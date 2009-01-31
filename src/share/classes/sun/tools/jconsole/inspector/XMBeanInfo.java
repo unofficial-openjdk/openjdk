@@ -44,46 +44,46 @@ import static sun.tools.jconsole.Utilities.*;
 
 @SuppressWarnings("serial")
 public class XMBeanInfo extends JPanel {
-
+    
     private static final Color lightYellow = new Color(255, 255, 128);
-
+    
     private final int NAME_COLUMN = 0;
     private final int VALUE_COLUMN = 1;
-
+    
     private final String[] columnNames = {
         Resources.getText("Name"),
         Resources.getText("Value")
     };
-
+    
     private JTable infoTable = new JTable();
     private JTable descTable = new JTable();
     private JPanel infoBorderPanel = new JPanel(new BorderLayout());
     private JPanel descBorderPanel = new JPanel(new BorderLayout());
-
+    
     private static class ReadOnlyDefaultTableModel extends DefaultTableModel {
         public void setValueAt(Object value, int row, int col) {
         }
     }
-
+    
     private static class TableRowDivider {
-
+        
         private String tableRowDividerText;
-
+        
         public TableRowDivider(String tableRowDividerText) {
             this.tableRowDividerText = tableRowDividerText;
         }
-
+        
         public String toString() {
             return tableRowDividerText;
         }
     }
-
+    
     private static MBeanInfoTableCellRenderer renderer =
             new MBeanInfoTableCellRenderer();
-
+    
     private static class MBeanInfoTableCellRenderer
             extends DefaultTableCellRenderer {
-
+        
         public Component getTableCellRendererComponent(
                 JTable table, Object value, boolean isSelected,
                 boolean hasFocus, int row, int column) {
@@ -92,22 +92,22 @@ public class XMBeanInfo extends JPanel {
             if (value instanceof TableRowDivider) {
                 JLabel label = new JLabel(value.toString());
                 label.setBackground(ensureContrast(lightYellow,
-                                                   label.getForeground()));
+						   label.getForeground()));
                 label.setOpaque(true);
                 return label;
             }
             return comp;
         }
     }
-
+    
     private static TableCellEditor editor =
             new MBeanInfoTableCellEditor(new JTextField());
-
+    
     private static class MBeanInfoTableCellEditor
-            extends Utils.ReadOnlyTableCellEditor {
+            extends Utils.ReadOnlyTableCellEditor {        
         public MBeanInfoTableCellEditor(JTextField tf) {
             super(tf);
-        }
+        }        
         public Component getTableCellEditorComponent(
                 JTable table, Object value, boolean isSelected,
                 int row, int column) {
@@ -116,14 +116,14 @@ public class XMBeanInfo extends JPanel {
             if (value instanceof TableRowDivider) {
                 JLabel label = new JLabel(value.toString());
                 label.setBackground(ensureContrast(lightYellow,
-                                                   label.getForeground()));
+						   label.getForeground()));
                 label.setOpaque(true);
                 return label;
             }
             return comp;
         }
     }
-
+    
     public XMBeanInfo() {
         // Use the grid layout to display the two tables
         //
@@ -171,21 +171,21 @@ public class XMBeanInfo extends JPanel {
         add(infoBorderPanel);
         add(descBorderPanel);
     }
-
+    
     public void emptyInfoTable() {
         DefaultTableModel tableModel = (DefaultTableModel) infoTable.getModel();
         while (tableModel.getRowCount() > 0) {
             tableModel.removeRow(0);
         }
     }
-
+    
     public void emptyDescTable() {
         DefaultTableModel tableModel = (DefaultTableModel) descTable.getModel();
         while (tableModel.getRowCount() > 0) {
             tableModel.removeRow(0);
         }
     }
-
+    
     private void addDescriptor(Descriptor desc, String text) {
         if (desc != null && desc.getFieldNames().length > 0) {
             DefaultTableModel tableModel = (DefaultTableModel) descTable.getModel();
@@ -222,7 +222,7 @@ public class XMBeanInfo extends JPanel {
             tableModel.newDataAvailable(new TableModelEvent(tableModel));
         }
     }
-
+    
     public void addMBeanInfo(XMBean mbean, MBeanInfo mbeanInfo) {
         emptyInfoTable();
         emptyDescTable();
@@ -262,7 +262,7 @@ public class XMBeanInfo extends JPanel {
         }
         tableModel.newDataAvailable(new TableModelEvent(tableModel));
     }
-
+    
     public void addMBeanAttributeInfo(MBeanAttributeInfo mbai) {
         emptyInfoTable();
         emptyDescTable();
@@ -295,7 +295,7 @@ public class XMBeanInfo extends JPanel {
         addDescriptor(mbai.getDescriptor(), text);
         tableModel.newDataAvailable(new TableModelEvent(tableModel));
     }
-
+    
     public void addMBeanOperationInfo(MBeanOperationInfo mboi) {
         emptyInfoTable();
         emptyDescTable();
@@ -342,7 +342,7 @@ public class XMBeanInfo extends JPanel {
         }
         tableModel.newDataAvailable(new TableModelEvent(tableModel));
     }
-
+    
     public void addMBeanNotificationInfo(MBeanNotificationInfo mbni) {
         emptyInfoTable();
         emptyDescTable();
@@ -366,7 +366,7 @@ public class XMBeanInfo extends JPanel {
         addDescriptor(mbni.getDescriptor(), text);
         tableModel.newDataAvailable(new TableModelEvent(tableModel));
     }
-
+    
     private void addMBeanConstructorInfo(MBeanConstructorInfo mbci, String text) {
         DefaultTableModel tableModel = (DefaultTableModel) infoTable.getModel();
         Object rowData[] = new Object[2];
@@ -382,7 +382,7 @@ public class XMBeanInfo extends JPanel {
         addDescriptor(mbci.getDescriptor(), text);
         tableModel.newDataAvailable(new TableModelEvent(tableModel));
     }
-
+    
     private void addMBeanParameterInfo(MBeanParameterInfo mbpi, String text) {
         DefaultTableModel tableModel = (DefaultTableModel) infoTable.getModel();
         Object rowData[] = new Object[2];
@@ -401,7 +401,7 @@ public class XMBeanInfo extends JPanel {
         addDescriptor(mbpi.getDescriptor(), text);
         tableModel.newDataAvailable(new TableModelEvent(tableModel));
     }
-
+    
     public static void loadInfo(DefaultMutableTreeNode root) {
         // Retrieve XMBean from XNodeInfo
         //

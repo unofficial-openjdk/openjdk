@@ -44,7 +44,8 @@ import java.io.ObjectStreamException;
  *
  * @see Toolkit#getDesktopProperty
  *
- * @author      Carl Quinn
+ * @version 	%I%, %G%
+ * @author 	Carl Quinn
  * @author      Amy Fowler
  */
 public final class SystemColor extends Color implements java.io.Serializable {
@@ -241,7 +242,7 @@ public final class SystemColor extends Color implements java.io.Serializable {
     /*
      * System colors with default initial values, overwritten by toolkit if
      * system values differ and are available.
-     * Should put array initialization above first field that is using
+     * Should put array initialization above first field that is using 
      * SystemColor constructor to initialize.
      */
     private static int[] systemColors = {
@@ -422,9 +423,9 @@ public final class SystemColor extends Color implements java.io.Serializable {
      */
     private static final long serialVersionUID = 4503142729533789064L;
 
-    /*
+    /* 
      * An index into either array of SystemColor objects or values.
-     */
+     */ 
     private transient int index;
 
     private static SystemColor systemColorObjects [] = {
@@ -469,7 +470,7 @@ public final class SystemColor extends Color implements java.io.Serializable {
         }
         for (int i = 0; i < systemColors.length; i++) {
             systemColorObjects[i].value = systemColors[i];
-        }
+        } 
     }
 
     /**
@@ -478,7 +479,7 @@ public final class SystemColor extends Color implements java.io.Serializable {
      */
     private SystemColor(byte index) {
         super(systemColors[index]);
-        this.index = index;
+        this.index = index; 
     }
 
     /**
@@ -508,7 +509,7 @@ public final class SystemColor extends Color implements java.io.Serializable {
      * on the serialized form of these objects.
      * @return one of the {@code SystemColor} static object
      *         fields that refers to the same system color.
-     */
+     */ 
     private Object readResolve() {
         // The instances of SystemColor are tightly controlled and
         // only the canonical instances appearing above as static
@@ -516,8 +517,8 @@ public final class SystemColor extends Color implements java.io.Serializable {
         // objects stores the color index as the value.  Here we
         // map that index back into the canonical instance.
         return systemColorObjects[value];
-    }
-
+    } 
+    
     /**
      * Returns a specialized version of the {@code SystemColor}
      * object for writing to the serialized stream.
@@ -531,7 +532,7 @@ public final class SystemColor extends Color implements java.io.Serializable {
      * each {@code SystemColor} object.
      * @return a proxy {@code SystemColor} object with its value
      *         replaced by the corresponding system color index.
-     */
+     */ 
     private Object writeReplace() throws ObjectStreamException
     {
         // we put an array index in the SystemColor.value while serialize

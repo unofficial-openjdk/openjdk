@@ -35,17 +35,17 @@
 #include <X11/Xutil.h>
 
 void getAwtLockFunctions(void (**AwtLock)(JNIEnv *),
-                         void (**AwtUnlock)(JNIEnv *),
-                         void (**AwtNoFlushUnlock)(JNIEnv *),
-                         void *);
+			 void (**AwtUnlock)(JNIEnv *),
+			 void (**AwtNoFlushUnlock)(JNIEnv *),
+			 void *);
 
 void getExtAwtData(Display *,
-                   int32_t,
-                   int32_t *,      /* awt_depth */
-                   Colormap *,     /* awt_cmap  */
-                   Visual **,      /* awt_visInfo.visual */
-                   int32_t *,      /* awt_num_colors */
-                   void *);
+		   int32_t,
+		   int32_t *,      /* awt_depth */
+		   Colormap *,     /* awt_cmap  */
+		   Visual **,      /* awt_visInfo.visual */
+		   int32_t *,      /* awt_num_colors */
+		   void *);
 
 void getAwtData(int32_t *, Colormap *, Visual **, int32_t *, void *);
 

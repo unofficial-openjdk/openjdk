@@ -43,11 +43,11 @@ import sun.java2d.SurfaceData;
 public class MEmbeddedFramePeer extends MFramePeer {
     private static final Logger xembedLog = Logger.getLogger("sun.awt.motif.xembed.MEmbeddedFramePeer");
 
-//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:
+//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:    
 /* Details for  XEMBED_FOCUS_IN: */
     final static int XEMBED_FOCUS_CURRENT       =       0;
     final static int XEMBED_FOCUS_FIRST         =       1;
-    final static int XEMBED_FOCUS_LAST  =       2;
+    final static int XEMBED_FOCUS_LAST  =       2;    
 
     LinkedList<AWTKeyStroke> strokes = new LinkedList<AWTKeyStroke>();
 
@@ -79,7 +79,7 @@ public class MEmbeddedFramePeer extends MFramePeer {
         xembedLog.fine("Peer made visible");
         if (vis && !supportsXEmbed()) {
             xembedLog.fine("Synthesizing FocusIn");
-            // Fix for 4878303 - generate WINDOW_GAINED_FOCUS and update if we were focused
+            // Fix for 4878303 - generate WINDOW_GAINED_FOCUS and update if we were focused 
             // since noone will do it for us(WM does it for regular top-levels)
             synthesizeFocusInOut(true);
         }
@@ -122,7 +122,7 @@ public class MEmbeddedFramePeer extends MFramePeer {
 //             int index = strokes.indexOf(stroke);
 //             nativeUnregisterAccelerator(index);
 //         }
-    }
+    }    
 
     void notifyStarted() {
         // Register accelerators
@@ -165,7 +165,7 @@ public class MEmbeddedFramePeer extends MFramePeer {
     }
     public void handleWindowFocusIn() {
         super.handleWindowFocusIn();
-        xembedLog.fine("windowFocusIn");
+        xembedLog.fine("windowFocusIn");        
     }
     public void handleWindowFocusOut(Window oppositeWindow) {
         super.handleWindowFocusOut(oppositeWindow);

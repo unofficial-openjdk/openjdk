@@ -36,6 +36,7 @@
 	  Metacity window manager, nor to be used for any purpose other than stated
 	  here.
      </description>
+     <date>%G%</date>
   </info>
 
   <frame_geometry name="normal">

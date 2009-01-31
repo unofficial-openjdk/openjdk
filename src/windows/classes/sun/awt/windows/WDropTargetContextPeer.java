@@ -41,6 +41,7 @@ import sun.awt.dnd.SunDropTargetEvent;
  * the interaction between the win32 DnD system and Java.
  * </p>
  *
+ * @version %R%.%L%
  *
  */
 
@@ -50,7 +51,7 @@ final class WDropTargetContextPeer extends SunDropTargetContextPeer {
      */
 
     static WDropTargetContextPeer getWDropTargetContextPeer() {
-        return new WDropTargetContextPeer();
+	return new WDropTargetContextPeer();
     }
 
     /**
@@ -58,7 +59,7 @@ final class WDropTargetContextPeer extends SunDropTargetContextPeer {
      */
 
     private WDropTargetContextPeer() {
-        super();
+	super();
     }
 
     /**
@@ -68,7 +69,7 @@ final class WDropTargetContextPeer extends SunDropTargetContextPeer {
     private static FileInputStream getFileStream(String file, long stgmedium)
         throws IOException
     {
-        return new WDropTargetContextPeerFileStream(file, stgmedium);
+	return new WDropTargetContextPeerFileStream(file, stgmedium);
     }
 
     /**
@@ -76,22 +77,22 @@ final class WDropTargetContextPeer extends SunDropTargetContextPeer {
      */
 
     private static Object getIStream(long istream) throws IOException {
-        return new WDropTargetContextPeerIStream(istream);
+	return new WDropTargetContextPeerIStream(istream);
     }
 
     protected Object getNativeData(long format) {
-        return getData(getNativeDragContext(), format);
+	return getData(getNativeDragContext(), format);
     }
 
     /**
      * signal drop complete
      */
 
-    protected void doDropDone(boolean success, int dropAction,
+    protected void doDropDone(boolean success, int dropAction, 
                               boolean isLocal) {
         dropDone(getNativeDragContext(), success, dropAction);
     }
-
+ 
     protected void eventPosted(final SunDropTargetEvent e) {
         if (e.getID() != SunDropTargetEvent.MOUSE_DROPPED) {
             Runnable runnable = new Runnable() {
@@ -100,7 +101,7 @@ final class WDropTargetContextPeer extends SunDropTargetContextPeer {
                     }
                 };
             // NOTE: this PeerEvent must be a NORM_PRIORITY event to be
-            // dispatched after this SunDropTargetEvent, but before the next
+            // dispatched after this SunDropTargetEvent, but before the next 
             // one, so we should pass zero flags.
             PeerEvent peerEvent = new PeerEvent(e.getSource(), runnable, 0);
             SunToolkit.executeOnEventHandlerThread(peerEvent);
@@ -133,9 +134,9 @@ class WDropTargetContextPeerFileStream extends FileInputStream {
     WDropTargetContextPeerFileStream(String name, long stgmedium)
         throws FileNotFoundException
     {
-        super(name);
+	super(name);
 
-        this.stgmedium  = stgmedium;
+	this.stgmedium  = stgmedium;
     }
 
     /**
@@ -174,11 +175,11 @@ class WDropTargetContextPeerIStream extends InputStream {
      */
 
     WDropTargetContextPeerIStream(long istream) throws IOException {
-        super();
+	super();
 
-        if (istream == 0) throw new IOException("No IStream");
+	if (istream == 0) throw new IOException("No IStream");
 
-        this.istream    = istream;
+	this.istream    = istream;
     }
 
     /**
@@ -186,7 +187,7 @@ class WDropTargetContextPeerIStream extends InputStream {
      */
 
     public int available() throws IOException {
-        if (istream == 0) throw new IOException("No IStream");
+	if (istream == 0) throw new IOException("No IStream");
         return Available(istream);
     }
 
@@ -197,7 +198,7 @@ class WDropTargetContextPeerIStream extends InputStream {
      */
 
     public int read() throws IOException {
-        if (istream == 0) throw new IOException("No IStream");
+	if (istream == 0) throw new IOException("No IStream");
         return Read(istream);
     }
 
@@ -208,7 +209,7 @@ class WDropTargetContextPeerIStream extends InputStream {
      */
 
     public int read(byte[] b, int off, int len) throws IOException {
-        if (istream == 0) throw new IOException("No IStream");
+	if (istream == 0) throw new IOException("No IStream");
         return ReadBytes(istream, b, off, len);
     }
 

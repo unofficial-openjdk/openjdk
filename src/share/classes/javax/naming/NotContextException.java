@@ -43,6 +43,7 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   * @since 1.3
   */
 
@@ -51,11 +52,11 @@ public class NotContextException extends NamingException {
      * Constructs a new instance of NotContextException using an
      * explanation. All other fields default to null.
      *
-     * @param   explanation     Possibly null additional detail about this exception.
+     * @param	explanation	Possibly null additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public NotContextException(String explanation) {
-        super(explanation);
+	super(explanation);
     }
 
     /**
@@ -63,7 +64,7 @@ public class NotContextException extends NamingException {
       * All fields default to null.
       */
     public NotContextException() {
-        super();
+	super();
     }
 
     /**

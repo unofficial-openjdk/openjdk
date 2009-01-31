@@ -75,20 +75,20 @@ JNIEXPORT void JNICALL Java_java_awt_Menu_initIDs
  */
 static void awtTearOffShellDestroy(Widget widget, XtPointer closure, XtPointer data) {
     if (widget != NULL ) {
-        XtSetKeyboardFocus(widget, NULL);
+	XtSetKeyboardFocus(widget, NULL);
     }
 }
 
 /*
  * Fix for Bug Traq 4251941 - segfault after double tear-off and close
- * This callback is added to menu after the creation.
+ * This callback is added to menu after the creation. 
  * It adds the destroy callback awtTearOffShellDestroy to remove the lost focus callback on destroy
  */
 static void awtTearOffActivatedCallback(Widget widget, XtPointer closure, XtPointer data) {
     Widget shell;
     shell = XtParent(widget);
     if (shell != NULL && XtClass(shell) == transientShellWidgetClass) {
-        XtAddCallback(shell, XtNdestroyCallback, awtTearOffShellDestroy, widget);
+	XtAddCallback(shell, XtNdestroyCallback, awtTearOffShellDestroy, widget);
     }
 }
 
@@ -139,17 +139,17 @@ awtJNI_CreateMenu(JNIEnv * env, jobject this, Widget menuParent)
     target = (*env)->GetObjectField(env, this, mMenuItemPeerIDs.target);
     if (JNU_IsNull(env, target)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
-        (*env)->PopLocalFrame(env, NULL);
+	(*env)->PopLocalFrame(env, NULL);
         return;
     }
     font = JNU_CallMethodByName(env, NULL, target, "getFont_NoClientCode",
-                                "()Ljava/awt/Font;").l;
+				"()Ljava/awt/Font;").l;
 
     mdata = ZALLOC(MenuData);
     JNU_SetLongFieldFromPtr(env, this, mMenuItemPeerIDs.pData, mdata);
     if (mdata == NULL) {
         JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-        (*env)->PopLocalFrame(env, NULL);
+	(*env)->PopLocalFrame(env, NULL);
         return;
     }
     targetFont = (*env)->GetObjectField(env, target, menuComponentIDs.font);
@@ -215,8 +215,8 @@ awtJNI_CreateMenu(JNIEnv * env, jobject this, Widget menuParent)
                       XmNforeground, fg,
                       XmNhighlightColor, fg,
                       NULL);
-        XtAddCallback(mdata->itemData.comp.widget, XmNtearOffMenuActivateCallback,
-                      awtTearOffActivatedCallback, NULL);
+	XtAddCallback(mdata->itemData.comp.widget, XmNtearOffMenuActivateCallback,
+		      awtTearOffActivatedCallback, NULL);
     }
     argc = 0;
     XtSetArg(args[argc], XmNsubMenuId, mdata->itemData.comp.widget);
@@ -226,7 +226,7 @@ awtJNI_CreateMenu(JNIEnv * env, jobject this, Widget menuParent)
         XtSetArg(args[argc], XmNlabelString, mfstr);
     } else {
         str = XmStringCreate(ctitle, XmSTRING_DEFAULT_CHARSET);
-        XtSetArg(args[argc], XmNlabelString, str);
+	XtSetArg(args[argc], XmNlabelString, str);
     }
     argc++;
     XtSetArg(args[argc], XmNbackground, bg);
@@ -283,7 +283,7 @@ awtJNI_CreateMenu(JNIEnv * env, jobject this, Widget menuParent)
     }
 
     if (mfstr != NULL) {
-      XmStringFree(mfstr);
+      XmStringFree(mfstr); 
       mfstr = NULL;
     }
 
@@ -295,7 +295,7 @@ awtJNI_CreateMenu(JNIEnv * env, jobject this, Widget menuParent)
     XtManageChild(mdata->comp.widget);
     XtSetSensitive(mdata->comp.widget,
                    (*env)->GetBooleanField(env, target, menuItemIDs.enabled) ?
-                   True : False);
+		   True : False);
 
     if (ctitle != NULL && ctitle != "") {
         JNU_ReleaseStringPlatformChars(env, label, (const char *) ctitle);
@@ -322,7 +322,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuPeer_createMenu
         return;
     }
     mbdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, parent, mMenuBarPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, parent, mMenuBarPeerIDs.pData);
     if (mbdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -352,7 +352,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuPeer_createSubMenu
         return;
     }
     mpdata = (struct MenuData *)
-        JNU_GetLongFieldAsPtr(env, parent, mMenuItemPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, parent, mMenuItemPeerIDs.pData);
     if (mpdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -375,11 +375,11 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuPeer_pDispose
     struct MenuData *mdata;
     Widget parent;
     Boolean isParentManaged = False;
-
+    
     AWT_LOCK();
 
     mdata = (struct MenuData *)
-        JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mMenuItemPeerIDs.pData);
     if (mdata == NULL) {
         AWT_UNLOCK();
         return;
@@ -394,14 +394,17 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuPeer_pDispose
         isParentManaged = True;
         XtUnmanageChild(parent);
     }
-
+    
     XtDestroyWidget(mdata->itemData.comp.widget);
-
-    if (isParentManaged) {
+    
+    if (isParentManaged) {    
         XtManageChild(parent);
     }
-
+    
     XtDestroyWidget(mdata->comp.widget);
     free((void *) mdata);
     AWT_UNLOCK();
 }
+
+
+

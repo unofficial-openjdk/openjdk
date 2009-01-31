@@ -60,7 +60,7 @@ public class AfterThreadDeathTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new AfterThreadDeathTest(args).startTests();
     }
 
@@ -74,13 +74,13 @@ public class AfterThreadDeathTest extends TestScaffold {
             stepRequest = null;
             println("Deleted stepRequest");
         }
-
+        
         if (mainIsDead) {
             // Here is the odd thing about this test; whatever thread this event
             // is for, we do a step on the mainThread. If the mainThread is
             // already dead, we should get the exception.  Note that we don't
             // come here for the start of the main thread.
-            stepRequest = erm.createStepRequest(mainThread,
+            stepRequest = erm.createStepRequest(mainThread, 
                                                 StepRequest.STEP_LINE,
                                                 StepRequest.STEP_OVER);
             stepRequest.addCountFilter(1);
@@ -93,7 +93,7 @@ public class AfterThreadDeathTest extends TestScaffold {
             } catch (Exception ee) {
                 failure("FAILED: Did not get expected"
                       + " IllegalThreadStateException"
-                      + " on a StepRequest.enable().  \n"
+                      + " on a StepRequest.enable().  \n" 
                       + "        Got this exception instead: " + ee);
                 return;
             }
@@ -110,27 +110,27 @@ public class AfterThreadDeathTest extends TestScaffold {
             }
         }
     }
-
+    
     public void vmDied(VMDeathEvent event) {
         println("Got VMDeathEvent");
     }
-
+    
     public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("AfterDeathTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
         erm = vm().eventRequestManager();
-
+        
         /*
          * Set event requests
          */
@@ -146,7 +146,7 @@ public class AfterThreadDeathTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+          
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -158,3 +158,4 @@ public class AfterThreadDeathTest extends TestScaffold {
         }
     }
 }
+

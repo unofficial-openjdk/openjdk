@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
@@ -55,68 +55,68 @@ import com.sun.tools.hat.internal.util.Comparer;
  */
 
 public class ReachableObjects {
-    public ReachableObjects(JavaHeapObject root,
+    public ReachableObjects(JavaHeapObject root, 
                             final ReachableExcludes excludes) {
         this.root = root;
 
-        final Hashtable<JavaHeapObject, JavaHeapObject> bag = new Hashtable<JavaHeapObject, JavaHeapObject>();
-        final Hashtable<String, String> fieldsExcluded = new Hashtable<String, String>();  //Bag<String>
-        final Hashtable<String, String> fieldsUsed = new Hashtable<String, String>();   // Bag<String>
-        JavaHeapObjectVisitor visitor = new AbstractJavaHeapObjectVisitor() {
-            public void visit(JavaHeapObject t) {
-                // Size is zero for things like integer fields
-                if (t != null && t.getSize() > 0 && bag.get(t) == null) {
-                    bag.put(t, t);
-                    t.visitReferencedObjects(this);
-                }
-            }
+	final Hashtable<JavaHeapObject, JavaHeapObject> bag = new Hashtable<JavaHeapObject, JavaHeapObject>();
+	final Hashtable<String, String> fieldsExcluded = new Hashtable<String, String>();  //Bag<String>
+	final Hashtable<String, String> fieldsUsed = new Hashtable<String, String>();	// Bag<String>
+	JavaHeapObjectVisitor visitor = new AbstractJavaHeapObjectVisitor() {
+	    public void visit(JavaHeapObject t) {
+		// Size is zero for things like integer fields
+		if (t != null && t.getSize() > 0 && bag.get(t) == null) {
+		    bag.put(t, t);
+		    t.visitReferencedObjects(this);
+		}
+	    }
 
-            public boolean mightExclude() {
-                return excludes != null;
-            }
+	    public boolean mightExclude() {
+		return excludes != null;
+	    }
 
-            public boolean exclude(JavaClass clazz, JavaField f) {
-                if (excludes == null) {
-                    return false;
-                }
-                String nm = clazz.getName() + "." + f.getName();
-                if (excludes.isExcluded(nm)) {
-                    fieldsExcluded.put(nm, nm);
-                    return true;
-                } else {
-                    fieldsUsed.put(nm, nm);
-                    return false;
-                }
-            }
-        };
-        // Put the closure of root and all objects reachable from root into
-        // bag (depth first), but don't include root:
-        visitor.visit(root);
-        bag.remove(root);
+	    public boolean exclude(JavaClass clazz, JavaField f) {
+		if (excludes == null) {
+		    return false;
+		}
+		String nm = clazz.getName() + "." + f.getName();
+		if (excludes.isExcluded(nm)) {
+		    fieldsExcluded.put(nm, nm);
+		    return true;
+		} else {
+		    fieldsUsed.put(nm, nm);
+		    return false;
+		}
+	    }
+	};
+	// Put the closure of root and all objects reachable from root into
+	// bag (depth first), but don't include root:
+	visitor.visit(root);
+	bag.remove(root);
 
-        // Now grab the elements into a vector, and sort it in decreasing size
-        JavaThing[] things = new JavaThing[bag.size()];
-        int i = 0;
-        for (Enumeration e = bag.elements(); e.hasMoreElements(); ) {
-            things[i++] = (JavaThing) e.nextElement();
-        }
-        ArraySorter.sort(things, new Comparer() {
-            public int compare(Object lhs, Object rhs) {
-                JavaThing left = (JavaThing) lhs;
-                JavaThing right = (JavaThing) rhs;
-                int diff = right.getSize() - left.getSize();
-                if (diff != 0) {
-                    return diff;
-                }
-                return left.compareTo(right);
-            }
-        });
+	// Now grab the elements into a vector, and sort it in decreasing size
+	JavaThing[] things = new JavaThing[bag.size()];
+	int i = 0;
+	for (Enumeration e = bag.elements(); e.hasMoreElements(); ) {
+	    things[i++] = (JavaThing) e.nextElement();
+	}
+	ArraySorter.sort(things, new Comparer() {
+	    public int compare(Object lhs, Object rhs) {
+		JavaThing left = (JavaThing) lhs;
+		JavaThing right = (JavaThing) rhs;
+		int diff = right.getSize() - left.getSize();
+		if (diff != 0) {
+		    return diff;
+		}
+		return left.compareTo(right);
+	    }
+	});
         this.reachables = things;
 
-        this.totalSize = root.getSize();
-        for (i = 0; i < things.length; i++) {
-            this.totalSize += things[i].getSize();
-        }
+	this.totalSize = root.getSize();
+	for (i = 0; i < things.length; i++) {
+	    this.totalSize += things[i].getSize();
+	}
 
         excludedFields = getElements(fieldsExcluded);
         usedFields = getElements(fieldsUsed);

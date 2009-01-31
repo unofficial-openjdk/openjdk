@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug     6547241
- * @summary Test verifies that concurrent usage of jpeg writer instance
+ * @summary Test verifies that concurrent usage of jpeg writer instance 
  *          by number of threads does not cause crash in jpeg library.
  * @run     main ConcurrentWritingTest
  */
@@ -54,7 +54,7 @@ public class ConcurrentWritingTest extends Thread {
         img = createTestImage();
 
         w = ImageIO.getImageWritersByFormatName("JPEG").next();
-
+        
         for (int i = 0; i < MAX_THREADS; i++) {
             (new ConcurrentWritingTest()).start();
         }
@@ -68,7 +68,7 @@ public class ConcurrentWritingTest extends Thread {
         }
         System.out.println("Test PASSED");
     }
-
+    
     public void run() {
         try {
             File f = File.createTempFile("writer_", ".jpg", pwd);
@@ -102,13 +102,13 @@ public class ConcurrentWritingTest extends Thread {
         Color[] colors = { Color.red, Color.green, Color.blue };
         float[] dist = {0.0f, 0.5f, 1.0f };
         Point2D center = new Point2D.Float(0.5f * w, 0.5f * h);
-
+        
         RadialGradientPaint p =
             new RadialGradientPaint(center, 0.5f * w, dist, colors);
         g.setPaint(p);
         g.fillRect(0, 0, w, h);
         g.dispose();
-
+        
         return img;
     }
 }

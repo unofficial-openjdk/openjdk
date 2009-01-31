@@ -27,26 +27,26 @@
             raise an exception, the VM core dumps.
 */
 
-
+    
 public class ExceptionHidingLoader extends ClassLoader {
 
     protected Class findClass(String name) throws ClassNotFoundException {
-        return null;
+	return null;
     }
-
+    
     public static void main(String[] args) throws Exception {
-        boolean exception = false;
-
-        try {
-            Class.forName("aha", false, new ExceptionHidingLoader());
-        } catch (ClassNotFoundException e) {
-            /* VM was smart enough to detect the problem and raise an
+	boolean exception = false;
+	
+	try {
+	    Class.forName("aha", false, new ExceptionHidingLoader());
+	} catch (ClassNotFoundException e) {
+	    /* VM was smart enough to detect the problem and raise an
                exception. */
-            exception = true;
-        }
-        if (!exception) {
-            throw new Exception("Bogus loader behavior not being corrected");
-        }
+	    exception = true;
+	}
+	if (!exception) {
+	    throw new Exception("Bogus loader behavior not being corrected");
+	}
     }
 
 }

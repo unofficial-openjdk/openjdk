@@ -45,8 +45,8 @@ public class DefaultSelectorProvider {
      * Returns the default SelectorProvider.
      */
     public static SelectorProvider create() {
-        String osname = AccessController.doPrivileged(
-            new GetPropertyAction("os.name"));
+	String osname = AccessController.doPrivileged(
+	    new GetPropertyAction("os.name"));
         if ("SunOS".equals(osname)) {
             return new sun.nio.ch.DevPollSelectorProvider();
         }
@@ -54,7 +54,7 @@ public class DefaultSelectorProvider {
         // use EPollSelectorProvider for Linux kernels >= 2.6
         if ("Linux".equals(osname)) {
             String osversion = AccessController.doPrivileged(
-                new GetPropertyAction("os.version"));
+		new GetPropertyAction("os.version"));
             String[] vers = osversion.split("\\.", 0);
             if (vers.length >= 2) {
                 try {

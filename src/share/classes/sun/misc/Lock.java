@@ -39,23 +39,24 @@ package sun.misc;
  * a lock, and one of the methods may throw an exception, you must be
  * prepared to release the lock similarly to the following example:
  * <pre>
- *      class SomeClass {
- *          Lock myLock = new Lock();
+ *	class SomeClass {
+ *	    Lock myLock = new Lock();
 
- *          void someMethod() {
- *              myLock.lock();
- *              try {
- *                  StartOperation();
- *                  ContinueOperation();
- *                  EndOperation();
- *              } finally {
- *                  myLock.unlock();
- *              }
- *          }
- *      }
+ *	    void someMethod() {
+ *	        myLock.lock();
+ *		try {
+ *	    	    StartOperation();
+ *		    ContinueOperation();
+ *		    EndOperation();
+ *		} finally {
+ *	    	    myLock.unlock();
+ *		}
+ *	    }
+ *	}
  * </pre>
  *
- * @author      Peter King
+ * @version 	%I%, %G%
+ * @author 	Peter King
  */
 public
 class Lock {
@@ -76,10 +77,10 @@ class Lock {
      *               interrupted this thread.
      */
     public final synchronized void lock() throws InterruptedException {
-        while (locked) {
-            wait();
-        }
-        locked = true;
+	while (locked) {
+	    wait();
+	}
+	locked = true;
     }
 
     /**
@@ -87,7 +88,7 @@ class Lock {
      * will be notitified so they can try to acquire the lock again.
      */
     public final synchronized void unlock() {
-        locked = false;
-        notifyAll();
+	locked = false;
+	notifyAll();
     }
 }

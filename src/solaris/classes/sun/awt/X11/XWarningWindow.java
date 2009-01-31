@@ -28,15 +28,15 @@ import java.awt.*;
 
 class XWarningWindow extends XWindow {
     final static int defaultHeight = 27;
-
+    
     Window ownerWindow;
     XWarningWindow(Window ownerWindow, long parentWindow) {
         super(ownerWindow, parentWindow);
-        this.ownerWindow = ownerWindow;
+        this.ownerWindow = ownerWindow;        
         xSetVisible(true);
         toFront();
     }
-
+    
     protected String getWMName() {
         return "Warning window";
     }
@@ -57,7 +57,7 @@ class XWarningWindow extends XWindow {
         if (updateRect.intersects(bounds)) {
             Rectangle updateArea = updateRect.intersection(bounds);
             g.setClip(updateArea);
-            g.setColor(getBackground());
+            g.setColor(getBackground());            
             g.fillRect(updateArea.x, updateArea.y, updateArea.width, updateArea.height);
             g.setColor(getColor());
             g.setFont(getFont());

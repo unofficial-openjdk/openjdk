@@ -38,7 +38,8 @@ package java.rmi;
  *
  * <p>A <code>ServerRuntimeException</code> is not thrown from servers
  * executing on the Java 2 platform v1.2 or later versions.
- *
+ * 
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  * @deprecated no replacement
@@ -60,6 +61,6 @@ public class ServerRuntimeException extends RemoteException {
      */
     @Deprecated
     public ServerRuntimeException(String s, Exception ex) {
-        super(s, ex);
+	super(s, ex);
     }
 }

@@ -30,6 +30,7 @@ import java.io.FileDescriptor;
 /*
  * On Unix systems we simply delegate to native methods.
  *
+ * @version %I%, %G%
  * @author Chris Hegarty
  */
 
@@ -76,9 +77,10 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
 
     native int socketGetOption(int opt, Object iaContainerObj) throws SocketException;
 
-    native int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd)
-        throws SocketException;
+    native int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd) 
+	throws SocketException;
 
     native void socketSendUrgentData(int data) throws IOException;
 
 }
+

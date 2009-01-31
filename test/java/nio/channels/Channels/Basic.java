@@ -51,21 +51,21 @@ public class Basic {
     }
 
     private static void test() throws Exception {
-        try {
-            ReadableByteChannel channel = Channels.newChannel((InputStream)null);
+	try {
+	    ReadableByteChannel channel = Channels.newChannel((InputStream)null);
 
-            throw new RuntimeException("Did not get the expected NullPointerException.");
-        } catch (NullPointerException ne) {
-            // OK. As expected.
-        }
+	    throw new RuntimeException("Did not get the expected NullPointerException.");
+	} catch (NullPointerException ne) {
+	    // OK. As expected.
+	}
 
-        try {
-            WritableByteChannel channel = Channels.newChannel((OutputStream)null);
+	try {
+	    WritableByteChannel channel = Channels.newChannel((OutputStream)null);
 
-            throw new RuntimeException("Did not get the expected NullPointerException.");
-        } catch (NullPointerException ne) {
-            // OK. As expected.
-        }
+	    throw new RuntimeException("Did not get the expected NullPointerException.");
+	} catch (NullPointerException ne) {
+	    // OK. As expected.
+	}
 
         try {
             blah = File.createTempFile("blah", null);
@@ -151,7 +151,7 @@ public class Basic {
             totalRead += bytesRead;
             bytesRead = is.read(bb, totalRead, messageSize - totalRead);
         }
-
+        
         String result = new String(bb, 0, totalRead, encoding);
         int len = message.length();
         for (int i=0; i<ITERATIONS; i++) {

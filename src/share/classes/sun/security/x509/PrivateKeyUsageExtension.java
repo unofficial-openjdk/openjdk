@@ -55,6 +55,7 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -76,8 +77,8 @@ implements CertAttrSet<String> {
     private static final byte TAG_BEFORE = 0;
     private static final byte TAG_AFTER = 1;
 
-    private Date        notBefore = null;
-    private Date        notAfter = null;
+    private Date	notBefore = null;
+    private Date	notAfter = null;
 
     // Encode this extension value.
     private void encodeThis() throws IOException {
@@ -137,34 +138,34 @@ implements CertAttrSet<String> {
         this.critical = critical.booleanValue();
 
         this.extensionValue = (byte[]) value;
-        DerInputStream str = new DerInputStream(this.extensionValue);
-        DerValue[] seq = str.getSequence(2);
+	DerInputStream str = new DerInputStream(this.extensionValue);
+	DerValue[] seq = str.getSequence(2);
 
         // NB. this is always encoded with the IMPLICIT tag
         // The checks only make sense if we assume implicit tagging,
         // with explicit tagging the form is always constructed.
-        for (int i = 0; i < seq.length; i++) {
+	for (int i = 0; i < seq.length; i++) {
             DerValue opt = seq[i];
 
             if (opt.isContextSpecific(TAG_BEFORE) &&
                 !opt.isConstructed()) {
-                if (notBefore != null) {
+	        if (notBefore != null) {
                     throw new CertificateParsingException(
                         "Duplicate notBefore in PrivateKeyUsage.");
-                }
+	        }
                 opt.resetTag(DerValue.tag_GeneralizedTime);
-                str = new DerInputStream(opt.toByteArray());
-                notBefore = str.getGeneralizedTime();
+	        str = new DerInputStream(opt.toByteArray());
+	        notBefore = str.getGeneralizedTime();
 
             } else if (opt.isContextSpecific(TAG_AFTER) &&
                        !opt.isConstructed()) {
-                if (notAfter != null) {
+	        if (notAfter != null) {
                     throw new CertificateParsingException(
-                        "Duplicate notAfter in PrivateKeyUsage.");
-                }
+	                "Duplicate notAfter in PrivateKeyUsage.");
+	        }
                 opt.resetTag(DerValue.tag_GeneralizedTime);
-                str = new DerInputStream(opt.toByteArray());
-                notAfter = str.getGeneralizedTime();
+	        str = new DerInputStream(opt.toByteArray());
+	        notAfter = str.getGeneralizedTime();
             } else
                 throw new IOException("Invalid encoding of " +
                                       "PrivateKeyUsageExtension");
@@ -235,7 +236,7 @@ implements CertAttrSet<String> {
             encodeThis();
         }
         super.encode(tmp);
-        out.write(tmp.toByteArray());
+	out.write(tmp.toByteArray());
     }
 
     /**
@@ -245,16 +246,16 @@ implements CertAttrSet<String> {
     public void set(String name, Object obj)
     throws CertificateException, IOException {
         if (!(obj instanceof Date)) {
-            throw new CertificateException("Attribute must be of type Date.");
-        }
-        if (name.equalsIgnoreCase(NOT_BEFORE)) {
-            notBefore = (Date)obj;
-        } else if (name.equalsIgnoreCase(NOT_AFTER)) {
-            notAfter = (Date)obj;
-        } else {
-          throw new CertificateException("Attribute name not recognized by"
+	    throw new CertificateException("Attribute must be of type Date.");
+	}
+	if (name.equalsIgnoreCase(NOT_BEFORE)) {
+	    notBefore = (Date)obj;
+	} else if (name.equalsIgnoreCase(NOT_AFTER)) {
+	    notAfter = (Date)obj;
+	} else {
+	  throw new CertificateException("Attribute name not recognized by"
                            + " CertAttrSet:PrivateKeyUsage.");
-        }
+	}
         encodeThis();
     }
 
@@ -268,7 +269,7 @@ implements CertAttrSet<String> {
       } else if (name.equalsIgnoreCase(NOT_AFTER)) {
           return (new Date(notAfter.getTime()));
       } else {
-          throw new CertificateException("Attribute name not recognized by"
+	  throw new CertificateException("Attribute name not recognized by"
                            + " CertAttrSet:PrivateKeyUsage.");
       }
   }
@@ -279,13 +280,13 @@ implements CertAttrSet<String> {
      */
     public void delete(String name) throws CertificateException, IOException {
         if (name.equalsIgnoreCase(NOT_BEFORE)) {
-            notBefore = null;
-        } else if (name.equalsIgnoreCase(NOT_AFTER)) {
-            notAfter = null;
-        } else {
-          throw new CertificateException("Attribute name not recognized by"
+	    notBefore = null;
+	} else if (name.equalsIgnoreCase(NOT_AFTER)) {
+	    notAfter = null;
+	} else {
+	  throw new CertificateException("Attribute name not recognized by"
                            + " CertAttrSet:PrivateKeyUsage.");
-        }
+	}
         encodeThis();
     }
 
@@ -295,10 +296,10 @@ implements CertAttrSet<String> {
      */
     public Enumeration<String> getElements() {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
-        elements.addElement(NOT_BEFORE);
-        elements.addElement(NOT_AFTER);
+	elements.addElement(NOT_BEFORE);
+	elements.addElement(NOT_AFTER);
 
-        return(elements.elements());
+	return(elements.elements());
     }
 
     /**

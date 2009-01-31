@@ -70,12 +70,12 @@ unpacker* unpacker::current() {
 static void set_current_unpacker(unpacker* u) {
   unpacker::non_mt_current = u;
   assert(((uThread = (u == null) ? -1 : THREAD_SELF),
-          true));
+	  true));
 }
 
 // Callback for fetching data, Unix style.
 static jlong read_input_via_stdio(unpacker* u,
-                                  void* buf, jlong minlen, jlong maxlen) {
+				  void* buf, jlong minlen, jlong maxlen) {
   assert(minlen <= maxlen);  // don't talk nonsense
   jlong numread = 0;
   char* bufptr = (char*) buf;
@@ -88,7 +88,7 @@ static jlong read_input_via_stdio(unpacker* u,
     if (u->infileptr != null) {
       nr = fread(bufptr, 1, readlen, u->infileptr);
     } else {
-#ifndef WIN32
+#ifndef WIN32 
       // we prefer unbuffered inputs
       nr = read(u->infileno, bufptr, readlen);
 #else
@@ -97,7 +97,7 @@ static jlong read_input_via_stdio(unpacker* u,
     }
     if (nr <= 0) {
       if (errno != EINTR)
-        break;
+	break;
       nr = 0;
     }
     numread += nr;
@@ -157,7 +157,7 @@ static void usage(unpacker* u, const char* progname, bool full = false) {
     fprintf(u->errstrm, usage_lines[i], progname);
     if (!full) {
       fprintf(u->errstrm,
-              "(For more information, run %s --help .)\n", progname);
+	      "(For more information, run %s --help .)\n", progname);
       break;
     }
   }
@@ -227,15 +227,15 @@ static int next_arg(char** &argp) {
       const char* key = keys[i];
       char kch = *key++;
       if (strchr(key, '=') == null) {
-        if (!strcmp(arg+2, key)) {
-          ++argp;  // pop option arg
-          return kch;
-        }
+	if (!strcmp(arg+2, key)) {
+	  ++argp;  // pop option arg
+	  return kch;
+	}
       } else {
-        if (!strpcmp(arg+2, key)) {
-          *argp += 2 + strlen(key);  // remove "--"+key from arg
-          return kch;
-        }
+	if (!strpcmp(arg+2, key)) {
+	  *argp += 2 + strlen(key);  // remove "--"+key from arg
+	  return kch;
+	}
       }
     }
   } else if (strchr(flag_opts, ach) != null) {  // plain option
@@ -264,7 +264,7 @@ static int next_arg(char** &argp) {
   return -1;  // bad argument
 }
 
-static const char sccsver[] = "1.30, 07/05/05";
+static const char sccsver[] = "%I%, %E%";
 
 // Usage:  unpackage input.pack output.jar
 int unpacker::run(int argc, char **argv) {
@@ -277,7 +277,7 @@ int unpacker::run(int argc, char **argv) {
 
   int envargc = 0;
   char** argbuf = init_args(argc, argv, envargc);
-  char** arg0 = argbuf+envargc;
+  char** arg0 = argbuf+envargc; 
   char** argp = argbuf;
   int ach;
 
@@ -299,7 +299,7 @@ int unpacker::run(int argc, char **argv) {
     case 'l':  logfile = *argp++; break;
     case 'J':  argp += 1; break;  // skip ignored -Jxxx parameter
 
-    case 'V':
+    case 'V': 
       fprintf(u.errstrm, "%s version %s\n", nbasename(argv[0]), sccsver);
       exit(0);
 
@@ -311,9 +311,9 @@ int unpacker::run(int argc, char **argv) {
     default:
       const char* inenv = isenvarg? " in ${UNPACK200_FLAGS}": "";
       if (hasoptarg)
-        fprintf(u.errstrm, "Missing option string%s: %s\n", inenv, arg);
+	fprintf(u.errstrm, "Missing option string%s: %s\n", inenv, arg);
       else
-        fprintf(u.errstrm, "Unrecognized argument%s: %s\n", inenv, arg);
+	fprintf(u.errstrm, "Unrecognized argument%s: %s\n", inenv, arg);
       usage(&u, argv[0]);
       exit(2);
     }
@@ -338,7 +338,7 @@ int unpacker::run(int argc, char **argv) {
 
   if (verbose != 0) {
     fprintf(u.errstrm,
-            "Unpacking from %s to %s\n", source_file, destination_file);
+	    "Unpacking from %s to %s\n", source_file, destination_file);
   }
   bool& remove_source = u.remove_packfile;
 
@@ -349,7 +349,7 @@ int unpacker::run(int argc, char **argv) {
     u.infileptr = fopen(source_file, "rb");
     if (u.infileptr == null) {
        fprintf(u.errstrm,
-               "Error: Could not open input file: %s\n", source_file);
+	       "Error: Could not open input file: %s\n", source_file);
        exit(3); // Called only from the native standalone unpacker
     }
   }
@@ -400,7 +400,7 @@ int unpacker::run(int argc, char **argv) {
     magic = read_magic(&u, peek, sizeof(peek));
     if (magic != JAVA_PACKAGE_MAGIC) {
       if (magic != EOF_MAGIC)
-        u.abort("garbage after end of pack archive");
+	u.abort("garbage after end of pack archive");
       break;   // all done
     }
 

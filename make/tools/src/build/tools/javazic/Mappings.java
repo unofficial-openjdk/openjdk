@@ -75,10 +75,8 @@ class Mappings {
             Zone zone = zones.get(zoneName);
             String zonename = zone.getName();
             int rawOffset = zone.get(zone.size()-1).getGmtOffset();
-
             // If the GMT offset of this Zone will change in some
             // future time, this Zone is added to the exclude list.
-            boolean isExcluded = false;
             if (zone.size() > 1) {
                 ZoneRec zrec = zone.get(zone.size()-2);
                 if ((zrec.getGmtOffset() != rawOffset)
@@ -87,7 +85,7 @@ class Mappings {
                         excludeList = new ArrayList<String>();
                     }
                     excludeList.add(zone.getName());
-                    isExcluded = true;
+                    continue;
                 }
             }
 
@@ -103,11 +101,9 @@ class Mappings {
                 rawOffsetsIndex.add(i, rawOffset);
 
                 Set<String> perRawOffset = new TreeSet<String>();
-                if (!isExcluded) {
-                    perRawOffset.add(zonename);
-                }
+                perRawOffset.add(zonename);
                 rawOffsetsIndexTable.add(i, perRawOffset);
-            } else if (!isExcluded) {
+            } else {
                 int i = rawOffsetsIndex.indexOf(new Integer(rawOffset));
                 Set<String> perRawOffset = rawOffsetsIndexTable.get(i);
                 perRawOffset.add(zonename);

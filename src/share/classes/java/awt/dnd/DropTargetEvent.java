@@ -29,13 +29,14 @@ import java.util.EventObject;
 import java.awt.dnd.DropTargetContext;
 
 /**
- * The <code>DropTargetEvent</code> is the base
+ * The <code>DropTargetEvent</code> is the base 
  * class for both the <code>DropTargetDragEvent</code>
- * and the <code>DropTargetDropEvent</code>.
+ * and the <code>DropTargetDropEvent</code>. 
  * It encapsulates the current state of the Drag and
- * Drop operations, in particular the current
+ * Drop operations, in particular the current 
  * <code>DropTargetContext</code>.
  *
+ * @version 	%I%, %G%
  * @since 1.2
  *
  */
@@ -45,16 +46,16 @@ public class DropTargetEvent extends java.util.EventObject {
     private static final long serialVersionUID = 2821229066521922993L;
 
     /**
-     * Construct a <code>DropTargetEvent</code> with
+     * Construct a <code>DropTargetEvent</code> with 
      * a specified <code>DropTargetContext</code>.
      * <P>
      * @param dtc the <code>DropTargetContext</code>
      */
 
     public DropTargetEvent(DropTargetContext dtc) {
-        super(dtc.getDropTarget());
+	super(dtc.getDropTarget());
 
-        context  = dtc;
+	context  = dtc;
     }
 
     /**
@@ -65,7 +66,7 @@ public class DropTargetEvent extends java.util.EventObject {
      */
 
     public DropTargetContext getDropTargetContext() {
-        return context;
+	return context;
     }
 
     /**

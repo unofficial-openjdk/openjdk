@@ -37,6 +37,7 @@ import java.nio.channels.*;
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
+ * @version %I%, %E%
  */
 interface Handler {
 

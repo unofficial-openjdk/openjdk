@@ -22,13 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+                                                                                
 package com.sun.management;
 
 /**
- * Diagnostic management interface for the HotSpot Virtual Machine.
- * The diagnostic MBean is registered to the platform MBeanServer
- * as are other platform MBeans.
+ * Diagnostic management interface for the HotSpot Virtual Machine.  
+ * The diagnostic MBean is registered to the platform MBeanServer 
+ * as are other platform MBeans. 
  *
  * <p>The <tt>ObjectName</tt> for uniquely identifying the diagnostic
  * MXBean within an MBeanServer is:
@@ -44,7 +44,7 @@ public interface HotSpotDiagnosticMXBean {
      * If this method is called remotely from another process,
      * the heap dump output is written to a file named <tt>outputFile</tt>
      * on the machine where the target VM is running.  If outputFile is
-     * a relative path, it is relative to the working directory where
+     * a relative path, it is relative to the working directory where 
      * the target VM was started.
      *
      * @param  outputFile the system-dependent filename
@@ -55,7 +55,7 @@ public interface HotSpotDiagnosticMXBean {
      * @throws UnsupportedOperationException if this operation is not supported.
      * @throws NullPointerException if <tt>outputFile</tt> is <tt>null</tt>.
      */
-    public void dumpHeap(String outputFile, boolean live) throws java.io.IOException;
+    public void dumpHeap(String outputFile, boolean live) throws java.io.IOException; 
 
     /**
      * Returns a list of <tt>VMOption</tt> objects for all diagnostic options.
@@ -79,14 +79,14 @@ public interface HotSpotDiagnosticMXBean {
     public VMOption getVMOption(String name);
 
     /**
-     * Sets a VM option of the given name to the specified value.
+     * Sets a VM option of the given name to the specified value. 
      * The new value will be reflected in a new <tt>VMOption</tt>
      * object returned by the {@link #getVMOption} method or
-     * the {@link #getDiagnosticOptions} method.  This method does
+     * the {@link #getDiagnosticOptions} method.  This method does 
      * not change the value of this <tt>VMOption</tt> object.
      *
-     * @param name Name of a VM option
-     * @param value New value of the VM option to be set
+     * @param name Name of a VM option 
+     * @param value New value of the VM option to be set 
      *
      * @throws IllegalArgumentException if the VM option of the given name
      *                                     does not exist.

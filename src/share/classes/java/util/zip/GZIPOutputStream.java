@@ -31,7 +31,8 @@ import java.io.IOException;
 /**
  * This class implements a stream filter for writing compressed data in
  * the GZIP file format.
- * @author      David Connelly
+ * @version 	%I%, %G%
+ * @author 	David Connelly
  *
  */
 public
@@ -60,10 +61,10 @@ class GZIPOutputStream extends DeflaterOutputStream {
      * @exception IllegalArgumentException if size is <= 0
      */
     public GZIPOutputStream(OutputStream out, int size) throws IOException {
-        super(out, new Deflater(Deflater.DEFAULT_COMPRESSION, true), size);
+	super(out, new Deflater(Deflater.DEFAULT_COMPRESSION, true), size);
         usesDefaultDeflater = true;
-        writeHeader();
-        crc.reset();
+	writeHeader();
+	crc.reset();
     }
 
     /**
@@ -72,7 +73,7 @@ class GZIPOutputStream extends DeflaterOutputStream {
      * @exception IOException If an I/O error has occurred.
      */
     public GZIPOutputStream(OutputStream out) throws IOException {
-        this(out, 512);
+	this(out, 512);
     }
 
     /**
@@ -84,10 +85,10 @@ class GZIPOutputStream extends DeflaterOutputStream {
      * @exception IOException If an I/O error has occurred.
      */
     public synchronized void write(byte[] buf, int off, int len)
-        throws IOException
+	throws IOException
     {
-        super.write(buf, off, len);
-        crc.update(buf, off, len);
+	super.write(buf, off, len);
+	crc.update(buf, off, len);
     }
 
     /**
@@ -97,12 +98,12 @@ class GZIPOutputStream extends DeflaterOutputStream {
      * @exception IOException if an I/O error has occurred
      */
     public void finish() throws IOException {
-        if (!def.finished()) {
-            def.finish();
-            while (!def.finished()) {
+	if (!def.finished()) {
+	    def.finish();
+	    while (!def.finished()) {
                 int len = def.deflate(buf, 0, buf.length);
                 if (def.finished() && len <= buf.length - TRAILER_SIZE) {
-                    // last deflater buffer. Fit trailer at the end
+                    // last deflater buffer. Fit trailer at the end 
                     writeTrailer(buf, len);
                     len = len + TRAILER_SIZE;
                     out.write(buf, 0, len);
@@ -110,15 +111,15 @@ class GZIPOutputStream extends DeflaterOutputStream {
                 }
                 if (len > 0)
                     out.write(buf, 0, len);
-            }
+	    }
             // if we can't fit the trailer at the end of the last
             // deflater buffer, we write it separately
             byte[] trailer = new byte[TRAILER_SIZE];
-            writeTrailer(trailer, 0);
+	    writeTrailer(trailer, 0);
             out.write(trailer);
-        }
+	}
     }
-
+  
     /*
      * Writes GZIP member header.
      */

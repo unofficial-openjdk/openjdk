@@ -81,13 +81,13 @@ public class TestStringPrep {
     */
     private static String[] mixed_prep_data ={
         "OWNER@",
-        "GROUP@",
-        "EVERYONE@",
-        "INTERACTIVE@",
-        "NETWORK@",
-        "DIALUP@",
-        "BATCH@",
-        "ANONYMOUS@",
+        "GROUP@",        
+        "EVERYONE@",     
+        "INTERACTIVE@",  
+        "NETWORK@",      
+        "DIALUP@",       
+        "BATCH@",        
+        "ANONYMOUS@",    
         "AUTHENTICATED@",
         "\u0930\u094D\u092E\u094D\u0915\u094D\u0937\u0947\u0924\u094D@slip129-37-118-146.nc.us.ibm.net",
         "\u0936\u094d\u0930\u0940\u092e\u0926\u094d@saratoga.pe.utexas.edu",
@@ -143,7 +143,7 @@ public class TestStringPrep {
             }catch(Exception e){
                 fail("mixed_prepare for string: " + mixed_prep_data[i] +" failed with " + e.toString());
             }
-        }
+        } 
         /* test the error condition */
         {
             String src = "OWNER@oss.software.ibm.com";
@@ -175,13 +175,13 @@ public class TestStringPrep {
                 if(!((expected instanceof ParseException) && (e instanceof ParseException))) {
                     fail("Did not get the expected exception");
                 }
-            }
+            } 
 
         }
     }
 
     public static void TestCSPrep(){
-
+        
         // Checking for bidi is turned off
         String src = "\uC138\uACC4\uC758\uBAA8\uB4E0\uC0AC\uB78C\uB4E4\uC774\u0644\u064A\u0647\uD55C\uAD6D\uC5B4\uB97C\uC774\uD574\uD55C\uB2E4\uBA74";
         try{
@@ -189,7 +189,7 @@ public class TestStringPrep {
         }catch(Exception e){
             fail("Got unexpected exception: " + e.toString());
         }
-
+        
         // normalization is turned off
         try{
             src = "www.\u00E0\u00B3\u00AF.com";
@@ -202,7 +202,7 @@ public class TestStringPrep {
         }catch(Exception e){
             fail("Got unexpected exception: " + e.toString());
         }
-
+        
         // test case insensitive string
         try{
             src = "THISISATEST";
@@ -228,7 +228,7 @@ public class TestStringPrep {
             fail("Got unexpected exception: " + e.toString());
         }
     }
-
+    
     public static void TestNamePrepConformance() throws Exception {
         InputStream stream = StringPrep.class.getResourceAsStream("uidna.spp");
         StringPrep namePrep = new StringPrep(stream);
@@ -255,7 +255,7 @@ public class TestStringPrep {
     private static void fail(String msg) {
         throw new RuntimeException(msg);
     }
-
+    
     private static String prettify(String s) {
         StringBuffer result = new StringBuffer();
         for (int i = 0; i < s.length(); ++i) {

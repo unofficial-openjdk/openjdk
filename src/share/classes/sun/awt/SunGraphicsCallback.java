@@ -48,50 +48,50 @@ public abstract class SunGraphicsCallback {
     }
 
     public final void runOneComponent(Component comp, Rectangle bounds,
-                                      Graphics g, Shape clip,
-                                      int weightFlags) {
+				      Graphics g, Shape clip,
+				      int weightFlags) {
         if (comp == null || comp.getPeer() == null || !comp.isVisible()) {
-            return;
-        }
-        boolean lightweight = comp.isLightweight();
-        if ((lightweight && (weightFlags & LIGHTWEIGHTS) == 0) ||
-            (!lightweight && (weightFlags & HEAVYWEIGHTS) == 0)) {
-            return;
-        }
+	    return;
+	}
+	boolean lightweight = comp.isLightweight();
+	if ((lightweight && (weightFlags & LIGHTWEIGHTS) == 0) ||
+	    (!lightweight && (weightFlags & HEAVYWEIGHTS) == 0)) {
+	    return;
+	}
 
-        if (bounds == null) {
-            bounds = comp.getBounds();
-        }
+	if (bounds == null) {
+	    bounds = comp.getBounds();
+	}
 
-        if (clip == null || clip.intersects(bounds)) {
-            Graphics cg = g.create();
-            try {
+	if (clip == null || clip.intersects(bounds)) {
+	    Graphics cg = g.create();
+	    try {
                 constrainGraphics(cg, bounds);
-                cg.setFont(comp.getFont());
-                cg.setColor(comp.getForeground());
-                if (cg instanceof Graphics2D) {
-                    ((Graphics2D)cg).setBackground(comp.getBackground());
-                } else if (cg instanceof Graphics2Delegate) {
-                    ((Graphics2Delegate)cg).setBackground(
-                        comp.getBackground());
-                }
-                run(comp, cg);
-            } finally {
-                cg.dispose();
-            }
-        }
+	        cg.setFont(comp.getFont());
+		cg.setColor(comp.getForeground());
+		if (cg instanceof Graphics2D) {
+	            ((Graphics2D)cg).setBackground(comp.getBackground());
+		} else if (cg instanceof Graphics2Delegate) {
+		    ((Graphics2Delegate)cg).setBackground(
+		        comp.getBackground());
+		}
+		run(comp, cg);
+	    } finally {
+	        cg.dispose();
+	    }
+	}
     }
 
     public final void runComponents(Component[] comps, Graphics g,
-                                    int weightFlags) {
+				    int weightFlags) {
         int ncomponents = comps.length;
-        Shape clip = g.getClip();
+	Shape clip = g.getClip();
 
         if (log.isLoggable(Level.FINER) && (clip != null)) {
             Rectangle newrect = clip.getBounds();
             log.log(Level.FINER, "x = " + newrect.x + ", y = " + newrect.y +
                                  ", width = " + newrect.width +
-                                 ", height = " + newrect.height);
+                                 ", height = " + newrect.height); 
         }
 
         // A seriously sad hack--
@@ -99,22 +99,22 @@ public abstract class SunGraphicsCallback {
         // even if they are at the top of the Z order. We emulate this
         // behavior by making two printing passes: the first for lightweights;
         // the second for heavyweights.
-        //
-        // ToDo(dpm): Either build a list of heavyweights during the
-        // lightweight pass, or redesign the components array to keep
-        // lightweights and heavyweights separate.
-        if ((weightFlags & TWO_PASSES) != 0) {
-            for (int i = ncomponents - 1; i >= 0; i--) {
-                runOneComponent(comps[i], null, g, clip, LIGHTWEIGHTS);
-            }
-            for (int i = ncomponents - 1; i >= 0; i--) {
-                runOneComponent(comps[i], null, g, clip, HEAVYWEIGHTS);
-            }
-        } else {
-            for (int i = ncomponents - 1; i >= 0; i--) {
-                runOneComponent(comps[i], null, g, clip, weightFlags);
-            }
-        }
+	//
+	// ToDo(dpm): Either build a list of heavyweights during the
+	// lightweight pass, or redesign the components array to keep
+	// lightweights and heavyweights separate.
+	if ((weightFlags & TWO_PASSES) != 0) {
+	    for (int i = ncomponents - 1; i >= 0; i--) {
+	        runOneComponent(comps[i], null, g, clip, LIGHTWEIGHTS);
+	    }
+	    for (int i = ncomponents - 1; i >= 0; i--) {
+	        runOneComponent(comps[i], null, g, clip, HEAVYWEIGHTS);
+	    }
+	} else {
+	    for (int i = ncomponents - 1; i >= 0; i--) {
+	        runOneComponent(comps[i], null, g, clip, weightFlags);
+	    }
+	}
     }
 
     public static final class PaintHeavyweightComponentsCallback

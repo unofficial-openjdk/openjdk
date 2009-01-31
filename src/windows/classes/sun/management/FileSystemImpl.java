@@ -34,15 +34,15 @@ import java.io.IOException;
 public class FileSystemImpl extends FileSystem {
 
     public boolean supportsFileSecurity(File f) throws IOException {
-        return isSecuritySupported0(f.getAbsolutePath());
+	return isSecuritySupported0(f.getAbsolutePath());
     }
 
     public boolean isAccessUserOnly(File f) throws IOException {
-        String path = f.getAbsolutePath();
-        if (!isSecuritySupported0(path)) {
-            throw new UnsupportedOperationException("File system does not support file security");
-        }
-        return isAccessUserOnly0(path);
+	String path = f.getAbsolutePath();
+	if (!isSecuritySupported0(path)) {
+	    throw new UnsupportedOperationException("File system does not support file security");
+	}
+	return isAccessUserOnly0(path);
     }
 
     // Native methods
@@ -56,8 +56,9 @@ public class FileSystemImpl extends FileSystem {
     // Initialization
 
     static {
-        java.security.AccessController
+	java.security.AccessController
             .doPrivileged(new sun.security.action.LoadLibraryAction("management"));
-        init0();
+	init0();
     }
 }
+

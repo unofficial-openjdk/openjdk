@@ -39,11 +39,11 @@ import java.util.Locale;
 
 public class JPEGImageWriterSpi extends ImageWriterSpi {
 
-    private static String [] readerSpiNames =
+    private static String [] readerSpiNames = 
         {"com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi"};
 
     private boolean registered = false;
-
+    
     public JPEGImageWriterSpi() {
         super(JPEG.vendor,
               JPEG.version,

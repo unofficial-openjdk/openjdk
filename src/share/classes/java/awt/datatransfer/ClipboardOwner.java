@@ -31,14 +31,15 @@ package java.awt.datatransfer;
  * of the contents of a clipboard (clipboard owner) if it is
  * passed as an argument to
  * {@link java.awt.datatransfer.Clipboard#setContents} method of
- * the clipboard and this method returns successfully.
+ * the clipboard and this method returns successfully. 
  * The instance remains the clipboard owner until another application
  * or another object within this application asserts ownership
  * of this clipboard.
  *
  * @see java.awt.datatransfer.Clipboard
- *
- * @author      Amy Fowler
+ * 
+ * @version 	%I%, %G%
+ * @author	Amy Fowler
  */
 
 public interface ClipboardOwner {

@@ -100,8 +100,8 @@ public class UpdateManifest {
         new File(jarFileName).delete(); // remove pre-existing first!
         Main jartool = new Main(out, err, "jar");
         boolean status = jartool.run(
-                                new String[] {"cfm", jarFileName,
-                                    manifestOrig.getPath(), hello.getPath() });
+				new String[] {"cfm", jarFileName,
+				    manifestOrig.getPath(), hello.getPath() });
         check(status);
 
         // Create a new manifest, to use in updating the jar file.
@@ -158,7 +158,7 @@ public class UpdateManifest {
     }
 
     static void checkManifest(String jarFileName, String mainClass)
-                throws Throwable {
+		throws Throwable {
         File f = new File(jarFileName);
         if (!debug) f.deleteOnExit();
         ZipFile zf = new ZipFile(f);
@@ -182,46 +182,46 @@ public class UpdateManifest {
     static volatile int passed = 0, failed = 0;
 
     static void pass() {
-        passed++;
+	passed++;
     }
 
     static void fail() {
-        failed++;
-        Thread.dumpStack();
+	failed++;
+	Thread.dumpStack();
     }
 
     static void fail(String msg) {
-        System.out.println(msg);
-        fail();
+	System.out.println(msg);
+	fail();
     }
 
     static void unexpected(Throwable t) {
-        failed++;
-        t.printStackTrace();
+	failed++;
+	t.printStackTrace();
     }
 
     static void check(boolean cond) {
-        if (cond)
-            pass();
-        else
-            fail();
+	if (cond)
+	    pass();
+	else
+	    fail();
     }
 
     static void equal(Object x, Object y) {
         if ((x == null) ? (y == null) : x.equals(y))
-            pass();
+	    pass();
         else
-            fail(x + " not equal to " + y);
+	    fail(x + " not equal to " + y);
     }
 
     public static void main(String[] args) throws Throwable {
         try {
-            realMain(args);
-        } catch (Throwable t) {
-            unexpected(t);
-        }
+	    realMain(args);
+	} catch (Throwable t) {
+	    unexpected(t);
+	}
         System.out.println("\nPassed = " + passed + " failed = " + failed);
         if (failed > 0)
-            throw new AssertionError("Some tests failed");
+	    throw new AssertionError("Some tests failed");
     }
 }

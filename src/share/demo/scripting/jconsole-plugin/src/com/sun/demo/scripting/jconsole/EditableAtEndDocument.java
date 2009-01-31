@@ -49,10 +49,10 @@ public class EditableAtEndDocument extends PlainDocument {
     public void remove(int offs, int len) throws BadLocationException {
         int start = offs;
         int end = offs + len;
-
+  
         int markStart = mark;
         int markEnd = getLength();
-
+      
         if ((end < markStart) || (start > markEnd)) {
             // no overlap
             return;

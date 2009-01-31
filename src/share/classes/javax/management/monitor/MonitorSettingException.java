@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management.monitor;
+package javax.management.monitor; 
 
 
 /**
@@ -35,7 +35,7 @@ package javax.management.monitor;
  *
  * @since 1.5
  */
-public class MonitorSettingException extends javax.management.JMRuntimeException {
+public class MonitorSettingException extends javax.management.JMRuntimeException { 
 
     /* Serial version */
     private static final long serialVersionUID = -8807913418190202007L;

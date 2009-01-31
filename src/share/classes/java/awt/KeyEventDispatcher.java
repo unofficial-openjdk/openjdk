@@ -46,6 +46,7 @@ import java.awt.event.KeyEvent;
  * usually unnecessary and not recommended.)
  *
  * @author David Mendenhall
+ * @version %I%, %G%
  *
  * @see KeyboardFocusManager#addKeyEventDispatcher
  * @see KeyboardFocusManager#removeKeyEventDispatcher

@@ -30,7 +30,7 @@
 #include "GlyphImageRef.h"
 #include "SurfaceData.h"
 
-#ifdef  __cplusplus
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
@@ -43,7 +43,7 @@ extern jint RefineBounds(GlyphBlitVector *gbv, SurfaceDataBounds *bounds);
 extern GlyphBlitVector* setupBlitVector(JNIEnv *env, jobject glyphlist);
 extern GlyphBlitVector* setupLCDBlitVector(JNIEnv *env, jobject glyphlist);
 
-#ifdef  __cplusplus
+#ifdef	__cplusplus
 }
 #endif
 

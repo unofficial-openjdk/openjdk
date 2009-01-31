@@ -40,6 +40,7 @@ package java.rmi.server;
  * instance of <code>ServerCloneException</code> always throws {@link
  * IllegalStateException}.
  *
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  * @see     java.rmi.server.UnicastRemoteObject#clone()
@@ -67,7 +68,7 @@ public class ServerCloneException extends CloneNotSupportedException {
      * @param s the detail message.
      */
     public ServerCloneException(String s) {
-        super(s);
+	super(s);
         initCause(null);  // Disallow subsequent initCause
     }
 
@@ -79,24 +80,24 @@ public class ServerCloneException extends CloneNotSupportedException {
      * @param cause the cause
      */
     public ServerCloneException(String s, Exception cause) {
-        super(s);
+	super(s);
         initCause(null);  // Disallow subsequent initCause
-        detail = cause;
+	detail = cause;
     }
 
     /**
      * Returns the detail message, including the message from the cause, if
      * any, of this exception.
-     *
+     * 
      * @return the detail message
      */
     public String getMessage() {
-        if (detail == null)
-            return super.getMessage();
-        else
-            return super.getMessage() +
-                "; nested exception is: \n\t" +
-                detail.toString();
+	if (detail == null)
+	    return super.getMessage();
+	else
+	    return super.getMessage() +
+		"; nested exception is: \n\t" +
+		detail.toString();
     }
 
     /**

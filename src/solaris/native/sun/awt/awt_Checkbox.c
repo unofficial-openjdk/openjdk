@@ -112,7 +112,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCheckboxPeer_create
     XmFontList fontlist = NULL;
     Dimension height;
     Boolean labelIsEmpty = FALSE;
-
+    
     AWT_LOCK();
 
     if (JNU_IsNull(env, parent)) {
@@ -161,7 +161,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCheckboxPeer_create
     label = (*env)->GetObjectField(env, target, checkboxIDs.label);
 
     // fix for 4383735.
-    // If the label is empty we need to set the indicator size
+    // If the label is empty we need to set the indicator size 
     // proportional to the size of the font.
     // kdm@sparc.spb.su
     if (JNU_IsNull(env, label) || ((*env)->GetStringLength(env, label) == 0)) {
@@ -197,14 +197,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCheckboxPeer_create
 
         XtSetArg(args[argc], XmNlabelString, mfstr);
         argc++;
-
+        
         DASSERT(!(argc > MAX_ARGC));
         bdata->widget = XmCreateToggleButton(wdata->widget, "", args, argc);
 
-        if (mfstr != NULL) {
-            XmStringFree(mfstr);
-            mfstr = NULL;
-        }
+	if (mfstr != NULL) {
+	    XmStringFree(mfstr);
+	    mfstr = NULL;
+	}
     } else {
         if (labelIsEmpty) {
             clabel = emptyString;
@@ -316,7 +316,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MCheckboxPeer_pGetState
   (JNIEnv * env, jobject this)
 {
     struct ComponentData *bdata;
-    Boolean               state;
+    Boolean 		  state;
 
     AWT_LOCK();
 
@@ -347,7 +347,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCheckboxPeer_setCheckboxGroup
     AWT_LOCK();
 
     bdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
 
     if (bdata == NULL || bdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -412,7 +412,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MCheckboxPeer_getSpacing
 
     wdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+ 
     if (wdata == NULL || wdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "Null pData");
         AWT_UNLOCK();
@@ -426,3 +426,4 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MCheckboxPeer_getSpacing
 
     return dim;
 }
+

@@ -46,7 +46,7 @@ public class DisableTest {
         throws Exception {
         if (!tm.isThreadContentionMonitoringSupported()) {
             System.out.println("JVM does not supports thread contention monitoring");
-            return;
+            return; 
         }
 
         // Default is false.
@@ -71,7 +71,7 @@ public class DisableTest {
         throws Exception {
         if (!tm.isThreadCpuTimeSupported()) {
             System.out.println("JVM does not support thread CPU time monitoring");
-            return;
+            return; 
         }
 
         if (tm.isThreadCpuTimeEnabled()) {

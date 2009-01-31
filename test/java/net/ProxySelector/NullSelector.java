@@ -31,15 +31,15 @@ import java.io.*;
 
 public class NullSelector {
     public static void main(String[] args) throws Exception {
-        URL url = new URL("http://127.0.0.1/");
-        ProxySelector.setDefault(null);
+	URL url = new URL("http://127.0.0.1/");
+	ProxySelector.setDefault(null);
         URLConnection con = url.openConnection();
-        con.setConnectTimeout(500);
-        try {
-            // Will throw a NullPointerException if bug still there
-            con.connect();
-        } catch (IOException e) {
-            // OK, don't care about timeouts, or refused connections.
-        }
+	con.setConnectTimeout(500);
+	try {
+	    // Will throw a NullPointerException if bug still there
+	    con.connect();
+	} catch (IOException e) {
+	    // OK, don't care about timeouts, or refused connections.
+	}
     }
 }

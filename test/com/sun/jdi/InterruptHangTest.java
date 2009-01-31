@@ -25,14 +25,14 @@ class InterruptHangTarg {
         int answer = 0;
         System.out.println("Howdy!");
         Interruptor interruptorThread = new Interruptor(Thread.currentThread());
-
+        
         synchronized(sync) {
             interruptorThread.start();
             try {
                 sync.wait();
             } catch (InterruptedException ee) {
                 System.out.println("Debuggee interruptee: interrupted before starting loop");
-            }
+            }                
         }
 
         // Debugger will keep stepping thru this loop
@@ -70,15 +70,15 @@ class Interruptor extends Thread {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException ee) {
-                System.out.println("Debuggee Interruptor: finished after " +
+                System.out.println("Debuggee Interruptor: finished after " + 
                                    ii + " iterrupts");
                 break;
             }
-
+            
         }
     }
 }
-
+        
     /********** test program **********/
 
 public class InterruptHangTest extends TestScaffold {
@@ -91,12 +91,12 @@ public class InterruptHangTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new InterruptHangTest(args).startTests();
     }
 
     /********** event handlers **********/
-
+    
     public void stepCompleted(StepEvent event) {
         synchronized(sync) {
             nSteps++;
@@ -108,18 +108,18 @@ public class InterruptHangTest extends TestScaffold {
             timerThread.start();
         }
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         BreakpointEvent bpe = startToMain("InterruptHangTarg");
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
-
+        
         /*
          * Set event requests
          */
-        StepRequest request = erm.createStepRequest(mainThread,
+        StepRequest request = erm.createStepRequest(mainThread, 
                                                     StepRequest.STEP_LINE,
                                                     StepRequest.STEP_OVER);
         request.enable();
@@ -151,7 +151,7 @@ public class InterruptHangTest extends TestScaffold {
         /*
          * resume the target listening for events
          */
-
+        
         listenUntilVMDisconnect();
         timerThread.interrupt();
 
@@ -166,3 +166,4 @@ public class InterruptHangTest extends TestScaffold {
         }
     }
 }
+

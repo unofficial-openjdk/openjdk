@@ -73,7 +73,7 @@ import sun.security.util.PropertyExpander;
  *   and specifies the directory where the JRE is installed.
  *   Each property value specifies a <code>URL</code> pointing to a
  *   policy file to be loaded.  Read in and load each policy.
- *
+ *   
  * <li>
  *   The <code>java.lang.System</code> property <i>java.security.auth.policy</i>
  *   may also be set to a <code>URL</code> pointing to another policy file
@@ -88,7 +88,7 @@ import sun.security.util.PropertyExpander;
  *   "==" (rather than "="), then ignore all other specified
  *   policies and only load this policy.
  * </ol>
- *
+ * 
  * Each policy file consists of one or more grant entries, each of
  * which consists of a number of permission entries.
  *
@@ -98,15 +98,15 @@ import sun.security.util.PropertyExpander;
  *         principal <b>principalClass</b> "<b>principalName</b>",
  *         ... {
  *
- *     permission <b>Type</b> "<b>name</b> "<b>action</b>",
+ *     permission <b>Type</b> "<b>name</b> "<b>action</b>", 
  *         signedBy "<b>alias</b>";
  *     permission <b>Type</b> "<b>name</b> "<b>action</b>",
  *         signedBy "<b>alias</b>";
  *     ....
  *   };
  * </pre>
- *
- * All non-bold items above must appear as is (although case
+ * 
+ * All non-bold items above must appear as is (although case 
  * doesn't matter and some are optional, as noted below).
  * Italicized items represent variable values.
  *
@@ -124,61 +124,61 @@ import sun.security.util.PropertyExpander;
  * any <code>Principal</code> name.  When setting the <i>principalName</i>
  * to the *, do not surround the * with quotes.
  *
- * <p> A permission entry must begin with the word <code>permission</code>.
+ * <p> A permission entry must begin with the word <code>permission</code>. 
  * The word <code><i>Type</i></code> in the template above is
  * a specific permission type, such as <code>java.io.FilePermission</code>
  * or <code>java.lang.RuntimePermission</code>.
- *
+ * 
  * <p> The "<i>action</i>" is required for
  * many permission types, such as <code>java.io.FilePermission</code>
  * (where it specifies what type of file access that is permitted).
- * It is not required for categories such as
+ * It is not required for categories such as 
  * <code>java.lang.RuntimePermission</code>
- * where it is not necessary - you either have the
- * permission specified by the <code>"<i>name</i>"</code>
+ * where it is not necessary - you either have the 
+ * permission specified by the <code>"<i>name</i>"</code> 
  * value following the type name or you don't.
- *
- * <p> The <code>signedBy</code> name/value pair for a permission entry
+ * 
+ * <p> The <code>signedBy</code> name/value pair for a permission entry 
  * is optional. If present, it indicates a signed permission. That is,
  * the permission class itself must be signed by the given alias in
  * order for it to be granted. For example,
  * suppose you have the following grant entry:
- *
+ * 
  * <pre>
  *   grant principal foo.com.Principal "Duke" {
  *     permission Foo "foobar", signedBy "FooSoft";
  *   }
  * </pre>
- *
- * <p> Then this permission of type <i>Foo</i> is granted if the
- * <code>Foo.class</code> permission has been signed by the
- * "FooSoft" alias, or if <code>Foo.class</code> is a
+ * 
+ * <p> Then this permission of type <i>Foo</i> is granted if the 
+ * <code>Foo.class</code> permission has been signed by the 
+ * "FooSoft" alias, or if <code>Foo.class</code> is a 
  * system class (i.e., is found on the CLASSPATH).
- *
+ * 
  * <p> Items that appear in an entry must appear in the specified order
- * (<code>permission</code>, <i>Type</i>, "<i>name</i>", and
+ * (<code>permission</code>, <i>Type</i>, "<i>name</i>", and 
  * "<i>action</i>"). An entry is terminated with a semicolon.
- *
- * <p> Case is unimportant for the identifiers (<code>permission</code>,
- * <code>signedBy</code>, <code>codeBase</code>, etc.) but is
+ * 
+ * <p> Case is unimportant for the identifiers (<code>permission</code>, 
+ * <code>signedBy</code>, <code>codeBase</code>, etc.) but is 
  * significant for the <i>Type</i>
  * or for any string that is passed in as a value. <p>
- *
+ * 
  * <p> An example of two entries in a policy configuration file is
  * <pre>
  *   // if the code is comes from "foo.com" and is running as "Duke",
  *   // grant it read/write to all files in /tmp.
  *
  *   grant codeBase "foo.com", principal foo.com.Principal "Duke" {
- *              permission java.io.FilePermission "/tmp/*", "read,write";
+ * 		permission java.io.FilePermission "/tmp/*", "read,write";
  *   };
  *
  *   // grant any code running as "Duke" permission to read
  *   // the "java.vendor" Property.
  *
- *   grant principal foo.com.Principal "Duke" {
- *         permission java.util.PropertyPermission "java.vendor";
- * </pre>
+ *   grant principal foo.com.Principal "Duke" { 
+ * 	   permission java.util.PropertyPermission "java.vendor";
+ * </pre> 
  *
  * <p> This <code>Policy</code> implementation supports
  * special handling for PrivateCredentialPermissions.
@@ -193,9 +193,9 @@ import sun.security.util.PropertyExpander;
  *
  * <pre>
  *   grant principal foo.com.Principal "Duke" {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "a.b.Credential self",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"a.b.Credential self",
+ *		"read";
  *    };
  * </pre>
  *
@@ -204,9 +204,9 @@ import sun.security.util.PropertyExpander;
  *
  * <pre>
  *   grant principal foo.com.Principal "Duke" {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "* self",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"* self",
+ *		"read";
  *    };
  * </pre>
  *
@@ -216,46 +216,47 @@ import sun.security.util.PropertyExpander;
  *
  * <pre>
  *   grant principal com.sun.security.auth.SolarisPrincipal * {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "* self",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"* self",
+ *		"read";
  *    };
  * </pre>
- *
+ * 
  * The following grants all Subjects permission to access their own
  * private Credentials:
  *
  * <pre>
  *   grant principal * * {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "* self",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"* self",
+ *		"read";
  *    };
  * </pre>
-
- * @deprecated As of JDK&nbsp;1.4, replaced by
+ 
+ * @deprecated As of JDK&nbsp;1.4, replaced by 
  *             <code>sun.security.provider.PolicyFile</code>.
  *             This class is entirely deprecated.
  *
+ * @version 1.22, 01/25/00
  * @see java.security.CodeSource
  * @see java.security.Permissions
- * @see java.security.ProtectionDomain
+ * @see java.security.ProtectionDomain 
  */
 @Deprecated
 public class PolicyFile extends javax.security.auth.Policy {
 
     static final java.util.ResourceBundle rb =
-        java.security.AccessController.doPrivileged
-        (new java.security.PrivilegedAction<java.util.ResourceBundle>() {
-            public java.util.ResourceBundle run() {
-                return (java.util.ResourceBundle.getBundle
-                        ("sun.security.util.AuthResources"));
-            }
-        });
+	java.security.AccessController.doPrivileged
+	(new java.security.PrivilegedAction<java.util.ResourceBundle>() {
+	    public java.util.ResourceBundle run() {
+		return (java.util.ResourceBundle.getBundle
+			("sun.security.util.AuthResources"));
+	    }
+	});
     // needs to be package private
 
     private static final sun.security.util.Debug debug =
-        sun.security.util.Debug.getInstance("policy", "\t[Auth Policy]");
+	sun.security.util.Debug.getInstance("policy", "\t[Auth Policy]");
 
     private static final String AUTH_POLICY = "java.security.auth.policy";
     private static final String SECURITY_MANAGER = "java.security.manager";
@@ -273,32 +274,32 @@ public class PolicyFile extends javax.security.auth.Policy {
 
     private static final Class[] PARAMS = { String.class, String.class};
 
-    /**
-     * Initializes the Policy object and reads the default policy
+    /** 
+     * Initializes the Policy object and reads the default policy 
      * configuration file(s) into the Policy object.
      */
     public PolicyFile() {
-        // initialize Policy if either the AUTH_POLICY or
-        // SECURITY_MANAGER properties are set
-        String prop = System.getProperty(AUTH_POLICY);
+	// initialize Policy if either the AUTH_POLICY or
+	// SECURITY_MANAGER properties are set
+	String prop = System.getProperty(AUTH_POLICY);
 
-        if (prop == null) {
-            prop = System.getProperty(SECURITY_MANAGER);
-        }
-        if (prop != null)
-            init();
+	if (prop == null) {
+	    prop = System.getProperty(SECURITY_MANAGER);
+	}
+ 	if (prop != null)
+ 	    init();
     }
 
     private synchronized void init() {
 
-        if (initialized)
-            return;
+	if (initialized)
+	    return;
 
-        policyEntries = new Vector<PolicyEntry>();
-        aliasMapping = new Hashtable(11);
-
-        initPolicyFile();
-        initialized = true;
+	policyEntries = new Vector<PolicyEntry>();
+	aliasMapping = new Hashtable(11);
+	
+	initPolicyFile();
+	initialized = true;
     }
 
     /**
@@ -307,208 +308,208 @@ public class PolicyFile extends javax.security.auth.Policy {
      * <p>
      *
      * @exception SecurityException if the caller doesn't have permission
-     *          to refresh the <code>Policy</code>.
+     *		to refresh the <code>Policy</code>.
      */
     public synchronized void refresh()
     {
 
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new javax.security.auth.AuthPermission
-                                ("refreshPolicy"));
-        }
+	java.lang.SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkPermission(new javax.security.auth.AuthPermission
+				("refreshPolicy"));
+	}
 
-        // XXX
-        //
-        // 1)   if code instantiates PolicyFile directly, then it will need
-        //      all the permissions required for the PolicyFile initialization
-        // 2)   if code calls Policy.getPolicy, then it simply needs
-        //      AuthPermission(getPolicy), and the javax.security.auth.Policy
-        //      implementation instantiates PolicyFile in a doPrivileged block
-        // 3)   if after instantiating a Policy (either via #1 or #2),
-        //      code calls refresh, it simply needs
-        //      AuthPermission(refreshPolicy).  then PolicyFile wraps
-        //      the refresh in a doPrivileged block.
-        initialized = false;
-        java.security.AccessController.doPrivileged
-            (new java.security.PrivilegedAction<Void>() {
-            public Void run() {
-                init();
-                return null;
-            }
-        });
+	// XXX
+	//
+	// 1)	if code instantiates PolicyFile directly, then it will need
+	// 	all the permissions required for the PolicyFile initialization
+	// 2)	if code calls Policy.getPolicy, then it simply needs
+	//	AuthPermission(getPolicy), and the javax.security.auth.Policy
+	//	implementation instantiates PolicyFile in a doPrivileged block
+	// 3)	if after instantiating a Policy (either via #1 or #2),
+	//	code calls refresh, it simply needs
+	//	AuthPermission(refreshPolicy).  then PolicyFile wraps
+	//	the refresh in a doPrivileged block.
+	initialized = false;
+	java.security.AccessController.doPrivileged
+	    (new java.security.PrivilegedAction<Void>() {
+	    public Void run() {
+		init();
+		return null;
+	    }
+	});
     }
 
     private KeyStore initKeyStore(URL policyUrl, String keyStoreName,
-                                  String keyStoreType) {
-        if (keyStoreName != null) {
-            try {
-                /*
-                 * location of keystore is specified as absolute URL in policy
-                 * file, or is relative to URL of policy file
-                 */
-                URL keyStoreUrl = null;
-                try {
-                    keyStoreUrl = new URL(keyStoreName);
-                    // absolute URL
-                } catch (java.net.MalformedURLException e) {
-                    // relative URL
-                    keyStoreUrl = new URL(policyUrl, keyStoreName);
-                }
+				  String keyStoreType) {
+	if (keyStoreName != null) {
+	    try {
+		/*
+		 * location of keystore is specified as absolute URL in policy
+		 * file, or is relative to URL of policy file
+		 */
+		URL keyStoreUrl = null;
+		try {
+		    keyStoreUrl = new URL(keyStoreName);
+		    // absolute URL
+		} catch (java.net.MalformedURLException e) {
+		    // relative URL
+		    keyStoreUrl = new URL(policyUrl, keyStoreName);
+		}
 
-                if (debug != null) {
-                    debug.println("reading keystore"+keyStoreUrl);
-                }
+		if (debug != null) {
+		    debug.println("reading keystore"+keyStoreUrl);
+		}
 
-                InputStream inStream =
-                    new BufferedInputStream(getInputStream(keyStoreUrl));
+		InputStream inStream = 
+		    new BufferedInputStream(getInputStream(keyStoreUrl));
 
-                KeyStore ks;
-                if (keyStoreType != null)
-                    ks = KeyStore.getInstance(keyStoreType);
-                else
-                    ks = KeyStore.getInstance(KeyStore.getDefaultType());
-                ks.load(inStream, null);
-                inStream.close();
-                return ks;
-            } catch (Exception e) {
-                // ignore, treat it like we have no keystore
-                if (debug != null) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-        }
-        return null;
+		KeyStore ks;
+		if (keyStoreType != null)
+		    ks = KeyStore.getInstance(keyStoreType);
+		else
+		    ks = KeyStore.getInstance(KeyStore.getDefaultType());
+		ks.load(inStream, null);
+		inStream.close();
+		return ks;
+	    } catch (Exception e) {
+		// ignore, treat it like we have no keystore
+		if (debug != null) {
+		    e.printStackTrace();
+		}
+		return null;
+	    }	    
+	}
+	return null;
     }
 
     private void initPolicyFile() {
 
-        String prop = Security.getProperty("policy.expandProperties");
+	String prop = Security.getProperty("policy.expandProperties");
 
-        if (prop != null) expandProperties = prop.equalsIgnoreCase("true");
+	if (prop != null) expandProperties = prop.equalsIgnoreCase("true");
 
-        String iscp = Security.getProperty("policy.ignoreIdentityScope");
+	String iscp = Security.getProperty("policy.ignoreIdentityScope");
 
-        if (iscp != null) ignoreIdentityScope = iscp.equalsIgnoreCase("true");
+	if (iscp != null) ignoreIdentityScope = iscp.equalsIgnoreCase("true");
 
-        String allowSys  = Security.getProperty("policy.allowSystemProperty");
+	String allowSys  = Security.getProperty("policy.allowSystemProperty");
 
-        if ((allowSys!=null) && allowSys.equalsIgnoreCase("true")) {
+	if ((allowSys!=null) && allowSys.equalsIgnoreCase("true")) {
 
-            String extra_policy = System.getProperty(AUTH_POLICY);
-            if (extra_policy != null) {
-                boolean overrideAll = false;
-                if (extra_policy.startsWith("=")) {
-                    overrideAll = true;
-                    extra_policy = extra_policy.substring(1);
-                }
-                try {
-                    extra_policy = PropertyExpander.expand(extra_policy);
-                    URL policyURL;;
-                    File policyFile = new File(extra_policy);
-                    if (policyFile.exists()) {
-                        policyURL =
-                            new URL("file:" + policyFile.getCanonicalPath());
-                    } else {
-                        policyURL = new URL(extra_policy);
-                    }
-                    if (debug != null)
-                        debug.println("reading "+policyURL);
-                    init(policyURL);
-                } catch (Exception e) {
-                    // ignore.
-                    if (debug != null) {
-                        debug.println("caught exception: "+e);
-                    }
+	    String extra_policy = System.getProperty(AUTH_POLICY);
+	    if (extra_policy != null) {
+		boolean overrideAll = false;
+		if (extra_policy.startsWith("=")) {
+		    overrideAll = true;
+		    extra_policy = extra_policy.substring(1);
+		}
+		try {
+		    extra_policy = PropertyExpander.expand(extra_policy);
+		    URL policyURL;;
+		    File policyFile = new File(extra_policy);
+		    if (policyFile.exists()) {
+			policyURL =
+			    new URL("file:" + policyFile.getCanonicalPath());
+		    } else {
+			policyURL = new URL(extra_policy);
+		    }
+		    if (debug != null)
+			debug.println("reading "+policyURL);
+		    init(policyURL);
+		} catch (Exception e) {
+		    // ignore. 
+		    if (debug != null) {
+			debug.println("caught exception: "+e);
+		    }
 
-                }
-                if (overrideAll) {
-                    if (debug != null) {
-                        debug.println("overriding other policies!");
-                    }
-                    return;
-                }
-            }
-        }
+		}
+		if (overrideAll) {
+		    if (debug != null) {
+			debug.println("overriding other policies!");
+		    }
+		    return;
+		}
+	    }
+	}
 
-        int n = 1;
-        boolean loaded_one = false;
-        String policy_url;
+	int n = 1;
+	boolean loaded_one = false;
+	String policy_url;
 
-        while ((policy_url = Security.getProperty(AUTH_POLICY_URL+n)) != null) {
-            try {
-                policy_url = PropertyExpander.expand(policy_url).replace
-                                                (File.separatorChar, '/');
-                if (debug != null)
-                    debug.println("reading "+policy_url);
-                init(new URL(policy_url));
-                loaded_one = true;
-            } catch (Exception e) {
-                if (debug != null) {
-                    debug.println("error reading policy "+e);
-                    e.printStackTrace();
-                }
-                // ignore that policy
-            }
-            n++;
-        }
+	while ((policy_url = Security.getProperty(AUTH_POLICY_URL+n)) != null) {
+	    try {
+		policy_url = PropertyExpander.expand(policy_url).replace
+						(File.separatorChar, '/');
+		if (debug != null)
+		    debug.println("reading "+policy_url);
+		init(new URL(policy_url));
+		loaded_one = true;
+	    } catch (Exception e) {
+		if (debug != null) {
+		    debug.println("error reading policy "+e);
+		    e.printStackTrace();
+		}
+		// ignore that policy
+	    }
+	    n++;
+	}
 
-        if (loaded_one == false) {
-            // do not load a static policy
-        }
+	if (loaded_one == false) {
+	    // do not load a static policy
+	}
     }
 
     /** the scope to check */
     private static IdentityScope scope = null;
 
     /**
-     * Checks public key. If it is marked as trusted in
+     * Checks public key. If it is marked as trusted in 
      * the identity database, add it to the policy
      * with the AllPermission.
      */
     private boolean checkForTrustedIdentity(final Certificate cert) {
-        // XXX  JAAS has no way to access the SUN package.
-        //      we'll add this back in when JAAS goes into core.
-        return false;
+	// XXX	JAAS has no way to access the SUN package.
+	//	we'll add this back in when JAAS goes into core.
+	return false;
     }
 
-    /**
+    /** 
      * Reads a policy configuration into the Policy object using a
      * Reader object.
-     *
+     * 
      * @param policyFile the policy Reader object.
      */
     private void init(URL policy) {
-        PolicyParser pp = new PolicyParser(expandProperties);
-        try {
-            InputStreamReader isr
-                = new InputStreamReader(getInputStream(policy));
-            pp.read(isr);
-            isr.close();
-            KeyStore keyStore = initKeyStore(policy, pp.getKeyStoreUrl(),
-                                             pp.getKeyStoreType());
-            Enumeration<PolicyParser.GrantEntry> enum_ = pp.grantElements();
-            while (enum_.hasMoreElements()) {
-                PolicyParser.GrantEntry ge = enum_.nextElement();
-                addGrantEntry(ge, keyStore);
-            }
-        } catch (PolicyParser.ParsingException pe) {
-            System.err.println(AUTH_POLICY +
-                                rb.getString(": error parsing ") + policy);
-            System.err.println(AUTH_POLICY +
-                                rb.getString(": ") +
-                                pe.getMessage());
-            if (debug != null)
-                pe.printStackTrace();
+	PolicyParser pp = new PolicyParser(expandProperties);
+	try {
+	    InputStreamReader isr
+		= new InputStreamReader(getInputStream(policy)); 
+	    pp.read(isr);
+	    isr.close();
+	    KeyStore keyStore = initKeyStore(policy, pp.getKeyStoreUrl(),
+					     pp.getKeyStoreType());
+	    Enumeration<PolicyParser.GrantEntry> enum_ = pp.grantElements();
+	    while (enum_.hasMoreElements()) {
+		PolicyParser.GrantEntry ge = enum_.nextElement();
+		addGrantEntry(ge, keyStore);
+	    }
+	} catch (PolicyParser.ParsingException pe) {
+	    System.err.println(AUTH_POLICY +
+				rb.getString(": error parsing ") + policy);
+	    System.err.println(AUTH_POLICY +
+				rb.getString(": ") +
+				pe.getMessage());
+	    if (debug != null) 
+		pe.printStackTrace();
 
-        } catch (Exception e) {
-            if (debug != null) {
-                debug.println("error parsing "+policy);
-                debug.println(e.toString());
-                e.printStackTrace();
-            }
-        }
+	} catch (Exception e) {
+	    if (debug != null) {
+		debug.println("error parsing "+policy);
+		debug.println(e.toString());
+		e.printStackTrace();
+	    }
+	}
     }
 
     /*
@@ -519,12 +520,12 @@ public class PolicyFile extends javax.security.auth.Policy {
      * start up time noticeably for the new launcher. -- DAC
      */
     private InputStream getInputStream(URL url) throws IOException {
-        if ("file".equals(url.getProtocol())) {
-            String path = url.getFile().replace('/', File.separatorChar);
-            return new FileInputStream(path);
-        } else {
-            return url.openStream();
-        }
+	if ("file".equals(url.getProtocol())) {
+	    String path = url.getFile().replace('/', File.separatorChar);
+	    return new FileInputStream(path);
+	} else {
+	    return url.openStream();
+	}
     }
 
     /**
@@ -532,146 +533,146 @@ public class PolicyFile extends javax.security.auth.Policy {
      *
      * @return null if signedBy alias is not recognized
      */
-    CodeSource getCodeSource(PolicyParser.GrantEntry ge, KeyStore keyStore)
-        throws java.net.MalformedURLException
+    CodeSource getCodeSource(PolicyParser.GrantEntry ge, KeyStore keyStore) 
+	throws java.net.MalformedURLException
     {
-        Certificate[] certs = null;
-        if (ge.signedBy != null) {
-            certs = getCertificates(keyStore, ge.signedBy);
-            if (certs == null) {
-                // we don't have a key for this alias,
-                // just return
-                if (debug != null) {
-                    debug.println(" no certs for alias " +
-                                       ge.signedBy + ", ignoring.");
-                }
-                return null;
-            }
-        }
+	Certificate[] certs = null;
+	if (ge.signedBy != null) {
+	    certs = getCertificates(keyStore, ge.signedBy);
+	    if (certs == null) {
+		// we don't have a key for this alias,
+		// just return
+		if (debug != null) {
+		    debug.println(" no certs for alias " +
+				       ge.signedBy + ", ignoring.");
+		}
+		return null;
+	    }
+	}
+	
+	URL location;
 
-        URL location;
+	if (ge.codeBase != null)
+	    location = new URL(ge.codeBase);
+	else
+	    location = null;
 
-        if (ge.codeBase != null)
-            location = new URL(ge.codeBase);
-        else
-            location = null;
-
-        if (ge.principals == null || ge.principals.size() == 0) {
-            return (canonicalizeCodebase
-                        (new CodeSource(location, certs),
-                        false));
-        } else {
-            return (canonicalizeCodebase
-                (new SubjectCodeSource(null, ge.principals, location, certs),
-                false));
-        }
+	if (ge.principals == null || ge.principals.size() == 0) {
+	    return (canonicalizeCodebase
+			(new CodeSource(location, certs),
+			false));
+	} else {
+	    return (canonicalizeCodebase
+		(new SubjectCodeSource(null, ge.principals, location, certs),
+		false));
+	}
     }
 
     /**
-     * Add one policy entry to the vector.
+     * Add one policy entry to the vector. 
      */
     private void addGrantEntry(PolicyParser.GrantEntry ge,
-                               KeyStore keyStore) {
+			       KeyStore keyStore) {
 
-        if (debug != null) {
-            debug.println("Adding policy entry: ");
-            debug.println("  signedBy " + ge.signedBy);
-            debug.println("  codeBase " + ge.codeBase);
-            if (ge.principals != null && ge.principals.size() > 0) {
-                ListIterator<PolicyParser.PrincipalEntry> li =
-                                                ge.principals.listIterator();
-                while (li.hasNext()) {
-                    PolicyParser.PrincipalEntry pppe = li.next();
-                    debug.println("  " + pppe.principalClass +
-                                        " " + pppe.principalName);
-                }
-            }
-            debug.println();
-        }
+	if (debug != null) {
+	    debug.println("Adding policy entry: ");
+	    debug.println("  signedBy " + ge.signedBy);
+	    debug.println("  codeBase " + ge.codeBase);
+	    if (ge.principals != null && ge.principals.size() > 0) {
+		ListIterator<PolicyParser.PrincipalEntry> li = 
+						ge.principals.listIterator();
+		while (li.hasNext()) {
+		    PolicyParser.PrincipalEntry pppe = li.next();
+		    debug.println("  " + pppe.principalClass +
+					" " + pppe.principalName);
+		}
+	    }
+	    debug.println();
+	}
 
-        try {
-            CodeSource codesource = getCodeSource(ge, keyStore);
-            // skip if signedBy alias was unknown...
-            if (codesource == null) return;
+	try {
+	    CodeSource codesource = getCodeSource(ge, keyStore);
+	    // skip if signedBy alias was unknown...
+	    if (codesource == null) return;
 
-            PolicyEntry entry = new PolicyEntry(codesource);
-            Enumeration<PolicyParser.PermissionEntry> enum_ =
-                                                ge.permissionElements();
-            while (enum_.hasMoreElements()) {
-                PolicyParser.PermissionEntry pe = enum_.nextElement();
-                try {
-                    // XXX special case PrivateCredentialPermission-SELF
-                    Permission perm;
-                    if (pe.permission.equals
-                        ("javax.security.auth.PrivateCredentialPermission") &&
-                        pe.name.endsWith(" self")) {
-                        perm = getInstance(pe.permission,
-                                         pe.name + " \"self\"",
-                                         pe.action);
-                    } else {
-                        perm = getInstance(pe.permission,
-                                         pe.name,
-                                         pe.action);
-                    }
-                    entry.add(perm);
-                    if (debug != null) {
-                        debug.println("  "+perm);
-                    }
-                } catch (ClassNotFoundException cnfe) {
-                    Certificate certs[];
-                    if (pe.signedBy != null)
-                        certs = getCertificates(keyStore, pe.signedBy);
-                    else
-                        certs = null;
+	    PolicyEntry entry = new PolicyEntry(codesource);
+	    Enumeration<PolicyParser.PermissionEntry> enum_ =
+						ge.permissionElements();
+	    while (enum_.hasMoreElements()) {
+		PolicyParser.PermissionEntry pe = enum_.nextElement();
+		try { 
+		    // XXX special case PrivateCredentialPermission-SELF
+		    Permission perm;
+		    if (pe.permission.equals
+			("javax.security.auth.PrivateCredentialPermission") &&
+			pe.name.endsWith(" self")) {
+			perm = getInstance(pe.permission,
+					 pe.name + " \"self\"",
+					 pe.action);
+		    } else {
+			perm = getInstance(pe.permission,
+					 pe.name,
+					 pe.action);
+		    }
+		    entry.add(perm);
+		    if (debug != null) {
+			debug.println("  "+perm);
+		    }
+		} catch (ClassNotFoundException cnfe) {
+		    Certificate certs[];
+		    if (pe.signedBy != null) 
+			certs = getCertificates(keyStore, pe.signedBy);
+		    else 
+			certs = null;
 
-                    // only add if we had no signer or we had a
-                    // a signer and found the keys for it.
-                    if (certs != null || pe.signedBy == null) {
-                            Permission perm = new UnresolvedPermission(
-                                             pe.permission,
-                                             pe.name,
-                                             pe.action,
-                                             certs);
-                            entry.add(perm);
-                            if (debug != null) {
-                                debug.println("  "+perm);
-                            }
-                    }
-                } catch (java.lang.reflect.InvocationTargetException ite) {
-                    System.err.println
-                        (AUTH_POLICY +
-                        rb.getString(": error adding Permission ") +
-                        pe.permission +
-                        rb.getString(" ") +
-                        ite.getTargetException());
-                } catch (Exception e) {
-                    System.err.println
-                        (AUTH_POLICY +
-                        rb.getString(": error adding Permission ") +
-                        pe.permission +
-                        rb.getString(" ") +
-                        e);
-                }
-            }
-            policyEntries.addElement(entry);
-        } catch (Exception e) {
-            System.err.println
-                (AUTH_POLICY +
-                rb.getString(": error adding Entry ") +
-                ge +
-                rb.getString(" ") +
-                e);
-        }
+		    // only add if we had no signer or we had a
+		    // a signer and found the keys for it.
+		    if (certs != null || pe.signedBy == null) {
+			    Permission perm = new UnresolvedPermission(
+					     pe.permission,
+					     pe.name,
+					     pe.action,
+					     certs);
+			    entry.add(perm);
+			    if (debug != null) {
+				debug.println("  "+perm);
+			    }
+		    }
+		} catch (java.lang.reflect.InvocationTargetException ite) {
+		    System.err.println
+			(AUTH_POLICY +
+			rb.getString(": error adding Permission ") +
+			pe.permission +
+			rb.getString(" ") +
+			ite.getTargetException());
+		} catch (Exception e) {
+		    System.err.println
+			(AUTH_POLICY +
+			rb.getString(": error adding Permission ") +
+			pe.permission +
+			rb.getString(" ") +
+			e);
+		}
+	    }
+	    policyEntries.addElement(entry);
+	} catch (Exception e) {
+	    System.err.println
+		(AUTH_POLICY +
+		rb.getString(": error adding Entry ") +
+		ge +
+		rb.getString(" ") +
+		e);
+	}
 
-        if (debug != null)
-            debug.println();
+	if (debug != null)
+	    debug.println();
     }
 
     /**
      * Returns a new Permission object of the given Type. The Permission is
-     * created by getting the
-     * Class object using the <code>Class.forName</code> method, and using
-     * the reflection API to invoke the (String name, String actions)
+     * created by getting the 
+     * Class object using the <code>Class.forName</code> method, and using 
+     * the reflection API to invoke the (String name, String actions) 
      * constructor on the
      * object.
      *
@@ -692,82 +693,82 @@ public class PolicyFile extends javax.security.auth.Policy {
      * @exception  NoSuchMethodException if the (String, String) constructor
      *               is not found.
      *
-     * @exception  InvocationTargetException if the underlying Permission
+     * @exception  InvocationTargetException if the underlying Permission 
      *               constructor throws an exception.
-     *
+     *               
      */
 
     private static final Permission getInstance(String type,
-                                    String name,
-                                    String actions)
-        throws ClassNotFoundException,
-               InstantiationException,
-               IllegalAccessException,
-               NoSuchMethodException,
-               InvocationTargetException
+				    String name,
+				    String actions)
+	throws ClassNotFoundException,
+	       InstantiationException,
+	       IllegalAccessException,
+	       NoSuchMethodException,
+	       InvocationTargetException
     {
-        //XXX we might want to keep a hash of created factories...
-        Class pc = Class.forName(type);
-        Constructor c = pc.getConstructor(PARAMS);
-        return (Permission) c.newInstance(new Object[] { name, actions });
+	//XXX we might want to keep a hash of created factories...
+	Class pc = Class.forName(type);
+	Constructor c = pc.getConstructor(PARAMS);
+	return (Permission) c.newInstance(new Object[] { name, actions });
     }
 
     /**
-     * Fetch all certs associated with this alias.
+     * Fetch all certs associated with this alias. 
      */
     Certificate[] getCertificates(
-                                    KeyStore keyStore, String aliases) {
+				    KeyStore keyStore, String aliases) {
 
-        Vector<Certificate> vcerts = null;
+	Vector<Certificate> vcerts = null;
 
-        StringTokenizer st = new StringTokenizer(aliases, ",");
-        int n = 0;
+	StringTokenizer st = new StringTokenizer(aliases, ",");
+	int n = 0;
 
-        while (st.hasMoreTokens()) {
-            String alias = st.nextToken().trim();
-            n++;
-            Certificate cert = null;
-            //See if this alias's cert has already been cached
-            cert = (Certificate) aliasMapping.get(alias);
-            if (cert == null && keyStore != null) {
+	while (st.hasMoreTokens()) {
+	    String alias = st.nextToken().trim();
+	    n++;
+	    Certificate cert = null;
+	    //See if this alias's cert has already been cached
+	    cert = (Certificate) aliasMapping.get(alias);
+	    if (cert == null && keyStore != null) {
 
-                try {
-                    cert = keyStore.getCertificate(alias);
-                } catch (KeyStoreException kse) {
-                    // never happens, because keystore has already been loaded
-                    // when we call this
-                }
-                if (cert != null) {
-                    aliasMapping.put(alias, cert);
-                    aliasMapping.put(cert, alias);
-                }
-            }
+		try {
+		    cert = keyStore.getCertificate(alias);
+		} catch (KeyStoreException kse) {
+		    // never happens, because keystore has already been loaded
+		    // when we call this
+		}
+		if (cert != null) {
+		    aliasMapping.put(alias, cert);
+		    aliasMapping.put(cert, alias);
+		} 
+	    }
 
-            if (cert != null) {
-                if (vcerts == null)
-                    vcerts = new Vector<Certificate>();
-                vcerts.addElement(cert);
-            }
-        }
+	    if (cert != null) {
+		if (vcerts == null)
+		    vcerts = new Vector<Certificate>();
+		vcerts.addElement(cert);
+	    }
+	}
 
-        // make sure n == vcerts.size, since we are doing a logical *and*
-        if (vcerts != null && n == vcerts.size()) {
-            Certificate[] certs = new Certificate[vcerts.size()];
-            vcerts.copyInto(certs);
-            return certs;
-        } else {
-            return null;
-        }
+	// make sure n == vcerts.size, since we are doing a logical *and*
+	if (vcerts != null && n == vcerts.size()) {
+	    Certificate[] certs = new Certificate[vcerts.size()];
+	    vcerts.copyInto(certs);
+	    return certs;
+	} else {
+	    return null;
+	}
     }
 
     /**
-     * Enumerate all the entries in the global policy object.
+     * Enumerate all the entries in the global policy object. 
      * This method is used by policy admin tools.   The tools
      * should use the Enumeration methods on the returned object
-     * to fetch the elements sequentially.
+     * to fetch the elements sequentially. 
      */
     private final synchronized Enumeration<PolicyEntry> elements(){
-        return policyEntries.elements();
+	return policyEntries.elements();
     }
 
     /**
@@ -815,50 +816,50 @@ public class PolicyFile extends javax.security.auth.Policy {
      * <p>
      *
      * @param subject the Permissions granted to this <code>Subject</code>
-     *          and the additionally provided <code>CodeSource</code>
-     *          are returned. <p>
+     *		and the additionally provided <code>CodeSource</code>
+     *		are returned. <p>
      *
      * @param codesource the Permissions granted to this <code>CodeSource</code>
-     *          and the additionally provided <code>Subject</code>
-     *          are returned.
+     *		and the additionally provided <code>Subject</code>
+     *		are returned.
      *
      * @return the Permissions granted to the provided <code>Subject</code>
-     *          <code>CodeSource</code>.
+     *		<code>CodeSource</code>.
      */
     public PermissionCollection getPermissions(final Subject subject,
-                                        final CodeSource codesource) {
+					final CodeSource codesource) {
 
-        // XXX  when JAAS goes into the JDK core,
-        //      we can remove this method and simply
-        //      rely on the getPermissions variant that takes a codesource,
-        //      which no one can use at this point in time.
-        //      at that time, we can also make SubjectCodeSource a public
-        //      class.
+	// XXX	when JAAS goes into the JDK core,
+	//	we can remove this method and simply
+	//	rely on the getPermissions variant that takes a codesource,
+	//	which no one can use at this point in time.
+	//	at that time, we can also make SubjectCodeSource a public
+	//	class.
 
-        // XXX
-        //
-        // 1)   if code instantiates PolicyFile directly, then it will need
-        //      all the permissions required for the PolicyFile initialization
-        // 2)   if code calls Policy.getPolicy, then it simply needs
-        //      AuthPermission(getPolicy), and the javax.security.auth.Policy
-        //      implementation instantiates PolicyFile in a doPrivileged block
-        // 3)   if after instantiating a Policy (either via #1 or #2),
-        //      code calls getPermissions, PolicyFile wraps the call
-        //      in a doPrivileged block.
-        return java.security.AccessController.doPrivileged
-            (new java.security.PrivilegedAction<PermissionCollection>() {
-            public PermissionCollection run() {
-                SubjectCodeSource scs = new SubjectCodeSource
-                    (subject,
-                    null,
-                    codesource == null ? null : codesource.getLocation(),
-                    codesource == null ? null : codesource.getCertificates());
-                if (initialized)
-                    return getPermissions(new Permissions(), scs);
-                else
-                    return new PolicyPermissions(PolicyFile.this, scs);
-            }
-        });
+	// XXX
+	//
+	// 1)	if code instantiates PolicyFile directly, then it will need
+	// 	all the permissions required for the PolicyFile initialization
+	// 2)	if code calls Policy.getPolicy, then it simply needs
+	//	AuthPermission(getPolicy), and the javax.security.auth.Policy
+	//	implementation instantiates PolicyFile in a doPrivileged block
+	// 3)	if after instantiating a Policy (either via #1 or #2),
+	//	code calls getPermissions, PolicyFile wraps the call
+	//	in a doPrivileged block.
+	return java.security.AccessController.doPrivileged
+	    (new java.security.PrivilegedAction<PermissionCollection>() {
+	    public PermissionCollection run() {
+		SubjectCodeSource scs = new SubjectCodeSource
+		    (subject, 
+		    null,
+		    codesource == null ? null : codesource.getLocation(),
+		    codesource == null ? null : codesource.getCertificates());
+ 		if (initialized)
+ 		    return getPermissions(new Permissions(), scs);
+ 		else
+		    return new PolicyPermissions(PolicyFile.this, scs);
+	    }
+	});
     }
 
     /**
@@ -870,14 +871,14 @@ public class PolicyFile extends javax.security.auth.Policy {
      * This encapsulates the original location of the code (where the code
      * came from) and the public key(s) of its signer.
      *
-     * @return the set of permissions according to the policy.
+     * @return the set of permissions according to the policy.  
      */
     PermissionCollection getPermissions(CodeSource codesource) {
 
-        if (initialized)
-            return getPermissions(new Permissions(), codesource);
-        else
-            return new PolicyPermissions(this, codesource);
+ 	if (initialized)
+ 	    return getPermissions(new Permissions(), codesource);
+ 	else
+ 	    return new PolicyPermissions(this, codesource);
     }
 
     /**
@@ -890,73 +891,73 @@ public class PolicyFile extends javax.security.auth.Policy {
      * This encapsulates the original location of the code (where the code
      * came from) and the public key(s) of its signer.
      *
-     * @return the set of permissions according to the policy.
+     * @return the set of permissions according to the policy.  
      */
     Permissions getPermissions(final Permissions perms,
-                               final CodeSource cs)
+			       final CodeSource cs)
     {
-        if (!initialized) {
-            init();
-        }
+	if (!initialized) {
+	    init();
+	}
 
-        final CodeSource codesource[] = {null};
+	final CodeSource codesource[] = {null};
 
-        codesource[0] = canonicalizeCodebase(cs, true);
+	codesource[0] = canonicalizeCodebase(cs, true);
 
-        if (debug != null) {
-            debug.println("evaluate("+codesource[0]+")\n");
-        }
+	if (debug != null) {
+	    debug.println("evaluate("+codesource[0]+")\n");
+	}
+	    
+	// needs to be in a begin/endPrivileged block because
+	// codesource.implies calls URL.equals which does an
+	// InetAddress lookup
 
-        // needs to be in a begin/endPrivileged block because
-        // codesource.implies calls URL.equals which does an
-        // InetAddress lookup
+	for (int i = 0; i < policyEntries.size(); i++) {
 
-        for (int i = 0; i < policyEntries.size(); i++) {
+	   PolicyEntry entry = policyEntries.elementAt(i);
 
-           PolicyEntry entry = policyEntries.elementAt(i);
+	   if (debug != null) {
+		debug.println("PolicyFile CodeSource implies: " +
+			entry.codesource.toString() + "\n\n" +
+			"\t" + codesource[0].toString() + "\n\n");
+	   }
 
-           if (debug != null) {
-                debug.println("PolicyFile CodeSource implies: " +
-                        entry.codesource.toString() + "\n\n" +
-                        "\t" + codesource[0].toString() + "\n\n");
-           }
+	   if (entry.codesource.implies(codesource[0])) {
+	       for (int j = 0; j < entry.permissions.size(); j++) {
+		    Permission p = entry.permissions.elementAt(j);
+		    if (debug != null) {
+		       debug.println("  granting " + p);
+		    }
+		    if (!addSelfPermissions(p, entry.codesource,
+					codesource[0], perms)) {
+			// we could check for duplicates
+			// before adding new permissions,
+			// but the SubjectDomainCombiner
+			// already checks for duplicates later
+			perms.add(p);
+		    }
+		}	
+	    }
+	}
 
-           if (entry.codesource.implies(codesource[0])) {
-               for (int j = 0; j < entry.permissions.size(); j++) {
-                    Permission p = entry.permissions.elementAt(j);
-                    if (debug != null) {
-                       debug.println("  granting " + p);
-                    }
-                    if (!addSelfPermissions(p, entry.codesource,
-                                        codesource[0], perms)) {
-                        // we could check for duplicates
-                        // before adding new permissions,
-                        // but the SubjectDomainCombiner
-                        // already checks for duplicates later
-                        perms.add(p);
-                    }
-                }
-            }
-        }
+	// now see if any of the keys are trusted ids.
 
-        // now see if any of the keys are trusted ids.
-
-        if (!ignoreIdentityScope) {
-            Certificate certs[] = codesource[0].getCertificates();
-            if (certs != null) {
-                for (int k=0; k < certs.length; k++) {
-                    if ((aliasMapping.get(certs[k]) == null) &&
-                        checkForTrustedIdentity(certs[k])) {
-                        // checkForTrustedIdentity added it
-                        // to the policy for us. next time
-                        // around we'll find it. This time
-                        // around we need to add it.
-                        perms.add(new java.security.AllPermission());
-                    }
-                }
-            }
-        }
-        return perms;
+	if (!ignoreIdentityScope) {
+	    Certificate certs[] = codesource[0].getCertificates();
+	    if (certs != null) {
+		for (int k=0; k < certs.length; k++) {
+		    if ((aliasMapping.get(certs[k]) == null) &&
+			checkForTrustedIdentity(certs[k])) {
+			// checkForTrustedIdentity added it
+			// to the policy for us. next time
+			// around we'll find it. This time
+			// around we need to add it.
+			perms.add(new java.security.AllPermission());
+		    }
+		}
+	    }
+	}
+	return perms;
     }
 
     /**
@@ -966,185 +967,185 @@ public class PolicyFile extends javax.security.auth.Policy {
      * <p>
      *
      * @param p check to see if this Permission is a "SELF"
-     *                  PrivateCredentialPermission. <p>
+     *			PrivateCredentialPermission. <p>
      *
      * @param entryCs the codesource for the Policy entry.
      *
      * @param accCs the codesource for from the current AccessControlContext.
      *
      * @param perms the PermissionCollection where the individual
-     *                  PrivateCredentialPermissions will be added.
+     *			PrivateCredentialPermissions will be added.
      */
     private boolean addSelfPermissions(final Permission p,
-                                CodeSource entryCs,
-                                CodeSource accCs,
-                                Permissions perms) {
+				CodeSource entryCs,
+				CodeSource accCs,
+				Permissions perms) {
 
-        if (!(p instanceof PrivateCredentialPermission))
-            return false;
+	if (!(p instanceof PrivateCredentialPermission))
+	    return false;
 
-        if (!(entryCs instanceof SubjectCodeSource))
-            return false;
+	if (!(entryCs instanceof SubjectCodeSource))
+	    return false;
 
 
-        PrivateCredentialPermission pcp = (PrivateCredentialPermission)p;
-        SubjectCodeSource scs = (SubjectCodeSource)entryCs;
+	PrivateCredentialPermission pcp = (PrivateCredentialPermission)p;
+	SubjectCodeSource scs = (SubjectCodeSource)entryCs;
 
-        // see if it is a SELF permission
-        String[][] pPrincipals = pcp.getPrincipals();
-        if (pPrincipals.length <= 0 ||
-            !pPrincipals[0][0].equalsIgnoreCase("self") ||
-            !pPrincipals[0][1].equalsIgnoreCase("self")) {
+	// see if it is a SELF permission
+	String[][] pPrincipals = pcp.getPrincipals();
+	if (pPrincipals.length <= 0 ||
+	    !pPrincipals[0][0].equalsIgnoreCase("self") ||
+	    !pPrincipals[0][1].equalsIgnoreCase("self")) {
 
-            // regular PrivateCredentialPermission
-            return false;
-        } else {
+	    // regular PrivateCredentialPermission
+	    return false;
+	} else {
 
-            // granted a SELF permission - create a
-            // PrivateCredentialPermission for each
-            // of the Policy entry's CodeSource Principals
+	    // granted a SELF permission - create a
+	    // PrivateCredentialPermission for each
+	    // of the Policy entry's CodeSource Principals
 
-            if (scs.getPrincipals() == null) {
-                // XXX SubjectCodeSource has no Subject???
-                return true;
-            }
+	    if (scs.getPrincipals() == null) {
+		// XXX SubjectCodeSource has no Subject???
+		return true;
+	    }
 
-            ListIterator<PolicyParser.PrincipalEntry> pli =
-                                        scs.getPrincipals().listIterator();
-            while (pli.hasNext()) {
+	    ListIterator<PolicyParser.PrincipalEntry> pli =
+					scs.getPrincipals().listIterator();
+	    while (pli.hasNext()) {
 
-                PolicyParser.PrincipalEntry principal = pli.next();
+		PolicyParser.PrincipalEntry principal = pli.next();
 
-                // XXX
-                //      if the Policy entry's Principal does not contain a
-                //              WILDCARD for the Principal name, then a
-                //              new PrivateCredentialPermission is created
-                //              for the Principal listed in the Policy entry.
-                //      if the Policy entry's Principal contains a WILDCARD
-                //              for the Principal name, then a new
-                //              PrivateCredentialPermission is created
-                //              for each Principal associated with the Subject
-                //              in the current ACC.
+		// XXX
+		//	if the Policy entry's Principal does not contain a
+		//		WILDCARD for the Principal name, then a
+		//		new PrivateCredentialPermission is created
+		//		for the Principal listed in the Policy entry.
+		//	if the Policy entry's Principal contains a WILDCARD
+		//		for the Principal name, then a new
+		//		PrivateCredentialPermission is created
+		//		for each Principal associated with the Subject
+		//		in the current ACC.
 
-                String[][] principalInfo = getPrincipalInfo
-                                                (principal, accCs);
+		String[][] principalInfo = getPrincipalInfo
+						(principal, accCs);
 
-                for (int i = 0; i < principalInfo.length; i++) {
+		for (int i = 0; i < principalInfo.length; i++) {
 
-                    // here's the new PrivateCredentialPermission
+		    // here's the new PrivateCredentialPermission
 
-                    PrivateCredentialPermission newPcp =
-                        new PrivateCredentialPermission
-                                (pcp.getCredentialClass() +
-                                        " " +
-                                        principalInfo[i][0] +
-                                        " " +
-                                        "\"" + principalInfo[i][1] + "\"",
-                                "read");
+		    PrivateCredentialPermission newPcp = 
+			new PrivateCredentialPermission
+				(pcp.getCredentialClass() +
+					" " +
+					principalInfo[i][0] +
+					" " +
+					"\"" + principalInfo[i][1] + "\"",
+				"read");
 
-                    if (debug != null) {
-                        debug.println("adding SELF permission: " +
-                                        newPcp.toString());
-                    }
+		    if (debug != null) {
+			debug.println("adding SELF permission: " +
+					newPcp.toString());
+		    }
 
-                    perms.add(newPcp);
-                }
-            }
-        }
-        return true;
+		    perms.add(newPcp);
+		}
+	    }
+	}
+	return true;
     }
 
     /**
      * return the principal class/name pair in the 2D array.
-     * array[x][y]:     x corresponds to the array length.
-     *                  if (y == 0), it's the principal class.
-     *                  if (y == 1), it's the principal name.
-     */
+     * array[x][y]:	x corresponds to the array length.
+     *			if (y == 0), it's the principal class.
+     *			if (y == 1), it's the principal name.
+     */ 
     private String[][] getPrincipalInfo
-                (PolicyParser.PrincipalEntry principal,
-                final CodeSource accCs) {
+		(PolicyParser.PrincipalEntry principal,
+		final CodeSource accCs) {
 
-        // there are 3 possibilities:
-        // 1) the entry's Principal class and name are not wildcarded
-        // 2) the entry's Principal name is wildcarded only
-        // 3) the entry's Principal class and name are wildcarded
+	// there are 3 possibilities:
+	// 1) the entry's Principal class and name are not wildcarded
+	// 2) the entry's Principal name is wildcarded only
+	// 3) the entry's Principal class and name are wildcarded
+	
+	if (!principal.principalClass.equals
+		(PolicyParser.PrincipalEntry.WILDCARD_CLASS) &&
+	    !principal.principalName.equals
+		(PolicyParser.PrincipalEntry.WILDCARD_NAME)) {
 
-        if (!principal.principalClass.equals
-                (PolicyParser.PrincipalEntry.WILDCARD_CLASS) &&
-            !principal.principalName.equals
-                (PolicyParser.PrincipalEntry.WILDCARD_NAME)) {
+	    // build a PrivateCredentialPermission for the principal
+	    // from the Policy entry
+	    String[][] info = new String[1][2];
+	    info[0][0] = principal.principalClass;
+	    info[0][1] = principal.principalName;
+	    return info;
 
-            // build a PrivateCredentialPermission for the principal
-            // from the Policy entry
-            String[][] info = new String[1][2];
-            info[0][0] = principal.principalClass;
-            info[0][1] = principal.principalName;
-            return info;
+	} else if (!principal.principalClass.equals
+		(PolicyParser.PrincipalEntry.WILDCARD_CLASS) &&
+	    principal.principalName.equals
+		(PolicyParser.PrincipalEntry.WILDCARD_NAME)) {
 
-        } else if (!principal.principalClass.equals
-                (PolicyParser.PrincipalEntry.WILDCARD_CLASS) &&
-            principal.principalName.equals
-                (PolicyParser.PrincipalEntry.WILDCARD_NAME)) {
+	    // build a PrivateCredentialPermission for all
+	    // the Subject's principals that are instances of principalClass
+	    
+	    // the accCs is guaranteed to be a SubjectCodeSource
+	    // because the earlier CodeSource.implies succeeded
+	    SubjectCodeSource scs = (SubjectCodeSource)accCs;
 
-            // build a PrivateCredentialPermission for all
-            // the Subject's principals that are instances of principalClass
+	    Set<Principal> principalSet = null;
+	    try {
+		Class pClass = Class.forName(principal.principalClass, false,
+				ClassLoader.getSystemClassLoader());
+		principalSet = scs.getSubject().getPrincipals(pClass);
+	    } catch (Exception e) {
+		if (debug != null) {
+		    debug.println("problem finding Principal Class " +
+				"when expanding SELF permission: " +
+				e.toString());
+		}
+	    }
 
-            // the accCs is guaranteed to be a SubjectCodeSource
-            // because the earlier CodeSource.implies succeeded
-            SubjectCodeSource scs = (SubjectCodeSource)accCs;
+	    if (principalSet == null) {
+		// error
+		return new String[0][0];
+	    }
 
-            Set<Principal> principalSet = null;
-            try {
-                Class pClass = Class.forName(principal.principalClass, false,
-                                ClassLoader.getSystemClassLoader());
-                principalSet = scs.getSubject().getPrincipals(pClass);
-            } catch (Exception e) {
-                if (debug != null) {
-                    debug.println("problem finding Principal Class " +
-                                "when expanding SELF permission: " +
-                                e.toString());
-                }
-            }
+	    String[][] info = new String[principalSet.size()][2];
+	    java.util.Iterator<Principal> pIterator = principalSet.iterator();
 
-            if (principalSet == null) {
-                // error
-                return new String[0][0];
-            }
+	    int i = 0;
+	    while (pIterator.hasNext()) {
+		Principal p = pIterator.next();
+		info[i][0] = p.getClass().getName();
+		info[i][1] = p.getName();
+		i++;
+	    }
+	    return info;
 
-            String[][] info = new String[principalSet.size()][2];
-            java.util.Iterator<Principal> pIterator = principalSet.iterator();
+	} else {
 
-            int i = 0;
-            while (pIterator.hasNext()) {
-                Principal p = pIterator.next();
-                info[i][0] = p.getClass().getName();
-                info[i][1] = p.getName();
-                i++;
-            }
-            return info;
+	    // build a PrivateCredentialPermission for every
+	    // one of the current Subject's principals
 
-        } else {
+	    // the accCs is guaranteed to be a SubjectCodeSource
+	    // because the earlier CodeSource.implies succeeded
+	    SubjectCodeSource scs = (SubjectCodeSource)accCs;
+	    Set<Principal> principalSet = scs.getSubject().getPrincipals();
 
-            // build a PrivateCredentialPermission for every
-            // one of the current Subject's principals
+	    String[][] info = new String[principalSet.size()][2];
+	    java.util.Iterator<Principal> pIterator = principalSet.iterator();
 
-            // the accCs is guaranteed to be a SubjectCodeSource
-            // because the earlier CodeSource.implies succeeded
-            SubjectCodeSource scs = (SubjectCodeSource)accCs;
-            Set<Principal> principalSet = scs.getSubject().getPrincipals();
-
-            String[][] info = new String[principalSet.size()][2];
-            java.util.Iterator<Principal> pIterator = principalSet.iterator();
-
-            int i = 0;
-            while (pIterator.hasNext()) {
-                Principal p = pIterator.next();
-                info[i][0] = p.getClass().getName();
-                info[i][1] = p.getName();
-                i++;
-            }
-            return info;
-        }
+	    int i = 0;
+	    while (pIterator.hasNext()) {
+		Principal p = pIterator.next();
+		info[i][0] = p.getClass().getName();
+		info[i][1] = p.getName();
+		i++;
+	    }
+	    return info;
+	}
     }
 
     /*
@@ -1161,137 +1162,137 @@ public class PolicyFile extends javax.security.auth.Policy {
      * signer certificate first and the (root) certificate authority last).
      */
     Certificate[] getSignerCertificates(CodeSource cs) {
-        Certificate[] certs = null;
-        if ((certs = cs.getCertificates()) == null)
-            return null;
-        for (int i=0; i<certs.length; i++) {
-            if (!(certs[i] instanceof X509Certificate))
-                return cs.getCertificates();
-        }
+	Certificate[] certs = null;
+	if ((certs = cs.getCertificates()) == null)
+	    return null;
+	for (int i=0; i<certs.length; i++) {
+	    if (!(certs[i] instanceof X509Certificate))
+		return cs.getCertificates();
+	}
 
-        // Do we have to do anything?
-        int i = 0;
-        int count = 0;
-        while (i < certs.length) {
-            count++;
-            while (((i+1) < certs.length)
-                   && ((X509Certificate)certs[i]).getIssuerDN().equals(
-                           ((X509Certificate)certs[i+1]).getSubjectDN())) {
-                i++;
-            }
-            i++;
-        }
-        if (count == certs.length)
-            // Done
-            return certs;
+	// Do we have to do anything?
+	int i = 0;
+	int count = 0;
+	while (i < certs.length) {
+	    count++;
+	    while (((i+1) < certs.length)
+		   && ((X509Certificate)certs[i]).getIssuerDN().equals(
+		           ((X509Certificate)certs[i+1]).getSubjectDN())) {
+		i++;
+	    }
+	    i++;
+	}
+	if (count == certs.length)
+	    // Done
+	    return certs;
 
-        ArrayList<Certificate> userCertList = new ArrayList<Certificate>();
-        i = 0;
-        while (i < certs.length) {
-            userCertList.add(certs[i]);
-            while (((i+1) < certs.length)
-                   && ((X509Certificate)certs[i]).getIssuerDN().equals(
-                           ((X509Certificate)certs[i+1]).getSubjectDN())) {
-                i++;
-            }
-            i++;
-        }
-        Certificate[] userCerts = new Certificate[userCertList.size()];
-        userCertList.toArray(userCerts);
-        return userCerts;
+	ArrayList<Certificate> userCertList = new ArrayList<Certificate>();
+	i = 0;
+	while (i < certs.length) {
+	    userCertList.add(certs[i]);
+	    while (((i+1) < certs.length)
+		   && ((X509Certificate)certs[i]).getIssuerDN().equals(
+		           ((X509Certificate)certs[i+1]).getSubjectDN())) {
+		i++;
+	    }
+	    i++;
+	}
+	Certificate[] userCerts = new Certificate[userCertList.size()];
+	userCertList.toArray(userCerts);
+	return userCerts;
     }
 
     private CodeSource canonicalizeCodebase(CodeSource cs,
-                                            boolean extractSignerCerts) {
-        CodeSource canonCs = cs;
-        if (cs.getLocation() != null &&
-            cs.getLocation().getProtocol().equalsIgnoreCase("file")) {
-            try {
-                String path = cs.getLocation().getFile().replace
-                                                        ('/',
-                                                        File.separatorChar);
-                URL csUrl = null;
-                if (path.endsWith("*")) {
-                    // remove trailing '*' because it causes canonicalization
-                    // to fail on win32
-                    path = path.substring(0, path.length()-1);
-                    boolean appendFileSep = false;
-                    if (path.endsWith(File.separator))
-                        appendFileSep = true;
-                    if (path.equals("")) {
-                        path = System.getProperty("user.dir");
-                    }
-                    File f = new File(path);
-                    path = f.getCanonicalPath();
-                    StringBuffer sb = new StringBuffer(path);
-                    // reappend '*' to canonicalized filename (note that
-                    // canonicalization may have removed trailing file
-                    // separator, so we have to check for that, too)
-                    if (!path.endsWith(File.separator) &&
-                        (appendFileSep || f.isDirectory()))
-                        sb.append(File.separatorChar);
-                    sb.append('*');
-                    path = sb.toString();
-                } else {
-                    path = new File(path).getCanonicalPath();
-                }
-                csUrl = new File(path).toURL();
+					    boolean extractSignerCerts) {
+	CodeSource canonCs = cs;
+	if (cs.getLocation() != null &&
+	    cs.getLocation().getProtocol().equalsIgnoreCase("file")) {
+	    try {
+		String path = cs.getLocation().getFile().replace
+							('/',
+							File.separatorChar);
+		URL csUrl = null;
+		if (path.endsWith("*")) {
+		    // remove trailing '*' because it causes canonicalization
+		    // to fail on win32
+		    path = path.substring(0, path.length()-1);
+		    boolean appendFileSep = false;
+		    if (path.endsWith(File.separator))
+			appendFileSep = true;
+		    if (path.equals("")) {
+			path = System.getProperty("user.dir");
+		    }
+		    File f = new File(path);
+		    path = f.getCanonicalPath();
+		    StringBuffer sb = new StringBuffer(path);
+		    // reappend '*' to canonicalized filename (note that
+		    // canonicalization may have removed trailing file
+		    // separator, so we have to check for that, too)
+		    if (!path.endsWith(File.separator) &&
+			(appendFileSep || f.isDirectory()))
+			sb.append(File.separatorChar);
+		    sb.append('*');
+		    path = sb.toString();
+		} else {
+		    path = new File(path).getCanonicalPath();
+		}
+		csUrl = new File(path).toURL();
 
-                if (cs instanceof SubjectCodeSource) {
-                    SubjectCodeSource scs = (SubjectCodeSource)cs;
-                    if (extractSignerCerts) {
-                        canonCs = new SubjectCodeSource
-                                                (scs.getSubject(),
-                                                scs.getPrincipals(),
-                                                csUrl,
-                                                getSignerCertificates(scs));
-                    } else {
-                        canonCs = new SubjectCodeSource
-                                                (scs.getSubject(),
-                                                scs.getPrincipals(),
-                                                csUrl,
-                                                scs.getCertificates());
-                    }
-                } else {
-                    if (extractSignerCerts) {
-                        canonCs = new CodeSource(csUrl,
-                                                getSignerCertificates(cs));
-                    } else {
-                        canonCs = new CodeSource(csUrl,
-                                                cs.getCertificates());
-                    }
-                }
-            } catch (IOException ioe) {
-                // leave codesource as it is, unless we have to extract its
-                // signer certificates
-                if (extractSignerCerts) {
-                    if (!(cs instanceof SubjectCodeSource)) {
-                        canonCs = new CodeSource(cs.getLocation(),
-                                                getSignerCertificates(cs));
-                    } else {
-                        SubjectCodeSource scs = (SubjectCodeSource)cs;
-                        canonCs = new SubjectCodeSource(scs.getSubject(),
-                                                scs.getPrincipals(),
-                                                scs.getLocation(),
-                                                getSignerCertificates(scs));
-                    }
-                }
-            }
-        } else {
-            if (extractSignerCerts) {
-                if (!(cs instanceof SubjectCodeSource)) {
-                    canonCs = new CodeSource(cs.getLocation(),
-                                        getSignerCertificates(cs));
-                } else {
-                    SubjectCodeSource scs = (SubjectCodeSource)cs;
-                    canonCs = new SubjectCodeSource(scs.getSubject(),
-                                        scs.getPrincipals(),
-                                        scs.getLocation(),
-                                        getSignerCertificates(scs));
-                }
-            }
-        }
-        return canonCs;
+		if (cs instanceof SubjectCodeSource) {
+		    SubjectCodeSource scs = (SubjectCodeSource)cs;
+		    if (extractSignerCerts) {
+			canonCs = new SubjectCodeSource
+						(scs.getSubject(),
+						scs.getPrincipals(),
+						csUrl,
+						getSignerCertificates(scs));
+		    } else {
+			canonCs = new SubjectCodeSource
+						(scs.getSubject(),
+						scs.getPrincipals(),
+						csUrl,
+						scs.getCertificates());
+		    }
+		} else {
+		    if (extractSignerCerts) {
+			canonCs = new CodeSource(csUrl,
+						getSignerCertificates(cs));
+		    } else {
+			canonCs = new CodeSource(csUrl,
+						cs.getCertificates());
+		    }
+		}
+	    } catch (IOException ioe) {
+		// leave codesource as it is, unless we have to extract its
+		// signer certificates
+		if (extractSignerCerts) {
+		    if (!(cs instanceof SubjectCodeSource)) {
+			canonCs = new CodeSource(cs.getLocation(),
+						getSignerCertificates(cs));
+		    } else {
+			SubjectCodeSource scs = (SubjectCodeSource)cs;
+			canonCs = new SubjectCodeSource(scs.getSubject(),
+						scs.getPrincipals(),
+						scs.getLocation(),
+						getSignerCertificates(scs));
+		    }
+		}
+	    }
+	} else {
+	    if (extractSignerCerts) {
+		if (!(cs instanceof SubjectCodeSource)) {
+		    canonCs = new CodeSource(cs.getLocation(),
+					getSignerCertificates(cs));
+		} else {
+		    SubjectCodeSource scs = (SubjectCodeSource)cs;
+		    canonCs = new SubjectCodeSource(scs.getSubject(),
+					scs.getPrincipals(),
+					scs.getLocation(),
+					getSignerCertificates(scs));
+		}
+	    }
+	}
+	return canonCs;
     }
 
     /**
@@ -1305,34 +1306,35 @@ public class PolicyFile extends javax.security.auth.Policy {
      * null, meaning that this policy entry is given to all comers, as
      * long as they match the signer field.  The signer could be null,
      * meaning the code is not signed. <p>
-     *
+     * 
      * The Permission contains the (Type, Name, Action) triplet. <p>
-     *
+     * 
      * For now, the Policy object retrieves the public key from the
      * X.509 certificate on disk that corresponds to the signedBy
      * alias specified in the Policy config file.  For reasons of
      * efficiency, the Policy object keeps a hashtable of certs already
      * read in.  This could be replaced by a secure internal key
      * store.
-     *
+     * 
      * <p>
      * For example, the entry
      * <pre>
-     *          permission java.io.File "/tmp", "read,write",
-     *          signedBy "Duke";
+     * 		permission java.io.File "/tmp", "read,write",
+     *		signedBy "Duke";	
      * </pre>
-     * is represented internally
+     * is represented internally 
      * <pre>
-     *
+     * 
      * FilePermission f = new FilePermission("/tmp", "read,write");
      * PublicKey p = publickeys.get("Duke");
      * URL u = InetAddress.getLocalHost();
      * CodeBase c = new CodeBase( p, u );
      * pe = new PolicyEntry(f, c);
      * </pre>
-     *
+     * 
      * @author Marianne Mueller
      * @author Roland Schemers
+     * @version 1.6, 03/04/97
      * @see java.security.CodeSource
      * @see java.security.Policy
      * @see java.security.Permissions
@@ -1341,57 +1343,57 @@ public class PolicyFile extends javax.security.auth.Policy {
 
     private static class PolicyEntry {
 
-        CodeSource codesource;
-        Vector<Permission> permissions;
+	CodeSource codesource;
+	Vector<Permission> permissions;
 
-        /**
-         * Given a Permission and a CodeSource, create a policy entry.
-         *
-         * XXX Decide if/how to add validity fields and "purpose" fields to
-         * XXX policy entries
-         *
-         * @param cs the CodeSource, which encapsulates the URL and the public
-         *        key
-         *        attributes from the policy config file.   Validity checks are
-         *        performed on the public key before PolicyEntry is called.
-         *
-         */
-        PolicyEntry(CodeSource cs)
-        {
-            this.codesource = cs;
-            this.permissions = new Vector<Permission>();
-        }
+	/**
+	 * Given a Permission and a CodeSource, create a policy entry.
+	 * 
+	 * XXX Decide if/how to add validity fields and "purpose" fields to
+	 * XXX policy entries 
+	 * 
+	 * @param cs the CodeSource, which encapsulates the URL and the public
+	 *        key
+	 *        attributes from the policy config file.   Validity checks are
+	 *        performed on the public key before PolicyEntry is called. 
+	 * 
+	 */
+	PolicyEntry(CodeSource cs)
+	{
+	    this.codesource = cs;
+	    this.permissions = new Vector<Permission>();
+	}
 
-        /**
-         * add a Permission object to this entry.
-         */
-        void add(Permission p) {
-            permissions.addElement(p);
-        }
+	/**
+	 * add a Permission object to this entry.
+	 */
+	void add(Permission p) {
+	    permissions.addElement(p);
+	}
 
-        /**
-         * Return the CodeSource for this policy entry
-         */
-        CodeSource getCodeSource() {
-            return this.codesource;
-        }
+	/**
+	 * Return the CodeSource for this policy entry
+	 */
+	CodeSource getCodeSource() {
+	    return this.codesource;
+	}
 
-        public String toString(){
-            StringBuffer sb = new StringBuffer();
-            sb.append(rb.getString("("));
-            sb.append(getCodeSource());
-            sb.append("\n");
-            for (int j = 0; j < permissions.size(); j++) {
-                Permission p = permissions.elementAt(j);
-                sb.append(rb.getString(" "));
-                sb.append(rb.getString(" "));
-                sb.append(p);
-                sb.append(rb.getString("\n"));
-            }
-            sb.append(rb.getString(")"));
-            sb.append(rb.getString("\n"));
-            return sb.toString();
-        }
+	public String toString(){
+	    StringBuffer sb = new StringBuffer();
+	    sb.append(rb.getString("("));
+	    sb.append(getCodeSource());
+	    sb.append("\n");
+	    for (int j = 0; j < permissions.size(); j++) {
+		Permission p = permissions.elementAt(j);
+		sb.append(rb.getString(" "));
+		sb.append(rb.getString(" "));
+		sb.append(p);
+		sb.append(rb.getString("\n"));
+	    }
+	    sb.append(rb.getString(")"));
+	    sb.append(rb.getString("\n"));
+	    return sb.toString();
+	}
 
     }
 }
@@ -1407,62 +1409,62 @@ class PolicyPermissions extends PermissionCollection {
     private Vector<Permission> additionalPerms;
 
     PolicyPermissions(PolicyFile policy,
-                      CodeSource codesource)
+		      CodeSource codesource)
     {
-        this.codesource = codesource;
-        this.policy = policy;
-        this.perms = null;
-        this.notInit = true;
-        this.additionalPerms = null;
+	this.codesource = codesource;
+	this.policy = policy;
+	this.perms = null;
+	this.notInit = true;
+	this.additionalPerms = null;
     }
 
     public void add(Permission permission) {
-        if (isReadOnly())
-            throw new SecurityException
-            (PolicyFile.rb.getString
-            ("attempt to add a Permission to a readonly PermissionCollection"));
+	if (isReadOnly())
+	    throw new SecurityException
+	    (PolicyFile.rb.getString
+	    ("attempt to add a Permission to a readonly PermissionCollection"));
 
-        if (perms == null) {
-            if (additionalPerms == null)
-                additionalPerms = new Vector<Permission>();
-            additionalPerms.add(permission);
-        } else {
-            perms.add(permission);
-        }
+	if (perms == null) {
+	    if (additionalPerms == null)
+		additionalPerms = new Vector<Permission>();
+	    additionalPerms.add(permission);
+	} else {
+	    perms.add(permission);
+	}
     }
 
     private synchronized void init() {
-        if (notInit) {
-            if (perms == null)
-                perms = new Permissions();
+	if (notInit) {
+	    if (perms == null)
+		perms = new Permissions();
 
-            if (additionalPerms != null) {
-                Enumeration<Permission> e = additionalPerms.elements();
-                while (e.hasMoreElements()) {
-                    perms.add(e.nextElement());
-                }
-                additionalPerms = null;
-            }
-            policy.getPermissions(perms,codesource);
-            notInit=false;
-        }
+	    if (additionalPerms != null) {
+		Enumeration<Permission> e = additionalPerms.elements();
+		while (e.hasMoreElements()) {
+		    perms.add(e.nextElement());
+		}
+		additionalPerms = null;
+	    }
+	    policy.getPermissions(perms,codesource);
+	    notInit=false;
+	}
     }
 
     public boolean implies(Permission permission) {
-        if (notInit)
-            init();
-        return perms.implies(permission);
+	if (notInit)
+	    init();
+	return perms.implies(permission);
     }
 
     public Enumeration<Permission> elements() {
-        if (notInit)
-            init();
-        return perms.elements();
+	if (notInit)
+	    init();
+	return perms.elements();
     }
 
     public String toString() {
-        if (notInit)
-            init();
-        return perms.toString();
+	if (notInit)
+	    init();
+	return perms.toString();
     }
 }

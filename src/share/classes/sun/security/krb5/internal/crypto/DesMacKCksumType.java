@@ -41,31 +41,31 @@ public class DesMacKCksumType extends CksumType {
     }
 
     public int confounderSize() {
-        return 0;
+	return 0;
     }
 
     public int cksumType() {
-        return Checksum.CKSUMTYPE_DES_MAC_K;
+	return Checksum.CKSUMTYPE_DES_MAC_K;
     }
 
     public boolean isSafe() {
-        return true;
+	return true;
     }
 
     public int cksumSize() {
-        return 16;
+	return 16;
     }
 
     public int keyType() {
-        return Krb5.KEYTYPE_DES;
+	return Krb5.KEYTYPE_DES;
     }
 
     public int keySize() {
-        return 8;
+	return 8;
     }
 
     public byte[] calculateChecksum(byte[] data, int size) {
-        return null;
+	return null;
     }
 
     /**
@@ -75,28 +75,28 @@ public class DesMacKCksumType extends CksumType {
      * @param key the key used to encrypt the checksum.
      * @return keyed checksum.
      *
-     * @modified by Yanni Zhang, 12/08/99.
+     * @modified by Yanni Zhang, 12/08/99. 
      */
     public byte[] calculateKeyedChecksum(byte[] data, int size, byte[] key,
-        int usage) throws KrbCryptoException {
-        //check for weak keys
-        try {
-            if (DESKeySpec.isWeak(key, 0)) {
-                key[7] = (byte)(key[7] ^ 0xF0);
-            }
-        } catch (InvalidKeyException ex) {
-            // swallow, since it should never happen
-        }
-        byte[] ivec = new byte[key.length];
-        System.arraycopy(key, 0, ivec, 0, key.length);
-        byte[] cksum = Des.des_cksum(ivec, data, key);
-        return cksum;
+	int usage) throws KrbCryptoException {
+	//check for weak keys
+	try {
+	    if (DESKeySpec.isWeak(key, 0)) {			   
+		key[7] = (byte)(key[7] ^ 0xF0);
+	    }
+	} catch (InvalidKeyException ex) {
+	    // swallow, since it should never happen
+	}
+	byte[] ivec = new byte[key.length];
+	System.arraycopy(key, 0, ivec, 0, key.length);
+	byte[] cksum = Des.des_cksum(ivec, data, key);
+	return cksum;
     }
 
     public boolean verifyKeyedChecksum(byte[] data, int size,
-        byte[] key, byte[] checksum, int usage) throws KrbCryptoException {
-        byte[] new_cksum = calculateKeyedChecksum(data, data.length, key, usage);
-        return isChecksumEqual(checksum, new_cksum);
+	byte[] key, byte[] checksum, int usage) throws KrbCryptoException {
+	byte[] new_cksum = calculateKeyedChecksum(data, data.length, key, usage);
+	return isChecksumEqual(checksum, new_cksum);
     }
 
 }

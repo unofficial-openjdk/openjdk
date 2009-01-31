@@ -35,10 +35,10 @@
 /* From BCI: */
 void event_object_init(JNIEnv *env, jthread thread, jobject obj);
 void event_newarray(JNIEnv *env, jthread thread, jobject obj);
-void event_call(JNIEnv *env, jthread thread,
-                ClassIndex cnum, MethodIndex mnum);
-void event_return(JNIEnv *env, jthread thread,
-                ClassIndex cnum, MethodIndex mnum);
+void event_call(JNIEnv *env, jthread thread, 
+		ClassIndex cnum, MethodIndex mnum);
+void event_return(JNIEnv *env, jthread thread, 
+		ClassIndex cnum, MethodIndex mnum);
 
 /* From JVMTI: */
 void event_class_load(JNIEnv *env, jthread thread, jclass klass, jobject loader);
@@ -46,6 +46,6 @@ void event_class_prepare(JNIEnv *env, jthread thread, jclass klass, jobject load
 void event_thread_start(JNIEnv *env_id, jthread thread);
 void event_thread_end(JNIEnv *env_id, jthread thread);
 void event_exception_catch(JNIEnv *env, jthread thread, jmethodID method,
-                jlocation location, jobject exception);
+		jlocation location, jobject exception);
 
 #endif

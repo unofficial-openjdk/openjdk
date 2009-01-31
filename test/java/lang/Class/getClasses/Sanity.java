@@ -46,7 +46,7 @@ public class Sanity {
         for (int i = 0; i < c.length; i++) {
             if (c[i] != Base.BInner.class &&
                 c[i] != Derived.DInner.class)
-               throw new Exception("Garbage in declared classes");
+               throw new Exception("Garbage in declared classes"); 
         }
     }
 }

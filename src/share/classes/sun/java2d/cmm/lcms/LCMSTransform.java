@@ -69,15 +69,15 @@ public class LCMSTransform implements ColorTransform {
         }
     }
 
-    public LCMSTransform(ICC_Profile profile, int renderType,
-                         int transformType)
+    public LCMSTransform(ICC_Profile profile, int renderType, 
+                         int transformType) 
     {
         /* Actually, it is not a complete transform but just part of it */
         profiles = new ICC_Profile[1];
         profiles[0] = profile;
         profileIDs = new long[1];
         profileIDs[0] = LCMS.getProfileID(profile);
-        this.renderType = (renderType == ColorTransform.Any)?
+        this.renderType = (renderType == ColorTransform.Any)? 
                               ICC_Profile.icPerceptual : renderType;
         this.transformType = transformType;
     }
@@ -93,13 +93,13 @@ public class LCMSTransform implements ColorTransform {
         for (int i=0; i < transforms.length; i++) {
             LCMSTransform curTrans = (LCMSTransform)transforms[i];
             System.arraycopy(curTrans.profiles, 0, profiles, j,
-                             curTrans.profiles.length);
+                             curTrans.profiles.length);        
             System.arraycopy(curTrans.profileIDs, 0, profileIDs, j,
-                             curTrans.profileIDs.length);
+                             curTrans.profileIDs.length);        
             j += curTrans.profiles.length;
         }
         renderType = ((LCMSTransform)transforms[0]).renderType;
-        ID = LCMS.createNativeTransform(profileIDs, renderType,
+        ID = LCMS.createNativeTransform(profileIDs, renderType, 
                                         disposerReferent);
     }
 
@@ -112,8 +112,8 @@ public class LCMSTransform implements ColorTransform {
     }
 
     public void colorConvert(BufferedImage src, BufferedImage dst) {
-        if (LCMSImageLayout.isSupported(src) &&
-            LCMSImageLayout.isSupported(dst))
+        if (LCMSImageLayout.isSupported(src) && 
+            LCMSImageLayout.isSupported(dst)) 
         {
             synchronized(this) {
                 LCMS.colorConvert(this, new LCMSImageLayout(src),
@@ -176,7 +176,7 @@ public class LCMSTransform implements ColorTransform {
                 alpha = new float[w];
             }
             int idx;
-            // TODO check for src npixels = dst npixels
+            // TODO check for src npixels = dst npixels 
             srcIL = new LCMSImageLayout(
                 srcLine, srcLine.length/getNumInComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumInComponents()) |
@@ -243,7 +243,7 @@ public class LCMSTransform implements ColorTransform {
                 dstLine, dstLine.length/getNumOutComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
                 LCMSImageLayout.BYTES_SH(2), getNumOutComponents()*2);
-
+ 
             // process each scanline
             for (int y = 0; y < h; y++) {
                 // convert src scanline
@@ -339,7 +339,7 @@ public class LCMSTransform implements ColorTransform {
                 if (dstTransferType == DataBuffer.TYPE_SHORT) {
                     dstScaleFactor[i] = 32767.0f / 65535.0f;
                 } else {
-                    dstScaleFactor[i] =
+                    dstScaleFactor[i] = 
                         ((float) ((1 << dstSM.getSampleSize(i)) - 1)) /
                         65535.0f;
                 }
@@ -362,7 +362,7 @@ public class LCMSTransform implements ColorTransform {
             dstLine, dstLine.length/getNumOutComponents(),
             LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
             LCMSImageLayout.BYTES_SH(2), getNumOutComponents()*2);
-
+ 
         // process each scanline
         for (int y = 0; y < h; y++, ys++, yd++) {
             // get src scanline
@@ -434,7 +434,7 @@ public class LCMSTransform implements ColorTransform {
             if (dstTransferType == DataBuffer.TYPE_SHORT) {
                 dstScaleFactor[i] = 32767.0f / maxNum;
             } else {
-                dstScaleFactor[i] =
+                dstScaleFactor[i] = 
                     ((float) ((1 << dstSM.getSampleSize(i)) - 1)) / maxNum;
             }
         }
@@ -446,7 +446,7 @@ public class LCMSTransform implements ColorTransform {
             byte[] srcLine = new byte[w * srcNumBands];
             byte[] dstLine = new byte[w * dstNumBands];
             int idx;
-            // TODO check for src npixels = dst npixels
+            // TODO check for src npixels = dst npixels 
             srcIL = new LCMSImageLayout(
                 srcLine, srcLine.length/getNumInComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumInComponents()) |
@@ -455,7 +455,7 @@ public class LCMSTransform implements ColorTransform {
                 dstLine, dstLine.length/getNumOutComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
                 LCMSImageLayout.BYTES_SH(1), getNumOutComponents());
-
+ 
             // process each scanline
             for (int y = 0; y < h; y++, ys++, yd++) {
                 // get src scanline
@@ -498,7 +498,7 @@ public class LCMSTransform implements ColorTransform {
                 dstLine, dstLine.length/getNumOutComponents(),
                 LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
                 LCMSImageLayout.BYTES_SH(2), getNumOutComponents()*2);
-
+ 
             // process each scanline
             for (int y = 0; y < h; y++, ys++, yd++) {
                 // get src scanline
@@ -550,7 +550,7 @@ public class LCMSTransform implements ColorTransform {
             LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
             LCMSImageLayout.BYTES_SH(2), getNumOutComponents()*2);
 
-        synchronized(this) {
+        synchronized(this) { 
             LCMS.colorConvert(this, srcIL, dstIL);
         }
 
@@ -572,7 +572,7 @@ public class LCMSTransform implements ColorTransform {
             LCMSImageLayout.CHANNELS_SH(getNumOutComponents()) |
             LCMSImageLayout.BYTES_SH(1), getNumOutComponents());
 
-        synchronized(this) {
+        synchronized(this) { 
             LCMS.colorConvert(this, srcIL, dstIL);
         }
 

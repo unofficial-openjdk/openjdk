@@ -31,7 +31,7 @@ import java.awt.peer.*;
 import java.awt.print.PrinterJob;
 
 public class WPrintDialog extends Dialog {
-    static {
+    static { 
         initIDs();
     }
 
@@ -40,14 +40,14 @@ public class WPrintDialog extends Dialog {
 
     public WPrintDialog(Frame parent, PrinterJob control) {
         super(parent, true);
-        this.pjob = control;
-        setLayout(null);
+	this.pjob = control;
+	setLayout(null);
     }
 
     public WPrintDialog(Dialog parent, PrinterJob control) {
         super(parent, "", true);
-        this.pjob = control;
-        setLayout(null);
+	this.pjob = control;
+	setLayout(null);
     }
 
     // Use native code to circumvent access restrictions on Component.peer
@@ -55,28 +55,28 @@ public class WPrintDialog extends Dialog {
 
     public void addNotify() {
         synchronized(getTreeLock()) {
-            Container parent = getParent();
+	    Container parent = getParent();
             if (parent != null && parent.getPeer() == null) {
                 parent.addNotify();
             }
 
-            if (getPeer() == null) {
-                ComponentPeer peer = ((WToolkit)Toolkit.getDefaultToolkit()).
-                    createWPrintDialog(this);
-                setPeer(peer);
-            }
-            super.addNotify();
-        }
+	    if (getPeer() == null) {
+	        ComponentPeer peer = ((WToolkit)Toolkit.getDefaultToolkit()).
+		    createWPrintDialog(this);
+		setPeer(peer);
+	    }
+	    super.addNotify();
+	}
     }
 
     private boolean retval = false;
-
+    
     public void setRetVal(boolean ret) {
-        retval = ret;
+	retval = ret;
     }
 
     public boolean getRetVal() {
-        return retval;
+	return retval;
     }
 
     /**

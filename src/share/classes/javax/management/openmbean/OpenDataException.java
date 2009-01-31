@@ -30,7 +30,7 @@ package javax.management.openmbean;
 import javax.management.JMException;
 
 /**
- * This checked exception is thrown when an <i>open type</i>, an <i>open data</i>  or an <i>open MBean metadata info</i> instance
+ * This checked exception is thrown when an <i>open type</i>, an <i>open data</i>  or an <i>open MBean metadata info</i> instance 
  * could not be constructed because one or more validity constraints were not met.
  *
  *
@@ -44,7 +44,7 @@ public class OpenDataException extends JMException {
      * An OpenDataException with no detail message.
      */
     public OpenDataException() {
-        super();
+	super();
     }
 
     /**
@@ -53,7 +53,7 @@ public class OpenDataException extends JMException {
      * @param msg the detail message.
      */
     public OpenDataException(String msg) {
-        super(msg);
+	super(msg);
     }
 
 }

@@ -143,41 +143,42 @@ import java.util.StringTokenizer;
  * defaults key is {@code null}. In addition, unless otherwise specified
  * all of the {@code install} methods throw a {@code NullPointerException} if
  * a {@code null} component is passed in.
- *
+ * 
+ * @version %I% %G%
  * @author Tom Ball
  * @author Hans Muller
  */
-public abstract class LookAndFeel
+public abstract class LookAndFeel 
 {
 
     /**
      * Convenience method for setting a component's foreground
      * and background color properties with values from the
      * defaults.  The properties are only set if the current
-     * value is either {@code null} or a {@code UIResource}.
-     *
+     * value is either {@code null} or a {@code UIResource}. 
+     * 
      * @param c component to set the colors on
      * @param defaultBgName key for the background
      * @param defaultFgName key for the foreground
-     *
+     * 
      * @see #installColorsAndFont
      * @see UIManager#getColor
      * @throws NullPointerException as described in
      *         <a href="#exceptions">exceptions</a>
      */
     public static void installColors(JComponent c,
-                                     String defaultBgName,
+				     String defaultBgName,
                                      String defaultFgName)
     {
         Color bg = c.getBackground();
-        if (bg == null || bg instanceof UIResource) {
-            c.setBackground(UIManager.getColor(defaultBgName));
-        }
+	if (bg == null || bg instanceof UIResource) {
+	    c.setBackground(UIManager.getColor(defaultBgName));
+	}
 
         Color fg = c.getForeground();
-        if (fg == null || fg instanceof UIResource) {
-            c.setForeground(UIManager.getColor(defaultFgName));
-        }
+	if (fg == null || fg instanceof UIResource) {
+	    c.setForeground(UIManager.getColor(defaultFgName));
+	} 
     }
 
 
@@ -186,14 +187,14 @@ public abstract class LookAndFeel
      * background and font properties with values from the
      * defaults.  The properties are only set if the current
      * value is either {@code null} or a {@code UIResource}.
-     *
+     * 
      * @param c component set to the colors and font on
      * @param defaultBgName key for the background
      * @param defaultFgName key for the foreground
      * @param defaultFontName key for the font
      * @throws NullPointerException as described in
      *         <a href="#exceptions">exceptions</a>
-     *
+     * 
      * @see #installColors
      * @see UIManager#getColor
      * @see UIManager#getFont
@@ -203,17 +204,17 @@ public abstract class LookAndFeel
                                          String defaultFgName,
                                          String defaultFontName) {
         Font f = c.getFont();
-        if (f == null || f instanceof UIResource) {
-            c.setFont(UIManager.getFont(defaultFontName));
-        }
+	if (f == null || f instanceof UIResource) {
+	    c.setFont(UIManager.getFont(defaultFontName));
+	}
 
-        installColors(c, defaultBgName, defaultFgName);
+	installColors(c, defaultBgName, defaultFgName);
     }
 
 
     /**
      * Convenience method for setting a component's border property with
-     * a value from the defaults. The border is only set if the border is
+     * a value from the defaults. The border is only set if the border is 
      * {@code null} or an instance of {@code UIResource}.
      *
      * @param c component to set the border on
@@ -259,7 +260,7 @@ public abstract class LookAndFeel
      * @throws ClassCastException if the property value has not been set
      *         by the developer and the type does not match the property's type
      * @throws NullPointerException if {@code c} is {@code null}, or the
-     *         named property has not been set by the developer and
+     *         named property has not been set by the developer and 
      *         {@code propertyValue} is {@code null}
      * @param c target component to set the property on
      * @param propertyName name of the property to set
@@ -267,7 +268,7 @@ public abstract class LookAndFeel
      * @since 1.5
      */
     public static void installProperty(JComponent c,
-                                       String propertyName, Object propertyValue) {
+				       String propertyName, Object propertyValue) {
         // this is a special case because the JPasswordField's ancestor heirarchy
         // includes a class outside of javax.swing, thus we cannot call setUIProperty
         // directly.
@@ -297,7 +298,7 @@ public abstract class LookAndFeel
      * The following example illustrates creating a {@code KeyBinding} array
      * from six alternating {@code key-action} pairs:
      * <pre>
-     *  JTextComponent.KeyBinding[] multilineBindings = makeKeyBindings( new Object[] {
+     * 	JTextComponent.KeyBinding[] multilineBindings = makeKeyBindings( new Object[] {
      *          "UP", DefaultEditorKit.upAction,
      *        "DOWN", DefaultEditorKit.downAction,
      *     "PAGE_UP", DefaultEditorKit.pageUpAction,
@@ -311,7 +312,7 @@ public abstract class LookAndFeel
      * <p>
      * Supplying a {@code null} value for either the {@code key} or
      * {@code action} part of the {@code key-action} pair results in
-     * creating a {@code KeyBinding} with the corresponding value
+     * creating a {@code KeyBinding} with the corresponding value 
      * {@code null}. As other parts of Swing's expect {@code non-null} values
      * in a {@code KeyBinding}, you should avoid supplying {@code null} as
      * either the {@code key} or {@code action} part of the {@code key-action}
@@ -327,19 +328,19 @@ public abstract class LookAndFeel
      * @see InputMap
      * @see KeyStroke#getKeyStroke
      */
-    public static JTextComponent.KeyBinding[] makeKeyBindings(Object[] keyBindingList)
+    public static JTextComponent.KeyBinding[] makeKeyBindings(Object[] keyBindingList) 
     {
-        JTextComponent.KeyBinding[] rv = new JTextComponent.KeyBinding[keyBindingList.length / 2];
+	JTextComponent.KeyBinding[] rv = new JTextComponent.KeyBinding[keyBindingList.length / 2];
 
-        for(int i = 0; i < keyBindingList.length; i += 2) {
-            KeyStroke keystroke = (keyBindingList[i] instanceof KeyStroke)
-                ? (KeyStroke)keyBindingList[i]
-                : KeyStroke.getKeyStroke((String)keyBindingList[i]);
-            String action = (String)keyBindingList[i+1];
-            rv[i / 2] = new JTextComponent.KeyBinding(keystroke, action);
-        }
+	for(int i = 0; i < keyBindingList.length; i += 2) {
+	    KeyStroke keystroke = (keyBindingList[i] instanceof KeyStroke)
+		? (KeyStroke)keyBindingList[i]
+		: KeyStroke.getKeyStroke((String)keyBindingList[i]);
+	    String action = (String)keyBindingList[i+1];
+	    rv[i / 2] = new JTextComponent.KeyBinding(keystroke, action);
+	}
 
-        return rv;
+	return rv;
     }
 
     /**
@@ -356,9 +357,9 @@ public abstract class LookAndFeel
      * @since 1.3
      */
     public static InputMap makeInputMap(Object[] keys) {
-        InputMap retMap = new InputMapUIResource();
-        loadKeyBindings(retMap, keys);
-        return retMap;
+	InputMap retMap = new InputMapUIResource();
+	loadKeyBindings(retMap, keys);
+	return retMap;
     }
 
     /**
@@ -377,14 +378,14 @@ public abstract class LookAndFeel
      *
      * @see #loadKeyBindings
      * @see ComponentInputMapUIResource
-     *
+     * 
      * @since 1.3
      */
     public static ComponentInputMap makeComponentInputMap(JComponent c,
-                                                          Object[] keys) {
-        ComponentInputMap retMap = new ComponentInputMapUIResource(c);
-        loadKeyBindings(retMap, keys);
-        return retMap;
+							  Object[] keys) {
+	ComponentInputMap retMap = new ComponentInputMapUIResource(c);
+	loadKeyBindings(retMap, keys);
+	return retMap;
     }
 
 
@@ -427,16 +428,16 @@ public abstract class LookAndFeel
      * @since 1.3
      */
     public static void loadKeyBindings(InputMap retMap, Object[] keys) {
-        if (keys != null) {
-            for (int counter = 0, maxCounter = keys.length;
-                 counter < maxCounter; counter++) {
-                Object keyStrokeO = keys[counter++];
-                KeyStroke ks = (keyStrokeO instanceof KeyStroke) ?
-                                (KeyStroke)keyStrokeO :
-                                KeyStroke.getKeyStroke((String)keyStrokeO);
-                retMap.put(ks, keys[counter]);
-            }
-        }
+	if (keys != null) {
+	    for (int counter = 0, maxCounter = keys.length;
+		 counter < maxCounter; counter++) {
+		Object keyStrokeO = keys[counter++];
+		KeyStroke ks = (keyStrokeO instanceof KeyStroke) ?
+		                (KeyStroke)keyStrokeO :
+		                KeyStroke.getKeyStroke((String)keyStrokeO);
+		retMap.put(ks, keys[counter]);
+	    }
+	}
     }
 
     /**
@@ -482,26 +483,26 @@ public abstract class LookAndFeel
     }
 
     /**
-     * Invoked when the user attempts an invalid operation,
-     * such as pasting into an uneditable <code>JTextField</code>
-     * that has focus. The default implementation beeps. Subclasses
-     * that wish different behavior should override this and provide
+     * Invoked when the user attempts an invalid operation, 
+     * such as pasting into an uneditable <code>JTextField</code> 
+     * that has focus. The default implementation beeps. Subclasses 
+     * that wish different behavior should override this and provide 
      * the additional feedback.
      *
      * @param component the <code>Component</code> the error occurred in,
      *                  may be <code>null</code>
-     *                  indicating the error condition is not directly
-     *                  associated with a <code>Component</code>
+     *			indicating the error condition is not directly 
+     *			associated with a <code>Component</code>
      * @since 1.4
      */
     public void provideErrorFeedback(Component component) {
-        Toolkit toolkit = null;
-        if (component != null) {
-            toolkit = component.getToolkit();
-        } else {
-            toolkit = Toolkit.getDefaultToolkit();
-        }
-        toolkit.beep();
+	Toolkit toolkit = null;
+	if (component != null) {
+	    toolkit = component.getToolkit();
+	} else {
+	    toolkit = Toolkit.getDefaultToolkit();
+	}
+	toolkit.beep();
     } // provideErrorFeedback()
 
     /**
@@ -519,15 +520,15 @@ public abstract class LookAndFeel
      * @since 1.4
      */
     public static Object getDesktopPropertyValue(String systemPropertyName, Object fallbackValue) {
-        Object value = Toolkit.getDefaultToolkit().getDesktopProperty(systemPropertyName);
-        if (value == null) {
-            return fallbackValue;
-        } else if (value instanceof Color) {
-            return new ColorUIResource((Color)value);
-        } else if (value instanceof Font) {
-            return new FontUIResource((Font)value);
-        }
-        return value;
+	Object value = Toolkit.getDefaultToolkit().getDesktopProperty(systemPropertyName);
+	if (value == null) {
+	    return fallbackValue;
+	} else if (value instanceof Color) {
+	    return new ColorUIResource((Color)value);
+	} else if (value instanceof Font) {
+	    return new FontUIResource((Font)value);
+	}
+	return value;
     }
 
     /**
@@ -537,7 +538,7 @@ public abstract class LookAndFeel
      * <code>JButton</code> and only specify an <code>Icon</code> via
      * <code>setIcon</code> this method will be called to generate the
      * disabled <code>Icon</code>. If {@code null} is passed as
-     * <code>icon</code> this method returns {@code null}.
+     * <code>icon</code> this method returns {@code null}. 
      * <p>
      * Some look and feels might not render the disabled {@code Icon}, in which
      * case they will ignore this.
@@ -555,7 +556,7 @@ public abstract class LookAndFeel
                    createDisabledImage(((ImageIcon)icon).getImage()));
         }
         return null;
-    }
+    }                       
 
     /**
      * Returns an <code>Icon</code> for use by disabled
@@ -585,7 +586,7 @@ public abstract class LookAndFeel
     /**
      * Return a short string that identifies this look and feel, e.g.
      * "CDE/Motif".  This string should be appropriate for a menu item.
-     * Distinct look and feels should have different names, e.g.
+     * Distinct look and feels should have different names, e.g. 
      * a subclass of MotifLookAndFeel that changes the way a few components
      * are rendered should be called "CDE/Motif My Way"; something
      * that would be useful to a user trying to select a L&F from a list
@@ -597,12 +598,12 @@ public abstract class LookAndFeel
 
 
     /**
-     * Return a string that identifies this look and feel.  This string
+     * Return a string that identifies this look and feel.  This string 
      * will be used by applications/services that want to recognize
      * well known look and feel implementations.  Presently
-     * the well known names are "Motif", "Windows", "Mac", "Metal".  Note
-     * that a LookAndFeel derived from a well known superclass
-     * that doesn't make any fundamental changes to the look or feel
+     * the well known names are "Motif", "Windows", "Mac", "Metal".  Note 
+     * that a LookAndFeel derived from a well known superclass 
+     * that doesn't make any fundamental changes to the look or feel 
      * shouldn't override this method.
      *
      * @return identifier for the look and feel
@@ -610,9 +611,9 @@ public abstract class LookAndFeel
     public abstract String getID();
 
 
-    /**
-     * Return a one line description of this look and feel implementation,
-     * e.g. "The CDE/Motif Look and Feel".   This string is intended for
+    /** 
+     * Return a one line description of this look and feel implementation, 
+     * e.g. "The CDE/Motif Look and Feel".   This string is intended for 
      * the user, e.g. in the title of a window or in a ToolTip message.
      *
      * @return short description for the look and feel
@@ -655,10 +656,10 @@ public abstract class LookAndFeel
 
     /**
      * Return {@code true} if the underlying platform supports and or permits
-     * this look and feel.  This method returns {@code false} if the look
+     * this look and feel.  This method returns {@code false} if the look 
      * and feel depends on special resources or legal agreements that
-     * aren't defined for the current platform.
-     *
+     * aren't defined for the current platform.  
+     * 
      *
      * @return {@code true} if this is a supported look and feel
      * @see UIManager#setLookAndFeel
@@ -673,7 +674,7 @@ public abstract class LookAndFeel
      * method is invoked before the {@code UIManager} invokes
      * {@code getDefaults}. This method is intended to perform any
      * initialization for the look and feel. Subclasses
-     * should do any one-time setup they need here, rather than
+     * should do any one-time setup they need here, rather than 
      * in a static initializer, because look and feel class objects
      * may be loaded just to discover that {@code isSupportedLookAndFeel()}
      * returns {@code false}.
@@ -722,6 +723,6 @@ public abstract class LookAndFeel
      * @return a String representation of this object
      */
     public String toString() {
-        return "[" + getDescription() + " - " + getClass().getName() + "]";
+	return "[" + getDescription() + " - " + getClass().getName() + "]";
     }
 }

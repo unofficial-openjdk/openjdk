@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package sun.nio.cs.ext;
@@ -54,129 +55,129 @@ abstract class DoubleByteDecoder
     protected char lowSurrogate;
 
     protected DoubleByteDecoder(Charset cs, short[] index1, String[] index2,
-                                int start, int end ) {
-        super(cs, 0.5f, 1.0f);
-        this.index1 = index1;
-        this.index2 = index2;
-        this.start = start;
-        this.end = end;
+				int start, int end ) {
+	super(cs, 0.5f, 1.0f);
+	this.index1 = index1;
+	this.index2 = index2;
+	this.start = start;
+	this.end = end;
     }
 
     private CoderResult decodeArrayLoop(ByteBuffer src, CharBuffer dst) {
-        byte[] sa = src.array();
-        int sp = src.arrayOffset() + src.position();
-        int sl = src.arrayOffset() + src.limit();
-        assert (sp <= sl);
-        sp = (sp <= sl ? sp : sl);
-        char[] da = dst.array();
-        int dp = dst.arrayOffset() + dst.position();
-        int dl = dst.arrayOffset() + dst.limit();
-        assert (dp <= dl);
-        dp = (dp <= dl ? dp : dl);
+	byte[] sa = src.array();
+	int sp = src.arrayOffset() + src.position();
+	int sl = src.arrayOffset() + src.limit();
+	assert (sp <= sl);
+	sp = (sp <= sl ? sp : sl);
+	char[] da = dst.array();
+	int dp = dst.arrayOffset() + dst.position();
+	int dl = dst.arrayOffset() + dst.limit();
+	assert (dp <= dl);
+	dp = (dp <= dl ? dp : dl);
 
-        try {
-            while (sp < sl) {
-                int b1, b2;
-                b1 = sa[sp];
-                int inputSize = 1;
-                int outputSize = 1;
-                highSurrogate = lowSurrogate = 0;
-                char c = decodeSingle(b1);
-                if (c == REPLACE_CHAR) {
-                    b1 &= 0xff;
-                    if (sl - sp < 2)
-                        return CoderResult.UNDERFLOW;
-                    b2 = sa[sp + 1] & 0xff;
-                    c = decodeDouble(b1, b2);
-                    inputSize = 2;
-                    if (c == REPLACE_CHAR)
-                        return CoderResult.unmappableForLength(inputSize);
-                    outputSize = (highSurrogate > 0) ? 2: 1;
-                }
+	try {
+	    while (sp < sl) {
+		int b1, b2;
+		b1 = sa[sp];
+		int inputSize = 1;
+		int outputSize = 1;
+		highSurrogate = lowSurrogate = 0;
+		char c = decodeSingle(b1);
+		if (c == REPLACE_CHAR) {
+		    b1 &= 0xff;
+		    if (sl - sp < 2)
+		        return CoderResult.UNDERFLOW;
+		    b2 = sa[sp + 1] & 0xff;
+		    c = decodeDouble(b1, b2);
+		    inputSize = 2;
+		    if (c == REPLACE_CHAR) 
+		        return CoderResult.unmappableForLength(inputSize);
+		    outputSize = (highSurrogate > 0) ? 2: 1;
+		}
 
-                if (dl - dp < outputSize)
-                    return CoderResult.OVERFLOW;
-                if (outputSize == 2) {
-                    da[dp++] = highSurrogate;
-                    da[dp++] = lowSurrogate;
-                } else {
-                    da[dp++] = c;
-                }
-                sp += inputSize;
-            }
-            return CoderResult.UNDERFLOW;
-        } finally {
-            src.position(sp - src.arrayOffset());
-            dst.position(dp - dst.arrayOffset());
-        }
+		if (dl - dp < outputSize)
+		    return CoderResult.OVERFLOW;
+		if (outputSize == 2) {
+		    da[dp++] = highSurrogate;
+		    da[dp++] = lowSurrogate;
+		} else {
+		    da[dp++] = c;
+		}
+		sp += inputSize;
+	    }
+	    return CoderResult.UNDERFLOW;
+	} finally {
+	    src.position(sp - src.arrayOffset());
+	    dst.position(dp - dst.arrayOffset());
+	}
     }
 
     private CoderResult decodeBufferLoop(ByteBuffer src, CharBuffer dst) {
-        int mark = src.position();
-        int inputSize = 0;
-        int outputSize = 0;
-        try {
-            while (src.hasRemaining()) {
-                int b1 = src.get();
-                inputSize = 1;
-                outputSize = 1;
-                highSurrogate = lowSurrogate = 0;
+	int mark = src.position();
+	int inputSize = 0;
+	int outputSize = 0;
+	try {
+	    while (src.hasRemaining()) {
+		int b1 = src.get();
+		inputSize = 1;
+		outputSize = 1;
+		highSurrogate = lowSurrogate = 0;
 
-                char c = decodeSingle(b1);
+		char c = decodeSingle(b1);
 
-                if (c == REPLACE_CHAR) {
-                    if (src.remaining() < 1)
-                        return CoderResult.UNDERFLOW;
-                    b1 &= 0xff;
-                    int b2 = src.get() & 0xff;
-                    inputSize = 2;
+		if (c == REPLACE_CHAR) {
+		    if (src.remaining() < 1)
+			return CoderResult.UNDERFLOW;
+		    b1 &= 0xff;
+		    int b2 = src.get() & 0xff; 
+		    inputSize = 2;
 
-                    c = decodeDouble(b1, b2);
+		    c = decodeDouble(b1, b2);
 
-                    if (c == REPLACE_CHAR)
-                        return CoderResult.unmappableForLength(2);
+		    if (c == REPLACE_CHAR) 
+			return CoderResult.unmappableForLength(2);
 
-                    outputSize =  (highSurrogate > 0) ? 2: 1;
-                }
-                if (dst.remaining() < outputSize)
-                    return CoderResult.OVERFLOW;
-                mark += inputSize;
+		    outputSize =  (highSurrogate > 0) ? 2: 1;
+		}
+		if (dst.remaining() < outputSize)
+		    return CoderResult.OVERFLOW;
+		mark += inputSize;
 
-                if (outputSize == 2) {
-                    dst.put(highSurrogate);
-                    dst.put(lowSurrogate);
-                } else {
-                    dst.put(c);
-                }
-            }
-            return CoderResult.UNDERFLOW;
-        } finally {
-            src.position(mark);
-        }
+		if (outputSize == 2) {
+		    dst.put(highSurrogate);
+		    dst.put(lowSurrogate);
+		} else {
+		    dst.put(c);
+		}
+	    }
+	    return CoderResult.UNDERFLOW;
+	} finally {
+	    src.position(mark);
+	}
     }
 
     protected CoderResult decodeLoop(ByteBuffer src, CharBuffer dst) {
-        if (src.hasArray() && dst.hasArray())
-            return decodeArrayLoop(src, dst);
-        else
-            return decodeBufferLoop(src, dst);
+	if (src.hasArray() && dst.hasArray())
+	    return decodeArrayLoop(src, dst);
+	else
+	    return decodeBufferLoop(src, dst);
     }
 
     /*
      * Can be changed by subclass
      */
     protected char decodeSingle(int b) {
-        if (b >= 0)
-            return (char) b;
-        return REPLACE_CHAR;
+	if (b >= 0)
+	    return (char) b;
+	return REPLACE_CHAR;
     }
 
     protected char decodeDouble(int byte1, int byte2) {
-        if (((byte1 < 0) || (byte1 > index1.length))
-            || ((byte2 < start) || (byte2 > end)))
-            return REPLACE_CHAR;
+	if (((byte1 < 0) || (byte1 > index1.length))
+	    || ((byte2 < start) || (byte2 > end)))
+	    return REPLACE_CHAR;
 
-        int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
-        return index2[index1[byte1] >> 4].charAt(n);
+	int n = (index1[byte1] & 0xf) * (end - start + 1) + (byte2 - start);
+	return index2[index1[byte1] >> 4].charAt(n);
     }
 }

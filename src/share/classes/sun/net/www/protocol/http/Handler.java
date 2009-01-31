@@ -24,7 +24,7 @@
  */
 
 /*-
- *      HTTP stream opener
+ *	HTTP stream opener
  */
 
 package sun.net.www.protocol.http;
@@ -43,22 +43,22 @@ public class Handler extends java.net.URLStreamHandler {
     }
 
     public Handler () {
-        proxy = null;
-        proxyPort = -1;
+	proxy = null;
+	proxyPort = -1;
     }
 
     public Handler (String proxy, int port) {
-        this.proxy = proxy;
-        this.proxyPort = port;
+	this.proxy = proxy;
+	this.proxyPort = port;
     }
 
     protected java.net.URLConnection openConnection(URL u)
     throws IOException {
-        return openConnection(u, (Proxy)null);
+	return openConnection(u, (Proxy)null);
     }
 
     protected java.net.URLConnection openConnection(URL u, Proxy p)
-        throws IOException {
-        return new HttpURLConnection(u, p, this);
+	throws IOException {
+	return new HttpURLConnection(u, p, this);
     }
 }

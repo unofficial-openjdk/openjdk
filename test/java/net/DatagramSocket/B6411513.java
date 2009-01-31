@@ -31,7 +31,7 @@ import java.net.*;
 import java.util.*;
 
 public class B6411513 {
-
+    
     public static void main( String[] args ) throws Exception {
         Enumeration<NetworkInterface> nics = NetworkInterface.getNetworkInterfaces();
         while (nics.hasMoreElements()) {
@@ -40,7 +40,7 @@ public class B6411513 {
                 Enumeration<InetAddress> addrs = nic.getInetAddresses();
                 while (addrs.hasMoreElements()) {
                     InetAddress addr = addrs.nextElement();
-
+                    
                     // Currently, seems there's a bug on Linux that one is
                     // unable to get IPv6 datagrams to be received by an
                     // IPv6 socket bound to any address except ::1. So filter
@@ -54,8 +54,8 @@ public class B6411513 {
             }
         }
     }
-
-
+    
+    
     /*
      * Connect a UDP socket, disconnect it, then send and recv on it.
      * It will fail on Linux if we don't silently bind(2) again at the
@@ -69,7 +69,7 @@ public class B6411513 {
             s.connect(ss.getLocalAddress(), ss.getLocalPort());
             System.out.print("disconnect...");
             s.disconnect();
-
+            
             byte[] data = { 0, 1, 2 };
             DatagramPacket p = new DatagramPacket(data, data.length,
                     s.getLocalAddress(), s.getLocalPort());
@@ -79,7 +79,7 @@ public class B6411513 {
             System.out.print("recv...");
             s.receive( p );
             System.out.println("OK");
-
+            
             ss.close();
             s.close();
         } catch( Exception e ){

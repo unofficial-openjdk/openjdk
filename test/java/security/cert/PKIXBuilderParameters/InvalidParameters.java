@@ -26,8 +26,8 @@
  * @test 4422738
  * @compile -source 1.4 -target 1.4 InvalidParameters.java
  * @run main InvalidParameters
- * @summary Make sure PKIXBuilderParameters(Set) detects invalid
- *          parameters and throws correct exceptions
+ * @summary Make sure PKIXBuilderParameters(Set) detects invalid 
+ *	    parameters and throws correct exceptions 
  */
 import java.security.InvalidAlgorithmParameterException;
 import java.security.cert.PKIXBuilderParameters;
@@ -38,24 +38,24 @@ public class InvalidParameters {
 
     public static void main(String[] args) throws Exception {
 
-        // make sure empty Set of anchors throws InvAlgParamExc
-        try {
-            PKIXBuilderParameters p =
-                new PKIXBuilderParameters(Collections.EMPTY_SET, null);
-            throw new Exception("should have thrown InvalidAlgorithmParameterExc");
-        } catch (InvalidAlgorithmParameterException iape) { }
+	// make sure empty Set of anchors throws InvAlgParamExc
+	try {
+            PKIXBuilderParameters p = 
+		new PKIXBuilderParameters(Collections.EMPTY_SET, null);
+	    throw new Exception("should have thrown InvalidAlgorithmParameterExc");
+	} catch (InvalidAlgorithmParameterException iape) { }
 
-        // make sure null Set of anchors throws NullPointerException
-        try {
+	// make sure null Set of anchors throws NullPointerException
+	try {
             PKIXBuilderParameters p = new PKIXBuilderParameters((Set) null, null);
-            throw new Exception("should have thrown NullPointerException");
-        } catch (NullPointerException npe) { }
+	    throw new Exception("should have thrown NullPointerException");
+	} catch (NullPointerException npe) { }
 
-        // make sure Set of invalid objects throws ClassCastException
-        try {
-            PKIXBuilderParameters p =
-                new PKIXBuilderParameters(Collections.singleton(new String()), null);
-            throw new Exception("should have thrown ClassCastException");
-        } catch (ClassCastException cce) { }
+	// make sure Set of invalid objects throws ClassCastException
+	try {
+            PKIXBuilderParameters p = 
+		new PKIXBuilderParameters(Collections.singleton(new String()), null);
+	    throw new Exception("should have thrown ClassCastException");
+	} catch (ClassCastException cce) { }
     }
 }

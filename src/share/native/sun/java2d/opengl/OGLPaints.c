@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -83,7 +83,7 @@ OGLPaints_ResetPaint(OGLContext *oglc)
         j2d_glActiveTextureARB(GL_TEXTURE0_ARB);
     }
 
-    // set each component of the current color state to the extra alpha
+    // set each component of the current color state to the extra alpha 
     // value, which will effectively apply the extra alpha to each fragment
     // in paint/texturing operations
     ea = (jubyte)(oglc->extraAlpha * 0xff + 0.5f);
@@ -727,7 +727,7 @@ OGLPaints_CreateLinearGradProgram(jint flags)
         // lower-left corner, so we have to flip the y-coordinate here
         "vec3 fragCoord = vec3(gl_FragCoord.x, yoff-gl_FragCoord.y, 1.0);"
         "dist = dot(params, fragCoord);";
-
+    
     return OGLPaints_CreateMultiGradProgram(flags, paintVars, distCode);
 }
 
@@ -850,7 +850,7 @@ OGLPaints_CreateRadialGradProgram(jint flags)
         "float y = dot(fragCoord, m1);"
         "float xfx = x - precalc.x;"
         "dist = (precalc.x*xfx + sqrt(xfx*xfx + y*y*precalc.z))*precalc.w;";
-
+    
     return OGLPaints_CreateMultiGradProgram(flags, paintVars, distCode);
 }
 

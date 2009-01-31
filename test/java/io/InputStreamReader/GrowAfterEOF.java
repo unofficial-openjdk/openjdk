@@ -35,13 +35,13 @@ public class GrowAfterEOF {
         RandomAccessFile rf = new RandomAccessFile(input, "rw");
         BufferedReader r = new BufferedReader
             (new InputStreamReader(new FileInputStream(input)));
-
+        
         // write something
         rf.writeBytes("a line");
-
+        
         // read till the end of file
         while (r.readLine() != null);
-
+        
         // append to the end of the file
         rf.seek(rf.length());
         rf.writeBytes("new line");

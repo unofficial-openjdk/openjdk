@@ -55,3 +55,4 @@ class BaseLineInfo implements LineInfo {
         return declaringType.baseSourcePath();
     }
 }
+

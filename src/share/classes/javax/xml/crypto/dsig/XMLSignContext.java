@@ -42,17 +42,17 @@ import javax.xml.crypto.XMLCryptoContext;
  * instance to sign two different {@link XMLSignature} objects).
  * <p>
  * <b><a name="Supported Properties"></a>Supported Properties</b>
- * <p>The following properties can be set using the
+ * <p>The following properties can be set using the 
  * {@link #setProperty setProperty} method.
  * <ul>
  *   <li><code>javax.xml.crypto.dsig.cacheReference</code>: value must be a
  *      {@link Boolean}. This property controls whether or not the digested
- *      {@link Reference} objects will cache the dereferenced content and
+ *      {@link Reference} objects will cache the dereferenced content and 
  *      pre-digested input for subsequent retrieval via the
  *      {@link Reference#getDereferencedData Reference.getDereferencedData} and
- *      {@link Reference#getDigestInputStream Reference.getDigestInputStream}
- *      methods. The default value if not specified is
- *      <code>Boolean.FALSE</code>.
+ *	{@link Reference#getDigestInputStream Reference.getDigestInputStream}
+ *      methods. The default value if not specified is 
+ *	<code>Boolean.FALSE</code>.
  * </ul>
  *
  * @author Sean Mullan

@@ -27,7 +27,7 @@ package java.sql;
 
 /**
  * The output stream for writing the attributes of a user-defined
- * type back to the database.  This interface, used
+ * type back to the database.  This interface, used 
  * only for custom mapping, is used by the driver, and its
  * methods are never directly invoked by a programmer.
  * <p>When an object of a class implementing the interface
@@ -38,10 +38,10 @@ package java.sql;
  * The driver then creates an instance of <code>SQLOutput</code> and
  * passes it to the method <code>SQLData.writeSQL</code>.
  * The method <code>writeSQL</code> in turn calls the
- * appropriate <code>SQLOutput</code> <i>writer</i> methods
+ * appropriate <code>SQLOutput</code> <i>writer</i> methods 
  * <code>writeBoolean</code>, <code>writeCharacterStream</code>, and so on)
  * to write data from the <code>SQLData</code> object to
- * the <code>SQLOutput</code> output stream as the
+ * the <code>SQLOutput</code> output stream as the 
  * representation of an SQL user-defined type.
  * @since 1.2
  */
@@ -255,7 +255,7 @@ package java.sql;
    * @since 1.2
    */
   void writeBinaryStream(java.io.InputStream x) throws SQLException;
-
+  
   //================================================================
   // Methods for writing items of SQL user-defined types to the stream.
   // These methods pass objects to the database as values of SQL
@@ -265,12 +265,12 @@ package java.sql;
   //================================================================
 
   /**
-   * Writes to the stream the data contained in the given
+   * Writes to the stream the data contained in the given 
    * <code>SQLData</code> object.
    * When the <code>SQLData</code> object is <code>null</code>, this
-   * method writes an SQL <code>NULL</code> to the stream.
+   * method writes an SQL <code>NULL</code> to the stream.  
    * Otherwise, it calls the <code>SQLData.writeSQL</code>
-   * method of the given object, which
+   * method of the given object, which 
    * writes the object's attributes to the stream.
    * The implementation of the method <code>SQLData.writeSQ</code>
    * calls the appropriate <code>SQLOutput</code> writer method(s)
@@ -279,7 +279,7 @@ package java.sql;
    * input stream and written to an <code>SQLOutput</code>
    * output stream in the same order in which they were
    * listed in the SQL definition of the user-defined type.
-   *
+   * 
    * @param x the object representing data of an SQL structured or
    * distinct type
    * @exception SQLException if a database access error occurs
@@ -331,7 +331,7 @@ package java.sql;
    * Writes an SQL structured type value to the stream.
    *
    * @param x a <code>Struct</code> object representing data of an SQL
-   * structured type
+   * structured type 
    *
    * @exception SQLException if a database access error occurs
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
@@ -355,7 +355,7 @@ package java.sql;
 
      //--------------------------- JDBC 3.0 ------------------------
 
-     /**
+     /** 
       * Writes a SQL <code>DATALINK</code> value to the stream.
       *
       * @param x a <code>java.net.URL</code> object representing the data
@@ -367,9 +367,9 @@ package java.sql;
       * @since 1.4
       */
      void writeURL(java.net.URL x) throws SQLException;
-
+     
      //--------------------------- JDBC 4.0 ------------------------
-
+     
   /**
    * Writes the next attribute to the stream as a <code>String</code>
    * in the Java programming language. The driver converts this to a
@@ -386,7 +386,7 @@ package java.sql;
    * @since 1.6
    */
   void writeNString(String x) throws SQLException;
-
+  
   /**
    * Writes an SQL <code>NCLOB</code> value to the stream.
    *
@@ -399,8 +399,8 @@ package java.sql;
    * @since 1.6
    */
   void writeNClob(NClob x) throws SQLException;
-
-
+  
+  
   /**
    * Writes an SQL <code>ROWID</code> value to the stream.
    *
@@ -421,11 +421,11 @@ package java.sql;
    * @param x a <code>SQLXML</code> object representing data of an SQL
    * <code>XML</code> value
    *
-   * @throws SQLException if a database access error occurs,
+   * @throws SQLException if a database access error occurs, 
    * the <code>java.xml.transform.Result</code>,
    *  <code>Writer</code> or <code>OutputStream</code> has not been closed for the <code>SQLXML</code> object or
-   *  if there is an error processing the XML value.  The <code>getCause</code> method
-   *  of the exception may provide a more detailed exception, for example, if the
+   *  if there is an error processing the XML value.  The <code>getCause</code> method 
+   *  of the exception may provide a more detailed exception, for example, if the 
    *  stream does not contain valid XML.
    * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
    * this method
@@ -435,3 +435,4 @@ package java.sql;
 
 
 }
+ 

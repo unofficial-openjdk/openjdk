@@ -28,7 +28,7 @@ package java.util;
 
 /**
  * Error thrown when something goes wrong while loading a service provider.
- *
+ * 
  * <p> This error will be thrown in the following situations:
  *
  * <ul>
@@ -53,6 +53,7 @@ package java.util;
  *
  *
  * @author Mark Reinhold
+ * @version %I%, %E%
  * @since 1.6
  */
 
@@ -69,7 +70,7 @@ public class ServiceConfigurationError
      *
      */
     public ServiceConfigurationError(String msg) {
-        super(msg);
+	super(msg);
     }
 
     /**
@@ -81,7 +82,7 @@ public class ServiceConfigurationError
      *                or unknown
      */
     public ServiceConfigurationError(String msg, Throwable cause) {
-        super(msg, cause);
+	super(msg, cause);
     }
 
 }

@@ -45,7 +45,7 @@ import java.util.*;
  * the string "pass" to be entered by the user. If that string is entered in
  * the first text field, then the user can advance to the second text field
  * either by clicking in it or by pressing TAB. However, if another string
- * is entered in the first text field, then the user will be unable to
+ * is entered in the first text field, then the user will be unable to 
  * transfer focus to the second text field.
  * <p>
  * <pre>
@@ -53,7 +53,7 @@ import java.util.*;
  * import java.util.*;
  * import java.awt.event.*;
  * import javax.swing.*;
- *
+ * 
  * // This program demonstrates the use of the Swing InputVerifier class.
  * // It creates two text fields; the first of the text fields expects the
  * // string "pass" as input, and will allow focus to advance out of it
@@ -62,31 +62,31 @@ import java.util.*;
  * public class VerifierTest extends JFrame {
  *     public VerifierTest() {
  *         JTextField tf1 = new JTextField ("Type \"pass\" here");
- *         getContentPane().add (tf1, BorderLayout.NORTH);
- *         tf1.setInputVerifier(new PassVerifier());
- *
- *         JTextField tf2 = new JTextField ("TextField2");
- *         getContentPane().add (tf2, BorderLayout.SOUTH);
- *
- *         WindowListener l = new WindowAdapter() {
- *             public void windowClosing(WindowEvent e) {
- *                 System.exit(0);
- *             }
- *         };
- *         addWindowListener(l);
+ * 	   getContentPane().add (tf1, BorderLayout.NORTH);
+ * 	   tf1.setInputVerifier(new PassVerifier());
+ * 
+ * 	   JTextField tf2 = new JTextField ("TextField2");
+ * 	   getContentPane().add (tf2, BorderLayout.SOUTH);
+ * 
+ * 	   WindowListener l = new WindowAdapter() {
+ * 	       public void windowClosing(WindowEvent e) { 
+ * 	           System.exit(0); 
+ * 	       }
+ * 	   };
+ * 	   addWindowListener(l);
  *     }
- *
+ * 
  *     class PassVerifier extends InputVerifier {
  *         public boolean verify(JComponent input) {
- *             JTextField tf = (JTextField) input;
- *             return "pass".equals(tf.getText());
+ * 	       JTextField tf = (JTextField) input;
+ * 	       return "pass".equals(tf.getText());
  *         }
  *     }
- *
+ * 
  *     public static void main(String[] args) {
  *         Frame f = new VerifierTest();
- *         f.pack();
- *         f.setVisible(true);
+ * 	   f.pack();
+ * 	   f.setVisible(true);
  *     }
  * }
  * </pre>
@@ -108,7 +108,7 @@ public abstract class InputVerifier {
    * @see JComponent#getInputVerifier
    *
    */
-
+  
   public abstract boolean verify(JComponent input);
 
 

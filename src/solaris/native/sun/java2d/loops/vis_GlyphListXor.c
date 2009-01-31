@@ -40,7 +40,7 @@
 
 #define INIT_FG                                                \
     fgpixel = (fgpixel ^ pCompInfo->details.xorPixel)          \
-              &~ pCompInfo->alphaMask;
+	      &~ pCompInfo->alphaMask;
 
 /***************************************************************/
 
@@ -63,21 +63,21 @@
     right = left + width;                                      \
     bottom = top + height;                                     \
     if (left < clipLeft) {                                     \
-        pixels += clipLeft - left;                             \
-        left = clipLeft;                                       \
+	pixels += clipLeft - left;                             \
+	left = clipLeft;                                       \
     }                                                          \
     if (top < clipTop) {                                       \
-        pixels += (clipTop - top) * rowBytes;                  \
-        top = clipTop;                                         \
+	pixels += (clipTop - top) * rowBytes;                  \
+	top = clipTop;                                         \
     }                                                          \
     if (right > clipRight) {                                   \
-        right = clipRight;                                     \
+	right = clipRight;                                     \
     }                                                          \
     if (bottom > clipBottom) {                                 \
-        bottom = clipBottom;                                   \
+	bottom = clipBottom;                                   \
     }                                                          \
     if (right <= left || bottom <= top) {                      \
-        continue;                                              \
+	continue;                                              \
     }                                                          \
     width = right - left;                                      \
     height = bottom - top;                                     \
@@ -105,50 +105,50 @@ void ADD_SUFF(AnyByteDrawGlyphListXor)(GLYPH_LIST_PARAMS)
     D64_FROM_U8x8(fgpixel_d, fgpixel);
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        DEF_GLYPH(1);
+	DEF_GLYPH(1);
 
-        for (j = 0; j < height; j++) {
-            mlib_u8 *src = (void*)pixels;
-            mlib_u8 *dst, *dst_end;
-            mlib_d64 ss, s0, s1;
+	for (j = 0; j < height; j++) {
+	    mlib_u8 *src = (void*)pixels;
+	    mlib_u8 *dst, *dst_end;
+	    mlib_d64 ss, s0, s1;
 
-            dst = (void*)dstBase;
-            dst_end = dst + width;
+	    dst = (void*)dstBase;
+	    dst_end = dst + width;
 
-            while (((mlib_s32)dst & 7) && (dst < dst_end)) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (((mlib_s32)dst & 7) && (dst < dst_end)) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            off = (mlib_s32)src & 7;
-            ss = *(mlib_d64*)(src - off);
-            mask_h = vis_fcmpne16(vis_fpmerge(vis_read_hi(ss), fzero), dzero);
-            mask_l = vis_fcmpne16(vis_fpmerge(vis_read_lo(ss), fzero), dzero);
-            mask1 = (mask_h << 4) | mask_l;
+	    off = (mlib_s32)src & 7;
+	    ss = *(mlib_d64*)(src - off);
+	    mask_h = vis_fcmpne16(vis_fpmerge(vis_read_hi(ss), fzero), dzero);
+	    mask_l = vis_fcmpne16(vis_fpmerge(vis_read_lo(ss), fzero), dzero);
+	    mask1 = (mask_h << 4) | mask_l;
 
 #pragma pipeloop(0)
-            for (; dst <= (dst_end - 8); dst += 8) {
-                mask0 = mask1;
-                src += 8;
-                ss = *(mlib_d64*)(src - off);
-                s0 = vis_fpmerge(vis_read_hi(ss), fzero);
-                s1 = vis_fpmerge(vis_read_lo(ss), fzero);
-                mask_h = vis_fcmpne16(s0, dzero);
-                mask_l = vis_fcmpne16(s1, dzero);
-                mask1 = (mask_h << 4) | mask_l;
-                STORE_D64(8, dst, (mask0 << off) | (mask1 >> (8 - off)));
-            }
+	    for (; dst <= (dst_end - 8); dst += 8) {
+		mask0 = mask1;
+		src += 8;
+		ss = *(mlib_d64*)(src - off);
+		s0 = vis_fpmerge(vis_read_hi(ss), fzero);
+		s1 = vis_fpmerge(vis_read_lo(ss), fzero);
+		mask_h = vis_fcmpne16(s0, dzero);
+		mask_l = vis_fcmpne16(s1, dzero);
+		mask1 = (mask_h << 4) | mask_l;
+		STORE_D64(8, dst, (mask0 << off) | (mask1 >> (8 - off)));
+	    }
 
-            while (dst < dst_end) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (dst < dst_end) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            PTR_ADD(dstBase, scan);
-            pixels += rowBytes;
-        }
+	    PTR_ADD(dstBase, scan);
+	    pixels += rowBytes;
+	}
     }
 }
 
@@ -172,44 +172,44 @@ void ADD_SUFF(AnyShortDrawGlyphListXor)(GLYPH_LIST_PARAMS)
     D64_FROM_U16x4(fgpixel_d, fgpixel);
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        DEF_GLYPH(2);
+	DEF_GLYPH(2);
 
-        for (j = 0; j < height; j++) {
-            mlib_u8 *src = (void*)pixels;
-            mlib_u16 *dst, *dst_end;
-            mlib_f32 ss;
+	for (j = 0; j < height; j++) {
+	    mlib_u8 *src = (void*)pixels;
+	    mlib_u16 *dst, *dst_end;
+	    mlib_f32 ss;
 
-            dst = (void*)dstBase;
-            dst_end = dst + width;
+	    dst = (void*)dstBase;
+	    dst_end = dst + width;
 
-            while (((mlib_s32)dst & 7) && (dst < dst_end)) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (((mlib_s32)dst & 7) && (dst < dst_end)) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            off = (mlib_s32)src & 3;
-            ss = *(mlib_f32*)(src - off);
-            mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
+	    off = (mlib_s32)src & 3;
+	    ss = *(mlib_f32*)(src - off);
+	    mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
 
 #pragma pipeloop(0)
-            for (; dst <= (dst_end - 4); dst += 4) {
-                mask0 = mask1;
-                src += 4;
-                ss = *(mlib_f32*)(src - off);
-                mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
-                STORE_D64(16, dst, (mask0 << off) | (mask1 >> (4 - off)));
-            }
+	    for (; dst <= (dst_end - 4); dst += 4) {
+		mask0 = mask1;
+		src += 4;
+		ss = *(mlib_f32*)(src - off);
+		mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
+		STORE_D64(16, dst, (mask0 << off) | (mask1 >> (4 - off)));
+	    }
 
-            while (dst < dst_end) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (dst < dst_end) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            PTR_ADD(dstBase, scan);
-            pixels += rowBytes;
-        }
+	    PTR_ADD(dstBase, scan);
+	    pixels += rowBytes;
+	}
     }
 }
 
@@ -233,46 +233,46 @@ void ADD_SUFF(AnyIntDrawGlyphListXor)(GLYPH_LIST_PARAMS)
     fgpixel_d = vis_to_double_dup(fgpixel);
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        DEF_GLYPH(4);
+	DEF_GLYPH(4);
 
-        for (j = 0; j < height; j++) {
-            mlib_u8 *src = (void*)pixels;
-            mlib_u32 *dst, *dst_end;
-            mlib_f32 ss;
+	for (j = 0; j < height; j++) {
+	    mlib_u8 *src = (void*)pixels;
+	    mlib_u32 *dst, *dst_end;
+	    mlib_f32 ss;
 
-            dst = (void*)dstBase;
-            dst_end = dst + width;
+	    dst = (void*)dstBase;
+	    dst_end = dst + width;
 
-            while (((mlib_s32)dst & 7) && (dst < dst_end)) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (((mlib_s32)dst & 7) && (dst < dst_end)) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            off = (mlib_s32)src & 3;
-            ss = *(mlib_f32*)(src - off);
-            mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
+	    off = (mlib_s32)src & 3;
+	    ss = *(mlib_f32*)(src - off);
+	    mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
 
 #pragma pipeloop(0)
-            for (; dst <= (dst_end - 4); dst += 4) {
-                mask0 = mask1;
-                src += 4;
-                ss = *(mlib_f32*)(src - off);
-                mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
-                mask = (mask0 << off) | (mask1 >> (4 - off));
-                STORE_D64(32, dst, mask >> 2);
-                STORE_D64(32, dst + 2, mask);
-            }
+	    for (; dst <= (dst_end - 4); dst += 4) {
+		mask0 = mask1;
+		src += 4;
+		ss = *(mlib_f32*)(src - off);
+		mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
+		mask = (mask0 << off) | (mask1 >> (4 - off));
+		STORE_D64(32, dst, mask >> 2);
+		STORE_D64(32, dst + 2, mask);
+	    }
 
-            while (dst < dst_end) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (dst < dst_end) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            PTR_ADD(dstBase, scan);
-            pixels += rowBytes;
-        }
+	    PTR_ADD(dstBase, scan);
+	    pixels += rowBytes;
+	}
     }
 }
 
@@ -301,70 +301,70 @@ void ADD_SUFF(Any4ByteDrawGlyphListXor)(GLYPH_LIST_PARAMS)
     fgpixel = *(mlib_u32*)&fgpixel_f;
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        DEF_GLYPH(4);
+	DEF_GLYPH(4);
 
-        if (((mlib_s32)dstBase | scan) & 3) {
-            if (width > max_width) {
-                if (pbuff != buff) {
-                    mlib_free(pbuff);
-                }
-                pbuff = mlib_malloc(width*sizeof(mlib_s32));
-                if (pbuff == NULL) return;
-                max_width = width;
-            }
-        }
+	if (((mlib_s32)dstBase | scan) & 3) {
+	    if (width > max_width) {
+		if (pbuff != buff) {
+		    mlib_free(pbuff);
+		}
+		pbuff = mlib_malloc(width*sizeof(mlib_s32));
+		if (pbuff == NULL) return;
+		max_width = width;
+	    }
+	}
 
-        for (j = 0; j < height; j++) {
-            mlib_u8 *src = (void*)pixels;
-            mlib_u32 *dst, *dst_end;
-            mlib_f32 ss;
+	for (j = 0; j < height; j++) {
+	    mlib_u8 *src = (void*)pixels;
+	    mlib_u32 *dst, *dst_end;
+	    mlib_f32 ss;
 
-            if ((mlib_s32)dstBase & 3) {
-                COPY_NA(dstBase, pbuff, width*sizeof(mlib_s32));
-                dst = pbuff;
-            } else {
-                dst = (void*)dstBase;
-            }
-            dst_end = dst + width;
+	    if ((mlib_s32)dstBase & 3) {
+		COPY_NA(dstBase, pbuff, width*sizeof(mlib_s32));
+		dst = pbuff;
+	    } else {
+		dst = (void*)dstBase;
+	    }
+	    dst_end = dst + width;
 
-            while (((mlib_s32)dst & 7) && (dst < dst_end)) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (((mlib_s32)dst & 7) && (dst < dst_end)) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            off = (mlib_s32)src & 3;
-            ss = *(mlib_f32*)(src - off);
-            mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
+	    off = (mlib_s32)src & 3;
+	    ss = *(mlib_f32*)(src - off);
+	    mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
 
 #pragma pipeloop(0)
-            for (; dst <= (dst_end - 4); dst += 4) {
-                mask0 = mask1;
-                src += 4;
-                ss = *(mlib_f32*)(src - off);
-                mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
-                mask = (mask0 << off) | (mask1 >> (4 - off));
-                STORE_D64(32, dst, mask >> 2);
-                STORE_D64(32, dst + 2, mask);
-            }
+	    for (; dst <= (dst_end - 4); dst += 4) {
+		mask0 = mask1;
+		src += 4;
+		ss = *(mlib_f32*)(src - off);
+		mask1 = vis_fcmpne16(vis_fpmerge(ss, fzero), dzero);
+		mask = (mask0 << off) | (mask1 >> (4 - off));
+		STORE_D64(32, dst, mask >> 2);
+		STORE_D64(32, dst + 2, mask);
+	    }
 
-            while (dst < dst_end) {
-                pix = *src++;
-                if (pix) STORE_INT;
-                dst++;
-            }
+	    while (dst < dst_end) {
+		pix = *src++;
+		if (pix) STORE_INT;
+		dst++;
+	    }
 
-            if ((mlib_s32)dstBase & 3) {
-                COPY_NA(pbuff, dstBase, width*sizeof(mlib_s32));
-            }
+	    if ((mlib_s32)dstBase & 3) {
+		COPY_NA(pbuff, dstBase, width*sizeof(mlib_s32));
+	    }
 
-            PTR_ADD(dstBase, scan);
-            pixels += rowBytes;
-        }
+	    PTR_ADD(dstBase, scan);
+	    pixels += rowBytes;
+	}
     }
 
     if (pbuff != buff) {
-        mlib_free(pbuff);
+	mlib_free(pbuff);
     }
 }
 

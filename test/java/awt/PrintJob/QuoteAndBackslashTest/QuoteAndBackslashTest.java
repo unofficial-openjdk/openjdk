@@ -44,38 +44,38 @@ public class QuoteAndBackslashTest {
 
 class QuoteAndBackslashTestFrame extends Frame implements ActionListener {
     PrintCanvas canvas;
-
+	
     public QuoteAndBackslashTestFrame () {
         super("QuoteAndBackslashTest");
-        canvas = new PrintCanvas ();
-        add("Center", canvas);
+	canvas = new PrintCanvas ();
+	add("Center", canvas);
 
-        Button b = new Button("Print");
-        b.setActionCommand ("print");
-        b.addActionListener (this);
-        add("South", b);
-
-        pack();
-        setVisible(true);
+	Button b = new Button("Print");
+	b.setActionCommand ("print");
+	b.addActionListener (this);
+	add("South", b);
+	
+	pack();
+	setVisible(true);
     }
 
-
+	
     public void actionPerformed(ActionEvent e) {
         String cmd = e.getActionCommand();
-        if (cmd.equals("print")) {
-            PrintJob pjob = getToolkit().getPrintJob(this, "\\\"\"\\\"",
-                                                     null);
-            if (pjob != null) {
-                Graphics pg = pjob.getGraphics();
-
-                if (pg != null)  {
-                    canvas.printAll(pg);
-                    pg.dispose();  //flush page
-                }
-
-                pjob.end();
-            }
-        }
+	if (cmd.equals("print")) {
+	    PrintJob pjob = getToolkit().getPrintJob(this, "\\\"\"\\\"",
+						     null);
+	    if (pjob != null) {
+	        Graphics pg = pjob.getGraphics();
+	      
+		if (pg != null)  {
+		    canvas.printAll(pg);
+		    pg.dispose();  //flush page
+		}
+		
+		pjob.end();
+	    }
+	}
     }
 }
 
@@ -86,7 +86,8 @@ class PrintCanvas extends Canvas {
 
     public void paint (Graphics g) {
         setBackground(Color.white);
-        g.setColor(Color.blue);
-        g.fillRoundRect(50, 50, 100, 200, 50, 50);
+	g.setColor(Color.blue);
+	g.fillRoundRect(50, 50, 100, 200, 50, 50);
     }
 }
+

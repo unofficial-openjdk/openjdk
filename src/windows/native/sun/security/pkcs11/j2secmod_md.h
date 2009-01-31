@@ -33,10 +33,11 @@ typedef int __declspec(dllimport) (*FPTR_Init)(const char *configdir);
 
 // in secmod.h
 //extern SECMODModule *SECMOD_LoadModule(char *moduleSpec,SECMODModule *parent,
-//                                                      PRBool recurse);
+//							PRBool recurse);
 //char **SECMOD_GetModuleSpecList(SECMODModule *module);
 //extern SECMODModuleList *SECMOD_GetDBModuleList(void);
 
 typedef void __declspec(dllimport) *(*FPTR_LoadModule)(char *moduleSpec, void *parent, int recurse);
 typedef char __declspec(dllimport) **(*FPTR_GetModuleSpecList)(void *module);
 typedef void __declspec(dllimport) *(*FPTR_GetDBModuleList)(void);
+

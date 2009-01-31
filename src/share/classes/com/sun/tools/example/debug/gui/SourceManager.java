@@ -55,15 +55,15 @@ public class SourceManager {
      * Hold on to it so it can be removed.
      */
     private SMClassListener classListener = new SMClassListener();
-
+    
     public SourceManager(Environment env) {
-        this(env, new SearchPath(""));
+	this(env, new SearchPath(""));
     }
-
+    
     public SourceManager(Environment env, SearchPath sourcePath) {
         this.env = env;
-        this.sourceList = new LinkedList<SourceModel>();
-        this.sourcePath = sourcePath;
+	this.sourceList = new LinkedList<SourceModel>();
+	this.sourcePath = sourcePath;
         env.getExecutionManager().addJDIListener(classListener);
     }
 
@@ -71,41 +71,41 @@ public class SourceManager {
      * Set path for access to source code.
      */
     public void setSourcePath(SearchPath sp) {
-        sourcePath = sp;
-        // Old cached sources are now invalid.
-        sourceList = new LinkedList<SourceModel>();
-        notifySourcepathChanged();
+	sourcePath = sp;
+	// Old cached sources are now invalid.
+	sourceList = new LinkedList<SourceModel>();
+	notifySourcepathChanged();
         classToSource = new HashMap<ReferenceType, SourceModel>();
     }
 
     public void addSourceListener(SourceListener l) {
-        sourceListeners.addElement(l);
+	sourceListeners.addElement(l);
     }
 
     public void removeSourceListener(SourceListener l) {
-        sourceListeners.removeElement(l);
+	sourceListeners.removeElement(l);
     }
 
     private void notifySourcepathChanged() {
-        Vector l = (Vector)sourceListeners.clone();
-        SourcepathChangedEvent evt = new SourcepathChangedEvent(this);
-        for (int i = 0; i < l.size(); i++) {
-            ((SourceListener)l.elementAt(i)).sourcepathChanged(evt);
-        }
+	Vector l = (Vector)sourceListeners.clone();
+	SourcepathChangedEvent evt = new SourcepathChangedEvent(this);
+	for (int i = 0; i < l.size(); i++) {
+	    ((SourceListener)l.elementAt(i)).sourcepathChanged(evt);
+	}
     }
 
     /**
      * Get path for access to source code.
      */
     public SearchPath getSourcePath() {
-        return sourcePath;
+	return sourcePath;
     }
-
+    
     /**
      * Get source object associated with a Location.
      */
     public SourceModel sourceForLocation(Location loc) {
-        return sourceForClass(loc.declaringType());
+	return sourceForClass(loc.declaringType());
     }
 
     /**
@@ -146,21 +146,21 @@ public class SourceManager {
             SourceModel candidate = (SourceModel)iter.next();
             if (candidate.fileName().equals(path)) {
                 sm = candidate;
-                iter.remove();    // Will move to start of list.
+		iter.remove();    // Will move to start of list.
                 break;
             }
         }
         if (sm == null && path.exists()) {
-            sm = new SourceModel(env, path);
+	    sm = new SourceModel(env, path);
         }
-        if (sm != null) {
+        if (sm != null) { 
             // At start of list for faster access
-            sourceList.add(0, sm);
+            sourceList.add(0, sm);  
         }
-        return sm;
+	return sm;
     }
-
-    private class SMClassListener extends JDIAdapter
+    
+    private class SMClassListener extends JDIAdapter 
                                    implements JDIListener {
 
         public void classPrepare(ClassPrepareEventSet e) {
@@ -169,11 +169,11 @@ public class SourceManager {
             if (sm != null) {
                 sm.addClass(refType);
             }
-        }
+	}
 
-        public void classUnload(ClassUnloadEventSet e) {
+	public void classUnload(ClassUnloadEventSet e) {
             //### iterate through looking for (e.getTypeName()).
             //### then remove it.
-        }
+	}
     }
 }

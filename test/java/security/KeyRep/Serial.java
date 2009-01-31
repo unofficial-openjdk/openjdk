@@ -25,7 +25,7 @@
  * @test
  * @bug 4532506 4999599
  * @summary Serializing KeyPair on one VM (Sun),
- *      and Deserializing on another (IBM) fails
+ *	and Deserializing on another (IBM) fails
  * @run main/othervm/policy=Serial.policy Serial
  */
 
@@ -44,161 +44,161 @@ public class Serial {
 
     public static void main(String[] args) throws Exception {
 
-        // generate DSA key pair
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA", SUN);
-        kpg.initialize(512);
-        KeyPair dsaKp = kpg.genKeyPair();
+	// generate DSA key pair
+	KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA", SUN);
+	kpg.initialize(512);
+	KeyPair dsaKp = kpg.genKeyPair();
 
-        // serialize DSA key pair
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(dsaKp);
-        oos.close();
+	// serialize DSA key pair
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	ObjectOutputStream oos = new ObjectOutputStream(baos);
+	oos.writeObject(dsaKp);
+	oos.close();
 
-        // deserialize DSA key pair
-        ObjectInputStream ois = new ObjectInputStream
-                        (new ByteArrayInputStream(baos.toByteArray()));
-        KeyPair dsaKp2 = (KeyPair)ois.readObject();
-        ois.close();
+	// deserialize DSA key pair
+	ObjectInputStream ois = new ObjectInputStream
+			(new ByteArrayInputStream(baos.toByteArray()));
+	KeyPair dsaKp2 = (KeyPair)ois.readObject();
+	ois.close();
 
-        if (!dsaKp2.getPublic().equals(dsaKp.getPublic()) ||
-            !dsaKp2.getPrivate().equals(dsaKp.getPrivate())) {
-            throw new SecurityException("DSA test failed");
-        }
+	if (!dsaKp2.getPublic().equals(dsaKp.getPublic()) ||
+	    !dsaKp2.getPrivate().equals(dsaKp.getPrivate())) {
+	    throw new SecurityException("DSA test failed");
+	}
 
-        // generate RSA key pair
-        kpg = KeyPairGenerator.getInstance("RSA", RSA);
-        kpg.initialize(512);
-        KeyPair rsaKp = kpg.genKeyPair();
+	// generate RSA key pair
+	kpg = KeyPairGenerator.getInstance("RSA", RSA);
+	kpg.initialize(512);
+	KeyPair rsaKp = kpg.genKeyPair();
 
-        // serialize RSA key pair
-        baos.reset();
-        oos = new ObjectOutputStream(baos);
-        oos.writeObject(rsaKp);
-        oos.close();
+	// serialize RSA key pair
+	baos.reset();
+	oos = new ObjectOutputStream(baos);
+	oos.writeObject(rsaKp);
+	oos.close();
 
-        // deserialize RSA key pair
-        ois = new ObjectInputStream
-                        (new ByteArrayInputStream(baos.toByteArray()));
-        KeyPair rsaKp2 = (KeyPair)ois.readObject();
-        ois.close();
+	// deserialize RSA key pair
+	ois = new ObjectInputStream
+			(new ByteArrayInputStream(baos.toByteArray()));
+	KeyPair rsaKp2 = (KeyPair)ois.readObject();
+	ois.close();
 
-        if (!rsaKp2.getPublic().equals(rsaKp.getPublic()) ||
-            !rsaKp2.getPrivate().equals(rsaKp.getPrivate())) {
-            throw new SecurityException("RSA test failed");
-        }
+	if (!rsaKp2.getPublic().equals(rsaKp.getPublic()) ||
+	    !rsaKp2.getPrivate().equals(rsaKp.getPrivate())) {
+	    throw new SecurityException("RSA test failed");
+	}
 
-        // exclude test is ECF provider is installed, see 4923290
-        if (Security.getProvider("SunPKCS11-Solaris") == null) {
-            // generate DH key pair
-            kpg = KeyPairGenerator.getInstance("DiffieHellman", JCE);
-            kpg.initialize(new DHParameterSpec(skip1024Modulus, skip1024Base));
-            KeyPair dhKp = kpg.genKeyPair();
+	// exclude test is ECF provider is installed, see 4923290
+	if (Security.getProvider("SunPKCS11-Solaris") == null) {
+	    // generate DH key pair
+	    kpg = KeyPairGenerator.getInstance("DiffieHellman", JCE);
+	    kpg.initialize(new DHParameterSpec(skip1024Modulus, skip1024Base));
+	    KeyPair dhKp = kpg.genKeyPair();
+    
+	    // serialize DH key pair
+	    baos.reset();
+	    oos = new ObjectOutputStream(baos);
+	    oos.writeObject(dhKp);
+	    oos.close();
+    
+	    // deserialize DH key pair
+	    ois = new ObjectInputStream
+			    (new ByteArrayInputStream(baos.toByteArray()));
+	    KeyPair dhKp2 = (KeyPair)ois.readObject();
+	    ois.close();
+    
+	    if (!dhKp2.getPublic().equals(dhKp.getPublic()) ||
+		!dhKp2.getPrivate().equals(dhKp.getPrivate())) {
+		throw new SecurityException("DH test failed");
+	    }
+	}
 
-            // serialize DH key pair
-            baos.reset();
-            oos = new ObjectOutputStream(baos);
-            oos.writeObject(dhKp);
-            oos.close();
+	// generate RC5 key
+	SecretKeySpec rc5Key = new SecretKeySpec(new byte[128], "RC5");
 
-            // deserialize DH key pair
-            ois = new ObjectInputStream
-                            (new ByteArrayInputStream(baos.toByteArray()));
-            KeyPair dhKp2 = (KeyPair)ois.readObject();
-            ois.close();
+	// serialize RC5 key
+	baos.reset();
+	oos = new ObjectOutputStream(baos);
+	oos.writeObject(rc5Key);
+	oos.close();
 
-            if (!dhKp2.getPublic().equals(dhKp.getPublic()) ||
-                !dhKp2.getPrivate().equals(dhKp.getPrivate())) {
-                throw new SecurityException("DH test failed");
-            }
-        }
+	// deserialize RC5 key
+	ois = new ObjectInputStream
+			(new ByteArrayInputStream(baos.toByteArray()));
+	SecretKey rc5Key2 = (SecretKey)ois.readObject();
+	ois.close();
 
-        // generate RC5 key
-        SecretKeySpec rc5Key = new SecretKeySpec(new byte[128], "RC5");
+	if (!rc5Key.equals(rc5Key2)) {
+	    throw new SecurityException("RC5 test failed");
+	}
 
-        // serialize RC5 key
-        baos.reset();
-        oos = new ObjectOutputStream(baos);
-        oos.writeObject(rc5Key);
-        oos.close();
+	// generate PBE key
 
-        // deserialize RC5 key
-        ois = new ObjectInputStream
-                        (new ByteArrayInputStream(baos.toByteArray()));
-        SecretKey rc5Key2 = (SecretKey)ois.readObject();
-        ois.close();
+	// Salt
+	byte[] salt = {
+		(byte)0xc7, (byte)0x73, (byte)0x21, (byte)0x8c,
+		(byte)0x7e, (byte)0xc8, (byte)0xee, (byte)0x99
+	};
 
-        if (!rc5Key.equals(rc5Key2)) {
-            throw new SecurityException("RC5 test failed");
-        }
+	// Iteration count
+	int count = 20;
 
-        // generate PBE key
+	// Create PBE parameter set
+	PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
 
-        // Salt
-        byte[] salt = {
-                (byte)0xc7, (byte)0x73, (byte)0x21, (byte)0x8c,
-                (byte)0x7e, (byte)0xc8, (byte)0xee, (byte)0x99
-        };
+	char[] password = new char[] {'f', 'o', 'o'};
+	PBEKeySpec pbeKeySpec = new PBEKeySpec(password);
+	SecretKeyFactory keyFac =
+			SecretKeyFactory.getInstance("PBEWithMD5AndDES", JCE);
+	SecretKey pbeKey = keyFac.generateSecret(pbeKeySpec);
 
-        // Iteration count
-        int count = 20;
+	// serialize PBE key
+	baos.reset();
+	oos = new ObjectOutputStream(baos);
+	oos.writeObject(pbeKey);
+	oos.close();
 
-        // Create PBE parameter set
-        PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
+	// deserialize PBE key
+	ois = new ObjectInputStream
+			(new ByteArrayInputStream(baos.toByteArray()));
+	SecretKey pbeKey2 = (SecretKey)ois.readObject();
+	ois.close();
 
-        char[] password = new char[] {'f', 'o', 'o'};
-        PBEKeySpec pbeKeySpec = new PBEKeySpec(password);
-        SecretKeyFactory keyFac =
-                        SecretKeyFactory.getInstance("PBEWithMD5AndDES", JCE);
-        SecretKey pbeKey = keyFac.generateSecret(pbeKeySpec);
+	if (!pbeKey.equals(pbeKey2)) {
+	    throw new SecurityException("PBE test failed");
+	}
 
-        // serialize PBE key
-        baos.reset();
-        oos = new ObjectOutputStream(baos);
-        oos.writeObject(pbeKey);
-        oos.close();
-
-        // deserialize PBE key
-        ois = new ObjectInputStream
-                        (new ByteArrayInputStream(baos.toByteArray()));
-        SecretKey pbeKey2 = (SecretKey)ois.readObject();
-        ois.close();
-
-        if (!pbeKey.equals(pbeKey2)) {
-            throw new SecurityException("PBE test failed");
-        }
-
-        checkKey("AES", 128);
-        checkKey("Blowfish", -1);
-        checkKey("DES", 56);
-        checkKey("DESede", 168);
-        checkKey("HmacMD5", -1);
-        checkKey("HmacSHA1", -1);
+	checkKey("AES", 128);
+	checkKey("Blowfish", -1);
+	checkKey("DES", 56);
+	checkKey("DESede", 168);
+	checkKey("HmacMD5", -1);
+	checkKey("HmacSHA1", -1);
     }
 
     private static void checkKey(String algorithm, int size) throws Exception {
-        // generate key
-        KeyGenerator kg = KeyGenerator.getInstance(algorithm, JCE);
-        if (size > 0) {
-            kg.init(size);
-        }
-        SecretKey key = kg.generateKey();
+	// generate key
+	KeyGenerator kg = KeyGenerator.getInstance(algorithm, JCE);
+	if (size > 0) {
+	    kg.init(size);
+	}
+	SecretKey key = kg.generateKey();
 
-        // serialize key
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(key);
-        oos.close();
+	// serialize key
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	ObjectOutputStream oos = new ObjectOutputStream(baos);
+	oos.writeObject(key);
+	oos.close();
 
-        // deserialize key
-        ObjectInputStream ois = new ObjectInputStream
-                                (new ByteArrayInputStream(baos.toByteArray()));
-        SecretKey key2 = (SecretKey)ois.readObject();
-        ois.close();
+	// deserialize key
+	ObjectInputStream ois = new ObjectInputStream
+				(new ByteArrayInputStream(baos.toByteArray()));
+	SecretKey key2 = (SecretKey)ois.readObject();
+	ois.close();
 
-        if (!key.equals(key2)) {
-            throw new SecurityException(algorithm + " test failed");
-        }
+	if (!key.equals(key2)) {
+	    throw new SecurityException(algorithm + " test failed");
+	}
     }
 
     // The 1024 bit Diffie-Hellman modulus values used by SKIP

@@ -47,20 +47,21 @@ import sun.security.x509.GeneralNameInterface;
 import sun.security.x509.X500Name;
 import sun.security.x509.X509CertImpl;
 
-/**
+/** 
  * A specification of a forward PKIX validation state
- * which is initialized by each build and updated each time a
+ * which is initialized by each build and updated each time a 
  * certificate is added to the current path.
- * @since       1.4
+ * @version 	%I% %G%
+ * @since	1.4
  * @author      Yassir Elley
  */
 class ForwardState implements State {
-
+ 
     private static final Debug debug = Debug.getInstance("certpath");
 
     /* The issuer DN of the last cert in the path */
     X500Principal issuerDN;
-
+    
     /* The last cert in the path */
     X509CertImpl cert;
 
@@ -68,14 +69,14 @@ class ForwardState implements State {
     HashSet<GeneralNameInterface> subjectNamesTraversed;
 
     /*
-     * The number of intermediate CA certs which have been traversed so
-     * far in the path
+     * The number of intermediate CA certs which have been traversed so 
+     * far in the path 
      */
     int traversedCACerts;
-
+    
     /* Flag indicating if state is initial (path is just starting) */
     private boolean init = true;
-
+    
     /* the checker used for revocation status */
     public CrlRevocationChecker crlChecker;
 
@@ -88,13 +89,13 @@ class ForwardState implements State {
     boolean keyParamsNeededFlag = false;
 
     /**
-     * Returns a boolean flag indicating if the state is initial
+     * Returns a boolean flag indicating if the state is initial 
      * (just starting)
      *
      * @return boolean flag indicating if the state is initial (just starting)
      */
     public boolean isInitial() {
-        return init;
+	return init;
     }
 
     /**
@@ -107,75 +108,75 @@ class ForwardState implements State {
     public boolean keyParamsNeeded() {
         return keyParamsNeededFlag;
     }
-
+    
     /**
      * Display state for debugging purposes
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        try {
+	StringBuffer sb = new StringBuffer();
+	try {
             sb.append("State [");
             sb.append("\n  issuerDN of last cert: " + issuerDN);
             sb.append("\n  traversedCACerts: " + traversedCACerts);
             sb.append("\n  init: " + String.valueOf(init));
-            sb.append("\n  keyParamsNeeded: "
-                + String.valueOf(keyParamsNeededFlag));
+            sb.append("\n  keyParamsNeeded: " 
+		+ String.valueOf(keyParamsNeededFlag));
             sb.append("\n  subjectNamesTraversed: \n" + subjectNamesTraversed);
-            sb.append("]\n");
-        } catch (Exception e) {
-            if (debug != null) {
-                debug.println("ForwardState.toString() unexpected exception");
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
+	    sb.append("]\n");
+	} catch (Exception e) {
+	    if (debug != null) {
+	    	debug.println("ForwardState.toString() unexpected exception");
+	    	e.printStackTrace();
+	    }
+	}
+	return sb.toString();
     }
-
+    
     /**
      * Initialize the state.
      *
      * @param certPathCheckers the list of user-defined PKIXCertPathCheckers
      */
-    public void initState(List<PKIXCertPathChecker> certPathCheckers)
-        throws CertPathValidatorException
+    public void initState(List<PKIXCertPathChecker> certPathCheckers) 
+	throws CertPathValidatorException
     {
-        subjectNamesTraversed = new HashSet<GeneralNameInterface>();
-        traversedCACerts = 0;
+	subjectNamesTraversed = new HashSet<GeneralNameInterface>();
+	traversedCACerts = 0;
 
-        /*
-         * Populate forwardCheckers with every user-defined checker
-         * that supports forward checking and initialize the forwardCheckers
-         */
-        forwardCheckers = new ArrayList<PKIXCertPathChecker>();
-        if (certPathCheckers != null) {
-            for (PKIXCertPathChecker checker : certPathCheckers) {
-                if (checker.isForwardCheckingSupported()) {
-                    checker.init(true);
-                    forwardCheckers.add(checker);
-                }
-            }
-        }
+	/*
+	 * Populate forwardCheckers with every user-defined checker
+	 * that supports forward checking and initialize the forwardCheckers
+	 */
+	forwardCheckers = new ArrayList<PKIXCertPathChecker>();
+	if (certPathCheckers != null) {
+	    for (PKIXCertPathChecker checker : certPathCheckers) {
+		if (checker.isForwardCheckingSupported()) {
+		    checker.init(true);
+		    forwardCheckers.add(checker);
+		}
+	    }
+	}
 
-        init = true;
+	init = true;
     }
-
+    
     /**
      * Update the state with the next certificate added to the path.
      *
      * @param cert the certificate which is used to update the state
      */
-    public void updateState(X509Certificate cert)
-        throws CertificateException, IOException, CertPathValidatorException {
-
-        if (cert == null)
-            return;
-
+    public void updateState(X509Certificate cert) 
+	throws CertificateException, IOException, CertPathValidatorException {
+	
+	if (cert == null)
+	    return;
+	
         X509CertImpl icert = X509CertImpl.toImpl(cert);
 
         /* see if certificate key has null parameters */
         PublicKey newKey = icert.getPublicKey();
         if (newKey instanceof DSAPublicKey &&
-            ((DSAPublicKey)newKey).getParams() == null) {
+            ((DSAPublicKey)newKey).getParams() == null) { 
             keyParamsNeededFlag = true;
         }
 
@@ -184,15 +185,15 @@ class ForwardState implements State {
 
         /* update issuer DN */
         issuerDN = cert.getIssuerX500Principal();
-
+	
         if (!X509CertImpl.isSelfIssued(cert)) {
 
-            /*
-             * update traversedCACerts only if this is a non-self-issued
-             * intermediate CA cert
+            /* 
+             * update traversedCACerts only if this is a non-self-issued 
+	     * intermediate CA cert
              */
-            if (!init && cert.getBasicConstraints() != -1) {
-                traversedCACerts++;
+	    if (!init && cert.getBasicConstraints() != -1) {
+		traversedCACerts++;
             }
         }
 
@@ -200,68 +201,68 @@ class ForwardState implements State {
            this cert is not self-issued */
         if (init || !X509CertImpl.isSelfIssued(cert)){
             X500Principal subjName = cert.getSubjectX500Principal();
-            subjectNamesTraversed.add(X500Name.asX500Name(subjName));
-
+	    subjectNamesTraversed.add(X500Name.asX500Name(subjName));
+	    
             try {
-                SubjectAlternativeNameExtension subjAltNameExt
+                SubjectAlternativeNameExtension subjAltNameExt 
                     = icert.getSubjectAlternativeNameExtension();
                 if (subjAltNameExt != null) {
-                    GeneralNames gNames = (GeneralNames)
+                    GeneralNames gNames = (GeneralNames) 
                         subjAltNameExt.get(SubjectAlternativeNameExtension.SUBJECT_NAME);
                     for (Iterator<GeneralName> t = gNames.iterator();
-                                t.hasNext(); ) {
+				t.hasNext(); ) {
                         GeneralNameInterface gName = t.next().getName();
-                        subjectNamesTraversed.add(gName);
+			subjectNamesTraversed.add(gName);
                     }
                 }
             } catch (Exception e) {
                 if (debug != null) {
                     debug.println("ForwardState.updateState() unexpected "
-                        + "exception");
+			+ "exception");
                     e.printStackTrace();
                 }
                 throw new CertPathValidatorException(e);
             }
         }
 
-        init = false;
+	init = false;
     }
-
+    
     /*
      * Clone current state. The state is cloned as each cert is
      * added to the path. This is necessary if backtracking occurs,
      * and a prior state needs to be restored.
      *
      * Note that this is a SMART clone. Not all fields are fully copied,
-     * because some of them will
+     * because some of them will 
      * not have their contents modified by subsequent calls to updateState.
      */
     public Object clone() {
-        try {
-            ForwardState clonedState = (ForwardState) super.clone();
+	try {
+	    ForwardState clonedState = (ForwardState) super.clone();
 
-            /* clone checkers, if cloneable */
-            clonedState.forwardCheckers = (ArrayList<PKIXCertPathChecker>)
-                                                forwardCheckers.clone();
-            ListIterator<PKIXCertPathChecker> li =
-                                clonedState.forwardCheckers.listIterator();
-            while (li.hasNext()) {
-                PKIXCertPathChecker checker = li.next();
-                if (checker instanceof Cloneable) {
-                    li.set((PKIXCertPathChecker)checker.clone());
-                }
-            }
+	    /* clone checkers, if cloneable */
+	    clonedState.forwardCheckers = (ArrayList<PKIXCertPathChecker>)
+						forwardCheckers.clone();
+	    ListIterator<PKIXCertPathChecker> li =
+				clonedState.forwardCheckers.listIterator();
+	    while (li.hasNext()) {
+		PKIXCertPathChecker checker = li.next();
+		if (checker instanceof Cloneable) {
+		    li.set((PKIXCertPathChecker)checker.clone());
+		}
+	    }
 
-            /*
-             * Shallow copy traversed names. There is no need to
-             * deep copy contents, since the elements of the Set
-             * are never modified by subsequent calls to updateState().
-             */
-            clonedState.subjectNamesTraversed
-                = (HashSet<GeneralNameInterface>)subjectNamesTraversed.clone();
-            return clonedState;
-        } catch (CloneNotSupportedException e) {
-            throw new InternalError(e.toString());
-        }
+	    /* 
+	     * Shallow copy traversed names. There is no need to 
+	     * deep copy contents, since the elements of the Set
+	     * are never modified by subsequent calls to updateState().
+	     */
+	    clonedState.subjectNamesTraversed 
+		= (HashSet<GeneralNameInterface>)subjectNamesTraversed.clone();
+	    return clonedState;
+	} catch (CloneNotSupportedException e) {
+	    throw new InternalError(e.toString());
+	} 
     }
 }

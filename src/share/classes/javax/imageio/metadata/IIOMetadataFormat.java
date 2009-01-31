@@ -68,6 +68,7 @@ import javax.imageio.ImageTypeSpecifier;
  * representing such objects textually.
  * </ul>
  *
+ * @version 0.5
  */
 public interface IIOMetadataFormat {
 
@@ -207,7 +208,7 @@ public interface IIOMetadataFormat {
      */
     int VALUE_RANGE_MIN_MAX_INCLUSIVE =
         VALUE_RANGE |
-        VALUE_RANGE_MIN_INCLUSIVE_MASK |
+        VALUE_RANGE_MIN_INCLUSIVE_MASK | 
         VALUE_RANGE_MAX_INCLUSIVE_MASK;
 
     /**
@@ -391,7 +392,7 @@ public interface IIOMetadataFormat {
     String[] getChildNames(String elementName);
 
     // Attributes
-
+    
     /**
      * Returns an array of <code>String</code>s listing the names of
      * the attributes that may be associated with the named element.
@@ -416,7 +417,7 @@ public interface IIOMetadataFormat {
      * @param elementName the name of the element being queried.
      * @param attrName the name of the attribute being queried.
      *
-     * @return one of the <code>VALUE_*</code> constants.
+     * @return one of the <code>VALUE_*</code> constants. 
      *
      * @exception IllegalArgumentException if <code>elementName</code>
      * is <code>null</code> or is not a legal element name for this
@@ -526,7 +527,7 @@ public interface IIOMetadataFormat {
      *
      * @return a <code>String</code> containing the smallest legal
      * value for the attribute.
-     *
+     * 
      * @exception IllegalArgumentException if <code>elementName</code>
      * is <code>null</code> or is not a legal element name for this
      * format.
@@ -659,7 +660,7 @@ public interface IIOMetadataFormat {
      *
      * @param elementName the name of the element being queried.
      *
-     * @return one of the <code>VALUE_*</code> constants.
+     * @return one of the <code>VALUE_*</code> constants. 
      *
      * @exception IllegalArgumentException if <code>elementName</code>
      * is <code>null</code> or is not a legal element name for this

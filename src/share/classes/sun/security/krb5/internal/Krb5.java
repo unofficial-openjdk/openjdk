@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -71,14 +72,14 @@ public class Krb5 {
     public static final int TKT_OPTS_HW_AUTHENT   = 11;
     public static final int TKT_OPTS_DELEGATE     = 13;
     public static final int TKT_OPTS_MAX          = 31;
-
+    
     // KDC Options
     // (option values defined in KDCOptions.java)
     public static final int KDC_OPTS_MAX          = 31;
 
     // KerberosFlags
     public static final int KRB_FLAGS_MAX         = 31;
-
+    
     //Last Request types
 
     public static final int LRTYPE_NONE                 = 0;
@@ -129,12 +130,12 @@ public class Krb5 {
 
     // number of retries before giving up
 
-    public static final int KDC_RETRY_LIMIT = 3;
+    public static final int KDC_RETRY_LIMIT = 3; 
 
     //OSI authentication mechanism OID
 
     //public static final int[] OSI_AUTH_MECH_TYPE = { /*iso*/ 1, /*org*/ 3,
-    //                                               /*dod*/ 5, /*internet*/ 1, /*security*/ 5, /*kerberosv5*/ 2 };
+    //						     /*dod*/ 5, /*internet*/ 1, /*security*/ 5, /*kerberosv5*/ 2 };
 
     //Protocol constants and associated values
 
@@ -263,7 +264,7 @@ public class Krb5 {
     public static final int KRB_CRYPTO_NOT_SUPPORT      = 100;    //Client does not support this crypto type
     public static final int KRB_AP_ERR_NOREALM          = 62;
     public static final int KRB_AP_ERR_GEN_CRED         = 63;
-    //  public static final int KRB_AP_ERR_CKSUM_NOKEY          =101;    //Lack of the key to generate the checksum
+    //  public static final int KRB_AP_ERR_CKSUM_NOKEY		=101;    //Lack of the key to generate the checksum
     // error codes specific to this implementation
     public static final int KRB_AP_ERR_REQ_OPTIONS = 101; //Invalid TGS_REQ
     public static final int API_INVALID_ARG               = 400;  //Invalid argument
@@ -290,100 +291,100 @@ public class Krb5 {
     public static final int ASN1_BAD_TAG                  = 912;  //Bad tag number
     public static final int ASN1_UNSUPPORTED_TYPE         = 913;  //Unsupported ASN.1 type encountered
     public static final int ASN1_CANNOT_ENCODE            = 914;  //Encoding failed due to invalid parameter(s)
-
+    
     private static Hashtable<Integer,String> errMsgList;
-
+    
     public static String getErrorMessage(int i) {
         return errMsgList.get(i);
     }
 
 
     public static final boolean DEBUG =
-        java.security.AccessController.doPrivileged(
-              new sun.security.action.GetBooleanAction("sun.security.krb5.debug"));
+	java.security.AccessController.doPrivileged( 
+	      new sun.security.action.GetBooleanAction("sun.security.krb5.debug"));
     public static final sun.misc.HexDumpEncoder hexDumper =
-        new sun.misc.HexDumpEncoder();
+	new sun.misc.HexDumpEncoder();
 
     static {
-        errMsgList = new Hashtable<Integer,String> ();
-        errMsgList.put(KDC_ERR_NONE, "No error");
-        errMsgList.put(KDC_ERR_NAME_EXP, "Client's entry in database expired");
-        errMsgList.put(KDC_ERR_SERVICE_EXP, "Server's entry in database has expired");
-        errMsgList.put(KDC_ERR_BAD_PVNO, "Requested protocol version number not supported");
-        errMsgList.put(KDC_ERR_C_OLD_MAST_KVNO, "Client's key encrypted in old master key");
-        errMsgList.put(KDC_ERR_S_OLD_MAST_KVNO, "Server's key encrypted in old master key");
-        errMsgList.put(KDC_ERR_C_PRINCIPAL_UNKNOWN, "Client not found in Kerberos database");
-        errMsgList.put(KDC_ERR_S_PRINCIPAL_UNKNOWN, "Server not found in Kerberos database");
-        errMsgList.put(KDC_ERR_PRINCIPAL_NOT_UNIQUE, "Multiple principal entries in database");
-        errMsgList.put(KDC_ERR_NULL_KEY, "The client or server has a null key");
-        errMsgList.put(KDC_ERR_CANNOT_POSTDATE, "Ticket not eligible for postdating");
-        errMsgList.put(KDC_ERR_NEVER_VALID, "Requested start time is later than end time");
-        errMsgList.put(KDC_ERR_POLICY, "KDC policy rejects request");
-        errMsgList.put(KDC_ERR_BADOPTION, "KDC cannot accommodate requested option");
-        errMsgList.put(KDC_ERR_ETYPE_NOSUPP, "KDC has no support for encryption type");
-        errMsgList.put(KDC_ERR_SUMTYPE_NOSUPP, "KDC has no support for checksum type");
-        errMsgList.put(KDC_ERR_PADATA_TYPE_NOSUPP, "KDC has no support for padata type");
-        errMsgList.put(KDC_ERR_TRTYPE_NOSUPP, "KDC has no support for transited type");
-        errMsgList.put(KDC_ERR_CLIENT_REVOKED, "Clients credentials have been revoked");
-        errMsgList.put(KDC_ERR_SERVICE_REVOKED, "Credentials for server have been revoked");
-        errMsgList.put(KDC_ERR_TGT_REVOKED, "TGT has been revoked");
-        errMsgList.put(KDC_ERR_CLIENT_NOTYET, "Client not yet valid - try again later");
-        errMsgList.put(KDC_ERR_SERVICE_NOTYET, "Server not yet valid - try again later");
-        errMsgList.put(KDC_ERR_KEY_EXPIRED, "Password has expired - change password to reset");
-        errMsgList.put(KDC_ERR_PREAUTH_FAILED, "Pre-authentication information was invalid");
-        errMsgList.put(KDC_ERR_PREAUTH_REQUIRED, "Additional pre-authentication required");
-        errMsgList.put(KRB_AP_ERR_BAD_INTEGRITY, "Integrity check on decrypted field failed");
-        errMsgList.put(KRB_AP_ERR_TKT_EXPIRED, "Ticket expired");
-        errMsgList.put(KRB_AP_ERR_TKT_NYV, "Ticket not yet valid");
-        errMsgList.put(KRB_AP_ERR_REPEAT, "Request is a replay");
-        errMsgList.put(KRB_AP_ERR_NOT_US, "The ticket isn't for us");
-        errMsgList.put(KRB_AP_ERR_BADMATCH, "Ticket and authenticator don't match");
-        errMsgList.put(KRB_AP_ERR_SKEW, "Clock skew too great");
-        errMsgList.put(KRB_AP_ERR_BADADDR, "Incorrect net address");
-        errMsgList.put(KRB_AP_ERR_BADVERSION, "Protocol version mismatch");
-        errMsgList.put(KRB_AP_ERR_MSG_TYPE, "Invalid msg type");
-        errMsgList.put(KRB_AP_ERR_MODIFIED, "Message stream modified");
-        errMsgList.put(KRB_AP_ERR_BADORDER, "Message out of order");
-        errMsgList.put(KRB_AP_ERR_BADKEYVER, "Specified version of key is not available");
-        errMsgList.put(KRB_AP_ERR_NOKEY, "Service key not available");
-        errMsgList.put(KRB_AP_ERR_MUT_FAIL, "Mutual authentication failed");
-        errMsgList.put(KRB_AP_ERR_BADDIRECTION, "Incorrect message direction");
-        errMsgList.put(KRB_AP_ERR_METHOD, "Alternative authentication method required");
-        errMsgList.put(KRB_AP_ERR_BADSEQ, "Incorrect sequence number in message");
-        errMsgList.put(KRB_AP_ERR_INAPP_CKSUM, "Inappropriate type of checksum in message");
-        errMsgList.put(KRB_ERR_RESPONSE_TOO_BIG, "Response too big for UDP, retry with TCP");
-        errMsgList.put(KRB_ERR_GENERIC, "Generic error (description in e-text)");
-        errMsgList.put(KRB_ERR_FIELD_TOOLONG, "Field is too long for this implementation");
+	errMsgList = new Hashtable<Integer,String> ();
+	errMsgList.put(KDC_ERR_NONE, "No error");
+	errMsgList.put(KDC_ERR_NAME_EXP, "Client's entry in database expired");
+	errMsgList.put(KDC_ERR_SERVICE_EXP, "Server's entry in database has expired");
+	errMsgList.put(KDC_ERR_BAD_PVNO, "Requested protocol version number not supported");
+	errMsgList.put(KDC_ERR_C_OLD_MAST_KVNO, "Client's key encrypted in old master key");
+	errMsgList.put(KDC_ERR_S_OLD_MAST_KVNO, "Server's key encrypted in old master key");
+	errMsgList.put(KDC_ERR_C_PRINCIPAL_UNKNOWN, "Client not found in Kerberos database");
+	errMsgList.put(KDC_ERR_S_PRINCIPAL_UNKNOWN, "Server not found in Kerberos database");
+	errMsgList.put(KDC_ERR_PRINCIPAL_NOT_UNIQUE, "Multiple principal entries in database");
+	errMsgList.put(KDC_ERR_NULL_KEY, "The client or server has a null key");
+	errMsgList.put(KDC_ERR_CANNOT_POSTDATE, "Ticket not eligible for postdating");
+	errMsgList.put(KDC_ERR_NEVER_VALID, "Requested start time is later than end time");
+	errMsgList.put(KDC_ERR_POLICY, "KDC policy rejects request");
+	errMsgList.put(KDC_ERR_BADOPTION, "KDC cannot accommodate requested option");
+	errMsgList.put(KDC_ERR_ETYPE_NOSUPP, "KDC has no support for encryption type");
+	errMsgList.put(KDC_ERR_SUMTYPE_NOSUPP, "KDC has no support for checksum type");
+	errMsgList.put(KDC_ERR_PADATA_TYPE_NOSUPP, "KDC has no support for padata type");
+	errMsgList.put(KDC_ERR_TRTYPE_NOSUPP, "KDC has no support for transited type");
+	errMsgList.put(KDC_ERR_CLIENT_REVOKED, "Clients credentials have been revoked");
+	errMsgList.put(KDC_ERR_SERVICE_REVOKED, "Credentials for server have been revoked");
+	errMsgList.put(KDC_ERR_TGT_REVOKED, "TGT has been revoked");
+	errMsgList.put(KDC_ERR_CLIENT_NOTYET, "Client not yet valid - try again later");
+	errMsgList.put(KDC_ERR_SERVICE_NOTYET, "Server not yet valid - try again later");
+	errMsgList.put(KDC_ERR_KEY_EXPIRED, "Password has expired - change password to reset");
+	errMsgList.put(KDC_ERR_PREAUTH_FAILED, "Pre-authentication information was invalid");
+	errMsgList.put(KDC_ERR_PREAUTH_REQUIRED, "Additional pre-authentication required");
+	errMsgList.put(KRB_AP_ERR_BAD_INTEGRITY, "Integrity check on decrypted field failed");
+	errMsgList.put(KRB_AP_ERR_TKT_EXPIRED, "Ticket expired");
+	errMsgList.put(KRB_AP_ERR_TKT_NYV, "Ticket not yet valid");
+	errMsgList.put(KRB_AP_ERR_REPEAT, "Request is a replay");
+	errMsgList.put(KRB_AP_ERR_NOT_US, "The ticket isn't for us");
+	errMsgList.put(KRB_AP_ERR_BADMATCH, "Ticket and authenticator don't match");
+	errMsgList.put(KRB_AP_ERR_SKEW, "Clock skew too great");
+	errMsgList.put(KRB_AP_ERR_BADADDR, "Incorrect net address");
+	errMsgList.put(KRB_AP_ERR_BADVERSION, "Protocol version mismatch");
+	errMsgList.put(KRB_AP_ERR_MSG_TYPE, "Invalid msg type");
+	errMsgList.put(KRB_AP_ERR_MODIFIED, "Message stream modified");
+	errMsgList.put(KRB_AP_ERR_BADORDER, "Message out of order");
+	errMsgList.put(KRB_AP_ERR_BADKEYVER, "Specified version of key is not available");
+	errMsgList.put(KRB_AP_ERR_NOKEY, "Service key not available");
+	errMsgList.put(KRB_AP_ERR_MUT_FAIL, "Mutual authentication failed");
+	errMsgList.put(KRB_AP_ERR_BADDIRECTION, "Incorrect message direction");
+	errMsgList.put(KRB_AP_ERR_METHOD, "Alternative authentication method required");
+	errMsgList.put(KRB_AP_ERR_BADSEQ, "Incorrect sequence number in message");
+	errMsgList.put(KRB_AP_ERR_INAPP_CKSUM, "Inappropriate type of checksum in message");
+	errMsgList.put(KRB_ERR_RESPONSE_TOO_BIG, "Response too big for UDP, retry with TCP");
+	errMsgList.put(KRB_ERR_GENERIC, "Generic error (description in e-text)");
+	errMsgList.put(KRB_ERR_FIELD_TOOLONG, "Field is too long for this implementation");
         errMsgList.put(KRB_AP_ERR_NOREALM, "Realm name not available"); //used in setDefaultCreds() in sun.security.krb5.Credentials
 
-        // error messages specific to this implementation
+	// error messages specific to this implementation
 
-        errMsgList.put(API_INVALID_ARG, "Invalid argument");
+	errMsgList.put(API_INVALID_ARG, "Invalid argument");
 
-        errMsgList.put(BITSTRING_SIZE_INVALID, "BitString size does not match input byte array");
-        errMsgList.put(BITSTRING_INDEX_OUT_OF_BOUNDS, "BitString bit index does not fall within size");
-        errMsgList.put(BITSTRING_BAD_LENGTH, "BitString length is wrong for the expected type");
+	errMsgList.put(BITSTRING_SIZE_INVALID, "BitString size does not match input byte array");
+	errMsgList.put(BITSTRING_INDEX_OUT_OF_BOUNDS, "BitString bit index does not fall within size");
+	errMsgList.put(BITSTRING_BAD_LENGTH, "BitString length is wrong for the expected type");
 
-        errMsgList.put(REALM_ILLCHAR, "Illegal character in realm name; one of: '/', ':', '\0'");
-        errMsgList.put(REALM_NULL, "Null realm name");
+	errMsgList.put(REALM_ILLCHAR, "Illegal character in realm name; one of: '/', ':', '\0'");
+	errMsgList.put(REALM_NULL, "Null realm name");
 
-        errMsgList.put(ASN1_BAD_TIMEFORMAT, "Input not in GeneralizedTime format");
-        errMsgList.put(ASN1_MISSING_FIELD, "Structure is missing a required field");
-        errMsgList.put(ASN1_MISPLACED_FIELD, "Unexpected field number");
-        errMsgList.put(ASN1_TYPE_MISMATCH, "Type numbers are inconsistent");
-        errMsgList.put(ASN1_OVERFLOW, "Value too large");
-        errMsgList.put(ASN1_OVERRUN, "Encoding ended unexpectedly");
-        errMsgList.put(ASN1_BAD_ID, "Identifier doesn't match expected value");
-        errMsgList.put(ASN1_BAD_LENGTH, "Length doesn't match expected value");
-        errMsgList.put(ASN1_BAD_FORMAT, "Badly-formatted encoding");
-        errMsgList.put(ASN1_PARSE_ERROR, "Parse error");
-        errMsgList.put(ASN1_BAD_CLASS, "Bad class number");
-        errMsgList.put(ASN1_BAD_TYPE, "Bad type number");
-        errMsgList.put(ASN1_BAD_TAG, "Bad tag number");
-        errMsgList.put(ASN1_UNSUPPORTED_TYPE, "Unsupported ASN.1 type encountered");
-        errMsgList.put(ASN1_CANNOT_ENCODE, "Encoding failed due to invalid parameter(s)");
-        errMsgList.put(KRB_CRYPTO_NOT_SUPPORT, "Client has no support for crypto type");
-        errMsgList.put(KRB_AP_ERR_REQ_OPTIONS, "Invalid option setting in ticket request.");
+	errMsgList.put(ASN1_BAD_TIMEFORMAT, "Input not in GeneralizedTime format");
+	errMsgList.put(ASN1_MISSING_FIELD, "Structure is missing a required field");
+	errMsgList.put(ASN1_MISPLACED_FIELD, "Unexpected field number");
+	errMsgList.put(ASN1_TYPE_MISMATCH, "Type numbers are inconsistent");
+	errMsgList.put(ASN1_OVERFLOW, "Value too large");
+	errMsgList.put(ASN1_OVERRUN, "Encoding ended unexpectedly");
+	errMsgList.put(ASN1_BAD_ID, "Identifier doesn't match expected value");
+	errMsgList.put(ASN1_BAD_LENGTH, "Length doesn't match expected value");
+	errMsgList.put(ASN1_BAD_FORMAT, "Badly-formatted encoding");
+	errMsgList.put(ASN1_PARSE_ERROR, "Parse error");
+	errMsgList.put(ASN1_BAD_CLASS, "Bad class number");
+	errMsgList.put(ASN1_BAD_TYPE, "Bad type number");
+	errMsgList.put(ASN1_BAD_TAG, "Bad tag number");
+	errMsgList.put(ASN1_UNSUPPORTED_TYPE, "Unsupported ASN.1 type encountered");
+	errMsgList.put(ASN1_CANNOT_ENCODE, "Encoding failed due to invalid parameter(s)");
+	errMsgList.put(KRB_CRYPTO_NOT_SUPPORT, "Client has no support for crypto type");
+	errMsgList.put(KRB_AP_ERR_REQ_OPTIONS, "Invalid option setting in ticket request.");
         errMsgList.put(KRB_AP_ERR_GEN_CRED, "Fail to create credential.");
     }
 

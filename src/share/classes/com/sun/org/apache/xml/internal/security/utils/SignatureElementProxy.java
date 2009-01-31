@@ -31,6 +31,7 @@ import org.w3c.dom.Element;
  * Class SignatureElementProxy
  *
  * @author $Author: raul $
+ * @version $Revision: 1.7 $
  */
 public abstract class SignatureElementProxy extends ElementProxy {
 

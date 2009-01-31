@@ -62,104 +62,104 @@ public class ThaiRules {
     public static final byte NOREPLACE = 2;
 
     public static final byte[] CHARTYPE = {
-    /* 0e00 UNUSED                      */      NON,
-    /* THAI CHARACTER KO KAI            */      CONS,
-    /* THAI CHARACTER KHO KHAI          */      CONS,
-    /* THAI CHARACTER KHO KHUAT         */      CONS,
-    /* THAI CHARACTER KHO KHWAI         */      CONS,
-    /* THAI CHARACTER KHO KHON          */      CONS,
-    /* THAI CHARACTER KHO RAKHANG       */      CONS,
-    /* THAI CHARACTER NGO NGU           */      CONS,
-    /* THAI CHARACTER CHO CHAN          */      CONS,
-    /* THAI CHARACTER CHO CHING         */      CONS,
-    /* THAI CHARACTER CHO CHANG         */      CONS,
-    /* THAI CHARACTER SO SO             */      CONS,
-    /* THAI CHARACTER CHO CHOE          */      CONS,
-    /* THAI CHARACTER YO YING           */      CONS,
-    /* THAI CHARACTER DO CHADA          */      CONS,
-    /* THAI CHARACTER TO PATAK          */      CONS,
-    /* THAI CHARACTER THO THAN          */      CONS,
-    /* THAI CHARACTER THO NANGMONTHO    */      CONS,
-    /* THAI CHARACTER THO PHUTHAO       */      CONS,
-    /* THAI CHARACTER NO NEN            */      CONS,
-    /* THAI CHARACTER DO DEK            */      CONS,
-    /* THAI CHARACTER TO TAO            */      CONS,
-    /* THAI CHARACTER THO THUNG         */      CONS,
-    /* THAI CHARACTER THO THAHAN        */      CONS,
-    /* THAI CHARACTER THO THONG         */      CONS,
-    /* THAI CHARACTER NO NU             */      CONS,
-    /* THAI CHARACTER BO BAIMAI         */      CONS,
-    /* THAI CHARACTER PO PLA            */      CONS,
-    /* THAI CHARACTER PHO PHUNG         */      CONS,
-    /* THAI CHARACTER FO FA             */      CONS,
-    /* THAI CHARACTER PHO PHAN          */      CONS,
-    /* THAI CHARACTER FO FAN            */      CONS,
-    /* THAI CHARACTER PHO SAMPHAO       */      CONS,
-    /* THAI CHARACTER MO MA             */      CONS,
-    /* THAI CHARACTER YO YAK            */      CONS,
-    /* THAI CHARACTER RO RUA            */      CONS,
-    /* THAI CHARACTER RU                */      FV3,
-    /* THAI CHARACTER LO LING           */      CONS,
-    /* THAI CHARACTER LU                */      FV3,
-    /* THAI CHARACTER WO WAEN           */      CONS,
-    /* THAI CHARACTER SO SALA           */      CONS,
-    /* THAI CHARACTER SO RUSI           */      CONS,
-    /* THAI CHARACTER SO SUA            */      CONS,
-    /* THAI CHARACTER HO HIP            */      CONS,
-    /* THAI CHARACTER LO CHULA          */      CONS,
-    /* THAI CHARACTER O ANG             */      CONS,
-    /* THAI CHARACTER HO NOKHUK         */      CONS,
-    /* THAI CHARACTER PAIYANNOI         */      NON,
-    /* THAI CHARACTER SARA A            */      FV1,
-    /* THAI CHARACTER MAI HAN-AKAT      */      AV2,
-    /* THAI CHARACTER SARA AA           */      FV1,
-    /* THAI CHARACTER SARA AM           */      FV4,
-    /* THAI CHARACTER SARA I            */      AV1,
-    /* THAI CHARACTER SARA II           */      AV3,
-    /* THAI CHARACTER SARA UE           */      AV2,
-    /* THAI CHARACTER SARA UEE          */      AV3,
-    /* THAI CHARACTER SARA U            */      BV1,
-    /* THAI CHARACTER SARA UU           */      BV2,
-    /* THAI CHARACTER PHINTHU           */      BD,
-    /* 0e3b UNUSED                      */      NON,
-    /* 0e3c UNUSED                      */      NON,
-    /* 0e3d UNUSED                      */      NON,
-    /* 0e3e UNUSED                      */      NON,
-    /* THAI CURRENCY SYMBOL BAHT        */      NON,
-    /* THAI CHARACTER SARA E            */      LV,
-    /* THAI CHARACTER SARA AE           */      LV,
-    /* THAI CHARACTER SARA O            */      LV,
-    /* THAI CHARACTER SARA AI MAIMUAN   */      LV,
-    /* THAI CHARACTER SARA AI MAIMALAI  */      LV,
-    /* THAI CHARACTER LAKKHANGYAO       */      FV2,
-    /* THAI CHARACTER MAIYAMOK          */      NON,
-    /* THAI CHARACTER MAITAIKHU         */      AD2,
-    /* THAI CHARACTER MAI EK            */      TONE,
-    /* THAI CHARACTER MAI THO           */      TONE,
-    /* THAI CHARACTER MAI TRI           */      TONE,
-    /* THAI CHARACTER MAI CHATTAWA      */      TONE,
-    /* THAI CHARACTER THANTHAKHAT       */      AD1,
-    /* THAI CHARACTER NIKHAHIT          */      AD3,
-    /* THAI CHARACTER YAMAKKAN          */      AD3,
-    /* THAI CHARACTER FONGMAN           */      NON,
-    /* THAI DIGIT ZERO                  */      NON,
-    /* THAI DIGIT ONE                   */      NON,
-    /* THAI DIGIT TWO                   */      NON,
-    /* THAI DIGIT THREE                 */      NON,
-    /* THAI DIGIT FOUR                  */      NON,
-    /* THAI DIGIT FIVE                  */      NON,
-    /* THAI DIGIT SIX                   */      NON,
-    /* THAI DIGIT SEVEN                 */      NON,
-    /* THAI DIGIT EIGHT                 */      NON,
-    /* THAI DIGIT NINE                  */      NON,
-    /* THAI CHARACTER ANGKHANKHU        */      NON,
-    /* THAI CHARACTER KHOMUT            */      NON
+    /* 0e00 UNUSED			*/	NON,
+    /* THAI CHARACTER KO KAI		*/	CONS,
+    /* THAI CHARACTER KHO KHAI		*/	CONS,
+    /* THAI CHARACTER KHO KHUAT		*/	CONS,
+    /* THAI CHARACTER KHO KHWAI		*/	CONS,
+    /* THAI CHARACTER KHO KHON		*/	CONS,
+    /* THAI CHARACTER KHO RAKHANG	*/	CONS,
+    /* THAI CHARACTER NGO NGU		*/	CONS,
+    /* THAI CHARACTER CHO CHAN		*/	CONS,
+    /* THAI CHARACTER CHO CHING		*/	CONS,
+    /* THAI CHARACTER CHO CHANG		*/	CONS,
+    /* THAI CHARACTER SO SO		*/	CONS,
+    /* THAI CHARACTER CHO CHOE		*/	CONS,
+    /* THAI CHARACTER YO YING		*/	CONS,
+    /* THAI CHARACTER DO CHADA		*/	CONS,
+    /* THAI CHARACTER TO PATAK		*/	CONS,
+    /* THAI CHARACTER THO THAN		*/	CONS,
+    /* THAI CHARACTER THO NANGMONTHO	*/	CONS,
+    /* THAI CHARACTER THO PHUTHAO	*/	CONS,
+    /* THAI CHARACTER NO NEN		*/	CONS,
+    /* THAI CHARACTER DO DEK		*/	CONS,
+    /* THAI CHARACTER TO TAO		*/	CONS,
+    /* THAI CHARACTER THO THUNG		*/	CONS,
+    /* THAI CHARACTER THO THAHAN	*/	CONS,
+    /* THAI CHARACTER THO THONG		*/	CONS,
+    /* THAI CHARACTER NO NU		*/	CONS,
+    /* THAI CHARACTER BO BAIMAI		*/	CONS,
+    /* THAI CHARACTER PO PLA		*/	CONS,
+    /* THAI CHARACTER PHO PHUNG		*/	CONS,
+    /* THAI CHARACTER FO FA		*/	CONS,
+    /* THAI CHARACTER PHO PHAN		*/	CONS,
+    /* THAI CHARACTER FO FAN		*/	CONS,
+    /* THAI CHARACTER PHO SAMPHAO	*/	CONS,
+    /* THAI CHARACTER MO MA		*/	CONS,
+    /* THAI CHARACTER YO YAK		*/	CONS,
+    /* THAI CHARACTER RO RUA		*/	CONS,
+    /* THAI CHARACTER RU		*/	FV3,
+    /* THAI CHARACTER LO LING		*/	CONS,
+    /* THAI CHARACTER LU		*/	FV3,
+    /* THAI CHARACTER WO WAEN		*/	CONS,
+    /* THAI CHARACTER SO SALA		*/	CONS,
+    /* THAI CHARACTER SO RUSI		*/	CONS,
+    /* THAI CHARACTER SO SUA		*/	CONS,
+    /* THAI CHARACTER HO HIP		*/	CONS,
+    /* THAI CHARACTER LO CHULA		*/	CONS,
+    /* THAI CHARACTER O ANG		*/	CONS,
+    /* THAI CHARACTER HO NOKHUK		*/	CONS,
+    /* THAI CHARACTER PAIYANNOI		*/	NON,
+    /* THAI CHARACTER SARA A		*/	FV1,
+    /* THAI CHARACTER MAI HAN-AKAT	*/	AV2,
+    /* THAI CHARACTER SARA AA		*/	FV1,
+    /* THAI CHARACTER SARA AM		*/	FV4,
+    /* THAI CHARACTER SARA I		*/	AV1,
+    /* THAI CHARACTER SARA II		*/	AV3,
+    /* THAI CHARACTER SARA UE		*/	AV2,
+    /* THAI CHARACTER SARA UEE		*/	AV3,
+    /* THAI CHARACTER SARA U		*/	BV1,
+    /* THAI CHARACTER SARA UU		*/	BV2,
+    /* THAI CHARACTER PHINTHU		*/	BD,
+    /* 0e3b UNUSED			*/	NON,
+    /* 0e3c UNUSED			*/	NON,
+    /* 0e3d UNUSED			*/	NON,
+    /* 0e3e UNUSED			*/	NON,
+    /* THAI CURRENCY SYMBOL BAHT	*/	NON,
+    /* THAI CHARACTER SARA E		*/	LV,
+    /* THAI CHARACTER SARA AE		*/	LV,
+    /* THAI CHARACTER SARA O		*/	LV,
+    /* THAI CHARACTER SARA AI MAIMUAN	*/	LV,
+    /* THAI CHARACTER SARA AI MAIMALAI	*/	LV,
+    /* THAI CHARACTER LAKKHANGYAO	*/	FV2,
+    /* THAI CHARACTER MAIYAMOK		*/	NON,
+    /* THAI CHARACTER MAITAIKHU		*/	AD2,
+    /* THAI CHARACTER MAI EK		*/	TONE,
+    /* THAI CHARACTER MAI THO		*/	TONE,
+    /* THAI CHARACTER MAI TRI		*/	TONE,
+    /* THAI CHARACTER MAI CHATTAWA	*/	TONE,
+    /* THAI CHARACTER THANTHAKHAT	*/	AD1,
+    /* THAI CHARACTER NIKHAHIT		*/	AD3,
+    /* THAI CHARACTER YAMAKKAN		*/	AD3,
+    /* THAI CHARACTER FONGMAN		*/	NON,
+    /* THAI DIGIT ZERO			*/	NON,
+    /* THAI DIGIT ONE			*/	NON,
+    /* THAI DIGIT TWO			*/	NON,
+    /* THAI DIGIT THREE			*/	NON,
+    /* THAI DIGIT FOUR			*/	NON,
+    /* THAI DIGIT FIVE			*/	NON,
+    /* THAI DIGIT SIX			*/	NON,
+    /* THAI DIGIT SEVEN			*/	NON,
+    /* THAI DIGIT EIGHT			*/	NON,
+    /* THAI DIGIT NINE			*/	NON,
+    /* THAI CHARACTER ANGKHANKHU	*/	NON,
+    /* THAI CHARACTER KHOMUT 		*/	NON
     };
 
     private InputMethodRequests requests;
 
     ThaiRules(InputMethodRequests requests) {
-        this.requests = requests;
+	this.requests = requests;
     }
 
     public static byte getCharType(char c) {
@@ -195,23 +195,23 @@ public class ThaiRules {
      */
 
     private static final int[] INPUTVALIDITY = {
-    /* NON  1110 010  0 0000 0000 0 */          0x00027,
-    /* CONS 1111 111  1 1111 1111 1 */          0x1ffff,
-    /* LV   0100 000  0 0000 0000 0 */          0x00002,
-    /* FV1  1110 010  0 0000 0000 0 */          0x00027,
-    /* FV2  1110 010  0 0000 0000 0 */          0x00027,
-    /* FV3  1110 110  0 0000 0000 0 */          0x00037,
-    /* FV4  1110 010  0 0000 0000 0 */          0x00027,
-    /* BV1  1110 010  0 0011 0000 0 */          0x00c27,
-    /* BV2  1110 010  0 0010 0000 0 */          0x00427,
-    /* BD   1110 010  0 0000 0000 0 */          0x00027,
+    /* NON  1110 010  0 0000 0000 0 */		0x00027,
+    /* CONS 1111 111  1 1111 1111 1 */		0x1ffff,
+    /* LV   0100 000  0 0000 0000 0 */		0x00002,
+    /* FV1  1110 010  0 0000 0000 0 */		0x00027,
+    /* FV2  1110 010  0 0000 0000 0 */		0x00027,
+    /* FV3  1110 110  0 0000 0000 0 */		0x00037,
+    /* FV4  1110 010  0 0000 0000 0 */		0x00027,
+    /* BV1  1110 010  0 0011 0000 0 */		0x00c27,
+    /* BV2  1110 010  0 0010 0000 0 */		0x00427,
+    /* BD   1110 010  0 0000 0000 0 */		0x00027,
     /* TONE 1111 011  0 0000 0000 0 */          0x0006f,
-    /* AD1  1110 010  0 0000 0000 0 */          0x00027,
-    /* AD2  1110 010  0 0000 0000 0 */          0x00027,
-    /* AD3  1110 010  0 0000 0000 0 */          0x00027,
+    /* AD1  1110 010  0 0000 0000 0 */		0x00027,
+    /* AD2  1110 010  0 0000 0000 0 */		0x00027,
+    /* AD3  1110 010  0 0000 0000 0 */		0x00027,
     /* AV1  1110 010  0 0011 0000 0 */          0x00c27,
-    /* AV2  1110 010  0 0010 0000 0 */          0x00427,
-    /* AV3  1110 010  0 0010 0100 0 */          0x02427
+    /* AV2  1110 010  0 0010 0000 0 */		0x00427,
+    /* AV3  1110 010  0 0010 0100 0 */		0x02427
     };
 
     private static final int[] COMPOSABLE = {
@@ -275,7 +275,7 @@ public class ThaiRules {
     };
 
     public static boolean isInputValid(char c1, char c2) {
-        return isValid(c1, c2, INPUTVALIDITY);
+	return isValid(c1, c2, INPUTVALIDITY);
     }
 
     public static boolean isComposable(char c1, char c2) {
@@ -283,7 +283,7 @@ public class ThaiRules {
     }
 
     public static boolean isSwappable(char c1, char c2) {
-        return isValid(c1, c2, SWAPPABLE);
+	return isValid(c1, c2, SWAPPABLE);
     }
 
     public static boolean isReplacable(char c1, char c2) {
@@ -299,13 +299,13 @@ public class ThaiRules {
     }
 
     public boolean isInputValid(char current) {
-        int offset = requests.getInsertPositionOffset();
+	int offset = requests.getInsertPositionOffset();
         if (offset == 0) {
             byte charType = getCharType(current);
             return ((charType < FV1) || (charType == FV3));
         }
         else {
-            char prev = requests.getCommittedText(offset-1, offset, null).first();
+	    char prev = requests.getCommittedText(offset-1, offset, null).first();
 
             if(isForward(current)) {
                 if (isInputValid(prev, current)) {
@@ -314,23 +314,23 @@ public class ThaiRules {
                         if (offset == 1) {
                             return true;
                         } else {
-                            char pprev =
-                                requests.getCommittedText(offset-2, offset-1, null).first();
-                            return isInputValid(pprev, current);
-                        }
+			    char pprev = 
+			        requests.getCommittedText(offset-2, offset-1, null).first();
+			    return isInputValid(pprev, current);
+			}
                     } else {
                         return true;
                     }
                 } else if (prev == '\u0e32' &&       // SARA AA
-                           current  == '\u0e30') {   // SARA A
-                    return true;
-                } else if (prev == '\u0e4d' &&       // NIKAHIT
-                           current  == '\u0e32') {   // SARA AA
-                                                     // Special compose to SARA AM
-                    return true;
-                } else {
-                    return false;
-                }
+			   current  == '\u0e30') {   // SARA A
+		    return true;
+		} else if (prev == '\u0e4d' &&       // NIKAHIT
+		           current  == '\u0e32') {   // SARA AA
+						     // Special compose to SARA AM
+		    return true;
+		} else {
+		    return false;
+		}
             } else {
                 if(isInputValid(prev, current)) {
                     if (getCharType(prev) == TONE &&
@@ -339,9 +339,9 @@ public class ThaiRules {
                     } else {
                         return true;
                     }
-                } else {
-                    return false;
-                }
+                } else { 
+		    return false;
+		}
             }
         }
     }

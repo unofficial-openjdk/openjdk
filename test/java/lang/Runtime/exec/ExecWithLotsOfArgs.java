@@ -37,81 +37,81 @@ import java.io.IOException;
 public class ExecWithLotsOfArgs {
 
     public static class EchoingHelper {
-        public static void main(String[] args) {
-            for (int i = 0; i < args.length; i++) {
-                System.out.println(args[i]);
-            }
-        }
+	public static void main(String[] args) {
+	    for (int i = 0; i < args.length; i++) {
+		System.out.println(args[i]);
+	    }
+	}
     }
 
     public static void main(String[] args) throws Exception {
         String[] command = new String[300];
-        int n = 0;
+	int n = 0;
 
-        /*
-         * The Java program to exec. This is slightly fragile. Works
-         * on Solaris and Win32.
-         */
-        command[n++] = System.getProperty("java.home") + File.separator +
-            "bin" + File.separator + "java";
-        if (System.getProperty("java.class.path") != null) {
-            command[n++] = "-classpath";
-            command[n++] = System.getProperty("java.class.path");
-        }
+	/*
+	 * The Java program to exec. This is slightly fragile. Works
+	 * on Solaris and Win32.
+	 */
+ 	command[n++] = System.getProperty("java.home") + File.separator + 
+	    "bin" + File.separator + "java";
+	if (System.getProperty("java.class.path") != null) {
+	    command[n++] = "-classpath";
+	    command[n++] = System.getProperty("java.class.path");
+	}
 
-        /*
-         * The class with main() that the exec'd VM will run.
-         */
-        command[n++] = "ExecWithLotsOfArgs$EchoingHelper";
+	/* 
+	 * The class with main() that the exec'd VM will run.
+	 */
+	command[n++] = "ExecWithLotsOfArgs$EchoingHelper";
 
-        /*
-         * Make a long set of args n, n + 1, ... , 300.
-         */
-        for (int i = n; i < command.length; i++) {
-            command[i] = new String(new Integer(i).toString());
-        }
+	/*
+	 * Make a long set of args n, n + 1, ... , 300.
+	 */
+	for (int i = n; i < command.length; i++) {
+	    command[i] = new String(new Integer(i).toString());
+	}
 
-        /*
-         * Do the exec.
-         */
-        Process p = null;
-        p = Runtime.getRuntime().exec(command);
-        BufferedReader in = new BufferedReader
-            (new InputStreamReader(p.getInputStream()));
+	/*
+	 * Do the exec.
+	 */
+	Process p = null;
+	p = Runtime.getRuntime().exec(command);
+	BufferedReader in = new BufferedReader
+	    (new InputStreamReader(p.getInputStream()));
 
-        /*
-         * Read back all the strings and that the same were returned.
-         */
-        String s;
-        int count = n;
-        while ((s = in.readLine()) != null) {
-            if (count >= command.length) {
-                failed("Was expecting " + (command.length - 2) +
-                       " strings to be echo'ed back, but got " +
-                       (count - 1) + " instead");
-            }
-            if (!s.equals(command[count])) {
-                failed("Exec'd process returned \"" +
-                       s + "\", was expecting \""  +
-                       command[count] + "\"");
-            }
-            count++;
-        }
+	/*
+	 * Read back all the strings and that the same were returned.
+	 */
+	String s;
+	int count = n;
+	while ((s = in.readLine()) != null) {
+	    if (count >= command.length) {
+		failed("Was expecting " + (command.length - 2) + 
+		       " strings to be echo'ed back, but got " +
+		       (count - 1) + " instead");
+	    }
+	    if (!s.equals(command[count])) {
+		failed("Exec'd process returned \"" + 
+		       s + "\", was expecting \""  +
+		       command[count] + "\"");
+	    }
+	    count++;
+	}
 
-        /*
-         * Did we read anything at all?
-         */
-        if (count == n) {
-            /* Try reading the error stream to see if we got any diagnostics */
-            in = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-            while ((s = in.readLine()) != null) {
-                System.err.println("Error output: " + s);
-            }
-            failed("Exec'd process didn't writing anything to its stdout");
-        }
+	/*
+	 * Did we read anything at all?
+	 */
+	if (count == n) {
+	    /* Try reading the error stream to see if we got any diagnostics */
+	    in = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+	    while ((s = in.readLine()) != null) {
+		System.err.println("Error output: " + s);
+	    }
+	    failed("Exec'd process didn't writing anything to its stdout");
+	}
     }
 
     private static void failed(String s) {
-        throw new RuntimeException("Failed: " + s);
+	throw new RuntimeException("Failed: " + s);
     }
 }

@@ -53,8 +53,8 @@ import java.lang.management.*;
 public class GetFreePhysicalMemorySize {
 
     private static OperatingSystemMXBean mbean =
-        (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
+	(com.sun.management.OperatingSystemMXBean)
+	ManagementFactory.getOperatingSystemMXBean();
 
     // Careful with these values.
     private static final long MIN_SIZE_FOR_PASS = 1;
@@ -68,24 +68,24 @@ public class GetFreePhysicalMemorySize {
             trace = true;
         }
 
-        long max_size = mbean.getTotalPhysicalMemorySize();
-        if (max_size > 0) {
-            max_size_for_pass = max_size;
-        }
+	long max_size = mbean.getTotalPhysicalMemorySize();
+	if (max_size > 0) {
+	    max_size_for_pass = max_size;
+	}
 
-        long size = mbean.getFreePhysicalMemorySize();
+	long size = mbean.getFreePhysicalMemorySize();
 
-        if (trace) {
-            System.out.println("Free physical memory size in bytes: " + size);
-        }
+	if (trace) {
+	    System.out.println("Free physical memory size in bytes: " + size);
+	}
 
-        if (size < MIN_SIZE_FOR_PASS || size > max_size_for_pass) {
-            throw new RuntimeException("Free physical memory size " +
-                                       "illegal value: " + size + " bytes " +
-                                       "(MIN = " + MIN_SIZE_FOR_PASS + "; " +
-                                       "MAX = " + max_size_for_pass + ")");
-        }
-
-        System.out.println("Test passed.");
+	if (size < MIN_SIZE_FOR_PASS || size > max_size_for_pass) {
+	    throw new RuntimeException("Free physical memory size " +
+				       "illegal value: " + size + " bytes " + 
+				       "(MIN = " + MIN_SIZE_FOR_PASS + "; " +
+				       "MAX = " + max_size_for_pass + ")");
+	}
+	
+	System.out.println("Test passed.");
     }
 }

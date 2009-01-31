@@ -39,18 +39,19 @@ public class CharToByteMS932 extends CharToByteMS932DB {
     }
 
     protected int convSingleByte(char inputChar, byte[] outputByte) {
-        byte b;
+	byte b;
 
-        // \u0000 - \u007F map straight through
-        if ((inputChar &0xFF80) == 0) {
-            outputByte[0] = (byte)inputChar;
-            return 1;
-        }
+	// \u0000 - \u007F map straight through
+	if ((inputChar &0xFF80) == 0) {
+	    outputByte[0] = (byte)inputChar;
+	    return 1;
+	}
 
-        if ((b = cbJIS0201.getNative(inputChar)) == 0)
-            return 0;
+	if ((b = cbJIS0201.getNative(inputChar)) == 0)
+	    return 0;
 
-        outputByte[0] = b;
-        return 1;
+	outputByte[0] = b;
+	return 1;
     }
 }
+

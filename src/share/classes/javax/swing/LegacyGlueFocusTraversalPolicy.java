@@ -40,6 +40,7 @@ import java.io.*;
  * been hard coded, then that traversal is provided either by the custom
  * DefaultFocusManager, or by a wrapped FocusTraversalPolicy instance.
  *
+ * @version %I%, %G%
  * @author David Mendenhall
  */
 final class LegacyGlueFocusTraversalPolicy extends FocusTraversalPolicy
@@ -77,7 +78,7 @@ final class LegacyGlueFocusTraversalPolicy extends FocusTraversalPolicy
             hardCoded = (Component)forwardMap.get(hardCoded);
             if (hardCoded == null) {
                 if (delegatePolicy != null &&
-                    prevHardCoded.isFocusCycleRoot(focusCycleRoot)) {
+		    prevHardCoded.isFocusCycleRoot(focusCycleRoot)) {
                     return delegatePolicy.getComponentAfter(focusCycleRoot,
                                                             prevHardCoded);
                 } else if (delegateManager != null) {
@@ -106,7 +107,7 @@ final class LegacyGlueFocusTraversalPolicy extends FocusTraversalPolicy
             hardCoded = (Component)backwardMap.get(hardCoded);
             if (hardCoded == null) {
                 if (delegatePolicy != null &&
-                    prevHardCoded.isFocusCycleRoot(focusCycleRoot)) {
+		    prevHardCoded.isFocusCycleRoot(focusCycleRoot)) {
                     return delegatePolicy.getComponentBefore(focusCycleRoot,
                                                        prevHardCoded);
                 } else if (delegateManager != null) {

@@ -39,6 +39,7 @@ import sun.swing.table.*;
 /**
  * SynthTableHeaderUI implementation
  *
+ * @version %I%, %G%
  * @author Alan Chung
  * @author Philip Milne
  */

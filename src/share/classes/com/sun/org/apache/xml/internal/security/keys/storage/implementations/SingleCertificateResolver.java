@@ -62,6 +62,7 @@ public class SingleCertificateResolver extends StorageResolverSpi {
     * Class InternalIterator
     *
     * @author $Author: raul $
+    * @version $Revision: 1.6 $
     */
    class InternalIterator implements Iterator {
 

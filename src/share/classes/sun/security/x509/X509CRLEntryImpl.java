@@ -22,21 +22,18 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package sun.security.x509;
 
 import java.io.InputStream;
 import java.io.IOException;
 import java.security.cert.CRLException;
-import java.security.cert.CRLReason;
 import java.security.cert.CertificateException;
 import java.security.cert.X509CRLEntry;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -73,6 +70,7 @@ import sun.misc.HexDumpEncoder;
  * </pre>
  *
  * @author Hemma Prafullchandra
+ * @version %I% %G%
  */
 
 public class X509CRLEntryImpl extends X509CRLEntry {
@@ -152,7 +150,7 @@ public class X509CRLEntryImpl extends X509CRLEntry {
      * false.
      */
     public boolean hasExtensions() {
-        return (extensions != null);
+	return (extensions != null);
     }
 
     /**
@@ -180,7 +178,7 @@ public class X509CRLEntryImpl extends X509CRLEntry {
 
                 DerOutputStream seq = new DerOutputStream();
                 seq.write(DerValue.tag_Sequence, tmp);
-
+ 
                 revokedCert = seq.toByteArray();
             }
             outStrm.write(revokedCert);
@@ -192,9 +190,9 @@ public class X509CRLEntryImpl extends X509CRLEntry {
     /**
      * Returns the ASN.1 DER-encoded form of this CRL Entry,
      * which corresponds to the inner SEQUENCE.
-     *
+     *   
      * @exception CRLException if an encoding error occurs.
-     */
+     */  
     public byte[] getEncoded() throws CRLException {
         if (revokedCert == null)
             this.encode(new DerOutputStream());
@@ -203,21 +201,21 @@ public class X509CRLEntryImpl extends X509CRLEntry {
 
     @Override
     public X500Principal getCertificateIssuer() {
-        return certIssuer;
+	return certIssuer;
     }
-
+    
     void setCertificateIssuer(X500Principal crlIssuer, X500Principal certIssuer) {
-        if (crlIssuer.equals(certIssuer)) {
-            this.certIssuer = null;
-        } else {
-            this.certIssuer = certIssuer;
-        }
+	if (crlIssuer.equals(certIssuer)) {
+	    this.certIssuer = null;
+	} else {
+	    this.certIssuer = certIssuer;
+	}
     }
 
     /**
      * Gets the serial number from this X509CRLEntry,
      * i.e. the <em>userCertificate</em>.
-     *
+     * 
      * @return the serial number.
      */
     public BigInteger getSerialNumber() {
@@ -227,7 +225,7 @@ public class X509CRLEntryImpl extends X509CRLEntry {
     /**
      * Gets the revocation date from this X509CRLEntry,
      * the <em>revocationDate</em>.
-     *
+     * 
      * @return the revocation date.
      */
     public Date getRevocationDate() {
@@ -235,47 +233,11 @@ public class X509CRLEntryImpl extends X509CRLEntry {
     }
 
     /**
-     * This method is the overridden implementation of the getRevocationReason
-     * method in X509CRLEntry. It is better performance-wise since it returns
-     * cached values.
-     */
-    @Override
-    public CRLReason getRevocationReason() {
-        Extension ext = getExtension(PKIXExtensions.ReasonCode_Id);
-        if (ext == null) {
-            return null;
-        }
-        CRLReasonCodeExtension rcExt = (CRLReasonCodeExtension) ext;
-        return rcExt.getReasonCode();
-    }
-
-    /**
-     * This static method is the default implementation of the
-     * getRevocationReason method in X509CRLEntry.
-     */
-    public static CRLReason getRevocationReason(X509CRLEntry crlEntry) {
-        try {
-            byte[] ext = crlEntry.getExtensionValue("2.5.29.21");
-            if (ext == null) {
-                return null;
-            }
-            DerValue val = new DerValue(ext);
-            byte[] data = val.getOctetString();
-
-            CRLReasonCodeExtension rcExt =
-                new CRLReasonCodeExtension(Boolean.FALSE, data);
-            return rcExt.getReasonCode();
-        } catch (IOException ioe) {
-            return null;
-        }
-    }
-
-    /**
      * get Reason Code from CRL entry.
-     *
+     *   
      * @returns Integer or null, if no such extension
      * @throws IOException on error
-     */
+     */  
     public Integer getReasonCode() throws IOException {
         Object obj = getExtension(PKIXExtensions.ReasonCode_Id);
         if (obj == null)
@@ -295,9 +257,9 @@ public class X509CRLEntryImpl extends X509CRLEntry {
 
         sb.append(serialNumber.toString());
         sb.append("  On: " + revocationDate.toString());
-        if (certIssuer != null) {
-            sb.append("\n    Certificate issuer: " + certIssuer);
-        }
+	if (certIssuer != null) {
+	    sb.append("\n    Certificate issuer: " + certIssuer);
+	}
         if (extensions != null) {
             Collection allEntryExts = extensions.getAllExtensions();
             Object[] objs = allEntryExts.toArray();
@@ -330,16 +292,16 @@ public class X509CRLEntryImpl extends X509CRLEntry {
         return sb.toString();
     }
 
-    /**
+    /** 
      * Return true if a critical extension is found that is
-     * not supported, otherwise return false.
-     */
+     * not supported, otherwise return false. 
+     */   
     public boolean hasUnsupportedCriticalExtension() {
         if (extensions == null)
             return false;
-        return extensions.hasUnsupportedCriticalExtension();
-    }
-
+        return extensions.hasUnsupportedCriticalExtension(); 
+    } 
+ 
     /**
      * Gets a Set of the extension(s) marked CRITICAL in this
      * X509CRLEntry.  In the returned set, each extension is
@@ -347,16 +309,16 @@ public class X509CRLEntryImpl extends X509CRLEntry {
      *
      * @return a set of the extension oid strings in the
      * Object that are marked critical.
-     */
+     */  
     public Set<String> getCriticalExtensionOIDs() {
         if (extensions == null) {
             return null;
-        }
+	}
         Set<String> extSet = new HashSet<String>();
-        for (Extension ex : extensions.getAllExtensions()) {
+	for (Extension ex : extensions.getAllExtensions()) {
             if (ex.isCritical()) {
                 extSet.add(ex.getExtensionId().toString());
-            }
+	    }
         }
         return extSet;
     }
@@ -365,20 +327,20 @@ public class X509CRLEntryImpl extends X509CRLEntry {
      * Gets a Set of the extension(s) marked NON-CRITICAL in this
      * X509CRLEntry. In the returned set, each extension is
      * represented by its OID string.
-     *
+     *   
      * @return a set of the extension oid strings in the
      * Object that are marked critical.
-     */
+     */  
     public Set<String> getNonCriticalExtensionOIDs() {
         if (extensions == null) {
             return null;
-        }
+	}
         Set<String> extSet = new HashSet<String>();
-        for (Extension ex : extensions.getAllExtensions()) {
+	for (Extension ex : extensions.getAllExtensions()) {
             if (!ex.isCritical()) {
                 extSet.add(ex.getExtensionId().toString());
-            }
-        }
+	    }
+	}
         return extSet;
     }
 
@@ -469,26 +431,26 @@ public class X509CRLEntryImpl extends X509CRLEntry {
             this.revocationDate = derVal.data.getGeneralizedTime();
         } else
             throw new CRLException("Invalid encoding for revocation date");
-
+        
         if (derVal.data.available() == 0)
             return;  // no extensions
 
         // crlEntryExtensions
         this.extensions = new CRLExtensions(derVal.toDerInputStream());
     }
-
+    
     /**
      * Utility method to convert an arbitrary instance of X509CRLEntry
      * to a X509CRLEntryImpl. Does a cast if possible, otherwise reparses
      * the encoding.
      */
-    public static X509CRLEntryImpl toImpl(X509CRLEntry entry)
-            throws CRLException {
-        if (entry instanceof X509CRLEntryImpl) {
-            return (X509CRLEntryImpl)entry;
-        } else {
-            return new X509CRLEntryImpl(entry.getEncoded());
-        }
+    public static X509CRLEntryImpl toImpl(X509CRLEntry entry) 
+	    throws CRLException {
+	if (entry instanceof X509CRLEntryImpl) {
+	    return (X509CRLEntryImpl)entry;
+	} else {
+	    return new X509CRLEntryImpl(entry.getEncoded());
+	}
     }
 
     /**
@@ -497,17 +459,7 @@ public class X509CRLEntryImpl extends X509CRLEntry {
      * @return the CertificateIssuerExtension, or null if it does not exist
      */
     CertificateIssuerExtension getCertificateIssuerExtension() {
-        return (CertificateIssuerExtension)
-            getExtension(PKIXExtensions.CertificateIssuer_Id);
-    }
-
-    public Map<String, java.security.cert.Extension> getExtensions() {
-        Collection<Extension> exts = extensions.getAllExtensions();
-        HashMap<String, java.security.cert.Extension> map =
-            new HashMap<String, java.security.cert.Extension>(exts.size());
-        for (Extension ext : exts) {
-            map.put(ext.getId(), ext);
-        }
-        return map;
+	return (CertificateIssuerExtension) 
+	    getExtension(PKIXExtensions.CertificateIssuer_Id);
     }
 }

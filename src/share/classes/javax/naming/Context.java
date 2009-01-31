@@ -274,6 +274,7 @@ import java.util.Hashtable;
  * @author Rosanna Lee
  * @author Scott Seligman
  * @author R. Vasudevan
+ * @version %I% %E%
  *
  * @since 1.3
  */
@@ -288,9 +289,9 @@ public interface Context {
      * concurrently).
      *
      * @param name
-     *          the name of the object to look up
-     * @return  the object bound to <tt>name</tt>
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the object to look up
+     * @return	the object bound to <tt>name</tt>
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #lookup(String)
      * @see #lookupLink(Name)
@@ -301,9 +302,9 @@ public interface Context {
      * Retrieves the named object.
      * See {@link #lookup(Name)} for details.
      * @param name
-     *          the name of the object to look up
-     * @return  the object bound to <tt>name</tt>
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the object to look up
+     * @return	the object bound to <tt>name</tt>
+     * @throws	NamingException if a naming exception is encountered
      */
     public Object lookup(String name) throws NamingException;
 
@@ -313,18 +314,18 @@ public interface Context {
      * but terminal atomic component of the name) must already exist.
      *
      * @param name
-     *          the name to bind; may not be empty
+     *		the name to bind; may not be empty
      * @param obj
-     *          the object to bind; possibly null
-     * @throws  NameAlreadyBoundException if name is already bound
-     * @throws  javax.naming.directory.InvalidAttributesException
-     *          if object did not supply all mandatory attributes
-     * @throws  NamingException if a naming exception is encountered
+     *		the object to bind; possibly null
+     * @throws	NameAlreadyBoundException if name is already bound
+     * @throws	javax.naming.directory.InvalidAttributesException
+     *	 	if object did not supply all mandatory attributes
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #bind(String, Object)
      * @see #rebind(Name, Object)
      * @see javax.naming.directory.DirContext#bind(Name, Object,
-     *          javax.naming.directory.Attributes)
+     *		javax.naming.directory.Attributes)
      */
     public void bind(Name name, Object obj) throws NamingException;
 
@@ -333,13 +334,13 @@ public interface Context {
      * See {@link #bind(Name, Object)} for details.
      *
      * @param name
-     *          the name to bind; may not be empty
+     *		the name to bind; may not be empty
      * @param obj
-     *          the object to bind; possibly null
-     * @throws  NameAlreadyBoundException if name is already bound
-     * @throws  javax.naming.directory.InvalidAttributesException
-     *          if object did not supply all mandatory attributes
-     * @throws  NamingException if a naming exception is encountered
+     *		the object to bind; possibly null
+     * @throws	NameAlreadyBoundException if name is already bound
+     * @throws	javax.naming.directory.InvalidAttributesException
+     *	 	if object did not supply all mandatory attributes
+     * @throws	NamingException if a naming exception is encountered
      */
     public void bind(String name, Object obj) throws NamingException;
 
@@ -354,17 +355,17 @@ public interface Context {
      * unchanged.
      *
      * @param name
-     *          the name to bind; may not be empty
+     *		the name to bind; may not be empty
      * @param obj
-     *          the object to bind; possibly null
-     * @throws  javax.naming.directory.InvalidAttributesException
-     *          if object did not supply all mandatory attributes
-     * @throws  NamingException if a naming exception is encountered
+     *		the object to bind; possibly null
+     * @throws	javax.naming.directory.InvalidAttributesException
+     *	 	if object did not supply all mandatory attributes
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #rebind(String, Object)
      * @see #bind(Name, Object)
      * @see javax.naming.directory.DirContext#rebind(Name, Object,
-     *          javax.naming.directory.Attributes)
+     *		javax.naming.directory.Attributes)
      * @see javax.naming.directory.DirContext
      */
     public void rebind(Name name, Object obj) throws NamingException;
@@ -374,12 +375,12 @@ public interface Context {
      * See {@link #rebind(Name, Object)} for details.
      *
      * @param name
-     *          the name to bind; may not be empty
+     *		the name to bind; may not be empty
      * @param obj
-     *          the object to bind; possibly null
-     * @throws  javax.naming.directory.InvalidAttributesException
-     *          if object did not supply all mandatory attributes
-     * @throws  NamingException if a naming exception is encountered
+     *		the object to bind; possibly null
+     * @throws	javax.naming.directory.InvalidAttributesException
+     *	 	if object did not supply all mandatory attributes
+     * @throws	NamingException if a naming exception is encountered
      */
     public void rebind(String name, Object obj) throws NamingException;
 
@@ -399,9 +400,9 @@ public interface Context {
      * Intermediate contexts are not changed.
      *
      * @param name
-     *          the name to unbind; may not be empty
-     * @throws  NameNotFoundException if an intermediate context does not exist
-     * @throws  NamingException if a naming exception is encountered
+     *		the name to unbind; may not be empty
+     * @throws	NameNotFoundException if an intermediate context does not exist
+     * @throws	NamingException if a naming exception is encountered
      * @see #unbind(String)
      */
     public void unbind(Name name) throws NamingException;
@@ -411,9 +412,9 @@ public interface Context {
      * See {@link #unbind(Name)} for details.
      *
      * @param name
-     *          the name to unbind; may not be empty
-     * @throws  NameNotFoundException if an intermediate context does not exist
-     * @throws  NamingException if a naming exception is encountered
+     *		the name to unbind; may not be empty
+     * @throws	NameNotFoundException if an intermediate context does not exist
+     * @throws	NamingException if a naming exception is encountered
      */
     public void unbind(String name) throws NamingException;
 
@@ -425,11 +426,11 @@ public interface Context {
      * Intermediate contexts of the old name are not changed.
      *
      * @param oldName
-     *          the name of the existing binding; may not be empty
+     *		the name of the existing binding; may not be empty
      * @param newName
-     *          the name of the new binding; may not be empty
-     * @throws  NameAlreadyBoundException if <tt>newName</tt> is already bound
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the new binding; may not be empty
+     * @throws	NameAlreadyBoundException if <tt>newName</tt> is already bound
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #rename(String, String)
      * @see #bind(Name, Object)
@@ -443,11 +444,11 @@ public interface Context {
      * See {@link #rename(Name, Name)} for details.
      *
      * @param oldName
-     *          the name of the existing binding; may not be empty
+     *		the name of the existing binding; may not be empty
      * @param newName
-     *          the name of the new binding; may not be empty
-     * @throws  NameAlreadyBoundException if <tt>newName</tt> is already bound
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the new binding; may not be empty
+     * @throws	NameAlreadyBoundException if <tt>newName</tt> is already bound
+     * @throws	NamingException if a naming exception is encountered
      */
     public void rename(String oldName, String newName) throws NamingException;
 
@@ -460,18 +461,18 @@ public interface Context {
      * its effect on an enumeration previously returned is undefined.
      *
      * @param name
-     *          the name of the context to list
-     * @return  an enumeration of the names and class names of the
-     *          bindings in this context.  Each element of the
-     *          enumeration is of type <tt>NameClassPair</tt>.
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context to list
+     * @return	an enumeration of the names and class names of the
+     *		bindings in this context.  Each element of the
+     *		enumeration is of type <tt>NameClassPair</tt>.
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #list(String)
      * @see #listBindings(Name)
      * @see NameClassPair
      */
     public NamingEnumeration<NameClassPair> list(Name name)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Enumerates the names bound in the named context, along with the
@@ -479,14 +480,14 @@ public interface Context {
      * See {@link #list(Name)} for details.
      *
      * @param name
-     *          the name of the context to list
-     * @return  an enumeration of the names and class names of the
-     *          bindings in this context.  Each element of the
-     *          enumeration is of type <tt>NameClassPair</tt>.
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context to list
+     * @return	an enumeration of the names and class names of the
+     *		bindings in this context.  Each element of the
+     *		enumeration is of type <tt>NameClassPair</tt>.
+     * @throws	NamingException if a naming exception is encountered
      */
     public NamingEnumeration<NameClassPair> list(String name)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Enumerates the names bound in the named context, along with the
@@ -497,18 +498,18 @@ public interface Context {
      * its effect on an enumeration previously returned is undefined.
      *
      * @param name
-     *          the name of the context to list
-     * @return  an enumeration of the bindings in this context.
-     *          Each element of the enumeration is of type
-     *          <tt>Binding</tt>.
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context to list
+     * @return	an enumeration of the bindings in this context.
+     *		Each element of the enumeration is of type
+     *		<tt>Binding</tt>.
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #listBindings(String)
      * @see #list(Name)
      * @see Binding
       */
     public NamingEnumeration<Binding> listBindings(Name name)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Enumerates the names bound in the named context, along with the
@@ -516,14 +517,14 @@ public interface Context {
      * See {@link #listBindings(Name)} for details.
      *
      * @param name
-     *          the name of the context to list
-     * @return  an enumeration of the bindings in this context.
-     *          Each element of the enumeration is of type
-     *          <tt>Binding</tt>.
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context to list
+     * @return	an enumeration of the bindings in this context.
+     *		Each element of the enumeration is of type
+     *		<tt>Binding</tt>.
+     * @throws	NamingException if a naming exception is encountered
      */
     public NamingEnumeration<Binding> listBindings(String name)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Destroys the named context and removes it from the namespace.
@@ -549,12 +550,12 @@ public interface Context {
      * on a context from the foreign context's "native" naming system.
      *
      * @param name
-     *          the name of the context to be destroyed; may not be empty
-     * @throws  NameNotFoundException if an intermediate context does not exist
-     * @throws  NotContextException if the name is bound but does not name a
-     *          context, or does not name a context of the appropriate type
-     * @throws  ContextNotEmptyException if the named context is not empty
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context to be destroyed; may not be empty
+     * @throws	NameNotFoundException if an intermediate context does not exist
+     * @throws	NotContextException if the name is bound but does not name a
+     *		context, or does not name a context of the appropriate type
+     * @throws	ContextNotEmptyException if the named context is not empty
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #destroySubcontext(String)
      */
@@ -565,12 +566,12 @@ public interface Context {
      * See {@link #destroySubcontext(Name)} for details.
      *
      * @param name
-     *          the name of the context to be destroyed; may not be empty
-     * @throws  NameNotFoundException if an intermediate context does not exist
-     * @throws  NotContextException if the name is bound but does not name a
-     *          context, or does not name a context of the appropriate type
-     * @throws  ContextNotEmptyException if the named context is not empty
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context to be destroyed; may not be empty
+     * @throws	NameNotFoundException if an intermediate context does not exist
+     * @throws	NotContextException if the name is bound but does not name a
+     *		context, or does not name a context of the appropriate type
+     * @throws	ContextNotEmptyException if the named context is not empty
+     * @throws	NamingException if a naming exception is encountered
      */
     public void destroySubcontext(String name) throws NamingException;
 
@@ -582,14 +583,14 @@ public interface Context {
      * target context must already exist.
      *
      * @param name
-     *          the name of the context to create; may not be empty
-     * @return  the newly created context
+     *		the name of the context to create; may not be empty
+     * @return	the newly created context
      *
-     * @throws  NameAlreadyBoundException if name is already bound
-     * @throws  javax.naming.directory.InvalidAttributesException
-     *          if creation of the subcontext requires specification of
-     *          mandatory attributes
-     * @throws  NamingException if a naming exception is encountered
+     * @throws	NameAlreadyBoundException if name is already bound
+     * @throws	javax.naming.directory.InvalidAttributesException
+     *		if creation of the subcontext requires specification of
+     *		mandatory attributes
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #createSubcontext(String)
      * @see javax.naming.directory.DirContext#createSubcontext
@@ -601,14 +602,14 @@ public interface Context {
      * See {@link #createSubcontext(Name)} for details.
      *
      * @param name
-     *          the name of the context to create; may not be empty
-     * @return  the newly created context
+     *		the name of the context to create; may not be empty
+     * @return	the newly created context
      *
-     * @throws  NameAlreadyBoundException if name is already bound
-     * @throws  javax.naming.directory.InvalidAttributesException
-     *          if creation of the subcontext requires specification of
-     *          mandatory attributes
-     * @throws  NamingException if a naming exception is encountered
+     * @throws	NameAlreadyBoundException if name is already bound
+     * @throws	javax.naming.directory.InvalidAttributesException
+     *		if creation of the subcontext requires specification of
+     *		mandatory attributes
+     * @throws	NamingException if a naming exception is encountered
      */
     public Context createSubcontext(String name) throws NamingException;
 
@@ -619,10 +620,10 @@ public interface Context {
      * returns the object itself.
      *
      * @param name
-     *          the name of the object to look up
-     * @return  the object bound to <tt>name</tt>, not following the
-     *          terminal link (if any).
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the object to look up
+     * @return	the object bound to <tt>name</tt>, not following the
+     *		terminal link (if any).
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #lookupLink(String)
      */
@@ -634,10 +635,10 @@ public interface Context {
      * See {@link #lookupLink(Name)} for details.
      *
      * @param name
-     *          the name of the object to look up
-     * @return  the object bound to <tt>name</tt>, not following the
-     *          terminal link (if any)
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the object to look up
+     * @return	the object bound to <tt>name</tt>, not following the
+     *		terminal link (if any)
+     * @throws	NamingException if a naming exception is encountered
      */
     public Object lookupLink(String name) throws NamingException;
 
@@ -652,10 +653,10 @@ public interface Context {
      * test).
      *
      * @param name
-     *          the name of the context from which to get the parser
-     * @return  a name parser that can parse compound names into their atomic
-     *          components
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context from which to get the parser
+     * @return	a name parser that can parse compound names into their atomic
+     *		components
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #getNameParser(String)
      * @see CompoundName
@@ -667,10 +668,10 @@ public interface Context {
      * See {@link #getNameParser(Name)} for details.
      *
      * @param name
-     *          the name of the context from which to get the parser
-     * @return  a name parser that can parse compound names into their atomic
-     *          components
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the context from which to get the parser
+     * @return	a name parser that can parse compound names into their atomic
+     *		components
+     * @throws	NamingException if a naming exception is encountered
      */
     public NameParser getNameParser(String name) throws NamingException;
 
@@ -689,27 +690,27 @@ public interface Context {
      * For example, if this context is named "wiz.com" relative
      * to the initial context, then
      * <pre>
-     *  composeName("east", "wiz.com")  </pre>
+     *	composeName("east", "wiz.com")	</pre>
      * might return <code>"east.wiz.com"</code>.
      * If instead this context is named "org/research", then
      * <pre>
-     *  composeName("user/jane", "org/research")        </pre>
+     *	composeName("user/jane", "org/research")	</pre>
      * might return <code>"org/research/user/jane"</code> while
      * <pre>
-     *  composeName("user/jane", "research")    </pre>
+     *	composeName("user/jane", "research")	</pre>
      * returns <code>"research/user/jane"</code>.
      *
      * @param name
-     *          a name relative to this context
+     *		a name relative to this context
      * @param prefix
-     *          the name of this context relative to one of its ancestors
-     * @return  the composition of <code>prefix</code> and <code>name</code>
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of this context relative to one of its ancestors
+     * @return	the composition of <code>prefix</code> and <code>name</code>
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #composeName(String, String)
      */
     public Name composeName(Name name, Name prefix)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Composes the name of this context with a name relative to
@@ -717,14 +718,14 @@ public interface Context {
      * See {@link #composeName(Name, Name)} for details.
      *
      * @param name
-     *          a name relative to this context
+     *		a name relative to this context
      * @param prefix
-     *          the name of this context relative to one of its ancestors
-     * @return  the composition of <code>prefix</code> and <code>name</code>
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of this context relative to one of its ancestors
+     * @return	the composition of <code>prefix</code> and <code>name</code>
+     * @throws	NamingException if a naming exception is encountered
      */
     public String composeName(String name, String prefix)
-            throws NamingException;
+	    throws NamingException;
 
     /**
      * Adds a new environment property to the environment of this
@@ -732,18 +733,18 @@ public interface Context {
      * See class description for more details on environment properties.
      *
      * @param propName
-     *          the name of the environment property to add; may not be null
+     *		the name of the environment property to add; may not be null
      * @param propVal
-     *          the value of the property to add; may not be null
-     * @return  the previous value of the property, or null if the property was
-     *          not in the environment before
-     * @throws  NamingException if a naming exception is encountered
+     *		the value of the property to add; may not be null
+     * @return	the previous value of the property, or null if the property was
+     *		not in the environment before
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #getEnvironment()
      * @see #removeFromEnvironment(String)
      */
     public Object addToEnvironment(String propName, Object propVal)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Removes an environment property from the environment of this
@@ -751,16 +752,16 @@ public interface Context {
      * properties.
      *
      * @param propName
-     *          the name of the environment property to remove; may not be null
-     * @return  the previous value of the property, or null if the property was
-     *          not in the environment
-     * @throws  NamingException if a naming exception is encountered
+     *		the name of the environment property to remove; may not be null
+     * @return	the previous value of the property, or null if the property was
+     *		not in the environment
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #getEnvironment()
      * @see #addToEnvironment(String, Object)
      */
     public Object removeFromEnvironment(String propName)
-        throws NamingException;
+	throws NamingException;
 
     /**
      * Retrieves the environment in effect for this context.
@@ -771,8 +772,8 @@ public interface Context {
      * The environment of this context may be changed using
      * <tt>addToEnvironment()</tt> and <tt>removeFromEnvironment()</tt>.
      *
-     * @return  the environment of this context; never null
-     * @throws  NamingException if a naming exception is encountered
+     * @return	the environment of this context; never null
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #addToEnvironment(String, Object)
      * @see #removeFromEnvironment(String)
@@ -788,7 +789,7 @@ public interface Context {
      * already been closed has no effect.  Invoking any other method
      * on a closed context is not allowed, and results in undefined behaviour.
      *
-     * @throws  NamingException if a naming exception is encountered
+     * @throws	NamingException if a naming exception is encountered
      */
     public void close() throws NamingException;
 
@@ -804,10 +805,10 @@ public interface Context {
      * In naming systems for which the notion of full name does not
      * make sense, <tt>OperationNotSupportedException</tt> is thrown.
      *
-     * @return  this context's name in its own namespace; never null
-     * @throws  OperationNotSupportedException if the naming system does
-     *          not have the notion of a full name
-     * @throws  NamingException if a naming exception is encountered
+     * @return	this context's name in its own namespace; never null
+     * @throws	OperationNotSupportedException if the naming system does
+     *		not have the notion of a full name
+     * @throws	NamingException if a naming exception is encountered
      *
      * @since 1.3
      */

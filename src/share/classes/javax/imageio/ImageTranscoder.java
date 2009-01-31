@@ -81,7 +81,8 @@ import javax.imageio.metadata.IIOMetadata;
  * are provided as part of the standard API.  Instead, the intention
  * of this interface is to provide a way for implementations to be
  * created and discovered by applications as the need arises.
- *
+ * 
+ * @version 0.5
  */
 public interface ImageTranscoder {
 

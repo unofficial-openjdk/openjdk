@@ -46,7 +46,7 @@ public class MyPrincipal implements Principal {
 
         if (this == o)
             return true;
-
+ 
         if (!(o instanceof MyPrincipal))
             return false;
         MyPrincipal that = (MyPrincipal)o;

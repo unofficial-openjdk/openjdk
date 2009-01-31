@@ -50,6 +50,7 @@ package java.text;
  * you can use the same <code>ParsePosition</code>, since the index parameter
  * records the current position.
  *
+ * @version     %I% %G%
  * @author      Mark Davis
  * @see         java.text.Format
  */

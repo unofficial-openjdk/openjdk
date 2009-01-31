@@ -33,8 +33,9 @@ public interface Hurryable {
 
     /**
      * @return a <code>boolean</code> indicating if the stream has been
-     *         hurried or not.
+     *	       hurried or not.
      */
     boolean hurry();
 
 }
+

@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 #include <X11/IntrinsicP.h>
@@ -35,10 +36,10 @@
 
 #ifdef DEBUG
 #include <jvm.h>  /* To get jio_fprintf() */
-#endif
+#endif 
 
 /******************************************************************
- *
+ * 
  * Provides Canvas widget which allows the X11 visual to be
  * changed (the Motif DrawingArea restricts the visual to that
  * of the parent widget).
@@ -54,23 +55,23 @@ static XmBaseClassExtRec baseClassExtRec = {
     NULLQUARK,
     XmBaseClassExtVersion,
     sizeof(XmBaseClassExtRec),
-    NULL,                               /* InitializePrehook    */
-    NULL,                               /* SetValuesPrehook     */
-    NULL,                               /* InitializePosthook   */
-    NULL,                               /* SetValuesPosthook    */
-    NULL,                               /* secondaryObjectClass */
-    NULL,                               /* secondaryCreate      */
-    NULL,                               /* getSecRes data       */
-    { 0 },                              /* fastSubclass flags   */
-    NULL,                               /* getValuesPrehook     */
-    NULL,                               /* getValuesPosthook    */
+    NULL,				/* InitializePrehook	*/
+    NULL,				/* SetValuesPrehook	*/
+    NULL,				/* InitializePosthook	*/
+    NULL,				/* SetValuesPosthook	*/
+    NULL,				/* secondaryObjectClass	*/
+    NULL,				/* secondaryCreate	*/
+    NULL,               		/* getSecRes data	*/
+    { 0 },      			/* fastSubclass flags	*/
+    NULL,				/* getValuesPrehook	*/
+    NULL,				/* getValuesPosthook	*/
     NULL,                               /* classPartInitPrehook */
     NULL,                               /* classPartInitPosthook*/
     NULL,                               /* ext_resources        */
     NULL,                               /* compiled_ext_resources*/
     0,                                  /* num_ext_resources    */
     FALSE,                              /* use_sub_resources    */
-    WidgetNavigable,                    /* widgetNavigable      */
+    WidgetNavigable,	                /* widgetNavigable      */
     NULL                                /* focusChange          */
 };
 
@@ -109,44 +110,44 @@ XDrawingAreaClassRec xDrawingAreaClassRec = {
     /* tm_table           */    NULL,
     /* query_geometry       */  NULL,
     /* display_accelerator  */  NULL,
-    /* extension            */  (XtPointer)&baseClassExtRec
+    /* extension            */  (XtPointer)&baseClassExtRec 
   },
 
-   {            /* composite_class fields */
-      XtInheritGeometryManager,                 /* geometry_manager   */
-      XtInheritChangeManaged,                   /* change_managed     */
-      XtInheritInsertChild,                     /* insert_child       */
-      XtInheritDeleteChild,                     /* delete_child       */
+   {		/* composite_class fields */
+      XtInheritGeometryManager,	                /* geometry_manager   */
+      XtInheritChangeManaged,	               	/* change_managed     */
+      XtInheritInsertChild,			/* insert_child       */
+      XtInheritDeleteChild,     		/* delete_child       */
       NULL,                                     /* extension          */
    },
 
-   {            /* constraint_class fields */
-      NULL,                                     /* resource list        */
-      0,                                        /* num resources        */
-      0,                                        /* constraint size      */
-      NULL,                                     /* init proc            */
-      NULL,                                     /* destroy proc         */
-      NULL,                                     /* set values proc      */
+   {		/* constraint_class fields */
+      NULL,					/* resource list        */   
+      0,					/* num resources        */   
+      0,					/* constraint size      */   
+      NULL,					/* init proc            */   
+      NULL,					/* destroy proc         */   
+      NULL,					/* set values proc      */   
       NULL,                                     /* extension            */
    },
 
-   {            /* manager_class fields */
-      XtInheritTranslations,                    /* translations           */
-      NULL,                                     /* syn_resources          */
-      0,                                        /* num_get_resources      */
-      NULL,                                     /* syn_cont_resources     */
-      0,                                        /* num_get_cont_resources */
+   {		/* manager_class fields */
+      XtInheritTranslations,			/* translations           */
+      NULL,					/* syn_resources      	  */
+      0,					/* num_get_resources 	  */
+      NULL,					/* syn_cont_resources     */
+      0,					/* num_get_cont_resources */
       XmInheritParentProcess,                   /* parent_process         */
-      NULL,                                     /* extension           */
+      NULL,					/* extension           */    
    },
 
-   {            /* drawingArea class */
-           /* extension */      NULL
+   {		/* drawingArea class */     
+	   /* extension	*/	NULL
    },
-
+  
    /* XDrawingArea class part */
    {
-        /* extension    */      NULL
+	/* extension	*/	NULL
    }
 };
 
@@ -161,3 +162,5 @@ static XmNavigability WidgetNavigable(Widget wid)
 {
     return XmCONTROL_NAVIGABLE;
 }
+
+

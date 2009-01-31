@@ -190,7 +190,7 @@ public class NotificationAccessControllerTest {
 
         JMXConnectorServer server = null;
         JMXConnector client = null;
-
+            
         // Create a new MBeanServer
         //
         final MBeanServer mbs = MBeanServerFactory.createMBeanServer();
@@ -201,7 +201,7 @@ public class NotificationAccessControllerTest {
             final Map<String,Object> env = new HashMap<String,Object>();
             env.put("jmx.remote.authenticator", new CustomJMXAuthenticator());
             if (enableChecks) {
-                env.put("com.sun.jmx.remote.notification.access.controller",
+                env.put("com.sun.jmx.remote.notification.access.controller", 
                         new NAC(throwException));
             }
 

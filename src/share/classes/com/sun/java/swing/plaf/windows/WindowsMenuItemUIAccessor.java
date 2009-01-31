@@ -34,9 +34,10 @@ import com.sun.java.swing.plaf.windows.TMSchema.Part;
 import com.sun.java.swing.plaf.windows.TMSchema.State;
 
 /**
- * Accessor interface for WindowsMenuItemUI to allow for "multiple implementation
- * inheritance".
- *
+ * Accessor interface for WindowsMenuItemUI to allow for "multiple implementation 
+ * inheritance".  
+ * 
+ * @version %I% %G%
  * @author Igor Kushnirskiy
  */
 interface WindowsMenuItemUIAccessor {

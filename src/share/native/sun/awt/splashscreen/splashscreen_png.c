@@ -35,7 +35,7 @@ void PNGAPI
 my_png_read_stream(png_structp png_ptr, png_bytep data, png_size_t length)
 {
     png_uint_32 check;
-
+    
     SplashStream * stream = (SplashStream*)png_ptr->io_ptr;
     check = stream->read(stream, data, length);
     if (check != length)
@@ -82,12 +82,12 @@ SplashDecodePng(Splash * splash, png_rw_ptr read_func, void *io_ptr)
 
     png_read_info(png_ptr, info_ptr);   /* read all PNG info up to image data */
 
-    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
+    png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, 
         NULL, NULL, NULL);
 
     /* expand palette images to RGB, low-bit-depth grayscale images to 8 bits,
      * transparency chunks to full alpha channel; strip 16-bit-per-sample
-     * images to 8 bits per sample; and convert grayscale to RGB[A]
+     * images to 8 bits per sample; and convert grayscale to RGB[A] 
      * this may be sub-optimal but this simplifies implementation */
 
     png_set_expand(png_ptr);
@@ -106,7 +106,7 @@ SplashDecodePng(Splash * splash, png_rw_ptr read_func, void *io_ptr)
     if ((image_data = (unsigned char *) malloc(rowbytes * height)) == NULL) {
         goto done;
     }
-    if ((row_pointers = (png_bytepp) malloc(height * sizeof(png_bytep)))
+    if ((row_pointers = (png_bytepp) malloc(height * sizeof(png_bytep))) 
             == NULL) {
         goto done;
     }
@@ -124,7 +124,7 @@ SplashDecodePng(Splash * splash, png_rw_ptr read_func, void *io_ptr)
     stride = splash->width * splash->imageFormat.depthBytes;
 
     splash->frameCount = 1;
-    splash->frames = (SplashImage *)
+    splash->frames = (SplashImage *) 
         malloc(sizeof(SplashImage) * splash->frameCount);
     splash->loopCount = 1;
     splash->frames[0].bitmapBits = malloc(stride * splash->height);
@@ -134,9 +134,9 @@ SplashDecodePng(Splash * splash, png_rw_ptr read_func, void *io_ptr)
     initFormat(&srcFormat, 0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
     srcFormat.byteOrder = BYTE_ORDER_MSBFIRST;
 
-    initRect(&srcRect, 0, 0, width, height, 1, rowbytes,
+    initRect(&srcRect, 0, 0, width, height, 1, rowbytes, 
         image_data, &srcFormat);
-    initRect(&dstRect, 0, 0, width, height, 1, stride,
+    initRect(&dstRect, 0, 0, width, height, 1, stride, 
         splash->frames[0].bitmapBits, &splash->imageFormat);
     convertRect(&srcRect, &dstRect, CVT_COPY);
 

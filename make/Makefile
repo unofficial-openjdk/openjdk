@@ -98,10 +98,13 @@ JDK_IMPORT_PATH.desc       = JDK used to import components of the build
 COMPILER_PATH.desc         = Compiler install directory
 CACERTS_FILE.desc          = Location of certificates file
 DEVTOOLS_PATH.desc         = Directory containing zip and unzip
+MOTIF_DIR.desc             = Root directory for motif directories
 CUPS_HEADERS_PATH.desc     = Include directory location for CUPS header files
 DXSDK_PATH.desc            = Root directory of DirectX SDK
 MSDEVTOOLS_PATH.desc       = Root directory of VC++ tools (e.g. rc.exe)
 MSVCRT_DLL_PATH.desc       = Directory containing mscvrt.dll
+UNICOWS_DLL_PATH.desc      = Directory containing unicows.dll
+UNICOWS_LIB_PATH.desc      = Directory containing unicows.lib
 
 # Make variables to print out (description and value)
 VARIABLE_PRINTVAL_LIST +=       \
@@ -116,7 +119,8 @@ VARIABLE_PRINTVAL_LIST +=       \
     JDK_IMPORT_PATH             \
     COMPILER_PATH               \
     CACERTS_FILE                \
-    DEVTOOLS_PATH
+    DEVTOOLS_PATH               \
+    MOTIF_DIR
 
 # Make variables that should refer to directories that exist
 VARIABLE_CHECKDIR_LIST +=       \
@@ -136,12 +140,16 @@ ifeq ($(PLATFORM), windows)
 VARIABLE_PRINTVAL_LIST +=       \
     DXSDK_PATH                  \
     MSDEVTOOLS_PATH             \
-    MSVCRT_DLL_PATH
+    MSVCRT_DLL_PATH             \
+    UNICOWS_DLL_PATH            \
+    UNICOWS_LIB_PATH
 
 VARIABLE_CHECKDIR_LIST +=       \
     DXSDK_PATH                  \
     MSDEVTOOLS_PATH             \
-    MSVCRT_DLL_PATH
+    MSVCRT_DLL_PATH             \
+    UNICOWS_DLL_PATH            \
+    UNICOWS_LIB_PATH
 
 endif
 

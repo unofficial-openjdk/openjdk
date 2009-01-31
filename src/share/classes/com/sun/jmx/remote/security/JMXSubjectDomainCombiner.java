@@ -53,10 +53,10 @@ public class JMXSubjectDomainCombiner extends SubjectDomainCombiner {
                                       ProtectionDomain[] assigned) {
         // Add a new ProtectionDomain with the null codesource/signers, and
         // the empty permission set, to the end of the array containing the
-        // 'current' protections domains, i.e. the ones that will be augmented
-        // with the permissions granted to the set of principals present in
-        // the supplied subject.
-        //
+	// 'current' protections domains, i.e. the ones that will be augmented
+	// with the permissions granted to the set of principals present in
+	// the supplied subject.
+	//
         ProtectionDomain[] newCurrent;
         if (current == null || current.length == 0) {
             newCurrent = new ProtectionDomain[1];
@@ -66,7 +66,7 @@ public class JMXSubjectDomainCombiner extends SubjectDomainCombiner {
             for (int i = 0; i < current.length; i++) {
                 newCurrent[i] = current[i];
             }
-            newCurrent[current.length] = pdNoPerms;
+            newCurrent[current.length] = pdNoPerms;          
         }
         return super.combine(newCurrent, assigned);
     }
@@ -75,13 +75,13 @@ public class JMXSubjectDomainCombiner extends SubjectDomainCombiner {
      * A null CodeSource.
      */
     private static final CodeSource nullCodeSource =
-        new CodeSource(null, (java.security.cert.Certificate[]) null);
+	new CodeSource(null, (java.security.cert.Certificate[]) null);
 
     /**
      * A ProtectionDomain with a null CodeSource and an empty permission set.
      */
     private static final ProtectionDomain pdNoPerms =
-        new ProtectionDomain(nullCodeSource, new Permissions());
+	new ProtectionDomain(nullCodeSource, new Permissions());
 
     /**
      * Get the current AccessControlContext combined with the supplied subject.

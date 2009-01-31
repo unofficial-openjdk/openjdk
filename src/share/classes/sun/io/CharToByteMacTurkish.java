@@ -31,6 +31,7 @@ import sun.nio.cs.ext.MacTurkish;
  * Tables and data to convert Unicode to MacTurkish
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteMacTurkish extends CharToByteSingleByte {

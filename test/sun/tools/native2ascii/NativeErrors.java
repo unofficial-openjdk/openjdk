@@ -25,7 +25,7 @@
  * @test
  * @bug 4136352
  * @summary Test Native2ASCII error messages
- *
+ * 
  */
 
 import java.io.*;
@@ -35,7 +35,7 @@ import java.util.*;
 public class NativeErrors {
 
     private static ResourceBundle rsrc;
-
+                 
     static {
         try {
             rsrc = ResourceBundle.getBundle(
@@ -64,8 +64,8 @@ public class NativeErrors {
         in = new BufferedReader(new InputStreamReader(p.getInputStream()));
         checkResult(in, "err.cannot.read");
 
-        File f1 = new File(System.getProperty("test.src", "."), "test1");
-        File f2 = new File(System.getProperty("test.src", "."), "test2");
+	File f1 = new File(System.getProperty("test.src", "."), "test1");
+	File f2 = new File(System.getProperty("test.src", "."), "test2");
         String path1 = f1.getPath();
         String path2 = f2.getPath();
 
@@ -112,7 +112,7 @@ public class NativeErrors {
      * Search for path to native2ascii
      */
     private static String getPathString() {
-        String path = System.getProperty("java.home") + File.separator +
+        String path = System.getProperty("java.home") + File.separator + 
             "bin" + File.separator + "native2ascii";
         if (File.separatorChar == '\\') {
             path = path + ".exe";

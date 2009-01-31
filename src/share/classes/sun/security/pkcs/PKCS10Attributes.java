@@ -44,13 +44,14 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see PKCS10
  * @see PKCS10Attribute
  */
 public class PKCS10Attributes implements DerEncoder {
 
     private Hashtable<String, PKCS10Attribute> map =
-                        new Hashtable<String, PKCS10Attribute>(3);
+			new Hashtable<String, PKCS10Attribute>(3);
 
     /**
      * Default constructor for the PKCS10 attribute.
@@ -65,7 +66,7 @@ public class PKCS10Attributes implements DerEncoder {
     public PKCS10Attributes(PKCS10Attribute[] attrs) {
         for (int i = 0; i < attrs.length; i++) {
             map.put(attrs[i].getAttributeId().toString(), attrs[i]);
-        }
+	}
     }
 
     /**
@@ -78,12 +79,12 @@ public class PKCS10Attributes implements DerEncoder {
     public PKCS10Attributes(DerInputStream in) throws IOException {
         DerValue[] attrs = in.getSet(3, true);
 
-        if (attrs == null)
+	if (attrs == null)
             throw new IOException("Illegal encoding of attributes");
         for (int i = 0; i < attrs.length; i++) {
             PKCS10Attribute attr = new PKCS10Attribute(attrs[i]);
             map.put(attr.getAttributeId().toString(), attr);
-        }
+	}
     }
 
     /**
@@ -104,15 +105,15 @@ public class PKCS10Attributes implements DerEncoder {
      * @exception IOException on encoding errors.
      */
     public void derEncode(OutputStream out) throws IOException {
-        // first copy the elements into an array
+	// first copy the elements into an array
         Collection<PKCS10Attribute> allAttrs = map.values();
         PKCS10Attribute[] attribs =
-                allAttrs.toArray(new PKCS10Attribute[map.size()]);
+		allAttrs.toArray(new PKCS10Attribute[map.size()]);
 
-        DerOutputStream attrOut = new DerOutputStream();
-        attrOut.putOrderedSetOf(DerValue.createTag(DerValue.TAG_CONTEXT,
-                                                   true, (byte)0),
-                                attribs);
+	DerOutputStream attrOut = new DerOutputStream();
+	attrOut.putOrderedSetOf(DerValue.createTag(DerValue.TAG_CONTEXT,
+                                                   true, (byte)0), 
+			        attribs);
         out.write(attrOut.toByteArray());
     }
 
@@ -120,9 +121,9 @@ public class PKCS10Attributes implements DerEncoder {
      * Set the attribute value.
      */
     public void setAttribute(String name, Object obj) {
-        if (obj instanceof PKCS10Attribute) {
-            map.put(name, (PKCS10Attribute)obj);
-        }
+	if (obj instanceof PKCS10Attribute) {
+	    map.put(name, (PKCS10Attribute)obj);
+	}
     }
 
     /**
@@ -160,46 +161,46 @@ public class PKCS10Attributes implements DerEncoder {
      * object. If the <code>other</code> object is an
      * <code>instanceof</code> <code>PKCS10Attributes</code>, then
      * all the entries are compared with the entries from this.
-     *
+     *   
      * @param other the object to test for equality with this PKCS10Attributes.
      * @return true if all the entries match that of the Other,
      * false otherwise.
-     */
+     */  
     public boolean equals(Object other) {
         if (this == other)
             return true;
         if (!(other instanceof PKCS10Attributes))
             return false;
-
+ 
         Collection<PKCS10Attribute> othersAttribs =
-                ((PKCS10Attributes)other).getAttributes();
+		((PKCS10Attributes)other).getAttributes();
         PKCS10Attribute[] attrs =
-            othersAttribs.toArray(new PKCS10Attribute[othersAttribs.size()]);
+	    othersAttribs.toArray(new PKCS10Attribute[othersAttribs.size()]);
         int len = attrs.length;
         if (len != map.size())
             return false;
         PKCS10Attribute thisAttr, otherAttr;
         String key = null;
         for (int i=0; i < len; i++) {
-            otherAttr = attrs[i];
-            key = otherAttr.getAttributeId().toString();
+	    otherAttr = attrs[i];
+	    key = otherAttr.getAttributeId().toString();
 
-            if (key == null)
-                return false;
-            thisAttr = map.get(key);
-            if (thisAttr == null)
-                return false;
-            if (! thisAttr.equals(otherAttr))
-                return false;
+	    if (key == null)
+		return false;
+	    thisAttr = map.get(key);
+	    if (thisAttr == null)
+		return false;
+	    if (! thisAttr.equals(otherAttr))
+		return false;
         }
         return true;
     }
-
+ 
     /**
      * Returns a hashcode value for this PKCS10Attributes.
-     *
+     *   
      * @return the hashcode value.
-     */
+     */  
     public int hashCode() {
         return map.hashCode();
     }
@@ -209,7 +210,7 @@ public class PKCS10Attributes implements DerEncoder {
      * in the form of a set of entries, enclosed in braces and separated
      * by the ASCII characters "<tt>,&nbsp;</tt>" (comma and space).
      * <p>Overrides the <tt>toString</tt> method of <tt>Object</tt>.
-     *
+     *   
      * @return  a string representation of this PKCS10Attributes.
      */
     public String toString() {

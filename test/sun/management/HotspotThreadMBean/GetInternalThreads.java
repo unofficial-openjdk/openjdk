@@ -34,7 +34,7 @@ import java.util.*;
 import java.lang.management.ThreadMXBean;
 
 public class GetInternalThreads {
-    private static HotspotThreadMBean mbean =
+    private static HotspotThreadMBean mbean = 
         ManagementFactory.getHotspotThreadMBean();
 
     // Minimum number of VM internal threads
@@ -44,7 +44,7 @@ public class GetInternalThreads {
 
     public static void main(String[] args) {
         long value = mbean.getInternalThreadCount();
-
+   
         if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
             throw new RuntimeException("Internal thread count " +
                                        "illegal value: " + value + " " +
@@ -54,7 +54,7 @@ public class GetInternalThreads {
 
         System.out.println("Internal Thread Count = " + value);
 
-        ThreadMXBean thread =
+        ThreadMXBean thread = 
             java.lang.management.ManagementFactory.getThreadMXBean();
         if (!thread.isThreadCpuTimeSupported()) {
             System.out.println("Thread Cpu Time is not supported.");
@@ -65,7 +65,7 @@ public class GetInternalThreads {
         Iterator iter = times.entrySet().iterator();
         for (; iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry) iter.next();
-            System.out.println(entry.getKey() +
+            System.out.println(entry.getKey() + 
                 " CPU time = " + entry.getValue() + "ns");
             if (((Long) entry.getValue()).longValue() < 0) {
                 throw new RuntimeException("Thread CPU time" +

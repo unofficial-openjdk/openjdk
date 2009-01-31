@@ -35,6 +35,7 @@ import javax.imageio.ImageTranscoder;
  * @see IIORegistry
  * @see javax.imageio.ImageTranscoder
  *
+ * @version 0.5
  */
 public abstract class ImageTranscoderSpi extends IIOServiceProvider {
 

@@ -37,7 +37,7 @@ import javax.imageio.ImageIO;
 
 public class ColConvDCMTest extends ColConvTest {
 
-    /*
+    /* 
      * Test case descriptors: <imgType> <rBits> <gBits> <bBits> <csNum> <gldNum>
      */
     final static int [][] imgTypes = {
@@ -56,33 +56,33 @@ public class ColConvDCMTest extends ColConvTest {
         {BufferedImage.TYPE_USHORT_565_RGB, 5, 6, 5, 0, 2},
         {BufferedImage.TYPE_USHORT_565_RGB, 5, 6, 5, 1, 5}
     };
-
+    
     final static int [] cSpaces = {
         ColorSpace.CS_sRGB,
         ColorSpace.CS_LINEAR_RGB,
     };
-
+    
     final static double ACCURACY = 2.5;
-
+    
     final static String [] gldImgNames = {
-        "SRGB.png", "SRGB555.png", "SRGB565.png", "LRGB.png", "LRGB555.png",
+        "SRGB.png", "SRGB555.png", "SRGB565.png", "LRGB.png", "LRGB555.png", 
         "LRGB565.png"
     };
 
     static BufferedImage [] gldImages = null;
-
-    static boolean testImage(int type, int rBits, int gBits, int bBits,
-                              int cs, BufferedImage gldImage,
-                              double accuracy)
+    
+    static boolean testImage(int type, int rBits, int gBits, int bBits, 
+                              int cs, BufferedImage gldImage, 
+                              double accuracy)  
     {
         BufferedImage src = ImageFactory.createDCMImage(type, cs);
         BufferedImage dst = ImageFactory.createDstImage(
             BufferedImage.TYPE_INT_RGB);
         ColorConvertOp op = new ColorConvertOp(null);
-
+        
         op.filter(src, dst);
 
-        ImageComparator cmp = new ImageComparator(accuracy, rBits, gBits,
+        ImageComparator cmp = new ImageComparator(accuracy, rBits, gBits, 
                                                   bBits);
         boolean result = cmp.compare(gldImage, dst);
         if (!result) {
@@ -90,23 +90,23 @@ public class ColConvDCMTest extends ColConvTest {
         }
         return result;
     }
-
-     static boolean testSubImage(int x0, int y0, int dx, int dy, int type,
-                                 int rBits, int gBits, int bBits,
-                                 int cs, BufferedImage gldImage,
-                                 double accuracy)
+     
+     static boolean testSubImage(int x0, int y0, int dx, int dy, int type, 
+                                 int rBits, int gBits, int bBits, 
+                                 int cs, BufferedImage gldImage, 
+                                 double accuracy) 
      {
         BufferedImage src = ImageFactory.createDCMImage(type, cs);
         BufferedImage subSrc = src.getSubimage(x0, y0, dx, dy);
         BufferedImage dst = ImageFactory.createDstImage(
             BufferedImage.TYPE_INT_RGB);
         BufferedImage subDst = dst.getSubimage(x0, y0, dx, dy);
-
+        
         ColorConvertOp op = new ColorConvertOp(null);
-
+        
         op.filter(subSrc, subDst);
 
-        ImageComparator cmp = new ImageComparator(accuracy, rBits, gBits,
+        ImageComparator cmp = new ImageComparator(accuracy, rBits, gBits, 
                                                   bBits);
         boolean result = cmp.compare(subDst, gldImage, x0, y0, dx, dy);
         if (!result) {
@@ -114,7 +114,7 @@ public class ColConvDCMTest extends ColConvTest {
         }
         return result;
      }
-
+     
      synchronized public static void initGoldenImages() {
         if (gldImages == null) {
             gldImages = new BufferedImage[gldImgNames.length];
@@ -122,16 +122,16 @@ public class ColConvDCMTest extends ColConvTest {
                 try {
                     File gldFile = new File(System.getProperty("test.src", "."),
                                             gldImgNames[i]);
-
+ 
                     gldImages[i] = ImageIO.read(gldFile);
                 } catch (IOException e) {
-                    throw new RuntimeException("Cannot initialize golden " +
+                    throw new RuntimeException("Cannot initialize golden " + 
                                                "image: " + gldImgNames[i]);
                 }
             }
         }
      }
-
+ 
      public void init() {
         initGoldenImages();
      }
@@ -141,8 +141,8 @@ public class ColConvDCMTest extends ColConvTest {
             BufferedImage gldImage = gldImages[imgTypes[i][5]];
 
             if (!testImage(imgTypes[i][0], imgTypes[i][1], imgTypes[i][2],
-                           imgTypes[i][3], cSpaces[imgTypes[i][4]], gldImage,
-                           ACCURACY))
+                           imgTypes[i][3], cSpaces[imgTypes[i][4]], gldImage, 
+                           ACCURACY)) 
             {
                 throw new RuntimeException(
                     "Invalid result of the ColorConvertOp for " +
@@ -151,10 +151,10 @@ public class ColConvDCMTest extends ColConvTest {
                     getImageTypeName(imgTypes[i][0]) + ". Golden image:" +
                     gldImgNames[imgTypes[i][5]]);
             }
-
-            if (!testSubImage(SI_X, SI_Y, SI_W, SI_H, imgTypes[i][0],
-                              imgTypes[i][1], imgTypes[i][2], imgTypes[i][3],
-                              cSpaces[imgTypes[i][4]], gldImage, ACCURACY))
+        
+            if (!testSubImage(SI_X, SI_Y, SI_W, SI_H, imgTypes[i][0], 
+                              imgTypes[i][1], imgTypes[i][2], imgTypes[i][3], 
+                              cSpaces[imgTypes[i][4]], gldImage, ACCURACY)) 
             {
                 throw new RuntimeException(
                     "Invalid result of the ColorConvertOp for " +

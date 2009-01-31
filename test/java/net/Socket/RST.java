@@ -33,48 +33,48 @@ public class RST implements Runnable {
     Socket client;
 
     public void run() {
-        try {
-            client.setSoLinger(true, 0);        // hard reset
-            client.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	try {
+	    client.setSoLinger(true, 0);	// hard reset
+	    client.close();
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
     }
 
     RST() throws Exception {
-        ServerSocket ss = new ServerSocket(0);
-        client = new Socket("localhost", ss.getLocalPort());
-        Socket server = ss.accept();
+	ServerSocket ss = new ServerSocket(0);
+	client = new Socket("localhost", ss.getLocalPort());
+	Socket server = ss.accept();
 
-        Thread thr = new Thread(this);
-        thr.start();
+	Thread thr = new Thread(this);
+	thr.start();
 
-        SocketException exc = null;
-        try {
-            InputStream in = server.getInputStream();
+	SocketException exc = null;
+	try {
+	    InputStream in = server.getInputStream();
 
-            /*
-             * This read should throw a SocketException indicating a
-             * connection reset.
-             */
-            int n = in.read();
-        } catch (SocketException se) {
-            exc = se;
-        }
+	    /*
+	     * This read should throw a SocketException indicating a
+	     * connection reset.
+	     */
+	    int n = in.read();
+	} catch (SocketException se) {
+	    exc = se;
+	}
 
-        server.close();
-        ss.close();
+	server.close();
+	ss.close();
 
-        if (exc == null) {
-            throw new Exception("Expected SocketException not thrown");
-        }
-        if (exc.getMessage().toLowerCase().indexOf("reset") == -1) {
-            throw new Exception("SocketException thrown but not expected \"connection reset\"");
-        }
+	if (exc == null) {
+	    throw new Exception("Expected SocketException not thrown");
+	}
+	if (exc.getMessage().toLowerCase().indexOf("reset") == -1) {
+	    throw new Exception("SocketException thrown but not expected \"connection reset\"");
+	}
     }
 
 
     public static void main(String args[]) throws Exception {
-        new RST();
+	new RST();
     }
 }

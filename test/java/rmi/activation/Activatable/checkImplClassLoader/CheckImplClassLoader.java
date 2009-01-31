@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -57,66 +57,66 @@ public class CheckImplClassLoader {
     private static Object dummy = new Object();
     private static MyRMI myRMI = null;
     private static ActivationGroup group = null;
+    
+    public static void main(String args[]) {  
+	/*
+	 * The following line is required with the JDK 1.2 VM because
+	 * of gc hocus pocus that may no longer be needed with an
+	 * exact vm (hotspot).
+	 */
+	Object dummy1 = new Object();
+	RMID rmid = null;
+	
+	System.err.println("\nRegression test for bug/rfe 4289544\n");
+	    
+	try {
 
-    public static void main(String args[]) {
-        /*
-         * The following line is required with the JDK 1.2 VM because
-         * of gc hocus pocus that may no longer be needed with an
-         * exact vm (hotspot).
-         */
-        Object dummy1 = new Object();
-        RMID rmid = null;
+	    URL implcb = TestLibrary.installClassInCodebase("ActivatableImpl",
+							    "implcb");
+	    TestLibrary.installClassInCodebase("ActivatableImpl_Stub",
+					       "implcb");
+	    TestLibrary.suggestSecurityManager(
+	        TestParams.defaultSecurityManager);
 
-        System.err.println("\nRegression test for bug/rfe 4289544\n");
+	    RMID.removeLog();
+	    rmid = RMID.createRMID();
+	    rmid.start();
 
-        try {
+	    System.err.println("Create activation group in this VM");
+	    ActivationGroupDesc groupDesc =
+		new ActivationGroupDesc(null, null);
+	    ActivationSystem system = ActivationGroup.getSystem();
+	    ActivationGroupID groupID = system.registerGroup(groupDesc);
+	    group = ActivationGroup.createGroup(groupID, groupDesc, 0);
+	    
+	    ActivationDesc desc = new ActivationDesc("ActivatableImpl",
+						     implcb.toString(), null);
+	    myRMI = (MyRMI) Activatable.register(desc);
 
-            URL implcb = TestLibrary.installClassInCodebase("ActivatableImpl",
-                                                            "implcb");
-            TestLibrary.installClassInCodebase("ActivatableImpl_Stub",
-                                               "implcb");
-            TestLibrary.suggestSecurityManager(
-                TestParams.defaultSecurityManager);
+	    System.err.println("Checking that impl has correct " +
+			       "context class loader");
+	    if (!myRMI.classLoaderOk()) {
+		TestLibrary.bomb("incorrect context class loader for " +
+				 "activation constructor");
+	    } 
+	    
+	    System.err.println("Deactivate object via method call");
+	    myRMI.shutdown();
 
-            RMID.removeLog();
-            rmid = RMID.createRMID();
-            rmid.start();
+	    System.err.println("\nsuccess: CheckImplClassLoader test passed ");
+		
+	} catch (Exception e) {
+	    TestLibrary.bomb("\nfailure: unexpected exception ", e);
+	} finally {
+	    try {
+		Thread.sleep(4000);
+	    } catch (InterruptedException e) {
+	    }
 
-            System.err.println("Create activation group in this VM");
-            ActivationGroupDesc groupDesc =
-                new ActivationGroupDesc(null, null);
-            ActivationSystem system = ActivationGroup.getSystem();
-            ActivationGroupID groupID = system.registerGroup(groupDesc);
-            group = ActivationGroup.createGroup(groupID, groupDesc, 0);
-
-            ActivationDesc desc = new ActivationDesc("ActivatableImpl",
-                                                     implcb.toString(), null);
-            myRMI = (MyRMI) Activatable.register(desc);
-
-            System.err.println("Checking that impl has correct " +
-                               "context class loader");
-            if (!myRMI.classLoaderOk()) {
-                TestLibrary.bomb("incorrect context class loader for " +
-                                 "activation constructor");
-            }
-
-            System.err.println("Deactivate object via method call");
-            myRMI.shutdown();
-
-            System.err.println("\nsuccess: CheckImplClassLoader test passed ");
-
-        } catch (Exception e) {
-            TestLibrary.bomb("\nfailure: unexpected exception ", e);
-        } finally {
-            try {
-                Thread.sleep(4000);
-            } catch (InterruptedException e) {
-            }
-
-            myRMI = null;
-            System.err.println("rmid shut down");
-            ActivationLibrary.rmidCleanup(rmid);
-            TestLibrary.unexport(group);
-        }
+	    myRMI = null;
+	    System.err.println("rmid shut down");
+	    ActivationLibrary.rmidCleanup(rmid);
+	    TestLibrary.unexport(group);
+	}
     }
 }

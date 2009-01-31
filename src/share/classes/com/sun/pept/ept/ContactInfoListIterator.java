@@ -33,7 +33,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -46,7 +46,7 @@ public interface ContactInfoListIterator {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a boolean with ...
  * </p>
  */
@@ -55,10 +55,17 @@ public interface ContactInfoListIterator {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a ContactInfo with ...
  * </p>
  */
     public ContactInfo next();
 
 } // end ContactInfoListIterator
+
+
+
+
+
+
+

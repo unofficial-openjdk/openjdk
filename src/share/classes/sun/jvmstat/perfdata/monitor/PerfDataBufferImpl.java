@@ -37,6 +37,7 @@ import java.util.regex.*;
  * PerfData instrumentation buffer.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  * @see AbstractPerfDataBuffer
  */

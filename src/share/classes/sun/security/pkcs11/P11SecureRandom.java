@@ -33,7 +33,7 @@ import sun.security.pkcs11.wrapper.*;
 import sun.security.pkcs11.wrapper.PKCS11Constants.*;
 
 /**
- * SecureRandom implementation class. Some tokens support only
+ * SecureRandom implementation class. Some tokens support only 
  * C_GenerateRandom() and not C_SeedRandom(). In order not to lose an
  * application specified seed, we create a SHA1PRNG that we mix with in that
  * case.
@@ -46,6 +46,7 @@ import sun.security.pkcs11.wrapper.PKCS11Constants.*;
  * up.
  *
  * @author  Andreas Sterbenz
+ * @version %I%, %G%
  * @since   1.5
  */
 final class P11SecureRandom extends SecureRandomSpi {
@@ -54,93 +55,94 @@ final class P11SecureRandom extends SecureRandomSpi {
 
     // token instance
     private final Token token;
-
+    
     // PRNG for mixing, non-null if active (i.e. setSeed() has been called)
     private volatile SecureRandom mixRandom;
-
+    
     // buffer, if mixing is used
     private byte[] mixBuffer;
-
+    
     // bytes remaining in buffer, if mixing is used
     private int buffered;
-
+    
     P11SecureRandom(Token token) {
-        this.token = token;
+	this.token = token;
     }
 
     // see JCA spec
     protected synchronized void engineSetSeed(byte[] seed) {
-        if (seed == null) {
-            throw new NullPointerException("seed must not be null");
-        }
-        Session session = null;
-        try {
-            session = token.getOpSession();
-            token.p11.C_SeedRandom(session.id(), seed);
-        } catch (PKCS11Exception e) {
-            // cannot set seed
-            // let a SHA1PRNG use that seed instead
-            SecureRandom random = mixRandom;
-            if (random != null) {
-                random.setSeed(seed);
-            } else {
-                try {
-                    mixBuffer = new byte[20];
-                    random = SecureRandom.getInstance("SHA1PRNG");
-                    // initialize object before assigning to class field
-                    random.setSeed(seed);
-                    mixRandom = random;
-                } catch (NoSuchAlgorithmException ee) {
-                    throw new ProviderException(ee);
-                }
-            }
-        } finally {
-            token.releaseSession(session);
-        }
+	if (seed == null) {
+	    throw new NullPointerException("seed must not be null");
+	}
+	Session session = null;
+	try {
+	    session = token.getOpSession();
+	    token.p11.C_SeedRandom(session.id(), seed);
+	} catch (PKCS11Exception e) {
+	    // cannot set seed
+	    // let a SHA1PRNG use that seed instead
+	    SecureRandom random = mixRandom;
+	    if (random != null) {
+		random.setSeed(seed);
+	    } else {
+		try {
+		    mixBuffer = new byte[20];
+		    random = SecureRandom.getInstance("SHA1PRNG");
+		    // initialize object before assigning to class field
+		    random.setSeed(seed);
+		    mixRandom = random;
+		} catch (NoSuchAlgorithmException ee) {
+		    throw new ProviderException(ee);
+		}
+	    }
+	} finally {
+	    token.releaseSession(session);
+	}
     }
 
     // see JCA spec
     protected void engineNextBytes(byte[] bytes) {
-        if ((bytes == null) || (bytes.length == 0)) {
-            return;
-        }
-        Session session = null;
-        try {
-            session = token.getOpSession();
-            token.p11.C_GenerateRandom(session.id(), bytes);
-            mix(bytes);
-        } catch (PKCS11Exception e) {
-            throw new ProviderException("nextBytes() failed", e);
-        } finally {
-            token.releaseSession(session);
-        }
+	if ((bytes == null) || (bytes.length == 0)) {
+	    return;
+	}
+	Session session = null;
+	try {
+	    session = token.getOpSession();
+	    token.p11.C_GenerateRandom(session.id(), bytes);
+	    mix(bytes);
+	} catch (PKCS11Exception e) {
+	    throw new ProviderException("nextBytes() failed", e);
+	} finally {
+	    token.releaseSession(session);
+	}
     }
 
     // see JCA spec
     protected byte[] engineGenerateSeed(int numBytes) {
-        byte[] b = new byte[numBytes];
-        engineNextBytes(b);
-        return b;
+	byte[] b = new byte[numBytes];
+	engineNextBytes(b);
+	return b;
     }
-
+    
     private void mix(byte[] b) {
-        SecureRandom random = mixRandom;
-        if (random == null) {
-            // avoid mixing if setSeed() has never been called
-            return;
-        }
-        synchronized (this) {
-            int ofs = 0;
-            int len = b.length;
-            while (len-- > 0) {
-                if (buffered == 0) {
-                    random.nextBytes(mixBuffer);
-                    buffered = mixBuffer.length;
-                }
-                b[ofs++] ^= mixBuffer[mixBuffer.length - buffered];
-                buffered--;
-            }
-        }
+	SecureRandom random = mixRandom;
+	if (random == null) {
+	    // avoid mixing if setSeed() has never been called
+	    return;
+	}
+	synchronized (this) {
+	    int ofs = 0;
+	    int len = b.length;
+	    while (len-- > 0) {
+		if (buffered == 0) {
+		    random.nextBytes(mixBuffer);
+		    buffered = mixBuffer.length;
+		}
+		b[ofs++] ^= mixBuffer[mixBuffer.length - buffered];
+		buffered--;
+	    }
+	}
     }
 
 }
+

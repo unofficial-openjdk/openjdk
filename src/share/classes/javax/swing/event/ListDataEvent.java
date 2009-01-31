@@ -40,9 +40,10 @@ import java.util.EventObject;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Hans Muller
  */
-public class ListDataEvent extends EventObject
+public class ListDataEvent extends EventObject 
 {
     /** Identifies one or more changes in the lists contents. */
     public static final int CONTENTS_CHANGED = 0;
@@ -96,18 +97,18 @@ public class ListDataEvent extends EventObject
      */
     public ListDataEvent(Object source, int type, int index0, int index1) {
         super(source);
-        this.type = type;
-        this.index0 = Math.min(index0, index1);
-        this.index1 = Math.max(index0, index1);
+	this.type = type;
+	this.index0 = Math.min(index0, index1);
+	this.index1 = Math.max(index0, index1);
     }
 
     /**
-     * Returns a string representation of this ListDataEvent. This method
-     * is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * Returns a string representation of this ListDataEvent. This method 
+     * is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between      
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
-     *
+     * 
      * @since 1.4
      * @return  a string representation of this ListDataEvent.
      */
@@ -118,3 +119,6 @@ public class ListDataEvent extends EventObject
         ",index1=" + index1 + "]";
     }
 }
+
+
+

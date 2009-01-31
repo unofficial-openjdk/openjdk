@@ -49,7 +49,7 @@ public class C14nHelper {
     * Method namespaceIsRelative
     *
     * @param namespace
-    * @return true if the given namespace is relative.
+    * @return true if the given namespace is relative. 
     */
    public static boolean namespaceIsRelative(Attr namespace) {
       return !namespaceIsAbsolute(namespace);

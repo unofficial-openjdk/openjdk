@@ -36,14 +36,14 @@ package java.net;
 public class BindException extends SocketException {
 
     /**
-     * Constructs a new BindException with the specified detail
+     * Constructs a new BindException with the specified detail 
      * message as to why the bind error occurred.
-     * A detail message is a String that gives a specific
+     * A detail message is a String that gives a specific 
      * description of this error.
      * @param msg the detail message
      */
     public BindException(String msg) {
-        super(msg);
+	super(msg);
     }
 
     /**

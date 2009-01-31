@@ -77,7 +77,7 @@ public class CK_SSL3_RANDOM_DATA {
      * </PRE>
      */
     public byte[] pClientRandom;
-
+    
     /**
      * <B>PKCS#11:</B>
      * <PRE>
@@ -86,41 +86,41 @@ public class CK_SSL3_RANDOM_DATA {
      * </PRE>
      */
     public byte[] pServerRandom;
-
+    
     public CK_SSL3_RANDOM_DATA(byte[] clientRandom, byte[] serverRandom) {
-        pClientRandom = clientRandom;
-        pServerRandom = serverRandom;
+	pClientRandom = clientRandom;
+	pServerRandom = serverRandom;
     }
-
+    
     /**
      * Returns the string representation of CK_SSL3_RANDOM_DATA.
      *
      * @return the string representation of CK_SSL3_RANDOM_DATA
      */
     public String toString() {
-        StringBuilder buffer = new StringBuilder();
-
-        buffer.append(Constants.INDENT);
-        buffer.append("pClientRandom: ");
-        buffer.append(Functions.toHexString(pClientRandom));
-        buffer.append(Constants.NEWLINE);
-
-        buffer.append(Constants.INDENT);
-        buffer.append("ulClientRandomLen: ");
-        buffer.append(pClientRandom.length);
-        buffer.append(Constants.NEWLINE);
-
-        buffer.append(Constants.INDENT);
-        buffer.append("pServerRandom: ");
-        buffer.append(Functions.toHexString(pServerRandom));
-        buffer.append(Constants.NEWLINE);
-
-        buffer.append(Constants.INDENT);
-        buffer.append("ulServerRandomLen: ");
-        buffer.append(pServerRandom.length);
-        //buffer.append(Constants.NEWLINE);
-
-        return buffer.toString();
+	StringBuilder buffer = new StringBuilder();
+	
+	buffer.append(Constants.INDENT);
+	buffer.append("pClientRandom: ");
+	buffer.append(Functions.toHexString(pClientRandom));
+	buffer.append(Constants.NEWLINE);
+	
+	buffer.append(Constants.INDENT);
+	buffer.append("ulClientRandomLen: ");
+	buffer.append(pClientRandom.length);
+	buffer.append(Constants.NEWLINE);
+	
+	buffer.append(Constants.INDENT);
+	buffer.append("pServerRandom: ");
+	buffer.append(Functions.toHexString(pServerRandom));
+	buffer.append(Constants.NEWLINE);
+	
+	buffer.append(Constants.INDENT);
+	buffer.append("ulServerRandomLen: ");
+	buffer.append(pServerRandom.length);
+	//buffer.append(Constants.NEWLINE);
+	
+	return buffer.toString();
     }
-
+    
 }

@@ -53,8 +53,8 @@ public class WBMPMetadataFormat extends IIOMetadataFormatImpl {
                      DATATYPE_INTEGER, true, null,
                      "1", "65535", true, true);
     }
-
-
+        
+    
 
     public boolean canNodeAppear(String elementName,
                                  ImageTypeSpecifier imageType) {

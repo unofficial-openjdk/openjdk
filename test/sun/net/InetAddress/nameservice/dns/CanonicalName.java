@@ -27,7 +27,7 @@ import javax.naming.*;
 import javax.naming.directory.*;
 
 /*
- * Tests if a canonical name (CNAME) record exists for a
+ * Tests if a canonical name (CNAME) record exists for a 
  * specified host - throws exception if DNS isn't configured
  * or there isn't a CNAME record.
  */
@@ -35,27 +35,27 @@ import javax.naming.directory.*;
 public class CanonicalName {
 
     public static void main(String args[]) throws Exception {
-        final Hashtable<String,String> env = new Hashtable<String,String>();
-        env.put("java.naming.factory.initial",
-                "com.sun.jndi.dns.DnsContextFactory");
+	final Hashtable<String,String> env = new Hashtable<String,String>();
+        env.put("java.naming.factory.initial", 
+		"com.sun.jndi.dns.DnsContextFactory");
         DirContext ctx = new InitialDirContext(env);
 
-        String ids[] = { "CNAME" };
-        Attributes attrs = ctx.getAttributes(args[0], ids);
+	String ids[] = { "CNAME" };
+	Attributes attrs = ctx.getAttributes(args[0], ids);
 
-        NamingEnumeration ne = attrs.getAll();
-        if (!ne.hasMoreElements()) {
-            throw new Exception("no CNAME record");
-        }
+	NamingEnumeration ne = attrs.getAll();
+	if (!ne.hasMoreElements()) {
+	    throw new Exception("no CNAME record");
+	}
 
-        // print out the CNAME records
+	// print out the CNAME records
 
-        while (ne.hasMoreElements()) {
-            Attribute attr = (Attribute)ne.next();
-            for (NamingEnumeration e = attr.getAll(); e.hasMoreElements();) {
-                System.out.println(args[0] + " -> " + e.next());
-            }
-        }
+	while (ne.hasMoreElements()) {
+	    Attribute attr = (Attribute)ne.next();
+	    for (NamingEnumeration e = attr.getAll(); e.hasMoreElements();) {
+	        System.out.println(args[0] + " -> " + e.next());
+	    }
+	}
 
     }
 }

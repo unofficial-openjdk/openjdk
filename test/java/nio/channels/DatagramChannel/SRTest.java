@@ -38,7 +38,7 @@ public class SRTest {
     static PrintStream log = System.err;
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
     static void test() throws Exception {
@@ -58,7 +58,7 @@ public class SRTest {
     static void invoke(Sprintable reader, Sprintable writer) throws Exception {
         Thread readerThread = new Thread(reader);
         readerThread.start();
-        Thread.sleep(50);
+	Thread.sleep(50);
 
         Thread writerThread = new Thread(writer);
         writerThread.start();
@@ -158,12 +158,12 @@ public class SRTest {
         public void run() {
             try {
                 DatagramChannel dc = DatagramChannel.open();
-                dc.socket().bind(new InetSocketAddress(8888));
+		dc.socket().bind(new InetSocketAddress(8888));
                 ByteBuffer bb = ByteBuffer.allocateDirect(100);
                 SocketAddress sa = dc.receive(bb);
                 bb.flip();
                 CharBuffer cb = Charset.forName("US-ASCII").
-                    newDecoder().decode(bb);
+		    newDecoder().decode(bb);
                 log.println("From: "+sa+ " said " +cb);
                 dc.close();
             } catch (Exception ex) {

@@ -34,6 +34,7 @@ import javax.imageio.ImageWriter;
  *
  * @see javax.imageio.ImageWriter#write
  *
+ * @version 0.5
  */
 public interface IIOWriteProgressListener extends EventListener {
 
@@ -77,7 +78,7 @@ public interface IIOWriteProgressListener extends EventListener {
      * @param percentageDone the approximate percentage of decoding that
      * has been completed.
      */
-    void imageProgress(ImageWriter source,
+    void imageProgress(ImageWriter source, 
                        float percentageDone);
 
     /**

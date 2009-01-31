@@ -34,7 +34,7 @@
 /* set the startTime field in MidiDeviceHandle */
 void MIDI_SetStartTime(MidiDeviceHandle* handle) {
     if (handle != NULL) {
-                handle->startTime = (INT64) timeGetTime();
+		handle->startTime = (INT64) timeGetTime();
     }
 }
 
@@ -43,14 +43,14 @@ void MIDI_SetStartTime(MidiDeviceHandle* handle) {
 INT64 MIDI_GetTimeStamp(MidiDeviceHandle* handle) {
     INT64 res;
     if (handle == NULL) {
-                return (INT64) -1;
+		return (INT64) -1;
     }
     res = ((INT64) timeGetTime()) - handle->startTime;
     if (res < 0) {
-                res *= (INT64) -1000;
+		res *= (INT64) -1000;
     } else {
-                res *= (INT64) 1000;
-    }
+		res *= (INT64) 1000;
+    }    
     return res;
 }
 
@@ -64,21 +64,21 @@ void* MIDI_CreateLock() {
 
 void MIDI_DestroyLock(void* lock) {
     if (lock) {
-        DeleteCriticalSection((CRITICAL_SECTION*) lock);
-        free(lock);
-        TRACE0("MIDI_DestroyLock\n");
+	DeleteCriticalSection((CRITICAL_SECTION*) lock);
+	free(lock);
+	TRACE0("MIDI_DestroyLock\n");
     }
 }
 
 void MIDI_Lock(void* lock) {
     if (lock) {
-        EnterCriticalSection((CRITICAL_SECTION*) lock);
+	EnterCriticalSection((CRITICAL_SECTION*) lock);
     }
 }
 
 void MIDI_Unlock(void* lock) {
     if (lock) {
-        LeaveCriticalSection((CRITICAL_SECTION*) lock);
+	LeaveCriticalSection((CRITICAL_SECTION*) lock);
     }
 }
 int MIDI_WinCreateEmptyLongBufferQueue(MidiDeviceHandle* handle, int count) {
@@ -99,12 +99,12 @@ int MIDI_WinCreateLongBufferQueue(MidiDeviceHandle* handle, int count, int size,
 
     // prepare memory block which will contain the actual data
     if (!preAllocatedMem && size > 0) {
-        preAllocatedMem = (UBYTE*) malloc(count*size);
-        if (!preAllocatedMem) {
-            free(sysex);
-            return FALSE;
-        }
-        sysex->ownsLinearMem = 1;
+	preAllocatedMem = (UBYTE*) malloc(count*size);
+	if (!preAllocatedMem) {
+	    free(sysex);
+	    return FALSE;
+	}
+	sysex->ownsLinearMem = 1;
     }
     sysex->linearMem = preAllocatedMem;
     handle->longBuffers = sysex;
@@ -112,11 +112,11 @@ int MIDI_WinCreateLongBufferQueue(MidiDeviceHandle* handle, int count, int size,
     // set up headers
     dataPtr = preAllocatedMem;
     for (i=0; i<count; i++) {
-        sysex->header[i].lpData = dataPtr;
-        sysex->header[i].dwBufferLength = size;
-        // user data is the index of the buffer
-        sysex->header[i].dwUser = (DWORD) i;
-        dataPtr += size;
+	sysex->header[i].lpData = dataPtr;
+	sysex->header[i].dwBufferLength = size;
+	// user data is the index of the buffer
+	sysex->header[i].dwUser = (DWORD) i;
+	dataPtr += size;
     }
     return TRUE;
 }
@@ -124,11 +124,11 @@ int MIDI_WinCreateLongBufferQueue(MidiDeviceHandle* handle, int count, int size,
 void MIDI_WinDestroyLongBufferQueue(MidiDeviceHandle* handle) {
     SysExQueue* sysex = (SysExQueue*) handle->longBuffers;
     if (sysex) {
-        handle->longBuffers = NULL;
-        if (sysex->ownsLinearMem && sysex->linearMem) {
-            free(sysex->linearMem);
-        }
-        free(sysex);
+	handle->longBuffers = NULL;
+	if (sysex->ownsLinearMem && sysex->linearMem) {
+	    free(sysex->linearMem);
+	}
+	free(sysex);
     }
 }
 

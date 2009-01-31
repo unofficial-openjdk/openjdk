@@ -38,23 +38,24 @@ import java.awt.im.InputMethodRequests;
 
 
 /**
- * The <code>TextComponent</code> class is the superclass of
- * any component that allows the editing of some text.
+ * The <code>TextComponent</code> class is the superclass of 
+ * any component that allows the editing of some text. 
  * <p>
- * A text component embodies a string of text.  The
- * <code>TextComponent</code> class defines a set of methods
+ * A text component embodies a string of text.  The 
+ * <code>TextComponent</code> class defines a set of methods 
  * that determine whether or not this text is editable. If the
  * component is editable, it defines another set of methods
- * that supports a text insertion caret.
+ * that supports a text insertion caret. 
  * <p>
- * In addition, the class defines methods that are used
- * to maintain a current <em>selection</em> from the text.
- * The text selection, a substring of the component's text,
+ * In addition, the class defines methods that are used 
+ * to maintain a current <em>selection</em> from the text. 
+ * The text selection, a substring of the component's text, 
  * is the target of editing operations. It is also referred
  * to as the <em>selected text</em>.
  *
- * @author      Sami Shaio
- * @author      Arthur van Hoff
+ * @version	%I%, %G%
+ * @author 	Sami Shaio
+ * @author 	Arthur van Hoff
  * @since       JDK1.0
  */
 public class TextComponent extends Component implements Accessible {
@@ -70,7 +71,7 @@ public class TextComponent extends Component implements Accessible {
     String text;
 
     /**
-     * A boolean indicating whether or not this
+     * A boolean indicating whether or not this 
      * <code>TextComponent</code> is editable.
      * It will be <code>true</code> if the text component
      * is editable and <code>false</code> if not.
@@ -81,7 +82,7 @@ public class TextComponent extends Component implements Accessible {
     boolean editable = true;
 
     /**
-     * The selection refers to the selected text, and the
+     * The selection refers to the selected text, and the 
      * <code>selectionStart</code> is the start position
      * of the selected text.
      *
@@ -92,7 +93,7 @@ public class TextComponent extends Component implements Accessible {
     int selectionStart;
 
     /**
-     * The selection refers to the selected text, and the
+     * The selection refers to the selected text, and the 
      * <code>selectionEnd</code>
      * is the end position of the selected text.
      *
@@ -116,36 +117,36 @@ public class TextComponent extends Component implements Accessible {
     transient protected TextListener textListener;
 
     /*
-     * JDK 1.1 serialVersionUID
+     * JDK 1.1 serialVersionUID 
      */
     private static final long serialVersionUID = -2214773872412987419L;
 
     /**
-     * Constructs a new text component initialized with the
-     * specified text. Sets the value of the cursor to
+     * Constructs a new text component initialized with the 
+     * specified text. Sets the value of the cursor to 
      * <code>Cursor.TEXT_CURSOR</code>.
      * @param      text       the text to be displayed; if
      *             <code>text</code> is <code>null</code>, the empty
      *             string <code>""</code> will be displayed
      * @exception  HeadlessException if
-     *             <code>GraphicsEnvironment.isHeadless</code>
+     *		   <code>GraphicsEnvironment.isHeadless</code>
      *             returns true
      * @see        java.awt.GraphicsEnvironment#isHeadless
      * @see        java.awt.Cursor
      */
     TextComponent(String text) throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
-        this.text = (text != null) ? text : "";
-        setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
-        checkSystemClipboardAccess();
+	this.text = (text != null) ? text : "";
+	setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+	checkSystemClipboardAccess();
     }
 
     private void enableInputMethodsIfNecessary() {
-        if (checkForEnableIM) {
+	if (checkForEnableIM) {
             checkForEnableIM = false;
-            try {
+    	    try {
                 Toolkit toolkit = Toolkit.getDefaultToolkit();
-                boolean shouldEnable = false;
+                boolean shouldEnable = false;            
                 if (toolkit instanceof InputMethodSupport) {
                     shouldEnable = ((InputMethodSupport)toolkit)
                       .enableInputMethodsForTextComponent();
@@ -153,16 +154,16 @@ public class TextComponent extends Component implements Accessible {
                 enableInputMethods(shouldEnable);
             } catch (Exception e) {
                 // if something bad happens, just don't enable input methods
-            }
+	    }
         }
     }
 
     /**
      * Enables or disables input method support for this text component. If input
      * method support is enabled and the text component also processes key events,
-     * incoming events are offered to the current input method and will only be
-     * processed by the component or dispatched to its listeners if the input method
-     * does not consume them. Whether and how input method support for this text
+     * incoming events are offered to the current input method and will only be 
+     * processed by the component or dispatched to its listeners if the input method 
+     * does not consume them. Whether and how input method support for this text 
      * component is enabled or disabled by default is implementation dependent.
      *
      * @param enable true to enable, false to disable
@@ -175,10 +176,10 @@ public class TextComponent extends Component implements Accessible {
     }
 
     boolean areInputMethodsEnabled() {
-        // moved from the constructor above to here and addNotify below,
+        // moved from the constructor above to here and addNotify below, 
         // this call will initialize the toolkit if not already initialized.
         if (checkForEnableIM) {
-            enableInputMethodsIfNecessary();
+            enableInputMethodsIfNecessary(); 
         }
 
         // TextComponent handles key events without touching the eventMask or
@@ -200,7 +201,7 @@ public class TextComponent extends Component implements Accessible {
      * This method is called internally by the toolkit and should
      * not be called directly by programs.
      * @see       java.awt.TextComponent#removeNotify
-     */
+     */  
     public void addNotify() {
         super.addNotify();
         enableInputMethodsIfNecessary();
@@ -208,36 +209,36 @@ public class TextComponent extends Component implements Accessible {
 
     /**
      * Removes the <code>TextComponent</code>'s peer.
-     * The peer allows us to modify the appearance of the
+     * The peer allows us to modify the appearance of the 
      * <code>TextComponent</code> without changing its
      * functionality.
      */
     public void removeNotify() {
         synchronized (getTreeLock()) {
-            TextComponentPeer peer = (TextComponentPeer)this.peer;
-            if (peer != null) {
-                text = peer.getText();
-                selectionStart = peer.getSelectionStart();
-                selectionEnd = peer.getSelectionEnd();
-            }
-            super.removeNotify();
-        }
+	    TextComponentPeer peer = (TextComponentPeer)this.peer;
+	    if (peer != null) {
+	        text = peer.getText();
+		selectionStart = peer.getSelectionStart();
+		selectionEnd = peer.getSelectionEnd();
+	    }
+	    super.removeNotify();
+	}
     }
 
     /**
-     * Sets the text that is presented by this
-     * text component to be the specified text.
+     * Sets the text that is presented by this 
+     * text component to be the specified text. 
      * @param       t   the new text;
      *                  if this parameter is <code>null</code> then
      *                  the text is set to the empty string ""
-     * @see         java.awt.TextComponent#getText
+     * @see         java.awt.TextComponent#getText  
      */
     public synchronized void setText(String t) {
-        text = (t != null) ? t : "";
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            peer.setText(text);
-        }
+	text = (t != null) ? t : "";
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    peer.setText(text);
+	}
     }
 
     /**
@@ -248,21 +249,21 @@ public class TextComponent extends Component implements Accessible {
      * @see     java.awt.TextComponent#setText
      */
     public synchronized String getText() {
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            text = peer.getText();
-        }
-        return text;
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    text = peer.getText();
+	}
+	return text;
     }
 
     /**
      * Returns the selected text from the text that is
-     * presented by this text component.
+     * presented by this text component.  
      * @return      the selected text of this text component
      * @see         java.awt.TextComponent#select
      */
     public synchronized String getSelectedText() {
-        return getText().substring(getSelectionStart(), getSelectionEnd());
+	return getText().substring(getSelectionStart(), getSelectionEnd());
     }
 
     /**
@@ -273,7 +274,7 @@ public class TextComponent extends Component implements Accessible {
      * @since      JDK1.0
      */
     public boolean isEditable() {
-        return editable;
+	return editable;
     }
 
     /**
@@ -297,11 +298,11 @@ public class TextComponent extends Component implements Accessible {
             return;
         }
 
-        editable = b;
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            peer.setEditable(b);
-        }
+	editable = b;
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    peer.setEditable(b);
+	}
     }
 
     /**
@@ -340,132 +341,132 @@ public class TextComponent extends Component implements Accessible {
     }
 
     /**
-     * Gets the start position of the selected text in
-     * this text component.
-     * @return      the start position of the selected text
+     * Gets the start position of the selected text in 
+     * this text component. 
+     * @return      the start position of the selected text 
      * @see         java.awt.TextComponent#setSelectionStart
      * @see         java.awt.TextComponent#getSelectionEnd
      */
     public synchronized int getSelectionStart() {
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            selectionStart = peer.getSelectionStart();
-        }
-        return selectionStart;
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    selectionStart = peer.getSelectionStart();
+	}
+	return selectionStart;
     }
 
     /**
-     * Sets the selection start for this text component to
-     * the specified position. The new start point is constrained
+     * Sets the selection start for this text component to  
+     * the specified position. The new start point is constrained 
      * to be at or before the current selection end. It also
-     * cannot be set to less than zero, the beginning of the
+     * cannot be set to less than zero, the beginning of the 
      * component's text.
      * If the caller supplies a value for <code>selectionStart</code>
      * that is out of bounds, the method enforces these constraints
      * silently, and without failure.
-     * @param       selectionStart   the start position of the
+     * @param       selectionStart   the start position of the 
      *                        selected text
      * @see         java.awt.TextComponent#getSelectionStart
      * @see         java.awt.TextComponent#setSelectionEnd
      * @since       JDK1.1
      */
     public synchronized void setSelectionStart(int selectionStart) {
-        /* Route through select method to enforce consistent policy
-         * between selectionStart and selectionEnd.
-         */
-        select(selectionStart, getSelectionEnd());
+	/* Route through select method to enforce consistent policy
+    	 * between selectionStart and selectionEnd.
+    	 */
+	select(selectionStart, getSelectionEnd());
     }
 
     /**
-     * Gets the end position of the selected text in
-     * this text component.
+     * Gets the end position of the selected text in 
+     * this text component. 
      * @return      the end position of the selected text
      * @see         java.awt.TextComponent#setSelectionEnd
      * @see         java.awt.TextComponent#getSelectionStart
      */
     public synchronized int getSelectionEnd() {
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            selectionEnd = peer.getSelectionEnd();
-        }
-        return selectionEnd;
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    selectionEnd = peer.getSelectionEnd();
+	}
+	return selectionEnd;
     }
 
     /**
-     * Sets the selection end for this text component to
-     * the specified position. The new end point is constrained
+     * Sets the selection end for this text component to  
+     * the specified position. The new end point is constrained 
      * to be at or after the current selection start. It also
      * cannot be set beyond the end of the component's text.
      * If the caller supplies a value for <code>selectionEnd</code>
      * that is out of bounds, the method enforces these constraints
      * silently, and without failure.
-     * @param       selectionEnd   the end position of the
+     * @param       selectionEnd   the end position of the 
      *                        selected text
      * @see         java.awt.TextComponent#getSelectionEnd
      * @see         java.awt.TextComponent#setSelectionStart
      * @since       JDK1.1
      */
     public synchronized void setSelectionEnd(int selectionEnd) {
-        /* Route through select method to enforce consistent policy
-         * between selectionStart and selectionEnd.
-         */
-        select(getSelectionStart(), selectionEnd);
+	/* Route through select method to enforce consistent policy
+    	 * between selectionStart and selectionEnd.
+    	 */
+	select(getSelectionStart(), selectionEnd);
     }
-
+    
     /**
      * Selects the text between the specified start and end positions.
      * <p>
-     * This method sets the start and end positions of the
-     * selected text, enforcing the restriction that the start position
-     * must be greater than or equal to zero.  The end position must be
-     * greater than or equal to the start position, and less than or
-     * equal to the length of the text component's text.  The
-     * character positions are indexed starting with zero.
-     * The length of the selection is
-     * <code>endPosition</code> - <code>startPosition</code>, so the
-     * character at <code>endPosition</code> is not selected.
-     * If the start and end positions of the selected text are equal,
-     * all text is deselected.
-     * <p>
-     * If the caller supplies values that are inconsistent or out of
-     * bounds, the method enforces these constraints silently, and
-     * without failure. Specifically, if the start position or end
-     * position is greater than the length of the text, it is reset to
-     * equal the text length. If the start position is less than zero,
-     * it is reset to zero, and if the end position is less than the
+     * This method sets the start and end positions of the 
+     * selected text, enforcing the restriction that the start position 
+     * must be greater than or equal to zero.  The end position must be 
+     * greater than or equal to the start position, and less than or 
+     * equal to the length of the text component's text.  The 
+     * character positions are indexed starting with zero.  
+     * The length of the selection is 
+     * <code>endPosition</code> - <code>startPosition</code>, so the 
+     * character at <code>endPosition</code> is not selected.  
+     * If the start and end positions of the selected text are equal,  
+     * all text is deselected.  
+     * <p> 
+     * If the caller supplies values that are inconsistent or out of 
+     * bounds, the method enforces these constraints silently, and 
+     * without failure. Specifically, if the start position or end 
+     * position is greater than the length of the text, it is reset to 
+     * equal the text length. If the start position is less than zero, 
+     * it is reset to zero, and if the end position is less than the 
      * start position, it is reset to the start position.
-     *
-     * @param        selectionStart the zero-based index of the first
-                       character (<code>char</code> value) to be selected
-     * @param        selectionEnd the zero-based end position of the
-                       text to be selected; the character (<code>char</code> value) at
-                       <code>selectionEnd</code> is not selected
+     * 
+     * @param        selectionStart the zero-based index of the first 
+                       character (<code>char</code> value) to be selected  
+     * @param        selectionEnd the zero-based end position of the 
+                       text to be selected; the character (<code>char</code> value) at 
+                       <code>selectionEnd</code> is not selected 
      * @see          java.awt.TextComponent#setSelectionStart
      * @see          java.awt.TextComponent#setSelectionEnd
      * @see          java.awt.TextComponent#selectAll
      */
     public synchronized void select(int selectionStart, int selectionEnd) {
-        String text = getText();
-        if (selectionStart < 0) {
-            selectionStart = 0;
-        }
-        if (selectionStart > text.length()) {
-            selectionStart = text.length();
-        }
-        if (selectionEnd > text.length()) {
-            selectionEnd = text.length();
-        }
-        if (selectionEnd < selectionStart) {
-            selectionEnd = selectionStart;
-        }
+	String text = getText();
+	if (selectionStart < 0) {
+	    selectionStart = 0;
+	}
+	if (selectionStart > text.length()) {
+	    selectionStart = text.length();
+	}
+	if (selectionEnd > text.length()) {
+	    selectionEnd = text.length();
+	}
+	if (selectionEnd < selectionStart) {
+	    selectionEnd = selectionStart;
+	}
 
-        this.selectionStart = selectionStart;
-        this.selectionEnd = selectionEnd;
+	this.selectionStart = selectionStart;
+	this.selectionEnd = selectionEnd;
 
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            peer.select(selectionStart, selectionEnd);
-        }
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    peer.select(selectionStart, selectionEnd);
+	}
     }
 
     /**
@@ -473,13 +474,13 @@ public class TextComponent extends Component implements Accessible {
      * @see        java.awt.TextComponent#select
      */
     public synchronized void selectAll() {
-        this.selectionStart = 0;
-        this.selectionEnd = getText().length();
+	this.selectionStart = 0;
+	this.selectionEnd = getText().length();
 
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            peer.select(selectionStart, selectionEnd);
-        }
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    peer.select(selectionStart, selectionEnd);
+	}
     }
 
     /**
@@ -492,28 +493,28 @@ public class TextComponent extends Component implements Accessible {
      * and no error is returned.  If the passed-in value is
      * less than 0, an <code>IllegalArgumentException</code>
      * is thrown.
-     *
+     * 
      * @param        position the position of the text insertion caret
      * @exception    IllegalArgumentException if <code>position</code>
      *               is less than zero
      * @since        JDK1.1
      */
     public synchronized void setCaretPosition(int position) {
-        if (position < 0) {
-            throw new IllegalArgumentException("position less than zero.");
-        }
+	if (position < 0) {
+	    throw new IllegalArgumentException("position less than zero.");
+	}
 
-        int maxposition = getText().length();
-        if (position > maxposition) {
-            position = maxposition;
-        }
+	int maxposition = getText().length();
+	if (position > maxposition) {
+	    position = maxposition;
+	}
 
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        if (peer != null) {
-            peer.setCaretPosition(position);
-        } else {
-            select(position, position);
-        }
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	if (peer != null) {
+	    peer.setCaretPosition(position);
+	} else {
+	    select(position, position);
+	}
     }
 
     /**
@@ -529,13 +530,13 @@ public class TextComponent extends Component implements Accessible {
      */
     public synchronized int getCaretPosition() {
         TextComponentPeer peer = (TextComponentPeer)this.peer;
-        int position = 0;
+	int position = 0;
 
-        if (peer != null) {
-            position = peer.getCaretPosition();
-        } else {
-            position = selectionStart;
-        }
+	if (peer != null) {
+	    position = peer.getCaretPosition();
+	} else {
+	    position = selectionStart;
+	}
         int maxposition = getText().length();
         if (position > maxposition) {
             position = maxposition;
@@ -544,45 +545,45 @@ public class TextComponent extends Component implements Accessible {
     }
 
     /**
-     * Adds the specified text event listener to receive text events
+     * Adds the specified text event listener to receive text events 
      * from this text component.
-     * If <code>l</code> is <code>null</code>, no exception is
+     * If <code>l</code> is <code>null</code>, no exception is 
      * thrown and no action is performed.
      * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
      * >AWT Threading Issues</a> for details on AWT's threading model.
      *
      * @param l the text event listener
-     * @see             #removeTextListener
-     * @see             #getTextListeners
-     * @see             java.awt.event.TextListener
-     */
+     * @see           	#removeTextListener
+     * @see           	#getTextListeners
+     * @see           	java.awt.event.TextListener
+     */ 
     public synchronized void addTextListener(TextListener l) {
-        if (l == null) {
-            return;
-        }
-        textListener = AWTEventMulticaster.add(textListener, l);
+	if (l == null) {
+	    return;
+	}
+	textListener = AWTEventMulticaster.add(textListener, l);
         newEventsOnly = true;
     }
 
     /**
      * Removes the specified text event listener so that it no longer
      * receives text events from this text component
-     * If <code>l</code> is <code>null</code>, no exception is
+     * If <code>l</code> is <code>null</code>, no exception is 
      * thrown and no action is performed.
      * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
      * >AWT Threading Issues</a> for details on AWT's threading model.
      *
-     * @param           l     the text listener
-     * @see             #addTextListener
-     * @see             #getTextListeners
-     * @see             java.awt.event.TextListener
-     * @since           JDK1.1
+     * @param         	l     the text listener
+     * @see           	#addTextListener
+     * @see           	#getTextListeners
+     * @see           	java.awt.event.TextListener
+     * @since         	JDK1.1
      */
     public synchronized void removeTextListener(TextListener l) {
-        if (l == null) {
-            return;
-        }
-        textListener = AWTEventMulticaster.remove(textListener, l);
+	if (l == null) {
+	    return;
+	}
+	textListener = AWTEventMulticaster.remove(textListener, l);
     }
 
     /**
@@ -636,13 +637,13 @@ public class TextComponent extends Component implements Accessible {
      * @since 1.3
      */
     public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        EventListener l = null;
-        if  (listenerType == TextListener.class) {
-            l = textListener;
-        } else {
-            return super.getListeners(listenerType);
-        }
-        return AWTEventMulticaster.getListeners(l, listenerType);
+	EventListener l = null; 
+	if  (listenerType == TextListener.class) { 
+	    l = textListener;
+	} else {
+	    return super.getListeners(listenerType);
+	}
+	return AWTEventMulticaster.getListeners(l, listenerType);
     }
 
     // REMIND: remove when filtering is done at lower level
@@ -651,11 +652,11 @@ public class TextComponent extends Component implements Accessible {
             if ((eventMask & AWTEvent.TEXT_EVENT_MASK) != 0 ||
                 textListener != null) {
                 return true;
-            }
+            } 
             return false;
         }
         return super.eventEnabled(e);
-    }
+    }     
 
     /**
      * Processes events on this text component. If the event is a
@@ -672,10 +673,10 @@ public class TextComponent extends Component implements Accessible {
             processTextEvent((TextEvent)e);
             return;
         }
-        super.processEvent(e);
+	super.processEvent(e);
     }
 
-    /**
+    /** 
      * Processes text events occurring on this text component by
      * dispatching them to any registered <code>TextListener</code> objects.
      * <p>
@@ -693,35 +694,35 @@ public class TextComponent extends Component implements Accessible {
      *
      * @param e the text event
      * @see Component#enableEvents
-     */
+     */ 
     protected void processTextEvent(TextEvent e) {
         TextListener listener = textListener;
         if (listener != null) {
             int id = e.getID();
-            switch (id) {
-            case TextEvent.TEXT_VALUE_CHANGED:
-                listener.textValueChanged(e);
-                break;
-            }
+	    switch (id) {
+	    case TextEvent.TEXT_VALUE_CHANGED:
+		listener.textValueChanged(e);
+		break;
+	    }
         }
     }
 
     /**
      * Returns a string representing the state of this
-     * <code>TextComponent</code>. This
-     * method is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not be
+     * <code>TextComponent</code>. This 
+     * method is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between 
+     * implementations. The returned string may be empty but may not be 
      * <code>null</code>.
      *
      * @return      the parameter string of this text component
      */
     protected String paramString() {
-        String str = super.paramString() + ",text=" + getText();
-        if (editable) {
-            str += ",editable";
-        }
-        return str + ",selection=" + getSelectionStart() + "-" + getSelectionEnd();
+	String str = super.paramString() + ",text=" + getText();
+	if (editable) {
+	    str += ",editable";
+	}
+	return str + ",selection=" + getSelectionStart() + "-" + getSelectionEnd();
     }
 
     /**
@@ -729,15 +730,15 @@ public class TextComponent extends Component implements Accessible {
      */
     private void checkSystemClipboardAccess() {
         canAccessClipboard = true;
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            try {
-                sm.checkSystemClipboardAccess();
-            }
-            catch (SecurityException e) {
-                canAccessClipboard = false;
-            }
-        }
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    try {
+	        sm.checkSystemClipboardAccess();
+	    }
+	    catch (SecurityException e) {
+	        canAccessClipboard = false;
+	    }
+	}
     }
 
     /*
@@ -766,7 +767,7 @@ public class TextComponent extends Component implements Accessible {
      * @see java.awt.Component#textListenerK
      */
     private void writeObject(java.io.ObjectOutputStream s)
-      throws IOException
+      throws IOException 
     {
         // Serialization support.  Since the value of the fields
         // selectionStart, selectionEnd, and text aren't necessarily
@@ -785,11 +786,11 @@ public class TextComponent extends Component implements Accessible {
     }
 
     /**
-     * Read the ObjectInputStream, and if it isn't null,
-     * add a listener to receive text events fired by the
-     * TextComponent.  Unrecognized keys or values will be
+     * Read the ObjectInputStream, and if it isn't null, 
+     * add a listener to receive text events fired by the 
+     * TextComponent.  Unrecognized keys or values will be 
      * ignored.
-     *
+     * 
      * @exception HeadlessException if
      * <code>GraphicsEnvironment.isHeadless()</code> returns
      * <code>true</code>
@@ -803,24 +804,24 @@ public class TextComponent extends Component implements Accessible {
         GraphicsEnvironment.checkHeadless();
         s.defaultReadObject();
 
-        // Make sure the state we just read in for text,
+        // Make sure the state we just read in for text, 
         // selectionStart and selectionEnd has legal values
-        this.text = (text != null) ? text : "";
+	this.text = (text != null) ? text : "";
         select(selectionStart, selectionEnd);
 
         Object keyOrNull;
         while(null != (keyOrNull = s.readObject())) {
-            String key = ((String)keyOrNull).intern();
+	    String key = ((String)keyOrNull).intern();
 
-            if (textListenerK == key) {
-                addTextListener((TextListener)(s.readObject()));
-            } else {
+	    if (textListenerK == key) {
+	        addTextListener((TextListener)(s.readObject()));
+            } else { 
                 // skip value for unrecognized key
-                s.readObject();
+	        s.readObject();
             }
         }
-        enableInputMethodsIfNecessary();
-        checkSystemClipboardAccess();
+	enableInputMethodsIfNecessary();
+	checkSystemClipboardAccess();
     }
 
 
@@ -833,13 +834,13 @@ public class TextComponent extends Component implements Accessible {
      *
      */
     int getIndexAtPoint(Point p) {
-        return -1;
+	return -1;
 /* To be fully implemented in a future release
-        if (peer == null) {
-            return -1;
-        }
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        return peer.getIndexAtPoint(p.x, p.y);
+	if (peer == null) {
+	    return -1;
+	}
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	return peer.getIndexAtPoint(p.x, p.y);
 */
     }
 
@@ -850,22 +851,22 @@ public class TextComponent extends Component implements Accessible {
     Rectangle getCharacterBounds(int i) {
         return null;
 /* To be fully implemented in a future release
-        if (peer == null) {
-            return null;
-        }
-        TextComponentPeer peer = (TextComponentPeer)this.peer;
-        return peer.getCharacterBounds(i);
+	if (peer == null) {
+	    return null;
+	}
+	TextComponentPeer peer = (TextComponentPeer)this.peer;
+	return peer.getCharacterBounds(i);
 */
     }
 
 
     /**
-     * Gets the AccessibleContext associated with this TextComponent.
-     * For text components, the AccessibleContext takes the form of an
-     * AccessibleAWTTextComponent.
+     * Gets the AccessibleContext associated with this TextComponent. 
+     * For text components, the AccessibleContext takes the form of an 
+     * AccessibleAWTTextComponent. 
      * A new AccessibleAWTTextComponent instance is created if necessary.
      *
-     * @return an AccessibleAWTTextComponent that serves as the
+     * @return an AccessibleAWTTextComponent that serves as the 
      *         AccessibleContext of this TextComponent
      * @since 1.3
      */
@@ -877,13 +878,13 @@ public class TextComponent extends Component implements Accessible {
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>TextComponent</code> class.  It provides an implementation of the
-     * Java Accessibility API appropriate to text component user-interface
+     * This class implements accessibility support for the 
+     * <code>TextComponent</code> class.  It provides an implementation of the 
+     * Java Accessibility API appropriate to text component user-interface 
      * elements.
      * @since 1.3
      */
-    protected class AccessibleAWTTextComponent extends AccessibleAWTComponent
+    protected class AccessibleAWTTextComponent extends AccessibleAWTComponent 
         implements AccessibleText, TextListener
     {
         /*
@@ -909,8 +910,8 @@ public class TextComponent extends Component implements Accessible {
 
         /**
          * Gets the state set of the TextComponent.
-         * The AccessibleStateSet of an object is composed of a set of
-         * unique AccessibleStates.  A change in the AccessibleStateSet
+         * The AccessibleStateSet of an object is composed of a set of 
+         * unique AccessibleStates.  A change in the AccessibleStateSet 
          * of an object will cause a PropertyChangeEvent to be fired
          * for the AccessibleContext.ACCESSIBLE_STATE_PROPERTY property.
          *
@@ -932,7 +933,7 @@ public class TextComponent extends Component implements Accessible {
         /**
          * Gets the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the
+         * @return an instance of AccessibleRole describing the role of the 
          * object (AccessibleRole.TEXT)
          * @see AccessibleRole
          */
@@ -942,11 +943,11 @@ public class TextComponent extends Component implements Accessible {
 
         /**
          * Get the AccessibleText associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * return this object, which is responsible for implementing the
          * AccessibleText interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object 
          */
         public AccessibleText getAccessibleText() {
             return this;
@@ -969,7 +970,7 @@ public class TextComponent extends Component implements Accessible {
          * @return the zero-based index of the character under Point p.
          */
         public int getIndexAtPoint(Point p) {
-            return TextComponent.this.getIndexAtPoint(p);
+	    return TextComponent.this.getIndexAtPoint(p);
         }
 
         /**
@@ -982,7 +983,7 @@ public class TextComponent extends Component implements Accessible {
          * @return the screen coordinates of the character's bounding box
          */
         public Rectangle getCharacterBounds(int i) {
-            return TextComponent.this.getCharacterBounds(i);
+	    return TextComponent.this.getCharacterBounds(i);
         }
 
         /**
@@ -1058,7 +1059,7 @@ public class TextComponent extends Component implements Accessible {
         }
 
         /**
-         * Returns the String at a given index.
+         * Returns the String at a given index. 
          *
          * @param part the AccessibleText.CHARACTER, AccessibleText.WORD,
          * or AccessibleText.SENTENCE to retrieve
@@ -1139,8 +1140,8 @@ public class TextComponent extends Component implements Accessible {
             switch (part) {
             case AccessibleText.CHARACTER:
                 if (index+1 >= TextComponent.this.getText().length()) {
-                   return null;
-                }
+		   return null;
+		}
                 return TextComponent.this.getText().substring(index+1, index+2);
             case AccessibleText.WORD:  {
                     String s = TextComponent.this.getText();
@@ -1191,9 +1192,9 @@ public class TextComponent extends Component implements Accessible {
             }
             switch (part) {
             case AccessibleText.CHARACTER:
-                if (index == 0) {
-                    return null;
-                }
+		if (index == 0) {
+		    return null;
+		}
                 return TextComponent.this.getText().substring(index-1, index);
             case AccessibleText.WORD:  {
                     String s = TextComponent.this.getText();

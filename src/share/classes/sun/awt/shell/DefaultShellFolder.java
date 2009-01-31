@@ -36,14 +36,14 @@ import sun.security.action.GetPropertyAction;
  */
 
 class DefaultShellFolder extends ShellFolder {
-
+    
     /**
      * Create a file system shell folder from a file
      */
     DefaultShellFolder(ShellFolder parent, File f) {
         super(parent, f.getAbsolutePath());
     }
-
+    
     /**
      * This method is implemented to make sure that no instances
      * of <code>ShellFolder</code> are ever serialized. An instance of
@@ -53,7 +53,7 @@ class DefaultShellFolder extends ShellFolder {
      * @returns a <code>java.io.File</code> replacement object.
      */
     protected Object writeReplace() throws java.io.ObjectStreamException {
-        return new File(getPath());
+	return new File(getPath());
     }
 
     /**
@@ -63,13 +63,13 @@ class DefaultShellFolder extends ShellFolder {
     public File[] listFiles() {
         File[] files = super.listFiles();
         if (files != null) {
-            for (int i = 0; i < files.length; i++) {
-                files[i] = new DefaultShellFolder(this, files[i]);
-            }
-        }
+	    for (int i = 0; i < files.length; i++) {
+		files[i] = new DefaultShellFolder(this, files[i]);
+	    }
+	}
         return files;
     }
-
+    
     /**
      * @return Whether this shell folder is a link
      */
@@ -81,10 +81,10 @@ class DefaultShellFolder extends ShellFolder {
      * @return Whether this shell folder is marked as hidden
      */
     public boolean isHidden() {
-        String fileName = getName();
+        String fileName = getName(); 
         if (fileName.length() > 0) {
             return (fileName.charAt(0) == '.');
-        }
+        } 
         return false;
     }
 
@@ -95,14 +95,14 @@ class DefaultShellFolder extends ShellFolder {
     public ShellFolder getLinkLocation() {
         return null; // Not supported by default
     }
-
+    
     /**
      * @return The name used to display this shell folder
      */
     public String getDisplayName() {
-        return getName();
+	return getName();
     }
-
+    
     /**
      * @return The type of shell folder as a string
      */
@@ -113,7 +113,7 @@ class DefaultShellFolder extends ShellFolder {
             return "File"; // TODO : LOCALIZE THIS STRING!!!
         }
     }
-
+    
     /**
      * @return The executable type as a string
      */

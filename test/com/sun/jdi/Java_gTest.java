@@ -58,7 +58,7 @@ public class Java_gTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         /*
          * On Windows, this test needs msvcrtd.dll which is installed
          * as part of Vis C++.  We don't want this test to fail
@@ -80,7 +80,7 @@ public class Java_gTest extends TestScaffold {
          * This test would like to run the debug (java) executable.
          * If java is not found, we don't want a spurious test failure,
          * so check before attempting to run.
-         *
+         * 
          * We can't catch the IOException because it is thrown
          * on a separate thread (com.sun.tools.jdi.AbstractLauncher$Helper),
          * so check for the expected executable before attempting to launch.
@@ -112,12 +112,12 @@ public class Java_gTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("Java_gTarg");
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

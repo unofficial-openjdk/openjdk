@@ -39,7 +39,7 @@
  * This test verifies that this really happens, and also verifies that the fix
  * doesn't incorrectly discard other fields.
  */
-
+  
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.*;
@@ -66,7 +66,7 @@ class Testy {
     int field6;
     final static int field7 = 7;  // Value is the number of fields.
     //int field8;
-
+    
     Testy() {
     }
 }
@@ -96,7 +96,7 @@ public class BacktraceFieldTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new BacktraceFieldTest(args).startTests();
     }
 
@@ -104,26 +104,26 @@ public class BacktraceFieldTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of gus()
+         * Get to the top of gus() 
          * to determine mainThread
          */
         BreakpointEvent bpe = startTo("BacktraceFieldTarg", "gus", "()V");
         mainThread = bpe.thread();
 
-        /*
+        /* 
          * We are now one frame below the exception frame that contains
          * our ee var.
          */
         StackFrame myFrame = mainThread.frame(1);
 
-        LocalVariable lv = myFrame.visibleVariableByName("ee");
-        println("BT: lv = " + lv);
+        LocalVariable lv = myFrame.visibleVariableByName("ee");  
+        println("BT: lv = " + lv);  
         println("BT: lvType = " + lv.typeName());
-
-        List allFields = ((ReferenceType)(lv.type())).allFields();
+        
+        List allFields = ((ReferenceType)(lv.type())).allFields(); 
         println("BT: allFields = " + allFields);
-
-        /*
+        
+        /* 
          * Search through the fields of ee to verify that
          * java.lang.Throwable.backtrace isn't there.
          */
@@ -139,24 +139,24 @@ public class BacktraceFieldTest extends TestScaffold {
                  */
                 if (1 == 0) {
                     // The following code will show the segv that this can cause.
-                    ObjectReference myVal = (ObjectReference)myFrame.getValue(lv);
+                    ObjectReference myVal = (ObjectReference)myFrame.getValue(lv);  
                     println("BT: myVal = " + myVal);
-
+                    
                     ArrayReference backTraceVal = null;
-                    backTraceVal = (ArrayReference)myVal.getValue(ff);
+                    backTraceVal = (ArrayReference)myVal.getValue(ff); 
                     println("BT: backTraceVal = " + backTraceVal);
 
-                    ArrayReference secondVal = (ArrayReference)backTraceVal.getValue(1);
+                    ArrayReference secondVal = (ArrayReference)backTraceVal.getValue(1);  
                     println("BT: secondVal = " + secondVal);
 
-                    Object x2Val = (Object)secondVal.getValue(0);
+                    Object x2Val = (Object)secondVal.getValue(0);  
                     println("BT: x2Val = " + x2Val);
 
                     ArrayReference firstVal = (ArrayReference)backTraceVal.getValue(0);
                     println("BT: firstVal = " + firstVal);
 
                     // The segv happens here.
-                    Object xVal = (Object)firstVal.getValue(0);
+                    Object xVal = (Object)firstVal.getValue(0);  
                     println("BT: xVal = " + xVal);
                 }
                 break;
@@ -168,7 +168,7 @@ public class BacktraceFieldTest extends TestScaffold {
         if (!testFailed) {
             lv = myFrame.visibleVariableByName("myTesty");
 
-            allFields = ((ReferenceType)(lv.type())).allFields();
+            allFields = ((ReferenceType)(lv.type())).allFields(); 
             println("BT: allFields = " + allFields);
 
             if (allFields.size() != Testy.field7) {
@@ -185,7 +185,7 @@ public class BacktraceFieldTest extends TestScaffold {
         }
 
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

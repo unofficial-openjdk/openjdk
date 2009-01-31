@@ -52,6 +52,7 @@ import javax.security.auth.x500.X500Principal;
  * <code>connect</code>ing.
  *
  * @since 1.4
+ * @version %I%
  */
 abstract public
 class HttpsURLConnection extends HttpURLConnection
@@ -63,7 +64,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @param url the URL
      */
     protected HttpsURLConnection(URL url) {
-        super(url);
+	super(url);
     }
 
     /**
@@ -71,7 +72,7 @@ class HttpsURLConnection extends HttpURLConnection
      *
      * @return the cipher suite
      * @throws IllegalStateException if this method is called before
-     *          the connection has been established.
+     *		the connection has been established.
      */
     public abstract String getCipherSuite();
 
@@ -89,11 +90,11 @@ class HttpsURLConnection extends HttpURLConnection
      * which certificate chain was actually sent.
      *
      * @return an ordered array of certificates,
-     *          with the client's own certificate first followed by any
-     *          certificate authorities.  If no certificates were sent,
-     *          then null is returned.
+     *		with the client's own certificate first followed by any
+     *		certificate authorities.  If no certificates were sent,
+     *		then null is returned.
      * @throws IllegalStateException if this method is called before
-     *          the connection has been established.
+     *		the connection has been established.
      * @see #getLocalPrincipal()
      */
     public abstract java.security.cert.Certificate [] getLocalCertificates();
@@ -107,15 +108,15 @@ class HttpsURLConnection extends HttpURLConnection
      * such as Kerberos, will throw an SSLPeerUnverifiedException.
      *
      * @return an ordered array of server certificates,
-     *          with the peer's own certificate first followed by
-     *          any certificate authorities.
+     *		with the peer's own certificate first followed by
+     *		any certificate authorities.
      * @throws SSLPeerUnverifiedException if the peer is not verified.
      * @throws IllegalStateException if this method is called before
-     *          the connection has been established.
+     *		the connection has been established.
      * @see #getPeerPrincipal()
      */
     public abstract java.security.cert.Certificate [] getServerCertificates()
-            throws SSLPeerUnverifiedException;
+	    throws SSLPeerUnverifiedException;
 
     /**
      * Returns the server's principal which was established as part of
@@ -133,7 +134,7 @@ class HttpsURLConnection extends HttpURLConnection
      *
      * @throws SSLPeerUnverifiedException if the peer was not verified
      * @throws IllegalStateException if this method is called before
-     *          the connection has been established.
+     *		the connection has been established.
      *
      * @see #getServerCertificates()
      * @see #getLocalPrincipal()
@@ -141,11 +142,11 @@ class HttpsURLConnection extends HttpURLConnection
      * @since 1.5
      */
     public Principal getPeerPrincipal()
-            throws SSLPeerUnverifiedException {
+	    throws SSLPeerUnverifiedException {
 
-        java.security.cert.Certificate[] certs = getServerCertificates();
-        return ((X500Principal)
-                ((X509Certificate)certs[0]).getSubjectX500Principal());
+	java.security.cert.Certificate[] certs = getServerCertificates();
+	return ((X500Principal)
+		((X509Certificate)certs[0]).getSubjectX500Principal());
     }
 
     /**
@@ -162,7 +163,7 @@ class HttpsURLConnection extends HttpURLConnection
      * sent, then null is returned.
      *
      * @throws IllegalStateException if this method is called before
-     *          the connection has been established.
+     *		the connection has been established.
      *
      * @see #getLocalCertificates()
      * @see #getPeerPrincipal()
@@ -171,13 +172,13 @@ class HttpsURLConnection extends HttpURLConnection
      */
     public Principal getLocalPrincipal() {
 
-        java.security.cert.Certificate[] certs = getLocalCertificates();
-        if (certs != null) {
-            return ((X500Principal)
-                ((X509Certificate)certs[0]).getSubjectX500Principal());
-        } else {
-            return null;
-        }
+	java.security.cert.Certificate[] certs = getLocalCertificates();
+	if (certs != null) {
+	    return ((X500Principal)
+		((X509Certificate)certs[0]).getSubjectX500Principal());
+	} else {
+	    return null;
+	}
     }
 
     /**
@@ -194,12 +195,12 @@ class HttpsURLConnection extends HttpURLConnection
      * Initialize the default <code>HostnameVerifier</code>.
      */
     static {
-        try {
-            defaultHostnameVerifier =
-                new sun.net.www.protocol.https.DefaultHostnameVerifier();
-        } catch (NoClassDefFoundError e) {
-            defaultHostnameVerifier = new DefaultHostnameVerifier();
-        }
+	try {
+	    defaultHostnameVerifier =
+		new sun.net.www.protocol.https.DefaultHostnameVerifier();
+	} catch (NoClassDefFoundError e) {
+	    defaultHostnameVerifier = new DefaultHostnameVerifier();
+	}
     }
 
     /*
@@ -208,10 +209,10 @@ class HttpsURLConnection extends HttpURLConnection
      * that are created.
      */
     private static class DefaultHostnameVerifier
-            implements HostnameVerifier {
-        public boolean verify(String hostname, SSLSession session) {
-            return false;
-        }
+	    implements HostnameVerifier {
+	public boolean verify(String hostname, SSLSession session) {
+	    return false;
+	}
     }
 
     /**
@@ -229,23 +230,23 @@ class HttpsURLConnection extends HttpURLConnection
      *
      * @param v the default host name verifier
      * @throws IllegalArgumentException if the <code>HostnameVerifier</code>
-     *          parameter is null.
+     *		parameter is null.
      * @throws SecurityException if a security manager exists and its
      *         <code>checkPermission</code> method does not allow
      *         <code>SSLPermission("setHostnameVerifier")</code>
      * @see #getDefaultHostnameVerifier()
      */
     public static void setDefaultHostnameVerifier(HostnameVerifier v) {
-        if (v == null) {
-            throw new IllegalArgumentException(
-                "no default HostnameVerifier specified");
-        }
+	if (v == null) {
+	    throw new IllegalArgumentException(
+		"no default HostnameVerifier specified");
+	}
 
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new SSLPermission("setHostnameVerifier"));
-        }
-        defaultHostnameVerifier = v;
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkPermission(new SSLPermission("setHostnameVerifier"));
+	}
+	defaultHostnameVerifier = v;
     }
 
     /**
@@ -256,7 +257,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @see #setDefaultHostnameVerifier(HostnameVerifier)
      */
     public static HostnameVerifier getDefaultHostnameVerifier() {
-        return defaultHostnameVerifier;
+	return defaultHostnameVerifier;
     }
 
     /**
@@ -269,17 +270,17 @@ class HttpsURLConnection extends HttpURLConnection
      *
      * @param v the host name verifier
      * @throws IllegalArgumentException if the <code>HostnameVerifier</code>
-     *  parameter is null.
+     *	parameter is null.
      * @see #getHostnameVerifier()
      * @see #setDefaultHostnameVerifier(HostnameVerifier)
      */
     public void setHostnameVerifier(HostnameVerifier v) {
-        if (v == null) {
-            throw new IllegalArgumentException(
-                "no HostnameVerifier specified");
-        }
+	if (v == null) {
+	    throw new IllegalArgumentException(
+		"no HostnameVerifier specified");
+	}
 
-        hostnameVerifier = v;
+	hostnameVerifier = v;
     }
 
     /**
@@ -290,7 +291,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @see #setDefaultHostnameVerifier(HostnameVerifier)
      */
     public HostnameVerifier getHostnameVerifier() {
-        return hostnameVerifier;
+	return hostnameVerifier;
     }
 
     private static SSLSocketFactory defaultSSLSocketFactory = null;
@@ -310,23 +311,23 @@ class HttpsURLConnection extends HttpURLConnection
      *
      * @param sf the default SSL socket factory
      * @throws IllegalArgumentException if the SSLSocketFactory
-     *          parameter is null.
+     *		parameter is null.
      * @throws SecurityException if a security manager exists and its
      *         <code>checkSetFactory</code> method does not allow
      *         a socket factory to be specified.
      * @see #getDefaultSSLSocketFactory()
      */
     public static void setDefaultSSLSocketFactory(SSLSocketFactory sf) {
-        if (sf == null) {
-            throw new IllegalArgumentException(
-                "no default SSLSocketFactory specified");
-        }
+	if (sf == null) {
+	    throw new IllegalArgumentException(
+		"no default SSLSocketFactory specified");
+	}
 
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkSetFactory();
-        }
-        defaultSSLSocketFactory = sf;
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkSetFactory();
+	}
+	defaultSSLSocketFactory = sf;
     }
 
     /**
@@ -340,11 +341,11 @@ class HttpsURLConnection extends HttpURLConnection
      * @see #setDefaultSSLSocketFactory(SSLSocketFactory)
      */
     public static SSLSocketFactory getDefaultSSLSocketFactory() {
-        if (defaultSSLSocketFactory == null) {
-            defaultSSLSocketFactory =
-                (SSLSocketFactory)SSLSocketFactory.getDefault();
-        }
-        return defaultSSLSocketFactory;
+	if (defaultSSLSocketFactory == null) {
+	    defaultSSLSocketFactory =
+		(SSLSocketFactory)SSLSocketFactory.getDefault();
+	}
+	return defaultSSLSocketFactory;
     }
 
     /**
@@ -359,16 +360,16 @@ class HttpsURLConnection extends HttpURLConnection
      *
      * @param sf the SSL socket factory
      * @throws IllegalArgumentException if the <code>SSLSocketFactory</code>
-     *          parameter is null.
+     *		parameter is null.
      * @see #getSSLSocketFactory()
      */
     public void setSSLSocketFactory(SSLSocketFactory sf) {
-        if (sf == null) {
-            throw new IllegalArgumentException(
-                "no SSLSocketFactory specified");
-        }
+	if (sf == null) {
+	    throw new IllegalArgumentException(
+		"no SSLSocketFactory specified");
+	}
 
-        sslSocketFactory = sf;
+	sslSocketFactory = sf;
     }
 
     /**
@@ -379,6 +380,6 @@ class HttpsURLConnection extends HttpURLConnection
      * @see #setSSLSocketFactory(SSLSocketFactory)
      */
     public SSLSocketFactory getSSLSocketFactory() {
-        return sslSocketFactory;
+	return sslSocketFactory;
     }
 }

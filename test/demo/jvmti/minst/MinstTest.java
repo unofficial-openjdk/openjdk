@@ -35,18 +35,19 @@
 public class MinstTest {
 
     public static void main(String args[]) throws Exception {
-        DemoRun demo;
+	DemoRun demo;
 
-        /* Run demo that uses JVMTI minst agent (no options) */
-        demo = new DemoRun("minst", "exclude=java/*,exclude=javax/*,exclude=com/*,exclude=sun/*" /* options to minst */ );
-        demo.runit(args[0]);
+	/* Run demo that uses JVMTI minst agent (no options) */
+	demo = new DemoRun("minst", "exclude=java/*,exclude=javax/*,exclude=com/*,exclude=sun/*" /* options to minst */ );
+	demo.runit(args[0]);
 
-        /* Make sure patterns in output look ok */
-        if (demo.output_contains("ERROR")) {
-            throw new RuntimeException("Test failed - ERROR seen in oputput");
-        }
+	/* Make sure patterns in output look ok */
+	if (demo.output_contains("ERROR")) {
+	    throw new RuntimeException("Test failed - ERROR seen in oputput");
+	}
 
-        /* Must be a pass. */
-        System.out.println("Test passed - cleanly terminated");
+	/* Must be a pass. */
+	System.out.println("Test passed - cleanly terminated");
     }
 }
+

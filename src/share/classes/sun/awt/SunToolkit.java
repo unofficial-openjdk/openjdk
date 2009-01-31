@@ -64,13 +64,14 @@ import java.security.PrivilegedExceptionAction;
 
 public abstract class SunToolkit extends Toolkit
     implements WindowClosingSupport, WindowClosingListener,
-    ComponentFactory, InputMethodSupport, KeyboardFocusManagerPeerProvider {
+    ComponentFactory, InputMethodSupport {
 
     private static final Logger log = Logger.getLogger("sun.awt.SunToolkit");
 
     /* Load debug settings for native code */
     static {
-        if (AccessController.doPrivileged(new GetBooleanAction("sun.awt.nativedebug"))) {
+        String nativeDebug = System.getProperty("sun.awt.nativedebug");
+        if ("true".equalsIgnoreCase(nativeDebug)) {
             DebugSettings.init();
         }
     };
@@ -93,27 +94,27 @@ public abstract class SunToolkit extends Toolkit
     /* The key to put()/get() the PostEventQueue into/from the AppContext.
      */
     private static final String POST_EVENT_QUEUE_KEY = "PostEventQueue";
-
+    
     public SunToolkit() {
-        /* If awt.threadgroup is set to class name the instance of
-         * this class is created (should be subclass of ThreadGroup)
-         * and EventDispatchThread is created inside of it
-         *
-         * If loaded class overrides uncaughtException instance
-         * handles all uncaught exception on EventDispatchThread
-         */
-        ThreadGroup threadGroup = null;
+	/* If awt.threadgroup is set to class name the instance of
+	 * this class is created (should be subclass of ThreadGroup)
+	 * and EventDispatchThread is created inside of it
+	 * 
+	 * If loaded class overrides uncaughtException instance
+	 * handles all uncaught exception on EventDispatchThread
+	 */
+	ThreadGroup threadGroup = null;
         String tgName = System.getProperty("awt.threadgroup", "");
 
-        if (tgName.length() != 0) {
-            try {
-                Constructor ctor = Class.forName(tgName).
-                    getConstructor(new Class[] {String.class});
-                threadGroup = (ThreadGroup)ctor.newInstance(new Object[] {"AWT-ThreadGroup"});
-            } catch (Exception e) {
-                System.err.println("Failed loading " + tgName + ": " + e);
-            }
-        }
+	if (tgName.length() != 0) {
+	    try {
+		Constructor ctor = Class.forName(tgName).
+		    getConstructor(new Class[] {String.class});
+		threadGroup = (ThreadGroup)ctor.newInstance(new Object[] {"AWT-ThreadGroup"});
+	    } catch (Exception e) {
+		System.err.println("Failed loading " + tgName + ": " + e);
+	    }
+	}
 
         Runnable initEQ = new Runnable() {
             public void run () {
@@ -137,17 +138,17 @@ public abstract class SunToolkit extends Toolkit
             }
         };
 
-        if (threadGroup != null) {
-            Thread eqInitThread = new Thread(threadGroup, initEQ, "EventQueue-Init");
-            eqInitThread.start();
-            try {
-                eqInitThread.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            initEQ.run();
-        }
+	if (threadGroup != null) {
+	    Thread eqInitThread = new Thread(threadGroup, initEQ, "EventQueue-Init");
+	    eqInitThread.start();
+	    try {
+		eqInitThread.join();
+	    } catch (InterruptedException e) {
+		e.printStackTrace();
+	    }
+	} else {
+	    initEQ.run();
+	}
     }
 
     public boolean useBufferPerWindow() {
@@ -376,7 +377,7 @@ public abstract class SunToolkit extends Toolkit
 
     /*
      * Fetch the peer associated with the given target (as specified
-     * in the peer creation method).  This can be used to determine
+     * in the peer creation method).  This can be used to determine 
      * things like what the parent peer is.  If the target is null
      * or the target can't be found (either because the a peer was
      * never created for it or the peer was disposed), a null will
@@ -407,7 +408,7 @@ public abstract class SunToolkit extends Toolkit
 
     // Maps from non-Component/MenuComponent to AppContext.
     // WeakHashMap<Component,AppContext>
-    private static final Map appContextMap =
+    private static final Map appContextMap = 
         Collections.synchronizedMap(new WeakHashMap());
 
 
@@ -518,7 +519,7 @@ public abstract class SunToolkit extends Toolkit
         } catch( IllegalAccessException e){
             assert false;
         }
-    };
+    }; 
 
     public static void checkAndSetPolicy(Container cont, boolean isSwingCont)
     {
@@ -568,7 +569,7 @@ public abstract class SunToolkit extends Toolkit
     private static FocusTraversalPolicy createLayoutPolicy() {
         FocusTraversalPolicy policy = null;
         try {
-            Class layoutPolicyClass =
+            Class layoutPolicyClass = 
                 Class.forName("javax.swing.LayoutFocusTraversalPolicy");
             policy = (FocusTraversalPolicy) layoutPolicyClass.newInstance();
         }
@@ -602,20 +603,20 @@ public abstract class SunToolkit extends Toolkit
     /*
      * Post an AWTEvent to the Java EventQueue, using the PostEventQueue
      * to avoid possibly calling client code (EventQueueSubclass.postEvent())
-     * on the toolkit (AWT-Windows/AWT-Motif) thread.  This function should
-     * not be called under another lock since it locks the EventQueue.
-     * See bugids 4632918, 4526597.
+     * on the toolkit (AWT-Windows/AWT-Motif) thread.  This function should 
+     * not be called under another lock since it locks the EventQueue.   
+     * See bugids 4632918, 4526597.  
      */
     public static void postEvent(AppContext appContext, AWTEvent event) {
-        if (event == null) {
-            throw new NullPointerException();
-        }
+	if (event == null) {
+	    throw new NullPointerException();
+	}
         AppContext eventContext = targetToAppContext(event.getSource());
         if (eventContext != null && !eventContext.equals(appContext)) {
             log.fine("Event posted on wrong app context : " + event);
         }
-        PostEventQueue postEventQueue =
-            (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
+	PostEventQueue postEventQueue =
+	    (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
         if(postEventQueue != null) {
             postEventQueue.postEvent(event);
         }
@@ -648,9 +649,9 @@ public abstract class SunToolkit extends Toolkit
      * EventQueue yet.
      */
     public static void flushPendingEvents()  {
-        AppContext appContext = AppContext.getAppContext();
-        PostEventQueue postEventQueue =
-            (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
+	AppContext appContext = AppContext.getAppContext();
+	PostEventQueue postEventQueue =
+	    (PostEventQueue)appContext.get(POST_EVENT_QUEUE_KEY);
         if(postEventQueue != null) {
             postEventQueue.flush();
         }
@@ -673,7 +674,7 @@ public abstract class SunToolkit extends Toolkit
      * returning to the caller.
      */
     public static void executeOnEventHandlerThread(Object target,
-                                                   Runnable runnable) {
+						   Runnable runnable) {
         executeOnEventHandlerThread(new PeerEvent(target, runnable, PeerEvent.PRIORITY_EVENT));
     }
 
@@ -701,7 +702,7 @@ public abstract class SunToolkit extends Toolkit
     }
 
     /*
-     * Execute a chunk of code on the Java event handler thread. The
+     * Execute a chunk of code on the Java event handler thread. The  
      * method takes into account provided AppContext and sets
      * <code>SunToolkit.getDefaultToolkit()</code> as a target of the
      * event. See 6451487 for detailes.
@@ -794,25 +795,25 @@ public abstract class SunToolkit extends Toolkit
     }
 
     public Dimension getScreenSize() {
-        return new Dimension(getScreenWidth(), getScreenHeight());
+	return new Dimension(getScreenWidth(), getScreenHeight());
     }
     protected abstract int getScreenWidth();
     protected abstract int getScreenHeight();
 
     public FontMetrics getFontMetrics(Font font) {
-        return FontDesignMetrics.getMetrics(font);
+	return FontDesignMetrics.getMetrics(font);
     }
-
+    
     public String[] getFontList() {
-        String[] hardwiredFontList = {
-            Font.DIALOG, Font.SANS_SERIF, Font.SERIF, Font.MONOSPACED,
-            Font.DIALOG_INPUT
+	String[] hardwiredFontList = {
+	    Font.DIALOG, Font.SANS_SERIF, Font.SERIF, Font.MONOSPACED,
+	    Font.DIALOG_INPUT
 
-            // -- Obsolete font names from 1.0.2.  It was decided that
-            // -- getFontList should not return these old names:
-            //    "Helvetica", "TimesRoman", "Courier", "ZapfDingbats"
-        };
-        return hardwiredFontList;
+	    // -- Obsolete font names from 1.0.2.  It was decided that
+	    // -- getFontList should not return these old names:
+	    //    "Helvetica", "TimesRoman", "Courier", "ZapfDingbats"
+	};
+	return hardwiredFontList;
     }
 
     public PanelPeer createPanel(Panel target) {
@@ -855,110 +856,110 @@ public abstract class SunToolkit extends Toolkit
     static SoftCache imgCache = new SoftCache();
 
     static synchronized Image getImageFromHash(Toolkit tk, URL url) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            try {
-                java.security.Permission perm =
-                    url.openConnection().getPermission();
-                if (perm != null) {
-                    try {
-                        sm.checkPermission(perm);
-                    } catch (SecurityException se) {
-                        // fallback to checkRead/checkConnect for pre 1.2
-                        // security managers
-                        if ((perm instanceof java.io.FilePermission) &&
-                            perm.getActions().indexOf("read") != -1) {
-                            sm.checkRead(perm.getName());
-                        } else if ((perm instanceof
-                            java.net.SocketPermission) &&
-                            perm.getActions().indexOf("connect") != -1) {
-                            sm.checkConnect(url.getHost(), url.getPort());
-                        } else {
-                            throw se;
-                        }
-                    }
-                }
-            } catch (java.io.IOException ioe) {
-                    sm.checkConnect(url.getHost(), url.getPort());
-            }
-        }
-        Image img = (Image)imgCache.get(url);
-        if (img == null) {
-            try {
-                img = tk.createImage(new URLImageSource(url));
-                imgCache.put(url, img);
-            } catch (Exception e) {
-            }
-        }
-        return img;
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    try {
+		java.security.Permission perm = 
+		    url.openConnection().getPermission();
+		if (perm != null) {
+		    try {
+			sm.checkPermission(perm);
+		    } catch (SecurityException se) {
+			// fallback to checkRead/checkConnect for pre 1.2
+			// security managers
+			if ((perm instanceof java.io.FilePermission) &&
+			    perm.getActions().indexOf("read") != -1) {
+			    sm.checkRead(perm.getName());
+			} else if ((perm instanceof 
+			    java.net.SocketPermission) &&
+			    perm.getActions().indexOf("connect") != -1) {
+			    sm.checkConnect(url.getHost(), url.getPort());
+			} else {
+			    throw se;
+			}
+		    }
+		}
+	    } catch (java.io.IOException ioe) {
+		    sm.checkConnect(url.getHost(), url.getPort());
+	    }
+	}
+	Image img = (Image)imgCache.get(url);
+	if (img == null) {
+	    try {	
+		img = tk.createImage(new URLImageSource(url));
+		imgCache.put(url, img);
+	    } catch (Exception e) {
+	    }
+	}
+	return img;
     }
 
     static synchronized Image getImageFromHash(Toolkit tk,
                                                String filename) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkRead(filename);
-        }
-        Image img = (Image)imgCache.get(filename);
-        if (img == null) {
-            try {
-                img = tk.createImage(new FileImageSource(filename));
-                imgCache.put(filename, img);
-            } catch (Exception e) {
-            }
-        }
-        return img;
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+	    security.checkRead(filename);
+	}
+	Image img = (Image)imgCache.get(filename);
+	if (img == null) {
+	    try {	
+		img = tk.createImage(new FileImageSource(filename));
+		imgCache.put(filename, img);
+	    } catch (Exception e) {
+	    }
+	}
+	return img;
     }
 
     public Image getImage(String filename) {
-        return getImageFromHash(this, filename);
+	return getImageFromHash(this, filename);
     }
 
     public Image getImage(URL url) {
-        return getImageFromHash(this, url);
+	return getImageFromHash(this, url);
     }
 
     public Image createImage(String filename) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkRead(filename);
-        }
-        return createImage(new FileImageSource(filename));
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+	    security.checkRead(filename);
+	}
+	return createImage(new FileImageSource(filename));
     }
 
     public Image createImage(URL url) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            try {
-                java.security.Permission perm =
-                    url.openConnection().getPermission();
-                if (perm != null) {
-                    try {
-                        sm.checkPermission(perm);
-                    } catch (SecurityException se) {
-                        // fallback to checkRead/checkConnect for pre 1.2
-                        // security managers
-                        if ((perm instanceof java.io.FilePermission) &&
-                            perm.getActions().indexOf("read") != -1) {
-                            sm.checkRead(perm.getName());
-                        } else if ((perm instanceof
-                            java.net.SocketPermission) &&
-                            perm.getActions().indexOf("connect") != -1) {
-                            sm.checkConnect(url.getHost(), url.getPort());
-                        } else {
-                            throw se;
-                        }
-                    }
-                }
-            } catch (java.io.IOException ioe) {
-                    sm.checkConnect(url.getHost(), url.getPort());
-            }
-        }
-        return createImage(new URLImageSource(url));
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    try {
+		java.security.Permission perm = 
+		    url.openConnection().getPermission();
+		if (perm != null) {
+		    try {
+			sm.checkPermission(perm);
+		    } catch (SecurityException se) {
+			// fallback to checkRead/checkConnect for pre 1.2
+			// security managers
+			if ((perm instanceof java.io.FilePermission) &&
+			    perm.getActions().indexOf("read") != -1) {
+			    sm.checkRead(perm.getName());
+			} else if ((perm instanceof 
+			    java.net.SocketPermission) &&
+			    perm.getActions().indexOf("connect") != -1) {
+			    sm.checkConnect(url.getHost(), url.getPort());
+			} else {
+			    throw se;
+			}
+		    }
+		}
+	    } catch (java.io.IOException ioe) {
+		    sm.checkConnect(url.getHost(), url.getPort());
+	    }
+	}
+	return createImage(new URLImageSource(url));
     }
 
     public Image createImage(byte[] data, int offset, int length) {
-        return createImage(new ByteArrayImageSource(data, offset, length));
+	return createImage(new ByteArrayImageSource(data, offset, length));
     }
 
     public Image createImage(ImageProducer producer) {
@@ -969,21 +970,21 @@ public abstract class SunToolkit extends Toolkit
         if (!(img instanceof ToolkitImage)) {
             return ImageObserver.ALLBITS;
         }
-
+            
         ToolkitImage tkimg = (ToolkitImage)img;
-        int repbits;
-        if (w == 0 || h == 0) {
-            repbits = ImageObserver.ALLBITS;
-        } else {
-            repbits = tkimg.getImageRep().check(o);
-        }
-        return tkimg.check(o) | repbits;
+	int repbits;
+	if (w == 0 || h == 0) {
+	    repbits = ImageObserver.ALLBITS;
+	} else {
+	    repbits = tkimg.getImageRep().check(o);
+	}
+	return tkimg.check(o) | repbits;
     }
 
     public boolean prepareImage(Image img, int w, int h, ImageObserver o) {
-        if (w == 0 || h == 0) {
-            return true;
-        }
+	if (w == 0 || h == 0) {
+	    return true;
+	}
 
         // Must be a ToolkitImage
         if (!(img instanceof ToolkitImage)) {
@@ -991,15 +992,15 @@ public abstract class SunToolkit extends Toolkit
         }
 
         ToolkitImage tkimg = (ToolkitImage)img;
-        if (tkimg.hasError()) {
-            if (o != null) {
-                o.imageUpdate(img, ImageObserver.ERROR|ImageObserver.ABORT,
-                              -1, -1, -1, -1);
-            }
-            return false;
-        }
-        ImageRepresentation ir = tkimg.getImageRep();
-        return ir.prepare(o);
+	if (tkimg.hasError()) {
+	    if (o != null) {
+		o.imageUpdate(img, ImageObserver.ERROR|ImageObserver.ABORT,
+			      -1, -1, -1, -1);
+	    }
+	    return false;
+	}
+	ImageRepresentation ir = tkimg.getImageRep();
+	return ir.prepare(o);
     }
 
     /**
@@ -1024,7 +1025,7 @@ public abstract class SunToolkit extends Toolkit
             Image im = i.next();
             if (im == null) {
                 if (log.isLoggable(Level.FINER)) {
-                    log.log(Level.FINER, "SunToolkit.getScaledIconImage: " +
+                    log.log(Level.FINER, "SunToolkit.getScaledIconImage: " + 
                             "Skipping the image passed into Java because it's null.");
                 }
                 continue;
@@ -1047,9 +1048,9 @@ public abstract class SunToolkit extends Toolkit
             }
             if (iw > 0 && ih > 0) {
                 //Calc scale factor
-                double scaleFactor = Math.min((double)width / (double)iw,
+                double scaleFactor = Math.min((double)width / (double)iw, 
                                               (double)height / (double)ih);
-                //Calculate scaled image dimensions
+                //Calculate scaled image dimensions 
                 //adjusting scale factor to nearest "good" value
                 int adjw = 0;
                 int adjh = 0;
@@ -1089,7 +1090,7 @@ public abstract class SunToolkit extends Toolkit
                     adjh = (int)Math.round((double)ih / scaleDivider);
                     scaleMeasure = 1.0 - 1.0 / scaleDivider;
                 }
-                double similarity = ((double)width - (double)adjw) / (double)width +
+                double similarity = ((double)width - (double)adjw) / (double)width + 
                     ((double)height - (double)adjh) / (double)height + //Large padding is bad
                     scaleMeasure; //Large rescale is bad
                 if (similarity < bestSimilarity) {
@@ -1109,17 +1110,17 @@ public abstract class SunToolkit extends Toolkit
         BufferedImage bimage =
             new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = bimage.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, 
                            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         try {
-            int x = (width - bestWidth) / 2;
+            int x = (width - bestWidth) / 2; 
             int y = (height - bestHeight) / 2;
             if (log.isLoggable(Level.FINER)) {
-                log.log(Level.FINER, "WWindowPeer.getScaledIconData() result : " +
-                        "w : " + width + " h : " + height +
-                        " iW : " + bestImage.getWidth(null) + " iH : " + bestImage.getHeight(null) +
-                        " sim : " + bestSimilarity + " sf : " + bestScaleFactor +
-                        " adjW : " + bestWidth + " adjH : " + bestHeight +
+                log.log(Level.FINER, "WWindowPeer.getScaledIconData() result : " + 
+                        "w : " + width + " h : " + height + 
+                        " iW : " + bestImage.getWidth(null) + " iH : " + bestImage.getHeight(null) + 
+                        " sim : " + bestSimilarity + " sf : " + bestScaleFactor + 
+                        " adjW : " + bestWidth + " adjH : " + bestHeight + 
                         " x : " + x + " y : " + y);
             }
             g.drawImage(bestImage, x, y, bestWidth, bestHeight, null);
@@ -1133,7 +1134,7 @@ public abstract class SunToolkit extends Toolkit
         BufferedImage bimage = getScaledIconImage(imageList, width, height);
         if (bimage == null) {
              if (log.isLoggable(Level.FINER)) {
-                 log.log(Level.FINER, "SunToolkit.getScaledIconData: " +
+                 log.log(Level.FINER, "SunToolkit.getScaledIconData: " + 
                          "Perhaps the image passed into Java is broken. Skipping this icon.");
              }
             return null;
@@ -1159,11 +1160,11 @@ public abstract class SunToolkit extends Toolkit
     }
 
     /**
-     * Give native peers the ability to query the native container
+     * Give native peers the ability to query the native container 
      * given a native component (eg the direct parent may be lightweight).
      */
     public static Container getNativeContainer(Component c) {
-        return Toolkit.getNativeContainer(c);
+	return Toolkit.getNativeContainer(c);
     }
 
     /**
@@ -1187,9 +1188,9 @@ public abstract class SunToolkit extends Toolkit
     public boolean enableInputMethodsForTextComponent() {
         return false;
     }
-
+    
     private static Locale startupLocale = null;
-
+    
     /**
      * Returns the locale in which the runtime was started.
      */
@@ -1286,10 +1287,10 @@ public abstract class SunToolkit extends Toolkit
         }
         return mPeer;
     }
-
+    
 
     /**
-     * Returns whether default toolkit needs the support of the xembed
+     * Returns whether default toolkit needs the support of the xembed 
      * from embedding host(if any).
      * @return <code>true</code>, if XEmbed is needed, <code>false</code> otherwise
      */
@@ -1312,7 +1313,7 @@ public abstract class SunToolkit extends Toolkit
     }
 
     /**
-     * Returns whether this toolkit needs the support of the xembed
+     * Returns whether this toolkit needs the support of the xembed 
      * from embedding host(if any).
      * @return <code>true</code>, if XEmbed is needed, <code>false</code> otherwise
      */
@@ -1432,7 +1433,7 @@ public abstract class SunToolkit extends Toolkit
     public boolean isModalExclusionTypeSupported(Dialog.ModalExclusionType exclusionType) {
         return (exclusionType == Dialog.ModalExclusionType.NO_EXCLUDE);
     }
-
+    
     ///////////////////////////////////////////////////////////////////////////
     //
     // The following is used by the Java Plug-in to coordinate dialog modality
@@ -1446,7 +1447,7 @@ public abstract class SunToolkit extends Toolkit
     public void addModalityListener(ModalityListener listener) {
         modalityListeners.add(listener);
     }
-
+     
     public void removeModalityListener(ModalityListener listener) {
         modalityListeners.remove(listener);
     }
@@ -1454,35 +1455,35 @@ public abstract class SunToolkit extends Toolkit
     public void notifyModalityPushed(Dialog dialog) {
         notifyModalityChange(ModalityEvent.MODALITY_PUSHED, dialog);
     }
-
+ 
     public void notifyModalityPopped(Dialog dialog) {
         notifyModalityChange(ModalityEvent.MODALITY_POPPED, dialog);
     }
-
+     
     final void notifyModalityChange(int id, Dialog source) {
         ModalityEvent ev = new ModalityEvent(source, modalityListeners, id);
         ev.dispatch();
     }
-
+         
     static class ModalityListenerList implements ModalityListener {
 
         Vector<ModalityListener> listeners = new Vector<ModalityListener>();
-
+        
         void add(ModalityListener listener) {
             listeners.addElement(listener);
         }
-
+         
         void remove(ModalityListener listener) {
             listeners.removeElement(listener);
         }
-
+         
         public void modalityPushed(ModalityEvent ev) {
             Iterator<ModalityListener> it = listeners.iterator();
             while (it.hasNext()) {
                 it.next().modalityPushed(ev);
             }
         }
-
+         
         public void modalityPopped(ModalityEvent ev) {
             Iterator<ModalityListener> it = listeners.iterator();
             while (it.hasNext()) {
@@ -1497,7 +1498,7 @@ public abstract class SunToolkit extends Toolkit
 
     public static boolean isLightweightOrUnknown(Component comp) {
         if (comp.isLightweight()
-            || !(getDefaultToolkit() instanceof SunToolkit))
+            || !(getDefaultToolkit() instanceof SunToolkit)) 
         {
             return true;
         }
@@ -1524,11 +1525,11 @@ public abstract class SunToolkit extends Toolkit
                         m.setAccessible(true);
                         return m;
                     }
-                });
+                });       
         } catch (PrivilegedActionException ex) {
             ex.printStackTrace();
         }
-        return res;
+        return res;        
     }
 
     public static class OperationTimedOut extends RuntimeException {
@@ -1582,7 +1583,7 @@ public abstract class SunToolkit extends Toolkit
      * <p> After realSync, <code>f</code> will be completely visible
      * on the screen, its getLocationOnScreen will be returning the
      * right result and it will be the focus owner.
-     *
+     * 
      * <p> Another example:
      * <code>
      * b.requestFocus();
@@ -1604,7 +1605,7 @@ public abstract class SunToolkit extends Toolkit
      * generate a serie of paint events which then are processed -
      * three cycles, minimum.
      *
-     * @param timeout the maximum time to wait in milliseconds, negative means "forever".
+     * @param timeout the maximum time to wait in milliseconds, negative means "forever". 
      */
     public void realSync(final long timeout) throws OperationTimedOut, InfiniteLoop
     {
@@ -1632,7 +1633,7 @@ public abstract class SunToolkit extends Toolkit
             if (iters >= MAX_ITERS) {
                 throw new InfiniteLoop();
             }
-
+        
             // native requests were dispatched by X/Window Manager or Windows
             // Moreover, we processed them all on Toolkit thread
             // Now wait while EDT processes them.
@@ -1651,7 +1652,7 @@ public abstract class SunToolkit extends Toolkit
             if (iters >= MAX_ITERS) {
                 throw new InfiniteLoop();
             }
-
+            
             bigLoop++;
             // Again, for Java events, it was simple to check for new Java
             // events by checking event queue, but what if Java events
@@ -1698,12 +1699,12 @@ public abstract class SunToolkit extends Toolkit
      * necessary, <code>false</code> otherwise.
      */
     protected final boolean waitForIdle(final long timeout) {
-        flushPendingEvents();
+        flushPendingEvents();  
         boolean queueWasEmpty = isEQEmpty();
         queueEmpty = false;
         eventDispatched = false;
         synchronized(waitLock) {
-            postEvent(AppContext.getAppContext(),
+            postEvent(AppContext.getAppContext(), 
                       new PeerEvent(getSystemEventQueueImpl(), null, PeerEvent.LOW_PRIORITY_EVENT) {
                           public void dispatch() {
                               // Here we block EDT.  It could have some
@@ -1743,7 +1744,7 @@ public abstract class SunToolkit extends Toolkit
             throw new RuntimeException("Interrupted");
         }
 
-        flushPendingEvents();
+        flushPendingEvents();  
 
         // Lock to force write-cache flush for queueEmpty.
         synchronized (waitLock) {
@@ -1770,9 +1771,9 @@ public abstract class SunToolkit extends Toolkit
      */
     public abstract void ungrab(Window w);
 
-
+    
     /**
-     * Locates the splash screen library in a platform dependent way and closes
+     * Locates the splash screen library in a platform dependent way and closes 
      * the splash screen. Should be invoked on first top-level frame display.
      * @see java.awt.SplashScreen
      * @since 1.6
@@ -1784,9 +1785,9 @@ public abstract class SunToolkit extends Toolkit
      */
 
     /* Need an instance method because setDesktopProperty(..) is protected. */
-    private void fireDesktopFontPropertyChanges() {
+    private void fireDesktopFontPropertyChanges() {             
         setDesktopProperty(SunToolkit.DESKTOPFONTHINTS,
-                           SunToolkit.getDesktopFontHints());
+                           SunToolkit.getDesktopFontHints());        
     }
 
     private static boolean checkedSystemAAFontSettings;
@@ -1879,7 +1880,7 @@ public abstract class SunToolkit extends Toolkit
             String systemAAFonts = null;
             Toolkit tk = Toolkit.getDefaultToolkit();
             if (tk instanceof SunToolkit) {
-                systemAAFonts =
+                systemAAFonts = 
                     (String)AccessController.doPrivileged(
                          new GetPropertyAction("awt.useSystemAAFontSettings"));
             }
@@ -1945,7 +1946,7 @@ public abstract class SunToolkit extends Toolkit
     private static Method consumeNextKeyTypedMethod = null;
     public static synchronized void consumeNextKeyTyped(KeyEvent keyEvent) {
         if (consumeNextKeyTypedMethod == null) {
-            consumeNextKeyTypedMethod = getMethod(DefaultKeyboardFocusManager.class,
+            consumeNextKeyTypedMethod = getMethod(DefaultKeyboardFocusManager.class, 
                                                   "consumeNextKeyTyped",
                                                   new Class[] {KeyEvent.class});
         }
@@ -1989,7 +1990,7 @@ class PostEventQueue {
     private final EventQueue eventQueue;
 
     PostEventQueue(EventQueue eq) {
-        eventQueue = eq;
+	eventQueue = eq;
     }
 
     public boolean noEvents() {
@@ -2026,7 +2027,7 @@ class PostEventQueue {
      * Enqueue an AWTEvent to be posted to the Java EventQueue.
      */
     void postEvent(AWTEvent event) {
-        EventQueueItem item = new EventQueueItem(event);
+	EventQueueItem item = new EventQueueItem(event);
 
         synchronized (this) {
             if (queueHead == null) {

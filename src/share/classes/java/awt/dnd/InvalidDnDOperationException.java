@@ -31,11 +31,12 @@ package java.awt.dnd;
  * to undertake the requested operation that the present time, since the
  * undrelying DnD system is not in the appropriate state.
  *
+ * @version 	%I%, %G%
  * @since 1.2
  */
 
 public class InvalidDnDOperationException extends IllegalStateException {
-
+    
     static private String dft_msg = "The operation requested cannot be performed by the DnD system since it is not in the appropriate state";
 
     /**
@@ -53,3 +54,6 @@ public class InvalidDnDOperationException extends IllegalStateException {
     public InvalidDnDOperationException(String msg) { super(msg); }
 
 }
+
+
+

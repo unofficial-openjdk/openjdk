@@ -39,7 +39,7 @@ import java.util.*;
  * out whether the insert row is complete.
  */
 public class InsertRow extends BaseRow implements Serializable, Cloneable {
-
+ 
 /**
  * An internal <code>BitSet</code> object used to keep track of the
  * columns in this <code>InsertRow</code> object that have had a value
@@ -51,15 +51,15 @@ public class InsertRow extends BaseRow implements Serializable, Cloneable {
  * The number of columns in this <code>InsertRow</code> object.
  */
     private int cols;
-
+    
     private JdbcRowSetResourceBundle resBundle;
 
 /**
  * Creates an <code>InsertRow</code> object initialized with the
  * given number of columns, an array for keeping track of the
- * original values in this insert row, and a
- * <code>BitSet</code> object with the same number of bits as
- * there are columns.
+ * original values in this insert row, and a 
+ * <code>BitSet</code> object with the same number of bits as 
+ * there are columns. 
  *
  * @param numCols an <code>int</code> indicating the number of columns
  *                in this <code>InsertRow</code> object
@@ -69,8 +69,8 @@ public class InsertRow extends BaseRow implements Serializable, Cloneable {
         colsInserted = new BitSet(numCols);
         cols = numCols;
         try {
-           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
-        } catch(IOException ioe) {
+	   resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
+	} catch(IOException ioe) {
             throw new RuntimeException(ioe);
         }
     }
@@ -100,8 +100,8 @@ public class InsertRow extends BaseRow implements Serializable, Cloneable {
  */
     public boolean isCompleteRow(RowSetMetaData RowSetMD) throws SQLException {
         for (int i = 0; i < cols; i++) {
-            if (colsInserted.get(i) == false &&
-                RowSetMD.isNullable(i + 1) ==
+            if (colsInserted.get(i) == false && 
+                RowSetMD.isNullable(i + 1) == 
                 ResultSetMetaData.columnNoNulls) {
                 return false;
             }
@@ -142,7 +142,7 @@ public class InsertRow extends BaseRow implements Serializable, Cloneable {
 /**
  * Sets the element in this <code>InsertRow</code> object's
  * internal array of original values that corresponds to the
- * designated column with the given value.  If the third
+ * designated column with the given value.  If the third 
  * argument is <code>true</code>,
  * which means that the cursor is on the insert row, this
  * <code>InsertRow</code> object's internal <code>BitSet</code> object
@@ -155,6 +155,6 @@ public class InsertRow extends BaseRow implements Serializable, Cloneable {
  */
     public void setColumnObject(int idx, Object val) {
         origVals[idx - 1] = val;
-        markColInserted(idx - 1);
+	markColInserted(idx - 1);
     }
 }

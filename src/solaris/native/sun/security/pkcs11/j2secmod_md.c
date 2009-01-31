@@ -26,22 +26,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+ 
 #include <dlfcn.h>
 #include <link.h>
 
 #include <jni_util.h>
-
+ 
 #include "j2secmod.h"
 
 void *findFunction(JNIEnv *env, jlong jHandle, const char *functionName) {
     void *hModule = (void*)jHandle;
     void *fAddress = dlsym(hModule, functionName);
     if (fAddress == NULL) {
-        char errorMessage[256];
-        snprintf(errorMessage, sizeof(errorMessage), "Symbol not found: %s", functionName);
-        JNU_ThrowNullPointerException(env, errorMessage);
-        return NULL;
+	char errorMessage[256];
+	snprintf(errorMessage, sizeof(errorMessage), "Symbol not found: %s", functionName);
+	JNU_ThrowNullPointerException(env, errorMessage);
+	return NULL;
     }
     return fAddress;
 }
@@ -69,9 +69,10 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_Secmod_nssLoadLibrary
     dprintf2("-handle: %u (0X%X)\n", hModule, hModule);
 
     if (hModule == NULL) {
-        JNU_ThrowIOException(env, dlerror());
-        return 0;
+	JNU_ThrowIOException(env, dlerror());
+	return 0;
     }
-
+    
     return (jlong)hModule;
 }
+

@@ -58,8 +58,8 @@ public abstract class TextConstructionTests extends TextTests {
     public static void init() {
       // don't even bother with this at all if we don't have Java2 APIs.
       if (hasGraphics2D) {
-        constructroot = new Group(textroot, "construction", "Construction Benchmarks");
-        constructtestroot = new Group(constructroot, "tests", "Construction Tests");
+	constructroot = new Group(textroot, "construction", "Construction Benchmarks");
+	constructtestroot = new Group(constructroot, "tests", "Construction Tests");
 
         new GVFromFontString();
         new GVFromFontChars();
@@ -80,7 +80,7 @@ public abstract class TextConstructionTests extends TextTests {
     }
 
     public TextConstructionTests(Group parent, String nodeName, String description) {
-        super(parent, nodeName, description);
+	super(parent, nodeName, description);
     }
 
     public static class TCContext extends G2DContext {
@@ -109,12 +109,12 @@ public abstract class TextConstructionTests extends TextTests {
     }
 
     public static class GVFromFontString extends TextConstructionTests {
-        public GVFromFontString() {
-            super(constructtestroot, "gvfromfontstring", "Call Font.createGlyphVector(FRC, String)");
-        }
+	public GVFromFontString() {
+	    super(constructtestroot, "gvfromfontstring", "Call Font.createGlyphVector(FRC, String)");
+	}
 
         public void runTest(Object ctx, int numReps) {
-            TCContext tcctx = (TCContext)ctx;
+	    TCContext tcctx = (TCContext)ctx;
             final Font font = tcctx.font;
             final String text = tcctx.text;
             final FontRenderContext frc = tcctx.frc;
@@ -122,16 +122,16 @@ public abstract class TextConstructionTests extends TextTests {
             do {
                 gv = font.createGlyphVector(frc, text);
             } while (--numReps >= 0);
-        }
+	}
     }
 
     public static class GVFromFontChars extends TextConstructionTests {
-        public GVFromFontChars() {
-            super(constructtestroot, "gvfromfontchars", "Call Font.createGlyphVector(FRC, char[])");
-        }
+	public GVFromFontChars() {
+	    super(constructtestroot, "gvfromfontchars", "Call Font.createGlyphVector(FRC, char[])");
+	}
 
         public void runTest(Object ctx, int numReps) {
-            TCContext tcctx = (TCContext)ctx;
+	    TCContext tcctx = (TCContext)ctx;
             final Font font = tcctx.font;
             final char[] chars = tcctx.chars;
             final FontRenderContext frc = tcctx.frc;
@@ -139,16 +139,16 @@ public abstract class TextConstructionTests extends TextTests {
             do {
                 gv = font.createGlyphVector(frc, chars);
             } while (--numReps >= 0);
-        }
+	}
     }
 
     public static class GVFromFontCI extends TextConstructionTests {
-        public GVFromFontCI() {
-            super(constructtestroot, "gvfromfontci", "Call Font.createGlyphVector(FRC, CharacterIterator)");
-        }
+	public GVFromFontCI() {
+	    super(constructtestroot, "gvfromfontci", "Call Font.createGlyphVector(FRC, CharacterIterator)");
+	}
 
         public void runTest(Object ctx, int numReps) {
-            TCContext tcctx = (TCContext)ctx;
+	    TCContext tcctx = (TCContext)ctx;
             final Font font = tcctx.font;
             final CharacterIterator ci = tcctx.ci;
             final FontRenderContext frc = tcctx.frc;
@@ -156,16 +156,16 @@ public abstract class TextConstructionTests extends TextTests {
             do {
                 gv = font.createGlyphVector(frc, ci);
             } while (--numReps >= 0);
-        }
+	}
     }
 
     public static class GVFromFontGlyphs extends TextConstructionTests {
-        public GVFromFontGlyphs() {
-            super(constructtestroot, "gvfromfontglyphs", "Call Font.createGlyphVector(FRC, int[])");
-        }
+	public GVFromFontGlyphs() {
+	    super(constructtestroot, "gvfromfontglyphs", "Call Font.createGlyphVector(FRC, int[])");
+	}
 
         public void runTest(Object ctx, int numReps) {
-            TCContext tcctx = (TCContext)ctx;
+	    TCContext tcctx = (TCContext)ctx;
             final Font font = tcctx.font;
             final int[] glyphs = tcctx.glyphs;
             final FontRenderContext frc = tcctx.frc;
@@ -173,16 +173,16 @@ public abstract class TextConstructionTests extends TextTests {
             do {
                 gv = font.createGlyphVector(frc, glyphs);
             } while (--numReps >= 0);
-        }
+	}
     }
 
     public static class GVFromFontLayout extends TextConstructionTests {
-        public GVFromFontLayout() {
-            super(constructtestroot, "gvfromfontlayout", "Call Font.layoutGlyphVector(...)");
-        }
+	public GVFromFontLayout() {
+	    super(constructtestroot, "gvfromfontlayout", "Call Font.layoutGlyphVector(...)");
+	}
 
         public void runTest(Object ctx, int numReps) {
-            TCContext tcctx = (TCContext)ctx;
+	    TCContext tcctx = (TCContext)ctx;
             final Font font = tcctx.font;
             final char[] chars = tcctx.chars1;
             final int start = 1;
@@ -193,25 +193,25 @@ public abstract class TextConstructionTests extends TextTests {
             do {
                 gv = font.layoutGlyphVector(frc, chars, start, limit, flags);
             } while (--numReps >= 0);
-        }
+	}
     }
 
     /*
      * my bad, clone is not public in GlyphVector!
 
     public static class GVClone extends TextConstructionTests {
-        public GVClone() {
-            super(constructtestroot, "gvclone", "Call GV.clone");
-        }
+	public GVClone() {
+	    super(constructtestroot, "gvclone", "Call GV.clone");
+	}
 
         public void runTest(Object ctx, int numReps) {
-            TCContext tcctx = (TCContext)ctx;
+	    TCContext tcctx = (TCContext)ctx;
             final GlyphVector origGV = tcctx.gv;
             GlyphVector gv;
             do {
                 gv = (GlyphVector)origGV.clone();
             } while (--numReps >= 0);
-        }
+	}
     }
     */
 
@@ -271,7 +271,7 @@ public abstract class TextConstructionTests extends TextTests {
             super.init(env, results);
 
             AttributedString astr = new AttributedString(text);
-
+            
         }
     }
 
@@ -395,7 +395,7 @@ public abstract class TextConstructionTests extends TextTests {
         public char current() {
             return pos == max ? DONE : chars[pos];
         }
-
+        
 
     /**
      * Increments the iterator's index by one and returns the character
@@ -412,7 +412,7 @@ public abstract class TextConstructionTests extends TextTests {
             pos = max;
             return DONE;
         }
-
+                
 
     /**
      * Decrements the iterator's index by one and returns the character

@@ -36,6 +36,7 @@ import java.io.FileDescriptor;
  * support also use this implementation, and fd1 gets set to null
  * during socket creation.
  *
+ * @version %I%, %G%
  * @author Chris Hegarty
  */
 
@@ -62,20 +63,20 @@ class TwoStacksPlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
     private int lastfd=-1;
 
     static {
-        init();
+	init();
     }
 
     protected synchronized void create() throws SocketException {
         fd1 = new FileDescriptor();
-        super.create();
+	super.create();
     }
 
     protected synchronized void bind(int lport, InetAddress laddr)
-        throws SocketException {
-        super.bind(lport, laddr);
-        if (laddr.isAnyLocalAddress()) {
-            anyLocalBoundAddr = laddr;
-        }
+	throws SocketException {
+	super.bind(lport, laddr);
+	if (laddr.isAnyLocalAddress()) {
+	    anyLocalBoundAddr = laddr;
+	}
     }
 
     protected synchronized void receive(DatagramPacket p)

@@ -39,16 +39,16 @@ public class ByteToCharASCII extends ByteToCharConverter {
     }
 
     public int flush(char[] output, int outStart, int outEnd) {
-        // This converter will not buffer any data.
-        byteOff = charOff = 0;
-        return 0;
+	// This converter will not buffer any data.
+	byteOff = charOff = 0;
+	return 0;
     }
 
     /**
      * Algorithmic character conversion
      */
     public int convert(byte[] input, int inOff, int inEnd,
-                       char[] output, int outOff, int outEnd)
+		       char[] output, int outOff, int outEnd)
         throws ConversionBufferFullException, UnknownCharacterException
     {
         byte    inputByte;
@@ -59,18 +59,18 @@ public class ByteToCharASCII extends ByteToCharConverter {
         // Loop until we hit the end of the input
         while(byteOff < inEnd)
         {
-            // If we don't have room for the output, throw an exception
-            if (charOff >= outEnd)
-                throw new ConversionBufferFullException();
+	    // If we don't have room for the output, throw an exception
+	    if (charOff >= outEnd)
+		throw new ConversionBufferFullException();
 
             // Convert the input byte
             inputByte = input[byteOff++];
 
             if (inputByte >= 0)
-                output[charOff++] = (char)inputByte;
+            	output[charOff++] = (char)inputByte;
             else {
                 if (subMode)
-                    output[charOff++] = '\uFFFD';       // Replace Char
+                    output[charOff++] = '\uFFFD';	// Replace Char
                 else {
                     badInputLength = 1;
                     throw new UnknownCharacterException();
@@ -78,15 +78,15 @@ public class ByteToCharASCII extends ByteToCharConverter {
             }
         }
 
-        // Return the length written to the output buffer
-        return charOff-outOff;
+    	// Return the length written to the output buffer
+	return charOff-outOff;
     }
 
     /*
      *   Reset after finding bad input
      */
     public void reset() {
-        byteOff = charOff = 0;
+	byteOff = charOff = 0;
     }
 
 }

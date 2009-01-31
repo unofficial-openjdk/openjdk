@@ -50,7 +50,7 @@ public class Basic {
         progenitor.join();
 
         // Check results
-        for(int i=0; i<threadCount; i++)
+	for(int i=0; i<threadCount; i++)
             if (x[i] != i)
                 throw(new Exception("x[" + i + "] =" + x[i]));
     }

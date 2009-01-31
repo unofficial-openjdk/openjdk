@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package com.sun.media.sound;
+package com.sun.media.sound;		  	 
 
 import java.io.InputStream;
 
@@ -39,11 +39,12 @@ import javax.sound.sampled.spi.FormatConversionProvider;
  * <p>
  * Its input format represents the format of the incoming
  * audio data, or the format of the data in the underlying stream.
- * <p>
+ * <p>  
  * Its output format represents the format of the processed, outgoing
- * audio data.  This is the format of the data which may be read from
+ * audio data.  This is the format of the data which may be read from 
  * the filtered stream.
  *
+ * @version %I% %E%
  * @author Kara Kytle
  */
 abstract class SunCodec extends FormatConversionProvider {
@@ -56,8 +57,8 @@ abstract class SunCodec extends FormatConversionProvider {
      */
     protected SunCodec(AudioFormat.Encoding[] inputEncodings, AudioFormat.Encoding[] outputEncodings) {
 
-        this.inputEncodings = inputEncodings;
-        this.outputEncodings = outputEncodings;
+	this.inputEncodings = inputEncodings;
+	this.outputEncodings = outputEncodings;
     }
 
 
@@ -65,17 +66,17 @@ abstract class SunCodec extends FormatConversionProvider {
      */
     public AudioFormat.Encoding[] getSourceEncodings() {
 
-        AudioFormat.Encoding[] encodings = new AudioFormat.Encoding[inputEncodings.length];
-        System.arraycopy(inputEncodings, 0, encodings, 0, inputEncodings.length);
-        return encodings;
+	AudioFormat.Encoding[] encodings = new AudioFormat.Encoding[inputEncodings.length];
+	System.arraycopy(inputEncodings, 0, encodings, 0, inputEncodings.length);
+	return encodings;
     }
     /**
      */
     public AudioFormat.Encoding[] getTargetEncodings() {
 
-        AudioFormat.Encoding[] encodings = new AudioFormat.Encoding[outputEncodings.length];
-        System.arraycopy(outputEncodings, 0, encodings, 0, outputEncodings.length);
-        return encodings;
+	AudioFormat.Encoding[] encodings = new AudioFormat.Encoding[outputEncodings.length];
+	System.arraycopy(outputEncodings, 0, encodings, 0, outputEncodings.length);
+	return encodings;
     }
 
     /**

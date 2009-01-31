@@ -33,7 +33,7 @@ import javax.imageio.stream.ImageInputStream;
  * The service provider interface (SPI) for <code>ImageReader</code>s.
  * For more information on service provider classes, see the class comment
  * for the <code>IIORegistry</code> class.
- *
+ * 
  * <p> Each <code>ImageReaderSpi</code> provides several types of information
  * about the <code>ImageReader</code> class with which it is associated.
  *
@@ -70,6 +70,7 @@ import javax.imageio.stream.ImageInputStream;
  * @see IIORegistry
  * @see javax.imageio.ImageReader
  *
+ * @version 0.5
  */
 public abstract class ImageReaderSpi extends ImageReaderWriterSpi {
 
@@ -99,7 +100,7 @@ public abstract class ImageReaderSpi extends ImageReaderWriterSpi {
      * <code>null</code>.
      */
     private Class readerClass = null;
-
+    
     /**
      * Constructs a blank <code>ImageReaderSpi</code>.  It is up to
      * the subclass to initialize instance variables and/or override
@@ -162,7 +163,7 @@ public abstract class ImageReaderSpi extends ImageReaderWriterSpi {
      * object can use trees described by the standard metadata format.
      * @param nativeImageMetadataFormatName a
      * <code>String</code>, or <code>null</code>, to be returned from
-     * <code>getNativeImageMetadataFormatName</code>.
+     * <code>getNativeImageMetadataFormatName</code>. 
      * @param nativeImageMetadataFormatClassName a
      * <code>String</code>, or <code>null</code>, to be used to instantiate
      * a metadata format object to be returned from
@@ -243,7 +244,7 @@ public abstract class ImageReaderSpi extends ImageReaderWriterSpi {
      * <code>ImageInputStream</code>, a single-element array
      * containing <code>ImageInputStream.class</code> should be
      * returned.
-     *
+     * 
      * @return a non-<code>null</code> array of
      * <code>Class</code>objects of length at least 1.
      */
@@ -305,7 +306,7 @@ public abstract class ImageReaderSpi extends ImageReaderWriterSpi {
      *
      * @return an <code>ImageReader</code> instance.
      *
-     * @exception IOException if an error occurs during loading,
+     * @exception IOException if an error occurs during loading, 
      * or initialization of the reader class, or during instantiation
      * or initialization of the reader object.
      */
@@ -338,12 +339,12 @@ public abstract class ImageReaderSpi extends ImageReaderWriterSpi {
      * <code>IllegalArgumentException</code> to indicate that the
      * extension object is unsuitable.
      */
-    public abstract ImageReader createReaderInstance(Object extension)
+    public abstract ImageReader createReaderInstance(Object extension) 
         throws IOException;
 
     /**
      * Returns <code>true</code> if the <code>ImageReader</code> object
-     * passed in is an instance of the <code>ImageReader</code>
+     * passed in is an instance of the <code>ImageReader</code> 
      * associated with this service provider.
      *
      * <p> The default implementation compares the fully-qualified

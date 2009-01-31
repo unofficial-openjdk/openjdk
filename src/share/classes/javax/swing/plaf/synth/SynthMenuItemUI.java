@@ -43,6 +43,7 @@ import sun.swing.SwingUtilities2;
 /**
  * Synth's MenuItemUI.
  *
+ * @version 1.25, 01/25/05
  * @author Georges Saab
  * @author David Karlton
  * @author Arnaud Weber
@@ -106,7 +107,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
            Icon checkIcon, Icon arrowIcon, int defaultTextIconGap,
            String acceleratorDelimiter) {
         JMenuItem b = (JMenuItem) c;
-        Icon icon = (Icon) b.getIcon();
+        Icon icon = (Icon) b.getIcon(); 
         String text = b.getText();
         KeyStroke accelerator =  b.getAccelerator();
         String acceleratorText = "";
@@ -131,7 +132,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                                                getFont(accContext));
 
         resetRects();
-
+        
         layoutMenuItem(
                   context, fm, accContext, text, fmAccel, acceleratorText,
                   icon, checkIcon, arrowIcon, b.getVerticalAlignment(),
@@ -181,11 +182,11 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         // Take text and all icons into account when determining height
         r.height = Math.max(r.height, maxIconHeight);
 
-        // To make the accelerator texts appear in a column,
+	// To make the accelerator texts appear in a column,
         // find the widest MenuItem text and the widest accelerator text.
 
-        // Get the parent, which stores the information.
-        Container parent = b.getParent();
+	// Get the parent, which stores the information.
+	Container parent = b.getParent();
 
         if (parent instanceof JPopupMenu) {
             SynthPopupMenuUI popupUI = (SynthPopupMenuUI)SynthLookAndFeel.
@@ -212,14 +213,14 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                 int totalAccelOrArrow = acceleratorRect.width + arrowWidth;
                 r.width += popupUI.adjustAcceleratorWidth(totalAccelOrArrow);
             }
-        }
+	}
         else if (parent != null && !(b instanceof JMenu &&
                                      ((JMenu)b).isTopLevelMenu())) {
             r.width +=
                 totalIconWidth + accelSpacing +
                 acceleratorRect.width + arrowWidth;
         }
-
+	
         Insets insets = b.getInsets();
         if(insets != null) {
             r.width += insets.left + insets.right;
@@ -237,7 +238,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         if(r.height%2 == 0) {
             r.height++;
         }
-        return r.getSize();
+	return r.getSize();
     }
 
     static void paint(SynthContext context, SynthContext accContext,
@@ -274,7 +275,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
             if (modifiers > 0) {
                 acceleratorText = KeyEvent.getKeyModifiersText(modifiers);
                 acceleratorText += acceleratorDelimiter;
-            }
+	    }
 
             int keyCode = accelerator.getKeyCode();
             if (keyCode != 0) {
@@ -283,14 +284,14 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                 acceleratorText += accelerator.getKeyChar();
             }
         }
-
+        
         // Layout the text and icon
         String text = layoutMenuItem(context, fm, accContext,
             b.getText(), accFM, acceleratorText, b.getIcon(),
             checkIcon, arrowIcon,
             b.getVerticalAlignment(), b.getHorizontalAlignment(),
             b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-            viewRect, iconRect, textRect, acceleratorRect,
+            viewRect, iconRect, textRect, acceleratorRect, 
             checkIconRect, arrowIconRect,
             b.getText() == null ? 0 : defaultTextIconGap,
             defaultTextIconGap
@@ -312,11 +313,11 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                 if(icon == null) {
                     // Use default icon
                     icon = (Icon) b.getIcon();
-                }
+                } 
             } else {
                 icon = (Icon) b.getIcon();
             }
-
+              
             if (icon!=null) {
                 SynthIcon.paintIcon(icon, context, g, iconRect.x,
                     iconRect.y, iconRect.width, iconRect.height);
@@ -325,17 +326,17 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
 
         // Draw the Text
         if(text != null) {
-            View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-            if (v != null) {
-                v.paint(g, textRect);
-            } else {
+ 	    View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+ 	    if (v != null) {
+ 		v.paint(g, textRect);
+ 	    } else {
                 g.setColor(style.getColor(context, ColorType.TEXT_FOREGROUND));
                 g.setFont(style.getFont(context));
                 style.getGraphicsUtils(context).paintText(context, g, text,
                         textRect.x, textRect.y, b.getDisplayedMnemonicIndex());
-            }
-        }
-
+	    }
+	}
+	
         // Draw the Accelerator Text
         if(acceleratorText != null && !acceleratorText.equals("")) {
             // Get the maxAccWidth from the parent to calculate the offset.
@@ -398,11 +399,11 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         }
     }
 
-    /**
-     * Compute and return the location of the icons origin, the
+    /** 
+     * Compute and return the location of the icons origin, the 
      * location of origin of the text baseline, and a possibly clipped
      * version of the compound labels string.  Locations are computed
-     * relative to the viewRect rectangle.
+     * relative to the viewRect rectangle. 
      */
 
     private static String layoutMenuItem(
@@ -419,12 +420,12 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         int horizontalAlignment,
         int verticalTextPosition,
         int horizontalTextPosition,
-        Rectangle viewRect,
-        Rectangle iconRect,
+        Rectangle viewRect, 
+        Rectangle iconRect, 
         Rectangle textRect,
         Rectangle acceleratorRect,
-        Rectangle checkIconRect,
-        Rectangle arrowIconRect,
+        Rectangle checkIconRect, 
+        Rectangle arrowIconRect, 
         int textIconGap,
         int menuItemGap
         )
@@ -445,7 +446,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                 iconRect, textRect, textIconGap);
 
         /* Initialize the acceleratorText bounds rectangle textRect.  If a null
-         * or and empty String was specified we substitute "" here
+         * or and empty String was specified we substitute "" here 
          * and use 0,0,0,0 for acceleratorTextRect.
          */
         if( (acceleratorText == null) || acceleratorText.equals("") ) {
@@ -466,11 +467,11 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                                                          context);
             checkIconRect.height = SynthIcon.getIconHeight(checkIcon,
                                                            context);
-        }
+        } 
         else {
             checkIconRect.width = checkIconRect.height = 0;
         }
-
+	    
         // Initialize the arrowIcon bounds rectangle width & height.
         if (arrowIcon != null) {
             arrowIconRect.width = SynthIcon.getIconWidth(arrowIcon,
@@ -488,7 +489,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
 
         Rectangle labelRect = iconRect.union(textRect);
         if( SynthLookAndFeel.isLeftToRight(context.getComponent()) ) {
-            // Position the check and user icons
+            // Position the check and user icons 
             iconRect.x = viewRect.x;
             if (checkIcon != null) {
                 checkIconRect.x = viewRect.x;
@@ -536,7 +537,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
                 checkIconRect.x =
                     viewRect.x + viewRect.width - checkIconRect.width;
                 textRect.x -= menuItemGap + checkIconRect.width;
-                iconRect.x -= menuItemGap + checkIconRect.width;
+                iconRect.x -= menuItemGap + checkIconRect.width;      
             }
 
             /* Align icons and text horizontally */
@@ -564,7 +565,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         }
 
         // Align the accelerator text and all icons vertically
-        // with the center of the label rect.
+        // with the center of the label rect.  
         int midY = labelRect.y + (labelRect.height/2);
         iconRect.y        = midY - (iconRect.height/2);
         acceleratorRect.y = midY - (acceleratorRect.height/2);
@@ -611,14 +612,14 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         style = SynthLookAndFeel.updateStyle(context, this);
         if (oldStyle != style) {
             String prefix = getPropertyPrefix();
-
-            Object value = style.get(context, prefix + ".textIconGap");
-            if (value != null) {
-                LookAndFeel.installProperty(mi, "iconTextGap", value);
-            }
-            defaultTextIconGap = mi.getIconTextGap();
-
-            if (menuItem.getMargin() == null ||
+ 
+            Object value = style.get(context, prefix + ".textIconGap"); 
+            if (value != null) { 
+                LookAndFeel.installProperty(mi, "iconTextGap", value); 
+            } 
+            defaultTextIconGap = mi.getIconTextGap(); 
+  
+            if (menuItem.getMargin() == null || 
                          (menuItem.getMargin() instanceof UIResource)) {
                 Insets insets = (Insets)style.get(context, prefix + ".margin");
 
@@ -751,7 +752,7 @@ class SynthMenuItemUI extends BasicMenuItemUI implements
         String prefix = getPropertyPrefix();
         Icon checkIcon = style.getIcon(context, prefix + ".checkIcon");
         Icon arrowIcon = style.getIcon(context, prefix + ".arrowIcon");
-        paint(context, accContext, g, checkIcon, arrowIcon,
+        paint(context, accContext, g, checkIcon, arrowIcon, 
               acceleratorDelimiter, defaultTextIconGap);
         accContext.dispose();
     }

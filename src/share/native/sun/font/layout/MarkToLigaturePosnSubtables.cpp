@@ -117,8 +117,8 @@ le_int32 MarkToLigaturePositioningSubtable::process(GlyphIterator *glyphIterator
         fontInstance->getGlyphAdvance(ligatureGlyph, pixels);
         fontInstance->pixelsToUnits(pixels, ligatureAdvance);
 
-        glyphIterator->setCurrGlyphPositionAdjustment(anchorDiffX - ligatureAdvance.fX,
-            anchorDiffY - ligatureAdvance.fY, -markAdvance.fX, -markAdvance.fY);
+        glyphIterator->setCurrGlyphPositionAdjustment(anchorDiffX - ligatureAdvance.fX, 
+	    anchorDiffY - ligatureAdvance.fY, -markAdvance.fX, -markAdvance.fY);
     }
 
     return 1;

@@ -32,8 +32,10 @@ import javax.swing.JMenu;
 /**
  * Pluggable look and feel interface for JMenuBar.
  *
+ * @version %I% %G%
  * @author Georges Saab
  * @author David Karlton
  */
 
 public abstract class MenuBarUI extends ComponentUI { }
+

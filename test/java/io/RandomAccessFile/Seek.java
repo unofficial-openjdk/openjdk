@@ -31,7 +31,7 @@
 
 import java.io.*;
 
-public class Seek
+public class Seek 
 {
     public static void main(String argv[]) throws Exception
     {

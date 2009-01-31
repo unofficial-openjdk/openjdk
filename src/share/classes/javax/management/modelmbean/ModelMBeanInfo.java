@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*
- * @author    IBM Corp.
- *
+ * %Z%author    IBM Corp.
+ * 
  * Copyright IBM Corp. 1999-2000.  All rights reserved.
  */
 
@@ -84,7 +84,7 @@ public interface ModelMBeanInfo
      * @see #setDescriptors
      */
     public Descriptor[] getDescriptors(String inDescriptorType)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
     /**
      * Adds or replaces descriptors in the ModelMBeanInfo.
@@ -98,7 +98,7 @@ public interface ModelMBeanInfo
      * @see #getDescriptors
      */
     public void setDescriptors(Descriptor[] inDescriptors)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
     /**
      * Returns a Descriptor requested by name and descriptorType.
@@ -122,7 +122,7 @@ public interface ModelMBeanInfo
      */
 
     public Descriptor getDescriptor(String inDescriptorName, String inDescriptorType)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
     /**
      * Sets descriptors in the info array of type inDescriptorType
@@ -152,7 +152,7 @@ public interface ModelMBeanInfo
      */
 
     public void setDescriptor(Descriptor inDescriptor, String inDescriptorType)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
 
     /**
@@ -178,7 +178,7 @@ public interface ModelMBeanInfo
      * </PRE>
      * <P>
      * The default descriptor is: name=className,descriptorType="mbean", displayName=className,
-     *  persistPolicy="never",log="F",export="F",visibility="1"
+     *	persistPolicy="never",log="F",export="F",visibility="1"
      * If the descriptor does not contain all these fields, they will be added with these default values.
      *
      * <p><b>Note:</b> because of inconsistencies in previous versions of
@@ -199,7 +199,7 @@ public interface ModelMBeanInfo
      * @see #setMBeanDescriptor
      */
     public Descriptor getMBeanDescriptor()
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
     /**
      * Sets the ModelMBean's descriptor.  This descriptor contains default, MBean wide
@@ -207,7 +207,7 @@ public interface ModelMBeanInfo
      * does a complete replacement of the descriptor, no merging is done. If the descriptor to
      * set to is null then the default descriptor will be created.
      * The default descriptor is: name=className,descriptorType="mbean", displayName=className,
-     *  persistPolicy="never",log="F",export="F",visibility="1"
+     *	persistPolicy="never",log="F",export="F",visibility="1"
      * If the descriptor does not contain all these fields, they will be added with these default values.
      *
      * See {@link #getMBeanDescriptor getMBeanDescriptor} method javadoc for description of valid field names.
@@ -222,7 +222,7 @@ public interface ModelMBeanInfo
      */
 
     public void setMBeanDescriptor(Descriptor inDescriptor)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
 
     /**
@@ -242,7 +242,7 @@ public interface ModelMBeanInfo
      */
 
     public ModelMBeanAttributeInfo getAttribute(String inName)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
 
     /**
@@ -260,7 +260,7 @@ public interface ModelMBeanInfo
      */
 
     public ModelMBeanOperationInfo getOperation(String inName)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
 
     /**
@@ -277,7 +277,7 @@ public interface ModelMBeanInfo
      *
      */
     public ModelMBeanNotificationInfo getNotification(String inName)
-            throws MBeanException, RuntimeOperationsException;
+	    throws MBeanException, RuntimeOperationsException;
 
     /**
      * Creates and returns a copy of this object.

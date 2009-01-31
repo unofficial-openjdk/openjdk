@@ -31,28 +31,28 @@
 #include "shmemBase.h"  /* for exitTransportWithError */
 
 /*
- * These functions are not completely universal. For now, they are used
+ * These functions are not completely universal. For now, they are used 
  * exclusively for Jbug's shared memory transport mechanism. They have
  * been implemented on Win32 only so far, so the abstractions may not be correct
  * yet.
  */
-
-static HANDLE memHandle = NULL;
+ 
+static HANDLE memHandle = NULL; 
 
 #ifdef DEBUG
-#define sysAssert(expression) {         \
-    if (!(expression)) {                \
-            exitTransportWithError \
+#define sysAssert(expression) {		\
+    if (!(expression)) {		\
+	    exitTransportWithError \
             ("\"%s\", line %d: assertion failure\n", \
              __FILE__, __DATE__, __LINE__); \
-    }                                   \
+    }					\
 }
 #else
 #define sysAssert(expression) ((void) 0)
 #endif
 
-int
-sysSharedMemCreate(const char *name, int length,
+int 
+sysSharedMemCreate(const char *name, int length, 
                    sys_shmem_t *mem, void **buffer)
 {
     void *mappedMemory;
@@ -62,10 +62,10 @@ sysSharedMemCreate(const char *name, int length,
     sysAssert(name);
     sysAssert(length > 0);
 
-    memHandle  =
+    memHandle  = 
         CreateFileMapping(INVALID_HANDLE_VALUE, /* backed by page file */
                           NULL,               /* no inheritance */
-                          PAGE_READWRITE,
+                          PAGE_READWRITE,     
                           0, length,          /* hi, lo order of length */
                           name);
     if (memHandle == NULL) {
@@ -75,9 +75,9 @@ sysSharedMemCreate(const char *name, int length,
         CloseHandle(memHandle);
         memHandle = NULL;
         return SYS_INUSE;
-    }
+    } 
 
-    mappedMemory =
+    mappedMemory = 
         MapViewOfFile(memHandle,
                       FILE_MAP_WRITE,       /* read/write */
                       0, 0, 0);             /* map entire "file" */
@@ -93,7 +93,7 @@ sysSharedMemCreate(const char *name, int length,
     return SYS_OK;
 }
 
-int
+int 
 sysSharedMemOpen(const char *name, sys_shmem_t *mem, void **buffer)
 {
     void *mappedMemory;
@@ -102,7 +102,7 @@ sysSharedMemOpen(const char *name, sys_shmem_t *mem, void **buffer)
     sysAssert(name);
     sysAssert(buffer);
 
-    memHandle =
+    memHandle = 
         OpenFileMapping(FILE_MAP_WRITE,     /* read/write */
                         FALSE,              /* no inheritance */
                         name);
@@ -110,7 +110,7 @@ sysSharedMemOpen(const char *name, sys_shmem_t *mem, void **buffer)
         return SYS_ERR;
     }
 
-    mappedMemory =
+    mappedMemory = 
         MapViewOfFile(memHandle,
                       FILE_MAP_WRITE,       /* read/write */
                       0, 0, 0);             /* map entire "file" */
@@ -126,7 +126,7 @@ sysSharedMemOpen(const char *name, sys_shmem_t *mem, void **buffer)
     return SYS_OK;
 }
 
-int
+int 
 sysSharedMemClose(sys_shmem_t mem, void *buffer)
 {
     if (buffer != NULL) {
@@ -142,7 +142,7 @@ sysSharedMemClose(sys_shmem_t mem, void *buffer)
     return SYS_OK;
 }
 
-int
+int 
 sysIPMutexCreate(const char *name, sys_ipmutex_t *mutexPtr)
 {
     HANDLE mutex;
@@ -159,13 +159,13 @@ sysIPMutexCreate(const char *name, sys_ipmutex_t *mutexPtr)
         /* If the call above didn't create it, consider it an error */
         CloseHandle(mutex);
         return SYS_INUSE;
-    }
+    } 
 
     *mutexPtr = mutex;
     return SYS_OK;
 }
 
-int
+int 
 sysIPMutexOpen(const char *name, sys_ipmutex_t *mutexPtr)
 {
     HANDLE mutex;
@@ -184,7 +184,7 @@ sysIPMutexOpen(const char *name, sys_ipmutex_t *mutexPtr)
     return SYS_OK;
 }
 
-int
+int 
 sysIPMutexEnter(sys_ipmutex_t mutex, sys_event_t event)
 {
     HANDLE handles[2] = { mutex, event };
@@ -193,25 +193,25 @@ sysIPMutexEnter(sys_ipmutex_t mutex, sys_event_t event)
 
     sysAssert(mutex);
     rc = WaitForMultipleObjects(count, handles,
-                                FALSE,              /* wait for either, not both */
-                                INFINITE);          /* infinite timeout */
+				FALSE,		    /* wait for either, not both */
+                                INFINITE);	    /* infinite timeout */
     return (rc == WAIT_OBJECT_0) ? SYS_OK : SYS_ERR;
 }
 
-int
+int 
 sysIPMutexExit(sys_ipmutex_t mutex)
 {
     sysAssert(mutex);
     return ReleaseMutex(mutex) ? SYS_OK : SYS_ERR;
 }
 
-int
+int 
 sysIPMutexClose(sys_ipmutex_t mutex)
 {
     return CloseHandle(mutex) ? SYS_OK : SYS_ERR;
 }
 
-int
+int 
 sysEventCreate(const char *name, sys_event_t *eventPtr, jboolean manualReset)
 {
     HANDLE event;
@@ -220,7 +220,7 @@ sysEventCreate(const char *name, sys_event_t *eventPtr, jboolean manualReset)
     sysAssert(eventPtr);
 
     event = CreateEvent(NULL,            /* no inheritance */
-                        reset,           /* manual reset */
+                        reset,		 /* manual reset */
                         FALSE,           /* initially, not signalled */
                         name);
     if (event == NULL) {
@@ -229,13 +229,13 @@ sysEventCreate(const char *name, sys_event_t *eventPtr, jboolean manualReset)
         /* If the call above didn't create it, consider it an error */
         CloseHandle(event);
         return SYS_INUSE;
-    }
+    } 
 
     *eventPtr = event;
     return SYS_OK;
 }
 
-int
+int 
 sysEventOpen(const char *name, sys_event_t *eventPtr)
 {
     HANDLE event;
@@ -255,7 +255,7 @@ sysEventOpen(const char *name, sys_event_t *eventPtr)
     return SYS_OK;
 }
 
-int
+int 
 sysEventWait(sys_process_t otherProcess, sys_event_t event, long timeout)
 {
     HANDLE handles[2];        /* process, event */
@@ -264,8 +264,8 @@ sysEventWait(sys_process_t otherProcess, sys_event_t event, long timeout)
     DWORD dwTimeout = (timeout == 0) ? INFINITE : (DWORD)timeout;
 
     /*
-     * If the signalling process is specified, and it dies while we wait,
-     * detect it and return an error.
+     * If the signalling process is specified, and it dies while we wait, 
+     * detect it and return an error. 
      */
     sysAssert(event);
 
@@ -284,32 +284,32 @@ sysEventWait(sys_process_t otherProcess, sys_event_t event, long timeout)
         /* Other process died, return error */
         return SYS_DIED;
     } else if (rc == WAIT_TIMEOUT) {
-        /* timeout */
-        return SYS_TIMEOUT;
+	/* timeout */
+	return SYS_TIMEOUT;
     }
     return SYS_ERR;
 }
 
-int
+int 
 sysEventSignal(sys_event_t event)
 {
     sysAssert(event);
     return SetEvent(event) ? SYS_OK : SYS_ERR;
 }
 
-int
+int 
 sysEventClose(sys_event_t event)
 {
     return CloseHandle(event) ? SYS_OK : SYS_ERR;
 }
 
-jlong
+jlong 
 sysProcessGetID()
 {
     return GetCurrentProcessId();
 }
 
-int
+int 
 sysProcessOpen(jlong processID, sys_process_t *processPtr)
 {
     HANDLE process;
@@ -327,34 +327,34 @@ sysProcessOpen(jlong processID, sys_process_t *processPtr)
     return SYS_OK;
 }
 
-int
+int 
 sysProcessClose(sys_process_t *process)
 {
     return CloseHandle(process) ? SYS_OK : SYS_ERR;
 }
 
-int
+int 
 sysGetLastError(char *buf, int len)
 {
     long errval = GetLastError();
     if (errval != 0) {
-        int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
-                              NULL, errval,
-                              0, buf, len, NULL);
-        if (n > 3) {
-            /* Drop final '.', CR, LF */
-            if (buf[n - 1] == '\n') n--;
-            if (buf[n - 1] == '\r') n--;
-            if (buf[n - 1] == '.') n--;
-            buf[n] = '\0';
-        }
-        return SYS_OK;
-    }
+	int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+			      NULL, errval,
+			      0, buf, len, NULL);
+	if (n > 3) {
+	    /* Drop final '.', CR, LF */
+	    if (buf[n - 1] == '\n') n--;
+	    if (buf[n - 1] == '\r') n--;
+	    if (buf[n - 1] == '.') n--;
+	    buf[n] = '\0';
+	}
+	return SYS_OK;
+    }    
     buf[0] = '\0';
     return 0;
 }
 
-int
+int 
 sysTlsAlloc() {
     return TlsAlloc();
 }
@@ -364,7 +364,7 @@ sysTlsFree(int index) {
     TlsFree(index);
 }
 
-void
+void 
 sysTlsPut(int index, void *value) {
     TlsSetValue(index, value);
 }

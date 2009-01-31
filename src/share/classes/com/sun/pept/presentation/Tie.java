@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -47,9 +47,9 @@ public interface Tie {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param servant ...
  * </p>
  */
@@ -58,7 +58,7 @@ public interface Tie {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Object with ...
  * </p>
  */
@@ -67,12 +67,19 @@ public interface Tie {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param messageInfo ...
  * </p>
  */
     public void _invoke(MessageInfo messageInfo);
 
 } // end Tie
+
+
+
+
+
+
+

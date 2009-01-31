@@ -2,6 +2,8 @@
 /*@egen*//*
  * @(#)file      Parser.jjt
  * @(#)author    Sun Microsystems, Inc.
+ * @(#)version   4.6
+ * @(#)date      02/04/12
  *
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.

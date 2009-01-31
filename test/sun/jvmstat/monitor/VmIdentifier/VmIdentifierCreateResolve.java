@@ -172,7 +172,7 @@ class VmIdentifierTestHandler extends DefaultHandler {
     public void processingInstruction(String target, String data) {
         if (debug) {
             System.out.println("processingInstruction():"
-                               + " target = " + target
+                               + " target = " + target 
                                + " data = " + data);
         }
     }

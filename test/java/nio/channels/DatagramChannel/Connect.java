@@ -38,7 +38,7 @@ public class Connect {
     static PrintStream log = System.err;
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
     static void test() throws Exception {
@@ -49,8 +49,8 @@ public class Connect {
 
         Thread writerThread = new Thread(writer);
         writerThread.start();
-        while (!writer.ready())
-            Thread.sleep(50);
+	while (!writer.ready())
+	    Thread.sleep(50);
 
         Thread readerThread = new Thread(reader);
         readerThread.start();
@@ -64,7 +64,7 @@ public class Connect {
 
     public interface Sprintable extends Runnable {
         public void throwException() throws Exception;
-        public boolean ready();
+	public boolean ready();
     }
 
     public static class Actor implements Sprintable {
@@ -75,16 +75,16 @@ public class Connect {
                 throw e;
         }
 
-        private volatile boolean ready = false;
+	private volatile boolean ready = false;
 
-        public boolean ready() {
-            return ready;
-        }
+	public boolean ready() {
+	    return ready;
+	}
 
         public void run() {
             try {
                 DatagramChannel dc = DatagramChannel.open();
-                ready = true;
+		ready = true;
 
                 // Send a message
                 ByteBuffer bb = ByteBuffer.allocateDirect(256);
@@ -112,7 +112,7 @@ public class Connect {
                 CharBuffer cb = Charset.forName("US-ASCII").
                 newDecoder().decode(bb);
                 log.println("From Reactor: "+isa+ " said " +cb);
-
+        
                 // Clean up
                 dc.disconnect();
                 dc.close();
@@ -130,25 +130,25 @@ public class Connect {
                 throw e;
         }
 
-        private volatile boolean ready = false;
+	private volatile boolean ready = false;
 
-        public boolean ready() {
-            return ready;
-        }
+	public boolean ready() {
+	    return ready;
+	}
 
         public void run() {
             try {
                 // Listen for a message
                 DatagramChannel dc = DatagramChannel.open();
-                dc.socket().bind(new InetSocketAddress(8888));
+		dc.socket().bind(new InetSocketAddress(8888));
                 ByteBuffer bb = ByteBuffer.allocateDirect(100);
-                ready = true;
+		ready = true;
                 SocketAddress sa = dc.receive(bb);
                 bb.flip();
                 CharBuffer cb = Charset.forName("US-ASCII").
                 newDecoder().decode(bb);
                 log.println("From Actor: "+sa+ " said " +cb);
-
+                
                 // Reply to sender
                 dc.connect(sa);
                 bb.flip();

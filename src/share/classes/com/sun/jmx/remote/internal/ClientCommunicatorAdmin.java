@@ -33,23 +33,23 @@ import com.sun.jmx.remote.util.EnvHelp;
 
 public abstract class ClientCommunicatorAdmin {
     public ClientCommunicatorAdmin(long period) {
-        this.period = period;
+	this.period = period;
 
-        if (period > 0) {
-            checker = new Checker();
+	if (period > 0) {
+	    checker = new Checker();
 
-            Thread t = new Thread(checker);
-            t.setDaemon(true);
-            t.start();
-        } else
-            checker = null;
+	    Thread t = new Thread(checker);
+	    t.setDaemon(true);
+	    t.start();
+	} else
+	    checker = null;
     }
 
     /**
      * Called by a client to inform of getting an IOException.
      */
     public void gotIOException (IOException ioe) throws IOException {
-        restart(ioe);
+	restart(ioe);
     }
 
     /**
@@ -71,161 +71,161 @@ public abstract class ClientCommunicatorAdmin {
      * Terminates this object.
      */
     public void terminate() {
-        synchronized(lock) {
-            if (state == TERMINATED) {
-                return;
-            }
+	synchronized(lock) {
+	    if (state == TERMINATED) {
+		return;
+	    }
 
-            state = TERMINATED;
+	    state = TERMINATED;
 
-            lock.notifyAll();
+	    lock.notifyAll();
 
-            if (checker != null)
-                checker.stop();
-        }
+	    if (checker != null)
+		checker.stop();
+	}
     }
 
     private void restart(IOException ioe) throws IOException {
-        // check state
-        synchronized(lock) {
-            if (state == TERMINATED) {
-                throw new IOException("The client has been closed.");
-            } else if (state == FAILED) { // already failed to re-start by another thread
-                throw ioe;
-            } else if (state == RE_CONNECTING) {
-                // restart process has been called by another thread
-                // we need to wait
-                while(state == RE_CONNECTING) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException ire) {
-                        // be asked to give up
-                        InterruptedIOException iioe = new InterruptedIOException(ire.toString());
-                        EnvHelp.initCause(iioe, ire);
+	// check state
+	synchronized(lock) {
+	    if (state == TERMINATED) {
+		throw new IOException("The client has been closed.");
+	    } else if (state == FAILED) { // already failed to re-start by another thread
+		throw ioe;
+	    } else if (state == RE_CONNECTING) {
+		// restart process has been called by another thread
+		// we need to wait
+		while(state == RE_CONNECTING) {
+		    try {
+			lock.wait();
+		    } catch (InterruptedException ire) {
+			// be asked to give up
+			InterruptedIOException iioe = new InterruptedIOException(ire.toString());
+			EnvHelp.initCause(iioe, ire);
 
-                        throw iioe;
-                    }
-                }
+			throw iioe;
+		    }
+		}
 
-                if (state == TERMINATED) {
-                    throw new IOException("The client has been closed.");
-                } else if (state != CONNECTED) {
-                    // restarted is failed by another thread
-                    throw ioe;
-                }
-            } else {
-                state = RE_CONNECTING;
-                lock.notifyAll();
-            }
-        }
+		if (state == TERMINATED) {
+		    throw new IOException("The client has been closed.");
+		} else if (state != CONNECTED) {
+		    // restarted is failed by another thread
+		    throw ioe;
+		}
+	    } else {
+		state = RE_CONNECTING;
+		lock.notifyAll();
+	    }
+	}
 
-        // re-starting
-        try {
-            doStart();
-            synchronized(lock) {
-                if (state == TERMINATED) {
-                    throw new IOException("The client has been closed.");
-                }
+	// re-starting
+	try {
+	    doStart();
+	    synchronized(lock) {
+		if (state == TERMINATED) {
+		    throw new IOException("The client has been closed.");
+		}
 
-                state = CONNECTED;
+		state = CONNECTED;
 
-                lock.notifyAll();
-            }
+		lock.notifyAll();
+	    }
 
-            return;
-        } catch (Exception e) {
-            logger.warning("restart", "Failed to restart: " + e);
-            logger.debug("restart",e);
+	    return;
+	} catch (Exception e) {
+	    logger.warning("restart", "Failed to restart: " + e);
+	    logger.debug("restart",e);
 
-            synchronized(lock) {
-                if (state == TERMINATED) {
-                    throw new IOException("The client has been closed.");
-                }
+	    synchronized(lock) {
+		if (state == TERMINATED) {
+		    throw new IOException("The client has been closed.");
+		}
 
-                state = FAILED;
+		state = FAILED;
 
-                lock.notifyAll();
-            }
+		lock.notifyAll();
+	    }
 
-            try {
-                doStop();
-            } catch (Exception eee) {
-                // OK.
-                // We know there is a problem.
-            }
+	    try {
+		doStop();
+	    } catch (Exception eee) {
+		// OK.
+		// We know there is a problem.
+	    }
 
-            terminate();
+	    terminate();
 
-            throw ioe;
-        }
+	    throw ioe;
+	}
     }
 
 // --------------------------------------------------------------
 // private varaibles
 // --------------------------------------------------------------
     private class Checker implements Runnable {
-        public void run() {
-            myThread = Thread.currentThread();
+	public void run() {
+	    myThread = Thread.currentThread();
 
-            while (state != TERMINATED && !myThread.isInterrupted()) {
-                try {
-                    Thread.sleep(period);
-                } catch (InterruptedException ire) {
-                    // OK.
-                    // We will check the state at the following steps
-                }
+	    while (state != TERMINATED && !myThread.isInterrupted()) {
+		try {
+		    Thread.sleep(period);
+		} catch (InterruptedException ire) {
+		    // OK.
+		    // We will check the state at the following steps
+		}
 
-                if (state == TERMINATED || myThread.isInterrupted()) {
-                    break;
-                }
+		if (state == TERMINATED || myThread.isInterrupted()) {
+		    break;
+		}
 
-                try {
-                    checkConnection();
-                } catch (Exception e) {
-                    synchronized(lock) {
-                        if (state == TERMINATED || myThread.isInterrupted()) {
-                            break;
-                        }
-                    }
+		try {
+		    checkConnection();
+		} catch (Exception e) {
+		    synchronized(lock) {
+			if (state == TERMINATED || myThread.isInterrupted()) {
+			    break;
+			}
+		    }
 
-                    e = (Exception)EnvHelp.getCause(e);
+		    e = (Exception)EnvHelp.getCause(e);
 
-                    if (e instanceof IOException &&
-                        !(e instanceof InterruptedIOException)) {
-                        try {
-                            restart((IOException)e);
-                        } catch (Exception ee) {
-                            logger.warning("Checker-run",
-                                           "Failed to check connection: "+ e);
-                            logger.warning("Checker-run", "stopping");
-                            logger.debug("Checker-run",e);
+		    if (e instanceof IOException && 
+			!(e instanceof InterruptedIOException)) {
+			try {
+			    restart((IOException)e);
+			} catch (Exception ee) {
+			    logger.warning("Checker-run", 
+					   "Failed to check connection: "+ e);
+			    logger.warning("Checker-run", "stopping");
+			    logger.debug("Checker-run",e);
+			    
+			    break;
+			}
+		    } else {
+			logger.warning("Checker-run", 
+				     "Failed to check the connection: " + e);
+			logger.debug("Checker-run",e);
 
-                            break;
-                        }
-                    } else {
-                        logger.warning("Checker-run",
-                                     "Failed to check the connection: " + e);
-                        logger.debug("Checker-run",e);
+			// XXX stop checking?
 
-                        // XXX stop checking?
+			break;
+		    }
+		}
+	    }
 
-                        break;
-                    }
-                }
-            }
+	    if (logger.traceOn()) {
+		logger.trace("Checker-run", "Finished.");
+	    }
+	}
 
-            if (logger.traceOn()) {
-                logger.trace("Checker-run", "Finished.");
-            }
-        }
+	private void stop() {
+	    if (myThread != null && myThread != Thread.currentThread()) {
+		myThread.interrupt();
+	    }
+	}
 
-        private void stop() {
-            if (myThread != null && myThread != Thread.currentThread()) {
-                myThread.interrupt();
-            }
-        }
-
-        private Thread myThread;
+	private Thread myThread;
     }
 
 // --------------------------------------------------------------
@@ -244,7 +244,7 @@ public abstract class ClientCommunicatorAdmin {
 
     private final int[] lock = new int[0];
 
-    private static final ClassLogger logger =
-        new ClassLogger("javax.management.remote.misc",
-                        "ClientCommunicatorAdmin");
+    private static final ClassLogger logger = 
+	new ClassLogger("javax.management.remote.misc", 
+			"ClientCommunicatorAdmin");
 }

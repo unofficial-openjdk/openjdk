@@ -29,6 +29,7 @@ package java.util;
  * Unchecked exception thrown when the format width is a negative value other
  * than <tt>-1</tt> or is otherwise unsupported.
  *
+ * @version 	%I%, %G%
  * @since 1.5
  */
 public class IllegalFormatWidthException extends IllegalFormatException {
@@ -44,7 +45,7 @@ public class IllegalFormatWidthException extends IllegalFormatException {
      *         The width
      */
     public IllegalFormatWidthException(int w) {
-        this.w = w;
+	this.w = w;
     }
 
     /**
@@ -53,10 +54,10 @@ public class IllegalFormatWidthException extends IllegalFormatException {
      * @return  The width
      */
     public int getWidth() {
-        return w;
+	return w;
     }
 
     public String getMessage() {
-        return Integer.toString(w);
+	return Integer.toString(w);
     }
 }

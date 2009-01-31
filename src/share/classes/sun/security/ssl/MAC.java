@@ -48,84 +48,85 @@ import static sun.security.ssl.CipherSuite.*;
  * sequence number is used.  It's also reset to zero with each change of
  * a cipher spec, so this is the only place this state is needed.
  *
+ * @version %I%, %G%
  * @author David Brownell
  * @author Andreas Sterbenz
  */
 final class MAC {
 
     final static MAC NULL = new MAC();
-
+    
     // Value of the null MAC is fixed
     private static final byte nullMAC[] = new byte[0];
 
     // internal identifier for the MAC algorithm
-    private final MacAlg        macAlg;
+    private final MacAlg	macAlg;
 
     // stuff defined by the kind of MAC algorithm
-    private final int           macSize;
+    private final int		macSize;
 
     // JCE Mac object
     private final Mac mac;
-
+    
     // byte array containing the additional information we MAC in each record
     // (see below)
     private final byte[] block;
 
     // sequence number + record type + + record length
     private static final int BLOCK_SIZE_SSL = 8 + 1 + 2;
-
+    
     // sequence number + record type + protocol version + record length
     private static final int BLOCK_SIZE_TLS = 8 + 1 + 2 + 2;
-
+    
     // offset of record type in block
     private static final int BLOCK_OFFSET_TYPE    = 8;
-
+    
     // offset of protocol version number in block (TLS only)
     private static final int BLOCK_OFFSET_VERSION = 8 + 1;
-
+    
     private MAC() {
-        macSize = 0;
-        macAlg = M_NULL;
-        mac = null;
-        block = null;
+	macSize = 0;
+	macAlg = M_NULL;
+	mac = null;
+	block = null;
     }
-
+    
     /**
      * Set up, configured for the given SSL/TLS MAC type and version.
      */
     MAC(MacAlg macAlg, ProtocolVersion protocolVersion, SecretKey key)
-            throws NoSuchAlgorithmException, InvalidKeyException {
-        this.macAlg = macAlg;
-        this.macSize = macAlg.size;
-
+	    throws NoSuchAlgorithmException, InvalidKeyException {
+	this.macAlg = macAlg;
+	this.macSize = macAlg.size;
+	
         String algorithm;
-        boolean tls = (protocolVersion.v >= ProtocolVersion.TLS10.v);
+	boolean tls = (protocolVersion.v >= ProtocolVersion.TLS10.v);
 
-        if (macAlg == M_MD5) {
-            algorithm = tls ? "HmacMD5" : "SslMacMD5";
-        } else if (macAlg == M_SHA) {
-            algorithm = tls ? "HmacSHA1" : "SslMacSHA1";
-        } else {
-            throw new RuntimeException("Unknown Mac " + macAlg);
-        }
+	if (macAlg == M_MD5) {
+	    algorithm = tls ? "HmacMD5" : "SslMacMD5";
+	} else if (macAlg == M_SHA) {
+	    algorithm = tls ? "HmacSHA1" : "SslMacSHA1";
+	} else {
+	    throw new RuntimeException("Unknown Mac " + macAlg);
+	}
 
-        mac = JsseJce.getMac(algorithm);
-        mac.init(key);
+	mac = JsseJce.getMac(algorithm);
+	mac.init(key);
 
-        if (tls) {
-            block = new byte[BLOCK_SIZE_TLS];
-            block[BLOCK_OFFSET_VERSION]   = protocolVersion.major;
-            block[BLOCK_OFFSET_VERSION+1] = protocolVersion.minor;
-        } else {
-            block = new byte[BLOCK_SIZE_SSL];
-        }
+	if (tls) {
+	    block = new byte[BLOCK_SIZE_TLS];
+	    block[BLOCK_OFFSET_VERSION]   = protocolVersion.major;
+	    block[BLOCK_OFFSET_VERSION+1] = protocolVersion.minor;
+	} else {
+	    block = new byte[BLOCK_SIZE_SSL];
+	}
     }
 
     /**
      * Returns the length of the MAC.
      */
     int MAClen() {
-        return macSize;
+	return macSize;
     }
 
     /**
@@ -137,7 +138,7 @@ final class MAC {
      * @param len the size of the compressed record
      */
     final byte[] compute(byte type, byte buf[], int offset, int len) {
-        return compute(type, null, buf, offset, len);
+	return compute(type, null, buf, offset, len);
     }
 
     /**
@@ -149,19 +150,19 @@ final class MAC {
      *
      * @param type record type
      * @param bb a ByteBuffer in which the position and limit
-     *          demarcate the data to be MAC'd.
+     *		demarcate the data to be MAC'd.
      */
     final byte[] compute(byte type, ByteBuffer bb) {
-        return compute(type, bb, null, 0, bb.remaining());
+	return compute(type, bb, null, 0, bb.remaining());
     }
-
+    
     // increment the sequence number in the block array
     // it is a 64-bit number stored in big-endian format
     private void incrementSequenceNumber() {
-        int k = 7;
-        while ((k >= 0) && (++block[k] == 0)) {
-            k--;
-        }
+	int k = 7;
+	while ((k >= 0) && (++block[k] == 0)) {
+	    k--;
+	}
     }
 
     /*
@@ -170,25 +171,25 @@ final class MAC {
      */
     private byte[] compute(byte type, ByteBuffer bb, byte[] buf, int offset, int len) {
 
-        if (macSize == 0) {
-            return nullMAC;
-        }
+	if (macSize == 0) {
+	    return nullMAC;
+	}
 
-        block[BLOCK_OFFSET_TYPE] = type;
-        block[block.length - 2]  = (byte)(len >> 8);
-        block[block.length - 1]  = (byte)(len     );
+	block[BLOCK_OFFSET_TYPE] = type;
+	block[block.length - 2]  = (byte)(len >> 8);
+	block[block.length - 1]  = (byte)(len     );
+	
+	mac.update(block);
+	incrementSequenceNumber();
+	
+	// content
+	if (bb != null) {
+	    mac.update(bb);
+	} else {
+	    mac.update(buf, offset, len);
+	}
 
-        mac.update(block);
-        incrementSequenceNumber();
-
-        // content
-        if (bb != null) {
-            mac.update(bb);
-        } else {
-            mac.update(buf, offset, len);
-        }
-
-        return mac.doFinal();
+	return mac.doFinal();
     }
 
 }

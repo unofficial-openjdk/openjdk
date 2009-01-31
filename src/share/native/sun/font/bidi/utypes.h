@@ -111,7 +111,7 @@ typedef jbyte    int8_t;
 typedef jshort   int16_t;
 typedef jint     int32_t;
 #endif
-
+ 
 typedef jubyte   uint8_t;
 typedef jushort  uint16_t;
 typedef juint    uint32_t;

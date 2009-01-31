@@ -33,8 +33,8 @@
  */
 import java.lang.instrument.*;
 
-public class
-RemoveAbsentTransformerTest
+public class 
+RemoveAbsentTransformerTest 
     extends ATransformerManagementTestCase
 {
 
@@ -48,18 +48,18 @@ RemoveAbsentTransformerTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new RemoveAbsentTransformerTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testRemoveNonExistentTransformer();
     }
-
+    
     /**
      * Remove transformers that were not added
      */
@@ -68,15 +68,15 @@ RemoveAbsentTransformerTest
     {
         boolean result;
         ClassFileTransformer moreThanMeetsTheEye = new MyClassFileTransformer("NonExistent");
-
+        
         addTransformerToManager(fInst, moreThanMeetsTheEye);
         removeTransformerFromManager(fInst, moreThanMeetsTheEye);
         result = fInst.removeTransformer(new MyClassFileTransformer("NonExistent2"));
         assertTrue(!result);
         result = fInst.removeTransformer(moreThanMeetsTheEye);
         assertTrue(!result);
-
+        
         verifyTransformers(fInst);
     }
-
+    
 }

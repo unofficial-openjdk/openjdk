@@ -23,7 +23,7 @@
 
 /**
  *  @test
- *  @bug 4836939
+ *  @bug 4836939 
  *  @summary JDI add addSourceNameFilter to ClassPrepareRequest
  *
  *  @author jjh
@@ -91,7 +91,7 @@ public class SourceNameFilterTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new SourceNameFilterTest(args).startTests();
     }
     public void eventSetComplete(EventSet set) {
@@ -115,11 +115,11 @@ public class SourceNameFilterTest extends TestScaffold {
         if (rtname.equals("LoadedLater2")) {
             gotEvent2 = true;
         }
-
+            
         if (rtname.equals("LoadedLater3")) {
             gotEvent3 = true;
         }
-
+            
         // debug code
         if (false) {
             println("Got ClassPrepareEvent for : " + rtname);
@@ -128,10 +128,10 @@ public class SourceNameFilterTest extends TestScaffold {
             } catch (AbsentInformationException ee) {
                 failure("failure: absent info on sourceName(): " + ee);
             }
-
+            
             String stratum = rt.defaultStratum();
             println("    defaultStratum = " + stratum);
-
+            
             try {
                 println("    sourceNames = " + rt.sourceNames(stratum));
             } catch (AbsentInformationException ee) {
@@ -140,13 +140,13 @@ public class SourceNameFilterTest extends TestScaffold {
             println("\nAvailable strata:  " + rt.availableStrata());
         }
     }
-
-
+    
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("SourceNameFilterTarg");
@@ -163,8 +163,8 @@ public class SourceNameFilterTest extends TestScaffold {
         cpReq.enable();
         resumeTo("SourceNameFilterTarg", "bkpt", "()V");
 
-        /*
-         * This should cause us to not get a class prepared for
+        /* 
+         * This should cause us to not get a class prepared for 
          * LoadedLater2 since it doesn't come from "jj"
          */
         cpReq.disable();
@@ -181,7 +181,7 @@ public class SourceNameFilterTest extends TestScaffold {
         cpReq.addSourceNameFilter("SourceNameFilterTest.java");
         cpReq.enable();
         resumeTo("SourceNameFilterTarg", "bkpt", "()V");
-
+        
         listenUntilVMDisconnect();
 
         if (!gotEvent1) {
@@ -210,3 +210,4 @@ public class SourceNameFilterTest extends TestScaffold {
         }
     }
 }
+

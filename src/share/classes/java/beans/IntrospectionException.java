@@ -24,7 +24,7 @@
  */
 
 package java.beans;
-
+ 
 /**
  * Thrown when an exception happens during Introspection.
  * <p>
@@ -38,7 +38,7 @@ public
 class IntrospectionException extends Exception {
 
     /**
-     * Constructs an <code>IntrospectionException</code> with a
+     * Constructs an <code>IntrospectionException</code> with a 
      * detailed message.
      *
      * @param mess Descriptive message

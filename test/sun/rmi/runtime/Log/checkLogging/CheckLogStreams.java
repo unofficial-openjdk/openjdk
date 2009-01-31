@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -41,6 +41,6 @@
  */
 public class CheckLogStreams {
     public static void main(String[] args) {
-        CheckLogging.main(args);
+	CheckLogging.main(args);
     }
 }

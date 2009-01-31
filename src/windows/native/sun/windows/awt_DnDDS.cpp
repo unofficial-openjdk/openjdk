@@ -98,10 +98,10 @@ void AwtDragSource::_DoDragDrop(void* param) {
     dragSource->Signal();
 
     res = ::DoDragDrop(dragSource,
-                       dragSource,
-                       convertActionsToDROPEFFECT(dragSource->m_actions),
-                       &effects
-          );
+		       dragSource,
+		       convertActionsToDROPEFFECT(dragSource->m_actions),
+		       &effects
+	  );
 
     if (effects == DROPEFFECT_NONE && dragSource->m_dwPerformedDropEffect != DROPEFFECT_NONE) {
         effects = dragSource->m_dwPerformedDropEffect;
@@ -109,7 +109,7 @@ void AwtDragSource::_DoDragDrop(void* param) {
     dragSource->m_dwPerformedDropEffect = DROPEFFECT_NONE;
 
     call_dSCddfinished(env, peer, res == DRAGDROP_S_DROP && effects != DROPEFFECT_NONE,
-                       convertDROPEFFECTToActions(effects),
+                       convertDROPEFFECTToActions(effects), 
                        dragSource->m_dragPoint.x, dragSource->m_dragPoint.y);
 
     env->DeleteLocalRef(peer);
@@ -124,13 +124,13 @@ void AwtDragSource::_DoDragDrop(void* param) {
  * constructor
  */
 
-AwtDragSource::AwtDragSource(JNIEnv* env, jobject peer, jobject component,
-                             jobject transferable, jobject trigger,
-                             jint actions, jlongArray formats,
-                             jobject formatMap) {
-    m_peer      = env->NewGlobalRef(peer);
+AwtDragSource::AwtDragSource(JNIEnv* env, jobject peer, jobject component, 
+			     jobject transferable, jobject trigger,
+			     jint actions, jlongArray formats,
+			     jobject formatMap) {
+    m_peer	= env->NewGlobalRef(peer);
 
-    m_refs      = 1;
+    m_refs	= 1;
 
     m_actions   = actions;
 
@@ -138,7 +138,7 @@ AwtDragSource::AwtDragSource(JNIEnv* env, jobject peer, jobject component,
 
     m_initmods  = 0;
     m_lastmods  = 0;
-
+  
     m_droptarget   = NULL;
     m_enterpending = TRUE;
 
@@ -149,7 +149,7 @@ AwtDragSource::AwtDragSource(JNIEnv* env, jobject peer, jobject component,
     m_component     = env->NewGlobalRef(component);
     m_transferable  = env->NewGlobalRef(transferable);
     m_formatMap     = env->NewGlobalRef(formatMap);
-
+  
     m_dragPoint.x = 0;
     m_dragPoint.y = 0;
 
@@ -170,7 +170,7 @@ AwtDragSource::AwtDragSource(JNIEnv* env, jobject peer, jobject component,
 AwtDragSource::~AwtDragSource() {
     JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
-    // fix for 6212440: on application shutdown, this object's
+    // fix for 6212440: on application shutdown, this object's 
     // destruction might be suppressed due to dangling COM references.
     // On destruction, VM might be shut down already, so we should make
     // a null check on env.
@@ -226,63 +226,63 @@ void AwtDragSource::LoadCache(jlongArray formats) {
         *saveFormats = lFormats;
 
     for (i = 0, m_ntypes = 0; i < items; i++, lFormats++) {
-        // Warning C4244.
-        // Cast from jlong to CLIPFORMAT (WORD).
-        CLIPFORMAT fmt = (CLIPFORMAT)*lFormats;
-        switch (fmt) {
-        case CF_ENHMETAFILE:
-            m_ntypes++;    // Only TYMED_ENHMF
-            break;
-        case CF_METAFILEPICT:
+	// Warning C4244.
+	// Cast from jlong to CLIPFORMAT (WORD).
+	CLIPFORMAT fmt = (CLIPFORMAT)*lFormats;
+	switch (fmt) {
+	case CF_ENHMETAFILE: 
+	    m_ntypes++;    // Only TYMED_ENHMF
+	    break;
+        case CF_METAFILEPICT: 
             m_ntypes++;    // Only TYMED_MFPICT
             break;
-        case CF_HDROP:
-            m_ntypes++;    // Only TYMED_HGLOBAL
-            break;
-        default:
-            m_ntypes += 2; // TYMED_HGLOBAL and TYMED_ISTREAM
-            break;
-        }
+	case CF_HDROP:
+	    m_ntypes++;    // Only TYMED_HGLOBAL
+	    break;
+	default:
+	    m_ntypes += 2; // TYMED_HGLOBAL and TYMED_ISTREAM
+	    break;
+	}
     }
 
     try {
         m_types = (FORMATETC *)safe_Calloc(sizeof(FORMATETC), m_ntypes);
     } catch (std::bad_alloc&) {
-        m_ntypes = 0;
-        throw;
+	m_ntypes = 0;
+	throw;
     }
 
     lFormats = saveFormats;
 
     for (i = 0, idx = 0; i < items; i++, lFormats++) {
-        // Warning C4244.
-        // Cast from jlong to CLIPFORMAT (WORD).
-        CLIPFORMAT fmt = (CLIPFORMAT)*lFormats;
+	// Warning C4244.
+	// Cast from jlong to CLIPFORMAT (WORD).
+	CLIPFORMAT fmt = (CLIPFORMAT)*lFormats;
 
-        m_types[idx].cfFormat = fmt;
-        m_types[idx].dwAspect = DVASPECT_CONTENT;
-        m_types[idx].lindex   = -1;
+	m_types[idx].cfFormat = fmt;
+	m_types[idx].dwAspect = DVASPECT_CONTENT;
+	m_types[idx].lindex   = -1;
 
-        switch (fmt) {
-        default:
-            m_types[idx].tymed = TYMED_ISTREAM;
-            idx++;
+	switch (fmt) {
+	default:
+	    m_types[idx].tymed = TYMED_ISTREAM;
+	    idx++;
 
-            // now make a copy, but with a TYMED of HGLOBAL
-            memcpy(m_types + idx, m_types + idx - 1, sizeof(FORMATETC));
-        case CF_HDROP:
-            m_types[idx].tymed = TYMED_HGLOBAL;
-            idx++;
-            break;
-        case CF_ENHMETAFILE:
-            m_types[idx].tymed = TYMED_ENHMF;
-            idx++;
-            break;
+	    // now make a copy, but with a TYMED of HGLOBAL
+	    memcpy(m_types + idx, m_types + idx - 1, sizeof(FORMATETC));
+	case CF_HDROP:
+	    m_types[idx].tymed = TYMED_HGLOBAL;
+	    idx++;
+	    break;
+	case CF_ENHMETAFILE:
+	    m_types[idx].tymed = TYMED_ENHMF;
+	    idx++;
+	    break;
         case CF_METAFILEPICT:
             m_types[idx].tymed = TYMED_MFPICT;
             idx++;
             break;
-        }
+	}
     }
     DASSERT(idx == m_ntypes);
 
@@ -290,7 +290,7 @@ void AwtDragSource::LoadCache(jlongArray formats) {
 
     // sort them in ascending order of format
     qsort((void *)m_types, (size_t)m_ntypes, (size_t)sizeof(FORMATETC),
-          _compar);
+	  _compar);
 }
 
 /**
@@ -314,8 +314,8 @@ HRESULT AwtDragSource::ChangeCursor()
 {
     if (m_cursor != NULL) {
         ::SetCursor(m_cursor->GetHCursor());
-        return S_OK;
-    }
+        return S_OK; 
+    } 
     return DRAGDROP_S_USEDEFAULTCURSORS;
 }
 
@@ -331,7 +331,7 @@ void AwtDragSource::SetCursor(jobject cursor) {
     }
 
     jlong pData = env->GetLongField(cursor, AwtCursor::pDataID);
-    // Warning C4312.
+    // Warning C4312. 
     // Cast jlong (__int64) to pointer.
     m_cursor = (AwtCursor*)pData;
 
@@ -344,14 +344,14 @@ void AwtDragSource::SetCursor(jobject cursor) {
  * MatchFormatEtc
  */
 
-HRESULT __stdcall
+HRESULT __stdcall 
 AwtDragSource::MatchFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn,
-                              FORMATETC *cacheEnt) {
+			      FORMATETC *cacheEnt) {
     TRY;
 
     if ((pFormatEtcIn->tymed & (TYMED_HGLOBAL | TYMED_ISTREAM | TYMED_ENHMF |
                                 TYMED_MFPICT)) == 0) {
-        return DV_E_TYMED;
+	return DV_E_TYMED;
     } else if (pFormatEtcIn->lindex != -1) {
         return DV_E_LINDEX;
     } else if (pFormatEtcIn->dwAspect != DVASPECT_CONTENT) {
@@ -361,7 +361,7 @@ AwtDragSource::MatchFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn,
     FORMATETC tmp;
     memcpy(&tmp, pFormatEtcIn, sizeof(FORMATETC));
 
-    static const DWORD supportedTymeds[] =
+    static const DWORD supportedTymeds[] = 
         { TYMED_ISTREAM, TYMED_HGLOBAL, TYMED_ENHMF, TYMED_MFPICT };
     static const int nSupportedTymeds = 4;
 
@@ -374,19 +374,19 @@ AwtDragSource::MatchFormatEtc(FORMATETC __RPC_FAR *pFormatEtcIn,
             continue;
         }
 
-        tmp.tymed = supportedTymeds[i];
-        FORMATETC *cp = (FORMATETC *)bsearch((const void *)&tmp,
-                                             (const void *)m_types,
-                                             (size_t)      m_ntypes,
-                                             (size_t)      sizeof(FORMATETC),
-                                                           _compar
-                                             );
-        if (cp != (FORMATETC *)NULL) {
-            if (cacheEnt != (FORMATETC *)NULL) {
-                memcpy(cacheEnt, cp, sizeof(FORMATETC));
-            }
-            return S_OK;
-        }
+	tmp.tymed = supportedTymeds[i];
+    	FORMATETC *cp = (FORMATETC *)bsearch((const void *)&tmp,
+					     (const void *)m_types,
+					     (size_t)      m_ntypes,
+					     (size_t)      sizeof(FORMATETC),
+					                   _compar
+					     );
+	if (cp != (FORMATETC *)NULL) {
+	    if (cacheEnt != (FORMATETC *)NULL) {
+	        memcpy(cacheEnt, cp, sizeof(FORMATETC));
+	    }
+	    return S_OK;
+	}
     }
 
     return DV_E_FORMATETC;
@@ -402,20 +402,20 @@ HRESULT __stdcall AwtDragSource::QueryInterface(REFIID riid, void __RPC_FAR *__R
     TRY;
 
     if (riid == IID_IUnknown) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IUnknown*)(IDropSource*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IUnknown*)(IDropSource*)this;
+	AddRef();
+	return S_OK;
     } else if (riid == IID_IDropSource) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IDropSource*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IDropSource*)this;
+	AddRef();
+	return S_OK;
     } else if (riid == IID_IDataObject) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IDataObject*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IDataObject*)this;
+	AddRef();
+	return S_OK;
     } else {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)NULL;
-        return E_NOINTERFACE;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)NULL;
+	return E_NOINTERFACE;
     }
 
     CATCH_BAD_ALLOC_RET(E_OUTOFMEMORY);
@@ -451,7 +451,7 @@ HRESULT __stdcall  AwtDragSource::QueryContinueDrag(BOOL fEscapeKeyPressed, DWOR
     JNIEnv* env       = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (fEscapeKeyPressed)
-        return DRAGDROP_S_CANCEL;
+	return DRAGDROP_S_CANCEL;
 
     jint modifiers = AwtComponent::GetJavaModifiers();
 
@@ -459,10 +459,10 @@ HRESULT __stdcall  AwtDragSource::QueryContinueDrag(BOOL fEscapeKeyPressed, DWOR
 
     ::GetCursorPos(&dragPoint);
 
-    if ( (dragPoint.x != m_dragPoint.x || dragPoint.y != m_dragPoint.y) &&
+    if ( (dragPoint.x != m_dragPoint.x || dragPoint.y != m_dragPoint.y) && 
          m_lastmods == modifiers) {//cannot move before cursor change
         call_dSCmouseMoved(env, m_peer,
-                           m_actions, modifiers, dragPoint.x, dragPoint.y);
+                           m_actions, modifiers, dragPoint.x, dragPoint.y); 
         m_dragPoint = dragPoint;
     }
 
@@ -474,21 +474,21 @@ HRESULT __stdcall  AwtDragSource::QueryContinueDrag(BOOL fEscapeKeyPressed, DWOR
         return DRAGDROP_S_CANCEL;
     } else if (m_lastmods != modifiers) {
         call_dSCchanged(env, m_peer,
-                        m_actions, modifiers, dragPoint.x, dragPoint.y);
+                        m_actions, modifiers, dragPoint.x, dragPoint.y); 
         m_bRestoreNodropCustomCursor = TRUE;
     }
 
     m_lastmods = modifiers;
 
     //CR 6480706 - MS Bug on hold
-    HCURSOR hNeedCursor;
-    if(
-        m_bRestoreNodropCustomCursor &&
-        m_cursor != NULL &&
+    HCURSOR hNeedCursor; 
+    if( 
+        m_bRestoreNodropCustomCursor && 
+        m_cursor != NULL && 
         (hNeedCursor = m_cursor->GetHCursor()) != ::GetCursor() )
-    {
+    {        
         ChangeCursor();
-        m_bRestoreNodropCustomCursor = FALSE;
+        m_bRestoreNodropCustomCursor = FALSE;    
     }
     return S_OK;
 
@@ -509,20 +509,20 @@ HRESULT __stdcall  AwtDragSource::GiveFeedback(DWORD dwEffect) {
     m_actions = convertDROPEFFECTToActions(dwEffect);
 
     if (::GetKeyState(VK_LBUTTON) & 0xff00) {
-        mods |= MK_LBUTTON;
+	mods |= MK_LBUTTON;
     } else if (::GetKeyState(VK_MBUTTON) & 0xff00) {
-        mods |= MK_MBUTTON;
+	mods |= MK_MBUTTON;
     } else if (::GetKeyState(VK_RBUTTON) & 0xff00) {
-        mods |= MK_RBUTTON;
+	mods |= MK_RBUTTON;
     }
 
     if (::GetKeyState(VK_SHIFT)   & 0xff00)
-        mods |= MK_SHIFT;
+	mods |= MK_SHIFT;
     if (::GetKeyState(VK_CONTROL) & 0xff00)
-        mods |= MK_CONTROL;
+	mods |= MK_CONTROL;
     if (::GetKeyState(VK_MENU) & 0xff00)
-        mods |= MK_ALT;
-
+	mods |= MK_ALT;
+	
     modifiers = AwtComponent::GetJavaModifiers();
 
     POINT curs;
@@ -534,10 +534,10 @@ HRESULT __stdcall  AwtDragSource::GiveFeedback(DWORD dwEffect) {
     int invalid = (dwEffect == DROPEFFECT_NONE);
 
     if (invalid) {
-        // Don't call dragExit if dragEnter and dragOver haven't been called.
-        if (!m_enterpending) {
-            call_dSCexit(env, m_peer, curs.x, curs.y);
-        }
+	// Don't call dragExit if dragEnter and dragOver haven't been called.
+	if (!m_enterpending) {
+	    call_dSCexit(env, m_peer, curs.x, curs.y);
+	}
         m_droptarget = (HWND)NULL;
         m_enterpending = TRUE;
     } else if (m_droptarget != NULL) {
@@ -546,23 +546,23 @@ HRESULT __stdcall  AwtDragSource::GiveFeedback(DWORD dwEffect) {
 
         m_enterpending = FALSE;
     }
-
+ 
     if (m_droptarget != NULL) {
-        RECT  rect;
-        POINT client = curs;
-        VERIFY(::ScreenToClient(m_droptarget, &client));
-        VERIFY(::GetClientRect(m_droptarget, &rect));
-        if (::PtInRect(&rect, client)) {
-            m_fNC = FALSE;
-            m_dropPoint = client;
-        } else {
-            m_fNC = TRUE;
-            m_dropPoint = curs;
-        }
+	RECT  rect;
+	POINT client = curs;
+	VERIFY(::ScreenToClient(m_droptarget, &client));
+	VERIFY(::GetClientRect(m_droptarget, &rect));
+	if (::PtInRect(&rect, client)) {
+	    m_fNC = FALSE;
+	    m_dropPoint = client;
+	} else {
+	    m_fNC = TRUE;
+	    m_dropPoint = curs;
+	}
     } else {
-        m_fNC = TRUE;
-        m_dropPoint.x = 0;
-        m_dropPoint.y = 0;
+	m_fNC = TRUE;
+	m_dropPoint.x = 0;
+	m_dropPoint.y = 0;
     }
 
     m_bRestoreNodropCustomCursor = (dwEffect == DROPEFFECT_NONE);
@@ -578,7 +578,7 @@ HRESULT __stdcall  AwtDragSource::GiveFeedback(DWORD dwEffect) {
  */
 
 HRESULT __stdcall AwtDragSource::GetData(FORMATETC __RPC_FAR *pFormatEtc,
-                                         STGMEDIUM __RPC_FAR *pmedium) {
+					 STGMEDIUM __RPC_FAR *pmedium) {
     TRY;
 
     HRESULT res = GetProcessId(pFormatEtc, pmedium);
@@ -595,21 +595,21 @@ HRESULT __stdcall AwtDragSource::GetData(FORMATETC __RPC_FAR *pFormatEtc,
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (env->PushLocalFrame(2) < 0) {
-        return E_OUTOFMEMORY;
+	return E_OUTOFMEMORY;
     }
 
-    jbyteArray bytes =
+    jbyteArray bytes = 
         AwtDataTransferer::ConvertData(env, m_component, m_transferable,
                                        (jlong)matchedFormatEtc.cfFormat,
                                        m_formatMap);
     if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
         env->ExceptionDescribe();
-        env->ExceptionClear();
-        env->PopLocalFrame(NULL);
-        return E_UNEXPECTED;
+	env->ExceptionClear();
+	env->PopLocalFrame(NULL);
+	return E_UNEXPECTED;
     }
     if (bytes == NULL) {
-        env->PopLocalFrame(NULL);
+	env->PopLocalFrame(NULL);
         return E_UNEXPECTED;
     }
 
@@ -618,73 +618,73 @@ HRESULT __stdcall AwtDragSource::GetData(FORMATETC __RPC_FAR *pFormatEtc,
     if ((matchedFormatEtc.tymed & TYMED_ISTREAM) != 0) {
         ADSIStreamProxy *istream = new ADSIStreamProxy(this, bytes, nBytes);
 
-        if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
-            env->ExceptionDescribe();
-            env->ExceptionClear();
-            env->PopLocalFrame(NULL);
-            return E_UNEXPECTED;
-        }
+	if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
+	    env->ExceptionDescribe();
+	    env->ExceptionClear();
+	    env->PopLocalFrame(NULL);
+	    return E_UNEXPECTED;
+	}
 
-        pmedium->tymed = TYMED_ISTREAM;
-        pmedium->pstm = istream;
-        pmedium->pUnkForRelease = (IUnknown *)NULL;
+	pmedium->tymed = TYMED_ISTREAM;
+	pmedium->pstm = istream;
+	pmedium->pUnkForRelease = (IUnknown *)NULL;
 
-        env->PopLocalFrame(NULL);
-        return S_OK;
+	env->PopLocalFrame(NULL);
+	return S_OK;
     } else if ((matchedFormatEtc.tymed & TYMED_HGLOBAL) != 0) {
         HGLOBAL copy = ::GlobalAlloc(GALLOCFLG, nBytes +
                                      ((matchedFormatEtc.cfFormat == CF_HDROP)
-                                          ? sizeof(DROPFILES)
-                                          : 0));
-        if (copy == NULL) {
-            env->PopLocalFrame(NULL);
-            throw std::bad_alloc();
-        }
+				          ? sizeof(DROPFILES)
+				          : 0));
+	if (copy == NULL) {
+	    env->PopLocalFrame(NULL);
+	    throw std::bad_alloc();
+	}
 
-        char *dataout = (char *)::GlobalLock(copy);
+	char *dataout = (char *)::GlobalLock(copy);
 
         if (matchedFormatEtc.cfFormat == CF_HDROP) {
-            DROPFILES *dropfiles = (DROPFILES *)dataout;
-            dropfiles->pFiles = sizeof(DROPFILES);
-            dropfiles->pt.x = m_dropPoint.x;
-            dropfiles->pt.y = m_dropPoint.y;
-            dropfiles->fNC = m_fNC;
-            dropfiles->fWide = FALSE; // good guess!
-            dataout += sizeof(DROPFILES);
-        }
+	    DROPFILES *dropfiles = (DROPFILES *)dataout;
+	    dropfiles->pFiles = sizeof(DROPFILES);
+	    dropfiles->pt.x = m_dropPoint.x;
+	    dropfiles->pt.y = m_dropPoint.y;
+	    dropfiles->fNC = m_fNC;
+	    dropfiles->fWide = FALSE; // good guess!
+	    dataout += sizeof(DROPFILES);
+	}
 
-        env->GetByteArrayRegion(bytes, 0, nBytes, (jbyte *)dataout);
-        ::GlobalUnlock(copy);
+	env->GetByteArrayRegion(bytes, 0, nBytes, (jbyte *)dataout);
+	::GlobalUnlock(copy);
 
-        pmedium->tymed = TYMED_HGLOBAL;
-        pmedium->hGlobal = copy;
-        pmedium->pUnkForRelease = (IUnknown *)NULL;
+	pmedium->tymed = TYMED_HGLOBAL;
+	pmedium->hGlobal = copy;
+	pmedium->pUnkForRelease = (IUnknown *)NULL;
 
-        env->PopLocalFrame(NULL);
-        return S_OK;
+	env->PopLocalFrame(NULL);
+	return S_OK;
     } else if ((matchedFormatEtc.tymed & TYMED_ENHMF) != 0) {
-        LPBYTE lpbEmfBuffer =
-            (LPBYTE)env->GetPrimitiveArrayCritical(bytes, NULL);
-        if (lpbEmfBuffer == NULL) {
-            env->PopLocalFrame(NULL);
-            throw std::bad_alloc();
-        }
+	LPBYTE lpbEmfBuffer = 
+	    (LPBYTE)env->GetPrimitiveArrayCritical(bytes, NULL);
+	if (lpbEmfBuffer == NULL) {
+	    env->PopLocalFrame(NULL);
+	    throw std::bad_alloc();
+	}
 
-        HENHMETAFILE hemf = ::SetEnhMetaFileBits(nBytes, lpbEmfBuffer);
+	HENHMETAFILE hemf = ::SetEnhMetaFileBits(nBytes, lpbEmfBuffer);
 
-        env->ReleasePrimitiveArrayCritical(bytes, (LPVOID)lpbEmfBuffer, JNI_ABORT);
+	env->ReleasePrimitiveArrayCritical(bytes, (LPVOID)lpbEmfBuffer, JNI_ABORT);
 
-        if (hemf == NULL) {
-            env->PopLocalFrame(NULL);
-            return E_UNEXPECTED;
-        }
+	if (hemf == NULL) {
+	    env->PopLocalFrame(NULL);
+	    return E_UNEXPECTED;
+	}
 
-        pmedium->tymed = TYMED_ENHMF;
-        pmedium->hEnhMetaFile = hemf;
-        pmedium->pUnkForRelease = (IUnknown *)NULL;
+	pmedium->tymed = TYMED_ENHMF;
+	pmedium->hEnhMetaFile = hemf;
+	pmedium->pUnkForRelease = (IUnknown *)NULL;
 
-        env->PopLocalFrame(NULL);
-        return S_OK;
+	env->PopLocalFrame(NULL);
+	return S_OK;
     } else if ((matchedFormatEtc.tymed & TYMED_MFPICT) != 0) {
         LPBYTE lpbMfpBuffer =
             (LPBYTE)env->GetPrimitiveArrayCritical(bytes, NULL);
@@ -727,7 +727,7 @@ HRESULT __stdcall AwtDragSource::GetData(FORMATETC __RPC_FAR *pFormatEtc,
         env->PopLocalFrame(NULL);
         return S_OK;
     }
-
+    
     env->PopLocalFrame(NULL);
     return DV_E_TYMED;
 
@@ -739,7 +739,7 @@ HRESULT __stdcall AwtDragSource::GetData(FORMATETC __RPC_FAR *pFormatEtc,
  */
 
 HRESULT __stdcall AwtDragSource::GetDataHere(FORMATETC __RPC_FAR *pFormatEtc,
-                                             STGMEDIUM __RPC_FAR *pmedium) {
+					     STGMEDIUM __RPC_FAR *pmedium) {
     TRY;
 
     if (pmedium->pUnkForRelease != (IUnknown *)NULL) {
@@ -760,21 +760,21 @@ HRESULT __stdcall AwtDragSource::GetDataHere(FORMATETC __RPC_FAR *pFormatEtc,
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (env->PushLocalFrame(2) < 0) {
-        return E_OUTOFMEMORY;
+	return E_OUTOFMEMORY;
     }
 
-    jbyteArray bytes =
+    jbyteArray bytes = 
         AwtDataTransferer::ConvertData(env, m_component, m_transferable,
                                        (jlong)matchedFormatEtc.cfFormat,
                                        m_formatMap);
     if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
         env->ExceptionDescribe();
-        env->ExceptionClear();
-        env->PopLocalFrame(NULL);
-        return E_UNEXPECTED;
+	env->ExceptionClear();
+	env->PopLocalFrame(NULL);
+	return E_UNEXPECTED;
     }
     if (bytes == NULL) {
-        env->PopLocalFrame(NULL);
+	env->PopLocalFrame(NULL);
         return E_UNEXPECTED;
     }
 
@@ -795,7 +795,7 @@ HRESULT __stdcall AwtDragSource::GetDataHere(FORMATETC __RPC_FAR *pFormatEtc,
         return S_OK;
     } else if ((matchedFormatEtc.tymed & TYMED_HGLOBAL) != 0) {
         ::SetLastError(0); // clear error
-        // Warning C4244.
+        // Warning C4244. 
         SIZE_T mBytes = ::GlobalSize(pmedium->hGlobal);
         if (::GetLastError() != 0) {
             env->PopLocalFrame(NULL);
@@ -803,30 +803,30 @@ HRESULT __stdcall AwtDragSource::GetDataHere(FORMATETC __RPC_FAR *pFormatEtc,
         }
 
         if (nBytes + ((matchedFormatEtc.cfFormat == CF_HDROP)
-                        ? sizeof(DROPFILES) : 0) > mBytes) {
-            env->PopLocalFrame(NULL);
-            return STG_E_MEDIUMFULL;
-        }
+		        ? sizeof(DROPFILES) : 0) > mBytes) {
+	    env->PopLocalFrame(NULL);
+	    return STG_E_MEDIUMFULL;
+	}
 
-        char *dataout = (char *)::GlobalLock(pmedium->hGlobal);
+	char *dataout = (char *)::GlobalLock(pmedium->hGlobal);
 
         if (matchedFormatEtc.cfFormat == CF_HDROP) {
-            DROPFILES *dropfiles = (DROPFILES *)dataout;
-            dropfiles->pFiles = sizeof(DROPFILES);
-            dropfiles->pt.x = m_dropPoint.x;
-            dropfiles->pt.y = m_dropPoint.y;
-            dropfiles->fNC = m_fNC;
-            dropfiles->fWide = FALSE; // good guess!
-            dataout += sizeof(DROPFILES);
-        }
+	    DROPFILES *dropfiles = (DROPFILES *)dataout;
+	    dropfiles->pFiles = sizeof(DROPFILES);
+	    dropfiles->pt.x = m_dropPoint.x;
+	    dropfiles->pt.y = m_dropPoint.y;
+	    dropfiles->fNC = m_fNC;
+	    dropfiles->fWide = FALSE; // good guess!
+	    dataout += sizeof(DROPFILES);
+	}
 
-        env->GetByteArrayRegion(bytes, 0, nBytes, (jbyte *)dataout);
-        ::GlobalUnlock(pmedium->hGlobal);
+	env->GetByteArrayRegion(bytes, 0, nBytes, (jbyte *)dataout);
+	::GlobalUnlock(pmedium->hGlobal);
 
-        env->PopLocalFrame(NULL);
-        return S_OK;
+	env->PopLocalFrame(NULL);
+	return S_OK;
     }
-
+    
     env->PopLocalFrame(NULL);
     return DV_E_TYMED;
 
@@ -921,19 +921,19 @@ HRESULT __stdcall  AwtDragSource::EnumDAdvise(IEnumSTATDATA __RPC_FAR *__RPC_FAR
     return OLE_E_ADVISENOTSUPPORTED;
 }
 
-const UINT AwtDragSource::PROCESS_ID_FORMAT =
+const UINT AwtDragSource::PROCESS_ID_FORMAT = 
     ::RegisterClipboardFormat(TEXT("_SUNW_JAVA_AWT_PROCESS_ID"));
 
 HRESULT __stdcall AwtDragSource::GetProcessId(FORMATETC __RPC_FAR *pFormatEtc, STGMEDIUM __RPC_FAR *pmedium) {
 
     if ((pFormatEtc->tymed & TYMED_HGLOBAL) == 0) {
-        return DV_E_TYMED;
+	return DV_E_TYMED;
     } else if (pFormatEtc->lindex != -1) {
         return DV_E_LINDEX;
     } else if (pFormatEtc->dwAspect != DVASPECT_CONTENT) {
         return DV_E_DVASPECT;
     } else if (pFormatEtc->cfFormat != PROCESS_ID_FORMAT) {
-        return DV_E_FORMATETC;
+	return DV_E_FORMATETC;
     }
 
     DWORD id = ::CoGetCurrentProcess();
@@ -941,26 +941,26 @@ HRESULT __stdcall AwtDragSource::GetProcessId(FORMATETC __RPC_FAR *pFormatEtc, S
     HGLOBAL copy = ::GlobalAlloc(GALLOCFLG, sizeof(id));
 
     if (copy == NULL) {
-        throw std::bad_alloc();
+	throw std::bad_alloc();
     }
 
     char *dataout = (char *)::GlobalLock(copy);
 
     memcpy(dataout, &id, sizeof(id));
     ::GlobalUnlock(copy);
-
+    
     pmedium->tymed = TYMED_HGLOBAL;
     pmedium->hGlobal = copy;
     pmedium->pUnkForRelease = (IUnknown *)NULL;
-
+    
     return S_OK;
 }
 
 DECLARE_JAVA_CLASS(dSCClazz, "sun/awt/windows/WDragSourceContextPeer")
 
-void
-AwtDragSource::call_dSCenter(JNIEnv* env, jobject self, jint targetActions,
-                             jint modifiers, jint x, jint y) {
+void 
+AwtDragSource::call_dSCenter(JNIEnv* env, jobject self, jint targetActions, 
+			     jint modifiers, jint x, jint y) {
     DECLARE_VOID_JAVA_METHOD(dSCenter, dSCClazz, "dragEnter", "(IIII)V");
     DASSERT(!JNU_IsNull(env, self));
     env->CallVoidMethod(self, dSCenter, targetActions, modifiers, x, y);
@@ -970,9 +970,9 @@ AwtDragSource::call_dSCenter(JNIEnv* env, jobject self, jint targetActions,
     }
 }
 
-void
-AwtDragSource::call_dSCmotion(JNIEnv* env, jobject self, jint targetActions,
-                              jint modifiers, jint x, jint y) {
+void 
+AwtDragSource::call_dSCmotion(JNIEnv* env, jobject self, jint targetActions, 
+			      jint modifiers, jint x, jint y) {
     DECLARE_VOID_JAVA_METHOD(dSCmotion, dSCClazz, "dragMotion", "(IIII)V");
     DASSERT(!JNU_IsNull(env, self));
     env->CallVoidMethod(self, dSCmotion, targetActions, modifiers, x, y);
@@ -982,11 +982,11 @@ AwtDragSource::call_dSCmotion(JNIEnv* env, jobject self, jint targetActions,
     }
 }
 
-void
-AwtDragSource::call_dSCchanged(JNIEnv* env, jobject self, jint targetActions,
-                               jint modifiers, jint x, jint y) {
+void 
+AwtDragSource::call_dSCchanged(JNIEnv* env, jobject self, jint targetActions, 
+			       jint modifiers, jint x, jint y) {
     DECLARE_VOID_JAVA_METHOD(dSCchanged, dSCClazz, "operationChanged",
-                             "(IIII)V");
+                             "(IIII)V"); 
     DASSERT(!JNU_IsNull(env, self));
     env->CallVoidMethod(self, dSCchanged, targetActions, modifiers, x, y);
     if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
@@ -995,7 +995,7 @@ AwtDragSource::call_dSCchanged(JNIEnv* env, jobject self, jint targetActions,
     }
 }
 
-void
+void 
 AwtDragSource::call_dSCexit(JNIEnv* env, jobject self, jint x, jint y) {
     DECLARE_VOID_JAVA_METHOD(dSCexit, dSCClazz, "dragExit", "(II)V");
     DASSERT(!JNU_IsNull(env, self));
@@ -1006,8 +1006,8 @@ AwtDragSource::call_dSCexit(JNIEnv* env, jobject self, jint x, jint y) {
     }
 }
 
-void
-AwtDragSource::call_dSCddfinished(JNIEnv* env, jobject self, jboolean success,
+void 
+AwtDragSource::call_dSCddfinished(JNIEnv* env, jobject self, jboolean success, 
                                   jint operations, jint x, jint y) {
     DECLARE_VOID_JAVA_METHOD(dSCddfinished, dSCClazz, "dragDropFinished", "(ZIII)V");
     DASSERT(!JNU_IsNull(env, self));
@@ -1017,12 +1017,12 @@ AwtDragSource::call_dSCddfinished(JNIEnv* env, jobject self, jboolean success,
         env->ExceptionClear();
     }
 }
-
-void
-AwtDragSource::call_dSCmouseMoved(JNIEnv* env, jobject self, jint targetActions,
-                                  jint modifiers, jint x, jint y) {
+  
+void 
+AwtDragSource::call_dSCmouseMoved(JNIEnv* env, jobject self, jint targetActions, 
+				  jint modifiers, jint x, jint y) {
     DECLARE_VOID_JAVA_METHOD(dSCmouseMoved, dSCClazz, "dragMouseMoved",
-                             "(IIII)V");
+                             "(IIII)V"); 
     DASSERT(!JNU_IsNull(env, self));
     env->CallVoidMethod(self, dSCmouseMoved, targetActions, modifiers, x, y);
     if (!JNU_IsNull(env, safe_ExceptionOccurred(env))) {
@@ -1064,16 +1064,16 @@ HRESULT __stdcall  AwtDragSource::ADSIEnumFormatEtc::QueryInterface(REFIID riid,
     TRY;
 
     if (riid == IID_IUnknown) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IUnknown*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IUnknown*)this;
+	AddRef();
+	return S_OK;
     } else if (riid == IID_IEnumFORMATETC) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IEnumFORMATETC*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IEnumFORMATETC*)this;
+	AddRef();
+	return S_OK;
     } else {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)NULL;
-        return E_NOINTERFACE;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)NULL;
+	return E_NOINTERFACE;
     }
 
     CATCH_BAD_ALLOC_RET(E_OUTOFMEMORY);
@@ -1110,8 +1110,8 @@ HRESULT _stdcall AwtDragSource::ADSIEnumFormatEtc::Next(ULONG celt, FORMATETC __
     unsigned int i;
 
     for (i = 0; i < celt && m_idx < len; i++, m_idx++) {
-        FORMATETC fetc = m_parent->getType(m_idx);
-        rgelt[i] = fetc;
+	FORMATETC fetc = m_parent->getType(m_idx);
+	rgelt[i] = fetc;
     }
 
     if (pceltFetched != NULL) *pceltFetched = i;
@@ -1132,11 +1132,11 @@ HRESULT __stdcall  AwtDragSource::ADSIEnumFormatEtc::Skip(ULONG celt) {
     unsigned int tmp = m_idx + celt;
 
     if (tmp < len) {
-        m_idx = tmp;
+	m_idx = tmp;
 
         return S_OK;
     } else {
-        m_idx = len;
+	m_idx = len;
 
         return S_FALSE;
     }
@@ -1186,25 +1186,25 @@ AwtDragSource::ADSIStreamProxy::ADSIStreamProxy(AwtDragSource* parent, jbyteArra
     m_off     = 0;
 
     m_cloneof = (ADSIStreamProxy*)NULL;
-
+    
     m_refs    = 0;
 
     FILETIME now;
 
     ::CoFileTimeNow(&now);
 
-    m_statstg.pwcsName          = (LPWSTR)NULL;
-    m_statstg.type              = STGTY_STREAM;
-    m_statstg.cbSize.HighPart   = 0;
-    m_statstg.cbSize.LowPart    = m_blen;
-    m_statstg.mtime             = now;
-    m_statstg.ctime             = now;
-    m_statstg.atime             = now;
-    m_statstg.grfMode           = STGM_READ;
+    m_statstg.pwcsName		= (LPWSTR)NULL;
+    m_statstg.type		= STGTY_STREAM;
+    m_statstg.cbSize.HighPart 	= 0;
+    m_statstg.cbSize.LowPart  	= m_blen;
+    m_statstg.mtime		= now;
+    m_statstg.ctime 		= now;
+    m_statstg.atime 		= now;
+    m_statstg.grfMode 		= STGM_READ;
     m_statstg.grfLocksSupported = FALSE;
-    m_statstg.clsid             = CLSID_NULL;
-    m_statstg.grfStateBits      = 0;
-    m_statstg.reserved          = 0;
+    m_statstg.clsid 	 	= CLSID_NULL;
+    m_statstg.grfStateBits 	= 0;
+    m_statstg.reserved 	 	= 0;
 
     m_parent->AddRef();
 
@@ -1238,9 +1238,9 @@ AwtDragSource::ADSIStreamProxy::ADSIStreamProxy(ADSIStreamProxy* cloneof) {
 
 AwtDragSource::ADSIStreamProxy::~ADSIStreamProxy() {
     if (m_cloneof == (ADSIStreamProxy*)NULL)
-        free((void *)m_buffer);
+	free((void *)m_buffer);
     else {
-        m_cloneof->Release();
+	m_cloneof->Release();
     }
 
     m_parent->Release();
@@ -1254,16 +1254,16 @@ HRESULT __stdcall  AwtDragSource::ADSIStreamProxy::QueryInterface(REFIID riid, v
     TRY;
 
     if (riid == IID_IUnknown) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IUnknown*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IUnknown*)this;
+	AddRef();
+	return S_OK;
     } else if (riid == IID_IStream) {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)(IStream*)this;
-        AddRef();
-        return S_OK;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)(IStream*)this;
+	AddRef();
+	return S_OK;
     } else {
-        *ppvObject = (void __RPC_FAR *__RPC_FAR)NULL;
-        return E_NOINTERFACE;
+	*ppvObject = (void __RPC_FAR *__RPC_FAR)NULL;
+	return E_NOINTERFACE;
     }
 
     CATCH_BAD_ALLOC_RET(E_OUTOFMEMORY);
@@ -1298,13 +1298,13 @@ HRESULT __stdcall  AwtDragSource::ADSIStreamProxy::Read(void __RPC_FAR *pv, ULON
 
     unsigned int rem  = m_blen - m_off;
     int          read = cb > rem ? rem : cb;
-
+    
     if (read > 0) memmove(pv, (void *)(m_buffer + m_off), read);
 
     m_off += read;
 
     if (pcbRead != (ULONG __RPC_FAR *)NULL) {
-        *pcbRead = read;
+	*pcbRead = read;
     }
 
     FILETIME now; ::CoFileTimeNow(&now); m_statstg.atime = now;
@@ -1322,7 +1322,7 @@ HRESULT __stdcall  AwtDragSource::ADSIStreamProxy::Write(const void __RPC_FAR *p
     TRY;
 
     if (pcbWritten != (ULONG __RPC_FAR *)NULL) {
-        *pcbWritten = 0;
+	*pcbWritten = 0;
     }
 
     FILETIME now; ::CoFileTimeNow(&now); m_statstg.atime = now;
@@ -1338,40 +1338,40 @@ HRESULT __stdcall  AwtDragSource::ADSIStreamProxy::Write(const void __RPC_FAR *p
 
 HRESULT __stdcall  AwtDragSource::ADSIStreamProxy::Seek(LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER __RPC_FAR *plibNewPosition) {
     TRY;
-
+  
     if (dlibMove.HighPart != 0) return STG_E_INVALIDPOINTER;
 
     if (plibNewPosition != (ULARGE_INTEGER __RPC_FAR *)NULL) {
-        plibNewPosition->HighPart = 0;
-        plibNewPosition->LowPart  = 0;
+	plibNewPosition->HighPart = 0;
+	plibNewPosition->LowPart  = 0;
     }
 
     switch (dwOrigin) {
-        case STREAM_SEEK_SET: {
-            if (dlibMove.HighPart != 0 || dlibMove.LowPart >= m_blen) return STG_E_INVALIDPOINTER;
+	case STREAM_SEEK_SET: {
+	    if (dlibMove.HighPart != 0 || dlibMove.LowPart >= m_blen) return STG_E_INVALIDPOINTER;
 
-            m_off = dlibMove.LowPart;
-        }
-        break;
+	    m_off = dlibMove.LowPart;
+	}
+	break;
 
-        case STREAM_SEEK_CUR:
-        case STREAM_SEEK_END: {
-            if (dlibMove.HighPart > 0) return STG_E_INVALIDPOINTER;
+	case STREAM_SEEK_CUR:
+	case STREAM_SEEK_END: {
+	    if (dlibMove.HighPart > 0) return STG_E_INVALIDPOINTER;
 
-            long newoff = (dwOrigin == STREAM_SEEK_END ? m_blen : m_off) + dlibMove.LowPart;
+	    long newoff = (dwOrigin == STREAM_SEEK_END ? m_blen : m_off) + dlibMove.LowPart;
 
-            if (newoff < 0 || newoff >= (long)m_blen)
-                return STG_E_INVALIDPOINTER;
-            else
-                m_off = newoff;
-        }
-        break;
+	    if (newoff < 0 || newoff >= (long)m_blen)
+		return STG_E_INVALIDPOINTER;
+	    else
+		m_off = newoff;
+	}
+	break;
 
-        default: return STG_E_INVALIDFUNCTION;
+	default: return STG_E_INVALIDFUNCTION;
     }
 
     if (plibNewPosition != (ULARGE_INTEGER __RPC_FAR *)NULL)
-        plibNewPosition->LowPart = m_off;
+	plibNewPosition->LowPart = m_off;
 
     FILETIME now; ::CoFileTimeNow(&now); m_statstg.atime = now;
 
@@ -1490,16 +1490,16 @@ extern "C" {
  * setNativeCursor
  */
 
-JNIEXPORT void JNICALL
-Java_sun_awt_windows_WDragSourceContextPeer_setNativeCursor(JNIEnv* env,
-                                                            jobject self,
-                                                            jlong nativeCtxt,
-                                                            jobject cursor,
-                                                            jint type) {
+JNIEXPORT void JNICALL 
+Java_sun_awt_windows_WDragSourceContextPeer_setNativeCursor(JNIEnv* env, 
+							    jobject self, 
+							    jlong nativeCtxt, 
+							    jobject cursor, 
+							    jint type) {
     TRY;
 
     AwtDragSource* ds = (AwtDragSource*)nativeCtxt;
-    if (ds != NULL) {
+    if (ds != NULL) { 
         ds->SetCursor(cursor);
     }
 
@@ -1512,7 +1512,7 @@ Java_sun_awt_windows_WDragSourceContextPeer_setNativeCursor(JNIEnv* env,
 
 JNIEXPORT jlong JNICALL
 Java_sun_awt_windows_WDragSourceContextPeer_createDragSource(
-    JNIEnv* env, jobject self, jobject component, jobject transferable,
+    JNIEnv* env, jobject self, jobject component, jobject transferable, 
     jobject trigger, jint actions,
     jlongArray formats, jobject formatMap)
 {
@@ -1521,12 +1521,12 @@ Java_sun_awt_windows_WDragSourceContextPeer_createDragSource(
     if (!AwtDropTarget::IsCurrentDnDDataObject(NULL)) {
         JNU_ThrowByName(env, "java/awt/dnd/InvalidDnDOperationException",
                         "Drag and drop is in progress");
-        return (jlong)NULL;
+	return (jlong)NULL;
     }
 
     AwtDragSource* ds = new AwtDragSource(env, self, component,
-                                          transferable, trigger, actions,
-                                          formats, formatMap);
+					  transferable, trigger, actions,
+					  formats, formatMap);
 
     DASSERT(AwtDropTarget::IsLocalDataObject(ds));
 

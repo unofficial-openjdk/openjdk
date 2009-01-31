@@ -47,7 +47,7 @@ public class RandomMXBeanTest {
         public int getZero();
         public int identity(int x);
     }
-
+    
     public static class StupidImpl implements StupidMXBean {
         public int getZero() {
             return 0;
@@ -57,26 +57,26 @@ public class RandomMXBeanTest {
             return x;
         }
     }
-
+    
     public static interface ReferMXBean {
         public StupidMXBean getStupid();
     }
-
+    
     public static class ReferImpl implements ReferMXBean {
         private final StupidMXBean stupid;
-
+        
         ReferImpl(StupidMXBean stupid) {
             this.stupid = stupid;
         }
-
+        
         public StupidMXBean getStupid() {
             return stupid;
         }
     }
-
+    
     private static class WrapInvocationHandler implements InvocationHandler {
         private final Object wrapped;
-
+        
         WrapInvocationHandler(Object wrapped) {
             this.wrapped = wrapped;
         }
@@ -86,7 +86,7 @@ public class RandomMXBeanTest {
             return method.invoke(wrapped, args);
         }
     }
-
+    
     private static class DullInvocationHandler implements InvocationHandler {
         private static Map<Class<?>, Object> zeroMap =
                 new HashMap<Class<?>, Object>();
@@ -100,14 +100,14 @@ public class RandomMXBeanTest {
             zeroMap.put(boolean.class, false);
             zeroMap.put(char.class, '\0');
         }
-
+        
         public static Object zeroFor(Class<?> c) {
             if (c.isPrimitive())
                 return zeroMap.get(c);
             else
                 return null;
         }
-
+        
         public Object invoke(Object proxy, Method method, Object[] args)
         throws Throwable {
             Class<?> retType = method.getReturnType();
@@ -116,7 +116,7 @@ public class RandomMXBeanTest {
             return zeroMap.get(retType);
         }
     }
-
+    
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();
         ObjectName name = new ObjectName("a:b=c");
@@ -135,7 +135,7 @@ public class RandomMXBeanTest {
         System.out.println("Zero field = " + zero.get(null));
         test(mbs, MerlinMXBean.class);
         test(mbs, TigerMXBean.class);
-
+        
         StupidMXBean proxy = JMX.newMXBeanProxy(mbs, name, StupidMXBean.class);
         System.out.println("Zero = " + proxy.getZero());
         System.out.println("One = " + proxy.identity(1));

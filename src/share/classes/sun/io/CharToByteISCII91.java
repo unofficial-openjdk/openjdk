@@ -64,8 +64,8 @@ public class CharToByteISCII91 extends CharToByteConverter {
 
         private static final byte NO_CHAR = (byte)255;
 
-        //private final static ISCII91 nioCoder = new ISCII91();
-        private final static byte[] directMapTable = ISCII91.getEncoderMappingTable();
+	//private final static ISCII91 nioCoder = new ISCII91();
+	private final static byte[] directMapTable = ISCII91.getEncoderMappingTable();
 
         private static final char NUKTA_CHAR = '\u093c';
         private static final char HALANT_CHAR = '\u094d';

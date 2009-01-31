@@ -46,19 +46,19 @@ static int SYSTEM_MESSAGE_LENGTH[] = {
 // the returned length includes the status byte.
 // for illegal messages, -1 is returned.
 static int getShortMessageLength(int status) {
-        int     dataLength = 0;
-        if (status < 0xF0) { // channel voice message
-                dataLength = CHANNEL_MESSAGE_LENGTH[(status >> 4) & 0xF];
-        } else {
-                dataLength = SYSTEM_MESSAGE_LENGTH[status & 0xF];
-        }
-        return dataLength;
+	int	dataLength = 0;
+	if (status < 0xF0) { // channel voice message
+		dataLength = CHANNEL_MESSAGE_LENGTH[(status >> 4) & 0xF];
+	} else {
+		dataLength = SYSTEM_MESSAGE_LENGTH[status & 0xF];
+	}
+	return dataLength;
 }
 
 
-/*
- * implementation of the platform-dependent
- * MIDI out functions declared in PlatformMidi.h
+/* 
+ * implementation of the platform-dependent 
+ * MIDI out functions declared in PlatformMidi.h 
  */
 char* MIDI_OUT_GetErrorStr(INT32 err) {
     return (char*) getErrorStr(err);
@@ -74,7 +74,7 @@ INT32 MIDI_OUT_GetNumDevices() {
 INT32 MIDI_OUT_GetDeviceName(INT32 deviceIndex, char *name, UINT32 nameLength) {
     TRACE0("MIDI_OUT_GetDeviceName()\n");
     return getMidiDeviceName(SND_RAWMIDI_STREAM_OUTPUT, deviceIndex,
-                             name, nameLength);
+			     name, nameLength);
 }
 
 
@@ -87,7 +87,7 @@ INT32 MIDI_OUT_GetDeviceVendor(INT32 deviceIndex, char *name, UINT32 nameLength)
 INT32 MIDI_OUT_GetDeviceDescription(INT32 deviceIndex, char *name, UINT32 nameLength) {
     TRACE0("MIDI_OUT_GetDeviceDescription()\n");
     return getMidiDeviceDescription(SND_RAWMIDI_STREAM_OUTPUT, deviceIndex,
-                                    name, nameLength);
+				    name, nameLength);
 }
 
 
@@ -117,7 +117,7 @@ INT64 MIDI_OUT_GetTimeStamp(MidiDeviceHandle* handle) {
 
 
 INT32 MIDI_OUT_SendShortMessage(MidiDeviceHandle* handle, UINT32 packedMsg,
-                                UINT32 timestamp) {
+				UINT32 timestamp) {
     int err;
     int status;
     int data1;
@@ -126,12 +126,12 @@ INT32 MIDI_OUT_SendShortMessage(MidiDeviceHandle* handle, UINT32 packedMsg,
 
     TRACE2("> MIDI_OUT_SendShortMessage() %x, time: %u\n", packedMsg, (unsigned int) timestamp);
     if (!handle) {
-        ERROR0("< ERROR: MIDI_OUT_SendShortMessage(): handle is NULL\n");
-        return MIDI_INVALID_HANDLE;
+	ERROR0("< ERROR: MIDI_OUT_SendShortMessage(): handle is NULL\n");
+	return MIDI_INVALID_HANDLE;
     }
     if (!handle->deviceHandle) {
-        ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): native handle is NULL\n");
-        return MIDI_INVALID_HANDLE;
+	ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): native handle is NULL\n");
+	return MIDI_INVALID_HANDLE;
     }
     status = (packedMsg & 0xFF);
     buffer[0] = (char) status;
@@ -140,7 +140,7 @@ INT32 MIDI_OUT_SendShortMessage(MidiDeviceHandle* handle, UINT32 packedMsg,
     TRACE4("status: %d, data1: %d, data2: %d, length: %d\n", (int) buffer[0], (int) buffer[1], (int) buffer[2], getShortMessageLength(status));
     err = snd_rawmidi_write((snd_rawmidi_t*) handle->deviceHandle, buffer, getShortMessageLength(status));
     if (err < 0) {
-        ERROR1("  ERROR: MIDI_OUT_SendShortMessage(): snd_rawmidi_write() returned %d\n", err);
+	ERROR1("  ERROR: MIDI_OUT_SendShortMessage(): snd_rawmidi_write() returned %d\n", err);
     }
 
     TRACE0("< MIDI_OUT_SendShortMessage()\n");
@@ -149,26 +149,26 @@ INT32 MIDI_OUT_SendShortMessage(MidiDeviceHandle* handle, UINT32 packedMsg,
 
 
 INT32 MIDI_OUT_SendLongMessage(MidiDeviceHandle* handle, UBYTE* data,
-                               UINT32 size, UINT32 timestamp) {
+			       UINT32 size, UINT32 timestamp) {
     int err;
 
     TRACE2("> MIDI_OUT_SendLongMessage() size %u, time: %u\n", (unsigned int) size, (unsigned int) timestamp);
     if (!handle) {
-        ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): handle is NULL\n");
-        return MIDI_INVALID_HANDLE;
+	ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): handle is NULL\n");
+	return MIDI_INVALID_HANDLE;
     }
     if (!handle->deviceHandle) {
-        ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): native handle is NULL\n");
-        return MIDI_INVALID_HANDLE;
+	ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): native handle is NULL\n");
+	return MIDI_INVALID_HANDLE;
     }
     if (!data) {
-        ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): data is NULL\n");
-        return MIDI_INVALID_HANDLE;
+	ERROR0("< ERROR: MIDI_OUT_SendLongMessage(): data is NULL\n");
+	return MIDI_INVALID_HANDLE;
     }
     err = snd_rawmidi_write((snd_rawmidi_t*) handle->deviceHandle,
-                            data, size);
+			    data, size);
     if (err < 0) {
-        ERROR1("  ERROR: MIDI_OUT_SendLongMessage(): snd_rawmidi_write() returned %d\n", err);
+	ERROR1("  ERROR: MIDI_OUT_SendLongMessage(): snd_rawmidi_write() returned %d\n", err);
     }
 
     TRACE0("< MIDI_OUT_SendLongMessage()\n");

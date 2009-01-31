@@ -31,16 +31,16 @@ import javax.script.*;
 import java.io.*;
 
 public class Test8 {
-        public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
             System.out.println("\nTest8\n");
             ScriptEngineManager m = new ScriptEngineManager();
-            ScriptEngine e  = m.getEngineByName("js");
-            e.eval(new FileReader(
+	    ScriptEngine e  = m.getEngineByName("js");
+	    e.eval(new FileReader(
                 new File(System.getProperty("test.src", "."), "Test8.js")));
-            Invocable inv = (Invocable)e;
+	    Invocable inv = (Invocable)e;
             inv.invokeFunction("main", "Mustang");
             // use method of a specific script object
-            Object scriptObj = e.get("scriptObj");
+	    Object scriptObj = e.get("scriptObj");
             inv.invokeMethod(scriptObj, "main", "Mustang");
-        }
+	}
 }

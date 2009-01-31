@@ -49,18 +49,18 @@ GetAllLoadedClassesTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new GetAllLoadedClassesTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testGetAllLoadedClasses();
     }
-
+    
     public void
     testGetAllLoadedClasses()
         throws  Throwable
@@ -71,13 +71,13 @@ GetAllLoadedClassesTest
         assertNotNull(classes);
         assertClassArrayDoesNotContainClassByName(classes, "DummyClass");
         assertClassArrayContainsClass(classes, Object.class);
-
-        Class dummy = loader.loadClass("DummyClass");
+        
+        Class dummy = loader.loadClass("DummyClass");                                                       
         assertEquals("DummyClass", dummy.getName());
 
         // double check that we can make an instance (just to prove the loader is kosher)
         Object testInstance = dummy.newInstance();
-
+        
         Class[] classes2 = fInst.getAllLoadedClasses();
         assertNotNull(classes2);
         assertClassArrayContainsClass(classes2, dummy);

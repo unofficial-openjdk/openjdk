@@ -51,7 +51,7 @@ static void geometry_hook(Widget wid, Widget hooked_widget, XtGeometryHookData c
     JNIEnv *env;
     struct ChoiceData *cdata;
     struct WidgetInfo *winfo = NULL;
-
+    
     jobject target;
     jobject parent;
     jint y, height;
@@ -66,7 +66,7 @@ static void geometry_hook(Widget wid, Widget hooked_widget, XtGeometryHookData c
         DASSERT(env != NULL);
 
         winfo=findWidgetInfo(hooked_widget);
-
+        
         if (winfo != NULL && XmIsRowColumn(hooked_widget)) {
             target = (*env)->GetObjectField(env, (jobject)winfo->peer, mComponentPeerIDs.target);
             cdata = (struct ChoiceData *) JNU_GetLongFieldAsPtr(env, (jobject)winfo->peer, mComponentPeerIDs.pData);
@@ -141,7 +141,7 @@ static void  addItems
     Boolean IsMultiFont = awtJNI_IsMultiFont(env, font);
 
     if ((items == NULL) || (nItems == 0)) {
-        return;
+	return;
     }
 
     AWT_LOCK();
@@ -156,7 +156,7 @@ static void  addItems
         return;
     }
     if (odata->maxitems == 0 || (index + nItems) > odata->maxitems) {
-        odata->maxitems = index + nItems + 20;
+	odata->maxitems = index + nItems + 20;
         if (odata->n_items > 0) {
             /* grow the list of items */
             odata->items = (Widget *)
@@ -182,51 +182,51 @@ static void  addItems
 
     firstNewItem = &(odata->items[index]);
     for (i = 0; i < nItems; i++) {
-        argc1 = argc;
-        if (IsMultiFont) {
-            mfstr = awtJNI_MakeMultiFontString(env, items[i], font);
-            fontlist = awtJNI_GetFontList(env, font);
-            /* XXX: XmNuserData doesn't seem to work when passing in zero */
-            /* so we increment the index before passing it in. */
-            XtSetArg(args[argc1], XmNuserData, (XtPointer)((intptr_t)(index + i + 1)));
-            argc1++;
-            XtSetArg(args[argc1], XmNfontList, fontlist);
-            argc1++;
-            XtSetArg(args[argc1], XmNlabelString, mfstr);
-            argc1++;
+	argc1 = argc;
+	if (IsMultiFont) {
+	    mfstr = awtJNI_MakeMultiFontString(env, items[i], font);
+	    fontlist = awtJNI_GetFontList(env, font);
+	    /* XXX: XmNuserData doesn't seem to work when passing in zero */
+	    /* so we increment the index before passing it in. */
+	    XtSetArg(args[argc1], XmNuserData, (XtPointer)((intptr_t)(index + i + 1)));
+	    argc1++;
+	    XtSetArg(args[argc1], XmNfontList, fontlist);
+	    argc1++;
+	    XtSetArg(args[argc1], XmNlabelString, mfstr);
+	    argc1++;
 
-            DASSERT(!(argc1 > MAX_ARGC));
+	    DASSERT(!(argc1 > MAX_ARGC));
 
-            bw = XmCreatePushButton(odata->menu, "", args, argc1);
+	    bw = XmCreatePushButton(odata->menu, "", args, argc1);
 
-            /* Free resurces */
-            if ( fontlist != NULL )
-            {
-                XmFontListFree(fontlist);
-                fontlist = NULL;
-            }
-            if (mfstr != NULL) {
-                XmStringFree(mfstr);
-                mfstr = NULL;
-            }
-        } else {
-            citem = (char *) JNU_GetStringPlatformChars(env, items[i], NULL);
-            /* XXX: XmNuserData doesn't seem to work when passing in zero */
-            /* so we increment the index before passing it in. */
-            XtSetArg(args[argc1], XmNuserData, (XtPointer)((intptr_t)(index + i + 1)));
-            argc1++;
-            DASSERT(!(argc1> MAX_ARGC));
-            bw = XmCreatePushButton(odata->menu, citem, args, argc1);
-            JNU_ReleaseStringPlatformChars(env, items[i], (const char *) citem);
-            citem = NULL;
-        }
+	    /* Free resurces */
+	    if ( fontlist != NULL )
+	    {
+		XmFontListFree(fontlist);
+		fontlist = NULL;
+	    }
+	    if (mfstr != NULL) {
+		XmStringFree(mfstr);
+		mfstr = NULL;
+	    }
+	} else {
+	    citem = (char *) JNU_GetStringPlatformChars(env, items[i], NULL);
+	    /* XXX: XmNuserData doesn't seem to work when passing in zero */
+	    /* so we increment the index before passing it in. */
+	    XtSetArg(args[argc1], XmNuserData, (XtPointer)((intptr_t)(index + i + 1)));
+	    argc1++;
+	    DASSERT(!(argc1> MAX_ARGC));
+	    bw = XmCreatePushButton(odata->menu, citem, args, argc1);
+	    JNU_ReleaseStringPlatformChars(env, items[i], (const char *) citem);
+	    citem = NULL;
+	}
 
          XtAddCallback(bw,
-                       XmNactivateCallback,
-                       (XtCallbackProc) Choice_callback,
-                       (XtPointer) JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef));
-        odata->items[index + i] = bw;
-        odata->n_items++;
+		       XmNactivateCallback,
+		       (XtCallbackProc) Choice_callback,
+		       (XtPointer) JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef));
+	odata->items[index + i] = bw;
+	odata->n_items++;
     }
 
     XtManageChildren(firstNewItem, nItems);
@@ -238,7 +238,7 @@ static void  addItems
     while ( height > sheight ) {
         cols = ++odata->n_columns;
         XtVaSetValues(odata->menu, XmNnumColumns, cols, NULL);
-        XtVaGetValues(odata->menu, XmNheight, &height, NULL);
+	XtVaGetValues(odata->menu, XmNheight, &height, NULL);
     }
 
     AWT_UNLOCK();
@@ -277,11 +277,11 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_create
         JNU_ThrowNullPointerException(env, "NullPointerException");
         return;
     }
-
+    
     adata = copyGraphicsConfigToPeer(env, this);
-
+    
     wdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
 
     if (wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -289,7 +289,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_create
 
         return;
     }
-
+    
     odata = ZALLOC(ChoiceData);
     if (odata == NULL) {
         JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
@@ -317,31 +317,31 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_create
     argc++;
     XtSetArg(args[argc], XmNforeground, fg);
     argc++;
-
+ 
     XtSetArg(args[argc], XmNorientation, XmVERTICAL);
     argc++;
     XtSetArg(args[argc], XmNpacking, XmPACK_COLUMN);
     argc++;
     XtSetArg(args[argc], XmNnumColumns, (short)1);
     argc++;
-    /* Fix for 4303064 by ibd@sparc.spb.su: pop-up shells will have
-     * ancestor_sensitive False if the parent was insensitive when the shell
-     * was created.  Since XtSetSensitive on the parent will not modify the
-     * resource of the pop-up child, clients are advised to include a resource
-     * specification of the form '*TransientShell.ancestorSensitive: True' in
+    /* Fix for 4303064 by ibd@sparc.spb.su: pop-up shells will have 
+     * ancestor_sensitive False if the parent was insensitive when the shell 
+     * was created.  Since XtSetSensitive on the parent will not modify the 
+     * resource of the pop-up child, clients are advised to include a resource 
+     * specification of the form '*TransientShell.ancestorSensitive: True' in 
      * the application defaults resource file or to otherwise ensure that the
      * parent is sensitive when creating pop-up shells.
      */
-    XtSetArg(args[argc], XmNancestorSensitive, True);
-    argc++;
-
+    XtSetArg(args[argc], XmNancestorSensitive, True); 
+    argc++;    
+ 
     DASSERT(!(argc > MAX_ARGC));
     odata->menu = XmCreatePulldownMenu(wdata->widget, "pulldown", args, argc);
 
 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
     clsDimension = (*env)->FindClass(env, "java/awt/Dimension");
-    dimension = JNU_CallMethodByName(env,
+    dimension = JNU_CallMethodByName(env, 
                                      NULL,
                                      this,
                                      "getPreferredSize",
@@ -390,13 +390,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_create
     XtSetArg (args[argc], XmNscreen,
               ScreenOfDisplay(awt_display, adata->awt_visInfo.screen));
     argc++;
-
+    
     DASSERT(!(argc > MAX_ARGC));
     odata->comp.widget = XmCreateOptionMenu(wdata->widget, "", args, argc);
 
     hookobj = XtHooksOfDisplay(XtDisplayOfObject(odata->comp.widget));
     XtAddCallback(hookobj,
-                  XtNgeometryHook,
+                  XtNgeometryHook, 
                   (XtCallbackProc) geometry_hook,
                   (XtPointer) odata->comp.widget);
 
@@ -560,7 +560,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_setBackground
     AWT_LOCK();
 
     bdata = (struct ChoiceData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (bdata == NULL || bdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -594,7 +594,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_setBackground
     for (i = 0; i < numChildren; i++) {
         XmChangeColor(children[i], bg);
         XtVaSetValues(children[i], XmNforeground, fg, NULL);
-    }
+    }    
 
 
     XmChangeColor(bdata->menu, bg);
@@ -635,7 +635,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_setForeground
     color = awtJNI_GetColor(env, c);
 
     XtVaSetValues(bdata->comp.widget, XmNforeground, color, NULL);
-
+ 
     XtVaSetValues(bdata->menu, XmNforeground, color, NULL);
     for (i = 0; i < bdata->n_items; i++) {
         XtVaSetValues(bdata->items[i], XmNforeground, color, NULL);
@@ -728,15 +728,15 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_remove
     cdata->n_items--;
 
     XtVaGetValues(cdata->menu, XmNheight, &height, NULL);
-
+ 
     sheight = DisplayHeight(awt_display, DefaultScreen(awt_display));
     cols = cdata->n_columns;
-
+ 
     if (cols >1) {
         /* first try to remove a column */
         cols = --cdata->n_columns;
         XtVaSetValues(cdata->menu, XmNnumColumns, cols, NULL);
-
+ 
         /* then see if it fits, if not add it back */
         XtVaGetValues(cdata->menu, XmNheight, &height, NULL);
         if ( height > sheight ) {
@@ -744,7 +744,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_remove
             XtVaSetValues(cdata->menu, XmNnumColumns, cols, NULL);
         }
     }
-
+ 
     AWT_UNLOCK();
 }
 
@@ -773,10 +773,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_removeAll
     XtUnmanageChildren(cdata->items, cdata->n_items);
 
     for (i = cdata->n_items-1; i >= 0; i--) {
-        awt_util_consumeAllXEvents(cdata->items[i]);
-        awt_util_cleanupBeforeDestroyWidget(cdata->items[i]);
-        XtDestroyWidget(cdata->items[i]);
-        cdata->items[i] = NULL;
+	awt_util_consumeAllXEvents(cdata->items[i]);
+	awt_util_cleanupBeforeDestroyWidget(cdata->items[i]);
+	XtDestroyWidget(cdata->items[i]);
+	cdata->items[i] = NULL;
     }
 
     cdata->n_items = 0;
@@ -785,7 +785,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_removeAll
         cdata->n_columns = 1;
         XtVaSetValues(cdata->menu, XmNnumColumns, cdata->n_columns, NULL);
     }
-
+ 
     AWT_UNLOCK();
 }
 
@@ -806,7 +806,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_appendItems
     }
     nItems  = (*env)->GetArrayLength(env, items);
     if (nItems == 0) {
-        return;
+	return;
     }
 
     AWT_LOCK();
@@ -816,28 +816,28 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MChoicePeer_appendItems
 
     if (odata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
-        goto cleanup;
+	goto cleanup;
     }
 
     strItems = (jstring *) malloc(sizeof(jstring) * nItems);
     if (strItems == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
-        goto cleanup;
+	goto cleanup;
     }
 
     for (i = 0; i < nItems; i++) {
-        strItems[i] = (jstring)(*env)->GetObjectArrayElement(env, items, i);
-        if (JNU_IsNull(env, strItems[i])) {
-            JNU_ThrowNullPointerException(env, "NullPointerException");
-            goto cleanup;
-        }
+	strItems[i] = (jstring)(*env)->GetObjectArrayElement(env, items, i);
+	if (JNU_IsNull(env, strItems[i])) {
+	    JNU_ThrowNullPointerException(env, "NullPointerException");
+	    goto cleanup;
+	}
     }
 
     addItems(env, this, strItems, nItems, odata->n_items);
 
 cleanup:
     if (strItems != NULL) {
-        free(strItems);
+	free(strItems);
     }
     AWT_UNLOCK();
 }

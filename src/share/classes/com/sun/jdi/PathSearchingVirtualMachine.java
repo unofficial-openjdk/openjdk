@@ -59,3 +59,4 @@ public interface PathSearchingVirtualMachine extends VirtualMachine {
      */
     String baseDirectory();
 }
+

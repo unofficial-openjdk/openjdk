@@ -67,36 +67,36 @@ AwtCanvas* AwtCanvas::Create(jobject self, jobject hParent)
     AwtCanvas *canvas = NULL;
 
     try {
-        if (env->EnsureLocalCapacity(1) < 0) {
-            return NULL;
-        }
+	if (env->EnsureLocalCapacity(1) < 0) {
+	    return NULL;
+	}
 
-        AwtComponent* parent;
+	AwtComponent* parent;
 
-        JNI_CHECK_NULL_GOTO(hParent, "null hParent", done);
+	JNI_CHECK_NULL_GOTO(hParent, "null hParent", done);
 
-        parent = (AwtComponent*)JNI_GET_PDATA(hParent);
-        JNI_CHECK_NULL_GOTO(parent, "null parent", done);
+	parent = (AwtComponent*)JNI_GET_PDATA(hParent);
+	JNI_CHECK_NULL_GOTO(parent, "null parent", done);
 
-        target = env->GetObjectField(self, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "null target", done);
+	target = env->GetObjectField(self, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "null target", done);
 
-        canvas = new AwtCanvas();
+	canvas = new AwtCanvas();
 
-        {
-            jint x = env->GetIntField(target, AwtComponent::xID);
-            jint y = env->GetIntField(target, AwtComponent::yID);
-            jint width = env->GetIntField(target, AwtComponent::widthID);
-            jint height = env->GetIntField(target, AwtComponent::heightID);
+	{
+	    jint x = env->GetIntField(target, AwtComponent::xID);
+	    jint y = env->GetIntField(target, AwtComponent::yID);
+	    jint width = env->GetIntField(target, AwtComponent::widthID);
+	    jint height = env->GetIntField(target, AwtComponent::heightID);
 
-            canvas->CreateHWnd(env, L"",
-                               WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0,
-                               x, y, width, height,
-                               parent->GetHWnd(),
-                               NULL,
-                               ::GetSysColor(COLOR_WINDOWTEXT),
-                               ::GetSysColor(COLOR_WINDOW),
-                               self);
+	    canvas->CreateHWnd(env, L"",
+			       WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS, 0,
+			       x, y, width, height,
+			       parent->GetHWnd(),
+			       NULL,
+			       ::GetSysColor(COLOR_WINDOWTEXT),
+			       ::GetSysColor(COLOR_WINDOW),
+			       self);
 
         // Set the pixel format of the HWND if a GraphicsConfiguration
         // was provided to the Canvas constructor.
@@ -125,7 +125,7 @@ AwtCanvas* AwtCanvas::Create(jobject self, jobject hParent)
                         //Since a GraphicsConfiguration was specified, we should
                         //throw an exception if the PixelFormat couldn't be set.
                         if (ret == FALSE) {
-                            DASSERT(!safe_ExceptionOccurred(env));
+                            DASSERT(!safe_ExceptionOccurred(env)); 
                             jclass excCls = env->FindClass(
                              "java/lang/RuntimeException");
                             DASSERT(excCls);
@@ -142,7 +142,7 @@ AwtCanvas* AwtCanvas::Create(jobject self, jobject hParent)
     }
     } catch (...) {
         env->DeleteLocalRef(target);
-        throw;
+	throw;
     }
 
 done:
@@ -177,15 +177,15 @@ MsgRouting AwtCanvas::WmPaint(HDC)
 MsgRouting AwtCanvas::HandleEvent(MSG *msg, BOOL synthetic)
 {
     if (msg->message == WM_LBUTTONDOWN || msg->message == WM_LBUTTONDBLCLK) {
-        /*
-         * Fix for BugTraq ID 4041703: keyDown not being invoked.
-         * Give the focus to a Canvas or Panel if it doesn't have heavyweight
-         * subcomponents so that they will behave the same way as on Solaris
-         * providing a possibility of giving keyboard focus to an empty Applet.
-         * Since ScrollPane doesn't receive focus on mouse press on Solaris,
-         * HandleEvent() is overriden there to do nothing with focus.
-         */
-        if (AwtComponent::sm_focusOwner != GetHWnd() &&
+	/*
+	 * Fix for BugTraq ID 4041703: keyDown not being invoked.
+	 * Give the focus to a Canvas or Panel if it doesn't have heavyweight 
+	 * subcomponents so that they will behave the same way as on Solaris 
+	 * providing a possibility of giving keyboard focus to an empty Applet. 
+	 * Since ScrollPane doesn't receive focus on mouse press on Solaris, 
+	 * HandleEvent() is overriden there to do nothing with focus.
+	 */
+	if (AwtComponent::sm_focusOwner != GetHWnd() &&
             ::GetWindow(GetHWnd(), GW_CHILD) == NULL)
         {
             JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -195,8 +195,8 @@ MsgRouting AwtCanvas::HandleEvent(MSG *msg, BOOL synthetic)
                  AwtKeyboardFocusManager::heavyweightButtonDownMID,
                  target, ((jlong)msg->time) & 0xFFFFFFFF);
             env->DeleteLocalRef(target);
-            AwtSetFocus();
-        }
+	    AwtSetFocus();
+	}
     }
     return AwtComponent::HandleEvent(msg, synthetic);
 }
@@ -231,15 +231,15 @@ extern "C" {
 
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WCanvasPeer_create(JNIEnv *env, jobject self,
-                                        jobject parent)
+					jobject parent)
 {
     TRY;
 
     PDATA pData;
     JNI_CHECK_PEER_RETURN(parent);
     AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)
-                                AwtCanvas::Create);
+				(AwtToolkit::ComponentFactory)
+				AwtCanvas::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;

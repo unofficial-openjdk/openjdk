@@ -28,14 +28,14 @@ package com.sun.jdi.request;
 import com.sun.jdi.*;
 
 /**
- * Request for notification when a thread in the target VM is about to
+ * Request for notification when a thread in the target VM is about to 
  * wait on a monitor object. That is, a thread is entering Object.wait().
  * When an enabled MonitorWaitRequest is satisfied, an
  * {@link com.sun.jdi.event.EventSet event set} containing a
  * {@link com.sun.jdi.event.MonitorWaitEvent MonitorWaitEvent}
- * will be placed on the
+ * will be placed on the 
  * {@link com.sun.jdi.event.EventQueue EventQueue}.
- * The collection of existing MonitorWaitEvents is
+ * The collection of existing MonitorWaitEvents is 
  * managed by the {@link EventRequestManager}
  *
  * @see com.sun.jdi.event.MonitorWaitEvent
@@ -52,7 +52,7 @@ public interface MonitorWaitRequest extends EventRequest {
      * the given thread.
      * @param thread the thread to filter on.
      * @throws InvalidRequestStateException if this request is currently
-     * enabled or has been deleted.
+     * enabled or has been deleted. 
      * Filters may be added only to disabled requests.
      */
     void addThreadFilter(ThreadReference thread);
@@ -64,7 +64,7 @@ public interface MonitorWaitRequest extends EventRequest {
      *
      * @param refType the reference type to filter on.
      * @throws InvalidRequestStateException if this request is currently
-     * enabled or has been deleted.
+     * enabled or has been deleted. 
      * Filters may be added only to disabled requests.
      */
     void addClassFilter(ReferenceType refType);
@@ -78,7 +78,7 @@ public interface MonitorWaitRequest extends EventRequest {
      *
      * @param classPattern the pattern String to filter for.
      * @throws InvalidRequestStateException if this request is currently
-     * enabled or has been deleted.
+     * enabled or has been deleted. 
      * Filters may be added only to disabled requests.
      */
     void addClassFilter(String classPattern);
@@ -89,7 +89,7 @@ public interface MonitorWaitRequest extends EventRequest {
      * regular expression, e.g.  "java.*" or "*.Foo".
      * @param classPattern the pattern String to filter against.
      * @throws InvalidRequestStateException if this request is currently
-     * enabled or has been deleted.
+     * enabled or has been deleted. 
      * Filters may be added only to disabled requests.
      */
     void addClassExclusionFilter(String classPattern);
@@ -99,17 +99,18 @@ public interface MonitorWaitRequest extends EventRequest {
      * which the currently executing instance ("this") is the object
      * specified.
      * <P>
-     * Not all targets support this operation.
+     * Not all targets support this operation. 
      * Use {@link VirtualMachine#canUseInstanceFilters()}
      * to determine if the operation is supported.
      * @param instance the object which must be the current instance
      * in order to pass this filter.
-     * @throws java.lang.UnsupportedOperationException if
-     * the target virtual machine does not support this
+     * @throws java.lang.UnsupportedOperationException if 
+     * the target virtual machine does not support this 
      * operation.
      * @throws InvalidRequestStateException if this request is currently
-     * enabled or has been deleted.
+     * enabled or has been deleted. 
      * Filters may be added only to disabled requests.
      */
     void addInstanceFilter(ObjectReference instance);
 }
+

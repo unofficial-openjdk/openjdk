@@ -135,6 +135,34 @@ else
   GCC_COMPILER_PATH = $(JDK_DEVTOOLS_DIR)/$(ARCH_FAMILY)/gnucc/bin/
 endif
 
+# MOTIF_DIR: must point to a directory containing motif12 and
+#            and motif21 directories which in turn contain the Xm and include
+#            directories for the appropriate version of motif.
+#            If MOTIF21, and OPENJDK, the motif12 and motif21 may be skipped.
+ifdef ALT_MOTIF_DIR
+  MOTIF_DIR=$(ALT_MOTIF_DIR)/motif21
+  MOTIF_LIB = $(MOTIF_DIR)/lib
+  MOTIF_INCLUDE = $(MOTIF_DIR)/include
+else
+  ifdef ALT_JDK_DEVTOOLS_DIR
+    MOTIF_DIR = $(JDK_DEVTOOLS_DIR)/$(ARCH_FAMILY)/motif21
+    MOTIF_LIB = $(MOTIF_DIR)/lib
+    MOTIF_INCLUDE = $(MOTIF_DIR)/include
+  else
+    ifdef OPENJDK
+      MOTIF_DIR = /usr
+      MOTIF_LIB = $(MOTIF_DIR)/lib$(ISA_DIR)
+      MOTIF_INCLUDE = $(MOTIF_DIR)/include
+    else
+      MOTIF_DIR = $(JDK_DEVTOOLS_DIR)/$(ARCH_FAMILY)/motif21
+      MOTIF_LIB = $(MOTIF_DIR)/lib
+      MOTIF_INCLUDE = $(MOTIF_DIR)/include
+    endif
+  endif
+endif
+ifdef MOTIF_REQUIRED
+  BUILD_MOTIF21 = true
+endif
 
 # Always build headless on Solaris
 BUILD_HEADLESS = true

@@ -44,15 +44,16 @@ import sun.security.action.GetLongAction;
  * This table maps object ids to remote object targets in this address
  * space.
  *
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @author  Peter Jones
  */
 public final class ObjectTable {
 
     /** maximum interval between complete garbage collections of local heap */
-    private final static long gcInterval =              // default 1 hour
-        AccessController.doPrivileged(
-            new GetLongAction("sun.rmi.dgc.server.gcInterval", 3600000));
+    private final static long gcInterval =		// default 1 hour
+	AccessController.doPrivileged(
+	    new GetLongAction("sun.rmi.dgc.server.gcInterval", 3600000));
 
     /**
      * lock guarding objTable and implTable.
@@ -62,9 +63,9 @@ public final class ObjectTable {
 
     /** tables mapping to Target, keyed from ObjectEndpoint and impl object */
     private static final Map<ObjectEndpoint,Target> objTable =
-        new HashMap<ObjectEndpoint,Target>();
+	new HashMap<ObjectEndpoint,Target>();
     private static final Map<WeakRef,Target> implTable =
-        new HashMap<WeakRef,Target>();
+	new HashMap<WeakRef,Target>();
 
     /**
      * lock guarding keepAliveCount, reaper, and gcLatencyRequest.
@@ -88,23 +89,23 @@ public final class ObjectTable {
      * Disallow anyone from creating one of these.
      */
     private ObjectTable() {}
-
+    
     /**
      * Returns the target associated with the object id.
      */
     static Target getTarget(ObjectEndpoint oe) {
-        synchronized (tableLock) {
-            return objTable.get(oe);
-        }
+	synchronized (tableLock) {
+	    return objTable.get(oe);
+	}
     }
 
     /**
      * Returns the target associated with the remote object
      */
     public static Target getTarget(Remote impl) {
-        synchronized (tableLock) {
-            return implTable.get(new WeakRef(impl));
-        }
+	synchronized (tableLock) {
+	    return implTable.get(new WeakRef(impl));
+	}
     }
 
     /**
@@ -117,14 +118,14 @@ public final class ObjectTable {
      * remote object could not be found.
      */
     public static Remote getStub(Remote impl)
-        throws NoSuchObjectException
+	throws NoSuchObjectException
     {
-        Target target = getTarget(impl);
-        if (target == null) {
-            throw new NoSuchObjectException("object not exported");
-        } else {
-            return target.getStub();
-        }
+	Target target = getTarget(impl);
+	if (target == null) {
+	    throw new NoSuchObjectException("object not exported");
+	} else {
+	    return target.getStub();
+	}
     }
 
    /**
@@ -145,21 +146,21 @@ public final class ObjectTable {
     * currently exported
     */
    public static boolean unexportObject(Remote obj, boolean force)
-        throws java.rmi.NoSuchObjectException
+	throws java.rmi.NoSuchObjectException
     {
-        synchronized (tableLock) {
-            Target target = getTarget(obj);
-            if (target == null) {
-                throw new NoSuchObjectException("object not exported");
-            } else {
-                if (target.unexport(force)) {
-                    removeTarget(target);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
+	synchronized (tableLock) {
+	    Target target = getTarget(obj);
+	    if (target == null) {
+		throw new NoSuchObjectException("object not exported");
+	    } else {
+		if (target.unexport(force)) {
+		    removeTarget(target);
+		    return true;
+		} else {
+		    return false;
+		}
+	    }
+	}
     }
 
     /**
@@ -168,34 +169,34 @@ public final class ObjectTable {
      * and keep VM alive.
      */
     static void putTarget(Target target) throws ExportException {
-        ObjectEndpoint oe = target.getObjectEndpoint();
-        WeakRef weakImpl = target.getWeakImpl();
+	ObjectEndpoint oe = target.getObjectEndpoint();
+	WeakRef weakImpl = target.getWeakImpl();
 
-        if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
-            DGCImpl.dgcLog.log(Log.VERBOSE, "add object " + oe);
-        }
+	if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
+	    DGCImpl.dgcLog.log(Log.VERBOSE, "add object " + oe);
+	}
+	
+	Remote impl = target.getImpl();
+	if (impl == null) {
+	    throw new ExportException(
+		"internal error: attempt to export collected object");
+	}
 
-        Remote impl = target.getImpl();
-        if (impl == null) {
-            throw new ExportException(
-                "internal error: attempt to export collected object");
-        }
+	synchronized (tableLock) {
+	    if (objTable.containsKey(oe)) {
+		throw new ExportException(
+		    "internal error: ObjID already in use");
+	    } else if (implTable.containsKey(weakImpl)) {
+		throw new ExportException("object already exported");
+	    }
 
-        synchronized (tableLock) {
-            if (objTable.containsKey(oe)) {
-                throw new ExportException(
-                    "internal error: ObjID already in use");
-            } else if (implTable.containsKey(weakImpl)) {
-                throw new ExportException("object already exported");
-            }
+	    objTable.put(oe, target);
+	    implTable.put(weakImpl, target);
 
-            objTable.put(oe, target);
-            implTable.put(weakImpl, target);
-
-            if (!target.isPermanent()) {
-                incrementKeepAliveCount();
-            }
-        }
+	    if (!target.isPermanent()) {
+		incrementKeepAliveCount();
+	    }
+	}
     }
 
     /**
@@ -205,52 +206,52 @@ public final class ObjectTable {
      * the "tableLock" object, because it does not do so itself.
      */
     private static void removeTarget(Target target) {
-        // assert Thread.holdsLock(tableLock);
+	// assert Thread.holdsLock(tableLock);
 
-        ObjectEndpoint oe = target.getObjectEndpoint();
-        WeakRef weakImpl = target.getWeakImpl();
+	ObjectEndpoint oe = target.getObjectEndpoint();
+	WeakRef weakImpl = target.getWeakImpl();
 
-        if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
-            DGCImpl.dgcLog.log(Log.VERBOSE, "remove object " + oe);
-        }
+	if (DGCImpl.dgcLog.isLoggable(Log.VERBOSE)) {
+	    DGCImpl.dgcLog.log(Log.VERBOSE, "remove object " + oe);
+	}
 
-        objTable.remove(oe);
-        implTable.remove(weakImpl);
+	objTable.remove(oe);
+	implTable.remove(weakImpl);
 
-        target.markRemoved();   // handles decrementing keep-alive count
+	target.markRemoved();	// handles decrementing keep-alive count
     }
 
     /**
-     * Process client VM signalling reference for given ObjID: forward to
+     * Process client VM signalling reference for given ObjID: forward to 
      * correspoding Target entry.  If ObjID is not found in table,
      * no action is taken.
      */
     static void referenced(ObjID id, long sequenceNum, VMID vmid) {
-        synchronized (tableLock) {
-            ObjectEndpoint oe =
-                new ObjectEndpoint(id, Transport.currentTransport());
-            Target target = objTable.get(oe);
-            if (target != null) {
-                target.referenced(sequenceNum, vmid);
-            }
-        }
+	synchronized (tableLock) {
+	    ObjectEndpoint oe =
+		new ObjectEndpoint(id, Transport.currentTransport());
+	    Target target = objTable.get(oe);
+	    if (target != null) {
+		target.referenced(sequenceNum, vmid);
+	    }
+	}
     }
 
     /**
-     * Process client VM dropping reference for given ObjID: forward to
+     * Process client VM dropping reference for given ObjID: forward to 
      * correspoding Target entry.  If ObjID is not found in table,
      * no action is taken.
      */
     static void unreferenced(ObjID id, long sequenceNum, VMID vmid,
-                             boolean strong)
+			     boolean strong)
     {
-        synchronized (tableLock) {
-            ObjectEndpoint oe =
-                new ObjectEndpoint(id, Transport.currentTransport());
-            Target target = objTable.get(oe);
-            if (target != null)
-                target.unreferenced(sequenceNum, vmid, strong);
-        }
+	synchronized (tableLock) {
+	    ObjectEndpoint oe =
+		new ObjectEndpoint(id, Transport.currentTransport());
+	    Target target = objTable.get(oe);
+	    if (target != null)
+		target.unreferenced(sequenceNum, vmid, strong);
+	}
     }
 
     /**
@@ -271,26 +272,26 @@ public final class ObjectTable {
      * VM keep-alive thread; a new reaper thread is created if necessary.
      */
     static void incrementKeepAliveCount() {
-        synchronized (keepAliveLock) {
-            keepAliveCount++;
+	synchronized (keepAliveLock) {
+	    keepAliveCount++;
 
-            if (reaper == null) {
-                reaper = AccessController.doPrivileged(
-                    new NewThreadAction(new Reaper(), "Reaper", false));
-                reaper.start();
-            }
+	    if (reaper == null) {
+		reaper = AccessController.doPrivileged(
+		    new NewThreadAction(new Reaper(), "Reaper", false));
+		reaper.start();
+	    }
 
-            /*
-             * While there are non-"permanent" objects in the object table,
-             * request a maximum latency for inspecting the entire heap
-             * from the local garbage collector, to place an upper bound
-             * on the time to discover remote objects that have become
-             * unreachable (and thus can be removed from the table).
-             */
-            if (gcLatencyRequest == null) {
-                gcLatencyRequest = GC.requestLatency(gcInterval);
-            }
-        }
+	    /*
+	     * While there are non-"permanent" objects in the object table,
+	     * request a maximum latency for inspecting the entire heap
+	     * from the local garbage collector, to place an upper bound
+	     * on the time to discover remote objects that have become
+	     * unreachable (and thus can be removed from the table).
+	     */
+	    if (gcLatencyRequest == null) {
+		gcLatencyRequest = GC.requestLatency(gcInterval);
+	    }
+	}
     }
 
     /**
@@ -307,28 +308,28 @@ public final class ObjectTable {
      * because there are no more non-permanent remote objects to reap).
      */
     static void decrementKeepAliveCount() {
-        synchronized (keepAliveLock) {
-            keepAliveCount--;
+	synchronized (keepAliveLock) {
+	    keepAliveCount--;
 
-            if (keepAliveCount == 0) {
-                if (!(reaper != null)) { throw new AssertionError(); }
-                AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                    public Void run() {
-                        reaper.interrupt();
-                        return null;
-                    }
-                });
-                reaper = null;
+	    if (keepAliveCount == 0) {
+		if (!(reaper != null)) { throw new AssertionError(); }
+		AccessController.doPrivileged(new PrivilegedAction<Void>() {
+		    public Void run() {
+			reaper.interrupt();
+			return null;
+		    }
+		});
+		reaper = null;
 
-                /*
-                 * If there are no longer any non-permanent objects in the
-                 * object table, we are no longer concerned with the latency
-                 * of local garbage collection here.
-                 */
-                gcLatencyRequest.cancel();
-                gcLatencyRequest = null;
-            }
-        }
+		/*
+		 * If there are no longer any non-permanent objects in the
+		 * object table, we are no longer concerned with the latency
+		 * of local garbage collection here.
+		 */
+		gcLatencyRequest.cancel();
+		gcLatencyRequest = null;
+	    }
+	}
     }
 
     /**
@@ -343,28 +344,28 @@ public final class ObjectTable {
      */
     private static class Reaper implements Runnable {
 
-        public void run() {
-            try {
-                do {
-                    // wait for next cleared weak reference
-                    WeakRef weakImpl = (WeakRef) reapQueue.remove();
+	public void run() {
+	    try {
+		do {
+		    // wait for next cleared weak reference
+		    WeakRef weakImpl = (WeakRef) reapQueue.remove();
 
-                    synchronized (tableLock) {
-                        Target target = implTable.get(weakImpl);
-                        if (target != null) {
-                            if (!target.isEmpty()) {
-                                throw new Error(
-                                    "object with known references collected");
-                            } else if (target.isPermanent()) {
-                                throw new Error("permanent object collected");
-                            }
-                            removeTarget(target);
-                        }
-                    }
-                } while (!Thread.interrupted());
-            } catch (InterruptedException e) {
-                // pass away if interrupted
-            }
-        }
+		    synchronized (tableLock) {
+			Target target = implTable.get(weakImpl);
+			if (target != null) {
+			    if (!target.isEmpty()) {
+				throw new Error(
+				    "object with known references collected");
+			    } else if (target.isPermanent()) {
+				throw new Error("permanent object collected");
+			    }
+			    removeTarget(target);
+			}
+		    }
+		} while (!Thread.interrupted());
+	    } catch (InterruptedException e) {
+		// pass away if interrupted
+	    }
+	}
     }
 }

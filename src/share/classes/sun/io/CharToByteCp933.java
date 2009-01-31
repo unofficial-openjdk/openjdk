@@ -443,7 +443,7 @@ public class CharToByteCp933 extends CharToByteConverter
         if (theBytes == 0 && unicode != '\u0000')
             return -1;
         return theBytes;
-    }
+    } 
 
     /**
      * private function to add a unicode character to the output buffer
@@ -477,9 +477,10 @@ public class CharToByteCp933 extends CharToByteConverter
        // now put the bytes in the buffer
        bytesToBuffer(outputByte, output, outEnd);
     }
-
+  
     //Methods below are for subclass Cp834
     protected boolean doSBCS() {
         return true;
     }
 }
+

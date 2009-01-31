@@ -31,6 +31,7 @@ import sun.nio.cs.ext.MS936;
  * Tables and data to convert MS936 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharMS936 extends ByteToCharDoubleByte {

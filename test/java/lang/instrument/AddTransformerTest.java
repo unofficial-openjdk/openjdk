@@ -31,8 +31,8 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar AddTransformerTest AddTransformerTest
  */
-public class
-AddTransformerTest
+public class 
+AddTransformerTest 
     extends ATransformerManagementTestCase
 {
 
@@ -46,18 +46,18 @@ AddTransformerTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new AddTransformerTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testAddTransformer();
     }
-
+        
     /**
      * Add and check a bunch of transformers to the manager
      */
@@ -68,8 +68,8 @@ AddTransformerTest
         {
             addTransformerToManager(fInst, kTransformerSamples[i]);
         }
-
+        
         verifyTransformers(fInst);
     }
-
+    
 }

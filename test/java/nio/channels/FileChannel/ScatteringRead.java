@@ -55,7 +55,7 @@ public class ScatteringRead {
         for (int i=0; i<NUM_BUFFERS; i++)
             dstBuffers[i] = ByteBuffer.allocateDirect(BUFFER_CAP);
         File blah = File.createTempFile("blah1", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         createTestFile(blah);
 
         FileInputStream fis = new FileInputStream(blah);
@@ -89,7 +89,7 @@ public class ScatteringRead {
         for (int i=0; i<2; i++)
             dstBuffers[i] = ByteBuffer.allocateDirect(10);
         File blah = File.createTempFile("blah2", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(blah);
         for(int i=0; i<15; i++)
             fos.write((byte)92);
@@ -149,3 +149,4 @@ public class ScatteringRead {
     }
 
 }
+

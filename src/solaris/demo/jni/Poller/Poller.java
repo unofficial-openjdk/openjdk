@@ -45,6 +45,7 @@ import java.net.*;
  * pages for poll(2) for info on C API and event types.
  *
  *
+ * @version %I%, %G%
  * @author  Bruce Chapman
  * @see     java.io.FileDescriptor
  * @see     java.net.Socket
@@ -85,7 +86,7 @@ public class Poller {
    * Native code uses sysconf(_SC_OPEN_MAX) to determine how
    * many fd/skt objects this Poller object can contain.
    */
-  public Poller() throws Exception {
+  public Poller() throws Exception { 
     synchronized(globalSync) {
       this.handle = nativeCreatePoller(-1);
     }
@@ -96,7 +97,7 @@ public class Poller {
    * @param  maxFd the maximum number of FileDescriptors/Sockets
    *         this Poller object can contain.
    */
-  public Poller(int maxFd) throws Exception {
+  public Poller(int maxFd) throws Exception { 
     synchronized(globalSync) {
       this.handle = nativeCreatePoller(maxFd);
     }
@@ -118,7 +119,7 @@ public class Poller {
    * @param  maxFd the maximum number of FileDescriptors/Sockets
    *         this Poller object can contain.
    */
-  public void reset(int maxFd) throws Exception {
+  public void reset(int maxFd) throws Exception { 
     synchronized(globalSync) {
       nativeDestroyPoller(handle);
       this.handle = nativeCreatePoller(maxFd);
@@ -128,7 +129,7 @@ public class Poller {
    * Since we can't guarantee WHEN finalize is called, we may
    * recycle on our own.
    */
-  public void reset() throws Exception {
+  public void reset() throws Exception { 
     synchronized(globalSync) {
       nativeDestroyPoller(handle);
       this.handle = nativeCreatePoller(-1);
@@ -168,7 +169,7 @@ public class Poller {
   }
   /**
    * Wait on Multiple IO Objects.
-   *
+   * 
    * @param maxRet    the maximum number of fds[] and revents[] to return.
    * @param fds[]     (return) an array of ints in which to store fds with
    *                  available data upon a successful non-timeout return.
@@ -192,20 +193,20 @@ public class Poller {
    * (much more reliable and scalable than Thread.sleep() or Object.wait())
    */
   public synchronized int waitMultiple(int maxRet, int[] fds,short[] revents,
-                                       long timeout) throws Exception
+				       long timeout) throws Exception
     {
       if ((revents == null) || (fds == null)) {
-        if (maxRet > 0) {
-          throw new NullPointerException("fds or revents is null");
-        }
+	if (maxRet > 0) {
+	  throw new NullPointerException("fds or revents is null");
+	}
       } else if ( (maxRet < 0) ||
-                  (maxRet > revents.length) || (maxRet > fds.length) ) {
-        throw new IllegalArgumentException("maxRet out of range");
+		  (maxRet > revents.length) || (maxRet > fds.length) ) {
+	throw new IllegalArgumentException("maxRet out of range");
       }
 
       int ret = nativeWait(handle, maxRet, fds, revents, timeout);
       if (ret < 0) {
-        throw new InterruptedIOException();
+	throw new InterruptedIOException();
       }
       return ret;
     }
@@ -230,17 +231,17 @@ public class Poller {
    * maximum number of return events.
    *
    * @see Poller#waitMultiple
-   *
+   * 
    */
   public synchronized int waitMultiple(int[] fds, short[] revents,
-                                       long timeout) throws Exception
+				       long timeout) throws Exception
     {
       if ((revents == null) && (fds == null)) {
-        return nativeWait(handle,0,null,null,timeout);
+	return nativeWait(handle,0,null,null,timeout);
       } else if ((revents == null) || (fds == null)) {
-        throw new NullPointerException("revents or fds is null");
+	throw new NullPointerException("revents or fds is null");
       } else if (fds.length == revents.length) {
-        return nativeWait(handle, fds.length, fds, revents, timeout);
+	return nativeWait(handle, fds.length, fds, revents, timeout);
       }
       throw new IllegalArgumentException("fds.length != revents.length");
     }
@@ -260,9 +261,9 @@ public class Poller {
     throws Exception
     {
       if ((revents == null) || (fds == null)) {
-        throw new NullPointerException("fds or revents is null");
+	throw new NullPointerException("fds or revents is null");
       } else if (fds.length == revents.length) {
-        return waitMultiple(revents.length,fds,revents,-1L); // already sync
+	return waitMultiple(revents.length,fds,revents,-1L); // already sync
       }
       throw new IllegalArgumentException("fds.length != revents.length");
     }
@@ -273,9 +274,9 @@ public class Poller {
     Class cl;
     Field f;
     Object val, implVal;
-
+    
     if ((fdObj instanceof java.net.Socket) ||
-        (fdObj instanceof java.net.ServerSocket)) {
+	(fdObj instanceof java.net.ServerSocket)) {
       cl = fdObj.getClass();
       f = cl.getDeclaredField("impl");
       f.setAccessible(true);
@@ -311,12 +312,12 @@ public class Poller {
     throws Exception;
   private native int  nativeIsMember(int handle, int fd) throws Exception;
   private native int  nativeWait(int handle, int maxRet, int[] fds,
-                                        short[] events, long timeout)
+					short[] events, long timeout)
     throws Exception;
   /**
    * Get number of active CPUs in this machine
    * to determine proper level of concurrency.
-   */
+   */ 
   public static native int  getNumCPUs();
 
   static {

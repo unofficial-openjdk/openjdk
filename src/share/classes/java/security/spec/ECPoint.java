@@ -33,6 +33,7 @@ import java.math.BigInteger;
  * coordinates.
  *
  * @author Valerie Peng
+ * @version %I%, %G%
  *
  * @since 1.5
  */
@@ -48,8 +49,8 @@ public class ECPoint {
 
     // private constructor for constructing point at infinity
     private ECPoint() {
-        this.x = null;
-        this.y = null;
+	this.x = null;
+	this.y = null;
     }
 
     /**
@@ -57,15 +58,15 @@ public class ECPoint {
      * <code>x</code> and affine y-coordinate <code>y</code>.
      * @param x the affine x-coordinate.
      * @param y the affine y-coordinate.
-     * @exception NullPointerException if <code>x</code> or
+     * @exception NullPointerException if <code>x</code> or 
      * <code>y</code> is null.
      */
     public ECPoint(BigInteger x, BigInteger y) {
-        if ((x==null) || (y==null)) {
-            throw new NullPointerException("affine coordinate x or y is null");
-        }
-        this.x = x;
-        this.y = y;
+	if ((x==null) || (y==null)) {
+	    throw new NullPointerException("affine coordinate x or y is null");
+	}
+	this.x = x;
+	this.y = y;
     }
 
     /**
@@ -74,7 +75,7 @@ public class ECPoint {
      * @return the affine x-coordinate.
      */
     public BigInteger getAffineX() {
-        return x;
+	return x;
     }
 
     /**
@@ -83,24 +84,24 @@ public class ECPoint {
      * @return the affine y-coordinate.
      */
     public BigInteger getAffineY() {
-        return y;
+	return y;
     }
 
     /**
      * Compares this elliptic curve point for equality with
-     * the specified object.
+     * the specified object. 
      * @param obj the object to be compared.
-     * @return true if <code>obj</code> is an instance of
+     * @return true if <code>obj</code> is an instance of 
      * ECPoint and the affine coordinates match, false otherwise.
      */
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (this == POINT_INFINITY) return false;
-        if (obj instanceof ECPoint) {
-            return ((x.equals(((ECPoint)obj).x)) &&
-                    (y.equals(((ECPoint)obj).y)));
-        }
-        return false;
+	if (this == obj) return true;
+	if (this == POINT_INFINITY) return false;
+	if (obj instanceof ECPoint) {
+	    return ((x.equals(((ECPoint)obj).x)) && 
+		    (y.equals(((ECPoint)obj).y)));
+	}
+	return false;
     }
 
     /**
@@ -108,7 +109,7 @@ public class ECPoint {
      * @return a hash code value.
      */
     public int hashCode() {
-        if (this == POINT_INFINITY) return 0;
-        return x.hashCode() << 5 + y.hashCode();
+	if (this == POINT_INFINITY) return 0;
+	return x.hashCode() << 5 + y.hashCode();
     }
 }

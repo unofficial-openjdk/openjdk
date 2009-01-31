@@ -41,11 +41,11 @@
  * appropriate decorations.
  *
  * On Win32, "__stdcall" functions are exported differently, depending
- * on the compiler. In MSVC 4.0, they are decorated with a "_" in the
- * beginning, and @nnn in the end, where nnn is the number of bytes in
+ * on the compiler. In MSVC 4.0, they are decorated with a "_" in the 
+ * beginning, and @nnn in the end, where nnn is the number of bytes in 
  * the arguments (in decimal). Borland C++ exports undecorated names.
  *
- * sysBuildFunName handles different encodings depending on the value
+ * sysBuildFunName handles different encodings depending on the value 
  * of encodingIndex. It returns 0 when handed an out-of-range
  * encodingIndex.
  */
@@ -54,20 +54,20 @@ sysBuildFunName(char *name, int nameMax, int args_size, int encodingIndex)
 {
   if (encodingIndex == 0) {
     /* For Microsoft MSVC 4.0 */
-    char suffix[6];    /* This is enough since Java never has more than
-                           256 words of arguments. */
+    char suffix[6];    /* This is enough since Java never has more than 
+			   256 words of arguments. */
     int nameLen;
     int i;
 
     sprintf(suffix, "@%d", args_size * 4);
-
+    
     nameLen = strlen(name);
     if (nameLen >= nameMax - 7)
         return 1;
     for(i = nameLen; i > 0; i--)
         name[i] = name[i-1];
     name[0] = '_';
-
+    
     sprintf(name + nameLen + 1, "%s", suffix);
     return 1;
   } else if (encodingIndex == 1)
@@ -106,14 +106,14 @@ sysLoadLibrary(const char * name, char *err_buf, int err_buflen)
 {
     void *result = LoadLibrary(name);
     if (result == NULL) {
-        /* Error message is pretty lame, try to make a better guess. */
-        long errcode = GetLastError();
-        if (errcode == ERROR_MOD_NOT_FOUND) {
-            strncpy(err_buf, "Can't find dependent libraries", err_buflen-2);
-            err_buf[err_buflen-1] = '\0';
-        } else {
-            sysGetLastErrorString(err_buf, err_buflen);
-        }
+	/* Error message is pretty lame, try to make a better guess. */
+	long errcode = GetLastError();
+	if (errcode == ERROR_MOD_NOT_FOUND) {
+	    strncpy(err_buf, "Can't find dependent libraries", err_buflen-2);
+	    err_buf[err_buflen-1] = '\0';
+	} else {
+	    sysGetLastErrorString(err_buf, err_buflen);
+	}
     }
     return result;
 }

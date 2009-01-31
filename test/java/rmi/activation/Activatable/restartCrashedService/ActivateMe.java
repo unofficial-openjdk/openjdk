@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,7 +26,7 @@
  */
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-// TEMPORARY HACK!!! to make interface public until MIS.resolveProxyClass is fixed.
+// TEMPORARY HACK!!! to make interface public until MIS.resolveProxyClass is fixed. 
 public interface ActivateMe extends Remote {
     public void ping(String responder) throws RemoteException;
     public ActivateMe getUnicastVersion() throws RemoteException;

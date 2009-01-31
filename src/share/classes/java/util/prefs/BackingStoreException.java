@@ -33,6 +33,7 @@ import java.io.NotSerializableException;
  * store.
  *
  * @author  Josh Bloch
+ * @version %I%, %G%
  * @since   1.4
  */
 public class BackingStoreException extends Exception {

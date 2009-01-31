@@ -28,7 +28,8 @@ package java.util.zip;
 /**
  * An interface representing a data checksum.
  *
- * @author      David Connelly
+ * @version 	%I%, %G%
+ * @author 	David Connelly
  */
 public
 interface Checksum {

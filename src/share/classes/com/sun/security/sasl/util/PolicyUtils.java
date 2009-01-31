@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package com.sun.security.sasl.util;
+package com.sun.security.sasl.util; 
 
 import javax.security.sasl.Sasl;
 import java.util.Map;
@@ -54,36 +54,36 @@ final public class PolicyUtils {
      * @return true if passes; false if fails
      */
     public static boolean checkPolicy(int flags, Map props) {
-        if (props == null) {
-            return true;
-        }
+	if (props == null) {
+	    return true;
+	}
 
-        if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NOPLAINTEXT))
-            && (flags&NOPLAINTEXT) == 0) {
-            return false;
-        }
-        if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NOACTIVE))
-            && (flags&NOACTIVE) == 0) {
-            return false;
-        }
-        if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NODICTIONARY))
-            && (flags&NODICTIONARY) == 0) {
-            return false;
-        }
-        if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NOANONYMOUS))
-            && (flags&NOANONYMOUS) == 0) {
-            return false;
-        }
-        if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_FORWARD_SECRECY))
-            && (flags&FORWARD_SECRECY) == 0) {
-            return false;
-        }
-        if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_PASS_CREDENTIALS))
-            && (flags&PASS_CREDENTIALS) == 0) {
-            return false;
-        }
+	if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NOPLAINTEXT))
+	    && (flags&NOPLAINTEXT) == 0) {
+	    return false;
+	}
+	if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NOACTIVE))
+	    && (flags&NOACTIVE) == 0) {
+	    return false;
+	}
+	if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NODICTIONARY))
+	    && (flags&NODICTIONARY) == 0) {
+	    return false;
+	}
+	if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_NOANONYMOUS))
+	    && (flags&NOANONYMOUS) == 0) {
+	    return false;
+	}
+	if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_FORWARD_SECRECY))
+	    && (flags&FORWARD_SECRECY) == 0) {
+	    return false;
+	}
+	if ("true".equalsIgnoreCase((String)props.get(Sasl.POLICY_PASS_CREDENTIALS))
+	    && (flags&PASS_CREDENTIALS) == 0) {
+	    return false;
+	}
 
-        return true;
+	return true;
     }
 
     /**
@@ -92,26 +92,26 @@ final public class PolicyUtils {
      * Useful for SaslXXXFactory.getMechanismNames(props) implementations.
      *
      */
-    public static String[] filterMechs(String[] mechs, int[] policies,
-        Map props) {
-        if (props == null) {
-            return mechs.clone();
-        }
+    public static String[] filterMechs(String[] mechs, int[] policies, 
+	Map props) {
+	if (props == null) {
+	    return mechs.clone();
+	}
 
-        boolean[] passed = new boolean[mechs.length];
-        int count = 0;
-        for (int i = 0; i< mechs.length; i++) {
-            if (passed[i] = checkPolicy(policies[i], props)) {
-                ++count;
-            }
-        }
-        String[] answer = new String[count];
-        for (int i = 0, j=0; i< mechs.length; i++) {
-            if (passed[i]) {
-                answer[j++] = mechs[i];
-            }
-        }
-
-        return answer;
+	boolean[] passed = new boolean[mechs.length];
+	int count = 0;
+	for (int i = 0; i< mechs.length; i++) {
+	    if (passed[i] = checkPolicy(policies[i], props)) {
+		++count;
+	    }
+	}
+	String[] answer = new String[count];
+	for (int i = 0, j=0; i< mechs.length; i++) {
+	    if (passed[i]) {
+		answer[j++] = mechs[i];
+	    }
+	}
+	
+	return answer;
     }
 }

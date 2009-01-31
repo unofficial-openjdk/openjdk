@@ -35,64 +35,64 @@ import javax.management.openmbean.TabularType;
 /**
  * This abstract class provides the implementation of the CompositeData
  * interface.  A CompositeData object will be lazily created only when
- * the CompositeData interface is used.
- *
+ * the CompositeData interface is used. 
+ *  
  * Classes that extends this abstract class will implement the
  * getCompositeData() method. The object returned by the
- * getCompositeData() is an instance of CompositeData such that
+ * getCompositeData() is an instance of CompositeData such that 
  * the instance serializes itself as the type CompositeDataSupport.
  */
 public abstract class LazyCompositeData
-        implements CompositeData, Serializable {
+	implements CompositeData, Serializable {
 
     private CompositeData compositeData;
 
-    // Implementation of the CompositeData interface
+    // Implementation of the CompositeData interface 
     public boolean containsKey(String key) {
-        return compositeData().containsKey(key);
+	return compositeData().containsKey(key);
     }
 
     public boolean containsValue(Object value) {
-        return compositeData().containsValue(value);
+	return compositeData().containsValue(value);
     }
 
     public boolean equals(Object obj) {
-        return compositeData().equals(obj);
+	return compositeData().equals(obj);
     }
 
     public Object get(String key) {
-        return compositeData().get(key);
+	return compositeData().get(key);
     }
 
     public Object[] getAll(String[] keys) {
-        return compositeData().getAll(keys);
+	return compositeData().getAll(keys);
     }
 
     public CompositeType getCompositeType() {
-        return compositeData().getCompositeType();
+	return compositeData().getCompositeType();
     }
 
     public int hashCode() {
-        return compositeData().hashCode();
+	return compositeData().hashCode();
     }
 
     public String toString() {
         /** FIXME: What should this be?? */
-        return compositeData().toString();
+	return compositeData().toString();
     }
 
     public Collection values() {
-        return compositeData().values();
+	return compositeData().values();
     }
 
     /* Lazy creation of a CompositeData object
      * only when the CompositeData interface is used.
      */
     private synchronized CompositeData compositeData() {
-        if (compositeData != null)
-            return compositeData;
-        compositeData = getCompositeData();
-        return compositeData;
+	if (compositeData != null)
+	    return compositeData;
+	compositeData = getCompositeData();
+	return compositeData;
     }
 
     /**
@@ -102,7 +102,7 @@ public abstract class LazyCompositeData
      * specific class.
      */
     protected Object writeReplace() throws java.io.ObjectStreamException {
-        return compositeData();
+	return compositeData();
     }
 
     /**
@@ -155,8 +155,8 @@ public abstract class LazyCompositeData
         // if the type name doesn't match.
         Set allItems = type1.keySet();
 
-        // Check all items in the type1 exist in type2
-        if (!type2.keySet().containsAll(allItems))
+        // Check all items in the type1 exist in type2 
+        if (!type2.keySet().containsAll(allItems)) 
             return false;
 
         for (Iterator iter = allItems.iterator(); iter.hasNext(); ) {
@@ -164,14 +164,14 @@ public abstract class LazyCompositeData
             OpenType ot1 = type1.getType(item);
             OpenType ot2 = type2.getType(item);
             if (ot1 instanceof CompositeType) {
-                if (! (ot2 instanceof CompositeType))
+                if (! (ot2 instanceof CompositeType)) 
                     return false;
-                if (!isTypeMatched((CompositeType) ot1, (CompositeType) ot2))
+                if (!isTypeMatched((CompositeType) ot1, (CompositeType) ot2)) 
                     return false;
             } else if (ot1 instanceof TabularType) {
-                if (! (ot2 instanceof TabularType))
+                if (! (ot2 instanceof TabularType)) 
                     return false;
-                if (!isTypeMatched((TabularType) ot1, (TabularType) ot2))
+                if (!isTypeMatched((TabularType) ot1, (TabularType) ot2)) 
                     return false;
             } else if (!ot1.equals(ot2)) {
                 return false;
@@ -187,7 +187,7 @@ public abstract class LazyCompositeData
         List list2 = type2.getIndexNames();
 
         // check if the list of index names are the same
-        if (!list1.equals(list2))
+        if (!list1.equals(list2)) 
             return false;
 
         return isTypeMatched(type1.getRowType(), type2.getRowType());

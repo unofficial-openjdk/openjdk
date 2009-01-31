@@ -53,7 +53,7 @@ class ExceptionSpec extends EventRequestSpec {
      */
     EventRequest resolveEventRequest(ReferenceType refType) {
         EventRequestManager em = refType.virtualMachine().eventRequestManager();
-        ExceptionRequest excReq = em.createExceptionRequest(refType,
+        ExceptionRequest excReq = em.createExceptionRequest(refType, 
                                                             notifyCaught,
                                                             notifyUncaught);
         excReq.enable();

@@ -195,7 +195,7 @@ public class BufferedPaints {
         buf.putInt(useMask ? 1 : 0);
         buf.putInt(isCyclic ? 1 : 0);
         buf.putDouble(p0).putDouble(p1).putDouble(p3);
-        buf.putInt(pixel1).putInt(pixel2);
+        buf.putInt(pixel1).putInt(pixel2);            
     }
 
     private static void setGradientPaint(RenderQueue rq,
@@ -499,7 +499,7 @@ public class BufferedPaints {
         at.translate(cx, cy);
         at.rotate(fx - cx, fy - cy);
         at.scale(radius, radius);
-
+            
         // invert to get mapping from device coords to unit circle
         try {
             at.invert();

@@ -1,21 +1,21 @@
-/*
+/* 
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -67,7 +67,7 @@ import java.io.File;
 import java.io.FileInputStream;
 
 /**
- * This class tests the behavior of the ResourceBundle cache with
+ * This class tests the behavior of the ResourceBundle cache with 
  * respect to ClassLoaders.  The same resource loaded by different
  * loaders should be cached as separate objects, one for each loader.
  * In order to test this behavior, this test constructs a custom
@@ -128,7 +128,7 @@ public class TestBug4179766 extends RBTestFmwk {
     public void testSameHash() throws Exception {
         doTest(true);
     }
-
+    
     /**
     * Test that loaders with different hash keys
     * cache resources seperately
@@ -191,7 +191,7 @@ public class TestBug4179766 extends RBTestFmwk {
         if (l != null) {
             hash = l.hashCode();
         }
-        logln(message + System.identityHashCode(o) + "  Class: " + c
+        logln(message + System.identityHashCode(o) + "  Class: " + c 
                 + "  ClassLoader: " + l + "  loaderHash: " + hash
                 + "  loaderPrimHash: " + System.identityHashCode(l));
     }
@@ -204,7 +204,7 @@ public class TestBug4179766 extends RBTestFmwk {
      */
     public class Loader extends ClassLoader {
         private int thisHashCode;
-
+        
         /**
          * Create a new loader
          */
@@ -255,7 +255,7 @@ public class TestBug4179766 extends RBTestFmwk {
          */
         public synchronized Class loadClass(String className, boolean resolveIt)
                 throws ClassNotFoundException {
-
+                
             Class result = findLoadedClass(className);
             if (result != null) {
                 printInfo("        ***Returning cached class: "+className, result);

@@ -24,7 +24,7 @@
 /* @test
    @bug 4166799
    @summary Make sure URL-downloaded jar files (jar_cache files)
-            will be deleted when VM exits.
+            will be deleted when VM exits. 
 
    @build DeleteTempJar
    @run shell deletetempjar.sh
@@ -59,7 +59,7 @@ public class DeleteTempJar
         jos.putNextEntry(je);
         jos.write("hello, world".getBytes("ASCII"));
         jos.close();
-
+        
         HttpServer server = HttpServer.create(
                 new InetSocketAddress((InetAddress) null, 0), 0);
         HttpContext context = server.createContext("/",

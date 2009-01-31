@@ -43,15 +43,15 @@ public class UserClassLoaderTest {
     private static final MBeanServer mbs = MBeanServerFactory.createMBeanServer();
     private static ObjectName timer;
     private final static NotificationListener listener = new NotificationListener() {
-            public void handleNotification(Notification notification, Object handback) {
-            }
-        };
+	    public void handleNotification(Notification notification, Object handback) {
+	    }
+	};
 
     public static void main(String[] args) throws Exception {
         System.out.println("main: we should not lose client classloader.");
 
-        timer = new ObjectName("test:name=timer");
-        mbs.createMBean("javax.management.timer.Timer", timer);
+	timer = new ObjectName("test:name=timer");
+	mbs.createMBean("javax.management.timer.Timer", timer);
 
         boolean ok = true;
         for (int i = 0; i < protocols.length; i++) {
@@ -91,40 +91,40 @@ public class UserClassLoaderTest {
         }
 
         server.start();
-        u = server.getAddress();
+	u = server.getAddress();
 
-        System.out.println("test: create a server on: "+u);
+	System.out.println("test: create a server on: "+u);
 
-        JMXConnector client = JMXConnectorFactory.connect(u, null);
-        MBeanServerConnection conn = client.getMBeanServerConnection();
+	JMXConnector client = JMXConnectorFactory.connect(u, null);
+	MBeanServerConnection conn = client.getMBeanServerConnection();
 
-        final ClassLoader orgCL = Thread.currentThread().getContextClassLoader();
-        System.out.println("test: the orginal classloader is "+orgCL);
+	final ClassLoader orgCL = Thread.currentThread().getContextClassLoader();
+	System.out.println("test: the orginal classloader is "+orgCL);
 
-        final URL url = new URL("file:/xxx");
-        final ClassLoader newCL = new URLClassLoader(new URL[]{url}, orgCL);
+	final URL url = new URL("file:/xxx");
+	final ClassLoader newCL = new URLClassLoader(new URL[]{url}, orgCL);
 
-        try {
-            System.out.println("test: set classloader to "+newCL);
-            Thread.currentThread().setContextClassLoader(newCL);
+	try {
+	    System.out.println("test: set classloader to "+newCL);
+	    Thread.currentThread().setContextClassLoader(newCL);
 
-            // reproduce the bug
-            conn.addNotificationListener(timer, listener, null, null);
+	    // reproduce the bug
+	    conn.addNotificationListener(timer, listener, null, null);
 
-            client.close();
-            server.stop();
+	    client.close();
+	    server.stop();
 
-            if (Thread.currentThread().getContextClassLoader() != newCL) {
-                System.out.println("ERROR: The client class loader is lost.");
+	    if (Thread.currentThread().getContextClassLoader() != newCL) {
+		System.out.println("ERROR: The client class loader is lost.");
 
-                return false;
-            } else {
-                System.out.println("test: Bye bye.");
+		return false;
+	    } else {
+		System.out.println("test: Bye bye.");
 
-                return true;
-            }
-        } finally {
-            Thread.currentThread().setContextClassLoader(orgCL);
-        }
+		return true;
+	    }
+	} finally {
+	    Thread.currentThread().setContextClassLoader(orgCL);
+	}
     }
 }

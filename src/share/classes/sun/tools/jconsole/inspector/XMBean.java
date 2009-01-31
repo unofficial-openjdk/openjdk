@@ -37,7 +37,7 @@ public class XMBean extends Object {
     private boolean broadcaster;
     private MBeanInfo mbeanInfo;
     private MBeansTab mbeansTab;
-
+    
     public XMBean(ObjectName objectName, MBeansTab mbeansTab)
         throws InstanceNotFoundException, IntrospectionException,
             ReflectionException, IOException {
@@ -51,15 +51,15 @@ public class XMBean extends Object {
         this.broadcaster = isBroadcaster(objectName);
         this.mbeanInfo = getMBeanInfo(objectName);
     }
-
+    
     MBeanServerConnection getMBeanServerConnection() {
         return mbeansTab.getMBeanServerConnection();
     }
-
+    
     public boolean isBroadcaster() {
         return broadcaster;
     }
-
+    
     private boolean isBroadcaster(ObjectName name) {
         try {
             return getMBeanServerConnection().isInstanceOf(
@@ -70,41 +70,41 @@ public class XMBean extends Object {
         }
         return false;
     }
-
+    
     public Object invoke(String operationName) throws Exception {
         Object result = getMBeanServerConnection().invoke(
                 getObjectName(), operationName, new Object[0], new String[0]);
         return result;
     }
-
+    
     public Object invoke(String operationName, Object params[], String sig[])
         throws Exception {
         Object result = getMBeanServerConnection().invoke(
                 getObjectName(), operationName, params, sig);
         return result;
     }
-
+    
     public void setAttribute(Attribute attribute)
         throws AttributeNotFoundException, InstanceNotFoundException,
             InvalidAttributeValueException, MBeanException,
             ReflectionException, IOException {
         getMBeanServerConnection().setAttribute(getObjectName(), attribute);
     }
-
+    
     public Object getAttribute(String attributeName)
         throws AttributeNotFoundException, InstanceNotFoundException,
             MBeanException, ReflectionException, IOException {
         return getMBeanServerConnection().getAttribute(
                 getObjectName(), attributeName);
     }
-
+    
     public AttributeList getAttributes(String attributeNames[])
         throws AttributeNotFoundException, InstanceNotFoundException,
             MBeanException, ReflectionException, IOException {
         return getMBeanServerConnection().getAttributes(
                 getObjectName(), attributeNames);
     }
-
+    
     public AttributeList getAttributes(MBeanAttributeInfo attributeNames[])
         throws AttributeNotFoundException, InstanceNotFoundException,
             MBeanException, ReflectionException, IOException {
@@ -114,11 +114,11 @@ public class XMBean extends Object {
         }
         return getAttributes(attributeString);
     }
-
+    
     public ObjectName getObjectName() {
         return objectName;
     }
-
+    
     private void setObjectName(ObjectName objectName) {
         this.objectName = objectName;
         // generate a readable name now
@@ -128,17 +128,17 @@ public class XMBean extends Object {
         else
             setText(name);
     }
-
+    
     public MBeanInfo getMBeanInfo() {
         return mbeanInfo;
     }
-
+    
     private MBeanInfo getMBeanInfo(ObjectName name)
         throws InstanceNotFoundException, IntrospectionException,
             ReflectionException, IOException {
         return getMBeanServerConnection().getMBeanInfo(name);
     }
-
+    
     public boolean equals(Object o) {
         if (o instanceof XMBean) {
             XMBean mbean = (XMBean) o;
@@ -146,23 +146,23 @@ public class XMBean extends Object {
         }
         return false;
     }
-
+    
     public String getText() {
         return text;
     }
-
+    
     public void setText(String text) {
         this.text = text;
     }
-
+    
     public Icon getIcon() {
         return icon;
     }
-
+    
     public void setIcon(Icon icon) {
         this.icon = icon;
     }
-
+    
     public String toString() {
         return getText();
     }

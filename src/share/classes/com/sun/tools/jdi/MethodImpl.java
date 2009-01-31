@@ -32,7 +32,7 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-public abstract class MethodImpl extends TypeComponentImpl
+public abstract class MethodImpl extends TypeComponentImpl 
     implements Method {
     private JNITypeParser signatureParser;
     abstract int argSlotCount() throws AbsentInformationException;
@@ -46,31 +46,31 @@ public abstract class MethodImpl extends TypeComponentImpl
                                   int lineNumber)
                            throws AbsentInformationException;
 
-    MethodImpl(VirtualMachine vm, ReferenceTypeImpl declaringType,
+    MethodImpl(VirtualMachine vm, ReferenceTypeImpl declaringType, 
                long ref,
-               String name, String signature,
+               String name, String signature, 
                String genericSignature, int modifiers) {
-        super(vm, declaringType, ref, name, signature,
+        super(vm, declaringType, ref, name, signature,  
               genericSignature, modifiers);
         signatureParser = new JNITypeParser(signature);
     }
 
-    static MethodImpl createMethodImpl(VirtualMachine vm,
-                                       ReferenceTypeImpl declaringType,
+    static MethodImpl createMethodImpl(VirtualMachine vm, 
+                                       ReferenceTypeImpl declaringType, 
                                        long ref,
-                                       String name,
-                                       String signature,
+                                       String name, 
+                                       String signature, 
                                        String genericSignature,
                                        int modifiers) {
-        if ((modifiers &
+        if ((modifiers & 
              (VMModifiers.NATIVE | VMModifiers.ABSTRACT)) != 0) {
             return new NonConcreteMethodImpl(vm, declaringType, ref,
-                                             name, signature,
+                                             name, signature, 
                                              genericSignature,
                                              modifiers);
         } else {
             return new ConcreteMethodImpl(vm, declaringType, ref,
-                                          name, signature,
+                                          name, signature, 
                                           genericSignature,
                                           modifiers);
         }
@@ -105,7 +105,7 @@ public abstract class MethodImpl extends TypeComponentImpl
 
     public final List<Location> locationsOfLine(int lineNumber)
                            throws AbsentInformationException {
-        return locationsOfLine(vm.getDefaultStratum(),
+        return locationsOfLine(vm.getDefaultStratum(), 
                                null, lineNumber);
     }
 
@@ -117,7 +117,7 @@ public abstract class MethodImpl extends TypeComponentImpl
                                sourceName, lineNumber);
     }
 
-    LineInfo codeIndexToLineInfo(SDE.Stratum stratum,
+    LineInfo codeIndexToLineInfo(SDE.Stratum stratum, 
                                  long codeIndex) {
         if (stratum.isJava()) {
             return new BaseLineInfo(-1, declaringType);
@@ -144,7 +144,7 @@ public abstract class MethodImpl extends TypeComponentImpl
     }
 
     public Type findType(String signature) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType();
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType(); 
         return enclosing.findType(signature);
     }
 
@@ -157,7 +157,7 @@ public abstract class MethodImpl extends TypeComponentImpl
     }
 
     Type argumentType(int index) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType();
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType(); 
         String signature = (String)argumentSignatures().get(index);
         return enclosing.findType(signature);
     }
@@ -177,16 +177,16 @@ public abstract class MethodImpl extends TypeComponentImpl
         ReferenceTypeImpl declaringType = (ReferenceTypeImpl)declaringType();
         int rc = declaringType.compareTo(method.declaringType());
         if (rc == 0) {
-            rc = declaringType.indexOf(this) -
+            rc = declaringType.indexOf(this) - 
                     declaringType.indexOf(method);
         }
         return rc;
     }
-
+    
     public boolean isAbstract() {
         return isModifierSet(VMModifiers.ABSTRACT);
     }
-
+ 
     public boolean isSynchronized() {
         return isModifierSet(VMModifiers.SYNCHRONIZED);
     }
@@ -210,10 +210,10 @@ public abstract class MethodImpl extends TypeComponentImpl
     public boolean isStaticInitializer() {
         return name().equals("<clinit>");
     }
-
+                                
     public boolean isObsolete() {
         try {
-            return JDWP.Method.IsObsolete.process(vm,
+            return JDWP.Method.IsObsolete.process(vm, 
                                     declaringType, ref).isObsolete;
         } catch (JDWPException exc) {
             throw exc.toJDIException();
@@ -289,7 +289,7 @@ public abstract class MethodImpl extends TypeComponentImpl
      *     - delete arguments(n+1), ...
      * NOTE that this might modify the input list.
      */
-    void handleVarArgs(List<Value> arguments)
+    void handleVarArgs(List<Value> arguments) 
         throws ClassNotLoadedException, InvalidTypeException {
         List<Type> paramTypes = this.argumentTypes();
         ArrayType lastParamType = (ArrayType)paramTypes.get(paramTypes.size() - 1);
@@ -307,30 +307,30 @@ public abstract class MethodImpl extends TypeComponentImpl
             arguments.add(argArray);
             return;
         }
-        Value nthArgValue = (Value)arguments.get(paramCount - 1);
+        Value nthArgValue = (Value)arguments.get(paramCount - 1); 
         if (nthArgValue == null) {
             return;
         }
         Type nthArgType = nthArgValue.type();
         if (nthArgType instanceof ArrayTypeImpl) {
-            if (argCount == paramCount &&
+            if (argCount == paramCount && 
                 ((ArrayTypeImpl)nthArgType).isAssignableTo(lastParamType)) {
                 /*
-                 * This is case 1.  A compatible array is being passed to the
+                 * This is case 1.  A compatible array is being passed to the 
                  * var args array param.  We don't have to do anything.
                  */
                 return;
             }
         }
-
+        
         /*
          * Case 2.  We have to verify that the n, n+1, ... args are compatible
          * with componentType, and do conversions if necessary and create
          * an array of componentType to hold these possibly converted values.
-         */
+         */ 
         int count = argCount - paramCount + 1;
         ArrayReference argArray = lastParamType.newInstance(count);
-
+        
         /*
          * This will copy arguments(paramCount - 1) ... to argArray(0) ...
          * doing whatever conversions are needed!  It will throw an
@@ -351,9 +351,9 @@ public abstract class MethodImpl extends TypeComponentImpl
     /*
      * The output list will be different than the input list.
      */
-    List<Value> validateAndPrepareArgumentsForInvoke(List<? extends Value> origArguments)
+    List<Value> validateAndPrepareArgumentsForInvoke(List<? extends Value> origArguments) 
                          throws ClassNotLoadedException, InvalidTypeException {
-
+        
         List<Value> arguments = new ArrayList<Value>(origArguments);
         if (isVarArgs()) {
             handleVarArgs(arguments);
@@ -372,7 +372,7 @@ public abstract class MethodImpl extends TypeComponentImpl
 
         for (int i = 0; i < argSize; i++) {
             Value value = (Value)arguments.get(i);
-            value = ValueImpl.prepareForAssignment(value,
+            value = ValueImpl.prepareForAssignment(value, 
                                                    new ArgumentContainer(i));
             arguments.set(i, value);
         }

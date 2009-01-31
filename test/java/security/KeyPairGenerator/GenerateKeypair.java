@@ -34,19 +34,19 @@ public class GenerateKeypair {
 
     public static void main(String[] args) throws Exception {
 
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
-        kpg.initialize(512);
+	KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA");
+	kpg.initialize(512);
 
-        // test generateKeyPair
-        KeyPair kpair = kpg.generateKeyPair();
-        if (kpair == null) {
-            throw new Exception("no keypair generated");
-        }
+	// test generateKeyPair
+	KeyPair kpair = kpg.generateKeyPair();
+	if (kpair == null) {
+	    throw new Exception("no keypair generated");
+	}
 
-        // test genKeyPair
-        kpair = kpg.genKeyPair();
-        if (kpair == null) {
-            throw new Exception("no keypair generated");
-        }
+	// test genKeyPair
+	kpair = kpg.genKeyPair();
+	if (kpair == null) {
+	    throw new Exception("no keypair generated");
+	}
     }
 }

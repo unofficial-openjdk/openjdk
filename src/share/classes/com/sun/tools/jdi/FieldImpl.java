@@ -28,14 +28,14 @@ package com.sun.tools.jdi;
 import com.sun.jdi.*;
 
 
-public class FieldImpl extends TypeComponentImpl
+public class FieldImpl extends TypeComponentImpl 
                        implements Field, ValueContainer {
 
-    FieldImpl(VirtualMachine vm, ReferenceTypeImpl declaringType,
+    FieldImpl(VirtualMachine vm, ReferenceTypeImpl declaringType, 
               long ref,
-              String name, String signature,
+              String name, String signature, 
               String genericSignature, int modifiers) {
-        super(vm, declaringType, ref, name, signature,
+        super(vm, declaringType, ref, name, signature, 
               genericSignature, modifiers);
     }
 
@@ -58,18 +58,18 @@ public class FieldImpl extends TypeComponentImpl
         ReferenceTypeImpl declaringType = (ReferenceTypeImpl)declaringType();
         int rc = declaringType.compareTo(field.declaringType());
         if (rc == 0) {
-            rc = declaringType.indexOf(this) -
+            rc = declaringType.indexOf(this) - 
                  declaringType.indexOf(field);
         }
         return rc;
     }
-
+    
     public Type type() throws ClassNotLoadedException {
         return findType(signature());
     }
 
     public Type findType(String signature) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType();
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType(); 
         return enclosing.findType(signature);
     }
 

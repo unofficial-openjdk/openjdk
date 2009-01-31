@@ -77,7 +77,7 @@ import sun.java2d.pipe.Region;
 
 public class NullComponentPeer implements LightweightPeer,
     CanvasPeer, PanelPeer {
-
+    
     public boolean isObscured() {
         return false;
     }
@@ -152,12 +152,12 @@ public class NullComponentPeer implements LightweightPeer,
     public Graphics getGraphics() {
         return null;
     }
-
+        
     public GraphicsConfiguration getGraphicsConfiguration() {
         return null;
     }
-
-    public FontMetrics  getFontMetrics(Font font) {
+        
+    public FontMetrics	getFontMetrics(Font font) {
         return null;
     }
 
@@ -183,7 +183,7 @@ public class NullComponentPeer implements LightweightPeer,
     public boolean requestFocus
         (Component lightweightChild, boolean temporary,
          boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause) {
-        return false;
+	return false;
     }
 
     public Image createImage(ImageProducer producer) {
@@ -198,7 +198,7 @@ public class NullComponentPeer implements LightweightPeer,
         return false;
     }
 
-    public int  checkImage(Image img, int w, int h, ImageObserver o) {
+    public int	checkImage(Image img, int w, int h, ImageObserver o) {
         return 0;
     }
 
@@ -227,9 +227,9 @@ public class NullComponentPeer implements LightweightPeer,
     public Insets insets() {
         return new Insets(0, 0, 0, 0);
     }
-
+    
     public boolean isPaintPending() {
-        return false;
+	return false;
     }
 
     public boolean handlesWheelScrolling() {
@@ -245,7 +245,7 @@ public class NullComponentPeer implements LightweightPeer,
 
     public void endLayout() {
     }
-
+    
     public void createBuffers(int numBuffers, BufferCapabilities caps)
         throws AWTException {
         throw new AWTException(
@@ -282,7 +282,7 @@ public class NullComponentPeer implements LightweightPeer,
     public void restack() {
         throw new UnsupportedOperationException();
     }
-
+    
     /**
      * @see java.awt.peer.ContainerPeer#isRestackSupported
      */
@@ -296,11 +296,12 @@ public class NullComponentPeer implements LightweightPeer,
         return new Rectangle(0, 0, 0, 0);
     }
 
-
+        
     /**
       * Applies the shape to the native component window.
       * @since 1.7
       */
     public void applyShape(Region shape) {
-    }
+    }       
 }
+

@@ -53,6 +53,7 @@ import javax.sql.rowset.spi.*;
  * Standard JDBC RowSet implementations provide an object instance of this
  * writer by invoking the <code>SyncProvider.getRowSetWriter()</code> method.
  *
+ * @version 0.2
  * @author Jonathan Bruce
  * @see javax.sql.rowset.spi.SyncProvider
  * @see javax.sql.rowset.spi.SyncFactory
@@ -189,9 +190,9 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
  * changed only in database.
  */
     private int iChangedValsinDbOnly ;
-
+    
     private JdbcRowSetResourceBundle resBundle;
-
+    
     public CachedRowSetWriter() {
        try {
                resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
@@ -273,12 +274,12 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
         // to get a JDBC connection, so call it.
 
         con = reader.connect(caller);
-
+        
 
         if (con == null) {
             throw new SQLException(resBundle.handleGetObject("crswriter.connect").toString());
         }
-
+     
         /*
          // Fix 6200646.
          // Don't change the connection or transaction properties. This will fail in a
@@ -315,8 +316,8 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
         if (callerColumnCount < 1) {
             // No data, so return success.
-            if (reader.getCloseConnection() == true)
-                    con.close();
+	    if (reader.getCloseConnection() == true)
+		    con.close();
             return true;
         }
         // We need to see rows marked for deletion.
@@ -339,20 +340,20 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                 }
 
            } else if (crs.rowInserted()) {
-                // The row has been inserted.
-
+    	        // The row has been inserted.
+		        
                 pstmtIns = con.prepareStatement(insertCmd);
                 if ( (conflict = insertNewRow(crs, pstmtIns, this.crsResolve)) == true) {
-                          status.add(rows, new Integer(SyncResolver.INSERT_ROW_CONFLICT));
+		          status.add(rows, new Integer(SyncResolver.INSERT_ROW_CONFLICT));
                 } else {
                       // insert happened without any occurrence of conflicts
                       // so update status accordingly
                        status.add(rows, new Integer(SyncResolver.NO_ROW_CONFLICT));
                 }
             } else  if (crs.rowUpdated()) {
-                  // The row has been updated.
-                       if ( conflict = (updateOriginalRow(crs)) == true) {
-                             status.add(rows, new Integer(SyncResolver.UPDATE_ROW_CONFLICT));
+  	          // The row has been updated.
+		       if ( conflict = (updateOriginalRow(crs)) == true) {
+		             status.add(rows, new Integer(SyncResolver.UPDATE_ROW_CONFLICT));
                } else {
                       // update happened without any occurrence of conflicts
                       // so update status accordingly
@@ -378,7 +379,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                 this.crsResolve.insertRow();
                 this.crsResolve.moveToCurrentRow();
 
-                } //end if
+	        } //end if
          rows++;
       } //end while
 
@@ -390,7 +391,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
       boolean boolConf = false;
       for (int j=1;j<status.size();j++){
-          // ignore status for index = 0 which is set to null
+          // ignore status for index = 0 which is set to null          
           if(! ((status.get(j)).equals(new Integer(SyncResolver.NO_ROW_CONFLICT)))) {
               // there is at least one conflict which needs to be resolved
               boolConf = true;
@@ -422,14 +423,14 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
             con.rollback();
             return false;
         } else {
-            con.commit();
-                if (reader.getCloseConnection() == true) {
-                       con.close();
-                }
+            con.commit();            
+	        if (reader.getCloseConnection() == true) {
+		       con.close();
+	        }	
             return true;
         }
         */
-
+	
   } //end writeData
 
 /**
@@ -455,7 +456,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
         throws SQLException {
         PreparedStatement pstmt;
         int i = 0;
-        int idx = 0;
+        int idx = 0;               
 
         // Select the row from the database.
         ResultSet origVals = crs.getOriginalRow();
@@ -463,35 +464,35 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
         try {
             updateWhere = buildWhereClause(updateWhere, origVals);
-
-
+            
+            
              /**
               *  The following block of code is for checking a particular type of
               *  query where in there is a where clause. Without this block, if a
               *  SQL statement is built the "where" clause will appear twice hence
-              *  the DB errors out and a SQLException is thrown. This code also
-              *  considers that the where clause is in the right place as the
+              *  the DB errors out and a SQLException is thrown. This code also 
+              *  considers that the where clause is in the right place as the 
               *  CachedRowSet object would already have been populated with this
               *  query before coming to this point.
               **/
-
-
+              
+              
             String tempselectCmd = selectCmd.toLowerCase();
-
-            int idxWhere = tempselectCmd.indexOf("where");
-
-            if(idxWhere != -1)
-            {
-               String tempSelect = selectCmd.substring(0,idxWhere);
-               selectCmd = tempSelect;
-            }
-
+            	    
+	    int idxWhere = tempselectCmd.indexOf("where");	    
+	    
+	    if(idxWhere != -1)
+	    {	       
+	       String tempSelect = selectCmd.substring(0,idxWhere);	       
+	       selectCmd = tempSelect;	       
+	    }
+	    
             pstmt = con.prepareStatement(selectCmd + updateWhere,
-                        ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
+            		ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                        
             for (i = 0; i < keyCols.length; i++) {
                 if (params[i] != null) {
-                    pstmt.setObject(++idx, params[i]);
+                    pstmt.setObject(++idx, params[i]);                    
                 } else {
                     continue;
                 }
@@ -506,8 +507,8 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                 // Older driver don't support these operations.
             }
 
-            ResultSet rs = null;
-            rs = pstmt.executeQuery();
+            ResultSet rs = null;                        
+            rs = pstmt.executeQuery();            
             if (rs.next() == true) {
 
                 if (rs.next()) {
@@ -520,7 +521,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                     *  crs.setKeyColumns needs to be set to
                     *  come out of this situation.
                     */
-
+		   
                    return true;
                 }
 
@@ -528,7 +529,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                 // we require the record in rs to be used.
                 // rs.close();
                 // pstmt.close();
-                        rs.first();
+		        rs.first();
 
                 // how many fields need to be updated
                 int colsNotChanged = 0;
@@ -552,17 +553,17 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                 orig = origVals.getObject(i);
                 curr = crs.getObject(i);
                 rsval = rs.getObject(i);
-
+                                
                 // reset boolNull if it had been set
-                boolNull = true;
-
-                /** This addtional checking has been added when the current value
-                 *  in the DB is null, but the DB had a different value when the
-                 *  data was actaully fetched into the CachedRowSet.
-                 **/
-
-                if(rsval == null && orig != null) {
-                   // value in db has changed
+                boolNull = true;                
+		
+		/** This addtional checking has been added when the current value
+		 *  in the DB is null, but the DB had a different value when the
+		 *  data was actaully fetched into the CachedRowSet.
+		 **/
+		
+		if(rsval == null && orig != null) {		  		   
+		   // value in db has changed
                     // don't proceed with synchronization
                     // get the value in db and pass it to the resolver.
 
@@ -571,15 +572,15 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                    // in order to set the actual value;
                      boolNull = false;
                      objVal = rsval;
-                }
-
-                /** Adding the checking for rsval to be "not" null or else
-                 *  it would through a NullPointerException when the values
-                 *  are compared.
-                 **/
-
+		}
+		
+		/** Adding the checking for rsval to be "not" null or else
+		 *  it would through a NullPointerException when the values
+		 *  are compared.
+		 **/
+		 
                 else if(rsval != null && (!rsval.equals(orig)))
-                {
+                {                                  	     
                     // value in db has changed
                     // don't proceed with synchronization
                     // get the value in db and pass it to the resolver.
@@ -589,39 +590,39 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                    // in order to set the actual value;
                      boolNull = false;
                      objVal = rsval;
-                } else if (  (orig == null || curr == null) ) {
-
-                        /** Adding the additonal condition of checking for "flag"
-                         *  boolean variable, which would otherwise result in
-                         *  building a invalid query, as the comma would not be
-                         *  added to the query string.
-                         **/
-
+		} else if (  (orig == null || curr == null) ) {
+		
+		        /** Adding the additonal condition of checking for "flag" 
+		         *  boolean variable, which would otherwise result in 
+		         *  building a invalid query, as the comma would not be
+		         *  added to the query string.
+		         **/
+		         
                         if (first == false || flag == false) {
-                          updateExec += ", ";
+                          updateExec += ", ";                          
                          }
                         updateExec += crs.getMetaData().getColumnName(i);
                         cols.add(new Integer(i));
-                        updateExec += " = ? ";
+                        updateExec += " = ? ";                        
                         first = false;
-
-                /** Adding the extra condition for orig to be "not" null as the
-                 *  condition for orig to be null is take prior to this, if this
-                 *  is not added it will result in a NullPointerException when
-                 *  the values are compared.
-                 **/
-
-                }  else if (orig.equals(curr)) {
+                        
+		/** Adding the extra condition for orig to be "not" null as the 
+		 *  condition for orig to be null is take prior to this, if this
+		 *  is not added it will result in a NullPointerException when 
+		 *  the values are compared.
+		 **/
+		 
+                }  else if (orig.equals(curr)) {                       
                        colsNotChanged++;
                      //nothing to update in this case since values are equal
 
-                /** Adding the extra condition for orig to be "not" null as the
-                 *  condition for orig to be null is take prior to this, if this
-                 *  is not added it will result in a NullPointerException when
-                 *  the values are compared.
-                 **/
-
-                } else if(orig.equals(curr) == false) {
+		/** Adding the extra condition for orig to be "not" null as the 
+		 *  condition for orig to be null is take prior to this, if this
+		 *  is not added it will result in a NullPointerException when 
+		 *  the values are compared.
+		 **/
+		 
+                } else if(orig.equals(curr) == false) {                	
                       // When values from db and values in CachedRowSet are not equal,
                       // if db value is same as before updation for each col in
                       // the row before fetching into CachedRowSet,
@@ -648,7 +649,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                                  }
                                 updateExec += crs.getMetaData().getColumnName(i);
                                 cols.add(new Integer(i));
-                                updateExec += " = ? ";
+                                updateExec += " = ? ";                                
                                 flag = false;
                              } else {
                                // Here the value has changed in the db after
@@ -664,13 +665,13 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
                     if(!boolNull) {
                         this.crsResolve.updateObject(i,objVal);
-                                 } else {
-                                      this.crsResolve.updateNull(i);
-                                 }
+			         } else {
+			              this.crsResolve.updateNull(i);
+			         }
                 } //end for
 
                this.crsResolve.insertRow();
-                   this.crsResolve.moveToCurrentRow();
+	           this.crsResolve.moveToCurrentRow();
 
                 /**
                  * if nothing has changed return now - this can happen
@@ -684,18 +685,18 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                     return false;
                 }
 
-                if(iChangedValsInDbAndCRS != 0 || iChangedValsinDbOnly != 0) {
+                if(iChangedValsInDbAndCRS != 0 || iChangedValsinDbOnly != 0) {                                      
                    return true;
                 }
-
-
-                updateExec += updateWhere;
-
+		
+                
+                updateExec += updateWhere;                                                     
+                                
                 pstmt = con.prepareStatement(updateExec);
 
                 // Comments needed here
                 for (i = 0; i < cols.size(); i++) {
-                    Object obj = crs.getObject(((Integer)cols.get(i)).intValue());
+                    Object obj = crs.getObject(((Integer)cols.get(i)).intValue());                    
                     if (obj != null)
                         pstmt.setObject(i + 1, obj);
                     else
@@ -711,7 +712,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                         continue;
                     }
                 }
-
+                                                                 
                 i = pstmt.executeUpdate();
 
                /**
@@ -734,11 +735,11 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
                  *
                  * NOTE:
                  * ------
-                 * In the database if a column that is mapped to java.sql.Types.REAL stores
-                 * a Double value and is compared with value got from ResultSet.getFloat()
+                 * In the database if a column that is mapped to java.sql.Types.REAL stores  
+                 * a Double value and is compared with value got from ResultSet.getFloat() 
                  * no row is retrieved and will throw a SyncProviderException. For details
                  * see bug Id 5053830
-                 **/
+                 **/                                 
                 return true;
             }
         } catch (SQLException ex) {
@@ -753,25 +754,25 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
             this.crsResolve.insertRow();
             this.crsResolve.moveToCurrentRow();
-
+                                                
             return true;
         }
     }
 
     /**
-         * Inserts a row that has been inserted into the given
-         * <code>CachedRowSet</code> object into the data source from which
-         * the rowset is derived, returning <code>false</code> if the insertion
-         * was successful.
-         *
-         * @param crs the <code>CachedRowSet</code> object that has had a row inserted
-         *            and to whose underlying data source the row will be inserted
-         * @param pstmt the <code>PreparedStatement</code> object that will be used
-         *              to execute the insertion
-         * @return <code>false</code> to indicate that the insertion was successful;
-         *         <code>true</code> otherwise
-         * @throws SQLException if a database access error occurs
-         */
+	 * Inserts a row that has been inserted into the given
+	 * <code>CachedRowSet</code> object into the data source from which
+	 * the rowset is derived, returning <code>false</code> if the insertion
+	 * was successful.
+	 *
+	 * @param crs the <code>CachedRowSet</code> object that has had a row inserted
+	 *            and to whose underlying data source the row will be inserted
+	 * @param pstmt the <code>PreparedStatement</code> object that will be used
+	 *              to execute the insertion
+	 * @return <code>false</code> to indicate that the insertion was successful;
+	 *         <code>true</code> otherwise
+	 * @throws SQLException if a database access error occurs
+	 */
     private boolean insertNewRow(CachedRowSet crs,
         PreparedStatement pstmt, CachedRowSetImpl crsRes) throws SQLException {
         int i = 0;
@@ -792,7 +793,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
             primaryKeys[k] = pkcolname;
             k++;
         }
-
+        
         if(rs.next()) {
             for(int j=0;j<primaryKeys.length;j++) {
                 if(primaryKeys[j] != null) {
@@ -819,7 +820,7 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
         }
         if(returnVal)
             return returnVal;
-
+ 
         try {
             for (i = 1; i <= icolCount; i++) {
                 Object obj = crs.getObject(i);
@@ -922,26 +923,26 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
             for (i = 1; i <= crs.getMetaData().getColumnCount(); i++) {
 
-                Object original = origVals.getObject(i);
-                Object changed = rs.getObject(i);
+		Object original = origVals.getObject(i);
+		Object changed = rs.getObject(i); 
 
-                if(original != null && changed != null ) {
+	  	if(original != null && changed != null ) {
                   if(! (original.toString()).equals(changed.toString()) ) {
-                      boolChanged = true;
+		      boolChanged = true;
                       crsRes.updateObject(i,origVals.getObject(i));
-                  }
-                } else {
+                  } 
+		} else {
                    crsRes.updateNull(i);
                }
             }
-
+	  
            crsRes.insertRow();
            crsRes.moveToCurrentRow();
 
            if(boolChanged) {
                // do not delete as values in db have changed
                // deletion will not happen for this row from db
-                   // exit now returning true. i.e. conflict
+	           // exit now returning true. i.e. conflict
                return true;
             } else {
                 // delete the row.
@@ -1028,9 +1029,9 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
             if (table == null || table.length() == 0) {
                 throw new SQLException(resBundle.handleGetObject("crswriter.tname").toString());
             }
-        }
+	}
         String catalog = callerMd.getCatalogName(1);
-            String schema = callerMd.getSchemaName(1);
+	    String schema = callerMd.getSchemaName(1);
         DatabaseMetaData dbmd = con.getMetaData();
 
         /*
@@ -1052,24 +1053,24 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
 
         /*
          * Compose an UPDATE statement.
-         */
+         */         
         updateCmd = "UPDATE " + buildTableName(dbmd, catalog, schema, table);
-
-
+        
+        
         /**
          *  The following block of code is for checking a particular type of
          *  query where in there is a where clause. Without this block, if a
          *  SQL statement is built the "where" clause will appear twice hence
-         *  the DB errors out and a SQLException is thrown. This code also
-         *  considers that the where clause is in the right place as the
+         *  the DB errors out and a SQLException is thrown. This code also 
+         *  considers that the where clause is in the right place as the 
          *  CachedRowSet object would already have been populated with this
          *  query before coming to this point.
          **/
-
+        
         String tempupdCmd = updateCmd.toLowerCase();
-
+        
         int idxupWhere = tempupdCmd.indexOf("where");
-
+        
         if(idxupWhere != -1)
         {
            updateCmd = updateCmd.substring(0,idxupWhere);
@@ -1115,13 +1116,13 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
      * and separator.
      *
      * @param dbmd a <code>DatabaseMetaData</code> object that contains metadata
-     *          about this writer's <code>CachedRowSet</code> object
+     * 		about this writer's <code>CachedRowSet</code> object
      * @param catalog a <code>String</code> object with the rowset's catalog
-     *          name
+     * 		name
      * @param table a <code>String</code> object with the name of the table from
-     *          which this writer's rowset was derived
+     * 		which this writer's rowset was derived
      * @return a <code>String</code> object with the fully qualified name of the
-     *          table from which this writer's rowset was derived
+     *		table from which this writer's rowset was derived
      * @throws SQLException if a database access error occurs
      */
     private String buildTableName(DatabaseMetaData dbmd,
@@ -1140,20 +1141,20 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
             if (catalog != null && catalog.length() > 0) {
                 cmd += catalog + dbmd.getCatalogSeparator();
             }
-            if (schema != null && schema.length() > 0) {
-                cmd += schema + ".";
-            }
+	    if (schema != null && schema.length() > 0) {
+		cmd += schema + ".";
+	    }
             cmd += table;
         } else {
-            if (schema != null && schema.length() > 0) {
-                cmd += schema + ".";
-            }
+	    if (schema != null && schema.length() > 0) {
+		cmd += schema + ".";
+	    }
             cmd += table;
             if (catalog != null && catalog.length() > 0) {
                 cmd += dbmd.getCatalogSeparator() + catalog;
             }
         }
-        cmd += " ";
+        cmd += " ";        
         return cmd;
     }
 
@@ -1189,29 +1190,29 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
     }
 
     /**
-         * Constructs an SQL <code>WHERE</code> clause using the given
-         * string as a starting point. The resulting clause will contain
-         * a column name and " = ?" for each key column, that is, each column
-         * that is needed to form a unique identifier for a row in the rowset.
-         * This <code>WHERE</code> clause can be added to
-         * a <code>PreparedStatement</code> object that updates, inserts, or
-         * deletes a row.
-         * <P>
-         * This method uses the given result set to access values in the
-         * <code>CachedRowSet</code> object that called this writer.  These
-         * values are used to build the array of parameters that will serve as
-         * replacements for the "?" parameter placeholders in the
-         * <code>PreparedStatement</code> object that is sent to the
-         * <code>CachedRowSet</code> object's underlying data source.
-         *
-         * @param whereClause a <code>String</code> object that is an empty
-         *                    string ("")
-         * @param rs a <code>ResultSet</code> object that can be used
-         *           to access the <code>CachedRowSet</code> object's data
-         * @return a <code>WHERE</code> clause of the form "<code>WHERE</code>
-         *         columnName = ? AND columnName = ? AND columnName = ? ..."
-         * @throws SQLException if a database access error occurs
-         */
+	 * Constructs an SQL <code>WHERE</code> clause using the given
+	 * string as a starting point. The resulting clause will contain
+	 * a column name and " = ?" for each key column, that is, each column
+	 * that is needed to form a unique identifier for a row in the rowset.
+	 * This <code>WHERE</code> clause can be added to
+	 * a <code>PreparedStatement</code> object that updates, inserts, or
+	 * deletes a row.
+	 * <P>
+	 * This method uses the given result set to access values in the
+	 * <code>CachedRowSet</code> object that called this writer.  These
+	 * values are used to build the array of parameters that will serve as
+	 * replacements for the "?" parameter placeholders in the
+	 * <code>PreparedStatement</code> object that is sent to the
+	 * <code>CachedRowSet</code> object's underlying data source.
+	 *
+	 * @param whereClause a <code>String</code> object that is an empty
+	 *                    string ("")
+	 * @param rs a <code>ResultSet</code> object that can be used
+	 *           to access the <code>CachedRowSet</code> object's data
+	 * @return a <code>WHERE</code> clause of the form "<code>WHERE</code>
+	 *         columnName = ? AND columnName = ? AND columnName = ? ..."
+	 * @throws SQLException if a database access error occurs
+	 */
     private String buildWhereClause(String whereClause,
                                     ResultSet rs) throws SQLException {
         whereClause = "WHERE ";
@@ -1326,14 +1327,14 @@ public class CachedRowSetWriter implements TransactionalWriter, Serializable {
             con.close();
         }
     }
-
+    
      public void commit(CachedRowSetImpl crs, boolean updateRowset) throws SQLException {
         con.commit();
         if(updateRowset) {
           if(crs.getCommand() != null)
-            crs.execute(con);
+            crs.execute(con);          
         }
-
+        
         if (reader.getCloseConnection() == true) {
             con.close();
         }

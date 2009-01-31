@@ -49,7 +49,7 @@ public class Size {
 
     private static void test1() throws Exception {
         blah = File.createTempFile("blah", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         for(int i=0; i<100; i++) {
             long testSize = generator.nextInt(1000);
             initTestFile(blah, testSize);
@@ -93,7 +93,7 @@ public class Size {
             blah.delete();
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<size; i++) {
             awriter.write("e");

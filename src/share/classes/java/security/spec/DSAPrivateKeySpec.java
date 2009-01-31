@@ -32,6 +32,7 @@ import java.math.BigInteger;
  *
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @see java.security.Key
  * @see java.security.KeyFactory
@@ -51,21 +52,21 @@ public class DSAPrivateKeySpec implements KeySpec {
 
     /**
      * Creates a new DSAPrivateKeySpec with the specified parameter values.
-     *
+     * 
      * @param x the private key.
-     *
+     * 
      * @param p the prime.
-     *
+     * 
      * @param q the sub-prime.
-     *
+     * 
      * @param g the base.
      */
     public DSAPrivateKeySpec(BigInteger x, BigInteger p, BigInteger q,
-                             BigInteger g) {
-        this.x = x;
-        this.p = p;
-        this.q = q;
-        this.g = g;
+			     BigInteger g) {
+	this.x = x;
+	this.p = p;
+	this.q = q;
+	this.g = g;
     }
 
     /**
@@ -74,7 +75,7 @@ public class DSAPrivateKeySpec implements KeySpec {
      * @return the private key <code>x</code>.
      */
     public BigInteger getX() {
-        return this.x;
+	return this.x;
     }
 
     /**
@@ -83,7 +84,7 @@ public class DSAPrivateKeySpec implements KeySpec {
      * @return the prime <code>p</code>.
      */
     public BigInteger getP() {
-        return this.p;
+	return this.p;
     }
 
     /**
@@ -92,7 +93,7 @@ public class DSAPrivateKeySpec implements KeySpec {
      * @return the sub-prime <code>q</code>.
      */
     public BigInteger getQ() {
-        return this.q;
+	return this.q;
     }
 
     /**
@@ -101,6 +102,6 @@ public class DSAPrivateKeySpec implements KeySpec {
      * @return the base <code>g</code>.
      */
     public BigInteger getG() {
-        return this.g;
+	return this.g;
     }
 }

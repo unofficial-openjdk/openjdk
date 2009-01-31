@@ -42,25 +42,26 @@ import java.security.Principal;
  * <P> In addition to the standard session attributes, SSL sessions expose
  * these read-only attributes:  <UL>
  *
- *      <LI> <em>Peer Identity.</em>  Sessions are between a particular
- *      client and a particular server.  The identity of the peer may
- *      have been established as part of session setup.  Peers are
- *      generally identified by X.509 certificate chains.
+ *	<LI> <em>Peer Identity.</em>  Sessions are between a particular
+ *	client and a particular server.  The identity of the peer may
+ *	have been established as part of session setup.  Peers are
+ *	generally identified by X.509 certificate chains.
  *
- *      <LI> <em>Cipher Suite Name.</em>  Cipher suites describe the
- *      kind of cryptographic protection that's used by connections
- *      in a particular session.
+ *	<LI> <em>Cipher Suite Name.</em>  Cipher suites describe the
+ *	kind of cryptographic protection that's used by connections
+ *	in a particular session.
  *
- *      <LI> <em>Peer Host.</em>  All connections in a session are
- *      between the same two hosts.  The address of the host on the other
- *      side of the connection is available.
+ *	<LI> <em>Peer Host.</em>  All connections in a session are
+ *	between the same two hosts.  The address of the host on the other
+ *	side of the connection is available.
  *
- *      </UL>
+ *	</UL>
  *
  * <P> Sessions may be explicitly invalidated.  Invalidation may also
  * be done implicitly, when faced with certain kinds of errors.
  *
  * @since 1.4
+ * @version %I%
  * @author David Brownell
  */
 public interface SSLSession {
@@ -86,7 +87,7 @@ public interface SSLSession {
      * <code>checkPermission</code> method is called with a
      * <code>SSLPermission("getSSLSessionContext")</code> permission.
      *
-     * @throws SecurityException if the calling thread does not have
+     * @throws SecurityException if the calling thread does not have 
      *         permission to get SSL session context.
      * @return the session context used for this session, or null
      * if the context is unavailable.
@@ -162,7 +163,7 @@ public interface SSLSession {
      * visible across different access control contexts.
      *
      * @param name the name to which the data object will be bound.
-     *          This may not be null.
+     *		This may not be null.
      * @param value the data object to be bound. This may not be null.
      * @throws IllegalArgumentException if either argument is null.
      */
@@ -178,7 +179,7 @@ public interface SSLSession {
      *
      * @param name the name of the binding to find.
      * @return the value bound to that name, or null if the binding does
-     *          not exist.
+     *		not exist.
      * @throws IllegalArgumentException if the argument is null.
      */
     public Object getValue(String name);
@@ -195,7 +196,7 @@ public interface SSLSession {
      * visible across different access control contexts.
      *
      * @param name the name of the object to remove visible
-     *          across different access control contexts
+     *		across different access control contexts
      * @throws IllegalArgumentException if the argument is null.
      */
     public void removeValue(String name);
@@ -222,14 +223,14 @@ public interface SSLSession {
      * such as Kerberos, will throw an SSLPeerUnverifiedException.
      *
      * @return an ordered array of peer certificates,
-     *          with the peer's own certificate first followed by any
-     *          certificate authorities.
+     *		with the peer's own certificate first followed by any
+     *		certificate authorities.
      * @exception SSLPeerUnverifiedException if the peer's identity has not
-     *          been verified
+     *		been verified
      * @see #getPeerPrincipal()
      */
     public java.security.cert.Certificate [] getPeerCertificates()
-            throws SSLPeerUnverifiedException;
+	    throws SSLPeerUnverifiedException;
 
     /**
      * Returns the certificate(s) that were sent to the peer during
@@ -266,16 +267,16 @@ public interface SSLSession {
      * {@link #getPeerCertificates} instead.</em></p>
      *
      * @return an ordered array of peer X.509 certificates,
-     *          with the peer's own certificate first followed by any
-     *          certificate authorities.  (The certificates are in
-     *          the original JSSE certificate
-     *          {@link javax.security.cert.X509Certificate} format.)
+     *		with the peer's own certificate first followed by any
+     *		certificate authorities.  (The certificates are in
+     *		the original JSSE certificate
+     *		{@link javax.security.cert.X509Certificate} format.)
      * @exception SSLPeerUnverifiedException if the peer's identity
-     *          has not been verified
+     *		has not been verified
      * @see #getPeerPrincipal()
      */
     public javax.security.cert.X509Certificate [] getPeerCertificateChain()
-            throws SSLPeerUnverifiedException;
+	    throws SSLPeerUnverifiedException;
 
     /**
      * Returns the identity of the peer which was established as part of
@@ -286,7 +287,7 @@ public interface SSLSession {
      * KerberosPrincipal for Kerberos cipher suites.
      *
      * @throws SSLPeerUnverifiedException if the peer's identity has not
-     *          been verified
+     *		been verified
      *
      * @see #getPeerCertificates()
      * @see #getLocalPrincipal()
@@ -294,7 +295,7 @@ public interface SSLSession {
      * @since 1.5
      */
     public Principal getPeerPrincipal()
-            throws SSLPeerUnverifiedException;
+	    throws SSLPeerUnverifiedException;
 
     /**
      * Returns the principal that was sent to the peer during handshaking.
@@ -349,8 +350,8 @@ public interface SSLSession {
      * It is mainly used as a hint for <code>SSLSession</code> caching
      * strategies.
      *
-     * @return  the host name of the peer host, or null if no information
-     *          is available.
+     * @return	the host name of the peer host, or null if no information
+     *		is available.
      */
     public String getPeerHost();
 
@@ -364,8 +365,8 @@ public interface SSLSession {
      * It is mainly used as a hint for <code>SSLSession</code> caching
      * strategies.
      *
-     * @return  the port number of the peer host, or -1 if no information
-     *          is available.
+     * @return	the port number of the peer host, or -1 if no information
+     *		is available.
      *
      * @since 1.5
      */

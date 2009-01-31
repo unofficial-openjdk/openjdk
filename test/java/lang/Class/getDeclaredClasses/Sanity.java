@@ -33,16 +33,16 @@ public class Sanity {
         class BlockLocal { };
         new Object() { };
         Class[] c = Sanity.class.getDeclaredClasses();
-        if (c.length < 2)
-             throw new Exception("Incorrect number of declared classes");
+	if (c.length < 2)
+	     throw new Exception("Incorrect number of declared classes");
 
         for (int i = 0; i < c.length; i++) {
-            String name = c[i].getName();
-            System.out.println(name);
+	    String name = c[i].getName();
+	    System.out.println(name);
 
-            if (c[i] != Nested.class && c[i] != Toplevel.class
-                && !name.matches("\\D\\w*\\$\\d*"))
-                throw new Exception("Unexpected class: " + name);
+	    if (c[i] != Nested.class && c[i] != Toplevel.class
+		&& !name.matches("\\D\\w*\\$\\d*"))
+		throw new Exception("Unexpected class: " + name);
         }
     }
 }

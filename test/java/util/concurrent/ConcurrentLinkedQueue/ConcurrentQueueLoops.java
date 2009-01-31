@@ -67,8 +67,8 @@ public class ConcurrentQueueLoops {
             oneRun(i, items);
         }
         pool.shutdown();
-        if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
-            throw new Error();
+	if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
+	    throw new Error();
    }
 
     static class Stage implements Callable<Integer> {

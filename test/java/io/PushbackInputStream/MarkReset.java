@@ -32,26 +32,26 @@ import java.io.*;
 public class MarkReset {
     public static void main(String args[]) throws Exception {
 
-        boolean expOccurred = false;
-        byte data[] = {90, 91, 92, 93, 94, 95, 96, 97};
-        PushbackInputStream in =
-            new PushbackInputStream(new ByteArrayInputStream(data));
+	boolean expOccurred = false;
+	byte data[] = {90, 91, 92, 93, 94, 95, 96, 97};
+        PushbackInputStream in = 
+	    new PushbackInputStream(new ByteArrayInputStream(data));
         in.mark(-5);
-        in.mark(6);
+	in.mark(6);
         in.mark(Integer.MAX_VALUE);
-        try {
-            in.reset();
+	try {
+	    in.reset();
             throw new RuntimeException("Expected exception not thrown");
-        } catch (IOException e) {
-            // Correct result
-        }
-        in.read();
-        in.read();
-        try {
-            in.reset();
+	} catch (IOException e) {
+	    // Correct result
+	}
+	in.read();
+	in.read();
+	try {
+	    in.reset();
             throw new RuntimeException("Expected exception not thrown");
-        } catch (IOException e) {
-            // Correct result
-        }
+	} catch (IOException e) {
+	    // Correct result
+	}
     }
 }

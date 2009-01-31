@@ -31,6 +31,7 @@ import java.util.EventListener;
  * Interface for listeners of MonitoredHost events.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  * @see sun.jvmstat.monitor.MonitoredHost
  */

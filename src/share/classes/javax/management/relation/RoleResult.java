@@ -83,20 +83,20 @@ public class RoleResult implements Serializable {
     private static final ObjectStreamField[] serialPersistentFields;
     private static boolean compat = false;
     static {
-        try {
-            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-            String form = AccessController.doPrivileged(act);
-            compat = (form != null && form.equals("1.0"));
-        } catch (Exception e) {
-            // OK : Too bad, no compat with 1.0
-        }
-        if (compat) {
-            serialPersistentFields = oldSerialPersistentFields;
-            serialVersionUID = oldSerialVersionUID;
-        } else {
-            serialPersistentFields = newSerialPersistentFields;
-            serialVersionUID = newSerialVersionUID;
-        }
+	try {
+	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+	    String form = AccessController.doPrivileged(act);
+	    compat = (form != null && form.equals("1.0"));
+	} catch (Exception e) {
+	    // OK : Too bad, no compat with 1.0
+	}
+	if (compat) {
+	    serialPersistentFields = oldSerialPersistentFields;
+	    serialVersionUID = oldSerialVersionUID;
+	} else {
+	    serialPersistentFields = newSerialPersistentFields;
+	    serialVersionUID = newSerialVersionUID;
+	}
     }
     //
     // END Serialization compatibility stuff
@@ -127,11 +127,11 @@ public class RoleResult implements Serializable {
      * descriptions).
      */
     public RoleResult(RoleList list,
-                      RoleUnresolvedList unresolvedList) {
+		      RoleUnresolvedList unresolvedList) {
 
-        setRoles(list);
-        setRolesUnresolved(unresolvedList);
-        return;
+	setRoles(list);
+	setRolesUnresolved(unresolvedList);
+	return;
     }
 
     //
@@ -146,7 +146,7 @@ public class RoleResult implements Serializable {
      * @see #setRoles
      */
     public RoleList getRoles() {
-        return roleList;
+	return roleList;
     }
 
     /**
@@ -157,7 +157,7 @@ public class RoleResult implements Serializable {
      * @see #setRolesUnresolved
      */
     public RoleUnresolvedList getRolesUnresolved() {
-        return unresolvedRoleList;
+	return unresolvedRoleList;
     }
 
     /**
@@ -168,19 +168,19 @@ public class RoleResult implements Serializable {
      * @see #getRoles
      */
     public void setRoles(RoleList list) {
-        if (list != null) {
+	if (list != null) {
 
-            roleList = new RoleList();
+	    roleList = new RoleList();
 
-            for (Iterator roleIter = list.iterator();
-                 roleIter.hasNext();) {
-                Role currRole = (Role)(roleIter.next());
-                roleList.add((Role)(currRole.clone()));
-            }
-        } else {
-            roleList = null;
-        }
-        return;
+	    for (Iterator roleIter = list.iterator();
+		 roleIter.hasNext();) {
+		Role currRole = (Role)(roleIter.next());
+		roleList.add((Role)(currRole.clone()));
+	    }
+	} else {
+	    roleList = null;
+	}
+	return;
     }
 
     /**
@@ -191,39 +191,39 @@ public class RoleResult implements Serializable {
      * @see #getRolesUnresolved
      */
     public void setRolesUnresolved(RoleUnresolvedList unresolvedList) {
-        if (unresolvedList != null) {
+	if (unresolvedList != null) {
 
-            unresolvedRoleList = new RoleUnresolvedList();
+	    unresolvedRoleList = new RoleUnresolvedList();
 
-            for (Iterator roleUnresIter = unresolvedList.iterator();
-                 roleUnresIter.hasNext();) {
-                RoleUnresolved currRoleUnres =
-                    (RoleUnresolved)(roleUnresIter.next());
-                unresolvedRoleList.add((RoleUnresolved)(currRoleUnres.clone()));
-            }
-        } else {
-            unresolvedRoleList = null;
-        }
-        return;
+	    for (Iterator roleUnresIter = unresolvedList.iterator();
+		 roleUnresIter.hasNext();) {
+		RoleUnresolved currRoleUnres =
+		    (RoleUnresolved)(roleUnresIter.next());
+		unresolvedRoleList.add((RoleUnresolved)(currRoleUnres.clone()));
+	    }
+	} else {
+	    unresolvedRoleList = null;
+	}
+	return;
     }
 
     /**
      * Deserializes a {@link RoleResult} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+	    throws IOException, ClassNotFoundException {
       if (compat)
       {
         // Read an object serialized in the old serial form
         //
         ObjectInputStream.GetField fields = in.readFields();
-        roleList = (RoleList) fields.get("myRoleList", null);
-        if (fields.defaulted("myRoleList"))
+	roleList = (RoleList) fields.get("myRoleList", null);
+	if (fields.defaulted("myRoleList"))
         {
           throw new NullPointerException("myRoleList");
         }
-        unresolvedRoleList = (RoleUnresolvedList) fields.get("myRoleUnresList", null);
-        if (fields.defaulted("myRoleUnresList"))
+	unresolvedRoleList = (RoleUnresolvedList) fields.get("myRoleUnresList", null);
+	if (fields.defaulted("myRoleUnresList"))
         {
           throw new NullPointerException("myRoleUnresList");
         }
@@ -241,15 +241,15 @@ public class RoleResult implements Serializable {
      * Serializes a {@link RoleResult} to an {@link ObjectOutputStream}.
      */
     private void writeObject(ObjectOutputStream out)
-            throws IOException {
+	    throws IOException {
       if (compat)
       {
         // Serializes this instance in the old serial form
         //
         ObjectOutputStream.PutField fields = out.putFields();
-        fields.put("myRoleList", roleList);
-        fields.put("myRoleUnresList", unresolvedRoleList);
-        out.writeFields();
+	fields.put("myRoleList", roleList);
+	fields.put("myRoleUnresList", unresolvedRoleList);
+	out.writeFields();
       }
       else
       {

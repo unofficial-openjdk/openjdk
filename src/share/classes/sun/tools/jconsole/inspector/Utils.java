@@ -36,10 +36,10 @@ import javax.swing.text.*;
 import java.util.*;
 
 public class Utils {
-
+    
     private Utils() {
     }
-
+    
     private static Set<Integer> tableNavigationKeys =
             new HashSet<Integer>(Arrays.asList(new Integer[] {
         KeyEvent.VK_TAB, KeyEvent.VK_ENTER,
@@ -47,38 +47,38 @@ public class Utils {
         KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT,
         KeyEvent.VK_UP, KeyEvent.VK_DOWN,
         KeyEvent.VK_PAGE_UP, KeyEvent.VK_PAGE_DOWN}));
-
+    
     private static final Set<Class<?>> primitiveWrappers =
             new HashSet<Class<?>>(Arrays.asList(new Class<?>[] {
         Byte.class, Short.class, Integer.class, Long.class,
         Float.class, Double.class, Character.class, Boolean.class}));
-
+    
     private static final Set<Class<?>> primitives = new HashSet<Class<?>>();
-
+    
     private static final Map<String, Class<?>> primitiveMap =
             new HashMap<String, Class<?>>();
-
+    
     private static final Map<String, Class<?>> primitiveToWrapper =
             new HashMap<String, Class<?>>();
-
+    
     private static final Set<String> editableTypes = new HashSet<String>();
-
+    
     private static final Set<Class<?>> extraEditableClasses =
             new HashSet<Class<?>>(Arrays.asList(new Class<?>[] {
         BigDecimal.class, BigInteger.class, Number.class,
         String.class, ObjectName.class}));
-
+    
     private static final Set<String> numericalTypes = new HashSet<String>();
-
+    
     private static final Set<String> extraNumericalTypes =
             new HashSet<String>(Arrays.asList(new String[] {
         BigDecimal.class.getName(), BigInteger.class.getName(),
         Number.class.getName()}));
-
+    
     private static final Set<String> booleanTypes =
             new HashSet<String>(Arrays.asList(new String[] {
         Boolean.TYPE.getName(), Boolean.class.getName()}));
-
+    
     static {
         // compute primitives/primitiveMap/primitiveToWrapper
         for (Class<?> c : primitiveWrappers) {
@@ -116,7 +116,7 @@ public class Utils {
             }
         }
     }
-
+    
     /**
      * This method returns the class matching the name className.
      * It's used to cater for the primitive types.
@@ -128,7 +128,7 @@ public class Utils {
             return c;
         return Class.forName(className);
     }
-
+    
     /**
      * Check if the given collection is a uniform collection of the given type.
      */
@@ -149,7 +149,7 @@ public class Utils {
         }
         return true;
     }
-
+    
     /**
      * Check if the given element denotes a supported array-friendly data
      * structure, i.e. a data structure jconsole can render as an array.
@@ -176,7 +176,7 @@ public class Utils {
         }
         return false;
     }
-
+    
     /**
      * Check if the given element is an array.
      *
@@ -201,7 +201,7 @@ public class Utils {
         }
         return true;
     }
-
+    
     /**
      * This method provides a readable classname if it's an array,
      * i.e. either the classname of the component type for arrays
@@ -228,7 +228,7 @@ public class Utils {
         }
         return className;
     }
-
+    
     /**
      * This methods provides a readable classname. If the supplied name
      * parameter denotes an array this method returns either the classname
@@ -247,7 +247,7 @@ public class Utils {
         }
         return brackets.toString();
     }
-
+    
     /**
      * This method tells whether the type is editable
      * (means can be created with a String or not)
@@ -255,7 +255,7 @@ public class Utils {
     public static boolean isEditableType(String type) {
         return editableTypes.contains(type);
     }
-
+    
     /**
      * This method inserts a default value for the standard java types,
      * else it inserts the text name of the expected class type.
@@ -277,7 +277,7 @@ public class Utils {
             return type;
         }
     }
-
+    
     /**
      * Try to create a Java object using a one-string-param constructor.
      */
@@ -295,7 +295,7 @@ public class Utils {
             }
         }
     }
-
+    
     /**
      * Try to convert a string value into a numerical value.
      */
@@ -329,7 +329,7 @@ public class Utils {
         throw new NumberFormatException("Cannot convert string value '" +
                 value + "' into a numerical value");
     }
-
+    
     /**
      * This method attempts to create an object of the given "type"
      * using the "value" parameter.
@@ -361,7 +361,7 @@ public class Utils {
         }
         return result;
     }
-
+    
     /**
      * This method is responsible for converting the inputs given by the user
      * into a useful object array for passing into a parameter array.
@@ -383,7 +383,7 @@ public class Utils {
         }
         return result;
     }
-
+    
     /**
      * If the exception is wrapped, unwrap it.
      */
@@ -397,7 +397,7 @@ public class Utils {
         }
         return e;
     }
-
+    
     @SuppressWarnings("serial")
     public static class ReadOnlyTableCellEditor
             extends DefaultCellEditor {
@@ -407,7 +407,7 @@ public class Utils {
             tf.addKeyListener(new Utils.CopyKeyAdapter());
         }
     }
-
+    
     public static class EditFocusAdapter extends FocusAdapter {
         private CellEditor editor;
         public EditFocusAdapter(CellEditor editor) {
@@ -417,7 +417,7 @@ public class Utils {
             editor.stopCellEditing();
         }
     };
-
+    
     public static class CopyKeyAdapter extends KeyAdapter {
         private static final String defaultEditorKitCopyActionName =
                 DefaultEditorKit.copyAction;

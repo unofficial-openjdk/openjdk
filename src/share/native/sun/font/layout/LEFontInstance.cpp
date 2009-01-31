@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)LEFontInstance.cpp	1.4 06/12/13
  *
  *******************************************************************************
  *
@@ -100,3 +101,4 @@ LEGlyphID LEFontInstance::mapCharToGlyph(LEUnicode32 ch, const LECharMapper *map
 
     return mapCharToGlyph(mappedChar);
 }
+

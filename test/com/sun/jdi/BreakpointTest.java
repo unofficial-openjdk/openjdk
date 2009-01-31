@@ -42,7 +42,7 @@ import java.util.*;
 // sets a bkpt on the Math.random call.  When the
 // bkpt is hit, the debugger disables it, resumes
 // the debuggee, waits a bit, and enables the bkpt again.
-
+  
 class BreakpointTarg {
     public final static int BKPT_LINE = 54;
             // LINE NUMBER SENSITIVE
@@ -76,7 +76,7 @@ public class BreakpointTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new BreakpointTest(args).startTests();
     }
 
@@ -153,7 +153,7 @@ public class BreakpointTest extends TestScaffold {
             } catch (InterruptedException ee) {
             }
         }
-
+        
         println("done with loop, final count = " +
                     ((LongValue)targetClass.
                      getValue(debuggeeCountField)).value());
@@ -172,3 +172,4 @@ public class BreakpointTest extends TestScaffold {
         }
     }
 }
+

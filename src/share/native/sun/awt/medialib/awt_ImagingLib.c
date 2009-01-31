@@ -71,7 +71,7 @@
     /* ((color - (alpha>>(nBits-1)))<<nBits)/alpha */
 #define UNBLEND(color, alpha, alphaNbits) \
     ((((color)-((alpha)>>((alphaNbits)-1)))<<(alphaNbits))/(alpha))
-
+    
 /* Enumeration of all of the mlib functions used */
 typedef enum {
     MLIB_CONVMxN,
@@ -137,7 +137,7 @@ static int
 storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
                 mlib_image *mlibImP);
 
-static int
+static int 
 storeRasterArray(JNIEnv *env, RasterS_t *srcP, RasterS_t *dstP,
                 mlib_image *mlibImP);
 
@@ -223,7 +223,7 @@ printMedialibError(int status) {
 JNIEXPORT jint JNICALL
 Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
                                          jobject jsrc, jobject jdst,
-                                         jobject jkernel, jint edgeHint)
+                                         jobject jkernel, jint edgeHint) 
 {
     void *sdata, *ddata;
     mlib_image *src;
@@ -245,7 +245,7 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
     int x, y;
     mlibHintS_t hint;
     int nbands;
-
+    
     /* This function requires a lot of local refs ??? Is 64 enough ??? */
     if ((*env)->EnsureLocalCapacity(env, 64) < 0)
         return 0;
@@ -286,7 +286,7 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
         (*env)->ReleasePrimitiveArrayCritical(env, jdata, kern, JNI_ABORT);
         return 0;
     }
-
+    
     /* Need to flip and find max value of the kernel.
      * Also, save the kernel values as mlib_d64 values.
      * The flip is to operate correctly with medialib,
@@ -304,8 +304,8 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
         for (x=0; x < kwidth; x++, i--) {
             dkern[y*w+x] = (mlib_d64) kern[i];
             if (kern[i] > kmax) {
-                kmax = kern[i];
-            }
+	        kmax = kern[i];
+	    }
         }
     }
 
@@ -360,7 +360,7 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
         free(dkern);
         return 0;
     }
-
+    
     kdata = NULL;
     if (SAFE_TO_ALLOC_3(w, h, sizeof(mlib_s32))) {
         kdata = (mlib_s32 *)malloc(w * h * sizeof(mlib_s32));
@@ -382,7 +382,7 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
         free(kdata);
         return 0;
     }
-
+    
     if (s_printIt) {
         fprintf(stderr, "Orig Kernel(len=%d):\n",klen);
         for (y=kheight-1; y >= 0; y--) {
@@ -405,13 +405,13 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
         int kh2 = kheight>>1;
         int bsize = mlib_ImageGetChannels(src)*
             (mlib_ImageGetType(src) == MLIB_BYTE ? 1 : 2);
-
+        
         void *dstDataP = mlib_ImageGetData(dst);
         void *srcDataP = mlib_ImageGetData(src);
         /* REMIND: Copy a smaller area */
         memcpy(dstDataP, srcDataP, dst->width*dst->height*bsize);
     }
-
+    
     cmask = (1<<src->channels)-1;
     status = (*sMlibFns[MLIB_CONVMxN].fptr)(dst, src, kdata, w, h,
                                (w-1)/2, (h-1)/2, scale, cmask,
@@ -469,14 +469,14 @@ Java_sun_awt_image_ImagingLib_convolveBI(JNIEnv *env, jobject this,
     free(kdata);
 
     if (s_timeIt) (*stop_timer)(3600, 1);
-
+    
     return retStatus;
 }
 
 JNIEXPORT jint JNICALL
 Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
                                              jobject jsrc, jobject jdst,
-                                             jobject jkernel, jint edgeHint)
+                                             jobject jkernel, jint edgeHint) 
 {
     mlib_image *src;
     mlib_image *dst;
@@ -515,7 +515,7 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         /* out of memory exception already thrown */
         return 0;
     }
-
+    
     if ((kwidth&0x1) == 0) {
         /* Kernel has even width */
         w = kwidth+1;
@@ -539,7 +539,7 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         (*env)->ReleasePrimitiveArrayCritical(env, jdata, kern, JNI_ABORT);
         return 0;
     }
-
+    
     /* Need to flip and find max value of the kernel.
      * Also, save the kernel values as mlib_d64 values.
      * The flip is to operate correctly with medialib,
@@ -557,8 +557,8 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         for (x=0; x < kwidth; x++, i--) {
             dkern[y*w+x] = (mlib_d64) kern[i];
             if (kern[i] > kmax) {
-                kmax = kern[i];
-            }
+	        kmax = kern[i];
+	    }
         }
     }
 
@@ -576,7 +576,7 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         free(dkern);
         return -1;
     }
-
+    
     if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
         JNU_ThrowOutOfMemoryError(env, "Out of memory");
         free(srcRasterP);
@@ -642,7 +642,7 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         free(kdata);
         return 0;
     }
-
+    
     if (s_printIt) {
         fprintf(stderr, "Orig Kernel(len=%d):\n",klen);
         for (y=kheight-1; y >= 0; y--) {
@@ -665,13 +665,13 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
         int kh2 = kheight>>1;
         int bsize = mlib_ImageGetChannels(src)*
             (mlib_ImageGetType(src) == MLIB_BYTE ? 1 : 2);
-
+        
         void *dstDataP = mlib_ImageGetData(dst);
         void *srcDataP = mlib_ImageGetData(src);
         /* REMIND: Copy a smaller area */
         memcpy(dstDataP, srcDataP, dst->width*dst->height*bsize);
     }
-
+    
     cmask = (1<<src->channels)-1;
     status = (*sMlibFns[MLIB_CONVMxN].fptr)(dst, src, kdata, w, h,
                                (w-1)/2, (h-1)/2, scale, cmask,
@@ -715,7 +715,7 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
     if (ddata == NULL) {
         unsigned char *bdataP;
         unsigned short *sdataP;
-
+        
         /* Punt for now */
         switch (dstRasterP->dataType) {
         case BYTE_DATA_TYPE:
@@ -747,10 +747,10 @@ Java_sun_awt_image_ImagingLib_convolveRaster(JNIEnv *env, jobject this,
 
 JNIEXPORT jint JNICALL
 Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
-                                          jobject jsrc,
+                                          jobject jsrc, 
                                           jobject jdst,
                                           jdoubleArray jmatrix,
-                                          jint interpType)
+                                          jint interpType) 
 {
     mlib_image *src;
     mlib_image *dst;
@@ -777,7 +777,7 @@ Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
     if (s_timeIt) {
         (*start_timer)(3600);
     }
-
+    
     switch(interpType) {
     case java_awt_image_AffineTransformOp_TYPE_BILINEAR:
         filter = MLIB_BILINEAR;
@@ -792,7 +792,7 @@ Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
         JNU_ThrowInternalError(env, "Unknown interpolation type");
         return -1;
     }
-
+    
     if ((*env)->GetArrayLength(env, jmatrix) < 6) {
         /*
          * Very unlikely, however we should check for this:
@@ -811,7 +811,7 @@ Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
         printf("matrix is %g %g %g %g %g %g\n", matrix[0], matrix[1],
                matrix[2], matrix[3], matrix[4], matrix[5]);
     }
-
+    
     mtx[0] = matrix[0];
     mtx[1] = matrix[2];
     mtx[2] = matrix[4];
@@ -820,7 +820,7 @@ Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
     mtx[5] = matrix[5];
 
     (*env)->ReleasePrimitiveArrayCritical(env, jmatrix, matrix, JNI_ABORT);
-
+    
     /* Parse the source image */
     if ((status = awt_parseImage(env, jsrc, &srcImageP, FALSE)) <= 0) {
         /* Can't handle any custom images */
@@ -874,7 +874,7 @@ fprintf(stderr,"Width   : %d\n",src->width);
 fprintf(stderr,"Height  : %d\n",src->height);
 fprintf(stderr,"Stride  : %d\n",src->stride);
 fprintf(stderr,"Flags   : %d\n",src->flags);
-
+ 
 fprintf(stderr,"Dst----------------\n");
 fprintf(stderr,"Type : %d\n",dst->type);
 fprintf(stderr,"Channels: %d\n",dst->channels);
@@ -899,7 +899,7 @@ fprintf(stderr,"Flags   : %d\n",dst->flags);
         freeArray(env, srcImageP, src, sdata, dstImageP, dst, ddata);
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
-
+        
         return 0;
     }
 
@@ -944,7 +944,7 @@ fprintf(stderr,"Flags   : %d\n",dst->flags);
         /* Release the pinned memory */
         freeArray(env, srcImageP, src, sdata, dstImageP, dst, ddata);
     }
-
+    
     awt_freeParsedImage(srcImageP, TRUE);
     awt_freeParsedImage(dstImageP, TRUE);
 
@@ -955,10 +955,10 @@ fprintf(stderr,"Flags   : %d\n",dst->flags);
 
 JNIEXPORT jint JNICALL
 Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
-                                              jobject jsrc,
+                                              jobject jsrc, 
                                               jobject jdst,
                                               jdoubleArray jmatrix,
-                                              jint interpType)
+                                              jint interpType) 
 {
     mlib_image *src;
     mlib_image *dst;
@@ -978,7 +978,7 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         JNU_ThrowOutOfMemoryError(env, "Out of memory");
         return -1;
     }
-
+    
     if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
         JNU_ThrowOutOfMemoryError(env, "Out of memory");
         free(srcRasterP);
@@ -1003,12 +1003,12 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         JNU_ThrowInternalError(env, "Unknown interpolation type");
         return -1;
     }
-
+    
     if (s_nomlib) return 0;
     if (s_timeIt) {
         (*start_timer)(3600);
     }
-
+    
     if ((*env)->GetArrayLength(env, jmatrix) < 6) {
         /*
          * Very unlikely, however we should check for this:
@@ -1031,7 +1031,7 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         printf("matrix is %g %g %g %g %g %g\n", matrix[0], matrix[1],
                matrix[2], matrix[3], matrix[4], matrix[5]);
     }
-
+    
     mtx[0] = matrix[0];
     mtx[1] = matrix[2];
     mtx[2] = matrix[4];
@@ -1040,7 +1040,7 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
     mtx[5] = matrix[5];
 
     (*env)->ReleasePrimitiveArrayCritical(env, jmatrix, matrix, JNI_ABORT);
-
+    
     /* Parse the source raster */
     if ((status = awt_parseRaster(env, jsrc, srcRasterP)) <= 0) {
         /* Can't handle any custom rasters */
@@ -1071,7 +1071,7 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         awt_freeParsedRaster(dstRasterP, TRUE);
         return 0;
     }
-
+    
 #if 0
 fprintf(stderr,"Src----------------\n");
 fprintf(stderr,"Type : %d\n",src->type);
@@ -1080,7 +1080,7 @@ fprintf(stderr,"Width   : %d\n",src->width);
 fprintf(stderr,"Height  : %d\n",src->height);
 fprintf(stderr,"Stride  : %d\n",src->stride);
 fprintf(stderr,"Flags   : %d\n",src->flags);
-
+ 
 fprintf(stderr,"Dst----------------\n");
 fprintf(stderr,"Type : %d\n",dst->type);
 fprintf(stderr,"Channels: %d\n",dst->channels);
@@ -1134,7 +1134,7 @@ fprintf(stderr,"Flags   : %d\n",dst->flags);
     if (ddata == NULL) {
         unsigned char *bdataP;
         unsigned short *sdataP;
-
+        
         /* Need to store it back into the array */
         if (storeRasterArray(env, srcRasterP, dstRasterP, dst) < 0) {
             /* Punt for now */
@@ -1156,7 +1156,7 @@ fprintf(stderr,"Flags   : %d\n",dst->flags);
     /* Release the pinned memory */
     freeDataArray(env, srcRasterP->jdata, src, sdata,
                   dstRasterP->jdata, dst, ddata);
-
+    
     awt_freeParsedRaster(srcRasterP, TRUE);
     awt_freeParsedRaster(dstRasterP, TRUE);
 
@@ -1185,7 +1185,7 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     int nbands;
     int ncomponents;
     mlibHintS_t hint;
-
+    
     /* This function requires a lot of local refs ??? Is 64 enough ??? */
     if ((*env)->EnsureLocalCapacity(env, 64) < 0)
         return 0;
@@ -1217,7 +1217,7 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
         tbl = (unsigned char **)
             calloc(1, ncomponents * sizeof(unsigned char *));
     }
-
+    
     jtable = NULL;
     if (SAFE_TO_ALLOC_2(jlen, sizeof(jobject *))) {
         jtable = (jobject *)malloc(jlen * sizeof (jobject *));
@@ -1227,7 +1227,7 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     if (SAFE_TO_ALLOC_2(jlen, sizeof(unsigned char *))) {
         table = (unsigned char **)malloc(jlen * sizeof(unsigned char *));
     }
-
+    
     if (tbl == NULL || table == NULL || jtable == NULL) {
         awt_freeParsedImage(srcImageP, TRUE);
         awt_freeParsedImage(dstImageP, TRUE);
@@ -1267,13 +1267,13 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     }
 
     /* Set up a straight lut so we don't mess around with alpha */
-    /*
+    /* 
      * NB: medialib lookup routine expects lookup array for each
-     * component of source image including alpha.
+     * component of source image including alpha. 
      * If lookup table we got form the java layer does not contain
      * sufficient number of lookup arrays we add references to identity
      * lookup array to make medialib happier.
-     */
+     */ 
     if (jlen < ncomponents) {
         int j;
         /* REMIND: This should be the size of the input lut!! */
@@ -1283,21 +1283,21 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
         for (j=0; j < ncomponents; j++) {
             tbl[j] = lut;
         }
-
+    
     }
 
     for (i=0; i < jlen; i++) {
-        table[i] = (unsigned char *)
-            (*env)->GetPrimitiveArrayCritical(env, jtable[i], NULL);
+        table[i] = (unsigned char *) 
+	    (*env)->GetPrimitiveArrayCritical(env, jtable[i], NULL);
         if (table[i] == NULL) {
-            /* Free what we've got so far. */
-            int j;
-            for (j = 0; j < i; j++) {
-                (*env)->ReleasePrimitiveArrayCritical(env,
-                                                      jtable[j],
-                                                      (jbyte *) table[j],
-                                                      JNI_ABORT);
-            }
+	    /* Free what we've got so far. */ 
+	    int j;
+	    for (j = 0; j < i; j++) {
+	        (*env)->ReleasePrimitiveArrayCritical(env, 
+						      jtable[j],
+						      (jbyte *) table[j],
+						      JNI_ABORT);
+	    }
             freeArray(env, srcImageP, src, sdata, NULL, NULL, NULL);
             awt_freeParsedImage(srcImageP, TRUE);
             awt_freeParsedImage(dstImageP, TRUE);
@@ -1365,28 +1365,28 @@ Java_sun_awt_image_ImagingLib_lookupByteBI(JNIEnv *env, jobject this,
     /* Release the LUT */
     for (i=0; i < jlen; i++) {
         (*env)->ReleasePrimitiveArrayCritical(env, jtable[i],
-                                              (jbyte *) table[i], JNI_ABORT);
+					      (jbyte *) table[i], JNI_ABORT);
     }
     free ((void *) jtable);
     free ((void *) table);
     free ((void *) tbl);
-
+    
     /* Release the pinned memory */
     freeArray(env, srcImageP, src, sdata, dstImageP, dst, ddata);
-
+    
     awt_freeParsedImage(srcImageP, TRUE);
     awt_freeParsedImage(dstImageP, TRUE);
 
-    if (s_timeIt) (*stop_timer)(3600, 1);
-
+    if (s_timeIt) (*stop_timer)(3600, 1); 
+    
     return retStatus;
 }
 
 
 JNIEXPORT jint JNICALL
-Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
+Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env, 
                                                jobject this,
-                                               jobject jsrc,
+                                               jobject jsrc, 
                                                jobject jdst,
                                                jobjectArray jtableArrays)
 {
@@ -1394,7 +1394,7 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
     RasterS_t*     dstRasterP;
     mlib_image*    src;
     mlib_image*    dst;
-    void*          sdata;
+    void*          sdata; 
     void*          ddata;
     jobject        jtable[4];
     unsigned char* table[4];
@@ -1418,7 +1418,7 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
         JNU_ThrowOutOfMemoryError(env, "Out of memory");
         return -1;
     }
-
+    
     if ((dstRasterP = (RasterS_t *) calloc(1, sizeof(RasterS_t))) == NULL) {
         JNU_ThrowOutOfMemoryError(env, "Out of memory");
         free(srcRasterP);
@@ -1443,8 +1443,8 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
     dst_nbands = dstRasterP->numBands;
 
     /* MediaLib can't do more than 4 bands */
-    if (src_nbands <= 0 || src_nbands > 4 ||
-        dst_nbands <= 0 || dst_nbands > 4 ||
+    if (src_nbands <= 0 || src_nbands > 4 || 
+        dst_nbands <= 0 || dst_nbands > 4 || 
         lut_nbands <= 0 || lut_nbands > 4 ||
         src_nbands != dst_nbands ||
         ((lut_nbands != 1) && (lut_nbands != src_nbands)))
@@ -1490,7 +1490,7 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
     if (src->channels != dst->channels) {
         freeDataArray(env, srcRasterP->jdata, src, sdata,
                       dstRasterP->jdata, dst, ddata);
-
+        
         awt_freeParsedRaster(srcRasterP, TRUE);
         awt_freeParsedRaster(dstRasterP, TRUE);
         return 0;
@@ -1501,7 +1501,7 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
             ilut[i] = i;
         }
     }
-
+        
 
     /* Get references to the lookup table arrays */
     /* Need to grab these pointers before we lock down arrays */
@@ -1513,18 +1513,18 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
     }
 
     for (i=0; i < lut_nbands; i++) {
-        table[i] = (unsigned char *)
-            (*env)->GetPrimitiveArrayCritical(env, jtable[i], NULL);
+        table[i] = (unsigned char *) 
+	    (*env)->GetPrimitiveArrayCritical(env, jtable[i], NULL);
         if (table[i] == NULL) {
-            /* Free what we've got so far. */
-            int j;
-            for (j = 0; j < i; j++) {
-                (*env)->ReleasePrimitiveArrayCritical(env,
-                                                      jtable[j],
-                                                      (jbyte *) table[j],
-                                                      JNI_ABORT);
-            }
-            freeDataArray(env, srcRasterP->jdata, src, sdata,
+	    /* Free what we've got so far. */ 
+	    int j;
+	    for (j = 0; j < i; j++) {
+	        (*env)->ReleasePrimitiveArrayCritical(env, 
+						      jtable[j],
+						      (jbyte *) table[j],
+						      JNI_ABORT);
+	    }
+            freeDataArray(env, srcRasterP->jdata, src, sdata, 
                           dstRasterP->jdata, dst, ddata);
             awt_freeParsedRaster(srcRasterP, TRUE);
             awt_freeParsedRaster(dstRasterP, TRUE);
@@ -1536,7 +1536,7 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
      * Medialib routine expects lookup array for each band of raster.
      * Setup the  rest of lookup arrays if supplied lookup table
      * contains single lookup array.
-     */
+     */ 
     for (i = lut_nbands; i < src_nbands; i++) {
         table[i] = table[0];
     }
@@ -1576,7 +1576,7 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
                           npix--;
                     }
 
-                    /*
+                    /* 
                      * Do NLUT pixels per loop iteration.
                      * Pack into ints and write out 2 at a time.
                      */
@@ -1668,18 +1668,18 @@ Java_sun_awt_image_ImagingLib_lookupByteRaster(JNIEnv *env,
     /* Release the LUT */
     for (i=0; i < lut_nbands; i++) {
         (*env)->ReleasePrimitiveArrayCritical(env, jtable[i],
-                                              (jbyte *) table[i], JNI_ABORT);
+					      (jbyte *) table[i], JNI_ABORT);
     }
-
+    
     /* Release the pinned memory */
-    freeDataArray(env, srcRasterP->jdata, src, sdata,
+    freeDataArray(env, srcRasterP->jdata, src, sdata, 
                   dstRasterP->jdata, dst, ddata);
-
+    
     awt_freeParsedRaster(srcRasterP, TRUE);
     awt_freeParsedRaster(dstRasterP, TRUE);
 
-    if (s_timeIt) (*stop_timer)(3600, 1);
-
+    if (s_timeIt) (*stop_timer)(3600, 1); 
+    
     return retStatus;
 }
 
@@ -1701,7 +1701,7 @@ Java_sun_awt_image_ImagingLib_init(JNIEnv *env, jclass thisClass) {
     if ((start = getenv("IMLIB_START")) != NULL) {
         sscanf(start, "%d", &s_startOff);
     }
-
+    
     if (getenv ("IMLIB_NOMLIB")) {
         s_nomlib = 1;
         return JNI_FALSE;
@@ -1729,7 +1729,7 @@ static void extendEdge(JNIEnv *env, BufImageS_t *imageP,
                                                  g_RasterBaseRasterID);
     width = rasterP->width;
     height = rasterP->height;
-#ifdef WORKING
+#ifdef WORKING    
     if (! JNU_IsNull(env, jbaseraster) &&
         !(*env)->IsSameObject(env, rasterP->jraster, jbaseraster)) {
         int xOff;
@@ -1754,10 +1754,10 @@ static void extendEdge(JNIEnv *env, BufImageS_t *imageP,
             /* Can use edge */
             height++;
         }
-
+            
     }
-#endif
-
+#endif    
+    
 }
 
 static int
@@ -1769,7 +1769,7 @@ setImageHints(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
     ColorModelS_t *dstCMP = &dstP->cmodel;
     int nbands = 0;
     int ncomponents;
-
+    
     hintP->dataType = srcP->raster.dataType;
     hintP->addAlpha = FALSE;
 
@@ -1822,7 +1822,7 @@ setImageHints(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
                 nbands = 1;
                 hintP->cvtSrcToDefault = FALSE;
             }
-
+        
         }
         else {
             if (srcP->hints.packing & INTERLEAVED) {
@@ -1847,7 +1847,7 @@ setImageHints(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
                 hintP->cvtSrcToDefault = TRUE;
             }
         }
-    }
+    }    
     if (hintP->cvtSrcToDefault) {
         /* By definition */
         nbands = 4;  /* What about alpha? */
@@ -1936,7 +1936,7 @@ setImageHints(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
 static int
 expandPacked(JNIEnv *env, BufImageS_t *img, ColorModelS_t *cmP,
              RasterS_t *rasterP, int component, unsigned char *bdataP) {
-
+    
     if (rasterP->rasterType == COMPONENT_RASTER_TYPE) {
         switch (rasterP->dataType) {
         case BYTE_DATA_TYPE:
@@ -1985,7 +1985,7 @@ cvtCustomToDefault(JNIEnv *env, BufImageS_t *imageP, int component,
 #define NUM_LINES    10
     int numLines = NUM_LINES;
     int nbytes = rasterP->width*4*NUM_LINES;
-
+    
     for (y=0; y < rasterP->height; y+=numLines) {
         /* getData, one scanline at a time */
         if (y+numLines > rasterP->height) {
@@ -2039,10 +2039,10 @@ cvtDefaultToCustom(JNIEnv *env, BufImageS_t *imageP, int component,
             /* JNI error */
             return -1;
         }
-
+        
         memcpy(pixels, dP, nbytes);
         dP += nbytes;
-
+        
        (*env)->ReleasePrimitiveArrayCritical(env, jpixels, pixels, 0);
 
        /* setData, one scanline at a time */
@@ -2087,7 +2087,7 @@ allocateArray(JNIEnv *env, BufImageS_t *imageP,
     /* increment width.  Expanding top and left requires bumping      */
     /* around pointers and incrementing the width/height              */
 
-#if 0
+#if 0    
     if (0 && useEdges) {
         baseWidth  = rasterP->baseRasterWidth;
         baseHeight = rasterP->baseRasterHeight;
@@ -2123,7 +2123,7 @@ allocateArray(JNIEnv *env, BufImageS_t *imageP,
         cDataP  = (unsigned char *) mlib_ImageGetData(*mlibImagePP);
         /* Make sure the image is cleared */
         memset(cDataP, 0, width*height*4);
-
+        
         if (!isSrc) {
             return 0;
         }
@@ -2138,7 +2138,7 @@ allocateArray(JNIEnv *env, BufImageS_t *imageP,
             else {
                 return cvtCustomToDefault(env, imageP, -1, cDataP);
             }
-
+            
         case DIRECT_CM_TYPE:
             switch(imageP->raster.dataType) {
             case BYTE_DATA_TYPE:
@@ -2251,7 +2251,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
     /* increment width.  Expanding top and left requires bumping      */
     /* around pointers and incrementing the width/height              */
 
-#if 0
+#if 0    
     if (0 && useEdges) {
         baseWidth  = rasterP->baseRasterWidth;
         baseHeight = rasterP->baseRasterHeight;
@@ -2291,7 +2291,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
         *mlibImagePP = (*sMlibSysFns.createStructFP)(MLIB_BYTE, 4,
                                               width, height,
                                               rasterP->scanlineStride*4,
-                                              (unsigned char *)dataP
+                                              (unsigned char *)dataP 
                                               + rasterP->chanOffsets[0]*4);
         *dataPP = dataP;
         return 0;
@@ -2304,7 +2304,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
         *mlibImagePP = (*sMlibSysFns.createStructFP)(MLIB_BYTE, rasterP->numBands,
                                               width, height,
                                               rasterP->scanlineStride,
-                                              (unsigned char *)dataP
+                                              (unsigned char *)dataP 
                                               + rasterP->chanOffsets[0]);
         *dataPP = dataP;
         return 0;
@@ -2318,18 +2318,18 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
                                                      rasterP->numBands,
                                                      width, height,
                                                      rasterP->scanlineStride*2,
-                                                     (unsigned char *)dataP
+                                                     (unsigned char *)dataP 
                                                      + rasterP->chanOffsets[0]*2);
         *dataPP = dataP;
         return 0;
-
+        
     case sun_awt_image_IntegerComponentRaster_TYPE_BYTE_PACKED_SAMPLES:
         *mlibImagePP = (*sMlibSysFns.createFP)(MLIB_BYTE, rasterP->numBands,
                                         width, height);
         if (!isSrc) return 0;
         cDataP  = (unsigned char *) mlib_ImageGetData(*mlibImagePP);
         return expandPackedBCR(env, rasterP, -1, cDataP);
-
+        
     case sun_awt_image_IntegerComponentRaster_TYPE_USHORT_PACKED_SAMPLES:
         if (rasterP->sppsm.maxBitSize <= 8) {
             *mlibImagePP = (*sMlibSysFns.createFP)(MLIB_BYTE, rasterP->numBands,
@@ -2365,7 +2365,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
             }
         }
         break;
-
+            
     case SHORT_DATA_TYPE:
         if ((*mlibImagePP = (*sMlibSysFns.createFP)(MLIB_SHORT,
                                                     rasterP->numBands,
@@ -2380,7 +2380,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
             }
         }
         break;
-
+            
     default:
         return -1;
     }
@@ -2430,7 +2430,7 @@ storeDstArray(JNIEnv *env,  BufImageS_t *srcP, BufImageS_t *dstP,
     RasterS_t *rasterP = &dstP->raster;
 
     /* Nothing to do since it is the same image type */
-    if (srcP->imageType == dstP->imageType
+    if (srcP->imageType == dstP->imageType 
         && srcP->imageType != java_awt_image_BufferedImage_TYPE_CUSTOM
         && srcP->imageType != java_awt_image_BufferedImage_TYPE_BYTE_INDEXED
         && srcP->imageType != java_awt_image_BufferedImage_TYPE_BYTE_BINARY) {
@@ -2462,7 +2462,7 @@ storeDstArray(JNIEnv *env,  BufImageS_t *srcP, BufImageS_t *dstP,
             /* REMIND: */
         }
     }
-
+    
     if (dstP->cmodel.cmType == DIRECT_CM_TYPE) {
         /* Just need to move bits */
         if (mlibImP->type == MLIB_BYTE) {
@@ -2477,7 +2477,7 @@ storeDstArray(JNIEnv *env,  BufImageS_t *srcP, BufImageS_t *dstP,
 
     return 0;
 }
-
+    
 static int
 storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
                 mlib_image *mlibImP) {
@@ -2486,7 +2486,7 @@ storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
     HintS_t *hintP = &dstP->hints;
     RasterS_t *rasterP = &dstP->raster;
     int y;
-
+    
     /* REMIND: Store mlib data type? */
 
     /* Check if it is an IndexColorModel */
@@ -2538,15 +2538,15 @@ storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
         /* Just need to move bits */
         if (mlibImP->type == MLIB_BYTE) {
             if (dstP->hints.packing == PACKED_BYTE_INTER) {
-                return setPackedBCRdefault(env, rasterP, -1,
+                return setPackedBCRdefault(env, rasterP, -1, 
                                            (unsigned char *) mlibImP->data,
                                            dstP->cmodel.supportsAlpha);
             } else if (dstP->hints.packing == PACKED_SHORT_INTER) {
-                return setPackedSCRdefault(env, rasterP, -1,
+                return setPackedSCRdefault(env, rasterP, -1, 
                                            (unsigned char *) mlibImP->data,
                                            dstP->cmodel.supportsAlpha);
             } else if (dstP->hints.packing == PACKED_INT_INTER) {
-                return setPackedICRdefault(env, rasterP, -1,
+                return setPackedICRdefault(env, rasterP, -1, 
                                            (unsigned char *) mlibImP->data,
                                            dstP->cmodel.supportsAlpha);
             }
@@ -2560,20 +2560,20 @@ storeImageArray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
         return cvtDefaultToCustom(env, dstP, -1,
                                   (unsigned char *)mlibImP->data);
     }
-
+    
     return 0;
 }
 
-static int
+static int 
 storeRasterArray(JNIEnv *env, RasterS_t *srcP, RasterS_t *dstP,
                 mlib_image *mlibImP) {
     unsigned char *cDataP;
-
+    
     switch(dstP->type) {
     case sun_awt_image_IntegerComponentRaster_TYPE_BYTE_PACKED_SAMPLES:
         cDataP  = (unsigned char *) mlib_ImageGetData(mlibImP);
         return setPackedBCR(env, dstP, -1, cDataP);
-
+        
     case sun_awt_image_IntegerComponentRaster_TYPE_USHORT_PACKED_SAMPLES:
         if (dstP->sppsm.maxBitSize <= 8) {
             cDataP  = (unsigned char *) mlib_ImageGetData(mlibImP);
@@ -2654,7 +2654,7 @@ storeICMarray(JNIEnv *env, BufImageS_t *srcP, BufImageS_t *dstP,
                                               JNI_ABORT);
         return -1;
     }
-
+    
     cDataP = dataP + dstP->hints.dataOffset;
     sP = (unsigned char *) mlib_ImageGetData(mlibImP);
 
@@ -2685,7 +2685,7 @@ static int expandICM(JNIEnv *env, BufImageS_t *imageP, unsigned int *mDataP)
     int width = rasterP->width;
     int height = rasterP->height;
     int x, y;
-
+                
     /* Need to grab the lookup tables.  Right now only bytes */
     rgb = (int *) (*env)->GetPrimitiveArrayCritical(env, cmP->jrgb, NULL);
 
@@ -2806,7 +2806,7 @@ static int expandPackedBCR(JNIEnv *env, RasterS_t *rasterP, int component,
                 }
                 lineInP += rasterP->scanlineStride;
             }
-        }
+        }            
     }
     else {
         c = component;
@@ -2828,7 +2828,7 @@ static int expandPackedBCR(JNIEnv *env, RasterS_t *rasterP, int component,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jInDataP, inDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -2848,7 +2848,7 @@ static int expandPackedBCRdefault(JNIEnv *env, RasterS_t *rasterP,
 
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
-    }
+    }    
 
     /* Grab data ptr, strides, offsets from raster */
     jInDataP = (*env)->GetObjectField(env, rasterP->jraster, g_BCRdataID);
@@ -2900,7 +2900,7 @@ static int expandPackedBCRdefault(JNIEnv *env, RasterS_t *rasterP,
                 }
                 lineInP += rasterP->scanlineStride;
             }
-        }
+        }            
     }
     else {
         c = component;
@@ -2922,7 +2922,7 @@ static int expandPackedBCRdefault(JNIEnv *env, RasterS_t *rasterP,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jInDataP, inDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -2936,7 +2936,7 @@ static int expandPackedSCR(JNIEnv *env, RasterS_t *rasterP, int component,
     jarray jInDataP;
     jint   *inDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3016,7 +3016,7 @@ static int expandPackedSCR(JNIEnv *env, RasterS_t *rasterP, int component,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jInDataP, inDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3037,7 +3037,7 @@ static int expandPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
-
+    
     /* Grab data ptr, strides, offsets from raster */
     jInDataP = (*env)->GetObjectField(env, rasterP->jraster, g_SCRdataID);
     inDataP = (*env)->GetPrimitiveArrayCritical(env, jInDataP, 0);
@@ -3068,7 +3068,7 @@ static int expandPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
                          * shift, etc
                          */
                         *outP++ = (unsigned char)
-                                (((*inP&rasterP->sppsm.maskArray[c]) >> roff[c])
+                        	(((*inP&rasterP->sppsm.maskArray[c]) >> roff[c])
                                    <<loff[c]);
                     }
                     inP++;
@@ -3081,7 +3081,7 @@ static int expandPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
                 inP = lineInP;
                 for (x=0; x < rasterP->width; x++) {
                     *outP++ = (unsigned char)
-                        (((*inP&rasterP->sppsm.maskArray[a]) >> roff[a])
+                    	(((*inP&rasterP->sppsm.maskArray[a]) >> roff[a])
                                    <<loff[a]);
                     for (c=0; c < numBands; c++) {
                         /*
@@ -3089,14 +3089,14 @@ static int expandPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
                          * unpremult, shift, etc
                          */
                         *outP++ = (unsigned char)
-                                (((*inP&rasterP->sppsm.maskArray[c]) >> roff[c])
+                        	(((*inP&rasterP->sppsm.maskArray[c]) >> roff[c])
                                    <<loff[c]);
                     }
                     inP++;
                 }
                 lineInP += rasterP->scanlineStride;
             }
-        }
+        }            
     }
     else {
         c = component;
@@ -3110,7 +3110,7 @@ static int expandPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
             inP = lineInP;
             for (x=0; x < rasterP->width; x++) {
                 *outP++ = (unsigned char)
-                        ((*inP & rasterP->sppsm.maskArray[c])>>roff[0])<<loff[0];
+                	((*inP & rasterP->sppsm.maskArray[c])>>roff[0])<<loff[0];
                 inP++;
             }
             lineInP += rasterP->scanlineStride;
@@ -3118,7 +3118,7 @@ static int expandPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jInDataP, inDataP, JNI_ABORT);
-
+    
     return 0;
 
 }
@@ -3133,7 +3133,7 @@ static int expandPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
     jarray jInDataP;
     jint   *inDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3189,7 +3189,7 @@ static int expandPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
                 }
                 lineInP += rasterP->scanlineStride;
             }
-        }
+        }            
     }
     else {
         c = component;
@@ -3210,7 +3210,7 @@ static int expandPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jInDataP, inDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3227,7 +3227,7 @@ static int expandPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
     int numBands = rasterP->numBands - (forceAlpha ? 0 : 1);
     int a = numBands;
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3287,7 +3287,7 @@ static int expandPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
                 }
                 lineInP += rasterP->scanlineStride;
             }
-        }
+        }            
     }
     else {
         c = component;
@@ -3308,7 +3308,7 @@ static int expandPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jInDataP, inDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3376,7 +3376,7 @@ static int setPackedBCR(JNIEnv *env, RasterS_t *rasterP, int component,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jOutDataP, outDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3390,7 +3390,7 @@ static int setPackedSCR(JNIEnv *env, RasterS_t *rasterP, int component,
     jarray jOutDataP;
     jint   *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3444,7 +3444,7 @@ static int setPackedSCR(JNIEnv *env, RasterS_t *rasterP, int component,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jOutDataP, outDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3458,7 +3458,7 @@ static int setPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
     jarray jOutDataP;
     jint   *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3513,7 +3513,7 @@ static int setPackedICR(JNIEnv *env, RasterS_t *rasterP, int component,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jOutDataP, outDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3603,7 +3603,7 @@ static int setPackedBCRdefault(JNIEnv *env, RasterS_t *rasterP,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jOutDataP, outDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3619,7 +3619,7 @@ static int setPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
     jint   *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
     int a = rasterP->numBands - 1;
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3693,7 +3693,7 @@ static int setPackedSCRdefault(JNIEnv *env, RasterS_t *rasterP,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jOutDataP, outDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3709,7 +3709,7 @@ static int setPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
     jint   *outDataP;
     int loff[MAX_NUMBANDS], roff[MAX_NUMBANDS];
     int a = rasterP->numBands - 1;
-
+    
     if (rasterP->numBands > MAX_NUMBANDS) {
         return -1;
     }
@@ -3785,7 +3785,7 @@ static int setPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
     }
 
     (*env)->ReleasePrimitiveArrayCritical(env, jOutDataP, outDataP, JNI_ABORT);
-
+    
     return 0;
 }
 
@@ -3795,7 +3795,7 @@ static int setPackedICRdefault(JNIEnv *env, RasterS_t *rasterP,
  */
 /* returns the absolute value x */
 #define ABS(x) ((x) < 0 ? -(x) : (x))
-#define CLIP(val,min,max)       ((val < min) ? min : ((val > max) ? max : val))
+#define CLIP(val,min,max)	((val < min) ? min : ((val > max) ? max : val))
 
 static int
 colorMatch(int r, int g, int b, int a, unsigned char *argb, int numColors) {
@@ -3856,6 +3856,6 @@ colorMatch(int r, int g, int b, int a, unsigned char *argb, int numColors) {
             mindist = d;
         }
     }
-
+    
     return besti;
 }

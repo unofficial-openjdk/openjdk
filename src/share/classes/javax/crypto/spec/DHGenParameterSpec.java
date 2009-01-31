@@ -33,7 +33,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * Diffie-Hellman (system) parameters for use in Diffie-Hellman key
  * agreement. This is typically done by a central
  * authority.
- *
+ * 
  * <p> The central authority, after computing the parameters, must send this
  * information to the parties looking to agree on a secret key.
  *
@@ -61,8 +61,8 @@ public class DHGenParameterSpec implements AlgorithmParameterSpec {
      * @param exponentSize the size (in bits) of the random exponent.
      */
     public DHGenParameterSpec(int primeSize, int exponentSize) {
-        this.primeSize = primeSize;
-        this.exponentSize = exponentSize;
+	this.primeSize = primeSize;
+	this.exponentSize = exponentSize;
     }
 
     /**
@@ -71,7 +71,7 @@ public class DHGenParameterSpec implements AlgorithmParameterSpec {
      * @return the size in bits of the prime modulus
      */
     public int getPrimeSize() {
-        return this.primeSize;
+	return this.primeSize;
     }
 
     /**
@@ -80,6 +80,6 @@ public class DHGenParameterSpec implements AlgorithmParameterSpec {
      * @return the size in bits of the random exponent (private value)
      */
     public int getExponentSize() {
-        return this.exponentSize;
+	return this.exponentSize;
     }
 }

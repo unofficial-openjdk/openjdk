@@ -42,6 +42,7 @@ import java.util.Set;
  * @see PropertyChangeListenerMap
  * @see VetoableChangeListenerMap
  *
+ * @version %I% %G%
  * @author Sergey A. Malenkov
  */
 abstract class ChangeListenerMap<L extends EventListener> {
@@ -239,8 +240,8 @@ abstract class ChangeListenerMap<L extends EventListener> {
      */
     public final L extract(L listener) {
         while (listener instanceof EventListenerProxy) {
-            EventListenerProxy<L> proxy = (EventListenerProxy<L>) listener;
-            listener = proxy.getListener();
+            EventListenerProxy proxy = (EventListenerProxy) listener;
+            listener = (L) proxy.getListener();
         }
         return listener;
     }

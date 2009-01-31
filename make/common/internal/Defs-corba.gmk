@@ -36,7 +36,7 @@ IMPORT_RT_PACKAGES +=  \
      org/omg/PortableServer \
      org/omg/SendingContext \
      org/omg/stub/java/rmi \
-     javax/rmi \
+     javax/rmi/PortableRemoteObject.class \
      javax/rmi/CORBA \
      javax/activity \
      javax/transaction \

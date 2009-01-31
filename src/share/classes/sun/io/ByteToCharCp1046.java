@@ -32,6 +32,7 @@ import sun.nio.cs.ext.IBM1046;
  * A table to convert to Cp1046 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp1046 extends ByteToCharSingleByte {

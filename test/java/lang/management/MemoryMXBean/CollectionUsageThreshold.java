@@ -43,7 +43,7 @@ public class CollectionUsageThreshold {
     private static MemoryMXBean mm = ManagementFactory.getMemoryMXBean();
     private static List pools = ManagementFactory.getMemoryPoolMXBeans();
     private static List managers = ManagementFactory.getMemoryManagerMXBeans();
-    private static Map result = new HashMap();
+    private static Map result = new HashMap(); 
     private static boolean trace = false;
     private static boolean testFailed = false;
     private static final int EXPECTED_NUM_POOLS = 2;
@@ -53,7 +53,7 @@ public class CollectionUsageThreshold {
     private static int numGCs = 0;
 
     static class PoolRecord {
-        private MemoryPoolMXBean pool;
+        private MemoryPoolMXBean pool; 
         private int listenerInvoked = 0;
         private long notifCount = 0;
         PoolRecord(MemoryPoolMXBean p) {
@@ -85,16 +85,16 @@ public class CollectionUsageThreshold {
                     from((CompositeData) notif.getUserData());
 
                 MemoryUtil.printMemoryNotificationInfo(minfo, type);
-                PoolRecord pr = (PoolRecord) result.get(minfo.getPoolName());
+                PoolRecord pr = (PoolRecord) result.get(minfo.getPoolName()); 
                 if (pr == null) {
                     throw new RuntimeException("Pool " + minfo.getPoolName() +
-                        " is not selected");
+                        " is not selected"); 
                 }
                 if (type != MemoryNotificationInfo.
                         MEMORY_COLLECTION_THRESHOLD_EXCEEDED) {
                     throw new RuntimeException("Pool " + minfo.getPoolName() +
                         " got unexpected notification type: " +
-                        type);
+                        type); 
                 }
                 pr.addNotification(minfo);
                 synchronized (this) {
@@ -117,7 +117,7 @@ public class CollectionUsageThreshold {
             MemoryUtil.printMemoryPools(pools);
             MemoryUtil.printMemoryManagers(managers);
         }
-
+        
         // Find the Old generation which supports low memory detection
         for (ListIterator iter = pools.listIterator(); iter.hasNext(); ) {
             MemoryPoolMXBean p = (MemoryPoolMXBean) iter.next();
@@ -141,7 +141,7 @@ public class CollectionUsageThreshold {
         for (Iterator iter = result.values().iterator(); iter.hasNext();) {
             PoolRecord pr = (PoolRecord) iter.next();
             pr.getPool().setCollectionUsageThreshold(THRESHOLD);
-            System.out.println("Collection usage threshold of " +
+            System.out.println("Collection usage threshold of " + 
                 pr.getPool().getName() + " set to " + THRESHOLD);
         }
 
@@ -152,7 +152,7 @@ public class CollectionUsageThreshold {
         mm.setVerbose(true);
         for (int i = 0; i < NUM_GCS; i++) {
             invokeGC();
-            checker.waitForCheckResult();
+            checker.waitForCheckResult(); 
         }
 
         if (testFailed)
@@ -195,7 +195,7 @@ public class CollectionUsageThreshold {
                         // ignore
                     }
                     checkResult();
-                    checkerReady = false;
+ 		    checkerReady = false;
                 }
             }
         }
@@ -222,7 +222,7 @@ public class CollectionUsageThreshold {
                     throw new RuntimeException("isCollectionUsageThresholdExceeded" +
                          " expected to be true");
                 }
-            }
+            } 
             synchronized (go) {
                 // wait until the main thread is waiting for notification
                 while (waiters == 0) {
@@ -233,13 +233,13 @@ public class CollectionUsageThreshold {
                     }
                 }
 
-                System.out.println(Thread.currentThread().getName() +
+                System.out.println(Thread.currentThread().getName() + 
                     " notifying main thread to continue - result checking finished");
                 go.notify();
             }
         }
         public void goCheckResult() {
-            System.out.println(Thread.currentThread().getName() +
+            System.out.println(Thread.currentThread().getName() + 
                 " notifying to check result");
             synchronized (lock) {
                 while (!checkerReady) {
@@ -254,7 +254,7 @@ public class CollectionUsageThreshold {
         }
 
         public void waitForCheckResult() {
-            System.out.println(Thread.currentThread().getName() +
+            System.out.println(Thread.currentThread().getName() + 
                 " waiting for result checking finishes");
             synchronized (go) {
                 waiters++;
@@ -268,3 +268,4 @@ public class CollectionUsageThreshold {
         }
     }
 }
+

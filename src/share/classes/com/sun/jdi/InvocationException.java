@@ -38,7 +38,7 @@ public class InvocationException extends Exception
 
     public InvocationException(ObjectReference exception)
     {
-        super("Exception occurred in target VM");
+	super("Exception occurred in target VM");
         this.exception = exception;
     }
 

@@ -36,5 +36,5 @@ public class StringIdCallbackReporter {
 
     public static void registerCallback(StringIdCallback aCallback) {
         callback = aCallback;
-    }
+    } 
 }

@@ -49,6 +49,7 @@ import javax.swing.text.html.CSS.Value;
  * CSS-style borders for HTML elements.
  *
  * @author Sergey Groznyh
+ * @version %I% %G%
  */
 class CSSBorder extends AbstractBorder {
 
@@ -195,10 +196,10 @@ class CSSBorder extends AbstractBorder {
 
     /* The javax.swing.border.Border methods.  */
 
-    public Insets getBorderInsets(Component c, Insets insets) {
+    public Insets getBorderInsets(Component c) {
         int[] widths = getWidths();
-        insets.set(widths[TOP], widths[LEFT], widths[BOTTOM], widths[RIGHT]);
-        return insets;
+        return new Insets(
+                    widths[TOP], widths[LEFT], widths[BOTTOM], widths[RIGHT]);
     }
 
     public void paintBorder(Component c, Graphics g,
@@ -255,7 +256,7 @@ class CSSBorder extends AbstractBorder {
 
     interface BorderPainter {
         /**
-         * The painter should paint the border as if it were at the top and the
+         * The painter should paint the border as if it were at the top and the 
          * coordinates of the NW corner of the interior area is (0, 0).  The
          * caller is responsible for the appropriate affine transformations.
          *
@@ -288,7 +289,7 @@ class CSSBorder extends AbstractBorder {
      * Defines a method for painting strokes in the specified direction using
      * the given length and color patterns.
      */
-    abstract static class StrokePainter implements BorderPainter {
+    abstract static class StrokePainter implements BorderPainter {        
         /**
          * Paint strokes repeatedly using the given length and color patterns.
          */
@@ -317,7 +318,7 @@ class CSSBorder extends AbstractBorder {
             }
         }
     }
-
+    
     /**
      * Painter for the "double" CSS border style.
      */
@@ -366,7 +367,7 @@ class CSSBorder extends AbstractBorder {
          */
         static Color getLightColor(Color c) {
             return CSSBorder.getAdjustedColor(c, 0.7);
-        }
+        }        
     }
 
     /**
@@ -405,7 +406,7 @@ class CSSBorder extends AbstractBorder {
             g.setColor(((side + 1) % 4 < 2) == (type == Value.INSET) ?
                                 getShadowColor(color) : getLightColor(color));
             g.fillPolygon(shape);
-        }
+        }        
     }
 
     /**

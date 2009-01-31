@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,3 +29,4 @@ import java.rmi.RemoteException;
 public interface RemoteExiter extends Remote {
     void exit() throws RemoteException;
 }
+

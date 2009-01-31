@@ -29,7 +29,7 @@
  * @author  Mandy Chung
  *
  * @compile -source 1.5 ProxyTypeMapping.java
- * @run main/othervm -verbose:gc ProxyTypeMapping
+ * @run main/othervm -verbose:gc ProxyTypeMapping 
  */
 import java.lang.management.*;
 import javax.management.*;
@@ -40,7 +40,7 @@ import java.util.Properties;
 import com.sun.management.GcInfo;
 
 public class ProxyTypeMapping {
-    private static MBeanServer server =
+    private static MBeanServer server = 
         ManagementFactory.getPlatformMBeanServer();
     private static RuntimeMXBean runtime;
     private static ThreadMXBean thread;
@@ -66,13 +66,13 @@ public class ProxyTypeMapping {
 
         List<MemoryPoolMXBean> pools = getMemoryPoolMXBeans();
         for (MemoryPoolMXBean p : pools) {
-            if (heapPool == null &&
+            if (heapPool == null && 
                 p.getType() == MemoryType.HEAP &&
                 p.isUsageThresholdSupported() &&
                 p.isCollectionUsageThresholdSupported()) {
                 heapPool = p;
             }
-            if (nonHeapPool == null &&
+            if (nonHeapPool == null && 
                 p.getType() == MemoryType.NON_HEAP &&
                 p.isUsageThresholdSupported()) {
                 nonHeapPool = p;
@@ -85,8 +85,8 @@ public class ProxyTypeMapping {
         checkMemoryUsage();
         checkThreadInfo();
 
-        checkOS();
-        checkSunGC();
+        checkOS(); 
+        checkSunGC(); 
 
         System.out.println("Test passed.");
     }
@@ -119,7 +119,7 @@ public class ProxyTypeMapping {
                found = true;
                break;
            }
-        }
+        } 
         if (!found) {
             throw new RuntimeException("TEST FAILED: " +
                 "VM option " + OPTION + " not found");
@@ -209,19 +209,19 @@ public class ProxyTypeMapping {
         System.out.print(info.getThreadName());
         System.out.print(" id=" + info.getThreadId());
         System.out.println(" " + info.getThreadState());
-
+   
         for (StackTraceElement s : info.getStackTrace()) {
             System.out.println(s);
         }
     }
 
     private static void checkOS() throws Exception {
-        com.sun.management.OperatingSystemMXBean os =
+        com.sun.management.OperatingSystemMXBean os = 
             newPlatformMXBeanProxy(server,
                                    OPERATING_SYSTEM_MXBEAN_NAME,
                                    com.sun.management.OperatingSystemMXBean.class);
         System.out.println("# CPUs = " + os.getAvailableProcessors());
-        System.out.println("Committed virtual memory = " +
+        System.out.println("Committed virtual memory = " + 
                            os.getCommittedVirtualMemorySize());
     }
 
@@ -234,7 +234,7 @@ public class ProxyTypeMapping {
                    GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE + ",name=" + gc.getName(),
                    com.sun.management.GarbageCollectorMXBean.class);
             GcInfo info = sunGc.getLastGcInfo();
-            if (info != null) {
+            if (info != null) { 
                 System.out.println("GC statistic for : " + gc.getName());
                 printGcInfo(info);
             }

@@ -33,7 +33,7 @@ import sun.awt.image.ImageRepresentation;
 
 public class MCustomCursor extends X11CustomCursor {
 
-    public MCustomCursor(Image cursor, Point hotSpot, String name)
+    public MCustomCursor(Image cursor, Point hotSpot, String name) 
             throws IndexOutOfBoundsException {
         super(cursor, hotSpot, name);
     }
@@ -43,10 +43,10 @@ public class MCustomCursor extends X11CustomCursor {
     public static Dimension getBestCursorSize(
         int preferredWidth, int preferredHeight) {
 
-        // Fix for bug 4212593 The Toolkit.createCustomCursor does not
-        //                     check absence of the image of cursor
+        // Fix for bug 4212593 The Toolkit.createCustomCursor does not 
+        //                     check absence of the image of cursor 
         // We use XQueryBestCursor which accepts unsigned ints to obtain
-        // the largest cursor size that could be dislpayed
+        // the largest cursor size that could be dislpayed 
         Dimension d = new Dimension(Math.abs(preferredWidth), Math.abs(preferredHeight));
 
         queryBestCursor(d);
@@ -55,9 +55,9 @@ public class MCustomCursor extends X11CustomCursor {
 
     private static native void queryBestCursor(Dimension d);
 
-    protected native void createCursor(byte[] xorMask, byte[] andMask,
-                                     int width, int height,
-                                     int fcolor, int bcolor,
+    protected native void createCursor(byte[] xorMask, byte[] andMask, 
+                                     int width, int height, 
+                                     int fcolor, int bcolor, 
                                      int xHotSpot, int yHotSpot);
 
     static {

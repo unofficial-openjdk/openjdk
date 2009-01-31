@@ -41,6 +41,7 @@ import java.awt.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version %I% %G%
  * @author Rich Schiavi
  */
 public class MotifCheckBoxUI extends MotifRadioButtonUI {
@@ -56,26 +57,26 @@ public class MotifCheckBoxUI extends MotifRadioButtonUI {
     //         Create PLAF
     // ********************************
     public static ComponentUI createUI(JComponent c){
-        return motifCheckBoxUI;
+	return motifCheckBoxUI;
     }
 
     public String getPropertyPrefix() {
-        return propertyPrefix;
+	return propertyPrefix;
     }
 
     // ********************************
     //          Defaults
     // ********************************
     public void installDefaults(AbstractButton b) {
-        super.installDefaults(b);
-        if(!defaults_initialized) {
-            icon = UIManager.getIcon(getPropertyPrefix() + "icon");
-            defaults_initialized = true;
-        }
+	super.installDefaults(b);
+	if(!defaults_initialized) {
+	    icon = UIManager.getIcon(getPropertyPrefix() + "icon");
+	    defaults_initialized = true;
+	}
     }
 
     protected void uninstallDefaults(AbstractButton b) {
-        super.uninstallDefaults(b);
-        defaults_initialized = false;
+	super.uninstallDefaults(b);
+	defaults_initialized = false;
     }
-}
+} 

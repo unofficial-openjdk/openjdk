@@ -28,8 +28,10 @@ package javax.swing.plaf;
 
 /**
  * Pluggable look and feel interface for JDesktopPane.
- *
+ * 
+ * @version %I% %G%
  * @author David Kloba
  */
 public abstract class DesktopPaneUI extends ComponentUI {
 }
+

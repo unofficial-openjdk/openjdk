@@ -500,17 +500,17 @@ public class QueryMatchTest {
 
         System.out.println("\n--- Test javax.management.Query.match ---");
 
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
         for (int i = 0; i < tests.length; i++) {
             error += query(mbs, (String) tests[i][0], (String[][]) tests[i][1]);
         }
 
         if (error > 0) {
-            System.out.println("\nTest failed! " + error + " errors.\n");
+	    System.out.println("\nTest failed! " + error + " errors.\n");
             throw new IllegalArgumentException("Test failed");
-        } else {
-            System.out.println("\nTest passed!\n");
+	} else {
+	    System.out.println("\nTest passed!\n");            
         }
     }
 }

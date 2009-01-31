@@ -82,40 +82,40 @@ class Main {
      * Initialize ResourceBundle
      */
     static {
-        try {
-            rsrc = ResourceBundle.getBundle("sun.tools.jar.resources.jar");
-        } catch (MissingResourceException e) {
-            throw new Error("Fatal: Resource for jar is missing");
-        }
+	try {
+	    rsrc = ResourceBundle.getBundle("sun.tools.jar.resources.jar");
+	} catch (MissingResourceException e) {
+	    throw new Error("Fatal: Resource for jar is missing");
+	}
     }
 
     private String getMsg(String key) {
-        try {
-            return (rsrc.getString(key));
-        } catch (MissingResourceException e) {
-            throw new Error("Error in message file");
-        }
+ 	try {
+	    return (rsrc.getString(key));
+ 	} catch (MissingResourceException e) {
+	    throw new Error("Error in message file");
+ 	}
     }
 
     private String formatMsg(String key, String arg) {
-        String msg = getMsg(key);
-        String[] args = new String[1];
-        args[0] = arg;
-        return MessageFormat.format(msg, (Object[]) args);
+ 	String msg = getMsg(key);
+ 	String[] args = new String[1];
+ 	args[0] = arg;
+ 	return MessageFormat.format(msg, (Object[]) args);
     }
 
     private String formatMsg2(String key, String arg, String arg1) {
-        String msg = getMsg(key);
-        String[] args = new String[2];
-        args[0] = arg;
-        args[1] = arg1;
-        return MessageFormat.format(msg, (Object[]) args);
+ 	String msg = getMsg(key);
+ 	String[] args = new String[2];
+ 	args[0] = arg;
+ 	args[1] = arg1;
+ 	return MessageFormat.format(msg, (Object[]) args);
     }
 
     public Main(PrintStream out, PrintStream err, String program) {
-        this.out = out;
-        this.err = err;
-        this.program = program;
+	this.out = out;
+	this.err = err;
+	this.program = program;
     }
 
     private boolean ok;
@@ -124,12 +124,12 @@ class Main {
      * Starts main program with the specified arguments.
      */
     public synchronized boolean run(String args[]) {
-        ok = true;
+	ok = true;
         if (!parseArgs(args)) {
-            return false;
-        }
-        try {
-            if (cflag || uflag) {
+	    return false;
+	}
+	try {
+	    if (cflag || uflag) {
                 if (fname != null) {
                     // The name of the zip file as it would appear as its own
                     // zip file entry. We use this to make sure that we don't
@@ -138,30 +138,30 @@ class Main {
                     if (zname.startsWith("./")) {
                         zname = zname.substring(2);
                     }
-                }
+		}
             }
             if (cflag) {
                 Manifest manifest = null;
                 InputStream in = null;
 
-                if (!Mflag) {
-                    if (mname != null) {
-                        in = new FileInputStream(mname);
-                        manifest = new Manifest(new BufferedInputStream(in));
-                    } else {
-                        manifest = new Manifest();
+		if (!Mflag) {
+		    if (mname != null) {
+			in = new FileInputStream(mname);
+			manifest = new Manifest(new BufferedInputStream(in));
+		    } else {
+			manifest = new Manifest();
                     }
                     addVersion(manifest);
-                    addCreatedBy(manifest);
-                    if (isAmbigousMainClass(manifest)) {
-                        if (in != null) {
-                            in.close();
-                        }
-                        return false;
-                    }
-                    if (ename != null) {
-                        addMainClass(manifest, ename);
-                    }
+		    addCreatedBy(manifest);
+		    if (isAmbigousMainClass(manifest)) {
+			if (in != null) {
+			    in.close();
+			}
+			return false;
+		    }
+		    if (ename != null) {
+			addMainClass(manifest, ename);
+		    }
                 }
                 OutputStream out;
                 if (fname != null) {
@@ -218,134 +218,134 @@ class Main {
                     tmpFile.delete();
                 }
             } else if (xflag || tflag) {
-                InputStream in;
-                if (fname != null) {
-                    in = new FileInputStream(fname);
-                } else {
-                    in = new FileInputStream(FileDescriptor.in);
-                }
-                if (xflag) {
-                    extract(new BufferedInputStream(in), files);
-                } else {
-                    list(new BufferedInputStream(in), files);
-                }
+		InputStream in;
+		if (fname != null) {
+		    in = new FileInputStream(fname);
+		} else {
+		    in = new FileInputStream(FileDescriptor.in);
+		}
+		if (xflag) {
+		    extract(new BufferedInputStream(in), files);
+		} else {
+		    list(new BufferedInputStream(in), files);
+		}
                 in.close();
-            } else if (iflag) {
+	    } else if (iflag) {
                 genIndex(rootjar, files);
             }
-        } catch (IOException e) {
-            fatalError(e);
-            ok = false;
-        } catch (Error ee) {
-            ee.printStackTrace();
-            ok = false;
-        } catch (Throwable t) {
-            t.printStackTrace();
-            ok = false;
-        }
-        out.flush();
-        err.flush();
-        return ok;
+	} catch (IOException e) {
+	    fatalError(e);
+	    ok = false;
+	} catch (Error ee) {
+	    ee.printStackTrace();
+	    ok = false;
+	} catch (Throwable t) {
+	    t.printStackTrace();
+	    ok = false;
+	}
+	out.flush();
+	err.flush();
+	return ok;
     }
 
     /*
      * Parse command line arguments.
      */
     boolean parseArgs(String args[]) {
-        /* Preprocess and expand @file arguments */
-        try {
-            args = CommandLine.parse(args);
-        } catch (FileNotFoundException e) {
+	/* Preprocess and expand @file arguments */
+	try {
+	    args = CommandLine.parse(args);
+	} catch (FileNotFoundException e) {
             fatalError(formatMsg("error.cant.open", e.getMessage()));
-            return false;
-        } catch (IOException e) {
-            fatalError(e);
-            return false;
-        }
-        /* parse flags */
-        int count = 1;
-        try {
-            String flags = args[0];
-            if (flags.startsWith("-")) {
-                flags = flags.substring(1);
-            }
-            for (int i = 0; i < flags.length(); i++) {
-                switch (flags.charAt(i)) {
-                case 'c':
-                    if (xflag || tflag || uflag) {
-                        usageError();
-                        return false;
-                    }
-                    cflag = true;
-                    break;
+	    return false;
+	} catch (IOException e) {
+	    fatalError(e);
+	    return false;
+	}
+	/* parse flags */
+	int count = 1;
+	try {
+	    String flags = args[0];
+	    if (flags.startsWith("-")) {
+		flags = flags.substring(1);
+	    }
+	    for (int i = 0; i < flags.length(); i++) {
+		switch (flags.charAt(i)) {
+		case 'c':
+		    if (xflag || tflag || uflag) {
+			usageError();
+			return false;
+		    }
+		    cflag = true;
+		    break;
                 case 'u':
-                    if (cflag || xflag || tflag) {
-                        usageError();
-                        return false;
-                    }
+		    if (cflag || xflag || tflag) {
+			usageError();
+			return false;
+		    }
                     uflag = true;
                     break;
-                case 'x':
-                    if (cflag || uflag || tflag) {
-                        usageError();
-                        return false;
-                    }
-                    xflag = true;
-                    break;
-                case 't':
-                    if (cflag || uflag || xflag) {
-                        usageError();
-                        return false;
-                    }
-                    tflag = true;
-                    break;
-                case 'M':
-                    Mflag = true;
-                    break;
-                case 'v':
-                    vflag = true;
-                    break;
-                case 'f':
-                    fname = args[count++];
-                    break;
-                case 'm':
-                    mname = args[count++];
-                    break;
-                case '0':
-                    flag0 = true;
-                    break;
+		case 'x':
+		    if (cflag || uflag || tflag) {
+			usageError();
+			return false;
+		    }
+		    xflag = true;
+		    break;
+		case 't':
+		    if (cflag || uflag || xflag) {
+			usageError();
+			return false;
+		    }
+		    tflag = true;
+		    break;
+		case 'M':
+		    Mflag = true;
+		    break;
+		case 'v':
+		    vflag = true;
+		    break;
+		case 'f':
+		    fname = args[count++];
+		    break;
+		case 'm':
+		    mname = args[count++];
+		    break;
+		case '0':
+		    flag0 = true;
+		    break;
                 case 'i':
                     // do not increase the counter, files will contain rootjar
                     rootjar = args[count++];
                     iflag = true;
                     break;
-                case 'e':
-                     ename = args[count++];
-                     break;
-                default:
-                    error(formatMsg("error.illegal.option",
-                                String.valueOf(flags.charAt(i))));
-                    usageError();
-                    return false;
-                }
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            usageError();
-            return false;
-        }
-        if (!cflag && !tflag && !xflag && !uflag && !iflag) {
-            error(getMsg("error.bad.option"));
-            usageError();
-            return false;
-        }
-        /* parse file arguments */
+		case 'e':
+		     ename = args[count++]; 
+		     break;
+		default:
+		    error(formatMsg("error.illegal.option",
+				String.valueOf(flags.charAt(i))));
+		    usageError();
+		    return false;
+		}
+	    }
+	} catch (ArrayIndexOutOfBoundsException e) {
+	    usageError();
+	    return false;
+	}
+	if (!cflag && !tflag && !xflag && !uflag && !iflag) {
+	    error(getMsg("error.bad.option"));
+	    usageError();
+	    return false;
+	}
+	/* parse file arguments */
         int n = args.length - count;
-        if (n > 0) {
+	if (n > 0) {
             int k = 0;
-            String[] nameBuf = new String[n];
+	    String[] nameBuf = new String[n];
             try {
                 for (int i = count; i < args.length; i++) {
-                    if (args[i].equals("-C")) {
+		    if (args[i].equals("-C")) {
                         /* change the directory */
                         String dir = args[++i];
                         dir = (dir.endsWith(File.separator) ?
@@ -368,9 +368,9 @@ class Main {
             System.arraycopy(nameBuf, 0, files, 0, k);
         } else if (cflag && (mname == null)) {
             error(getMsg("error.bad.cflag"));
-            usageError();
-            return false;
-        } else if (uflag) {
+	    usageError();
+	    return false;
+	} else if (uflag) {
             if ((mname != null) || (ename != null)) {
                 /* just want to update the manifest */
                 return true;
@@ -379,8 +379,8 @@ class Main {
                 usageError();
                 return false;
             }
-        }
-        return true;
+	}
+	return true;
     }
 
     /*
@@ -388,77 +388,77 @@ class Main {
      * can be found by recursively descending directories.
      */
     String[] expand(String[] files) {
-        v = new Vector();
-        expand(null, files, v, filesTable);
-        files = new String[v.size()];
-        for (int i = 0; i < files.length; i++) {
-            files[i] = ((File)v.elementAt(i)).getPath();
-        }
-        return files;
+	v = new Vector();
+	expand(null, files, v, filesTable);
+	files = new String[v.size()];
+	for (int i = 0; i < files.length; i++) {
+	    files[i] = ((File)v.elementAt(i)).getPath();
+	}
+	return files;
     }
 
     void expand(File dir, String[] files, Vector v, Hashtable t) {
-        if (files == null) {
-            return;
-        }
-        for (int i = 0; i < files.length; i++) {
-            File f;
-            if (dir == null) {
-                f = new File(files[i]);
-            } else {
-                f = new File(dir, files[i]);
-            }
-            if (f.isFile()) {
-                if (!t.contains(f)) {
-                    t.put(entryName(f.getPath()), f);
-                    v.addElement(f);
-                }
-            } else if (f.isDirectory()) {
+	if (files == null) {
+	    return;
+	}
+	for (int i = 0; i < files.length; i++) {
+	    File f;
+	    if (dir == null) {
+		f = new File(files[i]);
+	    } else {
+		f = new File(dir, files[i]);
+	    }
+	    if (f.isFile()) {
+		if (!t.contains(f)) {
+		    t.put(entryName(f.getPath()), f);
+		    v.addElement(f);
+		}
+	    } else if (f.isDirectory()) {
                 String dirPath = f.getPath();
                 dirPath = (dirPath.endsWith(File.separator)) ? dirPath :
                     (dirPath + File.separator);
                 t.put(entryName(dirPath), f);
-                v.addElement(f);
-                expand(f, f.list(), v, t);
-            } else {
-                error(formatMsg("error.nosuch.fileordir", String.valueOf(f)));
+		v.addElement(f);
+		expand(f, f.list(), v, t);
+	    } else {
+ 		error(formatMsg("error.nosuch.fileordir", String.valueOf(f)));
                 ok = false;
-            }
-        }
+	    }
+	}
     }
 
     /*
      * Creates a new JAR file.
      */
     void create(OutputStream out, String[] files, Manifest manifest)
-        throws IOException
+	throws IOException
     {
-        ZipOutputStream zos = new JarOutputStream(out);
-        if (flag0) {
-            zos.setMethod(ZipOutputStream.STORED);
-        }
-        if (manifest != null) {
+	ZipOutputStream zos = new JarOutputStream(out);
+	if (flag0) {
+	    zos.setMethod(ZipOutputStream.STORED);
+	}
+	if (manifest != null) {
             if (vflag) {
                 output(getMsg("out.added.manifest"));
             }
             ZipEntry e = new ZipEntry(MANIFEST_DIR);
-            e.setTime(System.currentTimeMillis());
+	    e.setTime(System.currentTimeMillis());
             e.setSize(0);
             e.setCrc(0);
             zos.putNextEntry(e);
             e = new ZipEntry(MANIFEST);
-            e.setTime(System.currentTimeMillis());
-            if (flag0) {
-                crc32Manifest(e, manifest);
-            }
-            zos.putNextEntry(e);
-            manifest.write(zos);
-            zos.closeEntry();
-        }
-        for (int i = 0; i < files.length; i++) {
-            addFile(zos, new File(files[i]));
-        }
-        zos.close();
+	    e.setTime(System.currentTimeMillis());
+	    if (flag0) {
+		crc32Manifest(e, manifest);
+	    }
+	    zos.putNextEntry(e);
+	    manifest.write(zos);
+	    zos.closeEntry();
+	}
+	for (int i = 0; i < files.length; i++) {
+	    addFile(zos, new File(files[i]));
+	}
+	zos.close();
     }
 
     /*
@@ -475,7 +475,7 @@ class Main {
         boolean foundManifest = false;
         byte[] buf = new byte[1024];
         int n = 0;
-        boolean updateOk = true;
+	boolean updateOk = true;
 
         if (t.containsKey(INDEX)) {
             addIndex((JarIndex)t.get(INDEX), zos);
@@ -485,17 +485,17 @@ class Main {
         while ((e = zis.getNextEntry()) != null) {
             String name = e.getName();
 
-            boolean isManifestEntry = name.toUpperCase(
-                                            java.util.Locale.ENGLISH).
-                                        equals(MANIFEST);
+	    boolean isManifestEntry = name.toUpperCase(
+					    java.util.Locale.ENGLISH).
+					equals(MANIFEST);
             if ((name.toUpperCase().equals(INDEX)
-                    && t.containsKey(INDEX))
-                    || (Mflag && isManifestEntry)) {
+		    && t.containsKey(INDEX))
+		    || (Mflag && isManifestEntry)) {
                 continue;
-            } else if (isManifestEntry && ((newManifest != null) ||
-                        (ename != null))) {
-                foundManifest = true;
-                if (newManifest != null) {
+	    } else if (isManifestEntry && ((newManifest != null) ||
+			(ename != null))) {
+		foundManifest = true;
+		if (newManifest != null) {
                     // Don't read from the newManifest InputStream, as we
                     // might need it below, and we can't re-read the same data
                     // twice.
@@ -505,20 +505,20 @@ class Main {
                     if (ambigous) {
                         return false;
                     }
-                }
+		}
 
-                // Update the manifest.
-                Manifest old = new Manifest(zis);
-                if (newManifest != null) {
-                    old.read(newManifest);
-                }
-                updateManifest(old, zos);
-            } else {
+		// Update the manifest.
+		Manifest old = new Manifest(zis);
+		if (newManifest != null) {
+		    old.read(newManifest);
+		}
+		updateManifest(old, zos);
+	    } else {
                 if (!t.containsKey(name)) { // copy the old stuff
 
                     // do our own compression
                     ZipEntry e2 = new ZipEntry(name);
-                    e2.setMethod(e.getMethod());
+		    e2.setMethod(e.getMethod());
                     e2.setTime(e.getTime());
                     e2.setComment(e.getComment());
                     e2.setExtra(e.getExtra());
@@ -548,19 +548,19 @@ class Main {
             }
         }
         if (!foundManifest) {
-            if (newManifest != null) {
-                Manifest m = new Manifest(newManifest);
-                updateOk = !isAmbigousMainClass(m);
-                if (updateOk) {
+	    if (newManifest != null) {
+		Manifest m = new Manifest(newManifest);
+		updateOk = !isAmbigousMainClass(m);
+		if (updateOk) {
                     updateManifest(m, zos);
-                }
-            } else if (ename != null) {
-                updateManifest(new Manifest(), zos);
-            }
-        }
+		}
+	    } else if (ename != null) {
+		updateManifest(new Manifest(), zos);
+	    }
+	}
         zis.close();
         zos.close();
-        return updateOk;
+	return updateOk;
     }
 
 
@@ -590,10 +590,10 @@ class Main {
         throws IOException
     {
         addVersion(m);
-        addCreatedBy(m);
-        if (ename != null) {
-            addMainClass(m, ename);
-        }
+	addCreatedBy(m);
+	if (ename != null) {
+	    addMainClass(m, ename);
+	}
         ZipEntry e = new ZipEntry(MANIFEST);
         e.setTime(System.currentTimeMillis());
         if (flag0) {
@@ -619,12 +619,12 @@ class Main {
         }
         name = name.substring(matchPath.length());
 
-        if (name.startsWith("/")) {
-            name = name.substring(1);
-        } else if (name.startsWith("./")) {
-            name = name.substring(2);
-        }
-        return name;
+	if (name.startsWith("/")) {
+	    name = name.substring(1);
+	} else if (name.startsWith("./")) {
+	    name = name.substring(2);
+	}
+	return name;
     }
 
     private void addVersion(Manifest m) {
@@ -637,30 +637,30 @@ class Main {
     private void addCreatedBy(Manifest m) {
         Attributes global = m.getMainAttributes();
         if (global.getValue(new Attributes.Name("Created-By")) == null) {
-            String javaVendor = System.getProperty("java.vendor");
-            String jdkVersion = System.getProperty("java.version");
+	    String javaVendor = System.getProperty("java.vendor");
+	    String jdkVersion = System.getProperty("java.version");
             global.put(new Attributes.Name("Created-By"), jdkVersion + " (" +
-                        javaVendor + ")");
+			javaVendor + ")");
         }
     }
 
     private void addMainClass(Manifest m, String mainApp) {
-        Attributes global = m.getMainAttributes();
+	Attributes global = m.getMainAttributes();
 
-        // overrides any existing Main-Class attribute
-        global.put(Attributes.Name.MAIN_CLASS, mainApp);
+	// overrides any existing Main-Class attribute
+	global.put(Attributes.Name.MAIN_CLASS, mainApp);
     }
 
     private boolean isAmbigousMainClass(Manifest m) {
-        if (ename != null) {
-            Attributes global = m.getMainAttributes();
-            if ((global.get(Attributes.Name.MAIN_CLASS) != null)) {
-                error(getMsg("error.bad.eflag"));
-                usageError();
-                return true;
-            }
-        }
-        return false;
+	if (ename != null) {
+	    Attributes global = m.getMainAttributes();
+	    if ((global.get(Attributes.Name.MAIN_CLASS) != null)) {
+	        error(getMsg("error.bad.eflag"));
+	        usageError();
+	        return true;
+	    }
+	}
+	return false;
     }
 
     /*
@@ -668,7 +668,7 @@ class Main {
      */
     void addFile(ZipOutputStream zos, File file) throws IOException {
         String name = file.getPath();
-        boolean isDir = file.isDirectory();
+	boolean isDir = file.isDirectory();
 
         if (isDir) {
             name = name.endsWith(File.separator) ? name :
@@ -676,59 +676,59 @@ class Main {
         }
         name = entryName(name);
 
-        if (name.equals("") || name.equals(".") || name.equals(zname)) {
-            return;
+	if (name.equals("") || name.equals(".") || name.equals(zname)) {
+	    return;
         } else if ((name.equals(MANIFEST_DIR) || name.equals(MANIFEST))
                    && !Mflag) {
             if (vflag) {
-                output(formatMsg("out.ignore.entry", name));
+ 		output(formatMsg("out.ignore.entry", name));
             }
             return;
         }
 
-        long size = isDir ? 0 : file.length();
+	long size = isDir ? 0 : file.length();
 
-        if (vflag) {
-            out.print(formatMsg("out.adding", name));
-        }
-        ZipEntry e = new ZipEntry(name);
-        e.setTime(file.lastModified());
-        if (size == 0) {
+	if (vflag) {
+	    out.print(formatMsg("out.adding", name));
+	}
+	ZipEntry e = new ZipEntry(name);
+	e.setTime(file.lastModified());
+	if (size == 0) {
+	    e.setMethod(ZipEntry.STORED);
+	    e.setSize(0);
+	    e.setCrc(0);
+	} else if (flag0) {
+	    e.setSize(size);
             e.setMethod(ZipEntry.STORED);
-            e.setSize(0);
-            e.setCrc(0);
-        } else if (flag0) {
-            e.setSize(size);
-            e.setMethod(ZipEntry.STORED);
-            crc32File(e, file);
-        }
-        zos.putNextEntry(e);
-        if (!isDir) {
-            byte[] buf = new byte[1024];
-            int len;
-            InputStream is = new BufferedInputStream(new FileInputStream(file));
-            while ((len = is.read(buf, 0, buf.length)) != -1) {
-                zos.write(buf, 0, len);
-            }
-            is.close();
-        }
-        zos.closeEntry();
-        /* report how much compression occurred. */
-        if (vflag) {
-            size = e.getSize();
-            long csize = e.getCompressedSize();
-            out.print(formatMsg2("out.size", String.valueOf(size),
-                        String.valueOf(csize)));
-            if (e.getMethod() == ZipEntry.DEFLATED) {
-                long ratio = 0;
-                if (size != 0) {
-                    ratio = ((size - csize) * 100) / size;
-                }
-                output(formatMsg("out.deflated", String.valueOf(ratio)));
-            } else {
+	    crc32File(e, file);
+	}
+	zos.putNextEntry(e);
+	if (!isDir) {
+	    byte[] buf = new byte[1024];
+	    int len;
+	    InputStream is = new BufferedInputStream(new FileInputStream(file));
+	    while ((len = is.read(buf, 0, buf.length)) != -1) {
+		zos.write(buf, 0, len);
+	    }
+	    is.close();
+	}
+	zos.closeEntry();
+	/* report how much compression occurred. */
+	if (vflag) {
+	    size = e.getSize();
+	    long csize = e.getCompressedSize();
+	    out.print(formatMsg2("out.size", String.valueOf(size),
+			String.valueOf(csize)));
+	    if (e.getMethod() == ZipEntry.DEFLATED) {
+		long ratio = 0;
+		if (size != 0) {
+		    ratio = ((size - csize) * 100) / size;
+		}
+ 		output(formatMsg("out.deflated", String.valueOf(ratio)));
+	    } else {
                 output(getMsg("out.stored"));
-            }
-        }
+	    }
+	}
     }
 
     /*
@@ -736,11 +736,11 @@ class Main {
      * is in STORED mode.
      */
     private void crc32Manifest(ZipEntry e, Manifest m) throws IOException {
-        crc32.reset();
-        CRC32OutputStream os = new CRC32OutputStream(crc32);
-        m.write(os);
-        e.setSize((long) os.n);
-        e.setCrc(crc32.getValue());
+	crc32.reset();
+	CRC32OutputStream os = new CRC32OutputStream(crc32);
+	m.write(os);
+	e.setSize((long) os.n);
+	e.setCrc(crc32.getValue());
     }
 
     /*
@@ -748,30 +748,30 @@ class Main {
      * is in STORED mode.
      */
     private void crc32File(ZipEntry e, File f) throws IOException {
-        InputStream is = new BufferedInputStream(new FileInputStream(f));
-        byte[] buf = new byte[1024];
-        crc32.reset();
-        int r = 0;
-        int nread = 0;
-        long len = f.length();
-        while ((r = is.read(buf)) != -1) {
-            nread += r;
-            crc32.update(buf, 0, r);
-        }
-        is.close();
-        if (nread != (int) len) {
-            throw new JarException(formatMsg(
-                        "error.incorrect.length", f.getPath()));
-        }
-        e.setCrc(crc32.getValue());
+	InputStream is = new BufferedInputStream(new FileInputStream(f));
+	byte[] buf = new byte[1024];
+	crc32.reset();
+	int r = 0;
+	int nread = 0;
+	long len = f.length();
+	while ((r = is.read(buf)) != -1) {
+	    nread += r;
+	    crc32.update(buf, 0, r);
+	}
+	is.close();
+	if (nread != (int) len) {
+	    throw new JarException(formatMsg(
+			"error.incorrect.length", f.getPath()));
+	}
+	e.setCrc(crc32.getValue());
     }
 
     /*
      * Extracts specified entries from JAR file.
      */
     void extract(InputStream in, String files[]) throws IOException {
-        ZipInputStream zis = new ZipInputStream(in);
-        ZipEntry e;
+	ZipInputStream zis = new ZipInputStream(in);
+	ZipEntry e;
         // Set of all directory entries specified in archive.  Dissallows
         // null entries.  Disallows all entries if using pre-6.0 behavior.
         Set<ZipEntry> dirs = new HashSet<ZipEntry>() {
@@ -779,21 +779,21 @@ class Main {
                 return ((e == null || useExtractionTime) ? false : super.add(e));
             }};
 
-        while ((e = zis.getNextEntry()) != null) {
-            if (files == null) {
+	while ((e = zis.getNextEntry()) != null) {
+	    if (files == null) {
                 dirs.add(extractFile(zis, e));
-
-            } else {
-                String name = e.getName();
-                for (int i = 0; i < files.length; i++) {
+                    
+	    } else {
+		String name = e.getName();
+		for (int i = 0; i < files.length; i++) {
                     String file = files[i].replace(File.separatorChar, '/');
-                    if (name.startsWith(file)) {
+		    if (name.startsWith(file)) {
                         dirs.add(extractFile(zis, e));
-                        break;
-                    }
-                }
-            }
-        }
+			break;
+		    }
+		}
+	    }
+	}
 
         // Update timestamps of directories specified in archive with their
         // timestamps as given in the archive.  We do this after extraction,
@@ -816,49 +816,49 @@ class Main {
     ZipEntry extractFile(ZipInputStream zis, ZipEntry e) throws IOException {
         ZipEntry rc = null;
         String name = e.getName();
-        File f = new File(e.getName().replace('/', File.separatorChar));
-        if (e.isDirectory()) {
+	File f = new File(e.getName().replace('/', File.separatorChar));
+	if (e.isDirectory()) {
             if (f.exists()) {
                 if (!f.isDirectory()) {
                     throw new IOException(formatMsg("error.create.dir",
-                        f.getPath()));
+			f.getPath()));
                 }
             } else {
                 if (!f.mkdirs()) {
                     throw new IOException(formatMsg("error.create.dir",
-                        f.getPath()));
+			f.getPath()));
                 } else {
                     rc = e;
                 }
             }
-
-            if (vflag) {
-                output(formatMsg("out.create", name));
-            }
-        } else {
-            if (f.getParent() != null) {
-                File d = new File(f.getParent());
-                if (!d.exists() && !d.mkdirs() || !d.isDirectory()) {
-                    throw new IOException(formatMsg(
-                        "error.create.dir", d.getPath()));
-                }
-            }
-            OutputStream os = new FileOutputStream(f);
-            byte[] b = new byte[512];
-            int len;
-            while ((len = zis.read(b, 0, b.length)) != -1) {
-                os.write(b, 0, len);
-            }
-            zis.closeEntry();
-            os.close();
-            if (vflag) {
-                if (e.getMethod() == ZipEntry.DEFLATED) {
+                    
+	    if (vflag) {
+ 		output(formatMsg("out.create", name));
+	    }
+	} else {
+	    if (f.getParent() != null) {
+		File d = new File(f.getParent());
+		if (!d.exists() && !d.mkdirs() || !d.isDirectory()) {
+		    throw new IOException(formatMsg(
+			"error.create.dir", d.getPath()));
+		}
+	    }
+	    OutputStream os = new FileOutputStream(f);
+	    byte[] b = new byte[512];
+	    int len;
+	    while ((len = zis.read(b, 0, b.length)) != -1) {
+		os.write(b, 0, len);
+	    }
+	    zis.closeEntry();
+	    os.close();
+	    if (vflag) {
+		if (e.getMethod() == ZipEntry.DEFLATED) {
                     output(formatMsg("out.inflated", name));
-                } else {
+		} else {
                     output(formatMsg("out.extracted", name));
-                }
-            }
-        }
+		}
+	    }
+	}
         if (!useExtractionTime) {
             long lastModified = e.getTime();
             if (lastModified != -1) {
@@ -872,29 +872,29 @@ class Main {
      * Lists contents of JAR file.
      */
     void list(InputStream in, String files[]) throws IOException {
-        ZipInputStream zis = new ZipInputStream(in);
-        ZipEntry e;
-        while ((e = zis.getNextEntry()) != null) {
-            String name = e.getName();
-            /*
-             * In the case of a compressed (deflated) entry, the entry size
-             * is stored immediately following the entry data and cannot be
-             * determined until the entry is fully read. Therefore, we close
-             * the entry first before printing out its attributes.
-             */
-            zis.closeEntry();
-            if (files == null) {
-                printEntry(e);
-            } else {
+	ZipInputStream zis = new ZipInputStream(in);
+	ZipEntry e;
+	while ((e = zis.getNextEntry()) != null) {
+	    String name = e.getName();
+	    /*
+	     * In the case of a compressed (deflated) entry, the entry size
+	     * is stored immediately following the entry data and cannot be
+	     * determined until the entry is fully read. Therefore, we close
+	     * the entry first before printing out its attributes.
+	     */
+	    zis.closeEntry();
+	    if (files == null) {
+		printEntry(e);
+	    } else {
                 for (int i = 0; i < files.length; i++) {
                     String file = files[i].replace(File.separatorChar, '/');
-                    if (name.startsWith(file)) {
-                        printEntry(e);
-                        break;
-                    }
-                }
-            }
-        }
+		    if (name.startsWith(file)) {
+			printEntry(e);
+			break;
+		    }
+		}
+	    }
+	}
     }
 
 
@@ -907,7 +907,7 @@ class Main {
         File scratchFile = File.createTempFile("scratch", null, new File("."));
         File jarFile = new File(rootjar);
         boolean updateOk = update(new FileInputStream(jarFile),
-                new FileOutputStream(scratchFile), null);
+		new FileOutputStream(scratchFile), null);
         jarFile.delete();
         if (!scratchFile.renameTo(jarFile)) {
             scratchFile.delete();
@@ -986,18 +986,18 @@ class Main {
      * Prints entry information.
      */
     void printEntry(ZipEntry e) throws IOException {
-        if (vflag) {
-            StringBuffer sb = new StringBuffer();
-            String s = Long.toString(e.getSize());
-            for (int i = 6 - s.length(); i > 0; --i) {
-                sb.append(' ');
-            }
-            sb.append(s).append(' ').append(new Date(e.getTime()).toString());
-            sb.append(' ').append(e.getName());
-            output(sb.toString());
-        } else {
-            output(e.getName());
-        }
+	if (vflag) {
+	    StringBuffer sb = new StringBuffer();
+	    String s = Long.toString(e.getSize());
+	    for (int i = 6 - s.length(); i > 0; --i) {
+		sb.append(' ');
+	    }
+	    sb.append(s).append(' ').append(new Date(e.getTime()).toString());
+	    sb.append(' ').append(e.getName());
+	    output(sb.toString());
+	} else {
+	    output(e.getName());
+	}
     }
 
     /*
@@ -1011,7 +1011,7 @@ class Main {
      * A fatal exception has been caught.  No recovery possible
      */
     void fatalError(Exception e) {
-        e.printStackTrace();
+	e.printStackTrace();
     }
 
     /*
@@ -1026,22 +1026,22 @@ class Main {
      * Print an output message; like verbose output and the like
      */
     protected void output(String s) {
-        out.println(s);
+	out.println(s);
     }
 
     /**
      * Print an error mesage; like something is broken
      */
     protected void error(String s) {
-        err.println(s);
+	err.println(s);
     }
 
     /*
      * Main routine to start program.
      */
     public static void main(String args[]) {
-        Main jartool = new Main(System.out, System.err, "jar");
-        System.exit(jartool.run(args) ? 0 : 1);
+	Main jartool = new Main(System.out, System.err, "jar");
+	System.exit(jartool.run(args) ? 0 : 1);
     }
 }
 
@@ -1054,21 +1054,21 @@ final class CRC32OutputStream extends java.io.OutputStream {
     CRC32 crc;
     int n = 0;
     CRC32OutputStream(CRC32 crc) {
-        this.crc = crc;
+	this.crc = crc;
     }
 
     public void write(int r) throws IOException {
-        crc.update(r);
-        n++;
+	crc.update(r);
+	n++;
     }
 
     public void write(byte[] b) throws IOException {
-        crc.update(b, 0, b.length);
-        n += b.length;
+	crc.update(b, 0, b.length);
+	n += b.length;
     }
 
     public void write(byte[] b, int off, int len) throws IOException {
-        crc.update(b, off, len);
-        n += len - off;
+	crc.update(b, off, len);
+	n += len - off;
     }
 }

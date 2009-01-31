@@ -38,6 +38,7 @@ import sun.swing.SwingUtilities2;
 
 
 /*
+ * @version 1.44 02/11/99
  * @author Hans Muller
  */
 
@@ -117,14 +118,14 @@ public class BasicGraphicsUtils
     }
 
 
-    public static void drawBezel(Graphics g, int x, int y, int w, int h,
-                                 boolean isPressed, boolean isDefault,
-                                 Color shadow, Color darkShadow,
+    public static void drawBezel(Graphics g, int x, int y, int w, int h, 
+                                 boolean isPressed, boolean isDefault, 
+                                 Color shadow, Color darkShadow, 
                                  Color highlight, Color lightHighlight)
     {
         Color oldColor = g.getColor();  // Make no net change to g
         g.translate(x, y);
-
+        
         if (isPressed && isDefault) {
             g.setColor(darkShadow);
             g.drawRect(0, 0, w - 1, h - 1);
@@ -134,10 +135,10 @@ public class BasicGraphicsUtils
             drawLoweredBezel(g, x, y, w, h,
                              shadow, darkShadow, highlight, lightHighlight);
         } else if (isDefault) {
-            g.setColor(darkShadow);
+            g.setColor(darkShadow);       
             g.drawRect(0, 0, w-1, h-1);
 
-            g.setColor(lightHighlight);
+            g.setColor(lightHighlight);   
             g.drawLine(1, 1, 1, h-3);
             g.drawLine(2, 1, w-3, 1);
 
@@ -149,11 +150,11 @@ public class BasicGraphicsUtils
             g.drawLine(2, h-3, w-3, h-3);
             g.drawLine(w-3, 2, w-3, h-4);
 
-            g.setColor(darkShadow);
+            g.setColor(darkShadow);        
             g.drawLine(1, h-2, w-2, h-2);
             g.drawLine(w-2, h-2, w-2, 1);
         } else {
-            g.setColor(lightHighlight);
+            g.setColor(lightHighlight);    
             g.drawLine(0, 0, 0, h-1);
             g.drawLine(1, 0, w-2, 0);
 
@@ -165,26 +166,26 @@ public class BasicGraphicsUtils
             g.drawLine(1, h-2, w-2, h-2);
             g.drawLine(w-2, 1, w-2, h-3);
 
-            g.setColor(darkShadow);
+            g.setColor(darkShadow);         
             g.drawLine(0, h-1, w-1, h-1);
             g.drawLine(w-1, h-1, w-1, 0);
         }
-        g.translate(-x, -y);
-        g.setColor(oldColor);
+	g.translate(-x, -y);
+	g.setColor(oldColor);
     }
 
     public static void drawLoweredBezel(Graphics g, int x, int y, int w, int h,
-                                        Color shadow, Color darkShadow,
+                                        Color shadow, Color darkShadow, 
                                         Color highlight, Color lightHighlight)  {
-        g.setColor(darkShadow);
+        g.setColor(darkShadow);    
         g.drawLine(0, 0, 0, h-1);
         g.drawLine(1, 0, w-2, 0);
-
+ 
         g.setColor(shadow);
         g.drawLine(1, 1, 1, h-2);
         g.drawLine(1, 1, w-3, 1);
-
-        g.setColor(lightHighlight);
+ 
+        g.setColor(lightHighlight);         
         g.drawLine(0, h-1, w-1, h-1);
         g.drawLine(w-1, h-1, w-1, 0);
 
@@ -255,7 +256,7 @@ public class BasicGraphicsUtils
 
         // draw left and right vertical dashes
         for (vy = y; vy < (y + height); vy+=2) {
-            g.fillRect(x, vy, 1, 1);
+	    g.fillRect(x, vy, 1, 1);
             g.fillRect(x+width-1, vy, 1, 1);
         }
     }
@@ -271,7 +272,7 @@ public class BasicGraphicsUtils
 
         Font font = b.getFont();
         FontMetrics fm = b.getFontMetrics(font);
-
+          
         Rectangle iconR = new Rectangle();
         Rectangle textR = new Rectangle();
         Rectangle viewR = new Rectangle(Short.MAX_VALUE, Short.MAX_VALUE);
@@ -283,7 +284,7 @@ public class BasicGraphicsUtils
             viewR, iconR, textR, (text == null ? 0 : textIconGap)
         );
 
-        /* The preferred size of the button is the size of
+        /* The preferred size of the button is the size of 
          * the text and icon rectangles plus the buttons insets.
          */
 
@@ -295,7 +296,7 @@ public class BasicGraphicsUtils
 
         return r.getSize();
     }
-
+    
     /*
      * Convenience function for determining ComponentOrientation.  Helps us
      * avoid having Munge directives throughout the code.

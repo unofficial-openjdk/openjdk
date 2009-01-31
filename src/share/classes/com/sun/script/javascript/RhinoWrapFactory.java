@@ -39,20 +39,21 @@ import sun.org.mozilla.javascript.internal.*;
  * code and hence should not be accessible to JavaScript run from
  * untrusted code.
  *
+ * @version 1.0
  * @author A. Sundararajan
  * @since 1.6
  */
 final class RhinoWrapFactory extends WrapFactory {
     private RhinoWrapFactory() {}
     private static RhinoWrapFactory theInstance;
-
+    
     static synchronized WrapFactory getInstance() {
         if (theInstance == null) {
             theInstance = new RhinoWrapFactory();
         }
         return theInstance;
     }
-
+   
     // We use instance of this class to wrap security sensitive
     // Java object. Please refer below.
     private static class RhinoJavaObject extends NativeJavaObject {
@@ -95,7 +96,7 @@ final class RhinoWrapFactory extends WrapFactory {
                 name = member.getDeclaringClass().getName();
             }
             // Now, make sure that no ClassShutter prevented Class or Member
-            // of it is accessed reflectively. Note that ClassShutter may
+            // of it is accessed reflectively. Note that ClassShutter may 
             // prevent access to a class, even though SecurityManager permit.
             if (name != null) {
                 if (!classShutter.visibleToScripts(name)) {
@@ -136,7 +137,7 @@ final class RhinoWrapFactory extends WrapFactory {
                 }
                 // atleast java.lang.Object has to be accessible. So, when
                 // we reach here, type variable should not be null.
-                assert type != null:
+                assert type != null: 
                        "even java.lang.Object is not accessible?";
             }
             // create custom wrapper with the 'safe' type.

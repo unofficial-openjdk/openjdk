@@ -31,15 +31,15 @@ import javax.management.ObjectName;
 import javax.management.loading.ClassLoaderRepository;
 
 /**
- * This interface keeps the list of Class Loaders registered in the
+ * This interface keeps the list of Class Loaders registered in the 
  * MBean Server.
- * It provides the necessary methods to load classes using the
+ * It provides the necessary methods to load classes using the 
  * registered Class Loaders, and to add/remove class loaders from the
  * list.
  *
  * @since 1.5
  */
-public interface ModifiableClassLoaderRepository
+public interface ModifiableClassLoaderRepository 
     extends ClassLoaderRepository {
 
     /**

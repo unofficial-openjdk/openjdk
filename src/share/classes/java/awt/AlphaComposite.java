@@ -29,7 +29,7 @@ import java.awt.image.ColorModel;
 import sun.java2d.SunCompositeContext;
 
 /**
- * The <code>AlphaComposite</code> class implements basic alpha
+ * The <code>AlphaComposite</code> class implements basic alpha 
  * compositing rules for combining source and destination colors
  * to achieve blending and transparency effects with graphics and
  * images.
@@ -64,7 +64,7 @@ import sun.java2d.SunCompositeContext;
  * sense. The accurate application of its equations depends
  * on the way the data is retrieved from its sources and stored
  * in its destinations.
- * See <a href="#caveats">Implementation Caveats</a>
+ * See <a href="#caveats">Implementation Caveats</a> 
  * for further information.
  *
  * <p>
@@ -93,8 +93,8 @@ import sun.java2d.SunCompositeContext;
  * The equations for determining <em>F<sub>s</sub></em> and <em>F<sub>d</sub></em>
  * are given in the descriptions of the 12 static fields
  * that specify visual effects.
- * For example,
- * the description for
+ * For example, 
+ * the description for 
  * <a href="#SRC_OVER"><code>SRC_OVER</code></a>
  * specifies that <em>F<sub>s</sub></em> = 1 and <em>F<sub>d</sub></em> = (1-<em>A<sub>s</sub></em>).
  * Once a set of equations for determining the blending factors is
@@ -102,10 +102,10 @@ import sun.java2d.SunCompositeContext;
  * using the following set of equations:
  *
  * <pre>
- *      <em>F<sub>s</sub></em> = <em>f</em>(<em>A<sub>d</sub></em>)
- *      <em>F<sub>d</sub></em> = <em>f</em>(<em>A<sub>s</sub></em>)
- *      <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*<em>F<sub>s</sub></em> + <em>A<sub>d</sub></em>*<em>F<sub>d</sub></em>
- *      <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*<em>F<sub>s</sub></em> + <em>C<sub>d</sub></em>*<em>F<sub>d</sub></em></pre>
+ * 	<em>F<sub>s</sub></em> = <em>f</em>(<em>A<sub>d</sub></em>)
+ * 	<em>F<sub>d</sub></em> = <em>f</em>(<em>A<sub>s</sub></em>)
+ * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*<em>F<sub>s</sub></em> + <em>A<sub>d</sub></em>*<em>F<sub>d</sub></em>
+ * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*<em>F<sub>s</sub></em> + <em>C<sub>d</sub></em>*<em>F<sub>d</sub></em></pre>
  *
  * <p>
  * The following factors will be used to discuss our extensions to
@@ -137,7 +137,7 @@ import sun.java2d.SunCompositeContext;
  * used in the Porter and Duff blending equation:
  *
  * <pre>
- *      <em>A<sub>s</sub></em> = <em>A<sub>sr</sub></em> * <em>A<sub>ac</sub></em> </pre>
+ * 	<em>A<sub>s</sub></em> = <em>A<sub>sr</sub></em> * <em>A<sub>ac</sub></em> </pre>
  *
  * All of the raw source color components need to be multiplied
  * by the alpha in the <code>AlphaComposite</code> instance.
@@ -149,21 +149,21 @@ import sun.java2d.SunCompositeContext;
  * pixels are premultiplied or not:
  *
  * <pre>
- *      <em>C<sub>s</sub></em> = <em>C<sub>sr</sub></em> * <em>A<sub>sr</sub></em> * <em>A<sub>ac</sub></em>     (if source is not premultiplied)
- *      <em>C<sub>s</sub></em> = <em>C<sub>sr</sub></em> * <em>A<sub>ac</sub></em>           (if source is premultiplied) </pre>
+ * 	<em>C<sub>s</sub></em> = <em>C<sub>sr</sub></em> * <em>A<sub>sr</sub></em> * <em>A<sub>ac</sub></em>     (if source is not premultiplied)
+ * 	<em>C<sub>s</sub></em> = <em>C<sub>sr</sub></em> * <em>A<sub>ac</sub></em>           (if source is premultiplied) </pre>
  *
  * No adjustment needs to be made to the destination alpha:
  *
  * <pre>
- *      <em>A<sub>d</sub></em> = <em>A<sub>dr</sub></em> </pre>
+ * 	<em>A<sub>d</sub></em> = <em>A<sub>dr</sub></em> </pre>
  *
  * <p>
  * The destination color components need to be adjusted only if
  * they are not in premultiplied form:
  *
  * <pre>
- *      <em>C<sub>d</sub></em> = <em>C<sub>dr</sub></em> * <em>A<sub>d</sub></em>    (if destination is not premultiplied)
- *      <em>C<sub>d</sub></em> = <em>C<sub>dr</sub></em>         (if destination is premultiplied) </pre>
+ * 	<em>C<sub>d</sub></em> = <em>C<sub>dr</sub></em> * <em>A<sub>d</sub></em>    (if destination is not premultiplied) 
+ * 	<em>C<sub>d</sub></em> = <em>C<sub>dr</sub></em>         (if destination is premultiplied) </pre>
  *
  * <h3>Applying the Blending Equation</h3>
  *
@@ -183,9 +183,9 @@ import sun.java2d.SunCompositeContext;
  * premultiplied, using the following equations:
  *
  * <pre>
- *      <em>A<sub>df</sub></em> = <em>A<sub>r</sub></em>
- *      <em>C<sub>df</sub></em> = <em>C<sub>r</sub></em>                 (if dest is premultiplied)
- *      <em>C<sub>df</sub></em> = <em>C<sub>r</sub></em> / <em>A<sub>r</sub></em>            (if dest is not premultiplied) </pre>
+ * 	<em>A<sub>df</sub></em> = <em>A<sub>r</sub></em>
+ * 	<em>C<sub>df</sub></em> = <em>C<sub>r</sub></em>                 (if dest is premultiplied)
+ * 	<em>C<sub>df</sub></em> = <em>C<sub>r</sub></em> / <em>A<sub>r</sub></em>            (if dest is not premultiplied) </pre>
  *
  * Note that since the division is undefined if the resulting alpha
  * is zero, the division in that case is omitted to avoid the "divide
@@ -196,9 +196,9 @@ import sun.java2d.SunCompositeContext;
  * <h3>Performance Considerations</h3>
  *
  * <p>
- * For performance reasons, it is preferrable that
+ * For performance reasons, it is preferrable that 
  * <code>Raster</code> objects passed to the <code>compose</code>
- * method of a {@link CompositeContext} object created by the
+ * method of a {@link CompositeContext} object created by the 
  * <code>AlphaComposite</code> class have premultiplied data.
  * If either the source <code>Raster</code>
  * or the destination <code>Raster</code>
@@ -237,12 +237,12 @@ import sun.java2d.SunCompositeContext;
  * is of limited use for just one or two compositing operations
  * before the rounding errors dominate the results.
  * An image format
- * that does not separately store
+ * that does not separately store 
  * color components is not a
  * good candidate for any type of translucent blending.
  * For example, <code>BufferedImage.TYPE_BYTE_INDEXED</code>
  * should not be used as a destination for a blending operation
- * because every operation
+ * because every operation 
  * can introduce large errors, due to
  * the need to choose a pixel from a limited palette to match the
  * results of the blending equations.
@@ -252,7 +252,7 @@ import sun.java2d.SunCompositeContext;
  * Nearly all formats store pixels as discrete integers rather than
  * the floating point values used in the reference equations above.
  * The implementation can either scale the integer pixel
- * values into floating point values in the range 0.0 to 1.0 or
+ * values into floating point values in the range 0.0 to 1.0 or 
  * use slightly modified versions of the equations
  * that operate entirely in the integer domain and yet produce
  * analogous results to the reference equations.
@@ -347,6 +347,7 @@ import sun.java2d.SunCompositeContext;
  * </ul>
  * @see Composite
  * @see CompositeContext
+ * @version 10 Feb 1997
  */
 
 public final class AlphaComposite implements Composite {
@@ -357,11 +358,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = 0 and <em>F<sub>d</sub></em> = 0, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = 0
-     *  <em>C<sub>r</sub></em> = 0
+     * 	<em>A<sub>r</sub></em> = 0
+     * 	<em>C<sub>r</sub></em> = 0
      *</pre>
      */
-    public static final int     CLEAR           = 1;
+    public static final int	CLEAR		= 1;
 
     /**
      * The source is copied to the destination
@@ -370,11 +371,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = 1 and <em>F<sub>d</sub></em> = 0, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>
      *</pre>
      */
-    public static final int     SRC             = 2;
+    public static final int	SRC		= 2;
 
     /**
      * The destination is left untouched
@@ -382,12 +383,12 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = 0 and <em>F<sub>d</sub></em> = 1, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>d</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>d</sub></em>
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>d</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>d</sub></em>
      *</pre>
      * @since 1.4
      */
-    public static final int     DST             = 9;
+    public static final int	DST		= 9;
     // Note that DST was added in 1.4 so it is numbered out of order...
 
     /**
@@ -396,11 +397,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = 1 and <em>F<sub>d</sub></em> = (1-<em>A<sub>s</sub></em>), thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em> + <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em> + <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em> + <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em> + <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
      *</pre>
      */
-    public static final int     SRC_OVER        = 3;
+    public static final int	SRC_OVER	= 3;
 
     /**
      * The destination is composited over the source and
@@ -409,11 +410,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = (1-<em>A<sub>d</sub></em>) and <em>F<sub>d</sub></em> = 1, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>A<sub>d</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>C<sub>d</sub></em>
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>A<sub>d</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>C<sub>d</sub></em>
      *</pre>
      */
-    public static final int     DST_OVER        = 4;
+    public static final int	DST_OVER	= 4;
 
     /**
      * The part of the source lying inside of the destination replaces
@@ -422,11 +423,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = <em>A<sub>d</sub></em> and <em>F<sub>d</sub></em> = 0, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*<em>A<sub>d</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*<em>A<sub>d</sub></em>
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*<em>A<sub>d</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*<em>A<sub>d</sub></em>
      *</pre>
      */
-    public static final int     SRC_IN          = 5;
+    public static final int	SRC_IN		= 5;
 
     /**
      * The part of the destination lying inside of the source
@@ -435,11 +436,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = 0 and <em>F<sub>d</sub></em> = <em>A<sub>s</sub></em>, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>d</sub></em>*<em>A<sub>s</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>d</sub></em>*<em>A<sub>s</sub></em>
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>d</sub></em>*<em>A<sub>s</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>d</sub></em>*<em>A<sub>s</sub></em>
      *</pre>
      */
-    public static final int     DST_IN          = 6;
+    public static final int	DST_IN		= 6;
 
     /**
      * The part of the source lying outside of the destination
@@ -448,11 +449,11 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = (1-<em>A<sub>d</sub></em>) and <em>F<sub>d</sub></em> = 0, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>)
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>)
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>)
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>)
      *</pre>
      */
-    public static final int     SRC_OUT         = 7;
+    public static final int	SRC_OUT		= 7;
 
     /**
      * The part of the destination lying outside of the source
@@ -461,16 +462,16 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = 0 and <em>F<sub>d</sub></em> = (1-<em>A<sub>s</sub></em>), thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
-     *  <em>C<sub>r</sub></em> = <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
      *</pre>
      */
-    public static final int     DST_OUT         = 8;
+    public static final int	DST_OUT		= 8;
 
     // Rule 9 is DST which is defined above where it fits into the
     // list logically, rather than numerically
     //
-    // public static final int  DST             = 9;
+    // public static final int	DST		= 9;
 
     /**
      * The part of the source lying inside of the destination
@@ -479,12 +480,12 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = <em>A<sub>d</sub></em> and <em>F<sub>d</sub></em> = (1-<em>A<sub>s</sub></em>), thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*<em>A<sub>d</sub></em> + <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>) = <em>A<sub>d</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*<em>A<sub>d</sub></em> + <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*<em>A<sub>d</sub></em> + <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>) = <em>A<sub>d</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*<em>A<sub>d</sub></em> + <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
      *</pre>
      * @since 1.4
      */
-    public static final int     SRC_ATOP        = 10;
+    public static final int	SRC_ATOP	= 10;
 
     /**
      * The part of the destination lying inside of the source
@@ -493,12 +494,12 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = (1-<em>A<sub>d</sub></em>) and <em>F<sub>d</sub></em> = <em>A<sub>s</sub></em>, thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>A<sub>d</sub></em>*<em>A<sub>s</sub></em> = <em>A<sub>s</sub></em>
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>C<sub>d</sub></em>*<em>A<sub>s</sub></em>
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>A<sub>d</sub></em>*<em>A<sub>s</sub></em> = <em>A<sub>s</sub></em>
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>C<sub>d</sub></em>*<em>A<sub>s</sub></em>
      *</pre>
      * @since 1.4
      */
-    public static final int     DST_ATOP        = 11;
+    public static final int	DST_ATOP	= 11;
 
     /**
      * The part of the source that lies outside of the destination
@@ -508,26 +509,26 @@ public final class AlphaComposite implements Composite {
      *<p>
      * <em>F<sub>s</sub></em> = (1-<em>A<sub>d</sub></em>) and <em>F<sub>d</sub></em> = (1-<em>A<sub>s</sub></em>), thus:
      *<pre>
-     *  <em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
-     *  <em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>A<sub>r</sub></em> = <em>A<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>A<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
+     * 	<em>C<sub>r</sub></em> = <em>C<sub>s</sub></em>*(1-<em>A<sub>d</sub></em>) + <em>C<sub>d</sub></em>*(1-<em>A<sub>s</sub></em>)
      *</pre>
      * @since 1.4
      */
-    public static final int     XOR             = 12;
+    public static final int	XOR		= 12;
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque CLEAR rule
      * with an alpha of 1.0f.
      * @see #CLEAR
      */
-    public static final AlphaComposite Clear    = new AlphaComposite(CLEAR);
+    public static final AlphaComposite Clear	= new AlphaComposite(CLEAR);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque SRC rule
      * with an alpha of 1.0f.
      * @see #SRC
      */
-    public static final AlphaComposite Src      = new AlphaComposite(SRC);
+    public static final AlphaComposite Src	= new AlphaComposite(SRC);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque DST rule
@@ -535,49 +536,49 @@ public final class AlphaComposite implements Composite {
      * @see #DST
      * @since 1.4
      */
-    public static final AlphaComposite Dst      = new AlphaComposite(DST);
+    public static final AlphaComposite Dst	= new AlphaComposite(DST);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque SRC_OVER rule
      * with an alpha of 1.0f.
      * @see #SRC_OVER
      */
-    public static final AlphaComposite SrcOver  = new AlphaComposite(SRC_OVER);
+    public static final AlphaComposite SrcOver	= new AlphaComposite(SRC_OVER);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque DST_OVER rule
      * with an alpha of 1.0f.
      * @see #DST_OVER
      */
-    public static final AlphaComposite DstOver  = new AlphaComposite(DST_OVER);
+    public static final AlphaComposite DstOver	= new AlphaComposite(DST_OVER);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque SRC_IN rule
      * with an alpha of 1.0f.
      * @see #SRC_IN
      */
-    public static final AlphaComposite SrcIn    = new AlphaComposite(SRC_IN);
+    public static final AlphaComposite SrcIn	= new AlphaComposite(SRC_IN);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque DST_IN rule
      * with an alpha of 1.0f.
      * @see #DST_IN
      */
-    public static final AlphaComposite DstIn    = new AlphaComposite(DST_IN);
+    public static final AlphaComposite DstIn	= new AlphaComposite(DST_IN);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque SRC_OUT rule
      * with an alpha of 1.0f.
      * @see #SRC_OUT
      */
-    public static final AlphaComposite SrcOut   = new AlphaComposite(SRC_OUT);
+    public static final AlphaComposite SrcOut	= new AlphaComposite(SRC_OUT);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque DST_OUT rule
      * with an alpha of 1.0f.
      * @see #DST_OUT
      */
-    public static final AlphaComposite DstOut   = new AlphaComposite(DST_OUT);
+    public static final AlphaComposite DstOut	= new AlphaComposite(DST_OUT);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque SRC_ATOP rule
@@ -585,7 +586,7 @@ public final class AlphaComposite implements Composite {
      * @see #SRC_ATOP
      * @since 1.4
      */
-    public static final AlphaComposite SrcAtop  = new AlphaComposite(SRC_ATOP);
+    public static final AlphaComposite SrcAtop	= new AlphaComposite(SRC_ATOP);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque DST_ATOP rule
@@ -593,7 +594,7 @@ public final class AlphaComposite implements Composite {
      * @see #DST_ATOP
      * @since 1.4
      */
-    public static final AlphaComposite DstAtop  = new AlphaComposite(DST_ATOP);
+    public static final AlphaComposite DstAtop	= new AlphaComposite(DST_ATOP);
 
     /**
      * <code>AlphaComposite</code> object that implements the opaque XOR rule
@@ -601,7 +602,7 @@ public final class AlphaComposite implements Composite {
      * @see #XOR
      * @since 1.4
      */
-    public static final AlphaComposite Xor      = new AlphaComposite(XOR);
+    public static final AlphaComposite Xor	= new AlphaComposite(XOR);
 
     private static final int MIN_RULE = CLEAR;
     private static final int MAX_RULE = XOR;
@@ -610,58 +611,58 @@ public final class AlphaComposite implements Composite {
     int rule;
 
     private AlphaComposite(int rule) {
-        this(rule, 1.0f);
+	this(rule, 1.0f);
     }
 
     private AlphaComposite(int rule, float alpha) {
-        if (alpha < 0.0f || alpha > 1.0f) {
-            throw new IllegalArgumentException("alpha value out of range");
-        }
-        if (rule < MIN_RULE || rule > MAX_RULE) {
-            throw new IllegalArgumentException("unknown composite rule");
-        }
-        this.rule = rule;
-        this.extraAlpha = alpha;
+	if (alpha < 0.0f || alpha > 1.0f) {
+	    throw new IllegalArgumentException("alpha value out of range");
+	}
+	if (rule < MIN_RULE || rule > MAX_RULE) {
+	    throw new IllegalArgumentException("unknown composite rule");
+	}
+	this.rule = rule;
+	this.extraAlpha = alpha;
     }
 
     /**
      * Creates an <code>AlphaComposite</code> object with the specified rule.
      * @param rule the compositing rule
-     * @throws IllegalArgumentException if <code>rule</code> is not one of
+     * @throws IllegalArgumentException if <code>rule</code> is not one of 
      *         the following:  {@link #CLEAR}, {@link #SRC}, {@link #DST},
-     *         {@link #SRC_OVER}, {@link #DST_OVER}, {@link #SRC_IN},
+     *         {@link #SRC_OVER}, {@link #DST_OVER}, {@link #SRC_IN}, 
      *         {@link #DST_IN}, {@link #SRC_OUT}, {@link #DST_OUT},
      *         {@link #SRC_ATOP}, {@link #DST_ATOP}, or {@link #XOR}
      */
     public static AlphaComposite getInstance(int rule) {
-        switch (rule) {
-        case CLEAR:
-            return Clear;
-        case SRC:
-            return Src;
-        case DST:
-            return Dst;
-        case SRC_OVER:
-            return SrcOver;
-        case DST_OVER:
-            return DstOver;
-        case SRC_IN:
-            return SrcIn;
-        case DST_IN:
-            return DstIn;
-        case SRC_OUT:
-            return SrcOut;
-        case DST_OUT:
-            return DstOut;
-        case SRC_ATOP:
-            return SrcAtop;
-        case DST_ATOP:
-            return DstAtop;
-        case XOR:
-            return Xor;
-        default:
-            throw new IllegalArgumentException("unknown composite rule");
-        }
+	switch (rule) {
+	case CLEAR:
+	    return Clear;
+	case SRC:
+	    return Src;
+	case DST:
+	    return Dst;
+	case SRC_OVER:
+	    return SrcOver;
+	case DST_OVER:
+	    return DstOver;
+	case SRC_IN:
+	    return SrcIn;
+	case DST_IN:
+	    return DstIn;
+	case SRC_OUT:
+	    return SrcOut;
+	case DST_OUT:
+	    return DstOut;
+	case SRC_ATOP:
+	    return SrcAtop;
+	case DST_ATOP:
+	    return DstAtop;
+	case XOR:
+	    return Xor;
+	default:
+	    throw new IllegalArgumentException("unknown composite rule");
+	}
     }
 
     /**
@@ -672,20 +673,20 @@ public final class AlphaComposite implements Composite {
      * @param rule the compositing rule
      * @param alpha the constant alpha to be multiplied with the alpha of
      * the source. <code>alpha</code> must be a floating point number in the
-     * inclusive range [0.0,&nbsp;1.0].
-     * @throws IllegalArgumentException if
+     * inclusive range [0.0,&nbsp;1.0]. 
+     * @throws IllegalArgumentException if 
      *         <code>alpha</code> is less than 0.0 or greater than 1.0, or if
-     *         <code>rule</code> is not one of
+     *         <code>rule</code> is not one of 
      *         the following:  {@link #CLEAR}, {@link #SRC}, {@link #DST},
-     *         {@link #SRC_OVER}, {@link #DST_OVER}, {@link #SRC_IN},
+     *         {@link #SRC_OVER}, {@link #DST_OVER}, {@link #SRC_IN}, 
      *         {@link #DST_IN}, {@link #SRC_OUT}, {@link #DST_OUT},
      *         {@link #SRC_ATOP}, {@link #DST_ATOP}, or {@link #XOR}
      */
     public static AlphaComposite getInstance(int rule, float alpha) {
-        if (alpha == 1.0f) {
-            return getInstance(rule);
-        }
-        return new AlphaComposite(rule, alpha);
+	if (alpha == 1.0f) {
+	    return getInstance(rule);
+	}
+	return new AlphaComposite(rule, alpha);
     }
 
     /**
@@ -698,7 +699,7 @@ public final class AlphaComposite implements Composite {
      * compositing operations.
      */
     public CompositeContext createContext(ColorModel srcColorModel,
-                                          ColorModel dstColorModel,
+					  ColorModel dstColorModel,
                                           RenderingHints hints) {
         return new SunCompositeContext(this, srcColorModel, dstColorModel);
     }
@@ -709,7 +710,7 @@ public final class AlphaComposite implements Composite {
      * @return the alpha value of this <code>AlphaComposite</code>.
      */
     public float getAlpha() {
-        return extraAlpha;
+	return extraAlpha;
     }
 
     /**
@@ -728,18 +729,18 @@ public final class AlphaComposite implements Composite {
      * @return an <code>AlphaComposite</code> object derived from
      * this object that uses the specified compositing rule.
      * @param rule the compositing rule
-     * @throws IllegalArgumentException if
-     *         <code>rule</code> is not one of
+     * @throws IllegalArgumentException if 
+     *         <code>rule</code> is not one of 
      *         the following:  {@link #CLEAR}, {@link #SRC}, {@link #DST},
-     *         {@link #SRC_OVER}, {@link #DST_OVER}, {@link #SRC_IN},
+     *         {@link #SRC_OVER}, {@link #DST_OVER}, {@link #SRC_IN}, 
      *         {@link #DST_IN}, {@link #SRC_OUT}, {@link #DST_OUT},
      *         {@link #SRC_ATOP}, {@link #DST_ATOP}, or {@link #XOR}
      * @since 1.6
      */
     public AlphaComposite derive(int rule) {
-        return (this.rule == rule)
-            ? this
-            : getInstance(rule, this.extraAlpha);
+	return (this.rule == rule)
+	    ? this
+	    : getInstance(rule, this.extraAlpha);
     }
 
     /**
@@ -751,15 +752,15 @@ public final class AlphaComposite implements Composite {
      * this object that uses the specified alpha value.
      * @param alpha the constant alpha to be multiplied with the alpha of
      * the source. <code>alpha</code> must be a floating point number in the
-     * inclusive range [0.0,&nbsp;1.0].
-     * @throws IllegalArgumentException if
+     * inclusive range [0.0,&nbsp;1.0]. 
+     * @throws IllegalArgumentException if 
      *         <code>alpha</code> is less than 0.0 or greater than 1.0
      * @since 1.6
      */
     public AlphaComposite derive(float alpha) {
-        return (this.extraAlpha == alpha)
-            ? this
-            : getInstance(this.rule, alpha);
+	return (this.extraAlpha == alpha)
+	    ? this
+	    : getInstance(this.rule, alpha);
     }
 
     /**
@@ -767,11 +768,11 @@ public final class AlphaComposite implements Composite {
      * @return      a hash code for this composite.
      */
     public int hashCode() {
-        return (Float.floatToIntBits(extraAlpha) * 31 + rule);
+	return (Float.floatToIntBits(extraAlpha) * 31 + rule);
     }
 
     /**
-     * Determines whether the specified object is equal to this
+     * Determines whether the specified object is equal to this 
      * <code>AlphaComposite</code>.
      * <p>
      * The result is <code>true</code> if and only if
@@ -800,5 +801,5 @@ public final class AlphaComposite implements Composite {
 
         return true;
     }
-
+            
 }

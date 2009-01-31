@@ -46,8 +46,8 @@ Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj,
     char * vec = (char *)malloc(numPages * sizeof(char));
 
     if (vec == NULL) {
-        JNU_ThrowOutOfMemoryError(env, NULL);
-        return JNI_FALSE;
+	JNU_ThrowOutOfMemoryError(env, NULL);
+	return JNI_FALSE;
     }
 
     result = mincore(a, (size_t)len, vec);
@@ -56,7 +56,7 @@ Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj,
         JNU_ThrowIOExceptionWithLastError(env, "mincore failed");
         return JNI_FALSE;
     }
-
+    
     for (i=0; i<numPages; i++) {
         if (vec[i] == 0) {
             loaded = JNI_FALSE;

@@ -44,9 +44,9 @@ import javax.swing.text.*;
  *        &lt;!-- list of named styles
  *         p.normal {
  *            font-family: SansSerif;
- *            margin-height: 0;
- *            font-size: 14
- *         }
+ *	      margin-height: 0;
+ *	      font-size: 14
+ *	   }
  *        --&gt;
  *      &lt;/style&gt;
  *   &lt;/head&gt;
@@ -63,6 +63,7 @@ import javax.swing.text.*;
  * </pre>
  *
  * @author Sunita Mani
+ * @version %I%, %G%
  */
 
 public class MinimalHTMLWriter extends AbstractWriter {
@@ -107,7 +108,7 @@ public class MinimalHTMLWriter extends AbstractWriter {
      *
      */
     public MinimalHTMLWriter(Writer w, StyledDocument doc) {
-        super(w, doc);
+	super(w, doc);
     }
 
     /**
@@ -121,7 +122,7 @@ public class MinimalHTMLWriter extends AbstractWriter {
      *
      */
     public MinimalHTMLWriter(Writer w, StyledDocument doc, int pos, int len) {
-        super(w, doc, pos, len);
+	super(w, doc, pos, len);
     }
 
     /**
@@ -134,11 +135,11 @@ public class MinimalHTMLWriter extends AbstractWriter {
      *
      */
     public void write() throws IOException, BadLocationException {
-        styleNameMapping = new Hashtable();
-        writeStartTag("<html>");
-        writeHeader();
-        writeBody();
-        writeEndTag("</html>");
+	styleNameMapping = new Hashtable();
+	writeStartTag("<html>");
+	writeHeader();
+	writeBody();
+	writeEndTag("</html>");
     }
 
 
@@ -155,23 +156,23 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeAttributes(AttributeSet attr) throws IOException {
-        Enumeration attributeNames = attr.getAttributeNames();
-        while (attributeNames.hasMoreElements()) {
-            Object name = attributeNames.nextElement();
-            if ((name instanceof StyleConstants.ParagraphConstants) ||
-                (name instanceof StyleConstants.CharacterConstants) ||
-                (name instanceof StyleConstants.FontConstants) ||
-                (name instanceof StyleConstants.ColorConstants)) {
-                indent();
-                write(name.toString());
-                write(':');
-                write(css.styleConstantsValueToCSSValue
-                      ((StyleConstants)name, attr.getAttribute(name)).
-                      toString());
-                write(';');
-                write(NEWLINE);
-            }
-        }
+	Enumeration attributeNames = attr.getAttributeNames();
+	while (attributeNames.hasMoreElements()) {
+	    Object name = attributeNames.nextElement();
+	    if ((name instanceof StyleConstants.ParagraphConstants) ||
+		(name instanceof StyleConstants.CharacterConstants) ||
+		(name instanceof StyleConstants.FontConstants) ||
+		(name instanceof StyleConstants.ColorConstants)) {
+		indent();
+		write(name.toString());
+		write(':');
+		write(css.styleConstantsValueToCSSValue
+		      ((StyleConstants)name, attr.getAttribute(name)).
+		      toString());
+		write(';');
+		write(NEWLINE);
+	    }
+	}
     }
 
 
@@ -181,14 +182,14 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void text(Element elem) throws IOException, BadLocationException {
-        String contentStr = getText(elem);
-        if ((contentStr.length() > 0) &&
-            (contentStr.charAt(contentStr.length()-1) == NEWLINE)) {
-            contentStr = contentStr.substring(0, contentStr.length()-1);
-        }
-        if (contentStr.length() > 0) {
-            write(contentStr);
-        }
+	String contentStr = getText(elem);
+	if ((contentStr.length() > 0) && 
+	    (contentStr.charAt(contentStr.length()-1) == NEWLINE)) {
+	    contentStr = contentStr.substring(0, contentStr.length()-1);
+	}
+	if (contentStr.length() > 0) {
+	    write(contentStr);
+	}
     }
 
     /**
@@ -198,10 +199,10 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeStartTag(String tag) throws IOException {
-        indent();
-        write(tag);
-        write(NEWLINE);
-        incrIndent();
+	indent();
+	write(tag);
+	write(NEWLINE);
+	incrIndent();
     }
 
 
@@ -212,10 +213,10 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeEndTag(String endTag) throws IOException {
-        decrIndent();
-        indent();
-        write(endTag);
-        write(NEWLINE);
+	decrIndent();
+	indent();
+	write(endTag);
+	write(NEWLINE);
     }
 
 
@@ -231,13 +232,13 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeHeader() throws IOException {
-        writeStartTag("<head>");
-        writeStartTag("<style>");
-        writeStartTag("<!--");
-        writeStyles();
-        writeEndTag("-->");
-        writeEndTag("</style>");
-        writeEndTag("</head>");
+	writeStartTag("<head>");
+	writeStartTag("<style>");
+	writeStartTag("<!--");
+	writeStyles();
+	writeEndTag("-->");
+	writeEndTag("</style>");
+	writeEndTag("</head>");
     }
 
 
@@ -249,32 +250,32 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeStyles() throws IOException {
-        /*
-         *  Access to DefaultStyledDocument done to workaround
-         *  a missing API in styled document to access the
-         *  stylenames.
-         */
-        DefaultStyledDocument styledDoc =  ((DefaultStyledDocument)getDocument());
-        Enumeration styleNames = styledDoc.getStyleNames();
+	/*
+	 *  Access to DefaultStyledDocument done to workaround
+	 *  a missing API in styled document to access the
+	 *  stylenames.
+	 */
+	DefaultStyledDocument styledDoc =  ((DefaultStyledDocument)getDocument());
+	Enumeration styleNames = styledDoc.getStyleNames();
 
-        while (styleNames.hasMoreElements()) {
-            Style s = styledDoc.getStyle((String)styleNames.nextElement());
+	while (styleNames.hasMoreElements()) {
+	    Style s = styledDoc.getStyle((String)styleNames.nextElement());
 
-            /** PENDING: Once the name attribute is removed
-                from the list we check check for 0. **/
-            if (s.getAttributeCount() == 1 &&
-                s.isDefined(StyleConstants.NameAttribute)) {
-                continue;
-            }
-            indent();
-            write("p." + addStyleName(s.getName()));
-            write(" {\n");
-            incrIndent();
-            writeAttributes(s);
-            decrIndent();
-            indent();
-            write("}\n");
-        }
+	    /** PENDING: Once the name attribute is removed
+		from the list we check check for 0. **/
+	    if (s.getAttributeCount() == 1 &&
+		s.isDefined(StyleConstants.NameAttribute)) {
+		continue;
+	    }
+	    indent();
+	    write("p." + addStyleName(s.getName()));
+	    write(" {\n");
+	    incrIndent();
+	    writeAttributes(s);
+	    decrIndent();
+	    indent();
+	    write("}\n");
+	}
     }
 
 
@@ -287,44 +288,44 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeBody() throws IOException, BadLocationException {
-        ElementIterator it = getElementIterator();
+	ElementIterator it = getElementIterator();
 
-        /*
-          This will be a section element for a styled document.
-          We represent this element in HTML as the body tags.
-          Therefore we ignore it.
-         */
-        it.current();
+	/*
+	  This will be a section element for a styled document.
+	  We represent this element in HTML as the body tags.
+	  Therefore we ignore it.
+	 */
+	it.current();
 
-        Element next = null;
+	Element next = null;
 
-        writeStartTag("<body>");
+	writeStartTag("<body>");
 
-        boolean inContent = false;
+	boolean inContent = false;
 
-        while((next = it.next()) != null) {
-            if (!inRange(next)) {
-                continue;
-            }
-            if (next instanceof AbstractDocument.BranchElement) {
-                if (inContent) {
-                    writeEndParagraph();
-                    inContent = false;
-                    fontMask = 0;
-                }
-                writeStartParagraph(next);
-            } else if (isText(next)) {
-                writeContent(next, !inContent);
-                inContent = true;
-            } else {
-                writeLeaf(next);
-                inContent = true;
-            }
-        }
-        if (inContent) {
-            writeEndParagraph();
-        }
-        writeEndTag("</body>");
+	while((next = it.next()) != null) {
+	    if (!inRange(next)) {
+		continue;
+	    }
+	    if (next instanceof AbstractDocument.BranchElement) {
+		if (inContent) {
+		    writeEndParagraph();
+		    inContent = false;
+		    fontMask = 0;
+		}
+		writeStartParagraph(next);
+	    } else if (isText(next)) {
+		writeContent(next, !inContent);
+		inContent = true;
+	    } else {
+		writeLeaf(next);
+		inContent = true;
+	    }
+	}
+	if (inContent) {
+	    writeEndParagraph();
+	}
+	writeEndTag("</body>");
     }
 
 
@@ -337,13 +338,13 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeEndParagraph() throws IOException {
-        writeEndMask(fontMask);
-        if (inFontTag()) {
-            endSpanTag();
-        } else {
-            write(NEWLINE);
-        }
-        writeEndTag("</p>");
+	writeEndMask(fontMask);
+	if (inFontTag()) {
+	    endSpanTag();
+	} else {
+	    write(NEWLINE);
+	}
+	writeEndTag("</p>");
     }
 
 
@@ -357,13 +358,13 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeStartParagraph(Element elem) throws IOException {
-        AttributeSet attr = elem.getAttributes();
-        Object resolveAttr = attr.getAttribute(StyleConstants.ResolveAttribute);
-        if (resolveAttr instanceof StyleContext.NamedStyle) {
-            writeStartTag("<p class=" + mapStyleName(((StyleContext.NamedStyle)resolveAttr).getName()) + ">");
-        } else {
-            writeStartTag("<p>");
-        }
+	AttributeSet attr = elem.getAttributes();
+	Object resolveAttr = attr.getAttribute(StyleConstants.ResolveAttribute);
+	if (resolveAttr instanceof StyleContext.NamedStyle) {
+	    writeStartTag("<p class=" + mapStyleName(((StyleContext.NamedStyle)resolveAttr).getName()) + ">");
+	} else {
+	    writeStartTag("<p>");
+	}
     }
 
 
@@ -374,20 +375,20 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void writeLeaf(Element elem) throws IOException {
-        indent();
-        if (elem.getName() == StyleConstants.IconElementName) {
-            writeImage(elem);
-        } else if (elem.getName() == StyleConstants.ComponentElementName) {
-            writeComponent(elem);
-        }
+	indent();
+	if (elem.getName() == StyleConstants.IconElementName) {
+	    writeImage(elem);
+	} else if (elem.getName() == StyleConstants.ComponentElementName) {
+	    writeComponent(elem);
+	}
     }
 
 
     /**
      * Responsible for handling Icon Elements;
-     * deliberately unimplemented.  How to implement this method is
+     * deliberately unimplemented.  How to implement this method is 
      * an issue of policy.  For example, if you're generating
-     * an &lt;img&gt; tag, how should you
+     * an &lt;img&gt; tag, how should you 
      * represent the src attribute (the location of the image)?
      * In certain cases it could be a URL, in others it could
      * be read from a stream.
@@ -399,7 +400,7 @@ public class MinimalHTMLWriter extends AbstractWriter {
 
 
     /**
-     * Responsible for handling Component Elements;
+     * Responsible for handling Component Elements;  
      * deliberately unimplemented.
      * How this method is implemented is a matter of policy.
      */
@@ -412,7 +413,7 @@ public class MinimalHTMLWriter extends AbstractWriter {
      *
      */
     protected boolean isText(Element elem) {
-        return (elem.getName() == AbstractDocument.ContentElementName);
+	return (elem.getName() == AbstractDocument.ContentElementName);
     }
 
 
@@ -425,15 +426,15 @@ public class MinimalHTMLWriter extends AbstractWriter {
      *            location within the document.
      */
     protected void writeContent(Element elem,  boolean needsIndenting)
-        throws IOException, BadLocationException {
+	throws IOException, BadLocationException {
 
-        AttributeSet attr = elem.getAttributes();
-        writeNonHTMLAttributes(attr);
-        if (needsIndenting) {
-            indent();
-        }
-        writeHTMLTags(attr);
-        text(elem);
+	AttributeSet attr = elem.getAttributes();
+	writeNonHTMLAttributes(attr);
+	if (needsIndenting) {
+	    indent();
+	}
+	writeHTMLTags(attr);
+	text(elem);
     }
 
 
@@ -447,36 +448,36 @@ public class MinimalHTMLWriter extends AbstractWriter {
 
     protected void writeHTMLTags(AttributeSet attr) throws IOException {
 
-        int oldMask = fontMask;
-        setFontMask(attr);
+	int oldMask = fontMask;
+	setFontMask(attr);
 
-        int endMask = 0;
-        int startMask = 0;
-        if ((oldMask & BOLD) != 0) {
-            if ((fontMask & BOLD) == 0) {
-                endMask |= BOLD;
-            }
-        } else if ((fontMask & BOLD) != 0) {
-            startMask |= BOLD;
-        }
+	int endMask = 0;
+	int startMask = 0;
+	if ((oldMask & BOLD) != 0) {
+	    if ((fontMask & BOLD) == 0) {
+		endMask |= BOLD;
+	    }
+	} else if ((fontMask & BOLD) != 0) {
+	    startMask |= BOLD;
+	}
 
-        if ((oldMask & ITALIC) != 0) {
-            if ((fontMask & ITALIC) == 0) {
-                endMask |= ITALIC;
-            }
-        } else if ((fontMask & ITALIC) != 0) {
-            startMask |= ITALIC;
-        }
+	if ((oldMask & ITALIC) != 0) {
+	    if ((fontMask & ITALIC) == 0) {
+		endMask |= ITALIC;
+	    }
+	} else if ((fontMask & ITALIC) != 0) {
+	    startMask |= ITALIC;
+	}
 
-        if ((oldMask & UNDERLINE) != 0) {
-            if ((fontMask & UNDERLINE) == 0) {
-                endMask |= UNDERLINE;
-            }
-        } else if ((fontMask & UNDERLINE) != 0) {
-            startMask |= UNDERLINE;
-        }
-        writeEndMask(endMask);
-        writeStartMask(startMask);
+	if ((oldMask & UNDERLINE) != 0) {
+	    if ((fontMask & UNDERLINE) == 0) {
+		endMask |= UNDERLINE;
+	    }
+	} else if ((fontMask & UNDERLINE) != 0) {
+	    startMask |= UNDERLINE;
+	}
+	writeEndMask(endMask);
+	writeStartMask(startMask);
     }
 
 
@@ -487,17 +488,17 @@ public class MinimalHTMLWriter extends AbstractWriter {
      *
      */
     private void setFontMask(AttributeSet attr) {
-        if (StyleConstants.isBold(attr)) {
-            fontMask |= BOLD;
-        }
+	if (StyleConstants.isBold(attr)) {
+	    fontMask |= BOLD;
+	}
 
-        if (StyleConstants.isItalic(attr)) {
-            fontMask |= ITALIC;
-        }
+	if (StyleConstants.isItalic(attr)) {
+	    fontMask |= ITALIC;
+	}
 
-        if (StyleConstants.isUnderline(attr)) {
-            fontMask |= UNDERLINE;
-        }
+	if (StyleConstants.isUnderline(attr)) {
+	    fontMask |= UNDERLINE;
+	}
     }
 
 
@@ -510,17 +511,17 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     private void writeStartMask(int mask) throws IOException  {
-        if (mask != 0) {
-            if ((mask & UNDERLINE) != 0) {
-                write("<u>");
-            }
-            if ((mask & ITALIC) != 0) {
-                write("<i>");
-            }
-            if ((mask & BOLD) != 0) {
-                write("<b>");
-            }
-        }
+	if (mask != 0) {
+	    if ((mask & UNDERLINE) != 0) {
+		write("<u>");
+	    }
+	    if ((mask & ITALIC) != 0) {
+		write("<i>");
+	    }
+	    if ((mask & BOLD) != 0) {
+		write("<b>");
+	    }
+	}
     }
 
     /**
@@ -530,17 +531,17 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     private void writeEndMask(int mask) throws IOException {
-        if (mask != 0) {
-            if ((mask & BOLD) != 0) {
-                write("</b>");
-            }
-            if ((mask & ITALIC) != 0) {
-                write("</i>");
-            }
-            if ((mask & UNDERLINE) != 0) {
-                write("</u>");
-            }
-        }
+	if (mask != 0) {
+	    if ((mask & BOLD) != 0) {
+		write("</b>");
+	    }
+	    if ((mask & ITALIC) != 0) {
+		write("</i>");
+	    }
+	    if ((mask & UNDERLINE) != 0) {
+		write("</u>");
+	    }
+	}
     }
 
 
@@ -557,52 +558,52 @@ public class MinimalHTMLWriter extends AbstractWriter {
      */
     protected void writeNonHTMLAttributes(AttributeSet attr) throws IOException {
 
-        String style = "";
-        String separator = "; ";
+	String style = "";
+	String separator = "; ";
 
-        if (inFontTag() && fontAttributes.isEqual(attr)) {
-            return;
-        }
+	if (inFontTag() && fontAttributes.isEqual(attr)) {
+	    return;
+	}
 
-        boolean first = true;
-        Color color = (Color)attr.getAttribute(StyleConstants.Foreground);
-        if (color != null) {
-            style += "color: " + css.styleConstantsValueToCSSValue
-                                    ((StyleConstants)StyleConstants.Foreground,
-                                     color);
-            first = false;
-        }
-        Integer size = (Integer)attr.getAttribute(StyleConstants.FontSize);
-        if (size != null) {
-            if (!first) {
-                style += separator;
-            }
-            style += "font-size: " + size.intValue() + "pt";
-            first = false;
-        }
+	boolean first = true;
+	Color color = (Color)attr.getAttribute(StyleConstants.Foreground);
+	if (color != null) {
+	    style += "color: " + css.styleConstantsValueToCSSValue
+		                    ((StyleConstants)StyleConstants.Foreground,
+				     color);
+	    first = false;
+	}
+	Integer size = (Integer)attr.getAttribute(StyleConstants.FontSize);
+	if (size != null) {
+	    if (!first) {
+		style += separator;
+	    }
+	    style += "font-size: " + size.intValue() + "pt";
+	    first = false;
+	}
 
-        String family = (String)attr.getAttribute(StyleConstants.FontFamily);
-        if (family != null) {
-            if (!first) {
-                style += separator;
-            }
-            style += "font-family: " + family;
-            first = false;
-        }
+	String family = (String)attr.getAttribute(StyleConstants.FontFamily);
+	if (family != null) {
+	    if (!first) {
+		style += separator;
+	    }
+	    style += "font-family: " + family;
+	    first = false;
+	}
 
-        if (style.length() > 0) {
-            if (fontMask != 0) {
-                writeEndMask(fontMask);
-                fontMask = 0;
-            }
-            startSpanTag(style);
-            fontAttributes = attr;
-        }
-        else if (fontAttributes != null) {
-            writeEndMask(fontMask);
-            fontMask = 0;
-            endSpanTag();
-        }
+	if (style.length() > 0) {
+	    if (fontMask != 0) {
+		writeEndMask(fontMask);
+		fontMask = 0;
+	    }
+	    startSpanTag(style);
+	    fontAttributes = attr;
+	}
+	else if (fontAttributes != null) {
+	    writeEndMask(fontMask);
+	    fontMask = 0;
+	    endSpanTag();
+	}
     }
 
 
@@ -610,7 +611,7 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * Returns true if we are currently in a &lt;font&gt; tag.
      */
     protected boolean inFontTag() {
-        return (fontAttributes != null);
+	return (fontAttributes != null);
     }
 
     /**
@@ -621,9 +622,9 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void endFontTag() throws IOException {
-        write(NEWLINE);
-        writeEndTag("</font>");
-        fontAttributes = null;
+	write(NEWLINE);
+	writeEndTag("</font>");
+	fontAttributes = null;
     }
 
 
@@ -631,7 +632,7 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * This is no longer used, instead &lt;span&gt; will be written out.
      * <p>
      * Writes out a start tag for the &lt;font&gt; tag.
-     * Because font tags cannot be nested,
+     * Because font tags cannot be nested, 
      * this method closes out
      * any enclosing font tag before writing out a
      * new start tag.
@@ -639,20 +640,20 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     protected void startFontTag(String style) throws IOException {
-        boolean callIndent = false;
-        if (inFontTag()) {
-            endFontTag();
-            callIndent = true;
-        }
-        writeStartTag("<font style=\"" + style + "\">");
-        if (callIndent) {
-            indent();
-        }
+	boolean callIndent = false;
+	if (inFontTag()) {
+	    endFontTag();
+	    callIndent = true;
+	}
+	writeStartTag("<font style=\"" + style + "\">");
+	if (callIndent) {
+	    indent();
+	}
     }
 
     /**
      * Writes out a start tag for the &lt;font&gt; tag.
-     * Because font tags cannot be nested,
+     * Because font tags cannot be nested, 
      * this method closes out
      * any enclosing font tag before writing out a
      * new start tag.
@@ -660,15 +661,15 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     private void startSpanTag(String style) throws IOException {
-        boolean callIndent = false;
-        if (inFontTag()) {
-            endSpanTag();
-            callIndent = true;
-        }
-        writeStartTag("<span style=\"" + style + "\">");
-        if (callIndent) {
-            indent();
-        }
+	boolean callIndent = false;
+	if (inFontTag()) {
+	    endSpanTag();
+	    callIndent = true;
+	}
+	writeStartTag("<span style=\"" + style + "\">");
+	if (callIndent) {
+	    indent();
+	}
     }
 
     /**
@@ -677,9 +678,9 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * @exception IOException on any I/O error
      */
     private void endSpanTag() throws IOException {
-        write(NEWLINE);
-        writeEndTag("</span>");
-        fontAttributes = null;
+	write(NEWLINE);
+	writeEndTag("</span>");
+	fontAttributes = null;
     }
 
     /**
@@ -688,39 +689,39 @@ public class MinimalHTMLWriter extends AbstractWriter {
      * allow the full Unicode set to be used as a style name.
      */
     private String addStyleName(String style) {
-        if (styleNameMapping == null) {
-            return style;
-        }
-        StringBuffer sb = null;
-        for (int counter = style.length() - 1; counter >= 0; counter--) {
-            if (!isValidCharacter(style.charAt(counter))) {
-                if (sb == null) {
-                    sb = new StringBuffer(style);
-                }
-                sb.setCharAt(counter, 'a');
-            }
-        }
-        String mappedName = (sb != null) ? sb.toString() : style;
-        while (styleNameMapping.get(mappedName) != null) {
-            mappedName = mappedName + 'x';
-        }
-        styleNameMapping.put(style, mappedName);
-        return mappedName;
+	if (styleNameMapping == null) {
+	    return style;
+	}
+	StringBuffer sb = null;
+	for (int counter = style.length() - 1; counter >= 0; counter--) {
+	    if (!isValidCharacter(style.charAt(counter))) {
+		if (sb == null) {
+		    sb = new StringBuffer(style);
+		}
+		sb.setCharAt(counter, 'a');
+	    }
+	}
+	String mappedName = (sb != null) ? sb.toString() : style;
+	while (styleNameMapping.get(mappedName) != null) {
+	    mappedName = mappedName + 'x';
+	}
+	styleNameMapping.put(style, mappedName);
+	return mappedName;
     }
 
     /**
      * Returns the mapped style name corresponding to <code>style</code>.
      */
     private String mapStyleName(String style) {
-        if (styleNameMapping == null) {
-            return style;
-        }
-        String retValue = (String)styleNameMapping.get(style);
-        return (retValue == null) ? style : retValue;
+	if (styleNameMapping == null) {
+	    return style;
+	}
+	String retValue = (String)styleNameMapping.get(style);
+	return (retValue == null) ? style : retValue;
     }
 
     private boolean isValidCharacter(char character) {
-        return ((character >= 'a' && character <= 'z') ||
-                (character >= 'A' && character <= 'Z'));
+	return ((character >= 'a' && character <= 'z') ||
+		(character >= 'A' && character <= 'Z'));
     }
 }

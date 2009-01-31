@@ -66,7 +66,7 @@ import static com.sun.jmx.examples.scandir.ScanManagerMXBean.ScanState.*;
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 public class ScanManagerTest extends TestCase {
-
+    
     public ScanManagerTest(String testName) {
         super(testName);
     }
@@ -79,7 +79,7 @@ public class ScanManagerTest extends TestCase {
 
     public static Test suite() {
         TestSuite suite = new TestSuite(ScanManagerTest.class);
-
+        
         return suite;
     }
 
@@ -88,13 +88,13 @@ public class ScanManagerTest extends TestCase {
      */
     public void testMakeSingletonName() {
         System.out.println("makeSingletonName");
-
+        
         Class clazz = ScanManagerMXBean.class;
-
+        
         ObjectName expResult = ScanManager.SCAN_MANAGER_NAME;
         ObjectName result = ScanManager.makeSingletonName(clazz);
         assertEquals(expResult, result);
-
+        
     }
 
     /**
@@ -102,10 +102,10 @@ public class ScanManagerTest extends TestCase {
      */
     public void testRegister() throws Exception {
         System.out.println("register");
-
+        
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-
-
+        
+        
         ScanManagerMXBean result = ScanManager.register(mbs);
         try {
             assertEquals(STOPPED,result.getState());
@@ -116,20 +116,20 @@ public class ScanManagerTest extends TestCase {
                 System.err.println("Failed to cleanup: "+x);
             }
         }
-
+        
     }
-
+    
     public interface Call {
         public void call() throws Exception;
         public void cancel() throws Exception;
     }
-
+    
     /**
      * Test of addNotificationListener method, of class com.sun.jmx.examples.scandir.ScanManager.
      */
     public void testAddNotificationListener() throws Exception {
         System.out.println("addNotificationListener");
-
+        
         final ScanManagerMXBean manager = ScanManager.register();
         final Call op = new Call() {
             public void call() throws Exception {
@@ -152,23 +152,23 @@ public class ScanManagerTest extends TestCase {
             }
         }
     }
-
+    
     /**
      * Test of addNotificationListener method, of class com.sun.jmx.examples.scandir.ScanManager.
      */
     private void doTestOperation(
             ScanManagerMXBean proxy,
-            Call op,
+            Call op, 
             EnumSet<ScanState> after,
-            String testName)
+            String testName) 
         throws Exception {
         System.out.println("doTestOperation: "+testName);
-
-        final LinkedBlockingQueue<Notification> queue =
+        
+        final LinkedBlockingQueue<Notification> queue = 
                 new LinkedBlockingQueue<Notification>();
-
+        
         NotificationListener listener = new NotificationListener() {
-            public void handleNotification(Notification notification,
+            public void handleNotification(Notification notification, 
                         Object handback) {
                 try {
                     queue.put(notification);
@@ -214,11 +214,11 @@ public class ScanManagerTest extends TestCase {
      */
     public void testPreRegister() throws Exception {
         System.out.println("preRegister");
-
+        
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         ObjectName name = new ObjectName("DownUnder:type=Wombat");
         ScanManager instance = new ScanManager();
-
+        
         ObjectName expResult = ScanManager.SCAN_MANAGER_NAME;
         ObjectName result;
         try {
@@ -239,9 +239,9 @@ public class ScanManagerTest extends TestCase {
      */
     public void testGetState() throws IOException, InstanceNotFoundException {
         System.out.println("getState");
-
+        
         ScanManager instance = new ScanManager();
-
+        
         ScanState expResult = ScanState.STOPPED;
         ScanState result = instance.getState();
         assertEquals(expResult, result);
@@ -261,10 +261,10 @@ public class ScanManagerTest extends TestCase {
      */
     public void testSchedule() throws Exception {
         System.out.println("schedule");
-
+        
         final long delay = 10000L;
         final long interval = 10000L;
-
+        
         final ScanManagerMXBean manager = ScanManager.register();
         final Call op = new Call() {
             public void call() throws Exception {
@@ -287,8 +287,8 @@ public class ScanManagerTest extends TestCase {
             }
         }
     }
-
-    public static void assertContained(EnumSet<ScanState> allowed,
+       
+    public static void assertContained(EnumSet<ScanState> allowed, 
             ScanState state) {
          final String msg = String.valueOf(state) + " is not one of " + allowed;
          assertTrue(msg,allowed.contains(state));
@@ -309,7 +309,7 @@ public class ScanManagerTest extends TestCase {
                     assertEquals(STOPPED,manager.getState());
                 }
                 public void cancel() throws Exception {
-                    if (manager.getState() != STOPPED)
+                    if (manager.getState() != STOPPED) 
                         manager.stop();
                 }
             };
@@ -352,5 +352,5 @@ public class ScanManagerTest extends TestCase {
             }
         }
     }
-
+    
 }

@@ -43,7 +43,7 @@ import java.util.HashMap;
 class ThreadImpl implements ThreadMXBean {
 
     private final VMManagement jvm;
-
+ 
     // default for thread contention monitoring is disabled.
     private boolean contentionMonitoringEnabled = false;
     private boolean cpuTimeEnabled;
@@ -113,7 +113,7 @@ class ThreadImpl implements ThreadMXBean {
         }
         return ids;
     }
-
+    
     public ThreadInfo getThreadInfo(long id) {
         if (id <= 0) {
             throw new IllegalArgumentException(
@@ -125,7 +125,7 @@ class ThreadImpl implements ThreadMXBean {
         final ThreadInfo[] infos = getThreadInfo(ids, 0);
         return infos[0];
     }
-
+     
     public ThreadInfo getThreadInfo(long id, int maxDepth) {
         if (id <= 0) {
             throw new IllegalArgumentException(
@@ -141,7 +141,7 @@ class ThreadImpl implements ThreadMXBean {
         final ThreadInfo[] infos = getThreadInfo(ids, maxDepth);
         return infos[0];
     }
-
+  
     public ThreadInfo[] getThreadInfo(long[] ids) {
         return getThreadInfo(ids, 0);
     }
@@ -180,7 +180,7 @@ class ThreadImpl implements ThreadMXBean {
         synchronized (this) {
             if (contentionMonitoringEnabled != enable) {
                 if (enable) {
-                    // if reeabled, reset contention time statistics
+                    // if reeabled, reset contention time statistics 
                     // for all threads
                     resetContentionTimes0(0);
                 }
@@ -357,7 +357,7 @@ class ThreadImpl implements ThreadMXBean {
         return jvm.isSynchronizerUsageSupported();
     }
 
-    public ThreadInfo[] getThreadInfo(long[] ids,
+    public ThreadInfo[] getThreadInfo(long[] ids, 
                                       boolean lockedMonitors,
                                       boolean lockedSynchronizers) {
         if (ids == null) {
@@ -394,7 +394,7 @@ class ThreadImpl implements ThreadMXBean {
 
     // VM support where maxDepth == -1 to request entire stack dump
     private static native Thread[] getThreads();
-    private static native void getThreadInfo0(long[] ids,
+    private static native void getThreadInfo0(long[] ids, 
                                               int maxDepth,
                                               ThreadInfo[] result);
     private static native long getThreadTotalCpuTime0(long id);

@@ -42,29 +42,29 @@ import java.io.Serializable;
  * <p>
  *
  * <strong><a name="override">Implementation Note:</a></strong>
- * This class inherits from <code>JLabel</code>, a standard component class.
+ * This class inherits from <code>JLabel</code>, a standard component class. 
  * However <code>JTable</code> employs a unique mechanism for rendering
  * its cells and therefore requires some slightly modified behavior
- * from its cell renderer.
- * The table class defines a single cell renderer and uses it as a
- * as a rubber-stamp for rendering all cells in the table;
+ * from its cell renderer.  
+ * The table class defines a single cell renderer and uses it as a 
+ * as a rubber-stamp for rendering all cells in the table; 
  * it renders the first cell,
- * changes the contents of that cell renderer,
+ * changes the contents of that cell renderer, 
  * shifts the origin to the new location, re-draws it, and so on.
  * The standard <code>JLabel</code> component was not
- * designed to be used this way and we want to avoid
+ * designed to be used this way and we want to avoid 
  * triggering a <code>revalidate</code> each time the
  * cell is drawn. This would greatly decrease performance because the
  * <code>revalidate</code> message would be
  * passed up the hierarchy of the container to determine whether any other
- * components would be affected.
+ * components would be affected.  
  * As the renderer is only parented for the lifetime of a painting operation
  * we similarly want to avoid the overhead associated with walking the
  * hierarchy for painting operations.
  * So this class
  * overrides the <code>validate</code>, <code>invalidate</code>,
  * <code>revalidate</code>, <code>repaint</code>, and
- * <code>firePropertyChange</code> methods to be
+ * <code>firePropertyChange</code> methods to be 
  * no-ops and override the <code>isOpaque</code> method solely to improve
  * performance.  If you write your own renderer,
  * please keep this performance consideration in mind.
@@ -79,7 +79,8 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
- * @author Philip Milne
+ * @version %I% %G%
+ * @author Philip Milne 
  * @see JTable
  */
 public class DefaultTableCellRenderer extends JLabel
@@ -88,26 +89,26 @@ public class DefaultTableCellRenderer extends JLabel
 
    /**
     * An empty <code>Border</code>. This field might not be used. To change the
-    * <code>Border</code> used by this renderer override the
+    * <code>Border</code> used by this renderer override the 
     * <code>getTableCellRendererComponent</code> method and set the border
     * of the returned component directly.
     */
-    protected static Border noFocusBorder = new EmptyBorder(1, 1, 1, 1);
+    protected static Border noFocusBorder = new EmptyBorder(1, 1, 1, 1); 
     private static final Border SAFE_NO_FOCUS_BORDER = new EmptyBorder(1, 1, 1, 1);
 
-    // We need a place to store the color the JLabel should be returned
-    // to after its foreground and background colors have been set
-    // to the selection background color.
-    // These ivars will be made protected when their names are finalized.
-    private Color unselectedForeground;
-    private Color unselectedBackground;
+    // We need a place to store the color the JLabel should be returned 
+    // to after its foreground and background colors have been set 
+    // to the selection background color. 
+    // These ivars will be made protected when their names are finalized. 
+    private Color unselectedForeground; 
+    private Color unselectedBackground; 
 
     /**
      * Creates a default table cell renderer.
      */
     public DefaultTableCellRenderer() {
-        super();
-        setOpaque(true);
+	super();
+	setOpaque(true);
         setBorder(getNoFocusBorder());
     }
 
@@ -122,14 +123,14 @@ public class DefaultTableCellRenderer extends JLabel
     /**
      * Overrides <code>JComponent.setForeground</code> to assign
      * the unselected-foreground color to the specified color.
-     *
+     * 
      * @param c set the foreground color to this value
      */
     public void setForeground(Color c) {
-        super.setForeground(c);
-        unselectedForeground = c;
+        super.setForeground(c); 
+        unselectedForeground = c; 
     }
-
+    
     /**
      * Overrides <code>JComponent.setBackground</code> to assign
      * the unselected-background color to the specified color.
@@ -137,24 +138,24 @@ public class DefaultTableCellRenderer extends JLabel
      * @param c set the background color to this value
      */
     public void setBackground(Color c) {
-        super.setBackground(c);
-        unselectedBackground = c;
+        super.setBackground(c); 
+        unselectedBackground = c; 
     }
 
     /**
      * Notification from the <code>UIManager</code> that the look and feel
      * [L&F] has changed.
-     * Replaces the current UI object with the latest version from the
+     * Replaces the current UI object with the latest version from the 
      * <code>UIManager</code>.
      *
      * @see JComponent#updateUI
      */
     public void updateUI() {
-        super.updateUI();
-        setForeground(null);
-        setBackground(null);
+        super.updateUI(); 
+	setForeground(null);
+	setBackground(null);
     }
-
+    
     // implements javax.swing.table.TableCellRenderer
     /**
      *
@@ -169,7 +170,7 @@ public class DefaultTableCellRenderer extends JLabel
      *
      * @param table  the <code>JTable</code>
      * @param value  the value to assign to the cell at
-     *                  <code>[row, column]</code>
+     *			<code>[row, column]</code>
      * @param isSelected true if cell is selected
      * @param hasFocus true if cell has focus
      * @param row  the row of the cell to render
@@ -201,18 +202,18 @@ public class DefaultTableCellRenderer extends JLabel
                                            : fg);
             super.setBackground(bg == null ? table.getSelectionBackground()
                                            : bg);
-        } else {
+	} else {
             super.setForeground(unselectedForeground != null
                                     ? unselectedForeground
                                     : table.getForeground());
-            super.setBackground(unselectedBackground != null
+	    super.setBackground(unselectedBackground != null
                                     ? unselectedBackground
                                     : table.getBackground());
-        }
+	}
 
-        setFont(table.getFont());
+	setFont(table.getFont());
 
-        if (hasFocus) {
+	if (hasFocus) {
             Border border = null;
             if (isSelected) {
                 border = UIManager.getBorder("Table.focusSelectedCellHighlightBorder");
@@ -222,7 +223,7 @@ public class DefaultTableCellRenderer extends JLabel
             }
             setBorder(border);
 
-            if (!isSelected && table.isCellEditable(row, column)) {
+	    if (!isSelected && table.isCellEditable(row, column)) {
                 Color col;
                 col = UIManager.getColor("Table.focusCellForeground");
                 if (col != null) {
@@ -232,45 +233,45 @@ public class DefaultTableCellRenderer extends JLabel
                 if (col != null) {
                     super.setBackground(col);
                 }
-            }
-        } else {
+	    }
+	} else {
             setBorder(getNoFocusBorder());
-        }
+	}
 
-        setValue(value);
+        setValue(value); 
 
-        return this;
+	return this;
     }
-
+    
     /*
-     * The following methods are overridden as a performance measure to
+     * The following methods are overridden as a performance measure to 
      * to prune code-paths are often called in the case of renders
      * but which we know are unnecessary.  Great care should be taken
-     * when writing your own renderer to weigh the benefits and
+     * when writing your own renderer to weigh the benefits and 
      * drawbacks of overriding methods like these.
      */
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
-    public boolean isOpaque() {
-        Color back = getBackground();
-        Component p = getParent();
-        if (p != null) {
-            p = p.getParent();
-        }
-        // p should now be the JTable.
-        boolean colorMatch = (back != null) && (p != null) &&
-            back.equals(p.getBackground()) &&
-                        p.isOpaque();
-        return !colorMatch && super.isOpaque();
+    public boolean isOpaque() { 
+	Color back = getBackground();
+	Component p = getParent(); 
+	if (p != null) { 
+	    p = p.getParent(); 
+	}
+	// p should now be the JTable. 
+	boolean colorMatch = (back != null) && (p != null) && 
+	    back.equals(p.getBackground()) && 
+			p.isOpaque();
+	return !colorMatch && super.isOpaque(); 
     }
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      *
      * @since 1.5
@@ -279,35 +280,35 @@ public class DefaultTableCellRenderer extends JLabel
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
     public void validate() {}
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
     public void revalidate() {}
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
     public void repaint(long tm, int x, int y, int width, int height) {}
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
     public void repaint(Rectangle r) { }
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      *
      * @since 1.5
@@ -317,12 +318,12 @@ public class DefaultTableCellRenderer extends JLabel
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
-    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-        // Strings get interned...
-        if (propertyName=="text"
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {	
+	// Strings get interned...
+	if (propertyName=="text"
                 || propertyName == "labelFor"
                 || propertyName == "displayedMnemonic"
                 || ((propertyName == "font" || propertyName == "foreground")
@@ -335,7 +336,7 @@ public class DefaultTableCellRenderer extends JLabel
 
     /**
      * Overridden for performance reasons.
-     * See the <a href="#override">Implementation Note</a>
+     * See the <a href="#override">Implementation Note</a> 
      * for more information.
      */
     public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) { }
@@ -344,16 +345,16 @@ public class DefaultTableCellRenderer extends JLabel
     /**
      * Sets the <code>String</code> object for the cell being rendered to
      * <code>value</code>.
-     *
+     * 
      * @param value  the string value for this cell; if value is
-     *          <code>null</code> it sets the text value to an empty string
+     *		<code>null</code> it sets the text value to an empty string
      * @see JLabel#setText
-     *
+     * 
      */
     protected void setValue(Object value) {
-        setText((value == null) ? "" : value.toString());
+	setText((value == null) ? "" : value.toString());
     }
-
+	
 
     /**
      * A subclass of <code>DefaultTableCellRenderer</code> that
@@ -373,9 +374,11 @@ public class DefaultTableCellRenderer extends JLabel
      * has been added to the <code>java.beans</code> package.
      * Please see {@link java.beans.XMLEncoder}.
      */
-    public static class UIResource extends DefaultTableCellRenderer
+    public static class UIResource extends DefaultTableCellRenderer 
         implements javax.swing.plaf.UIResource
     {
     }
 
 }
+
+

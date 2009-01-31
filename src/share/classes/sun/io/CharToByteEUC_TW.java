@@ -48,14 +48,14 @@ public class CharToByteEUC_TW extends CharToByteConverter
     private static String cnsTab3 = nioCoder.getCNSTab3();
 
     public int flush(byte[] output, int outStart, int outEnd)
-        throws MalformedInputException
+	throws MalformedInputException
     {
-        reset();
-        return 0;
+	reset();
+	return 0;
     }
 
     public void reset() {
-        byteOff = charOff = 0;
+	byteOff = charOff = 0;
     }
 
     public boolean canConvert(char ch){
@@ -73,42 +73,42 @@ public class CharToByteEUC_TW extends CharToByteConverter
         throws UnknownCharacterException, MalformedInputException,
                ConversionBufferFullException
     {
-        int outputSize;
-        byte [] tmpbuf = new byte[4];
-        byte [] outputByte;
+	int outputSize;
+	byte [] tmpbuf = new byte[4];
+	byte [] outputByte;
 
-        byteOff = outOff;
+	byteOff = outOff;
 
-        //Fixed 4122961 by bringing the charOff++ out to this
-        // loop where it belongs, changing the loop from
-        // while(){} to for(){}.
-        for (charOff = inOff; charOff < inEnd; charOff++) {
-            outputByte = tmpbuf;
-            if ( input[charOff] < 0x80) {       // ASCII
-                outputSize = 1;
-                outputByte[0] = (byte)(input[charOff] & 0x7f);
-            } else {
-                outputSize = unicodeToEUC(input[charOff], outputByte);
-            }
+	//Fixed 4122961 by bringing the charOff++ out to this
+	// loop where it belongs, changing the loop from
+	// while(){} to for(){}.
+	for (charOff = inOff; charOff < inEnd; charOff++) {
+	    outputByte = tmpbuf;
+	    if ( input[charOff] < 0x80) {	// ASCII
+		outputSize = 1;
+		outputByte[0] = (byte)(input[charOff] & 0x7f);
+	    } else {
+		outputSize = unicodeToEUC(input[charOff], outputByte);
+	    }
 
-            if (outputSize == -1) {
-                if (subMode) {
-                    outputByte = subBytes;
-                    outputSize = subBytes.length;
-                } else {
-                    badInputLength = 1;
-                    throw new UnknownCharacterException();
-                }
-            }
+	    if (outputSize == -1) {
+		if (subMode) {
+		    outputByte = subBytes;
+		    outputSize = subBytes.length;
+		} else {
+		    badInputLength = 1;
+		    throw new UnknownCharacterException();
+		}
+	    }
 
-            if (outEnd - byteOff < outputSize)
-                throw new ConversionBufferFullException();
+	    if (outEnd - byteOff < outputSize)
+		throw new ConversionBufferFullException();
 
-            for (int i = 0; i < outputSize; i++)
-                output[byteOff++] = outputByte[i];
-        }
+	    for (int i = 0; i < outputSize; i++)
+		output[byteOff++] = outputByte[i];
+	}
 
-        return byteOff - outOff;
+	return byteOff - outOff;
 
     }
 
@@ -130,73 +130,73 @@ public class CharToByteEUC_TW extends CharToByteConverter
 
 
     protected int getNative(char unicode) {
-        int  i,
-             cns;       // 2 chars in CNS table make 1 CNS code
+    	int  i,
+	     cns;	// 2 chars in CNS table make 1 CNS code
 
-        if (unicode < UniTab2[0]) {
-            if ((i = searchTab(unicode, UniTab1)) == -1)
-                return -1;
-            cns = (CNSTab1[2*i] << 16) + CNSTab1[2*i+1];
-            return cns;
-        } else  if (unicode < UniTab3[0]) {
-            if ((i = searchTab(unicode, UniTab2)) == -1)
-                return -1;
-            cns = (CNSTab2[2*i] << 16) + CNSTab2[2*i+1];
-            return cns;
+	if (unicode < UniTab2[0]) {
+	    if ((i = searchTab(unicode, UniTab1)) == -1)
+		return -1;
+	    cns = (CNSTab1[2*i] << 16) + CNSTab1[2*i+1];
+	    return cns;
+	} else  if (unicode < UniTab3[0]) {
+	    if ((i = searchTab(unicode, UniTab2)) == -1)
+		return -1;
+	    cns = (CNSTab2[2*i] << 16) + CNSTab2[2*i+1];
+	    return cns;
         } else {
-            if ((i = searchTab(unicode, UniTab3)) == -1)
-                return -1;
-            cns = (CNSTab3[2*i] << 16) + CNSTab3[2*i+1];
-            return cns;
+	    if ((i = searchTab(unicode, UniTab3)) == -1)
+		return -1;
+	    cns = (CNSTab3[2*i] << 16) + CNSTab3[2*i+1];
+	    return cns;
         }
     }
 
     protected int searchTab(char code, char [] table) {
-        int     i = 0, l, h;
+	int     i = 0, l, h;
 
-        for (l = 0, h = table.length - 1; l < h; ) {
-                if (table[l] == code) {
-                        i = l;
-                        break;
-                }
-                if (table[h] == code) {
-                        i = h;
-                        break;
-                }
-                i = (l + h) / 2;
-                if (table[i] == code)
-                        break;
-                if (table[i] < code)
-                        l = i + 1;
-                else    h = i - 1;
-        }
-        if (code == table[i]) {
-            return i;
-        } else {
-            return -1;
-        }
+	for (l = 0, h = table.length - 1; l < h; ) {
+		if (table[l] == code) {
+			i = l;
+			break;
+		}
+		if (table[h] == code) {
+			i = h;
+			break;
+		}
+		i = (l + h) / 2;
+		if (table[i] == code)
+			break;
+		if (table[i] < code)
+			l = i + 1;
+		else	h = i - 1;
+	}
+	if (code == table[i]) {
+	    return i;
+	} else {
+	    return -1;
+	}
     }
 
 
     private int unicodeToEUC(char unicode, byte ebyte[]) {
-        int cns = getNative(unicode);
+	int cns = getNative(unicode);
 
-        if ((cns >> 16) == 0x01) {      // Plane 1
-            ebyte[0] = (byte) (((cns & 0xff00) >> 8) | MSB);
-            ebyte[1] = (byte) ((cns & 0xff) | MSB);
-            return 2;
-        }
+	if ((cns >> 16) == 0x01) {	// Plane 1
+	    ebyte[0] = (byte) (((cns & 0xff00) >> 8) | MSB);
+	    ebyte[1] = (byte) ((cns & 0xff) | MSB);
+	    return 2;
+	}
 
-        byte cnsPlane = (byte)(cns >> 16);
-        if (cnsPlane >= (byte)0x02) {   // Plane 2
-            ebyte[0] = SS2;
-            ebyte[1] = (byte) (cnsPlane | (byte)0xA0);
-            ebyte[2] = (byte) (((cns & 0xff00) >> 8) | MSB);
-            ebyte[3] = (byte) ((cns & 0xff) | MSB);
-            return 4;
-        }
+	byte cnsPlane = (byte)(cns >> 16);
+	if (cnsPlane >= (byte)0x02) {	// Plane 2
+	    ebyte[0] = SS2;
+	    ebyte[1] = (byte) (cnsPlane | (byte)0xA0);
+	    ebyte[2] = (byte) (((cns & 0xff00) >> 8) | MSB);
+	    ebyte[3] = (byte) ((cns & 0xff) | MSB);
+	    return 4;
+	}
 
-        return -1;
+	return -1;
     }
 
     protected int unicodeToEUC(char unicode) {

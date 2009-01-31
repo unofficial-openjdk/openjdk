@@ -29,9 +29,10 @@ import sun.nio.cs.ext.JIS_X_0208_Solaris_Encoder;
 import sun.nio.cs.ext.JIS_X_0212_Solaris_Encoder;
 
 /**
+ * @version %I%, %E%
  * @author Limin Shi
  * @author Ian Little
- *
+ * 
  * EUC_JP variant converter for Solaris with vendor defined chars
  * added (4765370)
  */
@@ -68,14 +69,14 @@ public class CharToByteEUC_JP_Solaris extends CharToByteEUC_JP {
     }
 
     protected int getNative(char ch) {
-        int r = super.getNative(ch);
-        if (r != 0) {
-            return r;
-        } else {
-            int offset = j0208Index1[((ch & 0xff00) >> 8 )] << 8;
-            r = j0208Index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
-            if (r > 0x7500)
-                return 0x8f8080 + cbJIS0212.getNative(ch);
+	int r = super.getNative(ch);
+	if (r != 0) {
+	    return r;
+	} else {
+	    int offset = j0208Index1[((ch & 0xff00) >> 8 )] << 8;
+	    r = j0208Index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
+	    if (r > 0x7500)
+		return 0x8f8080 + cbJIS0212.getNative(ch);
         }
         return (r == 0)? r : r + 0x8080;
     }
@@ -92,7 +93,7 @@ public class CharToByteEUC_JP_Solaris extends CharToByteEUC_JP {
      * @param output byte array to receive conversion result
      * @param outStart starting offset
      * @param outEnd offset of last byte to be written to
-     * @throw UnsupportedCharacterException for any character
+     * @throw UnsupportedCharacterException for any character 
      * that cannot be converted to the external character set.
      */
     public int convert(char[] input, int inOff, int inEnd,
@@ -104,7 +105,7 @@ public class CharToByteEUC_JP_Solaris extends CharToByteEUC_JP {
         byte[]  outputByte;                // Output byte written to output
         int     inputSize = 0;             // Size of input
         int     outputSize = 0;            // Size of output
-        byte[]  tmpbuf = new byte[4];
+        byte[]  tmpbuf = new byte[4];  
 
         // Record beginning offsets
         charOff = inOff;
@@ -176,7 +177,7 @@ public class CharToByteEUC_JP_Solaris extends CharToByteEUC_JP {
                             outputByte[2] = (byte) (ncode & 0xff);
                             outputSize = 3;
                         }
-                    } else {
+                    } else { 
                         if (subMode) {
                             outputByte = subBytes;
                             outputSize = subBytes.length;
@@ -211,3 +212,4 @@ public class CharToByteEUC_JP_Solaris extends CharToByteEUC_JP {
         return 3;
     }
 }
+

@@ -31,14 +31,14 @@ import sun.font.GlyphList;
 import static sun.awt.SunHints.*;
 
 /**
- * A delegate pipe of SG2D for drawing LCD text with
+ * A delegate pipe of SG2D for drawing LCD text with 
  * a solid source colour to an opaque destination.
  */
 
 public class LCDTextRenderer extends GlyphListLoopPipe {
 
     protected void drawGlyphList(SunGraphics2D sg2d, GlyphList gl) {
-        sg2d.loops.drawGlyphListLCDLoop.
-            DrawGlyphListLCD(sg2d, sg2d.surfaceData, gl);
+	sg2d.loops.drawGlyphListLCDLoop.
+	    DrawGlyphListLCD(sg2d, sg2d.surfaceData, gl);
     }
 }

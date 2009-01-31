@@ -45,6 +45,7 @@ import javax.swing.text.*;
  *
  * @see java.text.DateFormat
  *
+ * @version 1.5 04/09/01
  * @since 1.4
  */
 public class DateFormatter extends InternationalFormatter {
@@ -114,7 +115,7 @@ public class DateFormatter extends InternationalFormatter {
             Object key = attrs.next();
 
             if ((key instanceof DateFormat.Field) &&
-                (key == DateFormat.Field.HOUR1 ||
+                (key == DateFormat.Field.HOUR1 || 
                  ((DateFormat.Field)key).getCalendarField() != -1)) {
                 return key;
             }

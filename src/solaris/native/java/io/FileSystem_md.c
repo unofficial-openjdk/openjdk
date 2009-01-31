@@ -28,7 +28,7 @@
 #include "java_io_FileSystem.h"
 
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL  
 Java_java_io_FileSystem_getFileSystem(JNIEnv *env, jclass ignored)
 {
     return JNU_NewObjectByName(env, "java/io/UnixFileSystem", "()V");

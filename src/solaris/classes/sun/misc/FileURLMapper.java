@@ -30,14 +30,15 @@ import java.io.File;
 import sun.net.www.ParseUtil;
 
 /**
- * (Solaris) platform specific handling for file: URLs .
+ * (Solaris) platform specific handling for file: URLs . 
  * urls must not contain a hostname in the authority field
- * other than "localhost".
+ * other than "localhost". 
  *
  * This implementation could be updated to map such URLs
  * on to /net/host/...
  *
- * @author      Michael McMahon
+ * @author	Michael McMahon
+ * @version 	%I%, %E%
  */
 
 public class FileURLMapper {
@@ -46,7 +47,7 @@ public class FileURLMapper {
     String path;
 
     public FileURLMapper (URL url) {
-        this.url = url;
+	this.url = url;
     }
 
     /**
@@ -55,27 +56,27 @@ public class FileURLMapper {
      */
 
     public String getPath () {
-        if (path != null) {
-            return path;
-        }
-        String host = url.getHost();
-        if (host == null || "".equals(host) || "localhost".equalsIgnoreCase (host)) {
-            path = url.getFile();
-            path = ParseUtil.decode (path);
-        }
-        return path;
+	if (path != null) {
+	    return path;
+	}
+	String host = url.getHost();
+	if (host == null || "".equals(host) || "localhost".equalsIgnoreCase (host)) {
+	    path = url.getFile();
+	    path = ParseUtil.decode (path);
+	} 
+	return path;
     }
 
     /**
      * Checks whether the file identified by the URL exists.
      */
     public boolean exists () {
-        String s = getPath ();
-        if (s == null) {
-            return false;
-        } else {
-            File f = new File (s);
-            return f.exists();
-        }
+	String s = getPath ();
+	if (s == null) {
+	    return false;
+	} else {
+	    File f = new File (s);
+	    return f.exists();
+	}
     }
 }

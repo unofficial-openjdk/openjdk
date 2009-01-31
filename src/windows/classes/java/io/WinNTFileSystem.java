@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package java.io;
@@ -32,6 +33,7 @@ package java.io;
  * Unicode-aware FileSystem for Windows NT/2000.
  *
  * @author Konstantin Kladko
+ * @version %I%, %E%
  * @since 1.4
  */
 class WinNTFileSystem extends Win32FileSystem {
@@ -52,10 +54,10 @@ class WinNTFileSystem extends Win32FileSystem {
 
 
     public long getSpace(File f, int t) {
-        if (f.exists()) {
-            return getSpace0(f, t);
-        }
-        return 0;
+ 	if (f.exists()) {
+ 	    return getSpace0(f, t);
+ 	}
+ 	return 0;
     }
 
     private native long getSpace0(File f, int t);
@@ -63,7 +65,7 @@ class WinNTFileSystem extends Win32FileSystem {
     /* -- File operations -- */
 
     public native boolean createFileExclusively(String path)
-                                               throws IOException;
+	                                       throws IOException;
     protected native boolean delete0(File f);
     public native String[] list(File f);
     public native boolean createDirectory(File f);
@@ -74,6 +76,6 @@ class WinNTFileSystem extends Win32FileSystem {
     private static native void initIDs();
 
     static {
-            initIDs();
+	    initIDs();
     }
 }

@@ -34,28 +34,28 @@
  * and 2 for the red component.
  */
 
-#define DeclareOutputVars                               \
+#define DeclareOutputVars				\
     pixptr dstP;
 
-#define InitOutput(cvdata, clrdata, dstX, dstY)                 \
-    do {                                                        \
-        img_check(clrdata->bitsperpixel == 24);                 \
-        dstP.vp = cvdata->outbuf;                               \
-        dstP.bp += dstY * ScanBytes(cvdata) + dstX * 3;         \
+#define InitOutput(cvdata, clrdata, dstX, dstY)			\
+    do {							\
+	img_check(clrdata->bitsperpixel == 24);			\
+	dstP.vp = cvdata->outbuf;				\
+	dstP.bp += dstY * ScanBytes(cvdata) + dstX * 3;		\
     } while (0)
 
-#define PutPixelInc(pixel, red, green, blue)                    \
-    do {                                                        \
-        *dstP.bp++ = blue;                                      \
-        *dstP.bp++ = green;                                     \
-        *dstP.bp++ = red;                                       \
+#define PutPixelInc(pixel, red, green, blue)			\
+    do {							\
+	*dstP.bp++ = blue;					\
+	*dstP.bp++ = green;					\
+	*dstP.bp++ = red;					\
     } while (0)
 
-#define EndOutputRow(cvdata, dstY, dstX1, dstX2)                \
-    do {                                                        \
-        SendRow(cvdata, dstY, dstX1, dstX2);                    \
-        dstP.bp += ScanBytes(cvdata) - (dstX2 - dstX1) * 3;     \
+#define EndOutputRow(cvdata, dstY, dstX1, dstX2)		\
+    do {							\
+	SendRow(cvdata, dstY, dstX1, dstX2);			\
+	dstP.bp += ScanBytes(cvdata) - (dstX2 - dstX1) * 3;	\
     } while (0)
 
-#define EndOutputRect(cvdata, dstX1, dstY1, dstX2, dstY2)       \
+#define EndOutputRect(cvdata, dstX1, dstY1, dstX2, dstY2)	\
     SendBuffer(cvdata, dstX1, dstY1, dstX2, dstY2)

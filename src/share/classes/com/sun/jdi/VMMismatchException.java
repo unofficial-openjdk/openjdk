@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that the requested operation cannot be
+ * Thrown to indicate that the requested operation cannot be 
  * completed because the a mirror from one target VM is being
  * combined with a mirror from another target VM.
  *
@@ -35,10 +35,10 @@ package com.sun.jdi;
  */
 public class VMMismatchException extends RuntimeException {
     public VMMismatchException() {
-        super();
+	super();
     }
 
     public VMMismatchException(String s) {
-        super(s);
+	super(s);
     }
 }

@@ -41,11 +41,11 @@ BOOL __initMultipleMonitorStubs(void);
 BOOL __initMultipleMonitorStubs(void)
 {
     static BOOL fInitDone;
-    HMODULE     hUser32;
-    HMODULE     hUnicows = UnicowsLoader::GetModuleHandle();
+    HMODULE     hUser32; 
+    HMODULE     hUnicows = UnicowsLoader::GetModuleHandle(); 
     BOOL        retCode = FALSE;
 
-    if (fInitDone)
+    if (fInitDone)   
     {
       retCode = g_pfnGetMonitorInfo != NULL;
         goto _RET_;
@@ -259,7 +259,7 @@ BOOL WINAPI _enumDisplayMonitors(
     if( __initMultipleMonitorStubs() )
     {
         retCode = g_pfnEnumDisplayMonitors  (
-                                                hDC, lrcSect,
+                                                hDC, lrcSect, 
                                                 lpfnEnumProc,lData
                                             );
         goto _RET_;
@@ -284,7 +284,7 @@ BOOL WINAPI _enumDisplayMonitors(
         {
             goto _RET_;
         }
-
+        
         switch( GetClipBox(hDC,&rSect) )
         {
             case NULLREGION:
@@ -313,7 +313,7 @@ _RET_:
 }
 
 BOOL WINAPI _enumDisplayDevices (
-                                    LPVOID lpReserved, int iDeviceNum,
+                                    LPVOID lpReserved, int iDeviceNum, 
                                     _DISPLAY_DEVICE * pDisplayDevice, DWORD dwFlags
                                 )
 {
@@ -369,13 +369,13 @@ void __normaRectPos(RECT* rDest,RECT rSrc,RECT rNorma)
     rDest->bottom    = rDest->top + nDY;
 }
 HWND __createWindow0(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
-                        DWORD dwStyle,int x,int y,int nWidth,
+                        DWORD dwStyle,int x,int y,int nWidth, 
                         int nHeight,HWND hWndParent,HMENU hMenu,
                         HANDLE hInstance,LPVOID lpParam )
 {
     HWND    retCode = NULL;
 
-    if( (NULL != hmMonitor) && (NULL != lpClassName) &&
+    if( (NULL != hmMonitor) && (NULL != lpClassName) && 
         (NULL != lpWindowName) && (NULL != hInstance) )
     {
         RECT    rRW     = {0,0,0,0};
@@ -398,9 +398,9 @@ HWND __createWindow0(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
                 nHeight = rSect.bottom - rSect.top;
                 retCode = CreateWindow(
                                             lpClassName,lpWindowName,
-                                            dwStyle,x,y,nWidth,
+                                            dwStyle,x,y,nWidth, 
                                             nHeight,hWndParent,hMenu,
-                                            (HINSTANCE)hInstance,lpParam
+                                            (HINSTANCE)hInstance,lpParam     
                                         );
             } else  {
                     //  A coisa indefinida. Nao tenho sabdoria o que
@@ -409,17 +409,17 @@ HWND __createWindow0(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
                     }
         }
     }
-
+    
     return retCode;
 }
 HWND __createWindow1(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
-                        DWORD dwStyle,int x,int y,int nWidth,
+                        DWORD dwStyle,int x,int y,int nWidth, 
                         int nHeight,HWND hWndParent,HMENU hMenu,
                         HANDLE hInstance,LPVOID lpParam )
 {
     HWND    retCode = NULL;
 
-    if( (NULL != hmMonitor) && (NULL != lpClassName) &&
+    if( (NULL != hmMonitor) && (NULL != lpClassName) && 
         (NULL != lpWindowName) && (NULL != hInstance) )
     {
         RECT    rRM     = {0,0,0,0};
@@ -436,9 +436,9 @@ HWND __createWindow1(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
 
             if( NULL != (wW = CreateWindow(
                                                 lpClassName,lpWindowName,
-                                                dwStyle,x,y,nWidth,
+                                                dwStyle,x,y,nWidth, 
                                                 nHeight,hWndParent,hMenu,
-                                                (HINSTANCE)hInstance,lpParam
+                                                (HINSTANCE)hInstance,lpParam     
                                             )) )
             {
                 RECT    rRW     = {0,0,0,0};
@@ -447,7 +447,7 @@ HWND __createWindow1(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
                 GetWindowRect(wW,&rRW);
 
                 __normaRectPos(&rRW,rRW,rRM);
-
+            
                 IntersectRect(&rSect,&rRM,&rRW);
 
                 if( TRUE == EqualRect(&rSect,&rRW) )
@@ -456,7 +456,7 @@ HWND __createWindow1(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
                     y = rSect.top;
                     nWidth = rSect.right - rSect.left;
                     nHeight = rSect.bottom - rSect.top;
-
+                    
                     MoveWindow(wW,x,y,nWidth,nHeight,FALSE);
 
                     if( TRUE == wasVisible )
@@ -474,7 +474,7 @@ HWND __createWindow1(   MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
             }
         }
     }
-
+    
     return retCode;
 }
 
@@ -530,44 +530,47 @@ BOOL WINAPI _monitorBounds(MHND hmMonitor,RECT* rpBounds)
 
 HDC WINAPI _makeDCFromMonitor(MHND hmMonitor) {
     HDC retCode = NULL;
-
+    
     if( NULL != hmMonitor ) {
-
+        
         MONITOR_INFO_EXTENDED mieInfo;
-
+        
         memset((void*)(&mieInfo),0,sizeof(MONITOR_INFO_EXTENDED));
         mieInfo.dwSize = sizeof(MONITOR_INFO_EXTENDED);
-
+        
         if( TRUE == _getMonitorInfo(hmMonitor,(PMONITOR_INFO)(&mieInfo)) ) {
             HDC hDC = CreateDC(mieInfo.strDevice,NULL,NULL,NULL);
-
-            if( NULL != hDC ) {
-                retCode = hDC;
-            }
-        }
-    }
+        	
+            if( NULL != hDC ) {        	
+                retCode = hDC;                
+            }        
+        }    
+    }    
     return retCode;
 }
 
 HWND WINAPI _createWindowOM( MHND hmMonitor,LPCTSTR lpClassName,LPCTSTR lpWindowName,
-                    DWORD dwStyle,int x,int y,int nWidth,
+                    DWORD dwStyle,int x,int y,int nWidth, 
                     int nHeight,HWND hWndParent,HMENU hMenu,
                     HANDLE hInstance,LPVOID lpParam )
 {
-    if( (CW_USEDEFAULT == x) || (CW_USEDEFAULT == y) ||
+    if( (CW_USEDEFAULT == x) || (CW_USEDEFAULT == y) || 
         (CW_USEDEFAULT == nWidth) || (CW_USEDEFAULT == nHeight) )
     {
         return __createWindow1   (
                                     hmMonitor,lpClassName,lpWindowName,
-                                    dwStyle,x,y,nWidth,
+                                    dwStyle,x,y,nWidth, 
                                     nHeight,hWndParent,hMenu,
                                     hInstance,lpParam
-                                );
+                                );   
     }
     return __createWindow0   (
                                 hmMonitor,lpClassName,lpWindowName,
-                                dwStyle,x,y,nWidth,
+                                dwStyle,x,y,nWidth, 
                                 nHeight,hWndParent,hMenu,
                                 hInstance,lpParam
-                            );
+                            );   
 }
+
+
+

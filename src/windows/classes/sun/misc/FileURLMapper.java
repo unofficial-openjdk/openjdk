@@ -33,7 +33,8 @@ import sun.net.www.ParseUtil;
  * (Windows) Platform specific handling for file: URLs . In particular deals
  * with network paths mapping them to UNCs.
  *
- * @author      Michael McMahon
+ * @author	Michael McMahon
+ * @version 	%I%, %E%
  */
 
 public class FileURLMapper {
@@ -42,7 +43,7 @@ public class FileURLMapper {
     String file;
 
     public FileURLMapper (URL url) {
-        this.url = url;
+	this.url = url;
     }
 
     /**
@@ -51,25 +52,25 @@ public class FileURLMapper {
      */
 
     public String getPath () {
-        if (file != null) {
-            return file;
-        }
-        String host = url.getHost();
-        if (host != null && !host.equals("") &&
-            !"localhost".equalsIgnoreCase(host)) {
-            String rest = url.getFile();
-            String s = host + ParseUtil.decode (url.getFile());
-            file = "\\\\"+ s.replace('/', '\\');
-            return file;
-        }
-        String path = url.getFile().replace('/', '\\');
-        file = ParseUtil.decode(path);
-        return file;
+	if (file != null) {
+	    return file;
+	}
+    	String host = url.getHost();
+    	if (host != null && !host.equals("") &&
+	    !"localhost".equalsIgnoreCase(host)) {
+	    String rest = url.getFile();
+	    String s = host + ParseUtil.decode (url.getFile());
+	    file = "\\\\"+ s.replace('/', '\\');
+	    return file;
+	}
+	String path = url.getFile().replace('/', '\\');
+	file = ParseUtil.decode(path);
+	return file;
     }
 
     public boolean exists() {
-        String path = getPath();
-        File f = new File (path);
-        return f.exists();
+	String path = getPath();
+	File f = new File (path);
+	return f.exists();
     }
 }

@@ -55,7 +55,7 @@ class MimeType implements Externalizable, Cloneable {
      */
     public MimeType() {
     }
-
+    
     /**
      * Builds a <code>MimeType</code> from a <code>String</code>.
      *
@@ -76,11 +76,11 @@ class MimeType implements Externalizable, Cloneable {
      *         <code>sub</code> is null
      */
     public MimeType(String primary, String sub) throws MimeTypeParseException {
-        this(primary, sub, new MimeTypeParameterList());
+	this(primary, sub, new MimeTypeParameterList());
     }
 
     /**
-     * Builds a <code>MimeType</code> with a pre-defined
+     * Builds a <code>MimeType</code> with a pre-defined 
      * and valid (or empty) parameter list.
      *
      * @param primary the primary type of this <code>MimeType</code>
@@ -97,26 +97,26 @@ MimeTypeParseException {
         } else {
             throw new MimeTypeParseException("Primary type is invalid.");
         }
-
+        
         //    check to see if sub is valid
         if(isValidToken(sub)) {
             subType = sub.toLowerCase();
         } else {
             throw new MimeTypeParseException("Sub type is invalid.");
         }
-
-        parameters = (MimeTypeParameterList)mtpl.clone();
+        
+	parameters = (MimeTypeParameterList)mtpl.clone();
     }
 
     public int hashCode() {
 
-        // We sum up the hash codes for all of the strings. This
-        // way, the order of the strings is irrelevant
-        int code = 0;
-        code += primaryType.hashCode();
-        code += subType.hashCode();
-        code += parameters.hashCode();
-        return code;
+	// We sum up the hash codes for all of the strings. This
+	// way, the order of the strings is irrelevant
+	int code = 0;
+	code += primaryType.hashCode();
+	code += subType.hashCode();
+	code += parameters.hashCode();
+	return code;
     } // hashCode()
 
     /**
@@ -129,17 +129,17 @@ MimeTypeParseException {
      *    a <code>MimeType</code>; otherwise returns <code>false</code>
      */
     public boolean equals(Object thatObject) {
-        if (!(thatObject instanceof MimeType)) {
-            return false;
-        }
-        MimeType that = (MimeType)thatObject;
-        boolean isIt =
-            ((this.primaryType.equals(that.primaryType)) &&
-             (this.subType.equals(that.subType)) &&
-             (this.parameters.equals(that.parameters)));
-        return isIt;
+	if (!(thatObject instanceof MimeType)) {
+	    return false;
+	}
+	MimeType that = (MimeType)thatObject;
+	boolean isIt = 
+	    ((this.primaryType.equals(that.primaryType)) &&
+	     (this.subType.equals(that.subType)) &&
+	     (this.parameters.equals(that.parameters)));
+	return isIt;
     } // equals()
-
+    
     /**
      * A routine for parsing the MIME type out of a String.
      *
@@ -176,14 +176,14 @@ MimeTypeParameterList(rawdata.substring(semIndex));
             //    & a parameter list but no sub type
             throw new MimeTypeParseException("Unable to find a sub type.");
         }
-
+        
         //    now validate the primary and sub types
-
+        
         //    check to see if primary is valid
         if(!isValidToken(primaryType)) {
             throw new MimeTypeParseException("Primary type is invalid.");
         }
-
+        
         //    check to see if sub is valid
         if(!isValidToken(subType)) {
             throw new MimeTypeParseException("Sub type is invalid.");
@@ -208,7 +208,7 @@ MimeTypeParameterList(rawdata.substring(semIndex));
      * Retrieve a copy of this object's parameter list.
      */
     public MimeTypeParameterList getParameters() {
-        return (MimeTypeParameterList)parameters.clone();
+	return (MimeTypeParameterList)parameters.clone();
     }
 
     /**
@@ -252,7 +252,7 @@ MimeTypeParameterList(rawdata.substring(semIndex));
     public String getBaseType() {
         return primaryType + "/" + subType;
     }
-
+    
     /**
      * Returns <code>true</code> if the primary type and the
      * subtype of this object are the same as the specified
@@ -265,17 +265,17 @@ MimeTypeParameterList(rawdata.substring(semIndex));
      *    <code>false</code>
      */
     public boolean match(MimeType type) {
-        if (type == null)
+	if (type == null)
             return false;
         return primaryType.equals(type.getPrimaryType())
                     && (subType.equals("*")
                             || type.getSubType().equals("*")
                             || (subType.equals(type.getSubType())));
     }
-
+    
     /**
      * Returns <code>true</code> if the primary type and the
-     * subtype of this object are the same as the content type
+     * subtype of this object are the same as the content type 
      * described in <code>rawdata</code>; otherwise returns
      * <code>false</code>.
      *
@@ -283,7 +283,7 @@ MimeTypeParameterList(rawdata.substring(semIndex));
      * @return <code>true</code> if the primary type and the
      *    subtype of this object are the same as the content type
      *    described in <code>rawdata</code>; otherwise returns
-     *    <code>false</code>; if <code>rawdata</code> is
+     *    <code>false</code>; if <code>rawdata</code> is 
      *    <code>null</code>, returns <code>false</code>
      */
     public boolean match(String rawdata) throws MimeTypeParseException {
@@ -291,7 +291,7 @@ MimeTypeParameterList(rawdata.substring(semIndex));
             return false;
         return match(new MimeType(rawdata));
     }
-
+    
     /**
      * The object implements the writeExternal method to save its contents
      * by calling the methods of DataOutput for its primitive values or
@@ -342,19 +342,19 @@ ClassNotFoundException {
      */
 
     public Object clone() {
-        MimeType newObj = null;
-        try {
-            newObj = (MimeType)super.clone();
-        } catch (CloneNotSupportedException cannotHappen) {
-        }
-        newObj.parameters = (MimeTypeParameterList)parameters.clone();
-        return newObj;
+	MimeType newObj = null;
+	try {
+	    newObj = (MimeType)super.clone();
+	} catch (CloneNotSupportedException cannotHappen) {
+	}
+	newObj.parameters = (MimeTypeParameterList)parameters.clone();
+	return newObj;
     }
 
     private String    primaryType;
     private String    subType;
     private MimeTypeParameterList parameters;
-
+    
     //    below here be scary parsing related things
 
     /**
@@ -363,7 +363,7 @@ ClassNotFoundException {
     private static boolean isTokenChar(char c) {
         return ((c > 040) && (c < 0177)) && (TSPECIALS.indexOf(c) < 0);
     }
-
+    
     /**
      * Determines whether or not a given string is a legal token.
      *
@@ -389,5 +389,5 @@ ClassNotFoundException {
      */
 
     private static final String TSPECIALS = "()<>@,;:\\\"/[]?=";
-
+    
 } // class MimeType

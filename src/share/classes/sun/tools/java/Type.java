@@ -47,10 +47,11 @@ import java.util.Hashtable;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @see         ArrayType
- * @see         ClassType
- * @see         MethodType
- * @author      Arthur van Hoff
+ * @see		ArrayType
+ * @see		ClassType
+ * @see		MethodType
+ * @author 	Arthur van Hoff
+ * @version 	%I%, %G%
  */
 public
 class Type implements Constants {
@@ -76,46 +77,46 @@ class Type implements Constants {
     /*
      * Predefined types.
      */
-    public static final Type noArgs[]   = new Type[0];
-    public static final Type tError     = new Type(TC_ERROR,    "?");
-    public static final Type tPackage   = new Type(TC_ERROR,    ".");
-    public static final Type tNull      = new Type(TC_NULL,     "*");
-    public static final Type tVoid      = new Type(TC_VOID,     SIG_VOID);
-    public static final Type tBoolean   = new Type(TC_BOOLEAN,  SIG_BOOLEAN);
-    public static final Type tByte      = new Type(TC_BYTE,     SIG_BYTE);
-    public static final Type tChar      = new Type(TC_CHAR,     SIG_CHAR);
-    public static final Type tShort     = new Type(TC_SHORT,    SIG_SHORT);
-    public static final Type tInt       = new Type(TC_INT,      SIG_INT);
-    public static final Type tFloat     = new Type(TC_FLOAT,    SIG_FLOAT);
-    public static final Type tLong      = new Type(TC_LONG,     SIG_LONG);
-    public static final Type tDouble    = new Type(TC_DOUBLE,   SIG_DOUBLE);
-    public static final Type tObject    = Type.tClass(idJavaLangObject);
+    public static final Type noArgs[] 	= new Type[0];
+    public static final Type tError 	= new Type(TC_ERROR, 	"?");
+    public static final Type tPackage 	= new Type(TC_ERROR, 	".");
+    public static final Type tNull 	= new Type(TC_NULL, 	"*");
+    public static final Type tVoid 	= new Type(TC_VOID, 	SIG_VOID);
+    public static final Type tBoolean 	= new Type(TC_BOOLEAN, 	SIG_BOOLEAN);
+    public static final Type tByte 	= new Type(TC_BYTE, 	SIG_BYTE);
+    public static final Type tChar 	= new Type(TC_CHAR, 	SIG_CHAR);
+    public static final Type tShort 	= new Type(TC_SHORT, 	SIG_SHORT);
+    public static final Type tInt 	= new Type(TC_INT, 	SIG_INT);
+    public static final Type tFloat 	= new Type(TC_FLOAT, 	SIG_FLOAT);
+    public static final Type tLong 	= new Type(TC_LONG, 	SIG_LONG);
+    public static final Type tDouble 	= new Type(TC_DOUBLE, 	SIG_DOUBLE);
+    public static final Type tObject 	= Type.tClass(idJavaLangObject);
     public static final Type tClassDesc = Type.tClass(idJavaLangClass);
-    public static final Type tString    = Type.tClass(idJavaLangString);
+    public static final Type tString 	= Type.tClass(idJavaLangString);
     public static final Type tCloneable = Type.tClass(idJavaLangCloneable);
     public static final Type tSerializable = Type.tClass(idJavaIoSerializable);
 
     /**
-     * Create a type given a typecode and a type signature.
+     * Create a type given a typecode and a type signature. 
      */
     protected Type(int typeCode, String typeSig) {
-        this.typeCode = typeCode;
-        this.typeSig = typeSig;
-        typeHash.put(typeSig, this);
+	this.typeCode = typeCode;
+	this.typeSig = typeSig;
+	typeHash.put(typeSig, this);
     }
 
     /**
      * Return the Java type signature.
      */
     public final String getTypeSignature() {
-        return typeSig;
+	return typeSig;
     }
 
     /**
      * Return the type code.
      */
     public final int getTypeCode() {
-        return typeCode;
+	return typeCode;
     }
 
     /**
@@ -125,14 +126,14 @@ class Type implements Constants {
      * @see Constants
      */
     public final int getTypeMask() {
-        return 1 << typeCode;
+	return 1 << typeCode;
     }
 
     /**
      * Check for a certain type.
      */
     public final boolean isType(int tc) {
-        return typeCode == tc;
+	return typeCode == tc;
     }
 
     /**
@@ -144,16 +145,16 @@ class Type implements Constants {
      * a nice error.
      */
     public boolean isVoidArray() {
-        // a void type is not a void array.
-        if (!isType(TC_ARRAY)) {
-            return false;
-        }
-        // If this is an array, find out what its element type is.
-        Type type = this;
-        while (type.isType(TC_ARRAY))
-            type = type.getElementType();
-
-        return type.isType(TC_VOID);
+	// a void type is not a void array.
+	if (!isType(TC_ARRAY)) {
+	    return false;
+	}
+	// If this is an array, find out what its element type is.
+	Type type = this;
+	while (type.isType(TC_ARRAY))
+	    type = type.getElementType();
+	
+	return type.isType(TC_VOID);
     }
 
 
@@ -161,27 +162,27 @@ class Type implements Constants {
      * Check for a certain set of types.
      */
     public final boolean inMask(int tm) {
-        return ((1 << typeCode) & tm) != 0;
+	return ((1 << typeCode) & tm) != 0;
     }
 
     /**
      * Create an array type.
      */
     public static synchronized Type tArray(Type elem) {
-        String sig = new String(SIG_ARRAY + elem.getTypeSignature());
-        Type t = (Type)typeHash.get(sig);
-        if (t == null) {
-            t = new ArrayType(sig, elem);
-        }
-        return t;
+	String sig = new String(SIG_ARRAY + elem.getTypeSignature());
+	Type t = (Type)typeHash.get(sig);
+	if (t == null) {
+	    t = new ArrayType(sig, elem);
+	}
+	return t;
     }
-
+    
     /**
      * Return the element type of an array type. Only works
      * for array types.
      */
     public Type getElementType() {
-        throw new CompilerError("getElementType");
+	throw new CompilerError("getElementType");
     }
 
     /**
@@ -189,7 +190,7 @@ class Type implements Constants {
      * array types.
      */
     public int getArrayDimension() {
-        return 0;
+	return 0;
     }
 
     /**
@@ -197,36 +198,36 @@ class Type implements Constants {
      * @arg className the fully qualified class name
      */
     public static synchronized Type tClass(Identifier className) {
-        if (className.isInner()) {
-            Type t = tClass(mangleInnerType(className));
-            if (t.getClassName() != className)
-                // Somebody got here first with a mangled name.
-                // (Perhaps it came from a binary.)
-                changeClassName(t.getClassName(), className);
-            return t;
-        }
-        // see if we've cached the object in the Identifier
-        if (className.typeObject != null) {
-            return className.typeObject;
-        }
-        String sig =
-            new String(SIG_CLASS +
-                       className.toString().replace('.', SIGC_PACKAGE) +
-                       SIG_ENDCLASS);
-        Type t = (Type)typeHash.get(sig);
-        if (t == null) {
-            t = new ClassType(sig, className);
-        }
+	if (className.isInner()) {
+	    Type t = tClass(mangleInnerType(className));
+	    if (t.getClassName() != className)
+		// Somebody got here first with a mangled name.
+		// (Perhaps it came from a binary.)
+		changeClassName(t.getClassName(), className);
+	    return t;
+	}
+	// see if we've cached the object in the Identifier
+	if (className.typeObject != null) {
+	    return className.typeObject;
+	}
+	String sig =
+	    new String(SIG_CLASS +
+		       className.toString().replace('.', SIGC_PACKAGE) +
+		       SIG_ENDCLASS);
+	Type t = (Type)typeHash.get(sig);
+	if (t == null) {
+	    t = new ClassType(sig, className);
+	}
 
-        className.typeObject = t; // cache the Type object in the Identifier
-        return t;
+	className.typeObject = t; // cache the Type object in the Identifier
+	return t;
     }
 
     /**
      * Return the ClassName. Only works on class types.
      */
     public Identifier getClassName() {
-        throw new CompilerError("getClassName:" + this);
+	throw new CompilerError("getClassName:" + this);
     }
 
     /**
@@ -238,13 +239,13 @@ class Type implements Constants {
      */
 
     public static Identifier mangleInnerType(Identifier className) {
-        // Map "pkg.Foo. Bar" to "pkg.Foo$Bar".
-        if (!className.isInner())  return className;
-        Identifier mname = Identifier.lookup(
-                                className.getFlatName().toString().
-                                replace('.', SIGC_INNERCLASS) );
-        if (mname.isInner())  throw new CompilerError("mangle "+mname);
-        return Identifier.lookup(className.getQualifier(), mname);
+	// Map "pkg.Foo. Bar" to "pkg.Foo$Bar".
+	if (!className.isInner())  return className;
+	Identifier mname = Identifier.lookup(
+				className.getFlatName().toString().
+				replace('.', SIGC_INNERCLASS) );
+	if (mname.isInner())  throw new CompilerError("mangle "+mname);
+	return Identifier.lookup(className.getQualifier(), mname);
     }
 
     /**
@@ -257,51 +258,51 @@ class Type implements Constants {
      * Note that the latter are also valid class names.)
      */
     static void changeClassName(Identifier oldName, Identifier newName) {
-        // Note:  If we are upgrading "pkg.Foo$Bar" to "pkg.Foo. Bar",
-        // we assume someone else will come along and deal with any types
-        // inner within Bar.  So, there's only one change to make.
-        ((ClassType)Type.tClass(oldName)).className = newName;
+	// Note:  If we are upgrading "pkg.Foo$Bar" to "pkg.Foo. Bar",
+	// we assume someone else will come along and deal with any types
+	// inner within Bar.  So, there's only one change to make.
+	((ClassType)Type.tClass(oldName)).className = newName;
     }
 
     /**
      * Create a method type with no arguments.
      */
     public static synchronized Type tMethod(Type ret) {
-        return tMethod(ret, noArgs);
+	return tMethod(ret, noArgs);
     }
 
     /**
      * Create a method type with arguments.
      */
     public static synchronized Type tMethod(Type returnType, Type argTypes[]) {
-        StringBuffer buf = new StringBuffer();
-        buf.append(SIG_METHOD);
-        for (int i = 0 ; i < argTypes.length ; i++) {
-            buf.append(argTypes[i].getTypeSignature());
-        }
-        buf.append(SIG_ENDMETHOD);
-        buf.append(returnType.getTypeSignature());
+	StringBuffer buf = new StringBuffer();
+	buf.append(SIG_METHOD);
+	for (int i = 0 ; i < argTypes.length ; i++) {
+	    buf.append(argTypes[i].getTypeSignature());
+	}
+	buf.append(SIG_ENDMETHOD);
+	buf.append(returnType.getTypeSignature());
 
-        String sig = buf.toString();
-        Type t = (Type)typeHash.get(sig);
-        if (t == null) {
-            t = new MethodType(sig, returnType, argTypes);
-        }
-        return t;
+	String sig = buf.toString();
+	Type t = (Type)typeHash.get(sig);
+	if (t == null) {
+	    t = new MethodType(sig, returnType, argTypes);
+	}
+	return t;
     }
 
     /**
      * Return the return type. Only works for method types.
      */
     public Type getReturnType() {
-        throw new CompilerError("getReturnType");
+	throw new CompilerError("getReturnType");
     }
 
     /**
      * Return the argument types. Only works for method types.
      */
     public Type getArgumentTypes()[] {
-        throw new CompilerError("getArgumentTypes");
+	throw new CompilerError("getArgumentTypes");
     }
 
     /**
@@ -309,43 +310,43 @@ class Type implements Constants {
      * @exception CompilerError invalid type signature.
      */
     public static synchronized Type tType(String sig) {
-        Type t = (Type)typeHash.get(sig);
-        if (t != null) {
-            return t;
-        }
+	Type t = (Type)typeHash.get(sig);
+	if (t != null) {
+	    return t;
+	}
 
-        switch (sig.charAt(0)) {
-          case SIGC_ARRAY:
-            return Type.tArray(tType(sig.substring(1)));
+	switch (sig.charAt(0)) {
+	  case SIGC_ARRAY:
+	    return Type.tArray(tType(sig.substring(1)));
 
-          case SIGC_CLASS:
-            return Type.tClass(Identifier.lookup(sig.substring(1, sig.length() - 1).replace(SIGC_PACKAGE, '.')));
+	  case SIGC_CLASS:
+	    return Type.tClass(Identifier.lookup(sig.substring(1, sig.length() - 1).replace(SIGC_PACKAGE, '.')));
 
-          case SIGC_METHOD: {
-            Type argv[] = new Type[8];
-            int argc = 0;
-            int i, j;
+	  case SIGC_METHOD: {
+	    Type argv[] = new Type[8];
+	    int argc = 0;
+	    int i, j;
 
-            for (i = 1 ; sig.charAt(i) != SIGC_ENDMETHOD ; i = j) {
-                for (j = i ; sig.charAt(j) == SIGC_ARRAY ; j++);
-                if (sig.charAt(j++) == SIGC_CLASS) {
-                    while (sig.charAt(j++) != SIGC_ENDCLASS);
-                }
-                if (argc == argv.length) {
-                    Type newargv[] = new Type[argc * 2];
-                    System.arraycopy(argv, 0, newargv, 0, argc);
-                    argv = newargv;
-                }
-                argv[argc++] = tType(sig.substring(i, j));
-            }
+	    for (i = 1 ; sig.charAt(i) != SIGC_ENDMETHOD ; i = j) {
+		for (j = i ; sig.charAt(j) == SIGC_ARRAY ; j++);
+		if (sig.charAt(j++) == SIGC_CLASS) {
+		    while (sig.charAt(j++) != SIGC_ENDCLASS);
+		}
+		if (argc == argv.length) {
+		    Type newargv[] = new Type[argc * 2];
+		    System.arraycopy(argv, 0, newargv, 0, argc);
+		    argv = newargv;
+		}
+		argv[argc++] = tType(sig.substring(i, j));
+	    }
 
-            Type argtypes[] = new Type[argc];
-            System.arraycopy(argv, 0, argtypes, 0, argc);
-            return Type.tMethod(tType(sig.substring(i + 1)), argtypes);
-          }
-        }
+	    Type argtypes[] = new Type[argc];
+	    System.arraycopy(argv, 0, argtypes, 0, argc);
+	    return Type.tMethod(tType(sig.substring(i + 1)), argtypes);
+	  }    
+	}
 
-        throw new CompilerError("invalid TypeSignature:" + sig);
+	throw new CompilerError("invalid TypeSignature:" + sig);
     }
 
     /**
@@ -354,7 +355,7 @@ class Type implements Constants {
      * argument types are identical.
      */
     public boolean equalArguments(Type t) {
-        return false;
+	return false;
     }
 
     /**
@@ -363,24 +364,24 @@ class Type implements Constants {
      * total space taken up by the arguments.
      */
     public int stackSize() {
-        switch (typeCode) {
-          case TC_ERROR:
-          case TC_VOID:
-            return 0;
-          case TC_BOOLEAN:
-          case TC_BYTE:
-          case TC_SHORT:
-          case TC_CHAR:
-          case TC_INT:
-          case TC_FLOAT:
-          case TC_ARRAY:
-          case TC_CLASS:
-            return 1;
-          case TC_LONG:
-          case TC_DOUBLE:
-            return 2;
-        }
-        throw new CompilerError("stackSize " + toString());
+	switch (typeCode) {
+	  case TC_ERROR:
+	  case TC_VOID:
+	    return 0;
+	  case TC_BOOLEAN:
+	  case TC_BYTE:
+	  case TC_SHORT:
+	  case TC_CHAR:
+	  case TC_INT:
+	  case TC_FLOAT:
+	  case TC_ARRAY:
+	  case TC_CLASS:
+	    return 1;
+	  case TC_LONG:
+	  case TC_DOUBLE:
+	    return 2;
+	}
+	throw new CompilerError("stackSize " + toString());
     }
 
     /**
@@ -391,65 +392,65 @@ class Type implements Constants {
      * appropriate opcode is iadd + type.getTypeCodeOffset().
      */
     public int getTypeCodeOffset() {
-        switch (typeCode) {
-          case TC_BOOLEAN:
-          case TC_BYTE:
-          case TC_SHORT:
-          case TC_CHAR:
-          case TC_INT:
-            return 0;
-          case TC_LONG:
-            return 1;
-          case TC_FLOAT:
-            return 2;
-          case TC_DOUBLE:
-            return 3;
-          case TC_NULL:
-          case TC_ARRAY:
-          case TC_CLASS:
-            return 4;
-        }
-        throw new CompilerError("invalid typecode: " + typeCode);
+	switch (typeCode) {
+	  case TC_BOOLEAN:
+	  case TC_BYTE:
+	  case TC_SHORT:
+	  case TC_CHAR:
+	  case TC_INT:
+	    return 0;
+	  case TC_LONG:
+	    return 1;
+	  case TC_FLOAT:
+	    return 2;
+	  case TC_DOUBLE:
+	    return 3;
+	  case TC_NULL:
+	  case TC_ARRAY:
+	  case TC_CLASS:
+	    return 4;
+	}
+	throw new CompilerError("invalid typecode: " + typeCode);
     }
-
+    
     /**
      * Convert a Type to a string, if abbrev is true class names are
      * not fully qualified, if ret is true the return type is included.
      */
     public String typeString(String id, boolean abbrev, boolean ret) {
-        String s = null;
+	String s = null;
+	
+	switch (typeCode) {
+	  case TC_NULL:		s = "null";    break;
+	  case TC_VOID:		s = "void";    break;
+	  case TC_BOOLEAN:	s = "boolean"; break;
+	  case TC_BYTE:		s = "byte";    break;
+	  case TC_CHAR:		s = "char";    break;
+	  case TC_SHORT:	s = "short";   break;
+	  case TC_INT:		s = "int";     break;
+	  case TC_LONG:		s = "long";    break;
+	  case TC_FLOAT:	s = "float";   break;
+	  case TC_DOUBLE:	s = "double";  break;
+	  case TC_ERROR:	s = "<error>";
+				if (this==tPackage) s = "<package>";
+				break;
+	  default:	    	s = "unknown";
+	  }
 
-        switch (typeCode) {
-          case TC_NULL:         s = "null";    break;
-          case TC_VOID:         s = "void";    break;
-          case TC_BOOLEAN:      s = "boolean"; break;
-          case TC_BYTE:         s = "byte";    break;
-          case TC_CHAR:         s = "char";    break;
-          case TC_SHORT:        s = "short";   break;
-          case TC_INT:          s = "int";     break;
-          case TC_LONG:         s = "long";    break;
-          case TC_FLOAT:        s = "float";   break;
-          case TC_DOUBLE:       s = "double";  break;
-          case TC_ERROR:        s = "<error>";
-                                if (this==tPackage) s = "<package>";
-                                break;
-          default:              s = "unknown";
-          }
-
-        return (id.length() > 0) ? s + " " + id : s;
+	return (id.length() > 0) ? s + " " + id : s;
     }
 
     /**
      * Create a type string, given an identifier.
      */
     public String typeString(String id) {
-        return typeString(id, false, true);
+	return typeString(id, false, true);
     }
 
     /**
      * Convert to a String
      */
     public String toString() {
-        return typeString("", false, true);
+	return typeString("", false, true);
     }
 }

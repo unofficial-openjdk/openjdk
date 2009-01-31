@@ -42,21 +42,21 @@ import javax.management.ObjectName;
 
 /**
  * A utility class defining static methods used by our tests.
- *
+ * 
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 public class TestUtils {
-
+    
     /**
      * A logger for this class.
      **/
     private static final Logger LOG =
             Logger.getLogger(TestUtils.class.getName());
-
+    
     /** Creates a new instance of TestUtils */
     private TestUtils() {
     }
-
+    
     /**
      * Returns the ObjectName of the MBean that a proxy object
      * is proxying.
@@ -67,11 +67,11 @@ public class TestUtils {
         final Proxy p = (Proxy) proxy;
         final InvocationHandler handler =
                 Proxy.getInvocationHandler(proxy);
-        if (handler instanceof MBeanServerInvocationHandler)
+        if (handler instanceof MBeanServerInvocationHandler) 
             return ((MBeanServerInvocationHandler)handler).getObjectName();
         throw new IllegalArgumentException("not a JMX Proxy");
     }
-
+    
     /**
      * Transfroms a proxy implementing T in a proxy implementing T plus
      * NotificationEmitter
@@ -95,11 +95,11 @@ public class TestUtils {
         final MBeanServerConnection mbs = h.getMBeanServerConnection();
         final boolean isMXBean = h.isMXBean();
         final T newProxy;
-        if (isMXBean)
+        if (isMXBean) 
             newProxy = JMX.newMXBeanProxy(mbs,name,mbeanInterface,true);
-        else
+        else 
             newProxy = JMX.newMBeanProxy(mbs,name,mbeanInterface,true);
         return newProxy;
     }
-
+    
 }

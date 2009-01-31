@@ -115,31 +115,31 @@ public class StandardMetadataFormatResources extends ListResourceBundle {
 
         { "VerticalPhysicalPixelSpacing",
           "The vertical distance in the subject of the image, in millimeters, represented by one pixel at the center of the image" },
-
+        
         { "HorizontalPosition",
           "The horizontal position, in millimeters, where the image should be rendered on media " },
-
+        
         { "VerticalPosition",
           "The vertical position, in millimeters, where the image should be rendered on media " },
-
+        
         { "HorizontalPixelOffset",
           "The horizonal position, in pixels, where the image should be rendered onto a raster display" },
-
+        
         { "VerticalPixelOffset",
           "The vertical position, in pixels, where the image should be rendered onto a raster display" },
-
+        
         { "HorizontalScreenSize",
           "The width, in pixels, of the raster display into which the image should be rendered" },
-
+        
         { "VerticalScreenSize",
           "The height, in pixels, of the raster display into which the image should be rendered" },
-
+        
         { "Document", "Document information" },
 
         { "FormatVersion",
           "The version of the format used by the stream" },
-
-        { "SubimageInterpretation",
+        
+        { "SubimageInterpretation", 
           "The interpretation of this image in relation to the other images stored in the same stream" },
 
         { "ImageCreationTime", "The time of image creation" },

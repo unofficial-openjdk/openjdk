@@ -39,20 +39,20 @@ class BitXorExpression extends BinaryBitExpression {
      * constructor
      */
     public BitXorExpression(long where, Expression left, Expression right) {
-        super(BITXOR, where, left, right);
+	super(BITXOR, where, left, right);
     }
 
     /**
      * Evaluate
      */
     Expression eval(boolean a, boolean b) {
-        return new BooleanExpression(where, a ^ b);
+	return new BooleanExpression(where, a ^ b);
     }
     Expression eval(int a, int b) {
-        return new IntExpression(where, a ^ b);
+	return new IntExpression(where, a ^ b);
     }
     Expression eval(long a, long b) {
-        return new LongExpression(where, a ^ b);
+	return new LongExpression(where, a ^ b);
     }
 
 
@@ -60,25 +60,25 @@ class BitXorExpression extends BinaryBitExpression {
      * Simplify
      */
     Expression simplify() {
-        if (left.equals(true)) {
-            return new NotExpression(where, right);
-        }
-        if (right.equals(true)) {
-            return new NotExpression(where, left);
-        }
-        if (left.equals(false) || left.equals(0)) {
-            return right;
-        }
-        if (right.equals(false) || right.equals(0)) {
-            return left;
-        }
-        return this;
+	if (left.equals(true)) {
+	    return new NotExpression(where, right);
+	}
+	if (right.equals(true)) {
+	    return new NotExpression(where, left);
+	}
+	if (left.equals(false) || left.equals(0)) {
+	    return right;
+	}
+	if (right.equals(false) || right.equals(0)) {
+	    return left;
+	}
+	return this;
     }
 
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-        asm.add(where, opc_ixor + type.getTypeCodeOffset());
+	asm.add(where, opc_ixor + type.getTypeCodeOffset());
     }
 }

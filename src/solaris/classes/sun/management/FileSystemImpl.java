@@ -34,11 +34,11 @@ import java.io.IOException;
 public class FileSystemImpl extends FileSystem {
 
     public boolean supportsFileSecurity(File f) throws IOException {
-        return true;
+	return true;
     }
 
     public boolean isAccessUserOnly(File f) throws IOException {
-        return isAccessUserOnly0(f.getPath());
+	return isAccessUserOnly0(f.getPath());
     }
 
     // Native methods
@@ -48,7 +48,8 @@ public class FileSystemImpl extends FileSystem {
     // Initialization
 
     static {
-        java.security.AccessController
+	java.security.AccessController
             .doPrivileged(new sun.security.action.LoadLibraryAction("management"));
     }
 }
+

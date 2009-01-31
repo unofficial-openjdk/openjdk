@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1997-1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,7 +27,7 @@
  * @run main ReadAddedField
  *
  * @summary Deserialize an evolved class with a new field, field type is new.
- *
+ * 
  */
 
 import java.io.*;
@@ -50,7 +50,7 @@ class B implements Serializable {
     int bar;
 
     B() {
-        bar = 4;
+	bar = 4;
     }
 }
 
@@ -62,53 +62,53 @@ class C implements Serializable {
     int bar;
 
     C() {
-        bar = 4;
+	bar = 4;
     }
 
     private void readObject(ObjectInputStream s)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        s.defaultReadObject();
+	s.defaultReadObject();
     }
 
     private void writeObject(ObjectOutputStream s)
-        throws IOException
+	throws IOException
     {
-        s.defaultWriteObject();
+	s.defaultWriteObject();
     }
 }
 
 public class ReadAddedField {
     public static void main(String args[])
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        File f = new File("tmp.ser");
-        ObjectInput in =
-            new ObjectInputStream(new FileInputStream(f));
-        A a = (A)in.readObject();
-        if (a.bar != 4)
-            throw new RuntimeException("a.bar does not equal 4, it equals " +
-                                       a.bar);
-        B b = (B)in.readObject();
-        if (b.bar != 4)
-            throw new RuntimeException("b.bar does not equal 4, it equals " +
-                                       b.bar);
-        C c = (C)in.readObject();
-        if (c.bar != 4)
-            throw new RuntimeException("c.bar does not equal 4, it equals " +
-                                       c.bar);
-        A aa = (A)in.readObject();
-        if (aa.bar != 4)
-            throw new RuntimeException("a.bar does not equal 4, it equals " +
-                                       aa.bar);
-        B bb = (B)in.readObject();
-        if (bb.bar != 4)
-            throw new RuntimeException("b.bar does not equal 4, it equals " +
-                                       bb.bar);
-        C cc = (C)in.readObject();
-        if (cc.bar != 4)
-            throw new RuntimeException("c.bar does not equal 4, it equals " +
-                                       cc.bar);
-        in.close();
+	File f = new File("tmp.ser");
+	ObjectInput in =
+	    new ObjectInputStream(new FileInputStream(f));
+	A a = (A)in.readObject();
+	if (a.bar != 4)
+	    throw new RuntimeException("a.bar does not equal 4, it equals " +
+				       a.bar);
+	B b = (B)in.readObject();
+	if (b.bar != 4)
+	    throw new RuntimeException("b.bar does not equal 4, it equals " +
+				       b.bar);
+	C c = (C)in.readObject();
+	if (c.bar != 4)
+	    throw new RuntimeException("c.bar does not equal 4, it equals " +
+				       c.bar);
+	A aa = (A)in.readObject();
+	if (aa.bar != 4)
+	    throw new RuntimeException("a.bar does not equal 4, it equals " +
+				       aa.bar);
+	B bb = (B)in.readObject();
+	if (bb.bar != 4)
+	    throw new RuntimeException("b.bar does not equal 4, it equals " +
+				       bb.bar);
+	C cc = (C)in.readObject();
+	if (cc.bar != 4)
+	    throw new RuntimeException("c.bar does not equal 4, it equals " +
+				       cc.bar);
+	in.close();
     }
 }

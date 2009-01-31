@@ -38,34 +38,34 @@ public class CharToByteEUC_JP extends CharToByteJIS0208 {
     }
 
     protected int convSingleByte(char inputChar, byte[] outputByte) {
-        byte b;
+	byte b;
 
-        if (inputChar == 0) {
-            outputByte[0] = (byte)0;
-            return 1;
-        }
+	if (inputChar == 0) {
+	    outputByte[0] = (byte)0;
+	    return 1;
+	}
 
-        if ((b = cbJIS0201.getNative(inputChar)) == 0)
-            return 0;
+	if ((b = cbJIS0201.getNative(inputChar)) == 0)
+	    return 0;
 
-        if (b > 0 && b < 128) {
-            outputByte[0] = b;
-            return 1;
-        }
-        outputByte[0] = (byte)0x8E;
-        outputByte[1] = b;
-        return 2;
+	if (b > 0 && b < 128) {
+	    outputByte[0] = b;
+	    return 1;
+	}
+	outputByte[0] = (byte)0x8E;
+	outputByte[1] = b;
+	return 2;
     }
 
     protected int getNative(char ch) {
-        int offset = index1[((ch & 0xff00) >> 8 )] << 8;
-        int r = index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
-        if (r != 0)
-            return r + 0x8080;
-        r = cbJIS0212.getNative(ch);
-        if (r == 0)
-            return r;
-        return r + 0x8F8080;
+	int offset = index1[((ch & 0xff00) >> 8 )] << 8;
+	int r = index2[offset >> 12].charAt((offset & 0xfff) + (ch & 0xff));
+	if (r != 0)
+	    return r + 0x8080;
+	r = cbJIS0212.getNative(ch);
+	if (r == 0)
+	    return r;
+	return r + 0x8F8080;
     }
 
 
@@ -80,25 +80,25 @@ public class CharToByteEUC_JP extends CharToByteJIS0208 {
      * @param output byte array to receive conversion result
      * @param outStart starting offset
      * @param outEnd offset of last byte to be written to
-     * @throw UnsupportedCharacterException for any character
+     * @throw UnsupportedCharacterException for any character 
      * that cannot be converted to the external character set.
      */
     public int convert(char[] input, int inOff, int inEnd,
-                       byte[] output, int outOff, int outEnd)
+		       byte[] output, int outOff, int outEnd)
         throws MalformedInputException, UnknownCharacterException,
                ConversionBufferFullException
     {
-        char    inputChar;                 // Input character to be converted
-        byte[]  outputByte;                // Output byte written to output
-        int     inputSize = 0;             // Size of input
-        int     outputSize = 0;            // Size of output
-        byte[]  tmpbuf = new byte[4];
+        char    inputChar;          	   // Input character to be converted
+        byte[]  outputByte; 		   // Output byte written to output
+        int     inputSize = 0;      	   // Size of input
+	int	outputSize = 0;	    	   // Size of output
+	byte[]	tmpbuf = new byte[4];  
 
         // Record beginning offsets
         charOff = inOff;
         byteOff = outOff;
 
-        if (highHalfZoneCode != 0) {
+	if (highHalfZoneCode != 0) {
             inputChar = highHalfZoneCode;
             highHalfZoneCode = 0;
             if (input[inOff] >= 0xdc00 && input[inOff] <= 0xdfff) {
@@ -115,8 +115,8 @@ public class CharToByteEUC_JP extends CharToByteJIS0208 {
         // Loop until we hit the end of the input
         while(charOff < inEnd) {
             inputSize = 1;
-            outputByte = tmpbuf;
-            inputChar = input[charOff]; // Get the input character
+	    outputByte = tmpbuf;
+	    inputChar = input[charOff]; // Get the input character
 
             // Is this a high surrogate?
             if(inputChar >= '\uD800' && inputChar <= '\uDBFF') {
@@ -150,42 +150,42 @@ public class CharToByteEUC_JP extends CharToByteJIS0208 {
                 badInputLength = 1;
                 throw new MalformedInputException();
             } else {
-                outputSize = convSingleByte(inputChar, outputByte);
-                if (outputSize == 0) { // DoubleByte
-                    int ncode = getNative(inputChar);
-                    if (ncode != 0 ) {
-                        if ((ncode & 0xFF0000) == 0) {
-                            outputByte[0] = (byte) ((ncode & 0xff00) >> 8);
-                            outputByte[1] = (byte) (ncode & 0xff);
-                            outputSize = 2;
-                        } else {
-                            outputByte[0] = (byte) 0x8F;
-                            outputByte[1] = (byte) ((ncode & 0xff00) >> 8);
-                            outputByte[2] = (byte) (ncode & 0xff);
-                            outputSize = 3;
-                        }
-                    } else {
-                        if (subMode) {
-                            outputByte = subBytes;
-                            outputSize = subBytes.length;
-                        } else {
-                            badInputLength = 1;
-                            throw new UnknownCharacterException();
-                        }
-                    }
-                }
-            }
+		outputSize = convSingleByte(inputChar, outputByte);
+		if (outputSize == 0) { // DoubleByte
+	            int ncode = getNative(inputChar);
+		    if (ncode != 0 ) {
+			if ((ncode & 0xFF0000) == 0) {
+		            outputByte[0] = (byte) ((ncode & 0xff00) >> 8);
+		            outputByte[1] = (byte) (ncode & 0xff);
+		            outputSize = 2;
+			} else {
+		            outputByte[0] = (byte) 0x8F;
+		            outputByte[1] = (byte) ((ncode & 0xff00) >> 8);
+		            outputByte[2] = (byte) (ncode & 0xff);
+		            outputSize = 3;
+			}
+            	    } else { 
+		        if (subMode) {
+		    	    outputByte = subBytes;
+            	    	    outputSize = subBytes.length;
+	                } else {
+			    badInputLength = 1;
+			    throw new UnknownCharacterException();
+		        }
+	    	    }
+	        }
+	    }
 
-            // If we don't have room for the output, throw an exception
-            if (byteOff + outputSize > outEnd)
-                throw new ConversionBufferFullException();
+	    // If we don't have room for the output, throw an exception
+	    if (byteOff + outputSize > outEnd)
+		throw new ConversionBufferFullException();
 
-            // Put the byte in the output buffer
-            for (int i = 0; i < outputSize; i++) {
-                output[byteOff++] = outputByte[i];
-            }
-            charOff += inputSize;
-        }
+	    // Put the byte in the output buffer
+	    for (int i = 0; i < outputSize; i++) {
+		output[byteOff++] = outputByte[i];
+	    }
+	    charOff += inputSize;
+	}
         // Return the length written to the output buffer
         return byteOff - outOff;
     }

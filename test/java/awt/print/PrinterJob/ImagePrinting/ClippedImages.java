@@ -41,14 +41,14 @@ public class ClippedImages extends Frame implements ActionListener {
 
     private ClippedImageCanvas c;
 
-    public static void main(String args[]) {
+    public static void main(String args[]) {    
 
         ClippedImages f = new ClippedImages();
         f.setVisible(true);
     }
-
+    
     public ClippedImages() {
-        super("Clipped Src Area Image Printing Test");
+	super("Clipped Src Area Image Printing Test");
         c = new ClippedImageCanvas();
         add("Center", c);
 
@@ -72,7 +72,7 @@ public class ClippedImages extends Frame implements ActionListener {
                     System.exit(0);
                 }
             });
-
+ 
         pack();
     }
 
@@ -128,7 +128,7 @@ public class ClippedImages extends Frame implements ActionListener {
             } finally {
                 System.out.println("PRINT RETURNED OK.");
             }
-        }
+        }             
     }
 
     private void printAll() {
@@ -145,7 +145,7 @@ public class ClippedImages extends Frame implements ActionListener {
             } finally {
                 System.out.println("PRINT RETURNED OK.");
             }
-        }
+        }             
     }
 }
 
@@ -196,7 +196,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
 
     public PageFormat getPageFormat(int pageIndex)
         throws IndexOutOfBoundsException {
-
+        
         if (pageIndex < 0 || pageIndex >= getNumberOfPages()) {
             throw new IndexOutOfBoundsException();
         }
@@ -267,7 +267,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
         int r=5;
         g.drawOval(dx1-r, dy1-r, 2*r, 2*r);
         g.setColor(Color.red);
-        g.drawOval(dx2-r, dy2-r, 2*r, 2*r);
+        g.drawOval(dx2-r, dy2-r, 2*r, 2*r);    
     }
 
     private AffineTransform savedTx = null;
@@ -305,7 +305,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
 
         saveTx(g2d);
         int sx = -20, sy=-20;
-
+        
         dx=300; dy=10; dw=50; dh=50;
 
         drawImage(g, dx, dy, dx+dw, dy+dh ,sx,sy,1,1);
@@ -320,7 +320,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
         g2d.rotate(Math.PI/4);
         drawImage(g, dx, dy, dx+dw, dy+dh, sx, sy, dw/2, dh/2);
 
-        restoreTx(g2d);
+        restoreTx(g2d);       
 
         dx=290; dy=180; dw=20; dh=20;
         drawImage(g, dx, dy, dx+dw*10, dy+dh*10, 30, sy, dw, dh);
@@ -328,7 +328,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
         dx=-280; dy=-200;
         drawImage(g, dx, dy, dx+dw*2, dy+dh*2, 30, sy, dw, dh);
 
-        restoreTx(g2d);
+        restoreTx(g2d);       
 
         g2d.scale(1, -1);
         dx=430; dy=-150;
@@ -354,7 +354,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
          * Similarly for the destination with vertices, dA, dB, dC, dD
          * there are 4 combinations : dA+dD, dD+dA, dB+dC, dC+dB.
          * Thus we need 16 calls to test all combinations.
-         * Note that we set the source area coordinates (x and y -20->80)
+         * Note that we set the source area coordinates (x and y -20->80) 
          * to be beyond the image size (50x50) so clipping is always needed.
          */
         int sxa = -20, sya =  -20;
@@ -444,7 +444,7 @@ class ClippedImageCanvas extends Component implements Printable, Pageable {
     }
 
 
-
+        
      /* Size is chosen to match default imageable width of a NA letter
       * page. This means there will be clipping, what is clipped will
       * depend on PageFormat orientation.

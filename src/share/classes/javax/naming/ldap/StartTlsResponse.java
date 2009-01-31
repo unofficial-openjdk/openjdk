@@ -40,14 +40,14 @@ import javax.net.ssl.HostnameVerifier;
  * and no extended response value is defined.
  *
  *<p>
- * The Start TLS extended request and response are used to establish
- * a TLS connection over the existing LDAP connection associated with
+ * The Start TLS extended request and response are used to establish 
+ * a TLS connection over the existing LDAP connection associated with 
  * the JNDI context on which <tt>extendedOperation()</tt> is invoked.
  * Typically, a JNDI program uses the StartTLS extended request and response
  * classes as follows.
  * <blockquote><pre>
  * import javax.naming.ldap.*;
- *
+ * 
  * // Open an LDAP association
  * LdapContext ctx = new InitialLdapContext();
  *
@@ -103,7 +103,7 @@ public abstract class StartTlsResponse implements ExtendedResponse {
      * @return The object identifier string, "1.3.6.1.4.1.1466.20037".
      */
     public String getID() {
-        return OID;
+	return OID;
     }
 
     /**
@@ -114,7 +114,7 @@ public abstract class StartTlsResponse implements ExtendedResponse {
      * @return The null value.
      */
     public byte[] getEncodedValue() {
-        return null;
+	return null;
     }
 
     // StartTls-specific methods
@@ -137,10 +137,10 @@ public abstract class StartTlsResponse implements ExtendedResponse {
      * Sets the hostname verifier used by <tt>negotiate()</tt>
      * after the TLS handshake has completed and the default hostname
      * verification has failed.
-     * <tt>setHostnameVerifier()</tt> must be called before
+     * <tt>setHostnameVerifier()</tt> must be called before 
      * <tt>negotiate()</tt> is invoked for it to have effect.
      * If called after
-     * <tt>negotiate()</tt>, this method does not do anything.
+     * <tt>negotiate()</tt>, this method does not do anything. 
      *
      * @param verifier The non-null hostname verifier callback.
      * @see #negotiate
@@ -173,7 +173,7 @@ public abstract class StartTlsResponse implements ExtendedResponse {
      * Hostname verification is performed after the TLS handshake completes.
      * The default hostname verification performs a match of the server's
      * hostname against the hostname information found in the server's certificate.
-     * If this verification fails and no callback has been set via
+     * If this verification fails and no callback has been set via 
      * <tt>setHostnameVerifier</tt> then the negotiation fails.
      * If this verification fails and a callback has been set via
      * <tt>setHostnameVerifier</tt>, then the callback is used to determine whether
@@ -191,7 +191,7 @@ public abstract class StartTlsResponse implements ExtendedResponse {
      * @see #setHostnameVerifier
      */
     public abstract SSLSession negotiate(SSLSocketFactory factory)
-        throws IOException;
+	throws IOException;
 
     /**
      * Closes the TLS connection gracefully and reverts back to the underlying

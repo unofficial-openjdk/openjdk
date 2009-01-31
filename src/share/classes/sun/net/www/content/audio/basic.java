@@ -25,6 +25,7 @@
 
 /**
  * Basic .au and .snd audio handler.
+ * @version %I%, %G%
  * @author  Jeff Nisewanger
  */
 package sun.net.www.content.audio;
@@ -40,6 +41,6 @@ import sun.applet.AppletAudioClip;
  */
 public class basic extends ContentHandler {
     public Object getContent(URLConnection uc) throws IOException {
-        return new AppletAudioClip(uc);
+	return new AppletAudioClip(uc);
     }
 }

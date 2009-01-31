@@ -30,8 +30,8 @@ import com.sun.jdi.*;
 /**
  * Notification of a method invocation in the target VM. This event
  * occurs after entry into the invoked method and before any
- * code has executed.
- * Method entry events are generated for both native and non-native
+ * code has executed. 
+ * Method entry events are generated for both native and non-native 
  * methods.
  * <P>
  * In some VMs method entry events can occur for a particular thread
@@ -52,3 +52,4 @@ public interface MethodEntryEvent extends LocatableEvent {
      */
     public Method method();
 }
+

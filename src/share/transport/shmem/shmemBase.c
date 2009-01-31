@@ -35,11 +35,11 @@
 
 /*
  * This is the base shared memory transport implementation that is used
- * by both front-end transports (through com.sun.tools.jdi) and
- * back-end transports (through JDWP_OnLoad and the function tables
- * it requires). It supports multiple connections for the benefit of the
+ * by both front-end transports (through com.sun.tools.jdi) and 
+ * back-end transports (through JDWP_OnLoad and the function tables 
+ * it requires). It supports multiple connections for the benefit of the 
  * front-end client; the back end interface assumes only a single connection.
- */
+ */  
 
 #define MAX_IPC_PREFIX 50   /* user-specified or generated name for */
                             /* shared memory seg and prefix for other IPC */
@@ -52,7 +52,7 @@
 #define CHECK_ERROR(expr) do { \
                               jint error = (expr); \
                               if (error != SYS_OK) { \
-                                  setLastError(error); \
+				  setLastError(error); \
                                   return error; \
                               } \
                           } while (0)
@@ -68,7 +68,7 @@
                          && (stream->shared->writeOffset >= 0)); \
         } while (0)
 
-/*
+/*   
  * Transports are duplex, so carve the shared memory into "streams",
  * one used to send from client to server, the other vice versa.
  */
@@ -115,7 +115,7 @@ typedef struct SharedMemory {
 } SharedMemory;
 
 /*
- * Local (to process) access to the shared memory
+ * Local (to process) access to the shared memory 
  * stream.  access to hasData and hasSpace synchronized
  * by OS.
  */
@@ -146,10 +146,10 @@ typedef struct SharedMemoryConnection {
     char name[MAX_IPC_NAME];
     SharedMemory *shared;
     sys_shmem_t sharedMemory;
-    Stream incoming;
+    Stream incoming;   
     Stream outgoing;
     sys_process_t otherProcess;
-    sys_event_t shutdown;           /* signalled to indicate shutdown */
+    sys_event_t shutdown;	    /* signalled to indicate shutdown */
 } SharedMemoryConnection;
 
 static jdwpTransportCallback *callback;
@@ -166,11 +166,11 @@ setLastErrorMsg(char *newmsg) {
     char *msg;
 
     msg = (char *)sysTlsGet(tlsIndex);
-    if (msg == NULL) {
+    if (msg == NULL) {   
         msg = (*callback->alloc)(strlen(newmsg)+1);
         if (msg != NULL) {
-           strcpy(msg, newmsg);
-        }
+           strcpy(msg, newmsg); 
+	}
         sysTlsPut(tlsIndex, (void *)msg);
     }
 }
@@ -178,7 +178,7 @@ setLastErrorMsg(char *newmsg) {
 /*
  * Clear last per-thread error message
  */
-static void
+static void 
 clearLastError() {
     char* msg = (char *)sysTlsGet(tlsIndex);
     if (msg != NULL) {
@@ -196,15 +196,15 @@ setLastError(jint error) {
     char buf[128];
 
     switch (error) {
-        case SYS_OK      : return;      /* no-op */
-        case SYS_DIED    : strcpy(buf, "Other process terminated"); break;
-        case SYS_TIMEOUT : strcpy(buf, "Timed out"); break;
-        default          : sysGetLastError(buf, sizeof(buf));
+        case SYS_OK	 : return;	/* no-op */
+	case SYS_DIED    : strcpy(buf, "Other process terminated"); break;
+	case SYS_TIMEOUT : strcpy(buf, "Timed out"); break;
+        default		 : sysGetLastError(buf, sizeof(buf));
     }
     setLastErrorMsg(buf);
 }
 
-jint
+jint 
 shmemBase_initialize(JavaVM *vm, jdwpTransportCallback *cbPtr)
 {
     jvm = vm;
@@ -231,7 +231,7 @@ createWithGeneratedName(char *prefix, char *nameBuffer, CreateFunc func, void *a
     } while ((error == SYS_INUSE) && (i < MAX_GENERATION_RETRIES));
 
     if (error != SYS_OK) {
-        setLastError(error);
+	setLastError(error);
     }
 
     return error;
@@ -243,14 +243,14 @@ typedef struct SharedMemoryArg {
     void *start;
 } SharedMemoryArg;
 
-static jint
+static jint 
 createSharedMem(char *name, void *ptr)
 {
     SharedMemoryArg *arg = ptr;
-    return sysSharedMemCreate(name, arg->size, &arg->memory, &arg->start);
+    return sysSharedMemCreate(name, arg->size, &arg->memory, &arg->start);   
 }
 
-static jint
+static jint 
 createMutex(char *name, void *arg)
 {
     sys_ipmutex_t *retArg = arg;
@@ -258,11 +258,11 @@ createMutex(char *name, void *arg)
 }
 
 /*
- * Creates named or unnamed event that is automatically reset
+ * Creates named or unnamed event that is automatically reset 
  * (in other words, no need to reset event after it has signalled
  * a thread).
  */
-static jint
+static jint 
 createEvent(char *name, void *arg)
 {
     sys_event_t *retArg = arg;
@@ -286,13 +286,13 @@ enterMutex(Stream *stream, sys_event_t event)
 {
     jint ret = sysIPMutexEnter(stream->mutex, event);
     if (ret != SYS_OK) {
-        if (IS_STATE_CLOSED(stream->state)) {
-            setLastErrorMsg("stream closed");
-        }
+	if (IS_STATE_CLOSED(stream->state)) {
+	    setLastErrorMsg("stream closed");
+	}
         return ret;
     }
     if (IS_STATE_CLOSED(stream->state)) {
-        setLastErrorMsg("stream closed");
+	setLastErrorMsg("stream closed");
         (void)leaveMutex(stream);
         return SYS_ERR;
     }
@@ -303,10 +303,10 @@ enterMutex(Stream *stream, sys_event_t event)
  * Enter/exit with stream mutex held.
  * On error, does not hold the stream mutex.
  */
-static jint
+static jint 
 waitForSpace(SharedMemoryConnection *connection, Stream *stream)
 {
-    jint error = SYS_OK;
+    jint error = SYS_OK; 
 
     /* Assumes mutex is held on call */
     while ((error == SYS_OK) && FULL(stream)) {
@@ -315,8 +315,8 @@ waitForSpace(SharedMemoryConnection *connection, Stream *stream)
         if (error == SYS_OK) {
             CHECK_ERROR(enterMutex(stream, connection->shutdown));
         } else {
-            setLastError(error);
-        }
+	    setLastError(error);
+	}
     }
     return error;
 }
@@ -343,8 +343,8 @@ waitForData(SharedMemoryConnection *connection, Stream *stream)
         if (error == SYS_OK) {
             CHECK_ERROR(enterMutex(stream, connection->shutdown));
         } else {
-            setLastError(error);
-        }
+	    setLastError(error);
+	}
     }
     return error;
 }
@@ -357,9 +357,9 @@ signalData(Stream *stream)
 
 
 static jint
-closeStream(Stream *stream, jboolean linger)
+closeStream(Stream *stream, jboolean linger) 
 {
-    /*
+    /* 
      * Lock stream during close - ignore shutdown event as we are
      * closing down and shutdown should be signalled.
      */
@@ -380,12 +380,12 @@ closeStream(Stream *stream, jboolean linger)
      */
     if (linger) {
         int attempts = 10;
-        while (!EMPTY(stream) && attempts>0) {
-            CHECK_ERROR(leaveMutex(stream));
-            sysSleep(200);
-            CHECK_ERROR(enterMutex(stream, NULL));
-            attempts--;
-        }
+	while (!EMPTY(stream) && attempts>0) {
+	    CHECK_ERROR(leaveMutex(stream));
+	    sysSleep(200);
+	    CHECK_ERROR(enterMutex(stream, NULL));
+	    attempts--;
+	}
     }
 
     CHECK_ERROR(leaveMutex(stream));
@@ -474,12 +474,12 @@ allocConnection(void)
      */
     SharedMemoryConnection *conn = (*callback->alloc)(sizeof(SharedMemoryConnection));
     if (conn != NULL) {
-        memset(conn, 0, sizeof(SharedMemoryConnection));
+	memset(conn, 0, sizeof(SharedMemoryConnection));
     }
     return conn;
 }
 
-static void
+static void 
 freeConnection(SharedMemoryConnection *connection)
 {
     (*callback->free)(connection);
@@ -493,7 +493,7 @@ closeConnection(SharedMemoryConnection *connection)
      * shutting down.
      */
     if (connection->shutdown) {
-        sysEventSignal(connection->shutdown);
+	sysEventSignal(connection->shutdown);
     }
 
 
@@ -501,21 +501,21 @@ closeConnection(SharedMemoryConnection *connection)
     (void)closeStream(&connection->incoming, JNI_FALSE);
 
     if (connection->sharedMemory) {
-        sysSharedMemClose(connection->sharedMemory, connection->shared);
+	sysSharedMemClose(connection->sharedMemory, connection->shared);
     }
     if (connection->otherProcess) {
-        sysProcessClose(connection->otherProcess);
+	sysProcessClose(connection->otherProcess);
     }
 
     /*
-     * Ideally we should close the connection->shutdown event and
-     * free the connection structure. However as closing the
+     * Ideally we should close the connection->shutdown event and 
+     * free the connection structure. However as closing the 
      * connection is asynchronous it means that other threads may
      * still be accessing the connection structure. On Win32 this
      * means we leak 132 bytes and one event per connection. This
      * memory will be reclaim at process exit.
      *
-     * if (connection->shutdown)
+     * if (connection->shutdown) 
      *     sysEventClose(connection->shutdown);
      * freeConnection(connection);
      */
@@ -527,7 +527,7 @@ closeConnection(SharedMemoryConnection *connection)
  * outgoing streams.
  */
 static jint
-openConnection(SharedMemoryTransport *transport, jlong otherPID,
+openConnection(SharedMemoryTransport *transport, jlong otherPID, 
                SharedMemoryConnection **connectionPtr)
 {
     jint error;
@@ -569,16 +569,16 @@ openConnection(SharedMemoryTransport *transport, jlong otherPID,
     }
 
     /*
-     * Create an event that signals that the connection is shutting
-     * down. The event is unnamed as it's process local, and is
+     * Create an event that signals that the connection is shutting 
+     * down. The event is unnamed as it's process local, and is 
      * manually reset (so that signalling the event will signal
      * all threads waiting on it).
      */
-    error = sysEventCreate(NULL, &connection->shutdown, JNI_TRUE);
+    error = sysEventCreate(NULL, &connection->shutdown, JNI_TRUE); 
     if (error != SYS_OK) {
         setLastError(error);
-        closeConnection(connection);
-        return error;
+	closeConnection(connection);
+	return error;
     }
 
     *connectionPtr = connection;
@@ -590,7 +590,7 @@ openConnection(SharedMemoryTransport *transport, jlong otherPID,
  * outgoing streams.
  */
 static jint
-createConnection(SharedMemoryTransport *transport, jlong otherPID,
+createConnection(SharedMemoryTransport *transport, jlong otherPID, 
                  SharedMemoryConnection **connectionPtr)
 {
     jint error;
@@ -639,16 +639,16 @@ createConnection(SharedMemoryTransport *transport, jlong otherPID,
     }
 
     /*
-     * Create an event that signals that the connection is shutting
-     * down. The event is unnamed as it's process local, and is
+     * Create an event that signals that the connection is shutting 
+     * down. The event is unnamed as it's process local, and is 
      * manually reset (so that a signalling the event will signal
      * all threads waiting on it).
      */
     error = sysEventCreate(NULL, &connection->shutdown, JNI_TRUE);
     if (error != SYS_OK) {
         setLastError(error);
-        closeConnection(connection);
-        return error;
+	closeConnection(connection);
+	return error;
     }
 
     *connectionPtr = connection;
@@ -666,14 +666,14 @@ allocTransport(void)
     return (*callback->alloc)(sizeof(SharedMemoryTransport));
 }
 
-static void
+static void 
 freeTransport(SharedMemoryTransport *transport)
 {
     (*callback->free)(transport);
 }
 
 static void
-closeTransport(SharedMemoryTransport *transport)
+closeTransport(SharedMemoryTransport *transport) 
 {
     sysIPMutexClose(transport->mutex);
     sysEventClose(transport->acceptEvent);
@@ -695,16 +695,16 @@ openTransport(const char *address, SharedMemoryTransport **transportPtr)
     memset(transport, 0, sizeof(*transport));
 
     if (strlen(address) >= MAX_IPC_PREFIX) {
-        char buf[128];
+	char buf[128];
         sprintf(buf, "Error: address strings longer than %d characters are invalid\n", MAX_IPC_PREFIX);
-        setLastErrorMsg(buf);
+	setLastErrorMsg(buf);
         closeTransport(transport);
         return SYS_ERR;
     }
 
     error = sysSharedMemOpen(address, &transport->sharedMemory, &transport->shared);
     if (error != SYS_OK) {
-        setLastError(error);
+	setLastError(error);
         closeTransport(transport);
         return error;
     }
@@ -712,7 +712,7 @@ openTransport(const char *address, SharedMemoryTransport **transportPtr)
 
     error = sysIPMutexOpen(transport->shared->mutexName, &transport->mutex);
     if (error != SYS_OK) {
-        setLastError(error);
+	setLastError(error);
         closeTransport(transport);
         return error;
     }
@@ -720,7 +720,7 @@ openTransport(const char *address, SharedMemoryTransport **transportPtr)
     error = sysEventOpen(transport->shared->acceptEventName,
                              &transport->acceptEvent);
     if (error != SYS_OK) {
-        setLastError(error);
+	setLastError(error);
         closeTransport(transport);
         return error;
     }
@@ -728,7 +728,7 @@ openTransport(const char *address, SharedMemoryTransport **transportPtr)
     error = sysEventOpen(transport->shared->attachEventName,
                              &transport->attachEvent);
     if (error != SYS_OK) {
-        setLastError(error);
+	setLastError(error);
         closeTransport(transport);
         return error;
     }
@@ -737,7 +737,7 @@ openTransport(const char *address, SharedMemoryTransport **transportPtr)
     return SYS_OK;
 }
 
-static jint
+static jint 
 createTransport(const char *address, SharedMemoryTransport **transportPtr)
 {
     SharedMemoryTransport *transport;
@@ -761,9 +761,9 @@ createTransport(const char *address, SharedMemoryTransport **transportPtr)
         transport->sharedMemory = arg.memory;
     } else {
         if (strlen(address) >= MAX_IPC_PREFIX) {
-            char buf[128];
+	    char buf[128];
             sprintf(buf, "Error: address strings longer than %d characters are invalid\n", MAX_IPC_PREFIX);
-            setLastErrorMsg(buf);
+	    setLastErrorMsg(buf);
             closeTransport(transport);
             return SYS_ERR;
         }
@@ -809,7 +809,7 @@ createTransport(const char *address, SharedMemoryTransport **transportPtr)
 }
 
 
-jint
+jint 
 shmemBase_listen(const char *address, SharedMemoryTransport **transportPtr)
 {
     int error;
@@ -825,8 +825,8 @@ shmemBase_listen(const char *address, SharedMemoryTransport **transportPtr)
 
 
 jint
-shmemBase_accept(SharedMemoryTransport *transport,
-                 long timeout,
+shmemBase_accept(SharedMemoryTransport *transport, 
+		 long timeout,
                  SharedMemoryConnection **connectionPtr)
 {
     jint error;
@@ -836,7 +836,7 @@ shmemBase_accept(SharedMemoryTransport *transport,
 
     CHECK_ERROR(sysEventWait(NULL, transport->attachEvent, timeout));
 
-    error = createConnection(transport, transport->shared->attachingPID,
+    error = createConnection(transport, transport->shared->attachingPID, 
                              &connection);
     if (error != SYS_OK) {
         /*
@@ -864,7 +864,7 @@ shmemBase_accept(SharedMemoryTransport *transport,
 }
 
 static jint
-doAttach(SharedMemoryTransport *transport, long timeout)
+doAttach(SharedMemoryTransport *transport, long timeout) 
 {
     transport->shared->attachingPID = sysProcessGetID();
     CHECK_ERROR(sysEventSignal(transport->attachEvent));
@@ -873,7 +873,7 @@ doAttach(SharedMemoryTransport *transport, long timeout)
 }
 
 jint
-shmemBase_attach(const char *addressString, long timeout, SharedMemoryConnection **connectionPtr)
+shmemBase_attach(const char *addressString, long timeout, SharedMemoryConnection **connectionPtr) 
 {
     int error;
     SharedMemoryTransport *transport;
@@ -885,11 +885,11 @@ shmemBase_attach(const char *addressString, long timeout, SharedMemoryConnection
     if (error != SYS_OK) {
         return error;
     }
-
+    
     /* lock transport - no additional event to wait on as no connection yet */
     error = sysIPMutexEnter(transport->mutex, NULL);
     if (error != SYS_OK) {
-        setLastError(error);
+	setLastError(error);
         closeTransport(transport);
         return error;
     }
@@ -909,7 +909,7 @@ shmemBase_attach(const char *addressString, long timeout, SharedMemoryConnection
         closeTransport(transport);
         return error;
     }
-
+    
     error = openConnection(transport, acceptingPID, connectionPtr);
 
     closeTransport(transport);
@@ -920,21 +920,21 @@ shmemBase_attach(const char *addressString, long timeout, SharedMemoryConnection
 
 
 
-void
+void 
 shmemBase_closeConnection(SharedMemoryConnection *connection)
 {
     clearLastError();
     closeConnection(connection);
 }
 
-void
+void 
 shmemBase_closeTransport(SharedMemoryTransport *transport)
 {
     clearLastError();
     closeTransport(transport);
 }
 
-jint
+jint 
 shmemBase_sendByte(SharedMemoryConnection *connection, jbyte data)
 {
     Stream *stream = &connection->outgoing;
@@ -959,7 +959,7 @@ shmemBase_sendByte(SharedMemoryConnection *connection, jbyte data)
     return SYS_OK;
 }
 
-jint
+jint 
 shmemBase_receiveByte(SharedMemoryConnection *connection, jbyte *data)
 {
     Stream *stream = &connection->incoming;
@@ -1028,7 +1028,7 @@ sendBytes(SharedMemoryConnection *connection, const void *bytes, jint length)
 /*
  * Send packet header followed by data.
  */
-jint
+jint 
 shmemBase_sendPacket(SharedMemoryConnection *connection, const jdwpPacket *packet)
 {
     jint data_length;
@@ -1050,7 +1050,7 @@ shmemBase_sendPacket(SharedMemoryConnection *connection, const jdwpPacket *packe
     CHECK_ERROR(sendBytes(connection, &data_length, sizeof(jint)));
 
     if (data_length > 0) {
-        CHECK_ERROR(sendBytes(connection, packet->type.cmd.data, data_length));
+	CHECK_ERROR(sendBytes(connection, packet->type.cmd.data, data_length));
     }
 
     return SYS_OK;
@@ -1098,7 +1098,7 @@ receiveBytes(SharedMemoryConnection *connection, void *bytes, jint length)
  * Read packet header and insert into packet structure.
  * Allocate space for the data and fill it in.
  */
-jint
+jint 
 shmemBase_receivePacket(SharedMemoryConnection *connection, jdwpPacket *packet)
 {
     jint data_length;
@@ -1140,7 +1140,7 @@ shmemBase_receivePacket(SharedMemoryConnection *connection, jdwpPacket *packet)
     return SYS_OK;
 }
 
-jint
+jint 
 shmemBase_name(struct SharedMemoryTransport *transport, char **name)
 {
     *name = transport->name;
@@ -1151,16 +1151,16 @@ jint
 shmemBase_getlasterror(char *msg, jint size) {
     char *errstr = (char *)sysTlsGet(tlsIndex);
     if (errstr != NULL) {
-        strcpy(msg, errstr);
-        return SYS_OK;
+	strcpy(msg, errstr);
+	return SYS_OK;
     } else {
-        return SYS_ERR;
+	return SYS_ERR;
     }
 }
 
 
-void
-exitTransportWithError(char *message, char *fileName,
+void 
+exitTransportWithError(char *message, char *fileName, 
                        char *date, int lineNumber)
 {
     JNIEnv *env;
@@ -1168,7 +1168,7 @@ exitTransportWithError(char *message, char *fileName,
     char buffer[500];
 
     sprintf(buffer, "Shared Memory Transport \"%s\" (%s), line %d: %s\n",
-            fileName, date, lineNumber, message);
+            fileName, date, lineNumber, message); 
     error = (*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_2);
     if (error != JNI_OK) {
         /*
@@ -1180,3 +1180,6 @@ exitTransportWithError(char *message, char *fileName,
         (*env)->FatalError(env, buffer);
     }
 }
+
+
+

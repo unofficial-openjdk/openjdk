@@ -31,10 +31,10 @@ public:
     /**
      * Creates B&W Bitmap with transparency mask from specified ARGB input data
      * 0 for opaque pixels, 1 for transparent.
-     * MSDN article for ICONINFO says that 'for color icons, this mask only
+     * MSDN article for ICONINFO says that 'for color icons, this mask only 
      * defines the AND bitmask of the icon'. That's wrong! If mask bit for
      * specific pixel is 0, the pixel is drawn opaque, otherwise it's XORed
-     * with background.
+     * with background. 
      */
     static HBITMAP CreateTransparencyMaskFromARGB(int width, int height, int* imageData);
 

@@ -24,9 +24,9 @@
 /*
  * @test
  * @bug     6467152
- *
+ * 
  * @summary deadlock occurs in LogManager initialization and JVM termination
- * @author  Serguei Spitsyn / Hittachi
+ * @author  Serguei Spitsyn / Hittachi 
  *
  * @build    LoggingDeadlock2
  * @run  main/timeout=15 LoggingDeadlock2
@@ -56,34 +56,34 @@ public class LoggingDeadlock2 implements Runnable {
     public static void main(String arg[]) {
         out.println("\nThis test checks that there is no deadlock.");
         out.println("If not crashed or timed-out then it is passed.");
-        try {
-            new Thread(new LoggingDeadlock2()).start();
-            synchronized(lock) {
-                c++;
-                if (c == 2) lock.notify();
-                else lock.wait();
-            }
-            LogManager log = LogManager.getLogManager();
+	try {
+	    new Thread(new LoggingDeadlock2()).start();
+	    synchronized(lock) {
+		c++;
+		if (c == 2) lock.notify();
+		else lock.wait();
+	    }
+	    LogManager log = LogManager.getLogManager();
             out.println("Test passed");
-        }
-        catch(Exception e) {
-            e.printStackTrace();
+	}
+	catch(Exception e) {
+	    e.printStackTrace();
             out.println("Test FAILED"); // Not expected
-        }
+	}
     }
 
     public void run() {
-        try {
-            synchronized(lock) {
-                c++;
-                if (c == 2) lock.notify();
-                else lock.wait();
-            }
-            System.exit(1);
-        }
-        catch(Exception e) {
-            e.printStackTrace();
+	try {
+	    synchronized(lock) {
+		c++;
+		if (c == 2) lock.notify();
+		else lock.wait();
+	    }
+	    System.exit(1);
+	}
+	catch(Exception e) {
+	    e.printStackTrace();
             out.println("Test FAILED"); // Not expected
-        }
+	}
     }
 }

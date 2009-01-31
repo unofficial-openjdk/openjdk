@@ -49,6 +49,7 @@ package java.util;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
+ * @version %I%, %G%
  * @see Collection
  * @see AbstractCollection
  * @see Set
@@ -83,14 +84,14 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements Se
      * @return <tt>true</tt> if the specified object is equal to this set
      */
     public boolean equals(Object o) {
-        if (o == this)
-            return true;
+	if (o == this)
+	    return true;
 
-        if (!(o instanceof Set))
-            return false;
-        Collection c = (Collection) o;
-        if (c.size() != size())
-            return false;
+	if (!(o instanceof Set))
+	    return false;
+	Collection c = (Collection) o;
+	if (c.size() != size())
+	    return false;
         try {
             return containsAll(c);
         } catch (ClassCastException unused)   {
@@ -118,14 +119,14 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements Se
      * @see Set#equals(Object)
      */
     public int hashCode() {
-        int h = 0;
-        Iterator<E> i = iterator();
-        while (i.hasNext()) {
-            E obj = i.next();
+	int h = 0;
+	Iterator<E> i = iterator();
+	while (i.hasNext()) {
+	    E obj = i.next();
             if (obj != null)
                 h += obj.hashCode();
         }
-        return h;
+	return h;
     }
 
     /**

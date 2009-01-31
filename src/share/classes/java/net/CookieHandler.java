@@ -46,6 +46,7 @@ import sun.security.util.SecurityConstants;
  * href="http://www.ietf.org/rfc/rfc2965.txt""><i>RFC&nbsp;2965: HTTP
  * State Management Mechanism</i></a>
  *
+ * @version 1.4, 03/08/09
  * @author Yingxian Wang
  * @since 1.5
  */
@@ -70,16 +71,16 @@ public abstract class CookieHandler {
      * @see #setDefault(CookieHandler)
      */
     public synchronized static CookieHandler getDefault() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SecurityConstants.GET_COOKIEHANDLER_PERMISSION);
-        }
-        return cookieHandler;
+	SecurityManager sm = System.getSecurityManager();
+ 	if (sm != null) {
+  	    sm.checkPermission(SecurityConstants.GET_COOKIEHANDLER_PERMISSION);
+ 	}
+	return cookieHandler;
     }
 
     /**
      * Sets (or unsets) the system-wide cookie handler.
-     *
+     * 
      * Note: non-standard http protocol handlers may ignore this setting.
      *
      * @param cHandler The HTTP cookie handler, or
@@ -90,11 +91,11 @@ public abstract class CookieHandler {
      * @see #getDefault()
      */
     public synchronized static void setDefault(CookieHandler cHandler) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SecurityConstants.SET_COOKIEHANDLER_PERMISSION);
-        }
-        cookieHandler = cHandler;
+	SecurityManager sm = System.getSecurityManager();
+ 	if (sm != null) {
+ 	    sm.checkPermission(SecurityConstants.SET_COOKIEHANDLER_PERMISSION);
+ 	}
+	cookieHandler = cHandler;
     }
 
     /**
@@ -118,9 +119,9 @@ public abstract class CookieHandler {
      * @see #put(URI, Map)
      */
     public abstract Map<String, List<String>>
-        get(URI uri, Map<String, List<String>> requestHeaders)
+	get(URI uri, Map<String, List<String>> requestHeaders)
         throws IOException;
-
+ 
     /**
      * Sets all the applicable cookies, examples are response header
      * fields that are named Set-Cookie2, present in the response
@@ -130,11 +131,11 @@ public abstract class CookieHandler {
      * @param responseHeaders an immutable map from field names to
      *            lists of field values representing the response
      *            header fields returned
-     * @throws  IOException if an I/O error occurs
+     * @throws	IOException if an I/O error occurs 
      * @throws  IllegalArgumentException if either argument is null
      * @see #get(URI, Map)
      */
     public abstract void
-        put(URI uri, Map<String, List<String>> responseHeaders)
-        throws IOException;
+	put(URI uri, Map<String, List<String>> responseHeaders)
+	throws IOException;
 }

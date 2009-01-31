@@ -39,7 +39,7 @@ import com.sun.net.httpserver.*;
 /**
  * Service provider class for HttpServer.
  * Sub-classes of HttpServerProvider provide an implementation of {@link HttpServer} and
- * associated classes. Applications do not normally use this class.
+ * associated classes. Applications do not normally use this class. 
  * See {@link #provider()} for how providers are found and loaded.
  */
 public abstract class HttpServerProvider {
@@ -71,48 +71,48 @@ public abstract class HttpServerProvider {
      *          {@link RuntimePermission}<tt>("httpServerProvider")</tt>
      */
     protected HttpServerProvider() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null)
-            sm.checkPermission(new RuntimePermission("httpServerProvider"));
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null)
+	    sm.checkPermission(new RuntimePermission("httpServerProvider"));
     }
 
     private static boolean loadProviderFromProperty() {
-        String cn = System.getProperty("com.sun.net.httpserver.HttpServerProvider");
-        if (cn == null)
-            return false;
-        try {
-            Class c = Class.forName(cn, true,
-                                    ClassLoader.getSystemClassLoader());
-            provider = (HttpServerProvider)c.newInstance();
-            return true;
-        } catch (ClassNotFoundException x) {
-            throw new ServiceConfigurationError(x);
-        } catch (IllegalAccessException x) {
-            throw new ServiceConfigurationError(x);
-        } catch (InstantiationException x) {
-            throw new ServiceConfigurationError(x);
-        } catch (SecurityException x) {
-            throw new ServiceConfigurationError(x);
-        }
+	String cn = System.getProperty("com.sun.net.httpserver.HttpServerProvider");
+	if (cn == null)
+	    return false;
+	try {
+	    Class c = Class.forName(cn, true,
+				    ClassLoader.getSystemClassLoader());
+	    provider = (HttpServerProvider)c.newInstance();
+	    return true;
+	} catch (ClassNotFoundException x) {
+	    throw new ServiceConfigurationError(x);
+	} catch (IllegalAccessException x) {
+	    throw new ServiceConfigurationError(x);
+	} catch (InstantiationException x) {
+	    throw new ServiceConfigurationError(x);
+	} catch (SecurityException x) {
+	    throw new ServiceConfigurationError(x);
+	}
     }
 
     private static boolean loadProviderAsService() {
-        Iterator i = Service.providers(HttpServerProvider.class,
-                                       ClassLoader.getSystemClassLoader());
-        for (;;) {
-            try {
-                if (!i.hasNext())
-                    return false;
-                provider = (HttpServerProvider)i.next();
-                return true;
-            } catch (ServiceConfigurationError sce) {
-                if (sce.getCause() instanceof SecurityException) {
-                    // Ignore the security exception, try the next provider
-                    continue;
-                }
-                throw sce;
-            }
-        }
+	Iterator i = Service.providers(HttpServerProvider.class,
+				       ClassLoader.getSystemClassLoader());
+	for (;;) {
+	    try {
+		if (!i.hasNext())
+		    return false;
+		provider = (HttpServerProvider)i.next();
+		return true;
+	    } catch (ServiceConfigurationError sce) {
+		if (sce.getCause() instanceof SecurityException) {
+		    // Ignore the security exception, try the next provider
+		    continue;
+		}
+		throw sce;
+	    }
+	}
     }
 
     /**
@@ -151,21 +151,21 @@ public abstract class HttpServerProvider {
      * @return  The system-wide default HttpServerProvider
      */
     public static HttpServerProvider provider () {
-        synchronized (lock) {
-            if (provider != null)
-                return provider;
-            return (HttpServerProvider)AccessController
-                .doPrivileged(new PrivilegedAction<Object>() {
-                        public Object run() {
-                            if (loadProviderFromProperty())
-                                return provider;
-                            if (loadProviderAsService())
-                                return provider;
-                            provider = new sun.net.httpserver.DefaultHttpServerProvider();
-                            return provider;
-                        }
-                    });
-        }
+	synchronized (lock) {
+	    if (provider != null)
+		return provider;
+	    return (HttpServerProvider)AccessController
+		.doPrivileged(new PrivilegedAction<Object>() {
+			public Object run() {
+			    if (loadProviderFromProperty())
+				return provider;
+			    if (loadProviderAsService())
+				return provider;
+			    provider = new sun.net.httpserver.DefaultHttpServerProvider();
+			    return provider;
+			}
+		    });
+	}
     }
 
 }

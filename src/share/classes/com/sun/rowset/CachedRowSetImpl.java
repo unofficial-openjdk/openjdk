@@ -50,12 +50,12 @@ import com.sun.rowset.providers.*;
  */
 
 public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetInternal, Serializable, Cloneable, CachedRowSet {
-
+    
     /**
      * The <code>SyncProvider</code> used by the CachedRowSet
      */
     private SyncProvider provider;
-
+    
     /**
      * The <code>RowSetReaderImpl</code> object that is the reader
      * for this rowset.  The method <code>execute</code> uses this
@@ -63,7 +63,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private RowSetReader rowSetReader;
-
+    
     /**
      * The <code>RowSetWriterImpl</code> object that is the writer
      * for this rowset.  The method <code>acceptChanges</code> uses
@@ -71,29 +71,29 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private RowSetWriter rowSetWriter;
-
+    
     /**
      * The <code>Connection</code> object that connects with this
      * <code>CachedRowSetImpl</code> object's current underlying data source.
      */
     private transient Connection conn;
-
+    
     /**
      * The <code>ResultSetMetaData</code> object that contains information
      * about the columns in the <code>ResultSet</code> object that is the
      * current source of data for this <code>CachedRowSetImpl</code> object.
      */
     private transient ResultSetMetaData RSMD;
-
+    
     /**
      * The <code>RowSetMetaData</code> object that contains information about
      * the columns in this <code>CachedRowSetImpl</code> object.
      * @serial
      */
     private RowSetMetaDataImpl RowSetMD;
-
+    
     // Properties of this RowSet
-
+    
     /**
      * An array containing the columns in this <code>CachedRowSetImpl</code>
      * object that form a unique identifier for a row. This array
@@ -101,7 +101,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private int keyCols[];
-
+    
     /**
      * The name of the table in the underlying database to which updates
      * should be written.  This name is needed because most drivers
@@ -110,8 +110,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private String tableName;
-
-
+    
+    
     /**
      * A <code>Vector</code> object containing the <code>Row</code>
      * objects that comprise  this <code>CachedRowSetImpl</code> object.
@@ -124,7 +124,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private int cursorPos;
-
+    
     /**
      * The current postion of the cursor in this <code>CachedRowSetImpl</code>
      * object not counting rows that have been deleted, if any.
@@ -136,21 +136,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private int absolutePos;
-
+    
     /**
      * The number of deleted rows currently in this <code>CachedRowSetImpl</code>
      * object.
      * @serial
      */
     private int numDeleted;
-
+    
     /**
      * The total number of rows currently in this <code>CachedRowSetImpl</code>
      * object.
      * @serial
      */
     private int numRows;
-
+    
     /**
      * A special row used for constructing a new row. A new
      * row is constructed by using <code>ResultSet.updateXXX</code>
@@ -158,14 +158,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private InsertRow insertRow;
-
+    
     /**
      * A <code>boolean</code> indicating whether the cursor is
      * currently on the insert row.
      * @serial
      */
     private boolean onInsertRow;
-
+    
     /**
      * The field that temporarily holds the last position of the
      * cursor before it moved to the insert row, thus preserving
@@ -173,44 +173,44 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @serial
      */
     private int currentRow;
-
+    
     /**
      * A <code>boolean</code> indicating whether the last value
      * returned was an SQL <code>NULL</code>.
      * @serial
      */
     private boolean lastValueNull;
-
+    
     /**
      * A <code>SQLWarning</code> which logs on the warnings
      */
     private SQLWarning sqlwarn;
-
+    
     /**
      * Used to track match column for JoinRowSet consumption
      */
     private String strMatchColumn ="";
-
+    
     /**
      * Used to track match column for JoinRowSet consumption
      */
     private int iMatchColumn = -1;
-
+    
     /**
      * A <code>RowSetWarning</code> which logs on the warnings
      */
     private RowSetWarning rowsetWarning;
-
+    
     /**
      * The default SyncProvider for the RI CachedRowSetImpl
      */
     private String DEFAULT_SYNC_PROVIDER = "com.sun.rowset.providers.RIOptimisticProvider";
-
+    
     /**
      * The boolean variable indicating locatorsUpdateValue
      */
     private boolean dbmslocatorsUpdateCopy;
-
+    
     /**
      * The <code>ResultSet</code> object that is used to maintain the data when
      * a ResultSet and start position are passed as parameters to the populate function
@@ -222,7 +222,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * up of rows for populating a CachedRowSet object was left off.
      */
     private int endPos;
-
+    
     /**
      * The integer value indicating the end position in the ResultSetwhere the picking
      * up of rows for populating a CachedRowSet object was left off.
@@ -289,12 +289,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * parameter is passed to populate the CachedRowSet object for paging.
      */
     private CachedRowSetReader crsReader;
-
+    
     /**
      * The Vector holding the Match Columns
      */
        private Vector iMatchColumns;
-
+     
     /**
      * The Vector that will hold the Match Column names.
      */
@@ -305,18 +305,18 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * additional TransactionalWriter method
      */
     private boolean tXWriter = false;
-
+    
     /**
      * The field object for a transactional RowSet writer
      */
     private TransactionalWriter tWriter = null;
-
+    
     protected transient JdbcRowSetResourceBundle resBundle;
-
+        
     private boolean updateOnInsert;
-
-
-
+    
+   
+       
     /**
      * Constructs a new default <code>CachedRowSetImpl</code> object with
      * the capacity to hold 100 rows. This new object has no metadata
@@ -348,42 +348,42 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @throws SQLException if an error occurs
      */
     public CachedRowSetImpl() throws SQLException {
-
-        try {
-           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
+    
+        try {           
+           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();           
         } catch(IOException ioe) {
             throw new RuntimeException(ioe);
         }
-
+        
         // set the Reader, this maybe overridden latter
         provider =
         (SyncProvider)SyncFactory.getInstance(DEFAULT_SYNC_PROVIDER);
-
+        
         if (!(provider instanceof RIOptimisticProvider)) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidp").toString());
         }
-
+        
         rowSetReader = (CachedRowSetReader)provider.getRowSetReader();
         rowSetWriter = (CachedRowSetWriter)provider.getRowSetWriter();
-
+        
         // allocate the parameters collection
         initParams();
-
+        
         initContainer();
-
+        
         // set up some default values
         initProperties();
-
+        
         // insert row setup
         onInsertRow = false;
         insertRow = null;
-
+        
         // set the warninings
         sqlwarn = new SQLWarning();
-        rowsetWarning = new RowSetWarning();
+        rowsetWarning = new RowSetWarning();                
 
     }
-
+    
     /**
      * Provides a <code>CachedRowSetImpl</code> instance with the same default properties as
      * as the zero parameter constructor.
@@ -448,10 +448,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * synchonization factory
      * @see SyncProvider
      */
-
+    
     public CachedRowSetImpl(Hashtable env) throws SQLException {
-
-
+        
+        
         try {
            resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
         } catch(IOException ioe) {
@@ -461,14 +461,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (env == null) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.nullhash").toString());
         }
-
+        
         String providerName = (String)env.get(
         javax.sql.rowset.spi.SyncFactory.ROWSET_SYNC_PROVIDER);
-
+        
         // set the Reader, this maybe overridden latter
         provider =
         (SyncProvider)SyncFactory.getInstance(providerName);
-
+        
         rowSetReader = provider.getRowSetReader();
         rowSetWriter = provider.getRowSetWriter();
 
@@ -476,29 +476,29 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         initContainer();
         initProperties(); // set up some default values
     }
-
+    
     /**
      * Sets the <code>rvh</code> field to a new <code>Vector</code>
      * object with a capacity of 100 and sets the
      * <code>cursorPos</code> and <code>numRows</code> fields to zero.
      */
     private void initContainer() {
-
+        
         rvh = new Vector(100);
         cursorPos = 0;
         absolutePos = 0;
         numRows = 0;
         numDeleted = 0;
     }
-
+    
     /**
      * Sets the properties for this <code>CachedRowSetImpl</code> object to
      * their default values. This method is called internally by the
      * default constructor.
      */
-
+    
     private void initProperties() throws SQLException {
-
+    
         if(resBundle == null) {
             try {
                resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
@@ -512,28 +512,28 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         setMaxFieldSize(0);
         setType(ResultSet.TYPE_SCROLL_INSENSITIVE);
         setConcurrency(ResultSet.CONCUR_UPDATABLE);
-        if((rvh.size() > 0) && (isReadOnly() == false))
-            setReadOnly(false);
-        else
+	if((rvh.size() > 0) && (isReadOnly() == false))
+	    setReadOnly(false);
+	else
             setReadOnly(true);
         setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         setEscapeProcessing(true);
         setTypeMap(null);
         checkTransactionalWriter();
-
+        
         //Instantiating the vector for MatchColumns
-
+        
         iMatchColumns = new Vector(10);
         for(int i = 0; i < 10 ; i++) {
            iMatchColumns.add(i,new Integer(-1));
         }
-
+        
         strMatchColumns = new Vector(10);
         for(int j = 0; j < 10; j++) {
            strMatchColumns.add(j,null);
         }
     }
-
+    
     /**
      * Determine whether the SyncProvider's writer implements the
      * <code>TransactionalWriter<code> interface
@@ -552,18 +552,18 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             }
         }
     }
-
+    
     /**
      * Sets an private field to all transaction bounddaries to be set
      */
     private void establishTransactionalWriter() {
         tWriter = (TransactionalWriter)provider.getRowSetWriter();
     }
-
+    
     //-----------------------------------------------------------------------
     // Properties
     //-----------------------------------------------------------------------
-
+    
     /**
      * Sets this <code>CachedRowSetImpl</code> object's command property
      * to the given <code>String</code> object and clears the parameters,
@@ -579,19 +579,19 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @throws SQLException if an error occurs
      */
     public void setCommand(String cmd) throws SQLException {
-
+        
         super.setCommand(cmd);
-
+        
         if(!buildTableName(cmd).equals("")) {
             this.setTableName(buildTableName(cmd));
         }
     }
-
-
+    
+    
     //---------------------------------------------------------------------
     // Reading and writing data
     //---------------------------------------------------------------------
-
+    
     /**
      * Populates this <code>CachedRowSetImpl</code> object with data from
      * the given <code>ResultSet</code> object.  This
@@ -616,7 +616,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *          violated while populating the RowSet
      * @see #execute
      */
-
+   
      public void populate(ResultSet data) throws SQLException {
         int rowsFetched;
         Row currentRow;
@@ -630,7 +630,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.populate").toString());
         }
         this.resultSet = data;
-
+       
         // get the meta data for this ResultSet
         RSMD = data.getMetaData();
 
@@ -694,9 +694,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // notify any listeners that the rowset has changed
         notifyRowSetChanged();
 
-
-    }
-
+ 
+    } 
+    
     /**
      * Initializes the given <code>RowSetMetaData</code> object with the values
      * in the given <code>ResultSetMetaData</code> object.
@@ -710,7 +710,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     private void initMetaData(RowSetMetaDataImpl md, ResultSetMetaData rsmd) throws SQLException {
         int numCols = rsmd.getColumnCount();
-
+        
         md.setColumnCount(numCols);
         for (int col=1; col <= numCols; col++) {
             md.setAutoIncrement(col, rsmd.isAutoIncrement(col));
@@ -737,7 +737,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
              * Drivers return some strange values for precision, for non-numeric data, including reports of
              * non-integer values; maybe we should check type, & set to 0 for non-numeric types.
              */
-            int precision = rsmd.getPrecision(col);
+	    int precision = rsmd.getPrecision(col);
             if (precision < 0) {
                 precision = 0;
             }
@@ -758,14 +758,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             md.setColumnType(col, rsmd.getColumnType(col));
             md.setColumnTypeName(col, rsmd.getColumnTypeName(col));
         }
-
+          
         if( conn != null){
            // JDBC 4.0 mandates as does the Java EE spec that all DataBaseMetaData methods
-           // must be implemented, therefore, the previous fix for 5055528 is being backed out
-           dbmslocatorsUpdateCopy = conn.getMetaData().locatorsUpdateCopy();
+           // must be implemented, therefore, the previous fix for 5055528 is being backed out        
+           dbmslocatorsUpdateCopy = conn.getMetaData().locatorsUpdateCopy();    
         }
     }
-
+    
     /**
      * Populates this <code>CachedRowSetImpl</code> object with data,
      * using the given connection to produce the result set from
@@ -787,7 +787,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void execute(Connection conn) throws SQLException {
         // store the connection so the reader can find it.
         setConnection(conn);
-
+        
         if(getPageSize() != 0){
             crsReader = (CachedRowSetReader)provider.getRowSetReader();
             crsReader.setStartPosition(1);
@@ -798,17 +798,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // Now call the current reader's readData method
         else {
            rowSetReader.readData((RowSetInternal)this);
-        }
+        }                
         RowSetMD = (RowSetMetaDataImpl)this.getMetaData();
-
+        
         if(conn != null){
             // JDBC 4.0 mandates as does the Java EE spec that all DataBaseMetaData methods
-            // must be implemented, therefore, the previous fix for 5055528 is being backed out
-            dbmslocatorsUpdateCopy = conn.getMetaData().locatorsUpdateCopy();
+            // must be implemented, therefore, the previous fix for 5055528 is being backed out        
+            dbmslocatorsUpdateCopy = conn.getMetaData().locatorsUpdateCopy();        
         }
-
+ 
     }
-
+    
     /**
      * Sets this <code>CachedRowSetImpl</code> object's connection property
      * to the given <code>Connection</code> object.  This method is called
@@ -823,11 +823,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *                   in this <code>CachedRowSetImpl</code> object's connection
      *                   property
      */
-    private void setConnection (Connection connection) {
-        conn = connection;
+    private void setConnection (Connection connection) {                
+        conn = connection;                
     }
-
-
+    
+    
     /**
      * Propagates all row update, insert, and delete changes to the
      * underlying data source backing this <code>CachedRowSetImpl</code>
@@ -852,8 +852,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * <code>RowSets</code>.
      *
      * @throws SQLException if the cursor is on the insert row or the underlying
-     *          reference synchronization provider fails to commit the updates
-     *          to the datasource
+     * 		reference synchronization provider fails to commit the updates
+     * 		to the datasource
      * @throws SyncProviderException if an internal error occurs within the
      *          <code>SyncProvider</code> instance during either during the
      *          process or at any time when the <code>SyncProvider</code>
@@ -866,18 +866,18 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (onInsertRow == true) {
             throw new SyncProviderException(resBundle.handleGetObject("cachedrowsetimpl.invalidop").toString());
         }
-
+        
         int saveCursorPos = cursorPos;
         boolean success = false;
         boolean conflict = false;
-
+        
         try {
             if (rowSetWriter != null) {
                 saveCursorPos = cursorPos;
                 conflict = rowSetWriter.writeData((RowSetInternal)this);
                 cursorPos = saveCursorPos;
             }
-
+            
             if ((tXWriter) && this.COMMIT_ON_ACCEPT_CHANGES) {
                 // do commit/rollback's here
                 if (!conflict) {
@@ -885,12 +885,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     tWriter.rollback();
                     success = false;
                 } else {
-                    tWriter = (TransactionalWriter)rowSetWriter;
+                    tWriter = (TransactionalWriter)rowSetWriter;                    
                     ((CachedRowSetWriter)tWriter).commit(this, updateOnInsert);
                     success = true;
                 }
             }
-
+            
             if (success == true) {
                 setOriginal();
             } else if (!(success) && !(this.COMMIT_ON_ACCEPT_CHANGES)) {
@@ -906,7 +906,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SyncProviderException(e.getMessage());
         }
     }
-
+    
     /**
      * Propagates all row update, insert, and delete changes to the
      * data source backing this <code>CachedRowSetImpl</code> object
@@ -970,11 +970,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         // move to before the first
         cursorPos = 0;
-
+        
         // notify any listeners
         notifyRowSetChanged();
     }
-
+    
     /**
      * Releases the current contents of this <code>CachedRowSetImpl</code>
      * object and sends a <code>rowSetChanged</code> event object to all
@@ -988,7 +988,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         initContainer();
         notifyRowSetChanged();
     }
-
+    
     /**
      * Cancels deletion of the current row and notifies listeners that
      * a row has changed.
@@ -1004,12 +1004,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         // make sure we are on a row
         checkCursor();
-
+        
         // don't want this to happen...
         if (onInsertRow == true) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcp").toString());
         }
-
+        
         Row currentRow = (Row)getCurrentRow();
         if (currentRow.getDeleted() == true) {
             currentRow.clearDeleted();
@@ -1017,7 +1017,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             notifyRowChanged();
         }
     }
-
+    
     /**
      * Immediately removes the current row from this
      * <code>CachedRowSetImpl</code> object if the row has been inserted, and
@@ -1034,12 +1034,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void undoInsert() throws SQLException {
         // make sure we are on a row
         checkCursor();
-
+        
         // don't want this to happen...
         if (onInsertRow == true) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcp").toString());
         }
-
+        
         Row currentRow = (Row)getCurrentRow();
         if (currentRow.getInserted() == true) {
             rvh.remove(cursorPos-1);
@@ -1049,7 +1049,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.illegalop").toString());
         }
     }
-
+    
     /**
      * Immediately reverses the last update operation if the
      * row has been modified. This method can be
@@ -1073,19 +1073,19 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // make the insert row flag,
         // cursorPos back to the current row
         moveToCurrentRow();
-
+        
         // else if not on insert row
         // call undoUpdate or undoInsert
         undoDelete();
-
+        
         undoInsert();
-
+        
     }
-
+    
     //--------------------------------------------------------------------
     // Views
     //--------------------------------------------------------------------
-
+    
     /**
      * Returns a new <code>RowSet</code> object backed by the same data as
      * that of this <code>CachedRowSetImpl</code> object and sharing a set of cursors
@@ -1108,7 +1108,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return clone;
     }
-
+    
     /**
      * Returns a new <code>RowSet</code> object containing by the same data
      * as this <code>CachedRowSetImpl</code> object.  This method
@@ -1128,7 +1128,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     protected Object clone() throws CloneNotSupportedException  {
         return (super.clone());
     }
-
+    
     /**
      * Creates a <code>RowSet</code> object that is a deep copy of
      * this <code>CachedRowSetImpl</code> object's data, including
@@ -1159,9 +1159,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } catch (IOException ex) {
             throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.clonefail").toString() , ex.getMessage()));
         }
-
+        
         ObjectInputStream in;
-
+        
         try {
             ByteArrayInputStream bIn = new ByteArrayInputStream(bOut.toByteArray());
             in = new ObjectInputStream(bIn);
@@ -1170,13 +1170,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } catch (IOException ex) {
             throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.clonefail").toString() , ex.getMessage()));
         }
-
+        
         try {
-            //return ((CachedRowSet)(in.readObject()));
+            //return ((CachedRowSet)(in.readObject()));            
             CachedRowSetImpl crsTemp = (CachedRowSetImpl)in.readObject();
             crsTemp.resBundle = this.resBundle;
             return ((CachedRowSet)crsTemp);
-
+            
         } catch (ClassNotFoundException ex) {
             throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.clonefail").toString() , ex.getMessage()));
         } catch (OptionalDataException ex) {
@@ -1185,7 +1185,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.clonefail").toString() , ex.getMessage()));
         }
     }
-
+    
     /**
      * Creates a <code>RowSet</code> object that is a copy of
      * this <code>CachedRowSetImpl</code> object's table structure
@@ -1210,21 +1210,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public CachedRowSet createCopySchema() throws SQLException {
         // Copy everything except data i.e all constraints
-
+        
         // Store the number of rows of "this"
         // and make numRows equals zero.
         // and make data also zero.
         int nRows = numRows;
         numRows = 0;
-
+        
         CachedRowSet crs = this.createCopy();
-
+        
         // reset this object back to number of rows.
         numRows = nRows;
-
+        
         return crs;
     }
-
+    
     /**
      * Creates a <code>CachedRowSet</code> object that is a copy of
      * this <code>CachedRowSetImpl</code> object's data only.
@@ -1247,23 +1247,23 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // Copy the whole data ONLY without any constraints.
         CachedRowSetImpl crs;
         crs = (CachedRowSetImpl)this.createCopy();
-
+        
         crs.initProperties();
         try {
             crs.unsetMatchColumn(crs.getMatchColumnIndexes());
         } catch(SQLException sqle) {
             //do nothing, if the setMatchColumn is not set.
         }
-
+	
         try {
-            crs.unsetMatchColumn(crs.getMatchColumnNames());
+  	    crs.unsetMatchColumn(crs.getMatchColumnNames());        
         } catch(SQLException sqle) {
             //do nothing, if the setMatchColumn is not set.
         }
-
+        
         return crs;
     }
-
+    
     /**
      * Converts this <code>CachedRowSetImpl</code> object to a collection
      * of tables. The sample implementation utilitizes the <code>TreeMap</code>
@@ -1280,23 +1280,23 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @see java.util.TreeMap
      */
     public Collection<?> toCollection() throws SQLException {
-
+       
         TreeMap tMap;
         int count = 0;
         Row origRow;
         Vector newRow;
-
-        int colCount = ((RowSetMetaDataImpl)this.getMetaData()).getColumnCount();
-
+       
+        int colCount = ((RowSetMetaDataImpl)this.getMetaData()).getColumnCount(); 
+        
         tMap = new TreeMap();
-
+        
         for (int i = 0; i<numRows; i++) {
             tMap.put(new Integer(i), rvh.get(i));
         }
-
+        
         return (tMap.values());
     }
-
+    
     /**
      * Returns the specified column of this <code>CachedRowSetImpl</code> object
      * as a <code>Collection</code> object.  This method makes a copy of the
@@ -1307,34 +1307,34 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *
      * @return a <code>Collection</code> object that contains the value(s)
      *         stored in the specified column of this
-     *         <code>CachedRowSetImpl</code>
+     * 	       <code>CachedRowSetImpl</code>
      *         object
      * @throws SQLException if an error occurs generated the collection; or
-     *          an invalid column is provided.
+     * 		an invalid column is provided.
      * @see #toCollection()
      * @see #toCollection(String)
      * @see java.util.Vector
      */
     public Collection<?> toCollection(int column) throws SQLException {
-
+        
         Vector vec;
         Row origRow;
         int nRows = numRows;
         vec = new Vector(nRows);
-
+        
         // create a copy
         CachedRowSetImpl crsTemp;
         crsTemp = (CachedRowSetImpl) this.createCopy();
-
+        
         while(nRows!=0) {
             crsTemp.next();
             vec.add(crsTemp.getObject(column));
             nRows--;
         }
-
+        
         return (Collection)vec;
     }
-
+    
     /**
      * Returns the specified column of this <code>CachedRowSetImpl</code> object
      * as a <code>Collection</code> object.  This method makes a copy of the
@@ -1345,10 +1345,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *
      * @return a <code>Collection</code> object that contains the value(s)
      *         stored in the specified column of this
-     *         <code>CachedRowSetImpl</code>
+     * 	       <code>CachedRowSetImpl</code>
      *         object
      * @throws SQLException if an error occurs generated the collection; or
-     *          an invalid column is provided.
+     * 		an invalid column is provided.
      * @see #toCollection()
      * @see #toCollection(int)
      * @see java.util.Vector
@@ -1356,55 +1356,55 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Collection<?> toCollection(String column) throws SQLException {
         return toCollection(getColIdxByName(column));
     }
-
+    
     //--------------------------------------------------------------------
     // Advanced features
     //--------------------------------------------------------------------
-
-
+    
+    
     /**
      * Returns the <code>SyncProvider</code> implementation being used
      * with this <code>CachedRowSetImpl</code> implementation rowset.
      *
      * @return the SyncProvider used by the rowset. If not provider was
-     *          set when the rowset was instantiated, the reference
-     *          implementation (default) provider is returned.
+     * 		set when the rowset was instantiated, the reference
+     *		implementation (default) provider is returned.
      * @throws SQLException if error occurs while return the
-     *          <code>SyncProvider</code> instance.
+     *		<code>SyncProvider</code> instance.
      */
     public SyncProvider getSyncProvider() throws SQLException {
         return provider;
     }
-
+    
     /**
      * Sets the active <code>SyncProvider</code> and attempts to load
      * load the new provider using the <code>SyncFactory</code> SPI.
      *
      * @throws SQLException if an error occurs while resetting the
-     *          <code>SyncProvider</code>.
+     * 		<code>SyncProvider</code>.
      */
     public void setSyncProvider(String providerStr) throws SQLException {
         provider =
         (SyncProvider)SyncFactory.getInstance(providerStr);
-
+        
         rowSetReader = provider.getRowSetReader();
         rowSetWriter = provider.getRowSetWriter();
     }
-
-
+    
+    
     //-----------------
     // methods inherited from RowSet
     //-----------------
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
     //---------------------------------------------------------------------
     // Reading and writing data
     //---------------------------------------------------------------------
-
+    
     /**
      * Populates this <code>CachedRowSetImpl</code> object with data.
      * This form of the method uses the rowset's user, password, and url or
@@ -1431,13 +1431,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void execute() throws SQLException {
         execute(null);
     }
-
-
-
+    
+    
+    
     //-----------------------------------
     // Methods inherited from ResultSet
     //-----------------------------------
-
+    
     /**
      * Moves the cursor down one row from its current position and
      * returns <code>true</code> if the new cursor position is a
@@ -1470,10 +1470,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // now move and notify
         boolean ret = this.internalNext();
         notifyCursorMoved();
-
+        
         return ret;
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the next
      * row and returns <code>true</code> if the cursor is still in the rowset;
@@ -1499,7 +1499,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     protected boolean internalNext() throws SQLException {
         boolean ret = false;
-
+        
         do {
             if (cursorPos < numRows) {
                 ++cursorPos;
@@ -1511,7 +1511,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 break;
             }
         } while ((getShowDeleted() == false) && (rowDeleted() == true));
-
+        
         /* each call to internalNext may increment cursorPos multiple
          * times however, the absolutePos only increments once per call.
          */
@@ -1519,10 +1519,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             absolutePos++;
         else
             absolutePos = 0;
-
+        
         return ret;
     }
-
+    
     /**
      * Closes this <code>CachedRowSetImpl</code> objecy and releases any resources
      * it was using.
@@ -1531,26 +1531,26 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * by this <code>CachedRowSetImpl</code> object
      */
     public void close() throws SQLException {
-
+        
         // close all data structures holding
         // the disconnected rowset
-
+        
         cursorPos = 0;
         absolutePos = 0;
         numRows = 0;
         numDeleted = 0;
-
+        
         // set all insert(s), update(s) & delete(s),
         // if at all, to their initial values.
         initProperties();
-
+        
         // clear the vector of it's present contents
         rvh.clear();
-
+        
         // this will make it eligible for gc
         // rvh = null;
     }
-
+    
     /**
      * Reports whether the last column read was SQL <code>NULL</code>.
      * Note that you must first call the method <code>getXXX</code>
@@ -1565,7 +1565,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public boolean wasNull() throws SQLException {
         return lastValueNull;
     }
-
+    
     /**
      * Sets the field <code>lastValueNull</code> to the given
      * <code>boolean</code> value.
@@ -1577,9 +1577,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     private void setLastValueNull(boolean value) {
         lastValueNull = value;
     }
-
+    
     // Methods for accessing results by column index
-
+    
     /**
      * Checks to see whether the given index is a valid column number
      * in this <code>CachedRowSetImpl</code> object and throws
@@ -1600,7 +1600,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcol").toString());
         }
     }
-
+    
     /**
      * Checks to see whether the cursor for this <code>CachedRowSetImpl</code>
      * object is on a row in the rowset and throws an
@@ -1614,11 +1614,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *         object is not on a valid row
      */
     private void checkCursor() throws SQLException {
-        if (isAfterLast() == true || isBeforeFirst() == true) {
+        if (isAfterLast() == true || isBeforeFirst() == true) {            
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcp").toString());
         }
     }
-
+    
     /**
      * Returns the column number of the column with the given name in this
      * <code>CachedRowSetImpl</code> object.  This method throws an
@@ -1633,7 +1633,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     private int getColIdxByName(String name) throws SQLException {
         RowSetMD = (RowSetMetaDataImpl)this.getMetaData();
         int cols = RowSetMD.getColumnCount();
-
+        
         for (int i=1; i <= cols; ++i) {
             String colName = RowSetMD.getColumnName(i);
             if (colName != null)
@@ -1643,9 +1643,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     continue;
         }
         throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalcolnm").toString());
-
+        
     }
-
+    
     /**
      * Returns the insert row or the current row of this
      * <code>CachedRowSetImpl</code>object.
@@ -1660,7 +1660,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             return (BaseRow)(rvh.get(cursorPos - 1));
         }
     }
-
+    
     /**
      * Removes the row on which the cursor is positioned.
      * <p>
@@ -1675,8 +1675,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         rvh.remove(cursorPos);
         --numRows;
     }
-
-
+    
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -1697,24 +1697,24 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public String getString(int columnIndex) throws SQLException {
         Object value;
-
+                
         // sanity check.
-        checkIndex(columnIndex);
+        checkIndex(columnIndex);        
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
-        value = getCurrentRow().getColumnObject(columnIndex);
-
+        value = getCurrentRow().getColumnObject(columnIndex);        
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
-        }
-
-        return value.toString();
+        }               
+                
+        return value.toString();        
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -1733,26 +1733,26 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public boolean getBoolean(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return false;
         }
-
+        
         // check for Boolean...
         if (value instanceof Boolean) {
             return ((Boolean)value).booleanValue();
         }
-
+        
         // convert to a Double and compare to zero
         try {
             Double d = new Double(value.toString());
@@ -1762,11 +1762,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 return true;
             }
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.boolfail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.boolfail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -1788,15 +1788,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public byte getByte(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -1805,11 +1805,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         try {
             return ((new Byte(value.toString())).byteValue());
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.bytefail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.bytefail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -1831,29 +1831,29 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public short getShort(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return (short)0;
         }
-
+        
         try {
             return ((new Short(value.toString().trim())).shortValue());
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.shortfail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.shortfail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as an
@@ -1874,29 +1874,29 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public int getInt(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return (int)0;
         }
-
+        
         try {
             return ((new Integer(value.toString().trim())).intValue());
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.intfail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.intfail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
-        }
+        }  
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -1918,15 +1918,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public long getLong(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -1935,11 +1935,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         try {
             return ((new Long(value.toString().trim())).longValue());
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.longfail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.longfail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -1961,15 +1961,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public float getFloat(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -1978,11 +1978,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         try {
             return ((new Float(value.toString())).floatValue());
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.floatfail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.floatfail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -2005,15 +2005,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public double getDouble(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -2022,11 +2022,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         try {
             return ((new Double(value.toString().trim())).doubleValue());
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.doublefail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.doublefail").toString(), 
                   new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -2049,9 +2049,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @deprecated
      */
     public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
-        Object value;
-        BigDecimal bDecimal, retVal;
-
+	Object value;
+	BigDecimal bDecimal, retVal;
+	
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
@@ -2059,20 +2059,20 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
 
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return (new BigDecimal(0));
         }
+	
+	bDecimal = this.getBigDecimal(columnIndex);	       
 
-        bDecimal = this.getBigDecimal(columnIndex);
-
-        retVal = bDecimal.setScale(scale);
-
+	retVal = bDecimal.setScale(scale);
+		       
         return retVal;
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -2098,14 +2098,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isBinary(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         return (byte[])(getCurrentRow().getColumnObject(columnIndex));
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -2122,21 +2122,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.sql.Date getDate(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         /*
          * The object coming back from the db could be
          * a date, a timestamp, or a char field variety.
@@ -2160,17 +2160,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     DateFormat df = DateFormat.getDateInstance();
                     return ((java.sql.Date)(df.parse(value.toString())));
                 } catch (ParseException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.datefail").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.datefail").toString(), 
                         new Object[] {value.toString().trim(), columnIndex}));
                 }
             }
             default: {
-                throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.datefail").toString(),
+                throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.datefail").toString(), 
                         new Object[] {value.toString().trim(), columnIndex}));
             }
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -2186,21 +2186,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.sql.Time getTime(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         /*
          * The object coming back from the db could be
          * a date, a timestamp, or a char field variety.
@@ -2223,17 +2223,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     DateFormat tf = DateFormat.getTimeInstance();
                     return ((java.sql.Time)(tf.parse(value.toString())));
                 } catch (ParseException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(), 
                         new Object[] {value.toString().trim(), columnIndex}));
                 }
             }
             default: {
-                throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(),
+                throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(), 
                         new Object[] {value.toString().trim(), columnIndex}));
             }
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -2249,21 +2249,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.sql.Timestamp getTimestamp(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         /*
          * The object coming back from the db could be
          * a date, a timestamp, or a char field variety.
@@ -2290,17 +2290,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     DateFormat tf = DateFormat.getTimeInstance();
                     return ((java.sql.Timestamp)(tf.parse(value.toString())));
                 } catch (ParseException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(), 
                         new Object[] {value.toString().trim(), columnIndex}));
                 }
             }
             default: {
-                throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(),
+                throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.timefail").toString(), 
                         new Object[] {value.toString().trim(), columnIndex}));
             }
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row of this
      * <code>CachedRowSetImpl</code> object as a <code>java.io.InputStream</code>
@@ -2334,21 +2334,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.io.InputStream getAsciiStream(int columnIndex) throws SQLException {
         Object value;
-
+        
         // always free an old stream
         asciiStream = null;
-
+        
         // sanity check
         checkIndex(columnIndex);
         //make sure the cursor is on a vlid row
         checkCursor();
-
+        
         value =  getCurrentRow().getColumnObject(columnIndex);
         if (value == null) {
             lastValueNull = true;
             return null;
         }
-
+        
         try {
             if (isString(RowSetMD.getColumnType(columnIndex))) {
                 asciiStream = new ByteArrayInputStream(((String)value).getBytes("ASCII"));
@@ -2358,10 +2358,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } catch (java.io.UnsupportedEncodingException ex) {
             throw new SQLException(ex.getMessage());
         }
-
+        
         return (java.io.InputStream)asciiStream;
     }
-
+    
     /**
      * A column value can be retrieved as a stream of Unicode characters
      * and then read in chunks from the stream.  This method is particularly
@@ -2386,28 +2386,28 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.io.InputStream getUnicodeStream(int columnIndex) throws SQLException {
         // always free an old stream
         unicodeStream = null;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isBinary(RowSetMD.getColumnType(columnIndex)) == false &&
         isString(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         Object value = getCurrentRow().getColumnObject(columnIndex);
         if (value == null) {
             lastValueNull = true;
             return null;
         }
-
+        
         unicodeStream = new StringBufferInputStream(value.toString());
-
+        
         return (java.io.InputStream)unicodeStream;
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row of this
      * <code>CachedRowSetImpl</code> object as a <code>java.io.InputStream</code>
@@ -2439,34 +2439,34 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @see #getBinaryStream(String)
      */
     public java.io.InputStream getBinaryStream(int columnIndex) throws SQLException {
-
+        
         // always free an old stream
         binaryStream = null;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isBinary(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         Object value = getCurrentRow().getColumnObject(columnIndex);
         if (value == null) {
             lastValueNull = true;
             return null;
         }
-
+        
         binaryStream = new ByteArrayInputStream((byte[])value);
-
+        
         return (java.io.InputStream)binaryStream;
-
+        
     }
-
-
+    
+    
     // Methods for accessing results by column name
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>String</code> object.
@@ -2486,7 +2486,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public String getString(String columnName) throws SQLException {
         return getString(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>boolean</code> value.
@@ -2505,7 +2505,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public boolean getBoolean(String columnName) throws SQLException {
         return getBoolean(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>byte</code> value.
@@ -2525,7 +2525,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public byte getByte(String columnName) throws SQLException {
         return getByte(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>short</code> value.
@@ -2546,7 +2546,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public short getShort(String columnName) throws SQLException {
         return getShort(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as an <code>int</code> value.
@@ -2567,7 +2567,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public int getInt(String columnName) throws SQLException {
         return getInt(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>long</code> value.
@@ -2588,7 +2588,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public long getLong(String columnName) throws SQLException {
         return getLong(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>float</code> value.
@@ -2609,7 +2609,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public float getFloat(String columnName) throws SQLException {
         return getFloat(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row of this <code>CachedRowSetImpl</code> object
@@ -2631,7 +2631,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public double getDouble(String columnName) throws SQLException {
         return getDouble(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>java.math.BigDecimal</code> object.
@@ -2655,7 +2655,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public BigDecimal getBigDecimal(String columnName, int scale) throws SQLException {
         return getBigDecimal(getColIdxByName(columnName), scale);
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>byte</code> array.
@@ -2676,7 +2676,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public byte[] getBytes(String columnName) throws SQLException {
         return getBytes(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>java.sql.Date</code> object.
@@ -2694,7 +2694,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.sql.Date getDate(String columnName) throws SQLException {
         return getDate(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>java.sql.Time</code> object.
@@ -2710,7 +2710,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.sql.Time getTime(String columnName) throws SQLException {
         return getTime(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>java.sql.Timestamp</code> object.
@@ -2726,7 +2726,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.sql.Timestamp getTimestamp(String columnName) throws SQLException {
         return getTimestamp(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row of this
      * <code>CachedRowSetImpl</code> object as a <code>java.io.InputStream</code>
@@ -2759,9 +2759,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.io.InputStream getAsciiStream(String columnName) throws SQLException {
         return getAsciiStream(getColIdxByName(columnName));
-
+        
     }
-
+    
     /**
      * A column value can be retrieved as a stream of Unicode characters
      * and then read in chunks from the stream.  This method is particularly
@@ -2786,7 +2786,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.io.InputStream getUnicodeStream(String columnName) throws SQLException {
         return getUnicodeStream(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row of this
      * <code>CachedRowSetImpl</code> object as a <code>java.io.InputStream</code>
@@ -2819,10 +2819,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.io.InputStream getBinaryStream(String columnName) throws SQLException {
         return getBinaryStream(getColIdxByName(columnName));
     }
-
-
+    
+    
     // Advanced features:
-
+    
     /**
      * The first warning reported by calls on this <code>CachedRowSetImpl</code>
      * object is returned. Subsequent <code>CachedRowSetImpl</code> warnings will
@@ -2841,7 +2841,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public SQLWarning getWarnings() {
         return sqlwarn;
     }
-
+    
     /**
      * Clears all the warnings reporeted for the <code>CachedRowSetImpl</code>
      * object. After a call to this method, the <code>getWarnings</code> method
@@ -2851,7 +2851,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void clearWarnings() {
         sqlwarn = null;
     }
-
+    
     /**
      * Retrieves the name of the SQL cursor used by this
      * <code>CachedRowSetImpl</code> object.
@@ -2879,7 +2879,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public String getCursorName() throws SQLException {
         throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.posupdate").toString());
     }
-
+    
     /**
      * Retrieves a <code>ResultSetMetaData</code> object instance that
      * contains information about the <code>CachedRowSet</code> object.
@@ -2909,8 +2909,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public ResultSetMetaData getMetaData() throws SQLException {
         return (ResultSetMetaData)RowSetMD;
     }
-
-
+    
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as an
@@ -2946,15 +2946,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Object getObject(int columnIndex) throws SQLException {
         Object value;
         java.util.Map map;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -2971,10 +2971,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 try {
                     obj = (SQLData)c.newInstance();
                 } catch (java.lang.InstantiationException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(), 
                     ex.getMessage()));
                 } catch (java.lang.IllegalAccessException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(), 
                     ex.getMessage()));
                 }
                 // get the attributes from the struct
@@ -2988,7 +2988,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as an
@@ -3024,9 +3024,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Object getObject(String columnName) throws SQLException {
         return getObject(getColIdxByName(columnName));
     }
-
+    
     //----------------------------------------------------------------
-
+    
     /**
      * Maps the given column name for one of this <code>CachedRowSetImpl</code>
      * object's columns to its column number.
@@ -3040,14 +3040,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public int findColumn(String columnName) throws SQLException {
         return getColIdxByName(columnName);
     }
-
-
+    
+    
     //--------------------------JDBC 2.0-----------------------------------
-
+    
     //---------------------------------------------------------------------
     // Getter's and Setter's
     //---------------------------------------------------------------------
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>java.io.Reader</code> object.
@@ -3072,12 +3072,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @see #getCharacterStream(String)
      */
     public java.io.Reader getCharacterStream(int columnIndex) throws SQLException{
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isBinary(RowSetMD.getColumnType(columnIndex))) {
             Object value = getCurrentRow().getColumnObject(columnIndex);
             if (value == null) {
@@ -3096,10 +3096,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } else {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         return (java.io.Reader)charStream;
     }
-
+    
     /**
      * Retrieves the value stored in the designated column
      * of the current row as a <code>java.io.Reader</code> object.
@@ -3123,7 +3123,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.io.Reader getCharacterStream(String columnName) throws SQLException {
         return getCharacterStream(getColIdxByName(columnName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -3145,15 +3145,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -3162,11 +3162,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         try {
             return (new BigDecimal(value.toString().trim()));
         } catch (NumberFormatException ex) {
-            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.doublefail").toString(),
+            throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.doublefail").toString(), 
                 new Object[] {value.toString().trim(), columnIndex}));
         }
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -3189,11 +3189,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public BigDecimal getBigDecimal(String columnName) throws SQLException {
         return getBigDecimal(getColIdxByName(columnName));
     }
-
+    
     //---------------------------------------------------------------------
     // Traversal/Positioning
     //---------------------------------------------------------------------
-
+    
     /**
      * Returns the number of rows in this <code>CachedRowSetImpl</code> object.
      *
@@ -3202,7 +3202,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public int size() {
         return numRows;
     }
-
+    
     /**
      * Indicates whether the cursor is before the first row in this
      * <code>CachedRowSetImpl</code> object.
@@ -3218,7 +3218,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             return false;
         }
     }
-
+    
     /**
      * Indicates whether the cursor is after the last row in this
      * <code>CachedRowSetImpl</code> object.
@@ -3234,7 +3234,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             return false;
         }
     }
-
+    
     /**
      * Indicates whether the cursor is on the first row in this
      * <code>CachedRowSetImpl</code> object.
@@ -3256,7 +3256,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             return false;
         }
     }
-
+    
     /**
      * Indicates whether the cursor is on the last row in this
      * <code>CachedRowSetImpl</code> object.
@@ -3285,7 +3285,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             return false;
         }
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the front of
      * the rowset, just before the first row. This method has no effect if
@@ -3302,7 +3302,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         absolutePos = 0;
         notifyCursorMoved();
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the end of
      * the rowset, just after the last row. This method has no effect if
@@ -3317,7 +3317,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             notifyCursorMoved();
         }
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the first row
      * and returns <code>true</code> if the operation was successful.  This
@@ -3333,14 +3333,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if(getType() == ResultSet.TYPE_FORWARD_ONLY) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.first").toString());
         }
-
+        
         // move and notify
         boolean ret = this.internalFirst();
         notifyCursorMoved();
-
+        
         return ret;
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the first
      * row and returns <code>true</code> if the operation is successful.
@@ -3359,7 +3359,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     protected boolean internalFirst() throws SQLException {
         boolean ret = false;
-
+        
         if (numRows > 0) {
             cursorPos = 1;
             if ((getShowDeleted() == false) && (rowDeleted() == true)) {
@@ -3368,15 +3368,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 ret = true;
             }
         }
-
+        
         if (ret == true)
             absolutePos = 1;
         else
             absolutePos = 0;
-
+        
         return ret;
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the last row
      * and returns <code>true</code> if the operation was successful.  This
@@ -3392,14 +3392,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (getType() == ResultSet.TYPE_FORWARD_ONLY) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.last").toString());
         }
-
+        
         // move and notify
         boolean ret = this.internalLast();
         notifyCursorMoved();
-
+        
         return ret;
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the last
      * row and returns <code>true</code> if the operation is successful.
@@ -3419,7 +3419,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     protected boolean internalLast() throws SQLException {
         boolean ret = false;
-
+        
         if (numRows > 0) {
             cursorPos = numRows;
             if ((getShowDeleted() == false) && (rowDeleted() == true)) {
@@ -3434,7 +3434,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             absolutePos = 0;
         return ret;
     }
-
+    
     /**
      * Returns the number of the current row in this <code>CachedRowSetImpl</code>
      * object. The first row is number 1, the second number 2, and so on.
@@ -3457,7 +3457,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             return 0;
         }
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the row number
      * specified.
@@ -3509,7 +3509,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (row == 0 || getType() == ResultSet.TYPE_FORWARD_ONLY) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.absolute").toString());
         }
-
+        
         if (row > 0) { // we are moving foward
             if (row > numRows) {
                 // fell off the end
@@ -3529,7 +3529,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     internalLast();
             }
         }
-
+        
         // Now move towards the absolute row that we're looking for
         while (absolutePos != row) {
             if (absolutePos < row) {
@@ -3541,16 +3541,16 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     break;
             }
         }
-
+        
         notifyCursorMoved();
-
+        
         if (isAfterLast() || isBeforeFirst()) {
             return false;
         } else {
             return true;
         }
     }
-
+    
     /**
      * Moves the cursor the specified number of rows from the current
      * position, with a positive number moving it forward and a
@@ -3611,11 +3611,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         isAfterLast() || getType() == ResultSet.TYPE_FORWARD_ONLY) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.relative").toString());
         }
-
+        
         if (rows == 0) {
             return true;
         }
-
+        
         if (rows > 0) { // we are moving forward
             if (cursorPos + rows > numRows) {
                 // fell off the end
@@ -3638,14 +3638,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             }
         }
         notifyCursorMoved();
-
+        
         if (isAfterLast() || isBeforeFirst()) {
             return false;
         } else {
             return true;
         }
     }
-
+    
     /**
      * Moves this <code>CachedRowSetImpl</code> object's cursor to the
      * previous row and returns <code>true</code> if the cursor is on
@@ -3703,10 +3703,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // move and notify
         boolean ret = this.internalPrevious();
         notifyCursorMoved();
-
+        
         return ret;
     }
-
+    
     /**
      * Moves the cursor to the previous row in this <code>CachedRowSetImpl</code>
      * object, skipping past deleted rows that are not visible; returns
@@ -3725,7 +3725,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     protected boolean internalPrevious() throws SQLException {
         boolean ret = false;
-
+        
         do {
             if (cursorPos > 1) {
                 --cursorPos;
@@ -3737,7 +3737,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 break;
             }
         } while ((getShowDeleted() == false) && (rowDeleted() == true));
-
+        
         /*
          * Each call to internalPrevious may move the cursor
          * over multiple rows, the absolute postion moves one one row
@@ -3746,15 +3746,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             --absolutePos;
         else
             absolutePos = 0;
-
+        
         return ret;
     }
-
-
+    
+    
     //---------------------------------------------------------------------
     // Updates
     //---------------------------------------------------------------------
-
+    
     /**
      * Indicates whether the current row of this <code>CachedRowSetImpl</code>
      * object has been updated.  The value returned
@@ -3777,7 +3777,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return(((Row)getCurrentRow()).getUpdated());
     }
-
+    
     /**
      * Indicates whether the designated column of the current row of
      * this <code>CachedRowSetImpl</code> object has been updated. The
@@ -3789,7 +3789,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * and the rowset detects updates; <code>false</code> if the rowset has not
      * been updated or the rowset does not detect updates
      * @throws SQLException if the cursor is on the insert row or not
-     *          on a valid row
+     *		on a valid row
      * @see DatabaseMetaData#updatesAreDetected
      */
     public boolean columnUpdated(int idx) throws SQLException {
@@ -3800,7 +3800,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return (((Row)getCurrentRow()).getColUpdated(idx - 1));
     }
-
+    
     /**
      * Indicates whether the designated column of the current row of
      * this <code>CachedRowSetImpl</code> object has been updated. The
@@ -3813,13 +3813,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * and the rowset detects updates; <code>false</code> if the rowset has not
      * been updated or the rowset does not detect updates
      * @throws SQLException if the cursor is on the insert row or not
-     *          on a valid row
+     *		on a valid row
      * @see DatabaseMetaData#updatesAreDetected
      */
     public boolean columnUpdated(String columnName) throws SQLException {
         return columnUpdated(getColIdxByName(columnName));
     }
-
+    
     /**
      * Indicates whether the current row has been inserted.  The value returned
      * depends on whether or not the rowset can detect visible inserts.
@@ -3839,7 +3839,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return(((Row)getCurrentRow()).getInserted());
     }
-
+    
     /**
      * Indicates whether the current row has been deleted.  A deleted row
      * may leave a visible "hole" in a rowset.  This method can be used to
@@ -3855,16 +3855,16 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public boolean rowDeleted() throws SQLException {
         // make sure the cursor is on a valid row
-
+        
         if (isAfterLast() == true ||
         isBeforeFirst() == true ||
         onInsertRow == true) {
-
+            
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcp").toString());
         }
         return(((Row)getCurrentRow()).getDeleted());
     }
-
+    
     /**
      * Indicates whether the given SQL data type is a numberic type.
      *
@@ -3892,7 +3892,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 return false;
         }
     }
-
+    
     /**
      * Indicates whether the given SQL data type is a string type.
      *
@@ -3911,7 +3911,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 return false;
         }
     }
-
+    
     /**
      * Indicates whether the given SQL data type is a binary type.
      *
@@ -3930,7 +3930,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 return false;
         }
     }
-
+    
     /**
      * Indicates whether the given SQL data type is a temporal type.
      * This method is called internally by the conversion methods
@@ -3972,7 +3972,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
     }
 
-
+    
     /**
      * Converts the given <code>Object</code> in the Java programming language
      * to the standard mapping for the specified SQL target data type.
@@ -3999,15 +3999,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     private Object convertNumeric(Object srcObj, int srcType,
     int trgType) throws SQLException {
-
+        
         if (srcType == trgType) {
             return srcObj;
         }
-
+        
         if (isNumeric(trgType) == false && isString(trgType) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString() + trgType);
         }
-
+        
         try {
             switch (trgType) {
                 case java.sql.Types.BIT:
@@ -4042,7 +4042,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString() + trgType);
         }
     }
-
+    
     /**
      * Converts the given <code>Object</code> in the Java programming language
      * to the standard object mapping for the specified SQL target data type.
@@ -4098,16 +4098,16 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     private Object convertTemporal(Object srcObj,
     int srcType, int trgType) throws SQLException {
-
+        
         if (srcType == trgType) {
             return srcObj;
         }
-
+        
         if (isNumeric(trgType) == true ||
         (isString(trgType) == false && isTemporal(trgType) == false)) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         try {
             switch (trgType) {
                 case java.sql.Types.DATE:
@@ -4138,7 +4138,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } catch (NumberFormatException ex) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
     }
 
     /**
@@ -4183,8 +4183,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                     new Boolean(false) :
                         new Boolean(true);
                 case java.sql.Types.BOOLEAN:
-                    return new Boolean(srcObj.toString().trim());
-                default:
+                    return new Boolean(srcObj.toString().trim()); 
+		default:
                     throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString()+ trgType);
             }
         } catch (NumberFormatException ex) {
@@ -4223,12 +4223,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         BaseRow row = getCurrentRow();
         row.setColumnObject(columnIndex, null);
-
+	
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4260,10 +4260,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         Object obj = convertBoolean(new Boolean(x),
         java.sql.Types.BIT,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4292,14 +4292,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertNumeric(new Byte(x),
         java.sql.Types.TINYINT,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4328,14 +4328,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertNumeric(new Short(x),
         java.sql.Types.SMALLINT,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4367,10 +4367,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         Object obj = convertNumeric(new Integer(x),
         java.sql.Types.INTEGER,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4399,15 +4399,15 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertNumeric(new Long(x),
         java.sql.Types.BIGINT,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
-
+        
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4436,14 +4436,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertNumeric(new Float(x),
         java.sql.Types.REAL,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4475,10 +4475,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         Object obj = convertNumeric(new Double(x),
         java.sql.Types.DOUBLE,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4507,14 +4507,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertNumeric(x,
         java.sql.Types.NUMERIC,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4546,10 +4546,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         getCurrentRow().setColumnObject(columnIndex, x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4578,14 +4578,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isBinary(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         getCurrentRow().setColumnObject(columnIndex, x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4615,14 +4615,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertTemporal(x,
         java.sql.Types.DATE,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4652,14 +4652,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertTemporal(x,
         java.sql.Types.TIME,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4690,14 +4690,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         Object obj = convertTemporal(x,
         java.sql.Types.TIMESTAMP,
         RowSetMD.getColumnType(columnIndex));
-
+        
         getCurrentRow().setColumnObject(columnIndex, obj);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4724,13 +4724,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
-
+        
+        
         if (isString(RowSetMD.getColumnType(columnIndex)) == false &&
         isBinary(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         byte buf[] = new byte[length];
         try {
             int charsRead = 0;
@@ -4742,11 +4742,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.asciistream").toString());
         }
         String str = new String(buf);
-
+        
         getCurrentRow().setColumnObject(columnIndex, str);
-
+        
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4778,11 +4778,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isBinary(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         byte buf[] = new byte[length];
         try {
             int bytesRead = 0;
@@ -4792,10 +4792,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } catch (java.io.IOException ex) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.binstream").toString());
         }
-
+        
         getCurrentRow().setColumnObject(columnIndex, buf);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4829,12 +4829,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (isString(RowSetMD.getColumnType(columnIndex)) == false &&
         isBinary(RowSetMD.getColumnType(columnIndex)) == false) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         char buf[] = new char[length];
         try {
             int charsRead = 0;
@@ -4846,10 +4846,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.binstream").toString());
         }
         String str = new String(buf);
-
+        
         getCurrentRow().setColumnObject(columnIndex, str);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4883,14 +4883,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         int type = RowSetMD.getColumnType(columnIndex);
         if (type == Types.DECIMAL || type == Types.NUMERIC) {
             ((java.math.BigDecimal)x).setScale(scale);
         }
         getCurrentRow().setColumnObject(columnIndex, x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4919,10 +4919,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         getCurrentRow().setColumnObject(columnIndex, x);
     }
-
+    
     /**
      * Sets the designated nullable column in the current row or the
      * insert row of this <code>CachedRowSetImpl</code> object with
@@ -4946,7 +4946,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateNull(String columnName) throws SQLException {
         updateNull(getColIdxByName(columnName));
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4972,7 +4972,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateBoolean(String columnName, boolean x) throws SQLException {
         updateBoolean(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -4998,7 +4998,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateByte(String columnName, byte x) throws SQLException {
         updateByte(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5024,7 +5024,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateShort(String columnName, short x) throws SQLException {
         updateShort(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5050,7 +5050,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateInt(String columnName, int x) throws SQLException {
         updateInt(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5076,7 +5076,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateLong(String columnName, long x) throws SQLException {
         updateLong(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5102,7 +5102,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateFloat(String columnName, float x) throws SQLException {
         updateFloat(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5128,7 +5128,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateDouble(String columnName, double x) throws SQLException {
         updateDouble(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5154,7 +5154,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateBigDecimal(String columnName, BigDecimal x) throws SQLException {
         updateBigDecimal(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5180,7 +5180,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateString(String columnName, String x) throws SQLException {
         updateString(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5206,7 +5206,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateBytes(String columnName, byte x[]) throws SQLException {
         updateBytes(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5234,7 +5234,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateDate(String columnName, java.sql.Date x) throws SQLException {
         updateDate(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5262,7 +5262,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateTime(String columnName, java.sql.Time x) throws SQLException {
         updateTime(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5293,7 +5293,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateTimestamp(String columnName, java.sql.Timestamp x) throws SQLException {
         updateTimestamp(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5318,7 +5318,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     int length) throws SQLException {
         updateAsciiStream(getColIdxByName(columnName), x, length);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5348,7 +5348,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateBinaryStream(String columnName, java.io.InputStream x, int length) throws SQLException {
         updateBinaryStream(getColIdxByName(columnName), x, length);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5381,7 +5381,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     int length) throws SQLException {
         updateCharacterStream(getColIdxByName(columnName), reader, length);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5412,7 +5412,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateObject(String columnName, Object x, int scale) throws SQLException {
         updateObject(getColIdxByName(columnName), x, scale);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -5438,7 +5438,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateObject(String columnName, Object x) throws SQLException {
         updateObject(getColIdxByName(columnName), x);
     }
-
+    
     /**
      * Inserts the contents of this <code>CachedRowSetImpl</code> object's insert
      * row into this rowset immediately following the current row.
@@ -5456,7 +5456,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public void insertRow() throws SQLException {
         int pos;
-
+        
         if (onInsertRow == false ||
             insertRow.isCompleteRow(RowSetMD) == false) {
                 throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.failedins").toString());
@@ -5465,11 +5465,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         // to setXXX methods after an empty CRS Object is
         // created through RowSetMetaData object
         Object [] toInsert = getParams();
-
+        
         for(int i = 0;i < toInsert.length; i++) {
-          insertRow.setColumnObject(i+1,toInsert[i]);
+          insertRow.setColumnObject(i+1,toInsert[i]);  
         }
-
+        
         Row insRow = new Row(RowSetMD.getColumnCount(),
         insertRow.getOrigRow());
         insRow.setInserted();
@@ -5485,13 +5485,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } else {
             pos = currentRow;
         }
-
+        
         rvh.add(pos, insRow);
         ++numRows;
         // notify the listeners that the row changed.
         notifyRowChanged();
     }
-
+    
     /**
      * Marks the current row of this <code>CachedRowSetImpl</code> object as
      * updated and notifies listeners registered with this rowset that the
@@ -5510,13 +5510,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (onInsertRow == true) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.updateins").toString());
         }
-
+        
         ((Row)getCurrentRow()).setUpdated();
-
+        
         // notify the listeners that the row changed.
         notifyRowChanged();
     }
-
+    
     /**
      * Deletes the current row from this <code>CachedRowSetImpl</code> object and
      * notifies listeners registered with this rowset that a row has changed.
@@ -5535,14 +5535,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void deleteRow() throws SQLException {
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         ((Row)getCurrentRow()).setDeleted();
         ++numDeleted;
-
+        
         // notify the listeners that the row changed.
         notifyRowChanged();
     }
-
+    
     /**
      * Sets the current row with its original value and marks the row as
      * not updated, thus undoing any changes made to the row since the
@@ -5556,18 +5556,18 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void refreshRow() throws SQLException {
         // make sure we are on a row
         checkCursor();
-
+        
         // don't want this to happen...
         if (onInsertRow == true) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcp").toString());
         }
-
+        
         Row currentRow = (Row)getCurrentRow();
         // just undo any changes made to this row.
         currentRow.clearUpdated();
-
+        
     }
-
+    
     /**
      * Rolls back any updates made to the current row of this
      * <code>CachedRowSetImpl</code> object and notifies listeners that
@@ -5583,19 +5583,19 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void cancelRowUpdates() throws SQLException {
         // make sure we are on a row
         checkCursor();
-
+        
         // don't want this to happen...
         if (onInsertRow == true) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidcp").toString());
         }
-
+        
         Row currentRow = (Row)getCurrentRow();
         if (currentRow.getUpdated() == true) {
             currentRow.clearUpdated();
             notifyRowChanged();
         }
     }
-
+    
     /**
      * Moves the cursor for this <code>CachedRowSetImpl</code> object
      * to the insert row.  The current row in the rowset is remembered
@@ -5638,13 +5638,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         onInsertRow = true;
         // %%% setCurrentRow called in BaseRow
-
+        
         currentRow = cursorPos;
         cursorPos = -1;
-
+        
         insertRow.initInsertRow();
     }
-
+    
     /**
      * Moves the cursor for this <code>CachedRowSetImpl</code> object to
      * the current row.  The current row is the row the cursor was on
@@ -5663,7 +5663,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             onInsertRow = false;
         }
     }
-
+    
     /**
      * Returns <code>null</code>.
      *
@@ -5673,7 +5673,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Statement getStatement() throws SQLException {
         return null;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as an <code>Object</code> in
@@ -5694,18 +5694,18 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
      public Object getObject(int columnIndex,
                              java.util.Map<String,Class<?>> map)
-         throws SQLException
+         throws SQLException 
      {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
@@ -5713,7 +5713,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         if (value instanceof Struct) {
             Struct s = (Struct)value;
-
+            
             // look up the class in the map
             Class c = (Class)map.get(s.getSQLTypeName());
             if (c != null) {
@@ -5722,10 +5722,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 try {
                     obj = (SQLData)c.newInstance();
                 } catch (java.lang.InstantiationException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(), 
                     ex.getMessage()));
                 } catch (java.lang.IllegalAccessException ex) {
-                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(),
+                    throw new SQLException(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.unableins").toString(), 
                     ex.getMessage()));
                 }
                 // get the attributes from the struct
@@ -5739,7 +5739,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>Ref</code> object
@@ -5757,28 +5757,28 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public Ref getRef(int columnIndex) throws SQLException {
         Ref value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (RowSetMD.getColumnType(columnIndex) != java.sql.Types.REF) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         setLastValueNull(false);
         value = (Ref)(getCurrentRow().getColumnObject(columnIndex));
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>Blob</code> object
@@ -5796,29 +5796,29 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public Blob getBlob(int columnIndex) throws SQLException {
         Blob value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (RowSetMD.getColumnType(columnIndex) != java.sql.Types.BLOB) {
             System.out.println(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.type").toString(), RowSetMD.getColumnType(columnIndex)));
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         setLastValueNull(false);
         value = (Blob)(getCurrentRow().getColumnObject(columnIndex));
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>Clob</code> object
@@ -5836,29 +5836,29 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public Clob getClob(int columnIndex) throws SQLException {
         Clob value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (RowSetMD.getColumnType(columnIndex) != java.sql.Types.CLOB) {
             System.out.println(MessageFormat.format(resBundle.handleGetObject("cachedrowsetimpl.type").toString(), RowSetMD.getColumnType(columnIndex)));
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         setLastValueNull(false);
         value = (Clob)(getCurrentRow().getColumnObject(columnIndex));
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as an <code>Array</code> object
@@ -5877,28 +5877,28 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public Array getArray(int columnIndex) throws SQLException {
         java.sql.Array value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (RowSetMD.getColumnType(columnIndex) != java.sql.Types.ARRAY) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         setLastValueNull(false);
         value = (java.sql.Array)(getCurrentRow().getColumnObject(columnIndex));
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as an <code>Object</code> in
@@ -5921,7 +5921,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     throws SQLException {
         return getObject(getColIdxByName(columnName), map);
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>Ref</code> object
@@ -5939,7 +5939,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Ref getRef(String colName) throws SQLException {
         return getRef(getColIdxByName(colName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>Blob</code> object
@@ -5957,7 +5957,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Blob getBlob(String colName) throws SQLException {
         return getBlob(getColIdxByName(colName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>Clob</code> object
@@ -5976,7 +5976,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Clob getClob(String colName) throws SQLException {
         return getClob(getColIdxByName(colName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as an <code>Array</code> object
@@ -5995,7 +5995,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Array getArray(String colName) throws SQLException {
         return getArray(getColIdxByName(colName));
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a <code>java.sql.Date</code>
@@ -6017,30 +6017,30 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.sql.Date getDate(int columnIndex, Calendar cal) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         value = convertTemporal(value,
         RowSetMD.getColumnType(columnIndex),
         java.sql.Types.DATE);
-
+        
         // create a default calendar
         Calendar defaultCal = Calendar.getInstance();
         // set this Calendar to the time we have
         defaultCal.setTime((java.util.Date)value);
-
+        
         /*
          * Now we can pull the pieces of the date out
          * of the default calendar and put them into
@@ -6049,14 +6049,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         cal.set(Calendar.YEAR, defaultCal.get(Calendar.YEAR));
         cal.set(Calendar.MONTH, defaultCal.get(Calendar.MONTH));
         cal.set(Calendar.DAY_OF_MONTH, defaultCal.get(Calendar.DAY_OF_MONTH));
-
+        
         /*
          * This looks a little odd but it is correct -
          * Calendar.getTime() returns a Date...
          */
         return new java.sql.Date(cal.getTime().getTime());
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a <code>java.sql.Date</code>
@@ -6078,7 +6078,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.sql.Date getDate(String columnName, Calendar cal) throws SQLException {
         return getDate(getColIdxByName(columnName), cal);
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a <code>java.sql.Time</code>
@@ -6100,30 +6100,30 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.sql.Time getTime(int columnIndex, Calendar cal) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         value = convertTemporal(value,
         RowSetMD.getColumnType(columnIndex),
         java.sql.Types.TIME);
-
+        
         // create a default calendar
         Calendar defaultCal = Calendar.getInstance();
         // set the time in the default calendar
         defaultCal.setTime((java.util.Date)value);
-
+        
         /*
          * Now we can pull the pieces of the date out
          * of the default calendar and put them into
@@ -6132,10 +6132,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         cal.set(Calendar.HOUR_OF_DAY, defaultCal.get(Calendar.HOUR_OF_DAY));
         cal.set(Calendar.MINUTE, defaultCal.get(Calendar.MINUTE));
         cal.set(Calendar.SECOND, defaultCal.get(Calendar.SECOND));
-
+        
         return new java.sql.Time(cal.getTime().getTime());
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a <code>java.sql.Time</code>
@@ -6157,7 +6157,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.sql.Time getTime(String columnName, Calendar cal) throws SQLException {
         return getTime(getColIdxByName(columnName), cal);
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a <code>java.sql.Timestamp</code>
@@ -6179,30 +6179,30 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.sql.Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
         Object value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         setLastValueNull(false);
         value = getCurrentRow().getColumnObject(columnIndex);
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         value = convertTemporal(value,
         RowSetMD.getColumnType(columnIndex),
         java.sql.Types.TIMESTAMP);
-
+        
         // create a default calendar
         Calendar defaultCal = Calendar.getInstance();
         // set the time in the default calendar
         defaultCal.setTime((java.util.Date)value);
-
+        
         /*
          * Now we can pull the pieces of the date out
          * of the default calendar and put them into
@@ -6214,10 +6214,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         cal.set(Calendar.HOUR_OF_DAY, defaultCal.get(Calendar.HOUR_OF_DAY));
         cal.set(Calendar.MINUTE, defaultCal.get(Calendar.MINUTE));
         cal.set(Calendar.SECOND, defaultCal.get(Calendar.SECOND));
-
+        
         return new java.sql.Timestamp(cal.getTime().getTime());
     }
-
+    
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>CachedRowSetImpl</code> object as a
@@ -6240,11 +6240,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public java.sql.Timestamp getTimestamp(String columnName, Calendar cal) throws SQLException {
         return getTimestamp(getColIdxByName(columnName), cal);
     }
-
+    
     /*
      * RowSetInternal Interface
      */
-
+    
     /**
      * Retrieves the <code>Connection</code> object passed to this
      * <code>CachedRowSetImpl</code> object.  This connection may be
@@ -6258,7 +6258,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public Connection getConnection() throws SQLException{
         return conn;
     }
-
+    
     /**
      * Sets the metadata for this <code>CachedRowSetImpl</code> object
      * with the given <code>RowSetMetaData</code> object.
@@ -6271,7 +6271,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void setMetaData(RowSetMetaData md) throws SQLException {
         RowSetMD =(RowSetMetaDataImpl) md;
     }
-
+    
     /**
      * Returns a result set containing the original value of the rowset. The
      * original value is the state of the <code>CachedRowSetImpl</code> after the
@@ -6291,21 +6291,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         crs.RowSetMD = RowSetMD;
         crs.numRows = numRows;
         crs.cursorPos = 0;
-
+        
         // make sure we don't get someone playing with these
         // %%% is this now necessary ???
         //crs.setReader(null);
         //crs.setWriter(null);
         int colCount = RowSetMD.getColumnCount();
         Row orig;
-
+        
         for (Iterator i = rvh.iterator(); i.hasNext();) {
             orig = new Row(colCount, ((Row)i.next()).getOrigRow());
             crs.rvh.add(orig);
         }
         return (ResultSet)crs;
     }
-
+    
     /**
      * Returns a result set containing the original value of the current
      * row only.
@@ -6322,21 +6322,21 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         crs.RowSetMD = RowSetMD;
         crs.numRows = 1;
         crs.cursorPos = 0;
-
+        
         // make sure we don't get someone playing with these
         // %%% is this now necessary ???
         //crs.setReader(null);
         //crs.setWriter(null);
-
+        
         Row orig = new Row(RowSetMD.getColumnCount(),
         getCurrentRow().getOrigRow());
-
+        
         crs.rvh.add(orig);
-
+        
         return (ResultSet)crs;
-
+        
     }
-
+    
     /**
      * Marks the current row in this rowset as being an original row.
      *
@@ -6347,17 +6347,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (onInsertRow == true) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.invalidop").toString());
         }
-
+        
         Row row = (Row)getCurrentRow();
         makeRowOriginal(row);
-
+        
         // this can happen if deleted rows are being shown
         if (row.getDeleted() == true) {
             removeCurrentRow();
             --numRows;
         }
     }
-
+    
     /**
      * Makes the given row of this rowset the original row by clearing any
      * settings that mark the row as having been inserted, deleted, or updated.
@@ -6371,12 +6371,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         if (row.getInserted() == true) {
             row.clearInserted();
         }
-
+        
         if (row.getUpdated() == true) {
             row.moveCurrentToOrig();
         }
     }
-
+    
     /**
      * Marks all rows in this rowset as being original rows. Any updates
      * made to the rows become the original values for the rowset.
@@ -6395,11 +6395,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             }
         }
         numDeleted = 0;
-
+        
         // notify any listeners that the rowset has changed
         notifyRowSetChanged();
     }
-
+    
     /**
      * Returns an identifier for the object (table) that was used to create this
      * rowset.
@@ -6411,14 +6411,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public String getTableName() throws SQLException {
         return tableName;
     }
-
+    
     /**
      * Sets the identifier for the table from which this rowset was derived
      * to the given table name.
      *
      * @param tabName a <code>String</code> object that identifies the
-     *          table from which this <code>CachedRowSetImpl</code> object
-     *          was derived
+     * 		table from which this <code>CachedRowSetImpl</code> object
+     * 		was derived
      * @throws SQLException if an error occurs
      */
     public void setTableName(String tabName) throws SQLException {
@@ -6427,7 +6427,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         else
             tableName = new String(tabName);
     }
-
+    
     /**
      * Returns the columns that make a key to uniquely identify a
      * row in this <code>CachedRowSetImpl</code> object.
@@ -6442,8 +6442,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public int[] getKeyColumns() throws SQLException {
         return keyCols;
     }
-
-
+    
+    
     /**
      * Sets this <code>CachedRowSetImpl</code> object's
      * <code>keyCols</code> field with the given array of column
@@ -6477,7 +6477,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             keyCols[i] = keys[i];
         }
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6506,13 +6506,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         // SerialClob will help in getting the byte array and storing it.
         // We need to be checking DatabaseMetaData.locatorsUpdatorCopy()
         // or through RowSetMetaData.locatorsUpdatorCopy()
         getCurrentRow().setColumnObject(columnIndex, new SerialRef(ref));
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6538,7 +6538,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateRef(String columnName, java.sql.Ref ref) throws SQLException {
         updateRef(getColIdxByName(columnName), ref);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6567,11 +6567,11 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         // SerialClob will help in getting the byte array and storing it.
         // We need to be checking DatabaseMetaData.locatorsUpdatorCopy()
         // or through RowSetMetaData.locatorsUpdatorCopy()
-
+        
         if(dbmslocatorsUpdateCopy){
            getCurrentRow().setColumnObject(columnIndex, new SerialClob(c));
         }
@@ -6579,7 +6579,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
            throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.opnotsupp").toString());
         }
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6605,7 +6605,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateClob(String columnName, Clob c) throws SQLException {
         updateClob(getColIdxByName(columnName), c);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6634,19 +6634,19 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         // SerialBlob will help in getting the byte array and storing it.
         // We need to be checking DatabaseMetaData.locatorsUpdatorCopy()
-        // or through RowSetMetaData.locatorsUpdatorCopy()
-
-        if(dbmslocatorsUpdateCopy){
+        // or through RowSetMetaData.locatorsUpdatorCopy()    
+        
+        if(dbmslocatorsUpdateCopy){               
            getCurrentRow().setColumnObject(columnIndex, new SerialBlob(b));
         }
         else{
            throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.opnotsupp").toString());
         }
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6672,7 +6672,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateBlob(String columnName, Blob b) throws SQLException {
         updateBlob(getColIdxByName(columnName), b);
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6701,13 +6701,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         // SerialArray will help in getting the byte array and storing it.
         // We need to be checking DatabaseMetaData.locatorsUpdatorCopy()
         // or through RowSetMetaData.locatorsUpdatorCopy()
         getCurrentRow().setColumnObject(columnIndex, new SerialArray(a));
     }
-
+    
     /**
      * Sets the designated column in either the current row or the insert
      * row of this <code>CachedRowSetImpl</code> object with the given
@@ -6733,8 +6733,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateArray(String columnName, Array a) throws SQLException {
         updateArray(getColIdxByName(columnName), a);
     }
-
-
+    
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>java.net.URL</code> object
@@ -6750,30 +6750,30 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.net.URL getURL(int columnIndex) throws SQLException {
         //throw new SQLException("Operation not supported");
-
+        
         java.net.URL value;
-
+        
         // sanity check.
         checkIndex(columnIndex);
         // make sure the cursor is on a valid row
         checkCursor();
-
+        
         if (RowSetMD.getColumnType(columnIndex) != java.sql.Types.DATALINK) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.dtypemismt").toString());
         }
-
+        
         setLastValueNull(false);
         value = (java.net.URL)(getCurrentRow().getColumnObject(columnIndex));
-
+        
         // check for SQL NULL
         if (value == null) {
             setLastValueNull(true);
             return null;
         }
-
+        
         return value;
     }
-
+    
     /**
      * Retrieves the value of the designated column in this
      * <code>CachedRowSetImpl</code> object as a <code>java.net.URL</code> object
@@ -6790,9 +6790,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      */
     public java.net.URL getURL(String columnName) throws SQLException {
         return getURL(getColIdxByName(columnName));
-
+        
     }
-
+    
     /**
      * The first warning reported by calls on this <code>CachedRowSetImpl</code>
      * object is returned. Subsequent <code>CachedRowSetImpl</code> warnings will
@@ -6818,8 +6818,8 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         } catch (SQLException e) {} // mask exception
         return rowsetWarning;
     }
-
-
+    
+    
     /**
      * The function tries to isolate the tablename when only setCommand
      * is set and not setTablename is called provided there is only one table
@@ -6830,49 +6830,49 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @return the tablename if only one table in query else return ""
      */
     private String buildTableName(String command) throws SQLException {
-
+        
         // If we have a query from one table,
         // we set the table name implicitly
         // else user has to explicitly set the table name.
-
+        
         int indexFrom, indexComma;
         String strTablename ="";
         command = command.trim();
-
+        
         // Query can be a select, insert or  update
-
+        
         if(command.toLowerCase().startsWith("select")) {
             // look for "from" keyword, after that look for a
             // comma after from. If comma is there don't set
             // table name else isolate table name.
-
+            
             indexFrom = command.toLowerCase().indexOf("from");
             indexComma = command.indexOf(",", indexFrom);
-
+            
             if(indexComma == -1) {
                 // implies only one table
                 strTablename = (command.substring(indexFrom+"from".length(),command.length())).trim();
-
+                
                 String tabName = strTablename;
-
+                
                 int idxWhere = tabName.toLowerCase().indexOf("where");
-
+                
                 /**
                   * Adding the addtional check for conditions following the table name.
                   * If a condition is found truncate it.
                   **/
-
+                  
                 if(idxWhere != -1)
                 {
                    tabName = tabName.substring(0,idxWhere).trim();
                 }
-
+                
                 strTablename = tabName;
-
+                
             } else {
                 //strTablename="";
             }
-
+            
         } else if(command.toLowerCase().startsWith("insert")) {
             //strTablename="";
         } else if(command.toLowerCase().startsWith("update")) {
@@ -6880,7 +6880,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         return strTablename;
     }
-
+    
     /**
      * Commits all changes performed by the <code>acceptChanges()</code>
      * methods
@@ -6890,7 +6890,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void commit() throws SQLException {
         conn.commit();
     }
-
+    
     /**
      * Rolls back all changes performed by the <code>acceptChanges()</code>
      * methods
@@ -6900,7 +6900,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void rollback() throws SQLException {
         conn.rollback();
     }
-
+    
     /**
      * Rolls back all changes performed by the <code>acceptChanges()</code>
      * to the last <code>Savepoint</code> transaction marker.
@@ -6910,7 +6910,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void rollback(Savepoint s) throws SQLException {
         conn.rollback(s);
     }
-
+    
     /**
      * Unsets the designated parameter to the given int array.
      * This was set using <code>setMatchColumn</code>
@@ -6926,7 +6926,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *  not the same as set using <code>setMatchColumn(int [])</code>
      */
     public void unsetMatchColumn(int[] columnIdxes) throws SQLException {
-
+    
          int i_val;
          for( int j= 0 ;j < columnIdxes.length; j++) {
             i_val = (Integer.parseInt(iMatchColumns.get(j).toString()));
@@ -6934,12 +6934,12 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.matchcols").toString());
             }
          }
-
+         
          for( int i = 0;i < columnIdxes.length ;i++) {
             iMatchColumns.set(i,new Integer(-1));
          }
     }
-
+    
    /**
      * Unsets the designated parameter to the given String array.
      * This was set using <code>setMatchColumn</code>
@@ -6955,20 +6955,20 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *  not the same as set using <code>setMatchColumn(String [])</code>
      */
     public void unsetMatchColumn(String[] columnIdxes) throws SQLException {
-
+    
         for(int j = 0 ;j < columnIdxes.length; j++) {
            if( !columnIdxes[j].equals(strMatchColumns.get(j)) ){
               throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.matchcols").toString());
            }
         }
-
+        
         for(int i = 0 ; i < columnIdxes.length; i++) {
            strMatchColumns.set(i,null);
         }
     }
-
+    
     /**
-     * Retrieves the column name as <code>String</code> array
+     * Retrieves the column name as <code>String</code> array 
      * that was set using <code>setMatchColumn(String [])</code>
      * for this rowset.
      *
@@ -6978,17 +6978,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @throws SQLException if an error occurs or column name is not set
      */
     public String[] getMatchColumnNames() throws SQLException {
-
+        
         String []str_temp = new String[strMatchColumns.size()];
-
+        
         if( strMatchColumns.get(0) == null) {
            throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.setmatchcols").toString());
         }
-
+        
         strMatchColumns.copyInto(str_temp);
         return str_temp;
     }
-
+    
     /**
      * Retrieves the column id as <code>int</code> array that was set using
      * <code>setMatchColumn(int [])</code> for this rowset.
@@ -6999,27 +6999,27 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * @throws SQLException if an error occurs or column index is not set
      */
     public int[] getMatchColumnIndexes() throws SQLException {
-
+        
         Integer []int_temp = new Integer[iMatchColumns.size()];
         int [] i_temp = new int[iMatchColumns.size()];
         int i_val;
-
+        
         i_val = ((Integer)iMatchColumns.get(0)).intValue();
-
+        
         if( i_val == -1 ) {
            throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.setmatchcols").toString());
         }
-
-
+        
+        
         iMatchColumns.copyInto(int_temp);
-
+        
         for(int i = 0; i < int_temp.length; i++) {
            i_temp[i] = (int_temp[i]).intValue();
-        }
-
+        } 
+        
         return i_temp;
     }
-
+    
     /**
      * Sets the designated parameter to the given int array.
      * This forms the basis of the join for the
@@ -7038,17 +7038,17 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *                         parameter index is out of bounds
      */
     public void setMatchColumn(int[] columnIdxes) throws SQLException {
-
+         
         for(int j = 0 ; j < columnIdxes.length; j++) {
            if( columnIdxes[j] < 0 ) {
               throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.matchcols1").toString());
            }
-        }
+        }       
         for(int i = 0 ;i < columnIdxes.length; i++) {
            iMatchColumns.add(i,new Integer(columnIdxes[i]));
         }
     }
-
+    
     /**
      * Sets the designated parameter to the given String array.
      *  This forms the basis of the join for the
@@ -7065,18 +7065,18 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      *  parameter index is out of bounds
      */
     public void setMatchColumn(String[] columnNames) throws SQLException {
-
+        
         for(int j = 0; j < columnNames.length; j++) {
            if( columnNames[j] == null || columnNames[j].equals("")) {
               throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.matchcols2").toString());
            }
-        }
+        }     
         for( int i = 0; i < columnNames.length; i++) {
            strMatchColumns.add(i,columnNames[i]);
         }
     }
-
-
+    
+    
     /**
      * Sets the designated parameter to the given <code>int</code>
      * object.  This forms the basis of the join for the
@@ -7104,7 +7104,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             //strMatchColumn = null;
         }
     }
-
+    
     /**
      * Sets the designated parameter to the given <code>String</code>
      * object.  This forms the basis of the join for the
@@ -7130,7 +7130,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             //iMatchColumn = -1;
         }
     }
-
+    
     /**
      * Unsets the designated parameter to the given <code>int</code>
      * object.  This was set using <code>setMatchColumn</code>
@@ -7153,10 +7153,10 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.unsetmatch1").toString());
         } else {
                 // that is, we are unsetting it.
-               iMatchColumns.set(0, new Integer(-1));
+               iMatchColumns.set(0, new Integer(-1)); 
         }
     }
-
+    
     /**
      * Unsets the designated parameter to the given <code>String</code>
      * object.  This was set using <code>setMatchColumn</code>
@@ -7174,7 +7174,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void unsetMatchColumn(String columnName) throws SQLException {
         // check if we are unsetting the same column
         columnName = columnName.trim();
-
+        
         if(!((strMatchColumns.get(0)).equals(columnName))) {
             throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.unsetmatch").toString());
         } else if( ((Integer)(iMatchColumns.get(0))).intValue() > 0) {
@@ -7183,40 +7183,40 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
             strMatchColumns.set(0, null);   // that is, we are unsetting it.
         }
     }
-
+    
     /**
      * Notifies registered listeners that a RowSet object in the given RowSetEvent
      * object has populated a number of additional rows. The <code>numRows</code> parameter
      * ensures that this event will only be fired every <code>numRow</code>.
      * <p>
-     * The source of the event can be retrieved with the method event.getSource.
+     * The source of the event can be retrieved with the method event.getSource.      
      *
-     * @param event a <code>RowSetEvent</code> object that contains the
+     * @param event a <code>RowSetEvent</code> object that contains the 
      *     <code>RowSet</code> object that is the source of the events
      * @param numRows when populating, the number of rows interval on which the
      *     <code>CachedRowSet</code> populated should fire; the default value
-     *     is zero; cannot be less than <code>fetchSize</code> or zero
+     *     is zero; cannot be less than <code>fetchSize</code> or zero     
      */
     public void rowSetPopulated(RowSetEvent event, int numRows) throws SQLException {
-
-        if( numRows < 0 || numRows < getFetchSize()) {
-           throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.numrows").toString());
-        }
-
-        if(size() % numRows == 0) {
-            RowSetEvent event_temp = new RowSetEvent(this);
-            event = event_temp;
-            notifyRowSetChanged();
-        }
-    }
-
+    
+    	if( numRows < 0 || numRows < getFetchSize()) {
+    	   throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.numrows").toString());
+    	}
+    	
+    	if(size() % numRows == 0) {
+    	    RowSetEvent event_temp = new RowSetEvent(this);
+    	    event = event_temp;
+    	    notifyRowSetChanged();
+    	}        
+    }               
+    
     /**
      * Populates this <code>CachedRowSet</code> object with data from
      * the given <code>ResultSet</code> object. While related to the <code>populate(ResultSet)</code>
      * method, an additional parameter is provided to allow starting position within
      * the <code>ResultSet</code> from where to populate the CachedRowSet
-     * instance.
-     *
+     * instance.     
+     * 
      * This method is an alternative to the method <code>execute</code>
      * for filling the rowset with data.  The method <code>populate</code>
      * does not require that the properties needed by the method
@@ -7268,13 +7268,13 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
         populatecallcount = populatecallcount +1;
         resultSet = data;
-        if((endPos - startPos) >= getMaxRows() && (getMaxRows() > 0)){
+        if((endPos - startPos) >= getMaxRows() && (getMaxRows() > 0)){                                                
             endPos = prevEndPos;
-            pagenotend = false;
+            pagenotend = false;            
             return;
         }
 
-        if((maxRowsreached != getMaxRows() || maxRowsreached != totalRows) && pagenotend) {
+        if((maxRowsreached != getMaxRows() || maxRowsreached != totalRows) && pagenotend) {                      
            startPrev = start - getPageSize();
         }
 
@@ -7320,7 +7320,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         rowsFetched = 0;
         currentRow = null;
 
-        if(!data.next() && mRows == 0){
+        if(!data.next() && mRows == 0){                       
             endPos = prevEndPos;
             pagenotend = false;
             return;
@@ -7439,7 +7439,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         return pageSize;
     }
 
-
+   
     /**
      * Retrieves the data present in the page prior to the page from where it is
      * called.
@@ -7455,7 +7455,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         int rem;
 
         pS = getPageSize();
-        mR = maxRowsreached;
+        mR = maxRowsreached;        
 
         if (populatecallcount == 0){
              throw new SQLException(resBundle.handleGetObject("cachedrowsetimpl.nextpage").toString());
@@ -7466,7 +7466,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                throw new SQLException (resBundle.handleGetObject("cachedrowsetimpl.fwdonly").toString());
            }
         }
-
+        
         pagenotend = true;
 
         if(startPrev < startPos ){
@@ -7500,7 +7500,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
                 crsReader.readData((RowSetInternal)this);
                 resultSet = null;
             }
-            else {
+            else {                             
                populate(resultSet,startPrev);
             }
             return true;
@@ -7589,7 +7589,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         }
     }
     */
-
+    
      /**
      * Retrieves the first page of data as specified by the page size.
      * @return boolean value true if present on first page, false otherwise
@@ -7621,7 +7621,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
            return onFirstPage;
     }
     */
-
+    
     /**
      * Retrives the last page of data as specified by the page size.
      * @return boolean value tur if present on the last page, false otherwise
@@ -7685,7 +7685,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
          }
     }
     */
-
+    
    /**
      * Sets the status for the row on which the cursor is positioned. The insertFlag is used
      * to mention the toggle status for this row
@@ -7706,7 +7706,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
           ((Row)getCurrentRow()).clearInserted();
         }
     }
-
+    
     /**
      * Retrieves the value of the designated <code>SQL XML</code> parameter as a
      * <code>SQLXML</code> object in the Java programming language.
@@ -7731,7 +7731,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     }
 
     /**
-     * Retrieves the value of the designated column in the current row of this
+     * Retrieves the value of the designated column in the current row of this 
      * <code>ResultSet</code> object as a java.sql.RowId object in the Java
      * programming language.
      *
@@ -7744,9 +7744,9 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public RowId getRowId(int columnIndex) throws SQLException {
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.opnotysupp").toString());
     }
-
+    
     /**
-     * Retrieves the value of the designated column in the current row of this
+     * Retrieves the value of the designated column in the current row of this 
      * <code>ResultSet</code> object as a java.sql.RowId object in the Java
      * programming language.
      *
@@ -7759,33 +7759,33 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public RowId getRowId(String columnName) throws SQLException {
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.opnotysupp").toString());
     }
-
+    
     /**
      * Updates the designated column with a <code>RowId</code> value. The updater
      * methods are used to update column values in the current row or the insert
-     * row. The updater methods do not update the underlying database; instead
-     * the <code>updateRow<code> or <code>insertRow</code> methods are called
+     * row. The updater methods do not update the underlying database; instead 
+     * the <code>updateRow<code> or <code>insertRow</code> methods are called 
      * to update the database.
-     *
+     * 
      * @param columnIndex the first column is 1, the second 2, ...
      * @param x the column value
-     * @throws SQLException if a database access occurs
+     * @throws SQLException if a database access occurs 
      * @since 6.0
      */
     public void updateRowId(int columnIndex, RowId x) throws SQLException {
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.opnotysupp").toString());
     }
-
+    
     /**
      * Updates the designated column with a <code>RowId</code> value. The updater
      * methods are used to update column values in the current row or the insert
-     * row. The updater methods do not update the underlying database; instead
-     * the <code>updateRow<code> or <code>insertRow</code> methods are called
+     * row. The updater methods do not update the underlying database; instead 
+     * the <code>updateRow<code> or <code>insertRow</code> methods are called 
      * to update the database.
-     *
+     * 
      * @param columnName the name of the column
      * @param x the column value
-     * @throws SQLException if a database access occurs
+     * @throws SQLException if a database access occurs 
      * @since 6.0
      */
     public void updateRowId(String columnName, RowId x) throws SQLException {
@@ -7861,14 +7861,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     public void updateNClob(String columnName, NClob nClob) throws SQLException {
        throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.opnotysupp").toString());
     }
-
+   
     /**
      * Retrieves the value of the designated column in the current row
      * of this <code>ResultSet</code> object as a <code>NClob</code> object
      * in the Java programming language.
      *
      * @param i the first column is 1, the second is 2, ...
-     * @return a <code>NClob</code> object representing the SQL
+     * @return a <code>NClob</code> object representing the SQL 
      *         <code>NCLOB</code> value in the specified column
      * @exception SQLException if a database access error occurs
      * @since 6.0
@@ -7877,7 +7877,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.opnotysupp").toString());
     }
 
-
+    
    /**
      * Retrieves the value of the designated column in the current row
      * of this <code>ResultSet</code> object as a <code>NClob</code> object
@@ -8111,14 +8111,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
     }
 
      /**
-       * Updates the designated column with a character stream value, which will
-       * have the specified number of bytes. The driver does the necessary conversion
-       * from Java character format to the national character set in the database.
-       * It is intended for use when updating NCHAR,NVARCHAR and LONGNVARCHAR columns.
-       * The updater methods are used to update column values in the current row or
-       * the insert row. The updater methods do not update the underlying database;
+       * Updates the designated column with a character stream value, which will 
+       * have the specified number of bytes. The driver does the necessary conversion 
+       * from Java character format to the national character set in the database. 
+       * It is intended for use when updating NCHAR,NVARCHAR and LONGNVARCHAR columns. 
+       * The updater methods are used to update column values in the current row or 
+       * the insert row. The updater methods do not update the underlying database; 
        * instead the updateRow or insertRow methods are called to update the database.
-       *
+       * 
        * @param columnIndex - the first column is 1, the second is 2, ...
        * @param x - the new column value
        * @param length - the length of the stream
@@ -8133,14 +8133,14 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
        }
 
      /**
-       * Updates the designated column with a character stream value, which will
-       * have the specified number of bytes. The driver does the necessary conversion
-       * from Java character format to the national character set in the database.
-       * It is intended for use when updating NCHAR,NVARCHAR and LONGNVARCHAR columns.
-       * The updater methods are used to update column values in the current row or
-       * the insert row. The updater methods do not update the underlying database;
+       * Updates the designated column with a character stream value, which will 
+       * have the specified number of bytes. The driver does the necessary conversion 
+       * from Java character format to the national character set in the database. 
+       * It is intended for use when updating NCHAR,NVARCHAR and LONGNVARCHAR columns. 
+       * The updater methods are used to update column values in the current row or 
+       * the insert row. The updater methods do not update the underlying database; 
        * instead the updateRow or insertRow methods are called to update the database.
-       *
+       * 
        * @param columnName - name of the Column
        * @param x - the new column value
        * @param length - the length of the stream
@@ -8191,7 +8191,7 @@ public class CachedRowSetImpl extends BaseRowSet implements RowSet, RowSetIntern
      * It is intended for use when
      * updating  <code>NCHAR</code>,<code>NVARCHAR</code>
      * and <code>LONGNVARCHAR</code> columns.
-     *
+     *   
      * The updater methods are used to update column values in the
      * current row or the insert row.  The updater methods do not
      * update the underlying database; instead the <code>updateRow</code> or
@@ -8226,13 +8226,13 @@ bel is the name of the column
      * <code>java.io.InputStream</code>. Data will be read from the stream
      * as needed until end-of-file is reached.  The JDBC driver will
      * do any necessary conversion from ASCII to the database char format.
-     *
+     * 
      * <P><B>Note:</B> This stream object can either be a standard
      * Java stream object or your own subclass that implements the
      * standard interface.
      * <p>
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8241,17 +8241,17 @@ bel is the name of the column
      * value to.
      * @param length the number of bytes in the parameter data.
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
      */
     public void updateBlob(int columnIndex, InputStream inputStream, long length) throws SQLException{
-        throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
+        throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString()); 
     }
 
-    /**
+    /** 
      * Updates the designated column using the given input stream, which
      * will have the specified number of bytes.
      * When a very large ASCII value is input to a <code>LONGVARCHAR</code>
@@ -8259,13 +8259,13 @@ bel is the name of the column
      * <code>java.io.InputStream</code>. Data will be read from the stream
      * as needed until end-of-file is reached.  The JDBC driver will
      * do any necessary conversion from ASCII to the database char format.
-     *
+     * 
      * <P><B>Note:</B> This stream object can either be a standard
      * Java stream object or your own subclass that implements the
      * standard interface.
      * <p>
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8274,7 +8274,7 @@ bel is the name of the column
      * value to.
      * @param length the number of bytes in the parameter data.
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
@@ -8362,13 +8362,13 @@ bel is the name of the column
      * <code>java.io.Reader</code> object. The data will be read from the stream
      * as needed until end-of-file is reached.  The JDBC driver will
      * do any necessary conversion from UNICODE to the database char format.
-     *
+     * 
      * <P><B>Note:</B> This stream object can either be a standard
      * Java stream object or your own subclass that implements the
      * standard interface.
      * <p>
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8376,17 +8376,17 @@ bel is the name of the column
      * @param reader An object that contains the data to set the parameter value to.
      * @param length the number of characters in the parameter data.
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
-     * this method
+     * this method 
      * @since 1.6
      */
     public void updateClob(int columnIndex,  Reader reader, long length) throws SQLException {
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
     }
 
-    /**
+    /** 
      * Updates the designated column using the given <code>Reader</code>
      * object, which is the given number of characters long.
      * When a very large UNICODE value is input to a <code>LONGVARCHAR</code>
@@ -8394,13 +8394,13 @@ bel is the name of the column
      * <code>java.io.Reader</code> object. The data will be read from the stream
      * as needed until end-of-file is reached.  The JDBC driver will
      * do any necessary conversion from UNICODE to the database char format.
-     *
+     * 
      * <P><B>Note:</B> This stream object can either be a standard
      * Java stream object or your own subclass that implements the
      * standard interface.
      * <p>
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8408,7 +8408,7 @@ bel is the name of the column
      * @param reader An object that contains the data to set the parameter value to.
      * @param length the number of characters in the parameter data.
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
@@ -8495,13 +8495,13 @@ bel is the name of the column
      * <code>java.io.Reader</code> object. The data will be read from the stream
      * as needed until end-of-file is reached.  The JDBC driver will
      * do any necessary conversion from UNICODE to the database char format.
-     *
+     * 
      * <P><B>Note:</B> This stream object can either be a standard
      * Java stream object or your own subclass that implements the
      * standard interface.
      * <p>
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8510,9 +8510,9 @@ bel is the name of the column
      * @param length the number of characters in the parameter data.
      * @throws SQLException if the driver does not support national
      *         character sets;  if the driver can detect that a data conversion
-     *  error could occur; this method is called on a closed result set,
+     *  error could occur; this method is called on a closed result set,  
      * if a database access error occurs or
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
@@ -8529,13 +8529,13 @@ bel is the name of the column
      * <code>java.io.Reader</code> object. The data will be read from the stream
      * as needed until end-of-file is reached.  The JDBC driver will
      * do any necessary conversion from UNICODE to the database char format.
-     *
+     * 
      * <P><B>Note:</B> This stream object can either be a standard
      * Java stream object or your own subclass that implements the
      * standard interface.
      * <p>
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8546,7 +8546,7 @@ bel is the name of the column
      *         character sets;  if the driver can detect that a data conversion
      *  error could occur; this method is called on a closed result set;
      *  if a database access error occurs or
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
@@ -8628,11 +8628,11 @@ bel is the name of the column
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
     }
 
-        /**
+        /** 
      * Updates the designated column with an ascii stream value, which will have
      * the specified number of bytes.
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8640,46 +8640,46 @@ bel is the name of the column
      * @param x the new column value
      * @param length the length of the stream
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
      */
-    public void updateAsciiStream(int columnIndex,
-                           java.io.InputStream x,
-                           long length) throws SQLException {
+    public void updateAsciiStream(int columnIndex, 
+			   java.io.InputStream x, 
+			   long length) throws SQLException {
 
     }
 
-    /**
+    /** 
      * Updates the designated column with a binary stream value, which will have
      * the specified number of bytes.
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
      * @param columnIndex the first column is 1, the second is 2, ...
-     * @param x the new column value
+     * @param x the new column value     
      * @param length the length of the stream
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
      */
-    public void updateBinaryStream(int columnIndex,
-                            java.io.InputStream x,
-                            long length) throws SQLException {
+    public void updateBinaryStream(int columnIndex, 
+			    java.io.InputStream x,
+			    long length) throws SQLException {
     }
 
     /**
      * Updates the designated column with a character stream value, which will have
      * the specified number of bytes.
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8687,15 +8687,15 @@ bel is the name of the column
      * @param x the new column value
      * @param length the length of the stream
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
      */
     public void updateCharacterStream(int columnIndex,
-                             java.io.Reader x,
-                             long length) throws SQLException {
+			     java.io.Reader x,
+			     long length) throws SQLException {
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
     }
 
@@ -8724,11 +8724,11 @@ bel is the name of the column
                              long length) throws SQLException {
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
     }
-     /**
+     /** 
      * Updates the designated column with an ascii stream value, which will have
      * the specified number of bytes..
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8736,22 +8736,22 @@ bel is the name of the column
      * @param x the new column value
      * @param length the length of the stream
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
      */
-    public void updateAsciiStream(String columnLabel,
-                           java.io.InputStream x,
-                           long length) throws SQLException {
+    public void updateAsciiStream(String columnLabel, 
+			   java.io.InputStream x, 
+			   long length) throws SQLException {
     }
 
-    /**
+    /** 
      * Updates the designated column with a binary stream value, which will have
      * the specified number of bytes.
      * The updater methods are used to update column values in the
-     * current row or the insert row.  The updater methods do not
+     * current row or the insert row.  The updater methods do not 
      * update the underlying database; instead the <code>updateRow</code> or
      * <code>insertRow</code> methods are called to update the database.
      *
@@ -8759,15 +8759,15 @@ bel is the name of the column
      * @param x the new column value
      * @param length the length of the stream
      * @exception SQLException if a database access error occurs,
-     * the result set concurrency is <code>CONCUR_READ_ONLY</code>
+     * the result set concurrency is <code>CONCUR_READ_ONLY</code> 
      * or this method is called on a closed result set
      * @exception SQLFeatureNotSupportedException if the JDBC driver does not support
      * this method
      * @since 1.6
      */
-    public void updateBinaryStream(String columnLabel,
-                            java.io.InputStream x,
-                            long length) throws SQLException {
+    public void updateBinaryStream(String columnLabel, 
+			    java.io.InputStream x,
+			    long length) throws SQLException {
     }
 
     /**
@@ -8795,7 +8795,7 @@ bel is the name of the column
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
     }
 
-
+   
     /**
      * Updates the designated column with a binary stream value.
      * The updater methods are used to update column values in the
@@ -8922,7 +8922,7 @@ bel is the name of the column
      */
     public void updateAsciiStream(String columnLabel,
                            java.io.InputStream x) throws SQLException {
-
+    
     }
 
    /**
@@ -9141,7 +9141,7 @@ a
          throws SQLException{
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
    }
-
+  
   /**
   * Sets the designated parameter to a <code>Reader</code> object. The
   * <code>Reader</code> reads the data till end-of-file is reached. The
@@ -9313,7 +9313,7 @@ a
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
    }
 
-
+ 
  /**
     * Sets the designated parameter to the given <code>java.sql.Time</code> value.
     * The driver converts this
@@ -9358,7 +9358,7 @@ a
    public void setTime(String parameterName, java.sql.Time x, Calendar cal)
        throws SQLException{
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
-   }
+   } 
 
    /**
    * Sets the designated parameter to a <code>Reader</code> object.
@@ -9408,9 +9408,9 @@ a
    public void setClob(int parameterIndex, Reader reader, long length)
      throws SQLException{
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
-   }
+   } 
 
-
+    
  /**
     * Sets the designated parameter to a <code>InputStream</code> object.  The inputstream must contain  the number
     * of characters specified by length otherwise a <code>SQLException</code> will be
@@ -9594,7 +9594,7 @@ a
    }
 
 
-
+ 
  /**
     * Sets the value of the designated parameter with the given object.
     * This method is like the method <code>setObject</code>
@@ -9802,7 +9802,7 @@ a
    }
 
 
-
+ 
  /**
     * Sets the designated parameter to the given <code>Reader</code>
     * object.
@@ -9897,7 +9897,7 @@ a
    }
 
 
-
+ 
  /**
     * Sets the designated parameter to the given <code>java.sql.Timestamp</code> value.
     * The driver
@@ -9974,7 +9974,7 @@ a
    }
 
 
-
+ 
  /**
     * Sets the designated parameter to the given Java <code>boolean</code> value.
     * The driver converts this
@@ -10014,7 +10014,7 @@ a
    }
 
 
-
+ 
  /**
     * Sets the designated parameter to the given Java <code>short</code> value.
     * The driver converts this
@@ -10108,22 +10108,23 @@ a
    public void setDouble(String parameterName, double x) throws SQLException{
         throw new SQLFeatureNotSupportedException(resBundle.handleGetObject("cachedrowsetimpl.featnotsupp").toString());
    }
-
+   
    /**
      * This method re populates the resBundle
-     * during the deserialization process
+     * during the deserialization process 
      *
      */
     protected void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-        // Default state initialization happens here
+        // Default state initialization happens here 
         ois.defaultReadObject();
-        // Initialization of transient Res Bundle happens here .
-        try {
-           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();
+        // Initialization of transient Res Bundle happens here . 
+        try {           
+           resBundle = JdbcRowSetResourceBundle.getJdbcRowSetResourceBundle();           
         } catch(IOException ioe) {
             throw new RuntimeException(ioe);
         }
-
+       
     }
-        static final long serialVersionUID =1884577171200622428L;
+	static final long serialVersionUID =1884577171200622428L;
 }
+

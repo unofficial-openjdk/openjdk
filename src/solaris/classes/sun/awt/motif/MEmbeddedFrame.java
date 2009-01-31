@@ -85,7 +85,7 @@ public class MEmbeddedFrame extends EmbeddedFrame {
         setPeer(toolkit.createEmbeddedFrame(this));
         /*
          * addNotify() creates a LightweightDispatcher that propagates
-         * SunDropTargetEvents to subcomponents.
+         * SunDropTargetEvents to subcomponents. 
          * NOTE: show() doesn't call addNotify() for embedded frames.
          */
         addNotify();
@@ -110,10 +110,10 @@ public class MEmbeddedFrame extends EmbeddedFrame {
     }
 
     public void show() {
-        if (handle != 0) {
-            mapWidget(handle);
-        }
-        super.show();
+	if (handle != 0) {
+	    mapWidget(handle);
+	}
+	super.show();
     }
 
     protected boolean traverseOut(boolean direction) {

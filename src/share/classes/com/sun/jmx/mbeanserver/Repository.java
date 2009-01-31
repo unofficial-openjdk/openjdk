@@ -74,11 +74,11 @@ public class Repository {
      * than querying the framework each time the info is required.
      */
     private final String domain;
-
+    
     /**
      * We use a global reentrant read write lock to protect the repository.
      * This seems safer and more efficient: we are using Maps of Maps,
-     * Guaranteing consistency while using Concurent objects at each level
+     * Guaranteing consistency while using Concurent objects at each level 
      * may be more difficult.
      **/
     private final ReentrantReadWriteLock lock;
@@ -269,7 +269,7 @@ public class Repository {
 
         stri = pati = 0;
         starstri = starpati = -1;
-
+        
         /* On each pass through this loop, we either advance pati,
            or we backtrack pati and advance starstri.  Since starstri
            is only ever assigned from pati, the loop must terminate.  */
@@ -349,13 +349,13 @@ public class Repository {
     public Repository(String domain) {
         this(domain,true);
     }
-
+    
     /**
      * Construct a new repository with the given default domain.
      */
     public Repository(String domain, boolean fairLock) {
         lock = new ReentrantReadWriteLock(fairLock);
-
+        
         domainTb = new HashMap<String,Map<String,NamedObject>>(5);
 
         if (domain != null && domain.length() != 0)
@@ -373,7 +373,7 @@ public class Repository {
      *
      */
     public String[] getDomains() {
-
+        
         lock.readLock().lock();
         final List<String> result;
         try {
@@ -452,14 +452,14 @@ public class Repository {
                         new IllegalArgumentException(
                         "Repository: domain name cannot be JMImplementation"));
             }
-
+            
             // If domain not already exists, add it to the hash table
             final Map<String,NamedObject> moiTb = domainTb.get(dom);
             if (moiTb == null) {
                 addNewDomMoi(object, dom, name);
                 return;
-            }
-
+            } 
+            
             // Add instance if not already present
             String cstr = name.getCanonicalKeyPropertyListString();
             NamedObject elmt= moiTb.get(cstr);
@@ -469,7 +469,7 @@ public class Repository {
                 nbElements++;
                 moiTb.put(cstr, new NamedObject(name, object));
             }
-
+            
         } finally {
             lock.writeLock().unlock();
         }
@@ -556,7 +556,7 @@ public class Repository {
 
         lock.readLock().lock();
         try {
-
+            
             // If pattern is not a pattern, retrieve this mbean !
             if (!name.isPattern()) {
                 final NamedObject no;
@@ -564,7 +564,7 @@ public class Repository {
                 if (no != null) result.add(no);
                 return result;
             }
-
+            
             // All names in all domains
             if (name == ObjectName.WILDCARD) {
                 for (Map<String,NamedObject> moiTb : domainTb.values()) {
@@ -572,24 +572,24 @@ public class Repository {
                 }
                 return result;
             }
-
+            
             final String canonical_key_property_list_string =
                     name.getCanonicalKeyPropertyListString();
-            final boolean allNames =
+            final boolean allNames = 
                     (canonical_key_property_list_string.length()==0);
             final ObjectNamePattern namePattern =
                 (allNames?null:new ObjectNamePattern(name));
-
+            
             // All names in default domain
             if (name.getDomain().length() == 0) {
                 final Map<String,NamedObject> moiTb = domainTb.get(domain);
-                if (allNames)
+                if (allNames) 
                     result.addAll(moiTb.values());
-                else
+                else 
                     addAllMatching(moiTb, result, namePattern);
                 return result;
             }
-
+            
             // Pattern matching in the domain name (*, ?)
             char[] dom2Match = name.getDomain().toCharArray();
             for (String domain : domainTb.keySet()) {

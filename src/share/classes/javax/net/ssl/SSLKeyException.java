@@ -31,6 +31,7 @@ package javax.net.ssl;
  * of the server or client SSL certificate and private key.
  *
  * @since 1.4
+ * @version %I%
  * @author David Brownell
  */
 public

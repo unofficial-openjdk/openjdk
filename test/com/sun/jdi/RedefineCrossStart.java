@@ -25,7 +25,7 @@
  *  @test
  *  @bug 4628726
  *  @summary Test class redefinition at start only (they use breakpoint
- *  or resumeTo()) cross tested with other tests.
+ *  or resumeTo()) cross tested with other tests.  
  *  ExceptionEvents/StackOverflowUncaughtTarg are here because they hit
  *  an unrelated crash in event testing.
  *

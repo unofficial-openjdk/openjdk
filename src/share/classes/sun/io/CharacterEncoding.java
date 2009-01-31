@@ -56,14 +56,14 @@ public class CharacterEncoding {
     static {
         aliasTable = new HashMap(460, 1.0f);                    /* MDA */
 
-        aliasTable.put("us-ascii",              "ASCII");
-        aliasTable.put("ascii",                 "ASCII");
-        aliasTable.put("646",                   "ASCII");       // Solaris POSIX locale
+        aliasTable.put("us-ascii",     		"ASCII");
+        aliasTable.put("ascii",     		"ASCII");
+	aliasTable.put("646",			"ASCII");	// Solaris POSIX locale
         aliasTable.put("iso_646.irv:1983",      "ASCII");       // Linux POSIX locale
-        aliasTable.put("ansi_x3.4-1968",        "ASCII");       // Caldera linux
-        aliasTable.put("iso646-us",             "ASCII");
-        aliasTable.put("default",               "ASCII");       // compatibility with obsolete "Default" converters
-        aliasTable.put("ascii7",                "ASCII");       // compatibility with obsolete "Default" converters
+	aliasTable.put("ansi_x3.4-1968",        "ASCII");       // Caldera linux
+	aliasTable.put("iso646-us",             "ASCII");
+	aliasTable.put("default",               "ASCII");       // compatibility with obsolete "Default" converters
+	aliasTable.put("ascii7",                "ASCII");       // compatibility with obsolete "Default" converters
 
         // Core encodings
         aliasTable.put("8859_1",                "ISO8859_1");
@@ -93,7 +93,7 @@ public class CharacterEncoding {
         aliasTable.put("gbk",                   "GBK");
         aliasTable.put("koi8-r",                "KOI8_R");
         aliasTable.put("tis620.2533",           "TIS620");
-
+        
         // Windows encodings
         aliasTable.put("cp1250",                "Cp1250");
         aliasTable.put("cp1251",                "Cp1251");
@@ -113,10 +113,10 @@ public class CharacterEncoding {
 
     public static String aliasName(String name){
 
-        if (name.startsWith("\1")) {
-            // Emergency access to old converters
-            name = name.substring(1);
-        }
+	if (name.startsWith("\1")) {
+	    // Emergency access to old converters
+	    name = name.substring(1);
+	}
         // need to use Locale.US so we can load ISO converters in tr_TR locale
         String lower = name.toLowerCase(Locale.US);
         String val = (String) aliasTable.get(lower);
@@ -139,7 +139,7 @@ public class CharacterEncoding {
             }
 
             // MIBenum: 4
-            aliasTable.put("8859_1",                "ISO8859_1");
+            aliasTable.put("8859_1",       	    "ISO8859_1");
             aliasTable.put("iso_8859-1:1987",       "ISO8859_1");
             aliasTable.put("iso-ir-100",            "ISO8859_1");
             aliasTable.put("iso_8859-1",            "ISO8859_1");
@@ -154,7 +154,7 @@ public class CharacterEncoding {
             aliasTable.put("csisolatin1",           "ISO8859_1");
 
             // MIBenum: 5
-            aliasTable.put("8859_2",                "ISO8859_2");
+            aliasTable.put("8859_2",       	    "ISO8859_2");
             aliasTable.put("iso_8859-2:1987",       "ISO8859_2");
             aliasTable.put("iso-ir-101",            "ISO8859_2");
             aliasTable.put("iso_8859-2",            "ISO8859_2");
@@ -169,7 +169,7 @@ public class CharacterEncoding {
             aliasTable.put("csisolatin2",           "ISO8859_2");
 
             // MIBenum: 6
-            aliasTable.put("8859_3",                "ISO8859_3");
+            aliasTable.put("8859_3",       	    "ISO8859_3");
             aliasTable.put("iso_8859-3:1988",       "ISO8859_3");
             aliasTable.put("iso-ir-109",            "ISO8859_3");
             aliasTable.put("iso_8859-3",            "ISO8859_3");
@@ -184,7 +184,7 @@ public class CharacterEncoding {
             aliasTable.put("csisolatin3",           "ISO8859_3");
 
             // MIBenum: 7
-            aliasTable.put("8859_4",                "ISO8859_4");
+            aliasTable.put("8859_4",       	    "ISO8859_4");
             aliasTable.put("iso_8859-4:1988",       "ISO8859_4");
             aliasTable.put("iso-ir-110",            "ISO8859_4");
             aliasTable.put("iso_8859-4",            "ISO8859_4");
@@ -199,7 +199,7 @@ public class CharacterEncoding {
             aliasTable.put("csisolatin4",           "ISO8859_4");
 
             // MIBenum: 8
-            aliasTable.put("8859_5",                "ISO8859_5");
+            aliasTable.put("8859_5",       	    "ISO8859_5");
             aliasTable.put("iso_8859-5:1988",       "ISO8859_5");
             aliasTable.put("iso-ir-144",            "ISO8859_5");
             aliasTable.put("iso_8859-5",            "ISO8859_5");
@@ -213,7 +213,7 @@ public class CharacterEncoding {
             aliasTable.put("915",                   "ISO8859_5");
 
             // MIBenum: 9
-            aliasTable.put("8859_6",                "ISO8859_6");
+            aliasTable.put("8859_6",       	    "ISO8859_6");
             aliasTable.put("iso_8859-6:1987",       "ISO8859_6");
             aliasTable.put("iso-ir-127",            "ISO8859_6");
             aliasTable.put("iso_8859-6",            "ISO8859_6");
@@ -229,7 +229,7 @@ public class CharacterEncoding {
             aliasTable.put("1089",                  "ISO8859_6");
 
             // MIBenum: 10
-            aliasTable.put("8859_7",                "ISO8859_7");
+            aliasTable.put("8859_7",       	    "ISO8859_7");
             aliasTable.put("iso_8859-7:1987",       "ISO8859_7");
             aliasTable.put("iso-ir-126",            "ISO8859_7");
             aliasTable.put("iso_8859-7",            "ISO8859_7");
@@ -244,10 +244,10 @@ public class CharacterEncoding {
             aliasTable.put("ibm-813",               "ISO8859_7");
             aliasTable.put("cp813",                 "ISO8859_7");
             aliasTable.put("813",                   "ISO8859_7");
-            aliasTable.put("sun_eu_greek",          "ISO8859_7");
+	    aliasTable.put("sun_eu_greek",	    "ISO8859_7");
 
             // MIBenum: 11
-            aliasTable.put("8859_8",                "ISO8859_8");
+            aliasTable.put("8859_8",       	    "ISO8859_8");
             aliasTable.put("iso_8859-8:1988",       "ISO8859_8");
             aliasTable.put("iso-ir-138",            "ISO8859_8");
             aliasTable.put("iso_8859-8",            "ISO8859_8");
@@ -261,7 +261,7 @@ public class CharacterEncoding {
             aliasTable.put("916",                   "ISO8859_8");
 
             // MIBenum: 12
-            aliasTable.put("8859_9",                "ISO8859_9");
+            aliasTable.put("8859_9",       	    "ISO8859_9");
             aliasTable.put("iso-ir-148",            "ISO8859_9");
             aliasTable.put("iso_8859-9",            "ISO8859_9");
             aliasTable.put("iso-8859-9",            "ISO8859_9");
@@ -305,19 +305,19 @@ public class CharacterEncoding {
             aliasTable.put("unicode-1-1-utf-8",     "UTF8");
 
             // MIBenum: 1010
-            aliasTable.put("unicode-1-1",           "UnicodeBigUnmarked");
+            aliasTable.put("unicode-1-1",	    "UnicodeBigUnmarked");
 
             // MIBenum: 1000
-            aliasTable.put("iso-10646-ucs-2",       "UnicodeBigUnmarked");
+            aliasTable.put("iso-10646-ucs-2",	    "UnicodeBigUnmarked");
 
             // Per Unicode standard
-            aliasTable.put("utf-16be",              "UnicodeBigUnmarked");
-            aliasTable.put("utf-16le",              "UnicodeLittleUnmarked");
-            aliasTable.put("utf-16",                "UTF16");
+            aliasTable.put("utf-16be",		    "UnicodeBigUnmarked");
+            aliasTable.put("utf-16le",		    "UnicodeLittleUnmarked");
+            aliasTable.put("utf-16",		    "UTF16");
 
             // Used by drag-and-drop subsystem
-            aliasTable.put("x-utf-16be",            "UnicodeBigUnmarked");
-            aliasTable.put("x-utf-16le",            "UnicodeLittleUnmarked");
+            aliasTable.put("x-utf-16be",	    "UnicodeBigUnmarked");
+            aliasTable.put("x-utf-16le",	    "UnicodeLittleUnmarked");
 
             aliasTable.put("unicode",               "Unicode");
 
@@ -704,7 +704,7 @@ public class CharacterEncoding {
             aliasTable.put("jis auto detect",       "JISAutoDetect");
 
             // MIBenum: 16/39
-            aliasTable.put("jis",                   "ISO2022JP");
+            aliasTable.put("jis",        	    "ISO2022JP");
             aliasTable.put("iso-2022-jp",           "ISO2022JP");
             aliasTable.put("csiso2022jp",           "ISO2022JP");
             aliasTable.put("jis_encoding",          "ISO2022JP");
@@ -716,16 +716,16 @@ public class CharacterEncoding {
 
             // JIS-defined Shift JIS
             aliasTable.put("\u30b7\u30d5\u30c8\u7b26\u53f7\u5316\u8868\u73fe",
-                           "SJIS");                             // JIS name
-            aliasTable.put("pck", "PCK");           // Case independent PCK alias
+                           "SJIS");	                        // JIS name
+	    aliasTable.put("pck", "PCK");	    // Case independent PCK alias
 
             if (sjisIsMS932) {
-                aliasTable.put("shift_jis",         "MS932");   // IANA shift jis aliases
-                aliasTable.put("csshiftjis",        "MS932");   // updated per 4556882
+                aliasTable.put("shift_jis",         "MS932");	// IANA shift jis aliases
+                aliasTable.put("csshiftjis",        "MS932");	// updated per 4556882
                 aliasTable.put("x-sjis",            "MS932");
                 aliasTable.put("ms_kanji",          "MS932");
             } else {
-                aliasTable.put("shift_jis",         "SJIS");    // IANA shift jis aliases
+                aliasTable.put("shift_jis",         "SJIS");	// IANA shift jis aliases
                 aliasTable.put("csshiftjis",        "SJIS");
                 aliasTable.put("x-sjis",            "SJIS");
                 aliasTable.put("ms_kanji",          "SJIS");
@@ -733,15 +733,15 @@ public class CharacterEncoding {
 
             // MIBenum: 18
             // Japanese EUC
-            aliasTable.put("eucjis",                "EUC_JP");
-            aliasTable.put("euc-jp",                "EUC_JP");
-            aliasTable.put("eucjp",                 "EUC_JP");
+            aliasTable.put("eucjis",        	    "EUC_JP");
+            aliasTable.put("euc-jp",        	    "EUC_JP");
+            aliasTable.put("eucjp",        	    "EUC_JP");
             aliasTable.put("extended_unix_code_packed_format_for_japanese",
                            "EUC_JP");
             aliasTable.put("cseucpkdfmtjapanese",   "EUC_JP");
-            aliasTable.put("x-euc-jp",              "EUC_JP");
-            aliasTable.put("x-eucjp",               "EUC_JP");
-            aliasTable.put("eucjp-open",            "EUC_JP_Solaris"); // 1.3.1_x compatibility
+            aliasTable.put("x-euc-jp",     	    "EUC_JP");
+            aliasTable.put("x-eucjp",     	    "EUC_JP");
+	    aliasTable.put("eucjp-open",	    "EUC_JP_Solaris"); // 1.3.1_x compatibility
 
             // For handing only JIS0202 and JIS0208 in linux
             aliasTable.put("euc-jp-linux",          "EUC_JP_LINUX");
@@ -789,23 +789,23 @@ public class CharacterEncoding {
             aliasTable.put("cskoi8r",               "KOI8_R");
 
             // Simplified Chinese
-            aliasTable.put("gb2312",                "EUC_CN");
-            aliasTable.put("gb2312-80",             "EUC_CN");
+            aliasTable.put("gb2312",        	    "EUC_CN");
+            aliasTable.put("gb2312-80",        	    "EUC_CN");
             aliasTable.put("gb2312-1980",           "EUC_CN");
-            aliasTable.put("euc-cn",                "EUC_CN");
-            aliasTable.put("euccn",                 "EUC_CN");
+            aliasTable.put("euc-cn",        	    "EUC_CN");
+            aliasTable.put("euccn",        	    "EUC_CN");
 
-            aliasTable.put("big5",                  "Big5");
-            aliasTable.put("big5hk",                "Big5_HKSCS");
-            aliasTable.put("big5-hkscs",            "Big5_HKSCS");
+            aliasTable.put("big5",        	    "Big5");
+            aliasTable.put("big5hk",		    "Big5_HKSCS");
+            aliasTable.put("big5-hkscs",	    "Big5_HKSCS");
             // Added for future compatibility, explicit mapping to Unicode 3.0
-            aliasTable.put("big5-hkscs:unicode3.0", "Big5_HKSCS");
-            aliasTable.put("big5_solaris",          "Big5_Solaris");
+            aliasTable.put("big5-hkscs:unicode3.0", "Big5_HKSCS"); 
+            aliasTable.put("big5_solaris",	    "Big5_Solaris");
 
             // Traditional Chinese
-            aliasTable.put("cns11643",              "EUC_TW");
-            aliasTable.put("euc-tw",                "EUC_TW");
-            aliasTable.put("euctw",                 "EUC_TW");
+            aliasTable.put("cns11643",        	    "EUC_TW");
+            aliasTable.put("euc-tw",        	    "EUC_TW");
+            aliasTable.put("euctw",        	    "EUC_TW");
 
             // Korean
             aliasTable.put("ksc5601",               "EUC_KR");
@@ -835,7 +835,7 @@ public class CharacterEncoding {
             aliasTable.put("x-compound-text",       "COMPOUND_TEXT");
             aliasTable.put("x11-compound_text",     "COMPOUND_TEXT");
 
-            // Variants
+            // Variants 
             aliasTable.put("cp942c", "Cp942C");
             aliasTable.put("cp943c", "Cp943C");
             aliasTable.put("cp949c", "Cp949C");
@@ -857,25 +857,25 @@ public class CharacterEncoding {
      * Auto Detect converter.
      */
     static String getSJISName() {
-        String encodeName = (String) AccessController.doPrivileged(
-                                                new PrivilegedAction() {
-            public Object run() {
+	String encodeName = (String) AccessController.doPrivileged(
+						new PrivilegedAction() {
+	    public Object run() {
                 String osName = System.getProperty("os.name");
                 if (osName.equals("Solaris") || osName.equals("SunOS")){
                     return "PCK";
                 }
                 else {
-                    return System.getProperty("file.encoding", null);
-                }
-            }
-        });
+		    return System.getProperty("file.encoding", null);
+	        }
+	    }
+	});
 
-        if (encodeName != null) {
-            if (encodeName.equals("MS932"))
-                return encodeName;
-            encodeName = aliasName(encodeName);
-        }
-        return (encodeName != null && encodeName.equals("MS932")) ? encodeName : "SJIS";
+	if (encodeName != null) {
+	    if (encodeName.equals("MS932"))
+		return encodeName;
+	    encodeName = aliasName(encodeName);
+	}
+	return (encodeName != null && encodeName.equals("MS932")) ? encodeName : "SJIS";
     }
 
 
@@ -886,7 +886,7 @@ public class CharacterEncoding {
               String osName = System.getProperty("os.name");
               if (osName.equals("Solaris") || osName.equals("SunOS"))
                   return "eucJP-open";
-              else
+              else 
                   return "EUC_JP";
           }
       });

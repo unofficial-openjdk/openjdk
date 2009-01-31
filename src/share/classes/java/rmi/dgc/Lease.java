@@ -53,8 +53,8 @@ public final class Lease implements java.io.Serializable {
      */
     public Lease(VMID id, long duration)
     {
-        vmid = id;
-        value = duration;
+	vmid = id;
+	value = duration;
     }
 
     /**
@@ -63,7 +63,7 @@ public final class Lease implements java.io.Serializable {
      */
     public VMID getVMID()
     {
-        return vmid;
+	return vmid;
     }
 
     /**
@@ -72,6 +72,6 @@ public final class Lease implements java.io.Serializable {
      */
     public long getValue()
     {
-        return value;
+	return value;
     }
 }

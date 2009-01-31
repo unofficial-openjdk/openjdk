@@ -34,13 +34,13 @@
 /*******************************************************************/
 
 /* field id for jint 'fd' in java.io.FileDescriptor */
-jfieldID IO_fd_fdID;
+jfieldID IO_fd_fdID; 
 
 /**************************************************************
  * static methods to store field ID's in initializers
  */
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_java_io_FileDescriptor_initIDs(JNIEnv *env, jclass fdClass) {
     IO_fd_fdID = (*env)->GetFieldID(env, fdClass, "fd", "I");
 }
@@ -49,10 +49,10 @@ Java_java_io_FileDescriptor_initIDs(JNIEnv *env, jclass fdClass) {
  * File Descriptor
  */
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_java_io_FileDescriptor_sync(JNIEnv *env, jobject this) {
     int fd = (*env)->GetIntField(env, this, IO_fd_fdID);
     if (JVM_Sync(fd) == -1) {
-        JNU_ThrowByName(env, "java/io/SyncFailedException", "sync failed");
-    }
+	JNU_ThrowByName(env, "java/io/SyncFailedException", "sync failed");
+    }	
 }

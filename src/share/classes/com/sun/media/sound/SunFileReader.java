@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package com.sun.media.sound;
+package com.sun.media.sound;	  	 
 
 import java.io.File;
 import java.io.InputStream;
@@ -42,6 +42,7 @@ import javax.sound.sampled.spi.AudioFileReader;
 /**
  * Abstract File Reader class.
  *
+ * @version %I% %E%
  * @author Jan Borgersen
  */
 abstract class SunFileReader extends AudioFileReader {
@@ -60,13 +61,13 @@ abstract class SunFileReader extends AudioFileReader {
 
     /**
      * Obtains the audio file format of the input stream provided.  The stream must
-     * point to valid audio file data.  In general, audio file providers may
+     * point to valid audio file data.  In general, audio file providers may 
      * need to read some data from the stream before determining whether they
      * support it.  These parsers must
-     * be able to mark the stream, read enough data to determine whether they
-     * support the stream, and, if not, reset the stream's read pointer to its original
+     * be able to mark the stream, read enough data to determine whether they 
+     * support the stream, and, if not, reset the stream's read pointer to its original 
      * position.  If the input stream does not support this, this method may fail
-     * with an IOException.
+     * with an IOException. 
      * @param stream the input stream from which file format information should be
      * extracted
      * @return an <code>AudioFileFormat</code> object describing the audio file format
@@ -107,13 +108,13 @@ abstract class SunFileReader extends AudioFileReader {
 
     /**
      * Obtains an audio stream from the input stream provided.  The stream must
-     * point to valid audio file data.  In general, audio file providers may
+     * point to valid audio file data.  In general, audio file providers may 
      * need to read some data from the stream before determining whether they
      * support it.  These parsers must
-     * be able to mark the stream, read enough data to determine whether they
-     * support the stream, and, if not, reset the stream's read pointer to its original
+     * be able to mark the stream, read enough data to determine whether they 
+     * support the stream, and, if not, reset the stream's read pointer to its original 
      * position.  If the input stream does not support this, this method may fail
-     * with an IOException.
+     * with an IOException. 
      * @param stream the input stream from which the <code>AudioInputStream</code> should be
      * constructed
      * @return an <code>AudioInputStream</code> object based on the audio file data contained
@@ -154,33 +155,33 @@ abstract class SunFileReader extends AudioFileReader {
      */
     abstract public AudioInputStream getAudioInputStream(File file) throws UnsupportedAudioFileException, IOException;
 
-
+	
     // HELPER METHODS
 
 
 
-    /**
-     * rllong
-     * Protected helper method to read 64 bits and changing the order of
-     * each bytes.
-     * @param DataInputStream
-     * @return 32 bits swapped value.
+    /** 
+     * rllong 
+     * Protected helper method to read 64 bits and changing the order of 
+     * each bytes. 
+     * @param DataInputStream 
+     * @return 32 bits swapped value. 
      * @exception IOException
      */
     protected int rllong(DataInputStream dis) throws IOException {
 
         int b1, b2, b3, b4 ;
         int i = 0;
-
-        i = dis.readInt();
-
-        b1 = ( i & 0xFF ) << 24 ;
-        b2 = ( i & 0xFF00 ) << 8;
-        b3 = ( i & 0xFF0000 ) >> 8;
-        b4 = ( i & 0xFF000000 ) >>> 24;
-
-        i = ( b1 | b2 | b3 | b4 );
-
+ 
+       	i = dis.readInt();
+ 
+       	b1 = ( i & 0xFF ) << 24 ;
+       	b2 = ( i & 0xFF00 ) << 8;
+       	b3 = ( i & 0xFF0000 ) >> 8;
+       	b4 = ( i & 0xFF000000 ) >>> 24;
+ 
+       	i = ( b1 | b2 | b3 | b4 );
+ 
         return i;
     }
 
@@ -193,14 +194,14 @@ abstract class SunFileReader extends AudioFileReader {
     protected int big2little(int i) {
 
         int b1, b2, b3, b4 ;
-
-        b1 = ( i & 0xFF ) << 24 ;
-        b2 = ( i & 0xFF00 ) << 8;
-        b3 = ( i & 0xFF0000 ) >> 8;
-        b4 = ( i & 0xFF000000 ) >>> 24;
-
-        i = ( b1 | b2 | b3 | b4 );
-
+ 
+       	b1 = ( i & 0xFF ) << 24 ;
+       	b2 = ( i & 0xFF00 ) << 8;
+       	b3 = ( i & 0xFF0000 ) >> 8;
+       	b4 = ( i & 0xFF000000 ) >>> 24;
+ 
+       	i = ( b1 | b2 | b3 | b4 );
+ 
         return i;
     }
 
@@ -210,20 +211,20 @@ abstract class SunFileReader extends AudioFileReader {
      * @param DataInputStream
      * @return the swapped value.
      * @exception IOException
-     */
+     */ 
     protected short rlshort(DataInputStream dis)  throws IOException {
 
-        short s=0;
-        short high, low;
+	short s=0; 
+	short high, low;
 
-        s = dis.readShort();
-
-        high = (short)(( s & 0xFF ) << 8) ;
-        low = (short)(( s & 0xFF00 ) >>> 8);
-
-        s = (short)( high | low );
-
-        return s;
+	s = dis.readShort();
+		
+	high = (short)(( s & 0xFF ) << 8) ;
+	low = (short)(( s & 0xFF00 ) >>> 8);
+		
+	s = (short)( high | low );
+		
+	return s;
     }
 
     /**
@@ -234,26 +235,26 @@ abstract class SunFileReader extends AudioFileReader {
      */
     protected short big2littleShort(short i) {
 
-        short high, low;
+	short high, low;
 
-        high = (short)(( i & 0xFF ) << 8) ;
-        low = (short)(( i & 0xFF00 ) >>> 8);
+	high = (short)(( i & 0xFF ) << 8) ;
+	low = (short)(( i & 0xFF00 ) >>> 8);
 
-        i = (short)( high | low );
+	i = (short)( high | low );
 
-        return i;
+	return i;
     }
 
 
-        /** Calculates the frame size for PCM frames.
-         * Note that this method is appropriate for non-packed samples.
-         * For instance, 12 bit, 2 channels will return 4 bytes, not 3.
-         * @param sampleSizeInBits the size of a single sample in bits
-         * @param channels the number of channels
-         * @return the size of a PCM frame in bytes.
-         */
-        protected static int calculatePCMFrameSize(int sampleSizeInBits,
-                                                                                        int channels) {
-                return ((sampleSizeInBits + 7) / 8) * channels;
-        }
+	/** Calculates the frame size for PCM frames.
+	 * Note that this method is appropriate for non-packed samples.
+	 * For instance, 12 bit, 2 channels will return 4 bytes, not 3.
+	 * @param sampleSizeInBits the size of a single sample in bits
+	 * @param channels the number of channels
+	 * @return the size of a PCM frame in bytes.
+	 */
+	protected static int calculatePCMFrameSize(int sampleSizeInBits,
+											int channels) {
+		return ((sampleSizeInBits + 7) / 8) * channels;
+	}
 }

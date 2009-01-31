@@ -42,7 +42,7 @@ import sun.security.util.ObjectIdentifier;
  *     TimeStampReq ::= SEQUENCE {
  *         version           INTEGER { v1(1) },
  *         messageImprint    MessageImprint
- *           -- a hash algorithm OID and the hash value of the data to be
+ *           -- a hash algorithm OID and the hash value of the data to be 
  *           -- time-stamped.
  *         reqPolicy         TSAPolicyId    OPTIONAL,
  *         nonce             INTEGER        OPTIONAL,
@@ -58,6 +58,7 @@ import sun.security.util.ObjectIdentifier;
  * </pre>
  *
  * @since 1.5
+ * @version %I%, %G%
  * @author Vincent Ryan
  * @see Timestamper
  */
@@ -67,8 +68,8 @@ public class TSRequest {
     private static final ObjectIdentifier SHA1_OID;
     private static final ObjectIdentifier MD5_OID;
     static {
-        ObjectIdentifier sha1 = null;
-        ObjectIdentifier md5 = null;
+	ObjectIdentifier sha1 = null;
+	ObjectIdentifier md5 = null;
         try {
             sha1 = new ObjectIdentifier("1.3.14.3.2.26");
             md5 = new ObjectIdentifier("1.2.840.113549.2.5");
@@ -101,23 +102,23 @@ public class TSRequest {
      */
     public TSRequest(byte[] hashValue, String hashAlgorithm) {
 
-        // Check the common hash algorithms
-        if ("MD5".equalsIgnoreCase(hashAlgorithm)) {
-            hashAlgorithmId = MD5_OID;
-            // Check that the hash value matches the hash algorithm
-            assert hashValue.length == 16;
+	// Check the common hash algorithms
+	if ("MD5".equalsIgnoreCase(hashAlgorithm)) {
+	    hashAlgorithmId = MD5_OID;
+	    // Check that the hash value matches the hash algorithm
+	    assert hashValue.length == 16;
 
-        } else if ("SHA-1".equalsIgnoreCase(hashAlgorithm) ||
-            "SHA".equalsIgnoreCase(hashAlgorithm) ||
-            "SHA1".equalsIgnoreCase(hashAlgorithm)) {
-            hashAlgorithmId = SHA1_OID;
-            // Check that the hash value matches the hash algorithm
-            assert hashValue.length == 20;
+	} else if ("SHA-1".equalsIgnoreCase(hashAlgorithm) ||
+	    "SHA".equalsIgnoreCase(hashAlgorithm) ||
+	    "SHA1".equalsIgnoreCase(hashAlgorithm)) {
+	    hashAlgorithmId = SHA1_OID;
+	    // Check that the hash value matches the hash algorithm
+	    assert hashValue.length == 20;
 
-        }
-        // Clone the hash value
-        this.hashValue = new byte[hashValue.length];
-        System.arraycopy(hashValue, 0, this.hashValue, 0, hashValue.length);
+	} 
+	// Clone the hash value
+	this.hashValue = new byte[hashValue.length];
+	System.arraycopy(hashValue, 0, this.hashValue, 0, hashValue.length);
     }
 
     /**
@@ -126,7 +127,7 @@ public class TSRequest {
      * @param version The TSP version.
      */
     public void setVersion(int version) {
-        this.version = version;
+	this.version = version;
     }
 
     /**
@@ -135,27 +136,27 @@ public class TSRequest {
      * @param version The policy object identifier.
      */
     public void setPolicyId(String policyId) {
-        this.policyId = policyId;
+	this.policyId = policyId;
     }
 
     /**
-     * Sets a nonce.
+     * Sets a nonce. 
      * A nonce is a single-use random number.
      *
      * @param nonce The nonce value.
      */
     public void setNonce(BigInteger nonce) {
-        this.nonce = nonce;
+	this.nonce = nonce;
     }
 
     /**
      * Request that the TSA include its signing certificate in the response.
      *
-     * @param returnCertificate True if the TSA should return its signing
+     * @param returnCertificate True if the TSA should return its signing 
      *                          certificate. By default it is not returned.
      */
     public void requestCertificate(boolean returnCertificate) {
-        this.returnCertificate = returnCertificate;
+	this.returnCertificate = returnCertificate;
     }
 
     /**
@@ -164,38 +165,38 @@ public class TSRequest {
      * @param extensions The protocol extensions.
      */
     public void setExtensions(X509Extension[] extensions) {
-        this.extensions = extensions;
+	this.extensions = extensions;
     }
 
     public byte[] encode() throws IOException {
 
-        DerOutputStream request = new DerOutputStream();
+	DerOutputStream request = new DerOutputStream();
 
-        // encode version
-        request.putInteger(version);
+	// encode version
+	request.putInteger(version);
 
-        // encode messageImprint
-        DerOutputStream messageImprint = new DerOutputStream();
-        DerOutputStream hashAlgorithm = new DerOutputStream();
-        hashAlgorithm.putOID(hashAlgorithmId);
-        messageImprint.write(DerValue.tag_Sequence, hashAlgorithm);
-        messageImprint.putOctetString(hashValue);
-        request.write(DerValue.tag_Sequence, messageImprint);
+	// encode messageImprint
+	DerOutputStream messageImprint = new DerOutputStream();
+	DerOutputStream hashAlgorithm = new DerOutputStream();
+	hashAlgorithm.putOID(hashAlgorithmId);
+	messageImprint.write(DerValue.tag_Sequence, hashAlgorithm);
+	messageImprint.putOctetString(hashValue);
+	request.write(DerValue.tag_Sequence, messageImprint);
 
-        // encode optional elements
+	// encode optional elements
 
-        if (policyId != null) {
-            request.putOID(new ObjectIdentifier(policyId));
-        }
-        if (nonce != null) {
-            request.putInteger(nonce);
-        }
-        if (returnCertificate) {
-            request.putBoolean(true);
-        }
+	if (policyId != null) {
+	    request.putOID(new ObjectIdentifier(policyId));
+	}
+	if (nonce != null) {
+	    request.putInteger(nonce);
+	}
+	if (returnCertificate) {
+	    request.putBoolean(true);
+	}
 
-        DerOutputStream out = new DerOutputStream();
-        out.write(DerValue.tag_Sequence, request);
-        return out.toByteArray();
+	DerOutputStream out = new DerOutputStream();
+	out.write(DerValue.tag_Sequence, request);
+	return out.toByteArray();
     }
 }

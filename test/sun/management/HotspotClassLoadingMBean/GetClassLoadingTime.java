@@ -39,7 +39,7 @@ import sun.management.*;
 public class GetClassLoadingTime {
 
     private static HotspotClassLoadingMBean mbean =
-        (HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
+	(HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
 
     // Careful with these values.
     private static final long MIN_TIME_FOR_PASS = 1;
@@ -52,40 +52,40 @@ public class GetClassLoadingTime {
             trace = true;
         }
 
-        long time = mbean.getClassLoadingTime();
+	long time = mbean.getClassLoadingTime();
 
-        if (trace) {
-            System.out.println("Class loading time (ms): " + time);
-        }
+	if (trace) {
+	    System.out.println("Class loading time (ms): " + time);
+	}
 
-        if (time < MIN_TIME_FOR_PASS || time > MAX_TIME_FOR_PASS) {
-            throw new RuntimeException("Class loading time " +
-                                       "illegal value: " + time + " ms " +
-                                       "(MIN = " + MIN_TIME_FOR_PASS + "; " +
-                                       "MAX = " + MAX_TIME_FOR_PASS + ")");
-        }
+	if (time < MIN_TIME_FOR_PASS || time > MAX_TIME_FOR_PASS) {
+	    throw new RuntimeException("Class loading time " + 
+				       "illegal value: " + time + " ms " + 
+				       "(MIN = " + MIN_TIME_FOR_PASS + "; " +
+				       "MAX = " + MAX_TIME_FOR_PASS + ")");
+	}
 
-        // Load some classes to increase the time
-        for (int i = 0; i < 1000; i++) {
-            Class.forName("ClassToLoad0", true, new KlassLoader());
-        }
+	// Load some classes to increase the time
+	for (int i = 0; i < 1000; i++) {
+	    Class.forName("ClassToLoad0", true, new KlassLoader());
+	}
+	
+	long time2 = mbean.getClassLoadingTime();
+	long count = mbean.getLoadedClassCount();
+	
+	if (trace) {
+	    System.out.println("(new count is " + count + ")");
+	    System.out.println("Class loading time2 (ms): " + time2);
+	}
 
-        long time2 = mbean.getClassLoadingTime();
-        long count = mbean.getLoadedClassCount();
+	if (time2 <= time) {
+	    throw new RuntimeException("Class loading time " + 
+				       "did not increase when class loaded" +
+				       "(time = " + time + "; " +
+				       "time2 = " + time2 + ")");
+	}
 
-        if (trace) {
-            System.out.println("(new count is " + count + ")");
-            System.out.println("Class loading time2 (ms): " + time2);
-        }
-
-        if (time2 <= time) {
-            throw new RuntimeException("Class loading time " +
-                                       "did not increase when class loaded" +
-                                       "(time = " + time + "; " +
-                                       "time2 = " + time2 + ")");
-        }
-
-        System.out.println("Test passed.");
+	System.out.println("Test passed.");
     }
 }
 
@@ -100,7 +100,7 @@ class KlassLoader extends ClassLoader {
       super(null);
   }
 
-  protected synchronized Class findClass(String name)
+  protected synchronized Class findClass(String name) 
                         throws ClassNotFoundException {
         String cname = klassDir
             + (klassDir == "" ? "" : "/")
@@ -138,5 +138,5 @@ class KlassLoader extends ClassLoader {
         }
 
         return defineClass(name, data, 0, data.length);
-  }
+  }  
 }

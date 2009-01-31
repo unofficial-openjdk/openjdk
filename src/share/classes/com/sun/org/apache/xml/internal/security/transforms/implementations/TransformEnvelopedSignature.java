@@ -79,63 +79,63 @@ public class TransformEnvelopedSignature extends TransformSpi {
             input.setNodesetXPath(Canonicalizer.XPATH_C14N_WITH_COMMENTS);
          }
          */
-
+         
          Element transformElement = this._transformObject.getElement();
          Node signatureElement = transformElement;
+         
 
-
-         signatureElement = searchSignatureElement(signatureElement);
-                input.setExcludeNode(signatureElement);
-                input.addNodeFilter(new EnvelopedNodeFilter(signatureElement));
-                return input;
-
+         signatureElement = searchSignatureElement(signatureElement);        
+         	input.setExcludeNode(signatureElement);   
+         	input.addNodeFilter(new EnvelopedNodeFilter(signatureElement));
+         	return input;
+         
          //
-
-
+         
+      
    }
 
    /**
-    * @param signatureElement
+    * @param signatureElement    
     * @return the node that is the signature
     * @throws TransformationException
     */
     private static Node searchSignatureElement(Node signatureElement) throws TransformationException {
-            boolean found=false;
+	    boolean found=false;
+        
+	    while (true) {
+	    	if ((signatureElement == null)
+	            || (signatureElement.getNodeType() == Node.DOCUMENT_NODE)) {
+	    		break;
+	    	}
+	    	Element el=(Element)signatureElement;
+	    	if (el.getNamespaceURI().equals(Constants.SignatureSpecNS)
+                    && 
+	               el.getLocalName().equals(Constants._TAG_SIGNATURE)) {
+	    		found = true;
+	    		break;
+	    	}
 
-            while (true) {
-                if ((signatureElement == null)
-                    || (signatureElement.getNodeType() == Node.DOCUMENT_NODE)) {
-                        break;
-                }
-                Element el=(Element)signatureElement;
-                if (el.getNamespaceURI().equals(Constants.SignatureSpecNS)
-                    &&
-                       el.getLocalName().equals(Constants._TAG_SIGNATURE)) {
-                        found = true;
-                        break;
-                }
+	    	signatureElement = signatureElement.getParentNode();
+	    }
 
-                signatureElement = signatureElement.getParentNode();
-            }
-
-            if (!found) {
-              throw new TransformationException(
-               "envelopedSignatureTransformNotInSignatureElement");
-            }
-            return signatureElement;
+	    if (!found) {
+	      throw new TransformationException(
+	       "envelopedSignatureTransformNotInSignatureElement");
+	    }
+	    return signatureElement;
     }
     class EnvelopedNodeFilter implements NodeFilter {
-        Node exclude;
-        EnvelopedNodeFilter(Node n) {
-                exclude=n;
-        }
-                /**
-                 * @see com.sun.org.apache.xml.internal.security.signature.NodeFilter#isNodeInclude(org.w3c.dom.Node)
-                 */
-                public boolean isNodeInclude(Node n) {
-                        // TODO Optimize me.
-                        return !XMLUtils.isDescendantOrSelf(exclude,n);
-                }
-
+    	Node exclude;    	
+    	EnvelopedNodeFilter(Node n) {
+    		exclude=n;
+    	}
+		/**
+		 * @see com.sun.org.apache.xml.internal.security.signature.NodeFilter#isNodeInclude(org.w3c.dom.Node)
+		 */
+		public boolean isNodeInclude(Node n) {
+			// TODO Optimize me.
+			return !XMLUtils.isDescendantOrSelf(exclude,n);
+		}
+    	
     }
 }

@@ -70,7 +70,7 @@ public class MethodInfo implements java.io.Serializable {
     }
 
     public String toString() {
-        return getName() + " type = " + getType() +
+        return getName() + " type = " + getType() + 
             " compileSize = " + getCompileSize();
     }
 

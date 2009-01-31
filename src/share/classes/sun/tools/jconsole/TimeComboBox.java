@@ -41,51 +41,51 @@ public class TimeComboBox extends JComboBox implements ItemListener, PropertyCha
     private ArrayList<Plotter> plotters = new ArrayList<Plotter>();
 
     public TimeComboBox(Plotter... plotterArray) {
-        super(Plotter.rangeNames);
+	super(Plotter.rangeNames);
 
-        addItemListener(this);
+	addItemListener(this);
 
-        if (plotterArray != null && plotterArray.length > 0) {
-            plotters.addAll(Arrays.asList(plotterArray));
-            selectValue(plotterArray[0].getViewRange());
-            for (Plotter plotter : plotters) {
-                plotter.addPropertyChangeListener(this);
-            }
-        }
+	if (plotterArray != null && plotterArray.length > 0) {
+	    plotters.addAll(Arrays.asList(plotterArray));
+	    selectValue(plotterArray[0].getViewRange());
+	    for (Plotter plotter : plotters) {
+		plotter.addPropertyChangeListener(this);
+	    }
+	}
     }
 
     public void addPlotter(Plotter plotter) {
-        plotters.add(plotter);
-        if (plotters.size() == 1) {
-            selectValue(plotter.getViewRange());
-        }
-        plotter.addPropertyChangeListener(this);
+	plotters.add(plotter);
+	if (plotters.size() == 1) {
+	    selectValue(plotter.getViewRange());
+	}
+	plotter.addPropertyChangeListener(this);
     }
 
     public void itemStateChanged(ItemEvent ev) {
-        for (Plotter plotter : plotters) {
-            plotter.setViewRange(Plotter.rangeValues[getSelectedIndex()]);
-        }
+	for (Plotter plotter : plotters) {
+	    plotter.setViewRange(Plotter.rangeValues[getSelectedIndex()]);
+	}
     }
 
     private void selectValue(int value) {
-        // Set the selected value
-        for (int i = 0; i < Plotter.rangeValues.length; i++) {
-            if (Plotter.rangeValues[i] == value) {
-                setSelectedItem(Plotter.rangeNames[i]);
-            }
-        }
-        // Make sure all plotters show this value
-        if (plotters.size() > 1) {
-            for (Plotter plotter : plotters) {
-                plotter.setViewRange(value);
-            }
-        }
+	// Set the selected value
+	for (int i = 0; i < Plotter.rangeValues.length; i++) {
+	    if (Plotter.rangeValues[i] == value) {
+		setSelectedItem(Plotter.rangeNames[i]);
+	    }
+	}
+	// Make sure all plotters show this value
+	if (plotters.size() > 1) {
+	    for (Plotter plotter : plotters) {
+		plotter.setViewRange(value);
+	    }
+	}
     }
 
     public void propertyChange(PropertyChangeEvent ev) {
-        if (ev.getPropertyName() == "viewRange") {
-            selectValue((Integer)ev.getNewValue());
-        }
+	if (ev.getPropertyName() == "viewRange") {
+	    selectValue((Integer)ev.getNewValue());
+	}
     }
 }

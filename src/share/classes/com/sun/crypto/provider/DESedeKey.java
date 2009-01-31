@@ -51,7 +51,7 @@ final class DESedeKey implements SecretKey {
      * @exception InvalidKeyException if the given key has a wrong size
      */
     DESedeKey(byte[] key) throws InvalidKeyException {
-        this(key, 0);
+	this(key, 0);
     }
 
     /**
@@ -66,27 +66,27 @@ final class DESedeKey implements SecretKey {
      */
     DESedeKey(byte[] key, int offset) throws InvalidKeyException {
 
-        if (key==null || ((key.length-offset)<DESedeKeySpec.DES_EDE_KEY_LEN)) {
-            throw new InvalidKeyException("Wrong key size");
-        }
-        this.key = new byte[DESedeKeySpec.DES_EDE_KEY_LEN];
-        System.arraycopy(key, offset, this.key, 0,
-                         DESedeKeySpec.DES_EDE_KEY_LEN);
-        DESKeyGenerator.setParityBit(this.key, 0);
-        DESKeyGenerator.setParityBit(this.key, 8);
-        DESKeyGenerator.setParityBit(this.key, 16);
+	if (key==null || ((key.length-offset)<DESedeKeySpec.DES_EDE_KEY_LEN)) {
+	    throw new InvalidKeyException("Wrong key size");
+	}
+	this.key = new byte[DESedeKeySpec.DES_EDE_KEY_LEN];
+	System.arraycopy(key, offset, this.key, 0,
+			 DESedeKeySpec.DES_EDE_KEY_LEN);
+	DESKeyGenerator.setParityBit(this.key, 0);
+	DESKeyGenerator.setParityBit(this.key, 8);
+	DESKeyGenerator.setParityBit(this.key, 16);
     }
 
     public byte[] getEncoded() {
-        return (byte[])this.key.clone();
+	return (byte[])this.key.clone();
     }
 
     public String getAlgorithm() {
-        return "DESede";
+	return "DESede";
     }
 
     public String getFormat() {
-        return "RAW";
+	return "RAW";
     }
 
     /**
@@ -94,29 +94,29 @@ final class DESedeKey implements SecretKey {
      * Objects that are equal will also have the same hashcode.
      */
     public int hashCode() {
-        int retval = 0;
-        for (int i = 1; i < this.key.length; i++) {
-            retval += this.key[i] * i;
-        }
-        return(retval ^= "desede".hashCode());
+	int retval = 0;
+	for (int i = 1; i < this.key.length; i++) {
+	    retval += this.key[i] * i;
+	}
+	return(retval ^= "desede".hashCode());
     }
 
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
+	if (this == obj)
+	    return true;
 
-        if (!(obj instanceof SecretKey))
-            return false;
+	if (!(obj instanceof SecretKey))
+	    return false;
 
-        String thatAlg = ((SecretKey)obj).getAlgorithm();
-        if (!(thatAlg.equalsIgnoreCase("DESede"))
-            && !(thatAlg.equalsIgnoreCase("TripleDES")))
-            return false;
+	String thatAlg = ((SecretKey)obj).getAlgorithm();
+	if (!(thatAlg.equalsIgnoreCase("DESede"))
+	    && !(thatAlg.equalsIgnoreCase("TripleDES")))
+	    return false;
 
-        byte[] thatKey = ((SecretKey)obj).getEncoded();
-        boolean ret = java.util.Arrays.equals(this.key, thatKey);
-        java.util.Arrays.fill(thatKey, (byte)0x00);
-        return ret;
+	byte[] thatKey = ((SecretKey)obj).getEncoded();
+	boolean ret = java.util.Arrays.equals(this.key, thatKey);
+	java.util.Arrays.fill(thatKey, (byte)0x00);
+	return ret;
     }
 
     /**
@@ -124,10 +124,10 @@ final class DESedeKey implements SecretKey {
      * a stream.
      */
     private void readObject(java.io.ObjectInputStream s)
-         throws java.io.IOException, ClassNotFoundException
+	 throws java.io.IOException, ClassNotFoundException
     {
-        s.defaultReadObject();
-        key = (byte[])key.clone();
+	s.defaultReadObject();
+	key = (byte[])key.clone();
     }
 
     /**
@@ -139,10 +139,10 @@ final class DESedeKey implements SecretKey {
      * this DESede key could not be created
      */
     private Object writeReplace() throws java.io.ObjectStreamException {
-        return new KeyRep(KeyRep.Type.SECRET,
-                        getAlgorithm(),
-                        getFormat(),
-                        getEncoded());
+	return new KeyRep(KeyRep.Type.SECRET,
+			getAlgorithm(),
+			getFormat(),
+			getEncoded());
     }
 
     /**
@@ -150,13 +150,14 @@ final class DESedeKey implements SecretKey {
      * set to zero when there are no more references to it.
      */
     protected void finalize() throws Throwable {
-        try {
-            if (this.key != null) {
-                java.util.Arrays.fill(this.key, (byte)0x00);
-                this.key = null;
-            }
-        } finally {
-            super.finalize();
-        }
+	try {
+	    if (this.key != null) {
+		java.util.Arrays.fill(this.key, (byte)0x00);
+		this.key = null;
+	    }
+	} finally {
+	    super.finalize();
+	}
     }
 }
+

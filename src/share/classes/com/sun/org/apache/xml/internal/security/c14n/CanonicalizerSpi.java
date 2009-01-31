@@ -49,7 +49,7 @@ public abstract class CanonicalizerSpi {
     *
     *
     * @param inputBytes
-    * @return the c14n bytes.
+    * @return the c14n bytes. 
     *
     *
     * @throws CanonicalizationException
@@ -116,7 +116,7 @@ public abstract class CanonicalizerSpi {
          .engineCanonicalizeXPathNodeSet(XMLUtils
             .convertNodelistToSet(xpathNodeSet));
    }
-
+   
    /**
     * Method engineCanonicalizeXPathNodeSet
     *
@@ -138,12 +138,12 @@ public abstract class CanonicalizerSpi {
     * @return the URI
     */
    public abstract String engineGetURI();
-
+   
    /** Returns the URI if include comments
     * @return true if include.
     */
    public abstract boolean engineGetIncludeComments();
-
+   
    /**
     * C14n a nodeset
     *
@@ -185,14 +185,14 @@ public abstract class CanonicalizerSpi {
     */
    public abstract byte[] engineCanonicalizeSubTree(Node rootNode, String inclusiveNamespaces)
       throws CanonicalizationException;
-
+   
    /**
-    * Sets the writter where the cannocalization ends. ByteArrayOutputStream if
+    * Sets the writter where the cannocalization ends. ByteArrayOutputStream if 
     * none is setted.
     * @param os
     */
    public abstract void setWriter(OutputStream os);
-
+   
    /** Reset the writter after a c14n */
    protected boolean reset=false;
    //J+

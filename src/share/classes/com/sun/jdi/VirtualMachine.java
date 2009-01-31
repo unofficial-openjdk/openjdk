@@ -44,7 +44,7 @@ import java.util.Map;
  * <P>
  * Instances of this interface are created by instances of
  * {@link com.sun.jdi.connect.Connector}. For example,
- * an {@link com.sun.jdi.connect.AttachingConnector AttachingConnector}
+ * an {@link com.sun.jdi.connect.AttachingConnector AttachingConnector} 
  * attaches to a target VM and returns its virtual machine mirror.
  * A Connector will typically create a VirtualMachine by invoking
  * the VirtualMachineManager's {@link
@@ -112,19 +112,19 @@ public interface VirtualMachine extends Mirror {
      * All classes given are redefined according to the
      * definitions supplied.  A method in a redefined class
      * is called 'equivalent' (to the old version of the
-     * method) if
+     * method) if 
      * <UL>
-     * <LI>their bytecodes are the same except for indicies into
+     * <LI>their bytecodes are the same except for indicies into 
      *   the constant pool, and
      * <LI>the referenced constants are equal.
      * </UL>
      * Otherwise, the new method is called 'non-equivalent'.
-     * If a redefined method has active stack frames, those active
+     * If a redefined method has active stack frames, those active 
      * frames continue to run the bytecodes of the previous version of the
      * method.  If the new version of such a method is non-equivalent,
-     * then a method from one of these active frames is called 'obsolete' and
-     * {@link Method#isObsolete Method.isObsolete()}
-     * will return true when called on one of these methods.
+     * then a method from one of these active frames is called 'obsolete' and 
+     * {@link Method#isObsolete Method.isObsolete()} 
+     * will return true when called on one of these methods. 
      * If resetting such a frame is desired, use
      * {@link ThreadReference#popFrames ThreadReference.popFrames(StackFrame)}
      * to pop the old obsolete method execution from the stack.
@@ -190,8 +190,8 @@ public interface VirtualMachine extends Mirror {
      * don't correspond to the reference type (the names
      * don't match).
      *
-     * @throws java.lang.VerifyError if a "verifier" detects
-     * that a class, though well formed, contains an internal
+     * @throws java.lang.VerifyError if a "verifier" detects 
+     * that a class, though well formed, contains an internal 
      * inconsistency or security problem.
      *
      * @throws java.lang.ClassFormatError if the bytes
@@ -226,7 +226,7 @@ public interface VirtualMachine extends Mirror {
      * by the target VM. Thread objects that have
      * not yet been started
      * (see {@link java.lang.Thread#start Thread.start()})
-     * and thread objects that have
+     * and thread objects that have 
      * completed their execution are not included in the returned list.
      *
      * @return a list of {@link ThreadReference} objects, one for each
@@ -580,7 +580,7 @@ public interface VirtualMachine extends Mirror {
      */
     boolean canPopFrames();
 
-    /**
+    /**     
      * Determines if the target VM supports getting
      * the source debug extension.
      * @see ReferenceType#sourceDebugExtension
@@ -606,7 +606,7 @@ public interface VirtualMachine extends Mirror {
 
     /**
      * Determines if the target VM supports the inclusion of return values
-     * in
+     * in 
      * {@link com.sun.jdi.event.MethodExitEvent}s.
      * @see com.sun.jdi.request.EventRequestManager#createMethodExitRequest
      *
@@ -620,7 +620,7 @@ public interface VirtualMachine extends Mirror {
     /**
      * Determines if the target VM supports the accessing of class instances,
      * instance counts, and referring objects.
-     *
+     * 
      * @see #instanceCounts
      * @see ReferenceType#instances(long)
      * @see ObjectReference#referringObjects(long)
@@ -648,7 +648,7 @@ public interface VirtualMachine extends Mirror {
     /**
      * Determines if the target VM supports the forcing of a method to
      * return early.
-     *
+     * 
      * @see ThreadReference#forceEarlyReturn(Value)
      *
      * @return <code>true</code> if the feature is supported,
@@ -662,7 +662,7 @@ public interface VirtualMachine extends Mirror {
      * Determines if the target VM is a read-only VM.  If a method which
      * would modify the state of the VM is called on a read-only VM,
      * then {@link VMCannotBeModifiedException} is thrown.
-     *
+     * 
      * @return <code>true</code> if the feature is supported,
      * <code>false</code> otherwise.
      *
@@ -671,7 +671,7 @@ public interface VirtualMachine extends Mirror {
 
     boolean canBeModified();
 
-    /**
+    /**  
      * Determines if the target VM supports the creation of
      * {@link com.sun.jdi.request.MonitorContendedEnterRequest}s.
      * {@link com.sun.jdi.request.MonitorContendedEnteredRequest}s.
@@ -690,7 +690,7 @@ public interface VirtualMachine extends Mirror {
 
     boolean canRequestMonitorEvents();
 
-    /**
+    /**  
      * Determines if the target VM supports getting which
      * frame has acquired a monitor.
      * @see com.sun.jdi.ThreadReference#ownedMonitorsAndFrames
@@ -700,10 +700,10 @@ public interface VirtualMachine extends Mirror {
      *
      * @since 1.6
      */
-
+ 
      boolean canGetMonitorFrameInfo();
 
-
+    
     /**
      * Determines if the target VM supports reading class file
      * major and minor versions.
@@ -721,7 +721,7 @@ public interface VirtualMachine extends Mirror {
     /**
      * Determines if the target VM supports getting constant pool
      * information of a class.
-     *
+     * 
      * @see ReferenceType#constantPoolCount()
      * @see ReferenceType#constantPool()
      *
@@ -743,7 +743,7 @@ public interface VirtualMachine extends Mirror {
      * single stepping.
      *
      * @param stratum the stratum to set as VM default,
-     * or null to use per-class defaults.
+     * or null to use per-class defaults. 
      *
      * @throws java.lang.UnsupportedOperationException if the
      * target virtual machine does not support this operation.
@@ -782,8 +782,8 @@ public interface VirtualMachine extends Mirror {
      * @param refTypes the list of {@link ReferenceType} objects for which counts
      *        are to be obtained.
      *
-     * @return an array of <code>long</code> containing one element for each
-     *         element in the 'refTypes' list.  Element i of the array contains
+     * @return an array of <code>long</code> containing one element for each 
+     *         element in the 'refTypes' list.  Element i of the array contains 
      *         the number of instances in the target VM of the ReferenceType at
      *         position i in the 'refTypes' list.
      *         If the 'refTypes' list is empty, a zero-length array is returned.
@@ -791,7 +791,7 @@ public interface VirtualMachine extends Mirror {
      *         is returned for its instance count.
      * @throws java.lang.UnsupportedOperationException if
      * the target virtual machine does not support this
-     * operation - see
+     * operation - see 
      * {@link VirtualMachine#canGetInstanceInfo() canGetInstanceInfo()}
      * @throws NullPointerException if the 'refTypes' list is null.
      * @since 1.6
@@ -861,3 +861,7 @@ public interface VirtualMachine extends Mirror {
      */
     void setDebugTraceMode(int traceFlags);
 }
+
+
+
+            

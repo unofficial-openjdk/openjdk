@@ -57,19 +57,19 @@ mlib_status awt_getImagingLib(JNIEnv *env, mlibFnS_t *sMlibFns,
     static int s_verbose = 1;
     mlib_status ret = MLIB_SUCCESS;
     struct utsname name;
-
+     
     /*
      * Find out the machine name. If it is an SUN ultra, we
      * can use the vis library
      */
     if ((uname(&name) >= 0) && (getenv("NO_VIS") == NULL) &&
-        (strncmp(name.machine, "sun4u" , 5) == 0) ||
+        (strncmp(name.machine, "sun4u" , 5) == 0) || 
         ((strncmp(name.machine, "sun4v" , 5) == 0) &&
          (getenv("USE_VIS_ON_SUN4V") != NULL)))
     {
         handle = dlopen("libmlib_image_v.so", RTLD_LAZY);
     }
-
+        
     if (handle == NULL) {
         handle = dlopen("libmlib_image.so", RTLD_LAZY);
     }
@@ -80,11 +80,11 @@ mlib_status awt_getImagingLib(JNIEnv *env, mlibFnS_t *sMlibFns,
         }
         return MLIB_FAILURE;
     }
-
+    
     /* So, if we are here, then either vis or generic version of
      * medialib library was sucessfuly loaded.
      * Let's try to initialize handlers...
-     */
+     */ 
     if ((tempSysFns.createFP = (MlibCreateFP_t)dlsym(handle,
                                        "j2d_mlib_ImageCreate")) == NULL) {
         if (s_timeIt) {
@@ -112,12 +112,12 @@ mlib_status awt_getImagingLib(JNIEnv *env, mlibFnS_t *sMlibFns,
             ret = MLIB_FAILURE;
         }
     }
-
+                                                                                           
     /* Set the system functions */
     if (ret == MLIB_SUCCESS) {
         *sMlibSysFns = tempSysFns;
     }
-
+    
     /* Loop through all of the fns and load them from the next library */
     mptr = sMlibFns;
     i = 0;
@@ -189,7 +189,7 @@ void awt_getBIColorOrder(int type, int *colorOrder) {
         break;
     }
 }
-
+        
 /***************************************************************************
  *                          Static Functions                               *
  ***************************************************************************/
@@ -222,3 +222,5 @@ static void stop_timer(int numsec, int ntimes)
     interval.it_value.tv_usec = 0;
     setitimer(ITIMER_PROF, &interval, 0);
 }
+
+

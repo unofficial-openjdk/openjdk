@@ -29,77 +29,78 @@ package sun.security.ssl;
 import java.security.*;
 
 /**
- * Abstraction for the SSL/TLS hash of all handshake messages that is
+ * Abstraction for the SSL/TLS hash of all handshake messages that is 
  * maintained to verify the integrity of the negotiation. Internally,
  * it consists of an MD5 and an SHA1 digest. They are used in the client
  * and server finished messages and in certificate verify messages (if sent).
  *
  * This class transparently deals with cloneable and non-cloneable digests.
  *
+ * @version %I%, %G%
  */
 final class HandshakeHash {
 
     private final MessageDigest md5, sha;
-
+    
     /**
      * Create a new HandshakeHash. needCertificateVerify indicates whether
      * a hash for the certificate verify message is required.
      */
     HandshakeHash(boolean needCertificateVerify) {
-        int n = needCertificateVerify ? 3 : 2;
-        try {
-            md5 = CloneableDigest.getDigest("MD5", n);
-            sha = CloneableDigest.getDigest("SHA", n);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException
-                        ("Algorithm MD5 or SHA not available", e);
-
-        }
+	int n = needCertificateVerify ? 3 : 2;
+	try {
+	    md5 = CloneableDigest.getDigest("MD5", n);
+	    sha = CloneableDigest.getDigest("SHA", n);
+	} catch (NoSuchAlgorithmException e) {
+	    throw new RuntimeException
+	    		("Algorithm MD5 or SHA not available", e);
+	    
+	}
     }
-
+    
     void update(byte b) {
-        md5.update(b);
-        sha.update(b);
+	md5.update(b);
+	sha.update(b);
     }
-
+    
     void update(byte[] b, int offset, int len) {
-        md5.update(b, offset, len);
-        sha.update(b, offset, len);
+	md5.update(b, offset, len);
+	sha.update(b, offset, len);
     }
-
+    
     /**
      * Reset the remaining digests. Note this does *not* reset the numbe of
      * digest clones that can be obtained. Digests that have already been
      * cloned and are gone remain gone.
      */
     void reset() {
-        md5.reset();
-        sha.reset();
+	md5.reset();
+	sha.reset();
     }
-
+    
     /**
      * Return a new MD5 digest updated with all data hashed so far.
      */
     MessageDigest getMD5Clone() {
-        return cloneDigest(md5);
+	return cloneDigest(md5);
     }
-
+    
     /**
      * Return a new SHA digest updated with all data hashed so far.
      */
     MessageDigest getSHAClone() {
-        return cloneDigest(sha);
+	return cloneDigest(sha);
     }
-
+    
     private static MessageDigest cloneDigest(MessageDigest digest) {
-        try {
-            return (MessageDigest)digest.clone();
-        } catch (CloneNotSupportedException e) {
-            // cannot occur for digests generated via CloneableDigest
-            throw new RuntimeException("Could not clone digest", e);
-        }
+	try {
+	    return (MessageDigest)digest.clone();
+	} catch (CloneNotSupportedException e) {
+	    // cannot occur for digests generated via CloneableDigest
+	    throw new RuntimeException("Could not clone digest", e);
+	}
     }
-
+    
 }
 
 /**
@@ -128,6 +129,7 @@ final class HandshakeHash {
  *
  * This class is not thread safe.
  *
+ * @version %I%, %G%
  */
 final class CloneableDigest extends MessageDigest implements Cloneable {
 
@@ -140,44 +142,44 @@ final class CloneableDigest extends MessageDigest implements Cloneable {
      */
     private final MessageDigest[] digests;
 
-    private CloneableDigest(MessageDigest digest, int n, String algorithm)
-            throws NoSuchAlgorithmException {
-        super(algorithm);
-        digests = new MessageDigest[n];
-        digests[0] = digest;
-        for (int i = 1; i < n; i++) {
-            digests[i] = JsseJce.getMessageDigest(algorithm);
-        }
+    private CloneableDigest(MessageDigest digest, int n, String algorithm) 
+    	    throws NoSuchAlgorithmException {
+	super(algorithm);
+	digests = new MessageDigest[n];
+	digests[0] = digest;
+	for (int i = 1; i < n; i++) {
+	    digests[i] = JsseJce.getMessageDigest(algorithm);
+	}
     }
 
     /**
      * Return a MessageDigest for the given algorithm that can be cloned the
-     * specified number of times. If the default implementation supports
-     * cloning, it is returned. Otherwise, an instance of this class is
+     * specified number of times. If the default implementation supports 
+     * cloning, it is returned. Otherwise, an instance of this class is 
      * returned.
      */
     static MessageDigest getDigest(String algorithm, int n)
-            throws NoSuchAlgorithmException {
-        MessageDigest digest = JsseJce.getMessageDigest(algorithm);
-        try {
-            digest.clone();
-            // already cloneable, use it
-            return digest;
-        } catch (CloneNotSupportedException e) {
-            return new CloneableDigest(digest, n, algorithm);
-        }
+    	    throws NoSuchAlgorithmException {
+	MessageDigest digest = JsseJce.getMessageDigest(algorithm);
+	try {
+	    digest.clone();
+	    // already cloneable, use it
+	    return digest;
+	} catch (CloneNotSupportedException e) {
+	    return new CloneableDigest(digest, n, algorithm);
+	}
     }
-
+    
     /**
      * Check if this object is still usable. If it has already been cloned the
      * maximum number of times, there are no digests left and this object can no
      * longer be used.
      */
     private void checkState() {
-        // XXX handshaking currently doesn't stop updating hashes...
-        // if (digests[0] == null) {
-        //     throw new IllegalStateException("no digests left");
-        // }
+	// XXX handshaking currently doesn't stop updating hashes...
+	// if (digests[0] == null) {
+	//     throw new IllegalStateException("no digests left");
+	// }
     }
 
     protected int engineGetDigestLength() {
@@ -188,7 +190,7 @@ final class CloneableDigest extends MessageDigest implements Cloneable {
     protected void engineUpdate(byte b) {
         checkState();
         for (int i = 0; (i < digests.length) && (digests[i] != null); i++) {
-            digests[i].update(b);
+	    digests[i].update(b);
         }
     }
 
@@ -200,49 +202,50 @@ final class CloneableDigest extends MessageDigest implements Cloneable {
     }
 
     protected byte[] engineDigest() {
-        checkState();
-        byte[] digest = digests[0].digest();
-        digestReset();
-        return digest;
+	checkState();
+	byte[] digest = digests[0].digest();
+	digestReset();
+	return digest;
     }
 
-    protected int engineDigest(byte[] buf, int offset, int len)
-            throws DigestException {
-        checkState();
-        int n = digests[0].digest(buf, offset, len);
-        digestReset();
-        return n;
+    protected int engineDigest(byte[] buf, int offset, int len) 
+	    throws DigestException {
+	checkState();
+	int n = digests[0].digest(buf, offset, len);
+	digestReset();
+	return n;
     }
 
     /**
      * Reset all digests after a digest() call. digests[0] has already been
-     * implicitly reset by the digest() call and does not need to be reset
+     * implicitly reset by the digest() call and does not need to be reset 
      * again.
      */
     private void digestReset() {
-        for (int i = 1; (i < digests.length) && (digests[i] != null); i++) {
-            digests[i].reset();
-        }
+	for (int i = 1; (i < digests.length) && (digests[i] != null); i++) {
+	    digests[i].reset();
+	}
     }
 
     protected void engineReset() {
-        checkState();
-        for (int i = 0; (i < digests.length) && (digests[i] != null); i++) {
-            digests[i].reset();
-        }
+	checkState();
+	for (int i = 0; (i < digests.length) && (digests[i] != null); i++) {
+	    digests[i].reset();
+	}
     }
 
     public Object clone() {
-        checkState();
-        for (int i = digests.length - 1; i >= 0; i--) {
-            if (digests[i] != null) {
-                MessageDigest digest = digests[i];
-                digests[i] = null;
-                return digest;
-            }
-        }
-        // cannot occur
-        throw new InternalError();
+	checkState();
+	for (int i = digests.length - 1; i >= 0; i--) {
+	    if (digests[i] != null) {
+		MessageDigest digest = digests[i];
+		digests[i] = null;
+		return digest;
+	    }
+	}
+	// cannot occur
+	throw new InternalError();
     }
 
 }
+

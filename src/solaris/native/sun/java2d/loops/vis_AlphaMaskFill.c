@@ -58,13 +58,13 @@
 /***************************************************************/
 
 static void IntArgbAlphaMaskFill_line(mlib_f32 *dst_ptr,
-                                      mlib_u8  *pMask,
-                                      mlib_s32 width,
-                                      mlib_f32 cnstARGB0,
-                                      mlib_s32 *log_val,
-                                      mlib_u8  *mul8_cnstA,
-                                      mlib_u8  *mul8_dstF,
-                                      mlib_u8  *mul8_tbl)
+				      mlib_u8  *pMask,
+				      mlib_s32 width,
+				      mlib_f32 cnstARGB0,
+				      mlib_s32 *log_val,
+				      mlib_u8  *mul8_cnstA,
+				      mlib_u8  *mul8_dstF,
+				      mlib_u8  *mul8_tbl)
 {
     mlib_s32 i, i0;
     mlib_s32 pathA0, pathA1, dstA0, dstA1, msk;
@@ -79,49 +79,49 @@ static void IntArgbAlphaMaskFill_line(mlib_f32 *dst_ptr,
     i = i0 = 0;
 
     if ((mlib_s32)dst_ptr & 7) {
-        pathA0 = pMask[i];
+	pathA0 = pMask[i];
 
-        if (pathA0) {
-            dstA0 = *(mlib_u8*)(dst_ptr + i);
-            dstARGB0 = dst_ptr[i];
-            MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-            dst_ptr[i] = vis_fpack16(res0);
-            *(mlib_u8*)(dst_ptr + i) = dstA0;
-        }
+	if (pathA0) {
+	    dstA0 = *(mlib_u8*)(dst_ptr + i);
+	    dstARGB0 = dst_ptr[i];
+	    MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+	    dst_ptr[i] = vis_fpack16(res0);
+	    *(mlib_u8*)(dst_ptr + i) = dstA0;
+	}
 
-        i0 = 1;
+	i0 = 1;
     }
 
 #pragma pipeloop(0)
     for (i = i0; i <= width - 2; i += 2) {
-        pathA0 = pMask[i];
-        pathA1 = pMask[i + 1];
-        dstA0 = *(mlib_u8*)(dst_ptr + i);
-        dstA1 = *(mlib_u8*)(dst_ptr + i + 1);
-        dstARGB = *(mlib_d64*)(dst_ptr + i);
+	pathA0 = pMask[i];
+	pathA1 = pMask[i + 1];
+	dstA0 = *(mlib_u8*)(dst_ptr + i);
+	dstA1 = *(mlib_u8*)(dst_ptr + i + 1);
+	dstARGB = *(mlib_d64*)(dst_ptr + i);
 
-        MASK_FILL(res0, pathA0, dstA0, vis_read_hi(dstARGB));
-        MASK_FILL(res1, pathA1, dstA1, vis_read_lo(dstARGB));
+	MASK_FILL(res0, pathA0, dstA0, vis_read_hi(dstARGB));
+	MASK_FILL(res1, pathA1, dstA1, vis_read_lo(dstARGB));
 
-        res0 = vis_fpack16_pair(res0, res1);
+	res0 = vis_fpack16_pair(res0, res1);
 
-        msk = (((-pathA0) & (1 << 11)) | ((-pathA1) & (1 << 10))) >> 10;
-        vis_pst_32(res0, dst_ptr + i, msk);
+	msk = (((-pathA0) & (1 << 11)) | ((-pathA1) & (1 << 10))) >> 10;
+	vis_pst_32(res0, dst_ptr + i, msk);
 
-        *(mlib_u8*)(dst_ptr + i    ) = dstA0;
-        *(mlib_u8*)(dst_ptr + i + 1) = dstA1;
+	*(mlib_u8*)(dst_ptr + i    ) = dstA0;
+	*(mlib_u8*)(dst_ptr + i + 1) = dstA1;
     }
 
     if (i < width) {
-        pathA0 = pMask[i];
+	pathA0 = pMask[i];
 
-        if (pathA0) {
-            dstA0 = *(mlib_u8*)(dst_ptr + i);
-            dstARGB0 = dst_ptr[i];
-            MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-            dst_ptr[i] = vis_fpack16(res0);
-            *(mlib_u8*)(dst_ptr + i) = dstA0;
-        }
+	if (pathA0) {
+	    dstA0 = *(mlib_u8*)(dst_ptr + i);
+	    dstARGB0 = dst_ptr[i];
+	    MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+	    dst_ptr[i] = vis_fpack16(res0);
+	    *(mlib_u8*)(dst_ptr + i) = dstA0;
+	}
     }
 }
 
@@ -147,13 +147,13 @@ static void IntArgbAlphaMaskFill_line(mlib_f32 *dst_ptr,
 /***************************************************************/
 
 static void IntArgbAlphaMaskFill_A1_line(mlib_f32 *dst_ptr,
-                                         mlib_u8  *pMask,
-                                         mlib_s32 width,
-                                         mlib_f32 cnstARGB0,
-                                         mlib_s32 *log_val,
-                                         mlib_u8  *mul8_cnstA,
-                                         mlib_u8  *mul8_dstF,
-                                         mlib_u8  *mul8_tbl)
+					 mlib_u8  *pMask,
+					 mlib_s32 width,
+					 mlib_f32 cnstARGB0,
+					 mlib_s32 *log_val,
+					 mlib_u8  *mul8_cnstA,
+					 mlib_u8  *mul8_dstF,
+					 mlib_u8  *mul8_tbl)
 {
     mlib_s32 i;
     mlib_s32 dstA0;
@@ -167,26 +167,26 @@ static void IntArgbAlphaMaskFill_A1_line(mlib_f32 *dst_ptr,
 
 #pragma pipeloop(0)
     for (i = 0; i < width; i++) {
-        dstA0 = *(mlib_u8*)(dst_ptr + i);
-        dstARGB0 = dst_ptr[i];
-        MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-        dst_ptr[i] = vis_fpack16(res0);
-        *(mlib_u8*)(dst_ptr + i) = dstA0;
+	dstA0 = *(mlib_u8*)(dst_ptr + i);
+	dstARGB0 = dst_ptr[i];
+	MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+	dst_ptr[i] = vis_fpack16(res0);
+	*(mlib_u8*)(dst_ptr + i) = dstA0;
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(IntArgbAlphaMaskFill)(void *rasBase,
-                                    jubyte *pMask,
-                                    jint maskOff,
-                                    jint maskScan,
-                                    jint width,
-                                    jint height,
-                                    jint fgColor,
-                                    SurfaceDataRasInfo *pRasInfo,
-                                    NativePrimitive *pPrim,
-                                    CompositeInfo *pCompInfo)
+				    jubyte *pMask,
+				    jint maskOff,
+				    jint maskScan,
+				    jint width,
+				    jint height,
+				    jint fgColor,
+				    SurfaceDataRasInfo *pRasInfo,
+				    NativePrimitive *pPrim,
+				    CompositeInfo *pCompInfo)
 {
     mlib_s32 cnstA, cnstR, cnstG, cnstB;
     mlib_s32 rasScan = pRasInfo->scanStride;
@@ -204,9 +204,9 @@ void ADD_SUFF(IntArgbAlphaMaskFill)(void *rasBase,
     cnstB = (fgColor      ) & 0xff;
 
     if (cnstA != 0xff) {
-        cnstR = mul8table[cnstA][cnstR];
-        cnstG = mul8table[cnstA][cnstG];
-        cnstB = mul8table[cnstA][cnstB];
+	cnstR = mul8table[cnstA][cnstR];
+	cnstG = mul8table[cnstA][cnstG];
+	cnstB = mul8table[cnstA][cnstB];
     }
 
     cnstARGB0 = F32_FROM_U8x4(cnstA, cnstR, cnstG, cnstB);
@@ -233,49 +233,49 @@ void ADD_SUFF(IntArgbAlphaMaskFill)(void *rasBase,
     vis_write_gsr(7 << 3);
 
     if (pMask != NULL) {
-        pMask += maskOff;
+	pMask += maskOff;
 
-        if (rasScan == 4*width && maskScan == width) {
-            width *= height;
-            height = 1;
-        }
+	if (rasScan == 4*width && maskScan == width) {
+	    width *= height;
+	    height = 1;
+	}
 
-        for (j = 0; j < height; j++) {
-            IntArgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
-                                      log_val, mul8_cnstA, mul8_dstF,
-                                      (void*)mul8table);
+	for (j = 0; j < height; j++) {
+	    IntArgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
+				      log_val, mul8_cnstA, mul8_dstF,
+				      (void*)mul8table);
 
-            PTR_ADD(rasBase, rasScan);
-            PTR_ADD(pMask, maskScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	    PTR_ADD(pMask, maskScan);
+	}
     } else {
-        if (rasScan == 4*width) {
-            width *= height;
-            height = 1;
-        }
+	if (rasScan == 4*width) {
+	    width *= height;
+	    height = 1;
+	}
 
-        for (j = 0; j < height; j++) {
-            IntArgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB0,
-                                         log_val, mul8_cnstA, mul8_dstF,
-                                         (void*)mul8table);
+	for (j = 0; j < height; j++) {
+	    IntArgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB0,
+					 log_val, mul8_cnstA, mul8_dstF,
+					 (void*)mul8table);
 
-            PTR_ADD(rasBase, rasScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	}
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(FourByteAbgrAlphaMaskFill)(void *rasBase,
-                                         jubyte *pMask,
-                                         jint maskOff,
-                                         jint maskScan,
-                                         jint width,
-                                         jint height,
-                                         jint fgColor,
-                                         SurfaceDataRasInfo *pRasInfo,
-                                         NativePrimitive *pPrim,
-                                         CompositeInfo *pCompInfo)
+					 jubyte *pMask,
+					 jint maskOff,
+					 jint maskScan,
+					 jint width,
+					 jint height,
+					 jint fgColor,
+					 SurfaceDataRasInfo *pRasInfo,
+					 NativePrimitive *pPrim,
+					 CompositeInfo *pCompInfo)
 {
     mlib_d64 buff[BUFF_SIZE/2];
     void     *pbuff = buff;
@@ -295,9 +295,9 @@ void ADD_SUFF(FourByteAbgrAlphaMaskFill)(void *rasBase,
     cnstB = (fgColor      ) & 0xff;
 
     if (cnstA != 0xff) {
-        cnstR = mul8table[cnstA][cnstR];
-        cnstG = mul8table[cnstA][cnstG];
-        cnstB = mul8table[cnstA][cnstB];
+	cnstR = mul8table[cnstA][cnstR];
+	cnstG = mul8table[cnstA][cnstG];
+	cnstB = mul8table[cnstA][cnstB];
     }
 
     cnstARGB0 = F32_FROM_U8x4(cnstA, cnstB, cnstG, cnstR);
@@ -324,62 +324,62 @@ void ADD_SUFF(FourByteAbgrAlphaMaskFill)(void *rasBase,
     vis_write_gsr(7 << 3);
 
     if (pMask != NULL) {
-        pMask += maskOff;
+	pMask += maskOff;
 
-        if (((mlib_s32)rasBase | rasScan) & 3) {
-            if (width > BUFF_SIZE) pbuff = mlib_malloc(width*sizeof(mlib_s32));
-        } else {
-            if (rasScan == 4*width && maskScan == width) {
-                width *= height;
-                height = 1;
-            }
-        }
+	if (((mlib_s32)rasBase | rasScan) & 3) {
+	    if (width > BUFF_SIZE) pbuff = mlib_malloc(width*sizeof(mlib_s32));
+	} else {
+	    if (rasScan == 4*width && maskScan == width) {
+		width *= height;
+		height = 1;
+	    }
+	}
 
-        for (j = 0; j < height; j++) {
-            if (!((mlib_s32)rasBase & 3)) {
-                IntArgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
-                                          log_val, mul8_cnstA, mul8_dstF,
-                                          (void*)mul8table);
-            } else {
-                mlib_ImageCopy_na(rasBase, pbuff, width*sizeof(mlib_s32));
-                IntArgbAlphaMaskFill_line(pbuff, pMask, width, cnstARGB0,
-                                          log_val, mul8_cnstA, mul8_dstF,
-                                          (void*)mul8table);
-                mlib_ImageCopy_na(pbuff, rasBase, width*sizeof(mlib_s32));
-            }
+	for (j = 0; j < height; j++) {
+	    if (!((mlib_s32)rasBase & 3)) {
+		IntArgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
+					  log_val, mul8_cnstA, mul8_dstF,
+					  (void*)mul8table);
+	    } else {
+		mlib_ImageCopy_na(rasBase, pbuff, width*sizeof(mlib_s32));
+		IntArgbAlphaMaskFill_line(pbuff, pMask, width, cnstARGB0,
+					  log_val, mul8_cnstA, mul8_dstF,
+					  (void*)mul8table);
+		mlib_ImageCopy_na(pbuff, rasBase, width*sizeof(mlib_s32));
+	    }
 
-            PTR_ADD(rasBase, rasScan);
-            PTR_ADD(pMask, maskScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	    PTR_ADD(pMask, maskScan);
+	}
     } else {
-        if (((mlib_s32)rasBase | rasScan) & 3) {
-            if (width > BUFF_SIZE) pbuff = mlib_malloc(width*sizeof(mlib_s32));
-        } else {
-            if (rasScan == 4*width) {
-                width *= height;
-                height = 1;
-            }
-        }
+	if (((mlib_s32)rasBase | rasScan) & 3) {
+	    if (width > BUFF_SIZE) pbuff = mlib_malloc(width*sizeof(mlib_s32));
+	} else {
+	    if (rasScan == 4*width) {
+		width *= height;
+		height = 1;
+	    }
+	}
 
-        for (j = 0; j < height; j++) {
-            if (!((mlib_s32)rasBase & 3)) {
-                IntArgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB0,
-                                             log_val, mul8_cnstA, mul8_dstF,
-                                             (void*)mul8table);
-            } else {
-                mlib_ImageCopy_na(rasBase, pbuff, width*sizeof(mlib_s32));
-                IntArgbAlphaMaskFill_A1_line(pbuff, pMask, width, cnstARGB0,
-                                             log_val, mul8_cnstA, mul8_dstF,
-                                             (void*)mul8table);
-                mlib_ImageCopy_na(pbuff, rasBase, width*sizeof(mlib_s32));
-            }
+	for (j = 0; j < height; j++) {
+	    if (!((mlib_s32)rasBase & 3)) {
+		IntArgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB0,
+					     log_val, mul8_cnstA, mul8_dstF,
+					     (void*)mul8table);
+	    } else {
+		mlib_ImageCopy_na(rasBase, pbuff, width*sizeof(mlib_s32));
+		IntArgbAlphaMaskFill_A1_line(pbuff, pMask, width, cnstARGB0,
+					     log_val, mul8_cnstA, mul8_dstF,
+					     (void*)mul8table);
+		mlib_ImageCopy_na(pbuff, rasBase, width*sizeof(mlib_s32));
+	    }
 
-            PTR_ADD(rasBase, rasScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	}
     }
 
     if (pbuff != buff) {
-        mlib_free(pbuff);
+	mlib_free(pbuff);
     }
 }
 
@@ -414,13 +414,13 @@ void ADD_SUFF(FourByteAbgrAlphaMaskFill)(void *rasBase,
 /***************************************************************/
 
 static void IntRgbAlphaMaskFill_line(mlib_f32 *dst_ptr,
-                                     mlib_u8  *pMask,
-                                     mlib_s32 width,
-                                     mlib_f32 cnstARGB0,
-                                     mlib_u8  *mul8_cnstA,
-                                     mlib_u8  *mul8_dstF,
-                                     mlib_u8  *mul8_srcF,
-                                     mlib_u8  *mul8_tbl)
+				     mlib_u8  *pMask,
+				     mlib_s32 width,
+				     mlib_f32 cnstARGB0,
+				     mlib_u8  *mul8_cnstA,
+				     mlib_u8  *mul8_dstF,
+				     mlib_u8  *mul8_srcF,
+				     mlib_u8  *mul8_tbl)
 {
     mlib_s32 i, i0;
     mlib_s32 pathA0, pathA1, dstA0, dstA1, msk;
@@ -430,40 +430,40 @@ static void IntRgbAlphaMaskFill_line(mlib_f32 *dst_ptr,
     i = i0 = 0;
 
     if ((mlib_s32)dst_ptr & 7) {
-        pathA0 = pMask[i];
+	pathA0 = pMask[i];
 
-        dstARGB0 = dst_ptr[i];
-        MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-        if (pathA0) {
-            dst_ptr[i] = vis_fpack16(res0);
-        }
+	dstARGB0 = dst_ptr[i];
+	MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+	if (pathA0) {
+	    dst_ptr[i] = vis_fpack16(res0);
+	}
 
-        i0 = 1;
+	i0 = 1;
     }
 
 #pragma pipeloop(0)
     for (i = i0; i <= width - 2; i += 2) {
-        pathA0 = pMask[i];
-        pathA1 = pMask[i + 1];
-        dstARGB = *(mlib_d64*)(dst_ptr + i);
+	pathA0 = pMask[i];
+	pathA1 = pMask[i + 1];
+	dstARGB = *(mlib_d64*)(dst_ptr + i);
 
-        MASK_FILL(res0, pathA0, dstA0, vis_read_hi(dstARGB));
-        MASK_FILL(res1, pathA1, dstA1, vis_read_lo(dstARGB));
+	MASK_FILL(res0, pathA0, dstA0, vis_read_hi(dstARGB));
+	MASK_FILL(res1, pathA1, dstA1, vis_read_lo(dstARGB));
 
-        res0 = vis_fpack16_pair(res0, res1);
+	res0 = vis_fpack16_pair(res0, res1);
 
-        msk = (((pathA0) & (1 << 11)) | ((pathA1) & (1 << 10))) >> 10;
-        vis_pst_32(res0, dst_ptr + i, msk);
+	msk = (((pathA0) & (1 << 11)) | ((pathA1) & (1 << 10))) >> 10;
+	vis_pst_32(res0, dst_ptr + i, msk);
     }
 
     if (i < width) {
-        pathA0 = pMask[i];
+	pathA0 = pMask[i];
 
-        dstARGB0 = dst_ptr[i];
-        MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-        if (pathA0) {
-            dst_ptr[i] = vis_fpack16(res0);
-        }
+	dstARGB0 = dst_ptr[i];
+	MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+	if (pathA0) {
+	    dst_ptr[i] = vis_fpack16(res0);
+	}
     }
 }
 
@@ -481,11 +481,11 @@ static void IntRgbAlphaMaskFill_line(mlib_f32 *dst_ptr,
 /***************************************************************/
 
 static void IntRgbAlphaMaskFill_A1_line(mlib_f32 *dst_ptr,
-                                         mlib_u8  *pMask,
-                                         mlib_s32 width,
-                                         mlib_d64 cnstARGB,
-                                         mlib_s32 dstF,
-                                         mlib_s32 dstA)
+					 mlib_u8  *pMask,
+					 mlib_s32 width,
+					 mlib_d64 cnstARGB,
+					 mlib_s32 dstF,
+					 mlib_s32 dstA)
 {
     mlib_s32 i;
     mlib_d64 res0;
@@ -493,24 +493,24 @@ static void IntRgbAlphaMaskFill_A1_line(mlib_f32 *dst_ptr,
 
 #pragma pipeloop(0)
     for (i = 0; i < width; i++) {
-        dstARGB0 = dst_ptr[i];
-        MASK_FILL(res0, pathA0, dstA0, dstARGB0);
-        dst_ptr[i] = vis_fpack16(res0);
+	dstARGB0 = dst_ptr[i];
+	MASK_FILL(res0, pathA0, dstA0, dstARGB0);
+	dst_ptr[i] = vis_fpack16(res0);
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(IntRgbAlphaMaskFill)(void *rasBase,
-                                    jubyte *pMask,
-                                    jint maskOff,
-                                    jint maskScan,
-                                    jint width,
-                                    jint height,
-                                    jint fgColor,
-                                    SurfaceDataRasInfo *pRasInfo,
-                                    NativePrimitive *pPrim,
-                                    CompositeInfo *pCompInfo)
+				    jubyte *pMask,
+				    jint maskOff,
+				    jint maskScan,
+				    jint width,
+				    jint height,
+				    jint fgColor,
+				    SurfaceDataRasInfo *pRasInfo,
+				    NativePrimitive *pPrim,
+				    CompositeInfo *pCompInfo)
 {
     mlib_s32 cnstA, cnstR, cnstG, cnstB;
     mlib_s32 rasScan = pRasInfo->scanStride;
@@ -528,9 +528,9 @@ void ADD_SUFF(IntRgbAlphaMaskFill)(void *rasBase,
     cnstB = (fgColor      ) & 0xff;
 
     if (cnstA != 0xff) {
-        cnstR = mul8table[cnstA][cnstR];
-        cnstG = mul8table[cnstA][cnstG];
-        cnstB = mul8table[cnstA][cnstB];
+	cnstR = mul8table[cnstA][cnstR];
+	cnstG = mul8table[cnstA][cnstG];
+	cnstB = mul8table[cnstA][cnstB];
     }
 
     cnstARGB0 = F32_FROM_U8x4(cnstA, cnstR, cnstG, cnstB);
@@ -557,59 +557,59 @@ void ADD_SUFF(IntRgbAlphaMaskFill)(void *rasBase,
     mul8_cnstA = mul8table[cnstA];
 
     if (pMask != NULL) {
-        pMask += maskOff;
+	pMask += maskOff;
 
-        mul8_dstF  = mul8table[dstF];
-        mul8_srcF  = mul8table[srcF];
+	mul8_dstF  = mul8table[dstF];
+	mul8_srcF  = mul8table[srcF];
 
-        if (rasScan == 4*width && maskScan == width) {
-            width *= height;
-            height = 1;
-        }
+	if (rasScan == 4*width && maskScan == width) {
+	    width *= height;
+	    height = 1;
+	}
 
-        for (j = 0; j < height; j++) {
-            IntRgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
-                                     mul8_cnstA, mul8_dstF, mul8_srcF,
-                                     (void*)mul8table);
+	for (j = 0; j < height; j++) {
+	    IntRgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
+				     mul8_cnstA, mul8_dstF, mul8_srcF,
+				     (void*)mul8table);
 
-            PTR_ADD(rasBase, rasScan);
-            PTR_ADD(pMask, maskScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	    PTR_ADD(pMask, maskScan);
+	}
     } else {
-        mlib_s32 dstA;
-        mlib_d64 cnstARGB;
+	mlib_s32 dstA;
+	mlib_d64 cnstARGB;
 
-        if (dstF == 0xFF && srcF == 0) return;
+	if (dstF == 0xFF && srcF == 0) return;
 
-        cnstARGB = MUL8_VIS(cnstARGB0, srcF);
-        dstA = dstF + mul8_cnstA[srcF];
+	cnstARGB = MUL8_VIS(cnstARGB0, srcF);
+	dstA = dstF + mul8_cnstA[srcF];
 
-        if (rasScan == 4*width) {
-            width *= height;
-            height = 1;
-        }
+	if (rasScan == 4*width) {
+	    width *= height;
+	    height = 1;
+	}
 
-        for (j = 0; j < height; j++) {
-            IntRgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB,
-                                        dstF, dstA);
+	for (j = 0; j < height; j++) {
+	    IntRgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB,
+					dstF, dstA);
 
-            PTR_ADD(rasBase, rasScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	}
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(IntBgrAlphaMaskFill)(void *rasBase,
-                                   jubyte *pMask,
-                                   jint maskOff,
-                                   jint maskScan,
-                                   jint width,
-                                   jint height,
-                                   jint fgColor,
-                                   SurfaceDataRasInfo *pRasInfo,
-                                   NativePrimitive *pPrim,
-                                   CompositeInfo *pCompInfo)
+				   jubyte *pMask,
+				   jint maskOff,
+				   jint maskScan,
+				   jint width,
+				   jint height,
+				   jint fgColor,
+				   SurfaceDataRasInfo *pRasInfo,
+				   NativePrimitive *pPrim,
+				   CompositeInfo *pCompInfo)
 {
     mlib_s32 cnstA, cnstR, cnstG, cnstB;
     mlib_s32 rasScan = pRasInfo->scanStride;
@@ -627,9 +627,9 @@ void ADD_SUFF(IntBgrAlphaMaskFill)(void *rasBase,
     cnstB = (fgColor      ) & 0xff;
 
     if (cnstA != 0xff) {
-        cnstR = mul8table[cnstA][cnstR];
-        cnstG = mul8table[cnstA][cnstG];
-        cnstB = mul8table[cnstA][cnstB];
+	cnstR = mul8table[cnstA][cnstR];
+	cnstG = mul8table[cnstA][cnstG];
+	cnstB = mul8table[cnstA][cnstB];
     }
 
     cnstARGB0 = F32_FROM_U8x4(cnstA, cnstB, cnstG, cnstR);
@@ -656,59 +656,59 @@ void ADD_SUFF(IntBgrAlphaMaskFill)(void *rasBase,
     mul8_cnstA = mul8table[cnstA];
 
     if (pMask != NULL) {
-        pMask += maskOff;
+	pMask += maskOff;
 
-        mul8_dstF  = mul8table[dstF];
-        mul8_srcF  = mul8table[srcF];
+	mul8_dstF  = mul8table[dstF];
+	mul8_srcF  = mul8table[srcF];
 
-        if (rasScan == 4*width && maskScan == width) {
-            width *= height;
-            height = 1;
-        }
+	if (rasScan == 4*width && maskScan == width) {
+	    width *= height;
+	    height = 1;
+	}
 
-        for (j = 0; j < height; j++) {
-            IntRgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
-                                     mul8_cnstA, mul8_dstF, mul8_srcF,
-                                     (void*)mul8table);
+	for (j = 0; j < height; j++) {
+	    IntRgbAlphaMaskFill_line(rasBase, pMask, width, cnstARGB0,
+				     mul8_cnstA, mul8_dstF, mul8_srcF,
+				     (void*)mul8table);
 
-            PTR_ADD(rasBase, rasScan);
-            PTR_ADD(pMask, maskScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	    PTR_ADD(pMask, maskScan);
+	}
     } else {
-        mlib_s32 dstA;
-        mlib_d64 cnstARGB;
+	mlib_s32 dstA;
+	mlib_d64 cnstARGB;
 
-        if (dstF == 0xFF && srcF == 0) return;
+	if (dstF == 0xFF && srcF == 0) return;
 
-        cnstARGB = MUL8_VIS(cnstARGB0, srcF);
-        dstA = dstF + mul8_cnstA[srcF];
+	cnstARGB = MUL8_VIS(cnstARGB0, srcF);
+	dstA = dstF + mul8_cnstA[srcF];
 
-        if (rasScan == 4*width) {
-            width *= height;
-            height = 1;
-        }
+	if (rasScan == 4*width) {
+	    width *= height;
+	    height = 1;
+	}
 
-        for (j = 0; j < height; j++) {
-            IntRgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB,
-                                        dstF, dstA);
+	for (j = 0; j < height; j++) {
+	    IntRgbAlphaMaskFill_A1_line(rasBase, pMask, width, cnstARGB,
+					dstF, dstA);
 
-            PTR_ADD(rasBase, rasScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	}
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(ThreeByteBgrAlphaMaskFill)(void *rasBase,
-                                         jubyte *pMask,
-                                         jint maskOff,
-                                         jint maskScan,
-                                         jint width,
-                                         jint height,
-                                         jint fgColor,
-                                         SurfaceDataRasInfo *pRasInfo,
-                                         NativePrimitive *pPrim,
-                                         CompositeInfo *pCompInfo)
+					 jubyte *pMask,
+					 jint maskOff,
+					 jint maskScan,
+					 jint width,
+					 jint height,
+					 jint fgColor,
+					 SurfaceDataRasInfo *pRasInfo,
+					 NativePrimitive *pPrim,
+					 CompositeInfo *pCompInfo)
 {
     mlib_d64 buff[BUFF_SIZE/2];
     void     *pbuff = buff;
@@ -730,9 +730,9 @@ void ADD_SUFF(ThreeByteBgrAlphaMaskFill)(void *rasBase,
     cnstB = (fgColor      ) & 0xff;
 
     if (cnstA != 0xff) {
-        cnstR = mul8table[cnstA][cnstR];
-        cnstG = mul8table[cnstA][cnstG];
-        cnstB = mul8table[cnstA][cnstB];
+	cnstR = mul8table[cnstA][cnstR];
+	cnstG = mul8table[cnstA][cnstG];
+	cnstB = mul8table[cnstA][cnstB];
     }
 
     cnstARGB0 = F32_FROM_U8x4(cnstA, cnstR, cnstG, cnstB);
@@ -759,52 +759,52 @@ void ADD_SUFF(ThreeByteBgrAlphaMaskFill)(void *rasBase,
     mul8_cnstA = mul8table[cnstA];
 
     if (pMask != NULL) {
-        pMask += maskOff;
+	pMask += maskOff;
 
-        mul8_dstF  = mul8table[dstF];
-        mul8_srcF  = mul8table[srcF];
+	mul8_dstF  = mul8table[dstF];
+	mul8_srcF  = mul8table[srcF];
 
-        for (j = 0; j < height; j++) {
-            ADD_SUFF(ThreeByteBgrToIntArgbConvert)(rasBase, pbuff, width, 1,
-                                                   pRasInfo, pRasInfo,
-                                                   pPrim, pCompInfo);
+	for (j = 0; j < height; j++) {
+	    ADD_SUFF(ThreeByteBgrToIntArgbConvert)(rasBase, pbuff, width, 1,
+						   pRasInfo, pRasInfo,
+						   pPrim, pCompInfo);
 
-            IntRgbAlphaMaskFill_line(pbuff, pMask, width, cnstARGB0,
-                                     mul8_cnstA, mul8_dstF, mul8_srcF,
-                                     (void*)mul8table);
+	    IntRgbAlphaMaskFill_line(pbuff, pMask, width, cnstARGB0,
+				     mul8_cnstA, mul8_dstF, mul8_srcF,
+				     (void*)mul8table);
 
-            IntArgbToThreeByteBgrConvert(pbuff, rasBase, width, 1,
-                                         pRasInfo, pRasInfo, pPrim, pCompInfo);
+	    IntArgbToThreeByteBgrConvert(pbuff, rasBase, width, 1,
+					 pRasInfo, pRasInfo, pPrim, pCompInfo);
 
-            PTR_ADD(rasBase, rasScan);
-            PTR_ADD(pMask, maskScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	    PTR_ADD(pMask, maskScan);
+	}
     } else {
-        mlib_s32 dstA;
-        mlib_d64 cnstARGB;
+	mlib_s32 dstA;
+	mlib_d64 cnstARGB;
 
-        if (dstF == 0xFF && srcF == 0) return;
+	if (dstF == 0xFF && srcF == 0) return;
 
-        cnstARGB = MUL8_VIS(cnstARGB0, srcF);
-        dstA = dstF + mul8_cnstA[srcF];
+	cnstARGB = MUL8_VIS(cnstARGB0, srcF);
+	dstA = dstF + mul8_cnstA[srcF];
 
-        for (j = 0; j < height; j++) {
-            ADD_SUFF(ThreeByteBgrToIntArgbConvert)(rasBase, pbuff, width, 1,
-                                                   pRasInfo, pRasInfo,
-                                                   pPrim, pCompInfo);
+	for (j = 0; j < height; j++) {
+	    ADD_SUFF(ThreeByteBgrToIntArgbConvert)(rasBase, pbuff, width, 1,
+						   pRasInfo, pRasInfo,
+						   pPrim, pCompInfo);
 
-            IntRgbAlphaMaskFill_A1_line(pbuff, pMask, width, cnstARGB,
-                                        dstF, dstA);
+	    IntRgbAlphaMaskFill_A1_line(pbuff, pMask, width, cnstARGB,
+					dstF, dstA);
 
-            IntArgbToThreeByteBgrConvert(pbuff, rasBase, width, 1,
-                                         pRasInfo, pRasInfo, pPrim, pCompInfo);
+	    IntArgbToThreeByteBgrConvert(pbuff, rasBase, width, 1,
+					 pRasInfo, pRasInfo, pPrim, pCompInfo);
 
-            PTR_ADD(rasBase, rasScan);
-        }
+	    PTR_ADD(rasBase, rasScan);
+	}
     }
 
     if (pbuff != buff) {
-        mlib_free(pbuff);
+	mlib_free(pbuff);
     }
 }
 

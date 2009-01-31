@@ -42,23 +42,23 @@ import java.util.Map;
 public abstract class HotSpotVirtualMachine extends VirtualMachine {
 
     HotSpotVirtualMachine(AttachProvider provider, String id) {
-        super(provider, id);
+	super(provider, id);
     }
-
+   
     /*
-     * Load agent library
+     * Load agent library 
      * If isAbsolute is true then the agent library is the absolute path
      * to the library and thus will not be expanded in the target VM.
      * if isAbsolute is false then the agent library is just a library
      * name and it will be expended in the target VM.
      */
-    private void loadAgentLibrary(String agentLibrary, boolean isAbsolute, String options)
+    private void loadAgentLibrary(String agentLibrary, boolean isAbsolute, String options) 
         throws AgentLoadException, AgentInitializationException, IOException
     {
-        InputStream in = execute("load",
-                                 agentLibrary,
-                                 isAbsolute ? "true" : "false",
-                                 options);
+        InputStream in = execute("load", 
+				 agentLibrary, 
+				 isAbsolute ? "true" : "false",
+				 options);
         try {
             int result = readInt(in);
             if (result != 0) {
@@ -66,34 +66,34 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
             }
         } finally {
             in.close();
-
+ 
         }
-    }
+    }        
 
     /*
-     * Load agent library - library name will be expanded in target VM
+     * Load agent library - library name will be expanded in target VM 
      */
     public void loadAgentLibrary(String agentLibrary, String options)
         throws AgentLoadException, AgentInitializationException, IOException
     {
         loadAgentLibrary(agentLibrary, false, options);
-    }
-
+    }           
+    
     /*
      * Load agent - absolute path of library provided to target VM
-     */
+     */    
     public void loadAgentPath(String agentLibrary, String options)
         throws AgentLoadException, AgentInitializationException, IOException
     {
         loadAgentLibrary(agentLibrary, true, options);
-    }
+    } 
 
     /*
      * Load JPLIS agent which will load the agent JAR file and invoke
      * the agentmain method.
      */
-    public void loadAgent(String agent, String options)
-        throws AgentLoadException, AgentInitializationException, IOException
+    public void loadAgent(String agent, String options) 
+	throws AgentLoadException, AgentInitializationException, IOException
     {
         String args = agent;
         if (options != null) {
@@ -101,88 +101,88 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
         }
         try {
             loadAgentLibrary("instrument", args);
-        } catch (AgentLoadException x) {
-            throw new InternalError("instrument library is missing in target VM");
+	} catch (AgentLoadException x) {
+	    throw new InternalError("instrument library is missing in target VM");
         } catch (AgentInitializationException x) {
-            /*
-             * Translate interesting errors into the right exception and
-             * message (FIXME: create a better interface to the instrument
-             * implementation so this isn't necessary)
-             */
+	    /*
+	     * Translate interesting errors into the right exception and 
+	     * message (FIXME: create a better interface to the instrument
+	     * implementation so this isn't necessary)
+	     */
             int rc = x.returnValue();
-            switch (rc) {
-                case JNI_ENOMEM:
-                    throw new AgentLoadException("Insuffient memory");
-                case ATTACH_ERROR_BADJAR:
-                    throw new AgentLoadException("Agent JAR not found or no Agent-Class attribute");
-                case ATTACH_ERROR_NOTONCP:
-                    throw new AgentLoadException("Unable to add JAR file to system class path");
-                case ATTACH_ERROR_STARTFAIL:
-                    throw new AgentInitializationException("Agent JAR loaded but agent failed to initialize");
-                default :
-                    throw new AgentLoadException("Failed to load agent - unknown reason: " + rc);
-            }
+	    switch (rc) {
+		case JNI_ENOMEM:
+		    throw new AgentLoadException("Insuffient memory");
+		case ATTACH_ERROR_BADJAR:
+		    throw new AgentLoadException("Agent JAR not found or no Agent-Class attribute");
+	        case ATTACH_ERROR_NOTONCP:
+		    throw new AgentLoadException("Unable to add JAR file to system class path");
+		case ATTACH_ERROR_STARTFAIL:
+		    throw new AgentInitializationException("Agent JAR loaded but agent failed to initialize");
+		default :
+		    throw new AgentLoadException("Failed to load agent - unknown reason: " + rc);
+	    }
         }
     }
 
     /*
      * The possible errors returned by JPLIS's agentmain
      */
-    private static final int JNI_ENOMEM                 = -4;
-    private static final int ATTACH_ERROR_BADJAR        = 100;
-    private static final int ATTACH_ERROR_NOTONCP       = 101;
-    private static final int ATTACH_ERROR_STARTFAIL     = 102;
+    private static final int JNI_ENOMEM 		= -4;
+    private static final int ATTACH_ERROR_BADJAR	= 100;
+    private static final int ATTACH_ERROR_NOTONCP	= 101;
+    private static final int ATTACH_ERROR_STARTFAIL	= 102;
 
 
     /*
      * Send "properties" command to target VM
      */
     public Properties getSystemProperties() throws IOException {
-        InputStream in = null;
-        Properties props = new Properties();
-        try {
-            in = executeCommand("properties");
-            props.load(in);
-        } finally {
-            if (in != null) in.close();
-        }
-        return props;
+	InputStream in = null;
+	Properties props = new Properties();
+	try {
+	    in = executeCommand("properties");
+	    props.load(in);
+	} finally {
+	    if (in != null) in.close();
+	}
+	return props;
     }
 
     public Properties getAgentProperties() throws IOException {
-        InputStream in = null;
-        Properties props = new Properties();
-        try {
-            in = executeCommand("agentProperties");
-            props.load(in);
-        } finally {
-            if (in != null) in.close();
-        }
-        return props;
+	InputStream in = null;
+	Properties props = new Properties();
+	try {
+	    in = executeCommand("agentProperties");
+	    props.load(in);
+	} finally {
+	    if (in != null) in.close();
+	}
+	return props;
     }
 
     // --- HotSpot specific methods ---
 
     // same as SIGQUIT
     public void localDataDump() throws IOException {
-        executeCommand("datadump").close();
+	executeCommand("datadump").close();
     }
 
     // Remote ctrl-break. The output of the ctrl-break actions can
     // be read from the input stream.
     public InputStream remoteDataDump(Object ... args) throws IOException {
-        return executeCommand("threaddump", args);
+	return executeCommand("threaddump", args);
     }
-
+       
     // Remote heap dump. The output (error message) can be read from the
     // returned input stream.
     public InputStream dumpHeap(Object ... args) throws IOException {
-        return executeCommand("dumpheap", args);
-    }
-
+	return executeCommand("dumpheap", args);
+    }   
+  
     // Heap histogram (heap inspection in HotSpot)
     public InputStream heapHisto(Object ... args) throws IOException {
-        return executeCommand("inspectheap", args);
+	return executeCommand("inspectheap", args);
     }
 
     // set JVM command line flag
@@ -206,7 +206,7 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
         throws AgentLoadException, IOException;
 
     /*
-     * Convenience method for simple commands
+     * Convenience method for simple commands 
      */
     private InputStream executeCommand(String cmd, Object ... args) throws IOException {
         try {
@@ -244,13 +244,13 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
             throw new IOException("Premature EOF");
         }
 
-        int value;
-        try {
+	int value;
+	try {
             value = Integer.parseInt(sb.toString());
         } catch (NumberFormatException x) {
             throw new IOException("Non-numeric value found - int expected");
         }
-        return value;
+	return value;
     }
 
     // -- attach timeout support
@@ -268,14 +268,14 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
             synchronized(this) {
                 if (attachTimeout == 0) {
                     try {
-                        String s =
+                        String s = 
                             System.getProperty("sun.tools.attach.attachTimeout");
                         attachTimeout = Long.parseLong(s);
                     } catch (SecurityException se) {
                     } catch (NumberFormatException ne) {
                     }
                     if (attachTimeout <= 0) {
-                       attachTimeout = defaultAttachTimeout;
+                       attachTimeout = defaultAttachTimeout; 
                     }
                 }
             }

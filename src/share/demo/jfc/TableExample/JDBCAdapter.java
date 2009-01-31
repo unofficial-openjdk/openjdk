@@ -30,11 +30,13 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /**
  * An adaptor, transforming the JDBC interface to the TableModel interface.
  *
+ * @version 1.20 09/25/97
  * @author Philip Milne
  */
 
@@ -48,7 +50,7 @@ public class JDBCAdapter extends AbstractTableModel {
     Statement           statement;
     ResultSet           resultSet;
     String[]            columnNames = {};
-    Vector              rows = new Vector();
+    Vector		rows = new Vector();
     ResultSetMetaData   metaData;
 
     public JDBCAdapter(String url, String driverName,
@@ -92,7 +94,7 @@ public class JDBCAdapter extends AbstractTableModel {
             while (resultSet.next()) {
                 Vector newRow = new Vector();
                 for (int i = 1; i <= getColumnCount(); i++) {
-                    newRow.addElement(resultSet.getObject(i));
+	            newRow.addElement(resultSet.getObject(i));
                 }
                 rows.addElement(newRow);
             }

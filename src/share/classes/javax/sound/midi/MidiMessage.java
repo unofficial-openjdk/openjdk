@@ -68,6 +68,7 @@ package javax.sound.midi;
  * @see Sequence
  * @see Receiver
  *
+ * @version %I%, %E%
  * @author David Rivas
  * @author Kara Kytle
  */
@@ -106,10 +107,10 @@ public abstract class MidiMessage implements Cloneable {
      * @see #setMessage
      */
     protected MidiMessage(byte[] data) {
-        this.data = data;
-        if (data != null) {
-            this.length = data.length;
-        }
+	this.data = data;
+	if (data != null) {
+	    this.length = data.length;
+	}
     }
 
 
@@ -120,15 +121,15 @@ public abstract class MidiMessage implements Cloneable {
      * message.
      */
     protected void setMessage(byte[] data, int length) throws InvalidMidiDataException {
-        if (length < 0 || (length > 0 && length > data.length)) {
-            throw new IndexOutOfBoundsException("length out of bounds: "+length);
-        }
-        this.length = length;
+	if (length < 0 || (length > 0 && length > data.length)) {
+	    throw new IndexOutOfBoundsException("length out of bounds: "+length);
+	}
+	this.length = length;
 
-        if (this.data == null || this.data.length < this.length) {
-            this.data = new byte[this.length];
-        }
-        System.arraycopy(data, 0, this.data, 0, length);
+	if (this.data == null || this.data.length < this.length) {
+	    this.data = new byte[this.length];
+	}
+	System.arraycopy(data, 0, this.data, 0, length);
     }
 
 
@@ -143,9 +144,9 @@ public abstract class MidiMessage implements Cloneable {
      * @return the byte array containing the complete <code>MidiMessage</code> data
      */
     public byte[] getMessage() {
-        byte[] returnedArray = new byte[length];
-        System.arraycopy(data, 0, returnedArray, 0, length);
-        return returnedArray;
+	byte[] returnedArray = new byte[length];
+	System.arraycopy(data, 0, returnedArray, 0, length);
+	return returnedArray;
     }
 
 
@@ -158,10 +159,10 @@ public abstract class MidiMessage implements Cloneable {
      * @return the integer representation of this event's status byte
      */
     public int getStatus() {
-        if (length > 0) {
-            return (data[0] & 0xFF);
-        }
-        return 0;
+	if (length > 0) {
+	    return (data[0] & 0xFF);
+	}
+	return 0;
     }
 
 
@@ -175,7 +176,7 @@ public abstract class MidiMessage implements Cloneable {
      * @return the length of the message in bytes
      */
     public int getLength() {
-        return length;
+	return length;
     }
 
 

@@ -51,8 +51,8 @@ abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
 
         addElement("dqtable", "dqt", CHILD_POLICY_EMPTY);
 
-        addAttribute("dqtable",
-                     "elementPrecision",
+        addAttribute("dqtable", 
+                     "elementPrecision", 
                      DATATYPE_INTEGER,
                      false,
                      "0");
@@ -61,13 +61,13 @@ abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
         tabids.add("1");
         tabids.add("2");
         tabids.add("3");
-        addAttribute("dqtable",
-                     "qtableId",
+        addAttribute("dqtable", 
+                     "qtableId", 
                      DATATYPE_INTEGER,
                      true,
                      null,
                      tabids);
-        addObjectValue("dqtable",
+        addObjectValue("dqtable", 
                        JPEGQTable.class,
                        true,
                        null);
@@ -77,27 +77,27 @@ abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
         List classes = new ArrayList();
         classes.add("0");
         classes.add("1");
-        addAttribute("dhtable",
-                     "class",
+        addAttribute("dhtable", 
+                     "class", 
                      DATATYPE_INTEGER,
                      true,
                      null,
                      classes);
-        addAttribute("dhtable",
-                     "htableId",
+        addAttribute("dhtable", 
+                     "htableId", 
                      DATATYPE_INTEGER,
                      true,
                      null,
                      tabids);
-        addObjectValue("dhtable",
+        addObjectValue("dhtable", 
                        JPEGHuffmanTable.class,
                        true,
                        null);
 
-
+        
         addElement("dri", parentName, CHILD_POLICY_EMPTY);
-        addAttribute("dri",
-                     "interval",
+        addAttribute("dri", 
+                     "interval", 
                      DATATYPE_INTEGER,
                      true,
                      null,
@@ -105,7 +105,7 @@ abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
                      true, true);
 
         addElement("com", parentName, CHILD_POLICY_EMPTY);
-        addAttribute("com",
+        addAttribute("com", 
                      "comment",
                      DATATYPE_STRING,
                      false,
@@ -113,7 +113,7 @@ abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
         addObjectValue("com", byte[].class, 1, MAX_JPEG_DATA_SIZE);
 
         addElement("unknown", parentName, CHILD_POLICY_EMPTY);
-        addAttribute("unknown",
+        addAttribute("unknown", 
                      "MarkerTag",
                      DATATYPE_INTEGER,
                      true,
@@ -139,8 +139,8 @@ abstract class JPEGMetadataFormat extends IIOMetadataFormatImpl {
      * itself.  <code>subtreeName</code> may be any node in
      * the format.  If it is not, an
      * <code>IllegalArgumentException</code> is thrown.
-     */
-    protected boolean isInSubtree(String elementName,
+     */ 
+    protected boolean isInSubtree(String elementName, 
                                   String subtreeName) {
         if (elementName.equals(subtreeName)) {
             return true;

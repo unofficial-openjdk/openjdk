@@ -130,12 +130,12 @@ public class SslRMIClientSocketFactory
             for (int i = 0 ; i < tokens; i++) {
                 enabledCipherSuitesList[i] = st.nextToken();
             }
-            try {
-                sslSocket.setEnabledCipherSuites(enabledCipherSuitesList);
-            } catch (IllegalArgumentException e) {
-                throw (IOException)
-                    new IOException(e.getMessage()).initCause(e);
-            }
+	    try {
+		sslSocket.setEnabledCipherSuites(enabledCipherSuitesList);
+	    } catch (IllegalArgumentException e) {
+		throw (IOException)
+		    new IOException(e.getMessage()).initCause(e);
+	    }
         }
         // Set the SSLSocket Enabled Protocols
         //
@@ -148,12 +148,12 @@ public class SslRMIClientSocketFactory
             for (int i = 0 ; i < tokens; i++) {
                 enabledProtocolsList[i] = st.nextToken();
             }
-            try {
-                sslSocket.setEnabledProtocols(enabledProtocolsList);
-            } catch (IllegalArgumentException e) {
-                throw (IOException)
-                    new IOException(e.getMessage()).initCause(e);
-            }
+	    try {
+		sslSocket.setEnabledProtocols(enabledProtocolsList);
+	    } catch (IllegalArgumentException e) {
+		throw (IOException)
+		    new IOException(e.getMessage()).initCause(e);
+	    }
         }
         // Return the preconfigured SSLSocket
         //

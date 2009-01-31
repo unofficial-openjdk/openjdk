@@ -38,7 +38,7 @@ package java.math;
  *
  * Note that SignedMutableBigIntegers only support signed addition and
  * subtraction. All other operations occur as with MutableBigIntegers.
- *
+ * 
  * @see     BigInteger
  * @author  Michael McCloskey
  * @since   1.3
@@ -98,7 +98,7 @@ class SignedMutableBigInteger extends MutableBigInteger {
             add(addend);
         else
             sign = sign * subtract(addend);
-
+        
     }
 
    /**
@@ -109,7 +109,7 @@ class SignedMutableBigInteger extends MutableBigInteger {
             sign = sign * subtract(addend);
         else
             add(addend);
-
+        
     }
 
    /**

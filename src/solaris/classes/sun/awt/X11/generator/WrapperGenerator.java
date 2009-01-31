@@ -87,7 +87,7 @@ public class WrapperGenerator {
 
         private boolean alias;
         private String aliasName;
-
+        
         static final int TYPE_INT=0;
         static final int TYPE_CHAR=1;
         static final int TYPE_LONG=2;
@@ -107,19 +107,19 @@ public class WrapperGenerator {
             if (str.equals("int"))
                 type = AtomicType.TYPE_INT;
             else if (str.equals("long"))
-                type = AtomicType.TYPE_LONG;
+                type = AtomicType.TYPE_LONG;    
             else if (str.equals("byte"))
                 type = AtomicType.TYPE_BYTE;
             else if (str.equals("char"))
-                type = AtomicType.TYPE_CHAR;
+                type = AtomicType.TYPE_CHAR;    
             else if (str.equals("long long"))
-                type = AtomicType.TYPE_LONG_LONG;
+                type = AtomicType.TYPE_LONG_LONG;    
             else if (str.equals("double"))
-                type = AtomicType.TYPE_DOUBLE;
+                type = AtomicType.TYPE_DOUBLE;    
             else if (str.equals("float"))
-                type = AtomicType.TYPE_FLOAT;
+                type = AtomicType.TYPE_FLOAT;    
             else if (str.equals("pointer"))
-                type = AtomicType.TYPE_PTR;
+                type = AtomicType.TYPE_PTR;    
             else if (str.equals("short"))
                 type = AtomicType.TYPE_SHORT;
             else if (str.equals("Bool"))
@@ -134,7 +134,7 @@ public class WrapperGenerator {
                 type = TYPE_ULONG;
             else throw new IllegalArgumentException("Uknown type string: " + str);
 
-            return type;
+            return type;     
         }
         String getJavaType() {
             if (referencedType != null) {
@@ -175,7 +175,7 @@ public class WrapperGenerator {
             }
         }
         String getItemSize() {
-            if (referencedType != null) {
+            if (referencedType != null) {                
                   if (referencedType instanceof StructType) {
                       return ((StructType)referencedType).getSize();
                   } else {
@@ -202,8 +202,8 @@ public class WrapperGenerator {
                   if (referencedType == null || referencedType instanceof StructType) {
                       res = base + "+" + offset;
                   } else if (referencedType instanceof AtomicType) {
-                      res = MessageFormat.format("Native.get{0}({1})",
-                                                 new Object[] {getNativeAccessForType(((AtomicType)referencedType).type),
+                      res = MessageFormat.format("Native.get{0}({1})", 
+                                                 new Object[] {getNativeAccessForType(((AtomicType)referencedType).type), 
                                                                base + "+" + offset});
                   }
                   break;
@@ -211,7 +211,7 @@ public class WrapperGenerator {
                   if (referencedType instanceof StructType) {
                       res = "pData + " + offset;
                   }  else if (referencedType instanceof AtomicType) {
-                      res = MessageFormat.format("Native.get{0}(pData + {1})",
+                      res = MessageFormat.format("Native.get{0}(pData + {1})", 
                                                  new Object[] {getNativeAccessForType(((AtomicType)referencedType).type),
                                                                offset});
                   }
@@ -274,7 +274,7 @@ public class WrapperGenerator {
                   return "Int";
               default:
                   throw new IllegalArgumentException("Unknown type: " + type);
-            }
+            }            
         }
         static String getNativeAccessForType(int type) {
             switch (type) {
@@ -305,7 +305,7 @@ public class WrapperGenerator {
                   return "Long";
               default:
                   throw new IllegalArgumentException("Unknown type: " + type);
-            }
+            }                        
         }
 
         static int getNativeSizeForAccess(String access) {
@@ -446,7 +446,7 @@ public class WrapperGenerator {
         }
         public boolean isAlias() {
             return alias;
-        }
+        }        
         public String getAliasName() {
             return aliasName;
         }
@@ -463,7 +463,7 @@ public class WrapperGenerator {
         String javaClassName;
 
         /**
-         * Construct new structured type.
+         * Construct new structured type. 
          * Description is used for name and type definition and has the following format:
          * structName [ '[' base classe ']' ] [ '{' interfaces '}' ] [ '|' javaClassName ]
          */
@@ -501,7 +501,7 @@ public class WrapperGenerator {
         {
             members.add(tp);
         }
-        public String getBaseClass() {
+        public String getBaseClass() {            
             return baseClass;
         }
         public String getInterfaces() {
@@ -537,7 +537,7 @@ public class WrapperGenerator {
             description = _desc;
 //              System.out.println("Struct " + name + " extends " + baseClass + " implements " + interfaces);
         }
-
+        
         /**
          * Returns String containing Java code calculating size of the structure depending on the data model
          */
@@ -545,7 +545,7 @@ public class WrapperGenerator {
             String s32 = (String) WrapperGenerator.sizeTable32bit.get(getName());
             String s64 = (String) WrapperGenerator.sizeTable64bit.get(getName());
             if (s32 == null || s64 == null) {
-                return (s32 == null)?(s64):(s32);
+                return (s32 == null)?(s64):(s32);                
             }
             if (s32.equals(s64)) {
                 return s32;
@@ -558,7 +558,7 @@ public class WrapperGenerator {
             String s64 = (String) WrapperGenerator.sizeTable64bit.get(key);
             String s32 = (String) WrapperGenerator.sizeTable32bit.get(key);
             if (s32 == null || s64 == null) {
-                return (s32 == null)?(s64):(s32);
+                return (s32 == null)?(s64):(s32);                
             }
             if (s32.equals(s64)) {
                 return s32;
@@ -593,7 +593,7 @@ public class WrapperGenerator {
                 return returnType;
             }
         }
-
+                                
         public int getNumArgs()
         {
             return args.size();
@@ -614,7 +614,7 @@ public class WrapperGenerator {
         {
             return description;
         }
-
+        
         public Collection getArguments()
         {
             return args;
@@ -645,7 +645,7 @@ public class WrapperGenerator {
           case 4: return "int";
           case 8: return "long";
           default: throw new RuntimeException("Unsupported size: " + size);
-        }
+        }        
     }
     public String getOffsets(StructType stp,AtomicType atp, boolean wide)
     {
@@ -733,7 +733,7 @@ public class WrapperGenerator {
                     if (type != AtomicType.TYPE_STRUCT) pw.println(prefix + "void set_" +name +"(" + tp.getJavaType() + " v);");
                 }
             }
-        }
+        } 
     }
 
     private int padSize(int size, int wordLength) {
@@ -768,13 +768,13 @@ public class WrapperGenerator {
                 if (type == AtomicType.TYPE_ARRAY) {
                     acc_size_32 += elemSize_32 * tp.getArrayLength();
                     acc_size_64 += elemSize_64 * tp.getArrayLength();
-                    pw.println(pref + tp.getJavaType() + " get_" +name + "(int index) { " +s_log+"return " +
+                    pw.println(pref + tp.getJavaType() + " get_" +name + "(int index) { " +s_log+"return " + 
                                tp.getJavaResult(stp.getOffset(tp) + "+index*" + elemSize, null) + "; }");
                     if (tp.getReferencedType() instanceof AtomicType) { // Set for StructType is forbidden
-                        pw.println(MessageFormat.format(pref + "void set_{0}(int index, {1} v) '{' {3} {2}; '}'",
+                        pw.println(MessageFormat.format(pref + "void set_{0}(int index, {1} v) '{' {3} {2}; '}'", 
                                                         new Object[] {
-                                                            name, jt,
-                                                            tp.getJavaConversion("pData+"+stp.getOffset(tp)+" + index*" + elemSize, "v"),
+                                                            name, jt, 
+                                                            tp.getJavaConversion("pData+"+stp.getOffset(tp)+" + index*" + elemSize, "v"), 
                                                             s_log}));
                     }
                     // Returns pointer to the start of the array
@@ -787,7 +787,7 @@ public class WrapperGenerator {
                                              s_log
                                              }));
                     pw.println(pref + "long get_" +name+ "() { "+s_log+"return Native.getLong(pData+"+stp.getOffset(tp)+"); }");
-                    pw.println(MessageFormat.format(pref + "void set_{0}({1} v) '{' {3} {2}; '}'",
+                    pw.println(MessageFormat.format(pref + "void set_{0}({1} v) '{' {3} {2}; '}'", 
                                                     new Object[] {name, "long", "Native.putLong(pData + " + stp.getOffset(tp) + ", v)", s_log}));
                     acc_size_32 += elemSize_32;
                     acc_size_64 += elemSize_64;
@@ -797,18 +797,18 @@ public class WrapperGenerator {
                     pw.println(pref + tp.getJavaType() + " get_" +name +
                                "() { "+s_log+"return " + tp.getJavaResult(stp.getOffset(tp), null) + "; }");
                     if (type != AtomicType.TYPE_STRUCT) {
-                        pw.println(MessageFormat.format(pref + "void set_{0}({1} v) '{' {3} {2}; '}'",
+                        pw.println(MessageFormat.format(pref + "void set_{0}({1} v) '{' {3} {2}; '}'", 
                                                         new Object[] {name, jt, tp.getJavaConversion("pData+"+stp.getOffset(tp), "v"), s_log}));
                     }
-                }
+                } 
                 i++;
             }
         }
         if (s_size_32 != null && !s_size_32.equals(Integer.toString(acc_size_32))) {
-            log.fine("32 bits: The size of the structure " + stp.getName() + " " + s_size_32 +
+            log.fine("32 bits: The size of the structure " + stp.getName() + " " + s_size_32 +  
                         " is not equal to the accumulated size " +acc_size_32 + " of the fields");
         } else if (s_size_64 != null && !s_size_64.equals(Integer.toString(acc_size_64))) {
-            log.fine("64 bits: The size of the structure " + stp.getName() + " " +s_size_64+
+            log.fine("64 bits: The size of the structure " + stp.getName() + " " +s_size_64+ 
                         " is not equal to the accumulated size " +acc_size_64+" of the fields");
         }
     }
@@ -858,7 +858,7 @@ public class WrapperGenerator {
                     pw.println("\tpublic int getDataSize() { return getSize(); }");
                     pw.println("\n\tlong pData;");
                     pw.println("\n\tpublic long getPData() { return pData; }");
-
+                  
                     pw.println("\n\n\t" + stp.getJavaClassName() + "(long addr) {");
                     if (generateLog) {
                         pw.println("\t\tlog.finest(\"Creating\");");
@@ -873,7 +873,7 @@ public class WrapperGenerator {
                     pw.println("\t\tpData = unsafe.allocateMemory(getSize());");
                     pw.println("\t\tshould_free_memory = true;");
                     pw.println("\t}");
-
+                  
                     pw.println("\n\n\tpublic void dispose() {");
                     if (generateLog) {
                         pw.println("\t\tlog.finest(\"Disposing\");");
@@ -885,13 +885,13 @@ public class WrapperGenerator {
                     pw.println("\t\t\tunsafe.freeMemory(pData); \n\t}");
                     pw.println("\t\t}");
                     writeAccessorImpls(stp, pw);
-                    writeToString(stp,pw);
+                    writeToString(stp,pw);              
                 } else {
                     pw.println("\n\n\tvoid dispose();");
                     pw.println("\n\tlong getPData();");
                     writeStubs(stp,pw);
                 }
-
+              
 
                 pw.println("}\n\n\n");
                 pw.close();
@@ -932,7 +932,7 @@ public class WrapperGenerator {
             FileOutputStream fs =  new FileOutputStream(outputDir + "/" + ft.getName()+".java");
             PrintWriter pw = new PrintWriter(fs);
             pw.println("// This file is an automatically generated file, please do not edit this file, modify the WrapperGenerator.java file instead !\n" );
-
+            
             pw.println("package "+package_name+";\n");
             pw.println("import sun.misc.Unsafe;\n");
             pw.println("class " + ft.getName() + " {");
@@ -964,14 +964,14 @@ public class WrapperGenerator {
             pw.println("\t)");
             pw.println("\t{");
             iter = ft.getArguments().iterator();
-            while (iter.hasNext()) {
+            while (iter.hasNext()) {                
                 AtomicType at = (AtomicType)iter.next();
-                if (at.isIn() || at.isInOut()) {
+                if (at.isIn() || at.isInOut()) {                    
                     pw.println("\t\tset_" + at.getName() + "(" + at.getName() + ");");
                 }
             }
             pw.println("\t}");
-
+            
             pw.println("\tpublic " + ft.getReturnType() + " execute() {");
             if (ft.isVoid()) {
                 pw.println("\t\texecute(null);");
@@ -1040,7 +1040,7 @@ public class WrapperGenerator {
             pw.println("\tpublic void finalize() {");
             pw.println("\t    dispose();");
             pw.println("\t}");
-
+            
             pw.println("\tpublic void dispose() {");
             pw.println("\t\tXToolkit.awtLock();");
             pw.println("\t\ttry {");
@@ -1069,7 +1069,7 @@ public class WrapperGenerator {
 
             iter = ft.getArguments().iterator();
             while (iter.hasNext()) {
-                AtomicType at = (AtomicType)iter.next();
+                AtomicType at = (AtomicType)iter.next();                
                 pw.println("\tpublic " + at.getJavaType() + " get_" + at.getName() + "() {");
 
                 pw.println("\t\tif (__disposed) {");
@@ -1119,7 +1119,7 @@ public class WrapperGenerator {
         }
     }
 
-
+   
     public void writeNativeSizer(String file)
     {
         int type;
@@ -1137,19 +1137,11 @@ public class WrapperGenerator {
 
             pw.println("/* This file is an automatically generated file, please do not edit this file, modify the XlibParser.java file instead !*/\n" );
             pw.println("#include <X11/Xlib.h>\n#include <X11/Xutil.h>\n#include <X11/Xos.h>\n#include <X11/Xatom.h>\n#include <stdio.h>\n");
+            pw.println("#include <Xm/MwmUtil.h>");
             pw.println("#include <X11/extensions/Xdbe.h>");
             pw.println("#include \"awt_p.h\"");
             pw.println("#include \"color.h\"");
             pw.println("#include \"colordata.h\"");
-            pw.println("\ntypedef struct\n");
-            pw.println("{\n");
-            pw.println("    unsigned long flags;\n");
-            pw.println("    unsigned long functions;\n");
-            pw.println("    unsigned long decorations;\n");
-            pw.println("    long inputMode;\n");
-            pw.println("    unsigned long status;\n");
-            pw.println("} PropMwmHints;\n");
-
 
             pw.println("\n\nint main(){");
             j=0;
@@ -1188,7 +1180,7 @@ public class WrapperGenerator {
                     for (Enumeration e = stp.getMembers() ; e.hasMoreElements() ;) {
                         AtomicType atp = (AtomicType) e.nextElement();
                         if (atp.isAlias()) continue;
-                        pw.println("printf(\""+ stp.getName() + "." + atp.getName() + "\t%d\\n\""+
+                        pw.println("printf(\""+ stp.getName() + "." + atp.getName() + "\t%d\\n\""+ 
                                    ",(int)((unsigned long ) &temp"+j+"."+atp.getName()+"- (unsigned long ) &temp" + j + ")  );");
 
                         i++;
@@ -1211,7 +1203,7 @@ public class WrapperGenerator {
             e.printStackTrace();
         }
     }
-
+ 
     private void initTypes() {
         symbolTable.put("int", new AtomicType(AtomicType.TYPE_INT, "", "int"));
         symbolTable.put("short", new AtomicType(AtomicType.TYPE_SHORT, "", "short"));
@@ -1249,7 +1241,7 @@ public class WrapperGenerator {
                 splits = line.split("\\p{Space}+");
                 if (splits.length >= 2)
                 {
-                    String struct_name = curType.getName();
+                    String struct_name = curType.getName(); 
                     String field_name = splits[1];
                     String s_type = splits[2];
                     BaseType bt = curType;

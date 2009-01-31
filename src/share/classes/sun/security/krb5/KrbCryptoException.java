@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -33,6 +34,7 @@ package sun.security.krb5;
 /**
  * KrbCryptoExceptoin is a wrapper exception for exceptions thrown by JCE.
  *
+ * @version 1.00
  * @author Yanni Zhang
  */
 public class KrbCryptoException extends KrbException {

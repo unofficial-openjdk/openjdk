@@ -38,62 +38,62 @@ public class HashSpread {
     /**
      * Generate and return a random IPv6 address.
      */
-    static InetAddress randomIPv6Adress() {
-        StringBuffer sb = new StringBuffer();
+    static InetAddress randomIPv6Adress() { 
+	StringBuffer sb = new StringBuffer();
 
-        for (int i=0; i<8; i++) {
+	for (int i=0; i<8; i++) {
 
-            if (i > 0)
-                sb.append(":");
+	    if (i > 0) 
+		sb.append(":");
 
-            for (int j=0; j<4; j++) {
-                int v = r.nextInt(16);
-                if (v < 10) {
-                    sb.append(Integer.toString(v));
-                } else {
-                    char c = (char) ('A' + v - 10);
-                    sb.append(c);
-                }
-            }
-        }
+	    for (int j=0; j<4; j++) {
+		int v = r.nextInt(16);
+		if (v < 10) {
+		    sb.append(Integer.toString(v));
+		} else {
+		    char c = (char) ('A' + v - 10);
+		    sb.append(c);
+		}
+	    }
+	}
 
-        try {
-            return InetAddress.getByName(sb.toString());
-        } catch (UnknownHostException x) {
-            throw new Error("Internal error in test");
-        }
+	try {
+	    return InetAddress.getByName(sb.toString());
+	} catch (UnknownHostException x) {
+	    throw new Error("Internal error in test");
+	}
     }
 
     public static void main(String args[]) throws Exception {
 
-        int iterations = 10000;
-        if (args.length > 0) {
-            iterations = Integer.parseInt(args[0]);
-        }
+	int iterations = 10000;
+	if (args.length > 0) {
+	    iterations = Integer.parseInt(args[0]);
+	}
 
-        int MIN_SHORT = (int)Short.MIN_VALUE;
-        int MAX_SHORT = (int)Short.MAX_VALUE;
+	int MIN_SHORT = (int)Short.MIN_VALUE;
+	int MAX_SHORT = (int)Short.MAX_VALUE;
 
-        /*
-         * Iterate through 10k hash codes and count the number
-         * in the MIN_SHORT-MAX_SHORT range.
-         */
-        int narrow = 0;
-        for (int i=0; i<iterations; i++) {
-            int hc = randomIPv6Adress().hashCode();
-            if (hc >= MIN_SHORT && hc <= MAX_SHORT) {
-                narrow++;
-            }
-        }
+	/*
+ 	 * Iterate through 10k hash codes and count the number
+	 * in the MIN_SHORT-MAX_SHORT range.
+	 */
+	int narrow = 0;
+	for (int i=0; i<iterations; i++) {
+	    int hc = randomIPv6Adress().hashCode();
+	    if (hc >= MIN_SHORT && hc <= MAX_SHORT) {
+		narrow++;
+	    }
+	}
 
-        /*
-         * If >85% of hash codes in the range then fail.
-         */
-        double percent = (double)narrow / (double)iterations * 100.0;
-        if (percent > 85.0) {
-            throw new RuntimeException(percent + " of hash codes were in " +
-                MIN_SHORT + " to " + MAX_SHORT  + " range.");
-        }
+	/*
+	 * If >85% of hash codes in the range then fail.
+	 */
+	double percent = (double)narrow / (double)iterations * 100.0;
+	if (percent > 85.0) {
+	    throw new RuntimeException(percent + " of hash codes were in " + 
+		MIN_SHORT + " to " + MAX_SHORT  + " range.");
+	}
 
     }
 

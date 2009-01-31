@@ -51,6 +51,7 @@ import sun.awt.ModalExclude;
  *
  * @see PopupFactory
  *
+ * @version %I% %G%
  * @since 1.4
  */
 public class Popup {
@@ -229,19 +230,19 @@ public class Popup {
             // Popups are typically transient and most likely won't benefit
             // from true double buffering.  Turn it off here.
             getRootPane().setUseTrueDoubleBuffering(false);
-            setAlwaysOnTop(true);
+            setAlwaysOnTop(true);   
         }
 
         public void update(Graphics g) {
             paint(g);
         }
 
-        public void show() {
-            this.pack();
+	public void show() {
+	    this.pack();
             if (getWidth() > 0 && getHeight() > 0) {
                 super.show();
-            }
-        }
+            }            
+	}
     }
 
 

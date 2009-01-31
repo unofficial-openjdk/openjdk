@@ -35,7 +35,7 @@ public abstract class ImageWatched {
     public Link watcherList;
 
     public ImageWatched() {
-        watcherList = endlink;
+	watcherList = endlink;
     }
 
     /*
@@ -46,43 +46,43 @@ public abstract class ImageWatched {
      * reference to a real ImageObserver.
      */
     public static class Link {
-        /*
-         * Check if iw is the referent of this Link or any
-         * subsequent Link objects on this chain.
-         */
-        public boolean isWatcher(ImageObserver iw) {
-            return false;  // No "iw" down here.
-        }
+	/*
+	 * Check if iw is the referent of this Link or any
+	 * subsequent Link objects on this chain.
+	 */
+	public boolean isWatcher(ImageObserver iw) {
+	    return false;  // No "iw" down here.
+	}
 
-        /*
-         * Remove this Link from the chain if its referent
-         * is the indicated target or if it has been nulled
-         * out by the garbage collector.
-         * Return the new remainder of the chain.
-         * The argument may be null which will trigger
-         * the chain to remove only the dead (null) links.
-         * This method is only ever called inside a
-         * synchronized block so Link.next modifications
-         * will be safe.
-         */
-        public Link removeWatcher(ImageObserver iw) {
-            return this;  // Leave me as the end link.
-        }
+	/*
+	 * Remove this Link from the chain if its referent
+	 * is the indicated target or if it has been nulled
+	 * out by the garbage collector.
+	 * Return the new remainder of the chain.
+	 * The argument may be null which will trigger
+	 * the chain to remove only the dead (null) links.
+	 * This method is only ever called inside a
+	 * synchronized block so Link.next modifications
+	 * will be safe.
+	 */
+	public Link removeWatcher(ImageObserver iw) {
+	    return this;  // Leave me as the end link.
+	}
 
-        /*
-         * Deliver the indicated image update information
-         * to the referent of this Link and return a boolean
-         * indicating whether or not some referent became
-         * null or has indicated a lack of interest in
-         * further updates to its imageUpdate() method.
-         * This method is not called inside a synchronized
-         * block so Link.next modifications are not safe.
-         */
-        public boolean newInfo(Image img, int info,
-                               int x, int y, int w, int h)
-        {
-            return false;  // No disinterested parties down here.
-        }
+	/*
+	 * Deliver the indicated image update information
+	 * to the referent of this Link and return a boolean
+	 * indicating whether or not some referent became
+	 * null or has indicated a lack of interest in
+	 * further updates to its imageUpdate() method.
+	 * This method is not called inside a synchronized
+	 * block so Link.next modifications are not safe.
+	 */
+	public boolean newInfo(Image img, int info,
+			       int x, int y, int w, int h)
+	{
+	    return false;  // No disinterested parties down here.
+	}
     }
 
     /*
@@ -90,86 +90,86 @@ public abstract class ImageWatched {
      * to an ImageObserver.
      */
     public static class WeakLink extends Link {
-        private WeakReference<ImageObserver> myref;
-        private Link next;
+	private WeakReference<ImageObserver> myref;
+	private Link next;
 
-        public WeakLink(ImageObserver obs, Link next) {
-            myref = new WeakReference<ImageObserver>(obs);
-            this.next = next;
-        }
+	public WeakLink(ImageObserver obs, Link next) {
+	    myref = new WeakReference<ImageObserver>(obs);
+	    this.next = next;
+	}
 
-        public boolean isWatcher(ImageObserver iw) {
-            return (myref.get() == iw || next.isWatcher(iw));
-        }
+	public boolean isWatcher(ImageObserver iw) {
+	    return (myref.get() == iw || next.isWatcher(iw));
+	}
 
-        public Link removeWatcher(ImageObserver iw) {
-            ImageObserver myiw = myref.get();
-            if (myiw == null) {
-                // Remove me from the chain, but continue recursion.
-                return next.removeWatcher(iw);
-            }
-            // At this point myiw is not null so we know this test will
-            // never succeed if this is a pruning pass (iw == null).
-            if (myiw == iw) {
-                // Remove me from the chain and end the recursion here.
-                return next;
-            }
-            // I am alive, but not the one to be removed, recurse
-            // and update my next link and leave me in the chain.
-            next = next.removeWatcher(iw);
-            return this;
-        }
+	public Link removeWatcher(ImageObserver iw) {
+	    ImageObserver myiw = myref.get();
+	    if (myiw == null) {
+		// Remove me from the chain, but continue recursion.
+		return next.removeWatcher(iw);
+	    }
+	    // At this point myiw is not null so we know this test will
+	    // never succeed if this is a pruning pass (iw == null).
+	    if (myiw == iw) {
+		// Remove me from the chain and end the recursion here.
+		return next;
+	    }
+	    // I am alive, but not the one to be removed, recurse
+	    // and update my next link and leave me in the chain.
+	    next = next.removeWatcher(iw);
+	    return this;
+	}
 
-        public boolean newInfo(Image img, int info,
-                               int x, int y, int w, int h)
-        {
-            // Note tail recursion because items are added LIFO.
-            boolean ret = next.newInfo(img, info, x, y, w, h);
-            ImageObserver myiw = myref.get();
-            if (myiw == null) {
-                // My referent is null so we must prune in a second pass.
-                ret = true;
-            } else if (myiw.imageUpdate(img, info, x, y, w, h) == false) {
-                // My referent has lost interest so clear it and ask
-                // for a pruning pass to remove it later.
-                myref.clear();
-                ret = true;
-            }
-            return ret;
-        }
+	public boolean newInfo(Image img, int info,
+			       int x, int y, int w, int h)
+	{
+	    // Note tail recursion because items are added LIFO.
+	    boolean ret = next.newInfo(img, info, x, y, w, h);
+	    ImageObserver myiw = myref.get();
+	    if (myiw == null) {
+		// My referent is null so we must prune in a second pass.
+		ret = true;
+	    } else if (myiw.imageUpdate(img, info, x, y, w, h) == false) {
+		// My referent has lost interest so clear it and ask
+		// for a pruning pass to remove it later.
+		myref.clear();
+		ret = true;
+	    }
+	    return ret;
+	}
     }
 
     public synchronized void addWatcher(ImageObserver iw) {
-        if (iw != null && !isWatcher(iw)) {
-            watcherList = new WeakLink(iw, watcherList);
-        }
+	if (iw != null && !isWatcher(iw)) {
+	    watcherList = new WeakLink(iw, watcherList);
+	}
     }
 
     public synchronized boolean isWatcher(ImageObserver iw) {
-        return watcherList.isWatcher(iw);
+	return watcherList.isWatcher(iw);
     }
 
     public void removeWatcher(ImageObserver iw) {
-        synchronized (this) {
-            watcherList = watcherList.removeWatcher(iw);
-        }
-        if (watcherList == endlink) {
-            notifyWatcherListEmpty();
-        }
+	synchronized (this) {
+	    watcherList = watcherList.removeWatcher(iw);
+	}
+	if (watcherList == endlink) {
+	    notifyWatcherListEmpty();
+	}
     }
 
     public boolean isWatcherListEmpty() {
-        synchronized (this) {
-            watcherList = watcherList.removeWatcher(null);
-        }
-        return (watcherList == endlink);
+	synchronized (this) {
+	    watcherList = watcherList.removeWatcher(null);
+	}
+	return (watcherList == endlink);
     }
 
     public void newInfo(Image img, int info, int x, int y, int w, int h) {
-        if (watcherList.newInfo(img, info, x, y, w, h)) {
-            // Some Link returned true so we now need to prune dead links.
-            removeWatcher(null);
-        }
+	if (watcherList.newInfo(img, info, x, y, w, h)) {
+	    // Some Link returned true so we now need to prune dead links.
+	    removeWatcher(null);
+	}
     }
 
     protected abstract void notifyWatcherListEmpty();

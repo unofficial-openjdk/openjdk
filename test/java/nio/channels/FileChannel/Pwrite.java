@@ -47,11 +47,11 @@ public class Pwrite {
         genericTest();
         testUnwritableChannel();
     }
-
+    
     // This test for bug 4862411
     private static void testUnwritableChannel() throws Exception {
         File blah = File.createTempFile("blah2", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(blah);
         fos.write(new byte[128]);
         fos.close();
@@ -70,7 +70,7 @@ public class Pwrite {
         sb.setLength(4);
 
         blah = File.createTempFile("blah", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         initTestFile(blah);
 
         RandomAccessFile raf = new RandomAccessFile(blah, "rw");
@@ -93,7 +93,7 @@ public class Pwrite {
                     throw new Exception("Read failed");
                 totalWritten += written;
             }
-
+            
             long newPosition = c.position();
 
             // Ensure that file pointer position has not changed
@@ -142,7 +142,7 @@ public class Pwrite {
     private static void initTestFile(File blah) throws Exception {
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<4000; i++) {
             String number = new Integer(i).toString();

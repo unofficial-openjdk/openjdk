@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 
@@ -44,6 +45,7 @@ import java.awt.*;
  * It's great for giving demos of your software to a group
  * where people will have trouble seeing what you're doing.
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class DemoMetalTheme extends DefaultMetalTheme {

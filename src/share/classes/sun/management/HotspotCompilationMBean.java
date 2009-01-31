@@ -42,7 +42,7 @@ public interface HotspotCompilationMBean {
     /**
      * Returns the statistic of all compiler threads.
      *
-     * @return a list of {@link CompilerThreadStat} object containing
+     * @return a list of {@link CompilerThreadStat} object containing 
      * the statistic of a compiler thread.
      *
      */

@@ -33,26 +33,27 @@ import java.io.IOException;
  * being enabled.
  *
  * @author  Michael McMahon
+ * @version %I%, %G%
  * @since   1.5
  */
-public
-class HttpRetryException extends IOException {
+public 
+class HttpRetryException extends IOException { 
 
     private int responseCode;
     private String location;
 
     /**
-     * Constructs a new <code>HttpRetryException</code> from the
+     * Constructs a new <code>HttpRetryException</code> from the 
      * specified response code and exception detail message
      *
      * @param   detail   the detail message.
      * @param   code   the HTTP response code from server.
      */
     public HttpRetryException(String detail, int code) {
-        super(detail);
-        responseCode = code;
+	super(detail);
+	responseCode = code;
     }
-
+    
     /**
      * Constructs a new <code>HttpRetryException</code> with detail message
      * responseCode and the contents of the Location response header field.
@@ -62,9 +63,9 @@ class HttpRetryException extends IOException {
      * @param   location   the URL to be redirected to
      */
     public HttpRetryException(String detail, int code, String location) {
-        super (detail);
-        responseCode = code;
-        this.location = location;
+	super (detail);
+	responseCode = code;
+	this.location = location;
     }
 
     /**

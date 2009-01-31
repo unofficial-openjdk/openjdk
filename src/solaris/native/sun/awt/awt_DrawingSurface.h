@@ -46,3 +46,4 @@ _JNI_IMPORT_OR_EXPORT_ jobject JNICALL
     awt_GetComponent(JNIEnv* env, void* platformInfo);
 
 #endif /* !_AWT_DRAWING_SURFACE_H_ */
+

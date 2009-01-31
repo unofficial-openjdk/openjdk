@@ -40,6 +40,7 @@ import sun.swing.text.html.FrameEditorPaneTag;
  * marginwidth and marginheight attributes.
  *
  * @author    Sunita Mani
+ * @version   %I%, %G%
  */
 
 class FrameView extends ComponentView implements HyperlinkListener {
@@ -60,63 +61,63 @@ class FrameView extends ComponentView implements HyperlinkListener {
      * @param elem the element to represent.
      */
     public FrameView(Element elem) {
-        super(elem);
+	super(elem);
     }
 
     protected Component createComponent() {
 
-        Element elem = getElement();
-        AttributeSet attributes = elem.getAttributes();
-        String srcAtt = (String)attributes.getAttribute(HTML.Attribute.SRC);
+	Element elem = getElement();
+	AttributeSet attributes = elem.getAttributes();
+	String srcAtt = (String)attributes.getAttribute(HTML.Attribute.SRC);
 
-        if ((srcAtt != null) && (!srcAtt.equals(""))) {
-            try {
-                URL base = ((HTMLDocument)elem.getDocument()).getBase();
-                src = new URL(base, srcAtt);
+	if ((srcAtt != null) && (!srcAtt.equals(""))) {
+	    try {
+		URL base = ((HTMLDocument)elem.getDocument()).getBase();
+		src = new URL(base, srcAtt);
                 htmlPane = new FrameEditorPane();
                 htmlPane.addHyperlinkListener(this);
                 JEditorPane host = getHostPane();
                 boolean isAutoFormSubmission = true;
                 if (host != null) {
                     htmlPane.setEditable(host.isEditable());
-                    String charset = (String) host.getClientProperty("charset");
-                    if (charset != null) {
-                        htmlPane.putClientProperty("charset", charset);
-                    }
+		    String charset = (String) host.getClientProperty("charset");
+		    if (charset != null) {
+			htmlPane.putClientProperty("charset", charset);
+		    }
                     HTMLEditorKit hostKit = (HTMLEditorKit)host.getEditorKit();
-                    if (hostKit != null) {
-                        isAutoFormSubmission = hostKit.isAutoFormSubmission();
-                    }
+		    if (hostKit != null) {
+			isAutoFormSubmission = hostKit.isAutoFormSubmission();
+		    }
                 }
                 htmlPane.setPage(src);
                 HTMLEditorKit kit = (HTMLEditorKit)htmlPane.getEditorKit();
-                if (kit != null) {
-                    kit.setAutoFormSubmission(isAutoFormSubmission);
-                }
+		if (kit != null) {
+		    kit.setAutoFormSubmission(isAutoFormSubmission);
+		}
 
-                Document doc = htmlPane.getDocument();
-                if (doc instanceof HTMLDocument) {
-                    ((HTMLDocument)doc).setFrameDocumentState(true);
-                }
-                setMargin();
-                createScrollPane();
-                setBorder();
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            }
-        }
-        createdComponent = true;
-        return scroller;
+		Document doc = htmlPane.getDocument();
+		if (doc instanceof HTMLDocument) {
+		    ((HTMLDocument)doc).setFrameDocumentState(true);
+		}
+		setMargin();
+		createScrollPane();
+		setBorder();
+	    } catch (MalformedURLException e) {
+		e.printStackTrace();
+	    } catch (IOException e1) {
+		e1.printStackTrace();
+	    }
+	}
+	createdComponent = true;
+	return scroller;
     }
 
     JEditorPane getHostPane() {
-        Container c = getContainer();
-        while ((c != null) && ! (c instanceof JEditorPane)) {
-            c = c.getParent();
-        }
-        return (JEditorPane) c;
+	Container c = getContainer();
+	while ((c != null) && ! (c instanceof JEditorPane)) {
+	    c = c.getParent();
+	}
+	return (JEditorPane) c;
     }
 
 
@@ -129,13 +130,13 @@ class FrameView extends ComponentView implements HyperlinkListener {
      * @param parent View
      */
     public void setParent(View parent) {
-        if (parent != null) {
-            JTextComponent t = (JTextComponent)parent.getContainer();
-            editable = t.isEditable();
-        }
-        super.setParent(parent);
+	if (parent != null) {
+	    JTextComponent t = (JTextComponent)parent.getContainer();
+	    editable = t.isEditable();
+	}
+	super.setParent(parent);
     }
-
+    
 
     /**
      * Also determines if the FrameView should be editable
@@ -148,12 +149,12 @@ class FrameView extends ComponentView implements HyperlinkListener {
      */
     public void paint(Graphics g, Shape allocation) {
 
-        Container host = getContainer();
-        if (host != null && htmlPane != null &&
-            htmlPane.isEditable() != ((JTextComponent)host).isEditable()) {
-            editable = ((JTextComponent)host).isEditable();
-            htmlPane.setEditable(editable);
-        }
+	Container host = getContainer();
+	if (host != null && htmlPane != null &&
+	    htmlPane.isEditable() != ((JTextComponent)host).isEditable()) {
+	    editable = ((JTextComponent)host).isEditable();
+	    htmlPane.setEditable(editable);
+	}
         super.paint(g, allocation);
     }
 
@@ -163,37 +164,37 @@ class FrameView extends ComponentView implements HyperlinkListener {
      * then the JEditorPane's margin's are set to the new values.
      */
     private void setMargin() {
-        int margin = 0;
-        Insets in = htmlPane.getMargin();
-        Insets newInsets;
-        boolean modified = false;
-        AttributeSet attributes = getElement().getAttributes();
-        String marginStr = (String)attributes.getAttribute(HTML.Attribute.MARGINWIDTH);
-        if ( in != null) {
-            newInsets = new Insets(in.top, in.left, in.right, in.bottom);
-        } else {
-            newInsets = new Insets(0,0,0,0);
-        }
-        if (marginStr != null) {
-            margin = Integer.parseInt(marginStr);
-            if (margin > 0) {
-                newInsets.left = margin;
-                newInsets.right = margin;
-                modified = true;
-            }
-        }
-        marginStr = (String)attributes.getAttribute(HTML.Attribute.MARGINHEIGHT);
-        if (marginStr != null) {
-            margin = Integer.parseInt(marginStr);
-            if (margin > 0) {
-                newInsets.top = margin;
-                newInsets.bottom = margin;
-                modified = true;
-            }
-        }
-        if (modified) {
-            htmlPane.setMargin(newInsets);
-        }
+	int margin = 0;
+	Insets in = htmlPane.getMargin();
+	Insets newInsets;
+	boolean modified = false;
+	AttributeSet attributes = getElement().getAttributes();
+	String marginStr = (String)attributes.getAttribute(HTML.Attribute.MARGINWIDTH);
+	if ( in != null) {
+	    newInsets = new Insets(in.top, in.left, in.right, in.bottom);
+	} else {
+	    newInsets = new Insets(0,0,0,0);
+	}
+	if (marginStr != null) {
+	    margin = Integer.parseInt(marginStr);
+	    if (margin > 0) {
+		newInsets.left = margin;
+		newInsets.right = margin;
+		modified = true;
+	    }
+	}
+	marginStr = (String)attributes.getAttribute(HTML.Attribute.MARGINHEIGHT);
+	if (marginStr != null) {
+	    margin = Integer.parseInt(marginStr);
+	    if (margin > 0) {
+		newInsets.top = margin;
+		newInsets.bottom = margin;
+		modified = true;
+	    }
+	}
+	if (modified) {
+	    htmlPane.setMargin(newInsets);
+	}
     }
 
     /**
@@ -203,47 +204,47 @@ class FrameView extends ComponentView implements HyperlinkListener {
      */
     private void setBorder() {
 
-        AttributeSet attributes = getElement().getAttributes();
-        String frameBorder = (String)attributes.getAttribute(HTML.Attribute.FRAMEBORDER);
-        if ((frameBorder != null) &&
-            (frameBorder.equals("no") || frameBorder.equals("0"))) {
-            // make invisible borders.
-            scroller.setBorder(null);
-        }
+	AttributeSet attributes = getElement().getAttributes();
+	String frameBorder = (String)attributes.getAttribute(HTML.Attribute.FRAMEBORDER);
+	if ((frameBorder != null) && 
+	    (frameBorder.equals("no") || frameBorder.equals("0"))) {
+	    // make invisible borders.
+	    scroller.setBorder(null);
+	}
     }
 
 
     /**
      * This method creates the JScrollPane.  The scrollbar policy is determined by
-     * the scrolling attribute.  If not defined, the default is "auto" which
+     * the scrolling attribute.  If not defined, the default is "auto" which 
      * maps to the scrollbar's being displayed as needed.
      */
     private void createScrollPane() {
-        AttributeSet attributes = getElement().getAttributes();
-        String scrolling = (String)attributes.getAttribute(HTML.Attribute.SCROLLING);
-        if (scrolling == null) {
-            scrolling = "auto";
-        }
+	AttributeSet attributes = getElement().getAttributes();
+	String scrolling = (String)attributes.getAttribute(HTML.Attribute.SCROLLING);
+	if (scrolling == null) {
+	    scrolling = "auto";
+	}
+	
+	if (!scrolling.equals("no")) {
+	    if (scrolling.equals("yes")) {
+		scroller = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, 
+					   JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+	    } else {
+		// scrollbars will be displayed if needed
+		//
+		scroller = new JScrollPane();
+	    } 
+	} else {
+	    scroller = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
+				       JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+	}
 
-        if (!scrolling.equals("no")) {
-            if (scrolling.equals("yes")) {
-                scroller = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                                           JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-            } else {
-                // scrollbars will be displayed if needed
-                //
-                scroller = new JScrollPane();
-            }
-        } else {
-            scroller = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_NEVER,
-                                       JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        }
-
-        JViewport vp = scroller.getViewport();
-        vp.add(htmlPane);
-        vp.setBackingStoreEnabled(true);
-        scroller.setMinimumSize(new Dimension(5,5));
-        scroller.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+	JViewport vp = scroller.getViewport();
+	vp.add(htmlPane);
+	vp.setBackingStoreEnabled(true);
+	scroller.setMinimumSize(new Dimension(5,5));
+	scroller.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
     }
 
 
@@ -253,18 +254,18 @@ class FrameView extends ComponentView implements HyperlinkListener {
      */
     JEditorPane getOutermostJEditorPane() {
 
-        View parent = getParent();
-        FrameSetView frameSetView = null;
-        while (parent != null) {
-            if (parent instanceof FrameSetView) {
-                frameSetView = (FrameSetView)parent;
-            }
-            parent = parent.getParent();
-        }
-        if (frameSetView != null) {
-            return (JEditorPane)frameSetView.getContainer();
-        }
-        return null;
+	View parent = getParent();
+	FrameSetView frameSetView = null;
+	while (parent != null) {
+	    if (parent instanceof FrameSetView) {
+		frameSetView = (FrameSetView)parent;
+	    }
+	    parent = parent.getParent();
+	}
+	if (frameSetView != null) {
+	    return (JEditorPane)frameSetView.getContainer();
+	}
+	return null;
     }
 
 
@@ -273,13 +274,13 @@ class FrameView extends ComponentView implements HyperlinkListener {
      * a nested frameset.
      */
     private boolean inNestedFrameSet() {
-        FrameSetView parent = (FrameSetView)getParent();
-        return (parent.getParent() instanceof FrameSetView);
+	FrameSetView parent = (FrameSetView)getParent();
+	return (parent.getParent() instanceof FrameSetView);
     }
 
 
     /**
-     * Notification of a change relative to a
+     * Notification of a change relative to a 
      * hyperlink. This method searches for the outermost
      * JEditorPane, and then fires an HTMLFrameHyperlinkEvent
      * to that frame.  In addition, if the target is _parent,
@@ -293,64 +294,63 @@ class FrameView extends ComponentView implements HyperlinkListener {
      */
     public void hyperlinkUpdate(HyperlinkEvent evt) {
 
-        JEditorPane c = getOutermostJEditorPane();
-        if (c == null) {
-            return;
-        }
+	JEditorPane c = getOutermostJEditorPane();
+	if (c == null) {
+	    return;
+	}
 
-        if (!(evt instanceof HTMLFrameHyperlinkEvent)) {
-            c.fireHyperlinkUpdate(evt);
-            return;
-        }
+	if (!(evt instanceof HTMLFrameHyperlinkEvent)) {
+	    c.fireHyperlinkUpdate(evt);
+	    return;
+	}
 
-        HTMLFrameHyperlinkEvent e = (HTMLFrameHyperlinkEvent)evt;
+	HTMLFrameHyperlinkEvent e = (HTMLFrameHyperlinkEvent)evt;
 
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            String target = e.getTarget();
+	if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+	    String target = e.getTarget();
             String postTarget = target;
 
-            if (target.equals("_parent") && !inNestedFrameSet()){
-                target = "_top";
-            }
+            if (target.equals("_parent") && !inNestedFrameSet()){ 
+		target = "_top";
+	    }
 
             if (evt instanceof FormSubmitEvent) {
                 HTMLEditorKit kit = (HTMLEditorKit)c.getEditorKit();
                 if (kit != null && kit.isAutoFormSubmission()) {
-                    if (target.equals("_top")) {
-                        try {
+		    if (target.equals("_top")) {
+			try {
                             movePostData(c, postTarget);
-                            c.setPage(e.getURL());
-                        } catch (IOException ex) {
-                            // Need a way to handle exceptions
-                        }
-                    } else {
-                        HTMLDocument doc = (HTMLDocument)c.getDocument();
-                        doc.processHTMLFrameHyperlinkEvent(e);
-                    }
+			    c.setPage(e.getURL());
+			} catch (IOException ex) {
+			    // Need a way to handle exceptions
+			}
+		    } else {
+			HTMLDocument doc = (HTMLDocument)c.getDocument();
+			doc.processHTMLFrameHyperlinkEvent(e);
+		    }
                 } else {
                     c.fireHyperlinkUpdate(evt);
                 }
                 return;
             }
 
-            if (target.equals("_top")) {
-                try {
-                    c.setPage(e.getURL());
-                } catch (IOException ex) {
-                    // Need a way to handle exceptions
-                    // ex.printStackTrace();
-                }
-            }
-            if (!c.isEditable()) {
-                c.fireHyperlinkUpdate(new HTMLFrameHyperlinkEvent(c,
-                                                                  e.getEventType(),
-                                                                  e.getURL(),
-                                                                  e.getDescription(),
-                                                                  getElement(),
-                                                                  e.getInputEvent(),
-                                                                  target));
-            }
-        }
+	    if (target.equals("_top")) {
+		try {
+		    c.setPage(e.getURL());
+		} catch (IOException ex) {
+		    // Need a way to handle exceptions
+		    // ex.printStackTrace();
+		}
+	    }
+	    if (!c.isEditable()) {
+		c.fireHyperlinkUpdate(new HTMLFrameHyperlinkEvent(c,
+								  e.getEventType(), 
+								  e.getURL(), 
+								  e.getDescription(),
+								  getElement(),
+								  target));
+	    }
+	}
     }
 
     /**
@@ -362,39 +362,39 @@ class FrameView extends ComponentView implements HyperlinkListener {
      * @param a the current allocation of the view
      * @param f the factory to use to rebuild if the view has children
      *
-     */
+     */    
     public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {
 
-        Element elem = getElement();
-        AttributeSet attributes = elem.getAttributes();
+	Element elem = getElement();
+	AttributeSet attributes = elem.getAttributes();
 
-        URL oldPage = src;
+	URL oldPage = src;
 
-        String srcAtt = (String)attributes.getAttribute(HTML.Attribute.SRC);
-        URL base = ((HTMLDocument)elem.getDocument()).getBase();
-        try {
-            if (!createdComponent) {
-                return;
-            }
-
+	String srcAtt = (String)attributes.getAttribute(HTML.Attribute.SRC);
+	URL base = ((HTMLDocument)elem.getDocument()).getBase();
+	try {
+	    if (!createdComponent) {
+		return;
+	    }
+            
             Object postData = movePostData(htmlPane, null);
             src = new URL(base, srcAtt);
             if (oldPage.equals(src) && (src.getRef() == null) && (postData == null)) {
-                return;
-            }
-
-            htmlPane.setPage(src);
-            Document newDoc = htmlPane.getDocument();
-            if (newDoc instanceof HTMLDocument) {
-                ((HTMLDocument)newDoc).setFrameDocumentState(true);
-            }
-        } catch (MalformedURLException e1) {
-            // Need a way to handle exceptions
-            //e1.printStackTrace();
-        } catch (IOException e2) {
-            // Need a way to handle exceptions
-            //e2.printStackTrace();
-        }
+		return;
+	    }
+            
+	    htmlPane.setPage(src);
+	    Document newDoc = htmlPane.getDocument();
+	    if (newDoc instanceof HTMLDocument) {
+		((HTMLDocument)newDoc).setFrameDocumentState(true);
+	    }
+	} catch (MalformedURLException e1) {
+	    // Need a way to handle exceptions
+	    //e1.printStackTrace();
+	} catch (IOException e2) {
+	    // Need a way to handle exceptions
+	    //e2.printStackTrace();
+	}
     }
 
     /**
@@ -421,20 +421,20 @@ class FrameView extends ComponentView implements HyperlinkListener {
                 }
             }
         }
-
+        
         return postData;
     }
-
+    
     /**
      * Determines the minimum span for this view along an
      * axis.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or
-     *  <code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or 
+     *	<code>View.Y_AXIS</code>
      * @return the preferred span; given that we do not
      * support resizing of frames, the minimum span returned
      * is the same as the preferred span
-     *
+     * 
      */
     public float getMinimumSpan(int axis) {
       return 5;
@@ -444,15 +444,15 @@ class FrameView extends ComponentView implements HyperlinkListener {
      * Determines the maximum span for this view along an
      * axis.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or
-     *  <code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or 
+     *	<code>View.Y_AXIS</code>
      * @return the preferred span; given that we do not
      * support resizing of frames, the maximum span returned
      * is the same as the preferred span
-     *
+     * 
      */
     public float getMaximumSpan(int axis) {
-        return Integer.MAX_VALUE;
+	return Integer.MAX_VALUE;
     }
 
     /** Editor pane rendering frame of HTML document
@@ -460,7 +460,7 @@ class FrameView extends ComponentView implements HyperlinkListener {
      */
     class FrameEditorPane extends JEditorPane implements FrameEditorPaneTag {
         public EditorKit getEditorKitForContentType(String type) {
-            EditorKit editorKit = super.getEditorKitForContentType(type);
+            EditorKit editorKit = super.getEditorKitForContentType(type); 
             JEditorPane outerMostJEditorPane = null;
             if ((outerMostJEditorPane = getOutermostJEditorPane()) != null) {
                 EditorKit inheritedEditorKit = outerMostJEditorPane.getEditorKitForContentType(type);
@@ -468,12 +468,13 @@ class FrameView extends ComponentView implements HyperlinkListener {
                     editorKit = (EditorKit) inheritedEditorKit.clone();
                     setEditorKitForContentType(type, editorKit);
                 }
-            }
+            } 
             return editorKit;
         }
-
+        
         FrameView getFrameView() {
             return FrameView.this;
         }
     }
 }
+

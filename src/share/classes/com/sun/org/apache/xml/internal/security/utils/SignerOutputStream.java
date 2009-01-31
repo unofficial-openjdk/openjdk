@@ -36,23 +36,23 @@ public class SignerOutputStream extends ByteArrayOutputStream {
      * @param sa
      */
     public SignerOutputStream(SignatureAlgorithm sa) {
-        this.sa=sa;
+        this.sa=sa;       
     }
 
     /** @inheritDoc */
     public byte[] toByteArray() {
         return none;
     }
-
+    
     /** @inheritDoc */
     public void write(byte[] arg0)  {
         try {
-                        sa.update(arg0);
-                } catch (XMLSignatureException e) {
+			sa.update(arg0);
+		} catch (XMLSignatureException e) {
             throw new RuntimeException(""+e);
-                }
+		}
     }
-
+    
     /** @inheritDoc */
     public void write(int arg0) {
         try {
@@ -61,7 +61,7 @@ public class SignerOutputStream extends ByteArrayOutputStream {
             throw new RuntimeException(""+e);
         }
     }
-
+    
     /** @inheritDoc */
     public void write(byte[] arg0, int arg1, int arg2) {
         try {
@@ -70,6 +70,6 @@ public class SignerOutputStream extends ByteArrayOutputStream {
             throw new RuntimeException(""+e);
         }
     }
-
+    
 
 }

@@ -1,5 +1,5 @@
 #!/bin/sh
-# @test
+# @test @(#)ClassPathWildCard.sh	
 # @bug  6510337
 # @run shell ClassPathWildCard.sh 
 # @summary A very basic/rudimentary test for classpath wildcards

@@ -59,7 +59,7 @@ abstract class AbstractPollSelectorImpl
     private boolean closed = false;
 
     AbstractPollSelectorImpl(SelectorProvider sp, int channels, int offset) {
-        super(sp);
+	super(sp);
         this.totalChannels = channels;
         this.channelOffset = offset;
     }
@@ -70,7 +70,7 @@ abstract class AbstractPollSelectorImpl
 
     public Selector wakeup() {
         pollWrapper.interrupt();
-        return this;
+	return this;
     }
 
     protected abstract int doSelect(long timeout) throws IOException;
@@ -84,9 +84,9 @@ abstract class AbstractPollSelectorImpl
                 assert(ski.getIndex() != -1);
                 ski.setIndex(-1);
                 deregister(ski);
-                SelectableChannel selch = channelArray[i].channel();
-                if (!selch.isOpen() && !selch.isRegistered())
-                    ((SelChImpl)selch).kill();
+		SelectableChannel selch = channelArray[i].channel();
+		if (!selch.isOpen() && !selch.isRegistered())
+		    ((SelChImpl)selch).kill();
             }
             implCloseInterrupt();
             pollWrapper.free();
@@ -115,7 +115,7 @@ abstract class AbstractPollSelectorImpl
                 if (selectedKeys.contains(sk)) {
                     if (sk.channel.translateAndSetReadyOps(rOps, sk)) {
                         numKeysUpdated++;
-                    }
+                    }    
                 } else {
                     sk.channel.translateAndSetReadyOps(rOps, sk);
                     if ((sk.nioReadyOps() & sk.nioInterestOps()) != 0) {

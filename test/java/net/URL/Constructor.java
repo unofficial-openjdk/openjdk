@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* This is no longer run directly. See runconstructor.sh
+/* This is no longer run directly. See runconstructor.sh 
  *
  *
  *
@@ -49,43 +49,44 @@ import java.net.URL;
 public class Constructor {
 
     public static void main(String[] args) throws Exception {
-        URL url = null;
-        String urls = "jar_urls";
-        if (args.length > 0 && args[0] != null) {
-            urls = args[0];
-        }
+	URL url = null;
+	String urls = "jar_urls";
+	if (args.length > 0 && args[0] != null) {
+	    urls = args[0];
+	}
 
-        File f = new File(urls);
-        InputStream file = new FileInputStream(f);
-        BufferedReader in = new BufferedReader(new InputStreamReader(file));
-        while(true) {
-            String context = in.readLine();
-            if (context == null) {
-                break;
-            }
-            context = getValue(context);
-            String spec = getValue(in.readLine());
-            String expected = getValue(in.readLine());
+	File f = new File(urls);
+	InputStream file = new FileInputStream(f);
+	BufferedReader in = new BufferedReader(new InputStreamReader(file));
+	while(true) {
+	    String context = in.readLine();
+	    if (context == null) {
+		break;
+	    }
+	    context = getValue(context);
+	    String spec = getValue(in.readLine());
+	    String expected = getValue(in.readLine());
 
-            if (context.equals("null")) {
-                url = new URL(spec);
-            } else {
-                url = new URL(new URL(context), spec);
-            }
-            if (!(url.toString().equals(expected))) {
-                throw new RuntimeException("error for: \n\tURL:" + context +
-                                           "\n\tspec: " + spec +
-                                           "\n\texpected: " + expected +
-                                           "\n\tactual: " + url.toString());
-            } else {
-                System.out.println("success for: " + url + "\n");
-            }
-            in.readLine();
-        }
-        in.close();
+	    if (context.equals("null")) {
+		url = new URL(spec);
+	    } else {
+		url = new URL(new URL(context), spec);
+	    }
+	    if (!(url.toString().equals(expected))) {
+		throw new RuntimeException("error for: \n\tURL:" + context +
+					   "\n\tspec: " + spec + 
+					   "\n\texpected: " + expected +
+					   "\n\tactual: " + url.toString());
+	    } else {
+		System.out.println("success for: " + url + "\n");
+	    }
+	    in.readLine();
+	}
+	in.close();
     }
 
     private static String getValue(String value) {
-        return value.substring(value.indexOf(':') + 2);
+	return value.substring(value.indexOf(':') + 2);
     }
 }
+	    

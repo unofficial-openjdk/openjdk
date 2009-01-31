@@ -64,9 +64,9 @@ typedef struct ImageFormat
     int fixedBits;              // this value is or'ed with the color value on get or put, non-indexed only
                                 // for indexed color, may be used when pre-decoding the colormap
     rgbquad_t *colorMap;        // colormap should be pre-decoded (i.e. an array of rgbquads)
-                                // when colormap is non-NULL, the source color is an index to a colormap, and
+                                // when colormap is non-NULL, the source color is an index to a colormap, and 
                                 // masks/shifts are unused.
-    unsigned transparentColor;  // only for indexed colors. this is transparent color _INDEX_.
+    unsigned transparentColor;  // only for indexed colors. this is transparent color _INDEX_. 
                                 // use a more-than-max value when you don't need transparency.
     int premultiplied;
     DitherSettings *dithers;
@@ -117,21 +117,21 @@ enum
     (((b)<<QUAD_BLUE_SHIFT)&QUAD_BLUE_MASK) \
 
 
-/* alpha testing threshold. what's >= the threshold is considered non-transparent when doing
+/* alpha testing threshold. what's >= the threshold is considered non-transparent when doing 
    conversion operation with CVT_ALPHATEST and when generating shapes/regions with
    BitmapToYXBandedRectangles */
 
 #define ALPHA_THRESHOLD     0x80000000
 
-void initRect(ImageRect * pRect, int x, int y, int width, int height, int jump,
+void initRect(ImageRect * pRect, int x, int y, int width, int height, int jump, 
         int stride, void *pBits, ImageFormat * format);
-int convertRect2(ImageRect * pSrcRect, ImageRect * pDstRect, int mode,
+int convertRect2(ImageRect * pSrcRect, ImageRect * pDstRect, int mode, 
         ImageRect * pSrcRect2);
 int convertRect(ImageRect * pSrcRect, ImageRect * pDstRect, int mode);
-void convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int n,
-        ImageFormat * srcFormat, ImageFormat * dstFormat, int mode,
+void convertLine(void *pSrc, int incSrc, void *pDst, int incDst, int n, 
+        ImageFormat * srcFormat, ImageFormat * dstFormat, int mode, 
         void *pSrc2, int incSrc2, ImageFormat * srcFormat2, int row, int col);
-void initFormat(ImageFormat * format, int redMask, int greenMask,
+void initFormat(ImageFormat * format, int redMask, int greenMask, 
         int blueMask, int alphaMask);
 int fillRect(rgbquad_t color, ImageRect * pDstRect);
 void dumpFormat(ImageFormat * format);
@@ -142,7 +142,7 @@ void initDither(DitherSettings * pDither, int numColors, int scale);
 
 int quantizeColors(int maxNumColors, int *numColors);
 
-void initColorCube(int *numColors, rgbquad_t * pColorMap,
+void initColorCube(int *numColors, rgbquad_t * pColorMap, 
         DitherSettings * pDithers, rgbquad_t * colorIndex);
 int platformByteOrder();
 

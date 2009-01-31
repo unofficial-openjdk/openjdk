@@ -27,7 +27,7 @@ package com.sun.jdi;
 
 /**
  * The type of all primitive float values accessed in
- * the target VM. Calls to {@link Value#type} will return an
+ * the target VM. Calls to {@link Value#type} will return an 
  * implementor of this interface.
  *
  * @see FloatValue
@@ -38,3 +38,4 @@ package com.sun.jdi;
 public interface FloatType extends PrimitiveType
 {
 }
+

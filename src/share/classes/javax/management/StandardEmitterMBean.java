@@ -29,13 +29,13 @@ package javax.management;
  * <p>An MBean whose management interface is determined by reflection
  * on a Java interface, and that emits notifications.</p>
  *
- * <p>The following example shows how to use the public constructor
- * {@link #StandardEmitterMBean(Object, Class, NotificationEmitter)
- * StandardEmitterMBean(implementation, mbeanInterface, emitter)} to
+ * <p>The following example shows how to use the public constructor 
+ * {@link #StandardEmitterMBean(Object, Class, NotificationEmitter) 
+ * StandardEmitterMBean(implementation, mbeanInterface, emitter)} to 
  * create an MBean emitting notifications with any
  * implementation class name <i>Impl</i>, with a management
  * interface defined (as for current Standard MBeans) by any interface
- * <i>Intf</i>, and with any implementation of the interface
+ * <i>Intf</i>, and with any implementation of the interface 
  * {@link NotificationEmitter}. The example uses the class
  * {@link NotificationBroadcasterSupport} as an implementation
  * of the interface {@link NotificationEmitter}.</p>
@@ -48,7 +48,7 @@ package javax.management;
  *                                          types,
  *                                          Notification.class.getName(),
  *                                          "Notification about disc info.");
- *     final NotificationEmitter emitter =
+ *     final NotificationEmitter emitter = 
  *                    new NotificationBroadcasterSupport(info);
  *
  *     final Intf impl = new Impl(...);
@@ -66,7 +66,7 @@ public class StandardEmitterMBean extends StandardMBean
 
     private final NotificationEmitter emitter;
     private final MBeanNotificationInfo[] notificationInfo;
-
+    
     /**
      * <p>Make an MBean whose management interface is specified by
      * {@code mbeanInterface}, with the given implementation and
@@ -74,7 +74,7 @@ public class StandardEmitterMBean extends StandardMBean
      * The resultant MBean implements the {@code NotificationEmitter} interface
      * by forwarding its methods to {@code emitter}.  It is legal and useful
      * for {@code implementation} and {@code emitter} to be the same object.</p>
-     *
+     * 
      * <p>If {@code emitter} is an instance of {@code
      * NotificationBroadcasterSupport} then the MBean's {@link #sendNotification
      * sendNotification} method will call {@code emitter.}{@link
@@ -94,7 +94,7 @@ public class StandardEmitterMBean extends StandardMBean
      *
      * @throws IllegalArgumentException if the {@code mbeanInterface}
      *    does not follow JMX design patterns for Management Interfaces, or
-     *    if the given {@code implementation} does not implement the
+     *    if the given {@code implementation} does not implement the 
      *    specified interface, or if {@code emitter} is null.
      */
     public <T> StandardEmitterMBean(T implementation, Class<T> mbeanInterface,
@@ -105,7 +105,7 @@ public class StandardEmitterMBean extends StandardMBean
         this.emitter = emitter;
         this.notificationInfo = emitter.getNotificationInfo();
     }
-
+    
     /**
      * <p>Make an MBean whose management interface is specified by
      * {@code mbeanInterface}, with the given implementation and where
@@ -116,7 +116,7 @@ public class StandardEmitterMBean extends StandardMBean
      * forwarding its methods to {@code emitter}.  It is legal and
      * useful for {@code implementation} and {@code emitter} to be the
      * same object.</p>
-     *
+     * 
      * <p>If {@code emitter} is an instance of {@code
      * NotificationBroadcasterSupport} then the MBean's {@link #sendNotification
      * sendNotification} method will call {@code emitter.}{@link
@@ -138,7 +138,7 @@ public class StandardEmitterMBean extends StandardMBean
      *
      * @throws IllegalArgumentException if the {@code mbeanInterface}
      *    does not follow JMX design patterns for Management Interfaces, or
-     *    if the given {@code implementation} does not implement the
+     *    if the given {@code implementation} does not implement the 
      *    specified interface, or if {@code emitter} is null.
      */
     public <T> StandardEmitterMBean(T implementation, Class<T> mbeanInterface,
@@ -157,7 +157,7 @@ public class StandardEmitterMBean extends StandardMBean
      * where notifications are handled by the given {@code NotificationEmitter}.
      * The resultant MBean implements the {@code NotificationEmitter} interface
      * by forwarding its methods to {@code emitter}.</p>
-     *
+     * 
      * <p>If {@code emitter} is an instance of {@code
      * NotificationBroadcasterSupport} then the MBean's {@link #sendNotification
      * sendNotification} method will call {@code emitter.}{@link
@@ -198,7 +198,7 @@ public class StandardEmitterMBean extends StandardMBean
      * used to make either Standard MBeans or MXBeans.  The resultant
      * MBean implements the {@code NotificationEmitter} interface by
      * forwarding its methods to {@code emitter}.</p>
-     *
+     * 
      * <p>If {@code emitter} is an instance of {@code
      * NotificationBroadcasterSupport} then the MBean's {@link #sendNotification
      * sendNotification} method will call {@code emitter.}{@link

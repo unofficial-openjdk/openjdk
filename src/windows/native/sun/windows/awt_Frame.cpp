@@ -141,7 +141,7 @@ AwtFrame* AwtFrame::Create(jobject self, jobject parent)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(1) < 0) {
-        return NULL;
+	return NULL;
     }
 
     PDATA pData;
@@ -153,49 +153,49 @@ AwtFrame* AwtFrame::Create(jobject self, jobject parent)
 
     try {
         target = env->GetObjectField(self, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "target", done);
+	JNI_CHECK_NULL_GOTO(target, "target", done);
 
-        if (parent != NULL) {
-            JNI_CHECK_PEER_GOTO(parent, done);
-            {
-                AwtFrame* parent = (AwtFrame *)pData;
-                hwndParent = parent->GetHWnd();
-            }
-        }
+	if (parent != NULL) {
+	    JNI_CHECK_PEER_GOTO(parent, done);
+	    {
+	        AwtFrame* parent = (AwtFrame *)pData;
+		hwndParent = parent->GetHWnd();
+	    }
+	}
 
-        frame = new AwtFrame();
+	frame = new AwtFrame();
+	
+	{
+	    /*
+	     * A variation on Netscape's hack for embedded frames: the client
+	     * area of the browser is a Java Frame for parenting purposes, but
+	     * really a Windows child window
+	     */
+	    cls = env->FindClass("sun/awt/EmbeddedFrame");
+	    if (cls == NULL) {
+	        return NULL;
+	    }
+	    INT_PTR handle;
+	    jboolean isEmbeddedInstance = env->IsInstanceOf(target, cls);
+	    jboolean isEmbedded = FALSE;
 
-        {
-            /*
-             * A variation on Netscape's hack for embedded frames: the client
-             * area of the browser is a Java Frame for parenting purposes, but
-             * really a Windows child window
-             */
-            cls = env->FindClass("sun/awt/EmbeddedFrame");
-            if (cls == NULL) {
-                return NULL;
-            }
-            INT_PTR handle;
-            jboolean isEmbeddedInstance = env->IsInstanceOf(target, cls);
-            jboolean isEmbedded = FALSE;
-
-            if (isEmbeddedInstance) {
+	    if (isEmbeddedInstance) {
                 handle = static_cast<INT_PTR>(env->GetLongField(target, AwtFrame::handleID));
-                if (handle != 0) {
-                    isEmbedded = TRUE;
-                }
-            }
-            frame->m_isEmbedded = isEmbedded;
-
-            if (isEmbedded) {
+		if (handle != 0) {
+		    isEmbedded = TRUE;
+		}
+	    }
+	    frame->m_isEmbedded = isEmbedded;
+	    
+	    if (isEmbedded) {
                 hwndParent = (HWND)handle;
                 RECT rect;
                 ::GetClientRect(hwndParent, &rect);
                 //Fix for 6328675: SWT_AWT.new_Frame doesn't occupy client area under JDK6
                 frame->m_isUndecorated = true;
-                /*
+                /* 
                  * Fix for BugTraq ID 4337754.
-                 * Initialize m_peerObject before the first call
+                 * Initialize m_peerObject before the first call 
                  * to AwtFrame::GetClassName().
                  */
                 frame->m_peerObject = env->NewGlobalRef(self);
@@ -222,7 +222,7 @@ AwtFrame* AwtFrame::Create(jobject self, jobject parent)
                 // Update target's dimensions to reflect this embedded window.
                 ::GetClientRect(frame->m_hwnd, &rect);
                 ::MapWindowPoints(frame->m_hwnd, hwndParent, (LPPOINT)&rect,
-                                  2);
+                                  2);                
 
                 env->SetIntField(target, AwtComponent::xID, rect.left);
                 env->SetIntField(target, AwtComponent::yID, rect.top);
@@ -231,10 +231,10 @@ AwtFrame* AwtFrame::Create(jobject self, jobject parent)
                 env->SetIntField(target, AwtComponent::heightID,
                                  rect.bottom-rect.top);
                 frame->InitPeerGraphicsConfig(env, self);
-            } else {
-                jint state = env->GetIntField(target, AwtFrame::stateID);
-                DWORD exStyle;
-                DWORD style;
+	    } else {
+	        jint state = env->GetIntField(target, AwtFrame::stateID);
+		DWORD exStyle;
+		DWORD style;
 
                // for input method windows, use minimal decorations
                inputMethodWindowCls = env->FindClass("sun/awt/im/InputMethodWindow");
@@ -243,7 +243,7 @@ AwtFrame* AwtFrame::Create(jobject self, jobject parent)
                    if (env->GetBooleanField(target, AwtFrame::undecoratedID) == JNI_TRUE){
                         exStyle = 0;
                         style = WS_POPUP|WS_CLIPCHILDREN;
-                        frame->m_isUndecorated = TRUE;
+                        frame->m_isUndecorated = TRUE; 
                    } else {
                         exStyle = WS_EX_PALETTEWINDOW;
                         style = WS_CLIPCHILDREN;
@@ -257,47 +257,47 @@ AwtFrame* AwtFrame::Create(jobject self, jobject parent)
                       frame->setIconic(TRUE);
                   }
                     frame->m_isUndecorated = TRUE;
-                } else {
-                    exStyle = WS_EX_WINDOWEDGE;
-                    style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
+		} else {
+		    exStyle = WS_EX_WINDOWEDGE;
+		    style = WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN;
                   if (state & java_awt_Frame_ICONIFIED) {
                       frame->setIconic(TRUE);
                   }
-                }
+		}
 
-                if (GetRTL()) {
-                    exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
-                    if (GetRTLReadingOrder())
-                        exStyle |= WS_EX_RTLREADING;
-                }
+		if (GetRTL()) {
+		    exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
+		    if (GetRTLReadingOrder())
+		        exStyle |= WS_EX_RTLREADING;
+		}
 
                 jint x = env->GetIntField(target, AwtComponent::xID);
                 jint y = env->GetIntField(target, AwtComponent::yID);
                 jint width = env->GetIntField(target, AwtComponent::widthID);
                 jint height = env->GetIntField(target, AwtComponent::heightID);
 
-                frame->CreateHWnd(env, L"",
-                                  style,
-                                  exStyle,
-                                  0, 0, 0, 0,
-                                  hwndParent,
-                                  NULL,
-                                  ::GetSysColor(COLOR_WINDOWTEXT),
-                                  ::GetSysColor(COLOR_WINDOWFRAME),
-                                  self);
+		frame->CreateHWnd(env, L"",
+		                  style,
+				  exStyle,
+				  0, 0, 0, 0,
+				  hwndParent,
+				  NULL,
+				  ::GetSysColor(COLOR_WINDOWTEXT),
+				  ::GetSysColor(COLOR_WINDOWFRAME),
+				  self);
 
-                /*
-                 * Reshape here instead of during create, so that a
-                 * WM_NCCALCSIZE is sent.
-                 */
-                frame->Reshape(x, y, width, height);
-            }
-        }
+		/* 
+		 * Reshape here instead of during create, so that a
+		 * WM_NCCALCSIZE is sent. 
+		 */
+		frame->Reshape(x, y, width, height);
+	    }
+	}
     } catch (...) {
         env->DeleteLocalRef(target);
-        env->DeleteLocalRef(cls);
-        env->DeleteLocalRef(inputMethodWindowCls);
-        throw;
+	env->DeleteLocalRef(cls);
+	env->DeleteLocalRef(inputMethodWindowCls);
+	throw;
     }
 
 done:
@@ -309,7 +309,7 @@ done:
 }
 
 LRESULT CALLBACK AwtFrame::ProxyWindowProc(HWND hwnd, UINT message,
-                                           WPARAM wParam, LPARAM lParam)
+					   WPARAM wParam, LPARAM lParam)
 {
     TRY;
 
@@ -325,7 +325,7 @@ LRESULT CALLBACK AwtFrame::ProxyWindowProc(HWND hwnd, UINT message,
     }
 
     AwtComponent *p = NULL;
-    // IME and input language related messages need to be sent to a window
+    // IME and input language related messages need to be sent to a window 
     // which has the Java input focus
     switch (message) {
         case WM_IME_STARTCOMPOSITION:
@@ -362,13 +362,13 @@ void AwtFrame::CreateProxyFocusOwner()
     DASSERT(m_proxyFocusOwner == NULL);
     DASSERT(AwtToolkit::MainThread() == ::GetCurrentThreadId());
 
-    m_proxyFocusOwner = ::CreateWindow(TEXT("STATIC"),
-                                       TEXT("ProxyFocusOwner"),
+    m_proxyFocusOwner = ::CreateWindow(TEXT("STATIC"), 
+                                       TEXT("ProxyFocusOwner"), 
                                        WS_CHILD,
-                                       0, 0, 0, 0, GetHWnd(), NULL,
-                                       AwtToolkit::GetInstance().
-                                           GetModuleHandle(),
-                                       NULL);
+				       0, 0, 0, 0, GetHWnd(), NULL,
+				       AwtToolkit::GetInstance().
+				           GetModuleHandle(),
+				       NULL);
 
     m_proxyDefWindowProc = ComCtl32Util::GetInstance().SubclassHWND(m_proxyFocusOwner, ProxyWindowProc);
 
@@ -381,7 +381,7 @@ void AwtFrame::DestroyProxyFocusOwner()
         AwtFrame::_DestroyProxyFocusOwner((void *)this);
     } else {
         AwtToolkit::GetInstance().InvokeFunction(AwtFrame::_DestroyProxyFocusOwner, (void *)this);
-    }
+    }        
 }
 
 void AwtFrame::_DestroyProxyFocusOwner(void *param)
@@ -397,40 +397,6 @@ void AwtFrame::_DestroyProxyFocusOwner(void *param)
     }
 }
 
-MsgRouting AwtFrame::WmShowWindow(BOOL show, UINT status)
-{
-    /*
-     * Fix for 6492970.
-     * When a non-focusable toplevel is shown alone the Java process
-     * is not foreground. If one shows another (focusable) toplevel
-     * the native platform not always makes it foreground (see the CR).
-     * Even worse, sometimes it sends the newly shown toplevel WM_ACTIVATE
-     * message. This breaks Java focus. To workaround the problem we
-     * set the toplevel being shown foreground programmatically.
-     * The fix is localized to non-foreground process case only.
-     */
-    if (show == TRUE && status == 0) {
-        HWND fgHWnd = ::GetForegroundWindow();
-        if (fgHWnd != NULL) {
-            DWORD fgProcessID;
-            ::GetWindowThreadProcessId(fgHWnd, &fgProcessID);
-
-            if (fgProcessID != ::GetCurrentProcessId()) {
-                AwtWindow* window = (AwtWindow*)GetComponent(GetHWnd());
-
-                if (window != NULL && window->IsFocusableWindow() && window->IsAutoRequestFocus() &&
-                    !::IsWindow(GetModalBlocker(GetHWnd())))
-                {
-                    // When the Java process is not allowed to set the foreground window
-                    // (see MSDN) the request below will just have no effect.
-                    ::SetForegroundWindow(GetHWnd());
-                }
-            }
-        }
-    }
-    return AwtWindow::WmShowWindow(show, status);
-}
-
 MsgRouting AwtFrame::WmMouseUp(UINT flags, int x, int y, int button) {
     if (isInManualMoveOrSize) {
         isInManualMoveOrSize = FALSE;
@@ -442,10 +408,10 @@ MsgRouting AwtFrame::WmMouseUp(UINT flags, int x, int y, int button) {
 
 MsgRouting AwtFrame::WmMouseMove(UINT flags, int x, int y) {
     /**
-     * If this Frame is non-focusable then we should implement move and size operation for it by
+     * If this Frame is non-focusable then we should implement move and size operation for it by 
      * ourselfves because we don't dispatch appropriate mouse messages to default window procedure.
      */
-    if (!IsFocusableWindow() && isInManualMoveOrSize) {
+    if (!IsFocusableWindow() && isInManualMoveOrSize) {        
         DWORD curPos = ::GetMessagePos();
         x = GET_X_LPARAM(curPos);
         y = GET_Y_LPARAM(curPos);
@@ -457,15 +423,15 @@ MsgRouting AwtFrame::WmMouseMove(UINT flags, int x, int y) {
         savedMousePos.x = x;
         savedMousePos.y = y;
         if (grabbedHitTest == HTCAPTION) {
-            ::SetWindowPos(GetHWnd(), NULL, r.left+mouseLoc.x, r.top+mouseLoc.y,
-                           r.right-r.left, r.bottom-r.top,
+            ::SetWindowPos(GetHWnd(), NULL, r.left+mouseLoc.x, r.top+mouseLoc.y, 
+                           r.right-r.left, r.bottom-r.top, 
                            SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
         } else {
             switch (grabbedHitTest) {
             case HTTOP:
                 r.top += mouseLoc.y;
                 break;
-            case HTBOTTOM:
+            case HTBOTTOM: 
                 r.bottom += mouseLoc.y;
                 break;
             case HTRIGHT:
@@ -490,12 +456,12 @@ MsgRouting AwtFrame::WmMouseMove(UINT flags, int x, int y) {
             case HTSIZE:
                 r.right += mouseLoc.x;
                 r.bottom += mouseLoc.y;
-                break;
+                break;                
             }
-
-            ::SetWindowPos(GetHWnd(), NULL, r.left, r.top,
-                           r.right-r.left, r.bottom-r.top,
-                           SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOZORDER |
+                
+            ::SetWindowPos(GetHWnd(), NULL, r.left, r.top, 
+                           r.right-r.left, r.bottom-r.top, 
+                           SWP_NOACTIVATE | SWP_NOSENDCHANGING | SWP_NOZORDER | 
                            SWP_NOCOPYBITS | SWP_DEFERERASE);
         }
         return mrConsume;
@@ -505,7 +471,7 @@ MsgRouting AwtFrame::WmMouseMove(UINT flags, int x, int y) {
 }
 
 MsgRouting AwtFrame::WmNcMouseUp(WPARAM hitTest, int x, int y, int button) {
-    if (!IsFocusableWindow() && (button & LEFT_BUTTON)) {
+    if (!IsFocusableWindow() && (button & LEFT_BUTTON)) {        
         /*
          * Fix for 6399659.
          * The native system shouldn't activate the next window in z-order
@@ -516,7 +482,7 @@ MsgRouting AwtFrame::WmNcMouseUp(WPARAM hitTest, int x, int y, int button) {
             return mrConsume;
         }
         /**
-         * If this Frame is non-focusable then we should implement move and size operation for it by
+         * If this Frame is non-focusable then we should implement move and size operation for it by 
          * ourselfves because we don't dispatch appropriate mouse messages to default window procedure.
          */
         if ((button & DBL_CLICK) && hitTest == HTCAPTION) {
@@ -524,26 +490,26 @@ MsgRouting AwtFrame::WmNcMouseUp(WPARAM hitTest, int x, int y, int button) {
             if (IsResizable()) {
                 if (::IsZoomed(GetHWnd())) {
                     ::ShowWindow(GetHWnd(), SW_SHOWNOACTIVATE);
-                } else {
+                } else {                             
                     ::ShowWindow(GetHWnd(), SW_MAXIMIZE);
                 }
             }
             return mrConsume;
         }
         switch (hitTest) {
-        case HTMAXBUTTON:
-            if (IsResizable()) {
-                if (::IsZoomed(GetHWnd())) {
-                    ::ShowWindow(GetHWnd(), SW_SHOWNOACTIVATE);
-                } else {
-                    ::ShowWindow(GetHWnd(), SW_MAXIMIZE);
-                }
-            }
-            return mrConsume;
+        case HTMAXBUTTON: 
+            if (IsResizable()) { 
+                if (::IsZoomed(GetHWnd())) { 
+                    ::ShowWindow(GetHWnd(), SW_SHOWNOACTIVATE); 
+                } else {                              
+                    ::ShowWindow(GetHWnd(), SW_MAXIMIZE); 
+                } 
+            }             
+            return mrConsume; 
         default:
             return mrDoDefault;
         }
-    }
+    } 
     return AwtWindow::WmNcMouseUp(hitTest, x, y, button);
 }
 
@@ -554,7 +520,7 @@ MsgRouting AwtFrame::WmNcMouseDown(WPARAM hitTest, int x, int y, int button) {
         m_grabbedWindow->Ungrab();
     }
 
-    if (!IsFocusableWindow() && (button & LEFT_BUTTON)) {
+    if (!IsFocusableWindow() && (button & LEFT_BUTTON)) {        
         switch (hitTest) {
         case HTTOP:
         case HTBOTTOM:
@@ -574,14 +540,14 @@ MsgRouting AwtFrame::WmNcMouseDown(WPARAM hitTest, int x, int y, int button) {
             // Grab mouse for this purpose and store coordinates for motion vector calculation
             savedMousePos.x = x;
             savedMousePos.y = y;
-            ::SetCapture(GetHWnd());
+            ::SetCapture(GetHWnd());        
             isInManualMoveOrSize = TRUE;
             grabbedHitTest = hitTest;
             return mrConsume;
         default:
             return mrDoDefault;
         }
-    }
+    } 
     return AwtWindow::WmNcMouseDown(hitTest, x, y, button);
 }
 
@@ -664,75 +630,75 @@ AwtFrame::Show()
          moveToDefaultLocation();
     }
     BOOL autoRequestFocus = IsAutoRequestFocus();
-
+	    
     if (m_iconic) {
-        if (m_zoomed) {
-            // This whole function could probably be rewritten to use
-            // ::SetWindowPlacement but MS docs doesn't tell if
-            // ::SetWindowPlacement is a proper superset of
-            // ::ShowWindow.  So let's be conservative and only use it
-            // here, where we really do need it.
-            DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED");
-            WINDOWPLACEMENT wp;
-            ::ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
-            wp.length = sizeof(WINDOWPLACEMENT);
-            ::GetWindowPlacement(hwnd, &wp);
+	if (m_zoomed) {
+	    // This whole function could probably be rewritten to use
+	    // ::SetWindowPlacement but MS docs doesn't tell if
+	    // ::SetWindowPlacement is a proper superset of
+	    // ::ShowWindow.  So let's be conservative and only use it
+	    // here, where we really do need it.
+	    DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWMINIMIZED, WPF_RESTORETOMAXIMIZED");
+	    WINDOWPLACEMENT wp;
+	    ::ZeroMemory(&wp, sizeof(WINDOWPLACEMENT));
+	    wp.length = sizeof(WINDOWPLACEMENT);
+	    ::GetWindowPlacement(hwnd, &wp);
             if (!IsFocusableWindow() || !autoRequestFocus) {
                 wp.showCmd = SW_SHOWMINNOACTIVE;
             } else {
                 wp.showCmd = SW_SHOWMINIMIZED;
             }
-            wp.flags |= WPF_RESTORETOMAXIMIZED;
-            ::SetWindowPlacement(hwnd, &wp);
-        }
-        else {
-            DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWMINIMIZED)");
-            if (!IsFocusableWindow() || !autoRequestFocus) {
+	    wp.flags |= WPF_RESTORETOMAXIMIZED;
+	    ::SetWindowPlacement(hwnd, &wp);
+	}
+	else {
+	    DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWMINIMIZED)");
+            if (!IsFocusableWindow() || !autoRequestFocus) { 
                 ::ShowWindow(hwnd, SW_SHOWMINNOACTIVE);
             } else {
                 ::ShowWindow(hwnd, SW_SHOWMINIMIZED);
             }
-        }
+	}
     }
     else if (m_zoomed) {
-        DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWMAXIMIZED)");
-        if (!autoRequestFocus) {
-
-            m_filterFocusAndActivation = TRUE;
-            ::ShowWindow(hwnd, SW_MAXIMIZE);
-            m_filterFocusAndActivation = FALSE;
-
-        } else if (!IsFocusableWindow()) {
+	DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWMAXIMIZED)");
+        if (!autoRequestFocus) {  
+    
+            m_filterFocusAndActivation = TRUE;  
+            ::ShowWindow(hwnd, SW_MAXIMIZE);  
+            m_filterFocusAndActivation = FALSE;  
+    
+        } else if (!IsFocusableWindow()) { 
             ::ShowWindow(hwnd, SW_MAXIMIZE);
         } else {
             ::ShowWindow(hwnd, SW_SHOWMAXIMIZED);
         }
     }
     else if (m_isInputMethodWindow) {
-        // Don't activate input methow window
-        DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWNA)");
-        ::ShowWindow(hwnd, SW_SHOWNA);
+	// Don't activate input methow window 
+	DTRACE_PRINTLN("AwtFrame::Show(SW_SHOWNA)");
+	::ShowWindow(hwnd, SW_SHOWNA);
 
-        // After the input method window shown, we have to adjust the
-        // IME candidate window position. Here is why.
-        // Usually, when IMM opens the candidate window, it sends WM_IME_NOTIFY w/
-        // IMN_OPENCANDIDATE message to the awt component window. The
-        // awt component makes a Java call to acquire the text position
-        // in order to show the candidate window just below the input method window.
-        // However, by the time it acquires the position, the input method window
-        // hasn't been displayed yet, the position returned is just below
-        // the composed text and when the input method window is shown, it
-        // will hide part of the candidate list. To fix this, we have to
-        // adjust the candidate window position after the input method window
-        // is shown. See bug 5012944.
-        AdjustCandidateWindowPos();
+	// After the input method window shown, we have to adjust the 
+	// IME candidate window position. Here is why.
+	// Usually, when IMM opens the candidate window, it sends WM_IME_NOTIFY w/
+	// IMN_OPENCANDIDATE message to the awt component window. The 
+	// awt component makes a Java call to acquire the text position
+	// in order to show the candidate window just below the input method window. 
+	// However, by the time it acquires the position, the input method window
+	// hasn't been displayed yet, the position returned is just below 
+	// the composed text and when the input method window is shown, it
+	// will hide part of the candidate list. To fix this, we have to 
+	// adjust the candidate window position after the input method window
+	// is shown. See bug 5012944.
+	AdjustCandidateWindowPos();
     }
     else {
-        // Nor iconic, nor zoomed (handled above) - so use SW_RESTORE
-        // to show in "normal" state regardless of whatever stale
-        // state might the invisible window still has.
-        DTRACE_PRINTLN("AwtFrame::Show(SW_RESTORE)");
-        if (!IsFocusableWindow() || !autoRequestFocus) {
+	// Nor iconic, nor zoomed (handled above) - so use SW_RESTORE
+	// to show in "normal" state regardless of whatever stale
+	// state might the invisible window still has.
+	DTRACE_PRINTLN("AwtFrame::Show(SW_RESTORE)");
+        if (!IsFocusableWindow() || !autoRequestFocus) {  
             ::ShowWindow(hwnd, SW_SHOWNOACTIVATE);
         } else {
             ::ShowWindow(hwnd, SW_RESTORE);
@@ -744,7 +710,7 @@ void
 AwtFrame::SendWindowStateEvent(int oldState, int newState)
 {
     SendWindowEvent(java_awt_event_WindowEvent_WINDOW_STATE_CHANGED,
-                    NULL, oldState, newState);
+		    NULL, oldState, newState);
 }
 
 void
@@ -756,7 +722,7 @@ AwtFrame::ClearMaximizedBounds()
 void AwtFrame::AdjustCandidateWindowPos()
 {
     // This method should only be called if the current frame
-    // is the input method window frame.
+    // is the input method window frame. 
     if (!m_isInputMethodWindow) {
         return;
     }
@@ -764,7 +730,7 @@ void AwtFrame::AdjustCandidateWindowPos()
     RECT inputWinRec, focusWinRec;
     AwtComponent *comp = AwtComponent::GetComponent(AwtComponent::sm_focusOwner);
     if (comp == NULL) {
-        return;
+	return;
     }
 
     ::GetWindowRect(GetHWnd(), &inputWinRec);
@@ -773,23 +739,23 @@ void AwtFrame::AdjustCandidateWindowPos()
     LPARAM candType = comp->GetCandidateType();
     HWND defaultIMEWnd = ::ImmGetDefaultIMEWnd(GetHWnd());
     if (defaultIMEWnd == NULL) {
-        return;
+	return;
     }
     UINT bits = 1;
     // adjusts the candidate window position
     for (int iCandType = 0; iCandType < 32; iCandType++, bits<<=1) {
-        if (candType & bits) {
-            CANDIDATEFORM cf;
-            cf.dwIndex = iCandType;
-            cf.dwStyle = CFS_CANDIDATEPOS;
-            // Since the coordinates are relative to the containing window,
-            // we have to calculate the coordinates as below.
-            cf.ptCurrentPos.x = inputWinRec.left - focusWinRec.left;
-            cf.ptCurrentPos.y = inputWinRec.bottom - focusWinRec.top;
-
-            // sends IMC_SETCANDIDATEPOS to IMM to move the candidate window.
-            ::SendMessage(defaultIMEWnd, WM_IME_CONTROL, IMC_SETCANDIDATEPOS, (LPARAM)&cf);
-        }
+	if (candType & bits) {
+	    CANDIDATEFORM cf;
+	    cf.dwIndex = iCandType;
+	    cf.dwStyle = CFS_CANDIDATEPOS;
+	    // Since the coordinates are relative to the containing window,
+	    // we have to calculate the coordinates as below.
+	    cf.ptCurrentPos.x = inputWinRec.left - focusWinRec.left;
+	    cf.ptCurrentPos.y = inputWinRec.bottom - focusWinRec.top;
+            
+	    // sends IMC_SETCANDIDATEPOS to IMM to move the candidate window.
+	    ::SendMessage(defaultIMEWnd, WM_IME_CONTROL, IMC_SETCANDIDATEPOS, (LPARAM)&cf);
+	}
     }
 }
 
@@ -814,13 +780,13 @@ MsgRouting AwtFrame::WmGetMinMaxInfo(LPMINMAXINFO lpmmi)
     }
 
     if (m_maxPos.x != java_lang_Integer_MAX_VALUE)
-        lpmmi->ptMaxPosition.x = m_maxPos.x;
+	lpmmi->ptMaxPosition.x = m_maxPos.x;
     if (m_maxPos.y != java_lang_Integer_MAX_VALUE)
-        lpmmi->ptMaxPosition.y = m_maxPos.y;
+	lpmmi->ptMaxPosition.y = m_maxPos.y;
     if (m_maxSize.x != java_lang_Integer_MAX_VALUE)
-        lpmmi->ptMaxSize.x = m_maxSize.x;
+	lpmmi->ptMaxSize.x = m_maxSize.x;
     if (m_maxSize.y != java_lang_Integer_MAX_VALUE)
-        lpmmi->ptMaxSize.y = m_maxSize.y;
+	lpmmi->ptMaxSize.y = m_maxSize.y;
     return mrConsume;
 }
 
@@ -829,7 +795,7 @@ MsgRouting AwtFrame::WmSize(UINT type, int w, int h)
     if (m_ignoreWmSize) {
         return mrDoDefault;
     }
-
+    
     DTRACE_PRINTLN6("AwtFrame::WmSize: %dx%d,%s visible, state%s%s%s",
                   w, h,
                   ::IsWindowVisible(GetHWnd()) ? "" : " not",
@@ -844,18 +810,18 @@ MsgRouting AwtFrame::WmSize(UINT type, int w, int h)
     //       the developer (via setExtendedState(MAXIMIZED_BOTH)
     //       maximizes the frame.
     //    2. type == SIZE_MINIMIZED && isZoomed() means that a maximized
-    //       frame is to be minimized. If the user minimizes a maximized
+    //       frame is to be minimized. If the user minimizes a maximized 
     //       frame, we need to keep the zoomed property TRUE. However,
     //       if the developer calls setExtendedState(ICONIFIED), i.e.
-    //       w/o combining the ICONIFIED state with the MAXIMIZED state,
+    //       w/o combining the ICONIFIED state with the MAXIMIZED state, 
     //       we MUST RESET the zoomed property.
     //       The flag m_forceResetZoomed identifies the latter case.
-    BOOL zoom =
+    BOOL zoom = 
         (
-         type == SIZE_MAXIMIZED
+         type == SIZE_MAXIMIZED 
          ||
          (type == SIZE_MINIMIZED && isZoomed())
-        )
+        ) 
         && !m_forceResetZoomed;
 
     // Set the new state and send appropriate Java event
@@ -877,7 +843,7 @@ MsgRouting AwtFrame::WmSize(UINT type, int w, int h)
 
     setIconic(iconify);
     setZoomed(zoom);
-
+    
     jint changed = oldState ^ newState;
     if (changed != 0) {
         DTRACE_PRINTLN2("AwtFrame::WmSize: reporting state change %x -> %x",
@@ -914,20 +880,20 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
             type = java_awt_event_WindowEvent_WINDOW_GAINED_FOCUS;
             isAppActive = TRUE;
             sm_focusedWindow = GetHWnd();
-
-            /*
+            
+            /* 
              * Fix for 4823903.
              * If the window to be focused is actually not this Frame
              * and it's visible then send it WM_ACTIVATE.
              */
             if (m_actualFocusedWindow != NULL) {
                 HWND hwnd = m_actualFocusedWindow->GetHWnd();
-
+                
                 if (hwnd != NULL && ::IsWindowVisible(hwnd)) {
-
+                    
                     ::SendMessage(hwnd, WM_ACTIVATE, MAKEWPARAM(nState, fMinimized), (LPARAM)opposite);
                     doActivateFrame = FALSE;
-                }
+                }      
                 m_actualFocusedWindow = NULL;
             }
         } else {
@@ -966,14 +932,14 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
                         wOpposite->GetOwningFrameOrDialog() != this)
                     {
                         AwtWindow *window = (AwtWindow *)AwtComponent::GetComponent(sm_focusedWindow);
-
+    
                         // If actual focused window is one of Frame's owned windows
                         if (window != NULL && window->GetOwningFrameOrDialog() == this) {
-                            m_actualFocusedWindow = window;
-                        }
+                            m_actualFocusedWindow = window;    
+                        }      
                     }
                 }
-            }
+            }  
 
             type = java_awt_event_WindowEvent_WINDOW_LOST_FOCUS;
             isAppActive = FALSE;
@@ -990,7 +956,7 @@ MsgRouting AwtFrame::WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
 MsgRouting AwtFrame::WmEnterMenuLoop(BOOL isTrackPopupMenu)
 {
     if ( !isTrackPopupMenu ) {
-        m_isMenuDropped = TRUE;
+	m_isMenuDropped = TRUE;
     }
     return mrDoDefault;
 }
@@ -998,7 +964,7 @@ MsgRouting AwtFrame::WmEnterMenuLoop(BOOL isTrackPopupMenu)
 MsgRouting AwtFrame::WmExitMenuLoop(BOOL isTrackPopupMenu)
 {
     if ( !isTrackPopupMenu ) {
-        m_isMenuDropped = FALSE;
+	m_isMenuDropped = FALSE;
     }
     return mrDoDefault;
 }
@@ -1029,36 +995,36 @@ MsgRouting AwtFrame::WmDrawItem(UINT ctrlId, DRAWITEMSTRUCT& drawInfo)
     AwtMenuBar* awtMenubar = GetMenuBar();
     if (drawInfo.CtlType == ODT_MENU && (awtMenubar != NULL) &&
         (::GetMenu( GetHWnd() ) == (HMENU)drawInfo.hwndItem) )
-        {
-                awtMenubar->DrawItem(drawInfo);
-                return mrConsume;
+	{
+		awtMenubar->DrawItem(drawInfo);
+		return mrConsume;
     }
 
-        return AwtComponent::WmDrawItem(ctrlId, drawInfo);
+	return AwtComponent::WmDrawItem(ctrlId, drawInfo);
 }
 
 MsgRouting AwtFrame::WmMeasureItem(UINT ctrlId, MEASUREITEMSTRUCT& measureInfo)
 {
-        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        AwtMenuBar* awtMenubar = GetMenuBar();
-        if ((measureInfo.CtlType == ODT_MENU) && (awtMenubar != NULL))
-        {
-                // AwtMenu instance is stored in itemData. Use it to check if this
-                // menu is the menu bar.
-                AwtMenu * pMenu = (AwtMenu *) measureInfo.itemData;
-                DASSERT(pMenu != NULL);
-                if ( pMenu == awtMenubar )
-                {
-                        HWND hWnd = GetHWnd();
-                        HDC hDC = ::GetDC(hWnd);
-                        DASSERT(hDC != NULL);
-                        awtMenubar->MeasureItem(hDC, measureInfo);
-                        VERIFY(::ReleaseDC(hWnd, hDC));
-                        return mrConsume;
-                }
-        }
+	JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+	AwtMenuBar* awtMenubar = GetMenuBar();
+	if ((measureInfo.CtlType == ODT_MENU) && (awtMenubar != NULL))
+	{
+		// AwtMenu instance is stored in itemData. Use it to check if this
+		// menu is the menu bar.
+		AwtMenu * pMenu = (AwtMenu *) measureInfo.itemData;
+		DASSERT(pMenu != NULL);
+		if ( pMenu == awtMenubar )
+		{
+			HWND hWnd = GetHWnd();
+			HDC hDC = ::GetDC(hWnd);
+			DASSERT(hDC != NULL);
+			awtMenubar->MeasureItem(hDC, measureInfo);
+			VERIFY(::ReleaseDC(hWnd, hDC));
+			return mrConsume;
+		}
+	}
 
-        return AwtComponent::WmMeasureItem(ctrlId, measureInfo);
+	return AwtComponent::WmMeasureItem(ctrlId, measureInfo);
 }
 
 MsgRouting AwtFrame::WmGetIcon(WPARAM iconType, LRESULT& retVal)
@@ -1085,22 +1051,22 @@ void AwtFrame::DoUpdateIcon()
     SendMessage(WM_SETICON, ICON_SMALL, (LPARAM)hIconSm);
 }
 
-HICON AwtFrame::GetEffectiveIcon(int iconType)
+HICON AwtFrame::GetEffectiveIcon(int iconType) 
 {
     BOOL smallIcon = ((iconType == ICON_SMALL) || (iconType == 2/*ICON_SMALL2*/));
     HICON hIcon = (smallIcon) ? GetHIconSm() : GetHIcon();
     if (hIcon == NULL) {
-        hIcon = (smallIcon) ? AwtToolkit::GetInstance().GetAwtIconSm() :
+        hIcon = (smallIcon) ? AwtToolkit::GetInstance().GetAwtIconSm() : 
             AwtToolkit::GetInstance().GetAwtIcon();
     }
     return hIcon;
 }
-
+  
 static BOOL keepOnMinimize(jobject peer) {
-    static BOOL checked = FALSE;
+    static BOOL checked = FALSE; 
     static BOOL keep = FALSE;
     if (!checked) {
-        keep = (JNU_GetStaticFieldByName(AwtToolkit::GetEnv(), NULL,
+        keep = (JNU_GetStaticFieldByName(AwtToolkit::GetEnv(), NULL, 
             "sun/awt/windows/WFramePeer", "keepOnMinimize", "Z").z) == JNI_TRUE;
         checked = TRUE;
     }
@@ -1116,45 +1082,45 @@ MsgRouting AwtFrame::WmSysCommand(UINT uCmdType, int xPos, int yPos)
 
     if (uCmdType == (SYSCOMMAND_IMM & 0xFFF0)){
         JNIEnv* env = AwtToolkit::GetEnv();
-        JNU_CallMethodByName(env, NULL, m_peerObject,
+        JNU_CallMethodByName(env, NULL, m_peerObject, 
             "notifyIMMOptionChange", "()V");
-        DASSERT(!safe_ExceptionOccurred(env));
+        DASSERT(!safe_ExceptionOccurred(env));  
         return mrConsume;
     }
     if ((uCmdType == SC_MINIMIZE) && keepOnMinimize(m_peerObject)) {
         ::ShowWindow(GetHWnd(),SW_SHOWMINIMIZED);
-        return mrConsume;
-    }
+        return mrConsume; 
+    }			   
     return AwtWindow::WmSysCommand(uCmdType, xPos, yPos);
 }
 
 LRESULT AwtFrame::WinThreadExecProc(ExecuteArgs * args)
 {
     switch( args->cmdId ) {
-        case FRAME_SETMENUBAR:
-        {
-            jobject  mbPeer = (jobject)args->param1;
+	case FRAME_SETMENUBAR:
+	{
+    	    jobject  mbPeer = (jobject)args->param1;
 
-            // cancel any currently dropped down menus
-            if (m_isMenuDropped) {
-                SendMessage(WM_CANCELMODE);
-            }
+	    // cancel any currently dropped down menus
+	    if (m_isMenuDropped) {
+		SendMessage(WM_CANCELMODE);
+	    }
 
-            if (mbPeer == NULL) {
-                // Remove existing menu bar, if any
-                SetMenuBar(NULL);
-            } else {
-                JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-                AwtMenuBar* menuBar = (AwtMenuBar *)JNI_GET_PDATA(mbPeer);
-                SetMenuBar(menuBar);
-            }
-            DrawMenuBar();
-            break;
-        }
+	    if (mbPeer == NULL) {
+		// Remove existing menu bar, if any
+		SetMenuBar(NULL);
+	    } else {
+		JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+		AwtMenuBar* menuBar = (AwtMenuBar *)JNI_GET_PDATA(mbPeer);
+		SetMenuBar(menuBar);
+	    }
+	    DrawMenuBar();
+	    break;
+	}
 
-        default:
-            AwtWindow::WinThreadExecProc(args);
-            break;
+	default:
+	    AwtWindow::WinThreadExecProc(args);
+	    break;
     }
 
     return 0L;
@@ -1178,11 +1144,11 @@ BOOL AwtFrame::activateEmbeddedFrameOnSetFocus(HWND hWndLostFocus) {
         // the native toplevel be set to the active window.
         HWND activeWindowHWnd = ::GetActiveWindow();
         DASSERT(activeWindowHWnd == ::GetAncestor(GetHWnd(), GA_ROOT));
-
+        
         // See 6538154.
         ::BringWindowToTop(activeWindowHWnd);
         ::SetForegroundWindow(activeWindowHWnd);
-
+        
         SynthesizeWmActivate(TRUE, oppositeToplevelHWnd);
 
         return FALSE;
@@ -1299,7 +1265,7 @@ void AwtFrame::_SetState(void *param)
 
         BOOL iconify = (state & java_awt_Frame_ICONIFIED) != 0;
         BOOL zoom = (state & java_awt_Frame_MAXIMIZED_BOTH)
-                        == java_awt_Frame_MAXIMIZED_BOTH;
+			== java_awt_Frame_MAXIMIZED_BOTH;
 
         DTRACE_PRINTLN4("WFramePeer.setState:%s%s ->%s%s",
                   f->isIconic() ? " iconic" : "",
@@ -1315,7 +1281,7 @@ void AwtFrame::_SetState(void *param)
             wp.length = sizeof(wp);
             ::GetWindowPlacement(hwnd, &wp);
 
-            // Iconify first.
+            // Iconify first. 
             // If both iconify & zoom are TRUE, handle this case
             // with wp.flags field below.
             if (iconify) {
@@ -1345,8 +1311,8 @@ void AwtFrame::_SetState(void *param)
         } else {
             DTRACE_PRINTLN("  not visible, just recording the requested state");
 
-            f->setIconic(iconify);
-            f->setZoomed(zoom);
+            f->setIconic(iconify); 
+            f->setZoomed(zoom); 
         }
     }
 ret:
@@ -1482,7 +1448,7 @@ void AwtFrame::_SetIMMOption(void *param)
     if (::IsWindow(f->GetHWnd()))
     {
         coption = JNU_GetStringPlatformChars(env, option, NULL);
-        if (coption == NULL)
+        if (coption == NULL) 
         {
             badAlloc = 1;
         }
@@ -1604,9 +1570,9 @@ Java_java_awt_Frame_initIDs(JNIEnv *env, jclass cls)
 
     AwtFrame::stateID = env->GetFieldID(cls, "state", "I");
     DASSERT(AwtFrame::stateID != NULL);
-
+        
     AwtFrame::undecoratedID = env->GetFieldID(cls,"undecorated","Z");
-    DASSERT(AwtFrame::undecoratedID != NULL);
+    DASSERT(AwtFrame::undecoratedID != NULL);    
 
     CATCH_BAD_ALLOC;
 }
@@ -1705,7 +1671,7 @@ Java_sun_awt_windows_WFramePeer_clearMaximizedBounds(JNIEnv *env, jobject self)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WFramePeer_setMenuBar0(JNIEnv *env, jobject self,
-                                            jobject mbPeer)
+					    jobject mbPeer)
 {
     TRY;
 
@@ -1731,8 +1697,8 @@ Java_sun_awt_windows_WFramePeer_createAwtFrame(JNIEnv *env, jobject self,
     TRY;
 
     AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)
-                                AwtFrame::Create);
+				(AwtToolkit::ComponentFactory)
+				AwtFrame::Create);
     PDATA pData;
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
@@ -1761,7 +1727,7 @@ Java_sun_awt_windows_WFramePeer_getSysMenuHeight(JNIEnv *env, jclass self)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WFramePeer_pSetIMMOption(JNIEnv *env, jobject self,
-                                               jstring option)
+					       jstring option) 
 {
     TRY;
 
@@ -1846,7 +1812,7 @@ Java_sun_awt_windows_WEmbeddedFrame_notifyModalBlockedImpl(JNIEnv *env,
     nmbs->peer = env->NewGlobalRef(peer);
     nmbs->blockerPeer = env->NewGlobalRef(blockerPeer);
     nmbs->blocked = blocked;
-
+    
     AwtToolkit::GetInstance().SyncCall(AwtFrame::_NotifyModalBlocked, nmbs);
     // global refs and nmbs are deleted in _NotifyModalBlocked()
 
@@ -1864,14 +1830,14 @@ extern "C" {
 
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WEmbeddedFramePeer_create(JNIEnv *env, jobject self,
-                                               jobject parent)
+					       jobject parent)
 {
     TRY;
 
     JNI_CHECK_NULL_RETURN(self, "peer");
     AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)
-                                AwtFrame::Create);
+				(AwtToolkit::ComponentFactory)
+				AwtFrame::Create);
     PDATA pData;
     JNI_CHECK_PEER_CREATION_RETURN(self);
 

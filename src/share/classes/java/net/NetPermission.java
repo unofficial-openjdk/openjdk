@@ -79,13 +79,13 @@ import java.util.StringTokenizer;
  * to specify a stream handler when constructing a URL</td>
  *   <td>Malicious code may create a URL with resources that it would
 normally not have access to (like file:/foo/fum/), specifying a
-stream handler that gets the actual bytes from someplace it does
+stream handler that gets the actual bytes from someplace it does 
 have access to. Thus it might be able to trick the system into
 creating a ProtectionDomain/CodeSource for a class even though
 that class really didn't come from that location.</td>
  * </tr>
  *
- * <tr>
+ * <tr> 
  *   <td>setProxySelector</td>
  *   <td>The ability to set the proxy selector used to make decisions
  *   on which proxies to use when making network connections.</td>
@@ -93,7 +93,7 @@ that class really didn't come from that location.</td>
  *   traffic to an arbitrary network host.</td>
  * </tr>
  *
- * <tr>
+ * <tr> 
  *   <td>getProxySelector</td>
  *   <td>The ability to get the proxy selector used to make decisions
  *   on which proxies to use when making network connections.</td>
@@ -102,7 +102,7 @@ that class really didn't come from that location.</td>
  *   targets for attack.</td>
  * </tr>
  *
- * <tr>
+ * <tr> 
  *   <td>setCookieHandler</td>
  *   <td>The ability to set the cookie handler that processes highly
  *   security sensitive cookie information for an Http session.</td>
@@ -112,7 +112,7 @@ that class really didn't come from that location.</td>
  *   control information, or to track user browsing habit.</td>
  *   </tr>
  *
- * <tr>
+ * <tr> 
  *   <td>getCookieHandler</td>
  *   <td>The ability to get the cookie handler that processes highly
  *   security sensitive cookie information for an Http session.</td>
@@ -122,7 +122,7 @@ that class really didn't come from that location.</td>
  *   control information, or to track user browsing habit.</td>
  *   </tr>
  *
- * <tr>
+ * <tr> 
  *   <td>setResponseCache</td>
  *   <td>The ability to set the response cache that provides access to
  *   a local response cache.</td>
@@ -131,7 +131,7 @@ that class really didn't come from that location.</td>
  *   entries in the response cache.</td>
  *   </tr>
  *
- * <tr>
+ * <tr> 
  *   <td>getResponseCache</td>
  *   <td>The ability to get the response cache that provides
  *   access to a local response cache.</td>
@@ -147,6 +147,7 @@ that class really didn't come from that location.</td>
  * @see java.security.PermissionCollection
  * @see java.lang.SecurityManager
  *
+ * @version %I% %E%
  *
  * @author Marianne Mueller
  * @author Roland Schemers
@@ -170,7 +171,7 @@ public final class NetPermission extends BasicPermission {
 
     public NetPermission(String name)
     {
-        super(name);
+	super(name);
     }
 
     /**
@@ -187,6 +188,6 @@ public final class NetPermission extends BasicPermission {
 
     public NetPermission(String name, String actions)
     {
-        super(name, actions);
+	super(name, actions);
     }
 }

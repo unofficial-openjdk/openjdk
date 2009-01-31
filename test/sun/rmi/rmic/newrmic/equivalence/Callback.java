@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,5 +29,5 @@ import java.rmi.server.*;
 
 public interface Callback extends Remote
 {
-        void callback() throws RemoteException;
+	void callback() throws RemoteException;
 }

@@ -56,19 +56,19 @@ abstract class ClientHandler implements Runnable {
         objectName = n ;
         interruptCalled = false ;
         dbgTag = makeDebugTag() ;
-        //if (mbs == null ){
-        //thread = new Thread (this) ;
-        thread =  createThread(this);
+	//if (mbs == null ){
+	//thread = new Thread (this) ;
+	thread =  createThread(this);
 
-        //} else {
-        //thread = mbs.getThreadAllocatorSrvIf().obtainThread(objectName,this) ;
-        //}
+	//} else {
+	//thread = mbs.getThreadAllocatorSrvIf().obtainThread(objectName,this) ;
+	//}
         // Note: the thread will be started by the subclass.
     }
 
     // thread service
     Thread createThread(Runnable r) {
-        return new Thread(this);
+	return new Thread(this);
     }
 
     public void interrupt() {
@@ -79,18 +79,18 @@ abstract class ClientHandler implements Runnable {
         }
         SNMP_ADAPTOR_LOGGER.exiting(dbgTag, "interrupt");
     }
-
-
+  
+  
     public void join() {
-        if (thread != null) {
+	if (thread != null) {
         try {
             thread.join() ;
         }
         catch(InterruptedException x) {
         }
-        }
+	}
     }
-
+  
     public void run() {
 
         try {
@@ -112,13 +112,13 @@ abstract class ClientHandler implements Runnable {
             //
             adaptorServer.notifyClientHandlerDeleted(this) ;
         }
-    }
-
+    }  
+  
     //
     // The protocol-dependent part of the request
     //
-    public abstract void doRun() ;
-
+    public abstract void doRun() ;  
+  
     protected CommunicatorServer adaptorServer = null ;
     protected int requestId = -1 ;
     protected MBeanServer mbs = null ;
@@ -126,7 +126,7 @@ abstract class ClientHandler implements Runnable {
     protected Thread thread = null ;
     protected boolean interruptCalled = false ;
     protected String dbgTag = null ;
-
+    
     protected String makeDebugTag() {
         return "ClientHandler[" + adaptorServer.getProtocol() + ":" + adaptorServer.getPort() + "][" + requestId + "]";
     }

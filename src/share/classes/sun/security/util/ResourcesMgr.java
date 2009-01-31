@@ -26,6 +26,7 @@
 package sun.security.util;
 
 /**
+ * @version %I%, %G%
  */
 public class ResourcesMgr {
 
@@ -37,34 +38,34 @@ public class ResourcesMgr {
 
     public static String getString(String s) {
 
-        if (bundle == null) {
+	if (bundle == null) {
 
-            // only load if/when needed
-            bundle = java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction<java.util.ResourceBundle>() {
-                public java.util.ResourceBundle run() {
-                    return (java.util.ResourceBundle.getBundle
-                                ("sun.security.util.Resources"));
-                }
-            });
-        }
+	    // only load if/when needed
+	    bundle = java.security.AccessController.doPrivileged(
+		new java.security.PrivilegedAction<java.util.ResourceBundle>() {
+		public java.util.ResourceBundle run() {
+		    return (java.util.ResourceBundle.getBundle
+				("sun.security.util.Resources"));
+		}
+	    });
+	}
 
-        return bundle.getString(s);
+	return bundle.getString(s);
     }
 
     public static String getString(String s, final String altBundleName) {
 
-        if (altBundle == null) {
+	if (altBundle == null) {
 
-            // only load if/when needed
-            altBundle = java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction<java.util.ResourceBundle>() {
-                public java.util.ResourceBundle run() {
-                    return (java.util.ResourceBundle.getBundle(altBundleName));
-                }
-            });
-        }
+	    // only load if/when needed
+	    altBundle = java.security.AccessController.doPrivileged(
+		new java.security.PrivilegedAction<java.util.ResourceBundle>() {
+		public java.util.ResourceBundle run() {
+		    return (java.util.ResourceBundle.getBundle(altBundleName));
+		}
+	    });
+	}
 
-        return altBundle.getString(s);
+	return altBundle.getString(s);
     }
 }

@@ -31,6 +31,7 @@ import java.awt.Component;
  * Defines the requirements for an object responsible for
  * "rendering" (displaying) a value.
  *
+ * @version %I% %G%
  * @author Arnaud Weber
  */
 public interface Renderer {

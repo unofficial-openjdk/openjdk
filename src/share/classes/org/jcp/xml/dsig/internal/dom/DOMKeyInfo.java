@@ -64,18 +64,18 @@ public final class DOMKeyInfo extends DOMStructure implements KeyInfo {
     public DOMKeyInfo(List content, String id) {
         if (content == null) {
             throw new NullPointerException("content cannot be null");
-        }
-        List typesCopy = new ArrayList(content);
-        if (typesCopy.isEmpty()) {
-            throw new IllegalArgumentException("content cannot be empty");
-        }
-        for (int i = 0, size = typesCopy.size(); i < size; i++) {
-            if (!(typesCopy.get(i) instanceof XMLStructure)) {
-                throw new ClassCastException
-                    ("content["+i+"] is not a valid KeyInfo type");
-            }
-        }
-        this.keyInfoTypes = Collections.unmodifiableList(typesCopy);
+	}
+	List typesCopy = new ArrayList(content);
+	if (typesCopy.isEmpty()) {
+	    throw new IllegalArgumentException("content cannot be empty");
+	}
+	for (int i = 0, size = typesCopy.size(); i < size; i++) {
+	    if (!(typesCopy.get(i) instanceof XMLStructure)) {
+		throw new ClassCastException
+		    ("content["+i+"] is not a valid KeyInfo type");
+	    }
+	}
+	this.keyInfoTypes = Collections.unmodifiableList(typesCopy);
         this.id = id;
     }
 
@@ -84,48 +84,48 @@ public final class DOMKeyInfo extends DOMStructure implements KeyInfo {
      *
      * @param input XML input
      */
-    public DOMKeyInfo(Element kiElem, XMLCryptoContext context)
-        throws MarshalException {
-        // get Id attribute, if specified
-        id = DOMUtils.getAttributeValue(kiElem, "Id");
+    public DOMKeyInfo(Element kiElem, XMLCryptoContext context) 
+	throws MarshalException {
+	// get Id attribute, if specified
+	id = DOMUtils.getAttributeValue(kiElem, "Id");
 
         // get all children nodes
         NodeList nl = kiElem.getChildNodes();
-        int length = nl.getLength();
-        if (length < 1) {
-            throw new MarshalException
-                ("KeyInfo must contain at least one type");
-        }
-        List content = new ArrayList(length);
+	int length = nl.getLength();
+	if (length < 1) {
+	    throw new MarshalException
+		("KeyInfo must contain at least one type");
+	}
+	List content = new ArrayList(length);
         for (int i = 0; i < length; i++) {
             Node child = nl.item(i);
             // ignore all non-Element nodes
             if (child.getNodeType() != Node.ELEMENT_NODE) {
                 continue;
-            }
+	    }
             Element childElem = (Element) child;
-            String localName = childElem.getLocalName();
+	    String localName = childElem.getLocalName();
             if (localName.equals("X509Data")) {
-                content.add(new DOMX509Data(childElem));
+	        content.add(new DOMX509Data(childElem));
             } else if (localName.equals("KeyName")) {
-                content.add(new DOMKeyName(childElem));
+	        content.add(new DOMKeyName(childElem));
             } else if (localName.equals("KeyValue")) {
-                content.add(new DOMKeyValue(childElem));
+	        content.add(new DOMKeyValue(childElem));
             } else if (localName.equals("RetrievalMethod")) {
-                content.add(new DOMRetrievalMethod(childElem, context));
-            } else { //may be MgmtData, SPKIData or element from other namespace
-                content.add(new javax.xml.crypto.dom.DOMStructure((childElem)));
-            }
+	        content.add(new DOMRetrievalMethod(childElem, context));
+	    } else { //may be MgmtData, SPKIData or element from other namespace
+	        content.add(new javax.xml.crypto.dom.DOMStructure((childElem)));
+	    }
         }
-        keyInfoTypes = Collections.unmodifiableList(content);
+	keyInfoTypes = Collections.unmodifiableList(content);
     }
 
     public String getId() {
-        return id;
+	return id;
     }
 
     public List getContent() {
-        return keyInfoTypes;
+	return keyInfoTypes;
     }
 
     public void marshal(XMLStructure parent, XMLCryptoContext context)
@@ -134,11 +134,11 @@ public final class DOMKeyInfo extends DOMStructure implements KeyInfo {
             throw new NullPointerException("parent is null");
         }
 
-        Node pNode = ((javax.xml.crypto.dom.DOMStructure) parent).getNode();
-        String dsPrefix = DOMUtils.getSignaturePrefix(context);
-        Element kiElem = DOMUtils.createElement
-            (DOMUtils.getOwnerDocument(pNode), "KeyInfo",
-             XMLSignature.XMLNS, dsPrefix);
+	Node pNode = ((javax.xml.crypto.dom.DOMStructure) parent).getNode();
+	String dsPrefix = DOMUtils.getSignaturePrefix(context);
+	Element kiElem = DOMUtils.createElement
+	    (DOMUtils.getOwnerDocument(pNode), "KeyInfo",
+	     XMLSignature.XMLNS, dsPrefix);
         if (dsPrefix == null) {
             kiElem.setAttributeNS
                 ("http://www.w3.org/2000/xmlns/", "xmlns", XMLSignature.XMLNS);
@@ -146,56 +146,56 @@ public final class DOMKeyInfo extends DOMStructure implements KeyInfo {
             kiElem.setAttributeNS
                 ("http://www.w3.org/2000/xmlns/", "xmlns:" + dsPrefix,
                  XMLSignature.XMLNS);
-        }
+	}
         marshal(pNode, kiElem, null, dsPrefix, (DOMCryptoContext) context);
     }
 
-    public void marshal(Node parent, String dsPrefix,
-        DOMCryptoContext context) throws MarshalException {
-        marshal(parent, null, dsPrefix, context);
+    public void marshal(Node parent, String dsPrefix, 
+	DOMCryptoContext context) throws MarshalException {
+	marshal(parent, null, dsPrefix, context);
     }
 
     public void marshal(Node parent, Node nextSibling, String dsPrefix,
-        DOMCryptoContext context) throws MarshalException {
+	DOMCryptoContext context) throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element kiElem = DOMUtils.createElement
-            (ownerDoc, "KeyInfo", XMLSignature.XMLNS, dsPrefix);
+	    (ownerDoc, "KeyInfo", XMLSignature.XMLNS, dsPrefix);
         marshal(parent, kiElem, nextSibling, dsPrefix, context);
     }
 
     private void marshal(Node parent, Element kiElem, Node nextSibling,
         String dsPrefix, DOMCryptoContext context) throws MarshalException {
         // create and append KeyInfoType elements
-        for (int i = 0, size = keyInfoTypes.size(); i < size; i++) {
-            XMLStructure kiType = (XMLStructure) keyInfoTypes.get(i);
-            if (kiType instanceof DOMStructure) {
-                ((DOMStructure) kiType).marshal(kiElem, dsPrefix, context);
-            } else {
-                DOMUtils.appendChild(kiElem,
-                    ((javax.xml.crypto.dom.DOMStructure) kiType).getNode());
-            }
+	for (int i = 0, size = keyInfoTypes.size(); i < size; i++) {
+	    XMLStructure kiType = (XMLStructure) keyInfoTypes.get(i);
+	    if (kiType instanceof DOMStructure) {
+		((DOMStructure) kiType).marshal(kiElem, dsPrefix, context);
+	    } else {
+		DOMUtils.appendChild(kiElem,
+		    ((javax.xml.crypto.dom.DOMStructure) kiType).getNode());
+	    }
         }
 
         // append id attribute
         DOMUtils.setAttributeID(kiElem, "Id", id);
 
-        parent.insertBefore(kiElem, nextSibling);
+	parent.insertBefore(kiElem, nextSibling);
     }
 
     public boolean equals(Object o) {
-        if (this == o) {
+	if (this == o) {
             return true;
-        }
+	}
 
         if (!(o instanceof KeyInfo)) {
             return false;
-        }
+	}
         KeyInfo oki = (KeyInfo) o;
 
-        boolean idsEqual = (id == null ? oki.getId() == null :
-            id.equals(oki.getId()));
+	boolean idsEqual = (id == null ? oki.getId() == null :
+	    id.equals(oki.getId()));
 
-        return (keyInfoTypes.equals(oki.getContent()) && idsEqual);
+	return (keyInfoTypes.equals(oki.getContent()) && idsEqual);
     }
 }

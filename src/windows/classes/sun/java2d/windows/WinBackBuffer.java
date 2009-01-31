@@ -47,8 +47,8 @@ public class WinBackBuffer extends SunVolatileImage {
     }
 
     @Override
-    protected VolatileSurfaceManager createSurfaceManager(Object context,
-                                                          ImageCapabilities caps)
+    protected VolatileSurfaceManager createSurfaceManager(Object context, 
+                                                          ImageCapabilities caps) 
     {
         return new WinBackBufferSurfaceManager(this, context);
     }
@@ -71,9 +71,9 @@ public class WinBackBuffer extends SunVolatileImage {
         protected Win32OffScreenSurfaceData createAccelSurface() {
             GraphicsConfiguration gc = vImg.getGraphicsConfig();
             ColorModel cm = getDeviceColorModel();
-            Win32SurfaceData parent = (Win32SurfaceData)context;
+	    Win32SurfaceData parent = (Win32SurfaceData)context;
 
-            Win32OffScreenSurfaceData ret =
+            Win32OffScreenSurfaceData ret = 
                 D3DBackBufferSurfaceData.createData(vImg.getWidth(),
                                                     vImg.getHeight(),
                                                     cm, gc, vImg, parent);

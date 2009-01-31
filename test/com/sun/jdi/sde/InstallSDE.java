@@ -1,7 +1,7 @@
 import java.io.*;
 
 class InstallSDE {
-    static final boolean verbose = true;
+    static final boolean verbose = true; 
     static final String nameSDE = "SourceDebugExtension";
 
     byte[] orig;
@@ -19,7 +19,7 @@ class InstallSDE {
         } else if (args.length == 3) {
             install(new File(args[0]), new File(args[1]), new File(args[2]));
         } else {
-            abort("Usage: <command> <input class file> " +
+            abort("Usage: <command> <input class file> " + 
                                "<attribute file> <output class file name>\n" +
                   "<command> <input/output class file> <attribute file>");
         }
@@ -61,7 +61,7 @@ class InstallSDE {
 
         // do it
         addSDE();
-
+        
         // write result
         FileOutputStream outStream = new FileOutputStream(outClassFile);
         outStream.write(gen, 0, genPos);
@@ -90,12 +90,12 @@ class InstallSDE {
         if (sdeIndex < 0) {
             // if "SourceDebugExtension" symbol not there add it
             writeUtf8ForSDE();
-
+            
             // increment the countantPoolCount
             sdeIndex = constantPoolCount;
             ++constantPoolCount;
             randomAccessWriteU2(constantPoolCountPos, constantPoolCount);
-
+            
             if (verbose) {
                 System.out.println("SourceDebugExtension not found, installed at: " +
                                    sdeIndex);
@@ -196,7 +196,7 @@ class InstallSDE {
          int res = readU1();
         return (res << 8) + readU1();
     }
-
+    
     int readU4() {
         int res = readU2();
         return (res << 16) + readU2();
@@ -215,13 +215,13 @@ class InstallSDE {
         writeU2(val >> 16);
         writeU2(val & 0xFFFF);
     }
-
+    
     void copy(int count) {
         for (int i = 0; i < count; ++i) {
             gen[genPos++] = orig[origPos++];
         }
     }
-
+    
     byte[] readBytes(int count) {
         byte[] bytes = new byte[count];
         for (int i = 0; i < count; ++i) {
@@ -229,13 +229,13 @@ class InstallSDE {
         }
         return bytes;
     }
-
+    
     void writeBytes(byte[] bytes) {
         for (int i = 0; i < bytes.length; ++i) {
             gen[genPos++] = bytes[i];
         }
     }
-
+    
     int copyConstantPool(int constantPoolCount) throws UnsupportedEncodingException {
         int sdeIndex = -1;
         // copy const pool index zero not in class file
@@ -245,7 +245,7 @@ class InstallSDE {
             switch (tag) {
                 case 7:  // Class
                 case 8:  // String
-                    copy(2);
+                    copy(2); 
                     break;
                 case 9:  // Field
                 case 10: // Method
@@ -253,14 +253,14 @@ class InstallSDE {
                 case 3:  // Integer
                 case 4:  // Float
                 case 12: // NameAndType
-                    copy(4);
+                    copy(4); 
                     break;
                 case 5:  // Long
                 case 6:  // Double
-                    copy(8);
+                    copy(8); 
                     break;
                 case 1:  // Utf8
-                    int len = readU2();
+                    int len = readU2(); 
                     writeU2(len);
                     byte[] utf8 = readBytes(len);
                     String str = new String(utf8, "UTF-8");
@@ -272,8 +272,8 @@ class InstallSDE {
                     }
                     writeBytes(utf8);
                     break;
-                default:
-                    abort("unexpected tag: " + tag);
+                default: 
+                    abort("unexpected tag: " + tag); 
                     break;
             }
         }

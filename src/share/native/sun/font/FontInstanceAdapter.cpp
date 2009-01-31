@@ -37,10 +37,10 @@
 
 FontInstanceAdapter::FontInstanceAdapter(JNIEnv *theEnv,
                                          jobject theFont2D,
-                                         jobject theFontStrike,
+                                         jobject theFontStrike,                                         
                                          float *matrix,
                                          le_int32 xRes, le_int32 yRes,
-                                         le_int32 theUPEM,
+                                         le_int32 theUPEM, 
                                          TTLayoutTableCache *ltables)
     : env(theEnv), font2D(theFont2D), fontStrike(theFontStrike),
       xppem(0), yppem(0),
@@ -81,7 +81,7 @@ const void *FontInstanceAdapter::getFontTable(LETag tableTag) const
   case GDEF_TAG: if (layoutTables->gdef_len != -1) return (void*)layoutTables->gdef; break;
   case MORT_TAG: if (layoutTables->mort_len != -1) return (void*)layoutTables->mort; break;
   case KERN_TAG: if (layoutTables->kern_len != -1) return (void*)layoutTables->kern; break;
-  default:
+  default: 
    //fprintf(stderr, "unexpected table request from font instance adapter: %x\n", tableTag);
     return 0;
   }
@@ -97,7 +97,7 @@ const void *FontInstanceAdapter::getFontTable(LETag tableTag) const
   }
 
   switch(tableTag) {
-  case GSUB_TAG: layoutTables->gsub = (void*)result; layoutTables->gsub_len = len; break;
+  case GSUB_TAG: layoutTables->gsub = (void*)result; layoutTables->gsub_len = len; break; 
   case GPOS_TAG: layoutTables->gpos = (void*)result; layoutTables->gpos_len = len; break;
   case GDEF_TAG: layoutTables->gdef = (void*)result; layoutTables->gdef_len = len; break;
   case MORT_TAG: layoutTables->mort = (void*)result; layoutTables->mort_len = len; break;
@@ -130,8 +130,8 @@ LEGlyphID FontInstanceAdapter::mapCharToGlyph(LEUnicode32 ch) const
     return id;
 }
 
-void FontInstanceAdapter::mapCharsToWideGlyphs(const LEUnicode chars[],
-    le_int32 offset, le_int32 count, le_bool reverse,
+void FontInstanceAdapter::mapCharsToWideGlyphs(const LEUnicode chars[], 
+    le_int32 offset, le_int32 count, le_bool reverse, 
     const LECharMapper *mapper, le_uint32 glyphs[]) const
 {
     le_int32 i, out = 0, dir = 1;
@@ -142,23 +142,23 @@ void FontInstanceAdapter::mapCharsToWideGlyphs(const LEUnicode chars[],
     }
 
     for (i = offset; i < offset + count; i += 1, out += dir) {
-                LEUnicode16 high = chars[i];
-                LEUnicode32 code = high;
+		LEUnicode16 high = chars[i];
+		LEUnicode32 code = high;
 
-                if (i < offset + count - 1 && high >= 0xD800 && high <= 0xDBFF) {
-                        LEUnicode16 low = chars[i + 1];
+		if (i < offset + count - 1 && high >= 0xD800 && high <= 0xDBFF) {
+			LEUnicode16 low = chars[i + 1];
 
-                        if (low >= 0xDC00 && low <= 0xDFFF) {
-                                code = (high - 0xD800) * 0x400 + low - 0xDC00 + 0x10000;
-                        }
-                }
+			if (low >= 0xDC00 && low <= 0xDFFF) {
+				code = (high - 0xD800) * 0x400 + low - 0xDC00 + 0x10000;
+			}
+		}
 
         glyphs[out] = mapCharToWideGlyph(code, mapper);
 
-                if (code >= 0x10000) {
-                        i += 1;
-                        glyphs[out += dir] = 0xFFFF;
-                }
+		if (code >= 0x10000) {
+			i += 1;
+			glyphs[out += dir] = 0xFFFF;
+		}
     }
 }
 
@@ -175,7 +175,7 @@ le_uint32 FontInstanceAdapter::mapCharToWideGlyph(LEUnicode32 ch, const LECharMa
     }
 
     return (LEGlyphID)env->CallIntMethod(font2D, sunFontIDs.charToGlyphMID,
-                                         mappedChar);
+					 mappedChar);
 }
 
 void FontInstanceAdapter::getGlyphAdvance(LEGlyphID glyph, LEPoint &advance) const
@@ -216,20 +216,20 @@ void FontInstanceAdapter::getWideGlyphAdvance(le_uint32 glyph, LEPoint &advance)
 {
     if ((glyph & 0xfffe) == 0xfffe) {
         advance.fX = 0;
-        advance.fY = 0;
-        return;
+	advance.fY = 0;
+	return;
     }
     jobject pt = env->CallObjectMethod(fontStrike,
-                                       sunFontIDs.getGlyphMetricsMID, glyph);
+				       sunFontIDs.getGlyphMetricsMID, glyph);
     if (pt != NULL) {
         advance.fX = env->GetFloatField(pt, sunFontIDs.xFID);
-        advance.fY = env->GetFloatField(pt, sunFontIDs.yFID);
+        advance.fY = env->GetFloatField(pt, sunFontIDs.yFID);    
     }
 }
 
 le_bool FontInstanceAdapter::getGlyphPoint(LEGlyphID glyph,
-                                           le_int32 pointNumber,
-                                           LEPoint &point) const
+					   le_int32 pointNumber,
+					   LEPoint &point) const
 {
   /* This upcall is not ideal, since it will make another down call.
    * The intention is to move up some of this code into Java. But
@@ -239,8 +239,8 @@ le_bool FontInstanceAdapter::getGlyphPoint(LEGlyphID glyph,
    * hinted glyph outline. This turns out to be a huge win over 1.4.x
    */
      jobject pt = env->CallObjectMethod(fontStrike,
-                                        sunFontIDs.getGlyphPointMID,
-                                        glyph, pointNumber);
+					sunFontIDs.getGlyphPointMID,
+					glyph, pointNumber);
      if (pt != NULL) {
        /* point is a java.awt.geom.Point2D.Float */
         point.fX = env->GetFloatField(pt, sunFontIDs.xFID);
@@ -248,7 +248,7 @@ le_bool FontInstanceAdapter::getGlyphPoint(LEGlyphID glyph,
         point.fY = -env->GetFloatField(pt, sunFontIDs.yFID);
         return true;
      } else {
-        return false;
+ 	return false;
      }
 }
 
@@ -258,20 +258,20 @@ void FontInstanceAdapter::transformFunits(float xFunits, float yFunits, LEPoint 
     le_bool isIdentityMatrix;
 
     isIdentityMatrix = (txMat[0] == 1 && txMat[1] == 0 &&
-                        txMat[2] == 0 && txMat[3] == 1);
+			txMat[2] == 0 && txMat[3] == 1);
 
     xx = xFunits * xScaleUnitsToPoints;
     xy = 0;
     if (!isIdentityMatrix) {
-        xy = xx * txMat[1];
-        xx = xx * txMat[0];
+	xy = xx * txMat[1];
+	xx = xx * txMat[0];
     };
 
     yx = 0;
     yy = yFunits * yScaleUnitsToPoints;
     if (!isIdentityMatrix) {
-        yx = yy * txMat[2];
-        yy = yy * txMat[3];
+	yx = yy * txMat[2];
+	yy = yy * txMat[3];
     };
     pixels.fX = xx + yx;
     pixels.fY = xy + yy;
@@ -298,7 +298,7 @@ float FontInstanceAdapter::euclidianDistance(float a, float b)
 
     float root = a > b ? a + (b / 2) : b + (a / 2); /* Do an initial approximation, in root */
 
-        /* An unrolled Newton-Raphson iteration sequence */
+	/* An unrolled Newton-Raphson iteration sequence */
     root = (root + (a * (a / root)) + (b * (b / root)) + 1) / 2;
     root = (root + (a * (a / root)) + (b * (b / root)) + 1) / 2;
     root = (root + (a * (a / root)) + (b * (b / root)) + 1) / 2;

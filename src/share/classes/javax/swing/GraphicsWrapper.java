@@ -27,6 +27,7 @@ package javax.swing;
 /**
  * A private interface to access clip bounds in wrapped Graphics objects.
  *
+ * @version %I% %G%
  * @author Thomas Ball
  */
 

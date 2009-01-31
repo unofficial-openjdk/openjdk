@@ -57,10 +57,10 @@ public class PSource {
      * is null.
      */
     protected PSource(String pSrcName) {
-        if (pSrcName == null) {
-            throw new NullPointerException("pSource algorithm is null");
-        }
-        this.pSrcName = pSrcName;
+	if (pSrcName == null) {
+	    throw new NullPointerException("pSource algorithm is null");
+	}
+	this.pSrcName = pSrcName;
     }
     /**
      * Returns the PSource algorithm name.
@@ -68,7 +68,7 @@ public class PSource {
      * @return the PSource algorithm name.
      */
     public String getAlgorithm() {
-        return pSrcName;
+	return pSrcName;
     }
 
     /**
@@ -79,33 +79,33 @@ public class PSource {
      */
     public static final class PSpecified extends PSource {
 
-        private byte[] p = new byte[0];
+	private byte[] p = new byte[0];
 
-        /**
-         * The encoding input P whose value equals byte[0].
-         */
-        public static final PSpecified DEFAULT = new PSpecified(new byte[0]);
+	/**
+	 * The encoding input P whose value equals byte[0].
+	 */
+	public static final PSpecified DEFAULT = new PSpecified(new byte[0]);
 
-        /**
-         * Constructs the source explicitly with the specified
-         * value <code>p</code> as the encoding input P.
-         * Note:
-         * @param p the value of the encoding input. The contents
-         * of the array are copied to protect against subsequent
-         * modification.
-         * @exception NullPointerException if <code>p</code> is null.
-         */
-        public PSpecified(byte[] p) {
-            super("PSpecified");
-            this.p = (byte[]) p.clone();
-        }
-        /**
-         * Returns the value of encoding input P.
-         * @return the value of encoding input P. A new array is
-         * returned each time this method is called.
-         */
-        public byte[] getValue() {
-            return (p.length==0? p: (byte[])p.clone());
-        }
+	/**
+	 * Constructs the source explicitly with the specified
+	 * value <code>p</code> as the encoding input P.
+	 * Note:
+	 * @param p the value of the encoding input. The contents
+	 * of the array are copied to protect against subsequent
+	 * modification.
+	 * @exception NullPointerException if <code>p</code> is null.
+	 */
+	public PSpecified(byte[] p) {
+	    super("PSpecified");
+	    this.p = (byte[]) p.clone();
+	}
+	/**
+	 * Returns the value of encoding input P.
+	 * @return the value of encoding input P. A new array is
+	 * returned each time this method is called.
+	 */
+	public byte[] getValue() {
+	    return (p.length==0? p: (byte[])p.clone());
+	}
     }
 }

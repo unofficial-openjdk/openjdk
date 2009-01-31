@@ -35,13 +35,13 @@ import java.lang.reflect.Array;
 /**
  * This subclass of ObjectInputStream delegates loading of classes to
  * an existing MLetClassLoader.
- *
+ * 
  * @since 1.5
  */
 class MLetObjectInputStream extends ObjectInputStream {
 
     private MLet loader;
-
+    
     /**
      * Loader must be non-null;
      */

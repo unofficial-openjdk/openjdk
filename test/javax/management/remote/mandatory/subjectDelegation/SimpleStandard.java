@@ -24,20 +24,20 @@
 /**
  * Simple definition of a standard MBean, named "SimpleStandard".
  *
- * The "SimpleStandard" standard MBean shows how to expose attributes and
- * operations for management by implementing its corresponding
+ * The "SimpleStandard" standard MBean shows how to expose attributes and  
+ * operations for management by implementing its corresponding  
  * "SimpleStandardMBean" management interface.
  *
- * This MBean has two attributes and one operation exposed
+ * This MBean has two attributes and one operation exposed 
  * for management by a JMX agent:
  *      - the read/write "State" attribute,
  *      - the read only "NbChanges" attribute,
- *      - the "reset()" operation.
+ *	- the "reset()" operation.
  *
  * This object also has one property and one method not exposed
  * for management by a JMX agent:
- *      - the "NbResets" property,
- *      - the "getNbResets()" method.
+ *	- the "NbResets" property,
+ *	- the "getNbResets()" method.
  */
 
 import java.security.AccessControlContext;
@@ -75,17 +75,17 @@ public class SimpleStandard
      * @return the current value of the "State" attribute.
      */
     public String getState() {
-        checkSubject();
+	checkSubject();
         return state;
     }
 
-    /**
+    /** 
      * Setter: set the "State" attribute of the "SimpleStandard" standard MBean.
      *
      * @param <VAR>s</VAR> the new value of the "State" attribute.
      */
     public void setState(String s) {
-        checkSubject();
+	checkSubject();
         state = s;
         nbChanges++;
     }
@@ -97,29 +97,29 @@ public class SimpleStandard
      * @return the current value of the "NbChanges" attribute.
      */
     public int getNbChanges() {
-        checkSubject();
+	checkSubject();
         return nbChanges;
     }
 
     /**
-     * Operation: reset to their initial values the "State" and "NbChanges"
-     * attributes of the "SimpleStandard" standard MBean.
+     * Operation: reset to their initial values the "State" and "NbChanges" 
+     * attributes of the "SimpleStandard" standard MBean. 
      */
     public void reset() {
-        checkSubject();
-        AttributeChangeNotification acn =
-            new AttributeChangeNotification(this,
-                                            0,
-                                            0,
-                                            "NbChanges reset",
-                                            "NbChanges",
-                                            "Integer",
-                                            new Integer(nbChanges),
-                                            new Integer(0));
-        state = "initial state";
+	checkSubject();
+	AttributeChangeNotification acn =
+	    new AttributeChangeNotification(this,
+					    0,
+					    0,
+					    "NbChanges reset",
+					    "NbChanges",
+					    "Integer",
+					    new Integer(nbChanges),
+					    new Integer(0)); 
+	state = "initial state";
         nbChanges = 0;
-        nbResets++;
-        sendNotification(acn);
+	nbResets++;
+	sendNotification(acn);
     }
 
     /*
@@ -129,14 +129,14 @@ public class SimpleStandard
      */
 
     /**
-     * Return the "NbResets" property.
-     * This method is not a Getter in the JMX sense because
+     * Return the "NbResets" property. 
+     * This method is not a Getter in the JMX sense because 
      * it is not exposed in the "SimpleStandardMBean" interface.
      *
      * @return the current value of the "NbResets" property.
      */
     public int getNbResets() {
-        return nbResets;
+	return nbResets;
     }
 
     /*
@@ -150,18 +150,18 @@ public class SimpleStandard
      * type JMXPrincipal and refers to the principalName identity.
      */
     private void checkSubject() {
-        AccessControlContext acc = AccessController.getContext();
-        Subject subject = Subject.getSubject(acc);
-        Set principals = subject.getPrincipals();
-        Principal principal = (Principal) principals.iterator().next();
-        if (!(principal instanceof JMXPrincipal))
-            throw new SecurityException("Authenticated subject contains " +
-                                        "invalid principal type = " +
-                                        principal.getClass().getName());
-        String identity = principal.getName();
-        if (!identity.equals(principalName))
-            throw new SecurityException("Authenticated subject contains " +
-                                        "invalid principal name = " + identity);
+	AccessControlContext acc = AccessController.getContext();
+	Subject subject = Subject.getSubject(acc);
+	Set principals = subject.getPrincipals();
+	Principal principal = (Principal) principals.iterator().next();
+	if (!(principal instanceof JMXPrincipal))
+	    throw new SecurityException("Authenticated subject contains " +
+					"invalid principal type = " +
+					principal.getClass().getName());
+	String identity = principal.getName();
+	if (!identity.equals(principalName))
+	    throw new SecurityException("Authenticated subject contains " +
+					"invalid principal name = " + identity);
     }
 
     /*

@@ -59,9 +59,9 @@ typedef BOOL WINAPI UpdateLayeredWindowT(HWND hwnd,     // handle to layered win
 
 static UpdateLayeredWindowT *UpdateLayeredWindow = NULL;
 
-/*      Get/SetWindowLongPtr prototypes, for the case we're compiling with old headers for a 32-bit platform
-        copied from Component.cpp
-        FIXME: remove this as soon as the build process is using up-to-date headers */
+/*	Get/SetWindowLongPtr prototypes, for the case we're compiling with old headers for a 32-bit platform 
+	copied from Component.cpp 
+	FIXME: remove this as soon as the build process is using up-to-date headers */
 #if !defined(__int3264)
 #define GetWindowLongPtr GetWindowLong
 #define SetWindowLongPtr SetWindowLong
@@ -83,10 +83,10 @@ char* SplashConvertStringAlloc(const char* in, int *size) {
         return NULL;
     }
     len = strlen(in);
-    outChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, in, len,
+    outChars = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, in, len, 
                                        NULL, 0);
     buf = malloc(outChars*sizeof(WCHAR));
-    rc = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, in, len,
+    rc = MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, in, len, 
                                  buf, outChars);
     if (rc==0) {
         free(buf);
@@ -116,11 +116,11 @@ SplashInitFrameShape(Splash * splash, int imageIndex)
         return;
 
     /* reserving memory for the worst case */
-    pRgnData = (RGNDATA *) malloc(sizeof(RGNDATAHEADER) +
+    pRgnData = (RGNDATA *) malloc(sizeof(RGNDATAHEADER) + 
             sizeof(RECT) * (splash->width / 2 + 1) * splash->height);
     pRgnHdr = (RGNDATAHEADER *) pRgnData;
-    initRect(&maskRect, 0, 0, splash->width, splash->height, 1,
-            splash->width * splash->imageFormat.depthBytes,
+    initRect(&maskRect, 0, 0, splash->width, splash->height, 1, 
+            splash->width * splash->imageFormat.depthBytes, 
             splash->frames[imageIndex].bitmapBits, &splash->imageFormat);
 
     pRgnHdr->dwSize = sizeof(RGNDATAHEADER);
@@ -131,10 +131,10 @@ SplashInitFrameShape(Splash * splash, int imageIndex)
     pRgnHdr->rcBound.bottom = splash->height;
     pRgnHdr->rcBound.right = splash->width;
 
-    pRgnHdr->nCount = BitmapToYXBandedRectangles(&maskRect,
+    pRgnHdr->nCount = BitmapToYXBandedRectangles(&maskRect, 
             (RECT *) (((BYTE *) pRgnData) + sizeof(RGNDATAHEADER)));
 
-    splash->frames[imageIndex].hRgn = ExtCreateRegion(NULL,
+    splash->frames[imageIndex].hRgn = ExtCreateRegion(NULL, 
             sizeof(RGNDATAHEADER) + sizeof(RECT) * pRgnHdr->nCount, pRgnData);
 
     free(pRgnData);
@@ -146,7 +146,7 @@ SplashInitFrameShape(Splash * splash, int imageIndex)
 void
 SplashPaint(Splash * splash, HDC hdc)
 {
-    unsigned numColors = splash->screenFormat.colorMap ?
+    unsigned numColors = splash->screenFormat.colorMap ? 
         splash->screenFormat.numColors : 0;
     unsigned bmiSize;
     BITMAPV4HEADER *pBmi;
@@ -160,7 +160,7 @@ SplashPaint(Splash * splash, HDC hdc)
     pBmi = (BITMAPV4HEADER *) alloca(bmiSize);
     memset(pBmi, 0, sizeof(BITMAPV4HEADER));
     if (splash->screenFormat.colorMap)
-        memcpy(((BYTE *) pBmi) + sizeof(BITMAPV4HEADER),
+        memcpy(((BYTE *) pBmi) + sizeof(BITMAPV4HEADER), 
                 splash->screenFormat.colorMap, sizeof(RGBQUAD) * numColors);
 
     pBmi->bV4Size = sizeof(BITMAPV4HEADER);
@@ -177,21 +177,21 @@ SplashPaint(Splash * splash, HDC hdc)
     pBmi->bV4GreenMask = splash->screenFormat.mask[1];
     pBmi->bV4BlueMask = splash->screenFormat.mask[0];
 
-    /*  creating the palette in SplashInitPlatform does not work, so I'm creating it
+    /*  creating the palette in SplashInitPlatform does not work, so I'm creating it 
        here on demand */
     if (!splash->hPalette) {
         unsigned i;
-        LOGPALETTE *pLogPal =
+        LOGPALETTE *pLogPal = 
             malloc(sizeof(LOGPALETTE) + sizeof(PALETTEENTRY) * numColors);
 
         pLogPal->palVersion = 0x300;
         pLogPal->palNumEntries = (WORD) numColors;
         for (i = 0; i < numColors; i++) {
-            pLogPal->palPalEntry[i].peRed = (BYTE)
+            pLogPal->palPalEntry[i].peRed = (BYTE) 
                 QUAD_RED(splash->colorMap[i]);
-            pLogPal->palPalEntry[i].peGreen = (BYTE)
+            pLogPal->palPalEntry[i].peGreen = (BYTE) 
                 QUAD_GREEN(splash->colorMap[i]);
-            pLogPal->palPalEntry[i].peBlue = (BYTE)
+            pLogPal->palPalEntry[i].peBlue = (BYTE) 
                 QUAD_BLUE(splash->colorMap[i]);
             pLogPal->palPalEntry[i].peFlags = PC_NOCOLLAPSE;
         }
@@ -204,7 +204,7 @@ SplashPaint(Splash * splash, HDC hdc)
     }
 
     StretchDIBits(hdc, 0, 0, splash->width, splash->height, 0, 0,
-            splash->width, splash->height, splash->screenData,
+            splash->width, splash->height, splash->screenData, 
             (BITMAPINFO *) pBmi, DIB_RGB_COLORS, SRCCOPY);
     if (hOldPal)
         SelectPalette(hdc, hOldPal, FALSE);
@@ -246,9 +246,9 @@ SplashRedrawWindow(Splash * splash)
         //      maybe if we allocate memory for all frames as DIBSections,
         //      then we could select the frames into the DC directly
 
-        hBitmap = CreateDIBSection(NULL, (BITMAPINFO *) & bmi, DIB_RGB_COLORS,
+        hBitmap = CreateDIBSection(NULL, (BITMAPINFO *) & bmi, DIB_RGB_COLORS, 
                 &bitmapBits, NULL, 0);
-        memcpy(bitmapBits, splash->screenData,
+        memcpy(bitmapBits, splash->screenData, 
                 splash->screenStride * splash->height);
         hOldBitmap = (HBITMAP) SelectObject(hdcSrc, hBitmap);
         hdcDst = GetDC(splash->hWnd);
@@ -261,7 +261,7 @@ SplashRedrawWindow(Splash * splash)
         size.cx = splash->width;
         size.cy = splash->height;
 
-        UpdateLayeredWindow(splash->hWnd, hdcDst, &ptDst, &size,
+        UpdateLayeredWindow(splash->hWnd, hdcDst, &ptDst, &size, 
                 hdcSrc, &ptSrc, 0, &bf, ULW_ALPHA);
 
         ReleaseDC(splash->hWnd, hdcDst);
@@ -274,7 +274,7 @@ SplashRedrawWindow(Splash * splash)
        if (splash->maskRequired) {
             HRGN hRgn = CreateRectRgn(0, 0, 0, 0);
 
-            CombineRgn(hRgn, splash->frames[splash->currentFrame].hRgn,
+            CombineRgn(hRgn, splash->frames[splash->currentFrame].hRgn, 
                     splash->frames[splash->currentFrame].hRgn, RGN_COPY);
             SetWindowRgn(splash->hWnd, hRgn, TRUE);
         } else {
@@ -299,7 +299,7 @@ SplashRedrawWindow(Splash * splash)
         }
     }
     if (SplashIsStillLooping(splash)) {
-        int time = splash->time +
+        int time = splash->time + 
             splash->frames[splash->currentFrame].delay - SplashTime();
 
         if (time < 0)
@@ -315,9 +315,9 @@ void SplashReconfigureNow(Splash * splash) {
     splash->x = (GetSystemMetrics(SM_CXSCREEN) - splash->width) / 2;
     splash->y = (GetSystemMetrics(SM_CYSCREEN) - splash->height) / 2;
     if (splash->hWnd) {
-        //Fixed 6474657: splash screen image jumps towards left while
+        //Fixed 6474657: splash screen image jumps towards left while 
         //    setting the new image using setImageURL()
-        // We may safely hide the splash window because SplashRedrawWindow()
+        // We may safely hide the splash window because SplashRedrawWindow() 
         //    will show the window again.
         ShowWindow(splash->hWnd, SW_HIDE);
         MoveWindow(splash->hWnd, splash->x, splash->y, splash->width, splash->height, FALSE);
@@ -330,7 +330,7 @@ SplashWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     PAINTSTRUCT ps;
     HDC hdc;
-
+    
 
     switch (message) {
 
@@ -414,8 +414,8 @@ SplashCreateWindow(Splash * splash)
     exStyle = splash->isLayered ? WS_EX_LAYERED : 0;
     exStyle |= WS_EX_TOOLWINDOW;        /* don't show the window on taskbar */
     style = WS_POPUP;
-    hWnd = CreateWindowEx(exStyle, (LPCSTR) wndClass, "", style,
-            splash->x, splash->y, splash->width, splash->height, NULL, NULL,
+    hWnd = CreateWindowEx(exStyle, (LPCSTR) wndClass, "", style, 
+            splash->x, splash->y, splash->width, splash->height, NULL, NULL, 
             wcex.hInstance, NULL);
     SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR) splash);
     return hWnd;
@@ -443,7 +443,7 @@ SplashInitPlatform(Splash * splash)
     InitializeCriticalSection(&splash->lock);
     splash->isLayered = FALSE;
     if (user32) {
-        UpdateLayeredWindow = (UpdateLayeredWindowT *)
+        UpdateLayeredWindow = (UpdateLayeredWindowT *) 
             GetProcAddress(user32, "UpdateLayeredWindow");
     }
     hdc = GetDC(NULL);
@@ -453,7 +453,7 @@ SplashInitPlatform(Splash * splash)
     }
     splash->byteAlignment = 4;
     if (splash->isLayered) {
-        initFormat(&splash->screenFormat,
+        initFormat(&splash->screenFormat, 
                 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
         splash->screenFormat.premultiplied = 1;
         splash->maskRequired = 0;
@@ -461,7 +461,7 @@ SplashInitPlatform(Splash * splash)
     else {
         splash->maskRequired = 1;
         if (paletteMode) {
-            int numColors = GetDeviceCaps(hdc, SIZEPALETTE) -
+            int numColors = GetDeviceCaps(hdc, SIZEPALETTE) - 
                 GetDeviceCaps(hdc, NUMRESERVED);
             int i;
             int numComponents[3];
@@ -473,7 +473,7 @@ SplashInitPlatform(Splash * splash)
             }
             numColors = quantizeColors(numColors, numComponents);
             initColorCube(numComponents, splash->colorMap, splash->dithers,
-                    splash->colorIndex);
+		    splash->colorIndex);
             splash->screenFormat.colorIndex = splash->colorIndex;
             splash->screenFormat.depthBytes = 1;
             splash->screenFormat.colorMap = splash->colorMap;
@@ -482,8 +482,8 @@ SplashInitPlatform(Splash * splash)
             splash->hPalette = NULL;
         }
         else {
-            initFormat(&splash->screenFormat,
-                    0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+            initFormat(&splash->screenFormat, 
+		    0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
         }
     }
     ReleaseDC(NULL, hdc);

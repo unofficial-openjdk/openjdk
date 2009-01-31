@@ -40,60 +40,60 @@ import javax.management.loading.*;
 
 public class ArrayClassTest {
     public static void main(String[] args) throws Exception {
-        MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+	MBeanServer mbs = MBeanServerFactory.createMBeanServer();
 
-        /* If this test isn't loaded by a URLClassLoader we will get
-           a ClassCastException here, which is good because it means
-           this test isn't valid.  */
-        URLClassLoader testLoader =
-            (URLClassLoader) ArrayClassTest.class.getClassLoader();
+	/* If this test isn't loaded by a URLClassLoader we will get
+	   a ClassCastException here, which is good because it means
+	   this test isn't valid.  */
+	URLClassLoader testLoader =
+	    (URLClassLoader) ArrayClassTest.class.getClassLoader();
 
-        // Create an MLet that can load the same class names but
-        // will produce different results.
-        ClassLoader loader = new SpyLoader(testLoader.getURLs());
-        ObjectName loaderName = new ObjectName("test:type=SpyLoader");
-        mbs.registerMBean(loader, loaderName);
+	// Create an MLet that can load the same class names but
+	// will produce different results.
+	ClassLoader loader = new SpyLoader(testLoader.getURLs());
+	ObjectName loaderName = new ObjectName("test:type=SpyLoader");
+	mbs.registerMBean(loader, loaderName);
 
-        ObjectName testName = new ObjectName("test:type=Test");
-        mbs.createMBean(Test.class.getName(), testName, loaderName,
-                        new Object[1], new String[] {X[].class.getName()});
-        ClassLoader checkLoader = mbs.getClassLoaderFor(testName);
-        if (checkLoader != loader)
-            throw new AssertionError("Wrong loader: " + checkLoader);
+	ObjectName testName = new ObjectName("test:type=Test");
+	mbs.createMBean(Test.class.getName(), testName, loaderName,
+			new Object[1], new String[] {X[].class.getName()});
+	ClassLoader checkLoader = mbs.getClassLoaderFor(testName);
+	if (checkLoader != loader)
+	    throw new AssertionError("Wrong loader: " + checkLoader);
 
-        mbs.invoke(testName, "ignore", new Object[1],
-                   new String[] {Y[].class.getName()});
+	mbs.invoke(testName, "ignore", new Object[1],
+		   new String[] {Y[].class.getName()});
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        oout.writeObject(new Z[0]);
-        oout.close();
-        byte[] bytes = bout.toByteArray();
-        ObjectInputStream oin = mbs.deserialize(testName, bytes);
-        Object zarray = oin.readObject();
-        String failed = null;
-        if (zarray instanceof Z[])
-            failed = "read back a real Z[]";
-        else if (!zarray.getClass().getName().equals(Z[].class.getName())) {
-            failed = "returned object of wrong type: " +
-                zarray.getClass().getName();
-        } else if (Array.getLength(zarray) != 0)
-            failed = "returned array of wrong size: " + Array.getLength(zarray);
-        if (failed != null) {
-            System.out.println("TEST FAILED: " + failed);
-            System.exit(1);
-        }
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	oout.writeObject(new Z[0]);
+	oout.close();
+	byte[] bytes = bout.toByteArray();
+	ObjectInputStream oin = mbs.deserialize(testName, bytes);
+	Object zarray = oin.readObject();
+	String failed = null;
+	if (zarray instanceof Z[])
+	    failed = "read back a real Z[]";
+	else if (!zarray.getClass().getName().equals(Z[].class.getName())) {
+	    failed = "returned object of wrong type: " +
+		zarray.getClass().getName();
+	} else if (Array.getLength(zarray) != 0)
+	    failed = "returned array of wrong size: " + Array.getLength(zarray);
+	if (failed != null) {
+	    System.out.println("TEST FAILED: " + failed);
+	    System.exit(1);
+	}
 
-        System.out.println("Test passed");
+	System.out.println("Test passed");
     }
 
     public static interface TestMBean {
-        public void ignore(Y[] ignored);
+    	public void ignore(Y[] ignored);
     }
 
     public static class Test implements TestMBean {
-        public Test(X[] ignored) {}
-        public void ignore(Y[] ignored) {}
+	public Test(X[] ignored) {}
+	public void ignore(Y[] ignored) {}
     }
 
     public static class X {}
@@ -107,33 +107,33 @@ public class ArrayClassTest {
        the MLet in the MBean server caused it not to fail when asked
        to load Z[].  */
     public static class SpyLoader extends URLClassLoader
-            implements SpyLoaderMBean, PrivateClassLoader {
-        public SpyLoader(URL[] urls) {
-            // important that the parent classloader be null!
-            // otherwise we can pick up classes from the classpath
-            super(urls, null);
-        }
+	    implements SpyLoaderMBean, PrivateClassLoader {
+	public SpyLoader(URL[] urls) {
+	    // important that the parent classloader be null!
+	    // otherwise we can pick up classes from the classpath
+	    super(urls, null);
+	}
 
-        /*
-        public Class loadClass(String name) throws ClassNotFoundException {
-            System.out.println("loadClass: " + name);
-            return super.loadClass(name);
-        }
+	/*
+	public Class loadClass(String name) throws ClassNotFoundException {
+	    System.out.println("loadClass: " + name);
+	    return super.loadClass(name);
+	}
 
-        public Class loadClass(String name, boolean resolve)
-                throws ClassNotFoundException {
-            System.out.println("loadClass: " + name + ", " + resolve);
-            return super.loadClass(name, resolve);
-        }
-        */
+	public Class loadClass(String name, boolean resolve)
+		throws ClassNotFoundException {
+	    System.out.println("loadClass: " + name + ", " + resolve);
+	    return super.loadClass(name, resolve);
+	}
+	*/
 
-        public Class findClass(String name) throws ClassNotFoundException {
-            System.out.println("findClass: " + name);
-            if (false)
-                new Throwable().printStackTrace(System.out);
-            Class c = super.findClass(name);
-            System.out.println(" -> " + name + " (" + c.getClassLoader() + ")");
-            return c;
-        }
+	public Class findClass(String name) throws ClassNotFoundException {
+	    System.out.println("findClass: " + name);
+	    if (false)
+		new Throwable().printStackTrace(System.out);
+	    Class c = super.findClass(name);
+	    System.out.println(" -> " + name + " (" + c.getClassLoader() + ")");
+	    return c;
+	}
     }
 }

@@ -42,49 +42,49 @@ public class getResponseCode {
     static String FNPrefix;
 
     getResponseCode() throws Exception {
-        url = new URL("http://localhost/file1.cache");
-        HttpURLConnection http = (HttpURLConnection)url.openConnection();
-        int respCode = http.getResponseCode();
-        http.disconnect();
+	url = new URL("http://localhost/file1.cache");
+	HttpURLConnection http = (HttpURLConnection)url.openConnection();
+	int respCode = http.getResponseCode();
+	http.disconnect();
 
-        if (respCode != 200) {
-            throw new RuntimeException("Response code should return 200, but it is returning "+respCode);
-        }
+	if (respCode != 200) {
+	    throw new RuntimeException("Response code should return 200, but it is returning "+respCode);
+	}
     }
     public static void main(String args[]) throws Exception {
-        ResponseCache.setDefault(new MyResponseCache());
-        FNPrefix = System.getProperty("test.src", ".")+"/";
-        new getResponseCode();
+	ResponseCache.setDefault(new MyResponseCache());
+	FNPrefix = System.getProperty("test.src", ".")+"/";
+	new getResponseCode();
     }
 
     static class MyResponseCache extends ResponseCache {
-        public CacheResponse
-        get(URI uri, String rqstMethod, Map<String,List<String>> requestHeaders)
-            throws IOException {
-            return new MyResponse(FNPrefix+"file1.cache");
-        }
-        public CacheRequest put(URI uri, URLConnection uconn)  throws IOException {;
-            return null;
-        }
+	public CacheResponse 
+	get(URI uri, String rqstMethod, Map<String,List<String>> requestHeaders)
+	    throws IOException {
+	    return new MyResponse(FNPrefix+"file1.cache");
+	}
+	public CacheRequest put(URI uri, URLConnection uconn)  throws IOException {;
+	    return null;
+	}
     }
 
     static class MyResponse extends CacheResponse {
-        FileInputStream fis;
-        Map<String,List<String>> headers;
-        public MyResponse(String filename) {
-            try {
-                fis = new FileInputStream(new File(filename));
-                headers = (Map<String,List<String>>)new ObjectInputStream(fis).readObject();
-            } catch (Exception ex) {
-                throw new RuntimeException(ex.getMessage());
-            }
-        }
-        public InputStream getBody() throws IOException {
-            return fis;
-        }
+	FileInputStream fis;
+	Map<String,List<String>> headers;
+	public MyResponse(String filename) {
+	    try {
+		fis = new FileInputStream(new File(filename));
+		headers = (Map<String,List<String>>)new ObjectInputStream(fis).readObject();
+	    } catch (Exception ex) {
+		throw new RuntimeException(ex.getMessage());
+	    }
+	}
+	public InputStream getBody() throws IOException {
+	    return fis;
+	}
 
-        public Map<String,List<String>> getHeaders() throws IOException {
-            return headers;
-        }
+	public Map<String,List<String>> getHeaders() throws IOException {
+	    return headers;
+	}
     }
 }

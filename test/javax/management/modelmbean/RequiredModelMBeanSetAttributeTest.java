@@ -55,7 +55,7 @@ public class RequiredModelMBeanSetAttributeTest {
         boolean ok = true;
 
         MBeanServer mbs = MBeanServerFactory.createMBeanServer();
-
+        
         // ModelMBeanAttributeInfo
 
         Descriptor somethingAttributeDescriptor =
@@ -78,7 +78,7 @@ public class RequiredModelMBeanSetAttributeTest {
                 "name=SomethingCached",
                 "descriptorType=attribute",
                 "getMethod=getSomethingCached",
-                "currencyTimeLimit=5000"
+                "currencyTimeLimit=5000"        
             });
         ModelMBeanAttributeInfo somethingCachedAttributeInfo =
             new ModelMBeanAttributeInfo("SomethingCached",
@@ -87,7 +87,7 @@ public class RequiredModelMBeanSetAttributeTest {
                                         true,
                                         true,
                                         false,
-                                        somethingCachedAttributeDescriptor);
+                                        somethingCachedAttributeDescriptor);                                
         // ModelMBeanInfo
 
         ModelMBeanInfo mmbi = new ModelMBeanInfoSupport(
@@ -118,9 +118,9 @@ public class RequiredModelMBeanSetAttributeTest {
             if(e == null || !(e instanceof ServiceNotFoundException)) {
                 System.out.println("TEST FAILED: Caught wrong exception:" + e);
                 ok = false;
-            } else
+            } else 
                 System.out.println("Received expected ServiceNotFoundException");
-
+                
         } catch (Exception e) {
             System.out.println("TEST FAILED: Caught wrong exception: " + e);
             e.printStackTrace(System.out);
@@ -137,8 +137,8 @@ public class RequiredModelMBeanSetAttributeTest {
             System.out.println("TEST FAILED: Caught an exception: " + e);
             e.printStackTrace(System.out);
             ok = false;
-       }
-
+       }        
+        
         if (ok)
             System.out.println("Test passed");
         else {
@@ -146,7 +146,7 @@ public class RequiredModelMBeanSetAttributeTest {
             throw new Exception("TEST FAILED");
         }
     }
-
+    
     public static class Resource {
         public String getSomething() {
             return "Something value";

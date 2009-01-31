@@ -75,13 +75,13 @@ AwtPopupMenu* AwtPopupMenu::Create(jobject self, AwtComponent* parent)
 
     try {
         if (env->EnsureLocalCapacity(1) < 0) {
-            return NULL;
-        }
+	    return NULL;
+	}
 
-        target = env->GetObjectField(self, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "null target", done);
+	target = env->GetObjectField(self, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "null target", done);
 
-        popupMenu = new AwtPopupMenu();
+	popupMenu = new AwtPopupMenu();
 
         SetLastError(0);
         HMENU hMenu = ::CreatePopupMenu();
@@ -98,7 +98,7 @@ AwtPopupMenu* AwtPopupMenu::Create(jobject self, AwtComponent* parent)
         popupMenu->SetParent(parent);
     } catch (...) {
         env->DeleteLocalRef(target);
-        throw;
+	throw;
     }
 
 done:
@@ -128,7 +128,7 @@ void AwtPopupMenu::Show(JNIEnv *env, jobject event, BOOL isTrayIconPopup)
         UINT flags = 0;
         pt.x = (env)->GetIntField(event, AwtEvent::xID);
         pt.y = (env)->GetIntField(event, AwtEvent::yID);
-
+        
         if (!isTrayIconPopup) {
             ::MapWindowPoints(awtOrigin->GetHWnd(), 0, (LPPOINT)&pt, 1);
 
@@ -165,7 +165,7 @@ void AwtPopupMenu::_Show(void *param)
 
     static jclass popupMenuCls;
     if (popupMenuCls == NULL) {
-        jclass popupMenuClsLocal =
+        jclass popupMenuClsLocal = 
             env->FindClass("java/awt/PopupMenu");
         if (!popupMenuClsLocal) {
             /* exception already thrown */
@@ -207,7 +207,7 @@ void AwtPopupMenu::AddItem(AwtMenuItem *item)
     if (GetMenuContainer() != NULL) return;
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(1) < 0) {
-        return;
+	return;
     }
     jobject target = GetTarget(env);
     if (!(jboolean)env->GetBooleanField(target, AwtMenuItem::enabledID)) {
@@ -225,16 +225,16 @@ void AwtPopupMenu::Enable(BOOL isEnabled)
     }
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(1) < 0) {
-        return;
+	return;
     }
     jobject target = GetTarget(env);
     int nCount = CountItem(target);
     for (int i = 0; i < nCount; ++i) {
         AwtMenuItem *item = GetItem(target,i);
         jobject jitem = item->GetTarget(env);
-        BOOL bItemEnabled = isEnabled && (jboolean)env->GetBooleanField(jitem,
+        BOOL bItemEnabled = isEnabled && (jboolean)env->GetBooleanField(jitem, 
             AwtMenuItem::enabledID);
-        LPWSTR labelW = TO_WSTRING((jstring)env->GetObjectField(jitem,
+        LPWSTR labelW = TO_WSTRING((jstring)env->GetObjectField(jitem, 
             AwtMenuItem::labelID));
         if (labelW != NULL && wcscmp(labelW,L"-") != 0) {
             item->Enable(bItemEnabled);
@@ -249,15 +249,15 @@ BOOL AwtPopupMenu::IsDisabledAndPopup()
     if (GetMenuContainer() != NULL) return FALSE;
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(1) < 0) {
-        return FALSE;
+	return FALSE;
     }
-    jobject target = GetTarget(env);
-    BOOL bEnabled = (jboolean)env->GetBooleanField(target,
+    jobject target = GetTarget(env);    
+    BOOL bEnabled = (jboolean)env->GetBooleanField(target, 
             AwtMenuItem::enabledID);
     env->DeleteLocalRef(target);
     return !bEnabled;
 }
-
+        
 /************************************************************************
  * WPopupMenuPeer native methods
  */
@@ -271,7 +271,7 @@ extern "C" {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WPopupMenuPeer_createMenu(JNIEnv *env, jobject self,
-                                               jobject parent)
+					       jobject parent)
 {
     TRY;
 
@@ -279,7 +279,7 @@ Java_sun_awt_windows_WPopupMenuPeer_createMenu(JNIEnv *env, jobject self,
     JNI_CHECK_PEER_RETURN(parent);
     AwtComponent* awtParent = (AwtComponent *)pData;
     AwtToolkit::CreateComponent(
-        self, awtParent, (AwtToolkit::ComponentFactory)AwtPopupMenu::Create, FALSE);
+	self, awtParent, (AwtToolkit::ComponentFactory)AwtPopupMenu::Create, FALSE);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;
@@ -292,7 +292,7 @@ Java_sun_awt_windows_WPopupMenuPeer_createMenu(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WPopupMenuPeer__1show(JNIEnv *env, jobject self,
-                                           jobject event)
+					   jobject event)
 {
     TRY;
 

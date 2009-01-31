@@ -51,11 +51,11 @@ extern Atom XA_TARGETS;
 /*
  * Single routine to convert to target FILE_NAME or _DT_FILENAME
  */
-Boolean
-convertFileType(jbyteArray data, Atom * type, XtPointer * value,
+Boolean 
+convertFileType(jbyteArray data, Atom * type, XtPointer * value, 
                 unsigned long *length, int32_t *format);
 
-Boolean
+Boolean 
 awt_convertData(Widget w, Atom * selection, Atom * target, Atom * type,
                 XtPointer * value, unsigned long *length, int32_t *format);
 
@@ -77,7 +77,7 @@ awt_cleanupConvertDataContext(JNIEnv *env, Atom selectionAtom);
  */
 
 /*
- * This macro defines a function which returns the class for the specified
+ * This macro defines a function which returns the class for the specified 
  * class name with proper caching and error handling.
  */
 #define DECLARE_JAVA_CLASS(javaclazz, name)                                    \
@@ -135,7 +135,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(False);                                                    \
             return;                                                            \
         }                                                                      \
-    }
+    }                                                               
 
 #define DECLARE_BOOLEAN_JAVA_METHOD(method, javaclazz, name, signature)        \
     static jmethodID method = NULL;                                            \
@@ -158,7 +158,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(False);                                                    \
             return False;                                                      \
         }                                                                      \
-    }
+    }                                                               
 
 #define DECLARE_JINT_JAVA_METHOD(method, javaclazz, name, signature)           \
     static jmethodID method = NULL;                                            \
@@ -181,7 +181,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(False);                                                    \
             return java_awt_dnd_DnDConstants_ACTION_NONE;                      \
         }                                                                      \
-    }
+    }                                                               
 
 #define DECLARE_OBJECT_JAVA_METHOD(method, javaclazz, name, signature)         \
     static jmethodID method = NULL;                                            \
@@ -204,7 +204,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(False);                                                    \
             return NULL;                                                       \
         }                                                                      \
-    }
+    }                                                               
 
 #define DECLARE_STATIC_OBJECT_JAVA_METHOD(method, javaclazz, name, signature)  \
     static jmethodID method = NULL;                                            \
@@ -226,7 +226,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(False);                                                    \
             return NULL;                                                       \
         }                                                                      \
-    }
+    }                                                               
 
 #define DECLARE_STATIC_VOID_JAVA_METHOD(method, javaclazz, name, signature)    \
     static jmethodID method = NULL;                                            \
@@ -248,7 +248,7 @@ get_ ## javaclazz(JNIEnv* env) {                                               \
             DASSERT(False);                                                    \
             return;                                                            \
         }                                                                      \
-    }
+    }                                                               
 
 #define DECLARE_STATIC_JINT_JAVA_METHOD(method, javaclazz, name, signature)    \
     static jmethodID method = NULL;                                            \

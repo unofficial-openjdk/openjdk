@@ -31,10 +31,11 @@ typedef int (*FPTR_Init)(const char *configdir);
 
 // in secmod.h
 //extern SECMODModule *SECMOD_LoadModule(char *moduleSpec,SECMODModule *parent,
-//                                                      PRBool recurse);
+//							PRBool recurse);
 //char **SECMOD_GetModuleSpecList(SECMODModule *module);
 //extern SECMODModuleList *SECMOD_GetDBModuleList(void);
 
 typedef void *(*FPTR_LoadModule)(char *moduleSpec, void *parent, int recurse);
 typedef char **(*FPTR_GetModuleSpecList)(void *module);
 typedef void *(*FPTR_GetDBModuleList)(void);
+

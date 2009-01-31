@@ -79,7 +79,7 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
 
     static {
         /* ensure that the necessary native libraries are loaded */
-        NativeLibLoader.loadLibraries();
+	NativeLibLoader.loadLibraries();
         initIDs();
     }
 
@@ -92,11 +92,11 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
      */
     public ImageRepresentation(ToolkitImage im, ColorModel cmodel, boolean
                                forceCMhint) {
-        image = im;
+	image = im;
 
-        if (image.getSource() instanceof InputStreamImageSource) {
-            src = (InputStreamImageSource) image.getSource();
-        }
+	if (image.getSource() instanceof InputStreamImageSource) {
+	    src = (InputStreamImageSource) image.getSource();
+	}
 
         setColorModel(cmodel);
 
@@ -105,56 +105,56 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
 
     /* REMIND: Only used for Frame.setIcon - should use ImageWatcher instead */
     public synchronized void reconstruct(int flags) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
-        int missinginfo = flags & ~availinfo;
-        if ((availinfo & ImageObserver.ERROR) == 0 && missinginfo != 0) {
-            numWaiters++;
-            try {
-                startProduction();
-                missinginfo = flags & ~availinfo;
-                while ((availinfo & ImageObserver.ERROR) == 0 &&
-                       missinginfo != 0)
-                {
-                    try {
-                        wait();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                    missinginfo = flags & ~availinfo;
-                }
-            } finally {
-                decrementWaiters();
-            }
-        }
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
+	int missinginfo = flags & ~availinfo;
+	if ((availinfo & ImageObserver.ERROR) == 0 && missinginfo != 0) {
+	    numWaiters++;
+	    try {
+		startProduction();
+		missinginfo = flags & ~availinfo;
+		while ((availinfo & ImageObserver.ERROR) == 0 &&
+		       missinginfo != 0)
+		{
+		    try {
+			wait();
+		    } catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			return;
+		    }
+		    missinginfo = flags & ~availinfo;
+		}
+	    } finally {
+		decrementWaiters();
+	    }
+	}
     }
 
     public void setDimensions(int w, int h) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
 
-        image.setDimensions(w, h);
+	image.setDimensions(w, h);
 
-        newInfo(image, (ImageObserver.WIDTH | ImageObserver.HEIGHT),
-                0, 0, w, h);
+	newInfo(image, (ImageObserver.WIDTH | ImageObserver.HEIGHT),
+		0, 0, w, h);
 
-        if (w <= 0 || h <= 0) {
-            imageComplete(ImageConsumer.IMAGEERROR);
-            return;
-        }
-
+	if (w <= 0 || h <= 0) {
+	    imageComplete(ImageConsumer.IMAGEERROR);
+	    return;
+	}
+        
         if (width != w || height != h) {
             // dimension mismatch => trigger recreation of the buffer
             bimage = null;
         }
 
-        width = w;
-        height = h;
+	width = w;
+	height = h;
 
-        availinfo |= ImageObserver.WIDTH | ImageObserver.HEIGHT;
+	availinfo |= ImageObserver.WIDTH | ImageObserver.HEIGHT;
     }
 
     public int getWidth() {
@@ -175,36 +175,36 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
 
     /**
      * Returns the BufferedImage that will be used as the representation of
-     * the pixel data.  Subclasses can override this method to return
+     * the pixel data.  Subclasses can override this method to return 
      * platform specific subclasses of BufferedImage that may or may not be
      * accelerated.
      *
      * It is subclass' responsibility to propagate acceleration priority
      * to the newly created image.
      */
-    protected BufferedImage createImage(ColorModel cm,
-                                        WritableRaster raster,
-                                        boolean isRasterPremultiplied,
-                                        Hashtable properties)
+    protected BufferedImage createImage(ColorModel cm, 
+					WritableRaster raster, 
+					boolean isRasterPremultiplied,
+					Hashtable properties) 
     {
-        BufferedImage bi =
-            new BufferedImage(cm, raster, isRasterPremultiplied, null);
-        bi.setAccelerationPriority(image.getAccelerationPriority());
-        return bi;
+	BufferedImage bi = 
+	    new BufferedImage(cm, raster, isRasterPremultiplied, null);
+	bi.setAccelerationPriority(image.getAccelerationPriority());
+	return bi;
     }
 
     public void setProperties(Hashtable<?,?> props) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
-        image.setProperties(props);
-        newInfo(image, ImageObserver.PROPERTIES, 0, 0, 0, 0);
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
+	image.setProperties(props);
+	newInfo(image, ImageObserver.PROPERTIES, 0, 0, 0, 0);
     }
 
     public void setColorModel(ColorModel model) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
         srcModel = model;
 
         // Check to see if model is INT_RGB
@@ -277,7 +277,7 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
     }
 
     private void convertToRGB() {
-        int w = bimage.getWidth();
+	int w = bimage.getWidth();
         int h = bimage.getHeight();
         int size = w*h;
 
@@ -327,10 +327,10 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
     }
 
     public void setHints(int h) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
-        hints = h;
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
+	hints = h;
     }
 
     public native void setICMpixels(int x, int y, int w, int h, int[] lut,
@@ -353,12 +353,12 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
         int poff;
         int[] newLUT=null;
 
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
 
         // REMIND: What if the model doesn't fit in default color model?
-        synchronized (this) {
+	synchronized (this) {
             if (bimage == null) {
                 if (cmodel == null) {
                     cmodel = model;
@@ -366,9 +366,9 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
                 createBufferedImage();
             }
             if (isSameCM && (cmodel != model) && (srcLUT != null) &&
-                (model instanceof IndexColorModel) &&
-                (biRaster instanceof ByteComponentRaster))
-            {
+		(model instanceof IndexColorModel) &&
+		(biRaster instanceof ByteComponentRaster))
+	    {
                 IndexColorModel icm = (IndexColorModel) model;
                 ByteComponentRaster bct = (ByteComponentRaster) biRaster;
                 int numlut = numSrcLUT;
@@ -483,11 +483,11 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
                 }
                 availinfo |= ImageObserver.SOMEBITS;
             }
-        }
+	}
 
-        if ((availinfo & ImageObserver.FRAMEBITS) == 0) {
-            newInfo(image, ImageObserver.SOMEBITS, x, y, w, h);
-        }
+	if ((availinfo & ImageObserver.FRAMEBITS) == 0) {
+	    newInfo(image, ImageObserver.SOMEBITS, x, y, w, h);
+	}
     }
 
 
@@ -497,12 +497,12 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
         int lineOff=off;
         int poff;
 
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
 
         // REMIND: What if the model doesn't fit in default color model?
-        synchronized (this) {
+	synchronized (this) {
             if (bimage == null) {
                 if (cmodel == null) {
                     cmodel = model;
@@ -541,7 +541,7 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
                     cmodel.getTransparency() == cmodel.OPAQUE) {
                     convertToRGB();
                 }
-
+                
                 if (isDefaultBI) {
                     IntegerComponentRaster iraster =
                                         (IntegerComponentRaster) biRaster;
@@ -583,157 +583,157 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
                     availinfo |= ImageObserver.SOMEBITS;
                 }
             }
-        }
+	}
 
         // Can't do this here since we might need to transform/clip
         // the region
-        if (((availinfo & ImageObserver.FRAMEBITS) == 0)) {
-            newInfo(image, ImageObserver.SOMEBITS, x, y, w, h);
-        }
+	if (((availinfo & ImageObserver.FRAMEBITS) == 0)) {
+	    newInfo(image, ImageObserver.SOMEBITS, x, y, w, h);
+	}
     }
 
     public BufferedImage getOpaqueRGBImage() {
         if (bimage.getType() == BufferedImage.TYPE_INT_ARGB) {
-            int w = bimage.getWidth();
-            int h = bimage.getHeight();
-            int size = w * h;
+	    int w = bimage.getWidth();
+	    int h = bimage.getHeight();
+	    int size = w * h; 
 
             // Note that we steal the data array here, but only for reading...
-            DataBufferInt db = (DataBufferInt)biRaster.getDataBuffer();
-            int[] pixels = SunWritableRaster.stealData(db, 0);
+	    DataBufferInt db = (DataBufferInt)biRaster.getDataBuffer();
+	    int[] pixels = SunWritableRaster.stealData(db, 0);
 
-            for (int i = 0; i < size; i++) {
-                if ((pixels[i] >>> 24) != 0xff) {
-                    return bimage;
-                }
-            }
+	    for (int i = 0; i < size; i++) {
+	        if ((pixels[i] >>> 24) != 0xff) {
+		    return bimage;
+		}
+	    }
 
-            ColorModel opModel = new DirectColorModel(24,
-                                                      0x00ff0000,
-                                                      0x0000ff00,
-                                                      0x000000ff);
+	    ColorModel opModel = new DirectColorModel(24, 
+						      0x00ff0000, 
+						      0x0000ff00, 
+						      0x000000ff);
 
-            int bandmasks[] = {0x00ff0000, 0x0000ff00, 0x000000ff};
-            WritableRaster opRaster = Raster.createPackedRaster(db, w, h, w,
-                                                                bandmasks,
-                                                                null);
-
-            try {
-                BufferedImage opImage = createImage(opModel, opRaster,
+	    int bandmasks[] = {0x00ff0000, 0x0000ff00, 0x000000ff};
+	    WritableRaster opRaster = Raster.createPackedRaster(db, w, h, w, 
+								bandmasks, 
+								null);
+		
+	    try { 
+	        BufferedImage opImage = createImage(opModel, opRaster, 
                                                     false, null);
-                return opImage;
-            } catch (Exception e) {
-                return bimage;
-            }
-        }
-        return bimage;
+		return opImage;
+	    } catch (Exception e) {
+	        return bimage;
+	    } 
+	}        
+	return bimage;
     }
 
     private boolean consuming = false;
 
     public void imageComplete(int status) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
-        boolean done;
-        int info;
-        switch (status) {
-        default:
-        case ImageConsumer.IMAGEABORTED:
-            done = true;
-            info = ImageObserver.ABORT;
-            break;
-        case ImageConsumer.IMAGEERROR:
-            image.addInfo(ImageObserver.ERROR);
-            done = true;
-            info = ImageObserver.ERROR;
-            dispose();
-            break;
-        case ImageConsumer.STATICIMAGEDONE:
-            done = true;
-            info = ImageObserver.ALLBITS;
-            break;
-        case ImageConsumer.SINGLEFRAMEDONE:
-            done = false;
-            info = ImageObserver.FRAMEBITS;
-            break;
-        }
-        synchronized (this) {
-            if (done) {
-                image.getSource().removeConsumer(this);
-                consuming = false;
-                newbits = null;
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
+	boolean done;
+	int info;
+	switch (status) {
+	default:
+	case ImageConsumer.IMAGEABORTED:
+	    done = true;
+	    info = ImageObserver.ABORT;
+	    break;
+	case ImageConsumer.IMAGEERROR:
+	    image.addInfo(ImageObserver.ERROR);
+	    done = true;
+	    info = ImageObserver.ERROR;
+	    dispose();
+	    break;
+	case ImageConsumer.STATICIMAGEDONE:
+	    done = true;
+	    info = ImageObserver.ALLBITS;
+	    break;
+	case ImageConsumer.SINGLEFRAMEDONE:
+	    done = false;
+	    info = ImageObserver.FRAMEBITS;
+	    break;
+	}
+	synchronized (this) {
+	    if (done) {
+		image.getSource().removeConsumer(this);
+		consuming = false;
+		newbits = null;
 
-                if (bimage != null) {
-                    bimage = getOpaqueRGBImage();
-                }
-            }
-            availinfo |= info;
-            notifyAll();
-        }
+		if (bimage != null) {
+		    bimage = getOpaqueRGBImage();
+		}
+	    }
+	    availinfo |= info;
+	    notifyAll();
+	}
 
         newInfo(image, info, 0, 0, width, height);
 
-        image.infoDone(status);
+	image.infoDone(status);
     }
 
     /*synchronized*/ void startProduction() {
-        if (!consuming) {
-            consuming = true;
-            image.getSource().startProduction(this);
-        }
+	if (!consuming) {
+	    consuming = true;
+	    image.getSource().startProduction(this);
+	}
     }
 
     private int numWaiters;
 
     private synchronized void checkConsumption() {
-        if (isWatcherListEmpty() && numWaiters == 0 &&
-            ((availinfo & ImageObserver.ALLBITS) == 0))
-        {
-            dispose();
-        }
+	if (isWatcherListEmpty() && numWaiters == 0 &&
+	    ((availinfo & ImageObserver.ALLBITS) == 0))
+	{
+	    dispose();
+	}
     }
 
     public synchronized void notifyWatcherListEmpty() {
-        checkConsumption();
+	checkConsumption();
     }
 
     private synchronized void decrementWaiters() {
-        --numWaiters;
-        checkConsumption();
+	--numWaiters;
+	checkConsumption();
     }
 
     public boolean prepare(ImageObserver iw) {
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
-        if ((availinfo & ImageObserver.ERROR) != 0) {
-            if (iw != null) {
-                iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
-                               -1, -1, -1, -1);
-            }
-            return false;
-        }
-        boolean done = ((availinfo & ImageObserver.ALLBITS) != 0);
-        if (!done) {
-            addWatcher(iw);
-            startProduction();
-            // Some producers deliver image data synchronously
-            done = ((availinfo & ImageObserver.ALLBITS) != 0);
-        }
-        return done;
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
+	if ((availinfo & ImageObserver.ERROR) != 0) {
+	    if (iw != null) {
+		iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
+			       -1, -1, -1, -1);
+	    }
+	    return false;
+	}
+	boolean done = ((availinfo & ImageObserver.ALLBITS) != 0);
+	if (!done) {
+	    addWatcher(iw);
+	    startProduction();
+	    // Some producers deliver image data synchronously
+	    done = ((availinfo & ImageObserver.ALLBITS) != 0);
+	}
+	return done;
     }
 
     public int check(ImageObserver iw) {
 
-        if (src != null) {
-            src.checkSecurity(null, false);
-        }
-        if ((availinfo & (ImageObserver.ERROR | ImageObserver.ALLBITS)) == 0) {
-            addWatcher(iw);
-        }
+	if (src != null) {
+	    src.checkSecurity(null, false);
+	}
+	if ((availinfo & (ImageObserver.ERROR | ImageObserver.ALLBITS)) == 0) {
+	    addWatcher(iw);
+	}
 
-        return availinfo;
+	return availinfo;
     }
 
     public boolean drawToBufImage(Graphics g, ToolkitImage img,
@@ -743,23 +743,23 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
         if (src != null) {
             src.checkSecurity(null, false);
         }
-        if ((availinfo & ImageObserver.ERROR) != 0) {
-            if (iw != null) {
-                iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
-                               -1, -1, -1, -1);
-            }
-            return false;
-        }
-        boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
+	if ((availinfo & ImageObserver.ERROR) != 0) {
+	    if (iw != null) {
+		iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
+			       -1, -1, -1, -1);
+	    }
+	    return false;
+	}
+	boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
         boolean abort = ((availinfo & ImageObserver.ABORT) != 0);
 
-        if (!done && !abort) {
-            addWatcher(iw);
-            startProduction();
-            // Some producers deliver image data synchronously
-            done = ((availinfo & ImageObserver.ALLBITS) != 0);
-        }
-
+	if (!done && !abort) {
+	    addWatcher(iw);
+	    startProduction();
+	    // Some producers deliver image data synchronously
+	    done = ((availinfo & ImageObserver.ALLBITS) != 0);
+	}
+            
         if (done || (0 != (availinfo & ImageObserver.FRAMEBITS))) {
             g.drawImage (bimage, x, y, bg, null);
         }
@@ -774,24 +774,24 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
         if (src != null) {
             src.checkSecurity(null, false);
         }
-        if ((availinfo & ImageObserver.ERROR) != 0) {
-            if (iw != null) {
-                iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
-                               -1, -1, -1, -1);
-            }
-            return false;
-        }
+	if ((availinfo & ImageObserver.ERROR) != 0) {
+	    if (iw != null) {
+		iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
+			       -1, -1, -1, -1);
+	    }
+	    return false;
+	}
 
-        boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
+	boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
         boolean abort = ((availinfo & ImageObserver.ABORT) != 0);
 
         if (!done && !abort) {
-            addWatcher(iw);
-            startProduction();
-            // Some producers deliver image data synchronously
-            done = ((availinfo & ImageObserver.ALLBITS) != 0);
-        }
-
+	    addWatcher(iw);
+	    startProduction();
+	    // Some producers deliver image data synchronously
+	    done = ((availinfo & ImageObserver.ALLBITS) != 0);
+	}
+            
         if (done || (0 != (availinfo & ImageObserver.FRAMEBITS))) {
             g.drawImage (bimage, x, y, w, h, bg, null);
         }
@@ -807,25 +807,25 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
         if (src != null) {
             src.checkSecurity(null, false);
         }
-        if ((availinfo & ImageObserver.ERROR) != 0) {
-            if (iw != null) {
-                iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
-                               -1, -1, -1, -1);
-            }
-            return false;
-        }
-        boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
+	if ((availinfo & ImageObserver.ERROR) != 0) {
+	    if (iw != null) {
+		iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
+			       -1, -1, -1, -1);
+	    }
+	    return false;
+	}
+	boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
         boolean abort = ((availinfo & ImageObserver.ABORT) != 0);
 
-        if (!done && !abort) {
-            addWatcher(iw);
-            startProduction();
-            // Some producers deliver image data synchronously
-            done = ((availinfo & ImageObserver.ALLBITS) != 0);
-        }
-
+	if (!done && !abort) {
+	    addWatcher(iw);
+	    startProduction();
+	    // Some producers deliver image data synchronously
+	    done = ((availinfo & ImageObserver.ALLBITS) != 0);
+	}
+            
         if (done || (0 != (availinfo & ImageObserver.FRAMEBITS))) {
-            g.drawImage (bimage,
+            g.drawImage (bimage, 
                          dx1, dy1, dx2, dy2,
                          sx1, sy1, sx2, sy2,
                          bg, null);
@@ -839,27 +839,27 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
                                   ImageObserver iw)
     {
         Graphics2D g2 = (Graphics2D) g;
-
+        
         if (src != null) {
             src.checkSecurity(null, false);
         }
-        if ((availinfo & ImageObserver.ERROR) != 0) {
-            if (iw != null) {
-                iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
-                               -1, -1, -1, -1);
-            }
-            return false;
-        }
-        boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
+	if ((availinfo & ImageObserver.ERROR) != 0) {
+	    if (iw != null) {
+		iw.imageUpdate(image, ImageObserver.ERROR|ImageObserver.ABORT,
+			       -1, -1, -1, -1);
+	    }
+	    return false;
+	}
+	boolean done  = ((availinfo & ImageObserver.ALLBITS) != 0);
         boolean abort = ((availinfo & ImageObserver.ABORT) != 0);
 
-        if (!done && !abort) {
-            addWatcher(iw);
-            startProduction();
-            // Some producers deliver image data synchronously
-            done = ((availinfo & ImageObserver.ALLBITS) != 0);
-        }
-
+	if (!done && !abort) {
+	    addWatcher(iw);
+	    startProduction();
+	    // Some producers deliver image data synchronously
+	    done = ((availinfo & ImageObserver.ALLBITS) != 0);
+	}
+            
         if (done || (0 != (availinfo & ImageObserver.FRAMEBITS))) {
             g2.drawImage (bimage, xform, null);
         }
@@ -868,9 +868,9 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
     }
 
     synchronized void abort() {
-        image.getSource().removeConsumer(this);
-        consuming = false;
-        newbits = null;
+	image.getSource().removeConsumer(this);
+	consuming = false;
+	newbits = null;
         bimage = null;
         biRaster = null;
         cmodel = null;
@@ -878,25 +878,25 @@ public class ImageRepresentation extends ImageWatched implements ImageConsumer
         isDefaultBI = false;
         isSameCM = false;
 
-        newInfo(image, ImageObserver.ABORT, -1, -1, -1, -1);
-        availinfo &= ~(ImageObserver.SOMEBITS
-                       | ImageObserver.FRAMEBITS
-                       | ImageObserver.ALLBITS
-                       | ImageObserver.ERROR);
+	newInfo(image, ImageObserver.ABORT, -1, -1, -1, -1);
+	availinfo &= ~(ImageObserver.SOMEBITS
+		       | ImageObserver.FRAMEBITS
+		       | ImageObserver.ALLBITS
+		       | ImageObserver.ERROR);
     }
 
     synchronized void dispose() {
-        image.getSource().removeConsumer(this);
-        consuming = false;
-        newbits = null;
-        availinfo &= ~(ImageObserver.SOMEBITS
-                       | ImageObserver.FRAMEBITS
-                       | ImageObserver.ALLBITS);
+	image.getSource().removeConsumer(this);
+	consuming = false;
+	newbits = null;
+	availinfo &= ~(ImageObserver.SOMEBITS
+		       | ImageObserver.FRAMEBITS
+		       | ImageObserver.ALLBITS);
     }
 
     public void setAccelerationPriority(float priority) {
-        if (bimage != null) {
-            bimage.setAccelerationPriority(priority);
-        }
+	if (bimage != null) {
+	    bimage.setAccelerationPriority(priority);
+	}
     }
 }

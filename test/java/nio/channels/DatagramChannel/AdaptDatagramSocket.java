@@ -45,100 +45,100 @@ public class AdaptDatagramSocket {
     static final String REMOTE_HOST = TestUtil.HOST;
 
     static final InetSocketAddress echoAddress
-        = new InetSocketAddress(REMOTE_HOST, ECHO_PORT);
+	= new InetSocketAddress(REMOTE_HOST, ECHO_PORT);
     static final InetSocketAddress discardAddress
-        = new InetSocketAddress(REMOTE_HOST, DISCARD_PORT);
+	= new InetSocketAddress(REMOTE_HOST, DISCARD_PORT);
 
     static String toString(DatagramPacket dp) {
-        return ("DatagramPacket[off=" + dp.getOffset()
-                + ", len=" + dp.getLength()
-                + "]");
+	return ("DatagramPacket[off=" + dp.getOffset()
+		+ ", len=" + dp.getLength()
+		+ "]");
     }
 
     static void test(DatagramSocket ds, InetSocketAddress dst,
-                     boolean shouldTimeout)
-        throws Exception
+		     boolean shouldTimeout)
+	throws Exception
     {
-        DatagramPacket op = new DatagramPacket(new byte[100], 13, 42, dst);
-        rand.nextBytes(op.getData());
-        DatagramPacket ip = new DatagramPacket(new byte[100], 19, 100 - 19);
-        out.println("pre  op: " + toString(op) + "  ip: " + toString(ip));
+	DatagramPacket op = new DatagramPacket(new byte[100], 13, 42, dst);
+	rand.nextBytes(op.getData());
+	DatagramPacket ip = new DatagramPacket(new byte[100], 19, 100 - 19);
+	out.println("pre  op: " + toString(op) + "  ip: " + toString(ip));
 
-        long start = System.currentTimeMillis();
-        ds.send(op);
+	long start = System.currentTimeMillis();
+	ds.send(op);
 
-        for (;;) {
-            try {
-                ds.receive(ip);
-                if (ip.getLength() == 0) { // ## Not sure why this happens
-                    ip.setLength(100 - 19);
-                    continue;
-                }
-            } catch (SocketTimeoutException x) {
-                if (shouldTimeout) {
-                    out.println("Receive timed out, as expected");
-                    return;
-                }
-                throw x;
-            }
-            if (shouldTimeout)
-                throw new Exception("Receive did not time out");
-            break;
-        }
+	for (;;) {
+	    try {
+		ds.receive(ip);
+		if (ip.getLength() == 0) { // ## Not sure why this happens
+		    ip.setLength(100 - 19);
+		    continue;
+		}
+	    } catch (SocketTimeoutException x) {
+		if (shouldTimeout) {
+		    out.println("Receive timed out, as expected");
+		    return;
+		}
+		throw x;
+	    }
+	    if (shouldTimeout)
+		throw new Exception("Receive did not time out");
+	    break;
+	}
 
-        out.println("rtt: " + (System.currentTimeMillis() - start));
-        out.println("post op: " + toString(op) + "  ip: " + toString(ip));
+	out.println("rtt: " + (System.currentTimeMillis() - start));
+	out.println("post op: " + toString(op) + "  ip: " + toString(ip));
 
-        for (int i = 0; i < ip.getLength(); i++)
-            if (ip.getData()[ip.getOffset() + i]
-                != op.getData()[op.getOffset() + i])
-                throw new Exception("Incorrect data received");
+	for (int i = 0; i < ip.getLength(); i++)
+	    if (ip.getData()[ip.getOffset() + i]
+		!= op.getData()[op.getOffset() + i])
+		throw new Exception("Incorrect data received");
     }
 
     static void test(InetSocketAddress dst,
-                     int timeout, boolean shouldTimeout,
-                     boolean connect)
-        throws Exception
+		     int timeout, boolean shouldTimeout,
+		     boolean connect)
+	throws Exception
     {
-        out.println();
-        out.println("dst: " + dst);
+	out.println();
+	out.println("dst: " + dst);
 
-        DatagramSocket ds;
-        if (false) {
-            // Original
-            ds = new DatagramSocket();
-        } else {
-            DatagramChannel dc = DatagramChannel.open();
-            ds = dc.socket();
-            ds.bind(new InetSocketAddress(0));
-        }
+	DatagramSocket ds;
+	if (false) {
+	    // Original
+	    ds = new DatagramSocket();
+	} else {
+	    DatagramChannel dc = DatagramChannel.open();
+	    ds = dc.socket();
+	    ds.bind(new InetSocketAddress(0));
+	}
 
-        out.println("socket: " + ds);
-        if (connect) {
-            ds.connect(dst);
-            out.println("connect: " + ds);
-        }
-        InetSocketAddress src = new InetSocketAddress(ds.getLocalAddress(),
-                                                      ds.getLocalPort());
-        out.println("src: " + src);
+	out.println("socket: " + ds);
+	if (connect) {
+	    ds.connect(dst);
+	    out.println("connect: " + ds);
+	}
+	InetSocketAddress src = new InetSocketAddress(ds.getLocalAddress(),
+						      ds.getLocalPort());
+	out.println("src: " + src);
 
-        if (timeout > 0)
-            ds.setSoTimeout(timeout);
-        out.println("timeout: " + ds.getSoTimeout());
+	if (timeout > 0)
+	    ds.setSoTimeout(timeout);
+	out.println("timeout: " + ds.getSoTimeout());
 
-        for (int i = 0; i < 5; i++)
-            test(ds, dst, shouldTimeout);
+	for (int i = 0; i < 5; i++)
+	    test(ds, dst, shouldTimeout);
 
-        // Leave the socket open so that we don't reuse the old src address
-        //ds.close();
+	// Leave the socket open so that we don't reuse the old src address
+	//ds.close();
 
     }
 
     public static void main(String[] args) throws Exception {
-        test(echoAddress, 0, false, false);
-        test(echoAddress, 0, false, true);
-        test(echoAddress, 5000, false, false);
-        test(discardAddress, 10, true, false);
+	test(echoAddress, 0, false, false);
+	test(echoAddress, 0, false, true);
+	test(echoAddress, 5000, false, false);
+	test(discardAddress, 10, true, false);
     }
 
 }

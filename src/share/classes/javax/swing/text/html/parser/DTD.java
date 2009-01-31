@@ -52,15 +52,16 @@ import java.net.URL;
  * @see ContentModel
  * @see Parser
  * @author Arthur van Hoff
+ * @version %I% %G%
  */
 public
 class DTD implements DTDConstants {
     public String name;
     public Vector<Element> elements = new Vector<Element>();
     public Hashtable<String,Element> elementHash
-        = new Hashtable<String,Element>();
+	= new Hashtable<String,Element>();
     public Hashtable<Object,Entity> entityHash
-        = new Hashtable<Object,Entity>();
+	= new Hashtable<Object,Entity>();
     public final Element pcdata = getElement("#pcdata");
     public final Element html = getElement("html");
     public final Element meta = getElement("meta");
@@ -83,11 +84,11 @@ class DTD implements DTDConstants {
      * @param name the name, as a <code>String</code> of the new DTD
      */
     protected DTD(String name) {
-        this.name = name;
-        defEntity("#RE", GENERAL, '\r');
-        defEntity("#RS", GENERAL, '\n');
-        defEntity("#SPACE", GENERAL, ' ');
-        defineElement("unknown", EMPTY, false, true, null, null, null, null);
+	this.name = name;
+	defEntity("#RE", GENERAL, '\r');
+	defEntity("#RS", GENERAL, '\n');
+	defEntity("#SPACE", GENERAL, ' ');
+	defineElement("unknown", EMPTY, false, true, null, null, null, null);
     }
 
     /**
@@ -95,16 +96,16 @@ class DTD implements DTDConstants {
      * @return the name of the DTD
      */
     public String getName() {
-        return name;
+	return name;
     }
 
     /**
      * Gets an entity by name.
-     * @return the <code>Entity</code> corresponding to the
+     * @return the <code>Entity</code> corresponding to the 
      *   <code>name</code> <code>String</code>
      */
     public Entity getEntity(String name) {
-        return (Entity)entityHash.get(name);
+	return (Entity)entityHash.get(name);
     }
 
     /**
@@ -113,7 +114,7 @@ class DTD implements DTDConstants {
      *    <code>ch</code> character
      */
     public Entity getEntity(int ch) {
-        return (Entity)entityHash.get(new Integer(ch));
+	return (Entity)entityHash.get(new Integer(ch));
     }
 
     /**
@@ -137,13 +138,13 @@ class DTD implements DTDConstants {
      *   <code>name</code>, which may be newly created
      */
     public Element getElement(String name) {
-        Element e = (Element)elementHash.get(name);
-        if (e == null) {
-            e = new Element(name, elements.size());
-            elements.addElement(e);
-            elementHash.put(name, e);
-        }
-        return e;
+	Element e = (Element)elementHash.get(name);
+	if (e == null) {
+	    e = new Element(name, elements.size());
+	    elements.addElement(e);
+	    elementHash.put(name, e);
+	}
+	return e;
     }
 
     /**
@@ -154,7 +155,7 @@ class DTD implements DTDConstants {
      *   <code>index</code>
      */
     public Element getElement(int index) {
-        return (Element)elements.elementAt(index);
+	return (Element)elements.elementAt(index);
     }
 
     /**
@@ -170,20 +171,20 @@ class DTD implements DTDConstants {
      *   if not found
      */
     public Entity defineEntity(String name, int type, char data[]) {
-        Entity ent = (Entity)entityHash.get(name);
-        if (ent == null) {
-            ent = new Entity(name, type, data);
-            entityHash.put(name, ent);
-            if (((type & GENERAL) != 0) && (data.length == 1)) {
-                switch (type & ~GENERAL) {
-                  case CDATA:
-                  case SDATA:
-                    entityHash.put(new Integer(data[0]), ent);
-                    break;
-                }
-            }
-        }
-        return ent;
+	Entity ent = (Entity)entityHash.get(name);
+	if (ent == null) {
+	    ent = new Entity(name, type, data);
+	    entityHash.put(name, ent);
+	    if (((type & GENERAL) != 0) && (data.length == 1)) {
+		switch (type & ~GENERAL) {
+		  case CDATA:
+		  case SDATA:
+		    entityHash.put(new Integer(data[0]), ent);
+		    break;
+		}
+	    }
+	}
+	return ent;
     }
 
     /**
@@ -196,22 +197,22 @@ class DTD implements DTDConstants {
      * @param omitStart <code>true</code> if start should be omitted
      * @param omitEnd  <code>true</code> if end should be omitted
      * @param content  the <code>ContentModel</code>
-     * @param atts the <code>AttributeList</code> specifying the
+     * @param atts the <code>AttributeList</code> specifying the 
      *    <code>Element</code>
      * @return the <code>Element</code> specified
      */
     public Element defineElement(String name, int type,
-                       boolean omitStart, boolean omitEnd, ContentModel content,
-                       BitSet exclusions, BitSet inclusions, AttributeList atts) {
-        Element e = getElement(name);
-        e.type = type;
-        e.oStart = omitStart;
-        e.oEnd = omitEnd;
-        e.content = content;
-        e.exclusions = exclusions;
-        e.inclusions = inclusions;
-        e.atts = atts;
-        return e;
+		       boolean omitStart, boolean omitEnd, ContentModel content,
+		       BitSet exclusions, BitSet inclusions, AttributeList atts) {
+	Element e = getElement(name);
+	e.type = type;
+	e.oStart = omitStart;
+	e.oEnd = omitEnd;
+	e.content = content;
+	e.exclusions = exclusions;
+	e.inclusions = inclusions;
+	e.atts = atts;
+	return e;
     }
 
     /**
@@ -222,8 +223,8 @@ class DTD implements DTDConstants {
      *    <code>Element</code>
      */
     public void defineAttributes(String name, AttributeList atts) {
-        Element e = getElement(name);
-        e.atts = atts;
+	Element e = getElement(name);
+	e.atts = atts;
     }
 
     /**
@@ -232,8 +233,8 @@ class DTD implements DTDConstants {
      * @return the new character <code>Entity</code>
      */
     public Entity defEntity(String name, int type, int ch) {
-        char data[] = {(char)ch};
-        return defineEntity(name, type, data);
+	char data[] = {(char)ch};
+	return defineEntity(name, type, data);
     }
 
     /**
@@ -242,10 +243,10 @@ class DTD implements DTDConstants {
      * @return the new <code>Entity</code>
      */
     protected Entity defEntity(String name, int type, String str) {
-        int len = str.length();
-        char data[] = new char[len];
-        str.getChars(0, len, data, 0);
-        return defineEntity(name, type, data);
+	int len = str.length();
+	char data[] = new char[len];
+	str.getChars(0, len, data, 0);
+	return defineEntity(name, type, data);
     }
 
     /**
@@ -254,29 +255,29 @@ class DTD implements DTDConstants {
      * @return the new <code>Element</code>
      */
     protected Element defElement(String name, int type,
-                       boolean omitStart, boolean omitEnd, ContentModel content,
-                       String[] exclusions, String[] inclusions, AttributeList atts) {
-        BitSet excl = null;
-        if (exclusions != null && exclusions.length > 0) {
-            excl = new BitSet();
-            for (int i = 0; i < exclusions.length; i++) {
-                String str = exclusions[i];
-                if (str.length() > 0) {
-                    excl.set(getElement(str).getIndex());
-                }
-            }
-        }
-        BitSet incl = null;
-        if (inclusions != null && inclusions.length > 0) {
-            incl = new BitSet();
-            for (int i = 0; i < inclusions.length; i++) {
-                String str = inclusions[i];
-                if (str.length() > 0) {
-                    incl.set(getElement(str).getIndex());
-                }
-            }
-        }
-        return defineElement(name, type, omitStart, omitEnd, content, excl, incl, atts);
+		       boolean omitStart, boolean omitEnd, ContentModel content,
+		       String[] exclusions, String[] inclusions, AttributeList atts) {
+	BitSet excl = null;
+	if (exclusions != null && exclusions.length > 0) {
+	    excl = new BitSet();
+	    for (int i = 0; i < exclusions.length; i++) {
+		String str = exclusions[i];
+		if (str.length() > 0) {
+		    excl.set(getElement(str).getIndex());
+		}
+	    }
+	}
+	BitSet incl = null;
+	if (inclusions != null && inclusions.length > 0) {
+	    incl = new BitSet();
+	    for (int i = 0; i < inclusions.length; i++) {
+		String str = inclusions[i];
+		if (str.length() > 0) {
+		    incl.set(getElement(str).getIndex());
+		}
+	    }
+	}
+	return defineElement(name, type, omitStart, omitEnd, content, excl, incl, atts);
     }
 
     /**
@@ -285,17 +286,17 @@ class DTD implements DTDConstants {
      * @return the new <code>AttributeList</code>
      */
     protected AttributeList defAttributeList(String name, int type, int modifier, String value, String values, AttributeList atts) {
-        Vector vals = null;
-        if (values != null) {
-            vals = new Vector();
-            for (StringTokenizer s = new StringTokenizer(values, "|") ; s.hasMoreTokens() ;) {
-                String str = s.nextToken();
-                if (str.length() > 0) {
-                    vals.addElement(str);
-                }
-            }
-        }
-        return new AttributeList(name, type, modifier, value, vals, atts);
+	Vector vals = null;
+	if (values != null) {
+	    vals = new Vector();
+	    for (StringTokenizer s = new StringTokenizer(values, "|") ; s.hasMoreTokens() ;) {
+		String str = s.nextToken();
+		if (str.length() > 0) {
+		    vals.addElement(str);
+		}
+	    }
+	}
+	return new AttributeList(name, type, modifier, value, vals, atts);
     }
 
     /**
@@ -304,7 +305,7 @@ class DTD implements DTDConstants {
      * @return the new <code>ContentModel</code>
      */
     protected ContentModel defContentModel(int type, Object obj, ContentModel next) {
-        return new ContentModel(type, obj, next);
+	return new ContentModel(type, obj, next);
     }
 
     /**
@@ -312,7 +313,7 @@ class DTD implements DTDConstants {
      * @return the string representation of this DTD
      */
     public String toString() {
-        return name;
+	return name;
     }
 
     /**
@@ -333,12 +334,12 @@ class DTD implements DTDConstants {
      * @return the DTD which corresponds to <code>name</code>
      */
     public static DTD getDTD(String name) throws IOException {
-        name = name.toLowerCase();
-        DTD dtd = (DTD)dtdHash.get(name);
-        if (dtd == null)
-          dtd = new DTD(name);
+	name = name.toLowerCase();
+	DTD dtd = (DTD)dtdHash.get(name);
+	if (dtd == null)
+	  dtd = new DTD(name);
 
-        return dtd;
+	return dtd;
     }
 
     /**
@@ -346,106 +347,106 @@ class DTD implements DTDConstants {
      * @param in  the <code>DataInputStream</code> to read from
      */
     public void read(DataInputStream in) throws IOException {
-        if (in.readInt() != FILE_VERSION) {
-        }
+	if (in.readInt() != FILE_VERSION) {
+	}
 
-        //
-        // Read the list of names
-        //
-        String[] names = new String[in.readShort()];
-        for (int i = 0; i < names.length; i++) {
-            names[i] = in.readUTF();
-        }
+	//
+	// Read the list of names
+	//
+	String[] names = new String[in.readShort()];
+	for (int i = 0; i < names.length; i++) {
+	    names[i] = in.readUTF();
+	}
 
 
-        //
-        // Read the entities
-        //
-        int num = in.readShort();
-        for (int i = 0; i < num; i++) {
-            short nameId = in.readShort();
-            int type = in.readByte();
-            String name = in.readUTF();
-            defEntity(names[nameId], type | GENERAL, name);
-        }
+	//
+	// Read the entities
+	//
+	int num = in.readShort();
+	for (int i = 0; i < num; i++) {
+	    short nameId = in.readShort();
+	    int type = in.readByte();
+	    String name = in.readUTF();
+	    defEntity(names[nameId], type | GENERAL, name);
+	}
 
-        // Read the elements
-        //
-        num = in.readShort();
-        for (int i = 0; i < num; i++) {
-            short nameId = in.readShort();
-            int type = in.readByte();
-            byte flags = in.readByte();
-            ContentModel m = readContentModel(in, names);
-            String[] exclusions = readNameArray(in, names);
-            String[] inclusions = readNameArray(in, names);
-            AttributeList atts = readAttributeList(in, names);
-            defElement(names[nameId], type,
-                       ((flags & 0x01) != 0), ((flags & 0x02) != 0),
-                       m, exclusions, inclusions, atts);
-        }
+	// Read the elements
+	//
+	num = in.readShort();
+	for (int i = 0; i < num; i++) {
+	    short nameId = in.readShort();
+	    int type = in.readByte();
+	    byte flags = in.readByte();
+	    ContentModel m = readContentModel(in, names);
+	    String[] exclusions = readNameArray(in, names);
+	    String[] inclusions = readNameArray(in, names);
+	    AttributeList atts = readAttributeList(in, names);
+	    defElement(names[nameId], type,
+		       ((flags & 0x01) != 0), ((flags & 0x02) != 0),
+		       m, exclusions, inclusions, atts);
+	}
     }
 
     private ContentModel readContentModel(DataInputStream in, String[] names)
-                throws IOException {
-        byte flag = in.readByte();
-        switch(flag) {
-            case 0:             // null
-                return null;
-            case 1: {           // content_c
-                int type = in.readByte();
-                ContentModel m = readContentModel(in, names);
-                ContentModel next = readContentModel(in, names);
-                return defContentModel(type, m, next);
-            }
-            case 2: {           // content_e
-                int type = in.readByte();
-                Element el = getElement(names[in.readShort()]);
-                ContentModel next = readContentModel(in, names);
-                return defContentModel(type, el, next);
-            }
-        default:
-                throw new IOException("bad bdtd");
-        }
+		throws IOException {
+	byte flag = in.readByte();
+	switch(flag) {
+	    case 0:		// null
+		return null;
+	    case 1: {		// content_c
+		int type = in.readByte();
+		ContentModel m = readContentModel(in, names);
+		ContentModel next = readContentModel(in, names);
+		return defContentModel(type, m, next);
+	    }
+	    case 2: {		// content_e
+		int type = in.readByte();
+		Element el = getElement(names[in.readShort()]);
+		ContentModel next = readContentModel(in, names);
+		return defContentModel(type, el, next);
+	    }
+	default:
+		throw new IOException("bad bdtd");
+	}
     }
 
     private String[] readNameArray(DataInputStream in, String[] names)
-                throws IOException {
-        int num = in.readShort();
-        if (num == 0) {
-            return null;
-        }
-        String[] result = new String[num];
-        for (int i = 0; i < num; i++) {
-            result[i] = names[in.readShort()];
-        }
-        return result;
+		throws IOException {
+	int num = in.readShort();
+	if (num == 0) {
+	    return null;
+	}
+	String[] result = new String[num];
+	for (int i = 0; i < num; i++) {
+	    result[i] = names[in.readShort()];
+	}
+	return result;
     }
 
 
     private AttributeList readAttributeList(DataInputStream in, String[] names)
-                throws IOException  {
-        AttributeList result = null;
-        for (int num = in.readByte(); num > 0; --num) {
-            short nameId = in.readShort();
-            int type = in.readByte();
-            int modifier = in.readByte();
-            short valueId = in.readShort();
-            String value = (valueId == -1) ? null : names[valueId];
-            Vector values = null;
-            short numValues = in.readShort();
-            if (numValues > 0) {
-                values = new Vector(numValues);
-                for (int i = 0; i < numValues; i++) {
-                    values.addElement(names[in.readShort()]);
-                }
-            }
+		throws IOException  {
+	AttributeList result = null;
+	for (int num = in.readByte(); num > 0; --num) {
+	    short nameId = in.readShort();
+	    int type = in.readByte();
+	    int modifier = in.readByte();
+	    short valueId = in.readShort();
+	    String value = (valueId == -1) ? null : names[valueId];
+	    Vector values = null;
+	    short numValues = in.readShort();
+	    if (numValues > 0) {
+		values = new Vector(numValues);
+		for (int i = 0; i < numValues; i++) {
+		    values.addElement(names[in.readShort()]);
+		}
+	    }
 result = new AttributeList(names[nameId], type, modifier, value,
-                                       values, result);
-            // We reverse the order of the linked list by doing this, but
-            // that order isn't important.
-        }
-        return result;
+				       values, result);
+	    // We reverse the order of the linked list by doing this, but
+	    // that order isn't important.
+	}
+	return result;
     }
 
 }

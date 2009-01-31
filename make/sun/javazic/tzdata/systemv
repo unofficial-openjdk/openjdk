@@ -22,6 +22,8 @@
 # have any questions.
 #
 
+# @(#)systemv	8.1
+
 # Old rules, should the need arise.
 # No attempt is made to handle Newfoundland, since it cannot be expressed
 # using the System V "TZ" scheme (half-hour offset), or anything outside

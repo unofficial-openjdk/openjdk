@@ -40,21 +40,21 @@ import java.net.*;
  * a way which does not require special configuration of the code which
  * asks for the sockets:  <UL>
  *
- *      <LI> Due to polymorphism of both factories and sockets, different
- *      kinds of sockets can be used by the same application code just
- *      by passing it different kinds of factories.
+ *	<LI> Due to polymorphism of both factories and sockets, different
+ *	kinds of sockets can be used by the same application code just
+ *	by passing it different kinds of factories.
  *
- *      <LI> Factories can themselves be customized with parameters used
- *      in socket construction.  So for example, factories could be
- *      customized to return sockets with different networking timeouts
+ *	<LI> Factories can themselves be customized with parameters used
+ *	in socket construction.  So for example, factories could be
+ *	customized to return sockets with different networking timeouts
  *      or security parameters already configured.
  *
- *      <LI> The sockets returned to the application can be subclasses
- *      of java.net.Socket, so that they can directly expose new APIs
- *      for features such as compression, security, record marking,
- *      statistics collection, or firewall tunneling.
+ *	<LI> The sockets returned to the application can be subclasses
+ *	of java.net.Socket, so that they can directly expose new APIs
+ *	for features such as compression, security, record marking,
+ *	statistics collection, or firewall tunneling.
  *
- *      </UL>
+ *	</UL>
  *
  * <P> Factory classes are specified by environment-specific configuration
  * mechanisms.  For example, the <em>getDefault</em> method could return
@@ -64,6 +64,7 @@ import java.net.*;
  * @since 1.4
  * @see ServerSocketFactory
  *
+ * @version %I%
  * @author David Brownell
  */
 public abstract class SocketFactory
@@ -72,7 +73,7 @@ public abstract class SocketFactory
     // NOTE:  JDK 1.1 bug in class GC, this can get collected
     // even though it's always accessible via getDefault().
     //
-    private static SocketFactory                theFactory;
+    private static SocketFactory		theFactory;
 
     /**
      * Creates a <code>SocketFactory</code>.
@@ -87,19 +88,19 @@ public abstract class SocketFactory
      */
     public static SocketFactory getDefault()
     {
-        synchronized (SocketFactory.class) {
-            if (theFactory == null) {
-                //
-                // Different implementations of this method SHOULD
-                // work rather differently.  For example, driving
-                // this from a system property, or using a different
-                // implementation than JavaSoft's.
-                //
-                theFactory = new DefaultSocketFactory();
-            }
-        }
+	synchronized (SocketFactory.class) {
+	    if (theFactory == null) {
+		//
+		// Different implementations of this method SHOULD
+		// work rather differently.  For example, driving
+		// this from a system property, or using a different
+		// implementation than JavaSoft's.
+		//
+		theFactory = new DefaultSocketFactory();
+	    }
+	}
 
-        return theFactory;
+	return theFactory;
     }
 
 
@@ -113,7 +114,7 @@ public abstract class SocketFactory
      * @see java.net.Socket#Socket()
      */
     public Socket createSocket() throws IOException {
-        throw new SocketException("Unconnected sockets not implemented");
+	throw new SocketException("Unconnected sockets not implemented");
     }
 
 
@@ -121,23 +122,12 @@ public abstract class SocketFactory
      * Creates a socket and connects it to the specified remote host
      * at the specified remote port.  This socket is configured using
      * the socket options established for this factory.
-     * <p>
-     * If there is a security manager, its <code>checkConnect</code>
-     * method is called with the host address and <code>port</code>
-     * as its arguments. This could result in a SecurityException.
      *
-     * @param host the server host name with which to connect, or
-     *        <code>null</code> for the loopback address.
+     * @param host the server host
      * @param port the server port
      * @return the <code>Socket</code>
      * @throws IOException if an I/O error occurs when creating the socket
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkConnect</code> method doesn't allow the operation.
      * @throws UnknownHostException if the host is not known
-     * @throws IllegalArgumentException if the port parameter is outside the
-     *         specified range of valid port values, which is between 0 and
-     *         65535, inclusive.
-     * @see SecurityManager#checkConnect
      * @see java.net.Socket#Socket(String, int)
      */
     public abstract Socket createSocket(String host, int port)
@@ -150,25 +140,14 @@ public abstract class SocketFactory
      * The socket will also be bound to the local address and port supplied.
      * This socket is configured using
      * the socket options established for this factory.
-     * <p>
-     * If there is a security manager, its <code>checkConnect</code>
-     * method is called with the host address and <code>port</code>
-     * as its arguments. This could result in a SecurityException.
      *
-     * @param host the server host name with which to connect, or
-     *        <code>null</code> for the loopback address.
+     * @param host the server host
      * @param port the server port
      * @param localHost the local address the socket is bound to
      * @param localPort the local port the socket is bound to
      * @return the <code>Socket</code>
      * @throws IOException if an I/O error occurs when creating the socket
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkConnect</code> method doesn't allow the operation.
      * @throws UnknownHostException if the host is not known
-     * @throws IllegalArgumentException if the port parameter or localPort
-     *         parameter is outside the specified range of valid port values,
-     *         which is between 0 and 65535, inclusive.
-     * @see SecurityManager#checkConnect
      * @see java.net.Socket#Socket(String, int, java.net.InetAddress, int)
      */
     public abstract Socket
@@ -180,22 +159,11 @@ public abstract class SocketFactory
      * Creates a socket and connects it to the specified port number
      * at the specified address.  This socket is configured using
      * the socket options established for this factory.
-     * <p>
-     * If there is a security manager, its <code>checkConnect</code>
-     * method is called with the host address and <code>port</code>
-     * as its arguments. This could result in a SecurityException.
      *
      * @param host the server host
      * @param port the server port
      * @return the <code>Socket</code>
      * @throws IOException if an I/O error occurs when creating the socket
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkConnect</code> method doesn't allow the operation.
-     * @throws IllegalArgumentException if the port parameter is outside the
-     *         specified range of valid port values, which is between 0 and
-     *         65535, inclusive.
-     * @throws NullPointerException if <code>host</code> is null.
-     * @see SecurityManager#checkConnect
      * @see java.net.Socket#Socket(java.net.InetAddress, int)
      */
     public abstract Socket createSocket(InetAddress host, int port)
@@ -207,10 +175,6 @@ public abstract class SocketFactory
      * on the specified remote port.  The socket will also be bound
      * to the local address and port suplied.  The socket is configured using
      * the socket options established for this factory.
-     * <p>
-     * If there is a security manager, its <code>checkConnect</code>
-     * method is called with the host address and <code>port</code>
-     * as its arguments. This could result in a SecurityException.
      *
      * @param address the server network address
      * @param port the server port
@@ -218,19 +182,12 @@ public abstract class SocketFactory
      * @param localPort the client port
      * @return the <code>Socket</code>
      * @throws IOException if an I/O error occurs when creating the socket
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkConnect</code> method doesn't allow the operation.
-     * @throws IllegalArgumentException if the port parameter or localPort
-     *         parameter is outside the specified range of valid port values,
-     *         which is between 0 and 65535, inclusive.
-     * @throws NullPointerException if <code>address</code> is null.
-     * @see SecurityManager#checkConnect
      * @see java.net.Socket#Socket(java.net.InetAddress, int,
      *     java.net.InetAddress, int)
      */
     public abstract Socket
     createSocket(InetAddress address, int port,
-        InetAddress localAddress, int localPort)
+	InetAddress localAddress, int localPort)
     throws IOException;
 }
 
@@ -250,32 +207,32 @@ public abstract class SocketFactory
 class DefaultSocketFactory extends SocketFactory {
 
     public Socket createSocket() {
-        return new Socket();
+	return new Socket();
     }
 
     public Socket createSocket(String host, int port)
     throws IOException, UnknownHostException
     {
-        return new Socket(host, port);
+	return new Socket(host, port);
     }
 
     public Socket createSocket(InetAddress address, int port)
     throws IOException
     {
-        return new Socket(address, port);
+	return new Socket(address, port);
     }
 
     public Socket createSocket(String host, int port,
-        InetAddress clientAddress, int clientPort)
+	InetAddress clientAddress, int clientPort)
     throws IOException, UnknownHostException
     {
-        return new Socket(host, port, clientAddress, clientPort);
+	return new Socket(host, port, clientAddress, clientPort);
     }
 
     public Socket createSocket(InetAddress address, int port,
-        InetAddress clientAddress, int clientPort)
+	InetAddress clientAddress, int clientPort)
     throws IOException
     {
-        return new Socket(address, port, clientAddress, clientPort);
+	return new Socket(address, port, clientAddress, clientPort);
     }
 }

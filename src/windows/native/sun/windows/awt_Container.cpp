@@ -41,7 +41,7 @@ jmethodID AwtContainer::findComponentAtMID;
 
 extern "C" {
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_java_awt_Container_initIDs(JNIEnv *env, jclass cls) {
     TRY;
 
@@ -49,7 +49,7 @@ Java_java_awt_Container_initIDs(JNIEnv *env, jclass cls) {
     AwtContainer::componentID =
         env->GetFieldID(cls, "component", "[Ljava/awt/Component;");
 
-    AwtContainer::layoutMgrID =
+    AwtContainer::layoutMgrID = 
         env->GetFieldID(cls, "layoutMgr", "Ljava/awt/LayoutManager;");
 
     AwtContainer::findComponentAtMID =

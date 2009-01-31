@@ -66,86 +66,88 @@ import java.io.*;
  *    set mapping.
  * </pre>
  *
- * @author      Jonathan Payne
+ * @version %I%, %G%
+ * @author	Jonathan Payne
  */
 
 public class TelnetInputStream extends FilterInputStream {
     /** If stickyCRLF is true, then we're a machine, like an IBM PC,
-        where a Newline is a CR followed by LF.  On UNIX, this is false
-        because Newline is represented with just a LF character. */
-    boolean         stickyCRLF = false;
-    boolean         seenCR = false;
+	where a Newline is a CR followed by LF.  On UNIX, this is false
+	because Newline is represented with just a LF character. */
+    boolean	    stickyCRLF = false;
+    boolean	    seenCR = false;
 
     public boolean  binaryMode = false;
 
     public TelnetInputStream(InputStream fd, boolean binary) {
-        super(fd);
-        binaryMode = binary;
+	super(fd);
+	binaryMode = binary;
     }
 
     public void setStickyCRLF(boolean on) {
-        stickyCRLF = on;
+	stickyCRLF = on;
     }
 
     public int read() throws IOException {
-        if (binaryMode)
-            return super.read();
+	if (binaryMode)
+	    return super.read();
 
-        int c;
+	int c;
 
-        /* If last time we determined we saw a CRLF pair, and we're
-           not turning that into just a Newline (that is, we're
-           stickyCRLF), then return the LF part of that sticky
-           pair now. */
+	/* If last time we determined we saw a CRLF pair, and we're
+	   not turning that into just a Newline (that is, we're
+	   stickyCRLF), then return the LF part of that sticky
+	   pair now. */
 
-        if (seenCR) {
-            seenCR = false;
-            return '\n';
-        }
+	if (seenCR) {
+	    seenCR = false;
+	    return '\n';
+	}
 
-        if ((c = super.read()) == '\r') {    /* CR */
-            switch (c = super.read()) {
-            default:
-            case -1:                        /* this is an error */
-                throw new TelnetProtocolException("misplaced CR in input");
+	if ((c = super.read()) == '\r') {    /* CR */
+	    switch (c = super.read()) {
+	    default:
+	    case -1:			    /* this is an error */
+		throw new TelnetProtocolException("misplaced CR in input");
 
-            case 0:                         /* NUL - treat CR as CR */
-                return '\r';
+	    case 0:			    /* NUL - treat CR as CR */
+		return '\r';
 
-            case '\n':                      /* CRLF - treat as NL */
-                if (stickyCRLF) {
-                    seenCR = true;
-                    return '\r';
-                } else {
-                    return '\n';
-                }
-            }
-        }
-        return c;
+	    case '\n':			    /* CRLF - treat as NL */
+		if (stickyCRLF) {
+		    seenCR = true;
+		    return '\r';
+		} else {
+		    return '\n';
+		}
+	    }
+	}
+	return c;
     }
 
     /** read into a byte array */
     public int read(byte bytes[]) throws IOException {
-        return read(bytes, 0, bytes.length);
+	return read(bytes, 0, bytes.length);
     }
 
-    /**
+    /** 
      * Read into a byte array at offset <i>off</i> for length <i>length</i>
      * bytes.
      */
     public int read(byte bytes[], int off, int length) throws IOException {
-        if (binaryMode)
-            return super.read(bytes, off, length);
+	if (binaryMode)
+	    return super.read(bytes, off, length);
 
-        int c;
-        int offStart = off;
+	int c;
+	int offStart = off;
 
-        while (--length >= 0) {
-            c = read();
-            if (c == -1)
-                break;
-            bytes[off++] = (byte)c;
-        }
-        return (off > offStart) ? off - offStart : -1;
+	while (--length >= 0) {
+	    c = read();
+	    if (c == -1)
+		break;
+	    bytes[off++] = (byte)c;
+	}
+	return (off > offStart) ? off - offStart : -1;
     }
 }
+

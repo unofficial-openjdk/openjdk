@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)ArabicShaping.cpp	1.20 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -50,7 +51,7 @@ const ArabicShaping::ShapeType ArabicShaping::shapeTypes[] =
 /*
     shaping array holds types for Arabic chars between 0610 and 0700
     other values are either unshaped, or transparent if a mark or format
-    code, except for format codes 200c (zero-width non-joiner) and 200d
+    code, except for format codes 200c (zero-width non-joiner) and 200d 
     (dual-width joiner) which are both unshaped and non_joining or
     dual-joining, respectively.
 */
@@ -148,8 +149,8 @@ void ArabicShaping::shape(const LEUnicode *chars, le_int32 offset, le_int32 char
                           le_bool rightToLeft, LEGlyphStorage &glyphStorage)
 {
     // iterate in logical order, store tags in visible order
-    //
-    // the effective right char is the most recently encountered
+    // 
+    // the effective right char is the most recently encountered 
     // non-transparent char
     //
     // four boolean states:
@@ -157,7 +158,7 @@ void ArabicShaping::shape(const LEUnicode *chars, le_int32 offset, le_int32 char
     //   the effective right char causes left shaping
     //   the current char shapes
     //   the current char causes right shaping
-    //
+    // 
     // if both cause shaping, then
     //   shaper.shape(errout, 2) (isolate to initial, or final to medial)
     //   shaper.shape(out, 1) (isolate to final)
@@ -168,7 +169,7 @@ void ArabicShaping::shape(const LEUnicode *chars, le_int32 offset, le_int32 char
 
     for (i = offset - 1; i >= 0; i -= 1) {
         rightType = getShapeType(chars[i]);
-
+        
         if (rightType != ST_TRANSPARENT) {
             break;
         }

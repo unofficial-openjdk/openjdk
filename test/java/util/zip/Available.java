@@ -47,7 +47,7 @@ public class Available {
         ZipInputStream z = new ZipInputStream(new FileInputStream(f));
         z.getNextEntry();
         tryAvail(z);
-
+        
         // test InflaterInputStream
         ZipFile zfile = new ZipFile(f);
         tryAvail(zfile.getInputStream(zfile.getEntry("Available.java")));

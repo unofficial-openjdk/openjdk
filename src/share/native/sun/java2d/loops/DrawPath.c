@@ -61,7 +61,7 @@ static void processPoint(DrawHandler* hnd, jint x0, jint y0)
 JNIEXPORT void JNICALL Java_sun_java2d_loops_DrawPath_DrawPath
    (JNIEnv *env, jobject self,
     jobject sg2d, jobject sData,
-    jint transX, jint transY, jobject p2df)
+    jint transX, jint transY, jobject p2df) 
 {
     jarray typesArray;
     jarray coordsArray;
@@ -127,12 +127,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_loops_DrawPath_DrawPath
                 rasInfo.bounds.y2 > rasInfo.bounds.y1)
             {
                 DrawHandlerData dHData;
-                DrawHandler drawHandler =
-                {
+                DrawHandler drawHandler = 
+                { 
                     &processLine,
                     &processPoint,
                     NULL,
-                    0, 0, 0, 0,
+                    0, 0, 0, 0, 
                     0, 0, 0, 0,
                     NULL
                 };
@@ -147,7 +147,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_loops_DrawPath_DrawPath
                  *  with C90 standard instead of C99)
                  */
                 dHData.pRasInfo = &rasInfo;
-                dHData.pixel = pixel;
+                dHData.pixel = pixel; 
                 dHData.pPrim = pPrim;
                 dHData.pCompInfo = &compInfo;
 
@@ -157,12 +157,12 @@ JNIEXPORT void JNICALL Java_sun_java2d_loops_DrawPath_DrawPath
                 drawHandler.yMax = rasInfo.bounds.y2;
                 drawHandler.pData = &dHData;
 
-                if (!doDrawPath(&drawHandler, NULL, transX, transY,
+                if (!doDrawPath(&drawHandler, NULL, transX, transY, 
                                 coords, maxCoords, types, numTypes,
                                 (stroke == sunHints_INTVAL_STROKE_PURE)?
                                     PH_STROKE_PURE : PH_STROKE_DEFAULT))
                 {
-                    JNU_ThrowArrayIndexOutOfBoundsException(env,
+                    JNU_ThrowArrayIndexOutOfBoundsException(env, 
                                                             "coords array");
                 }
 

@@ -28,7 +28,7 @@
  *   InternalException.
  *
  *  @author Robert Field
- *
+ *  
  *  @run build TestScaffold VMConnection TargetAdapter TargetListener
  *  @run compile -g CountEvent.java
  *  @run main CountEvent
@@ -58,13 +58,13 @@ class CountEventTarg {
         two();
         three();
     }
-
+    
     void one() {
     }
-
+    
     void two() {
     }
-
+    
     void three() {
     }
 }
@@ -80,7 +80,7 @@ public class CountEvent extends TestScaffold {
     }
 
     protected void runTests() throws Exception {
-
+        
         BreakpointEvent bpe = startToMain("CountEventTarg");
         ThreadReference thread = bpe.thread();
 
@@ -91,7 +91,7 @@ public class CountEvent extends TestScaffold {
 
         // uses addCountFilter
         BreakpointEvent bpEvent = resumeTo(className, "go", "()V");
-
+        
         bpEvent.request().disable();
         System.out.println("About to resume");
         resumeToVMDisconnect();

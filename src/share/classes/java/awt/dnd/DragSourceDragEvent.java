@@ -28,14 +28,14 @@ package java.awt.dnd;
 import java.awt.event.InputEvent;
 
 /**
- * The <code>DragSourceDragEvent</code> is
+ * The <code>DragSourceDragEvent</code> is 
  * delivered from the <code>DragSourceContextPeer</code>,
- * via the <code>DragSourceContext</code>, to the <code>DragSourceListener</code>
+ * via the <code>DragSourceContext</code>, to the <code>DragSourceListener</code> 
  * registered with that <code>DragSourceContext</code> and with its associated
- * <code>DragSource</code>.
+ * <code>DragSource</code>. 
  * <p>
  * The <code>DragSourceDragEvent</code> reports the <i>target drop action</i>
- * and the <i>user drop action</i> that reflect the current state of
+ * and the <i>user drop action</i> that reflect the current state of 
  * the drag operation.
  * <p>
  * <i>Target drop action</i> is one of <code>DnDConstants</code> that represents
@@ -45,16 +45,16 @@ import java.awt.event.InputEvent;
  * <p>
  * <i>User drop action</i> depends on the drop actions supported by the drag
  * source and the drop action selected by the user. The user can select a drop
- * action by pressing modifier keys during the drag operation:
- * <pre>
+ * action by pressing modifier keys during the drag operation: 
+ * <pre> 
  *   Ctrl + Shift -> ACTION_LINK
  *   Ctrl         -> ACTION_COPY
  *   Shift        -> ACTION_MOVE
- * </pre>
- * If the user selects a drop action, the <i>user drop action</i> is one of
+ * </pre> 
+ * If the user selects a drop action, the <i>user drop action</i> is one of 
  * <code>DnDConstants</code> that represents the selected drop action if this
  * drop action is supported by the drag source or
- * <code>DnDConstants.ACTION_NONE</code> if this drop action is not supported
+ * <code>DnDConstants.ACTION_NONE</code> if this drop action is not supported 
  * by the drag source.
  * <p>
  * If the user doesn't select a drop action, the set of
@@ -65,6 +65,7 @@ import java.awt.event.InputEvent;
  * first constant found. If no constant is found the <i>user drop action</i>
  * is <code>DnDConstants.ACTION_NONE</code>.
  *
+ * @version 	%I%, %G%
  * @since 1.2
  *
  */
@@ -74,12 +75,12 @@ public class DragSourceDragEvent extends DragSourceEvent {
     private static final long serialVersionUID = 481346297933902471L;
 
     /**
-     * Constructs a <code>DragSourceDragEvent</code>.
-     * This class is typically
-     * instantiated by the <code>DragSourceContextPeer</code>
-     * rather than directly
+     * Constructs a <code>DragSourceDragEvent</code>. 
+     * This class is typically 
+     * instantiated by the <code>DragSourceContextPeer</code> 
+     * rather than directly 
      * by client code.
-     * The coordinates for this <code>DragSourceDragEvent</code>
+     * The coordinates for this <code>DragSourceDragEvent</code>  
      * are not specified, so <code>getLocation</code> will return
      * <code>null</code> for this event.
      * <p>
@@ -91,8 +92,8 @@ public class DragSourceDragEvent extends DragSourceEvent {
      * constants.
      * This constructor does not throw any exception for invalid <code>dropAction</code>,
      * <code>action</code> and <code>modifiers</code>.
-     *
-     * @param dsc the <code>DragSourceContext</code> that is to manage
+     * 
+     * @param dsc the <code>DragSourceContext</code> that is to manage 
      *            notifications for this event.
      * @param dropAction the user drop action.
      * @param action the target drop action.
@@ -109,20 +110,20 @@ public class DragSourceDragEvent extends DragSourceEvent {
      * @see DragSourceEvent#getLocation
      */
 
-    public DragSourceDragEvent(DragSourceContext dsc, int dropAction,
-                               int action, int modifiers) {
-        super(dsc);
-
-        targetActions    = action;
-        gestureModifiers = modifiers;
-        this.dropAction  = dropAction;
+    public DragSourceDragEvent(DragSourceContext dsc, int dropAction, 
+                               int action, int modifiers) { 
+	super(dsc);
+	
+	targetActions    = action;
+	gestureModifiers = modifiers;
+	this.dropAction  = dropAction;
         if ((modifiers & ~(JDK_1_3_MODIFIERS | JDK_1_4_MODIFIERS)) != 0) {
             invalidModifiers = true;
         } else if ((getGestureModifiers() != 0) && (getGestureModifiersEx() == 0)) {
-            setNewModifiers();
-        } else if ((getGestureModifiers() == 0) && (getGestureModifiersEx() != 0)) {
-            setOldModifiers();
-        } else {
+	    setNewModifiers();
+	} else if ((getGestureModifiers() == 0) && (getGestureModifiersEx() != 0)) {
+	    setOldModifiers();
+	} else {
             invalidModifiers = true;
         }
     }
@@ -140,9 +141,9 @@ public class DragSourceDragEvent extends DragSourceEvent {
      * constants.
      * This constructor does not throw any exception for invalid <code>dropAction</code>,
      * <code>action</code> and <code>modifiers</code>.
-     *
+     * 
      * @param dsc the <code>DragSourceContext</code> associated with this
-     *        event.
+     *        event. 
      * @param dropAction the user drop action.
      * @param action the target drop action.
      * @param modifiers the modifier keys down during event (shift, ctrl,
@@ -159,7 +160,7 @@ public class DragSourceDragEvent extends DragSourceEvent {
      * @see java.awt.event.InputEvent
      * @since 1.4
      */
-    public DragSourceDragEvent(DragSourceContext dsc, int dropAction,
+    public DragSourceDragEvent(DragSourceContext dsc, int dropAction, 
                                int action, int modifiers, int x, int y) {
         super(dsc, x, y);
 
@@ -169,10 +170,10 @@ public class DragSourceDragEvent extends DragSourceEvent {
         if ((modifiers & ~(JDK_1_3_MODIFIERS | JDK_1_4_MODIFIERS)) != 0) {
             invalidModifiers = true;
         } else if ((getGestureModifiers() != 0) && (getGestureModifiersEx() == 0)) {
-            setNewModifiers();
-        } else if ((getGestureModifiers() == 0) && (getGestureModifiersEx() != 0)) {
-            setOldModifiers();
-        } else {
+	    setNewModifiers();    
+	} else if ((getGestureModifiers() == 0) && (getGestureModifiersEx() != 0)) {
+	    setOldModifiers();
+	} else {
             invalidModifiers = true;
         }
     }
@@ -183,12 +184,12 @@ public class DragSourceDragEvent extends DragSourceEvent {
      * @return the target drop action.
      */
     public int getTargetActions() {
-        return targetActions;
+	return targetActions;
     }
 
 
     private static final int JDK_1_3_MODIFIERS = InputEvent.SHIFT_DOWN_MASK - 1;
-    private static final int JDK_1_4_MODIFIERS =
+    private static final int JDK_1_4_MODIFIERS = 
             ((InputEvent.ALT_GRAPH_DOWN_MASK << 1) - 1) & ~JDK_1_3_MODIFIERS;
 
     /**
@@ -204,13 +205,13 @@ public class DragSourceDragEvent extends DragSourceEvent {
      */
 
     public int getGestureModifiers() {
-        return invalidModifiers ? gestureModifiers : gestureModifiers & JDK_1_3_MODIFIERS;
+	return invalidModifiers ? gestureModifiers : gestureModifiers & JDK_1_3_MODIFIERS;
     }
 
     /**
      * This method returns an <code>int</code> representing
      * the current state of the input device extended modifiers
-     * associated with the user's gesture.
+     * associated with the user's gesture. 
      * See {@link InputEvent#getModifiersEx}
      * <P>
      * If the <code>modifiers</code> passed to the constructor
@@ -221,26 +222,26 @@ public class DragSourceDragEvent extends DragSourceEvent {
      */
 
     public int getGestureModifiersEx() {
-        return invalidModifiers ? gestureModifiers : gestureModifiers & JDK_1_4_MODIFIERS;
+	return invalidModifiers ? gestureModifiers : gestureModifiers & JDK_1_4_MODIFIERS;
     }
 
     /**
      * This method returns the user drop action.
-     *
+     * 
      * @return the user drop action.
      */
     public int getUserAction() { return dropAction; }
 
     /**
-     * This method returns the logical intersection of
-     * the target drop action and the set of drop actions supported by
+     * This method returns the logical intersection of 
+     * the target drop action and the set of drop actions supported by 
      * the drag source.
      *
      * @return the logical intersection of the target drop action and
      *         the set of drop actions supported by the drag source.
      */
     public int getDropAction() {
-        return targetActions & getDragSourceContext().getSourceActions();
+	return targetActions & getDragSourceContext().getSourceActions();
     }
 
     /*
@@ -252,14 +253,14 @@ public class DragSourceDragEvent extends DragSourceEvent {
      *
      * @serial
      */
-    private int     targetActions    = DnDConstants.ACTION_NONE;
+    private int	    targetActions    = DnDConstants.ACTION_NONE;
 
     /**
      * The user drop action.
      *
      * @serial
      */
-    private int     dropAction       = DnDConstants.ACTION_NONE;
+    private int	    dropAction       = DnDConstants.ACTION_NONE;
 
     /**
      * The state of the input device modifiers associated with the user
@@ -267,7 +268,7 @@ public class DragSourceDragEvent extends DragSourceEvent {
      *
      * @serial
      */
-    private int     gestureModifiers = 0;
+    private int	    gestureModifiers = 0;
 
     /**
      * Indicates whether the <code>gestureModifiers</code> are invalid.
@@ -277,52 +278,52 @@ public class DragSourceDragEvent extends DragSourceEvent {
     private boolean invalidModifiers;
 
     /**
-     * Sets new modifiers by the old ones.
-     * The mouse modifiers have higher priority than overlaying key
+     * Sets new modifiers by the old ones. 
+     * The mouse modifiers have higher priority than overlaying key 
      * modifiers.
      */
     private void setNewModifiers() {
-        if ((gestureModifiers & InputEvent.BUTTON1_MASK) != 0) {
-            gestureModifiers |= InputEvent.BUTTON1_DOWN_MASK;
-        }
-        if ((gestureModifiers & InputEvent.BUTTON2_MASK) != 0) {
-            gestureModifiers |= InputEvent.BUTTON2_DOWN_MASK;
-        }
-        if ((gestureModifiers & InputEvent.BUTTON3_MASK) != 0) {
-            gestureModifiers |= InputEvent.BUTTON3_DOWN_MASK;
-        }
-        if ((gestureModifiers & InputEvent.SHIFT_MASK) != 0) {
-            gestureModifiers |= InputEvent.SHIFT_DOWN_MASK;
-        }
-        if ((gestureModifiers & InputEvent.CTRL_MASK) != 0) {
-            gestureModifiers |= InputEvent.CTRL_DOWN_MASK;
-        }
-        if ((gestureModifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
-            gestureModifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
-        }
-    }
+    	if ((gestureModifiers & InputEvent.BUTTON1_MASK) != 0) {
+	    gestureModifiers |= InputEvent.BUTTON1_DOWN_MASK;
+	}
+	if ((gestureModifiers & InputEvent.BUTTON2_MASK) != 0) {
+	    gestureModifiers |= InputEvent.BUTTON2_DOWN_MASK;
+	}
+	if ((gestureModifiers & InputEvent.BUTTON3_MASK) != 0) {
+	    gestureModifiers |= InputEvent.BUTTON3_DOWN_MASK;
+	}	
+	if ((gestureModifiers & InputEvent.SHIFT_MASK) != 0) {
+	    gestureModifiers |= InputEvent.SHIFT_DOWN_MASK;
+	}
+	if ((gestureModifiers & InputEvent.CTRL_MASK) != 0) {
+	    gestureModifiers |= InputEvent.CTRL_DOWN_MASK;
+	}
+	if ((gestureModifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+	    gestureModifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
+	}
+    }	
 
     /**
-     * Sets old modifiers by the new ones.
+     * Sets old modifiers by the new ones. 
      */
     private void setOldModifiers() {
-        if ((gestureModifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
-            gestureModifiers |= InputEvent.BUTTON1_MASK;
+	if ((gestureModifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
+	    gestureModifiers |= InputEvent.BUTTON1_MASK;
         }
         if ((gestureModifiers & InputEvent.BUTTON2_DOWN_MASK) != 0) {
             gestureModifiers |= InputEvent.BUTTON2_MASK;
         }
-        if ((gestureModifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
-            gestureModifiers |= InputEvent.BUTTON3_MASK;
+	if ((gestureModifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
+	    gestureModifiers |= InputEvent.BUTTON3_MASK;
         }
-        if ((gestureModifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
-            gestureModifiers |= InputEvent.SHIFT_MASK;
-        }
-        if ((gestureModifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
-            gestureModifiers |= InputEvent.CTRL_MASK;
-        }
-        if ((gestureModifiers & InputEvent.ALT_GRAPH_DOWN_MASK) != 0) {
-            gestureModifiers |= InputEvent.ALT_GRAPH_MASK;
-        }
+	if ((gestureModifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
+	    gestureModifiers |= InputEvent.SHIFT_MASK;
+	}
+	if ((gestureModifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
+	    gestureModifiers |= InputEvent.CTRL_MASK;
+	}
+	if ((gestureModifiers & InputEvent.ALT_GRAPH_DOWN_MASK) != 0) {
+	    gestureModifiers |= InputEvent.ALT_GRAPH_MASK;
+	}
     }
 }

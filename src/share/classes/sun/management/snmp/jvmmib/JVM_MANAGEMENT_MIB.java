@@ -107,7 +107,7 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
     /**
      * Initialization of the MIB with no registration in Java DMK.
      */
-    public void populate(MBeanServer server, ObjectName name)
+    public void populate(MBeanServer server, ObjectName name) 
         throws Exception {
         // Allow only one initialization of the MIB.
         //
@@ -115,41 +115,41 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
             return ;
         }
 
-        if (objectserver == null)
+        if (objectserver == null) 
             objectserver = new SnmpStandardObjectServer();
 
         // Initialization of the "JvmOS" group.
-        // To disable support of this group, redefine the
+        // To disable support of this group, redefine the 
         // "createJvmOSMetaNode()" factory method, and make it return "null"
         //
         initJvmOS(server);
 
         // Initialization of the "JvmCompilation" group.
-        // To disable support of this group, redefine the
+        // To disable support of this group, redefine the 
         // "createJvmCompilationMetaNode()" factory method, and make it return "null"
         //
         initJvmCompilation(server);
 
         // Initialization of the "JvmRuntime" group.
-        // To disable support of this group, redefine the
+        // To disable support of this group, redefine the 
         // "createJvmRuntimeMetaNode()" factory method, and make it return "null"
         //
         initJvmRuntime(server);
 
         // Initialization of the "JvmThreading" group.
-        // To disable support of this group, redefine the
+        // To disable support of this group, redefine the 
         // "createJvmThreadingMetaNode()" factory method, and make it return "null"
         //
         initJvmThreading(server);
 
         // Initialization of the "JvmMemory" group.
-        // To disable support of this group, redefine the
+        // To disable support of this group, redefine the 
         // "createJvmMemoryMetaNode()" factory method, and make it return "null"
         //
         initJvmMemory(server);
 
         // Initialization of the "JvmClassLoading" group.
-        // To disable support of this group, redefine the
+        // To disable support of this group, redefine the 
         // "createJvmClassLoadingMetaNode()" factory method, and make it return "null"
         //
         initJvmClassLoading(server);
@@ -159,22 +159,22 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Initialization of the "JvmOS" group.
-    //
+    // 
     // ------------------------------------------------------------
 
 
     /**
      * Initialization of the "JvmOS" group.
-     *
-     * To disable support of this group, redefine the
+     * 
+     * To disable support of this group, redefine the 
      * "createJvmOSMetaNode()" factory method, and make it return "null"
-     *
+     * 
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      **/
-    protected void initJvmOS(MBeanServer server)
+    protected void initJvmOS(MBeanServer server) 
         throws Exception {
         final String oid = getGroupOid("JvmOS", "1.3.6.1.4.1.42.2.145.3.163.1.1.6");
         ObjectName objname = null;
@@ -198,18 +198,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmOS" group metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmOS")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmOS" group (JvmOSMeta)
-     *
+     * 
      **/
     protected JvmOSMeta createJvmOSMetaNode(String groupName,
                 String groupOid, ObjectName groupObjname, MBeanServer server)  {
@@ -219,18 +219,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmOS" group MBean.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated MBean class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmOS")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the MBean class generated for the
      *         "JvmOS" group (JvmOS)
-     *
+     * 
      * Note that when using standard metadata,
      * the returned object must implement the "JvmOSMBean"
      * interface.
@@ -240,22 +240,22 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Initialization of the "JvmCompilation" group.
-    //
+    // 
     // ------------------------------------------------------------
 
 
     /**
      * Initialization of the "JvmCompilation" group.
-     *
-     * To disable support of this group, redefine the
+     * 
+     * To disable support of this group, redefine the 
      * "createJvmCompilationMetaNode()" factory method, and make it return "null"
-     *
+     * 
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      **/
-    protected void initJvmCompilation(MBeanServer server)
+    protected void initJvmCompilation(MBeanServer server) 
         throws Exception {
         final String oid = getGroupOid("JvmCompilation", "1.3.6.1.4.1.42.2.145.3.163.1.1.5");
         ObjectName objname = null;
@@ -279,18 +279,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmCompilation" group metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmCompilation")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmCompilation" group (JvmCompilationMeta)
-     *
+     * 
      **/
     protected JvmCompilationMeta createJvmCompilationMetaNode(String groupName,
                 String groupOid, ObjectName groupObjname, MBeanServer server)  {
@@ -300,18 +300,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmCompilation" group MBean.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated MBean class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmCompilation")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the MBean class generated for the
      *         "JvmCompilation" group (JvmCompilation)
-     *
+     * 
      * Note that when using standard metadata,
      * the returned object must implement the "JvmCompilationMBean"
      * interface.
@@ -321,22 +321,22 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Initialization of the "JvmRuntime" group.
-    //
+    // 
     // ------------------------------------------------------------
 
 
     /**
      * Initialization of the "JvmRuntime" group.
-     *
-     * To disable support of this group, redefine the
+     * 
+     * To disable support of this group, redefine the 
      * "createJvmRuntimeMetaNode()" factory method, and make it return "null"
-     *
+     * 
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      **/
-    protected void initJvmRuntime(MBeanServer server)
+    protected void initJvmRuntime(MBeanServer server) 
         throws Exception {
         final String oid = getGroupOid("JvmRuntime", "1.3.6.1.4.1.42.2.145.3.163.1.1.4");
         ObjectName objname = null;
@@ -360,18 +360,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmRuntime" group metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmRuntime")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmRuntime" group (JvmRuntimeMeta)
-     *
+     * 
      **/
     protected JvmRuntimeMeta createJvmRuntimeMetaNode(String groupName,
                 String groupOid, ObjectName groupObjname, MBeanServer server)  {
@@ -381,18 +381,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmRuntime" group MBean.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated MBean class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmRuntime")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the MBean class generated for the
      *         "JvmRuntime" group (JvmRuntime)
-     *
+     * 
      * Note that when using standard metadata,
      * the returned object must implement the "JvmRuntimeMBean"
      * interface.
@@ -402,22 +402,22 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Initialization of the "JvmThreading" group.
-    //
+    // 
     // ------------------------------------------------------------
 
 
     /**
      * Initialization of the "JvmThreading" group.
-     *
-     * To disable support of this group, redefine the
+     * 
+     * To disable support of this group, redefine the 
      * "createJvmThreadingMetaNode()" factory method, and make it return "null"
-     *
+     * 
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      **/
-    protected void initJvmThreading(MBeanServer server)
+    protected void initJvmThreading(MBeanServer server) 
         throws Exception {
         final String oid = getGroupOid("JvmThreading", "1.3.6.1.4.1.42.2.145.3.163.1.1.3");
         ObjectName objname = null;
@@ -441,18 +441,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmThreading" group metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmThreading")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmThreading" group (JvmThreadingMeta)
-     *
+     * 
      **/
     protected JvmThreadingMeta createJvmThreadingMetaNode(String groupName,
                 String groupOid, ObjectName groupObjname, MBeanServer server)  {
@@ -462,18 +462,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmThreading" group MBean.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated MBean class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmThreading")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the MBean class generated for the
      *         "JvmThreading" group (JvmThreading)
-     *
+     * 
      * Note that when using standard metadata,
      * the returned object must implement the "JvmThreadingMBean"
      * interface.
@@ -483,22 +483,22 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Initialization of the "JvmMemory" group.
-    //
+    // 
     // ------------------------------------------------------------
 
 
     /**
      * Initialization of the "JvmMemory" group.
-     *
-     * To disable support of this group, redefine the
+     * 
+     * To disable support of this group, redefine the 
      * "createJvmMemoryMetaNode()" factory method, and make it return "null"
-     *
+     * 
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      **/
-    protected void initJvmMemory(MBeanServer server)
+    protected void initJvmMemory(MBeanServer server) 
         throws Exception {
         final String oid = getGroupOid("JvmMemory", "1.3.6.1.4.1.42.2.145.3.163.1.1.2");
         ObjectName objname = null;
@@ -522,18 +522,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmMemory" group metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmMemory")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmMemory" group (JvmMemoryMeta)
-     *
+     * 
      **/
     protected JvmMemoryMeta createJvmMemoryMetaNode(String groupName,
                 String groupOid, ObjectName groupObjname, MBeanServer server)  {
@@ -543,18 +543,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmMemory" group MBean.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated MBean class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmMemory")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the MBean class generated for the
      *         "JvmMemory" group (JvmMemory)
-     *
+     * 
      * Note that when using standard metadata,
      * the returned object must implement the "JvmMemoryMBean"
      * interface.
@@ -564,22 +564,22 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Initialization of the "JvmClassLoading" group.
-    //
+    // 
     // ------------------------------------------------------------
 
 
     /**
      * Initialization of the "JvmClassLoading" group.
-     *
-     * To disable support of this group, redefine the
+     * 
+     * To disable support of this group, redefine the 
      * "createJvmClassLoadingMetaNode()" factory method, and make it return "null"
-     *
+     * 
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      **/
-    protected void initJvmClassLoading(MBeanServer server)
+    protected void initJvmClassLoading(MBeanServer server) 
         throws Exception {
         final String oid = getGroupOid("JvmClassLoading", "1.3.6.1.4.1.42.2.145.3.163.1.1.1");
         ObjectName objname = null;
@@ -603,18 +603,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmClassLoading" group metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmClassLoading")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmClassLoading" group (JvmClassLoadingMeta)
-     *
+     * 
      **/
     protected JvmClassLoadingMeta createJvmClassLoadingMetaNode(String groupName,
                 String groupOid, ObjectName groupObjname, MBeanServer server)  {
@@ -624,18 +624,18 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
     /**
      * Factory method for "JvmClassLoading" group MBean.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated MBean class with your own customized class.
-     *
+     * 
      * @param groupName Name of the group ("JvmClassLoading")
      * @param groupOid  OID of this group
      * @param groupObjname ObjectName for this group (may be null)
      * @param server    MBeanServer for this group (may be null)
-     *
+     * 
      * @return An instance of the MBean class generated for the
      *         "JvmClassLoading" group (JvmClassLoading)
-     *
+     * 
      * Note that when using standard metadata,
      * the returned object must implement the "JvmClassLoadingMBean"
      * interface.
@@ -645,10 +645,10 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "registerTableMeta" method defined in "SnmpMib".
     // See the "SnmpMib" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void registerTableMeta( String name, SnmpMibTable meta) {
@@ -659,10 +659,10 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "getRegisteredTableMeta" method defined in "SnmpMib".
     // See the "SnmpMib" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public SnmpMibTable getRegisteredTableMeta( String name ) {
@@ -672,7 +672,7 @@ public abstract class JVM_MANAGEMENT_MIB extends SnmpMib implements Serializable
     }
 
     public SnmpStandardObjectServer getStandardObjectServer() {
-        if (objectserver == null)
+        if (objectserver == null) 
             objectserver = new SnmpStandardObjectServer();
         return objectserver;
     }

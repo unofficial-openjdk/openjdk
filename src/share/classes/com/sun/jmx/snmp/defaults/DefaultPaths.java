@@ -34,10 +34,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.StringTokenizer;
 
-/**
+/** 
  * This class represents a set of default directories used by Java DMK.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  * @since 1.5
  */
@@ -45,9 +45,9 @@ public class DefaultPaths {
     private static final String INSTALL_PATH_RESOURCE_NAME = "com/sun/jdmk/defaults/install.path";
     // private constructor defined to "hide" the default public constructor
     private DefaultPaths() {
-
+	
     }
-
+    
     // PUBLIC STATIC METHODS
     //----------------------
 
@@ -97,7 +97,7 @@ public class DefaultPaths {
      *
      * @param dirname The directory where Java DMK resides.
      */
-    public static void setInstallDir(String dirname) {
+    public static void setInstallDir(String dirname) {    
         installDir = dirname;
     }
 
@@ -151,7 +151,7 @@ public class DefaultPaths {
      *
      * @param dirname The <CODE>etc</CODE> directory for Java DMK.
      */
-    public static void setEtcDir(String dirname) {
+    public static void setEtcDir(String dirname) {    
         etcDir = dirname;
     }
 
@@ -166,7 +166,7 @@ public class DefaultPaths {
      * @return Java DMK <CODE>tmp</CODE> directory.
      */
     public static String getTmpDir() {
-         if (tmpDir == null)
+	 if (tmpDir == null)
             return getInstallDir("tmp");
         else
             return tmpDir;
@@ -212,25 +212,25 @@ public class DefaultPaths {
 
     // PRIVATE STATIC METHODS
     //-----------------------
-
-    private static String useRessourceFile() {
-        InputStream in = null;
-        BufferedReader r = null;
-        try {
-            in =
-                DefaultPaths.class.getClassLoader().getResourceAsStream(INSTALL_PATH_RESOURCE_NAME);
-            if(in == null) return null;
-            r = new BufferedReader(new InputStreamReader(in));
-            installDir = r.readLine();
-        }catch(Exception e) {
-        }
-        finally {
-            try {
-                if(in != null) in.close();
-                if(r != null) r.close();
-            }catch(Exception e) {}
-        }
-        return installDir;
+    
+    private static String useRessourceFile() {	
+	InputStream in = null;
+	BufferedReader r = null;
+	try {
+	    in = 
+		DefaultPaths.class.getClassLoader().getResourceAsStream(INSTALL_PATH_RESOURCE_NAME);
+	    if(in == null) return null;
+	    r = new BufferedReader(new InputStreamReader(in));
+	    installDir = r.readLine();
+	}catch(Exception e) {
+	}
+	finally {
+	    try {
+		if(in != null) in.close();
+		if(r != null) r.close();
+	    }catch(Exception e) {}
+	}
+	return installDir;
     }
 
     // PRIVATE VARIABLES

@@ -33,13 +33,14 @@ import sun.security.x509.X500Name;
 public class BadName {
 
     public static void main(String args[]) throws Exception {
-        try {
-            // This used to throw java.lang.OutOfMemoryError, from which no
-            // recovery is possible.
-            // In the example below, the correct DN would be: "CN=John Doe"
-            X500Name name = new X500Name("John Doe");
-            System.out.println(name.toString());
-        } catch (IOException ioe) {
-        }
+	try {
+	    // This used to throw java.lang.OutOfMemoryError, from which no
+	    // recovery is possible.
+	    // In the example below, the correct DN would be: "CN=John Doe"
+	    X500Name name = new X500Name("John Doe");
+	    System.out.println(name.toString());
+	} catch (IOException ioe) {
+	}
     }
 }
+

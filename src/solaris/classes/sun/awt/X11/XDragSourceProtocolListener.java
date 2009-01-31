@@ -58,36 +58,36 @@ interface XDragSourceProtocolListener {
 
     /**
      * Called when the current drop target signals that the drag-and-drop
-     * operation is finished.
+     * operation is finished. 
      */
     void handleDragFinished();
 
     /**
      * Called when the current drop target signals that the drag-and-drop
-     * operation is finished.
+     * operation is finished. 
      *
      * @param success true if the drop target successfully performed the drop
-     *                action
+     *                action 
      */
     void handleDragFinished(boolean success);
 
     /**
      * Called when the current drop target signals that the drag-and-drop
-     * operation is finished.
+     * operation is finished. 
      *
      * @param action the drop action performed by the drop target
      * @param success true if the drop target successfully performed the drop
-     *                action
+     *                action 
      */
     void handleDragFinished(boolean success, int action);
 
     /**
      * Called when the current drop target signals that the drag-and-drop
-     * operation is finished.
+     * operation is finished. 
      *
      * @param action the drop action performed by the drop target
      * @param success true if the drop target successfully performed the drop
-     *                action
+     *                action 
      * @param x the x coordinate of the pointer location in screen coordinates
      *          for the signal
      * @param y the x coordinate of the pointer location in screen coordinates
@@ -96,7 +96,7 @@ interface XDragSourceProtocolListener {
     void handleDragFinished(boolean success, int action, int x, int y);
 
     /**
-     * Terminates the current drag-and-drop operation (if any) and performs
+     * Terminates the current drag-and-drop operation (if any) and performs 
      * the necessary cleanup.
      * @param time the time stamp of the event that triggered drag termination
      *             or XlibWrapper.CurrentTime

@@ -43,6 +43,7 @@ import java.security.AccessController;
  * instrumentation buffer for the target HotSpot Java Virtual Machine.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 // Suppreess unchecked conversion warning at line 34.

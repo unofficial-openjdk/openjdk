@@ -79,6 +79,7 @@ import java.util.HashMap;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -91,14 +92,14 @@ public class CoderResult {
     private static final int CR_UNMAPPABLE = 3;
 
     private static final String[] names
-        = { "UNDERFLOW", "OVERFLOW", "MALFORMED", "UNMAPPABLE" };
+	= { "UNDERFLOW", "OVERFLOW", "MALFORMED", "UNMAPPABLE" };
 
     private final int type;
     private final int length;
 
     private CoderResult(int type, int length) {
-        this.type = type;
-        this.length = length;
+	this.type = type;
+	this.length = length;
     }
 
     /**
@@ -107,8 +108,8 @@ public class CoderResult {
      * @return  A descriptive string
      */
     public String toString() {
-        String nm = names[type];
-        return isError() ? nm + "[" + length + "]" : nm;
+	String nm = names[type];
+	return isError() ? nm + "[" + length + "]" : nm;
     }
 
     /**
@@ -117,7 +118,7 @@ public class CoderResult {
      * @return  <tt>true</tt> if, and only if, this object denotes underflow
      */
     public boolean isUnderflow() {
-        return (type == CR_UNDERFLOW);
+	return (type == CR_UNDERFLOW);
     }
 
     /**
@@ -126,7 +127,7 @@ public class CoderResult {
      * @return  <tt>true</tt> if, and only if, this object denotes overflow
      */
     public boolean isOverflow() {
-        return (type == CR_OVERFLOW);
+	return (type == CR_OVERFLOW);
     }
 
     /**
@@ -136,7 +137,7 @@ public class CoderResult {
      *          malformed-input error or an unmappable-character error
      */
     public boolean isError() {
-        return (type >= CR_ERROR_MIN);
+	return (type >= CR_ERROR_MIN);
     }
 
     /**
@@ -147,7 +148,7 @@ public class CoderResult {
      *          malformed-input error
      */
     public boolean isMalformed() {
-        return (type == CR_MALFORMED);
+	return (type == CR_MALFORMED);
     }
 
     /**
@@ -158,7 +159,7 @@ public class CoderResult {
      *          unmappable-character error
      */
     public boolean isUnmappable() {
-        return (type == CR_UNMAPPABLE);
+	return (type == CR_UNMAPPABLE);
     }
 
     /**
@@ -172,9 +173,9 @@ public class CoderResult {
      *          if the {@link #isError() isError} does not return <tt>true</tt>
      */
     public int length() {
-        if (!isError())
-            throw new UnsupportedOperationException();
-        return length;
+	if (!isError())
+	    throw new UnsupportedOperationException();
+	return length;
     }
 
     /**
@@ -183,46 +184,46 @@ public class CoderResult {
      * that additional input is required.  </p>
      */
     public static final CoderResult UNDERFLOW
-        = new CoderResult(CR_UNDERFLOW, 0);
+	= new CoderResult(CR_UNDERFLOW, 0);
 
     /**
      * Result object indicating overflow, meaning that there is insufficient
      * room in the output buffer.  </p>
      */
     public static final CoderResult OVERFLOW
-        = new CoderResult(CR_OVERFLOW, 0);
+	= new CoderResult(CR_OVERFLOW, 0);
 
     private static abstract class Cache {
 
-        private Map cache = null;
+	private Map cache = null;
 
-        protected abstract CoderResult create(int len);
+	protected abstract CoderResult create(int len);
 
-        private synchronized CoderResult get(int len) {
-            if (len <= 0)
-                throw new IllegalArgumentException("Non-positive length");
-            Integer k = new Integer(len);
-            WeakReference w;
-            CoderResult e = null;
-            if (cache == null) {
-                cache = new HashMap();
-            } else if ((w = (WeakReference)cache.get(k)) != null) {
-                e = (CoderResult)w.get();
-            }
-            if (e == null) {
-                e = create(len);
-                cache.put(k, new WeakReference(e));
-            }
-            return e;
-        }
+	private synchronized CoderResult get(int len) {
+	    if (len <= 0)
+		throw new IllegalArgumentException("Non-positive length");
+	    Integer k = new Integer(len);
+	    WeakReference w;
+	    CoderResult e = null;
+	    if (cache == null) {
+		cache = new HashMap();
+	    } else if ((w = (WeakReference)cache.get(k)) != null) {
+		e = (CoderResult)w.get();
+	    }
+	    if (e == null) {
+		e = create(len);
+		cache.put(k, new WeakReference(e));
+	    }
+	    return e;
+	}
 
     }
 
     private static Cache malformedCache
-        = new Cache() {
-                public CoderResult create(int len) {
-                    return new CoderResult(CR_MALFORMED, len);
-                }};
+	= new Cache() {
+		public CoderResult create(int len) {
+		    return new CoderResult(CR_MALFORMED, len);
+		}};
 
     /**
      * Static factory method that returns the unique object describing a
@@ -231,14 +232,14 @@ public class CoderResult {
      * @return  The requested coder-result object
      */
     public static CoderResult malformedForLength(int length) {
-        return malformedCache.get(length);
+	return malformedCache.get(length);
     }
 
     private static Cache unmappableCache
-        = new Cache() {
-                public CoderResult create(int len) {
-                    return new CoderResult(CR_UNMAPPABLE, len);
-                }};
+	= new Cache() {
+		public CoderResult create(int len) {
+		    return new CoderResult(CR_UNMAPPABLE, len);
+		}};
 
     /**
      * Static factory method that returns the unique result object describing
@@ -247,7 +248,7 @@ public class CoderResult {
      * @return  The requested coder-result object
      */
     public static CoderResult unmappableForLength(int length) {
-        return unmappableCache.get(length);
+	return unmappableCache.get(length);
     }
 
     /**
@@ -269,16 +270,16 @@ public class CoderResult {
      *          exceptions length value will be that of this object
      */
     public void throwException()
-        throws CharacterCodingException
+	throws CharacterCodingException
     {
-        switch (type) {
-        case CR_UNDERFLOW:   throw new BufferUnderflowException();
-        case CR_OVERFLOW:    throw new BufferOverflowException();
-        case CR_MALFORMED:   throw new MalformedInputException(length);
-        case CR_UNMAPPABLE:  throw new UnmappableCharacterException(length);
-        default:
-            assert false;
-        }
+	switch (type) {
+	case CR_UNDERFLOW:   throw new BufferUnderflowException();
+	case CR_OVERFLOW:    throw new BufferOverflowException();
+	case CR_MALFORMED:   throw new MalformedInputException(length);
+	case CR_UNMAPPABLE:  throw new UnmappableCharacterException(length);
+	default:
+	    assert false;
+	}
     }
 
 }

@@ -67,8 +67,8 @@ public final class DHKeyPairGenerator extends KeyPairGeneratorSpi {
     private SecureRandom random;
 
     public DHKeyPairGenerator() {
-        super();
-        initialize(1024, null);
+	super();
+	initialize(1024, null);
     }
 
     /**
@@ -80,16 +80,16 @@ public final class DHKeyPairGenerator extends KeyPairGeneratorSpi {
      * @param random the source of randomness
      */
     public void initialize(int keysize, SecureRandom random) {
-        if ((keysize < 512) || (keysize > 1024) || (keysize % 64 != 0)) {
-            throw new InvalidParameterException("Keysize must be multiple "
-                                                + "of 64, and can only range "
-                                                + "from 512 to 1024 "
-                                                + "(inclusive)");
-        }
-        this.pSize = keysize;
-        this.lSize = 0;
-        this.random = random;
-        this.params = null;
+	if ((keysize < 512) || (keysize > 1024) || (keysize % 64 != 0)) {
+	    throw new InvalidParameterException("Keysize must be multiple "
+						+ "of 64, and can only range "
+						+ "from 512 to 1024 "
+						+ "(inclusive)");
+	}
+	this.pSize = keysize;
+	this.lSize = 0;
+	this.random = random;
+	this.params = null;
     }
 
     /**
@@ -107,30 +107,30 @@ public final class DHKeyPairGenerator extends KeyPairGeneratorSpi {
      * are inappropriate for this key pair generator
      */
     public void initialize(AlgorithmParameterSpec algParams,
-            SecureRandom random) throws InvalidAlgorithmParameterException {
-        if (!(algParams instanceof DHParameterSpec)){
-            throw new InvalidAlgorithmParameterException
-                ("Inappropriate parameter type");
-        }
+	    SecureRandom random) throws InvalidAlgorithmParameterException {
+	if (!(algParams instanceof DHParameterSpec)){
+	    throw new InvalidAlgorithmParameterException
+		("Inappropriate parameter type");
+	}
 
-        params = (DHParameterSpec)algParams;
-        pSize = params.getP().bitLength();
-        if ((pSize < 512) || (pSize > 1024) ||
-            (pSize % 64 != 0)) {
-            throw new InvalidAlgorithmParameterException
-                ("Prime size must be multiple of 64, and can only range "
-                 + "from 512 to 1024 (inclusive)");
-        }
+	params = (DHParameterSpec)algParams;
+	pSize = params.getP().bitLength();
+	if ((pSize < 512) || (pSize > 1024) ||
+	    (pSize % 64 != 0)) {
+	    throw new InvalidAlgorithmParameterException
+		("Prime size must be multiple of 64, and can only range "
+		 + "from 512 to 1024 (inclusive)");
+	}
 
-        // exponent size is optional, could be 0
-        lSize = params.getL();
+	// exponent size is optional, could be 0
+	lSize = params.getL();
 
-        // Require exponentSize < primeSize
-        if ((lSize != 0) && (lSize > pSize)) {
-            throw new InvalidAlgorithmParameterException
-                ("Exponent size must not be larger than modulus size");
-        }
-        this.random = random;
+	// Require exponentSize < primeSize
+	if ((lSize != 0) && (lSize > pSize)) {
+	    throw new InvalidAlgorithmParameterException
+		("Exponent size must not be larger than modulus size");
+	}
+	this.random = random;
     }
 
     /**
@@ -139,48 +139,48 @@ public final class DHKeyPairGenerator extends KeyPairGeneratorSpi {
      * @return the new key pair
      */
     public KeyPair generateKeyPair() {
-        if (random == null) {
-            random = SunJCE.RANDOM;
-        }
+	if (random == null) {
+	    random = SunJCE.RANDOM;
+	}
 
-        if (params == null) {
-            try {
-                params = ParameterCache.getDHParameterSpec(pSize, random);
-            } catch (GeneralSecurityException e) {
-                // should never happen
-                throw new ProviderException(e);
-            }
-        }
+	if (params == null) {
+	    try {
+		params = ParameterCache.getDHParameterSpec(pSize, random);
+	    } catch (GeneralSecurityException e) {
+		// should never happen
+		throw new ProviderException(e);
+	    }
+	}
 
-        BigInteger p = params.getP();
-        BigInteger g = params.getG();
+	BigInteger p = params.getP();
+	BigInteger g = params.getG();
 
-        if (lSize <= 0) {
-            // use an exponent size of (pSize / 2) but at least 384 bits
-            lSize = Math.max(384, pSize >> 1);
-            // if lSize is larger than pSize, limit by pSize
-            lSize = Math.min(lSize, pSize);
-        }
+	if (lSize <= 0) {
+	    // use an exponent size of (pSize / 2) but at least 384 bits
+	    lSize = Math.max(384, pSize >> 1);
+	    // if lSize is larger than pSize, limit by pSize
+	    lSize = Math.min(lSize, pSize);
+	}
 
-        BigInteger x;
-        BigInteger pMinus2 = p.subtract(BigInteger.valueOf(2));
+	BigInteger x;
+	BigInteger pMinus2 = p.subtract(BigInteger.valueOf(2));
 
-        //
-        // Handbook of Applied Cryptography:  Menezes, et.al.
-        // Repeat if the following does not hold:
-        //     1 <= x <= p-2
-        //
-        do {
-            // generate random x up to 2^lSize bits long
-            x = new BigInteger(lSize, random);
-        } while ((x.compareTo(BigInteger.ONE) < 0) ||
-            ((x.compareTo(pMinus2) > 0)));
+	//
+	// Handbook of Applied Cryptography:  Menezes, et.al.
+	// Repeat if the following does not hold:
+	//     1 <= x <= p-2
+	//
+	do {
+	    // generate random x up to 2^lSize bits long
+	    x = new BigInteger(lSize, random);
+	} while ((x.compareTo(BigInteger.ONE) < 0) ||
+	    ((x.compareTo(pMinus2) > 0)));
 
-        // calculate public value y
-        BigInteger y = g.modPow(x, p);
+	// calculate public value y
+	BigInteger y = g.modPow(x, p);
 
-        DHPublicKey pubKey = new DHPublicKey(y, p, g, lSize);
-        DHPrivateKey privKey = new DHPrivateKey(x, p, g, lSize);
-        return new KeyPair(pubKey, privKey);
+	DHPublicKey pubKey = new DHPublicKey(y, p, g, lSize);
+	DHPrivateKey privKey = new DHPrivateKey(x, p, g, lSize);
+	return new KeyPair(pubKey, privKey);
     }
 }

@@ -31,10 +31,10 @@ import java.awt.geom.Rectangle2D;
 
 class NullFontScaler extends FontScaler {
     NullFontScaler() {}
-
+    
     public NullFontScaler(Font2D font, int indexInCollection,
         boolean supportsCJK, int filesize) {}
-
+    
     StrikeMetrics getFontMetrics(long pScalerContext) {
         return new StrikeMetrics(0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,
         0xf0,0xf0,0xf0,0xf0);
@@ -51,7 +51,7 @@ class NullFontScaler extends FontScaler {
     }
 
     Rectangle2D.Float getGlyphOutlineBounds(long pContext, int glyphCode) {
-        return new Rectangle2D.Float(0, 0, 0, 0);
+        return new Rectangle2D.Float(0, 0, 0, 0);        
     }
 
     GeneralPath getGlyphOutline(long pScalerContext, int glyphCode,
@@ -63,9 +63,9 @@ class NullFontScaler extends FontScaler {
         int numGlyphs, float x, float y) {
         return new GeneralPath();
     }
-
+    
     long getLayoutTableCache() {return 0L;}
-
+    
     long createScalerContext(double[] matrix, boolean fontType, int aa,
         int fm, float boldness, float italic) {
         return getNullScalerContext();
@@ -74,19 +74,19 @@ class NullFontScaler extends FontScaler {
     void invalidateScalerContext(long ppScalerContext) {
         //nothing to do
     }
-
+    
     int getNumGlyphs() throws FontScalerException {
         return 0;
     }
-
+    
     int getMissingGlyphCode() throws FontScalerException {
         return 0;
     }
-
+    
     int getGlyphCode(char charCode) throws FontScalerException {
         return 0;
     }
-
+    
     long getUnitsPerEm() {
         return 2048;
     }
@@ -95,7 +95,7 @@ class NullFontScaler extends FontScaler {
                                 int glyphCode, int ptNumber) {
         return null;
     }
-
+    
     /* Ideally NullFontScaler should not have native code.
        However, at this moment we need these methods to be native because:
          - glyph cache code assumes null pointers to GlyphInfo structures
@@ -103,4 +103,4 @@ class NullFontScaler extends FontScaler {
     */
     static native long getNullScalerContext();
     native long getGlyphImage(long pScalerContext, int glyphCode);
-}
+}    

@@ -30,18 +30,18 @@ import java.nio.charset.Charset;
 public class MS50220 extends ISO2022_JP
 {
     public MS50220() {
-        super("x-windows-50220",
-              ExtendedCharsets.aliasesFor("x-windows-50220"));
+	super("x-windows-50220", 
+	      ExtendedCharsets.aliasesFor("x-windows-50220"));
     }
 
     public String historicalName() {
-        return "MS50220";
+	return "MS50220";
     }
 
     public boolean contains(Charset cs) {
-      return super.contains(cs) ||
-             (cs instanceof JIS_X_0212) ||
-             (cs instanceof MS50220);
+      return super.contains(cs) || 
+	     (cs instanceof JIS_X_0212) ||
+	     (cs instanceof MS50220);
     }
 
     protected short[] getDecIndex1() {

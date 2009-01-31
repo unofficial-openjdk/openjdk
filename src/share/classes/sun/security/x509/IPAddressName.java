@@ -63,6 +63,7 @@ import sun.security.util.DerValue;
  * @see GeneralNameInterface
  * @see GeneralNames
  *
+ * @version %I%
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
@@ -89,18 +90,18 @@ public class IPAddressName implements GeneralNameInterface {
      * @throws IOException if address is not a valid IPv4 or IPv6 address
      */
     public IPAddressName(byte[] address) throws IOException {
-        /*
-         * A valid address must consist of 4 bytes of address and
-         * optional 4 bytes of 4 bytes of mask, or 16 bytes of address
-         * and optional 16 bytes of mask.
-         */
-        if (address.length == 4 || address.length == 8) {
-            isIPv4 = true;
-        } else if (address.length == 16 || address.length == 32) {
-            isIPv4 = false;
-        } else {
-            throw new IOException("Invalid IPAddressName");
-        }
+	/*
+	 * A valid address must consist of 4 bytes of address and
+	 * optional 4 bytes of 4 bytes of mask, or 16 bytes of address
+	 * and optional 16 bytes of mask.
+	 */
+	if (address.length == 4 || address.length == 8) {
+	    isIPv4 = true;
+	} else if (address.length == 16 || address.length == 32) {
+	    isIPv4 = false;
+	} else {
+	    throw new IOException("Invalid IPAddressName");
+	}
         this.address = address;
     }
 
@@ -114,9 +115,9 @@ public class IPAddressName implements GeneralNameInterface {
      * <p>
      * [IETF RFC2373 IP Version 6 Addressing Architecture]
      * For IPv6 addresses, the forms are "a1:a2:...:a8" or "a1:a2:...:a8/n",
-     * where a1-a8 are hexadecimal values representing the eight 16-bit pieces
-     * of the address. If /n is used, n is a decimal number indicating how many
-     * of the leftmost contiguous bits of the address comprise the prefix for
+     * where a1-a8 are hexadecimal values representing the eight 16-bit pieces 
+     * of the address. If /n is used, n is a decimal number indicating how many 
+     * of the leftmost contiguous bits of the address comprise the prefix for 
      * this subnet. Internally, a mask value is created using the prefix length.
      * <p>
      * @param name String form of IPAddressName
@@ -125,26 +126,26 @@ public class IPAddressName implements GeneralNameInterface {
      */
     public IPAddressName(String name) throws IOException {
 
-        if (name == null || name.length() == 0) {
-            throw new IOException("IPAddress cannot be null or empty");
-        }
-        if (name.charAt(name.length() - 1) == '/') {
-            throw new IOException("Invalid IPAddress: " + name);
-        }
+	if (name == null || name.length() == 0) {
+	    throw new IOException("IPAddress cannot be null or empty");
+	}
+	if (name.charAt(name.length() - 1) == '/') {
+	    throw new IOException("Invalid IPAddress: " + name);
+	}
 
-        if (name.indexOf(':') >= 0) {
-            // name is IPv6: uses colons as value separators
-            // Parse name into byte-value address components and optional
-            // prefix
-            parseIPv6(name);
-            isIPv4 = false;
-        } else if (name.indexOf('.') >= 0) {
-            //name is IPv4: uses dots as value separators
-            parseIPv4(name);
-            isIPv4 = true;
-        } else {
-            throw new IOException("Invalid IPAddress: " + name);
-        }
+	if (name.indexOf(':') >= 0) {
+	    // name is IPv6: uses colons as value separators
+	    // Parse name into byte-value address components and optional 
+	    // prefix
+	    parseIPv6(name);
+	    isIPv4 = false;
+	} else if (name.indexOf('.') >= 0) {
+	    //name is IPv4: uses dots as value separators
+	    parseIPv4(name);
+	    isIPv4 = true;
+	} else {
+	    throw new IOException("Invalid IPAddress: " + name);
+	}
     }
 
     /**
@@ -158,20 +159,20 @@ public class IPAddressName implements GeneralNameInterface {
         // Parse name into byte-value address components
         int slashNdx = name.indexOf('/');
         if (slashNdx == -1) {
-            address = InetAddress.getByName(name).getAddress();
+	    address = InetAddress.getByName(name).getAddress();
         } else {
-            address = new byte[8];
+	    address = new byte[8];
 
-            // parse mask
-            byte[] mask = InetAddress.getByName
-                (name.substring(slashNdx+1)).getAddress();
+	    // parse mask
+	    byte[] mask = InetAddress.getByName
+		(name.substring(slashNdx+1)).getAddress();
 
-            // parse base address
-            byte[] host = InetAddress.getByName
-                (name.substring(0, slashNdx)).getAddress();
+	    // parse base address
+	    byte[] host = InetAddress.getByName
+		(name.substring(0, slashNdx)).getAddress();
 
-            System.arraycopy(host, 0, address, 0, 4);
-            System.arraycopy(mask, 0, address, 4, 4);
+	    System.arraycopy(host, 0, address, 0, 4);
+	    System.arraycopy(mask, 0, address, 4, 4);
         }
     }
 
@@ -186,19 +187,19 @@ public class IPAddressName implements GeneralNameInterface {
     private final static int MASKSIZE = 16;
     private void parseIPv6(String name) throws IOException {
 
-        int slashNdx = name.indexOf('/');
-        if (slashNdx == -1) {
-            address = InetAddress.getByName(name).getAddress();
-        } else {
-            address = new byte[32];
-            byte[] base = InetAddress.getByName
-                (name.substring(0, slashNdx)).getAddress();
-            System.arraycopy(base, 0, address, 0, 16);
-
-            // append a mask corresponding to the num of prefix bits specified
-            int prefixLen = Integer.parseInt(name.substring(slashNdx+1));
-            if (prefixLen > 128)
-                throw new IOException("IPv6Address prefix is longer than 128");
+	int slashNdx = name.indexOf('/');
+	if (slashNdx == -1) {
+	    address = InetAddress.getByName(name).getAddress();
+	} else {
+	    address = new byte[32];
+	    byte[] base = InetAddress.getByName
+		(name.substring(0, slashNdx)).getAddress();
+	    System.arraycopy(base, 0, address, 0, 16);	    
+ 
+	    // append a mask corresponding to the num of prefix bits specified
+	    int prefixLen = Integer.parseInt(name.substring(slashNdx+1));
+	    if (prefixLen > 128)
+		throw new IOException("IPv6Address prefix is longer than 128");
 
             // create new bit array initialized to zeros
             BitArray bitArray = new BitArray(MASKSIZE * 8);
@@ -211,7 +212,7 @@ public class IPAddressName implements GeneralNameInterface {
             // copy mask bytes into mask portion of address
             for (int i = 0; i < MASKSIZE; i++)
                 address[MASKSIZE+i] = maskArray[i];
-        }
+	}
     }
 
     /**
@@ -236,12 +237,12 @@ public class IPAddressName implements GeneralNameInterface {
      */
     public String toString() {
         try {
-            return "IPAddress: " + getName();
-        } catch (IOException ioe) {
-            // dump out hex rep for debugging purposes
-            HexDumpEncoder enc = new HexDumpEncoder();
-            return "IPAddress: " + enc.encodeBuffer(address);
-        }
+	    return "IPAddress: " + getName();
+	} catch (IOException ioe) {
+	    // dump out hex rep for debugging purposes
+	    HexDumpEncoder enc = new HexDumpEncoder();
+	    return "IPAddress: " + enc.encodeBuffer(address);
+	}
     }
 
     /**
@@ -252,50 +253,50 @@ public class IPAddressName implements GeneralNameInterface {
      * @throws IOException if the IPAddress cannot be converted to a String
      */
     public String getName() throws IOException {
-        if (name != null)
-            return name;
+	if (name != null)
+	    return name;
 
-        if (isIPv4) {
-            //IPv4 address or subdomain
-            byte[] host = new byte[4];
-            System.arraycopy(address, 0, host, 0, 4);
-            name = InetAddress.getByAddress(host).getHostAddress();
-            if (address.length == 8) {
-                byte[] mask = new byte[4];
-                System.arraycopy(address, 4, mask, 0, 4);
-                name = name + "/" +
-                       InetAddress.getByAddress(mask).getHostAddress();
-            }
-        } else {
-            //IPv6 address or subdomain
-            byte[] host = new byte[16];
-            System.arraycopy(address, 0, host, 0, 16);
-            name = InetAddress.getByAddress(host).getHostAddress();
-            if (address.length == 32) {
-                // IPv6 subdomain: display prefix length
+	if (isIPv4) {
+	    //IPv4 address or subdomain
+	    byte[] host = new byte[4];
+	    System.arraycopy(address, 0, host, 0, 4);
+	    name = InetAddress.getByAddress(host).getHostAddress();
+	    if (address.length == 8) {
+	        byte[] mask = new byte[4];
+	        System.arraycopy(address, 4, mask, 0, 4);
+	        name = name + "/" +
+		       InetAddress.getByAddress(mask).getHostAddress();
+	    }
+	} else {
+	    //IPv6 address or subdomain
+	    byte[] host = new byte[16];
+	    System.arraycopy(address, 0, host, 0, 16);
+	    name = InetAddress.getByAddress(host).getHostAddress();
+	    if (address.length == 32) {
+		// IPv6 subdomain: display prefix length
 
-                // copy subdomain into new array and convert to BitArray
-                byte[] maskBytes = new byte[16];
-                for (int i=16; i < 32; i++)
-                    maskBytes[i-16] = address[i];
-                BitArray ba = new BitArray(16*8, maskBytes);
-                // Find first zero bit
-                int i=0;
-                for (; i < 16*8; i++) {
-                    if (!ba.get(i))
-                        break;
-                }
-                name = name + "/" + i;
-                // Verify remaining bits 0
-                for (; i < 16*8; i++) {
-                    if (ba.get(i)) {
-                        throw new IOException("Invalid IPv6 subdomain - set " +
-                            "bit " + i + " not contiguous");
-                    }
-                }
-            }
-        }
-        return name;
+		// copy subdomain into new array and convert to BitArray
+		byte[] maskBytes = new byte[16];
+		for (int i=16; i < 32; i++)
+		    maskBytes[i-16] = address[i];
+		BitArray ba = new BitArray(16*8, maskBytes);
+		// Find first zero bit
+		int i=0;
+		for (; i < 16*8; i++) {
+		    if (!ba.get(i))
+			break;
+		}
+		name = name + "/" + i;
+		// Verify remaining bits 0
+		for (; i < 16*8; i++) {
+		    if (ba.get(i)) {
+			throw new IOException("Invalid IPv6 subdomain - set " +
+			    "bit " + i + " not contiguous");
+		    }
+		}
+	    }
+	}
+	return name;
     }
 
     /**
@@ -311,73 +312,73 @@ public class IPAddressName implements GeneralNameInterface {
      * @return true iff the names are identical.
      */
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
+	if (this == obj)
+	    return true;
 
-        if (!(obj instanceof IPAddressName))
-            return false;
+	if (!(obj instanceof IPAddressName))
+	    return false;
 
-        byte[] other = ((IPAddressName)obj).getBytes();
+	byte[] other = ((IPAddressName)obj).getBytes();
 
-        if (other.length != address.length)
-            return false;
+	if (other.length != address.length)
+	    return false;
 
-        if (address.length == 8 || address.length == 32) {
-            // Two subnet addresses
-            // Mask each and compare masked values
-            int maskLen = address.length/2;
-            byte[] maskedThis = new byte[maskLen];
-            byte[] maskedOther = new byte[maskLen];
-            for (int i=0; i < maskLen; i++) {
-                maskedThis[i] = (byte)(address[i] & address[i+maskLen]);
-                maskedOther[i] = (byte)(other[i] & other[i+maskLen]);
-                if (maskedThis[i] != maskedOther[i]) {
-                    return false;
-                }
-            }
-            // Now compare masks
-            for (int i=maskLen; i < address.length; i++)
-                if (address[i] != other[i])
-                    return false;
-            return true;
-        } else {
-            // Two IPv4 host addresses or two IPv6 host addresses
-            // Compare bytes
-            return Arrays.equals(other, address);
-        }
+	if (address.length == 8 || address.length == 32) {
+	    // Two subnet addresses
+	    // Mask each and compare masked values
+	    int maskLen = address.length/2;
+	    byte[] maskedThis = new byte[maskLen];
+	    byte[] maskedOther = new byte[maskLen];
+	    for (int i=0; i < maskLen; i++) {
+		maskedThis[i] = (byte)(address[i] & address[i+maskLen]);
+		maskedOther[i] = (byte)(other[i] & other[i+maskLen]);
+		if (maskedThis[i] != maskedOther[i]) {
+		    return false;
+		}
+	    }
+	    // Now compare masks
+	    for (int i=maskLen; i < address.length; i++)
+		if (address[i] != other[i])
+		    return false;
+	    return true;
+	} else {
+	    // Two IPv4 host addresses or two IPv6 host addresses
+	    // Compare bytes
+	    return Arrays.equals(other, address);
+	}
     }
 
     /**
      * Returns the hash code value for this object.
-     *
+     * 
      * @return a hash code value for this object.
      */
     public int hashCode() {
-        int retval = 0;
+	int retval = 0;
 
-        for (int i=0; i<address.length; i++)
-            retval += address[i] * i;
+	for (int i=0; i<address.length; i++)
+	    retval += address[i] * i;
 
-        return retval;
+	return retval;
     }
 
     /**
      * Return type of constraint inputName places on this name:<ul>
-     *   <li>NAME_DIFF_TYPE = -1: input name is different type from name
+     *   <li>NAME_DIFF_TYPE = -1: input name is different type from name 
      *       (i.e. does not constrain).
      *   <li>NAME_MATCH = 0: input name matches name.
-     *   <li>NAME_NARROWS = 1: input name narrows name (is lower in the naming
+     *   <li>NAME_NARROWS = 1: input name narrows name (is lower in the naming 
      *       subtree)
-     *   <li>NAME_WIDENS = 2: input name widens name (is higher in the naming
+     *   <li>NAME_WIDENS = 2: input name widens name (is higher in the naming 
      *       subtree)
-     *   <li>NAME_SAME_TYPE = 3: input name does not match or narrow name, but
+     *   <li>NAME_SAME_TYPE = 3: input name does not match or narrow name, but 
      *       is same type.
      * </ul>.  These results are used in checking NameConstraints during
      * certification path verification.
      * <p>
-     * [RFC2459] The syntax of iPAddress MUST be as described in section
-     * 4.2.1.7 with the following additions specifically for Name Constraints.
-     * For IPv4 addresses, the ipAddress field of generalName MUST contain
+     * [RFC2459] The syntax of iPAddress MUST be as described in section 
+     * 4.2.1.7 with the following additions specifically for Name Constraints.  
+     * For IPv4 addresses, the ipAddress field of generalName MUST contain 
      * eight (8) octets, encoded in the style of RFC 1519 (CIDR) to represent an
      * address range.[RFC 1519]  For IPv6 addresses, the ipAddress field
      * MUST contain 32 octets similarly encoded.  For example, a name
@@ -387,91 +388,91 @@ public class IPAddressName implements GeneralNameInterface {
      * <p>
      * @param inputName to be checked for being constrained
      * @returns constraint type above
-     * @throws UnsupportedOperationException if name is not exact match, but
+     * @throws UnsupportedOperationException if name is not exact match, but 
      * narrowing and widening are not supported for this name type.
      */
-    public int constrains(GeneralNameInterface inputName)
+    public int constrains(GeneralNameInterface inputName) 
     throws UnsupportedOperationException {
-        int constraintType;
-        if (inputName == null)
-            constraintType = NAME_DIFF_TYPE;
-        else if (inputName.getType() != NAME_IP)
-            constraintType = NAME_DIFF_TYPE;
-        else if (((IPAddressName)inputName).equals(this))
-            constraintType = NAME_MATCH;
-        else {
-            byte[] otherAddress = ((IPAddressName)inputName).getBytes();
-            if (otherAddress.length == 4 && address.length == 4)
-                // Two host addresses
-                constraintType = NAME_SAME_TYPE;
-            else if ((otherAddress.length == 8 && address.length == 8) ||
-                     (otherAddress.length == 32 && address.length == 32)) {
-                // Two subnet addresses
-                // See if one address fully encloses the other address
-                boolean otherSubsetOfThis = true;
-                boolean thisSubsetOfOther = true;
-                boolean thisEmpty = false;
-                boolean otherEmpty = false;
-                int maskOffset = address.length/2;
-                for (int i=0; i < maskOffset; i++) {
-                    if ((byte)(address[i] & address[i+maskOffset]) != address[i])
-                        thisEmpty=true;
-                    if ((byte)(otherAddress[i] & otherAddress[i+maskOffset]) != otherAddress[i])
-                        otherEmpty=true;
-                    if (!(((byte)(address[i+maskOffset] & otherAddress[i+maskOffset]) == address[i+maskOffset]) &&
-                          ((byte)(address[i]   & address[i+maskOffset])      == (byte)(otherAddress[i] & address[i+maskOffset])))) {
-                        otherSubsetOfThis = false;
-                    }
-                    if (!(((byte)(otherAddress[i+maskOffset] & address[i+maskOffset])      == otherAddress[i+maskOffset]) &&
-                          ((byte)(otherAddress[i]   & otherAddress[i+maskOffset]) == (byte)(address[i] & otherAddress[i+maskOffset])))) {
-                        thisSubsetOfOther = false;
-                    }
-                }
-                if (thisEmpty || otherEmpty) {
-                    if (thisEmpty && otherEmpty)
-                        constraintType = NAME_MATCH;
-                    else if (thisEmpty)
-                        constraintType = NAME_WIDENS;
-                    else
-                        constraintType = NAME_NARROWS;
-                } else if (otherSubsetOfThis)
-                    constraintType = NAME_NARROWS;
-                else if (thisSubsetOfOther)
-                    constraintType = NAME_WIDENS;
-                else
-                    constraintType = NAME_SAME_TYPE;
-            } else if (otherAddress.length == 8 || otherAddress.length == 32) {
-                //Other is a subnet, this is a host address
-                int i = 0;
-                int maskOffset = otherAddress.length/2;
-                for (; i < maskOffset; i++) {
-                    // Mask this address by other address mask and compare to other address
-                    // If all match, then this address is in other address subnet
-                    if ((address[i] & otherAddress[i+maskOffset]) != otherAddress[i])
-                        break;
-                }
-                if (i == maskOffset)
-                    constraintType = NAME_WIDENS;
-                else
-                    constraintType = NAME_SAME_TYPE;
-            } else if (address.length == 8 || address.length == 32) {
-                //This is a subnet, other is a host address
-                int i = 0;
-                int maskOffset = address.length/2;
-                for (; i < maskOffset; i++) {
-                    // Mask other address by this address mask and compare to this address
-                    if ((otherAddress[i] & address[i+maskOffset]) != address[i])
-                        break;
-                }
-                if (i == maskOffset)
-                    constraintType = NAME_NARROWS;
-                else
-                    constraintType = NAME_SAME_TYPE;
-            } else {
-                constraintType = NAME_SAME_TYPE;
-            }
-        }
-        return constraintType;
+	int constraintType;
+	if (inputName == null)
+	    constraintType = NAME_DIFF_TYPE;
+	else if (inputName.getType() != NAME_IP)
+	    constraintType = NAME_DIFF_TYPE;
+	else if (((IPAddressName)inputName).equals(this))
+	    constraintType = NAME_MATCH;
+	else {
+	    byte[] otherAddress = ((IPAddressName)inputName).getBytes();
+	    if (otherAddress.length == 4 && address.length == 4)
+		// Two host addresses
+		constraintType = NAME_SAME_TYPE;
+	    else if ((otherAddress.length == 8 && address.length == 8) ||
+		     (otherAddress.length == 32 && address.length == 32)) {
+		// Two subnet addresses
+		// See if one address fully encloses the other address
+		boolean otherSubsetOfThis = true;
+		boolean thisSubsetOfOther = true;
+		boolean thisEmpty = false;
+		boolean otherEmpty = false;
+		int maskOffset = address.length/2;
+		for (int i=0; i < maskOffset; i++) {
+		    if ((byte)(address[i] & address[i+maskOffset]) != address[i])
+			thisEmpty=true;
+		    if ((byte)(otherAddress[i] & otherAddress[i+maskOffset]) != otherAddress[i])
+			otherEmpty=true;
+		    if (!(((byte)(address[i+maskOffset] & otherAddress[i+maskOffset]) == address[i+maskOffset]) &&
+			  ((byte)(address[i]   & address[i+maskOffset])      == (byte)(otherAddress[i] & address[i+maskOffset])))) {
+			otherSubsetOfThis = false;
+		    }
+		    if (!(((byte)(otherAddress[i+maskOffset] & address[i+maskOffset])      == otherAddress[i+maskOffset]) &&
+			  ((byte)(otherAddress[i]   & otherAddress[i+maskOffset]) == (byte)(address[i] & otherAddress[i+maskOffset])))) {
+			thisSubsetOfOther = false;
+		    }
+		}
+		if (thisEmpty || otherEmpty) {
+		    if (thisEmpty && otherEmpty)
+			constraintType = NAME_MATCH;
+		    else if (thisEmpty)
+			constraintType = NAME_WIDENS;
+		    else
+			constraintType = NAME_NARROWS;
+		} else if (otherSubsetOfThis)
+		    constraintType = NAME_NARROWS;
+		else if (thisSubsetOfOther)
+		    constraintType = NAME_WIDENS;
+		else
+		    constraintType = NAME_SAME_TYPE;
+	    } else if (otherAddress.length == 8 || otherAddress.length == 32) {
+		//Other is a subnet, this is a host address
+		int i = 0;
+		int maskOffset = otherAddress.length/2;
+		for (; i < maskOffset; i++) {
+		    // Mask this address by other address mask and compare to other address
+		    // If all match, then this address is in other address subnet
+		    if ((address[i] & otherAddress[i+maskOffset]) != otherAddress[i])
+			break;
+		}
+		if (i == maskOffset)
+		    constraintType = NAME_WIDENS;
+		else
+		    constraintType = NAME_SAME_TYPE;
+	    } else if (address.length == 8 || address.length == 32) {
+		//This is a subnet, other is a host address
+		int i = 0;
+		int maskOffset = address.length/2;
+		for (; i < maskOffset; i++) {
+		    // Mask other address by this address mask and compare to this address
+		    if ((otherAddress[i] & address[i+maskOffset]) != address[i])
+			break;
+		}
+		if (i == maskOffset)
+		    constraintType = NAME_NARROWS;
+		else
+		    constraintType = NAME_SAME_TYPE;
+	    } else {
+		constraintType = NAME_SAME_TYPE;
+	    }
+	}
+	return constraintType;
     }
 
     /**
@@ -483,7 +484,7 @@ public class IPAddressName implements GeneralNameInterface {
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException
-            ("subtreeDepth() not defined for IPAddressName");
+	throw new UnsupportedOperationException
+	    ("subtreeDepth() not defined for IPAddressName");
     }
 }

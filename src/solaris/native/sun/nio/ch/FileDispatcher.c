@@ -35,8 +35,8 @@
 #include "nio_util.h"
 
 
-static int preCloseFD = -1;     /* File descriptor to which we dup other fd's
-                                   before closing them for real */
+static int preCloseFD = -1;	/* File descriptor to which we dup other fd's
+				   before closing them for real */
 
 
 JNIEXPORT void JNICALL
@@ -44,7 +44,7 @@ Java_sun_nio_ch_FileDispatcher_init(JNIEnv *env, jclass cl)
 {
     int sp[2];
     if (socketpair(PF_UNIX, SOCK_STREAM, 0, sp) < 0) {
-        JNU_ThrowIOExceptionWithLastError(env, "socketpair failed");
+	JNU_ThrowIOExceptionWithLastError(env, "socketpair failed");
         return;
     }
     preCloseFD = sp[0];
@@ -53,7 +53,7 @@ Java_sun_nio_ch_FileDispatcher_init(JNIEnv *env, jclass cl)
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_FileDispatcher_read0(JNIEnv *env, jclass clazz,
-                             jobject fdo, jlong address, jint len)
+			     jobject fdo, jlong address, jint len)
 {
     jint fd = fdval(env, fdo);
     void *buf = (void *)jlong_to_ptr(address);
@@ -73,7 +73,7 @@ Java_sun_nio_ch_FileDispatcher_pread0(JNIEnv *env, jclass clazz, jobject fdo,
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileDispatcher_readv0(JNIEnv *env, jclass clazz,
-                              jobject fdo, jlong address, jint len)
+			      jobject fdo, jlong address, jint len)
 {
     jint fd = fdval(env, fdo);
     struct iovec *iov = (struct iovec *)jlong_to_ptr(address);
@@ -85,7 +85,7 @@ Java_sun_nio_ch_FileDispatcher_readv0(JNIEnv *env, jclass clazz,
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_FileDispatcher_write0(JNIEnv *env, jclass clazz,
-                              jobject fdo, jlong address, jint len)
+			      jobject fdo, jlong address, jint len)
 {
     jint fd = fdval(env, fdo);
     void *buf = (void *)jlong_to_ptr(address);
@@ -135,8 +135,8 @@ Java_sun_nio_ch_FileDispatcher_preClose0(JNIEnv *env, jclass clazz, jobject fdo)
 {
     jint fd = fdval(env, fdo);
     if (preCloseFD >= 0) {
-        if (dup2(preCloseFD, fd) < 0)
-            JNU_ThrowIOExceptionWithLastError(env, "dup2 failed");
+	if (dup2(preCloseFD, fd) < 0)
+	    JNU_ThrowIOExceptionWithLastError(env, "dup2 failed");
     }
 }
 

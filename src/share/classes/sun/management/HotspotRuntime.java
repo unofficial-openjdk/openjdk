@@ -33,17 +33,17 @@ import sun.management.counter.Counter;
 /**
  * Implementation class of HotspotRuntimeMBean interface.
  *
- * Internal, uncommitted management interface for Hotspot runtime
+ * Internal, uncommitted management interface for Hotspot runtime 
  * system.
  */
-class HotspotRuntime
+class HotspotRuntime 
     implements HotspotRuntimeMBean {
 
     private VMManagement jvm;
 
     /**
      * Constructor of HotspotRuntime class.
-     */
+     */ 
     HotspotRuntime(VMManagement vm) {
         jvm = vm;
     }
@@ -72,6 +72,6 @@ class HotspotRuntime
         JAVA_PROPERTY + "|" + COM_SUN_PROPERTY + "|" + SUN_PROPERTY;
 
     public java.util.List<Counter> getInternalRuntimeCounters() {
-        return jvm.getInternalCounters(RT_COUNTER_NAME_PATTERN);
-    }
+        return jvm.getInternalCounters(RT_COUNTER_NAME_PATTERN); 
+    } 
 }

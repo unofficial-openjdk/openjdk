@@ -31,7 +31,8 @@ import java.awt.*;
  * A horizontal 'bag' of Components.  Allocates space for each Component
  * from left to right.
  *
- * @author      Herb Jellinek
+ * @version 	%I% %G%
+ * @author 	Herb Jellinek
  */
 public class HorizBagLayout implements LayoutManager {
 
@@ -41,7 +42,7 @@ public class HorizBagLayout implements LayoutManager {
      * Constructs a new HorizBagLayout.
      */
     public HorizBagLayout() {
-        this(0);
+	this(0);
     }
 
     /**
@@ -49,7 +50,7 @@ public class HorizBagLayout implements LayoutManager {
      * @param hgap the horizontal gap
      */
     public HorizBagLayout(int hgap) {
-        this.hgap = hgap;
+	this.hgap = hgap;
     }
 
     /**
@@ -69,30 +70,30 @@ public class HorizBagLayout implements LayoutManager {
 
     /**
      * Returns the minimum dimensions needed to lay out the components
-     * contained in the specified target container.
+     * contained in the specified target container. 
      * @param target the Container on which to do the layout
      * @see Container
      * @see #preferredLayoutSize
      */
     public Dimension minimumLayoutSize(Container target) {
-        Dimension dim = new Dimension();
+	Dimension dim = new Dimension();
 
-        for (int i = 0; i < target.countComponents(); i++) {
-            Component comp = target.getComponent(i);
-            if (comp.isVisible()) {
-                Dimension d = comp.minimumSize();
-                dim.width += d.width + hgap;
-                dim.height = Math.max(d.height, dim.height);
-            }
-        }
+	for (int i = 0; i < target.countComponents(); i++) {
+	    Component comp = target.getComponent(i);
+	    if (comp.isVisible()) {
+		Dimension d = comp.minimumSize();
+		dim.width += d.width + hgap;
+		dim.height = Math.max(d.height, dim.height);
+	    }
+	}
 
-        Insets insets = target.insets();
-        dim.width += insets.left + insets.right;
-        dim.height += insets.top + insets.bottom;
+	Insets insets = target.insets();
+	dim.width += insets.left + insets.right;
+	dim.height += insets.top + insets.bottom;
 
-        return dim;
+	return dim;
     }
-
+    
     /**
      * Returns the preferred dimensions for this layout given the components
      * in the specified target container.
@@ -101,54 +102,54 @@ public class HorizBagLayout implements LayoutManager {
      * @see #minimumLayoutSize
      */
     public Dimension preferredLayoutSize(Container target) {
-        Dimension dim = new Dimension();
+	Dimension dim = new Dimension();
 
-        for (int i = 0; i < target.countComponents(); i++) {
-            Component comp = target.getComponent(i);
-            if (comp.isVisible()) {
-                Dimension d = comp.preferredSize();
-                dim.width += d.width + hgap;
-                dim.height = Math.max(dim.height, d.height);
-            }
-        }
+	for (int i = 0; i < target.countComponents(); i++) {
+	    Component comp = target.getComponent(i);
+	    if (comp.isVisible()) {
+		Dimension d = comp.preferredSize();
+		dim.width += d.width + hgap;
+		dim.height = Math.max(dim.height, d.height);
+	    }
+	}
 
-        Insets insets = target.insets();
-        dim.width += insets.left + insets.right;
-        dim.height += insets.top + insets.bottom;
+	Insets insets = target.insets();
+	dim.width += insets.left + insets.right;
+	dim.height += insets.top + insets.bottom;
 
-        return dim;
+	return dim;
     }
 
     /**
      * Lays out the specified container. This method will actually reshape the
-     * components in the specified target container in order to satisfy the
-     * constraints of the HorizBagLayout object.
+     * components in the specified target container in order to satisfy the 
+     * constraints of the HorizBagLayout object. 
      * @param target the component being laid out
      * @see Container
      */
     public void layoutContainer(Container target) {
-        Insets insets = target.insets();
-        int top = insets.top;
-        int bottom = target.size().height - insets.bottom;
-        int left = insets.left;
-        int right = target.size().width - insets.right;
+	Insets insets = target.insets();
+	int top = insets.top;
+	int bottom = target.size().height - insets.bottom;
+	int left = insets.left;
+	int right = target.size().width - insets.right;
 
-        for (int i = 0; i < target.countComponents(); i++) {
-            Component comp = target.getComponent(i);
-            if (comp.isVisible()) {
-                int compWidth = comp.size().width;
-                comp.resize(compWidth, bottom - top);
-                Dimension d = comp.preferredSize();
-                comp.reshape(left, top, d.width, bottom - top);
-                left += d.width + hgap;
-            }
-        }
+	for (int i = 0; i < target.countComponents(); i++) {
+	    Component comp = target.getComponent(i);
+	    if (comp.isVisible()) {
+		int compWidth = comp.size().width;
+		comp.resize(compWidth, bottom - top);
+		Dimension d = comp.preferredSize();
+		comp.reshape(left, top, d.width, bottom - top);
+		left += d.width + hgap;
+	    }
+	}
     }
-
+    
     /**
      * Returns the String representation of this HorizBagLayout's values.
      */
     public String toString() {
-        return getClass().getName() + "[hgap=" + hgap + "]";
+	return getClass().getName() + "[hgap=" + hgap + "]";
     }
 }

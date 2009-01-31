@@ -41,6 +41,7 @@ import java.io.*;
  * principal running this JVM.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class LocalVmManager {

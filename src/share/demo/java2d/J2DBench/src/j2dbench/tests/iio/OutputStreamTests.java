@@ -142,7 +142,7 @@ abstract class OutputStreamTests extends OutputTests {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+	}
     }
 
     private static class IOSWrite extends OutputStreamTests {
@@ -180,7 +180,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteByteArray extends OutputStreamTests {
@@ -220,7 +220,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteBit extends OutputStreamTests {
@@ -258,7 +258,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteByte extends OutputStreamTests {
@@ -296,7 +296,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteShort extends OutputStreamTests {
@@ -334,7 +334,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteInt extends OutputStreamTests {
@@ -372,7 +372,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteFloat extends OutputStreamTests {
@@ -410,7 +410,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteLong extends OutputStreamTests {
@@ -448,7 +448,7 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IOSWriteDouble extends OutputStreamTests {
@@ -486,6 +486,6 @@ abstract class OutputStreamTests extends OutputTests {
             } finally {
                 try { ios.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 }

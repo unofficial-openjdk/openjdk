@@ -36,7 +36,7 @@ import javax.management.openmbean.OpenType;
 
 /**
  * A CompositeData for ThreadInfo for the local management support.
- * This class avoids the performance penalty paid to the
+ * This class avoids the performance penalty paid to the 
  * construction of a CompositeData use in the local case.
  */
 public class ThreadInfoCompositeData extends LazyCompositeData {
@@ -45,7 +45,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     private final boolean currentVersion;
 
     private ThreadInfoCompositeData(ThreadInfo ti) {
-        this.threadInfo = ti;
+	this.threadInfo = ti;
         this.currentVersion = true;
         this.cdata = null;
     }
@@ -57,11 +57,11 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     }
 
     public ThreadInfo getThreadInfo() {
-        return threadInfo;
+	return threadInfo;
     }
 
     public boolean isCurrentVersion() {
-        return currentVersion;
+	return currentVersion;
     }
 
     public static ThreadInfoCompositeData getInstance(CompositeData cd) {
@@ -76,61 +76,61 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
 
     protected CompositeData getCompositeData() {
         // Convert StackTraceElement[] to CompositeData[]
-        StackTraceElement[] stackTrace = threadInfo.getStackTrace();
-        CompositeData[] stackTraceData =
-            new CompositeData[stackTrace.length];
-        for (int i = 0; i < stackTrace.length; i++) {
-            StackTraceElement ste = stackTrace[i];
-            stackTraceData[i] = StackTraceElementCompositeData.toCompositeData(ste);
-        }
+	StackTraceElement[] stackTrace = threadInfo.getStackTrace();
+	CompositeData[] stackTraceData =
+	    new CompositeData[stackTrace.length];
+	for (int i = 0; i < stackTrace.length; i++) {
+	    StackTraceElement ste = stackTrace[i];
+	    stackTraceData[i] = StackTraceElementCompositeData.toCompositeData(ste);
+	}
 
         // Convert MonitorInfo[] and LockInfo[] to CompositeData[]
         LockDataConverter converter = new LockDataConverter(threadInfo);
-        CompositeData lockInfoData = converter.toLockInfoCompositeData();
-        CompositeData[] lockedSyncsData = converter.toLockedSynchronizersCompositeData();
+	CompositeData lockInfoData = converter.toLockInfoCompositeData();
+	CompositeData[] lockedSyncsData = converter.toLockedSynchronizersCompositeData();
 
         // Convert MonitorInfo[] to CompositeData[]
-        MonitorInfo[] lockedMonitors = threadInfo.getLockedMonitors();
-        CompositeData[] lockedMonitorsData =
-            new CompositeData[lockedMonitors.length];
-        for (int i = 0; i < lockedMonitors.length; i++) {
-            MonitorInfo mi = lockedMonitors[i];
-            lockedMonitorsData[i] = MonitorInfoCompositeData.toCompositeData(mi);
-        }
+	MonitorInfo[] lockedMonitors = threadInfo.getLockedMonitors();
+	CompositeData[] lockedMonitorsData =
+	    new CompositeData[lockedMonitors.length];
+	for (int i = 0; i < lockedMonitors.length; i++) {
+	    MonitorInfo mi = lockedMonitors[i];
+	    lockedMonitorsData[i] = MonitorInfoCompositeData.toCompositeData(mi);
+	}
 
 
-        // CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
-        // threadInfoItemNames!
-        final Object[] threadInfoItemValues = {
-            new Long(threadInfo.getThreadId()),
-            threadInfo.getThreadName(),
-            threadInfo.getThreadState().name(),
-            new Long(threadInfo.getBlockedTime()),
-            new Long(threadInfo.getBlockedCount()),
-            new Long(threadInfo.getWaitedTime()),
-            new Long(threadInfo.getWaitedCount()),
-            lockInfoData,
-            threadInfo.getLockName(),
-            new Long(threadInfo.getLockOwnerId()),
-            threadInfo.getLockOwnerName(),
-            stackTraceData,
-            new Boolean(threadInfo.isSuspended()),
-            new Boolean(threadInfo.isInNative()),
-            lockedMonitorsData,
-            lockedSyncsData,
-        };
-
-        try {
-            return new CompositeDataSupport(threadInfoCompositeType,
-                                            threadInfoItemNames,
-                                            threadInfoItemValues);
-        } catch (OpenDataException e) {
+	// CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
+	// threadInfoItemNames!
+	final Object[] threadInfoItemValues = {
+	    new Long(threadInfo.getThreadId()),
+	    threadInfo.getThreadName(),
+	    threadInfo.getThreadState().name(),
+	    new Long(threadInfo.getBlockedTime()),
+	    new Long(threadInfo.getBlockedCount()),
+	    new Long(threadInfo.getWaitedTime()),
+	    new Long(threadInfo.getWaitedCount()),
+	    lockInfoData,
+	    threadInfo.getLockName(),
+	    new Long(threadInfo.getLockOwnerId()),
+	    threadInfo.getLockOwnerName(),
+	    stackTraceData,
+	    new Boolean(threadInfo.isSuspended()),
+	    new Boolean(threadInfo.isInNative()),
+	    lockedMonitorsData,
+	    lockedSyncsData,
+	};
+	
+	try {
+	    return new CompositeDataSupport(threadInfoCompositeType,
+					    threadInfoItemNames,
+					    threadInfoItemValues);
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
-    // Attribute names
+    // Attribute names 
     private static final String THREAD_ID       = "threadId";
     private static final String THREAD_NAME     = "threadName";
     private static final String THREAD_STATE    = "threadState";
@@ -149,29 +149,29 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     private static final String LOCKED_SYNCS    = "lockedSynchronizers";
 
     private static final String[] threadInfoItemNames = {
-        THREAD_ID,
-        THREAD_NAME,
-        THREAD_STATE,
-        BLOCKED_TIME,
-        BLOCKED_COUNT,
-        WAITED_TIME,
-        WAITED_COUNT,
+	THREAD_ID,
+	THREAD_NAME,
+	THREAD_STATE,
+	BLOCKED_TIME,
+	BLOCKED_COUNT,
+	WAITED_TIME,
+	WAITED_COUNT,
         LOCK_INFO,
-        LOCK_NAME,
-        LOCK_OWNER_ID,
-        LOCK_OWNER_NAME,
-        STACK_TRACE,
-        SUSPENDED,
-        IN_NATIVE,
+	LOCK_NAME,
+	LOCK_OWNER_ID,
+	LOCK_OWNER_NAME,
+	STACK_TRACE,
+	SUSPENDED,
+	IN_NATIVE,
         LOCKED_MONITORS,
         LOCKED_SYNCS,
     };
 
-    // New attributes added in 6.0 ThreadInfo
+    // New attributes added in 6.0 ThreadInfo 
     private static final String[] threadInfoV6Attributes = {
-        LOCK_INFO,
-        LOCKED_MONITORS,
-        LOCKED_SYNCS,
+	LOCK_INFO,
+	LOCKED_MONITORS,
+	LOCKED_SYNCS,
     };
 
     // Current version of ThreadInfo
@@ -180,50 +180,50 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     private static final CompositeType threadInfoV5CompositeType;
     private static final CompositeType lockInfoCompositeType;
     static {
-        try {
-            threadInfoCompositeType = (CompositeType)
-                MappedMXBeanType.toOpenType(ThreadInfo.class);
+	try {
+	    threadInfoCompositeType = (CompositeType)
+		MappedMXBeanType.toOpenType(ThreadInfo.class);
             // Form a CompositeType for JDK 5.0 ThreadInfo version
-            String[] itemNames =
+            String[] itemNames = 
                 threadInfoCompositeType.keySet().toArray(new String[0]);
-            int numV5Attributes = threadInfoItemNames.length -
+            int numV5Attributes = threadInfoItemNames.length - 
                                       threadInfoV6Attributes.length;
             String[] v5ItemNames = new String[numV5Attributes];
             String[] v5ItemDescs = new String[numV5Attributes];
             OpenType[] v5ItemTypes = new OpenType[numV5Attributes];
             int i = 0;
-            for (String n : itemNames) {
+            for (String n : itemNames) { 
                 if (isV5Attribute(n)) {
                     v5ItemNames[i] = n;
                     v5ItemDescs[i] = threadInfoCompositeType.getDescription(n);
                     v5ItemTypes[i] = threadInfoCompositeType.getType(n);
                     i++;
                 }
-            }
+            } 
 
-            threadInfoV5CompositeType =
+            threadInfoV5CompositeType = 
                 new CompositeType("java.lang.management.ThreadInfo",
                                   "J2SE 5.0 java.lang.management.ThreadInfo",
                                   v5ItemNames,
                                   v5ItemDescs,
                                   v5ItemTypes);
-        } catch (OpenDataException e) {
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
 
         // Each CompositeData object has its CompositeType associated
         // with it.  So we can get the CompositeType representing LockInfo
-        // from a mapped CompositeData for any LockInfo object.
+        // from a mapped CompositeData for any LockInfo object. 
         // Thus we construct a random LockInfo object and pass it
         // to LockDataConverter to do the conversion.
         Object o = new Object();
         LockInfo li = new LockInfo(o.getClass().getName(),
                                    System.identityHashCode(o));
-        CompositeData cd = LockDataConverter.toLockInfoCompositeData(li);
-        lockInfoCompositeType = cd.getCompositeType();
+        CompositeData cd = LockDataConverter.toLockInfoCompositeData(li); 
+        lockInfoCompositeType = cd.getCompositeType(); 
     }
-
+  
     private static boolean isV5Attribute(String itemName) {
         for (String n : threadInfoV6Attributes) {
             if (itemName.equals(n)) {
@@ -246,7 +246,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     }
 
     public String threadName() {
-        // The ThreadName item cannot be null so we check that
+        // The ThreadName item cannot be null so we check that 
         // it is present with a non-null value.
         String name = getString(cdata, THREAD_NAME);
         if (name == null) {
@@ -261,7 +261,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     }
 
     public long blockedTime() {
-        return getLong(cdata, BLOCKED_TIME);
+        return getLong(cdata, BLOCKED_TIME); 
     }
 
     public long blockedCount() {
@@ -277,7 +277,7 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
     }
 
     public String lockName() {
-        // The LockName and LockOwnerName can legitimately be null,
+        // The LockName and LockOwnerName can legitimately be null, 
         // we don't bother to check the value
         return getString(cdata, LOCK_NAME);
     }
@@ -303,8 +303,8 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
             (CompositeData[]) cdata.get(STACK_TRACE);
 
         // The StackTrace item cannot be null, but if it is we will get
-        // a NullPointerException when we ask for its length.
-        StackTraceElement[] stackTrace =
+        // a NullPointerException when we ask for its length. 
+        StackTraceElement[] stackTrace = 
             new StackTraceElement[stackTraceData.length];
         for (int i = 0; i < stackTraceData.length; i++) {
             CompositeData cdi = stackTraceData[i];
@@ -325,8 +325,8 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
             (CompositeData[]) cdata.get(LOCKED_MONITORS);
 
         // The LockedMonitors item cannot be null, but if it is we will get
-        // a NullPointerException when we ask for its length.
-        MonitorInfo[] monitors =
+        // a NullPointerException when we ask for its length. 
+        MonitorInfo[] monitors = 
             new MonitorInfo[lockedMonitorsData.length];
         for (int i = 0; i < lockedMonitorsData.length; i++) {
             CompositeData cdi = lockedMonitorsData[i];
@@ -340,12 +340,12 @@ public class ThreadInfoCompositeData extends LazyCompositeData {
         CompositeData[] lockedSyncsData =
             (CompositeData[]) cdata.get(LOCKED_SYNCS);
 
-        // The LockedSynchronizers item cannot be null, but if it is we will
-        // get a NullPointerException when we ask for its length.
+        // The LockedSynchronizers item cannot be null, but if it is we will 
+        // get a NullPointerException when we ask for its length. 
         return converter.toLockedSynchronizers(lockedSyncsData);
     }
 
-    /** Validate if the input CompositeData has the expected
+    /** Validate if the input CompositeData has the expected 
      * CompositeType (i.e. contain all attributes with expected
      * names and types).
      */

@@ -154,3 +154,4 @@ public interface AgreementMethod {
      */
     String getAlgorithm();
 }
+

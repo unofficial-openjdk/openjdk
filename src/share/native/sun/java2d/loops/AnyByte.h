@@ -31,9 +31,9 @@
  * LoopMacros.h to manipulate a surface of type "AnyByte".
  */
 
-typedef jbyte   AnyByteDataType;
+typedef jbyte	AnyByteDataType;
 
-#define AnyBytePixelStride      1
+#define AnyBytePixelStride	1
 
 #define DeclareAnyByteLoadVars(PREFIX)
 #define DeclareAnyByteStoreVars(PREFIX)

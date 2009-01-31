@@ -54,7 +54,7 @@ import sun.security.util.*;
  * // key containing parameters to use
  * DSAPublicKey cAKey = (DSAPublicKey)(caCert.getPublicKey());
  * // key without parameters
- * DSAPublicKey nullParamsKey = (DSAPublicKey)(currentCert.getPublicKey());
+ * DSAPublicKey nullParamsKey = (DSAPublicKey)(currentCert.getPublicKey()); 
  *
  * DSAParams cAKeyParams = cAKey.getParams();
  * KeyFactory kf = KeyFactory.getInstance("DSA");
@@ -70,6 +70,7 @@ import sun.security.util.*;
  * @see java.security.KeyFactory
  * @see java.security.spec.DSAPublicKeySpec
  *
+ * @version %I%, %G%
  * @author David Brownell
  */
 public final
@@ -81,16 +82,16 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
     /*
      * The three unsigned integer parameters.
      */
-    private BigInteger  p , q, g;
+    private BigInteger	p , q, g;
 
     /** Returns the DSS/DSA parameter "P" */
-    public BigInteger   getP () { return p; }
+    public BigInteger	getP () { return p; }
 
     /** Returns the DSS/DSA parameter "Q" */
-    public BigInteger   getQ () { return q; }
+    public BigInteger	getQ () { return q; }
 
     /** Returns the DSS/DSA parameter "G" */
-    public BigInteger   getG () { return g; }
+    public BigInteger	getG () { return g; }
 
     /**
      * Default constructor.  The OID and parameters must be
@@ -100,13 +101,13 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
     public AlgIdDSA () {}
 
     AlgIdDSA (DerValue val) throws IOException
-        { super(val.getOID()); }
+	{ super(val.getOID()); }
 
     /**
-     * Construct an AlgIdDSA from an X.509 encoded byte array.
+     * Construct an AlgIdDSA from an X.509 encoded byte array. 
      */
     public AlgIdDSA (byte[] encodedAlg) throws IOException
-        { super (new DerValue(encodedAlg).getOID()); }
+	{ super (new DerValue(encodedAlg).getOID()); }
 
     /**
      * Constructs a DSS/DSA Algorithm ID from unsigned integers that
@@ -121,8 +122,8 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
     throws IOException
     {
         this (new BigInteger (1, p),
-            new BigInteger (1, q),
-            new BigInteger (1, g));
+	    new BigInteger (1, q),
+	    new BigInteger (1, g));
     }
 
     /**
@@ -160,7 +161,7 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
      * defined by the Digital Signature Standard (DSS), FIPS 186.
      */
     public String getName ()
-        { return "DSA"; }
+	{ return "DSA"; }
 
 
     /*
@@ -170,35 +171,35 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
     private void initializeParams ()
     throws IOException
     {
-        DerOutputStream out = new DerOutputStream ();
+	DerOutputStream	out = new DerOutputStream ();
 
-        out.putInteger(p);
-        out.putInteger(q);
-        out.putInteger(g);
-        params = new DerValue (DerValue.tag_Sequence,out.toByteArray ());
+	out.putInteger(p);
+	out.putInteger(q);
+	out.putInteger(g);
+	params = new DerValue (DerValue.tag_Sequence,out.toByteArray ());
     }
 
     /**
      * Parses algorithm parameters P, Q, and G.  They're found
      * in the "params" member, which never needs to be changed.
      */
-    protected void decodeParams ()
+    protected void decodeParams () 
     throws IOException
     {
-        if (params == null)
+	if (params == null)
             throw new IOException("DSA alg params are null");
         if (params.tag != DerValue.tag_Sequence)
-            throw new  IOException("DSA alg parsing error");
+	    throw new  IOException("DSA alg parsing error");
 
-        params.data.reset ();
+	params.data.reset ();
 
-        this.p = params.data.getBigInteger();
-        this.q = params.data.getBigInteger();
-        this.g = params.data.getBigInteger();
+	this.p = params.data.getBigInteger();
+	this.q = params.data.getBigInteger();
+	this.g = params.data.getBigInteger();
 
-        if (params.data.available () != 0)
-            throw new IOException ("AlgIdDSA params, extra="+
-                                   params.data.available ());
+	if (params.data.available () != 0)
+	    throw new IOException ("AlgIdDSA params, extra="+
+				   params.data.available ());
     }
 
 
@@ -206,7 +207,7 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
      * Returns a formatted string describing the parameters.
      */
     public String toString ()
-        { return paramsToString (); }
+	{ return paramsToString (); }
 
     /*
      * Returns a string describing the parameters.
@@ -216,7 +217,7 @@ class AlgIdDSA extends AlgorithmId implements DSAParams
         if (params == null)
             return " null\n";
         else
-            return
+            return  
                 "\n    p:\n" + Debug.toHexString(p) +
                 "\n    q:\n" + Debug.toHexString(q) +
                 "\n    g:\n" + Debug.toHexString(g) +

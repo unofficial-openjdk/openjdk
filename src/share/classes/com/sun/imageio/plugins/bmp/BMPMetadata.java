@@ -249,11 +249,11 @@ public class BMPMetadata extends IIOMetadata implements BMPConstants {
             IIOMetadataNode subNode = new IIOMetadataNode("PixelAspectRatio");
             subNode.setAttribute("value", "" + ratio);
             node.appendChild(subNode);
-
+            
             subNode = new IIOMetadataNode("HorizontalPhysicalPixelSpacing");
             subNode.setAttribute("value", "" + (1 / xPixelsPerMeter * 1000));
             node.appendChild(subNode);
-
+            
             subNode = new IIOMetadataNode("VerticalPhysicalPixelSpacing");
             subNode.setAttribute("value", "" + (1 / yPixelsPerMeter * 1000));
             node.appendChild(subNode);

@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ BUILDDIR = ../..
 PACKAGE = java.nio
 LIBRARY = nio
 PRODUCT = java
-OTHER_JAVACFLAGS += -Xmaxwarns 1000 -Xlint:serial -Werror
 include $(BUILDDIR)/common/Defs.gmk
 
 NIO_SRC = $(SHARE_SRC)/classes/java/nio
@@ -600,29 +599,25 @@ $(CS_GEN)/CharsetEncoder.java: $(CS_SRC)/Charset-X-Coder.java $(GEN_CODER_SH)
 # Generated exception classes
 #
 
-GEN_EX_SH = genExceptions.sh
- 
-GEN_EX_CMD = NAWK=$(NAWK) $(SHELL) $(GEN_EX_SH)
-
 $(CH_GEN)/%Exception.java: genExceptions.sh $(CH_SRC)/exceptions
 	$(prep-target)
 	@$(RM) $@.temp
-	$(GEN_EX_CMD) $(CH_SRC)/exceptions $(CH_GEN)
+	$(SHELL) genExceptions.sh $(CH_SRC)/exceptions $(CH_GEN)
 
 $(CS_GEN)/%Exception.java: genExceptions.sh $(CS_SRC)/exceptions
 	$(prep-target)
 	@$(RM) $@.temp
-	$(GEN_EX_CMD) $(CS_SRC)/exceptions $(CS_GEN)
+	$(SHELL) genExceptions.sh $(CS_SRC)/exceptions $(CS_GEN)
 
 $(BUF_GEN)/%Exception.java: genExceptions.sh $(BUF_SRC)/exceptions
 	$(prep-target)
 	@$(RM) $@.temp
-	$(GEN_EX_CMD) $(BUF_SRC)/exceptions $(BUF_GEN)
+	$(SHELL) genExceptions.sh $(BUF_SRC)/exceptions $(BUF_GEN)
 
 $(SCH_GEN)/%Exception.java: genExceptions.sh $(SCH_SRC)/exceptions
 	$(prep-target)
 	@$(RM) $@.temp
-	$(GEN_EX_CMD) $(SCH_SRC)/exceptions $(SCH_GEN)
+	$(SHELL) genExceptions.sh $(SCH_SRC)/exceptions $(SCH_GEN)
 
 
 #
@@ -640,3 +635,4 @@ $(SCS_GEN)/StandardCharsets.java: genCharsetProvider.sh \
 	  $(SHELL) -e genCharsetProvider.sh $(SCS_SRC)/standard-charsets $(SCS_GEN)
 
 .PHONY: sources 
+

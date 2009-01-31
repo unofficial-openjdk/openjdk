@@ -54,6 +54,7 @@ import sun.swing.UIAction;
 /**
  * A Basic L&F implementation of SliderUI.
  *
+ * @version %I% %G%
  * @author Tom Santos
  */
 public class BasicSliderUI extends SliderUI{
@@ -153,33 +154,33 @@ public class BasicSliderUI extends SliderUI{
         componentListener = createComponentListener( slider );
         focusListener = createFocusListener( slider );
         scrollListener = createScrollListener( slider );
-        propertyChangeListener = createPropertyChangeListener( slider );
+	propertyChangeListener = createPropertyChangeListener( slider );
 
-        installDefaults( slider );
-        installListeners( slider );
-        installKeyboardActions( slider );
+	installDefaults( slider );
+	installListeners( slider );
+	installKeyboardActions( slider );
 
         scrollTimer = new Timer( 100, scrollListener );
-        scrollTimer.setInitialDelay( 300 );
+        scrollTimer.setInitialDelay( 300 );   
 
-        insetCache = slider.getInsets();
-        leftToRightCache = BasicGraphicsUtils.isLeftToRight(slider);
-        focusRect = new Rectangle();
-        contentRect = new Rectangle();
-        labelRect = new Rectangle();
-        tickRect = new Rectangle();
-        trackRect = new Rectangle();
-        thumbRect = new Rectangle();
+	insetCache = slider.getInsets();
+	leftToRightCache = BasicGraphicsUtils.isLeftToRight(slider);
+	focusRect = new Rectangle();
+	contentRect = new Rectangle();
+	labelRect = new Rectangle();
+	tickRect = new Rectangle();
+	trackRect = new Rectangle();
+	thumbRect = new Rectangle();
         lastValue = slider.getValue();
-
+        
         calculateGeometry(); // This figures out where the labels, ticks, track, and thumb are.
-    }
+    }   
 
     public void uninstallUI(JComponent c) {
         if ( c != slider )
             throw new IllegalComponentStateException(
-                                                    this + " was asked to deinstall() "
-                                                    + c + " when it only knows about "
+                                                    this + " was asked to deinstall() " 
+                                                    + c + " when it only knows about " 
                                                     + slider + ".");
 
         LookAndFeel.uninstallBorder(slider);
@@ -187,37 +188,37 @@ public class BasicSliderUI extends SliderUI{
         scrollTimer.stop();
         scrollTimer = null;
 
-        uninstallListeners( slider );
-        uninstallKeyboardActions(slider);
+	uninstallListeners( slider );
+	uninstallKeyboardActions(slider);
 
-        focusInsets = null;
-        insetCache = null;
-        leftToRightCache = true;
-        focusRect = null;
-        contentRect = null;
-        labelRect = null;
-        tickRect = null;
-        trackRect = null;
+	focusInsets = null;
+	insetCache = null;
+	leftToRightCache = true;
+	focusRect = null;
+	contentRect = null;
+	labelRect = null;
+	tickRect = null;
+	trackRect = null;
         thumbRect = null;
         trackListener = null;
         changeListener = null;
         componentListener = null;
         focusListener = null;
         scrollListener = null;
-        propertyChangeListener = null;
+	propertyChangeListener = null;
         slider = null;
     }
 
     protected void installDefaults( JSlider slider ) {
         LookAndFeel.installBorder(slider, "Slider.border");
         LookAndFeel.installColorsAndFont(slider, "Slider.background",
-                                         "Slider.foreground", "Slider.font");
+					 "Slider.foreground", "Slider.font");
         highlightColor = UIManager.getColor("Slider.highlight");
 
         shadowColor = UIManager.getColor("Slider.shadow");
         focusColor = UIManager.getColor("Slider.focus");
 
-        focusInsets = (Insets)UIManager.get( "Slider.focusInsets" );
+	focusInsets = (Insets)UIManager.get( "Slider.focusInsets" );
     }
 
     protected TrackListener createTrackListener(JSlider slider) {
@@ -272,8 +273,8 @@ public class BasicSliderUI extends SliderUI{
     }
 
     protected void installKeyboardActions( JSlider slider ) {
-        InputMap km = getInputMap(JComponent.WHEN_FOCUSED, slider);
-        SwingUtilities.replaceUIInputMap(slider, JComponent.WHEN_FOCUSED, km);
+	InputMap km = getInputMap(JComponent.WHEN_FOCUSED, slider);
+	SwingUtilities.replaceUIInputMap(slider, JComponent.WHEN_FOCUSED, km);
         LazyActionMap.installLazyActionMap(slider, BasicSliderUI.class,
                 "Slider.actionMap");
     }
@@ -309,9 +310,9 @@ public class BasicSliderUI extends SliderUI{
     }
 
     protected void uninstallKeyboardActions( JSlider slider ) {
-        SwingUtilities.replaceUIActionMap(slider, null);
-        SwingUtilities.replaceUIInputMap(slider, JComponent.WHEN_FOCUSED,
-                                         null);
+	SwingUtilities.replaceUIActionMap(slider, null);
+	SwingUtilities.replaceUIInputMap(slider, JComponent.WHEN_FOCUSED,
+					 null);
     }
 
 
@@ -329,7 +330,7 @@ public class BasicSliderUI extends SliderUI{
             FontMetrics metrics = slider.getFontMetrics(slider.getFont());
             Insets insets = slider.getInsets();
             Dimension thumbSize = getThumbSize();
-            if (slider.getOrientation() == JSlider.HORIZONTAL) {
+	    if (slider.getOrientation() == JSlider.HORIZONTAL) {
                 int tickLength = getTickLength();
                 int contentHeight = height - insets.top - insets.bottom -
                     focusInsets.top - focusInsets.bottom;
@@ -476,15 +477,15 @@ public class BasicSliderUI extends SliderUI{
         Dimension d;
         if ( slider.getOrientation() == JSlider.VERTICAL ) {
             d = new Dimension(getPreferredVerticalSize());
-            d.width = insetCache.left + insetCache.right;
-            d.width += focusInsets.left + focusInsets.right;
-            d.width += trackRect.width + tickRect.width + labelRect.width;
+	    d.width = insetCache.left + insetCache.right;
+	    d.width += focusInsets.left + focusInsets.right;
+	    d.width += trackRect.width + tickRect.width + labelRect.width;
         }
         else {
             d = new Dimension(getPreferredHorizontalSize());
-            d.height = insetCache.top + insetCache.bottom;
-            d.height += focusInsets.top + focusInsets.bottom;
-            d.height += trackRect.height + tickRect.height + labelRect.height;
+	    d.height = insetCache.top + insetCache.bottom;
+	    d.height += focusInsets.top + focusInsets.bottom;
+	    d.height += trackRect.height + tickRect.height + labelRect.height;
         }
 
         return d;
@@ -496,15 +497,15 @@ public class BasicSliderUI extends SliderUI{
 
         if ( slider.getOrientation() == JSlider.VERTICAL ) {
             d = new Dimension(getMinimumVerticalSize());
-            d.width = insetCache.left + insetCache.right;
-            d.width += focusInsets.left + focusInsets.right;
-            d.width += trackRect.width + tickRect.width + labelRect.width;
+	    d.width = insetCache.left + insetCache.right;
+	    d.width += focusInsets.left + focusInsets.right;
+	    d.width += trackRect.width + tickRect.width + labelRect.width;
         }
         else {
             d = new Dimension(getMinimumHorizontalSize());
-            d.height = insetCache.top + insetCache.bottom;
-            d.height += focusInsets.top + focusInsets.bottom;
-            d.height += trackRect.height + tickRect.height + labelRect.height;
+	    d.height = insetCache.top + insetCache.bottom;
+	    d.height += focusInsets.top + focusInsets.bottom;
+	    d.height += trackRect.height + tickRect.height + labelRect.height;
         }
 
         return d;
@@ -524,27 +525,27 @@ public class BasicSliderUI extends SliderUI{
 
     protected void calculateGeometry() {
         calculateFocusRect();
-        calculateContentRect();
-        calculateThumbSize();
-        calculateTrackBuffer();
-        calculateTrackRect();
-        calculateTickRect();
-        calculateLabelRect();
-        calculateThumbLocation();
+        calculateContentRect(); 
+	calculateThumbSize();
+	calculateTrackBuffer();
+	calculateTrackRect();
+	calculateTickRect();
+	calculateLabelRect();
+	calculateThumbLocation();
     }
-
+  
     protected void calculateFocusRect() {
         focusRect.x = insetCache.left;
-        focusRect.y = insetCache.top;
-        focusRect.width = slider.getWidth() - (insetCache.left + insetCache.right);
-        focusRect.height = slider.getHeight() - (insetCache.top + insetCache.bottom);
+	focusRect.y = insetCache.top;
+	focusRect.width = slider.getWidth() - (insetCache.left + insetCache.right);
+	focusRect.height = slider.getHeight() - (insetCache.top + insetCache.bottom);
     }
-
+  
     protected void calculateThumbSize() {
-        Dimension size = getThumbSize();
-        thumbRect.setSize( size.width, size.height );
+	Dimension size = getThumbSize();
+	thumbRect.setSize( size.width, size.height );
     }
-
+  
     protected void calculateContentRect() {
         contentRect.x = focusRect.x + focusInsets.left;
         contentRect.y = focusRect.y + focusInsets.top;
@@ -554,49 +555,49 @@ public class BasicSliderUI extends SliderUI{
 
     protected void calculateThumbLocation() {
         if ( slider.getSnapToTicks() ) {
-            int sliderValue = slider.getValue();
-            int snappedValue = sliderValue;
-            int majorTickSpacing = slider.getMajorTickSpacing();
-            int minorTickSpacing = slider.getMinorTickSpacing();
-            int tickSpacing = 0;
+	    int sliderValue = slider.getValue();
+	    int snappedValue = sliderValue; 
+	    int majorTickSpacing = slider.getMajorTickSpacing();
+	    int minorTickSpacing = slider.getMinorTickSpacing();
+	    int tickSpacing = 0;
+	    
+	    if ( minorTickSpacing > 0 ) {
+	        tickSpacing = minorTickSpacing;
+	    }
+	    else if ( majorTickSpacing > 0 ) {
+	        tickSpacing = majorTickSpacing;
+	    }
 
-            if ( minorTickSpacing > 0 ) {
-                tickSpacing = minorTickSpacing;
-            }
-            else if ( majorTickSpacing > 0 ) {
-                tickSpacing = majorTickSpacing;
-            }
-
-            if ( tickSpacing != 0 ) {
-                // If it's not on a tick, change the value
-                if ( (sliderValue - slider.getMinimum()) % tickSpacing != 0 ) {
-                    float temp = (float)(sliderValue - slider.getMinimum()) / (float)tickSpacing;
-                    int whichTick = Math.round( temp );
+	    if ( tickSpacing != 0 ) {
+	        // If it's not on a tick, change the value
+	        if ( (sliderValue - slider.getMinimum()) % tickSpacing != 0 ) {
+		    float temp = (float)(sliderValue - slider.getMinimum()) / (float)tickSpacing;
+		    int whichTick = Math.round( temp );
 
                     // This is the fix for the bug #6401380
                     if (temp - (int)temp == .5 && sliderValue < lastValue) {
-                      whichTick --;
-                    }
+                      whichTick --;  
+                    }                    
                     snappedValue = slider.getMinimum() + (whichTick * tickSpacing);
-                }
-
-                if( snappedValue != sliderValue ) {
-                    slider.setValue( snappedValue );
-                }
-            }
-        }
-
+		}
+		
+		if( snappedValue != sliderValue ) { 
+		    slider.setValue( snappedValue );
+		}
+	    }
+	}
+	
         if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
             int valuePosition = xPositionForValue(slider.getValue());
 
-            thumbRect.x = valuePosition - (thumbRect.width / 2);
-            thumbRect.y = trackRect.y;
+	    thumbRect.x = valuePosition - (thumbRect.width / 2);
+	    thumbRect.y = trackRect.y;
         }
         else {
             int valuePosition = yPositionForValue(slider.getValue());
-
-            thumbRect.x = trackRect.x;
-            thumbRect.y = valuePosition - (thumbRect.height / 2);
+	    
+	    thumbRect.x = trackRect.x;
+	    thumbRect.y = valuePosition - (thumbRect.height / 2);
         }
     }
 
@@ -624,32 +625,32 @@ public class BasicSliderUI extends SliderUI{
         }
     }
 
-
+  
     protected void calculateTrackRect() {
-        int centerSpacing = 0; // used to center sliders added using BorderLayout.CENTER (bug 4275631)
+	int centerSpacing = 0; // used to center sliders added using BorderLayout.CENTER (bug 4275631)
         if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
-            centerSpacing = thumbRect.height;
-            if ( slider.getPaintTicks() ) centerSpacing += getTickLength();
-            if ( slider.getPaintLabels() ) centerSpacing += getHeightOfTallestLabel();
-            trackRect.x = contentRect.x + trackBuffer;
-            trackRect.y = contentRect.y + (contentRect.height - centerSpacing - 1)/2;
-            trackRect.width = contentRect.width - (trackBuffer * 2);
-            trackRect.height = thumbRect.height;
-        }
-        else {
-            centerSpacing = thumbRect.width;
-            if (BasicGraphicsUtils.isLeftToRight(slider)) {
-                if ( slider.getPaintTicks() ) centerSpacing += getTickLength();
-                if ( slider.getPaintLabels() ) centerSpacing += getWidthOfWidestLabel();
-            } else {
-                if ( slider.getPaintTicks() ) centerSpacing -= getTickLength();
-                if ( slider.getPaintLabels() ) centerSpacing -= getWidthOfWidestLabel();
-            }
-            trackRect.x = contentRect.x + (contentRect.width - centerSpacing - 1)/2;
-            trackRect.y = contentRect.y + trackBuffer;
-            trackRect.width = thumbRect.width;
-            trackRect.height = contentRect.height - (trackBuffer * 2);
-        }
+	    centerSpacing = thumbRect.height;
+	    if ( slider.getPaintTicks() ) centerSpacing += getTickLength();
+	    if ( slider.getPaintLabels() ) centerSpacing += getHeightOfTallestLabel();
+	    trackRect.x = contentRect.x + trackBuffer;
+	    trackRect.y = contentRect.y + (contentRect.height - centerSpacing - 1)/2;
+	    trackRect.width = contentRect.width - (trackBuffer * 2);
+	    trackRect.height = thumbRect.height;
+	}
+	else {
+	    centerSpacing = thumbRect.width;
+	    if (BasicGraphicsUtils.isLeftToRight(slider)) {
+		if ( slider.getPaintTicks() ) centerSpacing += getTickLength();
+	    	if ( slider.getPaintLabels() ) centerSpacing += getWidthOfWidestLabel();
+	    } else {
+	        if ( slider.getPaintTicks() ) centerSpacing -= getTickLength();
+	    	if ( slider.getPaintLabels() ) centerSpacing -= getWidthOfWidestLabel();
+	    }
+	    trackRect.x = contentRect.x + (contentRect.width - centerSpacing - 1)/2;
+	    trackRect.y = contentRect.y + trackBuffer;
+	    trackRect.width = thumbRect.width;
+	    trackRect.height = contentRect.height - (trackBuffer * 2);
+	}
 
     }
 
@@ -664,63 +665,63 @@ public class BasicSliderUI extends SliderUI{
     }
 
     protected void calculateTickRect() {
-        if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
-            tickRect.x = trackRect.x;
-            tickRect.y = trackRect.y + trackRect.height;
-            tickRect.width = trackRect.width;
-            tickRect.height = (slider.getPaintTicks()) ? getTickLength() : 0;
-        }
-        else {
-            tickRect.width = (slider.getPaintTicks()) ? getTickLength() : 0;
-            if(BasicGraphicsUtils.isLeftToRight(slider)) {
-                tickRect.x = trackRect.x + trackRect.width;
-            }
-            else {
-                tickRect.x = trackRect.x - tickRect.width;
-            }
-            tickRect.y = trackRect.y;
-            tickRect.height = trackRect.height;
-        }
+	if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
+	    tickRect.x = trackRect.x;
+	    tickRect.y = trackRect.y + trackRect.height;
+	    tickRect.width = trackRect.width;
+	    tickRect.height = (slider.getPaintTicks()) ? getTickLength() : 0;
+	}
+	else {
+	    tickRect.width = (slider.getPaintTicks()) ? getTickLength() : 0;
+	    if(BasicGraphicsUtils.isLeftToRight(slider)) {
+	        tickRect.x = trackRect.x + trackRect.width;
+	    }
+	    else {
+	        tickRect.x = trackRect.x - tickRect.width;
+	    }
+	    tickRect.y = trackRect.y;
+	    tickRect.height = trackRect.height;
+	}
     }
 
     protected void calculateLabelRect() {
         if ( slider.getPaintLabels() ) {
-            if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
-                labelRect.x = tickRect.x - trackBuffer;
-                labelRect.y = tickRect.y + tickRect.height;
-                labelRect.width = tickRect.width + (trackBuffer * 2);
+	    if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
+	        labelRect.x = tickRect.x - trackBuffer;
+		labelRect.y = tickRect.y + tickRect.height;
+		labelRect.width = tickRect.width + (trackBuffer * 2);
                 labelRect.height = getHeightOfTallestLabel();
             }
             else {
-                if(BasicGraphicsUtils.isLeftToRight(slider)) {
-                    labelRect.x = tickRect.x + tickRect.width;
-                    labelRect.width = getWidthOfWidestLabel();
-                }
-                else {
-                    labelRect.width = getWidthOfWidestLabel();
-                    labelRect.x = tickRect.x - labelRect.width;
-                }
-                labelRect.y = tickRect.y - trackBuffer;
-                labelRect.height = tickRect.height + (trackBuffer * 2);
+	        if(BasicGraphicsUtils.isLeftToRight(slider)) {
+		    labelRect.x = tickRect.x + tickRect.width;
+		    labelRect.width = getWidthOfWidestLabel();
+		}
+		else {
+		    labelRect.width = getWidthOfWidestLabel();
+		    labelRect.x = tickRect.x - labelRect.width;
+		}
+		labelRect.y = tickRect.y - trackBuffer;
+		labelRect.height = tickRect.height + (trackBuffer * 2);
             }
         }
         else {
             if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
-                labelRect.x = tickRect.x;
-                labelRect.y = tickRect.y + tickRect.height;
-                labelRect.width = tickRect.width;
-                labelRect.height = 0;
+	        labelRect.x = tickRect.x;
+		labelRect.y = tickRect.y + tickRect.height;
+		labelRect.width = tickRect.width;
+		labelRect.height = 0;
             }
             else {
-                if(BasicGraphicsUtils.isLeftToRight(slider)) {
-                    labelRect.x = tickRect.x + tickRect.width;
-                }
-                else {
-                    labelRect.x = tickRect.x;
-                }
-                labelRect.y = tickRect.y;
-                labelRect.width = 0;
-                labelRect.height = tickRect.height;
+	        if(BasicGraphicsUtils.isLeftToRight(slider)) {
+		    labelRect.x = tickRect.x + tickRect.width;
+		}
+		else {
+		    labelRect.x = tickRect.x;
+		}
+		labelRect.y = tickRect.y;
+		labelRect.width = 0;
+		labelRect.height = tickRect.height;
             }
         }
     }
@@ -729,21 +730,21 @@ public class BasicSliderUI extends SliderUI{
         Dimension size = new Dimension();
 
         if ( slider.getOrientation() == JSlider.VERTICAL ) {
-            size.width = 20;
-            size.height = 11;
-        }
-        else {
-            size.width = 11;
-            size.height = 20;
-        }
+	    size.width = 20;
+	    size.height = 11;
+	}
+	else {
+	    size.width = 11;
+	    size.height = 20;
+	}
 
-        return size;
+	return size;
     }
 
     public class PropertyChangeHandler implements PropertyChangeListener {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this
+        // new functionality add it to the Handler, but make sure this      
         // class calls into the Handler.
         public void propertyChange( PropertyChangeEvent e ) {
             getHandler().propertyChange(e);
@@ -822,14 +823,14 @@ public class BasicSliderUI extends SliderUI{
 
     protected boolean drawInverted() {
         if (slider.getOrientation()==JSlider.HORIZONTAL) {
-            if(BasicGraphicsUtils.isLeftToRight(slider)) {
-                return slider.getInverted();
-            } else {
-                return !slider.getInverted();
-            }
-        } else {
-            return slider.getInverted();
-        }
+	    if(BasicGraphicsUtils.isLeftToRight(slider)) {
+	        return slider.getInverted();
+	    } else {
+	        return !slider.getInverted();
+	    }
+	} else {
+	    return slider.getInverted();
+	}
     }
 
     /**
@@ -905,53 +906,53 @@ public class BasicSliderUI extends SliderUI{
 
     public void paint( Graphics g, JComponent c )   {
         recalculateIfInsetsChanged();
-        recalculateIfOrientationChanged();
-        Rectangle clip = g.getClipBounds();
+	recalculateIfOrientationChanged();
+	Rectangle clip = g.getClipBounds();
 
-        if ( !clip.intersects(trackRect) && slider.getPaintTrack())
-            calculateGeometry();
+	if ( !clip.intersects(trackRect) && slider.getPaintTrack())
+	    calculateGeometry();
 
-        if ( slider.getPaintTrack() && clip.intersects( trackRect ) ) {
-            paintTrack( g );
-        }
+	if ( slider.getPaintTrack() && clip.intersects( trackRect ) ) {
+	    paintTrack( g );
+	}
         if ( slider.getPaintTicks() && clip.intersects( tickRect ) ) {
             paintTicks( g );
         }
         if ( slider.getPaintLabels() && clip.intersects( labelRect ) ) {
             paintLabels( g );
         }
-        if ( slider.hasFocus() && clip.intersects( focusRect ) ) {
-            paintFocus( g );
-        }
-        if ( clip.intersects( thumbRect ) ) {
-            paintThumb( g );
-        }
+	if ( slider.hasFocus() && clip.intersects( focusRect ) ) {
+	    paintFocus( g );      
+	}
+	if ( clip.intersects( thumbRect ) ) {
+	    paintThumb( g );
+	}
     }
 
     protected void recalculateIfInsetsChanged() {
         Insets newInsets = slider.getInsets();
         if ( !newInsets.equals( insetCache ) ) {
-            insetCache = newInsets;
-            calculateGeometry();
-        }
+	    insetCache = newInsets;
+	    calculateGeometry();
+	}
     }
 
     protected void recalculateIfOrientationChanged() {
         boolean ltr = BasicGraphicsUtils.isLeftToRight(slider);
         if ( ltr!=leftToRightCache ) {
-            leftToRightCache = ltr;
-            calculateGeometry();
-        }
+	    leftToRightCache = ltr;
+	    calculateGeometry();
+	}
     }
 
-    public void paintFocus(Graphics g)  {
-        g.setColor( getFocusColor() );
+    public void paintFocus(Graphics g)  {        
+	g.setColor( getFocusColor() );
 
-        BasicGraphicsUtils.drawDashedRect( g, focusRect.x, focusRect.y,
-                                           focusRect.width, focusRect.height );
+	BasicGraphicsUtils.drawDashedRect( g, focusRect.x, focusRect.y,
+					   focusRect.width, focusRect.height );
     }
 
-    public void paintTrack(Graphics g)  {
+    public void paintTrack(Graphics g)  {        
 
         Rectangle trackBounds = trackRect;
 
@@ -991,7 +992,7 @@ public class BasicSliderUI extends SliderUI{
         }
     }
 
-    public void paintTicks(Graphics g)  {
+    public void paintTicks(Graphics g)  {        
         Rectangle tickBounds = tickRect;
         int i;
         int maj, min, max;
@@ -1037,11 +1038,11 @@ public class BasicSliderUI extends SliderUI{
             int yPos = 0;
 
             if ( slider.getMinorTickSpacing() > 0 ) {
-                int offset = 0;
-                if(!BasicGraphicsUtils.isLeftToRight(slider)) {
-                    offset = tickBounds.width - tickBounds.width / 2;
-                    g.translate(offset, 0);
-                }
+	        int offset = 0;
+	        if(!BasicGraphicsUtils.isLeftToRight(slider)) {
+		    offset = tickBounds.width - tickBounds.width / 2;
+		    g.translate(offset, 0);
+		}
 
                 while ( value <= slider.getMaximum() ) {
                     yPos = yPositionForValue( value );
@@ -1049,16 +1050,16 @@ public class BasicSliderUI extends SliderUI{
                     value += slider.getMinorTickSpacing();
                 }
 
-                if(!BasicGraphicsUtils.isLeftToRight(slider)) {
-                    g.translate(-offset, 0);
-                }
+		if(!BasicGraphicsUtils.isLeftToRight(slider)) {
+		    g.translate(-offset, 0);
+		}
             }
 
             if ( slider.getMajorTickSpacing() > 0 ) {
                 value = slider.getMinimum();
-                if(!BasicGraphicsUtils.isLeftToRight(slider)) {
-                    g.translate(2, 0);
-                }
+	        if(!BasicGraphicsUtils.isLeftToRight(slider)) {
+		    g.translate(2, 0);
+		}
 
                 while ( value <= slider.getMaximum() ) {
                     yPos = yPositionForValue( value );
@@ -1066,9 +1067,9 @@ public class BasicSliderUI extends SliderUI{
                     value += slider.getMajorTickSpacing();
                 }
 
-                if(!BasicGraphicsUtils.isLeftToRight(slider)) {
-                    g.translate(-2, 0);
-                }
+	        if(!BasicGraphicsUtils.isLeftToRight(slider)) {
+		    g.translate(-2, 0);
+		}
             }
             g.translate(-tickBounds.x, 0);
         }
@@ -1098,15 +1099,15 @@ public class BasicSliderUI extends SliderUI{
             Enumeration keys = dictionary.keys();
             int minValue = slider.getMinimum();
             int maxValue = slider.getMaximum();
-            boolean enabled = slider.isEnabled();
+	    boolean enabled = slider.isEnabled();
             while ( keys.hasMoreElements() ) {
                 Integer key = (Integer)keys.nextElement();
                 int value = key.intValue();
                 if (value >= minValue && value <= maxValue) {
                     Component label = (Component)dictionary.get( key );
-                    if (label instanceof JComponent) {
-                        ((JComponent)label).setEnabled(enabled);
-                    }
+		    if (label instanceof JComponent) {
+			((JComponent)label).setEnabled(enabled);
+		    }
                     if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
                         g.translate( 0, labelBounds.y );
                         paintHorizontalLabel( g, value, label );
@@ -1154,10 +1155,10 @@ public class BasicSliderUI extends SliderUI{
         g.translate( 0, -labelTop );
     }
 
-    public void paintThumb(Graphics g)  {
+    public void paintThumb(Graphics g)  {        
         Rectangle knobBounds = thumbRect;
         int w = knobBounds.width;
-        int h = knobBounds.height;
+        int h = knobBounds.height;      
 
         g.translate(knobBounds.x, knobBounds.y);
 
@@ -1168,18 +1169,18 @@ public class BasicSliderUI extends SliderUI{
             g.setColor(slider.getBackground().darker());
         }
 
-        Boolean paintThumbArrowShape =
-            (Boolean)slider.getClientProperty("Slider.paintThumbArrowShape");
+	Boolean paintThumbArrowShape =
+	    (Boolean)slider.getClientProperty("Slider.paintThumbArrowShape");
 
-        if ((!slider.getPaintTicks() && paintThumbArrowShape == null) ||
-            paintThumbArrowShape == Boolean.FALSE) {
+	if ((!slider.getPaintTicks() && paintThumbArrowShape == null) ||
+	    paintThumbArrowShape == Boolean.FALSE) {
 
-            // "plain" version
+	    // "plain" version
             g.fillRect(0, 0, w, h);
 
             g.setColor(Color.black);
-            g.drawLine(0, h-1, w-1, h-1);
-            g.drawLine(w-1, 0, w-1, h-1);
+            g.drawLine(0, h-1, w-1, h-1);    
+            g.drawLine(w-1, 0, w-1, h-1);    
 
             g.setColor(highlightColor);
             g.drawLine(0, 0, 0, h-2);
@@ -1196,47 +1197,47 @@ public class BasicSliderUI extends SliderUI{
             p.addPoint(1, h-cw);
             p.addPoint(cw-1, h-1);
             p.addPoint(w-2, h-1-cw);
-            g.fillPolygon(p);
+            g.fillPolygon(p);       
 
             g.setColor(highlightColor);
             g.drawLine(0, 0, w-2, 0);
             g.drawLine(0, 1, 0, h-1-cw);
-            g.drawLine(0, h-cw, cw-1, h-1);
+            g.drawLine(0, h-cw, cw-1, h-1); 
 
             g.setColor(Color.black);
-            g.drawLine(w-1, 0, w-1, h-2-cw);
-            g.drawLine(w-1, h-1-cw, w-1-cw, h-1);
+            g.drawLine(w-1, 0, w-1, h-2-cw);    
+            g.drawLine(w-1, h-1-cw, w-1-cw, h-1);       
 
             g.setColor(shadowColor);
-            g.drawLine(w-2, 1, w-2, h-2-cw);
-            g.drawLine(w-2, h-1-cw, w-1-cw, h-2);
+            g.drawLine(w-2, 1, w-2, h-2-cw);    
+            g.drawLine(w-2, h-1-cw, w-1-cw, h-2);       
         }
         else {  // vertical
             int cw = h / 2;
-            if(BasicGraphicsUtils.isLeftToRight(slider)) {
-                  g.fillRect(1, 1, w-1-cw, h-3);
-                  Polygon p = new Polygon();
+	    if(BasicGraphicsUtils.isLeftToRight(slider)) {
+		  g.fillRect(1, 1, w-1-cw, h-3);
+	          Polygon p = new Polygon();
                   p.addPoint(w-cw-1, 0);
                   p.addPoint(w-1, cw);
                   p.addPoint(w-1-cw, h-2);
                   g.fillPolygon(p);
 
                   g.setColor(highlightColor);
-                  g.drawLine(0, 0, 0, h - 2);                  // left
-                  g.drawLine(1, 0, w-1-cw, 0);                 // top
-                  g.drawLine(w-cw-1, 0, w-1, cw);              // top slant
+	          g.drawLine(0, 0, 0, h - 2);                  // left
+	          g.drawLine(1, 0, w-1-cw, 0);                 // top
+	          g.drawLine(w-cw-1, 0, w-1, cw);              // top slant
 
                   g.setColor(Color.black);
-                  g.drawLine(0, h-1, w-2-cw, h-1);             // bottom
-                  g.drawLine(w-1-cw, h-1, w-1, h-1-cw);        // bottom slant
+	          g.drawLine(0, h-1, w-2-cw, h-1);             // bottom
+	          g.drawLine(w-1-cw, h-1, w-1, h-1-cw);        // bottom slant
 
                   g.setColor(shadowColor);
                   g.drawLine(1, h-2, w-2-cw,  h-2 );         // bottom
                   g.drawLine(w-1-cw, h-2, w-2, h-cw-1 );     // bottom slant
-            }
-            else {
-                  g.fillRect(5, 1, w-1-cw, h-3);
-                  Polygon p = new Polygon();
+	    }
+	    else {
+		  g.fillRect(5, 1, w-1-cw, h-3);
+	          Polygon p = new Polygon();
                   p.addPoint(cw, 0);
                   p.addPoint(0, cw);
                   p.addPoint(cw, h-2);
@@ -1253,7 +1254,7 @@ public class BasicSliderUI extends SliderUI{
                   g.setColor(shadowColor);
                   g.drawLine(cw, h-2, w-2,  h-2 );         // bottom
                   g.drawLine(w-1, 1, w-1,  h-2 );          // right
-            }
+	    }
         }
 
         g.translate(-knobBounds.x, -knobBounds.y);
@@ -1267,7 +1268,7 @@ public class BasicSliderUI extends SliderUI{
 
         thumbRect.setLocation( x, y );
 
-        SwingUtilities.computeUnion( thumbRect.x, thumbRect.y, thumbRect.width, thumbRect.height, unionRect );
+	SwingUtilities.computeUnion( thumbRect.x, thumbRect.y, thumbRect.width, thumbRect.height, unionRect ); 
         slider.repaint( unionRect.x, unionRect.y, unionRect.width, unionRect.height );
     }
 
@@ -1284,7 +1285,7 @@ public class BasicSliderUI extends SliderUI{
             }
 
             int delta = blockIncrement * ((direction > 0) ? POSITIVE_SCROLL : NEGATIVE_SCROLL);
-            slider.setValue(oldValue + delta);
+            slider.setValue(oldValue + delta);          
         }
     }
 
@@ -1294,8 +1295,8 @@ public class BasicSliderUI extends SliderUI{
             int oldValue = slider.getValue();
             int delta = 1 * ((direction > 0) ? POSITIVE_SCROLL : NEGATIVE_SCROLL);
 
-            slider.setValue(oldValue + delta);
-        }
+            slider.setValue(oldValue + delta);  
+        }       
     }
 
     /**
@@ -1376,30 +1377,30 @@ public class BasicSliderUI extends SliderUI{
      */
     public int valueForYPosition( int yPos ) {
         int value;
-        final int minValue = slider.getMinimum();
-        final int maxValue = slider.getMaximum();
-        final int trackLength = trackRect.height;
-        final int trackTop = trackRect.y;
-        final int trackBottom = trackRect.y + (trackRect.height - 1);
+	final int minValue = slider.getMinimum();
+	final int maxValue = slider.getMaximum();
+	final int trackLength = trackRect.height;
+	final int trackTop = trackRect.y;
+	final int trackBottom = trackRect.y + (trackRect.height - 1);
+	
+	if ( yPos <= trackTop ) {
+	    value = drawInverted() ? minValue : maxValue;
+	}
+	else if ( yPos >= trackBottom ) {
+	    value = drawInverted() ? maxValue : minValue;
+	}
+	else {
+	    int distanceFromTrackTop = yPos - trackTop;
+	    double valueRange = (double)maxValue - (double)minValue;
+	    double valuePerPixel = valueRange / (double)trackLength;
+	    int valueFromTrackTop = (int)Math.round( distanceFromTrackTop * valuePerPixel );
 
-        if ( yPos <= trackTop ) {
-            value = drawInverted() ? minValue : maxValue;
-        }
-        else if ( yPos >= trackBottom ) {
-            value = drawInverted() ? maxValue : minValue;
-        }
-        else {
-            int distanceFromTrackTop = yPos - trackTop;
-            double valueRange = (double)maxValue - (double)minValue;
-            double valuePerPixel = valueRange / (double)trackLength;
-            int valueFromTrackTop = (int)Math.round( distanceFromTrackTop * valuePerPixel );
-
-            value = drawInverted() ? minValue + valueFromTrackTop : maxValue - valueFromTrackTop;
-        }
-
-        return value;
+	    value = drawInverted() ? minValue + valueFromTrackTop : maxValue - valueFromTrackTop;
+	}
+	
+	return value;
     }
-
+  
     /**
      * Returns a value give an x position.  If xPos is past the track at the left or the
      * right it will set the value to the min or max of the slider, depending if the
@@ -1407,29 +1408,29 @@ public class BasicSliderUI extends SliderUI{
      */
     public int valueForXPosition( int xPos ) {
         int value;
-        final int minValue = slider.getMinimum();
-        final int maxValue = slider.getMaximum();
-        final int trackLength = trackRect.width;
-        final int trackLeft = trackRect.x;
-        final int trackRight = trackRect.x + (trackRect.width - 1);
-
-        if ( xPos <= trackLeft ) {
-            value = drawInverted() ? maxValue : minValue;
-        }
-        else if ( xPos >= trackRight ) {
-            value = drawInverted() ? minValue : maxValue;
-        }
-        else {
-            int distanceFromTrackLeft = xPos - trackLeft;
-            double valueRange = (double)maxValue - (double)minValue;
-            double valuePerPixel = valueRange / (double)trackLength;
-            int valueFromTrackLeft = (int)Math.round( distanceFromTrackLeft * valuePerPixel );
-
-            value = drawInverted() ? maxValue - valueFromTrackLeft :
-              minValue + valueFromTrackLeft;
-        }
-
-        return value;
+	final int minValue = slider.getMinimum();
+	final int maxValue = slider.getMaximum();
+	final int trackLength = trackRect.width;
+	final int trackLeft = trackRect.x; 
+	final int trackRight = trackRect.x + (trackRect.width - 1);
+	
+	if ( xPos <= trackLeft ) {
+	    value = drawInverted() ? maxValue : minValue;
+	}
+	else if ( xPos >= trackRight ) {
+	    value = drawInverted() ? minValue : maxValue;
+	}
+	else {
+	    int distanceFromTrackLeft = xPos - trackLeft;
+	    double valueRange = (double)maxValue - (double)minValue;
+	    double valuePerPixel = valueRange / (double)trackLength;
+	    int valueFromTrackLeft = (int)Math.round( distanceFromTrackLeft * valuePerPixel );
+	    
+	    value = drawInverted() ? maxValue - valueFromTrackLeft :
+	      minValue + valueFromTrackLeft;
+	}
+	
+	return value;
     }
 
 
@@ -1437,10 +1438,10 @@ public class BasicSliderUI extends SliderUI{
             ComponentListener, FocusListener, PropertyChangeListener {
         // Change Handler
         public void stateChanged(ChangeEvent e) {
-            if (!isDragging) {
-                calculateThumbLocation();
-                slider.repaint();
-            }
+	    if (!isDragging) {
+	        calculateThumbLocation();
+		slider.repaint();
+	    }
             lastValue = slider.getValue();
         }
 
@@ -1448,8 +1449,8 @@ public class BasicSliderUI extends SliderUI{
         public void componentHidden(ComponentEvent e) { }
         public void componentMoved(ComponentEvent e) { }
         public void componentResized(ComponentEvent e) {
-            calculateGeometry();
-            slider.repaint();
+	    calculateGeometry();
+	    slider.repaint();
         }
         public void componentShown(ComponentEvent e) { }
 
@@ -1491,7 +1492,7 @@ public class BasicSliderUI extends SliderUI{
 
     /////////////////////////////////////////////////////////////////////////
     /// Model Listener Class
-    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////        
     /**
      * Data model listener.
      *
@@ -1501,7 +1502,7 @@ public class BasicSliderUI extends SliderUI{
     public class ChangeHandler implements ChangeListener {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this
+        // new functionality add it to the Handler, but make sure this      
         // class calls into the Handler.
         public void stateChanged(ChangeEvent e) {
             getHandler().stateChanged(e);
@@ -1510,7 +1511,7 @@ public class BasicSliderUI extends SliderUI{
 
     /////////////////////////////////////////////////////////////////////////
     /// Track Listener Class
-    /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////        
     /**
      * Track mouse movements.
      *
@@ -1548,8 +1549,8 @@ public class BasicSliderUI extends SliderUI{
 
         /**
         * If the mouse is pressed above the "thumb" component
-        * then reduce the scrollbars value by one page ("page up"),
-        * otherwise increase it by one page.  If there is no
+        * then reduce the scrollbars value by one page ("page up"), 
+        * otherwise increase it by one page.  If there is no 
         * thumb then page up if the mouse is in the upper half
         * of the track.
         */
@@ -1614,7 +1615,7 @@ public class BasicSliderUI extends SliderUI{
                             NEGATIVE_SCROLL : POSITIVE_SCROLL;
                     }
                 }
-                break;
+                break;                    
             case JSlider.HORIZONTAL:
                 if ( thumbRect.isEmpty() ) {
                     int scrollbarCenter = sbSize.width / 2;
@@ -1641,14 +1642,14 @@ public class BasicSliderUI extends SliderUI{
                 break;
             }
 
-            if (shouldScroll(direction)) {
-                scrollDueToClickInTrack(direction);
-            }
-            if (shouldScroll(direction)) {
-                scrollTimer.stop();
-                scrollListener.setDirection(direction);
-                scrollTimer.start();
-            }
+	    if (shouldScroll(direction)) {
+		scrollDueToClickInTrack(direction);
+	    }
+	    if (shouldScroll(direction)) {
+		scrollTimer.stop();
+		scrollListener.setDirection(direction);
+		scrollTimer.start();
+	    }
         }
 
         public boolean shouldScroll(int direction) {
@@ -1686,7 +1687,7 @@ public class BasicSliderUI extends SliderUI{
             return true;
         }
 
-        /**
+        /** 
         * Set the models value to the position of the top/left
         * of the thumb relative to the origin of the track.
         */
@@ -1707,7 +1708,7 @@ public class BasicSliderUI extends SliderUI{
             slider.setValueIsAdjusting(true);
 
             switch (slider.getOrientation()) {
-            case JSlider.VERTICAL:
+            case JSlider.VERTICAL:      
                 int halfThumbHeight = thumbRect.height / 2;
                 int thumbTop = e.getY() - offset;
                 int trackTop = trackRect.y;
@@ -1812,12 +1813,12 @@ public class BasicSliderUI extends SliderUI{
     public class ComponentHandler extends ComponentAdapter {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this
+        // new functionality add it to the Handler, but make sure this      
         // class calls into the Handler.
         public void componentResized(ComponentEvent e)  {
             getHandler().componentResized(e);
         }
-    };
+    };  
 
     /**
      * Focus-change listener.
@@ -1828,7 +1829,7 @@ public class BasicSliderUI extends SliderUI{
     public class FocusHandler implements FocusListener {
         // NOTE: This class exists only for backward compatability. All
         // its functionality has been moved into Handler. If you need to add
-        // new functionality add it to the Handler, but make sure this
+        // new functionality add it to the Handler, but make sure this      
         // class calls into the Handler.
         public void focusGained(FocusEvent e) {
             getHandler().focusGained(e);
@@ -1869,15 +1870,15 @@ public class BasicSliderUI extends SliderUI{
 
         public void actionPerformed(ActionEvent e) {
             SHARED_ACTION.scroll(slider, BasicSliderUI.this, dir, block);
-        }
+	}
 
-        public boolean isEnabled() {
-            boolean b = true;
-            if (slider != null) {
-                b = slider.isEnabled();
-            }
-            return b;
-        }
+	public boolean isEnabled() { 
+	    boolean b = true;
+	    if (slider != null) {
+		b = slider.isEnabled();
+	    }
+	    return b;
+	}
 
     };
 
@@ -1906,7 +1907,7 @@ public class BasicSliderUI extends SliderUI{
                 return;
             }
             SHARED_ACTION.scroll(slider, ui, dir, block);
-        }
+	}
     }
 
     private static class Actions extends UIAction {

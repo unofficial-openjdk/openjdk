@@ -48,6 +48,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's LabelUI.
  *
+ * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthLabelUI extends BasicLabelUI implements SynthUI {
@@ -128,7 +129,7 @@ class SynthLabelUI extends BasicLabelUI implements SynthUI {
         FontMetrics fm = context.getComponent().getFontMetrics(
             context.getStyle().getFont(context));
         context.getStyle().getGraphicsUtils(context).layoutText(
-            context, fm, label.getText(), label.getIcon(),
+            context, fm, label.getText(), label.getIcon(), 
             label.getHorizontalAlignment(), label.getVerticalAlignment(),
             label.getHorizontalTextPosition(), label.getVerticalTextPosition(),
             viewRect, iconRect, textRect, label.getIconTextGap());
@@ -150,8 +151,8 @@ class SynthLabelUI extends BasicLabelUI implements SynthUI {
 
     /**
      * Notifies this UI delegate that it's time to paint the specified
-     * component.  This method is invoked by <code>JComponent</code>
-     * when the specified component is being painted.
+     * component.  This method is invoked by <code>JComponent</code> 
+     * when the specified component is being painted. 
      */
     public void update(Graphics g, JComponent c) {
         SynthContext context = getContext(c);

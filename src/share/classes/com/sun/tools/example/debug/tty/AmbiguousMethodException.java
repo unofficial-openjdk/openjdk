@@ -29,11 +29,11 @@ public class AmbiguousMethodException extends Exception
 {
     public AmbiguousMethodException()
     {
-        super();
+	super();
     }
 
     public AmbiguousMethodException(String s)
     {
-        super(s);
+	super(s);
     }
 }

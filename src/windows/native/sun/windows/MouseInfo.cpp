@@ -38,7 +38,7 @@ extern "C" {
  * Signature: (Ljava/awt/Window)Z
  */
 JNIEXPORT jboolean JNICALL
-Java_sun_awt_DefaultMouseInfoPeer_isWindowUnderMouse(JNIEnv *env, jclass cls,
+Java_sun_awt_DefaultMouseInfoPeer_isWindowUnderMouse(JNIEnv *env, jclass cls, 
                                                         jobject window)
 {
     POINT pt;
@@ -46,7 +46,7 @@ Java_sun_awt_DefaultMouseInfoPeer_isWindowUnderMouse(JNIEnv *env, jclass cls,
     if (env->EnsureLocalCapacity(1) < 0) {
         return JNI_FALSE;
     }
-
+    
     jobject winPeer = AwtObject::GetPeerForTarget(env, window);
     PDATA pData;
     pData = JNI_GET_PDATA(winPeer);
@@ -60,16 +60,16 @@ Java_sun_awt_DefaultMouseInfoPeer_isWindowUnderMouse(JNIEnv *env, jclass cls,
     VERIFY(::GetCursorPos(&pt));
 
     AwtComponent * componentFromPoint = AwtComponent::GetComponent(::WindowFromPoint(pt));
-
+    
     while (componentFromPoint != NULL
         && componentFromPoint->GetHWnd() != hwnd
         && !AwtComponent::IsTopLevelHWnd(componentFromPoint->GetHWnd()))
     {
         componentFromPoint = componentFromPoint->GetParent();
     }
-
-    return ((componentFromPoint != NULL) && (componentFromPoint->GetHWnd() == hwnd)) ? JNI_TRUE : JNI_FALSE;
-
+    
+    return ((componentFromPoint != NULL) && (componentFromPoint->GetHWnd() == hwnd)) ? JNI_TRUE : JNI_FALSE; 
+    
 }
 
 /*

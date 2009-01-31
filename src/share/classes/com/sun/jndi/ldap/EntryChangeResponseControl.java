@@ -31,7 +31,7 @@ import javax.naming.directory.*;
 
 /**
  * This class implements the LDAPv3 Response Control for entry-change
- * notification as defined in
+ * notification as defined in 
  * <a href="http://www.ietf.org/internet-drafts/draft-ietf-ldapext-psearch-02.txt">draft-ietf-ldapext-psearch-02.txt</a>.
  *
  * The control's value has the following ASN.1 definition:
@@ -82,21 +82,21 @@ final public class EntryChangeResponseControl extends BasicControl {
      */
     public static final int RENAME = 8;
 
-    /**
+    /** 
      * The type of change that occurred.
      *
      * @serial
      */
     private int changeType;
 
-    /**
+    /** 
      * The previous distinguished name (only applies to RENAME changes).
      *
      * @serial
      */
     private String previousDN = null;
 
-    /**
+    /** 
      * The change number (if supported by the server).
      *
      * @serial
@@ -116,24 +116,24 @@ final public class EntryChangeResponseControl extends BasicControl {
      *                          while decoding the control's value.
      */
     public EntryChangeResponseControl(String id, boolean criticality,
-        byte[] value) throws IOException {
+	byte[] value) throws IOException {
 
-        super(id, criticality, value);
+	super(id, criticality, value);
 
-        // decode value
-        if ((value != null) && (value.length > 0)) {
-            BerDecoder ber = new BerDecoder(value, 0, value.length);
+	// decode value
+	if ((value != null) && (value.length > 0)) {
+	    BerDecoder ber = new BerDecoder(value, 0, value.length);
 
-            ber.parseSeq(null);
-            changeType = ber.parseEnumeration();
+	    ber.parseSeq(null);
+	    changeType = ber.parseEnumeration();
 
-            if ((ber.bytesLeft() > 0) && (ber.peekByte() == Ber.ASN_OCTET_STR)){
-                previousDN = ber.parseString(true);
-            }
-            if ((ber.bytesLeft() > 0) && (ber.peekByte() == Ber.ASN_INTEGER)) {
-                changeNumber = ber.parseInt();
-            }
-        }
+	    if ((ber.bytesLeft() > 0) && (ber.peekByte() == Ber.ASN_OCTET_STR)){
+		previousDN = ber.parseString(true);
+	    }
+	    if ((ber.bytesLeft() > 0) && (ber.peekByte() == Ber.ASN_INTEGER)) {
+		changeNumber = ber.parseInt();
+	    }
+	}
     }
 
     /**
@@ -142,7 +142,7 @@ final public class EntryChangeResponseControl extends BasicControl {
      * @return    The type of change.
      */
     public int getChangeType() {
-        return changeType;
+	return changeType;
     }
 
     /**
@@ -152,7 +152,7 @@ final public class EntryChangeResponseControl extends BasicControl {
      * @return    The previous distinguished name or null if not applicable.
      */
     public String getPreviousDN() {
-        return previousDN;
+	return previousDN;
     }
 
     /**
@@ -162,6 +162,6 @@ final public class EntryChangeResponseControl extends BasicControl {
      * @return    The change number or -1 if unsupported.
      */
     public long getChangeNumber() {
-        return changeNumber;
+	return changeNumber;
     }
 }

@@ -58,10 +58,10 @@ public interface LangReflectAccess {
     /** Creates a new java.lang.reflect.Constructor. Access checks as
       per java.lang.reflect.AccessibleObject are not overridden. */
     public <T> Constructor<T> newConstructor(Class<T> declaringClass,
-                                             Class[] parameterTypes,
-                                             Class[] checkedExceptions,
-                                             int modifiers,
-                                             int slot,
+					     Class[] parameterTypes,
+					     Class[] checkedExceptions,
+					     int modifiers,
+					     int slot,
                                              String signature,
                                              byte[] annotations,
                                              byte[] parameterAnnotations);

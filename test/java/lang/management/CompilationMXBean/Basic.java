@@ -26,7 +26,7 @@
  * @bug 5011189
  * @summary Unit test for java.lang.management.CompilationMXBean
  *
- * @run main/othervm -Xcomp -Xbatch -Djava.awt.headless=true Basic
+ * @run main/othervm -Xcomp -Xbatch -Djava.awt.headless=true Basic 
  */
 import java.lang.management.*;
 
@@ -34,50 +34,50 @@ public class Basic {
 
     public static void main(String args[]) {
         CompilationMXBean mb = ManagementFactory.getCompilationMXBean();
-        if (mb == null) {
-            System.out.println("The virtual machine doesn't have a compilation system");
-            return;
-        }
+	if (mb == null) {
+	    System.out.println("The virtual machine doesn't have a compilation system");
+	    return;
+   	}
 
-        // Exercise getName() method
-        System.out.println(mb.getName());
+	// Exercise getName() method
+	System.out.println(mb.getName());
 
-        // If compilation time monitoring isn't supported then we are done
+	// If compilation time monitoring isn't supported then we are done
         if (!mb.isCompilationTimeMonitoringSupported()) {
-            System.out.println("Compilation time monitoring not supported.");
-            return;
-        }
+	    System.out.println("Compilation time monitoring not supported.");
+	    return;
+  	}
 
-        // Exercise getTotalCompilationTime();
-        long time;
+	// Exercise getTotalCompilationTime();
+	long time;
 
-        // If the compiler has already done some work then we are done
-        time = mb.getTotalCompilationTime();
-        if (time > 0) {
+	// If the compiler has already done some work then we are done
+	time = mb.getTotalCompilationTime();
+	if (time > 0) {
+	    printCompilationTime(time);
+	    return;
+	}
+
+	// Now the hard bit - we do random work on the assumption
+  	// that the compiler will be used. 
+
+	System.out.println("Doing random work...");
+
+	java.util.Locale.getAvailableLocales();
+	java.security.Security.getProviders();
+	java.awt.Toolkit.getDefaultToolkit();
+	javax.swing.UIManager.getInstalledLookAndFeels();
+	java.nio.channels.spi.SelectorProvider.provider();
+
+	time = mb.getTotalCompilationTime();
+	if (time > 0) {
             printCompilationTime(time);
-            return;
-        }
-
-        // Now the hard bit - we do random work on the assumption
-        // that the compiler will be used.
-
-        System.out.println("Doing random work...");
-
-        java.util.Locale.getAvailableLocales();
-        java.security.Security.getProviders();
-        java.awt.Toolkit.getDefaultToolkit();
-        javax.swing.UIManager.getInstalledLookAndFeels();
-        java.nio.channels.spi.SelectorProvider.provider();
-
-        time = mb.getTotalCompilationTime();
-        if (time > 0) {
-            printCompilationTime(time);
-        } else {
-            throw new RuntimeException("getTimeCompilionTime returns 0");
-        }
+	} else {
+	    throw new RuntimeException("getTimeCompilionTime returns 0");
+	}
     }
 
     static void printCompilationTime(long time) {
-        System.out.println("Total compilation time: " + time + " ms");
+	System.out.println("Total compilation time: " + time + " ms");
     }
 }

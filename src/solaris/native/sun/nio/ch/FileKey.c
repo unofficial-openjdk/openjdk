@@ -40,7 +40,7 @@ static jfieldID key_st_ino;    /* id for FileKey.st_ino */
 } while(0)
 
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_nio_ch_FileKey_initIDs(JNIEnv *env, jclass clazz)
 {
     key_st_dev = (*env)->GetFieldID(env, clazz, "st_dev", "J");
@@ -48,7 +48,7 @@ Java_sun_nio_ch_FileKey_initIDs(JNIEnv *env, jclass clazz)
 }
 
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_nio_ch_FileKey_init(JNIEnv *env, jobject this, jobject fdo)
 {
     struct stat64 fbuf;
@@ -62,3 +62,4 @@ Java_sun_nio_ch_FileKey_init(JNIEnv *env, jobject this, jobject fdo)
         (*env)->SetLongField(env, this, key_st_ino, (jlong)fbuf.st_ino);
     }
 }
+

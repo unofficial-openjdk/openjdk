@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM865;
  * Tables and data to convert Unicode to Cp865
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp865 extends CharToByteSingleByte {

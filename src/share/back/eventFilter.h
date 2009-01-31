@@ -37,37 +37,37 @@ jvmtiError eventFilter_setCountFilter(HandlerNode *node,
 jvmtiError eventFilter_setThreadOnlyFilter(HandlerNode *node,
                                      jint index, jthread thread);
 jvmtiError eventFilter_setLocationOnlyFilter(HandlerNode *node,
-                                       jint index,
-                                       jclass clazz,
-                                       jmethodID method,
+                                       jint index, 
+                                       jclass clazz, 
+                                       jmethodID method, 
                                        jlocation location);
 jvmtiError eventFilter_setFieldOnlyFilter(HandlerNode *node,
-                                    jint index,
-                                    jclass clazz,
+                                    jint index, 
+                                    jclass clazz, 
                                     jfieldID field);
 jvmtiError eventFilter_setClassOnlyFilter(HandlerNode *node,
-                                    jint index,
+                                    jint index, 
                                     jclass clazz);
 jvmtiError eventFilter_setExceptionOnlyFilter(HandlerNode *node,
-                                        jint index,
-                                        jclass exceptionClass,
-                                        jboolean caught,
+                                        jint index, 
+                                        jclass exceptionClass, 
+                                        jboolean caught, 
                                         jboolean uncaught);
 jvmtiError eventFilter_setInstanceOnlyFilter(HandlerNode *node,
-                                       jint index,
+                                       jint index, 
                                        jobject object);
 jvmtiError eventFilter_setClassMatchFilter(HandlerNode *node,
-                                     jint index,
+                                     jint index, 
                                      char *classPattern);
 jvmtiError eventFilter_setClassExcludeFilter(HandlerNode *node,
-                                       jint index,
+                                       jint index, 
                                        char *classPattern);
 jvmtiError eventFilter_setStepFilter(HandlerNode *node,
-                               jint index,
-                               jthread thread,
+                               jint index, 
+                               jthread thread, 
                                jint size, jint depth);
-jvmtiError eventFilter_setSourceNameMatchFilter(HandlerNode *node,
-                                                jint index,
+jvmtiError eventFilter_setSourceNameMatchFilter(HandlerNode *node, 
+                                                jint index, 
                                                 char *sourceNamePattern);
 
 /***** misc *****/

@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)ThaiLayoutEngine.h	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -66,7 +67,7 @@ public:
      *
      * @internal
      */
-    ThaiLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode,
+    ThaiLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, 
         le_int32 languageCode, le_int32 typoFlags);
 
     /**
@@ -109,9 +110,9 @@ protected:
      * @param offset - the index of the first character to process
      * @param count - the number of characters to process
      * @param max - the number of characters in the input context
-     * @param rightToLeft - <code>TRUE</code> if the text is in a
+     * @param rightToLeft - <code>TRUE</code> if the text is in a 
      *    right to left directional run
-     * @param glyphStorage - the glyph storage object. The glyph and
+     * @param glyphStorage - the glyph storage object. The glyph and 
      *    char index arrays will be set.
      *
      * Output parameters:
@@ -123,10 +124,11 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 computeGlyphs(const LEUnicode chars[], le_int32 offset,
+    virtual le_int32 computeGlyphs(const LEUnicode chars[], le_int32 offset, 
         le_int32 count, le_int32 max, le_bool rightToLeft,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
 };
 
 #endif
+

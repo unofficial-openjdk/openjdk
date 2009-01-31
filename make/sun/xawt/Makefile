@@ -49,6 +49,7 @@ AUTO_JAVA_PRUNE = WrapperGenerator.java
 LDFLAGS += -L$(OPENWIN_LIB)
 
 ifeq ($(PLATFORM), linux)
+FILES_c += Xinerama.c
 LDFLAGS += -lpthread
 dummy := $(shell $(MKDIR) -p $(LIB_LOCATION))
 endif
@@ -126,16 +127,19 @@ ifeq ($(PLATFORM), linux)
 # Allows for builds on Debian GNU Linux, X11 is in a different place 
   CPPFLAGS += -I/usr/X11R6/include/X11/extensions \
               -I/usr/include/X11/extensions \
+              -I$(MOTIF_DIR)/include \
               -I$(OPENWIN_HOME)/include 
 endif
 
 ifeq ($(PLATFORM), solaris)
-  CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions
+  CPPFLAGS += -I$(OPENWIN_HOME)/include/X11/extensions -I$(MOTIF_DIR)/include 
 endif
 
 ifeq ($(MILESTONE), internal)
   CPPFLAGS += -DINTERNAL_BUILD
 endif
+
+#LDFLAGS_OPT += -L../../../build/solaris-sparc/lib/sparc/motif21 -lmawt_g -lXext -lXm -lXt -ldl
 
 #
 # Generation of wrappers
@@ -247,6 +251,8 @@ $(SIZES): $(SIZERS)
 	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
 	    $(DIFF) $@ $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
 	fi	
+		
+
 
 $(TEMPDIR)/.gen.wrappers: $(SIZES) $(WRAPPER_GENERATOR_CLASS) $(XLIBTYPES)
 	$(BOOT_JAVA_CMD) -cp $(WRAPPER_GENERATOR_TEMPDIR) WrapperGenerator \
@@ -291,6 +297,7 @@ $(TEMPDIR)/.gen_icons: $(TEMPDIR_CLASSES)/sun/awt/X11/ToBin.class $(ICONS)
 	    $(ECHO) "public static int[] $$name = { " >> $$classname;  \
 	    $(CAT) $$i | \
 	      $(BOOT_JAVA_CMD) -cp $(TEMPDIR_CLASSES)  \
+		-Dawt.toolkit=sun.awt.motif.MToolkit \
 		-Djava.awt.headless=true \
 		sun.awt.X11.ToBin >> $$classname; \
 	    $(ECHO) "}; }" >> $$classname;  \
@@ -301,6 +308,7 @@ $(TEMPDIR)/.gen_icons: $(TEMPDIR_CLASSES)/sun/awt/X11/ToBin.class $(ICONS)
 	    $(ECHO) "public static long[] $$name = { " >> $$classname;  \
 	    $(CAT) $$i | \
 	      $(BOOT_JAVA_CMD) -cp $(TEMPDIR_CLASSES)  \
+		-Dawt.toolkit=sun.awt.motif.MToolkit \
 		-Djava.awt.headless=true \
 		sun.awt.X11.ToBin >> $$classname; \
 	    $(ECHO) "}; }" >> $$classname;  \

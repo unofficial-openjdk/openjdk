@@ -56,7 +56,7 @@ public class OperationImpactTest {
             throw new Exception("TEST FAILED: wrong op name: " + op);
         if (op.getImpact() != MBeanOperationInfo.UNKNOWN)
             throw new Exception("TEST FAILED: wrong impact: " + op);
-
+        
         // Also check that constructing an OpenMBeanOperationInfo with an
         // UNKNOWN impact works
         op = new OpenMBeanOperationInfoSupport("name", "descr", null,
@@ -64,7 +64,7 @@ public class OperationImpactTest {
                                                MBeanOperationInfo.UNKNOWN);
         if (op.getImpact() != MBeanOperationInfo.UNKNOWN)
             throw new Exception("TEST FAILED: wrong impact: " + op);
-
+        
         System.out.println("TEST PASSED");
     }
 }

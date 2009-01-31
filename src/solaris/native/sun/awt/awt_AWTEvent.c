@@ -72,7 +72,7 @@ Java_java_awt_event_KeyEvent_initIDs(JNIEnv *env, jclass cls)
 #ifndef XAWT
 JNIEXPORT void JNICALL
 Java_java_awt_AWTEvent_nativeSetSource(JNIEnv *env, jobject self,
-                                       jobject newSource)
+				       jobject newSource)
 {
     jbyteArray bdata;
 
@@ -81,39 +81,39 @@ Java_java_awt_AWTEvent_nativeSetSource(JNIEnv *env, jobject self,
     bdata = (jbyteArray)(*env)->GetObjectField(env, self, awtEventIDs.bdata);
 
     if (bdata != NULL) {
-        XEvent *xev;
-        Window w;
-        jboolean dummy;
+	XEvent *xev;
+	Window w;
+	jboolean dummy;
 
-        /* get the widget out of the peer newSource */
-        struct ComponentData *cdata = (struct ComponentData *)
-            JNU_GetLongFieldAsPtr(env, newSource, mComponentPeerIDs.pData);
-        if (JNU_IsNull(env, cdata) || (cdata == NULL) ||
-            ((cdata->widget != NULL) && (XtIsObject(cdata->widget)) &&
-             (cdata->widget->core.being_destroyed))) {
-            JNU_ThrowNullPointerException(env, "null widget");
-            AWT_UNLOCK();
-            return;
-        }
+	/* get the widget out of the peer newSource */
+	struct ComponentData *cdata = (struct ComponentData *)
+	    JNU_GetLongFieldAsPtr(env, newSource, mComponentPeerIDs.pData);
+	if (JNU_IsNull(env, cdata) || (cdata == NULL) ||
+	    ((cdata->widget != NULL) && (XtIsObject(cdata->widget)) &&
+	     (cdata->widget->core.being_destroyed))) {
+	    JNU_ThrowNullPointerException(env, "null widget");
+	    AWT_UNLOCK();
+	    return;
+	}
+	
+	/* get the Window out of the widget */
+	w = XtWindow(cdata->widget);
 
-        /* get the Window out of the widget */
-        w = XtWindow(cdata->widget);
+	if (w == None) {
+	    JNU_ThrowNullPointerException(env, "null window");
+	    AWT_UNLOCK();
+	    return;
+	}
 
-        if (w == None) {
-            JNU_ThrowNullPointerException(env, "null window");
-            AWT_UNLOCK();
-            return;
-        }
-
-        /* reset the filed in the event */
-        xev = (XEvent *)(*env)->GetPrimitiveArrayCritical(env, bdata, &dummy);
-        if (xev == NULL) {
-            JNU_ThrowNullPointerException(env, "null data");
-            AWT_UNLOCK();
-            return;
-        }
-        xev->xany.window = w;
-        (*env)->ReleasePrimitiveArrayCritical(env, bdata, (void *)xev, 0);
+	/* reset the filed in the event */
+	xev = (XEvent *)(*env)->GetPrimitiveArrayCritical(env, bdata, &dummy);
+	if (xev == NULL) {
+	    JNU_ThrowNullPointerException(env, "null data");
+	    AWT_UNLOCK();
+	    return;
+	}
+	xev->xany.window = w;
+	(*env)->ReleasePrimitiveArrayCritical(env, bdata, (void *)xev, 0);
     }
 
     AWT_UNLOCK();
@@ -121,7 +121,7 @@ Java_java_awt_AWTEvent_nativeSetSource(JNIEnv *env, jobject self,
 #else
 JNIEXPORT void JNICALL
 Java_java_awt_AWTEvent_nativeSetSource(JNIEnv *env, jobject self,
-                                       jobject newSource)
+				       jobject newSource)
 {
 
 }

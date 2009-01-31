@@ -29,15 +29,16 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
+/** 
  * Logging is the implementation class of LoggingMXBean.
  *
  * The <tt>LoggingMXBean</tt> interface provides a standard
  * method for management access to the individual
  * java.util.Logger objects available at runtime.
- *
+ * 
  * @author Ron Mann
  * @author Mandy Chung
+ * @version %I%, %G%
  * @since 1.5
  *
  * @see javax.management
@@ -51,9 +52,9 @@ class Logging implements LoggingMXBean {
     /** Constructor of Logging which is the implementation class
      *  of LoggingMXBean.
      */
-    Logging() {
+    Logging() { 
     }
-
+ 
     public List<String> getLoggerNames() {
         Enumeration loggers = logManager.getLoggerNames();
         ArrayList<String> array = new ArrayList<String>();
@@ -85,15 +86,15 @@ class Logging implements LoggingMXBean {
         }
 
         Logger logger = logManager.getLogger(loggerName);
-
+        
         if (logger == null) {
             throw new IllegalArgumentException("Logger " + loggerName +
                 "does not exist");
         }
-
-        Level level = null;
+ 
+        Level level = null; 
         if (levelName != null) {
-            // parse will throw IAE if logLevel is invalid
+            // parse will throw IAE if logLevel is invalid 
             level = Level.parse(levelName);
         }
 
@@ -106,7 +107,7 @@ class Logging implements LoggingMXBean {
             return null;
         }
 
-        Logger p = l.getParent();
+        Logger p = l.getParent();        
         if (p == null) {
             // root logger
             return EMPTY_STRING;

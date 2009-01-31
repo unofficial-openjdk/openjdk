@@ -36,6 +36,7 @@ import java.awt.event.*;
 /**
  * BasicPanel implementation
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class BasicPanelUI extends PanelUI {
@@ -44,9 +45,9 @@ public class BasicPanelUI extends PanelUI {
     private static PanelUI panelUI;
 
     public static ComponentUI createUI(JComponent c) {
-        if(panelUI == null) {
+	if(panelUI == null) {
             panelUI = new BasicPanelUI();
-        }
+	}
         return panelUI;
     }
 
@@ -64,9 +65,9 @@ public class BasicPanelUI extends PanelUI {
 
     protected void installDefaults(JPanel p) {
         LookAndFeel.installColorsAndFont(p,
-                                         "Panel.background",
-                                         "Panel.foreground",
-                                         "Panel.font");
+					 "Panel.background",
+					 "Panel.foreground",
+					 "Panel.font");
         LookAndFeel.installBorder(p,"Panel.border");
         LookAndFeel.installProperty(p, "opaque", Boolean.TRUE);
     }

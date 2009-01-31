@@ -31,7 +31,8 @@ import javax.security.auth.login.*;
 /**
  * <p> This class implementation retrieves and makes available Unix
  * UID/GID/groups information for the current user.
- *
+ * 
+ * @version %I%, %G%
  */
 public class UnixSystem {
 
@@ -47,8 +48,8 @@ public class UnixSystem {
      * the native library to access the underlying system information.
      */
     public UnixSystem() {
-        System.loadLibrary("jaas_unix");
-        getUnixInfo();
+	System.loadLibrary("jaas_unix");
+	getUnixInfo();
     }
 
     /**
@@ -59,7 +60,7 @@ public class UnixSystem {
      * @return the username for the current Unix user.
      */
     public String getUsername() {
-        return username;
+	return username;
     }
 
     /**
@@ -70,7 +71,7 @@ public class UnixSystem {
      * @return the UID for the current Unix user.
      */
     public long getUid() {
-        return uid;
+	return uid;
     }
 
     /**
@@ -81,7 +82,7 @@ public class UnixSystem {
      * @return the GID for the current Unix user.
      */
     public long getGid() {
-        return gid;
+	return gid;
     }
 
     /**
@@ -92,6 +93,6 @@ public class UnixSystem {
      * @return the supplementary groups for the current Unix user.
      */
     public long[] getGroups() {
-        return groups;
+	return groups;
     }
 }

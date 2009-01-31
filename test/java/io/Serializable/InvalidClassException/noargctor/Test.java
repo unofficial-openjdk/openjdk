@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
  * @test
  * @bug 4093279
  * @summary Validate accessibility checking to NonSerializable superclass constuctor.
@@ -33,8 +33,9 @@
 import java.io.*;
 import Serialize.SubclassAcrossPackage;
 public class Test {
-      public static void main(String[] args)
+      public static void main(String[] args) 
          throws IOException, ClassNotFoundException {
-         Serialize.SubclassAcrossPackage.main(args);
+	 Serialize.SubclassAcrossPackage.main(args);
       }
 }
+

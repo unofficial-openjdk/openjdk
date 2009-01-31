@@ -31,14 +31,15 @@ package sun.io;
  * big-endian byte order; do not write a byte-order mark before the first
  * converted character.
  *
- * @author      Mark Reinhold
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
  */
 
 public class CharToByteUnicodeBigUnmarked extends CharToByteUnicode {
 
     public CharToByteUnicodeBigUnmarked () {
-        byteOrder = BIG;
-        usesMark = false;
+	byteOrder = BIG;
+	usesMark = false;
     }
 
 }

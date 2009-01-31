@@ -21,10 +21,10 @@
  * have any questions.
  */
 
-/*
+/* 
  * @test
  * @bug 4156278
- * @summary Basic functional test for
+ * @summary Basic functional test for 
  *          Runtime.exec(String[] command, String[] env, File path) and
  *          Runtime.exec(String command, String[] env, File path).
  *
@@ -65,11 +65,11 @@ public class SetCwd {
         }
         System.out.println(curDir);
     }
-
+    
     public static void main (String args[]) throws Exception {
         String cmdarray[] = new String[2];
-        cmdarray[0] = System.getProperty("java.home") + File.separator +
-            "bin" + File.separator + "java";
+        cmdarray[0] = System.getProperty("java.home") + File.separator + 
+	    "bin" + File.separator + "java";
         cmdarray[1] = "SetCwd";
         String cmd = cmdarray[0] + " " + cmdarray[1];
         // test the two new methods

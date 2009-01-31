@@ -48,11 +48,11 @@ public class MXBeanFlagTest {
     public static class Compliant4 implements Compliant4MBean {}
 
     public static void main(String[] args) throws Exception {
-        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-        ObjectName on1 = new ObjectName(":type=Compliant1");
-        ObjectName on2 = new ObjectName(":type=Compliant2");
-        ObjectName on3 = new ObjectName(":type=Compliant3");
-        ObjectName on4 = new ObjectName(":type=Compliant4");
+	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+	ObjectName on1 = new ObjectName(":type=Compliant1");
+	ObjectName on2 = new ObjectName(":type=Compliant2");
+	ObjectName on3 = new ObjectName(":type=Compliant3");
+	ObjectName on4 = new ObjectName(":type=Compliant4");
         Compliant1 compliant1 = new Compliant1();
         StandardMBean compliant2 =
             new StandardMBean(new Compliant2(), Compliant2MXBean.class, true);
@@ -84,9 +84,9 @@ public class MXBeanFlagTest {
             flag3 != null && flag3.equals("false") &&
             flag4 != null && flag4.equals("false"))
             System.out.println("Test PASSED");
-        else {
+	else {
             System.out.println("Test FAILED");
             throw new Exception("invalid flags");
-        }
+	}
     }
 }

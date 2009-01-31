@@ -41,12 +41,13 @@ import sun.swing.MenuItemCheckIconFactory;
  * Factory object that can vend Icons appropriate for the Windows L & F.
  * <p>
  * <strong>Warning:</strong>
- * Serialized objects of this class will not be compatible with
+ * Serialized objects of this class will not be compatible with 
  * future Swing releases.  The current serialization support is appropriate
  * for short term storage or RMI between applications running the same
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version %I% %G%
  * @author David Kloba
  * @author Georges Saab
  * @author Rich Schiavi
@@ -68,52 +69,52 @@ public class WindowsIconFactory implements Serializable
     private static VistaMenuItemCheckIconFactory menuItemCheckIconFactory;
 
     public static Icon getMenuItemCheckIcon() {
-        if (menuItemCheckIcon == null) {
-            menuItemCheckIcon = new MenuItemCheckIcon();
-        }
-        return menuItemCheckIcon;
+	if (menuItemCheckIcon == null) {
+	    menuItemCheckIcon = new MenuItemCheckIcon();
+	}
+	return menuItemCheckIcon;
     }
 
     public static Icon getMenuItemArrowIcon() {
-        if (menuItemArrowIcon == null) {
-            menuItemArrowIcon = new MenuItemArrowIcon();
-        }
-        return menuItemArrowIcon;
+	if (menuItemArrowIcon == null) {
+	    menuItemArrowIcon = new MenuItemArrowIcon();
+	}
+	return menuItemArrowIcon;
     }
 
     public static Icon getMenuArrowIcon() {
-        if (menuArrowIcon == null) {
-            menuArrowIcon = new MenuArrowIcon();
-        }
-        return menuArrowIcon;
+	if (menuArrowIcon == null) {
+	    menuArrowIcon = new MenuArrowIcon();
+	}
+	return menuArrowIcon;
     }
 
     public static Icon getCheckBoxIcon() {
-        if (checkBoxIcon == null) {
-            checkBoxIcon = new CheckBoxIcon();
-        }
-        return checkBoxIcon;
+	if (checkBoxIcon == null) {
+	    checkBoxIcon = new CheckBoxIcon();
+	}
+	return checkBoxIcon;
     }
 
     public static Icon getRadioButtonIcon() {
-        if (radioButtonIcon == null) {
-            radioButtonIcon = new RadioButtonIcon();
-        }
-        return radioButtonIcon;
+	if (radioButtonIcon == null) {
+	    radioButtonIcon = new RadioButtonIcon();
+	}
+	return radioButtonIcon;
     }
 
     public static Icon getCheckBoxMenuItemIcon() {
-        if (checkBoxMenuItemIcon == null) {
-            checkBoxMenuItemIcon = new CheckBoxMenuItemIcon();
-        }
-        return checkBoxMenuItemIcon;
+	if (checkBoxMenuItemIcon == null) {
+	    checkBoxMenuItemIcon = new CheckBoxMenuItemIcon();
+	}
+	return checkBoxMenuItemIcon;
     }
 
     public static Icon getRadioButtonMenuItemIcon() {
-        if (radioButtonMenuItemIcon == null) {
-            radioButtonMenuItemIcon = new RadioButtonMenuItemIcon();
-        }
-        return radioButtonMenuItemIcon;
+	if (radioButtonMenuItemIcon == null) {
+	    radioButtonMenuItemIcon = new RadioButtonMenuItemIcon();
+	}
+	return radioButtonMenuItemIcon;
     }
 
     static
@@ -126,172 +127,172 @@ public class WindowsIconFactory implements Serializable
     }
 
     public static Icon createFrameCloseIcon() {
-        if (frame_closeIcon == null) {
-            frame_closeIcon = new FrameButtonIcon(Part.WP_CLOSEBUTTON);
-        }
-        return frame_closeIcon;
+	if (frame_closeIcon == null) {
+	    frame_closeIcon = new FrameButtonIcon(Part.WP_CLOSEBUTTON);
+	}
+	return frame_closeIcon;
     }
 
     public static Icon createFrameIconifyIcon() {
-        if (frame_iconifyIcon == null) {
-            frame_iconifyIcon = new FrameButtonIcon(Part.WP_MINBUTTON);
-        }
-        return frame_iconifyIcon;
+	if (frame_iconifyIcon == null) {
+	    frame_iconifyIcon = new FrameButtonIcon(Part.WP_MINBUTTON);
+	}
+	return frame_iconifyIcon;
     }
 
     public static Icon createFrameMaximizeIcon() {
-        if (frame_maxIcon == null) {
-            frame_maxIcon = new FrameButtonIcon(Part.WP_MAXBUTTON);
-        }
-        return frame_maxIcon;
+	if (frame_maxIcon == null) {
+	    frame_maxIcon = new FrameButtonIcon(Part.WP_MAXBUTTON);
+	}
+	return frame_maxIcon;
     }
 
     public static Icon createFrameMinimizeIcon() {
-        if (frame_minIcon == null) {
-            frame_minIcon = new FrameButtonIcon(Part.WP_RESTOREBUTTON);
-        }
-        return frame_minIcon;
+	if (frame_minIcon == null) {
+	    frame_minIcon = new FrameButtonIcon(Part.WP_RESTOREBUTTON);
+	}
+	return frame_minIcon;
     }
 
     public static Icon createFrameResizeIcon() {
-        if(frame_resizeIcon == null)
-            frame_resizeIcon = new ResizeIcon();
-        return frame_resizeIcon;
+	if(frame_resizeIcon == null)
+	    frame_resizeIcon = new ResizeIcon();
+	return frame_resizeIcon;
     }
 
 
     private static class FrameButtonIcon implements Icon, Serializable {
-        private Part part;
+	private Part part;
 
-        private FrameButtonIcon(Part part) {
-            this.part = part;
-        }
+	private FrameButtonIcon(Part part) {
+	    this.part = part;
+	}
 
-        public void paintIcon(Component c, Graphics g, int x0, int y0) {
-            int width = getIconWidth();
-            int height = getIconHeight();
+	public void paintIcon(Component c, Graphics g, int x0, int y0) {
+	    int width = getIconWidth();
+	    int height = getIconHeight();
 
-            XPStyle xp = XPStyle.getXP();
-            if (xp != null) {
-                Skin skin = xp.getSkin(c, part);
-                JButton b = (JButton)c;
-                ButtonModel model = b.getModel();
+	    XPStyle xp = XPStyle.getXP();
+	    if (xp != null) {
+		Skin skin = xp.getSkin(c, part);
+		JButton b = (JButton)c;
+		ButtonModel model = b.getModel();
 
-                // Find out if frame is inactive
-                JInternalFrame jif = (JInternalFrame)SwingUtilities.
-                                        getAncestorOfClass(JInternalFrame.class, b);
+		// Find out if frame is inactive
+		JInternalFrame jif = (JInternalFrame)SwingUtilities.
+					getAncestorOfClass(JInternalFrame.class, b);
                 boolean jifSelected = (jif != null && jif.isSelected());
 
-                State state;
-                if (jifSelected) {
-                    if (!model.isEnabled()) {
-                        state = State.DISABLED;
-                    } else if (model.isArmed() && model.isPressed()) {
-                        state = State.PUSHED;
-                    } else if (model.isRollover()) {
-                        state = State.HOT;
-                    } else {
-                        state = State.NORMAL;
-                    }
-                } else {
-                    if (!model.isEnabled()) {
-                        state = State.INACTIVEDISABLED;
-                    } else if (model.isArmed() && model.isPressed()) {
-                        state = State.INACTIVEPUSHED;
-                    } else if (model.isRollover()) {
-                        state = State.INACTIVEHOT;
-                    } else {
-                        state = State.INACTIVENORMAL;
-                    }
-                }
-                skin.paintSkin(g, 0, 0, width, height, state);
-            } else {
-                g.setColor(Color.black);
-                int x = width / 12 + 2;
-                int y = height / 5;
-                int h = height - y * 2 - 1;
-                int w = width * 3/4 -3;
-                int thickness2 = Math.max(height / 8, 2);
-                int thickness  = Math.max(width / 15, 1);
-                if (part == Part.WP_CLOSEBUTTON) {
-                    int lineWidth;
-                    if      (width > 47) lineWidth = 6;
-                    else if (width > 37) lineWidth = 5;
-                    else if (width > 26) lineWidth = 4;
-                    else if (width > 16) lineWidth = 3;
-                    else if (width > 12) lineWidth = 2;
-                    else                 lineWidth = 1;
-                    y = height / 12 + 2;
-                    if (lineWidth == 1) {
-                        if (w % 2 == 1) { x++; w++; }
-                        g.drawLine(x,     y, x+w-2, y+w-2);
-                        g.drawLine(x+w-2, y, x,     y+w-2);
-                    } else if (lineWidth == 2) {
-                        if (w > 6) { x++; w--; }
-                        g.drawLine(x,     y, x+w-2, y+w-2);
-                        g.drawLine(x+w-2, y, x,     y+w-2);
-                        g.drawLine(x+1,   y, x+w-1, y+w-2);
-                        g.drawLine(x+w-1, y, x+1,   y+w-2);
-                    } else {
-                        x += 2; y++; w -= 2;
-                        g.drawLine(x,     y,   x+w-1, y+w-1);
-                        g.drawLine(x+w-1, y,   x,     y+w-1);
-                        g.drawLine(x+1,   y,   x+w-1, y+w-2);
-                        g.drawLine(x+w-2, y,   x,     y+w-2);
-                        g.drawLine(x,     y+1, x+w-2, y+w-1);
-                        g.drawLine(x+w-1, y+1, x+1,   y+w-1);
-                        for (int i = 4; i <= lineWidth; i++) {
-                            g.drawLine(x+i-2,   y,     x+w-1,   y+w-i+1);
-                            g.drawLine(x,       y+i-2, x+w-i+1, y+w-1);
-                            g.drawLine(x+w-i+1, y,     x,       y+w-i+1);
-                            g.drawLine(x+w-1,   y+i-2, x+i-2,   y+w-1);
-                        }
-                    }
-                } else if (part == Part.WP_MINBUTTON) {
-                    g.fillRect(x, y+h-thickness2, w-w/3, thickness2);
-                } else if (part == Part.WP_MAXBUTTON) {
-                    g.fillRect(x, y, w, thickness2);
-                    g.fillRect(x, y, thickness, h);
-                    g.fillRect(x+w-thickness, y, thickness, h);
-                    g.fillRect(x, y+h-thickness, w, thickness);
-                } else if (part == Part.WP_RESTOREBUTTON) {
-                    g.fillRect(x+w/3, y, w-w/3, thickness2);
-                    g.fillRect(x+w/3, y, thickness, h/3);
-                    g.fillRect(x+w-thickness, y, thickness, h-h/3);
-                    g.fillRect(x+w-w/3, y+h-h/3-thickness, w/3, thickness);
+		State state;
+		if (jifSelected) {
+		    if (!model.isEnabled()) {
+			state = State.DISABLED;
+		    } else if (model.isArmed() && model.isPressed()) {
+			state = State.PUSHED;
+		    } else if (model.isRollover()) {
+			state = State.HOT;
+		    } else {
+			state = State.NORMAL;
+		    }
+		} else {
+		    if (!model.isEnabled()) {
+			state = State.INACTIVEDISABLED;
+		    } else if (model.isArmed() && model.isPressed()) {
+			state = State.INACTIVEPUSHED;
+		    } else if (model.isRollover()) {
+			state = State.INACTIVEHOT;
+		    } else {
+			state = State.INACTIVENORMAL;
+		    }
+		}
+		skin.paintSkin(g, 0, 0, width, height, state);
+	    } else {
+		g.setColor(Color.black);
+		int x = width / 12 + 2;
+		int y = height / 5;
+		int h = height - y * 2 - 1;
+		int w = width * 3/4 -3;
+		int thickness2 = Math.max(height / 8, 2);
+		int thickness  = Math.max(width / 15, 1);
+		if (part == Part.WP_CLOSEBUTTON) {
+		    int lineWidth;
+		    if      (width > 47) lineWidth = 6;
+		    else if (width > 37) lineWidth = 5;
+		    else if (width > 26) lineWidth = 4;
+		    else if (width > 16) lineWidth = 3;
+		    else if (width > 12) lineWidth = 2;
+		    else                 lineWidth = 1;
+		    y = height / 12 + 2;
+		    if (lineWidth == 1) {
+			if (w % 2 == 1) { x++; w++; }
+			g.drawLine(x,     y, x+w-2, y+w-2);
+			g.drawLine(x+w-2, y, x,     y+w-2);
+		    } else if (lineWidth == 2) {
+			if (w > 6) { x++; w--; }
+			g.drawLine(x,     y, x+w-2, y+w-2);
+			g.drawLine(x+w-2, y, x,     y+w-2);
+			g.drawLine(x+1,   y, x+w-1, y+w-2);
+			g.drawLine(x+w-1, y, x+1,   y+w-2);
+		    } else {
+			x += 2; y++; w -= 2;
+			g.drawLine(x,     y,   x+w-1, y+w-1);
+			g.drawLine(x+w-1, y,   x,     y+w-1);
+			g.drawLine(x+1,   y,   x+w-1, y+w-2);
+			g.drawLine(x+w-2, y,   x,     y+w-2);
+			g.drawLine(x,     y+1, x+w-2, y+w-1);
+			g.drawLine(x+w-1, y+1, x+1,   y+w-1);
+			for (int i = 4; i <= lineWidth; i++) {
+			    g.drawLine(x+i-2,   y,     x+w-1,   y+w-i+1);
+			    g.drawLine(x,       y+i-2, x+w-i+1, y+w-1);
+			    g.drawLine(x+w-i+1, y,     x,       y+w-i+1);
+			    g.drawLine(x+w-1,   y+i-2, x+i-2,   y+w-1);
+			}
+		    }
+		} else if (part == Part.WP_MINBUTTON) {
+		    g.fillRect(x, y+h-thickness2, w-w/3, thickness2);
+		} else if (part == Part.WP_MAXBUTTON) {
+		    g.fillRect(x, y, w, thickness2);
+		    g.fillRect(x, y, thickness, h);
+		    g.fillRect(x+w-thickness, y, thickness, h);
+		    g.fillRect(x, y+h-thickness, w, thickness);
+		} else if (part == Part.WP_RESTOREBUTTON) {
+		    g.fillRect(x+w/3, y, w-w/3, thickness2);
+		    g.fillRect(x+w/3, y, thickness, h/3);
+		    g.fillRect(x+w-thickness, y, thickness, h-h/3);
+		    g.fillRect(x+w-w/3, y+h-h/3-thickness, w/3, thickness);
 
-                    g.fillRect(x, y+h/3, w-w/3, thickness2);
-                    g.fillRect(x, y+h/3, thickness, h-h/3);
-                    g.fillRect(x+w-w/3-thickness, y+h/3, thickness, h-h/3);
-                    g.fillRect(x, y+h-thickness, w-w/3, thickness);
-                }
-            }
-        }
+		    g.fillRect(x, y+h/3, w-w/3, thickness2);
+		    g.fillRect(x, y+h/3, thickness, h-h/3);
+		    g.fillRect(x+w-w/3-thickness, y+h/3, thickness, h-h/3);
+		    g.fillRect(x, y+h-thickness, w-w/3, thickness);
+		}
+	    }
+	}
 
-        public int getIconWidth() {
-            int width;
-            if (XPStyle.getXP() != null) {
-                // Fix for XP bug where sometimes these sizes aren't updated properly
-                // Assume for now that height is correct and derive width using the
+	public int getIconWidth() {
+	    int width;
+	    if (XPStyle.getXP() != null) {
+		// Fix for XP bug where sometimes these sizes aren't updated properly
+                // Assume for now that height is correct and derive width using the 
                 // ratio from the uxtheme part
-                width = UIManager.getInt("InternalFrame.titleButtonHeight") -2;
+		width = UIManager.getInt("InternalFrame.titleButtonHeight") -2;
                 Dimension d = XPStyle.getPartSize(Part.WP_CLOSEBUTTON, State.NORMAL);
                 if (d != null && d.width != 0 && d.height != 0) {
                     width = (int) ((float) width * d.width / d.height);
                 }
-            } else {
-                width = UIManager.getInt("InternalFrame.titleButtonWidth") -2;
-            }
-            if (XPStyle.getXP() != null) {
-                width -= 2;
-            }
-            return width;
-        }
+	    } else {
+		width = UIManager.getInt("InternalFrame.titleButtonWidth") -2;
+	    }
+	    if (XPStyle.getXP() != null) {
+		width -= 2;
+	    }
+	    return width;
+	}
 
-        public int getIconHeight() {
-            int height = UIManager.getInt("InternalFrame.titleButtonHeight")-4;
-            return height;
-        }
+	public int getIconHeight() {
+	    int height = UIManager.getInt("InternalFrame.titleButtonHeight")-4;
+	    return height;
+	}
     }
 
 
@@ -317,196 +318,196 @@ public class WindowsIconFactory implements Serializable
 
     private static class CheckBoxIcon implements Icon, Serializable
     {
-        final static int csize = 13;
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            JCheckBox cb = (JCheckBox) c;
-            ButtonModel model = cb.getModel();
-            XPStyle xp = XPStyle.getXP();
+	final static int csize = 13;
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+	    JCheckBox cb = (JCheckBox) c;
+	    ButtonModel model = cb.getModel();
+	    XPStyle xp = XPStyle.getXP();
 
-            if (xp != null) {
-                State state;
-                if (model.isSelected()) {
-                    state = State.CHECKEDNORMAL;
-                    if (!model.isEnabled()) {
-                        state = State.CHECKEDDISABLED;
-                    } else if (model.isPressed() && model.isArmed()) {
-                        state = State.CHECKEDPRESSED;
-                    } else if (model.isRollover()) {
-                        state = State.CHECKEDHOT;
-                    }
-                } else {
-                    state = State.UNCHECKEDNORMAL;
-                    if (!model.isEnabled()) {
-                        state = State.UNCHECKEDDISABLED;
-                    } else if (model.isPressed() && model.isArmed()) {
-                        state = State.UNCHECKEDPRESSED;
-                    } else if (model.isRollover()) {
-                        state = State.UNCHECKEDHOT;
-                    }
-                }
-                Part part = Part.BP_CHECKBOX;
-                xp.getSkin(c, part).paintSkin(g, x, y, state);
-            } else {
-                // outer bevel
-                if(!cb.isBorderPaintedFlat()) {
-                    // Outer top/left
-                    g.setColor(UIManager.getColor("CheckBox.shadow"));
-                    g.drawLine(x, y, x+11, y);
-                    g.drawLine(x, y+1, x, y+11);
+	    if (xp != null) {
+		State state;
+		if (model.isSelected()) {
+		    state = State.CHECKEDNORMAL;
+		    if (!model.isEnabled()) {
+			state = State.CHECKEDDISABLED;
+		    } else if (model.isPressed() && model.isArmed()) {
+			state = State.CHECKEDPRESSED;
+		    } else if (model.isRollover()) {
+			state = State.CHECKEDHOT;
+		    }
+		} else {
+		    state = State.UNCHECKEDNORMAL;
+		    if (!model.isEnabled()) {
+			state = State.UNCHECKEDDISABLED;
+		    } else if (model.isPressed() && model.isArmed()) {
+			state = State.UNCHECKEDPRESSED;
+		    } else if (model.isRollover()) {
+			state = State.UNCHECKEDHOT;
+		    }
+		}
+		Part part = Part.BP_CHECKBOX;
+		xp.getSkin(c, part).paintSkin(g, x, y, state);
+	    } else {
+		// outer bevel
+		if(!cb.isBorderPaintedFlat()) {
+		    // Outer top/left
+		    g.setColor(UIManager.getColor("CheckBox.shadow"));
+		    g.drawLine(x, y, x+11, y);
+		    g.drawLine(x, y+1, x, y+11);
 
-                    // Outer bottom/right
-                    g.setColor(UIManager.getColor("CheckBox.highlight"));
-                    g.drawLine(x+12, y, x+12, y+12);
-                    g.drawLine(x, y+12, x+11, y+12);
+		    // Outer bottom/right
+		    g.setColor(UIManager.getColor("CheckBox.highlight"));
+		    g.drawLine(x+12, y, x+12, y+12);
+		    g.drawLine(x, y+12, x+11, y+12);
 
-                    // Inner top.left
-                    g.setColor(UIManager.getColor("CheckBox.darkShadow"));
-                    g.drawLine(x+1, y+1, x+10, y+1);
-                    g.drawLine(x+1, y+2, x+1, y+10);
+		    // Inner top.left
+		    g.setColor(UIManager.getColor("CheckBox.darkShadow"));
+		    g.drawLine(x+1, y+1, x+10, y+1);
+		    g.drawLine(x+1, y+2, x+1, y+10);
 
-                    // Inner bottom/right
-                    g.setColor(UIManager.getColor("CheckBox.light"));
-                    g.drawLine(x+1, y+11, x+11, y+11);
-                    g.drawLine(x+11, y+1, x+11, y+10);
+		    // Inner bottom/right
+		    g.setColor(UIManager.getColor("CheckBox.light"));
+		    g.drawLine(x+1, y+11, x+11, y+11);
+		    g.drawLine(x+11, y+1, x+11, y+10);
 
-                    // inside box
-                    if((model.isPressed() && model.isArmed()) || !model.isEnabled()) {
-                        g.setColor(UIManager.getColor("CheckBox.background"));
-                    } else {
-                        g.setColor(UIManager.getColor("CheckBox.interiorBackground"));
-                    }
-                    g.fillRect(x+2, y+2, csize-4, csize-4);
-                } else {
-                    g.setColor(UIManager.getColor("CheckBox.shadow"));
-                    g.drawRect(x+1, y+1, csize-3, csize-3);
+		    // inside box 
+		    if((model.isPressed() && model.isArmed()) || !model.isEnabled()) {
+			g.setColor(UIManager.getColor("CheckBox.background"));
+		    } else {
+			g.setColor(UIManager.getColor("CheckBox.interiorBackground"));
+		    }
+		    g.fillRect(x+2, y+2, csize-4, csize-4);
+		} else {
+		    g.setColor(UIManager.getColor("CheckBox.shadow"));
+		    g.drawRect(x+1, y+1, csize-3, csize-3);
 
-                    if((model.isPressed() && model.isArmed()) || !model.isEnabled()) {
-                        g.setColor(UIManager.getColor("CheckBox.background"));
-                    } else {
-                        g.setColor(UIManager.getColor("CheckBox.interiorBackground"));
-                    }
-                    g.fillRect(x+2, y+2, csize-4, csize-4);
-                }
+		    if((model.isPressed() && model.isArmed()) || !model.isEnabled()) {
+			g.setColor(UIManager.getColor("CheckBox.background"));
+		    } else {
+			g.setColor(UIManager.getColor("CheckBox.interiorBackground"));
+		    }
+		    g.fillRect(x+2, y+2, csize-4, csize-4);
+		}
 
-                if(model.isEnabled()) {
+		if(model.isEnabled()) {
                     g.setColor(UIManager.getColor("CheckBox.foreground"));
-                } else {
-                    g.setColor(UIManager.getColor("CheckBox.shadow"));
-                }
+		} else {
+		    g.setColor(UIManager.getColor("CheckBox.shadow"));
+		}
 
-                // paint check
-                if (model.isSelected()) {
-                    g.drawLine(x+9, y+3, x+9, y+3);
-                    g.drawLine(x+8, y+4, x+9, y+4);
-                    g.drawLine(x+7, y+5, x+9, y+5);
-                    g.drawLine(x+6, y+6, x+8, y+6);
-                    g.drawLine(x+3, y+7, x+7, y+7);
-                    g.drawLine(x+4, y+8, x+6, y+8);
-                    g.drawLine(x+5, y+9, x+5, y+9);
-                    g.drawLine(x+3, y+5, x+3, y+5);
-                    g.drawLine(x+3, y+6, x+4, y+6);
-                }
-            }
-        }
+		// paint check
+		if (model.isSelected()) {
+		    g.drawLine(x+9, y+3, x+9, y+3);
+		    g.drawLine(x+8, y+4, x+9, y+4);
+		    g.drawLine(x+7, y+5, x+9, y+5);
+		    g.drawLine(x+6, y+6, x+8, y+6);
+		    g.drawLine(x+3, y+7, x+7, y+7);
+		    g.drawLine(x+4, y+8, x+6, y+8);
+		    g.drawLine(x+5, y+9, x+5, y+9);
+		    g.drawLine(x+3, y+5, x+3, y+5);
+		    g.drawLine(x+3, y+6, x+4, y+6);
+		}
+	    }
+	}
 
-        public int getIconWidth() {
-            XPStyle xp = XPStyle.getXP();
-            if (xp != null) {
-                return xp.getSkin(null, Part.BP_CHECKBOX).getWidth();
-            } else {
-                return csize;
-            }
-        }
-
-        public int getIconHeight() {
-            XPStyle xp = XPStyle.getXP();
-            if (xp != null) {
-                return xp.getSkin(null, Part.BP_CHECKBOX).getHeight();
-            } else {
-                return csize;
-            }
-        }
+	public int getIconWidth() {
+	    XPStyle xp = XPStyle.getXP();
+	    if (xp != null) {
+		return xp.getSkin(null, Part.BP_CHECKBOX).getWidth();
+	    } else {
+		return csize;
+	    }
+	}
+		
+	public int getIconHeight() {
+	    XPStyle xp = XPStyle.getXP();
+	    if (xp != null) {
+		return xp.getSkin(null, Part.BP_CHECKBOX).getHeight();
+	    } else {
+		return csize;
+	    }
+	}
     }
 
     private static class RadioButtonIcon implements Icon, UIResource, Serializable
     {
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            AbstractButton b = (AbstractButton) c;
-            ButtonModel model = b.getModel();
-            XPStyle xp = XPStyle.getXP();
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+	    AbstractButton b = (AbstractButton) c;
+	    ButtonModel model = b.getModel();
+	    XPStyle xp = XPStyle.getXP();
 
-            if (xp != null) {
-                Part part = Part.BP_RADIOBUTTON;
-                Skin skin = xp.getSkin(b, part);
-                State state;
-                int index = 0;
-                if (model.isSelected()) {
-                    state = State.CHECKEDNORMAL;
-                    if (!model.isEnabled()) {
-                        state = State.CHECKEDDISABLED;
-                    } else if (model.isPressed() && model.isArmed()) {
-                        state = State.CHECKEDPRESSED;
-                    } else if (model.isRollover()) {
-                        state = State.CHECKEDHOT;
-                    }
-                } else {
-                    state = State.UNCHECKEDNORMAL;
-                    if (!model.isEnabled()) {
-                        state = State.UNCHECKEDDISABLED;
-                    } else if (model.isPressed() && model.isArmed()) {
-                        state = State.UNCHECKEDPRESSED;
-                    } else if (model.isRollover()) {
-                        state = State.UNCHECKEDHOT;
-                    }
-                }
-                skin.paintSkin(g, x, y, state);
-            } else {
-                // fill interior
-                if((model.isPressed() && model.isArmed()) || !model.isEnabled()) {
-                    g.setColor(UIManager.getColor("RadioButton.background"));
-                } else {
-                    g.setColor(UIManager.getColor("RadioButton.interiorBackground"));
-                }
-                g.fillRect(x+2, y+2, 8, 8);
-
-
-                    // outter left arc
-                g.setColor(UIManager.getColor("RadioButton.shadow"));
-                g.drawLine(x+4, y+0, x+7, y+0);
-                g.drawLine(x+2, y+1, x+3, y+1);
-                g.drawLine(x+8, y+1, x+9, y+1);
-                g.drawLine(x+1, y+2, x+1, y+3);
-                g.drawLine(x+0, y+4, x+0, y+7);
-                g.drawLine(x+1, y+8, x+1, y+9);
-
-                // outter right arc
-                g.setColor(UIManager.getColor("RadioButton.highlight"));
-                g.drawLine(x+2, y+10, x+3, y+10);
-                g.drawLine(x+4, y+11, x+7, y+11);
-                g.drawLine(x+8, y+10, x+9, y+10);
-                g.drawLine(x+10, y+9, x+10, y+8);
-                g.drawLine(x+11, y+7, x+11, y+4);
-                g.drawLine(x+10, y+3, x+10, y+2);
+	    if (xp != null) {
+		Part part = Part.BP_RADIOBUTTON;
+		Skin skin = xp.getSkin(b, part);
+		State state;
+		int index = 0;
+		if (model.isSelected()) {
+		    state = State.CHECKEDNORMAL;
+		    if (!model.isEnabled()) {
+			state = State.CHECKEDDISABLED;
+		    } else if (model.isPressed() && model.isArmed()) {
+			state = State.CHECKEDPRESSED;
+		    } else if (model.isRollover()) {
+			state = State.CHECKEDHOT;
+		    }
+		} else {
+		    state = State.UNCHECKEDNORMAL;
+		    if (!model.isEnabled()) {
+			state = State.UNCHECKEDDISABLED;
+		    } else if (model.isPressed() && model.isArmed()) {
+			state = State.UNCHECKEDPRESSED;
+		    } else if (model.isRollover()) {
+			state = State.UNCHECKEDHOT;
+		    }
+		}
+		skin.paintSkin(g, x, y, state);
+	    } else {
+		// fill interior
+		if((model.isPressed() && model.isArmed()) || !model.isEnabled()) {
+		    g.setColor(UIManager.getColor("RadioButton.background"));
+		} else {
+		    g.setColor(UIManager.getColor("RadioButton.interiorBackground"));
+		}
+		g.fillRect(x+2, y+2, 8, 8);
 
 
-                // inner left arc
-                g.setColor(UIManager.getColor("RadioButton.darkShadow"));
-                g.drawLine(x+4, y+1, x+7, y+1);
-                g.drawLine(x+2, y+2, x+3, y+2);
-                g.drawLine(x+8, y+2, x+9, y+2);
-                g.drawLine(x+2, y+3, x+2, y+3);
-                g.drawLine(x+1, y+4, x+1, y+7);
-                g.drawLine(x+2, y+8, x+2, y+8);
+		    // outter left arc
+		g.setColor(UIManager.getColor("RadioButton.shadow"));
+		g.drawLine(x+4, y+0, x+7, y+0);
+		g.drawLine(x+2, y+1, x+3, y+1);
+		g.drawLine(x+8, y+1, x+9, y+1);
+		g.drawLine(x+1, y+2, x+1, y+3);
+		g.drawLine(x+0, y+4, x+0, y+7);
+		g.drawLine(x+1, y+8, x+1, y+9);
+
+		// outter right arc
+		g.setColor(UIManager.getColor("RadioButton.highlight"));
+		g.drawLine(x+2, y+10, x+3, y+10);
+		g.drawLine(x+4, y+11, x+7, y+11);
+		g.drawLine(x+8, y+10, x+9, y+10);
+		g.drawLine(x+10, y+9, x+10, y+8);
+		g.drawLine(x+11, y+7, x+11, y+4);
+		g.drawLine(x+10, y+3, x+10, y+2);
 
 
-                // inner right arc
-                g.setColor(UIManager.getColor("RadioButton.light"));
-                g.drawLine(x+2,  y+9,  x+3,  y+9);
-                g.drawLine(x+4,  y+10, x+7,  y+10);
-                g.drawLine(x+8,  y+9,  x+9,  y+9);
-                g.drawLine(x+9,  y+8,  x+9,  y+8);
-                g.drawLine(x+10, y+7,  x+10, y+4);
-                g.drawLine(x+9,  y+3,  x+9,  y+3);
+		// inner left arc
+		g.setColor(UIManager.getColor("RadioButton.darkShadow"));
+		g.drawLine(x+4, y+1, x+7, y+1);
+		g.drawLine(x+2, y+2, x+3, y+2);
+		g.drawLine(x+8, y+2, x+9, y+2);
+		g.drawLine(x+2, y+3, x+2, y+3);
+		g.drawLine(x+1, y+4, x+1, y+7);
+		g.drawLine(x+2, y+8, x+2, y+8);
+
+
+		// inner right arc
+		g.setColor(UIManager.getColor("RadioButton.light"));
+		g.drawLine(x+2,  y+9,  x+3,  y+9);
+		g.drawLine(x+4,  y+10, x+7,  y+10);
+		g.drawLine(x+8,  y+9,  x+9,  y+9);
+		g.drawLine(x+9,  y+8,  x+9,  y+8);
+		g.drawLine(x+10, y+7,  x+10, y+4);
+		g.drawLine(x+9,  y+3,  x+9,  y+3);
 
 
                  // indicate whether selected or not
@@ -516,108 +517,108 @@ public class WindowsIconFactory implements Serializable
                     } else {
                         g.setColor(UIManager.getColor("RadioButton.shadow"));
                     }
-                    g.fillRect(x+4, y+5, 4, 2);
-                    g.fillRect(x+5, y+4, 2, 4);
-                }
-            }
-        }
+		    g.fillRect(x+4, y+5, 4, 2);
+		    g.fillRect(x+5, y+4, 2, 4);
+		} 
+	    }
+	}
 
-        public int getIconWidth() {
-            XPStyle xp = XPStyle.getXP();
-            if (xp != null) {
-                return xp.getSkin(null, Part.BP_RADIOBUTTON).getWidth();
-            } else {
-                return 13;
-            }
-        }
-
-        public int getIconHeight() {
-            XPStyle xp = XPStyle.getXP();
-            if (xp != null) {
-                return xp.getSkin(null, Part.BP_RADIOBUTTON).getHeight();
-            } else {
-                return 13;
-            }
-        }
+	public int getIconWidth() {
+	    XPStyle xp = XPStyle.getXP();
+	    if (xp != null) {
+		return xp.getSkin(null, Part.BP_RADIOBUTTON).getWidth();
+	    } else {
+		return 13;
+	    }
+	}
+		
+	public int getIconHeight() {
+	    XPStyle xp = XPStyle.getXP();
+	    if (xp != null) {
+		return xp.getSkin(null, Part.BP_RADIOBUTTON).getHeight();
+	    } else {
+		return 13;
+	    }
+	}
     } // end class RadioButtonIcon
 
 
     private static class CheckBoxMenuItemIcon implements Icon, UIResource, Serializable
     {
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            AbstractButton b = (AbstractButton) c;
-            ButtonModel model = b.getModel();
-            boolean isSelected = model.isSelected();
-            if (isSelected) {
-                y = y - getIconHeight() / 2;
-                g.drawLine(x+9, y+3, x+9, y+3);
-                g.drawLine(x+8, y+4, x+9, y+4);
-                g.drawLine(x+7, y+5, x+9, y+5);
-                g.drawLine(x+6, y+6, x+8, y+6);
-                g.drawLine(x+3, y+7, x+7, y+7);
-                g.drawLine(x+4, y+8, x+6, y+8);
-                g.drawLine(x+5, y+9, x+5, y+9);
-                g.drawLine(x+3, y+5, x+3, y+5);
-                g.drawLine(x+3, y+6, x+4, y+6);
-            }
-        }
-        public int getIconWidth() { return 9; }
-        public int getIconHeight() { return 9; }
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+	    AbstractButton b = (AbstractButton) c;
+	    ButtonModel model = b.getModel();
+	    boolean isSelected = model.isSelected();
+	    if (isSelected) {
+		y = y - getIconHeight() / 2;
+		g.drawLine(x+9, y+3, x+9, y+3);
+		g.drawLine(x+8, y+4, x+9, y+4);
+		g.drawLine(x+7, y+5, x+9, y+5);
+		g.drawLine(x+6, y+6, x+8, y+6);
+		g.drawLine(x+3, y+7, x+7, y+7);
+		g.drawLine(x+4, y+8, x+6, y+8);
+		g.drawLine(x+5, y+9, x+5, y+9);
+		g.drawLine(x+3, y+5, x+3, y+5);
+		g.drawLine(x+3, y+6, x+4, y+6);
+	    }
+	}
+	public int getIconWidth() { return 9; }
+	public int getIconHeight() { return 9; }
 
     } // End class CheckBoxMenuItemIcon
 
-
+    
     private static class RadioButtonMenuItemIcon implements Icon, UIResource, Serializable
     {
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            AbstractButton b = (AbstractButton) c;
-            ButtonModel model = b.getModel();
-            if (b.isSelected() == true) {
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+	    AbstractButton b = (AbstractButton) c;
+	    ButtonModel model = b.getModel();
+	    if (b.isSelected() == true) {
                g.fillRoundRect(x+3,y+3, getIconWidth()-6, getIconHeight()-6,
                                4, 4);
-            }
-        }
-        public int getIconWidth() { return 12; }
-        public int getIconHeight() { return 12; }
+	    }
+	}
+	public int getIconWidth() { return 12; }
+	public int getIconHeight() { return 12; }
 
     } // End class RadioButtonMenuItemIcon
 
 
     private static class MenuItemCheckIcon implements Icon, UIResource, Serializable{
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            /* For debugging:
-               Color oldColor = g.getColor();
-            g.setColor(Color.orange);
-            g.fill3DRect(x,y,getIconWidth(), getIconHeight(), true);
-            g.setColor(oldColor);
-            */
-        }
-        public int getIconWidth() { return 9; }
-        public int getIconHeight() { return 9; }
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+	    /* For debugging:
+	       Color oldColor = g.getColor();
+	    g.setColor(Color.orange);
+	    g.fill3DRect(x,y,getIconWidth(), getIconHeight(), true);
+	    g.setColor(oldColor);
+	    */
+	}
+	public int getIconWidth() { return 9; }
+	public int getIconHeight() { return 9; }
 
     } // End class MenuItemCheckIcon
 
     private static class MenuItemArrowIcon implements Icon, UIResource, Serializable {
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            /* For debugging:
-            Color oldColor = g.getColor();
-            g.setColor(Color.green);
-            g.fill3DRect(x,y,getIconWidth(), getIconHeight(), true);
-            g.setColor(oldColor);
-            */
-        }
-        public int getIconWidth() { return 4; }
-        public int getIconHeight() { return 8; }
+	public void paintIcon(Component c, Graphics g, int x, int y) {
+	    /* For debugging:
+	    Color oldColor = g.getColor();
+	    g.setColor(Color.green);
+	    g.fill3DRect(x,y,getIconWidth(), getIconHeight(), true);
+	    g.setColor(oldColor);
+	    */
+	}
+	public int getIconWidth() { return 4; }
+	public int getIconHeight() { return 8; }
 
     } // End class MenuItemArrowIcon
 
     private static class MenuArrowIcon implements Icon, UIResource, Serializable {
-        public void paintIcon(Component c, Graphics g, int x, int y) {
+	public void paintIcon(Component c, Graphics g, int x, int y) {
             if (WindowsMenuItemUI.isVistaPainting()) {
                 XPStyle xp = XPStyle.getXP();
                 State state = State.NORMAL;
                 if (c instanceof JMenuItem) {
-                    state = ((JMenuItem) c).getModel().isEnabled()
+                    state = ((JMenuItem) c).getModel().isEnabled() 
                     ? State.NORMAL : State.DISABLED;
                 }
                 Skin skin = xp.getSkin(c, Part.MP_POPUPSUBMENU);
@@ -645,7 +646,7 @@ public class WindowsIconFactory implements Serializable
                 }
                 g.translate(-x,-y);
             }
-        }
+	}
         public int getIconWidth() {
             if (WindowsMenuItemUI.isVistaPainting()) {
                 Skin skin = XPStyle.getXP().getSkin(null, Part.MP_POPUPSUBMENU);
@@ -660,32 +661,32 @@ public class WindowsIconFactory implements Serializable
                 return skin.getHeight();
             } else {
                 return 8;
-            }
+            } 
         }
     } // End class MenuArrowIcon
 
-    static class VistaMenuItemCheckIconFactory
+    static class VistaMenuItemCheckIconFactory 
            implements MenuItemCheckIconFactory {
         private static final int OFFSET = 3;
-
+        
         public Icon getIcon(JMenuItem component) {
             return new VistaMenuItemCheckIcon(component);
         }
-
+        
         public boolean isCompatible(Object icon, String prefix) {
             return icon instanceof VistaMenuItemCheckIcon
               && ((VistaMenuItemCheckIcon) icon).type == getType(prefix);
         }
-
+        
         public Icon getIcon(String type) {
             return new VistaMenuItemCheckIcon(type);
         }
-
+        
         static int getIconWidth() {
             return XPStyle.getXP().getSkin(null, Part.MP_POPUPCHECK).getWidth()
                 + 2 * OFFSET;
         }
-
+        
         private static Class<? extends JMenuItem> getType(Component c) {
             Class<? extends JMenuItem> rv = null;
             if (c instanceof JCheckBoxMenuItem) {
@@ -699,7 +700,7 @@ public class WindowsIconFactory implements Serializable
             }
             return rv;
         }
-
+        
         private static Class<? extends JMenuItem> getType(String type) {
             Class<? extends JMenuItem> rv = null;
             if (type == "CheckBoxMenuItem") {
@@ -716,18 +717,18 @@ public class WindowsIconFactory implements Serializable
             }
             return rv;
         }
-
+        
         /**
-         * CheckIcon for JMenuItem, JMenu, JCheckBoxMenuItem and
+         * CheckIcon for JMenuItem, JMenu, JCheckBoxMenuItem and 
          * JRadioButtonMenuItem.
          * Note: to be used on Vista only.
          */
-        private static class VistaMenuItemCheckIcon
+        private static class VistaMenuItemCheckIcon 
               implements Icon, UIResource, Serializable {
-
+            
             private final JMenuItem menuItem;
             private final Class<? extends JMenuItem> type;
-
+            
             VistaMenuItemCheckIcon(JMenuItem menuItem) {
                 this.type = getType(menuItem);
                 this.menuItem = menuItem;
@@ -736,7 +737,7 @@ public class WindowsIconFactory implements Serializable
                 this.type = getType(type);
                 this.menuItem = null;
             }
-
+            
             public int getIconHeight() {
                 Icon lafIcon = getLaFIcon();
                 if (lafIcon != null) {
@@ -747,7 +748,7 @@ public class WindowsIconFactory implements Serializable
                 if (icon != null) {
                     height = icon.getIconHeight() + 2 * OFFSET;
                 } else {
-                    Skin skin =
+                    Skin skin = 
                         XPStyle.getXP().getSkin(null, Part.MP_POPUPCHECK);
                     height = skin.getHeight() + 2 * OFFSET;
                 }
@@ -768,7 +769,7 @@ public class WindowsIconFactory implements Serializable
                 }
                 return width;
             }
-
+            
             public void paintIcon(Component c, Graphics g, int x, int y) {
                 Icon lafIcon = getLaFIcon();
                 if (lafIcon != null) {
@@ -782,26 +783,26 @@ public class WindowsIconFactory implements Serializable
                     AbstractButton b = (AbstractButton) c;
                     if (b.isSelected()) {
                         Part backgroundPart = Part.MP_POPUPCHECKBACKGROUND;
-                        Part part = Part.MP_POPUPCHECK;
+                        Part part = Part.MP_POPUPCHECK; 
                         State backgroundState;
                         State state;
                         if (isEnabled(c, null)) {
-                            backgroundState =
+                            backgroundState =  
                                 (icon != null) ? State.BITMAP : State.NORMAL;
-                            state = (type == JRadioButtonMenuItem.class)
-                              ? State.BULLETNORMAL
+                            state = (type == JRadioButtonMenuItem.class) 
+                              ? State.BULLETNORMAL 
                               : State.CHECKMARKNORMAL;
                         } else {
                             backgroundState = State.DISABLEDPUSHED;
-                            state =
-                                (type == JRadioButtonMenuItem.class)
-                                  ? State.BULLETDISABLED
+                            state = 
+                                (type == JRadioButtonMenuItem.class) 
+                                  ? State.BULLETDISABLED 
                                   : State.CHECKMARKDISABLED;
                         }
                         Skin skin;
                         XPStyle xp = XPStyle.getXP();
                         skin =  xp.getSkin(c, backgroundPart);
-                        skin.paintSkin(g, x, y,
+                        skin.paintSkin(g, x, y, 
                             getIconWidth(), getIconHeight(), backgroundState);
                         if (icon == null) {
                             skin = xp.getSkin(c, part);
@@ -829,13 +830,13 @@ public class WindowsIconFactory implements Serializable
                 }
                 return rv;
             }
-
+            
             private static boolean isEnabled(Component  c, State state) {
                 if (state == null && c instanceof JMenuItem) {
-                    WindowsMenuItemUIAccessor accessor =
+                    WindowsMenuItemUIAccessor accessor = 
                         getAccessor((JMenuItem) c);
                     if (accessor != null) {
-                        state = accessor.getState((JMenuItem) c);
+                        state = accessor.getState((JMenuItem) c);    
                     }
                 }
                 if (state == null) {
@@ -855,9 +856,9 @@ public class WindowsIconFactory implements Serializable
                 if (menuItem == null) {
                     return rv;
                 }
-                WindowsMenuItemUIAccessor accessor =
+                WindowsMenuItemUIAccessor accessor = 
                     getAccessor(menuItem);
-                State state = (accessor != null) ? accessor.getState(menuItem)
+                State state = (accessor != null) ? accessor.getState(menuItem) 
                         : null;
                 if (isEnabled(menuItem, null)) {
                     if (state == State.PUSHED) {
@@ -872,8 +873,8 @@ public class WindowsIconFactory implements Serializable
             }
             /**
              * Check if developer changed icon in the UI table.
-             *
-             * @return the icon to use or {@code null} if the current one is to
+             * 
+             * @return the icon to use or {@code null} if the current one is to 
              * be used
              */
             private Icon getLaFIcon() {
@@ -885,13 +886,13 @@ public class WindowsIconFactory implements Serializable
                 }
                 return rv;
             }
-
+            
             private static String typeToString(
                     Class<? extends JMenuItem> type) {
-                assert type == JMenuItem.class
-                    || type == JMenu.class
-                    || type == JCheckBoxMenuItem.class
-                    || type == JRadioButtonMenuItem.class;
+                assert type == JMenuItem.class 
+                    || type == JMenu.class 
+                    || type == JCheckBoxMenuItem.class 
+                    || type == JRadioButtonMenuItem.class; 
                 StringBuilder sb = new StringBuilder(type.getName());
                 // remove package name, dot and the first character
                 sb.delete(0, sb.lastIndexOf("J") + 1);
@@ -901,3 +902,4 @@ public class WindowsIconFactory implements Serializable
         }
     } // End class VistaMenuItemCheckIconFactory
 }
+

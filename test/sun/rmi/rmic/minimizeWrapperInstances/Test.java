@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,85 +34,85 @@ import java.util.Arrays;
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        System.err.println("\nRegression test for RFE 5096178\n");
-        Class<? extends P> cl =
-            Class.forName(PImpl.class.getName() + "_Stub").asSubclass(P.class);
-        Constructor<? extends P> cons = cl.getConstructor(RemoteRef.class);
-        cons.newInstance(new ArgCheckingRemoteRef(Boolean.FALSE)).m(false);
-        cons.newInstance(new ArgCheckingRemoteRef(Boolean.TRUE)).m(true);
-        System.err.println("TEST PASSED");
+	System.err.println("\nRegression test for RFE 5096178\n");
+	Class<? extends P> cl =
+	    Class.forName(PImpl.class.getName() + "_Stub").asSubclass(P.class);
+	Constructor<? extends P> cons = cl.getConstructor(RemoteRef.class);
+	cons.newInstance(new ArgCheckingRemoteRef(Boolean.FALSE)).m(false);
+	cons.newInstance(new ArgCheckingRemoteRef(Boolean.TRUE)).m(true);
+	System.err.println("TEST PASSED");
     }
 
     private static void printValues(Object... values) {
-        System.err.print("{ ");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0) {
-                System.err.print(", ");
-            }
-            printValue(values[i]);
-        }
-        System.err.println(" }");
+	System.err.print("{ ");
+	for (int i = 0; i < values.length; i++) {
+	    if (i > 0) {
+		System.err.print(", ");
+	    }
+	    printValue(values[i]);
+	}
+	System.err.println(" }");
     }
 
     private static void printValue(Object value) {
-        System.err.print(value.getClass().getName() + "@" +
-                         System.identityHashCode(value) + "(" + value + ")");
+	System.err.print(value.getClass().getName() + "@" +
+			 System.identityHashCode(value) + "(" + value + ")");
     }
 
     private static class ArgCheckingRemoteRef extends AbstractRemoteRef {
-        Object[] expected;
-        ArgCheckingRemoteRef(Object... expected) {
-            this.expected = expected;
-        }
-        protected void test(Object[] args) {
-            System.err.print("expected argument values: ");
-            printValues(expected);
-            System.err.print("  actual argument values: ");
-            printValues(args);
-            if (args.length != expected.length) {
-                throw new Error("wrong number of arguments");
-            }
-            for (int i = 0; i < args.length; i++) {
-                if (args[i] != expected[i]) {
-                    throw new Error("args[" + i + "] not expected value");
-                }
-            }
-        }
+	Object[] expected;
+	ArgCheckingRemoteRef(Object... expected) {
+	    this.expected = expected;
+	}
+	protected void test(Object[] args) {
+	    System.err.print("expected argument values: ");
+	    printValues(expected);
+	    System.err.print("  actual argument values: ");
+	    printValues(args);
+	    if (args.length != expected.length) {
+		throw new Error("wrong number of arguments");
+	    }
+	    for (int i = 0; i < args.length; i++) {
+		if (args[i] != expected[i]) {
+		    throw new Error("args[" + i + "] not expected value");
+		}
+	    }
+	}
     }
 
     private static abstract class AbstractRemoteRef implements RemoteRef {
-        AbstractRemoteRef() { }
-        protected abstract void test(Object[] args);
-        public Object invoke(Remote obj,
-                             Method method,
-                             Object[] args,
-                             long opnum)
-        {
-            test(args);
-            return null;
-        }
-        public RemoteCall newCall(RemoteObject obj,
-                                  Operation[] op,
-                                  int opnum,
-                                  long hash)
-        {
-            throw new AssertionError();
-        }
-        public void invoke(RemoteCall call) { throw new AssertionError(); }
-        public void done(RemoteCall call) { throw new AssertionError(); }
-        public String getRefClass(ObjectOutput out) {
-            throw new AssertionError();
-        }
-        public int remoteHashCode() { throw new AssertionError(); }
-        public boolean remoteEquals(RemoteRef obj) {
-            throw new AssertionError();
-        }
-        public String remoteToString() { throw new AssertionError(); }
-        public void writeExternal(ObjectOutput out) {
-            throw new AssertionError();
-        }
-        public void readExternal(ObjectInput in) {
-            throw new AssertionError();
-        }
+	AbstractRemoteRef() { }
+	protected abstract void test(Object[] args);
+	public Object invoke(Remote obj,
+			     Method method,
+			     Object[] args,
+			     long opnum)
+	{
+	    test(args);
+	    return null;
+	}
+	public RemoteCall newCall(RemoteObject obj,
+				  Operation[] op,
+				  int opnum,
+				  long hash)
+	{
+	    throw new AssertionError();
+	}
+	public void invoke(RemoteCall call) { throw new AssertionError(); }
+	public void done(RemoteCall call) { throw new AssertionError(); }
+	public String getRefClass(ObjectOutput out) {
+	    throw new AssertionError();
+	}
+	public int remoteHashCode() { throw new AssertionError(); }
+	public boolean remoteEquals(RemoteRef obj) {
+	    throw new AssertionError();
+	}
+	public String remoteToString() { throw new AssertionError(); }
+	public void writeExternal(ObjectOutput out) {
+	    throw new AssertionError();
+	}
+	public void readExternal(ObjectInput in) {
+	    throw new AssertionError();
+	}
     }
 }

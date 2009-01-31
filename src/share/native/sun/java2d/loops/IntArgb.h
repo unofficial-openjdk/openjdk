@@ -35,10 +35,10 @@
  * LoopMacros.h to manipulate a surface of type "IntArgb".
  */
 
-typedef jint    IntArgbPixelType;
-typedef jint    IntArgbDataType;
+typedef jint	IntArgbPixelType;
+typedef jint	IntArgbDataType;
 
-#define IntArgbPixelStride      4
+#define IntArgbPixelStride	4
 
 #define DeclareIntArgbLoadVars(PREFIX)
 #define DeclareIntArgbStoreVars(PREFIX)
@@ -76,14 +76,14 @@ typedef jint    IntArgbDataType;
 
 #define LoadIntArgbTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-        jint pixel = (pRas)[x]; \
-        ExtractIntDcmComponentsX123(pixel, r, g, b); \
+	jint pixel = (pRas)[x]; \
+	ExtractIntDcmComponentsX123(pixel, r, g, b); \
     } while (0)
 
 #define LoadIntArgbTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-        jint pixel = (pRas)[x]; \
-        ExtractIntDcmComponents1234(pixel, a, r, g, b); \
+	jint pixel = (pRas)[x]; \
+	ExtractIntDcmComponents1234(pixel, a, r, g, b); \
     } while (0)
 
 #define StoreIntArgbFrom1IntRgb(pRas, PREFIX, x, rgb) \
@@ -100,20 +100,20 @@ typedef jint    IntArgbDataType;
 
 #define CopyIntArgbToIntArgbPre(pRGB, i, PREFIX, pRow, x) \
     do { \
-        jint argb = (pRow)[x]; \
-        jint a = URShift(argb, 24); \
-        if (a == 0) { \
-            argb = 0; \
-        } else if (a < 0xff) { \
-            jint r = (argb >> 16) & 0xff; \
-            jint g = (argb >>  8) & 0xff; \
-            jint b = (argb      ) & 0xff; \
-            r = MUL8(a, r); \
-            g = MUL8(a, g); \
-            b = MUL8(a, b); \
-            argb = ComposeIntDcmComponents1234(a, r, g, b); \
-        } \
-        (pRGB)[i] = argb; \
+	jint argb = (pRow)[x]; \
+	jint a = URShift(argb, 24); \
+	if (a == 0) { \
+	    argb = 0; \
+	} else if (a < 0xff) { \
+	    jint r = (argb >> 16) & 0xff; \
+	    jint g = (argb >>  8) & 0xff; \
+	    jint b = (argb      ) & 0xff; \
+	    r = MUL8(a, r); \
+	    g = MUL8(a, g); \
+	    b = MUL8(a, b); \
+	    argb = ComposeIntDcmComponents1234(a, r, g, b); \
+	} \
+	(pRGB)[i] = argb; \
     } while (0)
 
 
@@ -124,8 +124,8 @@ typedef jint    IntArgbDataType;
 
 #define LoadAlphaFromIntArgbFor4ByteArgb(pRas, PREFIX, COMP_PREFIX) \
     do { \
-        PREFIX = (pRas)[0]; \
-        COMP_PREFIX ## A = ((juint) PREFIX) >> 24; \
+	PREFIX = (pRas)[0]; \
+	COMP_PREFIX ## A = ((juint) PREFIX) >> 24; \
     } while (0)
 
 #define LoadAlphaFromIntArgbFor1ByteGray(pRas, PREFIX, COMP_PREFIX) \
@@ -139,9 +139,9 @@ typedef jint    IntArgbDataType;
 
 #define Postload4ByteArgbFromIntArgb(pRas, PREFIX, COMP_PREFIX) \
     do { \
-        COMP_PREFIX ## R = (PREFIX >> 16) & 0xff; \
-        COMP_PREFIX ## G = (PREFIX >>  8) & 0xff; \
-        COMP_PREFIX ## B = (PREFIX >>  0) & 0xff; \
+	COMP_PREFIX ## R = (PREFIX >> 16) & 0xff; \
+	COMP_PREFIX ## G = (PREFIX >>  8) & 0xff; \
+	COMP_PREFIX ## B = (PREFIX >>  0) & 0xff; \
     } while (0)
 
 #define Postload1ByteGrayFromIntArgb(pRas, PREFIX, COMP_PREFIX) \
@@ -159,7 +159,7 @@ typedef jint    IntArgbDataType;
     } while (0)
 
 
-#define IntArgbIsPremultiplied  0
+#define IntArgbIsPremultiplied	0
 
 #define DeclareIntArgbBlendFillVars(PREFIX)
 
@@ -180,8 +180,8 @@ typedef jint    IntArgbDataType;
                               COMP_PREFIX ## G, COMP_PREFIX ## B)
 
 
-/*
- * Extract ## STRATEGY ## CompsAndAlphaFromArgb(pixel, COMP_PREFIX)
+/* 
+ * Extract ## STRATEGY ## CompsAndAlphaFromArgb(pixel, COMP_PREFIX) 
  */
 #define Extract3ByteRgbCompsAndAlphaFromArgb(pixel, COMP_PREFIX) \
     ExtractIntDcmComponents1234(pixel, COMP_PREFIX ## A, COMP_PREFIX ## R, \
@@ -192,8 +192,8 @@ typedef jint    IntArgbDataType;
 
 #define Extract1ByteGrayCompsAndAlphaFromArgb(pixel, COMP_PREFIX) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponents1234(pixel, COMP_PREFIX ## A, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponents1234(pixel, COMP_PREFIX ## A, r, g, b); \
         COMP_PREFIX ## G = ComposeByteGrayFrom3ByteRgb(r, g, b); \
     } while (0)
 

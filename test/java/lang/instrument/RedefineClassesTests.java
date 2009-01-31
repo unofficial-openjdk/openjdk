@@ -51,28 +51,28 @@ RedefineClassesTests
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new RedefineClassesTests(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testIsRedefineClassesSupported();
         testSimpleRedefineClasses();
-        testUnmodifiableClassException();
+	testUnmodifiableClassException();
     }
-
-
+    
+    
     public void
     testIsRedefineClassesSupported()
     {
         boolean canRedef = fInst.isRedefineClassesSupported();
         assertTrue("Cannot redefine classes", canRedef);
     }
-
+        
     public void
     testSimpleRedefineClasses()
         throws Throwable
@@ -82,13 +82,13 @@ RedefineClassesTests
 
         // with this version of the class, doSomething is a nop
         int firstGet = ex.get();
-        ex.doSomething();
+        ex.doSomething();        
         int secondGet = ex.get();
-
+        
         assertEquals(firstGet, secondGet);
-
+        
         // now redefine the class. This will change doSomething to be an increment
-
+        
         // this class is stored in a different place (scratch directory) to avoid collisions
         File f = new File("Different_ExampleRedefine.class");
         System.out.println("Reading test class from " + f);
@@ -98,37 +98,37 @@ RedefineClassesTests
 
         ClassDefinition redefineParamBlock = new ClassDefinition(   ExampleRedefine.class,
                                                                     redefineBuffer);
-
+        
         fInst.redefineClasses(new ClassDefinition[] {redefineParamBlock});
-
+        
         int thirdGet = ex.get();
-        ex.doSomething();
+        ex.doSomething();        
         int fourthGet = ex.get();
         assertEquals(thirdGet + 1, fourthGet);
     }
 
     public void
-    testUnmodifiableClassException()
-        throws Throwable
+    testUnmodifiableClassException() 
+	throws Throwable 
     {
-        System.out.println("Testing UnmodifiableClassException");
+	System.out.println("Testing UnmodifiableClassException");
 
-        // Load any class
-        File f = new File("Different_ExampleRedefine.class");
+	// Load any class
+	File f = new File("Different_ExampleRedefine.class");
         InputStream redefineStream = new FileInputStream(f);
         byte[] redefineBuffer = NamedBuffer.loadBufferFromStream(redefineStream);
 
-        System.out.println("Try to redefine class for primitive type");
-        try {
-            ClassDefinition redefineParamBlock =
-                new ClassDefinition( byte.class, redefineBuffer );
+	System.out.println("Try to redefine class for primitive type");
+	try {
+	    ClassDefinition redefineParamBlock = 
+		new ClassDefinition( byte.class, redefineBuffer );
             fInst.redefineClasses(new ClassDefinition[] {redefineParamBlock});
-            fail();
-        } catch (UnmodifiableClassException x) {
-        }
+	    fail();
+	} catch (UnmodifiableClassException x) { 
+	}
 
-        System.out.println("Try to redefine class for array type");
-        try {
+	System.out.println("Try to redefine class for array type");
+	try {
             ClassDefinition redefineParamBlock =
                 new ClassDefinition( byte[].class, redefineBuffer );
             fInst.redefineClasses(new ClassDefinition[] {redefineParamBlock});

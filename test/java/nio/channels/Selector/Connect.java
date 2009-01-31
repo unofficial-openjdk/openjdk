@@ -36,26 +36,26 @@ import java.util.*;
 import java.nio.channels.spi.SelectorProvider;
 
 public class Connect {
-
+    
     static int success = 0;
     static int LIMIT = 500;
 
     public static void main(String[] args) throws Exception {
-        scaleTest();
+      	scaleTest();
     }
-
+    
     public static void scaleTest() throws Exception {
         InetAddress myAddress=InetAddress.getByName(TestUtil.HOST);
         InetSocketAddress isa = new InetSocketAddress(myAddress,13);
-
-        for (int j=0; j<LIMIT; j++) {
+	
+	for (int j=0; j<LIMIT; j++) {
             SocketChannel sc = SocketChannel.open();
             sc.configureBlocking(false);
             boolean result = sc.connect(isa);
             if (!result) {
                 Selector RSelector = SelectorProvider.provider().openSelector();
                 SelectionKey RKey = sc.register (RSelector, SelectionKey.OP_CONNECT);
-                while (!result) {
+                while (!result) {	
                     int keysAdded = RSelector.select(100);
                     if (keysAdded > 0) {
                         Set readyKeys = RSelector.selectedKeys();
@@ -64,17 +64,17 @@ public class Connect {
                             SelectionKey sk = (SelectionKey)i.next();
                             SocketChannel nextReady = (SocketChannel)sk.channel();
                             result = nextReady.finishConnect();
-                        }
+                        } 
                     }
                 }
                 RSelector.close();
             }
             read(sc);
-        }
+	}
     }
 
     static void read(SocketChannel sc) throws Exception {
-        ByteBuffer bb = ByteBuffer.allocateDirect(100);
+	ByteBuffer bb = ByteBuffer.allocateDirect(100);
         int n = 0;
         while (n == 0) // Note this is not a rigorous check for done reading
             n = sc.read(bb);
@@ -82,7 +82,18 @@ public class Connect {
         //bb.flip();
         //CharBuffer cb = Charset.forName("US-ASCII").newDecoder().decode(bb);
         //System.out.println("Received: \"" + cb + "\"");
-        sc.close();
+        sc.close(); 
         success++;
     }
 }
+
+
+
+
+
+
+
+
+
+
+

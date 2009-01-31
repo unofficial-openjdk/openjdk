@@ -33,7 +33,7 @@ import java.util.Iterator;
  * @since 1.5
  */
 final class XDropTargetEventProcessor {
-    private static final XDropTargetEventProcessor theInstance =
+    private static final XDropTargetEventProcessor theInstance = 
         new XDropTargetEventProcessor();
     private static boolean active = false;
 
@@ -70,7 +70,7 @@ final class XDropTargetEventProcessor {
         XDropTargetProtocol curProtocol = protocol;
 
         if (protocol != null) {
-            if (protocol.getMessageType(xclient) !=
+            if (protocol.getMessageType(xclient) != 
                 XDropTargetProtocol.UNKNOWN_MESSAGE) {
                 processed = protocol.processClientMessage(xclient);
             } else {
@@ -79,11 +79,11 @@ final class XDropTargetEventProcessor {
         }
 
         if (protocol == null) {
-            Iterator dropTargetProtocols =
+            Iterator dropTargetProtocols = 
                 XDragAndDropProtocols.getDropTargetProtocols();
-
+        
             while (dropTargetProtocols.hasNext()) {
-                XDropTargetProtocol dropTargetProtocol =
+                XDropTargetProtocol dropTargetProtocol = 
                     (XDropTargetProtocol)dropTargetProtocols.next();
                 // Don't try to process it again with the current protocol.
                 if (dropTargetProtocol == curProtocol) {
@@ -91,7 +91,7 @@ final class XDropTargetEventProcessor {
                 }
 
                 if (dropTargetProtocol.getMessageType(xclient) ==
-                    XDropTargetProtocol.UNKNOWN_MESSAGE) {
+                    XDropTargetProtocol.UNKNOWN_MESSAGE) { 
                     continue;
                 }
 
@@ -113,7 +113,7 @@ final class XDropTargetEventProcessor {
     }
 
     // Fix for 4915454 - do not call doProcessEvent() until the first drop
-    // target is registered to avoid premature loading of DnD protocol
+    // target is registered to avoid premature loading of DnD protocol 
     // classes.
     static boolean processEvent(XEvent ev) {
         return active ? theInstance.doProcessEvent(ev) : false;

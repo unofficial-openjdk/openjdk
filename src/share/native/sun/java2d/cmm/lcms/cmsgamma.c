@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,28 +31,28 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the Software
+// Permission is hereby granted, free of charge, to any person obtaining 
+// a copy of this software and associated documentation files (the "Software"), 
+// to deal in the Software without restriction, including without limitation 
+// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+// and/or sell copies of the Software, and to permit persons to whom the Software 
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in
+// The above copyright notice and this permission notice shall be included in 
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 #include "lcms.h"
 
-// Gamma handling.
+// Gamma handling. 
 
 LPGAMMATABLE LCMSEXPORT cmsAllocGamma(int nEntries);
 void         LCMSEXPORT cmsFreeGamma(LPGAMMATABLE Gamma);
@@ -92,16 +92,16 @@ typedef float vec[MAX_KNOTS+1];
 
 // Ciclic-redundant-check for assuring table is a true representation of parametric curve
 
-// The usual polynomial, which is used for AAL5, FDDI, and probably Ethernet
+// The usual polynomial, which is used for AAL5, FDDI, and probably Ethernet 
 #define QUOTIENT 0x04c11db7
-
+    
 static
 unsigned int Crc32(unsigned int result, LPVOID ptr, int len)
-{
+{    
     int          i,j;
-    BYTE         octet;
+    BYTE         octet; 
     LPBYTE       data = (LPBYTE) ptr;
-
+        
     for (i=0; i < len; i++) {
 
         octet = *data++;
@@ -119,11 +119,11 @@ unsigned int Crc32(unsigned int result, LPVOID ptr, int len)
             octet <<= 1;
         }
     }
-
+    
     return result;
 }
 
-// Get CRC of gamma table
+// Get CRC of gamma table 
 
 unsigned int _cmsCrc32OfGammaTable(LPGAMMATABLE Table)
 {
@@ -158,7 +158,7 @@ LPGAMMATABLE LCMSEXPORT cmsAllocGamma(int nEntries)
 
        p -> Seed.Type     = 0;
        p -> nEntries = nEntries;
-
+       
        return p;
 }
 
@@ -191,7 +191,7 @@ LPGAMMATABLE  LCMSEXPORT cmsDupGamma(LPGAMMATABLE In)
 
        size = sizeof(GAMMATABLE) + (sizeof(WORD) * (In -> nEntries-1));
 
-       CopyMemory(Ptr, In, size);
+       CopyMemory(Ptr, In, size);                  
        return Ptr;
 }
 
@@ -222,7 +222,7 @@ LPGAMMATABLE LCMSEXPORT cmsJoinGamma(LPGAMMATABLE InGamma,
 
               wValIn  = cmsLinearInterpLUT16(RGB_8_TO_16(i), InPtr, &L16In);
               wValOut = cmsReverseLinearInterpLUT16(wValIn, OutPtr, &L16Out);
-
+              
               p -> GammaTable[i] = wValOut;
        }
 
@@ -232,7 +232,7 @@ LPGAMMATABLE LCMSEXPORT cmsJoinGamma(LPGAMMATABLE InGamma,
 
 
 // New method, using smoothed parametric curves. This works FAR better.
-// We want to get
+// We want to get 
 //
 //      y = f(g^-1(x))      ; f = ingamma, g = outgamma
 //
@@ -248,7 +248,7 @@ LPGAMMATABLE LCMSEXPORT cmsJoinGammaEx(LPGAMMATABLE InGamma,
 
     LPSAMPLEDCURVE x, y, r;
     LPGAMMATABLE res;
-
+    
     x = cmsConvertGammaToSampledCurve(InGamma,  nPoints);
     y = cmsConvertGammaToSampledCurve(OutGamma, nPoints);
     r = cmsJoinSampledCurves(y, x, nPoints);
@@ -256,8 +256,8 @@ LPGAMMATABLE LCMSEXPORT cmsJoinGammaEx(LPGAMMATABLE InGamma,
     // Does clean "hair"
     cmsSmoothSampledCurve(r, 0.001);
 
-    cmsClampSampledCurve(r, 0.0, 65535.0);
-
+    cmsClampSampledCurve(r, 0.0, 65535.0); 
+    
     cmsFreeSampledCurve(x);
     cmsFreeSampledCurve(y);
 
@@ -288,12 +288,12 @@ LPGAMMATABLE LCMSEXPORT cmsReverseGamma(int nResultSamples, LPGAMMATABLE InGamma
        {
               WORD wValIn, wValOut;
 
-              wValIn = _cmsQuantizeVal(i, nResultSamples);
+              wValIn = _cmsQuantizeVal(i, nResultSamples);           
               wValOut = cmsReverseLinearInterpLUT16(wValIn, InPtr, &L16In);
               p -> GammaTable[i] = wValOut;
        }
 
-
+           
        return p;
 }
 
@@ -315,7 +315,7 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
         Table = cmsAllocGamma(nEntries);
         if (NULL == Table) return NULL;
 
-        Table -> Seed.Type = Type;
+        Table -> Seed.Type = Type;       
 
         CopyMemory(Table ->Seed.Params, Params, ParamsByType[abs(Type)] * sizeof(double));
 
@@ -341,7 +341,7 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
                 // Y = 0               | else
                 case 2:
                     if (R >= -Params[2] / Params[1]) {
-
+                              
                               e = Params[1]*R + Params[2];
 
                               if (e > 0)
@@ -355,11 +355,11 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
 
                 // Type 2 Reversed
                 // X = (Y ^1/g  - b) / a
-                case -2:
-
+                case -2: 
+                    
                     Val = (pow(R, 1.0/Params[0]) - Params[2]) / Params[1];
                     if (Val < 0)
-                            Val = 0;
+                            Val = 0;                            
                     break;
 
 
@@ -368,8 +368,8 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
                 // Y = c              | else
                 case 3:
                     if (R >= -Params[2] / Params[1]) {
-
-                      e = Params[1]*R + Params[2];
+                            
+                      e = Params[1]*R + Params[2];                    
                       Val = pow(e, Params[0]) + Params[3];
                     }
                     else
@@ -379,8 +379,8 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
 
                 // Type 3 reversed
                 // X=((Y-c)^1/g - b)/a      | (Y>=c)
-                // X=-b/a                   | (Y<c)
-
+                // X=-b/a                   | (Y<c) 
+                    
                 case -3:
                     if (R >= Params[3])  {
                         e = R - Params[3];
@@ -398,7 +398,7 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
                 // Y = cX             | X < d
                 case 4:
                     if (R >= Params[4]) {
-
+                              
                               e = Params[1]*R + Params[2];
                               if (e > 0)
                                 Val = pow(e, Params[0]);
@@ -422,17 +422,17 @@ LPGAMMATABLE LCMSEXPORT cmsBuildParametricGamma(int nEntries, int Type, double P
                         Val = R / Params[3];
                     }
                     break;
-
+                
 
 
                 // Y = (aX + b)^Gamma + e | X <= d
                 // Y = cX + f             | else
                 case 5:
                     if (R >= Params[4]) {
-
+                             
                         e = Params[1]*R + Params[2];
                         Val = pow(e, Params[0]) + Params[5];
-                    }
+                    }        
                     else
                         Val = R*Params[3] + Params[6];
                     break;
@@ -595,14 +595,14 @@ double LCMSEXPORT cmsEstimateGammaEx(LPWORD GammaTable, int nEntries, double The
     int i;
 
     sum = sum2 = n = 0;
-
-    // Does exclude endpoints
+    
+    // Does exclude endpoints   
     for (i=1; i < nEntries - 1; i++) {
 
             x = (double) i / (nEntries - 1);
             y = (double) GammaTable[i] / 65535.;
-
-            // Avoid 7% on lower part to prevent
+            
+            // Avoid 7% on lower part to prevent 
             // artifacts due to linear ramps
 
             if (y > 0. && y < 1. && x > 0.07) {
@@ -612,12 +612,12 @@ double LCMSEXPORT cmsEstimateGammaEx(LPWORD GammaTable, int nEntries, double The
             sum2 += gamma * gamma;
             n++;
             }
-
+            
     }
 
     // Take a look on SD to see if gamma isn't exponential at all
     Std = sqrt((n * sum2 - sum * sum) / (n*(n-1)));
-
+    
 
     if (Std > Thereshold)
         return -1.0;
@@ -768,7 +768,7 @@ BOOL cmsSmoothSampledCurve(LPSAMPLEDCURVE Tab, double lambda)
 }
 
 
-// Scale a value v, within domain Min .. Max
+// Scale a value v, within domain Min .. Max 
 // to a domain 0..(nPoints-1)
 
 static
@@ -779,7 +779,7 @@ double ScaleVal(double v, double Min, double Max, int nPoints)
 
         if (v <= Min) return 0;
         if (v >= Max) return (nPoints-1);
-
+    
         a = (double) (nPoints - 1) / (Max - Min);
         b = a * Min;
 
@@ -809,7 +809,7 @@ void cmsRescaleSampledCurve(LPSAMPLEDCURVE p, double Min, double Max, int nPoint
 
 LPSAMPLEDCURVE cmsJoinSampledCurves(LPSAMPLEDCURVE X, LPSAMPLEDCURVE Y, int nResultingPoints)
 {
-    int i, j;
+    int i, j;   
     LPSAMPLEDCURVE out;
     double MinX, MinY, MaxX, MaxY;
     double x, y, x1, y1, x2, y2, a, b;
@@ -829,21 +829,21 @@ LPSAMPLEDCURVE cmsJoinSampledCurves(LPSAMPLEDCURVE X, LPSAMPLEDCURVE Y, int nRes
     cmsEndpointsOfSampledCurve(X, &MinX, &MaxX);
     cmsEndpointsOfSampledCurve(Y, &MinY, &MaxY);
 
-
+    
     // Set our points
-    out ->Values[0] = MinY;
+    out ->Values[0] = MinY; 
     for (i=1; i < nResultingPoints; i++) {
 
         // Scale t to x domain
         x = (i * (MaxX - MinX) / (nResultingPoints-1)) + MinX;
 
-        // Find interval in which j is within (always up,
+        // Find interval in which j is within (always up, 
         // since fn should be monotonic at all)
 
         j = 1;
         while ((j < X ->nItems - 1) && X ->Values[j] < x)
             j++;
-
+            
         // Now x is within X[j-1], X[j]
         x1 = X ->Values[j-1]; x2 = X ->Values[j];
         y1 = Y ->Values[j-1]; y2 = Y ->Values[j];
@@ -852,10 +852,10 @@ LPSAMPLEDCURVE cmsJoinSampledCurves(LPSAMPLEDCURVE X, LPSAMPLEDCURVE Y, int nRes
         a = (y1 - y2) / (x1 - x2);
         b = y1 - a * x1;
         y = a* x + b;
-
+        
         out ->Values[i] = y;
     }
-
+    
 
     cmsClampSampledCurve(out, MinY, MaxY);
     return out;
@@ -869,13 +869,13 @@ LPGAMMATABLE cmsConvertSampledCurveToGamma(LPSAMPLEDCURVE Sampled, double Max)
 {
     LPGAMMATABLE Gamma;
     int i, nPoints;
-
+    
 
     nPoints = Sampled ->nItems;
 
     Gamma = cmsAllocGamma(nPoints);
     for (i=0; i < nPoints; i++) {
-
+        
         Gamma->GammaTable[i] = (WORD) floor(ScaleVal(Sampled ->Values[i], 0, Max, 65536) + .5);
     }
 
@@ -899,7 +899,7 @@ LPSAMPLEDCURVE cmsConvertGammaToSampledCurve(LPGAMMATABLE Gamma, int nPoints)
     }
 
     cmsCalcL16Params(Gamma -> nEntries, &L16);
-
+       
     Sampled = cmsAllocSampledCurve(nPoints);
     for (i=0; i < nPoints; i++) {
             wQuant  = _cmsQuantizeVal(i, nPoints);
@@ -927,7 +927,7 @@ BOOL _cmsSmoothEndpoints(LPWORD Table, int nEntries)
 
     if (cmsIsLinear(Table, nEntries)) return FALSE; // Nothing to do
 
-
+    
     if (nEntries > MAX_KNOTS) {
                 cmsSignalError(LCMS_ERRC_ABORTED, "_cmsSmoothEndpoints: too many points.");
                 return FALSE;

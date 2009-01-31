@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 
@@ -42,60 +43,61 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 /**
- * A multi-threaded implementation of Selector for Windows.
+ * A multi-threaded implementation of Selector for Windows. 
  *
  * @author Konstantin Kladko
  * @author Mark Reinhold
+ * @version %I%, %G%
  */
 
-final class WindowsSelectorImpl extends SelectorImpl {
+final class WindowsSelectorImpl extends SelectorImpl {   
     // Initial capacity of the poll array
-    private final int INIT_CAP = 8;
+    private final int INIT_CAP = 8;   
     // Maximum number of sockets for select().
     // Should be INIT_CAP times a power of 2
     private final static int MAX_SELECTABLE_FDS = 1024;
-
-    // The list of SelectableChannels serviced by this Selector. Every mod
+    
+    // The list of SelectableChannels serviced by this Selector. Every mod 
     // MAX_SELECTABLE_FDS entry is bogus, to align this array with the poll
     // array,  where the corresponding entry is occupied by the wakeupSocket
     private SelectionKeyImpl[] channelArray = new SelectionKeyImpl[INIT_CAP];
-
+    
     // The global native poll array holds file decriptors and event masks
-    private PollArrayWrapper pollWrapper;
-
-    // The number of valid entries in  poll array, including entries occupied
+    private PollArrayWrapper pollWrapper; 
+        
+    // The number of valid entries in  poll array, including entries occupied 
     // by wakeup socket handle.
     private int totalChannels = 1;
-
+        
     // Number of helper threads needed for select. We need one thread per
-    // each additional set of MAX_SELECTABLE_FDS - 1 channels.
+    // each additional set of MAX_SELECTABLE_FDS - 1 channels. 
     private int threadsCount = 0;
-
+    
     // A list of helper threads for select.
     private final List threads = new ArrayList();
-
+    
     //Pipe used as a wakeup object.
     private final Pipe wakeupPipe;
-
+    
     // File descriptors corresponding to source and sink
     private final int wakeupSourceFd, wakeupSinkFd;
-
-    // Maps file descriptors to their indices in  pollArray
+        
+    // Maps file descriptors to their indices in  pollArray     
     private final static class FdMap extends HashMap<Integer, MapEntry> {
         private MapEntry get(int desc) {
             return get(new Integer(desc));
-        }
+        }        
         private MapEntry put(SelectionKeyImpl ski) {
             return put(new Integer(ski.channel.getFDVal()), new MapEntry(ski));
-        }
+        }        
         private MapEntry remove(SelectionKeyImpl ski) {
             Integer fd = new Integer(ski.channel.getFDVal());
             MapEntry x = get(fd);
-            if ((x != null) && (x.ski.channel == ski.channel))
+            if ((x != null) && (x.ski.channel == ski.channel)) 
                 return remove(fd);
             return null;
         }
-    }
+    }                    
 
     // class for fdMap entries
     private final static class MapEntry {
@@ -105,18 +107,18 @@ final class WindowsSelectorImpl extends SelectorImpl {
         MapEntry(SelectionKeyImpl ski) {
             this.ski = ski;
         }
-    }
-    private final FdMap fdMap = new FdMap();
-
+    }                            
+    private final FdMap fdMap = new FdMap();    
+    
     // SubSelector for the main thread
-    private final SubSelector subSelector = new SubSelector();
-
-    private long timeout; //timeout for poll
+    private final SubSelector subSelector = new SubSelector(); 
+    
+    private long timeout; //timeout for poll    
 
     // Lock for interrupt triggering and clearing
     private final Object interruptLock = new Object();
-    private volatile boolean interruptTriggered = false;
-
+    private volatile boolean interruptTriggered = false;    
+    
     WindowsSelectorImpl(SelectorProvider sp) throws IOException {
         super(sp);
         pollWrapper = new PollArrayWrapper(INIT_CAP);
@@ -130,7 +132,7 @@ final class WindowsSelectorImpl extends SelectorImpl {
 
         pollWrapper.addWakeupSocket(wakeupSourceFd, 0);
     }
-
+    
     protected int doSelect(long timeout) throws IOException {
         if (channelArray == null)
             throw new ClosedSelectorException();
@@ -144,7 +146,7 @@ final class WindowsSelectorImpl extends SelectorImpl {
         // threads are created here and start waiting on startLock
         adjustThreadsCount();
         finishLock.reset(); // reset finishLock
-        // Wakeup helper threads, waiting on startLock, so they start polling.
+        // Wakeup helper threads, waiting on startLock, so they start polling. 
         // Redundant threads will exit here after wakeup.
         startLock.startThreads();
         // do polling in the main thread. Main thread is responsible for
@@ -153,11 +155,11 @@ final class WindowsSelectorImpl extends SelectorImpl {
             begin();
             try {
                 subSelector.poll();
-            } catch (IOException e) {
+            } catch (IOException e) {                
                 finishLock.setException(e); // Save this exception
             }
             // Main thread is out of poll(). Wakeup others and wait for them
-            if (threads.size() > 0)
+            if (threads.size() > 0) 
                 finishLock.waitForHelperThreads();
           } finally {
               end();
@@ -168,25 +170,25 @@ final class WindowsSelectorImpl extends SelectorImpl {
         int updated = updateSelectedKeys();
         // Done with poll(). Set wakeupSocket to nonsignaled  for the next run.
         resetWakeupSocket();
-        return updated;
+        return updated;   
     }
-
+        
     // Helper threads wait on this lock for the next poll.
     private final StartLock startLock = new StartLock();
-
+    
     private final class StartLock {
         // A variable which distinguishes the current run of doSelect from the
-        // previous one. Incrementing runsCounter and notifying threads will
+        // previous one. Incrementing runsCounter and notifying threads will 
         // trigger another round of poll.
-        private long runsCounter;
+        private long runsCounter;        
        // Triggers threads, waiting on this lock to start polling.
         private synchronized void startThreads() {
             runsCounter++; // next run
             notifyAll(); // wake up threads.
-        }
+        }        
         // This function is called by a helper thread to wait for the
         // next round of poll(). It also checks, if this thread became
-        // redundant. If yes, it returns true, notifying the thread
+        // redundant. If yes, it returns true, notifying the thread 
         // that it should exit.
         private synchronized boolean waitForStart(SelectThread thread) {
             while (true) {
@@ -210,21 +212,21 @@ final class WindowsSelectorImpl extends SelectorImpl {
     // Main thread waits on this lock, until all helper threads are done
     // with poll().
     private final FinishLock finishLock = new FinishLock();
-
-    private final class FinishLock  {
+    
+    private final class FinishLock  {        
         // Number of helper threads, that did not finish yet.
         private int threadsToFinish;
-
+        
         // IOException which occured during the last run.
         IOException exception = null;
-
+        
         // Called before polling.
         private void reset() {
             threadsToFinish = threads.size(); // helper threads
         }
-
+        
         // Each helper thread invokes this function on finishLock, when
-        // the thread is done with poll().
+        // the thread is done with poll(). 
         private synchronized void threadFinished() {
             if (threadsToFinish == threads.size()) { // finished poll() first
                 // if finished first, wakeup others
@@ -234,12 +236,12 @@ final class WindowsSelectorImpl extends SelectorImpl {
             if (threadsToFinish == 0) // all helper threads finished poll().
                 notify();             // notify the main thread
         }
-
+      
         // The main thread invokes this function on finishLock to wait
         // for helper threads to finish poll().
         private synchronized void waitForHelperThreads() {
             if (threadsToFinish == threads.size()) {
-                // no helper threads finished yet. Wakeup them up.
+                // no helper threads finished yet. Wakeup them up. 
                 wakeup();
             }
             while (threadsToFinish != 0) {
@@ -251,12 +253,12 @@ final class WindowsSelectorImpl extends SelectorImpl {
                 }
             }
         }
-
+        
         // sets IOException for this run
         private synchronized void setException(IOException e) {
             exception = e;
         }
-
+        
         // Checks if there was any exception during the last run.
         // If yes, throws it
         private void checkForException() throws IOException {
@@ -268,58 +270,58 @@ final class WindowsSelectorImpl extends SelectorImpl {
             message.append('\n');
             exception = null;
             throw new IOException(message.toString());
-        }
-    }
-
-    private final class SubSelector {
-        private final int pollArrayIndex; // starting index in pollArray to poll
+        }                   
+    }        
+        
+    private final class SubSelector {        
+        private final int pollArrayIndex; // starting index in pollArray to poll 
         // These arrays will hold result of native select().
         // The first element of each array is the number of selected sockets.
         // Other elements are file descriptors of selected sockets.
         private final int[] readFds = new int [MAX_SELECTABLE_FDS + 1];
         private final int[] writeFds = new int [MAX_SELECTABLE_FDS + 1];
         private final int[] exceptFds = new int [MAX_SELECTABLE_FDS + 1];
-
+        
         private SubSelector() {
             this.pollArrayIndex = 0; // main thread
         }
-
+        
         private SubSelector(int threadIndex) { // helper threads
             this.pollArrayIndex = (threadIndex + 1) * MAX_SELECTABLE_FDS;
         }
-
+        
         private int poll() throws IOException{ // poll for the main thread
-            return poll0(pollWrapper.pollArrayAddress,
+            return poll0(pollWrapper.pollArrayAddress, 
                          Math.min(totalChannels, MAX_SELECTABLE_FDS),
                          readFds, writeFds, exceptFds, timeout);
-        }
-
+        }        
+        
         private int poll(int index) throws IOException {
             // poll for helper threads
-            return  poll0(pollWrapper.pollArrayAddress +
-                     (pollArrayIndex * PollArrayWrapper.SIZE_POLLFD),
-                     Math.min(MAX_SELECTABLE_FDS,
+            return  poll0(pollWrapper.pollArrayAddress + 
+                     (pollArrayIndex * PollArrayWrapper.SIZE_POLLFD), 
+                     Math.min(MAX_SELECTABLE_FDS, 
                              totalChannels - (index + 1) * MAX_SELECTABLE_FDS),
                      readFds, writeFds, exceptFds, timeout);
         }
-
-        private native int poll0(long pollAddress, int numfds,
+        
+        private native int poll0(long pollAddress, int numfds, 
              int[] readFds, int[] writeFds, int[] exceptFds, long timeout);
 
         private int processSelectedKeys(long updateCount) {
             int numKeysUpdated = 0;
-            numKeysUpdated += processFDSet(updateCount, readFds,
-                                           PollArrayWrapper.POLLIN);
-            numKeysUpdated += processFDSet(updateCount, writeFds,
+            numKeysUpdated += processFDSet(updateCount, readFds,  
+                                           PollArrayWrapper.POLLIN); 
+            numKeysUpdated += processFDSet(updateCount, writeFds,  
                                            PollArrayWrapper.POLLCONN |
-                                           PollArrayWrapper.POLLOUT);
-            numKeysUpdated += processFDSet(updateCount, exceptFds,
+                                           PollArrayWrapper.POLLOUT); 
+            numKeysUpdated += processFDSet(updateCount, exceptFds,  
                                            PollArrayWrapper.POLLIN |
-                                           PollArrayWrapper.POLLCONN |
-                                           PollArrayWrapper.POLLOUT);
+                                           PollArrayWrapper.POLLCONN |  
+                                           PollArrayWrapper.POLLOUT); 
             return numKeysUpdated;
         }
-
+        
         /**
          * Note, clearedCount is used to determine if the readyOps have
          * been reset in this select operation. updateCount is used to
@@ -381,19 +383,19 @@ final class WindowsSelectorImpl extends SelectorImpl {
             return numKeysUpdated;
         }
     }
-
+    
     // Represents a helper thread used for select.
     private final class SelectThread extends Thread {
         private int index; // index of this thread
         SubSelector subSelector;
-        private long lastRun = 0; // last run number
+        private long lastRun = 0; // last run number     
         // Creates a new thread
         private SelectThread(int i) {
             this.index = i;
             this.subSelector = new SubSelector(i);
             //make sure we wait for next round of poll
             this.lastRun = startLock.runsCounter;
-        }
+        }                
         public void run() {
             while (true) { // poll loop
                 // wait for the start of poll. If this thread has become
@@ -402,18 +404,18 @@ final class WindowsSelectorImpl extends SelectorImpl {
                     return;
                 // call poll()
                 try {
-                    subSelector.poll(index);
-                } catch (IOException e) {
+                    subSelector.poll(index); 
+                } catch (IOException e) {                        
                     // Save this exception and let other threads finish.
                     finishLock.setException(e);
                 }
-                // notify main thread, that this thread has finished, and
+                // notify main thread, that this thread has finished, and 
                 // wakeup others, if this thread is the first to finish.
                 finishLock.threadFinished();
             }
         }
     }
-
+            
     // After some channels registered/deregistered, the number of required
     // helper threads may have changed. Adjust this number.
     private void adjustThreadsCount() {
@@ -431,33 +433,33 @@ final class WindowsSelectorImpl extends SelectorImpl {
                 threads.remove(i);
         }
     }
-
+    
     // Sets Windows wakeup socket to a signaled state.
-    private void setWakeupSocket() {
+    private void setWakeupSocket() {       
         setWakeupSocket0(wakeupSinkFd);
-    }
+    }    
     private native void setWakeupSocket0(int wakeupSinkFd);
-
+    
     // Sets Windows wakeup socket to a non-signaled state.
     private void resetWakeupSocket() {
-        synchronized (interruptLock) {
+        synchronized (interruptLock) {        
             if (interruptTriggered == false)
                 return;
             resetWakeupSocket0(wakeupSourceFd);
             interruptTriggered = false;
         }
-    }
-
+    }    
+    
     private native void resetWakeupSocket0(int wakeupSourceFd);
 
-    // We increment this counter on each call to updateSelectedKeys()
-    // each entry in  SubSelector.fdsMap has a memorized value of
-    // updateCount. When we increment numKeysUpdated we set updateCount
-    // for the corresponding entry to its current value. This is used to
-    // avoid counting the same key more than once - the same key can
-    // appear in readfds and writefds.
-    private long updateCount = 0;
-
+    // We increment this counter on each call to updateSelectedKeys() 
+    // each entry in  SubSelector.fdsMap has a memorized value of 
+    // updateCount. When we increment numKeysUpdated we set updateCount 
+    // for the corresponding entry to its current value. This is used to 
+    // avoid counting the same key more than once - the same key can  
+    // appear in readfds and writefds. 
+    private long updateCount = 0;            
+    
     // Update ops of the corresponding Channels. Add the ready keys to the
     // ready queue.
     private int updateSelectedKeys() {
@@ -470,46 +472,46 @@ final class WindowsSelectorImpl extends SelectorImpl {
                                              processSelectedKeys(updateCount);
         return numKeysUpdated;
     }
-
+    
     protected void implClose() throws IOException {
         if (channelArray != null) {
             if (pollWrapper != null) {
-                // prevent further wakeup
-                synchronized (interruptLock) {
-                    interruptTriggered = true;
-                }
+		// prevent further wakeup
+		synchronized (interruptLock) {
+		    interruptTriggered = true;
+		}
                 wakeupPipe.sink().close();
                 wakeupPipe.source().close();
                 for(int i = 1; i < totalChannels; i++) { // Deregister channels
                     if (i % MAX_SELECTABLE_FDS != 0) { // skip wakeupEvent
                         deregister(channelArray[i]);
-                        SelectableChannel selch = channelArray[i].channel();
-                        if (!selch.isOpen() && !selch.isRegistered())
-                            ((SelChImpl)selch).kill();
+		        SelectableChannel selch = channelArray[i].channel();
+		        if (!selch.isOpen() && !selch.isRegistered())
+		            ((SelChImpl)selch).kill();
                     }
-                }
+                }                
                 pollWrapper.free();
                 pollWrapper = null;
                 selectedKeys = null;
                 channelArray = null;
                 threads.clear();
-                // Call startThreads. All remaining helper threads now exit,
+                // Call startThreads. All remaining helper threads now exit, 
                 // since threads.size() = 0;
-                startLock.startThreads();
+                startLock.startThreads(); 
             }
         }
     }
-
+    
     protected void implRegister(SelectionKeyImpl ski) {
         growIfNeeded();
         channelArray[totalChannels] = ski;
-        ski.setIndex(totalChannels);
+        ski.setIndex(totalChannels);        
         fdMap.put(ski);
-        keys.add(ski);
+        keys.add(ski);        
         pollWrapper.addEntry(totalChannels, ski);
         totalChannels++;
     }
-
+    
     private void growIfNeeded() {
         if (channelArray.length == totalChannels) {
             int newSize = totalChannels * 2; // Make a larger array
@@ -523,8 +525,8 @@ final class WindowsSelectorImpl extends SelectorImpl {
             totalChannels++;
             threadsCount++;
         }
-    }
-
+    }        
+    
     protected void implDereg(SelectionKeyImpl ski) throws IOException{
         int i = ski.getIndex();
         assert (i >= 0);
@@ -535,38 +537,38 @@ final class WindowsSelectorImpl extends SelectorImpl {
             endChannel.setIndex(i);
             pollWrapper.replaceEntry(pollWrapper, totalChannels - 1,
                                                                 pollWrapper, i);
-        }
+        }      
         channelArray[totalChannels - 1] = null;
         totalChannels--;
         ski.setIndex(-1);
         if ( totalChannels != 1 && totalChannels % MAX_SELECTABLE_FDS == 1) {
             totalChannels--;
             threadsCount--; // The last thread has become redundant.
-        }
+        }                
         fdMap.remove(ski); // Remove the key from fdMap, keys and selectedKeys
         keys.remove(ski);
         selectedKeys.remove(ski);
         deregister(ski);
-        SelectableChannel selch = ski.channel();
-        if (!selch.isOpen() && !selch.isRegistered())
-            ((SelChImpl)selch).kill();
+	SelectableChannel selch = ski.channel();
+	if (!selch.isOpen() && !selch.isRegistered())
+	    ((SelChImpl)selch).kill();        
     }
-
+    
     void putEventOps(SelectionKeyImpl sk, int ops) {
         pollWrapper.putEventOps(sk.getIndex(), ops);
     }
-
+    
     public Selector wakeup() {
         synchronized (interruptLock) {
             if (!interruptTriggered) {
                 setWakeupSocket();
                 interruptTriggered = true;
             }
-        }
+        }        
         return this;
-    }
-
+    }               
+    
     static {
         Util.load();
-    }
+    }    
 }

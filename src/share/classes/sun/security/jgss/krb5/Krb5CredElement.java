@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 package sun.security.jgss.krb5;
 
 import org.ietf.jgss.*;
@@ -34,8 +34,9 @@ import java.security.Provider;
  * Provides type safety for Krb5 credential elements.
  *
  * @author Mayank Upadhyay
+ * @version %I%, %G%
  * @since 1.4
  */
-interface Krb5CredElement
+interface Krb5CredElement 
     extends GSSCredentialSpi {
 }

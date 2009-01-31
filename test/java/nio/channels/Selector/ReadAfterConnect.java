@@ -22,8 +22,8 @@
  */
 
 /* @test
- * @bug 4629307
- * @summary Socket with OP_READ would get selected on connect
+ * @bug 4629307 
+ * @summary Socket with OP_READ would get selected on connect 
  * @author kladko
  */
 
@@ -34,9 +34,9 @@ import java.nio.channels.*;
 public class ReadAfterConnect {
 
     public static void main(String[] argv) throws Exception {
-        ByteServer server = new ByteServer(0); // server: accept connection and do nothing
+        ByteServer server = new ByteServer(0); // server: accept connection and do nothing 
         server.start();
-        InetSocketAddress isa = new InetSocketAddress(
+	InetSocketAddress isa = new InetSocketAddress(
                 InetAddress.getByName(ByteServer.LOCALHOST), ByteServer.PORT);
         Selector sel = Selector.open();
         SocketChannel sc = SocketChannel.open();
@@ -44,10 +44,13 @@ public class ReadAfterConnect {
         sc.configureBlocking(false);
         sc.register(sel, SelectionKey.OP_READ);
         // Previously channel would get selected here, although there is nothing to read
-        if (sel.selectNow() != 0)
-            throw new Exception("Select returned nonzero value");
+        if (sel.selectNow() != 0) 
+            throw new Exception("Select returned nonzero value"); 
         sc.close();
-        server.exit();
+        server.exit();	
     }
 
 }
+
+
+

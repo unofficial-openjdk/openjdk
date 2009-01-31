@@ -35,6 +35,7 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   *
   * @see Context#bind
   * @see Context#rebind
@@ -51,11 +52,11 @@ public class NameAlreadyBoundException extends NamingException {
      * explanation supplied. All other fields default to null.
      *
      *
-     * @param   explanation     Possibly null additional detail about this exception.
+     * @param	explanation	Possibly null additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public NameAlreadyBoundException(String explanation) {
-        super(explanation);
+	super(explanation);
     }
 
     /**
@@ -63,7 +64,7 @@ public class NameAlreadyBoundException extends NamingException {
       * All fields are set to null;
       */
     public NameAlreadyBoundException() {
-        super();
+	super();
     }
 
     /**

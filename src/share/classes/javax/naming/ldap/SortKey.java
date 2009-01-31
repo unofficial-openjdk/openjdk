@@ -57,11 +57,11 @@ public class SortKey {
      * according to the specified attribute in ascending order using the
      * ordering matching rule defined for use with that attribute.
      *
-     * @param   attrID  The non-null ID of the attribute to be used as a sort
-     *          key.
+     * @param	attrID	The non-null ID of the attribute to be used as a sort
+     *		key.
      */
     public SortKey(String attrID) {
-        this.attrID = attrID;
+	this.attrID = attrID;
     }
 
     /**
@@ -69,22 +69,22 @@ public class SortKey {
      * the specified attribute in the specified sort order and using the
      * specified matching rule, if supplied.
      *
-     * @param   attrID          The non-null ID of the attribute to be used as
-     *                          a sort key.
-     * @param   ascendingOrder  If true then entries are arranged in ascending
-     *                          order. Otherwise there are arranged in
-     *                          descending order.
-     * @param   matchingRuleID  The possibly null ID of the matching rule to
-     *                          use to order the attribute values. If not
-     *                          specified then the ordering matching rule
-     *                          defined for the sort key attribute is used.
+     * @param	attrID		The non-null ID of the attribute to be used as
+     *				a sort key.
+     * @param	ascendingOrder	If true then entries are arranged in ascending
+     *				order. Otherwise there are arranged in
+     *				descending order.
+     * @param	matchingRuleID	The possibly null ID of the matching rule to
+     *				use to order the attribute values. If not
+     *				specified then the ordering matching rule
+     *				defined for the sort key attribute is used.
      */
     public SortKey(String attrID, boolean ascendingOrder,
-                    String matchingRuleID) {
+		    String matchingRuleID) {
 
-        this.attrID = attrID;
-        reverseOrder = (! ascendingOrder);
-        this.matchingRuleID = matchingRuleID;
+	this.attrID = attrID;
+	reverseOrder = (! ascendingOrder);
+	this.matchingRuleID = matchingRuleID;
     }
 
     /**
@@ -93,7 +93,7 @@ public class SortKey {
      * @return    The non-null Attribute ID of the sort key.
      */
     public String getAttributeID() {
-        return attrID;
+	return attrID;
     }
 
     /**
@@ -102,17 +102,17 @@ public class SortKey {
      * @return    true if the sort order is ascending, false if descending.
      */
     public boolean isAscending() {
-        return (! reverseOrder);
+	return (! reverseOrder);
     }
 
     /**
      * Retrieves the matching rule ID used to order the attribute values.
      *
      * @return    The possibly null matching rule ID. If null then the
-     *            ordering matching rule defined for the sort key attribute
-     *            is used.
+     *		  ordering matching rule defined for the sort key attribute
+     *		  is used.
      */
     public String getMatchingRuleID() {
-        return matchingRuleID;
+	return matchingRuleID;
     }
 }

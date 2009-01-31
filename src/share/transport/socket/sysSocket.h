@@ -37,11 +37,11 @@ typedef unsigned long   UINT32;
 typedef long            INT32;
 #endif /* _LP64 */
 
-#define DBG_POLLIN              1
-#define DBG_POLLOUT             2
+#define DBG_POLLIN		1
+#define DBG_POLLOUT		2
 
-#define DBG_EINPROGRESS         -150
-#define DBG_ETIMEOUT            -200
+#define DBG_EINPROGRESS		-150
+#define DBG_ETIMEOUT		-200
 
 int dbgsysSocketClose(int fd);
 INT32 dbgsysSocketAvailable(int fd, INT32 *pbytes);
@@ -49,13 +49,13 @@ int dbgsysConnect(int fd, struct sockaddr *him, int len);
 int dbgsysFinishConnect(int fd, long timeout);
 int dbgsysAccept(int fd, struct sockaddr *him, int *len);
 int dbgsysSendTo(int fd, char *buf, int len, int flags, struct sockaddr *to,
-              int tolen);
+	      int tolen);
 int dbgsysRecvFrom(int fd, char *buf, int nbytes, int flags,
                 struct sockaddr *from, int *fromlen);
 int dbgsysListen(int fd, INT32 count);
 int dbgsysRecv(int fd, char *buf, int nBytes, int flags);
 int dbgsysSend(int fd, char *buf, int nBytes, int flags);
-int dbgsysTimeout(int fd, INT32 timeout);
+int dbgsysTimeout(int fd, INT32 timeout); 
 struct hostent *dbgsysGetHostByName(char *hostname);
 int dbgsysSocket(int domain, int type, int protocol);
 int dbgsysBind(int fd, struct sockaddr *name, int namelen);
@@ -80,3 +80,5 @@ void dbgsysTlsPut(int index, void *value);
 void* dbgsysTlsGet(int index);
 
 #endif
+
+

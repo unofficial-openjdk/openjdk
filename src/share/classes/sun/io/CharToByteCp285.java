@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM285;
  * Tables and data to convert Unicode to Cp285
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp285 extends CharToByteSingleByte {

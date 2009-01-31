@@ -40,6 +40,7 @@ import java.nio.channels.FileChannel;
  * buffer stored in a file referenced by a file URI.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class PerfDataBuffer extends AbstractPerfDataBuffer {

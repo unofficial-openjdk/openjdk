@@ -118,21 +118,21 @@
 
 #define LoadByteBinaryTo3ByteRgb(TYPE, pRas, PREFIX, x, r, g, b) \
     do { \
-        jint rgb = PREFIX ## Lut[CurrentPixelByteBinary(TYPE, PREFIX)]; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	jint rgb = PREFIX ## Lut[CurrentPixelByteBinary(TYPE, PREFIX)]; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
     } while (0)
 
 #define LoadByteBinaryTo4ByteArgb(TYPE, pRas, PREFIX, x, a, r, g, b) \
     do { \
-        jint argb = PREFIX ## Lut[CurrentPixelByteBinary(TYPE, PREFIX)]; \
-        ExtractIntDcmComponents1234(argb, a, r, g, b); \
+	jint argb = PREFIX ## Lut[CurrentPixelByteBinary(TYPE, PREFIX)]; \
+	ExtractIntDcmComponents1234(argb, a, r, g, b); \
     } while (0)
 
 #define StoreByteBinaryFrom1IntRgb(TYPE, pRas, PREFIX, x, rgb) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
-        StoreByteBinaryFrom3ByteRgb(TYPE, pRas, PREFIX, x, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	StoreByteBinaryFrom3ByteRgb(TYPE, pRas, PREFIX, x, r, g, b); \
     } while (0)
 
 #define StoreByteBinaryFrom1IntArgb(TYPE, pRas, PREFIX, x, argb) \
@@ -157,19 +157,19 @@
 
 #define LoadAlphaFromByteBinaryFor4ByteArgb(TYPE, pRas, PREFIX, COMP_PREFIX) \
     do { \
-        PREFIX ## rgb = PREFIX ## Lut[CurrentPixelByteBinary(TYPE, PREFIX)]; \
-        COMP_PREFIX ## A = ((juint) PREFIX ## rgb) >> 24; \
+	PREFIX ## rgb = PREFIX ## Lut[CurrentPixelByteBinary(TYPE, PREFIX)]; \
+	COMP_PREFIX ## A = ((juint) PREFIX ## rgb) >> 24; \
     } while (0)
 
 #define Postload4ByteArgbFromByteBinary(TYPE, pRas, PREFIX, COMP_PREFIX) \
     do { \
-        COMP_PREFIX ## R = (PREFIX ## rgb >> 16) & 0xff; \
-        COMP_PREFIX ## G = (PREFIX ## rgb >>  8) & 0xff; \
-        COMP_PREFIX ## B = (PREFIX ## rgb >>  0) & 0xff; \
+	COMP_PREFIX ## R = (PREFIX ## rgb >> 16) & 0xff; \
+	COMP_PREFIX ## G = (PREFIX ## rgb >>  8) & 0xff; \
+	COMP_PREFIX ## B = (PREFIX ## rgb >>  0) & 0xff; \
     } while (0)
 
 
-#define ByteBinaryIsPremultiplied       0
+#define ByteBinaryIsPremultiplied	0
 
 #define StoreByteBinaryFrom4ByteArgbComps(TYPE, pRas, PREFIX, x, COMP_PREFIX)\
     StoreByteBinaryFrom4ByteArgb(TYPE, pRas, PREFIX, x, \
@@ -180,40 +180,40 @@
 
 
 #define BBBlitLoopWidthHeight(SRCTYPE, SRCPTR, SRCBASE, SRCINFO, SRCPREFIX, \
-                              DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
-                              WIDTH, HEIGHT, BODY) \
+			      DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
+			      WIDTH, HEIGHT, BODY) \
     do { \
-        SRCTYPE ## DataType *SRCPTR = (SRCTYPE ## DataType *) (SRCBASE); \
-        DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
-        jint srcScan = (SRCINFO)->scanStride; \
-        jint dstScan = (DSTINFO)->scanStride; \
+	SRCTYPE ## DataType *SRCPTR = (SRCTYPE ## DataType *) (SRCBASE); \
+	DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
+	jint srcScan = (SRCINFO)->scanStride; \
+	jint dstScan = (DSTINFO)->scanStride; \
         jint srcx1 = (SRCINFO)->bounds.x1; \
         jint dstx1 = (DSTINFO)->bounds.x1; \
-        Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
-        srcScan -= (WIDTH) * SRCTYPE ## PixelStride; \
-        dstScan -= (WIDTH) * DSTTYPE ## PixelStride; \
-        do { \
+	Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
+	srcScan -= (WIDTH) * SRCTYPE ## PixelStride; \
+	dstScan -= (WIDTH) * DSTTYPE ## PixelStride; \
+	do { \
             Declare ## SRCTYPE ## InitialLoadVars(SRCINFO, SRCPTR, SRCPREFIX, \
                                                   srcx1) \
             Declare ## DSTTYPE ## InitialLoadVars(DSTINFO, DSTPTR, DSTPREFIX, \
                                                   dstx1) \
-            juint w = WIDTH; \
-            Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
-            do { \
+	    juint w = WIDTH; \
+	    Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
+	    do { \
                 InitialLoad ## SRCTYPE(SRCPTR, SRCPREFIX); \
                 InitialLoad ## DSTTYPE(DSTPTR, DSTPREFIX); \
                 BODY; \
                 ShiftBits ## SRCTYPE(SRCPREFIX); \
                 ShiftBits ## DSTTYPE(DSTPREFIX); \
-                SRCPTR = PtrAddBytes(SRCPTR, SRCTYPE ## PixelStride); \
-                DSTPTR = PtrAddBytes(DSTPTR, DSTTYPE ## PixelStride); \
-                Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
-            } while (--w > 0); \
+		SRCPTR = PtrAddBytes(SRCPTR, SRCTYPE ## PixelStride); \
+		DSTPTR = PtrAddBytes(DSTPTR, DSTTYPE ## PixelStride); \
+		Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
+	    } while (--w > 0); \
             FinalStore ## DSTTYPE(DSTPTR, DSTPREFIX); \
             SRCPTR = PtrAddBytes(SRCPTR, srcScan); \
-            DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
-            Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
-        } while (--HEIGHT > 0); \
+	    DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
+	    Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
+	} while (--HEIGHT > 0); \
     } while (0)
 
 #define BBXorVia1IntArgb(SRCPTR, SRCTYPE, SRCPREFIX, \
@@ -235,22 +235,22 @@
 
 #define DEFINE_BYTE_BINARY_CONVERT_BLIT(SRC, DST, STRATEGY) \
 void NAME_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                                 juint width, juint height, \
-                                 SurfaceDataRasInfo *pSrcInfo, \
-                                 SurfaceDataRasInfo *pDstInfo, \
-                                 NativePrimitive *pPrim, \
-                                 CompositeInfo *pCompInfo) \
+				 juint width, juint height, \
+				 SurfaceDataRasInfo *pSrcInfo, \
+				 SurfaceDataRasInfo *pDstInfo, \
+				 NativePrimitive *pPrim, \
+				 CompositeInfo *pCompInfo) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     Declare ## DST ## StoreVars(DstWrite) \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BBBlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, SrcRead, \
-                          DST, pDst, dstBase, pDstInfo, DstWrite, \
-                          width, height, \
+		          DST, pDst, dstBase, pDstInfo, DstWrite, \
+		          width, height, \
                           ConvertVia ## STRATEGY(pSrc, SRC, SrcRead, \
-                                                 pDst, DST, DstWrite, \
-                                                 0, 0)); \
+		                                 pDst, DST, DstWrite, \
+		                                 0, 0)); \
 }
 
 #define DEFINE_BYTE_BINARY_XOR_BLIT(SRC, DST) \
@@ -268,11 +268,11 @@ void NAME_XOR_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BBBlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, SrcRead, \
-                          DST, pDst, dstBase, pDstInfo, DstWrite, \
-                          width, height, \
-                          BBXorVia1IntArgb(pSrc, SRC, SrcRead, \
-                                           pDst, DST, DstWrite, \
-                                           0, xorpixel, \
+			  DST, pDst, dstBase, pDstInfo, DstWrite, \
+			  width, height, \
+			  BBXorVia1IntArgb(pSrc, SRC, SrcRead, \
+			                   pDst, DST, DstWrite, \
+			                   0, xorpixel, \
                                            alphamask, pDstInfo)); \
 }
 
@@ -292,21 +292,21 @@ void NAME_SOLID_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
     pPix = PtrCoord(pRasInfo->rasBase, lox, DST ## PixelStride, loy, scan); \
     do { \
         Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, lox) \
-        jint w = width; \
-        do { \
+	jint w = width; \
+	do { \
             InitialLoad ## DST(pPix, DstPix); \
-            Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
+	    Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
             ShiftBits ## DST(DstPix); \
-        } while (--w > 0); \
+	} while (--w > 0); \
         FinalStore ## DST(pPix, DstPix); \
-        pPix = PtrAddBytes(pPix, scan); \
+	pPix = PtrAddBytes(pPix, scan); \
     } while (--height > 0); \
 }
 
 #define DEFINE_BYTE_BINARY_SOLID_FILLSPANS(DST) \
 void NAME_SOLID_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
-                               SpanIteratorFuncs *pSpanFuncs, void *siData, \
-                               jint pixel, NativePrimitive *pPrim, \
+			       SpanIteratorFuncs *pSpanFuncs, void *siData, \
+			       jint pixel, NativePrimitive *pPrim, \
                                CompositeInfo *pCompInfo) \
 { \
     void *pBase = pRasInfo->rasBase; \
@@ -314,72 +314,72 @@ void NAME_SOLID_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
     jint bbox[4]; \
  \
     while ((*pSpanFuncs->nextSpan)(siData, bbox)) { \
-        jint x = bbox[0]; \
-        jint y = bbox[1]; \
-        juint w = bbox[2] - x; \
-        juint h = bbox[3] - y; \
-        DST ## DataType *pPix = PtrCoord(pBase, \
-                                         x, DST ## PixelStride, \
-                                         y, scan); \
-        do { \
+	jint x = bbox[0]; \
+	jint y = bbox[1]; \
+	juint w = bbox[2] - x; \
+	juint h = bbox[3] - y; \
+	DST ## DataType *pPix = PtrCoord(pBase, \
+					 x, DST ## PixelStride, \
+					 y, scan); \
+	do { \
             Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, x) \
-            jint relx = w; \
-            do { \
+	    jint relx = w; \
+	    do { \
                 InitialLoad ## DST(pPix, DstPix); \
-                Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
+	        Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
                 ShiftBits ## DST(DstPix); \
-            } while (--relx > 0); \
+	    } while (--relx > 0); \
             FinalStore ## DST(pPix, DstPix); \
-            pPix = PtrAddBytes(pPix, scan); \
-        } while (--h > 0); \
+	    pPix = PtrAddBytes(pPix, scan); \
+	} while (--h > 0); \
     } \
 }
 
 #define DEFINE_BYTE_BINARY_SOLID_DRAWLINE(DST) \
 void NAME_SOLID_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
-                              jint x1, jint y1, jint pixel, \
-                              jint steps, jint error, \
+			      jint x1, jint y1, jint pixel, \
+			      jint steps, jint error, \
                               jint bumpmajormask, jint errmajor, \
                               jint bumpminormask, jint errminor, \
-                              NativePrimitive *pPrim, \
+			      NativePrimitive *pPrim, \
                               CompositeInfo *pCompInfo) \
 { \
     jint scan = pRasInfo->scanStride; \
     DST ## DataType *pPix = PtrCoord(pRasInfo->rasBase, \
-                                     x1, DST ## PixelStride, \
-                                     y1, scan); \
+				     x1, DST ## PixelStride, \
+				     y1, scan); \
     DeclareBumps(bumpmajor, bumpminor) \
  \
     scan *= DST ## PixelsPerByte; \
     InitBumps(bumpmajor, bumpminor, bumpmajormask, bumpminormask, 1, scan); \
     if (errmajor == 0) { \
-        do { \
+	do { \
             Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, x1) \
-            Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
+	    Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
             FinalStore ## DST(pPix, DstPix); \
             x1 += bumpmajor; \
-        } while (--steps > 0); \
+	} while (--steps > 0); \
     } else { \
-        do { \
+	do { \
             Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, x1) \
-            Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
+	    Store ## DST ## PixelData(pPix, 0, pixel, DstPix); \
             FinalStore ## DST(pPix, DstPix); \
-            if (error < 0) { \
+	    if (error < 0) { \
                 x1 += bumpmajor; \
-                error += errmajor; \
-            } else { \
+		error += errmajor; \
+	    } else { \
                 x1 += bumpminor; \
-                error -= errminor; \
-            } \
-        } while (--steps > 0); \
+		error -= errminor; \
+	    } \
+	} while (--steps > 0); \
     } \
 }
 
 #define DEFINE_BYTE_BINARY_XOR_FILLRECT(DST) \
 void NAME_XOR_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
-                            jint lox, jint loy, \
-                            jint hix, jint hiy, \
-                            jint pixel, \
+			    jint lox, jint loy, \
+			    jint hix, jint hiy, \
+			    jint pixel, \
                             NativePrimitive *pPrim, \
                             CompositeInfo *pCompInfo) \
 { \
@@ -393,21 +393,21 @@ void NAME_XOR_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
     pPix = PtrCoord(pRasInfo->rasBase, lox, DST ## PixelStride, loy, scan); \
     do { \
         Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, lox) \
-        jint w = width; \
-        do { \
+	jint w = width; \
+	do { \
             InitialLoad ## DST(pPix, DstPix); \
             Xor ## DST ## PixelData(pPix, 0, DstPix, \
                                     pixel, xorpixel, alphamask); \
             ShiftBits ## DST(DstPix); \
-        } while (--w > 0); \
+	} while (--w > 0); \
         FinalStore ## DST(pPix, DstPix); \
-        pPix = PtrAddBytes(pPix, scan); \
+	pPix = PtrAddBytes(pPix, scan); \
     } while (--height > 0); \
 }
 
 #define DEFINE_BYTE_BINARY_XOR_FILLSPANS(DST) \
 void NAME_XOR_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
-                             SpanIteratorFuncs *pSpanFuncs, \
+			     SpanIteratorFuncs *pSpanFuncs, \
                              void *siData, jint pixel, \
                              NativePrimitive *pPrim, \
                              CompositeInfo *pCompInfo) \
@@ -419,77 +419,77 @@ void NAME_XOR_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
     jint bbox[4]; \
  \
     while ((*pSpanFuncs->nextSpan)(siData, bbox)) { \
-        jint x = bbox[0]; \
-        jint y = bbox[1]; \
-        juint w = bbox[2] - x; \
-        juint h = bbox[3] - y; \
-        DST ## DataType *pPix = PtrCoord(pBase, \
-                                         x, DST ## PixelStride, \
-                                         y, scan); \
-        do { \
+	jint x = bbox[0]; \
+	jint y = bbox[1]; \
+	juint w = bbox[2] - x; \
+	juint h = bbox[3] - y; \
+	DST ## DataType *pPix = PtrCoord(pBase, \
+					 x, DST ## PixelStride, \
+					 y, scan); \
+	do { \
             Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, x) \
-            jint relx = w; \
-            do { \
+	    jint relx = w; \
+	    do { \
                 InitialLoad ## DST(pPix, DstPix); \
                 Xor ## DST ## PixelData(pPix, 0, DstPix, \
                                         pixel, xorpixel, alphamask); \
                 ShiftBits ## DST(DstPix); \
-            } while (--relx > 0); \
+	    } while (--relx > 0); \
             FinalStore ## DST(pPix, DstPix); \
-            pPix = PtrAddBytes(pPix, scan); \
-        } while (--h > 0); \
+	    pPix = PtrAddBytes(pPix, scan); \
+	} while (--h > 0); \
     } \
 }
 
 #define DEFINE_BYTE_BINARY_XOR_DRAWLINE(DST) \
 void NAME_XOR_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
-                            jint x1, jint y1, jint pixel, \
-                            jint steps, jint error, \
-                            jint bumpmajormask, jint errmajor, \
-                            jint bumpminormask, jint errminor, \
-                            NativePrimitive *pPrim, \
+			    jint x1, jint y1, jint pixel, \
+			    jint steps, jint error, \
+			    jint bumpmajormask, jint errmajor, \
+			    jint bumpminormask, jint errminor, \
+			    NativePrimitive *pPrim, \
                             CompositeInfo *pCompInfo) \
 { \
     jint xorpixel = pCompInfo->details.xorPixel; \
     juint alphamask = pCompInfo->alphaMask; \
     jint scan = pRasInfo->scanStride; \
     DST ## DataType *pPix = PtrCoord(pRasInfo->rasBase, \
-                                     x1, DST ## PixelStride, \
-                                     y1, scan); \
+				     x1, DST ## PixelStride, \
+				     y1, scan); \
     DeclareBumps(bumpmajor, bumpminor) \
  \
     scan *= DST ## PixelsPerByte; \
     InitBumps(bumpmajor, bumpminor, bumpmajormask, bumpminormask, 1, scan); \
  \
     if (errmajor == 0) { \
-        do { \
+	do { \
             Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, x1) \
             Xor ## DST ## PixelData(pPix, 0, DstPix, \
                                     pixel, xorpixel, alphamask); \
             FinalStore ## DST(pPix, DstPix); \
             x1 += bumpmajor; \
-        } while (--steps > 0); \
+	} while (--steps > 0); \
     } else { \
-        do { \
+	do { \
             Declare ## DST ## InitialLoadVars(pRasInfo, pPix, DstPix, x1) \
             Xor ## DST ## PixelData(pPix, 0, DstPix, \
                                     pixel, xorpixel, alphamask); \
             FinalStore ## DST(pPix, DstPix); \
-            if (error < 0) { \
+	    if (error < 0) { \
                 x1 += bumpmajor; \
-                error += errmajor; \
-            } else { \
+		error += errmajor; \
+	    } else { \
                 x1 += bumpminor; \
-                error -= errminor; \
-            } \
-        } while (--steps > 0); \
+		error -= errminor; \
+	    } \
+	} while (--steps > 0); \
     } \
 }
 
 #define DEFINE_BYTE_BINARY_SOLID_DRAWGLYPHLIST(DST) \
 void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
                                    ImageRef *glyphs, \
-                                   jint totalGlyphs, jint fgpixel, \
+			           jint totalGlyphs, jint fgpixel, \
                                    jint argbcolor, \
                                    jint clipLeft, jint clipTop, \
                                    jint clipRight, jint clipBottom, \
@@ -524,7 +524,7 @@ void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
             pixels += rowBytes; \
         } while (--height > 0); \
     } \
-}
+} 
 
 /*
  * REMIND: we shouldn't be attempting to do antialiased text for the
@@ -533,7 +533,7 @@ void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
 #define DEFINE_BYTE_BINARY_SOLID_DRAWGLYPHLISTAA(DST, STRATEGY) \
 void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
                                      ImageRef *glyphs, \
-                                     jint totalGlyphs, jint fgpixel, \
+			             jint totalGlyphs, jint fgpixel, \
                                      jint argbcolor, \
                                      jint clipLeft, jint clipTop, \
                                      jint clipRight, jint clipBottom, \
@@ -586,7 +586,7 @@ void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
 #define DEFINE_BYTE_BINARY_XOR_DRAWGLYPHLIST(DST) \
 void NAME_XOR_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
                                  ImageRef *glyphs, \
-                                 jint totalGlyphs, jint fgpixel, \
+			         jint totalGlyphs, jint fgpixel, \
                                  jint argbcolor, \
                                  jint clipLeft, jint clipTop, \
                                  jint clipRight, jint clipBottom, \
@@ -666,16 +666,16 @@ void NAME_ALPHA_MASKBLIT(SRC, DST) \
     dstScan -= width * DST ## PixelStride; \
     maskScan -= width; \
     if (pMask) { \
-        pMask += maskOff; \
+	pMask += maskOff; \
     } \
  \
     Init ## DST ## StoreVarsY(DstWrite, pDstInfo); \
     do { \
         Declare ## SRC ## InitialLoadVars(pSrcInfo, pSrc, SrcRead, srcx1) \
         Declare ## DST ## InitialLoadVars(pDstInfo, pDst, DstWrite, dstx1) \
-        jint w = width; \
-        Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
-        do { \
+	jint w = width; \
+	Init ## DST ## StoreVarsX(DstWrite, pDstInfo); \
+	do { \
             DeclareAlphaVarFor ## STRATEGY(resA) \
             DeclareCompVarsFor ## STRATEGY(res) \
             DeclareAlphaVarFor ## STRATEGY(srcF) \
@@ -683,98 +683,98 @@ void NAME_ALPHA_MASKBLIT(SRC, DST) \
  \
             InitialLoad ## SRC(pSrc, SrcRead); \
             InitialLoad ## DST(pDst, DstWrite); \
-            if (pMask) { \
+	    if (pMask) { \
                 pathA = *pMask++; \
-                if (!pathA) { \
+		if (!pathA) { \
                     ShiftBits ## SRC(SrcRead); \
                     ShiftBits ## DST(DstWrite); \
-                    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-                    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-                    Next ## DST ## StoreVarsX(DstWrite); \
-                    continue; \
-                } \
+		    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+		    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+		    Next ## DST ## StoreVarsX(DstWrite); \
+		    continue; \
+		} \
                 PromoteByteAlphaFor ## STRATEGY(pathA); \
-            } \
-            if (loadsrc) { \
-                LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc,SrcRead,src); \
-                srcA = MultiplyAlphaFor ## STRATEGY(extraA, srcA); \
-            } \
-            if (loaddst) { \
-                LoadAlphaFrom ## DST ## For ## STRATEGY(pDst,DstWrite,dst); \
-            } \
-            srcF = ApplyAlphaOperands(SrcOp, dstA); \
-            dstF = ApplyAlphaOperands(DstOp, srcA); \
-            if (pathA != MaxValFor ## STRATEGY) { \
-                srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
-                dstF = MaxValFor ## STRATEGY - pathA + \
+	    } \
+	    if (loadsrc) { \
+		LoadAlphaFrom ## SRC ## For ## STRATEGY(pSrc,SrcRead,src); \
+		srcA = MultiplyAlphaFor ## STRATEGY(extraA, srcA); \
+	    } \
+	    if (loaddst) { \
+		LoadAlphaFrom ## DST ## For ## STRATEGY(pDst,DstWrite,dst); \
+	    } \
+	    srcF = ApplyAlphaOperands(SrcOp, dstA); \
+	    dstF = ApplyAlphaOperands(DstOp, srcA); \
+	    if (pathA != MaxValFor ## STRATEGY) { \
+		srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
+		dstF = MaxValFor ## STRATEGY - pathA + \
                            MultiplyAlphaFor ## STRATEGY(pathA, dstF); \
-            } \
-            if (srcF) { \
-                resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
-                if (!(SRC ## IsPremultiplied)) { \
-                    srcF = resA; \
-                } else { \
-                    srcF = MultiplyAlphaFor ## STRATEGY(srcF, extraA); \
-                } \
-                if (srcF) { \
-                    /* assert(loadsrc); */ \
+	    } \
+	    if (srcF) { \
+		resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
+		if (!(SRC ## IsPremultiplied)) { \
+		    srcF = resA; \
+		} else { \
+		    srcF = MultiplyAlphaFor ## STRATEGY(srcF, extraA); \
+		} \
+		if (srcF) { \
+		    /* assert(loadsrc); */ \
                     Postload ## STRATEGY ## From ## SRC(pSrc, SrcRead, res); \
-                    if (srcF != MaxValFor ## STRATEGY) { \
+		    if (srcF != MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(res, \
                                                               srcF, res); \
-                    } \
-                } else { \
+		    } \
+		} else { \
                     Set ## STRATEGY ## CompsToZero(res); \
-                } \
-            } else { \
-                if (dstF == MaxValFor ## STRATEGY) { \
+		} \
+	    } else { \
+		if (dstF == MaxValFor ## STRATEGY) { \
                     ShiftBits ## SRC(SrcRead); \
                     ShiftBits ## DST(DstWrite); \
-                    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-                    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-                    Next ## DST ## StoreVarsX(DstWrite); \
-                    continue; \
-                } \
+		    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+		    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+		    Next ## DST ## StoreVarsX(DstWrite); \
+		    continue; \
+		} \
                 resA = 0; \
                 Set ## STRATEGY ## CompsToZero(res); \
-            } \
-            if (dstF) { \
-                dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-                if (!(DST ## IsPremultiplied)) { \
-                    dstF = dstA; \
-                } \
-                resA += dstA; \
-                if (dstF) { \
+	    } \
+	    if (dstF) { \
+		dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+		if (!(DST ## IsPremultiplied)) { \
+		    dstF = dstA; \
+		} \
+		resA += dstA; \
+		if (dstF) { \
                     DeclareCompVarsFor ## STRATEGY(tmp) \
-                    /* assert(loaddst); */ \
+		    /* assert(loaddst); */ \
                     Postload ## STRATEGY ## From ## DST(pDst,DstWrite,tmp); \
-                    if (dstF != MaxValFor ## STRATEGY) { \
+		    if (dstF != MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(tmp, \
                                                               dstF, tmp); \
-                    } \
+		    } \
                     Store ## STRATEGY ## CompsUsingOp(res, +=, tmp); \
-                } \
-            } \
-            if (!(DST ## IsPremultiplied) && resA && \
+		} \
+	    } \
+	    if (!(DST ## IsPremultiplied) && resA && \
                 resA < MaxValFor ## STRATEGY) \
             { \
                 DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-            } \
+	    } \
             Store ## DST ## From ## STRATEGY ## Comps(pDst, DstWrite, \
                                                       0, res); \
             ShiftBits ## SRC(SrcRead); \
             ShiftBits ## DST(DstWrite); \
-            pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
-            pDst = PtrAddBytes(pDst, DST ## PixelStride); \
-            Next ## DST ## StoreVarsX(DstWrite); \
-        } while (--w > 0); \
+	    pSrc = PtrAddBytes(pSrc, SRC ## PixelStride); \
+	    pDst = PtrAddBytes(pDst, DST ## PixelStride); \
+	    Next ## DST ## StoreVarsX(DstWrite); \
+	} while (--w > 0); \
         FinalStore ## DST(pDst, DstWrite); \
-        pSrc = PtrAddBytes(pSrc, srcScan); \
-        pDst = PtrAddBytes(pDst, dstScan); \
-        Next ## DST ## StoreVarsY(DstWrite); \
-        if (pMask) { \
-            pMask = PtrAddBytes(pMask, maskScan); \
-        } \
+	pSrc = PtrAddBytes(pSrc, srcScan); \
+	pDst = PtrAddBytes(pDst, dstScan); \
+	Next ## DST ## StoreVarsY(DstWrite); \
+	if (pMask) { \
+	    pMask = PtrAddBytes(pMask, maskScan); \
+	} \
     } while (--height > 0); \
 }
 
@@ -819,89 +819,89 @@ void NAME_ALPHA_MASKFILL(TYPE) \
     Init ## TYPE ## AlphaLoadData(DstWrite, pRasInfo); \
     maskScan -= width; \
     if (pMask) { \
-        pMask += maskOff; \
+	pMask += maskOff; \
     } \
  \
     Init ## TYPE ## StoreVarsY(DstWrite, pRasInfo); \
     do { \
         Declare ## TYPE ## InitialLoadVars(pRasInfo, pRas, DstWrite, x1) \
-        jint w = width; \
-        Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
-        do { \
+	jint w = width; \
+	Init ## TYPE ## StoreVarsX(DstWrite, pRasInfo); \
+	do { \
             DeclareAlphaVarFor ## STRATEGY(resA) \
             DeclareCompVarsFor ## STRATEGY(res) \
             DeclareAlphaVarFor ## STRATEGY(srcF) \
  \
             InitialLoad ## TYPE(pRas, DstWrite); \
-            if (pMask) { \
-                pathA = *pMask++; \
-                if (!pathA) { \
+	    if (pMask) { \
+		pathA = *pMask++; \
+		if (!pathA) { \
                     ShiftBits ## TYPE(DstWrite); \
-                    Next ## TYPE ## StoreVarsX(DstWrite); \
-                    continue; \
-                } \
+		    Next ## TYPE ## StoreVarsX(DstWrite); \
+		    continue; \
+		} \
                 PromoteByteAlphaFor ## STRATEGY(pathA); \
-                dstF = dstFbase; \
-            } \
-            if (loaddst) { \
-                LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas,DstWrite,dst);\
-            } \
-            srcF = ApplyAlphaOperands(SrcOp, dstA); \
-            if (pathA != MaxValFor ## STRATEGY) { \
-                srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
-                dstF = MaxValFor ## STRATEGY - pathA + \
+		dstF = dstFbase; \
+	    } \
+	    if (loaddst) { \
+		LoadAlphaFrom ## TYPE ## For ## STRATEGY(pRas,DstWrite,dst);\
+	    } \
+	    srcF = ApplyAlphaOperands(SrcOp, dstA); \
+	    if (pathA != MaxValFor ## STRATEGY) { \
+		srcF = MultiplyAlphaFor ## STRATEGY(pathA, srcF); \
+		dstF = MaxValFor ## STRATEGY - pathA + \
                            MultiplyAlphaFor ## STRATEGY(pathA, dstF); \
-            } \
-            if (srcF) { \
-                if (srcF == MaxValFor ## STRATEGY) { \
-                    resA = srcA; \
+	    } \
+	    if (srcF) { \
+		if (srcF == MaxValFor ## STRATEGY) { \
+		    resA = srcA; \
                     Store ## STRATEGY ## CompsUsingOp(res, =, src); \
-                } else { \
-                    resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
+		} else { \
+		    resA = MultiplyAlphaFor ## STRATEGY(srcF, srcA); \
                     MultiplyAndStore ## STRATEGY ## Comps(res, srcF, src); \
-                } \
-            } else { \
-                if (dstF == MaxValFor ## STRATEGY) { \
+		} \
+	    } else { \
+		if (dstF == MaxValFor ## STRATEGY) { \
                     ShiftBits ## TYPE(DstWrite); \
-                    Next ## TYPE ## StoreVarsX(DstWrite); \
-                    continue; \
-                } \
-                resA = 0; \
+		    Next ## TYPE ## StoreVarsX(DstWrite); \
+		    continue; \
+		} \
+		resA = 0; \
                 Set ## STRATEGY ## CompsToZero(res); \
-            } \
-            if (dstF) { \
-                dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
-                if (!(TYPE ## IsPremultiplied)) { \
-                    dstF = dstA; \
-                } \
-                resA += dstA; \
-                if (dstF) { \
+	    } \
+	    if (dstF) { \
+		dstA = MultiplyAlphaFor ## STRATEGY(dstF, dstA); \
+		if (!(TYPE ## IsPremultiplied)) { \
+		    dstF = dstA; \
+		} \
+		resA += dstA; \
+		if (dstF) { \
                     DeclareCompVarsFor ## STRATEGY(tmp) \
-                    /* assert(loaddst); */ \
-                    Postload ## STRATEGY ## From ## TYPE(pRas,DstWrite,tmp); \
-                    if (dstF != MaxValFor ## STRATEGY) { \
+		    /* assert(loaddst); */ \
+		    Postload ## STRATEGY ## From ## TYPE(pRas,DstWrite,tmp); \
+		    if (dstF != MaxValFor ## STRATEGY) { \
                         MultiplyAndStore ## STRATEGY ## Comps(tmp, \
                                                               dstF, tmp); \
-                    } \
+		    } \
                     Store ## STRATEGY ## CompsUsingOp(res, +=, tmp); \
-                } \
-            } \
-            if (!(TYPE ## IsPremultiplied) && resA && \
+		} \
+	    } \
+	    if (!(TYPE ## IsPremultiplied) && resA && \
                 resA < MaxValFor ## STRATEGY) \
             { \
                 DivideAndStore ## STRATEGY ## Comps(res, res, resA); \
-            } \
-            Store ## TYPE ## From ## STRATEGY ## Comps(pRas, DstWrite, \
+	    } \
+	    Store ## TYPE ## From ## STRATEGY ## Comps(pRas, DstWrite, \
                                                        0, res); \
             ShiftBits ## TYPE(DstWrite); \
-            Next ## TYPE ## StoreVarsX(DstWrite); \
-        } while (--w > 0); \
+	    Next ## TYPE ## StoreVarsX(DstWrite); \
+	} while (--w > 0); \
         FinalStore ## TYPE(pRas, DstWrite); \
-        pRas = PtrAddBytes(pRas, rasScan); \
-        Next ## TYPE ## StoreVarsY(DstWrite); \
-        if (pMask) { \
-            pMask = PtrAddBytes(pMask, maskScan); \
-        } \
+	pRas = PtrAddBytes(pRas, rasScan); \
+	Next ## TYPE ## StoreVarsY(DstWrite); \
+	if (pMask) { \
+	    pMask = PtrAddBytes(pMask, maskScan); \
+	} \
     } while (--height > 0); \
 }
 
@@ -911,7 +911,7 @@ void NAME_ALPHA_MASKFILL(TYPE) \
  * for the various ByteBinary-specific surface types to manipulate pixel data.
  *
  * In the macro names in the following definitions, the string <stype>
- * is used as a place holder for the SurfaceType name (eg. ByteBinary2Bit).
+ * is used as a place holder for the SurfaceType name (eg. ByteBinary2Bit).  
  * The macros above access these type specific macros using the ANSI
  * CPP token concatenation operator "##".
  *

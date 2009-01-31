@@ -37,3 +37,5 @@ interface ReferenceTypeSpec {
 
     boolean equals(Object obj);
 }
+
+

@@ -43,6 +43,7 @@ import java.beans.ConstructorProperties;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author David Kloba
  */
 public class BevelBorder extends AbstractBorder
@@ -93,8 +94,8 @@ public class BevelBorder extends AbstractBorder
      * @param shadowInnerColor the color to use for the bevel inner shadow
      */
     @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
-    public BevelBorder(int bevelType, Color highlightOuterColor,
-                       Color highlightInnerColor, Color shadowOuterColor,
+    public BevelBorder(int bevelType, Color highlightOuterColor, 
+                       Color highlightInnerColor, Color shadowOuterColor, 
                        Color shadowInnerColor) {
         this(bevelType);
         this.highlightOuter = highlightOuterColor;
@@ -123,12 +124,20 @@ public class BevelBorder extends AbstractBorder
     }
 
     /**
-     * Reinitialize the insets parameter with this Border's current Insets.
+     * Returns the insets of the border.
+     * @param c the component for which this border insets value applies
+     */
+    public Insets getBorderInsets(Component c)       {
+	return new Insets(2, 2, 2, 2);
+    }
+
+    /** 
+     * Reinitialize the insets parameter with this Border's current Insets. 
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      */
     public Insets getBorderInsets(Component c, Insets insets) {
-        insets.set(2, 2, 2, 2);
+        insets.left = insets.top = insets.right = insets.bottom = 2;
         return insets;
     }
 
@@ -142,7 +151,7 @@ public class BevelBorder extends AbstractBorder
      */
     public Color getHighlightOuterColor(Component c)   {
         Color highlight = getHighlightOuterColor();
-        return highlight != null? highlight :
+        return highlight != null? highlight : 
                                        c.getBackground().brighter().brighter();
     }
 

@@ -30,21 +30,22 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
 
 /**
  *
+ * @version     1.3, 03/06/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 
@@ -70,43 +71,43 @@ public class StackFrame {
     private int lineNumber;
 
     public StackFrame(String methodName, String methodSignature,
-                      String className, String sourceFileName, int lineNumber) {
-        this.methodName = methodName;
-        this.methodSignature = methodSignature;
-        this.className = className;
-        this.sourceFileName = sourceFileName;
-        this.lineNumber = lineNumber;
+		      String className, String sourceFileName, int lineNumber) {
+	this.methodName = methodName;
+	this.methodSignature = methodSignature;
+	this.className = className;
+	this.sourceFileName = sourceFileName;
+	this.lineNumber = lineNumber;
     }
 
     public void resolve(Snapshot snapshot) {
     }
 
     public String getMethodName() {
-        return methodName;
+	return methodName;
     }
 
     public String getMethodSignature() {
-        return methodSignature;
+	return methodSignature;
     }
 
     public String getClassName() {
-        return className;
+	return className;
     }
 
     public String getSourceFileName() {
-        return sourceFileName;
+	return sourceFileName;
     }
 
     public String getLineNumber() {
-        switch(lineNumber) {
-            case LINE_NUMBER_UNKNOWN:
-                return "(unknown)";
-            case LINE_NUMBER_COMPILED:
-                return "(compiled method)";
-            case LINE_NUMBER_NATIVE:
-                return "(native method)";
-            default:
-                return Integer.toString(lineNumber, 10);
-        }
+	switch(lineNumber) {
+	    case LINE_NUMBER_UNKNOWN:
+		return "(unknown)";
+	    case LINE_NUMBER_COMPILED:
+		return "(compiled method)";
+	    case LINE_NUMBER_NATIVE:
+		return "(native method)";
+	    default:
+		return Integer.toString(lineNumber, 10);
+	}
     }
 }

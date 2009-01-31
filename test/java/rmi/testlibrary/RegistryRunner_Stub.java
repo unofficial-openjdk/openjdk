@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,37 +29,37 @@ public final class RegistryRunner_Stub
     implements RemoteExiter, java.rmi.Remote
 {
     private static final long serialVersionUID = 2;
-
+    
     private static java.lang.reflect.Method $method_exit_0;
-
+    
     static {
-        try {
-            $method_exit_0 = RemoteExiter.class.getMethod("exit", new java.lang.Class[] {});
-        } catch (java.lang.NoSuchMethodException e) {
-            throw new java.lang.NoSuchMethodError(
-                "stub class initialization failed");
-        }
+	try {
+	    $method_exit_0 = RemoteExiter.class.getMethod("exit", new java.lang.Class[] {});
+	} catch (java.lang.NoSuchMethodException e) {
+	    throw new java.lang.NoSuchMethodError(
+		"stub class initialization failed");
+	}
     }
-
+    
     // constructors
     public RegistryRunner_Stub(java.rmi.server.RemoteRef ref) {
-        super(ref);
+	super(ref);
     }
-
+    
     // methods from remote interfaces
-
+    
     // implementation of exit()
     public void exit()
-        throws java.rmi.RemoteException
+	throws java.rmi.RemoteException
     {
-        try {
-            ref.invoke(this, $method_exit_0, null, -6307240473358936408L);
-        } catch (java.lang.RuntimeException e) {
-            throw e;
-        } catch (java.rmi.RemoteException e) {
-            throw e;
-        } catch (java.lang.Exception e) {
-            throw new java.rmi.UnexpectedException("undeclared checked exception", e);
-        }
+	try {
+	    ref.invoke(this, $method_exit_0, null, -6307240473358936408L);
+	} catch (java.lang.RuntimeException e) {
+	    throw e;
+	} catch (java.rmi.RemoteException e) {
+	    throw e;
+	} catch (java.lang.Exception e) {
+	    throw new java.rmi.UnexpectedException("undeclared checked exception", e);
+	}
     }
 }

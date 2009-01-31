@@ -42,22 +42,22 @@ import javax.naming.ldap.UnsolicitedNotificationListener;
  *
  * Pieces stolen from sun.misc.Queue.
  *
- * @author      Bill Shannon (from javax.mail.event)
+ * @author	Bill Shannon (from javax.mail.event)
  * @author      Rosanna Lee (modified for JNDI-related events)
  */
 final class EventQueue implements Runnable {
     final static private boolean debug = false;
 
     private static class QueueElement {
-        QueueElement next = null;
-        QueueElement prev = null;
-        EventObject event = null;
-        Vector vector = null;
+	QueueElement next = null;
+	QueueElement prev = null;
+	EventObject event = null;
+	Vector vector = null;
 
-        QueueElement(EventObject event, Vector vector) {
-            this.event = event;
-            this.vector = vector;
-        }
+	QueueElement(EventObject event, Vector vector) {
+	    this.event = event;
+	    this.vector = vector;
+	}
     }
 
     private QueueElement head = null;
@@ -66,16 +66,16 @@ final class EventQueue implements Runnable {
 
     // package private
     EventQueue() {
-        qThread = Obj.helper.createThread(this);
-        qThread.setDaemon(true);  // not a user thread
-        qThread.start();
+	qThread = Obj.helper.createThread(this);
+	qThread.setDaemon(true);  // not a user thread
+	qThread.start();
     }
 
     // package private;
     /**
      * Enqueue an event.
-     * @param event Either a <tt>NamingExceptionEvent</tt> or a subclass
-     *              of <tt>NamingEvent</tt> or
+     * @param event Either a <tt>NamingExceptionEvent</tt> or a subclass 
+     * 		    of <tt>NamingEvent</tt> or 
      * <tt>UnsolicitedNotificatoniEvent</tt>.
      * If it is a subclass of <tt>NamingEvent</tt>, all listeners must implement
      * the corresponding subinterface of <tt>NamingListener</tt>.
@@ -88,17 +88,17 @@ final class EventQueue implements Runnable {
      * @param vector List of NamingListeners that will be notified of event.
      */
     synchronized void enqueue(EventObject event, Vector vector) {
-        QueueElement newElt = new QueueElement(event, vector);
+	QueueElement newElt = new QueueElement(event, vector);
 
-        if (head == null) {
-            head = newElt;
-            tail = newElt;
-        } else {
-            newElt.next = head;
-            head.prev = newElt;
-            head = newElt;
-        }
-        notify();
+	if (head == null) {
+	    head = newElt;
+	    tail = newElt;
+	} else {
+	    newElt.next = head;
+	    head.prev = newElt;
+	    head = newElt;
+	}
+	notify();
     }
 
     /**
@@ -110,58 +110,58 @@ final class EventQueue implements Runnable {
      *              interrupted this thread.
      */
     private synchronized QueueElement dequeue()
-                                throws InterruptedException {
-        while (tail == null)
-            wait();
-        QueueElement elt = tail;
-        tail = elt.prev;
-        if (tail == null) {
-            head = null;
-        } else {
-            tail.next = null;
-        }
-        elt.prev = elt.next = null;
-        return elt;
+				throws InterruptedException {
+	while (tail == null)
+	    wait();
+	QueueElement elt = tail;
+	tail = elt.prev;
+	if (tail == null) {
+	    head = null;
+	} else {
+	    tail.next = null;
+	}
+	elt.prev = elt.next = null;
+	return elt;
     }
 
     /**
      * Pull events off the queue and dispatch them.
      */
     public void run() {
-        QueueElement qe;
+	QueueElement qe;
 
-        try {
-            while ((qe = dequeue()) != null) {
-                EventObject e = qe.event;
-                Vector v = qe.vector;
+	try {
+	    while ((qe = dequeue()) != null) {
+		EventObject e = qe.event;
+		Vector v = qe.vector;
 
-                for (int i = 0; i < v.size(); i++) {
+		for (int i = 0; i < v.size(); i++) {
 
-                    // Dispatch to corresponding NamingListener
-                    // The listener should only be getting the event that
-                    // it is interested in. (No need to check mask or
-                    // instanceof subinterfaces.)
-                    // It is the responsibility of the enqueuer to
-                    // only enqueue events with listseners of the correct type.
+		    // Dispatch to corresponding NamingListener
+		    // The listener should only be getting the event that
+		    // it is interested in. (No need to check mask or 
+		    // instanceof subinterfaces.)
+		    // It is the responsibility of the enqueuer to
+		    // only enqueue events with listseners of the correct type.
+		    
+		    if (e instanceof NamingEvent) {
+			((NamingEvent)e).dispatch((NamingListener)v.elementAt(i));
 
-                    if (e instanceof NamingEvent) {
-                        ((NamingEvent)e).dispatch((NamingListener)v.elementAt(i));
+		    // An exception occurred: if notify all naming listeners
+		    } else if (e instanceof NamingExceptionEvent) {
+			((NamingExceptionEvent)e).dispatch(
+			    (NamingListener)v.elementAt(i));
+		    } else if (e instanceof UnsolicitedNotificationEvent) {
+			((UnsolicitedNotificationEvent)e).dispatch(
+			    (UnsolicitedNotificationListener)v.elementAt(i));
+		    }
+		}
 
-                    // An exception occurred: if notify all naming listeners
-                    } else if (e instanceof NamingExceptionEvent) {
-                        ((NamingExceptionEvent)e).dispatch(
-                            (NamingListener)v.elementAt(i));
-                    } else if (e instanceof UnsolicitedNotificationEvent) {
-                        ((UnsolicitedNotificationEvent)e).dispatch(
-                            (UnsolicitedNotificationListener)v.elementAt(i));
-                    }
-                }
-
-                qe = null; e = null; v = null;
-            }
-        } catch (InterruptedException e) {
-            // just die
-        }
+		qe = null; e = null; v = null;
+	    }
+	} catch (InterruptedException e) {
+	    // just die
+	}
     }
 
     // package private; used by EventSupport;
@@ -169,10 +169,10 @@ final class EventQueue implements Runnable {
      * Stop the dispatcher so we can be destroyed.
      */
     void stop() {
-        if (debug) System.err.println("EventQueue stopping");
-        if (qThread != null) {
-            qThread.interrupt();        // kill our thread
-            qThread = null;
-        }
+	if (debug) System.err.println("EventQueue stopping");
+	if (qThread != null) {
+	    qThread.interrupt();	// kill our thread
+	    qThread = null;
+	}
     }
 }

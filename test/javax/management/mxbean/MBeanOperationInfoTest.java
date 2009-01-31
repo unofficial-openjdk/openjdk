@@ -51,7 +51,7 @@ public class MBeanOperationInfoTest {
     };
     public static void main(String[] args) throws Exception {
         int error = 0;
-        int tested = 0;
+	int tested = 0;
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         ObjectName on = new ObjectName(ManagementFactory.THREAD_MXBEAN_NAME);
         MBeanInfo mbi = mbs.getMBeanInfo(on);
@@ -75,7 +75,7 @@ public class MBeanOperationInfoTest {
                 if (sb.toString().equals(rts[0])) {
                     if (rt.equals(rts[1])) {
                         System.out.println("OK");
-                        tested++;
+			tested++;
                     } else {
                         System.out.println("KO: EXPECTED RETURN TYPE = " + rts[1]);
                         error++;
@@ -89,8 +89,8 @@ public class MBeanOperationInfoTest {
         } else if (tested != returnTypes.length) {
             System.out.println("\nTEST FAILED");
             throw new Exception("TEST FAILED: " + tested + " cases tested, " +
-            returnTypes.length + " expected");
-        } else {
+	    returnTypes.length + " expected");
+	} else {
             System.out.println("\nTEST PASSED");
         }
     }

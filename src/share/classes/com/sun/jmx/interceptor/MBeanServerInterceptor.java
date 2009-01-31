@@ -30,7 +30,7 @@ import java.util.Set;
 // RI import
 import javax.management.DynamicMBean;
 import javax.management.AttributeNotFoundException;
-import javax.management.MBeanException;
+import javax.management.MBeanException; 
 import javax.management.ReflectionException;
 import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
@@ -52,8 +52,8 @@ import javax.management.ObjectInstance;
 import javax.management.Attribute;
 import javax.management.AttributeList;
 import javax.management.RuntimeOperationsException;
-import javax.management.MBeanServerConnection;
-import javax.management.MBeanServerDelegate;
+import javax.management.MBeanServerConnection; 
+import javax.management.MBeanServerDelegate; 
 import javax.management.loading.ClassLoaderRepository;
 
 /**
@@ -63,7 +63,7 @@ import javax.management.loading.ClassLoaderRepository;
  * forwards received requests to its default interceptor, which may
  * handle them itself or forward them to other interceptors.  The
  * default interceptor may be changed via the {@link
- * com.sun.jmx.mbeanserver.SunJmxMBeanServer#setMBeanServerInterceptor}
+ * com.sun.jmx.mbeanserver.SunJmxMBeanServer#setMBeanServerInterceptor} 
  * method.</p>
  *
  * <p>The initial default interceptor provides the standard MBean
@@ -127,10 +127,10 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * is specified for the MBean.
      */
     public ObjectInstance createMBean(String className, ObjectName name,
-                                      Object params[], String signature[])
-            throws ReflectionException, InstanceAlreadyExistsException,
-                   MBeanRegistrationException, MBeanException,
-                   NotCompliantMBeanException;
+				      Object params[], String signature[]) 
+	    throws ReflectionException, InstanceAlreadyExistsException,
+	    	   MBeanRegistrationException, MBeanException,
+	    	   NotCompliantMBeanException;
 
     /**
      * Instantiates and registers an MBean in the MBean server.  The
@@ -177,11 +177,11 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      *
      */
     public ObjectInstance createMBean(String className, ObjectName name,
-                                      ObjectName loaderName, Object params[],
-                                      String signature[])
-            throws ReflectionException, InstanceAlreadyExistsException,
-                   MBeanRegistrationException, MBeanException,
-                   NotCompliantMBeanException, InstanceNotFoundException;
+				      ObjectName loaderName, Object params[],
+				      String signature[]) 
+	    throws ReflectionException, InstanceAlreadyExistsException,
+	    	   MBeanRegistrationException, MBeanException,
+	    	   NotCompliantMBeanException, InstanceNotFoundException;
 
     /**
      * Registers a pre-existing object as an MBean with the MBean
@@ -191,7 +191,7 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * and returning the name from the {@link
      * javax.management.MBeanRegistration#preRegister preRegister} method.
      *
-     * @param object The  MBean to be registered as an MBean.
+     * @param object The  MBean to be registered as an MBean.	  
      * @param name The object name of the MBean. May be null.
      *
      * @return The <CODE>ObjectInstance</CODE> for the MBean that has
@@ -210,8 +210,8 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * passed in parameter is null or no object name is specified.
      */
     public ObjectInstance registerMBean(Object object, ObjectName name)
-            throws InstanceAlreadyExistsException, MBeanRegistrationException,
-                   NotCompliantMBeanException;
+	    throws InstanceAlreadyExistsException, MBeanRegistrationException,
+		   NotCompliantMBeanException;
 
     /**
      * Unregisters an MBean from the MBean server. The MBean is
@@ -234,7 +234,7 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      *
      */
     public void unregisterMBean(ObjectName name)
-            throws InstanceNotFoundException, MBeanRegistrationException;
+	    throws InstanceNotFoundException, MBeanRegistrationException;
 
     /**
      * Gets the <CODE>ObjectInstance</CODE> for a given MBean
@@ -249,7 +249,7 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * registered in the MBean server.
      */
     public ObjectInstance getObjectInstance(ObjectName name)
-            throws InstanceNotFoundException;
+	    throws InstanceNotFoundException;
 
     /**
      * Gets MBeans controlled by the MBean server. This method allows
@@ -329,7 +329,7 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * @param attribute A String specifying the name of the attribute
      * to be retrieved.
      *
-     * @return  The value of the retrieved attribute.
+     * @return	The value of the retrieved attribute.
      *
      * @exception AttributeNotFoundException The attribute specified
      * is not accessible in the MBean.
@@ -346,8 +346,8 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * null.
      */
     public Object getAttribute(ObjectName name, String attribute)
-            throws MBeanException, AttributeNotFoundException,
-                   InstanceNotFoundException, ReflectionException;
+	    throws MBeanException, AttributeNotFoundException,
+	    	   InstanceNotFoundException, ReflectionException;
 
     /**
      * Enables the values of several attributes of a named MBean. The MBean
@@ -368,7 +368,7 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * name in parameter is null or attributes in parameter is null.
      */
     public AttributeList getAttributes(ObjectName name, String[] attributes)
-            throws InstanceNotFoundException, ReflectionException;
+	    throws InstanceNotFoundException, ReflectionException;
 
     /**
      * Sets the value of a specific attribute of a named MBean. The MBean
@@ -396,9 +396,9 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * null.
      */
     public void setAttribute(ObjectName name, Attribute attribute)
-            throws InstanceNotFoundException, AttributeNotFoundException,
-                   InvalidAttributeValueException, MBeanException,
-                   ReflectionException;
+	    throws InstanceNotFoundException, AttributeNotFoundException,
+		   InvalidAttributeValueException, MBeanException, 
+		   ReflectionException;
 
 
 
@@ -423,8 +423,8 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * name in parameter is null or attributes in parameter is null.
      */
     public AttributeList setAttributes(ObjectName name,
-                                       AttributeList attributes)
-        throws InstanceNotFoundException, ReflectionException;
+				       AttributeList attributes)
+	throws InstanceNotFoundException, ReflectionException;
 
     /**
      * Invokes an operation on an MBean.
@@ -451,10 +451,10 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * the method.
      */
     public Object invoke(ObjectName name, String operationName,
-                         Object params[], String signature[])
-            throws InstanceNotFoundException, MBeanException,
-                   ReflectionException;
-
+			 Object params[], String signature[])
+	    throws InstanceNotFoundException, MBeanException,
+		   ReflectionException;
+ 
     /**
      * Returns the default domain used for naming the MBean.
      * The default domain name is used as the domain part in the ObjectName
@@ -489,10 +489,10 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * does not match any of the registered MBeans.
      */
     public void addNotificationListener(ObjectName name,
-                                        NotificationListener listener,
-                                        NotificationFilter filter,
-                                        Object handback)
-            throws InstanceNotFoundException;
+					NotificationListener listener,
+					NotificationFilter filter,
+					Object handback)
+	    throws InstanceNotFoundException;
 
 
     /**
@@ -529,10 +529,10 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * talking to the MBean server.
      */
     public void addNotificationListener(ObjectName name,
-                                        ObjectName listener,
-                                        NotificationFilter filter,
-                                        Object handback)
-            throws InstanceNotFoundException;
+					ObjectName listener,
+					NotificationFilter filter,
+					Object handback)
+	    throws InstanceNotFoundException;
 
     /**
      * Removes a listener from a registered MBean.
@@ -551,8 +551,8 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * registered in the MBean.
      */
     public void removeNotificationListener(ObjectName name,
-                                           ObjectName listener)
-        throws InstanceNotFoundException, ListenerNotFoundException;
+					   ObjectName listener) 
+	throws InstanceNotFoundException, ListenerNotFoundException;
 
     /**
      * <p>Removes a listener from a registered MBean.</p>
@@ -582,10 +582,10 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * filter and handback.
      */
     public void removeNotificationListener(ObjectName name,
-                                           ObjectName listener,
-                                           NotificationFilter filter,
-                                           Object handback)
-            throws InstanceNotFoundException, ListenerNotFoundException;
+					   ObjectName listener,
+					   NotificationFilter filter,
+					   Object handback)
+	    throws InstanceNotFoundException, ListenerNotFoundException;
 
 
     /**
@@ -606,8 +606,8 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * registered in the MBean.
      */
     public void removeNotificationListener(ObjectName name,
-                                           NotificationListener listener)
-            throws InstanceNotFoundException, ListenerNotFoundException;
+					   NotificationListener listener)
+	    throws InstanceNotFoundException, ListenerNotFoundException;
 
     /**
      * <p>Removes a listener from a registered MBean.</p>
@@ -637,10 +637,10 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * filter and handback.
      */
     public void removeNotificationListener(ObjectName name,
-                                           NotificationListener listener,
-                                           NotificationFilter filter,
-                                           Object handback)
-            throws InstanceNotFoundException, ListenerNotFoundException;
+					   NotificationListener listener,
+					   NotificationFilter filter,
+					   Object handback)
+	    throws InstanceNotFoundException, ListenerNotFoundException;
 
     /**
      * This method discovers the attributes and operations that an
@@ -659,14 +659,14 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * trying to invoke the getMBeanInfo of a Dynamic MBean.
      */
     public MBeanInfo getMBeanInfo(ObjectName name)
-            throws InstanceNotFoundException, IntrospectionException,
-                   ReflectionException;
+	    throws InstanceNotFoundException, IntrospectionException,
+	    	   ReflectionException;
 
-
+ 
     /**
      * Returns true if the MBean specified is an instance of the
      * specified class, false otherwise.
-     *
+     * 
      * @param name The <CODE>ObjectName</CODE> of the MBean.
      * @param className The name of the class.
      *
@@ -677,8 +677,8 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * registered in the MBean server.
      */
     public boolean isInstanceOf(ObjectName name, String className)
-            throws InstanceNotFoundException;
-
+	    throws InstanceNotFoundException;
+ 
     /**
      * <p>Return the {@link java.lang.ClassLoader} that was used for
      * loading the class of the named MBean.
@@ -687,16 +687,16 @@ public interface MBeanServerInterceptor extends MBeanServerConnection {
      * @exception InstanceNotFoundException if the named MBean is not found.
      */
     public ClassLoader getClassLoaderFor(ObjectName mbeanName)
-        throws InstanceNotFoundException;
+	throws InstanceNotFoundException;
 
     /**
      * <p>Return the named {@link java.lang.ClassLoader}.
      * @param loaderName The ObjectName of the ClassLoader.
      * @return The named ClassLoader.
-     * @exception InstanceNotFoundException if the named ClassLoader is
+     * @exception InstanceNotFoundException if the named ClassLoader is 
      * not found.
      */
     public ClassLoader getClassLoader(ObjectName loaderName)
-        throws InstanceNotFoundException;
+	throws InstanceNotFoundException;
 
 }

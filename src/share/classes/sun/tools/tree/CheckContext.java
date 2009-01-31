@@ -47,6 +47,6 @@ class CheckContext extends Context {
      * Create a new nested context, for a block statement
      */
     CheckContext(Context ctx, Statement stat) {
-        super(ctx, stat);
+	super(ctx, stat);
     }
 }

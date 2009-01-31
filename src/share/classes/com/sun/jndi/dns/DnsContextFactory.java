@@ -35,7 +35,7 @@ import javax.naming.*;
 import javax.naming.spi.*;
 
 import com.sun.jndi.toolkit.url.UrlUtil;
-import sun.net.dns.ResolverConfiguration;       // available since 1.4.1
+import sun.net.dns.ResolverConfiguration;	// available since 1.4.1
 
 
 /**
@@ -48,6 +48,7 @@ import sun.net.dns.ResolverConfiguration;       // available since 1.4.1
  * If the property is not set, the default "dns:" is used.
  *
  * @author Scott Seligman
+ * @version %I% %E%
  */
 
 
@@ -57,16 +58,16 @@ public class DnsContextFactory implements InitialContextFactory {
 
 
     public Context getInitialContext(Hashtable<?,?> env) throws NamingException {
-        if (env == null) {
-            env = new Hashtable(5);
-        }
-        return urlToContext(getInitCtxUrl(env), env);
+	if (env == null) {
+	    env = new Hashtable(5);
+	}
+	return urlToContext(getInitCtxUrl(env), env);
     }
 
     public static DnsContext getContext(String domain,
-                                        String[] servers, Hashtable<?,?> env)
-            throws NamingException {
-        return new DnsContext(domain, servers, env);
+					String[] servers, Hashtable<?,?> env)
+	    throws NamingException {
+	return new DnsContext(domain, servers, env);
     }
 
     /*
@@ -74,47 +75,47 @@ public class DnsContextFactory implements InitialContextFactory {
      * components are overridden by "domain".
      */
     public static DnsContext getContext(String domain,
-                                        DnsUrl[] urls, Hashtable env)
-            throws NamingException {
+					DnsUrl[] urls, Hashtable env)
+	    throws NamingException {
 
-        String[] servers = serversForUrls(urls);
-        DnsContext ctx = getContext(domain, servers, env);
-        if (platformServersUsed(urls)) {
-            ctx.setProviderUrl(constructProviderUrl(domain, servers));
-        }
-        return ctx;
+	String[] servers = serversForUrls(urls);
+	DnsContext ctx = getContext(domain, servers, env);
+	if (platformServersUsed(urls)) {
+	    ctx.setProviderUrl(constructProviderUrl(domain, servers));
+	}
+	return ctx;
     }
 
     /*
      * Public for use by product test suite.
      */
     public static boolean platformServersAvailable() {
-        return !ResolverConfiguration.open().nameservers().isEmpty();
+	return !ResolverConfiguration.open().nameservers().isEmpty();
     }
 
     private static Context urlToContext(String url, Hashtable env)
-            throws NamingException {
+	    throws NamingException {
 
-        DnsUrl[] urls;
-        try {
-            urls = DnsUrl.fromList(url);
-        } catch (MalformedURLException e) {
-            throw new ConfigurationException(e.getMessage());
-        }
-        if (urls.length == 0) {
-            throw new ConfigurationException(
-                    "Invalid DNS pseudo-URL(s): " + url);
-        }
-        String domain = urls[0].getDomain();
+	DnsUrl[] urls;
+	try {
+	    urls = DnsUrl.fromList(url);
+	} catch (MalformedURLException e) {
+	    throw new ConfigurationException(e.getMessage());
+	}
+	if (urls.length == 0) {
+	    throw new ConfigurationException(
+		    "Invalid DNS pseudo-URL(s): " + url);
+	}
+	String domain = urls[0].getDomain();
 
-        // If multiple urls, all must have the same domain.
-        for (int i = 1; i < urls.length; i++) {
-            if (!domain.equalsIgnoreCase(urls[i].getDomain())) {
-                throw new ConfigurationException(
-                        "Conflicting domains: " + url);
-            }
-        }
-        return getContext(domain, urls, env);
+	// If multiple urls, all must have the same domain.
+	for (int i = 1; i < urls.length; i++) {
+	    if (!domain.equalsIgnoreCase(urls[i].getDomain())) {
+		throw new ConfigurationException(
+			"Conflicting domains: " + url);
+	    }
+	}
+	return getContext(domain, urls, env);
     }
 
     /*
@@ -126,39 +127,39 @@ public class DnsContextFactory implements InitialContextFactory {
      * There must be at least one URL.
      */
     private static String[] serversForUrls(DnsUrl[] urls)
-            throws NamingException {
+	    throws NamingException {
+  
+	if (urls.length == 0) {
+	    throw new ConfigurationException("DNS pseudo-URL required");
+	}
 
-        if (urls.length == 0) {
-            throw new ConfigurationException("DNS pseudo-URL required");
-        }
+	List servers = new ArrayList();
 
-        List servers = new ArrayList();
+	for (int i = 0; i < urls.length; i++) {
+	    String server = urls[i].getHost();
+	    int port = urls[i].getPort();
 
-        for (int i = 0; i < urls.length; i++) {
-            String server = urls[i].getHost();
-            int port = urls[i].getPort();
+	    if (server == null && port < 0) {
+		// No server or port given, so look to underlying platform.
+		// ResolverConfiguration does some limited caching, so the
+		// following is reasonably efficient even if called rapid-fire.
+		List platformServers =
+		    ResolverConfiguration.open().nameservers();
+		if (!platformServers.isEmpty()) {
+		    servers.addAll(platformServers);
+		    continue;  // on to next URL (if any, which is unlikely)
+		}
+	    }
 
-            if (server == null && port < 0) {
-                // No server or port given, so look to underlying platform.
-                // ResolverConfiguration does some limited caching, so the
-                // following is reasonably efficient even if called rapid-fire.
-                List platformServers =
-                    ResolverConfiguration.open().nameservers();
-                if (!platformServers.isEmpty()) {
-                    servers.addAll(platformServers);
-                    continue;  // on to next URL (if any, which is unlikely)
-                }
-            }
-
-            if (server == null) {
-                server = "localhost";
-            }
-            servers.add((port < 0)
-                        ? server
-                        : server + ":" + port);
-        }
-        return (String[]) servers.toArray(
-                                        new String[servers.size()]);
+	    if (server == null) {
+		server = "localhost";
+	    }
+	    servers.add((port < 0)
+			? server
+			: server + ":" + port);
+	}
+	return (String[]) servers.toArray(
+					new String[servers.size()]);
     }
 
     /*
@@ -166,16 +167,16 @@ public class DnsContextFactory implements InitialContextFactory {
      * from the underlying platform.
      */
     private static boolean platformServersUsed(DnsUrl[] urls) {
-        if (!platformServersAvailable()) {
-            return false;
-        }
-        for (int i = 0; i < urls.length; i++) {
-            if (urls[i].getHost() == null &&
-                urls[i].getPort() < 0) {
-                return true;
-            }
-        }
-        return false;
+	if (!platformServersAvailable()) {
+	    return false;
+	}
+	for (int i = 0; i < urls.length; i++) {
+	    if (urls[i].getHost() == null &&
+		urls[i].getPort() < 0) {
+		return true;
+	    }
+	}
+	return false;
     }
 
     /*
@@ -186,24 +187,24 @@ public class DnsContextFactory implements InitialContextFactory {
      * IPv6 literal host names include delimiting brackets.
      */
     private static String constructProviderUrl(String domain,
-                                               String[] servers) {
-        String path = "";
-        if (!domain.equals(".")) {
-            try {
-                path = "/" + UrlUtil.encode(domain, "ISO-8859-1");
-            } catch (java.io.UnsupportedEncodingException e) {
-                // assert false : "ISO-Latin-1 charset unavailable";
-            }
-        }
+					       String[] servers) {
+	String path = "";
+	if (!domain.equals(".")) {
+	    try {
+		path = "/" + UrlUtil.encode(domain, "ISO-8859-1");
+	    } catch (java.io.UnsupportedEncodingException e) {
+		// assert false : "ISO-Latin-1 charset unavailable";
+	    }
+	}
 
-        StringBuffer buf = new StringBuffer();
-        for (int i = 0; i < servers.length; i++) {
-            if (i > 0) {
-                buf.append(' ');
-            }
-            buf.append("dns://").append(servers[i]).append(path);
-        }
-        return buf.toString();
+	StringBuffer buf = new StringBuffer();
+	for (int i = 0; i < servers.length; i++) {
+	    if (i > 0) {
+		buf.append(' ');
+	    }
+	    buf.append("dns://").append(servers[i]).append(path);
+	}
+	return buf.toString();
     }
 
     /*
@@ -211,7 +212,7 @@ public class DnsContextFactory implements InitialContextFactory {
      * Default URL is "dns:".
      */
     private static String getInitCtxUrl(Hashtable env) {
-        String url = (String) env.get(Context.PROVIDER_URL);
-        return ((url != null) ? url : DEFAULT_URL);
+	String url = (String) env.get(Context.PROVIDER_URL);
+	return ((url != null) ? url : DEFAULT_URL);
     }
 }

@@ -23,7 +23,7 @@
 
 /*
  @test
- @bug 5085626
+ @bug 5085626 
  @summary Exponential performance regression in AWT components (multiple mon)
  @run main WPanelPeerPerf
 */
@@ -156,7 +156,7 @@ public class WPanelPeerPerf {
                 if (ctr.counter < ITERATIONS_PER_SCREEN * devs.length) {
                     // If test hasn't finished, wait for maximum time
                     // If we get interrupted, test fails
-                    ctr.wait((long)(ITERATIONS_PER_SCREEN * MAX_WAIT_PER_SCREEN * devs.length));
+                    ctr.wait((long)(ITERATIONS_PER_SCREEN * MAX_WAIT_PER_SCREEN * devs.length)); 
                     System.out.println("after wait");
                     if (ctr.counter < ITERATIONS_PER_SCREEN * devs.length) {
                         throw new RuntimeException("Waited too long for all the componentMoved()s");
@@ -175,3 +175,4 @@ public class WPanelPeerPerf {
         testAWT();
     }
 }
+

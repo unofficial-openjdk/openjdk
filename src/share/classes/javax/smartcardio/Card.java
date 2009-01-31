@@ -33,6 +33,7 @@ import java.nio.ByteBuffer;
  *
  * @see CardTerminal
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
@@ -41,8 +42,8 @@ public abstract class Card {
 
     /**
      * Constructs a new Card object.
-     *
-     * <p>This constructor is called by subclasses only. Application should
+     * 
+     * <p>This constructor is called by subclasses only. Application should 
      * call the {@linkplain CardTerminal#connect CardTerminal.connect()}
      * method to obtain a Card
      * object.
@@ -99,7 +100,7 @@ public abstract class Card {
      * <code>endExclusive</code>. Other threads attempting communication
      * will receive a CardException.
      *
-     * <p>Applications have to ensure that exclusive access is correctly
+     * <p>Applications have to ensure that exclusive access is correctly 
      * released. This can be achieved by executing
      * the <code>beginExclusive()</code> and <code>endExclusive</code> calls
      * in a <code>try ... finally</code> block.
@@ -146,12 +147,12 @@ public abstract class Card {
      * @throws IllegalStateException if this card object has been disposed of
      *   via the {@linkplain #disconnect disconnect()} method
      */
-    public abstract byte[] transmitControlCommand(int controlCode,
-            byte[] command) throws CardException;
+    public abstract byte[] transmitControlCommand(int controlCode, 
+	    byte[] command) throws CardException;
 
     /**
      * Disconnects the connection with this card. After this method returns,
-     * calling methods on this object or in CardChannels associated with this
+     * calling methods on this object or in CardChannels associated with this 
      * object that require interaction with the card will raise an
      * IllegalStateException.
      *
@@ -165,3 +166,4 @@ public abstract class Card {
     public abstract void disconnect(boolean reset) throws CardException;
 
 }
+

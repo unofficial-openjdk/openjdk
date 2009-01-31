@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)ThaiShaping.h	1.14 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -121,3 +122,5 @@ inline ThaiShaping::StateTransition ThaiShaping::getTransition(le_uint8 state, l
 }
 
 #endif
+
+

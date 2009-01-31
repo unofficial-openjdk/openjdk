@@ -56,245 +56,245 @@ import javax.management.remote.*;
  */
 public class MethodResultTest {
     public static void main(String[] args) throws Exception {
-        Class thisClass = MethodResultTest.class;
-        Class exoticClass = Exotic.class;
-        String exoticClassName = Exotic.class.getName();
-        ClassLoader testClassLoader = thisClass.getClassLoader();
-        if (!(testClassLoader instanceof URLClassLoader)) {
-            System.out.println("TEST INVALID: Not loaded by a " +
-                               "URLClassLoader: " + testClassLoader);
-            System.exit(1);
-        }
+	Class thisClass = MethodResultTest.class;
+	Class exoticClass = Exotic.class;
+	String exoticClassName = Exotic.class.getName();
+	ClassLoader testClassLoader = thisClass.getClassLoader();
+	if (!(testClassLoader instanceof URLClassLoader)) {
+	    System.out.println("TEST INVALID: Not loaded by a " +
+			       "URLClassLoader: " + testClassLoader);
+	    System.exit(1);
+	}
 
-        URLClassLoader tcl = (URLClassLoader) testClassLoader;
-        URL[] urls = tcl.getURLs();
-        ClassLoader shadowLoader =
-            new ShadowLoader(urls, testClassLoader,
-                             new String[] {exoticClassName,
-                                           ExoticMBeanInfo.class.getName(),
-                                           ExoticException.class.getName()});
-        Class cl = shadowLoader.loadClass(exoticClassName);
-        if (cl == exoticClass) {
-            System.out.println("TEST INVALID: Shadow class loader loaded " +
-                               "same class as test class loader");
-            System.exit(1);
-        }
-        Thread.currentThread().setContextClassLoader(shadowLoader);
+	URLClassLoader tcl = (URLClassLoader) testClassLoader;
+	URL[] urls = tcl.getURLs();
+	ClassLoader shadowLoader =
+	    new ShadowLoader(urls, testClassLoader,
+			     new String[] {exoticClassName,
+			     	     	   ExoticMBeanInfo.class.getName(),
+					   ExoticException.class.getName()});
+	Class cl = shadowLoader.loadClass(exoticClassName);
+	if (cl == exoticClass) {
+	    System.out.println("TEST INVALID: Shadow class loader loaded " +
+			       "same class as test class loader");
+	    System.exit(1);
+	}
+	Thread.currentThread().setContextClassLoader(shadowLoader);
 
-        ObjectName on = new ObjectName("a:b=c");
-        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-        mbs.createMBean(Thing.class.getName(), on);
+	ObjectName on = new ObjectName("a:b=c");
+	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+	mbs.createMBean(Thing.class.getName(), on);
 
-        final String[] protos = {"rmi", "iiop", "jmxmp"};
+	final String[] protos = {"rmi", "iiop", "jmxmp"};
 
-        boolean ok = true;
-        for (int i = 0; i < protos.length; i++) {
-            try {
-                ok &= test(protos[i], mbs, on);
-                System.out.println();
-            } catch (Exception e) {
-                System.out.println("TEST FAILED WITH EXCEPTION:");
-                e.printStackTrace(System.out);
-                ok = false;
-            }
-        }
+	boolean ok = true;
+	for (int i = 0; i < protos.length; i++) {
+	    try {
+		ok &= test(protos[i], mbs, on);
+		System.out.println();
+	    } catch (Exception e) {
+		System.out.println("TEST FAILED WITH EXCEPTION:");
+		e.printStackTrace(System.out);
+		ok = false;
+	    }
+	}
 
-        if (ok)
-            System.out.println("Test passed");
-        else {
-            System.out.println("TEST FAILED");
-            System.exit(1);
-        }
+	if (ok)
+	    System.out.println("Test passed");
+	else {
+	    System.out.println("TEST FAILED");
+	    System.exit(1);
+	}
     }
 
     private static boolean test(String proto, MBeanServer mbs, ObjectName on)
-            throws Exception {
-        System.out.println("Testing for protocol " + proto);
+	    throws Exception {
+	System.out.println("Testing for protocol " + proto);
 
-        JMXConnectorServer cs;
-        JMXServiceURL url = new JMXServiceURL(proto, null, 0);
-        try {
-            cs = JMXConnectorServerFactory.newJMXConnectorServer(url, null,
-                                                                 mbs);
-        } catch (MalformedURLException e) {
-            System.out.println("System does not recognize URL: " + url +
-                               "; ignoring");
-            return true;
-        }
-        cs.start();
-        JMXServiceURL addr = cs.getAddress();
-        JMXConnector client = JMXConnectorFactory.connect(addr);
-        MBeanServerConnection mbsc = client.getMBeanServerConnection();
-        Object getAttributeExotic = mbsc.getAttribute(on, "Exotic");
-        AttributeList getAttrs =
-            mbsc.getAttributes(on, new String[] {"Exotic"});
-        AttributeList setAttrs = new AttributeList();
-        setAttrs.add(new Attribute("Exotic", new Exotic()));
-        setAttrs = mbsc.setAttributes(on, setAttrs);
-        Object invokeExotic =
-            mbsc.invoke(on, "anExotic", new Object[] {}, new String[] {});
-        MBeanInfo exoticMBI = mbsc.getMBeanInfo(on);
+	JMXConnectorServer cs;
+	JMXServiceURL url = new JMXServiceURL(proto, null, 0);
+	try {
+	    cs = JMXConnectorServerFactory.newJMXConnectorServer(url, null,
+								 mbs);
+	} catch (MalformedURLException e) {
+	    System.out.println("System does not recognize URL: " + url +
+			       "; ignoring");
+	    return true;
+	}
+	cs.start();
+	JMXServiceURL addr = cs.getAddress();
+	JMXConnector client = JMXConnectorFactory.connect(addr);
+	MBeanServerConnection mbsc = client.getMBeanServerConnection();
+	Object getAttributeExotic = mbsc.getAttribute(on, "Exotic");
+	AttributeList getAttrs =
+	    mbsc.getAttributes(on, new String[] {"Exotic"});
+	AttributeList setAttrs = new AttributeList();
+	setAttrs.add(new Attribute("Exotic", new Exotic()));
+	setAttrs = mbsc.setAttributes(on, setAttrs);
+	Object invokeExotic =
+	    mbsc.invoke(on, "anExotic", new Object[] {}, new String[] {});
+	MBeanInfo exoticMBI = mbsc.getMBeanInfo(on);
 
-        mbsc.setAttribute(on, new Attribute("Exception", Boolean.TRUE));
-        Exception
-            getAttributeException, setAttributeException, invokeException;
-        try {
-            try {
-                mbsc.getAttribute(on, "Exotic");
-                throw noException("getAttribute");
-            } catch (Exception e) {
-                getAttributeException = e;
-            }
-            try {
-                mbsc.setAttribute(on, new Attribute("Exotic", new Exotic()));
-                throw noException("setAttribute");
-            } catch (Exception e) {
-                setAttributeException = e;
-            }
-            try {
-                mbsc.invoke(on, "anExotic", new Object[] {}, new String[] {});
-                throw noException("invoke");
-            } catch (Exception e) {
-                invokeException = e;
-            }
-        } finally {
-            mbsc.setAttribute(on, new Attribute("Exception", Boolean.FALSE));
-        }
-        client.close();
-        cs.stop();
+	mbsc.setAttribute(on, new Attribute("Exception", Boolean.TRUE));
+	Exception
+	    getAttributeException, setAttributeException, invokeException;
+	try {
+	    try {
+		mbsc.getAttribute(on, "Exotic");
+		throw noException("getAttribute");
+	    } catch (Exception e) {
+		getAttributeException = e;
+	    }
+	    try {
+		mbsc.setAttribute(on, new Attribute("Exotic", new Exotic()));
+		throw noException("setAttribute");
+	    } catch (Exception e) {
+		setAttributeException = e;
+	    }
+	    try {
+		mbsc.invoke(on, "anExotic", new Object[] {}, new String[] {});
+		throw noException("invoke");
+	    } catch (Exception e) {
+		invokeException = e;
+	    }
+	} finally {
+	    mbsc.setAttribute(on, new Attribute("Exception", Boolean.FALSE));
+	}
+	client.close();
+	cs.stop();
 
-        boolean ok = true;
+	boolean ok = true;
 
-        ok &= checkAttrs("getAttributes", getAttrs);
-        ok &= checkAttrs("setAttributes", setAttrs);
+	ok &= checkAttrs("getAttributes", getAttrs);
+	ok &= checkAttrs("setAttributes", setAttrs);
 
-        ok &= checkType("getAttribute", getAttributeExotic, Exotic.class);
-        ok &= checkType("getAttributes", attrValue(getAttrs), Exotic.class);
-        ok &= checkType("setAttributes", attrValue(setAttrs), Exotic.class);
-        ok &= checkType("invoke", invokeExotic, Exotic.class);
-        ok &= checkType("getMBeanInfo", exoticMBI, ExoticMBeanInfo.class);
+	ok &= checkType("getAttribute", getAttributeExotic, Exotic.class);
+	ok &= checkType("getAttributes", attrValue(getAttrs), Exotic.class);
+	ok &= checkType("setAttributes", attrValue(setAttrs), Exotic.class);
+	ok &= checkType("invoke", invokeExotic, Exotic.class);
+	ok &= checkType("getMBeanInfo", exoticMBI, ExoticMBeanInfo.class);
 
-        ok &= checkExceptionType("getAttribute", getAttributeException,
-                                 ExoticException.class);
-        ok &= checkExceptionType("setAttribute", setAttributeException,
-                                 ExoticException.class);
-        ok &= checkExceptionType("invoke", invokeException,
-                                 ExoticException.class);
+	ok &= checkExceptionType("getAttribute", getAttributeException,
+				 ExoticException.class);
+	ok &= checkExceptionType("setAttribute", setAttributeException,
+				 ExoticException.class);
+	ok &= checkExceptionType("invoke", invokeException,
+				 ExoticException.class);
 
-        if (ok)
-            System.out.println("Test passes for protocol " + proto);
-        return ok;
+	if (ok)
+	    System.out.println("Test passes for protocol " + proto);
+	return ok;
     }
 
     private static Exception noException(String what) {
-        final String msg =
-            "Operation " + what + " returned when exception expected";
-        return new IllegalStateException(msg);
+	final String msg =
+	    "Operation " + what + " returned when exception expected";
+	return new IllegalStateException(msg);
     }
 
     private static Object attrValue(AttributeList attrs) {
-        return ((Attribute) attrs.get(0)).getValue();
+	return ((Attribute) attrs.get(0)).getValue();
     }
 
     private static boolean checkType(String what, Object object,
-                                     Class wrongClass) {
-        return checkType(what, object, wrongClass, false);
+				     Class wrongClass) {
+	return checkType(what, object, wrongClass, false);
     }
 
     private static boolean checkType(String what, Object object,
-                                     Class wrongClass, boolean isException) {
-        final String type = isException ? "exception" : "object";
-        final String rendered = isException ? "thrown" : "returned";
-        System.out.println("For " + type + " " + rendered + " by " + what +
-                           ":");
-        if (wrongClass.isInstance(object)) {
-            System.out.println("TEST FAILS: " + type + " loaded by test " +
-                               "classloader");
-            return false;
-        }
-        String className = object.getClass().getName();
-        if (!className.equals(wrongClass.getName())) {
-            System.out.println("TEST FAILS: " + rendered + " " + type +
-                               " has wrong class name: " + className);
-            return false;
-        }
-        System.out.println("Test passes: " + rendered + " " + type +
-                           " has same class name but is not same class");
-        return true;
+				     Class wrongClass, boolean isException) {
+	final String type = isException ? "exception" : "object";
+	final String rendered = isException ? "thrown" : "returned";
+	System.out.println("For " + type + " " + rendered + " by " + what +
+			   ":");
+	if (wrongClass.isInstance(object)) {
+	    System.out.println("TEST FAILS: " + type + " loaded by test " +
+			       "classloader");
+	    return false;
+	}
+	String className = object.getClass().getName();
+	if (!className.equals(wrongClass.getName())) {
+	    System.out.println("TEST FAILS: " + rendered + " " + type +
+			       " has wrong class name: " + className);
+	    return false;
+	}
+	System.out.println("Test passes: " + rendered + " " + type +
+			   " has same class name but is not same class");
+	return true;
     }
 
     private static boolean checkExceptionType(String what, Exception exception,
-                                              Class wrongClass) {
-        if (!(exception instanceof MBeanException)) {
-            System.out.println("Exception thrown by " + what + " is not an " +
-                               MBeanException.class.getName() +
-                               ":");
-            exception.printStackTrace(System.out);
-            return false;
-        }
+					      Class wrongClass) {
+	if (!(exception instanceof MBeanException)) {
+	    System.out.println("Exception thrown by " + what + " is not an " +
+			       MBeanException.class.getName() +
+			       ":");
+	    exception.printStackTrace(System.out);
+	    return false;
+	}
 
-        exception = ((MBeanException) exception).getTargetException();
+	exception = ((MBeanException) exception).getTargetException();
 
-        return checkType(what, exception, wrongClass, true);
+	return checkType(what, exception, wrongClass, true);
     }
 
     private static boolean checkAttrs(String what, AttributeList attrs) {
-        if (attrs.size() != 1) {
-            System.out.println("TEST FAILS: list returned by " + what +
-                               " does not have size 1: " + attrs);
-            return false;
-        }
-        Attribute attr = (Attribute) attrs.get(0);
-        if (!"Exotic".equals(attr.getName())) {
-            System.out.println("TEST FAILS: " + what + " returned wrong " +
-                               "attribute: " + attr);
-            return false;
-        }
+	if (attrs.size() != 1) {
+	    System.out.println("TEST FAILS: list returned by " + what +
+			       " does not have size 1: " + attrs);
+	    return false;
+	}
+	Attribute attr = (Attribute) attrs.get(0);
+	if (!"Exotic".equals(attr.getName())) {
+	    System.out.println("TEST FAILS: " + what + " returned wrong " +
+			       "attribute: " + attr);
+	    return false;
+	}
 
-        return true;
+	return true;
     }
 
     public static class Thing
-            extends StandardMBean implements ThingMBean {
-        public Thing() throws NotCompliantMBeanException {
-            super(ThingMBean.class);
-        }
+	    extends StandardMBean implements ThingMBean {
+	public Thing() throws NotCompliantMBeanException {
+	    super(ThingMBean.class);
+	}
 
-        public Exotic getExotic() throws ExoticException {
-            if (exception)
-                throw new ExoticException();
-            return new Exotic();
-        }
+	public Exotic getExotic() throws ExoticException {
+	    if (exception)
+		throw new ExoticException();
+	    return new Exotic();
+	}
 
-        public void setExotic(Exotic x) throws ExoticException {
-            if (exception)
-                throw new ExoticException();
-        }
+	public void setExotic(Exotic x) throws ExoticException {
+	    if (exception)
+		throw new ExoticException();
+	}
 
-        public Exotic anExotic() throws ExoticException {
-            if (exception)
-                throw new ExoticException();
-            return new Exotic();
-        }
+	public Exotic anExotic() throws ExoticException {
+	    if (exception)
+		throw new ExoticException();
+	    return new Exotic();
+	}
 
-        public void cacheMBeanInfo(MBeanInfo mbi) {
-            if (mbi != null)
-                mbi = new ExoticMBeanInfo(mbi);
-            super.cacheMBeanInfo(mbi);
-        }
+	public void cacheMBeanInfo(MBeanInfo mbi) {
+	    if (mbi != null)
+		mbi = new ExoticMBeanInfo(mbi);
+	    super.cacheMBeanInfo(mbi);
+	}
 
-        public void setException(boolean x) {
-            this.exception = x;
-        }
+	public void setException(boolean x) {
+	    this.exception = x;
+	}
 
-        private boolean exception;
+	private boolean exception;
     }
 
     public static interface ThingMBean {
-        public Exotic getExotic() throws ExoticException;
-        public void setExotic(Exotic x) throws ExoticException;
-        public Exotic anExotic() throws ExoticException;
-        public void setException(boolean x);
+	public Exotic getExotic() throws ExoticException;
+	public void setExotic(Exotic x) throws ExoticException;
+	public Exotic anExotic() throws ExoticException;
+	public void setException(boolean x);
     }
 
     public static class Exotic implements Serializable {}
@@ -302,32 +302,32 @@ public class MethodResultTest {
     public static class ExoticException extends Exception {}
 
     public static class ExoticMBeanInfo extends MBeanInfo {
-        public ExoticMBeanInfo(MBeanInfo mbi) {
-            super(mbi.getClassName(),
-                  mbi.getDescription(),
-                  mbi.getAttributes(),
-                  mbi.getConstructors(),
-                  mbi.getOperations(),
-                  mbi.getNotifications());
-        }
+	public ExoticMBeanInfo(MBeanInfo mbi) {
+	    super(mbi.getClassName(),
+		  mbi.getDescription(),
+		  mbi.getAttributes(),
+		  mbi.getConstructors(),
+		  mbi.getOperations(),
+		  mbi.getNotifications());
+	}
     }
 
     private static class ShadowLoader extends URLClassLoader {
-        ShadowLoader(URL[] urls, ClassLoader realLoader,
-                     String[] shadowClassNames) {
-            super(urls, null);
-            this.realLoader = realLoader;
-            this.shadowClassNames = Arrays.asList(shadowClassNames);
-        }
+	ShadowLoader(URL[] urls, ClassLoader realLoader,
+		     String[] shadowClassNames) {
+	    super(urls, null);
+	    this.realLoader = realLoader;
+	    this.shadowClassNames = Arrays.asList(shadowClassNames);
+	}
 
-        protected Class findClass(String name) throws ClassNotFoundException {
-            if (shadowClassNames.contains(name))
-                return super.findClass(name);
-            else
-                return realLoader.loadClass(name);
-        }
+	protected Class findClass(String name) throws ClassNotFoundException {
+	    if (shadowClassNames.contains(name))
+		return super.findClass(name);
+	    else
+		return realLoader.loadClass(name);
+	}
 
-        private final ClassLoader realLoader;
-        private final List shadowClassNames;
+	private final ClassLoader realLoader;
+	private final List shadowClassNames;
     }
 }

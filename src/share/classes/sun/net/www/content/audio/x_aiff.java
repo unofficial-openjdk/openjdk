@@ -25,6 +25,7 @@
 
 /**
  * Basic .aiff audio handler.
+ * @version %I%, %G%
  * @author  Jeff Nisewanger
  */
 package sun.net.www.content.audio;
@@ -38,6 +39,6 @@ import sun.applet.AppletAudioClip;
  */
 public class x_aiff extends ContentHandler {
     public Object getContent(URLConnection uc) throws IOException {
-        return new AppletAudioClip(uc);
+	return new AppletAudioClip(uc);
     }
 }

@@ -36,6 +36,6 @@ public class CharSignature implements BaseType {
     public static CharSignature make() {return singleton;}
 
     public void accept(TypeTreeVisitor<?> v){
-        v.visitCharSignature(this);
+	v.visitCharSignature(this);
     }
 }

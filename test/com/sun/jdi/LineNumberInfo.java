@@ -24,9 +24,9 @@
 /**
  *  @test
  *  @bug 4238644 4238643 4238641 4944198
- *  @summary Test javac regressions in the generation of line number info
+ *  @summary Test javac regressions in the generation of line number info 
  *  @author Gordon Hirsch
- *
+ *  
  *  @run build TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g LineNumberInfo.java ControlFlow.java
  *
@@ -41,17 +41,17 @@ import java.util.Iterator;
 
 public class LineNumberInfo extends TestScaffold {
     /*
-     * These two arrays are used to validate the line number
-     * information returned by JDI. There are limitations to
+     * These two arrays are used to validate the line number 
+     * information returned by JDI. There are limitations to 
      * this approach:
      * - there are no strict rules about
-     *   what constitutes the "right" line number mapping, so
-     *   this kind of test may have false negatives with other
-     *   compilers.
-     * - this test is also sensitive to the compiler's code generation;
-     *   if that changes, this test will likely need updating.
+     *   what constitutes the "right" line number mapping, so 
+     *   this kind of test may have false negatives with other 
+     *   compilers. 
+     * - this test is also sensitive to the compiler's code generation; 
+     *   if that changes, this test will likely need updating. 
      * - this test assumes that JDI code index == class file
-     *   byte code index which may not be true in all VMs.
+     *   byte code index which may not be true in all VMs. 
      * - To find the values for these tables, compile ControlFlow.java and then
      *   do:
      *   javap -classpath _jj1.solaris-sparc/JTwork/classes/com/sun/jdi \
@@ -174,12 +174,12 @@ public class LineNumberInfo extends TestScaffold {
         while (iter.hasNext()) {
             Location location = (Location)iter.next();
             if (location.codeIndex() != codeIndices[i]) {
-                failure("FAILED: Code index mismatch: jdi=" +
+                failure("FAILED: Code index mismatch: jdi=" + 
                                     location.codeIndex() +
                                     ", test=" + codeIndices[i]);
             }
             if (location.lineNumber() != lineNumbers[i]) {
-                failure("FAILED: Line number mismatch: jdi=" +
+                failure("FAILED: Line number mismatch: jdi=" + 
                                     location.lineNumber() +
                                     ", test=" + lineNumbers[i]);
             }
@@ -202,3 +202,5 @@ public class LineNumberInfo extends TestScaffold {
 
     }
 }
+
+

@@ -31,7 +31,7 @@ import com.sun.jdi.request.*;
 public abstract class WatchpointSpec extends EventRequestSpec {
     final String fieldId;
 
-    WatchpointSpec(EventRequestSpecList specs,
+    WatchpointSpec(EventRequestSpecList specs, 
                    ReferenceTypeSpec refSpec, String fieldId) {
         super(specs, refSpec);
         this.fieldId = fieldId;
@@ -61,7 +61,7 @@ public abstract class WatchpointSpec extends EventRequestSpec {
     }
 
     public int hashCode() {
-        return refSpec.hashCode() + fieldId.hashCode() +
+        return refSpec.hashCode() + fieldId.hashCode() + 
             getClass().hashCode();
     }
 
@@ -77,11 +77,13 @@ public abstract class WatchpointSpec extends EventRequestSpec {
         }
     }
 
-    public String errorMessageFor(Exception e) {
+    public String errorMessageFor(Exception e) { 
         if (e instanceof NoSuchFieldException) {
             return ("No field " + fieldId + " in " + refSpec);
         } else {
             return super.errorMessageFor(e);
-        }
+        } 
     }
 }
+
+

@@ -27,35 +27,35 @@ import javax.net.ssl.*;
 public class JavaxSSLContextImpl extends SSLContextSpi {
 
     public JavaxSSLContextImpl() {
-        System.out.println("JavaxSSLContextImpl initialized");
+	System.out.println("JavaxSSLContextImpl initialized");
     }
 
     protected void engineInit(KeyManager[] km,
-           TrustManager[] tm, SecureRandom sr) throws KeyManagementException {
-        System.out.println("JavaxSSLContextImpl init'd");
+	   TrustManager[] tm, SecureRandom sr) throws KeyManagementException {
+	System.out.println("JavaxSSLContextImpl init'd");
     }
 
     protected SSLEngine engineCreateSSLEngine() {
-        return null;
+	return null;
     }
 
     protected SSLEngine engineCreateSSLEngine(String host, int port) {
-        return null;
+	return null;
     }
 
     protected SSLSocketFactory engineGetSocketFactory() {
-        return null;
+	return null;
     }
 
     protected SSLServerSocketFactory engineGetServerSocketFactory() {
-        return null;
+	return null;
     }
 
     protected SSLSessionContext engineGetServerSessionContext() {
-        return null;
+	return null;
     }
 
     protected SSLSessionContext engineGetClientSessionContext() {
-        return null;
+	return null;
     }
 }

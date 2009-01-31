@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,11 +32,11 @@
  * @run main Test
  *
  * @summary Verify that if a serializable class declares multiple
- *          serialPersistentFields that share the same name, calling
- *          ObjectStreamClass.lookup() for that class will not result in an
- *          InternalError, and that attempts at default serialization or
- *          deserialization of such a class will result in
- *          InvalidClassExceptions.
+ * 	    serialPersistentFields that share the same name, calling
+ * 	    ObjectStreamClass.lookup() for that class will not result in an
+ * 	    InternalError, and that attempts at default serialization or
+ * 	    deserialization of such a class will result in
+ * 	    InvalidClassExceptions.
  */
 
 import java.io.*;
@@ -44,8 +44,8 @@ import java.io.*;
 class A implements Serializable {
     private static final long serialVersionUID = 0L;
     private static final ObjectStreamField[] serialPersistentFields = {
-        new ObjectStreamField("i", int.class),
-        new ObjectStreamField("i", int.class)
+	new ObjectStreamField("i", int.class),
+	new ObjectStreamField("i", int.class)
     };
     int i;
 }
@@ -53,8 +53,8 @@ class A implements Serializable {
 class B implements Serializable {
     private static final long serialVersionUID = 0L;
     private static final ObjectStreamField[] serialPersistentFields = {
-        new ObjectStreamField("i", int.class),
-        new ObjectStreamField("i", String.class)
+	new ObjectStreamField("i", int.class),
+	new ObjectStreamField("i", String.class)
     };
     int i;
 }
@@ -62,38 +62,38 @@ class B implements Serializable {
 public class Test {
     public static void main(String[] args) throws Exception {
 
-        ObjectStreamClass.lookup(A.class);
-        ObjectStreamClass.lookup(B.class);
+	ObjectStreamClass.lookup(A.class);
+	ObjectStreamClass.lookup(B.class);
 
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new ByteArrayOutputStream());
-        try {
-            oout.writeObject(new A());
-            throw new Error(
-                "write of A should fail with InvalidClassException");
-        } catch (InvalidClassException e) {
-        }
+	ObjectOutputStream oout = 
+	    new ObjectOutputStream(new ByteArrayOutputStream());
+	try {
+	    oout.writeObject(new A());
+	    throw new Error(
+		"write of A should fail with InvalidClassException");
+	} catch (InvalidClassException e) {
+	}
 
-        oout = new ObjectOutputStream(new ByteArrayOutputStream());
-        try {
-            oout.writeObject(new B());
-            throw new Error(
-                "write of B should fail with InvalidClassException");
-        } catch (InvalidClassException e) {
-        }
+	oout = new ObjectOutputStream(new ByteArrayOutputStream());
+	try {
+	    oout.writeObject(new B());
+	    throw new Error(
+		"write of B should fail with InvalidClassException");
+	} catch (InvalidClassException e) {
+	}
 
-        try {
-            new ObjectInputStream(new FileInputStream("a.ser")).readObject();
-            throw new Error(
-                "read of A should fail with InvalidClassException");
-        } catch (InvalidClassException e) {
-        }
+	try {
+	    new ObjectInputStream(new FileInputStream("a.ser")).readObject();
+	    throw new Error(
+		"read of A should fail with InvalidClassException");
+	} catch (InvalidClassException e) {
+	}
 
-        try {
-            new ObjectInputStream(new FileInputStream("b.ser")).readObject();
-            throw new Error(
-                "read of B should fail with InvalidClassException");
-        } catch (InvalidClassException e) {
-        }
+	try {
+	    new ObjectInputStream(new FileInputStream("b.ser")).readObject();
+	    throw new Error(
+		"read of B should fail with InvalidClassException");
+	} catch (InvalidClassException e) {
+	}
     }
 }

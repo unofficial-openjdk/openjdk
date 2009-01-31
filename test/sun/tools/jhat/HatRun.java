@@ -43,7 +43,7 @@ class MyInputStream implements Runnable {
     private StringBuffer        buffer;
 
     /* Create MyInputStream that saves all output to a StringBuffer */
-    MyInputStream(String name, InputStream in) {
+    MyInputStream(String name, InputStream in) { 
         this.name = name;
         this.in = new BufferedInputStream(in);
         buffer = new StringBuffer(4096);
@@ -84,7 +84,7 @@ class MyInputStream implements Runnable {
     }
 }
 
-/*
+/* 
  * Main jhat run
  */
 public class HatRun {
@@ -96,7 +96,7 @@ public class HatRun {
     private MyInputStream error;
 
     /* Create a Hat run process */
-    public HatRun(String hprof_options, String hat_options)
+    public HatRun(String hprof_options, String hat_options) 
     {
         all_hprof_options = hprof_options;
         all_hat_options   = hat_options;
@@ -117,16 +117,16 @@ public class HatRun {
     {
         /* Begin process */
         Process p;
-        String cmdLine = "";
-        int i;
+	String cmdLine = "";
+	int i;
 
-        for ( i = 0 ; i < cmd.length; i++ ) {
-          cmdLine += cmd[i];
-          cmdLine += " ";
-        }
+	for ( i = 0 ; i < cmd.length; i++ ) {
+	  cmdLine += cmd[i];
+	  cmdLine += " ";
+	}
         System.out.println("Starting: " + cmdLine);
-
-        try {
+        
+	try {
             p = Runtime.getRuntime().exec(cmd);
         } catch ( IOException e ) {
             throw new RuntimeException("Test failed - exec got IO exception");
@@ -153,42 +153,42 @@ public class HatRun {
         }
         System.out.println("Completed: " + cmdLine);
     }
-
+    
     /*
      * Execute a process with an -agentpath or -agentlib command option
      *    plus any set of other java options.
      */
-    public void runit(String class_name, String vm_options[])
+    public void runit(String class_name, String vm_options[]) 
     {
         String jre_home  = System.getProperty("java.home");
-        String sdk_home  = (jre_home.endsWith("jre") ?
+        String sdk_home  = (jre_home.endsWith("jre") ? 
                             (jre_home + File.separator + "..") :
                             jre_home );
         String cdir      = System.getProperty("test.classes", ".");
         String os_arch   = System.getProperty("os.arch");
-        boolean d64      = os_arch.equals("sparcv9") ||
-                           os_arch.equals("amd64");
+        boolean d64      = os_arch.equals("sparcv9") || 
+			   os_arch.equals("amd64");
         String isa_dir   = d64?(File.separator+os_arch):"";
         String java      = jre_home
                              + File.separator + "bin" + isa_dir
                              + File.separator + "java";
         String jhat      = sdk_home + File.separator + "bin"
-                           + File.separator + "jhat";
+			   + File.separator + "jhat";
         /* Array of strings to be passed in for exec:
-         *   1. java
+         *   1. java 
          *   2. -Dtest.classes=.
          *   3. -d64                 (optional)
          *   4. -Xcheck:jni          (Just because it finds bugs)
          *   5. -Xverify:all         (Make sure verification is on full blast)
          *   6. -agent
-         *       vm_options
+	 *       vm_options
          *   7+i. classname
          */
-        int nvm_options = 0;
-        if ( vm_options != null ) nvm_options = vm_options.length;
+	int nvm_options = 0;
+	if ( vm_options != null ) nvm_options = vm_options.length;
         String cmd[]     = new String[1 + (d64?1:0) + 5 + nvm_options];
         int i,j;
-
+        
         i = 0;
         cmd[i++] = java;
         cmd[i++] = "-Dtest.classes=" + cdir;
@@ -197,27 +197,27 @@ public class HatRun {
         }
         cmd[i++] = "-Xcheck:jni";
         cmd[i++] = "-Xverify:all";
-        dumpfile= cdir + File.separator + class_name + ".hdump";
-        cmd[i++] = "-agentlib:hprof=" + all_hprof_options
-                    + ",format=b,file=" + dumpfile;
-        /* Add any special VM options */
-        for ( j = 0; j < nvm_options; j++ ) {
-            cmd[i++] = vm_options[j];
-        }
-        /* Add classname */
+	dumpfile= cdir + File.separator + class_name + ".hdump";
+	cmd[i++] = "-agentlib:hprof=" + all_hprof_options
+		    + ",format=b,file=" + dumpfile;
+	/* Add any special VM options */
+	for ( j = 0; j < nvm_options; j++ ) {
+	    cmd[i++] = vm_options[j];
+	}
+	/* Add classname */
         cmd[i++] = class_name;
 
         /* Execute process */
         execute(cmd);
-
-        /* Run jhat */
-        String jhat_cmd[] = new String[4];
-        jhat_cmd[0] = jhat;
-        jhat_cmd[1] = "-debug";
-        jhat_cmd[2] = "2";
-        jhat_cmd[3] = dumpfile;
-
-        /* Execute process */
+        
+	/* Run jhat */
+	String jhat_cmd[] = new String[4];
+	jhat_cmd[0] = jhat;
+	jhat_cmd[1] = "-debug";
+	jhat_cmd[2] = "2";
+	jhat_cmd[3] = dumpfile;
+        
+	/* Execute process */
         execute(jhat_cmd);
 
     }
@@ -228,3 +228,4 @@ public class HatRun {
         return output.contains(pattern) || error.contains(pattern);
     }
 }
+

@@ -62,7 +62,7 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
    * @exception UnknownHostException if the subnet mask cann't be built.
    */
   public GroupImpl (String mask) throws UnknownHostException {
-        super(mask);
+	super(mask);
   }
 
     /**
@@ -73,13 +73,13 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
      *     principal was already a member.
      */
     public boolean addMember(Principal p) {
-        // we don't need to add members because the ip address is a
-        // subnet mask
-        return true;
+	// we don't need to add members because the ip address is a
+	// subnet mask
+	return true;
     }
 
   public int hashCode() {
-        return super.hashCode();
+	return super.hashCode();
   }
 
   /**
@@ -91,12 +91,12 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
    *   false otherwise.
    */
   public boolean equals (Object p) {
-        if (p instanceof PrincipalImpl || p instanceof GroupImpl){
-          if ((super.hashCode() & p.hashCode()) == p.hashCode()) return true;
-          else return false;
-        } else {
-          return false;
-        }
+	if (p instanceof PrincipalImpl || p instanceof GroupImpl){
+	  if ((super.hashCode() & p.hashCode()) == p.hashCode()) return true;
+	  else return false;
+	} else {
+	  return false;
+	}
   }
 
   /**
@@ -106,8 +106,8 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
    * @return true if the principal is a member of this group, false otherwise.
    */
   public boolean isMember(Principal p) {
-        if ((p.hashCode() & super.hashCode()) == p.hashCode()) return true;
-        else return false;
+	if ((p.hashCode() & super.hashCode()) == p.hashCode()) return true;
+	else return false;
   }
 
   /**
@@ -116,9 +116,9 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
    * @return an enumeration which contains the subnet mask.
    */
   public Enumeration<? extends Principal> members(){
-        Vector<Principal> v = new Vector<Principal>(1);
-        v.addElement(this);
-        return v.elements();
+	Vector<Principal> v = new Vector<Principal>(1);
+	v.addElement(this);
+	return v.elements();
   }
 
   /**
@@ -128,7 +128,7 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
    * @return allways return true.
    */
   public boolean removeMember(Principal p) {
-        return true;
+	return true;
   }
 
   /**
@@ -137,6 +137,8 @@ class GroupImpl extends PrincipalImpl implements Group, Serializable {
    * @return  a string representation of this group.
    */
   public String toString() {
-        return ("GroupImpl :"+super.getAddress().toString());
+	return ("GroupImpl :"+super.getAddress().toString());
   }
 }
+
+

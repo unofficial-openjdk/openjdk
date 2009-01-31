@@ -32,38 +32,38 @@ public class SetMaxPriority {
 
     public static void main(String args[]) throws Exception {
         ThreadGroup tg = new ThreadGroup("foo");
-        ThreadGroup ptg = tg.getParent();
-        int currentMaxPriority = tg.getMaxPriority();
-        int halfMaxPriority = ptg.getMaxPriority() / 2;
-        if (halfMaxPriority - Thread.MIN_PRIORITY < 2) {
-            throw new RuntimeException("SetMaxPriority test no longer valid: starting parent max priority too close to Thread.MIN_PRIORITY");
-        }
-        tg.setMaxPriority(halfMaxPriority - 2);
-        currentMaxPriority = tg.getMaxPriority();
-        if (currentMaxPriority != halfMaxPriority - 2) {
-            throw new RuntimeException("SetMaxPriority failed: max priority not changed");
-        }
+	ThreadGroup ptg = tg.getParent();
+	int currentMaxPriority = tg.getMaxPriority();
+	int halfMaxPriority = ptg.getMaxPriority() / 2;
+	if (halfMaxPriority - Thread.MIN_PRIORITY < 2) {
+	    throw new RuntimeException("SetMaxPriority test no longer valid: starting parent max priority too close to Thread.MIN_PRIORITY");
+	}
+	tg.setMaxPriority(halfMaxPriority - 2);
+	currentMaxPriority = tg.getMaxPriority();
+	if (currentMaxPriority != halfMaxPriority - 2) {
+	    throw new RuntimeException("SetMaxPriority failed: max priority not changed");
+	}
+	
+	// This will fail if bug 6497629 is present because the min tests is
+	// being made with the (just lowered) max instead of the parent max,
+	// preventing the priority from being moved back up.
+	tg.setMaxPriority(currentMaxPriority + 1);
+	int newMaxPriority = tg.getMaxPriority();
+	if (newMaxPriority != currentMaxPriority + 1) {
+	    throw new RuntimeException("SetMaxPriority failed: defect 6497629 present");
+	}
 
-        // This will fail if bug 6497629 is present because the min tests is
-        // being made with the (just lowered) max instead of the parent max,
-        // preventing the priority from being moved back up.
-        tg.setMaxPriority(currentMaxPriority + 1);
-        int newMaxPriority = tg.getMaxPriority();
-        if (newMaxPriority != currentMaxPriority + 1) {
-            throw new RuntimeException("SetMaxPriority failed: defect 6497629 present");
-        }
+	// Confirm that max priorities out of range on both ends have no
+	// effect.
+	for (int badPriority : new int[] {Thread.MIN_PRIORITY - 1,
+					  Thread.MAX_PRIORITY + 1}) {
+	    int oldPriority = tg.getMaxPriority();
+	    tg.setMaxPriority(badPriority);
+	    if (oldPriority != tg.getMaxPriority())
+		throw new RuntimeException(
+		    "setMaxPriority bad arg not ignored as specified");
+	}
 
-        // Confirm that max priorities out of range on both ends have no
-        // effect.
-        for (int badPriority : new int[] {Thread.MIN_PRIORITY - 1,
-                                          Thread.MAX_PRIORITY + 1}) {
-            int oldPriority = tg.getMaxPriority();
-            tg.setMaxPriority(badPriority);
-            if (oldPriority != tg.getMaxPriority())
-                throw new RuntimeException(
-                    "setMaxPriority bad arg not ignored as specified");
-        }
-
-        System.out.println("SetMaxPriority passed");
+	System.out.println("SetMaxPriority passed");
     }
 }

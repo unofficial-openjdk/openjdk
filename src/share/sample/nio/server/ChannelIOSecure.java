@@ -91,6 +91,7 @@ import javax.net.ssl.SSLEngineResult.*;
  *
  * @author Brad R. Wetmore
  * @author Mark Reinhold
+ * @version %I%, %E%
  */
 class ChannelIOSecure extends ChannelIO {
 
@@ -145,27 +146,27 @@ class ChannelIOSecure extends ChannelIO {
      * Constructor for a secure ChannelIO variant.
      */
     protected ChannelIOSecure(SocketChannel sc, boolean blocking,
-            SSLContext sslc) throws IOException {
-        super(sc, blocking);
+	    SSLContext sslc) throws IOException {
+	super(sc, blocking);
 
-        /*
-         * We're a server, so no need to use host/port variant.
-         *
-         * The first call for a server is a NEED_UNWRAP.
-         */
-        sslEngine = sslc.createSSLEngine();
-        sslEngine.setUseClientMode(false);
-        initialHSStatus = HandshakeStatus.NEED_UNWRAP;
-        initialHSComplete = false;
+	/*
+	 * We're a server, so no need to use host/port variant.
+	 *
+	 * The first call for a server is a NEED_UNWRAP.
+	 */
+	sslEngine = sslc.createSSLEngine();
+	sslEngine.setUseClientMode(false);
+	initialHSStatus = HandshakeStatus.NEED_UNWRAP;
+	initialHSComplete = false;
 
-        // Create a buffer using the normal expected packet size we'll
-        // be getting.  This may change, depending on the peer's
-        // SSL implementation.
-        netBBSize = sslEngine.getSession().getPacketBufferSize();
-        inNetBB = ByteBuffer.allocate(netBBSize);
-        outNetBB = ByteBuffer.allocate(netBBSize);
-        outNetBB.position(0);
-        outNetBB.limit(0);
+	// Create a buffer using the normal expected packet size we'll
+	// be getting.  This may change, depending on the peer's
+	// SSL implementation. 
+	netBBSize = sslEngine.getSession().getPacketBufferSize();
+	inNetBB = ByteBuffer.allocate(netBBSize);
+	outNetBB = ByteBuffer.allocate(netBBSize);
+	outNetBB.position(0);
+	outNetBB.limit(0);
     }
 
     /*
@@ -176,17 +177,17 @@ class ChannelIOSecure extends ChannelIO {
      * this until our sslEngine is created.
      */
     static ChannelIOSecure getInstance(SocketChannel sc, boolean blocking,
-            SSLContext sslc) throws IOException {
+	    SSLContext sslc) throws IOException {
 
-        ChannelIOSecure cio = new ChannelIOSecure(sc, blocking, sslc);
+	ChannelIOSecure cio = new ChannelIOSecure(sc, blocking, sslc);
 
-        // Create a buffer using the normal expected application size we'll
-        // be getting.  This may change, depending on the peer's
-        // SSL implementation.
-        cio.appBBSize = cio.sslEngine.getSession().getApplicationBufferSize();
-        cio.requestBB = ByteBuffer.allocate(cio.appBBSize);
+	// Create a buffer using the normal expected application size we'll
+	// be getting.  This may change, depending on the peer's
+	// SSL implementation. 
+	cio.appBBSize = cio.sslEngine.getSession().getApplicationBufferSize();
+	cio.requestBB = ByteBuffer.allocate(cio.appBBSize);
 
-        return cio;
+	return cio;
     }
 
     /*
@@ -194,17 +195,17 @@ class ChannelIOSecure extends ChannelIO {
      * by an appropriate increment.
      */
     protected void resizeRequestBB() {
-        resizeRequestBB(appBBSize);
+	resizeRequestBB(appBBSize);
     }
 
     /*
      * Adjust the inbount network buffer to an appropriate size.
      */
     private void resizeResponseBB() {
-        ByteBuffer bb = ByteBuffer.allocate(netBBSize);
-        inNetBB.flip();
-        bb.put(inNetBB);
-        inNetBB = bb;
+	ByteBuffer bb = ByteBuffer.allocate(netBBSize);
+	inNetBB.flip();
+	bb.put(inNetBB);
+	inNetBB = bb;
     }
 
     /*
@@ -213,8 +214,8 @@ class ChannelIOSecure extends ChannelIO {
      * Returns true when the ByteBuffer has no remaining data.
      */
     private boolean tryFlush(ByteBuffer bb) throws IOException {
-        super.write(bb);
-        return !bb.hasRemaining();
+	super.write(bb);
+	return !bb.hasRemaining();
     }
 
     /*
@@ -224,7 +225,7 @@ class ChannelIOSecure extends ChannelIO {
      * blocking).
      */
     boolean doHandshake() throws IOException {
-        return doHandshake(null);
+	return doHandshake(null);
     }
 
     /*
@@ -241,156 +242,156 @@ class ChannelIOSecure extends ChannelIO {
      * it a try.
      * <P>
      * return:
-     *          true when handshake is done.
-     *          false while handshake is in progress
+     *		true when handshake is done.
+     *		false while handshake is in progress
      */
     boolean doHandshake(SelectionKey sk) throws IOException {
 
-        SSLEngineResult result;
+	SSLEngineResult result;
 
-        if (initialHSComplete) {
-            return initialHSComplete;
-        }
+	if (initialHSComplete) {
+	    return initialHSComplete;
+	}
 
-        /*
-         * Flush out the outgoing buffer, if there's anything left in
-         * it.
-         */
-        if (outNetBB.hasRemaining()) {
+	/*
+	 * Flush out the outgoing buffer, if there's anything left in
+	 * it.
+	 */
+	if (outNetBB.hasRemaining()) {
 
-            if (!tryFlush(outNetBB)) {
-                return false;
-            }
+	    if (!tryFlush(outNetBB)) {
+		return false;
+	    }
 
-            // See if we need to switch from write to read mode.
+	    // See if we need to switch from write to read mode.
 
-            switch (initialHSStatus) {
+	    switch (initialHSStatus) {
 
-            /*
-             * Is this the last buffer?
-             */
-            case FINISHED:
-                initialHSComplete = true;
-                // Fall-through to reregister need for a Read.
+	    /*
+	     * Is this the last buffer?
+	     */
+	    case FINISHED:
+		initialHSComplete = true;
+		// Fall-through to reregister need for a Read.
 
-            case NEED_UNWRAP:
-                if (sk != null) {
-                    sk.interestOps(SelectionKey.OP_READ);
-                }
-                break;
-            }
+	    case NEED_UNWRAP:
+		if (sk != null) {
+		    sk.interestOps(SelectionKey.OP_READ);
+		}
+		break;
+	    }
 
-            return initialHSComplete;
-        }
+	    return initialHSComplete;
+	}
 
 
-        switch (initialHSStatus) {
+	switch (initialHSStatus) {
 
-        case NEED_UNWRAP:
-            if (sc.read(inNetBB) == -1) {
-                sslEngine.closeInbound();
-                return initialHSComplete;
-            }
+	case NEED_UNWRAP:
+	    if (sc.read(inNetBB) == -1) {
+		sslEngine.closeInbound();
+		return initialHSComplete;
+	    }
 
 needIO:
-            while (initialHSStatus == HandshakeStatus.NEED_UNWRAP) {
-                resizeRequestBB();    // expected room for unwrap
-                inNetBB.flip();
-                result = sslEngine.unwrap(inNetBB, requestBB);
-                inNetBB.compact();
+	    while (initialHSStatus == HandshakeStatus.NEED_UNWRAP) {
+		resizeRequestBB();    // expected room for unwrap
+		inNetBB.flip();
+		result = sslEngine.unwrap(inNetBB, requestBB);
+		inNetBB.compact();
 
-                initialHSStatus = result.getHandshakeStatus();
+		initialHSStatus = result.getHandshakeStatus();
 
-                switch (result.getStatus()) {
+		switch (result.getStatus()) {
 
-                case OK:
-                    switch (initialHSStatus) {
-                    case NOT_HANDSHAKING:
-                        throw new IOException(
-                            "Not handshaking during initial handshake");
+		case OK:
+		    switch (initialHSStatus) {
+		    case NOT_HANDSHAKING:
+			throw new IOException(
+			    "Not handshaking during initial handshake");
 
-                    case NEED_TASK:
-                        initialHSStatus = doTasks();
-                        break;
+		    case NEED_TASK:
+			initialHSStatus = doTasks();
+			break;
 
-                    case FINISHED:
-                        initialHSComplete = true;
-                        break needIO;
-                    }
+		    case FINISHED:
+			initialHSComplete = true;
+			break needIO;
+		    }
 
-                    break;
+		    break;
 
-                case BUFFER_UNDERFLOW:
-                    // Resize buffer if needed.
-                    netBBSize = sslEngine.getSession().getPacketBufferSize();
-                    if (netBBSize > inNetBB.capacity()) {
-                        resizeResponseBB();
-                    }
+		case BUFFER_UNDERFLOW:
+		    // Resize buffer if needed.
+		    netBBSize = sslEngine.getSession().getPacketBufferSize();
+		    if (netBBSize > inNetBB.capacity()) {
+			resizeResponseBB();
+		    }
 
-                    /*
-                     * Need to go reread the Channel for more data.
-                     */
-                    if (sk != null) {
-                        sk.interestOps(SelectionKey.OP_READ);
-                    }
-                    break needIO;
+		    /*
+		     * Need to go reread the Channel for more data.
+		     */
+		    if (sk != null) {
+			sk.interestOps(SelectionKey.OP_READ);
+		    }
+		    break needIO;
 
-                case BUFFER_OVERFLOW:
-                    // Reset the application buffer size.
-                    appBBSize =
-                        sslEngine.getSession().getApplicationBufferSize();
-                    break;
+		case BUFFER_OVERFLOW:
+		    // Reset the application buffer size.
+		    appBBSize = 
+			sslEngine.getSession().getApplicationBufferSize();
+		    break;
 
-                default: //CLOSED:
-                    throw new IOException("Received" + result.getStatus() +
-                        "during initial handshaking");
-                }
-            }  // "needIO" block.
+		default: //CLOSED:
+		    throw new IOException("Received" + result.getStatus() +
+			"during initial handshaking");
+		}
+	    }  // "needIO" block.
 
-            /*
-             * Just transitioned from read to write.
-             */
-            if (initialHSStatus != HandshakeStatus.NEED_WRAP) {
-                break;
-            }
+	    /*
+	     * Just transitioned from read to write.
+	     */
+	    if (initialHSStatus != HandshakeStatus.NEED_WRAP) {
+		break;
+	    }
 
-            // Fall through and fill the write buffers.
+	    // Fall through and fill the write buffers.
 
-        case NEED_WRAP:
-            /*
-             * The flush above guarantees the out buffer to be empty
-             */
-            outNetBB.clear();
-            result = sslEngine.wrap(hsBB, outNetBB);
-            outNetBB.flip();
+	case NEED_WRAP:
+	    /*
+	     * The flush above guarantees the out buffer to be empty
+	     */
+	    outNetBB.clear();
+	    result = sslEngine.wrap(hsBB, outNetBB);
+	    outNetBB.flip();
 
-            initialHSStatus = result.getHandshakeStatus();
+	    initialHSStatus = result.getHandshakeStatus();
 
-            switch (result.getStatus()) {
-            case OK:
+	    switch (result.getStatus()) {
+	    case OK:
 
-                if (initialHSStatus == HandshakeStatus.NEED_TASK) {
-                    initialHSStatus = doTasks();
-                }
+		if (initialHSStatus == HandshakeStatus.NEED_TASK) {
+		    initialHSStatus = doTasks();
+		}
 
-                if (sk != null) {
-                    sk.interestOps(SelectionKey.OP_WRITE);
-                }
+		if (sk != null) {
+		    sk.interestOps(SelectionKey.OP_WRITE);
+		}
 
-                break;
+		break;
 
-            default: // BUFFER_OVERFLOW/BUFFER_UNDERFLOW/CLOSED:
-                throw new IOException("Received" + result.getStatus() +
-                        "during initial handshaking");
-            }
-            break;
+	    default: // BUFFER_OVERFLOW/BUFFER_UNDERFLOW/CLOSED:
+		throw new IOException("Received" + result.getStatus() +
+			"during initial handshaking");
+	    }
+	    break;
 
-        default: // NOT_HANDSHAKING/NEED_TASK/FINISHED
-            throw new RuntimeException("Invalid Handshaking State" +
-                    initialHSStatus);
-        } // switch
+	default: // NOT_HANDSHAKING/NEED_TASK/FINISHED
+	    throw new RuntimeException("Invalid Handshaking State" +
+		    initialHSStatus);
+	} // switch
 
-        return initialHSComplete;
+	return initialHSComplete;
     }
 
     /*
@@ -398,16 +399,16 @@ needIO:
      */
     private SSLEngineResult.HandshakeStatus doTasks() {
 
-        Runnable runnable;
+	Runnable runnable;
 
-        /*
-         * We could run this in a separate thread, but
-         * do in the current for now.
-         */
-        while ((runnable = sslEngine.getDelegatedTask()) != null) {
-            runnable.run();
-        }
-        return sslEngine.getHandshakeStatus();
+	/*
+	 * We could run this in a separate thread, but
+	 * do in the current for now.
+	 */
+	while ((runnable = sslEngine.getDelegatedTask()) != null) {
+	    runnable.run();
+	}
+	return sslEngine.getHandshakeStatus();
     }
 
     /*
@@ -420,60 +421,60 @@ needIO:
      * Each call to this method will perform at most one underlying read().
      */
     int read() throws IOException {
-        SSLEngineResult result;
+	SSLEngineResult result;
 
-        if (!initialHSComplete) {
-            throw new IllegalStateException();
-        }
+	if (!initialHSComplete) {
+	    throw new IllegalStateException();
+	}
 
-        int pos = requestBB.position();
+	int pos = requestBB.position();
 
-        if (sc.read(inNetBB) == -1) {
-            sslEngine.closeInbound();  // probably throws exception
-            return -1;
-        }
+	if (sc.read(inNetBB) == -1) {
+	    sslEngine.closeInbound();  // probably throws exception
+	    return -1;
+	}
 
-        do {
-            resizeRequestBB();    // expected room for unwrap
-            inNetBB.flip();
-            result = sslEngine.unwrap(inNetBB, requestBB);
-            inNetBB.compact();
+	do {
+	    resizeRequestBB();    // expected room for unwrap
+	    inNetBB.flip();
+	    result = sslEngine.unwrap(inNetBB, requestBB);
+	    inNetBB.compact();
 
-            /*
-             * Could check here for a renegotation, but we're only
-             * doing a simple read/write, and won't have enough state
-             * transitions to do a complete handshake, so ignore that
-             * possibility.
-             */
-            switch (result.getStatus()) {
+	    /*
+	     * Could check here for a renegotation, but we're only
+	     * doing a simple read/write, and won't have enough state
+	     * transitions to do a complete handshake, so ignore that
+	     * possibility.
+	     */
+	    switch (result.getStatus()) {
 
-            case BUFFER_OVERFLOW:
-                // Reset the application buffer size.
-                appBBSize = sslEngine.getSession().getApplicationBufferSize();
-                break;
+	    case BUFFER_OVERFLOW:
+		// Reset the application buffer size.
+		appBBSize = sslEngine.getSession().getApplicationBufferSize();
+		break;
+		
+	    case BUFFER_UNDERFLOW:
+		// Resize buffer if needed.
+		netBBSize = sslEngine.getSession().getPacketBufferSize();
+		if (netBBSize > inNetBB.capacity()) {
+		    resizeResponseBB();
 
-            case BUFFER_UNDERFLOW:
-                // Resize buffer if needed.
-                netBBSize = sslEngine.getSession().getPacketBufferSize();
-                if (netBBSize > inNetBB.capacity()) {
-                    resizeResponseBB();
+		    break; // break, next read will support larger buffer.
+		}
+	    case OK:
+		if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+		    doTasks();
+		}
+		break;
 
-                    break; // break, next read will support larger buffer.
-                }
-            case OK:
-                if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
-                    doTasks();
-                }
-                break;
+	    default:
+		throw new IOException("sslEngine error during data read: " +
+		    result.getStatus());
+	    }
+	} while ((inNetBB.position() != 0) &&
+	    result.getStatus() != Status.BUFFER_UNDERFLOW);
 
-            default:
-                throw new IOException("sslEngine error during data read: " +
-                    result.getStatus());
-            }
-        } while ((inNetBB.position() != 0) &&
-            result.getStatus() != Status.BUFFER_UNDERFLOW);
-
-        return (requestBB.position() - pos);
+	return (requestBB.position() - pos);
     }
 
     /*
@@ -481,11 +482,11 @@ needIO:
      */
     int write(ByteBuffer src) throws IOException {
 
-        if (!initialHSComplete) {
-            throw new IllegalStateException();
-        }
+	if (!initialHSComplete) {
+	    throw new IllegalStateException();
+	}
 
-        return doWrite(src);
+	return doWrite(src);
     }
 
     /*
@@ -497,45 +498,45 @@ needIO:
      * waiting to be flushed.
      */
     private int doWrite(ByteBuffer src) throws IOException {
-        int retValue = 0;
+	int retValue = 0;
 
-        if (outNetBB.hasRemaining() && !tryFlush(outNetBB)) {
-            return retValue;
-        }
+	if (outNetBB.hasRemaining() && !tryFlush(outNetBB)) {
+	    return retValue;
+	}
 
-        /*
-         * The data buffer is empty, we can reuse the entire buffer.
-         */
-        outNetBB.clear();
+	/*
+	 * The data buffer is empty, we can reuse the entire buffer.
+	 */
+	outNetBB.clear();
 
-        SSLEngineResult result = sslEngine.wrap(src, outNetBB);
-        retValue = result.bytesConsumed();
+	SSLEngineResult result = sslEngine.wrap(src, outNetBB);
+	retValue = result.bytesConsumed();
 
-        outNetBB.flip();
+	outNetBB.flip();
 
-        switch (result.getStatus()) {
+	switch (result.getStatus()) {
 
-        case OK:
-            if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
-                doTasks();
-            }
-            break;
+	case OK:
+	    if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
+		doTasks();
+	    }
+	    break;
 
-        default:
-            throw new IOException("sslEngine error during data write: " +
-                result.getStatus());
-        }
+	default:
+	    throw new IOException("sslEngine error during data write: " +
+		result.getStatus());
+	}
 
-        /*
-         * Try to flush the data, regardless of whether or not
-         * it's been selected.  Odds of a write buffer being full
-         * is less than a read buffer being empty.
-         */
-        if (outNetBB.hasRemaining()) {
-            tryFlush(outNetBB);
-        }
+	/*
+	 * Try to flush the data, regardless of whether or not
+	 * it's been selected.  Odds of a write buffer being full
+	 * is less than a read buffer being empty.
+	 */
+	if (outNetBB.hasRemaining()) {
+	    tryFlush(outNetBB);
+	}
 
-        return retValue;
+	return retValue;
     }
 
     /*
@@ -552,27 +553,27 @@ needIO:
      */
     long transferTo(FileChannel fc, long pos, long len) throws IOException {
 
-        if (!initialHSComplete) {
-            throw new IllegalStateException();
-        }
+	if (!initialHSComplete) {
+	    throw new IllegalStateException();
+	}
 
-        if (fileChannelBB == null) {
-            fileChannelBB = ByteBuffer.allocate(appBBSize);
-            fileChannelBB.limit(0);
-        }
+	if (fileChannelBB == null) {
+	    fileChannelBB = ByteBuffer.allocate(appBBSize);
+	    fileChannelBB.limit(0);
+	}
 
-        fileChannelBB.compact();
-        int fileRead = fc.read(fileChannelBB);
-        fileChannelBB.flip();
+	fileChannelBB.compact();
+	int fileRead = fc.read(fileChannelBB);
+	fileChannelBB.flip();
 
-        /*
-         * We ignore the return value here, we return the
-         * number of bytes actually consumed from the the file.
-         * We'll flush the output buffer before we start shutting down.
-         */
-        doWrite(fileChannelBB);
+	/*
+	 * We ignore the return value here, we return the
+	 * number of bytes actually consumed from the the file.
+	 * We'll flush the output buffer before we start shutting down.
+	 */
+	doWrite(fileChannelBB);
 
-        return fileRead;
+	return fileRead;
     }
 
     /*
@@ -581,16 +582,16 @@ needIO:
      * Return true when the fileChannelBB and outNetBB are empty.
      */
     boolean dataFlush() throws IOException {
-        boolean fileFlushed = true;
+	boolean fileFlushed = true;
 
-        if ((fileChannelBB != null) && fileChannelBB.hasRemaining()) {
-            doWrite(fileChannelBB);
-            fileFlushed = !fileChannelBB.hasRemaining();
-        } else if (outNetBB.hasRemaining()) {
-            tryFlush(outNetBB);
-        }
+	if ((fileChannelBB != null) && fileChannelBB.hasRemaining()) {
+	    doWrite(fileChannelBB);
+	    fileFlushed = !fileChannelBB.hasRemaining();
+	} else if (outNetBB.hasRemaining()) {
+	    tryFlush(outNetBB);
+	}
 
-        return (fileFlushed && !outNetBB.hasRemaining());
+	return (fileFlushed && !outNetBB.hasRemaining());
     }
 
     /*
@@ -603,36 +604,36 @@ needIO:
      */
     boolean shutdown() throws IOException {
 
-        if (!shutdown) {
-            sslEngine.closeOutbound();
-            shutdown = true;
-        }
+	if (!shutdown) {
+	    sslEngine.closeOutbound();
+	    shutdown = true;
+	}
 
-        if (outNetBB.hasRemaining() && tryFlush(outNetBB)) {
-            return false;
-        }
+	if (outNetBB.hasRemaining() && tryFlush(outNetBB)) {
+	    return false;
+	}
 
-        /*
-         * By RFC 2616, we can "fire and forget" our close_notify
-         * message, so that's what we'll do here.
-         */
-        outNetBB.clear();
-        SSLEngineResult result = sslEngine.wrap(hsBB, outNetBB);
-        if (result.getStatus() != Status.CLOSED) {
-            throw new SSLException("Improper close state");
-        }
-        outNetBB.flip();
+	/*
+	 * By RFC 2616, we can "fire and forget" our close_notify
+	 * message, so that's what we'll do here.
+	 */
+	outNetBB.clear();
+	SSLEngineResult result = sslEngine.wrap(hsBB, outNetBB);
+	if (result.getStatus() != Status.CLOSED) {
+	    throw new SSLException("Improper close state");
+	}
+	outNetBB.flip();
 
-        /*
-         * We won't wait for a select here, but if this doesn't work,
-         * we'll cycle back through on the next select.
-         */
-        if (outNetBB.hasRemaining()) {
-            tryFlush(outNetBB);
-        }
+	/*
+	 * We won't wait for a select here, but if this doesn't work,
+	 * we'll cycle back through on the next select.
+	 */
+	if (outNetBB.hasRemaining()) {
+	    tryFlush(outNetBB);
+	}
 
-        return (!outNetBB.hasRemaining() &&
-                (result.getHandshakeStatus() != HandshakeStatus.NEED_WRAP));
+	return (!outNetBB.hasRemaining() &&
+		(result.getHandshakeStatus() != HandshakeStatus.NEED_WRAP));
     }
 
     /*

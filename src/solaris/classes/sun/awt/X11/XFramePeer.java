@@ -162,7 +162,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         try {
             synchronized(getStateLock()) {
                 int width = dimensions.getClientSize().width;
-                if (menubarPeer != null) {
+                if (menubarPeer != null) {            
                     menubarPeer.reshape(0, 0, width, getMenuBarHeight());
                 }
             }
@@ -173,7 +173,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
 
     /**
      * In addition to reshaping menubarPeer (by using 'updateChildrenSizes')
-     * this method also performs some frame reaction on this (i.e. layouts
+     * this method also performs some frame reaction on this (i.e. layouts 
      * other frame children, if required)
      */
     final void reshapeMenubarPeer() {
@@ -231,7 +231,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             if (insLog.isLoggable(Level.FINER)) insLog.finer("Setting hints, flags " + XlibWrapper.hintsToString(hints.get_flags()));
             XlibWrapper.XSetWMNormalHints(XToolkit.getDisplay(), window, hints.pData);
         } finally {
-            XToolkit.awtUnlock();
+            XToolkit.awtUnlock();            
         }
     }
 
@@ -245,12 +245,12 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         }
         changeState(newState);
     }
-
+    
     void changeState(int newState) {
         int changed = state ^ newState;
         int changeIconic = changed & Frame.ICONIFIED;
         boolean iconic = (newState & Frame.ICONIFIED) != 0;
-        stateLog.log(Level.FINER, "Changing state, old state {0}, new state {1}(iconic {2})",
+        stateLog.log(Level.FINER, "Changing state, old state {0}, new state {1}(iconic {2})", 
                      new Object[] {Integer.valueOf(state), Integer.valueOf(newState), Boolean.valueOf(iconic)});
         if (changeIconic != 0 && iconic) {
             if (stateLog.isLoggable(Level.FINER)) stateLog.finer("Iconifying shell " + getShell() + ", this " + this + ", screen " + getScreenNumber());
@@ -281,7 +281,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         XPropertyEvent ev = xev.get_xproperty();
 
         log.log(Level.FINER, "Property change {0}", new Object[] {ev});
-        /*
+        /* 
          * Let's see if this is a window state protocol message, and
          * if it is - decode a new state in terms of java constants.
          */
@@ -289,7 +289,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         if (newState == null) {
             return;
         }
-
+        
         int changed = state ^ newState.intValue();
         if (changed == 0) {
             stateLog.finer("State is the same: " + state);
@@ -308,7 +308,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
                 content.purgeIconifiedExposeEvents();
                 handleDeiconify();
             }
-        }
+        }        
         handleStateChange(old_state, state);
     }
 
@@ -345,22 +345,22 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             XlibWrapper.XSetWMHints(XToolkit.getDisplay(), getWindow(), hints.pData);
         }
         finally {
-            XToolkit.awtUnlock();
+            XToolkit.awtUnlock();        
         }
     }
 
     public void dispose() {
         if (menubarPeer != null) {
-            menubarPeer.dispose();
+            menubarPeer.dispose();            
         }
         super.dispose();
     }
-
+    
     boolean isMaximized() {
         return (state & (Frame.MAXIMIZED_VERT  | Frame.MAXIMIZED_HORIZ)) != 0;
     }
 
-
+ 
 
 
     static final int CROSSHAIR_INSET = 5;
@@ -368,25 +368,25 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
     static final int BUTTON_Y = CROSSHAIR_INSET + 1;
     static final int BUTTON_W = 17;
     static final int BUTTON_H = 17;
-
+  
     static final int SYS_MENU_X = CROSSHAIR_INSET + 1;
     static final int SYS_MENU_CONTAINED_X = SYS_MENU_X + 5;
     static final int SYS_MENU_CONTAINED_Y = BUTTON_Y + 7;
     static final int SYS_MENU_CONTAINED_W = 8;
     static final int SYS_MENU_CONTAINED_H = 3;
-
+  
     static final int MAXIMIZE_X_DIFF = CROSSHAIR_INSET + BUTTON_W;
     static final int MAXIMIZE_CONTAINED_X_DIFF = MAXIMIZE_X_DIFF - 5;
     static final int MAXIMIZE_CONTAINED_Y = BUTTON_Y + 5;
     static final int MAXIMIZE_CONTAINED_W = 8;
     static final int MAXIMIZE_CONTAINED_H = 8;
-
+  
     static final int MINIMIZE_X_DIFF = MAXIMIZE_X_DIFF + BUTTON_W;
     static final int MINIMIZE_CONTAINED_X_DIFF = MINIMIZE_X_DIFF - 7;
     static final int MINIMIZE_CONTAINED_Y = BUTTON_Y + 7;
     static final int MINIMIZE_CONTAINED_W = 3;
     static final int MINIMIZE_CONTAINED_H = 3;
-
+  
     static final int TITLE_X = SYS_MENU_X + BUTTON_W;
     static final int TITLE_W_DIFF = BUTTON_W * 3 + CROSSHAIR_INSET * 2 - 1;
     static final int TITLE_MID_Y = BUTTON_Y + (BUTTON_H / 2);
@@ -433,7 +433,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             }
             g.drawLine(0, 0, fsize.width, 0);
             g.drawLine(0, 1, fsize.width - 1, 1);
-
+            
             // left outer
             // if (highlight.equals(Color.white)) {
             //     g.setColor(new Color(230, 230, 230));
@@ -443,19 +443,19 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             // }
             g.drawLine(0, 0, 0, fsize.height);
             g.drawLine(1, 0, 1, fsize.height - 1);
-
+            
             // bottom cross-hair
             g.setColor(highlight);
             g.drawLine(CROSSHAIR_INSET + 1, fsize.height - CROSSHAIR_INSET,
-                       fsize.width - CROSSHAIR_INSET,
+                       fsize.width - CROSSHAIR_INSET, 
                        fsize.height - CROSSHAIR_INSET);
-
+            
             // right cross-hair
             // g.setColor(highlight);
             g.drawLine(fsize.width - CROSSHAIR_INSET, CROSSHAIR_INSET + 1,
                        fsize.width - CROSSHAIR_INSET,
                        fsize.height - CROSSHAIR_INSET);
-
+            
             // bottom outer
             g.setColor(shadow);
             g.drawLine(1, fsize.height, fsize.width, fsize.height);
@@ -468,7 +468,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
 
             // top cross-hair
             // g.setColor(shadow);
-            g.drawLine(CROSSHAIR_INSET, CROSSHAIR_INSET,
+            g.drawLine(CROSSHAIR_INSET, CROSSHAIR_INSET, 
                        fsize.width - CROSSHAIR_INSET, CROSSHAIR_INSET);
 
             // left cross-hair
@@ -492,7 +492,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             // g.setColor(bg);
             g.fill3DRect(TITLE_X, BUTTON_Y, fsize.width - TITLE_W_DIFF, BUTTON_H,
                          true);
-
+        
             if (hasDecorations(XWindowAttributesData.AWT_DECOR_MINIMIZE)) {
 
                 // minimize button
@@ -521,13 +521,13 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             g.setFont(sysfont);
             FontMetrics sysfm = g.getFontMetrics();
             String ftitle = f.getTitle();
-            g.drawString(ftitle,
-                         ((TITLE_X + TITLE_X + fsize.width - TITLE_W_DIFF) / 2) -
+            g.drawString(ftitle, 
+                         ((TITLE_X + TITLE_X + fsize.width - TITLE_W_DIFF) / 2) - 
                          (sysfm.stringWidth(ftitle) / 2),
                          TITLE_MID_Y + sysfm.getMaxDescent());
         }
-
-        if (f.isResizable() &&
+            
+        if (f.isResizable() && 
             hasDecorations(XWindowAttributesData.AWT_DECOR_RESIZEH)) {
 
             // add resize cross hairs
@@ -581,7 +581,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
                        HORIZ_RESIZE_INSET + 1);
             // upper-right vert (highlight)
             // g.setColor(highlight);
-            g.drawLine(fsize.width - VERT_RESIZE_INSET, 2,
+            g.drawLine(fsize.width - VERT_RESIZE_INSET, 2, 
                        fsize.width - VERT_RESIZE_INSET, CROSSHAIR_INSET);
             // lower-left horiz (highlight)
             // g.setColor(highlight);
@@ -590,7 +590,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             // lower-left vert (highlight)
             // g.setColor(highlight);
             g.drawLine(VERT_RESIZE_INSET + 1,
-                       fsize.height - CROSSHAIR_INSET + 1,
+                       fsize.height - CROSSHAIR_INSET + 1, 
                        VERT_RESIZE_INSET + 1, fsize.height - 1);
             // lower-right horiz (highlight)
             // g.setColor(highlight);

@@ -74,6 +74,7 @@ import sun.security.provider.X509Factory;
  * @author Dave Brownell
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I% %G%
  * @see X509CertInfo
  */
 public class X509CertImpl extends X509Certificate implements DerEncoder {
@@ -113,7 +114,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
     // x509.info.version.value
     public static final String VERSION = NAME + DOT + INFO + DOT +
-                               X509CertInfo.VERSION + DOT +
+	                       X509CertInfo.VERSION + DOT +
                                CertificateVersion.VERSION;
 
     // x509.algorithm
@@ -127,10 +128,10 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     private boolean readOnly = false;
 
     // Certificate data, and its envelope
-    private byte[]              signedCert = null;
-    protected X509CertInfo      info = null;
-    protected AlgorithmId       algId = null;
-    protected byte[]            signature = null;
+    private byte[] 		signedCert = null;
+    protected X509CertInfo	info = null;
+    protected AlgorithmId	algId = null;
+    protected byte[]		signature = null;
 
     // recognized extension OIDS
     private static final String KEY_USAGE_OID = "2.5.29.15";
@@ -157,7 +158,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
     /**
      * PublicKey that has previously been used to verify
-     * the signature of this certificate. Null if the certificate has not
+     * the signature of this certificate. Null if the certificate has not 
      * yet been verified.
      */
     private PublicKey verifiedPublicKey;
@@ -173,7 +174,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * successful, if false, it failed.
      */
     private boolean verificationResult;
-
+    
     /**
      * Default constructor.
      */
@@ -196,10 +197,10 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
             parse(new DerValue(certData));
         } catch (IOException e) {
             signedCert = null;
-            CertificateException ce = new
-                CertificateException("Unable to initialize, " + e);
-            ce.initCause(e);
-            throw ce;
+	    CertificateException ce = new 
+		CertificateException("Unable to initialize, " + e);
+	    ce.initCause(e);
+	    throw ce;
         }
     }
 
@@ -216,40 +217,40 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     public X509CertImpl(InputStream in) throws CertificateException {
 
-        DerValue der = null;
+	DerValue der = null;
 
-        BufferedInputStream inBuffered = new BufferedInputStream(in);
+	BufferedInputStream inBuffered = new BufferedInputStream(in);
 
-        // First try reading stream as HEX-encoded DER-encoded bytes,
-        // since not mistakable for raw DER
-        try {
-            inBuffered.mark(Integer.MAX_VALUE);
-            der = readRFC1421Cert(inBuffered);
-        } catch (IOException ioe) {
-            try {
-                // Next, try reading stream as raw DER-encoded bytes
-                inBuffered.reset();
-                der = new DerValue(inBuffered);
-            } catch (IOException ioe1) {
-                CertificateException ce = new
-                    CertificateException("Input stream must be " +
-                                         "either DER-encoded bytes " +
-                                         "or RFC1421 hex-encoded " +
-                                         "DER-encoded bytes: " +
-                                         ioe1.getMessage());
-                ce.initCause(ioe1);
-                throw ce;
-            }
-        }
+	// First try reading stream as HEX-encoded DER-encoded bytes, 
+	// since not mistakable for raw DER
+	try {
+	    inBuffered.mark(Integer.MAX_VALUE);
+	    der = readRFC1421Cert(inBuffered);
+	} catch (IOException ioe) {
+	    try {
+		// Next, try reading stream as raw DER-encoded bytes
+		inBuffered.reset();
+		der = new DerValue(inBuffered);
+	    } catch (IOException ioe1) {
+		CertificateException ce = new 
+		    CertificateException("Input stream must be " +
+				         "either DER-encoded bytes " +
+					 "or RFC1421 hex-encoded " +
+					 "DER-encoded bytes: " +
+					 ioe1.getMessage());
+		ce.initCause(ioe1);
+		throw ce;
+	    }
+	}
         try {
             parse(der);
         } catch (IOException ioe) {
             signedCert = null;
-            CertificateException ce = new
-                CertificateException("Unable to parse DER value of " +
-                                     "certificate, " + ioe);
-            ce.initCause(ioe);
-            throw ce;
+            CertificateException ce = new 
+		CertificateException("Unable to parse DER value of " +
+				     "certificate, " + ioe);
+	    ce.initCause(ioe);
+	    throw ce;
         }
     }
 
@@ -258,48 +259,48 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      *
      * @param in InputStream to read
      * @returns DerValue corresponding to decoded HEX-encoded bytes
-     * @throws IOException if stream can not be interpreted as RFC1421
+     * @throws IOException if stream can not be interpreted as RFC1421 
      *                     encoded bytes
      */
     private DerValue readRFC1421Cert(InputStream in) throws IOException {
-        DerValue der = null;
-        String line = null;
-        BufferedReader certBufferedReader =
+	DerValue der = null;
+	String line = null;
+	BufferedReader certBufferedReader =
             new BufferedReader(new InputStreamReader(in, "ASCII"));
-        try {
-            line = certBufferedReader.readLine();
-        } catch (IOException ioe1) {
-            throw new IOException("Unable to read InputStream: " +
-                                  ioe1.getMessage());
-        }
-        if (line.equals(X509Factory.BEGIN_CERT)) {
-            /* stream appears to be hex-encoded bytes */
-            BASE64Decoder         decoder   = new BASE64Decoder();
-            ByteArrayOutputStream decstream = new ByteArrayOutputStream();
-            try {
-                while ((line = certBufferedReader.readLine()) != null) {
-                    if (line.equals(X509Factory.END_CERT)) {
-                        der = new DerValue(decstream.toByteArray());
-                        break;
-                    } else {
-                        decstream.write(decoder.decodeBuffer(line));
-                    }
-                }
-            } catch (IOException ioe2) {
-                throw new IOException("Unable to read InputStream: "
-                                      + ioe2.getMessage());
-            }
-        } else {
-            throw new IOException("InputStream is not RFC1421 hex-encoded " +
-                                  "DER bytes");
-        }
-        return der;
+	try {
+	    line = certBufferedReader.readLine();
+	} catch (IOException ioe1) {
+	    throw new IOException("Unable to read InputStream: " +
+				  ioe1.getMessage());
+	}
+	if (line.equals(X509Factory.BEGIN_CERT)) {
+	    /* stream appears to be hex-encoded bytes */
+	    BASE64Decoder         decoder   = new BASE64Decoder();
+	    ByteArrayOutputStream decstream = new ByteArrayOutputStream();
+	    try {
+		while ((line = certBufferedReader.readLine()) != null) {
+		    if (line.equals(X509Factory.END_CERT)) {
+			der = new DerValue(decstream.toByteArray());
+			break;
+		    } else {
+			decstream.write(decoder.decodeBuffer(line));
+		    }
+		}
+	    } catch (IOException ioe2) {
+		throw new IOException("Unable to read InputStream: " 
+				      + ioe2.getMessage());
+	    }
+	} else {
+	    throw new IOException("InputStream is not RFC1421 hex-encoded " +
+				  "DER bytes");
+	}
+	return der;
     }
 
     /**
      * Construct an initialized X509 Certificate. The certificate is stored
      * in raw form and has to be signed to be useful.
-     *
+     *   
      * @params info the X509CertificateInfo which the Certificate is to be
      *              created from.
      */
@@ -311,19 +312,19 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * Unmarshal a certificate from its encoded form, parsing a DER value.
      * This form of constructor is used by agents which need to examine
      * and use certificate contents.
-     *
+     *   
      * @param derVal the der value containing the encoded cert.
      * @exception CertificateException on parsing and initialization errors.
-     */
+     */  
     public X509CertImpl(DerValue derVal) throws CertificateException {
         try {
             parse(derVal);
         } catch (IOException e) {
             signedCert = null;
-            CertificateException ce = new
-                CertificateException("Unable to initialize, " + e);
-            ce.initCause(e);
-            throw ce;
+            CertificateException ce = new 
+		CertificateException("Unable to initialize, " + e);
+	    ce.initCause(e);
+	    throw ce;
         }
     }
 
@@ -356,7 +357,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     public void derEncode(OutputStream out) throws IOException {
         if (signedCert == null)
             throw new IOException("Null certificate to encode");
-        out.write(signedCert.clone());
+	out.write(signedCert.clone());
     }
 
     /**
@@ -364,13 +365,13 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * assumed that each certificate type would have only a single
      * form of encoding; for example, X.509 certificates would
      * be encoded as ASN.1 DER.
-     *
+     *   
      * @exception CertificateEncodingException if an encoding error occurs.
-     */
+     */  
     public byte[] getEncoded() throws CertificateEncodingException {
-        return getEncodedInternal().clone();
+	return getEncodedInternal().clone();
     }
-
+    
     /**
      * Returned the encoding as an uncloned byte array. Callers must
      * guarantee that they neither modify it nor expose it to untrusted
@@ -380,8 +381,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         if (signedCert == null) {
             throw new CertificateEncodingException(
                           "Null certificate to encode");
-        }
-        return signedCert;
+	}
+	return signedCert;
     }
 
     /**
@@ -391,7 +392,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * it represents.
      *
      * @param key the public key used for verification.
-     *
+     *   
      * @exception InvalidKeyException on incorrect key.
      * @exception NoSuchAlgorithmException on unsupported signature
      * algorithms.
@@ -414,7 +415,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      *
      * @param key the public key used for verification.
      * @param sigProvider the name of the provider.
-     *
+     *   
      * @exception NoSuchAlgorithmException on unsupported signature
      * algorithms.
      * @exception InvalidKeyException on incorrect key.
@@ -423,47 +424,47 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * @exception CertificateException on encoding errors.
      */
     public synchronized void verify(PublicKey key, String sigProvider)
-            throws CertificateException, NoSuchAlgorithmException,
-            InvalidKeyException, NoSuchProviderException, SignatureException {
-        if (sigProvider == null) {
-            sigProvider = "";
-        }
-        if ((verifiedPublicKey != null) && verifiedPublicKey.equals(key)) {
-            // this certificate has already been verified using
-            // this public key. Make sure providers match, too.
-            if (sigProvider.equals(verifiedProvider)) {
-                if (verificationResult) {
-                    return;
-                } else {
-                    throw new SignatureException("Signature does not match.");
-                }
-            }
-        }
+	    throws CertificateException, NoSuchAlgorithmException,
+	    InvalidKeyException, NoSuchProviderException, SignatureException {
+	if (sigProvider == null) {
+	    sigProvider = "";
+	}
+	if ((verifiedPublicKey != null) && verifiedPublicKey.equals(key)) {
+	    // this certificate has already been verified using
+	    // this public key. Make sure providers match, too.
+	    if (sigProvider.equals(verifiedProvider)) {
+		if (verificationResult) {
+		    return;
+		} else {
+		    throw new SignatureException("Signature does not match.");
+		}
+	    }
+	}
         if (signedCert == null) {
             throw new CertificateEncodingException("Uninitialized certificate");
         }
         // Verify the signature ...
         Signature sigVerf = null;
-        if (sigProvider.length() == 0) {
-            sigVerf = Signature.getInstance(algId.getName());
-        } else {
-            sigVerf = Signature.getInstance(algId.getName(), sigProvider);
-        }
+	if (sigProvider.length() == 0) {
+	    sigVerf = Signature.getInstance(algId.getName());
+	} else {
+	    sigVerf = Signature.getInstance(algId.getName(), sigProvider);
+	}
         sigVerf.initVerify(key);
 
         byte[] rawCert = info.getEncodedInfo();
         sigVerf.update(rawCert, 0, rawCert.length);
-
-        // verify may throw SignatureException for invalid encodings, etc.
-        verificationResult = sigVerf.verify(signature);
-        verifiedPublicKey = key;
-        verifiedProvider = sigProvider;
-
+	
+	// verify may throw SignatureException for invalid encodings, etc.
+	verificationResult = sigVerf.verify(signature);
+	verifiedPublicKey = key;
+	verifiedProvider = sigProvider;
+      
         if (verificationResult == false) {
             throw new SignatureException("Signature does not match.");
         }
     }
-
+  
     /**
      * Creates an X.509 certificate, and signs it using the given key
      * (associating a signature algorithm and an X.500 name).
@@ -518,7 +519,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
             sigEngine.initSign(key);
 
-                                // in case the name is reset
+				// in case the name is reset
             algId = AlgorithmId.get(sigEngine.getAlgorithm());
 
             DerOutputStream out = new DerOutputStream();
@@ -549,22 +550,22 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     /**
      * Checks that the certificate is currently valid, i.e. the current
      * time is within the specified validity period.
-     *
+     * 
      * @exception CertificateExpiredException if the certificate has expired.
      * @exception CertificateNotYetValidException if the certificate is not
      * yet valid.
-     */
+     */  
     public void checkValidity()
     throws CertificateExpiredException, CertificateNotYetValidException {
         Date date = new Date();
         checkValidity(date);
     }
-
+ 
     /**
-     * Checks that the specified date is within the certificate's
-     * validity period, or basically if the certificate would be
-     * valid at the specified date/time.
-     *
+     * Checks that the specified date is within the certificate's 
+     * validity period, or basically if the certificate would be 
+     * valid at the specified date/time. 
+     * 
      * @param date the Date to check against to see if this certificate
      *        is valid at that date/time.
      *
@@ -610,32 +611,32 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         id = attr.getPrefix();
 
         if (id.equalsIgnoreCase(INFO)) {
-            if (info == null) {
-                return null;
-            }
-            if (attr.getSuffix() != null) {
-                try {
-                    return info.get(attr.getSuffix());
-                } catch (IOException e) {
-                    throw new CertificateParsingException(e.toString());
-                } catch (CertificateException e) {
-                    throw new CertificateParsingException(e.toString());
-                }
-            } else {
-                return info;
-            }
+	    if (info == null) {
+	        return null;
+	    }
+	    if (attr.getSuffix() != null) {
+		try {
+		    return info.get(attr.getSuffix());
+		} catch (IOException e) {
+		    throw new CertificateParsingException(e.toString());
+		} catch (CertificateException e) {
+		    throw new CertificateParsingException(e.toString());
+		}
+	    } else {
+		return info;
+	    }
         } else if (id.equalsIgnoreCase(ALG_ID)) {
             return(algId);
         } else if (id.equalsIgnoreCase(SIGNATURE)) {
-            if (signature != null)
-                return signature.clone();
-            else
+	    if (signature != null)
+		return signature.clone();
+	    else
                 return null;
         } else if (id.equalsIgnoreCase(SIGNED_CERT)) {
-            if (signedCert != null)
-                return signedCert.clone();
-            else
-                return null;
+	    if (signedCert != null)
+	        return signedCert.clone();
+	    else
+		return null;
         } else {
             throw new CertificateParsingException("Attribute name not "
                  + "recognized or get() not allowed for the same: " + id);
@@ -668,14 +669,14 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
         if (id.equalsIgnoreCase(INFO)) {
             if (attr.getSuffix() == null) {
-                if (!(obj instanceof X509CertInfo)) {
-                    throw new CertificateException("Attribute value should"
+	        if (!(obj instanceof X509CertInfo)) {
+	            throw new CertificateException("Attribute value should"
                                     + " be of type X509CertInfo.");
-                }
-                info = (X509CertInfo)obj;
+	        }
+	        info = (X509CertInfo)obj;
                 signedCert = null;  //reset this as certificate data has changed
             } else {
-                info.set(attr.getSuffix(), obj);
+	        info.set(attr.getSuffix(), obj);
                 signedCert = null;  //reset this as certificate data has changed
             }
         } else {
@@ -710,9 +711,9 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
         if (id.equalsIgnoreCase(INFO)) {
             if (attr.getSuffix() != null) {
-                info = null;
+	        info = null;
             } else {
-                info.delete(attr.getSuffix());
+	        info.delete(attr.getSuffix());
             }
         } else if (id.equalsIgnoreCase(ALG_ID)) {
             algId = null;
@@ -774,9 +775,9 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
     /**
      * Gets the publickey from this certificate.
-     *
+     *   
      * @return the publickey.
-     */
+     */  
     public PublicKey getPublicKey() {
         if (info == null)
             return null;
@@ -812,21 +813,21 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * @return the serial number.
      */
     public BigInteger getSerialNumber() {
-        SerialNumber ser = getSerialNumberObject();
+	SerialNumber ser = getSerialNumberObject();
 
-        return ser != null ? ser.getNumber() : null;
+	return ser != null ? ser.getNumber() : null;
     }
 
     /**
-     * Gets the serial number from the certificate as
+     * Gets the serial number from the certificate as 
      * a SerialNumber object.
      *
      * @return the serial number.
      */
     public SerialNumber getSerialNumberObject() {
-        if (info == null)
-            return null;
-        try {
+	if (info == null)
+	    return null;
+	try {
             SerialNumber ser = (SerialNumber)info.get(
                               CertificateSerialNumber.NAME + DOT +
                               CertificateSerialNumber.NUMBER);
@@ -862,8 +863,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     public X500Principal getSubjectX500Principal() {
         if (info == null) {
-            return null;
-        }
+	    return null;
+	}
         try {
             X500Principal subject = (X500Principal)info.get(
                                 CertificateSubjectName.NAME + DOT +
@@ -891,7 +892,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
             return null;
         }
     }
-
+    
     /**
      * Get issuer name as X500Principal. Overrides implementation in
      * X509Certificate with a slightly more efficient version that is
@@ -899,8 +900,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     public X500Principal getIssuerX500Principal() {
         if (info == null) {
-            return null;
-        }
+	    return null;
+	}
         try {
             X500Principal issuer = (X500Principal)info.get(
                                 CertificateIssuerName.NAME + DOT +
@@ -947,12 +948,12 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
     /**
      * Gets the DER encoded certificate informations, the
-     * <code>tbsCertificate</code> from this certificate.
-     * This can be used to verify the signature independently.
-     *
+     * <code>tbsCertificate</code> from this certificate. 
+     * This can be used to verify the signature independently.   
+     *   
      * @return the DER encoded certificate information.
      * @exception CertificateEncodingException if an encoding error occurs.
-     */
+     */  
     public byte[] getTBSCertificate() throws CertificateEncodingException {
         if (info != null) {
             return info.getEncodedInfo();
@@ -1002,10 +1003,10 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     /**
      * Gets the DER encoded signature algorithm parameters from this
      * certificate's signature algorithm.
-     *
+     *   
      * @return the DER encoded signature algorithm parameters, or
      *         null if no parameters are present.
-     */
+     */  
     public byte[] getSigAlgParams() {
         if (algId == null)
             return null;
@@ -1060,53 +1061,53 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
 
     /**
      * Get AuthorityKeyIdentifier extension
-     * @return AuthorityKeyIdentifier object or null (if no such object
+     * @return AuthorityKeyIdentifier object or null (if no such object 
      * in certificate)
      */
-    public AuthorityKeyIdentifierExtension getAuthorityKeyIdentifierExtension()
-    {
+    public AuthorityKeyIdentifierExtension getAuthorityKeyIdentifierExtension() 
+    { 
         return (AuthorityKeyIdentifierExtension)
-            getExtension(PKIXExtensions.AuthorityKey_Id);
+	    getExtension(PKIXExtensions.AuthorityKey_Id);
     }
 
     /**
      * Get BasicConstraints extension
-     * @return BasicConstraints object or null (if no such object in
+     * @return BasicConstraints object or null (if no such object in 
      * certificate)
      */
     public BasicConstraintsExtension getBasicConstraintsExtension() {
-        return (BasicConstraintsExtension)
-            getExtension(PKIXExtensions.BasicConstraints_Id);
+	return (BasicConstraintsExtension)
+	    getExtension(PKIXExtensions.BasicConstraints_Id);
     }
 
     /**
      * Get CertificatePoliciesExtension
-     * @return CertificatePoliciesExtension or null (if no such object in
+     * @return CertificatePoliciesExtension or null (if no such object in 
      * certificate)
      */
     public CertificatePoliciesExtension getCertificatePoliciesExtension() {
-        return (CertificatePoliciesExtension)
-            getExtension(PKIXExtensions.CertificatePolicies_Id);
+	return (CertificatePoliciesExtension)
+	    getExtension(PKIXExtensions.CertificatePolicies_Id);
     }
 
     /**
      * Get ExtendedKeyUsage extension
-     * @return ExtendedKeyUsage extension object or null (if no such object
+     * @return ExtendedKeyUsage extension object or null (if no such object 
      * in certificate)
      */
     public ExtendedKeyUsageExtension getExtendedKeyUsageExtension() {
-        return (ExtendedKeyUsageExtension)
-            getExtension(PKIXExtensions.ExtendedKeyUsage_Id);
+	return (ExtendedKeyUsageExtension)
+	    getExtension(PKIXExtensions.ExtendedKeyUsage_Id);
     }
 
     /**
      * Get IssuerAlternativeName extension
-     * @return IssuerAlternativeName object or null (if no such object in
+     * @return IssuerAlternativeName object or null (if no such object in 
      * certificate)
      */
     public IssuerAlternativeNameExtension getIssuerAlternativeNameExtension() {
-        return (IssuerAlternativeNameExtension)
-            getExtension(PKIXExtensions.IssuerAlternativeName_Id);
+	return (IssuerAlternativeNameExtension)
+	    getExtension(PKIXExtensions.IssuerAlternativeName_Id);
     }
 
     /**
@@ -1114,28 +1115,28 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * @return NameConstraints object or null (if no such object in certificate)
      */
     public NameConstraintsExtension getNameConstraintsExtension() {
-        return (NameConstraintsExtension)
-            getExtension(PKIXExtensions.NameConstraints_Id);
+	return (NameConstraintsExtension)
+	    getExtension(PKIXExtensions.NameConstraints_Id);
     }
 
     /**
      * Get PolicyConstraints extension
-     * @return PolicyConstraints object or null (if no such object in
+     * @return PolicyConstraints object or null (if no such object in 
      * certificate)
      */
     public PolicyConstraintsExtension getPolicyConstraintsExtension() {
-        return (PolicyConstraintsExtension)
-            getExtension(PKIXExtensions.PolicyConstraints_Id);
+	return (PolicyConstraintsExtension)
+	    getExtension(PKIXExtensions.PolicyConstraints_Id);
     }
 
     /**
      * Get PolicyMappingsExtension extension
-     * @return PolicyMappingsExtension object or null (if no such object
+     * @return PolicyMappingsExtension object or null (if no such object 
      * in certificate)
      */
     public PolicyMappingsExtension getPolicyMappingsExtension() {
-        return (PolicyMappingsExtension)
-            getExtension(PKIXExtensions.PolicyMappings_Id);
+	return (PolicyMappingsExtension)
+	    getExtension(PKIXExtensions.PolicyMappings_Id);
     }
 
     /**
@@ -1143,45 +1144,45 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * @return PrivateKeyUsage object or null (if no such object in certificate)
      */
     public PrivateKeyUsageExtension getPrivateKeyUsageExtension() {
-        return (PrivateKeyUsageExtension)
-            getExtension(PKIXExtensions.PrivateKeyUsage_Id);
+	return (PrivateKeyUsageExtension)
+	    getExtension(PKIXExtensions.PrivateKeyUsage_Id);
     }
 
     /**
      * Get SubjectAlternativeName extension
-     * @return SubjectAlternativeName object or null (if no such object in
+     * @return SubjectAlternativeName object or null (if no such object in 
      * certificate)
      */
-    public SubjectAlternativeNameExtension getSubjectAlternativeNameExtension()
+    public SubjectAlternativeNameExtension getSubjectAlternativeNameExtension() 
     {
-        return (SubjectAlternativeNameExtension)
-            getExtension(PKIXExtensions.SubjectAlternativeName_Id);
+	return (SubjectAlternativeNameExtension)
+	    getExtension(PKIXExtensions.SubjectAlternativeName_Id);
     }
 
     /**
      * Get SubjectKeyIdentifier extension
-     * @return SubjectKeyIdentifier object or null (if no such object in
+     * @return SubjectKeyIdentifier object or null (if no such object in 
      * certificate)
      */
     public SubjectKeyIdentifierExtension getSubjectKeyIdentifierExtension() {
-        return (SubjectKeyIdentifierExtension)
-            getExtension(PKIXExtensions.SubjectKey_Id);
+	return (SubjectKeyIdentifierExtension)
+	    getExtension(PKIXExtensions.SubjectKey_Id);
     }
 
     /**
      * Get CRLDistributionPoints extension
-     * @return CRLDistributionPoints object or null (if no such object in
+     * @return CRLDistributionPoints object or null (if no such object in 
      * certificate)
      */
     public CRLDistributionPointsExtension getCRLDistributionPointsExtension() {
-        return (CRLDistributionPointsExtension)
-            getExtension(PKIXExtensions.CRLDistributionPoints_Id);
+	return (CRLDistributionPointsExtension)
+	    getExtension(PKIXExtensions.CRLDistributionPoints_Id);
     }
 
-    /**
+    /** 
      * Return true if a critical extension is found that is
-     * not supported, otherwise return false.
-     */
+     * not supported, otherwise return false. 
+     */   
     public boolean hasUnsupportedCriticalExtension() {
         if (info == null)
             return false;
@@ -1190,54 +1191,54 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                                          CertificateExtensions.NAME);
             if (exts == null)
                 return false;
-            return exts.hasUnsupportedCriticalExtension();
+            return exts.hasUnsupportedCriticalExtension(); 
         } catch (Exception e) {
             return false;
         }
-    }
-
+    } 
+ 
     /**
      * Gets a Set of the extension(s) marked CRITICAL in the
      * certificate. In the returned set, each extension is
      * represented by its OID string.
-     *
+     *   
      * @return a set of the extension oid strings in the
      * certificate that are marked critical.
-     */
+     */  
     public Set<String> getCriticalExtensionOIDs() {
         if (info == null) {
             return null;
-        }
+	}
         try {
             CertificateExtensions exts = (CertificateExtensions)info.get(
                                          CertificateExtensions.NAME);
             if (exts == null) {
                 return null;
-            }
+	    }
             Set<String> extSet = new HashSet<String>();
-            for (Extension ex : exts.getAllExtensions()) {
+	    for (Extension ex : exts.getAllExtensions()) {
                 if (ex.isCritical()) {
                     extSet.add(ex.getExtensionId().toString());
-                }
+		}
             }
             return extSet;
         } catch (Exception e) {
             return null;
         }
     }
-
+   
     /**
      * Gets a Set of the extension(s) marked NON-CRITICAL in the
      * certificate. In the returned set, each extension is
      * represented by its OID string.
-     *
+     *   
      * @return a set of the extension oid strings in the
      * certificate that are NOT marked critical.
-     */
+     */  
     public Set<String> getNonCriticalExtensionOIDs() {
         if (info == null) {
             return null;
-        }
+	}
         try {
             CertificateExtensions exts = (CertificateExtensions)info.get(
                                          CertificateExtensions.NAME);
@@ -1245,12 +1246,12 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                 return null;
             }
             Set<String> extSet = new HashSet<String>();
-            for (Extension ex : exts.getAllExtensions()) {
+	    for (Extension ex : exts.getAllExtensions()) {
                 if (!ex.isCritical()) {
                     extSet.add(ex.getExtensionId().toString());
-                }
+		}
             }
-            extSet.addAll(exts.getUnparseableExtensions().keySet());
+	    extSet.addAll(exts.getUnparseableExtensions().keySet());
             return extSet;
         } catch (Exception e) {
             return null;
@@ -1265,52 +1266,52 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      *         extension
      */
     public Extension getExtension(ObjectIdentifier oid) {
-        if (info == null) {
-            return null;
-        }
-        try {
-            CertificateExtensions extensions;
-            try {
-                extensions = (CertificateExtensions)info.get(CertificateExtensions.NAME);
-            } catch (CertificateException ce) {
-                return null;
-            }
-            if (extensions == null) {
-                return null;
-            } else {
-                for (Extension ex : extensions.getAllExtensions()) {
-                    if (ex.getExtensionId().equals(oid)) {
-                        //XXXX May want to consider cloning this
-                        return ex;
-                    }
-                }
-                /* no such extension in this certificate */
-                return null;
-            }
-        } catch (IOException ioe) {
-            return null;
-        }
+	if (info == null) {
+	    return null;
+	}
+	try {
+	    CertificateExtensions extensions;
+	    try {
+		extensions = (CertificateExtensions)info.get(CertificateExtensions.NAME);
+	    } catch (CertificateException ce) {
+		return null;
+	    }
+	    if (extensions == null) {
+		return null;
+	    } else {
+		for (Extension ex : extensions.getAllExtensions()) {
+		    if (ex.getExtensionId().equals(oid)) {
+			//XXXX May want to consider cloning this
+			return ex;
+		    }
+		}
+		/* no such extension in this certificate */
+  		return null;
+  	    }
+	} catch (IOException ioe) {
+	    return null;
+	}
     }
 
     public Extension getUnparseableExtension(ObjectIdentifier oid) {
-        if (info == null) {
-            return null;
-        }
-        try {
-            CertificateExtensions extensions;
-            try {
-                extensions = (CertificateExtensions)info.get(CertificateExtensions.NAME);
-            } catch (CertificateException ce) {
-                return null;
-            }
-            if (extensions == null) {
-                return null;
-            } else {
+	if (info == null) {
+	    return null;
+	}
+	try {
+	    CertificateExtensions extensions;
+	    try {
+		extensions = (CertificateExtensions)info.get(CertificateExtensions.NAME);
+	    } catch (CertificateException ce) {
+		return null;
+	    }
+	    if (extensions == null) {
+		return null;
+	    } else {
                 return extensions.getUnparseableExtensions().get(oid.toString());
-            }
-        } catch (IOException ioe) {
-            return null;
-        }
+  	    }
+	} catch (IOException ioe) {
+	    return null;
+	}
     }
 
     /**
@@ -1321,19 +1322,19 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     public byte[] getExtensionValue(String oid) {
         try {
-            ObjectIdentifier findOID = new ObjectIdentifier(oid);
+	    ObjectIdentifier findOID = new ObjectIdentifier(oid);
             String extAlias = OIDMap.getName(findOID);
             Extension certExt = null;
-            CertificateExtensions exts = (CertificateExtensions)info.get(
-                                     CertificateExtensions.NAME);
+	    CertificateExtensions exts = (CertificateExtensions)info.get(
+				     CertificateExtensions.NAME);
 
             if (extAlias == null) { // may be unknown
                 // get the extensions, search thru' for this oid
                 if (exts == null) {
                     return null;
-                }
-
-                for (Extension ex : exts.getAllExtensions()) {
+		}
+		
+		for (Extension ex : exts.getAllExtensions()) {
                     ObjectIdentifier inCertOID = ex.getExtensionId();
                     if (inCertOID.equals(findOID)) {
                         certExt = ex;
@@ -1341,24 +1342,24 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                     }
                 }
             } else { // there's sub-class that can handle this extension
-                try {
-                    certExt = (Extension)this.get(extAlias);
-                } catch (CertificateException e) {
-                    // get() throws an Exception instead of returning null, ignore
-                }
+		try {
+		    certExt = (Extension)this.get(extAlias);
+		} catch (CertificateException e) {
+		    // get() throws an Exception instead of returning null, ignore
+		}
             }
             if (certExt == null) {
-                if (exts != null) {
-                    certExt = exts.getUnparseableExtensions().get(oid);
-                }
-                if (certExt == null) {
-                    return null;
-                }
-            }
+		if (exts != null) {
+		    certExt = exts.getUnparseableExtensions().get(oid);
+		}
+		if (certExt == null) {
+		    return null;
+		}
+	    }
             byte[] extData = certExt.getExtensionValue();
             if (extData == null) {
                 return null;
-            }
+	    }
             DerOutputStream out = new DerOutputStream();
             out.putOctetString(extData);
             return out.toByteArray();
@@ -1371,7 +1372,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * Get a boolean array representing the bits of the KeyUsage extension,
      * (oid = 2.5.29.15).
      * @return the bit values of this extension as an array of booleans.
-     */
+     */  
     public boolean[] getKeyUsage() {
         try {
             String extAlias = OIDMap.getName(PKIXExtensions.KeyUsage_Id);
@@ -1383,12 +1384,12 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
                 return null;
 
             boolean[] ret = certExt.getBits();
-            if (ret.length < NUM_STANDARD_KEY_USAGE) {
-                boolean[] usageBits = new boolean[NUM_STANDARD_KEY_USAGE];
-                System.arraycopy(ret, 0, usageBits, 0, ret.length);
-                ret = usageBits;
-            }
-            return ret;
+	    if (ret.length < NUM_STANDARD_KEY_USAGE) {	 
+		boolean[] usageBits = new boolean[NUM_STANDARD_KEY_USAGE];
+		System.arraycopy(ret, 0, usageBits, 0, ret.length);
+		ret = usageBits;
+	    }
+	    return ret;
         } catch (Exception e) {
             return null;
         }
@@ -1401,18 +1402,18 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * values.
      */
     public synchronized List<String> getExtendedKeyUsage()
-        throws CertificateParsingException {
-        if (readOnly && extKeyUsage != null) {
-            return extKeyUsage;
-        } else {
-            ExtendedKeyUsageExtension ext = getExtendedKeyUsageExtension();
-            if (ext == null) {
-                return null;
-            }
-            extKeyUsage =
-                Collections.unmodifiableList(ext.getExtendedKeyUsage());
-            return extKeyUsage;
-        }
+	throws CertificateParsingException {
+	if (readOnly && extKeyUsage != null) {
+	    return extKeyUsage;
+	} else {
+	    ExtendedKeyUsageExtension ext = getExtendedKeyUsageExtension();
+	    if (ext == null) {
+		return null;
+	    }
+	    extKeyUsage =
+		Collections.unmodifiableList(ext.getExtendedKeyUsage());
+	    return extKeyUsage;
+	}
     }
 
     /**
@@ -1422,23 +1423,23 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * provide among other things caching for better performance.
      */
     public static List<String> getExtendedKeyUsage(X509Certificate cert)
-        throws CertificateParsingException {
-        try {
-            byte[] ext = cert.getExtensionValue(EXTENDED_KEY_USAGE_OID);
-            if (ext == null)
-                return null;
-            DerValue val = new DerValue(ext);
-            byte[] data = val.getOctetString();
-
-            ExtendedKeyUsageExtension ekuExt =
-                new ExtendedKeyUsageExtension(Boolean.FALSE, data);
-            return Collections.unmodifiableList(ekuExt.getExtendedKeyUsage());
-        } catch (IOException ioe) {
-            CertificateParsingException cpe =
-                new CertificateParsingException();
-            cpe.initCause(ioe);
-            throw cpe;
-        }
+	throws CertificateParsingException {
+	try {
+	    byte[] ext = cert.getExtensionValue(EXTENDED_KEY_USAGE_OID);
+	    if (ext == null)
+		return null;
+	    DerValue val = new DerValue(ext);
+	    byte[] data = val.getOctetString();
+	    
+	    ExtendedKeyUsageExtension ekuExt =
+		new ExtendedKeyUsageExtension(Boolean.FALSE, data);
+	    return Collections.unmodifiableList(ekuExt.getExtendedKeyUsage());
+	} catch (IOException ioe) {
+	    CertificateParsingException cpe =
+		new CertificateParsingException();
+	    cpe.initCause(ioe);
+	    throw cpe;
+	}
     }
 
     /**
@@ -1451,8 +1452,8 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
             String extAlias = OIDMap.getName(PKIXExtensions.BasicConstraints_Id);
             if (extAlias == null)
                 return -1;
-            BasicConstraintsExtension certExt =
-                        (BasicConstraintsExtension)this.get(extAlias);
+	    BasicConstraintsExtension certExt =
+		        (BasicConstraintsExtension)this.get(extAlias);	    
             if (certExt == null)
                 return -1;
 
@@ -1468,9 +1469,9 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     }
 
     /**
-     * Converts a GeneralNames structure into an immutable Collection of
-     * alternative names (subject or issuer) in the form required by
-     * {@link #getSubjectAlternativeNames} or
+     * Converts a GeneralNames structure into an immutable Collection of 
+     * alternative names (subject or issuer) in the form required by 
+     * {@link #getSubjectAlternativeNames} or 
      * {@link #getIssuerAlternativeNames}.
      *
      * @param names the GeneralNames to be converted
@@ -1478,85 +1479,85 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      */
     private static Collection<List<?>> makeAltNames(GeneralNames names) {
         if (names.isEmpty()) {
-            return Collections.<List<?>>emptySet();
-        }
-        Set<List<?>> newNames = new HashSet<List<?>>();
-        for (GeneralName gname : names.names()) {
-            GeneralNameInterface name = gname.getName();
-            List<Object> nameEntry = new ArrayList<Object>(2);
-            nameEntry.add(Integer.valueOf(name.getType()));
+	    return Collections.<List<?>>emptySet();
+	}
+	Set<List<?>> newNames = new HashSet<List<?>>();
+	for (GeneralName gname : names.names()) {
+	    GeneralNameInterface name = gname.getName();
+	    List<Object> nameEntry = new ArrayList<Object>(2);
+	    nameEntry.add(Integer.valueOf(name.getType()));
             switch (name.getType()) {
             case GeneralNameInterface.NAME_RFC822:
-                nameEntry.add(((RFC822Name) name).getName());
+       	        nameEntry.add(((RFC822Name) name).getName());
                 break;
-            case GeneralNameInterface.NAME_DNS:
-                nameEntry.add(((DNSName) name).getName());
+       	    case GeneralNameInterface.NAME_DNS:
+       	        nameEntry.add(((DNSName) name).getName());
                 break;
             case GeneralNameInterface.NAME_DIRECTORY:
-                nameEntry.add(((X500Name) name).getRFC2253Name());
+       	        nameEntry.add(((X500Name) name).getRFC2253Name());
                 break;
             case GeneralNameInterface.NAME_URI:
-                nameEntry.add(((URIName) name).getName());
+     	        nameEntry.add(((URIName) name).getName());
                 break;
             case GeneralNameInterface.NAME_IP:
-                try {
-                    nameEntry.add(((IPAddressName) name).getName());
-                } catch (IOException ioe) {
-                    // IPAddressName in cert is bogus
-                    throw new RuntimeException("IPAddress cannot be parsed",
-                        ioe);
-                }
+		try {
+       	            nameEntry.add(((IPAddressName) name).getName());
+		} catch (IOException ioe) {
+		    // IPAddressName in cert is bogus
+		    throw new RuntimeException("IPAddress cannot be parsed",
+			ioe);
+		}
                 break;
             case GeneralNameInterface.NAME_OID:
-                nameEntry.add(((OIDName) name).getOID().toString());
+       	        nameEntry.add(((OIDName) name).getOID().toString());
                 break;
             default:
-                // add DER encoded form
-                DerOutputStream derOut = new DerOutputStream();
-                try {
-                    name.encode(derOut);
-                } catch (IOException ioe) {
-                    // should not occur since name has already been decoded
-                    // from cert (this would indicate a bug in our code)
-                    throw new RuntimeException("name cannot be encoded", ioe);
-                }
+		// add DER encoded form
+	        DerOutputStream derOut = new DerOutputStream();
+		try {
+		    name.encode(derOut);
+	        } catch (IOException ioe) {
+		    // should not occur since name has already been decoded
+		    // from cert (this would indicate a bug in our code)
+		    throw new RuntimeException("name cannot be encoded", ioe);
+		}
                 nameEntry.add(derOut.toByteArray());
-                break;
-            }
-            newNames.add(Collections.unmodifiableList(nameEntry));
-        }
-        return Collections.unmodifiableCollection(newNames);
+		break;
+	    }
+	    newNames.add(Collections.unmodifiableList(nameEntry));
+	}
+	return Collections.unmodifiableCollection(newNames);
     }
 
     /**
-     * Checks a Collection of altNames and clones any name entries of type
+     * Checks a Collection of altNames and clones any name entries of type 
      * byte [].
      */ // only partially generified due to javac bug
     private static Collection<List<?>> cloneAltNames(Collection<List<?>> altNames) {
-        boolean mustClone = false;
-        for (List<?> nameEntry : altNames) {
-            if (nameEntry.get(1) instanceof byte[]) {
-                // must clone names
-                mustClone = true;
-            }
-        }
-        if (mustClone) {
-            Set<List<?>> namesCopy = new HashSet<List<?>>();
-            for (List<?> nameEntry : altNames) {
-                Object nameObject = nameEntry.get(1);
-                if (nameObject instanceof byte[]) {
-                    List<Object> nameEntryCopy =
-                                        new ArrayList<Object>(nameEntry);
-                    nameEntryCopy.set(1, ((byte[])nameObject).clone());
+	boolean mustClone = false;
+	for (List<?> nameEntry : altNames) {
+	    if (nameEntry.get(1) instanceof byte[]) {
+		// must clone names
+	        mustClone = true;
+	    }
+	}
+	if (mustClone) {
+	    Set<List<?>> namesCopy = new HashSet<List<?>>();
+	    for (List<?> nameEntry : altNames) {
+		Object nameObject = nameEntry.get(1);
+	        if (nameObject instanceof byte[]) {
+		    List<Object> nameEntryCopy =
+					new ArrayList<Object>(nameEntry);
+		    nameEntryCopy.set(1, ((byte[])nameObject).clone());
                     namesCopy.add(Collections.unmodifiableList(nameEntryCopy));
-                } else {
-                    namesCopy.add(nameEntry);
-                }
-            }
-            return Collections.unmodifiableCollection(namesCopy);
-        } else {
-            return altNames;
-        }
+		} else {
+		    namesCopy.add(nameEntry);
+		}
+	    }
+	    return Collections.unmodifiableCollection(namesCopy);
+	} else {
+	    return altNames;
+	}
     }
 
     /**
@@ -1566,26 +1567,26 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * values.
      */
     public synchronized Collection<List<?>> getSubjectAlternativeNames()
-        throws CertificateParsingException {
-        // return cached value if we can
-        if (readOnly && subjectAlternativeNames != null)  {
-            return cloneAltNames(subjectAlternativeNames);
-        }
-        SubjectAlternativeNameExtension subjectAltNameExt =
-            getSubjectAlternativeNameExtension();
-        if (subjectAltNameExt == null) {
-            return null;
-        }
-        GeneralNames names;
-        try {
-            names = (GeneralNames) subjectAltNameExt.get
-                (SubjectAlternativeNameExtension.SUBJECT_NAME);
-        } catch (IOException ioe) {
-            // should not occur
-            return Collections.<List<?>>emptySet();
-        }
-        subjectAlternativeNames = makeAltNames(names);
-        return subjectAlternativeNames;
+ 	throws CertificateParsingException {
+	// return cached value if we can
+	if (readOnly && subjectAlternativeNames != null)  {
+	    return cloneAltNames(subjectAlternativeNames);
+	}
+	SubjectAlternativeNameExtension subjectAltNameExt =
+	    getSubjectAlternativeNameExtension();
+	if (subjectAltNameExt == null) {
+	    return null;
+	}
+	GeneralNames names;
+	try {
+	    names = (GeneralNames) subjectAltNameExt.get
+		(SubjectAlternativeNameExtension.SUBJECT_NAME);
+	} catch (IOException ioe) { 
+	    // should not occur
+	    return Collections.<List<?>>emptySet();
+	}
+	subjectAlternativeNames = makeAltNames(names);
+	return subjectAlternativeNames;
     }
 
     /**
@@ -1595,34 +1596,34 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * provide among other things caching for better performance.
      */
     public static Collection<List<?>> getSubjectAlternativeNames(X509Certificate cert)
-        throws CertificateParsingException {
-        try {
-            byte[] ext = cert.getExtensionValue(SUBJECT_ALT_NAME_OID);
-            if (ext == null) {
-                return null;
-            }
-            DerValue val = new DerValue(ext);
-            byte[] data = val.getOctetString();
+ 	throws CertificateParsingException {
+	try {
+	    byte[] ext = cert.getExtensionValue(SUBJECT_ALT_NAME_OID);
+	    if (ext == null) {
+		return null;
+	    }
+	    DerValue val = new DerValue(ext);
+	    byte[] data = val.getOctetString();
 
-            SubjectAlternativeNameExtension subjectAltNameExt =
-                new SubjectAlternativeNameExtension(Boolean.FALSE,
-                                                    data);
+	    SubjectAlternativeNameExtension subjectAltNameExt =
+		new SubjectAlternativeNameExtension(Boolean.FALSE,
+						    data);
 
-            GeneralNames names;
-            try {
-                names = (GeneralNames) subjectAltNameExt.get
-                    (SubjectAlternativeNameExtension.SUBJECT_NAME);
-            }  catch (IOException ioe) {
-                // should not occur
-                return Collections.<List<?>>emptySet();
-            }
-            return makeAltNames(names);
-        } catch (IOException ioe) {
-            CertificateParsingException cpe =
-                new CertificateParsingException();
-            cpe.initCause(ioe);
-            throw cpe;
-        }
+	    GeneralNames names;
+	    try {
+		names = (GeneralNames) subjectAltNameExt.get
+		    (SubjectAlternativeNameExtension.SUBJECT_NAME);
+	    }  catch (IOException ioe) { 
+		// should not occur
+		return Collections.<List<?>>emptySet();
+	    }
+	    return makeAltNames(names);
+	} catch (IOException ioe) {
+	    CertificateParsingException cpe =
+		new CertificateParsingException();
+	    cpe.initCause(ioe);
+	    throw cpe;
+	}
     }
 
     /**
@@ -1632,26 +1633,26 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * values.
      */
     public synchronized Collection<List<?>> getIssuerAlternativeNames()
-        throws CertificateParsingException {
-        // return cached value if we can
-        if (readOnly && issuerAlternativeNames != null) {
-            return cloneAltNames(issuerAlternativeNames);
-        }
-        IssuerAlternativeNameExtension issuerAltNameExt =
-            getIssuerAlternativeNameExtension();
-        if (issuerAltNameExt == null) {
-            return null;
-        }
-        GeneralNames names;
-        try {
-            names = (GeneralNames) issuerAltNameExt.get
-                (IssuerAlternativeNameExtension.ISSUER_NAME);
-        } catch (IOException ioe) {
-            // should not occur
-            return Collections.<List<?>>emptySet();
-        }
-        issuerAlternativeNames = makeAltNames(names);
-        return issuerAlternativeNames;
+	throws CertificateParsingException {
+	// return cached value if we can
+	if (readOnly && issuerAlternativeNames != null) {
+	    return cloneAltNames(issuerAlternativeNames);
+	}
+	IssuerAlternativeNameExtension issuerAltNameExt =
+	    getIssuerAlternativeNameExtension();
+	if (issuerAltNameExt == null) {
+	    return null;
+	}
+	GeneralNames names;
+	try {
+	    names = (GeneralNames) issuerAltNameExt.get
+		(IssuerAlternativeNameExtension.ISSUER_NAME);
+	} catch (IOException ioe) { 
+	    // should not occur
+	    return Collections.<List<?>>emptySet(); 
+	}
+	issuerAlternativeNames = makeAltNames(names);
+	return issuerAlternativeNames;
     }
 
     /**
@@ -1661,39 +1662,39 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * provide among other things caching for better performance.
      */
     public static Collection<List<?>> getIssuerAlternativeNames(X509Certificate cert)
-        throws CertificateParsingException {
-        try {
-            byte[] ext = cert.getExtensionValue(ISSUER_ALT_NAME_OID);
-            if (ext == null) {
-                return null;
-            }
+	throws CertificateParsingException {
+	try {
+	    byte[] ext = cert.getExtensionValue(ISSUER_ALT_NAME_OID);
+	    if (ext == null) {
+		return null;
+	    }
 
-            DerValue val = new DerValue(ext);
-            byte[] data = val.getOctetString();
+	    DerValue val = new DerValue(ext);
+	    byte[] data = val.getOctetString();
 
-            IssuerAlternativeNameExtension issuerAltNameExt =
-                new IssuerAlternativeNameExtension(Boolean.FALSE,
-                                                    data);
-            GeneralNames names;
-            try {
-                names = (GeneralNames) issuerAltNameExt.get
-                    (IssuerAlternativeNameExtension.ISSUER_NAME);
-            }  catch (IOException ioe) {
-                // should not occur
-                return Collections.<List<?>>emptySet();
-            }
-            return makeAltNames(names);
-        } catch (IOException ioe) {
-            CertificateParsingException cpe =
-                new CertificateParsingException();
-            cpe.initCause(ioe);
-            throw cpe;
-        }
+	    IssuerAlternativeNameExtension issuerAltNameExt =
+		new IssuerAlternativeNameExtension(Boolean.FALSE,
+						    data);
+	    GeneralNames names;
+	    try {
+		names = (GeneralNames) issuerAltNameExt.get
+		    (IssuerAlternativeNameExtension.ISSUER_NAME);
+	    }  catch (IOException ioe) { 
+		// should not occur
+		return Collections.<List<?>>emptySet();
+	    }
+	    return makeAltNames(names);
+	} catch (IOException ioe) {
+	    CertificateParsingException cpe =
+		new CertificateParsingException();
+	    cpe.initCause(ioe);
+	    throw cpe;
+	}
     }
 
     public AuthorityInfoAccessExtension getAuthorityInfoAccessExtension() {
-        return (AuthorityInfoAccessExtension)
-            getExtension(PKIXExtensions.AuthInfoAccess_Id);
+	return (AuthorityInfoAccessExtension)
+	    getExtension(PKIXExtensions.AuthInfoAccess_Id);
     }
 
     /************************************************************/
@@ -1701,9 +1702,9 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
     /*
      * Cert is a SIGNED ASN.1 macro, a three elment sequence:
      *
-     *  - Data to be signed (ToBeSigned) -- the "raw" cert
-     *  - Signature algorithm (SigAlgId)
-     *  - The signature bits
+     *	- Data to be signed (ToBeSigned) -- the "raw" cert
+     *	- Signature algorithm (SigAlgId)
+     *	- The signature bits
      *
      * This routine unmarshals the certificate, saving the signature
      * parts away for later verification.
@@ -1715,9 +1716,9 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
             throw new CertificateParsingException(
                       "cannot over-write existing certificate");
 
-        if (val.data == null || val.tag != DerValue.tag_Sequence)
-            throw new CertificateParsingException(
-                      "invalid DER-encoded certificate data");
+	if (val.data == null || val.tag != DerValue.tag_Sequence)
+	    throw new CertificateParsingException(
+		      "invalid DER-encoded certificate data");
 
         signedCert = val.toByteArray();
         DerValue[] seq = new DerValue[3];
@@ -1725,7 +1726,7 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
         seq[0] = val.data.getDerValue();
         seq[1] = val.data.getDerValue();
         seq[2] = val.data.getDerValue();
-
+	
         if (val.data.available() != 0) {
             throw new CertificateParsingException("signed overrun, bytes = "
                                      + val.data.available());
@@ -1755,33 +1756,33 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
             throw new CertificateException("Signature algorithm mismatch");
         readOnly = true;
     }
-
+    
     /**
-     * Extract the subject or issuer X500Principal from an X509Certificate.
-     * Parses the encoded form of the cert to preserve the principal's
-     * ASN.1 encoding.
+     * Extract the subject or issuer X500Principal from an X509Certificate. 
+     * Parses the encoded form of the cert to preserve the principal's 
+     * ASN.1 encoding. 
      */
     private static X500Principal getX500Principal(X509Certificate cert,
-            boolean getIssuer) throws Exception {
-        byte[] encoded = cert.getEncoded();
-        DerInputStream derIn = new DerInputStream(encoded);
-        DerValue tbsCert = derIn.getSequence(3)[0];
-        DerInputStream tbsIn = tbsCert.data;
-        DerValue tmp;
-        tmp = tbsIn.getDerValue();
-        // skip version number if present
-        if (tmp.isContextSpecific((byte)0)) {
-          tmp = tbsIn.getDerValue();
-        }
-        // tmp always contains serial number now
-        tmp = tbsIn.getDerValue();              // skip signature
-        tmp = tbsIn.getDerValue();              // issuer
-        if (getIssuer == false) {
-            tmp = tbsIn.getDerValue();          // skip validity
-            tmp = tbsIn.getDerValue();          // subject
-        }
-        byte[] principalBytes = tmp.toByteArray();
-        return new X500Principal(principalBytes);
+	    boolean getIssuer) throws Exception {
+	byte[] encoded = cert.getEncoded();
+	DerInputStream derIn = new DerInputStream(encoded);
+	DerValue tbsCert = derIn.getSequence(3)[0];
+	DerInputStream tbsIn = tbsCert.data;
+	DerValue tmp;
+	tmp = tbsIn.getDerValue();
+	// skip version number if present
+	if (tmp.isContextSpecific((byte)0)) {
+	  tmp = tbsIn.getDerValue();
+	}
+	// tmp always contains serial number now
+	tmp = tbsIn.getDerValue();		// skip signature
+	tmp = tbsIn.getDerValue();		// issuer
+	if (getIssuer == false) {
+	    tmp = tbsIn.getDerValue();		// skip validity
+	    tmp = tbsIn.getDerValue();		// subject
+	}
+	byte[] principalBytes = tmp.toByteArray();
+	return new X500Principal(principalBytes);
     }
 
     /**
@@ -1789,62 +1790,62 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * Called from java.security.cert.X509Certificate.getSubjectX500Principal().
      */
     public static X500Principal getSubjectX500Principal(X509Certificate cert) {
-        try {
-            return getX500Principal(cert, false);
-        } catch (Exception e) {
-            throw new RuntimeException("Could not parse subject", e);
-        }
+    	try {
+	    return getX500Principal(cert, false);
+	} catch (Exception e) {
+	    throw new RuntimeException("Could not parse subject", e);
+	}
     }
-
+    
     /**
      * Extract the issuer X500Principal from an X509Certificate.
      * Called from java.security.cert.X509Certificate.getIssuerX500Principal().
      */
     public static X500Principal getIssuerX500Principal(X509Certificate cert) {
-        try {
-            return getX500Principal(cert, true);
-        } catch (Exception e) {
-            throw new RuntimeException("Could not parse issuer", e);
-        }
+    	try {
+	    return getX500Principal(cert, true);
+	} catch (Exception e) {
+	    throw new RuntimeException("Could not parse issuer", e);
+	}
     }
-
+    
     /**
      * Returned the encoding of the given certificate for internal use.
-     * Callers must guarantee that they neither modify it nor expose it
+     * Callers must guarantee that they neither modify it nor expose it 
      * to untrusted code. Uses getEncodedInternal() if the certificate
      * is instance of X509CertImpl, getEncoded() otherwise.
      */
-    public static byte[] getEncodedInternal(Certificate cert)
-            throws CertificateEncodingException {
-        if (cert instanceof X509CertImpl) {
-            return ((X509CertImpl)cert).getEncodedInternal();
-        } else {
-            return cert.getEncoded();
-        }
+    public static byte[] getEncodedInternal(Certificate cert) 
+	    throws CertificateEncodingException {
+	if (cert instanceof X509CertImpl) {
+	    return ((X509CertImpl)cert).getEncodedInternal();
+	} else {
+	    return cert.getEncoded();
+	}
     }
-
+    
     /**
      * Utility method to convert an arbitrary instance of X509Certificate
      * to a X509CertImpl. Does a cast if possible, otherwise reparses
      * the encoding.
      */
-    public static X509CertImpl toImpl(X509Certificate cert)
-            throws CertificateException {
-        if (cert instanceof X509CertImpl) {
-            return (X509CertImpl)cert;
-        } else {
-            return X509Factory.intern(cert);
-        }
+    public static X509CertImpl toImpl(X509Certificate cert) 
+	    throws CertificateException {
+	if (cert instanceof X509CertImpl) {
+	    return (X509CertImpl)cert;
+	} else {
+	    return X509Factory.intern(cert);
+	}
     }
-
+    
     /**
      * Utility method to test if a certificate is self-issued. This is
      * the case iff the subject and issuer X500Principals are equal.
      */
     public static boolean isSelfIssued(X509Certificate cert) {
-        X500Principal subject = cert.getSubjectX500Principal();
-        X500Principal issuer = cert.getIssuerX500Principal();
-        return subject.equals(issuer);
+	X500Principal subject = cert.getSubjectX500Principal();
+	X500Principal issuer = cert.getIssuerX500Principal();
+	return subject.equals(issuer);
     }
 
     /**
@@ -1853,20 +1854,20 @@ public class X509CertImpl extends X509Certificate implements DerEncoder {
      * AND the certificate's subject public key can be used to verify
      * the certificate. In case of exception, returns false.
      */
-    public static boolean isSelfSigned(X509Certificate cert,
-        String sigProvider) {
-        if (isSelfIssued(cert)) {
-            try {
-                if (sigProvider == null) {
-                    cert.verify(cert.getPublicKey());
-                } else {
-                    cert.verify(cert.getPublicKey(), sigProvider);
-                }
-                return true;
-            } catch (Exception e) {
-                // In case of exception, return false
-            }
-        }
-        return false;
+    public static boolean isSelfSigned(X509Certificate cert, 
+	String sigProvider) {
+ 	if (isSelfIssued(cert)) {
+ 	    try {
+		if (sigProvider == null) {
+ 		    cert.verify(cert.getPublicKey());
+		} else {
+ 		    cert.verify(cert.getPublicKey(), sigProvider);
+		}
+ 		return true;
+ 	    } catch (Exception e) {
+ 		// In case of exception, return false
+ 	    }
+ 	}
+ 	return false;
     }
 }

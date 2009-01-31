@@ -42,7 +42,7 @@ import org.jcp.xml.dsig.internal.dom.DOMUtils;
 public class Marshal {
 
     public static void main(String[] args) throws Exception {
-        KeyInfoFactory fac = KeyInfoFactory.getInstance();
+	KeyInfoFactory fac = KeyInfoFactory.getInstance();
         KeyInfo ki = fac.newKeyInfo
             (Collections.singletonList(fac.newKeyName("foo")), "keyid");
         try {
@@ -61,12 +61,12 @@ public class Marshal {
         Element kiElem = DOMUtils.getFirstChildElement(elem);
         if (!kiElem.getLocalName().equals("KeyInfo")) {
             throw new Exception
-                ("Should be KeyInfo element: " + kiElem.getLocalName());
+		("Should be KeyInfo element: " + kiElem.getLocalName());
         }
         Element knElem = DOMUtils.getFirstChildElement(kiElem);
         if (!knElem.getLocalName().equals("KeyName")) {
             throw new Exception
-                ("Should be KeyName element: " + knElem.getLocalName());
+		("Should be KeyName element: " + knElem.getLocalName());
         }
     }
 }

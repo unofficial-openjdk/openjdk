@@ -45,19 +45,20 @@ import java.util.Hashtable;
  * <p> All access is unsynchronized.
  *
  * @author Scott Seligman
+ * @version %I% %E%
  */
 
 
 class NameNode {
 
-    private String label;               // name of this node relative to its
-                                        // parent, or null for root of a tree
-    private Hashtable children = null;  // child nodes
-    private boolean isZoneCut = false;  // true if this node is a zone cut
-    private int depth = 0;              // depth in tree (0 for root)
+    private String label;		// name of this node relative to its
+    					// parent, or null for root of a tree
+    private Hashtable children = null;	// child nodes
+    private boolean isZoneCut = false;	// true if this node is a zone cut
+    private int depth = 0;		// depth in tree (0 for root)
 
     NameNode(String label) {
-        this.label = label;
+	this.label = label;
     }
 
     /*
@@ -66,7 +67,7 @@ class NameNode {
      * of the subclass's type.
      */
     protected NameNode newNameNode(String label) {
-        return new NameNode(label);
+	return new NameNode(label);
     }
 
     /*
@@ -74,7 +75,7 @@ class NameNode {
      * the root of a tree.
      */
     String getLabel() {
-        return label;
+	return label;
     }
 
     /*
@@ -82,15 +83,15 @@ class NameNode {
      * is 0.
      */
     int depth() {
-        return depth;
+	return depth;
     }
 
     boolean isZoneCut() {
-        return isZoneCut;
+	return isZoneCut;
     }
 
     void setZoneCut(boolean isZoneCut) {
-        this.isZoneCut = isZoneCut;
+	this.isZoneCut = isZoneCut;
     }
 
     /*
@@ -98,7 +99,7 @@ class NameNode {
      * The caller must not modify the Hashtable returned.
      */
     Hashtable getChildren() {
-        return children;
+	return children;
     }
 
     /*
@@ -107,9 +108,9 @@ class NameNode {
      * child.
      */
     NameNode get(String key) {
-        return (children != null)
-            ? (NameNode) children.get(key)
-            : null;
+	return (children != null)
+	    ? (NameNode) children.get(key)
+	    : null;
     }
 
     /*
@@ -119,11 +120,11 @@ class NameNode {
      * at index idx.
      */
     NameNode get(DnsName name, int idx) {
-        NameNode node = this;
-        for (int i = idx; i < name.size() && node != null; i++) {
-            node = node.get(name.getKey(i));
-        }
-        return node;
+	NameNode node = this;
+	for (int i = idx; i < name.size() && node != null; i++) {
+	    node = node.get(name.getKey(i));
+	}
+	return node;
     }
 
     /*
@@ -133,24 +134,24 @@ class NameNode {
      * at index idx.
      */
     NameNode add(DnsName name, int idx) {
-        NameNode node = this;
-        for (int i = idx; i < name.size(); i++) {
-            String label = name.get(i);
-            String key = name.getKey(i);
+	NameNode node = this;
+	for (int i = idx; i < name.size(); i++) {
+	    String label = name.get(i);
+	    String key = name.getKey(i);
 
-            NameNode child = null;
-            if (node.children == null) {
-                node.children = new Hashtable();
-            } else {
-                child = (NameNode) node.children.get(key);
-            }
-            if (child == null) {
-                child = newNameNode(label);
-                child.depth = node.depth + 1;
-                node.children.put(key, child);
-            }
-            node = child;
-        }
-        return node;
+	    NameNode child = null;
+	    if (node.children == null) {
+		node.children = new Hashtable();
+	    } else {
+		child = (NameNode) node.children.get(key);
+	    }
+	    if (child == null) {
+		child = newNameNode(label);
+		child.depth = node.depth + 1;
+		node.children.put(key, child);
+	    }
+	    node = child;
+	}
+	return node;
     }
 }

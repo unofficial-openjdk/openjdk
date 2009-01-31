@@ -30,7 +30,8 @@ package java.awt.image;
  * The <code>ImagingOpException</code> is thrown if one of the
  * {@link BufferedImageOp} or {@link RasterOp} filter methods cannot
  * process the image.
- */
+ * @version 10 Feb 1997
+ */ 
 public class ImagingOpException extends java.lang.RuntimeException {
 
     /**

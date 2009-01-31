@@ -77,7 +77,8 @@ import javax.accessibility.*;
  * <code>addActionListener</code> method. The application can
  * make use of the button's action command as a messaging protocol.
  *
- * @author      Sami Shaio
+ * @version 	%I% %G%
+ * @author 	Sami Shaio
  * @see         java.awt.event.ActionEvent
  * @see         java.awt.event.ActionListener
  * @see         java.awt.Component#processMouseEvent
@@ -87,7 +88,7 @@ import javax.accessibility.*;
 public class Button extends Component implements Accessible {
 
     /**
-     * The button's label.  This value may be null.
+     * The button's label.  This value may be null.  
      * @serial
      * @see #getLabel()
      * @see #setLabel(String)
@@ -96,7 +97,7 @@ public class Button extends Component implements Accessible {
 
     /**
      * The action to be performed once a button has been
-     * pressed.  This value may be null.
+     * pressed.  This value may be null. 
      * @serial
      * @see #getActionCommand()
      * @see #setActionCommand(String)
@@ -116,7 +117,7 @@ public class Button extends Component implements Accessible {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-        Toolkit.loadLibraries();
+	Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -130,19 +131,19 @@ public class Button extends Component implements Accessible {
 
     /**
      * Constructs a button with an empty string for its label.
-     *
+     * 
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public Button() throws HeadlessException {
-        this("");
+	this("");
     }
 
     /**
      * Constructs a button with the specified label.
-     *
-     * @param label  a string label for the button, or
+     * 
+     * @param label  a string label for the button, or 
      *               <code>null</code> for no label
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true
@@ -150,7 +151,7 @@ public class Button extends Component implements Accessible {
      */
     public Button(String label) throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
-        this.label = label;
+	this.label = label;
     }
 
     /**
@@ -167,32 +168,32 @@ public class Button extends Component implements Accessible {
      * Creates the peer of the button.  The button's peer allows the
      * application to change the look of the button without changing
      * its functionality.
-     *
+     * 
      * @see     java.awt.Toolkit#createButton(java.awt.Button)
      * @see     java.awt.Component#getToolkit()
      */
     public void addNotify() {
         synchronized(getTreeLock()) {
-            if (peer == null)
-                peer = getToolkit().createButton(this);
-            super.addNotify();
-        }
+	    if (peer == null) 
+	        peer = getToolkit().createButton(this);
+	    super.addNotify();
+	}
     }
 
     /**
      * Gets the label of this button.
-     *
+     * 
      * @return    the button's label, or <code>null</code>
      *                if the button has no label.
      * @see       java.awt.Button#setLabel
      */
     public String getLabel() {
-        return label;
+	return label;
     }
 
     /**
      * Sets the button's label to be the specified string.
-     *
+     * 
      * @param     label   the new label, or <code>null</code>
      *                if the button has no label.
      * @see       java.awt.Button#getLabel
@@ -200,29 +201,29 @@ public class Button extends Component implements Accessible {
     public void setLabel(String label) {
         boolean testvalid = false;
 
-        synchronized (this) {
-            if (label != this.label && (this.label == null ||
-                                        !this.label.equals(label))) {
-                this.label = label;
-                ButtonPeer peer = (ButtonPeer)this.peer;
-                if (peer != null) {
-                    peer.setLabel(label);
-                }
-                testvalid = true;
-            }
-        }
+	synchronized (this) {
+	    if (label != this.label && (this.label == null ||
+					!this.label.equals(label))) {
+	        this.label = label;
+		ButtonPeer peer = (ButtonPeer)this.peer;
+		if (peer != null) {
+		    peer.setLabel(label);
+		}
+		testvalid = true;
+	    }
+	}
 
-        // This could change the preferred size of the Component.
-        if (testvalid && valid) {
-            invalidate();
-        }
+	// This could change the preferred size of the Component.
+	if (testvalid && valid) {
+	    invalidate();
+	}
     }
 
     /**
      * Sets the command name for the action event fired
      * by this button. By default this action command is
      * set to match the label of the button.
-     *
+     * 
      * @param     command  a string used to set the button's
      *                  action command.
      *            If the string is <code>null</code> then the action command
@@ -258,10 +259,10 @@ public class Button extends Component implements Accessible {
      * @since         JDK1.1
      */
     public synchronized void addActionListener(ActionListener l) {
-        if (l == null) {
-            return;
-        }
-        actionListener = AWTEventMulticaster.add(actionListener, l);
+	if (l == null) {
+	    return;
+	}
+	actionListener = AWTEventMulticaster.add(actionListener, l);
         newEventsOnly = true;
     }
 
@@ -273,17 +274,17 @@ public class Button extends Component implements Accessible {
      * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
      * >AWT Threading Issues</a> for details on AWT's threading model.
      *
-     * @param           l     the action listener
-     * @see             #addActionListener
-     * @see             #getActionListeners
-     * @see             java.awt.event.ActionListener
-     * @since           JDK1.1
+     * @param         	l     the action listener
+     * @see           	#addActionListener
+     * @see           	#getActionListeners
+     * @see           	java.awt.event.ActionListener
+     * @since         	JDK1.1
      */
     public synchronized void removeActionListener(ActionListener l) {
-        if (l == null) {
-            return;
-        }
-        actionListener = AWTEventMulticaster.remove(actionListener, l);
+	if (l == null) {
+	    return;
+	}
+	actionListener = AWTEventMulticaster.remove(actionListener, l);
     }
 
     /**
@@ -291,12 +292,12 @@ public class Button extends Component implements Accessible {
      * registered on this button.
      *
      * @return all of this button's <code>ActionListener</code>s
-     *         or an empty array if no action
+     *         or an empty array if no action 
      *         listeners are currently registered
      *
-     * @see             #addActionListener
-     * @see             #removeActionListener
-     * @see             java.awt.event.ActionListener
+     * @see	        #addActionListener
+     * @see           	#removeActionListener
+     * @see           	java.awt.event.ActionListener
      * @since 1.4
      */
     public synchronized ActionListener[] getActionListeners() {
@@ -337,13 +338,13 @@ public class Button extends Component implements Accessible {
      * @since 1.3
      */
     public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        EventListener l = null;
-        if  (listenerType == ActionListener.class) {
-            l = actionListener;
-        } else {
-            return super.getListeners(listenerType);
-        }
-        return AWTEventMulticaster.getListeners(l, listenerType);
+	EventListener l = null;
+	if  (listenerType == ActionListener.class) { 
+	    l = actionListener;
+	} else {
+	    return super.getListeners(listenerType);
+	}
+	return AWTEventMulticaster.getListeners(l, listenerType);
     }
 
     // REMIND: remove when filtering is done at lower level
@@ -377,7 +378,7 @@ public class Button extends Component implements Accessible {
             processActionEvent((ActionEvent)e);
             return;
         }
-        super.processEvent(e);
+	super.processEvent(e);
     }
 
     /**
@@ -412,15 +413,15 @@ public class Button extends Component implements Accessible {
 
     /**
      * Returns a string representing the state of this <code>Button</code>.
-     * This method is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not be
+     * This method is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between 
+     * implementations. The returned string may be empty but may not be 
      * <code>null</code>.
      *
      * @return     the parameter string of this button
      */
     protected String paramString() {
-        return super.paramString() + ",label=" + label;
+	return super.paramString() + ",label=" + label;
     }
 
 
@@ -437,16 +438,16 @@ public class Button extends Component implements Accessible {
      * Writes default serializable fields to stream.  Writes
      * a list of serializable <code>ActionListeners</code>
      * as optional data.  The non-serializable
-     * <code>ActionListeners</code> are detected and
+     * <code>ActionListeners</code> are detected and 
      * no attempt is made to serialize them.
      *
-     * @serialData <code>null</code> terminated sequence of 0 or
-     *   more pairs: the pair consists of a <code>String</code>
-     *   and an <code>Object</code>; the <code>String</code>
+     * @serialData <code>null</code> terminated sequence of 0 or 
+     *   more pairs: the pair consists of a <code>String</code> 
+     *   and an <code>Object</code>; the <code>String</code> 
      *   indicates the type of object and is one of the following:
      *   <code>actionListenerK</code> indicating an
      *     <code>ActionListener</code> object
-     *
+     * 			
      * @param s the <code>ObjectOutputStream</code> to write
      * @see AWTEventMulticaster#save(ObjectOutputStream, String, EventListener)
      * @see java.awt.Component#actionListenerK
@@ -485,13 +486,13 @@ public class Button extends Component implements Accessible {
 
       Object keyOrNull;
       while(null != (keyOrNull = s.readObject())) {
-        String key = ((String)keyOrNull).intern();
+	String key = ((String)keyOrNull).intern();
 
-        if (actionListenerK == key)
-          addActionListener((ActionListener)(s.readObject()));
+	if (actionListenerK == key)
+	  addActionListener((ActionListener)(s.readObject()));
 
-        else // skip value for unrecognized key
-          s.readObject();
+	else // skip value for unrecognized key
+	  s.readObject();
       }
     }
 
@@ -503,12 +504,12 @@ public class Button extends Component implements Accessible {
     /**
      * Gets the <code>AccessibleContext</code> associated with
      * this <code>Button</code>. For buttons, the
-     * <code>AccessibleContext</code> takes the form of an
-     * <code>AccessibleAWTButton</code>.
+     * <code>AccessibleContext</code> takes the form of an 
+     * <code>AccessibleAWTButton</code>. 
      * A new <code>AccessibleAWTButton</code> instance is
      * created if necessary.
      *
-     * @return an <code>AccessibleAWTButton</code> that serves as the
+     * @return an <code>AccessibleAWTButton</code> that serves as the 
      *         <code>AccessibleContext</code> of this <code>Button</code>
      * @beaninfo
      *       expert: true
@@ -523,8 +524,8 @@ public class Button extends Component implements Accessible {
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>Button</code> class.  It provides an implementation of the
+     * This class implements accessibility support for the 
+     * <code>Button</code> class.  It provides an implementation of the 
      * Java Accessibility API appropriate to button user-interface elements.
      * @since 1.3
      */
@@ -537,9 +538,9 @@ public class Button extends Component implements Accessible {
         private static final long serialVersionUID = -5932203980244017102L;
 
         /**
-         * Get the accessible name of this object.
+         * Get the accessible name of this object.  
          *
-         * @return the localized name of the object -- can be null if this
+         * @return the localized name of the object -- can be null if this 
          * object does not have a name
          */
         public String getAccessibleName() {
@@ -556,11 +557,11 @@ public class Button extends Component implements Accessible {
 
         /**
          * Get the AccessibleAction associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * return this object, which is responsible for implementing the
          * AccessibleAction interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object
          */
         public AccessibleAction getAccessibleAction() {
             return this;
@@ -568,19 +569,19 @@ public class Button extends Component implements Accessible {
 
         /**
          * Get the AccessibleValue associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * return this object, which is responsible for implementing the
          * AccessibleValue interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object
          */
         public AccessibleValue getAccessibleValue() {
             return this;
         }
 
         /**
-         * Returns the number of Actions available in this object.  The
-         * default behavior of a button is to have one action - toggle
+         * Returns the number of Actions available in this object.  The 
+         * default behavior of a button is to have one action - toggle 
          * the button.
          *
          * @return 1, the number of Actions in this object
@@ -588,7 +589,7 @@ public class Button extends Component implements Accessible {
         public int getAccessibleActionCount() {
             return 1;
         }
-
+    
         /**
          * Return a description of the specified action of the object.
          *
@@ -602,7 +603,7 @@ public class Button extends Component implements Accessible {
                 return null;
             }
         }
-
+    
         /**
          * Perform the specified Action on the object
          *
@@ -663,7 +664,7 @@ public class Button extends Component implements Accessible {
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the
+         * @return an instance of AccessibleRole describing the role of the 
          * object
          * @see AccessibleRole
          */

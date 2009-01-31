@@ -40,6 +40,7 @@ import java.util.Vector;
  * on the last of the contained input streams.
  *
  * @author  Author van Hoff
+ * @version %I%, %G%
  * @since   JDK1.0
  */
 public
@@ -64,13 +65,13 @@ class SequenceInputStream extends InputStream {
      * @see     java.util.Enumeration
      */
     public SequenceInputStream(Enumeration<? extends InputStream> e) {
-        this.e = e;
-        try {
-            nextStream();
-        } catch (IOException ex) {
-            // This should never happen
-            throw new Error("panic");
-        }
+	this.e = e;
+	try {
+	    nextStream();
+	} catch (IOException ex) {
+	    // This should never happen
+	    throw new Error("panic");
+	}
     }
 
     /**
@@ -85,26 +86,26 @@ class SequenceInputStream extends InputStream {
      * @param   s2   the second input stream to read.
      */
     public SequenceInputStream(InputStream s1, InputStream s2) {
-        Vector  v = new Vector(2);
+	Vector	v = new Vector(2);
 
-        v.addElement(s1);
-        v.addElement(s2);
-        e = v.elements();
-        try {
-            nextStream();
-        } catch (IOException ex) {
-            // This should never happen
-            throw new Error("panic");
-        }
+	v.addElement(s1);
+	v.addElement(s2);
+	e = v.elements();
+	try {
+	    nextStream();
+	} catch (IOException ex) {
+	    // This should never happen
+	    throw new Error("panic");
+	}
     }
 
     /**
      *  Continues reading in the next stream if an EOF is reached.
      */
     final void nextStream() throws IOException {
-        if (in != null) {
-            in.close();
-        }
+	if (in != null) {
+	    in.close();
+	}
 
         if (e.hasMoreElements()) {
             in = (InputStream) e.nextElement();
@@ -135,10 +136,10 @@ class SequenceInputStream extends InputStream {
      * @since   JDK1.1
      */
     public int available() throws IOException {
-        if(in == null) {
-            return 0; // no way to signal EOF from available()
-        }
-        return in.available();
+	if(in == null) {
+	    return 0; // no way to signal EOF from available()
+	}
+	return in.available();
     }
 
     /**
@@ -160,15 +161,15 @@ class SequenceInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public int read() throws IOException {
-        if (in == null) {
-            return -1;
-        }
-        int c = in.read();
-        if (c == -1) {
-            nextStream();
-            return read();
-        }
-        return c;
+	if (in == null) {
+	    return -1;
+	}
+	int c = in.read();
+	if (c == -1) {
+	    nextStream();
+	    return read();
+	}
+	return c;
     }
 
     /**
@@ -189,28 +190,28 @@ class SequenceInputStream extends InputStream {
      * @param      len   the maximum number of bytes read.
      * @return     int   the number of bytes read.
      * @exception  NullPointerException If <code>b</code> is <code>null</code>.
-     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
-     * <code>len</code> is negative, or <code>len</code> is greater than
+     * @exception  IndexOutOfBoundsException If <code>off</code> is negative, 
+     * <code>len</code> is negative, or <code>len</code> is greater than 
      * <code>b.length - off</code>
      * @exception  IOException  if an I/O error occurs.
      */
     public int read(byte b[], int off, int len) throws IOException {
-        if (in == null) {
-            return -1;
-        } else if (b == null) {
-            throw new NullPointerException();
-        } else if (off < 0 || len < 0 || len > b.length - off) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
-            return 0;
-        }
+	if (in == null) {
+	    return -1;
+	} else if (b == null) {
+	    throw new NullPointerException();
+	} else if (off < 0 || len < 0 || len > b.length - off) {
+	    throw new IndexOutOfBoundsException();
+	} else if (len == 0) {
+	    return 0;
+	}
 
-        int n = in.read(b, off, len);
-        if (n <= 0) {
-            nextStream();
-            return read(b, off, len);
-        }
-        return n;
+	int n = in.read(b, off, len);
+	if (n <= 0) {
+	    nextStream();
+	    return read(b, off, len);
+	}
+	return n;
     }
 
     /**
@@ -228,8 +229,8 @@ class SequenceInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public void close() throws IOException {
-        do {
-            nextStream();
-        } while (in != null);
+	do {
+	    nextStream();
+	} while (in != null);
     }
 }

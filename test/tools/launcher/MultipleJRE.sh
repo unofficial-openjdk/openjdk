@@ -1,11 +1,10 @@
-# @test MultipleJRE.sh
+# @test
 # @bug 4811102 4953711 4955505 4956301 4991229 4998210 5018605 6387069
 # @build PrintVersion
 # @build UglyPrintVersion
 # @run shell MultipleJRE.sh
 # @summary Verify Multiple JRE version support
 # @author Joseph E. Kowalski
-
 
 #
 # Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -63,8 +62,8 @@ TestSyntax() {
 		echo "Invalid version syntax $1 accepted"
 		exit 1
 	fi
-	prefix="`echo "$mess" | cut -d ' ' -f 1-3`"
-	if [ "$prefix" != "Error: Syntax error" ]; then
+	prefix="`echo "$mess" | cut -d ' ' -f 1-2`"
+	if [ "$prefix" != "Syntax error" ]; then
 		echo "Unexpected error message for invalid syntax $1"
 		exit 1
 	fi

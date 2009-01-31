@@ -22,8 +22,8 @@
  */
 
 /* @test
-   @bug 4635869
-   @summary Zip files with no extension signature would get rejected
+   @bug 4635869 
+   @summary Zip files with no extension signature would get rejected 
    */
 
 import java.io.*;
@@ -36,7 +36,7 @@ public class NoExtensionSignature {
         File f = new File(System.getProperty("test.src", "."), "test.zip");
         ZipInputStream zis = new ZipInputStream (new FileInputStream(f));
         ZipEntry entry;
-        while ((entry = zis.getNextEntry()) != null)
-            while (zis.read() != -1 );
-    }
+        while ((entry = zis.getNextEntry()) != null) 
+            while (zis.read() != -1 ); 
+    } 
 }

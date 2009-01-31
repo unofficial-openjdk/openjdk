@@ -31,28 +31,28 @@ import javax.xml.crypto.XMLStructure;
 import java.util.List;
 
 /**
- * A representation of the XML <code>SignatureProperties</code> element as
+ * A representation of the XML <code>SignatureProperties</code> element as 
  * defined in the <a href="http://www.w3.org/TR/xmldsig-core/">
- * W3C Recommendation for XML-Signature Syntax and Processing</a>.
+ * W3C Recommendation for XML-Signature Syntax and Processing</a>. 
  * The XML Schema Definition is defined as:
  * <pre><code>
- *&lt;element name="SignatureProperties" type="ds:SignaturePropertiesType"/&gt;
+ *&lt;element name="SignatureProperties" type="ds:SignaturePropertiesType"/&gt; 
  *   &lt;complexType name="SignaturePropertiesType"&gt;
  *     &lt;sequence&gt;
- *       &lt;element ref="ds:SignatureProperty" maxOccurs="unbounded"/&gt;
+ *       &lt;element ref="ds:SignatureProperty" maxOccurs="unbounded"/&gt; 
  *     &lt;/sequence&gt;
- *     &lt;attribute name="Id" type="ID" use="optional"/&gt;
+ *     &lt;attribute name="Id" type="ID" use="optional"/&gt; 
  *   &lt;/complexType&gt;
  * </code></pre>
  *
  * A <code>SignatureProperties</code> instance may be created by invoking the
- * {@link XMLSignatureFactory#newSignatureProperties newSignatureProperties}
- * method of the {@link XMLSignatureFactory} class; for example:
+ * {@link XMLSignatureFactory#newSignatureProperties newSignatureProperties} 
+ * method of the {@link XMLSignatureFactory} class; for example: 
  *
  * <pre>
  *   XMLSignatureFactory factory = XMLSignatureFactory.getInstance("DOM");
- *   SignatureProperties properties =
- *      factory.newSignatureProperties(props, "signature-properties-1");
+ *   SignatureProperties properties = 
+ *	factory.newSignatureProperties(props, "signature-properties-1");
  * </pre>
  *
  * @author Sean Mullan
@@ -64,8 +64,8 @@ import java.util.List;
 public interface SignatureProperties extends XMLStructure {
 
     /**
-     * URI that identifies the <code>SignatureProperties</code> element (this
-     * can be specified as the value of the <code>type</code> parameter of the
+     * URI that identifies the <code>SignatureProperties</code> element (this 
+     * can be specified as the value of the <code>type</code> parameter of the 
      * {@link Reference} class to identify the referent's type).
      */
     final static String TYPE =
@@ -74,18 +74,18 @@ public interface SignatureProperties extends XMLStructure {
     /**
      * Returns the Id of this <code>SignatureProperties</code>.
      *
-     * @return the Id of this <code>SignatureProperties</code> (or
+     * @return the Id of this <code>SignatureProperties</code> (or 
      *    <code>null</code> if not specified)
      */
     String getId();
-
+    
     /**
-     * Returns an {@link java.util.Collections#unmodifiableList unmodifiable
-     * list} of one or more {@link SignatureProperty}s that are contained in
-     * this <code>SignatureProperties</code>.
+     * Returns an {@link java.util.Collections#unmodifiableList unmodifiable 
+     * list} of one or more {@link SignatureProperty}s that are contained in 
+     * this <code>SignatureProperties</code>. 
      *
-     * @return an unmodifiable list of one or more
-     *    <code>SignatureProperty</code>s
+     * @return an unmodifiable list of one or more 
+     *    <code>SignatureProperty</code>s 
      */
     List getProperties();
 }

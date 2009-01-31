@@ -196,6 +196,7 @@ import java.util.Set;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  *
  * @see SelectableChannel
@@ -223,7 +224,7 @@ public abstract class Selector {
      *          If an I/O error occurs
      */
     public static Selector open() throws IOException {
-        return SelectorProvider.provider().openSelector();
+	return SelectorProvider.provider().openSelector();
     }
 
     /**
@@ -326,7 +327,7 @@ public abstract class Selector {
      *          If the value of the timeout argument is negative
      */
     public abstract int select(long timeout)
-        throws IOException;
+	throws IOException;
 
     /**
      * Selects a set of keys whose corresponding channels are ready for I/O

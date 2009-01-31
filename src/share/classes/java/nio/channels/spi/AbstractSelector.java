@@ -63,6 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -79,15 +80,15 @@ public abstract class AbstractSelector
      * Initializes a new instance of this class.  </p>
      */
     protected AbstractSelector(SelectorProvider provider) {
-        this.provider = provider;
+	this.provider = provider;
     }
 
     private final Set cancelledKeys = new HashSet();
 
-    void cancel(SelectionKey k) {                       // package-private
-        synchronized (cancelledKeys) {
-            cancelledKeys.add(k);
-        }
+    void cancel(SelectionKey k) {			// package-private
+	synchronized (cancelledKeys) {
+	    cancelledKeys.add(k);
+	}
     }
 
     /**
@@ -127,7 +128,7 @@ public abstract class AbstractSelector
     protected abstract void implCloseSelector() throws IOException;
 
     public final boolean isOpen() {
-        return selectorOpen.get();
+	return selectorOpen.get();
     }
 
     /**
@@ -136,7 +137,7 @@ public abstract class AbstractSelector
      * @return  The provider that created this channel
      */
     public final SelectorProvider provider() {
-        return provider;
+	return provider;
     }
 
     /**
@@ -147,7 +148,7 @@ public abstract class AbstractSelector
      * @return  The cancelled-key set
      */
     protected final Set<SelectionKey> cancelledKeys() {
-        return cancelledKeys;
+	return cancelledKeys;
     }
 
     /**
@@ -170,7 +171,7 @@ public abstract class AbstractSelector
      *          with this selector
      */
     protected abstract SelectionKey register(AbstractSelectableChannel ch,
-                                             int ops, Object att);
+					     int ops, Object att);
 
     /**
      * Removes the given key from its channel's key set.
@@ -182,10 +183,10 @@ public abstract class AbstractSelector
      *         The selection key to be removed
      */
     protected final void deregister(AbstractSelectionKey key) {
-        ((AbstractSelectableChannel)key.channel()).removeKey(key);
+	((AbstractSelectableChannel)key.channel()).removeKey(key);
     }
 
-
+
     // -- Interruption machinery --
 
     private Interruptible interruptor = null;
@@ -204,15 +205,15 @@ public abstract class AbstractSelector
      * blocked in an I/O operation upon the selector.  </p>
      */
     protected final void begin() {
-        if (interruptor == null) {
-            interruptor = new Interruptible() {
-                    public void interrupt() {
-                        AbstractSelector.this.wakeup();
-                    }};
-        }
-        AbstractInterruptibleChannel.blockedOn(interruptor);
-        if (Thread.currentThread().isInterrupted())
-            interruptor.interrupt();
+	if (interruptor == null) {
+	    interruptor = new Interruptible() {
+		    public void interrupt() {
+			AbstractSelector.this.wakeup();
+		    }};
+	}
+	AbstractInterruptibleChannel.blockedOn(interruptor);
+	if (Thread.currentThread().isInterrupted())
+	    interruptor.interrupt();
     }
 
     /**
@@ -224,7 +225,7 @@ public abstract class AbstractSelector
      * this selector.  </p>
      */
     protected final void end() {
-        AbstractInterruptibleChannel.blockedOn(null);
+	AbstractInterruptibleChannel.blockedOn(null);
     }
 
 }

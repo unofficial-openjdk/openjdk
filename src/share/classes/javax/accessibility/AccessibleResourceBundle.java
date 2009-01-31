@@ -28,12 +28,13 @@ package javax.accessibility;
 import java.util.ListResourceBundle;
 
 /**
- * A resource bundle containing the localized strings in the accessibility
+ * A resource bundle containing the localized strings in the accessibility 
  * package.  This is meant only for internal use by Java Accessibility and
  * is not meant to be used by assistive technologies or applications.
  *
+ * @version     %I% %G% %U%
  * @author      Willie Walker
- * @deprecated This class is deprecated as of version 1.3 of the
+ * @deprecated This class is deprecated as of version 1.3 of the 
  *             Java Platform.
  */
 @Deprecated
@@ -44,10 +45,10 @@ public class AccessibleResourceBundle extends ListResourceBundle {
      * localized display strings.
      */
     public Object[][] getContents() {
-        return contents;
+	return contents;
     }
 
-    /**
+    /** 
      * The table holding the mapping between the programmatic keys
      * and the display strings for the en_US locale.
      */
@@ -95,7 +96,7 @@ public class AccessibleResourceBundle extends ListResourceBundle {
         { "pagetab","page tab" },
         { "pagetablist","page tab list" },
         { "panel","panel" },
-        { "passwordtext","password text" },
+	{ "passwordtext","password text" },
         { "popupmenu","popup menu" },
         { "progressbar","progress bar" },
         { "pushbutton","push button" },
@@ -128,25 +129,25 @@ public class AccessibleResourceBundle extends ListResourceBundle {
         { "armed","armed" },
         { "busy","busy" },
         { "checked","checked" },
-        { "collapsed", "collapsed" },
+	{ "collapsed", "collapsed" },
         { "editable","editable" },
-        { "expandable", "expandable" },
-        { "expanded", "expanded" },
+	{ "expandable", "expandable" },
+	{ "expanded", "expanded" },
         { "enabled","enabled" },
         { "focusable","focusable" },
         { "focused","focused" },
-        { "iconified", "iconified" },
-        { "modal", "modal" },
-        { "multiline", "multiple line" },
+	{ "iconified", "iconified" },
+	{ "modal", "modal" },
+	{ "multiline", "multiple line" },
         { "multiselectable","multiselectable" },
-        { "opaque", "opaque" },
+	{ "opaque", "opaque" },
         { "pressed","pressed" },
-        { "resizable", "resizable" },
+	{ "resizable", "resizable" },
         { "selectable","selectable" },
         { "selected","selected" },
         { "showing","showing" },
-        { "singleline", "single line" },
-        { "transient", "transient" },
+	{ "singleline", "single line" },
+	{ "transient", "transient" },
         { "visible","visible" },
         { "vertical","vertical" },
         { "horizontal","horizontal" }

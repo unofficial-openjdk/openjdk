@@ -121,7 +121,7 @@ void AwtTrayIcon::FillClassInfo(WNDCLASS *lpwc)
 
 void AwtTrayIcon::RegisterClass()
 {
-    WNDCLASS  wc;
+    WNDCLASS  wc;  
 
     ::ZeroMemory(&wc, sizeof(wc));
 
@@ -282,7 +282,7 @@ MsgRouting AwtTrayIcon::WmAwtTrayNotify(WPARAM wParam, LPARAM lParam)
             break;
         case WM_LBUTTONDBLCLK:
         case WM_LBUTTONDOWN:
-            mr = WmMouseDown(flags, pos.x, pos.y, LEFT_BUTTON);
+            mr = WmMouseDown(flags, pos.x, pos.y, LEFT_BUTTON); 
             break;
         case WM_LBUTTONUP:
             mr = WmMouseUp(flags, pos.x, pos.y, LEFT_BUTTON);
@@ -333,9 +333,9 @@ MsgRouting AwtTrayIcon::WmMouseDown(UINT flags, int x, int y, int button)
     jlong now = TimeHelper::windowsToUTC(::GetTickCount());
     jint javaModif = AwtComponent::GetJavaModifiers();
 
-    if (lastClickTrIc == this &&
+    if (lastClickTrIc == this &&  
         lastButton == button &&
-        (now - lastTime) <= multiClickTime &&
+        (now - lastTime) <= multiClickTime && 
         abs(x - lastClickX) <= multiClickMaxX &&
         abs(y - lastClickY) <= multiClickMaxY)
     {
@@ -366,10 +366,10 @@ MsgRouting AwtTrayIcon::WmMouseUp(UINT flags, int x, int y, int button)
     MSG msg;
     AwtComponent::InitMessage(&msg, lastMessage, flags, MAKELPARAM(x, y), x, y);
 
-    SendMouseEvent(java_awt_event_MouseEvent_MOUSE_RELEASED, TimeHelper::windowsToUTC(::GetTickCount()),
-                   x, y, AwtComponent::GetJavaModifiers(), clickCount,
+    SendMouseEvent(java_awt_event_MouseEvent_MOUSE_RELEASED, TimeHelper::windowsToUTC(::GetTickCount()), 
+                   x, y, AwtComponent::GetJavaModifiers(), clickCount, 
                    (AwtComponent::GetButton(button) == java_awt_event_MouseEvent_BUTTON3 ?
-                    TRUE : FALSE), AwtComponent::GetButton(button), &msg);
+                    TRUE : FALSE), AwtComponent::GetButton(button), &msg); 
 
     if (!(m_mouseDragState & AwtComponent::GetButtonMK(button))) { // No up-button in the drag-state
         SendMouseEvent(java_awt_event_MouseEvent_MOUSE_CLICKED,
@@ -384,9 +384,9 @@ MsgRouting AwtTrayIcon::WmMouseUp(UINT flags, int x, int y, int button)
 MsgRouting AwtTrayIcon::WmMouseMove(UINT flags, int x, int y)
 {
     MSG msg;
-    static AwtTrayIcon* lastComp = NULL;
-    static int lastX = 0;
-    static int lastY = 0;
+    static AwtTrayIcon* lastComp = NULL; 
+    static int lastX = 0; 
+    static int lastY = 0; 
 
     /*
      * Workaround for CR#6267980
@@ -416,7 +416,7 @@ MsgRouting AwtTrayIcon::WmBalloonUserClick(UINT flags, int x, int y)
         SendActionEvent(java_awt_event_ActionEvent_ACTION_PERFORMED, TimeHelper::windowsToUTC(::GetTickCount()),
                         AwtComponent::GetJavaModifiers(), &msg);
     }
-    return mrConsume;
+    return mrConsume; 
 }
 
 MsgRouting AwtTrayIcon::WmKeySelect(UINT flags, int x, int y)
@@ -449,7 +449,7 @@ MsgRouting AwtTrayIcon::WmSelect(UINT flags, int x, int y)
         SendActionEvent(java_awt_event_ActionEvent_ACTION_PERFORMED, TimeHelper::windowsToUTC(::GetTickCount()),
                         AwtComponent::GetJavaModifiers(), &msg);
     }
-    return mrConsume;
+    return mrConsume;    
 }
 
 MsgRouting AwtTrayIcon::WmContextMenu(UINT flags, int x, int y)
@@ -457,7 +457,7 @@ MsgRouting AwtTrayIcon::WmContextMenu(UINT flags, int x, int y)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jobject peer = GetPeer(env);
     if (peer != NULL) {
-        JNU_CallMethodByName(env, NULL, peer, "showPopupMenu",
+        JNU_CallMethodByName(env, NULL, peer, "showPopupMenu", 
                              "(II)V", x, y);
     }
     return mrConsume;
@@ -479,8 +479,8 @@ MsgRouting AwtTrayIcon::WmTaskbarCreated() {
     return mrDoDefault;
 }
 
-void AwtTrayIcon::SendMouseEvent(jint id, jlong when, jint x, jint y,
-                                 jint modifiers, jint clickCount,
+void AwtTrayIcon::SendMouseEvent(jint id, jlong when, jint x, jint y, 
+                                 jint modifiers, jint clickCount, 
                                  jboolean popupTrigger, jint button,
                                  MSG *pMsg)
 {
@@ -492,7 +492,7 @@ void AwtTrayIcon::SendMouseEvent(jint id, jlong when, jint x, jint y,
 
     static jclass mouseEventCls;
     if (mouseEventCls == NULL) {
-        jclass mouseEventClsLocal =
+        jclass mouseEventClsLocal = 
             env->FindClass("java/awt/event/MouseEvent");
         if (!mouseEventClsLocal) {
             /* exception already thrown */
@@ -504,8 +504,8 @@ void AwtTrayIcon::SendMouseEvent(jint id, jlong when, jint x, jint y,
 
     static jmethodID mouseEventConst;
     if (mouseEventConst == NULL) {
-        mouseEventConst =
-            env->GetMethodID(mouseEventCls, "<init>",
+        mouseEventConst = 
+            env->GetMethodID(mouseEventCls, "<init>", 
                              "(Ljava/awt/Component;IJIIIIIIZI)V");
         DASSERT(mouseEventConst);
     }
@@ -513,9 +513,9 @@ void AwtTrayIcon::SendMouseEvent(jint id, jlong when, jint x, jint y,
         return;
     }
     jobject target = GetTarget(env);
-    jobject mouseEvent = env->NewObject(mouseEventCls, mouseEventConst,
+    jobject mouseEvent = env->NewObject(mouseEventCls, mouseEventConst, 
                                         target,
-                                        id, when, modifiers,
+                                        id, when, modifiers, 
                                         x, y, // no client area coordinates
                                         x, y,
                                         clickCount, popupTrigger, button);
@@ -545,7 +545,7 @@ void AwtTrayIcon::SendActionEvent(jint id, jlong when, jint modifiers, MSG *pMsg
 
     static jclass actionEventCls;
     if (actionEventCls == NULL) {
-        jclass actionEventClsLocal =
+        jclass actionEventClsLocal = 
             env->FindClass("java/awt/event/ActionEvent");
         if (!actionEventClsLocal) {
             /* exception already thrown */
@@ -557,8 +557,8 @@ void AwtTrayIcon::SendActionEvent(jint id, jlong when, jint modifiers, MSG *pMsg
 
     static jmethodID actionEventConst;
     if (actionEventConst == NULL) {
-        actionEventConst =
-            env->GetMethodID(actionEventCls, "<init>",
+        actionEventConst = 
+            env->GetMethodID(actionEventCls, "<init>", 
                              "(Ljava/lang/Object;ILjava/lang/String;JI)V");
         DASSERT(actionEventConst);
     }
@@ -567,7 +567,7 @@ void AwtTrayIcon::SendActionEvent(jint id, jlong when, jint modifiers, MSG *pMsg
     }
     jobject target = GetTarget(env);
     jstring actionCommand = (jstring)env->GetObjectField(target, AwtTrayIcon::actionCommandID);
-    jobject actionEvent = env->NewObject(actionEventCls, actionEventConst,
+    jobject actionEvent = env->NewObject(actionEventCls, actionEventConst, 
                                          target, id, actionCommand, when, modifiers);
 
     if (safe_ExceptionOccurred(env)) {
@@ -593,7 +593,7 @@ AwtTrayIcon* AwtTrayIcon::SearchTrayIconItem(UINT id) {
             return item->m_trayIcon;
         }
     }
-    /*
+    /* 
      * DASSERT(FALSE);
      * This should not be happend if all tray icons are recorded
      */
@@ -648,7 +648,7 @@ HBITMAP AwtTrayIcon::CreateBMP(HWND hW,int* imageData,int nSS, int nW, int nH)
     HBITMAP         hbmpBitmap;
     HBITMAP         hBitmap;
     int             nNumChannels    = 3;
-
+    
     if (!hW) {
         hW = ::GetDesktopWindow();
     }
@@ -656,16 +656,16 @@ HBITMAP AwtTrayIcon::CreateBMP(HWND hW,int* imageData,int nSS, int nW, int nH)
     if (!hDC) {
         return NULL;
     }
-
+    
     memset(&bmhHeader, 0, sizeof(Bitmapheader));
     bmhHeader.bmiHeader.biSize              = sizeof(BITMAPINFOHEADER);
     bmhHeader.bmiHeader.biWidth             = nW;
     bmhHeader.bmiHeader.biHeight            = -nH;
     bmhHeader.bmiHeader.biPlanes            = 1;
-
+    
     bmhHeader.bmiHeader.biBitCount          = 24;
     bmhHeader.bmiHeader.biCompression       = BI_RGB;
-
+    
     hbmpBitmap = ::CreateDIBSection(hDC, (BITMAPINFO*)&(bmhHeader),
                                     DIB_RGB_COLORS,
                                     (void**)&(ptrImageData),
@@ -681,20 +681,20 @@ HBITMAP AwtTrayIcon::CreateBMP(HWND hW,int* imageData,int nSS, int nW, int nH)
             dstPtr[2] = (*srcPtr >> 0x10) & 0xFF;
             dstPtr[1] = (*srcPtr >> 0x08) & 0xFF;
             dstPtr[0] = *srcPtr & 0xFF;
-
+            
             srcPtr++;
             dstPtr += nNumChannels;
         }
     }
-
+    
     // convert it into DDB to make CustomCursor work on WIN95
-    hBitmap = CreateDIBitmap(hDC,
+    hBitmap = CreateDIBitmap(hDC, 
                              (BITMAPINFOHEADER*)&bmhHeader,
                              CBM_INIT,
                              (void *)ptrImageData,
                              (BITMAPINFO*)&bmhHeader,
                              DIB_RGB_COLORS);
-
+    
     ::DeleteObject(hbmpBitmap);
     ::ReleaseDC(hW, hDC);
 //  ::GdiFlush();
@@ -806,7 +806,7 @@ void AwtTrayIcon::DisplayMessage(LPCTSTR caption, LPCTSTR text, LPCTSTR msgType)
     } else if (lstrcmp(msgType, TEXT("NONE")) == 0) {
         m_nid.dwInfoFlags = AWT_NIIF_NONE;
     } else {
-        m_nid.dwInfoFlags = AWT_NIIF_NONE;
+        m_nid.dwInfoFlags = AWT_NIIF_NONE; 
     }
 
     if (caption[0] == '\0') {
@@ -922,7 +922,7 @@ Java_sun_awt_windows_WTrayIconPeer_create(JNIEnv *env, jobject self)
  * Method:    _dispose
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WTrayIconPeer__1dispose(JNIEnv *env, jobject self)
 {
     TRY;
@@ -938,7 +938,7 @@ Java_sun_awt_windows_WTrayIconPeer__1dispose(JNIEnv *env, jobject self)
  * Method:    _setToolTip
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WTrayIconPeer_setToolTip(JNIEnv *env, jobject self,
                                               jstring tooltip)
 {
@@ -963,9 +963,9 @@ Java_sun_awt_windows_WTrayIconPeer_setToolTip(JNIEnv *env, jobject self,
  * Method:    setNativeIcon
  * Signature: (I[B[IIIII)V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WTrayIconPeer_setNativeIcon(JNIEnv *env, jobject self,
-                                                 jintArray intRasterData, jbyteArray andMask,
+                                                 jintArray intRasterData, jbyteArray andMask, 
                                                  jint nSS, jint nW, jint nH)
 {
     TRY;
@@ -974,16 +974,16 @@ Java_sun_awt_windows_WTrayIconPeer_setNativeIcon(JNIEnv *env, jobject self,
     jbyte *andMaskPtr = new jbyte[length];
 
     env->GetByteArrayRegion(andMask, 0, length, andMaskPtr);
-
+    
     HBITMAP hMask = ::CreateBitmap(nW, nH, 1, 1, (BYTE *)andMaskPtr);
 //    ::GdiFlush();
 
     delete[] andMaskPtr;
-
+    
     jint *intRasterDataPtr = NULL;
     HBITMAP hColor = NULL;
     try {
-        intRasterDataPtr =
+        intRasterDataPtr = 
             (jint *)env->GetPrimitiveArrayCritical(intRasterData, 0);
         hColor = AwtTrayIcon::CreateBMP(NULL, (int *)intRasterDataPtr, nSS, nW, nH);
     } catch (...) {
@@ -993,12 +993,12 @@ Java_sun_awt_windows_WTrayIconPeer_setNativeIcon(JNIEnv *env, jobject self,
         ::DeleteObject(hMask);
         throw;
     }
-
+    
     env->ReleasePrimitiveArrayCritical(intRasterData, intRasterDataPtr, 0);
     intRasterDataPtr = NULL;
-
+    
     HICON hIcon = NULL;
-
+    
     if (hMask && hColor) {
         ICONINFO icnInfo;
         memset(&icnInfo, 0, sizeof(ICONINFO));
@@ -1007,7 +1007,7 @@ Java_sun_awt_windows_WTrayIconPeer_setNativeIcon(JNIEnv *env, jobject self,
         icnInfo.fIcon = TRUE;
         icnInfo.xHotspot = TRAY_ICON_X_HOTSPOT;
         icnInfo.yHotspot = TRAY_ICON_Y_HOTSPOT;
-
+        
         hIcon = ::CreateIconIndirect(&icnInfo);
     }
     ::DeleteObject(hColor);
@@ -1030,7 +1030,7 @@ Java_sun_awt_windows_WTrayIconPeer_setNativeIcon(JNIEnv *env, jobject self,
  * Method:    updateNativeIcon
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WTrayIconPeer_updateNativeIcon(JNIEnv *env, jobject self,
                                                     jboolean doUpdate)
 {
@@ -1051,7 +1051,7 @@ Java_sun_awt_windows_WTrayIconPeer_updateNativeIcon(JNIEnv *env, jobject self,
  * Method:    displayMessage
  * Signature: ()V;
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WTrayIconPeer__1displayMessage(JNIEnv *env, jobject self,
     jstring caption, jstring text, jstring msgType)
 {
@@ -1063,7 +1063,7 @@ Java_sun_awt_windows_WTrayIconPeer__1displayMessage(JNIEnv *env, jobject self,
         dms->caption = (jstring)env->NewGlobalRef(caption);
         dms->text = (jstring)env->NewGlobalRef(text);
         dms->msgType = (jstring)env->NewGlobalRef(msgType);
-
+        
         AwtToolkit::GetInstance().SyncCall(AwtTrayIcon::_DisplayMessage, dms);
         // global ref is deleted in _DisplayMessage
     }

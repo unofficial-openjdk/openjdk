@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /* @test
  * @bug 4128620
  *
- * @summary synopsis: NoSuchMethodError should be elucidated
- *
+ * @summary synopsis: NoSuchMethodError should be elucidated 
+ * 
  * @author Laird Dornin
  *
  * @library ../../../testlibrary
@@ -42,8 +42,8 @@ import java.rmi.registry.*;
 import java.util.Properties;
 
 public class ElucidateNoSuchMethod
-        extends Activatable
-        implements ActivateMe, Runnable
+	extends Activatable
+	implements ActivateMe, Runnable
 {
 
     /**
@@ -51,14 +51,14 @@ public class ElucidateNoSuchMethod
      *  activatable, or at least registered.
      */
     ElucidateNoSuchMethod(ActivationID id, int port)
-        throws RemoteException
+	throws RemoteException 
     {
-        super(id, port);
+	super(id, port);
     }
-
+    
     /**
      * dont provide an activation constructor so that we get a no such
-     * method error.
+     * method error. 
      */
 
     public void ping() {}
@@ -67,7 +67,7 @@ public class ElucidateNoSuchMethod
      * Spawns a thread to deactivate the object.
      */
     public void shutdown() throws Exception {
-        (new Thread(this,"ElucidateNoSuchMethod")).start();
+	(new Thread(this,"ElucidateNoSuchMethod")).start();
     }
 
     /**
@@ -77,68 +77,68 @@ public class ElucidateNoSuchMethod
      * unexport the object forcibly.
      */
     public void run() {
-        ActivationLibrary.deactivate(this, getID());
+	ActivationLibrary.deactivate(this, getID());
     }
-
+    
     public static void main(String[] args) {
 
-        System.out.println("\nRegression test for 4128620 \n");
+	System.out.println("\nRegression test for 4128620 \n");
+	
+	TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");	
 
-        TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
+	RMID rmid = null;
+	
+	try {
+	    RMID.removeLog();
+	    rmid = RMID.createRMID();
+	    rmid.start();
 
-        RMID rmid = null;
+	    /* Cause activation groups to have a security policy that will
+	     * allow security managers to be downloaded and installed
+	     */
+	    Properties p = new Properties();
+	    // this test must always set policies/managers in its
+	    // activation groups
+	    p.put("java.security.policy", 
+		  TestParams.defaultGroupPolicy);
+	    p.put("java.security.manager", 
+		  TestParams.defaultSecurityManager);
 
-        try {
-            RMID.removeLog();
-            rmid = RMID.createRMID();
-            rmid.start();
+	    System.err.println("Create activation group in this VM");
+	    ActivationGroupDesc groupDesc =
+		new ActivationGroupDesc(p, null);
+	    ActivationSystem system = ActivationGroup.getSystem();
+	    ActivationGroupID groupID = system.registerGroup(groupDesc);
+	    ActivationGroup.createGroup(groupID, groupDesc, 0);
+	    
+	    System.err.println("Creating descriptor");
+	    ActivationDesc desc =
+		new ActivationDesc("ElucidateNoSuchMethod", null, null);
+	    
+	    System.err.println("Registering descriptor");
+	    ActivateMe obj = (ActivateMe) Activatable.register(desc);
+	    
+	    System.err.println("Activate object via method call");
 
-            /* Cause activation groups to have a security policy that will
-             * allow security managers to be downloaded and installed
-             */
-            Properties p = new Properties();
-            // this test must always set policies/managers in its
-            // activation groups
-            p.put("java.security.policy",
-                  TestParams.defaultGroupPolicy);
-            p.put("java.security.manager",
-                  TestParams.defaultSecurityManager);
+	    try {
+		obj.ping();
+	    } catch (ActivateFailedException afe) {
+		ActivationException a = (ActivationException) afe.detail;
+		
+		if (((a.detail instanceof NoSuchMethodException) ||
+		     (a.detail instanceof NoSuchMethodError)) &&
+		        (a.getMessage().indexOf
+		      ("must provide an activation constructor") > -1)) {
+		    System.err.println("\ntest passed for 4128620\n");
+		} else {
+		    TestLibrary.bomb("test failed", afe);
+		}
+	    }
 
-            System.err.println("Create activation group in this VM");
-            ActivationGroupDesc groupDesc =
-                new ActivationGroupDesc(p, null);
-            ActivationSystem system = ActivationGroup.getSystem();
-            ActivationGroupID groupID = system.registerGroup(groupDesc);
-            ActivationGroup.createGroup(groupID, groupDesc, 0);
-
-            System.err.println("Creating descriptor");
-            ActivationDesc desc =
-                new ActivationDesc("ElucidateNoSuchMethod", null, null);
-
-            System.err.println("Registering descriptor");
-            ActivateMe obj = (ActivateMe) Activatable.register(desc);
-
-            System.err.println("Activate object via method call");
-
-            try {
-                obj.ping();
-            } catch (ActivateFailedException afe) {
-                ActivationException a = (ActivationException) afe.detail;
-
-                if (((a.detail instanceof NoSuchMethodException) ||
-                     (a.detail instanceof NoSuchMethodError)) &&
-                        (a.getMessage().indexOf
-                      ("must provide an activation constructor") > -1)) {
-                    System.err.println("\ntest passed for 4128620\n");
-                } else {
-                    TestLibrary.bomb("test failed", afe);
-                }
-            }
-
-        } catch (Exception e) {
-            TestLibrary.bomb("test failed", e);
-        } finally {
-            ActivationLibrary.rmidCleanup(rmid);
-        }
+	} catch (Exception e) {
+	    TestLibrary.bomb("test failed", e);
+	} finally {
+	    ActivationLibrary.rmidCleanup(rmid);
+	}
     }
 }

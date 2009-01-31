@@ -33,7 +33,7 @@ import  java.security.ProtectionDomain;
 
 /**
  * An agent provides an implementation of this interface in order
- * to transform class files.
+ * to transform class files.  
  * The transformation occurs before the class is defined by the JVM.
  * <P>
  * Note the term <i>class file</i> is used as defined in the chapter
@@ -47,9 +47,9 @@ import  java.security.ProtectionDomain;
  * @since   1.5
  */
 
-public interface ClassFileTransformer {
+public interface ClassFileTransformer { 
     /**
-     * The implementation of this method may transform the supplied class file and
+     * The implementation of this method may transform the supplied class file and 
      * return a new replacement class file.
      *
      * <P>
@@ -61,7 +61,7 @@ public interface ClassFileTransformer {
      *        <code>canRetransform</code> as true
      *    </li>
      *    <li><i>retransformation incapable</i> transformers that were added with
-     *        <code>canRetransform</code> as false or where added with
+     *        <code>canRetransform</code> as false or where added with 
      *        {@link java.lang.instrument.Instrumentation#addTransformer(ClassFileTransformer)}
      *    </li>
      *  </ul>
@@ -84,7 +84,7 @@ public interface ClassFileTransformer {
      * The transformer is called during the processing of the request, before the class file bytes
      * have been verified or applied.
      * When there are multiple transformers, transformations are composed by chaining the
-     * <code>transform</code> calls.
+     * <code>transform</code> calls. 
      * That is, the byte array returned by one call to <code>transform</code> becomes the input
      * (via the <code>classfileBuffer</code> parameter) to the next call.
      *
@@ -93,7 +93,7 @@ public interface ClassFileTransformer {
      *  <ul>
      *    <li>Retransformation incapable transformers
      *    </li>
-     *    <li>Retransformation incapable native transformers
+     *    <li>Retransformation incapable native transformers 
      *    </li>
      *    <li>Retransformation capable transformers
      *    </li>
@@ -110,14 +110,14 @@ public interface ClassFileTransformer {
      * in the Java Virtual Machine Tool Interface).
      *
      * <P>
-     * The input (via the <code>classfileBuffer</code> parameter) to the first
+     * The input (via the <code>classfileBuffer</code> parameter) to the first 
      * transformer is:
      *  <ul>
      *    <li>for new class definition,
      *        the bytes passed to <code>ClassLoader.defineClass</code>
      *    </li>
      *    <li>for class redefinition,
-     *        <code>definitions.getDefinitionClassFile()</code> where
+     *        <code>definitions.getDefinitionClassFile()</code> where 
      *        <code>definitions</code> is the parameter to
      *        {@link java.lang.instrument.Instrumentation#redefineClasses
      *         Instrumentation.redefineClasses}
@@ -134,10 +134,10 @@ public interface ClassFileTransformer {
      *
      * <P>
      * If the implementing method determines that no transformations are needed,
-     * it should return <code>null</code>.
+     * it should return <code>null</code>. 
      * Otherwise, it should create a new <code>byte[]</code> array,
      * copy the input <code>classfileBuffer</code> into it,
-     * along with all desired transformations, and return the new array.
+     * along with all desired transformations, and return the new array. 
      * The input <code>classfileBuffer</code> must not be modified.
      *
      * <P>
@@ -149,7 +149,7 @@ public interface ClassFileTransformer {
      * redefinition of the first output class file.
      *
      * <P>
-     * If the transformer throws an exception (which it doesn't catch),
+     * If the transformer throws an exception (which it doesn't catch), 
      * subsequent transformers will still be called and the load, redefine
      * or retransform will still be attempted.
      * Thus, throwing an exception has the same effect as returning <code>null</code>.
@@ -165,16 +165,16 @@ public interface ClassFileTransformer {
      *                              may be <code>null</code> if the bootstrap loader
      * @param className             the name of the class in the internal form of fully
      *                              qualified class and interface names as defined in
-     *                              <i>The Java Virtual Machine Specification</i>.
+     *                              <i>The Java Virtual Machine Specification</i>.  
      *                              For example, <code>"java/util/List"</code>.
-     * @param classBeingRedefined   if this is triggered by a redefine or retransform,
+     * @param classBeingRedefined   if this is triggered by a redefine or retransform, 
      *                              the class being redefined or retransformed;
      *                              if this is a class load, <code>null</code>
      * @param protectionDomain      the protection domain of the class being defined or redefined
      * @param classfileBuffer       the input byte buffer in class file format - must not be modified
      *
      * @throws IllegalClassFormatException if the input does not represent a well-formed class file
-     * @return  a well-formed class file buffer (the result of the transform),
+     * @return  a well-formed class file buffer (the result of the transform), 
                 or <code>null</code> if no transform is performed.
      * @see Instrumentation#redefineClasses
      */
@@ -185,4 +185,4 @@ public interface ClassFileTransformer {
                 ProtectionDomain    protectionDomain,
                 byte[]              classfileBuffer)
         throws IllegalClassFormatException;
-}
+} 

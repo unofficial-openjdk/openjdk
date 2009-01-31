@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,9 +32,9 @@
  * @run main Read
  *
  * @summary Verify that the message string of a ClassCastException thrown by
- *          ObjectInputStream when attempting to assign a value to a field of
- *          an incompatible type contains the names of the value's class, the
- *          field's declaring class, the field's type, and the field itself.
+ * 	    ObjectInputStream when attempting to assign a value to a field of
+ * 	    an incompatible type contains the names of the value's class, the
+ * 	    field's declaring class, the field's type, and the field itself.
  */
 
 import java.io.*;
@@ -48,9 +48,9 @@ class Gub extends Foo {}
 
 public class Write {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-        oout.writeObject(new Gub());
-        oout.close();
+	ObjectOutputStream oout = 
+	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+	oout.writeObject(new Gub());
+	oout.close();
     }
 }

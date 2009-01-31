@@ -57,14 +57,14 @@ public class DSAKeyValueResolver extends KeyResolverSpi {
       boolean isDSAKeyValue = XMLUtils.elementIsInSignatureSpace(element,
                                  Constants._TAG_DSAKEYVALUE);
 
-      if (isKeyValue) {
-
+      if (isKeyValue) {         
+     
             this._dsaKeyElement =
-                XMLUtils.selectDsNode(element.getFirstChild(),Constants._TAG_DSAKEYVALUE,0);
+            	XMLUtils.selectDsNode(element.getFirstChild(),Constants._TAG_DSAKEYVALUE,0);                    
 
             if (this._dsaKeyElement != null) {
                return true;
-            }
+            }         
       } else if (isDSAKeyValue) {
 
          // this trick is needed to allow the RetrievalMethodResolver to eat a
@@ -104,13 +104,13 @@ public class DSAKeyValueResolver extends KeyResolverSpi {
 
          return pk;
       } catch (XMLSecurityException ex) {
-                //do nothing
+		//do nothing
       }
 
       return null;
    }
 
-
+   
    /** @inheritDoc */
    public X509Certificate engineResolveX509Certificate(
            Element element, String BaseURI, StorageResolver storage) {

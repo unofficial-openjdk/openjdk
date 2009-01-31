@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>long</code> value in
+ * Provides access to a primitive <code>long</code> value in 
  * the target VM.
  *
  * @author Robert Field
@@ -38,7 +38,7 @@ public interface LongValue extends PrimitiveValue, Comparable<LongValue>
 {
     /**
      * Returns this LongValue as a long.
-     *
+     * 
      * @return the <code>long</code> mirrored by this object.
      */
     long value();
@@ -59,3 +59,4 @@ public interface LongValue extends PrimitiveValue, Comparable<LongValue>
      */
     int hashCode();
 }
+

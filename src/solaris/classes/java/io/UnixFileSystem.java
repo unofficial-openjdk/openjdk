@@ -37,22 +37,22 @@ class UnixFileSystem extends FileSystem {
 
     public UnixFileSystem() {
         slash = AccessController.doPrivileged(
-            new GetPropertyAction("file.separator")).charAt(0);
-        colon = AccessController.doPrivileged(
-            new GetPropertyAction("path.separator")).charAt(0);
-        javaHome = AccessController.doPrivileged(
-            new GetPropertyAction("java.home"));
+	    new GetPropertyAction("file.separator")).charAt(0);
+	colon = AccessController.doPrivileged(
+	    new GetPropertyAction("path.separator")).charAt(0);
+	javaHome = AccessController.doPrivileged(
+	    new GetPropertyAction("java.home"));
     }
 
 
     /* -- Normalization and construction -- */
 
     public char getSeparator() {
-        return slash;
+	return slash;
     }
 
     public char getPathSeparator() {
-        return colon;
+	return colon;
     }
 
     /* A normal Unix pathname contains no duplicate slashes and does not end
@@ -61,76 +61,76 @@ class UnixFileSystem extends FileSystem {
     /* Normalize the given pathname, whose length is len, starting at the given
        offset; everything before this offset is already normal. */
     private String normalize(String pathname, int len, int off) {
-        if (len == 0) return pathname;
-        int n = len;
-        while ((n > 0) && (pathname.charAt(n - 1) == '/')) n--;
-        if (n == 0) return "/";
-        StringBuffer sb = new StringBuffer(pathname.length());
-        if (off > 0) sb.append(pathname.substring(0, off));
-        char prevChar = 0;
-        for (int i = off; i < n; i++) {
-            char c = pathname.charAt(i);
-            if ((prevChar == '/') && (c == '/')) continue;
-            sb.append(c);
-            prevChar = c;
-        }
-        return sb.toString();
+	if (len == 0) return pathname;
+	int n = len;
+	while ((n > 0) && (pathname.charAt(n - 1) == '/')) n--;
+	if (n == 0) return "/";
+	StringBuffer sb = new StringBuffer(pathname.length());
+	if (off > 0) sb.append(pathname.substring(0, off));
+	char prevChar = 0;
+	for (int i = off; i < n; i++) {
+	    char c = pathname.charAt(i);
+	    if ((prevChar == '/') && (c == '/')) continue;
+	    sb.append(c);
+	    prevChar = c;
+	}
+	return sb.toString();
     }
 
     /* Check that the given pathname is normal.  If not, invoke the real
        normalizer on the part of the pathname that requires normalization.
        This way we iterate through the whole pathname string only once. */
     public String normalize(String pathname) {
-        int n = pathname.length();
-        char prevChar = 0;
-        for (int i = 0; i < n; i++) {
-            char c = pathname.charAt(i);
-            if ((prevChar == '/') && (c == '/'))
-                return normalize(pathname, n, i - 1);
-            prevChar = c;
-        }
-        if (prevChar == '/') return normalize(pathname, n, n - 1);
-        return pathname;
+	int n = pathname.length();
+	char prevChar = 0;
+	for (int i = 0; i < n; i++) {
+	    char c = pathname.charAt(i);
+	    if ((prevChar == '/') && (c == '/'))
+		return normalize(pathname, n, i - 1);
+	    prevChar = c;
+	}
+	if (prevChar == '/') return normalize(pathname, n, n - 1);
+	return pathname;
     }
 
     public int prefixLength(String pathname) {
-        if (pathname.length() == 0) return 0;
-        return (pathname.charAt(0) == '/') ? 1 : 0;
+	if (pathname.length() == 0) return 0;
+	return (pathname.charAt(0) == '/') ? 1 : 0;
     }
 
     public String resolve(String parent, String child) {
-        if (child.equals("")) return parent;
-        if (child.charAt(0) == '/') {
-            if (parent.equals("/")) return child;
-            return parent + child;
-        }
-        if (parent.equals("/")) return parent + child;
-        return parent + '/' + child;
+	if (child.equals("")) return parent;
+	if (child.charAt(0) == '/') {
+	    if (parent.equals("/")) return child;
+	    return parent + child;
+	}
+	if (parent.equals("/")) return parent + child;
+	return parent + '/' + child;
     }
 
     public String getDefaultParent() {
-        return "/";
+	return "/";
     }
 
     public String fromURIPath(String path) {
-        String p = path;
-        if (p.endsWith("/") && (p.length() > 1)) {
-            // "/foo/" --> "/foo", but "/" --> "/"
-            p = p.substring(0, p.length() - 1);
-        }
-        return p;
+	String p = path;
+	if (p.endsWith("/") && (p.length() > 1)) {
+	    // "/foo/" --> "/foo", but "/" --> "/"
+	    p = p.substring(0, p.length() - 1);
+	}
+	return p;
     }
 
 
     /* -- Path operations -- */
 
     public boolean isAbsolute(File f) {
-        return (f.getPrefixLength() != 0);
+	return (f.getPrefixLength() != 0);
     }
 
     public String resolve(File f) {
-        if (isAbsolute(f)) return f.getPath();
-        return resolve(System.getProperty("user.dir"), f.getPath());
+	if (isAbsolute(f)) return f.getPath();
+	return resolve(System.getProperty("user.dir"), f.getPath());
     }
 
     // Caches for canonicalization results to improve startup performance.
@@ -151,8 +151,8 @@ class UnixFileSystem extends FileSystem {
         } else {
             String res = cache.get(path);
             if (res == null) {
-                String dir = null;
-                String resDir = null;
+		String dir = null;
+		String resDir = null;
                 if (useCanonPrefixCache) {
                     // Note that this can cause symlinks that should
                     // be resolved to a destination directory to be
@@ -172,7 +172,7 @@ class UnixFileSystem extends FileSystem {
                     res = canonicalize0(path);
                     cache.put(path, res);
                     if (useCanonPrefixCache &&
-                        dir != null && dir.startsWith(javaHome)) {
+			dir != null && dir.startsWith(javaHome)) {
                         resDir = parentOrNull(res);
                         // Note that we don't allow a resolved symlink
                         // to elsewhere in java.home to pollute the
@@ -240,10 +240,10 @@ class UnixFileSystem extends FileSystem {
     public native int getBooleanAttributes0(File f);
 
     public int getBooleanAttributes(File f) {
-        int rv = getBooleanAttributes0(f);
-        String name = f.getName();
-        boolean hidden = (name.length() > 0) && (name.charAt(0) == '.');
-        return rv | (hidden ? BA_HIDDEN : 0);
+	int rv = getBooleanAttributes0(f);
+	String name = f.getName();
+	boolean hidden = (name.length() > 0) && (name.charAt(0) == '.');
+	return rv | (hidden ? BA_HIDDEN : 0);
     }
 
     public native boolean checkAccess(File f, int access);
@@ -254,7 +254,7 @@ class UnixFileSystem extends FileSystem {
     /* -- File operations -- */
 
     public native boolean createFileExclusively(String path)
-        throws IOException;
+	throws IOException;
     public boolean delete(File f) {
         // Keep canonicalization caches in sync after file deletion
         // and renaming operations. Could be more clever than this
@@ -286,15 +286,15 @@ class UnixFileSystem extends FileSystem {
     /* -- Filesystem interface -- */
 
     public File[] listRoots() {
-        try {
-            SecurityManager security = System.getSecurityManager();
-            if (security != null) {
-                security.checkRead("/");
-            }
-            return new File[] { new File("/") };
-        } catch (SecurityException x) {
-            return new File[0];
-        }
+	try {
+	    SecurityManager security = System.getSecurityManager();
+	    if (security != null) {
+		security.checkRead("/");
+	    }
+	    return new File[] { new File("/") };
+	} catch (SecurityException x) {
+	    return new File[0];
+	}
     }
 
     /* -- Disk usage -- */
@@ -303,18 +303,18 @@ class UnixFileSystem extends FileSystem {
     /* -- Basic infrastructure -- */
 
     public int compare(File f1, File f2) {
-        return f1.getPath().compareTo(f2.getPath());
+	return f1.getPath().compareTo(f2.getPath());
     }
 
     public int hashCode(File f) {
-        return f.getPath().hashCode() ^ 1234321;
+	return f.getPath().hashCode() ^ 1234321;
     }
 
-
+    
     private static native void initIDs();
 
     static {
-        initIDs();
+	initIDs();
     }
 
 }

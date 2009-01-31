@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>int</code> value in
+ * Provides access to a primitive <code>int</code> value in 
  * the target VM.
  *
  * @author Robert Field
@@ -38,11 +38,11 @@ public interface IntegerValue extends PrimitiveValue, Comparable<IntegerValue>
 {
     /**
      * Returns this IntegerValue as an int.
-     *
+     * 
      * @return the <code>int</code> mirrored by this object.
      */
     int value();
-
+    
     /**
      * Compares the specified Object with this IntegerValue for equality.
      *
@@ -59,3 +59,4 @@ public interface IntegerValue extends PrimitiveValue, Comparable<IntegerValue>
      */
     int hashCode();
 }
+

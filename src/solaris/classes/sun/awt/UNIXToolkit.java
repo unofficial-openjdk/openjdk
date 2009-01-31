@@ -40,8 +40,8 @@ public abstract class UNIXToolkit extends SunToolkit
     /** All calls into GTK should be synchronized on this lock */
     public static final Object GTK_LOCK = new Object();
 
-    private static final int[] BAND_OFFSETS = { 0, 1, 2 };
-    private static final int[] BAND_OFFSETS_ALPHA = { 0, 1, 2, 3 };
+    private static final int[] BAND_OFFSETS = { 0, 1, 2 }; 
+    private static final int[] BAND_OFFSETS_ALPHA = { 0, 1, 2, 3 }; 
     private static final int DEFAULT_DATATRANSFER_TIMEOUT = 10000;
 
     private Boolean nativeGTKAvailable;
@@ -113,11 +113,11 @@ public abstract class UNIXToolkit extends SunToolkit
         if (name.startsWith("gtk.icon.")) {
             return lazilyLoadGTKIcon(name);
         }
-        return super.lazilyLoadDesktopProperty(name);
+	return super.lazilyLoadDesktopProperty(name);
     }
 
     /**
-     * Load a native Gtk stock icon.
+     * Load a native Gtk stock icon.  
      *
      * @param longname a desktop property name. This contains icon name, size
      *        and orientation, e.g. <code>"gtk.icon.gtk-add.4.rtl"</code>
@@ -148,7 +148,7 @@ public abstract class UNIXToolkit extends SunToolkit
         // Direction.
         TextDirection dir = ("ltr".equals(str[4]) ? TextDirection.LTR :
                                                     TextDirection.RTL);
-
+        
         // Load the stock icon.
         BufferedImage img = getStockIcon(-1, str[2], size, dir.ordinal(), null);
         if (img != null) {
@@ -190,15 +190,15 @@ public abstract class UNIXToolkit extends SunToolkit
      * -1 for system default stock icon.
      * @param stockId String which defines the stock id of the gtk item.
      * For a complete list reference the API at www.gtk.org for StockItems.
-     * @param iconSize One of the GtkIconSize values defined in GTKConstants
+     * @param iconSize One of the GtkIconSize values defined in GTKConstants 
      * @param textDirection One of the TextDirection values defined in
      * GTKConstants
      * @param detail Render detail that is passed to the native engine (feel
      * free to pass null)
      * @return The stock icon or null if it was not found or loaded.
      */
-    public BufferedImage getStockIcon(final int widgetType, final String stockId,
-                                final int iconSize, final int direction,
+    public BufferedImage getStockIcon(final int widgetType, final String stockId, 
+                                final int iconSize, final int direction, 
                                 final String detail) {
         if (!loadGTK()) {
             return null;
@@ -214,14 +214,14 @@ public abstract class UNIXToolkit extends SunToolkit
         // Return local image the callback loaded the icon into.
         return tmpImage;  // set by loadIconCallback
     }
-
+                
     /**
      * This method is used by JNI as a callback from load_stock_icon.
      * Image data is passed back to us via this method and loaded into the
      * local BufferedImage and then returned via getStockIcon.
      *
      * Do NOT call this method directly.
-     */
+     */ 
     public void loadIconCallback(byte[] data, int width, int height,
             int rowStride, int bps, int channels, boolean alpha) {
         // Reset the stock image to null.
@@ -258,7 +258,7 @@ public abstract class UNIXToolkit extends SunToolkit
         // now flush the OGL pipeline (this is a no-op if OGL is not enabled)
         OGLRenderQueue.sync();
     }
-
+   
     /*
      * This returns the value for the desktop property "awt.font.desktophints"
      * It builds this by querying the Gnome desktop properties to return
@@ -277,7 +277,7 @@ public abstract class UNIXToolkit extends SunToolkit
              */
             aaValue = getDesktopProperty(FONTCONFIGAAHINT);
             if (aaValue != null) {
-               return new RenderingHints(KEY_TEXT_ANTIALIASING, aaValue);
+               return new RenderingHints(KEY_TEXT_ANTIALIASING, aaValue); 
             } else {
                  return null; // no Gnome or KDE Desktop properties available.
             }

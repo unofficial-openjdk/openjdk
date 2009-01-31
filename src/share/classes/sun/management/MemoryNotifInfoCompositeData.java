@@ -34,63 +34,63 @@ import javax.management.openmbean.OpenDataException;
 
 /**
  * A CompositeData for MemoryNotificationInfo for the local management support.
- * This class avoids the performance penalty paid to the
+ * This class avoids the performance penalty paid to the 
  * construction of a CompositeData use in the local case.
  */
 public class MemoryNotifInfoCompositeData extends LazyCompositeData {
     private final MemoryNotificationInfo memoryNotifInfo;
 
     private MemoryNotifInfoCompositeData(MemoryNotificationInfo info) {
-        this.memoryNotifInfo = info;
+	this.memoryNotifInfo = info;
     }
 
     public MemoryNotificationInfo getMemoryNotifInfo() {
-        return memoryNotifInfo;
+	return memoryNotifInfo;
     }
 
     public static CompositeData toCompositeData(MemoryNotificationInfo info) {
-        MemoryNotifInfoCompositeData mnicd =
+        MemoryNotifInfoCompositeData mnicd = 
             new MemoryNotifInfoCompositeData(info);
-        return mnicd.getCompositeData();
+        return mnicd.getCompositeData(); 
     }
 
     protected CompositeData getCompositeData() {
-        // CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
-        // memoryNotifInfoItemNames!
-        final Object[] memoryNotifInfoItemValues = {
-            memoryNotifInfo.getPoolName(),
-            MemoryUsageCompositeData.toCompositeData(memoryNotifInfo.getUsage()),
-            new Long(memoryNotifInfo.getCount()),
-        };
-
-        try {
-            return new CompositeDataSupport(memoryNotifInfoCompositeType,
-                                            memoryNotifInfoItemNames,
-                                            memoryNotifInfoItemValues);
-        } catch (OpenDataException e) {
+	// CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
+	// memoryNotifInfoItemNames!
+	final Object[] memoryNotifInfoItemValues = {
+	    memoryNotifInfo.getPoolName(),
+	    MemoryUsageCompositeData.toCompositeData(memoryNotifInfo.getUsage()),
+	    new Long(memoryNotifInfo.getCount()),
+	};
+	
+	try {
+	    return new CompositeDataSupport(memoryNotifInfoCompositeType,
+					    memoryNotifInfoItemNames,
+					    memoryNotifInfoItemValues);
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
     private static final CompositeType memoryNotifInfoCompositeType;
     static {
-        try {
-            memoryNotifInfoCompositeType = (CompositeType)
-                MappedMXBeanType.toOpenType(MemoryNotificationInfo.class);
-        } catch (OpenDataException e) {
+	try {
+	    memoryNotifInfoCompositeType = (CompositeType)
+		MappedMXBeanType.toOpenType(MemoryNotificationInfo.class);
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
     private static final String POOL_NAME = "poolName";
     private static final String USAGE     = "usage";
     private static final String COUNT     = "count";
     private static final String[] memoryNotifInfoItemNames = {
-        POOL_NAME,
-        USAGE,
-        COUNT,
+	POOL_NAME,
+	USAGE,
+	COUNT,
     };
 
 
@@ -112,7 +112,7 @@ public class MemoryNotifInfoCompositeData extends LazyCompositeData {
         return getLong(cd, COUNT);
     }
 
-    /** Validate if the input CompositeData has the expected
+    /** Validate if the input CompositeData has the expected 
      * CompositeType (i.e. contain all attributes with expected
      * names and types).
      */

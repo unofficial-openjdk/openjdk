@@ -101,14 +101,14 @@ int
 sysGetLastErrorString(char *buf, int len)
 {
     if (errno == 0) {
-        return 0;
+	return 0;
     } else {
-        const char *s = strerror(errno);
-        int n = strlen(s);
-        if (n >= len) n = len - 1;
-        strncpy(buf, s, n);
-        buf[n] = '\0';
-        return n;
+	const char *s = strerror(errno);
+	int n = strlen(s);
+	if (n >= len) n = len - 1;
+	strncpy(buf, s, n);
+	buf[n] = '\0';
+	return n;
     }
 }
 
@@ -199,17 +199,17 @@ open64_w(const char *path, int oflag, int mode)
 
     /* If the open succeeded, the file might still be a directory */
     {
-        int st_mode;
-        if (sysFfileMode(fd, &st_mode) != -1) {
-            if ((st_mode & S_IFMT) == S_IFDIR) {
-                errno = EISDIR;
-                close(fd);
-                return -1;
-            }
-        } else {
-            close(fd);
-            return -1;
-        }
+	int st_mode;
+	if (sysFfileMode(fd, &st_mode) != -1) {
+	    if ((st_mode & S_IFMT) == S_IFDIR) {
+		errno = EISDIR;
+		close(fd);
+		return -1;
+	    }
+	} else {
+	    close(fd);
+	    return -1;
+	}
     }
 
     /*
@@ -248,19 +248,19 @@ open64_w(const char *path, int oflag, int mode)
      */
 #if defined(__solaris__) && defined(_ILP32)
     {
-        static int needToWorkAroundBug1085341 = -1;
-        if (needToWorkAroundBug1085341) {
-            if (needToWorkAroundBug1085341 == -1)
-                needToWorkAroundBug1085341 =
-                    (dlsym(RTLD_DEFAULT, "enable_extended_FILE_stdio") == NULL);
-            if (needToWorkAroundBug1085341 && fd < 256) {
-                int newfd = fcntl(fd, F_DUPFD, 256);
-                if (newfd != -1) {
-                    close(fd);
-                    fd = newfd;
-                }
-            }
-        }
+	static int needToWorkAroundBug1085341 = -1;
+	if (needToWorkAroundBug1085341) {
+	    if (needToWorkAroundBug1085341 == -1)
+		needToWorkAroundBug1085341 =
+		    (dlsym(RTLD_DEFAULT, "enable_extended_FILE_stdio") == NULL);
+	    if (needToWorkAroundBug1085341 && fd < 256) {
+		int newfd = fcntl(fd, F_DUPFD, 256);
+		if (newfd != -1) {
+		    close(fd);
+		    fd = newfd;
+		}
+	    }
+	}
     }
 #endif /* 32-bit Solaris */
 
@@ -288,9 +288,9 @@ open64_w(const char *path, int oflag, int mode)
      */
 #ifdef FD_CLOEXEC
     {
-        int flags = fcntl(fd, F_GETFD);
-        if (flags != -1)
-            fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
+	int flags = fcntl(fd, F_GETFD);
+	if (flags != -1)
+	    fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
     }
 #endif
     return fd;

@@ -25,7 +25,7 @@
  * @test 1.1 01/09/19
  * @bug 4511404
  * @summary Check that a broken pipe error doesn't throw an exception
- *          indicating the socket is closed.
+ *  	    indicating the socket is closed.
  */
 import java.io.*;
 import java.net.*;
@@ -35,13 +35,13 @@ public class BrokenPipe {
     private static class Closer implements Runnable {
         private final Socket s;
 
-        Closer(Socket s) {
-            this.s = s;
-        }
+        Closer(Socket s) { 
+	    this.s = s; 
+	}
 
         public void run() {
             try {
-                /* gives time for 'write' to block */
+		/* gives time for 'write' to block */
                 Thread.sleep(5000);
                 s.close();
             } catch (Exception e) {
@@ -62,17 +62,17 @@ public class BrokenPipe {
             client.getOutputStream().write(new byte[1000000]);
         } catch (IOException ioe) {
 
-            /*
-             * Check that the exception text doesn't indicate the
-             * socket is closed. In tiger we should be able to
-             * replace this by catching a more specific exception.
-             */
+	    /*
+	     * Check that the exception text doesn't indicate the
+ 	     * socket is closed. In tiger we should be able to
+	     * replace this by catching a more specific exception.
+	     */
             String text = ioe.getMessage();
             if (text.toLowerCase().indexOf("closed") >= 0) {
                 throw ioe;
             }
         }
-        server.close();
+	server.close();
     }
 
 }

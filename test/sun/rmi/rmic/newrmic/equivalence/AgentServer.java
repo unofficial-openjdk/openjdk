@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,17 +27,17 @@ import java.rmi.*;
  * Define the remote interface
  */
 public interface AgentServer extends Remote {
-
-    /**
+    
+    /** 
      * Accepts the agent, creates new thread and starts it.
      */
     void accept (Agent agent)
-        throws RemoteException; //, InvalidAgentException;
-
+	throws RemoteException; //, InvalidAgentException;
+    
     /**
-     * Method for home server to accept agent returning home and
+     * Method for home server to accept agent returning home and 
      * report gathered information to STDOUT.
      */
     void returnHome (Agent agent)
-        throws RemoteException; //, InvalidAgentException;
+	throws RemoteException; //, InvalidAgentException;
 }

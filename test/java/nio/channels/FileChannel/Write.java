@@ -46,8 +46,8 @@ public class Write {
 
     // Test to see that offset > length does not throw exception
     static void test1() throws Exception {
-        File testFile = File.createTempFile("test1", null);
-        testFile.deleteOnExit();
+	File testFile = File.createTempFile("test1", null);
+	testFile.deleteOnExit();
 
         ByteBuffer[] dsts = new ByteBuffer[4];
         for (int i=0; i<4; i++)
@@ -61,8 +61,8 @@ public class Write {
 
     // Test to see that the appropriate buffers are updated
     static void test2() throws Exception {
-        File testFile = File.createTempFile("test2", null);
-        testFile.deleteOnExit();
+	File testFile = File.createTempFile("test2", null);
+	testFile.deleteOnExit();
         ByteBuffer[] srcs = new ByteBuffer[4];
         for (int i=0; i<4; i++)
             srcs[i] = ByteBuffer.allocateDirect(10);
@@ -97,8 +97,8 @@ public class Write {
 
     // Test write to a negative position (bug 4698138).
     static void test3() throws Exception {
-        File testFile = File.createTempFile("test1", null);
-        testFile.deleteOnExit();
+	File testFile = File.createTempFile("test1", null);
+	testFile.deleteOnExit();
         ByteBuffer dst = ByteBuffer.allocate(10);
         FileOutputStream fos = new FileOutputStream(testFile);
         FileChannel fc = fos.getChannel();
@@ -123,7 +123,7 @@ public class Write {
      * with this test. It typically relies upon adequate disk space and/or
      * a Solaris disk space optimization where empty files take up less
      * space than their logical size.
-     *
+     * 
      * Note that if this test fails it is not necessarily a violation of
      * spec: the value returned by fc.write can be smaller than the number
      * of bytes requested to write. It is testing an optimization that allows
@@ -138,8 +138,8 @@ public class Write {
         if (!dataModel.startsWith("64"))
             return;
 
-        File testFile = File.createTempFile("test4", null);
-        testFile.deleteOnExit();
+	File testFile = File.createTempFile("test4", null);
+	testFile.deleteOnExit();
 
         FileChannel[] fcs = new FileChannel[TEST4_NUM_BUFFERS];
 
@@ -159,11 +159,11 @@ public class Write {
         FileOutputStream fos = new FileOutputStream(testFile);
         FileChannel fc = fos.getChannel();
         try {
-            long bytesWritten = fc.write(dsts);
+            long bytesWritten = fc.write(dsts); 
             if (bytesWritten < Integer.MAX_VALUE) {
                 // Note: this is not a violation of the spec
                 throw new RuntimeException("Test 4 failed but wrote " +
-                                           bytesWritten);
+                                           bytesWritten); 
             }
         } finally {
             fc.close();

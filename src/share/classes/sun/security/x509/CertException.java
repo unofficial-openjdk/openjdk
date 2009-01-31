@@ -33,6 +33,7 @@ package sun.security.x509;
  *
  * @see java.security.Certificate
  *
+ * @version %I%
  *
  * @author David Brownell
  */
@@ -81,8 +82,8 @@ public class CertException extends SecurityException {
     public static final int err_ENCODING = 12;
 
     // Private data members
-    private int         verfCode;
-    private String      moreData;
+    private int		verfCode;
+    private String	moreData;
 
 
     /**
@@ -92,8 +93,8 @@ public class CertException extends SecurityException {
      */
     public CertException(int code, String moredata)
     {
-        verfCode = code;
-        moreData = moredata;
+	verfCode = code;
+	moreData = moredata;
     }
 
     /**
@@ -102,7 +103,7 @@ public class CertException extends SecurityException {
      */
     public CertException(int code)
     {
-        verfCode = code;
+	verfCode = code;
     }
 
     /**
@@ -122,7 +123,7 @@ public class CertException extends SecurityException {
      */
     public String getVerfDescription()
     {
-        switch (verfCode) {
+	switch (verfCode) {
         case verf_INVALID_SIG:
             return "The signature in the certificate is not valid.";
         case verf_INVALID_REVOKED:
@@ -150,7 +151,7 @@ public class CertException extends SecurityException {
 
         default:
             return "Unknown code:  " + verfCode;
-        }
+	}
     }
 
     /**
@@ -158,7 +159,7 @@ public class CertException extends SecurityException {
      */
     public String toString()
     {
-        return "[Certificate Exception: " + getMessage() + "]";
+	return "[Certificate Exception: " + getMessage() + "]";
     }
 
     /**
@@ -166,8 +167,8 @@ public class CertException extends SecurityException {
      */
     public String getMessage()
     {
-        return getVerfDescription()
-                + ( (moreData != null)
-                    ? ( "\n  (" + moreData + ")" ) : "" );
+	return getVerfDescription()
+		+ ( (moreData != null)
+		    ? ( "\n  (" + moreData + ")" ) : "" );
     }
 }

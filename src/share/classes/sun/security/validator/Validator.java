@@ -82,6 +82,7 @@ import java.security.cert.*;
  * @see EndEntityChecker
  *
  * @author Andreas Sterbenz
+ * @version %I%, %G%
  */
 public abstract class Validator {
 
@@ -144,7 +145,7 @@ public abstract class Validator {
 
     final EndEntityChecker endEntityChecker;
     final String variant;
-
+    
     /**
      * @deprecated
      * @see #setValidationDate
@@ -161,8 +162,8 @@ public abstract class Validator {
      * Get a new Validator instance using the trusted certificates from the
      * specified KeyStore as trust anchors.
      */
-    public static Validator getInstance(String type, String variant,
-            KeyStore ks) {
+    public static Validator getInstance(String type, String variant, 
+	    KeyStore ks) {
         return getInstance(type, variant, KeyStores.getTrustedCerts(ks));
     }
 
@@ -170,15 +171,15 @@ public abstract class Validator {
      * Get a new Validator instance using the Set of X509Certificates as trust
      * anchors.
      */
-    public static Validator getInstance(String type, String variant,
-            Collection<X509Certificate> trustedCerts) {
+    public static Validator getInstance(String type, String variant, 
+	    Collection<X509Certificate> trustedCerts) {
         if (type.equals(TYPE_SIMPLE)) {
             return new SimpleValidator(variant, trustedCerts);
         } else if (type.equals(TYPE_PKIX)) {
             return new PKIXValidator(variant, trustedCerts);
         } else {
             throw new IllegalArgumentException
-                ("Unknown validator type: " + type);
+	    	("Unknown validator type: " + type);
         }
     }
 
@@ -186,12 +187,12 @@ public abstract class Validator {
      * Get a new Validator instance using the provided PKIXBuilderParameters.
      * This method can only be used with the PKIX validator.
      */
-    public static Validator getInstance(String type, String variant,
-            PKIXBuilderParameters params) {
+    public static Validator getInstance(String type, String variant, 
+	    PKIXBuilderParameters params) {
         if (type.equals(TYPE_PKIX) == false) {
             throw new IllegalArgumentException
-                ("getInstance(PKIXBuilderParameters) can only be used "
-                + "with PKIX validator");
+	    	("getInstance(PKIXBuilderParameters) can only be used "
+		+ "with PKIX validator");
         }
         return new PKIXValidator(variant, params);
     }
@@ -199,8 +200,8 @@ public abstract class Validator {
     /**
      * Validate the given certificate chain.
      */
-    public final X509Certificate[] validate(X509Certificate[] chain)
-            throws CertificateException {
+    public final X509Certificate[] validate(X509Certificate[] chain) 
+	    throws CertificateException {
         return validate(chain, null, null);
     }
 
@@ -209,8 +210,8 @@ public abstract class Validator {
      * a Collection of additional X509Certificates that could be helpful for
      * path building.
      */
-    public final X509Certificate[] validate(X509Certificate[] chain,
-        Collection<X509Certificate> otherCerts) throws CertificateException {
+    public final X509Certificate[] validate(X509Certificate[] chain, 
+	Collection<X509Certificate> otherCerts) throws CertificateException {
         return validate(chain, otherCerts, null);
     }
 
@@ -229,26 +230,26 @@ public abstract class Validator {
      * @return a non-empty chain that was used to validate the path. The
      * end entity cert is at index 0, the trust anchor at index n-1.
      */
-    public final X509Certificate[] validate(X509Certificate[] chain,
-            Collection<X509Certificate> otherCerts, Object parameter)
-            throws CertificateException {
+    public final X509Certificate[] validate(X509Certificate[] chain, 
+	    Collection<X509Certificate> otherCerts, Object parameter) 
+	    throws CertificateException {
         chain = engineValidate(chain, otherCerts, parameter);
-        // omit EE extension check if EE cert is also trust anchor
-        if (chain.length > 1) {
-            endEntityChecker.check(chain[0], parameter);
-        }
+	// omit EE extension check if EE cert is also trust anchor
+	if (chain.length > 1) {
+	    endEntityChecker.check(chain[0], parameter);
+	}
         return chain;
     }
 
-    abstract X509Certificate[] engineValidate(X509Certificate[] chain,
-        Collection<X509Certificate> otherCerts, Object parameter) throws CertificateException;
+    abstract X509Certificate[] engineValidate(X509Certificate[] chain, 
+	Collection<X509Certificate> otherCerts, Object parameter) throws CertificateException;
 
     /**
      * Returns an immutable Collection of the X509Certificates this instance
      * uses as trust anchors.
      */
     public abstract Collection<X509Certificate> getTrustedCertificates();
-
+    
     /**
      * Set the date to be used for subsequent validations. NOTE that
      * this is not a supported API, it is provided to simplify
@@ -258,7 +259,7 @@ public abstract class Validator {
      */
     @Deprecated
     public void setValidationDate(Date validationDate) {
-        this.validationDate = validationDate;
+	this.validationDate = validationDate;
     }
-
+    
 }

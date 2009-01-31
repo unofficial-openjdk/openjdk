@@ -35,13 +35,13 @@ public class Version {
         printFullVersion(ps);
 
         ps.println(Resources.getText("Name and Build",
-                                     System.getProperty("java.runtime.name"),
+                                     System.getProperty("java.runtime.name"), 
                                      System.getProperty("java.runtime.version")));
 
         ps.println(Resources.getText("Name Build and Mode",
                                      System.getProperty("java.vm.name"),
                                      System.getProperty("java.vm.version"),
-                                     System.getProperty("java.vm.info")));
+                                     System.getProperty("java.vm.info"))); 
 
     }
 

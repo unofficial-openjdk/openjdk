@@ -78,3 +78,4 @@ public class Clone {
     private static class TreeSet2    extends TreeSet {};
     private static class TreeMap2    extends TreeMap {};
 }
+

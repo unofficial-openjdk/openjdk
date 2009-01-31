@@ -56,7 +56,7 @@ public class TryLock {
 
     public static void test1(boolean shared, boolean trylock) throws Exception {
         File testFile = File.createTempFile("test1", null);
-        testFile.deleteOnExit();
+	testFile.deleteOnExit();
         FileInputStream fis = new FileInputStream(testFile);
         FileChannel fc = fis.getChannel();
         FileLock fl = null;
@@ -78,7 +78,7 @@ public class TryLock {
 
     public static void test2(boolean shared, boolean trylock) throws Exception {
         File testFile = File.createTempFile("test2", null);
-        testFile.deleteOnExit();
+	testFile.deleteOnExit();
         FileOutputStream fis = new FileOutputStream(testFile);
         FileChannel fc = fis.getChannel();
         FileLock fl = null;
@@ -100,7 +100,7 @@ public class TryLock {
 
     public static void test3(boolean shared, boolean trylock) throws Exception {
         File testFile = File.createTempFile("test3", null);
-        testFile.deleteOnExit();
+	testFile.deleteOnExit();
         RandomAccessFile fis = new RandomAccessFile(testFile, "rw");
         FileChannel fc = fis.getChannel();
         FileLock fl = null;

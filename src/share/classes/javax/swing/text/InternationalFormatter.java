@@ -39,7 +39,7 @@ import javax.swing.text.*;
  * If <code>getAllowsInvalid()</code> is false, this will ask the
  * <code>Format</code> to format the current text on every edit.
  * <p>
- * You can specify a minimum and maximum value by way of the
+ * You can specify a minimum and maximum value by way of the 
  * <code>setMinimum</code> and <code>setMaximum</code> methods. In order
  * for this to work the values returned from <code>stringToValue</code> must be
  * comparable to the min/max values by way of the <code>Comparable</code>
@@ -90,6 +90,7 @@ import javax.swing.text.*;
  * @see java.text.Format
  * @see java.lang.Comparable
  *
+ * @version 1.7 04/09/01
  * @since 1.4
  */
 public class InternationalFormatter extends DefaultFormatter {
@@ -941,7 +942,7 @@ public class InternationalFormatter extends DefaultFormatter {
      * Subclasses supporting incrementing must override this to handle
      * the actual incrementing. <code>value</code> is the current value,
      * <code>attributes</code> gives the field the cursor is in (may be
-     * null depending upon <code>canIncrement</code>) and
+     * null depending upon <code>canIncrement</code>) and 
      * <code>direction</code> is the amount to increment by.
      */
     Object adjustValue(Object value, Map attributes, Object field,
@@ -952,7 +953,7 @@ public class InternationalFormatter extends DefaultFormatter {
 
     /**
      * Returns false, indicating InternationalFormatter does not allow
-     * incrementing of the value. Subclasses that wish to support
+     * incrementing of the value. Subclasses that wish to support 
      * incrementing/decrementing the value should override this and
      * return true. Subclasses should also override
      * <code>adjustValue</code>.
@@ -983,7 +984,7 @@ public class InternationalFormatter extends DefaultFormatter {
      * Subclassed to update the internal representation of the mask after
      * the default read operation has completed.
      */
-    private void readObject(ObjectInputStream s)
+    private void readObject(ObjectInputStream s) 
         throws IOException, ClassNotFoundException {
         s.defaultReadObject();
         updateMaskIfNecessary();
@@ -1050,7 +1051,7 @@ public class InternationalFormatter extends DefaultFormatter {
         }
 
         public void actionPerformed(ActionEvent ae) {
-
+        
             if (getFormattedTextField().isEditable()) {
                 if (getAllowsInvalid()) {
                     // This will work if the currently edited value is valid.

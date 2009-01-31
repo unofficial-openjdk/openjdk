@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug 4364855
- * @summary     PrivateCredentialPermission serialized set has
- *              implementation-dependent class
+ * @summary	PrivateCredentialPermission serialized set has
+ *		implementation-dependent class
  * @run main/othervm/policy=Serial.policy Serial
  */
 
@@ -37,35 +37,35 @@ public class Serial implements java.io.Serializable {
 
     public static void main(String[] args) {
 
-        try {
-            FileOutputStream fos = new FileOutputStream("serial.tmp");
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
+	try {
+	    FileOutputStream fos = new FileOutputStream("serial.tmp");
+	    ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-            PrivateCredentialPermission pcp = new PrivateCredentialPermission
-                        ("cred1 pc1 \"pn1\" pc2 \"pn2\"", "read");
-            oos.writeObject(pcp);
-            oos.flush();
-            fos.close();
+	    PrivateCredentialPermission pcp = new PrivateCredentialPermission
+			("cred1 pc1 \"pn1\" pc2 \"pn2\"", "read");
+	    oos.writeObject(pcp);
+	    oos.flush();
+	    fos.close();
 
-            FileInputStream fis = new FileInputStream("serial.tmp");
-            ObjectInputStream ois = new ObjectInputStream(fis);
+	    FileInputStream fis = new FileInputStream("serial.tmp");
+	    ObjectInputStream ois = new ObjectInputStream(fis);
 
-            PrivateCredentialPermission pcp2 =
-                (PrivateCredentialPermission)ois.readObject();
-            fis.close();
+	    PrivateCredentialPermission pcp2 =
+		(PrivateCredentialPermission)ois.readObject();
+	    fis.close();
 
-            System.out.println("pcp2 = " + pcp2.toString());
-            System.out.println("pcp2.getPrincipals().length = " +
-                                pcp2.getPrincipals().length);
-            if (!pcp.equals(pcp2) || !pcp2.equals(pcp)) {
-                throw new SecurityException("Serial test failed: " +
-                                        "EQUALS TEST FAILED");
-            }
+	    System.out.println("pcp2 = " + pcp2.toString());
+	    System.out.println("pcp2.getPrincipals().length = " +
+				pcp2.getPrincipals().length);
+	    if (!pcp.equals(pcp2) || !pcp2.equals(pcp)) {
+		throw new SecurityException("Serial test failed: " +
+					"EQUALS TEST FAILED");
+	    }
 
-            System.out.println("Serial test succeeded");
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new SecurityException("Serial test failed");
-        }
+	    System.out.println("Serial test succeeded");
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    throw new SecurityException("Serial test failed");
+	}
     }
 }

@@ -83,7 +83,7 @@ public class ListHelper implements XScrollbarClient {
     // See 6243382 for more information
     boolean mouseDraggedOutVertically = false;
     private volatile boolean vsbVisibilityChanged = false;
-
+    
     /*
      * Comment
      */
@@ -130,7 +130,7 @@ public class ListHelper implements XScrollbarClient {
     /**********************************************************************/
     /* List management methods                                            */
     /**********************************************************************/
-
+    
     public void add(String item) {
         items.add(item);
         updateScrollbars();
@@ -200,7 +200,7 @@ public class ListHelper implements XScrollbarClient {
 
     int[] getSelectedIndexes() { assert(false); return null;}
 
-    /*
+    /* 
      * A getter method for XChoicePeer.
      * Returns vsbVisiblityChanged value and sets it to false.
      */
@@ -252,7 +252,7 @@ public class ListHelper implements XScrollbarClient {
             int l = fm.stringWidth(getItem(i));
             m = Math.max(m, l);
         }
-        return m;
+        return m; 
     }
 
     /*
@@ -269,7 +269,7 @@ public class ListHelper implements XScrollbarClient {
         }
         // See 6243382 for more information
         int newIdx = firstDisplayedIndex() + ((y - 2*ITEM_MARGIN) / (getItemHeight() + 2*ITEM_MARGIN));
-        return newIdx;
+        return newIdx; 
     }
 
     /* write these
@@ -634,7 +634,7 @@ public class ListHelper implements XScrollbarClient {
         }
 
         wheelRotation = e.getWheelRotation();
-
+        
         // Check if scroll is necessary
         if ((wheelRotation < 0 && scroll.getValue() > scroll.getMinimum()) ||
             (wheelRotation > 0 && scroll.getValue() < scroll.getMaximum()) ||

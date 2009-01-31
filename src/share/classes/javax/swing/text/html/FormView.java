@@ -34,14 +34,14 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 /**
- * Component decorator that implements the view interface
+ * Component decorator that implements the view interface 
  * for form elements, &lt;input&gt;, &lt;textarea&gt;,
- * and &lt;select&gt;.  The model for the component is stored
- * as an attribute of the the element (using StyleConstants.ModelAttribute),
+ * and &lt;select&gt;.  The model for the component is stored 
+ * as an attribute of the the element (using StyleConstants.ModelAttribute), 
  * and is used to build the component of the view.  The type
  * of the model is assumed to of the type that would be set by
  * <code>HTMLDocument.HTMLReader.FormAction</code>.  If there are
- * multiple views mapped over the document, they will share the
+ * multiple views mapped over the document, they will share the 
  * embedded component models.
  * <p>
  * The following table shows what components get built
@@ -103,6 +103,7 @@ import javax.swing.text.*;
  *
  * @author Timothy Prinzing
  * @author Sunita Mani
+ * @version %I% %G%
  */
 public class FormView extends ComponentView implements ActionListener {
 
@@ -145,7 +146,7 @@ public class FormView extends ComponentView implements ActionListener {
      * @param elem the element to decorate
      */
     public FormView(Element elem) {
-        super(elem);
+	super(elem);
     }
 
     /**
@@ -154,48 +155,48 @@ public class FormView extends ComponentView implements ActionListener {
      * and html attributes of the associated element.
      */
     protected Component createComponent() {
-        AttributeSet attr = getElement().getAttributes();
-        HTML.Tag t = (HTML.Tag)
-            attr.getAttribute(StyleConstants.NameAttribute);
-        JComponent c = null;
-        Object model = attr.getAttribute(StyleConstants.ModelAttribute);
-        if (t == HTML.Tag.INPUT) {
-            c = createInputComponent(attr, model);
-        } else if (t == HTML.Tag.SELECT) {
+	AttributeSet attr = getElement().getAttributes();
+	HTML.Tag t = (HTML.Tag) 
+	    attr.getAttribute(StyleConstants.NameAttribute);
+	JComponent c = null;
+	Object model = attr.getAttribute(StyleConstants.ModelAttribute);
+	if (t == HTML.Tag.INPUT) {
+	    c = createInputComponent(attr, model);
+	} else if (t == HTML.Tag.SELECT) {
 
-            if (model instanceof OptionListModel) {
+	    if (model instanceof OptionListModel) {
 
-                JList list = new JList((ListModel) model);
-                int size = HTML.getIntegerAttributeValue(attr,
-                                                         HTML.Attribute.SIZE,
-                                                         1);
-                list.setVisibleRowCount(size);
-                list.setSelectionModel((ListSelectionModel)model);
-                c = new JScrollPane(list);
-            } else {
-                c = new JComboBox((ComboBoxModel) model);
+		JList list = new JList((ListModel) model);
+		int size = HTML.getIntegerAttributeValue(attr,
+							 HTML.Attribute.SIZE,
+							 1);
+		list.setVisibleRowCount(size);
+		list.setSelectionModel((ListSelectionModel)model);
+		c = new JScrollPane(list);
+	    } else {
+		c = new JComboBox((ComboBoxModel) model);
                 maxIsPreferred = 3;
-            }
-        } else if (t == HTML.Tag.TEXTAREA) {
-            JTextArea area = new JTextArea((Document) model);
-            int rows = HTML.getIntegerAttributeValue(attr,
-                                                     HTML.Attribute.ROWS,
-                                                     1);
-            area.setRows(rows);
-            int cols = HTML.getIntegerAttributeValue(attr,
-                                                     HTML.Attribute.COLS,
-                                                     20);
+	    }
+	} else if (t == HTML.Tag.TEXTAREA) {
+	    JTextArea area = new JTextArea((Document) model);
+	    int rows = HTML.getIntegerAttributeValue(attr,
+						     HTML.Attribute.ROWS,
+						     1);
+	    area.setRows(rows);
+	    int cols = HTML.getIntegerAttributeValue(attr,
+						     HTML.Attribute.COLS,
+						     20);
             maxIsPreferred = 3;
-            area.setColumns(cols);
-            c = new JScrollPane(area,
-                                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        }
+	    area.setColumns(cols);
+	    c = new JScrollPane(area, 
+				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+	}
 
-        if (c != null) {
-            c.setAlignmentY(1.0f);
-        }
-        return c;
+	if (c != null) {
+	    c.setAlignmentY(1.0f);
+	}
+	return c;
     }
 
 
@@ -208,93 +209,93 @@ public class FormView extends ComponentView implements ActionListener {
      * @return the component.
      */
     private JComponent createInputComponent(AttributeSet attr, Object model) {
-        JComponent c = null;
-        String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
+	JComponent c = null;
+	String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
 
-        if (type.equals("submit") || type.equals("reset")) {
-            String value = (String)
-                attr.getAttribute(HTML.Attribute.VALUE);
-            if (value == null) {
-                if (type.equals("submit")) {
-                    value = UIManager.getString("FormView.submitButtonText");
-                } else {
-                    value = UIManager.getString("FormView.resetButtonText");
-                }
-            }
-            JButton button = new JButton(value);
-            if (model != null) {
-                button.setModel((ButtonModel)model);
-                button.addActionListener(this);
-            }
-            c = button;
+	if (type.equals("submit") || type.equals("reset")) {
+	    String value = (String) 
+		attr.getAttribute(HTML.Attribute.VALUE);
+	    if (value == null) {
+		if (type.equals("submit")) {
+		    value = UIManager.getString("FormView.submitButtonText");
+		} else {
+		    value = UIManager.getString("FormView.resetButtonText");
+		}
+	    }
+	    JButton button = new JButton(value);
+	    if (model != null) {
+		button.setModel((ButtonModel)model);
+		button.addActionListener(this);
+	    }
+	    c = button;
             maxIsPreferred = 3;
-        } else if (type.equals("image")) {
-            String srcAtt = (String) attr.getAttribute(HTML.Attribute.SRC);
-            JButton button;
-            try {
-                URL base = ((HTMLDocument)getElement().getDocument()).getBase();
-                URL srcURL = new URL(base, srcAtt);
-                Icon icon = new ImageIcon(srcURL);
-                button  = new JButton(icon);
-            } catch (MalformedURLException e) {
-                button = new JButton(srcAtt);
-            }
-            if (model != null) {
-                button.setModel((ButtonModel)model);
-                button.addMouseListener(new MouseEventListener());
-            }
-            c = button;
+	} else if (type.equals("image")) {
+	    String srcAtt = (String) attr.getAttribute(HTML.Attribute.SRC);
+	    JButton button;
+	    try {
+		URL base = ((HTMLDocument)getElement().getDocument()).getBase();
+		URL srcURL = new URL(base, srcAtt);
+		Icon icon = new ImageIcon(srcURL);
+		button  = new JButton(icon);
+	    } catch (MalformedURLException e) {
+		button = new JButton(srcAtt);
+	    }
+	    if (model != null) {
+		button.setModel((ButtonModel)model);
+		button.addMouseListener(new MouseEventListener());
+	    }
+	    c = button;
             maxIsPreferred = 3;
-        } else if (type.equals("checkbox")) {
-            c = new JCheckBox();
-            if (model != null) {
-                ((JCheckBox)c).setModel((JToggleButton.ToggleButtonModel) model);
-            }
+	} else if (type.equals("checkbox")) {
+	    c = new JCheckBox();
+	    if (model != null) {
+		((JCheckBox)c).setModel((JToggleButton.ToggleButtonModel) model);
+	    }
             maxIsPreferred = 3;
-        } else if (type.equals("radio")) {
-            c = new JRadioButton();
-            if (model != null) {
-                ((JRadioButton)c).setModel((JToggleButton.ToggleButtonModel)model);
-            }
+	} else if (type.equals("radio")) {
+	    c = new JRadioButton();
+	    if (model != null) {
+		((JRadioButton)c).setModel((JToggleButton.ToggleButtonModel)model);
+	    }
             maxIsPreferred = 3;
-        } else if (type.equals("text")) {
-            int size = HTML.getIntegerAttributeValue(attr,
-                                                     HTML.Attribute.SIZE,
-                                                     -1);
-            JTextField field;
-            if (size > 0) {
-                field = new JTextField();
-                field.setColumns(size);
-            }
-            else {
-                field = new JTextField();
-                field.setColumns(20);
-            }
-            c = field;
-            if (model != null) {
-                field.setDocument((Document) model);
-            }
-            field.addActionListener(this);
+	} else if (type.equals("text")) {
+	    int size = HTML.getIntegerAttributeValue(attr,
+						     HTML.Attribute.SIZE,
+						     -1);
+	    JTextField field;
+	    if (size > 0) {
+		field = new JTextField();
+		field.setColumns(size);
+	    }
+	    else {
+		field = new JTextField();
+		field.setColumns(20);
+	    }
+	    c = field;
+	    if (model != null) {
+		field.setDocument((Document) model);
+	    }
+	    field.addActionListener(this);
             maxIsPreferred = 3;
-        } else if (type.equals("password")) {
-            JPasswordField field = new JPasswordField();
-            c = field;
-            if (model != null) {
-                field.setDocument((Document) model);
-            }
-            int size = HTML.getIntegerAttributeValue(attr,
-                                                     HTML.Attribute.SIZE,
-                                                     -1);
+	} else if (type.equals("password")) {
+	    JPasswordField field = new JPasswordField();
+	    c = field;
+	    if (model != null) {
+		field.setDocument((Document) model);
+	    }
+	    int size = HTML.getIntegerAttributeValue(attr,
+						     HTML.Attribute.SIZE,
+						     -1);
             field.setColumns((size > 0) ? size : 20);
-            field.addActionListener(this);
+	    field.addActionListener(this);
             maxIsPreferred = 3;
-        } else if (type.equals("file")) {
+	} else if (type.equals("file")) {
             JTextField field = new JTextField();
-            if (model != null) {
-                field.setDocument((Document)model);
-            }
-            int size = HTML.getIntegerAttributeValue(attr, HTML.Attribute.SIZE,
-                                                     -1);
+	    if (model != null) {
+		field.setDocument((Document)model);
+	    }
+	    int size = HTML.getIntegerAttributeValue(attr, HTML.Attribute.SIZE,
+						     -1);
             field.setColumns((size > 0) ? size : 20);
             JButton browseButton = new JButton(UIManager.getString
                                            ("FormView.browseFileButtonText"));
@@ -307,7 +308,7 @@ public class FormView extends ComponentView implements ActionListener {
             c = box;
             maxIsPreferred = 3;
         }
-        return c;
+	return c;
     }
 
 
@@ -321,7 +322,7 @@ public class FormView extends ComponentView implements ActionListener {
      * @param axis may be either View.X_AXIS or View.Y_AXIS
      * @return   the span the view would like to be rendered into >= 0.
      *           Typically the view is told to render into the span
-     *           that is returned, although there is no guarantee.
+     *           that is returned, although there is no guarantee.  
      *           The parent may choose to resize or break the view.
      * @exception IllegalArgumentException for an invalid axis
      */
@@ -349,11 +350,11 @@ public class FormView extends ComponentView implements ActionListener {
     /**
      * Responsible for processeing the ActionEvent.
      * If the element associated with the FormView,
-     * has a type of "submit", "reset", "text" or "password"
-     * then the action is processed.  In the case of a "submit"
+     * has a type of "submit", "reset", "text" or "password" 
+     * then the action is processed.  In the case of a "submit" 
      * the form is submitted.  In the case of a "reset"
      * the form is reset to its original state.
-     * In the case of "text" or "password", if the
+     * In the case of "text" or "password", if the 
      * element is the last one of type "text" or "password",
      * the form is submitted.  Otherwise, focus is transferred
      * to the next component in the form.
@@ -361,26 +362,26 @@ public class FormView extends ComponentView implements ActionListener {
      * @param evt the ActionEvent.
      */
     public void actionPerformed(ActionEvent evt) {
-        Element element = getElement();
-        StringBuffer dataBuffer = new StringBuffer();
-        HTMLDocument doc = (HTMLDocument)getDocument();
-        AttributeSet attr = element.getAttributes();
+	Element element = getElement();
+	StringBuffer dataBuffer = new StringBuffer();
+	HTMLDocument doc = (HTMLDocument)getDocument();
+	AttributeSet attr = element.getAttributes();
+	
+	String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
 
-        String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
-
-        if (type.equals("submit")) {
-            getFormData(dataBuffer);
-            submitData(dataBuffer.toString());
-        } else if (type.equals("reset")) {
-            resetForm();
-        } else if (type.equals("text") || type.equals("password")) {
-            if (isLastTextOrPasswordField()) {
-                getFormData(dataBuffer);
-                submitData(dataBuffer.toString());
-            } else {
-                getComponent().transferFocus();
-            }
-        }
+	if (type.equals("submit")) { 
+	    getFormData(dataBuffer);
+	    submitData(dataBuffer.toString());
+	} else if (type.equals("reset")) {
+	    resetForm();
+	} else if (type.equals("text") || type.equals("password")) {
+	    if (isLastTextOrPasswordField()) {
+		getFormData(dataBuffer);
+		submitData(dataBuffer.toString());
+	    } else {
+		getComponent().transferFocus();
+	    }
+	}
     }
 
 
@@ -398,7 +399,7 @@ public class FormView extends ComponentView implements ActionListener {
         if (target == null) {
             target = "_self";
         }
-
+        
         String method = (String) attrs.getAttribute(HTML.Attribute.METHOD);
         if (method == null) {
             method = "GET";
@@ -408,10 +409,10 @@ public class FormView extends ComponentView implements ActionListener {
         if (isPostMethod) {
             storePostData(doc, target, data);
         }
-
+        
         String action = (String) attrs.getAttribute(HTML.Attribute.ACTION);
         URL actionURL;
-        try {
+        try { 
             actionURL = (action == null)
                 ? new URL(base.getProtocol(), base.getHost(),
                                         base.getPort(), base.getFile())
@@ -425,7 +426,7 @@ public class FormView extends ComponentView implements ActionListener {
         }
         final JEditorPane c = (JEditorPane) getContainer();
         HTMLEditorKit kit = (HTMLEditorKit) c.getEditorKit();
-
+        
         FormSubmitEvent formEvent = null;
         if (!kit.isAutoFormSubmission() || doc.isFrameDocument()) {
             FormSubmitEvent.MethodType methodType = isPostMethod
@@ -434,12 +435,12 @@ public class FormView extends ComponentView implements ActionListener {
             formEvent = new FormSubmitEvent(
                     FormView.this, HyperlinkEvent.EventType.ACTIVATED,
                     actionURL, form, target, methodType, data);
-
+            
         }
         // setPage() may take significant time so schedule it to run later.
         final FormSubmitEvent fse = formEvent;
         final URL url = actionURL;
-        SwingUtilities.invokeLater(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {            
             public void run() {
                 if (fse != null) {
                     c.fireHyperlinkUpdate(fse);
@@ -453,9 +454,9 @@ public class FormView extends ComponentView implements ActionListener {
             }
         });
     }
-
+        
     private void storePostData(HTMLDocument doc, String target, String data) {
-
+        
         /* POST data is stored into the document property named by constant
          * PostDataProperty from where it is later retrieved by method
          * JEditorPane.getPostData().  If the current document is in a frame,
@@ -465,10 +466,10 @@ public class FormView extends ComponentView implements ActionListener {
          * to move data from the frameset document property into the frame
          * document property.
          */
-
+        
         Document propDoc = doc;
         String propName = PostDataProperty;
-
+        
         if (doc.isFrameDocument()) {
             // find the top-most JEditorPane holding the frameset view.
             FrameView.FrameEditorPane p =
@@ -480,7 +481,7 @@ public class FormView extends ComponentView implements ActionListener {
                 propName += ("." + target);
             }
         }
-
+        
         propDoc.putProperty(propName, data);
     }
 
@@ -493,10 +494,10 @@ public class FormView extends ComponentView implements ActionListener {
      */
     protected class MouseEventListener extends MouseAdapter {
 
-        public void mouseReleased(MouseEvent evt) {
-            String imageData = getImageData(evt.getPoint());
-            imageSubmit(imageData);
-        }
+	public void mouseReleased(MouseEvent evt) {
+	    String imageData = getImageData(evt.getPoint());
+	    imageSubmit(imageData);
+	}
     }
 
     /**
@@ -508,47 +509,47 @@ public class FormView extends ComponentView implements ActionListener {
      */
     protected void imageSubmit(String imageData) {
 
-        StringBuffer dataBuffer = new StringBuffer();
-        Element elem = getElement();
-        HTMLDocument hdoc = (HTMLDocument)elem.getDocument();
-        getFormData(dataBuffer);
-        if (dataBuffer.length() > 0) {
-            dataBuffer.append('&');
-        }
-        dataBuffer.append(imageData);
-        submitData(dataBuffer.toString());
-        return;
+	StringBuffer dataBuffer = new StringBuffer();
+	Element elem = getElement();
+	HTMLDocument hdoc = (HTMLDocument)elem.getDocument();
+	getFormData(dataBuffer);
+	if (dataBuffer.length() > 0) {
+	    dataBuffer.append('&');
+	}
+	dataBuffer.append(imageData);
+	submitData(dataBuffer.toString());
+	return;
     }
 
     /**
      * Extracts the value of the name attribute
      * associated with the input element of type
      * image.  If name is defined it is encoded using
-     * the URLEncoder.encode() method and the
+     * the URLEncoder.encode() method and the 
      * image data is returned in the following format:
-     *      name + ".x" +"="+ x +"&"+ name +".y"+"="+ y
+     *	    name + ".x" +"="+ x +"&"+ name +".y"+"="+ y
      * otherwise,
-     *      "x="+ x +"&y="+ y
-     *
+     * 	    "x="+ x +"&y="+ y
+     * 
      * @param point associated with the mouse click.
      * @return the image data.
      */
     private String getImageData(Point point) {
-
-        String mouseCoords = point.x + ":" + point.y;
-        int sep = mouseCoords.indexOf(':');
-        String x = mouseCoords.substring(0, sep);
-        String y = mouseCoords.substring(++sep);
-        String name = (String) getElement().getAttributes().getAttribute(HTML.Attribute.NAME);
-
-        String data;
-        if (name == null || name.equals("")) {
-            data = "x="+ x +"&y="+ y;
-        } else {
-            name = URLEncoder.encode(name);
-            data = name + ".x" +"="+ x +"&"+ name +".y"+"="+ y;
-        }
-        return data;
+	    
+	String mouseCoords = point.x + ":" + point.y;
+	int sep = mouseCoords.indexOf(':');
+	String x = mouseCoords.substring(0, sep);
+	String y = mouseCoords.substring(++sep);
+	String name = (String) getElement().getAttributes().getAttribute(HTML.Attribute.NAME);
+	
+	String data;
+	if (name == null || name.equals("")) {
+	    data = "x="+ x +"&y="+ y;
+	} else {
+	    name = URLEncoder.encode(name);
+	    data = name + ".x" +"="+ x +"&"+ name +".y"+"="+ y;
+	}
+	return data;
     }
 
 
@@ -578,15 +579,15 @@ public class FormView extends ComponentView implements ActionListener {
     }
 
     /**
-     * Iterates over the
-     * element hierarchy, extracting data from the
+     * Iterates over the 
+     * element hierarchy, extracting data from the 
      * models associated with the relevant form elements.
      * "Relevant" means the form elements that are part
      * of the same form whose element triggered the submit
      * action.
      *
      * @param buffer        the buffer that contains that data to submit
-     * @param targetElement the element that triggered the
+     * @param targetElement the element that triggered the 
      *                      form submission
      */
     void getFormData(StringBuffer buffer) {
@@ -600,7 +601,7 @@ public class FormView extends ComponentView implements ActionListener {
                     String type = (String)next.getAttributes().getAttribute
                                        (HTML.Attribute.TYPE);
 
-                    if (type != null && type.equals("submit") &&
+                    if (type != null && type.equals("submit") && 
                         next != getElement()) {
                         // do nothing - this submit isnt the trigger
                     } else if (type == null || !type.equals("image")) {
@@ -621,30 +622,30 @@ public class FormView extends ComponentView implements ActionListener {
      * The format in which data is appended depends
      * on the type of the form element.  Essentially
      * data is loaded in name/value pairs.
-     *
+     * 
      */
     private void loadElementDataIntoBuffer(Element elem, StringBuffer buffer) {
 
-        AttributeSet attr = elem.getAttributes();
-        String name = (String)attr.getAttribute(HTML.Attribute.NAME);
-        if (name == null) {
-            return;
-        }
-        String value = null;
-        HTML.Tag tag = (HTML.Tag)elem.getAttributes().getAttribute
+	AttributeSet attr = elem.getAttributes();
+	String name = (String)attr.getAttribute(HTML.Attribute.NAME);
+	if (name == null) {
+	    return;
+ 	}
+	String value = null;
+	HTML.Tag tag = (HTML.Tag)elem.getAttributes().getAttribute
                                   (StyleConstants.NameAttribute);
 
-        if (tag == HTML.Tag.INPUT) {
-            value = getInputElementData(attr);
-        } else if (tag ==  HTML.Tag.TEXTAREA) {
-            value = getTextAreaData(attr);
-        } else if (tag == HTML.Tag.SELECT) {
-            loadSelectData(attr, buffer);
-        }
-
-        if (name != null && value != null) {
-            appendBuffer(buffer, name, value);
-        }
+	if (tag == HTML.Tag.INPUT) {
+	    value = getInputElementData(attr);
+	} else if (tag ==  HTML.Tag.TEXTAREA) {
+	    value = getTextAreaData(attr);
+	} else if (tag == HTML.Tag.SELECT) {
+	    loadSelectData(attr, buffer);
+	}
+	
+	if (name != null && value != null) {
+	    appendBuffer(buffer, name, value);
+	}
     }
 
 
@@ -656,40 +657,40 @@ public class FormView extends ComponentView implements ActionListener {
      * extracted.
      */
     private String getInputElementData(AttributeSet attr) {
-
-        Object model = attr.getAttribute(StyleConstants.ModelAttribute);
-        String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
-        String value = null;
-
-        if (type.equals("text") || type.equals("password")) {
-            Document doc = (Document)model;
-            try {
-                value = doc.getText(0, doc.getLength());
-            } catch (BadLocationException e) {
-                value = null;
-            }
-        } else if (type.equals("submit") || type.equals("hidden")) {
-            value = (String) attr.getAttribute(HTML.Attribute.VALUE);
-            if (value == null) {
-                value = "";
-            }
-        } else if (type.equals("radio") || type.equals("checkbox")) {
-            ButtonModel m = (ButtonModel)model;
-            if (m.isSelected()) {
-                value = (String) attr.getAttribute(HTML.Attribute.VALUE);
-                if (value == null) {
-                    value = "on";
-                }
-            }
-        } else if (type.equals("file")) {
-            Document doc = (Document)model;
+	
+	Object model = attr.getAttribute(StyleConstants.ModelAttribute);
+	String type = (String) attr.getAttribute(HTML.Attribute.TYPE);
+	String value = null;
+	
+	if (type.equals("text") || type.equals("password")) {
+	    Document doc = (Document)model;
+	    try {
+		value = doc.getText(0, doc.getLength());
+	    } catch (BadLocationException e) {
+		value = null;
+	    }
+	} else if (type.equals("submit") || type.equals("hidden")) {
+	    value = (String) attr.getAttribute(HTML.Attribute.VALUE);
+	    if (value == null) {
+		value = "";
+	    }
+	} else if (type.equals("radio") || type.equals("checkbox")) {
+	    ButtonModel m = (ButtonModel)model;
+	    if (m.isSelected()) {
+		value = (String) attr.getAttribute(HTML.Attribute.VALUE);
+		if (value == null) {
+		    value = "on";
+		}
+	    }
+	} else if (type.equals("file")) {
+	    Document doc = (Document)model;
             String path;
 
-            try {
-                path = doc.getText(0, doc.getLength());
-            } catch (BadLocationException e) {
-                path = null;
-            }
+	    try {
+		path = doc.getText(0, doc.getLength());
+	    } catch (BadLocationException e) {
+		path = null;
+	    }
             if (path != null && path.length() > 0) {
                 value = path;
 /*
@@ -717,7 +718,7 @@ public class FormView extends ComponentView implements ActionListener {
 */
             }
         }
-        return value;
+	return value;
     }
 
     /**
@@ -726,12 +727,12 @@ public class FormView extends ComponentView implements ActionListener {
      * Document model.
      */
     private String getTextAreaData(AttributeSet attr) {
-        Document doc = (Document)attr.getAttribute(StyleConstants.ModelAttribute);
-        try {
-            return doc.getText(0, doc.getLength());
-        } catch (BadLocationException e) {
-            return null;
-        }
+	Document doc = (Document)attr.getAttribute(StyleConstants.ModelAttribute);
+	try {
+	    return doc.getText(0, doc.getLength());
+	} catch (BadLocationException e) {
+	    return null;
+	}
     }
 
 
@@ -742,44 +743,44 @@ public class FormView extends ComponentView implements ActionListener {
      */
     private void loadSelectData(AttributeSet attr, StringBuffer buffer) {
 
-        String name = (String)attr.getAttribute(HTML.Attribute.NAME);
-        if (name == null) {
-            return;
-        }
-        Object m = attr.getAttribute(StyleConstants.ModelAttribute);
-        if (m instanceof OptionListModel) {
-            OptionListModel model = (OptionListModel)m;
-
-            for (int i = 0; i < model.getSize(); i++) {
-                if (model.isSelectedIndex(i)) {
-                    Option option = (Option) model.getElementAt(i);
-                    appendBuffer(buffer, name, option.getValue());
-                }
-            }
-        } else if (m instanceof ComboBoxModel) {
-            ComboBoxModel model = (ComboBoxModel)m;
-            Option option = (Option)model.getSelectedItem();
-            if (option != null) {
-                appendBuffer(buffer, name, option.getValue());
-            }
-        }
+	String name = (String)attr.getAttribute(HTML.Attribute.NAME);
+	if (name == null) {
+	    return;
+	}
+	Object m = attr.getAttribute(StyleConstants.ModelAttribute);
+	if (m instanceof OptionListModel) {
+	    OptionListModel model = (OptionListModel)m;
+	    
+	    for (int i = 0; i < model.getSize(); i++) {
+		if (model.isSelectedIndex(i)) {
+		    Option option = (Option) model.getElementAt(i);
+		    appendBuffer(buffer, name, option.getValue());
+		}
+	    }
+	} else if (m instanceof ComboBoxModel) {
+	    ComboBoxModel model = (ComboBoxModel)m;
+	    Option option = (Option)model.getSelectedItem();
+	    if (option != null) {
+		appendBuffer(buffer, name, option.getValue());
+	    }
+	}
     }
 
     /**
-     * Appends name / value pairs into the
-     * buffer.  Both names and values are encoded using the
+     * Appends name / value pairs into the 
+     * buffer.  Both names and values are encoded using the 
      * URLEncoder.encode() method before being added to the
      * buffer.
      */
     private void appendBuffer(StringBuffer buffer, String name, String value) {
-        if (buffer.length() > 0) {
-            buffer.append('&');
-        }
-        String encodedName = URLEncoder.encode(name);
-        buffer.append(encodedName);
-        buffer.append('=');
-        String encodedValue = URLEncoder.encode(value);
-        buffer.append(encodedValue);
+	if (buffer.length() > 0) {
+	    buffer.append('&');
+	}
+	String encodedName = URLEncoder.encode(name);
+	buffer.append(encodedName);
+	buffer.append('=');
+	String encodedValue = URLEncoder.encode(value);
+	buffer.append(encodedValue);
     }
 
     /**

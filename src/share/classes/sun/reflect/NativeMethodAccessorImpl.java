@@ -37,7 +37,7 @@ class NativeMethodAccessorImpl extends MethodAccessorImpl {
 
     NativeMethodAccessorImpl(Method method) {
         this.method = method;
-    }
+    }    
 
     public Object invoke(Object obj, Object[] args)
         throws IllegalArgumentException, InvocationTargetException
@@ -53,7 +53,7 @@ class NativeMethodAccessorImpl extends MethodAccessorImpl {
                                    method.getModifiers());
             parent.setDelegate(acc);
         }
-
+        
         return invoke0(method, obj, args);
     }
 

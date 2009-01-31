@@ -23,6 +23,7 @@
  * have any questions.
  */
 /*
+ * %W% %E%
  *
  * (C) Copyright IBM Corp. 1998, All Rights Reserved
  */
@@ -130,7 +131,7 @@ abstract class Underline {
             }
             else {
                 return new BasicStroke(lineThickness,
-                                       BasicStroke.CAP_BUTT,
+                                       BasicStroke.CAP_BUTT, 
                                        BasicStroke.JOIN_MITER,
                                        10.0f,
                                        dashPattern,
@@ -139,7 +140,7 @@ abstract class Underline {
         }
 
         private float getLineThickness(float thickness) {
-
+            
             if (useThickness) {
                 return thickness * thicknessMultiplier;
             }
@@ -152,9 +153,9 @@ abstract class Underline {
 
             float lineThickness = getLineThickness(thickness);
             BasicStroke stroke = cachedStroke;
-            if (stroke == null ||
+            if (stroke == null || 
                     stroke.getLineWidth() != lineThickness) {
-
+                
                 stroke = createStroke(lineThickness);
                 cachedStroke = stroke;
             }
@@ -184,7 +185,7 @@ abstract class Underline {
                                 float x1,
                                 float x2,
                                 float y) {
-
+            
             Stroke ulStroke = getStroke(thickness);
             Line2D line = new Line2D.Float(x1, y + shift, x2, y + shift);
             return ulStroke.createStrokedShape(line);
@@ -198,7 +199,7 @@ abstract class Underline {
 
         IMGrayUnderline() {
             stroke = new BasicStroke(DEFAULT_THICKNESS,
-                                     BasicStroke.CAP_BUTT,
+                                     BasicStroke.CAP_BUTT, 
                                      BasicStroke.JOIN_MITER,
                                      10.0f,
                                      new float[] {1, 1},
@@ -213,7 +214,7 @@ abstract class Underline {
 
             Stroke saveStroke = g2d.getStroke();
             g2d.setStroke(stroke);
-
+    
             Line2D.Float drawLine = new Line2D.Float(x1, y, x2, y);
             g2d.draw(drawLine);
 
@@ -252,7 +253,7 @@ abstract class Underline {
     }
 
      // Keep a map of underlines, one for each type
-     // of underline.  The Underline objects are Flyweights
+     // of underline.  The Underline objects are Flyweights 
      // (shared across multiple clients), so they should be immutable.
      // If this implementation changes then clone underline
      // instances in getUnderline before returning them.
@@ -261,9 +262,9 @@ abstract class Underline {
     private static final Underline[] UNDERLINE_LIST;
 
     static {
-        Underline[] uls = new Underline[6];
-
-        uls[0] = new StandardUnderline(0, 1, null, USE_THICKNESS);
+	Underline[] uls = new Underline[6];
+	
+	uls[0] = new StandardUnderline(0, 1, null, USE_THICKNESS);
         UNDERLINES.put(TextAttribute.UNDERLINE_ON, uls[0]);
 
         uls[1] = new StandardUnderline(1, 1, null, IGNORE_THICKNESS);
@@ -279,9 +280,9 @@ abstract class Underline {
         UNDERLINES.put(TextAttribute.UNDERLINE_LOW_GRAY, uls[4]);
 
         uls[5] = new StandardUnderline(1, 1, new float[] { 4, 4 }, IGNORE_THICKNESS);
-        UNDERLINES.put(TextAttribute.UNDERLINE_LOW_DASHED, uls[5]);
+        UNDERLINES.put(TextAttribute.UNDERLINE_LOW_DASHED, uls[5]);    
 
-        UNDERLINE_LIST = uls;
+	UNDERLINE_LIST = uls;
     }
 
     /**
@@ -301,6 +302,6 @@ abstract class Underline {
     }
 
     static Underline getUnderline(int index) {
-        return index < 0 ? null : UNDERLINE_LIST[index];
+	return index < 0 ? null : UNDERLINE_LIST[index];
     }
 }

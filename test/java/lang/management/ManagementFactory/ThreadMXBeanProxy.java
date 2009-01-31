@@ -25,8 +25,8 @@
  * @test
  * @bug     5086470 6358247
  * @summary Test type conversion when invoking ThreadMXBean.dumpAllThreads
- *          through proxy.
- *
+ *          through proxy.  
+ *          
  * @author  Mandy Chung
  *
  * @run main ThreadMXBeanProxy
@@ -60,7 +60,7 @@ public class ThreadMXBeanProxy {
         thread.setDaemon(true);
         thread.start();
 
-        // wait until myThread acquires mutex
+        // wait until myThread acquires mutex 
         while (!mutex.isLocked()) {
            try {
                Thread.sleep(100);
@@ -68,22 +68,22 @@ public class ThreadMXBeanProxy {
                throw new RuntimeException(e);
            }
         }
-
+        
         long[] ids = new long[] { thread.getId() };
 
         // validate the local access
         ThreadInfo[] infos = getThreadMXBean().getThreadInfo(ids, true, true);
         if (ids.length != 1) {
-            throw new RuntimeException("Returned ThreadInfo[] of length=" +
-                ids.length + ". Expected to be 1.");
+            throw new RuntimeException("Returned ThreadInfo[] of length=" + 
+                ids.length + ". Expected to be 1."); 
         }
         thread.checkThreadInfo(infos[0]);
 
         // validate the remote access
         infos = mbean.getThreadInfo(ids, true, true);
         if (ids.length != 1) {
-            throw new RuntimeException("Returned ThreadInfo[] of length=" +
-                ids.length + ". Expected to be 1.");
+            throw new RuntimeException("Returned ThreadInfo[] of length=" + 
+                ids.length + ". Expected to be 1."); 
         }
         thread.checkThreadInfo(infos[0]);
 
@@ -94,7 +94,7 @@ public class ThreadMXBeanProxy {
                 thread.checkThreadInfo(ti);
                 found = true;
             }
-        }
+        } 
 
         if (!found) {
             throw new RuntimeException("No ThreadInfo found for MyThread");
@@ -147,12 +147,12 @@ public class ThreadMXBeanProxy {
                     "stack frame in ThreadInfo.getStackTrace");
            }
 
-           String className = lock.getClass().getName();
+           String className = lock.getClass().getName(); 
            int hcode = System.identityHashCode(lock);
            if (!className.equals(m.getClassName()) ||
-                   hcode != m.getIdentityHashCode() ||
+                   hcode != m.getIdentityHashCode() || 
                    !m.getLockedStackFrame().getMethodName().equals("run")) {
-                System.out.println(info);
+                System.out.println(info); 
                 throw new RuntimeException("MonitorInfo " + m +
                    " doesn't match.");
             }
@@ -178,14 +178,14 @@ public class ThreadMXBeanProxy {
         }
     }
     static class Mutex implements Lock, java.io.Serializable {
-
+   
         // Our internal helper class
         class Sync extends AbstractQueuedSynchronizer {
             // Report whether in locked state
             protected boolean isHeldExclusively() {
                 return getState() == 1;
             }
-
+      
             // Acquire the lock if state is zero
             public boolean tryAcquire(int acquires) {
                 assert acquires == 1; // Otherwise unused
@@ -195,7 +195,7 @@ public class ThreadMXBeanProxy {
                 }
                 return false;
             }
-
+      
             // Release the lock by setting state to zero
             protected boolean tryRelease(int releases) {
                 assert releases == 1; // Otherwise unused
@@ -204,18 +204,18 @@ public class ThreadMXBeanProxy {
                 setState(0);
                 return true;
             }
-
+      
             // Provide a Condition
             Condition newCondition() { return new ConditionObject(); }
-
+      
             // Deserialize properly
-            private void readObject(ObjectInputStream s)
+            private void readObject(ObjectInputStream s) 
                 throws IOException, ClassNotFoundException {
                 s.defaultReadObject();
                 setState(0); // reset to unlocked state
             }
         }
-
+    
         // The sync object does all the hard work. We just forward to it.
         private final Sync sync = new Sync();
 
@@ -232,6 +232,6 @@ public class ThreadMXBeanProxy {
             return sync.tryAcquireNanos(1, unit.toNanos(timeout));
         }
 
-        public AbstractOwnableSynchronizer getSync() { return sync; }
+        public AbstractOwnableSynchronizer getSync() { return sync; } 
     }
 }

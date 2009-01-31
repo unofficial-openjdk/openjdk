@@ -71,28 +71,29 @@ import sun.font.FontDesignMetrics;
 import sun.swing.text.html.FrameEditorPaneTag;
 
 /**
- * An implementation of {@code Printable} to print {@code JTextComponent} with
+ * An implementation of {@code Printable} to print {@code JTextComponent} with 
  * the header and footer.
- *
+ * 
  * <h1>
- * WARNING: this class is to be used in
- * javax.swing.text.JTextComponent only.
- * </h1>
- *
+ * WARNING: this class is to be used in 
+ * javax.swing.text.JTextComponent only. 
+ * </h1> 
+ *  
  * <p>
- * The implementation creates a new {@code JTextComponent} ({@code printShell})
- * to print the content using the {@code Document}, {@code EditorKit} and
+ * The implementation creates a new {@code JTextComponent} ({@code printShell}) 
+ * to print the content using the {@code Document}, {@code EditorKit} and 
  * rendering-affecting properties from the original {@code JTextComponent}.
- *
+ * 
  * <p>
  * {@code printShell} is laid out on the first {@code print} invocation.
- *
+ * 
  * <p>
- * This class can be used on any thread. Part of the implementation is executed
+ * This class can be used on any thread. Part of the implementation is executed 
  * on the EDT though.
- *
+ * 
  * @author Igor Kushnirskiy
- *
+ * @version %I% %G%
+ * 
  * @since 1.6
  */
 public class TextComponentPrintable implements CountingPrintable {
@@ -110,7 +111,7 @@ public class TextComponentPrintable implements CountingPrintable {
     /*
      * The FontRenderContext to layout and print with
      */
-    private final AtomicReference<FontRenderContext> frc =
+    private final AtomicReference<FontRenderContext> frc = 
         new AtomicReference<FontRenderContext>(null);
 
     /**
@@ -120,10 +121,10 @@ public class TextComponentPrintable implements CountingPrintable {
 
     private final MessageFormat headerFormat;
     private final MessageFormat footerFormat;
-
+    
     private static final float HEADER_FONT_SIZE = 18.0f;
     private static final float FOOTER_FONT_SIZE = 12.0f;
-
+    
     private final Font headerFont;
     private final Font footerFont;
 
@@ -131,7 +132,7 @@ public class TextComponentPrintable implements CountingPrintable {
      * stores metrics for the unhandled rows. The only metrics we need are
      * yStart and yEnd when row is handled by updatePagesMetrics it is removed
      * from the list. Thus the head of the list is the fist row to handle.
-     *
+     * 
      * sorted
      */
     private final List<IntegerSegment> rowsMetrics;
@@ -141,32 +142,32 @@ public class TextComponentPrintable implements CountingPrintable {
      * yStart and yEnd.
      * It has to be thread-safe since metrics are calculated on
      * the printing thread and accessed on the EDT thread.
-     *
+     * 
      * sorted
      */
     private final List<IntegerSegment> pagesMetrics;
 
     /**
      * Returns {@code TextComponentPrintable} to print {@code textComponent}.
-     *
+     * 
      * @param textComponent {@code JTextComponent} to print
      * @param headerFormat the page header, or {@code null} for none
      * @param footerFormat the page footer, or {@code null} for none
      * @return {@code TextComponentPrintable} to print {@code textComponent}
      */
-    public static Printable getPrintable(final JTextComponent textComponent,
+    public static Printable getPrintable(final JTextComponent textComponent, 
             final MessageFormat headerFormat,
             final MessageFormat footerFormat) {
-
-        if (textComponent instanceof JEditorPane
+        
+        if (textComponent instanceof JEditorPane 
                 && isFrameSetDocument(textComponent.getDocument())) {
             //for document with frames we create one printable per
             //frame and merge them with the CompoundPrintable.
             List<JEditorPane> frames = getFrames((JEditorPane) textComponent);
-            List<CountingPrintable> printables =
+            List<CountingPrintable> printables = 
                 new ArrayList<CountingPrintable>();
             for (JEditorPane frame : frames) {
-                printables.add((CountingPrintable)
+                printables.add((CountingPrintable) 
                                getPrintable(frame, headerFormat, footerFormat));
             }
             return new CompoundPrintable(printables);
@@ -175,7 +176,7 @@ public class TextComponentPrintable implements CountingPrintable {
                headerFormat, footerFormat);
         }
     }
-
+    
     /**
      * Checks whether the document has frames. Only HTMLDocument might
      * have frames.
@@ -194,7 +195,7 @@ public class TextComponentPrintable implements CountingPrintable {
         return ret;
     }
 
-
+    
     /**
      * Returns frames under the {@code editor}.
      * The frames are created if necessary.
@@ -206,14 +207,14 @@ public class TextComponentPrintable implements CountingPrintable {
         List<JEditorPane> list = new ArrayList<JEditorPane>();
         getFrames(editor, list);
         if (list.size() == 0) {
-            //the frames have not been created yet.
+            //the frames have not been created yet. 
             //let's trigger the frames creation.
             createFrames(editor);
             getFrames(editor, list);
         }
         return list;
     }
-
+    
     /**
      * Adds all {@code JEditorPanes} under {@code container} tagged by {@code
      * FrameEditorPaneTag} to the {@code list}. It adds only top
@@ -225,7 +226,7 @@ public class TextComponentPrintable implements CountingPrintable {
      */
     private static void getFrames(final Container container, List<JEditorPane> list) {
         for (Component c : container.getComponents()) {
-            if (c instanceof FrameEditorPaneTag
+            if (c instanceof FrameEditorPaneTag 
                 && c instanceof JEditorPane ) { //it should be always JEditorPane
                 list.add((JEditorPane) c);
             } else {
@@ -238,11 +239,11 @@ public class TextComponentPrintable implements CountingPrintable {
 
     /**
      * Triggers the frames creation for {@code JEditorPane}
-     *
+     * 
      * @param editor the {@code JEditorPane} to create frames for
      */
     private static void createFrames(final JEditorPane editor) {
-        Runnable doCreateFrames =
+        Runnable doCreateFrames = 
             new Runnable() {
                 public void run() {
                     final int WIDTH = 500;
@@ -250,12 +251,12 @@ public class TextComponentPrintable implements CountingPrintable {
                     CellRendererPane rendererPane = new CellRendererPane();
                     rendererPane.add(editor);
                     //the values do not matter
-                    //we only need to get frames created
+                    //we only need to get frames created 
                     rendererPane.setSize(WIDTH, HEIGHT);
                 };
             };
         if (SwingUtilities.isEventDispatchThread()) {
-            doCreateFrames.run();
+            doCreateFrames.run(); 
         } else {
             try {
                 SwingUtilities.invokeAndWait(doCreateFrames);
@@ -272,7 +273,7 @@ public class TextComponentPrintable implements CountingPrintable {
     /**
      * Constructs  {@code TextComponentPrintable} to print {@code JTextComponent}
      * {@code textComponent} with {@code headerFormat} and {@code footerFormat}.
-     *
+     * 
      * @param textComponent {@code JTextComponent} to print
      * @param headerFormat the page header or {@code null} for none
      * @param footerFormat the page footer or {@code null} for none
@@ -287,7 +288,7 @@ public class TextComponentPrintable implements CountingPrintable {
             HEADER_FONT_SIZE);
         footerFont = textComponent.getFont().deriveFont(Font.PLAIN,
             FOOTER_FONT_SIZE);
-        this.pagesMetrics =
+        this.pagesMetrics = 
             Collections.synchronizedList(new ArrayList<IntegerSegment>());
         this.rowsMetrics = new ArrayList<IntegerSegment>(LIST_SIZE);
         this.printShell = createPrintShell(textComponent);
@@ -308,7 +309,7 @@ public class TextComponentPrintable implements CountingPrintable {
         if (SwingUtilities.isEventDispatchThread()) {
             return createPrintShellOnEDT(textComponent);
         } else {
-            FutureTask<JTextComponent> futureCreateShell =
+            FutureTask<JTextComponent> futureCreateShell = 
                 new FutureTask<JTextComponent>(
                     new Callable<JTextComponent>() {
                         public JTextComponent call() throws Exception {
@@ -324,10 +325,10 @@ public class TextComponentPrintable implements CountingPrintable {
                 Throwable cause = e.getCause();
                 if (cause instanceof Error) {
                     throw (Error) cause;
-                }
+                } 
                 if (cause instanceof RuntimeException) {
                     throw (RuntimeException) cause;
-                }
+                } 
                 throw new AssertionError(cause);
             }
         }
@@ -337,7 +338,7 @@ public class TextComponentPrintable implements CountingPrintable {
 
         JTextComponent ret = null;
         if (textComponent instanceof JTextField) {
-            ret =
+            ret = 
                 new JTextField() {
                     {
                         setHorizontalAlignment(
@@ -351,7 +352,7 @@ public class TextComponentPrintable implements CountingPrintable {
                     }
                 };
         } else if (textComponent instanceof JTextArea) {
-            ret =
+            ret = 
                 new JTextArea() {
                     {
                         JTextArea textArea = (JTextArea) textComponent;
@@ -367,7 +368,7 @@ public class TextComponentPrintable implements CountingPrintable {
                     }
                 };
         } else if (textComponent instanceof JTextPane) {
-            ret =
+            ret = 
                 new JTextPane() {
                     @Override
                     public FontMetrics getFontMetrics(Font font) {
@@ -385,7 +386,7 @@ public class TextComponentPrintable implements CountingPrintable {
                     }
                 };
         } else if (textComponent instanceof JEditorPane) {
-            ret =
+            ret = 
                 new JEditorPane() {
                     @Override
                     public FontMetrics getFontMetrics(Font font) {
@@ -403,10 +404,10 @@ public class TextComponentPrintable implements CountingPrintable {
                     }
                 };
         }
-        //want to occupy the whole width and height by text
+        //want to occupy the whole width and height by text 
         ret.setBorder(null);
 
-        //set properties from the component to print
+        //set properties from the component to print 
         ret.setOpaque(textComponent.isOpaque());
         ret.setEditable(textComponent.isEditable());
         ret.setEnabled(textComponent.isEnabled());
@@ -415,21 +416,21 @@ public class TextComponentPrintable implements CountingPrintable {
         ret.setForeground(textComponent.getForeground());
         ret.setComponentOrientation(
             textComponent.getComponentOrientation());
-
+        
         if (ret instanceof JEditorPane) {
             ret.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES,
                 textComponent.getClientProperty(
                 JEditorPane.HONOR_DISPLAY_PROPERTIES));
-            ret.putClientProperty(JEditorPane.W3C_LENGTH_UNITS,
+            ret.putClientProperty(JEditorPane.W3C_LENGTH_UNITS, 
                 textComponent.getClientProperty(JEditorPane.W3C_LENGTH_UNITS));
-            ret.putClientProperty("charset",
+            ret.putClientProperty("charset", 
                 textComponent.getClientProperty("charset"));
         }
         ret.setDocument(textComponent.getDocument());
         return ret;
     }
 
-
+    
 
 
     /**
@@ -445,14 +446,14 @@ public class TextComponentPrintable implements CountingPrintable {
 
     /**
      * See Printable.print for the API description.
-     *
+     * 
      * There are two parts in the implementation.
      * First part (print) is to be called on the printing thread.
      * Second part (printOnEDT) is to be called on the EDT only.
-     *
+     * 
      * print triggers printOnEDT
      */
-    public int print(final Graphics graphics,
+    public int print(final Graphics graphics, 
             final PageFormat pf,
             final int pageIndex) throws PrinterException {
         if (!isLayouted) {
@@ -469,7 +470,7 @@ public class TextComponentPrintable implements CountingPrintable {
                     return printOnEDT(graphics, pf, pageIndex);
                 }
             };
-            FutureTask<Integer> futurePrintOnEDT =
+            FutureTask<Integer> futurePrintOnEDT = 
                 new FutureTask<Integer>(doPrintOnEDT);
             SwingUtilities.invokeLater(futurePrintOnEDT);
             try {
@@ -497,7 +498,7 @@ public class TextComponentPrintable implements CountingPrintable {
 
     /**
      * The EDT part of the print method.
-     *
+     * 
      * This method is to be called on the EDT only. Layout should be done before
      * calling this method.
      */
@@ -508,50 +509,50 @@ public class TextComponentPrintable implements CountingPrintable {
         Border border = BorderFactory.createEmptyBorder();
         //handle header and footer
         if (headerFormat != null || footerFormat != null) {
-            //Printable page enumeration is 0 base. We need 1 based.
+            //Printable page enumeration is 0 base. We need 1 based. 
             Object[] formatArg = new Object[]{Integer.valueOf(pageIndex + 1)};
             if (headerFormat != null) {
-                border = new TitledBorder(border,
-                    headerFormat.format(formatArg),
+                border = new TitledBorder(border, 
+                    headerFormat.format(formatArg), 
                     TitledBorder.CENTER, TitledBorder.ABOVE_TOP,
                     headerFont, printShell.getForeground());
             }
             if (footerFormat != null) {
-                border = new TitledBorder(border,
-                    footerFormat.format(formatArg),
+                border = new TitledBorder(border, 
+                    footerFormat.format(formatArg), 
                     TitledBorder.CENTER, TitledBorder.BELOW_BOTTOM,
                     footerFont, printShell.getForeground());
-            }
+            }    
         }
         Insets borderInsets = border.getBorderInsets(printShell);
-        updatePagesMetrics(pageIndex,
+        updatePagesMetrics(pageIndex, 
             (int)Math.floor(pf.getImageableHeight()) - borderInsets.top
                            - borderInsets.bottom);
-
+        
         if (pagesMetrics.size() <= pageIndex) {
             return NO_SUCH_PAGE;
         }
-
+        
         Graphics2D g2d = (Graphics2D)graphics.create();
-
+        
         g2d.translate(pf.getImageableX(), pf.getImageableY());
-        border.paintBorder(printShell, g2d, 0, 0,
-            (int)Math.floor(pf.getImageableWidth()),
+        border.paintBorder(printShell, g2d, 0, 0, 
+            (int)Math.floor(pf.getImageableWidth()), 
             (int)Math.floor(pf.getImageableHeight()));
-
+        
         g2d.translate(0, borderInsets.top);
         //want to clip only vertically
-        Rectangle clip = new Rectangle(0, 0,
+        Rectangle clip = new Rectangle(0, 0, 
             (int) pf.getWidth(),
-            pagesMetrics.get(pageIndex).end
+            pagesMetrics.get(pageIndex).end 
                 - pagesMetrics.get(pageIndex).start + 1);
 
         g2d.clip(clip);
         int xStart = 0;
-        if (ComponentOrientation.RIGHT_TO_LEFT ==
+        if (ComponentOrientation.RIGHT_TO_LEFT == 
                 printShell.getComponentOrientation()) {
             xStart = (int) pf.getImageableWidth() - printShell.getWidth();
-        }
+        } 
         g2d.translate(xStart, - pagesMetrics.get(pageIndex).start);
         printShell.print(g2d);
 
@@ -564,7 +565,7 @@ public class TextComponentPrintable implements CountingPrintable {
     private boolean needReadLock = false;
 
     /**
-     * Tries to release document's readlock
+     * Tries to release document's readlock 
      *
      * Note: Not to be called on the EDT.
      */
@@ -583,7 +584,7 @@ public class TextComponentPrintable implements CountingPrintable {
 
 
     /**
-     * Tries to acquire document's readLock if it was released
+     * Tries to acquire document's readLock if it was released 
      * in releaseReadLock() method.
      *
      * Note: Not to be called on the EDT.
@@ -592,7 +593,7 @@ public class TextComponentPrintable implements CountingPrintable {
         assert ! SwingUtilities.isEventDispatchThread();
         if (needReadLock) {
             try {
-                /*
+                /* 
                  * wait until all the EDT events are processed
                  * some of the document changes are asynchronous
                  * we need to make sure we get the lock after those changes
@@ -612,20 +613,20 @@ public class TextComponentPrintable implements CountingPrintable {
     }
 
     /**
-     * Prepares {@code printShell} for printing.
-     *
+     * Prepares {@code printShell} for printing. 
+     * 
      * Sets properties from the component to print.
-     * Sets width and FontRenderContext.
-     *
+     * Sets width and FontRenderContext.  
+     * 
      * Triggers Views creation for the printShell.
-     *
+     * 
      * There are two parts in the implementation.
      * First part (layout) is to be called on the printing thread.
      * Second part (layoutOnEDT) is to be called on the EDT only.
-     *
+     * 
      * {@code layout} triggers {@code layoutOnEDT}.
-     *
-     * @param width width to layout the text for
+     *  
+     * @param width width to layout the text for 
      */
     private void layout(final int width) {
         if (!SwingUtilities.isEventDispatchThread()) {
@@ -663,23 +664,23 @@ public class TextComponentPrintable implements CountingPrintable {
         } else {
             layoutOnEDT(width);
         }
-
+        
         isLayouted = true;
     }
 
     /**
      * The EDT part of layout method.
-     *
-     * This method is to be called on the EDT only.
+     * 
+     * This method is to be called on the EDT only. 
      */
     private void layoutOnEDT(final int width) {
         assert SwingUtilities.isEventDispatchThread();
         //need to have big value but smaller than MAX_VALUE otherwise
         //printing goes south due to overflow somewhere
         final int HUGE_INTEGER = Integer.MAX_VALUE - 1000;
-
+        
         CellRendererPane rendererPane = new CellRendererPane();
-
+        
         //need to use JViewport since text is layouted to the viewPort width
         //otherwise it will be layouted to the maximum text width
         JViewport viewport = new JViewport();
@@ -689,9 +690,9 @@ public class TextComponentPrintable implements CountingPrintable {
         //JTextField is a special case
         //it layouts text in the middle by Y
         if (printShell instanceof JTextField) {
-            size =
+            size = 
                 new Dimension(size.width, printShell.getPreferredSize().height);
-        }
+        } 
         printShell.setSize(size);
         viewport.setComponentOrientation(printShell.getComponentOrientation());
         viewport.setSize(size);
@@ -703,7 +704,7 @@ public class TextComponentPrintable implements CountingPrintable {
      * Calculates pageMetrics for the pages up to the {@code pageIndex} using
      * {@code rowsMetrics}.
      * Metrics are stored in the {@code pagesMetrics}.
-     *
+     * 
      * @param pageIndex the page to update the metrics for
      * @param pageHeight the page height
      */
@@ -711,13 +712,13 @@ public class TextComponentPrintable implements CountingPrintable {
         while (pageIndex >= pagesMetrics.size() && !rowsMetrics.isEmpty()) {
             // add one page to the pageMetrics
             int lastPage = pagesMetrics.size() - 1;
-            int pageStart = (lastPage >= 0)
+            int pageStart = (lastPage >= 0) 
                ? pagesMetrics.get(lastPage).end + 1
                : 0;
             int rowIndex;
-            for (rowIndex = 0;
+            for (rowIndex = 0; 
                    rowIndex < rowsMetrics.size()
-                   && (rowsMetrics.get(rowIndex).end - pageStart + 1)
+                   && (rowsMetrics.get(rowIndex).end - pageStart + 1) 
                      <= pageHeight;
                    rowIndex++) {
             }
@@ -728,7 +729,7 @@ public class TextComponentPrintable implements CountingPrintable {
                     new IntegerSegment(pageStart, pageStart + pageHeight - 1));
             } else {
                 rowIndex--;
-                pagesMetrics.add(new IntegerSegment(pageStart,
+                pagesMetrics.add(new IntegerSegment(pageStart, 
                     rowsMetrics.get(rowIndex).end));
                 for (int i = 0; i <= rowIndex; i++) {
                     rowsMetrics.remove(0);
@@ -738,9 +739,9 @@ public class TextComponentPrintable implements CountingPrintable {
     }
 
     /**
-     * Calculates rowsMetrics for the document. The result is stored
+     * Calculates rowsMetrics for the document. The result is stored 
      * in the {@code rowsMetrics}.
-     *
+     * 
      * Two steps process.
      * First step is to find yStart and yEnd for the every document position.
      * Second step is to merge all intersected segments ( [yStart, yEnd] ).
@@ -749,7 +750,7 @@ public class TextComponentPrintable implements CountingPrintable {
         final int documentLength = printShell.getDocument().getLength();
         List<IntegerSegment> documentMetrics = new ArrayList<IntegerSegment>(LIST_SIZE);
         Rectangle rect;
-        for (int i = 0, previousY = -1, previousHeight = -1; i < documentLength;
+        for (int i = 0, previousY = -1, previousHeight = -1; i < documentLength; 
                  i++) {
             try {
                 rect = printShell.modelToView(i);
@@ -796,7 +797,7 @@ public class TextComponentPrintable implements CountingPrintable {
 
     /**
      *  Class to represent segment of integers.
-     *  we do not call it Segment to avoid confusion with
+     *  we do not call it Segment to avoid confusion with 
      *  javax.swing.text.Segment
      */
     private static class IntegerSegment implements Comparable<IntegerSegment> {
@@ -807,7 +808,7 @@ public class TextComponentPrintable implements CountingPrintable {
             this.start = start;
             this.end = end;
         }
-
+        
         public int compareTo(IntegerSegment object) {
             int startsDelta = start - object.start;
             return (startsDelta != 0) ? startsDelta : end - object.end;

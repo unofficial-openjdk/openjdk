@@ -71,11 +71,11 @@ void AwtRobot::MouseMove( jint x, jint y)
       bResult = SystemParametersInfo(SPI_SETMOUSE,0,newAccel,SPIF_SENDCHANGE);
       bResult = SystemParametersInfo(SPI_SETMOUSESPEED, 0,
                 // 4504963: Though the third argument to SystemParameterInfo is
-                // declared as a PVOID, as of Windows 2000 it is apparently
+                // declared as a PVOID, as of Windows 2000 it is apparently 
                 // interpreted as an int.  (The MSDN docs for SPI_SETMOUSESPEED
                 // say that it's an integer between 1 and 20, the default being
                 // 10).  Instead of passing the @ of the desired value, the
-                // value itself is now passed, cast as a PVOID so as to
+                // value itself is now passed, cast as a PVOID so as to 
                 // compile.  -bchristi 10/02/2001
                                      (PVOID)newSpeed,
                                      SPIF_SENDCHANGE);
@@ -136,7 +136,7 @@ void AwtRobot::MouseRelease( jint buttonMask )
     if ( buttonMask & java_awt_event_InputEvent_BUTTON2_MASK ) {
         dwFlags |= MOUSEEVENTF_MIDDLEUP;
     }
-
+	
     mouse_event(dwFlags, 0, 0, 0, 0 );
 }
 
@@ -149,7 +149,7 @@ void AwtRobot::MouseWheel (jint wheelAmt) {
         }
 
         // Win95 doesn't understand MOUSEEVENTF_WHEEL, so use PostEvent
-        POINT curPos;
+        POINT curPos; 
         HWND mouseOver = NULL;
         HWND topLevel = NULL;
         UINT wheelMsg = NULL;
@@ -185,16 +185,16 @@ void AwtRobot::MouseWheel (jint wheelAmt) {
 inline jint AwtRobot::WinToJavaPixel(USHORT r, USHORT g, USHORT b)
 {
     jint value =
-            0xFF << 24 | // alpha channel is always turned all the way up
-            r << 16 |
-            g << 8  |
-            b << 0;
+	    0xFF << 24 | // alpha channel is always turned all the way up
+	    r << 16 |
+	    g << 8  |
+	    b << 0;
     return value;
 }
 
 jint AwtRobot::GetRGBPixel( jint x, jint y)
 {
-    HDC hdc = GetDC(NULL);
+    HDC	hdc = GetDC(NULL);
     COLORREF ref = ::GetPixel( hdc, x, y );
     ReleaseDC(NULL,hdc);
     jint value = WinToJavaPixel(GetRValue(ref), GetGValue(ref), GetBValue(ref));
@@ -215,20 +215,20 @@ void AwtRobot::GetRGBPixels(jint x, jint y, jint width, jint height, jintArray p
     // create an offscreen bitmap
     hbitmap = ::CreateCompatibleBitmap(hdcScreen, width, height);
     if (hbitmap == NULL) {
-        throw std::bad_alloc();
+	throw std::bad_alloc();
     }
     hOldBitmap = (HBITMAP)::SelectObject(hdcMem, hbitmap);
 
     // REMIND: not multimon-friendly...
     int primaryIndex = AwtWin32GraphicsDevice::GetDefaultDeviceIndex();
-    hOldPalette =
-        AwtWin32GraphicsDevice::SelectPalette(hdcMem, primaryIndex);
+    hOldPalette = 
+	AwtWin32GraphicsDevice::SelectPalette(hdcMem, primaryIndex);
     AwtWin32GraphicsDevice::RealizePalette(hdcMem, primaryIndex);
 
     // copy screen image to offscreen bitmap
     // CAPTUREBLT flag is required to capture WS_EX_LAYERED windows' contents
     // correctly on Win2K/XP
-    VERIFY(::BitBlt(hdcMem, 0, 0, width, height, hdcScreen, x, y,
+    VERIFY(::BitBlt(hdcMem, 0, 0, width, height, hdcScreen, x, y, 
                                                 SRCCOPY|CAPTUREBLT) != 0);
 
     static const int BITS_PER_PIXEL = 32;
@@ -248,7 +248,7 @@ void AwtRobot::GetRGBPixels(jint x, jint y, jint width, jint height, jintArray p
 
     // pixel data starts after 3 RGBQUADS for color masks
     RGBQUAD *pixelData = &pinfo->bmiColors[3];
-
+    
     // prepare BITMAPINFO for a 32-bit RGB bitmap
     ::memset(pinfo, 0, sizeof(*pinfo));
     pinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -274,9 +274,9 @@ void AwtRobot::GetRGBPixels(jint x, jint y, jint width, jint height, jintArray p
     DASSERT(sizeof(jint) == sizeof(RGBQUAD));
     for(int nPixel = 0; nPixel < numPixels; nPixel++) {
         RGBQUAD * prgbq = &pixelData[nPixel];
-        jint jpixel = WinToJavaPixel(prgbq->rgbRed, prgbq->rgbGreen, prgbq->rgbBlue);
-        // stuff the 32-bit pixel back into the 32-bit RGBQUAD
-        *prgbq = *( (RGBQUAD *)(&jpixel) );
+	jint jpixel = WinToJavaPixel(prgbq->rgbRed, prgbq->rgbGreen, prgbq->rgbBlue);
+	// stuff the 32-bit pixel back into the 32-bit RGBQUAD
+	*prgbq = *( (RGBQUAD *)(&jpixel) );
     }
 
     // copy pixels into Java array
@@ -290,35 +290,35 @@ void AwtRobot::GetRGBPixels(jint x, jint y, jint width, jint height, jintArray p
     }
     ::DeleteObject(hbitmap);
     ::DeleteDC(hdcMem);
-    ::DeleteDC(hdcScreen);
+    ::DeleteDC(hdcScreen); 
 }
 
-void AwtRobot::KeyPress( jint jkey )
+void AwtRobot::KeyPress( jint jkey ) 
 {
     DoKeyEvent(jkey, 0); // no flags means key down
 }
 
 void AwtRobot::KeyRelease( jint jkey )
 {
-    DoKeyEvent(jkey, KEYEVENTF_KEYUP);
+    DoKeyEvent(jkey, KEYEVENTF_KEYUP); 
 }
 
 void AwtRobot::DoKeyEvent( jint jkey, DWORD dwFlags )
 {
-    UINT        vkey;
-    UINT        modifiers;
-    UINT        scancode;
-    JNIEnv *    env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    UINT	vkey;
+    UINT	modifiers;
+    UINT	scancode;
+    JNIEnv *	env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     // convert Java key into Windows key (and modifiers too)
     AwtComponent::JavaKeyToWindowsKey(jkey, &vkey, &modifiers);
     if (vkey == 0) {
-        // no equivalent Windows key found for given Java keycode
-        JNU_ThrowIllegalArgumentException(env, "Invalid key code");
+	// no equivalent Windows key found for given Java keycode
+	JNU_ThrowIllegalArgumentException(env, "Invalid key code");
     } else {
-        // get the scancode from the virtual key
-        scancode = ::MapVirtualKey(vkey, 0);
-        keybd_event(vkey, scancode, dwFlags, 0);
+	// get the scancode from the virtual key
+	scancode = ::MapVirtualKey(vkey, 0);
+	keybd_event(vkey, scancode, dwFlags, 0);
     }
 }
 
@@ -427,7 +427,7 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WRobotPeer_keyPress(
 
     CATCH_BAD_ALLOC;
 }
-
+    
 JNIEXPORT void JNICALL Java_sun_awt_windows_WRobotPeer_keyRelease(
   JNIEnv *, jobject self, jint javakey )
 {

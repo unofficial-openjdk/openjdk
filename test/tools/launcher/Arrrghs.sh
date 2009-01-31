@@ -1,6 +1,6 @@
 #!/bin/sh
-# @test Arrrghs.sh
-# @bug 5030233 6214916 6356475 6571029
+# @test
+# @bug 5030233 6214916 6356475
 # @build Arrrghs
 # @run shell Arrrghs.sh
 # @summary Argument parsing validation.
@@ -112,7 +112,6 @@ TestHelp() {
 #
 TestCP java -cp
 TestCP java -classpath
-TestCP java -jar
 TestCP javac -cp
 TestCP javac -classpath
 TestXUsage

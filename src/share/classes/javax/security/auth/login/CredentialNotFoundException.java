@@ -31,6 +31,7 @@ package javax.security.auth.login;
  * <p> This exception may be thrown by a LoginModule if it is unable
  * to locate a credential necessary to perform authentication.
  *
+ * @version %I%, %G%
  * @since 1.5
  */
 public class CredentialNotFoundException extends CredentialException {
@@ -42,7 +43,7 @@ public class CredentialNotFoundException extends CredentialException {
      * A detail message is a String that describes this particular exception.
      */
     public CredentialNotFoundException() {
-        super();
+	super();
     }
 
     /**
@@ -55,6 +56,6 @@ public class CredentialNotFoundException extends CredentialException {
      * @param msg the detail message.
      */
     public CredentialNotFoundException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

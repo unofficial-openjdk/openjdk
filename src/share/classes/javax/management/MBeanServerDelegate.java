@@ -35,13 +35,13 @@ import com.sun.jmx.defaults.ServiceName;
  * @since 1.5
  */
 public class MBeanServerDelegate implements MBeanServerDelegateMBean,
-                                            NotificationEmitter   {
+					    NotificationEmitter   {
 
     /** The MBean server agent identification.*/
     private String mbeanServerId ;
 
     /** The NotificationBroadcasterSupport object that sends the
-        notifications */
+	notifications */
     private final NotificationBroadcasterSupport broadcaster;
 
     private static long oldStamp = 0;
@@ -52,21 +52,21 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
 
     static {
         final String[] types  = {
-            MBeanServerNotification.UNREGISTRATION_NOTIFICATION,
-            MBeanServerNotification.REGISTRATION_NOTIFICATION
-        };
-        notifsInfo = new MBeanNotificationInfo[1];
-        notifsInfo[0] =
-            new MBeanNotificationInfo(types,
-                    "javax.management.MBeanServerNotification",
-                    "Notifications sent by the MBeanServerDelegate MBean");
+	    MBeanServerNotification.UNREGISTRATION_NOTIFICATION,
+	    MBeanServerNotification.REGISTRATION_NOTIFICATION
+	};
+	notifsInfo = new MBeanNotificationInfo[1];
+	notifsInfo[0] =
+	    new MBeanNotificationInfo(types,
+		    "javax.management.MBeanServerNotification",
+		    "Notifications sent by the MBeanServerDelegate MBean");
     }
 
     /**
      * Create a MBeanServerDelegate object.
      */
     public MBeanServerDelegate () {
-        stamp = getStamp();
+	stamp = getStamp();
         broadcaster = new NotificationBroadcasterSupport() ;
     }
 
@@ -77,16 +77,16 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      * @return the identity.
      */
     public synchronized String getMBeanServerId() {
-        if (mbeanServerId == null) {
-            String localHost;
-            try {
-                localHost = java.net.InetAddress.getLocalHost().getHostName();
-            } catch (java.net.UnknownHostException e) {
-                localHost = "localhost";
-            }
-            mbeanServerId = localHost + "_" + stamp;
-        }
-        return mbeanServerId;
+	if (mbeanServerId == null) {
+	    String localHost;
+	    try {
+		localHost = java.net.InetAddress.getLocalHost().getHostName();
+	    } catch (java.net.UnknownHostException e) {
+		localHost = "localhost";
+	    }
+	    mbeanServerId = localHost + "_" + stamp;
+	}
+	return mbeanServerId;
     }
 
     /**
@@ -96,7 +96,7 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      * @return the specification name.
      */
     public String getSpecificationName() {
-        return ServiceName.JMX_SPEC_NAME;
+	return ServiceName.JMX_SPEC_NAME;
     }
 
     /**
@@ -106,7 +106,7 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      * @return the specification version.
      */
     public String getSpecificationVersion() {
-        return ServiceName.JMX_SPEC_VERSION;
+	return ServiceName.JMX_SPEC_VERSION;
     }
 
     /**
@@ -116,7 +116,7 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      * @return the specification vendor.
      */
     public String getSpecificationVendor() {
-        return ServiceName.JMX_SPEC_VENDOR;
+	return ServiceName.JMX_SPEC_VENDOR;
     }
 
     /**
@@ -125,7 +125,7 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      * @return the implementation name.
      */
     public String getImplementationName() {
-        return ServiceName.JMX_IMPL_NAME;
+	return ServiceName.JMX_IMPL_NAME;
     }
 
     /**
@@ -147,25 +147,25 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      * @return the implementation vendor.
      */
     public String getImplementationVendor()  {
-        return ServiceName.JMX_IMPL_VENDOR;
+	return ServiceName.JMX_IMPL_VENDOR;
     }
 
     // From NotificationEmitter extends NotificationBroacaster
     //
     public MBeanNotificationInfo[] getNotificationInfo() {
-        final int len = MBeanServerDelegate.notifsInfo.length;
+	final int len = MBeanServerDelegate.notifsInfo.length;
         final MBeanNotificationInfo[] infos =
-        new MBeanNotificationInfo[len];
-        System.arraycopy(MBeanServerDelegate.notifsInfo,0,infos,0,len);
-        return infos;
+	new MBeanNotificationInfo[len];
+	System.arraycopy(MBeanServerDelegate.notifsInfo,0,infos,0,len);
+	return infos;
     }
 
     // From NotificationEmitter extends NotificationBroacaster
     //
     public synchronized
-        void addNotificationListener(NotificationListener listener,
-                                     NotificationFilter filter,
-                                     Object handback)
+	void addNotificationListener(NotificationListener listener,
+				     NotificationFilter filter,
+				     Object handback)
         throws IllegalArgumentException {
         broadcaster.addNotificationListener(listener,filter,handback) ;
     }
@@ -173,17 +173,17 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
     // From NotificationEmitter extends NotificationBroacaster
     //
     public synchronized
-        void removeNotificationListener(NotificationListener listener,
-                                        NotificationFilter filter,
-                                        Object handback)
-        throws ListenerNotFoundException {
+	void removeNotificationListener(NotificationListener listener,
+					NotificationFilter filter,
+					Object handback)
+	throws ListenerNotFoundException {
         broadcaster.removeNotificationListener(listener,filter,handback) ;
     }
 
     // From NotificationEmitter extends NotificationBroacaster
     //
     public synchronized
-        void removeNotificationListener(NotificationListener listener)
+	void removeNotificationListener(NotificationListener listener)
         throws ListenerNotFoundException {
         broadcaster.removeNotificationListener(listener) ;
     }
@@ -197,11 +197,11 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
      *
      */
     public void sendNotification(Notification notification) {
-        if (notification.getSequenceNumber() < 1) {
-            synchronized (this) {
-                notification.setSequenceNumber(this.sequenceNumber++);
-            }
-        }
+	if (notification.getSequenceNumber() < 1) {
+	    synchronized (this) {
+		notification.setSequenceNumber(this.sequenceNumber++);
+	    }
+	}
         broadcaster.sendNotification(notification);
     }
 
@@ -227,11 +227,11 @@ public class MBeanServerDelegate implements MBeanServerDelegateMBean,
        for a given JVM will always be distinact, though there is no
        such guarantee for two different JVMs.  */
     private static synchronized long getStamp() {
-        long s = System.currentTimeMillis();
-        if (oldStamp >= s) {
-            s = oldStamp + 1;
-        }
-        oldStamp = s;
-        return s;
+	long s = System.currentTimeMillis();
+	if (oldStamp >= s) {
+	    s = oldStamp + 1;
+	}
+	oldStamp = s;
+	return s;
     }
 }

@@ -41,143 +41,143 @@ public abstract class ImageDecoder {
     ImageDecoder next;
 
     public ImageDecoder(InputStreamImageSource src, InputStream is) {
-        source = src;
-        input = is;
-        feeder = Thread.currentThread();
+	source = src;
+	input = is;
+	feeder = Thread.currentThread();
     }
 
     public boolean isConsumer(ImageConsumer ic) {
-        return ImageConsumerQueue.isConsumer(queue, ic);
+	return ImageConsumerQueue.isConsumer(queue, ic);
     }
 
     public void removeConsumer(ImageConsumer ic) {
-        queue = ImageConsumerQueue.removeConsumer(queue, ic, false);
-        if (!finished && queue == null) {
-            abort();
-        }
+	queue = ImageConsumerQueue.removeConsumer(queue, ic, false);
+	if (!finished && queue == null) {
+	    abort();
+	}
     }
 
     protected ImageConsumerQueue nextConsumer(ImageConsumerQueue cq) {
-        synchronized (source) {
-            if (aborted) {
-                return null;
-            }
-            cq = ((cq == null) ? queue : cq.next);
-            while (cq != null) {
-                if (cq.interested) {
-                    return cq;
-                }
-                cq = cq.next;
-            }
-        }
-        return null;
+	synchronized (source) {
+	    if (aborted) {
+		return null;
+	    }
+	    cq = ((cq == null) ? queue : cq.next);
+	    while (cq != null) {
+		if (cq.interested) {
+		    return cq;
+		}
+		cq = cq.next;
+	    }
+	}
+	return null;
     }
 
     protected int setDimensions(int w, int h) {
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.setDimensions(w, h);
-            count++;
-        }
-        return count;
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.setDimensions(w, h);
+	    count++;
+	}
+	return count;
     }
 
     protected int setProperties(Hashtable props) {
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.setProperties(props);
-            count++;
-        }
-        return count;
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.setProperties(props);
+	    count++;
+	}
+	return count;
     }
 
     protected int setColorModel(ColorModel model) {
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.setColorModel(model);
-            count++;
-        }
-        return count;
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.setColorModel(model);
+	    count++;
+	}
+	return count;
     }
 
     protected int setHints(int hints) {
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.setHints(hints);
-            count++;
-        }
-        return count;
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.setHints(hints);
+	    count++;
+	}
+	return count;
     }
 
     protected void headerComplete() {
-        feeder.setPriority(ImageFetcher.LOW_PRIORITY);
+	feeder.setPriority(ImageFetcher.LOW_PRIORITY);
     }
 
     protected int setPixels(int x, int y, int w, int h, ColorModel model,
-                            byte pix[], int off, int scansize) {
-        source.latchConsumers(this);
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.setPixels(x, y, w, h, model, pix, off, scansize);
-            count++;
-        }
-        return count;
+			    byte pix[], int off, int scansize) {
+ 	source.latchConsumers(this);
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.setPixels(x, y, w, h, model, pix, off, scansize);
+	    count++;
+	}
+	return count;
     }
 
     protected int setPixels(int x, int y, int w, int h, ColorModel model,
-                            int pix[], int off, int scansize) {
-        source.latchConsumers(this);
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.setPixels(x, y, w, h, model, pix, off, scansize);
-            count++;
-        }
-        return count;
+			    int pix[], int off, int scansize) {
+ 	source.latchConsumers(this);
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.setPixels(x, y, w, h, model, pix, off, scansize);
+	    count++;
+	}
+	return count;
     }
 
     protected int imageComplete(int status, boolean done) {
-        source.latchConsumers(this);
-        if (done) {
-            finished = true;
-            source.doneDecoding(this);
-        }
-        ImageConsumerQueue cq = null;
-        int count = 0;
-        while ((cq = nextConsumer(cq)) != null) {
-            cq.consumer.imageComplete(status);
-            count++;
-        }
-        return count;
+ 	source.latchConsumers(this);
+	if (done) {
+	    finished = true;
+	    source.doneDecoding(this);
+	}
+	ImageConsumerQueue cq = null;
+	int count = 0;
+	while ((cq = nextConsumer(cq)) != null) {
+	    cq.consumer.imageComplete(status);
+	    count++;
+	}
+	return count;
     }
 
     public abstract void produceImage() throws IOException,
-                                               ImageFormatException;
+					       ImageFormatException;
 
     public void abort() {
-        aborted = true;
-        source.doneDecoding(this);
-        close();
-        java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction() {
-            public Object run() {
-                feeder.interrupt();
-                return null;
-            }
-        });
+	aborted = true;
+	source.doneDecoding(this);
+	close();
+	java.security.AccessController.doPrivileged(
+	    new java.security.PrivilegedAction() {
+	    public Object run() {
+		feeder.interrupt();
+		return null;
+	    }
+	});
     }
 
     public synchronized void close() {
-        if (input != null) {
-            try {
-                input.close();
-            } catch (IOException e) {
-            }
-        }
+	if (input != null) {
+	    try {
+		input.close();
+	    } catch (IOException e) {
+	    }
+	}
     }
 }

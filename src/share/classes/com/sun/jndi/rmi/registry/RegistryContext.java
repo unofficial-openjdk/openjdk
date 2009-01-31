@@ -41,6 +41,7 @@ import javax.naming.spi.NamingManager;
  * A RegistryContext is a context representing a remote RMI registry.
  *
  * @author Scott Seligman
+ * @version %I% %E%
  */
 
 
@@ -53,12 +54,12 @@ public class RegistryContext implements Context, Referenceable {
     private static final NameParser nameParser = new AtomicNameParser();
     private static final String SOCKET_FACTORY = "com.sun.jndi.rmi.factory.socket";
 
-    Reference reference = null; // ref used to create this context, if any
+    Reference reference = null;	// ref used to create this context, if any
 
     // Environment property that, if set, indicates that a security
     // manager should be installed (if none is already in place).
     public static final String SECURITY_MGR =
-            "java.naming.rmi.security.manager";
+	    "java.naming.rmi.security.manager";
 
     /**
      * Returns a context for the registry at a given host and port.
@@ -68,23 +69,23 @@ public class RegistryContext implements Context, Referenceable {
      * RegistryContextFactory.getObjectInstance(), for example.
      */
     public RegistryContext(String host, int port, Hashtable env)
-            throws NamingException
+	    throws NamingException
     {
-        environment = ((env == null) ? new Hashtable(5) : env);
-        if (environment.get(SECURITY_MGR) != null) {
-            installSecurityMgr();
-        }
-
-        // chop off '[' and ']' in an IPv6 literal address
-        if ((host != null) && (host.charAt(0) == '[')) {
+	environment = ((env == null) ? new Hashtable(5) : env);
+	if (environment.get(SECURITY_MGR) != null) {
+	    installSecurityMgr();
+	}
+	
+	// chop off '[' and ']' in an IPv6 literal address
+	if ((host != null) && (host.charAt(0) == '[')) {
             host = host.substring(1, host.length() - 1);
         }
 
-        RMIClientSocketFactory socketFactory =
-                (RMIClientSocketFactory) env.get(SOCKET_FACTORY);
-        registry = getRegistry(host, port, socketFactory);
-        this.host = host;
-        this.port = port;
+	RMIClientSocketFactory socketFactory =
+		(RMIClientSocketFactory) env.get(SOCKET_FACTORY); 	
+	registry = getRegistry(host, port, socketFactory);
+	this.host = host;
+	this.port = port;
     }
 
     /**
@@ -94,34 +95,34 @@ public class RegistryContext implements Context, Referenceable {
      */
     // %%% Alternatively, this could be done with a clone() method.
     RegistryContext(RegistryContext ctx) {
-        environment = (Hashtable)ctx.environment.clone();
-        registry = ctx.registry;
-        host = ctx.host;
-        port = ctx.port;
-        reference = ctx.reference;
+	environment = (Hashtable)ctx.environment.clone();
+	registry = ctx.registry;
+	host = ctx.host;
+	port = ctx.port;
+	reference = ctx.reference;
     }
 
     protected void finalize() {
-        close();
+	close();
     }
 
     public Object lookup(Name name) throws NamingException {
-        if (name.isEmpty()) {
-            return (new RegistryContext(this));
-        }
-        Remote obj;
-        try {
-            obj = registry.lookup(name.get(0));
-        } catch (NotBoundException e) {
-            throw (new NameNotFoundException(name.get(0)));
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
-        return (decodeObject(obj, name.getPrefix(1)));
+	if (name.isEmpty()) {
+	    return (new RegistryContext(this));
+	}
+	Remote obj;
+	try {
+	    obj = registry.lookup(name.get(0));
+	} catch (NotBoundException e) {
+	    throw (new NameNotFoundException(name.get(0)));
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
+	return (decodeObject(obj, name.getPrefix(1)));
     }
 
     public Object lookup(String name) throws NamingException {
-        return lookup(new CompositeName(name));
+	return lookup(new CompositeName(name));
     }
 
     /**
@@ -129,57 +130,57 @@ public class RegistryContext implements Context, Referenceable {
      * object itself, not its Reference.
      */
     public void bind(Name name, Object obj) throws NamingException {
-        if (name.isEmpty()) {
-            throw (new InvalidNameException(
-                    "RegistryContext: Cannot bind empty name"));
-        }
-        try {
-            registry.bind(name.get(0), encodeObject(obj, name.getPrefix(1)));
-        } catch (AlreadyBoundException e) {
-            NamingException ne = new NameAlreadyBoundException(name.get(0));
-            ne.setRootCause(e);
-            throw ne;
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
+	if (name.isEmpty()) {
+	    throw (new InvalidNameException(
+		    "RegistryContext: Cannot bind empty name"));
+	}
+	try {
+	    registry.bind(name.get(0), encodeObject(obj, name.getPrefix(1)));
+	} catch (AlreadyBoundException e) {
+	    NamingException ne = new NameAlreadyBoundException(name.get(0));
+	    ne.setRootCause(e);
+	    throw ne;
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
     }
 
     public void bind(String name, Object obj) throws NamingException {
-        bind(new CompositeName(name), obj);
+	bind(new CompositeName(name), obj);
     }
 
     public void rebind(Name name, Object obj) throws NamingException {
-        if (name.isEmpty()) {
-            throw (new InvalidNameException(
-                    "RegistryContext: Cannot rebind empty name"));
-        }
-        try {
-            registry.rebind(name.get(0), encodeObject(obj, name.getPrefix(1)));
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
+	if (name.isEmpty()) {
+	    throw (new InvalidNameException(
+		    "RegistryContext: Cannot rebind empty name"));
+	}
+	try {
+	    registry.rebind(name.get(0), encodeObject(obj, name.getPrefix(1)));
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
     }
 
     public void rebind(String name, Object obj) throws NamingException {
-        rebind(new CompositeName(name), obj);
+	rebind(new CompositeName(name), obj);
     }
 
     public void unbind(Name name) throws NamingException {
-        if (name.isEmpty()) {
-            throw (new InvalidNameException(
-                    "RegistryContext: Cannot unbind empty name"));
-        }
-        try {
-            registry.unbind(name.get(0));
-        } catch (NotBoundException e) {
-            // method is idempotent
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
+	if (name.isEmpty()) {
+	    throw (new InvalidNameException(
+		    "RegistryContext: Cannot unbind empty name"));
+	}
+	try {
+	    registry.unbind(name.get(0));
+	} catch (NotBoundException e) {
+	    // method is idempotent
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
     }
 
     public void unbind(String name) throws NamingException {
-        unbind(new CompositeName(name));
+	unbind(new CompositeName(name));
     }
 
     /**
@@ -187,122 +188,122 @@ public class RegistryContext implements Context, Referenceable {
      * lookup, bind, unbind.  The sequence is not performed atomically.
      */
     public void rename(Name oldName, Name newName) throws NamingException {
-        bind(newName, lookup(oldName));
-        unbind(oldName);
+	bind(newName, lookup(oldName));
+	unbind(oldName);
     }
 
     public void rename(String name, String newName) throws NamingException {
-        rename(new CompositeName(name), new CompositeName(newName));
+	rename(new CompositeName(name), new CompositeName(newName));
     }
 
-    public NamingEnumeration list(Name name)    throws NamingException {
-        if (!name.isEmpty()) {
-            throw (new InvalidNameException(
-                    "RegistryContext: can only list \"\""));
-        }
-        try {
-            String[] names = registry.list();
-            return (new NameClassPairEnumeration(names));
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
+    public NamingEnumeration list(Name name)	throws NamingException {
+	if (!name.isEmpty()) {
+	    throw (new InvalidNameException(
+		    "RegistryContext: can only list \"\""));
+	}
+	try {
+	    String[] names = registry.list();
+	    return (new NameClassPairEnumeration(names));
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
     }
 
     public NamingEnumeration list(String name) throws NamingException {
-        return list(new CompositeName(name));
+	return list(new CompositeName(name));
     }
 
-    public NamingEnumeration listBindings(Name name)
-            throws NamingException
+    public NamingEnumeration listBindings(Name name) 
+	    throws NamingException
     {
-        if (!name.isEmpty()) {
-            throw (new InvalidNameException(
-                    "RegistryContext: can only list \"\""));
-        }
-        try {
-            String[] names = registry.list();
-            return (new BindingEnumeration(this, names));
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
+	if (!name.isEmpty()) {
+	    throw (new InvalidNameException(
+		    "RegistryContext: can only list \"\""));
+	}
+	try {
+	    String[] names = registry.list();
+	    return (new BindingEnumeration(this, names));
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
     }
 
     public NamingEnumeration listBindings(String name) throws NamingException {
-        return listBindings(new CompositeName(name));
+	return listBindings(new CompositeName(name));
     }
 
     public void destroySubcontext(Name name) throws NamingException {
-        throw (new OperationNotSupportedException());
+	throw (new OperationNotSupportedException());
     }
 
     public void destroySubcontext(String name) throws NamingException {
-        throw (new OperationNotSupportedException());
+	throw (new OperationNotSupportedException());
     }
 
     public Context createSubcontext(Name name) throws NamingException {
-        throw (new OperationNotSupportedException());
+	throw (new OperationNotSupportedException());
     }
 
     public Context createSubcontext(String name) throws NamingException {
-        throw (new OperationNotSupportedException());
+	throw (new OperationNotSupportedException());
     }
 
     public Object lookupLink(Name name) throws NamingException {
-        return lookup(name);
+	return lookup(name);
     }
 
     public Object lookupLink(String name) throws NamingException {
-        return lookup(name);
+	return lookup(name);
     }
 
     public NameParser getNameParser(Name name) throws NamingException {
-        return nameParser;
+	return nameParser;
     }
 
     public NameParser getNameParser(String name) throws NamingException {
-        return nameParser;
+	return nameParser;
     }
 
     public Name composeName(Name name, Name prefix) throws NamingException {
-        Name result = (Name)prefix.clone();
-        return result.addAll(name);
+	Name result = (Name)prefix.clone();
+	return result.addAll(name);
     }
 
     public String composeName(String name, String prefix)
-            throws NamingException
+	    throws NamingException
     {
-        return composeName(new CompositeName(name),
-                           new CompositeName(prefix)).toString();
+	return composeName(new CompositeName(name),
+			   new CompositeName(prefix)).toString();
     }
 
     public Object removeFromEnvironment(String propName)
-            throws NamingException
+	    throws NamingException
     {
-        return environment.remove(propName);
+	return environment.remove(propName);
     }
 
     public Object addToEnvironment(String propName, Object propVal)
-            throws NamingException
+	    throws NamingException
     {
-        if (propName.equals(SECURITY_MGR)) {
-            installSecurityMgr();
-        }
-        return environment.put(propName, propVal);
+	if (propName.equals(SECURITY_MGR)) {
+	    installSecurityMgr();
+	}
+	return environment.put(propName, propVal);
     }
 
     public Hashtable getEnvironment() throws NamingException {
-        return (Hashtable)environment.clone();
+	return (Hashtable)environment.clone();
     }
 
     public void close() {
-        environment = null;
-        registry = null;
-        // &&& If we were caching registry connections, we would probably
-        // uncache this one now.
+	environment = null;
+	registry = null;
+	// &&& If we were caching registry connections, we would probably
+	// uncache this one now.
     }
 
     public String getNameInNamespace() {
-        return ""; // Registry has an empty name
+	return ""; // Registry has an empty name
     }
 
     /**
@@ -317,28 +318,28 @@ public class RegistryContext implements Context, Referenceable {
      * @see RegistryContextFactory
      */
     public Reference getReference() throws NamingException {
-        if (reference != null) {
-            return (Reference)reference.clone();  // %%% clone the addrs too?
-        }
-        if (host == null || host.equals("localhost")) {
-            throw (new ConfigurationException(
-                    "Cannot create a reference for an RMI registry whose " +
-                    "host was unspecified or specified as \"localhost\""));
-        }
-        String url = "rmi://";
+	if (reference != null) {
+	    return (Reference)reference.clone();  // %%% clone the addrs too?
+	}
+	if (host == null || host.equals("localhost")) {
+	    throw (new ConfigurationException(
+		    "Cannot create a reference for an RMI registry whose " +
+		    "host was unspecified or specified as \"localhost\""));
+	}
+	String url = "rmi://";
 
-        // Enclose IPv6 literal address in '[' and ']'
-        url = (host.indexOf(":") > -1) ? url + "[" + host + "]" :
-                                         url + host;
-        if (port > 0) {
-            url += ":" + Integer.toString(port);
-        }
-        RefAddr addr = new StringRefAddr(RegistryContextFactory.ADDRESS_TYPE,
-                                         url);
-        return (new Reference(RegistryContext.class.getName(),
-                              addr,
-                              RegistryContextFactory.class.getName(),
-                              null));
+	// Enclose IPv6 literal address in '[' and ']'
+	url = (host.indexOf(":") > -1) ? url + "[" + host + "]" :
+					 url + host;
+	if (port > 0) {
+	    url += ":" + Integer.toString(port);
+	}
+	RefAddr addr = new StringRefAddr(RegistryContextFactory.ADDRESS_TYPE,
+					 url);
+	return (new Reference(RegistryContext.class.getName(),
+			      addr,
+			      RegistryContextFactory.class.getName(),
+			      null));
     }
 
 
@@ -347,35 +348,35 @@ public class RegistryContext implements Context, Referenceable {
      */
     public static NamingException wrapRemoteException(RemoteException re) {
 
-        NamingException ne;
+	NamingException ne;
 
-        if (re instanceof ConnectException) {
-            ne = new ServiceUnavailableException();
+	if (re instanceof ConnectException) {
+	    ne = new ServiceUnavailableException();
 
-        } else if (re instanceof AccessException) {
-            ne = new NoPermissionException();
+	} else if (re instanceof AccessException) {
+	    ne = new NoPermissionException();
 
-        } else if (re instanceof StubNotFoundException ||
-                   re instanceof UnknownHostException ||
-                   re instanceof SocketSecurityException) {
-            ne = new ConfigurationException();
+	} else if (re instanceof StubNotFoundException ||
+		   re instanceof UnknownHostException ||
+		   re instanceof SocketSecurityException) {
+	    ne = new ConfigurationException();
+	    
+	} else if (re instanceof ExportException ||
+		   re instanceof ConnectIOException ||
+		   re instanceof MarshalException ||
+		   re instanceof UnmarshalException ||
+		   re instanceof NoSuchObjectException) {
+	    ne = new CommunicationException();
 
-        } else if (re instanceof ExportException ||
-                   re instanceof ConnectIOException ||
-                   re instanceof MarshalException ||
-                   re instanceof UnmarshalException ||
-                   re instanceof NoSuchObjectException) {
-            ne = new CommunicationException();
+	} else if (re instanceof ServerException &&
+		   re.detail instanceof RemoteException) {
+	    ne = wrapRemoteException((RemoteException)re.detail);
 
-        } else if (re instanceof ServerException &&
-                   re.detail instanceof RemoteException) {
-            ne = wrapRemoteException((RemoteException)re.detail);
-
-        } else {
-            ne = new NamingException();
-        }
-        ne.setRootCause(re);
-        return ne;
+	} else {
+	    ne = new NamingException();
+	}
+	ne.setRootCause(re);
+	return ne;
     }
 
     /**
@@ -385,20 +386,20 @@ public class RegistryContext implements Context, Referenceable {
      * If "socketFactory" is null, uses the default socket.
      */
     private static Registry getRegistry(String host, int port,
-                RMIClientSocketFactory socketFactory)
-            throws NamingException
+		RMIClientSocketFactory socketFactory)
+	    throws NamingException
     {
-        // %%% We could cache registry connections here.  The transport layer
-        // may already reuse connections.
-        try {
-            if (socketFactory == null) {
-                return LocateRegistry.getRegistry(host, port);
-            } else {
-                return LocateRegistry.getRegistry(host, port, socketFactory);
-            }
-        } catch (RemoteException e) {
-            throw (NamingException)wrapRemoteException(e).fillInStackTrace();
-        }
+	// %%% We could cache registry connections here.  The transport layer
+	// may already reuse connections.
+	try {
+	    if (socketFactory == null) {
+	        return LocateRegistry.getRegistry(host, port);
+	    } else {
+	        return LocateRegistry.getRegistry(host, port, socketFactory);
+	    }
+	} catch (RemoteException e) {
+	    throw (NamingException)wrapRemoteException(e).fillInStackTrace();
+	}
     }
 
     /**
@@ -407,10 +408,10 @@ public class RegistryContext implements Context, Referenceable {
      */
     private static void installSecurityMgr() {
 
-        try {
-            System.setSecurityManager(new RMISecurityManager());
-        } catch (Exception e) {
-        }
+	try {
+	    System.setSecurityManager(new RMISecurityManager());
+	} catch (Exception e) {
+	}
     }
 
     /**
@@ -420,25 +421,25 @@ public class RegistryContext implements Context, Referenceable {
      * Referenceable, the reference is wrapped in a Remote object.
      * Otherwise, an exception is thrown.
      *
-     * @param name      The object's name relative to this context.
+     * @param name	The object's name relative to this context.
      */
     private Remote encodeObject(Object obj, Name name)
-            throws NamingException, RemoteException
+	    throws NamingException, RemoteException
     {
-        obj = NamingManager.getStateToBind(obj, name, this, environment);
+	obj = NamingManager.getStateToBind(obj, name, this, environment);
 
-        if (obj instanceof Remote) {
-            return (Remote)obj;
-        }
-        if (obj instanceof Reference) {
-            return (new ReferenceWrapper((Reference)obj));
-        }
-        if (obj instanceof Referenceable) {
-            return (new ReferenceWrapper(((Referenceable)obj).getReference()));
-        }
-        throw (new IllegalArgumentException(
-                "RegistryContext: " +
-                "object to bind must be Remote, Reference, or Referenceable"));
+	if (obj instanceof Remote) {
+	    return (Remote)obj;
+	}
+	if (obj instanceof Reference) {
+	    return (new ReferenceWrapper((Reference)obj));
+	}
+	if (obj instanceof Referenceable) {
+	    return (new ReferenceWrapper(((Referenceable)obj).getReference()));
+	}
+	throw (new IllegalArgumentException(
+		"RegistryContext: " +
+		"object to bind must be Remote, Reference, or Referenceable"));
     }
 
     /**
@@ -446,25 +447,25 @@ public class RegistryContext implements Context, Referenceable {
      * First, if the object is a RemoteReference, the Reference is
      * unwrapped.  Then, NamingManager.getObjectInstance() is invoked.
      *
-     * @param name      The object's name relative to this context.
+     * @param name	The object's name relative to this context.
      */
     private Object decodeObject(Remote r, Name name) throws NamingException {
-        try {
-            Object obj = (r instanceof RemoteReference)
-                        ? ((RemoteReference)r).getReference()
-                        : (Object)r;
-            return NamingManager.getObjectInstance(obj, name, this,
-                                                   environment);
-        } catch (NamingException e) {
-            throw e;
-        } catch (RemoteException e) {
-            throw (NamingException)
-                wrapRemoteException(e).fillInStackTrace();
-        } catch (Exception e) {
-            NamingException ne = new NamingException();
-            ne.setRootCause(e);
-            throw ne;
-        }
+	try {
+	    Object obj = (r instanceof RemoteReference)
+			? ((RemoteReference)r).getReference()
+			: (Object)r;
+	    return NamingManager.getObjectInstance(obj, name, this,
+						   environment);
+	} catch (NamingException e) {
+	    throw e;
+	} catch (RemoteException e) {
+	    throw (NamingException)
+		wrapRemoteException(e).fillInStackTrace();
+	} catch (Exception e) {
+	    NamingException ne = new NamingException();
+	    ne.setRootCause(e);
+	    throw ne;
+	}
     }
 
 }
@@ -477,7 +478,7 @@ class AtomicNameParser implements NameParser {
     private static final Properties syntax = new Properties();
 
     public Name parse(String name) throws NamingException {
-        return (new CompoundName(name, syntax));
+	return (new CompoundName(name, syntax));
     }
 }
 
@@ -489,46 +490,46 @@ class AtomicNameParser implements NameParser {
  */
 class NameClassPairEnumeration implements NamingEnumeration {
     private final String[] names;
-    private int nextName;       // index into "names"
+    private int nextName;	// index into "names"
 
     NameClassPairEnumeration(String[] names) {
-        this.names = names;
-        nextName = 0;
+	this.names = names;
+	nextName = 0;
     }
 
     public boolean hasMore() {
-        return (nextName < names.length);
+	return (nextName < names.length);
     }
 
     public Object next() throws NamingException {
-        if (!hasMore()) {
-            throw (new java.util.NoSuchElementException());
-        }
-        // Convert name to a one-element composite name, so embedded
-        // meta-characters are properly escaped.
-        String name = names[nextName++];
-        Name cname = (new CompositeName()).add(name);
-        NameClassPair ncp = new NameClassPair(cname.toString(),
-                                            "java.lang.Object");
-        ncp.setNameInNamespace(name);
-        return ncp;
+	if (!hasMore()) {
+	    throw (new java.util.NoSuchElementException());
+	}
+	// Convert name to a one-element composite name, so embedded
+	// meta-characters are properly escaped.
+	String name = names[nextName++];
+	Name cname = (new CompositeName()).add(name);
+	NameClassPair ncp = new NameClassPair(cname.toString(),
+					    "java.lang.Object");
+	ncp.setNameInNamespace(name);
+	return ncp;
     }
 
     public boolean hasMoreElements() {
-        return hasMore();
+	return hasMore();
     }
 
     public Object nextElement() {
-        try {
-            return next();
-        } catch (NamingException e) {   // should never happen
-            throw (new java.util.NoSuchElementException(
-                    "javax.naming.NamingException was thrown"));
-        }
+	try {
+	    return next();
+	} catch (NamingException e) {	// should never happen
+	    throw (new java.util.NoSuchElementException(
+		    "javax.naming.NamingException was thrown"));
+	}
     }
 
     public void close() {
-        nextName = names.length;
+	nextName = names.length;
     }
 }
 
@@ -544,56 +545,56 @@ class NameClassPairEnumeration implements NamingEnumeration {
 class BindingEnumeration implements NamingEnumeration {
     private RegistryContext ctx;
     private final String[] names;
-    private int nextName;       // index into "names"
+    private int nextName;	// index into "names"
 
     BindingEnumeration(RegistryContext ctx, String[] names) {
-        // Clone ctx in case someone closes it before we're through.
-        this.ctx = new RegistryContext(ctx);
-        this.names = names;
-        nextName = 0;
+	// Clone ctx in case someone closes it before we're through.
+	this.ctx = new RegistryContext(ctx);
+	this.names = names;
+	nextName = 0;
     }
 
     protected void finalize() {
-        ctx.close();
+	ctx.close();
     }
 
     public boolean hasMore() {
-        if (nextName >= names.length) {
-            ctx.close();
-        }
-        return (nextName < names.length);
+	if (nextName >= names.length) {
+	    ctx.close();
+	}
+	return (nextName < names.length);
     }
 
     public Object next() throws NamingException {
-        if (!hasMore()) {
-            throw (new java.util.NoSuchElementException());
-        }
-        // Convert name to a one-element composite name, so embedded
-        // meta-characters are properly escaped.
-        String name = names[nextName++];
-        Name cname = (new CompositeName()).add(name);
+	if (!hasMore()) {
+	    throw (new java.util.NoSuchElementException());
+	}
+	// Convert name to a one-element composite name, so embedded
+	// meta-characters are properly escaped.
+	String name = names[nextName++];
+	Name cname = (new CompositeName()).add(name);
 
-        Object obj = ctx.lookup(cname);
-        String cnameStr = cname.toString();
-        Binding binding = new Binding(cnameStr, obj);
-        binding.setNameInNamespace(cnameStr);
-        return binding;
+	Object obj = ctx.lookup(cname);
+	String cnameStr = cname.toString();
+	Binding binding = new Binding(cnameStr, obj);
+	binding.setNameInNamespace(cnameStr);
+	return binding;
     }
 
     public boolean hasMoreElements() {
-        return hasMore();
+	return hasMore();
     }
 
     public Object nextElement() {
-        try {
-            return next();
-        } catch (NamingException e) {
-            throw (new java.util.NoSuchElementException(
-                    "javax.naming.NamingException was thrown"));
-        }
+	try {
+	    return next();
+	} catch (NamingException e) {
+	    throw (new java.util.NoSuchElementException(
+		    "javax.naming.NamingException was thrown"));
+	}
     }
 
     public void close () {
-        finalize();
+	finalize();
     }
 }

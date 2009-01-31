@@ -32,17 +32,17 @@ import java.nio.channels.*;
 
 public class Basic {
     public static void main(String[] args) throws Exception {
-        byte[] srcData = new byte[20];
+	byte[] srcData = new byte[20];
         for (int i=0; i<20; i++)
             srcData[i] = 3;
         File blah = File.createTempFile("blah", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(blah);
         FileChannel fc = fos.getChannel();
         fc.write(ByteBuffer.wrap(srcData));
         fc.close();
         fos.close();
-
+        
         FileInputStream fis = new FileInputStream(blah);
         fc = fis.getChannel();
         MappedByteBuffer mbb = fc.map(FileChannel.MapMode.READ_ONLY, 0, 10);

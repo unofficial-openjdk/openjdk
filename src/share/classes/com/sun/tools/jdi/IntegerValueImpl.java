@@ -54,8 +54,8 @@ public class IntegerValueImpl extends PrimitiveValueImpl
     }
 
     public int compareTo(IntegerValue obj) {
-        int other = obj.value();
-        return (value()<other ? -1 : (value()==other ? 0 : 1));
+	int other = obj.value();
+	return (value()<other ? -1 : (value()==other ? 0 : 1));
     }
 
     public Type type() {

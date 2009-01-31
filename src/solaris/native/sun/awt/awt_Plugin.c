@@ -45,12 +45,12 @@ Display *getAwtDisplay(void)
 }
 
 void getExtAwtData(Display      *display,
-                   int32_t      screen,
-                   int32_t      *awt_depth,
-                   Colormap     *awt_cmap,
-                   Visual       **awt_visual,
-                   int32_t      *awt_num_colors,
-                   void         *pReserved)
+		   int32_t      screen,
+		   int32_t      *awt_depth,
+		   Colormap     *awt_cmap,
+		   Visual       **awt_visual,
+		   int32_t      *awt_num_colors,
+		   void         *pReserved)
 {
   AwtGraphicsConfigDataPtr defaultConfig = NULL;
 
@@ -69,15 +69,15 @@ void getExtAwtData(Display      *display,
     if (awt_depth != NULL) {
       *awt_depth = defaultConfig->awt_depth;
     }
-
+    
     if (awt_cmap != NULL) {
       *awt_cmap = defaultConfig->awt_cmap;
     }
-
+    
     if (awt_visual != NULL) {
       *awt_visual = defaultConfig->awt_visInfo.visual;
     }
-
+    
     if (awt_num_colors != NULL) {
       *awt_num_colors = defaultConfig->awt_num_colors;
     }
@@ -89,20 +89,20 @@ void getExtAwtData(Display      *display,
  *
  */
 void getAwtData(int32_t          *awt_depth,
-                Colormap     *awt_cmap,
-                Visual       **awt_visual,
-                int32_t          *awt_num_colors,
-                void         *pReserved)
+		Colormap     *awt_cmap,
+		Visual       **awt_visual,
+		int32_t          *awt_num_colors,
+		void         *pReserved)
 {
   Display *display = getAwtDisplay();
 
   getExtAwtData(display,
-                DefaultScreen(display),
-                awt_depth,
-                awt_cmap,
-                awt_visual,
-                awt_num_colors,
-                pReserved);
+		DefaultScreen(display),
+		awt_depth,
+		awt_cmap,
+		awt_visual,
+		awt_num_colors,
+		pReserved);
 }
 
 /*
@@ -124,14 +124,14 @@ static void awt_noflush_unlock_wrapper(JNIEnv *env) {
 }
 
 void getAwtLockFunctions(void (**AwtLock)(JNIEnv *),
-                         void (**AwtUnlock)(JNIEnv *),
-                         void (**AwtNoFlushUnlock)(JNIEnv *),
-                         void *pReserved)
+			 void (**AwtUnlock)(JNIEnv *),
+			 void (**AwtNoFlushUnlock)(JNIEnv *),
+			 void *pReserved)
 {
 #ifdef DEBUG
   if (pReserved != NULL) {
     jio_fprintf(stderr,
-                "getAwtLockFunctions: warning: reserved pointer is not null\n");
+		"getAwtLockFunctions: warning: reserved pointer is not null\n");
   }
 #endif
 
@@ -147,3 +147,8 @@ void getAwtLockFunctions(void (**AwtLock)(JNIEnv *),
     *AwtNoFlushUnlock = awt_noflush_unlock_wrapper;
   }
 }
+
+
+
+
+

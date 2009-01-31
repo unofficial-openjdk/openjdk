@@ -113,7 +113,7 @@ NativePrimitive FourByteAbgrPrimitives[] = {
 jboolean RegisterFourByteAbgr(JNIEnv *env)
 {
     return RegisterPrimitives(env, FourByteAbgrPrimitives,
-                              ArraySize(FourByteAbgrPrimitives));
+			      ArraySize(FourByteAbgrPrimitives));
 }
 
 jint PixelForFourByteAbgr(SurfaceDataRasInfo *pRasInfo, jint rgb)

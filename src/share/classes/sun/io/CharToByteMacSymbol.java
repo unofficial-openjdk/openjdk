@@ -31,6 +31,7 @@ import sun.nio.cs.ext.MacSymbol;
  * Tables and data to convert Unicode to MacSymbol
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteMacSymbol extends CharToByteSingleByte {

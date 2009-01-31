@@ -49,36 +49,36 @@ abstract public class URLConnection extends java.net.URLConnection {
     protected MessageHeader properties;
 
     /** Create a URLConnection object.  These should not be created directly:
-        instead they should be created by protocol handers in response to
-        URL.openConnection.
-        @param  u       The URL that this connects to.
+	instead they should be created by protocol handers in response to
+	URL.openConnection.
+	@param	u	The URL that this connects to.
      */
     public URLConnection (URL u) {
-        super(u);
-        properties = new MessageHeader();
+	super(u);
+	properties = new MessageHeader();
     }
 
     /** Call this routine to get the property list for this object.
      * Properties (like content-type) that have explicit getXX() methods
      * associated with them should be accessed using those methods.  */
     public MessageHeader getProperties() {
-        return properties;
+	return properties;
     }
 
     /** Call this routine to set the property list for this object. */
     public void setProperties(MessageHeader properties) {
-        this.properties = properties;
+	this.properties = properties;
     }
 
     public void setRequestProperty(String key, String value) {
-        if(connected)
-            throw new IllegalAccessError("Already connected");
-        if (key == null)
-            throw new NullPointerException ("key cannot be null");
-        properties.set(key, value);
+	if(connected)
+	    throw new IllegalAccessError("Already connected");
+	if (key == null)
+	    throw new NullPointerException ("key cannot be null");
+	properties.set(key, value);
     }
 
-    /**
+    /** 
      * The following three methods addRequestProperty, getRequestProperty,
      * and getRequestProperties were copied from the superclass implementation
      * before it was changed by CR:6230836, to maintain backward compatibility.
@@ -103,12 +103,12 @@ abstract public class URLConnection extends java.net.URLConnection {
     }
 
     public String getHeaderField(String name) {
-        try {
-            getInputStream();
-        } catch (Exception e) {
-            return null;
-        }
-        return properties == null ? null : properties.findValue(name);
+	try {
+	    getInputStream();
+	} catch (Exception e) {
+	    return null;
+	}
+	return properties == null ? null : properties.findValue(name);
     }
 
     /**
@@ -117,13 +117,13 @@ abstract public class URLConnection extends java.net.URLConnection {
      * through all the headers in the message.
      */
     public String getHeaderFieldKey(int n) {
-        try {
-            getInputStream();
-        } catch (Exception e) {
-            return null;
-        }
-        MessageHeader props = properties;
-        return props == null ? null : props.getKey(n);
+	try {
+	    getInputStream();
+	} catch (Exception e) {
+	    return null;
+	}
+	MessageHeader props = properties;
+	return props == null ? null : props.getKey(n);
     }
 
     /**
@@ -132,103 +132,103 @@ abstract public class URLConnection extends java.net.URLConnection {
      * with getHeaderFieldKey to iterate through all the headers in the message.
      */
     public String getHeaderField(int n) {
-        try {
-            getInputStream();
-        } catch (Exception e) {
-            return null;
-        }
-        MessageHeader props = properties;
-        return props == null ? null : props.getValue(n);
+	try {
+	    getInputStream();
+	} catch (Exception e) {
+	    return null;
+	}
+	MessageHeader props = properties;
+	return props == null ? null : props.getValue(n);
     }
 
     /** Call this routine to get the content-type associated with this
      * object.
      */
     public String getContentType() {
-        if (contentType == null)
-            contentType = getHeaderField("content-type");
-        if (contentType == null) {
-            String ct = null;
-            try {
-                ct = guessContentTypeFromStream(getInputStream());
-            } catch(java.io.IOException e) {
-            }
-            String ce = properties.findValue("content-encoding");
-            if (ct == null) {
-                ct = properties.findValue("content-type");
+	if (contentType == null)
+	    contentType = getHeaderField("content-type");
+	if (contentType == null) {
+	    String ct = null;
+	    try {
+		ct = guessContentTypeFromStream(getInputStream());
+	    } catch(java.io.IOException e) {
+	    }
+	    String ce = properties.findValue("content-encoding");
+	    if (ct == null) {
+		ct = properties.findValue("content-type");
 
-                if (ct == null)
-                    if (url.getFile().endsWith("/"))
-                        ct = "text/html";
-                    else
-                        ct = guessContentTypeFromName(url.getFile());
-            }
+		if (ct == null)
+		    if (url.getFile().endsWith("/"))
+			ct = "text/html";
+		    else
+			ct = guessContentTypeFromName(url.getFile());
+	    }
 
-            /*
-             * If the Mime header had a Content-encoding field and its value
-             * was not one of the values that essentially indicate no
-             * encoding, we force the content type to be unknown. This will
-             * cause a save dialog to be presented to the user.  It is not
-             * ideal but is better than what we were previously doing, namely
-             * bringing up an image tool for compressed tar files.
-             */
+	    /*
+	     * If the Mime header had a Content-encoding field and its value
+	     * was not one of the values that essentially indicate no
+	     * encoding, we force the content type to be unknown. This will
+	     * cause a save dialog to be presented to the user.  It is not
+	     * ideal but is better than what we were previously doing, namely
+	     * bringing up an image tool for compressed tar files.
+	     */
 
-            if (ct == null || ce != null &&
-                    !(ce.equalsIgnoreCase("7bit")
-                      || ce.equalsIgnoreCase("8bit")
-                      || ce.equalsIgnoreCase("binary")))
-                ct = "content/unknown";
-            setContentType(ct);
-        }
-        return contentType;
+	    if (ct == null || ce != null &&
+		    !(ce.equalsIgnoreCase("7bit")
+		      || ce.equalsIgnoreCase("8bit")
+		      || ce.equalsIgnoreCase("binary")))
+		ct = "content/unknown";
+	    setContentType(ct);
+	}
+	return contentType;
     }
 
     /**
      * Set the content type of this URL to a specific value.
-     * @param   type    The content type to use.  One of the
-     *                  content_* static variables in this
-     *                  class should be used.
-     *                  eg. setType(URL.content_html);
+     * @param	type	The content type to use.  One of the
+     *			content_* static variables in this
+     *			class should be used.
+     *			eg. setType(URL.content_html);
      */
     public void setContentType(String type) {
-        contentType = type;
-        properties.set("content-type", type);
+	contentType = type;
+	properties.set("content-type", type);
     }
 
     /** Call this routine to get the content-length associated with this
      * object.
      */
     public int getContentLength() {
-        try {
-            getInputStream();
-        } catch (Exception e) {
-            return -1;
-        }
-        int l = contentLength;
-        if (l < 0) {
-            try {
-                l = Integer.parseInt(properties.findValue("content-length"));
-                setContentLength(l);
-            } catch(Exception e) {
-            }
-        }
-        return l;
+	try {
+	    getInputStream();
+	} catch (Exception e) {
+	    return -1;
+	}
+	int l = contentLength;
+	if (l < 0) {
+	    try {
+		l = Integer.parseInt(properties.findValue("content-length"));
+		setContentLength(l);
+	    } catch(Exception e) {
+	    }
+	}
+	return l;
     }
 
     /** Call this routine to set the content-length associated with this
      * object.
      */
     protected void setContentLength(int length) {
-        contentLength = length;
-        properties.set("content-length", String.valueOf(length));
+	contentLength = length;
+	properties.set("content-length", String.valueOf(length));
     }
 
     /**
      * Returns true if the data associated with this URL can be cached.
      */
     public boolean canCache() {
-        return url.getFile().indexOf('?') < 0   /* && url.postData == null
-                REMIND */ ;
+	return url.getFile().indexOf('?') < 0	/* && url.postData == null
+	        REMIND */ ;
     }
 
     /**
@@ -236,6 +236,6 @@ abstract public class URLConnection extends java.net.URLConnection {
      * Overriders must remember to call super.close()
      */
     public void close() {
-        url = null;
+	url = null;
     }
 }

@@ -32,6 +32,7 @@ package java.net;
  * implementations.
  *
  * @author  Arthur van Hoff
+ * @version %I%, %G%
  * @see     java.net.Socket
  * @see     java.net.ServerSocket
  * @since   JDK1.0

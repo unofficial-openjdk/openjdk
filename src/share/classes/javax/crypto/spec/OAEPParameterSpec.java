@@ -97,43 +97,43 @@ public class OAEPParameterSpec implements AlgorithmParameterSpec {
      * Constructs a parameter set for OAEP padding as defined in
      * the PKCS #1 standard using the specified message digest
      * algorithm <code>mdName</code>, mask generation function
-     * algorithm <code>mgfName</code>, parameters for the mask
+     * algorithm <code>mgfName</code>, parameters for the mask 
      * generation function <code>mgfSpec</code>, and source of
      * the encoding input P <code>pSrc</code>.
-     *
-     * @param mdName the algorithm name for the message digest.
-     * @param mgfName the algorithm name for the mask generation
+     * 
+     * @param mdName the algorithm name for the message digest. 
+     * @param mgfName the algorithm name for the mask generation 
      * function.
-     * @param mgfSpec the parameters for the mask generation function.
+     * @param mgfSpec the parameters for the mask generation function. 
      * If null is specified, null will be returned by getMGFParameters().
      * @param pSrc the source of the encoding input P.
-     * @exception NullPointerException if <code>mdName</code>,
+     * @exception NullPointerException if <code>mdName</code>, 
      * <code>mgfName</code>, or <code>pSrc</code> is null.
      */
     public OAEPParameterSpec(String mdName, String mgfName,
-                             AlgorithmParameterSpec mgfSpec,
-                             PSource pSrc) {
-        if (mdName == null) {
-            throw new NullPointerException("digest algorithm is null");
-        }
-        if (mgfName == null) {
-            throw new NullPointerException("mask generation function " +
-                                           "algorithm is null");
-        }
-        if (pSrc == null) {
-            throw new NullPointerException("source of the encoding input " +
-                                           "is null");
-        }
-        this.mdName =  mdName;
-        this.mgfName =  mgfName;
-        this.mgfSpec =  mgfSpec;
-        this.pSrc =  pSrc;
+			     AlgorithmParameterSpec mgfSpec,
+			     PSource pSrc) {
+	if (mdName == null) {
+	    throw new NullPointerException("digest algorithm is null");
+	}
+	if (mgfName == null) {
+	    throw new NullPointerException("mask generation function " +
+					   "algorithm is null");
+	}
+	if (pSrc == null) {
+	    throw new NullPointerException("source of the encoding input " +
+					   "is null");
+	}
+	this.mdName =  mdName;
+	this.mgfName =  mgfName;
+	this.mgfSpec =  mgfSpec;
+	this.pSrc =  pSrc;
     }
 
     /**
-     * Returns the message digest algorithm name.
+     * Returns the message digest algorithm name. 
      *
-     * @return the message digest algorithm name.
+     * @return the message digest algorithm name. 
      */
     public String getDigestAlgorithm() {
         return mdName;

@@ -70,16 +70,16 @@ public class ArrayTypeImpl extends ReferenceTypeImpl
     }
 
     /*
-     * Find the type object, if any, of a component type of this array.
+     * Find the type object, if any, of a component type of this array. 
      * The component type does not have to be immediate; e.g. this method
      * can be used to find the component Foo of Foo[][]. This method takes
      * advantage of the property that an array and its component must have
      * the same class loader. Since array set operations don't have an
-     * implicit enclosing type like field and variable set operations,
+     * implicit enclosing type like field and variable set operations, 
      * this method is sometimes needed for proper type checking.
      */
     Type findComponentType(String signature) throws ClassNotLoadedException {
-        byte tag = (byte)signature.charAt(0);
+        byte tag = (byte)signature.charAt(0); 
         if (PacketStream.isObjectTag(tag)) {
             // It's a reference type
             JNITypeParser parser = new JNITypeParser(componentSignature());
@@ -88,8 +88,8 @@ public class ArrayTypeImpl extends ReferenceTypeImpl
             while (iter.hasNext()) {
                 ReferenceType type = (ReferenceType)iter.next();
                 ClassLoaderReference cl = type.classLoader();
-                if ((cl == null)?
-                         (classLoader() == null) :
+                if ((cl == null)? 
+                         (classLoader() == null) : 
                          (cl.equals(classLoader()))) {
                     return type;
                 }
@@ -115,7 +115,7 @@ public class ArrayTypeImpl extends ReferenceTypeImpl
             if (destination instanceof PrimitiveType) {
                 return false;
             }
-
+            
             ReferenceTypeImpl refSource = (ReferenceTypeImpl)source;
             ReferenceTypeImpl refDestination = (ReferenceTypeImpl)destination;
             // Assignment of object arrays requires availability
@@ -125,7 +125,7 @@ public class ArrayTypeImpl extends ReferenceTypeImpl
     }
 
     /*
-     * Return true if an instance of the  given reference type
+     * Return true if an instance of the  given reference type 
      * can be assigned to a variable of this type
      */
     boolean isAssignableTo(ReferenceType destType) {
@@ -134,7 +134,7 @@ public class ArrayTypeImpl extends ReferenceTypeImpl
                 Type destComponentType = ((ArrayType)destType).componentType();
                 return isComponentAssignable(destComponentType, componentType());
             } catch (ClassNotLoadedException e) {
-                // One or both component types has not yet been
+                // One or both component types has not yet been 
                 // loaded => can't assign
                 return false;
             }

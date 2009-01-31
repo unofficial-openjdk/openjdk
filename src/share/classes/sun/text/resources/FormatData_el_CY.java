@@ -47,7 +47,7 @@ import java.util.ListResourceBundle;
 public class FormatData_el_CY extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "MonthNames",
+            { "MonthNames", 
                 new String[] {
                     "\u0399\u03b1\u03bd\u03bf\u03c5\u03ac\u03c1\u03b9\u03bf\u03c2",
                     "\u03a6\u03b5\u03b2\u03c1\u03bf\u03c5\u03ac\u03c1\u03b9\u03bf\u03c2",
@@ -64,26 +64,26 @@ public class FormatData_el_CY extends ListResourceBundle {
                     "",
                 }
             },
-            { "AmPmMarkers",
+            { "AmPmMarkers", 
                 new String[] {
                     "\u03a0\u039c",
                     "\u039c\u039c",
                 }
             },
-            { "Eras",
+            { "Eras", 
                 new String[] {
                     "\u03c0.\u03a7.",
                     "\u03bc.\u03a7.",
                 }
             },
-            { "NumberPatterns",
+            { "NumberPatterns", 
                 new String[] {
                     "#,##0.###",
                     "\u00a4#,##0.00",
                     "#,##0%",
                 }
             },
-            { "NumberElements",
+            { "NumberElements", 
                 new String[] {
                     ",",
                     ".",
@@ -98,7 +98,7 @@ public class FormatData_el_CY extends ListResourceBundle {
                     "NaN",
                 }
             },
-            { "DateTimePatterns",
+            { "DateTimePatterns", 
                 new String[] {
                     "h:mm:ss a z",
                     "h:mm:ss a z",

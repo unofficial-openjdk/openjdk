@@ -34,15 +34,15 @@
 
 void     reference_init(void);
 RefIndex reference_obj(RefIndex next, jvmtiHeapReferenceKind kind,
-                ObjectIndex object_index, jint index, jint length);
+		ObjectIndex object_index, jint index, jint length);
 RefIndex reference_prim_field(RefIndex next, jvmtiHeapReferenceKind refKind,
               jvmtiPrimitiveType primType, jvalue value, jint field_index);
-RefIndex reference_prim_array(RefIndex next, jvmtiPrimitiveType element_type,
-                const void *elements, jint count);
+RefIndex reference_prim_array(RefIndex next, jvmtiPrimitiveType element_type, 
+		const void *elements, jint count);
 void     reference_cleanup(void);
 void     reference_dump_class(JNIEnv *env, ObjectIndex object_index,
-                RefIndex list);
+		RefIndex list);
 void     reference_dump_instance(JNIEnv *env, ObjectIndex object_index,
-                RefIndex list);
+		RefIndex list);
 
 #endif

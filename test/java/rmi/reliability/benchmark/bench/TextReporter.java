@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,7 +38,7 @@ import java.util.Properties;
  * Benchmark text report generator.
  */
 public class TextReporter implements Reporter {
-
+    
     static final int PRECISION = 3;
     static final int INDEX_WIDTH = 3;
     static final int NAME_WIDTH = 30;
@@ -46,8 +46,8 @@ public class TextReporter implements Reporter {
     static final int SCORE_WIDTH = 10;
     static final int PROPNAME_WIDTH = 25;
     static final String[] PROPNAMES = { "os.name", "os.arch", "os.version",
-        "java.home", "java.vm.version", "java.vm.vendor", "java.vm.name",
-        "java.compiler", "java.class.path", "sun.boot.class.path" };
+	"java.home", "java.vm.version", "java.vm.vendor", "java.vm.name",
+	"java.compiler", "java.class.path", "sun.boot.class.path" };
 
     OutputStream out;
     String title;
@@ -59,7 +59,7 @@ public class TextReporter implements Reporter {
         this.out = out;
         this.title = title;
     }
-
+    
     /**
      * Generate text report.
      */
@@ -68,18 +68,18 @@ public class TextReporter implements Reporter {
     {
         PrintStream p = new PrintStream(out);
         float total = 0.0f;
-
+        
         p.println("\n" + title);
         p.println(pad('-', title.length()));
         p.println("");
-        for (int i = 0; i < PROPNAMES.length; i++) {
-            p.println(fit(PROPNAMES[i] + ":", PROPNAME_WIDTH) +
-                    props.getProperty(PROPNAMES[i]));
-        }
+	for (int i = 0; i < PROPNAMES.length; i++) {
+	    p.println(fit(PROPNAMES[i] + ":", PROPNAME_WIDTH) +
+		    props.getProperty(PROPNAMES[i]));
+	}
         p.println("");
 
-        p.println(fit("#", INDEX_WIDTH) + "  " +
-                fit("Benchmark Name", NAME_WIDTH) + "  " +
+        p.println(fit("#", INDEX_WIDTH) + "  " + 
+                fit("Benchmark Name", NAME_WIDTH) + "  " + 
                 fit("Time (ms)", TIME_WIDTH) + "  " +
                 fit("Score", SCORE_WIDTH));
         p.println(pad('-', INDEX_WIDTH + NAME_WIDTH + TIME_WIDTH +
@@ -93,7 +93,7 @@ public class TextReporter implements Reporter {
                 float score = b.getTime() * b.getWeight();
                 total += score;
                 p.print(fit(Long.toString(b.getTime()), TIME_WIDTH) + "  ");
-                p.println(fit(Util.floatToString(score, PRECISION),
+                p.println(fit(Util.floatToString(score, PRECISION), 
                             SCORE_WIDTH));
             }
             else {
@@ -110,7 +110,7 @@ public class TextReporter implements Reporter {
         p.println("Report generated on " + new Date() + "\n");
         p.println("");
     }
-
+    
     /**
      * Extend or truncate string so it fits in the given space.
      */
@@ -122,13 +122,14 @@ public class TextReporter implements Reporter {
             buf.setCharAt(i, ' ');
         return buf.toString();
     }
-
+    
     /**
      * Return string with given number of chars.
      */
     private static String pad(char c, int len) {
         char[] buf = new char[len];
-        Arrays.fill(buf, c);
+	Arrays.fill(buf, c);
         return new String(buf);
     }
 }
+

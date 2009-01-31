@@ -35,7 +35,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Arun Gupta
  * </p>
  */
@@ -48,9 +48,9 @@ public interface Encoder {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param messageInfo ...
  * </p>
  */
@@ -59,7 +59,7 @@ public interface Encoder {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a ByteBuffer with ...
  * </p><p>
  * @param messageInfo ...
@@ -68,3 +68,10 @@ public interface Encoder {
     public ByteBuffer encode(MessageInfo messageInfo);
 
 } // end Encoder
+
+
+
+
+
+
+

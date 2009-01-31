@@ -38,6 +38,7 @@ import java.util.Set;
  * The in-degree of the node (that is, number of nodes that point to
  * the current node) may be queried.
  *
+ * @version 0.5
  */
 class DigraphNode implements Cloneable, Serializable {
 
@@ -49,7 +50,7 @@ class DigraphNode implements Cloneable, Serializable {
      * node.
      */
     protected Set outNodes = new HashSet();
-
+    
     /** The in-degree of the node. */
     protected int inDegree = 0;
 
@@ -62,13 +63,13 @@ class DigraphNode implements Cloneable, Serializable {
     public DigraphNode(Object data) {
         this.data = data;
     }
-
+    
     /** Returns the <code>Object</code> referenced by this node. */
     public Object getData() {
         return data;
     }
-
-    /**
+    
+    /** 
      * Returns an <code>Iterator</code> containing the nodes pointed
      * to by this node.
      */
@@ -107,7 +108,7 @@ class DigraphNode implements Cloneable, Serializable {
     public boolean hasEdge(DigraphNode node) {
         return outNodes.contains(node);
     }
-
+    
     /**
      * Removes a directed edge from the graph.  The outNodes list of this
      * node is updated and the in-degree of the other node is decremented.
@@ -143,7 +144,7 @@ class DigraphNode implements Cloneable, Serializable {
             removeEdge(node);
         }
     }
-
+    
     /** Returns the in-degree of this node. */
     public int getInDegree() {
         return inDegree;

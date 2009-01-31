@@ -38,12 +38,13 @@ import static sun.swing.SwingUtilities2.BASICMENUITEMUI_MAX_TEXT_OFFSET;
  * so that plauggable L&Fs can distinguish it from user-installed
  * layout managers on menus.
  *
+ * @version %I% %G%
  * @author Georges Saab
  */
 
 public class DefaultMenuLayout extends BoxLayout implements UIResource {
     public DefaultMenuLayout(Container target, int axis) {
-        super(target, axis);
+	super(target, axis);
     }
 
     public Dimension preferredLayoutSize(Container target) {

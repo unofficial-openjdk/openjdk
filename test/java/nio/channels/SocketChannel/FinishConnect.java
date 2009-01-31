@@ -40,20 +40,20 @@ public class FinishConnect {
     static final String DAYTIME_HOST = TestUtil.HOST;
 
     public static void main(String[] args) throws Exception {
-        test1(true, true);
+	test1(true, true);
         test1(true, false);
-        test1(false, true);
-        test1(false, false);
+	test1(false, true);
+	test1(false, false);
         test2();
     }
 
     static void test1(boolean select, boolean setBlocking) throws Exception {
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-                                    DAYTIME_PORT);
-        SocketChannel sc = SocketChannel.open();
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+				    DAYTIME_PORT);
+	SocketChannel sc = SocketChannel.open();
         sc.configureBlocking(false);
-        boolean connected = sc.connect(isa);
+	boolean connected = sc.connect(isa);
         int attempts = 0;
 
         try {
@@ -92,7 +92,7 @@ public class FinishConnect {
             connected = sc.finishConnect();
         }
 
-        ByteBuffer bb = ByteBuffer.allocateDirect(100);
+	ByteBuffer bb = ByteBuffer.allocateDirect(100);
         int bytesRead = 0;
         int totalRead = 0;
         while (totalRead < 20) {
@@ -102,17 +102,17 @@ public class FinishConnect {
             if (bytesRead < 0)
                 throw new RuntimeException("Message shorter than expected");
         }
-        bb.position(bb.position() - 2);         // Drop CRLF
-        bb.flip();
-        CharBuffer cb = Charset.forName("US-ASCII").newDecoder().decode(bb);
-        System.err.println(isa + " says: \"" + cb + "\"");
-        sc.close();
+	bb.position(bb.position() - 2);		// Drop CRLF
+	bb.flip();
+	CharBuffer cb = Charset.forName("US-ASCII").newDecoder().decode(bb);
+	System.err.println(isa + " says: \"" + cb + "\"");
+	sc.close();
     }
 
     static void test2() throws Exception {
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-                                    DAYTIME_PORT);
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+				    DAYTIME_PORT);
         boolean done = false;
         int globalAttempts = 0;
         while (!done) {
@@ -128,9 +128,9 @@ public class FinishConnect {
                 connected = sc.finishConnect();
                 if (connected) {
                     done = true;
-                    break;
-                }
-                Thread.sleep(10);
+		    break;
+		}
+		Thread.sleep(10);
             }
             sc.close();
         }

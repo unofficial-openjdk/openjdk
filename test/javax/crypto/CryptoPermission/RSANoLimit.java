@@ -131,38 +131,39 @@ public class RSANoLimit {
 (byte)0x6C, (byte)0x4F
     };
     private static final byte[] PUB4096 = {
-        (byte)0x01, (byte)0x00, (byte)0x01
+	(byte)0x01, (byte)0x00, (byte)0x01
     };
     public static void main(String[] args) throws Exception {
-        boolean result = true;
-        Provider p = Security.getProvider("SunJCE");
-        System.out.println("Testing provider " + p.getName() + "...");
-        // Test#1: make sure Cipher.getMaxAllowedKeyLength returns the
-        // correct value
-        if (Cipher.getMaxAllowedKeyLength("RSA") != Integer.MAX_VALUE) {
-            result = false;
-            System.out.println("Test#1 failed");
-        }
-        // Test#2: try initializing RSA cipher with 4096 key
-        String algo = "RSA";
-        RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec
-            (new BigInteger(MODULUS4096), new BigInteger(PUB4096));
-        KeyFactory kf = KeyFactory.getInstance(algo);
-        RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(pubKeySpec);
+	boolean result = true;
+	Provider p = Security.getProvider("SunJCE");
+	System.out.println("Testing provider " + p.getName() + "...");
+	// Test#1: make sure Cipher.getMaxAllowedKeyLength returns the
+	// correct value
+	if (Cipher.getMaxAllowedKeyLength("RSA") != Integer.MAX_VALUE) {
+	    result = false;
+	    System.out.println("Test#1 failed");
+	}
+	// Test#2: try initializing RSA cipher with 4096 key
+	String algo = "RSA";
+	RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec
+	    (new BigInteger(MODULUS4096), new BigInteger(PUB4096));
+	KeyFactory kf = KeyFactory.getInstance(algo);
+	RSAPublicKey pubKey = (RSAPublicKey) kf.generatePublic(pubKeySpec);
 
-        Cipher c = Cipher.getInstance(algo + "/ECB/NoPadding", p);
-        try {
-            c.init(Cipher.ENCRYPT_MODE, pubKey);
-        } catch (InvalidKeyException ike) {
-            result = false;
-            System.out.println("Test#2 failed");
-            ike.printStackTrace();
-        }
+	Cipher c = Cipher.getInstance(algo + "/ECB/NoPadding", p);
+	try {
+	    c.init(Cipher.ENCRYPT_MODE, pubKey);
+	} catch (InvalidKeyException ike) {
+	    result = false;
+	    System.out.println("Test#2 failed");
+	    ike.printStackTrace();
+	}
 
-        if (result) {
-            System.out.println("All tests passed!");
-        } else {
-            throw new Exception("One or more test failed!");
-        }
+	if (result) {
+	    System.out.println("All tests passed!");
+	} else {
+	    throw new Exception("One or more test failed!");
+	}
     }
 }
+

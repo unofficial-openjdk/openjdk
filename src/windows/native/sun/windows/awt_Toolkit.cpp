@@ -87,7 +87,7 @@ extern jfieldID jawtSMgrID;
  * Utilities
  */
 
-/* Initialize the Java VM instance variable when the library is
+/* Initialize the Java VM instance variable when the library is 
    first loaded */
 JavaVM *jvm;
 
@@ -155,10 +155,10 @@ UINT AwtToolkit::GetMouseKeyState()
 //
 void AwtToolkit::GetKeyboardState(PBYTE keyboardState)
 {
-    CriticalSection::Lock       l(AwtToolkit::GetInstance().m_lockKB);
+    CriticalSection::Lock	l(AwtToolkit::GetInstance().m_lockKB);
     DASSERT(!IsBadWritePtr(keyboardState, KB_STATE_SIZE));
     memcpy(keyboardState, AwtToolkit::GetInstance().m_lastKeyboardState,
-           KB_STATE_SIZE);
+	   KB_STATE_SIZE);
 }
 
 void AwtToolkit::SetBusy(BOOL busy) {
@@ -224,26 +224,26 @@ BOOL AwtToolkit::activateKeyboardLayout(HKL hkl) {
 
     // If the above call fails, try loading the layout in case of NT
     if ((prev == 0) && IS_NT) {
-
-        // create input locale string, e.g., "00000409", from hkl.
-        TCHAR inputLocale[9];
-        TCHAR buf[9];
-        _tcscpy(inputLocale, TEXT("00000000"));
+	
+	// create input locale string, e.g., "00000409", from hkl.
+	TCHAR inputLocale[9];
+	TCHAR buf[9];
+	_tcscpy(inputLocale, TEXT("00000000"));
 
     // 64-bit: ::LoadKeyboardLayout() is such a weird API - a string of
     // the hex value you want?!  Here we're converting our HKL value to
     // a string.  Hopefully there is no 64-bit trouble.
-        _i64tot(reinterpret_cast<INT_PTR>(hkl), buf, 16);
-        size_t len = _tcslen(buf);
-        memcpy(&inputLocale[8-len], buf, len);
+	_i64tot(reinterpret_cast<INT_PTR>(hkl), buf, 16);
+	size_t len = _tcslen(buf);
+	memcpy(&inputLocale[8-len], buf, len);
 
-        // load and activate the keyboard layout
-        hkl = ::LoadKeyboardLayout(inputLocale, 0);
-        if (hkl != 0) {
-            prev = ::ActivateKeyboardLayout(hkl, 0);
-        }
+	// load and activate the keyboard layout
+	hkl = ::LoadKeyboardLayout(inputLocale, 0);
+	if (hkl != 0) {
+	    prev = ::ActivateKeyboardLayout(hkl, 0);
+	}
     }
-
+    
     return (prev != 0);
 }
 
@@ -251,7 +251,7 @@ BOOL AwtToolkit::activateKeyboardLayout(HKL hkl) {
  * Exported functions
  */
 
-extern "C" BOOL APIENTRY DllMain(HANDLE hInstance, DWORD ul_reason_for_call,
+extern "C" BOOL APIENTRY DllMain(HANDLE hInstance, DWORD ul_reason_for_call, 
                                  LPVOID)
 {
     // Don't use the TRY and CATCH_BAD_ALLOC_RET macros if we're detaching
@@ -260,29 +260,29 @@ extern "C" BOOL APIENTRY DllMain(HANDLE hInstance, DWORD ul_reason_for_call,
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
         TRY;
-        AwtToolkit::GetInstance().SetModuleHandle((HMODULE)hInstance);
-        CATCH_BAD_ALLOC_RET(FALSE);
-        break;
+	AwtToolkit::GetInstance().SetModuleHandle((HMODULE)hInstance);
+	CATCH_BAD_ALLOC_RET(FALSE);
+	break;
     case DLL_PROCESS_DETACH:
 #ifdef DEBUG
-        DTrace_DisableMutex();
-        DMem_DisableMutex();
+	DTrace_DisableMutex();
+	DMem_DisableMutex();
 #endif DEBUG
-        // Release any resources that have not yet been released
-        // Note that releasing DirectX objects is necessary for some
-        // failure situations on win9x (such as the primary remaining
-        // locked on application exit) but cannot be done during
-        // PROCESS_DETACH on XP.  On NT and win2k calling this ends up
-        // in a catch() clause in the calling function, but on XP
-        // the process simply hangs during the release of the ddraw
-        // device object.  Thus we check for NT here and do not bother
-        // with the release on any NT flavored OS.  Note that XP is
-        // based on NT, so the IS_NT check is valid for NT4, win2k,
-        // XP, and presumably XP follow-ons.
-        if (!IS_NT) {
-            DDRelease();
-        }
-        break;
+	// Release any resources that have not yet been released
+	// Note that releasing DirectX objects is necessary for some
+	// failure situations on win9x (such as the primary remaining
+	// locked on application exit) but cannot be done during
+	// PROCESS_DETACH on XP.  On NT and win2k calling this ends up
+	// in a catch() clause in the calling function, but on XP
+	// the process simply hangs during the release of the ddraw
+	// device object.  Thus we check for NT here and do not bother
+	// with the release on any NT flavored OS.  Note that XP is
+	// based on NT, so the IS_NT check is valid for NT4, win2k, 
+	// XP, and presumably XP follow-ons.
+	if (!IS_NT) {
+	    DDRelease();
+	}
+	break;
     }
     return TRUE;
 }
@@ -310,8 +310,8 @@ JavaStringBuffer::JavaStringBuffer(JNIEnv *env, jstring jstr) {
         int length = env->GetStringLength(jstr);
         buffer = new TCHAR[length + 1];
         LPCTSTR tmp = (LPCTSTR)JNU_GetStringPlatformChars(env, jstr, NULL);
-        _tcscpy(buffer, tmp);
-        JNU_ReleaseStringPlatformChars(env, jstr, tmp);
+	_tcscpy(buffer, tmp);
+	JNU_ReleaseStringPlatformChars(env, jstr, tmp);
     } else {
         buffer = new TCHAR[1];
         buffer[0] = _T('\0');
@@ -374,14 +374,14 @@ AwtToolkit::~AwtToolkit() {
 HWND AwtToolkit::CreateToolkitWnd(LPCTSTR name)
 {
     HWND hwnd = CreateWindow(
-        szAwtToolkitClassName,
-        (LPCTSTR)name,                    /* window name */
-        WS_DISABLED,                      /* window style */
-        -1, -1,                           /* position of window */
-        0, 0,                             /* width and height */
-        NULL, NULL,                       /* hWndParent and hWndMenu */
-        GetModuleHandle(),
-        NULL);                            /* lpParam */
+	szAwtToolkitClassName,
+	(LPCTSTR)name,	                  /* window name */
+	WS_DISABLED,			  /* window style */
+	-1, -1,				  /* position of window */
+	0, 0,				  /* width and height */
+	NULL, NULL, 			  /* hWndParent and hWndMenu */
+	GetModuleHandle(),
+	NULL);				  /* lpParam */
     DASSERT(hwnd != NULL);
     return hwnd;
 }
@@ -390,8 +390,8 @@ BOOL AwtToolkit::Initialize(BOOL localPump) {
     AwtToolkit& tk = AwtToolkit::GetInstance();
 
     if (!tk.m_isActive || tk.m_mainThreadId != 0) {
-        /* Already initialized. */
-        return FALSE;
+	/* Already initialized. */
+	return FALSE;
     }
 
     // This call is moved here from AwtToolkit constructor. Having it
@@ -405,45 +405,45 @@ BOOL AwtToolkit::Initialize(BOOL localPump) {
     // Set up operator new/malloc out of memory handler.
     NewHandler::init();
 
-        //\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-        // Bugs 4032109, 4047966, and 4071991 to fix AWT
-        //      crash in 16 color display mode.  16 color mode is supported.  Less
-        //      than 16 color is not.
-        // creighto@eng.sun.com 1997-10-07
-        //
-        // Check for at least 16 colors
+	//\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+	// Bugs 4032109, 4047966, and 4071991 to fix AWT
+	//	crash in 16 color display mode.  16 color mode is supported.  Less
+	//	than 16 color is not.
+	// creighto@eng.sun.com 1997-10-07
+	//
+	// Check for at least 16 colors
     HDC hDC = ::GetDC(NULL);
-        if ((::GetDeviceCaps(hDC, BITSPIXEL) * ::GetDeviceCaps(hDC, PLANES)) < 4) {
-                ::MessageBox(NULL,
-                             TEXT("Sorry, but this release of Java requires at least 16 colors"),
-                             TEXT("AWT Initialization Error"),
-                             MB_ICONHAND | MB_APPLMODAL);
-                ::DeleteDC(hDC);
-                JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-                JNU_ThrowByName(env, "java/lang/InternalError",
-                                "unsupported screen depth");
-                return FALSE;
-        }
+	if ((::GetDeviceCaps(hDC, BITSPIXEL) * ::GetDeviceCaps(hDC, PLANES)) < 4) {
+		::MessageBox(NULL,
+			     TEXT("Sorry, but this release of Java requires at least 16 colors"),
+			     TEXT("AWT Initialization Error"),
+			     MB_ICONHAND | MB_APPLMODAL);	
+		::DeleteDC(hDC);
+		JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+		JNU_ThrowByName(env, "java/lang/InternalError",
+				"unsupported screen depth");
+		return FALSE;
+	}
     ::ReleaseDC(NULL, hDC);
-        ///////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////
 
     tk.m_localPump = localPump;
     tk.m_mainThreadId = ::GetCurrentThreadId();
 
-    /*
+    /* 
      * Create the one-and-only toolkit window.  This window isn't
-     * displayed, but is used to route messages to this thread.
+     * displayed, but is used to route messages to this thread.  
      */
     tk.m_toolkitHWnd = tk.CreateToolkitWnd(TEXT("theAwtToolkitWindow"));
     DASSERT(tk.m_toolkitHWnd != NULL);
 
     /*
-     * Setup a GetMessage filter to watch all messages coming out of our
+     * Setup a GetMessage filter to watch all messages coming out of our 
      * queue from PreProcessMsg().
      */
     tk.m_hGetMessageHook = ::SetWindowsHookEx(WH_GETMESSAGE,
-                                              (HOOKPROC)GetMessageFilter,
-                                              0, tk.m_mainThreadId);
+					      (HOOKPROC)GetMessageFilter,
+					      0, tk.m_mainThreadId);
 
     awt_dnd_initialize();
 
@@ -468,7 +468,7 @@ BOOL AwtToolkit::Dispose() {
     AwtFont::Cleanup();
 
     if (tk.m_inputMethodHWnd != NULL) {
-        ::SendMessage(tk.m_inputMethodHWnd, WM_IME_CONTROL, IMC_OPENSTATUSWINDOW, 0);
+	::SendMessage(tk.m_inputMethodHWnd, WM_IME_CONTROL, IMC_OPENSTATUSWINDOW, 0);
     }
     tk.m_inputMethodHWnd = NULL;
 
@@ -550,7 +550,7 @@ void AwtToolkit::UnregisterClass() {
 }
 
 /*
- * Structure holding the information to create a component. This packet is
+ * Structure holding the information to create a component. This packet is 
  * sent to the toolkit window.
  */
 struct ComponentCreatePacket {
@@ -561,34 +561,34 @@ struct ComponentCreatePacket {
 
 /*
  * Create an AwtXxxx component using a given factory function
- * Implemented by sending a message to the toolkit window to invoke the
+ * Implemented by sending a message to the toolkit window to invoke the 
  * factory function from that thread
  */
-void AwtToolkit::CreateComponent(void* component, void* parent,
-                                 ComponentFactory compFactory, BOOL isParentALocalReference)
+void AwtToolkit::CreateComponent(void* component, void* parent, 
+				 ComponentFactory compFactory, BOOL isParentALocalReference)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-
+    
     /* Since Local references are not valid in another Thread, we need to
-       create a global reference before we send this to the Toolkit thread.
-       In some cases this method is called with parent being a native
-       malloced struct so we cannot and do not need to create a Global
+       create a global reference before we send this to the Toolkit thread. 
+       In some cases this method is called with parent being a native 
+       malloced struct so we cannot and do not need to create a Global 
        Reference from it. This is indicated by isParentALocalReference */
-
-    jobject gcomponent = env->NewGlobalRef((jobject)component);
+           
+    jobject gcomponent = env->NewGlobalRef((jobject)component); 
     jobject gparent;
     if (isParentALocalReference) gparent = env->NewGlobalRef((jobject)parent);
     ComponentCreatePacket ccp = { gcomponent,
                                   isParentALocalReference == TRUE ?  gparent : parent,
                                    compFactory };
     AwtToolkit::GetInstance().SendMessage(WM_AWT_COMPONENT_CREATE, 0,
-                                          (LPARAM)&ccp);
+					  (LPARAM)&ccp);
     env->DeleteGlobalRef(gcomponent);
     if (isParentALocalReference) env->DeleteGlobalRef(gparent);
 }
 
 /*
- * Destroy an HWND that was created in the toolkit thread. Can be used on
+ * Destroy an HWND that was created in the toolkit thread. Can be used on 
  * Components and the toolkit window itself.
  */
 void AwtToolkit::DestroyComponentHWND(HWND hwnd)
@@ -617,7 +617,7 @@ void SpyWinMessage(HWND hwnd, UINT message, LPCTSTR szComment);
 /*
  * An AwtToolkit window is just a means of routing toolkit messages to here.
  */
-LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
+LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message, 
                                      WPARAM wParam, LPARAM lParam)
 {
     TRY;
@@ -639,9 +639,9 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
           jobject peerObject = (jobject)wParam;
           AwtObject* object = (AwtObject *)JNI_GET_PDATA(peerObject);
           DASSERT( !IsBadReadPtr(object, sizeof(AwtObject)));
-          AwtObject::ExecuteArgs *args = (AwtObject::ExecuteArgs *)lParam;
-          DASSERT(!IsBadReadPtr(args, sizeof(AwtObject::ExecuteArgs)));
-          LRESULT result = 0;
+	  AwtObject::ExecuteArgs *args = (AwtObject::ExecuteArgs *)lParam;
+	  DASSERT(!IsBadReadPtr(args, sizeof(AwtObject::ExecuteArgs)));
+	  LRESULT result = 0;
           if (object != NULL)
           {
               result = object->WinThreadExecProc(args);
@@ -738,22 +738,14 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
            * Control Panel -> Display are changed.  You must _always_ query
            * the system for these - you can't rely on cached values.
            */
-          jobject peer = AwtToolkit::GetInstance().m_peer;
-          if (peer != NULL) {
-              env->CallVoidMethod(peer, AwtToolkit::windowsSettingChangeMID);
-          }
-          return 0;
+	  jobject peer = AwtToolkit::GetInstance().m_peer;
+	  if (peer != NULL) {
+	      env->CallVoidMethod(peer, AwtToolkit::windowsSettingChangeMID);
+	  }
+	  return 0;
       }
       case WM_TIMER: {
-          // 6479820. Should check if a window is in manual resizing process: skip
-          // sending any MouseExit/Enter events while inside resize-loop.
-          // Note that window being in manual moving process could still
-          // produce redundant enter/exit mouse events. In future, they can be
-          // made skipped in a similar way.
-           if (AwtWindow::IsResizing()) {
-               return 0;
-           }
-          // Create an artifical MouseExit message if the mouse left to
+          // Create an artifical MouseExit message if the mouse left to 
           // a non-java window (bad mouse!)
           POINT pt;
           AwtToolkit& tk = AwtToolkit::GetInstance();
@@ -765,20 +757,20 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
                   // translate point from screen to target window
                   MapWindowPoints(HWND_DESKTOP, last_M->GetHWnd(), &pt, 1);
                   last_M->SendMessage(WM_AWT_MOUSEEXIT,
-                                      GetMouseKeyState(),
+                                      GetMouseKeyState(), 
                                       POINTTOPOINTS(pt));
                   tk.m_lastMouseOver = 0;
               }
           }
           if (tk.m_lastMouseOver == NULL && tk.m_timer != 0) {
               VERIFY(::KillTimer(tk.m_toolkitHWnd, tk.m_timer));
-              tk.m_timer = 0;
-          }
+	      tk.m_timer = 0;
+	  }
           return 0;
       }
       case WM_DESTROYCLIPBOARD: {
-          if (!AwtClipboard::IsGettingOwnership())
-              AwtClipboard::LostOwnership((JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2));
+	  if (!AwtClipboard::IsGettingOwnership())
+	      AwtClipboard::LostOwnership((JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2));
           return 0;
       }
       case WM_CHANGECBCHAIN: {
@@ -807,7 +799,7 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
             reinterpret_cast<void*>(ImmCreateContext()));
       }
       case WM_AWT_DESTROYCONTEXT: {
-          ImmDestroyContext((HIMC)wParam);
+	  ImmDestroyContext((HIMC)wParam);
           return 0;
       }
       case WM_AWT_ASSOCIATECONTEXT: {
@@ -816,59 +808,59 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
           return 0;
       }
       case WM_AWT_ENDCOMPOSITION: {
-          /*right now we just cancel the composition string
-          may need to commit it in the furture
-          Changed to commit it according to the flag 10/29/98*/
+	  /*right now we just cancel the composition string
+	  may need to commit it in the furture
+	  Changed to commit it according to the flag 10/29/98*/
           ImmNotifyIME((HIMC)wParam, NI_COMPOSITIONSTR,
-                       (lParam ? CPS_COMPLETE : CPS_CANCEL), 0);
+	               (lParam ? CPS_COMPLETE : CPS_CANCEL), 0);
           return 0;
       }
       case WM_AWT_SETCONVERSIONSTATUS: {
-          DWORD cmode;
-          DWORD smode;
-          ImmGetConversionStatus((HIMC)wParam, (LPDWORD)&cmode, (LPDWORD)&smode);
-          ImmSetConversionStatus((HIMC)wParam, (DWORD)LOWORD(lParam), smode);
-          return 0;
+	  DWORD cmode;
+	  DWORD smode;
+	  ImmGetConversionStatus((HIMC)wParam, (LPDWORD)&cmode, (LPDWORD)&smode);
+	  ImmSetConversionStatus((HIMC)wParam, (DWORD)LOWORD(lParam), smode);
+	  return 0;
       }
       case WM_AWT_GETCONVERSIONSTATUS: {
-          DWORD cmode;
-          DWORD smode;
-          ImmGetConversionStatus((HIMC)wParam, (LPDWORD)&cmode, (LPDWORD)&smode);
-          return cmode;
+	  DWORD cmode;
+	  DWORD smode;
+	  ImmGetConversionStatus((HIMC)wParam, (LPDWORD)&cmode, (LPDWORD)&smode);
+	  return cmode;
       }
       case WM_AWT_ACTIVATEKEYBOARDLAYOUT: {
           if (wParam && g_bUserHasChangedInputLang) {
-              // Input language has been changed since the last WInputMethod.getNativeLocale()
-              // call.  So let's honor the user's selection.
-              // Note: we need to check this flag inside the toolkit thread to synchronize access
-              // to the flag.
-              return FALSE;
-          }
-
+	      // Input language has been changed since the last WInputMethod.getNativeLocale()
+	      // call.  So let's honor the user's selection.
+	      // Note: we need to check this flag inside the toolkit thread to synchronize access
+	      // to the flag.
+	      return FALSE;
+	  }
+	 
           if (lParam == (LPARAM)::GetKeyboardLayout(0)) {
-              // already active
-              return FALSE;
-          }
+	      // already active
+	      return FALSE;
+	  }
+	 
+	  // Since ActivateKeyboardLayout does not post WM_INPUTLANGCHANGEREQUEST,
+	  // we explicitly need to do the same thing here.
+	  static BYTE keyboardState[AwtToolkit::KB_STATE_SIZE];
+	  AwtToolkit::GetKeyboardState(keyboardState);
+	  WORD ignored;
+	  ::ToAscii(VK_SPACE, ::MapVirtualKey(VK_SPACE, 0),
+		    keyboardState, &ignored, 0);
 
-          // Since ActivateKeyboardLayout does not post WM_INPUTLANGCHANGEREQUEST,
-          // we explicitly need to do the same thing here.
-          static BYTE keyboardState[AwtToolkit::KB_STATE_SIZE];
-          AwtToolkit::GetKeyboardState(keyboardState);
-          WORD ignored;
-          ::ToAscii(VK_SPACE, ::MapVirtualKey(VK_SPACE, 0),
-                    keyboardState, &ignored, 0);
-
-          return (LRESULT)activateKeyboardLayout((HKL)lParam);
+	  return (LRESULT)activateKeyboardLayout((HKL)lParam);
       }
       case WM_AWT_OPENCANDIDATEWINDOW: {
           jobject peerObject = (jobject)wParam;
           AwtComponent* p = (AwtComponent*)JNI_GET_PDATA(peerObject);
           DASSERT( !IsBadReadPtr(p, sizeof(AwtObject)));
-          // fix for 4805862: use GET_X_LPARAM and GET_Y_LPARAM macros
+          // fix for 4805862: use GET_X_LPARAM and GET_Y_LPARAM macros 
           // instead of LOWORD and HIWORD
           p->OpenCandidateWindow(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
           env->DeleteGlobalRef(peerObject);
-          return 0;
+	  return 0;
       }
 
       /*
@@ -878,108 +870,108 @@ LRESULT CALLBACK AwtToolkit::WndProc(HWND hWnd, UINT message,
        */
 
       case WM_AWT_WAIT_FOR_SINGLE_OBJECT: {
-        return ::WaitForSingleObject((HANDLE)lParam, INFINITE);
+	return ::WaitForSingleObject((HANDLE)lParam, INFINITE);
       }
       case WM_AWT_INVOKE_METHOD: {
-        return (LRESULT)(*(void*(*)(void*))wParam)((void *)lParam);
+	return (LRESULT)(*(void*(*)(void*))wParam)((void *)lParam);
       }
       case WM_AWT_INVOKE_VOID_METHOD: {
-        return (LRESULT)(*(void*(*)(void))wParam)();
+	return (LRESULT)(*(void*(*)(void))wParam)();
       }
 
       case WM_AWT_SETOPENSTATUS: {
-          ImmSetOpenStatus((HIMC)wParam, (BOOL)lParam);
-          return 0;
+	  ImmSetOpenStatus((HIMC)wParam, (BOOL)lParam);
+	  return 0;
       }
       case WM_AWT_GETOPENSTATUS: {
-          return (DWORD)ImmGetOpenStatus((HIMC)wParam);
+	  return (DWORD)ImmGetOpenStatus((HIMC)wParam);
       }
       case WM_DISPLAYCHANGE: {
-          AwtCursor::DirtyAllCustomCursors();
+	  AwtCursor::DirtyAllCustomCursors();
 
-          // Reinitialize screens
-          initScreens(env);
+	  // Reinitialize screens
+	  initScreens(env);
 
-          // Invalidate current DDraw object; the object must be recreated
-          // when we first try to create a new DDraw surface.  Note that we
-          // don't recreate the ddraw object directly here because of
-          // multi-threading issues; we'll just leave that to the first
-          // time an object tries to create a DDraw surface under the new
-          // display depth (which will happen after the displayChange event
-          // propagation at the end of this case).
+	  // Invalidate current DDraw object; the object must be recreated
+	  // when we first try to create a new DDraw surface.  Note that we
+	  // don't recreate the ddraw object directly here because of 
+	  // multi-threading issues; we'll just leave that to the first
+	  // time an object tries to create a DDraw surface under the new
+	  // display depth (which will happen after the displayChange event
+	  // propagation at the end of this case).
           if (DDCanReplaceSurfaces(NULL)) {
-              DDInvalidateDDInstance(NULL);
-          }
+	      DDInvalidateDDInstance(NULL);
+      	  }
 
-          // Notify Java side - call WToolkit.displayChanged()
-          jclass clazz = env->FindClass("sun/awt/windows/WToolkit");
-          env->CallStaticVoidMethod(clazz, AwtToolkit::displayChangeMID);
+	  // Notify Java side - call WToolkit.displayChanged()
+	  jclass clazz = env->FindClass("sun/awt/windows/WToolkit");
+	  env->CallStaticVoidMethod(clazz, AwtToolkit::displayChangeMID);
 
-          GetInstance().m_displayChanged = TRUE;
+	  GetInstance().m_displayChanged = TRUE;
 
-          ::PostMessage(HWND_BROADCAST, WM_PALETTEISCHANGING, NULL, NULL);
-          break;
+	  ::PostMessage(HWND_BROADCAST, WM_PALETTEISCHANGING, NULL, NULL);
+	  break;
       }
       case WM_AWT_SETCURSOR: {
-          ::SetCursor((HCURSOR)wParam);
-          return TRUE;
+	  ::SetCursor((HCURSOR)wParam);
+	  return TRUE;
       }
       /* Session management */
       case WM_QUERYENDSESSION: {
-          /* Shut down cleanly */
-          if (JVM_RaiseSignal(SIGTERM)) {
+	  /* Shut down cleanly */
+	  if (JVM_RaiseSignal(SIGTERM)) {
               AwtToolkit::GetInstance().m_vmSignalled = TRUE;
           }
-          return TRUE;
+	  return TRUE;
       }
       case WM_ENDSESSION: {
-          // Keep pumping messages until the shutdown sequence halts the VM,
-          // or we exit the MessageLoop because of a WM_QUIT message
-          AwtToolkit& tk = AwtToolkit::GetInstance();
+	  // Keep pumping messages until the shutdown sequence halts the VM,
+	  // or we exit the MessageLoop because of a WM_QUIT message
+	  AwtToolkit& tk = AwtToolkit::GetInstance();
 
           // if WM_QUERYENDSESSION hasn't successfully raised SIGTERM
           // we ignore the ENDSESSION message
           if (!tk.m_vmSignalled) {
               return 0;
           }
-          tk.MessageLoop(AwtToolkit::PrimaryIdleFunc,
-                         AwtToolkit::CommonPeekMessageFunc);
+	  tk.MessageLoop(AwtToolkit::PrimaryIdleFunc, 
+			 AwtToolkit::CommonPeekMessageFunc);
 
-          // Dispose here instead of in eventLoop so that we don't have
-          // to return from the WM_ENDSESSION handler.
-          tk.Dispose();
+	  // Dispose here instead of in eventLoop so that we don't have
+	  // to return from the WM_ENDSESSION handler.
+	  tk.Dispose();
 
-          // Never return. The VM will halt the process.
-          hang_if_shutdown();
+	  // Never return. The VM will halt the process.
+	  hang_if_shutdown();
 
-          // Should never get here.
-          DASSERT(FALSE);
+	  // Should never get here.
+	  DASSERT(FALSE);
           break;
       }
       case WM_SYNC_WAIT:
           SetEvent(AwtToolkit::GetInstance().m_waitEvent);
           break;
     }
-
+    
     return DefWindowProc(hWnd, message, wParam, lParam);
 
     CATCH_BAD_ALLOC_RET(0);
 }
 
 LRESULT CALLBACK AwtToolkit::GetMessageFilter(int code,
-                                              WPARAM wParam, LPARAM lParam)
+					      WPARAM wParam, LPARAM lParam)
 {
     TRY;
 
     if (code >= 0 && wParam == PM_REMOVE && lParam != 0) {
        if (AwtToolkit::GetInstance().PreProcessMsg(*(MSG*)lParam) !=
-               mrPassAlong) {
+	       mrPassAlong) {
            /* PreProcessMsg() wants us to eat it */
-           ((MSG*)lParam)->message = WM_NULL;
+           ((MSG*)lParam)->message = WM_NULL;  
        }
     }
-    return ::CallNextHookEx(AwtToolkit::GetInstance().m_hGetMessageHook, code,
-                            wParam, lParam);
+    return ::CallNextHookEx(AwtToolkit::GetInstance().m_hGetMessageHook, code, 
+			    wParam, lParam);
 
     CATCH_BAD_ALLOC_RET(0);
 }
@@ -998,27 +990,27 @@ const int AwtToolkit::EXIT_ALL_ENCLOSING_LOOPS = -1;
  *
  * Note that this gets used more often than you would think; some
  * window moves actually happen over more than one event burst.  So,
- * for example, we might get a WINDOWPOSCHANGING event, then we
+ * for example, we might get a WINDOWPOSCHANGING event, then we 
  * idle and release the lock here, then eventually we get the
  * WINDOWPOSCHANGED event.
  *
- * This method may be called from WToolkit.embeddedEventLoopIdleProcessing
- * if there is a separate event loop that must do the same CriticalSection
+ * This method may be called from WToolkit.embeddedEventLoopIdleProcessing 
+ * if there is a separate event loop that must do the same CriticalSection 
  * check.
- *
+ * 
  * See bug #4526587 for more information.
  */
 void VerifyWindowMoveLockReleased()
 {
     if (windowMoveLockHeld) {
-        windowMoveLockHeld = FALSE;
-        windowMoveLock.Leave();
+	windowMoveLockHeld = FALSE;
+	windowMoveLock.Leave();
     }
 }
 
-UINT
-AwtToolkit::MessageLoop(IDLEPROC lpIdleFunc,
-                        PEEKMESSAGEPROC lpPeekMessageFunc)
+UINT 
+AwtToolkit::MessageLoop(IDLEPROC lpIdleFunc, 
+			PEEKMESSAGEPROC lpPeekMessageFunc)
 {
     DTRACE_PRINTLN("AWT event loop started");
 
@@ -1026,21 +1018,21 @@ AwtToolkit::MessageLoop(IDLEPROC lpIdleFunc,
     DASSERT(lpPeekMessageFunc != NULL);
 
     m_messageLoopResult = 0;
-    while (!m_breakMessageLoop) {
+    while (!m_breakMessageLoop) {            
 
-        (*lpIdleFunc)();
+	(*lpIdleFunc)();
 
         PumpWaitingMessages(lpPeekMessageFunc); /* pumps waiting messages */
 
-        // Catch problems with windowMoveLock critical section.  In case we
-        // misunderstood the way windows processes window move/resize
-        // events, we don't want to hold onto the windowMoveLock CS forever.
-        // If we've finished processing events for now, release the lock
-        // if held.
-        VerifyWindowMoveLockReleased();
+	// Catch problems with windowMoveLock critical section.  In case we
+	// misunderstood the way windows processes window move/resize
+	// events, we don't want to hold onto the windowMoveLock CS forever.
+	// If we've finished processing events for now, release the lock
+	// if held.
+	VerifyWindowMoveLockReleased();
     }
     if (m_messageLoopResult == EXIT_ALL_ENCLOSING_LOOPS)
-        ::PostQuitMessage(EXIT_ALL_ENCLOSING_LOOPS);
+	::PostQuitMessage(EXIT_ALL_ENCLOSING_LOOPS);
     m_breakMessageLoop = FALSE;
 
     DTRACE_PRINTLN("AWT event loop ended");
@@ -1076,7 +1068,7 @@ static void DoQuitMessageLoop(void* param) {
 void AwtToolkit::QuitMessageLoop(int status) {
     /*
      * Fix for 4623377.
-     * Reinvoke QuitMessageLoop on the toolkit thread, so that
+     * Reinvoke QuitMessageLoop on the toolkit thread, so that 
      * m_breakMessageLoop is accessed on a single thread.
      */
     if (!AwtToolkit::IsMainThread()) {
@@ -1110,8 +1102,8 @@ void AwtToolkit::QuitMessageLoop(int status) {
 
     /*
      * Fix for 4683602.
-     * Post an empty message, to wake up the toolkit thread
-     * if it is currently in WaitMessage(),
+     * Post an empty message, to wake up the toolkit thread 
+     * if it is currently in WaitMessage(), 
      */
     PostMessage(WM_NULL);
 }
@@ -1133,15 +1125,15 @@ BOOL AwtToolkit::PumpWaitingMessages(PEEKMESSAGEPROC lpPeekMessageFunc)
             m_breakMessageLoop = TRUE;
             m_messageLoopResult = static_cast<UINT>(msg.wParam);
             if (m_messageLoopResult == EXIT_ALL_ENCLOSING_LOOPS)
-                ::PostQuitMessage(static_cast<int>(msg.wParam));  // make sure all loops exit
+		::PostQuitMessage(static_cast<int>(msg.wParam));  // make sure all loops exit
             break;
         }
         else if (msg.message != WM_NULL) {
-            /*
-             * The AWT in standalone mode (that is, dynamically loaded from the
-             * Java VM) doesn't have any translation tables to worry about, so
-             * TranslateAccelerator isn't called.
-             */
+	    /*
+	     * The AWT in standalone mode (that is, dynamically loaded from the
+	     * Java VM) doesn't have any translation tables to worry about, so
+	     * TranslateAccelerator isn't called.
+	     */
 
             ::TranslateMessage(&msg);
             ::DispatchMessage(&msg);
@@ -1162,7 +1154,7 @@ AwtToolkit::SecondaryIdleFunc() {
     ::WaitMessage();               /* allow system to go idle */
 }
 
-BOOL
+BOOL 
 AwtToolkit::CommonPeekMessageFunc(MSG& msg) {
     return ::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
 }
@@ -1203,7 +1195,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
 
     /*
      * Fix for BugTraq ID 4395290.
-     * Do not synthesize mouse enter/exit events during drag-and-drop,
+     * Do not synthesize mouse enter/exit events during drag-and-drop, 
      * since it messes up LightweightDispatcher.
      */
     if (AwtDropTarget::IsLocalDnD()) {
@@ -1234,7 +1226,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
     curPos.y = GET_Y_LPARAM(dwCurPos);
     HWND hWndFromPoint = ::WindowFromPoint(curPos);
     // hWndFromPoint == 0 if mouse is over a scrollbar
-    AwtComponent* mouseComp =
+    AwtComponent* mouseComp = 
         AwtComponent::GetComponent(hWndFromPoint);
     // Need extra copies for non-client area issues
     AwtComponent* mouseWheelComp = mouseComp;
@@ -1257,23 +1249,18 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
         (curPos.x < windowRect.left) ||
         (curPos.x >= windowRect.right)) {
         mouseComp = NULL;
-        hWndFromPoint = NULL;
+	hWndFromPoint = NULL;
     }
 
     /*
-     * Look for mouse transitions between windows & create
-     * MouseExit & MouseEnter messages
+     * Look for mouse transitions between windows & create 
+     * MouseExit & MouseEnter messages 
      */
-    // 6479820. Should check if a window is in manual resizing process: skip
-    // sending any MouseExit/Enter events while inside resize-loop.
-    // Note that window being in manual moving process could still
-    // produce redundant enter/exit mouse events. In future, they can be
-    // made skipped in a similar way.
-    if (mouseComp != m_lastMouseOver && !AwtWindow::IsResizing()) {
-        /*
-         * Send the messages right to the windows so that they are in
-         * the right sequence.
-         */
+    if (mouseComp != m_lastMouseOver) {
+	/*
+	 * Send the messages right to the windows so that they are in 
+	 * the right sequence.
+	 */
         if (m_lastMouseOver) {
             dwCurPos = dwScreenPos;
             curPos.x = LOWORD(dwCurPos);
@@ -1281,8 +1268,8 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
             ::MapWindowPoints(HWND_DESKTOP, m_lastMouseOver->GetHWnd(),
                               &curPos, 1);
             mouseLParam = MAKELPARAM((WORD)curPos.x, (WORD)curPos.y);
-            m_lastMouseOver->SendMessage(WM_AWT_MOUSEEXIT, mouseWParam,
-                                         mouseLParam);
+            m_lastMouseOver->SendMessage(WM_AWT_MOUSEEXIT, mouseWParam, 
+					 mouseLParam);
         }
         if (mouseComp) {
                 dwCurPos = dwScreenPos;
@@ -1292,7 +1279,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
                                   &curPos, 1);
                 mouseLParam = MAKELPARAM((WORD)curPos.x, (WORD)curPos.y);
             mouseComp->SendMessage(WM_AWT_MOUSEENTER, mouseWParam,
-                                   mouseLParam);
+				   mouseLParam);
         }
         m_lastMouseOver = mouseComp;
     }
@@ -1314,7 +1301,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
         // On Win95, mouse wheels are _always_ delivered to the top level
         // Frame.  Default behavior only takes place if the message's hwnd
         // remains that of the Frame.  We only want to change the hwnd if
-        // we're changing it to a Component that DOESN'T handle the
+        // we're changing it to a Component that DOESN'T handle the 
         // mousewheel natively.
 
         if (!mouseWheelComp->InheritsNativeMouseWheelBehavior()) {
@@ -1324,7 +1311,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
     }
 
     /*
-     * Make sure we get at least one last chance to check for transitions
+     * Make sure we get at least one last chance to check for transitions 
      * before we sleep
      */
     if (m_lastMouseOver && !m_timer) {
@@ -1336,7 +1323,7 @@ BOOL AwtToolkit::PreProcessMouseMsg(AwtComponent* p, MSG& msg)
 BOOL AwtToolkit::PreProcessKeyMsg(AwtComponent* p, MSG& msg)
 {
     // get keyboard state for use in AwtToolkit::GetKeyboardState
-    CriticalSection::Lock       l(m_lockKB);
+    CriticalSection::Lock	l(m_lockKB);
     ::GetKeyboardState(m_lastKeyboardState);
     return FALSE;
 }
@@ -1381,8 +1368,8 @@ void AwtToolkit::SyncCall(void (*ftn)(void)) {
     }
 }
 
-UINT AwtToolkit::CreateCmdID(AwtObject* object)
-{
+UINT AwtToolkit::CreateCmdID(AwtObject* object) 
+{ 
     return m_cmdIDs->Add(object);
 }
 
@@ -1403,19 +1390,19 @@ HICON AwtToolkit::GetAwtIcon()
 
 HICON AwtToolkit::GetAwtIconSm()
 {
-    static HICON defaultIconSm = NULL;
-    static int prevSmx = 0;
-    static int prevSmy = 0;
+    static HICON defaultIconSm = NULL;  
+    static int prevSmx = 0;  
+    static int prevSmy = 0;  
 
-    int smx = GetSystemMetrics(SM_CXSMICON);
-    int smy = GetSystemMetrics(SM_CYSMICON);
+    int smx = GetSystemMetrics(SM_CXSMICON);  
+    int smy = GetSystemMetrics(SM_CYSMICON);  
 
-    // Fixed 6364216: LoadImage() may leak memory
-    if (defaultIconSm == NULL || smx != prevSmx || smy != prevSmy) {
-        defaultIconSm = (HICON)LoadImage(GetModuleHandle(), TEXT("AWT_ICON"), IMAGE_ICON, smx, smy, 0);
-        prevSmx = smx;
-        prevSmy = smy;
-    }
+    // Fixed 6364216: LoadImage() may leak memory  
+    if (defaultIconSm == NULL || smx != prevSmx || smy != prevSmy) {  
+        defaultIconSm = (HICON)LoadImage(GetModuleHandle(), TEXT("AWT_ICON"), IMAGE_ICON, smx, smy, 0);  
+        prevSmx = smx; 
+        prevSmy = smy; 
+    }  
     return defaultIconSm;
 }
 
@@ -1458,7 +1445,7 @@ getComponentClass(JNIEnv *env)
             /* exception already thrown */
             return NULL;
         }
-        componentCls = (jclass)env->NewGlobalRef(componentClsLocal);
+	componentCls = (jclass)env->NewGlobalRef(componentClsLocal);
         env->DeleteLocalRef(componentClsLocal);
     }
     return componentCls;
@@ -1481,7 +1468,7 @@ getMenuComponentClass(JNIEnv *env)
             /* exception already thrown */
             return NULL;
         }
-        menuComponentCls = (jclass)env->NewGlobalRef(menuComponentClsLocal);
+	menuComponentCls = (jclass)env->NewGlobalRef(menuComponentClsLocal);
         env->DeleteLocalRef(menuComponentClsLocal);
     }
     return menuComponentCls;
@@ -1508,27 +1495,27 @@ JNIEnv* AwtToolkit::GetEnv() {
  */
 
 extern "C" {
-
+  
 /*
  * Class:     java_awt_Toolkit
  * Method:    initIDs
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_java_awt_Toolkit_initIDs(JNIEnv *env, jclass cls) {
     TRY;
 
-    AwtToolkit::getDefaultToolkitMID =
-        env->GetStaticMethodID(cls,"getDefaultToolkit","()Ljava/awt/Toolkit;");
+    AwtToolkit::getDefaultToolkitMID = 
+	env->GetStaticMethodID(cls,"getDefaultToolkit","()Ljava/awt/Toolkit;");
     AwtToolkit::getFontMetricsMID =
-        env->GetMethodID(cls, "getFontMetrics",
-                         "(Ljava/awt/Font;)Ljava/awt/FontMetrics;");
-        AwtToolkit::insetsMID =
-                env->GetMethodID(env->FindClass("java/awt/Insets"), "<init>", "(IIII)V");
+	env->GetMethodID(cls, "getFontMetrics", 
+			 "(Ljava/awt/Font;)Ljava/awt/FontMetrics;");
+	AwtToolkit::insetsMID =
+		env->GetMethodID(env->FindClass("java/awt/Insets"), "<init>", "(IIII)V");
 
     DASSERT(AwtToolkit::getDefaultToolkitMID != NULL);
     DASSERT(AwtToolkit::getFontMetricsMID != NULL);
-        DASSERT(AwtToolkit::insetsMID != NULL);
+	DASSERT(AwtToolkit::insetsMID != NULL);
 
     CATCH_BAD_ALLOC;
 }
@@ -1553,7 +1540,7 @@ Java_sun_awt_windows_WToolkit_initIDs(JNIEnv *env, jclass cls)
     TRY;
 
     AwtToolkit::windowsSettingChangeMID =
-        env->GetMethodID(cls, "windowsSettingChange", "()V");
+	env->GetMethodID(cls, "windowsSettingChange", "()V");
     DASSERT(AwtToolkit::windowsSettingChangeMID != 0);
 
     AwtToolkit::displayChangeMID =
@@ -1561,7 +1548,7 @@ Java_sun_awt_windows_WToolkit_initIDs(JNIEnv *env, jclass cls)
     DASSERT(AwtToolkit::displayChangeMID != 0);
 
     // Set various global IDs needed by JAWT code.  Note: these
-    // variables cannot be set by JAWT code directly due to
+    // variables cannot be set by JAWT code directly due to 
     // different permissions that that code may be run under
     // (bug 4796548).  It would be nice to initialize these
     // variables lazily, but given the minimal number of calls
@@ -1576,10 +1563,10 @@ Java_sun_awt_windows_WToolkit_initIDs(JNIEnv *env, jclass cls)
     DASSERT(vSMgrClassLocal != 0);
     jclass componentClassLocal = env->FindClass("java/awt/Component");
     DASSERT(componentClassLocal != 0);
-    jclass w32ossdClassLocal =
-        env->FindClass("sun/java2d/windows/Win32OffScreenSurfaceData");
+    jclass w32ossdClassLocal = 
+	env->FindClass("sun/java2d/windows/Win32OffScreenSurfaceData");
     DASSERT(w32ossdClassLocal != 0);
-    jawtSMgrID = env->GetFieldID(vImgClassLocal, "volSurfaceManager",
+    jawtSMgrID = env->GetFieldID(vImgClassLocal, "volSurfaceManager", 
                                  "Lsun/awt/image/VolatileSurfaceManager;");
     DASSERT(jawtSMgrID != 0);
     jawtSDataID = env->GetFieldID(vSMgrClassLocal, "sdCurrent",
@@ -1587,7 +1574,7 @@ Java_sun_awt_windows_WToolkit_initIDs(JNIEnv *env, jclass cls)
     DASSERT(jawtSDataID != 0);
     jawtPDataID = env->GetFieldID(sDataClassLocal, "pData", "J");
     DASSERT(jawtPDataID != 0);
-
+    
     // Save these classes in global references for later use
     jawtVImgClass = (jclass)env->NewGlobalRef(vImgClassLocal);
     jawtComponentClass = (jclass)env->NewGlobalRef(componentClassLocal);
@@ -1602,7 +1589,7 @@ Java_sun_awt_windows_WToolkit_initIDs(JNIEnv *env, jclass cls)
  * Method:    disableCustomPalette
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WToolkit_disableCustomPalette(JNIEnv *env, jclass cls) {
     AwtPalette::DisableCustomPalette();
 }
@@ -1665,7 +1652,7 @@ Java_sun_awt_windows_WToolkit_init(JNIEnv *env, jobject self)
     TRY;
 
     AwtToolkit::SetEnv(env);
-
+    
     AwtToolkit::GetInstance().SetPeer(env, self);
 
     // This call will fail if the Toolkit was already initialized.
@@ -1689,8 +1676,8 @@ Java_sun_awt_windows_WToolkit_eventLoop(JNIEnv *env, jobject self)
 
     AwtToolkit::SetBusy(TRUE);
 
-    AwtToolkit::GetInstance().MessageLoop(AwtToolkit::PrimaryIdleFunc,
-                                          AwtToolkit::CommonPeekMessageFunc);
+    AwtToolkit::GetInstance().MessageLoop(AwtToolkit::PrimaryIdleFunc, 
+					  AwtToolkit::CommonPeekMessageFunc);
 
     AwtToolkit::GetInstance().Dispose();
 
@@ -1718,7 +1705,7 @@ Java_sun_awt_windows_WToolkit_shutdown(JNIEnv *env, jobject self)
     AwtToolkit& tk = AwtToolkit::GetInstance();
 
     tk.QuitMessageLoop(AwtToolkit::EXIT_ALL_ENCLOSING_LOOPS);
-
+    
     while (!tk.IsDisposed()) {
         Sleep(100);
     }
@@ -1741,7 +1728,7 @@ Java_sun_awt_windows_WToolkit_startSecondaryEventLoop(
     DASSERT(AwtToolkit::MainThread() == ::GetCurrentThreadId());
 
     AwtToolkit::GetInstance().MessageLoop(AwtToolkit::SecondaryIdleFunc,
-                                          AwtToolkit::CommonPeekMessageFunc);
+					  AwtToolkit::CommonPeekMessageFunc);
 
     CATCH_BAD_ALLOC;
 }
@@ -1768,13 +1755,13 @@ Java_sun_awt_windows_WToolkit_quitSecondaryEventLoop(
  * Method:    makeColorModel
  * Signature: ()Ljava/awt/image/ColorModel;
  */
-JNIEXPORT jobject JNICALL
-Java_sun_awt_windows_WToolkit_makeColorModel(JNIEnv *env, jclass cls)
+JNIEXPORT jobject JNICALL 
+Java_sun_awt_windows_WToolkit_makeColorModel(JNIEnv *env, jclass cls) 
 {
     TRY;
 
     return AwtWin32GraphicsDevice::GetColorModel(env, JNI_FALSE,
-        AwtWin32GraphicsDevice::GetDefaultDeviceIndex());
+	AwtWin32GraphicsDevice::GetDefaultDeviceIndex());
 
     CATCH_BAD_ALLOC_RET(NULL);
 }
@@ -1793,11 +1780,11 @@ Java_sun_awt_windows_WToolkit_getMaximumCursorColors(JNIEnv *env, jobject self)
 
     int nColor = 256;
     switch (::GetDeviceCaps(hIC, BITSPIXEL) * ::GetDeviceCaps(hIC, PLANES)) {
-        case 1:         nColor = 2;             break;
-        case 4:         nColor = 16;            break;
-        case 8:         nColor = 256;           break;
+	case 1:		nColor = 2; 		break;
+	case 4:		nColor = 16; 		break;
+	case 8:		nColor = 256; 		break;
         case 16:        nColor = 65536;         break;
-        case 24:        nColor = 16777216;      break;
+	case 24:	nColor = 16777216; 	break;
     }
     ::DeleteDC(hIC);
     return nColor;
@@ -1810,7 +1797,7 @@ Java_sun_awt_windows_WToolkit_getMaximumCursorColors(JNIEnv *env, jobject self)
  * Method:    getScreenWidth
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_awt_windows_WToolkit_getScreenWidth(JNIEnv *env, jobject self)
 {
     TRY;
@@ -1841,14 +1828,14 @@ Java_sun_awt_windows_WToolkit_getScreenHeight(JNIEnv *env, jobject self)
  * Method:    getSreenInsets
  * Signature: (I)Ljava/awt/Insets;
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_sun_awt_windows_WToolkit_getScreenInsets(JNIEnv *env,
                                               jobject self,
                                               jint screen)
 {
     jobject insets = NULL;
     RECT rRW;
-    MONITOR_INFO *miInfo;
+    MONITOR_INFO *miInfo;     
 
     TRY;
 
@@ -1863,10 +1850,10 @@ Java_sun_awt_windows_WToolkit_getScreenInsets(JNIEnv *env,
              ::GetSystemMetrics(SM_CXSCREEN) - rRW.right);
       }
     }
-
-/* if additional display */
+    
+/* if additional display */    
     else {
-        miInfo = AwtWin32GraphicsDevice::GetMonitorInfo(screen);
+	miInfo = AwtWin32GraphicsDevice::GetMonitorInfo(screen);
         if (miInfo) {
             insets = env->NewObject(env->FindClass("java/awt/Insets"),
                 AwtToolkit::insetsMID,
@@ -1881,7 +1868,7 @@ Java_sun_awt_windows_WToolkit_getScreenInsets(JNIEnv *env,
         return 0;
     }
     return insets;
-
+	
     CATCH_BAD_ALLOC_RET(NULL);
 }
 
@@ -1930,13 +1917,13 @@ Java_sun_awt_windows_WToolkit_getLockingKeyStateNative(JNIEnv *env, jobject self
 
     UINT windowsKey, modifiers;
     AwtComponent::JavaKeyToWindowsKey(javaKey, &windowsKey, &modifiers);
-
+    
     if (windowsKey == 0) {
         JNU_ThrowByName(env, "java/lang/UnsupportedOperationException", "Keyboard doesn't have requested key");
         return JNI_FALSE;
     }
-
-    // low order bit in keyboardState indicates whether the key is toggled
+    
+    // low order bit in keyboardState indicates whether the key is toggled 
     BYTE keyboardState[AwtToolkit::KB_STATE_SIZE];
     AwtToolkit::GetKeyboardState(keyboardState);
     return keyboardState[windowsKey] & 0x01;
@@ -1956,14 +1943,14 @@ Java_sun_awt_windows_WToolkit_setLockingKeyStateNative(JNIEnv *env, jobject self
 
     UINT windowsKey, modifiers;
     AwtComponent::JavaKeyToWindowsKey(javaKey, &windowsKey, &modifiers);
-
+    
     if (windowsKey == 0) {
         JNU_ThrowByName(env, "java/lang/UnsupportedOperationException", "Keyboard doesn't have requested key");
         return;
     }
 
     // if the key isn't in the desired state yet, simulate key events to get there
-    // low order bit in keyboardState indicates whether the key is toggled
+    // low order bit in keyboardState indicates whether the key is toggled 
     BYTE keyboardState[AwtToolkit::KB_STATE_SIZE];
     AwtToolkit::GetKeyboardState(keyboardState);
     if ((keyboardState[windowsKey] & 0x01) != state) {
@@ -1981,7 +1968,7 @@ Java_sun_awt_windows_WToolkit_setLockingKeyStateNative(JNIEnv *env, jobject self
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WToolkit_loadSystemColors(JNIEnv *env, jobject self,
-                                               jintArray colors)
+					       jintArray colors)
 {
     TRY;
 
@@ -2018,14 +2005,14 @@ Java_sun_awt_windows_WToolkit_loadSystemColors(JNIEnv *env, jobject self,
     jint* colorsPtr = NULL;
     try {
         colorsPtr = (jint *)env->GetPrimitiveArrayCritical(colors, 0);
-        for (int i = 0; i < sizeof indexMap && i < colorLen; i++) {
-            colorsPtr[i] = DesktopColor2RGB(indexMap[i]);
-        }
+	for (int i = 0; i < sizeof indexMap && i < colorLen; i++) {
+	    colorsPtr[i] = DesktopColor2RGB(indexMap[i]);
+	}
     } catch (...) {
         if (colorsPtr != NULL) {
-            env->ReleasePrimitiveArrayCritical(colors, colorsPtr, 0);
-        }
-        throw;
+	    env->ReleasePrimitiveArrayCritical(colors, colorsPtr, 0);
+	}
+	throw;
     }
 
     env->ReleasePrimitiveArrayCritical(colors, colorsPtr, 0);
@@ -2072,7 +2059,7 @@ Java_sun_awt_windows_WToolkit_postDispose(JNIEnv *env, jclass clazz)
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WToolkit_setDynamicLayoutNative(JNIEnv *env,
+Java_sun_awt_windows_WToolkit_setDynamicLayoutNative(JNIEnv *env, 
   jobject self, jboolean dynamic)
 {
     TRY;
@@ -2104,7 +2091,7 @@ Java_sun_awt_windows_WToolkit_isDynamicLayoutSupportedNative(JNIEnv *env,
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL
-Java_sun_awt_windows_WToolkit_getWindowsVersion(JNIEnv *env, jclass cls)
+Java_sun_awt_windows_WToolkit_getWindowsVersion(JNIEnv *env, jclass cls) 
 {
     TRY;
 
@@ -2163,8 +2150,8 @@ Java_sun_awt_windows_WToolkit_syncNativeQueue(JNIEnv *env, jobject self, jlong t
 /* Convert a Windows desktop color index into an RGB value. */
 COLORREF DesktopColor2RGB(int colorIndex) {
     DWORD sysColor = ::GetSysColor(colorIndex);
-    return ((GetRValue(sysColor)<<16) | (GetGValue(sysColor)<<8) |
-            (GetBValue(sysColor)) | 0xff000000);
+    return ((GetRValue(sysColor)<<16) | (GetGValue(sysColor)<<8) | 
+	    (GetBValue(sysColor)) | 0xff000000);
 }
 
 
@@ -2174,7 +2161,7 @@ COLORREF DesktopColor2RGB(int colorIndex) {
  * Signature: ()V
  */
 extern "C" JNIEXPORT void JNICALL
-Java_sun_awt_SunToolkit_closeSplashScreen(JNIEnv *env, jclass cls)
+Java_sun_awt_SunToolkit_closeSplashScreen(JNIEnv *env, jclass cls) 
 {
     typedef void (*SplashClose_t)();
     HMODULE hSplashDll = GetModuleHandle(_T("splashscreen.dll"));

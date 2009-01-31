@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)ContextualGlyphSubstProc.cpp	1.4 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -57,7 +58,7 @@ void ContextualGlyphSubstitutionProcessor::beginStateTable()
     markGlyph = 0;
 }
 
-ByteOffset ContextualGlyphSubstitutionProcessor::processStateEntry(LEGlyphStorage &glyphStorage,
+ByteOffset ContextualGlyphSubstitutionProcessor::processStateEntry(LEGlyphStorage &glyphStorage, 
     le_int32 &currGlyph, EntryTableIndex index)
 {
     const ContextualGlyphSubstitutionStateEntry *entry = &entryTable[index];

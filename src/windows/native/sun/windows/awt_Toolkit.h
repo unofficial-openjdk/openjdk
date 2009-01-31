@@ -24,14 +24,14 @@
  */
 
 /*
- * The Toolkit class has two functions: it instantiates the AWT
+ * The Toolkit class has two functions: it instantiates the AWT 
  * ToolkitPeer's native methods, and provides the DLL's core functions.
  *
  * There are two ways this DLL can be used: either as a dynamically-
  * loaded Java native library from the interpreter, or by a Windows-
  * specific app.  The first manner requires that the Toolkit provide
  * all support needed so the app can function as a first-class Windows
- * app, while the second assumes that the app will provide that
+ * app, while the second assumes that the app will provide that 
  * functionality.  Which mode this DLL functions in is determined by
  * which initialization paradigm is used. If the Toolkit is constructed
  * normally, then the Toolkit will have its own pump. If it is explicitly
@@ -42,7 +42,7 @@
  * The most basic functionality needed is a Windows message pump (also
  * known as a message loop).  When an Java app is started as a console
  * app by the interpreter, the Toolkit needs to provide that message
- * pump if the AWT is dynamically loaded.
+ * pump if the AWT is dynamically loaded.  
  */
 
 #ifndef AWT_TOOLKIT_H
@@ -162,22 +162,22 @@ class CriticalSection {
 // lock/unlock actions
 #define CRITICAL_SECTION_ENTER(cs) { \
     J2dTraceLn4(J2D_TRACE_VERBOSE2, \
-                "CS.Wait:  tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
-                GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
+		"CS.Wait:  tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
+	    	GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
     (cs).Enter(); \
     J2dTraceLn4(J2D_TRACE_VERBOSE2, \
-                "CS.Enter: tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
-                GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
+		"CS.Enter: tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
+	    	GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
 }
 
 #define CRITICAL_SECTION_LEAVE(cs) { \
     J2dTraceLn4(J2D_TRACE_VERBOSE2, \
-                "CS.Leave: tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
-                GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
+		"CS.Leave: tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
+	    	GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
     (cs).Leave(); \
     J2dTraceLn4(J2D_TRACE_VERBOSE2, \
-                "CS.Left:  tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
-                GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
+		"CS.Left:  tid, cs, file, line = 0x%x, 0x%x, %s, %d", \
+	    	GetCurrentThreadId(), &(cs), __FILE__, __LINE__); \
 }
 
 /************************************************************************
@@ -187,13 +187,13 @@ class CriticalSection {
 class AwtToolkit {
 public:
     enum {
-        KB_STATE_SIZE = 256
+	KB_STATE_SIZE = 256
     };
 
     /* java.awt.Toolkit method ids */
     static jmethodID getDefaultToolkitMID;
     static jmethodID getFontMetricsMID;
-        static jmethodID insetsMID;
+	static jmethodID insetsMID;
 
     /* sun.awt.windows.WToolkit ids */
     static jmethodID windowsSettingChangeMID;
@@ -222,8 +222,8 @@ public:
     INLINE static DWORD MainThread() { return GetInstance().m_mainThreadId; }
     INLINE void VerifyActive() throw (awt_toolkit_shutdown) {
         if (!m_isActive && m_mainThreadId != ::GetCurrentThreadId()) {
-            throw awt_toolkit_shutdown();
-        }
+	    throw awt_toolkit_shutdown();
+	}
     }
     INLINE BOOL IsDisposed() { return m_isDisposed; }
     static UINT GetMouseKeyState();
@@ -233,25 +233,25 @@ public:
     static void UnregisterClass();
     INLINE LRESULT SendMessage(UINT msg, WPARAM wParam=0, LPARAM lParam=0) {
         if (!m_isDisposed) {
-            return ::SendMessage(GetHWnd(), msg, wParam, lParam);
+	    return ::SendMessage(GetHWnd(), msg, wParam, lParam);
         } else {
             return NULL;
         }
     }
-    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam,
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, 
                                     LPARAM lParam);
-    static LRESULT CALLBACK GetMessageFilter(int code, WPARAM wParam,
+    static LRESULT CALLBACK GetMessageFilter(int code, WPARAM wParam, 
                                              LPARAM lParam);
-    static LRESULT CALLBACK ForegroundIdleFilter(int code, WPARAM wParam,
+    static LRESULT CALLBACK ForegroundIdleFilter(int code, WPARAM wParam, 
                                                  LPARAM lParam);
 
     INLINE static AwtToolkit& GetInstance() { return theInstance; }
-    INLINE void SetPeer(JNIEnv *env, jobject wToolkit) {
+    INLINE void SetPeer(JNIEnv *env, jobject wToolkit) { 
         AwtToolkit &tk = AwtToolkit::GetInstance();
-        if (tk.m_peer != NULL) {
-            env->DeleteGlobalRef(tk.m_peer);
-        }
-        tk.m_peer = (wToolkit != NULL) ? env->NewGlobalRef(wToolkit) : NULL;
+	if (tk.m_peer != NULL) {
+	    env->DeleteGlobalRef(tk.m_peer);
+	}
+	tk.m_peer = (wToolkit != NULL) ? env->NewGlobalRef(wToolkit) : NULL;
     }
 
     INLINE jobject GetPeer() {
@@ -261,7 +261,7 @@ public:
     // is this thread the main thread?
 
     INLINE static BOOL IsMainThread() {
-        return GetInstance().m_mainThreadId == ::GetCurrentThreadId();
+	return GetInstance().m_mainThreadId == ::GetCurrentThreadId();
     }
 
     // post a message to the message pump thread
@@ -269,18 +269,18 @@ public:
     INLINE BOOL PostMessage(UINT msg, WPARAM wp=0, LPARAM lp=0) {
         return ::PostMessage(GetHWnd(), msg, wp, lp);
     }
-
+ 
     // cause the message pump thread to call the function synchronously now!
 
     INLINE void * InvokeFunction(void*(*ftn)(void)) {
-        return (void *)SendMessage(WM_AWT_INVOKE_VOID_METHOD, (WPARAM)ftn, 0);
+	return (void *)SendMessage(WM_AWT_INVOKE_VOID_METHOD, (WPARAM)ftn, 0);
     }
     INLINE void InvokeFunction(void (*ftn)(void)) {
         InvokeFunction((void*(*)(void))ftn);
     }
     INLINE void * InvokeFunction(void*(*ftn)(void *), void* param) {
-        return (void *)SendMessage(WM_AWT_INVOKE_METHOD, (WPARAM)ftn,
-                                   (LPARAM)param);
+	return (void *)SendMessage(WM_AWT_INVOKE_METHOD, (WPARAM)ftn,
+				   (LPARAM)param);
     }
     INLINE void InvokeFunction(void (*ftn)(void *), void* param) {
         InvokeFunction((void*(*)(void*))ftn, param);
@@ -305,14 +305,14 @@ public:
    // cause the message pump thread to synchronously synchronize on the handle
 
     INLINE void WaitForSingleObject(HANDLE handle) {
-        SendMessage(WM_AWT_WAIT_FOR_SINGLE_OBJECT, 0, (LPARAM)handle);
+	SendMessage(WM_AWT_WAIT_FOR_SINGLE_OBJECT, 0, (LPARAM)handle);
     }
 
     /*
      * Create an AwtXxxx C++ component using a given factory
      */
     typedef void (*ComponentFactory)(void*, void*);
-    static void CreateComponent(void* hComponent, void* hParent,
+    static void CreateComponent(void* hComponent, void* hParent, 
                                 ComponentFactory compFactory, BOOL isParentALocalReference=TRUE);
 
     static void DestroyComponentHWND(HWND hwnd);
@@ -346,10 +346,10 @@ public:
     HICON GetAwtIconSm();
 
     /* Turns on/off dialog modality for the system. */
-    INLINE AwtDialog* SetModal(AwtDialog* frame) {
-        AwtDialog* previousDialog = m_pModalDialog;
-        m_pModalDialog = frame;
-        return previousDialog;
+    INLINE AwtDialog* SetModal(AwtDialog* frame) { 
+	AwtDialog* previousDialog = m_pModalDialog;
+	m_pModalDialog = frame;
+	return previousDialog;
     };
     INLINE void ResetModal(AwtDialog* oldFrame) { m_pModalDialog = oldFrame; };
     INLINE BOOL IsModal() { return (m_pModalDialog != NULL); };
@@ -404,8 +404,8 @@ private:
     UINT_PTR  m_timer;
 
     class AwtCmdIDList* m_cmdIDs;
-    BYTE                m_lastKeyboardState[KB_STATE_SIZE];
-    CriticalSection     m_lockKB;
+    BYTE		m_lastKeyboardState[KB_STATE_SIZE];
+    CriticalSection	m_lockKB;
 
     static AwtToolkit theInstance;
 
@@ -436,12 +436,12 @@ public:
     static HANDLE m_thread;
  public:
     static void SetEnv(JNIEnv *env);
-    static JNIEnv* GetEnv();
+    static JNIEnv* GetEnv();    
 };
 
 /*
  * Class to encapsulate the extraction of the java string contents
- * into a buffer and the cleanup of the buffer
+ * into a buffer and the cleanup of the buffer 
  */
 class JavaStringBuffer {
   public:
@@ -458,7 +458,7 @@ class JavaStringBuffer {
     the argument is initially NULL. Supposed to be thread-safe.
     returns the new value of the argument. I'm not using volatile here
     as InterlockedCompareExchange ensures volatile semantics
-    and acquire/release.
+    and acquire/release. 
     The function is useful when used with static POD NULL-initialized
     pointers, as they are guaranteed to be NULL before any dynamic
     initialization takes place. This function turns such a pointer
@@ -468,7 +468,7 @@ class JavaStringBuffer {
 */
 
 template<typename T> inline T* SafeCreate(T* &pArg) {
-    /*  this implementation has no locks, it just destroys the object if it
+    /*  this implementation has no locks, it just destroys the object if it 
         fails to be the first to init. another way would be using a special
         flag pointer value to mark the pointer as "being initialized". */
     T* pTemp = (T*)InterlockedCompareExchangePointer((void**)&pArg, NULL, NULL);
@@ -485,3 +485,4 @@ template<typename T> inline T* SafeCreate(T* &pArg) {
 }
 
 #endif /* AWT_TOOLKIT_H */
+

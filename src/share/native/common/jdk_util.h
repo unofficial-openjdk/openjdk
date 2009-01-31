@@ -41,7 +41,7 @@ extern "C" {
 /*
  *
  */
-JNIEXPORT void
+JNIEXPORT void 
 JDK_GetVersionInfo0(jdk_version_info* info, size_t info_size);
 
 
@@ -63,3 +63,4 @@ void* JDK_FindJvmEntry(const char* name);
 #endif /* __cplusplus */
 
 #endif /* JDK_UTIL_H */
+

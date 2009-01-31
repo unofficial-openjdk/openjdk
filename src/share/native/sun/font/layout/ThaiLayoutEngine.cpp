@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)ThaiLayoutEngine.cpp	1.9 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -38,7 +39,7 @@
 
 #include "ThaiShaping.h"
 
-ThaiLayoutEngine::ThaiLayoutEngine(const LEFontInstance *fontInstance,
+ThaiLayoutEngine::ThaiLayoutEngine(const LEFontInstance *fontInstance, 
     le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags)
     : LayoutEngine(fontInstance, scriptCode, languageCode, typoFlags)
 {
@@ -73,15 +74,15 @@ ThaiLayoutEngine::~ThaiLayoutEngine()
 // Output: glyphs, char indices
 // Returns: the glyph count
 // NOTE: this assumes that ThaiShaping::compose will allocate the outChars array...
-le_int32 ThaiLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset,
-    le_int32 count, le_int32 max, le_bool /*rightToLeft*/,
+le_int32 ThaiLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset, 
+    le_int32 count, le_int32 max, le_bool /*rightToLeft*/, 
     LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
     if (LE_FAILURE(success)) {
         return 0;
     }
 
-    if (chars == NULL || offset < 0 || count < 0 || max < 0 ||
+    if (chars == NULL || offset < 0 || count < 0 || max < 0 || 
         offset >= max || offset + count > max) {
         success = LE_ILLEGAL_ARGUMENT_ERROR;
         return 0;
@@ -89,7 +90,7 @@ le_int32 ThaiLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offse
 
     LEUnicode *outChars;
     le_int32 glyphCount;
-
+    
     // This is enough room for the worst-case expansion
     // (it says here...)
     outChars = LE_NEW_ARRAY(LEUnicode, count * 2);
@@ -107,7 +108,7 @@ le_int32 ThaiLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offse
         return 0;
     }
 
-    glyphCount = ThaiShaping::compose(chars, offset, count, fGlyphSet, fErrorChar,
+    glyphCount = ThaiShaping::compose(chars, offset, count, fGlyphSet, fErrorChar, 
         outChars, glyphStorage);
     mapCharsToGlyphs(outChars, 0, glyphCount, FALSE, FALSE, glyphStorage, success);
 
@@ -116,3 +117,4 @@ le_int32 ThaiLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offse
     glyphStorage.adoptGlyphCount(glyphCount);
     return glyphCount;
 }
+

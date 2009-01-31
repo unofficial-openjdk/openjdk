@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /**
@@ -39,6 +40,7 @@
  * NOTE: This example uses a modal dialog via the static convenience methods in
  * the JOptionPane. Use of modal dialogs requires JDK 1.1.4 or greater.
  *
+ * @version %I% %G%
  * @author Philip Milne
  */
 
@@ -85,14 +87,14 @@ public class TableExample implements LayoutManager {
      * If the user clicks on the 'Connect' button the connection is reset.
      */
     void activateConnectionDialog() {
-        if(JOptionPane.showOptionDialog(tableAggregate, connectionPanel, ConnectTitle,
-                   JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
+	if(JOptionPane.showOptionDialog(tableAggregate, connectionPanel, ConnectTitle,
+		   JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                    null, ConnectOptionNames, ConnectOptionNames[0]) == 0) {
-            connect();
+	    connect();
             frame.setVisible(true);
-        }
-        else if(!frame.isVisible())
-            System.exit(0);
+	}
+	else if(!frame.isVisible())
+	    System.exit(0);
     }
 
     /**
@@ -100,75 +102,75 @@ public class TableExample implements LayoutManager {
      * the connection information.
      */
     public void createConnectionDialog() {
-        // Create the labels and text fields.
-        userNameLabel = new JLabel("User name: ", JLabel.RIGHT);
-        userNameField = new JTextField("guest");
+ 	// Create the labels and text fields.
+	userNameLabel = new JLabel("User name: ", JLabel.RIGHT);
+ 	userNameField = new JTextField("guest");
 
-        passwordLabel = new JLabel("Password: ", JLabel.RIGHT);
-        passwordField = new JTextField("trustworthy");
+	passwordLabel = new JLabel("Password: ", JLabel.RIGHT);
+	passwordField = new JTextField("trustworthy");
 
         serverLabel = new JLabel("Database URL: ", JLabel.RIGHT);
-        serverField = new JTextField("jdbc:sybase://dbtest:1455/pubs2");
+	serverField = new JTextField("jdbc:sybase://dbtest:1455/pubs2");
 
-        driverLabel = new JLabel("Driver: ", JLabel.RIGHT);
-        driverField = new JTextField("connect.sybase.SybaseDriver");
+	driverLabel = new JLabel("Driver: ", JLabel.RIGHT);
+	driverField = new JTextField("connect.sybase.SybaseDriver");
 
 
-        connectionPanel = new JPanel(false);
-        connectionPanel.setLayout(new BoxLayout(connectionPanel,
-                                                BoxLayout.X_AXIS));
+	connectionPanel = new JPanel(false);
+	connectionPanel.setLayout(new BoxLayout(connectionPanel,
+						BoxLayout.X_AXIS));
 
-        JPanel namePanel = new JPanel(false);
-        namePanel.setLayout(new GridLayout(0, 1));
-        namePanel.add(userNameLabel);
-        namePanel.add(passwordLabel);
-        namePanel.add(serverLabel);
-        namePanel.add(driverLabel);
+	JPanel namePanel = new JPanel(false);
+	namePanel.setLayout(new GridLayout(0, 1));
+	namePanel.add(userNameLabel);
+	namePanel.add(passwordLabel);
+	namePanel.add(serverLabel);
+	namePanel.add(driverLabel);
 
-        JPanel fieldPanel = new JPanel(false);
-        fieldPanel.setLayout(new GridLayout(0, 1));
-        fieldPanel.add(userNameField);
-        fieldPanel.add(passwordField);
-        fieldPanel.add(serverField);
+	JPanel fieldPanel = new JPanel(false);
+	fieldPanel.setLayout(new GridLayout(0, 1));
+	fieldPanel.add(userNameField);
+	fieldPanel.add(passwordField);
+	fieldPanel.add(serverField);
         fieldPanel.add(driverField);
 
-        connectionPanel.add(namePanel);
-        connectionPanel.add(fieldPanel);
+	connectionPanel.add(namePanel);
+	connectionPanel.add(fieldPanel);
     }
 
     public TableExample() {
         mainPanel = new JPanel();
 
         // Create the panel for the connection information
-        createConnectionDialog();
+	createConnectionDialog();
 
-        // Create the buttons.
-        showConnectionInfoButton = new JButton("Configuration");
+	// Create the buttons.
+	showConnectionInfoButton = new JButton("Configuration");
         showConnectionInfoButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    activateConnectionDialog();
-                }
-            }
-        );
+	        public void actionPerformed(ActionEvent e) {
+	            activateConnectionDialog();
+	        }
+	    }
+	);
 
-        fetchButton = new JButton("Fetch");
+	fetchButton = new JButton("Fetch");
         fetchButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    fetch();
-                }
-            }
-        );
+	        public void actionPerformed(ActionEvent e) {
+	            fetch();
+	        }
+	    }
+	);
 
-        // Create the query text area and label.
+	// Create the query text area and label.
         queryTextArea = new JTextArea("SELECT * FROM titles", 25, 25);
-        queryAggregate = new JScrollPane(queryTextArea);
+	queryAggregate = new JScrollPane(queryTextArea);
         queryAggregate.setBorder(new BevelBorder(BevelBorder.LOWERED));
 
         // Create the table.
         tableAggregate = createTable();
         tableAggregate.setBorder(new BevelBorder(BevelBorder.LOWERED));
 
-        // Add all the components to the main panel.
+	// Add all the components to the main panel.
         mainPanel.add(fetchButton);
         mainPanel.add(showConnectionInfoButton);
         mainPanel.add(queryAggregate);
@@ -185,7 +187,7 @@ public class TableExample implements LayoutManager {
         frame.setVisible(false);
         frame.setBounds(200, 200, 640, 480);
 
-        activateConnectionDialog();
+	activateConnectionDialog();
     }
 
     public void connect() {
@@ -208,9 +210,9 @@ public class TableExample implements LayoutManager {
         //fetch();
 
         // Create the table
-        JTable table = new JTable(sorter);
-        // Use a scrollbar, in case there are many columns.
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        JTable table = new JTable(sorter); 
+	// Use a scrollbar, in case there are many columns. 
+	table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); 
 
         // Install a mouse listener in the TableHeader as the sorter UI.
         sorter.addMouseListenerToHeaderInTable(table);

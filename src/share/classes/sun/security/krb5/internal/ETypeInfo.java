@@ -32,12 +32,13 @@ import java.io.IOException;
 /**
  * Implements the ASN.1 ETYPE-INFO-ENTRY type.
  *
- * ETYPE-INFO-ENTRY     ::= SEQUENCE {
- *         etype        [0] Int32,
- *         salt         [1] OCTET STRING OPTIONAL
+ * ETYPE-INFO-ENTRY	::= SEQUENCE {
+ *	   etype	[0] Int32,
+ *	   salt		[1] OCTET STRING OPTIONAL
  *   }
  *
  * @author Seema Malkani
+ * @version %I%, %G%
  */
 
 public class ETypeInfo {
@@ -52,54 +53,54 @@ public class ETypeInfo {
     }
 
     public ETypeInfo(int etype, byte[] salt) {
-        this.etype = etype;
-        if (salt != null) {
-            this.salt = salt.clone();
-        }
+	this.etype = etype;
+	if (salt != null) {
+	    this.salt = salt.clone();
+	}
     }
 
     public Object clone() {
-        ETypeInfo etypeInfo = new ETypeInfo();
-        etypeInfo.etype = etype;
-        if (salt != null) {
-            etypeInfo.salt = new byte[salt.length];
-            System.arraycopy(salt, 0, etypeInfo.salt, 0, salt.length);
-        }
-        return etypeInfo;
+	ETypeInfo etypeInfo = new ETypeInfo();
+	etypeInfo.etype = etype;
+	if (salt != null) {
+	    etypeInfo.salt = new byte[salt.length];
+	    System.arraycopy(salt, 0, etypeInfo.salt, 0, salt.length);
+	}
+	return etypeInfo;
     }
 
     /**
      * Constructs a ETypeInfo object.
      * @param encoding a DER-encoded data.
-     * @exception Asn1Exception if an error occurs while decoding an
+     * @exception Asn1Exception if an error occurs while decoding an 
      *            ASN1 encoded data.
      * @exception IOException if an I/O error occurs while reading encoded data.
      */
-    public ETypeInfo(DerValue encoding) throws Asn1Exception, IOException {
-        DerValue der = null;
+    public ETypeInfo(DerValue encoding) throws Asn1Exception, IOException { 
+	DerValue der = null; 
 
-        if (encoding.getTag() != DerValue.tag_Sequence) {
+	if (encoding.getTag() != DerValue.tag_Sequence) {
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-        }
+	}
 
-        // etype
-        der = encoding.getData().getDerValue();
-        if ((der.getTag() & 0x1F) == 0x00) {
-            this.etype = der.getData().getBigInteger().intValue();
-        }
-        else
+	// etype
+	der = encoding.getData().getDerValue();
+	if ((der.getTag() & 0x1F) == 0x00) {
+	    this.etype = der.getData().getBigInteger().intValue();
+	}
+	else
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
 
-        // salt
-        if (encoding.getData().available() > 0) {
-            der = encoding.getData().getDerValue();
-            if ((der.getTag() & 0x1F) == 0x01) {
-                this.salt = der.getData().getOctetString();
-            }
-        }
+	// salt
+	if (encoding.getData().available() > 0) {
+	    der = encoding.getData().getDerValue();
+	    if ((der.getTag() & 0x1F) == 0x01) {
+		this.salt = der.getData().getOctetString();
+	    }
+	}
 
-        if (encoding.getData().available() > 0)
-            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+	if (encoding.getData().available() > 0) 
+	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
     }
 
     /**
@@ -111,32 +112,32 @@ public class ETypeInfo {
      */
     public byte[] asn1Encode() throws Asn1Exception, IOException {
 
-        DerOutputStream bytes = new DerOutputStream();
-        DerOutputStream temp = new DerOutputStream();
+	DerOutputStream bytes = new DerOutputStream();		 
+	DerOutputStream temp = new DerOutputStream();
+		
+	temp.putInteger(etype);
+	bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, 
+					TAG_TYPE), temp);
 
-        temp.putInteger(etype);
-        bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true,
-                                        TAG_TYPE), temp);
-
-        if (salt != null) {
-            temp = new DerOutputStream();
-            temp.putOctetString(salt);
-            bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true,
-                                        TAG_VALUE), temp);
-        }
-
-        temp = new DerOutputStream();
-        temp.write(DerValue.tag_Sequence, bytes);
-        return temp.toByteArray();
+	if (salt != null) {
+	    temp = new DerOutputStream();
+	    temp.putOctetString(salt);
+	    bytes.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, 
+					TAG_VALUE), temp);
+	}
+	
+	temp = new DerOutputStream();
+	temp.write(DerValue.tag_Sequence, bytes);
+	return temp.toByteArray();
     }
 
     // accessor methods
     public int getEType() {
-        return etype;
+	return etype;
     }
 
     public byte[] getSalt() {
-        return ((salt == null) ? null : salt.clone());
+	return ((salt == null) ? null : salt.clone());
     }
 
 }

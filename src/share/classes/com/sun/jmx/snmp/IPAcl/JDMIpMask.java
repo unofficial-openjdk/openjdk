@@ -51,13 +51,13 @@ class JDMIpMask extends Host {
   public static Node jjtCreate(Parser p, int id) {
       return new JDMIpMask(p, id);
   }
-
+  
   protected String getHname() {
-        return address.toString();
+	return address.toString();
   }
-
-  protected PrincipalImpl createAssociatedPrincipal()
-    throws UnknownHostException {
+  
+  protected PrincipalImpl createAssociatedPrincipal() 
+    throws UnknownHostException { 
       return new GroupImpl(address.toString());
   }
 }

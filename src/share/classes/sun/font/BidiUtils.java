@@ -43,7 +43,7 @@ public final class BidiUtils {
 
     /**
      * Return the level of each character into the levels array starting at start.
-     * This is a convenience method for clients who prefer to use an explicit levels
+     * This is a convenience method for clients who prefer to use an explicit levels 
      * array instead of iterating over the runs.
      *
      * @param levels the array to receive the character levels
@@ -52,23 +52,23 @@ public final class BidiUtils {
      * <code>start + getLength()</code> is greater than <code>levels.length</code>.
      */
     public static void getLevels(Bidi bidi, byte[] levels, int start) {
-        int limit = start + bidi.getLength();
+	int limit = start + bidi.getLength();
 
         if (start < 0 || limit > levels.length) {
-            throw new IndexOutOfBoundsException("levels.length = " + levels.length +
-                " start: " + start + " limit: " + limit);
-        }
+	    throw new IndexOutOfBoundsException("levels.length = " + levels.length + 
+		" start: " + start + " limit: " + limit);
+	}
 
-        int runCount = bidi.getRunCount();
-        int p = start;
-        for (int i = 0; i < runCount; ++i) {
-            int rlimit = start + bidi.getRunLimit(i);
-            byte rlevel = (byte)bidi.getRunLevel(i);
+	int runCount = bidi.getRunCount();
+	int p = start;
+	for (int i = 0; i < runCount; ++i) {
+	    int rlimit = start + bidi.getRunLimit(i);
+	    byte rlevel = (byte)bidi.getRunLevel(i);
 
-            while (p < rlimit) {
-                levels[p++] = rlevel;
-            }
-        }
+	    while (p < rlimit) {
+		levels[p++] = rlevel;
+	    }
+	}
     }
 
     /**
@@ -76,9 +76,9 @@ public final class BidiUtils {
      * @return an array containing the level of each character, in logical order.
      */
     public static byte[] getLevels(Bidi bidi) {
-        byte[] levels = new byte[bidi.getLength()];
-        getLevels(bidi, levels, 0);
-        return levels;
+	byte[] levels = new byte[bidi.getLength()];
+	getLevels(bidi, levels, 0);
+	return levels;
     }
 
     static final char NUMLEVELS = 62;
@@ -167,7 +167,7 @@ public final class BidiUtils {
 
 
     /**
-     * Return an array containing contiguous values from 0 to length
+     * Return an array containing contiguous values from 0 to length 
      * having the same ordering as the source array. If this would be
      * a canonical ltr ordering, return null.  The data in values[] is NOT
      * required to be a permutation, but elements in values are required
@@ -186,7 +186,7 @@ public final class BidiUtils {
     /**
      * Compute a contiguous order for the range start, limit.
      */
-    private static int[] computeContiguousOrder(int[] values, int start,
+    private static int[] computeContiguousOrder(int[] values, int start, 
                                                 int limit) {
 
         int[] result = new int[limit-start];
@@ -236,8 +236,8 @@ public final class BidiUtils {
     }
 
     /**
-     * Return an array containing the data in the values array from start up to limit,
-     * normalized to fall within the range from 0 up to limit - start.
+     * Return an array containing the data in the values array from start up to limit, 
+     * normalized to fall within the range from 0 up to limit - start.  
      * If this would be a canonical ltr ordering, return null.
      * NOTE: This method assumes that values[] is a logical to visual map
      * generated from levels[].
@@ -245,9 +245,9 @@ public final class BidiUtils {
      * @param levels the levels corresponding to the values
      * @param start the starting offset in the values and levels arrays
      * @param limit the limiting offset in the values and levels arrays
-     * @return the normlized map
+     * @return the normlized map 
      */
-    public static int[] createNormalizedMap(int[] values, byte[] levels,
+    public static int[] createNormalizedMap(int[] values, byte[] levels, 
                                            int start, int limit) {
 
         if (values != null) {

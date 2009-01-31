@@ -27,9 +27,20 @@
 
 SUNWprivate_1.1 {
 	global:
-		JLI_Launch;
+		JLI_ParseManifest;
+		JLI_JarUnpackFile;
+		JLI_FreeManifest;
 		JLI_ManifestIterate;
-		JLI_SetTraceLauncher;
+		JLI_ExactVersionId;
+		JLI_PrefixVersionId;
+		JLI_AcceptableRelease;
+		JLI_ValidVersionString;
+		JLI_WildcardExpandClasspath;
+		JLI_MemAlloc;
+		JLI_MemRealloc;
+		JLI_StringDup;
+		JLI_MemFree;
+
 	local:
 		*;
 };

@@ -58,13 +58,14 @@ package javax.naming.ldap;
   * A program would use then these classes as follows:
   *<blockquote><pre>
   * GetTimeResponse resp =
-  *     (GetTimeResponse) ectx.extendedOperation(new GetTimeRequest());
+  * 	(GetTimeResponse) ectx.extendedOperation(new GetTimeRequest());
   * java.util.Date now = resp.getDate();
   *</pre></blockquote>
-  *
+  * 
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author Vincent Ryan
+  * @version %I% %E%
   *
   * @see ExtendedRequest
   * @since 1.3
@@ -77,7 +78,7 @@ public interface ExtendedResponse extends java.io.Serializable {
       * The LDAP protocol specifies that the response object identifier is optional.
       * If the server does not send it, the response will contain no ID (i.e. null).
       *
-      * @return A possibly null object identifier string representing the LDAP
+      * @return	A possibly null object identifier string representing the LDAP
       *         <tt>ExtendedResponse.responseName</tt> component.
       */
     public String getID();

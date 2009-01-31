@@ -46,20 +46,20 @@ public class SimpleProvider extends AttachProvider {
     }
 
     public String name() {
-        return "simple";
+	return "simple";
     }
 
     public String type() {
-        return "none";
+	return "none";
     }
 
-    public VirtualMachine attachVirtualMachine(String id)
-        throws AttachNotSupportedException, IOException
+    public VirtualMachine attachVirtualMachine(String id) 
+	throws AttachNotSupportedException, IOException
     {
-        if (!id.startsWith("simple:")) {
-            throw new AttachNotSupportedException("id not recognized");
-        }
-        return new SimpleVirtualMachine(this, id);
+	if (!id.startsWith("simple:")) {
+	    throw new AttachNotSupportedException("id not recognized");
+	}
+	return new SimpleVirtualMachine(this, id);
     }
 
     public List<VirtualMachineDescriptor> listVirtualMachines() {
@@ -74,9 +74,9 @@ class SimpleVirtualMachine extends VirtualMachine {
 
     public void detach() throws IOException {
     }
-
-    public void loadAgentLibrary(String agentLibrary, String options)
-        throws IOException, AgentLoadException, AgentInitializationException
+ 
+    public void loadAgentLibrary(String agentLibrary, String options) 
+	throws IOException, AgentLoadException, AgentInitializationException 
     {
     }
 
@@ -91,11 +91,11 @@ class SimpleVirtualMachine extends VirtualMachine {
     }
 
     public Properties getSystemProperties() throws IOException {
-        return new Properties();
+	return new Properties();
     }
 
     public Properties getAgentProperties() throws IOException {
-        return new Properties();
+	return new Properties();
     }
 
     public void dataDumpRequest() throws IOException {

@@ -24,7 +24,7 @@
  */
 
 /*
- * Monitor interface    10/25/94
+ * Monitor interface	10/25/94
  *
  * Private data structures and interfaces used in the monitor code.
  * This file is used to share declarations and such between the different
@@ -58,8 +58,8 @@ struct monitor_waiter {
 };
 
 struct monitor_wait_queue {
-    monitor_waiter_t   *head;           /* linked list of waiting threads */
-    short               count;          /* number of waiters on the list */
+    monitor_waiter_t   *head;		/* linked list of waiting threads */
+    short		count;		/* number of waiters on the list */
 };
 
 #define ANY_WAITING(mwq) ((mwq).count > 0)
@@ -67,26 +67,26 @@ struct monitor_wait_queue {
 
 /* The system-level monitor data structure */
 struct sys_mon {
-    mutex_t             mutex;          /* The monitor's mutex */
-    condvar_t           cv_monitor;     /* Notify those doing monitorWait on
-                                           the monitor */
+    mutex_t     	mutex;          /* The monitor's mutex */
+    condvar_t		cv_monitor;	/* Notify those doing monitorWait on
+					   the monitor */
     /*
      * Threads waiting on either of the above condvars put themselves
      * on one of these lists.
      */
-    monitor_wait_queue_t mwait_queue;   /* Head of MonitorWaitQ */
+    monitor_wait_queue_t mwait_queue;	/* Head of MonitorWaitQ */
 
     /* Thread currently executing in this monitor */
-    sys_thread_t        *monitor_owner;
-    long                entry_count;    /* Recursion depth */
+    sys_thread_t 	*monitor_owner;
+    long        	entry_count;    /* Recursion depth */
     int                 contention_count;
 };
 
 void initializeContentionCountMutex();
 
 typedef enum {
-        ASYNC_REGISTER,
-        ASYNC_UNREGISTER
+	ASYNC_REGISTER,
+	ASYNC_UNREGISTER
 } async_action_t;
 
 /*
@@ -96,11 +96,11 @@ typedef enum {
 #define SYS_MID_NULL ((sys_mon_t *) 0)
 
 typedef enum {
-        SYS_ASYNC_MON_ALARM = 1,
-        SYS_ASYNC_MON_IO,
-        SYS_ASYNC_MON_EVENT,
-        SYS_ASYNC_MON_CHILD,
-        SYS_ASYNC_MON_MAX
+	SYS_ASYNC_MON_ALARM = 1,
+ 	SYS_ASYNC_MON_IO,
+ 	SYS_ASYNC_MON_EVENT,
+	SYS_ASYNC_MON_CHILD,
+ 	SYS_ASYNC_MON_MAX
 } async_mon_key_t;
 
 #define SYS_ASYNC_MON_INPUT SYS_ASYNC_MON_IO
@@ -109,3 +109,4 @@ typedef enum {
 sys_mon_t *asyncMon(async_mon_key_t);
 
 #endif /* !_JAVASOFT_SOLARIS_MONITOR_MD_H_ */
+

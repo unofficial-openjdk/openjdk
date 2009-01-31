@@ -31,9 +31,9 @@
  * LoopMacros.h to manipulate a surface of type "AnyShort".
  */
 
-typedef jshort  AnyShortDataType;
+typedef jshort	AnyShortDataType;
 
-#define AnyShortPixelStride     2
+#define AnyShortPixelStride	2
 
 #define DeclareAnyShortLoadVars(PREFIX)
 #define DeclareAnyShortStoreVars(PREFIX)

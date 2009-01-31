@@ -273,6 +273,8 @@ $(ACTUAL_LIBRARY_DIR)/%: $(JDK_IMPORT_PATH)/$(ARCH_VM_SUBDIR)/native_threads/%
 	$(install-import-file)
 $(ACTUAL_LIBRARY_DIR)/%: $(JDK_IMPORT_PATH)/$(ARCH_VM_SUBDIR)/headless/%
 	$(install-import-file)
+$(ACTUAL_LIBRARY_DIR)/%: $(JDK_IMPORT_PATH)/$(ARCH_VM_SUBDIR)/motif21/%
+	$(install-import-file)
 $(ACTUAL_LIBRARY_DIR)/%: $(JDK_IMPORT_PATH)/$(ARCH_VM_SUBDIR)/xawt/%
 	$(install-import-file)
 else # fdlibm

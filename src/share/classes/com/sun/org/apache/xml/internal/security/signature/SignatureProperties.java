@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
 public class SignatureProperties extends SignatureElementProxy {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(SignatureProperties.class.getName());
 
    /**
@@ -75,7 +75,7 @@ public class SignatureProperties extends SignatureElementProxy {
     * @return the number of SignatureProperty elements
     */
    public int getLength() {
-
+      
          Element[] propertyElems =
             XMLUtils.selectDsNodes(this._constructionElement,
                                      Constants._TAG_SIGNATUREPROPERTY
@@ -93,16 +93,16 @@ public class SignatureProperties extends SignatureElementProxy {
     * @throws XMLSignatureException
     */
    public SignatureProperty item(int i) throws XMLSignatureException {
-          try {
+   	  try {
          Element propertyElem =
-            XMLUtils.selectDsNode(this._constructionElement,
-                                 Constants._TAG_SIGNATUREPROPERTY,
+            XMLUtils.selectDsNode(this._constructionElement, 
+                                 Constants._TAG_SIGNATUREPROPERTY, 
                                  i );
 
          if (propertyElem == null) {
             return null;
-         }
-         return new SignatureProperty(propertyElem, this._baseURI);
+         } 
+         return new SignatureProperty(propertyElem, this._baseURI);               
       } catch (XMLSecurityException ex) {
          throw new XMLSignatureException("empty", ex);
       }

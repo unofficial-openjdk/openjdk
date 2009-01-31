@@ -46,15 +46,15 @@ import sun.awt.dnd.SunDropTargetEvent;
  * @since 1.5
  */
 final class XDropTargetRegistry {
-    private static final Logger logger =
+    private static final Logger logger = 
         Logger.getLogger("sun.awt.X11.xembed.xdnd.XDropTargetRegistry");
 
     private static final long DELAYED_REGISTRATION_PERIOD = 200;
 
-    private static final XDropTargetRegistry theInstance =
-        new XDropTargetRegistry();
+    private static final XDropTargetRegistry theInstance = 
+        new XDropTargetRegistry(); 
 
-    private final HashMap<Long, Runnable> delayedRegistrationMap =
+    private final HashMap<Long, Runnable> delayedRegistrationMap = 
         new HashMap<Long, Runnable>();
 
     private XDropTargetRegistry() {}
@@ -75,8 +75,8 @@ final class XDropTargetRegistry {
                 return toplevel.getWindow();
             }
         }
-
-        /* Traverse the ancestor tree from window up to the root and find
+        
+        /* Traverse the ancestor tree from window up to the root and find 
            the top-level client window nearest to the root. */
         do {
             if (XlibUtil.isTrueToplevelWindow(window)) {
@@ -99,7 +99,7 @@ final class XDropTargetRegistry {
         private final long event_mask;
         private List<XDropTargetProtocol> supportedProtocols;
         private final HashSet<Long> nonXEmbedClientSites = new HashSet<Long>();
-        private final List<Long> sites = new ArrayList<Long>();
+        private final List<Long> sites = new ArrayList<Long>();  
 
         public EmbeddedDropSiteEntry(long root, long event_mask,
                                      List<XDropTargetProtocol> supportedProtocols) {
@@ -136,7 +136,7 @@ final class XDropTargetRegistry {
         }
         public void setSupportedProtocols(List<XDropTargetProtocol> list) {
             supportedProtocols = list;
-        }
+        }            
         public List<XDropTargetProtocol> getSupportedProtocols() {
             return supportedProtocols;
         }
@@ -177,14 +177,14 @@ final class XDropTargetRegistry {
                                                                       window, wattr.pData);
                         XToolkit.RESTORE_XERROR_HANDLER();
 
-                        if (status == 0 ||
-                            (XToolkit.saved_error != null &&
+                        if (status == 0 || 
+                            (XToolkit.saved_error != null && 
                              XToolkit.saved_error.get_error_code() != XlibWrapper.Success)) {
                             continue;
                         }
 
                         if (wattr.get_map_state() != XlibWrapper.IsUnmapped
-                            && dest_x < wattr.get_width()
+                            && dest_x < wattr.get_width() 
                             && dest_y < wattr.get_height()) {
                             return window;
                         }
@@ -197,19 +197,19 @@ final class XDropTargetRegistry {
         }
     }
 
-    private final HashMap<Long, EmbeddedDropSiteEntry> embeddedDropSiteRegistry =
+    private final HashMap<Long, EmbeddedDropSiteEntry> embeddedDropSiteRegistry = 
         new HashMap<Long, EmbeddedDropSiteEntry>();
 
     private EmbeddedDropSiteEntry registerEmbedderDropSite(long embedder) {
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
-        Iterator dropTargetProtocols =
+        Iterator dropTargetProtocols = 
             XDragAndDropProtocols.getDropTargetProtocols();
         // The list of protocols supported by the embedder.
         List<XDropTargetProtocol> embedderProtocols = new ArrayList();
-
+        
         while (dropTargetProtocols.hasNext()) {
-            XDropTargetProtocol dropTargetProtocol =
+            XDropTargetProtocol dropTargetProtocol = 
                 (XDropTargetProtocol)dropTargetProtocols.next();
             if (dropTargetProtocol.isProtocolSupported(embedder)) {
                 embedderProtocols.add(dropTargetProtocol);
@@ -218,7 +218,7 @@ final class XDropTargetRegistry {
 
         embedderProtocols = Collections.unmodifiableList(embedderProtocols);
 
-        /* Grab server, since we are working with the window that belongs to
+        /* Grab server, since we are working with the window that belongs to 
            another client. */
         XlibWrapper.XGrabServer(XToolkit.getDisplay());
         try {
@@ -231,12 +231,12 @@ final class XDropTargetRegistry {
                                                               embedder, wattr.pData);
                 XToolkit.RESTORE_XERROR_HANDLER();
 
-                if (status == 0 ||
-                    (XToolkit.saved_error != null &&
+                if (status == 0 || 
+                    (XToolkit.saved_error != null && 
                      XToolkit.saved_error.get_error_code() != XlibWrapper.Success)) {
                     throw new XException("XGetWindowAttributes failed");
                 }
-
+             
                 event_mask = wattr.get_your_event_mask();
                 root = wattr.get_root();
             } finally {
@@ -248,8 +248,8 @@ final class XDropTargetRegistry {
                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), embedder,
                                          event_mask | XlibWrapper.PropertyChangeMask);
                 XToolkit.RESTORE_XERROR_HANDLER();
-
-                if (XToolkit.saved_error != null &&
+                
+                if (XToolkit.saved_error != null && 
                     XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                     throw new XException("XSelectInput failed");
                 }
@@ -267,15 +267,15 @@ final class XDropTargetRegistry {
     private void registerProtocols(long embedder, boolean protocols,
                                    List<XDropTargetProtocol> supportedProtocols) {
         Iterator dropTargetProtocols = null;
-
+        
         /*
          * By default, we register a drop site that supports all dnd
          * protocols. This approach is not appropriate in plugin
          * scenario if the browser supports Motif DnD and doesn't support
          * XDnD. If we forcibly set XdndAware on the browser toplevel, any drag
          * source that supports both protocols and prefers XDnD will be unable
-         * to drop anything on the browser.
-         * The solution for this problem is not to register XDnD drop site
+         * to drop anything on the browser. 
+         * The solution for this problem is not to register XDnD drop site 
          * if the browser supports only Motif DnD.
          * In general, if the browser already supports some protocols, we
          * register the embedded drop site only for those protocols. Otherwise
@@ -288,18 +288,18 @@ final class XDropTargetRegistry {
                 XDragAndDropProtocols.getDropTargetProtocols();
         }
 
-        /* Grab server, since we are working with the window that belongs to
+        /* Grab server, since we are working with the window that belongs to 
            another client. */
         XlibWrapper.XGrabServer(XToolkit.getDisplay());
         try {
             while (dropTargetProtocols.hasNext()) {
-                XDropTargetProtocol dropTargetProtocol =
+                XDropTargetProtocol dropTargetProtocol = 
                     (XDropTargetProtocol)dropTargetProtocols.next();
-                if ((protocols == XEMBED_PROTOCOLS) ==
+                if ((protocols == XEMBED_PROTOCOLS) == 
                     dropTargetProtocol.isXEmbedSupported()) {
                     dropTargetProtocol.registerEmbedderDropSite(embedder);
                 }
-            }
+            }            
         } finally {
             XlibWrapper.XUngrabServer(XToolkit.getDisplay());
         }
@@ -314,13 +314,13 @@ final class XDropTargetRegistry {
 
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
-        Iterator dropTargetProtocols =
+        Iterator dropTargetProtocols = 
             XDragAndDropProtocols.getDropTargetProtocols();
         // The list of protocols supported by the embedder.
         List<XDropTargetProtocol> embedderProtocols = new ArrayList();
-
+        
         while (dropTargetProtocols.hasNext()) {
-            XDropTargetProtocol dropTargetProtocol =
+            XDropTargetProtocol dropTargetProtocol = 
                 (XDropTargetProtocol)dropTargetProtocols.next();
             if (dropTargetProtocol.isProtocolSupported(embedder)) {
                 embedderProtocols.add(dropTargetProtocol);
@@ -332,7 +332,7 @@ final class XDropTargetRegistry {
         Long lToplevel = new Long(embedder);
         boolean isXEmbedServer = false;
         synchronized (this) {
-            EmbeddedDropSiteEntry entry =
+            EmbeddedDropSiteEntry entry = 
                 (EmbeddedDropSiteEntry)embeddedDropSiteRegistry.get(lToplevel);
             if (entry == null) {
                 return;
@@ -347,8 +347,8 @@ final class XDropTargetRegistry {
          * scenario if the browser supports Motif DnD and doesn't support
          * XDnD. If we forcibly set XdndAware on the browser toplevel, any drag
          * source that supports both protocols and prefers XDnD will be unable
-         * to drop anything on the browser.
-         * The solution for this problem is not to register XDnD drop site
+         * to drop anything on the browser. 
+         * The solution for this problem is not to register XDnD drop site 
          * if the browser supports only Motif DnD.
          * In general, if the browser already supports some protocols, we
          * register the embedded drop site only for those protocols. Otherwise
@@ -361,38 +361,38 @@ final class XDropTargetRegistry {
                 XDragAndDropProtocols.getDropTargetProtocols();
         }
 
-        /* Grab server, since we are working with the window that belongs to
+        /* Grab server, since we are working with the window that belongs to 
            another client. */
         XlibWrapper.XGrabServer(XToolkit.getDisplay());
         try {
             while (dropTargetProtocols.hasNext()) {
-                XDropTargetProtocol dropTargetProtocol =
+                XDropTargetProtocol dropTargetProtocol = 
                     (XDropTargetProtocol)dropTargetProtocols.next();
                 if (!isXEmbedServer || !dropTargetProtocol.isXEmbedSupported()) {
                     dropTargetProtocol.registerEmbedderDropSite(embedder);
                 }
-            }
+            }            
         } finally {
             XlibWrapper.XUngrabServer(XToolkit.getDisplay());
         }
     }
 
-    private void unregisterEmbedderDropSite(long embedder,
+    private void unregisterEmbedderDropSite(long embedder, 
                                             EmbeddedDropSiteEntry entry) {
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
-        Iterator dropTargetProtocols =
+        Iterator dropTargetProtocols = 
             XDragAndDropProtocols.getDropTargetProtocols();
 
-        /* Grab server, since we are working with the window that belongs to
+        /* Grab server, since we are working with the window that belongs to 
            another client. */
         XlibWrapper.XGrabServer(XToolkit.getDisplay());
         try {
             while (dropTargetProtocols.hasNext()) {
-                XDropTargetProtocol dropTargetProtocol =
+                XDropTargetProtocol dropTargetProtocol = 
                     (XDropTargetProtocol)dropTargetProtocols.next();
                 dropTargetProtocol.unregisterEmbedderDropSite(embedder);
-            }
+            }            
 
             long event_mask = entry.getEventMask();
 
@@ -402,8 +402,8 @@ final class XDropTargetRegistry {
                 XlibWrapper.XSelectInput(XToolkit.getDisplay(), embedder,
                                          event_mask);
                 XToolkit.RESTORE_XERROR_HANDLER();
-
-                if (XToolkit.saved_error != null &&
+                
+                if (XToolkit.saved_error != null && 
                     XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                     throw new XException("XSelectInput failed");
                 }
@@ -415,7 +415,7 @@ final class XDropTargetRegistry {
 
     private void registerEmbeddedDropSite(long toplevel, long window) {
         XBaseWindow xBaseWindow = XToolkit.windowToXWindow(window);
-        boolean isXEmbedClient =
+        boolean isXEmbedClient = 
             (xBaseWindow instanceof XEmbeddedFramePeer) &&
             ((XEmbeddedFramePeer)xBaseWindow).isXEmbedActive();
 
@@ -442,7 +442,7 @@ final class XDropTargetRegistry {
                     // Register an XEmbed drop site.
                     peer.setXEmbedDropTarget();
                     // Create a dummy entry to register the embedded site.
-                    entry = new EmbeddedDropSiteEntry(0, 0,
+                    entry = new EmbeddedDropSiteEntry(0, 0, 
                                                       Collections.<XDropTargetProtocol>emptyList());
                 } else {
                     // Foreign toplevel.
@@ -451,38 +451,38 @@ final class XDropTargetRegistry {
                     // protocols.
                     entry = registerEmbedderDropSite(toplevel);
                     // Register the toplevel with all DnD protocols that are not
-                    // supported by XEmbed - actually setup a proxy, so that
+                    // supported by XEmbed - actually setup a proxy, so that 
                     // all DnD notifications sent to the toplevel are first
                     // routed to us.
-                    registerProtocols(toplevel, NON_XEMBED_PROTOCOLS,
+                    registerProtocols(toplevel, NON_XEMBED_PROTOCOLS, 
                                       entry.getSupportedProtocols());
                 }
                 embeddedDropSiteRegistry.put(lToplevel, entry);
             }
         }
-
+        
         assert entry != null;
 
         synchronized (entry) {
             // For a foreign toplevel.
-            if (peer == null) {
+            if (peer == null) { 
                 if (!isXEmbedClient) {
                     // Since this is not an XEmbed client we can no longer rely
                     // on XEmbed to route DnD notifications even for DnD
                     // protocols that are supported by XEmbed.
-                    // We rollback to the XEmbed-unfriendly solution - setup
+                    // We rollback to the XEmbed-unfriendly solution - setup 
                     // a proxy, so that all DnD notifications sent to the
                     // toplevel are first routed to us.
                     registerProtocols(toplevel, XEMBED_PROTOCOLS,
                                       entry.getSupportedProtocols());
                 } else {
-                    Iterator dropTargetProtocols =
+                    Iterator dropTargetProtocols = 
                         XDragAndDropProtocols.getDropTargetProtocols();
-
+                    
                     // Register the embedded window as a plain drop site with
                     // all DnD protocols that are supported by XEmbed.
                     while (dropTargetProtocols.hasNext()) {
-                        XDropTargetProtocol dropTargetProtocol =
+                        XDropTargetProtocol dropTargetProtocol = 
                             (XDropTargetProtocol)dropTargetProtocols.next();
                         if (dropTargetProtocol.isXEmbedSupported()) {
                             dropTargetProtocol.registerEmbedderDropSite(window);
@@ -531,7 +531,7 @@ final class XDropTargetRegistry {
     public long getEmbeddedDropSite(long embedder, int x, int y) {
         Long lToplevel = Long.valueOf(embedder);
         EmbeddedDropSiteEntry entry =
-            (EmbeddedDropSiteEntry)embeddedDropSiteRegistry.get(lToplevel);
+            (EmbeddedDropSiteEntry)embeddedDropSiteRegistry.get(lToplevel); 
         if (entry == null) {
             return 0;
         }
@@ -541,7 +541,7 @@ final class XDropTargetRegistry {
     public void registerDropSite(long window) {
         if (window == 0) {
             throw new IllegalArgumentException();
-        }
+        }        
 
         XDropTargetEventProcessor.activate();
 
@@ -555,7 +555,7 @@ final class XDropTargetRegistry {
              * toplevel, we cannot determine which window will eventually have
              * WM_STATE property set. So we schedule a timer callback that will
              * periodically attempt to find an ancestor with WM_STATE and
-             * register the drop site appropriately.
+             * register the drop site appropriately. 
              */
             if (toplevel == 0) {
                 addDelayedRegistrationEntry(window);
@@ -563,11 +563,11 @@ final class XDropTargetRegistry {
             }
 
             if (toplevel == window) {
-                Iterator dropTargetProtocols =
+                Iterator dropTargetProtocols = 
                     XDragAndDropProtocols.getDropTargetProtocols();
-
+        
                 while (dropTargetProtocols.hasNext()) {
-                    XDropTargetProtocol dropTargetProtocol =
+                    XDropTargetProtocol dropTargetProtocol = 
                         (XDropTargetProtocol)dropTargetProtocols.next();
                     dropTargetProtocol.registerDropTarget(toplevel);
                 }
@@ -589,11 +589,11 @@ final class XDropTargetRegistry {
             long toplevel = getToplevelWindow(window);
 
             if (toplevel == window) {
-                Iterator dropProtocols =
+                Iterator dropProtocols = 
                     XDragAndDropProtocols.getDropTargetProtocols();
 
                 removeDelayedRegistrationEntry(window);
-
+        
                 while (dropProtocols.hasNext()) {
                     XDropTargetProtocol dropProtocol = (XDropTargetProtocol)dropProtocols.next();
                     dropProtocol.unregisterDropTarget(window);
@@ -607,15 +607,15 @@ final class XDropTargetRegistry {
     }
 
     public void registerXEmbedClient(long canvasWindow, long clientWindow) {
-        // If the client has an associated XDnD drop site, add a drop target
+        // If the client has an associated XDnD drop site, add a drop target 
         // to the XEmbedCanvasPeer's target to route drag notifications to the
         // client.
 
-        XDragSourceProtocol xdndDragProtocol =
+        XDragSourceProtocol xdndDragProtocol = 
             XDragAndDropProtocols.getDragSourceProtocol(XDragAndDropProtocols.XDnD);
-        XDragSourceProtocol.TargetWindowInfo info =
+        XDragSourceProtocol.TargetWindowInfo info = 
             xdndDragProtocol.getTargetWindowInfo(clientWindow);
-        if (info != null &&
+        if (info != null && 
             info.getProtocolVersion() >= XDnDConstants.XDND_MIN_PROTOCOL_VERSION) {
 
             if (logger.isLoggable(Level.FINE)) {
@@ -623,11 +623,11 @@ final class XDropTargetRegistry {
             }
             registerEmbeddedDropSite(canvasWindow, clientWindow);
 
-            Iterator dropTargetProtocols =
+            Iterator dropTargetProtocols = 
                 XDragAndDropProtocols.getDropTargetProtocols();
 
             while (dropTargetProtocols.hasNext()) {
-                XDropTargetProtocol dropTargetProtocol =
+                XDropTargetProtocol dropTargetProtocol = 
                     (XDropTargetProtocol)dropTargetProtocols.next();
                 dropTargetProtocol.registerEmbeddedDropSite(clientWindow);
             }
@@ -642,11 +642,11 @@ final class XDropTargetRegistry {
         if (logger.isLoggable(Level.FINE)) {
             logger.fine("        XEmbed drop site will be unregistered for " + Long.toHexString(clientWindow));
         }
-        Iterator dropTargetProtocols =
+        Iterator dropTargetProtocols = 
             XDragAndDropProtocols.getDropTargetProtocols();
-
+        
         while (dropTargetProtocols.hasNext()) {
-            XDropTargetProtocol dropTargetProtocol =
+            XDropTargetProtocol dropTargetProtocol = 
                 (XDropTargetProtocol)dropTargetProtocols.next();
             dropTargetProtocol.unregisterEmbeddedDropSite(clientWindow);
         }
@@ -694,3 +694,4 @@ final class XDropTargetRegistry {
     }
     /*******************************************************************************/
 }
+

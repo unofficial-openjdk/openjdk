@@ -27,7 +27,7 @@ package javax.management;
 
 
 /**
- * Represents a notification emitted by the MBean server through the MBeanServerDelegate MBean.
+ * Represents a notification emitted by the MBean server through the MBeanServerDelegate MBean. 
  * The MBean Server emits the following types of notifications: MBean registration, MBean
  * de-registration.
  * <P>
@@ -38,28 +38,28 @@ package javax.management;
  *
  * @since 1.5
  */
- public class MBeanServerNotification extends Notification   {
-
+ public class MBeanServerNotification extends Notification   { 
+     
 
      /* Serial version */
      private static final long serialVersionUID = 2876477500475969677L;
 
      /**
       * Notification type denoting that an MBean has been registered. Value is "JMX.mbean.registered".
-      */
+      */  
      public static final String REGISTRATION_NOTIFICATION = "JMX.mbean.registered" ;
-
+     
      /**
       * Notification type denoting that an MBean has been unregistered. Value is "JMX.mbean.unregistered".
-      */
+      */  
      public static final String UNREGISTRATION_NOTIFICATION = "JMX.mbean.unregistered" ;
+          
 
-
-     /**
-      * @serial The object names of the MBeans concerned by this notification
+     /** 
+      * @serial The object names of the MBeans concerned by this notification 
       */
      private final ObjectName objectName;
-
+     
 
      /**
       * Creates an MBeanServerNotification object specifying object names of
@@ -75,19 +75,19 @@ package javax.management;
       * received notifications.
       * @param objectName The object name of the MBean that caused the notification.
       *
-      */
-     public MBeanServerNotification(String type, Object source, long sequenceNumber, ObjectName objectName ) {
-         super (type,source,sequenceNumber) ;
-         this.objectName =  objectName ;
-     }
-
+      */          
+     public MBeanServerNotification(String type, Object source, long sequenceNumber, ObjectName objectName ) { 
+	 super (type,source,sequenceNumber) ;
+	 this.objectName =  objectName ;
+     } 
+     
      /**
       * Returns the  object name of the MBean that caused the notification.
       *
       * @return the object name of the MBean that caused the notification.
       */
-     public ObjectName getMBeanName()  {
-         return objectName ;
-     }
+     public ObjectName getMBeanName()  { 
+	 return objectName ;
+     } 
 
  }

@@ -30,7 +30,7 @@ import java.security.spec.MGF1ParameterSpec;
 
 /**
  * This class specifies a parameter spec for RSA-PSS signature scheme,
- * as defined in the
+ * as defined in the 
  * <a href="http://www.ietf.org/rfc/rfc3447.txt">PKCS#1 v2.1</a>
  * standard.
  *
@@ -71,6 +71,7 @@ import java.security.spec.MGF1ParameterSpec;
  *
  * @author Valerie Peng
  *
+ * @version %I% %E%
  *
  * @since 1.4
  */
@@ -99,66 +100,66 @@ public class PSSParameterSpec implements AlgorithmParameterSpec {
     /**
      * Creates a new <code>PSSParameterSpec</code> as defined in
      * the PKCS #1 standard using the specified message digest,
-     * mask generation function, parameters for mask generation
+     * mask generation function, parameters for mask generation 
      * function, salt length, and trailer field values.
      *
      * @param mdName the algorithm name of the hash function.
-     * @param mgfName the algorithm name of the mask generation
+     * @param mgfName the algorithm name of the mask generation 
      * function.
-     * @param mgfSpec the parameters for the mask generation
-     * function. If null is specified, null will be returned by
+     * @param mgfSpec the parameters for the mask generation 
+     * function. If null is specified, null will be returned by 
      * getMGFParameters().
      * @param saltLen the length of salt.
      * @param trailerField the value of the trailer field.
-     * @exception NullPointerException if <code>mdName</code>,
+     * @exception NullPointerException if <code>mdName</code>, 
      * or <code>mgfName</code> is null.
      * @exception IllegalArgumentException if <code>saltLen</code>
      * or <code>trailerField</code> is less than 0.
      * @since 1.5
      */
-    public PSSParameterSpec(String mdName, String mgfName,
-                            AlgorithmParameterSpec mgfSpec,
-                            int saltLen, int trailerField) {
-        if (mdName == null) {
-            throw new NullPointerException("digest algorithm is null");
-        }
-        if (mgfName == null) {
-            throw new NullPointerException("mask generation function " +
-                                           "algorithm is null");
-        }
-        if (saltLen < 0) {
-            throw new IllegalArgumentException("negative saltLen value: " +
-                                               saltLen);
-        }
-        if (trailerField < 0) {
-            throw new IllegalArgumentException("negative trailerField: " +
-                                               trailerField);
-        }
+    public PSSParameterSpec(String mdName, String mgfName, 
+			    AlgorithmParameterSpec mgfSpec, 
+			    int saltLen, int trailerField) {
+	if (mdName == null) {
+	    throw new NullPointerException("digest algorithm is null");
+	}
+	if (mgfName == null) {
+	    throw new NullPointerException("mask generation function " +
+					   "algorithm is null");
+	}
+	if (saltLen < 0) {
+	    throw new IllegalArgumentException("negative saltLen value: " + 
+					       saltLen);
+	}
+	if (trailerField < 0) {
+	    throw new IllegalArgumentException("negative trailerField: " +
+					       trailerField);
+	}
         this.mdName = mdName;
         this.mgfName = mgfName;
         this.mgfSpec = mgfSpec;
-        this.saltLen = saltLen;
-        this.trailerField = trailerField;
+	this.saltLen = saltLen;
+	this.trailerField = trailerField;
     }
 
     /**
      * Creates a new <code>PSSParameterSpec</code>
-     * using the specified salt length and other default values as
+     * using the specified salt length and other default values as 
      * defined in PKCS#1.
      *
-     * @param saltLen the length of salt in bits to be used in PKCS#1
+     * @param saltLen the length of salt in bits to be used in PKCS#1 
      * PSS encoding.
      * @exception IllegalArgumentException if <code>saltLen</code> is
      * less than 0.
      */
     public PSSParameterSpec(int saltLen) {
-        if (saltLen < 0) {
-            throw new IllegalArgumentException("negative saltLen value: " +
-                                               saltLen);
-        }
-        this.saltLen = saltLen;
+	if (saltLen < 0) {
+	    throw new IllegalArgumentException("negative saltLen value: " + 
+					       saltLen);
+	}
+	this.saltLen = saltLen;
     }
-
+    
     /**
      * Returns the message digest algorithm name.
      *
@@ -196,7 +197,7 @@ public class PSSParameterSpec implements AlgorithmParameterSpec {
      * @return the salt length.
      */
     public int getSaltLength() {
-        return saltLen;
+	return saltLen;
     }
 
     /**
@@ -206,6 +207,6 @@ public class PSSParameterSpec implements AlgorithmParameterSpec {
      * @since 1.5
      */
     public int getTrailerField() {
-        return trailerField;
+	return trailerField;
     }
 }

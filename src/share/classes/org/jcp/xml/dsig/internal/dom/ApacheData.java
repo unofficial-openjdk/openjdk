@@ -31,7 +31,7 @@ import javax.xml.crypto.Data;
 import com.sun.org.apache.xml.internal.security.signature.XMLSignatureInput;
 
 /**
- * XMLSignatureInput Data wrapper.
+ * XMLSignatureInput Data wrapper. 
  *
  * @author Sean Mullan
  */

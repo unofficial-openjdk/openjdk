@@ -81,9 +81,10 @@ package java.util;
  * Java Collections Framework</a>.
  *
  * @author  Josh Bloch
- * @see     List
- * @see     ArrayList
- * @see     Vector
+ * @version %I%, %G%
+ * @see	    List
+ * @see	    ArrayList
+ * @see	    Vector
  * @since 1.2
  * @param <E> the type of elements held in this collection
  */
@@ -111,8 +112,8 @@ public class LinkedList<E>
      * @throws NullPointerException if the specified collection is null
      */
     public LinkedList(Collection<? extends E> c) {
-        this();
-        addAll(c);
+	this();
+	addAll(c);
     }
 
     /**
@@ -122,10 +123,10 @@ public class LinkedList<E>
      * @throws NoSuchElementException if this list is empty
      */
     public E getFirst() {
-        if (size==0)
-            throw new NoSuchElementException();
+	if (size==0)
+	    throw new NoSuchElementException();
 
-        return header.next.element;
+	return header.next.element;
     }
 
     /**
@@ -135,10 +136,10 @@ public class LinkedList<E>
      * @throws NoSuchElementException if this list is empty
      */
     public E getLast()  {
-        if (size==0)
-            throw new NoSuchElementException();
+	if (size==0)
+	    throw new NoSuchElementException();
 
-        return header.previous.element;
+	return header.previous.element;
     }
 
     /**
@@ -148,7 +149,7 @@ public class LinkedList<E>
      * @throws NoSuchElementException if this list is empty
      */
     public E removeFirst() {
-        return remove(header.next);
+	return remove(header.next);
     }
 
     /**
@@ -158,7 +159,7 @@ public class LinkedList<E>
      * @throws NoSuchElementException if this list is empty
      */
     public E removeLast() {
-        return remove(header.previous);
+	return remove(header.previous);
     }
 
     /**
@@ -167,7 +168,7 @@ public class LinkedList<E>
      * @param e the element to add
      */
     public void addFirst(E e) {
-        addBefore(e, header.next);
+	addBefore(e, header.next);
     }
 
     /**
@@ -178,7 +179,7 @@ public class LinkedList<E>
      * @param e the element to add
      */
     public void addLast(E e) {
-        addBefore(e, header);
+	addBefore(e, header);
     }
 
     /**
@@ -200,7 +201,7 @@ public class LinkedList<E>
      * @return the number of elements in this list
      */
     public int size() {
-        return size;
+	return size;
     }
 
     /**
@@ -212,7 +213,7 @@ public class LinkedList<E>
      * @return <tt>true</tt> (as specified by {@link Collection#add})
      */
     public boolean add(E e) {
-        addBefore(e, header);
+	addBefore(e, header);
         return true;
     }
 
@@ -287,11 +288,11 @@ public class LinkedList<E>
         int numNew = a.length;
         if (numNew==0)
             return false;
-        modCount++;
+	modCount++;
 
         Entry<E> successor = (index==size ? header : entry(index));
         Entry<E> predecessor = successor.previous;
-        for (int i=0; i<numNew; i++) {
+	for (int i=0; i<numNew; i++) {
             Entry<E> e = new Entry<E>((E)a[i], successor, predecessor);
             predecessor.next = e;
             predecessor = e;
@@ -315,7 +316,7 @@ public class LinkedList<E>
         }
         header.next = header.previous = header;
         size = 0;
-        modCount++;
+	modCount++;
     }
 
 
@@ -681,68 +682,68 @@ public class LinkedList<E>
      * @see List#listIterator(int)
      */
     public ListIterator<E> listIterator(int index) {
-        return new ListItr(index);
+	return new ListItr(index);
     }
 
     private class ListItr implements ListIterator<E> {
-        private Entry<E> lastReturned = header;
-        private Entry<E> next;
-        private int nextIndex;
-        private int expectedModCount = modCount;
+	private Entry<E> lastReturned = header;
+	private Entry<E> next;
+	private int nextIndex;
+	private int expectedModCount = modCount;
 
-        ListItr(int index) {
-            if (index < 0 || index > size)
-                throw new IndexOutOfBoundsException("Index: "+index+
-                                                    ", Size: "+size);
-            if (index < (size >> 1)) {
-                next = header.next;
-                for (nextIndex=0; nextIndex<index; nextIndex++)
-                    next = next.next;
-            } else {
-                next = header;
-                for (nextIndex=size; nextIndex>index; nextIndex--)
-                    next = next.previous;
-            }
-        }
+	ListItr(int index) {
+	    if (index < 0 || index > size)
+		throw new IndexOutOfBoundsException("Index: "+index+
+						    ", Size: "+size);
+	    if (index < (size >> 1)) {
+		next = header.next;
+		for (nextIndex=0; nextIndex<index; nextIndex++)
+		    next = next.next;
+	    } else {
+		next = header;
+		for (nextIndex=size; nextIndex>index; nextIndex--)
+		    next = next.previous;
+	    }
+	}
 
-        public boolean hasNext() {
-            return nextIndex != size;
-        }
+	public boolean hasNext() {
+	    return nextIndex != size;
+	}
 
-        public E next() {
-            checkForComodification();
-            if (nextIndex == size)
-                throw new NoSuchElementException();
+	public E next() {
+	    checkForComodification();
+	    if (nextIndex == size)
+		throw new NoSuchElementException();
 
-            lastReturned = next;
-            next = next.next;
-            nextIndex++;
-            return lastReturned.element;
-        }
+	    lastReturned = next;
+	    next = next.next;
+	    nextIndex++;
+	    return lastReturned.element;
+	}
 
-        public boolean hasPrevious() {
-            return nextIndex != 0;
-        }
+	public boolean hasPrevious() {
+	    return nextIndex != 0;
+	}
 
-        public E previous() {
-            if (nextIndex == 0)
-                throw new NoSuchElementException();
+	public E previous() {
+	    if (nextIndex == 0)
+		throw new NoSuchElementException();
 
-            lastReturned = next = next.previous;
-            nextIndex--;
-            checkForComodification();
-            return lastReturned.element;
-        }
+	    lastReturned = next = next.previous;
+	    nextIndex--;
+	    checkForComodification();
+	    return lastReturned.element;
+	}
 
-        public int nextIndex() {
-            return nextIndex;
-        }
+	public int nextIndex() {
+	    return nextIndex;
+	}
 
-        public int previousIndex() {
-            return nextIndex-1;
-        }
+	public int previousIndex() {
+	    return nextIndex-1;
+	}
 
-        public void remove() {
+	public void remove() {
             checkForComodification();
             Entry<E> lastNext = lastReturned.next;
             try {
@@ -750,67 +751,67 @@ public class LinkedList<E>
             } catch (NoSuchElementException e) {
                 throw new IllegalStateException();
             }
-            if (next==lastReturned)
+	    if (next==lastReturned)
                 next = lastNext;
             else
-                nextIndex--;
-            lastReturned = header;
-            expectedModCount++;
-        }
+		nextIndex--;
+	    lastReturned = header;
+	    expectedModCount++;
+	}
 
-        public void set(E e) {
-            if (lastReturned == header)
-                throw new IllegalStateException();
-            checkForComodification();
-            lastReturned.element = e;
-        }
+	public void set(E e) {
+	    if (lastReturned == header)
+		throw new IllegalStateException();
+	    checkForComodification();
+	    lastReturned.element = e;
+	}
 
-        public void add(E e) {
-            checkForComodification();
-            lastReturned = header;
-            addBefore(e, next);
-            nextIndex++;
-            expectedModCount++;
-        }
+	public void add(E e) {
+	    checkForComodification();
+	    lastReturned = header;
+	    addBefore(e, next);
+	    nextIndex++;
+	    expectedModCount++;
+	}
 
-        final void checkForComodification() {
-            if (modCount != expectedModCount)
-                throw new ConcurrentModificationException();
-        }
+	final void checkForComodification() {
+	    if (modCount != expectedModCount)
+		throw new ConcurrentModificationException();
+	}
     }
 
     private static class Entry<E> {
-        E element;
-        Entry<E> next;
-        Entry<E> previous;
+	E element;
+	Entry<E> next;
+	Entry<E> previous;
 
-        Entry(E element, Entry<E> next, Entry<E> previous) {
-            this.element = element;
-            this.next = next;
-            this.previous = previous;
-        }
+	Entry(E element, Entry<E> next, Entry<E> previous) {
+	    this.element = element;
+	    this.next = next;
+	    this.previous = previous;
+	}
     }
 
     private Entry<E> addBefore(E e, Entry<E> entry) {
-        Entry<E> newEntry = new Entry<E>(e, entry, entry.previous);
-        newEntry.previous.next = newEntry;
-        newEntry.next.previous = newEntry;
-        size++;
-        modCount++;
-        return newEntry;
+	Entry<E> newEntry = new Entry<E>(e, entry, entry.previous);
+	newEntry.previous.next = newEntry;
+	newEntry.next.previous = newEntry;
+	size++;
+	modCount++;
+	return newEntry;
     }
 
     private E remove(Entry<E> e) {
-        if (e == header)
-            throw new NoSuchElementException();
+	if (e == header)
+	    throw new NoSuchElementException();
 
         E result = e.element;
-        e.previous.next = e.next;
-        e.next.previous = e.previous;
+	e.previous.next = e.next;
+	e.next.previous = e.previous;
         e.next = e.previous = null;
         e.element = null;
-        size--;
-        modCount++;
+	size--;
+	modCount++;
         return result;
     }
 
@@ -824,13 +825,13 @@ public class LinkedList<E>
     /** Adapter to provide descending iterators via ListItr.previous */
     private class DescendingIterator implements Iterator {
         final ListItr itr = new ListItr(size());
-        public boolean hasNext() {
-            return itr.hasPrevious();
-        }
-        public E next() {
+	public boolean hasNext() {
+	    return itr.hasPrevious();
+	}
+	public E next() {
             return itr.previous();
         }
-        public void remove() {
+	public void remove() {
             itr.remove();
         }
     }
@@ -843,11 +844,11 @@ public class LinkedList<E>
      */
     public Object clone() {
         LinkedList<E> clone = null;
-        try {
-            clone = (LinkedList<E>) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new InternalError();
-        }
+	try {
+	    clone = (LinkedList<E>) super.clone();
+	} catch (CloneNotSupportedException e) {
+	    throw new InternalError();
+	}
 
         // Put clone into "virgin" state
         clone.header = new Entry<E>(null, null, null);
@@ -877,11 +878,11 @@ public class LinkedList<E>
      *         in proper sequence
      */
     public Object[] toArray() {
-        Object[] result = new Object[size];
+	Object[] result = new Object[size];
         int i = 0;
         for (Entry<E> e = header.next; e != header; e = e.next)
             result[i++] = e.element;
-        return result;
+	return result;
     }
 
     /**
@@ -927,7 +928,7 @@ public class LinkedList<E>
             a = (T[])java.lang.reflect.Array.newInstance(
                                 a.getClass().getComponentType(), size);
         int i = 0;
-        Object[] result = a;
+	Object[] result = a;
         for (Entry<E> e = header.next; e != header; e = e.next)
             result[i++] = e.element;
 
@@ -949,13 +950,13 @@ public class LinkedList<E>
      */
     private void writeObject(java.io.ObjectOutputStream s)
         throws java.io.IOException {
-        // Write out any hidden serialization magic
-        s.defaultWriteObject();
+	// Write out any hidden serialization magic
+	s.defaultWriteObject();
 
         // Write out size
         s.writeInt(size);
 
-        // Write out all elements in the proper order.
+	// Write out all elements in the proper order.
         for (Entry e = header.next; e != header; e = e.next)
             s.writeObject(e.element);
     }
@@ -966,8 +967,8 @@ public class LinkedList<E>
      */
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
-        // Read in any hidden serialization magic
-        s.defaultReadObject();
+	// Read in any hidden serialization magic
+	s.defaultReadObject();
 
         // Read in size
         int size = s.readInt();
@@ -976,8 +977,8 @@ public class LinkedList<E>
         header = new Entry<E>(null, null, null);
         header.next = header.previous = header;
 
-        // Read in all elements in the proper order.
-        for (int i=0; i<size; i++)
+	// Read in all elements in the proper order.
+	for (int i=0; i<size; i++)
             addBefore((E)s.readObject(), header);
     }
 }

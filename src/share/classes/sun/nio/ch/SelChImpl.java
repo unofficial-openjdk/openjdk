@@ -32,6 +32,7 @@ import java.io.IOException;
 /**
  * An interface that allows translation (and more!).
  *
+ * @version %I% %E%
  * @since 1.4
  */
 

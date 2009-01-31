@@ -127,12 +127,12 @@ public abstract class OGLSurfaceData extends SurfaceData {
         "OpenGL Surface (render-to-texture)";
     private static final String DESC_OPENGL_TEXTURE = "OpenGL Texture";
 
-    static final SurfaceType OpenGLSurface =
+    static final SurfaceType OpenGLSurface = 
         SurfaceType.Any.deriveSubType(DESC_OPENGL_SURFACE,
                                       PixelConverter.ArgbPre.instance);
-    static final SurfaceType OpenGLSurfaceRTT =
+    static final SurfaceType OpenGLSurfaceRTT = 
         OpenGLSurface.deriveSubType(DESC_OPENGL_SURFACE_RTT);
-    static final SurfaceType OpenGLTexture =
+    static final SurfaceType OpenGLTexture = 
         SurfaceType.Any.deriveSubType(DESC_OPENGL_TEXTURE);
 
     /** This will be true if the fbobject system property has been enabled. */
@@ -277,7 +277,7 @@ public abstract class OGLSurfaceData extends SurfaceData {
         case FLIP_BACKBUFFER:
             success = initFlipBackbuffer(getNativeOps());
             break;
-
+  
         default:
             break;
         }
@@ -351,7 +351,7 @@ public abstract class OGLSurfaceData extends SurfaceData {
     }
 
     public Raster getRaster(int x, int y, int w, int h) {
-        throw new InternalError("not implemented yet");
+	throw new InternalError("not implemented yet");
     }
 
     /**

@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)GXLayoutEngine.cpp	1.13 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -36,8 +37,8 @@
 
 #include "MorphTables.h"
 
-GXLayoutEngine::GXLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode,
-    le_int32 languageCode, const MorphTableHeader *morphTable)
+GXLayoutEngine::GXLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, 
+    le_int32 languageCode, const MorphTableHeader *morphTable) 
     : LayoutEngine(fontInstance, scriptCode, languageCode, 0), fMorphTable(morphTable)
 {
     // nothing else to do?
@@ -49,8 +50,8 @@ GXLayoutEngine::~GXLayoutEngine()
 }
 
 // apply 'mort' table
-le_int32 GXLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset,
-    le_int32 count, le_int32 max, le_bool rightToLeft, LEGlyphStorage &glyphStorage,
+le_int32 GXLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset, 
+    le_int32 count, le_int32 max, le_bool rightToLeft, LEGlyphStorage &glyphStorage, 
     LEErrorCode &success)
 {
     if (LE_FAILURE(success)) {
@@ -74,7 +75,7 @@ le_int32 GXLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset,
 }
 
 // apply positional tables
-void GXLayoutEngine::adjustGlyphPositions(const LEUnicode chars[],
+void GXLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_bool /*reverse*/,
     LEGlyphStorage &/*glyphStorage*/, LEErrorCode &success)
 {
@@ -89,3 +90,4 @@ void GXLayoutEngine::adjustGlyphPositions(const LEUnicode chars[],
 
     // FIXME: no positional processing yet...
 }
+

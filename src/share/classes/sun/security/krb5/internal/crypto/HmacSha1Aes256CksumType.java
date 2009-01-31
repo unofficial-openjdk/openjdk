@@ -36,6 +36,7 @@ import java.security.GeneralSecurityException;
  * This class encapsulates the checksum type for AES256
  *
  * @author Seema Malkani
+ * @version %I%, %G%
  */
 
 public class HmacSha1Aes256CksumType extends CksumType {
@@ -44,31 +45,31 @@ public class HmacSha1Aes256CksumType extends CksumType {
     }
 
     public int confounderSize() {
-        return 16;
+	return 16;
     }
 
     public int cksumType() {
-        return Checksum.CKSUMTYPE_HMAC_SHA1_96_AES256;
+	return Checksum.CKSUMTYPE_HMAC_SHA1_96_AES256;
     }
 
     public boolean isSafe() {
-        return true;
+	return true;
     }
 
     public int cksumSize() {
-        return 12;  // bytes
+	return 12;  // bytes
     }
 
     public int keyType() {
-        return Krb5.KEYTYPE_AES;
+	return Krb5.KEYTYPE_AES;
     }
 
     public int keySize() {
-        return 32;   // bytes
+	return 32;   // bytes
     }
 
     public byte[] calculateChecksum(byte[] data, int size) {
-        return null;
+	return null;
     }
 
     /**
@@ -78,16 +79,16 @@ public class HmacSha1Aes256CksumType extends CksumType {
      * @param key the key used to encrypt the checksum.
      * @return keyed checksum.
      */
-    public byte[] calculateKeyedChecksum(byte[] data, int size, byte[] key,
-        int usage) throws KrbCryptoException {
+    public byte[] calculateKeyedChecksum(byte[] data, int size, byte[] key, 
+	int usage) throws KrbCryptoException {
 
          try {
-            return Aes256.calculateChecksum(key, usage, data, 0, size);
-         } catch (GeneralSecurityException e) {
-            KrbCryptoException ke = new KrbCryptoException(e.getMessage());
-            ke.initCause(e);
-            throw ke;
-         }
+	    return Aes256.calculateChecksum(key, usage, data, 0, size);
+	 } catch (GeneralSecurityException e) {
+	    KrbCryptoException ke = new KrbCryptoException(e.getMessage());
+	    ke.initCause(e);
+	    throw ke;
+	 }
     }
 
     /**
@@ -99,16 +100,16 @@ public class HmacSha1Aes256CksumType extends CksumType {
      * @return true if verification is successful.
      */
     public boolean verifyKeyedChecksum(byte[] data, int size,
-        byte[] key, byte[] checksum, int usage) throws KrbCryptoException {
+	byte[] key, byte[] checksum, int usage) throws KrbCryptoException {
 
-         try {
-            byte[] newCksum = Aes256.calculateChecksum(key, usage, data,
-                                                        0, size);
-            return isChecksumEqual(checksum, newCksum);
-         } catch (GeneralSecurityException e) {
-            KrbCryptoException ke = new KrbCryptoException(e.getMessage());
-            ke.initCause(e);
-            throw ke;
-         }
+	 try {
+	    byte[] newCksum = Aes256.calculateChecksum(key, usage, data, 
+							0, size);
+	    return isChecksumEqual(checksum, newCksum);
+	 } catch (GeneralSecurityException e) {
+	    KrbCryptoException ke = new KrbCryptoException(e.getMessage());
+	    ke.initCause(e);
+	    throw ke;
+	 }
     }
 }

@@ -30,11 +30,13 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /**
  * A minimal example, using the JTable to view data from a database.
  *
+ * @version 1.20 09/25/97
  * @author Philip Milne
  */
 

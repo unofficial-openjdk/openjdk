@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)GlyphSubstitutionTables.h	1.18 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -46,7 +47,7 @@ struct GlyphSubstitutionTableHeader : public GlyphLookupTableHeader
     le_int32 process(LEGlyphStorage &glyphStorage,
         le_bool rightToLeft, LETag scriptTag, LETag languageTag,
         const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
-        const LEGlyphFilter *filter, const FeatureMap *featureMap,
+        const LEGlyphFilter *filter, const FeatureMap *featureMap, 
         le_int32 featureMapCount, le_bool featureOrder) const;
 };
 

@@ -34,8 +34,8 @@ import sun.management.VMManagement;
  * ManagementFactory.getOperatingSystemMXBean() returns an instance
  * of this class.
  */
-class UnixOperatingSystem
-    extends    sun.management.OperatingSystemImpl
+class UnixOperatingSystem 
+    extends    sun.management.OperatingSystemImpl 
     implements UnixOperatingSystemMXBean {
 
     UnixOperatingSystem(VMManagement vm) {

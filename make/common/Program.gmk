@@ -60,7 +60,7 @@ program: $(ACTUAL_PROGRAM)
 include $(JDK_TOPDIR)/make/common/Rules.gmk
 
 ifdef NEVER_ACT_AS_SERVER_CLASS_MACHINE
-OTHER_CPPFLAGS += -DNEVER_ACT_AS_SERVER_CLASS_MACHINE
+SERVERCLASS=-DNEVER_ACT_AS_SERVER_CLASS_MACHINE
 endif
 
 #
@@ -92,7 +92,6 @@ ifneq (,$(findstring $(PLATFORM), linux solaris))	# UNIX systems
     endif
 endif
 ifeq ($(PLATFORM), windows)
-	JLI_LCF = $(OUTPUTDIR)/tmp/java/jli/$(OBJDIRNAME)/jli.lcf
 	ifdef STATIC_JLI
 	    LDFLAGS += -libpath:$(OUTPUTDIR)/tmp/java/jli/$(OBJDIRNAME)/static
 	else
@@ -105,7 +104,9 @@ endif
 # Launcher specific files.
 #
 FILES_o = \
-	$(OBJDIR)/main.$(OBJECT_SUFFIX)
+	$(OBJDIR)/$(PROGRAM).$(OBJECT_SUFFIX) \
+	$(OBJDIR)/$(PROGRAM)_md.$(OBJECT_SUFFIX) \
+	$(OBJDIR)/splashscreen_stubs.$(OBJECT_SUFFIX)
 
 # We either need to import (copy) binaries in, or build them
 ifneq ($(IMPORT_NATIVE_BINARIES),true)
@@ -116,7 +117,7 @@ endif
 
 ifeq ($(COMPILE_IT),true)
 
-$(ACTUAL_PROGRAM):: classes $(JVMCFG) $(INIT) 
+$(ACTUAL_PROGRAM):: classes $(JVMCFG) $(INIT)
 
 #
 # Windows only
@@ -153,7 +154,7 @@ else
   STACK_SIZE=1048576
 endif
 
-$(OBJDIR)/$(PROGRAM)$(EXE_SUFFIX):: $(OBJDIR)/$(PROGRAM).lcf $(FILES_o) $(JLI_LCF) 
+$(OBJDIR)/$(PROGRAM)$(EXE_SUFFIX):: $(OBJDIR)/$(PROGRAM).lcf $(FILES_o)
 	@$(prep-target)
 	@set -- $?; \
 	    $(ECHO) Rebuilding $@ because of $$1 $$2 $$3 $$4 $$5 $$6 $${7:+...};
@@ -182,7 +183,7 @@ $(ACTUAL_PROGRAM):: $(FILES_o)
 	@set -- $?; \
 	    $(ECHO) Rebuilding $@ because of $$1 $$2 $$3 $$4 $$5 $$6 $${7:+...};
 	@$(MKDIR) -p $(TEMPDIR)
-	$(LINK_PRE_CMD) $(CC) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LDFLAGS) \
+	$(LINK_PRE_CMD) $(CC) $(SERVERCLASS) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LDFLAGS) \
 	    $(FILES_o) $(THREADLIBS) $(LDLIBS)
 
 endif # PLATFORM
@@ -264,12 +265,25 @@ endif
 VERSION_DEFINES += -DJDK_MAJOR_VERSION='"$(JDK_MAJOR_VERSION)"' \
 		   -DJDK_MINOR_VERSION='"$(JDK_MINOR_VERSION)"'
 
+# Names of arch directories
+LIBARCH_DEFINES = -DLIBARCHNAME='"$(LIBARCH)"'
+ifeq ($(PLATFORM), solaris)
+  LIBARCH_DEFINES += -DLIBARCH32NAME='"$(LIBARCH32)"'
+  LIBARCH_DEFINES += -DLIBARCH64NAME='"$(LIBARCH64)"'
+endif
 
-
-$(OBJDIR)/main.$(OBJECT_SUFFIX): $(LAUNCHER_SHARE_SRC)/bin/main.c
+$(OBJDIR)/$(PROGRAM).$(OBJECT_SUFFIX): $(LAUNCHER_SHARE_SRC)/bin/java.c
 	@$(prep-target)
-	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$(OBJDIR)/main.$(OBJECT_SUFFIX) \
-		$(VERSION_DEFINES) $<
+	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(VERSION_DEFINES) $<
+
+$(OBJDIR)/$(PROGRAM)_md.$(OBJECT_SUFFIX): $(LAUNCHER_PLATFORM_SRC)/bin/java_md.c
+	@$(prep-target)
+	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(LIBARCH_DEFINES) \
+		     $(VERSION_DEFINES) $(SERVERCLASS) $<
+
+$(OBJDIR)/%.$(OBJECT_SUFFIX): $(LAUNCHER_SHARE_SRC)/bin/%.c
+	@$(prep-target)
+	$(COMPILE.c) $(CC_OBJECT_OUTPUT_FLAG)$@ $(VERSION_DEFINES) $<
 
 #
 # How to install jvm.cfg. 

@@ -27,8 +27,10 @@ package javax.swing.plaf;
 
 /**
  * Pluggable look and feel interface for JInternalFrame.
- *
+ * 
+ * @version %I% %G%
  * @author David Kloba
  */
 public abstract class InternalFrameUI extends ComponentUI {
 }
+

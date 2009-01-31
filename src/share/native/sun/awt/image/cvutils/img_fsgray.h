@@ -51,82 +51,82 @@
  */
 #ifndef DitherDeclared
 #define DitherDeclared
-#define DeclareDitherVars       DeclareGrayDitherVars
-#define InitDither              InitGrayDither
-#define StartDitherLine         StartGrayDitherLine
-#define DitherPixel             GrayDitherPixel
-#define DitherBufComplete       GrayDitherBufComplete
+#define DeclareDitherVars	DeclareGrayDitherVars
+#define InitDither		InitGrayDither
+#define StartDitherLine		StartGrayDitherLine
+#define DitherPixel		GrayDitherPixel
+#define DitherBufComplete	GrayDitherBufComplete
 #endif
 
 typedef struct {
     int gray;
 } GrayDitherError;
 
-#define DeclareGrayDitherVars                                   \
-    extern unsigned char img_grays[256];                        \
-    extern unsigned char img_bwgamma[256];                      \
-    int egray;                                                  \
+#define DeclareGrayDitherVars					\
+    extern unsigned char img_grays[256];			\
+    extern unsigned char img_bwgamma[256];			\
+    int	egray;							\
     GrayDitherError *gep;
 
-#define InitGrayDither(cvdata, clrdata, dstTW)                          \
-    do {                                                                \
-        if (cvdata->fserrors == 0) {                                    \
-            int size = (dstTW + 2) * sizeof(GrayDitherError);           \
-            gep = (GrayDitherError *) sysMalloc(size);                  \
-            if (gep == 0) {                                             \
-                SignalError(0, JAVAPKG "OutOfMemoryError", 0);          \
-                return SCALEFAILURE;                                    \
-            }                                                           \
-            memset(gep, 0, size);                                       \
-            cvdata->fserrors = (void *) gep;                            \
-        }                                                               \
+#define InitGrayDither(cvdata, clrdata, dstTW)				\
+    do {								\
+	if (cvdata->fserrors == 0) {					\
+	    int size = (dstTW + 2) * sizeof(GrayDitherError);		\
+	    gep = (GrayDitherError *) sysMalloc(size);			\
+	    if (gep == 0) {						\
+		SignalError(0, JAVAPKG "OutOfMemoryError", 0);		\
+		return SCALEFAILURE;					\
+	    }								\
+	    memset(gep, 0, size);					\
+	    cvdata->fserrors = (void *) gep;				\
+	}								\
     } while (0)
 
 
-#define StartGrayDitherLine(cvdata, dstX1, dstY)                        \
-    do {                                                                \
-        gep = cvdata->fserrors;                                         \
-        if (dstX1) {                                                    \
-            egray = gep[0].gray;                                        \
-            gep += dstX1;                                               \
-        } else {                                                        \
-            egray = 0;                                                  \
-        }                                                               \
+#define StartGrayDitherLine(cvdata, dstX1, dstY)			\
+    do {								\
+	gep = cvdata->fserrors;						\
+	if (dstX1) {							\
+	    egray = gep[0].gray;					\
+	    gep += dstX1;						\
+	} else {							\
+	    egray = 0;							\
+	}								\
     } while (0)
 
-#define GrayDitherPixel(dstX, dstY, pixel, red, green, blue)            \
-    do {                                                                \
-        int e1, e2, e3;                                                 \
-                                                                        \
-        /* convert to gray value */                                     \
-        e2 = RGBTOGRAY(red, green, blue);                               \
-                                                                        \
-        /* add previous errors */                                       \
-        e2 += gep[1].gray;                                              \
-                                                                        \
-        /* bounds checking */                                           \
-        e2 = ComponentBound(e2);                                        \
-                                                                        \
-        /* Store the closest color in the destination pixel */          \
-        e2 = img_bwgamma[e2];                                           \
-        pixel = img_grays[e2];                                          \
-        GetPixelRGB(pixel, red, green, blue);                           \
-                                                                        \
-        /* Set the error from the previous lap */                       \
-        gep[1].gray = egray;                                            \
-                                                                        \
-        /* compute the errors */                                        \
-        egray = e2 - red;                                               \
-                                                                        \
-        /* distribute the errors */                                     \
-        DitherDist(gep, e1, e2, e3, egray, gray);                       \
-        gep++;                                                          \
+#define GrayDitherPixel(dstX, dstY, pixel, red, green, blue) 		\
+    do {								\
+	int e1, e2, e3;							\
+									\
+	/* convert to gray value */					\
+	e2 = RGBTOGRAY(red, green, blue);				\
+									\
+	/* add previous errors */					\
+	e2 += gep[1].gray;						\
+									\
+	/* bounds checking */						\
+	e2 = ComponentBound(e2);					\
+									\
+	/* Store the closest color in the destination pixel */		\
+	e2 = img_bwgamma[e2];						\
+	pixel = img_grays[e2];						\
+	GetPixelRGB(pixel, red, green, blue);				\
+									\
+	/* Set the error from the previous lap */			\
+	gep[1].gray = egray;						\
+									\
+	/* compute the errors */					\
+	egray = e2 - red;						\
+									\
+	/* distribute the errors */					\
+	DitherDist(gep, e1, e2, e3, egray, gray);			\
+	gep++;								\
     } while (0)
 
-#define GrayDitherBufComplete(cvdata, dstX1)                            \
-    do {                                                                \
-        if (dstX1) {                                                    \
-            gep = cvdata->fserrors;                                     \
-            gep[0].gray = egray;                                        \
-        }                                                               \
+#define GrayDitherBufComplete(cvdata, dstX1)				\
+    do {								\
+	if (dstX1) {							\
+	    gep = cvdata->fserrors;					\
+	    gep[0].gray = egray;					\
+	}								\
     } while (0)

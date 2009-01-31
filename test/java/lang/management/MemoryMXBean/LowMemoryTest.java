@@ -83,7 +83,7 @@ public class LowMemoryTest {
                 throw new RuntimeException("Unexpected number of triggers = " +
                     triggers + " but expected to be " + NUM_TRIGGERS);
             }
-
+ 
             for (int i = 0; i < triggers; i++) {
                 if (count[i] != i+1) {
                     throw new RuntimeException("Unexpected count of" +
@@ -92,7 +92,7 @@ public class LowMemoryTest {
                         " but expected to be " + (i+1));
                 }
                 if (usedMemory[i] < newThreshold) {
-                    throw new RuntimeException("Used memory = " +
+                    throw new RuntimeException("Used memory = " + 
                         usedMemory[i] + " is less than the threshold = " +
                         newThreshold);
                 }
@@ -110,7 +110,7 @@ public class LowMemoryTest {
         ListIterator iter = pools.listIterator();
         while (iter.hasNext()) {
             MemoryPoolMXBean p = (MemoryPoolMXBean) iter.next();
-            if (p.getType() == MemoryType.HEAP &&
+            if (p.getType() == MemoryType.HEAP && 
                     p.isUsageThresholdSupported()) {
                 mpool = p;
                 if (trace) {
@@ -143,7 +143,7 @@ public class LowMemoryTest {
 
         if (mpool.getUsageThreshold() != newThreshold) {
             throw new RuntimeException("TEST FAILED: " +
-                "Threshold for Memory pool " + mpool.getName() +
+                "Threshold for Memory pool " + mpool.getName() + 
                 "is " + mpool.getUsageThreshold() + " but expected to be" +
                 newThreshold);
         }
@@ -183,26 +183,26 @@ public class LowMemoryTest {
     private static boolean waiting = false; // No thread is waiting.
 
     // Synchronizes two thread. If no thread is waiting then wait
-    // for notification from a different thread  and if it is
+    // for notification from a different thread  and if it is 
     // is waiting then send notification.
-    // In this test case this method is used to synchronize sweeper
-    // thread and alocater thread to reach a particular point.
+    // In this test case this method is used to synchronize sweeper 
+    // thread and alocater thread to reach a particular point. 
     private static void wait_or_notify() {
         synchronized (go) {
-            if (waiting == false) {
+	    if (waiting == false) { 
                 waiting = true;
-                System.out.println(" Waiting ");
-                try {
+	        System.out.println(" Waiting ");
+              	try {
                     go.wait();
-                } catch (InterruptedException e) {
+              	} catch (InterruptedException e) {
                     e.printStackTrace();
                     testFailed = true;
-                }
-                waiting = false;
-            } else {
-                System.out.println(" Notify ");
-                go.notify();
-            }
+              	}
+	        waiting = false;
+	    } else {
+	        System.out.println(" Notify ");
+		go.notify();
+	    }
         }
     }
 
@@ -215,20 +215,20 @@ public class LowMemoryTest {
                 iterations++;
                 if (trace) {
                     System.out.println("   Iteration " + iterations +
-                        ": before allocation " +
+                        ": before allocation " + 
                         mpool.getUsage().getUsed());
                 }
 
                 Object[] o = new Object[numElements];
                 if (iterations <= NUM_CHUNKS) {
-                    // only hold a reference to the first NUM_CHUNKS
-                    // allocated objects
+                    // only hold a reference to the first NUM_CHUNKS 
+                    // allocated objects 
                     objectPool.add(o);
                 }
 
                 if (trace) {
                     System.out.println("               " +
-                        "  after allocation " +
+                        "  after allocation " + 
                         mpool.getUsage().getUsed());
                 }
                 goSleep(100);
@@ -241,19 +241,19 @@ public class LowMemoryTest {
                 synchronized (sweep) {
                     sweep.notify();
                 }
-                // System.out.print(" Allocater Thread ");
-                // If sweeper thread is waiting then send notify
-                // else wait for notification from sweeper thread.
+	        // System.out.print(" Allocater Thread ");
+                // If sweeper thread is waiting then send notify 
+  	        // else wait for notification from sweeper thread.
                 wait_or_notify();
                 if (testFailed) return;
             }
         }
-    }
+    } 
 
     private static Object sweep = new Object();
     static class SweeperThread extends Thread {
         private void doTask() {
-            for (; mpool.getUsage().getUsed() >=
+            for (; mpool.getUsage().getUsed() >= 
                        mpool.getUsageThreshold();) {
                 // clear all allocated objects and invoke GC
                 objectPool.clear();
@@ -271,20 +271,21 @@ public class LowMemoryTest {
                             e.printStackTrace();
                             System.out.println("Unexpected exception.");
                             testFailed = true;
-                        }
-                    }
+                        } 
+                    } 
                 }
                 System.out.println("SweepThread is doing task " + i);
                 doTask();
-
+              
                 listenerInvoked = false;
 
-                // System.out.print(" Sweeper Thread ");
-                // If Allocater thread is waiting wait send notify
-                // else wait for notfication from allocater thread.
+	        // System.out.print(" Sweeper Thread ");
+	        // If Allocater thread is waiting wait send notify
+	        // else wait for notfication from allocater thread.
                 wait_or_notify();
                 if (testFailed) return;
             }
         }
     }
 }
+

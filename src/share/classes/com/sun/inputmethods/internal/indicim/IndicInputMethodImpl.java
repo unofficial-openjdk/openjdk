@@ -51,9 +51,9 @@ import java.util.Map;
 import java.util.Set;
 
 class IndicInputMethodImpl {
-
+    
     protected char[] KBD_MAP;
-
+    
     private static final char SUBSTITUTION_BASE = '\uff00';
 
     // Indexed by map value - SUBSTITUTION_BASE
@@ -70,16 +70,16 @@ class IndicInputMethodImpl {
     // Viram followed by Nukta is replaced by one VIRAMA and one ZWJ
     private static final char ZWJ                       = '\u200d';
     private static final char ZWNJ                      = '\u200c';
-
+    
     // Backspace
     private static final char BACKSPACE                 = '\u0008';
 
     // Sorted list of characters which can be followed by Nukta
     protected char[] JOIN_WITH_NUKTA;
-
+    
     // Nukta form of the above characters
     protected char[] NUKTA_FORM;
-
+        
     private int log2;
     private int power;
     private int extra;
@@ -92,18 +92,18 @@ class IndicInputMethodImpl {
      * If character is not found, -1 is returned.
      */
     private int nuktaIndex(char ch) {
-
+        
         if (JOIN_WITH_NUKTA == null) {
             return -1;
         }
-
+        
         int probe = power;
         int index = 0;
 
         if (JOIN_WITH_NUKTA[extra] <= ch) {
             index = extra;
         }
-
+         
         while (probe > (1 << 0)) {
             probe >>= 1;
 
@@ -118,7 +118,7 @@ class IndicInputMethodImpl {
 
         return index;
     }
-
+    
     /**
      * Returns the equivalent character for hindi locale.
      * @param originalChar The original character.
@@ -128,10 +128,10 @@ class IndicInputMethodImpl {
         if (originalChar <= KBD_MAP.length) {
             return KBD_MAP[originalChar];
         }
-
+        
         return originalChar;
     }//getMappedChar()
-
+    
     // Array used to hold the text to be sent.
     // If the last character was not committed it is stored in text[0].
     // The variable totalChars give an indication of whether the last
@@ -148,7 +148,7 @@ class IndicInputMethodImpl {
     private int totalChars = 0;//number of total characters ( committed + composed )
 
     private boolean lastCharWasVirama = false;
-
+    
     private InputMethodContext context;
 
     //
@@ -191,34 +191,34 @@ class IndicInputMethodImpl {
         return bit;
     }
 
-    IndicInputMethodImpl(char[] keyboardMap, char[] joinWithNukta, char[] nuktaForm,
+    IndicInputMethodImpl(char[] keyboardMap, char[] joinWithNukta, char[] nuktaForm, 
                          char[][] substitutionTable) {
         KBD_MAP = keyboardMap;
         JOIN_WITH_NUKTA = joinWithNukta;
         NUKTA_FORM = nuktaForm;
         SUBSTITUTION_TABLE = substitutionTable;
-
+        
         if (JOIN_WITH_NUKTA != null) {
             int log2 = highBit(JOIN_WITH_NUKTA.length);
-
+            
             power = 1 << log2;
             extra = JOIN_WITH_NUKTA.length - power;
         } else {
             power = extra = 0;
         }
-
+        
     }
-
+    
     void setInputMethodContext(InputMethodContext context) {
-
+        
         this.context = context;
     }
-
+    
     void handleKeyTyped(KeyEvent kevent) {
-
+        
         char keyChar = kevent.getKeyChar();
         char currentChar = getMappedChar(keyChar);
-
+        
         // The Explicit and Soft Halanta case.
         if ( lastCharWasVirama ) {
             switch (keyChar) {
@@ -239,16 +239,16 @@ class IndicInputMethodImpl {
 
         if (currentChar == BACKSPACE) {
             lastCharWasVirama = false;
-
+            
             if (totalChars > 0) {
                 totalChars = committedChars = 0;
             } else {
                 return;
-            }
+            }                            
         }
         else if (keyChar == KEY_SIGN_NUKTA) {
             int nuktaIndex = nuktaIndex(text[0]);
-
+            
             if (nuktaIndex != -1) {
                 text[0] = NUKTA_FORM[nuktaIndex];
             } else {
@@ -258,12 +258,12 @@ class IndicInputMethodImpl {
                 // the state must be totalChars = committedChars = 0;
                 text[totalChars++] = currentChar;
             }
-
+            
             committedChars += 1;
         }
         else {
             int nuktaIndex = nuktaIndex(currentChar);
-
+            
             if (nuktaIndex != -1) {
                 // Commit everything but currentChar
                 text[totalChars++] = currentChar;
@@ -271,17 +271,17 @@ class IndicInputMethodImpl {
             } else {
                 if (currentChar >= SUBSTITUTION_BASE) {
                     char[] sub = SUBSTITUTION_TABLE[currentChar - SUBSTITUTION_BASE];
-
+                    
                     System.arraycopy(sub, 0, text, totalChars, sub.length);
                     totalChars += sub.length;
                 } else {
                     text[totalChars++] = currentChar;
                 }
-
+                
                 committedChars = totalChars;
             }
         }
-
+        
         ACIText aText = new ACIText( text, 0, totalChars, committedChars );
         int composedCharLength = totalChars - committedChars;
         TextHitInfo caret=null,visiblePosition=null;
@@ -294,21 +294,21 @@ class IndicInputMethodImpl {
             default:
                 assert false : "The code should not reach here. There is no case where there can be more than one character pending.";
         }
-
+                        
         context.dispatchInputMethodEvent(InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
                                          aText,
                                          committedChars,
                                          caret,
                                          visiblePosition);
-
+                                        
         if (totalChars == 0) {
             text[0] = INVALID_CHAR;
         } else {
             text[0] = text[totalChars - 1];// make text[0] hold the last character
         }
-
+        
         lastCharWasVirama =  keyChar == KEY_SIGN_VIRAMA && !lastCharWasVirama;
-
+                    
         totalChars -= committedChars;
         committedChars = 0;
         // state now text[0] = last character
@@ -328,7 +328,7 @@ class IndicInputMethodImpl {
             lastCharWasVirama = false;
         }//end if
     }//endComposition()
-
+    
     // custom AttributedCharacterIterator -- much lightweight since currently there is no
     // attribute defined on the text being generated by the input method.
     private class ACIText implements AttributedCharacterIterator {
@@ -422,7 +422,7 @@ class IndicInputMethodImpl {
         }
 
         public int getRunLimit(AttributedCharacterIterator.Attribute attribute) {
-            return (index < committed &&
+            return (index < committed && 
                     attribute == TextAttribute.INPUT_METHOD_UNDERLINE) ? committed : text.length;
         }
 
@@ -434,14 +434,14 @@ class IndicInputMethodImpl {
         public Map getAttributes() {
             Hashtable result = new Hashtable();
             if (index >= committed && committed < text.length) {
-                result.put(TextAttribute.INPUT_METHOD_UNDERLINE,
+                result.put(TextAttribute.INPUT_METHOD_UNDERLINE, 
                            TextAttribute.UNDERLINE_LOW_ONE_PIXEL);
             }
             return result;
         }
 
         public Object getAttribute(AttributedCharacterIterator.Attribute attribute) {
-            if (index >= committed &&
+            if (index >= committed && 
                 committed < text.length &&
                 attribute == TextAttribute.INPUT_METHOD_UNDERLINE) {
 
@@ -473,3 +473,4 @@ class IndicInputMethodImpl {
 
     }//end of inner class
 }
+

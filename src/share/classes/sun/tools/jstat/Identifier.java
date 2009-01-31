@@ -30,6 +30,7 @@ package sun.tools.jstat;
  * expression. Objects of this type are always leaves of an expression tree.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Identifier extends Expression {

@@ -67,3 +67,4 @@ public class WindowsPasswordFieldUI extends BasicPasswordFieldUI {
         return new WindowsTextUI.WindowsCaret();
     }
 }
+

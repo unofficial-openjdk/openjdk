@@ -25,20 +25,20 @@
 
 /*
  * Monitor implementation for Native Solaris threads
- *
+ * 
  * Java Monitors are implemented using one solaris mutex and two
- * condition variables. Because solaris mutex is not re-entrant we
+ * condition variables. Because solaris mutex is not re-entrant we 
  * cannot simply have a monitor map to a mutex as re-entering a monitor
  * would deadlock an application.
  *
  * Monitor is implemented using:
- *   mutex_t             mutex;
- *   condvar_t           cv_monitor;
- *   condvar_t           cv_waiters;
+ *   mutex_t             mutex;         
+ *   condvar_t           cv_monitor;     
+ *   condvar_t           cv_waiters;   
  *
  * mutex protects the monitor state.
- * cv_monitor is the condtion variable used along with mutex for
- *     supporting wait and notify on the monitor.
+ * cv_monitor is the condtion variable used along with mutex for 
+ *     supporting wait and notify on the monitor. 
  * cv_waiters is used for all the threads waiting to acquire the monitor
  *     lock.
  *
@@ -78,13 +78,13 @@ sysMonitorSizeof()
     return sizeof(struct sys_mon);
 }
 
-int
+int 
 sysMonitorInit(sys_mon_t *mid)
 {
     int ret;
 
     sysAssert(mid != SYS_MID_NULL);
-    ret = mutexInit(&mid->mutex);
+    ret = mutexInit(&mid->mutex);		
     ret = (ret == SYS_OK ? condvarInit(&mid->cv_monitor) : ret);
 
     mid->entry_count = 0;
@@ -109,7 +109,7 @@ sysMonitorDestroy(sys_mon_t *mid)
 
 static void
 enqueue_me(monitor_waiter_t *mp, monitor_wait_queue_t *queue,
-           sys_thread_t *self)
+	   sys_thread_t *self)
 {
     /*
      * Order does not matter here. It is more convenient to
@@ -119,7 +119,7 @@ enqueue_me(monitor_waiter_t *mp, monitor_wait_queue_t *queue,
     mp->next = queue->head;
     mp->prev = &(queue->head);
     if ( queue->head != NULL ){
-        queue->head->prev = &(mp->next);
+	queue->head->prev = &(mp->next);
     }
     queue->head = mp;
     queue->count++;
@@ -131,7 +131,7 @@ dequeue_me(monitor_waiter_t *mp, monitor_wait_queue_t *queue)
     queue->count--;
     *(mp->prev) = mp->next;
     if (mp->next != NULL ){
-        mp->next->prev = mp->prev;
+	mp->next->prev = mp->prev;
     }
     mp->next = NULL;
 }
@@ -144,37 +144,37 @@ sysMonitorEnter(sys_thread_t *self, sys_mon_t *mid)
     sysAssert(mid != SYS_MID_NULL);
     err = mutex_trylock(&mid->mutex);
     if (err == 0) { /* no one owns it */
-        mid->monitor_owner = self;
-        mid->entry_count = 1;
-        return SYS_OK;
+	mid->monitor_owner = self;
+	mid->entry_count = 1;
+	return SYS_OK;
     } else if (err == EBUSY) { /* it's already locked */
-        if (mid->monitor_owner == self) {
-            mid->entry_count++;
-            return SYS_OK;
-        } else {
-            self->mon_enter = mid;
-            /* block on it */
-            if (profiler_on) {
-                VM_CALL(monitorContendedEnter)(self, mid);
-                mutexLock(&contention_count_mutex);
-                mid->contention_count++;
-                mutexUnlock(&contention_count_mutex);
-            }
-            mutex_lock(&mid->mutex);
-            mid->monitor_owner = self;
-            mid->entry_count = 1;
-            self->mon_enter = NULL;
-            if (profiler_on) {
-                mutexLock(&contention_count_mutex);
-                mid->contention_count--;
-                mutexUnlock(&contention_count_mutex);
-                VM_CALL(monitorContendedEntered)(self, mid);
-            }
-            return SYS_OK;
-        }
+	if (mid->monitor_owner == self) {
+	    mid->entry_count++;
+	    return SYS_OK;
+	} else {
+	    self->mon_enter = mid;
+	    /* block on it */
+	    if (profiler_on) {
+		VM_CALL(monitorContendedEnter)(self, mid);
+		mutexLock(&contention_count_mutex);
+		mid->contention_count++;
+		mutexUnlock(&contention_count_mutex);
+	    }
+	    mutex_lock(&mid->mutex);
+	    mid->monitor_owner = self;
+	    mid->entry_count = 1;
+	    self->mon_enter = NULL;
+	    if (profiler_on) {
+		mutexLock(&contention_count_mutex);
+		mid->contention_count--;
+		mutexUnlock(&contention_count_mutex);
+		VM_CALL(monitorContendedEntered)(self, mid);
+	    }
+	    return SYS_OK;
+	}
     } else {
-        sysAssert(err == 0);
-        return SYS_ERR;
+	sysAssert(err == 0);
+	return SYS_ERR;
     }
 }
 
@@ -197,19 +197,19 @@ sysMonitorExit(sys_thread_t *self, sys_mon_t *mid)
     sysAssert(mid != SYS_MID_NULL);
 
     if (mid->monitor_owner == self) {
-        sysAssert(mid->entry_count > 0);
+	sysAssert(mid->entry_count > 0);
         if (--mid->entry_count == 0) {
-            mid->monitor_owner = SYS_THREAD_NULL;
-            if (!mid->contention_count || !profiler_on) {
-                mutex_unlock(&mid->mutex);
-            } else {
-                mutex_unlock(&mid->mutex);
-                VM_CALL(monitorContendedExit)(self, mid);
-            }
+	    mid->monitor_owner = SYS_THREAD_NULL;
+	    if (!mid->contention_count || !profiler_on) {
+	        mutex_unlock(&mid->mutex);
+	    } else {
+	        mutex_unlock(&mid->mutex);
+	        VM_CALL(monitorContendedExit)(self, mid);
+	    }
         }
-        return SYS_OK;
+	return SYS_OK;
     } else {
-        return SYS_ERR;
+	return SYS_ERR;
     }
 }
 
@@ -219,12 +219,12 @@ sysMonitorNotify(sys_thread_t *self, sys_mon_t *mid)
     sysAssert(mid != SYS_MID_NULL);
     if (self == mid->monitor_owner) {
         if (ANY_WAITING(mid->mwait_queue)) {
-            /* If there is someone doing a monitor wait */
-            condvarSignal(&(mid->cv_monitor));
-        }
-        return SYS_OK;
+	    /* If there is someone doing a monitor wait */
+	    condvarSignal(&(mid->cv_monitor));
+	}
+	return SYS_OK;
     } else
-        return SYS_ERR;
+	return SYS_ERR;
 }
 
 int
@@ -232,10 +232,10 @@ sysMonitorNotifyAll(sys_thread_t *self, sys_mon_t *mid)
 {
     sysAssert(mid != SYS_MID_NULL);
     if (self == mid->monitor_owner) {
-        if (ANY_WAITING(mid->mwait_queue)) {
-            /* If there is someone doing a monitor wait */
-            condvarBroadcast(&(mid->cv_monitor));
-        }
+	if (ANY_WAITING(mid->mwait_queue)) {
+	    /* If there is someone doing a monitor wait */
+	    condvarBroadcast(&(mid->cv_monitor));
+	}
         return SYS_OK;
     } else
         return SYS_ERR;
@@ -249,10 +249,10 @@ sysMonitorWait(sys_thread_t *self, sys_mon_t *mid, jlong millis)
     sysAssert(mid != SYS_MID_NULL);
 
     if (self != mid->monitor_owner) {
-        return SYS_ERR;
+	return SYS_ERR;
     }
     if (sysThreadIsInterrupted(self, TRUE)) {
-        return SYS_INTRPT;
+	return SYS_INTRPT;
     }
 
     /* Prepare to wait: drop mutex ownership */
@@ -266,10 +266,10 @@ sysMonitorWait(sys_thread_t *self, sys_mon_t *mid, jlong millis)
     /* Add myself to the monitor waitq */
     enqueue_me(&me, &mid->mwait_queue, self);
     if (millis == SYS_TIMEOUT_INFINITY) {
-        ret = condvarWait(&mid->cv_monitor, &mid->mutex, CONDVAR_WAIT);
+	ret = condvarWait(&mid->cv_monitor, &mid->mutex, CONDVAR_WAIT);
     } else {
-        ret = condvarTimedWait(&mid->cv_monitor, &mid->mutex, millis,
-                               CONDVAR_WAIT);
+	ret = condvarTimedWait(&mid->cv_monitor, &mid->mutex, millis, 
+			       CONDVAR_WAIT);
     }
     dequeue_me(&me, &mid->mwait_queue);
 
@@ -282,24 +282,24 @@ sysMonitorWait(sys_thread_t *self, sys_mon_t *mid, jlong millis)
 
     /* Did we get interrupted in mid-wait?  (IS THIS THE RIGHT PLACE?) */
     if (sysThreadIsInterrupted(self, TRUE)) {
-        return SYS_INTRPT;
+	return SYS_INTRPT;
     }
 
     return ret;
 }
 
-static int
+static int 
 dumpWaitingQueue(monitor_wait_queue_t *queue, sys_thread_t **waiters, int sz)
 {
     int n;
     monitor_waiter_t * waiter;
     if (queue == NULL || ( waiter = queue->head ) == NULL ) {
-        return 0;
+	return 0;
     }
     for (n = 0; waiter != 0; waiter = waiter->next, n++, sz--) {
         if (sz > 0) {
-            waiters[n] = waiter->waiting_thread;
-        }
+	    waiters[n] = waiter->waiting_thread;
+	}
     }
     return n;
 }
@@ -317,10 +317,10 @@ findWaitersHelper(sys_thread_t *t, void *arg)
     wait_info * winfo = (wait_info *) arg;
     if (t->mon_enter == winfo->mid) {
         if (winfo->sz > 0) {
-            winfo->waiters[winfo->nwaiters] = t;
-        }
-        winfo->sz--;
-        winfo->nwaiters++;
+	    winfo->waiters[winfo->nwaiters] = t;
+	}
+	winfo->sz--;
+	winfo->nwaiters++;
     }
     return SYS_OK;
 }
@@ -343,9 +343,9 @@ sysMonitorGetInfo(sys_mon_t *mid, sys_mon_info *info)
     sysThreadEnumerateOver(findWaitersHelper, (void *) &winfo);
     info->n_monitor_waiters = winfo.nwaiters;
 
-    info->n_condvar_waiters = dumpWaitingQueue(&mid->mwait_queue,
-                                               info->condvar_waiters,
-                                               info->sz_condvar_waiters);
+    info->n_condvar_waiters = dumpWaitingQueue(&mid->mwait_queue, 
+					       info->condvar_waiters,
+					       info->sz_condvar_waiters);
 
     return SYS_OK;
 }
@@ -355,7 +355,7 @@ bool_t
 sysMonitorInUse(sys_mon_t * mon)
 {
     return mon->monitor_owner != 0 ||
-        mon->mwait_queue.count != 0;
+	mon->mwait_queue.count != 0;
 }
 
 sys_thread_t *

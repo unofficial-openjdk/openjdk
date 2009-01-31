@@ -44,7 +44,7 @@
 static sys_thread_t *ThreadQueue;
 sys_mon_t *_sys_queue_lock;
 
-static int ActiveThreadCount = 0;               /* All threads */
+static int ActiveThreadCount = 0;		/* All threads */
 
 /*
  * Set to TRUE once threads have been bootstrapped
@@ -68,8 +68,8 @@ static void RecordNTTIB(sys_thread_t *tid)
 #ifndef _WIN64
     PNT_TIB nt_tib;
     __asm {
-        mov eax, dword ptr fs:[18h];
-        mov nt_tib, eax;
+	mov eax, dword ptr fs:[18h];
+	mov nt_tib, eax;
     }
     tid->nt_tib = nt_tib;
 #else
@@ -104,19 +104,19 @@ removefromActiveQ(sys_thread_t *tid)
     --ActiveThreadCount;
 
     if (ThreadQueue == tid) {
-        ThreadQueue = tid->next;
+	ThreadQueue = tid->next;
     } else {
-        sys_thread_t *p;
-        for (p = ThreadQueue; p->next != 0; p = p->next) {
-            if (p->next == tid) {
-                p->next = tid->next;
-                break;
-            }
-        }
+	sys_thread_t *p;
+	for (p = ThreadQueue; p->next != 0; p = p->next) {
+	    if (p->next == tid) {
+		p->next = tid->next;
+		break;
+	    }
+	}
     }
 }
 
-/*
+/* 
  * Allocate and initialize the sys_thread_t structure for an arbitary
  * native thread.
  */
@@ -134,7 +134,7 @@ sysThreadAlloc(sys_thread_t **tidP)
     tid->interrupt_event = CreateEvent(NULL, TRUE, FALSE, NULL);
     tid->id = GetCurrentThreadId();
     DuplicateHandle(hnd, GetCurrentThread(), hnd, &tid->handle, 0, FALSE,
-                    DUPLICATE_SAME_ACCESS);
+		    DUPLICATE_SAME_ACCESS);
 
     RecordNTTIB(tid);
     /* For the Invocation API:
@@ -149,7 +149,7 @@ sysThreadAlloc(sys_thread_t **tidP)
     return SYS_OK;
 }
 
-/*
+/* 
  * Bootstrap the Java thread system by making the current thread the
  * "primordial" thread.
  */
@@ -165,10 +165,10 @@ int threadBootstrapMD(sys_thread_t **tidP, sys_mon_t **lockP, int nb)
     tls_index = TlsAlloc();
     if (tls_index == TLS_INVALID_INDEX) {
         VM_CALL(jio_fprintf)(stderr, "TlsAlloc failed (errcode = %x)\n",
-                    GetLastError());
-        return SYS_NOMEM;
+		    GetLastError());
+	return SYS_NOMEM;
     }
-
+    
     /* OS properties */
     windowsVersion.dwOSVersionInfoSize = sizeof(windowsVersion);
     GetVersionEx(&windowsVersion);
@@ -199,8 +199,8 @@ sysThreadStackPointer(sys_thread_t *tid)
     context.ContextFlags = CONTEXT_CONTROL;
     if (!GetThreadContext(tid->handle, &context)) {
         VM_CALL(jio_fprintf)(stderr, "GetThreadContext failed (errcode = %x)\n",
-                GetLastError());
-        return 0;
+		GetLastError());
+	return 0;
     }
 
     /* With the NT TIB stuff that Hong came up with, I don't think we
@@ -217,13 +217,13 @@ sysThreadStackPointer(sys_thread_t *tid)
 
     __asm {
         mov ax, ss;
-        mov __current_SS, ax;
+	mov __current_SS, ax;
     }
 
     if (context.SegSs == __current_SS &&
-        context.Esp >= (uintptr_t)(tid->nt_tib->StackLimit) &&
-        context.Esp < (uintptr_t)(tid->nt_tib->StackBase)) {
-        MEMORY_BASIC_INFORMATION mbi;
+	context.Esp >= (uintptr_t)(tid->nt_tib->StackLimit) &&
+	context.Esp < (uintptr_t)(tid->nt_tib->StackBase)) {
+	MEMORY_BASIC_INFORMATION mbi;
 
         VirtualQuery((PBYTE) context.Esp, &mbi, sizeof(mbi));
 
@@ -244,34 +244,34 @@ sysThreadStackPointer(sys_thread_t *tid)
             return Esp;
         }
     } else {
-        /* segment selectors don't match - thread is in some weird context */
-        MEMORY_BASIC_INFORMATION mbi;
-        PBYTE pbStackHwm, pbStackBase;
-        SYSTEM_INFO si;
-        DWORD dwPageSize;
-        stackp_t stack_ptr = tid->stack_ptr;
+	/* segment selectors don't match - thread is in some weird context */
+	MEMORY_BASIC_INFORMATION mbi;
+	PBYTE pbStackHwm, pbStackBase;
+	SYSTEM_INFO si;
+	DWORD dwPageSize;
+	stackp_t stack_ptr = tid->stack_ptr;
 
-        if (stack_ptr == 0) {
-            return 0;
-        }
-        GetSystemInfo(&si);
-        dwPageSize = si.dwPageSize;
-        VirtualQuery((PBYTE)stack_ptr - 1, &mbi, sizeof(mbi));
-        pbStackBase = (PBYTE)mbi.AllocationBase;
-        /* step backwards till beginning of segment, non-RW page, or guard
-           page (guard pages only on WinNT) */
-        do {
-            pbStackHwm = (PBYTE)mbi.BaseAddress;
-            if (pbStackHwm <= pbStackBase) {
-                break;
-            }
-            VirtualQuery(pbStackHwm - dwPageSize, &mbi, sizeof(mbi));
-        }
-        while ((mbi.Protect & PAGE_READWRITE) &&
-              !(mbi.Protect & PAGE_GUARD));
-        /* the best we can do for now is the first page of stack
-           storage - it should be a stack high-water mark, anyway */
-        return (void *)pbStackHwm;
+	if (stack_ptr == 0) {
+	    return 0;
+	}
+	GetSystemInfo(&si);
+	dwPageSize = si.dwPageSize;
+	VirtualQuery((PBYTE)stack_ptr - 1, &mbi, sizeof(mbi));
+	pbStackBase = (PBYTE)mbi.AllocationBase;
+	/* step backwards till beginning of segment, non-RW page, or guard
+	   page (guard pages only on WinNT) */
+	do {
+	    pbStackHwm = (PBYTE)mbi.BaseAddress;
+	    if (pbStackHwm <= pbStackBase) {
+		break;
+	    }
+	    VirtualQuery(pbStackHwm - dwPageSize, &mbi, sizeof(mbi));
+	}
+	while ((mbi.Protect & PAGE_READWRITE) &&
+	      !(mbi.Protect & PAGE_GUARD));
+	/* the best we can do for now is the first page of stack
+	   storage - it should be a stack high-water mark, anyway */
+	return (void *)pbStackHwm;
     }
 #else
     return 0;
@@ -321,12 +321,12 @@ _start(sys_thread_t *tid)
     return 0;
 }
 
-/*
+/* 
  * Create a new Java thread. The thread is initially suspended.
  */
 int
 sysThreadCreate(sys_thread_t **tidP, long stack_size,
-                void (*proc)(void *), void *arg)
+		void (*proc)(void *), void *arg)
 {
     sys_thread_t *tid = allocThreadBlock();
     if (tid == NULL) {
@@ -342,9 +342,9 @@ sysThreadCreate(sys_thread_t **tidP, long stack_size,
      * Start the new thread.
      */
     tid->handle = (HANDLE)_beginthreadex(NULL, stack_size, _start, tid,
-                                         CREATE_SUSPENDED, &tid->id);
+					 CREATE_SUSPENDED, &tid->id);
     if (tid->handle == 0) {
-        return SYS_NORESOURCE;  /* Will be treated as though SYS_NOMEM */
+	return SYS_NORESOURCE;	/* Will be treated as though SYS_NOMEM */
     }
 
     queueInsert(tid);
@@ -353,7 +353,7 @@ sysThreadCreate(sys_thread_t **tidP, long stack_size,
 }
 
 /*
- * Free a system thread block.
+ * Free a system thread block. 
  * Remove from the thread queue.
  */
 int
@@ -372,10 +372,10 @@ sysThreadFree()
     SYS_QUEUE_UNLOCK(tid);
 
     /* For invocation API: later sysThreadSelf() calls will return 0 */
-    TlsSetValue(tls_index, 0);
+    TlsSetValue(tls_index, 0);   
 
     /*
-     * Close the thread and interrupt event handles, and free the
+     * Close the thread and interrupt event handles, and free the 
      * sys_thread_t structure.
      */
     CloseHandle(tid->handle);
@@ -384,7 +384,7 @@ sysThreadFree()
     return SYS_OK;
 }
 
-/*
+/* 
  * Yield control to another thread.
  */
 void
@@ -393,7 +393,7 @@ sysThreadYield(void)
     Sleep(0);
 }
 
-/*
+/* 
  * Suspend execution of the specified thread.
  */
 int
@@ -402,9 +402,9 @@ sysThreadSuspend(sys_thread_t *tid)
     /* REMIND: Fix for Win95 */
     /* Set state first so state is reflected before this thread */
     /* returns.  Fix suggested by ARB of SAS  */
-    thread_state_t oldstate = tid->state;
+    thread_state_t oldstate = tid->state;     
     sys_thread_t *self = sysThreadSelf();
-
+ 
     if (tid == self) {
         self->state = SUSPENDED;
     } else {
@@ -422,19 +422,19 @@ sysThreadSuspend(sys_thread_t *tid)
                 break;
             case SUSPENDED:
             case MONITOR_SUSPENDED:
-            default:
-                return SYS_ERR;
+	    default:
+	        return SYS_ERR;
         }
     }
     if (SuspendThread(tid->handle) == 0xffffffffUL) {
-        tid->state = oldstate;
-        tid->suspend_flags = 0;
-        return SYS_ERR;
+	tid->state = oldstate;
+	tid->suspend_flags = 0;
+	return SYS_ERR;
     }
     return SYS_OK;
 }
 
-/*
+/* 
  * Continue execution of the specified thread.
  */
 int
@@ -456,25 +456,25 @@ sysThreadResume(sys_thread_t *tid)
             case MONITOR_SUSPENDED:
                 tid->state = MONITOR_WAIT;
                 break;
-            case RUNNABLE:
-            case MONITOR_WAIT:
-            case CONDVAR_WAIT:
-            default:
-                return SYS_ERR;
-                break;
+	    case RUNNABLE:
+	    case MONITOR_WAIT:
+	    case CONDVAR_WAIT:
+	    default:
+	        return SYS_ERR;
+		break;
         }
     }
 
     /* Decrement thread's suspend count until no longer suspended */
     while ((n = ResumeThread(tid->handle)) > 1) {
-        if (n == 0xffffffffUL) {
-            return SYS_ERR;
-        }
+	if (n == 0xffffffffUL) {
+	    return SYS_ERR;
+	}
     }
     return SYS_OK;
 }
 
-/*
+/* 
  * Return priority of specified thread.
  */
 int
@@ -482,21 +482,21 @@ sysThreadGetPriority(sys_thread_t *tid, int *pp)
 {
     switch (GetThreadPriority(tid->handle)) {
     case THREAD_PRIORITY_IDLE:
-        *pp = 0; break;
+	*pp = 0; break;
     case THREAD_PRIORITY_LOWEST:
-        *pp = 2; break;
+	*pp = 2; break;
     case THREAD_PRIORITY_BELOW_NORMAL:
-        *pp = 4; break;
+	*pp = 4; break;
     case THREAD_PRIORITY_NORMAL:
-        *pp = 5; break;
+	*pp = 5; break;
     case THREAD_PRIORITY_ABOVE_NORMAL:
-        *pp = 6; break;
+	*pp = 6; break;
     case THREAD_PRIORITY_HIGHEST:
-        *pp = 8; break;
+	*pp = 8; break;
     case THREAD_PRIORITY_TIME_CRITICAL:
-        *pp = 10; break;
+	*pp = 10; break;
     case THREAD_PRIORITY_ERROR_RETURN:
-        return SYS_ERR;
+	return SYS_ERR;
     }
     return SYS_OK;
 }
@@ -511,33 +511,33 @@ sysThreadSetPriority(sys_thread_t *tid, int p)
 
     switch (p) {
     case 0:
-        priority = THREAD_PRIORITY_IDLE;
-        break;
+	priority = THREAD_PRIORITY_IDLE;
+	break;
     case 1: case 2:
-        priority = THREAD_PRIORITY_LOWEST;
-        break;
+	priority = THREAD_PRIORITY_LOWEST;
+	break;
     case 3: case 4:
-        priority = THREAD_PRIORITY_BELOW_NORMAL;
-        break;
+	priority = THREAD_PRIORITY_BELOW_NORMAL;
+	break;
     case 5:
-        priority = THREAD_PRIORITY_NORMAL;
-        break;
+	priority = THREAD_PRIORITY_NORMAL;
+	break;
     case 6: case 7:
-        priority = THREAD_PRIORITY_ABOVE_NORMAL;
-        break;
+	priority = THREAD_PRIORITY_ABOVE_NORMAL;
+	break;
     case 8: case 9:
-        priority = THREAD_PRIORITY_HIGHEST;
-        break;
+	priority = THREAD_PRIORITY_HIGHEST;
+	break;
     case 10:
-        priority = THREAD_PRIORITY_TIME_CRITICAL;
-        break;
+	priority = THREAD_PRIORITY_TIME_CRITICAL;
+	break;
     default:
-        return SYS_ERR;
+	return SYS_ERR;
     }
     return SetThreadPriority(tid->handle, priority) ? SYS_OK : SYS_ERR;
 }
 
-/*
+/* 
  * Return the thread information block of the calling thread.
  */
 sys_thread_t *
@@ -560,9 +560,9 @@ sysThreadEnumerateOver(int (*func)(sys_thread_t *, void *), void *arg)
     sysAssert(SYS_QUEUE_LOCKED(sysThreadSelf()));
 
     for (tid = ThreadQueue; tid != 0; tid = tid->next) {
-        if ((ret = (*func)(tid, arg)) != SYS_OK) {
-            break;
-        }
+	if ((ret = (*func)(tid, arg)) != SYS_OK) {
+	    break;
+	}
     }
     return ret;
 }
@@ -580,32 +580,32 @@ threadSingleHelper(sys_thread_t *tid, void *self)
         return SYS_ERR;
     }
     {
-        CONTEXT context;
-        DWORD *esp = (DWORD *)tid->regs;
+	CONTEXT context;
+	DWORD *esp = (DWORD *)tid->regs;
 
-        context.ContextFlags = CONTEXT_INTEGER | CONTEXT_CONTROL;
-        if (!GetThreadContext(tid->handle, &context)) {
-            VM_CALL(jio_fprintf)
-                (stderr, "GetThreadContext failed (errcode = %x)\n",
-                 GetLastError());
-            return SYS_ERR;
-        }
+	context.ContextFlags = CONTEXT_INTEGER | CONTEXT_CONTROL;
+	if (!GetThreadContext(tid->handle, &context)) {
+	    VM_CALL(jio_fprintf)
+	        (stderr, "GetThreadContext failed (errcode = %x)\n",
+		 GetLastError());
+	    return SYS_ERR;
+	}
 #ifdef _M_AMD64
-        *esp++ = context.Rax;
-        *esp++ = context.Rbx;
-        *esp++ = context.Rcx;
-        *esp++ = context.Rdx;
-        *esp++ = context.Rsi;
-        *esp++ = context.Rdi;
-        *esp   = context.Rbp;
+	*esp++ = context.Rax;
+	*esp++ = context.Rbx;
+	*esp++ = context.Rcx;
+	*esp++ = context.Rdx;
+	*esp++ = context.Rsi;
+	*esp++ = context.Rdi;
+	*esp   = context.Rbp;
 #else
-        *esp++ = context.Eax;
-        *esp++ = context.Ebx;
-        *esp++ = context.Ecx;
-        *esp++ = context.Edx;
-        *esp++ = context.Esi;
-        *esp++ = context.Edi;
-        *esp   = context.Ebp;
+	*esp++ = context.Eax;
+	*esp++ = context.Ebx;
+	*esp++ = context.Ecx;
+	*esp++ = context.Edx;
+	*esp++ = context.Esi;
+	*esp++ = context.Edi;
+	*esp   = context.Ebp;
 #endif
     }
     return SYS_OK;
@@ -626,7 +626,7 @@ sysThreadSingle(void)
 /*
  * Helper function for sysThreadMulti(): Only ResumeThread once, unlike
  * sysThreadResume(), which will repeatedly call ResumeThread until the
- * thread is really resumed.  That is, Thread.resume will unwind any
+ * thread is really resumed.  That is, Thread.resume will unwind any 
  * number of Thread.suspend invocations, but sysThreadMulti() calls must
  * be strictly matched with sysThreadSingle() calls.  Doing this keeps
  * the garbage collector, which uses thread suspension to stop threads
@@ -637,9 +637,9 @@ static int
 threadMultiHelper(sys_thread_t *tid, void *self)
 {
     if (tid == self || ResumeThread(tid->handle) != 0xffffffffUL) {
-        return SYS_OK;
+	return SYS_OK;
     } else {
-        return SYS_ERR;
+	return SYS_ERR;
     }
 }
 
@@ -700,8 +700,8 @@ sysThreadIsInterrupted(sys_thread_t *tid, int ClearInterrupted)
 {
     bool_t interrupted = tid->interrupted;
     if (interrupted && ClearInterrupted) {
-        tid->interrupted = FALSE;
-        ResetEvent(tid->interrupt_event);
+	tid->interrupted = FALSE;
+	ResetEvent(tid->interrupt_event);
     }
     return interrupted;
 }
@@ -713,30 +713,30 @@ sysGetSysInfo()
 
     if (info.name == NULL) {
         SYSTEM_INFO sysinfo;
-        GetSystemInfo(&sysinfo);
-        info.isMP = sysinfo.dwNumberOfProcessors > 1;
-        info.name = "native threads";
+	GetSystemInfo(&sysinfo);
+	info.isMP = sysinfo.dwNumberOfProcessors > 1;
+	info.name = "native threads";
     }
     return &info;
 }
 
 #define FT2INT64(ft) \
-        ((jlong)(ft).dwHighDateTime << 32 | (jlong)(ft).dwLowDateTime)
+	((jlong)(ft).dwHighDateTime << 32 | (jlong)(ft).dwLowDateTime)
 
 jlong
 sysThreadCPUTime()
 {
     if (windowsNT) {
-        FILETIME CreationTime;
-        FILETIME ExitTime;
-        FILETIME KernelTime;
-        FILETIME UserTime;
-
-        GetThreadTimes(GetCurrentThread(),
-                       &CreationTime, &ExitTime, &KernelTime, &UserTime);
-        return FT2INT64(UserTime) * 100;
+	FILETIME CreationTime;
+	FILETIME ExitTime;
+	FILETIME KernelTime;
+	FILETIME UserTime;
+	
+	GetThreadTimes(GetCurrentThread(),
+		       &CreationTime, &ExitTime, &KernelTime, &UserTime);
+	return FT2INT64(UserTime) * 100;
     } else {
-        return (jlong)sysGetMilliTicks() * 1000000;
+	return (jlong)sysGetMilliTicks() * 1000000;
     }
 }
 
@@ -746,34 +746,34 @@ sysThreadGetStatus(sys_thread_t *tid, sys_mon_t **monitorPtr)
     int status;
     switch (tid->state) {
       case RUNNABLE:
-          if (tid->enter_monitor)
-              status = SYS_THREAD_MONITOR_WAIT;
-          else
+	  if (tid->enter_monitor)
+	      status = SYS_THREAD_MONITOR_WAIT;
+          else 
               status = SYS_THREAD_RUNNABLE;
           break;
       case SUSPENDED:
           if (tid->enter_monitor)
-              status = SYS_THREAD_SUSPENDED | SYS_THREAD_MONITOR_WAIT;
-          else if (tid->suspend_flags & CONDVAR_WAIT_SUSPENDED)
-              status = SYS_THREAD_SUSPENDED | SYS_THREAD_CONDVAR_WAIT;
-          else
-              status = SYS_THREAD_SUSPENDED;
+	      status = SYS_THREAD_SUSPENDED | SYS_THREAD_MONITOR_WAIT;
+	  else if (tid->suspend_flags & CONDVAR_WAIT_SUSPENDED) 
+	      status = SYS_THREAD_SUSPENDED | SYS_THREAD_CONDVAR_WAIT;
+	  else
+	      status = SYS_THREAD_SUSPENDED;
           break;
       case MONITOR_SUSPENDED:
-          status = SYS_THREAD_SUSPENDED | SYS_THREAD_MONITOR_WAIT;
+	  status = SYS_THREAD_SUSPENDED | SYS_THREAD_MONITOR_WAIT;
           break;
       case CONDVAR_WAIT:
-          status = SYS_THREAD_CONDVAR_WAIT;
+	  status = SYS_THREAD_CONDVAR_WAIT;
           break;
       case MONITOR_WAIT:
-          /*
-           * this flag should never be in used on win32 since the
-           * state is actually signalled by setting self->enter_monitor
-           * to point at the monitor the thread is waiting to enter
-           */
-          sysAssert(FALSE);
+	  /*
+	   * this flag should never be in used on win32 since the
+	   * state is actually signalled by setting self->enter_monitor
+	   * to point at the monitor the thread is waiting to enter
+	   */
+	  sysAssert(FALSE);
       default:
-          return SYS_ERR;
+	  return SYS_ERR;
     }
     if (monitorPtr) {
         if (status & SYS_THREAD_MONITOR_WAIT) {
@@ -814,7 +814,7 @@ bool_t sysThreadIsRunning(sys_thread_t *tid)
     p = &context.SegGs;
     while (p <= &context.SegSs) {
         sum += *p;
-        p++;
+	p++;
     }
 
     if (sum == tid->last_sum) {

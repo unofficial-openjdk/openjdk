@@ -45,7 +45,8 @@ import sun.security.util.Password;
  * Kinit tool for obtaining Kerberos v5 tickets.
  *
  * @author Yanni Zhang
- * @author Ram Marti
+ * @author Ram Marti 
+ * @version 1.00 12 Apr 2000
  */
 public class Kinit {
 
@@ -53,18 +54,18 @@ public class Kinit {
     private static final boolean DEBUG = Krb5.DEBUG;
 
     /**
-     * The main method is used to accept user command line input for ticket
+     * The main method is used to accept user command line input for ticket 
      * request.
      * <p>
-     * Usage: kinit [-A] [-f] [-p] [-c cachename] [[-k [-t keytab_file_name]]
+     * Usage: kinit [-A] [-f] [-p] [-c cachename] [[-k [-t keytab_file_name]] 
      * [principal] [password]
      * <ul>
-     * <li>    -A        do not include addresses
+     * <li>    -A   	 do not include addresses 
      * <li>    -f        forwardable
      * <li>    -p        proxiable
      * <li>    -c        cache name (i.e., FILE://c:\temp\mykrb5cc)
      * <li>    -k        use keytab
-     * <li>    -t        keytab file name
+     * <li>    -t   	 keytab file name
      * <li>    principal the principal name (i.e., duke@java.sun.com)
      * <li>    password  the principal's Kerberos password
      * </ul>
@@ -76,37 +77,37 @@ public class Kinit {
      * By default, for all Unix platforms a cache file named
      * /tmp/krb5cc_&lt;uid&gt will be generated. The &lt;uid&gt is the
      * numeric user identifier.
-     * For all other platforms, a cache file named
+     * For all other platforms, a cache file named 
      * &lt;USER_HOME&gt/krb5cc_&lt;USER_NAME&gt would be generated.
-     * <p>
-     * &lt;USER_HOME&gt is obtained from <code>java.lang.System</code>
+     * <p> 
+     * &lt;USER_HOME&gt is obtained from <code>java.lang.System</code> 
      * property <i>user.home</i>.
-     * &lt;USER_NAME&gt is obtained from <code>java.lang.System</code>
+     * &lt;USER_NAME&gt is obtained from <code>java.lang.System</code> 
      * property <i>user.name</i>.
-     * If &lt;USER_HOME&gt is null the cache file would be stored in
+     * If &lt;USER_HOME&gt is null the cache file would be stored in 
      * the current directory that the program is running from.
-     * &lt;USER_NAME&gt is operating system's login username.
+     * &lt;USER_NAME&gt is operating system's login username. 
      * It could be different from user's principal name.
      *</p>
      *<p>
-     * For instance, on Windows NT, it could be
+     * For instance, on Windows NT, it could be 
      * c:\winnt\profiles\duke\krb5cc_duke, in
-     * which duke is the &lt;USER_NAME&gt, and c:\winnt\profile\duke is the
-     * &lt;USER_HOME&gt.
+     * which duke is the &lt;USER_NAME&gt, and c:\winnt\profile\duke is the 
+     * &lt;USER_HOME&gt. 
      *<p>
-     * A single user could have multiple principal names,
-     * but the primary principal of the credentials cache could only be one,
-     * which means one cache file could only store tickets for one
-     * specific user principal. If the user switches
-     * the principal name at the next Kinit, the cache file generated for the
-     * new ticket would overwrite the old cache file by default.
-     * To avoid overwriting, you need to specify
-     * a different cache file name when you request a
-     * new ticket.
+     * A single user could have multiple principal names, 
+     * but the primary principal of the credentials cache could only be one, 
+     * which means one cache file could only store tickets for one 
+     * specific user principal. If the user switches 
+     * the principal name at the next Kinit, the cache file generated for the 
+     * new ticket would overwrite the old cache file by default. 
+     * To avoid overwriting, you need to specify 
+     * a different cache file name when you request a 
+     * new ticket. 
      *</p>
      *<p>
      * You can specify the location of the cache file by using the -c option
-     *
+     *     
      */
 
     public static void main(String[] args) {
@@ -117,59 +118,59 @@ public class Kinit {
             String msg = null;
             if (e instanceof KrbException) {
                 msg = ((KrbException)e).krbErrorMessage() + " " +
-                    ((KrbException)e).returnCodeMessage();
+		    ((KrbException)e).returnCodeMessage();
             } else  {
-                msg = e.getMessage();
-            }
+		msg = e.getMessage();
+	    }
             if (msg != null) {
                 System.err.println("Exception: " + msg);
-            } else {
-                System.out.println("Exception: " + e);
-            }
-            e.printStackTrace();
-            System.exit(-1);
+            } else { 
+		System.out.println("Exception: " + e);
+	    }
+	    e.printStackTrace();
+	    System.exit(-1);
         }
         return;
-    }
+    }           
 
-    /**
+    /** 
      * Constructs a new Kinit object.
-     * @param args array of ticket request options.
+     * @param args array of ticket request options. 
      * Avaiable options are: -f, -p, -c, principal, password.
      * @exception IOException if an I/O error occurs.
      * @exception RealmException if the Realm could not be instantiated.
      * @exception KrbException if error occurs during Kerberos operation.
      */
-    private Kinit(String[] args)
-        throws IOException, RealmException, KrbException {
+    private Kinit(String[] args) 
+	throws IOException, RealmException, KrbException {
         if (args == null || args.length == 0) {
-            options = new KinitOptions();
+	    options = new KinitOptions();
         } else {
-            options = new KinitOptions(args);
+	    options = new KinitOptions(args);
         }
         String princName = null;
         PrincipalName principal = options.getPrincipal();
         if (principal != null) {
             princName = principal.toString();
         }
-        if (DEBUG) {
-            System.out.println("Principal is " + principal);
-        }
+	if (DEBUG) {
+	    System.out.println("Principal is " + principal);	
+	}
         char[] psswd = options.password;
         EncryptionKey[] skeys = null;
         boolean useKeytab = options.useKeytabFile();
         if (!useKeytab) {
             if (princName == null) {
                 throw new IllegalArgumentException
-                    (" Can not obtain principal name");
+		    (" Can not obtain principal name");
             }
             if (psswd == null) {
                 System.out.print("Password for " + princName + ":");
                 System.out.flush();
                 psswd = Password.readPassword(System.in);
                 if (DEBUG) {
-                    System.out.println(">>> Kinit console input " +
-                        new String(psswd));
+                    System.out.println(">>> Kinit console input " + 
+			new String(psswd));
                 }
             }
         } else {
@@ -178,17 +179,17 @@ public class Kinit {
             }
             if (princName == null) {
                 throw new IllegalArgumentException
-                    ("Principal name must be specified.");
+		    ("Principal name must be specified.");
             }
             String ktabName = options.keytabFileName();
             if (ktabName != null) {
                 if (DEBUG) {
                     System.out.println(
-                                       ">>> Kinit keytab file name: " + ktabName);
+				       ">>> Kinit keytab file name: " + ktabName);
                 }
-            }
+	    }
 
-            // assert princName and principal are nonnull
+	    // assert princName and principal are nonnull
             skeys = EncryptionKey.acquireSecretKeys(principal, ktabName);
 
             if (skeys == null || skeys.length == 0) {
@@ -212,8 +213,8 @@ public class Kinit {
             System.out.println(">>> Kinit realm name is " + realm);
         }
 
-        PrincipalName sname = new PrincipalName("krbtgt" + "/" + realm,
-                                        PrincipalName.KRB_NT_SRV_INST);
+        PrincipalName sname = new PrincipalName("krbtgt" + "/" + realm, 
+					PrincipalName.KRB_NT_SRV_INST);
         sname.setRealm(realm);
 
         if (DEBUG) {
@@ -228,12 +229,12 @@ public class Kinit {
 
             if (useKeytab) {
                 as_req = new KrbAsReq(skeys, opt,
-                                      principal, sname,
-                                      null, null, null, null, addresses, null);
+				      principal, sname,
+				      null, null, null, null, addresses, null);
             } else {
                 as_req = new KrbAsReq(psswd, opt,
-                                      principal, sname,
-                                      null, null, null, null, addresses, null);
+				      principal, sname,
+				      null, null, null, null, addresses, null);
             }
         } catch (KrbException exc) {
             throw exc;
@@ -242,63 +243,63 @@ public class Kinit {
         }
 
         KrbAsRep as_rep = null;
-        try {
-            as_rep = sendASRequest(as_req, useKeytab, realm, psswd, skeys);
-        } catch (KrbException ke) {
-            if ((ke.returnCode() == Krb5.KDC_ERR_PREAUTH_FAILED) ||
-                (ke.returnCode() == Krb5.KDC_ERR_PREAUTH_REQUIRED)) {
-                if (DEBUG) {
-                    System.out.println("Kinit: PREAUTH FAILED/REQ, re-send AS-REQ");
-                }
-                KRBError error = ke.getError();
-                int etype = error.getEType();
-                byte[] salt = error.getSalt();
-                byte[] s2kparams = error.getParams();
-                if (useKeytab) {
-                    as_req = new KrbAsReq(skeys, true, etype, salt, s2kparams,
-                                        opt, principal, sname,
-                                        null, null, null, null, addresses, null);
-                } else {
-                    as_req = new KrbAsReq(psswd, true, etype, salt, s2kparams,
-                                        opt, principal, sname,
-                                        null, null, null, null, addresses, null);
-                }
-                as_rep = sendASRequest(as_req, useKeytab, realm, psswd, skeys);
-            } else {
-                throw ke;
-            }
-        }
+	try {
+	    as_rep = sendASRequest(as_req, useKeytab, realm, psswd, skeys);
+	} catch (KrbException ke) {
+	    if ((ke.returnCode() == Krb5.KDC_ERR_PREAUTH_FAILED) ||
+		(ke.returnCode() == Krb5.KDC_ERR_PREAUTH_REQUIRED)) {
+		if (DEBUG) {
+		    System.out.println("Kinit: PREAUTH FAILED/REQ, re-send AS-REQ");
+		}
+		KRBError error = ke.getError();
+		int etype = error.getEType();
+		byte[] salt = error.getSalt();
+		byte[] s2kparams = error.getParams();
+		if (useKeytab) {
+		    as_req = new KrbAsReq(skeys, true, etype, salt, s2kparams,
+					opt, principal, sname,
+					null, null, null, null, addresses, null);
+		} else {
+		    as_req = new KrbAsReq(psswd, true, etype, salt, s2kparams,
+					opt, principal, sname,
+					null, null, null, null, addresses, null);
+		}
+	        as_rep = sendASRequest(as_req, useKeytab, realm, psswd, skeys);
+	    } else {
+		throw ke;
+	    }
+	}
 
         sun.security.krb5.internal.ccache.Credentials credentials =
-            as_rep.setCredentials();
-        // we always create a new cache and store the ticket we get
-        CredentialsCache cache =
-            CredentialsCache.create(principal, options.cachename);
-        if (cache == null) {
-           throw new IOException("Unable to create the cache file " +
-                                 options.cachename);
-        }
+	    as_rep.setCredentials();
+	// we always create a new cache and store the ticket we get
+        CredentialsCache cache = 
+	    CredentialsCache.create(principal, options.cachename);
+	if (cache == null) {
+	   throw new IOException("Unable to create the cache file " +
+				 options.cachename);
+	}
         cache.update(credentials);
         cache.save();
 
         if (options.password == null) {
             // Assume we're running interactively
             System.out.println("New ticket is stored in cache file " +
-                               options.cachename);
-         } else {
-             Arrays.fill(options.password, '0');
-         }
+			       options.cachename);
+	 } else {
+	     Arrays.fill(options.password, '0');
+	 }
 
         // clear the password
         if (psswd != null) {
-            Arrays.fill(psswd, '0');
-        }
+	    Arrays.fill(psswd, '0');
+	}
         options = null; // release reference to options
     }
 
     private static KrbAsRep sendASRequest(KrbAsReq as_req, boolean useKeytab,
-                String realm, char[] passwd, EncryptionKey[] skeys)
-        throws IOException, RealmException, KrbException {
+		String realm, char[] passwd, EncryptionKey[] skeys)
+	throws IOException, RealmException, KrbException {
 
         if (DEBUG) {
             System.out.println(">>> Kinit: sending as_req to realm " + realm);
@@ -310,25 +311,25 @@ public class Kinit {
             System.out.println(">>> reading response from kdc");
         }
         KrbAsRep as_rep = null;
-        try {
+	try {
             if (useKeytab) {
                 as_rep = as_req.getReply(skeys);
             } else {
                 as_rep = as_req.getReply(passwd);
             }
-        } catch (KrbException ke) {
-            if (ke.returnCode() == Krb5.KRB_ERR_RESPONSE_TOO_BIG) {
-                as_req.send(realm, kdc, true); // useTCP is set
-                if (useKeytab) {
-                    as_rep = as_req.getReply(skeys);
-                } else {
-                    as_rep = as_req.getReply(passwd);
-                }
-            } else {
-                throw ke;
-            }
-        }
-        return as_rep;
+	} catch (KrbException ke) {
+	    if (ke.returnCode() == Krb5.KRB_ERR_RESPONSE_TOO_BIG) {
+		as_req.send(realm, kdc, true); // useTCP is set
+		if (useKeytab) {
+		    as_rep = as_req.getReply(skeys);
+		} else {
+		    as_rep = as_req.getReply(passwd);
+		}
+	    } else {
+		throw ke;
+	    }
+	}
+	return as_rep;
     }
 
     private static void setOptions(int flag, int option, KDCOptions opt) {

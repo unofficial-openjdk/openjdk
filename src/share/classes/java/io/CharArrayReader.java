@@ -29,7 +29,8 @@ package java.io;
  * This class implements a character buffer that can be used as a
  * character-input stream.
  *
- * @author      Herb Jellinek
+ * @author	Herb Jellinek
+ * @version 	%I%, %G%
  * @since       JDK1.1
  */
 public class CharArrayReader extends Reader {
@@ -42,7 +43,7 @@ public class CharArrayReader extends Reader {
     /** The position of mark in buffer. */
     protected int markedPos = 0;
 
-    /**
+    /** 
      *  The index of the end of this buffer.  There is not valid
      *  data at or beyond this index.
      */
@@ -50,12 +51,12 @@ public class CharArrayReader extends Reader {
 
     /**
      * Creates a CharArrayReader from the specified array of chars.
-     * @param buf       Input buffer (not copied)
+     * @param buf	Input buffer (not copied)
      */
     public CharArrayReader(char buf[]) {
-        this.buf = buf;
+	this.buf = buf;
         this.pos = 0;
-        this.count = buf.length;
+	this.count = buf.length;
     }
 
     /**
@@ -71,55 +72,55 @@ public class CharArrayReader extends Reader {
      *         <tt>buf.length</tt>, or if <tt>length</tt> is negative, or if
      *         the sum of these two values is negative.
      *
-     * @param buf       Input buffer (not copied)
+     * @param buf	Input buffer (not copied)
      * @param offset    Offset of the first char to read
-     * @param length    Number of chars to read
+     * @param length	Number of chars to read
      */
     public CharArrayReader(char buf[], int offset, int length) {
-        if ((offset < 0) || (offset > buf.length) || (length < 0) ||
+	if ((offset < 0) || (offset > buf.length) || (length < 0) ||
             ((offset + length) < 0)) {
-            throw new IllegalArgumentException();
-        }
-        this.buf = buf;
+	    throw new IllegalArgumentException();
+	}
+	this.buf = buf;
         this.pos = offset;
-        this.count = Math.min(offset + length, buf.length);
+	this.count = Math.min(offset + length, buf.length);
         this.markedPos = offset;
     }
 
     /** Checks to make sure that the stream has not been closed */
     private void ensureOpen() throws IOException {
-        if (buf == null)
-            throw new IOException("Stream closed");
+	if (buf == null)
+	    throw new IOException("Stream closed");
     }
 
     /**
      * Reads a single character.
-     *
+     * 
      * @exception   IOException  If an I/O error occurs
      */
     public int read() throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            if (pos >= count)
-                return -1;
-            else
-                return buf[pos++];
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    if (pos >= count)
+		return -1;
+	    else
+		return buf[pos++];
+	}
     }
 
     /**
      * Reads characters into a portion of an array.
-     * @param b  Destination buffer
+     * @param b	 Destination buffer
      * @param off  Offset at which to start storing characters
      * @param len   Maximum number of characters to read
      * @return  The actual number of characters read, or -1 if
-     *          the end of the stream has been reached
-     *
+     * 		the end of the stream has been reached
+     * 
      * @exception   IOException  If an I/O error occurs
      */
     public int read(char b[], int off, int len) throws IOException {
-        synchronized (lock) {
-            ensureOpen();
+	synchronized (lock) {
+	    ensureOpen();
             if ((off < 0) || (off > b.length) || (len < 0) ||
                 ((off + len) > b.length) || ((off + len) < 0)) {
                 throw new IndexOutOfBoundsException();
@@ -127,19 +128,19 @@ public class CharArrayReader extends Reader {
                 return 0;
             }
 
-            if (pos >= count) {
-                return -1;
-            }
-            if (pos + len > count) {
-                len = count - pos;
-            }
-            if (len <= 0) {
-                return 0;
-            }
-            System.arraycopy(buf, pos, b, off, len);
-            pos += len;
-            return len;
-        }
+	    if (pos >= count) {
+		return -1;
+	    }
+	    if (pos + len > count) {
+		len = count - pos;
+	    }
+	    if (len <= 0) {
+		return 0;
+	    }
+	    System.arraycopy(buf, pos, b, off, len);
+	    pos += len;
+	    return len;
+	}
     }
 
     /**
@@ -155,17 +156,17 @@ public class CharArrayReader extends Reader {
      * @exception  IOException If the stream is closed, or an I/O error occurs
      */
     public long skip(long n) throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            if (pos + n > count) {
-                n = count - pos;
-            }
-            if (n < 0) {
-                return 0;
-            }
-            pos += n;
-            return n;
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    if (pos + n > count) {
+		n = count - pos;
+	    }
+	    if (n < 0) {
+		return 0;
+	    }
+	    pos += n;
+	    return n;
+	}
     }
 
     /**
@@ -175,17 +176,17 @@ public class CharArrayReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public boolean ready() throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            return (count - pos) > 0;
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    return (count - pos) > 0;
+	}
     }
 
     /**
      * Tells whether this stream supports the mark() operation, which it does.
      */
     public boolean markSupported() {
-        return true;
+	return true;
     }
 
     /**
@@ -201,10 +202,10 @@ public class CharArrayReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public void mark(int readAheadLimit) throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            markedPos = pos;
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    markedPos = pos;
+	}
     }
 
     /**
@@ -214,10 +215,10 @@ public class CharArrayReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public void reset() throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            pos = markedPos;
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    pos = markedPos;
+	}
     }
 
     /**
@@ -227,6 +228,6 @@ public class CharArrayReader extends Reader {
      * Closing a previously closed stream has no effect.
      */
     public void close() {
-        buf = null;
+	buf = null;
     }
 }

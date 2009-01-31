@@ -57,65 +57,65 @@ public class JvmThreadingImpl implements JvmThreadingMBean {
      *
      * "The state of the Thread CPU Time Monitoring feature.
      * This feature can be:
-     *
+     * 
      * unsupported: The JVM does not support Thread CPU Time Monitoring.
      * enabled    : The JVM supports Thread CPU Time Monitoring, and it
      * is enabled.
      * disabled   : The JVM supports Thread CPU Time Monitoring, and it
      * is disabled.
-     *
+     * 
      * Only enabled(3) and disabled(4) may be supplied as values to a
      * SET request. unsupported(1) can only be set internally by the
      * agent.
-     *
+     * 
      * See java.lang.management.ThreadMXBean.isThreadCpuTimeSupported(),
      * java.lang.management.ThreadMXBean.isThreadCpuTimeEnabled(),
      * java.lang.management.ThreadMXBean.setThreadCpuTimeEnabled()
      * "
      *
      */
-    final static EnumJvmThreadCpuTimeMonitoring
-        JvmThreadCpuTimeMonitoringUnsupported =
-        new EnumJvmThreadCpuTimeMonitoring("unsupported");
-    final static EnumJvmThreadCpuTimeMonitoring
-        JvmThreadCpuTimeMonitoringEnabled =
-        new EnumJvmThreadCpuTimeMonitoring("enabled");
-    final static EnumJvmThreadCpuTimeMonitoring
-        JvmThreadCpuTimeMonitoringDisabled =
-        new EnumJvmThreadCpuTimeMonitoring("disabled");
-
+    final static EnumJvmThreadCpuTimeMonitoring 
+	JvmThreadCpuTimeMonitoringUnsupported = 
+	new EnumJvmThreadCpuTimeMonitoring("unsupported");
+    final static EnumJvmThreadCpuTimeMonitoring 
+	JvmThreadCpuTimeMonitoringEnabled = 
+	new EnumJvmThreadCpuTimeMonitoring("enabled");
+    final static EnumJvmThreadCpuTimeMonitoring 
+	JvmThreadCpuTimeMonitoringDisabled = 
+	new EnumJvmThreadCpuTimeMonitoring("disabled");
+    
 
     /**
      * Variable for storing the value of "JvmThreadContentionMonitoring".
      *
      * "The state of the Thread Contention Monitoring feature.
      * This feature can be:
-     *
+     * 
      * unsupported: The JVM does not support Thread Contention Monitoring.
      * enabled    : The JVM supports Thread Contention Monitoring, and it
      * is enabled.
      * disabled   : The JVM supports Thread Contention Monitoring, and it
      * is disabled.
-     *
+     * 
      * Only enabled(3) and disabled(4) may be supplied as values to a
      * SET request. unsupported(1) can only be set internally by the
      * agent.
-     *
+     * 
      * See java.lang.management.ThreadMXBean.isThreadContentionMonitoringSupported(),
      * java.lang.management.ThreadMXBean.isThreadContentionMonitoringEnabled(),
      * java.lang.management.ThreadMXBean.setThreadContentionMonitoringEnabled()
      * "
      *
      */
-    static final EnumJvmThreadContentionMonitoring
-        JvmThreadContentionMonitoringUnsupported =
-        new EnumJvmThreadContentionMonitoring("unsupported");
-    static final EnumJvmThreadContentionMonitoring
-        JvmThreadContentionMonitoringEnabled =
-        new EnumJvmThreadContentionMonitoring("enabled");
-    static final EnumJvmThreadContentionMonitoring
-        JvmThreadContentionMonitoringDisabled =
-        new EnumJvmThreadContentionMonitoring("disabled");
+    static final EnumJvmThreadContentionMonitoring 
+	JvmThreadContentionMonitoringUnsupported = 
+	new EnumJvmThreadContentionMonitoring("unsupported");
+    static final EnumJvmThreadContentionMonitoring 
+	JvmThreadContentionMonitoringEnabled = 
+	new EnumJvmThreadContentionMonitoring("enabled");
+    static final EnumJvmThreadContentionMonitoring 
+	JvmThreadContentionMonitoringDisabled = 
+	new EnumJvmThreadContentionMonitoring("disabled");
 
     /**
      * Constructor for the "JvmThreading" group.
@@ -123,187 +123,187 @@ public class JvmThreadingImpl implements JvmThreadingMBean {
      * will not be registered in Java DMK.
      */
     public JvmThreadingImpl(SnmpMib myMib) {
-        log.debug("JvmThreadingImpl","Constructor");
+	log.debug("JvmThreadingImpl","Constructor");
     }
 
 
     /**
      * Constructor for the "JvmThreading" group.
-     * If the group contains a table, the entries created through an SNMP SET
+     * If the group contains a table, the entries created through an SNMP SET 
      * will be AUTOMATICALLY REGISTERED in Java DMK.
      */
     public JvmThreadingImpl(SnmpMib myMib, MBeanServer server) {
-        log.debug("JvmThreadingImpl","Constructor with server");
+	log.debug("JvmThreadingImpl","Constructor with server");
     }
 
     /**
-     * ThreadMXBean accessor. It is acquired from the
+     * ThreadMXBean accessor. It is acquired from the 
      * java.lang.management.ManagementFactory
      * @return The local ThreadMXBean.
      */
     static ThreadMXBean getThreadMXBean() {
-        return ManagementFactory.getThreadMXBean();
+	return ManagementFactory.getThreadMXBean();
     }
-
+    
     /**
      * Getter for the "JvmThreadCpuTimeMonitoring" variable.
      */
-    public EnumJvmThreadCpuTimeMonitoring getJvmThreadCpuTimeMonitoring()
-        throws SnmpStatusException {
-
-        ThreadMXBean mbean = getThreadMXBean();
-
-        if(!mbean.isThreadCpuTimeSupported()) {
-            log.debug("getJvmThreadCpuTimeMonitoring",
-                      "Unsupported ThreadCpuTimeMonitoring");
-            return JvmThreadCpuTimeMonitoringUnsupported;
-        }
-
-        try {
-            if(mbean.isThreadCpuTimeEnabled()) {
-                log.debug("getJvmThreadCpuTimeMonitoring",
-                      "Enabled ThreadCpuTimeMonitoring");
-                return JvmThreadCpuTimeMonitoringEnabled;
-            } else {
-                log.debug("getJvmThreadCpuTimeMonitoring",
-                          "Disabled ThreadCpuTimeMonitoring");
-                return JvmThreadCpuTimeMonitoringDisabled;
-            }
-        }catch(UnsupportedOperationException e) {
-            log.debug("getJvmThreadCpuTimeMonitoring",
-                      "Newly unsupported ThreadCpuTimeMonitoring");
-
-            return JvmThreadCpuTimeMonitoringUnsupported;
-        }
+    public EnumJvmThreadCpuTimeMonitoring getJvmThreadCpuTimeMonitoring() 
+	throws SnmpStatusException {
+   
+	ThreadMXBean mbean = getThreadMXBean();
+	
+	if(!mbean.isThreadCpuTimeSupported()) {
+	    log.debug("getJvmThreadCpuTimeMonitoring", 
+		      "Unsupported ThreadCpuTimeMonitoring");
+	    return JvmThreadCpuTimeMonitoringUnsupported;
+	}
+	
+	try {
+	    if(mbean.isThreadCpuTimeEnabled()) {
+		log.debug("getJvmThreadCpuTimeMonitoring", 
+		      "Enabled ThreadCpuTimeMonitoring");
+		return JvmThreadCpuTimeMonitoringEnabled;
+	    } else {
+		log.debug("getJvmThreadCpuTimeMonitoring", 
+			  "Disabled ThreadCpuTimeMonitoring");
+		return JvmThreadCpuTimeMonitoringDisabled;
+	    }
+	}catch(UnsupportedOperationException e) {
+	    log.debug("getJvmThreadCpuTimeMonitoring",
+		      "Newly unsupported ThreadCpuTimeMonitoring");
+	    
+	    return JvmThreadCpuTimeMonitoringUnsupported;
+	}
     }
-
+    
     /**
      * Setter for the "JvmThreadCpuTimeMonitoring" variable.
      */
     public void setJvmThreadCpuTimeMonitoring(EnumJvmThreadCpuTimeMonitoring x)
-        throws SnmpStatusException {
+	throws SnmpStatusException {
+	
+	ThreadMXBean mbean = getThreadMXBean();
 
-        ThreadMXBean mbean = getThreadMXBean();
-
-        // We can trust the received value, it has been checked in
-        // checkJvmThreadCpuTimeMonitoring
-        if(JvmThreadCpuTimeMonitoringEnabled.intValue() == x.intValue())
-            mbean.setThreadCpuTimeEnabled(true);
-        else
-            mbean.setThreadCpuTimeEnabled(false);
+	// We can trust the received value, it has been checked in 
+	// checkJvmThreadCpuTimeMonitoring
+	if(JvmThreadCpuTimeMonitoringEnabled.intValue() == x.intValue())
+	    mbean.setThreadCpuTimeEnabled(true);
+	else
+	    mbean.setThreadCpuTimeEnabled(false);
     }
 
     /**
      * Checker for the "JvmThreadCpuTimeMonitoring" variable.
      */
     public void checkJvmThreadCpuTimeMonitoring(EnumJvmThreadCpuTimeMonitoring
-                                                x)
-        throws SnmpStatusException {
-
-        //Can't be set externaly to unsupported state.
+						x) 
+	throws SnmpStatusException {
+	
+	//Can't be set externaly to unsupported state.
         if(JvmThreadCpuTimeMonitoringUnsupported.intValue() == x.intValue()) {
-             log.debug("checkJvmThreadCpuTimeMonitoring",
-                      "Try to set to illegal unsupported value");
-            throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
-        }
+	     log.debug("checkJvmThreadCpuTimeMonitoring",
+		      "Try to set to illegal unsupported value");
+	    throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
+	}
 
-        if ((JvmThreadCpuTimeMonitoringEnabled.intValue() == x.intValue()) ||
-            (JvmThreadCpuTimeMonitoringDisabled.intValue() == x.intValue())) {
+	if ((JvmThreadCpuTimeMonitoringEnabled.intValue() == x.intValue()) ||
+	    (JvmThreadCpuTimeMonitoringDisabled.intValue() == x.intValue())) {
 
-            // The value is a valid value. But is the feature supported?
-            ThreadMXBean mbean = getThreadMXBean();
-            if(mbean.isThreadCpuTimeSupported()) return;
+	    // The value is a valid value. But is the feature supported?
+	    ThreadMXBean mbean = getThreadMXBean();
+	    if(mbean.isThreadCpuTimeSupported()) return;
 
-            // Not supported.
-            log.debug("checkJvmThreadCpuTimeMonitoring",
-                      "Unsupported operation, can't set state");
-            throw new
-                SnmpStatusException(SnmpDefinitions.snmpRspInconsistentValue);
-        }
-
-        // Unknown value.
-        log.debug("checkJvmThreadCpuTimeMonitoring",
-                  "unknown enum value ");
-        throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
+	    // Not supported.
+	    log.debug("checkJvmThreadCpuTimeMonitoring",
+		      "Unsupported operation, can't set state");
+	    throw new 
+		SnmpStatusException(SnmpDefinitions.snmpRspInconsistentValue);
+	}
+	
+	// Unknown value.
+	log.debug("checkJvmThreadCpuTimeMonitoring",
+		  "unknown enum value ");
+	throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
     }
-
+    
     /**
      * Getter for the "JvmThreadContentionMonitoring" variable.
      */
     public EnumJvmThreadContentionMonitoring getJvmThreadContentionMonitoring()
-        throws SnmpStatusException {
-
-        ThreadMXBean mbean = getThreadMXBean();
-
-        if(!mbean.isThreadContentionMonitoringSupported()) {
-            log.debug("getJvmThreadContentionMonitoring",
-                      "Unsupported ThreadContentionMonitoring");
-            return JvmThreadContentionMonitoringUnsupported;
-        }
-
-        if(mbean.isThreadContentionMonitoringEnabled()) {
-            log.debug("getJvmThreadContentionMonitoring",
-                      "Enabled ThreadContentionMonitoring");
-            return JvmThreadContentionMonitoringEnabled;
-        } else {
-            log.debug("getJvmThreadContentionMonitoring",
-                      "Disabled ThreadContentionMonitoring");
-            return JvmThreadContentionMonitoringDisabled;
-        }
+	throws SnmpStatusException {
+	
+	ThreadMXBean mbean = getThreadMXBean();
+	
+	if(!mbean.isThreadContentionMonitoringSupported()) {
+	    log.debug("getJvmThreadContentionMonitoring", 
+		      "Unsupported ThreadContentionMonitoring");
+	    return JvmThreadContentionMonitoringUnsupported;
+	}
+	
+	if(mbean.isThreadContentionMonitoringEnabled()) {
+	    log.debug("getJvmThreadContentionMonitoring", 
+		      "Enabled ThreadContentionMonitoring");
+	    return JvmThreadContentionMonitoringEnabled;
+	} else {
+	    log.debug("getJvmThreadContentionMonitoring", 
+		      "Disabled ThreadContentionMonitoring");
+	    return JvmThreadContentionMonitoringDisabled;
+	}
     }
 
     /**
      * Setter for the "JvmThreadContentionMonitoring" variable.
      */
     public void setJvmThreadContentionMonitoring(
-                            EnumJvmThreadContentionMonitoring x)
-        throws SnmpStatusException {
+                            EnumJvmThreadContentionMonitoring x) 
+	throws SnmpStatusException {
         ThreadMXBean mbean = getThreadMXBean();
-
-        // We can trust the received value, it has been checked in
-        // checkJvmThreadContentionMonitoring
-        if(JvmThreadContentionMonitoringEnabled.intValue() == x.intValue())
-            mbean.setThreadContentionMonitoringEnabled(true);
-        else
-            mbean.setThreadContentionMonitoringEnabled(false);
+	
+	// We can trust the received value, it has been checked in 
+	// checkJvmThreadContentionMonitoring
+	if(JvmThreadContentionMonitoringEnabled.intValue() == x.intValue())
+	    mbean.setThreadContentionMonitoringEnabled(true);
+	else
+	    mbean.setThreadContentionMonitoringEnabled(false);
     }
 
     /**
      * Checker for the "JvmThreadContentionMonitoring" variable.
      */
     public void checkJvmThreadContentionMonitoring(
-                              EnumJvmThreadContentionMonitoring x)
-        throws SnmpStatusException {
-        //Can't be set externaly to unsupported state.
+			      EnumJvmThreadContentionMonitoring x) 
+	throws SnmpStatusException {
+	//Can't be set externaly to unsupported state.
         if(JvmThreadContentionMonitoringUnsupported.intValue()==x.intValue()) {
-            log.debug("checkJvmThreadContentionMonitoring",
-                      "Try to set to illegal unsupported value");
-            throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
-        }
+	    log.debug("checkJvmThreadContentionMonitoring",
+		      "Try to set to illegal unsupported value");
+	    throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
+	}
 
-        if ((JvmThreadContentionMonitoringEnabled.intValue()==x.intValue()) ||
-            (JvmThreadContentionMonitoringDisabled.intValue()==x.intValue())) {
+	if ((JvmThreadContentionMonitoringEnabled.intValue()==x.intValue()) ||
+	    (JvmThreadContentionMonitoringDisabled.intValue()==x.intValue())) {
 
-            // The value is valid, but is the feature supported ?
-            ThreadMXBean mbean = getThreadMXBean();
-            if(mbean.isThreadContentionMonitoringSupported()) return;
+	    // The value is valid, but is the feature supported ?
+	    ThreadMXBean mbean = getThreadMXBean();
+	    if(mbean.isThreadContentionMonitoringSupported()) return;
 
-            log.debug("checkJvmThreadContentionMonitoring",
-                      "Unsupported operation, can't set state");
-            throw new
-                SnmpStatusException(SnmpDefinitions.snmpRspInconsistentValue);
-        }
+	    log.debug("checkJvmThreadContentionMonitoring",
+		      "Unsupported operation, can't set state");
+	    throw new 
+		SnmpStatusException(SnmpDefinitions.snmpRspInconsistentValue);
+	}
 
-        log.debug("checkJvmThreadContentionMonitoring",
-                  "Try to set to unknown value");
-        throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
+	log.debug("checkJvmThreadContentionMonitoring",
+		  "Try to set to unknown value");
+	throw new SnmpStatusException(SnmpDefinitions.snmpRspWrongValue);
     }
-
+    
     /**
      * Getter for the "JvmThreadTotalStartedCount" variable.
      */
     public Long getJvmThreadTotalStartedCount() throws SnmpStatusException {
-        return new Long(getThreadMXBean().getTotalStartedThreadCount());
+	return new Long(getThreadMXBean().getTotalStartedThreadCount());
     }
 
     /**
@@ -312,7 +312,7 @@ public class JvmThreadingImpl implements JvmThreadingMBean {
     public Long getJvmThreadPeakCount() throws SnmpStatusException {
         return  new Long(getThreadMXBean().getPeakThreadCount());
     }
-
+    
     /**
      * Getter for the "JvmThreadDaemonCount" variable.
      */
@@ -330,35 +330,35 @@ public class JvmThreadingImpl implements JvmThreadingMBean {
    /**
      * Getter for the "JvmThreadPeakCountReset" variable.
      */
-    public synchronized Long getJvmThreadPeakCountReset()
-        throws SnmpStatusException {
-        return new Long(jvmThreadPeakCountReset);
+    public synchronized Long getJvmThreadPeakCountReset() 
+	throws SnmpStatusException {
+	return new Long(jvmThreadPeakCountReset);
     }
 
     /**
      * Setter for the "JvmThreadPeakCountReset" variable.
      */
-    public synchronized void setJvmThreadPeakCountReset(Long x)
-        throws SnmpStatusException {
-        final long l = x.longValue();
-        if (l > jvmThreadPeakCountReset) {
-            final long stamp = System.currentTimeMillis();
-            getThreadMXBean().resetPeakThreadCount();
-            jvmThreadPeakCountReset = stamp;
-            log.debug("setJvmThreadPeakCountReset",
-                      "jvmThreadPeakCountReset="+stamp);
-        }
+    public synchronized void setJvmThreadPeakCountReset(Long x) 
+	throws SnmpStatusException {
+	final long l = x.longValue();
+	if (l > jvmThreadPeakCountReset) {
+	    final long stamp = System.currentTimeMillis();
+	    getThreadMXBean().resetPeakThreadCount();
+	    jvmThreadPeakCountReset = stamp; 
+	    log.debug("setJvmThreadPeakCountReset",
+		      "jvmThreadPeakCountReset="+stamp);
+	}
     }
 
     /**
      * Checker for the "JvmThreadPeakCountReset" variable.
      */
-    public void checkJvmThreadPeakCountReset(Long x)
-        throws SnmpStatusException {
+    public void checkJvmThreadPeakCountReset(Long x) 
+	throws SnmpStatusException {
     }
 
     /* Last time thread peak count was reset */
     private long jvmThreadPeakCountReset=0;
 
-    static final MibLogger log = new MibLogger(JvmThreadingImpl.class);
+    static final MibLogger log = new MibLogger(JvmThreadingImpl.class); 
 }

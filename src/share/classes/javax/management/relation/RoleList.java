@@ -68,7 +68,7 @@ public class RoleList extends ArrayList<Object> {
      * Constructs an empty RoleList.
      */
     public RoleList() {
-        super();
+	super();
     }
 
     /**
@@ -78,7 +78,7 @@ public class RoleList extends ArrayList<Object> {
      * @param initialCapacity  initial capacity
      */
     public RoleList(int initialCapacity) {
-        super(initialCapacity);
+	super(initialCapacity);
     }
 
     /**
@@ -140,7 +140,7 @@ public class RoleList extends ArrayList<Object> {
                 checkTypeSafe(this);
             typeSafe = true;
         }
-        return (List<Role>) (List) this;
+	return (List<Role>) (List) this;
     }
 
     //
@@ -155,13 +155,13 @@ public class RoleList extends ArrayList<Object> {
      * @exception IllegalArgumentException  if the role is null.
      */
     public void add(Role role)
-        throws IllegalArgumentException {
+	throws IllegalArgumentException {
 
-        if (role == null) {
-            String excMsg = "Invalid parameter";
-            throw new IllegalArgumentException(excMsg);
-        }
-        super.add(role);
+	if (role == null) {
+	    String excMsg = "Invalid parameter";
+	    throw new IllegalArgumentException(excMsg);
+	}
+	super.add(role);
     }
 
     /**
@@ -178,16 +178,16 @@ public class RoleList extends ArrayList<Object> {
      * outside of the list.
      */
     public void add(int index,
-                    Role role)
-        throws IllegalArgumentException,
+		    Role role)
+	throws IllegalArgumentException,
                IndexOutOfBoundsException {
 
-        if (role == null) {
-            String excMsg = "Invalid parameter";
-            throw new IllegalArgumentException(excMsg);
-        }
+	if (role == null) {
+	    String excMsg = "Invalid parameter";
+	    throw new IllegalArgumentException(excMsg);
+	}
 
-        super.add(index, role);
+	super.add(index, role);
     }
 
     /**
@@ -203,17 +203,17 @@ public class RoleList extends ArrayList<Object> {
      * outside of the list.
      */
      public void set(int index,
-                     Role role)
-         throws IllegalArgumentException,
-                IndexOutOfBoundsException {
+		     Role role)
+	 throws IllegalArgumentException,
+	        IndexOutOfBoundsException {
 
-        if (role == null) {
-            // Revisit [cebro] Localize message
-            String excMsg = "Invalid parameter.";
-            throw new IllegalArgumentException(excMsg);
-        }
+	if (role == null) {
+	    // Revisit [cebro] Localize message
+	    String excMsg = "Invalid parameter.";
+	    throw new IllegalArgumentException(excMsg);
+	}
 
-        super.set(index, role);
+	super.set(index, role);
      }
 
     /**
@@ -231,13 +231,13 @@ public class RoleList extends ArrayList<Object> {
      * @see ArrayList#addAll(Collection)
      */
     public boolean addAll(RoleList roleList)
-        throws IndexOutOfBoundsException {
+	throws IndexOutOfBoundsException {
 
-        if (roleList == null) {
-            return true;
-        }
+	if (roleList == null) {
+	    return true;
+	}
 
-        return (super.addAll(roleList));
+	return (super.addAll(roleList));
     }
 
     /**
@@ -258,17 +258,17 @@ public class RoleList extends ArrayList<Object> {
      * @see ArrayList#addAll(int, Collection)
      */
     public boolean addAll(int index,
-                          RoleList roleList)
-        throws IllegalArgumentException,
+			  RoleList roleList)
+	throws IllegalArgumentException,
                IndexOutOfBoundsException {
 
-        if (roleList == null) {
-            // Revisit [cebro] Localize message
-            String excMsg = "Invalid parameter.";
-            throw new IllegalArgumentException(excMsg);
-        }
+	if (roleList == null) {
+	    // Revisit [cebro] Localize message
+	    String excMsg = "Invalid parameter.";
+	    throw new IllegalArgumentException(excMsg);
+	}
 
-        return (super.addAll(index, roleList));
+	return (super.addAll(index, roleList));
     }
 
     /*

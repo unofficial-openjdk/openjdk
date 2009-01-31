@@ -51,7 +51,7 @@ Java_sun_java2d_pipe_RenderBuffer_copyFromArray
          * (Probably not an issue for STR, since our buffer size is likely
          * much smaller than a megabyte, but just in case...)
          */
-        size = (size_t)(length > MBYTE ? MBYTE : length);
+	size = (size_t)(length > MBYTE ? MBYTE : length);
 
         bytes = (*env)->GetPrimitiveArrayCritical(env, srcArray, NULL);
         if (bytes == NULL) {
@@ -59,13 +59,13 @@ Java_sun_java2d_pipe_RenderBuffer_copyFromArray
             return;
         }
 
-        memcpy(jlong_to_ptr(dstAddr), bytes + srcPos, size);
+ 	memcpy(jlong_to_ptr(dstAddr), bytes + srcPos, size);
 
         (*env)->ReleasePrimitiveArrayCritical(env, srcArray,
                                               bytes, JNI_ABORT);
 
-        length -= size;
-        dstAddr += size;
-        srcPos += size;
+	length -= size;
+	dstAddr += size;
+	srcPos += size;
     }
 }

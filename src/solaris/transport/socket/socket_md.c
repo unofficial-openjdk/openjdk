@@ -53,9 +53,9 @@ int
 dbgsysConnect(int fd, struct sockaddr *name, int namelen) {
     int rv = connect(fd, name, namelen);
     if (rv < 0 && errno == EINPROGRESS) {
-        return DBG_EINPROGRESS;
+	return DBG_EINPROGRESS;
     } else {
-        return rv;
+	return rv;
     }
 }
 
@@ -63,25 +63,25 @@ int
 dbgsysFinishConnect(int fd, long timeout) {
     int rv = dbgsysPoll(fd, 0, 1, timeout);
     if (rv == 0) {
-        return DBG_ETIMEOUT;
+	return DBG_ETIMEOUT;
     }
     if (rv > 0) {
-        return 0;
+	return 0;
     }
     return rv;
 }
 
 int
 dbgsysAccept(int fd, struct sockaddr *name, int *namelen) {
-    int rv;
+    int rv; 
     for (;;) {
-        rv = accept(fd, name, namelen);
-        if (rv >= 0) {
-            return rv;
-        }
-        if (errno != ECONNABORTED) {
-            return rv;
-        }
+	rv = accept(fd, name, namelen);
+	if (rv >= 0) {
+	    return rv;
+	}
+	if (errno != ECONNABORTED) {
+	    return rv;
+	}
     }
 }
 
@@ -158,7 +158,7 @@ dbgsysNetworkToHostLong(UINT32 netlong) {
 
 
 int
-dbgsysSetSocketOption(int fd, jint cmd, jboolean on, jvalue value)
+dbgsysSetSocketOption(int fd, jint cmd, jboolean on, jvalue value) 
 {
     if (cmd == TCP_NODELAY) {
         struct protoent *proto = getprotobyname("TCP");
@@ -239,7 +239,7 @@ dbgsysPoll(int fd, jboolean rd, jboolean wr, long timeout) {
             rv |= DBG_POLLIN;
         }
         if (fds[0].revents & POLLOUT) {
-            rv |= DBG_POLLOUT;
+	    rv |= DBG_POLLOUT;
         }
     }
     return rv;
@@ -249,7 +249,7 @@ int
 dbgsysGetLastIOError(char *buf, jint size) {
     char *msg = strerror(errno);
     strncpy(buf, msg, size-1);
-    buf[size-1] = '\0';
+    buf[size-1] = '\0';  
     return 0;
 }
 
@@ -258,8 +258,8 @@ int
 dbgsysTlsAlloc() {
     thread_key_t tk;
     if (thr_keycreate(&tk, NULL)) {
-        perror("thr_keycreate");
-        exit(-1);
+  	perror("thr_keycreate");
+	exit(-1);
     }
     return (int)tk;
 }
@@ -317,3 +317,5 @@ dbgsysCurrentTimeMillis() {
     gettimeofday(&t, 0);
     return ((jlong)t.tv_sec) * 1000 + (jlong)(t.tv_usec/1000);
 }
+
+

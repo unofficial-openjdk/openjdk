@@ -28,21 +28,21 @@
   @author    anton.tarasov@...: area=awt.focus
   @run       applet DeiconifiedFrameLoosesFocus.html
 */
-
+ 
 import java.awt.*;
 import java.applet.Applet;
 import test.java.awt.regtesthelpers.Util;
-
+ 
 public class DeiconifiedFrameLoosesFocus extends Applet {
     Robot robot;
     static final Frame frame = new Frame("Frame");
-
+ 
     public static void main(String[] args) {
         DeiconifiedFrameLoosesFocus app = new DeiconifiedFrameLoosesFocus();
         app.init();
         app.start();
     }
-
+ 
     public void init() {
         robot = Util.createRobot();
 
@@ -51,7 +51,7 @@ public class DeiconifiedFrameLoosesFocus extends Applet {
         // etc.
         this.setLayout (new BorderLayout ());
     }
-
+ 
     public void start() {
         if (!Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.ICONIFIED) ||
             !Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.NORMAL))
@@ -93,9 +93,10 @@ public class DeiconifiedFrameLoosesFocus extends Applet {
         }
     }
 }
-
+ 
 class TestFailedException extends RuntimeException {
     TestFailedException(String msg) {
         super("Test failed: " + msg);
     }
 }
+ 

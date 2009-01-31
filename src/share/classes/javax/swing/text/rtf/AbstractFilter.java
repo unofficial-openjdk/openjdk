@@ -66,22 +66,22 @@ abstract class AbstractFilter extends OutputStream
 
       noSpecialsTable = new boolean[256];
       for (i = 0; i < 256; i++)
-        noSpecialsTable[i] = false;
+	noSpecialsTable[i] = false;
 
       allSpecialsTable = new boolean[256];
       for (i = 0; i < 256; i++)
-        allSpecialsTable[i] = true;
+	allSpecialsTable[i] = true;
 
       latin1TranslationTable = new char[256];
       for (i = 0; i < 256; i++)
-        latin1TranslationTable[i] = (char)i;
+	latin1TranslationTable[i] = (char)i;
     }
 
     /**
      * A convenience method that reads text from a FileInputStream
      * and writes it to the receiver.
      * The format in which the file
-     * is read is determined by the concrete subclass of
+     * is read is determined by the concrete subclass of 
      * AbstractFilter to which this method is sent.
      * <p>This method does not close the receiver after reaching EOF on
      * the input stream.
@@ -95,16 +95,16 @@ abstract class AbstractFilter extends OutputStream
     {
         byte buf[];
         int count;
-
-        buf = new byte[16384];
-
-        while(true) {
-            count = in.read(buf);
-            if (count < 0)
-                break;
-
-            this.write(buf, 0, count);
-        }
+        
+	buf = new byte[16384];
+	
+	while(true) {
+	    count = in.read(buf);
+	    if (count < 0)
+	        break;
+	    
+	    this.write(buf, 0, count);
+	}
     }
 
     public void readFromReader(Reader in)
@@ -112,46 +112,46 @@ abstract class AbstractFilter extends OutputStream
     {
         char buf[];
         int count;
-
-        buf = new char[2048];
-
-        while(true) {
-            count = in.read(buf);
-            if (count < 0)
-                break;
-            for (int i = 0; i < count; i++) {
-              this.write(buf[i]);
-            }
-        }
+        
+	buf = new char[2048];
+	
+	while(true) {
+	    count = in.read(buf);
+	    if (count < 0)
+	        break;
+	    for (int i = 0; i < count; i++) {
+	      this.write(buf[i]);
+	    }
+	}
     }
 
     public AbstractFilter()
     {
         translationTable = latin1TranslationTable;
-        specialsTable = noSpecialsTable;
+	specialsTable = noSpecialsTable;
     }
 
     /**
      * Implements the abstract method of OutputStream, of which this class
-     * is a subclass.
+     * is a subclass. 
      */
     public void write(int b)
       throws IOException
     {
       if (b < 0)
-        b += 256;
-      if (specialsTable[b])
-        writeSpecial(b);
+	b += 256;
+      if (specialsTable[b]) 
+	writeSpecial(b);
       else {
-        char ch = translationTable[b];
-        if (ch != (char)0)
-          write(ch);
+	char ch = translationTable[b];
+	if (ch != (char)0)
+	  write(ch);
       }
     }
 
     /**
      * Implements the buffer-at-a-time write method for greater
-     * efficiency.
+     * efficiency. 
      *
      * <p> <strong>PENDING:</strong> Does <code>write(byte[])</code>
      * call <code>write(byte[], int, int)</code> or is it the other way
@@ -164,37 +164,37 @@ abstract class AbstractFilter extends OutputStream
       while (len > 0) {
         short b = (short)buf[off];
 
-        // stupid signed bytes
+	// stupid signed bytes
         if (b < 0)
             b += 256;
 
-        if (specialsTable[b]) {
-          if (accumulator != null) {
-            write(accumulator.toString());
-            accumulator = null;
-          }
-          writeSpecial(b);
-        } else {
-          char ch = translationTable[b];
-          if (ch != (char)0) {
-            if (accumulator == null)
-              accumulator = new StringBuffer();
-            accumulator.append(ch);
-          }
-        }
-
-        len --;
-        off ++;
+	if (specialsTable[b]) {
+	  if (accumulator != null) {
+	    write(accumulator.toString());
+	    accumulator = null;
+	  }
+	  writeSpecial(b);
+	} else {
+	  char ch = translationTable[b];
+	  if (ch != (char)0) {
+	    if (accumulator == null)
+	      accumulator = new StringBuffer();
+	    accumulator.append(ch);
+	  }
+	}
+	
+	len --;
+	off ++;
       }
 
-      if (accumulator != null)
-        write(accumulator.toString());
+      if (accumulator != null) 
+	write(accumulator.toString());
     }
 
     /**
      * Hopefully, all subclasses will override this method to accept strings
      * of text, but if they don't, AbstractFilter's implementation
-     * will spoon-feed them via <code>write(char)</code>.
+     * will spoon-feed them via <code>write(char)</code>. 
      *
      * @param s The string of non-special characters written to the
      *          OutputStream.
@@ -206,7 +206,7 @@ abstract class AbstractFilter extends OutputStream
 
       length = s.length();
       for(index = 0; index < length; index ++) {
-        write(s.charAt(index));
+	write(s.charAt(index));
       }
     }
 
@@ -227,3 +227,5 @@ abstract class AbstractFilter extends OutputStream
      */
     protected abstract void writeSpecial(int b) throws IOException;
 }
+
+

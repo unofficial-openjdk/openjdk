@@ -68,7 +68,8 @@ import sun.awt.image.ImagingLib;
  * conversion is required.
  * <p>
  * This class allows the Source to be the same as the Destination.
- *
+ * 
+ * @version 10 Feb 1997
  * @see LookupTable
  * @see java.awt.RenderingHints#KEY_COLOR_RENDERING
  * @see java.awt.RenderingHints#KEY_DITHERING
@@ -78,10 +79,10 @@ public class LookupOp implements BufferedImageOp, RasterOp {
     private LookupTable ltable;
     private int numComponents;
     RenderingHints hints;
-
+    
     /**
-     * Constructs a <code>LookupOp</code> object given the lookup
-     * table and a <code>RenderingHints</code> object, which might
+     * Constructs a <code>LookupOp</code> object given the lookup 
+     * table and a <code>RenderingHints</code> object, which might 
      * be <code>null</code>.
      * @param lookup the specified <code>LookupTable</code>
      * @param hints the specified <code>RenderingHints</code>,
@@ -103,18 +104,18 @@ public class LookupOp implements BufferedImageOp, RasterOp {
     }
 
     /**
-     * Performs a lookup operation on a <code>BufferedImage</code>.
+     * Performs a lookup operation on a <code>BufferedImage</code>.  
      * If the color model in the source image is not the same as that
      * in the destination image, the pixels will be converted
      * in the destination.  If the destination image is <code>null</code>,
-     * a <code>BufferedImage</code> will be created with an appropriate
+     * a <code>BufferedImage</code> will be created with an appropriate 
      * <code>ColorModel</code>.  An <code>IllegalArgumentException</code>
-     * might be thrown if the number of arrays in the
+     * might be thrown if the number of arrays in the 
      * <code>LookupTable</code> does not meet the restrictions
      * stated in the class comment above, or if the source image
      * has an <code>IndexColorModel</code>.
      * @param src the <code>BufferedImage</code> to be filtered
-     * @param dst the <code>BufferedImage</code> in which to
+     * @param dst the <code>BufferedImage</code> in which to 
      *            store the results of the filter operation
      * @return the filtered <code>BufferedImage</code>.
      * @throws IllegalArgumentException if the number of arrays in the
@@ -143,9 +144,9 @@ public class LookupOp implements BufferedImageOp, RasterOp {
                                                " src image: "+src);
         }
 
-
+        
         boolean needToConvert = false;
-
+        
         int width = src.getWidth();
         int height = src.getHeight();
 
@@ -176,7 +177,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
             }
 
         }
-
+        
         BufferedImage origDst = dst;
 
         if (ImagingLib.filter(this, src, dst) == null) {
@@ -220,7 +221,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
 
             filter(srcRaster, dstRaster);
         }
-
+        
         if (needToConvert) {
             // ColorModels are not the same
             ColorConvertOp ccop = new ColorConvertOp(hints);
@@ -231,24 +232,24 @@ public class LookupOp implements BufferedImageOp, RasterOp {
     }
 
     /**
-     * Performs a lookup operation on a <code>Raster</code>.
-     * If the destination <code>Raster</code> is <code>null</code>,
+     * Performs a lookup operation on a <code>Raster</code>.  
+     * If the destination <code>Raster</code> is <code>null</code>, 
      * a new <code>Raster</code> will be created.
-     * The <code>IllegalArgumentException</code> might be thrown
-     * if the source <code>Raster</code> and the destination
+     * The <code>IllegalArgumentException</code> might be thrown 
+     * if the source <code>Raster</code> and the destination 
      * <code>Raster</code> do not have the same
-     * number of bands or if the number of arrays in the
+     * number of bands or if the number of arrays in the 
      * <code>LookupTable</code> does not meet the
      * restrictions stated in the class comment above.
      * @param src the source <code>Raster</code> to filter
      * @param dst the destination <code>WritableRaster</code> for the
      *            filtered <code>src</code>
      * @return the filtered <code>WritableRaster</code>.
-     * @throws IllegalArgumentException if the source and destinations
+     * @throws IllegalArgumentException if the source and destinations 
      *         rasters do not have the same number of bands, or the
-     *         number of arrays in the <code>LookupTable</code> does
+     *         number of arrays in the <code>LookupTable</code> does 
      *         not meet the restrictions described in the class comments.
-     *
+     *         
      */
     public final WritableRaster filter (Raster src, WritableRaster dst) {
         int numBands  = src.getNumBands();
@@ -256,7 +257,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
         int height    = src.getHeight();
         int width     = src.getWidth();
         int srcPix[]  = new int[numBands];
-
+        
         // Create a new destination Raster, if needed
 
         if (dst == null) {
@@ -268,7 +269,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
                                           "match");
         }
         dstLength = dst.getNumBands();
-
+        
         if (numBands != dstLength) {
             throw new
                 IllegalArgumentException ("Number of channels in the src ("
@@ -286,7 +287,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
                                                " src Raster: "+src);
         }
 
-
+        
         if (ImagingLib.filter(this, src, dst) != null) {
             return dst;
         }
@@ -344,16 +345,16 @@ public class LookupOp implements BufferedImageOp, RasterOp {
      * @return the bounds of the filtered definition <code>Raster</code>.
      */
     public final Rectangle2D getBounds2D (Raster src) {
-        return src.getBounds();
-
+	return src.getBounds();
+			      
     }
 
     /**
      * Creates a zeroed destination image with the correct size and number of
-     * bands.  If destCM is <code>null</code>, an appropriate
+     * bands.  If destCM is <code>null</code>, an appropriate 
      * <code>ColorModel</code> will be used.
      * @param src       Source image for the filter operation.
-     * @param destCM    the destination's <code>ColorModel</code>, which
+     * @param destCM    the destination's <code>ColorModel</code>, which 
      *                  can be <code>null</code>.
      * @return a filtered destination <code>BufferedImage</code>.
      */
@@ -430,9 +431,9 @@ public class LookupOp implements BufferedImageOp, RasterOp {
 
         return image;
     }
-
+    
     /**
-     * Creates a zeroed-destination <code>Raster</code> with the
+     * Creates a zeroed-destination <code>Raster</code> with the 
      * correct size and number of bands, given this source.
      * @param src the <code>Raster</code> to be transformed
      * @return the zeroed-destination <code>Raster</code>.
@@ -440,29 +441,29 @@ public class LookupOp implements BufferedImageOp, RasterOp {
     public WritableRaster createCompatibleDestRaster (Raster src) {
         return src.createCompatibleWritableRaster();
     }
-
+    
     /**
      * Returns the location of the destination point given a
-     * point in the source.  If <code>dstPt</code> is not
-     * <code>null</code>, it will be used to hold the return value.
+     * point in the source.  If <code>dstPt</code> is not 
+     * <code>null</code>, it will be used to hold the return value.  
      * Since this is not a geometric operation, the <code>srcPt</code>
      * will equal the <code>dstPt</code>.
      * @param srcPt a <code>Point2D</code> that represents a point
      *        in the source image
      * @param dstPt a <code>Point2D</code>that represents the location
      *        in the destination
-     * @return the <code>Point2D</code> in the destination that
+     * @return the <code>Point2D</code> in the destination that 
      *         corresponds to the specified point in the source.
      */
     public final Point2D getPoint2D (Point2D srcPt, Point2D dstPt) {
         if (dstPt == null) {
             dstPt = new Point2D.Float();
         }
-        dstPt.setLocation(srcPt.getX(), srcPt.getY());
+	dstPt.setLocation(srcPt.getX(), srcPt.getY());
 
         return dstPt;
     }
-
+    
     /**
      * Returns the rendering hints for this op.
      * @return the <code>RenderingHints</code> object associated
@@ -492,7 +493,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
         int y;
         int band;
         int len = table[0].length;
-
+        
         // Loop through the data
         for ( y=0; y < height; y++) {
             tidx = 0;
@@ -518,7 +519,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
             }
         }
     }
-
+    
     private final void shortFilter(ShortLookupTable lookup, Raster src,
                                    WritableRaster dst,
                                    int width, int height, int numBands) {
@@ -530,7 +531,7 @@ public class LookupOp implements BufferedImageOp, RasterOp {
         int offset = lookup.getOffset();
         int tidx;
         int step=1;
-
+        
         // Check if it is one lookup applied to all bands
         if (table.length == 1) {
             step=0;
@@ -565,3 +566,5 @@ public class LookupOp implements BufferedImageOp, RasterOp {
         }
     }
 }
+
+

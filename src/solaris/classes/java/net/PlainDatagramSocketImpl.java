@@ -29,13 +29,14 @@ import java.io.IOException;
 /*
  * On Unix systems we simply delegate to native methods.
  *
+ * @version %I%, %G%
  * @author Chris Hegarty
  */
 
 class PlainDatagramSocketImpl extends AbstractPlainDatagramSocketImpl
 {
     static {
-        init();
+	init();
     }
 
     protected synchronized native void bind0(int lport, InetAddress laddr)

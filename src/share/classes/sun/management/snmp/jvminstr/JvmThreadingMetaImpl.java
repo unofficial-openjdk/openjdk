@@ -61,7 +61,7 @@ import sun.management.snmp.jvmmib.JvmThreadingMeta;
 import sun.management.snmp.jvmmib.JvmThreadInstanceTableMeta;
 
 /**
- * The class is used for representing SNMP metadata for the "JvmThreading"
+ * The class is used for representing SNMP metadata for the "JvmThreading" 
  * group.
  */
 public class JvmThreadingMetaImpl extends JvmThreadingMeta {
@@ -69,32 +69,32 @@ public class JvmThreadingMetaImpl extends JvmThreadingMeta {
     /**
      * Constructor for the metadata associated to "JvmThreading".
      */
-    public JvmThreadingMetaImpl(SnmpMib myMib,
-                                SnmpStandardObjectServer objserv) {
+    public JvmThreadingMetaImpl(SnmpMib myMib, 
+				SnmpStandardObjectServer objserv) {
         super(myMib, objserv);
     }
 
     /**
      * Factory method for "JvmThreadInstanceTable" table metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param tableName Name of the table object ("JvmThreadInstanceTable")
-     * @param groupName Name of the group to which this table belong
+     * @param groupName Name of the group to which this table belong 
      *        ("JvmThreading")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmThreadInstanceTable" table (JvmThreadInstanceTableMeta)
-     *
+     * 
      **/
-    protected JvmThreadInstanceTableMeta
-        createJvmThreadInstanceTableMetaNode(String tableName,
-                                             String groupName,
-                                             SnmpMib mib,
-                                             MBeanServer server)  {
+    protected JvmThreadInstanceTableMeta 
+	createJvmThreadInstanceTableMetaNode(String tableName, 
+					     String groupName, 
+					     SnmpMib mib, 
+					     MBeanServer server)  {
         return new JvmThreadInstanceTableMetaImpl(mib, objectserver);
     }
 }

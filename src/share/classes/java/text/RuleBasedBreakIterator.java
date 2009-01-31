@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)RuleBasedBreakIterator.java	1.3 99/04/07
  *
  * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
  * (C) Copyright IBM Corp. 1996 - 2002 - All Rights Reserved
@@ -218,6 +219,7 @@ import sun.text.SupplementaryCharacterData;
  * &nbsp; For examples, see the resource data (which is annotated).</p>
  *
  * @author Richard Gillam
+ * @version $RCSFile$ $Revision: 1.1 $ $Date: 1998/11/05 19:32:04 $
  */
 class RuleBasedBreakIterator extends BreakIterator {
 
@@ -343,7 +345,7 @@ class RuleBasedBreakIterator extends BreakIterator {
      *  data(512 entries), its length isn't included in <code>header</code>.
      * <code>checksum</code> is a CRC32 value of all in <code>body</code>.
      * <pre>
-     *   header_info {
+     *   header_info { 
      *       u4           stateTableLength;
      *       u4           backwardsStateTableLength;
      *       u4           endStatesLength;
@@ -355,7 +357,7 @@ class RuleBasedBreakIterator extends BreakIterator {
      *   }
      * </pre>
      * <p>
-     *
+     * 
      * Finally, <code>BMPindices</code> and <code>BMPdata</code> are set to
      * <code>charCategoryTable</code>. <code>nonBMPdata</code> is set to
      * <code>supplementaryCharCategoryTable</code>.
@@ -403,13 +405,13 @@ class RuleBasedBreakIterator extends BreakIterator {
         /* Read endStates[numRows] */
         endStates = new boolean[endStatesLength];
         for (int i = 0; i < endStatesLength; i++, offset++) {
-           endStates[i] = buffer[offset] == 1;
+           endStates[i] = buffer[offset] == 1; 
         }
 
         /* Read lookaheadStates[numRows] */
         lookaheadStates = new boolean[lookaheadStatesLength];
         for (int i = 0; i < lookaheadStatesLength; i++, offset++) {
-           lookaheadStates[i] = buffer[offset] == 1;
+           lookaheadStates[i] = buffer[offset] == 1; 
         }
 
         /* Read a category table and indices for BMP characters. */
@@ -429,7 +431,7 @@ class RuleBasedBreakIterator extends BreakIterator {
         }
         supplementaryCharCategoryTable = new SupplementaryCharacterData(temp3);
 
-        /* Read additional data */
+        /* Read additional data */ 
         if (additionalDataLength > 0) {
             additionalData = new byte[additionalDataLength];
             System.arraycopy(buffer, offset, additionalData, 0, additionalDataLength);
@@ -451,7 +453,7 @@ class RuleBasedBreakIterator extends BreakIterator {
                     }
                 }
             );
-        }
+        }                
         catch (PrivilegedActionException e) {
             throw new InternalError(e.toString());
         }
@@ -785,8 +787,8 @@ class RuleBasedBreakIterator extends BreakIterator {
         // position specified by the caller, we can just use previous()
         // to carry out this operation
         CharacterIterator text = getText();
-        checkOffset(offset, text);
-        text.setIndex(offset);
+	checkOffset(offset, text);
+	text.setIndex(offset);
         return previous();
     }
 
@@ -1123,3 +1125,4 @@ class RuleBasedBreakIterator extends BreakIterator {
         }
     }
 }
+

@@ -35,9 +35,10 @@ import javax.swing.plaf.*;
 
 
 /**
- * A Metal L&F implementation of PopupMenuSeparatorUI.  This implementation
+ * A Metal L&F implementation of PopupMenuSeparatorUI.  This implementation 
  * is a "combined" view/controller.
  *
+ * @version %I% %G%
  * @author Jeff Shapiro
  */
 
@@ -62,7 +63,11 @@ public class MetalPopupMenuSeparatorUI extends MetalSeparatorUI
     }
 
     public Dimension getPreferredSize( JComponent c )
-    {
+    { 
         return new Dimension( 0, 4 );
     }
 }
+
+
+
+

@@ -2,7 +2,7 @@
 /*
  * Debuggee which exercises various types of control flow
  */
-
+ 
 class ControlFlow {
     boolean b = true;
     int n = 22;
@@ -19,11 +19,11 @@ class ControlFlow {
         if (b) {
             System.out.println("if branch");
         } else {
-            throw new Exception("Wrong branch!?");
+            throw new Exception("Wrong branch!?");   
         }
 
         if (!b) {
-            throw new Exception("Wrong branch!?");
+            throw new Exception("Wrong branch!?");   
         } else {
             System.out.println("else branch");
         }
@@ -77,3 +77,4 @@ class ControlFlow {
         }
     }
 }
+

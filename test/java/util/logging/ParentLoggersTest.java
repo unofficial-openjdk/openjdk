@@ -1,9 +1,9 @@
 /*
  * @test
  * @bug     6498300
- *
+ * 
  * @summary regression: parent loggers are not properly registered
- * @author  ss45998
+ * @author  ss45998 
  *
  * @build ParentLoggersTest
  * @run main ParentLoggersTest

@@ -78,7 +78,7 @@ public class TempBuffer {
     private static void initTestFile(File blah) throws IOException {
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<4000; i++) {
             String number = new Integer(i).toString();

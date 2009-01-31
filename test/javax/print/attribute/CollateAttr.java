@@ -35,7 +35,7 @@ import javax.print.attribute.standard.*;
 public class CollateAttr {
 
    public static void main(String args[]) throws Exception {
-
+ 
       PrintService[] services =
             PrintServiceLookup.lookupPrintServices(null,null);
       for (int i=0; i<services.length; i++) {
@@ -49,3 +49,4 @@ public class CollateAttr {
       }
    }
 }
+

@@ -35,7 +35,7 @@ import java.io.InputStream;
  * @since 1.6
  */
 public class OctetStreamData implements Data {
-
+  
     private InputStream octetStream;
     private String uri;
     private String mimeType;
@@ -44,35 +44,35 @@ public class OctetStreamData implements Data {
      * Creates a new <code>OctetStreamData</code>.
      *
      * @param octetStream the input stream containing the octets
-     * @throws NullPointerException if <code>octetStream</code> is
+     * @throws NullPointerException if <code>octetStream</code> is 
      *    <code>null</code>
      */
     public OctetStreamData(InputStream octetStream) {
-        if (octetStream == null) {
-            throw new NullPointerException("octetStream is null");
-        }
-        this.octetStream = octetStream;
+	if (octetStream == null) {
+	    throw new NullPointerException("octetStream is null");
+	}
+	this.octetStream = octetStream;
     }
 
     /**
      * Creates a new <code>OctetStreamData</code>.
      *
      * @param octetStream the input stream containing the octets
-     * @param uri the URI String identifying the data object (may be
-     *    <code>null</code>)
-     * @param mimeType the MIME type associated with the data object (may be
-     *    <code>null</code>)
-     * @throws NullPointerException if <code>octetStream</code> is
+     * @param uri the URI String identifying the data object (may be 
+     *    <code>null</code>) 
+     * @param mimeType the MIME type associated with the data object (may be 
+     *    <code>null</code>) 
+     * @throws NullPointerException if <code>octetStream</code> is 
      *    <code>null</code>
      */
-    public OctetStreamData(InputStream octetStream, String uri,
-        String mimeType) {
-        if (octetStream == null) {
-            throw new NullPointerException("octetStream is null");
-        }
-        this.octetStream = octetStream;
-        this.uri = uri;
-        this.mimeType = mimeType;
+    public OctetStreamData(InputStream octetStream, String uri, 
+	String mimeType) {
+	if (octetStream == null) {
+	    throw new NullPointerException("octetStream is null");
+	}
+	this.octetStream = octetStream;
+	this.uri = uri;
+	this.mimeType = mimeType;
     }
 
     /**
@@ -81,7 +81,7 @@ public class OctetStreamData implements Data {
      * @return the input stream of this <code>OctetStreamData</code>.
      */
     public InputStream getOctetStream() {
-        return octetStream;
+	return octetStream;
     }
 
     /**
@@ -91,7 +91,7 @@ public class OctetStreamData implements Data {
      * @return the URI String or <code>null</code> if not applicable
      */
     public String getURI() {
-        return uri;
+	return uri;
     }
 
     /**
@@ -101,6 +101,6 @@ public class OctetStreamData implements Data {
      * @return the MIME type or <code>null</code> if not applicable
      */
     public String getMimeType() {
-        return mimeType;
+	return mimeType;
     }
 }

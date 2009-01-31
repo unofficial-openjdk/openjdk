@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)ArabicLayoutEngine.cpp	1.14 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -64,7 +65,7 @@ ArabicOpenTypeLayoutEngine::ArabicOpenTypeLayoutEngine(
 }
 
 ArabicOpenTypeLayoutEngine::ArabicOpenTypeLayoutEngine(
-    const LEFontInstance *fontInstance,
+    const LEFontInstance *fontInstance, 
     le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags)
     : OpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags)
 {
@@ -86,7 +87,7 @@ ArabicOpenTypeLayoutEngine::~ArabicOpenTypeLayoutEngine()
 // Input: characters
 // Output: characters, char indices, tags
 // Returns: output character count
-le_int32 ArabicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
+le_int32 ArabicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_int32 max, le_bool rightToLeft,
     LEUnicode *&outChars, LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
@@ -124,7 +125,7 @@ le_int32 ArabicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[]
     return count;
 }
 
-void ArabicOpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], le_int32 offset,
+void ArabicOpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], le_int32 offset, 
     le_int32 count, le_bool reverse, LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
     if (LE_FAILURE(success)) {
@@ -137,14 +138,14 @@ void ArabicOpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], l
     }
 
     if (fGPOSTable != NULL) {
-        OpenTypeLayoutEngine::adjustGlyphPositions(chars, offset, count,
+        OpenTypeLayoutEngine::adjustGlyphPositions(chars, offset, count, 
             reverse, glyphStorage, success);
     } else if (fGDEFTable != NULL) {
         GDEFMarkFilter filter(fGDEFTable);
 
         adjustMarkGlyphs(glyphStorage, &filter, success);
     } else {
-        GlyphDefinitionTableHeader *gdefTable =
+        GlyphDefinitionTableHeader *gdefTable = 
             (GlyphDefinitionTableHeader *) CanonShaping::glyphDefinitionTable;
         GDEFMarkFilter filter(gdefTable);
 
@@ -153,7 +154,7 @@ void ArabicOpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], l
 }
 
 UnicodeArabicOpenTypeLayoutEngine::UnicodeArabicOpenTypeLayoutEngine(
-    const LEFontInstance *fontInstance,
+    const LEFontInstance *fontInstance, 
     le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags)
     : ArabicOpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags)
 {
@@ -193,7 +194,7 @@ le_int32 UnicodeArabicOpenTypeLayoutEngine::glyphPostProcessing(
 
     glyphStorage.adoptCharIndicesArray(tempGlyphStorage);
 
-    ArabicOpenTypeLayoutEngine::mapCharsToGlyphs(tempChars, 0, tempGlyphCount, FALSE,
+    ArabicOpenTypeLayoutEngine::mapCharsToGlyphs(tempChars, 0, tempGlyphCount, FALSE, 
         TRUE, glyphStorage, success);
 
     LE_DELETE_ARRAY(tempChars);
@@ -201,8 +202,8 @@ le_int32 UnicodeArabicOpenTypeLayoutEngine::glyphPostProcessing(
     return tempGlyphCount;
 }
 
-void UnicodeArabicOpenTypeLayoutEngine::mapCharsToGlyphs(const LEUnicode chars[],
-    le_int32 offset, le_int32 count, le_bool reverse, le_bool /*mirror*/,
+void UnicodeArabicOpenTypeLayoutEngine::mapCharsToGlyphs(const LEUnicode chars[], 
+    le_int32 offset, le_int32 count, le_bool reverse, le_bool /*mirror*/, 
     LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
     if (LE_FAILURE(success)) {
@@ -228,7 +229,7 @@ void UnicodeArabicOpenTypeLayoutEngine::mapCharsToGlyphs(const LEUnicode chars[]
     }
 }
 
-void UnicodeArabicOpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[],
+void UnicodeArabicOpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_bool reverse,
     LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {

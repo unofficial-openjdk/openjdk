@@ -33,8 +33,8 @@
 class AwtObjectListItem {
 public:
     INLINE AwtObjectListItem(AwtObject* c) {
-        obj = c;
-        next = NULL;
+	obj = c;
+	next = NULL;
     }
 
     AwtObject* obj;
@@ -43,7 +43,7 @@ public:
 
 class AwtObjectList {
 public:
-    AwtObjectList();
+    AwtObjectList(); 
 
     void Add(AwtObject* obj);
     void Remove(AwtObject* obj);

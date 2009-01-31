@@ -60,7 +60,7 @@ public class ManyZipFiles {
         zos.finish();
         zos.close();
         byte[] data = baos.toByteArray();
-
+        
         ZipFile zips[] = new ZipFile[numFiles];
 
         try {
@@ -85,7 +85,7 @@ public class ManyZipFiles {
                 return;
             }
             tmpdir.deleteOnExit();
-
+            
             // Create and then open a large number of zip files
             for (int i = 0; i < numFiles; i++) {
                 File f = File.createTempFile("test", ".zip", tmpdir);

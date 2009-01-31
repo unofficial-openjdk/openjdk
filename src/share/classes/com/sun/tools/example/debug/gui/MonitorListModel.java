@@ -32,20 +32,20 @@ import javax.swing.AbstractListModel;
 public class MonitorListModel extends AbstractListModel {
 
     private final List<String> monitors = new ArrayList<String>();
-
+	
     MonitorListModel(Environment env) {
-
-        // Create listener.
-        MonitorListListener listener = new MonitorListListener();
-        env.getContextManager().addContextListener(listener);
+	
+	// Create listener.
+	MonitorListListener listener = new MonitorListListener();
+	env.getContextManager().addContextListener(listener);
 
         //### remove listeners on exit!
     }
-
+	
     public Object getElementAt(int index) {
         return monitors.get(index);
     }
-
+	
     public int getSize() {
         return monitors.size();
     }
@@ -80,8 +80,8 @@ public class MonitorListModel extends AbstractListModel {
 
     private class MonitorListListener implements ContextListener {
 
-        public void currentFrameChanged(CurrentFrameChangedEvent e) {
-            invalidate();
-        }
+	public void currentFrameChanged(CurrentFrameChangedEvent e) {
+	    invalidate();
+	}
     }
 }

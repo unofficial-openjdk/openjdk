@@ -35,14 +35,14 @@ public class SunDropTargetEvent extends MouseEvent {
 
     private final SunDropTargetContextPeer.EventDispatcher dispatcher;
 
-    public SunDropTargetEvent(Component source, int id, int x, int y,
+    public SunDropTargetEvent(Component source, int id, int x, int y, 
                               SunDropTargetContextPeer.EventDispatcher d) {
         super(source, id, System.currentTimeMillis(), 0, x, y, 0, 0, 0,
               false,  MouseEvent.NOBUTTON);
         dispatcher = d;
         dispatcher.registerEvent(this);
     }
-
+    
     public void dispatch() {
         try {
             dispatcher.dispatchEvent(this);
@@ -67,7 +67,7 @@ public class SunDropTargetEvent extends MouseEvent {
         String typeStr = null;
 
         switch (id) {
-        case MOUSE_DROPPED:
+        case MOUSE_DROPPED:           
             typeStr = "MOUSE_DROPPED"; break;
         default:
             return super.paramString();

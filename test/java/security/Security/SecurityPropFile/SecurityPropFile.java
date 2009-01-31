@@ -25,18 +25,18 @@
  * @test
  * @bug 4303068
  * @summary be allowed to specify the security properties file
- *      as a -D system property
+ *	as a -D system property
  *
  * @run main/othervm/policy=SecurityPropFile.policy -Djava.security.properties=${test.src}/SecurityPropFile.file -Djava.security.debug=properties SecurityPropFile
  */
 
 public class SecurityPropFile {
     public static void main(String[] args) {
-        System.out.println(java.security.Security.getProperty
-                                ("policy.provider"));
-        System.out.println(java.security.Security.getProperty
-                                ("policy.url.1"));
-        System.out.println(java.security.Security.getProperty
-                                ("policy.url.2"));
+	System.out.println(java.security.Security.getProperty
+				("policy.provider"));
+	System.out.println(java.security.Security.getProperty
+				("policy.url.1"));
+	System.out.println(java.security.Security.getProperty
+				("policy.url.2"));
     }
 }

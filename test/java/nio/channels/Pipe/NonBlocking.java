@@ -40,13 +40,13 @@ public class NonBlocking {
     }
 
     static void test1() throws Exception {
-        Pipe p = Pipe.open();
-        p.sink().configureBlocking(false);
-        if (p.sink().isBlocking())
-            throw new Exception("Sink still blocking");
-        p.source().configureBlocking(false);
-        if (p.source().isBlocking())
-            throw new Exception("Source still blocking");
+	Pipe p = Pipe.open();
+	p.sink().configureBlocking(false);
+	if (p.sink().isBlocking())
+	    throw new Exception("Sink still blocking");
+	p.source().configureBlocking(false);
+	if (p.source().isBlocking())
+	    throw new Exception("Source still blocking");
     }
 
 }

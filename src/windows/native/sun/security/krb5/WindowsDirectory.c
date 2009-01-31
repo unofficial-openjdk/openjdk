@@ -39,13 +39,13 @@ JNIEXPORT jstring JNICALL Java_sun_security_krb5_Config_getWindowsDirectory(
     jstring path = NULL;
 
     if (uLength = GetWindowsDirectory(lpPath, 0)) {
-        lpPath = (LPTSTR)malloc(sizeof(TCHAR) * uLength);
-        if (lpPath != NULL) {
-            if (GetWindowsDirectory(lpPath, uLength)) {
-                path = (*env)->NewStringUTF(env, lpPath);
-            }
-            free(lpPath);
-        }
+	lpPath = (LPTSTR)malloc(sizeof(TCHAR) * uLength);
+	if (lpPath != NULL) {
+	    if (GetWindowsDirectory(lpPath, uLength)) {
+		path = (*env)->NewStringUTF(env, lpPath);
+	    }
+	    free(lpPath);
+	}
     }
     return path;
 }

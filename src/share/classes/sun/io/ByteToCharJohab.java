@@ -32,6 +32,7 @@ import sun.nio.cs.ext.Johab;
  * Tables and data to convert Johab to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharJohab extends ByteToCharDoubleByte {

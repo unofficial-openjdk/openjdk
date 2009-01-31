@@ -40,8 +40,9 @@ package java.security.cert;
  * provide the necessary locking. Multiple threads each manipulating
  * separate objects need not synchronize.
  *
- * @since       1.4
- * @author      Steve Hanna
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Steve Hanna
  * @see         CertStore
  */
 public class LDAPCertStoreParameters implements CertStoreParameters {
@@ -83,7 +84,7 @@ public class LDAPCertStoreParameters implements CertStoreParameters {
      * <code>null</code>
      */
     public LDAPCertStoreParameters(String serverName) {
-        this(serverName, LDAP_DEFAULT_PORT);
+	this(serverName, LDAP_DEFAULT_PORT);
     }
 
     /**
@@ -117,8 +118,8 @@ public class LDAPCertStoreParameters implements CertStoreParameters {
      * the original and vice versa.
      * <p>
      * Note: this method currently performs a shallow copy of the object
-     * (simply calls <code>Object.clone()</code>). This may be changed in a
-     * future revision to perform a deep copy if new parameters are added
+     * (simply calls <code>Object.clone()</code>). This may be changed in a 
+     * future revision to perform a deep copy if new parameters are added 
      * that should not be shared.
      *
      * @return the copy

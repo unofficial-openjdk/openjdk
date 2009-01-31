@@ -42,11 +42,11 @@ static jboolean isArrayClass(jclass clazz);
 static char * getPropertyUTF8(JNIEnv *env, char *propertyName);
 
 /* Save an object reference for use later (create a NewGlobalRef) */
-void
+void 
 saveGlobalRef(JNIEnv *env, jobject obj, jobject *pobj)
 {
     jobject newobj;
-
+    
     if ( pobj == NULL ) {
         EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"saveGlobalRef pobj");
     }
@@ -67,11 +67,11 @@ saveGlobalRef(JNIEnv *env, jobject obj, jobject *pobj)
 }
 
 /* Toss a previously saved object reference */
-void
+void 
 tossGlobalRef(JNIEnv *env, jobject *pobj)
 {
     jobject obj;
-
+    
     if ( pobj == NULL ) {
         EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"tossGlobalRef pobj");
     }
@@ -113,7 +113,7 @@ static jmethodID
 getMethod(JNIEnv *env, jclass clazz, const char * name, const char *signature)
 {
     jmethodID method;
-
+    
     if ( env == NULL ) {
         EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"getMethod env");
     }
@@ -128,12 +128,12 @@ getMethod(JNIEnv *env, jclass clazz, const char * name, const char *signature)
     }
     method = JNI_FUNC_PTR(env,GetMethodID)(env, clazz, name, signature);
     if (method == NULL) {
-        ERROR_MESSAGE(("JDWP Can't find method %s with signature %s",
+        ERROR_MESSAGE(("JDWP Can't find method %s with signature %s", 
                                 name, signature));
         EXIT_ERROR(AGENT_ERROR_NULL_POINTER,NULL);
     }
     if ( JNI_FUNC_PTR(env,ExceptionOccurred)(env) ) {
-        ERROR_MESSAGE(("JDWP Exception occurred finding method %s with signature %s",
+        ERROR_MESSAGE(("JDWP Exception occurred finding method %s with signature %s", 
                                 name, signature));
         EXIT_ERROR(AGENT_ERROR_NULL_POINTER,NULL);
     }
@@ -144,7 +144,7 @@ static jmethodID
 getStaticMethod(JNIEnv *env, jclass clazz, const char * name, const char *signature)
 {
     jmethodID method;
-
+    
     if ( env == NULL ) {
         EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"getStaticMethod env");
     }
@@ -159,19 +159,19 @@ getStaticMethod(JNIEnv *env, jclass clazz, const char * name, const char *signat
     }
     method = JNI_FUNC_PTR(env,GetStaticMethodID)(env, clazz, name, signature);
     if (method == NULL) {
-        ERROR_MESSAGE(("JDWP Can't find method %s with signature %s",
+        ERROR_MESSAGE(("JDWP Can't find method %s with signature %s", 
                                 name, signature));
         EXIT_ERROR(AGENT_ERROR_NULL_POINTER,NULL);
     }
     if ( JNI_FUNC_PTR(env,ExceptionOccurred)(env) ) {
-        ERROR_MESSAGE(("JDWP Exception occurred finding method %s with signature %s",
+        ERROR_MESSAGE(("JDWP Exception occurred finding method %s with signature %s", 
                                 name, signature));
         EXIT_ERROR(AGENT_ERROR_NULL_POINTER,NULL);
     }
     return method;
 }
 
-void
+void 
 util_initialize(JNIEnv *env)
 {
     WITH_LOCAL_REFS(env, 6) {
@@ -190,7 +190,7 @@ util_initialize(JNIEnv *env)
         jint groupCount;
         jthreadGroup *groups;
         jthreadGroup localSystemThreadGroup;
-
+        
         /* Find some standard classes */
 
         localClassClass         = findClass(env,"java/lang/Class");
@@ -202,7 +202,7 @@ util_initialize(JNIEnv *env)
         localPropertiesClass    = findClass(env,"java/util/Properties");
 
         /* Save references */
-
+        
         saveGlobalRef(env, localClassClass,       &(gdata->classClass));
         saveGlobalRef(env, localThreadClass,      &(gdata->threadClass));
         saveGlobalRef(env, localThreadGroupClass, &(gdata->threadGroupClass));
@@ -211,24 +211,24 @@ util_initialize(JNIEnv *env)
         saveGlobalRef(env, localSystemClass,      &(gdata->systemClass));
 
         /* Find some standard methods */
-
-        gdata->threadConstructor =
-                getMethod(env, gdata->threadClass,
+        
+        gdata->threadConstructor = 
+                getMethod(env, gdata->threadClass, 
                     "<init>", "(Ljava/lang/ThreadGroup;Ljava/lang/String;)V");
-        gdata->threadSetDaemon =
+        gdata->threadSetDaemon = 
                 getMethod(env, gdata->threadClass, "setDaemon", "(Z)V");
-        gdata->threadResume =
+        gdata->threadResume = 
                 getMethod(env, gdata->threadClass, "resume", "()V");
-        gdata->systemGetProperty =
-                getStaticMethod(env, gdata->systemClass,
+        gdata->systemGetProperty = 
+                getStaticMethod(env, gdata->systemClass, 
                     "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
-        gdata->setProperty =
-                getMethod(env, localPropertiesClass,
+        gdata->setProperty = 
+                getMethod(env, localPropertiesClass, 
                     "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;");
 
         /* Find the system thread group */
 
-        groups = NULL;
+        groups = NULL; 
         groupCount = 0;
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetTopThreadGroups)
                     (gdata->jvmti, &groupCount, &groups);
@@ -242,21 +242,21 @@ util_initialize(JNIEnv *env)
         saveGlobalRef(env, localSystemThreadGroup, &(gdata->systemThreadGroup));
 
         /* Get some basic Java property values we will need at some point */
-        gdata->property_java_version
+        gdata->property_java_version    
                         = getPropertyUTF8(env, "java.version");
-        gdata->property_java_vm_name
+        gdata->property_java_vm_name    
                         = getPropertyUTF8(env, "java.vm.name");
-        gdata->property_java_vm_info
+        gdata->property_java_vm_info    
                         = getPropertyUTF8(env, "java.vm.info");
-        gdata->property_java_class_path
+        gdata->property_java_class_path 
                         = getPropertyUTF8(env, "java.class.path");
-        gdata->property_sun_boot_class_path
+        gdata->property_sun_boot_class_path     
                         = getPropertyUTF8(env, "sun.boot.class.path");
-        gdata->property_sun_boot_library_path
+        gdata->property_sun_boot_library_path   
                         = getPropertyUTF8(env, "sun.boot.library.path");
-        gdata->property_path_separator
+        gdata->property_path_separator  
                         = getPropertyUTF8(env, "path.separator");
-        gdata->property_user_dir
+        gdata->property_user_dir                
                         = getPropertyUTF8(env, "user.dir");
 
         /* Get agent properties: invoke sun.misc.VMSupport.getAgentProperties */
@@ -268,10 +268,10 @@ util_initialize(JNIEnv *env)
                 JNI_FUNC_PTR(env,ExceptionClear)(env);
             }
         } else {
-            getAgentProperties  =
-                getStaticMethod(env, localVMSupportClass,
+            getAgentProperties  = 
+                getStaticMethod(env, localVMSupportClass, 
                                 "getAgentProperties", "()Ljava/util/Properties;");
-            localAgentProperties =
+            localAgentProperties = 
                 JNI_FUNC_PTR(env,CallStaticObjectMethod)
                             (env, localVMSupportClass, getAgentProperties);
             saveGlobalRef(env, localAgentProperties, &(gdata->agent_properties));
@@ -281,7 +281,7 @@ util_initialize(JNIEnv *env)
                     "Exception occurred calling sun.misc.VMSupport.getAgentProperties");
             }
         }
-
+    
     } END_WITH_LOCAL_REFS(env);
 
 }
@@ -291,7 +291,7 @@ util_reset(void)
 {
 }
 
-jboolean
+jboolean 
 isObjectTag(jbyte tag) {
     return (tag == JDWP_TAG(OBJECT)) ||
            (tag == JDWP_TAG(STRING)) ||
@@ -302,8 +302,8 @@ isObjectTag(jbyte tag) {
            (tag == JDWP_TAG(ARRAY));
 }
 
-jbyte
-specificTypeKey(JNIEnv *env, jobject object)
+jbyte 
+specificTypeKey(JNIEnv *env, jobject object) 
 {
     if (object == NULL) {
         return JDWP_TAG(OBJECT);
@@ -330,8 +330,8 @@ specificTypeKey(JNIEnv *env, jobject object)
     }
 }
 
-static void
-writeFieldValue(JNIEnv *env, PacketOutputStream *out, jobject object,
+static void 
+writeFieldValue(JNIEnv *env, PacketOutputStream *out, jobject object, 
                 jfieldID field)
 {
     jclass clazz;
@@ -347,10 +347,10 @@ writeFieldValue(JNIEnv *env, PacketOutputStream *out, jobject object,
     }
     typeKey = signature[0];
     jvmtiDeallocate(signature);
-
+    
     /*
      * For primitive types, the type key is bounced back as is. Objects
-     * are handled in the switch statement below.
+     * are handled in the switch statement below. 
      */
     if ((typeKey != JDWP_TAG(OBJECT)) && (typeKey != JDWP_TAG(ARRAY))) {
         (void)outStream_writeByte(out, typeKey);
@@ -364,57 +364,57 @@ writeFieldValue(JNIEnv *env, PacketOutputStream *out, jobject object,
             (void)outStream_writeObjectRef(env, out, value);
             break;
         }
-
+    
         case JDWP_TAG(BYTE):
-            (void)outStream_writeByte(out,
+            (void)outStream_writeByte(out, 
                       JNI_FUNC_PTR(env,GetByteField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(CHAR):
-            (void)outStream_writeChar(out,
+            (void)outStream_writeChar(out, 
                       JNI_FUNC_PTR(env,GetCharField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(FLOAT):
-            (void)outStream_writeFloat(out,
+            (void)outStream_writeFloat(out, 
                       JNI_FUNC_PTR(env,GetFloatField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(DOUBLE):
-            (void)outStream_writeDouble(out,
+            (void)outStream_writeDouble(out, 
                       JNI_FUNC_PTR(env,GetDoubleField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(INT):
-            (void)outStream_writeInt(out,
+            (void)outStream_writeInt(out, 
                       JNI_FUNC_PTR(env,GetIntField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(LONG):
-            (void)outStream_writeLong(out,
+            (void)outStream_writeLong(out, 
                       JNI_FUNC_PTR(env,GetLongField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(SHORT):
-            (void)outStream_writeShort(out,
+            (void)outStream_writeShort(out, 
                       JNI_FUNC_PTR(env,GetShortField)(env, object, field));
             break;
-
+    
         case JDWP_TAG(BOOLEAN):
-            (void)outStream_writeBoolean(out,
+            (void)outStream_writeBoolean(out, 
                       JNI_FUNC_PTR(env,GetBooleanField)(env, object, field));
             break;
     }
 }
 
-static void
-writeStaticFieldValue(JNIEnv *env, PacketOutputStream *out, jclass clazz,
+static void 
+writeStaticFieldValue(JNIEnv *env, PacketOutputStream *out, jclass clazz, 
                       jfieldID field)
 {
     jvmtiError error;
     char *signature = NULL;
     jbyte typeKey;
-
+    
     error = fieldSignature(clazz, field, NULL, &signature, NULL);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
@@ -425,7 +425,7 @@ writeStaticFieldValue(JNIEnv *env, PacketOutputStream *out, jclass clazz,
 
     /*
      * For primitive types, the type key is bounced back as is. Objects
-     * are handled in the switch statement below.
+     * are handled in the switch statement below. 
      */
     if ((typeKey != JDWP_TAG(OBJECT)) && (typeKey != JDWP_TAG(ARRAY))) {
         (void)outStream_writeByte(out, typeKey);
@@ -439,50 +439,50 @@ writeStaticFieldValue(JNIEnv *env, PacketOutputStream *out, jclass clazz,
             (void)outStream_writeObjectRef(env, out, value);
             break;
         }
-
+    
         case JDWP_TAG(BYTE):
-            (void)outStream_writeByte(out,
+            (void)outStream_writeByte(out, 
                       JNI_FUNC_PTR(env,GetStaticByteField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(CHAR):
-            (void)outStream_writeChar(out,
+            (void)outStream_writeChar(out, 
                       JNI_FUNC_PTR(env,GetStaticCharField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(FLOAT):
-            (void)outStream_writeFloat(out,
+            (void)outStream_writeFloat(out, 
                       JNI_FUNC_PTR(env,GetStaticFloatField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(DOUBLE):
-            (void)outStream_writeDouble(out,
+            (void)outStream_writeDouble(out, 
                       JNI_FUNC_PTR(env,GetStaticDoubleField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(INT):
-            (void)outStream_writeInt(out,
+            (void)outStream_writeInt(out, 
                       JNI_FUNC_PTR(env,GetStaticIntField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(LONG):
-            (void)outStream_writeLong(out,
+            (void)outStream_writeLong(out, 
                       JNI_FUNC_PTR(env,GetStaticLongField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(SHORT):
-            (void)outStream_writeShort(out,
+            (void)outStream_writeShort(out, 
                       JNI_FUNC_PTR(env,GetStaticShortField)(env, clazz, field));
             break;
-
+    
         case JDWP_TAG(BOOLEAN):
-            (void)outStream_writeBoolean(out,
+            (void)outStream_writeBoolean(out, 
                       JNI_FUNC_PTR(env,GetStaticBooleanField)(env, clazz, field));
             break;
     }
 }
 
-void
+void 
 sharedGetFieldValues(PacketInputStream *in, PacketOutputStream *out,
                      jboolean isStatic)
 {
@@ -493,7 +493,7 @@ sharedGetFieldValues(PacketInputStream *in, PacketOutputStream *out,
 
     object = NULL;
     clazz  = NULL;
-
+    
     if (isStatic) {
         clazz = inStream_readClassRef(env, in);
     } else {
@@ -508,7 +508,7 @@ sharedGetFieldValues(PacketInputStream *in, PacketOutputStream *out,
     WITH_LOCAL_REFS(env, length + 1) { /* +1 for class with instance fields */
 
         int i;
-
+        
         (void)outStream_writeInt(out, length);
         for (i = 0; (i < length) && !outStream_error(out); i++) {
             jfieldID field = inStream_readFieldID(in);
@@ -523,7 +523,7 @@ sharedGetFieldValues(PacketInputStream *in, PacketOutputStream *out,
     } END_WITH_LOCAL_REFS(env);
 }
 
-jboolean
+jboolean 
 sharedInvoke(PacketInputStream *in, PacketOutputStream *out)
 {
     jvalue *arguments = NULL;
@@ -538,7 +538,7 @@ sharedInvoke(PacketInputStream *in, PacketOutputStream *out)
     JNIEnv *env;
 
     /*
-     * Instance methods start with the instance, thread and class,
+     * Instance methods start with the instance, thread and class, 
      * and statics and constructors start with the class and then the
      * thread.
      */
@@ -578,7 +578,7 @@ sharedInvoke(PacketInputStream *in, PacketOutputStream *out)
             return JNI_TRUE;
         }
     }
-
+    
     options = inStream_readInt(in);
     if (inStream_error(in)) {
         if ( arguments != NULL ) {
@@ -603,11 +603,11 @@ sharedInvoke(PacketInputStream *in, PacketOutputStream *out)
 
     /*
      * Request the invoke. If there are no errors in the request,
-     * the interrupting thread will actually do the invoke and a
+     * the interrupting thread will actually do the invoke and a 
      * reply will be generated subsequently, so we don't reply here.
      */
-    error = invoker_requestInvoke(invokeType, (jbyte)options, inStream_id(in),
-                                  thread, clazz, method,
+    error = invoker_requestInvoke(invokeType, (jbyte)options, inStream_id(in), 
+                                  thread, clazz, method, 
                                   instance, arguments, argumentCount);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
@@ -620,14 +620,14 @@ sharedInvoke(PacketInputStream *in, PacketOutputStream *out)
     return JNI_FALSE;   /* Don't reply */
 }
 
-jint
+jint 
 uniqueID(void)
 {
     static jint currentID = 0;
     return currentID++;
 }
 
-int
+int 
 filterDebugThreads(jthread *threads, int count)
 {
     int i;
@@ -646,10 +646,10 @@ filterDebugThreads(jthread *threads, int count)
     return current;
 }
 
-jbyte
-referenceTypeTag(jclass clazz)
+jbyte 
+referenceTypeTag(jclass clazz) 
 {
-    jbyte tag;
+    jbyte tag; 
 
     if (isInterface(clazz)) {
         tag = JDWP_TYPE_TAG(INTERFACE);
@@ -665,11 +665,11 @@ referenceTypeTag(jclass clazz)
 /**
  * Get field modifiers
  */
-jvmtiError
+jvmtiError 
 fieldModifiers(jclass clazz, jfieldID field, jint *pmodifiers)
 {
     jvmtiError error;
-
+  
     *pmodifiers = 0;
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetFieldModifiers)
             (gdata->jvmti, clazz, field, pmodifiers);
@@ -679,11 +679,11 @@ fieldModifiers(jclass clazz, jfieldID field, jint *pmodifiers)
 /**
  * Get method modifiers
  */
-jvmtiError
+jvmtiError 
 methodModifiers(jmethodID method, jint *pmodifiers)
 {
     jvmtiError error;
-
+  
     *pmodifiers = 0;
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetMethodModifiers)
             (gdata->jvmti, method, pmodifiers);
@@ -716,38 +716,38 @@ methodLocation(jmethodID method, jlocation *ploc1, jlocation *ploc2)
 /**
  * Get method signature
  */
-jvmtiError
-methodSignature(jmethodID method,
+jvmtiError 
+methodSignature(jmethodID method, 
         char **pname, char **psignature, char **pgeneric_signature)
 {
     jvmtiError error;
     char *name = NULL;
     char *signature = NULL;
     char *generic_signature = NULL;
-
+  
     error = FUNC_PTR(gdata->jvmti,GetMethodName)
             (gdata->jvmti, method, &name, &signature, &generic_signature);
-
+    
     if ( pname != NULL ) {
         *pname = name;
     } else if ( name != NULL )  {
         jvmtiDeallocate(name);
-    }
+    } 
     if ( psignature != NULL ) {
         *psignature = signature;
     } else if ( signature != NULL ) {
         jvmtiDeallocate(signature);
-    }
+    } 
     if ( pgeneric_signature != NULL ) {
         *pgeneric_signature = generic_signature;
     } else if ( generic_signature != NULL )  {
         jvmtiDeallocate(generic_signature);
-    }
+    } 
     return error;
 }
 
 /*
- * Get the return type key of the method
+ * Get the return type key of the method 
  *     V or B C D F I J S Z L  [
  */
 jvmtiError
@@ -755,7 +755,7 @@ methodReturnType(jmethodID method, char *typeKey)
 {
     char       *signature;
     jvmtiError  error;
-
+    
     signature = NULL;
     error     = methodSignature(method, NULL, &signature, NULL);
     if (error == JVMTI_ERROR_NONE) {
@@ -763,7 +763,7 @@ methodReturnType(jmethodID method, char *typeKey)
             error = AGENT_ERROR_INVALID_TAG;
         } else {
             char * xx;
-
+            
             xx = strchr(signature, ')');
             if (xx == NULL || *(xx + 1) == 0) {
                 error = AGENT_ERROR_INVALID_TAG;
@@ -794,15 +794,15 @@ classLoader(jclass clazz, jobject *pclazz)
 /**
  * Get field signature
  */
-jvmtiError
-fieldSignature(jclass clazz, jfieldID field,
+jvmtiError 
+fieldSignature(jclass clazz, jfieldID field, 
         char **pname, char **psignature, char **pgeneric_signature)
 {
     jvmtiError error;
     char *name = NULL;
     char *signature = NULL;
     char *generic_signature = NULL;
-
+  
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetFieldName)
             (gdata->jvmti, clazz, field, &name, &signature, &generic_signature);
 
@@ -810,17 +810,17 @@ fieldSignature(jclass clazz, jfieldID field,
         *pname = name;
     } else if ( name != NULL )  {
         jvmtiDeallocate(name);
-    }
+    } 
     if ( psignature != NULL ) {
         *psignature = signature;
     } else if ( signature != NULL )  {
         jvmtiDeallocate(signature);
-    }
+    } 
     if ( pgeneric_signature != NULL ) {
         *pgeneric_signature = generic_signature;
     } else if ( generic_signature != NULL )  {
         jvmtiDeallocate(generic_signature);
-    }
+    } 
     return error;
 }
 
@@ -833,14 +833,14 @@ getEnv(void)
     rc = FUNC_PTR(gdata->jvm,GetEnv)
                 (gdata->jvm, (void **)&env, JNI_VERSION_1_2);
     if (rc != JNI_OK) {
-        ERROR_MESSAGE(("JDWP Unable to get JNI 1.2 environment, jvm->GetEnv() return code = %d",
+        ERROR_MESSAGE(("JDWP Unable to get JNI 1.2 environment, jvm->GetEnv() return code = %d", 
                 rc));
         EXIT_ERROR(AGENT_ERROR_NO_JNI_ENV,NULL);
     }
     return env;
 }
 
-jvmtiError
+jvmtiError 
 spawnNewThread(jvmtiStartFunction func, void *arg, char *name)
 {
     JNIEnv *env = getEnv();
@@ -852,7 +852,7 @@ spawnNewThread(jvmtiStartFunction func, void *arg, char *name)
 
         jthread thread;
         jstring nameString;
-
+        
         nameString = JNI_FUNC_PTR(env,NewStringUTF)(env, name);
         if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
             JNI_FUNC_PTR(env,ExceptionClear)(env);
@@ -861,7 +861,7 @@ spawnNewThread(jvmtiStartFunction func, void *arg, char *name)
         }
 
         thread = JNI_FUNC_PTR(env,NewObject)
-                        (env, gdata->threadClass, gdata->threadConstructor,
+                        (env, gdata->threadClass, gdata->threadConstructor, 
                                    gdata->systemThreadGroup, nameString);
         if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
             JNI_FUNC_PTR(env,ExceptionClear)(env);
@@ -883,21 +883,21 @@ spawnNewThread(jvmtiStartFunction func, void *arg, char *name)
         error = threadControl_addDebugThread(thread);
         if (error == JVMTI_ERROR_NONE) {
             /*
-             * Debugger threads need cycles in all sorts of strange
-             * situations (e.g. infinite cpu-bound loops), so give the
+             * Debugger threads need cycles in all sorts of strange 
+             * situations (e.g. infinite cpu-bound loops), so give the 
              * thread a high priority. Note that if the VM has an application
              * thread running at the max priority, there is still a chance
-             * that debugger threads will be starved. (There needs to be
+             * that debugger threads will be starved. (There needs to be 
              * a way to give debugger threads a priority higher than any
              * application thread).
              */
             error = JVMTI_FUNC_PTR(gdata->jvmti,RunAgentThread)
-                        (gdata->jvmti, thread, func, arg,
+                        (gdata->jvmti, thread, func, arg, 
                                         JVMTI_THREAD_MAX_PRIORITY);
         }
 
         err: ;
-
+    
     } END_WITH_LOCAL_REFS(env);
 
     return error;
@@ -932,7 +932,7 @@ jvmtiVersion(void)
         jvmtiError error;
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetVersionNumber)
                         (gdata->jvmti, &(gdata->cachedJvmtiVersion));
-        if (error != JVMTI_ERROR_NONE) {
+        if (error != JVMTI_ERROR_NONE) { 
             EXIT_ERROR(error, "on getting the JVMTI version number");
         }
     }
@@ -965,20 +965,20 @@ canSuspendResumeThreadLists(void)
 {
     jvmtiError error;
     jvmtiCapabilities cap;
-
+    
     error = jvmtiGetCapabilities(&cap);
     return (error == JVMTI_ERROR_NONE && cap.can_suspend);
 }
 
-jvmtiError
+jvmtiError 
 getSourceDebugExtension(jclass clazz, char **extensionPtr)
 {
     return JVMTI_FUNC_PTR(gdata->jvmti,GetSourceDebugExtension)
                 (gdata->jvmti, clazz, extensionPtr);
 }
-
+    
 /*
- * Convert the signature "Ljava/lang/Foo;" to a
+ * Convert the signature "Ljava/lang/Foo;" to a 
  * classname "java.lang.Foo" compatible with the pattern.
  * Signature is overwritten in-place.
  */
@@ -1001,22 +1001,22 @@ convertSignatureToClassname(char *convert)
 }
 
 static void
-handleInterrupt(void)
+handleInterrupt(void) 
 {
     /*
      * An interrupt is handled:
      *
      * 1) for running application threads by deferring the interrupt
-     * until the current event handler has concluded.
+     * until the current event handler has concluded. 
      *
-     * 2) for debugger threads by ignoring the interrupt; this is the
+     * 2) for debugger threads by ignoring the interrupt; this is the 
      * most robust solution since debugger threads don't use interrupts
-     * to signal any condition.
+     * to signal any condition. 
      *
-     * 3) for application threads that have not started or already
+     * 3) for application threads that have not started or already 
      * ended by ignoring the interrupt. In the former case, the application
      * is relying on timing to determine whether or not the thread sees
-     * the interrupt; in the latter case, the interrupt is meaningless.
+     * the interrupt; in the latter case, the interrupt is meaningless. 
      */
     jthread thread = threadControl_currentThread();
     if ((thread != NULL) && (!threadControl_isDebugThread(thread))) {
@@ -1027,14 +1027,14 @@ handleInterrupt(void)
 static jvmtiError
 ignore_vm_death(jvmtiError error)
 {
-    if (error == JVMTI_ERROR_WRONG_PHASE) {
+    if (error == JVMTI_ERROR_WRONG_PHASE) { 
         LOG_MISC(("VM_DEAD, in debugMonitor*()?"));
         return JVMTI_ERROR_NONE; /* JVMTI does this, not JVMDI? */
     }
     return error;
 }
 
-void
+void 
 debugMonitorEnter(jrawMonitorID monitor)
 {
     jvmtiError error;
@@ -1047,26 +1047,26 @@ debugMonitorEnter(jrawMonitorID monitor)
         } else {
             break;
         }
-    }
-    if (error != JVMTI_ERROR_NONE) {
+    } 
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on raw monitor enter");
     }
 }
 
-void
+void 
 debugMonitorExit(jrawMonitorID monitor)
 {
     jvmtiError error;
-
+    
     error = FUNC_PTR(gdata->jvmti,RawMonitorExit)
                 (gdata->jvmti, monitor);
     error = ignore_vm_death(error);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on raw monitor exit");
     }
 }
 
-void
+void 
 debugMonitorWait(jrawMonitorID monitor)
 {
     jvmtiError error;
@@ -1106,12 +1106,12 @@ debugMonitorWait(jrawMonitorID monitor)
         error = JVMTI_ERROR_NONE;
     }
     error = ignore_vm_death(error);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on raw monitor wait");
     }
 }
 
-void
+void 
 debugMonitorTimedWait(jrawMonitorID monitor, jlong millis)
 {
     jvmtiError error;
@@ -1121,62 +1121,62 @@ debugMonitorTimedWait(jrawMonitorID monitor, jlong millis)
         /* See comment above */
         handleInterrupt();
         error = JVMTI_ERROR_NONE;
-    }
+    } 
     error = ignore_vm_death(error);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on raw monitor timed wait");
     }
 }
 
-void
+void 
 debugMonitorNotify(jrawMonitorID monitor)
 {
     jvmtiError error;
-
+    
     error = FUNC_PTR(gdata->jvmti,RawMonitorNotify)
                 (gdata->jvmti, monitor);
     error = ignore_vm_death(error);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on raw monitor notify");
     }
 }
 
-void
+void 
 debugMonitorNotifyAll(jrawMonitorID monitor)
 {
     jvmtiError error;
-
+    
     error = FUNC_PTR(gdata->jvmti,RawMonitorNotifyAll)
                 (gdata->jvmti, monitor);
     error = ignore_vm_death(error);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on raw monitor notify all");
     }
 }
 
-jrawMonitorID
+jrawMonitorID 
 debugMonitorCreate(char *name)
 {
     jrawMonitorID monitor;
     jvmtiError error;
-
+    
     error = FUNC_PTR(gdata->jvmti,CreateRawMonitor)
                 (gdata->jvmti, name, &monitor);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on creation of a raw monitor");
     }
     return monitor;
 }
 
-void
+void 
 debugMonitorDestroy(jrawMonitorID monitor)
 {
     jvmtiError error;
-
+    
     error = FUNC_PTR(gdata->jvmti,DestroyRawMonitor)
                 (gdata->jvmti, monitor);
     error = ignore_vm_death(error);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on destruction of raw monitor");
     }
 }
@@ -1185,7 +1185,7 @@ debugMonitorDestroy(jrawMonitorID monitor)
  * Return array of all threads (must be inside a WITH_LOCAL_REFS)
  */
 jthread *
-allThreads(jint *count)
+allThreads(jint *count) 
 {
     jthread *threads;
     jvmtiError error;
@@ -1211,10 +1211,10 @@ void
 threadGroupInfo(jthreadGroup group, jvmtiThreadGroupInfo *info)
 {
     jvmtiError error;
-
+    
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadGroupInfo)
                 (gdata->jvmti, group, info);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on getting thread group info");
     }
 }
@@ -1228,18 +1228,18 @@ classSignature(jclass clazz, char **psignature, char **pgeneric_signature)
     jvmtiError error;
     char *signature = NULL;
 
-    /*
+    /* 
      * pgeneric_signature can be NULL, and GetClassSignature
      * accepts NULL.
      */
     error = FUNC_PTR(gdata->jvmti,GetClassSignature)
                 (gdata->jvmti, clazz, &signature, pgeneric_signature);
-
+    
     if ( psignature != NULL ) {
         *psignature = signature;
     } else if ( signature != NULL )  {
         jvmtiDeallocate(signature);
-    }
+    } 
     return error;
 }
 
@@ -1271,7 +1271,7 @@ writeGenericSignature(PacketOutputStream *out, char *genericSignature)
     }
 }
 
-jint
+jint 
 classStatus(jclass clazz)
 {
     jint status;
@@ -1279,13 +1279,13 @@ classStatus(jclass clazz)
 
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetClassStatus)
                 (gdata->jvmti, clazz, &status);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on getting class status");
     }
     return status;
 }
 
-static jboolean
+static jboolean 
 isArrayClass(jclass clazz)
 {
     jboolean isArray = JNI_FALSE;
@@ -1293,13 +1293,13 @@ isArrayClass(jclass clazz)
 
     error = JVMTI_FUNC_PTR(gdata->jvmti,IsArrayClass)
                 (gdata->jvmti, clazz, &isArray);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on checking for an array class");
     }
     return isArray;
 }
 
-static jboolean
+static jboolean 
 isInterface(jclass clazz)
 {
     jboolean isInterface = JNI_FALSE;
@@ -1307,13 +1307,13 @@ isInterface(jclass clazz)
 
     error = JVMTI_FUNC_PTR(gdata->jvmti,IsInterface)
                 (gdata->jvmti, clazz, &isInterface);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on checking for an interface");
     }
     return isInterface;
 }
 
-jvmtiError
+jvmtiError 
 isFieldSynthetic(jclass clazz, jfieldID field, jboolean *psynthetic)
 {
     jvmtiError error;
@@ -1328,7 +1328,7 @@ isFieldSynthetic(jclass clazz, jfieldID field, jboolean *psynthetic)
     return error;
 }
 
-jvmtiError
+jvmtiError 
 isMethodSynthetic(jmethodID method, jboolean *psynthetic)
 {
     jvmtiError error;
@@ -1343,7 +1343,7 @@ isMethodSynthetic(jmethodID method, jboolean *psynthetic)
     return error;
 }
 
-jboolean
+jboolean 
 isMethodNative(jmethodID method)
 {
     jboolean isNative = JNI_FALSE;
@@ -1351,7 +1351,7 @@ isMethodNative(jmethodID method)
 
     error = JVMTI_FUNC_PTR(gdata->jvmti,IsMethodNative)
                 (gdata->jvmti, method, &isNative);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         EXIT_ERROR(error, "on checking for a native interface");
     }
     return isNative;
@@ -1366,7 +1366,7 @@ isSameObject(JNIEnv *env, jobject o1, jobject o2)
     return FUNC_PTR(env,IsSameObject)(env, o1, o2);
 }
 
-jint
+jint 
 objectHashCode(jobject object)
 {
     jint hashCode = 0;
@@ -1375,7 +1375,7 @@ objectHashCode(jobject object)
     if ( object!=NULL ) {
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetObjectHashCode)
                     (gdata->jvmti, object, &hashCode);
-        if (error != JVMTI_ERROR_NONE) {
+        if (error != JVMTI_ERROR_NONE) { 
             EXIT_ERROR(error, "on getting an object hash code");
         }
     }
@@ -1387,7 +1387,7 @@ jvmtiError
 allInterfaces(jclass clazz, jclass **ppinterfaces, jint *pcount)
 {
     jvmtiError error;
-
+    
     *pcount = 0;
     *ppinterfaces = NULL;
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetImplementedInterfaces)
@@ -1400,7 +1400,7 @@ jvmtiError
 allLoadedClasses(jclass **ppclasses, jint *pcount)
 {
     jvmtiError error;
-
+    
     *pcount = 0;
     *ppclasses = NULL;
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetLoadedClasses)
@@ -1413,7 +1413,7 @@ jvmtiError
 allClassLoaderClasses(jobject loader, jclass **ppclasses, jint *pcount)
 {
     jvmtiError error;
-
+    
     *pcount = 0;
     *ppclasses = NULL;
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetClassLoaderClasses)
@@ -1425,7 +1425,7 @@ static jboolean
 is_a_nested_class(char *outer_sig, int outer_sig_len, char *sig, int sep)
 {
     char *inner;
-
+   
     /* Assumed outer class signature is  "LOUTERCLASSNAME;"
      *         inner class signature is  "LOUTERCLASSNAME$INNERNAME;"
      *
@@ -1434,7 +1434,7 @@ is_a_nested_class(char *outer_sig, int outer_sig_len, char *sig, int sep)
      *    [0-9][1-9]*NAME    local class somewhere in the OUTER class
      *    NAME               nested class in OUTER
      *
-     * If NAME itself contains a $ (sep) then classname is further nested
+     * If NAME itself contains a $ (sep) then classname is further nested 
      *    inside another class.
      *
      */
@@ -1484,16 +1484,16 @@ allNestedClasses(jclass parent_clazz, jclass **ppnested, jint *pcount)
     jint count;
     jint ncount;
     int i;
-
+    
     *ppnested   = NULL;
     *pcount     = 0;
-
+    
     parent_loader = NULL;
     classes       = NULL;
     signature     = NULL;
     count         = 0;
     ncount        = 0;
-
+        
     error = classLoader(parent_clazz, &parent_loader);
     if (error != JVMTI_ERROR_NONE) {
         return error;
@@ -1503,7 +1503,7 @@ allNestedClasses(jclass parent_clazz, jclass **ppnested, jint *pcount)
         return error;
     }
     len = strlen(signature);
-
+    
     error = allClassLoaderClasses(parent_loader, &classes, &count);
     if ( error != JVMTI_ERROR_NONE ) {
         jvmtiDeallocate(signature);
@@ -1520,7 +1520,7 @@ allNestedClasses(jclass parent_clazz, jclass **ppnested, jint *pcount)
         if (error != JVMTI_ERROR_NONE) {
             break;
         }
-
+        
         if ( is_a_nested_class(signature, (int)len, candidate_signature, '$') ||
              is_a_nested_class(signature, (int)len, candidate_signature, '#') ) {
             /* Float nested classes to top */
@@ -1529,21 +1529,21 @@ allNestedClasses(jclass parent_clazz, jclass **ppnested, jint *pcount)
         }
         jvmtiDeallocate(candidate_signature);
     }
-
+    
     jvmtiDeallocate(signature);
-
+    
     if ( count != 0 &&  ncount == 0 ) {
         jvmtiDeallocate(classes);
         classes = NULL;
     }
-
+    
     *ppnested = classes;
     *pcount = ncount;
     return error;
 }
 
 void
-createLocalRefSpace(JNIEnv *env, jint capacity)
+createLocalRefSpace(JNIEnv *env, jint capacity) 
 {
     /*
      * Save current exception since it might get overwritten by
@@ -1562,7 +1562,7 @@ createLocalRefSpace(JNIEnv *env, jint capacity)
     /*
      * TO DO: This could be more efficient if it used EnsureLocalCapacity,
      * but that would not work if two functions on the call stack
-     * use this function. We would need to either track reserved
+     * use this function. We would need to either track reserved 
      * references on a per-thread basis or come up with a convention
      * that would prevent two functions from depending on this function
      * at the same time.
@@ -1578,42 +1578,42 @@ createLocalRefSpace(JNIEnv *env, jint capacity)
     }
 }
 
-jboolean
-isClass(jobject object)
+jboolean 
+isClass(jobject object) 
 {
     JNIEnv *env = getEnv();
     return JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->classClass);
 }
 
-jboolean
+jboolean 
 isThread(jobject object)
 {
     JNIEnv *env = getEnv();
     return JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->threadClass);
 }
 
-jboolean
+jboolean 
 isThreadGroup(jobject object)
 {
     JNIEnv *env = getEnv();
     return JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->threadGroupClass);
 }
 
-jboolean
+jboolean 
 isString(jobject object)
 {
     JNIEnv *env = getEnv();
     return JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->stringClass);
 }
 
-jboolean
+jboolean 
 isClassLoader(jobject object)
 {
     JNIEnv *env = getEnv();
     return JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->classLoaderClass);
 }
 
-jboolean
+jboolean 
 isArray(jobject object)
 {
     JNIEnv *env = getEnv();
@@ -1636,7 +1636,7 @@ getPropertyValue(JNIEnv *env, char *propertyName)
 {
     jstring valueString;
     jstring nameString;
-
+        
     valueString = NULL;
 
     /* Create new String object to hold the property name */
@@ -1669,7 +1669,7 @@ setAgentPropertyValue(JNIEnv *env, char *propertyName, char* propertyValue)
         /* VMSupport doesn't exist; so ignore */
         return;
     }
-
+    
     /* Create jstrings for property name and value */
     nameString = JNI_FUNC_PTR(env,NewStringUTF)(env, propertyName);
     if (nameString != NULL) {
@@ -1678,7 +1678,7 @@ setAgentPropertyValue(JNIEnv *env, char *propertyName, char* propertyValue)
             /* invoke Properties.setProperty */
             JNI_FUNC_PTR(env,CallObjectMethod)
                 (env, gdata->agent_properties,
-                 gdata->setProperty,
+                 gdata->setProperty, 
                  nameString, valueString);
         }
     }
@@ -1695,19 +1695,19 @@ getPropertyUTF8(JNIEnv *env, char *propertyName)
 {
     jvmtiError  error;
     char       *value;
-
+    
     value = NULL;
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetSystemProperty)
                 (gdata->jvmti, (const char *)propertyName, &value);
-    if (error != JVMTI_ERROR_NONE) {
+    if (error != JVMTI_ERROR_NONE) { 
         jstring valueString;
-
+            
         value = NULL;
         valueString = getPropertyValue(env, propertyName);
-
+        
         if (valueString != NULL) {
             const char *utf;
-
+            
             /* Get the UTF8 encoding for this property value string */
             utf = JNI_FUNC_PTR(env,GetStringUTFChars)(env, valueString, NULL);
             /* Make a copy for returning, release the JNI copy */
@@ -1766,8 +1766,8 @@ getSpecialJvmti(void)
     return jvmti;
 }
 
-void
-writeCodeLocation(PacketOutputStream *out, jclass clazz,
+void 
+writeCodeLocation(PacketOutputStream *out, jclass clazz, 
                        jmethodID method, jlocation location)
 {
     jbyte tag;
@@ -1814,7 +1814,7 @@ jvmtiDeallocate(void *ptr)
 }
 
 /* Rarely needed, transport library uses JDWP errors, only use? */
-jvmtiError
+jvmtiError 
 map2jvmtiError(jdwpError error)
 {
     switch ( error ) {
@@ -1870,23 +1870,23 @@ map2jvmtiError(jdwpError error)
             return JVMTI_ERROR_CIRCULAR_CLASS_DEFINITION;
         case JDWP_ERROR(FAILS_VERIFICATION):
             return JVMTI_ERROR_FAILS_VERIFICATION;
-        case JDWP_ERROR(ADD_METHOD_NOT_IMPLEMENTED):
+        case JDWP_ERROR(ADD_METHOD_NOT_IMPLEMENTED): 
             return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED;
-        case JDWP_ERROR(SCHEMA_CHANGE_NOT_IMPLEMENTED):
+        case JDWP_ERROR(SCHEMA_CHANGE_NOT_IMPLEMENTED): 
             return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED;
         case JDWP_ERROR(INVALID_TYPESTATE):
             return JVMTI_ERROR_INVALID_TYPESTATE;
-        case JDWP_ERROR(HIERARCHY_CHANGE_NOT_IMPLEMENTED):
+        case JDWP_ERROR(HIERARCHY_CHANGE_NOT_IMPLEMENTED): 
             return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
-        case JDWP_ERROR(DELETE_METHOD_NOT_IMPLEMENTED):
+        case JDWP_ERROR(DELETE_METHOD_NOT_IMPLEMENTED): 
             return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED;
         case JDWP_ERROR(UNSUPPORTED_VERSION):
             return JVMTI_ERROR_UNSUPPORTED_VERSION;
         case JDWP_ERROR(NAMES_DONT_MATCH):
             return JVMTI_ERROR_NAMES_DONT_MATCH;
-        case JDWP_ERROR(CLASS_MODIFIERS_CHANGE_NOT_IMPLEMENTED):
+        case JDWP_ERROR(CLASS_MODIFIERS_CHANGE_NOT_IMPLEMENTED): 
             return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED;
-        case JDWP_ERROR(METHOD_MODIFIERS_CHANGE_NOT_IMPLEMENTED):
+        case JDWP_ERROR(METHOD_MODIFIERS_CHANGE_NOT_IMPLEMENTED): 
             return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED;
         case JDWP_ERROR(NOT_IMPLEMENTED):
             return JVMTI_ERROR_NOT_AVAILABLE;
@@ -1942,7 +1942,7 @@ eventIndexInit(void)
 {
     (void)memset(index2jvmti, 0, (int)sizeof(index2jvmti));
     (void)memset(index2jdwp,  0, (int)sizeof(index2jdwp));
-
+    
     index2jvmti[EI_SINGLE_STEP        -EI_min] = JVMTI_EVENT_SINGLE_STEP;
     index2jvmti[EI_BREAKPOINT         -EI_min] = JVMTI_EVENT_BREAKPOINT;
     index2jvmti[EI_FRAME_POP          -EI_min] = JVMTI_EVENT_FRAME_POP;
@@ -1963,7 +1963,7 @@ eventIndexInit(void)
     index2jvmti[EI_MONITOR_WAITED     -EI_min] = JVMTI_EVENT_MONITOR_WAITED;
     index2jvmti[EI_VM_INIT            -EI_min] = JVMTI_EVENT_VM_INIT;
     index2jvmti[EI_VM_DEATH           -EI_min] = JVMTI_EVENT_VM_DEATH;
-
+                  
     index2jdwp[EI_SINGLE_STEP         -EI_min] = JDWP_EVENT(SINGLE_STEP);
     index2jdwp[EI_BREAKPOINT          -EI_min] = JDWP_EVENT(BREAKPOINT);
     index2jdwp[EI_FRAME_POP           -EI_min] = JDWP_EVENT(FRAME_POP);
@@ -1971,7 +1971,7 @@ eventIndexInit(void)
     index2jdwp[EI_THREAD_START        -EI_min] = JDWP_EVENT(THREAD_START);
     index2jdwp[EI_THREAD_END          -EI_min] = JDWP_EVENT(THREAD_END);
     index2jdwp[EI_CLASS_PREPARE       -EI_min] = JDWP_EVENT(CLASS_PREPARE);
-    index2jdwp[EI_GC_FINISH           -EI_min] = JDWP_EVENT(CLASS_UNLOAD);
+    index2jdwp[EI_GC_FINISH           -EI_min] = JDWP_EVENT(CLASS_UNLOAD);    
     index2jdwp[EI_CLASS_LOAD          -EI_min] = JDWP_EVENT(CLASS_LOAD);
     index2jdwp[EI_FIELD_ACCESS        -EI_min] = JDWP_EVENT(FIELD_ACCESS);
     index2jdwp[EI_FIELD_MODIFICATION  -EI_min] = JDWP_EVENT(FIELD_MODIFICATION);
@@ -2004,7 +2004,7 @@ eventIndex2jvmti(EventIndex i)
     return index2jvmti[i-EI_min];
 }
 
-EventIndex
+EventIndex 
 jdwp2EventIndex(jdwpEvent eventType)
 {
     switch ( eventType ) {
@@ -2054,14 +2054,14 @@ jdwp2EventIndex(jdwpEvent eventType)
             break;
     }
 
-    /*
+    /* 
      * Event type not recognized - don't exit with error as caller
      * may wish to return error to debugger.
      */
     return (EventIndex)0;
 }
 
-EventIndex
+EventIndex       
 jvmti2EventIndex(jvmtiEvent kind)
 {
     switch ( kind ) {
@@ -2093,7 +2093,7 @@ jvmti2EventIndex(jvmtiEvent kind)
             return EI_METHOD_ENTRY;
         case JVMTI_EVENT_METHOD_EXIT:
             return EI_METHOD_EXIT;
-        /*
+        /* 
          * There is no JVMTI_EVENT_METHOD_EXIT_WITH_RETURN_VALUE.
          * The normal JVMTI_EVENT_METHOD_EXIT always contains the return value.
          */
@@ -2109,7 +2109,7 @@ jvmti2EventIndex(jvmtiEvent kind)
             return EI_VM_INIT;
         case JVMTI_EVENT_VM_DEATH:
             return EI_VM_DEATH;
-        default:
+        default: 
             EXIT_ERROR(AGENT_ERROR_INVALID_INDEX,"JVMTI to EventIndex mapping");
             break;
     }
@@ -2119,7 +2119,7 @@ jvmti2EventIndex(jvmtiEvent kind)
 /* This routine is commonly used, maps jvmti and agent errors to the best
  *    jdwp error code we can map to.
  */
-jdwpError
+jdwpError       
 map2jdwpError(jvmtiError error)
 {
     switch ( error ) {
@@ -2207,19 +2207,19 @@ map2jdwpError(jvmtiError error)
             return JDWP_ERROR(UNATTACHED_THREAD);
         case JVMTI_ERROR_NOT_AVAILABLE:
         case JVMTI_ERROR_MUST_POSSESS_CAPABILITY:
-            return JDWP_ERROR(NOT_IMPLEMENTED);
+            return JDWP_ERROR(NOT_IMPLEMENTED); 
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED:
-            return JDWP_ERROR(HIERARCHY_CHANGE_NOT_IMPLEMENTED);
+            return JDWP_ERROR(HIERARCHY_CHANGE_NOT_IMPLEMENTED); 
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED:
-            return JDWP_ERROR(DELETE_METHOD_NOT_IMPLEMENTED);
+            return JDWP_ERROR(DELETE_METHOD_NOT_IMPLEMENTED); 
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED:
-            return JDWP_ERROR(ADD_METHOD_NOT_IMPLEMENTED);
+            return JDWP_ERROR(ADD_METHOD_NOT_IMPLEMENTED); 
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED:
-            return JDWP_ERROR(SCHEMA_CHANGE_NOT_IMPLEMENTED);
+            return JDWP_ERROR(SCHEMA_CHANGE_NOT_IMPLEMENTED); 
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED:
-            return JDWP_ERROR(CLASS_MODIFIERS_CHANGE_NOT_IMPLEMENTED);
+            return JDWP_ERROR(CLASS_MODIFIERS_CHANGE_NOT_IMPLEMENTED); 
         case JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED:
-            return JDWP_ERROR(METHOD_MODIFIERS_CHANGE_NOT_IMPLEMENTED);
+            return JDWP_ERROR(METHOD_MODIFIERS_CHANGE_NOT_IMPLEMENTED); 
         case AGENT_ERROR_NOT_CURRENT_FRAME:
             return JDWP_ERROR(NOT_CURRENT_FRAME);
         case AGENT_ERROR_INVALID_TAG:
@@ -2253,7 +2253,7 @@ map2jdwpError(jvmtiError error)
         case AGENT_ERROR_JDWP_INTERNAL:
             return JDWP_ERROR(INTERNAL);
         default:
-            break;
+	    break;
     }
     return JDWP_ERROR(INTERNAL);
 }
@@ -2280,7 +2280,7 @@ map2jdwpThreadStatus(jint state)
             status = JDWP_THREAD_STATUS(ZOMBIE);
         } else {
             /* FIXUP? New JDWP #define for not started? */
-            status = (jdwpThreadStatus)(-1);
+            status = (jdwpThreadStatus)(-1); 
         }
     } else {
         if ( state & JVMTI_THREAD_STATE_SLEEPING ) {
@@ -2316,7 +2316,7 @@ map2jdwpClassStatus(jint classStatus)
 }
 
 void
-log_debugee_location(const char *func,
+log_debugee_location(const char *func, 
         jthread thread, jmethodID method, jlocation location)
 {
     int logging_locations = LOG_TEST(JDWP_LOG_LOC);
@@ -2340,7 +2340,7 @@ log_debugee_location(const char *func,
         if ( error != JVMTI_ERROR_NONE) {
             state = 0;
         }
-
+        
         /* Get method if necessary */
         if ( method==NULL ) {
             error = FUNC_PTR(gdata->jvmti,GetFrameLocation)
@@ -2364,7 +2364,7 @@ log_debugee_location(const char *func,
         class_sig = NULL;
         if ( method != NULL ) {
             jclass clazz;
-
+            
             error = methodClass(method, &clazz);
             if ( error == JVMTI_ERROR_NONE ) {
                 error = classSignature(clazz, &class_sig, NULL);
@@ -2378,9 +2378,9 @@ log_debugee_location(const char *func,
         LOG_LOC(("%s: debugee: thread=%p(%s:0x%x),method=%p(%s@%d;%s)",
                 func,
                 thread, info.name==NULL ? "?" : info.name, state,
-                method, method_name==NULL ? "?" : method_name,
+                method, method_name==NULL ? "?" : method_name, 
                 (int)location, class_sig==NULL ? "?" : class_sig));
-
+        
         /* Free memory */
         if ( class_sig != NULL ) {
             jvmtiDeallocate(class_sig);
@@ -2410,14 +2410,14 @@ typedef struct ClassInstancesData {
 } ClassInstancesData;
 
 /* Callback for instance object tagging (heap_reference_callback). */
-static jint JNICALL
-cbObjectTagInstance(jvmtiHeapReferenceKind reference_kind,
-     const jvmtiHeapReferenceInfo* reference_info, jlong class_tag,
-     jlong referrer_class_tag, jlong size,
+static jint JNICALL 
+cbObjectTagInstance(jvmtiHeapReferenceKind reference_kind, 
+     const jvmtiHeapReferenceInfo* reference_info, jlong class_tag, 
+     jlong referrer_class_tag, jlong size, 
      jlong* tag_ptr, jlong* referrer_tag_ptr, jint length, void* user_data)
 {
     ClassInstancesData  *data;
-
+   
     /* Check data structure */
     data = (ClassInstancesData*)user_data;
     if (data == NULL) {
@@ -2429,7 +2429,7 @@ cbObjectTagInstance(jvmtiHeapReferenceKind reference_kind,
     if ( data->maxInstances != 0 && data->instCount >= data->maxInstances ) {
         return JVMTI_VISIT_ABORT;
     }
-
+    
     /* If tagged already, just continue */
     if ( (*tag_ptr) != (jlong)0 ) {
         return JVMTI_VISIT_OBJECTS;
@@ -2459,11 +2459,11 @@ classInstances(jclass klass, ObjectBatch *instances, int maxInstances)
     if ( maxInstances < 0 || instances == NULL) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
-
+    
     /* Initialize return information */
     instances->count   = 0;
     instances->objects = NULL;
-
+  
     /* Get jvmti environment to use */
     jvmti = getSpecialJvmti();
     if ( jvmti == NULL ) {
@@ -2475,13 +2475,13 @@ classInstances(jclass klass, ObjectBatch *instances, int maxInstances)
     data.maxInstances = maxInstances;
     data.objTag       = (jlong)1;
     data.error        = JVMTI_ERROR_NONE;
-
+    
     /* Clear out callbacks structure */
     (void)memset(&heap_callbacks,0,sizeof(heap_callbacks));
-
+    
     /* Set the callbacks we want */
     heap_callbacks.heap_reference_callback = &cbObjectTagInstance;
-
+        
     /* Follow references, no initiating object, just this class, all objects */
     error = JVMTI_FUNC_PTR(jvmti,FollowReferences)
                  (jvmti, 0, klass, NULL, &heap_callbacks, &data);
@@ -2492,14 +2492,14 @@ classInstances(jclass klass, ObjectBatch *instances, int maxInstances)
     /* Get all the instances now that they are tagged */
     if ( error == JVMTI_ERROR_NONE ) {
         error = JVMTI_FUNC_PTR(jvmti,GetObjectsWithTags)
-                      (jvmti, 1, &(data.objTag), &(instances->count),
+                      (jvmti, 1, &(data.objTag), &(instances->count), 
                        &(instances->objects), NULL);
         /* Verify we got the count we expected */
         if ( data.instCount != instances->count ) {
             error = AGENT_ERROR_INTERNAL;
         }
     }
-
+    
     /* Dispose of any special jvmti environment */
     (void)JVMTI_FUNC_PTR(jvmti,DisposeEnvironment)(jvmti);
     return error;
@@ -2526,17 +2526,17 @@ typedef struct ClassCountData {
  */
 
 /* Callback for object count heap traversal (heap_reference_callback) */
-static jint JNICALL
-cbObjectCounterFromRef(jvmtiHeapReferenceKind reference_kind,
+static jint JNICALL 
+cbObjectCounterFromRef(jvmtiHeapReferenceKind reference_kind, 
      const jvmtiHeapReferenceInfo* reference_info, jlong class_tag,
-     jlong referrer_class_tag, jlong size,
+     jlong referrer_class_tag, jlong size, 
      jlong* tag_ptr, jlong* referrer_tag_ptr, jint length, void* user_data)
 {
     ClassCountData  *data;
     int              index;
     jlong            jindex;
     jlong            tag;
-
+   
     /* Check data structure */
     data = (ClassCountData*)user_data;
     if (data == NULL) {
@@ -2589,25 +2589,25 @@ cbObjectCounterFromRef(jvmtiHeapReferenceKind reference_kind,
 
 /* Callback for instance count heap traversal (heap_iteration_callback) */
 static jint JNICALL
-cbObjectCounter(jlong class_tag, jlong size, jlong* tag_ptr, jint length,
-                        void* user_data)
+cbObjectCounter(jlong class_tag, jlong size, jlong* tag_ptr, jint length, 
+                        void* user_data) 
 {
     ClassCountData  *data;
     int              index;
-
+   
     /* Check data structure */
     data = (ClassCountData*)user_data;
     if (data == NULL) {
         data->error = AGENT_ERROR_ILLEGAL_ARGUMENT;
         return JVMTI_VISIT_ABORT;
     }
-
+    
     /* Classes with no tag should be filtered out. */
     if ( class_tag == (jlong)0 ) {
         data->error = AGENT_ERROR_INTERNAL;
         return JVMTI_VISIT_ABORT;
     }
-
+    
     /* Class tag is actually an index into data arrays */
     index = CLASSTAG2INDEX(class_tag);
     if (index < 0 || index >= data->classCount) {
@@ -2639,25 +2639,25 @@ classInstanceCounts(jint classCount, jclass *classes, jlong *counts)
     for ( i = 0 ; i < classCount ; i++ ) {
         counts[i] = (jlong)0;
     }
-
+  
     /* Get jvmti environment to use */
     jvmti = getSpecialJvmti();
     if ( jvmti == NULL ) {
         return AGENT_ERROR_INTERNAL;
     }
-
+   
     /* Setup class data structure */
     data.error        = JVMTI_ERROR_NONE;
     data.classCount   = classCount;
     data.counts       = counts;
-
+     
     error = JVMTI_ERROR_NONE;
     /* Set tags on classes, use index in classes[] as the tag value. */
     error             = JVMTI_ERROR_NONE;
     for ( i = 0 ; i < classCount ; i++ ) {
         if (classes[i] != NULL) {
             jlong tag;
-
+            
             tag = INDEX2CLASSTAG(i);
             error = JVMTI_FUNC_PTR(jvmti,SetTag) (jvmti, classes[i], tag);
             if ( error != JVMTI_ERROR_NONE ) {
@@ -2665,36 +2665,36 @@ classInstanceCounts(jint classCount, jclass *classes, jlong *counts)
             }
         }
     }
-
+  
     /* Traverse heap, two ways to do this for instance counts. */
     if ( error == JVMTI_ERROR_NONE ) {
-
+        
         /* Clear out callbacks structure */
         (void)memset(&heap_callbacks,0,sizeof(heap_callbacks));
 
         /* Check debug flags to see how to do this. */
         if ( (gdata->debugflags & USE_ITERATE_THROUGH_HEAP) == 0 ) {
-
+        
             /* Using FollowReferences only gives us live objects, but we
              *   need to tag the objects to avoid counting them twice since
              *   the callback is per reference.
              *   The jclass objects have been tagged with their index in the
              *   supplied list, and that tag may flip to negative if it
              *   is also an object of interest.
-             *   All other objects being counted that weren't in the
+             *   All other objects being counted that weren't in the 
              *   supplied classes list will have a negative classCount
              *   tag value. So all objects counted will have negative tags.
              *   If the absolute tag value is an index in the supplied
              *   list, then it's one of the supplied classes.
              */
             data.negObjTag = -INDEX2CLASSTAG(classCount);
-
+            
             /* Setup callbacks, only using object reference callback */
             heap_callbacks.heap_reference_callback = &cbObjectCounterFromRef;
-
+        
             /* Follow references, no initiating object, tagged classes only */
             error = JVMTI_FUNC_PTR(jvmti,FollowReferences)
-                          (jvmti, JVMTI_HEAP_FILTER_CLASS_UNTAGGED,
+                          (jvmti, JVMTI_HEAP_FILTER_CLASS_UNTAGGED, 
                            NULL, NULL, &heap_callbacks, &data);
 
         } else {
@@ -2708,23 +2708,23 @@ classInstanceCounts(jint classCount, jclass *classes, jlong *counts)
             /* FIXUP: Need some kind of trigger here to avoid excessive GC's? */
             error = JVMTI_FUNC_PTR(jvmti,ForceGarbageCollection)(jvmti);
             if ( error != JVMTI_ERROR_NONE ) {
-
+                
                 /* Setup callbacks, just need object callback */
                 heap_callbacks.heap_iteration_callback = &cbObjectCounter;
-
+                
                 /* Iterate through entire heap, tagged classes only */
                 error = JVMTI_FUNC_PTR(jvmti,IterateThroughHeap)
                               (jvmti, JVMTI_HEAP_FILTER_CLASS_UNTAGGED,
                                NULL, &heap_callbacks, &data);
-
+                
             }
         }
-
+        
         /* Use data error if needed */
         if ( error == JVMTI_ERROR_NONE ) {
             error = data.error;
         }
-
+    
     }
 
     /* Dispose of any special jvmti environment */
@@ -2746,14 +2746,14 @@ typedef struct ReferrerData {
 } ReferrerData;
 
 /* Callback for referrers object tagging (heap_reference_callback). */
-static jint JNICALL
-cbObjectTagReferrer(jvmtiHeapReferenceKind reference_kind,
+static jint JNICALL 
+cbObjectTagReferrer(jvmtiHeapReferenceKind reference_kind, 
      const jvmtiHeapReferenceInfo* reference_info, jlong class_tag,
-     jlong referrer_class_tag, jlong size,
+     jlong referrer_class_tag, jlong size, 
      jlong* tag_ptr, jlong* referrer_tag_ptr, jint length, void* user_data)
 {
     ReferrerData  *data;
-
+   
     /* Check data structure */
     data = (ReferrerData*)user_data;
     if (data == NULL) {
@@ -2798,7 +2798,7 @@ objectReferrers(jobject obj, ObjectBatch *referrers, int maxObjects)
     ReferrerData       data;
     jvmtiError         error;
     jvmtiEnv          *jvmti;
-
+    
     /* Check interface assumptions */
     if (obj == NULL) {
         return AGENT_ERROR_INVALID_OBJECT;
@@ -2830,23 +2830,23 @@ objectReferrers(jobject obj, ObjectBatch *referrers, int maxObjects)
 
     /* No need to go any further if we can't tag the object */
     if ( error == JVMTI_ERROR_NONE ) {
-
+    
         /* Clear out callbacks structure */
         (void)memset(&heap_callbacks,0,sizeof(heap_callbacks));
-
+    
         /* Setup callbacks we want */
         heap_callbacks.heap_reference_callback = &cbObjectTagReferrer;
-
+        
         /* Follow references, no initiating object, all classes, 1 tagged objs */
         error = JVMTI_FUNC_PTR(jvmti,FollowReferences)
-                      (jvmti, JVMTI_HEAP_FILTER_UNTAGGED,
+                      (jvmti, JVMTI_HEAP_FILTER_UNTAGGED, 
                        NULL, NULL, &heap_callbacks, &data);
-
+    
         /* Use data error if needed */
         if ( error == JVMTI_ERROR_NONE ) {
             error = data.error;
         }
-
+    
     }
 
     /* Watch out for self-reference */
@@ -2854,19 +2854,20 @@ objectReferrers(jobject obj, ObjectBatch *referrers, int maxObjects)
         /* Tag itself as a referer */
         error = JVMTI_FUNC_PTR(jvmti,SetTag) (jvmti, obj, data.refTag);
     }
-
+    
     /* Get the jobjects for the tagged referrer objects.  */
     if ( error == JVMTI_ERROR_NONE ) {
         error = JVMTI_FUNC_PTR(jvmti,GetObjectsWithTags)
-                    (jvmti, 1, &(data.refTag), &(referrers->count),
+                    (jvmti, 1, &(data.refTag), &(referrers->count), 
                           &(referrers->objects), NULL);
         /* Verify we got the count we expected */
         if ( data.refCount != referrers->count ) {
             error = AGENT_ERROR_INTERNAL;
         }
     }
-
+    
     /* Dispose of any special jvmti environment */
     (void)JVMTI_FUNC_PTR(jvmti,DisposeEnvironment)(jvmti);
     return error;
 }
+

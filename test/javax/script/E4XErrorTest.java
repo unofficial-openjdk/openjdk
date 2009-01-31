@@ -35,15 +35,15 @@ import java.util.Locale;
 
 public class E4XErrorTest {
 
-        public static void main(String[] args) throws Exception {
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine jsengine = manager.getEngineByName("js");
+	public static void main(String[] args) throws Exception {
+	    ScriptEngineManager manager = new ScriptEngineManager();
+	    ScriptEngine jsengine = manager.getEngineByName("js");
             if (jsengine == null) {
                 throw new RuntimeException("no js engine found");
             }
 
             // The test below depends on the error message content
-            // that is loaded from resource bundles.  So, we force
+            // that is loaded from resource bundles.  So, we force 
             // English Locale to compare correct value..
             Locale.setDefault(Locale.US);
 
@@ -59,5 +59,5 @@ public class E4XErrorTest {
             }
             // should not reach here.. exception should have been thrown.
             throw new RuntimeException("Huh! E4X is supported??");
-        }
+	}
 }

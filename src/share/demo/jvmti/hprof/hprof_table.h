@@ -39,7 +39,7 @@ struct LookupTable;
 typedef void (*LookupTableIterator)
                 (TableIndex, void *key_ptr, int key_len, void*, void*);
 
-struct LookupTable * table_initialize(const char *name, int size,
+struct LookupTable * table_initialize(const char *name, int size, 
                                 int incr, int buckets, int esize);
 int                  table_element_count(struct LookupTable *ltable);
 TableIndex           table_create_entry(struct LookupTable *ltable,
@@ -47,20 +47,21 @@ TableIndex           table_create_entry(struct LookupTable *ltable,
 TableIndex           table_find_entry(struct LookupTable *ltable,
                                 void *key_ptr, int key_len);
 TableIndex           table_find_or_create_entry(struct LookupTable *ltable,
-                                void *key_ptr, int key_len,
-                                jboolean *pnew_entry, void *info_ptr);
+                                void *key_ptr, int key_len, 
+				jboolean *pnew_entry, void *info_ptr);
 void                 table_free_entry(struct LookupTable *ltable,
-                                TableIndex index);
+				TableIndex index);
 void                 table_cleanup(struct LookupTable *ltable,
                                 LookupTableIterator func, void *arg);
 void                 table_walk_items(struct LookupTable *ltable,
                                 LookupTableIterator func, void *arg);
-void *               table_get_info(struct LookupTable *ltable,
+void *               table_get_info(struct LookupTable *ltable, 
                                 TableIndex index);
-void                 table_get_key(struct LookupTable *ltable,
-                                TableIndex index, void **pkey_ptr,
-                                int *pkey_len);
+void                 table_get_key(struct LookupTable *ltable, 
+                                TableIndex index, void **pkey_ptr, 
+				int *pkey_len);
 void                 table_lock_enter(struct LookupTable *ltable);
 void                 table_lock_exit(struct LookupTable *ltable);
 
 #endif
+

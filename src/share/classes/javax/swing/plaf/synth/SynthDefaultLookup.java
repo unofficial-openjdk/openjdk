@@ -32,6 +32,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * SynthDefaultLookup redirects all lookup calls to the SynthContext.
  *
+ * @version %I% %G%
  * @author Scott Violet
  */
 class SynthDefaultLookup extends DefaultLookup {

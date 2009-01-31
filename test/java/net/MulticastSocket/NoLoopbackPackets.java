@@ -33,11 +33,11 @@ import java.net.*;
 public class NoLoopbackPackets {
     private static int PORT = 9001;
     private static String osname;
-
+    
     static boolean isWindows() {
         if (osname == null)
             osname = System.getProperty("os.name");
-        return osname.contains("Windows");
+	return osname.contains("Windows");
     }
 
     private static boolean hasIPv6() throws Exception {
@@ -53,16 +53,16 @@ public class NoLoopbackPackets {
                 }
             }
         }
-
+        
         return false;
     }
-
+    
     public static void main(String[] args) throws Exception {
         if (isWindows()) {
             System.out.println("The test only run on non-Windows OS. Bye.");
             return;
         }
-
+        
         if (!hasIPv6()) {
             System.out.println("No IPv6 available. Bye.");
             return;

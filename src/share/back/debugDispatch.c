@@ -45,7 +45,7 @@
 
 static void **l1Array;
 
-void
+void 
 debugDispatch_initialize(void)
 {
     /*
@@ -88,8 +88,8 @@ debugDispatch_reset(void)
 {
 }
 
-CommandHandler
-debugDispatch_getHandler(int cmdSet, int cmd)
+CommandHandler 
+debugDispatch_getHandler(int cmdSet, int cmd) 
 {
     void **l2Array;
 

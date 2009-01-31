@@ -95,7 +95,7 @@ Java_sun_awt_DefaultMouseInfoPeer_fillPointWithCoords(JNIEnv *env, jclass cls,
 JNIEXPORT jboolean JNICALL Java_sun_awt_DefaultMouseInfoPeer_isWindowUnderMouse
   (JNIEnv * env, jclass cls, jobject window)
 {
-    Window rootWindow = None, parentWindow = None, siblingWindow = None;
+    Window rootWindow = None, parentWindow = None, siblingWindow = None; 
     Window * children = NULL;
     int i = 0;
     int is_the_same_screen = 0;
@@ -122,20 +122,20 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_DefaultMouseInfoPeer_isWindowUnderMouse
         return JNI_FALSE;
     }
 
-    AWT_LOCK();
-
+    AWT_LOCK(); 
+    
     XQueryTree(awt_display, XtWindow(wdata->winData.comp.widget),
                     &rootWindow, &parentWindow, &children, &nchildren);
-
+    
     is_the_same_screen = XQueryPointer(awt_display, parentWindow,
-            &rootWindow, &siblingWindow, &xr, &yr, &xw, &yw, &keys);
+            &rootWindow, &siblingWindow, &xr, &yr, &xw, &yw, &keys); 
 
     if (siblingWindow == XtWindow(wdata->winData.comp.widget) && is_the_same_screen) {
         AWT_UNLOCK();
         return JNI_TRUE;
     }
-
+    
     AWT_UNLOCK();
-    return JNI_FALSE ;
+    return JNI_FALSE ;  
 
 }

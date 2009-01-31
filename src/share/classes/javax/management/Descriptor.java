@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*
- * @author    IBM Corp.
- *
+ * %Z%author    IBM Corp.
+ * 
  * Copyright IBM Corp. 1999-2000.  All rights reserved.
  */
 

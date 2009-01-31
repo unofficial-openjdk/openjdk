@@ -42,7 +42,7 @@ class Flag {
     private boolean writeable;
     private boolean external;
 
-    Flag(String name, Object value, boolean writeable,
+    Flag(String name, Object value, boolean writeable, 
          boolean external, Origin origin) {
         this.name = name;
         this.value = value;

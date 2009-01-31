@@ -37,8 +37,8 @@ FrameIndex frame_find_or_create(jmethodID method, jlocation location);
 void       frame_list(void);
 void       frame_cleanup(void);
 void       frame_get_location(FrameIndex frame_num, SerialNumber *serial_num,
-                        jmethodID *pmethod,
-                        jlocation *plocation, jint *plineno);
+			jmethodID *pmethod, 
+			jlocation *plocation, jint *plineno);
 void       frame_set_status(FrameIndex frame_num, jint status);
 jint       frame_get_status(FrameIndex frame_num);
 

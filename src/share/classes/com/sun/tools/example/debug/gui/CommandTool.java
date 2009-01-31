@@ -52,58 +52,58 @@ public class CommandTool extends JPanel {
 
     public CommandTool(Environment env) {
 
-        super(new BorderLayout());
+	super(new BorderLayout());
 
-        this.env = env;
-        this.context = env.getContextManager();
-        this.runtime = env.getExecutionManager();
-        this.sourceManager = env.getSourceManager();
+	this.env = env;
+	this.context = env.getContextManager();
+	this.runtime = env.getExecutionManager();
+	this.sourceManager = env.getSourceManager();
 
-        script = new TypeScript(DEFAULT_CMD_PROMPT, false); //no echo
-        this.add(script);
+	script = new TypeScript(DEFAULT_CMD_PROMPT, false); //no echo
+	this.add(script);
 
-        final CommandInterpreter interpreter =
-            new CommandInterpreter(env);
+	final CommandInterpreter interpreter = 
+	    new CommandInterpreter(env);
 
-        // Establish handler for incoming commands.
+	// Establish handler for incoming commands.
 
-        script.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                interpreter.executeCommand(script.readln());
-            }
-        });
+	script.addActionListener(new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		interpreter.executeCommand(script.readln());
+	    }
+	});
 
-        // Establish ourselves as the listener for VM diagnostics.
-
-        OutputListener diagnosticsListener =
-            new TypeScriptOutputListener(script, true);
+	// Establish ourselves as the listener for VM diagnostics.
+	
+	OutputListener diagnosticsListener =
+	    new TypeScriptOutputListener(script, true);
         runtime.addDiagnosticsListener(diagnosticsListener);
 
-        // Establish ourselves as the shared debugger typescript.
+	// Establish ourselves as the shared debugger typescript.
 
-        env.setTypeScript(new PrintWriter(new TypeScriptWriter(script)));
+	env.setTypeScript(new PrintWriter(new TypeScriptWriter(script)));
 
-        // Handle VM events.
+	// Handle VM events.
 
         TTYDebugListener listener = new TTYDebugListener(diagnosticsListener);
-
+	
         runtime.addJDIListener(listener);
         runtime.addSessionListener(listener);
         runtime.addSpecListener(listener);
         context.addContextListener(listener);
 
         //### remove listeners on exit!
-
+    	
     }
 
     private class TTYDebugListener implements
             JDIListener, SessionListener, SpecListener, ContextListener {
 
-        private OutputListener diagnostics;
+	private OutputListener diagnostics;
 
         TTYDebugListener(OutputListener diagnostics) {
-            this.diagnostics = diagnostics;
-        }
+	    this.diagnostics = diagnostics;
+	}
 
         // JDIListener
 
@@ -111,30 +111,30 @@ public class CommandTool extends JPanel {
             setThread(e);
             for (EventIterator it = e.eventIterator(); it.hasNext(); ) {
                 Event evt = it.nextEvent();
-                diagnostics.putString("Watchpoint hit: " +
+                diagnostics.putString("Watchpoint hit: " + 
                                       locationString(e));
             }
-        }
+	}
 
         public void classPrepare(ClassPrepareEventSet e) {
-            if (context.getVerboseFlag()) {
-                String name = e.getReferenceType().name();
-                diagnostics.putString("Class " + name + " loaded");
-            }
-        }
+	    if (context.getVerboseFlag()) {
+		String name = e.getReferenceType().name();
+		diagnostics.putString("Class " + name + " loaded");
+	    }
+	}
 
         public void classUnload(ClassUnloadEventSet e) {
-            if (context.getVerboseFlag()) {
-                diagnostics.putString("Class " + e.getClassName() +
+	    if (context.getVerboseFlag()) {
+		diagnostics.putString("Class " + e.getClassName() + 
                                       " unloaded.");
-            }
-        }
+	    }
+	}
 
         public void exception(ExceptionEventSet e) {
             setThread(e);
-            String name = e.getException().referenceType().name();
-            diagnostics.putString("Exception: " + name);
-        }
+	    String name = e.getException().referenceType().name();
+	    diagnostics.putString("Exception: " + name);
+	}
 
         public void locationTrigger(LocationTriggerEventSet e) {
             String locString = locationString(e);
@@ -153,45 +153,45 @@ public class CommandTool extends JPanel {
                     diagnostics.putString("UNKNOWN event: " + e);
                 }
             }
-        }
+	}
 
         public void modificationWatchpoint(ModificationWatchpointEventSet e) {
             setThread(e);
             for (EventIterator it = e.eventIterator(); it.hasNext(); ) {
                 Event evt = it.nextEvent();
-                diagnostics.putString("Watchpoint hit: " +
+                diagnostics.putString("Watchpoint hit: " + 
                                       locationString(e));
             }
-        }
+	}
 
         public void threadDeath(ThreadDeathEventSet e) {
-            if (context.getVerboseFlag()) {
-                diagnostics.putString("Thread " + e.getThread() +
+	    if (context.getVerboseFlag()) {
+		diagnostics.putString("Thread " + e.getThread() + 
                                       " ended.");
-            }
-        }
+	    }
+	}
 
         public void threadStart(ThreadStartEventSet e) {
-            if (context.getVerboseFlag()) {
-                diagnostics.putString("Thread " + e.getThread() +
+	    if (context.getVerboseFlag()) {
+		diagnostics.putString("Thread " + e.getThread() + 
                                       " started.");
-            }
-        }
+	    }
+	}
 
         public void vmDeath(VMDeathEventSet e) {
-            script.setPrompt(DEFAULT_CMD_PROMPT);
-            diagnostics.putString("VM exited");
+	    script.setPrompt(DEFAULT_CMD_PROMPT);
+	    diagnostics.putString("VM exited");
         }
 
         public void vmDisconnect(VMDisconnectEventSet e) {
-            script.setPrompt(DEFAULT_CMD_PROMPT);
-            diagnostics.putString("Disconnected from VM");
+	    script.setPrompt(DEFAULT_CMD_PROMPT);
+	    diagnostics.putString("Disconnected from VM");
         }
 
         public void vmStart(VMStartEventSet e) {
-            script.setPrompt(DEFAULT_CMD_PROMPT);
-            diagnostics.putString("VM started");
-        }
+	    script.setPrompt(DEFAULT_CMD_PROMPT);
+	    diagnostics.putString("VM started");
+	}
 
         // SessionListener
 
@@ -199,14 +199,14 @@ public class CommandTool extends JPanel {
 
         public void sessionInterrupt(EventObject e) {
             Thread.yield();  // fetch output
-            diagnostics.putString("VM interrupted by user.");
-            script.setPrompt(DEFAULT_CMD_PROMPT);
-        }
+	    diagnostics.putString("VM interrupted by user.");
+	    script.setPrompt(DEFAULT_CMD_PROMPT);
+	}
 
         public void sessionContinue(EventObject e) {
-            diagnostics.putString("Execution resumed.");
-            script.setPrompt(DEFAULT_CMD_PROMPT);
-        }
+	    diagnostics.putString("Execution resumed.");
+	    script.setPrompt(DEFAULT_CMD_PROMPT);
+	}
 
         // SpecListener
 
@@ -221,16 +221,16 @@ public class CommandTool extends JPanel {
         }
         public void breakpointDeleted(SpecEvent e) {
             EventRequestSpec spec = e.getEventRequestSpec();
-            diagnostics.putString("Breakpoint at " + spec.toString() + " deleted.");
+	    diagnostics.putString("Breakpoint at " + spec.toString() + " deleted.");
         }
         public void breakpointResolved(SpecEvent e) {
             EventRequestSpec spec = e.getEventRequestSpec();
-            diagnostics.putString("Breakpoint resolved to " + spec.toString() + ".");
+	    diagnostics.putString("Breakpoint resolved to " + spec.toString() + ".");
         }
         public void breakpointError(SpecErrorEvent e) {
             EventRequestSpec spec = e.getEventRequestSpec();
-            diagnostics.putString("Deferred breakpoint at " +
-                                  spec + " could not be resolved:" +
+	    diagnostics.putString("Deferred breakpoint at " +
+				  spec + " could not be resolved:" +
                                   e.getReason());
         }
 
@@ -259,16 +259,16 @@ public class CommandTool extends JPanel {
         }
 
 
-        // ContextListener.
+	// ContextListener.
 
-        // If the user selects a new current thread or frame, update prompt.
+	// If the user selects a new current thread or frame, update prompt.
 
-        public void currentFrameChanged(CurrentFrameChangedEvent e) {
-            // Update prompt only if affect thread is current.
-            ThreadReference thread = e.getThread();
-            if (thread == context.getCurrentThread()) {
-                script.setPrompt(promptString(thread, e.getIndex()));
-            }
+	public void currentFrameChanged(CurrentFrameChangedEvent e) {
+	    // Update prompt only if affect thread is current.
+	    ThreadReference thread = e.getThread();
+	    if (thread == context.getCurrentThread()) {
+		script.setPrompt(promptString(thread, e.getIndex()));
+	    }
         }
 
     }
@@ -288,13 +288,17 @@ public class CommandTool extends JPanel {
             //### context.setCurrentThread(thread);
         }
     }
-
+						  
     private String promptString(ThreadReference thread, int frameIndex) {
         if (thread == null) {
-            return DEFAULT_CMD_PROMPT;
+	    return DEFAULT_CMD_PROMPT;
         } else {
-            // Frame indices are presented to user as indexed from 1.
-            return (thread.name() + "[" + (frameIndex + 1) + "]:");
-        }
+	    // Frame indices are presented to user as indexed from 1.
+	    return (thread.name() + "[" + (frameIndex + 1) + "]:");
+	}
     }
 }
+
+
+
+

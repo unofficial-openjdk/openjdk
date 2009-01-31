@@ -37,13 +37,13 @@ typedef jobjectArray (JNICALL *GET_THREAD_STATE_NAMES_FN)(JNIEnv *, jint, jintAr
 static GET_THREAD_STATE_VALUES_FN GetThreadStateValues_fp = NULL;
 static GET_THREAD_STATE_NAMES_FN GetThreadStateNames_fp = NULL;
 
-static void get_thread_state_info(JNIEnv *env, jint state,
+static void get_thread_state_info(JNIEnv *env, jint state, 
                                       jobjectArray stateValues,
                                       jobjectArray stateNames) {
     char errmsg[128];
     jintArray values;
     jobjectArray names;
-
+    
     values = (*GetThreadStateValues_fp)(env, state);
     if (values == NULL) {
         sprintf(errmsg, "Mismatched VM version: Thread state (%d) "
@@ -65,26 +65,26 @@ static void get_thread_state_info(JNIEnv *env, jint state,
 }
 
 JNIEXPORT void JNICALL
-Java_sun_misc_VM_getThreadStateValues(JNIEnv *env, jclass cls,
+Java_sun_misc_VM_getThreadStateValues(JNIEnv *env, jclass cls, 
                                       jobjectArray values,
                                       jobjectArray names)
 {
     char errmsg[128];
 
-    // check if the number of Thread.State enum constants
-    // matches the number of states defined in jvm.h
+    // check if the number of Thread.State enum constants 
+    // matches the number of states defined in jvm.h 
     jsize len1 = (*env)->GetArrayLength(env, values);
     jsize len2 = (*env)->GetArrayLength(env, names);
     if (len1 != JAVA_THREAD_STATE_COUNT || len2 != JAVA_THREAD_STATE_COUNT) {
         sprintf(errmsg, "Mismatched VM version: JAVA_THREAD_STATE_COUNT = %d "
-                " but JDK expects %d / %d",
+                " but JDK expects %d / %d", 
                 JAVA_THREAD_STATE_COUNT, len1, len2);
         JNU_ThrowInternalError(env, errmsg);
         return;
     }
 
     if (GetThreadStateValues_fp == NULL) {
-        GetThreadStateValues_fp = (GET_THREAD_STATE_VALUES_FN)
+        GetThreadStateValues_fp = (GET_THREAD_STATE_VALUES_FN) 
             JDK_FindJvmEntry("JVM_GetThreadStateValues");
         if (GetThreadStateValues_fp == NULL) {
             JNU_ThrowInternalError(env,
@@ -92,7 +92,7 @@ Java_sun_misc_VM_getThreadStateValues(JNIEnv *env, jclass cls,
             return;
         }
 
-        GetThreadStateNames_fp = (GET_THREAD_STATE_NAMES_FN)
+        GetThreadStateNames_fp = (GET_THREAD_STATE_NAMES_FN) 
             JDK_FindJvmEntry("JVM_GetThreadStateNames");
         if (GetThreadStateNames_fp == NULL) {
             JNU_ThrowInternalError(env,
@@ -117,3 +117,4 @@ Java_sun_misc_VM_initialize(JNIEnv *env, jclass cls) {
         JNU_ThrowInternalError(env, "Handle for JVM not found for symbol lookup");
     }
 }
+

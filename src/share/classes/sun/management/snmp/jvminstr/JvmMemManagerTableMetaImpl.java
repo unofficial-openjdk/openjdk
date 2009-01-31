@@ -65,204 +65,204 @@ public class JvmMemManagerTableMetaImpl extends JvmMemManagerTableMeta {
      * A concrete implementation of {@link SnmpNamedListTableCache}, for the
      * jvmMemManagerTable.
      **/
-    private static class JvmMemManagerTableCache
-        extends SnmpNamedListTableCache {
-        /**
-         * Create a weak cache for the jvmMemManagerTable.
-         * @param validity validity of the cached data, in ms.
-         **/
-        JvmMemManagerTableCache(long validity) {
-            this.validity = validity;
-        }
+    private static class JvmMemManagerTableCache 
+	extends SnmpNamedListTableCache {
+	/**
+	 * Create a weak cache for the jvmMemManagerTable.
+	 * @param validity validity of the cached data, in ms.
+	 **/
+	JvmMemManagerTableCache(long validity) {
+	    this.validity = validity;
+	}
 
-        /**
-         * Use the MemoryManagerMXBean name as key.
-         * @param context A {@link TreeMap} as allocated by the parent
-         *        {@link SnmpNamedListTableCache} class.
-         * @param rawDatas List of {@link MemoryManagerMXBean}, as
-         *        returned by
-         * <code>ManagementFactory.getMemoryMBean().getMemoryManagers()</code>
-         * @param rank The <var>rank</var> of <var>item</var> in the list.
-         * @param item The <var>rank</var><super>th</super>
-         *        <code>MemoryManagerMXBean</code> in the list.
-         * @return  <code>((MemoryManagerMXBean)item).getName()</code>
-         **/
-        protected String getKey(Object context, List rawDatas,
-                                int rank, Object item) {
-            if (item == null) return null;
-            final String name = ((MemoryManagerMXBean)item).getName();
-            log.debug("getKey", "key=" + name);
-            return name;
-        }
+	/**
+	 * Use the MemoryManagerMXBean name as key.
+	 * @param context A {@link TreeMap} as allocated by the parent
+	 *        {@link SnmpNamedListTableCache} class.
+	 * @param rawDatas List of {@link MemoryManagerMXBean}, as
+	 *        returned by 
+	 * <code>ManagementFactory.getMemoryMBean().getMemoryManagers()</code>
+	 * @param rank The <var>rank</var> of <var>item</var> in the list.
+	 * @param item The <var>rank</var><super>th</super> 
+	 *        <code>MemoryManagerMXBean</code> in the list.
+	 * @return  <code>((MemoryManagerMXBean)item).getName()</code>
+	 **/
+	protected String getKey(Object context, List rawDatas, 
+				int rank, Object item) {
+	    if (item == null) return null;
+	    final String name = ((MemoryManagerMXBean)item).getName();
+	    log.debug("getKey", "key=" + name);
+	    return name;
+	}
 
-        /**
-         * Call <code>getTableHandler(JvmContextFactory.getUserData())</code>.
-         **/
-        public SnmpTableHandler getTableHandler() {
-            final Map userData = JvmContextFactory.getUserData();
-            return getTableDatas(userData);
-        }
+	/**
+	 * Call <code>getTableHandler(JvmContextFactory.getUserData())</code>.
+	 **/
+	public SnmpTableHandler getTableHandler() {
+	    final Map userData = JvmContextFactory.getUserData();
+	    return getTableDatas(userData);
+	}
 
-        /**
-         * Return the key used to cache the raw data of this table.
-         **/
-        protected String getRawDatasKey() {
-            return "JvmMemManagerTable.getMemoryManagers";
-        }
+	/**
+	 * Return the key used to cache the raw data of this table.
+	 **/
+	protected String getRawDatasKey() {
+	    return "JvmMemManagerTable.getMemoryManagers";
+	}
 
-        /**
-         * Call ManagementFactory.getMemoryManagerMXBeans() to
-         * load the raw data of this table.
-         **/
-        protected List   loadRawDatas(Map userData) {
-            return ManagementFactory.getMemoryManagerMXBeans();
-        }
+	/**
+	 * Call ManagementFactory.getMemoryManagerMXBeans() to
+	 * load the raw data of this table.
+	 **/
+	protected List   loadRawDatas(Map userData) {
+	    return ManagementFactory.getMemoryManagerMXBeans();
+	}
 
     }
 
     // The weak cache for this table.
-    protected SnmpTableCache cache;
+    protected SnmpTableCache cache; 
 
     /**
-     * Constructor for the table. Initialize metadata for
+     * Constructor for the table. Initialize metadata for 
      * "JvmMemManagerTableMeta".
-     * The reference on the MBean server is updated so the entries
-     * created through an SNMP SET will be AUTOMATICALLY REGISTERED
+     * The reference on the MBean server is updated so the entries 
+     * created through an SNMP SET will be AUTOMATICALLY REGISTERED 
      * in Java DMK.
      */
-    public JvmMemManagerTableMetaImpl(SnmpMib myMib,
-                                      SnmpStandardObjectServer objserv) {
+    public JvmMemManagerTableMetaImpl(SnmpMib myMib, 
+				      SnmpStandardObjectServer objserv) {
         super(myMib,objserv);
-        this.cache = new
-            JvmMemManagerTableCache(((JVM_MANAGEMENT_MIB_IMPL)myMib).
-                                    validity());
+	this.cache = new
+	    JvmMemManagerTableCache(((JVM_MANAGEMENT_MIB_IMPL)myMib).
+				    validity());
     }
 
     // See com.sun.jmx.snmp.agent.SnmpMibTable
-    protected SnmpOid getNextOid(Object userData)
-        throws SnmpStatusException {
-        // null means get the first OID.
-        return getNextOid(null,userData);
+    protected SnmpOid getNextOid(Object userData) 
+	throws SnmpStatusException {
+	// null means get the first OID.
+	return getNextOid(null,userData);
     }
 
     // See com.sun.jmx.snmp.agent.SnmpMibTable
     protected SnmpOid getNextOid(SnmpOid oid, Object userData)
-        throws SnmpStatusException {
-        final boolean dbg = log.isDebugOn();
-        if (dbg) log.debug("getNextOid", "previous=" + oid);
+	throws SnmpStatusException {
+	final boolean dbg = log.isDebugOn();
+	if (dbg) log.debug("getNextOid", "previous=" + oid);
+	
 
+	// Get the data handler.
+	//
+	SnmpTableHandler handler = getHandler(userData);
+	if (handler == null) {
+	    // This should never happen.
+	    // If we get here it's a bug.
+	    //
+	    if (dbg) log.debug("getNextOid", "handler is null!");
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	}
+	
+	// Get the next oid
+	//
+	final SnmpOid next = handler.getNext(oid);
+	if (dbg) log.debug("getNextOid", "next=" + next);
 
-        // Get the data handler.
-        //
-        SnmpTableHandler handler = getHandler(userData);
-        if (handler == null) {
-            // This should never happen.
-            // If we get here it's a bug.
-            //
-            if (dbg) log.debug("getNextOid", "handler is null!");
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-        }
-
-        // Get the next oid
-        //
-        final SnmpOid next = handler.getNext(oid);
-        if (dbg) log.debug("getNextOid", "next=" + next);
-
-        // if next is null: we reached the end of the table.
-        //
-        if (next == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-
-        return next;
+	// if next is null: we reached the end of the table.
+	//
+	if (next == null) 
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	
+	return next;
     }
-
+    
 
     // See com.sun.jmx.snmp.agent.SnmpMibTable
     protected boolean contains(SnmpOid oid, Object userData) {
 
-        // Get the handler.
-        //
-        SnmpTableHandler handler = getHandler(userData);
+	// Get the handler.
+	//
+	SnmpTableHandler handler = getHandler(userData);
 
-        // handler should never be null.
-        //
-        if (handler == null)
-            return false;
+	// handler should never be null.
+	//
+	if (handler == null) 
+	    return false;
 
-        return handler.contains(oid);
+	return handler.contains(oid);
     }
 
     // See com.sun.jmx.snmp.agent.SnmpMibTable
-    public Object getEntry(SnmpOid oid)
-        throws SnmpStatusException {
+    public Object getEntry(SnmpOid oid) 
+	throws SnmpStatusException {
 
-        if (oid == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	if (oid == null)
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	
+	// Get the request contextual cache (userData).
+	//
+	final Map<Object, Object> m = JvmContextFactory.getUserData();
 
-        // Get the request contextual cache (userData).
-        //
-        final Map<Object, Object> m = JvmContextFactory.getUserData();
+	// We know in the case of this table that the index is an integer,
+	// it is thus the first OID arc of the index OID.
+	//
+	final long   index    = oid.getOidArc(0);
 
-        // We know in the case of this table that the index is an integer,
-        // it is thus the first OID arc of the index OID.
-        //
-        final long   index    = oid.getOidArc(0);
+	// We're going to use this name to store/retrieve the entry in
+	// the request contextual cache.
+	//
+	// Revisit: Probably better programming to put all these strings
+	//          in some interface.
+	//
+	final String entryTag = ((m==null)?null:("JvmMemManagerTable.entry." +
+						 index));
 
-        // We're going to use this name to store/retrieve the entry in
-        // the request contextual cache.
-        //
-        // Revisit: Probably better programming to put all these strings
-        //          in some interface.
-        //
-        final String entryTag = ((m==null)?null:("JvmMemManagerTable.entry." +
-                                                 index));
+	// If the entry is in the cache, simply return it.
+	//
+	if (m != null) {
+	    final Object entry = m.get(entryTag);
+	    if (entry != null) return entry;
+	}
 
-        // If the entry is in the cache, simply return it.
-        //
-        if (m != null) {
-            final Object entry = m.get(entryTag);
-            if (entry != null) return entry;
-        }
+	// The entry was not in the cache, make a new one.
+	//
+	// Get the data hanler.
+	//
+	SnmpTableHandler handler = getHandler(m);
+	
+	// handler should never be null.
+	//
+	if (handler == null) 
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
-        // The entry was not in the cache, make a new one.
-        //
-        // Get the data hanler.
-        //
-        SnmpTableHandler handler = getHandler(m);
+	// Get the data associated with our entry.
+	//
+	final Object data = handler.getData(oid);
 
-        // handler should never be null.
-        //
-        if (handler == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	// data may be null if the OID we were given is not valid.
+	// 
+	if (data == null) 
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
-        // Get the data associated with our entry.
-        //
-        final Object data = handler.getData(oid);
+	// make the new entry (transient object that will be kept only
+	// for the duration of the request.
+	//
+	final Object entry = 
+	    new JvmMemManagerEntryImpl((MemoryManagerMXBean)data,(int)index);
 
-        // data may be null if the OID we were given is not valid.
-        //
-        if (data == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	// Put the entry in the cache in case we need it later while processing
+	// the request.
+	//
+	if (m != null && entry != null) {
+	    m.put(entryTag,entry);
+	}
 
-        // make the new entry (transient object that will be kept only
-        // for the duration of the request.
-        //
-        final Object entry =
-            new JvmMemManagerEntryImpl((MemoryManagerMXBean)data,(int)index);
-
-        // Put the entry in the cache in case we need it later while processing
-        // the request.
-        //
-        if (m != null && entry != null) {
-            m.put(entryTag,entry);
-        }
-
-        return entry;
+	return entry;
     }
 
     /**
      * Get the SnmpTableHandler that holds the jvmMemManagerTable data.
-     * First look it up in the request contextual cache, and if it is
+     * First look it up in the request contextual cache, and if it is 
      * not found, obtain it from the weak cache.
      * <br>The request contextual cache will be released at the end of the
      * current requests, and is used only to process this request.
@@ -273,26 +273,26 @@ public class JvmMemManagerTableMetaImpl extends JvmMemManagerTableMeta {
      *     coherency.
      **/
     protected SnmpTableHandler getHandler(Object userData) {
-        final Map<Object, Object> m;
-        if (userData instanceof Map) m=Util.cast(userData);
-        else m=null;
+	final Map<Object, Object> m;
+	if (userData instanceof Map) m=Util.cast(userData);
+	else m=null;
 
-        // Look in the contextual cache.
-        if (m != null) {
-            final SnmpTableHandler handler =
-                (SnmpTableHandler)m.get("JvmMemManagerTable.handler");
-            if (handler != null) return handler;
-        }
+	// Look in the contextual cache.
+	if (m != null) {
+	    final SnmpTableHandler handler = 
+		(SnmpTableHandler)m.get("JvmMemManagerTable.handler");
+	    if (handler != null) return handler;
+	}
 
-        // No handler in contextual cache, make a new one.
-        final SnmpTableHandler handler = cache.getTableHandler();
+	// No handler in contextual cache, make a new one.
+	final SnmpTableHandler handler = cache.getTableHandler();
+	
+	if (m != null && handler != null ) 
+	    m.put("JvmMemManagerTable.handler",handler);
 
-        if (m != null && handler != null )
-            m.put("JvmMemManagerTable.handler",handler);
-
-        return handler;
+	return handler;
     }
 
-    static final MibLogger log =
-        new MibLogger(JvmMemManagerTableMetaImpl.class);
+    static final MibLogger log = 
+	new MibLogger(JvmMemManagerTableMetaImpl.class);
 }

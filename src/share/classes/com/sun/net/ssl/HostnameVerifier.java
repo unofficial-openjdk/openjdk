@@ -36,8 +36,8 @@ package com.sun.net.ssl;
  * the server name from the certificate mismatch.
  *
  * @deprecated As of JDK 1.4, this implementation-specific class was
- *      replaced by {@link javax.net.ssl.HostnameVerifier} and
- *      {@link javax.net.ssl.CertificateHostnameVerifier}.
+ *	replaced by {@link javax.net.ssl.HostnameVerifier} and
+ *	{@link javax.net.ssl.CertificateHostnameVerifier}.
  */
 @Deprecated
 public interface HostnameVerifier {

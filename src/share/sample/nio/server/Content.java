@@ -36,6 +36,7 @@
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
+ * @version %I%, %E%
  */
 interface Content extends Sendable {
 

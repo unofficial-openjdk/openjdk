@@ -41,31 +41,31 @@ import static java.lang.Math.*;
  */
 public class Utilities {
     private static final String windowsLaF =
-        "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
+	"com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
 
     public static void updateTransparency(JComponent comp) {
-        LookAndFeel laf = UIManager.getLookAndFeel();
-        boolean transparent = laf.getClass().getName().equals(windowsLaF);
-        setTabbedPaneTransparency(comp, transparent);
+	LookAndFeel laf = UIManager.getLookAndFeel();
+	boolean transparent = laf.getClass().getName().equals(windowsLaF);
+	setTabbedPaneTransparency(comp, transparent);
     }
 
     private static void setTabbedPaneTransparency(JComponent comp, boolean transparent) {
         for (Component child : comp.getComponents()) {
-            if (comp instanceof JTabbedPane) {
+	    if (comp instanceof JTabbedPane) {
                 setTransparency((JComponent)child, transparent);
-            } else if (child instanceof JComponent) {
-                setTabbedPaneTransparency((JComponent)child, transparent);
-            }
-        }
+	    } else if (child instanceof JComponent) {
+		setTabbedPaneTransparency((JComponent)child, transparent);
+	    }
+	}
     }
 
     private static void setTransparency(JComponent comp, boolean transparent) {
-        comp.setOpaque(!transparent);
+	comp.setOpaque(!transparent);
         for (Component child : comp.getComponents()) {
-            if (child instanceof JPanel ||
-                child instanceof JSplitPane ||
-                child instanceof JScrollPane ||
-                child instanceof JViewport ||
+            if (child instanceof JPanel || 
+                child instanceof JSplitPane || 
+                child instanceof JScrollPane || 
+                child instanceof JViewport || 
                 child instanceof JCheckBox) {
 
                 setTransparency((JComponent)child, transparent);
@@ -90,7 +90,7 @@ public class Utilities {
      * The top border helps differentiating the containing table from its container.
      */
     public static JScrollPane newTableScrollPane(JComponent comp) {
-        return new TableScrollPane(comp);
+	return new TableScrollPane(comp);
     }
 
     @SuppressWarnings("serial")
@@ -112,13 +112,13 @@ public class Utilities {
             }
         }
     }
-
+    
     public static void setAccessibleName(Accessible comp, String name) {
-        comp.getAccessibleContext().setAccessibleName(name);
+	comp.getAccessibleContext().setAccessibleName(name);
     }
 
     public static void setAccessibleDescription(Accessible comp, String description) {
-        comp.getAccessibleContext().setAccessibleDescription(description);
+	comp.getAccessibleContext().setAccessibleDescription(description);
     }
 
 
@@ -130,37 +130,37 @@ public class Utilities {
      * http://www.cs.rit.edu/~ncs/color/t_convert.html#RGB%20to%20YIQ%20&%20YIQ%20to%20RGB
      */
     public static Color ensureContrast(Color c1, Color c2) {
-        double y1 = getColorBrightness(c1);
-        double y2 = getColorBrightness(c2);
+	double y1 = getColorBrightness(c1);
+	double y2 = getColorBrightness(c2);
 
-        if (abs(y1 - y2) < 125.0) {
-            if (y2 < 128.0) {
-                c1 = setColorBrightness(c1, y2 + 125.0);
-            } else {
-                c1 = setColorBrightness(c1, y2 - 125.0);
-            }
-        }
+	if (abs(y1 - y2) < 125.0) {
+	    if (y2 < 128.0) {
+		c1 = setColorBrightness(c1, y2 + 125.0);
+	    } else {
+		c1 = setColorBrightness(c1, y2 - 125.0);
+	    }
+	}
 
-        return c1;
+	return c1;
     }
 
     public static double getColorBrightness(Color c) {
-        // Convert RGB -> YIQ and return the Y value
-        return (c.getRed() * 0.299 + c.getGreen() * 0.587 + c.getBlue() * 0.114);
+	// Convert RGB -> YIQ and return the Y value
+	return (c.getRed() * 0.299 + c.getGreen() * 0.587 + c.getBlue() * 0.114);
     }
 
     private static Color setColorBrightness(Color c, double y) {
-        // Convert YIQ -> RGB
-        double i = (c.getRed() * 0.596 - c.getGreen() * 0.275 - c.getBlue() * 0.321);
-        double q = (c.getRed() * 0.212 - c.getGreen() * 0.523 + c.getBlue() * 0.311);
+	// Convert YIQ -> RGB
+	double i = (c.getRed() * 0.596 - c.getGreen() * 0.275 - c.getBlue() * 0.321);
+	double q = (c.getRed() * 0.212 - c.getGreen() * 0.523 + c.getBlue() * 0.311);
 
-        // Keep values in legal range. This may reduce the
-        // achieved contrast somewhat.
-        int r = max(0, min(255, (int)round(y + i * 0.956 + q * 0.621)));
-        int g = max(0, min(255, (int)round(y - i * 0.272 - q * 0.647)));
-        int b = max(0, min(255, (int)round(y - i * 1.105 + q * 1.702)));
+	// Keep values in legal range. This may reduce the
+	// achieved contrast somewhat.
+	int r = max(0, min(255, (int)round(y + i * 0.956 + q * 0.621)));
+	int g = max(0, min(255, (int)round(y - i * 0.272 - q * 0.647)));
+	int b = max(0, min(255, (int)round(y - i * 1.105 + q * 1.702)));
 
-        return new Color(r, g, b);
+	return new Color(r, g, b);
     }
 
 }

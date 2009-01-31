@@ -31,29 +31,29 @@ import java.io.*;
 import javax.script.*;
 
 public class Test5 {
-        public static void main(String[] args) throws Exception {
-                System.out.println("\nTest5\n");
+	public static void main(String[] args) throws Exception {
+		System.out.println("\nTest5\n");
                 ScriptEngineManager m = new ScriptEngineManager();
-                ScriptEngine engine = m.getEngineByName("js");
-                Bindings g = new SimpleBindings();
-                Bindings e = new SimpleBindings();
-                g.put("key", "value in global");
-                e.put("key", "value in engine");
-                ScriptContext ctxt = new SimpleScriptContext();
-                ctxt.setBindings(e, ScriptContext.ENGINE_SCOPE);
-                System.out.println("engine scope only");
+		ScriptEngine engine = m.getEngineByName("js");
+		Bindings g = new SimpleBindings();
+		Bindings e = new SimpleBindings();
+		g.put("key", "value in global");
+		e.put("key", "value in engine");
+		ScriptContext ctxt = new SimpleScriptContext();
+		ctxt.setBindings(e, ScriptContext.ENGINE_SCOPE);
+		System.out.println("engine scope only");
                 e.put("count", new Integer(1));
 
                 Reader reader = new FileReader(
                     new File(System.getProperty("test.src", "."), "Test5.js"));
-                engine.eval(reader,ctxt);
-                System.out.println("both scopes");
-                ctxt.setBindings(g, ScriptContext.GLOBAL_SCOPE);
+		engine.eval(reader,ctxt);
+		System.out.println("both scopes");
+		ctxt.setBindings(g, ScriptContext.GLOBAL_SCOPE);
                 e.put("count", new Integer(2));
-                engine.eval(reader,ctxt);
-                System.out.println("only global");
+		engine.eval(reader,ctxt);
+		System.out.println("only global");
                 e.put("count", new Integer(3));
-                ctxt.setAttribute("key", null, ScriptContext.ENGINE_SCOPE);
-                engine.eval(reader,ctxt);
-        }
-}
+		ctxt.setAttribute("key", null, ScriptContext.ENGINE_SCOPE);
+		engine.eval(reader,ctxt);
+	}
+}		

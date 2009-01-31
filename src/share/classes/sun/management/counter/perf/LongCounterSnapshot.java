@@ -36,18 +36,18 @@ class LongCounterSnapshot extends AbstractCounter
     long value;
 
     // package private
-    LongCounterSnapshot(String name, Units u, Variability v, int flags,
+    LongCounterSnapshot(String name, Units u, Variability v, int flags, 
                         long value) {
         super(name, u, v, flags);
         this.value = value;
     }
-
+    
     public Object getValue() {
         return new Long(value);
     }
-
+    
     /**
-     * Get the value of this Long performance counter
+     * Get the value of this Long performance counter 
      */
     public long longValue() {
         return value;

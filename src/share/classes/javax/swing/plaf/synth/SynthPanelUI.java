@@ -38,6 +38,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's PanelUI.
  *
+ * @version %I%, %G%
  * @author Steve Wilson
  */
 class SynthPanelUI extends BasicPanelUI implements PropertyChangeListener,

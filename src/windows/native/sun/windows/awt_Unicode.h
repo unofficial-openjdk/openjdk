@@ -25,7 +25,7 @@
 
 /*
  * Unicode to ANSI string conversion macros, based on a slide from a
- * presentation by Asmus Freytag.  These must be macros, since the
+ * presentation by Asmus Freytag.  These must be macros, since the 
  * alloca() has to be in the caller's stack space.
  */
 
@@ -44,7 +44,7 @@ extern LPWSTR JNI_J2WHelper1(JNIEnv *env, LPWSTR lpw, jstring jstr);
 #define TO_WSTRING(jstr) \
    ((jstr == NULL) ? NULL : \
      (JNI_J2WHelper1(env, (LPWSTR) alloca((env->GetStringLength(jstr)+1)*2), \
-                     jstr) \
+		     jstr) \
     ))
 
 #endif // AWT_UNICODE_H

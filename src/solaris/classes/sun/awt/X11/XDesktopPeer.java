@@ -36,9 +36,9 @@ import java.awt.peer.DesktopPeer;
 
 
 /**
- * Concrete implementation of the interface <code>DesktopPeer</code> for
+ * Concrete implementation of the interface <code>DesktopPeer</code> for 
  * the Gnome desktop on Linux and Unix platforms.
- *
+ * 
  * @see DesktopPeer
  */
 public class XDesktopPeer implements DesktopPeer {
@@ -47,7 +47,7 @@ public class XDesktopPeer implements DesktopPeer {
     static {
         nativeLibraryLoaded = init();
     }
-
+    
     static boolean isDesktopSupported() {
         return nativeLibraryLoaded;
     }
@@ -55,7 +55,7 @@ public class XDesktopPeer implements DesktopPeer {
     public boolean isSupported(Action type) {
         return type != Action.PRINT && type != Action.EDIT;
     }
-
+    
     public void open(File file) throws IOException {
         try {
             launch(file.toURI());
@@ -81,19 +81,19 @@ public class XDesktopPeer implements DesktopPeer {
     public void browse(URI uri) throws IOException {
         launch(uri);
     }
-
+    
     private void launch(URI uri) throws IOException {
         if (!nativeLibraryLoaded) {
-            throw new IOException("Failed to load native libraries.");
+            throw new IOException("Failed to load native libraries.");            
         }
-
+        
         byte[] uriByteArray = ( uri.toString() + '\0' ).getBytes();
         boolean result = gnome_url_show(uriByteArray);
         if (!result) {
             throw new IOException("Failed to show URI:" + uri);
         }
     }
-
+    
     private native boolean gnome_url_show(byte[] url);
     private static native boolean init();
 }

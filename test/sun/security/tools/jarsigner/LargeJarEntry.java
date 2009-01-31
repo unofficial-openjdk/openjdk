@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 6405538 6474350
- * @summary Make sure jar files with large entries (more than max heap size)
+ * @summary Make sure jar files with large entries (more than max heap size) 
  *    can be signed
  * @run main/othervm -Xmx8M LargeJarEntry
  * @author Sean Mullan
@@ -43,42 +43,42 @@ public class LargeJarEntry {
 
         String srcDir = System.getProperty("test.src", ".");
         String keystore = srcDir + "/JarSigning.keystore";
-        String jarName = "largeJarEntry.jar";
+	String jarName = "largeJarEntry.jar";
 
-        // Set java.io.tmpdir to the current working dir (see 6474350)
-        System.setProperty("java.io.tmpdir", System.getProperty("user.dir"));
+	// Set java.io.tmpdir to the current working dir (see 6474350)
+	System.setProperty("java.io.tmpdir", System.getProperty("user.dir"));
 
-        // first, create jar file with 8M uncompressed entry
-        // note, we set the max heap size to 8M in @run tag above
+	// first, create jar file with 8M uncompressed entry
+	// note, we set the max heap size to 8M in @run tag above
         byte[] bytes = new byte[1000000];
         CRC32 crc = new CRC32();
-        for (int i=0; i<8; i++) {
+	for (int i=0; i<8; i++) {
             crc.update(bytes);
-        }
+	}
         JarEntry je = new JarEntry("large");
         je.setSize(8000000l);
         je.setMethod(JarEntry.STORED);
         je.setCrc(crc.getValue());
-        File file = new File(jarName);
+	File file = new File(jarName);
         FileOutputStream os = new FileOutputStream(file);
         JarOutputStream jos = new JarOutputStream(os);
         jos.setMethod(JarEntry.STORED);
         jos.putNextEntry(je);
-        for (int i=0; i<8; i++) {
+	for (int i=0; i<8; i++) {
             jos.write(bytes, 0, bytes.length);
-        }
+	}
         jos.close();
 
-        String[] jsArgs = { "-keystore", keystore, "-storepass", "bbbbbb",
-                jarName, "b" };
-        // now, try to sign it
-        try {
-            JarSigner.main(jsArgs);
-        } catch (OutOfMemoryError err) {
-            throw new Exception("Test failed with OutOfMemoryError", err);
-        } finally {
-            // remove jar file
-            file.delete();
-        }
+	String[] jsArgs = { "-keystore", keystore, "-storepass", "bbbbbb",
+		jarName, "b" };
+	// now, try to sign it
+	try {
+	    JarSigner.main(jsArgs);
+	} catch (OutOfMemoryError err) {
+	    throw new Exception("Test failed with OutOfMemoryError", err);
+	} finally {
+	    // remove jar file
+	    file.delete();
+	}
     }
 }

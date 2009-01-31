@@ -31,10 +31,12 @@ import java.io.*;
  * This exeception is thrown when unexpected results are returned during
  * an FTP session.
  *
- * @author      Jonathan Payne
+ * @version	%I%, %G%
+ * @author	Jonathan Payne
  */
 public class FtpProtocolException extends IOException {
     FtpProtocolException(String s) {
-        super(s);
+	super(s);
     }
 }
+

@@ -44,6 +44,7 @@ import java.io.*;
  * hierarchy, and other organizations can easily acquire the ability
  * to assign such unique identifiers.
  *
+ * @version %I%
  *
  * @author David Brownell
  * @author Amit Kapoor
@@ -64,7 +65,7 @@ class ObjectIdentifier implements Serializable
     public ObjectIdentifier (String oid) throws IOException
     {
         int ch = '.';
-        int     start = 0;
+        int	start = 0;
         int end = 0;
 
         // Calculate length of oid
@@ -96,19 +97,19 @@ class ObjectIdentifier implements Serializable
     }
 
     /**
-     * Check if the values make a legal OID. There must be at least 2
+     * Check if the values make a legal OID. There must be at least 2 
      * components and they must be all non-negative. The first component
      * should be 0,1 or 2. When the first component is 0 or 1, the
      * second component should be less than or equal to 39
      *
      * @param values the components that will make the OID
-     * @param len the number of components to check. Note that the allocation
+     * @param len the number of components to check. Note that the allocation 
      *        size of <code>values</code> may be longer than <code>len</code>.
      *        In this case, only the first <code>len</code> items are checked.
      * @exception IOException if this is not a legal OID
      */
-    private void checkValidOid(int[] values, int len) throws IOException {
-        if (values == null || len < 2) {
+    private void checkValidOid(int[] values, int len) throws IOException {        
+	if (values == null || len < 2) {
             throw new IOException("ObjectIdentifier() -- " +
                     "Must be at least two oid components ");
         }
@@ -123,7 +124,7 @@ class ObjectIdentifier implements Serializable
         if (values[0] > maxFirstComponent) {
             throw new IOException("ObjectIdentifier() -- " +
                     "First oid component is invalid ");
-        }
+	}
 
         if (values[0] < 2 && values[1] > maxSecondComponent) {
             throw new IOException("ObjectIdentifier() -- " +
@@ -137,10 +138,10 @@ class ObjectIdentifier implements Serializable
     public ObjectIdentifier (int values []) throws IOException
     {
         checkValidOid(values, values.length);
-        components = values.clone();
-        componentLen = values.length;
+	components = values.clone();
+	componentLen = values.length;
     }
-
+    
     /**
      * Constructs an object ID from an ASN.1 encoded input stream.
      * The encoding of the ID in the stream uses "DER", a BER/1 subset.
@@ -153,33 +154,33 @@ class ObjectIdentifier implements Serializable
      * @exception IOException indicates a decoding error
      */
     public ObjectIdentifier (DerInputStream in)
-        throws IOException
+	throws IOException
     {
-        byte    type_id;
-        int     bufferEnd;
+	byte	type_id;
+	int	bufferEnd;
 
-        /*
-         * Object IDs are a "universal" type, and their tag needs only
-         * one byte of encoding.  Verify that the tag of this datum
-         * is that of an object ID.
-         *
-         * Then get and check the length of the ID's encoding.  We set
-         * up so that we can use in.available() to check for the end of
-         * this value in the data stream.
-         */
-        type_id = (byte) in.getByte ();
-        if (type_id != DerValue.tag_ObjectId)
-            throw new IOException (
-                "ObjectIdentifier() -- data isn't an object ID"
-                + " (tag = " +  type_id + ")"
-                );
+	/*
+	 * Object IDs are a "universal" type, and their tag needs only
+	 * one byte of encoding.  Verify that the tag of this datum
+	 * is that of an object ID.
+	 *
+	 * Then get and check the length of the ID's encoding.  We set
+	 * up so that we can use in.available() to check for the end of
+	 * this value in the data stream.
+	 */
+	type_id = (byte) in.getByte ();
+	if (type_id != DerValue.tag_ObjectId)
+	    throw new IOException (
+		"ObjectIdentifier() -- data isn't an object ID"
+		+ " (tag = " +  type_id + ")"
+		);
 
-        bufferEnd = in.available () - in.getLength () - 1;
-        if (bufferEnd < 0)
-            throw new IOException (
-                "ObjectIdentifier() -- not enough data");
+	bufferEnd = in.available () - in.getLength () - 1;
+	if (bufferEnd < 0)
+	    throw new IOException (
+		"ObjectIdentifier() -- not enough data");
 
-        initFromEncoding (in, bufferEnd);
+	initFromEncoding (in, bufferEnd);
     }
 
     /*
@@ -188,24 +189,24 @@ class ObjectIdentifier implements Serializable
      */
     ObjectIdentifier (DerInputBuffer buf) throws IOException
     {
-        initFromEncoding (new DerInputStream (buf), 0);
+	initFromEncoding (new DerInputStream (buf), 0);
     }
-
+    
     /**
      * Private constructor for use by newInternal(). Dummy argument
      * to avoid clash with the public constructor.
      */
     private ObjectIdentifier(int[] components, boolean dummy) {
-        this.components = components;
-        this.componentLen = components.length;
+	this.components = components;
+	this.componentLen = components.length;
     }
-
+    
     /**
      * Create a new ObjectIdentifier for internal use. The values are
      * neither checked nor cloned.
      */
     public static ObjectIdentifier newInternal(int[] values) {
-        return new ObjectIdentifier(values, true);
+	return new ObjectIdentifier(values, true);
     }
 
     /*
@@ -213,74 +214,74 @@ class ObjectIdentifier implements Serializable
      * length are verified.
      */
     private void initFromEncoding (DerInputStream in, int bufferEnd)
-        throws IOException
+	throws IOException
     {
 
-        /*
-         * Now get the components ("sub IDs") one at a time.  We fill a
-         * temporary buffer, resizing it as needed.
-         */
-        int             component;
-        boolean         first_subid = true;
+	/*
+	 * Now get the components ("sub IDs") one at a time.  We fill a
+	 * temporary buffer, resizing it as needed.
+	 */
+	int		component;
+	boolean		first_subid = true;
 
-        for (components = new int [allocationQuantum], componentLen = 0;
-                in.available () > bufferEnd;
-        ) {
-            component = getComponent (in);
-            if (component < 0) {
-                throw new IOException(
-                    "ObjectIdentifier() -- " +
-                    "component values must be nonnegative");
-            }
-            if (first_subid) {
-                int     X, Y;
+	for (components = new int [allocationQuantum], componentLen = 0;
+		in.available () > bufferEnd;
+	) {
+	    component = getComponent (in);
+	    if (component < 0) {
+	        throw new IOException(
+		    "ObjectIdentifier() -- " + 
+		    "component values must be nonnegative");
+	    }
+	    if (first_subid) {
+		int	X, Y;
 
-                /*
-                 * NOTE:  the allocation quantum is large enough that we know
-                 * we don't have to reallocate here!
-                 */
-                if (component < 40)
-                    X = 0;
-                else if (component < 80)
-                    X = 1;
-                else
-                    X = 2;
-                Y = component - ( X * 40);
-                components [0] = X;
-                components [1] = Y;
-                componentLen = 2;
+		/*
+		 * NOTE:  the allocation quantum is large enough that we know
+		 * we don't have to reallocate here!
+		 */
+		if (component < 40)
+		    X = 0;
+		else if (component < 80)
+		    X = 1;
+		else
+		    X = 2;
+		Y = component - ( X * 40);
+		components [0] = X;
+		components [1] = Y;
+		componentLen = 2;
 
-                first_subid = false;
+		first_subid = false;
 
-            } else {
+	    } else {
 
-                /*
-                 * Other components are encoded less exotically.  The only
-                 * potential trouble is the need to grow the array.
-                 */
-                if (componentLen >= components.length) {
-                    int         tmp_components [];
+		/*
+		 * Other components are encoded less exotically.  The only
+		 * potential trouble is the need to grow the array.
+		 */
+		if (componentLen >= components.length) {
+		    int		tmp_components [];
 
-                    tmp_components = new int [components.length
-                                        + allocationQuantum];
-                    System.arraycopy (components, 0, tmp_components, 0,
-                            components.length);
-                    components = tmp_components;
-                }
-                components [componentLen++] = component;
-            }
-        }
-
+		    tmp_components = new int [components.length
+					+ allocationQuantum];
+		    System.arraycopy (components, 0, tmp_components, 0,
+			    components.length);
+		    components = tmp_components;
+		}
+		components [componentLen++] = component;
+	    }
+	}
+        
         checkValidOid(components, componentLen);
 
-        /*
-         * Final sanity check -- if we didn't use exactly the number of bytes
-         * specified, something's quite wrong.
-         */
-        if (in.available () != bufferEnd) {
-            throw new IOException (
-                    "ObjectIdentifier() -- malformed input data");
-        }
+	/*
+	 * Final sanity check -- if we didn't use exactly the number of bytes
+	 * specified, something's quite wrong.
+	 */
+	if (in.available () != bufferEnd) {
+	    throw new IOException (
+		    "ObjectIdentifier() -- malformed input data");
+	}
     }
 
 
@@ -289,25 +290,25 @@ class ObjectIdentifier implements Serializable
      */
     void encode (DerOutputStream out) throws IOException
     {
-        DerOutputStream bytes = new DerOutputStream ();
-        int i;
+	DerOutputStream	bytes = new DerOutputStream ();
+	int i;
 
-        // According to ISO X.660, when the 1st component is 0 or 1, the 2nd
+        // According to ISO X.660, when the 1st component is 0 or 1, the 2nd 
         // component is restricted to be less than or equal to 39, thus make
         // it small enough to be encoded into one single byte.
         if (components[0] < 2) {
-            bytes.write ((components [0] * 40) + components [1]);
+	    bytes.write ((components [0] * 40) + components [1]);
         } else {
             putComponent(bytes, (components [0] * 40) + components [1]);
         }
-        for (i = 2; i < componentLen; i++)
-            putComponent (bytes, components [i]);
+	for (i = 2; i < componentLen; i++)
+	    putComponent (bytes, components [i]);
 
-        /*
-         * Now that we've constructed the component, encode
-         * it in the stream we were given.
-         */
-        out.write (DerValue.tag_ObjectId, bytes);
+	/*
+	 * Now that we've constructed the component, encode
+	 * it in the stream we were given.
+	 */
+	out.write (DerValue.tag_ObjectId, bytes);
     }
 
     /*
@@ -320,13 +321,13 @@ class ObjectIdentifier implements Serializable
     {
         int retval, i, tmp;
 
-        for (i = 0, retval = 0; i < 4; i++) {
-            retval <<= 7;
-            tmp = in.getByte ();
-            retval |= (tmp & 0x07f);
-            if ((tmp & 0x080) == 0)
-                return retval;
-        }
+	for (i = 0, retval = 0; i < 4; i++) {
+	    retval <<= 7;
+	    tmp = in.getByte ();
+	    retval |= (tmp & 0x07f);
+	    if ((tmp & 0x080) == 0)
+		return retval;
+	}
 
         throw new IOException ("ObjectIdentifier() -- component value too big");
     }
@@ -339,20 +340,20 @@ class ObjectIdentifier implements Serializable
     private static void putComponent (DerOutputStream out, int val)
     throws IOException
     {
-        int     i;
+	int	i;
         // TODO: val must be <128*128*128*128 here, otherwise, 4 bytes is not
         // enough to hold it. Will address this later.
-        byte    buf [] = new byte [4] ;
+	byte	buf [] = new byte [4] ;
 
-        for (i = 0; i < 4; i++) {
-            buf [i] = (byte) (val & 0x07f);
-            val >>>= 7;
-            if (val == 0)
-                break;
-        }
-        for ( ; i > 0; --i)
-            out.write (buf [i] | 0x080);
-        out.write (buf [0]);
+	for (i = 0; i < 4; i++) {
+	    buf [i] = (byte) (val & 0x07f);
+	    val >>>= 7;
+	    if (val == 0)
+		break;
+	}
+	for ( ; i > 0; --i)
+	    out.write (buf [i] | 0x080);
+	out.write (buf [0]);
     }
 
     // XXX this API should probably facilitate the JDK sort utility
@@ -363,26 +364,26 @@ class ObjectIdentifier implements Serializable
      *
      * @param other identifer that may precede this one.
      * @return true iff <em>other</em> precedes this one
-     *          in a particular sorting order.
+     *		in a particular sorting order.
      */
     public boolean precedes (ObjectIdentifier other)
     {
-        int             i;
+	int		i;
 
-        // shorter IDs go first
-        if (other == this || componentLen < other.componentLen)
-            return false;
-        if (other.componentLen < componentLen)
-            return true;
+	// shorter IDs go first
+	if (other == this || componentLen < other.componentLen)
+	    return false;
+	if (other.componentLen < componentLen)
+	    return true;
 
-        // for each component, the lesser component goes first
-        for (i = 0; i < componentLen; i++) {
-            if (other.components [i] < components [i])
-                return true;
-        }
+	// for each component, the lesser component goes first
+	for (i = 0; i < componentLen; i++) {
+	    if (other.components [i] < components [i])
+		return true;
+	}
 
-        // identical IDs don't precede each other
-        return false;
+	// identical IDs don't precede each other
+	return false;
     }
 
     /**
@@ -390,7 +391,7 @@ class ObjectIdentifier implements Serializable
      */
     @Deprecated
     public boolean equals(ObjectIdentifier other) {
-        return equals((Object)other);
+	return equals((Object)other);
     }
 
     /**
@@ -399,30 +400,30 @@ class ObjectIdentifier implements Serializable
      * @return true iff the names are identical.
      */
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj instanceof ObjectIdentifier == false) {
-            return false;
-        }
-        ObjectIdentifier other = (ObjectIdentifier)obj;
+	if (this == obj) {
+	    return true;
+	}
+	if (obj instanceof ObjectIdentifier == false) {
+	    return false;
+	}
+	ObjectIdentifier other = (ObjectIdentifier)obj;
         if (componentLen != other.componentLen) {
             return false;
-        }
+	}
         for (int i = 0; i < componentLen; i++) {
             if (components[i] != other.components[i]) {
                 return false;
-            }
+	    }
         }
         return true;
     }
-
+    
     public int hashCode() {
-        int h = componentLen;
-        for (int i = 0; i < componentLen; i++) {
-            h += components[i] * 37;
-        }
-        return h;
+	int h = componentLen;
+	for (int i = 0; i < componentLen; i++) {
+	    h += components[i] * 37;
+	}
+	return h;
     }
 
     /**
@@ -432,19 +433,19 @@ class ObjectIdentifier implements Serializable
      * will not be understood everywhere.
      */
     public String toString() {
-        String s = stringForm;
-        if (s == null) {
-            StringBuffer sb = new StringBuffer(componentLen * 4);
-            for (int i = 0; i < componentLen; i++) {
-                if (i != 0) {
-                    sb.append('.');
-                }
-                sb.append(components[i]);
-            }
-            s = sb.toString();
-            stringForm = s;
-        }
-        return s;
+	String s = stringForm;
+	if (s == null) {
+	    StringBuffer sb = new StringBuffer(componentLen * 4);
+	    for (int i = 0; i < componentLen; i++) {
+		if (i != 0) {
+		    sb.append('.');
+		}
+		sb.append(components[i]);
+	    }
+	    s = sb.toString();
+	    stringForm = s;
+	}
+	return s;
     }
 
     /*
@@ -452,10 +453,10 @@ class ObjectIdentifier implements Serializable
      * larger than 32 bits.  Then we represent the path from the root as
      * an array that's (usually) only filled at the beginning.
      */
-    private int         components [];                  // path from root
-    private int         componentLen;                   // how much is used.
-
+    private int		components [];			// path from root
+    private int		componentLen;			// how much is used.
+    
     private transient volatile String stringForm;
 
-    private static final int allocationQuantum = 5;     // >= 2
+    private static final int allocationQuantum = 5;	// >= 2
 }

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 
 package javax.security.cert;
 
@@ -41,13 +41,13 @@ import java.security.SignatureException;
  * This class is an abstraction for certificates that have different
  * formats but important common uses.  For example, different types of
  * certificates, such as X.509 and PGP, share general certificate
- * functionality (like encoding and verifying) and
+ * functionality (like encoding and verifying) and 
  * some types of information (like a public key).
  * <p>
  * X.509, PGP, and SDSI certificates can all be implemented by
  * subclassing the Certificate class, even though they contain different
  * sets of information, and they store and retrieve the information in
- * different ways.
+ * different ways. 
  *
  * <p><em>Note: The classes in the package <code>javax.security.cert</code>
  * exist for compatibility with earlier versions of the
@@ -59,20 +59,21 @@ import java.security.SignatureException;
  * @see X509Certificate
  *
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public abstract class Certificate {
 
     /**
-     * Compares this certificate for equality with the specified
-     * object. If the <code>other</code> object is an
+     * Compares this certificate for equality with the specified 
+     * object. If the <code>other</code> object is an 
      * <code>instanceof</code> <code>Certificate</code>, then
      * its encoded form is retrieved and compared with the
      * encoded form of this certificate.
-     *
+     * 
      * @param other the object to test for equality with this certificate.
      * @return true if the encoded forms of the two certificates
      *         match, false otherwise.
-     */
+     */  
     public boolean equals(Object other) {
         if (this == other)
             return true;
@@ -89,7 +90,7 @@ public abstract class Certificate {
                      return false;
             return true;
         } catch (CertificateException e) {
-            return false;
+	    return false;
         }
     }
 
@@ -98,7 +99,7 @@ public abstract class Certificate {
      * encoded form.
      *
      * @return the hashcode value.
-     */
+     */  
     public int hashCode() {
         int     retval = 0;
         try {
@@ -125,7 +126,7 @@ public abstract class Certificate {
     public abstract byte[] getEncoded() throws CertificateEncodingException;
 
     /**
-     * Verifies that this certificate was signed using the
+     * Verifies that this certificate was signed using the 
      * private key that corresponds to the specified public key.
      *
      * @param key the PublicKey used to carry out the verification.
@@ -136,14 +137,14 @@ public abstract class Certificate {
      * @exception NoSuchProviderException if there's no default provider.
      * @exception SignatureException on signature errors.
      * @exception CertificateException on encoding errors.
-     */
+     */  
     public abstract void verify(PublicKey key)
         throws CertificateException, NoSuchAlgorithmException,
         InvalidKeyException, NoSuchProviderException,
         SignatureException;
 
     /**
-     * Verifies that this certificate was signed using the
+     * Verifies that this certificate was signed using the 
      * private key that corresponds to the specified public key.
      * This method uses the signature verification engine
      * supplied by the specified provider.
@@ -155,7 +156,7 @@ public abstract class Certificate {
      * @exception NoSuchProviderException on incorrect provider.
      * @exception SignatureException on signature errors.
      * @exception CertificateException on encoding errors.
-     */
+     */  
     public abstract void verify(PublicKey key, String sigProvider)
         throws CertificateException, NoSuchAlgorithmException,
         InvalidKeyException, NoSuchProviderException,
@@ -170,7 +171,7 @@ public abstract class Certificate {
 
     /**
      * Gets the public key from this certificate.
-     *
+     * 
      * @return the public key.
      */
     public abstract PublicKey getPublicKey();

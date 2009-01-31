@@ -34,19 +34,19 @@ import com.sun.jdi.*;
  * {@link com.sun.jdi.event.VMDeathEvent VMDeathEvent}
  * will be placed on the
  * {@link com.sun.jdi.event.EventQueue EventQueue}.
- * The collection of existing VMDeathRequests is
+ * The collection of existing VMDeathRequests is 
  * managed by the {@link EventRequestManager}
  * <P>
- * Even without creating a VMDeathRequest, a single
- * unsolicited VMDeathEvent will be sent with a
- * {@link EventRequest#suspendPolicy() suspend policy}
+ * Even without creating a VMDeathRequest, a single 
+ * unsolicited VMDeathEvent will be sent with a 
+ * {@link EventRequest#suspendPolicy() suspend policy} 
  * of {@link EventRequest#SUSPEND_NONE SUSPEND_NONE}.
  * This request would typically be created so that a
  * VMDeathEvent with a suspend policy of
  * {@link EventRequest#SUSPEND_ALL SUSPEND_ALL}
  * will be sent.  This event can be used to assure
  * completion of any processing which requires the VM
- * to be alive (e.g. event processing).  Note: the
+ * to be alive (e.g. event processing).  Note: the 
  * unsolicited VMDeathEvent will still be sent.
  *
  * @see com.sun.jdi.event.VMDeathEvent
@@ -59,3 +59,6 @@ import com.sun.jdi.*;
 public interface VMDeathRequest extends EventRequest {
 
 }
+
+
+			

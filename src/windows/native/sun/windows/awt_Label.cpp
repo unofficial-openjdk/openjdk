@@ -72,42 +72,42 @@ AwtLabel* AwtLabel::Create(jobject labelPeer, jobject parent)
 
     try {
         if (env->EnsureLocalCapacity(1) < 0) {
-            return NULL;
-        }
+	    return NULL;
+	}
 
-        PDATA pData;
-        AwtCanvas* awtParent;
+	PDATA pData;
+	AwtCanvas* awtParent;
 
-        JNI_CHECK_PEER_GOTO(parent, done);
-        awtParent = (AwtCanvas*)pData;
-        JNI_CHECK_NULL_GOTO(awtParent, "awtParent", done);
-        target  = env->GetObjectField(labelPeer, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "target", done);
+	JNI_CHECK_PEER_GOTO(parent, done);
+	awtParent = (AwtCanvas*)pData;
+	JNI_CHECK_NULL_GOTO(awtParent, "awtParent", done);
+	target  = env->GetObjectField(labelPeer, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "target", done);
 
-        awtLabel = new AwtLabel();
+	awtLabel = new AwtLabel();
 
-        {
-            DWORD style = WS_CHILD | WS_CLIPSIBLINGS;
+	{
+	    DWORD style = WS_CHILD | WS_CLIPSIBLINGS;
 
-            DWORD exStyle = 0;
-            if (GetRTLReadingOrder())
-                exStyle |= WS_EX_RTLREADING;
+	    DWORD exStyle = 0;
+	    if (GetRTLReadingOrder())
+	        exStyle |= WS_EX_RTLREADING;
 
-            jint x = env->GetIntField(target, AwtComponent::xID);
-            jint y = env->GetIntField(target, AwtComponent::yID);
-            jint width = env->GetIntField(target, AwtComponent::widthID);
-            jint height = env->GetIntField(target, AwtComponent::heightID);
-            awtLabel->CreateHWnd(env, L"", style, exStyle,
-                                 x, y, width, height,
-                                 awtParent->GetHWnd(),
-                                 NULL,
-                                 ::GetSysColor(COLOR_WINDOWTEXT),
-                                 ::GetSysColor(COLOR_BTNFACE),
-                                 labelPeer);
-        }
+	    jint x = env->GetIntField(target, AwtComponent::xID);
+	    jint y = env->GetIntField(target, AwtComponent::yID);
+	    jint width = env->GetIntField(target, AwtComponent::widthID);
+	    jint height = env->GetIntField(target, AwtComponent::heightID);
+	    awtLabel->CreateHWnd(env, L"", style, exStyle,
+				 x, y, width, height,
+				 awtParent->GetHWnd(),
+				 NULL,
+				 ::GetSysColor(COLOR_WINDOWTEXT),
+				 ::GetSysColor(COLOR_BTNFACE),
+				 labelPeer);
+	}
     } catch (...) {
         env->DeleteLocalRef(target);
-        throw;
+	throw;
     }
 
 done:
@@ -123,19 +123,19 @@ void AwtLabel::DoPaint(HDC hDC, RECT& r)
         m_peerObject != NULL && m_callbacksEnabled) {
 
         if (env->EnsureLocalCapacity(3) < 0)
-            return;
+	    return;
         long x,y;
         SIZE size;
 
-        /* self is sun.awt.windows.WLabelPeer  */
+	/* self is sun.awt.windows.WLabelPeer  */
 
-        jobject self = GetPeer(env);
-        DASSERT(self);
+	jobject self = GetPeer(env);
+	DASSERT(self);
 
-        /* target is java.awt.Label */
-        jobject target = env->GetObjectField(self, AwtObject::targetID);
-        jobject font = GET_FONT(target, self);
-        jstring text = (jstring)env->GetObjectField(target, AwtLabel::textID);
+	/* target is java.awt.Label */
+	jobject target = env->GetObjectField(self, AwtObject::targetID);
+	jobject font = GET_FONT(target, self);
+	jstring text = (jstring)env->GetObjectField(target, AwtLabel::textID);
 
         size = AwtFont::getMFStringSize(hDC, font, text);
         ::SetTextColor(hDC, GetColor());
@@ -144,9 +144,9 @@ void AwtLabel::DoPaint(HDC hDC, RECT& r)
         VERIFY(::FillRect (hDC, &r, GetBackgroundBrush()));
         y = (r.top + r.bottom - size.cy) / 2;
 
-        jint alignment = env->GetIntField(target, AwtLabel::alignmentID);
+	jint alignment = env->GetIntField(target, AwtLabel::alignmentID);
         switch (alignment) {
-           case java_awt_Label_LEFT:
+	   case java_awt_Label_LEFT:
               x = r.left + 2;
               break;
           case java_awt_Label_CENTER:
@@ -164,9 +164,9 @@ void AwtLabel::DoPaint(HDC hDC, RECT& r)
         }
         DoCallback("handlePaint", "(IIII)V",
                    r.left, r.top, r.right-r.left, r.bottom-r.top);
-        env->DeleteLocalRef(target);
-        env->DeleteLocalRef(font);
-        env->DeleteLocalRef(text);
+	env->DeleteLocalRef(target);
+	env->DeleteLocalRef(font);
+	env->DeleteLocalRef(text);
     }
 }
 
@@ -205,12 +205,12 @@ MsgRouting AwtLabel::WmPaint(HDC)
     PAINTSTRUCT ps;
     HDC hDC = ::BeginPaint(GetHWnd(), &ps);/* the passed-in HDC is ignored. */
     DASSERT(hDC);
-
+    
     /* fix for 4408606 - incorrect color palette used in 256 color mode */
-
+    
     int screen = AwtWin32GraphicsDevice::DeviceIndexForWindow(GetHWnd());
     AwtWin32GraphicsDevice::SelectPalette(hDC, screen);
-
+    
     RECT& r = ps.rcPaint;
     if (!m_callbacksEnabled) {
         m_needPaint = TRUE;
@@ -343,7 +343,7 @@ extern "C" {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WLabelPeer_setText(JNIEnv *env, jobject self,
-                                        jstring text)
+					jstring text)
 {
     TRY;
 
@@ -364,7 +364,7 @@ Java_sun_awt_windows_WLabelPeer_setText(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WLabelPeer_setAlignment(JNIEnv *env, jobject self,
-                                             jint alignment)
+					     jint alignment)
 {
     TRY;
 
@@ -385,15 +385,15 @@ Java_sun_awt_windows_WLabelPeer_setAlignment(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WLabelPeer_create(JNIEnv *env, jobject self,
-                                       jobject parent)
+				       jobject parent)
 {
     TRY;
 
     PDATA pData;
     JNI_CHECK_PEER_RETURN(parent);
     AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)
-                                AwtLabel::Create);
+				(AwtToolkit::ComponentFactory)
+				AwtLabel::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;

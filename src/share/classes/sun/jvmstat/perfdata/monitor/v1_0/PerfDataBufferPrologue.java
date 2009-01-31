@@ -45,6 +45,7 @@ import java.nio.*;
  * </pre>
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class PerfDataBufferPrologue extends AbstractPerfDataBufferPrologue {

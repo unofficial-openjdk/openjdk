@@ -40,7 +40,7 @@ public class AttributeNotFoundException extends OperationsException {
      * Default constructor.
      */
     public AttributeNotFoundException() {
-        super();
+	super();
     }
 
     /**
@@ -49,7 +49,7 @@ public class AttributeNotFoundException extends OperationsException {
      * @param message detail message.
      */
     public AttributeNotFoundException(String message) {
-        super(message);
+	super(message);
     }
 
 }

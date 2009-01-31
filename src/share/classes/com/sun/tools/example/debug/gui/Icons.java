@@ -202,8 +202,8 @@ class Icons {
         return bytes;
     }
 
-    static Icon stopSignIcon = new ImageIcon(wordsToBytes(stopSignWords));
-    static Icon blankIcon = new ImageIcon(wordsToBytes(blank));
-
-    static Icon execIcon = new ImageIcon(wordsToBytes(exec));
+    static Icon stopSignIcon = new ImageIcon(wordsToBytes(stopSignWords)); 
+    static Icon blankIcon = new ImageIcon(wordsToBytes(blank)); 
+ 
+    static Icon execIcon = new ImageIcon(wordsToBytes(exec)); 
 }

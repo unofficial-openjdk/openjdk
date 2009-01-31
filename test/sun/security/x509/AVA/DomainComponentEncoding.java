@@ -36,7 +36,7 @@ import sun.security.x509.X500Name;
 public class DomainComponentEncoding {
 
     public static void main(String[] args) throws Exception {
-        // RFC 2253 String DN
+	// RFC 2253 String DN
         testDN("cn=hello, dc=com, dc=example");
         // RFC 1779 String DN with embedded quotes
         testDN("cn=hello, dc=\"com\", dc=example");

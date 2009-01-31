@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)LookupProcessor.h	1.17 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -51,7 +52,7 @@ class LookupProcessor
 public:
     le_int32 process(LEGlyphStorage &glyphStorage,
         GlyphPositionAdjustments *glyphPositionAdjustments,
-        le_bool rightToLeft, const GlyphDefinitionTableHeader *glyphDefinitionTableHeader,
+        le_bool rightToLeft, const GlyphDefinitionTableHeader *glyphDefinitionTableHeader, 
         const LEFontInstance *fontInstance) const;
 
     le_uint32 applyLookupTable(const LookupTable *lookupTable, GlyphIterator *glyphIterator, const LEFontInstance *fontInstance) const;
@@ -66,7 +67,7 @@ public:
 protected:
     LookupProcessor(const char *baseAddress,
         Offset scriptListOffset, Offset featureListOffset, Offset lookupListOffset,
-        LETag scriptTag, LETag languageTag, const FeatureMap *featureMap,
+        LETag scriptTag, LETag languageTag, const FeatureMap *featureMap, 
         le_int32 featureMapCount, le_bool orderFeatures);
 
     LookupProcessor();

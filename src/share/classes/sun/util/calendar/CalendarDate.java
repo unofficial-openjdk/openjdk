@@ -74,8 +74,8 @@ public abstract class CalendarDate implements Cloneable {
     private int hours;
     private int minutes;
     private int seconds;
-    private int millis;         // fractional part of the second
-    private long fraction;      // time of day value in millisecond
+    private int millis;		// fractional part of the second
+    private long fraction;	// time of day value in millisecond
 
     private boolean normalized;
 
@@ -87,15 +87,15 @@ public abstract class CalendarDate implements Cloneable {
     private Locale locale;
 
     protected CalendarDate() {
-        this(TimeZone.getDefault());
+	this(TimeZone.getDefault());
     }
 
     protected CalendarDate(TimeZone zone) {
-        zoneinfo = zone;
+	zoneinfo = zone;
     }
 
     public Era getEra() {
-        return era;
+	return era;
     }
 
     /**
@@ -111,32 +111,32 @@ public abstract class CalendarDate implements Cloneable {
      * system for this <code>CalendarDate</code>.
      */
     public CalendarDate setEra(Era era) {
-        if (this.era == era) {
-            return this;
-        }
-        this.era = era;
-        normalized = false;
-        return this;
+	if (this.era == era) {
+	    return this;
+	}
+	this.era = era;
+	normalized = false;
+	return this;
     }
 
     public int getYear() {
-        return year;
+	return year;
     }
 
     public CalendarDate setYear(int year) {
-        if (this.year != year) {
-            this.year = year;
-            normalized = false;
-        }
-        return this;
+	if (this.year != year) {
+	    this.year = year;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addYear(int n) {
-        if (n != 0) {
-            year += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    year += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     /**
@@ -155,51 +155,51 @@ public abstract class CalendarDate implements Cloneable {
      * @see BaseCalendar#isGregorianLeapYear
      */
     public boolean isLeapYear() {
-        return leapYear;
+	return leapYear;
     }
 
     void setLeapYear(boolean leapYear) {
-        this.leapYear = leapYear;
+	this.leapYear = leapYear;
     }
-
+    
     public int getMonth() {
-        return month;
+	return month;
     }
 
     public CalendarDate setMonth(int month) {
-        if (this.month != month) {
-            this.month = month;
-            normalized = false;
-        }
-        return this;
+	if (this.month != month) {
+	    this.month = month;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addMonth(int n) {
-        if (n != 0) {
-            month += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    month += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     public int getDayOfMonth() {
-        return dayOfMonth;
+	return dayOfMonth;
     }
 
     public CalendarDate setDayOfMonth(int date) {
-        if (dayOfMonth != date) {
-            dayOfMonth = date;
-            normalized = false;
-        }
-        return this;
+	if (dayOfMonth != date) {
+	    dayOfMonth = date;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addDayOfMonth(int n) {
-        if (n != 0) {
-            dayOfMonth += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    dayOfMonth += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     /**
@@ -209,164 +209,164 @@ public abstract class CalendarDate implements Cloneable {
      * @return day of week or {@link #FIELD_UNDEFINED}
      */
     public int getDayOfWeek() {
-        if (!isNormalized()) {
-            dayOfWeek = FIELD_UNDEFINED;
-        }
-        return dayOfWeek;
+	if (!isNormalized()) {
+	    dayOfWeek = FIELD_UNDEFINED;
+	}
+	return dayOfWeek;
     }
 
     public int getHours() {
-        return hours;
+	return hours;
     }
 
     public CalendarDate setHours(int hours) {
-        if (this.hours != hours) {
-            this.hours = hours;
-            normalized = false;
-        }
-        return this;
+	if (this.hours != hours) {
+	    this.hours = hours;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addHours(int n) {
-        if (n != 0) {
-            hours += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    hours += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     public int getMinutes() {
-        return minutes;
+	return minutes;
     }
 
     public CalendarDate setMinutes(int minutes) {
-        if (this.minutes != minutes) {
-            this.minutes = minutes;
-            normalized = false;
-        }
-        return this;
+	if (this.minutes != minutes) {
+	    this.minutes = minutes;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addMinutes(int n) {
-        if (n != 0) {
-            minutes += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    minutes += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     public int getSeconds() {
-        return seconds;
+	return seconds;
     }
 
     public CalendarDate setSeconds(int seconds) {
-        if (this.seconds != seconds) {
-            this.seconds = seconds;
-            normalized = false;
-        }
-        return this;
+	if (this.seconds != seconds) {
+	    this.seconds = seconds;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addSeconds(int n) {
-        if (n != 0) {
-            seconds += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    seconds += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     public int getMillis() {
-        return millis;
+	return millis;
     }
 
     public CalendarDate setMillis(int millis) {
-        if (this.millis != millis) {
-            this.millis = millis;
-            normalized = false;
-        }
-        return this;
+	if (this.millis != millis) {
+	    this.millis = millis;
+	    normalized = false;
+	}
+	return this;
     }
 
     public CalendarDate addMillis(int n) {
-        if (n != 0) {
-            millis += n;
-            normalized = false;
-        }
-        return this;
+	if (n != 0) {
+	    millis += n;
+	    normalized = false;
+	}
+	return this;
     }
 
     public long getTimeOfDay() {
-        if (!isNormalized()) {
-            return fraction = TIME_UNDEFINED;
-        }
-        return fraction;
+	if (!isNormalized()) {
+	    return fraction = TIME_UNDEFINED;
+	}
+	return fraction;
     }
 
     public CalendarDate setDate(int year, int month, int dayOfMonth) {
-        setYear(year);
-        setMonth(month);
-        setDayOfMonth(dayOfMonth);
-        return this;
+	setYear(year);
+	setMonth(month);
+	setDayOfMonth(dayOfMonth);
+	return this;
     }
 
     public CalendarDate addDate(int year, int month, int dayOfMonth) {
-        addYear(year);
-        addMonth(month);
-        addDayOfMonth(dayOfMonth);
-        return this;
+	addYear(year);
+	addMonth(month);
+	addDayOfMonth(dayOfMonth);
+	return this;
     }
 
     public CalendarDate setTimeOfDay(int hours, int minutes, int seconds, int millis) {
-        setHours(hours);
-        setMinutes(minutes);
-        setSeconds(seconds);
-        setMillis(millis);
-        return this;
+	setHours(hours);
+	setMinutes(minutes);
+	setSeconds(seconds);
+	setMillis(millis);
+	return this;
     }
 
     public CalendarDate addTimeOfDay(int hours, int minutes, int seconds, int millis) {
-        addHours(hours);
-        addMinutes(minutes);
-        addSeconds(seconds);
-        addMillis(millis);
-        return this;
+	addHours(hours);
+	addMinutes(minutes);
+	addSeconds(seconds);
+	addMillis(millis);
+	return this;
     }
 
     protected void setTimeOfDay(long fraction) {
-        this.fraction = fraction;
+	this.fraction = fraction;
     }
 
     public boolean isNormalized() {
-        return normalized;
+	return normalized;
     }
 
 
     public boolean isStandardTime() {
-        return forceStandardTime;
+	return forceStandardTime;
     }
 
     public void setStandardTime(boolean standardTime) {
-        forceStandardTime = standardTime;
+	forceStandardTime = standardTime;
     }
 
     public boolean isDaylightTime() {
-        if (isStandardTime()) {
-            return false;
-        }
-        return daylightSaving != 0;
+	if (isStandardTime()) {
+	    return false;
+	}
+	return daylightSaving != 0;
     }
 
     protected void setLocale(Locale loc) {
-        locale = loc;
+	locale = loc;
     }
 
     public TimeZone getZone() {
-        return zoneinfo;
+	return zoneinfo;
     }
 
     public CalendarDate setZone(TimeZone zoneinfo) {
-        this.zoneinfo = zoneinfo;
-        return this;
+	this.zoneinfo = zoneinfo;
+	return this;
     }
 
     /**
@@ -375,53 +375,53 @@ public abstract class CalendarDate implements Cloneable {
      * ignored for the comparison.
      */
     public boolean isSameDate(CalendarDate date) {
-        return getDayOfWeek() == date.getDayOfWeek()
-            && getMonth() == date.getMonth()
-            && getYear() == date.getYear()
-            && getEra() == date.getEra();
+	return getDayOfWeek() == date.getDayOfWeek()
+	    && getMonth() == date.getMonth()
+	    && getYear() == date.getYear()
+	    && getEra() == date.getEra();
     }
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof CalendarDate)) {
-            return false;
-        }
-        CalendarDate that = (CalendarDate) obj;
-        if (isNormalized() != that.isNormalized()) {
-            return false;
-        }
-        boolean hasZone = zoneinfo != null;
-        boolean thatHasZone = that.zoneinfo != null;
-        if (hasZone != thatHasZone) {
-            return false;
-        }
-        if (hasZone && !zoneinfo.equals(that.zoneinfo)) {
-            return false;
-        }
-        return (getEra() == that.getEra()
-                && year == that.year
-                && month == that.month
-                && dayOfMonth == that.dayOfMonth
-                && hours == that.hours
-                && minutes == that.minutes
-                && seconds == that.seconds
-                && millis == that.millis
-                && zoneOffset == that.zoneOffset);
+	if (!(obj instanceof CalendarDate)) {
+	    return false;
+	}
+	CalendarDate that = (CalendarDate) obj;
+	if (isNormalized() != that.isNormalized()) {
+	    return false;
+	}
+	boolean hasZone = zoneinfo != null;
+	boolean thatHasZone = that.zoneinfo != null;
+	if (hasZone != thatHasZone) {
+	    return false;
+	}
+	if (hasZone && !zoneinfo.equals(that.zoneinfo)) {
+	    return false;
+	}
+	return (getEra() == that.getEra()
+		&& year == that.year
+		&& month == that.month
+		&& dayOfMonth == that.dayOfMonth
+		&& hours == that.hours
+		&& minutes == that.minutes
+		&& seconds == that.seconds
+		&& millis == that.millis
+		&& zoneOffset == that.zoneOffset);
     }
 
     public int hashCode() {
-        // a pseudo (local standard) time stamp value in milliseconds
-        // from the Epoch, assuming Gregorian calendar fields.
-        long hash = ((((((long)year - 1970) * 12) + (month - 1)) * 30) + dayOfMonth) * 24;
-        hash = ((((((hash + hours) * 60) + minutes) * 60) + seconds) * 1000) + millis;
-        hash -= zoneOffset;
-        int normalized = isNormalized() ? 1 : 0;
-        int era = 0;
-        Era e = getEra();
-        if (e != null) {
-            era = e.hashCode();
-        }
-        int zone = zoneinfo != null ? zoneinfo.hashCode() : 0;
-        return (int) hash * (int)(hash >> 32) ^ era ^ normalized ^ zone;
+	// a pseudo (local standard) time stamp value in milliseconds
+	// from the Epoch, assuming Gregorian calendar fields.
+	long hash = ((((((long)year - 1970) * 12) + (month - 1)) * 30) + dayOfMonth) * 24;
+	hash = ((((((hash + hours) * 60) + minutes) * 60) + seconds) * 1000) + millis;
+	hash -= zoneOffset;
+	int normalized = isNormalized() ? 1 : 0;
+	int era = 0;
+	Era e = getEra();
+	if (e != null) {
+	    era = e.hashCode();
+	}
+	int zone = zoneinfo != null ? zoneinfo.hashCode() : 0;
+ 	return (int) hash * (int)(hash >> 32) ^ era ^ normalized ^ zone;
     }
 
     /**
@@ -431,12 +431,12 @@ public abstract class CalendarDate implements Cloneable {
      * @return a copy of this <code>CalendarDate</code>
      */
     public Object clone() {
-        try {
-            return super.clone();
-        } catch (CloneNotSupportedException e) {
+	try {
+	    return super.clone();
+	} catch (CloneNotSupportedException e) {
             // this shouldn't happen
             throw new InternalError();
-        }
+        }	    
     }
 
     /**
@@ -449,57 +449,57 @@ public abstract class CalendarDate implements Cloneable {
      * @see java.text.SimpleDateFormat
      */
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        CalendarUtils.sprintf0d(sb, year, 4).append('-');
-        CalendarUtils.sprintf0d(sb, month, 2).append('-');
-        CalendarUtils.sprintf0d(sb, dayOfMonth, 2).append('T');
-        CalendarUtils.sprintf0d(sb, hours, 2).append(':');
-        CalendarUtils.sprintf0d(sb, minutes, 2).append(':');
-        CalendarUtils.sprintf0d(sb, seconds, 2).append('.');
-        CalendarUtils.sprintf0d(sb, millis, 3);
-        if (zoneOffset == 0) {
-            sb.append('Z');
-        } else if (zoneOffset != FIELD_UNDEFINED) {
-            int offset;
-            char sign;
-            if (zoneOffset > 0) {
-                offset = zoneOffset;
-                sign = '+';
-            } else {
-                offset = -zoneOffset;
-                sign = '-';
-            }
-            offset /= 60000;
-            sb.append(sign);
-            CalendarUtils.sprintf0d(sb, offset / 60, 2);
-            CalendarUtils.sprintf0d(sb, offset % 60, 2);
-        } else {
-            sb.append(" local time");
-        }
-        return sb.toString();
+	StringBuilder sb = new StringBuilder();
+	CalendarUtils.sprintf0d(sb, year, 4).append('-');
+	CalendarUtils.sprintf0d(sb, month, 2).append('-');
+	CalendarUtils.sprintf0d(sb, dayOfMonth, 2).append('T');
+	CalendarUtils.sprintf0d(sb, hours, 2).append(':');
+	CalendarUtils.sprintf0d(sb, minutes, 2).append(':');
+	CalendarUtils.sprintf0d(sb, seconds, 2).append('.');
+	CalendarUtils.sprintf0d(sb, millis, 3);
+	if (zoneOffset == 0) {
+	    sb.append('Z');
+	} else if (zoneOffset != FIELD_UNDEFINED) {
+	    int offset;
+	    char sign;
+	    if (zoneOffset > 0) {
+		offset = zoneOffset;
+		sign = '+';
+	    } else {
+		offset = -zoneOffset;
+		sign = '-';
+	    }
+	    offset /= 60000;
+	    sb.append(sign);
+	    CalendarUtils.sprintf0d(sb, offset / 60, 2);
+	    CalendarUtils.sprintf0d(sb, offset % 60, 2);
+	} else {
+	    sb.append(" local time");
+	}
+	return sb.toString();
     }
 
     protected void setDayOfWeek(int dayOfWeek) {
-        this.dayOfWeek = dayOfWeek;
+	this.dayOfWeek = dayOfWeek;
     }
 
     protected void setNormalized(boolean normalized) {
-        this.normalized = normalized;
+	this.normalized = normalized;
     }
 
     public int getZoneOffset() {
-        return zoneOffset;
+	return zoneOffset;
     }
 
     protected void setZoneOffset(int offset) {
-        zoneOffset = offset;
+	zoneOffset = offset;
     }
 
     public int getDaylightSaving() {
-        return daylightSaving;
+	return daylightSaving;
     }
 
     protected void setDaylightSaving(int daylightSaving) {
-        this.daylightSaving = daylightSaving;
+	this.daylightSaving = daylightSaving;
     }
 }

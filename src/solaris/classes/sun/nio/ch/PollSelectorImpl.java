@@ -43,7 +43,7 @@ class PollSelectorImpl
     // File descriptors used for interrupt
     private int fd0;
     private int fd1;
-
+    
     // Lock for interrupt triggering and clearing
     private Object interruptLock = new Object();
     private boolean interruptTriggered = false;
@@ -89,10 +89,10 @@ class PollSelectorImpl
     }
 
     protected void implCloseInterrupt() throws IOException {
-        // prevent further wakeup
-        synchronized (interruptLock) {
-            interruptTriggered = true;
-        }
+	// prevent further wakeup
+	synchronized (interruptLock) {
+	    interruptTriggered = true;
+	}
         FileDispatcher.closeIntFD(fd0);
         FileDispatcher.closeIntFD(fd1);
         fd0 = -1;
@@ -107,7 +107,7 @@ class PollSelectorImpl
                 interruptTriggered = true;
             }
         }
-        return this;
+	return this;
     }
 
 }

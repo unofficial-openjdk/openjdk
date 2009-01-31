@@ -49,8 +49,8 @@ public class XCreateWindowParams extends HashMap {
             put(key, value);
         }
         return this;
-    }
-    public XCreateWindowParams putIfNull(Object key, int value) {
+    }   
+    public XCreateWindowParams putIfNull(Object key, int value) {        
         if (!containsKey(key)) {
             put(key, Integer.valueOf(value));
         }

@@ -160,7 +160,7 @@ OGLSD_InitTextureObject(OGLSDOps *oglsdo,
         // use non-pow2 dimensions with GL_TEXTURE_RECTANGLE_ARB target
         j2d_glGetIntegerv(GL_MAX_RECTANGLE_TEXTURE_SIZE_ARB, &texMax);
         texWidth = (width <= texMax) ? width : 0;
-        texHeight = (height <= texMax) ? height : 0;
+        texHeight = (height <= texMax) ? height : 0;        
         texTarget = GL_TEXTURE_RECTANGLE_ARB;
         texProxyTarget = GL_PROXY_TEXTURE_RECTANGLE_ARB;
     } else {
@@ -509,7 +509,7 @@ OGLSD_Flush(JNIEnv *env, OGLSDOps *oglsdo)
     if (oglsdo->drawableType == OGLSD_TEXTURE) {
         if (oglsdo->textureID != 0) {
             j2d_glDeleteTextures(1, &oglsdo->textureID);
-            oglsdo->textureID = 0;
+	    oglsdo->textureID = 0;
         }
     } else if (oglsdo->drawableType == OGLSD_FBOBJECT) {
         if (oglsdo->textureID != 0) {

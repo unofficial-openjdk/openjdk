@@ -47,8 +47,9 @@ import java.util.Collections;
  * provide the necessary locking. Multiple threads each manipulating
  * separate objects need not synchronize.
  *
- * @since       1.4
- * @author      Steve Hanna
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Steve Hanna
  * @see         java.util.Collection
  * @see         CertStore
  */
@@ -90,8 +91,8 @@ public class CollectionCertStoreParameters
     }
 
     /**
-     * Creates an instance of <code>CollectionCertStoreParameters</code> with
-     * the default parameter values (an empty and immutable
+     * Creates an instance of <code>CollectionCertStoreParameters</code> with 
+     * the default parameter values (an empty and immutable 
      * <code>Collection</code>).
      */
     public CollectionCertStoreParameters() {

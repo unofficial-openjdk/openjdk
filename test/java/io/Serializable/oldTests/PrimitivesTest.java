@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,17 +34,17 @@ public class PrimitivesTest implements java.io.Serializable {
     PrimitivesTest self = this;
 
     public boolean equals(PrimitivesTest other) {
-        if (b != other.b ||
-            c != other.c ||
-            f != other.f ||
-            l != other.l ||
-            d != other.d ||
-            i != other.i ||
-            s != other.s ||
-            z != other.z )
+    	if (b != other.b ||
+	    c != other.c ||
+	    f != other.f ||
+	    l != other.l ||
+	    d != other.d ||
+	    i != other.i ||
+	    s != other.s ||
+	    z != other.z )
         {
-            return false;
+	    return false;
         }
-        return true;
+	return true;
     }
 }

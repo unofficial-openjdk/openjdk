@@ -47,7 +47,7 @@
 #define ALSA_VENDOR "ALSA (http://www.alsa-project.org)"
 
 // Environment variable for inclusion of subdevices in device listing.
-// If this variable is unset or "no", then subdevices are ignored, and
+// If this variable is unset or "no", then subdevices are ignored, and 
 // it's ALSA's choice which one to use (enables hardware mixing)
 #define ENV_ENUMERATE_PCM_SUBDEVICES "ALSA_ENUMERATE_PCM_SUBDEVICES"
 
@@ -71,12 +71,13 @@ int needEnumerateSubdevices(int isMidi);
 UINT32 encodeDeviceID(int card, int device, int subdevice);
 
 void decodeDeviceID(UINT32 deviceID, int* card, int* device, int* subdevice,
-                    int isMidi);
+		    int isMidi);
 
 void getDeviceStringFromDeviceID(char* buffer, UINT32 deviceID,
-                                 int usePlugHw, int isMidi);
+				 int usePlugHw, int isMidi);
 
 void getALSAVersion(char* buffer, int len);
 
 
 #endif // PLATFORM_API_LINUXOS_ALSA_COMMONUTILS_H_INCLUDED
+

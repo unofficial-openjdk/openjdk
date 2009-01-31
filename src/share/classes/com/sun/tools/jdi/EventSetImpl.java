@@ -47,14 +47,14 @@ enum EventDestination {UNKNOWN_EVENT, INTERNAL_EVENT, CLIENT_EVENT};
  * that is on the queues are all for client requests.
  */
 public class EventSetImpl extends ArrayList<Event> implements EventSet {
-
+    
     private VirtualMachineImpl vm; // we implement Mirror
     private Packet pkt;
     private byte suspendPolicy;
     private EventSetImpl internalEventSet;
 
     public String toString() {
-        String string = "event set, policy:" + suspendPolicy +
+        String string = "event set, policy:" + suspendPolicy + 
                         ", count:" + this.size() + " = {";
         Iterator iter = this.iterator();
         boolean first = true;
@@ -96,7 +96,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         public boolean equals(Object obj) {
             return this == obj;
         }
-
+    
         public int hashCode() {
             return System.identityHashCode(this);
         }
@@ -118,7 +118,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         int requestID() {
             return requestID;
         }
-
+        
         EventDestination destination() {
             /*
              * We need to decide if this event is for
@@ -142,7 +142,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
                  */
                 return EventDestination.CLIENT_EVENT;
             }
-
+             
             // Is this an event for a current client request?
             if (request == null) {
                 // Nope.  Is it an event for an internal request?
@@ -187,12 +187,12 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         }
     }
 
-    abstract class LocatableEventImpl extends ThreadedEventImpl
+    abstract class LocatableEventImpl extends ThreadedEventImpl 
                                             implements Locatable {
         private Location location;
 
         LocatableEventImpl(JDWP.Event.Composite.Events.EventsCommon evt,
-                           int requestID,
+                           int requestID, 
                            ThreadReference thread, Location location) {
             super(evt, requestID, thread);
             this.location = location;
@@ -202,15 +202,15 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
             return location;
         }
 
-        /**
-         * For MethodEntry and MethodExit
-         */
+	/**
+	 * For MethodEntry and MethodExit
+	 */
         public Method method() {
             return location.method();
         }
 
         public String toString() {
-            return eventName() + "@" + location().toString() +
+            return eventName() + "@" + location().toString() + 
                                  " in thread " + thread().name();
         }
     }
@@ -271,13 +271,13 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
             }
             return returnVal;
         }
-
+            
     }
 
     class MonitorContendedEnterEventImpl extends LocatableEventImpl
                             implements MonitorContendedEnterEvent {
         private ObjectReference monitor = null;
-
+        
         MonitorContendedEnterEventImpl(JDWP.Event.Composite.Events.MonitorContendedEnter evt) {
             super(evt, evt.requestID, evt.thread, evt.location);
             this.monitor = evt.object;
@@ -296,7 +296,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     class MonitorContendedEnteredEventImpl extends LocatableEventImpl
                             implements MonitorContendedEnteredEvent {
         private ObjectReference monitor = null;
-
+        
         MonitorContendedEnteredEventImpl(JDWP.Event.Composite.Events.MonitorContendedEntered evt) {
             super(evt, evt.requestID, evt.thread, evt.location);
             this.monitor = evt.object;
@@ -311,12 +311,12 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         };
 
     }
-
+    
     class MonitorWaitEventImpl extends LocatableEventImpl
                             implements MonitorWaitEvent {
         private ObjectReference monitor = null;
         private long timeout;
-
+        
         MonitorWaitEventImpl(JDWP.Event.Composite.Events.MonitorWait evt) {
             super(evt, evt.requestID, evt.thread, evt.location);
             this.monitor = evt.object;
@@ -340,7 +340,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
                             implements MonitorWaitedEvent {
         private ObjectReference monitor = null;
         private boolean timed_out;
-
+        
         MonitorWaitedEventImpl(JDWP.Event.Composite.Events.MonitorWaited evt) {
             super(evt, evt.requestID, evt.thread, evt.location);
             this.monitor = evt.object;
@@ -366,7 +366,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
 
         ClassPrepareEventImpl(JDWP.Event.Composite.Events.ClassPrepare evt) {
             super(evt, evt.requestID, evt.thread);
-            referenceType = this.vm.referenceType(evt.typeID, evt.refTypeTag,
+            referenceType = this.vm.referenceType(evt.typeID, evt.refTypeTag, 
                                                   evt.signature);
             ((ReferenceTypeImpl)referenceType).setStatus(evt.status);
         }
@@ -382,7 +382,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
 
     class ClassUnloadEventImpl extends EventImpl implements ClassUnloadEvent {
         private String classSignature;
-
+    
         ClassUnloadEventImpl(JDWP.Event.Composite.Events.ClassUnload evt) {
             super(evt, evt.requestID);
             this.classSignature = evt.signature;
@@ -392,7 +392,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
             return classSignature.substring(1, classSignature.length()-1)
                 .replace('/', '.');
         }
-
+    
         public String classSignature() {
             return classSignature;
         }
@@ -427,7 +427,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     }
 
     class ThreadDeathEventImpl extends ThreadedEventImpl
-                                        implements ThreadDeathEvent {
+                                        implements ThreadDeathEvent { 
         ThreadDeathEventImpl(JDWP.Event.Composite.Events.ThreadDeath evt) {
             super(evt, evt.requestID, evt.thread);
         }
@@ -438,7 +438,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     }
 
     class ThreadStartEventImpl extends ThreadedEventImpl
-                                        implements ThreadStartEvent {
+                                        implements ThreadStartEvent { 
         ThreadStartEventImpl(JDWP.Event.Composite.Events.ThreadStart evt) {
             super(evt, evt.requestID, evt.thread);
         }
@@ -449,7 +449,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     }
 
     class VMStartEventImpl extends ThreadedEventImpl
-                                        implements VMStartEvent {
+                                        implements VMStartEvent { 
         VMStartEventImpl(JDWP.Event.Composite.Events.VMStart evt) {
             super(evt, evt.requestID, evt.thread);
         }
@@ -470,7 +470,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         }
     }
 
-    class VMDisconnectEventImpl extends EventImpl
+    class VMDisconnectEventImpl extends EventImpl 
                                          implements VMDisconnectEvent {
 
         VMDisconnectEventImpl() {
@@ -490,9 +490,9 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         private Field field = null;
 
         WatchpointEventImpl(JDWP.Event.Composite.Events.EventsCommon evt,
-                            int requestID,
+                            int requestID, 
                             ThreadReference thread, Location location,
-                            byte refTypeTag, long typeID, long fieldID,
+                            byte refTypeTag, long typeID, long fieldID, 
                             ObjectReference object) {
             super(evt, requestID, thread, location);
             this.refType = this.vm.referenceType(typeID, refTypeTag);
@@ -520,7 +520,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         }
     }
 
-    class AccessWatchpointEventImpl extends WatchpointEventImpl
+    class AccessWatchpointEventImpl extends WatchpointEventImpl 
                                             implements AccessWatchpointEvent {
 
         AccessWatchpointEventImpl(JDWP.Event.Composite.Events.FieldAccess evt) {
@@ -533,8 +533,8 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         }
     }
 
-    class ModificationWatchpointEventImpl extends WatchpointEventImpl
-                           implements ModificationWatchpointEvent {
+    class ModificationWatchpointEventImpl extends WatchpointEventImpl 
+                           implements ModificationWatchpointEvent {                            
         Value newValue;
 
         ModificationWatchpointEventImpl(
@@ -554,9 +554,9 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     }
 
     /**
-     * Events are constructed on the thread which reads all data from the
-     * transport. This means that the packet cannot be converted to real
-     * JDI objects as that may involve further communications with the
+     * Events are constructed on the thread which reads all data from the 
+     * transport. This means that the packet cannot be converted to real 
+     * JDI objects as that may involve further communications with the 
      * back end which would deadlock.
      *
      * Hence the {@link #build()} method below called by EventQueue.
@@ -573,7 +573,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         this.pkt = pkt;
     }
 
-    /**
+    /** 
      * Constructor for special events like VM disconnected
      */
     EventSetImpl(VirtualMachine aVm, byte eventCmd) {
@@ -586,7 +586,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
 
             default:
                 throw new InternalException("Bad singleton event code");
-        }
+        }       
     }
 
     private void addEvent(EventImpl evt) {
@@ -594,7 +594,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         // an exception so that clients can't modify the EventSet
         super.add(evt);
     }
-
+    
     /*
      * Complete the construction of an EventSet.  This is called from
      * an event handler thread.  It upacks the JDWP events inside
@@ -663,7 +663,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
 
         // Avoid hangs described in 6296125, 6293795
         if (super.size() == 0) {
-            // This set has no client events.  If we don't do
+            // This set has no client events.  If we don't do 
             // needed resumes, no one else is going to.
             if (suspendPolicy == JDWP.SuspendPolicy.ALL) {
                 vm.resume();
@@ -678,101 +678,101 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
             suspendPolicy = JDWP.SuspendPolicy.NONE;
 
         }
-
+            
     }
 
-    /**
+    /** 
      * Filter out internal events
      */
     EventSet userFilter() {
         return this;
-    }
-
-    /**
+    }       
+            
+    /** 
      * Filter out user events.
      */
     EventSet internalFilter() {
         return this.internalEventSet;
-    }
-
+    }       
+            
     EventImpl createEvent(JDWP.Event.Composite.Events evt) {
         JDWP.Event.Composite.Events.EventsCommon comm = evt.aEventsCommon;
         switch (evt.eventKind) {
-            case JDWP.EventKind.THREAD_START:
-                return new ThreadStartEventImpl(
+            case JDWP.EventKind.THREAD_START: 
+                return new ThreadStartEventImpl( 
                       (JDWP.Event.Composite.Events.ThreadStart)comm);
-
-            case JDWP.EventKind.THREAD_END:
-                return new ThreadDeathEventImpl(
+ 
+            case JDWP.EventKind.THREAD_END: 
+                return new ThreadDeathEventImpl(  
                       (JDWP.Event.Composite.Events.ThreadDeath)comm);
 
-            case JDWP.EventKind.EXCEPTION:
-                return new ExceptionEventImpl(
+            case JDWP.EventKind.EXCEPTION: 
+                return new ExceptionEventImpl(  
                       (JDWP.Event.Composite.Events.Exception)comm);
-
-            case JDWP.EventKind.BREAKPOINT:
-                return new BreakpointEventImpl(
+ 
+            case JDWP.EventKind.BREAKPOINT: 
+                return new BreakpointEventImpl(  
                       (JDWP.Event.Composite.Events.Breakpoint)comm);
 
-            case JDWP.EventKind.METHOD_ENTRY:
-                return new MethodEntryEventImpl(
+            case JDWP.EventKind.METHOD_ENTRY: 
+                return new MethodEntryEventImpl(  
                       (JDWP.Event.Composite.Events.MethodEntry)comm);
 
-            case JDWP.EventKind.METHOD_EXIT:
-                return new MethodExitEventImpl(
+            case JDWP.EventKind.METHOD_EXIT: 
+                return new MethodExitEventImpl(  
                       (JDWP.Event.Composite.Events.MethodExit)comm);
 
-            case JDWP.EventKind.METHOD_EXIT_WITH_RETURN_VALUE:
-                return new MethodExitEventImpl(
+            case JDWP.EventKind.METHOD_EXIT_WITH_RETURN_VALUE: 
+                return new MethodExitEventImpl(  
                       (JDWP.Event.Composite.Events.MethodExitWithReturnValue)comm);
 
-            case JDWP.EventKind.FIELD_ACCESS:
-                return new AccessWatchpointEventImpl(
+            case JDWP.EventKind.FIELD_ACCESS: 
+                return new AccessWatchpointEventImpl(  
                       (JDWP.Event.Composite.Events.FieldAccess)comm);
 
-            case JDWP.EventKind.FIELD_MODIFICATION:
-                return new ModificationWatchpointEventImpl(
+            case JDWP.EventKind.FIELD_MODIFICATION: 
+                return new ModificationWatchpointEventImpl(  
                       (JDWP.Event.Composite.Events.FieldModification)comm);
 
-            case JDWP.EventKind.SINGLE_STEP:
-                return new StepEventImpl(
+            case JDWP.EventKind.SINGLE_STEP: 
+                return new StepEventImpl(  
                       (JDWP.Event.Composite.Events.SingleStep)comm);
 
-            case JDWP.EventKind.CLASS_PREPARE:
-                return new ClassPrepareEventImpl(
+            case JDWP.EventKind.CLASS_PREPARE: 
+                return new ClassPrepareEventImpl(  
                       (JDWP.Event.Composite.Events.ClassPrepare)comm);
-
-            case JDWP.EventKind.CLASS_UNLOAD:
-                return new ClassUnloadEventImpl(
+    
+            case JDWP.EventKind.CLASS_UNLOAD: 
+                return new ClassUnloadEventImpl(  
                       (JDWP.Event.Composite.Events.ClassUnload)comm);
 
-            case JDWP.EventKind.MONITOR_CONTENDED_ENTER:
-                return new MonitorContendedEnterEventImpl(
+            case JDWP.EventKind.MONITOR_CONTENDED_ENTER: 
+                return new MonitorContendedEnterEventImpl(  
                       (JDWP.Event.Composite.Events.MonitorContendedEnter)comm);
-
-            case JDWP.EventKind.MONITOR_CONTENDED_ENTERED:
-                return new MonitorContendedEnteredEventImpl(
+                
+            case JDWP.EventKind.MONITOR_CONTENDED_ENTERED: 
+                return new MonitorContendedEnteredEventImpl(  
                       (JDWP.Event.Composite.Events.MonitorContendedEntered)comm);
-
-            case JDWP.EventKind.MONITOR_WAIT:
-                return new MonitorWaitEventImpl(
+                
+            case JDWP.EventKind.MONITOR_WAIT: 
+                return new MonitorWaitEventImpl(  
                       (JDWP.Event.Composite.Events.MonitorWait)comm);
-
-            case JDWP.EventKind.MONITOR_WAITED:
-                return new MonitorWaitedEventImpl(
+                
+            case JDWP.EventKind.MONITOR_WAITED: 
+                return new MonitorWaitedEventImpl(  
                       (JDWP.Event.Composite.Events.MonitorWaited)comm);
-
-            case JDWP.EventKind.VM_START:
-                return new VMStartEventImpl(
+                
+            case JDWP.EventKind.VM_START: 
+                return new VMStartEventImpl( 
                       (JDWP.Event.Composite.Events.VMStart)comm);
-
+ 
             case JDWP.EventKind.VM_DEATH:
-                return new VMDeathEventImpl(
+                return new VMDeathEventImpl(  
                       (JDWP.Event.Composite.Events.VMDeath)comm);
 
             default:
                 // Ignore unknown event types
-                System.err.println("Ignoring event cmd " +
+                System.err.println("Ignoring event cmd " + 
                                    evt.eventKind + " from the VM");
                 return null;
         }
@@ -826,32 +826,32 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     }
 
     public class Itr implements EventIterator {
-        /**
-         * Index of element to be returned by subsequent call to next.
-         */
-        int cursor = 0;
+	/**
+	 * Index of element to be returned by subsequent call to next.
+	 */
+	int cursor = 0;
 
-        public boolean hasNext() {
-            return cursor != size();
-        }
+	public boolean hasNext() {
+	    return cursor != size();
+	}
 
-        public Event next() {
-            try {
-                Event nxt = get(cursor);
+	public Event next() {
+	    try {
+		Event nxt = get(cursor);
                 ++cursor;
                 return nxt;
-            } catch(IndexOutOfBoundsException e) {
-                throw new NoSuchElementException();
-            }
-        }
+	    } catch(IndexOutOfBoundsException e) {
+		throw new NoSuchElementException();
+	    }
+	}
 
         public Event nextEvent() {
             return (Event)next();
         }
 
-        public void remove() {
+	public void remove() {
             throw new UnsupportedOperationException();
-        }
+	}
     }
 
     /* below make this unmodifiable */
@@ -875,3 +875,4 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         throw new UnsupportedOperationException();
     }
 }
+

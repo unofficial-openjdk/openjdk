@@ -54,7 +54,7 @@ public class ByteToCharCp964 extends ByteToCharConverter
     public ByteToCharCp964() {
        super();
        state = G0;
-       byteToCharTable = nioCoder.getDecoderSingleByteMappings();
+       byteToCharTable = nioCoder.getDecoderSingleByteMappings(); 
        mappingTableG1 = nioCoder.getDecoderMappingTableG1();
        mappingTableG2a2 = nioCoder.getDecoderMappingTableG2a2();
        mappingTableG2ac = nioCoder.getDecoderMappingTableG2ac();

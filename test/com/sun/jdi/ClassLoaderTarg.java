@@ -41,7 +41,7 @@ class ClassLoaderTarg extends ClassLoader {
                                                   File.pathSeparator);
         /* search class path for the class file */
         while (stk.hasMoreTokens()) {
-           File cfile = new File(stk.nextToken() + File.separator +
+           File cfile = new File(stk.nextToken() + File.separator + 
                                  cname + ".class");
            if (cfile.exists()) {
                System.out.println("loading from: " + cfile);
@@ -52,7 +52,7 @@ class ClassLoaderTarg extends ClassLoader {
         }
         throw new ClassNotFoundException(cname);
     }
-
+           
 
     private byte[] loadBytes(File cfile, String cname)
                                          throws ClassNotFoundException {
@@ -90,4 +90,5 @@ class ClassLoaderTarg extends ClassLoader {
         } catch (Throwable thrown) {
         }
     }
-}
+}    
+            

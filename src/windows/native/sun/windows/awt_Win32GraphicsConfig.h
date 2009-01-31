@@ -30,8 +30,8 @@
 
 class AwtWin32GraphicsConfig {
 public:
-        /* sun.awt.Win32GraphicsConfig fields and method IDs */
-        static jfieldID win32GCVisualID;
+	/* sun.awt.Win32GraphicsConfig fields and method IDs */
+	static jfieldID win32GCVisualID;
 };
 
 #endif /* AWT_WIN32GRAPHICSCONFIG_H */

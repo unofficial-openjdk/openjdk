@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package javax.security.auth;
 
 /**
@@ -32,13 +32,13 @@ package javax.security.auth;
  * access control <code>Policy</code>.
  *
  * <p> A <code>Policy</code> object can be queried for the set of
- * Permissions granted to code running as a
+ * Permissions granted to code running as a 
  * <code>Principal</code> in the following manner:
  *
  * <pre>
- *      policy = Policy.getPolicy();
- *      PermissionCollection perms = policy.getPermissions(subject,
- *                                                      codeSource);
+ *	policy = Policy.getPolicy();
+ *	PermissionCollection perms = policy.getPermissions(subject,
+ *							codeSource);
  * </pre>
  *
  * The <code>Policy</code> object consults the local policy and returns
@@ -60,12 +60,12 @@ package javax.security.auth;
  * as well as the Permissions granted to that triplet.
  *
  * <pre>
- *      grant CodeBase ["URL"], Signedby ["signers"],
- *            Principal [Principal_Class] "Principal_Name" {
- *          Permission Permission_Class ["Target_Name"]
- *                                      [, "Permission_Actions"]
- *                                      [, signedBy "SignerName"];
- *      };
+ *	grant CodeBase ["URL"], Signedby ["signers"],
+ *	      Principal [Principal_Class] "Principal_Name" {
+ *	    Permission Permission_Class ["Target_Name"]
+ *					[, "Permission_Actions"]
+ *					[, signedBy "SignerName"];
+ *	};
  * </pre>
  *
  * The CodeBase and Signedby components of the triplet name/value pairs
@@ -74,10 +74,10 @@ package javax.security.auth;
  * For Example,
  *
  * <pre>
- *      grant CodeBase "foo.com", Signedby "foo",
- *            Principal com.sun.security.auth.SolarisPrincipal "duke" {
- *          permission java.io.FilePermission "/home/duke", "read, write";
- *      };
+ *	grant CodeBase "foo.com", Signedby "foo",
+ *	      Principal com.sun.security.auth.SolarisPrincipal "duke" {
+ *	    permission java.io.FilePermission "/home/duke", "read, write";
+ *	};
  * </pre>
  *
  * This <b><i>grant</i></b> entry specifies that code from "foo.com",
@@ -100,24 +100,24 @@ package javax.security.auth;
  * for that <code>Subject</code> to be granted the specified Permissions.
  *
  * <pre>
- *      grant Principal com.sun.security.auth.SolarisPrincipal "duke",
- *            Principal com.sun.security.auth.SolarisNumericUserPrincipal "0" {
- *          permission java.io.FilePermission "/home/duke", "read, write";
- *          permission java.net.SocketPermission "duke.com", "connect";
- *      };
+ *	grant Principal com.sun.security.auth.SolarisPrincipal "duke",
+ *	      Principal com.sun.security.auth.SolarisNumericUserPrincipal "0" {
+ *	    permission java.io.FilePermission "/home/duke", "read, write";
+ *	    permission java.net.SocketPermission "duke.com", "connect";
+ *	};
  * </pre>
  *
  * This entry grants any code running as both "duke" and "0"
  * permission to read and write files in duke's home directory,
  * as well as permission to make socket connections to "duke.com".
- *
+ * 
  * <p> Note that non Principal-based grant entries are not permitted
  * in this <code>Policy</code>.  Therefore, grant entries such as:
  *
  * <pre>
- *      grant CodeBase "foo.com", Signedby "foo" {
- *          permission java.io.FilePermission "/tmp/scratch", "read, write";
- *      };
+ *	grant CodeBase "foo.com", Signedby "foo" {
+ *	    permission java.io.FilePermission "/tmp/scratch", "read, write";
+ *	};
  * </pre>
  *
  * are rejected.  Such permission must be listed in the
@@ -132,26 +132,27 @@ package javax.security.auth;
  * &lt;JAVA_HOME&gt; refers to the value of the java.home system property,
  * and specifies the directory where the JRE is installed.
  *
- * @deprecated  as of JDK version 1.4 -- Replaced by java.security.Policy.
- *              java.security.Policy has a method:
+ * @deprecated	as of JDK version 1.4 -- Replaced by java.security.Policy.
+ *		java.security.Policy has a method:
  * <pre>
- *      public PermissionCollection getPermissions
- *          (java.security.ProtectionDomain pd)
- *
+ * 	public PermissionCollection getPermissions
+ *  	    (java.security.ProtectionDomain pd)
+ * 
  * </pre>
  * and ProtectionDomain has a constructor:
  * <pre>
- *      public ProtectionDomain
- *          (CodeSource cs,
- *           PermissionCollection permissions,
- *           ClassLoader loader,
- *           Principal[] principals)
+ *	public ProtectionDomain
+ *	    (CodeSource cs,
+ *	     PermissionCollection permissions,
+ *	     ClassLoader loader,
+ *	     Principal[] principals)
  * </pre>
  *
  * These two APIs provide callers the means to query the
  * Policy for Principal-based Permission entries.
  *
  *
+ * @version %I%, %G%
  */
 @Deprecated
 public abstract class Policy {
@@ -160,7 +161,7 @@ public abstract class Policy {
     private static ClassLoader contextClassLoader;
 
     static {
-        contextClassLoader = java.security.AccessController.doPrivileged
+	contextClassLoader = java.security.AccessController.doPrivileged
                 (new java.security.PrivilegedAction<ClassLoader>() {
                 public ClassLoader run() {
                     return Thread.currentThread().getContextClassLoader();
@@ -184,17 +185,17 @@ public abstract class Policy {
      * <p>
      *
      * @return the installed Policy.  The return value cannot be
-     *          <code>null</code>.
+     *		<code>null</code>.
      *
      * @exception java.lang.SecurityException if the current thread does not
-     *      have permission to get the Policy object.
+     *	    have permission to get the Policy object.
      *
      * @see #setPolicy
      */
     public static Policy getPolicy() {
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm != null) sm.checkPermission(new AuthPermission("getPolicy"));
-        return getPolicyNoCheck();
+	java.lang.SecurityManager sm = System.getSecurityManager();
+	if (sm != null) sm.checkPermission(new AuthPermission("getPolicy"));
+	return getPolicyNoCheck();
     }
 
     /**
@@ -204,45 +205,45 @@ public abstract class Policy {
      *
      */
     static Policy getPolicyNoCheck() {
-        if (policy == null) {
-
-            synchronized(Policy.class) {
-
-                if (policy == null) {
-                    String policy_class = null;
-                    policy_class = java.security.AccessController.doPrivileged
-                        (new java.security.PrivilegedAction<String>() {
-                        public String run() {
-                            return java.security.Security.getProperty
-                                ("auth.policy.provider");
-                        }
-                    });
-                    if (policy_class == null) {
-                        policy_class = "com.sun.security.auth.PolicyFile";
-                    }
-
-                    try {
-                        final String finalClass = policy_class;
-                        policy = java.security.AccessController.doPrivileged
-                            (new java.security.PrivilegedExceptionAction<Policy>() {
-                            public Policy run() throws ClassNotFoundException,
-                                                InstantiationException,
-                                                IllegalAccessException {
-                                return (Policy) Class.forName
-                                        (finalClass,
-                                        true,
-                                        contextClassLoader).newInstance();
-                            }
-                        });
-                    } catch (Exception e) {
-                        throw new SecurityException
-                                (sun.security.util.ResourcesMgr.getString
-                                ("unable to instantiate Subject-based policy"));
-                    }
-                }
-            }
-        }
-        return policy;
+	if (policy == null) {
+ 
+	    synchronized(Policy.class) {
+ 
+		if (policy == null) {
+		    String policy_class = null;
+		    policy_class = java.security.AccessController.doPrivileged
+			(new java.security.PrivilegedAction<String>() {
+			public String run() {
+			    return java.security.Security.getProperty
+				("auth.policy.provider");
+			}
+		    });
+		    if (policy_class == null) {
+			policy_class = "com.sun.security.auth.PolicyFile";
+		    }
+ 
+		    try {
+			final String finalClass = policy_class;
+			policy = java.security.AccessController.doPrivileged
+			    (new java.security.PrivilegedExceptionAction<Policy>() {
+			    public Policy run() throws ClassNotFoundException,
+						InstantiationException,
+						IllegalAccessException {
+				return (Policy) Class.forName
+					(finalClass,
+					true,
+					contextClassLoader).newInstance();
+			    }
+			});
+		    } catch (Exception e) {
+			throw new SecurityException
+				(sun.security.util.ResourcesMgr.getString
+				("unable to instantiate Subject-based policy"));
+		    }
+		}
+	    }
+	}
+	return policy;
     }
 
 
@@ -257,14 +258,14 @@ public abstract class Policy {
      * @param policy the new system Policy object.
      *
      * @exception java.lang.SecurityException if the current thread does not
-     *          have permission to set the Policy.
+     *		have permission to set the Policy.
      *
      * @see #getPolicy
      */
     public static void setPolicy(Policy policy) {
-        java.lang.SecurityManager sm = System.getSecurityManager();
-        if (sm != null) sm.checkPermission(new AuthPermission("setPolicy"));
-        Policy.policy = policy;
+	java.lang.SecurityManager sm = System.getSecurityManager();
+	if (sm != null) sm.checkPermission(new AuthPermission("setPolicy"));
+	Policy.policy = policy;
     }
 
     /**
@@ -274,26 +275,26 @@ public abstract class Policy {
      * <p>
      *
      * @param subject the <code>Subject</code>
-     *                  whose associated Principals,
-     *                  in conjunction with the provided
-     *                  <code>CodeSource</code>, determines the Permissions
-     *                  returned by this method.  This parameter
-     *                  may be <code>null</code>. <p>
+     *			whose associated Principals,
+     *			in conjunction with the provided
+     *			<code>CodeSource</code>, determines the Permissions
+     *			returned by this method.  This parameter
+     *			may be <code>null</code>. <p>
      *
      * @param cs the code specified by its <code>CodeSource</code>
-     *                  that determines, in conjunction with the provided
-     *                  <code>Subject</code>, the Permissions
-     *                  returned by this method.  This parameter may be
-     *                  <code>null</code>.
+     *			that determines, in conjunction with the provided
+     *			<code>Subject</code>, the Permissions
+     *			returned by this method.  This parameter may be
+     *			<code>null</code>.
      *
      * @return the Collection of Permissions granted to all the
-     *                  <code>Subject</code> and code specified in
-     *                  the provided <i>subject</i> and <i>cs</i>
-     *                  parameters.
+     *			<code>Subject</code> and code specified in
+     *			the provided <i>subject</i> and <i>cs</i>
+     *			parameters.
      */
     public abstract java.security.PermissionCollection getPermissions
-                                        (Subject subject,
-                                        java.security.CodeSource cs);
+					(Subject subject,
+					java.security.CodeSource cs);
 
     /**
      * Refresh and reload the Policy.
@@ -306,7 +307,7 @@ public abstract class Policy {
      * <p>
      *
      * @exception SecurityException if the caller does not have permission
-     *                          to refresh the Policy.
+     *				to refresh the Policy.
      */
     public abstract void refresh();
 }

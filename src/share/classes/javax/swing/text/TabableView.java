@@ -26,10 +26,11 @@ package javax.swing.text;
 
 
 /**
- * Interface for <code>View</code>s that have size dependent upon tabs.
- *
+ * Interface for <code>View</code>s that have size dependent upon tabs.  
+ * 
  * @author  Timothy Prinzing
  * @author  Scott Violet
+ * @version %I% %G%
  * @see TabExpander
  * @see LabelView
  * @see ParagraphView
@@ -37,8 +38,8 @@ package javax.swing.text;
 public interface TabableView {
 
     /**
-     * Determines the desired span when using the given
-     * tab expansion implementation.  If a container
+     * Determines the desired span when using the given 
+     * tab expansion implementation.  If a container 
      * calls this method, it will do so prior to the
      * normal layout which would call getPreferredSpan.
      * A view implementing this should give the same
@@ -53,11 +54,11 @@ public interface TabableView {
     float getTabbedSpan(float x, TabExpander e);
 
     /**
-     * Determines the span along the same axis as tab
+     * Determines the span along the same axis as tab 
      * expansion for a portion of the view.  This is
      * intended for use by the TabExpander for cases
      * where the tab expansion involves aligning the
-     * portion of text that doesn't have whitespace
+     * portion of text that doesn't have whitespace 
      * relative to the tab stop.  There is therefore
      * an assumption that the range given does not
      * contain tabs.

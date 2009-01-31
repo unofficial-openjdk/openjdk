@@ -35,16 +35,16 @@ public class NativeStrike extends PhysicalStrike {
     NativeFont nativeFont;
 
     NativeStrike(NativeFont nativeFont, FontStrikeDesc desc) {
-        super(nativeFont, desc);
+	super(nativeFont, desc);
 
-        throw new RuntimeException("NativeFont not used on Windows");
+	throw new RuntimeException("NativeFont not used on Windows");
     }
 
     NativeStrike(NativeFont nativeFont, FontStrikeDesc desc,
-                 boolean nocache) {
-        super(nativeFont, desc);
+		 boolean nocache) {
+	super(nativeFont, desc);
 
-        throw new RuntimeException("NativeFont not used on Windows");
+	throw new RuntimeException("NativeFont not used on Windows");
     }
 
 
@@ -52,35 +52,35 @@ public class NativeStrike extends PhysicalStrike {
     }
 
     long getGlyphImagePtr(int glyphCode) {
-        return 0L;
+	return 0L;
     }
 
     long getGlyphImagePtrNoCache(int glyphCode) {
-        return 0L;
+	return 0L;
     }
 
     void getGlyphImageBounds(int glyphcode,
-                             Point2D.Float pt,
-                             Rectangle result) {
+			     Point2D.Float pt,
+			     Rectangle result) {
     }
-
+    
     Point2D.Float getGlyphMetrics(int glyphCode) {
-        return null;
+	return null;
     }
 
     float getGlyphAdvance(int glyphCode) {
-        return 0f;
+	return 0f;
     }
 
     Rectangle2D.Float getGlyphOutlineBounds(int glyphCode) {
-        return null;
+	return null;
     }
-    GeneralPath getGlyphOutline(int glyphCode, float x, float y) {
-        return null;
+    GeneralPath	getGlyphOutline(int glyphCode, float x, float y) {
+	return null;
     }
-
+    
     GeneralPath getGlyphVectorOutline(int[] glyphs, float x, float y) {
-        return null;
+	return null;
     }
-
+  
 }

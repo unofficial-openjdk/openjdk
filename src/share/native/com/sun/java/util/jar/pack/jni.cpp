@@ -56,7 +56,7 @@ static char* dbg = null;
 #define THROW_IOE(x) JNU_ThrowIOException(env,x)
 
 static jlong read_input_via_jni(unpacker* self,
-                                void* buf, jlong minlen, jlong maxlen);
+				void* buf, jlong minlen, jlong maxlen);
 
 static unpacker* get_unpacker(JNIEnv *env, jobject pObj, bool noCreate=false) {
   unpacker* uPtr = (unpacker*) env->GetLongField(pObj, unpackerPtrFID);
@@ -113,23 +113,23 @@ unpacker* unpacker::current() {
 
 // Callback for fetching data, Java style.  Calls NativeUnpack.readInputFn().
 static jlong read_input_via_jni(unpacker* self,
-                                void* buf, jlong minlen, jlong maxlen) {
+				void* buf, jlong minlen, jlong maxlen) {
   JNIEnv* env = (JNIEnv*) self->jnienv;
   jobject pbuf = env->NewDirectByteBuffer(buf, maxlen);
   return env->CallLongMethod((jobject) self->jniobj, readInputMID,
-                             pbuf, minlen);
+			     pbuf, minlen);
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_com_sun_java_util_jar_pack_NativeUnpack_initIDs(JNIEnv *env, jclass clazz) {
   dbg = getenv("DEBUG_ATTACH");
   while( dbg != null) { sleep(10); }
   NIclazz = (jclass) env->NewGlobalRef(clazz);
   unpackerPtrFID = env->GetFieldID(clazz, "unpackerPtr", "J");
   currentInstMID = env->GetStaticMethodID(clazz, "currentInstance",
-                                          "()Ljava/lang/Object;");
+					  "()Ljava/lang/Object;");
   readInputMID = env->GetMethodID(clazz, "readInputFn",
-                                  "(Ljava/nio/ByteBuffer;J)J");
+				  "(Ljava/nio/ByteBuffer;J)J");
   if (unpackerPtrFID == null ||
       currentInstMID == null ||
       readInputMID == null ||
@@ -138,9 +138,9 @@ Java_com_sun_java_util_jar_pack_NativeUnpack_initIDs(JNIEnv *env, jclass clazz) 
   }
 }
 
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_com_sun_java_util_jar_pack_NativeUnpack_start(JNIEnv *env, jobject pObj,
-                                   jobject pBuf, jlong offset) {
+				   jobject pBuf, jlong offset) {
   unpacker* uPtr = get_unpacker(env, pObj);
 
   // redirect our io to the default log file or whatever.
@@ -166,13 +166,13 @@ Java_com_sun_java_util_jar_pack_NativeUnpack_start(JNIEnv *env, jobject pObj,
   }
 
   return ((jlong)
-          uPtr->get_segments_remaining() << 32)
+	  uPtr->get_segments_remaining() << 32)
     + uPtr->get_files_remaining();
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_java_util_jar_pack_NativeUnpack_getNextFile(JNIEnv *env, jobject pObj,
-                                         jobjectArray pParts) {
+JNIEXPORT jboolean JNICALL 
+Java_com_sun_java_util_jar_pack_NativeUnpack_getNextFile(JNIEnv *env, jobject pObj, 
+					 jobjectArray pParts) {
 
   unpacker* uPtr = get_unpacker(env, pObj);
   unpacker::file* filep = uPtr->get_next_file();
@@ -201,19 +201,19 @@ Java_com_sun_java_util_jar_pack_NativeUnpack_getNextFile(JNIEnv *env, jobject pO
   jobject pDataBuf = null;
   if (filep->data[0].len > 0)
     pDataBuf = env->NewDirectByteBuffer(filep->data[0].ptr,
-                                        filep->data[0].len);
+					filep->data[0].len);
   env->SetObjectArrayElement(pParts, pidx++, pDataBuf);
   pDataBuf = null;
   if (filep->data[1].len > 0)
     pDataBuf = env->NewDirectByteBuffer(filep->data[1].ptr,
-                                        filep->data[1].len);
+					filep->data[1].len);
   env->SetObjectArrayElement(pParts, pidx++, pDataBuf);
 
   return true;
 }
 
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_com_sun_java_util_jar_pack_NativeUnpack_getUnusedInput(JNIEnv *env, jobject pObj) {
   unpacker* uPtr = get_unpacker(env, pObj);
   unpacker::file* filep = &uPtr->cur_file;
@@ -229,10 +229,10 @@ Java_com_sun_java_util_jar_pack_NativeUnpack_getUnusedInput(JNIEnv *env, jobject
     return null;
   else
     return env->NewDirectByteBuffer(uPtr->input_scan(),
-                                    uPtr->input_remaining());
+				    uPtr->input_remaining());
 }
 
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_com_sun_java_util_jar_pack_NativeUnpack_finish(JNIEnv *env, jobject pObj) {
   unpacker* uPtr = get_unpacker(env, pObj, false);
   if (uPtr == null)  return 0;
@@ -241,9 +241,9 @@ Java_com_sun_java_util_jar_pack_NativeUnpack_finish(JNIEnv *env, jobject pObj) {
   return consumed;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_sun_java_util_jar_pack_NativeUnpack_setOption(JNIEnv *env, jobject pObj,
-                                       jstring pProp, jstring pValue) {
+JNIEXPORT jboolean JNICALL 
+Java_com_sun_java_util_jar_pack_NativeUnpack_setOption(JNIEnv *env, jobject pObj, 
+				       jstring pProp, jstring pValue) {
   unpacker*   uPtr  = get_unpacker(env, pObj);
   const char* prop  = env->GetStringUTFChars(pProp, JNI_FALSE);
   const char* value = env->GetStringUTFChars(pValue, JNI_FALSE);
@@ -253,9 +253,9 @@ Java_com_sun_java_util_jar_pack_NativeUnpack_setOption(JNIEnv *env, jobject pObj
   return retval;
 }
 
-JNIEXPORT jstring JNICALL
-Java_com_sun_java_util_jar_pack_NativeUnpack_getOption(JNIEnv *env, jobject pObj,
-                                       jstring pProp) {
+JNIEXPORT jstring JNICALL 
+Java_com_sun_java_util_jar_pack_NativeUnpack_getOption(JNIEnv *env, jobject pObj, 
+				       jstring pProp) {
 
   unpacker*   uPtr  = get_unpacker(env, pObj);
   const char* prop  = env->GetStringUTFChars(pProp, JNI_FALSE);

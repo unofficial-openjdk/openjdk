@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
@@ -50,6 +50,7 @@ import com.sun.tools.hat.internal.util.Misc;
 
 /**
  *
+ * @version     1.26, 10/08/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 
@@ -67,18 +68,18 @@ public class Snapshot {
     private static final JavaField[] EMPTY_FIELD_ARRAY = new JavaField[0];
     private static final JavaStatic[] EMPTY_STATIC_ARRAY = new JavaStatic[0];
 
-    // all heap objects
-    private Hashtable<Number, JavaHeapObject> heapObjects =
+    // all heap objects 
+    private Hashtable<Number, JavaHeapObject> heapObjects = 
                  new Hashtable<Number, JavaHeapObject>();
 
-    private Hashtable<Number, JavaClass> fakeClasses =
+    private Hashtable<Number, JavaClass> fakeClasses = 
                  new Hashtable<Number, JavaClass>();
 
     // all Roots in this Snapshot
-    private Vector<Root> roots = new Vector<Root>();
+    private Vector<Root> roots = new Vector<Root>(); 
 
-    // name-to-class map
-    private Map<String, JavaClass> classes =
+    // name-to-class map 
+    private Map<String, JavaClass> classes = 
                  new TreeMap<String, JavaClass>();
 
     // new objects relative to a baseline - lazily initialized
@@ -90,14 +91,14 @@ public class Snapshot {
     // object-to-Root map for all objects
     private Map<JavaHeapObject, Root> rootsMap =
                  new HashMap<JavaHeapObject, Root>();
-
-    // soft cache of finalizeable objects - lazily initialized
+   
+    // soft cache of finalizeable objects - lazily initialized 
     private SoftReference<Vector> finalizablesCache;
 
     // represents null reference
     private JavaThing nullThing;
-
-    // java.lang.ref.Reference class
+    
+    // java.lang.ref.Reference class  
     private JavaClass weakReferenceClass;
     // index of 'referent' field in java.lang.ref.Reference class
     private int referentFieldIndex;
@@ -109,10 +110,10 @@ public class Snapshot {
     // java.lang.ClassLoader class
     private JavaClass javaLangClassLoader;
 
-    // unknown "other" array class
+    // unknown "other" array class 
     private volatile JavaClass otherArrayType;
     // Stuff to exclude from reachable query
-    private ReachableExcludes reachableExcludes;
+    private ReachableExcludes reachableExcludes; 
     // the underlying heap dump buffer
     private ReadBuffer readBuf;
 
@@ -133,7 +134,7 @@ public class Snapshot {
     private int minimumObjectSize;
 
     public Snapshot(ReadBuffer buf) {
-        nullThing = new HackJavaValue("<null>", 0);
+	nullThing = new HackJavaValue("<null>", 0);
         readBuf = buf;
     }
 
@@ -164,7 +165,7 @@ public class Snapshot {
         identifierSize = size;
         minimumObjectSize = 2 * size;
     }
-
+    
     public int getIdentifierSize() {
         return identifierSize;
     }
@@ -172,18 +173,18 @@ public class Snapshot {
     public int getMinimumObjectSize() {
         return minimumObjectSize;
     }
-
+    
     public void addHeapObject(long id, JavaHeapObject ho) {
-        heapObjects.put(makeId(id), ho);
+	heapObjects.put(makeId(id), ho);
     }
 
     public void addRoot(Root r) {
-        r.setIndex(roots.size());
-        roots.addElement(r);
+	r.setIndex(roots.size());
+	roots.addElement(r);
     }
 
     public void addClass(long id, JavaClass c) {
-        addHeapObject(id, c);
+	addHeapObject(id, c);       
         putInClassesMap(c);
     }
 
@@ -202,13 +203,13 @@ public class Snapshot {
             fields[i] = new JavaField("unknown-field-" + i, "I");
         }
         for (i = 0; i < numBytes; i++) {
-            fields[i + numInts] = new JavaField("unknown-field-" +
+            fields[i + numInts] = new JavaField("unknown-field-" + 
                                                 i + numInts, "B");
         }
 
         // Create fake instance class
-        JavaClass c = new JavaClass(name, 0, 0, 0, 0, fields,
-                                 EMPTY_STATIC_ARRAY, instSize);
+	JavaClass c = new JavaClass(name, 0, 0, 0, 0, fields, 
+	                         EMPTY_STATIC_ARRAY, instSize);
         // Add the class
         addFakeClass(makeId(classID), c);
         return c;
@@ -217,79 +218,79 @@ public class Snapshot {
 
     /**
      * @return true iff it's possible that some JavaThing instances might
-     *          isNew set
+     * 		isNew set
      *
      * @see JavaThing.isNew()
      */
     public boolean getHasNewSet() {
-        return hasNewSet;
+	return hasNewSet;
     }
 
     //
     // Used in the body of resolve()
     //
     private static class MyVisitor extends AbstractJavaHeapObjectVisitor {
-        JavaHeapObject t;
-        public void visit(JavaHeapObject other) {
-            other.addReferenceFrom(t);
-        }
+	JavaHeapObject t;
+	public void visit(JavaHeapObject other) {
+	    other.addReferenceFrom(t);
+	}
     }
 
-    // To show heap parsing progress, we print a '.' after this limit
+    // To show heap parsing progress, we print a '.' after this limit 
     private static final int DOT_LIMIT = 5000;
 
     /**
      * Called after reading complete, to initialize the structure
      */
     public void resolve(boolean calculateRefs) {
-        System.out.println("Resolving " + heapObjects.size() + " objects...");
+	System.out.println("Resolving " + heapObjects.size() + " objects...");
 
-        // First, resolve the classes.  All classes must be resolved before
-        // we try any objects, because the objects use classes in their
-        // resolution.
-        javaLangClass = findClass("java.lang.Class");
-        if (javaLangClass == null) {
-            System.out.println("WARNING:  hprof file does not include java.lang.Class!");
-            javaLangClass = new JavaClass("java.lang.Class", 0, 0, 0, 0,
+	// First, resolve the classes.  All classes must be resolved before
+	// we try any objects, because the objects use classes in their
+	// resolution.
+	javaLangClass = findClass("java.lang.Class");
+	if (javaLangClass == null) {
+	    System.out.println("WARNING:  hprof file does not include java.lang.Class!");
+	    javaLangClass = new JavaClass("java.lang.Class", 0, 0, 0, 0, 
                                  EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY, 0);
-            addFakeClass(javaLangClass);
-        }
-        javaLangString = findClass("java.lang.String");
-        if (javaLangString == null) {
-            System.out.println("WARNING:  hprof file does not include java.lang.String!");
-            javaLangString = new JavaClass("java.lang.String", 0, 0, 0, 0,
+	    addFakeClass(javaLangClass);
+	}
+	javaLangString = findClass("java.lang.String");
+	if (javaLangString == null) {
+	    System.out.println("WARNING:  hprof file does not include java.lang.String!");
+	    javaLangString = new JavaClass("java.lang.String", 0, 0, 0, 0, 
                                  EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY, 0);
-            addFakeClass(javaLangString);
-        }
-        javaLangClassLoader = findClass("java.lang.ClassLoader");
-        if (javaLangClassLoader == null) {
-            System.out.println("WARNING:  hprof file does not include java.lang.ClassLoader!");
-            javaLangClassLoader = new JavaClass("java.lang.ClassLoader", 0, 0, 0, 0,
+	    addFakeClass(javaLangString);
+	}
+	javaLangClassLoader = findClass("java.lang.ClassLoader");
+	if (javaLangClassLoader == null) {
+	    System.out.println("WARNING:  hprof file does not include java.lang.ClassLoader!");
+	    javaLangClassLoader = new JavaClass("java.lang.ClassLoader", 0, 0, 0, 0, 
                                  EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY, 0);
-            addFakeClass(javaLangClassLoader);
-        }
+	    addFakeClass(javaLangClassLoader);
+	}
 
-        for (JavaHeapObject t : heapObjects.values()) {
-            if (t instanceof JavaClass) {
-                t.resolve(this);
-            }
-        }
+	for (JavaHeapObject t : heapObjects.values()) {
+	    if (t instanceof JavaClass) {
+		t.resolve(this);
+	    }
+	}
 
-        // Now, resolve everything else.
-        for (JavaHeapObject t : heapObjects.values()) {
-            if (!(t instanceof JavaClass)) {
-                t.resolve(this);
-            }
-        }
+	// Now, resolve everything else.
+	for (JavaHeapObject t : heapObjects.values()) {
+	    if (!(t instanceof JavaClass)) {
+		t.resolve(this);
+	    }
+	}
 
         heapObjects.putAll(fakeClasses);
         fakeClasses.clear();
 
-        weakReferenceClass = findClass("java.lang.ref.Reference");
-        if (weakReferenceClass == null)  {      // JDK 1.1.x
-            weakReferenceClass = findClass("sun.misc.Ref");
+	weakReferenceClass = findClass("java.lang.ref.Reference");
+	if (weakReferenceClass == null)  {	// JDK 1.1.x
+	    weakReferenceClass = findClass("sun.misc.Ref");
             referentFieldIndex = 0;
-        } else {
+	} else {
             JavaField[] fields = weakReferenceClass.getFieldsForInstance();
             for (int i = 0; i < fields.length; i++) {
                 if ("referent".equals(fields[i].getName())) {
@@ -299,73 +300,73 @@ public class Snapshot {
             }
         }
 
-        if (calculateRefs) {
-            calculateReferencesToObjects();
-            System.out.print("Eliminating duplicate references");
-            System.out.flush();
-            // This println refers to the *next* step
-        }
-        int count = 0;
-        for (JavaHeapObject t : heapObjects.values()) {
-            t.setupReferers();
-            ++count;
-            if (calculateRefs && count % DOT_LIMIT == 0) {
-                System.out.print(".");
-                System.out.flush();
-            }
-        }
-        if (calculateRefs) {
-            System.out.println("");
-        }
+	if (calculateRefs) {
+	    calculateReferencesToObjects();
+	    System.out.print("Eliminating duplicate references");
+	    System.out.flush();
+	    // This println refers to the *next* step
+	}
+	int count = 0;
+	for (JavaHeapObject t : heapObjects.values()) {
+	    t.setupReferers();
+	    ++count;
+	    if (calculateRefs && count % DOT_LIMIT == 0) {
+		System.out.print(".");
+		System.out.flush();
+	    }
+	}
+	if (calculateRefs) {
+	    System.out.println("");
+	}
 
         // to ensure that Iterator.remove() on getClasses()
         // result will throw exception..
         classes = Collections.unmodifiableMap(classes);
     }
-
+    
     private void calculateReferencesToObjects() {
-        System.out.print("Chasing references, expect "
-                         + (heapObjects.size() / DOT_LIMIT) + " dots");
-        System.out.flush();
-        int count = 0;
-        MyVisitor visitor = new MyVisitor();
-        for (JavaHeapObject t : heapObjects.values()) {
-            visitor.t = t;
-            // call addReferenceFrom(t) on all objects t references:
-            t.visitReferencedObjects(visitor);
-            ++count;
-            if (count % DOT_LIMIT == 0) {
-                System.out.print(".");
-                System.out.flush();
-            }
-        }
-        System.out.println();
-        for (Root r : roots) {
-            r.resolve(this);
-            JavaHeapObject t = findThing(r.getId());
-            if (t != null) {
-                t.addReferenceFromRoot(r);
-            }
-        }
+	System.out.print("Chasing references, expect " 
+			 + (heapObjects.size() / DOT_LIMIT) + " dots");
+	System.out.flush();
+	int count = 0;
+	MyVisitor visitor = new MyVisitor();
+	for (JavaHeapObject t : heapObjects.values()) {
+	    visitor.t = t;
+	    // call addReferenceFrom(t) on all objects t references:
+	    t.visitReferencedObjects(visitor);
+	    ++count;
+	    if (count % DOT_LIMIT == 0) {
+		System.out.print(".");
+		System.out.flush();
+	    }
+	}
+	System.out.println();
+	for (Root r : roots) {
+	    r.resolve(this);
+	    JavaHeapObject t = findThing(r.getId());
+	    if (t != null) {
+		t.addReferenceFromRoot(r);
+	    }
+	}
     }
 
     public void markNewRelativeTo(Snapshot baseline) {
-        hasNewSet = true;
-        for (JavaHeapObject t : heapObjects.values()) {
-            boolean isNew;
-            long thingID = t.getId();
-            if (thingID == 0L || thingID == -1L) {
-                isNew = false;
-            } else {
-                JavaThing other = baseline.findThing(t.getId());
-                if (other == null) {
-                    isNew = true;
-                } else {
-                    isNew = !t.isSameTypeAs(other);
-                }
-            }
-            t.setNew(isNew);
-        }
+	hasNewSet = true;
+	for (JavaHeapObject t : heapObjects.values()) {
+	    boolean isNew;
+	    long thingID = t.getId();
+	    if (thingID == 0L || thingID == -1L) {
+		isNew = false;
+	    } else {
+		JavaThing other = baseline.findThing(t.getId());
+		if (other == null) {
+		    isNew = true;
+		} else {
+		    isNew = !t.isSameTypeAs(other);
+		}
+	    }
+	    t.setNew(isNew);
+	}
     }
 
     public Enumeration<JavaHeapObject> getThings() {
@@ -374,9 +375,9 @@ public class Snapshot {
 
 
     public JavaHeapObject findThing(long id) {
-        Number idObj = makeId(id);
-        JavaHeapObject jho = heapObjects.get(idObj);
-        return jho != null? jho : fakeClasses.get(idObj);
+	Number idObj = makeId(id);
+	JavaHeapObject jho = heapObjects.get(idObj);
+	return jho != null? jho : fakeClasses.get(idObj);
     }
 
     public JavaHeapObject findThing(String id) {
@@ -387,7 +388,7 @@ public class Snapshot {
         if (name.startsWith("0x")) {
             return (JavaClass) findThing(name);
         } else {
-            return classes.get(name);
+	    return classes.get(name);
         }
     }
 
@@ -397,7 +398,7 @@ public class Snapshot {
     public Iterator getClasses() {
         // note that because classes is a TreeMap
         // classes are already sorted by name
-        return classes.values().iterator();
+	return classes.values().iterator(); 
     }
 
     public JavaClass[] getClassesArray() {
@@ -426,7 +427,7 @@ public class Snapshot {
                     break;
                 }
                 head = (JavaObject) next;
-                finalizables.add(referent);
+                finalizables.add(referent); 
             }
         }
         finalizablesCache = new SoftReference<Vector>(finalizables);
@@ -434,7 +435,7 @@ public class Snapshot {
     }
 
     public Enumeration<Root> getRoots() {
-        return roots.elements();
+	return roots.elements();
     }
 
     public Root[] getRootsArray() {
@@ -444,57 +445,57 @@ public class Snapshot {
     }
 
     public Root getRootAt(int i) {
-        return roots.elementAt(i);
+	return roots.elementAt(i);
     }
 
-    public ReferenceChain[]
+    public ReferenceChain[] 
     rootsetReferencesTo(JavaHeapObject target, boolean includeWeak) {
-        Vector<ReferenceChain> fifo = new Vector<ReferenceChain>();  // This is slow... A real fifo would help
-            // Must be a fifo to go breadth-first
-        Hashtable<JavaHeapObject, JavaHeapObject> visited = new Hashtable<JavaHeapObject, JavaHeapObject>();
-        // Objects are added here right after being added to fifo.
-        Vector<ReferenceChain> result = new Vector<ReferenceChain>();
-        visited.put(target, target);
-        fifo.addElement(new ReferenceChain(target, null));
+	Vector<ReferenceChain> fifo = new Vector<ReferenceChain>();  // This is slow... A real fifo would help
+	    // Must be a fifo to go breadth-first
+	Hashtable<JavaHeapObject, JavaHeapObject> visited = new Hashtable<JavaHeapObject, JavaHeapObject>();
+	// Objects are added here right after being added to fifo.
+	Vector<ReferenceChain> result = new Vector<ReferenceChain>();
+	visited.put(target, target);
+	fifo.addElement(new ReferenceChain(target, null));
 
-        while (fifo.size() > 0) {
-            ReferenceChain chain = fifo.elementAt(0);
-            fifo.removeElementAt(0);
-            JavaHeapObject curr = chain.getObj();
-            if (curr.getRoot() != null) {
-                result.addElement(chain);
-                // Even though curr is in the rootset, we want to explore its
-                // referers, because they might be more interesting.
-            }
-            Enumeration referers = curr.getReferers();
-            while (referers.hasMoreElements()) {
-                JavaHeapObject t = (JavaHeapObject) referers.nextElement();
-                if (t != null && !visited.containsKey(t)) {
-                    if (includeWeak || !t.refersOnlyWeaklyTo(this, curr)) {
-                        visited.put(t, t);
-                        fifo.addElement(new ReferenceChain(t, chain));
-                    }
-                }
-            }
-        }
+	while (fifo.size() > 0) {
+	    ReferenceChain chain = fifo.elementAt(0);
+	    fifo.removeElementAt(0);
+	    JavaHeapObject curr = chain.getObj();
+	    if (curr.getRoot() != null) {
+		result.addElement(chain);
+		// Even though curr is in the rootset, we want to explore its
+		// referers, because they might be more interesting.
+	    }
+	    Enumeration referers = curr.getReferers();
+	    while (referers.hasMoreElements()) {
+		JavaHeapObject t = (JavaHeapObject) referers.nextElement();
+		if (t != null && !visited.containsKey(t)) {
+		    if (includeWeak || !t.refersOnlyWeaklyTo(this, curr)) {
+			visited.put(t, t);
+			fifo.addElement(new ReferenceChain(t, chain));
+		    }
+		}
+	    }
+	}
 
-        ReferenceChain[] realResult = new ReferenceChain[result.size()];
-        for (int i = 0; i < result.size(); i++) {
-            realResult[i] =  result.elementAt(i);
-        }
-        return realResult;
+	ReferenceChain[] realResult = new ReferenceChain[result.size()];
+	for (int i = 0; i < result.size(); i++) {
+	    realResult[i] =  result.elementAt(i);
+	}
+	return realResult;
     }
 
     public boolean getUnresolvedObjectsOK() {
-        return unresolvedObjectsOK;
+	return unresolvedObjectsOK;
     }
 
     public void setUnresolvedObjectsOK(boolean v) {
-        unresolvedObjectsOK = v;
+	unresolvedObjectsOK = v;
     }
 
     public JavaClass getWeakReferenceClass() {
-        return weakReferenceClass;
+	return weakReferenceClass;
     }
 
     public int getReferentFieldIndex() {
@@ -502,15 +503,15 @@ public class Snapshot {
     }
 
     public JavaThing getNullThing() {
-        return nullThing;
+	return nullThing;
     }
 
     public void setReachableExcludes(ReachableExcludes e) {
-        reachableExcludes = e;
+	reachableExcludes = e;
     }
 
     public ReachableExcludes getReachableExcludes() {
-        return reachableExcludes;
+	return reachableExcludes;
     }
 
     // package privates
@@ -526,48 +527,48 @@ public class Snapshot {
     Root getRoot(JavaHeapObject obj) {
         return rootsMap.get(obj);
     }
-
+ 
     JavaClass getJavaLangClass() {
-        return javaLangClass;
+	return javaLangClass;
     }
 
     JavaClass getJavaLangString() {
-        return javaLangString;
+	return javaLangString;
     }
 
     JavaClass getJavaLangClassLoader() {
-        return javaLangClassLoader;
+	return javaLangClassLoader;
     }
 
     JavaClass getOtherArrayType() {
-        if (otherArrayType == null) {
-            synchronized(this) {
-                if (otherArrayType == null) {
-                    addFakeClass(new JavaClass("[<other>", 0, 0, 0, 0,
-                                     EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY,
+	if (otherArrayType == null) {
+	    synchronized(this) {
+		if (otherArrayType == null) {
+		    addFakeClass(new JavaClass("[<other>", 0, 0, 0, 0, 
+                                     EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY, 
                                      0));
-                    otherArrayType = findClass("[<other>");
-                }
-            }
-        }
-        return otherArrayType;
+		    otherArrayType = findClass("[<other>");
+		}
+	    }
+	}
+	return otherArrayType;
     }
 
     JavaClass getArrayClass(String elementSignature) {
-        JavaClass clazz;
-        synchronized(classes) {
-            clazz = findClass("[" + elementSignature);
-            if (clazz == null) {
-                clazz = new JavaClass("[" + elementSignature, 0, 0, 0, 0,
-                                   EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY, 0);
-                addFakeClass(clazz);
-                // This is needed because the JDK only creates Class structures
-                // for array element types, not the arrays themselves.  For
-                // analysis, though, we need to pretend that there's a
-                // JavaClass for the array type, too.
-            }
-        }
-        return clazz;
+	JavaClass clazz;
+	synchronized(classes) {
+	    clazz = findClass("[" + elementSignature);
+	    if (clazz == null) {
+		clazz = new JavaClass("[" + elementSignature, 0, 0, 0, 0,
+				   EMPTY_FIELD_ARRAY, EMPTY_STATIC_ARRAY, 0);
+		addFakeClass(clazz);
+		// This is needed because the JDK only creates Class structures
+		// for array element types, not the arrays themselves.  For
+		// analysis, though, we need to pretend that there's a
+		// JavaClass for the array type, too.
+	    }
+	}
+	return clazz;
     }
 
     ReadBuffer getReadBuffer() {
@@ -604,14 +605,14 @@ public class Snapshot {
             // more than one class can have the same name
             // if so, create a unique name by appending
             // - and id string to it.
-            name += "-" + c.getIdString();
-        }
-        classes.put(c.getName(), c);
+            name += "-" + c.getIdString();    
+        }         
+	classes.put(c.getName(), c);
     }
 
     private void addFakeClass(JavaClass c) {
         putInClassesMap(c);
-        c.resolve(this);
+	c.resolve(this);
     }
 
     private void addFakeClass(Number id, JavaClass c) {

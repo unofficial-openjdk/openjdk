@@ -82,7 +82,7 @@ public interface OpenMBeanAttributeInfo extends OpenMBeanParameterInfo {
     //
 
     /**
-     * Compares the specified <var>obj</var> parameter with this <code>OpenMBeanAttributeInfo</code> instance for equality.
+     * Compares the specified <var>obj</var> parameter with this <code>OpenMBeanAttributeInfo</code> instance for equality. 
      * <p>
      * Returns <tt>true</tt> if and only if all of the following statements are true:
      * <ul>
@@ -97,20 +97,20 @@ public interface OpenMBeanAttributeInfo extends OpenMBeanParameterInfo {
      * different implementations of the <code>OpenMBeanAttributeInfo</code> interface.
      * <br>&nbsp;
      * @param  obj  the object to be compared for equality with this <code>OpenMBeanAttributeInfo</code> instance;
-     *
+     * 
      * @return  <code>true</code> if the specified object is equal to this <code>OpenMBeanAttributeInfo</code> instance.
      */
     public boolean equals(Object obj);
 
     /**
-     * Returns the hash code value for this <code>OpenMBeanAttributeInfo</code> instance.
+     * Returns the hash code value for this <code>OpenMBeanAttributeInfo</code> instance. 
      * <p>
      * The hash code of an <code>OpenMBeanAttributeInfo</code> instance is the sum of the hash codes
-     * of all elements of information used in <code>equals</code> comparisons
-     * (ie: its name, its <i>open type</i>, and its default, min, max and legal values).
+     * of all elements of information used in <code>equals</code> comparisons 
+     * (ie: its name, its <i>open type</i>, and its default, min, max and legal values). 
      * <p>
-     * This ensures that <code> t1.equals(t2) </code> implies that <code> t1.hashCode()==t2.hashCode() </code>
-     * for any two <code>OpenMBeanAttributeInfo</code> instances <code>t1</code> and <code>t2</code>,
+     * This ensures that <code> t1.equals(t2) </code> implies that <code> t1.hashCode()==t2.hashCode() </code> 
+     * for any two <code>OpenMBeanAttributeInfo</code> instances <code>t1</code> and <code>t2</code>, 
      * as required by the general contract of the method
      * {@link Object#hashCode() Object.hashCode()}.
      * <p>
@@ -120,18 +120,18 @@ public interface OpenMBeanAttributeInfo extends OpenMBeanParameterInfo {
     public int hashCode();
 
     /**
-     * Returns a string representation of this <code>OpenMBeanAttributeInfo</code> instance.
+     * Returns a string representation of this <code>OpenMBeanAttributeInfo</code> instance. 
      * <p>
-     * The string representation consists of the name of this class (ie <code>javax.management.openmbean.OpenMBeanAttributeInfo</code>),
-     * the string representation of the name and open type of the described attribute,
+     * The string representation consists of the name of this class (ie <code>javax.management.openmbean.OpenMBeanAttributeInfo</code>), 
+     * the string representation of the name and open type of the described attribute, 
      * and the string representation of its default, min, max and legal values.
-     *
+     * 
      * @return  a string representation of this <code>OpenMBeanAttributeInfo</code> instance
      */
     public String toString();
 
 
-    // methods specific to open MBeans are inherited from
+    // methods specific to open MBeans are inherited from 
     // OpenMBeanParameterInfo
     //
 

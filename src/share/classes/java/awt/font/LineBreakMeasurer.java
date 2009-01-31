@@ -74,7 +74,7 @@ import java.awt.font.FontRenderContext;
  * of the characters that fit within the wrapping width are placed on the
  * line.  At least one character is placed on each line.
  * <p>
- * The <code>TextLayout</code> instances returned by
+ * The <code>TextLayout</code> instances returned by 
  * <code>LineBreakMeasurer</code> treat tabs like 0-width spaces.  Clients
  * who wish to obtain tab-delimited segments for positioning should use
  * the overload of <code>nextLayout</code> which takes a limiting offset
@@ -92,12 +92,12 @@ import java.awt.font.FontRenderContext;
  * remaining space entirely on the next line.  This change of policy
  * can be requested in the overload of <code>nextLayout</code> which
  * takes a <code>boolean</code> parameter.  If this parameter is
- * <code>true</code>, <code>nextLayout</code> returns
+ * <code>true</code>, <code>nextLayout</code> returns 
  * <code>null</code> if the first word won't fit in
  * the given space.  See the tab sample below.
  * <p>
- * In general, if the text used to construct the
- * <code>LineBreakMeasurer</code> changes, a new
+ * In general, if the text used to construct the 
+ * <code>LineBreakMeasurer</code> changes, a new 
  * <code>LineBreakMeasurer</code> must be constructed to reflect
  * the change.  (The old <code>LineBreakMeasurer</code> continues to
  * function properly, but it won't be aware of the text change.)
@@ -246,7 +246,7 @@ import java.awt.font.FontRenderContext;
  */
 
 public final class LineBreakMeasurer {
-
+    
     private BreakIterator breakIter;
     private int start;
     private int pos;
@@ -258,13 +258,13 @@ public final class LineBreakMeasurer {
      * Constructs a <code>LineBreakMeasurer</code> for the specified text.
      *
      * @param text the text for which this <code>LineBreakMeasurer</code>
-     *       produces <code>TextLayout</code> objects; the text must contain
-     *       at least one character; if the text available through
-     *       <code>iter</code> changes, further calls to this
+     *       produces <code>TextLayout</code> objects; the text must contain 
+     *       at least one character; if the text available through 
+     *       <code>iter</code> changes, further calls to this 
      *       <code>LineBreakMeasurer</code> instance are undefined (except,
-     *       in some cases, when <code>insertChar</code> or
+     *       in some cases, when <code>insertChar</code> or 
      *       <code>deleteChar</code> are invoked afterward - see below)
-     * @param frc contains information about a graphics device which is
+     * @param frc contains information about a graphics device which is 
      *       needed to measure the text correctly;
      *       text measurements can vary slightly depending on the
      *       device resolution, and attributes such as antialiasing; this
@@ -281,11 +281,11 @@ public final class LineBreakMeasurer {
      * Constructs a <code>LineBreakMeasurer</code> for the specified text.
      *
      * @param text the text for which this <code>LineBreakMeasurer</code>
-     *     produces <code>TextLayout</code> objects; the text must contain
-     *     at least one character; if the text available through
-     *     <code>iter</code> changes, further calls to this
+     *     produces <code>TextLayout</code> objects; the text must contain 
+     *     at least one character; if the text available through 
+     *     <code>iter</code> changes, further calls to this 
      *     <code>LineBreakMeasurer</code> instance are undefined (except,
-     *     in some cases, when <code>insertChar</code> or
+     *     in some cases, when <code>insertChar</code> or 
      *     <code>deleteChar</code> are invoked afterward - see below)
      * @param breakIter the {@link BreakIterator} which defines line
      *     breaks
@@ -303,14 +303,14 @@ public final class LineBreakMeasurer {
                              BreakIterator breakIter,
                              FontRenderContext frc) {
         if (text.getEndIndex() - text.getBeginIndex() < 1) {
-            throw new IllegalArgumentException("Text must contain at least one character.");
-        }
+	    throw new IllegalArgumentException("Text must contain at least one character.");
+	}
 
         this.breakIter = breakIter;
         this.measurer = new TextMeasurer(text, frc);
         this.limit = text.getEndIndex();
         this.pos = this.start = text.getBeginIndex();
-
+        
         charIter = new CharArrayIterator(measurer.getChars(), this.start);
         this.breakIter.setText(charIter);
     }
@@ -406,7 +406,7 @@ public final class LineBreakMeasurer {
      * @param wrappingWidth the maximum visible advance permitted for
      *     the text in the next layout
      * @return a <code>TextLayout</code>, beginning at the current
-     *     position, which represents the next line fitting within
+     *     position, which represents the next line fitting within 
      *     <code>wrappingWidth</code>
      */
     public TextLayout nextLayout(float wrappingWidth) {
@@ -420,7 +420,7 @@ public final class LineBreakMeasurer {
      *    for the text in the next layout
      * @param offsetLimit the first character that can not be
      *    included in the next layout, even if the text after the limit
-     *    would fit within the wrapping width; <code>offsetLimit</code>
+     *    would fit within the wrapping width; <code>offsetLimit</code> 
      *    must be greater than the current position
      * @param requireNextWord if <code>true</code>, and if the entire word
      *    at the current position does not fit within the wrapping width,
@@ -428,8 +428,8 @@ public final class LineBreakMeasurer {
      *    layout is returned that includes at least the character at the
      *    current position
      * @return a <code>TextLayout</code>, beginning at the current
-     *    position, that represents the next line fitting within
-     *    <code>wrappingWidth</code>.  If the current position is at the end
+     *    position, that represents the next line fitting within 
+     *    <code>wrappingWidth</code>.  If the current position is at the end 
      *    of the text used by this <code>LineBreakMeasurer</code>,
      *    <code>null</code> is returned
      */
@@ -489,7 +489,7 @@ public final class LineBreakMeasurer {
      * @throws IndexOutOfBoundsException if <code>insertPos</code> is less
      *         than the start of <code>newParagraph</code> or greater than
      *         or equal to the end of <code>newParagraph</code>
-     * @throws NullPointerException if <code>newParagraph</code> is
+     * @throws NullPointerException if <code>newParagraph</code> is   
      *         <code>null</code>
      * @see #deleteChar
      */
@@ -531,3 +531,4 @@ public final class LineBreakMeasurer {
         breakIter.setText(charIter);
     }
 }
+

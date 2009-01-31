@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,29 +32,29 @@ public class ComputeServerImpl
     extends UnicastRemoteObject
     implements ComputeServer
 {
-        public ComputeServerImpl() throws RemoteException
-        {
-
+	public ComputeServerImpl() throws RemoteException
+	{
+	
     }
-
+    
     /**
      * Accepts task and runs it
      */
     public Object compute(Task task) {
-        return task.run();
+	return task.run();
     }
-
-    /**
+    
+    /** 
      * Binds compute server and waits for tasks
      */
-    public static void main(String args[]) throws Exception
-        {
-                // use the default, restrictive security manager
-                System.setSecurityManager(new RMISecurityManager());
+    public static void main(String args[]) throws Exception 
+	{
+		// use the default, restrictive security manager
+		System.setSecurityManager(new RMISecurityManager());
+	
+		Naming.rebind("/ComputeServer", new ComputeServerImpl());
+		System.out.println("Ready to receive tasks.");
 
-                Naming.rebind("/ComputeServer", new ComputeServerImpl());
-                System.out.println("Ready to receive tasks.");
-
-                System.err.println("DTI_DoneInitializing");
+		System.err.println("DTI_DoneInitializing");
     }
 }

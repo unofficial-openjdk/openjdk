@@ -36,107 +36,107 @@ import javax.crypto.*;
 public class TestGetInstance {
 
     private static void same(Provider p1, Provider p2) throws Exception {
-        if (p1 != p2) {
-           throw new Exception("not same object");
-        }
+	if (p1 != p2) {
+	   throw new Exception("not same object");
+	}
     }
 
     public static void main(String[] args) throws Exception {
-        Provider p = Security.getProvider("SunJCE");
+	Provider p = Security.getProvider("SunJCE");
 
-        Cipher c;
+	Cipher c;
 
-        c = Cipher.getInstance("des");
-        same(p, c.getProvider());
-        c = Cipher.getInstance("des/cbc/pkcs5padding");
-        same(p, c.getProvider());
+	c = Cipher.getInstance("des");
+	same(p, c.getProvider());
+	c = Cipher.getInstance("des/cbc/pkcs5padding");
+	same(p, c.getProvider());
 
-        c = Cipher.getInstance("des", "SunJCE");
-        same(p, c.getProvider());
-        c = Cipher.getInstance("des/cbc/pkcs5padding", "SunJCE");
-        same(p, c.getProvider());
+	c = Cipher.getInstance("des", "SunJCE");
+	same(p, c.getProvider());
+	c = Cipher.getInstance("des/cbc/pkcs5padding", "SunJCE");
+	same(p, c.getProvider());
 
-        c = Cipher.getInstance("des", p);
-        same(p, c.getProvider());
-        c = Cipher.getInstance("des/cbc/pkcs5padding", p);
-        same(p, c.getProvider());
+	c = Cipher.getInstance("des", p);
+	same(p, c.getProvider());
+	c = Cipher.getInstance("des/cbc/pkcs5padding", p);
+	same(p, c.getProvider());
 
-        try {
-            c = Cipher.getInstance("DES/XYZ/PKCS5Padding");
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("DES/XYZ/PKCS5Padding", "SunJCE");
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("DES/XYZ/PKCS5Padding", p);
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
+	try {
+	    c = Cipher.getInstance("DES/XYZ/PKCS5Padding");
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("DES/XYZ/PKCS5Padding", "SunJCE");
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("DES/XYZ/PKCS5Padding", p);
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
 
-        try {
-            c = Cipher.getInstance("DES/CBC/XYZPadding");
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("DES/CBC/XYZPadding", "SunJCE");
-            throw new AssertionError();
-        } catch (NoSuchPaddingException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("DES/CBC/XYZPadding", p);
-            throw new AssertionError();
-        } catch (NoSuchPaddingException e) {
-            System.out.println(e);
-        }
+	try {
+	    c = Cipher.getInstance("DES/CBC/XYZPadding");
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("DES/CBC/XYZPadding", "SunJCE");
+	    throw new AssertionError();
+	} catch (NoSuchPaddingException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("DES/CBC/XYZPadding", p);
+	    throw new AssertionError();
+	} catch (NoSuchPaddingException e) {
+	    System.out.println(e);
+	}
 
-        try {
-            c = Cipher.getInstance("foo");
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("foo", "SunJCE");
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("foo", p);
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
+	try {
+	    c = Cipher.getInstance("foo");
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("foo", "SunJCE");
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("foo", p);
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
 
-        try {
-            c = Cipher.getInstance("foo", "SUN");
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("foo", Security.getProvider("SUN"));
-            throw new AssertionError();
-        } catch (NoSuchAlgorithmException e) {
-            System.out.println(e);
-        }
-        try {
-            c = Cipher.getInstance("foo", "bar");
-            throw new AssertionError();
-        } catch (NoSuchProviderException e) {
-            System.out.println(e);
-        }
+	try {
+	    c = Cipher.getInstance("foo", "SUN");
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("foo", Security.getProvider("SUN"));
+	    throw new AssertionError();
+	} catch (NoSuchAlgorithmException e) {
+	    System.out.println(e);
+	}
+	try {
+	    c = Cipher.getInstance("foo", "bar");
+	    throw new AssertionError();
+	} catch (NoSuchProviderException e) {
+	    System.out.println(e);
+	}
 
-        System.out.println("All Tests ok");
+	System.out.println("All Tests ok");
     }
 }

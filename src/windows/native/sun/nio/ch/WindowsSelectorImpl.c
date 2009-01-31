@@ -24,13 +24,14 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /* Maximum number of sockets per select() */
 /* This number should be equal to WindowsSelectorImpl.MAX_SELECTABLE_FDS */
 /* This definition MUST precede the inclusion of winsock2.h */
 
-#define FD_SETSIZE 1024
+#define FD_SETSIZE 1024 
 
 #include <stdlib.h>
 #include "jvm.h"
@@ -97,9 +98,9 @@ Java_sun_nio_ch_WindowsSelectorImpl_00024SubSelector_poll0(JNIEnv *env, jobject 
     readfds.fd_count = read_count;
     writefds.fd_count = write_count;
     exceptfds.fd_count = except_count;
-
+       
     /* Call select */
-    if ((result = select(0 , &readfds, &writefds, &exceptfds, tv))
+    if ((result = select(0 , &readfds, &writefds, &exceptfds, tv)) 
                                                              == SOCKET_ERROR) {
         /* Bad error - this should not happen frequently */
         /* Iterate over sockets and call select() on each separately */
@@ -123,7 +124,7 @@ Java_sun_nio_ch_WindowsSelectorImpl_00024SubSelector_poll0(JNIEnv *env, jobject 
             errexceptfds.fd_count = 1;
 
             /* call select on the i-th socket */
-            if (select(0, &errreadfds, &errwritefds, &errexceptfds, &zerotime)
+            if (select(0, &errreadfds, &errwritefds, &errexceptfds, &zerotime) 
                                                              == SOCKET_ERROR) {
                 /* This socket causes an error. Add it to exceptfds set */
                 exceptfds.fd_array[exceptfds.fd_count] = fds[i].fd;
@@ -144,7 +145,7 @@ Java_sun_nio_ch_WindowsSelectorImpl_00024SubSelector_poll0(JNIEnv *env, jobject 
                 }
             }
         }
-    }
+    }            
 
     /* Return selected sockets. */
     /* Each Java array consists of sockets count followed by sockets list */
@@ -152,37 +153,37 @@ Java_sun_nio_ch_WindowsSelectorImpl_00024SubSelector_poll0(JNIEnv *env, jobject 
 #ifdef _WIN64
     resultbuf[0] = readfds.fd_count;
     for (i = 0; i < (int)readfds.fd_count; i++) {
-        resultbuf[i + 1] = (int)readfds.fd_array[i];
-    }
-    (*env)->SetIntArrayRegion(env, returnReadFds, 0,
+        resultbuf[i + 1] = (int)readfds.fd_array[i];        
+    }    
+    (*env)->SetIntArrayRegion(env, returnReadFds, 0, 
                               readfds.fd_count + 1, resultbuf);
 
     resultbuf[0] = writefds.fd_count;
     for (i = 0; i < (int)writefds.fd_count; i++) {
-        resultbuf[i + 1] = (int)writefds.fd_array[i];
+        resultbuf[i + 1] = (int)writefds.fd_array[i];        
     }
     (*env)->SetIntArrayRegion(env, returnWriteFds, 0,
                               writefds.fd_count + 1, resultbuf);
 
     resultbuf[0] = exceptfds.fd_count;
     for (i = 0; i < (int)exceptfds.fd_count; i++) {
-        resultbuf[i + 1] = (int)exceptfds.fd_array[i];
+        resultbuf[i + 1] = (int)exceptfds.fd_array[i];        
     }
     (*env)->SetIntArrayRegion(env, returnExceptFds, 0,
                               exceptfds.fd_count + 1, resultbuf);
 #else
-    (*env)->SetIntArrayRegion(env, returnReadFds, 0,
+    (*env)->SetIntArrayRegion(env, returnReadFds, 0, 
                               readfds.fd_count + 1, (jint *)&readfds);
-
-    (*env)->SetIntArrayRegion(env, returnWriteFds, 0,
-                              writefds.fd_count + 1, (jint *)&writefds);
-    (*env)->SetIntArrayRegion(env, returnExceptFds, 0,
+    
+    (*env)->SetIntArrayRegion(env, returnWriteFds, 0, 
+                              writefds.fd_count + 1, (jint *)&writefds);    
+    (*env)->SetIntArrayRegion(env, returnExceptFds, 0, 
                               exceptfds.fd_count + 1, (jint *)&exceptfds);
 #endif
     return 0;
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_nio_ch_WindowsSelectorImpl_setWakeupSocket0(JNIEnv *env, jclass this,
                                                 jint scoutFd)
 {
@@ -191,24 +192,24 @@ Java_sun_nio_ch_WindowsSelectorImpl_setWakeupSocket0(JNIEnv *env, jclass this,
 }
 
 JNIEXPORT void JNICALL
-Java_sun_nio_ch_WindowsSelectorImpl_resetWakeupSocket0(JNIEnv *env, jclass this,
+Java_sun_nio_ch_WindowsSelectorImpl_resetWakeupSocket0(JNIEnv *env, jclass this,         
                                                 jint scinFd)
 {
     char bytes[WAKEUP_SOCKET_BUF_SIZE];
     long bytesToRead;
-
+  
     /* Drain socket */
     /* Find out how many bytes available for read */
     ioctlsocket (scinFd, FIONREAD, &bytesToRead);
     if (bytesToRead == 0) {
-        return;
+	return;
     }
     /* Prepare corresponding buffer if needed, and then read */
     if (bytesToRead > WAKEUP_SOCKET_BUF_SIZE) {
-        char* buf = (char*)malloc(bytesToRead);
-        recv(scinFd, buf, bytesToRead, 0);
-        free(buf);
+	char* buf = (char*)malloc(bytesToRead);
+	recv(scinFd, buf, bytesToRead, 0);
+	free(buf);
     } else {
-        recv(scinFd, bytes, WAKEUP_SOCKET_BUF_SIZE, 0);
+	recv(scinFd, bytes, WAKEUP_SOCKET_BUF_SIZE, 0);
     }
 }

@@ -48,17 +48,17 @@ class LogHandler {
      * Creates a LogHandler for a ReliableLog.
      */
     public LogHandler() {}
-
+    
     /**
      * Creates and returns the initial state of data structure that needs
      * to be stably stored. This method is called when a ReliableLog is
-     * created.
+     * created. 
      * @return the initial state
      * @exception Exception can raise any exception
      */
     public abstract
     Object initialSnapshot() throws Exception;
-
+    
     /**
      * Writes the snapshot object to a stream.  This callback is
      * invoked when the client calls the snaphot method of ReliableLog.
@@ -68,29 +68,29 @@ class LogHandler {
      */
     public
     void snapshot(OutputStream out, Object value) throws Exception {
-        MarshalOutputStream s = new MarshalOutputStream(out);
-        s.writeObject(value);
-        s.flush();
+	MarshalOutputStream s = new MarshalOutputStream(out);
+	s.writeObject(value);
+	s.flush();
     }
-
+    
     /**
      * Read the snapshot object from a stream and returns the snapshot.
      * This callback is invoked when the client calls the recover method
-     * of ReliableLog.
+     * of ReliableLog.  
      * @param in the input stream
      * @return the state (snapshot)
      * @exception Exception can raise any exception
      */
-
+    
     public
     Object recover(InputStream in) throws Exception {
-        MarshalInputStream s = new MarshalInputStream(in);
-        return s.readObject();
+	MarshalInputStream s = new MarshalInputStream(in);
+	return s.readObject();
     }
-
+    
     /**
-     * Writes the representation (a serializable object) of an update
-     * to a stream.  This callback is invoked when the client calls the
+     * Writes the representation (a serializable object) of an update 
+     * to a stream.  This callback is invoked when the client calls the 
      * update method of ReliableLog.
      * @param out the output stream
      * @param value the snapshot
@@ -99,11 +99,11 @@ class LogHandler {
     public
     void writeUpdate(LogOutputStream out, Object value) throws Exception {
 
-        MarshalOutputStream s = new MarshalOutputStream(out);
-        s.writeObject(value);
-        s.flush();
+	MarshalOutputStream s = new MarshalOutputStream(out);
+ 	s.writeObject(value);
+	s.flush();
     }
-
+    
     /**
      * Reads a stably logged update (a serializable object) from a
      * stream.  This callback is invoked during recovery, once for
@@ -118,13 +118,13 @@ class LogHandler {
      */
     public
     Object readUpdate(LogInputStream in, Object state) throws Exception {
-        MarshalInputStream  s = new MarshalInputStream(in);
-        return applyUpdate(s.readObject(), state);
+	MarshalInputStream  s = new MarshalInputStream(in);
+	return applyUpdate(s.readObject(), state);
     }
 
     /**
-     * Reads a stably logged update (a serializable object) from a stream.
-     * This callback is invoked during recovery, once for every record in the
+     * Reads a stably logged update (a serializable object) from a stream.  
+     * This callback is invoked during recovery, once for every record in the 
      * log.  After reading the update, this method is invoked in order to
      * obtain the new snapshot value.  The method should apply the update
      * object to the current state <code>state</code> and return the new
@@ -136,5 +136,5 @@ class LogHandler {
      */
     public abstract
     Object applyUpdate(Object update, Object state) throws Exception;
-
+    
 }

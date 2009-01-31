@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetSafepointCount {
 
     private static HotspotRuntimeMBean mbean =
-        (HotspotRuntimeMBean)ManagementFactory.getHotspotRuntimeMBean();
+	(HotspotRuntimeMBean)ManagementFactory.getHotspotRuntimeMBean();
 
     private static final long NUM_THREAD_DUMPS = 5;
 
@@ -51,44 +51,44 @@ public class GetSafepointCount {
         if (args.length > 0 && args[0].equals("trace")) {
             trace = true;
         }
-
-        // Thread.getAllStackTraces() should cause safepoints.
-        // If this test is failing because it doesn't,
+	
+	// Thread.getAllStackTraces() should cause safepoints.  
+        // If this test is failing because it doesn't, 
         // MIN_VALUE_FOR_PASS should be reset to 0
-        for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
+	for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
             Thread.getAllStackTraces();
-        }
+	}
 
-        long value = mbean.getSafepointCount();
+	long value = mbean.getSafepointCount();
 
-        if (trace) {
-            System.out.println("Safepoint count: " + value);
-        }
+	if (trace) {
+	    System.out.println("Safepoint count: " + value);
+	}
 
-        if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
-            throw new RuntimeException("Safepoint count " +
-                                       "illegal value: " + value + " " +
-                                       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
-                                       "MAX = " + MAX_VALUE_FOR_PASS + ")");
-        }
-
-        for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
+	if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
+	    throw new RuntimeException("Safepoint count " + 
+				       "illegal value: " + value + " " + 
+				       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
+				       "MAX = " + MAX_VALUE_FOR_PASS + ")");
+	}
+	
+	for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
             Thread.getAllStackTraces();
-        }
+	}
 
-        long value2 = mbean.getSafepointCount();
+	long value2 = mbean.getSafepointCount();
 
-        if (trace) {
-            System.out.println("Safepoint count2: " + value2);
-        }
+	if (trace) {
+	    System.out.println("Safepoint count2: " + value2);
+	}
 
-        if (value2 <= value) {
-            throw new RuntimeException("Safepoint count " +
-                                       "did not increase " +
-                                       "(value = " + value + "; " +
-                                       "value2 = " + value2 + ")");
-        }
+	if (value2 <= value) {
+	    throw new RuntimeException("Safepoint count " + 
+				       "did not increase " +
+				       "(value = " + value + "; " +
+				       "value2 = " + value2 + ")");
+	}
 
-        System.out.println("Test passed.");
+	System.out.println("Test passed.");
     }
 }

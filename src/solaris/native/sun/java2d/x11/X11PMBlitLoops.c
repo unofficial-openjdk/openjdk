@@ -45,29 +45,29 @@ Java_sun_java2d_x11_X11PMBlitLoops_nativeBlit
     GC xgc;
 
     if (width <= 0 || height <= 0) {
-        return;
+	return;
     }
 
     srcXsdo = (X11SDOps *)jlong_to_ptr(srcData);
     if (srcXsdo == NULL) {
-        return;
+	return;
     }
     dstXsdo = (X11SDOps *)jlong_to_ptr(dstData);
     if (dstXsdo == NULL) {
-        return;
+	return;
     }
     if (Region_GetInfo(env, clip, &clipInfo)) {
-        return;
+	return;
     }
 
     xgc = (GC)gc;
     if (xgc == NULL) {
-        return;
+	return;
     }
 
 #ifdef MITSHM
     if (srcXsdo->isPixmap) {
-        X11SD_UnPuntPixmap(srcXsdo);
+	X11SD_UnPuntPixmap(srcXsdo);
     }
 #endif /* MITSHM */
 
@@ -76,7 +76,7 @@ Java_sun_java2d_x11_X11PMBlitLoops_nativeBlit
     srcBounds.y1 = srcy;
     srcBounds.x2 = srcx + width;
     srcBounds.y2 = srcy + height;
-    SurfaceData_IntersectBoundsXYXY(&srcBounds,
+    SurfaceData_IntersectBoundsXYXY(&srcBounds, 
                                     0, 0, srcXsdo->pmWidth, srcXsdo->pmHeight);
     span.x1 = dstx;
     span.y1 = dsty;
@@ -84,7 +84,7 @@ Java_sun_java2d_x11_X11PMBlitLoops_nativeBlit
     span.y2 = dsty + height;
 
     /* intersect the source and dest rects */
-    SurfaceData_IntersectBlitBounds(&srcBounds, &span,
+    SurfaceData_IntersectBlitBounds(&srcBounds, &span, 
                                     dstx - srcx, dsty - srcy);
     srcx = srcBounds.x1;
     srcy = srcBounds.y1;
@@ -92,31 +92,31 @@ Java_sun_java2d_x11_X11PMBlitLoops_nativeBlit
     dsty = span.y1;
 
     if (srcXsdo->bitmask != 0) {
-        XSetClipOrigin(awt_display, xgc, dstx - srcx, dsty - srcy);
-        XSetClipMask(awt_display, xgc, srcXsdo->bitmask);
+	XSetClipOrigin(awt_display, xgc, dstx - srcx, dsty - srcy);
+	XSetClipMask(awt_display, xgc, srcXsdo->bitmask);
     }
 
     Region_IntersectBounds(&clipInfo, &span);
     if (!Region_IsEmpty(&clipInfo)) {
-        Region_StartIteration(env, &clipInfo);
-        srcx -= dstx;
-        srcy -= dsty;
-        while (Region_NextIteration(&clipInfo, &span)) {
-            XCopyArea(awt_display, srcXsdo->drawable, dstXsdo->drawable, xgc,
-                      srcx + span.x1, srcy + span.y1,
-                      span.x2 - span.x1, span.y2 - span.y1,
-                      span.x1, span.y1);
-        }
-        Region_EndIteration(env, &clipInfo);
+	Region_StartIteration(env, &clipInfo);
+	srcx -= dstx;
+	srcy -= dsty;
+	while (Region_NextIteration(&clipInfo, &span)) {
+	    XCopyArea(awt_display, srcXsdo->drawable, dstXsdo->drawable, xgc,
+		      srcx + span.x1, srcy + span.y1,
+		      span.x2 - span.x1, span.y2 - span.y1,
+		      span.x1, span.y1);
+	}
+	Region_EndIteration(env, &clipInfo);
     }
 
     if (srcXsdo->bitmask != 0) {
-        XSetClipMask(awt_display, xgc, None);
+	XSetClipMask(awt_display, xgc, None);
     }
 
 #ifdef MITSHM
-    if (srcXsdo->shmPMData.usingShmPixmap) {
-        srcXsdo->shmPMData.xRequestSent = JNI_TRUE;
+    if (srcXsdo->shmPMData.usingShmPixmap) { 
+	srcXsdo->shmPMData.xRequestSent = JNI_TRUE;
     }
 #endif /* MITSHM */
     X11SD_DirectRenderNotify(env, dstXsdo);
@@ -139,32 +139,32 @@ Java_sun_java2d_x11_X11PMBlitBgLoops_nativeBlitBg
     Drawable srcDrawable;
 
     if (width <= 0 || height <= 0) {
-        return;
+	return;
     }
 
     srcXsdo = (X11SDOps *)jlong_to_ptr(srcData);
     if (srcXsdo == NULL) {
-        return;
+	return;
     }
     dstXsdo = (X11SDOps *)jlong_to_ptr(dstData);
     if (dstXsdo == NULL) {
-        return;
+	return;
     }
 
     dstGC = (GC)xgc;
     if (dstGC == NULL) {
-        return;
+	return;
     }
 
 #ifdef MITSHM
     if (srcXsdo->isPixmap) {
-        X11SD_UnPuntPixmap(srcXsdo);
+	X11SD_UnPuntPixmap(srcXsdo);
     }
 #endif /* MITSHM */
-
+    
     srcDrawable = srcXsdo->GetPixmapWithBg(env, srcXsdo, pixel);
     if (srcDrawable == 0) {
-        return;
+	return;
     }
 
     /* clip the source rect to the source pixmap's dimensions */
@@ -172,7 +172,7 @@ Java_sun_java2d_x11_X11PMBlitBgLoops_nativeBlitBg
     srcBounds.y1 = srcy;
     srcBounds.x2 = srcx + width;
     srcBounds.y2 = srcy + height;
-    SurfaceData_IntersectBoundsXYXY(&srcBounds,
+    SurfaceData_IntersectBoundsXYXY(&srcBounds, 
                                     0, 0, srcXsdo->pmWidth, srcXsdo->pmHeight);
     dstBounds.x1 = dstx;
     dstBounds.y1 = dsty;
@@ -180,7 +180,7 @@ Java_sun_java2d_x11_X11PMBlitBgLoops_nativeBlitBg
     dstBounds.y2 = dsty + height;
 
     /* intersect the source and dest rects */
-    SurfaceData_IntersectBlitBounds(&srcBounds, &dstBounds,
+    SurfaceData_IntersectBlitBounds(&srcBounds, &dstBounds, 
                                     dstx - srcx, dsty - srcy);
     srcx = srcBounds.x1;
     srcy = srcBounds.y1;
@@ -189,10 +189,10 @@ Java_sun_java2d_x11_X11PMBlitBgLoops_nativeBlitBg
     width = srcBounds.x2 - srcBounds.x1;
     height = srcBounds.y2 - srcBounds.y1;
 
-    /* do an unmasked copy as we've already filled transparent
+    /* do an unmasked copy as we've already filled transparent 
        pixels of the source image with the desired color */
     XCopyArea(awt_display, srcDrawable, dstXsdo->drawable, dstGC,
-              srcx, srcy, width, height, dstx, dsty);
+	      srcx, srcy, width, height, dstx, dsty);
 
     srcXsdo->ReleasePixmapWithBg(env, srcXsdo);
     X11SD_DirectRenderNotify(env, dstXsdo);
@@ -224,8 +224,8 @@ Java_sun_java2d_x11_X11PMBlitLoops_updateBitmask
     GC xgc;
 
     if (srcOps == NULL || xsdo == NULL) {
-        JNU_ThrowNullPointerException(env, "Null BISD in updateMaskRegion");
-        return;
+	JNU_ThrowNullPointerException(env, "Null BISD in updateMaskRegion");
+	return;
     }
 
     AWT_LOCK();
@@ -235,34 +235,34 @@ Java_sun_java2d_x11_X11PMBlitLoops_updateBitmask
     height = xsdo->pmHeight;
 
     if (xsdo->bitmask == 0) {
-        /* create the bitmask if it is not yet created */
+	/* create the bitmask if it is not yet created */
         xsdo->bitmask = XCreatePixmap(awt_display,
                                       RootWindow(awt_display, screen),
                                       width, height, 1);
-        if (xsdo->bitmask == 0) {
-            AWT_UNLOCK();
-            JNU_ThrowOutOfMemoryError(env,
+	if (xsdo->bitmask == 0) {
+	    AWT_UNLOCK();
+            JNU_ThrowOutOfMemoryError(env, 
                                       "Cannot create bitmask for "
                                       "offscreen surface");
-            return;
-        }
+	    return;
+	}
     }
 
     /* Create a bitmask image and then blit it to the pixmap. */
     image = XCreateImage(awt_display, DefaultVisual(awt_display, screen),
-                         1, XYBitmap, 0, NULL, width, height, 32, 0);
+			 1, XYBitmap, 0, NULL, width, height, 32, 0);
     if (image == NULL) {
-        AWT_UNLOCK();
-        JNU_ThrowOutOfMemoryError(env, "Cannot allocate bitmask for mask");
-        return;
+	AWT_UNLOCK();
+	JNU_ThrowOutOfMemoryError(env, "Cannot allocate bitmask for mask");
+	return;
     }
     dstScan = image->bytes_per_line;
     image->data = malloc(dstScan * height);
     if (image->data == NULL) {
-        XFree(image);
-        AWT_UNLOCK();
-        JNU_ThrowOutOfMemoryError(env, "Cannot allocate bitmask for mask");
-        return;
+	XFree(image);
+	AWT_UNLOCK();
+	JNU_ThrowOutOfMemoryError(env, "Cannot allocate bitmask for mask");
+	return;
     }
     pDst = (unsigned char *)image->data;
 
@@ -281,107 +281,107 @@ Java_sun_java2d_x11_X11PMBlitLoops_updateBitmask
 
     rowCount = height;
     if (isICM) {
-        unsigned char *pSrc;
-        jint *srcLut;
+	unsigned char *pSrc;
+	jint *srcLut;
 
-        srcScan = srcInfo.scanStride;
-        srcLut = srcInfo.lutBase;
-        pSrc = (unsigned char *)srcInfo.rasBase;
+	srcScan = srcInfo.scanStride;
+	srcLut = srcInfo.lutBase;
+	pSrc = (unsigned char *)srcInfo.rasBase;
 
-        if (image->bitmap_bit_order == MSBFirst) {
-            do {
-                int x = 0, bx = 0;
-                unsigned int pix = 0;
-                unsigned int bit = 0x80;
-                unsigned char *srcPixel = pSrc;
-                do {
-                    if (bit == 0) {
-                        pDst[bx++] = (unsigned char)pix;
-                        pix = 0;
-                        bit = 0x80;
-                    }
+	if (image->bitmap_bit_order == MSBFirst) {
+	    do {
+		int x = 0, bx = 0;
+		unsigned int pix = 0;
+		unsigned int bit = 0x80;
+		unsigned char *srcPixel = pSrc;
+		do {
+		    if (bit == 0) {
+			pDst[bx++] = (unsigned char)pix;
+			pix = 0;
+			bit = 0x80;
+		    }
                     pix |= bit & (srcLut[*srcPixel++] >> 31);
-                    bit >>= 1;
-                } while (++x < width);
-                pDst[bx] = (unsigned char)pix;
-                pDst += dstScan;
-                pSrc = (unsigned char *) (((intptr_t)pSrc) + srcScan);
-            } while (--rowCount > 0);
-        } else {
-            do {
-                int x = 0, bx = 0;
-                unsigned int pix = 0;
-                unsigned int bit = 1;
-                unsigned char *srcPixel = pSrc;
-                do {
-                    if ((bit >> 8) != 0) {
-                        pDst[bx++] = (unsigned char) pix;
-                        pix = 0;
-                        bit = 1;
-                    }
+		    bit >>= 1;
+		} while (++x < width);
+		pDst[bx] = (unsigned char)pix;
+		pDst += dstScan;
+		pSrc = (unsigned char *) (((intptr_t)pSrc) + srcScan);
+	    } while (--rowCount > 0);
+	} else {
+	    do {
+		int x = 0, bx = 0;
+		unsigned int pix = 0;
+		unsigned int bit = 1;
+		unsigned char *srcPixel = pSrc;
+		do {
+		    if ((bit >> 8) != 0) {
+			pDst[bx++] = (unsigned char) pix;
+			pix = 0;
+			bit = 1;
+		    }
                     pix |= bit & (srcLut[*srcPixel++] >> 31);
-                    bit <<= 1;
-                } while (++x < width);
-                pDst[bx] = (unsigned char) pix;
-                pDst += dstScan;
-                pSrc = (unsigned char *) (((intptr_t)pSrc) + srcScan);
-            } while (--rowCount > 0);
-        }
+		    bit <<= 1;
+		} while (++x < width);
+		pDst[bx] = (unsigned char) pix;
+		pDst += dstScan;
+		pSrc = (unsigned char *) (((intptr_t)pSrc) + srcScan);
+	    } while (--rowCount > 0);
+	}
     } else /*DCM with ARGB*/ {
-        unsigned int *pSrc;
+	unsigned int *pSrc;
 
-        /* this is a number of pixels in a row, not number of bytes */
-        srcScan = srcInfo.scanStride;
-        pSrc = (unsigned int *)srcInfo.rasBase;
+	/* this is a number of pixels in a row, not number of bytes */
+	srcScan = srcInfo.scanStride;
+	pSrc = (unsigned int *)srcInfo.rasBase;
 
-        if (image->bitmap_bit_order == MSBFirst) {
-            do {
-                int x = 0, bx = 0;
-                unsigned int pix = 0;
-                unsigned int bit = 0x80;
-                int *srcPixel = (int *) pSrc;
-                do {
-                    if (bit == 0) {
-                        /* next word */
-                        pDst[bx++] = (unsigned char)pix;
-                        pix = 0;
-                        bit = 0x80;
-                    }
-                    if (*srcPixel++ & 0xff000000) {
-                        /* if src pixel is opaque, set the bit in the bitmap */
-                        pix |= bit;
-                    }
-                    bit >>= 1;
-                } while (++x < width);
-                /* last pixels in a row */
-                pDst[bx] = (unsigned char)pix;
+	if (image->bitmap_bit_order == MSBFirst) {
+	    do {
+		int x = 0, bx = 0;
+		unsigned int pix = 0;
+		unsigned int bit = 0x80;
+		int *srcPixel = (int *) pSrc;
+		do {
+		    if (bit == 0) {
+			/* next word */
+			pDst[bx++] = (unsigned char)pix;
+			pix = 0;
+			bit = 0x80;
+		    }
+		    if (*srcPixel++ & 0xff000000) {
+			/* if src pixel is opaque, set the bit in the bitmap */
+			pix |= bit;
+		    }
+		    bit >>= 1;
+		} while (++x < width);
+		/* last pixels in a row */
+		pDst[bx] = (unsigned char)pix;
 
-                pDst += dstScan;
-                pSrc = (unsigned int *) (((intptr_t)pSrc) + srcScan);
-            } while (--rowCount > 0);
-        } else {
-            do {
-                int x = 0, bx = 0;
-                unsigned int pix = 0;
-                unsigned int bit = 1;
-                int *srcPixel = (int *) pSrc;
-                do {
-                    if ((bit >> 8) != 0) {
-                        pDst[bx++] = (unsigned char)pix;
-                        pix = 0;
-                        bit = 1;
-                    }
-                    if (*srcPixel++ & 0xff000000) {
-                        /* if src pixel is opaque, set the bit in the bitmap */
-                        pix |= bit;
-                    }
-                    bit <<= 1;
-                } while (++x < width);
-                pDst[bx] = (unsigned char)pix;
-                pDst += dstScan;
-                pSrc = (unsigned int *) (((intptr_t)pSrc) + srcScan);
-            } while (--rowCount > 0);
-        }
+		pDst += dstScan;
+		pSrc = (unsigned int *) (((intptr_t)pSrc) + srcScan);
+	    } while (--rowCount > 0);
+	} else {
+	    do {
+		int x = 0, bx = 0;
+		unsigned int pix = 0;
+		unsigned int bit = 1;
+		int *srcPixel = (int *) pSrc;
+		do {
+		    if ((bit >> 8) != 0) {
+			pDst[bx++] = (unsigned char)pix;
+			pix = 0;
+			bit = 1;
+		    }
+		    if (*srcPixel++ & 0xff000000) {
+			/* if src pixel is opaque, set the bit in the bitmap */
+			pix |= bit;
+		    }
+		    bit <<= 1;
+		} while (++x < width);
+		pDst[bx] = (unsigned char)pix;
+		pDst += dstScan;
+		pSrc = (unsigned int *) (((intptr_t)pSrc) + srcScan);
+	    } while (--rowCount > 0);
+	}
     }
     SurfaceData_InvokeRelease(env, srcOps, &srcInfo);
     SurfaceData_InvokeUnlock(env, srcOps, &srcInfo);
@@ -390,7 +390,7 @@ Java_sun_java2d_x11_X11PMBlitLoops_updateBitmask
     XSetForeground(awt_display, xgc, 1);
     XSetBackground(awt_display, xgc, 0);
     XPutImage(awt_display, xsdo->bitmask, xgc,
-              image, 0, 0, 0, 0, width, height);
+	      image, 0, 0, 0, 0, width, height);
 
     XFreeGC(awt_display, xgc);
     XDestroyImage(image);

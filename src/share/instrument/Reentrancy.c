@@ -106,7 +106,7 @@ tryToAcquireReentrancyToken(    jvmtiEnv *  jvmtienv,
     jboolean    result      = JNI_FALSE;
     jvmtiError  error       = JVMTI_ERROR_NONE;
     void *      storedValue = NULL;
-
+    
     error = (*jvmtienv)->GetThreadLocalStorage(
                                 jvmtienv,
                                 thread,
@@ -151,10 +151,11 @@ releaseReentrancyToken(         jvmtiEnv *  jvmtienv,
                     thread,
                     JPLIS_CURRENTLY_INSIDE_TOKEN);
 #endif
-
+    
     error = confirmingTLSSet(   jvmtienv,
                                 thread,
                                 JPLIS_CURRENTLY_OUTSIDE_TOKEN);
     jplis_assert(error == JVMTI_ERROR_NONE);
 
 }
+

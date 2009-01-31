@@ -31,11 +31,12 @@ import java.io.IOException;
  * Native seed generator for Unix systems. Inherit everything from
  * URLSeedGenerator.
  *
+ * @version %I%, %G%
  */
 class NativeSeedGenerator extends SeedGenerator.URLSeedGenerator {
 
     NativeSeedGenerator() throws IOException {
-        super();
+	super();
     }
 
 }

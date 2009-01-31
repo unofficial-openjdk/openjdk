@@ -38,7 +38,7 @@ import java.awt.Composite;
 
 /**
  * X11PMBlitBgLoops
- *
+ * 
  * This class accelerates Blits between two surfaces of types *PM.  Since
  * the onscreen surface is of that type and some of the offscreen surfaces
  * may be of that type (if they were created via X11OffScreenImage), then
@@ -47,43 +47,43 @@ import java.awt.Composite;
 */
 public class X11PMBlitBgLoops extends BlitBg {
 
-    public static void register()
+    public static void register() 
     {
         GraphicsPrimitive[] primitives = {
-            new X11PMBlitBgLoops(X11SurfaceData.IntBgrX11_BM,
-                                 X11SurfaceData.IntBgrX11),
-            new X11PMBlitBgLoops(X11SurfaceData.IntRgbX11_BM,
-                                 X11SurfaceData.IntRgbX11),
-            new X11PMBlitBgLoops(X11SurfaceData.ThreeByteBgrX11_BM,
-                                 X11SurfaceData.ThreeByteBgrX11),
-            new X11PMBlitBgLoops(X11SurfaceData.ThreeByteRgbX11_BM,
-                                 X11SurfaceData.ThreeByteRgbX11),
-            new X11PMBlitBgLoops(X11SurfaceData.ByteIndexedX11_BM,
-                                 X11SurfaceData.ByteIndexedOpaqueX11),
-            new X11PMBlitBgLoops(X11SurfaceData.ByteGrayX11_BM,
-                                 X11SurfaceData.ByteGrayX11),
-            new X11PMBlitBgLoops(X11SurfaceData.Index8GrayX11_BM,
-                                 X11SurfaceData.Index8GrayX11),
-            new X11PMBlitBgLoops(X11SurfaceData.UShort555RgbX11_BM,
-                                 X11SurfaceData.UShort555RgbX11),
-            new X11PMBlitBgLoops(X11SurfaceData.UShort565RgbX11_BM,
-                                 X11SurfaceData.UShort565RgbX11),
-            new X11PMBlitBgLoops(X11SurfaceData.UShortIndexedX11_BM,
-                                 X11SurfaceData.UShortIndexedX11),
-        };
-        GraphicsPrimitiveMgr.register(primitives);
+	    new X11PMBlitBgLoops(X11SurfaceData.IntBgrX11_BM,
+				 X11SurfaceData.IntBgrX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.IntRgbX11_BM,
+				 X11SurfaceData.IntRgbX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.ThreeByteBgrX11_BM,
+				 X11SurfaceData.ThreeByteBgrX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.ThreeByteRgbX11_BM,
+				 X11SurfaceData.ThreeByteRgbX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.ByteIndexedX11_BM,
+				 X11SurfaceData.ByteIndexedOpaqueX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.ByteGrayX11_BM,
+				 X11SurfaceData.ByteGrayX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.Index8GrayX11_BM,
+				 X11SurfaceData.Index8GrayX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.UShort555RgbX11_BM,
+				 X11SurfaceData.UShort555RgbX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.UShort565RgbX11_BM,
+				 X11SurfaceData.UShort565RgbX11),
+	    new X11PMBlitBgLoops(X11SurfaceData.UShortIndexedX11_BM,
+				 X11SurfaceData.UShortIndexedX11),
+	};
+	GraphicsPrimitiveMgr.register(primitives);
     }
 
-    public X11PMBlitBgLoops(SurfaceType srcType, SurfaceType dstType)
+    public X11PMBlitBgLoops(SurfaceType srcType, SurfaceType dstType) 
     {
-        super(srcType, CompositeType.SrcNoEa, dstType);
+	super(srcType, CompositeType.SrcNoEa, dstType);
     }
 
     public void BlitBg(SurfaceData src, SurfaceData dst,
-                       Composite comp, Region clip, Color bgColor,
-                       int sx, int sy,
-                       int dx, int dy,
-                       int w, int h)
+		       Composite comp, Region clip, Color bgColor, 
+		       int sx, int sy,
+		       int dx, int dy,
+		       int w, int h) 
     {
         SunToolkit.awtLock();
         try {
@@ -104,8 +104,8 @@ public class X11PMBlitBgLoops extends BlitBg {
      * accelerated Blit.
      */
     private native void nativeBlitBg(long srcData, long dstData,
-                                     long xgc, int pixel,
-                                     int sx, int sy,
-                                     int dx, int dy,
+                                     long xgc, int pixel, 
+                                     int sx, int sy, 
+                                     int dx, int dy, 
                                      int w, int h);
 }

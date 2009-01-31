@@ -41,7 +41,7 @@ extern struct MComponentPeerIDs mComponentPeerIDs;
 typedef enum {
     NO_PROTOCOL,
     XDND_PROTOCOL,
-    MOTIF_DND_PROTOCOL
+    MOTIF_DND_PROTOCOL 
 } Protocol;
 
 /* XDnD constants */
@@ -60,8 +60,8 @@ typedef enum {
 #define MOTIF_DND_PROTOCOL_VERSION 0
 
 /* Suuported protocol styles */
-#define MOTIF_PREFER_PREREGISTER_STYLE    2
-#define MOTIF_PREFER_DYNAMIC_STYLE        4
+#define	MOTIF_PREFER_PREREGISTER_STYLE    2
+#define	MOTIF_PREFER_DYNAMIC_STYLE        4
 #define MOTIF_DYNAMIC_STYLE               5
 #define MOTIF_PREFER_RECEIVER_STYLE       6
 
@@ -72,7 +72,7 @@ typedef enum {
 
 /* Info structure sizes */
 #define MOTIF_INITIATOR_INFO_SIZE         8
-#define MOTIF_RECEIVER_INFO_SIZE         16
+#define MOTIF_RECEIVER_INFO_SIZE         16 
 
 /* Message flags masks and shifts */
 #define MOTIF_DND_ACTION_MASK        0x000F
@@ -94,10 +94,10 @@ typedef enum {
 #define OPERATION_CHANGED  8
 
 /* drop action constants */
-#define MOTIF_DND_NOOP  0L
-#define MOTIF_DND_MOVE  (1L << 0)
-#define MOTIF_DND_COPY  (1L << 1)
-#define MOTIF_DND_LINK  (1L << 2)
+#define	MOTIF_DND_NOOP	0L
+#define MOTIF_DND_MOVE 	(1L << 0)
+#define MOTIF_DND_COPY	(1L << 1)
+#define MOTIF_DND_LINK	(1L << 2)
 
 /* drop site status constants */
 #define MOTIF_NO_DROP_SITE      1
@@ -147,23 +147,23 @@ extern unsigned char MOTIF_BYTE_ORDER;
 /* Motif DnD macros */
 
 #define SWAP4BYTES(l) {\
-        struct {\
-          unsigned t :32;\
-        } bit32;\
-        char n, *tp = (char *) &bit32;\
-        bit32.t = l;\
-        n = tp[0]; tp[0] = tp[3]; tp[3] = n;\
-        n = tp[1]; tp[1] = tp[2]; tp[2] = n;\
+	struct {\
+	  unsigned t :32;\
+	} bit32;\
+        char n,	*tp = (char *) &bit32;\
+	bit32.t = l;\
+	n = tp[0]; tp[0] = tp[3]; tp[3] = n;\
+	n = tp[1]; tp[1] = tp[2]; tp[2] = n;\
         l = bit32.t;\
 }
 
 #define SWAP2BYTES(s) {\
-        struct {\
-          unsigned t :16;\
-        } bit16;\
+	struct {\
+	  unsigned t :16;\
+	} bit16;\
         char n, *tp = (char *) &bit16;\
-        bit16.t = s;\
-        n = tp[0]; tp[0] = tp[1]; tp[1] = n;\
+	bit16.t = s;\
+	n = tp[0]; tp[0] = tp[1]; tp[1] = n;\
         s = bit16.t;\
 }
 
@@ -180,28 +180,28 @@ Boolean awt_dnd_ds_init(Display* display);
 Window get_awt_root_window();
 
 /**************** checked_X* wrappers *****************************************/
-unsigned char
+unsigned char 
 checked_XChangeProperty(Display* display, Window w, Atom property, Atom type,
-                        int format, int mode, unsigned char* data,
-                        int nelements);
+			int format, int mode, unsigned char* data, 
+			int nelements);
+
+unsigned char 
+checked_XGetWindowProperty(Display* display, Window w, Atom property, 
+			   long long_offset, long long_length, Bool delete, 
+			   Atom req_type, Atom* actual_type_return, 
+			   int* actual_format_return, 
+			   unsigned long* nitems_return, 
+			   unsigned long* bytes_after_return,
+			   unsigned char** prop_return);
 
 unsigned char
-checked_XGetWindowProperty(Display* display, Window w, Atom property,
-                           long long_offset, long long_length, Bool delete,
-                           Atom req_type, Atom* actual_type_return,
-                           int* actual_format_return,
-                           unsigned long* nitems_return,
-                           unsigned long* bytes_after_return,
-                           unsigned char** prop_return);
+checked_XSendEvent(Display* display, Window w, Bool propagate, long event_mask, 
+		   XEvent* event_send);
 
 unsigned char
-checked_XSendEvent(Display* display, Window w, Bool propagate, long event_mask,
-                   XEvent* event_send);
-
-unsigned char
-checked_XTranslateCoordinates(Display* display, Window src_w, Window dest_w,
-                              int src_x, int src_y, int* dest_x_return,
-                              int* dest_y_return, Window* child_return);
+checked_XTranslateCoordinates(Display* display, Window src_w, Window dest_w, 
+			      int src_x, int src_y, int* dest_x_return,
+			      int* dest_y_return, Window* child_return);
 
 unsigned char
 checked_XSelectInput(Display* display, Window w, long event_mask);
@@ -227,7 +227,7 @@ Window get_motif_window(Display* dpy);
 
 int get_index_for_target_list(Display* dpy, Atom* targets, unsigned int num_targets);
 void get_target_list_for_index(Display* dpy, int index, Atom** targets, unsigned
-                               int* num_targets);
+			       int* num_targets);
 
 /***************************************************************************************/
 

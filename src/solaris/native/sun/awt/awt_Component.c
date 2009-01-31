@@ -53,8 +53,8 @@
 #include <Xm/ManagerP.h>
 #include <Xm/ComboBox.h>
 
-/* CanvasType widgets: Frame, Dialog, Window, Panel, Canvas,
- *                     &  all lightweights (Component, Container)
+/* CanvasType widgets: Frame, Dialog, Window, Panel, Canvas, 
+ *                     &  all lightweights (Component, Container) 
  */
 #define IsCanvasTypeWidget(w) \
         XtIsSubclass(w, xmDrawingAreaWidgetClass) ||\
@@ -101,7 +101,7 @@ Java_java_awt_Component_initIDs
     componentIDs.foreground =
         (*env)->GetFieldID(env, cls, "foreground", "Ljava/awt/Color;");
     componentIDs.graphicsConfig =
-        (*env)->GetFieldID(env, cls, "graphicsConfig",
+        (*env)->GetFieldID(env, cls, "graphicsConfig", 
                            "Ljava/awt/GraphicsConfiguration;");
     componentIDs.name =
         (*env)->GetFieldID(env, cls, "name", "Ljava/lang/String;");
@@ -109,26 +109,26 @@ Java_java_awt_Component_initIDs
     /* Use _NoClientCode() methods for trusted methods, so that we
      *  know that we are not invoking client code on trusted threads
      */
-    componentIDs.getParent =
+    componentIDs.getParent = 
         (*env)->GetMethodID(env, cls, "getParent_NoClientCode",
                             "()Ljava/awt/Container;");
 
-    componentIDs.getLocationOnScreen =
+    componentIDs.getLocationOnScreen = 
         (*env)->GetMethodID(env, cls, "getLocationOnScreen_NoTreeLock",
                             "()Ljava/awt/Point;");
 
-    componentIDs.resetGCMID =
+    componentIDs.resetGCMID = 
         (*env)->GetMethodID(env, cls, "resetGC", "()V");
 
     keyclass = (*env)->FindClass(env, "java/awt/event/KeyEvent");
     DASSERT (keyclass != NULL);
 
-    componentIDs.isProxyActive =
-        (*env)->GetFieldID(env, keyclass, "isProxyActive",
+    componentIDs.isProxyActive = 
+        (*env)->GetFieldID(env, keyclass, "isProxyActive", 
                            "Z");
 
     componentIDs.appContext =
-        (*env)->GetFieldID(env, cls, "appContext",
+        (*env)->GetFieldID(env, cls, "appContext", 
                            "Lsun/awt/AppContext;");
 
     (*env)->DeleteLocalRef(env, keyclass);
@@ -158,7 +158,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_initIDs
     mComponentPeerIDs.jniGlobalRef =
         (*env)->GetFieldID(env, cls, "jniGlobalRef", "J");
     mComponentPeerIDs.graphicsConfig =
-        (*env)->GetFieldID(env, cls, "graphicsConfig",
+        (*env)->GetFieldID(env, cls, "graphicsConfig", 
                            "Lsun/awt/X11GraphicsConfig;");
     mComponentPeerIDs.drawState =
         (*env)->GetFieldID(env, cls, "drawState", "I");
@@ -180,13 +180,13 @@ JNIEXPORT void JNICALL
 Java_java_awt_Container_initIDs
 (JNIEnv *env, jclass cls)
 {
-    containerIDs.layoutMgr =
+    containerIDs.layoutMgr = 
         (*env)->GetFieldID(env, cls, "layoutMgr", "Ljava/awt/LayoutManager;");
 
-    containerIDs.getComponents =
+    containerIDs.getComponents = 
         (*env)->GetMethodID(env, cls, "getComponents_NoClientCode",
                             "()[Ljava/awt/Component;");
-    containerIDs.findComponentAt =
+    containerIDs.findComponentAt = 
         (*env)->GetMethodID(env, cls, "findComponentAt",
                             "(IIZ)Ljava/awt/Component;");
 }
@@ -204,7 +204,7 @@ Java_java_awt_Container_initIDs
  * compute it ourselves based on the font metrics for all the platform
  * fonts given Java font maps onto.  Every time we set XmNfontList we
  * should set XmNindicatorSize as well.
- *
+ * 
  * The logic is in awt_computeIndicatorSize that just compute the
  * arithmetic mean of platform fonts by now.  HIE should take a look
  * at this.
@@ -222,7 +222,7 @@ struct changeFontInfo {
     jobject    fObj;
 };
 
-static void
+static void 
 changeFont(Widget w, void *info)
 {
     struct changeFontInfo *f = (struct changeFontInfo *)info;
@@ -291,13 +291,13 @@ changeFont(Widget w, void *info)
     }
 }
 
-static void
+static void 
 changeForeground(Widget w, void *fg)
 {
     XtVaSetValues(w, XmNforeground, fg, NULL);
 }
 
-static void
+static void 
 changeBackground(Widget w, void *bg)
 {
     Pixel fg;
@@ -327,14 +327,14 @@ AwtGraphicsConfigDataPtr
 getGraphicsConfigFromComponentPeer(JNIEnv *env, jobject this) {
     AwtGraphicsConfigDataPtr adata;
     jobject gc_object;
-
+    
     /* GraphicsConfiguration object of MComponentPeer */
     gc_object = (*env)->GetObjectField(env, this,
                                        mComponentPeerIDs.graphicsConfig);
 
-    if (gc_object != NULL) {
+    if (gc_object != NULL) { 
         adata = (AwtGraphicsConfigDataPtr)
-            JNU_GetLongFieldAsPtr(env, gc_object,
+            JNU_GetLongFieldAsPtr(env, gc_object, 
                                   x11GraphicsConfigIDs.aData);
     } else {
         adata = getDefaultConfig(DefaultScreen(awt_display));
@@ -345,35 +345,35 @@ getGraphicsConfigFromComponentPeer(JNIEnv *env, jobject this) {
 
 AwtGraphicsConfigDataPtr
 copyGraphicsConfigToPeer(JNIEnv *env, jobject this) {
-
+    
     jobject component_object, gc_object;
     AwtGraphicsConfigDataPtr adata;
-
+    
     /**
      * Copy the GraphicsConfiguration object from Component object to
      * MComponentPeer object.
      */
-    component_object = (*env)->GetObjectField(env, this,
+    component_object = (*env)->GetObjectField(env, this, 
                                               mComponentPeerIDs.target);
     /* GraphicsConfiguration object of Component */
     gc_object = (JNU_CallMethodByName(env, NULL, component_object,
                                       "getGraphicsConfiguration",
                                       "()Ljava/awt/GraphicsConfiguration;")).l;
-
+    
     if (gc_object != NULL) {
         /* Set graphicsConfig field of MComponentPeer */
         (*env)->SetObjectField (env, this,
                                 mComponentPeerIDs.graphicsConfig,
                                 gc_object);
         adata = (AwtGraphicsConfigDataPtr)
-            JNU_GetLongFieldAsPtr(env, gc_object,
+            JNU_GetLongFieldAsPtr(env, gc_object, 
                                   x11GraphicsConfigIDs.aData);
     } else {
         /* Component was not constructed with a GraphicsConfiguration
            object */
         adata = getDefaultConfig(DefaultScreen(awt_display));
     }
-
+    
     return adata;
 }
 
@@ -385,7 +385,7 @@ copyGraphicsConfigToPeer(JNIEnv *env, jobject this) {
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MComponentPeer_getNativeColor
 (JNIEnv *env, jobject this, jobject color, jobject gc_object) {
     AwtGraphicsConfigDataPtr adata;
-    adata = (AwtGraphicsConfigDataPtr) JNU_GetLongFieldAsPtr(env, gc_object,
+    adata = (AwtGraphicsConfigDataPtr) JNU_GetLongFieldAsPtr(env, gc_object, 
                                                              x11GraphicsConfigIDs.aData);
     return awtJNI_GetColorForVis(env, color, adata);
 }
@@ -396,7 +396,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MComponentPeer_getNativeColor
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pInitialize
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
     Widget parent;
@@ -411,11 +411,11 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pInitialize
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef);
 
     adata = copyGraphicsConfigToPeer(env, this);
-
+   
     AWT_LOCK();
-
+ 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+    
     cdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (JNU_IsNull(env, cdata) || (cdata == NULL)) {
@@ -423,7 +423,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pInitialize
         AWT_UNLOCK();
         return;
     }
-    /* Allow FileDialog to have its own traversal policy because
+    /* Allow FileDialog to have its own traversal policy because 
      * it doesn't interfer with our.
      */
     if (XtIsSubclass(cdata->widget, xmFileSelectionBoxWidgetClass)) {
@@ -436,22 +436,22 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pInitialize
                   XmNscreen, ScreenOfDisplay(awt_display,
                                              adata->awt_visInfo.screen),
                   /**
-                   * From now we keep all but the focus owner widget unable
+                   * From now we keep all but the focus owner widget unable 
                    * to receive focus. This will prevent Motif from unexpected
                    * focus transfers.
                    */
-                  XmNtraversalOn, initialTraversal,
+                  XmNtraversalOn, initialTraversal, 
                   NULL);
 
 
     /* For all but canvas-style components, pre-process
      * mouse and keyboard events (which means posting them
-     * to the Java EventQueue before dispatching them to Xt).
-     * For canvas-style components ONLY pre-process mouse events
-     * because the input-method currently relies on key events
+     * to the Java EventQueue before dispatching them to Xt).  
+     * For canvas-style components ONLY pre-process mouse events 
+     * because the input-method currently relies on key events 
      * being processed by Xt first.
      */
-    awtMask = java_awt_AWTEvent_MOUSE_EVENT_MASK |
+    awtMask = java_awt_AWTEvent_MOUSE_EVENT_MASK | 
         java_awt_AWTEvent_MOUSE_MOTION_EVENT_MASK;
     xtMask = ExposureMask | FocusChangeMask;
 
@@ -501,7 +501,7 @@ void restack(Widget parent) {
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pShow
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
 
@@ -525,7 +525,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pShow
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pHide
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
 
@@ -548,7 +548,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pHide
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pEnable
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
 
@@ -570,7 +570,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pEnable
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pDisable
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
 
@@ -622,7 +622,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pReshape
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pDispose
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
 
@@ -656,7 +656,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pDispose
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pMakeCursorVisible
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     struct ComponentData *cdata;
 
@@ -828,7 +828,7 @@ Java_sun_awt_motif_MComponentPeer_pGetLocationOnScreen2(
  * Method:    getParent_NoClientCode
  * Signature: (Ljava/awt/Component)Ljava/awt/Container;
  *
- * NOTE: This method may be called by privileged threads.
+ * NOTE: This method may be called by privileged threads. 
  *       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
  */
 JNIEXPORT jobject JNICALL Java_sun_awt_motif_MComponentPeer_getParent_1NoClientCode
@@ -848,7 +848,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MComponentPeer_getParent_1NoClientC
  * Signature: (Ljava/awt/Container)[Ljava/awt/Component;
  *               REMIND: Signature is incorrect for returned array value
  *
- * NOTE: This method may be called by privileged threads.
+ * NOTE: This method may be called by privileged threads. 
  *       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
  */
 JNIEXPORT jobjectArray JNICALL Java_sun_awt_motif_MComponentPeer_getComponents_1NoClientCode
@@ -867,7 +867,7 @@ JNIEXPORT jobjectArray JNICALL Java_sun_awt_motif_MComponentPeer_getComponents_1
  * Signature: (Ljava/awt/Color;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetForeground
-(JNIEnv *env, jobject this, jobject c)
+(JNIEnv *env, jobject this, jobject c) 
 {
     struct ComponentData *bdata;
     Pixel color;
@@ -885,7 +885,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetForeground
         AWT_UNLOCK();
         return;
     }
-
+    
     adata = getGraphicsConfigFromComponentPeer(env, this);
 
     color = (Pixel) awtJNI_GetColorForVis (env, c, adata);
@@ -899,7 +899,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetForeground
  * Signature: (Ljava/awt/Color;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetBackground
-(JNIEnv *env, jobject this, jobject c)
+(JNIEnv *env, jobject this, jobject c) 
 {
     struct ComponentData *bdata;
     Pixel color;
@@ -934,7 +934,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetBackground
  * Signature: (Ljava/awt/Color;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetScrollbarBackground
-(JNIEnv *env, jobject this, jobject c)
+(JNIEnv *env, jobject this, jobject c) 
 {
     struct ComponentData *bdata;
     Pixel color;
@@ -991,7 +991,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetScrollbarBackground
  * Signature: (Ljava/awt/Color;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetInnerForeground
-(JNIEnv *env, jobject this, jobject c)
+(JNIEnv *env, jobject this, jobject c) 
 {
     struct ComponentData *bdata;
     Pixel color;
@@ -1022,7 +1022,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetInnerForeground
  * Signature: (Ljava/awt/Font;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetFont
-(JNIEnv *env, jobject this, jobject f)
+(JNIEnv *env, jobject this, jobject f) 
 {
     struct ComponentData *cdata;
 
@@ -1046,7 +1046,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetFont
     finfo.env = env;
     finfo.fObj = f;
     awt_util_mapChildren(cdata->widget, changeFont, 1, (void *)&finfo);
-    if (!finfo.error && finfo.fontList != NULL) {
+    if (!finfo.error && finfo.fontList != NULL) { 
         XmFontListFree(finfo.fontList);
     }
 
@@ -1078,7 +1078,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_setTargetBackground
  * Signature: (Ljava/awt/Cursor;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetCursor
-(JNIEnv *env, jobject this, jobject cursor)
+(JNIEnv *env, jobject this, jobject cursor) 
 {
     Cursor xcursor;
     struct ComponentData *cdata;
@@ -1104,7 +1104,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_pSetCursor
  * Signature: (Ljava/awt/AWTEvent;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_nativeHandleEvent
-(JNIEnv *env, jobject this, jobject event)
+(JNIEnv *env, jobject this, jobject event) 
 {
     extern void awt_modify_KeyEvent(JNIEnv *env, XEvent * xevent, jobject jevent);
     jbyteArray array;
@@ -1119,7 +1119,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_nativeHandleEvent
 
     consumed = (*env)->GetBooleanField(env, event, awtEventIDs.consumed);
 
-    /*
+    /*    
      * Fix for bug 4280561
      *
      * If a menu is up, we must dispatch all XEvents, to allow
@@ -1255,7 +1255,7 @@ void processTree(Widget from, Widget to, Boolean action) {
     // Process parents list. Find common part which is usually doesn't
     // require changes. At the exit of the cycle index will point
     // to the first widget which requeires the change.
-
+    
     if (from != NULL && to != NULL) {
         do {
             if (index >= count_from-1 || index >= count_to-1) {
@@ -1266,7 +1266,7 @@ void processTree(Widget from, Widget to, Boolean action) {
                 if (XtIsShell(parents_from[index])) {
                     index++;
                     continue;
-                }
+                }                        
                 if (action) {
                     if (getTraversal(parents_from[index])) {
                         index++;
@@ -1282,7 +1282,7 @@ void processTree(Widget from, Widget to, Boolean action) {
         } while (True);
     }
 
-
+    
     if (action) { // enable the tree starting from uncommon part till 'to'
         if (to != NULL) {
             while (index < count_to - 1) {
@@ -1304,7 +1304,7 @@ void processTree(Widget from, Widget to, Boolean action) {
             index++;
         }
         while (index < count_from - 1) {
-            if (!XmIsGadget(parents_from[index]) && !XtIsShell(parents_from[index])) {
+            if (!XmIsGadget(parents_from[index]) && !XtIsShell(parents_from[index])) {                
                 setTraversal(parents_from[index], False);
             }
             index++;
@@ -1313,7 +1313,7 @@ void processTree(Widget from, Widget to, Boolean action) {
             setTraversal(parents_from[index], False);
         }
     }
-  skip_disable:
+  skip_disable:    
     free(parents_from);
     free(parents_to);
 }
@@ -1335,9 +1335,9 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
     jobject curPeer = NULL;
     Widget shell;
     Widget widgetToFocus = NULL;
-
+    
     AWT_LOCK();
-
+    
     bdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (bdata == NULL || bdata->widget == NULL) {
@@ -1377,7 +1377,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
         (*env)->DeleteLocalRef(env, target);
         return JNI_FALSE;
     }
-
+    
     DASSERT(retval == java_awt_KeyboardFocusManager_SNFH_SUCCESS_PROCEED);
 
     shell = getShellWidget(bdata->widget);
@@ -1392,10 +1392,10 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
     processTree(currentOwner, widgetToFocus, True);
 
     /*
-      Fix for bug 4157017: replace XmProcessTraversal with
+      Fix for bug 4157017: replace XmProcessTraversal with 
       XtSetKeyboardFocus because XmProcessTraversal does not allow
       focus to go to non-visible widgets.
-
+      
       (There is a corresponding change to awt_MToolkit.c:dispatchToWidget)
 
       I found a last minute problem with this fix i.e. it broke the test
@@ -1410,12 +1410,12 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
     if (!result)
     {
         Widget w = widgetToFocus;
-
+        
         shell = getShellWidget(w);
         XtSetKeyboardFocus(shell, w);
     }
     /* end 4157017 */
-
+    
     // Because Motif focus callbacks are disabled we need to generate
     // the required events by ourselves.
     // First, check if the current focused widget has the entry in focus
@@ -1427,7 +1427,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
             currentOwner = findTopLevelByShell(currentOwner);
             if (currentOwner != NULL) {
                 curPeer = findPeer(&currentOwner);
-            }
+            }        
         }
         if (curPeer != NULL) {
             curPeer = (*env)->GetObjectField(env, curPeer, mComponentPeerIDs.target);
@@ -1446,7 +1446,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
         }
     }
     awt_canvas_addToFocusList(target);
-
+    
     // If new and current focus owners are the same do not generate FOCUS_LOST
     // event because we don't expect it, but generate FOCUS_GAIN because we
     // wait for it.
@@ -1456,7 +1456,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MComponentPeer__1requestFocus
     }
     callFocusHandler(widgetToFocus, FocusIn, cause);
     (*env)->DeleteLocalRef(env, target);
-
+    
     AWT_FLUSH_UNLOCK();
     return JNI_TRUE;
 }
@@ -1529,7 +1529,7 @@ JNIEXPORT jlong JNICALL Java_sun_awt_motif_MComponentPeer_getWindow
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_restoreFocus
-(JNIEnv *env, jobject this)
+(JNIEnv *env, jobject this) 
 {
     jobject focus_peer;
     AWT_LOCK();
@@ -1547,21 +1547,21 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MComponentPeer_restoreFocus
             if (!result)
             {
                 XtSetKeyboardFocus(getShellWidget(widgetToFocus), widgetToFocus);
-            }
+            }        
         }
     }
     (*env)->DeleteLocalRef(env, focus_peer);
-
-    AWT_UNLOCK();
+   
+    AWT_UNLOCK(); 
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jboolean JNICALL 
 Java_sun_awt_motif_MComponentPeer_processSynchronousLightweightTransfer(
     JNIEnv * env, jclass cls, jobject heavyweight, jobject descendant,
     jboolean temporary, jboolean focusedWindowChangeAllowed, jlong time)
 {
     return (*env)->CallStaticBooleanMethod(env, keyboardFocusManagerIDs.keyboardFocusManagerCls,
-                                           keyboardFocusManagerIDs.processSynchronousTransferMID,
+                                           keyboardFocusManagerIDs.processSynchronousTransferMID,                                           
                                            heavyweight, descendant, temporary,
                                            focusedWindowChangeAllowed, time);
 }
@@ -1587,13 +1587,13 @@ Java_sun_awt_motif_MComponentPeer_getNativeFocusedWindow
 
 /**
  * Makes sure that child has correct index inside parent
- * Note: there was a short time when we were counting index in the
+ * Note: there was a short time when we were counting index in the 
  * opposite order when it seemed that X and Java z-order notions
  * are different. Now we know they are not: last component is
- * painted first and appears below all other components with
+ * painted first and appears below all other components with 
  * smaller indices.
  */
-void ensureIndex(Widget parent, Widget child, int index) {
+void ensureIndex(Widget parent, Widget child, int index) {    
     WidgetList children;
     int32_t num_children;
     int32_t i;
@@ -1630,11 +1630,11 @@ Java_sun_awt_motif_MPanelPeer_pEnsureIndex(JNIEnv * env, jobject this, jobject c
     struct ComponentData *cdata;
     Widget w_parent, w_child;
     AWT_LOCK();
-
+    
     cdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     w_parent = cdata->widget;
-
+    
     cdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env, child, mComponentPeerIDs.pData);
     w_child = cdata->widget;
@@ -1647,10 +1647,11 @@ Java_sun_awt_motif_MPanelPeer_pRestack(JNIEnv * env, jobject this) {
     struct ComponentData *cdata;
     Widget w_parent;
     AWT_LOCK();
-
+    
     cdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     w_parent = cdata->widget;
     restack(w_parent);
     AWT_UNLOCK();
 }
+

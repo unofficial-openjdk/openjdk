@@ -43,6 +43,7 @@ import java.util.Enumeration;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see CertificateException
  */
 public interface CertAttrSet<T> {
@@ -59,7 +60,7 @@ public interface CertAttrSet<T> {
      * that can be parsed by the <code>decode</code> method.
      *
      * @param out the OutputStream to encode the attribute to.
-     *
+     * 
      * @exception CertificateException on encoding or validity errors.
      * @exception IOException on other errors.
      */
@@ -71,7 +72,7 @@ public interface CertAttrSet<T> {
      *
      * @param name the name of the attribute (e.g. "x509.info.key")
      * @param obj the attribute object.
-     *
+     * 
      * @exception CertificateException on attribute handling errors.
      * @exception IOException on other errors.
      */
@@ -82,7 +83,7 @@ public interface CertAttrSet<T> {
      * Gets an attribute value for this CertAttrSet.
      *
      * @param name the name of the attribute to return.
-     *
+     * 
      * @exception CertificateException on attribute handling errors.
      * @exception IOException on other errors.
      */
@@ -93,7 +94,7 @@ public interface CertAttrSet<T> {
      * Deletes an attribute value from this CertAttrSet.
      *
      * @param name the name of the attribute to delete.
-     *
+     * 
      * @exception CertificateException on attribute handling errors.
      * @exception IOException on other errors.
      */
@@ -103,14 +104,14 @@ public interface CertAttrSet<T> {
     /**
      * Returns an enumeration of the names of the attributes existing within
      * this attribute.
-     *
+     * 
      * @return an enumeration of the attribute names.
      */
     Enumeration<T> getElements();
-
+ 
     /**
      * Returns the name (identifier) of this CertAttrSet.
-     *
+     * 
      * @return the name of this CertAttrSet.
      */
     String getName();

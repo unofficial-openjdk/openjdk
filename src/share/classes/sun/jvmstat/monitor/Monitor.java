@@ -32,6 +32,7 @@ import sun.management.counter.Variability;
  * Interface provided by Instrumentation Monitoring Objects.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public interface Monitor  {

@@ -55,7 +55,7 @@ extern jboolean awtLockInited;
 #define DEBUG_AWT_LOCK
 #endif
 
-/*
+/* 
  * The following locking primitives should be defined
  *
 #define AWT_LOCK()
@@ -70,9 +70,9 @@ extern jboolean awtLockInited;
  */
 extern void awt_output_flush();
 #define AWT_UNLOCK() AWT_FLUSH_UNLOCK()
-#define AWT_FLUSH_UNLOCK() do {                 \
-    awt_output_flush();                         \
-    AWT_NOFLUSH_UNLOCK();                       \
+#define AWT_FLUSH_UNLOCK() do {			\
+    awt_output_flush();				\
+    AWT_NOFLUSH_UNLOCK();			\
 } while (0)
 
 #define AWT_LOCK_IMPL() \
@@ -95,56 +95,56 @@ extern int awt_locked;
 extern char *lastF;
 extern int lastL;
 
-#define AWT_LOCK() do {                                                 \
+#define AWT_LOCK() do {							\
     if (!awtLockInited) {                                               \
-        jio_fprintf(stderr, "AWT lock error, awt_lock is null\n");      \
-    }                                                                   \
-    if (awt_locked < 0) {                                               \
-        jio_fprintf(stderr,                                             \
-                    "AWT lock error (%s,%d) (last held by %s,%d) %d\n", \
-                    __FILE__, __LINE__, lastF, lastL, awt_locked);      \
-    }                                                                   \
-    lastF = __FILE__;                                                   \
-    lastL = __LINE__;                                                   \
+	jio_fprintf(stderr, "AWT lock error, awt_lock is null\n");	\
+    }									\
+    if (awt_locked < 0) {						\
+	jio_fprintf(stderr,						\
+		    "AWT lock error (%s,%d) (last held by %s,%d) %d\n",	\
+		    __FILE__, __LINE__, lastF, lastL, awt_locked);	\
+    }									\
+    lastF = __FILE__;							\
+    lastL = __LINE__;							\
     AWT_LOCK_IMPL();                                                    \
-    ++awt_locked;                                                       \
+    ++awt_locked;							\
 } while (0)
 
-#define AWT_NOFLUSH_UNLOCK() do {                               \
-    lastF = "";                                                 \
-    lastL = -1;                                                 \
-    if (awt_locked < 1) {                                       \
-        jio_fprintf(stderr, "AWT unlock error (%s,%d,%d)\n",    \
-                    __FILE__, __LINE__, awt_locked);            \
-    }                                                           \
-    --awt_locked;                                               \
+#define AWT_NOFLUSH_UNLOCK() do {				\
+    lastF = "";							\
+    lastL = -1;							\
+    if (awt_locked < 1) {					\
+	jio_fprintf(stderr, "AWT unlock error (%s,%d,%d)\n",	\
+		    __FILE__, __LINE__, awt_locked);		\
+    }								\
+    --awt_locked;						\
     AWT_NOFLUSH_UNLOCK_IMPL();                                  \
 } while (0)
 
-#define AWT_WAIT(tm) do {                                       \
-    int old_lockcount = awt_locked;                             \
-    if (awt_locked < 1) {                                       \
-        jio_fprintf(stderr, "AWT wait error (%s,%d,%d)\n",      \
-                    __FILE__, __LINE__, awt_locked);            \
-    }                                                           \
-    awt_locked = 0;                                             \
+#define AWT_WAIT(tm) do {					\
+    int old_lockcount = awt_locked;				\
+    if (awt_locked < 1) {					\
+	jio_fprintf(stderr, "AWT wait error (%s,%d,%d)\n",	\
+		    __FILE__, __LINE__, awt_locked);		\
+    }								\
+    awt_locked = 0;						\
     AWT_WAIT_IMPL(tm);                                          \
-    awt_locked = old_lockcount;                                 \
+    awt_locked = old_lockcount;					\
 } while (0)
 
-#define AWT_NOTIFY() do {                                       \
-    if (awt_locked < 1) {                                       \
-        jio_fprintf(stderr, "AWT notify error (%s,%d,%d)\n",    \
-                    __FILE__, __LINE__, awt_locked);            \
-    }                                                           \
+#define AWT_NOTIFY() do {					\
+    if (awt_locked < 1) {					\
+	jio_fprintf(stderr, "AWT notify error (%s,%d,%d)\n",	\
+		    __FILE__, __LINE__, awt_locked);		\
+    }								\
     AWT_NOTIFY_IMPL();                                          \
 } while(0)
 
-#define AWT_NOTIFY_ALL() do {                                           \
-    if (awt_locked < 1) {                                               \
-        jio_fprintf(stderr, "AWT notify all error (%s,%d,%d)\n",        \
-                    __FILE__, __LINE__, awt_locked);                    \
-    }                                                                   \
+#define AWT_NOTIFY_ALL() do {						\
+    if (awt_locked < 1) {						\
+	jio_fprintf(stderr, "AWT notify all error (%s,%d,%d)\n",	\
+		    __FILE__, __LINE__, awt_locked);			\
+    }									\
     AWT_NOTIFY_ALL_IMPL();                                              \
 } while (0)
 
@@ -159,18 +159,18 @@ extern int lastL;
 #endif /* DEBUG_AWT_LOCK && !XAWT */
 
 #ifndef HEADLESS
-extern Display         *awt_display;            /* awt_GraphicsEnv.c */
-extern XtAppContext     awt_appContext;         /* awt_MToolkit.c */
+extern Display	       *awt_display;		/* awt_GraphicsEnv.c */
+extern XtAppContext	awt_appContext;		/* awt_MToolkit.c */
 extern Widget           awt_root_shell;
-extern Pixel            awt_defaultBg;
-extern Pixel            awt_defaultFg;
-extern int              awt_multiclick_time;    /* awt_MToolkit.c */
-extern int              awt_multiclick_smudge;  /* canvas.c */
-extern unsigned int     awt_MetaMask;           /* awt_MToolkit.c */
-extern unsigned int     awt_AltMask;
+extern Pixel		awt_defaultBg;
+extern Pixel		awt_defaultFg;
+extern int		awt_multiclick_time;	/* awt_MToolkit.c */
+extern int              awt_multiclick_smudge;	/* canvas.c */
+extern unsigned int	awt_MetaMask;		/* awt_MToolkit.c */
+extern unsigned int	awt_AltMask;
 extern unsigned int     awt_NumLockMask;
 extern unsigned int     awt_ModeSwitchMask;
-extern Cursor           awt_scrollCursor;       /* awt_MToolkit.c */
+extern Cursor           awt_scrollCursor;	/* awt_MToolkit.c */
 extern Boolean          awt_ModLockIsShiftLock;
 
 #endif /* !HEADLESS */

@@ -58,6 +58,7 @@
  * think of using this class unless your method's name appears below.
  *
  * @author Martin Buchholz
+ * @version %I%, %E%
  * @since 1.5
  */
 
@@ -69,156 +70,156 @@ import java.util.*;
 final class ProcessEnvironment extends HashMap<String,String>
 {
     private static String validateName(String name) {
-        // An initial `=' indicates a magic Windows variable name -- OK
-        if (name.indexOf('=', 1)   != -1 ||
-            name.indexOf('\u0000') != -1)
-            throw new IllegalArgumentException
-                ("Invalid environment variable name: \"" + name + "\"");
-        return name;
+	// An initial `=' indicates a magic Windows variable name -- OK
+	if (name.indexOf('=', 1)   != -1 ||
+	    name.indexOf('\u0000') != -1)
+	    throw new IllegalArgumentException
+		("Invalid environment variable name: \"" + name + "\"");
+	return name;
     }
 
     private static String validateValue(String value) {
-        if (value.indexOf('\u0000') != -1)
-            throw new IllegalArgumentException
-                ("Invalid environment variable value: \"" + value + "\"");
-        return value;
+	if (value.indexOf('\u0000') != -1)
+	    throw new IllegalArgumentException
+		("Invalid environment variable value: \"" + value + "\"");
+	return value;
     }
 
     private static String nonNullString(Object o) {
-        if (o == null)
-            throw new NullPointerException();
-        return (String) o;
+	if (o == null)
+	    throw new NullPointerException();
+	return (String) o;
     }
 
     public String put(String key, String value) {
-        return super.put(validateName(key), validateValue(value));
+	return super.put(validateName(key), validateValue(value));
     }
 
     public String get(Object key) {
-        return super.get(nonNullString(key));
+	return super.get(nonNullString(key));
     }
 
     public boolean containsKey(Object key) {
-        return super.containsKey(nonNullString(key));
+	return super.containsKey(nonNullString(key));
     }
 
     public boolean containsValue(Object value) {
-        return super.containsValue(nonNullString(value));
+	return super.containsValue(nonNullString(value));
     }
 
     public String remove(Object key) {
-        return super.remove(nonNullString(key));
+	return super.remove(nonNullString(key));
     }
 
     private static class CheckedEntry
-        implements Map.Entry<String,String>
+	implements Map.Entry<String,String>
     {
-        private final Map.Entry<String,String> e;
-        public CheckedEntry(Map.Entry<String,String> e) {this.e = e;}
-        public String getKey()   { return e.getKey();}
-        public String getValue() { return e.getValue();}
-        public String setValue(String value) {
-            return e.setValue(validateValue(value));
-        }
-        public String toString() { return getKey() + "=" + getValue();}
-        public boolean equals(Object o) {return e.equals(o);}
-        public int hashCode()    {return e.hashCode();}
+	private final Map.Entry<String,String> e;
+	public CheckedEntry(Map.Entry<String,String> e) {this.e = e;}
+	public String getKey()   { return e.getKey();}
+	public String getValue() { return e.getValue();}
+	public String setValue(String value) {
+	    return e.setValue(validateValue(value));
+	}
+	public String toString() { return getKey() + "=" + getValue();}
+	public boolean equals(Object o) {return e.equals(o);}
+	public int hashCode()    {return e.hashCode();}
     }
 
     private static class CheckedEntrySet
-        extends AbstractSet<Map.Entry<String,String>>
+	extends AbstractSet<Map.Entry<String,String>>
     {
-        private final Set<Map.Entry<String,String>> s;
-        public CheckedEntrySet(Set<Map.Entry<String,String>> s) {this.s = s;}
-        public int size()        {return s.size();}
-        public boolean isEmpty() {return s.isEmpty();}
-        public void clear()      {       s.clear();}
-        public Iterator<Map.Entry<String,String>> iterator() {
-            return new Iterator<Map.Entry<String,String>>() {
-                Iterator<Map.Entry<String,String>> i = s.iterator();
-                public boolean hasNext() { return i.hasNext();}
-                public Map.Entry<String,String> next() {
-                    return new CheckedEntry(i.next());
-                }
-                public void remove() { i.remove();}
-            };
-        }
-        private static Map.Entry<String,String> checkedEntry (Object o) {
-            Map.Entry<String,String> e = (Map.Entry<String,String>) o;
-            nonNullString(e.getKey());
-            nonNullString(e.getValue());
-            return e;
-        }
-        public boolean contains(Object o) {return s.contains(checkedEntry(o));}
-        public boolean remove(Object o)   {return s.remove(checkedEntry(o));}
+	private final Set<Map.Entry<String,String>> s;
+	public CheckedEntrySet(Set<Map.Entry<String,String>> s) {this.s = s;}
+	public int size()        {return s.size();}
+	public boolean isEmpty() {return s.isEmpty();}
+	public void clear()      {       s.clear();}
+	public Iterator<Map.Entry<String,String>> iterator() {
+	    return new Iterator<Map.Entry<String,String>>() {
+		Iterator<Map.Entry<String,String>> i = s.iterator();
+		public boolean hasNext() { return i.hasNext();}
+		public Map.Entry<String,String> next() {
+		    return new CheckedEntry(i.next());
+		}
+		public void remove() { i.remove();}
+	    };
+	}
+	private static Map.Entry<String,String> checkedEntry (Object o) {
+	    Map.Entry<String,String> e = (Map.Entry<String,String>) o;
+	    nonNullString(e.getKey());
+	    nonNullString(e.getValue());
+	    return e;
+	}
+	public boolean contains(Object o) {return s.contains(checkedEntry(o));}
+	public boolean remove(Object o)   {return s.remove(checkedEntry(o));}
     }
 
     private static class CheckedValues extends AbstractCollection<String> {
-        private final Collection<String> c;
-        public CheckedValues(Collection<String> c) {this.c = c;}
-        public int size()                  {return c.size();}
-        public boolean isEmpty()           {return c.isEmpty();}
-        public void clear()                {       c.clear();}
-        public Iterator<String> iterator() {return c.iterator();}
-        public boolean contains(Object o)  {return c.contains(nonNullString(o));}
-        public boolean remove(Object o)    {return c.remove(nonNullString(o));}
+	private final Collection<String> c;
+	public CheckedValues(Collection<String> c) {this.c = c;}
+	public int size()                  {return c.size();}
+	public boolean isEmpty()           {return c.isEmpty();}
+	public void clear()                {       c.clear();}
+	public Iterator<String> iterator() {return c.iterator();}
+	public boolean contains(Object o)  {return c.contains(nonNullString(o));}
+	public boolean remove(Object o)    {return c.remove(nonNullString(o));}
     }
 
     private static class CheckedKeySet extends AbstractSet<String> {
-        private final Set<String> s;
-        public CheckedKeySet(Set<String> s) {this.s = s;}
-        public int size()                  {return s.size();}
-        public boolean isEmpty()           {return s.isEmpty();}
-        public void clear()                {       s.clear();}
-        public Iterator<String> iterator() {return s.iterator();}
-        public boolean contains(Object o)  {return s.contains(nonNullString(o));}
-        public boolean remove(Object o)    {return s.remove(nonNullString(o));}
+	private final Set<String> s;
+	public CheckedKeySet(Set<String> s) {this.s = s;}
+	public int size()                  {return s.size();}
+	public boolean isEmpty()           {return s.isEmpty();}
+	public void clear()                {       s.clear();}
+	public Iterator<String> iterator() {return s.iterator();}
+	public boolean contains(Object o)  {return s.contains(nonNullString(o));}
+	public boolean remove(Object o)    {return s.remove(nonNullString(o));}
     }
 
     public Set<String> keySet() {
-        return new CheckedKeySet(super.keySet());
+	return new CheckedKeySet(super.keySet());
     }
 
     public Collection<String> values() {
-        return new CheckedValues(super.values());
+	return new CheckedValues(super.values());
     }
 
     public Set<Map.Entry<String,String>> entrySet() {
-        return new CheckedEntrySet(super.entrySet());
+	return new CheckedEntrySet(super.entrySet());
     }
 
 
     private static final class NameComparator
-        implements Comparator<String> {
-        public int compare(String s1, String s2) {
-            // We can't use String.compareToIgnoreCase since it
-            // canonicalizes to lower case, while Windows
-            // canonicalizes to upper case!  For example, "_" should
-            // sort *after* "Z", not before.
-            int n1 = s1.length();
-            int n2 = s2.length();
-            int min = Math.min(n1, n2);
-            for (int i = 0; i < min; i++) {
-                char c1 = s1.charAt(i);
-                char c2 = s2.charAt(i);
-                if (c1 != c2) {
-                    c1 = Character.toUpperCase(c1);
-                    c2 = Character.toUpperCase(c2);
-                    if (c1 != c2)
-                        // No overflow because of numeric promotion
-                        return c1 - c2;
-                }
-            }
-            return n1 - n2;
-        }
+	implements Comparator<String> {
+	public int compare(String s1, String s2) {
+	    // We can't use String.compareToIgnoreCase since it
+	    // canonicalizes to lower case, while Windows
+	    // canonicalizes to upper case!  For example, "_" should
+	    // sort *after* "Z", not before.
+	    int n1 = s1.length();
+	    int n2 = s2.length();
+	    int min = Math.min(n1, n2);
+	    for (int i = 0; i < min; i++) {
+		char c1 = s1.charAt(i);
+		char c2 = s2.charAt(i);
+		if (c1 != c2) {
+		    c1 = Character.toUpperCase(c1);
+		    c2 = Character.toUpperCase(c2);
+		    if (c1 != c2)
+			// No overflow because of numeric promotion
+			return c1 - c2;
+		}
+	    }
+	    return n1 - n2;
+	}
     }
 
     private static final class EntryComparator
-        implements Comparator<Map.Entry<String,String>> {
-        public int compare(Map.Entry<String,String> e1,
-                           Map.Entry<String,String> e2) {
-            return nameComparator.compare(e1.getKey(), e2.getKey());
-        }
+	implements Comparator<Map.Entry<String,String>> {
+	public int compare(Map.Entry<String,String> e1,
+			   Map.Entry<String,String> e2) {
+	    return nameComparator.compare(e1.getKey(), e2.getKey());
+	}
     }
 
     // Allow `=' as first char in name, e.g. =C:=C:\DIR
@@ -231,91 +232,91 @@ final class ProcessEnvironment extends HashMap<String,String>
     private static final Map<String,String> theCaseInsensitiveEnvironment;
 
     static {
-        nameComparator  = new NameComparator();
-        entryComparator = new EntryComparator();
-        theEnvironment  = new ProcessEnvironment();
-        theUnmodifiableEnvironment
-            = Collections.unmodifiableMap(theEnvironment);
+	nameComparator  = new NameComparator();
+	entryComparator = new EntryComparator();
+	theEnvironment  = new ProcessEnvironment();
+	theUnmodifiableEnvironment
+	    = Collections.unmodifiableMap(theEnvironment);
 
-        String envblock = environmentBlock();
-        int beg, end, eql;
-        for (beg = 0;
-             ((end = envblock.indexOf('\u0000', beg  )) != -1 &&
-              // An initial `=' indicates a magic Windows variable name -- OK
-              (eql = envblock.indexOf('='     , beg+1)) != -1);
-             beg = end + 1) {
-            // Ignore corrupted environment strings.
-            if (eql < end)
-                theEnvironment.put(envblock.substring(beg, eql),
-                                   envblock.substring(eql+1,end));
-        }
+	String envblock = environmentBlock();
+	int beg, end, eql;
+	for (beg = 0;
+	     ((end = envblock.indexOf('\u0000', beg  )) != -1 &&
+	      // An initial `=' indicates a magic Windows variable name -- OK
+	      (eql = envblock.indexOf('='     , beg+1)) != -1);
+	     beg = end + 1) {
+	    // Ignore corrupted environment strings.
+	    if (eql < end)
+		theEnvironment.put(envblock.substring(beg, eql),
+				   envblock.substring(eql+1,end));
+	}
 
-        theCaseInsensitiveEnvironment
-            = new TreeMap<String,String>(nameComparator);
-        theCaseInsensitiveEnvironment.putAll(theEnvironment);
+	theCaseInsensitiveEnvironment
+	    = new TreeMap<String,String>(nameComparator);
+	theCaseInsensitiveEnvironment.putAll(theEnvironment);
     }
 
     private ProcessEnvironment() {
-        super();
+	super();
     }
 
     private ProcessEnvironment(int capacity) {
-        super(capacity);
+	super(capacity);
     }
 
     // Only for use by System.getenv(String)
     static String getenv(String name) {
-        // The original implementation used a native call to _wgetenv,
-        // but it turns out that _wgetenv is only consistent with
-        // GetEnvironmentStringsW (for non-ASCII) if `wmain' is used
-        // instead of `main', even in a process created using
-        // CREATE_UNICODE_ENVIRONMENT.  Instead we perform the
-        // case-insensitive comparison ourselves.  At least this
-        // guarantees that System.getenv().get(String) will be
-        // consistent with System.getenv(String).
-        return theCaseInsensitiveEnvironment.get(name);
+	// The original implementation used a native call to _wgetenv,
+	// but it turns out that _wgetenv is only consistent with
+	// GetEnvironmentStringsW (for non-ASCII) if `wmain' is used
+	// instead of `main', even in a process created using
+	// CREATE_UNICODE_ENVIRONMENT.  Instead we perform the
+	// case-insensitive comparison ourselves.  At least this
+	// guarantees that System.getenv().get(String) will be
+	// consistent with System.getenv(String).
+	return theCaseInsensitiveEnvironment.get(name);
     }
 
     // Only for use by System.getenv()
     static Map<String,String> getenv() {
-        return theUnmodifiableEnvironment;
+	return theUnmodifiableEnvironment;
     }
 
     // Only for use by ProcessBuilder.environment()
     static Map<String,String> environment() {
-        return (Map<String,String>) theEnvironment.clone();
+	return (Map<String,String>) theEnvironment.clone();
     }
 
     // Only for use by Runtime.exec(...String[]envp...)
     static Map<String,String> emptyEnvironment(int capacity) {
-        return new ProcessEnvironment(capacity);
+	return new ProcessEnvironment(capacity);
     }
 
     private static native String environmentBlock();
 
     // Only for use by ProcessImpl.start()
     String toEnvironmentBlock() {
-        // Sort Unicode-case-insensitively by name
-        List<Map.Entry<String,String>> list
-            = new ArrayList<Map.Entry<String,String>>(entrySet());
-        Collections.sort(list, entryComparator);
+	// Sort Unicode-case-insensitively by name
+	List<Map.Entry<String,String>> list
+	    = new ArrayList<Map.Entry<String,String>>(entrySet());
+	Collections.sort(list, entryComparator);
 
-        StringBuilder sb = new StringBuilder(size()*30);
-        for (Map.Entry<String,String> e : list)
-            sb.append(e.getKey())
-              .append('=')
-              .append(e.getValue())
-              .append('\u0000');
-        // Ensure double NUL termination,
-        // even if environment is empty.
-        if (sb.length() == 0)
-            sb.append('\u0000');
-        sb.append('\u0000');
-        return sb.toString();
+	StringBuilder sb = new StringBuilder(size()*30);
+	for (Map.Entry<String,String> e : list)
+	    sb.append(e.getKey())
+	      .append('=')
+	      .append(e.getValue())
+	      .append('\u0000');
+	// Ensure double NUL termination,
+	// even if environment is empty.
+	if (sb.length() == 0)
+	    sb.append('\u0000');
+	sb.append('\u0000');
+	return sb.toString();
     }
 
     static String toEnvironmentBlock(Map<String,String> map) {
-        return map == null ? null :
-            ((ProcessEnvironment)map).toEnvironmentBlock();
+	return map == null ? null :
+	    ((ProcessEnvironment)map).toEnvironmentBlock();
     }
 }

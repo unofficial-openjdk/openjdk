@@ -39,6 +39,7 @@ import java.lang.reflect.Method;
 /**
  * The default editor for editable combo boxes. The editor is implemented as a JTextField.
  *
+ * @version %I% %G%
  * @author Arnaud Weber
  * @author Mark Davidson
  */
@@ -53,7 +54,7 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
     public Component getEditorComponent() {
         return editor;
     }
-
+    
     /**
      * Creates the internal editor component. Override this to provide
      * a custom implementation.
@@ -67,15 +68,15 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
         return editor;
     }
 
-    /**
-     * Sets the item that should be edited.
+    /** 
+     * Sets the item that should be edited. 
      *
      * @param anObject the displayed value of the editor
      */
     public void setItem(Object anObject) {
         if ( anObject != null )  {
             editor.setText(anObject.toString());
-
+            
             oldValue = anObject;
         } else {
             editor.setText("");
@@ -84,7 +85,7 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
 
     public Object getItem() {
         Object newValue = editor.getText();
-
+        
         if (oldValue != null && !(oldValue instanceof String))  {
             // The original value is not a string. Should return the value in it's
             // original type.
@@ -112,7 +113,7 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
     // This used to do something but now it doesn't.  It couldn't be
     // removed because it would be an API change to do so.
     public void focusGained(FocusEvent e) {}
-
+    
     // This used to do something but now it doesn't.  It couldn't be
     // removed because it would be an API change to do so.
     public void focusLost(FocusEvent e) {}
@@ -144,7 +145,7 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
             }
         }
     }
-
+    
     /**
      * A subclass of BasicComboBoxEditor that implements UIResource.
      * BasicComboBoxEditor doesn't implement UIResource
@@ -164,3 +165,4 @@ public class BasicComboBoxEditor implements ComboBoxEditor,FocusListener {
     implements javax.swing.plaf.UIResource {
     }
 }
+

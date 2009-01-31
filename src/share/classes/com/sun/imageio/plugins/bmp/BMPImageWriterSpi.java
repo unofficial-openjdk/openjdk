@@ -82,19 +82,19 @@ public class BMPImageWriterSpi extends ImageWriterSpi {
         int dataType= type.getSampleModel().getDataType();
         if (dataType < DataBuffer.TYPE_BYTE || dataType > DataBuffer.TYPE_INT)
             return false;
-
+       
         SampleModel sm = type.getSampleModel();
         int numBands = sm.getNumBands();
         if (!(numBands == 1 || numBands == 3))
             return false;
-
+        
         if (numBands == 1 && dataType != DataBuffer.TYPE_BYTE)
             return false;
-
-        if (dataType > DataBuffer.TYPE_BYTE &&
+        
+        if (dataType > DataBuffer.TYPE_BYTE && 
               !(sm instanceof SinglePixelPackedSampleModel))
             return false;
-
+        
         return true;
     }
 

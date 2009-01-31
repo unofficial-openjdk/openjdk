@@ -32,7 +32,7 @@ import java.security.GeneralSecurityException;
  * certificates and CRLs from a <code>CertStore</code>.
  * <p>
  * A <code>CertStoreException</code> provides support for wrapping
- * exceptions. The {@link #getCause getCause} method returns the throwable,
+ * exceptions. The {@link #getCause getCause} method returns the throwable, 
  * if any, that caused this exception to be thrown.
  * <p>
  * <b>Concurrent Access</b>
@@ -45,8 +45,9 @@ import java.security.GeneralSecurityException;
  *
  * @see CertStore
  *
- * @since       1.4
- * @author      Sean Mullan
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Sean Mullan
  */
 public class CertStoreException extends GeneralSecurityException {
 
@@ -54,7 +55,7 @@ public class CertStoreException extends GeneralSecurityException {
 
     /**
      * Creates a <code>CertStoreException</code> with <code>null</code> as
-     * its detail message.
+     * its detail message. 
      */
     public CertStoreException() {
         super();
@@ -76,11 +77,11 @@ public class CertStoreException extends GeneralSecurityException {
      * throwable. This allows any exception to be converted into a
      * <code>CertStoreException</code>, while retaining information about the
      * cause, which may be useful for debugging. The detail message is
-     * set to (<code>cause==null ? null : cause.toString()</code>) (which
+     * set to (<code>cause==null ? null : cause.toString()</code>) (which 
      * typically contains the class and detail message of cause).
      *
-     * @param cause the cause (which is saved for later retrieval by the
-     * {@link #getCause getCause()} method). (A <code>null</code> value is
+     * @param cause the cause (which is saved for later retrieval by the 
+     * {@link #getCause getCause()} method). (A <code>null</code> value is 
      * permitted, and indicates that the cause is nonexistent or unknown.)
      */
     public CertStoreException(Throwable cause) {
@@ -92,8 +93,8 @@ public class CertStoreException extends GeneralSecurityException {
      * message and cause.
      *
      * @param msg the detail message
-     * @param cause the cause (which is saved for later retrieval by the
-     * {@link #getCause getCause()} method). (A <code>null</code> value is
+     * @param cause the cause (which is saved for later retrieval by the 
+     * {@link #getCause getCause()} method). (A <code>null</code> value is 
      * permitted, and indicates that the cause is nonexistent or unknown.)
      */
     public CertStoreException(String msg, Throwable cause) {

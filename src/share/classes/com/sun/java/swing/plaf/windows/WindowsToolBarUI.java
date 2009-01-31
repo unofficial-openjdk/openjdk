@@ -46,42 +46,42 @@ import static com.sun.java.swing.plaf.windows.TMSchema.Part;
 
 
 public class WindowsToolBarUI extends BasicToolBarUI {
-
+    
     public static ComponentUI createUI(JComponent c) {
-        return new WindowsToolBarUI();
+	return new WindowsToolBarUI();
     }
 
     protected void installDefaults() {
-        if (XPStyle.getXP() != null) {
-            setRolloverBorders(true);
-        }
-        super.installDefaults();
+	if (XPStyle.getXP() != null) {
+	    setRolloverBorders(true);
+	}
+	super.installDefaults();
     }
 
     protected Border createRolloverBorder() {
-        if (XPStyle.getXP() != null) {
-            return new EmptyBorder(3, 3, 3, 3);
-        } else {
-            return super.createRolloverBorder();
-        }
+	if (XPStyle.getXP() != null) {
+	    return new EmptyBorder(3, 3, 3, 3);
+	} else {
+	    return super.createRolloverBorder();
+	}
     }
 
     protected Border createNonRolloverBorder() {
-        if (XPStyle.getXP() != null) {
-            return new EmptyBorder(3, 3, 3, 3);
-        } else {
-            return super.createNonRolloverBorder();
-        }
+	if (XPStyle.getXP() != null) {
+	    return new EmptyBorder(3, 3, 3, 3);
+	} else {
+	    return super.createNonRolloverBorder();
+	}
     }
 
     public void paint(Graphics g, JComponent c) {
-        XPStyle xp = XPStyle.getXP();
-        if (xp != null) {
-            xp.getSkin(c, Part.TP_TOOLBAR).paintSkin(g, 0, 0,
+	XPStyle xp = XPStyle.getXP();
+	if (xp != null) {
+            xp.getSkin(c, Part.TP_TOOLBAR).paintSkin(g, 0, 0, 
                         c.getWidth(), c.getHeight(), null, true);
-        } else {
-            super.paint(g, c);
-        }
+	} else {
+	    super.paint(g, c);
+	}
     }
 
     /**
@@ -97,3 +97,4 @@ public class WindowsToolBarUI extends BasicToolBarUI {
         }
     }
 }
+

@@ -54,20 +54,20 @@ public class JvmClassLoadingImpl implements JvmClassLoadingMBean {
      *
      * "verbose: if the -verbose:class flag is set.
      * silent:  otherwise.
-     *
+     * 
      * See java.management.ClassLoadingMXBean.isVerbose(),
      * java.management.ClassLoadingMXBean.setVerbose()
      * "
      *
      */
-    static final EnumJvmClassesVerboseLevel JvmClassesVerboseLevelVerbose =
-        new EnumJvmClassesVerboseLevel("verbose");
-    static final EnumJvmClassesVerboseLevel JvmClassesVerboseLevelSilent =
-        new EnumJvmClassesVerboseLevel("silent");
+    static final EnumJvmClassesVerboseLevel JvmClassesVerboseLevelVerbose = 
+	new EnumJvmClassesVerboseLevel("verbose");
+    static final EnumJvmClassesVerboseLevel JvmClassesVerboseLevelSilent = 
+	new EnumJvmClassesVerboseLevel("silent");
 
     /**
      * Constructor for the "JvmClassLoading" group.
-     * If the group contains a table, the entries created through an
+     * If the group contains a table, the entries created through an 
      * SNMP SET will not be registered in Java DMK.
      */
     public JvmClassLoadingImpl(SnmpMib myMib) {
@@ -80,49 +80,49 @@ public class JvmClassLoadingImpl implements JvmClassLoadingMBean {
      */
     public JvmClassLoadingImpl(SnmpMib myMib, MBeanServer server) {
     }
-
+    
     static ClassLoadingMXBean getClassLoadingMXBean() {
-        return ManagementFactory.getClassLoadingMXBean();
+	return ManagementFactory.getClassLoadingMXBean();
     }
-
+    
     /**
      * Getter for the "JvmClassesVerboseLevel" variable.
      */
-    public EnumJvmClassesVerboseLevel getJvmClassesVerboseLevel()
-        throws SnmpStatusException {
+    public EnumJvmClassesVerboseLevel getJvmClassesVerboseLevel() 
+	throws SnmpStatusException {
         if(getClassLoadingMXBean().isVerbose())
-            return JvmClassesVerboseLevelVerbose;
-        else
-            return JvmClassesVerboseLevelSilent;
+	    return JvmClassesVerboseLevelVerbose;
+	else
+	    return JvmClassesVerboseLevelSilent;
     }
 
     /**
      * Setter for the "JvmClassesVerboseLevel" variable.
      */
-    public void setJvmClassesVerboseLevel(EnumJvmClassesVerboseLevel x)
-        throws SnmpStatusException {
-        final boolean verbose;
-        if (JvmClassesVerboseLevelVerbose.equals(x)) verbose=true;
-        else if (JvmClassesVerboseLevelSilent.equals(x)) verbose=false;
-        // Should never happen, this case is handled by
-        // checkJvmClassesVerboseLevel();
-        else throw new
-            SnmpStatusException(SnmpStatusException.snmpRspWrongValue);
+    public void setJvmClassesVerboseLevel(EnumJvmClassesVerboseLevel x) 
+	throws SnmpStatusException {
+	final boolean verbose;
+	if (JvmClassesVerboseLevelVerbose.equals(x)) verbose=true;
+	else if (JvmClassesVerboseLevelSilent.equals(x)) verbose=false;
+	// Should never happen, this case is handled by 
+	// checkJvmClassesVerboseLevel();
+	else throw new 
+	    SnmpStatusException(SnmpStatusException.snmpRspWrongValue);
         getClassLoadingMXBean().setVerbose(verbose);
     }
 
     /**
      * Checker for the "JvmClassesVerboseLevel" variable.
      */
-    public void checkJvmClassesVerboseLevel(EnumJvmClassesVerboseLevel x)
-        throws SnmpStatusException {
+    public void checkJvmClassesVerboseLevel(EnumJvmClassesVerboseLevel x) 
+	throws SnmpStatusException {
         //
         // Add your own checking policy.
         //
-        if (JvmClassesVerboseLevelVerbose.equals(x)) return;
-        if (JvmClassesVerboseLevelSilent.equals(x))  return;
-        throw new SnmpStatusException(SnmpStatusException.snmpRspWrongValue);
-
+	if (JvmClassesVerboseLevelVerbose.equals(x)) return;
+	if (JvmClassesVerboseLevelSilent.equals(x))  return;
+	throw new SnmpStatusException(SnmpStatusException.snmpRspWrongValue);
+	
     }
 
     /**

@@ -71,35 +71,35 @@ public class FontStrikeDesc {
     AffineTransform devTx;
     AffineTransform glyphTx; // all of ptSize, Font tx and Graphics tx.
     int style;
-    int aaHint;
+    int aaHint;   
     int fmHint;
     private int hashCode;
     private int valuemask;
 
     public int hashCode() {
-        /* Can cache hashcode since a strike(desc) is immutable.*/
-        if (hashCode == 0) {
-            hashCode = glyphTx.hashCode() + devTx.hashCode() + valuemask;
-        }
-        return hashCode;
+	/* Can cache hashcode since a strike(desc) is immutable.*/
+	if (hashCode == 0) {
+	    hashCode = glyphTx.hashCode() + devTx.hashCode() + valuemask;
+	}
+	return hashCode;
     }
 
     public boolean equals(Object obj) {
-        try {
-            FontStrikeDesc desc = (FontStrikeDesc)obj;
-            return (desc.valuemask == this.valuemask &&
-                    desc.glyphTx.equals(this.glyphTx) &&
-                    desc.devTx.equals(this.devTx));
-        } catch (Exception e) {
-            /* class cast or NP exceptions should not happen often, if ever,
-             * and I am hoping that this is faster than an instanceof check.
-             */
-            return false;
-        }
+	try {
+	    FontStrikeDesc desc = (FontStrikeDesc)obj;
+	    return (desc.valuemask == this.valuemask &&
+		    desc.glyphTx.equals(this.glyphTx) &&
+		    desc.devTx.equals(this.devTx));
+	} catch (Exception e) {
+	    /* class cast or NP exceptions should not happen often, if ever,
+	     * and I am hoping that this is faster than an instanceof check.
+	     */
+	    return false;
+	}
     }
 
     FontStrikeDesc() {
-        // used with init
+	// used with init
     }
 
 
@@ -110,26 +110,26 @@ public class FontStrikeDesc {
      * must therefore include device and font transforms.
      */
     public static int getAAHintIntVal(Object aa, Font2D font2D, int ptSize) {
-        if (aa == VALUE_TEXT_ANTIALIAS_OFF ||
-            aa == VALUE_TEXT_ANTIALIAS_DEFAULT) {
-            return INTVAL_TEXT_ANTIALIAS_OFF;
-        } else if (aa == VALUE_TEXT_ANTIALIAS_ON) {
-            return INTVAL_TEXT_ANTIALIAS_ON;
-        } else if (aa == VALUE_TEXT_ANTIALIAS_GASP) {
-            if (font2D.useAAForPtSize(ptSize)) {
-                return INTVAL_TEXT_ANTIALIAS_ON;
-            } else {
-                return INTVAL_TEXT_ANTIALIAS_OFF;
-            }
-        } else if (aa == VALUE_TEXT_ANTIALIAS_LCD_HRGB ||
-                   aa == VALUE_TEXT_ANTIALIAS_LCD_HBGR) {
-            return INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
-        } else if (aa == VALUE_TEXT_ANTIALIAS_LCD_VRGB ||
-                   aa == VALUE_TEXT_ANTIALIAS_LCD_VBGR) {
-            return INTVAL_TEXT_ANTIALIAS_LCD_VRGB;
-        } else {
-            return INTVAL_TEXT_ANTIALIAS_OFF;
-        }
+	if (aa == VALUE_TEXT_ANTIALIAS_OFF ||
+	    aa == VALUE_TEXT_ANTIALIAS_DEFAULT) {
+	    return INTVAL_TEXT_ANTIALIAS_OFF;
+	} else if (aa == VALUE_TEXT_ANTIALIAS_ON) {
+	    return INTVAL_TEXT_ANTIALIAS_ON;
+	} else if (aa == VALUE_TEXT_ANTIALIAS_GASP) {
+	    if (font2D.useAAForPtSize(ptSize)) {
+		return INTVAL_TEXT_ANTIALIAS_ON;
+	    } else {
+		return INTVAL_TEXT_ANTIALIAS_OFF;
+	    }
+	} else if (aa == VALUE_TEXT_ANTIALIAS_LCD_HRGB ||
+		   aa == VALUE_TEXT_ANTIALIAS_LCD_HBGR) {
+	    return INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
+	} else if (aa == VALUE_TEXT_ANTIALIAS_LCD_VRGB ||
+		   aa == VALUE_TEXT_ANTIALIAS_LCD_VBGR) {
+	    return INTVAL_TEXT_ANTIALIAS_LCD_VRGB;
+	} else {
+	    return INTVAL_TEXT_ANTIALIAS_OFF;
+	}
     }
 
     /* This maps a public text AA hint value into one of the subset of values
@@ -140,70 +140,70 @@ public class FontStrikeDesc {
      * already calculated the glyph device point size.
      */
     public static int getAAHintIntVal(Font2D font2D, Font font,
-                                      FontRenderContext frc) {
-        Object aa = frc.getAntiAliasingHint();
-        if (aa == VALUE_TEXT_ANTIALIAS_OFF ||
-            aa == VALUE_TEXT_ANTIALIAS_DEFAULT) {
-            return INTVAL_TEXT_ANTIALIAS_OFF;
-        } else if (aa == VALUE_TEXT_ANTIALIAS_ON) {
-            return INTVAL_TEXT_ANTIALIAS_ON;
-        } else if (aa == VALUE_TEXT_ANTIALIAS_GASP) {
-            /* FRC.isIdentity() would have been useful */
-            int ptSize;
-            AffineTransform tx = frc.getTransform();
-            if (tx.isIdentity() && !font.isTransformed()) {
-                ptSize = font.getSize();
-            } else {
-                /* one or both transforms is not identity */
-                float size = font.getSize2D();
-                if (tx.isIdentity()) {
-                    tx = font.getTransform();
-                    tx.scale(size, size);
-                } else {
-                    tx.scale(size, size);
-                    if (font.isTransformed()) {
-                        tx.concatenate(font.getTransform());
-                    }
-                }
-                double shearx = tx.getShearX();
-                double scaley = tx.getScaleY();
-                if (shearx != 0) {
-                    scaley = Math.sqrt(shearx * shearx + scaley * scaley);
-                }
-                ptSize = (int)(Math.abs(scaley)+0.5);
-            }
-            if (font2D.useAAForPtSize(ptSize)) {
-                return INTVAL_TEXT_ANTIALIAS_ON;
-            } else {
-                return INTVAL_TEXT_ANTIALIAS_OFF;
-            }
-        } else if (aa == VALUE_TEXT_ANTIALIAS_LCD_HRGB ||
-                   aa == VALUE_TEXT_ANTIALIAS_LCD_HBGR) {
-            return INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
-        } else if (aa == VALUE_TEXT_ANTIALIAS_LCD_VRGB ||
-                   aa == VALUE_TEXT_ANTIALIAS_LCD_VBGR) {
-            return INTVAL_TEXT_ANTIALIAS_LCD_VRGB;
-        } else {
-            return INTVAL_TEXT_ANTIALIAS_OFF;
-        }
+				      FontRenderContext frc) {
+	Object aa = frc.getAntiAliasingHint();
+	if (aa == VALUE_TEXT_ANTIALIAS_OFF ||
+	    aa == VALUE_TEXT_ANTIALIAS_DEFAULT) {
+	    return INTVAL_TEXT_ANTIALIAS_OFF;
+	} else if (aa == VALUE_TEXT_ANTIALIAS_ON) {
+	    return INTVAL_TEXT_ANTIALIAS_ON;
+	} else if (aa == VALUE_TEXT_ANTIALIAS_GASP) {
+	    /* FRC.isIdentity() would have been useful */
+	    int ptSize;
+	    AffineTransform tx = frc.getTransform();
+	    if (tx.isIdentity() && !font.isTransformed()) {
+		ptSize = font.getSize();
+	    } else {
+		/* one or both transforms is not identity */
+		float size = font.getSize2D();
+		if (tx.isIdentity()) {
+		    tx = font.getTransform();
+		    tx.scale(size, size);
+		} else {
+		    tx.scale(size, size);
+		    if (font.isTransformed()) {
+			tx.concatenate(font.getTransform());
+		    }
+		}
+		double shearx = tx.getShearX();
+		double scaley = tx.getScaleY();
+		if (shearx != 0) {
+		    scaley = Math.sqrt(shearx * shearx + scaley * scaley);
+		}
+		ptSize = (int)(Math.abs(scaley)+0.5);
+	    }
+	    if (font2D.useAAForPtSize(ptSize)) {
+		return INTVAL_TEXT_ANTIALIAS_ON;
+	    } else {
+		return INTVAL_TEXT_ANTIALIAS_OFF;
+	    }
+	} else if (aa == VALUE_TEXT_ANTIALIAS_LCD_HRGB ||
+		   aa == VALUE_TEXT_ANTIALIAS_LCD_HBGR) {
+	    return INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
+	} else if (aa == VALUE_TEXT_ANTIALIAS_LCD_VRGB ||
+		   aa == VALUE_TEXT_ANTIALIAS_LCD_VBGR) {
+	    return INTVAL_TEXT_ANTIALIAS_LCD_VRGB;
+	} else {
+	    return INTVAL_TEXT_ANTIALIAS_OFF;
+	}
     }
 
     public static int getFMHintIntVal(Object fm) {
-        if (fm == VALUE_FRACTIONALMETRICS_OFF ||
-            fm == VALUE_FRACTIONALMETRICS_DEFAULT) {
-            return INTVAL_FRACTIONALMETRICS_OFF;
-        } else {
-            return INTVAL_FRACTIONALMETRICS_ON;
-        }
+	if (fm == VALUE_FRACTIONALMETRICS_OFF ||
+	    fm == VALUE_FRACTIONALMETRICS_DEFAULT) {
+	    return INTVAL_FRACTIONALMETRICS_OFF;
+	} else {
+	    return INTVAL_FRACTIONALMETRICS_ON;
+	}
     }
 
     public FontStrikeDesc(AffineTransform devAt, AffineTransform at,
-                          int fStyle, int aa, int fm) {
-        devTx = devAt;
-        glyphTx = at; // not cloning glyphTx. Callers trusted to not mutate it.
-        style = fStyle;
-        aaHint = aa;
-        fmHint = fm;
+			  int fStyle, int aa, int fm) {
+	devTx = devAt;
+	glyphTx = at; // not cloning glyphTx. Callers trusted to not mutate it.
+	style = fStyle;
+	aaHint = aa;
+	fmHint = fm;
         valuemask = fStyle;
         switch (aa) {
            case INTVAL_TEXT_ANTIALIAS_OFF :
@@ -211,36 +211,36 @@ public class FontStrikeDesc {
            case INTVAL_TEXT_ANTIALIAS_ON  :
                 valuemask |= AA_ON;
                 break;
-           case INTVAL_TEXT_ANTIALIAS_LCD_HRGB :
-           case INTVAL_TEXT_ANTIALIAS_LCD_HBGR :
+	   case INTVAL_TEXT_ANTIALIAS_LCD_HRGB :
+	   case INTVAL_TEXT_ANTIALIAS_LCD_HBGR :
                 valuemask |= AA_LCD_H;
                 break;
-           case INTVAL_TEXT_ANTIALIAS_LCD_VRGB :
-           case INTVAL_TEXT_ANTIALIAS_LCD_VBGR :
+	   case INTVAL_TEXT_ANTIALIAS_LCD_VRGB :
+	   case INTVAL_TEXT_ANTIALIAS_LCD_VBGR :
                 valuemask |= AA_LCD_V;
                 break;
            default: break;
-        }
-        if (fm == INTVAL_FRACTIONALMETRICS_ON) {
-           valuemask |= FRAC_METRICS_ON;
-        }
+	}
+	if (fm == INTVAL_FRACTIONALMETRICS_ON) {
+	   valuemask |= FRAC_METRICS_ON; 
+	}
     }
 
     FontStrikeDesc(FontStrikeDesc desc) {
-        devTx = desc.devTx;
-        // Clone the TX in this case as this is called when its known
-        // that "desc" is being re-used by its creator.
-        glyphTx = (AffineTransform)desc.glyphTx.clone();
-        style = desc.style;
-        aaHint = desc.aaHint;
-        fmHint = desc.fmHint;
-        hashCode = desc.hashCode;
+	devTx = desc.devTx;
+	// Clone the TX in this case as this is called when its known
+	// that "desc" is being re-used by its creator.
+	glyphTx = (AffineTransform)desc.glyphTx.clone();
+	style = desc.style;
+	aaHint = desc.aaHint;
+	fmHint = desc.fmHint;
+	hashCode = desc.hashCode;
         valuemask = desc.valuemask;
     }
 
 
     public String toString() {
-        return "FontStrikeDesc: Style="+style+ " AA="+aaHint+ " FM="+fmHint+
-            " devTx="+devTx+ " devTx.FontTx.ptSize="+glyphTx;
+	return "FontStrikeDesc: Style="+style+ " AA="+aaHint+ " FM="+fmHint+
+	    " devTx="+devTx+ " devTx.FontTx.ptSize="+glyphTx;
     }
 }

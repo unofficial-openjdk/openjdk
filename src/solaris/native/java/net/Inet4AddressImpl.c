@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@
 
 /* the initial size of our hostent buffers */
 #define HENT_BUF_SIZE 1024
-#define BIG_HENT_BUF_SIZE 10240  /* a jumbo-sized one */
+#define BIG_HENT_BUF_SIZE 10240	 /* a jumbo-sized one */
 
 #ifndef __GLIBC__
 /* gethostname() is in libc.so but I can't find a header file for it */
@@ -65,52 +65,52 @@ Java_java_net_Inet4AddressImpl_getLocalHostName(JNIEnv *env, jobject this) {
 
     hostname[0] = '\0';
     if (JVM_GetHostName(hostname, MAXHOSTNAMELEN)) {
-        /* Something went wrong, maybe networking is not setup? */
-        strcpy(hostname, "localhost");
+	/* Something went wrong, maybe networking is not setup? */
+	strcpy(hostname, "localhost");
     } else {
 #ifdef __linux__
-        /* On Linux gethostname() says "host.domain.sun.com".  On
-         * Solaris gethostname() says "host", so extra work is needed.
-         */
+	/* On Linux gethostname() says "host.domain.sun.com".  On
+	 * Solaris gethostname() says "host", so extra work is needed.
+	 */
 #else
-        /* Solaris doesn't want to give us a fully qualified domain name.
-         * We do a reverse lookup to try and get one.  This works
-         * if DNS occurs before NIS in /etc/resolv.conf, but fails
-         * if NIS comes first (it still gets only a partial name).
-         * We use thread-safe system calls.
-         */
+	/* Solaris doesn't want to give us a fully qualified domain name.
+	 * We do a reverse lookup to try and get one.  This works
+	 * if DNS occurs before NIS in /etc/resolv.conf, but fails
+	 * if NIS comes first (it still gets only a partial name).
+	 * We use thread-safe system calls.
+	 */
 #endif /* __linux__ */
-        struct hostent res, res2, *hp;
-        char buf[HENT_BUF_SIZE];
-        char buf2[HENT_BUF_SIZE];
-        int h_error=0;
+	struct hostent res, res2, *hp;
+	char buf[HENT_BUF_SIZE];
+	char buf2[HENT_BUF_SIZE];
+	int h_error=0;
 
 #ifdef __GLIBC__
-        gethostbyname_r(hostname, &res, buf, sizeof(buf), &hp, &h_error);
+	gethostbyname_r(hostname, &res, buf, sizeof(buf), &hp, &h_error);
 #else
-        hp = gethostbyname_r(hostname, &res, buf, sizeof(buf), &h_error);
+	hp = gethostbyname_r(hostname, &res, buf, sizeof(buf), &h_error);
 #endif
-        if (hp) {
+	if (hp) {
 #ifdef __GLIBC__
-            gethostbyaddr_r(hp->h_addr, hp->h_length, AF_INET,
-                            &res2, buf2, sizeof(buf2), &hp, &h_error);
+	    gethostbyaddr_r(hp->h_addr, hp->h_length, AF_INET,
+			    &res2, buf2, sizeof(buf2), &hp, &h_error);
 #else
-            hp = gethostbyaddr_r(hp->h_addr, hp->h_length, AF_INET,
-                                 &res2, buf2, sizeof(buf2), &h_error);
+	    hp = gethostbyaddr_r(hp->h_addr, hp->h_length, AF_INET,
+				 &res2, buf2, sizeof(buf2), &h_error);
 #endif
-            if (hp) {
-                /*
-                 * If gethostbyaddr_r() found a fully qualified host name,
-                 * returns that name. Otherwise, returns the hostname
-                 * found by gethostname().
-                 */
-                char *p = hp->h_name;
-                if ((strlen(hp->h_name) > strlen(hostname))
-                    && (strncmp(hostname, hp->h_name, strlen(hostname)) == 0)
-                    && (*(p + strlen(hostname)) == '.'))
-                    strcpy(hostname, hp->h_name);
-            }
-        }
+	    if (hp) {
+		/*
+		 * If gethostbyaddr_r() found a fully qualified host name,
+		 * returns that name. Otherwise, returns the hostname 
+		 * found by gethostname().
+		 */
+		char *p = hp->h_name;
+		if ((strlen(hp->h_name) > strlen(hostname))
+		    && (strncmp(hostname, hp->h_name, strlen(hostname)) == 0)
+		    && (*(p + strlen(hostname)) == '.'))
+		    strcpy(hostname, hp->h_name);
+	    }
+	}
     }
     return (*env)->NewStringUTF(env, hostname);
 }
@@ -136,7 +136,7 @@ static int initialized = 0;
 
 JNIEXPORT jobjectArray JNICALL
 Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
-                                                jstring host) {
+						jstring host) {
     const char *hostname;
     jobject name;
     jobjectArray ret = 0;
@@ -160,27 +160,27 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
     }
 
     if (IS_NULL(host)) {
-        JNU_ThrowNullPointerException(env, "host is null");
-        return 0;
+	JNU_ThrowNullPointerException(env, "host is null");
+	return 0;
     }
     hostname = JNU_GetStringPlatformChars(env, host, JNI_FALSE);
     CHECK_NULL_RETURN(hostname, NULL);
 
-    /*
+    /* 
      * Workaround for Solaris bug 4160367 - if a hostname contains a
      * white space then 0.0.0.0 is returned
      */
     if (isspace(hostname[0])) {
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException",
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException",
                         (char *)hostname);
-        JNU_ReleaseStringPlatformChars(env, host, hostname);
-        return NULL;
+	JNU_ReleaseStringPlatformChars(env, host, hostname);
+	return NULL;
     }
 
     /* Try once, with our static buffer. */
 #ifdef __GLIBC__
     gethostbyname_r(hostname, &res, buf, sizeof(buf), &hp, &h_error);
-#else
+#else    
     hp = gethostbyname_r(hostname, &res, buf, sizeof(buf), &h_error);
 #endif
 
@@ -190,62 +190,62 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
      * more, with a very big size.
      */
     if (hp == NULL && errno == ERANGE) {
-        if ((tmp = (char*)malloc(BIG_HENT_BUF_SIZE))) {
+	if ((tmp = (char*)malloc(BIG_HENT_BUF_SIZE))) {
 #ifdef __GLIBC__
-            gethostbyname_r(hostname, &res, tmp, BIG_HENT_BUF_SIZE,
-                            &hp, &h_error);
+	    gethostbyname_r(hostname, &res, tmp, BIG_HENT_BUF_SIZE,
+			    &hp, &h_error);
 #else
-            hp = gethostbyname_r(hostname, &res, tmp, BIG_HENT_BUF_SIZE,
-                                 &h_error);
+	    hp = gethostbyname_r(hostname, &res, tmp, BIG_HENT_BUF_SIZE,
+				 &h_error);
 #endif
-        }
+	}
     }
     if (hp != NULL) {
-        struct in_addr **addrp = (struct in_addr **) hp->h_addr_list;
-        int len = sizeof(struct in_addr);
-        int i = 0;
+	struct in_addr **addrp = (struct in_addr **) hp->h_addr_list;
+	int len = sizeof(struct in_addr);
+	int i = 0;
 
-        while (*addrp != (struct in_addr *) 0) {
-            i++;
-            addrp++;
-        }
+	while (*addrp != (struct in_addr *) 0) {
+	    i++;
+	    addrp++;
+	}
 
-        name = (*env)->NewStringUTF(env, hostname);
+	name = (*env)->NewStringUTF(env, hostname);
 
-        if (IS_NULL(name)) {
-          goto cleanupAndReturn;
-        }
+	if (IS_NULL(name)) {
+	  goto cleanupAndReturn;
+	}
 
-        ret = (*env)->NewObjectArray(env, i, ni_iacls, NULL);
-        if (IS_NULL(ret)) {
-            /* we may have memory to free at the end of this */
-            goto cleanupAndReturn;
-        }
-        addrp = (struct in_addr **) hp->h_addr_list;
-        i = 0;
-        while (*addrp) {
-          jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
-          if (IS_NULL(iaObj)) {
-            ret = NULL;
-            goto cleanupAndReturn;
-          }
-          (*env)->SetIntField(env, iaObj, ni_iaaddressID,
-                              ntohl((*addrp)->s_addr));
-          (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
-          (*env)->SetObjectArrayElement(env, ret, i, iaObj);
-          addrp++;
-          i++;
-        }
+	ret = (*env)->NewObjectArray(env, i, ni_iacls, NULL);
+	if (IS_NULL(ret)) {
+	    /* we may have memory to free at the end of this */
+	    goto cleanupAndReturn;
+	}
+	addrp = (struct in_addr **) hp->h_addr_list;
+	i = 0;
+	while (*addrp) {
+	  jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
+	  if (IS_NULL(iaObj)) {
+	    ret = NULL;
+	    goto cleanupAndReturn;
+	  }
+	  (*env)->SetIntField(env, iaObj, ni_iaaddressID, 
+			      ntohl((*addrp)->s_addr));
+	  (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
+	  (*env)->SetObjectArrayElement(env, ret, i, iaObj);
+	  addrp++;
+	  i++;
+	}
     } else {
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException",
-                        (char *)hostname);
-        ret = NULL;
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException",
+			(char *)hostname);
+	ret = NULL;
     }
 
 cleanupAndReturn:
     JNU_ReleaseStringPlatformChars(env, host, hostname);
     if (tmp != NULL) {
-        free(tmp);
+	free(tmp);
     }
     return ret;
 }
@@ -257,14 +257,14 @@ cleanupAndReturn:
  */
 JNIEXPORT jstring JNICALL
 Java_java_net_Inet4AddressImpl_getHostByAddr(JNIEnv *env, jobject this,
-                                            jbyteArray addrArray) {
+					    jbyteArray addrArray) {
     jstring ret = NULL;
     jint addr;
     struct hostent hent, *hp = 0;
     char buf[HENT_BUF_SIZE];
     int h_error = 0;
     char *tmp = NULL;
-
+    
     /*
      * We are careful here to use the reentrant version of
      * gethostbyname because at the Java level this routine is not
@@ -272,21 +272,21 @@ Java_java_net_Inet4AddressImpl_getHostByAddr(JNIEnv *env, jobject this,
      *
      * Still keeping the reentrant platform dependent calls temporarily
      * We should probably conform to one interface later.
-     *
+     * 
      */
     jbyte caddr[4];
     (*env)->GetByteArrayRegion(env, addrArray, 0, 4, caddr);
     addr = ((caddr[0]<<24) & 0xff000000);
     addr |= ((caddr[1] <<16) & 0xff0000);
     addr |= ((caddr[2] <<8) & 0xff00);
-    addr |= (caddr[3] & 0xff);
+    addr |= (caddr[3] & 0xff); 
     addr = htonl(addr);
 #ifdef __GLIBC__
     gethostbyaddr_r((char *)&addr, sizeof(addr), AF_INET, &hent,
-                    buf, sizeof(buf), &hp, &h_error);
+		    buf, sizeof(buf), &hp, &h_error);
 #else
     hp = gethostbyaddr_r((char *)&addr, sizeof(addr), AF_INET, &hent,
-                         buf, sizeof(buf), &h_error);
+			 buf, sizeof(buf), &h_error);
 #endif
     /* With the re-entrant system calls, it's possible that the buffer
      * we pass to it is not large enough to hold an exceptionally
@@ -294,33 +294,33 @@ Java_java_net_Inet4AddressImpl_getHostByAddr(JNIEnv *env, jobject this,
      * more, with a very big size.
      */
     if (hp == NULL && errno == ERANGE) {
-        if ((tmp = (char*)malloc(BIG_HENT_BUF_SIZE))) {
+	if ((tmp = (char*)malloc(BIG_HENT_BUF_SIZE))) {
 #ifdef __GLIBC__
-            gethostbyaddr_r((char *)&addr, sizeof(addr), AF_INET,
-                            &hent, tmp, BIG_HENT_BUF_SIZE, &hp, &h_error);
+	    gethostbyaddr_r((char *)&addr, sizeof(addr), AF_INET,
+			    &hent, tmp, BIG_HENT_BUF_SIZE, &hp, &h_error);
 #else
-            hp = gethostbyaddr_r((char *)&addr, sizeof(addr), AF_INET,
-                                 &hent, tmp, BIG_HENT_BUF_SIZE, &h_error);
+	    hp = gethostbyaddr_r((char *)&addr, sizeof(addr), AF_INET,
+				 &hent, tmp, BIG_HENT_BUF_SIZE, &h_error);
 #endif
-        } else {
-            JNU_ThrowOutOfMemoryError(env, "getHostByAddr");
-        }
+	} else {
+	    JNU_ThrowOutOfMemoryError(env, "getHostByAddr");
+	}
     }
     if (hp == NULL) {
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", NULL);
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", NULL);
     } else {
-        ret = (*env)->NewStringUTF(env, hp->h_name);
+	ret = (*env)->NewStringUTF(env, hp->h_name);
     }
     if (tmp) {
-        free(tmp);
+	free(tmp);
     }
     return ret;
 }
 
-#define SET_NONBLOCKING(fd) {           \
-        int flags = fcntl(fd, F_GETFL); \
-        flags |= O_NONBLOCK;            \
-        fcntl(fd, F_SETFL, flags);      \
+#define SET_NONBLOCKING(fd) {		\
+        int flags = fcntl(fd, F_GETFL);	\
+        flags |= O_NONBLOCK; 		\
+        fcntl(fd, F_SETFL, flags);	\
 }
 
 /**
@@ -338,11 +338,15 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
     char recvbuf[1500];
     struct icmp *icmp;
     struct ip *ip;
-    struct sockaddr_in sa_recv;
-    jchar pid;
-    jint tmout2, seq = 1;
+    struct sockaddr sa_recv;
+    jchar pid, seq;
+    jint tmout2;
     struct timeval tv;
     size_t plen;
+
+    /* Initialize the sequence number to a suitable random number and
+       shift right one place to allow sufficient room for increamenting. */
+    seq = ((unsigned short)rand()) >> 1;
 
     /* icmp_id is a 16 bit data type, therefore down cast the pid */
     pid = (jchar)getpid();
@@ -360,9 +364,9 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
      */
     if (netif != NULL) {
       if (bind(fd, (struct sockaddr*)netif, sizeof(struct sockaddr_in)) < 0) {
-        NET_ThrowNew(env, errno, "Can't bind socket");
-        close(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, errno, "Can't bind socket");
+	close(fd);
+	return JNI_FALSE;
       }
     }
     /*
@@ -378,7 +382,6 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
       icmp->icmp_code = 0;
       icmp->icmp_id = htons(pid);
       icmp->icmp_seq = htons(seq);
-      seq++;
       gettimeofday(&tv, NULL);
       memcpy(icmp->icmp_data, &tv, sizeof(tv));
       plen = ICMP_ADVLENMIN + sizeof(tv);
@@ -388,36 +391,36 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
        * send it
        */
       n = sendto(fd, sendbuf, plen, 0, (struct sockaddr *)him,
-                 sizeof(struct sockaddr));
+		 sizeof(struct sockaddr));
       if (n < 0 && errno != EINPROGRESS ) {
-        NET_ThrowNew(env, errno, "Can't send ICMP packet");
-        close(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, errno, "Can't send ICMP packet");
+	close(fd);
+	return JNI_FALSE;
       }
 
       tmout2 = timeout > 1000 ? 1000 : timeout;
       do {
-        tmout2 = NET_Wait(env, fd, NET_WAIT_READ, tmout2);
-        if (tmout2 >= 0) {
-          len = sizeof(sa_recv);
-          n = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, (struct sockaddr *)&sa_recv, &len);
-          ip = (struct ip*) recvbuf;
-          hlen1 = (ip->ip_hl) << 2;
-          icmp = (struct icmp *) (recvbuf + hlen1);
-          icmplen = n - hlen1;
-          /*
-           * We did receive something, but is it what we were expecting?
-           * I.E.: A ICMP_ECHOREPLY packet with the proper PID.
-           */
-          if (icmplen >= 8 && icmp->icmp_type == ICMP_ECHOREPLY &&
-               (ntohs(icmp->icmp_id) == pid) &&
-               (him->sin_addr.s_addr == sa_recv.sin_addr.s_addr)) {
-            close(fd);
-            return JNI_TRUE;
-          }
-        }
+	tmout2 = NET_Wait(env, fd, NET_WAIT_READ, tmout2);
+	if (tmout2 >= 0) {
+	  len = sizeof(sa_recv);
+	  n = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, &sa_recv, &len);
+	  ip = (struct ip*) recvbuf;
+	  hlen1 = (ip->ip_hl) << 2;
+	  icmp = (struct icmp *) (recvbuf + hlen1);
+	  icmplen = n - hlen1;
+	  /*
+	   * We did receive something, but is it what we were expecting?
+	   * I.E.: A ICMP_ECHOREPLY packet with the proper PID and sequence number.
+	   */
+	  if (icmplen >= 8 && icmp->icmp_type == ICMP_ECHOREPLY &&
+	       (ntohs(icmp->icmp_seq) == seq) && (ntohs(icmp->icmp_id) == pid)) {
+	    close(fd);
+	    return JNI_TRUE;
+	  }
+	}
       } while (tmout2 > 0);
       timeout -= 1000;
+      seq++; 
     } while (timeout >0);
     close(fd);
     return JNI_FALSE;
@@ -430,10 +433,10 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
  */
 JNIEXPORT jboolean JNICALL
 Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
-                                           jbyteArray addrArray,
-                                           jint timeout,
-                                           jbyteArray ifArray,
-                                           jint ttl) {
+					   jbyteArray addrArray,
+					   jint timeout, 
+					   jbyteArray ifArray,
+					   jint ttl) {
     jint addr;
     jbyte caddr[4];
     jint fd;
@@ -454,7 +457,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
     addr = ((caddr[0]<<24) & 0xff000000);
     addr |= ((caddr[1] <<16) & 0xff0000);
     addr |= ((caddr[2] <<8) & 0xff00);
-    addr |= (caddr[3] & 0xff);
+    addr |= (caddr[3] & 0xff); 
     addr = htonl(addr);
     him.sin_addr.s_addr = addr;
     him.sin_family = AF_INET;
@@ -469,7 +472,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
       addr = ((caddr[0]<<24) & 0xff000000);
       addr |= ((caddr[1] <<16) & 0xff0000);
       addr |= ((caddr[2] <<8) & 0xff00);
-      addr |= (caddr[3] & 0xff);
+      addr |= (caddr[3] & 0xff); 
       addr = htonl(addr);
       inf.sin_addr.s_addr = addr;
       inf.sin_family = AF_INET;
@@ -494,12 +497,12 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      */
     fd = JVM_Socket(AF_INET, SOCK_STREAM, 0);
     if (fd == JVM_IO_ERR) {
-        /* note: if you run out of fds, you may not be able to load
-         * the exception class, and get a NoClassDefFoundError
-         * instead.
-         */
-        NET_ThrowNew(env, errno, "Can't create socket");
-        return JNI_FALSE;
+	/* note: if you run out of fds, you may not be able to load
+	 * the exception class, and get a NoClassDefFoundError
+	 * instead.
+	 */
+	NET_ThrowNew(env, errno, "Can't create socket");
+	return JNI_FALSE;
     }
     if (ttl > 0) {
       setsockopt(fd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
@@ -510,9 +513,9 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      */
     if (netif != NULL) {
       if (bind(fd, (struct sockaddr*)netif, sizeof(struct sockaddr_in)) < 0) {
-        NET_ThrowNew(env, errno, "Can't bind socket");
-        close(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, errno, "Can't bind socket");
+	close(fd);
+	return JNI_FALSE;
       }
     }
 
@@ -522,7 +525,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
     SET_NONBLOCKING(fd);
 
     /* no need to use NET_Connect as non-blocking */
-    him.sin_port = htons(7);    /* Echo */
+    him.sin_port = htons(7);	/* Echo */
     connect_rv = JVM_Connect(fd, (struct sockaddr *)&him, len);
 
     /**
@@ -530,48 +533,48 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      * we were able to reach the host!
      */
     if (connect_rv == 0 || errno == ECONNREFUSED) {
-        close(fd);
-        return JNI_TRUE;
+	close(fd);
+	return JNI_TRUE;
     } else {
-        int optlen;
+	int optlen;
 
-        switch (errno) {
-        case ENETUNREACH: /* Network Unreachable */
-        case EAFNOSUPPORT: /* Address Family not supported */
-        case EADDRNOTAVAIL: /* address is not available on  the  remote machine */
+	switch (errno) {
+	case ENETUNREACH: /* Network Unreachable */
+	case EAFNOSUPPORT: /* Address Family not supported */
+	case EADDRNOTAVAIL: /* address is not available on  the  remote machine */
 #ifdef __linux__
-        case EINVAL:
-          /*
-           * On some Linuxes, when bound to the loopback interface, connect
-           * will fail and errno will be set to EINVAL. When that happens,
-           * don't throw an exception, just return false.
-           */
+	case EINVAL:
+	  /*
+	   * On some Linuxes, when bound to the loopback interface, connect
+	   * will fail and errno will be set to EINVAL. When that happens,
+	   * don't throw an exception, just return false.
+	   */
 #endif /* __linux__ */
-          close(fd);
-          return JNI_FALSE;
-        }
+	  close(fd);
+	  return JNI_FALSE;
+	}
 
-        if (errno != EINPROGRESS) {
-          NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
-                                       "connect failed");
-          close(fd);
-          return JNI_FALSE;
-        }
+	if (errno != EINPROGRESS) {
+	  NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+				       "connect failed");
+	  close(fd);
+	  return JNI_FALSE;
+	}
 
-        timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
-        if (timeout >= 0) {
-          /* has connection been established? */
-          optlen = sizeof(connect_rv);
-          if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
-                             &optlen) <0) {
-            connect_rv = errno;
-          }
-          if (connect_rv == 0 || connect_rv == ECONNREFUSED) {
-            close(fd);
-            return JNI_TRUE;
-          }
-        }
-        close(fd);
-        return JNI_FALSE;
+	timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
+	if (timeout >= 0) {
+	  /* has connection been established? */
+	  optlen = sizeof(connect_rv);
+	  if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv, 
+			     &optlen) <0) {
+	    connect_rv = errno;
+	  }
+	  if (connect_rv == 0 || connect_rv == ECONNREFUSED) {
+	    close(fd);
+	    return JNI_TRUE;
+	  }
+	}
+	close(fd);
+	return JNI_FALSE;
     }
 }

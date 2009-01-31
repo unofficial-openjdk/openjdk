@@ -40,6 +40,7 @@ import java.util.List;
  *
  * @since 1.7
  *
+ * @version %I% %G%
  * @author Sergey A. Malenkov
  */
 public final class EnumEditor implements PropertyEditor {

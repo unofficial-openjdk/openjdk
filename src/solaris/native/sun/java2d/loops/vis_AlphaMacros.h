@@ -39,9 +39,9 @@ extern const mlib_u64 vis_div8pre_tbl[];
 
 /***************************************************************/
 
-void IntArgbToIntAbgrConvert_line(mlib_s32 *srcBase,
-                                  mlib_s32 *dstBase,
-                                  mlib_s32 width);
+void IntArgbToIntAbgrConvert_line(mlib_s32 *srcBase, 
+				  mlib_s32 *dstBase,
+				  mlib_s32 width);
 
 /***************************************************************/
 
@@ -52,11 +52,11 @@ void IntArgbToIntAbgrConvert_line(mlib_s32 *srcBase,
 #define COPY_NA(src, dst, _size) {                             \
     mlib_s32 cci, size = _size;                                \
     if (size <= 16) {                                          \
-        for (cci = 0; cci < size; cci++) {                     \
-            ((mlib_u8*)dst)[cci] = ((mlib_u8*)src)[cci];       \
-        }                                                      \
+	for (cci = 0; cci < size; cci++) {                     \
+	    ((mlib_u8*)dst)[cci] = ((mlib_u8*)src)[cci];       \
+	}                                                      \
     } else {                                                   \
-        mlib_ImageCopy_na(src, dst, size);                     \
+	mlib_ImageCopy_na(src, dst, size);                     \
     }                                                          \
 }
 

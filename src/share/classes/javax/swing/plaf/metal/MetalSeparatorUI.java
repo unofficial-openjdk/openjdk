@@ -36,7 +36,7 @@ import javax.swing.plaf.basic.BasicSeparatorUI;
 
 
 /**
- * A Metal L&F implementation of SeparatorUI.  This implementation
+ * A Metal L&F implementation of SeparatorUI.  This implementation 
  * is a "combined" view/controller.
  * <p>
  * <strong>Warning:</strong>
@@ -48,6 +48,7 @@ import javax.swing.plaf.basic.BasicSeparatorUI;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Jeff Shapiro
  */
 
@@ -67,29 +68,33 @@ public class MetalSeparatorUI extends BasicSeparatorUI
     {
         Dimension s = c.getSize();
 
-        if ( ((JSeparator)c).getOrientation() == JSeparator.VERTICAL )
-        {
-          g.setColor( c.getForeground() );
-          g.drawLine( 0, 0, 0, s.height );
+	if ( ((JSeparator)c).getOrientation() == JSeparator.VERTICAL )
+	{
+	  g.setColor( c.getForeground() );
+	  g.drawLine( 0, 0, 0, s.height );
 
-          g.setColor( c.getBackground() );
-          g.drawLine( 1, 0, 1, s.height );
-        }
-        else  // HORIZONTAL
-        {
-          g.setColor( c.getForeground() );
-          g.drawLine( 0, 0, s.width, 0 );
+	  g.setColor( c.getBackground() );
+	  g.drawLine( 1, 0, 1, s.height );
+	}
+	else  // HORIZONTAL
+	{
+	  g.setColor( c.getForeground() );
+	  g.drawLine( 0, 0, s.width, 0 );
 
-          g.setColor( c.getBackground() );
-          g.drawLine( 0, 1, s.width, 1 );
-        }
+	  g.setColor( c.getBackground() );
+	  g.drawLine( 0, 1, s.width, 1 );
+	}
     }
 
     public Dimension getPreferredSize( JComponent c )
-    {
-        if ( ((JSeparator)c).getOrientation() == JSeparator.VERTICAL )
-            return new Dimension( 2, 0 );
-        else
-            return new Dimension( 0, 2 );
+    { 
+	if ( ((JSeparator)c).getOrientation() == JSeparator.VERTICAL )
+	    return new Dimension( 2, 0 );
+	else
+	    return new Dimension( 0, 2 );
     }
 }
+
+
+
+

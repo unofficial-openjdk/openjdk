@@ -23,7 +23,7 @@
 
 /* @test
    @bug 4096273
-   @summary new String("").indexOf("") must give 0, not -1
+   @summary new String("").indexOf("") must give 0, not -1 
    @author Anand Palaniswamy
  */
 public class IndexOfEmptyInEmpty {

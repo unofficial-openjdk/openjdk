@@ -30,27 +30,28 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
-
+ 
 package com.sun.tools.hat.internal.oql;
-
+ 
 import com.sun.tools.hat.internal.model.*;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
-
+ 
 /**
  * This is Object Query Language Interpreter
  *
+ * @author A. Sundararajan [jhat %W% %E%]
  */
 public class OQLEngine {
     static {
@@ -59,7 +60,7 @@ public class OQLEngine {
             // create ScriptEngineManager
             Class<?> managerClass = Class.forName("javax.script.ScriptEngineManager");
             Object manager = managerClass.newInstance();
-
+ 
             // create JavaScript engine
             Method getEngineMethod = managerClass.getMethod("getEngineByName",
                                 new Class[] { String.class });
@@ -70,27 +71,27 @@ public class OQLEngine {
         }
     }
 
-    // check OQL is supported or not before creating OQLEngine
+    // check OQL is supported or not before creating OQLEngine 
     public static boolean isOQLSupported() {
         return oqlSupported;
     }
-
+ 
     public OQLEngine(Snapshot snapshot) {
         if (!isOQLSupported()) {
             throw new UnsupportedOperationException("OQL not supported");
         }
         init(snapshot);
     }
-
+ 
     /**
        Query is of the form
-
+ 
           select &lt;java script code to select&gt;
           [ from [instanceof] &lt;class name&gt; [&lt;identifier&gt;]
             [ where &lt;java script boolean expression&gt; ]
           ]
     */
-    public synchronized void executeQuery(String query, ObjectVisitor visitor)
+    public synchronized void executeQuery(String query, ObjectVisitor visitor) 
                                           throws OQLException {
         debugPrint("query : " + query);
         StringTokenizer st = new StringTokenizer(query);
@@ -110,8 +111,8 @@ public class OQLEngine {
         } else {
             throw new OQLException("query syntax error: no 'select' clause");
         }
-
-        String selectExpr = "";
+ 
+        String selectExpr = ""; 
         boolean seenFrom = false;
         while (st.hasMoreTokens()) {
             String tok = st.nextToken();
@@ -121,16 +122,16 @@ public class OQLEngine {
             }
             selectExpr += " " + tok;
         }
-
+ 
         if (selectExpr.equals("")) {
             throw new OQLException("query syntax error: 'select' expression can not be empty");
         }
-
+             
         String className = null;
         boolean isInstanceOf = false;
         String whereExpr =  null;
         String identifier = null;
-
+ 
         if (seenFrom) {
             if (st.hasMoreTokens()) {
                 String tmp = st.nextToken();
@@ -146,7 +147,7 @@ public class OQLEngine {
             } else {
                 throw new OQLException("query syntax error: class name must follow 'from'");
             }
-
+     
             if (st.hasMoreTokens()) {
                 identifier = st.nextToken();
                 if (identifier.equals("where")) {
@@ -157,7 +158,7 @@ public class OQLEngine {
                     if (! tmp.equals("where")) {
                         throw new OQLException("query syntax error: 'where' clause expected after 'from' clause");
                     }
-
+ 
                     whereExpr = "";
                     while (st.hasMoreTokens()) {
                         whereExpr += " " + st.nextToken();
@@ -169,13 +170,13 @@ public class OQLEngine {
             } else {
                 throw new OQLException("query syntax error: identifier should follow class name");
             }
-        }
-
-        executeQuery(new OQLQuery(selectExpr, isInstanceOf, className,
+        } 
+ 
+        executeQuery(new OQLQuery(selectExpr, isInstanceOf, className, 
                                   identifier, whereExpr), visitor);
     }
-
-    private void executeQuery(OQLQuery q, ObjectVisitor visitor)
+ 
+    private void executeQuery(OQLQuery q, ObjectVisitor visitor) 
                               throws OQLException {
         JavaClass clazz = null;
         if (q.className != null) {
@@ -184,7 +185,7 @@ public class OQLEngine {
                 throw new OQLException(q.className + " is not found!");
             }
         }
-
+ 
         StringBuffer buf = new StringBuffer();
         buf.append("function __select__(");
         if (q.identifier != null) {
@@ -193,7 +194,7 @@ public class OQLEngine {
         buf.append(") { return ");
         buf.append(q.selectExpr.replace('\n', ' '));
         buf.append("; }");
-
+ 
         String selectCode = buf.toString();
         debugPrint(selectCode);
         String whereCode = null;
@@ -207,14 +208,14 @@ public class OQLEngine {
             whereCode = buf.toString();
         }
         debugPrint(whereCode);
-
-        // compile select expression and where condition
+ 
+        // compile select expression and where condition 
         try {
             evalMethod.invoke(engine, new Object[] { selectCode });
             if (whereCode != null) {
                 evalMethod.invoke(engine, new Object[] { whereCode });
             }
-
+ 
             if (q.className != null) {
                 Enumeration objects = clazz.getInstances(q.isInstanceOf);
                 while (objects.hasMoreElements()) {
@@ -231,7 +232,7 @@ public class OQLEngine {
                             b = (res != null);
                         }
                     }
-
+ 
                     if (b) {
                         Object select = call("__select__", args);
                         if (visitor.visit(select)) return;
@@ -254,26 +255,26 @@ public class OQLEngine {
     public Object wrapJavaObject(JavaHeapObject obj) throws Exception {
         return call("wrapJavaObject", new Object[] { obj });
     }
-
+ 
     public Object toHtml(Object obj) throws Exception {
         return call("toHtml", new Object[] { obj });
     }
-
+ 
     public Object call(String func, Object[] args) throws Exception {
         return invokeMethod.invoke(engine, new Object[] { func, args });
     }
-
+ 
     private static void debugPrint(String msg) {
         if (debug) System.out.println(msg);
     }
-
+ 
     private void init(Snapshot snapshot) throws RuntimeException {
         this.snapshot = snapshot;
         try {
             // create ScriptEngineManager
             Class<?> managerClass = Class.forName("javax.script.ScriptEngineManager");
             Object manager = managerClass.newInstance();
-
+ 
             // create JavaScript engine
             Method getEngineMethod = managerClass.getMethod("getEngineByName",
                                 new Class[] { String.class });
@@ -281,24 +282,24 @@ public class OQLEngine {
 
             // initialize engine with init file (hat.js)
             InputStream strm = getInitStream();
-            Class<?> engineClass = Class.forName("javax.script.ScriptEngine");
+            Class<?> engineClass = Class.forName("javax.script.ScriptEngine");   
             evalMethod = engineClass.getMethod("eval",
                                 new Class[] { Reader.class });
             evalMethod.invoke(engine, new Object[] {new InputStreamReader(strm)});
-
+ 
             // initialize ScriptEngine.eval(String) and
             // Invocable.invokeFunction(String, Object[]) methods.
             Class<?> invocableClass = Class.forName("javax.script.Invocable");
-
+ 
             evalMethod = engineClass.getMethod("eval",
                                   new Class[] { String.class });
             invokeMethod = invocableClass.getMethod("invokeFunction",
                                   new Class[] { String.class, Object[].class });
-
+ 
             // initialize ScriptEngine.put(String, Object) method
             Method putMethod = engineClass.getMethod("put",
                                   new Class[] { String.class, Object.class });
-
+ 
             // call ScriptEngine.put to initialize built-in heap object
             putMethod.invoke(engine, new Object[] {
                         "heap", call("wrapHeapSnapshot", new Object[] { snapshot })
@@ -308,14 +309,14 @@ public class OQLEngine {
             throw new RuntimeException(e);
         }
     }
-
+ 
     private InputStream getInitStream() {
         return getClass().getResourceAsStream("/com/sun/tools/hat/resources/hat.js");
     }
-
+ 
     private Object engine;
-    private Method evalMethod;
-    private Method invokeMethod;
+    private Method evalMethod; 
+    private Method invokeMethod; 
     private Snapshot snapshot;
     private static boolean debug = false;
     private static boolean oqlSupported;

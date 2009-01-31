@@ -57,7 +57,7 @@ public class ScatteringRead {
                 throw new Exception("Write failed");
             totalWritten += written;
         }
-
+        
         ByteBuffer[] bufs = new ByteBuffer[3];
         for(int i=0; i<3; i++)
             bufs[i] = ByteBuffer.allocateDirect(10);

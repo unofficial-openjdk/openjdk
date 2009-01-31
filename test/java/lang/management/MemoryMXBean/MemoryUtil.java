@@ -50,9 +50,9 @@ public class MemoryUtil {
     public static void printMemoryPool(MemoryPoolMXBean pool) {
         System.out.println(INDENT + "Memory Pool name: " + pool.getName());
         System.out.println(INDENT + "Type: " + pool.getType());
-        System.out.println(INDENT + "Memory Usage: " +
+        System.out.println(INDENT + "Memory Usage: " + 
             pool.getUsage());
-        System.out.println(INDENT + "Threshold: " +
+        System.out.println(INDENT + "Threshold: " + 
             (pool.isUsageThresholdSupported() ? pool.getUsageThreshold() : -1));
         System.out.print(INDENT + "Manager = [");
         String[] mgrs = pool.getMemoryManagerNames();

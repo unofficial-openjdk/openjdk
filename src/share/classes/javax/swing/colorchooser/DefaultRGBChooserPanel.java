@@ -28,7 +28,6 @@ package javax.swing.colorchooser;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.awt.*;
-import java.util.Locale;
 
 /**
  * The standard RGB chooser.
@@ -42,6 +41,7 @@ import java.util.Locale;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version 1.31 01/23/03
  * @author Steve Wilson
  * @author Mark Davidson
  * @see JColorChooser
@@ -66,7 +66,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
         setInheritsPopupMenu(true);
     }
 
-    /**
+    /** 
      * Sets the values of the controls to reflect the color
      */
     private void setColor( Color newColor ) {
@@ -91,9 +91,9 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
         if (((Integer)blueField.getValue()).intValue() != blue )
             blueField.setValue(new Integer(blue));
     }
-
+    
     public String getDisplayName() {
-        return UIManager.getString("ColorChooser.rgbNameText", getLocale());
+        return UIManager.getString("ColorChooser.rgbNameText");
     }
 
     /**
@@ -105,7 +105,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
      * and feel to honor the return value in some meaningful way.
      * <p>
      * This implementation looks up the value from the default
-     * <code>ColorChooser.rgbMnemonic</code>, or if it
+     * <code>ColorChooser.rgbMnemonic</code>, or if it 
      * isn't available (or not an <code>Integer</code>) returns -1.
      * The lookup for the default is done through the <code>UIManager</code>:
      * <code>UIManager.get("ColorChooser.rgbMnemonic");</code>.
@@ -133,7 +133,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
      * the <code>getDisplayName</code>.
      * <p>
      * This implementation looks up the value from the default
-     * <code>ColorChooser.rgbDisplayedMnemonicIndex</code>, or if it
+     * <code>ColorChooser.rgbDisplayedMnemonicIndex</code>, or if it 
      * isn't available (or not an <code>Integer</code>) returns -1.
      * The lookup for the default is done through the <code>UIManager</code>:
      * <code>UIManager.get("ColorChooser.rgbDisplayedMnemonicIndex");</code>.
@@ -154,21 +154,20 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
     public Icon getLargeDisplayIcon() {
         return null;
     }
-
+       
     /**
      * The background color, foreground color, and font are already set to the
      * defaults from the defaults table before this method is called.
-     */
+     */                                                                        
     public void installChooserPanel(JColorChooser enclosingChooser) {
         super.installChooserPanel(enclosingChooser);
     }
 
     protected void buildChooser() {
-
-        Locale locale = getLocale();
-        String redString = UIManager.getString("ColorChooser.rgbRedText", locale);
-        String greenString = UIManager.getString("ColorChooser.rgbGreenText", locale);
-        String blueString = UIManager.getString("ColorChooser.rgbBlueText", locale);
+      
+        String redString = UIManager.getString("ColorChooser.rgbRedText");
+        String greenString = UIManager.getString("ColorChooser.rgbGreenText");
+        String blueString = UIManager.getString("ColorChooser.rgbBlueText");
 
         setLayout( new BorderLayout() );
         Color color = getColorFromModel();
@@ -185,7 +184,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
 
         // The row for the red value
         JLabel l = new JLabel(redString);
-        l.setDisplayedMnemonic(getInt("ColorChooser.rgbRedMnemonic", -1));
+        l.setDisplayedMnemonic(AbstractColorChooserPanel.getInt("ColorChooser.rgbRedMnemonic", -1));
         enclosure.add(l);
         redSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, color.getRed());
         redSlider.setMajorTickSpacing( 85 );
@@ -207,7 +206,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
 
         // The row for the green value
         l = new JLabel(greenString);
-        l.setDisplayedMnemonic(getInt("ColorChooser.rgbGreenMnemonic", -1));
+        l.setDisplayedMnemonic(AbstractColorChooserPanel.getInt("ColorChooser.rgbGreenMnemonic", -1));
         enclosure.add(l);
         greenSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, color.getGreen());
         greenSlider.setMajorTickSpacing( 85 );
@@ -228,7 +227,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
 
         // The slider for the blue value
         l = new JLabel(blueString);
-        l.setDisplayedMnemonic(getInt("ColorChooser.rgbBlueMnemonic", -1));
+        l.setDisplayedMnemonic(AbstractColorChooserPanel.getInt("ColorChooser.rgbBlueMnemonic", -1));
         enclosure.add(l);
         blueSlider = new JSlider(JSlider.HORIZONTAL, 0, 255, color.getBlue());
         blueSlider.setMajorTickSpacing( 85 );
@@ -249,8 +248,8 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
 
         redSlider.addChangeListener( this );
         greenSlider.addChangeListener( this );
-        blueSlider.addChangeListener( this );
-
+        blueSlider.addChangeListener( this );  
+        
         redSlider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
         greenSlider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
         blueSlider.putClientProperty("JSlider.isFilled", Boolean.TRUE);
@@ -278,7 +277,7 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
             int green = greenSlider.getValue();
             int blue = blueSlider.getValue() ;
             Color color = new Color (red, green, blue);
-
+    
             getColorSelectionModel().setSelectedColor(color);
         } else if (e.getSource() instanceof JSpinner && !isAdjusting) {
 
@@ -286,9 +285,11 @@ class DefaultRGBChooserPanel extends AbstractColorChooserPanel implements Change
             int green = ((Integer)greenField.getValue()).intValue();
             int blue = ((Integer)blueField.getValue()).intValue();
             Color color = new Color (red, green, blue);
-
+            
             getColorSelectionModel().setSelectedColor(color);
         }
     }
 
 }
+
+

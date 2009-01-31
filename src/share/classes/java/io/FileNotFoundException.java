@@ -37,6 +37,7 @@ package java.io;
  * example when an attempt is made to open a read-only file for writing.
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.0
  */
 
@@ -47,7 +48,7 @@ public class FileNotFoundException extends IOException {
      * <code>null</code> as its error detail message.
      */
     public FileNotFoundException() {
-        super();
+	super();
     }
 
     /**
@@ -60,7 +61,7 @@ public class FileNotFoundException extends IOException {
      * @param   s   the detail message.
      */
     public FileNotFoundException(String s) {
-        super(s);
+	super(s);
     }
 
     /**
@@ -73,9 +74,9 @@ public class FileNotFoundException extends IOException {
      * @since 1.2
      */
     private FileNotFoundException(String path, String reason) {
-        super(path + ((reason == null)
-                      ? ""
-                      : " (" + reason + ")"));
+	super(path + ((reason == null)
+		      ? ""
+		      : " (" + reason + ")"));
     }
 
 }

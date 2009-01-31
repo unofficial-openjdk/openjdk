@@ -46,7 +46,7 @@ import sun.security.util.DerValue;
  *         nameRelativeToCRLIssuer   [1] RelativeDistinguishedName }
  *
  *     GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
- *
+ * 
  *     GeneralName ::= CHOICE {
  *         otherName                 [0] INSTANCE OF OTHER-NAME,
  *         rfc822Name                [1] IA5String,
@@ -71,7 +71,7 @@ import sun.security.util.DerValue;
  * </pre>
  * <p>
  * Instances of this class are designed to be immutable. However, since this
- * is an internal API we do not use defensive cloning for values for
+ * is an internal API we do not use defensive cloning for values for 
  * performance reasons. It is the responsibility of the consumer to ensure
  * that no mutable elements are modified.
  *
@@ -80,7 +80,7 @@ import sun.security.util.DerValue;
  * @since 1.6
  */
 public class DistributionPointName {
-
+    
     // ASN.1 context specific tag values
     private static final byte TAG_FULL_NAME = 0;
     private static final byte TAG_RELATIVE_NAME = 1;
@@ -91,7 +91,7 @@ public class DistributionPointName {
 
     // Cached hashCode value
     private volatile int hashCode;
-
+    
     /**
      * Creates a distribution point name using a full name.
      *
@@ -100,10 +100,10 @@ public class DistributionPointName {
      */
     public DistributionPointName(GeneralNames fullName) {
 
-        if (fullName == null) {
-            throw new IllegalArgumentException("fullName must not be null");
-        }
-        this.fullName = fullName;
+	if (fullName == null) {
+	    throw new IllegalArgumentException("fullName must not be null");
+	}
+	this.fullName = fullName;
     }
 
     /**
@@ -115,10 +115,10 @@ public class DistributionPointName {
      */
     public DistributionPointName(RDN relativeName) {
 
-        if (relativeName == null) {
-            throw new IllegalArgumentException("relativeName must not be null");
-        }
-        this.relativeName = relativeName;
+	if (relativeName == null) {
+	    throw new IllegalArgumentException("relativeName must not be null");
+	}
+	this.relativeName = relativeName;
     }
 
     /**
@@ -129,38 +129,38 @@ public class DistributionPointName {
      */
     public DistributionPointName(DerValue encoding) throws IOException {
 
-        if (encoding.isContextSpecific(TAG_FULL_NAME) &&
-            encoding.isConstructed()) {
+	if (encoding.isContextSpecific(TAG_FULL_NAME) &&
+	    encoding.isConstructed()) {
 
-            encoding.resetTag(DerValue.tag_Sequence);
-            fullName = new GeneralNames(encoding);
+	    encoding.resetTag(DerValue.tag_Sequence);
+	    fullName = new GeneralNames(encoding);
 
-        } else if (encoding.isContextSpecific(TAG_RELATIVE_NAME) &&
-            encoding.isConstructed()) {
+	} else if (encoding.isContextSpecific(TAG_RELATIVE_NAME) &&
+	    encoding.isConstructed()) {
 
-            encoding.resetTag(DerValue.tag_Set);
-            relativeName = new RDN(encoding);
+	    encoding.resetTag(DerValue.tag_Set);
+	    relativeName = new RDN(encoding);
 
-        } else {
-            throw new IOException("Invalid encoding for DistributionPointName");
-        }
+	} else {
+	    throw new IOException("Invalid encoding for DistributionPointName");
+	}
 
     }
-
+    
     /**
      * Returns the full name for the distribution point or null if not set.
      */
     public GeneralNames getFullName() {
-        return fullName;
+	return fullName;
     }
-
+    
     /**
      * Returns the relative name for the distribution point or null if not set.
      */
     public RDN getRelativeName() {
-        return relativeName;
+	return relativeName;
     }
-
+    
     /**
      * Encodes the distribution point name and writes it to the DerOutputStream.
      *
@@ -169,21 +169,21 @@ public class DistributionPointName {
      */
     public void encode(DerOutputStream out) throws IOException {
 
-        DerOutputStream theChoice = new DerOutputStream();
+	DerOutputStream theChoice = new DerOutputStream();
 
-        if (fullName != null) {
-            fullName.encode(theChoice);
-            out.writeImplicit(
-                DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_FULL_NAME),
-                theChoice);
+	if (fullName != null) {
+	    fullName.encode(theChoice);
+	    out.writeImplicit(
+		DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_FULL_NAME),
+		theChoice);
 
-        } else {
-            relativeName.encode(theChoice);
-            out.writeImplicit(
-                DerValue.createTag(DerValue.TAG_CONTEXT, true,
-                    TAG_RELATIVE_NAME),
-                theChoice);
-        }
+	} else {
+	    relativeName.encode(theChoice);
+	    out.writeImplicit(
+		DerValue.createTag(DerValue.TAG_CONTEXT, true,
+		    TAG_RELATIVE_NAME),
+		theChoice);
+	}
     }
 
     /**
@@ -193,57 +193,57 @@ public class DistributionPointName {
      * @return true if objects match; false otherwise
      */
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj instanceof DistributionPointName == false) {
-            return false;
-        }
-        DistributionPointName other = (DistributionPointName)obj;
-
-        return equals(this.fullName, other.fullName) &&
-               equals(this.relativeName, other.relativeName);
+	if (this == obj) {
+	    return true;
+	}
+	if (obj instanceof DistributionPointName == false) {
+	    return false;
+	}
+	DistributionPointName other = (DistributionPointName)obj;
+	
+	return equals(this.fullName, other.fullName) &&
+	       equals(this.relativeName, other.relativeName);
     }
-
+    
     /**
      * Returns the hash code for this distribution point name.
      *
      * @return the hash code.
      */
     public int hashCode() {
-        int hash = hashCode;
-        if (hash == 0) {
-            hash = 1;
-            if (fullName != null) {
-                hash += fullName.hashCode();
+	int hash = hashCode;
+	if (hash == 0) {
+	    hash = 1;
+	    if (fullName != null) {
+		hash += fullName.hashCode();
 
-            } else {
-                hash += relativeName.hashCode();
-            }
-            hashCode = hash;
-        }
-        return hash;
+	    } else {
+		hash += relativeName.hashCode();
+	    }
+	    hashCode = hash;
+	}
+	return hash;
     }
-
+    
     /**
      * Returns a printable string of the distribution point name.
      */
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+	StringBuilder sb = new StringBuilder();
         if (fullName != null) {
-            sb.append("DistributionPointName:\n     " + fullName + "\n");
+	    sb.append("DistributionPointName:\n     " + fullName + "\n");
 
-        } else {
+	} else {
             sb.append("DistributionPointName:\n     " + relativeName + "\n");
-        }
+	}
 
-        return sb.toString();
+	return sb.toString();
     }
 
     /*
      * Utility function for a.equals(b) where both a and b may be null.
      */
     private static boolean equals(Object a, Object b) {
-        return (a == null) ? (b == null) : a.equals(b);
+	return (a == null) ? (b == null) : a.equals(b);
     }
 }

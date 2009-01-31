@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -47,7 +47,7 @@ public interface Delegate {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a MessageStruct with ...
  * </p>
  */
@@ -56,12 +56,19 @@ public interface Delegate {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param message ...
  * </p>
  */
     public void send(MessageStruct message);
 
 } // end Delegate
+
+
+
+
+
+
+

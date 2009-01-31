@@ -46,9 +46,9 @@ public class ThreadInfoCompositeData {
     private static int lockIdentityHashCode = 123456;
     private static String lockName = lockClassName + '@' +
         Integer.toHexString(lockIdentityHashCode);
-    private static LockInfo lockInfo =
+    private static LockInfo lockInfo = 
         new LockInfo(lockClassName, lockIdentityHashCode);
-
+      
     public static void main(String[] argv) throws Exception {
         // A valid CompositeData is passed to ThreadInfo
         createGoodCompositeData();
@@ -105,55 +105,55 @@ public class ThreadInfoCompositeData {
                " expected = " + values[THREAD_ID]);
         }
         if (!info.getThreadName().equals(values[THREAD_NAME])) {
-            throw new RuntimeException("Thread Name = " +
+            throw new RuntimeException("Thread Name = " + 
                info.getThreadName() + " expected = " + values[THREAD_NAME]);
         }
         if (info.getThreadState() != Thread.State.RUNNABLE) {
-            throw new RuntimeException("Thread Name = " +
+            throw new RuntimeException("Thread Name = " + 
                info.getThreadName() + " expected = " + Thread.State.RUNNABLE);
         }
         if (info.getBlockedTime() != ((Long) values[BLOCKED_TIME]).longValue()) {
-            throw new RuntimeException("blocked time = " +
+            throw new RuntimeException("blocked time = " + 
                info.getBlockedTime() +
                " expected = " + values[BLOCKED_TIME]);
         }
         if (info.getBlockedCount() != ((Long) values[BLOCKED_COUNT]).longValue()) {
-            throw new RuntimeException("blocked count = " +
+            throw new RuntimeException("blocked count = " + 
                info.getBlockedCount() +
                " expected = " + values[BLOCKED_COUNT]);
         }
         if (info.getWaitedTime() != ((Long) values[WAITED_TIME]).longValue()) {
-            throw new RuntimeException("waited time = " +
+            throw new RuntimeException("waited time = " + 
                info.getWaitedTime() +
                " expected = " + values[WAITED_TIME]);
         }
         if (info.getWaitedCount() != ((Long) values[WAITED_COUNT]).longValue()) {
-            throw new RuntimeException("waited count = " +
+            throw new RuntimeException("waited count = " + 
                info.getWaitedCount() +
                " expected = " + values[WAITED_COUNT]);
         }
         if (!info.getLockName().equals(values[LOCK_NAME])) {
-            throw new RuntimeException("Lock Name = " +
+            throw new RuntimeException("Lock Name = " + 
                info.getLockName() + " expected = " + values[LOCK_NAME]);
         }
-        if (info.getLockOwnerId() !=
+        if (info.getLockOwnerId() != 
                 ((Long) values[LOCK_OWNER_ID]).longValue()) {
             throw new RuntimeException(
                "LockOwner Id = " + info.getLockOwnerId() +
                " expected = " + values[LOCK_OWNER_ID]);
         }
         if (!info.getLockOwnerName().equals(values[LOCK_OWNER_NAME])) {
-            throw new RuntimeException("LockOwner Name = " +
-               info.getLockOwnerName() + " expected = " +
+            throw new RuntimeException("LockOwner Name = " + 
+               info.getLockOwnerName() + " expected = " + 
                values[LOCK_OWNER_NAME]);
         }
 
-        checkStackTrace(info.getStackTrace());
+        checkStackTrace(info.getStackTrace()); 
 
         checkLockInfo(info.getLockInfo());
     }
 
-    private static void checkStackTrace(StackTraceElement[] s)
+    private static void checkStackTrace(StackTraceElement[] s) 
         throws Exception {
         if (ste.length != s.length) {
             throw new RuntimeException("Stack Trace length = " +
@@ -181,27 +181,27 @@ public class ThreadInfoCompositeData {
         }
     }
 
-    private static void checkLockInfo(LockInfo li)
+    private static void checkLockInfo(LockInfo li) 
         throws Exception {
         if (!li.getClassName().equals(lockInfo.getClassName())) {
-            throw new RuntimeException("Class Name = " +
+            throw new RuntimeException("Class Name = " + 
                 li.getClassName() + " expected = " + lockInfo.getClassName());
         }
         if (li.getIdentityHashCode() != lockInfo.getIdentityHashCode()) {
-            throw new RuntimeException("Class Name = " +
-                li.getIdentityHashCode() + " expected = " +
+            throw new RuntimeException("Class Name = " + 
+                li.getIdentityHashCode() + " expected = " + 
                 lockInfo.getIdentityHashCode());
         }
     }
 
     public static void badNameCompositeData() throws Exception {
-        CompositeType ct =
+        CompositeType ct = 
             new CompositeType("MyCompositeType",
                               "CompositeType for ThreadInfo",
                               badItemNames,
                               badItemNames,
                               validItemTypes);
-        CompositeData cd =
+        CompositeData cd = 
             new CompositeDataSupport(ct,
                                      badItemNames,
                                      values);
@@ -215,10 +215,10 @@ public class ThreadInfoCompositeData {
         }
         throw new RuntimeException(
             "IllegalArgumentException not thrown");
-    }
+    } 
 
     public static void badTypeCompositeData() throws Exception {
-        CompositeType ct =
+        CompositeType ct = 
             new CompositeType("MyCompositeType",
                               "CompositeType for ThreadInfo",
                               validItemNames,
@@ -228,7 +228,7 @@ public class ThreadInfoCompositeData {
         // patch values[STACK_TRACE] to Long
         values[STACK_TRACE] = new Long(1000);
         values[LOCK_INFO] = new Long(1000);
-        CompositeData cd =
+        CompositeData cd = 
             new CompositeDataSupport(ct,
                                      validItemNames,
                                      values);
@@ -242,7 +242,7 @@ public class ThreadInfoCompositeData {
         }
         throw new RuntimeException(
             "IllegalArgumentException not thrown");
-    }
+    } 
 
     private static final int THREAD_ID       = 0;
     private static final int THREAD_NAME     = 1;
@@ -334,7 +334,7 @@ public class ThreadInfoCompositeData {
             CompositeType steCType = (CompositeType)
                 OpenTypeConverter.toOpenType(StackTraceElement.class);
             validItemTypes[STACK_TRACE] = new ArrayType(1, steCType);
-
+    
             final Object[] steValue = {
                 ste[0].getClassName(),
                 ste[0].getMethodName(),
@@ -342,22 +342,22 @@ public class ThreadInfoCompositeData {
                 new Integer(ste[0].getLineNumber()),
                 new Boolean(ste[0].isNativeMethod()),
             };
-
-            steCD[0] =
+    
+            steCD[0] = 
                 new CompositeDataSupport(steCType,
                                          steItemNames,
                                          steValue);
-
+    
             CompositeType lockInfoCType = (CompositeType)
                 OpenTypeConverter.toOpenType(LockInfo.class);
             validItemTypes[LOCK_INFO] = lockInfoCType;
-
+    
             final Object[] lockInfoValue = {
                 lockInfo.getClassName(),
                 lockInfo.getIdentityHashCode(),
             };
-
-            values[LOCK_INFO] =
+    
+            values[LOCK_INFO] = 
                 new CompositeDataSupport(lockInfoCType,
                                          lockInfoItemNames,
                                          lockInfoValue);

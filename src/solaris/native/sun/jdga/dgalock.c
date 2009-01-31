@@ -28,7 +28,7 @@
 /* #define DGA_DEBUG */
 
 #ifdef DGA_DEBUG
-#define DEBUG_PRINT(x)  printf x
+#define DEBUG_PRINT(x)	printf x
 #else
 #define DEBUG_PRINT(x)
 #endif
@@ -49,8 +49,8 @@
 
 #include <dlfcn.h>
 
-#define min(x, y)       ((x) < (y) ? (x) : (y))
-#define max(x, y)       ((x) > (y) ? (x) : (y))
+#define min(x, y)	((x) < (y) ? (x) : (y))
+#define max(x, y)	((x) > (y) ? (x) : (y))
 
 typedef struct _SolarisDgaLibInfo SolarisDgaLibInfo;
 
@@ -86,19 +86,19 @@ static GetVirtualDrawableFunc * GetVirtualDrawable = GetVirtualDrawableStub;
 static void Solaris_DGA_XineramaInit(Display *display) {
     void * handle = 0;
     if (IsXineramaOn == NULL) {
-        handle = dlopen("libxinerama.so", RTLD_NOW);
-        if (handle != 0) {
-            void *sym = dlsym(handle, "IsXineramaOn");
-            IsXineramaOn = (IsXineramaOnFunc *)sym;
-            if (IsXineramaOn != 0 && (*IsXineramaOn)(display)) {
-                sym = dlsym(handle, "GetVirtualDrawable");
-                if (sym != 0) {
-                    GetVirtualDrawable = (GetVirtualDrawableFunc *)sym;
-                }
-            } else {
-                dlclose(handle);
-            }
-        }
+	handle = dlopen("libxinerama.so", RTLD_NOW);
+	if (handle != 0) {
+	    void *sym = dlsym(handle, "IsXineramaOn");
+	    IsXineramaOn = (IsXineramaOnFunc *)sym;
+	    if (IsXineramaOn != 0 && (*IsXineramaOn)(display)) {
+		sym = dlsym(handle, "GetVirtualDrawable");
+		if (sym != 0) {
+		    GetVirtualDrawable = (GetVirtualDrawableFunc *)sym;
+		}
+	    } else {
+		dlclose(handle);
+	    }
+	}
     }
 }
 
@@ -112,38 +112,38 @@ static SolarisJDgaDevInfo * getDevInfo(Dga_drawable dgadraw) {
 
     fd = dga_draw_devfd(dgadraw);
     if (ioctl(fd, VIS_GETIDENTIFIER, &visid) != 1) {
-        /* check in the devices list */
+	/* check in the devices list */
         for (i = 0; (i < MAX_FB_TYPES) && (curDevInfo->visidName);
-             i++, curDevInfo++) {
-            if (strcmp(visid.name, curDevInfo->visidName) == 0) {
-                /* we already have such a device, return it */
-                return curDevInfo;
-            }
-        }
-        if (i == MAX_FB_TYPES) {
-            /* we're out of slots, return NULL */
-            return NULL;
-        }
-
-        strcpy(libName, "libjdga");
-        strcat(libName, visid.name);
-        strcat(libName,".so");
-        /* we use RTLD_NOW because of bug 4032715 */
-        handle = dlopen(libName, RTLD_NOW);
-        if (handle != 0) {
-            JDgaStatus ret = JDGA_FAILED;
-            void *sym = dlsym(handle, "SolarisJDgaDevOpen");
-            if (sym != 0) {
-                curDevInfo->majorVersion = JDGALIB_MAJOR_VERSION;
-                curDevInfo->minorVersion = JDGALIB_MINOR_VERSION;
-                ret = (*(SolarisJDgaDevOpenFunc *)sym)(curDevInfo);
-            }
-            if (ret == JDGA_SUCCESS) {
-                curDevInfo->visidName = strdup(visid.name);
-                return curDevInfo;
-            }
-            dlclose(handle);
-        }
+	     i++, curDevInfo++) {
+	    if (strcmp(visid.name, curDevInfo->visidName) == 0) {
+		/* we already have such a device, return it */
+		return curDevInfo;
+	    }
+	}
+	if (i == MAX_FB_TYPES) {
+	    /* we're out of slots, return NULL */
+	    return NULL;
+	}
+	
+	strcpy(libName, "libjdga");
+	strcat(libName, visid.name);
+	strcat(libName,".so");
+	/* we use RTLD_NOW because of bug 4032715 */
+	handle = dlopen(libName, RTLD_NOW);
+	if (handle != 0) {
+	    JDgaStatus ret = JDGA_FAILED;
+	    void *sym = dlsym(handle, "SolarisJDgaDevOpen");
+	    if (sym != 0) {
+		curDevInfo->majorVersion = JDGALIB_MAJOR_VERSION;
+		curDevInfo->minorVersion = JDGALIB_MINOR_VERSION;
+		ret = (*(SolarisJDgaDevOpenFunc *)sym)(curDevInfo);
+	    }
+	    if (ret == JDGA_SUCCESS) {
+		curDevInfo->visidName = strdup(visid.name);
+		return curDevInfo;
+	    }
+	    dlclose(handle);
+	}
     }
     return NULL;
 }
@@ -152,10 +152,10 @@ mmap_dgaDev(SolarisDgaLibInfo *libInfo, Dga_drawable dgadraw)
 {
 
     if (!libInfo->devInfo) {
-        libInfo->devInfo = getDevInfo(dgadraw);
-        if (!libInfo->devInfo) {
-            return JDGA_FAILED;
-        }
+	libInfo->devInfo = getDevInfo(dgadraw);
+	if (!libInfo->devInfo) {
+	    return JDGA_FAILED;
+	}
     }
     return (*libInfo->devInfo->function->winopen)(&(libInfo->winInfo));
 }
@@ -181,22 +181,22 @@ Solaris_DGA_Available(Display *display)
         root = RootWindow(display, screen);
 
         dgaDrawable = XDgaGrabDrawable(display, root);
-        if (dgaDrawable != 0) {
-            devinfo = getDevInfo(dgaDrawable);
+	if (dgaDrawable != 0) {
+	    devinfo = getDevInfo(dgaDrawable);
             XDgaUnGrabDrawable(dgaDrawable);
-            if (devinfo != NULL) {
-                return JNI_TRUE;
-            }
+	    if (devinfo != NULL) {
+		return JNI_TRUE;
+	    }
         }
     }
     return JNI_FALSE;
 }
 
-static JDgaLibInitFunc          Solaris_DGA_LibInit;
-static JDgaGetLockFunc          Solaris_DGA_GetLock;
-static JDgaReleaseLockFunc      Solaris_DGA_ReleaseLock;
-static JDgaXRequestSentFunc     Solaris_DGA_XRequestSent;
-static JDgaLibDisposeFunc       Solaris_DGA_LibDispose;
+static JDgaLibInitFunc		Solaris_DGA_LibInit;
+static JDgaGetLockFunc		Solaris_DGA_GetLock;
+static JDgaReleaseLockFunc	Solaris_DGA_ReleaseLock;
+static JDgaXRequestSentFunc	Solaris_DGA_XRequestSent;
+static JDgaLibDisposeFunc	Solaris_DGA_LibDispose;
 static int firstInitDone = 0;
 
 #pragma weak JDgaLibInit = Solaris_DGA_LibInit
@@ -209,7 +209,7 @@ Solaris_DGA_LibInit(JNIEnv *env, JDgaLibInfo *ppInfo)
     DGA_INIT();
 
     if (!Solaris_DGA_Available(ppInfo->display)) {
-        return JDGA_FAILED;
+	return JDGA_FAILED;
     }
     Solaris_DGA_XineramaInit(ppInfo->display);
 
@@ -224,7 +224,7 @@ Solaris_DGA_LibInit(JNIEnv *env, JDgaLibInfo *ppInfo)
 static JDgaStatus
 Solaris_DGA_GetLock(JNIEnv *env, Display *display, void **dgaDev,
                         Drawable drawable, JDgaSurfaceInfo *pSurface,
-                        jint lox, jint loy, jint hix, jint hiy)
+			jint lox, jint loy, jint hix, jint hiy)
 {
     SolarisDgaLibInfo *pDevInfo;
     SolarisDgaLibInfo *pCachedInfo = cachedInfo;
@@ -241,7 +241,7 @@ Solaris_DGA_GetLock(JNIEnv *env, Display *display, void **dgaDev,
             *dgaDev = 0;
         }
     }
-
+    
     if (*dgaDev == 0) {
         pCachedInfo = cachedInfo;
         for (i = 0 ; (i < MAX_CACHED_INFO) && (pCachedInfo->drawable) ;
@@ -252,61 +252,61 @@ Solaris_DGA_GetLock(JNIEnv *env, Display *display, void **dgaDev,
             }
         }
         if (*dgaDev == 0) {
-            if (i < MAX_CACHED_INFO) { /* slot can be used for new info */
-                 *dgaDev = pCachedInfo;
-            } else {
-                pCachedInfo = cachedInfo;
-                /* find the least used slot but does not handle an overflow of
-                   the counter */
-                for (i = 0, k = 0xffffffff; i < MAX_CACHED_INFO ;
-                     i++, pCachedInfo++) {
-                    if (k > pCachedInfo->count) {
-                        k = pCachedInfo->count;
-                        *dgaDev = pCachedInfo;
-                    }
-                    pCachedInfo->count = 0; /* reset all counters */
-                }
-                pCachedInfo = *dgaDev;
-                if (pCachedInfo->winInfo.dgaDraw != 0) {
-                    XDgaUnGrabDrawable(pCachedInfo->winInfo.dgaDraw);
-                }
-                pCachedInfo->winInfo.dgaDraw = 0;
-                /* the slot might be used for another device */
-                pCachedInfo->devInfo = 0;
-            }
+	    if (i < MAX_CACHED_INFO) { /* slot can be used for new info */ 
+                 *dgaDev = pCachedInfo; 
+	    } else { 
+		pCachedInfo = cachedInfo;
+		/* find the least used slot but does not handle an overflow of
+		   the counter */
+		for (i = 0, k = 0xffffffff; i < MAX_CACHED_INFO ;
+		     i++, pCachedInfo++) {
+		    if (k > pCachedInfo->count) {
+			k = pCachedInfo->count;
+			*dgaDev = pCachedInfo;
+		    }
+		    pCachedInfo->count = 0; /* reset all counters */
+		}
+		pCachedInfo = *dgaDev;
+		if (pCachedInfo->winInfo.dgaDraw != 0) {
+		    XDgaUnGrabDrawable(pCachedInfo->winInfo.dgaDraw);
+		}
+		pCachedInfo->winInfo.dgaDraw = 0;
+		/* the slot might be used for another device */
+		pCachedInfo->devInfo = 0;
+	    }
         }
     }
-
+    
     pDevInfo = *dgaDev;
     pDevInfo->drawable = drawable;
 
     prev_virtual_drawable = pDevInfo->virtual_drawable;
     pDevInfo->virtual_drawable = GetVirtualDrawable(display, drawable);
     if (pDevInfo->virtual_drawable == NULL) {
-        /* this usually means that the drawable is spanned across
-           screens in xinerama mode - we can't handle this for now */
-        return JDGA_FAILED;
+	/* this usually means that the drawable is spanned across 
+	   screens in xinerama mode - we can't handle this for now */
+	return JDGA_FAILED;
     } else {
-        /* check if the drawable has been moved to another screen
-           since last time */
-        if (pDevInfo->winInfo.dgaDraw != 0 &&
-            pDevInfo->virtual_drawable != prev_virtual_drawable) {
-            XDgaUnGrabDrawable(pDevInfo->winInfo.dgaDraw);
-            pDevInfo->winInfo.dgaDraw = 0;
-        }
+	/* check if the drawable has been moved to another screen
+	   since last time */
+	if (pDevInfo->winInfo.dgaDraw != 0 && 
+	    pDevInfo->virtual_drawable != prev_virtual_drawable) {
+	    XDgaUnGrabDrawable(pDevInfo->winInfo.dgaDraw);
+	    pDevInfo->winInfo.dgaDraw = 0;
+	}
     }
-
+    
     pDevInfo->count++;
-
+    
     if (pDevInfo->winInfo.dgaDraw == 0) {
-        pDevInfo->winInfo.dgaDraw = XDgaGrabDrawable(display, pDevInfo->virtual_drawable);
-        if (pDevInfo->winInfo.dgaDraw == 0) {
-            DEBUG_PRINT(("DgaGrabDrawable failed for 0x%08x\n", drawable));
-            return JDGA_UNAVAILABLE;
-        }
+	pDevInfo->winInfo.dgaDraw = XDgaGrabDrawable(display, pDevInfo->virtual_drawable);
+	if (pDevInfo->winInfo.dgaDraw == 0) {
+ 	    DEBUG_PRINT(("DgaGrabDrawable failed for 0x%08x\n", drawable));
+	    return JDGA_UNAVAILABLE;
+	}
         type = dga_draw_type(pDevInfo->winInfo.dgaDraw);
         if (type != DGA_DRAW_PIXMAP &&
-            mmap_dgaDev(pDevInfo, pDevInfo->winInfo.dgaDraw) != JDGA_SUCCESS) {
+	    mmap_dgaDev(pDevInfo, pDevInfo->winInfo.dgaDraw) != JDGA_SUCCESS) {
             DEBUG_PRINT(("memory map failed for 0x%08x (depth = %d)\n",
                          drawable, dga_draw_depth(pDevInfo->winInfo.dgaDraw)));
             XDgaUnGrabDrawable(pDevInfo->winInfo.dgaDraw);
@@ -318,44 +318,44 @@ Solaris_DGA_GetLock(JNIEnv *env, Display *display, void **dgaDev,
     }
 
     if (needsSync) {
-        XSync(display, False);
-        needsSync = JNI_FALSE;
+	XSync(display, False);
+	needsSync = JNI_FALSE;
     }
-
+    
     dgaDrawable = pDevInfo->winInfo.dgaDraw;
 
     DGA_DRAW_LOCK(dgaDrawable, -1);
 
     site = dga_draw_site(dgaDrawable);
     if (type == DGA_DRAW_PIXMAP) {
-        if (site == DGA_SITE_SYSTEM) {
-            pDevInfo->winInfo.mapDepth = dga_draw_depth(dgaDrawable);
-            pDevInfo->winInfo.mapAddr = dga_draw_address(dgaDrawable);
-            dga_draw_bbox(dgaDrawable, &dlox, &dloy, &dhix, &dhiy);
-            pDevInfo->winInfo.mapWidth = dhix;
-            pDevInfo->winInfo.mapHeight = dhiy;
-            if (pDevInfo->winInfo.mapDepth == 8) {
-                pDevInfo->winInfo.mapLineStride = dga_draw_linebytes(dgaDrawable);
-                pDevInfo->winInfo.mapPixelStride = 1;
-            } else {
-                pDevInfo->winInfo.mapLineStride = dga_draw_linebytes(dgaDrawable)/4;
-                pDevInfo->winInfo.mapPixelStride = 4;
-            }
-        } else {
-            XDgaUnGrabDrawable(dgaDrawable);
-            pDevInfo->winInfo.dgaDraw = 0;
-            return JDGA_UNAVAILABLE;
-        }
+	if (site == DGA_SITE_SYSTEM) {
+	    pDevInfo->winInfo.mapDepth = dga_draw_depth(dgaDrawable);
+	    pDevInfo->winInfo.mapAddr = dga_draw_address(dgaDrawable);
+	    dga_draw_bbox(dgaDrawable, &dlox, &dloy, &dhix, &dhiy);
+	    pDevInfo->winInfo.mapWidth = dhix;
+	    pDevInfo->winInfo.mapHeight = dhiy;
+	    if (pDevInfo->winInfo.mapDepth == 8) {
+		pDevInfo->winInfo.mapLineStride = dga_draw_linebytes(dgaDrawable);
+		pDevInfo->winInfo.mapPixelStride = 1;
+	    } else {
+		pDevInfo->winInfo.mapLineStride = dga_draw_linebytes(dgaDrawable)/4;
+		pDevInfo->winInfo.mapPixelStride = 4;
+	    }
+	} else {
+	    XDgaUnGrabDrawable(dgaDrawable);
+	    pDevInfo->winInfo.dgaDraw = 0;
+	    return JDGA_UNAVAILABLE;
+	}
     } else {
-        if (site == DGA_SITE_NULL) {
-            DEBUG_PRINT(("zombie drawable = 0x%08x\n", dgaDrawable));
-            DGA_DRAW_UNLOCK(dgaDrawable);
-            unmap_dgaDev(pDevInfo);
-            XDgaUnGrabDrawable(dgaDrawable);
-            pDevInfo->winInfo.dgaDraw = 0;
-            return JDGA_UNAVAILABLE;
-        }
-        dga_draw_bbox(dgaDrawable, &dlox, &dloy, &dhix, &dhiy);
+	if (site == DGA_SITE_NULL) {
+	    DEBUG_PRINT(("zombie drawable = 0x%08x\n", dgaDrawable));
+	    DGA_DRAW_UNLOCK(dgaDrawable);
+	    unmap_dgaDev(pDevInfo);
+	    XDgaUnGrabDrawable(dgaDrawable);
+	    pDevInfo->winInfo.dgaDraw = 0;
+	    return JDGA_UNAVAILABLE;
+	}
+	dga_draw_bbox(dgaDrawable, &dlox, &dloy, &dhix, &dhiy);
     }
 
     /* get the screen address of the drawable */
@@ -388,11 +388,11 @@ Solaris_DGA_GetLock(JNIEnv *env, Display *display, void **dgaDev,
                      pSurface->visible.hiy));
         break;
     case DGA_VIS_PARTIALLY_OBSCURED: {
-        /*
-         * fix for #4305271
-         * the dga_draw_clipinfo call returns the clipping bounds
-         * in short ints, but use only full size ints for all comparisons.
-         */
+	/*
+	 * fix for #4305271 
+	 * the dga_draw_clipinfo call returns the clipping bounds 
+	 * in short ints, but use only full size ints for all comparisons.
+	 */
         short *ptr;
         int x0, y0, x1, y1;
         int cliplox, cliploy, cliphix, cliphiy;
@@ -511,22 +511,22 @@ Solaris_DGA_LibDispose(JNIEnv *env)
     SolarisDgaLibInfo *pCachedInfo = cachedInfo;
     SolarisJDgaDevInfo *curDevInfo = devicesInfo;
     int i;
-
+    
     for (i = 0 ; (i < MAX_CACHED_INFO) && (pCachedInfo->drawable) ;
          i++, pCachedInfo++) {
         if (pCachedInfo->winInfo.dgaDraw != 0) {
-            if (dga_draw_type(pCachedInfo->winInfo.dgaDraw) == DGA_DRAW_WINDOW &&
-                pCachedInfo->winInfo.mapDepth != 0) {
-                unmap_dgaDev(pCachedInfo);
-            }
+	    if (dga_draw_type(pCachedInfo->winInfo.dgaDraw) == DGA_DRAW_WINDOW &&
+		pCachedInfo->winInfo.mapDepth != 0) {
+		unmap_dgaDev(pCachedInfo);
+	    }
             XDgaUnGrabDrawable(pCachedInfo->winInfo.dgaDraw);
             pCachedInfo->winInfo.dgaDraw = 0;
         }
     }
     for (i = 0; (i < MAX_FB_TYPES) && (curDevInfo->visidName);
-         i++, curDevInfo++) {
+	 i++, curDevInfo++) {
         curDevInfo->function->devclose(curDevInfo);
-        free(curDevInfo->visidName);
+	free(curDevInfo->visidName);
     }
 }
 #endif

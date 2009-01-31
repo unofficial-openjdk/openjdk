@@ -50,10 +50,10 @@ public class VetoableChangeSupport implements Serializable {
      * @param sourceBean  The bean to be given as the source for any events.
      */
     public VetoableChangeSupport(Object sourceBean) {
-        if (sourceBean == null) {
-            throw new NullPointerException();
-        }
-        source = sourceBean;
+	if (sourceBean == null) {
+	    throw new NullPointerException();
+	}
+	source = sourceBean;
     }
 
     /**
@@ -75,7 +75,7 @@ public class VetoableChangeSupport implements Serializable {
                     (VetoableChangeListenerProxy)listener;
             // Call two argument add method.
             addVetoableChangeListener(proxy.getPropertyName(),
-                                      proxy.getListener());
+                    (VetoableChangeListener)proxy.getListener());
         } else {
             this.map.add(null, listener);
         }
@@ -101,41 +101,18 @@ public class VetoableChangeSupport implements Serializable {
                     (VetoableChangeListenerProxy)listener;
             // Call two argument remove method.
             removeVetoableChangeListener(proxy.getPropertyName(),
-                                         proxy.getListener());
+                    (VetoableChangeListener)proxy.getListener());
         } else {
             this.map.remove(null, listener);
         }
     }
 
     /**
-     * Returns an array of all the listeners that were added to the
-     * VetoableChangeSupport object with addVetoableChangeListener().
+     * Returns the list of VetoableChangeListeners. If named vetoable change listeners
+     * were added, then VetoableChangeListenerProxy wrappers will returned
      * <p>
-     * If some listeners have been added with a named property, then
-     * the returned array will be a mixture of VetoableChangeListeners
-     * and <code>VetoableChangeListenerProxy</code>s. If the calling
-     * method is interested in distinguishing the listeners then it must
-     * test each element to see if it's a
-     * <code>VetoableChangeListenerProxy</code>, perform the cast, and examine
-     * the parameter.
-     *
-     * <pre>
-     * VetoableChangeListener[] listeners = bean.getVetoableChangeListeners();
-     * for (int i = 0; i < listeners.length; i++) {
-     *        if (listeners[i] instanceof VetoableChangeListenerProxy) {
-     *     VetoableChangeListenerProxy proxy =
-     *                    (VetoableChangeListenerProxy)listeners[i];
-     *     if (proxy.getPropertyName().equals("foo")) {
-     *       // proxy is a VetoableChangeListener which was associated
-     *       // with the property named "foo"
-     *     }
-     *   }
-     * }
-     *</pre>
-     *
-     * @see VetoableChangeListenerProxy
-     * @return all of the <code>VetoableChangeListeners</code> added or an
-     *         empty array if no listeners have been added
+     * @return List of VetoableChangeListeners and VetoableChangeListenerProxys
+     *         if named property change listeners were added.
      * @since 1.4
      */
     public VetoableChangeListener[] getVetoableChangeListeners(){
@@ -156,7 +133,7 @@ public class VetoableChangeSupport implements Serializable {
      * @param listener  The VetoableChangeListener to be added
      */
     public void addVetoableChangeListener(
-                                String propertyName,
+				String propertyName,
                 VetoableChangeListener listener) {
         if (listener == null || propertyName == null) {
             return;
@@ -181,7 +158,7 @@ public class VetoableChangeSupport implements Serializable {
      * @param listener  The VetoableChangeListener to be removed
      */
     public void removeVetoableChangeListener(
-                                String propertyName,
+				String propertyName,
                 VetoableChangeListener listener) {
         if (listener == null || propertyName == null) {
             return;
@@ -193,7 +170,7 @@ public class VetoableChangeSupport implements Serializable {
     }
 
     /**
-     * Returns an array of all the listeners which have been associated
+     * Returns an array of all the listeners which have been associated 
      * with the named property.
      *
      * @param propertyName  The name of the property being listened to
@@ -209,27 +186,27 @@ public class VetoableChangeSupport implements Serializable {
 
     /**
      * Report a vetoable property update to any registered listeners.  If
-     * anyone vetos the change, then fire a new event reverting everyone to
+     * anyone vetos the change, then fire a new event reverting everyone to 
      * the old value and then rethrow the PropertyVetoException.
      * <p>
      * No event is fired if old and new are equal and non-null.
      *
      * @param propertyName  The programmatic name of the property
-     *          that is about to change..
+     *		that is about to change..
      * @param oldValue  The old value of the property.
      * @param newValue  The new value of the property.
      * @exception PropertyVetoException if the recipient wishes the property
      *              change to be rolled back.
      */
-    public void fireVetoableChange(String propertyName,
-                                        Object oldValue, Object newValue)
-                                        throws PropertyVetoException {
+    public void fireVetoableChange(String propertyName, 
+					Object oldValue, Object newValue)
+					throws PropertyVetoException {
         if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
             return;
         }
-        PropertyChangeEvent evt = new PropertyChangeEvent(source, propertyName,
-                                                            oldValue, newValue);
-        fireVetoableChange(evt);
+       	PropertyChangeEvent evt = new PropertyChangeEvent(source, propertyName,
+							    oldValue, newValue);
+	fireVetoableChange(evt);
     }
 
     /**
@@ -240,16 +217,16 @@ public class VetoableChangeSupport implements Serializable {
      * fireVetoableChange method that takes Object values.
      *
      * @param propertyName  The programmatic name of the property
-     *          that is about to change.
+     *		that is about to change.
      * @param oldValue  The old value of the property.
      * @param newValue  The new value of the property.
      */
-    public void fireVetoableChange(String propertyName,
-                                        int oldValue, int newValue)
-                                        throws PropertyVetoException {
-        if (oldValue == newValue) {
-            return;
-        }
+    public void fireVetoableChange(String propertyName, 
+					int oldValue, int newValue)
+					throws PropertyVetoException {
+	if (oldValue == newValue) {
+	    return;
+	}
         fireVetoableChange(propertyName, Integer.valueOf(oldValue), Integer.valueOf(newValue));
     }
 
@@ -261,22 +238,22 @@ public class VetoableChangeSupport implements Serializable {
      * fireVetoableChange method that takes Object values.
      *
      * @param propertyName  The programmatic name of the property
-     *          that is about to change.
+     *		that is about to change.
      * @param oldValue  The old value of the property.
      * @param newValue  The new value of the property.
      */
-    public void fireVetoableChange(String propertyName,
-                                        boolean oldValue, boolean newValue)
-                                        throws PropertyVetoException {
-        if (oldValue == newValue) {
-            return;
-        }
-        fireVetoableChange(propertyName, Boolean.valueOf(oldValue), Boolean.valueOf(newValue));
+    public void fireVetoableChange(String propertyName, 
+					boolean oldValue, boolean newValue) 
+					throws PropertyVetoException {
+	if (oldValue == newValue) {
+	    return;
+	}
+	fireVetoableChange(propertyName, Boolean.valueOf(oldValue), Boolean.valueOf(newValue));
     }
 
     /**
      * Fire a vetoable property update to any registered listeners.  If
-     * anyone vetos the change, then fire a new event reverting everyone to
+     * anyone vetos the change, then fire a new event reverting everyone to 
      * the old value and then rethrow the PropertyVetoException.
      * <p>
      * No event is fired if old and new are equal and non-null.
@@ -286,14 +263,14 @@ public class VetoableChangeSupport implements Serializable {
      *              change to be rolled back.
      */
     public void fireVetoableChange(PropertyChangeEvent evt)
-                                        throws PropertyVetoException {
+					throws PropertyVetoException {
 
-        Object oldValue = evt.getOldValue();
-        Object newValue = evt.getNewValue();
-        String propertyName = evt.getPropertyName();
-        if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
-            return;
-        }
+	Object oldValue = evt.getOldValue();
+	Object newValue = evt.getNewValue();
+	String propertyName = evt.getPropertyName();
+	if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
+	    return;
+	}
         VetoableChangeListener[] common = this.map.get(null);
         VetoableChangeListener[] named = (propertyName != null)
                     ? this.map.get(propertyName)
@@ -303,15 +280,15 @@ public class VetoableChangeSupport implements Serializable {
     }
 
     private void fire(VetoableChangeListener[] listeners, PropertyChangeEvent event) throws PropertyVetoException {
-        if (listeners != null) {
+	if (listeners != null) {
             VetoableChangeListener current = null;
-            try {
+	    try {
                 for (VetoableChangeListener listener : listeners) {
                     current = listener;
                     listener.vetoableChange(event);
                 }
-            } catch (PropertyVetoException veto) {
-                // Create an event to revert everyone to the old value.
+	    } catch (PropertyVetoException veto) {
+	        // Create an event to revert everyone to the old value.
                 event = new PropertyChangeEvent( this.source,
                                                  event.getPropertyName(),
                                                  event.getNewValue(),
@@ -320,16 +297,16 @@ public class VetoableChangeSupport implements Serializable {
                     if (current == listener) {
                         break;
                     }
-                    try {
+		    try {
                         listener.vetoableChange(event);
-                    } catch (PropertyVetoException ex) {
-                         // We just ignore exceptions that occur during reversions.
-                    }
-                }
-                // And now rethrow the PropertyVetoException.
-                throw veto;
-            }
-        }
+		    } catch (PropertyVetoException ex) {
+		         // We just ignore exceptions that occur during reversions.
+		    }
+	        }
+	        // And now rethrow the PropertyVetoException.
+	        throw veto;
+	    }
+	}
     }
 
     /**
@@ -376,9 +353,9 @@ public class VetoableChangeSupport implements Serializable {
 
         if (listeners != null) {
             for (VetoableChangeListener l : listeners) {
-                if (l instanceof Serializable) {
-                    s.writeObject(l);
-                }
+	        if (l instanceof Serializable) {
+	            s.writeObject(l);
+	        }
             }
         }
         s.writeObject(null);
@@ -406,7 +383,7 @@ public class VetoableChangeSupport implements Serializable {
         }
     }
 
-    /**
+    /** 
      * The object to be provided as the "source" for any generated events.
      */
     private Object source;

@@ -89,8 +89,8 @@ public class GenericsTest extends TestScaffold {
     public static void main(String[] args) throws Exception {
         /*
          * The 1.5 FE must be able to talk to a 1.4 BE, ie, JDWP version <= 1.4.
-         * This is hard to test since this test file must be compiled with
-         * -source 1.5 which will cause its class file to be version 49 which
+         * This is hard to test since this test file must be compiled with 
+         * -source 1.5 which will cause its class file to be version 49 which 
          * won't run on a pre 1.5 JDK.   We can simulate this though
          * by passing
          *      -xjdk <pathname>
@@ -105,7 +105,7 @@ public class GenericsTest extends TestScaffold {
         if (args.length > 1 && args[0].equals("-xjdk")) {
             System.setProperty("java.home", args[1]);
             useOld = true;
-
+            
             // Delete this arg
             String[] args1 = new String[args.length - 2];
             for (int ii = 0; ii < args.length -2; ii++) {
@@ -116,12 +116,12 @@ public class GenericsTest extends TestScaffold {
 
         new GenericsTest(args).startTests();
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("GenericsTarg");
@@ -165,7 +165,7 @@ public class GenericsTest extends TestScaffold {
             System.out.println("          sig = " + gen1Class.signature());
             System.out.println("       genSig = " + genSig);
             if (!useOld && !expected.equals(genSig)) {
-                failure("FAILED: Expected generic signature for gen1: " +
+                failure("FAILED: Expected generic signature for gen1: " + 
                         expected + ", received: " + genSig);
             }
         }
@@ -181,7 +181,7 @@ public class GenericsTest extends TestScaffold {
             System.out.println("        sig = " + field1.signature());
             System.out.println("    gen sig = " + genSig);
             if (!useOld && !expected.equals(genSig)) {
-                failure("FAILED: Expected generic signature for field1: " +
+                failure("FAILED: Expected generic signature for field1: " + 
                         expected + ", received: " + genSig);
             }
         }
@@ -198,7 +198,7 @@ public class GenericsTest extends TestScaffold {
             System.out.println("     gen sig = " + genSig);
             System.out.println("     bridge  = " + method1.isBridge());
             if (!useOld && !expected.equals(genSig)) {
-                failure("FAILED: Expected generic signature for method1: " +
+                failure("FAILED: Expected generic signature for method1: " + 
                         expected + ", received: " + genSig);
             }
 
@@ -219,7 +219,7 @@ public class GenericsTest extends TestScaffold {
                 System.out.println("      sig      = " + pp.signature());
                 System.out.println("      gen sig  = " + genSig);
                 //jjh Uncomment when generics for local vars are available from
-                //jjh javac and hotspot.  See:
+                //jjh javac and hotspot.  See: 
                 //jjh   4914602 LVT entries for classfile version > 49 must be converted
                 //jjh if (!useOld && !expected.equals(genSig)) {
                 //jjh    failure("FAILED: Expected generic signature for local var: " +
@@ -241,7 +241,7 @@ public class GenericsTest extends TestScaffold {
             System.out.println("     gen sig = " + genSig);
             System.out.println("     bridge  = " + method2.isBridge());
             if (!useOld && !expected.equals(genSig)) {
-                failure("FAILED: Expected generic signature for method2: " +
+                failure("FAILED: Expected generic signature for method2: " + 
                         expected + ", received: " + genSig);
             }
 
@@ -288,7 +288,7 @@ public class GenericsTest extends TestScaffold {
                 failure("FAILED: Expected Sub1.method1 to be a bridge method"
                          + " but it isn't");
             }
-
+            
         }
         {
             // Verify genericSignature for a non generic class
@@ -296,7 +296,7 @@ public class GenericsTest extends TestScaffold {
             if (genSig != null) {
                 failure("FAILED: Expected generic signature = null for "
                         + targetClass.name() + ", received: " + genSig);
-            }
+            }                
         }
         {
             // Verify genericSignature for a non generic field
@@ -305,7 +305,7 @@ public class GenericsTest extends TestScaffold {
             if (genSig != null) {
                 failure("FAILED: Expected generic signature = null for "
                         + objField.name() + ", received: " + genSig);
-            }
+            }                
         }
         {
             // Verify genericSignature for a non generic method
@@ -320,7 +320,7 @@ public class GenericsTest extends TestScaffold {
         if (0 == 1) {
             mainThread = bpe.thread();
             EventRequestManager erm = vm().eventRequestManager();
-            StepRequest request = erm.createStepRequest(mainThread,
+            StepRequest request = erm.createStepRequest(mainThread, 
                                                     StepRequest.STEP_LINE,
                                                     StepRequest.STEP_INTO);
             request.enable();
@@ -330,7 +330,7 @@ public class GenericsTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -342,3 +342,4 @@ public class GenericsTest extends TestScaffold {
         }
     }
 }
+

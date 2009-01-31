@@ -25,7 +25,7 @@
 
 /*****************************************************************************/
 /*
-**      Native functions for interfacing Java with the native implementation
+**	Native functions for interfacing Java with the native implementation
 **      of PlatformMidi.h's functions.
 */
 /*****************************************************************************/
@@ -58,11 +58,11 @@ Java_com_sun_media_sound_MidiOutDevice_nOpen(JNIEnv* e, jobject thisObj, jint in
 
     // if we didn't get a valid handle, throw a MidiUnavailableException
     if (!deviceHandle) {
-        ERROR0("Java_com_sun_media_sound_MidiOutDevice_nOpen:");
-        ThrowJavaMessageException(e, JAVA_MIDI_PACKAGE_NAME"/MidiUnavailableException",
-                                  MIDI_OUT_InternalGetErrorString(err));
+	ERROR0("Java_com_sun_media_sound_MidiOutDevice_nOpen:");
+	ThrowJavaMessageException(e, JAVA_MIDI_PACKAGE_NAME"/MidiUnavailableException", 
+				  MIDI_OUT_InternalGetErrorString(err));
     } else {
-        TRACE0("Java_com_sun_media_sound_MidiOutDevice_nOpen succeeded\n");
+	TRACE0("Java_com_sun_media_sound_MidiOutDevice_nOpen succeeded\n");
     }
     return (jlong) (INT_PTR) deviceHandle;
 }
@@ -94,8 +94,8 @@ Java_com_sun_media_sound_MidiOutDevice_nGetTimeStamp(JNIEnv* e, jobject thisObj,
 
     /* Handle error codes. */
     if (ret < -1) {
-        ERROR1("Java_com_sun_media_sound_MidiOutDevice_nGetTimeStamp: MIDI_IN_GetTimeStamp returned %lld\n", ret);
-        ret = -1;
+	ERROR1("Java_com_sun_media_sound_MidiOutDevice_nGetTimeStamp: MIDI_IN_GetTimeStamp returned %lld\n", ret);
+	ret = -1;
     }
     return ret;
 }
@@ -103,13 +103,13 @@ Java_com_sun_media_sound_MidiOutDevice_nGetTimeStamp(JNIEnv* e, jobject thisObj,
 
 JNIEXPORT void JNICALL
 Java_com_sun_media_sound_MidiOutDevice_nSendShortMessage(JNIEnv* e, jobject thisObj, jlong deviceHandle,
-                                                         jint packedMsg, jlong timeStamp) {
+							 jint packedMsg, jlong timeStamp) {
 
     TRACE0("Java_com_sun_media_sound_MidiOutDevice_nSendShortMessage.\n");
 
 #if USE_PLATFORM_MIDI_OUT == TRUE
     MIDI_OUT_SendShortMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle,
-                              (UINT32) packedMsg, (UINT32)timeStamp);
+			      (UINT32) packedMsg, (UINT32)timeStamp);
 #endif
 
     TRACE0("Java_com_sun_media_sound_MidiOutDevice_nSendShortMessage succeeded\n");
@@ -118,7 +118,7 @@ Java_com_sun_media_sound_MidiOutDevice_nSendShortMessage(JNIEnv* e, jobject this
 
 JNIEXPORT void JNICALL
 Java_com_sun_media_sound_MidiOutDevice_nSendLongMessage(JNIEnv* e, jobject thisObj, jlong deviceHandle,
-                                                        jbyteArray jData, jint size, jlong timeStamp) {
+							jbyteArray jData, jint size, jlong timeStamp) {
 #if USE_PLATFORM_MIDI_OUT == TRUE
     UBYTE* data;
 #endif
@@ -128,17 +128,17 @@ Java_com_sun_media_sound_MidiOutDevice_nSendLongMessage(JNIEnv* e, jobject thisO
 #if USE_PLATFORM_MIDI_OUT == TRUE
     data = (UBYTE*) ((*e)->GetByteArrayElements(e, jData, NULL));
     if (!data) {
-        ERROR0("MidiOutDevice: Java_com_sun_media_sound_MidiOutDevice_nSendLongMessage: could not get array elements\n");
-        return;
+	ERROR0("MidiOutDevice: Java_com_sun_media_sound_MidiOutDevice_nSendLongMessage: could not get array elements\n");
+	return;
     }
     /* "continuation" sysex messages start with F7 (instead of F0), but
        are sent without the F7. */
     if (data[0] == 0xF7) {
-        data++;
-        size--;
+	data++;
+	size--;
     }
     MIDI_OUT_SendLongMessage((MidiDeviceHandle*) (UINT_PTR) deviceHandle, data,
-                             (UINT32) size, (UINT32)timeStamp);
+			     (UINT32) size, (UINT32)timeStamp);
     // release the byte array
     (*e)->ReleaseByteArrayElements(e, jData, (jbyte*) data, JNI_ABORT);
 #endif

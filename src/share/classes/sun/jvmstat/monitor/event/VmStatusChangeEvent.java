@@ -33,6 +33,7 @@ import sun.jvmstat.monitor.MonitoredHost;
  * associated with a MonitoredHost.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class VmStatusChangeEvent extends HostEvent {

@@ -37,6 +37,7 @@ import java.io.*;
  *
  * @see DTD
  * @see AttributeList
+ * @version %I%, %G%
  * @author Arthur van Hoff
  */
 public final
@@ -66,110 +67,110 @@ class Element implements DTDConstants, Serializable {
      * Create a new element.
      */
     Element(String name, int index) {
-        this.name = name;
-        this.index = index;
-        maxIndex = Math.max(maxIndex, index);
+	this.name = name;
+	this.index = index;
+	maxIndex = Math.max(maxIndex, index);
     }
 
     /**
      * Get the name of the element.
      */
     public String getName() {
-        return name;
+	return name;
     }
 
     /**
      * Return true if the start tag can be omitted.
      */
     public boolean omitStart() {
-        return oStart;
+	return oStart;
     }
 
     /**
      * Return true if the end tag can be omitted.
      */
     public boolean omitEnd() {
-        return oEnd;
+	return oEnd;
     }
 
     /**
      * Get type.
      */
     public int getType() {
-        return type;
+	return type;
     }
 
     /**
      * Get content model
      */
     public ContentModel getContent() {
-        return content;
+	return content;
     }
 
     /**
      * Get the attributes.
      */
     public AttributeList getAttributes() {
-        return atts;
+	return atts;
     }
 
     /**
      * Get index.
      */
     public int getIndex() {
-        return index;
+	return index;
     }
 
     /**
      * Check if empty
      */
     public boolean isEmpty() {
-        return type == EMPTY;
+	return type == EMPTY;
     }
 
     /**
      * Convert to a string.
      */
     public String toString() {
-        return name;
+	return name;
     }
 
     /**
      * Get an attribute by name.
      */
     public AttributeList getAttribute(String name) {
-        for (AttributeList a = atts ; a != null ; a = a.next) {
-            if (a.name.equals(name)) {
-                return a;
-            }
-        }
-        return null;
+	for (AttributeList a = atts ; a != null ; a = a.next) {
+	    if (a.name.equals(name)) {
+		return a;
+	    }
+	}
+	return null;
     }
 
     /**
      * Get an attribute by value.
      */
     public AttributeList getAttributeByValue(String name) {
-        for (AttributeList a = atts ; a != null ; a = a.next) {
-            if ((a.values != null) && a.values.contains(name)) {
-                return a;
-            }
-        }
-        return null;
+	for (AttributeList a = atts ; a != null ; a = a.next) {
+	    if ((a.values != null) && a.values.contains(name)) {
+		return a;
+	    }
+	}
+	return null;
     }
 
 
     static Hashtable contentTypes = new Hashtable();
 
     static {
-        contentTypes.put("CDATA", new Integer(CDATA));
-        contentTypes.put("RCDATA", new Integer(RCDATA));
-        contentTypes.put("EMPTY", new Integer(EMPTY));
-        contentTypes.put("ANY", new Integer(ANY));
+	contentTypes.put("CDATA", new Integer(CDATA));
+	contentTypes.put("RCDATA", new Integer(RCDATA));
+	contentTypes.put("EMPTY", new Integer(EMPTY));
+	contentTypes.put("ANY", new Integer(ANY));
     }
 
     public static int name2type(String nm) {
-        Integer val = (Integer)contentTypes.get(nm);
-        return (val != null) ? val.intValue() : 0;
+	Integer val = (Integer)contentTypes.get(nm);
+	return (val != null) ? val.intValue() : 0;
     }
 }

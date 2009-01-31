@@ -26,11 +26,12 @@ package javax.swing.event;
 
 
 import java.util.EventListener;
-
-
+ 
+ 
 /**
  * Defines an object which listens for ChangeEvents.
  *
+ * @version %I% %G%
  * @author Jeff Dinkins
  */
 public interface ChangeListener extends EventListener {
@@ -41,3 +42,4 @@ public interface ChangeListener extends EventListener {
      */
     void stateChanged(ChangeEvent e);
 }
+

@@ -255,10 +255,10 @@ public class MBeanPermission extends Permission {
 
         if (actions == null)
             throw new IllegalArgumentException("MBeanPermission: " +
-                                               "actions can't be null");
+					       "actions can't be null");
         if (actions.equals(""))
             throw new IllegalArgumentException("MBeanPermission: " +
-                                               "actions can't be empty");
+					       "actions can't be empty");
 
         mask = getMask(actions);
 
@@ -273,20 +273,20 @@ public class MBeanPermission extends Permission {
      * Parse <code>name</code> parameter.
      */
     private void parseName() {
-        String name = getName();
+	String name = getName();
 
-        if (name == null)
-            throw new IllegalArgumentException("MBeanPermission name " +
-                                               "cannot be null");
+	if (name == null)
+	    throw new IllegalArgumentException("MBeanPermission name " +
+					       "cannot be null");
 
         if (name.equals(""))
-            throw new IllegalArgumentException("MBeanPermission name " +
-                                               "cannot be empty");
+	    throw new IllegalArgumentException("MBeanPermission name " +
+					       "cannot be empty");
 
-        /* The name looks like "class#member[objectname]".  We subtract
-           elements from the right as we parse, so after parsing the
-           objectname we have "class#member" and after parsing the
-           member we have "class".  Each element is optional.  */
+	/* The name looks like "class#member[objectname]".  We subtract
+	   elements from the right as we parse, so after parsing the
+	   objectname we have "class#member" and after parsing the
+	   member we have "class".  Each element is optional.  */
 
         // Parse ObjectName
 
@@ -294,7 +294,7 @@ public class MBeanPermission extends Permission {
         if (openingBracket == -1) {
             // If "[on]" missing then ObjectName("*:*")
             //
-            objectName = ObjectName.WILDCARD;
+	    objectName = ObjectName.WILDCARD;
         } else {
             if (!name.endsWith("]")) {
                 throw new IllegalArgumentException("MBeanPermission: " +
@@ -311,11 +311,11 @@ public class MBeanPermission extends Permission {
                     String on = name.substring(openingBracket + 1,
                                                name.length() - 1);
                     if (on.equals(""))
-                        objectName = ObjectName.WILDCARD;
-                    else if (on.equals("-"))
-                        objectName = null;
-                    else
-                        objectName = new ObjectName(on);
+			objectName = ObjectName.WILDCARD;
+		    else if (on.equals("-"))
+			objectName = null;
+		    else
+			objectName = new ObjectName(on);
                 } catch (MalformedObjectNameException e) {
                     throw new IllegalArgumentException("MBeanPermission: " +
                                                        "The target name does " +
@@ -324,24 +324,24 @@ public class MBeanPermission extends Permission {
                 }
             }
 
-            name = name.substring(0, openingBracket);
+	    name = name.substring(0, openingBracket);
         }
 
-        // Parse member
+	// Parse member
 
         int poundSign = name.indexOf("#");
 
         if (poundSign == -1)
-            setMember("*");
-        else {
+	    setMember("*");
+	else {
             String memberName = name.substring(poundSign + 1);
-            setMember(memberName);
-            name = name.substring(0, poundSign);
+	    setMember(memberName);
+	    name = name.substring(0, poundSign);
         }
 
         // Parse className
 
-        setClassName(name);
+	setClassName(name);
     }
 
     /**
@@ -349,36 +349,36 @@ public class MBeanPermission extends Permission {
      * parameters.
      */
     private void initName(String className, String member,
-                          ObjectName objectName) {
-        setClassName(className);
-        setMember(member);
-        this.objectName = objectName;
+			  ObjectName objectName) {
+	setClassName(className);
+	setMember(member);
+	this.objectName = objectName;
     }
 
     private void setClassName(String className) {
-        if (className == null || className.equals("-")) {
-            classNamePrefix = null;
-            classNameExactMatch = false;
-        } else if (className.equals("") || className.equals("*")) {
-            classNamePrefix = "";
-            classNameExactMatch = false;
+	if (className == null || className.equals("-")) {
+	    classNamePrefix = null;
+	    classNameExactMatch = false;
+	} else if (className.equals("") || className.equals("*")) {
+	    classNamePrefix = "";
+	    classNameExactMatch = false;
         } else if (className.endsWith(".*")) {
-            // Note that we include the "." in the required prefix
-            classNamePrefix = className.substring(0, className.length() - 1);
-            classNameExactMatch = false;
+	    // Note that we include the "." in the required prefix
+	    classNamePrefix = className.substring(0, className.length() - 1);
+	    classNameExactMatch = false;
         } else {
-            classNamePrefix = className;
-            classNameExactMatch = true;
+	    classNamePrefix = className;
+	    classNameExactMatch = true;
         }
     }
 
     private void setMember(String member) {
-        if (member == null || member.equals("-"))
-            this.member = null;
-        else if (member.equals(""))
-            this.member = "*";
-        else
-            this.member = member;
+	if (member == null || member.equals("-"))
+	    this.member = null;
+	else if (member.equals(""))
+	    this.member = "*";
+	else
+	    this.member = member;
     }
 
     /**
@@ -402,10 +402,10 @@ public class MBeanPermission extends Permission {
     public MBeanPermission(String name, String actions) {
         super(name);
 
-        parseName();
+	parseName();
 
-        this.actions = actions;
-        parseActions();
+	this.actions = actions;
+	parseActions();
     }
 
     /**
@@ -436,37 +436,37 @@ public class MBeanPermission extends Permission {
      * @param actions the action string.
      */
     public MBeanPermission(String className,
-                           String member,
-                           ObjectName objectName,
-                           String actions) {
+			   String member,
+			   ObjectName objectName,
+			   String actions) {
 
         super(makeName(className, member, objectName));
-        initName(className, member, objectName);
+	initName(className, member, objectName);
 
-        this.actions = actions;
-        parseActions();
+	this.actions = actions;
+	parseActions();
     }
 
     private static String makeName(String className, String member,
-                                   ObjectName objectName) {
-        final StringBuilder name = new StringBuilder();
-        if (className == null)
-            className = "-";
-        name.append(className);
-        if (member == null)
-            member = "-";
-        name.append("#" + member);
-        if (objectName == null)
-            name.append("[-]");
-        else
-            name.append("[").append(objectName.getCanonicalName()).append("]");
+				   ObjectName objectName) {
+	final StringBuilder name = new StringBuilder();
+	if (className == null)
+	    className = "-";
+	name.append(className);
+	if (member == null)
+	    member = "-";
+	name.append("#" + member);
+	if (objectName == null)
+	    name.append("[-]");
+	else
+	    name.append("[").append(objectName.getCanonicalName()).append("]");
 
-        /* In the interests of legibility for Permission.toString(), we
-           transform the empty string into "*".  */
-        if (name.length() == 0)
-            return "*";
-        else
-            return name.toString();
+	/* In the interests of legibility for Permission.toString(), we
+	   transform the empty string into "*".  */
+	if (name.length() == 0)
+	    return "*";
+	else
+	    return name.toString();
     }
 
     /**
@@ -963,7 +963,7 @@ public class MBeanPermission extends Permission {
                 switch(a[i-matchlen]) {
                 case ',':
                     seencomma = true;
-                    break;
+		    break;
                 case ' ': case '\r': case '\n':
                 case '\f': case '\t':
                     break;
@@ -1035,18 +1035,18 @@ public class MBeanPermission extends Permission {
         // superset of the actions in 'that' permission
         //
 
-        /* "queryMBeans" implies "queryNames" */
-        if ((this.mask & QueryMBeans) == QueryMBeans) {
-            if (((this.mask | QueryNames) & that.mask) != that.mask) {
-                //System.out.println("action [with QueryNames] does not imply");
-                return false;
-            }
-        } else {
-            if ((this.mask & that.mask) != that.mask) {
-                //System.out.println("action does not imply");
-                return false;
-            }
-        }
+	/* "queryMBeans" implies "queryNames" */
+	if ((this.mask & QueryMBeans) == QueryMBeans) {
+	    if (((this.mask | QueryNames) & that.mask) != that.mask) {
+		//System.out.println("action [with QueryNames] does not imply");
+		return false;
+	    }
+	} else {
+	    if ((this.mask & that.mask) != that.mask) {
+		//System.out.println("action does not imply");
+		return false;
+	    }
+	}
 
         // Target name
         //
@@ -1070,56 +1070,56 @@ public class MBeanPermission extends Permission {
         //
 
         /* Check if this.className implies that.className.
+	   
+	   If that.classNamePrefix is empty that means the className is
+	   irrelevant for this permission check.  Otherwise, we do not
+	   expect that "that" contains a wildcard, since it is a
+	   needed permission.  So we assume that.classNameExactMatch.  */
 
-           If that.classNamePrefix is empty that means the className is
-           irrelevant for this permission check.  Otherwise, we do not
-           expect that "that" contains a wildcard, since it is a
-           needed permission.  So we assume that.classNameExactMatch.  */
-
-        if (that.classNamePrefix == null) {
-            // bottom is implied
-        } else if (this.classNamePrefix == null) {
-            // bottom implies nothing but itself
-            return false;
-        } else if (this.classNameExactMatch) {
-            if (!that.classNameExactMatch)
-                return false; // exact never implies wildcard
-            if (!that.classNamePrefix.equals(this.classNamePrefix))
-                return false; // exact match fails
-        } else {
-            // prefix match, works even if "that" is also a wildcard
-            // e.g. a.* implies a.* and a.b.*
-            if (!that.classNamePrefix.startsWith(this.classNamePrefix))
-                return false;
-        }
+	if (that.classNamePrefix == null) {
+	    // bottom is implied
+	} else if (this.classNamePrefix == null) {
+	    // bottom implies nothing but itself
+	    return false;
+	} else if (this.classNameExactMatch) {
+	    if (!that.classNameExactMatch)
+		return false; // exact never implies wildcard
+	    if (!that.classNamePrefix.equals(this.classNamePrefix))
+		return false; // exact match fails
+	} else {
+	    // prefix match, works even if "that" is also a wildcard
+	    // e.g. a.* implies a.* and a.b.*
+	    if (!that.classNamePrefix.startsWith(this.classNamePrefix))
+		return false;
+	}
 
         /* Check if this.member implies that.member */
 
-        if (that.member == null) {
-            // bottom is implied
-        } else if (this.member == null) {
-            // bottom implies nothing but itself
-            return false;
-        } else if (this.member.equals("*")) {
-            // wildcard implies everything (including itself)
-        } else if (!this.member.equals(that.member)) {
-            return false;
-        }
+	if (that.member == null) {
+	    // bottom is implied
+	} else if (this.member == null) {
+	    // bottom implies nothing but itself
+	    return false;
+	} else if (this.member.equals("*")) {
+	    // wildcard implies everything (including itself)
+	} else if (!this.member.equals(that.member)) {
+	    return false;
+	}
 
         /* Check if this.objectName implies that.objectName */
 
-        if (that.objectName == null) {
-            // bottom is implied
-        } else if (this.objectName == null) {
-            // bottom implies nothing but itself
-            return false;
-        } else if (!this.objectName.apply(that.objectName)) {
-            /* ObjectName.apply returns false if that.objectName is a
-               wildcard so we also allow equals for that case.  This
-               never happens during real permission checks, but means
-               the implies relation is reflexive.  */
-            if (!this.objectName.equals(that.objectName))
-                return false;
+	if (that.objectName == null) {
+	    // bottom is implied
+	} else if (this.objectName == null) {
+	    // bottom implies nothing but itself
+	    return false;
+	} else if (!this.objectName.apply(that.objectName)) {
+	    /* ObjectName.apply returns false if that.objectName is a
+	       wildcard so we also allow equals for that case.  This
+	       never happens during real permission checks, but means
+	       the implies relation is reflexive.  */
+	    if (!this.objectName.equals(that.objectName))
+		return false;
         }
 
         return true;
@@ -1151,9 +1151,9 @@ public class MBeanPermission extends Permission {
      * Deserialize this object based on its name and actions.
      */
     private void readObject(ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        parseName();
-        parseActions();
+	    throws IOException, ClassNotFoundException {
+	in.defaultReadObject();
+	parseName();
+	parseActions();
     }
 }

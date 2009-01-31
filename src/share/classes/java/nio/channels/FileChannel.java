@@ -146,6 +146,7 @@ import java.nio.channels.spi.AbstractInterruptibleChannel;
  * @author Mark Reinhold
  * @author Mike McCloskey
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -159,7 +160,7 @@ public abstract class FileChannel
      */
     protected FileChannel() { }
 
-
+
     // -- Channel operations --
 
     /**
@@ -182,7 +183,7 @@ public abstract class FileChannel
      * ScatteringByteChannel} interface.  </p>
      */
     public abstract long read(ByteBuffer[] dsts, int offset, int length)
-        throws IOException;
+	throws IOException;
 
     /**
      * Reads a sequence of bytes from this channel into the given buffers.
@@ -193,7 +194,7 @@ public abstract class FileChannel
      * ScatteringByteChannel} interface.  </p>
      */
     public final long read(ByteBuffer[] dsts) throws IOException {
-        return read(dsts, 0, dsts.length);
+	return read(dsts, 0, dsts.length);
     }
 
     /**
@@ -206,7 +207,7 @@ public abstract class FileChannel
      * with the number of bytes actually written.  Otherwise this method
      * behaves exactly as specified by the {@link WritableByteChannel}
      * interface. </p>
-     */
+     */ 
     public abstract int write(ByteBuffer src) throws IOException;
 
     /**
@@ -220,9 +221,9 @@ public abstract class FileChannel
      * with the number of bytes actually written.  Otherwise this method
      * behaves exactly as specified in the {@link GatheringByteChannel}
      * interface.  </p>
-     */
+     */ 
     public abstract long write(ByteBuffer[] srcs, int offset, int length)
-        throws IOException;
+	throws IOException;
 
     /**
      * Writes a sequence of bytes to this channel from the given buffers.
@@ -234,12 +235,12 @@ public abstract class FileChannel
      * with the number of bytes actually written.  Otherwise this method
      * behaves exactly as specified in the {@link GatheringByteChannel}
      * interface.  </p>
-     */
+     */ 
     public final long write(ByteBuffer[] srcs) throws IOException {
-        return write(srcs, 0, srcs.length);
+	return write(srcs, 0, srcs.length);
     }
 
-
+
     // -- Other operations --
 
     /**
@@ -442,8 +443,8 @@ public abstract class FileChannel
      *          If some other I/O error occurs
      */
     public abstract long transferTo(long position, long count,
-                                    WritableByteChannel target)
-        throws IOException;
+				    WritableByteChannel target)
+	throws IOException;
 
     /**
      * Transfers bytes into this channel's file from the given readable byte
@@ -509,8 +510,8 @@ public abstract class FileChannel
      *          If some other I/O error occurs
      */
     public abstract long transferFrom(ReadableByteChannel src,
-                                      long position, long count)
-        throws IOException;
+				      long position, long count)
+	throws IOException;
 
     /**
      * Reads a sequence of bytes from this channel into the given buffer,
@@ -602,50 +603,51 @@ public abstract class FileChannel
      */
     public abstract int write(ByteBuffer src, long position) throws IOException;
 
-
+
     // -- Memory-mapped buffers --
 
     /**
      * A typesafe enumeration for file-mapping modes.
      *
+     * @version %I%, %E%
      * @since 1.4
      *
      * @see java.nio.channels.FileChannel#map
      */
     public static class MapMode {
 
-        /**
-         * Mode for a read-only mapping.
-         */
-        public static final MapMode READ_ONLY
-            = new MapMode("READ_ONLY");
+	/**
+	 * Mode for a read-only mapping.
+	 */
+	public static final MapMode READ_ONLY
+	    = new MapMode("READ_ONLY");
 
-        /**
-         * Mode for a read/write mapping.
-         */
-        public static final MapMode READ_WRITE
-            = new MapMode("READ_WRITE");
+	/**
+	 * Mode for a read/write mapping.
+	 */
+	public static final MapMode READ_WRITE
+	    = new MapMode("READ_WRITE");
 
-        /**
-         * Mode for a private (copy-on-write) mapping.
-         */
-        public static final MapMode PRIVATE
-            = new MapMode("PRIVATE");
+	/**
+	 * Mode for a private (copy-on-write) mapping.
+	 */
+	public static final MapMode PRIVATE
+	    = new MapMode("PRIVATE");
 
-        private final String name;
+	private final String name;
 
-        private MapMode(String name) {
-            this.name = name;
-        }
+	private MapMode(String name) {
+	    this.name = name;
+	}
 
-        /**
-         * Returns a string describing this file-mapping mode.
-         *
-         * @return  A descriptive string
-         */
-        public String toString() {
-            return name;
-        }
+	/**
+	 * Returns a string describing this file-mapping mode.
+	 *
+	 * @return  A descriptive string
+	 */
+	public String toString() {
+	    return name;
+	}
 
     }
 
@@ -736,22 +738,22 @@ public abstract class FileChannel
      * @see java.nio.MappedByteBuffer
      */
     public abstract MappedByteBuffer map(MapMode mode,
-                                         long position, long size)
+					 long position, long size)
         throws IOException;
 
-
+
     // -- Locks --
-
+    
     /**
      * Acquires a lock on the given region of this channel's file.
      *
      * <p> An invocation of this method will block until the region can be
      * locked, this channel is closed, or the invoking thread is interrupted,
      * whichever comes first.
-     *
+     * 
      * <p> If this channel is closed by another thread during an invocation of
      * this method then an {@link AsynchronousCloseException} will be thrown.
-     *
+     * 
      * <p> If the invoking thread is interrupted while waiting to acquire the
      * lock then its interrupt status will be set and a {@link
      * FileLockInterruptionException} will be thrown.  If the invoker's
@@ -832,7 +834,7 @@ public abstract class FileChannel
      * @see     #tryLock(long,long,boolean)
      */
     public abstract FileLock lock(long position, long size, boolean shared)
-        throws IOException;
+	throws IOException;
 
     /**
      * Acquires an exclusive lock on this channel's file.
@@ -873,7 +875,7 @@ public abstract class FileChannel
      * @see     #tryLock(long,long,boolean)
      */
     public final FileLock lock() throws IOException {
-        return lock(0L, Long.MAX_VALUE, false);
+	return lock(0L, Long.MAX_VALUE, false);
     }
 
     /**
@@ -943,7 +945,7 @@ public abstract class FileChannel
      * @see     #tryLock()
      */
     public abstract FileLock tryLock(long position, long size, boolean shared)
-        throws IOException;
+	throws IOException;
 
     /**
      * Attempts to acquire an exclusive lock on this channel's file.
@@ -975,7 +977,7 @@ public abstract class FileChannel
      * @see     #tryLock(long,long,boolean)
      */
     public final FileLock tryLock() throws IOException {
-        return tryLock(0L, Long.MAX_VALUE, false);
+	return tryLock(0L, Long.MAX_VALUE, false);
     }
 
 }

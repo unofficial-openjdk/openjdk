@@ -47,6 +47,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's ListUI.
  *
+ * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthListUI extends BasicListUI implements PropertyChangeListener,
@@ -184,7 +185,7 @@ class SynthListUI extends BasicListUI implements PropertyChangeListener,
             else {
                 SynthLookAndFeel.resetSelectedUI();
             }
-
+            
             super.getListCellRendererComponent(list, value, index,
                                                isSelected, cellHasFocus);
             return this;

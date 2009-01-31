@@ -39,35 +39,35 @@ public class Alias {
 
     public static void main(String[] args) {
 
-        Principal[] principals = new Principal[3];
-        principals[0] = new com.sun.security.auth.UnixPrincipal("unix");
-        principals[1] = new javax.security.auth.x500.X500Principal("cn=x509");
-        principals[2] = new javax.security.auth.x500.X500Principal
-                                        ("emailaddress=duke@sun");
+	Principal[] principals = new Principal[3];
+	principals[0] = new com.sun.security.auth.UnixPrincipal("unix");
+	principals[1] = new javax.security.auth.x500.X500Principal("cn=x509");
+	principals[2] = new javax.security.auth.x500.X500Principal
+					("emailaddress=duke@sun");
 
-        java.net.URL url = null;
-        try {
-            url = new java.net.URL("http://alias");
-        } catch (java.net.MalformedURLException mue) {
-            System.out.println("test 1 failed");
-            throw new SecurityException(mue.getMessage());
-        }
-        CodeSource cs =
-            new CodeSource(url, (java.security.cert.Certificate[]) null);
+	java.net.URL url = null;
+	try {
+	    url = new java.net.URL("http://alias");
+	} catch (java.net.MalformedURLException mue) {
+	    System.out.println("test 1 failed");
+	    throw new SecurityException(mue.getMessage());
+	}
+	CodeSource cs =
+	    new CodeSource(url, (java.security.cert.Certificate[]) null);
 
-        ProtectionDomain pd = new ProtectionDomain
-                (cs,
-                null,
-                null,
-                principals);
+	ProtectionDomain pd = new ProtectionDomain
+		(cs,
+		null,
+		null,
+		principals);
 
-        PermissionCollection perms = Policy.getPolicy().getPermissions(pd);
+	PermissionCollection perms = Policy.getPolicy().getPermissions(pd);
 
-        if (perms.implies(new SecurityPermission("ALIAS"))) {
-            System.out.println("test succeeded");
-        } else {
-            System.out.println("test 2 failed");
-            throw new SecurityException("test failed");
-        }
+	if (perms.implies(new SecurityPermission("ALIAS"))) {
+	    System.out.println("test succeeded");
+	} else {
+	    System.out.println("test 2 failed");
+	    throw new SecurityException("test failed");
+	}
     }
 }

@@ -50,57 +50,57 @@ public class ProxyTunnelServer extends Thread {
      * wants to establish the tunnel for communication.
      */
     private InetAddress serverInetAddr;
-    private int serverPort;
+    private int	serverPort;
 
     public ProxyTunnelServer() throws IOException {
-        if (ss == null) {
+	if (ss == null) {
           ss = (ServerSocket) ServerSocketFactory.getDefault().
           createServerSocket(0);
         }
     }
 
     public void run() {
-        try {
-            clientSocket = ss.accept();
-            processRequests();
-        } catch (Exception e) {
-            System.out.println("Proxy Failed: " + e);
-            e.printStackTrace();
-            try {
-                ss.close();
-            }
-            catch (IOException excep) {
-                System.out.println("ProxyServer close error: " + excep);
-                excep.printStackTrace();
-            }
-          }
+	try {
+	    clientSocket = ss.accept();
+	    processRequests();
+	} catch (Exception e) {
+	    System.out.println("Proxy Failed: " + e);
+	    e.printStackTrace();
+	    try {
+		ss.close();
+	    }
+	    catch (IOException excep) {
+		System.out.println("ProxyServer close error: " + excep);
+		excep.printStackTrace();
+	    }
+	  }
     }
 
-    /*
+    /* 
      * Processes the CONNECT requests
      */
     private void processRequests() throws Exception {
 
-        InputStream in = clientSocket.getInputStream();
-        MessageHeader response = new MessageHeader(in);
-        String statusLine = response.getValue(0);
+	InputStream in = clientSocket.getInputStream();
+	MessageHeader response = new MessageHeader(in);
+ 	String statusLine = response.getValue(0);
 
-        if (statusLine.startsWith("CONNECT")) {
-            // retrieve the host and port info from the response line
+	if (statusLine.startsWith("CONNECT")) {
+	    // retrieve the host and port info from the response line
             retrieveConnectInfo(statusLine);
-            respondForConnect();
+	    respondForConnect();
             doTunnel();
-            ss.close();
-        } else {
-            System.out.println("proxy server: processes only "
-                                   + "CONNECT method requests, recieved: "
-                                   + statusLine);
+	    ss.close();
+	} else {
+	    System.out.println("proxy server: processes only "
+				   + "CONNECT method requests, recieved: "
+				   + statusLine);
         }
     }
 
     private void respondForConnect() throws Exception {
-        OutputStream out = clientSocket.getOutputStream();
-        PrintWriter pout = new PrintWriter(out);
+	OutputStream out = clientSocket.getOutputStream();
+	PrintWriter pout = new PrintWriter(out);
         pout.println("HTTP/1.1 200 OK");
         pout.println();
         pout.flush();
@@ -115,19 +115,19 @@ public class ProxyTunnelServer extends Thread {
     private void doTunnel() throws Exception {
         Socket serverSocket = new Socket(serverInetAddr, serverPort);
 
-        // delay the write from client -> server
-        ProxyTunnel clientToServer = new ProxyTunnel(
-                                clientSocket, serverSocket, true);
-        ProxyTunnel serverToClient = new ProxyTunnel(
-                                serverSocket, clientSocket, false);
-        clientToServer.start();
-        serverToClient.start();
+	// delay the write from client -> server
+	ProxyTunnel clientToServer = new ProxyTunnel(
+				clientSocket, serverSocket, true);
+	ProxyTunnel serverToClient = new ProxyTunnel(
+				serverSocket, clientSocket, false);
+	clientToServer.start();
+	serverToClient.start();
 
-        clientToServer.join();
-        serverToClient.join();
+	clientToServer.join();
+	serverToClient.join();
 
-        clientToServer.close();
-        serverToClient.close();
+	clientToServer.close();
+	serverToClient.close();
     }
 
     /*
@@ -136,92 +136,92 @@ public class ProxyTunnelServer extends Thread {
      * socket, until both sockets are open and EOF has not been received.
      */
     class ProxyTunnel extends Thread {
-        Socket sockIn;
-        Socket sockOut;
-        InputStream input;
-        OutputStream output;
-        boolean delayedWrite;
+	Socket sockIn;
+	Socket sockOut;
+	InputStream input;
+	OutputStream output;
+	boolean delayedWrite;
 
-        public ProxyTunnel(Socket sockIn, Socket sockOut, boolean delayedWrite)
-        throws Exception {
-            this.sockIn = sockIn;
-            this.sockOut = sockOut;
-            input = sockIn.getInputStream();
-            output = sockOut.getOutputStream();
-            this.delayedWrite = delayedWrite;
-        }
+	public ProxyTunnel(Socket sockIn, Socket sockOut, boolean delayedWrite)
+	throws Exception {
+	    this.sockIn = sockIn;
+	    this.sockOut = sockOut;
+	    input = sockIn.getInputStream();
+	    output = sockOut.getOutputStream();
+	    this.delayedWrite = delayedWrite;
+	}
 
-        public void run() {
-            // the buffer size of < 47 introduces delays in availability
+	public void run() {
+	    // the buffer size of < 47 introduces delays in availability
             // of chunks of client handshake data
-            int BUFFER_SIZE = 40;
-            byte[] buf = new byte[BUFFER_SIZE];
-            int bytesRead = 0;
-            int count = 0;  // keep track of the amount of data transfer
+	    int BUFFER_SIZE = 40;
+	    byte[] buf = new byte[BUFFER_SIZE];
+	    int bytesRead = 0;
+	    int count = 0;  // keep track of the amount of data transfer
 
-            try {
-                while ((bytesRead = input.read(buf)) >= 0) {
-                    if (delayedWrite) {
-                        try {
-                            this.sleep(1);
-                        } catch (InterruptedException excep) {
-                            System.out.println(excep);
-                          }
-                    }
-                    output.write(buf, 0, bytesRead);
-                    output.flush();
-                    count += bytesRead;
-                }
-            } catch (IOException e) {
-                /*
-                 * The peer end has closed the connection
-                 * we will close the tunnel
-                 */
-                close();
-              }
-        }
+	    try {
+		while ((bytesRead = input.read(buf)) >= 0) {
+		    if (delayedWrite) {
+			try {
+			    this.sleep(1);
+ 			} catch (InterruptedException excep) {
+			    System.out.println(excep);
+			  }
+		    }
+		    output.write(buf, 0, bytesRead);
+		    output.flush();
+		    count += bytesRead;
+		}
+	    } catch (IOException e) {
+		/*
+		 * The peer end has closed the connection
+		 * we will close the tunnel
+		 */
+		close();
+	      }
+	}
 
-        public void close() {
-            try {
-                if (!sockIn.isClosed())
-                    sockIn.close();
-                if (!sockOut.isClosed())
-                    sockOut.close();
-            } catch (IOException ignored) { }
-        }
+	public void close() {
+	    try {
+		if (!sockIn.isClosed())
+		    sockIn.close();
+		if (!sockOut.isClosed())
+		    sockOut.close();
+	    } catch (IOException ignored) { }
+	}
     }
 
     /*
      ***************************************************************
-     *                  helper methods follow
+     *			helper methods follow
      ***************************************************************
      */
 
-    /*
+    /* 
      * This method retrieves the hostname and port of the destination
      * that the connect request wants to establish a tunnel for
      * communication.
      * The input, connectStr is of the form:
-     *                          CONNECT server-name:server-port HTTP/1.x
+     * 				CONNECT server-name:server-port HTTP/1.x
      */
     void retrieveConnectInfo(String connectStr) throws Exception {
-        int starti;
-        int endi;
-        String connectInfo;
-        String serverName = null;
-        try {
-            starti = connectStr.indexOf(' ');
-            endi = connectStr.lastIndexOf(' ');
-            connectInfo = connectStr.substring(starti+1, endi).trim();
-            // retrieve server name and port
-            endi = connectInfo.indexOf(':');
+    	int starti;
+	int endi;
+	String connectInfo;
+	String serverName = null;
+	try {
+	    starti = connectStr.indexOf(' ');
+	    endi = connectStr.lastIndexOf(' ');
+	    connectInfo = connectStr.substring(starti+1, endi).trim();
+	    // retrieve server name and port
+	    endi = connectInfo.indexOf(':');
             serverName = connectInfo.substring(0, endi);
-            serverPort = Integer.parseInt(connectInfo.substring(endi+1));
-        } catch (Exception e) {
-            throw new IOException("Proxy recieved a request: "
-                                        + connectStr);
-          }
-        serverInetAddr = InetAddress.getByName(serverName);
+	    serverPort = Integer.parseInt(connectInfo.substring(endi+1));
+	} catch (Exception e) {
+	    throw new IOException("Proxy recieved a request: "
+					+ connectStr);
+	  }
+	serverInetAddr = InetAddress.getByName(serverName);
     }
 
     public int getPort() {

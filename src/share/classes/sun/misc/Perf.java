@@ -44,6 +44,7 @@ import java.io.UnsupportedEncodingException;
  * stamp and interval measurement purposes.
  *
  * @author   Brian Doherty
+ * @version  %I%, %G%
  * @since    1.4.2
  * @see      #getPerf
  * @see      sun.misc.Perf$GetPerfAction
@@ -197,7 +198,7 @@ public final class Perf {
            throws IllegalArgumentException, IOException
     {
         if (mode.compareTo("r") == 0) {
-            return attachImpl(null, lvmid, PERF_MODE_RO);
+            return attachImpl(null, lvmid, PERF_MODE_RO); 
         }
         else if (mode.compareTo("rw") == 0) {
             return attachImpl(null, lvmid, PERF_MODE_RW);
@@ -233,7 +234,7 @@ public final class Perf {
            throws IllegalArgumentException, IOException
     {
         if (mode.compareTo("r") == 0) {
-            return attachImpl(user, lvmid, PERF_MODE_RO);
+            return attachImpl(user, lvmid, PERF_MODE_RO); 
         }
         else if (mode.compareTo("rw") == 0) {
             return attachImpl(user, lvmid, PERF_MODE_RW);
@@ -247,7 +248,7 @@ public final class Perf {
      * Call the implementation specific attach method.
      * <p>
      * This method calls into the Java virtual machine to perform the platform
-     * specific attach method. Buffers returned from this method are
+     * specific attach method. Buffers returned from this method are 
      * internally managed as <code>PhantomRefereces</code> to provide for
      * guaranteed, secure release of the native resources.
      *
@@ -383,7 +384,7 @@ public final class Perf {
      * The truncated value will be terminated by a null character.
      * <p>
      * The underlying implementation may further limit the length of the
-     * value, but will continue to preserve the null terminator.
+     * value, but will continue to preserve the null terminator. 
      * <p>
      * Access to the instrument is provided through the returned <code>
      * ByteBuffer</code> object.
@@ -424,7 +425,7 @@ public final class Perf {
      * <p>
      * The underlying implementation may further limit the length of the
      * initial or subsequent value, but will continue to preserve the null
-     * terminator.
+     * terminator. 
      * <p>
      * Access to the instrument is provided through the returned <code>
      * ByteBuffer</code> object.
@@ -461,7 +462,7 @@ public final class Perf {
      * updates is provided.
      * <p>
      * The underlying implementation may further limit the length of the
-     * length of the initial or subsequent value.
+     * length of the initial or subsequent value. 
      * <p>
      * Access to the instrument is provided through the returned <code>
      * ByteBuffer</code> object.

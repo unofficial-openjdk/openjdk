@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)PairPositioningSubtables.cpp	1.12 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -82,7 +83,7 @@ le_uint32 PairPositioningFormat1Subtable::process(GlyphIterator *glyphIterator, 
         const PairValueRecord *pairValueRecord = NULL;
 
         if (pairValueCount != 0) {
-            pairValueRecord = findPairValueRecord((TTGlyphID) LE_GET_GLYPH(secondGlyph),
+            pairValueRecord = findPairValueRecord((TTGlyphID) LE_GET_GLYPH(secondGlyph), 
                 pairSetTable->pairValueRecordArray, pairValueCount, recordSize);
         }
 
@@ -91,7 +92,7 @@ le_uint32 PairPositioningFormat1Subtable::process(GlyphIterator *glyphIterator, 
         }
 
         if (valueFormat1 != 0) {
-            pairValueRecord->valueRecord1.adjustPosition(SWAPW(valueFormat1), (char *) this,
+            pairValueRecord->valueRecord1.adjustPosition(SWAPW(valueFormat1), (char *) this, 
                 tempIterator, fontInstance);
         }
 

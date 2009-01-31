@@ -33,19 +33,19 @@ import java.nio.channels.*;
 
 public class ZeroMap {
     public static void main(String[] args) throws Exception {
-        Random random = new Random();
-        long filesize = random.nextInt(1024*1024);
-        int cut = random.nextInt((int)filesize);
-        File file = new File("Blah");
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        raf.setLength(filesize);
-        FileChannel fc = raf.getChannel();
-        MappedByteBuffer buf1 = fc.map(
-                        FileChannel.MapMode.READ_WRITE, cut, 0);
-        buf1.force();
+	Random random = new Random();
+	long filesize = random.nextInt(1024*1024);
+	int cut = random.nextInt((int)filesize);
+	File file = new File("Blah");
+	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+	raf.setLength(filesize);
+	FileChannel fc = raf.getChannel();
+	MappedByteBuffer buf1 = fc.map(
+			FileChannel.MapMode.READ_WRITE, cut, 0);
+	buf1.force();
         buf1.load();
         buf1.isLoaded();
-        fc.close();
-        raf.close();
+	fc.close();
+	raf.close();
     }
 }

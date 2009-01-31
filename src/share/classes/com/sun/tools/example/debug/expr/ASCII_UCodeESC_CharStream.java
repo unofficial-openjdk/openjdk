@@ -192,7 +192,7 @@ public final class ASCII_UCodeESC_CharStream
   }
 
   public final char BeginToken() throws java.io.IOException
-  {
+  {     
      if (inBuf > 0)
      {
         --inBuf;
@@ -204,7 +204,7 @@ public final class ASCII_UCodeESC_CharStream
      bufpos = -1;
 
      return readChar();
-  }
+  }     
 
   private final void AdjustBuffSize()
   {
@@ -355,7 +355,7 @@ public final class ASCII_UCodeESC_CharStream
   }
 
   /**
-   * @deprecated
+   * @deprecated 
    * @see #getEndColumn
    */
     @Deprecated
@@ -364,7 +364,7 @@ public final class ASCII_UCodeESC_CharStream
   }
 
   /**
-   * @deprecated
+   * @deprecated 
    * @see #getEndLine
    */
     @Deprecated
@@ -501,7 +501,7 @@ public final class ASCII_UCodeESC_CharStream
         bufcolumn[j] = newCol + columnDiff;
         columnDiff = nextColDiff;
         i++;
-     }
+     } 
 
      if (i < len)
      {

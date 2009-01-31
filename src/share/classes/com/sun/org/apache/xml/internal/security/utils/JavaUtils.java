@@ -38,7 +38,7 @@ import java.io.InputStream;
 public class JavaUtils {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(JavaUtils.class.getName());
 
    private JavaUtils() {

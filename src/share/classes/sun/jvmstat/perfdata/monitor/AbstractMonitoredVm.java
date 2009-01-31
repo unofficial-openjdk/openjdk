@@ -39,6 +39,7 @@ import sun.jvmstat.monitor.event.VmListener;
  * mechanism to the target Java Virtual Machine.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public abstract class AbstractMonitoredVm implements BufferedMonitoredVm {

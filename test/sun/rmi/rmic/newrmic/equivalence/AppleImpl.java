@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,66 +30,66 @@ import java.util.logging.Level;
  * The AppleImpl class implements the behavior of the remote "apple"
  * objects exported by the application.
  */
-public class AppleImpl
-    extends UnicastRemoteObject
-    implements Apple
+public class AppleImpl 
+    extends UnicastRemoteObject 
+    implements Apple 
 {
 
     private static Logger logger = Logger.getLogger("reliability.apple");
     private String name;
-
+    
     public AppleImpl(String name) throws RemoteException {
-        this.name = name;
+	this.name = name;
     }
 
     /**
      * Receive an array of AppleEvent objects.
      */
     public void notify(AppleEvent[] events) {
-        try {
-            String threadName = Thread.currentThread().getName();
-            logger.log(Level.FINEST,
-                threadName + ": " + toString() + ".notify: BEGIN");
+	try {
+	    String threadName = Thread.currentThread().getName();
+	    logger.log(Level.FINEST,
+		threadName + ": " + toString() + ".notify: BEGIN");
 
-            for (int i = 0; i < events.length; ++ i) {
-                logger.log(Level.FINEST,
-                    threadName + ": " + toString() +
-                        ".notify(): events[" + i + "] = " +
-                        events[i].toString());
-            }
+	    for (int i = 0; i < events.length; ++ i) {
+		logger.log(Level.FINEST,
+		    threadName + ": " + toString() + 
+			".notify(): events[" + i + "] = " +
+			events[i].toString());
+	    }
 
-            logger.log(Level.FINEST,
-                threadName + ": " + toString() + ".notify(): END");
-        } catch (RuntimeException e) {
-            logger.log(Level.SEVERE, toString() + ".notify():", e);
-            throw e;
-        }
+	    logger.log(Level.FINEST,
+		threadName + ": " + toString() + ".notify(): END");
+	} catch (RuntimeException e) {
+	    logger.log(Level.SEVERE, toString() + ".notify():", e);
+	    throw e;
+	}
     }
 
     /**
      * Return a newly created and exported orange implementation.
      */
     public Orange newOrange(String name) throws RemoteException {
-        try {
-            String threadName = Thread.currentThread().getName();
-            logger.log(Level.FINEST,
-                threadName + ": " + toString() +
-                ".newOrange(" + name + "): BEGIN");
+	try {
+	    String threadName = Thread.currentThread().getName();
+	    logger.log(Level.FINEST,
+		threadName + ": " + toString() +
+		".newOrange(" + name + "): BEGIN");
 
-            Orange orange = new OrangeImpl(name);
+	    Orange orange = new OrangeImpl(name);
+	    
+	    logger.log(Level.FINEST,
+		threadName + ": " + toString() +
+		".newOrange(" + name + "): END");
 
-            logger.log(Level.FINEST,
-                threadName + ": " + toString() +
-                ".newOrange(" + name + "): END");
-
-            return orange;
-        } catch (RuntimeException e) {
-            logger.log(Level.SEVERE, toString() + ".newOrange():", e);
-            throw e;
-        }
+	    return orange;
+	} catch (RuntimeException e) {
+	    logger.log(Level.SEVERE, toString() + ".newOrange():", e);
+	    throw e;
+	}
     }
 
     public String toString() {
-        return name;
+	return name;
     }
 }

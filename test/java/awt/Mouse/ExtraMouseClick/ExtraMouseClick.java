@@ -21,7 +21,7 @@
  * have any questions.
  */
 
- /*
+ /* 
   test
   @bug 5039416 6404008
   @summary REGRESSION: Extra mouse click dispatched after press-drag- release sequence.
@@ -56,7 +56,7 @@ public class ExtraMouseClick extends Applet
     boolean pressed = false;
     boolean released = false;
 
-    public void init()
+    public void init() 
     {
         this.setLayout (new BorderLayout ());
 
@@ -65,12 +65,12 @@ public class ExtraMouseClick extends Applet
                     System.out.println("MousePressed");
                     pressed = true;
                 }
-
+                
                 public void mouseReleased(MouseEvent e) {
                     System.out.println("MouseReleased");
                     released = true;
                 }
-
+                
                 public void mouseClicked(MouseEvent e) {
                     System.out.println("MouseClicked!!!!");
                     clicked = true;
@@ -84,7 +84,7 @@ public class ExtraMouseClick extends Applet
                 public void mouseMoved(MouseEvent e) {
                 }
             });
-
+        
     }//End  init()
 
 
@@ -105,7 +105,7 @@ public class ExtraMouseClick extends Applet
         for (int i = 0; i< TRIALS; i++){
             checkClicked();
             clearFlags();
-        }
+        }        
 
         for (int i = 0; i< TRIALS; i++){
             oneDrag(2);
@@ -135,8 +135,8 @@ public class ExtraMouseClick extends Applet
             // narrowed into 1x1 pixel and we can't drag a mouse in it.
             // In that case we may skip following testcase but I'd prefer if we move mouse on 1 pixel only.
             // And that should pass as well.
-            dragWidth = dragWidth > 1? dragWidth/2:1;
-            dragHeight = dragHeight > 1? dragHeight/2:1;
+            dragWidth = dragWidth > 1? dragWidth/2:1; 
+            dragHeight = dragHeight > 1? dragHeight/2:1; 
             for (int i = 0; i< TRIALS; i++){
                 smallWin32Drag(dragWidth, dragHeight);
                 clearFlags();
@@ -234,7 +234,7 @@ public class ExtraMouseClick extends Applet
             throw new RuntimeException("Test failed. Some of Pressed/Released/Clicked events are missed or dragged occured. Pressed/Released/Clicked/Dragged = "+pressed + ":"+released+":"+clicked +":" +dragged);
         }
     }
-
+    
     public void clearFlags(){
         clicked = false;
         pressed = false;

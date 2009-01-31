@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 
@@ -42,6 +43,7 @@ import java.awt.*;
 /**
  * This class describes a theme using "blue-green" colors.
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class AquaMetalTheme extends DefaultMetalTheme {

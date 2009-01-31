@@ -42,12 +42,12 @@ extern "C"
         static HINSTANCE hDLL = NULL;
         mlibSysFnS_t tempSysFns;
         mlib_status ret = MLIB_SUCCESS;
-
-        /* Try to load library. Routine should find the library successfully
+        
+        /* Try to load library. Routine should find the library successfully 
          * because this library is already loaded to the process space by
          * the System.loadLibrary() call. Here we just need to get handle to
          * initialize the pointers to required mlib routines.
-         */
+         */ 
         hDLL = ::LoadLibrary(TEXT("mlib_image.dll"));
 
         if (hDLL == NULL) {
@@ -68,7 +68,7 @@ extern "C"
                 ret = MLIB_FAILURE;
             }
         }
-
+        
         if (ret == MLIB_SUCCESS) {
             tempSysFns.deleteImageFP = (MlibDeleteFP_t)
                 ::GetProcAddress(hDLL, "j2d_mlib_ImageDelete");
@@ -93,7 +93,7 @@ extern "C"
             }
             i++;
         }
-
+        
         if (ret != MLIB_SUCCESS) {
             ::FreeLibrary(hDLL);
         }
@@ -107,7 +107,7 @@ extern "C"
     mlib_stop_timer awt_setMlibStopTimer() {
         return NULL;
     }
-
+    
     void awt_getBIColorOrder(int type, int *colorOrder) {
         switch(type) {
         case java_awt_image_BufferedImage_TYPE_INT_ARGB:

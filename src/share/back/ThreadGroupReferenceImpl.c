@@ -28,14 +28,14 @@
 #include "inStream.h"
 #include "outStream.h"
 
-static jboolean
-name(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+name(PacketInputStream *in, PacketOutputStream *out) 
 {
     JNIEnv *env;
     jthreadGroup group;
-
+    
     env = getEnv();
-
+    
     group = inStream_readThreadGroupRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -50,20 +50,20 @@ name(PacketInputStream *in, PacketOutputStream *out)
         (void)outStream_writeString(out, info.name);
         if ( info.name != NULL )
             jvmtiDeallocate(info.name);
-
+    
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
-parent(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+parent(PacketInputStream *in, PacketOutputStream *out) 
 {
     JNIEnv *env;
     jthreadGroup group;
-
+    
     env = getEnv();
-
+    
     group = inStream_readThreadGroupRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -72,7 +72,7 @@ parent(PacketInputStream *in, PacketOutputStream *out)
     WITH_LOCAL_REFS(env, 1) {
 
         jvmtiThreadGroupInfo info;
-
+        
         (void)memset(&info, 0, sizeof(info));
         threadGroupInfo(group, &info);
         (void)outStream_writeObjectRef(env, out, info.parent);
@@ -80,31 +80,31 @@ parent(PacketInputStream *in, PacketOutputStream *out)
             jvmtiDeallocate(info.name);
 
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
-children(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+children(PacketInputStream *in, PacketOutputStream *out) 
 {
      JNIEnv *env;
      jthreadGroup group;
-
+     
      env = getEnv();
-
+    
      group = inStream_readThreadGroupRef(env, in);
      if (inStream_error(in)) {
          return JNI_TRUE;
      }
-
+ 
      WITH_LOCAL_REFS(env, 1) {
-
+     
          jvmtiError error;
          jint threadCount;
          jint groupCount;
          jthread *theThreads;
          jthread *theGroups;
-
+         
          error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadGroupChildren)(gdata->jvmti, group,
                                               &threadCount,&theThreads,
                                               &groupCount, &theGroups);
@@ -113,10 +113,10 @@ children(PacketInputStream *in, PacketOutputStream *out)
          } else {
 
              int i;
-
+             
              /* Squish out all of the debugger-spawned threads */
              threadCount = filterDebugThreads(theThreads, threadCount);
-
+          
              (void)outStream_writeInt(out, threadCount);
              for (i = 0; i < threadCount; i++) {
                  (void)outStream_writeObjectRef(env, out, theThreads[i]);
@@ -139,3 +139,4 @@ void *ThreadGroupReference_Cmds[] = { (void *)3,
                                       (void *)name,
                                       (void *)parent,
                                       (void *)children };
+

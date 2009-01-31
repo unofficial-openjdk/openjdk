@@ -38,8 +38,8 @@ import com.sun.jdi.connect.spi.*;
  * TransportService.
  */
 
-public class GenericAttachingConnector
-        extends ConnectorImpl implements AttachingConnector
+public class GenericAttachingConnector 
+	extends ConnectorImpl implements AttachingConnector 
 {
     /*
      * The arguments that this connector supports
@@ -53,35 +53,35 @@ public class GenericAttachingConnector
     /*
      * Initialize a new instance of this connector. The connector
      * encapsulates a transport service and optionally has an
-     * "address" connector argument.
+     * "address" connector argument. 
      */
-    private GenericAttachingConnector(TransportService ts,
-                                      boolean addAddressArgument)
+    private GenericAttachingConnector(TransportService ts, 
+				      boolean addAddressArgument)
     {
-        transportService = ts;
-        transport = new Transport() {
-                public String name() {
-                    // delegate name to the transport service
-                    return transportService.name();
-                }
-            };
+	transportService = ts;
+	transport = new Transport() {
+		public String name() {
+		    // delegate name to the transport service
+		    return transportService.name();
+		}
+	    };
 
-        if (addAddressArgument) {
-            addStringArgument(
-                ARG_ADDRESS,
+	if (addAddressArgument) {
+	    addStringArgument(
+		ARG_ADDRESS,
                 getString("generic_attaching.address.label"),
                 getString("generic_attaching.address"),
-                "",
+		"",
                 true);
-        }
+	}
 
-
-        addIntegerArgument(
+	
+	addIntegerArgument(
                 ARG_TIMEOUT,
                 getString("generic_attaching.timeout.label"),
                 getString("generic_attaching.timeout"),
                 "",
-                false,
+		false,
                 0, Integer.MAX_VALUE);
     }
 
@@ -91,7 +91,7 @@ public class GenericAttachingConnector
      * a "timeout" connector argument.
      */
     protected GenericAttachingConnector(TransportService ts) {
-        this(ts, false);
+	this(ts, false);
     }
 
     /*
@@ -99,21 +99,21 @@ public class GenericAttachingConnector
      * will have address and timeout connector arguments.
      */
     public static GenericAttachingConnector create(TransportService ts) {
-        return new GenericAttachingConnector(ts, true);
+	return new GenericAttachingConnector(ts, true);
     }
 
     /**
      * Attach to a target VM using the specified address and Connector arguments.
      */
-    public VirtualMachine attach(String address, Map args)
-        throws IOException, IllegalConnectorArgumentsException
+    public VirtualMachine attach(String address, Map args) 
+	throws IOException, IllegalConnectorArgumentsException
     {
         String ts  = argument(ARG_TIMEOUT, args).value();
-        int timeout = 0;
-        if (ts.length() > 0) {
-            timeout = Integer.decode(ts).intValue();
-        }
-        Connection connection = transportService.attach(address, timeout, 0);
+	int timeout = 0;
+	if (ts.length() > 0) {
+	    timeout = Integer.decode(ts).intValue();
+	}
+	Connection connection = transportService.attach(address, timeout, 0);
         return Bootstrap.virtualMachineManager().createVirtualMachine(connection);
     }
 
@@ -123,19 +123,19 @@ public class GenericAttachingConnector
      * argument.
      */
     public VirtualMachine
-        attach(Map<String,? extends Connector.Argument> args)
-        throws IOException, IllegalConnectorArgumentsException
+	attach(Map<String,? extends Connector.Argument> args)
+	throws IOException, IllegalConnectorArgumentsException
     {
-        String address = argument(ARG_ADDRESS, args).value();
-        return attach(address, args);
+	String address = argument(ARG_ADDRESS, args).value();
+	return attach(address, args);
     }
 
     public String name() {
-        return transport.name() + "Attach";
+	return transport.name() + "Attach";
     }
 
     public String description() {
-        return transportService.description();
+	return transportService.description();
     }
 
     public Transport transport() {
@@ -143,3 +143,4 @@ public class GenericAttachingConnector
     }
 
 }
+

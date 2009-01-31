@@ -57,21 +57,21 @@ public class CacheMap<K, V> extends WeakHashMap<K, V> {
      * <code>nSoftReferences</code> is negative.
      */
     public CacheMap(int nSoftReferences) {
-        if (nSoftReferences < 0) {
-            throw new IllegalArgumentException("nSoftReferences = " +
-                                               nSoftReferences);
-        }
-        this.nSoftReferences = nSoftReferences;
+	if (nSoftReferences < 0) {
+	    throw new IllegalArgumentException("nSoftReferences = " +
+					       nSoftReferences);
+	}
+	this.nSoftReferences = nSoftReferences;
     }
 
     public V put(K key, V value) {
-        cache(key);
-        return super.put(key, value);
+	cache(key);
+	return super.put(key, value);
     }
 
     public V get(Object key) {
-        cache(Util.<K>cast(key));
-        return super.get(key);
+	cache(Util.<K>cast(key));
+	return super.get(key);
     }
 
     /* We don't override remove(Object) or try to do something with
@@ -83,35 +83,35 @@ public class CacheMap<K, V> extends WeakHashMap<K, V> {
        performant.  */
 
     private void cache(K key) {
-        Iterator<SoftReference<K>> it = cache.iterator();
-        while (it.hasNext()) {
+	Iterator<SoftReference<K>> it = cache.iterator();
+	while (it.hasNext()) {
             SoftReference<K> sref = it.next();
             K key1 = sref.get();
-            if (key1 == null)
+	    if (key1 == null)
                 it.remove();
-            else if (key.equals(key1)) {
-                // Move this element to the head of the LRU list
-                it.remove();
-                cache.add(0, sref);
-                return;
-            }
-        }
+	    else if (key.equals(key1)) {
+		// Move this element to the head of the LRU list
+		it.remove();
+		cache.add(0, sref);
+		return;
+	    }
+	}
 
-        int size = cache.size();
-        if (size == nSoftReferences) {
-            if (size == 0)
-                return;  // degenerate case, equivalent to WeakHashMap
-            it.remove();
-        }
+	int size = cache.size();
+	if (size == nSoftReferences) {
+	    if (size == 0)
+		return;  // degenerate case, equivalent to WeakHashMap
+	    it.remove();
+	}
 
-        cache.add(0, new SoftReference<K>(key));
+	cache.add(0, new SoftReference<K>(key));
     }
 
     /* List of soft references for the most-recently referenced keys.
        The list is in most-recently-used order, i.e. the first element
        is the most-recently referenced key.  There are never more than
        nSoftReferences elements of this list.
-
+    
        If we didn't care about J2SE 1.3 compatibility, we could use
        LinkedHashSet in conjunction with a subclass of SoftReference
        whose equals and hashCode reflect the referent.  */

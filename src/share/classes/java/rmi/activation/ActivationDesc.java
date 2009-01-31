@@ -45,29 +45,30 @@ import java.rmi.MarshalledObject;
  * as the second argument to the remote object's constructor for
  * object to use during reinitialization/activation.
  *
- * @author      Ann Wollrath
- * @since       1.2
+ * @author 	Ann Wollrath
+ * @version	%I%, %G%
+ * @since 	1.2
  * @see         java.rmi.activation.Activatable
  */
 public final class ActivationDesc implements Serializable {
 
     /**
-     * @serial the group's identifier
+     * @serial the group's identifier 
      */
     private ActivationGroupID groupID;
 
     /**
-     * @serial the object's class name
+     * @serial the object's class name 
      */
     private String className;
-
+    
     /**
      * @serial the object's code location
      */
     private String location;
 
-    /**
-     * @serial the object's initialization data
+    /** 
+     * @serial the object's initialization data 
      */
     private MarshalledObject<?> data;
 
@@ -108,14 +109,14 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public ActivationDesc(String className,
-                          String location,
-                          MarshalledObject<?> data)
-        throws ActivationException
+			  String location, 
+			  MarshalledObject<?> data)
+	throws ActivationException
     {
-        this(ActivationGroup.internalCurrentGroupID(),
-             className, location, data, false);
+	this(ActivationGroup.internalCurrentGroupID(),
+	     className, location, data, false);
     }
-
+    
     /**
      * Constructs an object descriptor for an object whose class name
      * is <code>className</code>, that can be loaded from the
@@ -145,13 +146,13 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public ActivationDesc(String className,
-                          String location,
-                          MarshalledObject<?> data,
-                          boolean restart)
-        throws ActivationException
+			  String location, 
+			  MarshalledObject<?> data,
+			  boolean restart)
+	throws ActivationException
     {
-        this(ActivationGroup.internalCurrentGroupID(),
-             className, location, data, restart);
+	this(ActivationGroup.internalCurrentGroupID(),
+	     className, location, data, restart);
     }
 
     /**
@@ -179,11 +180,11 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public ActivationDesc(ActivationGroupID groupID,
-                          String className,
-                          String location,
-                          MarshalledObject<?> data)
+			  String className, 
+			  String location, 
+			  MarshalledObject<?> data)
     {
-        this(groupID, className, location, data, false);
+	this(groupID, className, location, data, false);
     }
 
     /**
@@ -211,20 +212,20 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public ActivationDesc(ActivationGroupID groupID,
-                          String className,
-                          String location,
-                          MarshalledObject<?> data,
-                          boolean restart)
+			  String className, 
+			  String location, 
+			  MarshalledObject<?> data,
+			  boolean restart)
     {
-        if (groupID == null)
-            throw new IllegalArgumentException("groupID can't be null");
-        this.groupID = groupID;
-        this.className = className;
-        this.location = location;
-        this.data = data;
-        this.restart = restart;
+	if (groupID == null)
+	    throw new IllegalArgumentException("groupID can't be null");
+	this.groupID = groupID;
+	this.className = className;
+	this.location = location;
+	this.data = data;
+	this.restart = restart;
     }
-
+    
     /**
      * Returns the group identifier for the object specified by this
      * descriptor. A group provides a way to aggregate objects into a
@@ -235,9 +236,9 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public ActivationGroupID getGroupID() {
-        return groupID;
+	return groupID;
     }
-
+    
     /**
      * Returns the class name for the object specified by this
      * descriptor.
@@ -245,9 +246,9 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public String getClassName() {
-        return className;
+	return className;
     }
-
+    
     /**
      * Returns the code location for the object specified by
      * this descriptor.
@@ -255,9 +256,9 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public String getLocation() {
-        return location;
+	return location;
     }
-
+    
     /**
      * Returns a "marshalled object" containing intialization/activation
      * data for the object specified by this descriptor.
@@ -265,7 +266,7 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public MarshalledObject<?> getData() {
-        return data;
+	return data;
     }
 
     /**
@@ -283,35 +284,35 @@ public final class ActivationDesc implements Serializable {
      * @since 1.2
      */
     public boolean getRestartMode() {
-        return restart;
+	return restart;
     }
 
     /**
      * Compares two activation descriptors for content equality.
      *
-     * @param   obj     the Object to compare with
-     * @return  true if these Objects are equal; false otherwise.
-     * @see             java.util.Hashtable
+     * @param	obj	the Object to compare with
+     * @return	true if these Objects are equal; false otherwise.
+     * @see		java.util.Hashtable
      * @since 1.2
      */
     public boolean equals(Object obj) {
+	
+	if (obj instanceof ActivationDesc) {
+	    ActivationDesc desc = (ActivationDesc) obj;
+	    return
+		((groupID == null ? desc.groupID == null :
+		  groupID.equals(desc.groupID)) &&
+		 (className == null ? desc.className == null :
+		  className.equals(desc.className)) &&
+		 (location == null ? desc.location == null:
+		  location.equals(desc.location)) &&
+		 (data == null ? desc.data == null :
+		  data.equals(desc.data)) &&
+		 (restart == desc.restart));
 
-        if (obj instanceof ActivationDesc) {
-            ActivationDesc desc = (ActivationDesc) obj;
-            return
-                ((groupID == null ? desc.groupID == null :
-                  groupID.equals(desc.groupID)) &&
-                 (className == null ? desc.className == null :
-                  className.equals(desc.className)) &&
-                 (location == null ? desc.location == null:
-                  location.equals(desc.location)) &&
-                 (data == null ? desc.data == null :
-                  data.equals(desc.data)) &&
-                 (restart == desc.restart));
-
-        } else {
-            return false;
-        }
+	} else {
+	    return false;
+	}
     }
 
     /**
@@ -320,20 +321,20 @@ public final class ActivationDesc implements Serializable {
      * @see java.util.Hashtable
      */
     public int hashCode() {
-        return ((location == null
-                    ? 0
-                    : location.hashCode() << 24) ^
-                (groupID == null
-                    ? 0
-                    : groupID.hashCode() << 16) ^
-                (className == null
-                    ? 0
-                    : className.hashCode() << 9) ^
-                (data == null
-                    ? 0
-                    : data.hashCode() << 1) ^
-                (restart
-                    ? 1
-                    : 0));
+	return ((location == null
+		    ? 0
+		    : location.hashCode() << 24) ^
+		(groupID == null
+		    ? 0
+		    : groupID.hashCode() << 16) ^
+		(className == null
+		    ? 0
+		    : className.hashCode() << 9) ^
+		(data == null
+		    ? 0
+		    : data.hashCode() << 1) ^
+		(restart
+		    ? 1
+		    : 0));
     }
 }

@@ -40,6 +40,7 @@ import java.util.LinkedList;
  * } pollfd_t;
  *
  * @author Mike McCloskey
+ * @version 1.3, 01/05/06
  * @since 1.4
  */
 
@@ -48,15 +49,15 @@ class DevPollArrayWrapper {
     // Event masks
     static final short POLLIN       = 0x0001;
     static final short POLLPRI      = 0x0002;
-    static final short POLLOUT      = 0x0004;
+    static final short POLLOUT	    = 0x0004;
     static final short POLLRDNORM   = 0x0040;
     static final short POLLWRNORM   = POLLOUT;
     static final short POLLRDBAND   = 0x0080;
     static final short POLLWRBAND   = 0x0100;
-    static final short POLLNORM     = POLLRDNORM;
-    static final short POLLERR      = 0x0008;
-    static final short POLLHUP      = 0x0010;
-    static final short POLLNVAL     = 0x0020;
+    static final short POLLNORM	    = POLLRDNORM;
+    static final short POLLERR	    = 0x0008;
+    static final short POLLHUP	    = 0x0010;
+    static final short POLLNVAL	    = 0x0020;
     static final short POLLREMOVE   = 0x0800;
     static final short POLLCONN     = POLLOUT;
 
@@ -69,7 +70,7 @@ class DevPollArrayWrapper {
     // Maximum number of open file descriptors
     static final int   OPEN_MAX      = fdLimit();
 
-    // Number of pollfd structures to create.
+    // Number of pollfd structures to create. 
     // DP_POLL ioctl allows up to OPEN_MAX-1
     static final int   NUM_POLLFDS   = Math.min(OPEN_MAX-1, 8192);
 
@@ -202,9 +203,9 @@ class DevPollArrayWrapper {
             // then the second pollfd of that pair will not be needed. The
             // number of entries is limited to a reasonable number to avoid
             // allocating a lot of memory.
-            int maxUpdates = Math.min(updateSize * 2, MAX_UPDATE_SIZE);
+            int maxUpdates = Math.min(updateSize * 2, MAX_UPDATE_SIZE); 
             int allocationSize =  maxUpdates * SIZE_POLLFD;
-            AllocatedNativeObject updatePollArray =
+            AllocatedNativeObject updatePollArray = 
                 new AllocatedNativeObject(allocationSize, true);
 
             try {
@@ -247,7 +248,7 @@ class DevPollArrayWrapper {
         }
     }
 
-    private void putPollFD(AllocatedNativeObject array, int index, int fd,
+    private void putPollFD(AllocatedNativeObject array, int index, int fd, 
                            short event)
     {
         int structIndex = SIZE_POLLFD * index;
@@ -266,7 +267,7 @@ class DevPollArrayWrapper {
         return interruptedIndex;
     }
 
-    boolean interrupted() {
+    boolean interrupted() { 
         return interrupted;
     }
 

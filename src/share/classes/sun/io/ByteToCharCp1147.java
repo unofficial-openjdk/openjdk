@@ -29,6 +29,7 @@ package sun.io;
  * A table to convert Cp1147 to Unicode.  This converter differs from
  * Cp297 is one code point, 0x9F, which changes from \u00A4 to \u20AC.
  * @author  Alan Liu
+ * @version >= JDK1.2
  */
 public class ByteToCharCp1147 extends ByteToCharCp297 {
     public ByteToCharCp1147() {}

@@ -38,11 +38,12 @@ import sun.net.smtp.SmtpClient;
 import sun.net.www.ParseUtil;
 
 
-/**
+/** 
  * Handle mailto URLs. To send mail using a mailto URLConnection,
  * call <code>getOutputStream</code>, write the message to the output
  * stream, and close it.
  *
+ * @version %I%, %G% 
  */
 public class MailToURLConnection extends URLConnection {
     InputStream is = null;
@@ -54,85 +55,85 @@ public class MailToURLConnection extends URLConnection {
     private int readTimeout = -1;
 
     MailToURLConnection(URL u) {
-        super(u);
+	super(u);
 
-        MessageHeader props = new MessageHeader();
-        props.add("content-type", "text/html");
-        setProperties(props);
+	MessageHeader props = new MessageHeader();
+	props.add("content-type", "text/html");
+	setProperties(props);
     }
 
     /**
-     * Get the user's full email address - stolen from
+     * Get the user's full email address - stolen from 
      * HotJavaApplet.getMailAddress().
      */
     String getFromAddress() {
-        String str = System.getProperty("user.fromaddr");
-        if (str == null) {
-            str = System.getProperty("user.name");
-            if (str != null) {
-                String host = System.getProperty("mail.host");
-                if (host == null) {
-                    try {
-                        host = InetAddress.getLocalHost().getHostName();
-                    } catch (java.net.UnknownHostException e) {
-                    }
-                }
-                str += "@" + host;
-            } else {
-                str = "";
-            }
-        }
-        return str;
-    }
+	String str = System.getProperty("user.fromaddr");
+	if (str == null) {
+	    str = System.getProperty("user.name");
+	    if (str != null) {
+		String host = System.getProperty("mail.host");
+		if (host == null) {
+		    try {
+			host = InetAddress.getLocalHost().getHostName();
+		    } catch (java.net.UnknownHostException e) {
+		    }
+		}
+		str += "@" + host;
+	    } else {
+		str = "";
+	    }
+	}
+	return str;
+    }    
 
     public void connect() throws IOException {
-        System.err.println("connect. Timeout = " + connectTimeout);
-        client = new SmtpClient(connectTimeout);
-        client.setReadTimeout(readTimeout);
+	System.err.println("connect. Timeout = " + connectTimeout);
+	client = new SmtpClient(connectTimeout);
+	client.setReadTimeout(readTimeout);
     }
 
     public synchronized OutputStream getOutputStream() throws IOException {
-        if (os != null) {
-            return os;
-        } else if (is != null) {
-            throw new IOException("Cannot write output after reading input.");
-        }
-        connect();
+	if (os != null) {
+	    return os;
+	} else if (is != null) {
+	    throw new IOException("Cannot write output after reading input.");
+	}
+	connect();
 
-        String to = ParseUtil.decode(url.getPath());
-        client.from(getFromAddress());
-        client.to(to);
+	String to = ParseUtil.decode(url.getPath());
+	client.from(getFromAddress());
+	client.to(to);
 
-        os = client.startMessage();
-        return os;
+	os = client.startMessage();
+	return os;
     }
 
     public Permission getPermission() throws IOException {
-        if (permission == null) {
-            connect();
-            String host = client.getMailHost() + ":" + 25;
-            permission = new SocketPermission(host, "connect");
-        }
-        return permission;
-    }
+	if (permission == null) {
+	    connect();
+	    String host = client.getMailHost() + ":" + 25;
+	    permission = new SocketPermission(host, "connect");
+	}
+	return permission;
+    }	
 
     public void setConnectTimeout(int timeout) {
-        if (timeout < 0)
-            throw new IllegalArgumentException("timeouts can't be negative");
-        connectTimeout = timeout;
+	if (timeout < 0)
+	    throw new IllegalArgumentException("timeouts can't be negative");
+	connectTimeout = timeout;
     }
 
     public int getConnectTimeout() {
-        return (connectTimeout < 0 ? 0 : connectTimeout);
+	return (connectTimeout < 0 ? 0 : connectTimeout);
     }
-
+    
     public void setReadTimeout(int timeout) {
-        if (timeout < 0)
-            throw new IllegalArgumentException("timeouts can't be negative");
-        readTimeout = timeout;
+	if (timeout < 0)
+	    throw new IllegalArgumentException("timeouts can't be negative");
+	readTimeout = timeout;
     }
-
+    
     public int getReadTimeout() {
-        return readTimeout < 0 ? 0 : readTimeout;
+	return readTimeout < 0 ? 0 : readTimeout;
     }
 }

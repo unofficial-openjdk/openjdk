@@ -33,6 +33,7 @@ import java.io.IOException;
  */
 public class SmtpProtocolException extends IOException {
     SmtpProtocolException(String s) {
-        super(s);
+	super(s);
     }
 }
+

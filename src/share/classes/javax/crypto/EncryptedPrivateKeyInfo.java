@@ -44,8 +44,8 @@ import sun.security.util.DerOutputStream;
  *     encryptedData   OCTET STRING }
  *
  * AlgorithmIdentifier  ::=  SEQUENCE  {
- *     algorithm              OBJECT IDENTIFIER,
- *     parameters             ANY DEFINED BY algorithm OPTIONAL  }
+ *     algorithm	      OBJECT IDENTIFIER,
+ *     parameters	      ANY DEFINED BY algorithm OPTIONAL  }
  * </pre>
  *
  * @author Valerie Peng
@@ -75,32 +75,32 @@ public class EncryptedPrivateKeyInfo {
      * @exception IOException if error occurs when parsing the ASN.1 encoding.
      */
     public EncryptedPrivateKeyInfo(byte[] encoded)
-        throws IOException {
-        if (encoded == null) {
-            throw new NullPointerException("the encoded parameter " +
-                                           "must be non-null");
-        }
-        this.encoded = (byte[])encoded.clone();
-        DerValue val = new DerValue(this.encoded);
+	throws IOException {
+	if (encoded == null) {
+	    throw new NullPointerException("the encoded parameter " +
+					   "must be non-null");
+	}
+	this.encoded = (byte[])encoded.clone();
+	DerValue val = new DerValue(this.encoded);
 
-        DerValue[] seq = new DerValue[2];
+	DerValue[] seq = new DerValue[2];
 
-        seq[0] = val.data.getDerValue();
-        seq[1] = val.data.getDerValue();
+	seq[0] = val.data.getDerValue();
+	seq[1] = val.data.getDerValue();
 
-        if (val.data.available() != 0) {
-            throw new IOException("overrun, bytes = " + val.data.available());
-        }
+	if (val.data.available() != 0) {
+	    throw new IOException("overrun, bytes = " + val.data.available());
+	}
 
-        this.algid = AlgorithmId.parse(seq[0]);
-        if (seq[0].data.available() != 0) {
-            throw new IOException("encryptionAlgorithm field overrun");
-        }
+	this.algid = AlgorithmId.parse(seq[0]);
+	if (seq[0].data.available() != 0) {
+	    throw new IOException("encryptionAlgorithm field overrun");
+	}
 
-        this.encryptedData = seq[1].getOctetString();
-        if (seq[1].data.available() != 0) {
-            throw new IOException("encryptedData field overrun");
-        }
+	this.encryptedData = seq[1].getOctetString();
+	if (seq[1].data.available() != 0) {
+	    throw new IOException("encryptedData field overrun");
+	}
     }
 
     /**
@@ -129,25 +129,25 @@ public class EncryptedPrivateKeyInfo {
      * not supported.
      */
     public EncryptedPrivateKeyInfo(String algName, byte[] encryptedData)
-        throws NoSuchAlgorithmException {
+	throws NoSuchAlgorithmException {
 
-        if (algName == null)
-                throw new NullPointerException("the algName parameter " +
-                                               "must be non-null");
-        this.algid = AlgorithmId.get(algName);
+	if (algName == null)
+		throw new NullPointerException("the algName parameter " +
+					       "must be non-null");
+	this.algid = AlgorithmId.get(algName);
 
-        if (encryptedData == null) {
-            throw new NullPointerException("the encryptedData " +
-                                           "parameter must be non-null");
-        } else if (encryptedData.length == 0) {
-            throw new IllegalArgumentException("the encryptedData " +
-                                                "parameter must not be empty");
-        } else {
-            this.encryptedData = (byte[])encryptedData.clone();
-        }
-        // delay the generation of ASN.1 encoding until
-        // getEncoded() is called
-        this.encoded = null;
+	if (encryptedData == null) {
+	    throw new NullPointerException("the encryptedData " +
+					   "parameter must be non-null");
+	} else if (encryptedData.length == 0) {
+	    throw new IllegalArgumentException("the encryptedData " +
+						"parameter must not be empty");
+	} else {
+	    this.encryptedData = (byte[])encryptedData.clone();
+	}
+	// delay the generation of ASN.1 encoding until
+	// getEncoded() is called
+	this.encoded = null;
     }
 
     /**
@@ -170,25 +170,25 @@ public class EncryptedPrivateKeyInfo {
      * the specified <code>algParams</code> parameter is not supported.
      */
     public EncryptedPrivateKeyInfo(AlgorithmParameters algParams,
-        byte[] encryptedData) throws NoSuchAlgorithmException {
+	byte[] encryptedData) throws NoSuchAlgorithmException {
 
-        if (algParams == null) {
-            throw new NullPointerException("algParams must be non-null");
-        }
-        this.algid = AlgorithmId.get(algParams);
+	if (algParams == null) {
+	    throw new NullPointerException("algParams must be non-null");
+	}
+	this.algid = AlgorithmId.get(algParams);
 
-        if (encryptedData == null) {
-            throw new NullPointerException("encryptedData must be non-null");
-        } else if (encryptedData.length == 0) {
-            throw new IllegalArgumentException("the encryptedData " +
-                                                "parameter must not be empty");
-        } else {
-            this.encryptedData = (byte[])encryptedData.clone();
-        }
+	if (encryptedData == null) {
+	    throw new NullPointerException("encryptedData must be non-null");
+	} else if (encryptedData.length == 0) {
+	    throw new IllegalArgumentException("the encryptedData " +
+						"parameter must not be empty");
+	} else {
+	    this.encryptedData = (byte[])encryptedData.clone();
+	}
 
-        // delay the generation of ASN.1 encoding until
-        // getEncoded() is called
-        this.encoded = null;
+	// delay the generation of ASN.1 encoding until
+	// getEncoded() is called
+	this.encoded = null;
     }
 
 
@@ -205,7 +205,7 @@ public class EncryptedPrivateKeyInfo {
      * @return the encryption algorithm name.
      */
     public String getAlgName() {
-        return this.algid.getName();
+	return this.algid.getName();
     }
 
     /**
@@ -213,7 +213,7 @@ public class EncryptedPrivateKeyInfo {
      * @return the algorithm parameters.
      */
     public AlgorithmParameters getAlgParameters() {
-        return this.algid.getParameters();
+	return this.algid.getParameters();
     }
 
     /**
@@ -222,7 +222,7 @@ public class EncryptedPrivateKeyInfo {
      * each time this method is called.
      */
     public byte[] getEncryptedData() {
-        return (byte[])this.encryptedData.clone();
+	return (byte[])this.encryptedData.clone();
     }
 
     /**
@@ -244,63 +244,63 @@ public class EncryptedPrivateKeyInfo {
      * data is corrupted and cannot be decrypted.
      */
     public PKCS8EncodedKeySpec getKeySpec(Cipher cipher)
-        throws InvalidKeySpecException {
-        byte[] encoded = null;
-        try {
-            encoded = cipher.doFinal((byte[])encryptedData);
-            checkPKCS8Encoding(encoded);
-        } catch (GeneralSecurityException gse) {
-            InvalidKeySpecException ikse = new
-                InvalidKeySpecException(
-                    "Cannot retrieve the PKCS8EncodedKeySpec");
-            ikse.initCause(gse);
-            throw ikse;
-        } catch (IOException ioe) {
-            InvalidKeySpecException ikse = new
-                InvalidKeySpecException(
-                    "Cannot retrieve the PKCS8EncodedKeySpec");
-            ikse.initCause(ioe);
-            throw ikse;
-        } catch (IllegalStateException ise) {
-            InvalidKeySpecException ikse = new
-                InvalidKeySpecException(
-                    "Cannot retrieve the PKCS8EncodedKeySpec");
-            ikse.initCause(ise);
-            throw ikse;
-        }
-        return new PKCS8EncodedKeySpec(encoded);
+	throws InvalidKeySpecException {
+	byte[] encoded = null;
+	try {
+	    encoded = cipher.doFinal((byte[])encryptedData);
+	    checkPKCS8Encoding(encoded);
+	} catch (GeneralSecurityException gse) {
+	    InvalidKeySpecException ikse = new
+		InvalidKeySpecException(
+		    "Cannot retrieve the PKCS8EncodedKeySpec");
+	    ikse.initCause(gse);
+	    throw ikse;
+	} catch (IOException ioe) {
+	    InvalidKeySpecException ikse = new
+		InvalidKeySpecException(
+		    "Cannot retrieve the PKCS8EncodedKeySpec");
+	    ikse.initCause(ioe);
+	    throw ikse;
+	} catch (IllegalStateException ise) {
+	    InvalidKeySpecException ikse = new
+		InvalidKeySpecException(
+		    "Cannot retrieve the PKCS8EncodedKeySpec");
+	    ikse.initCause(ise);
+	    throw ikse;
+	}
+	return new PKCS8EncodedKeySpec(encoded);
     }
 
     private PKCS8EncodedKeySpec getKeySpecImpl(Key decryptKey,
-        Provider provider) throws NoSuchAlgorithmException,
-        InvalidKeyException {
-        byte[] encoded = null;
-        Cipher c;
-        try {
-            if (provider == null) {
-                // use the most preferred one
-                c = Cipher.getInstance(algid.getName());
-            } else {
-                c = Cipher.getInstance(algid.getName(), provider);
-            }
-            c.init(Cipher.DECRYPT_MODE, decryptKey, algid.getParameters());
-            encoded = c.doFinal(encryptedData);
-            checkPKCS8Encoding(encoded);
-        } catch (NoSuchAlgorithmException nsae) {
-            // rethrow
-            throw nsae;
-        } catch (GeneralSecurityException gse) {
-            InvalidKeyException ike = new InvalidKeyException
-                ("Cannot retrieve the PKCS8EncodedKeySpec");
-            ike.initCause(gse);
-            throw ike;
-        } catch (IOException ioe) {
-            InvalidKeyException ike = new InvalidKeyException
-                ("Cannot retrieve the PKCS8EncodedKeySpec");
-            ike.initCause(ioe);
-            throw ike;
-        }
-        return new PKCS8EncodedKeySpec(encoded);
+	Provider provider) throws NoSuchAlgorithmException,
+	InvalidKeyException {
+	byte[] encoded = null;
+	Cipher c;
+	try {
+	    if (provider == null) {
+		// use the most preferred one
+		c = Cipher.getInstance(algid.getName());
+	    } else {
+		c = Cipher.getInstance(algid.getName(), provider);
+	    }
+	    c.init(Cipher.DECRYPT_MODE, decryptKey, algid.getParameters());
+	    encoded = c.doFinal(encryptedData);
+	    checkPKCS8Encoding(encoded);
+	} catch (NoSuchAlgorithmException nsae) {
+	    // rethrow
+	    throw nsae;
+	} catch (GeneralSecurityException gse) {
+	    InvalidKeyException ike = new InvalidKeyException
+		("Cannot retrieve the PKCS8EncodedKeySpec");
+	    ike.initCause(gse);
+	    throw ike;
+	} catch (IOException ioe) {
+	    InvalidKeyException ike = new InvalidKeyException
+		("Cannot retrieve the PKCS8EncodedKeySpec");
+	    ike.initCause(ioe);
+	    throw ike;
+	}
+	return new PKCS8EncodedKeySpec(encoded);
     }
 
     /**
@@ -319,11 +319,11 @@ public class EncryptedPrivateKeyInfo {
      * @since 1.5
      */
     public PKCS8EncodedKeySpec getKeySpec(Key decryptKey)
-        throws NoSuchAlgorithmException, InvalidKeyException {
-        if (decryptKey == null) {
-            throw new NullPointerException("decryptKey is null");
-        }
-        return getKeySpecImpl(decryptKey, null);
+	throws NoSuchAlgorithmException, InvalidKeyException {
+	if (decryptKey == null) {
+	    throw new NullPointerException("decryptKey is null");
+	}
+	return getKeySpecImpl(decryptKey, null);
     }
 
     /**
@@ -346,20 +346,20 @@ public class EncryptedPrivateKeyInfo {
      * @since 1.5
      */
     public PKCS8EncodedKeySpec getKeySpec(Key decryptKey,
-        String providerName) throws NoSuchProviderException,
-        NoSuchAlgorithmException, InvalidKeyException {
-        if (decryptKey == null) {
-            throw new NullPointerException("decryptKey is null");
-        }
-        if (providerName == null) {
-            throw new NullPointerException("provider is null");
-        }
-        Provider provider = Security.getProvider(providerName);
-        if (provider == null) {
-            throw new NoSuchProviderException("provider " +
-                providerName + " not found");
-        }
-        return getKeySpecImpl(decryptKey, provider);
+	String providerName) throws NoSuchProviderException,
+	NoSuchAlgorithmException, InvalidKeyException {
+	if (decryptKey == null) {
+	    throw new NullPointerException("decryptKey is null");
+	}
+	if (providerName == null) {
+	    throw new NullPointerException("provider is null");
+	}
+	Provider provider = Security.getProvider(providerName);
+	if (provider == null) {
+	    throw new NoSuchProviderException("provider " +
+		providerName + " not found");
+	}
+	return getKeySpecImpl(decryptKey, provider);
     }
 
     /**
@@ -380,15 +380,15 @@ public class EncryptedPrivateKeyInfo {
      * @since 1.5
      */
     public PKCS8EncodedKeySpec getKeySpec(Key decryptKey,
-        Provider provider) throws NoSuchAlgorithmException,
-        InvalidKeyException {
-        if (decryptKey == null) {
-            throw new NullPointerException("decryptKey is null");
-        }
-        if (provider == null) {
-            throw new NullPointerException("provider is null");
-        }
-        return getKeySpecImpl(decryptKey, provider);
+	Provider provider) throws NoSuchAlgorithmException,
+	InvalidKeyException {
+	if (decryptKey == null) {
+	    throw new NullPointerException("decryptKey is null");
+	}
+	if (provider == null) {
+	    throw new NullPointerException("provider is null");
+	}
+	return getKeySpecImpl(decryptKey, provider);
     }
 
     /**
@@ -399,50 +399,50 @@ public class EncryptedPrivateKeyInfo {
      * ASN.1 encoding.
      */
     public byte[] getEncoded() throws IOException {
-        if (this.encoded == null) {
-            DerOutputStream out = new DerOutputStream();
-            DerOutputStream tmp = new DerOutputStream();
+	if (this.encoded == null) {
+	    DerOutputStream out = new DerOutputStream();
+	    DerOutputStream tmp = new DerOutputStream();
 
-            // encode encryption algorithm
-            algid.encode(tmp);
+	    // encode encryption algorithm
+	    algid.encode(tmp);
 
-            // encode encrypted data
-            tmp.putOctetString(encryptedData);
+	    // encode encrypted data
+	    tmp.putOctetString(encryptedData);
 
-            // wrap everything into a SEQUENCE
-            out.write(DerValue.tag_Sequence, tmp);
-            this.encoded = out.toByteArray();
-        }
-        return (byte[])this.encoded.clone();
+	    // wrap everything into a SEQUENCE
+	    out.write(DerValue.tag_Sequence, tmp);
+	    this.encoded = out.toByteArray();
+	}
+	return (byte[])this.encoded.clone();
     }
 
     private static void checkTag(DerValue val, byte tag, String valName)
-        throws IOException {
-        if (val.getTag() != tag) {
-            throw new IOException("invalid key encoding - wrong tag for " +
-                                  valName);
-        }
+	throws IOException {
+	if (val.getTag() != tag) {
+	    throw new IOException("invalid key encoding - wrong tag for " +
+				  valName);
+	}
     }
 
     private static void checkPKCS8Encoding(byte[] encodedKey)
-        throws IOException {
-        DerInputStream in = new DerInputStream(encodedKey);
-        DerValue[] values = in.getSequence(3);
+	throws IOException {
+	DerInputStream in = new DerInputStream(encodedKey);
+	DerValue[] values = in.getSequence(3);
 
-        switch (values.length) {
-        case 4:
-            checkTag(values[3], DerValue.TAG_CONTEXT, "attributes");
-        case 3:
-            checkTag(values[0], DerValue.tag_Integer, "version");
-            DerInputStream algid = values[1].toDerInputStream();
-            algid.getOID();
-            if (algid.available() != 0) {
-                algid.getDerValue();
-            }
-            checkTag(values[2], DerValue.tag_OctetString, "privateKey");
-            break;
-        default:
-            throw new IOException("invalid key encoding");
-        }
+	switch (values.length) {
+	case 4:
+	    checkTag(values[3], DerValue.TAG_CONTEXT, "attributes");
+	case 3:
+	    checkTag(values[0], DerValue.tag_Integer, "version");
+	    DerInputStream algid = values[1].toDerInputStream();
+	    algid.getOID();
+	    if (algid.available() != 0) {
+		algid.getDerValue();
+	    }
+	    checkTag(values[2], DerValue.tag_OctetString, "privateKey");
+	    break;
+	default:
+	    throw new IOException("invalid key encoding");
+	}
     }
 }

@@ -44,3 +44,4 @@ public interface WindowPeer extends ContainerPeer {
     void updateMinimumSize();
     void updateIconImages();
 }
+

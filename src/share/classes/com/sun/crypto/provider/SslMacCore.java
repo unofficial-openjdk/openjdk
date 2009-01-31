@@ -44,32 +44,32 @@ import static com.sun.crypto.provider.TlsPrfGenerator.genPad;
  * @since   1.6
  */
 final class SslMacCore {
-
+    
     private final MessageDigest md;
     private final byte[] pad1, pad2;
 
-    private boolean first;       // Is this the first data to be processed?
+    private boolean first;	 // Is this the first data to be processed?
     private byte[] secret;
 
     /**
      * Standard constructor, creates a new SslMacCore instance instantiating
      * a MessageDigest of the specified name.
      */
-    SslMacCore(String digestAlgorithm, byte[] pad1, byte[] pad2)
-            throws NoSuchAlgorithmException {
-        md = MessageDigest.getInstance(digestAlgorithm);
-        this.pad1 = pad1;
-        this.pad2 = pad2;
-        first = true;
+    SslMacCore(String digestAlgorithm, byte[] pad1, byte[] pad2) 
+	    throws NoSuchAlgorithmException {
+	md = MessageDigest.getInstance(digestAlgorithm);
+	this.pad1 = pad1;
+	this.pad2 = pad2;
+	first = true;
     }
 
-    /**
+    /** 
      * Returns the length of the Mac in bytes.
      *
      * @return the Mac length in bytes.
      */
     int getDigestLength() {
-        return md.getDigestLength();
+	return md.getDigestLength();
     }
 
     /**
@@ -84,71 +84,71 @@ final class SslMacCore {
      * parameters are inappropriate for this MAC.
      */
     void init(Key key, AlgorithmParameterSpec params)
-            throws InvalidKeyException, InvalidAlgorithmParameterException {
+	    throws InvalidKeyException, InvalidAlgorithmParameterException {
+	    
+	if (params != null) {
+	    throw new InvalidAlgorithmParameterException
+	    	("SslMac does not use parameters");
+	}
 
-        if (params != null) {
-            throw new InvalidAlgorithmParameterException
-                ("SslMac does not use parameters");
-        }
+	if (!(key instanceof SecretKey)) {
+	    throw new InvalidKeyException("Secret key expected");
+	}
 
-        if (!(key instanceof SecretKey)) {
-            throw new InvalidKeyException("Secret key expected");
-        }
-
-        secret = key.getEncoded();
-        if (secret == null || secret.length == 0) {
-            throw new InvalidKeyException("Missing key data");
-        }
-
-        reset();
+	secret = key.getEncoded();
+	if (secret == null || secret.length == 0) {
+	    throw new InvalidKeyException("Missing key data");
+	}
+	
+	reset();
     }
 
     /**
-     * Processes the given byte.
-     *
+     * Processes the given byte.    
+     * 
      * @param input the input byte to be processed.
      */
     void update(byte input) {
-        if (first == true) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(secret);
-            md.update(pad1);
-            first = false;
-        }
+	if (first == true) {
+	    // compute digest for 1st pass; start with inner pad
+	    md.update(secret);
+	    md.update(pad1);
+	    first = false;
+	}
 
-        // add the passed byte to the inner digest
-        md.update(input);
+	// add the passed byte to the inner digest
+	md.update(input);
     }
 
     /**
      * Processes the first <code>len</code> bytes in <code>input</code>,
      * starting at <code>offset</code>.
-     *
+     * 
      * @param input the input buffer.
      * @param offset the offset in <code>input</code> where the input starts.
      * @param len the number of bytes to process.
      */
     void update(byte input[], int offset, int len) {
-        if (first == true) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(secret);
-            md.update(pad1);
-            first = false;
-        }
+	if (first == true) {
+	    // compute digest for 1st pass; start with inner pad
+	    md.update(secret);
+	    md.update(pad1);
+	    first = false;
+	}
 
-        // add the selected part of an array of bytes to the inner digest
-        md.update(input, offset, len);
+	// add the selected part of an array of bytes to the inner digest
+	md.update(input, offset, len);
     }
-
+    
     void update(ByteBuffer input) {
-        if (first == true) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(secret);
-            md.update(pad1);
-            first = false;
-        }
+	if (first == true) {
+	    // compute digest for 1st pass; start with inner pad
+	    md.update(secret);
+	    md.update(pad1);
+	    first = false;
+	}
 
-        md.update(input);
+	md.update(input);
     }
 
     /**
@@ -158,30 +158,30 @@ final class SslMacCore {
      * @return the Mac result.
      */
     byte[] doFinal() {
-        if (first == true) {
-            // compute digest for 1st pass; start with inner pad
-            md.update(secret);
-            md.update(pad1);
-        } else {
-            first = true;
-        }
-
-        try {
-            // finish the inner digest
-            byte[] tmp = md.digest();
-
-            // compute digest for 2nd pass; start with outer pad
-            md.update(secret);
-            md.update(pad2);
-            // add result of 1st hash
-            md.update(tmp);
-
-            md.digest(tmp, 0, tmp.length);
-            return tmp;
-        } catch (DigestException e) {
-            // should never occur
-            throw new ProviderException(e);
-        }
+	if (first == true) {
+	    // compute digest for 1st pass; start with inner pad
+	    md.update(secret);
+	    md.update(pad1);
+	} else {
+	    first = true;
+	}
+	
+	try {
+	    // finish the inner digest
+	    byte[] tmp = md.digest();
+	    
+	    // compute digest for 2nd pass; start with outer pad
+	    md.update(secret);
+	    md.update(pad2);
+	    // add result of 1st hash
+	    md.update(tmp);
+	    
+	    md.digest(tmp, 0, tmp.length);
+	    return tmp;
+	} catch (DigestException e) {
+	    // should never occur
+	    throw new ProviderException(e);
+	}
     }
 
     /**
@@ -189,82 +189,82 @@ final class SslMacCore {
      * Mac was initialized with.
      */
     void reset() {
-        if (first == false) {
-            md.reset();
-            first = true;
-        }
+	if (first == false) {
+	    md.reset();
+	    first = true;
+	}
     }
 
     // nested static class for the SslMacMD5 implementation
     public static final class SslMacMD5 extends MacSpi {
-        private final SslMacCore core;
-        public SslMacMD5() throws NoSuchAlgorithmException {
-            core = new SslMacCore("MD5", md5Pad1, md5Pad2);
-        }
-        protected int engineGetMacLength() {
-            return core.getDigestLength();
-        }
-        protected void engineInit(Key key, AlgorithmParameterSpec params)
-                throws InvalidKeyException, InvalidAlgorithmParameterException {
-            core.init(key, params);
-        }
-        protected void engineUpdate(byte input) {
-            core.update(input);
-        }
-        protected void engineUpdate(byte input[], int offset, int len) {
-            core.update(input, offset, len);
-        }
-        protected void engineUpdate(ByteBuffer input) {
-            core.update(input);
-        }
-        protected byte[] engineDoFinal() {
-            return core.doFinal();
-        }
-        protected void engineReset() {
-            core.reset();
-        }
+	private final SslMacCore core;
+	public SslMacMD5() throws NoSuchAlgorithmException {
+	    core = new SslMacCore("MD5", md5Pad1, md5Pad2);
+	}
+	protected int engineGetMacLength() {
+	    return core.getDigestLength();
+	}
+	protected void engineInit(Key key, AlgorithmParameterSpec params)
+	    	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	    core.init(key, params);
+	}
+	protected void engineUpdate(byte input) {
+	    core.update(input);
+	}
+	protected void engineUpdate(byte input[], int offset, int len) {
+	    core.update(input, offset, len);
+	}
+	protected void engineUpdate(ByteBuffer input) {
+	    core.update(input);
+	}
+	protected byte[] engineDoFinal() {
+	    return core.doFinal();
+	}
+	protected void engineReset() {
+	    core.reset();
+	}
 
-        static final byte[] md5Pad1 = genPad((byte)0x36, 48);
-        static final byte[] md5Pad2 = genPad((byte)0x5c, 48);
-        static {
-            SunJCE.ensureIntegrity(SslMacMD5.class);
-        }
+	static final byte[] md5Pad1 = genPad((byte)0x36, 48);
+	static final byte[] md5Pad2 = genPad((byte)0x5c, 48);
+	static {
+	    SunJCE.ensureIntegrity(SslMacMD5.class);
+	}
     }
-
+    
     // nested static class for the SslMacMD5 implementation
     public static final class SslMacSHA1 extends MacSpi {
-        private final SslMacCore core;
-        public SslMacSHA1() throws NoSuchAlgorithmException {
-            core = new SslMacCore("SHA", shaPad1, shaPad2);
-        }
-        protected int engineGetMacLength() {
-            return core.getDigestLength();
-        }
-        protected void engineInit(Key key, AlgorithmParameterSpec params)
-                throws InvalidKeyException, InvalidAlgorithmParameterException {
-            core.init(key, params);
-        }
-        protected void engineUpdate(byte input) {
-            core.update(input);
-        }
-        protected void engineUpdate(byte input[], int offset, int len) {
-            core.update(input, offset, len);
-        }
-        protected void engineUpdate(ByteBuffer input) {
-            core.update(input);
-        }
-        protected byte[] engineDoFinal() {
-            return core.doFinal();
-        }
-        protected void engineReset() {
-            core.reset();
-        }
+	private final SslMacCore core;
+	public SslMacSHA1() throws NoSuchAlgorithmException {
+	    core = new SslMacCore("SHA", shaPad1, shaPad2);
+	}
+	protected int engineGetMacLength() {
+	    return core.getDigestLength();
+	}
+	protected void engineInit(Key key, AlgorithmParameterSpec params)
+	    	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	    core.init(key, params);
+	}
+	protected void engineUpdate(byte input) {
+	    core.update(input);
+	}
+	protected void engineUpdate(byte input[], int offset, int len) {
+	    core.update(input, offset, len);
+	}
+	protected void engineUpdate(ByteBuffer input) {
+	    core.update(input);
+	}
+	protected byte[] engineDoFinal() {
+	    return core.doFinal();
+	}
+	protected void engineReset() {
+	    core.reset();
+	}
 
-        static final byte[] shaPad1 = genPad((byte)0x36, 40);
-        static final byte[] shaPad2 = genPad((byte)0x5c, 40);
-        static {
-            SunJCE.ensureIntegrity(SslMacSHA1.class);
-        }
+	static final byte[] shaPad1 = genPad((byte)0x36, 40);
+	static final byte[] shaPad2 = genPad((byte)0x5c, 40);
+	static {
+	    SunJCE.ensureIntegrity(SslMacSHA1.class);
+	}
     }
-
+    
 }

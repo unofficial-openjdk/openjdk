@@ -58,14 +58,15 @@ import sun.awt.EventListenerAggregate;
  *
  * @author Danila Sinopalnikov
  * @author Alexander Gerasimov
+ * @version %I%, %G%
  *
  * @since 1.3
  */
-public abstract class SunClipboard extends Clipboard
+public abstract class SunClipboard extends Clipboard 
     implements PropertyChangeListener {
 
     public static final FlavorTable flavorMap =
-        (FlavorTable)SystemFlavorMap.getDefaultFlavorMap();
+	(FlavorTable)SystemFlavorMap.getDefaultFlavorMap();
 
     private AppContext contentsContext = null;
 
@@ -77,7 +78,7 @@ public abstract class SunClipboard extends Clipboard
      */
     private volatile int numberOfFlavorListeners = 0;
 
-    /**
+    /** 
      * A set of <code>DataFlavor</code>s that is available on
      * this clipboard. It is used for tracking changes
      * of <code>DataFlavor</code>s available on this clipboard.
@@ -252,7 +253,7 @@ public abstract class SunClipboard extends Clipboard
      * @throws IllegalStateException if the clipboard has not been opened
      */
     public void openClipboard(SunClipboard newOwner) {}
-    public void closeClipboard() {}
+    public void closeClipboard() {}    
 
     public abstract long getID();
 
@@ -266,7 +267,7 @@ public abstract class SunClipboard extends Clipboard
 
     protected void lostOwnershipImpl() {
         lostOwnershipLater(null);
-    }
+    }   
 
     /**
      * Clears the clipboard state (contents, owner and contents context) and
@@ -283,21 +284,21 @@ public abstract class SunClipboard extends Clipboard
         if (context == null) {
             return;
         }
-
+        
         final Runnable runnable = new Runnable() {
                 public void run() {
                     final SunClipboard sunClipboard = SunClipboard.this;
                     ClipboardOwner owner = null;
                     Transferable contents = null;
-
+                    
                     synchronized (sunClipboard) {
                         final AppContext context = sunClipboard.contentsContext;
-
+                        
                         if (context == null) {
                             return;
                         }
-
-                        if (disposedContext == null || context == disposedContext) {
+                        
+                        if (disposedContext == null || context == disposedContext) { 
                             owner = sunClipboard.owner;
                             contents = sunClipboard.contents;
                             sunClipboard.contentsContext = null;
@@ -313,7 +314,7 @@ public abstract class SunClipboard extends Clipboard
                     if (owner != null) {
                         owner.lostOwnership(sunClipboard, contents);
                     }
-                }
+                }                
             };
 
         SunToolkit.postEvent(context, new PeerEvent(this, runnable,
@@ -416,12 +417,12 @@ public abstract class SunClipboard extends Clipboard
 
     /**
      * Checks change of the <code>DataFlavor</code>s and, if necessary,
-     * posts notifications on <code>FlavorEvent</code>s to the
+     * posts notifications on <code>FlavorEvent</code>s to the 
      * AppContexts' EDTs.
      * The parameter <code>formats</code> is null iff we have just
      * failed to get formats available on the clipboard.
      *
-     * @param formats data formats that have just been retrieved from
+     * @param formats data formats that have just been retrieved from 
      *        this clipboard
      */
     public void checkChange(long[] formats) {
@@ -458,7 +459,7 @@ public abstract class SunClipboard extends Clipboard
             EventListenerAggregate flavorListeners = (EventListenerAggregate)
                     appContext.get(CLIPBOARD_FLAVOR_LISTENER_KEY);
             if (flavorListeners != null) {
-                FlavorListener[] flavorListenerArray =
+                FlavorListener[] flavorListenerArray = 
                         (FlavorListener[])flavorListeners.getListenersInternal();
                 for (int i = 0; i < flavorListenerArray.length; i++) {
                     SunToolkit.postEvent(appContext, new PeerEvent(this,

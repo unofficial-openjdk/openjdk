@@ -36,119 +36,119 @@ import com.sun.net.ssl.internal.www.protocol.https.HttpsURLConnectionOldImpl;
 public class CheckMethods {
     static boolean debug = false;
     static class MethodSignature {
-        String name;
-        Class[] paramTypes;
-        MethodSignature(String name, Class[] paramTypes) {
-            this.name = name;
-            this.paramTypes = paramTypes;
-        }
+	String name;
+	Class[] paramTypes;
+	MethodSignature(String name, Class[] paramTypes) {
+	    this.name = name;
+	    this.paramTypes = paramTypes;
+	}
+	
+	public boolean equals(Object obj) {
+	    if (debug)
+		System.out.println("comparing "+this +" against: "+obj);
+	    if (!(obj instanceof MethodSignature)) {
+		if (debug)
+		    System.out.println(false);
+		return false;
+	    }
+	    MethodSignature ms = (MethodSignature) obj;
+	    Class[] types = ms.paramTypes;
+	    try {
+		for (int i = 0; i < types.length; i++) {
+		    if (!types[i].equals(paramTypes[i])) {
+			if (debug)
+			    System.out.println(false);
+			return false;
+		    }
+		}
+	    } catch (Exception e) {
+		if (debug)
+		    System.out.println(false);
+		return false;
+	    }
+	    boolean result = this.name.equals(ms.name);
+	    if (debug)
+		System.out.println(result);
+	    return result;
+	}
 
-        public boolean equals(Object obj) {
-            if (debug)
-                System.out.println("comparing "+this +" against: "+obj);
-            if (!(obj instanceof MethodSignature)) {
-                if (debug)
-                    System.out.println(false);
-                return false;
-            }
-            MethodSignature ms = (MethodSignature) obj;
-            Class[] types = ms.paramTypes;
-            try {
-                for (int i = 0; i < types.length; i++) {
-                    if (!types[i].equals(paramTypes[i])) {
-                        if (debug)
-                            System.out.println(false);
-                        return false;
-                    }
-                }
-            } catch (Exception e) {
-                if (debug)
-                    System.out.println(false);
-                return false;
-            }
-            boolean result = this.name.equals(ms.name);
-            if (debug)
-                System.out.println(result);
-            return result;
-        }
-
-        public String toString() {
-            StringBuffer sb = new StringBuffer(name+"(");
-            for (int i = 0; i < paramTypes.length; i++) {
-                sb.append(paramTypes[i].getName()+",");
-                if (i == (paramTypes.length -1))
-                    sb.deleteCharAt(sb.length()-1);
-            }
-            sb.append(")");
-            return sb.toString();
-        }
+	public String toString() {
+	    StringBuffer sb = new StringBuffer(name+"(");
+	    for (int i = 0; i < paramTypes.length; i++) {
+		sb.append(paramTypes[i].getName()+",");
+		if (i == (paramTypes.length -1))
+		    sb.deleteCharAt(sb.length()-1);
+	    }
+	    sb.append(")");
+	    return sb.toString();
+	}
     }
 
     // check HttpsURLConnectionImpl and HttpsURLConnectionOldImpl
     // contain all public and protected methods defined in
     // HttpURLConnection and URLConnection
     public static void main(String[] args) {
-        ArrayList allMethods = new ArrayList(
-            Arrays.asList(HttpURLConnection.class.getDeclaredMethods()));
-        allMethods.addAll(Arrays.asList(URLConnection.class.getDeclaredMethods()));
-        ArrayList allMethodSignatures = new ArrayList();
-        for (Iterator itr = allMethods.iterator(); itr.hasNext(); ) {
-            Method m = (Method)itr.next();
-            // don't include static and private methods
-            if (!Modifier.isStatic(m.getModifiers()) &&
-                (Modifier.isPublic(m.getModifiers()) ||
-                 Modifier.isProtected(m.getModifiers()))) {
-                allMethodSignatures.add(
+	ArrayList allMethods = new ArrayList(
+	    Arrays.asList(HttpURLConnection.class.getDeclaredMethods()));
+	allMethods.addAll(Arrays.asList(URLConnection.class.getDeclaredMethods()));
+	ArrayList allMethodSignatures = new ArrayList();
+	for (Iterator itr = allMethods.iterator(); itr.hasNext(); ) {
+	    Method m = (Method)itr.next();
+	    // don't include static and private methods
+	    if (!Modifier.isStatic(m.getModifiers()) && 
+		(Modifier.isPublic(m.getModifiers()) ||
+		 Modifier.isProtected(m.getModifiers()))) {
+		allMethodSignatures.add(
                     new MethodSignature(m.getName(), m.getParameterTypes()));
-            }
-        }
+	    }
+	}
 
-        // testing HttpsURLConnectionImpl
-        List httpsMethods =
-            Arrays.asList(HttpsURLConnectionImpl.class.getDeclaredMethods());
+	// testing HttpsURLConnectionImpl
+	List httpsMethods =
+	    Arrays.asList(HttpsURLConnectionImpl.class.getDeclaredMethods());
 
-        ArrayList httpsMethodSignatures = new ArrayList();
-        for (Iterator itr = httpsMethods.iterator(); itr.hasNext(); ) {
-            Method m = (Method)itr.next();
-            if (!Modifier.isStatic(m.getModifiers())) {
-                httpsMethodSignatures.add(
+	ArrayList httpsMethodSignatures = new ArrayList();
+	for (Iterator itr = httpsMethods.iterator(); itr.hasNext(); ) {
+	    Method m = (Method)itr.next();
+	    if (!Modifier.isStatic(m.getModifiers())) {
+		httpsMethodSignatures.add(
                  new MethodSignature(m.getName(), m.getParameterTypes()));
-            }
-        }
+	    }
+	}
 
-        if (!httpsMethodSignatures.containsAll(allMethodSignatures)) {
-            throw new RuntimeException("Method definition test failed on HttpsURLConnectionImpl");
-        }
+	if (!httpsMethodSignatures.containsAll(allMethodSignatures)) {
+	    throw new RuntimeException("Method definition test failed on HttpsURLConnectionImpl");
+	} 
 
-        // testing HttpsURLConnectionOldImpl
-        List httpsOldMethods =
-            Arrays.asList(HttpsURLConnectionOldImpl.class.getDeclaredMethods());
+	// testing HttpsURLConnectionOldImpl
+	List httpsOldMethods =
+	    Arrays.asList(HttpsURLConnectionOldImpl.class.getDeclaredMethods());
 
-        ArrayList httpsOldMethodSignatures = new ArrayList();
-        for (Iterator itr = httpsOldMethods.iterator(); itr.hasNext(); ) {
-            Method m = (Method)itr.next();
-            if (!Modifier.isStatic(m.getModifiers())) {
-                httpsOldMethodSignatures.add(
+	ArrayList httpsOldMethodSignatures = new ArrayList();
+	for (Iterator itr = httpsOldMethods.iterator(); itr.hasNext(); ) {
+	    Method m = (Method)itr.next();
+	    if (!Modifier.isStatic(m.getModifiers())) {
+		httpsOldMethodSignatures.add(
                  new MethodSignature(m.getName(), m.getParameterTypes()));
-            }
-        }
+	    }
+	}
 
-        if (!httpsOldMethodSignatures.containsAll(allMethodSignatures)) {
-            throw new RuntimeException("Method definition test failed" +
-                                       " on HttpsURLConnectionOldImpl");
-        }
+	if (!httpsOldMethodSignatures.containsAll(allMethodSignatures)) {
+	    throw new RuntimeException("Method definition test failed" +
+				       " on HttpsURLConnectionOldImpl");
+	} 
 
-        // testing for non static public field
-        ArrayList allFields = new ArrayList(
+	// testing for non static public field
+	ArrayList allFields = new ArrayList(
             Arrays.asList(URLConnection.class.getFields()));
-        allFields.addAll(Arrays.asList(HttpURLConnection.class.getFields()));
-
-        for (Iterator itr = allFields.iterator(); itr.hasNext(); ) {
-            Field f = (Field) itr.next();
-            if (!Modifier.isStatic(f.getModifiers())) {
-                throw new RuntimeException("Non static Public fields" +
-                                           " declared in superclasses");
-            }
-        }
+	allFields.addAll(Arrays.asList(HttpURLConnection.class.getFields()));
+	
+	for (Iterator itr = allFields.iterator(); itr.hasNext(); ) {
+	    Field f = (Field) itr.next();
+	    if (!Modifier.isStatic(f.getModifiers())) {
+		throw new RuntimeException("Non static Public fields" +
+					   " declared in superclasses");
+	    }
+	}
     }
 }

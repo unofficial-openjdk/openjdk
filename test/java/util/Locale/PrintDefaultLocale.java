@@ -1,21 +1,21 @@
-/*
+/* 
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -53,7 +53,7 @@
  */
 /*
     @bug 4123370 4091969 4118731 4182108 4778440
-
+    
     The "at-test" tag was removed from this file, because there's no way to
     run this test in an automated test harness.  It depends on having various
     different locales installed on the machine, and on Windows it depends
@@ -61,7 +61,7 @@
     the settings before running the test for each bug.  We can run this test
     manually from time to time to ensure that there has been no regression,
     but it's not automated. -- lwerner, 7/6/98
-
+    
     INSTRUCTIONS FOR RUNNING THIS TEST
     ==================================
     This test is designed to check for problems in the JVM code that initializes the
@@ -128,7 +128,7 @@
         Regional Settings control panel on Windows.  For each setting, run this program.
         You should see no_NO and no_NO_NY, respectively.
 
-    Bug #4182108:
+    Bug #4182108:    
         Test this bug the same way you test bug #4118731.  Set the locale to
         each of the specified locale IDs (e.g., "setenv LC_ALL japanese"), and
         then run PrintDefaultLocale.  You should get the following results:
@@ -151,44 +151,44 @@
         returned by this test is currency ISO8859-1 for 8859-15 locales.
 
     Bug #4778440, 5005601, 5074060, 5107154:
-        Run the "deflocale" tool found in "data" directory (deflocale.sh on Unix,
-        deflocale.exe on Windows), and check the following:
+        Run the "deflocale" tool found in "data" directory (deflocale.sh on Unix, 
+	deflocale.exe on Windows), and check the following:
 
-            4778440: Check that iw_IL is the default locale if the OS's locale is
-            Hebrew,  and in_ID for Indonesian.
-            5005601: For Norwegian locales, no_NO is selected for Bokmal, and no_NO_NY
-            is selected for Nynorsk.
-            5074060, 5107154: On Windows XP ServicePack 2, check the default locales for the
-            following Windows locales.  Compare with the golden data (deflocale.win):
-                Bengali - India
-                Croatian - Bosnia and Herzegovina
-                Bosnian - Bosnia and Herzegovina
-                Serbian (Latin) - Bosnia and Herzegovina
-                Serbian (Cyrillic) - Bosnia and Herzegovina
-                Welsh - United Kingdom
-                Maori - New Zealand
-                Malayalam - India
-                Maltese - Malta
-                Quechua - Bolivia
-                Quechua - Ecuador
-                Quechua - Peru
-                Setswana (Tswana) - South Africa
-                isiXhosa (Xhosa) - South Africa
-                isiZulu ( Zulu) - South Africa
+	    4778440: Check that iw_IL is the default locale if the OS's locale is
+	    Hebrew,  and in_ID for Indonesian.
+	    5005601: For Norwegian locales, no_NO is selected for Bokmal, and no_NO_NY
+	    is selected for Nynorsk.
+	    5074060, 5107154: On Windows XP ServicePack 2, check the default locales for the
+	    following Windows locales.  Compare with the golden data (deflocale.win):
+                Bengali - India					
+                Croatian - Bosnia and Herzegovina		
+                Bosnian - Bosnia and Herzegovina		
+                Serbian (Latin) - Bosnia and Herzegovina	
+                Serbian (Cyrillic) - Bosnia and Herzegovina	
+                Welsh - United Kingdom				
+                Maori - New Zealand				
+                Malayalam - India				
+                Maltese - Malta					
+                Quechua - Bolivia				
+                Quechua - Ecuador				
+                Quechua - Peru					
+                Setswana (Tswana) - South Africa		
+                isiXhosa (Xhosa) - South Africa			
+                isiZulu ( Zulu) - South Africa			
                 Sesotho sa Leboa (Northern Sotho) - South Africa
-                Sami, Northern - Norway
-                Sami, Northern - Sweden
-                Sami, Northern - Finland
-                Sami, Lule - Norway
-                Sami, Lule - Sweden
-                Sami, Southern - Norway
-                Sami, Southern - Sweden
-                Sami, Skolt - Finland
-                Sami, Inari - Finland
+                Sami, Northern - Norway				
+                Sami, Northern - Sweden				
+                Sami, Northern - Finland			
+                Sami, Lule - Norway				
+                Sami, Lule - Sweden				
+                Sami, Southern - Norway				
+                Sami, Southern - Sweden				
+                Sami, Skolt - Finland				
+                Sami, Inari - Finland				
 
     Bug # 6409997:
         Run the "deflocale.exe" tool found in "data" directory on Windows Vista.
-        It contains the following new locales:
+	It contains the following new locales:
                 Tajik (Cyrillic) (Tajikistan) - 1251
                 Upper Sorbian (Germany) - 1252
                 Turkmen (Turkmenistan) - 1250
@@ -224,7 +224,7 @@
                 English (Malaysia) - 1252
                 English (Singapore) - 1252
                 Spanish (United States) - 1252
-
+	    
 */
 import java.nio.charset.Charset;
 import java.util.Locale;

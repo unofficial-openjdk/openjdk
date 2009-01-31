@@ -38,11 +38,11 @@ public class ClassManager {
     private SearchPath classPath;
 
     public ClassManager(Environment env) {
-        this.classPath = new SearchPath("");
+	this.classPath = new SearchPath("");
     }
 
     public ClassManager(SearchPath classPath) {
-        this.classPath = classPath;
+	this.classPath = classPath;
     }
 
     /*
@@ -50,7 +50,7 @@ public class ClassManager {
      */
 
     public void setClassPath(SearchPath sp) {
-        classPath = sp;
+	classPath = sp;
     }
 
     /*
@@ -58,7 +58,7 @@ public class ClassManager {
      */
 
     public SearchPath getClassPath() {
-        return classPath;
+	return classPath;
     }
 
 }

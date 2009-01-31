@@ -25,7 +25,7 @@
  * @test
  * @bug 6388456
  * @summary Need adjustable TLS max record size for interoperability
- *      with non-compliant stacks
+ *	with non-compliant stacks
  *
  * Check the system property "jsse.SSLEngine.acceptLargeFragments"
  *
@@ -40,7 +40,7 @@ public class AcceptLargeFragments {
     public static void main (String[] args) throws Exception {
         SSLContext context = SSLContext.getDefault();
 
-        // set the property before initialization SSLEngine.
+	// set the property before initialization SSLEngine.
         System.setProperty("jsse.SSLEngine.acceptLargeFragments", "true");
 
         SSLEngine cliEngine = context.createSSLEngine();
@@ -52,17 +52,17 @@ public class AcceptLargeFragments {
         SSLSession cliSession = cliEngine.getSession();
         SSLSession srvSession = srvEngine.getSession();
 
-        // check packet buffer sizes.
-        if (cliSession.getPacketBufferSize() < 33049 ||
+	// check packet buffer sizes.
+	if (cliSession.getPacketBufferSize() < 33049 ||
             srvSession.getPacketBufferSize() < 33049) {
-                throw new Exception("Don't accept large SSL/TLS fragments");
-        }
+		throw new Exception("Don't accept large SSL/TLS fragments");
+	}
 
-        // check application data buffer sizes.
-        if (cliSession.getApplicationBufferSize() < 32768 ||
-            srvSession.getApplicationBufferSize() < 32768) {
-                throw new Exception(
-                        "Don't accept large SSL/TLS application data ");
-        }
+	// check application data buffer sizes.
+	if (cliSession.getApplicationBufferSize() < 32768 ||
+	    srvSession.getApplicationBufferSize() < 32768) {
+		throw new Exception(
+			"Don't accept large SSL/TLS application data ");
+	}
     }
 }

@@ -31,7 +31,7 @@ import java.net.URL;
  * An interface for all objects that implement HTTP authentication.
  * See the HTTP spec for details on how this works in general.
  * A single class or object can implement an arbitrary number of
- * authentication schemes.
+ * authentication schemes.  
  *
  * @author David Brown
  *
@@ -43,7 +43,7 @@ import java.net.URL;
 // a goal, there's no reason to carry this forward into JDK 2.0.
 @Deprecated
 public interface HttpAuthenticator {
-
+    
 
     /**
      * Indicate whether the specified authentication scheme is
@@ -74,3 +74,7 @@ public interface HttpAuthenticator {
     public String authString (URL u, String scheme, String realm);
 
 }
+
+
+
+

@@ -37,6 +37,7 @@ package javax.net.ssl;
  * exception is thrown.
  *
  * @since 1.4
+ * @version %I%
  * @author David Brownell
  */
 public
@@ -52,6 +53,6 @@ class SSLPeerUnverifiedException extends SSLException
      */
     public SSLPeerUnverifiedException(String reason)
     {
-        super(reason);
+	super(reason);
     }
 }

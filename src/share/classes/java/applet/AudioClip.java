@@ -31,7 +31,8 @@ package java.applet;
  * playing at the same time, and the resulting sound is mixed
  * together to produce a composite.
  *
- * @author      Arthur van Hoff
+ * @author 	Arthur van Hoff
+ * @version     %I%, %G%
  * @since       JDK1.0
  */
 public interface AudioClip {

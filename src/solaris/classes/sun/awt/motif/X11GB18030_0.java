@@ -32,21 +32,21 @@ import sun.nio.cs.ext.DoubleByteEncoder;
 
 public class X11GB18030_0 extends Charset {
     public X11GB18030_0 () {
-        super("X11GB18030_0", null);
+	super("X11GB18030_0", null);
     }
 
-    public CharsetEncoder newEncoder() {
-        return new Encoder(this);
+    public CharsetEncoder newEncoder() { 
+        return new Encoder(this); 
     }
 
     /* Seems like supporting a decoder is required, but we aren't going
      * to be publically exposing this class, so no need to waste work
      */
-    public CharsetDecoder newDecoder() {
+    public CharsetDecoder newDecoder() { 
         throw new Error("Decoder is not implemented for X11GB18030_0 Charset");
     }
 
-    public boolean contains(Charset cs) {
+    public boolean contains(Charset cs) { 
         return cs instanceof X11GB18030_0;
     }
 
@@ -56,8 +56,8 @@ public class X11GB18030_0 extends Charset {
         }
         protected int encodeSingle(char inputChar) {
             return -1;
-        }
-        private final static String innerIndex0=
+	}
+        private final static String innerIndex0= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -570,8 +570,8 @@ public class X11GB18030_0 extends Charset {
             "\uA5E8\uA5E9\uA5EA\uA5EB\uA5EC\uA5ED\uA5EE\uA5EF"+
             "\uA5F0\uA5F1\uA5F2\uA5F3\uA5F4\uA5F5\uA5F6\u0000"+
             "\u0000\u0000\u0000\u0000\uA960\uA963\uA964\u0000";
-
-        private final static String innerIndex1=
+	
+	private final static String innerIndex1= 
             "\u0000\u0000\u0000\u0000\u0000\uA8C5\uA8C6\uA8C7"+
             "\uA8C8\uA8C9\uA8CA\uA8CB\uA8CC\uA8CD\uA8CE\uA8CF"+
             "\uA8D0\uA8D1\uA8D2\uA8D3\uA8D4\uA8D5\uA8D6\uA8D7"+
@@ -1084,8 +1084,8 @@ public class X11GB18030_0 extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
-
-        private final static String innerIndex2=
+	
+	private final static String innerIndex2= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -1598,8 +1598,8 @@ public class X11GB18030_0 extends Charset {
             "\u8BA9\uC4DB\u8BAA\uE6C6\u8BAB\u8BAC\u8BAD\u8BAE"+
             "\u8BAF\uE6CD\u8BB0\u8BB1\u8BB2\u8BB3\u8BB4\u8BB5"+
             "\u8BB6\u8BB7\u8BB8\u8BB9\u8BBA\u8BBB\u8BBC\u8BBD";
-
-        private final static String innerIndex3=
+	
+	private final static String innerIndex3= 
             "\u8BBE\u8BBF\u8BC0\u8BC1\u8BC2\u8BC3\u8BC4\u8BC5"+
             "\u8BC6\uE6D2\u8BC7\u8BC8\u8BC9\u8BCA\u8BCB\u8BCC"+
             "\u8BCD\u8BCE\u8BCF\u8BD0\u8BD1\u8BD2\uE6D4\uE6D3"+
@@ -2112,8 +2112,8 @@ public class X11GB18030_0 extends Charset {
             "\u99BE\u99BF\u99C0\u99C1\u99C2\u99C3\u99C4\u99C5"+
             "\u99C6\u99C7\u99C8\u99C9\u99CA\u99CB\u99CC\u99CD"+
             "\u99CE\u99CF\u99D0\u99D1\u99D2\u99D3\u99D4\u99D5";
-
-        private final static String innerIndex4=
+	
+	private final static String innerIndex4= 
             "\u99D6\u99D7\u99D8\u99D9\u99DA\u99DB\u99DC\u99DD"+
             "\u99DE\u99DF\u99E0\u99E1\u99E2\u99E3\u99E4\u99E5"+
             "\u99E6\u99E7\u99E8\u99E9\u99EA\u99EB\u99EC\u99ED"+
@@ -2626,8 +2626,8 @@ public class X11GB18030_0 extends Charset {
             "\uB875\uB876\uB877\uB878\uB879\uBDDF\uB87A\uB6CB"+
             "\uB87B\uB87C\uB87D\uB87E\uB880\uB881\uB882\uB883"+
             "\uB884\uD6F1\uF3C3\uB885\uB886\uF3C4\uB887\uB8CD";
-
-        private final static String innerIndex5=
+	
+	private final static String innerIndex5= 
             "\uB888\uB889\uB88A\uF3C6\uF3C7\uB88B\uB0CA\uB88C"+
             "\uF3C5\uB88D\uF3C9\uCBF1\uB88E\uB88F\uB890\uF3CB"+
             "\uB891\uD0A6\uB892\uB893\uB1CA\uF3C8\uB894\uB895"+
@@ -3140,8 +3140,8 @@ public class X11GB18030_0 extends Charset {
             "\uD644\uD645\uD646\uD647\uD648\uD649\uD64A\uD64B"+
             "\uD64C\uD64D\uD64E\uD64F\uD650\uD651\uD652\uD653"+
             "\uD654\uD655\uD656\uD657\uD658\uD659\uD65A\uD65B";
-
-        private final static String innerIndex6=
+	
+	private final static String innerIndex6= 
             "\uD65C\uD65D\uD65E\uD65F\uD660\uD661\uD662\uE5C0"+
             "\uD663\uD664\uD665\uD666\uD667\uD668\uD669\uD66A"+
             "\uD66B\uD66C\uD66D\uD66E\uD66F\uD670\uD671\uD672"+
@@ -3654,8 +3654,8 @@ public class X11GB18030_0 extends Charset {
             "\uF388\uF389\uF38A\uF7D8\uF38B\uF7DA\uF38C\uF7D7"+
             "\uF38D\uF38E\uF38F\uF390\uF391\uF392\uF393\uF394"+
             "\uF395\uF7DB\uF396\uF7D9\uF397\uF398\uF399\uF39A";
-
-        private final static String innerIndex7=
+	
+	private final static String innerIndex7= 
             "\uF39B\uF39C\uF39D\uD7D7\uF39E\uF39F\uF3A0\uF440"+
             "\uF7DC\uF441\uF442\uF443\uF444\uF445\uF446\uF7DD"+
             "\uF447\uF448\uF449\uF7DE\uF44A\uF44B\uF44C\uF44D"+
@@ -4168,8 +4168,8 @@ public class X11GB18030_0 extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
-
-        private final static String innerIndex8=
+	
+	private final static String innerIndex8= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -4234,37 +4234,37 @@ public class X11GB18030_0 extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
-
-        private final static short index1[] = {
-            1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            6, 7, 8, 9, 10, 11, 12, 0, 0, 0, 0, 0, 0, 0, 13, 14,
-            15, 16, 17, 18, 19, 20, 21, 0, 0, 22, 23, 24, 25, 0, 0, 0,
-            26, 27, 0, 28, 29, 0, 30, 31, 0, 32, 0, 0, 33, 34, 35, 36,
-            37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52,
-            53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
-            69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
-            85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100,
-            101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            117, 118, 119, 120, 121, 122, 123, 124, 125, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 127, 0, 0, 0, 128, 129
-        };
-
+	
+	private final static short index1[] = {
+	    1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    6, 7, 8, 9, 10, 11, 12, 0, 0, 0, 0, 0, 0, 0, 13, 14, 
+	    15, 16, 17, 18, 19, 20, 21, 0, 0, 22, 23, 24, 25, 0, 0, 0, 
+	    26, 27, 0, 28, 29, 0, 30, 31, 0, 32, 0, 0, 33, 34, 35, 36, 
+	    37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 
+	    53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 
+	    69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 
+	    85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 
+	    101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    117, 118, 119, 120, 121, 122, 123, 124, 125, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 126, 127, 0, 0, 0, 128, 129
+	};
+	
         private final static String index2[] = {
-            innerIndex0,
-            innerIndex1,
-            innerIndex2,
-            innerIndex3,
-            innerIndex4,
-            innerIndex5,
-            innerIndex6,
-            innerIndex7,
-            innerIndex8
-        };
+	    innerIndex0,
+	    innerIndex1,
+	    innerIndex2,
+	    innerIndex3,
+	    innerIndex4,
+	    innerIndex5,
+	    innerIndex6,
+	    innerIndex7,
+	    innerIndex8
+	};
 
         /* The default implementation creates a decoder and we don't have one */
         public boolean isLegalReplacement(byte[] repl) {
@@ -4272,3 +4272,5 @@ public class X11GB18030_0 extends Charset {
         }
     }
 }
+
+	

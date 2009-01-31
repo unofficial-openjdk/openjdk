@@ -236,33 +236,33 @@ class TestDialog extends Dialog
       String printStr, remainingStr;
       for( int i=0; i < instructions.length; i++ )
        {
-         //chop up each into pieces maxSringLength long
-         remainingStr = instructions[ i ];
-         while( remainingStr.length() > 0 )
-          {
-            //if longer than max then chop off first max chars to print
-            if( remainingStr.length() >= maxStringLength )
-             {
-               //Try to chop on a word boundary
-               int posOfSpace = remainingStr.
-                  lastIndexOf( ' ', maxStringLength - 1 );
-
-               if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-
-               printStr = remainingStr.substring( 0, posOfSpace + 1 );
-               remainingStr = remainingStr.substring( posOfSpace + 1 );
-             }
-            //else just print
-            else
-             {
-               printStr = remainingStr;
-               remainingStr = "";
-             }
-
+	 //chop up each into pieces maxSringLength long
+	 remainingStr = instructions[ i ];
+	 while( remainingStr.length() > 0 )
+	  {
+	    //if longer than max then chop off first max chars to print
+	    if( remainingStr.length() >= maxStringLength )
+	     {
+	       //Try to chop on a word boundary
+	       int posOfSpace = remainingStr.
+		  lastIndexOf( ' ', maxStringLength - 1 );
+	
+	       if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
+	
+	       printStr = remainingStr.substring( 0, posOfSpace + 1 );
+	       remainingStr = remainingStr.substring( posOfSpace + 1 );
+	     }
+	    //else just print
+	    else
+	     {
+	       printStr = remainingStr;
+	       remainingStr = "";
+	     }
+	
             instructionsText.append( printStr + "\n" );
-
-          }// while
-
+	
+	  }// while
+	
        }// for
 
     }//printInstructions()

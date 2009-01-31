@@ -30,7 +30,7 @@
 public class TLRemoveTest {
     private static final int INITIAL_VALUE = 101;
     private static final int REMOVE_SET_VALUE = 102;
-
+    
     static ThreadLocal<Integer> n = new ThreadLocal<Integer>() {
         protected synchronized Integer initialValue() {
             return INITIAL_VALUE;
@@ -38,23 +38,23 @@ public class TLRemoveTest {
     };
 
     public static void main(String args[]) throws Throwable {
-        int threadCount = 100;
-        final int[] removeNode = {10,20,45,38};
+	int threadCount = 100;
+        final int[] removeNode = {10,20,45,38}; 
         // ThreadLocal values will be removed for these threads.
         final int[] removeAndSet = {12,34,10};
         // ThreadLocal values will be removed and sets new values..
-
-        Thread th[] = new Thread[threadCount];
+        
+	Thread th[] = new Thread[threadCount];
         final int x[] = new int[threadCount];
         final Throwable exceptions[] = new Throwable[threadCount];
 
-        for(int i = 0; i<threadCount; i++) {
+	for(int i = 0; i<threadCount; i++) {
             final int threadId = i;
-            th[i] = new Thread() {
-                public void run() {
+	    th[i] = new Thread() {
+		public void run() {
                     try{
                         n.set(threadId); // Sets threadId as threadlocal value...
-                        for (int j = 0; j<threadId; j++)
+                        for (int j = 0; j<threadId; j++) 
                             Thread.currentThread().yield();
 
                         // To remove the ThreadLocal ....
@@ -64,15 +64,15 @@ public class TLRemoveTest {
                                break;
                             }
 
-                        // To remove the ThreadLocal value and set new value ...
+                        // To remove the ThreadLocal value and set new value ...        
                         for(int removeId  : removeAndSet)
                             if(threadId == removeId){
                                n.remove(); // Removes the ThreadLocal Value...
-                               n.set(REMOVE_SET_VALUE); /* Setting new Values to
-                                                          ThreadLocal */
+                               n.set(REMOVE_SET_VALUE); /* Setting new Values to 
+                                                          ThreadLocal */ 
                                break;
                             }
-                            /* Storing the threadlocal values in 'x'
+                            /* Storing the threadlocal values in 'x' 
                                ...so that it can be used for checking results... */
                         x[threadId] = n.get();
                     }
@@ -80,22 +80,22 @@ public class TLRemoveTest {
                         exceptions[threadId] = ex;
                     }
                 }
-            };
-            th[i].start();
-        }
-
+	    };
+	    th[i].start();
+	}
+        
         // Wait for the threads to finish
         for(int i = 0; i<threadCount; i++)
             th[i].join();
 
         // Check results
-        for(int i = 0; i<threadCount; i++){
+	for(int i = 0; i<threadCount; i++){
             int checkValue = i;
-
+            
             /* If the remove method is called then the ThreadLocal value will
              * be its initial value */
             for(int removeId : removeNode)
-                if(removeId == i){
+                if(removeId == i){ 
                     checkValue = INITIAL_VALUE;
                     break;
                 }
@@ -105,10 +105,10 @@ public class TLRemoveTest {
                     checkValue = REMOVE_SET_VALUE;
                     break;
                 }
-
+                
             if(exceptions[i] != null)
                 throw(exceptions[i]);
-            if(x[i] != checkValue)
+            if(x[i] != checkValue)    
                 throw(new Throwable("x[" + i + "] =" + x[i]));
         }
     }

@@ -30,6 +30,7 @@ package java.io;
  * violates internal consistency checks.
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.1
  */
 public class StreamCorruptedException extends ObjectStreamException {
@@ -42,13 +43,13 @@ public class StreamCorruptedException extends ObjectStreamException {
      * @param reason  String describing the reason for the exception.
      */
     public StreamCorruptedException(String reason) {
-        super(reason);
+	super(reason);
     }
 
     /**
      * Create a StreamCorruptedException and list no reason why thrown.
      */
     public StreamCorruptedException() {
-        super();
+	super();
     }
 }

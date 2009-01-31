@@ -38,6 +38,7 @@ import java.security.*;
  *
  * @since 1.4
  * @see SSLContext
+ * @version %I%
  */
 public abstract class SSLContextSpi {
     /**
@@ -50,7 +51,7 @@ public abstract class SSLContextSpi {
      * @see SSLContext#init(KeyManager [], TrustManager [], SecureRandom)
      */
     protected abstract void engineInit(KeyManager[] km, TrustManager[] tm,
-        SecureRandom sr) throws KeyManagementException;
+	SecureRandom sr) throws KeyManagementException;
 
     /**
      * Returns a <code>SocketFactory</code> object for this
@@ -137,14 +138,14 @@ public abstract class SSLContextSpi {
      * @see javax.net.ssl.SSLContext#getClientSessionContext()
      */
     protected abstract SSLSessionContext engineGetClientSessionContext();
-
+    
     private SSLSocket getDefaultSocket() {
-        try {
-            SSLSocketFactory factory = engineGetSocketFactory();
-            return (SSLSocket)factory.createSocket();
-        } catch (java.io.IOException e) {
-            throw new UnsupportedOperationException("Could not obtain parameters", e);
-        }
+	try {
+	    SSLSocketFactory factory = engineGetSocketFactory();
+	    return (SSLSocket)factory.createSocket();
+	} catch (java.io.IOException e) {
+	    throw new UnsupportedOperationException("Could not obtain parameters", e);
+	}
     }
 
     /**
@@ -166,10 +167,10 @@ public abstract class SSLContextSpi {
      * @since 1.6
      */
     protected SSLParameters engineGetDefaultSSLParameters() {
-        SSLSocket socket = getDefaultSocket();
-        return socket.getSSLParameters();
+	SSLSocket socket = getDefaultSocket();
+	return socket.getSSLParameters();
     }
-
+    
     /**
      * Returns a copy of the SSLParameters indicating the maximum supported
      * settings for this SSL context.
@@ -182,7 +183,7 @@ public abstract class SSLContextSpi {
      * {@linkplain javax.net.SocketFactory#createSocket
      * SocketFactory.createSocket()} method of this context's SocketFactory.
      *
-     * @return a copy of the SSLParameters object with the maximum supported
+     * @return a copy of the SSLParameters object with the maximum supported 
      *   settings
      * @throws UnsupportedOperationException if the supported SSL parameters
      *   could not be obtained.
@@ -190,11 +191,11 @@ public abstract class SSLContextSpi {
      * @since 1.6
      */
     protected SSLParameters engineGetSupportedSSLParameters() {
-        SSLSocket socket = getDefaultSocket();
-        SSLParameters params = new SSLParameters();
-        params.setCipherSuites(socket.getSupportedCipherSuites());
-        params.setProtocols(socket.getSupportedProtocols());
-        return params;
+	SSLSocket socket = getDefaultSocket();
+	SSLParameters params = new SSLParameters();
+	params.setCipherSuites(socket.getSupportedCipherSuites());
+	params.setProtocols(socket.getSupportedProtocols());
+	return params;
     }
 
 }

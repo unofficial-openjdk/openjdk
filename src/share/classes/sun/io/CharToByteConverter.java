@@ -44,7 +44,7 @@ public abstract class CharToByteConverter {
     /**
      * Substitution mode flag.
      */
-    protected boolean subMode = true;
+    protected boolean subMode = true;	
 
     /**
      * Bytes to substitute for unmappable input.
@@ -70,9 +70,9 @@ public abstract class CharToByteConverter {
      * Create an instance of the default CharToByteConverter subclass.
      */
     public static CharToByteConverter getDefault() {
-        Object cvt;
-        cvt = Converters.newDefaultConverter(Converters.CHAR_TO_BYTE);
-        return (CharToByteConverter)cvt;
+	Object cvt;
+	cvt = Converters.newDefaultConverter(Converters.CHAR_TO_BYTE);
+	return (CharToByteConverter)cvt;
     }
 
     /**
@@ -80,11 +80,11 @@ public abstract class CharToByteConverter {
      * @param string represets encoding
      */
     public static CharToByteConverter getConverter(String encoding)
-        throws UnsupportedEncodingException
+	throws UnsupportedEncodingException
     {
-        Object cvt;
-        cvt = Converters.newConverter(Converters.CHAR_TO_BYTE, encoding);
-        return (CharToByteConverter)cvt;
+	Object cvt;
+	cvt = Converters.newConverter(Converters.CHAR_TO_BYTE, encoding);
+	return (CharToByteConverter)cvt;
     }
 
     /**
@@ -121,17 +121,17 @@ public abstract class CharToByteConverter {
      * to converting all the input.
      */
     public abstract int convert(char[] input, int inStart, int inEnd,
-                                byte[] output, int outStart, int outEnd)
-        throws MalformedInputException,
+				byte[] output, int outStart, int outEnd)
+	throws MalformedInputException,
                UnknownCharacterException,
                ConversionBufferFullException;
 
-    /*
+    /* 
      * Converts any array of characters, including malformed surrogate
-     * pairs, into an array of bytes in the target character encoding.
+     * pairs, into an array of bytes in the target character encoding. 
      * A precondition is that substitution mode is turned on. This method
-     * allows a buffer by buffer conversion of a data stream.
-     * The state of the conversion is saved between calls to convert.
+     * allows a buffer by buffer conversion of a data stream.  
+     * The state of the conversion is saved between calls to convert. 
      * All conversions should be finished with a call to the flushAny method.
      *
      * @return the number of bytes written to output.
@@ -145,46 +145,46 @@ public abstract class CharToByteConverter {
      * to converting all the input.
      */
     public int convertAny(char[] input, int inStart, int inEnd,
-                          byte[] output, int outStart, int outEnd)
-        throws ConversionBufferFullException
+			  byte[] output, int outStart, int outEnd)
+	throws ConversionBufferFullException 
     {
-        if (!subMode) {             /* Precondition: subMode == true */
-            throw new IllegalStateException("Substitution mode is not on");
-        }
-        /* Rely on the untested precondition that the indices are meaningful */
-        /* For safety, use the public interface to charOff and byteOff, but
-           badInputLength is directly modified.*/
-        int localInOff = inStart;
-        int localOutOff = outStart;
-        while(localInOff < inEnd) {
-            try {
-                int discard = convert(input, localInOff, inEnd,
-                                      output, localOutOff, outEnd);
-                return (nextByteIndex() - outStart);
-            } catch (MalformedInputException e) {
-                byte[] s = subBytes;
-                int subSize = s.length;
-                localOutOff = nextByteIndex();
-                if ((localOutOff + subSize) > outEnd)
-                    throw new ConversionBufferFullException();
-                for (int i = 0; i < subSize; i++)
-                    output[localOutOff++] = s[i];
-                localInOff = nextCharIndex();
-                localInOff += badInputLength;
-                badInputLength = 0;
-                if (localInOff >= inEnd){
+	if (!subMode) { 	    /* Precondition: subMode == true */
+	    throw new IllegalStateException("Substitution mode is not on");
+	}
+	/* Rely on the untested precondition that the indices are meaningful */
+	/* For safety, use the public interface to charOff and byteOff, but
+	   badInputLength is directly modified.*/
+	int localInOff = inStart;
+	int localOutOff = outStart;
+	while(localInOff < inEnd) {
+	    try {
+		int discard = convert(input, localInOff, inEnd, 
+				      output, localOutOff, outEnd);
+		return (nextByteIndex() - outStart);
+	    } catch (MalformedInputException e) {
+		byte[] s = subBytes;
+		int subSize = s.length;
+		localOutOff = nextByteIndex();		
+		if ((localOutOff + subSize) > outEnd)
+		    throw new ConversionBufferFullException();
+		for (int i = 0; i < subSize; i++) 
+		    output[localOutOff++] = s[i];
+		localInOff = nextCharIndex();
+		localInOff += badInputLength;  
+		badInputLength = 0;
+		if (localInOff >= inEnd){
                     byteOff = localOutOff;
                     return (byteOff - outStart);
-                }
-                continue;
-            }catch (UnknownCharacterException e) {
-                /* Should never occur, since subMode == true */
-                throw new Error("UnknownCharacterException thrown "
-                                + "in substititution mode",
-                                e);
-            }
-        }
-        return (nextByteIndex() - outStart);
+		}
+		continue;
+	    }catch (UnknownCharacterException e) {
+		/* Should never occur, since subMode == true */
+		throw new Error("UnknownCharacterException thrown "
+				+ "in substititution mode",
+				e);
+	    }
+	}
+	return (nextByteIndex() - outStart);
     }
 
 
@@ -224,14 +224,14 @@ public abstract class CharToByteConverter {
         reset();
         boolean savedSubMode = subMode;
         subMode = true;
-
+        
         byte[] output = new byte[ getMaxBytesPerChar() * input.length ];
 
         try {
             int outputLength = convert( input, 0, input.length,
                                         output, 0, output.length );
             outputLength += flush( output, nextByteIndex(), output.length );
-
+            
             byte [] returnedOutput = new byte[ outputLength ];
             System.arraycopy( output, 0, returnedOutput, 0, outputLength );
             return returnedOutput;
@@ -249,10 +249,10 @@ public abstract class CharToByteConverter {
             subMode = savedSubMode;
         }
     }
-
+    
     /**
      * Writes any remaining output to the output buffer and resets the
-     * converter to its initial state.
+     * converter to its initial state. 
      *
      * @param output byte array to receive flushed output.
      * @param outStart start writing to output array at this offset.
@@ -263,7 +263,7 @@ public abstract class CharToByteConverter {
      * of a surrogate pair. flush will write what it can to the output buffer
      * and reset the converter before throwing this exception.  An additional
      * call to flush is not required.
-     * @exception ConversionBufferFullException if output array is filled
+     * @exception ConversionBufferFullException if output array is filled 
      * before all the output can be flushed. flush will write what it can
      * to the output buffer and remember its state.  An additional call to
      * flush with a new output buffer will conclude the operation.
@@ -280,38 +280,38 @@ public abstract class CharToByteConverter {
      * @param output byte array to receive flushed output.
      * @param outStart start writing to output array at this offset.
      * @param outEnd stop writing to output array at this offset (exclusive).
-     * @return number of bytes writter into output.
-     * @exception ConversionBufferFullException if output array is filled
+     * @return number of bytes writter into output. 
+     * @exception ConversionBufferFullException if output array is filled 
      * before all the output can be flushed. flush will write what it can
      * to the output buffer and remember its state.  An additional call to
      * flush with a new output buffer will conclude the operation.
      */
     public int flushAny( byte[] output, int outStart, int outEnd )
-        throws ConversionBufferFullException
+        throws ConversionBufferFullException 
     {
-        if (!subMode) {             /* Precondition: subMode == true */
-            throw new IllegalStateException("Substitution mode is not on");
-        }
+	if (!subMode) { 	    /* Precondition: subMode == true */
+	    throw new IllegalStateException("Substitution mode is not on");
+	}
         try {
-            return flush(output, outStart, outEnd);
-        } catch (MalformedInputException e) {
-            /* Assume that if a malformed input exception has occurred,
-               no useful data has been placed in the output buffer.
-               i.e. there is no mixture of left over good + some bad data.
-               Usually occurs with a trailing high surrogate pair element.
-               Special cases occur in Cp970, 949c and 933 that seem
-               to be covered, but may require further investigation */
-            int subSize = subBytes.length;
-            byte[] s = subBytes;
-            int outIndex = outStart;
-            if ((outStart + subSize) > outEnd)
-                throw new ConversionBufferFullException();
-            for (int i = 0; i < subSize; i++)
-                output[outIndex++] = s[i];
-            byteOff = charOff = 0; // Reset the internal state.
-            badInputLength = 0;
-            return subSize;
-        }
+	    return flush(output, outStart, outEnd);
+	} catch (MalformedInputException e) {
+	    /* Assume that if a malformed input exception has occurred, 
+	       no useful data has been placed in the output buffer.
+	       i.e. there is no mixture of left over good + some bad data.
+	       Usually occurs with a trailing high surrogate pair element.
+	       Special cases occur in Cp970, 949c and 933 that seem
+	       to be covered, but may require further investigation */
+	    int subSize = subBytes.length;
+	    byte[] s = subBytes;
+	    int outIndex = outStart;
+	    if ((outStart + subSize) > outEnd) 
+		throw new ConversionBufferFullException();
+	    for (int i = 0; i < subSize; i++) 
+		output[outIndex++] = s[i];
+	    byteOff = charOff = 0; // Reset the internal state.
+	    badInputLength = 0;
+	    return subSize;
+	}
     }
 
     /**
@@ -326,16 +326,16 @@ public abstract class CharToByteConverter {
      * @param c character to test
      */
     public boolean canConvert(char c) {
-        try {
+	try {
             //FIXME output buffer size should use getMaxBytesPerChar value.
-            char[] input = new char[1];
-            byte[] output = new byte[3];
-            input[0] = c;
-            convert(input, 0, 1, output, 0, 3);
-            return true;
-        } catch(CharConversionException e){
-            return false;
-        }
+	    char[] input = new char[1];
+	    byte[] output = new byte[3];
+	    input[0] = c;
+	    convert(input, 0, 1, output, 0, 3);
+	    return true;
+	} catch(CharConversionException e){
+	    return false;
+	}
     }
 
     /**

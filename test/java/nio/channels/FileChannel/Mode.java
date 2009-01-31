@@ -35,8 +35,8 @@ public class Mode {
    private static File testFile;
 
    public static void main(String[] args) throws Exception {
-        testFile = File.createTempFile("testFile", null);
-        testFile.deleteOnExit();
+	testFile = File.createTempFile("testFile", null);
+	testFile.deleteOnExit();
         testReadable();
         testWritable();
    }
@@ -46,7 +46,7 @@ public class Mode {
         FileChannel channel = is.getChannel();
         try {
             MappedByteBuffer buff = channel.map(FileChannel.MapMode.READ_WRITE,
-                                                0, 8);
+						0, 8);
             throw new RuntimeException("Exception expected, none thrown");
         } catch (NonWritableChannelException e) {
             // correct result
@@ -59,7 +59,7 @@ public class Mode {
         FileChannel channel = is.getChannel();
         try {
             MappedByteBuffer buff = channel.map(FileChannel.MapMode.READ_ONLY,
-                                                0, 8);
+						0, 8);
             throw new RuntimeException("Exception expected, none thrown");
         } catch (NonReadableChannelException e) {
             // correct result

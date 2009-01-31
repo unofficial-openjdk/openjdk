@@ -30,12 +30,12 @@ import java.io.*;
 import sun.security.action.GetPropertyAction;
 import java.security.AccessController;
 
-/**
+/** 
   *
-  *  This class contains code that is need to mimic the
+  *  This class contains code that is need to mimic the 
   *  Motif Color selection and color defaults code.
-  *
-  *  Portions of this code have been ported to java from
+  *  
+  *  Portions of this code have been ported to java from 
   *  Motif sources (Color.c) (ColorP.h) etc.
   *
   *  Author: Bino George
@@ -107,7 +107,7 @@ class MotifColorUtilities {
         float light;
         float luminosity, maxprimary, minprimary;
 
-        // To mimix Motif logic, we need to convert to 16 bit color values.
+        // To mimix Motif logic, we need to convert to 16 bit color values.    
 
         red = red << 8;
         green = green << 8;
@@ -117,7 +117,7 @@ class MotifColorUtilities {
         intensity = (red + green + blue) / 3;
 
 
-        /*
+        /* 
          * The casting nonsense below is to try to control the point at
          * the truncation occurs.
          */
@@ -152,7 +152,7 @@ class MotifColorUtilities {
         }
         else foreground = WHITE;
 
-        return foreground;
+        return foreground;    
     }
 
     static int calculateTopShadowFromBackground(int r, int g, int b) {
@@ -203,7 +203,7 @@ class MotifColorUtilities {
             blue = color_value;
 
         }
-        else {
+        else {	
             // medium
             f = XmCOLOR_LO_TS_FACTOR + (brightness
                     * ( XmCOLOR_HI_TS_FACTOR - XmCOLOR_LO_TS_FACTOR )
@@ -222,7 +222,7 @@ class MotifColorUtilities {
             blue = color_value;
 
 
-        }
+        } 
 
 
         int ired = ((int)red) >> 8;
@@ -282,9 +282,9 @@ class MotifColorUtilities {
             blue = color_value;
 
         }
-        else {
+        else {	
             // medium
-            f = XmCOLOR_LO_BS_FACTOR + (brightness
+            f = XmCOLOR_LO_BS_FACTOR + (brightness 
                     * ( XmCOLOR_HI_BS_FACTOR - XmCOLOR_LO_BS_FACTOR )
                     / XmMAX_SHORT);
 
@@ -299,7 +299,7 @@ class MotifColorUtilities {
             color_value = bb;
             color_value -= (color_value * f) / 100;
             blue = color_value;
-        }
+        } 
 
 
         int ired = ((int)red) >> 8;
@@ -358,9 +358,9 @@ class MotifColorUtilities {
             blue = color_value;
 
         }
-        else {
+        else {	
             // medium
-            f = XmCOLOR_LO_SEL_FACTOR + (brightness
+            f = XmCOLOR_LO_SEL_FACTOR + (brightness 
                     * ( XmCOLOR_HI_SEL_FACTOR - XmCOLOR_LO_SEL_FACTOR )
                     / XmMAX_SHORT);
 
@@ -375,7 +375,7 @@ class MotifColorUtilities {
             color_value = bb;
             color_value -= (color_value * f) / 100;
             blue = color_value;
-        }
+        } 
 
 
         int ired = ((int)red) >> 8;
@@ -388,20 +388,20 @@ class MotifColorUtilities {
     }
 
    static void loadSystemColorsForCDE(int[] systemColors) throws Exception  {
-        // System.out.println("loadSystemColorsForCDE");
+        // System.out.println("loadSystemColorsForCDE");  
         XAtom resourceManager = XAtom.get("RESOURCE_MANAGER");
 
         String resourceString = resourceManager.getProperty(XToolkit.getDefaultRootWindow());
 
         int index = resourceString.indexOf("ColorPalette:");
-        int len = resourceString.length();
+        int len = resourceString.length(); 
         while ( (index < len) && (resourceString.charAt(index) != ':')) index++;
         index++; // skip :
         if (resourceString.charAt(index) == '\t') index++; // skip \t
 
         String paletteFile = resourceString.substring(index,resourceString.indexOf("\n",index));
 
-        //System.out.println("Palette File = " + paletteFile);
+        //System.out.println("Palette File = " + paletteFile);  
 
         // Check if palette is a user palette.
 
@@ -410,7 +410,7 @@ class MotifColorUtilities {
         File pFile = new File(paletteFilePath);
         if (!pFile.exists())
         {
-            // Must be a system palette
+            // Must be a system palette 
             paletteFilePath = "/usr/dt/palettes/" + paletteFile;
             pFile = new File(paletteFilePath);
             if (!pFile.exists())
@@ -497,7 +497,7 @@ class MotifColorUtilities {
     }
 
     static void loadMotifDefaultColors(int[] systemColors) {
-        //fix for 5092883. WINDOW should be light gray and TEXT should be WHITE to look similar to Motif
+        //fix for 5092883. WINDOW should be light gray and TEXT should be WHITE to look similar to Motif 
         systemColors[SystemColor.WINDOW] = MotifColorUtilities.MOTIF_WINDOW_COLOR;
         systemColors[SystemColor.TEXT] = MotifColorUtilities.WHITE;
         systemColors[SystemColor.WINDOW_TEXT] = MotifColorUtilities.BLACK;
@@ -534,7 +534,7 @@ class MotifColorUtilities {
 
     static void loadSystemColors(int[] systemColors) {
         if ("Linux".equals(AccessController.doPrivileged(new GetPropertyAction("os.name")))) { // Load motif default colors on Linux.
-            loadMotifDefaultColors(systemColors);
+            loadMotifDefaultColors(systemColors); 
         }
         else
         {
@@ -543,7 +543,7 @@ class MotifColorUtilities {
             }
             catch (Exception e) // Failure to load CDE colors.
             {
-                loadMotifDefaultColors(systemColors);
+                loadMotifDefaultColors(systemColors); 
             }
         }
     }

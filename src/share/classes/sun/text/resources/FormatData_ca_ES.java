@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /*
@@ -61,3 +62,4 @@ public class FormatData_ca_ES extends ListResourceBundle {
         };
     }
 }
+

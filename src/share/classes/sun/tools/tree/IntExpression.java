@@ -39,7 +39,7 @@ class IntExpression extends IntegerExpression {
      * Constructor
      */
     public IntExpression(long where, int value) {
-        super(INTVAL, where, Type.tInt, value);
+	super(INTVAL, where, Type.tInt, value);
     }
 
     /**
@@ -47,10 +47,10 @@ class IntExpression extends IntegerExpression {
      * can put IntExpressions in a hashtable
      */
     public boolean equals(Object obj) {
-        if ((obj != null) && (obj instanceof IntExpression)) {
-            return value == ((IntExpression)obj).value;
-        }
-        return false;
+	if ((obj != null) && (obj instanceof IntExpression)) {
+	    return value == ((IntExpression)obj).value;
+	}
+	return false;
     }
 
     /**
@@ -58,13 +58,13 @@ class IntExpression extends IntegerExpression {
      * can put IntExpressions in a hashtable
      */
     public int hashCode() {
-        return value;
+	return value;
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-        out.print(value);
+	out.print(value);
     }
 }

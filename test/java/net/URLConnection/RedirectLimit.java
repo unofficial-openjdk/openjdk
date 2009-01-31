@@ -67,22 +67,22 @@ class RedirLimitServer extends Thread {
 
     public void run () {
         try {
-            s.setSoTimeout (2000);
-            for (int i=0; i<nredirects; i++) {
-                s1 = s.accept ();
-                s1.setSoTimeout (2000);
-                is = s1.getInputStream ();
-                os = s1.getOutputStream ();
-                is.read ();
-                String reply = reply1 + port + "/redirect" + i + reply2;
-                os.write (reply.getBytes());
-            }
-            s1 = s.accept ();
-            is = s1.getInputStream ();
-            os = s1.getOutputStream ();
-            is.read ();
+	    s.setSoTimeout (2000);
+	    for (int i=0; i<nredirects; i++) {
+            	s1 = s.accept ();
+	    	s1.setSoTimeout (2000);
+            	is = s1.getInputStream ();
+            	os = s1.getOutputStream ();
+            	is.read ();
+            	String reply = reply1 + port + "/redirect" + i + reply2;
+            	os.write (reply.getBytes());
+	    }
+	    s1 = s.accept ();
+	    is = s1.getInputStream ();
+	    os = s1.getOutputStream ();
+	    is.read ();
             os.write (reply3.getBytes());
-        }
+        } 
         catch (Exception e) {
             /* Just need thread to terminate */
         }
@@ -105,7 +105,7 @@ public class RedirectLimit {
         try {
             sock = new ServerSocket (0);
             port = sock.getLocalPort ();
-        }
+        } 
         catch (Exception e) {
             System.out.println ("Exception: " + e);
             return;
@@ -126,11 +126,11 @@ public class RedirectLimit {
 
             InputStream in = conURL.getInputStream();
             if ((in.read() != (int)'W') || (in.read()!=(int)'o')) {
-                throw new RuntimeException ("Unexpected string read");
-            }
-        }
+		throw new RuntimeException ("Unexpected string read");
+	    }
+        } 
         catch(IOException e) {
-            throw new RuntimeException ("Exception caught " + e);
+	    throw new RuntimeException ("Exception caught " + e);
         }
     }
 }

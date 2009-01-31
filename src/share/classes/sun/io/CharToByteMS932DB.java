@@ -40,3 +40,4 @@ abstract class CharToByteMS932DB extends CharToByteDoubleByte {
         super.index2 = MS932DB.Encoder.index2;
     }
 }
+

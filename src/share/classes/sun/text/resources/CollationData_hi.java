@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /*
@@ -40,7 +41,7 @@ public class CollationData_hi extends ListResourceBundle {
 
     protected final Object[][] getContents() {
         return new Object[][] {
-          { "Rule", ""
+          { "Rule", "" 
                     + "< \u0901 < \u0902 < \u0903 < \u0905"
                     + "< \u0906 < \u0907 < \u0908 < \u0909"
                     + "< \u090a < \u090b < \u0960 < \u090e"

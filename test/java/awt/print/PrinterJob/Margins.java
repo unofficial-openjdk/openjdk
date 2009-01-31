@@ -24,9 +24,9 @@
 /**
  * @test
  * @bug 6543815
- * @summary Image should be sent to printer, no exceptions thrown.
- *    The 2 printouts should have a rectangle which is the minimum
- *    possible margin.
+ * @summary Image should be sent to printer, no exceptions thrown.  
+ *    The 2 printouts should have a rectangle which is the minimum 
+ *    possible margin. 
  * @run main/manual Margins
  */
 
@@ -42,7 +42,7 @@ public class Margins implements Printable {
         double wid = paper.getWidth();
         double hgt = paper.getHeight();
         paper.setImageableArea(0, -10, wid, hgt);
-        pageFormat = job.pageDialog(pageFormat);
+	pageFormat = job.pageDialog(pageFormat);
         pageFormat.setPaper(paper);
         job.setPrintable(new Margins(), pageFormat);
         try {
@@ -50,10 +50,10 @@ public class Margins implements Printable {
         } catch (PrinterException e) {
         }
 
-        paper.setImageableArea(0, 0, wid, hgt+72);
-        pageFormat = job.pageDialog(pageFormat);
+       	paper.setImageableArea(0, 0, wid, hgt+72);
+	pageFormat = job.pageDialog(pageFormat);
         pageFormat.setPaper(paper);
-
+        
         job.setPrintable(new Margins(), pageFormat);
         try {
            job.print();

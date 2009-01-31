@@ -55,7 +55,7 @@ public interface SpanIterator {
      * rectangle whose bounds are given.
      */
     public void intersectClipBox(int lox, int loy, int hix, int hiy);
-
+    
     /**
      * This method returns the next span in the shape being iterated.
      * The array must be of length at least 4 and upon return, it

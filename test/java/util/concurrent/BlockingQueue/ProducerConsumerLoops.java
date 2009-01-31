@@ -82,8 +82,8 @@ public class ProducerConsumerLoops {
             Thread.sleep(100);
         }
         pool.shutdown();
-        if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
-            throw new Error();
+	if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
+	    throw new Error();
    }
 
     static void oneTest(int pairs, int iters) throws Exception {

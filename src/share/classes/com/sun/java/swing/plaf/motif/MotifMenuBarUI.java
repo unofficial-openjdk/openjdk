@@ -45,7 +45,7 @@ import javax.swing.plaf.basic.BasicMenuBarUI;
 import javax.swing.plaf.basic.*;
 
 /**
- * A Windows L&F implementation of MenuBarUI.  This implementation
+ * A Windows L&F implementation of MenuBarUI.  This implementation 
  * is a "combined" view/controller.
  * <p>
  * <strong>Warning:</strong>
@@ -55,6 +55,7 @@ import javax.swing.plaf.basic.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * %I% %G%
  * @author Georges Saab
  * @author Rich Schiavi
  */
@@ -63,7 +64,8 @@ public class MotifMenuBarUI extends BasicMenuBarUI
 {
 
     public static ComponentUI createUI(JComponent x) {
-        return new MotifMenuBarUI();
+	return new MotifMenuBarUI();
     }
 
 } // end class
+

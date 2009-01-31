@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,66 +29,66 @@ public final class RestartService_Stub
     implements ActivateMe
 {
     private static final java.rmi.server.Operation[] operations = {
-        new java.rmi.server.Operation("void ping(java.lang.String)")
+	new java.rmi.server.Operation("void ping(java.lang.String)")
     };
-
+    
     private static final long interfaceHash = -3290104068898408724L;
-
+    
     private static final long serialVersionUID = 2;
-
+    
     private static boolean useNewInvoke;
     private static java.lang.reflect.Method $method_ping_0;
-
+    
     static {
-        try {
-            java.rmi.server.RemoteRef.class.getMethod("invoke",
-                new java.lang.Class[] {
-                    java.rmi.Remote.class,
-                    java.lang.reflect.Method.class,
-                    java.lang.Object[].class,
-                    long.class
-                });
-            useNewInvoke = true;
-            $method_ping_0 = ActivateMe.class.getMethod("ping", new java.lang.Class[] {java.lang.String.class});
-        } catch (java.lang.NoSuchMethodException e) {
-            useNewInvoke = false;
-        }
+	try {
+	    java.rmi.server.RemoteRef.class.getMethod("invoke",
+		new java.lang.Class[] {
+		    java.rmi.Remote.class,
+		    java.lang.reflect.Method.class,
+		    java.lang.Object[].class,
+		    long.class
+		});
+	    useNewInvoke = true;
+	    $method_ping_0 = ActivateMe.class.getMethod("ping", new java.lang.Class[] {java.lang.String.class});
+	} catch (java.lang.NoSuchMethodException e) {
+	    useNewInvoke = false;
+	}
     }
-
+    
     // constructors
     public RestartService_Stub() {
-        super();
+	super();
     }
     public RestartService_Stub(java.rmi.server.RemoteRef ref) {
-        super(ref);
+	super(ref);
     }
-
+    
     // methods from remote interfaces
-
+    
     // implementation of ping(String)
     public void ping(java.lang.String $param_String_1)
-        throws java.rmi.RemoteException
+	throws java.rmi.RemoteException
     {
-        try {
-            if (useNewInvoke) {
-                ref.invoke(this, $method_ping_0, new java.lang.Object[] {$param_String_1}, 8618968970901024056L);
-            } else {
-                java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
-                try {
-                    java.io.ObjectOutput out = call.getOutputStream();
-                    out.writeObject($param_String_1);
-                } catch (java.io.IOException e) {
-                    throw new java.rmi.MarshalException("error marshalling arguments", e);
-                }
-                ref.invoke(call);
-                ref.done(call);
-            }
-        } catch (java.lang.RuntimeException e) {
-            throw e;
-        } catch (java.rmi.RemoteException e) {
-            throw e;
-        } catch (java.lang.Exception e) {
-            throw new java.rmi.UnexpectedException("undeclared checked exception", e);
-        }
+	try {
+	    if (useNewInvoke) {
+		ref.invoke(this, $method_ping_0, new java.lang.Object[] {$param_String_1}, 8618968970901024056L);
+	    } else {
+		java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
+		try {
+		    java.io.ObjectOutput out = call.getOutputStream();
+		    out.writeObject($param_String_1);
+		} catch (java.io.IOException e) {
+		    throw new java.rmi.MarshalException("error marshalling arguments", e);
+		}
+		ref.invoke(call);
+		ref.done(call);
+	    }
+	} catch (java.lang.RuntimeException e) {
+	    throw e;
+	} catch (java.rmi.RemoteException e) {
+	    throw e;
+	} catch (java.lang.Exception e) {
+	    throw new java.rmi.UnexpectedException("undeclared checked exception", e);
+	}
     }
 }

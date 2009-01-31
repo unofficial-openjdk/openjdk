@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -69,109 +69,109 @@ import sun.rmi.transport.proxy.RMIHttpToPortSocketFactory;
 public class BlockAcceptTest
 {
     public static void main(String[] args)
-        throws Exception
+	throws Exception
     {
-        // Make trouble for ourselves
-        if (System.getSecurityManager() == null)
-            System.setSecurityManager(new RMISecurityManager());
+	// Make trouble for ourselves
+	if (System.getSecurityManager() == null)
+	    System.setSecurityManager(new RMISecurityManager());
 
-        // HTTP direct to the server port
-        System.setProperty("http.proxyHost", "127.0.0.1");
+	// HTTP direct to the server port
+	System.setProperty("http.proxyHost", "127.0.0.1");
 
-        // Set the socket factory.
-        System.err.println("(installing HTTP-out socket factory)");
-        HttpOutFactory fac = new HttpOutFactory();
-        RMISocketFactory.setSocketFactory(fac);
+	// Set the socket factory.
+	System.err.println("(installing HTTP-out socket factory)");
+	HttpOutFactory fac = new HttpOutFactory();
+	RMISocketFactory.setSocketFactory(fac);
 
-        // Create remote object
-        TestImpl impl = new TestImpl();
+	// Create remote object
+	TestImpl impl = new TestImpl();
 
-        // Export and get which port.
-        System.err.println("(exporting remote object)");
-        TestIface stub = impl.export();
-        try {
-            int port = fac.whichPort();
+	// Export and get which port.
+	System.err.println("(exporting remote object)");
+	TestIface stub = impl.export();
+	try {
+	    int port = fac.whichPort();
 
-            // Sanity
-            if (port == 0)
-                throw new Error("TEST FAILED: export didn't reserve a port(?)");
+	    // Sanity
+	    if (port == 0)
+		throw new Error("TEST FAILED: export didn't reserve a port(?)");
+	
+	    // Set the HTTP port, at last.
+	    System.setProperty("http.proxyPort", port+"");
 
-            // Set the HTTP port, at last.
-            System.setProperty("http.proxyPort", port+"");
+	    // Now, connect to that port
+	    //Thread.sleep(2000);
+	    System.err.println("(connecting to listening port on 127.0.0.1:" +
+			       port + ")");
+	    Socket DoS = new Socket("127.0.0.1", port);
+	    // we hold the connection open until done with the test.
 
-            // Now, connect to that port
-            //Thread.sleep(2000);
-            System.err.println("(connecting to listening port on 127.0.0.1:" +
-                               port + ")");
-            Socket DoS = new Socket("127.0.0.1", port);
-            // we hold the connection open until done with the test.
+	    // The test itself: make a remote call and see if it's blocked or
+	    // if it works
+	    //Thread.sleep(2000);
+	    System.err.println("(making RMI-through-HTTP call)");
+	    System.err.println("(typical test failure deadlocks here)");
+	    String result = stub.testCall("dummy load");
 
-            // The test itself: make a remote call and see if it's blocked or
-            // if it works
-            //Thread.sleep(2000);
-            System.err.println("(making RMI-through-HTTP call)");
-            System.err.println("(typical test failure deadlocks here)");
-            String result = stub.testCall("dummy load");
+	    System.err.println(" => " + result);
+	    if (!("OK".equals(result)))
+		throw new Error("TEST FAILED: result not OK");
+	    System.err.println("Test passed.");
+	
+	    // Clean up, including writing a byte to that connection just in
+	    // case an optimizer thought of optimizing it out of existence
+	    try {
+		DoS.getOutputStream().write(0);
+		DoS.getOutputStream().close();
+	    } catch (Throwable apathy) {
+	    }
+	
+	} finally {
+	    try {
+		impl.unexport();
+	    } catch (Throwable unmatter) {
+	    }
+	}
 
-            System.err.println(" => " + result);
-            if (!("OK".equals(result)))
-                throw new Error("TEST FAILED: result not OK");
-            System.err.println("Test passed.");
-
-            // Clean up, including writing a byte to that connection just in
-            // case an optimizer thought of optimizing it out of existence
-            try {
-                DoS.getOutputStream().write(0);
-                DoS.getOutputStream().close();
-            } catch (Throwable apathy) {
-            }
-
-        } finally {
-            try {
-                impl.unexport();
-            } catch (Throwable unmatter) {
-            }
-        }
-
-        // Should exit here
+	// Should exit here
     }
 
     private static class HttpOutFactory
-        extends RMISocketFactory
+	extends RMISocketFactory
     {
-        private int servport = 0;
+	private int servport = 0;
 
-        public Socket createSocket(String h, int p)
-            throws IOException
-        {
-            return ((new RMIHttpToPortSocketFactory()).createSocket(h, p));
-        }
+	public Socket createSocket(String h, int p)
+	    throws IOException
+	{
+	    return ((new RMIHttpToPortSocketFactory()).createSocket(h, p));
+	}
 
-        /** Create a server socket and remember which port it's on.
-         * Aborts if createServerSocket(0) is called twice, because then
-         * it doesn't know whether to remember the first or second port.
-         */
-        public ServerSocket createServerSocket(int p)
-            throws IOException
-        {
-            ServerSocket ss;
-            ss = (new RMIMasterSocketFactory()).createServerSocket(p);
-            if (p == 0) {
-                if (servport != 0) {
-                    System.err.println("TEST FAILED: " +
-                                       "Duplicate createServerSocket(0)");
-                    throw new Error("Test aborted (createServerSocket)");
-                }
-                servport = ss.getLocalPort();
-            }
-            return (ss);
-        }
+	/** Create a server socket and remember which port it's on.
+	 * Aborts if createServerSocket(0) is called twice, because then
+	 * it doesn't know whether to remember the first or second port.
+	 */
+	public ServerSocket createServerSocket(int p)
+	    throws IOException
+	{
+	    ServerSocket ss;
+	    ss = (new RMIMasterSocketFactory()).createServerSocket(p);
+	    if (p == 0) {
+		if (servport != 0) {
+		    System.err.println("TEST FAILED: " +
+				       "Duplicate createServerSocket(0)");
+		    throw new Error("Test aborted (createServerSocket)");
+		}
+		servport = ss.getLocalPort();
+	    }
+	    return (ss);
+	}
 
-        /** Return which port was reserved by createServerSocket(0).
-         * If the return value was 0, createServerSocket(0) wasn't called.
-         */
-        public int whichPort() {
-            return (servport);
-        }
+	/** Return which port was reserved by createServerSocket(0).
+	 * If the return value was 0, createServerSocket(0) wasn't called.
+	 */
+	public int whichPort() {
+	    return (servport);
+	}
     } // end class HttpOutFactory
 }

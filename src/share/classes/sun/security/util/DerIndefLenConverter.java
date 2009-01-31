@@ -37,6 +37,7 @@ import java.util.ArrayList;
  * end-of-contents bytes are expected.
  *
  * @author Hemma Prafullchandra
+ * @version %I% %G%
  */
 class DerIndefLenConverter {
 
@@ -92,33 +93,33 @@ class DerIndefLenConverter {
         if (dataPos == dataSize)
             return;
         if (isEOC(data[dataPos]) && (data[dataPos + 1] == 0)) {
-            int numOfEncapsulatedLenBytes = 0;
-            Object elem = null;
-            int index;
-            for (index = ndefsList.size()-1; index >= 0; index--) {
-                // Determine the first element in the vector that does not
-                // have a matching EOC
-                elem = ndefsList.get(index);
-                if (elem instanceof Integer) {
-                    break;
-                } else {
-                    numOfEncapsulatedLenBytes += ((byte[])elem).length - 3;
-                }
-            }
-            if (index < 0) {
-                throw new IOException("EOC does not have matching " +
-                                      "indefinite-length tag");
-            }
-            int sectionLen = dataPos - ((Integer)elem).intValue() +
-                             numOfEncapsulatedLenBytes;
-            byte[] sectionLenBytes = getLengthBytes(sectionLen);
+	    int numOfEncapsulatedLenBytes = 0;
+	    Object elem = null;
+	    int index;
+	    for (index = ndefsList.size()-1; index >= 0; index--) {
+		// Determine the first element in the vector that does not
+		// have a matching EOC
+		elem = ndefsList.get(index);
+		if (elem instanceof Integer) {
+		    break;
+		} else {
+		    numOfEncapsulatedLenBytes += ((byte[])elem).length - 3;
+		}
+	    }
+	    if (index < 0) {
+		throw new IOException("EOC does not have matching " +
+				      "indefinite-length tag");
+	    }
+	    int sectionLen = dataPos - ((Integer)elem).intValue() +
+		             numOfEncapsulatedLenBytes;
+	    byte[] sectionLenBytes = getLengthBytes(sectionLen);
             ndefsList.set(index, sectionLenBytes);
 
-            // Add the number of bytes required to represent this section
-            // to the total number of length bytes,
-            // and subtract the indefinite-length tag (1 byte) and
-            // EOC bytes (2 bytes) for this section
-            numOfTotalLenBytes += (sectionLenBytes.length - 3);
+	    // Add the number of bytes required to represent this section
+	    // to the total number of length bytes,
+	    // and subtract the indefinite-length tag (1 byte) and
+	    // EOC bytes (2 bytes) for this section
+	    numOfTotalLenBytes += (sectionLenBytes.length - 3);
         }
         dataPos++;
     }
@@ -132,7 +133,7 @@ class DerIndefLenConverter {
             return;
         int tag = data[dataPos++];
         if (isEOC(tag) && (data[dataPos] == 0)) {
-            dataPos++;  // skip length
+            dataPos++;	// skip length
             writeTag();
         } else
             newData[newDataPos++] = (byte)tag;
@@ -161,7 +162,7 @@ class DerIndefLenConverter {
                 curLen = (curLen << 8) + (data[dataPos++] & 0xff);
         } else {
            curLen = (lenByte & LEN_MASK);
-        }
+	}
         return curLen;
     }
 
@@ -177,11 +178,11 @@ class DerIndefLenConverter {
         int curLen = 0;
         int lenByte = data[dataPos++] & 0xff;
         if (isIndefinite(lenByte)) {
-            byte[] lenBytes = (byte[])ndefsList.get(index++);
-            System.arraycopy(lenBytes, 0, newData, newDataPos,
-                             lenBytes.length);
-            newDataPos += lenBytes.length;
-            return;
+	    byte[] lenBytes = (byte[])ndefsList.get(index++);
+	    System.arraycopy(lenBytes, 0, newData, newDataPos,
+			     lenBytes.length);
+	    newDataPos += lenBytes.length;
+	    return;
         }
         if (isLongForm(lenByte)) {
             lenByte &= LEN_MASK;
@@ -222,33 +223,33 @@ class DerIndefLenConverter {
     }
 
     private byte[] getLengthBytes(int curLen) {
-        byte[] lenBytes;
-        int index = 0;
+	byte[] lenBytes;
+	int index = 0;
 
         if (curLen < 128) {
-            lenBytes = new byte[1];
-            lenBytes[index++] = (byte)curLen;
+	    lenBytes = new byte[1];
+	    lenBytes[index++] = (byte)curLen;
 
         } else if (curLen < (1 << 8)) {
-            lenBytes = new byte[2];
+	    lenBytes = new byte[2];
             lenBytes[index++] = (byte)0x81;
             lenBytes[index++] = (byte)curLen;
 
         } else if (curLen < (1 << 16)) {
-            lenBytes = new byte[3];
+	    lenBytes = new byte[3];
             lenBytes[index++] = (byte)0x82;
             lenBytes[index++] = (byte)(curLen >> 8);
             lenBytes[index++] = (byte)curLen;
 
         } else if (curLen < (1 << 24)) {
-            lenBytes = new byte[4];
+	    lenBytes = new byte[4];
             lenBytes[index++] = (byte)0x83;
             lenBytes[index++] = (byte)(curLen >> 16);
             lenBytes[index++] = (byte)(curLen >> 8);
             lenBytes[index++] = (byte)curLen;
 
         } else {
-            lenBytes = new byte[5];
+	    lenBytes = new byte[5];
             lenBytes[index++] = (byte)0x84;
             lenBytes[index++] = (byte)(curLen >> 24);
             lenBytes[index++] = (byte)(curLen >> 16);
@@ -256,13 +257,13 @@ class DerIndefLenConverter {
             lenBytes[index++] = (byte)curLen;
         }
 
-        return lenBytes;
+	return lenBytes;
     }
 
     // Returns the number of bytes needed to represent the given length
     // in ASN.1 notation
     private int getNumOfLenBytes(int len) {
-        int numOfLenBytes = 0;
+	int numOfLenBytes = 0;
 
         if (len < 128) {
             numOfLenBytes = 1;
@@ -275,7 +276,7 @@ class DerIndefLenConverter {
         } else {
             numOfLenBytes = 5;
         }
-        return numOfLenBytes;
+	return numOfLenBytes;
     }
 
     /**

@@ -55,9 +55,10 @@ import sun.rmi.registry.RegistryImpl;
 /**
  * The default activation group implementation.
  *
- * @author      Ann Wollrath
- * @since       1.2
- * @see         java.rmi.activation.ActivationGroup
+ * @version	%I%, %G%
+ * @author	Ann Wollrath
+ * @since	1.2
+ * @see		java.rmi.activation.ActivationGroup
  */
 public class ActivationGroupImpl extends ActivationGroup {
 
@@ -66,40 +67,40 @@ public class ActivationGroupImpl extends ActivationGroup {
 
     /** maps persistent IDs to activated remote objects */
     private final Hashtable<ActivationID,ActiveEntry> active =
-        new Hashtable<ActivationID,ActiveEntry>();
+	new Hashtable<ActivationID,ActiveEntry>();
     private boolean groupInactive = false;
     private final ActivationGroupID groupID;
     private final List<ActivationID> lockedIDs = new ArrayList<ActivationID>();
 
     /**
      * Creates a default activation group implementation.
-     *
+     * 
      * @param id the group's identifier
-     * @param data ignored
+     * @param data ignored 
      */
     public ActivationGroupImpl(ActivationGroupID id, MarshalledObject<?> data)
-        throws RemoteException
+	throws RemoteException
     {
-        super(id);
-        groupID = id;
+	super(id);
+	groupID = id;
 
-        /*
-         * Unexport activation group impl and attempt to export it on
-         * an unshared anonymous port.  See 4692286.
-         */
-        unexportObject(this, true);
-        RMIServerSocketFactory ssf = new ServerSocketFactoryImpl();
-        UnicastRemoteObject.exportObject(this, 0, null, ssf);
-
-        if (System.getSecurityManager() == null) {
-            try {
-                // Provide a default security manager.
-                System.setSecurityManager(new SecurityManager());
-
-            } catch (Exception e) {
-                throw new RemoteException("unable to set security manager", e);
-            }
-        }
+	/*
+	 * Unexport activation group impl and attempt to export it on
+	 * an unshared anonymous port.  See 4692286.
+	 */
+	unexportObject(this, true);
+	RMIServerSocketFactory ssf = new ServerSocketFactoryImpl();
+	UnicastRemoteObject.exportObject(this, 0, null, ssf);
+	
+	if (System.getSecurityManager() == null) {
+	    try {
+		// Provide a default security manager.
+		System.setSecurityManager(new SecurityManager());
+		
+	    } catch (Exception e) {
+		throw new RemoteException("unable to set security manager", e);
+	    }
+	}
     }
 
     /**
@@ -107,16 +108,16 @@ public class ActivationGroupImpl extends ActivationGroup {
      * impl on an unshared port.
      */
     private static class ServerSocketFactoryImpl
-        implements RMIServerSocketFactory
+    	implements RMIServerSocketFactory
     {
-        public ServerSocket createServerSocket(int port) throws IOException
-        {
-            RMISocketFactory sf = RMISocketFactory.getSocketFactory();
-            if (sf == null) {
-                sf = RMISocketFactory.getDefaultSocketFactory();
-            }
-            return sf.createServerSocket(port);
-        }
+	public ServerSocket createServerSocket(int port) throws IOException
+	{
+	    RMISocketFactory sf = RMISocketFactory.getSocketFactory();
+	    if (sf == null) {
+		sf = RMISocketFactory.getDefaultSocketFactory();
+	    }
+	    return sf.createServerSocket(port);
+	}
     }
 
     /*
@@ -138,38 +139,38 @@ public class ActivationGroupImpl extends ActivationGroup {
      */
     private void acquireLock(ActivationID id) {
 
-        ActivationID waitForID;
+	ActivationID waitForID;
 
-        for (;;) {
-
-            synchronized (lockedIDs) {
-                int index = lockedIDs.indexOf(id);
-                if (index < 0) {
-                    lockedIDs.add(id);
-                    return;
-                } else {
-                    waitForID = lockedIDs.get(index);
-                }
-            }
-
-            synchronized (waitForID) {
-                synchronized (lockedIDs) {
-                    int index = lockedIDs.indexOf(waitForID);
-                    if (index < 0) continue;
-                    ActivationID actualID = lockedIDs.get(index);
-                    if (actualID != waitForID)
-                        /*
-                         * don't wait on an id that won't be notified.
-                         */
-                        continue;
-                }
-
-                try {
-                    waitForID.wait();
-                } catch (InterruptedException ignore) {
-                }
-            }
-        }
+	for (;;) {
+	
+	    synchronized (lockedIDs) {
+		int index = lockedIDs.indexOf(id);
+		if (index < 0) {
+		    lockedIDs.add(id);
+		    return;
+		} else {
+		    waitForID = lockedIDs.get(index);
+		}
+	    }
+	
+	    synchronized (waitForID) {
+		synchronized (lockedIDs) {
+		    int index = lockedIDs.indexOf(waitForID);
+		    if (index < 0) continue;
+		    ActivationID actualID = lockedIDs.get(index);
+		    if (actualID != waitForID)
+			/*
+			 * don't wait on an id that won't be notified.
+			 */
+			continue;
+		}
+	    
+		try {
+		    waitForID.wait();
+		} catch (InterruptedException ignore) {
+		}
+	    }
+	}
 
     }
 
@@ -178,15 +179,15 @@ public class ActivationGroupImpl extends ActivationGroup {
      * notifies all threads waiting on the lock.
      */
     private void releaseLock(ActivationID id) {
-        synchronized (lockedIDs) {
-            id = lockedIDs.remove(lockedIDs.indexOf(id));
-        }
+	synchronized (lockedIDs) {
+	    id = lockedIDs.remove(lockedIDs.indexOf(id));
+	}
 
-        synchronized (id) {
-            id.notifyAll();
-        }
+	synchronized (id) {
+	    id.notifyAll();
+	}
     }
-
+    
     /**
      * Creates a new instance of an activatable remote object. The
      * <code>Activator</code> calls this method to create an activatable
@@ -204,125 +205,125 @@ public class ActivationGroupImpl extends ActivationGroup {
      * @return a marshalled object containing the activated object's stub
      */
     public MarshalledObject<? extends Remote>
-                                      newInstance(final ActivationID id,
-                                                  final ActivationDesc desc)
-        throws ActivationException, RemoteException
+				      newInstance(final ActivationID id,
+						  final ActivationDesc desc)
+	throws ActivationException, RemoteException
     {
-        RegistryImpl.checkAccess("ActivationInstantiator.newInstance");
+	RegistryImpl.checkAccess("ActivationInstantiator.newInstance");
+	
+	if (!groupID.equals(desc.getGroupID()))
+	    throw new ActivationException("newInstance in wrong group");
 
-        if (!groupID.equals(desc.getGroupID()))
-            throw new ActivationException("newInstance in wrong group");
+	try {
+	    acquireLock(id);
+	    synchronized (this) {
+		if (groupInactive == true)
+		    throw new InactiveGroupException("group is inactive");
+	    }
 
-        try {
-            acquireLock(id);
-            synchronized (this) {
-                if (groupInactive == true)
-                    throw new InactiveGroupException("group is inactive");
-            }
+	    ActiveEntry entry = active.get(id);
+	    if (entry != null)
+		return entry.mobj;
+		
+	    String className = desc.getClassName();
 
-            ActiveEntry entry = active.get(id);
-            if (entry != null)
-                return entry.mobj;
+	    final Class<? extends Remote> cl =
+		RMIClassLoader.loadClass(desc.getLocation(), className)
+		.asSubclass(Remote.class);
+	    Remote impl = null;
 
-            String className = desc.getClassName();
+	    final Thread t = Thread.currentThread();
+	    final ClassLoader savedCcl = t.getContextClassLoader();
+	    ClassLoader objcl = cl.getClassLoader();
+	    final ClassLoader ccl = covers(objcl, savedCcl) ? objcl : savedCcl;
+			  
+	    /*
+	     * Fix for 4164971: allow non-public activatable class
+	     * and/or constructor, create the activatable object in a
+	     * privileged block
+	     */
+	    try {
+		/*
+		 * The code below is in a doPrivileged block to
+		 * protect against user code which code might have set
+		 * a global socket factory (in which case application
+		 * code would be on the stack).
+		 */
+  		impl = AccessController.doPrivileged(
+		      new PrivilegedExceptionAction<Remote>() {
+  		      public Remote run() throws InstantiationException, 
+  			  NoSuchMethodException, IllegalAccessException,
+  			  InvocationTargetException
+  		      {
+			  Constructor<? extends Remote> constructor = 
+			      cl.getDeclaredConstructor(
+				  ActivationID.class, MarshalledObject.class);
+			  constructor.setAccessible(true);
+			  try {
+			      /*
+			       * Fix for 4289544: make sure to set the
+			       * context class loader to be the class
+			       * loader of the impl class before
+			       * constructing that class.
+			       */
+			      t.setContextClassLoader(ccl);
+			      return constructor.newInstance(id,
+							     desc.getData());
+			  } finally {
+			      t.setContextClassLoader(savedCcl);  
+			  }
+		      }
+		  });
+ 	    } catch (PrivilegedActionException pae) {
+ 		Throwable e = pae.getException();
+ 
+ 		// narrow the exception's type and rethrow it
+ 		if (e instanceof InstantiationException) {
+ 		    throw (InstantiationException) e;
+ 		} else if (e instanceof NoSuchMethodException) {
+ 		    throw (NoSuchMethodException) e;
+ 		} else if (e instanceof IllegalAccessException) {
+ 		    throw (IllegalAccessException) e;
+ 		} else if (e instanceof InvocationTargetException) {
+ 		    throw (InvocationTargetException) e;
+ 		} else if (e instanceof RuntimeException) {
+ 		    throw (RuntimeException) e;
+ 		} else if (e instanceof Error) {
+ 		    throw (Error) e;
+ 		}
+	    }
 
-            final Class<? extends Remote> cl =
-                RMIClassLoader.loadClass(desc.getLocation(), className)
-                .asSubclass(Remote.class);
-            Remote impl = null;
+	    entry = new ActiveEntry(impl);
+	    active.put(id, entry);
+	    return entry.mobj;
 
-            final Thread t = Thread.currentThread();
-            final ClassLoader savedCcl = t.getContextClassLoader();
-            ClassLoader objcl = cl.getClassLoader();
-            final ClassLoader ccl = covers(objcl, savedCcl) ? objcl : savedCcl;
+	} catch (NoSuchMethodException e) {
+	    /* user forgot to provide activatable constructor? */
+	    throw new ActivationException
+		("Activatable object must provide an activation"+
+		 " constructor", e);
+		
+	} catch (NoSuchMethodError e) {
+	    /* code recompiled and user forgot to provide
+	     *  activatable constructor? 
+	     */
+	    throw new ActivationException
+		("Activatable object must provide an activation"+
+		 " constructor", e );
 
-            /*
-             * Fix for 4164971: allow non-public activatable class
-             * and/or constructor, create the activatable object in a
-             * privileged block
-             */
-            try {
-                /*
-                 * The code below is in a doPrivileged block to
-                 * protect against user code which code might have set
-                 * a global socket factory (in which case application
-                 * code would be on the stack).
-                 */
-                impl = AccessController.doPrivileged(
-                      new PrivilegedExceptionAction<Remote>() {
-                      public Remote run() throws InstantiationException,
-                          NoSuchMethodException, IllegalAccessException,
-                          InvocationTargetException
-                      {
-                          Constructor<? extends Remote> constructor =
-                              cl.getDeclaredConstructor(
-                                  ActivationID.class, MarshalledObject.class);
-                          constructor.setAccessible(true);
-                          try {
-                              /*
-                               * Fix for 4289544: make sure to set the
-                               * context class loader to be the class
-                               * loader of the impl class before
-                               * constructing that class.
-                               */
-                              t.setContextClassLoader(ccl);
-                              return constructor.newInstance(id,
-                                                             desc.getData());
-                          } finally {
-                              t.setContextClassLoader(savedCcl);
-                          }
-                      }
-                  });
-            } catch (PrivilegedActionException pae) {
-                Throwable e = pae.getException();
-
-                // narrow the exception's type and rethrow it
-                if (e instanceof InstantiationException) {
-                    throw (InstantiationException) e;
-                } else if (e instanceof NoSuchMethodException) {
-                    throw (NoSuchMethodException) e;
-                } else if (e instanceof IllegalAccessException) {
-                    throw (IllegalAccessException) e;
-                } else if (e instanceof InvocationTargetException) {
-                    throw (InvocationTargetException) e;
-                } else if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                } else if (e instanceof Error) {
-                    throw (Error) e;
-                }
-            }
-
-            entry = new ActiveEntry(impl);
-            active.put(id, entry);
-            return entry.mobj;
-
-        } catch (NoSuchMethodException e) {
-            /* user forgot to provide activatable constructor? */
-            throw new ActivationException
-                ("Activatable object must provide an activation"+
-                 " constructor", e);
-
-        } catch (NoSuchMethodError e) {
-            /* code recompiled and user forgot to provide
-             *  activatable constructor?
-             */
-            throw new ActivationException
-                ("Activatable object must provide an activation"+
-                 " constructor", e );
-
-        } catch (InvocationTargetException e) {
-            throw new ActivationException("exception in object constructor",
-                                          e.getTargetException());
-
-        } catch (Exception e) {
-            throw new ActivationException("unable to activate object", e);
-        } finally {
-            releaseLock(id);
-            checkInactiveGroup();
-        }
+	} catch (InvocationTargetException e) {
+	    throw new ActivationException("exception in object constructor",
+					  e.getTargetException());
+		    
+	} catch (Exception e) {
+	    throw new ActivationException("unable to activate object", e);
+	} finally {
+	    releaseLock(id);
+	    checkInactiveGroup();
+	}
     }
 
-
+    
    /**
     * The group's <code>inactiveObject</code> method is called
     * indirectly via a call to the <code>Activatable.inactive</code>
@@ -334,7 +335,7 @@ public class ActivationGroupImpl extends ActivationGroup {
     * object will never be garbage collected since the group keeps
     * strong references to the objects it creates. <p>
     *
-    * The group's <code>inactiveObject</code> method
+    * The group's <code>inactiveObject</code> method 
     * unexports the remote object from the RMI runtime so that the
     * object can no longer receive incoming RMI calls. This call will
     * only succeed if the object has no pending/executing calls. If
@@ -360,41 +361,41 @@ public class ActivationGroupImpl extends ActivationGroup {
     * @exception RemoteException if call informing monitor fails
     */
     public boolean inactiveObject(ActivationID id)
-        throws ActivationException, UnknownObjectException, RemoteException
+	throws ActivationException, UnknownObjectException, RemoteException
     {
 
-        try {
-            acquireLock(id);
-            synchronized (this) {
-                if (groupInactive == true)
-                    throw new ActivationException("group is inactive");
-            }
+	try {
+	    acquireLock(id);
+	    synchronized (this) {
+		if (groupInactive == true)
+		    throw new ActivationException("group is inactive");
+	    }
+	    
+	    ActiveEntry entry = active.get(id);
+	    if (entry == null) {
+		// REMIND: should this be silent?
+		throw new UnknownObjectException("object not active");
+	    }
+		
+	    try {
+		if (Activatable.unexportObject(entry.impl, false) == false)
+		    return false;
+	    } catch (NoSuchObjectException allowUnexportedObjects) {
+	    }
+	    
+	    try {
+		super.inactiveObject(id);
+	    } catch (UnknownObjectException allowUnregisteredObjects) {
+	    }
 
-            ActiveEntry entry = active.get(id);
-            if (entry == null) {
-                // REMIND: should this be silent?
-                throw new UnknownObjectException("object not active");
-            }
+	    active.remove(id);
+		
+	} finally {
+	    releaseLock(id);
+	    checkInactiveGroup();
+	}
 
-            try {
-                if (Activatable.unexportObject(entry.impl, false) == false)
-                    return false;
-            } catch (NoSuchObjectException allowUnexportedObjects) {
-            }
-
-            try {
-                super.inactiveObject(id);
-            } catch (UnknownObjectException allowUnregisteredObjects) {
-            }
-
-            active.remove(id);
-
-        } finally {
-            releaseLock(id);
-            checkInactiveGroup();
-        }
-
-        return true;
+	return true;
     }
 
     /*
@@ -402,27 +403,27 @@ public class ActivationGroupImpl extends ActivationGroup {
      * marks it as such.
      */
     private void checkInactiveGroup() {
-        boolean groupMarkedInactive = false;
-        synchronized (this) {
-            if (active.size() == 0 && lockedIDs.size() == 0 &&
-                groupInactive == false)
-            {
-                groupInactive = true;
-                groupMarkedInactive = true;
-            }
-        }
+	boolean groupMarkedInactive = false;
+	synchronized (this) {
+	    if (active.size() == 0 && lockedIDs.size() == 0 &&
+		groupInactive == false)
+	    {
+		groupInactive = true;
+		groupMarkedInactive = true;
+	    }
+	}
 
-        if (groupMarkedInactive) {
-            try {
-                super.inactiveGroup();
-            } catch (Exception ignoreDeactivateFailure) {
-            }
+	if (groupMarkedInactive) {
+	    try {
+		super.inactiveGroup();
+	    } catch (Exception ignoreDeactivateFailure) {
+	    }
 
-            try {
-                UnicastRemoteObject.unexportObject(this, true);
-            } catch (NoSuchObjectException allowUnexportedGroup) {
-            }
-        }
+	    try {
+		UnicastRemoteObject.unexportObject(this, true);
+	    } catch (NoSuchObjectException allowUnexportedGroup) {
+	    }
+	}
     }
 
     /**
@@ -440,47 +441,47 @@ public class ActivationGroupImpl extends ActivationGroup {
      * @exception RemoteException if call informing monitor fails
      */
     public void activeObject(ActivationID id, Remote impl)
-        throws ActivationException, UnknownObjectException, RemoteException
+	throws ActivationException, UnknownObjectException, RemoteException
     {
-
-        try {
-            acquireLock(id);
-            synchronized (this) {
-                if (groupInactive == true)
-                    throw new ActivationException("group is inactive");
-            }
-            if (!active.contains(id)) {
-                ActiveEntry entry = new ActiveEntry(impl);
-                active.put(id, entry);
-                // created new entry, so inform monitor of active object
-                try {
-                    super.activeObject(id, entry.mobj);
-                } catch (RemoteException e) {
-                    // daemon can still find it by calling newInstance
-                }
-            }
-        } finally {
-            releaseLock(id);
-            checkInactiveGroup();
-        }
+	
+	try {
+	    acquireLock(id);
+	    synchronized (this) {
+		if (groupInactive == true)
+		    throw new ActivationException("group is inactive");
+	    }
+	    if (!active.contains(id)) {
+		ActiveEntry entry = new ActiveEntry(impl);
+		active.put(id, entry);
+		// created new entry, so inform monitor of active object
+		try {
+		    super.activeObject(id, entry.mobj);
+		} catch (RemoteException e) {
+		    // daemon can still find it by calling newInstance
+		}
+	    }
+	} finally {
+	    releaseLock(id);
+	    checkInactiveGroup();
+	}
     }
 
     /**
      * Entry in table for active object.
      */
     private static class ActiveEntry {
-        Remote impl;
-        MarshalledObject<Remote> mobj;
-
-        ActiveEntry(Remote impl) throws ActivationException {
-            this.impl =  impl;
-            try {
-                this.mobj = new MarshalledObject<Remote>(impl);
-            } catch (IOException e) {
-                throw new
-                    ActivationException("failed to marshal remote object", e);
-            }
-        }
+	Remote impl;
+	MarshalledObject<Remote> mobj;
+	
+	ActiveEntry(Remote impl) throws ActivationException {
+	    this.impl =  impl;
+	    try {
+		this.mobj = new MarshalledObject<Remote>(impl);
+	    } catch (IOException e) {
+		throw new
+		    ActivationException("failed to marshal remote object", e);
+	    }
+	}
     }
 
     /**
@@ -489,17 +490,17 @@ public class ActivationGroupImpl extends ActivationGroup {
      * the tree.
      */
     private static boolean covers(ClassLoader sub, ClassLoader sup) {
-        if (sup == null) {
-            return true;
-        } else if (sub == null) {
-            return false;
-        }
-        do {
-            if (sub == sup) {
-                return true;
-            }
-            sub = sub.getParent();
-        } while (sub != null);
-        return false;
+	if (sup == null) {
+	    return true;
+	} else if (sub == null) {
+	    return false;
+	}
+	do {
+	    if (sub == sup) {
+		return true;
+	    }
+	    sub = sub.getParent();
+	} while (sub != null);
+	return false;
     }
 }

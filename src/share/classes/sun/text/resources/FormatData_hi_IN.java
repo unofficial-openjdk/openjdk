@@ -35,7 +35,7 @@ import java.util.ListResourceBundle;
 
 /**
  * The locale elements for Hindi.
- *
+ *                                                                 
  */
 public class FormatData_hi_IN extends ListResourceBundle {
     /**
@@ -111,7 +111,7 @@ public class FormatData_hi_IN extends ListResourceBundle {
                     "\u0938\u0928"
                 }
             },
-            { "NumberElements",
+            { "NumberElements", 
                 new String[] {
                     ".", // decimal separator
                     ",", // group (thousands) separator

@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -38,7 +39,7 @@ import java.io.IOException;
 /**
  * Implements the ASN.1TicketFlags type.
  *
- *    TicketFlags ::= BIT STRING
+ *    TicketFlags ::= BIT STRING   
  *                  {
  *                   reserved(0),
  *                   forwardable(1),
@@ -56,26 +57,26 @@ import java.io.IOException;
  */
 public class TicketFlags extends KerberosFlags {
     public TicketFlags() {
-        super(Krb5.TKT_OPTS_MAX + 1);
+	super(Krb5.TKT_OPTS_MAX + 1);
     }
-
+	
     public TicketFlags (boolean[] flags) throws Asn1Exception {
-        super(flags);
+	super(flags);
         if (flags.length > Krb5.TKT_OPTS_MAX + 1) {
-            throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
-        }
-    }
+	    throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
+	}
+    }   
 
     public TicketFlags(int size, byte[] data) throws Asn1Exception {
-        super(size, data);
-        if ((size > data.length * BITS_PER_UNIT) || (size > Krb5.TKT_OPTS_MAX + 1))
-            throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
+	super(size, data);
+	if ((size > data.length * BITS_PER_UNIT) || (size > Krb5.TKT_OPTS_MAX + 1))
+	    throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
     }
 
     public TicketFlags(DerValue encoding) throws IOException, Asn1Exception {
-        this(encoding.getUnalignedBitString(true).toBooleanArray());
+	this(encoding.getUnalignedBitString(true).toBooleanArray());
     }
-
+	
     /**
      * Parse (unmarshal) a ticket flag from a DER input stream.  This form
      * parsing might be used when expanding a value which is part of
@@ -89,25 +90,25 @@ public class TicketFlags extends KerberosFlags {
      *
      */
     public static TicketFlags parse(DerInputStream data, byte explicitTag, boolean optional) throws Asn1Exception, IOException {
-        if ((optional) && (((byte)data.peekByte() & (byte)0x1F) != explicitTag))
-            return null;
-        DerValue der = data.getDerValue();
-        if (explicitTag != (der.getTag() & (byte)0x1F))  {
-            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-        }
-        else {
-            DerValue subDer = der.getData().getDerValue();
-            return new TicketFlags(subDer);
-        }
+	if ((optional) && (((byte)data.peekByte() & (byte)0x1F) != explicitTag)) 
+	    return null;		
+	DerValue der = data.getDerValue();
+	if (explicitTag != (der.getTag() & (byte)0x1F))  {	
+	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+	}
+	else {
+	    DerValue subDer = der.getData().getDerValue();
+	    return new TicketFlags(subDer);
+	}
     }
 
     public Object clone() {
-        try {
-            return new TicketFlags(this.toBooleanArray());
-        }
-        catch (Exception e) {
-            return null;
-        }
+	try {
+	    return new TicketFlags(this.toBooleanArray());
+	}
+	catch (Exception e) {
+	    return null;
+	}
     }
 
     public boolean match(LoginOptions options) {

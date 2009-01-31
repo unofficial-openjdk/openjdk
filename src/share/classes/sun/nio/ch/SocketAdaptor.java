@@ -60,187 +60,187 @@ public class SocketAdaptor
     // Timeout "option" value for reads
     private volatile int timeout = 0;
 
-    // Traffic-class/Type-of-service
+    // Traffic-class/Type-of-service 
     private volatile int trafficClass = 0;
 
 
     // ## super will create a useless impl
     private SocketAdaptor(SocketChannelImpl sc) {
-        this.sc = sc;
+	this.sc = sc;
     }
 
     public static Socket create(SocketChannelImpl sc) {
-        return new SocketAdaptor(sc);
+	return new SocketAdaptor(sc);
     }
 
     public SocketChannel getChannel() {
-        return sc;
+	return sc;
     }
 
     // Override this method just to protect against changes in the superclass
     //
     public void connect(SocketAddress remote) throws IOException {
-        connect(remote, 0);
+	connect(remote, 0);
     }
 
     public void connect(SocketAddress remote, int timeout) throws IOException {
-        if (remote == null)
-            throw new IllegalArgumentException("connect: The address can't be null");
-        if (timeout < 0)
-            throw new IllegalArgumentException("connect: timeout can't be negative");
+	if (remote == null)
+	    throw new IllegalArgumentException("connect: The address can't be null");
+	if (timeout < 0)
+	    throw new IllegalArgumentException("connect: timeout can't be negative");
 
-        synchronized (sc.blockingLock()) {
-            if (!sc.isBlocking())
-                throw new IllegalBlockingModeException();
+	synchronized (sc.blockingLock()) {
+	    if (!sc.isBlocking())
+		throw new IllegalBlockingModeException();
 
-            try {
+	    try {
 
-                if (timeout == 0) {
-                    sc.connect(remote);
-                    return;
-                }
+		if (timeout == 0) {
+		    sc.connect(remote);
+		    return;
+		}
 
-                // Implement timeout with a selector
-                SelectionKey sk = null;
-                Selector sel = null;
-                sc.configureBlocking(false);
-                try {
-                    if (sc.connect(remote))
-                        return;
-                    sel = Util.getTemporarySelector(sc);
-                    sk = sc.register(sel, SelectionKey.OP_CONNECT);
-                    long to = timeout;
-                    for (;;) {
-                        if (!sc.isOpen())
-                            throw new ClosedChannelException();
-                        long st = System.currentTimeMillis();
-                        int ns = sel.select(to);
-                        if (ns > 0 &&
+		// Implement timeout with a selector
+		SelectionKey sk = null;
+		Selector sel = null;
+		sc.configureBlocking(false);
+		try {
+		    if (sc.connect(remote))
+			return;
+		    sel = Util.getTemporarySelector(sc);
+		    sk = sc.register(sel, SelectionKey.OP_CONNECT);
+		    long to = timeout;
+		    for (;;) {
+                        if (!sc.isOpen()) 
+			    throw new ClosedChannelException();
+			long st = System.currentTimeMillis();
+			int ns = sel.select(to);
+			if (ns > 0 &&
                             sk.isConnectable() && sc.finishConnect())
-                            break;
-                        sel.selectedKeys().remove(sk);
-                        to -= System.currentTimeMillis() - st;
-                        if (to <= 0) {
-                            try {
-                                sc.close();
-                            } catch (IOException x) { }
-                            throw new SocketTimeoutException();
-                        }
-                    }
-                } finally {
-                    if (sk != null)
-                        sk.cancel();
-                    if (sc.isOpen())
-                        sc.configureBlocking(true);
-                    if (sel != null)
+			    break;
+			sel.selectedKeys().remove(sk);
+			to -= System.currentTimeMillis() - st;
+			if (to <= 0) {
+			    try {
+				sc.close();
+			    } catch (IOException x) { }
+			    throw new SocketTimeoutException();
+			}
+		    }
+		} finally {
+		    if (sk != null)
+			sk.cancel();
+		    if (sc.isOpen())
+			sc.configureBlocking(true);
+		    if (sel != null)
                         Util.releaseTemporarySelector(sel);
-                }
+		}
 
-            } catch (Exception x) {
-                Net.translateException(x, true);
-            }
-        }
+	    } catch (Exception x) {
+		Net.translateException(x, true);
+	    }
+	}
 
     }
 
     public void bind(SocketAddress local) throws IOException {
-        try {
-            if (local == null)
-                local = new InetSocketAddress(0);
-            sc.bind(local);
-        } catch (Exception x) {
-            Net.translateException(x);
-        }
+	try {
+	    if (local == null)
+		local = new InetSocketAddress(0);
+	    sc.bind(local);
+	} catch (Exception x) {
+	    Net.translateException(x);
+	}
     }
 
     public InetAddress getInetAddress() {
-        if (!sc.isConnected())
-            return null;
-        return Net.asInetSocketAddress(sc.remoteAddress()).getAddress();
+	if (!sc.isConnected())
+	    return null;
+	return Net.asInetSocketAddress(sc.remoteAddress()).getAddress();
     }
 
     public InetAddress getLocalAddress() {
-        if (!sc.isBound())
-            return new InetSocketAddress(0).getAddress();
-        return Net.asInetSocketAddress(sc.localAddress()).getAddress();
+	if (!sc.isBound())
+	    return new InetSocketAddress(0).getAddress();
+	return Net.asInetSocketAddress(sc.localAddress()).getAddress();
     }
 
     public int getPort() {
-        if (!sc.isConnected())
-            return 0;
-        return Net.asInetSocketAddress(sc.remoteAddress()).getPort();
+	if (!sc.isConnected())
+	    return 0;
+	return Net.asInetSocketAddress(sc.remoteAddress()).getPort();
     }
 
     public int getLocalPort() {
-        if (!sc.isBound())
-            return -1;
-        return Net.asInetSocketAddress(sc.localAddress()).getPort();
+	if (!sc.isBound())
+	    return -1;
+	return Net.asInetSocketAddress(sc.localAddress()).getPort();
     }
 
     private class SocketInputStream
-        extends ChannelInputStream
+	extends ChannelInputStream
     {
-        private SocketInputStream() {
-            super(sc);
-        }
+	private SocketInputStream() {
+	    super(sc);
+	}
 
-        protected int read(ByteBuffer bb)
-            throws IOException
-        {
-            synchronized (sc.blockingLock()) {
-                if (!sc.isBlocking())
-                    throw new IllegalBlockingModeException();
-                if (timeout == 0)
-                    return sc.read(bb);
+	protected int read(ByteBuffer bb)
+	    throws IOException
+	{
+	    synchronized (sc.blockingLock()) {
+		if (!sc.isBlocking())
+		    throw new IllegalBlockingModeException();
+		if (timeout == 0)
+		    return sc.read(bb);
 
-                // Implement timeout with a selector
-                SelectionKey sk = null;
-                Selector sel = null;
-                sc.configureBlocking(false);
-                try {
-                    int n;
-                    if ((n = sc.read(bb)) != 0)
-                        return n;
-                    sel = Util.getTemporarySelector(sc);
-                    sk = sc.register(sel, SelectionKey.OP_READ);
-                    long to = timeout;
-                    for (;;) {
-                        if (!sc.isOpen())
-                            throw new ClosedChannelException();
-                        long st = System.currentTimeMillis();
-                        int ns = sel.select(to);
-                        if (ns > 0 && sk.isReadable()) {
-                            if ((n = sc.read(bb)) != 0)
-                                return n;
-                        }
-                        sel.selectedKeys().remove(sk);
-                        to -= System.currentTimeMillis() - st;
-                        if (to <= 0)
-                            throw new SocketTimeoutException();
-                    }
-                } finally {
-                    if (sk != null)
-                        sk.cancel();
-                    if (sc.isOpen())
-                        sc.configureBlocking(true);
-                    if (sel != null)
+		// Implement timeout with a selector
+		SelectionKey sk = null;
+		Selector sel = null;
+		sc.configureBlocking(false);
+		try {
+		    int n;
+		    if ((n = sc.read(bb)) != 0)
+			return n;
+		    sel = Util.getTemporarySelector(sc);
+		    sk = sc.register(sel, SelectionKey.OP_READ);
+		    long to = timeout;
+		    for (;;) {
+                        if (!sc.isOpen()) 
+			    throw new ClosedChannelException();
+			long st = System.currentTimeMillis();
+			int ns = sel.select(to);
+			if (ns > 0 && sk.isReadable()) {
+			    if ((n = sc.read(bb)) != 0)
+				return n;
+			}
+			sel.selectedKeys().remove(sk);
+			to -= System.currentTimeMillis() - st;
+			if (to <= 0)
+			    throw new SocketTimeoutException();
+		    }
+		} finally {
+		    if (sk != null)
+			sk.cancel();
+		    if (sc.isOpen())
+			sc.configureBlocking(true);
+		    if (sel != null)
                         Util.releaseTemporarySelector(sel);
-                }
+		}
 
-            }
-        }
+	    }
+	}
     }
 
     private InputStream socketInputStream = null;
 
     public InputStream getInputStream() throws IOException {
-        if (!sc.isOpen())
-            throw new SocketException("Socket is closed");
-        if (!sc.isConnected())
-            throw new SocketException("Socket is not connected");
-        if (!sc.isInputOpen())
-            throw new SocketException("Socket input is shutdown");
-        if (socketInputStream == null) {
+	if (!sc.isOpen())
+	    throw new SocketException("Socket is closed");
+	if (!sc.isConnected())
+	    throw new SocketException("Socket is not connected");
+	if (!sc.isInputOpen())
+	    throw new SocketException("Socket input is shutdown");
+	if (socketInputStream == null) {
             try {
                 socketInputStream = (InputStream)AccessController.doPrivileged(
                     new PrivilegedExceptionAction() {
@@ -252,169 +252,169 @@ public class SocketAdaptor
                 throw (IOException)e.getException();
             }
         }
-        return socketInputStream;
+	return socketInputStream;
     }
 
     public OutputStream getOutputStream() throws IOException {
-        if (!sc.isOpen())
-            throw new SocketException("Socket is closed");
-        if (!sc.isConnected())
-            throw new SocketException("Socket is not connected");
-        if (!sc.isOutputOpen())
-            throw new SocketException("Socket output is shutdown");
-        OutputStream os = null;
-        try {
-            os = (OutputStream)
-                AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws IOException {
-                        return Channels.newOutputStream(sc);
-                    }
-                });
-        } catch (java.security.PrivilegedActionException e) {
-            throw (IOException)e.getException();
-        }
-        return os;
+	if (!sc.isOpen())
+	    throw new SocketException("Socket is closed");
+	if (!sc.isConnected())
+	    throw new SocketException("Socket is not connected");
+	if (!sc.isOutputOpen())
+	    throw new SocketException("Socket output is shutdown");
+	OutputStream os = null;
+	try {
+	    os = (OutputStream)
+		AccessController.doPrivileged(new PrivilegedExceptionAction() {
+		    public Object run() throws IOException {
+			return Channels.newOutputStream(sc);
+		    }
+		});
+	} catch (java.security.PrivilegedActionException e) {
+	    throw (IOException)e.getException();
+	}
+	return os;
     }
 
     private OptionAdaptor opts() {
-        if (opts == null)
-            opts = new OptionAdaptor(sc);
-        return opts;
+	if (opts == null)
+	    opts = new OptionAdaptor(sc);
+	return opts;
     }
 
     public void setTcpNoDelay(boolean on) throws SocketException {
-        opts().setTcpNoDelay(on);
+	opts().setTcpNoDelay(on);
     }
 
     public boolean getTcpNoDelay() throws SocketException {
-        return opts().getTcpNoDelay();
+	return opts().getTcpNoDelay();
     }
 
     public void setSoLinger(boolean on, int linger) throws SocketException {
-        opts().setSoLinger(on, linger);
+	opts().setSoLinger(on, linger);
     }
 
     public int getSoLinger() throws SocketException {
-        return opts().getSoLinger();
+	return opts().getSoLinger();
     }
 
     public void sendUrgentData(int data) throws IOException {
-        throw new SocketException("Urgent data not supported");
+	throw new SocketException("Urgent data not supported");
     }
 
     public void setOOBInline(boolean on) throws SocketException {
-        opts().setOOBInline(on);
+	opts().setOOBInline(on);
     }
 
     public boolean getOOBInline() throws SocketException {
-        return opts().getOOBInline();
+	return opts().getOOBInline();
     }
 
     public void setSoTimeout(int timeout) throws SocketException {
-        if (timeout < 0)
-            throw new IllegalArgumentException("timeout can't be negative");
-        this.timeout = timeout;
+	if (timeout < 0)
+	    throw new IllegalArgumentException("timeout can't be negative");
+	this.timeout = timeout;
     }
 
     public int getSoTimeout() throws SocketException {
-        return timeout;
+	return timeout;
     }
 
     public void setSendBufferSize(int size) throws SocketException {
-        opts().setSendBufferSize(size);
+	opts().setSendBufferSize(size);
     }
 
     public int getSendBufferSize() throws SocketException {
-        return opts().getSendBufferSize();
+	return opts().getSendBufferSize();
     }
 
     public void setReceiveBufferSize(int size) throws SocketException {
-        opts().setReceiveBufferSize(size);
+	opts().setReceiveBufferSize(size);
     }
 
     public int getReceiveBufferSize() throws SocketException {
-        return opts().getReceiveBufferSize();
+	return opts().getReceiveBufferSize();
     }
 
     public void setKeepAlive(boolean on) throws SocketException {
-        opts().setKeepAlive(on);
+	opts().setKeepAlive(on);
     }
 
     public boolean getKeepAlive() throws SocketException {
-        return opts().getKeepAlive();
+	return opts().getKeepAlive();
     }
 
     public void setTrafficClass(int tc) throws SocketException {
-        opts().setTrafficClass(tc);
-        trafficClass = tc;
+	opts().setTrafficClass(tc);
+	trafficClass = tc;
     }
 
     public int getTrafficClass() throws SocketException {
-        int tc = opts().getTrafficClass();
-        if (tc < 0) {
-            tc = trafficClass;
-        }
-        return tc;
+	int tc = opts().getTrafficClass();
+	if (tc < 0) {
+	    tc = trafficClass;
+	}
+	return tc;
     }
 
     public void setReuseAddress(boolean on) throws SocketException {
-        opts().setReuseAddress(on);
+	opts().setReuseAddress(on);
     }
 
     public boolean getReuseAddress() throws SocketException {
-        return opts().getReuseAddress();
+	return opts().getReuseAddress();
     }
 
     public void close() throws IOException {
-        try {
-            sc.close();
-        } catch (Exception x) {
-            Net.translateToSocketException(x);
-        }
+	try {
+	    sc.close();
+	} catch (Exception x) {
+	    Net.translateToSocketException(x);
+	}
     }
 
     public void shutdownInput() throws IOException {
-        try {
-            sc.shutdownInput();
-        } catch (Exception x) {
-            Net.translateException(x);
-        }
+	try {
+	    sc.shutdownInput();
+	} catch (Exception x) {
+	    Net.translateException(x);
+	}
     }
 
     public void shutdownOutput() throws IOException {
-        try {
-            sc.shutdownOutput();
-        } catch (Exception x) {
-            Net.translateException(x);
-        }
+	try {
+	    sc.shutdownOutput();
+	} catch (Exception x) {
+	    Net.translateException(x);
+	}
     }
 
     public String toString() {
-        if (sc.isConnected())
-            return "Socket[addr=" + getInetAddress() +
-                ",port=" + getPort() +
-                ",localport=" + getLocalPort() + "]";
-        return "Socket[unconnected]";
+	if (sc.isConnected())
+	    return "Socket[addr=" + getInetAddress() +
+		",port=" + getPort() +
+		",localport=" + getLocalPort() + "]";
+	return "Socket[unconnected]";
     }
 
     public boolean isConnected() {
-        return sc.isConnected();
+	return sc.isConnected();
     }
 
     public boolean isBound() {
-        return sc.isBound();
+	return sc.isBound();
     }
 
     public boolean isClosed() {
-        return !sc.isOpen();
+	return !sc.isOpen();
     }
 
     public boolean isInputShutdown() {
-        return !sc.isInputOpen();
+	return !sc.isInputOpen();
     }
 
     public boolean isOutputShutdown() {
-        return !sc.isOutputOpen();
+	return !sc.isOutputOpen();
     }
 
 }

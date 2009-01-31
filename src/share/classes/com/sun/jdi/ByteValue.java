@@ -37,7 +37,7 @@ public interface ByteValue extends PrimitiveValue, Comparable<ByteValue>
 {
     /**
      * Returns this ByteValue as a <code>byte</code>.
-     *
+     * 
      * @return the <code>byte</code> mirrored by this object.
      */
     byte value();
@@ -58,3 +58,4 @@ public interface ByteValue extends PrimitiveValue, Comparable<ByteValue>
      */
     int hashCode();
 }
+

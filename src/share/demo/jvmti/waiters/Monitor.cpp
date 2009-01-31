@@ -42,7 +42,7 @@
 
 /* Implementation of the Monitor class */
 
-Monitor::Monitor(jvmtiEnv *jvmti, JNIEnv *env, jobject object)
+Monitor::Monitor(jvmtiEnv *jvmti, JNIEnv *env, jobject object) 
 {
     jvmtiError err;
     jclass     klass;
@@ -52,38 +52,39 @@ Monitor::Monitor(jvmtiEnv *jvmti, JNIEnv *env, jobject object)
     contends  = 0;
     waits     = 0;
     timeouts  = 0;
-
+    
     /* Get the class name for this monitor object */
     (void)strcpy(name, "Unknown");
     klass = env->GetObjectClass(object);
     if ( klass == NULL ) {
-        fatal_error("ERROR: Cannot find jclass from jobject\n");
+	fatal_error("ERROR: Cannot find jclass from jobject\n");
     }
     err = jvmti->GetClassSignature(klass, &signature, NULL);
     check_jvmti_error(jvmti, err, "get class signature");
     if ( signature != NULL ) {
-        (void)strncpy(name, signature, (int)sizeof(name)-1);
+	(void)strncpy(name, signature, (int)sizeof(name)-1);
         deallocate(jvmti, signature);
     }
 }
 
-Monitor::~Monitor()
+Monitor::~Monitor() 
 {
     stdout_message("Monitor %s summary: %d contends, %d waits, %d timeouts\n",
-        name, contends, waits, timeouts);
+	name, contends, waits, timeouts);
 }
 
-void Monitor::contended()
+void Monitor::contended() 
 {
     contends++;
 }
 
-void Monitor::waited()
+void Monitor::waited() 
 {
     waits++;
 }
 
-void Monitor::timeout()
+void Monitor::timeout() 
 {
     timeouts++;
 }
+

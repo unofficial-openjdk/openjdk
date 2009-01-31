@@ -32,7 +32,7 @@ import java.io.*;
 
 public class LeadingSlash {
     public static void main (String args[]) throws Exception {
-        if (File.separatorChar == '\\') {       // Windows
+        if (File.separatorChar == '\\') {	// Windows
             File file = null;
             try {
                 file = File.createTempFile("bug", "4487368");

@@ -30,48 +30,48 @@ import java.io.*;
 
 public class Skip {
 
-    private static void dotest(PushbackInputStream in, int expected)
-        throws Exception
+    private static void dotest(PushbackInputStream in, int expected) 
+	throws Exception 
     {
-        int one, two, last, got;
+	int one, two, last, got;
 
-        in.unread(4);
-        in.unread(5);
-        in.unread(6);
-        in.skip(2);
-        if (in.read() != 4) {
-            throw new Exception("Failed the n < pushed back bytes case");
-        }
-        System.err.println("Passed the n < pushed back bytes case");
-        one = in.read();
-        two = in.read();
+	in.unread(4);
+	in.unread(5);
+	in.unread(6);
+	in.skip(2);
+	if (in.read() != 4) {
+	    throw new Exception("Failed the n < pushed back bytes case");
+	}
+	System.err.println("Passed the n < pushed back bytes case");
+	one = in.read();
+	two = in.read();
 
-        if (two == 7) {
-            in.unread(two);
-            two = 0;
-        }
-        in.skip(2);
-        last = in.read();
-        got = (one + two + last);
-        System.err.println("Expected " + expected + " got " + got);
-        if (expected != got) {
-            throw new Exception("Expected " + expected + " got " + got);
-        }
+	if (two == 7) {
+	    in.unread(two);
+	    two = 0;
+	}
+	in.skip(2);
+	last = in.read();
+	got = (one + two + last);
+	System.err.println("Expected " + expected + " got " + got);
+	if (expected != got) {
+	    throw new Exception("Expected " + expected + " got " + got);
+	}
     }
 
 
     public static void main(String args[]) throws Exception {
-        byte[] data1 = {1, 7, 1, 0, 4};
-        byte[] data2 = {1, 1, 1, 1, 5};
-        byte[] data3 = {1, 7, 1, 3, 6};
-        PushbackInputStream in;
+	byte[] data1 = {1, 7, 1, 0, 4};
+	byte[] data2 = {1, 1, 1, 1, 5};
+	byte[] data3 = {1, 7, 1, 3, 6};
+	PushbackInputStream in;
 
-        in = new PushbackInputStream(new ByteArrayInputStream(data1), 3);
-        dotest(in, 1);
-        in = new PushbackInputStream(new ByteArrayInputStream(data2), 3);
-        dotest(in, 7);
-        in = new PushbackInputStream(new ByteArrayInputStream(data3), 3);
-        dotest(in, 4);
+	in = new PushbackInputStream(new ByteArrayInputStream(data1), 3);
+	dotest(in, 1);
+	in = new PushbackInputStream(new ByteArrayInputStream(data2), 3);
+	dotest(in, 7);
+	in = new PushbackInputStream(new ByteArrayInputStream(data3), 3);
+	dotest(in, 4);
     }
 
 }

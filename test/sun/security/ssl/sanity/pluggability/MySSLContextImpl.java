@@ -26,42 +26,42 @@ import java.net.*;
 import javax.net.ssl.*;
 
 public class MySSLContextImpl extends SSLContextSpi {
-    private static MySSLServerSocketFacImpl ssf =
-        new MySSLServerSocketFacImpl();
+    private static MySSLServerSocketFacImpl ssf = 
+	new MySSLServerSocketFacImpl();
     private static MySSLSocketFacImpl sf = new MySSLSocketFacImpl();
-
+    
     private static MySSLEngineImpl se1 = new MySSLEngineImpl();
     private static MySSLEngineImpl se2 = new MySSLEngineImpl("schnauzer", 1024);
 
     public static void useStandardCipherSuites() {
-        MySSLServerSocketFacImpl.useStandardCipherSuites();
-        MySSLSocketFacImpl.useStandardCipherSuites();
-        MySSLEngineImpl.useStandardCipherSuites();
-    }
+	MySSLServerSocketFacImpl.useStandardCipherSuites();
+	MySSLSocketFacImpl.useStandardCipherSuites();
+	MySSLEngineImpl.useStandardCipherSuites();
+    }	
     public static void useCustomCipherSuites() {
         MySSLServerSocketFacImpl.useCustomCipherSuites();
         MySSLSocketFacImpl.useCustomCipherSuites();
-        MySSLEngineImpl.useCustomCipherSuites();
+	MySSLEngineImpl.useCustomCipherSuites();
     }
 
-    protected SSLSessionContext engineGetClientSessionContext() {
-        return null;
+    protected SSLSessionContext engineGetClientSessionContext() {	    
+	return null;
     }
     protected SSLSessionContext engineGetServerSessionContext() {
-        return null;
+	return null;
     }
     protected SSLServerSocketFactory engineGetServerSocketFactory() {
-        return ssf;
+	return ssf;
     }
     protected SSLSocketFactory engineGetSocketFactory() {
-        return sf;
+	return sf;
     }
     protected SSLEngine engineCreateSSLEngine() {
-        return se1;
+	return se1;
     }
     protected SSLEngine engineCreateSSLEngine(String host, int port) {
-        return se2;
+	return se2;
     }
-    protected void engineInit(KeyManager[] km, TrustManager[] tm,
-                              SecureRandom sr) throws KeyManagementException {}
+    protected void engineInit(KeyManager[] km, TrustManager[] tm, 
+			      SecureRandom sr) throws KeyManagementException {}
 }

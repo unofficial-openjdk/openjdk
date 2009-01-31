@@ -69,7 +69,7 @@ implements Serializable {
      * no CryptoPermissionCollections.
      */
     CryptoPermissions() {
-        perms = new Hashtable(7);
+	perms = new Hashtable(7);
     }
 
     /**
@@ -82,14 +82,14 @@ implements Serializable {
      * successfully.
      */
     void load(InputStream in)
-        throws IOException, CryptoPolicyParser.ParsingException {
-        CryptoPolicyParser parser = new CryptoPolicyParser();
-        parser.read(new BufferedReader(new InputStreamReader(in, "UTF-8")));
+	throws IOException, CryptoPolicyParser.ParsingException {
+	CryptoPolicyParser parser = new CryptoPolicyParser();
+	parser.read(new BufferedReader(new InputStreamReader(in, "UTF-8")));
 
-        CryptoPermission[] parsingResult = parser.getPermissions();
-        for (int i = 0; i < parsingResult.length; i++) {
-            this.add(parsingResult[i]);
-        }
+	CryptoPermission[] parsingResult = parser.getPermissions();
+	for (int i = 0; i < parsingResult.length; i++) {
+	    this.add(parsingResult[i]);
+	}
     }
 
     /**
@@ -98,7 +98,7 @@ implements Serializable {
      * false.
      */
     boolean isEmpty() {
-        return perms.isEmpty();
+	return perms.isEmpty();
     }
 
     /**
@@ -119,22 +119,22 @@ implements Serializable {
      */
     public void add(Permission permission) {
 
-        if (isReadOnly())
-            throw new SecurityException("Attempt to add a Permission " +
-                                        "to a readonly CryptoPermissions " +
-                                        "object");
+	if (isReadOnly())
+	    throw new SecurityException("Attempt to add a Permission " +
+					"to a readonly CryptoPermissions " +
+					"object");
 
-        if (!(permission instanceof CryptoPermission))
-            return;
+	if (!(permission instanceof CryptoPermission))
+	    return;
 
-        CryptoPermission cryptoPerm = (CryptoPermission)permission;
-        PermissionCollection pc =
-                        getPermissionCollection(cryptoPerm);
-        pc.add(cryptoPerm);
-        String alg = cryptoPerm.getAlgorithm();
-        if (!perms.containsKey(alg)) {
-            perms.put(alg, pc);
-        }
+	CryptoPermission cryptoPerm = (CryptoPermission)permission;
+	PermissionCollection pc =
+			getPermissionCollection(cryptoPerm);
+	pc.add(cryptoPerm);
+	String alg = cryptoPerm.getAlgorithm();
+	if (!perms.containsKey(alg)) {
+	    perms.put(alg, pc);
+	}
     }
 
     /**
@@ -149,15 +149,15 @@ implements Serializable {
      *
      */
     public boolean implies(Permission permission) {
-        if (!(permission instanceof CryptoPermission)) {
-            return false;
-        }
+	if (!(permission instanceof CryptoPermission)) {
+	    return false;
+	}
 
-        CryptoPermission cryptoPerm = (CryptoPermission)permission;
+	CryptoPermission cryptoPerm = (CryptoPermission)permission;
 
-        PermissionCollection pc =
-            getPermissionCollection(cryptoPerm.getAlgorithm());
-        return pc.implies(cryptoPerm);
+	PermissionCollection pc =
+	    getPermissionCollection(cryptoPerm.getAlgorithm());
+	return pc.implies(cryptoPerm);
     }
 
     /**
@@ -167,9 +167,9 @@ implements Serializable {
      * @return an enumeration of all the Permissions.
      */
     public Enumeration elements() {
-        // go through each Permissions in the hash table
-        // and call their elements() function.
-        return new PermissionsEnumerator(perms.elements());
+	// go through each Permissions in the hash table
+	// and call their elements() function.
+	return new PermissionsEnumerator(perms.elements());
     }
 
     /**
@@ -182,96 +182,96 @@ implements Serializable {
      * object to compare with this object.
      */
     CryptoPermissions getMinimum(CryptoPermissions other) {
-        if (other == null) {
-            return null;
-        }
+	if (other == null) {
+	    return null;
+	}
 
-        if (this.perms.containsKey(CryptoAllPermission.ALG_NAME)) {
-            return other;
-        }
+	if (this.perms.containsKey(CryptoAllPermission.ALG_NAME)) {
+	    return other;
+	}
 
-        if (other.perms.containsKey(CryptoAllPermission.ALG_NAME)) {
-            return this;
-        }
+	if (other.perms.containsKey(CryptoAllPermission.ALG_NAME)) {
+	    return this;
+	}
 
-        CryptoPermissions ret = new CryptoPermissions();
+	CryptoPermissions ret = new CryptoPermissions();
 
 
-        PermissionCollection thatWildcard =
-            (PermissionCollection)other.perms.get(
-                                        CryptoPermission.ALG_NAME_WILDCARD);
-        int maxKeySize = 0;
-        if (thatWildcard != null) {
-            maxKeySize = ((CryptoPermission)
-                    thatWildcard.elements().nextElement()).getMaxKeySize();
-        }
-        // For each algorithm in this CryptoPermissions,
-        // find out if there is anything we should add into
-        // ret.
-        Enumeration thisKeys = this.perms.keys();
-        while (thisKeys.hasMoreElements()) {
-            String alg = (String)thisKeys.nextElement();
+	PermissionCollection thatWildcard =
+	    (PermissionCollection)other.perms.get(
+					CryptoPermission.ALG_NAME_WILDCARD);
+	int maxKeySize = 0;
+	if (thatWildcard != null) {
+	    maxKeySize = ((CryptoPermission)
+		    thatWildcard.elements().nextElement()).getMaxKeySize();
+	}
+	// For each algorithm in this CryptoPermissions,
+	// find out if there is anything we should add into
+	// ret.
+	Enumeration thisKeys = this.perms.keys();
+	while (thisKeys.hasMoreElements()) {
+	    String alg = (String)thisKeys.nextElement();
 
-            PermissionCollection thisPc =
-                (PermissionCollection)this.perms.get(alg);
-            PermissionCollection thatPc =
-                (PermissionCollection)other.perms.get(alg);
+	    PermissionCollection thisPc =
+		(PermissionCollection)this.perms.get(alg);
+	    PermissionCollection thatPc =
+		(PermissionCollection)other.perms.get(alg);
 
-            CryptoPermission[] partialResult;
+	    CryptoPermission[] partialResult;
 
-            if (thatPc == null) {
-                if (thatWildcard == null) {
-                    // The other CryptoPermissions
-                    // doesn't allow this given
-                    // algorithm at all. Just skip this
-                    // algorithm.
-                    continue;
-                }
-                partialResult = getMinimum(maxKeySize, thisPc);
-            } else {
-                partialResult = getMinimum(thisPc, thatPc);
-            }
+	    if (thatPc == null) {
+		if (thatWildcard == null) {
+		    // The other CryptoPermissions
+		    // doesn't allow this given
+		    // algorithm at all. Just skip this
+		    // algorithm.
+		    continue;
+		}
+		partialResult = getMinimum(maxKeySize, thisPc);
+	    } else {
+		partialResult = getMinimum(thisPc, thatPc);
+	    }
 
-            for (int i = 0; i < partialResult.length; i++) {
-                ret.add(partialResult[i]);
-            }
-        }
+	    for (int i = 0; i < partialResult.length; i++) {
+		ret.add(partialResult[i]);
+	    }
+	}
 
-        PermissionCollection thisWildcard =
-            (PermissionCollection)this.perms.get(
-                                      CryptoPermission.ALG_NAME_WILDCARD);
+	PermissionCollection thisWildcard =
+	    (PermissionCollection)this.perms.get(
+				      CryptoPermission.ALG_NAME_WILDCARD);
 
-        // If this CryptoPermissions doesn't
-        // have a wildcard, we are done.
-        if (thisWildcard == null) {
-            return ret;
-        }
+	// If this CryptoPermissions doesn't
+	// have a wildcard, we are done.
+	if (thisWildcard == null) {
+	    return ret;
+	}
 
-        // Deal with the algorithms only appear
-        // in the other CryptoPermissions.
-        maxKeySize =
-            ((CryptoPermission)
-                    thisWildcard.elements().nextElement()).getMaxKeySize();
-        Enumeration thatKeys = other.perms.keys();
-        while (thatKeys.hasMoreElements()) {
-            String alg = (String)thatKeys.nextElement();
+	// Deal with the algorithms only appear
+	// in the other CryptoPermissions.
+	maxKeySize =
+	    ((CryptoPermission)
+		    thisWildcard.elements().nextElement()).getMaxKeySize();
+	Enumeration thatKeys = other.perms.keys();
+	while (thatKeys.hasMoreElements()) {
+	    String alg = (String)thatKeys.nextElement();
 
-            if (this.perms.containsKey(alg)) {
-                continue;
-            }
+	    if (this.perms.containsKey(alg)) {
+		continue;
+	    }
 
-            PermissionCollection thatPc =
-                (PermissionCollection)other.perms.get(alg);
+	    PermissionCollection thatPc =
+		(PermissionCollection)other.perms.get(alg);
 
-            CryptoPermission[] partialResult;
+	    CryptoPermission[] partialResult;
 
-            partialResult = getMinimum(maxKeySize, thatPc);
+	    partialResult = getMinimum(maxKeySize, thatPc);
 
-            for (int i = 0; i < partialResult.length; i++) {
-                ret.add(partialResult[i]);
-            }
-        }
-        return ret;
+	    for (int i = 0; i < partialResult.length; i++) {
+		ret.add(partialResult[i]);
+	    }
+	}
+	return ret;
     }
 
     /**
@@ -285,46 +285,46 @@ implements Serializable {
      * object.
      */
     private CryptoPermission[] getMinimum(PermissionCollection thisPc,
-                                          PermissionCollection thatPc) {
-        Vector permVector = new Vector(2);
+					  PermissionCollection thatPc) {
+	Vector permVector = new Vector(2);
 
-        Enumeration thisPcPermissions = thisPc.elements();
+	Enumeration thisPcPermissions = thisPc.elements();
 
-        // For each CryptoPermission in
-        // thisPc object, do the following:
-        // 1) if this CryptoPermission is implied
-        //     by thatPc, this CryptoPermission
-        //     should be returned, and we can
-        //     move on to check the next
-        //     CryptoPermission in thisPc.
-        // 2) otherwise, we should return
-        //     all CryptoPermissions in thatPc
-        //     which
-        //     are implied by this CryptoPermission.
-        //     Then we can move on to the
-        //     next CryptoPermission in thisPc.
-        while (thisPcPermissions.hasMoreElements()) {
-            CryptoPermission thisCp =
-                (CryptoPermission)thisPcPermissions.nextElement();
+	// For each CryptoPermission in
+	// thisPc object, do the following:
+	// 1) if this CryptoPermission is implied
+	//     by thatPc, this CryptoPermission
+	//     should be returned, and we can
+	//     move on to check the next
+	//     CryptoPermission in thisPc.
+	// 2) otherwise, we should return
+	//     all CryptoPermissions in thatPc
+	//     which
+	//     are implied by this CryptoPermission.
+	//     Then we can move on to the
+	//     next CryptoPermission in thisPc.
+	while (thisPcPermissions.hasMoreElements()) {
+	    CryptoPermission thisCp =
+		(CryptoPermission)thisPcPermissions.nextElement();
 
-            Enumeration thatPcPermissions = thatPc.elements();
-            while (thatPcPermissions.hasMoreElements()) {
-                CryptoPermission thatCp =
-                    (CryptoPermission)thatPcPermissions.nextElement();
+	    Enumeration thatPcPermissions = thatPc.elements();
+	    while (thatPcPermissions.hasMoreElements()) {
+		CryptoPermission thatCp =
+		    (CryptoPermission)thatPcPermissions.nextElement();
 
-                if (thatCp.implies(thisCp)) {
-                    permVector.addElement(thisCp);
-                    break;
-                }
-                if (thisCp.implies(thatCp)) {
-                    permVector.addElement(thatCp);
-                }
-            }
-        }
+		if (thatCp.implies(thisCp)) {
+		    permVector.addElement(thisCp);
+		    break;
+		}
+		if (thisCp.implies(thatCp)) {
+		    permVector.addElement(thatCp);
+		}
+	    }
+	}
 
-        CryptoPermission[] ret = new CryptoPermission[permVector.size()];
-        permVector.copyInto(ret);
-        return ret;
+	CryptoPermission[] ret = new CryptoPermission[permVector.size()];
+	permVector.copyInto(ret);
+	return ret;
     }
 
     /**
@@ -341,35 +341,35 @@ implements Serializable {
      * @param pc the given PermissionCollection object.
      */
     private CryptoPermission[] getMinimum(int maxKeySize,
-                                          PermissionCollection pc) {
-        Vector permVector = new Vector(1);
+					  PermissionCollection pc) {
+	Vector permVector = new Vector(1);
 
-        Enumeration enum_ = pc.elements();
+	Enumeration enum_ = pc.elements();
 
-        while (enum_.hasMoreElements()) {
-            CryptoPermission cp =
-                (CryptoPermission)enum_.nextElement();
-            if (cp.getMaxKeySize() <= maxKeySize) {
-                permVector.addElement(cp);
-            } else {
-                if (cp.getCheckParam()) {
-                    permVector.addElement(
-                           new CryptoPermission(cp.getAlgorithm(),
-                                                maxKeySize,
-                                                cp.getAlgorithmParameterSpec(),
-                                                cp.getExemptionMechanism()));
-                } else {
-                    permVector.addElement(
-                           new CryptoPermission(cp.getAlgorithm(),
-                                                maxKeySize,
-                                                cp.getExemptionMechanism()));
-                }
-            }
-        }
+	while (enum_.hasMoreElements()) {
+	    CryptoPermission cp =
+		(CryptoPermission)enum_.nextElement();
+	    if (cp.getMaxKeySize() <= maxKeySize) {
+		permVector.addElement(cp);
+	    } else {
+		if (cp.getCheckParam()) {
+		    permVector.addElement(
+			   new CryptoPermission(cp.getAlgorithm(),
+						maxKeySize,
+						cp.getAlgorithmParameterSpec(),
+						cp.getExemptionMechanism()));
+		} else {
+		    permVector.addElement(
+			   new CryptoPermission(cp.getAlgorithm(),
+						maxKeySize,
+						cp.getExemptionMechanism()));
+		}
+	    }
+	}
 
-        CryptoPermission[] ret = new CryptoPermission[permVector.size()];
-        permVector.copyInto(ret);
-        return ret;
+	CryptoPermission[] ret = new CryptoPermission[permVector.size()];
+	permVector.copyInto(ret);
+	return ret;
     }
 
     /**
@@ -380,24 +380,24 @@ implements Serializable {
      * @param alg the algorithm name.
      */
     PermissionCollection getPermissionCollection(String alg) {
-        // If this CryptoPermissions includes CryptoAllPermission,
-        // we should return CryptoAllPermission.
-        if (perms.containsKey(CryptoAllPermission.ALG_NAME)) {
-            return
-                (PermissionCollection)(perms.get(CryptoAllPermission.ALG_NAME));
-        }
+	// If this CryptoPermissions includes CryptoAllPermission,
+	// we should return CryptoAllPermission.
+	if (perms.containsKey(CryptoAllPermission.ALG_NAME)) {
+	    return
+		(PermissionCollection)(perms.get(CryptoAllPermission.ALG_NAME));
+	}
 
-        PermissionCollection pc = (PermissionCollection)perms.get(alg);
+	PermissionCollection pc = (PermissionCollection)perms.get(alg);
 
-        // If there isn't a PermissionCollection for
-        // the given algorithm,we should return the
-        // PermissionCollection for the wildcard
-        // if there is one.
-        if (pc == null) {
-            pc = (PermissionCollection)perms.get(
-                                       CryptoPermission.ALG_NAME_WILDCARD);
-        }
-        return pc;
+	// If there isn't a PermissionCollection for
+	// the given algorithm,we should return the
+	// PermissionCollection for the wildcard
+	// if there is one.
+	if (pc == null) {
+	    pc = (PermissionCollection)perms.get(
+				       CryptoPermission.ALG_NAME_WILDCARD);
+	}
+	return pc;
     }
 
     /**
@@ -410,16 +410,16 @@ implements Serializable {
      * @param cryptoPerm the CryptoPermission object.
      */
     private PermissionCollection getPermissionCollection(
-                                          CryptoPermission cryptoPerm) {
+					  CryptoPermission cryptoPerm) {
 
-        String alg = cryptoPerm.getAlgorithm();
+	String alg = cryptoPerm.getAlgorithm();
 
-        PermissionCollection pc = (PermissionCollection)perms.get(alg);
+	PermissionCollection pc = (PermissionCollection)perms.get(alg);
 
-        if (pc == null) {
-            pc = cryptoPerm.newPermissionCollection();
-        }
-        return pc;
+	if (pc == null) {
+	    pc = cryptoPerm.newPermissionCollection();
+	}
+	return pc;
     }
 }
 
@@ -431,49 +431,49 @@ final class PermissionsEnumerator implements Enumeration {
     private Enumeration permset;
 
     PermissionsEnumerator(Enumeration e) {
-        perms = e;
-        permset = getNextEnumWithMore();
+	perms = e;
+	permset = getNextEnumWithMore();
     }
 
     public synchronized boolean hasMoreElements() {
-        // if we enter with permissionimpl null, we know
-        // there are no more left.
+	// if we enter with permissionimpl null, we know
+	// there are no more left.
 
-        if (permset == null)
-            return  false;
+	if (permset == null)
+	    return  false;
 
-        // try to see if there are any left in the current one
+	// try to see if there are any left in the current one
 
-        if (permset.hasMoreElements())
-            return true;
+	if (permset.hasMoreElements())
+	    return true;
 
-        // get the next one that has something in it...
-        permset = getNextEnumWithMore();
+	// get the next one that has something in it...
+	permset = getNextEnumWithMore();
 
-        // if it is null, we are done!
-        return (permset != null);
+	// if it is null, we are done!
+	return (permset != null);
     }
 
     public synchronized Object nextElement() {
-        // hasMoreElements will update permset to the next permset
-        // with something in it...
+	// hasMoreElements will update permset to the next permset
+	// with something in it...
 
-        if (hasMoreElements()) {
-            return permset.nextElement();
-        } else {
-            throw new NoSuchElementException("PermissionsEnumerator");
-        }
+	if (hasMoreElements()) {
+	    return permset.nextElement();
+	} else {
+	    throw new NoSuchElementException("PermissionsEnumerator");
+	}
 
     }
 
     private Enumeration getNextEnumWithMore() {
-        while (perms.hasMoreElements()) {
-            PermissionCollection pc =
-                (PermissionCollection) perms.nextElement();
-            Enumeration next = pc.elements();
-            if (next.hasMoreElements())
-                return next;
-        }
-        return null;
+	while (perms.hasMoreElements()) {
+	    PermissionCollection pc =
+		(PermissionCollection) perms.nextElement();
+	    Enumeration next = pc.elements();
+	    if (next.hasMoreElements())
+		return next;
+	}
+	return null;
     }
 }

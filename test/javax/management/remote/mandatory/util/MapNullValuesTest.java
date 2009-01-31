@@ -156,8 +156,8 @@ public class MapNullValuesTest {
                 MBeanServer mbs = MBeanServerFactory.createMBeanServer();
                 echo("\tCreate the RMI connector server");
                 JMXServiceURL url =
-                    new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:" +
-                                      port + "/JMXConnectorServerFactory" + i);
+		    new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:" +
+				      port + "/JMXConnectorServerFactory" + i);
                 JMXConnectorServer jmxcs =
                     JMXConnectorServerFactory.newJMXConnectorServer(url,
                                                                     maps[i],
@@ -197,8 +197,8 @@ public class MapNullValuesTest {
                 MBeanServer mbs = MBeanServerFactory.createMBeanServer();
                 echo("\tCreate the RMI connector server");
                 JMXServiceURL url =
-                    new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:" +
-                                      port + "/JMXConnectorFactory" + i);
+		    new JMXServiceURL("service:jmx:rmi:///jndi/rmi://:" +
+				      port + "/JMXConnectorFactory" + i);
                 JMXConnectorServer jmxcs =
                     JMXConnectorServerFactory.newJMXConnectorServer(url,
                                                                     null,
@@ -206,8 +206,8 @@ public class MapNullValuesTest {
                 echo("\tStart the RMI connector server");
                 jmxcs.start();
                 echo("\tCreate and connect the RMI connector");
-                JMXConnector jmxc =
-                    JMXConnectorFactory.connect(jmxcs.getAddress(), maps[i]);
+		JMXConnector jmxc =
+		    JMXConnectorFactory.connect(jmxcs.getAddress(), maps[i]);
                 echo("\tClose the RMI connector");
                 jmxc.close();
                 echo("\tTest [" + i + "] PASSED!");
@@ -231,104 +231,104 @@ public class MapNullValuesTest {
         int errorCount = 0;
         echo("");
         echo(dashedMessage("Run Null Key Factory Tests"));
-        echo("\tMap = " + map3);
-        try {
-            String urlStr =
-                "service:jmx:rmi:///jndi/rmi://:" + port + "/NullKeyFactory";
-            MBeanServer mbs = MBeanServerFactory.createMBeanServer();
-            JMXServiceURL url = null;
-            JMXConnectorServer jmxcs = null;
-            JMXConnector jmxc = null;
+	echo("\tMap = " + map3);
+	try {
+	    String urlStr =
+		"service:jmx:rmi:///jndi/rmi://:" + port + "/NullKeyFactory";
+	    MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+	    JMXServiceURL url = null;
+	    JMXConnectorServer jmxcs = null;
+	    JMXConnector jmxc = null;
 
-            echo("\tJMXConnectorServerFactory.newJMXConnectorServer()");
-            try {
-                url = new JMXServiceURL(urlStr + "1");
-                jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
-                                                                        map3,
-                                                                        mbs);
-                errorCount++;
-                echo("\tTest FAILED!");
-            } catch (Exception e) {
-                echo("\tException Message: " + e.getMessage());
-                echo("\tTest PASSED!");
-            }
+	    echo("\tJMXConnectorServerFactory.newJMXConnectorServer()");
+	    try {
+		url = new JMXServiceURL(urlStr + "1");
+		jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
+									map3,
+									mbs);
+		errorCount++;
+		echo("\tTest FAILED!");
+	    } catch (Exception e) {
+		echo("\tException Message: " + e.getMessage());
+		echo("\tTest PASSED!");
+	    }
 
-            echo("\tJMXConnectorServerFactory.toJMXConnector()");
-            try {
-                url = new JMXServiceURL(urlStr + "2");
-                jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
-                                                                        null,
-                                                                        mbs);
-                jmxcs.start();
-                jmxcs.toJMXConnector(map3);
-                errorCount++;
-                echo("\tTest FAILED!");
-            } catch (Exception e) {
-                echo("\tException Message: " + e.getMessage());
-                echo("\tTest PASSED!");
-            } finally {
-                jmxcs.stop();
-            }
+	    echo("\tJMXConnectorServerFactory.toJMXConnector()");
+	    try {
+		url = new JMXServiceURL(urlStr + "2");
+		jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
+									null,
+									mbs);
+		jmxcs.start();
+		jmxcs.toJMXConnector(map3);
+		errorCount++;
+		echo("\tTest FAILED!");
+	    } catch (Exception e) {
+		echo("\tException Message: " + e.getMessage());
+		echo("\tTest PASSED!");
+	    } finally {
+		jmxcs.stop();
+	    }
 
-            echo("\tJMXConnectorFactory.newJMXConnector()");
-            try {
-                url = new JMXServiceURL(urlStr + "3");
-                jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
-                                                                        null,
-                                                                        mbs);
-                jmxcs.start();
-                jmxc = JMXConnectorFactory.newJMXConnector(jmxcs.getAddress(),
-                                                           map3);
-                errorCount++;
-                echo("\tTest FAILED!");
-            } catch (Exception e) {
-                echo("\tException Message: " + e.getMessage());
-                echo("\tTest PASSED!");
-            } finally {
-                jmxcs.stop();
-            }
+	    echo("\tJMXConnectorFactory.newJMXConnector()");
+	    try {
+		url = new JMXServiceURL(urlStr + "3");
+		jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
+									null,
+									mbs);
+		jmxcs.start();
+		jmxc = JMXConnectorFactory.newJMXConnector(jmxcs.getAddress(),
+							   map3);
+		errorCount++;
+		echo("\tTest FAILED!");
+	    } catch (Exception e) {
+		echo("\tException Message: " + e.getMessage());
+		echo("\tTest PASSED!");
+	    } finally {
+		jmxcs.stop();
+	    }
 
-            echo("\tJMXConnectorFactory.connect()");
-            try {
-                url = new JMXServiceURL(urlStr + "4");
-                jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
-                                                                        null,
-                                                                        mbs);
-                jmxcs.start();
-                jmxc = JMXConnectorFactory.connect(jmxcs.getAddress(), map3);
-                errorCount++;
-                echo("\tTest FAILED!");
-            } catch (Exception e) {
-                echo("\tException Message: " + e.getMessage());
-                echo("\tTest PASSED!");
-            } finally {
-                jmxcs.stop();
-            }
+	    echo("\tJMXConnectorFactory.connect()");
+	    try {
+		url = new JMXServiceURL(urlStr + "4");
+		jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
+									null,
+									mbs);
+		jmxcs.start();
+		jmxc = JMXConnectorFactory.connect(jmxcs.getAddress(), map3);
+		errorCount++;
+		echo("\tTest FAILED!");
+	    } catch (Exception e) {
+		echo("\tException Message: " + e.getMessage());
+		echo("\tTest PASSED!");
+	    } finally {
+		jmxcs.stop();
+	    }
 
-            echo("\tJMXConnector.connect()");
-            try {
-                url = new JMXServiceURL(urlStr + "5");
-                jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
-                                                                        null,
-                                                                        mbs);
-                jmxcs.start();
-                jmxc = JMXConnectorFactory.newJMXConnector(jmxcs.getAddress(),
-                                                           null);
-                jmxc.connect(map3);
-                errorCount++;
-                echo("\tTest FAILED!");
-            } catch (Exception e) {
-                echo("\tException Message: " + e.getMessage());
-                echo("\tTest PASSED!");
-            } finally {
-                jmxcs.stop();
-            }
+	    echo("\tJMXConnector.connect()");
+	    try {
+		url = new JMXServiceURL(urlStr + "5");
+		jmxcs = JMXConnectorServerFactory.newJMXConnectorServer(url,
+									null,
+									mbs);
+		jmxcs.start();
+		jmxc = JMXConnectorFactory.newJMXConnector(jmxcs.getAddress(),
+							   null);
+		jmxc.connect(map3);
+		errorCount++;
+		echo("\tTest FAILED!");
+	    } catch (Exception e) {
+		echo("\tException Message: " + e.getMessage());
+		echo("\tTest PASSED!");
+	    } finally {
+		jmxcs.stop();
+	    }
 
-        } catch (Exception e) {
-            echo("\tGot unexpected exception!");
-            e.printStackTrace(System.out);
-            errorCount = 1;
-        }
+	} catch (Exception e) {
+	    echo("\tGot unexpected exception!");
+	    e.printStackTrace(System.out);
+	    errorCount = 1;
+	}
 
         if (errorCount == 0) {
             echo("");
@@ -341,7 +341,7 @@ public class MapNullValuesTest {
     }
 
     private static String dashedMessage(String message) {
-        final int MAX_LINE = 80;
+	final int MAX_LINE = 80;
         StringBuffer sb = new StringBuffer(message);
         sb.append(" ");
         for (int i = MAX_LINE; i > message.length() + 1; i--)
@@ -359,30 +359,30 @@ public class MapNullValuesTest {
 
         MapNullValuesTest test = new MapNullValuesTest();
 
-        // Create an RMI registry
-        //
+	// Create an RMI registry
+	//
         echo("");
-        echo(dashedMessage("Start RMI registry"));
-        Registry reg = null;
-        port = 7500;
-        while (port++ < 7550) {
-            try {
-                reg = LocateRegistry.createRegistry(port);
-                echo("\nRMI registry running on port " + port);
-                break;
-            } catch (RemoteException e) {
-                // Failed to create RMI registry...
-                //
-                echo("\nFailed to create RMI registry on port " + port);
-                e.printStackTrace(System.out);
-            }
-        }
-        if (reg == null) {
-            System.exit(1);
-        }
+	echo(dashedMessage("Start RMI registry"));
+	Registry reg = null;
+	port = 7500;
+	while (port++ < 7550) {
+	    try {
+		reg = LocateRegistry.createRegistry(port);
+		echo("\nRMI registry running on port " + port);
+		break;
+	    } catch (RemoteException e) {
+		// Failed to create RMI registry...
+		//
+		echo("\nFailed to create RMI registry on port " + port);
+		e.printStackTrace(System.out);
+	    }
+	}
+	if (reg == null) {
+	    System.exit(1);
+	}
 
-        // Run tests
-        //
+	// Run tests
+	//
         errorCount += test.mapToHashtableTests();
         errorCount += test.jmxConnectorServerFactoryTests();
         errorCount += test.jmxConnectorFactoryTests();
@@ -392,7 +392,7 @@ public class MapNullValuesTest {
             echo("\nNull values for key/value pairs in Map Tests PASSED!");
         } else {
             echo("\nNull values for key/value pairs in Map Tests FAILED!");
-            System.exit(1);
+	    System.exit(1);
         }
     }
 }

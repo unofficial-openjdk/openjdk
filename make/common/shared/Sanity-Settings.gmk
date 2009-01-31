@@ -102,6 +102,9 @@ ifeq ($(PLATFORM),windows)
     ALL_SETTINGS+=$(call addAltSetting,MSVCR71_DLL_PATH)
   endif
   ALL_SETTINGS+=$(call addAltSetting,MSDEVTOOLS_PATH)
+else
+  ALL_SETTINGS+=$(call addAltSetting,MOTIF_DIR)
+  ALL_SETTINGS+=$(call addOptionalSetting,MOTIF_REQUIRED)
 endif
 ALL_SETTINGS+=$(call addOptionalSetting,COMPILER_NAME)
 ALL_SETTINGS+=$(call addOptionalSetting,COMPILER_VERSION)
@@ -229,6 +232,10 @@ ifeq ($(PLATFORM),windows)
   ALL_SETTINGS+=$(call addAltSetting,DXSDK_PATH)
   ALL_SETTINGS+=$(call addAltSetting,DXSDK_INCLUDE_PATH)
   ALL_SETTINGS+=$(call addAltSetting,DXSDK_LIB_PATH)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+    ALL_SETTINGS+=$(call addAltSetting,UNICOWS_DLL_PATH)
+    ALL_SETTINGS+=$(call addAltSetting,UNICOWS_LIB_PATH)
+  endif
   ifndef OPENJDK
     ALL_SETTINGS+=$(call addAltSetting,DEPLOY_MSSDK)
     ALL_SETTINGS+=$(call addAltSetting,INSTALL_MSSDK)

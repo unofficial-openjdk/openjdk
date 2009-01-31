@@ -45,6 +45,7 @@ import sun.java2d.loops.SurfaceType;
  *
  * @see GraphicsEnvironment
  * @see GraphicsConfiguration
+ * @version 10 Feb 1997
  */
 public class X11GraphicsDevice
     extends GraphicsDevice
@@ -61,7 +62,7 @@ public class X11GraphicsDevice
     private boolean shutdownHookRegistered;
 
     public X11GraphicsDevice(int screennum) {
-        this.screen = screennum;
+	this.screen = screennum;
     }
 
     /*
@@ -108,7 +109,7 @@ public class X11GraphicsDevice
      * @see #TYPE_IMAGE_BUFFER
      */
     public int getType() {
-        return TYPE_RASTER_SCREEN;
+	return TYPE_RASTER_SCREEN;
     }
 
     /**
@@ -116,7 +117,7 @@ public class X11GraphicsDevice
      * device.
      */
     public String getIDstring() {
-        return ":0."+screen;
+	return ":0."+screen;
     }
 
 
@@ -203,7 +204,7 @@ public class X11GraphicsDevice
     }
     // Enumerates all visuals that support double buffering
     private native void getDoubleBufferVisuals(int screen);
-
+    
     /**
      * Returns the default graphics configuration
      * associated with this graphics device.
@@ -245,7 +246,7 @@ public class X11GraphicsDevice
                                                             depth, getConfigColormap(0, screen),
                                                             doubleBuffer);
             }
-        }
+	}
     }
 
     private static native void enterFullScreenExclusive(long window);
@@ -281,11 +282,11 @@ public class X11GraphicsDevice
         // exclusive mode at any given time...
         boolean fsAvailable = (screen == 0) && isXrandrExtensionSupported();
         if (fsAvailable) {
-            SecurityManager security = System.getSecurityManager();
-            if (security != null) {
-                if (fullScreenExclusivePermission == null) {
-                    fullScreenExclusivePermission =
-                        new AWTPermission("fullScreenExclusive");
+            SecurityManager security = System.getSecurityManager(); 
+            if (security != null) { 
+                if (fullScreenExclusivePermission == null) { 
+                    fullScreenExclusivePermission = 
+                        new AWTPermission("fullScreenExclusive"); 
                 }
                 try {
                     security.checkPermission(fullScreenExclusivePermission);
@@ -327,7 +328,7 @@ public class X11GraphicsDevice
         if (fsSupported && old != null) {
             // enter windowed mode (and restore original display mode)
             exitFullScreenExclusive(old);
-            setDisplayMode(origDisplayMode);
+            setDisplayMode(origDisplayMode);            
         }
 
         super.setFullScreenWindow(w);
@@ -485,6 +486,6 @@ public class X11GraphicsDevice
     }
 
     public String toString() {
-        return ("X11GraphicsDevice[screen="+screen+"]");
+	return ("X11GraphicsDevice[screen="+screen+"]");
     }
 }

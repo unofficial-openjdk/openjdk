@@ -89,14 +89,14 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * is null or <code>key</code> is null or empty.
      */
     public SecretKeySpec(byte[] key, String algorithm) {
-        if (key == null || algorithm == null) {
-            throw new IllegalArgumentException("Missing argument");
-        }
-        if (key.length == 0) {
-            throw new IllegalArgumentException("Empty key");
-        }
-        this.key = (byte[])key.clone();
-        this.algorithm = algorithm;
+	if (key == null || algorithm == null) {
+	    throw new IllegalArgumentException("Missing argument");
+	}
+	if (key.length == 0) {
+	    throw new IllegalArgumentException("Empty key");
+	}
+	this.key = (byte[])key.clone();
+	this.algorithm = algorithm;
     }
 
     /**
@@ -138,22 +138,22 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * <code>key</code>.
      */
     public SecretKeySpec(byte[] key, int offset, int len, String algorithm) {
-        if (key == null || algorithm == null) {
-            throw new IllegalArgumentException("Missing argument");
-        }
-        if (key.length == 0) {
-            throw new IllegalArgumentException("Empty key");
-        }
-        if (key.length-offset < len) {
-            throw new IllegalArgumentException
-                ("Invalid offset/length combination");
-        }
-        if (len < 0) {
-            throw new ArrayIndexOutOfBoundsException("len is negative");
-        }
-        this.key = new byte[len];
-        System.arraycopy(key, offset, this.key, 0, len);
-        this.algorithm = algorithm;
+	if (key == null || algorithm == null) {
+	    throw new IllegalArgumentException("Missing argument");
+	}
+	if (key.length == 0) {
+	    throw new IllegalArgumentException("Empty key");
+	}
+	if (key.length-offset < len) {
+	    throw new IllegalArgumentException
+		("Invalid offset/length combination");
+	}
+	if (len < 0) {
+	    throw new ArrayIndexOutOfBoundsException("len is negative");
+	}
+	this.key = new byte[len];
+	System.arraycopy(key, offset, this.key, 0, len);
+	this.algorithm = algorithm;
     }
 
     /**
@@ -162,7 +162,7 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * @return the secret key algorithm.
      */
     public String getAlgorithm() {
-        return this.algorithm;
+	return this.algorithm;
     }
 
     /**
@@ -171,7 +171,7 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * @return the string "RAW".
      */
     public String getFormat() {
-        return "RAW";
+	return "RAW";
     }
 
     /**
@@ -181,7 +181,7 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * each time this method is called.
      */
     public byte[] getEncoded() {
-        return (byte[])this.key.clone();
+	return (byte[])this.key.clone();
     }
 
     /**
@@ -189,14 +189,14 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * Objects that are equal will also have the same hashcode.
      */
     public int hashCode() {
-        int retval = 0;
-        for (int i = 1; i < this.key.length; i++) {
-            retval += this.key[i] * i;
-        }
-        if (this.algorithm.equalsIgnoreCase("TripleDES"))
-            return (retval ^= "desede".hashCode());
-        else
-            return (retval ^= this.algorithm.toLowerCase().hashCode());
+	int retval = 0;
+	for (int i = 1; i < this.key.length; i++) {
+	    retval += this.key[i] * i;
+	}
+	if (this.algorithm.equalsIgnoreCase("TripleDES"))
+	    return (retval ^= "desede".hashCode());
+	else
+	    return (retval ^= this.algorithm.toLowerCase().hashCode());
     }
 
    /**
@@ -211,23 +211,23 @@ public class SecretKeySpec implements KeySpec, SecretKey {
      * <code>obj</code> is null or otherwise.
      */
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
+	if (this == obj)
+	    return true;
 
-        if (!(obj instanceof SecretKey))
-            return false;
+	if (!(obj instanceof SecretKey))
+	    return false;
 
-        String thatAlg = ((SecretKey)obj).getAlgorithm();
-        if (!(thatAlg.equalsIgnoreCase(this.algorithm))) {
-            if ((!(thatAlg.equalsIgnoreCase("DESede"))
-                 || !(this.algorithm.equalsIgnoreCase("TripleDES")))
-                && (!(thatAlg.equalsIgnoreCase("TripleDES"))
-                    || !(this.algorithm.equalsIgnoreCase("DESede"))))
-            return false;
-        }
+	String thatAlg = ((SecretKey)obj).getAlgorithm();
+	if (!(thatAlg.equalsIgnoreCase(this.algorithm))) {
+	    if ((!(thatAlg.equalsIgnoreCase("DESede"))
+		 || !(this.algorithm.equalsIgnoreCase("TripleDES")))
+		&& (!(thatAlg.equalsIgnoreCase("TripleDES"))
+		    || !(this.algorithm.equalsIgnoreCase("DESede"))))
+	    return false;
+	}
 
-        byte[] thatKey = ((SecretKey)obj).getEncoded();
+	byte[] thatKey = ((SecretKey)obj).getEncoded();
 
-        return java.util.Arrays.equals(this.key, thatKey);
+	return java.util.Arrays.equals(this.key, thatKey);
     }
 }

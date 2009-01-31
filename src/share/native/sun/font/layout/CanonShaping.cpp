@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)CanonShaping.cpp	1.3 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -35,7 +36,7 @@
 #include "GlyphDefinitionTables.h"
 #include "ClassDefinitionTables.h"
 
-void CanonShaping::sortMarks(le_int32 *indices,
+void CanonShaping::sortMarks(le_int32 *indices, 
     const le_int32 *combiningClasses, le_int32 index, le_int32 limit)
 {
     for (le_int32 j = index + 1; j < limit; j += 1) {
@@ -55,12 +56,12 @@ void CanonShaping::sortMarks(le_int32 *indices,
     }
 }
 
-void CanonShaping::reorderMarks(const LEUnicode *inChars, le_int32 charCount,
+void CanonShaping::reorderMarks(const LEUnicode *inChars, le_int32 charCount, 
     le_bool rightToLeft, LEUnicode *outChars, LEGlyphStorage &glyphStorage)
 {
-    const GlyphDefinitionTableHeader *gdefTable =
+    const GlyphDefinitionTableHeader *gdefTable = 
         (const GlyphDefinitionTableHeader *) glyphDefinitionTable;
-    const ClassDefinitionTable *classTable =
+    const ClassDefinitionTable *classTable = 
         gdefTable->getMarkAttachClassDefinitionTable();
     le_int32 *combiningClasses = LE_NEW_ARRAY(le_int32, charCount);
     le_int32 *indices = LE_NEW_ARRAY(le_int32, charCount);
@@ -103,3 +104,4 @@ void CanonShaping::reorderMarks(const LEUnicode *inChars, le_int32 charCount,
     LE_DELETE_ARRAY(indices);
     LE_DELETE_ARRAY(combiningClasses);
 }
+

@@ -42,7 +42,7 @@ import java.security.PrivilegedAction;
 
 /**
  * This class provides a hook to access platform-specific
- * imaging code.
+ * imaging code.  
  *
  * If the implementing class cannot handle the op, tile format or
  * image format, the method will return null;
@@ -55,16 +55,16 @@ public class ImagingLib {
 
     static boolean useLib = true;
     static boolean verbose = false;
-
+    
     private static final int NUM_NATIVE_OPS = 3;
     private static final int LOOKUP_OP   = 0;
     private static final int AFFINE_OP   = 1;
     private static final int CONVOLVE_OP = 2;
-
+ 
     private static Class[] nativeOpClass = new Class[NUM_NATIVE_OPS];
 
     /**
-     * Returned value indicates whether the library initailization was
+     * Returned value indicates whether the library initailization was 
      * succeded.
      *
      * There could be number of reasons to failure:
@@ -88,12 +88,12 @@ public class ImagingLib {
                                               byte[][] table);
 
     static {
-
+        
         PrivilegedAction<Boolean> doMlibInitialization =
             new PrivilegedAction<Boolean>() {
                 public Boolean run() {
                     String arch = System.getProperty("os.arch");
-
+                    
                     if (arch == null || !arch.startsWith("sparc")) {
                         try {
                             System.loadLibrary("mlib_image");
@@ -106,9 +106,9 @@ public class ImagingLib {
                     return Boolean.valueOf(success);
                 }
             };
-
+        
         useLib = AccessController.doPrivileged(doMlibInitialization);
-
+        
         //
         // Cache the class references of the operations we know about
         // at the time this class is initially loaded.
@@ -155,16 +155,16 @@ public class ImagingLib {
         if (useLib == false) {
             return null;
         }
-
+    
         // Create the destination tile
         if (dst == null) {
             dst = op.createCompatibleDestRaster(src);
         }
-
-
+    
+ 
         WritableRaster retRaster = null;
         switch (getNativeOpIndex(op.getClass())) {
-
+ 
           case LOOKUP_OP:
             // REMIND: Fix this!
             LookupTable table = ((LookupOp)op).getTable();
@@ -179,7 +179,7 @@ public class ImagingLib {
                 }
             }
             break;
-
+ 
           case AFFINE_OP:
             AffineTransformOp bOp = (AffineTransformOp) op;
             double[] matrix = new double[6];
@@ -189,7 +189,7 @@ public class ImagingLib {
                 retRaster =  dst;
             }
             break;
-
+ 
           case CONVOLVE_OP:
             ConvolveOp cOp = (ConvolveOp) op;
             if (convolveRaster(src, dst,
@@ -197,7 +197,7 @@ public class ImagingLib {
                 retRaster = dst;
             }
             break;
-
+ 
           default:
             break;
         }
@@ -209,7 +209,7 @@ public class ImagingLib {
         return retRaster;
     }
 
-
+    
     public static BufferedImage filter(BufferedImageOp op, BufferedImage src,
                                        BufferedImage dst)
     {
@@ -217,19 +217,19 @@ public class ImagingLib {
             System.out.println("in filter and op is "+op
                                + "bufimage is "+src+" and "+dst);
         }
-
+ 
         if (useLib == false) {
             return null;
         }
-
+ 
         // Create the destination image
         if (dst == null) {
             dst = op.createCompatibleDestImage(src, null);
         }
-
+ 
         BufferedImage retBI = null;
         switch (getNativeOpIndex(op.getClass())) {
-
+ 
           case LOOKUP_OP:
             // REMIND: Fix this!
             LookupTable table = ((LookupOp)op).getTable();
@@ -244,19 +244,19 @@ public class ImagingLib {
                 }
             }
             break;
-
+ 
           case AFFINE_OP:
             AffineTransformOp bOp = (AffineTransformOp) op;
             double[] matrix = new double[6];
             AffineTransform xform = bOp.getTransform();
             bOp.getTransform().getMatrix(matrix);
-
+ 
             if (transformBI(src, dst, matrix,
                             bOp.getInterpolationType())>0) {
                 retBI = dst;
             }
             break;
-
+ 
           case CONVOLVE_OP:
             ConvolveOp cOp = (ConvolveOp) op;
             if (convolveBI(src, dst, cOp.getKernel(),
@@ -264,15 +264,16 @@ public class ImagingLib {
                 retBI = dst;
             }
             break;
-
+ 
           default:
             break;
         }
 
-        if (retBI != null) {
+	if (retBI != null) {
             SunWritableRaster.markDirty(retBI);
-        }
+	}
 
         return retBI;
     }
 }
+ 

@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management;
+package javax.management; 
 
 
 /**
@@ -31,7 +31,7 @@ package javax.management;
  *
  * @since 1.5
  */
-public class InstanceAlreadyExistsException extends OperationsException   {
+public class InstanceAlreadyExistsException extends OperationsException   { 
 
     /* Serial version */
     private static final long serialVersionUID = 8893743928912733931L;
@@ -40,16 +40,16 @@ public class InstanceAlreadyExistsException extends OperationsException   {
      * Default constructor.
      */
     public InstanceAlreadyExistsException() {
-        super();
+	super();
     }
-
+    
     /**
      * Constructor that allows a specific error message to be specified.
      *
      * @param message the detail message.
      */
     public InstanceAlreadyExistsException(String message) {
-        super(message);
+	super(message);
     }
-
+    
  }

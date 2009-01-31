@@ -31,6 +31,7 @@ import sun.nio.cs.IBM775;
  * Tables and data to convert Unicode to Cp775
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp775 extends CharToByteSingleByte {

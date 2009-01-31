@@ -87,12 +87,13 @@
 struct ModuleData {
 
     HINSTANCE hModule;
-
+    
     /* The pointer to the PKCS#11 functions of this module. */
     CK_FUNCTION_LIST_PTR ckFunctionListPtr;
-
+    
     /* Reference to the object to use for mutex handling. NULL, if not used. */
     jobject applicationMutexHandler;
 
 };
 typedef struct ModuleData ModuleData;
+

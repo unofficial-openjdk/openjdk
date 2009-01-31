@@ -30,14 +30,14 @@ package sun.font;
  * the runtime representation of a logical font.
  */
 public class CompositeFontDescriptor {
-
+    
     private String faceName;
     private int coreComponentCount;
     private String[] componentFaceNames;
     private String[] componentFileNames;
     private int[] exclusionRanges;
     private int[] exclusionRangeLimits;
-
+    
     /**
      * Constructs a composite font descriptor.
      * @param faceName the font face name, i.e., the family name suffixed
@@ -65,27 +65,27 @@ public class CompositeFontDescriptor {
         this.exclusionRanges = exclusionRanges;
         this.exclusionRangeLimits = exclusionRangeLimits;
     }
-
+    
     public String getFaceName() {
         return faceName;
     }
-
+    
     public int getCoreComponentCount() {
         return coreComponentCount;
     }
-
+    
     public String[] getComponentFaceNames() {
         return componentFaceNames;
     }
-
+    
     public String[] getComponentFileNames() {
         return componentFileNames;
     }
-
+    
     public int[] getExclusionRanges() {
         return exclusionRanges;
     }
-
+    
     public int[] getExclusionRangeLimits() {
         return exclusionRangeLimits;
     }

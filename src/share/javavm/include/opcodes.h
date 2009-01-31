@@ -260,9 +260,10 @@ typedef enum {
   opc_first_unused_index = 230,
   opc_software = 254,
   opc_hardware = 255,
-  opc_dummy = (int)0xF0000000U      /* portability change, opc_invokeinit in the
-                                     * verifier requires more than 8 bits.
-                                     */
+  opc_dummy = (int)0xF0000000U      /* portability change, opc_invokeinit in the 
+				     * verifier requires more than 8 bits.
+				     */
 } opcode_type;
 
 #endif /* !_JAVASOFT_OPCODES_H_ */
+

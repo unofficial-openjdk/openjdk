@@ -44,13 +44,13 @@ public class GetVMOption {
         "com.sun.management:type=HotSpotDiagnostic";
 
     public static void main(String[] args) throws Exception {
-        HotSpotDiagnosticMXBean mbean =
+        HotSpotDiagnosticMXBean mbean = 
             sun.management.ManagementFactory.getDiagnosticMXBean();
         checkVMOption(mbean);
 
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        mbean = ManagementFactory.newPlatformMXBeanProxy(mbs,
-                    HOTSPOT_DIAGNOSTIC_MXBEAN_NAME,
+        mbean = ManagementFactory.newPlatformMXBeanProxy(mbs, 
+                    HOTSPOT_DIAGNOSTIC_MXBEAN_NAME, 
                     HotSpotDiagnosticMXBean.class);
         checkVMOption(mbean);
     }

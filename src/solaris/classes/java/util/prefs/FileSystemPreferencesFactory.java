@@ -31,6 +31,7 @@ package java.util.prefs;
  * java.util.prefs.PreferencesFactory system property.
  *
  * @author  Josh Bloch
+ * @version %I%, %G%
  * @see     FileSystemPreferences
  * @see     Preferences
  * @since   1.4

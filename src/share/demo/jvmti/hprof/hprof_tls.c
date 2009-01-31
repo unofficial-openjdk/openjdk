@@ -35,7 +35,7 @@
 
 /*
  * The tls table items have a key of it's serial number, but may be
- *   searched via a walk of the table looking for a jthread match.
+ *   searched via a walk of the table looking for a jthread match. 
  *   This isn't a performance
  *   issue because the table index should normally be stored in the
  *   Thread Local Storage for the thread. The table is only searched
@@ -57,7 +57,7 @@
  *   that stack trace is updated with an additional 'hit'.
  *
  * This file also contains the dump logic for owned monitors, and for
- *   threads.
+ *   threads. 
  *
  */
 
@@ -65,13 +65,13 @@
  * Initial number of stack elements to track per thread. This
  * value should be set to a reasonable guess as to the number of
  * methods deep a thread calls. This stack doubles in size for each
- * reallocation and does not shrink.
+ * reallocation and does not shrink. 
  */
 
 #define INITIAL_THREAD_STACK_LIMIT 64
 
 typedef struct StackElement {
-    FrameIndex  frame_index;            /* Frame (method/location(-1)) */
+    FrameIndex  frame_index;	        /* Frame (method/location(-1)) */
     jmethodID   method;                 /* Method ID */
     jlong       method_start_time;      /* method start time */
     jlong       time_in_callees;        /* time in callees */
@@ -100,9 +100,9 @@ typedef struct SearchData {
 } SearchData;
 
 typedef struct IterateInfo {
-    TlsIndex *          ptls_index;
-    jthread  *          pthreads;
-    jint                count;
+    TlsIndex *		ptls_index;
+    jthread  *		pthreads;
+    jint		count;
 } IterateInfo;
 
 typedef struct ThreadList {
@@ -127,7 +127,7 @@ get_key(TlsIndex index)
     int           key_len;
 
     if ( index == 0 ) {
-        return 0;
+	return 0;
     }
     pkey    = NULL;
     key_len = 0;
@@ -147,13 +147,13 @@ static void
 delete_globalref(JNIEnv *env, TlsInfo *info)
 {
     jthread ref;
-
+    
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(info!=NULL);
     ref = info->globalref;
     info->globalref = NULL;
     if ( ref != NULL ) {
-        deleteWeakGlobalReference(env, ref);
+	deleteWeakGlobalReference(env, ref);
     }
 }
 
@@ -162,22 +162,22 @@ clean_info(TlsInfo *info)
 {
     /* Free up any allocated space in this TlsInfo structure */
     if ( info->stack != NULL ) {
-        stack_term(info->stack);
-        info->stack = NULL;
+	stack_term(info->stack);
+	info->stack = NULL;
     }
     if ( info->frames_buffer != NULL ) {
-        HPROF_FREE(info->frames_buffer);
-        info->frames_buffer = NULL;
+	HPROF_FREE(info->frames_buffer);
+	info->frames_buffer = NULL;
     }
     if ( info->jframes_buffer != NULL ) {
-        HPROF_FREE(info->jframes_buffer);
-        info->jframes_buffer = NULL;
+	HPROF_FREE(info->jframes_buffer);
+	info->jframes_buffer = NULL;
     }
 }
 
 static void
-cleanup_item(TableIndex index, void *key_ptr, int key_len,
-                        void *info_ptr, void *arg)
+cleanup_item(TableIndex index, void *key_ptr, int key_len, 
+			void *info_ptr, void *arg)
 {
     TlsInfo *   info;
 
@@ -186,24 +186,24 @@ cleanup_item(TableIndex index, void *key_ptr, int key_len,
 }
 
 static void
-delete_ref_item(TableIndex index, void *key_ptr, int key_len,
-                        void *info_ptr, void *arg)
+delete_ref_item(TableIndex index, void *key_ptr, int key_len, 
+			void *info_ptr, void *arg)
 {
     delete_globalref((JNIEnv*)arg, (TlsInfo*)info_ptr);
 }
 
 static void
-list_item(TableIndex index, void *key_ptr, int key_len,
-                        void *info_ptr, void *arg)
+list_item(TableIndex index, void *key_ptr, int key_len, 
+			void *info_ptr, void *arg)
 {
     TlsInfo     *info;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
-
+    
     info        = (TlsInfo*)info_ptr;
     debug_message( "Tls 0x%08x: SN=%u, sample_status=%d, agent=%d, "
-                          "thread=%p, monitor=0x%08x, "
-                          "tracker_status=%d\n",
+			  "thread=%p, monitor=0x%08x, "
+			  "tracker_status=%d\n",
                 index,
                 *(SerialNumber*)key_ptr,
                 info->sample_status,
@@ -214,24 +214,24 @@ list_item(TableIndex index, void *key_ptr, int key_len,
 }
 
 static void
-search_item(TableIndex index, void *key_ptr, int key_len,
-                        void *info_ptr, void *arg)
+search_item(TableIndex index, void *key_ptr, int key_len, 
+			void *info_ptr, void *arg)
 {
     TlsInfo     *info;
     SearchData  *data;
     jobject      lref;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
     HPROF_ASSERT(arg!=NULL);
     info        = (TlsInfo*)info_ptr;
-    data        = (SearchData*)arg;
+    data	= (SearchData*)arg;
     lref        = newLocalReference(data->env, info->globalref);
     if ( lref != NULL ) {
-        if ( isSameObject(data->env, data->thread, lref) ) {
-            HPROF_ASSERT(data->found==0); /* Did we find more than one? */
-            data->found = index;
-        }
-        deleteLocalReference(data->env, lref);
+	if ( isSameObject(data->env, data->thread, lref) ) {
+	    HPROF_ASSERT(data->found==0); /* Did we find more than one? */
+	    data->found = index;
+	}
+	deleteLocalReference(data->env, lref);
     }
 }
 
@@ -242,7 +242,7 @@ search(JNIEnv *env, jthread thread)
 
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(thread!=NULL);
-
+    
     data.env = env;
     data.thread = thread;
     data.found = 0;
@@ -251,24 +251,24 @@ search(JNIEnv *env, jthread thread)
 }
 
 static void
-garbage_collect_item(TableIndex index, void *key_ptr, int key_len,
-                        void *info_ptr, void *arg)
+garbage_collect_item(TableIndex index, void *key_ptr, int key_len, 
+			void *info_ptr, void *arg)
 {
     TlsInfo     *info;
     JNIEnv      *env;
     jobject      lref;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
     HPROF_ASSERT(arg!=NULL);
     info        = (TlsInfo*)info_ptr;
-    env         = (JNIEnv*)arg;
+    env 	= (JNIEnv*)arg;
     lref        = newLocalReference(env, info->globalref);
     if ( lref == NULL ) {
-        delete_globalref(env, info);
-        clean_info(info);
-        table_free_entry(gdata->tls_table, index);
+	delete_globalref(env, info);
+	clean_info(info);
+	table_free_entry(gdata->tls_table, index);
     } else {
-        deleteLocalReference(env, lref);
+	deleteLocalReference(env, lref);
     }
 }
 
@@ -285,7 +285,7 @@ static void
 sum_sample_status_item(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     TlsInfo     *info;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
     info                = (TlsInfo*)info_ptr;
     if ( !info->agent_thread ) {
@@ -300,13 +300,13 @@ setup_trace_buffers(TlsInfo *info, int max_depth)
     int max_frames;
 
     if ( info->frames_buffer != NULL && info->buffer_depth >= max_depth ) {
-        return;
+	return;
     }
     if ( info->frames_buffer != NULL ) {
-        HPROF_FREE(info->frames_buffer);
+	HPROF_FREE(info->frames_buffer);
     }
     if ( info->jframes_buffer != NULL ) {
-        HPROF_FREE(info->jframes_buffer);
+	HPROF_FREE(info->jframes_buffer);
     }
     info->buffer_depth      = max_depth;
     max_frames              = max_depth + 4; /* Allow for BCI & <init> */
@@ -318,16 +318,16 @@ setup_trace_buffers(TlsInfo *info, int max_depth)
 
 static TraceIndex
 get_trace(jthread thread, SerialNumber thread_serial_num,
-                int depth, jboolean skip_init,
-                FrameIndex *frames_buffer, jvmtiFrameInfo *jframes_buffer)
+		int depth, jboolean skip_init,
+		FrameIndex *frames_buffer, jvmtiFrameInfo *jframes_buffer)
 {
     TraceIndex trace_index;
-
+  
     trace_index = gdata->system_trace_index;
     if ( thread != NULL ) {
         trace_index = trace_get_current(thread,
-                        thread_serial_num, depth, skip_init,
-                        frames_buffer, jframes_buffer);
+			thread_serial_num, depth, skip_init,
+			frames_buffer, jframes_buffer);
     }
     return trace_index;
 }
@@ -337,17 +337,17 @@ static void
 sample_setter(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     TlsInfo *info;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
-
+    
     info  = (TlsInfo*)info_ptr;
     if ( info->globalref != NULL && !info->agent_thread ) {
-        SampleData *data;
-
-        data   = (SampleData*)arg;
-        if ( data->thread_object_index == info->thread_object_index ) {
-            info->sample_status = data->sample_status;
-        }
+	SampleData *data;
+	
+	data   = (SampleData*)arg;
+	if ( data->thread_object_index == info->thread_object_index ) {
+	    info->sample_status = data->sample_status;
+	}
     }
 }
 
@@ -359,38 +359,38 @@ get_thread_list(TableIndex index, void *key_ptr, int key_len, void *info_ptr, vo
     TlsInfo     *info;
     ThreadList  *list;
     jthread      thread;
-
+    
     HPROF_ASSERT(key_ptr!=NULL);
     HPROF_ASSERT(info_ptr!=NULL);
-
+    
     thread_serial_num = *(SerialNumber*)key_ptr;
     info              = (TlsInfo*)info_ptr;
     list              = (ThreadList*)arg;
     thread            = newLocalReference(list->env, info->globalref);
     if ( thread != NULL && info->sample_status != 0 && !info->agent_thread ) {
-        if ( list->infos != NULL ) {
-            list->infos[list->count] = info;
-        }
-        if ( list->serial_nums != NULL ) {
-            list->serial_nums[list->count] = thread_serial_num;
-        }
-        list->threads[list->count] = thread;
-        list->count++;
-        /* Local reference gets freed by caller */
+	if ( list->infos != NULL ) {
+	    list->infos[list->count] = info;
+	}
+	if ( list->serial_nums != NULL ) {
+	    list->serial_nums[list->count] = thread_serial_num;
+	}
+	list->threads[list->count] = thread;
+	list->count++;
+	/* Local reference gets freed by caller */
     } else {
-        /* If we don't use the local reference, delete it now */
-        if ( thread != NULL ) {
-            deleteLocalReference(list->env, thread);
-        }
+	/* If we don't use the local reference, delete it now */
+	if ( thread != NULL ) {
+	    deleteLocalReference(list->env, thread);
+	}
     }
 }
 
 static void
 adjust_stats(jlong total_time, jlong self_time, TraceIndex trace_index,
-             StackElement *parent)
+	     StackElement *parent)
 {
     if ( total_time > 0 && parent != NULL ) {  /* if a caller exists */
-        parent->time_in_callees += total_time;
+	parent->time_in_callees += total_time;
     }
     trace_increment_cost(trace_index, 1, self_time, total_time);
 }
@@ -400,7 +400,7 @@ push_method(Stack *stack, jlong method_start_time, jmethodID method)
 {
     StackElement new_element;
     FrameIndex   frame_index;
-
+    
     HPROF_ASSERT(method!=NULL);
     HPROF_ASSERT(stack!=NULL);
 
@@ -411,11 +411,11 @@ push_method(Stack *stack, jlong method_start_time, jmethodID method)
     new_element.method_start_time= method_start_time;
     new_element.time_in_callees  = (jlong)0;
     stack_push(stack, &new_element);
-}
+}  
 
 static Stack *
 insure_method_on_stack(jthread thread, TlsInfo *info, jlong current_time,
-                FrameIndex frame_index, jmethodID method)
+		FrameIndex frame_index, jmethodID method)
 {
     StackElement  element;
     void         *p;
@@ -429,22 +429,22 @@ insure_method_on_stack(jthread thread, TlsInfo *info, jlong current_time,
     stack = info->stack;
 
     HPROF_ASSERT(method!=NULL);
-
+   
     /* If this method is on the stack, just return */
     depth   = stack_depth(stack);
     p = stack_top(stack);
     if ( p != NULL ) {
         element = *(StackElement*)p;
-        if ( element.frame_index == frame_index ) {
-            return stack;
+	if ( element.frame_index == frame_index ) {
+	    return stack;
         }
     }
     for ( i = 0 ; i < depth ; i++ ) {
         p = stack_element(stack, i);
         element = *(StackElement*)p;
-        if ( element.frame_index == frame_index ) {
-            return stack;
-        }
+	if ( element.frame_index == frame_index ) {
+	    return stack;
+	}
     }
 
     /* It wasn't found, create a new stack */
@@ -457,16 +457,16 @@ insure_method_on_stack(jthread thread, TlsInfo *info, jlong current_time,
     HPROF_ASSERT(count==fcount);
 
     /* Create a new stack */
-    new_stack = stack_init(INITIAL_THREAD_STACK_LIMIT,
-                            INITIAL_THREAD_STACK_LIMIT,
-                            (int)sizeof(StackElement));
+    new_stack = stack_init(INITIAL_THREAD_STACK_LIMIT, 
+			    INITIAL_THREAD_STACK_LIMIT,
+			    (int)sizeof(StackElement));
     for ( i = count-1; i >= 0 ; i-- ) {
-        push_method(new_stack, current_time, info->jframes_buffer[i].method);
+	push_method(new_stack, current_time, info->jframes_buffer[i].method);
     }
     if ( depth > 0 ) {
-        for ( i = depth-1 ; i >= 0; i-- ) {
-            stack_push(new_stack, stack_element(stack, i));
-        }
+	for ( i = depth-1 ; i >= 0; i-- ) {
+	    stack_push(new_stack, stack_element(stack, i));
+	}
     }
     stack_term(stack);
     return new_stack;
@@ -488,7 +488,7 @@ pop_method(TlsIndex index, jlong current_time, jmethodID method, FrameIndex fram
 
     HPROF_ASSERT(method!=NULL);
     HPROF_ASSERT(frame_index!=0);
-
+    
     thread_serial_num  = get_key(index);
     info               = get_info(index);
     HPROF_ASSERT(info!=NULL);
@@ -497,37 +497,37 @@ pop_method(TlsIndex index, jlong current_time, jmethodID method, FrameIndex fram
     p = stack_pop(info->stack);
     if (p == NULL) {
         HPROF_ERROR(JNI_FALSE, "method return tracked, but stack is empty");
-        return;
+	return;
     }
     element = *(StackElement*)p;
     HPROF_ASSERT(element.frame_index!=0);
 
     /* The depth of frames we should keep track for reporting */
     if (gdata->prof_trace_depth > depth) {
-        trace_depth = depth;
+	trace_depth = depth;
     } else {
-        trace_depth = gdata->prof_trace_depth;
+	trace_depth = gdata->prof_trace_depth;
     }
-
+    
     /* Create a trace entry */
     HPROF_ASSERT(info->frames_buffer!=NULL);
     HPROF_ASSERT(info->jframes_buffer!=NULL);
     setup_trace_buffers(info, trace_depth);
     info->frames_buffer[0] = element.frame_index;
     for (i = 1; i < trace_depth; i++) {
-        StackElement e;
-
-        e = *(StackElement*)stack_element(info->stack, (depth - i) - 1);
-        info->frames_buffer[i] = e.frame_index;
-        HPROF_ASSERT(e.frame_index!=0);
+	StackElement e;
+	
+	e = *(StackElement*)stack_element(info->stack, (depth - i) - 1);
+	info->frames_buffer[i] = e.frame_index;
+	HPROF_ASSERT(e.frame_index!=0);
     }
     trace_index = trace_find_or_create(thread_serial_num,
-                    trace_depth, info->frames_buffer, info->jframes_buffer);
-
+		    trace_depth, info->frames_buffer, info->jframes_buffer);
+   
     /* Calculate time spent */
     total_time = current_time - element.method_start_time;
     if ( total_time < 0 ) {
-        total_time = 0;
+	total_time = 0;
         self_time = 0;
     } else {
         self_time = total_time - element.time_in_callees;
@@ -549,7 +549,7 @@ dump_thread_state(TlsIndex index, void *key_ptr, int key_len, void *info_ptr, vo
     TlsInfo     *info;
     jthread      thread;
     JNIEnv      *env;
-
+    
     HPROF_ASSERT(key_ptr!=NULL);
     HPROF_ASSERT(info_ptr!=NULL);
     env                  = (JNIEnv*)arg;
@@ -557,22 +557,22 @@ dump_thread_state(TlsIndex index, void *key_ptr, int key_len, void *info_ptr, vo
     info                 = (TlsInfo*)info_ptr;
     thread               = newLocalReference(env, info->globalref);
     if ( thread != NULL ) {
-        jint         threadState;
-        SerialNumber trace_serial_num;
-
-        getThreadState(thread, &threadState);
-        /* A 0 trace at this time means the thread is in unknown territory.
-         *   The trace serial number MUST be a valid serial number, so we use
-         *   the system trace (empty) just so it has a valid trace.
-         */
-        if ( info->last_trace == 0 ) {
-            trace_serial_num = trace_get_serial_number(gdata->system_trace_index);
-        } else {
-            trace_serial_num = trace_get_serial_number(info->last_trace);
-        }
-        io_write_monitor_dump_thread_state(thread_serial_num,
-                       trace_serial_num, threadState);
-        deleteLocalReference(env, thread);
+	jint         threadState;
+	SerialNumber trace_serial_num;
+	
+	getThreadState(thread, &threadState);
+	/* A 0 trace at this time means the thread is in unknown territory.
+	 *   The trace serial number MUST be a valid serial number, so we use
+	 *   the system trace (empty) just so it has a valid trace.
+	 */
+	if ( info->last_trace == 0 ) {
+	    trace_serial_num = trace_get_serial_number(gdata->system_trace_index);
+	} else {
+	    trace_serial_num = trace_get_serial_number(info->last_trace);
+	}
+	io_write_monitor_dump_thread_state(thread_serial_num,
+		       trace_serial_num, threadState);
+	deleteLocalReference(env, thread);
     }
 }
 
@@ -580,9 +580,9 @@ static SerialNumber
 get_serial_number(JNIEnv *env, jthread thread)
 {
     TlsIndex     index;
-
+    
     if ( thread == NULL ) {
-        return gdata->unknown_thread_serial_num;
+	return gdata->unknown_thread_serial_num;
     }
     HPROF_ASSERT(env!=NULL);
     index = tls_find_or_create(env, thread);
@@ -595,59 +595,59 @@ dump_monitor_state(TlsIndex index, void *key_ptr, int key_len, void *info_ptr, v
     TlsInfo *info;
     jthread  thread;
     JNIEnv  *env;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
     env = (JNIEnv*)arg;
     info = (TlsInfo*)info_ptr;
     thread = newLocalReference(env, info->globalref);
     if ( thread != NULL ) {
-        jobject *objects;
-        jint     ocount;
-        int      i;
+	jobject *objects;
+	jint     ocount;
+	int      i;
+	
+	getOwnedMonitorInfo(thread, &objects, &ocount);
+	if ( ocount > 0 ) {
+	    for ( i = 0 ; i < ocount ; i++ ) {
+		jvmtiMonitorUsage usage;
+		SerialNumber *waiter_nums;
+		SerialNumber *notify_waiter_nums;
+		int           t;
+		char *        sig;
 
-        getOwnedMonitorInfo(thread, &objects, &ocount);
-        if ( ocount > 0 ) {
-            for ( i = 0 ; i < ocount ; i++ ) {
-                jvmtiMonitorUsage usage;
-                SerialNumber *waiter_nums;
-                SerialNumber *notify_waiter_nums;
-                int           t;
-                char *        sig;
+		WITH_LOCAL_REFS(env, 1) {
+		    jclass clazz;
 
-                WITH_LOCAL_REFS(env, 1) {
-                    jclass clazz;
-
-                    clazz = getObjectClass(env, objects[i]);
-                    getClassSignature(clazz, &sig, NULL);
-                } END_WITH_LOCAL_REFS;
-
-                getObjectMonitorUsage(objects[i], &usage);
-                waiter_nums = HPROF_MALLOC(usage.waiter_count*
-                                        (int)sizeof(SerialNumber)+1);
+		    clazz = getObjectClass(env, objects[i]);
+		    getClassSignature(clazz, &sig, NULL);
+		} END_WITH_LOCAL_REFS;
+		
+		getObjectMonitorUsage(objects[i], &usage);
+		waiter_nums = HPROF_MALLOC(usage.waiter_count*
+					(int)sizeof(SerialNumber)+1);
                 for ( t = 0 ; t < usage.waiter_count ; t++ ) {
-                    waiter_nums[t] =
-                        get_serial_number(env, usage.waiters[t]);
-                }
-                notify_waiter_nums = HPROF_MALLOC(usage.notify_waiter_count*
-                                        (int)sizeof(SerialNumber)+1);
+		    waiter_nums[t] = 
+			get_serial_number(env, usage.waiters[t]);
+		}
+		notify_waiter_nums = HPROF_MALLOC(usage.notify_waiter_count*
+					(int)sizeof(SerialNumber)+1);
                 for ( t = 0 ; t < usage.notify_waiter_count ; t++ ) {
-                    notify_waiter_nums[t] =
-                        get_serial_number(env, usage.notify_waiters[t]);
-                }
-                io_write_monitor_dump_state(sig,
-                       get_serial_number(env, usage.owner),
-                       usage.entry_count,
-                       waiter_nums, usage.waiter_count,
-                       notify_waiter_nums, usage.notify_waiter_count);
-                jvmtiDeallocate(sig);
-                jvmtiDeallocate(usage.waiters);
-                jvmtiDeallocate(usage.notify_waiters);
-                HPROF_FREE(waiter_nums);
-                HPROF_FREE(notify_waiter_nums);
-            }
-        }
-        jvmtiDeallocate(objects);
-        deleteLocalReference(env, thread);
+		    notify_waiter_nums[t] = 
+			get_serial_number(env, usage.notify_waiters[t]);
+		}
+		io_write_monitor_dump_state(sig,
+		       get_serial_number(env, usage.owner), 
+		       usage.entry_count,
+		       waiter_nums, usage.waiter_count,
+		       notify_waiter_nums, usage.notify_waiter_count);
+		jvmtiDeallocate(sig);
+		jvmtiDeallocate(usage.waiters);
+		jvmtiDeallocate(usage.notify_waiters);
+		HPROF_FREE(waiter_nums);
+		HPROF_FREE(notify_waiter_nums);
+	    }
+	}
+	jvmtiDeallocate(objects);
+	deleteLocalReference(env, thread);
     }
 }
 
@@ -681,26 +681,26 @@ tls_find_or_create(JNIEnv *env, jthread thread)
 
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(thread!=NULL);
-
+    
     /*LINTED*/
     index = (TlsIndex)(ptrdiff_t)getThreadLocalStorage(thread);
     if ( index != 0 ) {
-        HPROF_ASSERT(isSameObject(env, thread, get_info(index)->globalref));
-        return index;
+	HPROF_ASSERT(isSameObject(env, thread, get_info(index)->globalref));
+	return index;
     }
     index = search(env, thread);
     if ( index != 0 ) {
-        setThreadLocalStorage(thread, (void*)(ptrdiff_t)index);
-        return index;
+	setThreadLocalStorage(thread, (void*)(ptrdiff_t)index);
+	return index;
     }
     thread_serial_num      = gdata->thread_serial_number_counter++;
     info                   = empty_info;
     info.monitor_index     = 0;
     info.sample_status     = 1;
     info.agent_thread      = JNI_FALSE;
-    info.stack             = stack_init(INITIAL_THREAD_STACK_LIMIT,
-                                INITIAL_THREAD_STACK_LIMIT,
-                                (int)sizeof(StackElement));
+    info.stack             = stack_init(INITIAL_THREAD_STACK_LIMIT, 
+				INITIAL_THREAD_STACK_LIMIT,
+				(int)sizeof(StackElement));
     setup_trace_buffers(&info, gdata->max_trace_depth);
     info.globalref = newWeakGlobalReference(env, thread);
     index = table_create_entry(gdata->tls_table, &thread_serial_num, (int)sizeof(SerialNumber), (void*)&info);
@@ -731,7 +731,7 @@ tls_init(void)
 void
 tls_list(void)
 {
-    debug_message(
+    debug_message( 
         "--------------------- TLS Table ------------------------\n");
     table_walk_items(gdata->tls_table, &list_item, NULL);
     debug_message(
@@ -742,7 +742,7 @@ jint
 tls_sum_sample_status(void)
 {
     jint sample_status_total;
-
+    
     sample_status_total = 0;
     table_walk_items(gdata->tls_table, &sum_sample_status_item, (void*)&sample_status_total);
     return sample_status_total;
@@ -760,34 +760,34 @@ tls_set_sample_status(ObjectIndex object_index, jint sample_status)
 
 jint
 tls_get_tracker_status(JNIEnv *env, jthread thread, jboolean skip_init,
-        jint **ppstatus, TlsIndex* pindex,
-        SerialNumber *pthread_serial_num, TraceIndex *ptrace_index)
+	jint **ppstatus, TlsIndex* pindex,
+	SerialNumber *pthread_serial_num, TraceIndex *ptrace_index)
 {
     TlsInfo      *info;
     TlsIndex      index;
     SerialNumber  thread_serial_num;
     jint          status;
-
+  
     index             = tls_find_or_create(env, thread);
     info              = get_info(index);
     *ppstatus         = &(info->tracker_status);
     status            = **ppstatus;
     thread_serial_num = get_key(index);
-
+    
     if ( pindex != NULL ) {
-        *pindex = index;
+	*pindex = index;
     }
     if ( status != 0 ) {
-        return status;
+	return status;
     }
     if ( ptrace_index != NULL ) {
-        setup_trace_buffers(info, gdata->max_trace_depth);
-        *ptrace_index = get_trace(thread, thread_serial_num,
-                            gdata->max_trace_depth, skip_init,
-                            info->frames_buffer, info->jframes_buffer);
+	setup_trace_buffers(info, gdata->max_trace_depth);
+	*ptrace_index = get_trace(thread, thread_serial_num, 
+			    gdata->max_trace_depth, skip_init,
+			    info->frames_buffer, info->jframes_buffer);
     }
     if ( pthread_serial_num != NULL ) {
-        *pthread_serial_num = thread_serial_num;
+	*pthread_serial_num = thread_serial_num;
     }
     return status;
 }
@@ -796,7 +796,7 @@ MonitorIndex
 tls_get_monitor(TlsIndex index)
 {
     TlsInfo  *info;
-
+    
     info = get_info(index);
     return info->monitor_index;
 }
@@ -805,7 +805,7 @@ void
 tls_set_thread_object_index(TlsIndex index, ObjectIndex thread_object_index)
 {
     TlsInfo  *info;
-
+    
     info = get_info(index);
     info->thread_object_index = thread_object_index;
 }
@@ -820,7 +820,7 @@ void
 tls_set_monitor(TlsIndex index, MonitorIndex monitor_index)
 {
     TlsInfo  *info;
-
+    
     info = get_info(index);
     info->monitor_index = monitor_index;
 }
@@ -842,25 +842,25 @@ void
 tls_thread_ended(JNIEnv *env, TlsIndex index)
 {
     HPROF_ASSERT(env!=NULL);
-
+   
     /* Sample thread stack for last time, do NOT free the entry yet. */
     table_lock_enter(gdata->tls_table); {
-        SerialNumber thread_serial_num;
+	SerialNumber thread_serial_num;
         TlsInfo     *info;
-        jthread      thread;
-
-        thread_serial_num = get_key(index);
-        info              = get_info(index);
-        thread            = newLocalReference(env, info->globalref);
-        if (gdata->heap_dump && thread!=NULL) {
-            setup_trace_buffers(info, gdata->max_trace_depth);
-            info->last_trace = get_trace(thread, thread_serial_num,
-                                    gdata->max_trace_depth, JNI_FALSE,
-                                    info->frames_buffer, info->jframes_buffer);
-        }
-        if ( thread != NULL ) {
-            deleteLocalReference(env, thread);
-        }
+	jthread      thread;
+	
+	thread_serial_num = get_key(index);
+	info              = get_info(index);
+	thread            = newLocalReference(env, info->globalref);
+	if (gdata->heap_dump && thread!=NULL) {
+	    setup_trace_buffers(info, gdata->max_trace_depth);
+	    info->last_trace = get_trace(thread, thread_serial_num,
+				    gdata->max_trace_depth, JNI_FALSE,
+				    info->frames_buffer, info->jframes_buffer);
+	}
+	if ( thread != NULL ) {
+	    deleteLocalReference(env, thread);
+	}
     } table_lock_exit(gdata->tls_table);
 
 }
@@ -872,40 +872,40 @@ tls_sample_all_threads(JNIEnv *env)
     ThreadList    list;
     jthread      *threads;
     SerialNumber *serial_nums;
-
+    
     table_lock_enter(gdata->tls_table); {
-        int           max_count;
-        int           nbytes;
-        int           i;
-
-        /* Get buffers to hold thread list and serial number list */
-        max_count   = table_element_count(gdata->tls_table);
-        nbytes      = (int)sizeof(jthread)*max_count;
-        threads     = (jthread*)HPROF_MALLOC(nbytes);
-        nbytes      = (int)sizeof(SerialNumber)*max_count;
-        serial_nums = (SerialNumber*)HPROF_MALLOC(nbytes);
-
-        /* Get list of threads and serial numbers */
-        list.threads     = threads;
-        list.infos       = NULL;
-        list.serial_nums = serial_nums;
-        list.count       = 0;
-        list.env         = env;
+	int           max_count;
+	int           nbytes;
+	int           i;
+ 
+	/* Get buffers to hold thread list and serial number list */
+	max_count   = table_element_count(gdata->tls_table);
+	nbytes      = (int)sizeof(jthread)*max_count;
+	threads     = (jthread*)HPROF_MALLOC(nbytes);
+	nbytes      = (int)sizeof(SerialNumber)*max_count;
+	serial_nums = (SerialNumber*)HPROF_MALLOC(nbytes);
+	
+	/* Get list of threads and serial numbers */
+	list.threads     = threads;
+	list.infos       = NULL;
+	list.serial_nums = serial_nums;
+	list.count       = 0;
+	list.env         = env;
         table_walk_items(gdata->tls_table, &get_thread_list, (void*)&list);
+	
+	/* Increment the cost on the traces for these threads */
+	trace_increment_all_sample_costs(list.count, threads, serial_nums, 
+			      gdata->max_trace_depth, JNI_FALSE);
 
-        /* Increment the cost on the traces for these threads */
-        trace_increment_all_sample_costs(list.count, threads, serial_nums,
-                              gdata->max_trace_depth, JNI_FALSE);
-
-        /* Loop over local refs and free them */
-        for ( i = 0 ; i < list.count ; i++ ) {
-            if ( threads[i] != NULL ) {
-                deleteLocalReference(env, threads[i]);
-            }
-        }
+	/* Loop over local refs and free them */
+	for ( i = 0 ; i < list.count ; i++ ) {
+	    if ( threads[i] != NULL ) {
+		deleteLocalReference(env, threads[i]);
+	    }
+	}
 
     } table_lock_exit(gdata->tls_table);
-
+    
     /* Free up allocated space */
     HPROF_FREE(threads);
     HPROF_FREE(serial_nums);
@@ -917,14 +917,14 @@ tls_push_method(TlsIndex index, jmethodID method)
 {
     jlong    method_start_time;
     TlsInfo *info;
-
+    
     HPROF_ASSERT(method!=NULL);
     info        = get_info(index);
     HPROF_ASSERT(info!=NULL);
     method_start_time  = method_time();
     HPROF_ASSERT(info->stack!=NULL);
     push_method(info->stack, method_start_time, method);
-}
+}  
 
 void
 tls_pop_exception_catch(TlsIndex index, jthread thread, jmethodID method)
@@ -938,32 +938,32 @@ tls_pop_exception_catch(TlsIndex index, jthread thread, jmethodID method)
     HPROF_ASSERT(method!=NULL);
     frame_index = frame_find_or_create(method, -1);
     HPROF_ASSERT(frame_index != 0);
-
+    
     info = get_info(index);
-
+    
     HPROF_ASSERT(info!=NULL);
     HPROF_ASSERT(info->stack!=NULL);
     HPROF_ASSERT(frame_index!=0);
     current_time = method_time();
     info->stack = insure_method_on_stack(thread, info, current_time,
-                        frame_index, method);
+			frame_index, method);
     p = stack_top(info->stack);
     if (p == NULL) {
-        HPROF_ERROR(JNI_FALSE, "expection pop, nothing on stack");
-        return;
+	HPROF_ERROR(JNI_FALSE, "expection pop, nothing on stack");
+	return;
     }
     element = *(StackElement*)p;
     HPROF_ASSERT(element.frame_index!=0);
     while ( element.frame_index != frame_index ) {
-        pop_method(index, current_time, element.method, frame_index);
-        p = stack_top(info->stack);
-        if ( p == NULL ) {
-            break;
-        }
-        element = *(StackElement*)p;
+	pop_method(index, current_time, element.method, frame_index);
+	p = stack_top(info->stack);
+	if ( p == NULL ) {
+	    break;
+	}
+	element = *(StackElement*)p;
     }
     if (p == NULL) {
-        HPROF_ERROR(JNI_FALSE, "exception pop stack empty");
+	HPROF_ERROR(JNI_FALSE, "exception pop stack empty");
     }
 }
 
@@ -975,86 +975,86 @@ tls_pop_method(TlsIndex index, jthread thread, jmethodID method)
     void         *p;
     FrameIndex    frame_index;
     jlong         current_time;
-
+    
     HPROF_ASSERT(method!=NULL);
     frame_index = frame_find_or_create(method, -1);
     HPROF_ASSERT(frame_index != 0);
-
+    
     info = get_info(index);
     HPROF_ASSERT(info!=NULL);
     HPROF_ASSERT(info->stack!=NULL);
     current_time = method_time();
     HPROF_ASSERT(frame_index!=0);
     info->stack = insure_method_on_stack(thread, info, current_time,
-                frame_index, method);
+		frame_index, method);
     p = stack_top(info->stack);
     HPROF_ASSERT(p!=NULL);
     element = *(StackElement*)p;
     while ( element.frame_index != frame_index ) {
-        pop_method(index, current_time, element.method, frame_index);
-        p = stack_top(info->stack);
-        if ( p == NULL ) {
-            break;
-        }
-        element = *(StackElement*)p;
+	pop_method(index, current_time, element.method, frame_index);
+	p = stack_top(info->stack);
+	if ( p == NULL ) {
+	    break;
+	}
+	element = *(StackElement*)p;
     }
     pop_method(index, current_time, method, frame_index);
 }
 
 /* For all TLS entries, update the last_trace on all threads */
-static void
+static void         
 update_all_last_traces(JNIEnv *env)
 {
     jthread        *threads;
     TlsInfo       **infos;
     SerialNumber   *serial_nums;
     TraceIndex     *traces;
-
+   
     if ( gdata->max_trace_depth == 0 ) {
-        return;
+	return;
     }
 
     table_lock_enter(gdata->tls_table); {
-
-        ThreadList      list;
-        int             max_count;
-        int             nbytes;
-        int             i;
-
-        /* Get buffers to hold thread list and serial number list */
-        max_count   = table_element_count(gdata->tls_table);
-        nbytes      = (int)sizeof(jthread)*max_count;
-        threads     = (jthread*)HPROF_MALLOC(nbytes);
-        nbytes      = (int)sizeof(SerialNumber)*max_count;
-        serial_nums = (SerialNumber*)HPROF_MALLOC(nbytes);
-        nbytes      = (int)sizeof(TlsInfo*)*max_count;
-        infos       = (TlsInfo**)HPROF_MALLOC(nbytes);
-
-        /* Get list of threads, serial numbers, and info pointers */
-        list.threads     = threads;
-        list.serial_nums = serial_nums;
-        list.infos       = infos;
-        list.count       = 0;
-        list.env         = env;
+        
+	ThreadList      list;
+	int             max_count;
+	int             nbytes;
+	int             i;
+ 
+	/* Get buffers to hold thread list and serial number list */
+	max_count   = table_element_count(gdata->tls_table);
+	nbytes      = (int)sizeof(jthread)*max_count;
+	threads     = (jthread*)HPROF_MALLOC(nbytes);
+	nbytes      = (int)sizeof(SerialNumber)*max_count;
+	serial_nums = (SerialNumber*)HPROF_MALLOC(nbytes);
+	nbytes      = (int)sizeof(TlsInfo*)*max_count;
+	infos       = (TlsInfo**)HPROF_MALLOC(nbytes);
+	
+	/* Get list of threads, serial numbers, and info pointers */
+	list.threads     = threads;
+	list.serial_nums = serial_nums;
+	list.infos       = infos;
+	list.count       = 0;
+	list.env         = env;
         table_walk_items(gdata->tls_table, &get_thread_list, (void*)&list);
 
-        /* Get all stack trace index's for all these threadss */
-        nbytes      = (int)sizeof(TraceIndex)*max_count;
-        traces      = (TraceIndex*)HPROF_MALLOC(nbytes);
-        trace_get_all_current(list.count, threads, serial_nums,
-                              gdata->max_trace_depth, JNI_FALSE,
-                              traces, JNI_TRUE);
+	/* Get all stack trace index's for all these threadss */
+	nbytes      = (int)sizeof(TraceIndex)*max_count;
+	traces      = (TraceIndex*)HPROF_MALLOC(nbytes);
+	trace_get_all_current(list.count, threads, serial_nums, 
+			      gdata->max_trace_depth, JNI_FALSE,
+			      traces, JNI_TRUE);
 
-        /* Loop over traces and update last_trace's */
-        for ( i = 0 ; i < list.count ; i++ ) {
-            if ( threads[i] != NULL ) {
-                deleteLocalReference(env, threads[i]);
-            }
-            infos[i]->last_trace = traces[i];
-        }
-
+	/* Loop over traces and update last_trace's */
+	for ( i = 0 ; i < list.count ; i++ ) {
+	    if ( threads[i] != NULL ) {
+		deleteLocalReference(env, threads[i]);
+	    }
+	    infos[i]->last_trace = traces[i];
+	}
+	
     } table_lock_exit(gdata->tls_table);
-
+	
     /* Free up all allocated space */
     HPROF_FREE(threads);
     HPROF_FREE(serial_nums);
@@ -1063,41 +1063,41 @@ update_all_last_traces(JNIEnv *env)
 
 }
 
-void
+void         
 tls_dump_traces(JNIEnv *env)
 {
     rawMonitorEnter(gdata->data_access_lock); {
-        update_all_last_traces(env);
-        trace_output_unmarked(env);
+	update_all_last_traces(env);
+	trace_output_unmarked(env);
     } rawMonitorExit(gdata->data_access_lock);
-}
-
+}    
+    
 void
 tls_dump_monitor_state(JNIEnv *env)
 {
     HPROF_ASSERT(env!=NULL);
-
+    
     rawMonitorEnter(gdata->data_access_lock); {
-        tls_dump_traces(env);
-        io_write_monitor_dump_header();
-        table_walk_items(gdata->tls_table, &dump_thread_state, (void*)env);
-        table_walk_items(gdata->tls_table, &dump_monitor_state, (void*)env);
-        io_write_monitor_dump_footer();
+	tls_dump_traces(env);
+	io_write_monitor_dump_header();
+	table_walk_items(gdata->tls_table, &dump_thread_state, (void*)env);
+	table_walk_items(gdata->tls_table, &dump_monitor_state, (void*)env);
+	io_write_monitor_dump_footer();
     } rawMonitorExit(gdata->data_access_lock);
 }
 
-void
+void         
 tls_monitor_start_timer(TlsIndex index)
 {
     TlsInfo *info;
-
+    
     info = get_info(index);
     HPROF_ASSERT(info!=NULL);
     HPROF_ASSERT(info->globalref!=NULL);
     info->monitor_start_time = monitor_time();
 }
 
-jlong
+jlong        
 tls_monitor_stop_timer(TlsIndex index)
 {
     TlsInfo *info;
@@ -1110,7 +1110,7 @@ tls_monitor_stop_timer(TlsIndex index)
     return t;
 }
 
-TraceIndex
+TraceIndex   
 tls_get_trace(TlsIndex index, JNIEnv *env, int depth, jboolean skip_init)
 {
     SerialNumber thread_serial_num;
@@ -1125,8 +1125,8 @@ tls_get_trace(TlsIndex index, JNIEnv *env, int depth, jboolean skip_init)
     thread = newLocalReference(env, info->globalref);
     if ( thread != NULL ) {
         trace_index = get_trace(thread, thread_serial_num, depth, skip_init,
-                        info->frames_buffer, info->jframes_buffer);
-        deleteLocalReference(env, thread);
+			info->frames_buffer, info->jframes_buffer);
+	deleteLocalReference(env, thread);
     } else {
         trace_index = gdata->system_trace_index;
     }
@@ -1137,7 +1137,7 @@ void
 tls_set_in_heap_dump(TlsIndex index, jint in_heap_dump)
 {
     TlsInfo  *info;
-
+    
     info = get_info(index);
     info->in_heap_dump = in_heap_dump;
 }
@@ -1146,7 +1146,7 @@ jint
 tls_get_in_heap_dump(TlsIndex index)
 {
     TlsInfo  *info;
-
+    
     info = get_info(index);
     return info->in_heap_dump;
 }
@@ -1155,7 +1155,7 @@ static void
 clean_in_heap_dump(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     TlsInfo *info;
-
+    
     HPROF_ASSERT(info_ptr!=NULL);
     info  = (TlsInfo*)info_ptr;
     info->in_heap_dump = 0;
@@ -1171,11 +1171,11 @@ TlsIndex
 tls_find(SerialNumber thread_serial_num)
 {
     TlsIndex index;
-
+   
     if ( thread_serial_num == 0 ) {
-        return 0;
+	return 0;
     }
-    index = table_find_entry(gdata->tls_table,
-          (void*)&thread_serial_num, (int)sizeof(SerialNumber));
+    index = table_find_entry(gdata->tls_table, 
+	  (void*)&thread_serial_num, (int)sizeof(SerialNumber));
     return index;
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,13 +40,13 @@
 public class Installed {
     public static void main(String[] args) throws Exception {
 
-        ServiceConfiguration.installServiceConfigurationFile();
+	ServiceConfiguration.installServiceConfigurationFile();
 
-        TestProvider.exerciseTestProvider(
-            TestProvider2.loadClassReturn,
-            TestProvider2.loadProxyClassReturn,
-            TestProvider2.getClassLoaderReturn,
-            TestProvider2.getClassAnnotationReturn,
-            TestProvider2.invocations);
+	TestProvider.exerciseTestProvider(
+	    TestProvider2.loadClassReturn,
+	    TestProvider2.loadProxyClassReturn,
+	    TestProvider2.getClassLoaderReturn,
+	    TestProvider2.getClassAnnotationReturn,
+	    TestProvider2.invocations);
     }
 }

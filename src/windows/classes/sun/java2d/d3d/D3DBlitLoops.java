@@ -42,45 +42,45 @@ import sun.java2d.SurfaceData;
 import static sun.java2d.d3d.D3DSurfaceData.*;
 
 /**
- * This class contains accelerated blits/scales/transforms
+ * This class contains accelerated blits/scales/transforms 
  * between textures and DD surfaces.
  */
 public class D3DBlitLoops {
 
-    static void register()
+    static void register() 
     {
         GraphicsPrimitive[] primitives = {
-            new D3DTextureToSurfaceBlit(IntRgbD3D),
-            new D3DTextureToSurfaceBlit(Ushort565RgbD3D),
-            new D3DTextureToSurfaceBlit(IntRgbxD3D),
-            new D3DTextureToSurfaceBlit(Ushort555RgbD3D),
-            new D3DTextureToSurfaceBlit(ThreeByteBgrD3D),
+	    new D3DTextureToSurfaceBlit(IntRgbD3D),
+	    new D3DTextureToSurfaceBlit(Ushort565RgbD3D),
+	    new D3DTextureToSurfaceBlit(IntRgbxD3D),
+	    new D3DTextureToSurfaceBlit(Ushort555RgbD3D),
+	    new D3DTextureToSurfaceBlit(ThreeByteBgrD3D),
 
-            new D3DTextureToSurfaceScale(IntRgbD3D),
-            new D3DTextureToSurfaceScale(Ushort565RgbD3D),
-            new D3DTextureToSurfaceScale(IntRgbxD3D),
-            new D3DTextureToSurfaceScale(Ushort555RgbD3D),
-            new D3DTextureToSurfaceScale(ThreeByteBgrD3D),
+	    new D3DTextureToSurfaceScale(IntRgbD3D),
+	    new D3DTextureToSurfaceScale(Ushort565RgbD3D),
+	    new D3DTextureToSurfaceScale(IntRgbxD3D),
+	    new D3DTextureToSurfaceScale(Ushort555RgbD3D),
+	    new D3DTextureToSurfaceScale(ThreeByteBgrD3D),
 
             new D3DTextureToSurfaceTransform(D3DTexture, IntRgbD3D),
-            new D3DTextureToSurfaceTransform(D3DTexture, Ushort565RgbD3D),
-            new D3DTextureToSurfaceTransform(D3DTexture, IntRgbxD3D),
-            new D3DTextureToSurfaceTransform(D3DTexture, Ushort555RgbD3D),
-            new D3DTextureToSurfaceTransform(D3DTexture, ThreeByteBgrD3D),
+	    new D3DTextureToSurfaceTransform(D3DTexture, Ushort565RgbD3D),
+	    new D3DTextureToSurfaceTransform(D3DTexture, IntRgbxD3D),
+	    new D3DTextureToSurfaceTransform(D3DTexture, Ushort555RgbD3D),
+	    new D3DTextureToSurfaceTransform(D3DTexture, ThreeByteBgrD3D),
 
             new DelegateSwToTextureLoop(),
 
-        };
-        GraphicsPrimitiveMgr.register(primitives);
+	};
+	GraphicsPrimitiveMgr.register(primitives);
     }
     static native void doTransform(long pSrc, long pDst, long pCtx,
                                    int hint,
-                                   int sx1, int sy1, int sx2, int sy2,
+                                   int sx1, int sy1, int sx2, int sy2, 
                                    float dx1, float dy1,
                                    float dx2, float dy2);
-
+    
     static long getContext(SurfaceData src, SurfaceData dst,
-                           Region clip, Composite comp, AffineTransform at)
+                           Region clip, Composite comp, AffineTransform at) 
     {
         int ctxFlags;
         if (src.getTransparency() == Transparency.OPAQUE) {
@@ -88,7 +88,7 @@ public class D3DBlitLoops {
         } else {
             ctxFlags = D3DContext.NO_CONTEXT_FLAGS;
         }
-
+            
         return D3DContext.getContext(src, dst, clip, comp, at,
                                      0xffffffff /* rgb */, ctxFlags);
     }
@@ -96,7 +96,7 @@ public class D3DBlitLoops {
 
 class D3DTextureToSurfaceBlit extends Blit {
     D3DTextureToSurfaceBlit(SurfaceType dstType) {
-        super(D3DTexture, CompositeType.AnyAlpha , dstType);
+	super(D3DTexture, CompositeType.AnyAlpha , dstType);
     }
 
     /**
@@ -105,9 +105,9 @@ class D3DTextureToSurfaceBlit extends Blit {
      * accelerated Blit.
      */
     @Override
-    public void Blit(SurfaceData src, SurfaceData dst,
+    public void Blit(SurfaceData src, SurfaceData dst, 
                      Composite comp, Region clip,
-                     int sx, int sy, int dx, int dy, int w, int h)
+                     int sx, int sy, int dx, int dy, int w, int h) 
     {
         synchronized (D3DContext.LOCK) {
             long pCtx = D3DBlitLoops.getContext(src, dst, clip, comp, null);
@@ -115,22 +115,22 @@ class D3DTextureToSurfaceBlit extends Blit {
                                      pCtx,
                                      AffineTransformOp.TYPE_NEAREST_NEIGHBOR,
                                      sx, sy, sx+w, sy+h,
-                                     (float)dx, (float)dy,
+                                     (float)dx, (float)dy, 
                                      (float)(dx+w), (float)(dy+h));
-        }
+        }        
     }
 }
 
 class D3DTextureToSurfaceTransform extends TransformBlit {
 
-    D3DTextureToSurfaceTransform(SurfaceType srcType,
-                                 SurfaceType dstType)
+    D3DTextureToSurfaceTransform(SurfaceType srcType, 
+                                 SurfaceType dstType) 
     {
         super(srcType, CompositeType.AnyAlpha, dstType);
     }
 
     @Override
-    public void Transform(SurfaceData src, SurfaceData dst,
+    public void Transform(SurfaceData src, SurfaceData dst, 
                           Composite comp, Region clip,
                           AffineTransform at, int hint,
                           int sx, int sy, int dx, int dy,
@@ -138,12 +138,12 @@ class D3DTextureToSurfaceTransform extends TransformBlit {
     {
         synchronized (D3DContext.LOCK) {
             long pCtx = D3DBlitLoops.getContext(src, dst, clip, comp, at);
-            D3DBlitLoops.doTransform(src.getNativeOps(), dst.getNativeOps(),
+            D3DBlitLoops.doTransform(src.getNativeOps(), dst.getNativeOps(), 
                                      pCtx, hint,
                                      sx, sy, sx+w, sy+h,
-                                     (float)dx, (float)dy,
+                                     (float)dx, (float)dy, 
                                      (float)(dx+w), (float)(dy+h));
-        }
+        }        
     }
 }
 
@@ -152,37 +152,37 @@ class D3DTextureToSurfaceScale extends ScaledBlit {
     D3DTextureToSurfaceScale(SurfaceType dstType) {
         super(D3DTexture, CompositeType.AnyAlpha, dstType);
     }
-
+    
     @Override
     public void Scale(SurfaceData src, SurfaceData dst,
                       Composite comp, Region clip,
-                      int sx1, int sy1,
-                      int sx2, int sy2,
-                      double dx1, double dy1,
-                      double dx2, double dy2)
+		      int sx1, int sy1,
+		      int sx2, int sy2,
+		      double dx1, double dy1,
+		      double dx2, double dy2)
     {
         synchronized (D3DContext.LOCK) {
             long pCtx = D3DBlitLoops.getContext(src, dst, clip, comp, null);
-            D3DBlitLoops.doTransform(src.getNativeOps(), dst.getNativeOps(),
-                                     pCtx,
+            D3DBlitLoops.doTransform(src.getNativeOps(), dst.getNativeOps(), 
+                                     pCtx, 
                                      AffineTransformOp.TYPE_NEAREST_NEIGHBOR,
                                      sx1, sy1, sx2, sy2,
-                                     (float)dx1, (float)dy1,
+                                     (float)dx1, (float)dy1, 
                                      (float)dx2, (float)dy2);
-        }
+        }        
     }
 }
 
 class DelegateSwToTextureLoop extends Blit {
-
+    
     DelegateSwToTextureLoop() {
         super(SurfaceType.Any, CompositeType.SrcNoEa, D3DTexture);
     }
 
     @Override
-    public void Blit(SurfaceData src, SurfaceData dst,
+    public void Blit(SurfaceData src, SurfaceData dst, 
                      Composite comp, Region clip,
-                     int sx, int sy, int dx, int dy, int w, int h)
+                     int sx, int sy, int dx, int dy, int w, int h) 
     {
         Blit realBlit = null;
         int pf = ((D3DSurfaceData)dst).getPixelFormat();
@@ -214,10 +214,10 @@ class DelegateSwToTextureLoop extends Blit {
                                          SurfaceType.Ushort4444Argb);
             break;
         default:
-             throw
+             throw 
                  new InternalError("Can't yet handle dest pixel format: "+pf);
         }
-
+        
         if (realBlit != null) {
             realBlit.Blit(src, dst, comp, clip, sx, sy, dx, dy, w, h);
         }

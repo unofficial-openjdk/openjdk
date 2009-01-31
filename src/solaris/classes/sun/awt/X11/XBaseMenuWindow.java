@@ -39,7 +39,7 @@ import sun.java2d.SunGraphics2D;
 
 /**
  * The abstract class XBaseMenuWindow is the superclass
- * of all menu windows.
+ * of all menu windows. 
  */
 abstract public class XBaseMenuWindow extends XWindow {
 
@@ -63,17 +63,17 @@ abstract public class XBaseMenuWindow extends XWindow {
     private Color disabledColor;
 
     /**
-     * Array of items.
+     * Array of items. 
      */
     private ArrayList<XMenuItemPeer> items;
-
+    
     /**
      * Index of selected item in array of items
      */
     private int selectedIndex = -1;
-
+    
     /**
-     * Specifies currently showing submenu.
+     * Specifies currently showing submenu. 
      */
     private XMenuPeer showingSubmenu = null;
 
@@ -99,10 +99,10 @@ abstract public class XBaseMenuWindow extends XWindow {
 
     /**
      * If mouse button is clicked on item showing submenu
-     * we have to hide its submenu.
+     * we have to hide its submenu. 
      * And if mouse button is pressed on such item and
      * dragged to another, getShowingSubmenu() is changed.
-     * So this member saves the item that the user
+     * So this member saves the item that the user 
      * presses mouse button on _only_ if it's showing submenu.
      */
     private XMenuPeer showingMousePressedSubmenu = null;
@@ -144,7 +144,7 @@ abstract public class XBaseMenuWindow extends XWindow {
         MappingData(XMenuItemPeer[] items) {
             this.items = items;
         }
-
+        
         /**
          * Constructs MappingData without items
          * This constructor should be used in case of errors
@@ -175,7 +175,7 @@ abstract public class XBaseMenuWindow extends XWindow {
         super(new XCreateWindowParams(new Object[] {
             DELAYED, Boolean.TRUE}));
     }
-
+    
     /************************************************
      *
      * Abstract methods
@@ -200,8 +200,8 @@ abstract public class XBaseMenuWindow extends XWindow {
     /**
      * Calculates placement of submenu window
      * given bounds of item with submenu and
-     * size of submenu window. Returns suggested
-     * rectangle for submenu window in global coordinates
+     * size of submenu window. Returns suggested 
+     * rectangle for submenu window in global coordinates 
      * @param itemBounds the bounding rectangle of item
      * in local coordinates
      * @param windowSize the desired size of submenu's window
@@ -256,7 +256,7 @@ abstract public class XBaseMenuWindow extends XWindow {
      */
     void postPaintEvent() {
         if (isShowing()) {
-            PaintEvent pe = new PaintEvent(target, PaintEvent.PAINT,
+            PaintEvent pe = new PaintEvent(target, PaintEvent.PAINT, 
                                            new Rectangle(0, 0, width, height));
             postEvent(pe);
         }
@@ -290,7 +290,7 @@ abstract public class XBaseMenuWindow extends XWindow {
         synchronized(getMenuTreeLock()) {
             return (XMenuItemPeer[])items.toArray(new XMenuItemPeer[] {});
         }
-    }
+    } 
 
 
     /**
@@ -319,7 +319,7 @@ abstract public class XBaseMenuWindow extends XWindow {
     /**
      * Adds item to end of items vector.
      * Note that this function does not perform
-     * check for adding duplicate items
+     * check for adding duplicate items 
      * @param item item to add
      */
     public void addItem(MenuItem item) {
@@ -358,7 +358,7 @@ abstract public class XBaseMenuWindow extends XWindow {
         }
         updateSize();
     }
-
+    
     /**
      * Clears items vector and loads specified vector
      * @param items vector to be loaded
@@ -414,9 +414,9 @@ abstract public class XBaseMenuWindow extends XWindow {
         XMenuWindow menuWindowToShow = (submenuToShow != null) ? submenuToShow.getMenuWindow() : null;
         Dimension dim = null;
         Rectangle bounds = null;
-        //ensureCreated can invoke XWindowPeer.init() ->
+        //ensureCreated can invoke XWindowPeer.init() -> 
         //XWindowPeer.initGraphicsConfiguration() ->
-        //Window.getGraphicsConfiguration()
+        //Window.getGraphicsConfiguration() 
         //that tries to obtain Component.AWTTreeLock.
         //So it should be called outside awtLock()
         if (menuWindowToShow != null) {
@@ -466,7 +466,7 @@ abstract public class XBaseMenuWindow extends XWindow {
      * Returns array of mapped items, null if error
      * This function has to be not synchronized
      * and we have to guarantee that we return
-     * some MappingData to user. It's OK if
+     * some MappingData to user. It's OK if 
      * this.mappingData is replaced meanwhile
      */
     MappingData getMappingData() {
@@ -577,22 +577,22 @@ abstract public class XBaseMenuWindow extends XWindow {
                 return item;
             }
         }
-
+        
         return null;
     }
 
     /************************************************
      *
-     * Utility functions for manipulating
+     * Utility functions for manipulating 
      * hierarchy of windows
      *
      ************************************************/
-
+    
     /**
-     * returns leaf menu window or
+     * returns leaf menu window or 
      * this if no children are showing
      */
-    XBaseMenuWindow getShowingLeaf() {
+    XBaseMenuWindow getShowingLeaf() { 
         synchronized(getMenuTreeLock()) {
             XBaseMenuWindow leaf = this;
             XMenuPeer leafchild = leaf.getShowingSubmenu();
@@ -646,8 +646,8 @@ abstract public class XBaseMenuWindow extends XWindow {
      *
      * These functions are invoked from getSubmenuBounds
      * implementations in different order. They check if window
-     * of size windowSize fits to the specified edge of
-     * rectangle itemBounds on the screen of screenSize.
+     * of size windowSize fits to the specified edge of 
+     * rectangle itemBounds on the screen of screenSize. 
      * Return rectangle that occupies the window if it fits or null.
      *
      ************************************************/
@@ -662,7 +662,7 @@ abstract public class XBaseMenuWindow extends XWindow {
     Rectangle fitWindowBelow(Rectangle itemBounds, Dimension windowSize, Dimension screenSize) {
         int width = windowSize.width;
         int height = windowSize.height;
-        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened
+        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened 
         //near the periphery of the screen, XToolkit
         //Window should be moved if it's outside top-left screen bounds
         int x = (itemBounds.x > 0) ? itemBounds.x : 0;
@@ -691,7 +691,7 @@ abstract public class XBaseMenuWindow extends XWindow {
     Rectangle fitWindowAbove(Rectangle itemBounds, Dimension windowSize, Dimension screenSize) {
         int width = windowSize.width;
         int height = windowSize.height;
-        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened
+        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened 
         //near the periphery of the screen, XToolkit
         //Window should be moved if it's outside bottom-left screen bounds
         int x = (itemBounds.x > 0) ? itemBounds.x : 0;
@@ -720,7 +720,7 @@ abstract public class XBaseMenuWindow extends XWindow {
     Rectangle fitWindowRight(Rectangle itemBounds, Dimension windowSize, Dimension screenSize) {
         int width = windowSize.width;
         int height = windowSize.height;
-        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened
+        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened 
         //near the periphery of the screen, XToolkit
         //Window should be moved if it's outside top-left screen bounds
         int x = (itemBounds.x + itemBounds.width > 0) ? itemBounds.x + itemBounds.width : 0;
@@ -736,7 +736,7 @@ abstract public class XBaseMenuWindow extends XWindow {
             return new Rectangle(x, y, width, height);
         } else {
             return null;
-        }
+        } 
     }
 
     /**
@@ -749,7 +749,7 @@ abstract public class XBaseMenuWindow extends XWindow {
     Rectangle fitWindowLeft(Rectangle itemBounds, Dimension windowSize, Dimension screenSize) {
         int width = windowSize.width;
         int height = windowSize.height;
-        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened
+        //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened 
         //near the periphery of the screen, XToolkit
         //Window should be moved if it's outside top-right screen bounds
         int x = (itemBounds.x < screenSize.width) ? itemBounds.x - width : screenSize.width - width;
@@ -765,11 +765,11 @@ abstract public class XBaseMenuWindow extends XWindow {
             return new Rectangle(x, y, width, height);
         } else {
             return null;
-        }
+        } 
     }
 
     /**
-     * The last thing we can do with the window
+     * The last thing we can do with the window 
      * to fit it on screen - move it to the
      * top-left edge and cut by screen dimensions
      * @param windowSize size of submenu window to fit
@@ -787,7 +787,7 @@ abstract public class XBaseMenuWindow extends XWindow {
      * Utility functions for manipulating colors
      *
      ************************************************/
-
+    
     /**
      * This function is called before every painting.
      * TODO:It would be better to add PropertyChangeListener
@@ -798,11 +798,11 @@ abstract public class XBaseMenuWindow extends XWindow {
     void resetColors() {
         replaceColors((target == null) ? SystemColor.window : target.getBackground());
     }
-
+    
     /**
      * Calculates colors of various elements given
      * background color. Uses MotifColorUtilities
-     * @param backgroundColor the color of menu window's
+     * @param backgroundColor the color of menu window's 
      * background.
      */
     void replaceColors(Color backgroundColor) {
@@ -816,7 +816,7 @@ abstract public class XBaseMenuWindow extends XWindow {
             foregroundColor = new Color(MotifColorUtilities.calculateForegroundFromBackground(red,green,blue));
             lightShadowColor = new Color(MotifColorUtilities.calculateTopShadowFromBackground(red,green,blue));
             darkShadowColor = new Color(MotifColorUtilities.calculateBottomShadowFromBackground(red,green,blue));
-            selectedColor = new Color(MotifColorUtilities.calculateSelectFromBackground(red,green,blue));
+            selectedColor = new Color(MotifColorUtilities.calculateSelectFromBackground(red,green,blue)); 
             disabledColor = (backgroundColor.equals(Color.BLACK)) ? foregroundColor.darker() : backgroundColor.darker();
         }
     }
@@ -850,7 +850,7 @@ abstract public class XBaseMenuWindow extends XWindow {
      * Painting utility functions
      *
      ************************************************/
-
+    
     /**
      * Draws raised or sunken rectangle on specified graphics
      * @param g the graphics on which to draw
@@ -886,7 +886,7 @@ abstract public class XBaseMenuWindow extends XWindow {
      protected boolean isEventDisabled(XEvent e) {
         switch (e.get_type()) {
           case XlibWrapper.Expose :
-          case XlibWrapper.GraphicsExpose :
+          case XlibWrapper.GraphicsExpose :  
           case XlibWrapper.ButtonPress:
           case XlibWrapper.ButtonRelease:
           case XlibWrapper.MotionNotify:
@@ -909,8 +909,8 @@ abstract public class XBaseMenuWindow extends XWindow {
                 doDispose();
             }
         });
-    }
-
+    }    
+    
     /**
      * Performs disposal of menu window.
      * Should be called only on eventHandlerThread
@@ -941,8 +941,8 @@ abstract public class XBaseMenuWindow extends XWindow {
     }
 
     /**
-     * The implementation of base window performs processing
-     * of paint events only. This behaviour is changed in
+     * The implementation of base window performs processing 
+     * of paint events only. This behaviour is changed in 
      * descendants.
      */
     protected void handleEvent(AWTEvent event) {
@@ -950,7 +950,7 @@ abstract public class XBaseMenuWindow extends XWindow {
         case PaintEvent.PAINT:
             doHandleJavaPaintEvent((PaintEvent)event);
             break;
-        }
+        }        
     }
 
     /**
@@ -1009,7 +1009,7 @@ abstract public class XBaseMenuWindow extends XWindow {
      *
      ************************************************/
 
-    /**
+    /** 
      * Performs handling of java mouse event
      * Note that this function should be invoked
      * only from root of menu window's hierarchy
@@ -1036,15 +1036,15 @@ abstract public class XBaseMenuWindow extends XWindow {
         XBaseMenuWindow wnd = getMenuWindowFromPoint(ptGlobal);
         //Item in wnd that contains mouse point, if any
         XMenuItemPeer item = (wnd != null) ? wnd.getItemFromPoint(wnd.toLocal(ptGlobal)) : null;
-        //Currently showing leaf window
+        //Currently showing leaf window 
         XBaseMenuWindow cwnd = getShowingLeaf();
         switch (mouseEvent.getID()) {
           case MouseEvent.MOUSE_PRESSED:
               //This line is to get rid of possible problems
               //That may occur if mouse events are lost
-              showingMousePressedSubmenu = null;
+              showingMousePressedSubmenu = null; 
               if ((grabWindow == this) && (wnd == null)) {
-                  //Menus grab input and the user
+                  //Menus grab input and the user 
                   //presses mouse button outside
                   ungrabInput();
               } else {
@@ -1115,7 +1115,7 @@ abstract public class XBaseMenuWindow extends XWindow {
         }
     }
 
-    /**
+    /** 
      * Performs handling of java keyboard event
      * Note that this function should be invoked
      * only from root of menu window's hierarchy

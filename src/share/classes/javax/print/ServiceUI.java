@@ -63,7 +63,7 @@ import sun.print.SunAlternateMedia;
  * The vendor extensions should return the settings as part of the
  * AttributeSet.
  * Applications which want to preserve the user settings should use those
- * settings to specify the print job.
+ * settings to specify the print job. 
  * Note that this class is not referenced by any other part of the Java
  * Print Service and may not be included in profiles which cannot depend
  * on the presence of the AWT packages.
@@ -117,7 +117,7 @@ public class ServiceUI {
      * If the user cancels the dialog, the returned attributes will not reflect
      * any changes made by the user.
      *
-     * A typical basic usage of this method may be :
+     * A typical basic usage of this method may be : 
      * <pre>
      * PrintService[] services = PrintServiceLookup.lookupPrintServices(
      *                            DocFlavor.INPUT_STREAM.JPEG, null);
@@ -142,7 +142,7 @@ public class ServiceUI {
      * @param flavor - the flavor to be printed, or null.
      * @param attributes on input is the initial application supplied
      * preferences. This cannot be null but may be empty.
-     * On output the attributes reflect changes made by the user.
+     * On output the attributes reflect changes made by the user. 
      * @return print service selected by the user, or null if the user
      * cancelled the dialog.
      * @throws HeadlessException if GraphicsEnvironment.isHeadless()
@@ -156,8 +156,8 @@ public class ServiceUI {
                                            PrintService[] services,
                                            PrintService defaultService,
                                            DocFlavor flavor,
-                                           PrintRequestAttributeSet attributes)
-        throws HeadlessException
+                                           PrintRequestAttributeSet attributes) 
+	throws HeadlessException
     {
         int defaultIndex = -1;
 
@@ -168,8 +168,8 @@ public class ServiceUI {
                                                "and non-empty");
         } else if (attributes == null) {
             throw new IllegalArgumentException("attributes must be non-null");
-        }
-
+        } 
+        
         if (defaultService != null) {
             for (int i = 0; i < services.length; i++) {
                 if (services[i].equals(defaultService)) {
@@ -177,7 +177,7 @@ public class ServiceUI {
                     break;
                 }
             }
-
+            
             if (defaultIndex < 0) {
                 throw new IllegalArgumentException("services must contain " +
                                                    "defaultService");
@@ -186,45 +186,45 @@ public class ServiceUI {
             defaultIndex = 0;
         }
 
-        // For now we set owner to null. In the future, it may be passed
-        // as an argument.
-        Window owner = null;
+	// For now we set owner to null. In the future, it may be passed
+	// as an argument. 
+	Window owner = null; 
+	
+	Rectangle gcBounds = (gc == null) ?  GraphicsEnvironment.
+	    getLocalGraphicsEnvironment().getDefaultScreenDevice().
+	    getDefaultConfiguration().getBounds() : gc.getBounds();
 
-        Rectangle gcBounds = (gc == null) ?  GraphicsEnvironment.
-            getLocalGraphicsEnvironment().getDefaultScreenDevice().
-            getDefaultConfiguration().getBounds() : gc.getBounds();
+	ServiceDialog dialog;
+	if (owner instanceof Frame) {
+	    dialog = new ServiceDialog(gc, 
+				       x + gcBounds.x, 
+				       y + gcBounds.y, 
+				       services, defaultIndex,
+				       flavor, attributes, 
+				       (Frame)owner);
+	} else {
+	    dialog = new ServiceDialog(gc, 
+				       x + gcBounds.x, 
+				       y + gcBounds.y, 
+				       services, defaultIndex,
+				       flavor, attributes, 
+				       (Dialog)owner);
+	}
+	Rectangle dlgBounds = dialog.getBounds();
 
-        ServiceDialog dialog;
-        if (owner instanceof Frame) {
-            dialog = new ServiceDialog(gc,
-                                       x + gcBounds.x,
-                                       y + gcBounds.y,
-                                       services, defaultIndex,
-                                       flavor, attributes,
-                                       (Frame)owner);
-        } else {
-            dialog = new ServiceDialog(gc,
-                                       x + gcBounds.x,
-                                       y + gcBounds.y,
-                                       services, defaultIndex,
-                                       flavor, attributes,
-                                       (Dialog)owner);
-        }
-        Rectangle dlgBounds = dialog.getBounds();
-
-        // get union of all GC bounds
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] gs = ge.getScreenDevices();
-        for (int j=0; j<gs.length; j++) {
+	// get union of all GC bounds
+	GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	GraphicsDevice[] gs = ge.getScreenDevices();
+	for (int j=0; j<gs.length; j++) {
             gcBounds =
                 gcBounds.union(gs[j].getDefaultConfiguration().getBounds());
-        }
+	}
 
-        // if portion of dialog is not within the gc boundary
-        if (!gcBounds.contains(dlgBounds)) {
-            // put in the center relative to parent frame/dialog
-            dialog.setLocationRelativeTo(owner);
-        }
+	// if portion of dialog is not within the gc boundary
+	if (!gcBounds.contains(dlgBounds)) {
+	    // put in the center relative to parent frame/dialog
+	    dialog.setLocationRelativeTo(owner);
+	}
         dialog.show();
 
         if (dialog.getStatus() == ServiceDialog.APPROVE) {
@@ -256,7 +256,7 @@ public class ServiceUI {
             }
         }
 
-        return dialog.getPrintService();
+	return dialog.getPrintService();
     }
 
     /**
@@ -297,12 +297,12 @@ public class ServiceUI {
             attributes.addAll(newas.values());
         }
 
-        dialog.getOwner().dispose();
+	dialog.getOwner().dispose();
     }
     */
 
     /**
-     * Removes any attributes from the given AttributeSet that are
+     * Removes any attributes from the given AttributeSet that are 
      * unsupported by the given PrintService/DocFlavor combination.
      */
     private static void removeUnsupportedAttributes(PrintService ps,
@@ -313,13 +313,13 @@ public class ServiceUI {
                                                                  aset);
 
         if (asUnsupported != null) {
-            Attribute[] usAttrs = asUnsupported.toArray();
+	    Attribute[] usAttrs = asUnsupported.toArray();
 
             for (int i=0; i<usAttrs.length; i++) {
                 Class category = usAttrs[i].getCategory();
 
                 if (ps.isAttributeCategorySupported(category)) {
-                    Attribute attr =
+                    Attribute attr = 
                         (Attribute)ps.getDefaultAttributeValue(category);
 
                     if (attr != null) {

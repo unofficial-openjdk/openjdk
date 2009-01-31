@@ -52,62 +52,62 @@ struct MMenuBarPeerIDs mMenuBarPeerIDs;
 
 /* This function gets called from the static initializer for MMenuBarPeer.java
    to initialize the fieldIDs fields that may be accessed from C */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_motif_MMenuBarPeer_initIDs
   (JNIEnv *env, jclass cls)
 {
   mMenuBarPeerIDs.pData = (*env)->GetFieldID(env, cls, "pData", "J");
   mMenuBarPeerIDs.graphicsConfig =
-      (*env)->GetFieldID(env, cls, "graphicsConfig",
-                         "Lsun/awt/X11GraphicsConfig;");
+      (*env)->GetFieldID(env, cls, "graphicsConfig", 
+			 "Lsun/awt/X11GraphicsConfig;");
 }
 
 static AwtGraphicsConfigDataPtr
 copyGraphicsConfigToMenuBarPeer(
 JNIEnv *env, jobject frame, jobject thisMenuBar) {
-
+    
     jobject gc_object;
     AwtGraphicsConfigDataPtr adata;
-
+    
     /* GraphicsConfiguration object of Component */
-    gc_object = (*env)->GetObjectField(env, frame,
+    gc_object = (*env)->GetObjectField(env, frame, 
                                        mComponentPeerIDs.graphicsConfig);
-
+    
     if (gc_object != NULL) {
         /* Set graphicsConfig field of MComponentPeer */
         (*env)->SetObjectField (env, thisMenuBar,
                                 mMenuBarPeerIDs.graphicsConfig,
                                 gc_object);
         adata = (AwtGraphicsConfigDataPtr)
-            JNU_GetLongFieldAsPtr(env, gc_object,
+            JNU_GetLongFieldAsPtr(env, gc_object, 
                                   x11GraphicsConfigIDs.aData);
     } else {
         /* Component was not constructed with a GraphicsConfiguration
            object */
         adata = getDefaultConfig(DefaultScreen(awt_display));
     }
-
+    
     return adata;
 }
 
 AwtGraphicsConfigDataPtr
 getGraphicsConfigFromMenuBarPeer(JNIEnv *env, jobject menubarPeer) {
-
+    
     jobject gc_object;
     AwtGraphicsConfigDataPtr adata;
-
+    
     /* GraphicsConfiguration object of Component */
     gc_object = (*env)->GetObjectField(env, menubarPeer,
                                        mMenuBarPeerIDs.graphicsConfig);
-
+    
     if (gc_object != NULL) {
         adata = (AwtGraphicsConfigDataPtr)
-            JNU_GetLongFieldAsPtr(env, gc_object,
+            JNU_GetLongFieldAsPtr(env, gc_object, 
                                   x11GraphicsConfigIDs.aData);
     } else {
         adata = getDefaultConfig(DefaultScreen(awt_display));
     }
-
+    
     return adata;
 }
 
@@ -134,7 +134,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuBarPeer_create
     }
     AWT_LOCK();
     wdata = (struct FrameData *)
-        JNU_GetLongFieldAsPtr(env, frame, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, frame, mComponentPeerIDs.pData);
     mdata = ZALLOC(ComponentData);
 
     if (wdata == NULL || mdata == NULL) {
@@ -145,7 +145,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuBarPeer_create
     JNU_SetLongFieldFromPtr(env, this, mMenuBarPeerIDs.pData, mdata);
 
     adata = copyGraphicsConfigToMenuBarPeer(env, frame, this);
-
+    
     XtVaGetValues(wdata->winData.comp.widget,
                   XmNbackground, &bg,
                   XmNforeground, &fg,
@@ -183,7 +183,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuBarPeer_pDispose
 
     /*hania LOOK HERE does this make sense? look at original code */
     mdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, this, mMenuBarPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mMenuBarPeerIDs.pData);
     if (mdata == NULL) {
         AWT_UNLOCK();
         return;
@@ -196,3 +196,4 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MMenuBarPeer_pDispose
     (*env)->SetLongField(env, this, mMenuBarPeerIDs.pData, (jlong)0);
     AWT_UNLOCK();
 }
+

@@ -45,19 +45,19 @@ import javax.management.NotificationListener;
 
 /**
  * <p>
- * The <code>ScanDirAgent</code> is the Agent class for the <i>scandir</i>
+ * The <code>ScanDirAgent</code> is the Agent class for the <i>scandir</i> 
  * application.
  * This class contains the {@link #main} method to start a standalone
  * <i>scandir</i> application.
  * </p>
  * <p>
  * The {@link #main main()} method simply registers a {@link
- * ScanManagerMXBean} in the platform MBeanServer - see {@link #init init},
- * and then waits for someone to call {@link ScanManagerMXBean#close close}
+ * ScanManagerMXBean} in the platform MBeanServer - see {@link #init init}, 
+ * and then waits for someone to call {@link ScanManagerMXBean#close close} 
  * on that MBean.
  * </p>
  * <p>
- * When the {@link ScanManagerMXBean} state is switched to {@link
+ * When the {@link ScanManagerMXBean} state is switched to {@link 
  * ScanManagerMXBean.ScanState#CLOSED CLOSED}, {@link #cleanup cleanup} is
  * called, the {@link ScanManagerMXBean} is unregistered, and the application
  * terminates (i.e. the main thread completes).
@@ -84,8 +84,8 @@ public class ScanDirAgent {
     //
     private final NotificationListener listener;
 
-    /**
-     * Creates a new instance of ScanDirAgent
+    /** 
+     * Creates a new instance of ScanDirAgent 
      * You will need to call {@link #init()} later on in order to initialize
      * the application.
      * @see #main
@@ -178,7 +178,7 @@ public class ScanDirAgent {
                 // arbitrary - if this were a real daemon - id'be tempted
                 // to wait 30 minutes - knowing that any incoming
                 // notification will wake me up anyway.
-                // Note: we simply use the state change notifications to
+                // Note: we simply use the state change notifications to 
                 // react more quickly to state changes: see javadoc above.
                 //
                 queue.poll(30,TimeUnit.SECONDS);
@@ -190,8 +190,8 @@ public class ScanDirAgent {
 
     /**
      * The agent's main: {@link #init registers} a {@link ScanManagerMXBean},
-     * {@link #waitForClose waits} until its state is {@link
-     * ScanManagerMXBean.ScanState#CLOSED CLOSED}, {@link #cleanup cleanup}
+     * {@link #waitForClose waits} until its state is {@link 
+     * ScanManagerMXBean.ScanState#CLOSED CLOSED}, {@link #cleanup cleanup} 
      * and exits.
      * @param args the command line arguments - ignored
      * @throws java.io.IOException A communication problem occurred.

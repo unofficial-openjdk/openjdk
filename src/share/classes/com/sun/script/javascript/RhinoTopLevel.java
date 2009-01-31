@@ -30,9 +30,10 @@ import javax.script.*;
 
 /**
  * This class serves as top level scope for Rhino. This class adds
- * 3 top level functions (bindings, scope, sync) and two constructors
+ * 3 top level functions (bindings, scope, sync) and two constructors 
  * (JSAdapter, JavaAdapter).
  *
+ * @version 1.0
  * @author A. Sundararajan
  * @since 1.6
  */
@@ -49,20 +50,20 @@ public final class RhinoTopLevel extends ImporterTopLevel {
     RhinoTopLevel(Context cx, RhinoScriptEngine engine) {
         super(cx);
         this.engine = engine;
-
-
+        
+        
         // initialize JSAdapter lazily. Reduces footprint & startup time.
         new LazilyLoadedCtor(this, "JSAdapter",
                 "com.sun.script.javascript.JSAdapter",
                 false);
-
+        
         /*
          * initialize JavaAdapter. We can't lazy initialize this because
          * lazy initializer attempts to define a new property. But, JavaAdapter
          * is an exisiting property that we overwrite.
          */
         JavaAdapter.init(cx, this, false);
-
+        
         // add top level functions
         String names[] = { "bindings", "scope", "sync"  };
         defineFunctionProperties(names, RhinoTopLevel.class,
@@ -73,14 +74,14 @@ public final class RhinoTopLevel extends ImporterTopLevel {
     }
 
     /**
-     * The bindings function takes a JavaScript scope object
+     * The bindings function takes a JavaScript scope object 
      * of type ExternalScriptable and returns the underlying Bindings
      * instance.
      *
      *    var page = scope(pageBindings);
      *    with (page) {
-     *       // code that uses page scope
-     *    }
+     *       // code that uses page scope 
+     *    } 
      *    var b = bindings(page);
      *    // operate on bindings here.
      */
@@ -94,15 +95,15 @@ public final class RhinoTopLevel extends ImporterTopLevel {
             if (arg instanceof ExternalScriptable) {
                 ScriptContext ctx = ((ExternalScriptable)arg).getContext();
                 Bindings bind = ctx.getBindings(ScriptContext.ENGINE_SCOPE);
-                return Context.javaToJS(bind,
+                return Context.javaToJS(bind, 
                            ScriptableObject.getTopLevelScope(thisObj));
             }
         }
         return cx.getUndefinedValue();
     }
-
-    /**
-     * The scope function creates a new JavaScript scope object
+   
+    /** 
+     * The scope function creates a new JavaScript scope object 
      * with given Bindings object as backing store. This can be used
      * to create a script scope based on arbitrary Bindings instance.
      * For example, in webapp scenario, a 'page' level Bindings instance
@@ -111,8 +112,8 @@ public final class RhinoTopLevel extends ImporterTopLevel {
      *
      *    var page = scope(pageBindings);
      *    with (page) {
-     *       // code that uses page scope
-     *    }
+     *       // code that uses page scope 
+     *    } 
      */
     public static Object scope(Context cx, Scriptable thisObj, Object[] args,
             Function funObj) {
@@ -132,7 +133,7 @@ public final class RhinoTopLevel extends ImporterTopLevel {
         }
         return cx.getUndefinedValue();
     }
-
+ 
     /**
      * The sync function creates a synchronized function (in the sense
      * of a Java synchronized method) from an existing function. The
@@ -159,10 +160,10 @@ public final class RhinoTopLevel extends ImporterTopLevel {
             throw Context.reportRuntimeError("wrong argument(s) for sync");
         }
     }
-
+    
     RhinoScriptEngine getScriptEngine() {
         return engine;
     }
-
+   
     private RhinoScriptEngine engine;
 }

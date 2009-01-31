@@ -62,9 +62,9 @@ class LaunchTool {
             this.arg = arg;
             panel = new JPanel();
             Border etched = BorderFactory.createEtchedBorder();
-            Border titled = BorderFactory.createTitledBorder(etched,
+            Border titled = BorderFactory.createTitledBorder(etched, 
                                       arg.description(),
-                                      TitledBorder.LEFT, TitledBorder.TOP);
+                                      TitledBorder.LEFT, TitledBorder.TOP); 
             panel.setBorder(titled);
         }
 
@@ -76,7 +76,7 @@ class LaunchTool {
 
         boolean isSpecified() {
             String value = getText();
-            return (value != null && value.length() > 0) ||
+            return (value != null && value.length() > 0) || 
                 !arg.mustSpecify();
         }
 
@@ -119,7 +119,7 @@ class LaunchTool {
                            .stringValueOf(check.getModel().isSelected());
         }
     }
-
+        
 
     private LaunchTool(ExecutionManager runtime) {
         this.runtime = runtime;
@@ -147,41 +147,41 @@ class LaunchTool {
         content.add(radioPanel);
 
         final boolean[] oked = {false};
-        JPanel buttonPanel = okCancel( dialog, new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
+        JPanel buttonPanel = okCancel( dialog, new ActionListener() { 
+            public void actionPerformed(ActionEvent event) { 
                 if (radioGroup.getSelection() == null) {
-                    JOptionPane.showMessageDialog(dialog,
+                    JOptionPane.showMessageDialog(dialog, 
                                     "Please select a connector type",
-                                    "No Selection",
+                                    "No Selection", 
                                      JOptionPane.ERROR_MESSAGE);
                 } else {
                     oked[0] = true;
                     dialog.setVisible(false);
                     dialog.dispose();
                 }
-            }
+            } 
         } );
         content.add(BorderLayout.SOUTH, buttonPanel);
         dialog.pack();
-        dialog.show();
+        dialog.show();    
 
-        return oked[0] ?
-            (Connector)(modelToConnector.get(radioGroup.getSelection())) :
+        return oked[0] ? 
+            (Connector)(modelToConnector.get(radioGroup.getSelection())) : 
             null;
     }
 
     private void configureAndConnect(final Connector connector) {
         final JDialog dialog = new JDialog();
         final Map<String, Connector.Argument> args = connector.defaultArguments();
-
+        
         dialog.setModal(true);
         dialog.setTitle("Connector Arguments");
         Container content = dialog.getContentPane();
         JPanel guts = new JPanel();
         Border etched = BorderFactory.createEtchedBorder();
-        Border titled = BorderFactory.createTitledBorder(etched,
+        Border titled = BorderFactory.createTitledBorder(etched, 
                                 connector.description(),
-                                TitledBorder.LEFT, TitledBorder.TOP);
+                                TitledBorder.LEFT, TitledBorder.TOP); 
         guts.setBorder(etched);
         guts.setLayout(new BoxLayout(guts, BoxLayout.Y_AXIS));
 
@@ -200,25 +200,25 @@ class LaunchTool {
         }
         content.add(guts);
 
-        JPanel buttonPanel = okCancel( dialog, new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
+        JPanel buttonPanel = okCancel( dialog, new ActionListener() { 
+            public void actionPerformed(ActionEvent event) { 
                 for (Iterator it = argReps.iterator(); it.hasNext(); ) {
                     ArgRep ar = (ArgRep)it.next();
                     if (!ar.isSpecified()) {
-                        JOptionPane.showMessageDialog(dialog,
-                                    ar.arg.label() +
+                        JOptionPane.showMessageDialog(dialog, 
+                                    ar.arg.label() + 
                                          ": Argument must be specified",
                                     "No argument", JOptionPane.ERROR_MESSAGE);
                         return;
-                    }
+                    }                        
                     if (!ar.isValid()) {
-                        JOptionPane.showMessageDialog(dialog,
-                                    ar.arg.label() +
-                                         ": Bad argument value: " +
+                        JOptionPane.showMessageDialog(dialog, 
+                                    ar.arg.label() + 
+                                         ": Bad argument value: " + 
                                          ar.getText(),
                                     "Bad argument", JOptionPane.ERROR_MESSAGE);
                         return;
-                    }
+                    }                        
                     ar.install();
                 }
                 try {
@@ -226,20 +226,20 @@ class LaunchTool {
                         dialog.setVisible(false);
                         dialog.dispose();
                     } else {
-                        JOptionPane.showMessageDialog(dialog,
+                        JOptionPane.showMessageDialog(dialog, 
                            "Bad arguments values: See diagnostics window.",
                            "Bad arguments", JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (VMLaunchFailureException exc) {
-                        JOptionPane.showMessageDialog(dialog,
+                        JOptionPane.showMessageDialog(dialog, 
                            "Launch Failure: " + exc,
                            "Launch Failed",JOptionPane.ERROR_MESSAGE);
                 }
-            }
+            } 
         } );
         content.add(BorderLayout.SOUTH, buttonPanel);
         dialog.pack();
-        dialog.show();
+        dialog.show();    
     }
 
     private JPanel okCancel(final JDialog dialog, ActionListener okListener) {
@@ -249,11 +249,11 @@ class LaunchTool {
         buttonPanel.add(ok);
         buttonPanel.add(cancel);
         ok.addActionListener(okListener);
-        cancel.addActionListener( new ActionListener() {
-            public void actionPerformed(ActionEvent event) {
+        cancel.addActionListener( new ActionListener() { 
+            public void actionPerformed(ActionEvent event) { 
                 dialog.setVisible(false);
                 dialog.dispose();
-            }
+            } 
         } );
         return buttonPanel;
     }

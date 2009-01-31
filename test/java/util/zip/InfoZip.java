@@ -35,88 +35,88 @@ public class InfoZip {
     static int passed = 0, failed = 0;
 
     static void fail(String msg) {
-        failed++;
-        new Exception(msg).printStackTrace();
+	failed++;
+	new Exception(msg).printStackTrace();
     }
 
     static void unexpected(Throwable t) {
-        failed++;
-        t.printStackTrace();
+	failed++;
+	t.printStackTrace();
     }
 
     static void check(boolean condition, String msg) {
-        if (! condition)
-            fail(msg);
+	if (! condition)
+	    fail(msg);
     }
 
     static void check(boolean condition) {
-        check(condition, "Something's wrong");
+	check(condition, "Something's wrong");
     }
 
     private static String contents(ZipFile zf, ZipEntry ze) throws Exception {
-        InputStream is = zf.getInputStream(ze);
-        String result = contents(is);
-        is.close();
-        return result;
+	InputStream is = zf.getInputStream(ze);
+	String result = contents(is);
+	is.close();
+	return result;
     }
 
     private static String contents(InputStream is) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        int c;
-        while ((c = is.read()) != -1)
-            sb.append((char)c);
-        return sb.toString();
+	StringBuilder sb = new StringBuilder();
+	int c;
+	while ((c = is.read()) != -1)
+	    sb.append((char)c);
+	return sb.toString();
     }
 
     private static void checkZipEntry(ZipEntry ze, String contents) {
-        check(ze.getName().equals("someFile"), "filename");
-        check(ze.getExtra() != null, "extra");
-        check(contents.equals("Message in a Bottle\n"), "contents");
-        check(ze.getSize() == "Message in a Bottle\n".length());
+	check(ze.getName().equals("someFile"), "filename");
+	check(ze.getExtra() != null, "extra");
+	check(contents.equals("Message in a Bottle\n"), "contents");
+	check(ze.getSize() == "Message in a Bottle\n".length());
     }
 
 
     public static void main(String[] args) throws Exception {
-        //----------------------------------------------------------------
-        // The file InfoZip.zip was created using Unix Info-Zip's zip, thus:
-        // echo Message in a Bottle > someFile; zip InfoZip.zip someFile
-        // Such a file has a LOC extra different from the CEN extra,
-        // which cannot happen using JDK APIs.
-        //----------------------------------------------------------------
-        File f = new File("InfoZip.zip");
+	//----------------------------------------------------------------
+	// The file InfoZip.zip was created using Unix Info-Zip's zip, thus:
+	// echo Message in a Bottle > someFile; zip InfoZip.zip someFile
+	// Such a file has a LOC extra different from the CEN extra,
+	// which cannot happen using JDK APIs.
+	//----------------------------------------------------------------
+	File f = new File("InfoZip.zip");
 
-        OutputStream os = new FileOutputStream(f);
-        os.write(new byte[]
-            {'P', 'K', 3, 4, 10, 0, 0, 0, 0, 0, -68, 8, 'k',
-             '2', 'V', -7, 'm', 9, 20, 0, 0, 0, 20, 0, 0, 0,
-             8, 0, 21, 0, 's', 'o', 'm', 'e', 'F', 'i', 'l', 'e', 'U',
-             'T', 9, 0, 3, 't', '_', '1', 'B', 't', '_', '1', 'B', 'U',
-             'x', 4, 0, -14, 'v', 26, 4, 'M', 'e', 's', 's', 'a', 'g',
-             'e', ' ', 'i', 'n', ' ', 'a', ' ', 'B', 'o', 't', 't', 'l', 'e',
-             10, 'P', 'K', 1, 2, 23, 3, 10, 0, 0, 0, 0, 0,
-             -68, 8, 'k', '2', 'V', -7, 'm', 9, 20, 0, 0, 0, 20,
-             0, 0, 0, 8, 0, 13, 0, 0, 0, 0, 0, 1, 0,
-             0, 0, -92, -127, 0, 0, 0, 0, 's', 'o', 'm', 'e', 'F',
-             'i', 'l', 'e', 'U', 'T', 5, 0, 3, 't', '_', '1', 'B', 'U',
-             'x', 0, 0, 'P', 'K', 5, 6, 0, 0, 0, 0, 1, 0,
-             1, 0, 'C', 0, 0, 0, 'O', 0, 0, 0, 0, 0, });
-        os.close();
+	OutputStream os = new FileOutputStream(f);
+	os.write(new byte[]
+	    {'P', 'K', 3, 4, 10, 0, 0, 0, 0, 0, -68, 8, 'k',
+	     '2', 'V', -7, 'm', 9, 20, 0, 0, 0, 20, 0, 0, 0,
+	     8, 0, 21, 0, 's', 'o', 'm', 'e', 'F', 'i', 'l', 'e', 'U',
+	     'T', 9, 0, 3, 't', '_', '1', 'B', 't', '_', '1', 'B', 'U',
+	     'x', 4, 0, -14, 'v', 26, 4, 'M', 'e', 's', 's', 'a', 'g',
+	     'e', ' ', 'i', 'n', ' ', 'a', ' ', 'B', 'o', 't', 't', 'l', 'e',
+	     10, 'P', 'K', 1, 2, 23, 3, 10, 0, 0, 0, 0, 0,
+	     -68, 8, 'k', '2', 'V', -7, 'm', 9, 20, 0, 0, 0, 20,
+	     0, 0, 0, 8, 0, 13, 0, 0, 0, 0, 0, 1, 0,
+	     0, 0, -92, -127, 0, 0, 0, 0, 's', 'o', 'm', 'e', 'F',
+	     'i', 'l', 'e', 'U', 'T', 5, 0, 3, 't', '_', '1', 'B', 'U',
+	     'x', 0, 0, 'P', 'K', 5, 6, 0, 0, 0, 0, 1, 0,
+	     1, 0, 'C', 0, 0, 0, 'O', 0, 0, 0, 0, 0, });
+	os.close();
 
-        ZipFile zf = new ZipFile(f);
-        Enumeration<? extends ZipEntry> entries = zf.entries();
-        ZipEntry ze = entries.nextElement();
-        check(! entries.hasMoreElements());
-        checkZipEntry(ze, contents(zf, ze));
-        zf.close();
+	ZipFile zf = new ZipFile(f);
+	Enumeration<? extends ZipEntry> entries = zf.entries();
+	ZipEntry ze = entries.nextElement();
+	check(! entries.hasMoreElements());
+	checkZipEntry(ze, contents(zf, ze));
+	zf.close();
 
-        ZipInputStream is = new ZipInputStream(new FileInputStream(f));
-        ze = is.getNextEntry();
-        checkZipEntry(ze, contents(is));
-        check(is.getNextEntry() == null);
+	ZipInputStream is = new ZipInputStream(new FileInputStream(f));
+	ze = is.getNextEntry();
+	checkZipEntry(ze, contents(is));
+	check(is.getNextEntry() == null);
 
-        f.delete();
+	f.delete();
 
-        System.out.printf("passed = %d, failed = %d%n", passed, failed);
-        if (failed > 0) throw new Exception("Some tests failed");
+	System.out.printf("passed = %d, failed = %d%n", passed, failed);
+	if (failed > 0) throw new Exception("Some tests failed");
     }
 }

@@ -33,11 +33,11 @@ void eventHelper_initialize(jbyte sessionID);
 void eventHelper_reset(jbyte sessionID);
 struct bag *eventHelper_createEventBag(void);
 
-void eventHelper_recordEvent(EventInfo *evinfo, jint id,
+void eventHelper_recordEvent(EventInfo *evinfo, jint id, 
                              jbyte suspendPolicy, struct bag *eventBag);
 void eventHelper_recordClassUnload(jint id, char *signature, struct bag *eventBag);
 void eventHelper_recordFrameEvent(jint id, jbyte suspendPolicy, EventIndex ei,
-                                  jthread thread, jclass clazz,
+                                  jthread thread, jclass clazz, 
                                   jmethodID method, jlocation location,
                                   int needReturnValue,
                                   jvalue returnValue,
@@ -61,3 +61,4 @@ void eventHelper_unlock(void);
 void unblockCommandLoop(void);
 
 #endif
+

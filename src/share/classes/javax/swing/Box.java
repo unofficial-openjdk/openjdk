@@ -34,7 +34,7 @@ import java.io.Serializable;
 import javax.accessibility.*;
 
 /**
- * A lightweight container
+ * A lightweight container 
  * that uses a BoxLayout object as its layout manager.
  * Box provides several class methods
  * that are useful for containers using BoxLayout --
@@ -42,10 +42,10 @@ import javax.accessibility.*;
  *
  * <p>
  * The <code>Box</code> class can create several kinds
- * of invisible components
+ * of invisible components 
  * that affect layout:
  * glue, struts, and rigid areas.
- * If all the components your <code>Box</code> contains
+ * If all the components your <code>Box</code> contains 
  * have a fixed size,
  * you might want to use a glue component
  * (returned by <code>createGlue</code>)
@@ -57,7 +57,7 @@ import javax.accessibility.*;
  * that always takes up the same amount of space,
  * get it by invoking <code>createRigidArea</code>.
  * <p>
- * If you are implementing a <code>BoxLayout</code> you
+ * If you are implementing a <code>BoxLayout</code> you 
  * can find further information and examples in
  * <a
  href="http://java.sun.com/docs/books/tutorial/uiswing/layout/box.html">How to Use BoxLayout</a>,
@@ -75,6 +75,7 @@ import javax.accessibility.*;
  * @see BoxLayout
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class Box extends JComponent implements Accessible {
 
@@ -91,8 +92,8 @@ public class Box extends JComponent implements Accessible {
      * @see #createVerticalBox
      */
     public Box(int axis) {
-        super();
-        super.setLayout(new BoxLayout(this, axis));
+	super();
+	super.setLayout(new BoxLayout(this, axis));
     }
 
     /**
@@ -108,7 +109,7 @@ public class Box extends JComponent implements Accessible {
      * @return the box
      */
     public static Box createHorizontalBox() {
-        return new Box(BoxLayout.X_AXIS);
+	return new Box(BoxLayout.X_AXIS);
     }
 
     /**
@@ -124,7 +125,7 @@ public class Box extends JComponent implements Accessible {
      * @return the box
      */
     public static Box createVerticalBox() {
-        return new Box(BoxLayout.Y_AXIS);
+	return new Box(BoxLayout.Y_AXIS);
     }
 
     /**
@@ -138,16 +139,16 @@ public class Box extends JComponent implements Accessible {
      * @see #createVerticalStrut
      */
     public static Component createRigidArea(Dimension d) {
-        return new Filler(d, d, d);
+	return new Filler(d, d, d);
     }
 
     /**
      * Creates an invisible, fixed-width component.
-     * In a horizontal box,
-     * you typically use this method
+     * In a horizontal box, 
+     * you typically use this method 
      * to force a certain amount of space between two components.
      * In a vertical box,
-     * you might use this method
+     * you might use this method 
      * to force the box to be at least the specified width.
      * The invisible component has no height
      * unless excess space is available,
@@ -161,17 +162,17 @@ public class Box extends JComponent implements Accessible {
      * @see #createRigidArea
      */
     public static Component createHorizontalStrut(int width) {
-        return new Filler(new Dimension(width,0), new Dimension(width,0),
-                          new Dimension(width, Short.MAX_VALUE));
+	return new Filler(new Dimension(width,0), new Dimension(width,0), 
+			  new Dimension(width, Short.MAX_VALUE));
     }
 
     /**
      * Creates an invisible, fixed-height component.
-     * In a vertical box,
+     * In a vertical box, 
      * you typically use this method
      * to force a certain amount of space between two components.
      * In a horizontal box,
-     * you might use this method
+     * you might use this method 
      * to force the box to be at least the specified height.
      * The invisible component has no width
      * unless excess space is available,
@@ -185,12 +186,12 @@ public class Box extends JComponent implements Accessible {
      * @see #createRigidArea
      */
     public static Component createVerticalStrut(int height) {
-        return new Filler(new Dimension(0,height), new Dimension(0,height),
-                          new Dimension(Short.MAX_VALUE, height));
+	return new Filler(new Dimension(0,height), new Dimension(0,height), 
+			  new Dimension(Short.MAX_VALUE, height));
     }
 
     /**
-     * Creates an invisible "glue" component
+     * Creates an invisible "glue" component 
      * that can be useful in a Box
      * whose visible components have a maximum width
      * (for a horizontal box)
@@ -226,7 +227,7 @@ public class Box extends JComponent implements Accessible {
      * and add the returned component to a container.
      * The glue component has no minimum or preferred size,
      * so it takes no space unless excess space is available.
-     * If excess space is available,
+     * If excess space is available, 
      * then the glue component takes its share of available
      * horizontal or vertical space,
      * just like any other component that has no maximum width or height.
@@ -234,8 +235,8 @@ public class Box extends JComponent implements Accessible {
      * @return the component
      */
     public static Component createGlue() {
-        return new Filler(new Dimension(0,0), new Dimension(0,0),
-                          new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+	return new Filler(new Dimension(0,0), new Dimension(0,0), 
+			  new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
     }
 
     /**
@@ -244,8 +245,8 @@ public class Box extends JComponent implements Accessible {
      * @return the component
      */
     public static Component createHorizontalGlue() {
-        return new Filler(new Dimension(0,0), new Dimension(0,0),
-                          new Dimension(Short.MAX_VALUE, 0));
+	return new Filler(new Dimension(0,0), new Dimension(0,0), 
+			  new Dimension(Short.MAX_VALUE, 0));
     }
 
     /**
@@ -254,8 +255,8 @@ public class Box extends JComponent implements Accessible {
      * @return the component
      */
     public static Component createVerticalGlue() {
-        return new Filler(new Dimension(0,0), new Dimension(0,0),
-                          new Dimension(0, Short.MAX_VALUE));
+	return new Filler(new Dimension(0,0), new Dimension(0,0), 
+			  new Dimension(0, Short.MAX_VALUE));
     }
 
     /**
@@ -264,7 +265,7 @@ public class Box extends JComponent implements Accessible {
      * @param l the layout manager to use
      */
     public void setLayout(LayoutManager l) {
-        throw new AWTError("Illegal request");
+	throw new AWTError("Illegal request");
     }
 
     /**
@@ -303,37 +304,37 @@ public class Box extends JComponent implements Accessible {
      */
     public static class Filler extends JComponent implements Accessible {
 
-        /**
-         * Constructor to create shape with the given size ranges.
-         *
-         * @param min   Minimum size
-         * @param pref  Preferred size
-         * @param max   Maximum size
-         */
+	/**
+	 * Constructor to create shape with the given size ranges.
+	 *
+	 * @param min   Minimum size
+	 * @param pref  Preferred size
+	 * @param max   Maximum size
+	 */
         @ConstructorProperties({"minimumSize", "preferredSize", "maximumSize"})
         public Filler(Dimension min, Dimension pref, Dimension max) {
             setMinimumSize(min);
             setPreferredSize(pref);
             setMaximumSize(max);
-        }
+	}
 
-        /**
-         * Change the size requests for this shape.  An invalidate() is
-         * propagated upward as a result so that layout will eventually
-         * happen with using the new sizes.
-         *
-         * @param min   Value to return for getMinimumSize
-         * @param pref  Value to return for getPreferredSize
-         * @param max   Value to return for getMaximumSize
-         */
+	/**
+	 * Change the size requests for this shape.  An invalidate() is
+	 * propagated upward as a result so that layout will eventually
+	 * happen with using the new sizes.
+	 *
+	 * @param min   Value to return for getMinimumSize
+	 * @param pref  Value to return for getPreferredSize
+	 * @param max   Value to return for getMaximumSize
+	 */
         public void changeShape(Dimension min, Dimension pref, Dimension max) {
             setMinimumSize(min);
             setPreferredSize(pref);
             setMaximumSize(max);
             revalidate();
-        }
+	}
 
-        // ---- Component methods ------------------------------------------
+	// ---- Component methods ------------------------------------------
 
         /**
          * Paints this <code>Filler</code>.  If this
@@ -361,26 +362,26 @@ public class Box extends JComponent implements Accessible {
 ////////////////
 
         /**
-         * Gets the AccessibleContext associated with this Box.Filler.
-         * For box fillers, the AccessibleContext takes the form of an
-         * AccessibleBoxFiller.
+         * Gets the AccessibleContext associated with this Box.Filler. 
+         * For box fillers, the AccessibleContext takes the form of an 
+         * AccessibleBoxFiller. 
          * A new AccessibleAWTBoxFiller instance is created if necessary.
          *
-         * @return an AccessibleBoxFiller that serves as the
+         * @return an AccessibleBoxFiller that serves as the 
          *         AccessibleContext of this Box.Filler.
          */
         public AccessibleContext getAccessibleContext() {
-            if (accessibleContext == null) {
-                accessibleContext = new AccessibleBoxFiller();
-            }
-            return accessibleContext;
+	    if (accessibleContext == null) {
+		accessibleContext = new AccessibleBoxFiller();
+	    }
+	    return accessibleContext;
         }
 
         /**
-         * This class implements accessibility support for the
+         * This class implements accessibility support for the 
          * <code>Box.Filler</code> class.
          */
-        protected class AccessibleBoxFiller extends AccessibleAWTComponent {
+	protected class AccessibleBoxFiller extends AccessibleAWTComponent {
             // AccessibleContext methods
             //
             /**
@@ -401,23 +402,23 @@ public class Box extends JComponent implements Accessible {
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this Box.
-     * For boxes, the AccessibleContext takes the form of an
-     * AccessibleBox.
+     * Gets the AccessibleContext associated with this Box. 
+     * For boxes, the AccessibleContext takes the form of an 
+     * AccessibleBox. 
      * A new AccessibleAWTBox instance is created if necessary.
      *
-     * @return an AccessibleBox that serves as the
+     * @return an AccessibleBox that serves as the 
      *         AccessibleContext of this Box
      */
     public AccessibleContext getAccessibleContext() {
-        if (accessibleContext == null) {
-            accessibleContext = new AccessibleBox();
-        }
-        return accessibleContext;
+	if (accessibleContext == null) {
+	    accessibleContext = new AccessibleBox();
+	}
+	return accessibleContext;
     }
 
     /**
-     * This class implements accessibility support for the
+     * This class implements accessibility support for the 
      * <code>Box</code> class.
      */
     protected class AccessibleBox extends AccessibleAWTContainer {
@@ -426,8 +427,8 @@ public class Box extends JComponent implements Accessible {
         /**
          * Gets the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the
-         *   object (AccessibleRole.FILLER)
+         * @return an instance of AccessibleRole describing the role of the 
+	 *   object (AccessibleRole.FILLER)
          * @see AccessibleRole
          */
         public AccessibleRole getAccessibleRole() {

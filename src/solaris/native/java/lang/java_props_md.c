@@ -32,7 +32,7 @@
 #ifndef ARCHPROPNAME
 #error "The macro ARCHPROPNAME has not been defined"
 #endif
-#include <sys/utsname.h>        /* For os_name and os_version */
+#include <sys/utsname.h>	/* For os_name and os_version */
 #include <langinfo.h>           /* For nl_langinfo */
 #include <stdlib.h>
 #include <string.h>
@@ -79,35 +79,35 @@ static void
 setPathEnvironment(char *envstring)
 {
     char name[20], *value, *current;
-
+    
     value = strchr(envstring, '='); /* locate name and value separator */
-
+    
     if (! value)
-        return; /* not a valid environment setting */
-
+	return; /* not a valid environment setting */
+    
     /* copy first part as environment name */
     strncpy(name, envstring, value - envstring);
     name[value-envstring] = '\0';
-
+    
     value++; /* set value point to value of the envstring */
-
+    
     current = getenv(name);
     if (current) {
-        if (! strstr(current, value)) {
-            /* value is not found in current environment, append it */
-            char *temp = malloc(strlen(envstring) + strlen(current) + 2);
+	if (! strstr(current, value)) {
+	    /* value is not found in current environment, append it */
+	    char *temp = malloc(strlen(envstring) + strlen(current) + 2);
         strcpy(temp, name);
         strcat(temp, "=");
         strcat(temp, current);
         strcat(temp, ":");
         strcat(temp, value);
         putenv(temp);
-        }
-        /* else the value has already been set, do nothing */
+	}
+	/* else the value has already been set, do nothing */
     }
     else {
-        /* environment variable is not found */
-        putenv(envstring);
+	/* environment variable is not found */
+	putenv(envstring);
     }
 }
 
@@ -136,7 +136,7 @@ GetJavaProperties(JNIEnv *env)
 
     /* patches/service packs installed */
     sprops.patch_level = "unknown";
-
+    
     /* Java 2D properties */
     sprops.graphics_env = "sun.awt.X11GraphicsEnvironment";
     sprops.awt_toolkit = NULL;
@@ -168,15 +168,15 @@ GetJavaProperties(JNIEnv *env)
     /* os properties */
     {
         struct utsname name;
-        uname(&name);
-        sprops.os_name = strdup(name.sysname);
-        sprops.os_version = strdup(name.release);
+	uname(&name);
+	sprops.os_name = strdup(name.sysname);
+	sprops.os_version = strdup(name.release);
 
         sprops.os_arch = ARCHPROPNAME;
 
         if (getenv("GNOME_DESKTOP_SESSION_ID") != NULL) {
             sprops.desktop = "gnome";
-        }
+	}
         else {
             sprops.desktop = NULL;
         }
@@ -229,11 +229,11 @@ GetJavaProperties(JNIEnv *env)
              * the encoding - without it, we wouldn't get ISO-8859-15.
              * Therefore, this code section is Solaris-specific.
              */
-            lc = strdup(lc);    /* keep a copy, setlocale trashes original. */
+	    lc = strdup(lc);	/* keep a copy, setlocale trashes original. */
             strcpy(temp, lc);
-            p = strstr(temp, "@euro");
-            if (p != NULL)
-                *p = '\0';
+	    p = strstr(temp, "@euro");
+	    if (p != NULL) 
+		*p = '\0';
             setlocale(LC_ALL, temp);
 #endif
 
@@ -261,16 +261,16 @@ GetJavaProperties(JNIEnv *env)
             } else {
                 *encoding_variant = '\0';
             }
-
+            
             if (mapLookup(locale_aliases, temp, &p)) {
                 strcpy(temp, p);
             }
-
+            
             language = temp;
             if ((country = strchr(temp, '_')) != NULL) {
                 *country++ = '\0';
             }
-
+            
             p = encoding_variant;
             if ((encoding = strchr(p, '.')) != NULL) {
                 p[encoding++ - p] = '\0';
@@ -307,60 +307,60 @@ GetJavaProperties(JNIEnv *env)
              * returns an empty string if no encoding is set for the given locale
              * (e.g., the C or POSIX locales); we use the default ISO 8859-1
              * converter for such locales.
-             */
+	     */
 
-            /* OK, not so reliable - nl_langinfo() gives wrong answers on
-             * Euro locales, in particular. */
-            if (strcmp(p, "ISO8859-15") == 0)
-                p = "ISO8859-15";
-            else
+	    /* OK, not so reliable - nl_langinfo() gives wrong answers on
+	     * Euro locales, in particular. */
+	    if (strcmp(p, "ISO8859-15") == 0)
+		p = "ISO8859-15";
+	    else		
                 p = nl_langinfo(CODESET);
 
-            /* Convert the bare "646" used on Solaris to a proper IANA name */
-            if (strcmp(p, "646") == 0)
-                p = "ISO646-US";
+	    /* Convert the bare "646" used on Solaris to a proper IANA name */
+	    if (strcmp(p, "646") == 0)
+		p = "ISO646-US";
 
-            /* return same result nl_langinfo would return for en_UK,
-             * in order to use optimizations. */
+	    /* return same result nl_langinfo would return for en_UK,
+	     * in order to use optimizations. */
             std_encoding = (*p != '\0') ? p : "ISO8859-1";
 
 
 #ifdef __linux__
-            /*
-             * Remap the encoding string to a different value for japanese
-             * locales on linux so that customized converters are used instead
-             * of the default converter for "EUC-JP". The customized converters
-             * omit support for the JIS0212 encoding which is not supported by
-             * the variant of "EUC-JP" encoding used on linux
-             */
-            if (strcmp(p, "EUC-JP") == 0) {
-                std_encoding = "EUC-JP-LINUX";
-            }
+	    /* 
+	     * Remap the encoding string to a different value for japanese
+	     * locales on linux so that customized converters are used instead
+	     * of the default converter for "EUC-JP". The customized converters
+	     * omit support for the JIS0212 encoding which is not supported by
+	     * the variant of "EUC-JP" encoding used on linux
+	     */
+	    if (strcmp(p, "EUC-JP") == 0) {
+		std_encoding = "EUC-JP-LINUX";
+	    }
 #else
-            /* For Solaris use customized vendor defined character
+            /* For Solaris use customized vendor defined character 
              * customized EUC-JP converter
              */
             if (strcmp(p,"eucJP") == 0) {
-                std_encoding = "eucJP-open";
+                std_encoding = "eucJP-open"; 
             }
 #endif
 #ifndef __linux__
-            /*
-             * Remap the encoding string to Big5_Solaris which augments
-             * the default converter for Solaris Big5 locales to include
-             * seven additional ideographic characters beyond those included
-             * in the Java "Big5" converter.
-             */
-            if (strcmp(p, "Big5") == 0) {
-                    std_encoding = "Big5_Solaris";
-            }
+	    /* 
+	     * Remap the encoding string to Big5_Solaris which augments
+	     * the default converter for Solaris Big5 locales to include
+	     * seven additional ideographic characters beyond those included
+	     * in the Java "Big5" converter.
+	     */
+	    if (strcmp(p, "Big5") == 0) {
+		    std_encoding = "Big5_Solaris";
+	    }
 #endif
-            sprops.encoding = std_encoding;
+	    sprops.encoding = std_encoding;
             sprops.sun_jnu_encoding = sprops.encoding;
         }
     }
-
-#ifdef __linux__
+    
+#ifdef __linux__ 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     sprops.unicode_encoding = "UnicodeLittle";
 #else
@@ -373,21 +373,21 @@ GetJavaProperties(JNIEnv *env)
     /* user properties */
     {
         struct passwd *pwent = getpwuid(getuid());
-        sprops.user_name = pwent ? strdup(pwent->pw_name) : "?";
-        sprops.user_home = pwent ? strdup(pwent->pw_dir) : "?";
+	sprops.user_name = pwent ? strdup(pwent->pw_name) : "?";
+	sprops.user_home = pwent ? strdup(pwent->pw_dir) : "?";
     }
 
     /* User TIMEZONE */
     {
-        /*
-         * We defer setting up timezone until it's actually necessary.
-         * Refer to TimeZone.getDefault(). However, the system
-         * property is necessary to be able to be set by the command
-         * line interface -D. Here temporarily set a null string to
-         * timezone.
-         */
-        tzset();        /* for compatibility */
-        sprops.timezone = "";
+	/*
+	 * We defer setting up timezone until it's actually necessary.
+	 * Refer to TimeZone.getDefault(). However, the system
+	 * property is necessary to be able to be set by the command
+	 * line interface -D. Here temporarily set a null string to
+	 * timezone.
+	 */
+	tzset();	/* for compatibility */
+	sprops.timezone = "";
     }
 
     /* Current directory */
@@ -395,7 +395,7 @@ GetJavaProperties(JNIEnv *env)
         char buf[MAXPATHLEN];
         errno = 0;
         if (getcwd(buf, sizeof(buf))  == NULL)
-            JNU_ThrowByName(env, "java/lang/Error",
+            JNU_ThrowByName(env, "java/lang/Error", 
              "Properties init: Could not determine current working directory.");
         else
             sprops.user_dir = strdup(buf);
@@ -406,7 +406,7 @@ GetJavaProperties(JNIEnv *env)
     sprops.line_separator = "\n";
 
     /* Append CDE message and resource search path to NLSPATH and
-     * XFILESEARCHPATH, in order to pick localized message for
+     * XFILESEARCHPATH, in order to pick localized message for 
      * FileSelectionDialog window (Bug 4173641).
      */
     setPathEnvironment("NLSPATH=/usr/dt/lib/nls/msg/%L/%N.cat");

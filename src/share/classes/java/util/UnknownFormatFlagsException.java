@@ -32,6 +32,7 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
+ * @version 	%I%, %G%
  * @since 1.5
  */
 public class UnknownFormatFlagsException extends IllegalFormatException {
@@ -47,9 +48,9 @@ public class UnknownFormatFlagsException extends IllegalFormatException {
      *         The set of format flags which contain an unknown flag
      */
     public UnknownFormatFlagsException(String f) {
-        if (f == null)
-            throw new NullPointerException();
-        this.flags = f;
+ 	if (f == null)
+ 	    throw new NullPointerException();
+	this.flags = f;
     }
 
     /**
@@ -58,11 +59,11 @@ public class UnknownFormatFlagsException extends IllegalFormatException {
      * @return  The flags
      */
     public String getFlags() {
-        return flags;
+	return flags;
     }
 
     // javadoc inherited from Throwable.java
     public String getMessage() {
-        return "Flags = " + flags;
+	return "Flags = " + flags;
     }
 }

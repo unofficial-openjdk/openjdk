@@ -38,6 +38,7 @@ import javax.swing.*;
  * visible or invisible, either by the setVisible() method or by being added
  * or removed from the component hierarchy.
  *
+ * @version %I% %G%
  * @author Dave Moore
  */
 public interface AncestorListener extends EventListener {
@@ -67,3 +68,5 @@ public interface AncestorListener extends EventListener {
     public void ancestorMoved(AncestorEvent event);
 
 }
+
+

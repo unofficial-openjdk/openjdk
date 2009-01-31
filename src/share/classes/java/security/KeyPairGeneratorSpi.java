@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package java.security;
 
 import java.security.spec.AlgorithmParameterSpec;
@@ -35,7 +35,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * <p> All the abstract methods in this class must be implemented by each
  * cryptographic service provider who wishes to supply the implementation
  * of a key pair generator for a particular algorithm.
- *
+ * 
  * <p> In case the client does not explicitly initialize the KeyPairGenerator
  * (via a call to an <code>initialize</code> method), each provider must
  * supply (and document) a default initialization.
@@ -44,6 +44,7 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author Benjamin Renaud
  *
+ * @version %I%, %G%
  *
  * @see KeyPairGenerator
  * @see java.security.spec.AlgorithmParameterSpec
@@ -72,7 +73,7 @@ public abstract class KeyPairGeneratorSpi {
      *
      * <p>This concrete method has been added to this previously-defined
      * abstract class. (For backwards compatibility, it cannot be abstract.)
-     * It may be overridden by a provider to initialize the key pair
+     * It may be overridden by a provider to initialize the key pair 
      * generator. Such an override
      * is expected to throw an InvalidAlgorithmParameterException if
      * a parameter is inappropriate for this key pair generator.
@@ -89,9 +90,9 @@ public abstract class KeyPairGeneratorSpi {
      * @since 1.2
      */
     public void initialize(AlgorithmParameterSpec params,
-                           SecureRandom random)
-        throws InvalidAlgorithmParameterException {
-            throw new UnsupportedOperationException();
+		           SecureRandom random)
+	throws InvalidAlgorithmParameterException {
+	    throw new UnsupportedOperationException();
     }
 
     /**

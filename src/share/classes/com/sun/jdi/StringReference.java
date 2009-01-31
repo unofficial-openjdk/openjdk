@@ -46,3 +46,4 @@ public interface StringReference extends ObjectReference
      */
     String value();
 }
+

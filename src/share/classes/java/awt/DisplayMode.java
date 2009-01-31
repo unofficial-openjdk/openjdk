@@ -27,9 +27,9 @@ package java.awt;
 
 /**
  * The <code>DisplayMode</code> class encapsulates the bit depth, height,
- * width, and refresh rate of a <code>GraphicsDevice</code>. The ability to
- * change graphics device's display mode is platform- and
- * configuration-dependent and may not always be available
+ * width, and refresh rate of a <code>GraphicsDevice</code>. The ability to 
+ * change graphics device's display mode is platform- and 
+ * configuration-dependent and may not always be available 
  * (see {@link GraphicsDevice#isDisplayChangeSupported}).
  * <p>
  * For more information on full-screen exclusive mode API, see the
@@ -44,11 +44,11 @@ package java.awt;
  * @since 1.4
  */
 public final class DisplayMode {
-
+    
     private Dimension size;
     private int bitDepth;
     private int refreshRate;
-
+        
     /**
      * Create a new display mode object with the supplied parameters.
      * @param width the width of the display, in pixels
@@ -67,7 +67,7 @@ public final class DisplayMode {
         this.bitDepth = bitDepth;
         this.refreshRate = refreshRate;
     }
-
+    
     /**
      * Returns the height of the display, in pixels.
      * @return the height of the display, in pixels
@@ -75,7 +75,7 @@ public final class DisplayMode {
     public int getHeight() {
         return size.height;
     }
-
+    
     /**
      * Returns the width of the display, in pixels.
      * @return the width of the display, in pixels
@@ -83,14 +83,14 @@ public final class DisplayMode {
     public int getWidth() {
         return size.width;
     }
-
+    
     /**
      * Value of the bit depth if multiple bit depths are supported in this
      * display mode.
      * @see #getBitDepth
      */
     public final static int BIT_DEPTH_MULTI = -1;
-
+    
     /**
      * Returns the bit depth of the display, in bits per pixel.  This may be
      * <code>BIT_DEPTH_MULTI</code> if multiple bit depths are supported in
@@ -102,13 +102,13 @@ public final class DisplayMode {
     public int getBitDepth() {
         return bitDepth;
     }
-
+    
     /**
      * Value of the refresh rate if not known.
      * @see #getRefreshRate
      */
     public final static int REFRESH_RATE_UNKNOWN = 0;
-
+    
     /**
      * Returns the refresh rate of the display, in hertz.  This may be
      * <code>REFRESH_RATE_UNKNOWN</code> if the information is not available.
@@ -125,26 +125,26 @@ public final class DisplayMode {
      * @return whether the two display modes are equal
      */
     public boolean equals(DisplayMode dm) {
-        if (dm == null) {
-            return false;
-        }
+	if (dm == null) {
+	    return false;
+	}
         return (getHeight() == dm.getHeight()
             && getWidth() == dm.getWidth()
             && getBitDepth() == dm.getBitDepth()
             && getRefreshRate() == dm.getRefreshRate());
     }
-
+    
     /**
      * {@inheritDoc}
      */
     public boolean equals(Object dm) {
-        if (dm instanceof DisplayMode) {
-            return equals((DisplayMode)dm);
-        } else {
-            return false;
-        }
+	if (dm instanceof DisplayMode) {
+	    return equals((DisplayMode)dm);
+	} else {
+	    return false;
+	}
     }
-
+    
     /**
      * {@inheritDoc}
      */
@@ -152,5 +152,5 @@ public final class DisplayMode {
         return getWidth() + getHeight() + getBitDepth() * 7
             + getRefreshRate() * 13;
     }
-
+    
 }

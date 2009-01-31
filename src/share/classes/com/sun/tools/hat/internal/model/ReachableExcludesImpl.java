@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
@@ -59,58 +59,59 @@ import java.util.Hashtable;
  * transitive closure of objects reachable from a given object, allowing
  * some kind of real determination of the "size" of that object.
  *
+ * @version     1.1, 03/06/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 public class ReachableExcludesImpl implements ReachableExcludes {
 
     private File excludesFile;
     private long lastModified;
-    private Hashtable methods;  // Hashtable<String, String>, used as a bag
+    private Hashtable methods;	// Hashtable<String, String>, used as a bag
 
     /**
      * Create a new ReachableExcludesImpl over the given file.  The file will be
      * re-read whenever the timestamp changes.
      */
     public ReachableExcludesImpl(File excludesFile) {
-        this.excludesFile = excludesFile;
-        readFile();
+	this.excludesFile = excludesFile;
+	readFile();
     }
 
     private void readFileIfNeeded() {
-        if (excludesFile.lastModified() != lastModified) {
-            synchronized(this) {
-                if (excludesFile.lastModified() != lastModified) {
-                    readFile();
-                }
-            }
-        }
+	if (excludesFile.lastModified() != lastModified) {
+	    synchronized(this) {
+		if (excludesFile.lastModified() != lastModified) {
+		    readFile();
+		}
+	    }
+	}
     }
 
     private void readFile() {
-        long lm = excludesFile.lastModified();
-        Hashtable<String, String> m = new Hashtable<String, String>();
+	long lm = excludesFile.lastModified();
+	Hashtable<String, String> m = new Hashtable<String, String>();
 
-        try {
-            BufferedReader r = new BufferedReader(new InputStreamReader(
-                                    new FileInputStream(excludesFile)));
-
-            String method;
-            while ((method = r.readLine()) != null) {
-                m.put(method, method);
-            }
-            lastModified = lm;
-            methods = m;        // We want this to be atomic
-        } catch (IOException ex) {
-            System.out.println("Error reading " + excludesFile + ":  " + ex);
-        }
+	try {
+	    BufferedReader r = new BufferedReader(new InputStreamReader(
+				    new FileInputStream(excludesFile)));
+	    
+	    String method;
+	    while ((method = r.readLine()) != null) {
+		m.put(method, method);
+	    }
+	    lastModified = lm;
+	    methods = m;	// We want this to be atomic
+	} catch (IOException ex) {
+	    System.out.println("Error reading " + excludesFile + ":  " + ex);
+	}
     }
 
     /**
      * @return true iff the given field is on the histlist of excluded
-     *          fields.
+     * 		fields.
      */
     public boolean isExcluded(String fieldName) {
-        readFileIfNeeded();
-        return methods.get(fieldName) != null;
+	readFileIfNeeded();
+	return methods.get(fieldName) != null;
     }
 }

@@ -1,23 +1,23 @@
 /*
  * Portions Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -34,13 +34,13 @@ import java.io.*;
  * Immutable objects which encapsulate the context settings which
  * describe certain rules for numerical operators, such as those
  * implemented by the {@link BigDecimal} class.
- *
+ * 
  * <p>The base-independent settings are:
  * <ol>
  * <li>{@code precision}:
  * the number of digits to be used for an operation; results are
  * rounded to this precision
- *
+ * 
  * <li>{@code roundingMode}:
  * a {@link RoundingMode} object which specifies the algorithm to be
  * used for rounding.
@@ -111,7 +111,7 @@ public final class MathContext implements Serializable {
      * indicates that unlimited precision (as many digits as are
      * required) will be used.  Note that leading zeros (in the
      * coefficient of a number) are never significant.
-     *
+     * 
      * <p>{@code precision} will always be non-negative.
      *
      * @serial
@@ -147,7 +147,7 @@ public final class MathContext implements Serializable {
      * mode.
      *
      * @param setPrecision The non-negative {@code int} precision setting.
-     * @throws IllegalArgumentException if the {@code setPrecision} parameter is less
+     * @throws IllegalArgumentException if the {@code setPrecision} parameter is less 
      *         than zero.
      */
     public MathContext(int setPrecision) {
@@ -161,12 +161,12 @@ public final class MathContext implements Serializable {
      *
      * @param setPrecision The non-negative {@code int} precision setting.
      * @param setRoundingMode The rounding mode to use.
-     * @throws IllegalArgumentException if the {@code setPrecision} parameter is less
+     * @throws IllegalArgumentException if the {@code setPrecision} parameter is less 
      *         than zero.
      * @throws NullPointerException if the rounding mode argument is {@code null}
      */
-    public MathContext(int setPrecision,
-                       RoundingMode setRoundingMode) {
+    public MathContext(int setPrecision, 
+		       RoundingMode setRoundingMode) {
         if (setPrecision < MIN_DIGITS)
             throw new IllegalArgumentException("Digits < 0");
         if (setRoundingMode == null)
@@ -187,7 +187,7 @@ public final class MathContext implements Serializable {
      *
      * The string must be in the same format as that produced by the
      * {@link #toString} method.
-     *
+     * 
      * <p>An {@code IllegalArgumentException} is thrown if the precision
      * section of the string is out of range ({@code < 0}) or the string is
      * not in the format created by the {@link #toString} method.
@@ -208,8 +208,8 @@ public final class MathContext implements Serializable {
             int off = 10;                     // where value starts
             setPrecision = Integer.parseInt(val.substring(10, fence));
 
-            if (!val.startsWith("roundingMode=", fence+1))
-                throw new RuntimeException();
+            if (!val.startsWith("roundingMode=", fence+1)) 
+		throw new RuntimeException();
             off = fence + 1 + 13;
             String str = val.substring(off, val.length());
             roundingMode = RoundingMode.valueOf(str);
@@ -262,10 +262,10 @@ public final class MathContext implements Serializable {
      * Compares this {@code MathContext} with the specified
      * {@code Object} for equality.
      *
-     * @param  x {@code Object} to which this {@code MathContext} is to
+     * @param  x {@code Object} to which this {@code MathContext} is to 
      *         be compared.
      * @return {@code true} if and only if the specified {@code Object} is
-     *         a {@code MathContext} object which has exactly the same
+     *         a {@code MathContext} object which has exactly the same 
      *         settings as this object
      */
     public boolean equals(Object x){
@@ -286,7 +286,7 @@ public final class MathContext implements Serializable {
         return this.precision + roundingMode.hashCode() * 59;
     }
 
-    /**
+    /** 
      * Returns the string representation of this {@code MathContext}.
      * The {@code String} returned represents the settings of the
      * {@code MathContext} object as two space-delimited words
@@ -319,8 +319,8 @@ public final class MathContext implements Serializable {
      * @return a {@code String} representing the context settings
      */
     public java.lang.String toString() {
-        return "precision=" +           precision + " " +
-               "roundingMode=" +        roundingMode.toString();
+        return "precision=" +		precision + " " +
+	       "roundingMode=" +	roundingMode.toString();
     }
 
     // Private methods

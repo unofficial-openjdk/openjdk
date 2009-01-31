@@ -36,6 +36,7 @@ package java.security;
  *
  * @see GuardedObject
  *
+ * @version %I% %E%
  * @author Roland Schemers
  * @author Li Gong
  */

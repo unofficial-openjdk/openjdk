@@ -37,6 +37,7 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see CertAttrSet
  */
 public class CertificateSerialNumber implements CertAttrSet<String> {
@@ -52,7 +53,7 @@ public class CertificateSerialNumber implements CertAttrSet<String> {
     public static final String NAME = "serialNumber";
     public static final String NUMBER = "number";
 
-    private SerialNumber        serial;
+    private SerialNumber	serial;
 
     /**
      * Default constructor for the certificate attribute.
@@ -169,10 +170,10 @@ public class CertificateSerialNumber implements CertAttrSet<String> {
     public Enumeration<String> getElements() {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(NUMBER);
-
+ 
         return (elements.elements());
     }
-
+ 
     /**
      * Return the name of this attribute.
      */

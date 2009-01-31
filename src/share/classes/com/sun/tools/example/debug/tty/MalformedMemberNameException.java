@@ -27,10 +27,10 @@ package com.sun.tools.example.debug.tty;
 
 class MalformedMemberNameException extends Exception {
     public MalformedMemberNameException() {
-        super();
+	super();
     }
 
     public MalformedMemberNameException(String s) {
-        super(s);
+	super(s);
     }
 }

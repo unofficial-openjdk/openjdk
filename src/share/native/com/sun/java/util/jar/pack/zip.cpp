@@ -22,10 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 /**
  * Note: Lifted from uncrunch.c from jdk sources
- */
+ */ 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -33,7 +33,7 @@
 
 #include <stdlib.h>
 
-#ifndef _MSC_VER
+#ifndef _MSC_VER 
 #include <strings.h>
 #endif
 
@@ -97,7 +97,7 @@ void jar::write_data(void* buff, int len) {
 }
 
 void jar::add_to_jar_directory(const char* fname, bool store, int modtime,
-                               int len, int clen, uLong crc) {
+			       int len, int clen, uLong crc) {
   uint fname_length = strlen(fname);
   ushort header[23];
   if (modtime == 0)  modtime = default_modtime;
@@ -111,7 +111,7 @@ void jar::add_to_jar_directory(const char* fname, bool store, int modtime,
   header[3] = SWAP_BYTES(0xA);
 
   // flags 02 = maximum  sub-compression flag
-  header[4] = ( store ) ? 0x0 : SWAP_BYTES(0x2);
+  header[4] = ( store ) ? 0x0 : SWAP_BYTES(0x2); 
 
   // Compression method 8=deflate.
   header[5] = ( store ) ? 0x0 : SWAP_BYTES(0x08);
@@ -159,7 +159,7 @@ void jar::add_to_jar_directory(const char* fname, bool store, int modtime,
 }
 
 void jar::write_jar_header(const char* fname, bool store, int modtime,
-                           int len, int clen, uint crc) {
+			   int len, int clen, uint crc) {
   uint fname_length = strlen(fname);
   ushort header[15];
   if (modtime == 0)  modtime = default_modtime;
@@ -173,7 +173,7 @@ void jar::write_jar_header(const char* fname, bool store, int modtime,
   header[2] = SWAP_BYTES(0xA);
 
   // flags 02 = maximum  sub-compression flag
-  header[3] = ( store ) ? 0x0 : SWAP_BYTES(0x2);
+  header[3] = ( store ) ? 0x0 : SWAP_BYTES(0x2); 
 
   // Compression method = deflate
   header[4] = ( store ) ? 0x0 : SWAP_BYTES(0x08);
@@ -185,7 +185,7 @@ void jar::write_jar_header(const char* fname, bool store, int modtime,
   // CRC
   header[7] = GET_INT_LO(crc);
   header[8] = GET_INT_HI(crc);
-
+ 
   // Compressed length:
   header[9] = GET_INT_LO(clen);
   header[10] = GET_INT_HI(clen);
@@ -225,7 +225,7 @@ void jar::write_central_directory() {
   // Size of the central directory}
   header[6] = GET_INT_LO(central_directory.size());
   header[7] = GET_INT_HI(central_directory.size());
-  // Offset of central directory within disk.
+  // Offset of central directory within disk. 
   header[8] = GET_INT_LO(output_file_offset);
   header[9] = GET_INT_HI(output_file_offset);
   // zipfile comment length;
@@ -260,8 +260,8 @@ void jar::openJarFile(const char* fname) {
 
 // Add a ZIP entry and copy the file data
 void jar::addJarEntry(const char* fname,
-                      bool deflate_hint, int modtime,
-                      bytes& head, bytes& tail) {
+		      bool deflate_hint, int modtime,
+		      bytes& head, bytes& tail) { 
   int len = head.len + tail.len;
   int clen = 0;
 
@@ -276,7 +276,7 @@ void jar::addJarEntry(const char* fname,
   if (deflate) {
     if (deflate_bytes(head, tail) == false) {
       printcr(2, "Reverting to store fn=%s\t%d -> %d\n",
-              fname, len, deflated.size());
+	      fname, len, deflated.size());
       deflate = false;
     }
   }
@@ -313,21 +313,21 @@ void jar::closeJarFile(bool central) {
 
 /* Convert the date y/n/d and time h:m:s to a four byte DOS date and
  *  time (date in high two bytes, time in low two bytes allowing magnitude
- *  comparison).
+ *  comparison). 
  */
 inline
 uLong jar::dostime(int y, int n, int d, int h, int m, int s) {
   return y < 1980 ? dostime(1980, 1, 1, 0, 0, 0) :
     (((uLong)y - 1980) << 25) | ((uLong)n << 21) | ((uLong)d << 16) |
     ((uLong)h << 11) | ((uLong)m << 5) | ((uLong)s >> 1);
-}
+} 
 
 #ifdef _REENTRANT // solaris
 extern "C" struct tm *gmtime_r(const time_t *, struct tm *);
 #else
 #define gmtime_r(t, s) gmtime(t)
 #endif
-/*
+/* 
  * Return the Unix time in DOS format
  */
 uLong jar::get_dostime(int modtime) {
@@ -341,7 +341,7 @@ uLong jar::get_dostime(int modtime) {
   struct tm* s = gmtime_r(&t, &sbuf);
   modtime_cache = modtime;
   dostime_cache = dostime(s->tm_year + 1900, s->tm_mon + 1, s->tm_mday,
-                          s->tm_hour, s->tm_min, s->tm_sec);
+			  s->tm_hour, s->tm_min, s->tm_sec);
   //printf("modtime %d => %d\n", modtime_cache, dostime_cache);
   return dostime_cache;
 }
@@ -353,7 +353,7 @@ uLong jar::get_dostime(int modtime) {
 /* Returns true on success, and will set the clen to the compressed
    length, the caller should verify if true and clen less than the
    input data
-*/
+*/ 
 bool jar::deflate_bytes(bytes& head, bytes& tail) {
   int len = head.len + tail.len;
 
@@ -364,7 +364,7 @@ bool jar::deflate_bytes(bytes& head, bytes& tail) {
   // unzip/zipup.c and java/Deflater.c
 
   int error = deflateInit2(&zs, Z_BEST_COMPRESSION, Z_DEFLATED,
-                           -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
+			   -MAX_WBITS, 8, Z_DEFAULT_STRATEGY);
   if (error != Z_OK) {
     switch (error) {
     case Z_MEM_ERROR:
@@ -427,7 +427,7 @@ bool jar::deflate_bytes(bytes& head, bytes& tail) {
 
 // Callback for fetching data from a GZIP input stream
 static jlong read_input_via_gzip(unpacker* u,
-                                  void* buf, jlong minlen, jlong maxlen) {
+				  void* buf, jlong minlen, jlong maxlen) {
   assert(minlen <= maxlen);  // don't talk nonsense
   jlong numread = 0;
   char* bufptr = (char*) buf;
@@ -459,11 +459,11 @@ static jlong read_input_via_gzip(unpacker* u,
       enum { TRAILER_LEN = 8 };
       // skip 8-byte trailer
       if (zs.avail_in >= TRAILER_LEN) {
-        zs.avail_in -= TRAILER_LEN;
+	zs.avail_in -= TRAILER_LEN;
       } else {
         // Bug: 5023768,we read past the TRAILER_LEN to see if there is
-        // any extraneous data, as we dont support concatenated .gz
-        // files just yet.
+        // any extraneous data, as we dont support concatenated .gz 
+        // files just yet. 
         int extra = (int) read_gzin_fn(u, inbuf, 1, inbuflen);
         zs.avail_in += extra - TRAILER_LEN;
       }

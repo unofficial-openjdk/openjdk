@@ -46,7 +46,7 @@ import java.util.*;
  * This is script console plugin. This class uses javax.script API to create
  * interactive read-eval-print script shell within the jconsole GUI.
  */
-public class ScriptJConsolePlugin extends JConsolePlugin
+public class ScriptJConsolePlugin extends JConsolePlugin 
                      implements ScriptShellPanel.CommandProcessor {
     // Panel for our tab
     private volatile ScriptShellPanel window;
@@ -64,13 +64,13 @@ public class ScriptJConsolePlugin extends JConsolePlugin
     // For eg. ".js" for JavaScript, ".bsh" for BeanShell.
     private String extension;
 
-    // Prompt to print in the read-eval-print loop. This is
+    // Prompt to print in the read-eval-print loop. This is 
     // derived from the script file extension.
     private volatile String prompt;
 
     /**
      * Constructor to create this plugin
-     */
+     */ 
     public ScriptJConsolePlugin() {
     }
 
@@ -98,7 +98,7 @@ public class ScriptJConsolePlugin extends JConsolePlugin
     @Override public SwingWorker<?,?> newSwingWorker() {
         return null;
     }
-
+    
     @Override public void dispose() {
         window.dispose();
     }

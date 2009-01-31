@@ -50,19 +50,19 @@ AppendToClassPathTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new AppendToClassPathTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testAppendToClassPath();
     }
-
-
+    
+    
     public void
     testAppendToClassPath()
         throws  IOException,
@@ -70,7 +70,7 @@ AppendToClassPathTest
     {
         Class sentinelClass;
         ClassLoader loader = this.getClass().getClassLoader();
-
+        
         // load the "hidden" class, it should be loaded by the system loader
         sentinelClass = loader.loadClass("ExampleForClassPath");
         assertTrue(sentinelClass.getClassLoader() == ClassLoader.getSystemClassLoader());

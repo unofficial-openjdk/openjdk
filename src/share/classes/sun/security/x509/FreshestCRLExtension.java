@@ -38,7 +38,7 @@ import sun.security.util.*;
  *
  * <p>
  * The extension identifies how delta CRL information for a
- * complete CRL is obtained.
+ * complete CRL is obtained. 
  *
  * <p>
  * The extension is defined in Section 5.2.6 of
@@ -69,9 +69,9 @@ public class FreshestCRLExtension extends CRLDistributionPointsExtension {
      * @param distributionPoints the list of delta CRL distribution points.
      */
     public FreshestCRLExtension(List<DistributionPoint> distributionPoints)
-        throws IOException {
+	throws IOException {
 
-        super(PKIXExtensions.FreshestCRL_Id, false, distributionPoints, NAME);
+	super(PKIXExtensions.FreshestCRL_Id, false, distributionPoints, NAME);
     }
 
     /**
@@ -83,8 +83,8 @@ public class FreshestCRLExtension extends CRLDistributionPointsExtension {
      */
     public FreshestCRLExtension(Boolean critical, Object value)
     throws IOException {
-        super(PKIXExtensions.FreshestCRL_Id, critical.booleanValue(), value,
-            NAME);
+	super(PKIXExtensions.FreshestCRL_Id, critical.booleanValue(), value, 
+	    NAME);
     }
 
     /**
@@ -94,6 +94,6 @@ public class FreshestCRLExtension extends CRLDistributionPointsExtension {
      * @exception IOException on encoding errors.
      */
     public void encode(OutputStream out) throws IOException {
-        super.encode(out, PKIXExtensions.FreshestCRL_Id, false);
+	super.encode(out, PKIXExtensions.FreshestCRL_Id, false);
     }
 }

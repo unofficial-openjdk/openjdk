@@ -41,6 +41,7 @@ import sun.awt.AppContext;
  * TimerQueue manages a queue of Timers. The Timers are chained
  * together in a linked list sorted by the order in which they will expire.
  *
+ * @version %I% %G%
  * @author Dave Moore
  * @author Igor Kushnirskiy
  */
@@ -54,7 +55,7 @@ class TimerQueue implements Runnable
     private final DelayQueue<DelayedTimer> queue;
     volatile boolean running;
 
-    /* Lock object used in place of class object for synchronization.
+    /* Lock object used in place of class object for synchronization. 
      * (4187686)
      */
     private static final Object classLock = new Object();
@@ -93,7 +94,7 @@ class TimerQueue implements Runnable
                                        "that is already running");
         }
         else {
-            final ThreadGroup threadGroup =
+            final ThreadGroup threadGroup = 
                 AppContext.getAppContext().getThreadGroup();
             java.security.AccessController.doPrivileged(
                 new java.security.PrivilegedAction() {
@@ -119,7 +120,7 @@ class TimerQueue implements Runnable
         try {
             // If the Timer is already in the queue, then ignore the add.
             if (! containsTimer(timer)) {
-                addTimer(new DelayedTimer(timer,
+                addTimer(new DelayedTimer(timer, 
                                       TimeUnit.MILLISECONDS.toNanos(delayMillis)
                                       + now()));
             }
@@ -173,14 +174,14 @@ class TimerQueue implements Runnable
                         DelayedTimer delayedTimer = timer.delayedTimer;
                         if (delayedTimer != null) {
                             /*
-                             * Timer is not removed after we get it from
-                             * the queue and before the lock on the timer is
+                             * Timer is not removed after we get it from 
+                             * the queue and before the lock on the timer is 
                              * acquired
                              */
                             timer.post(); // have timer post an event
                             timer.delayedTimer = null;
                             if (timer.isRepeats()) {
-                                delayedTimer.setTime(now()
+                                delayedTimer.setTime(now() 
                                     + TimeUnit.MILLISECONDS.toNanos(
                                           timer.getDelay()));
                                 addTimer(delayedTimer);
@@ -221,16 +222,16 @@ class TimerQueue implements Runnable
         buf.append(")");
         return buf.toString();
     }
-
+    
     /**
      * Returns nanosecond time offset by origin
      */
     private final static long now() {
         return System.nanoTime() - NANO_ORIGIN;
     }
-
+    
     static class DelayedTimer implements Delayed {
-        // most of it copied from
+        // most of it copied from 
         // java.util.concurrent.ScheduledThreadPoolExecutor
 
         /**
@@ -238,11 +239,11 @@ class TimerQueue implements Runnable
          * guarantee FIFO order among tied entries.
          */
         private static final AtomicLong sequencer = new AtomicLong(0);
-
+        
         /** Sequence number to break ties FIFO */
         private final long sequenceNumber;
-
-
+        
+    
         /** The time the task is enabled to execute in nanoTime units */
         private volatile long time;
 
@@ -268,7 +269,7 @@ class TimerQueue implements Runnable
         }
 
         public int compareTo(Delayed other) {
-            if (other == this) { // compare zero ONLY if same object
+            if (other == this) { // compare zero ONLY if same object 
                 return 0;
             }
             if (other instanceof DelayedTimer) {

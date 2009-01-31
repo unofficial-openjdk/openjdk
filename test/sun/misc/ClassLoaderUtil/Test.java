@@ -33,38 +33,38 @@ import java.util.*;
 public class Test {
 
     static File copy (File src, String destDir) throws Exception {
-        FileInputStream fis = new FileInputStream (src);
-        File dest = new File (destDir, src.getName());
-        FileOutputStream fos = new FileOutputStream (dest);
-        byte buf[] = new byte [1024];
-        int c;
-        while ((c=fis.read(buf)) != -1) {
-            fos.write (buf, 0, c);
-        }
-        fis.close();
-        fos.close();
-        return dest;
+	FileInputStream fis = new FileInputStream (src);
+	File dest = new File (destDir, src.getName());
+	FileOutputStream fos = new FileOutputStream (dest);
+	byte buf[] = new byte [1024];
+	int c;
+	while ((c=fis.read(buf)) != -1) {
+	    fos.write (buf, 0, c);
+	}
+	fis.close();
+	fos.close();
+	return dest;
     }
 
     public static void main(String[] args) throws Exception {
-        String srcPath = System.getProperty("test.src");
-        String destPath = System.getProperty("test.classes");
-        if (destPath == null || "".equals(destPath)) {
-            throw new RuntimeException ("Not running test");
-        }
-        File file = new File (srcPath, "test.jar");
-        file = copy (file, destPath);
-        URL url = file.toURL();
-        URLClassLoader loader = new URLClassLoader (new URL [] {url});
-        Class clazz = Class.forName ("Foo", true,  loader);
-        Object obj = clazz.newInstance();
-        List<String> jarsclosed = new LinkedList<String>();
-        sun.misc.ClassLoaderUtil.releaseLoader (loader, jarsclosed);
-        for (String jar: jarsclosed) {
-            System.out.println ("Successfully closed " + jar);
-        }
-        if (!file.delete()) {
-            throw new RuntimeException ("failed to delete jar file");
-        }
+	String srcPath = System.getProperty("test.src");
+	String destPath = System.getProperty("test.classes");
+	if (destPath == null || "".equals(destPath)) {
+	    throw new RuntimeException ("Not running test");
+	}
+	File file = new File (srcPath, "test.jar");
+	file = copy (file, destPath);
+	URL url = file.toURL();
+	URLClassLoader loader = new URLClassLoader (new URL [] {url});
+	Class clazz = Class.forName ("Foo", true,  loader);
+	Object obj = clazz.newInstance();
+	List<String> jarsclosed = new LinkedList<String>();
+	sun.misc.ClassLoaderUtil.releaseLoader (loader, jarsclosed);
+	for (String jar: jarsclosed) {
+	    System.out.println ("Successfully closed " + jar);
+	}
+	if (!file.delete()) {
+	    throw new RuntimeException ("failed to delete jar file");
+	}
     }
 }

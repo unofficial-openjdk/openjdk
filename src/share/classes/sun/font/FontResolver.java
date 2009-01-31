@@ -25,6 +25,7 @@
  */
 
 /*
+ * @(#)FontResolver.java	1.7 05/08/26
  * (C) Copyright IBM Corp. 1999,  All rights reserved.
  */
 
@@ -38,7 +39,7 @@ import java.util.Map;
 import sun.text.CodePointIterator;
 
 /**
- * This class maps an individual character to a Font family which can
+ * This class maps an individual character to a Font family which can 
  * display it.  The character-to-Font mapping does not depend on the
  * character's context, so a particular character will be mapped to the
  * same font family each time.
@@ -49,7 +50,7 @@ import sun.text.CodePointIterator;
  * a font obtained from getFont().
  */
 public final class FontResolver {
-
+    
     // An array of all fonts available to the runtime.  The fonts
     // will be searched in order.
     private Font[] allFonts;
@@ -60,7 +61,7 @@ public final class FontResolver {
     private static final int DEFAULT_SIZE = 12; // from Font
 
     private Font defaultFont = new Font(Font.DIALOG, Font.PLAIN, DEFAULT_SIZE);
-
+    
     // The results of previous lookups are cached in a two-level
     // table.  The value for a character c is found in:
     //     blocks[c>>SHIFT][c&MASK]
@@ -72,16 +73,16 @@ public final class FontResolver {
     private static final int BLOCKSIZE = 1<<(16-SHIFT);
     private static final int MASK = BLOCKSIZE-1;
     private int[][] blocks = new int[1<<SHIFT][];
-
+    
     private FontResolver() {
     }
-
+    
     private Font[] getAllFonts() {
         if (allFonts == null) {
             allFonts =
             GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
             for (int i=0; i < allFonts.length; i++) {
-                allFonts[i] = allFonts[i].deriveFont((float)DEFAULT_SIZE);
+                allFonts[i] = allFonts[i].deriveFont((float)DEFAULT_SIZE); 
             }
         }
         return allFonts;
@@ -161,14 +162,14 @@ public final class FontResolver {
      * @see #getFont
      */
     public int getFontIndex(char c) {
-
+        
         int blockIndex = c>>SHIFT;
         int[] block = blocks[blockIndex];
         if (block == null) {
             block = new int[BLOCKSIZE];
             blocks[blockIndex] = block;
         }
-
+        
         int index = c & MASK;
         if (block[index] == 0) {
             block[index] = getIndexFor(c);
@@ -193,19 +194,19 @@ public final class FontResolver {
      * was empty.
      */
     public int nextFontRunIndex(CodePointIterator iter) {
-        int cp = iter.next();
-        int fontIndex = 1;
-        if (cp != CodePointIterator.DONE) {
-            fontIndex = getFontIndex(cp);
+	int cp = iter.next();
+	int fontIndex = 1;
+	if (cp != CodePointIterator.DONE) {
+	    fontIndex = getFontIndex(cp);
 
-            while ((cp = iter.next()) != CodePointIterator.DONE) {
-                if (getFontIndex(cp) != fontIndex) {
-                    iter.prev();
-                    break;
-                }
-            }
-        }
-        return fontIndex;
+	    while ((cp = iter.next()) != CodePointIterator.DONE) {
+		if (getFontIndex(cp) != fontIndex) {
+		    iter.prev();
+		    break;
+		}
+	    }
+	}
+	return fontIndex;
     }
 
     /**
@@ -213,7 +214,7 @@ public final class FontResolver {
      * from attributes.  The font index, which should have been produced
      * by getFontIndex(), determines a font family.  The size and style
      * of the Font reflect the properties in attributes.  Any Font or
-     * font family specifications in attributes are ignored, on the
+     * font family specifications in attributes are ignored, on the 
      * assumption that clients have already handled them.
      * @param index an index from getFontIndex() which determines the
      *        font family
@@ -231,9 +232,9 @@ public final class FontResolver {
 
         return font.deriveFont(attributes);
     }
-
+    
     private static FontResolver INSTANCE;
-
+    
     /**
      * Return a shared instance of FontResolver.
      */

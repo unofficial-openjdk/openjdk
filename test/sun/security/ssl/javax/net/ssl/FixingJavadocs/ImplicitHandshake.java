@@ -82,34 +82,34 @@ public class ImplicitHandshake {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-        SSLServerSocketFactory sslssf =
-            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-        SSLServerSocket sslServerSocket =
-            (SSLServerSocket) sslssf.createServerSocket(serverPort);
-        serverPort = sslServerSocket.getLocalPort();
+	SSLServerSocketFactory sslssf =
+	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	SSLServerSocket sslServerSocket =
+	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
+	serverPort = sslServerSocket.getLocalPort();
 
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady = true;
+	/*
+	 * Signal Client, we're ready for his connect.
+	 */
+	serverReady = true;
 
-        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
 
-        /*
-         * For grins, let's mix it up here, to make sure you
-         * can have a server really be a client.  Don't think
-         * we have a test that does this yet.
-         */
-        sslSocket.setUseClientMode(true);
+	/*
+	 * For grins, let's mix it up here, to make sure you
+	 * can have a server really be a client.  Don't think
+	 * we have a test that does this yet.
+	 */
+	sslSocket.setUseClientMode(true);
 
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
+	InputStream sslIS = sslSocket.getInputStream();
+	OutputStream sslOS = sslSocket.getOutputStream();
 
-        sslIS.read();
-        sslOS.write(85);
-        sslOS.flush();
+	sslIS.read();
+	sslOS.write(85);
+	sslOS.flush();
 
-        sslSocket.close();
+	sslSocket.close();
     }
 
     /*
@@ -120,52 +120,52 @@ public class ImplicitHandshake {
      */
     void doClientSide() throws Exception {
 
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
-        }
+	/*
+	 * Wait for server to get started.
+	 */
+	while (!serverReady) {
+	    Thread.sleep(50);
+	}
 
-        SSLSocketFactory sslsf =
-            (SSLSocketFactory) SSLSocketFactory.getDefault();
-        SSLSocket sslSocket = (SSLSocket)
-            sslsf.createSocket("localhost", serverPort);
+	SSLSocketFactory sslsf =
+	    (SSLSocketFactory) SSLSocketFactory.getDefault();
+	SSLSocket sslSocket = (SSLSocket)
+	    sslsf.createSocket("localhost", serverPort);
 
-        /*
-         * This is bogus, we should no longer get an tho...
-         */
-        sslSocket.setUseClientMode(true);
-        sslSocket.setNeedClientAuth(true);
+	/*
+	 * This is bogus, we should no longer get an tho...
+	 */
+	sslSocket.setUseClientMode(true);
+	sslSocket.setNeedClientAuth(true);
 
-        /*
-         * For grins, let's mix it up here, to make sure you
-         * can have a client really be a server.  Don't think
-         * we have a test that does this yet.
-         */
-        sslSocket.setUseClientMode(false);
+	/*
+	 * For grins, let's mix it up here, to make sure you
+	 * can have a client really be a server.  Don't think
+	 * we have a test that does this yet.
+	 */
+	sslSocket.setUseClientMode(false);
 
-        System.out.println("Using Implicit handshake, ciphersuite is: " +
-            sslSocket.getSession().getCipherSuite());
+	System.out.println("Using Implicit handshake, ciphersuite is: " +
+	    sslSocket.getSession().getCipherSuite());
 
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
+	InputStream sslIS = sslSocket.getInputStream();
+	OutputStream sslOS = sslSocket.getOutputStream();
 
-        sslOS.write(280);
-        sslOS.flush();
-        sslIS.read();
+	sslOS.write(280);
+	sslOS.flush();
+	sslIS.read();
 
-        /*
-         * Lastly, checking that you can't change modes once you've
-         * started/completed handshaking.
-         */
-        try {
-            sslSocket.setUseClientMode(true);
-        } catch (IllegalArgumentException e) {
-            System.out.println("Caught proper exception");
-        }
+	/*
+	 * Lastly, checking that you can't change modes once you've
+	 * started/completed handshaking.
+	 */
+	try {
+	    sslSocket.setUseClientMode(true);
+	} catch (IllegalArgumentException e) {
+	    System.out.println("Caught proper exception");
+	}
 
-        sslSocket.close();
+	sslSocket.close();
     }
 
     /*
@@ -180,25 +180,25 @@ public class ImplicitHandshake {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-        String keyFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + keyStoreFile;
-        String trustFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + trustStoreFile;
+	String keyFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + keyStoreFile;
+	String trustFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + trustStoreFile;
 
-        System.setProperty("javax.net.ssl.keyStore", keyFilename);
-        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-        System.setProperty("javax.net.ssl.trustStore", trustFilename);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+	System.setProperty("javax.net.ssl.keyStore", keyFilename);
+	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+	System.setProperty("javax.net.ssl.trustStore", trustFilename);
+	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
+	if (debug)
+	    System.setProperty("javax.net.debug", "all");
 
-        /*
-         * Start the tests.
-         */
-        new ImplicitHandshake();
+	/*
+	 * Start the tests.
+	 */
+	new ImplicitHandshake();
     }
 
     Thread clientThread = null;
@@ -210,82 +210,82 @@ public class ImplicitHandshake {
      * Fork off the other side, then do your work.
      */
     ImplicitHandshake() throws Exception {
-        if (separateServerThread) {
-            startServer(true);
-            startClient(false);
-        } else {
-            startClient(true);
-            startServer(false);
-        }
+	if (separateServerThread) {
+	    startServer(true);
+	    startClient(false);
+	} else {
+	    startClient(true);
+	    startServer(false);
+	}
 
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
+	/*
+	 * Wait for other side to close down.
+	 */
+	if (separateServerThread) {
+	    serverThread.join();
+	} else {
+	    clientThread.join();
+	}
 
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null) {
-            System.out.print("Server Exception:");
-            throw serverException;
-        }
-        if (clientException != null) {
-            System.out.print("Client Exception:");
-            throw clientException;
-        }
+	/*
+	 * When we get here, the test is pretty much over.
+	 *
+	 * If the main thread excepted, that propagates back
+	 * immediately.  If the other thread threw an exception, we
+	 * should report back.
+	 */
+	if (serverException != null) {
+	    System.out.print("Server Exception:");
+	    throw serverException;
+	}
+	if (clientException != null) {
+	    System.out.print("Client Exception:");
+	    throw clientException;
+	}
     }
 
     void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.err.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide();
-        }
+	if (newThread) {
+	    serverThread = new Thread() {
+		public void run() {
+		    try {
+			doServerSide();
+		    } catch (Exception e) {
+			/*
+			 * Our server thread just died.
+			 *
+			 * Release the client, if not active already...
+			 */
+			System.err.println("Server died...");
+			serverReady = true;
+			serverException = e;
+		    }
+		}
+	    };
+	    serverThread.start();
+	} else {
+	    doServerSide();
+	}
     }
 
     void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+	if (newThread) {
+	    clientThread = new Thread() {
+		public void run() {
+		    try {
+			doClientSide();
+		    } catch (Exception e) {
+			/*
+			 * Our client thread just died.
+			 */
+			System.err.println("Client died...");
+			clientException = e;
+		    }
+		}
+	    };
+	    clientThread.start();
+	} else {
+	    doClientSide();
+	}
     }
 }

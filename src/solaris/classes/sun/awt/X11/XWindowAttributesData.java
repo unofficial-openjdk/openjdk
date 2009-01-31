@@ -27,9 +27,9 @@ import java.awt.Image;
 import java.util.ArrayList;
 
 class XWindowAttributesData {
-    static int NORMAL           = 0;
-    static int ICONIC           = 1;
-    static int MAXIMIZED        = 2;
+    static int NORMAL		= 0;
+    static int ICONIC		= 1;
+    static int MAXIMIZED	= 2;
 
     static int AWT_DECOR_NONE        = 0;
     static int AWT_DECOR_ALL         = 1;
@@ -53,10 +53,10 @@ class XWindowAttributesData {
     String title;
     java.util.List<XIconInfo> icons;
     boolean iconsInherited;
-    int decorations;            // for future expansion to be able to
-                                // specify native decorations
+    int	decorations;		// for future expansion to be able to 
+				// specify native decorations
     int functions; // MWM_FUNC_*
-
+    
     XWindowAttributesData() {
         nativeDecor = false;
         initialFocus = false;
@@ -69,5 +69,5 @@ class XWindowAttributesData {
         decorations = 0;
         functions = 0;
         initialResizability = true;
-    }
+    }   
 }

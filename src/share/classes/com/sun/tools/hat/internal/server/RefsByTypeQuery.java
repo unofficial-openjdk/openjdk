@@ -23,22 +23,22 @@
  * have any questions.
  */
 
-
+ 
 /*
  * The contents of this file are subject to the Sun Public License
  * Version 1.0 (the "License"); you may not use this file except in
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.server;
@@ -49,6 +49,7 @@ import java.util.*;
 /**
  * References by type summary
  *
+ * @author A. Sundararajan [jhat %W% %E%]
  */
 public class RefsByTypeQuery extends QueryHandler {
     public void run() {
@@ -56,8 +57,8 @@ public class RefsByTypeQuery extends QueryHandler {
         if (clazz == null) {
             error("class not found: " + query);
         } else {
-            Map<JavaClass, Long> referrersStat = new HashMap<JavaClass, Long>();
-            final Map<JavaClass, Long> refereesStat = new HashMap<JavaClass, Long>();
+            Map<JavaClass, Long> referrersStat = new HashMap<JavaClass, Long>(); 
+            final Map<JavaClass, Long> refereesStat = new HashMap<JavaClass, Long>(); 
             Enumeration instances = clazz.getInstances(false);
             while (instances.hasMoreElements()) {
                 JavaHeapObject instance = (JavaHeapObject) instances.nextElement();
@@ -73,7 +74,7 @@ public class RefsByTypeQuery extends QueryHandler {
                          continue;
                     }
                     Long count = referrersStat.get(cl);
-                    if (count == null) {
+                    if (count == null) { 
                         count = new Long(1);
                     } else {
                         count = new Long(count.longValue() + 1);
@@ -85,7 +86,7 @@ public class RefsByTypeQuery extends QueryHandler {
                         public void visit(JavaHeapObject obj) {
                             JavaClass cl = obj.getClazz();
                             Long count = refereesStat.get(cl);
-                            if (count == null) {
+                            if (count == null) { 
                                 count = new Long(1);
                             } else {
                                 count = new Long(count.longValue() + 1);
@@ -135,7 +136,7 @@ public class RefsByTypeQuery extends QueryHandler {
         for (int i = 0; i < classes.length; i++) {
             JavaClass clazz = classes[i];
             out.println("<tr><td>");
-            out.print("<a href='/refsByType/");
+            out.print("<a href='/refsByType/"); 
             out.print(clazz.getIdString());
             out.print("'>");
             out.print(clazz.getName());

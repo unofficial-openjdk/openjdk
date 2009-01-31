@@ -45,7 +45,7 @@ public class BadPaddingException extends GeneralSecurityException {
      * particular exception.
      */
     public BadPaddingException() {
-        super();
+	super();
     }
 
     /**
@@ -55,6 +55,6 @@ public class BadPaddingException extends GeneralSecurityException {
      * @param msg the detail message.
      */
     public BadPaddingException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

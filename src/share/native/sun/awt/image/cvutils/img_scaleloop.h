@@ -36,11 +36,11 @@
 ImgConvertFcn NAME;
 
 int NAME(struct Hjava_awt_image_ColorModel *colormodel,
-         int srcOX, int srcOY, int srcW, int srcH,
-         void *srcpix, int srcOff, int srcBPP, int srcScan,
-         int srcTotalWidth, int srcTotalHeight,
-         int dstTotalWidth, int dstTotalHeight,
-         ImgConvertData *cvdata, ImgColorData *clrdata)
+	 int srcOX, int srcOY, int srcW, int srcH,
+	 void *srcpix, int srcOff, int srcBPP, int srcScan,
+	 int srcTotalWidth, int srcTotalHeight,
+	 int dstTotalWidth, int dstTotalHeight,
+	 ImgConvertData *cvdata, ImgColorData *clrdata)
 {
     DeclareScaleVars
     DeclareInputVars
@@ -54,9 +54,9 @@ int NAME(struct Hjava_awt_image_ColorModel *colormodel,
 
     InitInput(srcBPP);
     InitScale(srcpix, srcOff, srcScan,
-              srcOX, srcOY, srcW, srcH,
-              srcTotalWidth, srcTotalHeight,
-              dstTotalWidth, dstTotalHeight);
+	      srcOX, srcOY, srcW, srcH,
+	      srcTotalWidth, srcTotalHeight,
+	      dstTotalWidth, dstTotalHeight);
     InitOutput(cvdata, clrdata, DSTX1, DSTY1);
     InitAlpha(cvdata, DSTY1, DSTX1, DSTX2);
 
@@ -64,21 +64,21 @@ int NAME(struct Hjava_awt_image_ColorModel *colormodel,
     InitDither(cvdata, clrdata, dstTotalWidth);
 
     RowLoop(srcOY) {
-        RowSetup(srcTotalHeight, dstTotalHeight,
-                 srcTotalWidth, dstTotalWidth,
-                 srcOY, srcpix, srcOff, srcScan);
-        StartDitherLine(cvdata, DSTX1, DSTY);
-        StartAlphaRow(cvdata, DSTX1, DSTY);
-        ColLoop(srcOX) {
-            ColSetup(srcTotalWidth, dstTotalWidth, pixel);
-            PixelDecode(colormodel, pixel, red, green, blue, alpha);
-            ApplyAlpha(cvdata, DSTX, DSTY, alpha);
-            DitherPixel(DSTX, DSTY, pixel, red, green, blue);
-            PutPixelInc(pixel, red, green, blue);
-        }
-        EndMaskLine();
-        EndOutputRow(cvdata, DSTY, DSTX1, DSTX2);
-        RowEnd(srcTotalHeight, dstTotalHeight, srcW, srcScan);
+	RowSetup(srcTotalHeight, dstTotalHeight,
+		 srcTotalWidth, dstTotalWidth,
+		 srcOY, srcpix, srcOff, srcScan);
+	StartDitherLine(cvdata, DSTX1, DSTY);
+	StartAlphaRow(cvdata, DSTX1, DSTY);
+	ColLoop(srcOX) {
+	    ColSetup(srcTotalWidth, dstTotalWidth, pixel);
+	    PixelDecode(colormodel, pixel, red, green, blue, alpha);
+	    ApplyAlpha(cvdata, DSTX, DSTY, alpha);
+	    DitherPixel(DSTX, DSTY, pixel, red, green, blue);
+	    PutPixelInc(pixel, red, green, blue);
+	}
+	EndMaskLine();
+	EndOutputRow(cvdata, DSTY, DSTX1, DSTX2);
+	RowEnd(srcTotalHeight, dstTotalHeight, srcW, srcScan);
     }
     DitherBufComplete(cvdata, DSTX1);
     BufComplete(cvdata, DSTX1, DSTY1, DSTX2, DSTY2);

@@ -45,22 +45,22 @@ class B extends A {
 
 class FieldWatchpointsDebugee {
     public void update (){
-        /* test direct modify access by other class */
-        A.aField = 7;
-        B.aField = 11;
+	/* test direct modify access by other class */
+	A.aField = 7;
+	B.aField = 11;
     }
     public void access (){
-        /* test direct read access by other class */
+	/* test direct read access by other class */
         System.out.print("aField is: ");
         System.out.println(A.aField);
     }
     public static void main(String[] args){
-        A testA = new A();
-        B testB = new B();
-        FieldWatchpointsDebugee my =
-            new FieldWatchpointsDebugee();
-        my.update();
-        my.access();
+	A testA = new A();
+	B testB = new B();
+	FieldWatchpointsDebugee my = 
+	    new FieldWatchpointsDebugee();
+	my.update();
+	my.access();
     }
 }
 
@@ -69,67 +69,67 @@ public class FieldWatchpoints extends TestScaffold {
     boolean fieldAccessReported = false;
 
     FieldWatchpoints (String args[]) {
-        super(args);
+	super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        new FieldWatchpoints (args).startTests();
+    public static void main(String[] args)	throws Exception {
+	new FieldWatchpoints (args).startTests();
     }
 
     protected void runTests() throws Exception {
         startTo("FieldWatchpointsDebugee", "update", "()V");
 
-        try {
-            /*
-             * Set a modification watch on aField
-             */
-            ReferenceType rt = findReferenceType("A");
-            String fieldName = "aField";
-            Field field = rt.fieldByName(fieldName);
-            if (field == null) {
-                throw new Exception ("Field name not found: " + fieldName);
-            }
-            com.sun.jdi.request.EventRequest req =
-               eventRequestManager().createModificationWatchpointRequest(field);
-            req.setSuspendPolicy(com.sun.jdi.request.EventRequest.SUSPEND_ALL);
-            req.enable();
+	try {
+	    /*
+	     * Set a modification watch on aField
+	     */
+	    ReferenceType rt = findReferenceType("A");
+	    String fieldName = "aField";
+	    Field field = rt.fieldByName(fieldName);
+	    if (field == null) {
+		throw new Exception ("Field name not found: " + fieldName);
+	    }
+	    com.sun.jdi.request.EventRequest req =
+	       eventRequestManager().createModificationWatchpointRequest(field);
+	    req.setSuspendPolicy(com.sun.jdi.request.EventRequest.SUSPEND_ALL);
+	    req.enable();
 
-            /*
-             * Set an access watch on aField
-             */
-            req =
-               eventRequestManager().createAccessWatchpointRequest(field);
-            req.setSuspendPolicy(com.sun.jdi.request.EventRequest.SUSPEND_ALL);
-            req.enable();
+	    /*
+	     * Set an access watch on aField
+	     */
+	    req =
+	       eventRequestManager().createAccessWatchpointRequest(field);
+	    req.setSuspendPolicy(com.sun.jdi.request.EventRequest.SUSPEND_ALL);
+	    req.enable();
 
-            addListener (new TargetAdapter() {
-                    EventSet lastSet = null;
+	    addListener (new TargetAdapter() {
+		    EventSet lastSet = null;
 
-                    public void eventSetReceived(EventSet set) {
-                        lastSet = set;
-                    }
-                    public void fieldModified(ModificationWatchpointEvent event) {
-                        System.out.println("Field modified: " + event);
-                        fieldModifyReported = true;
-                        lastSet.resume();
-                    }
-                    public void fieldAccessed(AccessWatchpointEvent event) {
-                        System.out.println("Field accessed: " + event);
-                        fieldAccessReported = true;
-                        lastSet.resume();
-                    }
-                });
+		    public void eventSetReceived(EventSet set) {
+			lastSet = set;
+		    }
+		    public void fieldModified(ModificationWatchpointEvent event) {
+			System.out.println("Field modified: " + event);
+			fieldModifyReported = true;
+			lastSet.resume();
+		    }
+		    public void fieldAccessed(AccessWatchpointEvent event) {
+			System.out.println("Field accessed: " + event);
+			fieldAccessReported = true;
+			lastSet.resume();
+		    }
+		});
 
-            vm().resume();
+	    vm().resume();
 
-        } catch (Exception ex){
-            ex.printStackTrace();
-            testFailed = true;
-        } finally {
-            // Allow application to complete and shut down
-            resumeToVMDisconnect();
-        }
-        if (!testFailed && fieldModifyReported && fieldAccessReported) {
+	} catch (Exception ex){
+	    ex.printStackTrace();
+	    testFailed = true;
+	} finally {
+	    // Allow application to complete and shut down
+	    resumeToVMDisconnect();
+	}
+	if (!testFailed && fieldModifyReported && fieldAccessReported) {
             System.out.println("FieldWatchpoints: passed");
         } else {
             throw new Exception("FieldWatchpoints: failed");

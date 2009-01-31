@@ -39,16 +39,16 @@ import java.io.IOException;
 
 
 /**
- * NegotiateAuthentication:
+ * NegotiateAuthentication: 
  *
  * @author weijun.wang@sun.com
  * @since 1.6
  */
 
 class NegotiateAuthentication extends AuthenticationInfo {
-
+ 
     private static final long serialVersionUID = 100L;
-
+    
     private String scheme = null;
 
     static final char NEGOTIATE_AUTH = 'S';
@@ -61,28 +61,28 @@ class NegotiateAuthentication extends AuthenticationInfo {
     // the cache can be used only once, so after the first use, it's cleaned.
     static HashMap <String, Boolean> supported = null;
     static HashMap <String, Negotiator> cache = null;
-
+    
     // The HTTP Negotiate Helper
     private Negotiator negotiator = null;
 
-   /**
-    * Constructor used for WWW entries. <code>pw</code> is not used because
-    * for GSS there is only one single PasswordAuthentication which is
+   /** 
+    * Constructor used for WWW entries. <code>pw</code> is not used because 
+    * for GSS there is only one single PasswordAuthentication which is 
     * independant of host/port/... info.
     */
-    public NegotiateAuthentication(boolean isProxy, URL url,
+    public NegotiateAuthentication(boolean isProxy, URL url, 
             PasswordAuthentication pw, String scheme) {
-        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION,
+        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, 
                 NEGOTIATE_AUTH, url, "");
         this.scheme = scheme;
     }
 
-   /**
+   /** 
     * Constructor used for proxy entries
     */
-    public NegotiateAuthentication(boolean isProxy, String host, int port,
+    public NegotiateAuthentication(boolean isProxy, String host, int port, 
                                 PasswordAuthentication pw, String scheme) {
-        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION,
+        super(isProxy?PROXY_AUTHENTICATION:SERVER_AUTHENTICATION, 
                 NEGOTIATE_AUTH,host, port, "");
         this.scheme = scheme;
     }
@@ -95,8 +95,8 @@ class NegotiateAuthentication extends AuthenticationInfo {
     }
 
     /**
-     * Find out if a hostname supports Negotiate protocol. In order to find
-     * out yes or no, an initialization of a Negotiator object against
+     * Find out if a hostname supports Negotiate protocol. In order to find 
+     * out yes or no, an initialization of a Negotiator object against 
      * hostname and scheme is tried. The generated object will be cached
      * under the name of hostname at a success try.<br>
      *
@@ -107,7 +107,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
      * @param scheme scheme to test
      * @return true if supported
      */
-    synchronized public static boolean isSupported(String hostname,
+    synchronized public static boolean isSupported(String hostname, 
             String scheme) {
         if (supported == null) {
             supported = new HashMap <String, Boolean>();
@@ -120,7 +120,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
         }
 
         try {
-            Negotiator neg = Negotiator.getSupported(hostname, scheme);
+            Negotiator neg = Negotiator.getSupported(hostname, scheme); 
             supported.put(hostname, true);
             // the only place cache.put is called. here we can make sure
             // the object is valid and the oneToken inside is not null
@@ -131,7 +131,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
             return false;
         }
     }
-
+    
     /**
      * @return the name of the HTTP header this authentication wants to set
      */
@@ -161,7 +161,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
     boolean isAuthorizationStale (String header) {
         return false; /* should not be called for Negotiate */
     }
-
+        
     /**
      * Set header(s) on the given connection.
      * @param conn The connection to apply the header(s) to
@@ -186,7 +186,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
             return true;
         } catch (IOException e) {
             return false;
-        }
+        } 
     }
 
     /**
@@ -197,24 +197,24 @@ class NegotiateAuthentication extends AuthenticationInfo {
      */
     private byte[] firstToken() throws IOException {
         negotiator = null;
-        if (cache != null) {
-            synchronized(cache) {
-                negotiator = cache.get(getHost());
+	if (cache != null) {
+	    synchronized(cache) {
+		negotiator = cache.get(getHost());
                 if (negotiator != null) {
                     cache.remove(getHost()); // so that it is only used once
                 }
-            }
-        }
-        if (negotiator == null) {
-            try {
-                negotiator = Negotiator.getSupported(getHost(), scheme);
-            } catch(Exception e) {
-                IOException ioe = new IOException("Cannot initialize Negotiator");
-                ioe.initCause(e);
-                throw ioe;
-            }
-        }
-
+	    }
+	}
+	if (negotiator == null) {
+	    try {
+		negotiator = Negotiator.getSupported(getHost(), scheme);
+	    } catch(Exception e) {
+		IOException ioe = new IOException("Cannot initialize Negotiator");
+		ioe.initCause(e);
+		throw ioe;
+	    }
+	}
+	
         return negotiator.firstToken();
     }
 
@@ -243,7 +243,7 @@ class NegotiateAuthentication extends AuthenticationInfo {
 
     // MS will send a final WWW-Authenticate even if the status is already
     // 200 OK. The token can be fed into initSecContext() again to determine
-    // if the server can be trusted. This is not the same concept as Digest's
+    // if the server can be trusted. This is not the same concept as Digest's 
     // Authentication-Info header.
     //
     // Currently we ignore this header.
@@ -255,21 +255,21 @@ class NegotiateAuthentication extends AuthenticationInfo {
  * NegotiatorImpl, so that JAAS and JGSS calls can be made
  */
 abstract class Negotiator {
-    static Negotiator getSupported(String hostname, String scheme)
-                throws Exception {
-
+    static Negotiator getSupported(String hostname, String scheme) 
+    		throws Exception {
+                    
         // These lines are equivalent to
-        //     return new NegotiatorImpl(hostname, scheme);
-        // The current implementation will make sure NegotiatorImpl is not
+	//     return new NegotiatorImpl(hostname, scheme);
+        // The current implementation will make sure NegotiatorImpl is not 
         // directly referenced when compiling, thus smooth the way of building
         // the J2SE platform where HttpURLConnection is a bootstrap class.
-
-        Class clazz = Class.forName("sun.net.www.protocol.http.NegotiatorImpl");
-        java.lang.reflect.Constructor c = clazz.getConstructor(String.class, String.class);
-        return (Negotiator) (c.newInstance(hostname, scheme));
+        
+	Class clazz = Class.forName("sun.net.www.protocol.http.NegotiatorImpl");
+	java.lang.reflect.Constructor c = clazz.getConstructor(String.class, String.class);
+	return (Negotiator) (c.newInstance(hostname, scheme));
     }
-
+    
     abstract byte[] firstToken() throws IOException;
-
+    
     abstract byte[] nextToken(byte[] in) throws IOException;
 }

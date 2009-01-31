@@ -45,91 +45,91 @@ class DoStatement extends Statement {
      * Constructor
      */
     public DoStatement(long where, Statement body, Expression cond) {
-        super(DO, where);
-        this.body = body;
-        this.cond = cond;
+	super(DO, where);
+	this.body = body;
+	this.cond = cond;
     }
 
     /**
      * Check statement
      */
     Vset check(Environment env, Context ctx, Vset vset, Hashtable exp) {
-        checkLabel(env,ctx);
+	checkLabel(env,ctx);
         CheckContext newctx = new CheckContext(ctx, this);
-        // remember what was unassigned on entry
-        Vset vsEntry = vset.copy();
-        vset = body.check(env, newctx, reach(env, vset), exp);
-        vset = vset.join(newctx.vsContinue);
-        // get to the test either by falling through the body, or through
-        // a "continue" statement.
-        ConditionVars cvars =
-            cond.checkCondition(env, newctx, vset, exp);
-        cond = convert(env, newctx, Type.tBoolean, cond);
-        // make sure the back-branch fits the entry of the loop
-        ctx.checkBackBranch(env, this, vsEntry, cvars.vsTrue);
-        // exit the loop through the test returning false, or a "break"
-        vset = newctx.vsBreak.join(cvars.vsFalse);
-        return ctx.removeAdditionalVars(vset);
+	// remember what was unassigned on entry
+	Vset vsEntry = vset.copy();
+	vset = body.check(env, newctx, reach(env, vset), exp);
+	vset = vset.join(newctx.vsContinue);
+	// get to the test either by falling through the body, or through
+	// a "continue" statement.
+	ConditionVars cvars = 
+	    cond.checkCondition(env, newctx, vset, exp);
+	cond = convert(env, newctx, Type.tBoolean, cond);
+	// make sure the back-branch fits the entry of the loop
+	ctx.checkBackBranch(env, this, vsEntry, cvars.vsTrue);
+	// exit the loop through the test returning false, or a "break"
+	vset = newctx.vsBreak.join(cvars.vsFalse);
+	return ctx.removeAdditionalVars(vset);
     }
 
     /**
      * Inline
      */
     public Statement inline(Environment env, Context ctx) {
-        ctx = new Context(ctx, this);
-        if (body != null) {
-            body = body.inline(env, ctx);
-        }
-        cond = cond.inlineValue(env, ctx);
-        return this;
+	ctx = new Context(ctx, this);
+	if (body != null) {
+	    body = body.inline(env, ctx);
+	}
+	cond = cond.inlineValue(env, ctx);
+	return this;
     }
 
     /**
      * Create a copy of the statement for method inlining
      */
     public Statement copyInline(Context ctx, boolean valNeeded) {
-        DoStatement s = (DoStatement)clone();
-        s.cond = cond.copyInline(ctx);
-        if (body != null) {
-            s.body = body.copyInline(ctx, valNeeded);
-        }
-        return s;
+	DoStatement s = (DoStatement)clone();
+	s.cond = cond.copyInline(ctx);
+	if (body != null) {
+	    s.body = body.copyInline(ctx, valNeeded);
+	}
+	return s;
     }
 
     /**
      * The cost of inlining this statement
      */
     public int costInline(int thresh, Environment env, Context ctx) {
-        return 1 + cond.costInline(thresh, env, ctx)
-                + ((body != null) ? body.costInline(thresh, env, ctx) : 0);
+	return 1 + cond.costInline(thresh, env, ctx) 
+	        + ((body != null) ? body.costInline(thresh, env, ctx) : 0);
     }
 
     /**
      * Code
      */
     public void code(Environment env, Context ctx, Assembler asm) {
-        Label l1 = new Label();
-        asm.add(l1);
+	Label l1 = new Label();
+	asm.add(l1);
 
-        CodeContext newctx = new CodeContext(ctx, this);
+	CodeContext newctx = new CodeContext(ctx, this);
 
-        if (body != null) {
-            body.code(env, newctx, asm);
-        }
-        asm.add(newctx.contLabel);
-        cond.codeBranch(env, newctx, asm, l1, true);
-        asm.add(newctx.breakLabel);
+	if (body != null) {
+	    body.code(env, newctx, asm);
+	}
+	asm.add(newctx.contLabel);
+	cond.codeBranch(env, newctx, asm, l1, true);
+	asm.add(newctx.breakLabel);
     }
 
     /**
      * Print
      */
     public void print(PrintStream out, int indent) {
-        super.print(out, indent);
-        out.print("do ");
-        body.print(out, indent);
-        out.print(" while ");
-        cond.print(out);
-        out.print(";");
+	super.print(out, indent);
+	out.print("do ");
+	body.print(out, indent);
+	out.print(" while ");
+	cond.print(out);
+	out.print(";");
     }
 }

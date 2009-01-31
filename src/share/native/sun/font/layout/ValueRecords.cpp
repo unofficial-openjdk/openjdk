@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)ValueRecords.cpp	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -161,7 +162,7 @@ void ValueRecord::adjustPosition(ValueFormat valueFormat, const char *base, Glyp
         xPlacementAdjustment, yPlacementAdjustment, xAdvanceAdjustment, yAdvanceAdjustment);
 }
 
-void ValueRecord::adjustPosition(le_int16 index, ValueFormat valueFormat, const char *base,
+void ValueRecord::adjustPosition(le_int16 index, ValueFormat valueFormat, const char *base, 
     GlyphIterator &glyphIterator, const LEFontInstance *fontInstance) const
 {
     float xPlacementAdjustment = 0;
@@ -300,7 +301,7 @@ le_int16 ValueRecord::getFieldCount(ValueFormat valueFormat)
 
 le_int16 ValueRecord::getFieldIndex(ValueFormat valueFormat, ValueRecordField field)
 {
-    static const le_uint16 beforeMasks[] =
+    static const le_uint16 beforeMasks[] = 
     {
         0x0000,
         0x0001,
@@ -323,3 +324,4 @@ le_int16 ValueRecord::getFieldIndex(ValueFormat valueFormat, ValueRecordField fi
 
     return getFieldCount(valueFormat & beforeMasks[field]);
 }
+

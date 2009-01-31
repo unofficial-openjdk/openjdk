@@ -98,15 +98,15 @@ extern Pixel awt_pixel_by_name(Display *dpy, char *color, char *defaultColor);
 typedef struct DropSiteInfo* DropSitePtr;
 
 struct WidgetInfo {
-    Widget             widget;
-    Widget             origin;
-    void*              peer;
-    jlong              event_mask;
+    Widget	       widget;
+    Widget	       origin;
+    void*  	       peer;
+    jlong   	       event_mask;
     struct WidgetInfo* next;
 };
 #endif /* !HEADLESS */
 
-#define RepaintPending_NONE     0
+#define RepaintPending_NONE 	0
 #define RepaintPending_REPAINT  (1 << 0)
 #define RepaintPending_EXPOSE   (1 << 1)
 #define LOOKUPSIZE 32
@@ -127,12 +127,12 @@ typedef struct _AwtGraphicsConfigData  {
     awtImageData *awtImage;
     int         (*AwtColorMatch)(int, int, int,
                                  struct _AwtGraphicsConfigData *);
-    XImage      *monoImage;
+    XImage	*monoImage;
     Pixmap      monoPixmap;      /* Used in X11TextRenderer_md.c */
     int         monoPixmapWidth; /* Used in X11TextRenderer_md.c */
     int         monoPixmapHeight;/* Used in X11TextRenderer_md.c */
     GC          monoPixmapGC;    /* Used in X11TextRenderer_md.c */
-    int         pixelStride;     /* Used in X11SurfaceData.c */
+    int         pixelStride;     /* Used in X11SurfaceData.c */   
     ColorData      *color_data;
     struct _GLXGraphicsConfigInfo *glxInfo;
 } AwtGraphicsConfigData;
@@ -151,32 +151,32 @@ typedef struct _AwtScreenData {
 typedef AwtScreenData* AwtScreenDataPtr;
 
 struct ComponentData {
-    Widget      widget;
-    int         repaintPending;
+    Widget	widget;
+    int 	repaintPending;
     DamageRect  repaintRect;
     DamageRect  exposeRect;
     DropSitePtr dsi;
 };
 
 struct MessageDialogData {
-    struct ComponentData        comp;
-    int                 isModal;
+    struct ComponentData	comp;
+    int			isModal;
 };
 
 struct CanvasData {
-    struct ComponentData        comp;
-    Widget                      shell;
-    int                         flags;
+    struct ComponentData	comp;
+    Widget			shell;
+    int				flags;
 };
 
 struct MenuItemData {
-    struct ComponentData        comp;
-    int                         index;
+    struct ComponentData	comp;
+    int				index;
 };
 
 struct MenuData {
-    struct ComponentData        comp;
-    struct MenuItemData         itemData;
+    struct ComponentData	comp;
+    struct MenuItemData		itemData;
 };
 
 
@@ -202,7 +202,7 @@ struct FrameData {
     int                 wwHeight;       /* height of the warning window */
     jint                state;          /* java.awt.Frame.state bits    */
     Boolean             reparented;
-    Boolean             configure_seen;
+    Boolean		configure_seen;
     Boolean             shellResized;   /* frame shell has been resized */
     Boolean             canvasResized;  /* frame inner canvas resized   */
     Boolean             menuBarReset;   /* frame menu bar added/removed */
@@ -215,19 +215,19 @@ struct FrameData {
     Pixmap              iconPixmap;     /* Pixmap to hold icon image    */
     int                 iconWidth;
     int                 iconHeight;
-    int                 imHeight;       /* imStatusBar's height         */
+    int                 imHeight;       /* imStatusBar's height         */ 
     Boolean             imRemove;       /* ImStatusBar is being removed */
     Boolean             fixInsets;      /* [jk] REMINDER: remove if possible */
     int                 decor;          /* type of native decorations */
     Boolean             initialFocus;   /* does Window take focus initially */
     Boolean             isInputMethodWindow;
 
-    /*
-     * Fix for BugTraq ID 4060975.
-     * firstShellEH() stores to this field handle of the widget that had
+    /* 
+     * Fix for BugTraq ID 4060975. 
+     * firstShellEH() stores to this field handle of the widget that had 
      * focus before the shell was resized so that we can later restore it.
      */
-    Widget              focusWidget;
+    Widget              focusWidget;   
     int screenNum;      /* Which screen this Window is on.  Xinerama-aware. */
     Boolean             isDisposeScheduled;
     Boolean             isFocusableWindow;  /* a cache of Window.isFocusableWindow() return value */
@@ -235,12 +235,12 @@ struct FrameData {
 
 struct ListData {
     struct ComponentData comp;
-    Widget               list;
+    Widget		 list;
 };
 
 struct TextAreaData {
     struct ComponentData comp;
-    Widget               txt;
+    Widget 		 txt;
 };
 
 struct TextFieldData {
@@ -251,7 +251,7 @@ struct TextFieldData {
 
 struct FileDialogData {
     struct ComponentData comp;
-    char        *file;
+    char	*file;
 };
 
 typedef struct awtFontList {
@@ -265,8 +265,8 @@ typedef struct awtFontList {
 struct FontData {
     int charset_num;
     awtFontList *flist;
-    XFontSet xfs;       /* for TextField & TextArea */
-    XFontStruct *xfont; /* Latin1 font */
+    XFontSet xfs; 	/* for TextField & TextArea */
+    XFontStruct *xfont;	/* Latin1 font */
 };
 
 #ifndef XAWT
@@ -278,10 +278,10 @@ extern Boolean awt_isAwtWidget(Widget widget);
 
 struct ChoiceData {
     struct ComponentData comp;
-    Widget               menu;
-    Widget               *items;
-    int                  maxitems;
-    int                  n_items;
+    Widget		 menu;
+    Widget		 *items;
+    int			 maxitems;
+    int			 n_items;
     short                n_columns;
 /* Bug 4255631 Solaris: Size returned by Choice.getSize() does not match
  * actual size
@@ -303,7 +303,7 @@ extern AwtScreenDataPtr getScreenData(int screen);
 #endif /* !HEADLESS */
 
 /* allocated and initialize a structure */
-#define ZALLOC(T)       ((struct T *)calloc(1, sizeof(struct T)))
+#define ZALLOC(T)	((struct T *)calloc(1, sizeof(struct T)))
 
 #ifndef HEADLESS
 #define XDISPLAY awt_display;
@@ -336,7 +336,7 @@ extern void awtJNI_notifySelectionLost(JNIEnv *env, char *sel_str);
 extern void removePopupMenus();
 extern Boolean awtMenuIsActive();
 #endif /* !HEADLESS */
-
+ 
 extern void awtJNI_DeleteGlobalRef(JNIEnv *env,jobject thiscomp);
 extern void awtJNI_DeleteGlobalMenuRef(JNIEnv *env,jobject thismenu);
 extern jobject awtJNI_CreateAndSetGlobalRef(JNIEnv *env,jobject thiscomp);
@@ -344,8 +344,8 @@ extern void awtJNI_CleanupGlobalRefs(void);
 
 #ifndef HEADLESS
 /* XXX: Motif internals. Need to fix 4090493. */
-#define MOTIF_XmINVALID_DIMENSION       ((Dimension) 0xFFFF)
-#define MOTIF_XmDEFAULT_INDICATOR_DIM   ((Dimension) 9)
+#define MOTIF_XmINVALID_DIMENSION	((Dimension) 0xFFFF)
+#define MOTIF_XmDEFAULT_INDICATOR_DIM	((Dimension) 9)
 
 extern Dimension awt_computeIndicatorSize(struct FontData *fdata);
 extern Dimension awt_adjustIndicatorSizeForMenu(Dimension indSize);

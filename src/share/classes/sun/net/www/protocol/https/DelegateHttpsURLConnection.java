@@ -38,6 +38,7 @@ import java.io.IOException;
  * of protocol implementation (this one)
  * com.sun.net.ssl.HttpURLConnection is used in the com.sun version.
  *
+ * @version %I% %G%
  */
 public class DelegateHttpsURLConnection extends AbstractDelegateHttpsURLConnection {
 
@@ -51,26 +52,26 @@ public class DelegateHttpsURLConnection extends AbstractDelegateHttpsURLConnecti
     public javax.net.ssl.HttpsURLConnection httpsURLConnection;
 
     DelegateHttpsURLConnection(URL url,
-            sun.net.www.protocol.http.Handler handler,
-            javax.net.ssl.HttpsURLConnection httpsURLConnection)
-            throws IOException {
-        this(url, null, handler, httpsURLConnection);
+	    sun.net.www.protocol.http.Handler handler,
+	    javax.net.ssl.HttpsURLConnection httpsURLConnection)
+	    throws IOException {
+	this(url, null, handler, httpsURLConnection);
     }
 
     DelegateHttpsURLConnection(URL url, Proxy p,
-            sun.net.www.protocol.http.Handler handler,
-            javax.net.ssl.HttpsURLConnection httpsURLConnection)
-            throws IOException {
-        super(url, p, handler);
-        this.httpsURLConnection = httpsURLConnection;
+	    sun.net.www.protocol.http.Handler handler,
+	    javax.net.ssl.HttpsURLConnection httpsURLConnection)
+	    throws IOException {
+	super(url, p, handler);
+	this.httpsURLConnection = httpsURLConnection;
     }
 
     protected javax.net.ssl.SSLSocketFactory getSSLSocketFactory() {
-        return httpsURLConnection.getSSLSocketFactory();
+	return httpsURLConnection.getSSLSocketFactory();
     }
 
     protected javax.net.ssl.HostnameVerifier getHostnameVerifier() {
-        return httpsURLConnection.getHostnameVerifier();
+	return httpsURLConnection.getHostnameVerifier();
     }
 
     /*
@@ -78,6 +79,6 @@ public class DelegateHttpsURLConnection extends AbstractDelegateHttpsURLConnecti
      * the underlying object.
      */
     protected void dispose() throws Throwable {
-        super.finalize();
+	super.finalize();
     }
 }

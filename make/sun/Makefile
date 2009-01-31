@@ -46,6 +46,9 @@ ifneq ($(PLATFORM), windows)
       endif
     endif
   endif
+  ifdef MOTIF_REQUIRED
+    MOTIF_SUBDIRS   = motif12 motif21
+  endif
   HEADLESS_SUBDIR = headless
   XAWT_SUBDIR     = xawt
 endif
@@ -53,13 +56,8 @@ endif
 ifndef OPENJDK
   JDBC_SUBDIR = jdbc
 endif
-ifdef OPENJDK
-  RENDER_SUBDIR = pisces
-else
-  RENDER_SUBDIR = dcpr
-endif
-SUBDIRS = jar security javazic misc net audio $(RENDER_SUBDIR) image \
-	  awt splashscreen $(XAWT_SUBDIR) \
+SUBDIRS = jar security javazic misc net audio dcpr image \
+	  awt splashscreen $(XAWT_SUBDIR) $(MOTIF_SUBDIRS) \
           $(HEADLESS_SUBDIR) $(DGA_SUBDIR) \
 	  font jpeg cmm applet rmi beans $(JDBC_SUBDIR) \
 	  jawt text nio launcher management $(ORG_SUBDIR) \

@@ -51,107 +51,107 @@ public class DatagramSocketAdaptor
     // Timeout "option" value for receives
     private volatile int timeout = 0;
 
-    // Traffic-class/Type-of-service
+    // Traffic-class/Type-of-service 
     private volatile int trafficClass = 0;
 
 
     // ## super will create a useless impl
     private DatagramSocketAdaptor(DatagramChannelImpl dc) throws IOException {
-        // Invoke the DatagramSocketAdaptor(SocketAddress) constructor,
-        // passing a dummy DatagramSocketImpl object to aovid any native
+	// Invoke the DatagramSocketAdaptor(SocketAddress) constructor,
+	// passing a dummy DatagramSocketImpl object to aovid any native
         // resource allocation in super class and invoking our bind method
-        // before the dc field is initialized.
-        super(dummyDatagramSocket);
-        this.dc = dc;
+	// before the dc field is initialized.
+	super(dummyDatagramSocket);
+	this.dc = dc;
     }
 
     public static DatagramSocket create(DatagramChannelImpl dc) {
-        try {
-            return new DatagramSocketAdaptor(dc);
-        } catch (IOException x) {
-            throw new Error(x);
-        }
+	try {
+	    return new DatagramSocketAdaptor(dc);
+	} catch (IOException x) {
+	    throw new Error(x);
+	}
     }
 
     private void connectInternal(SocketAddress remote)
-        throws SocketException
+	throws SocketException
     {
-        InetSocketAddress isa = Net.asInetSocketAddress(remote);
-        int port = isa.getPort();
+	InetSocketAddress isa = Net.asInetSocketAddress(remote);
+	int port = isa.getPort();
         if (port < 0 || port > 0xFFFF)
             throw new IllegalArgumentException("connect: " + port);
         if (remote == null)
             throw new IllegalArgumentException("connect: null address");
         if (!isClosed())
             return;
-        try {
-            dc.connect(remote);
-        } catch (Exception x) {
-            Net.translateToSocketException(x);
-        }
+	try {
+	    dc.connect(remote);
+	} catch (Exception x) {
+	    Net.translateToSocketException(x);
+	}
     }
 
     public void bind(SocketAddress local) throws SocketException {
-        try {
-            if (local == null)
-                local = new InetSocketAddress(0);
-            dc.bind(local);
-        } catch (Exception x) {
-            Net.translateToSocketException(x);
-        }
+	try {
+	    if (local == null)
+		local = new InetSocketAddress(0);
+	    dc.bind(local);
+	} catch (Exception x) {
+	    Net.translateToSocketException(x);
+	}
     }
 
     public void connect(InetAddress address, int port) {
-        try {
-            connectInternal(new InetSocketAddress(address, port));
-        } catch (SocketException x) {
-            // Yes, j.n.DatagramSocket really does this
-        }
+	try {
+	    connectInternal(new InetSocketAddress(address, port));
+	} catch (SocketException x) {
+	    // Yes, j.n.DatagramSocket really does this
+	}
     }
 
     public void connect(SocketAddress remote) throws SocketException {
-        if (remote == null)
-            throw new IllegalArgumentException("Address can't be null");
-        connectInternal(remote);
+	if (remote == null)
+	    throw new IllegalArgumentException("Address can't be null");
+	connectInternal(remote);
     }
 
     public void disconnect() {
-        try {
-            dc.disconnect();
-        } catch (IOException x) {
-            throw new Error(x);
-        }
+	try {
+	    dc.disconnect();
+	} catch (IOException x) {
+	    throw new Error(x);
+	}
     }
 
     public boolean isBound() {
-        return dc.isBound();
+	return dc.isBound();
     }
 
     public boolean isConnected() {
-        return dc.isConnected();
+	return dc.isConnected();
     }
 
     public InetAddress getInetAddress() {
-        return (isConnected()
-                ? Net.asInetSocketAddress(dc.remoteAddress()).getAddress()
-                : null);
+	return (isConnected()
+		? Net.asInetSocketAddress(dc.remoteAddress()).getAddress()
+		: null);
     }
 
     public int getPort() {
-        return (isConnected()
-                ? Net.asInetSocketAddress(dc.remoteAddress()).getPort()
-                : -1);
+	return (isConnected()
+		? Net.asInetSocketAddress(dc.remoteAddress()).getPort()
+		: -1);
     }
 
     public void send(DatagramPacket p) throws IOException {
-        synchronized (dc.blockingLock()) {
-            if (!dc.isBlocking())
-                throw new IllegalBlockingModeException();
-            try {
-                synchronized (p) {
-                    ByteBuffer bb = ByteBuffer.wrap(p.getData(),
-                                                    p.getOffset(),
-                                                    p.getLength());
+	synchronized (dc.blockingLock()) {
+	    if (!dc.isBlocking())
+		throw new IllegalBlockingModeException();
+	    try {
+		synchronized (p) {
+		    ByteBuffer bb = ByteBuffer.wrap(p.getData(),
+						    p.getOffset(),
+						    p.getLength());
                     if (dc.isConnected()) {
                         if (p.getAddress() == null) {
                             // Legacy DatagramSocket will send in this case
@@ -169,173 +169,173 @@ public class DatagramSocketAdaptor
                         // Not connected so address must be valid or throw
                         dc.send(bb, p.getSocketAddress());
                     }
-                }
-            } catch (IOException x) {
-                Net.translateException(x);
-            }
-        }
+		}
+	    } catch (IOException x) {
+		Net.translateException(x);
+	    }
+	}
     }
 
     // Must hold dc.blockingLock()
     //
     private void receive(ByteBuffer bb) throws IOException {
-        if (timeout == 0) {
-            dc.receive(bb);
-            return;
-        }
+	if (timeout == 0) {
+	    dc.receive(bb);
+	    return;
+	}
 
-        // Implement timeout with a selector
-        SelectionKey sk = null;
-        Selector sel = null;
-        dc.configureBlocking(false);
-        try {
-            int n;
-            if (dc.receive(bb) != null)
-                return;
-            sel = Util.getTemporarySelector(dc);
-            sk = dc.register(sel, SelectionKey.OP_READ);
-            long to = timeout;
-            for (;;) {
-                if (!dc.isOpen())
-                     throw new ClosedChannelException();
-                long st = System.currentTimeMillis();
-                int ns = sel.select(to);
-                if (ns > 0 && sk.isReadable()) {
-                    if (dc.receive(bb) != null)
-                        return;
-                }
-                sel.selectedKeys().remove(sk);
-                to -= System.currentTimeMillis() - st;
-                if (to <= 0)
-                    throw new SocketTimeoutException();
+	// Implement timeout with a selector
+	SelectionKey sk = null;
+	Selector sel = null;
+	dc.configureBlocking(false);
+	try {
+	    int n;
+	    if (dc.receive(bb) != null)
+		return;
+	    sel = Util.getTemporarySelector(dc);
+	    sk = dc.register(sel, SelectionKey.OP_READ);
+	    long to = timeout;
+	    for (;;) {
+                if (!dc.isOpen()) 
+		     throw new ClosedChannelException();
+		long st = System.currentTimeMillis();
+		int ns = sel.select(to);
+		if (ns > 0 && sk.isReadable()) {
+		    if (dc.receive(bb) != null)
+			return;
+		}
+		sel.selectedKeys().remove(sk);
+		to -= System.currentTimeMillis() - st;
+		if (to <= 0)
+		    throw new SocketTimeoutException();
 
-            }
-        } finally {
-            if (sk != null)
-                sk.cancel();
-            if (dc.isOpen())
-                dc.configureBlocking(true);
-            if (sel != null)
+	    }
+	} finally {
+	    if (sk != null)
+		sk.cancel();
+	    if (dc.isOpen())
+		dc.configureBlocking(true);
+	    if (sel != null)
                 Util.releaseTemporarySelector(sel);
-        }
+	}
     }
-
+			
     public void receive(DatagramPacket p) throws IOException {
-        synchronized (dc.blockingLock()) {
-            if (!dc.isBlocking())
-                throw new IllegalBlockingModeException();
-            try {
-                synchronized (p) {
-                    ByteBuffer bb = ByteBuffer.wrap(p.getData(),
-                                                    p.getOffset(),
-                                                    p.getLength());
-                    receive(bb);
-                    p.setLength(bb.position() - p.getOffset());
-                }
-            } catch (IOException x) {
-                Net.translateException(x);
-            }
-        }
+	synchronized (dc.blockingLock()) {
+	    if (!dc.isBlocking())
+		throw new IllegalBlockingModeException();
+	    try {
+		synchronized (p) {
+		    ByteBuffer bb = ByteBuffer.wrap(p.getData(),
+						    p.getOffset(),
+						    p.getLength());
+		    receive(bb);
+		    p.setLength(bb.position() - p.getOffset());
+		}
+	    } catch (IOException x) {
+		Net.translateException(x);
+	    }
+	}
     }
 
     public InetAddress getLocalAddress() {
-        if (isClosed())
-            return null;
-        try {
-            return Net.asInetSocketAddress(dc.localAddress()).getAddress();
-        } catch (Exception x) {
-            return new InetSocketAddress(0).getAddress();
-        }
+	if (isClosed())
+	    return null;
+	try {
+	    return Net.asInetSocketAddress(dc.localAddress()).getAddress();
+	} catch (Exception x) {
+	    return new InetSocketAddress(0).getAddress();
+	}
     }
 
     public int getLocalPort() {
-        if (isClosed())
-            return -1;
-        try {
-            return Net.asInetSocketAddress(dc.localAddress()).getPort();
-        } catch (Exception x) {
-            return 0;
-        }
+	if (isClosed())
+	    return -1;
+	try {
+	    return Net.asInetSocketAddress(dc.localAddress()).getPort();
+	} catch (Exception x) {
+	    return 0;
+	}
     }
 
     public void setSoTimeout(int timeout) throws SocketException {
-        this.timeout = timeout;
+	this.timeout = timeout;
     }
 
     public int getSoTimeout() throws SocketException {
-        return timeout;
+	return timeout;
     }
 
     private OptionAdaptor opts() {
-        if (opts == null)
-            opts = new OptionAdaptor(dc);
-        return opts;
+	if (opts == null)
+	    opts = new OptionAdaptor(dc);
+	return opts;
     }
 
     public void setSendBufferSize(int size) throws SocketException {
-        opts().setSendBufferSize(size);
+	opts().setSendBufferSize(size);
     }
 
     public int getSendBufferSize() throws SocketException {
-        return opts().getSendBufferSize();
+	return opts().getSendBufferSize();
     }
 
     public void setReceiveBufferSize(int size) throws SocketException {
-        opts().setReceiveBufferSize(size);
+	opts().setReceiveBufferSize(size);
     }
 
     public int getReceiveBufferSize() throws SocketException {
-        return opts().getReceiveBufferSize();
+	return opts().getReceiveBufferSize();
     }
 
     public void setReuseAddress(boolean on) throws SocketException {
-        opts().setReuseAddress(on);
+	opts().setReuseAddress(on);
     }
 
     public boolean getReuseAddress() throws SocketException {
-        return opts().getReuseAddress();
+	return opts().getReuseAddress();
     }
 
     public void setBroadcast(boolean on) throws SocketException {
-        opts().setBroadcast(on);
+	opts().setBroadcast(on);
     }
 
     public boolean getBroadcast() throws SocketException {
-        return opts().getBroadcast();
+	return opts().getBroadcast();
     }
 
     public void setTrafficClass(int tc) throws SocketException {
-        opts().setTrafficClass(tc);
-        trafficClass = tc;
+	opts().setTrafficClass(tc);
+	trafficClass = tc;
     }
 
     public int getTrafficClass() throws SocketException {
-        int tc = opts().getTrafficClass();
-        if (tc < 0) {
-            tc = trafficClass;
-        }
-        return tc;
+	int tc = opts().getTrafficClass();
+	if (tc < 0) {
+	    tc = trafficClass;
+	}
+	return tc;
     }
 
     public void close() {
-        try {
-            dc.close();
-        } catch (IOException x) {
-            throw new Error(x);
-        }
+	try {
+	    dc.close();
+	} catch (IOException x) {
+	    throw new Error(x);
+	}
     }
 
     public boolean isClosed() {
-        return !dc.isOpen();
+	return !dc.isOpen();
     }
 
     public DatagramChannel getChannel() {
-        return dc;
+	return dc;
     }
 
    /*
     * A dummy implementation of DatagramSocketImpl that can be passed to the
-    * DatagramSocket constructor so that no native resources are allocated in
+    * DatagramSocket constructor so that no native resources are allocated in 
     * super class.
     */
    private static final DatagramSocketImpl dummyDatagramSocket

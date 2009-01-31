@@ -38,7 +38,7 @@ jfieldID AwtInputEvent::modifiersID;
 
 extern "C" {
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_java_awt_event_InputEvent_initIDs(JNIEnv *env, jclass cls) {
     AwtInputEvent::modifiersID = env->GetFieldID(cls, "modifiers", "I");
 

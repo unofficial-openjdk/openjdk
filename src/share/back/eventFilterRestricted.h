@@ -37,17 +37,18 @@ jvmtiError eventFilterRestricted_install(HandlerNode *node);
 
 jvmtiError eventFilterRestricted_deinstall(HandlerNode *node);
 
-jboolean eventFilterRestricted_passesFilter(JNIEnv *env,
-                                            char *classname,
-                                            EventInfo *evinfo,
-                                            HandlerNode *node,
+jboolean eventFilterRestricted_passesFilter(JNIEnv *env, 
+                                            char *classname, 
+                                            EventInfo *evinfo, 
+                                            HandlerNode *node, 
                                             jboolean *shouldDelete);
-jboolean eventFilterRestricted_passesUnloadFilter(JNIEnv *env,
-                                                  char *classname,
-                                                  HandlerNode *node,
+jboolean eventFilterRestricted_passesUnloadFilter(JNIEnv *env, 
+                                                  char *classname, 
+                                                  HandlerNode *node, 
                                                   jboolean *shouldDelete);
-jboolean eventFilterRestricted_isBreakpointInClass(JNIEnv *env,
-                                                   jclass clazz,
+jboolean eventFilterRestricted_isBreakpointInClass(JNIEnv *env, 
+                                                   jclass clazz, 
                                                    HandlerNode *node);
 
 #endif
+

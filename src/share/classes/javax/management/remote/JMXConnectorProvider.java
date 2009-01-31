@@ -68,6 +68,6 @@ public interface JMXConnectorProvider {
      * connection cannot be made because of a communication problem.
      */
     public JMXConnector newJMXConnector(JMXServiceURL serviceURL,
-                                        Map<String,?> environment)
-            throws IOException;
+					Map<String,?> environment)
+	    throws IOException;
 }

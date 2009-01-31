@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetMethodDataSize {
 
     private static HotspotClassLoadingMBean mbean =
-        (HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
+	(HotspotClassLoadingMBean)ManagementFactory.getHotspotClassLoadingMBean();
 
     // Careful with these values.
     private static final long MIN_VALUE_FOR_PASS = 1;
@@ -50,36 +50,36 @@ public class GetMethodDataSize {
             trace = true;
         }
 
-        long value = mbean.getMethodDataSize();
+	long value = mbean.getMethodDataSize();
 
-        if (trace) {
-            System.out.println("Method data size (bytes): " + value);
-        }
+	if (trace) {
+	    System.out.println("Method data size (bytes): " + value);
+	}
 
-        if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
-            throw new RuntimeException("Method data size " +
-                                       "illegal value: " + value + " bytes " +
-                                       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
-                                       "MAX = " + MAX_VALUE_FOR_PASS + ")");
-        }
+	if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
+	    throw new RuntimeException("Method data size " + 
+				       "illegal value: " + value + " bytes " + 
+				       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
+				       "MAX = " + MAX_VALUE_FOR_PASS + ")");
+	}
+	
+	// increase method data size
+	Class.forName("ClassToLoad2");
 
-        // increase method data size
-        Class.forName("ClassToLoad2");
+	long value2 = mbean.getMethodDataSize();
 
-        long value2 = mbean.getMethodDataSize();
+	if (trace) {
+	    System.out.println("Method data size2 (bytes): " + value2);
+	}
 
-        if (trace) {
-            System.out.println("Method data size2 (bytes): " + value2);
-        }
+	if (value2 <= value) {
+	    throw new RuntimeException("Method data size " + 
+				       "did not increase " +
+				       "(value = " + value + "; " +
+				       "value2 = " + value2 + ")");
+	}
 
-        if (value2 <= value) {
-            throw new RuntimeException("Method data size " +
-                                       "did not increase " +
-                                       "(value = " + value + "; " +
-                                       "value2 = " + value2 + ")");
-        }
-
-        System.out.println("Test passed.");
+	System.out.println("Test passed.");
     }
 }
 
@@ -87,6 +87,6 @@ class ClassToLoad2 {
     int i = 0;
 
     public void method1() {
-        i = 1;
+	i = 1;
     }
 }

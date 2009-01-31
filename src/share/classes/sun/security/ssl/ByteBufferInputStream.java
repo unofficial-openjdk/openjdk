@@ -36,13 +36,14 @@ import java.nio.*;
  * Data reads on an exhausted ByteBuffer returns a -1.
  *
  * @author  Brad Wetmore
+ * @version %I%, %G%
  */
 class ByteBufferInputStream extends InputStream {
 
     ByteBuffer bb;
 
     ByteBufferInputStream(ByteBuffer bb) {
-        this.bb = bb;
+	this.bb = bb;
     }
 
     /**
@@ -52,14 +53,14 @@ class ByteBufferInputStream extends InputStream {
      */
     public int read() throws IOException {
 
-        if (bb == null) {
-            throw new IOException("read on a closed InputStream");
-        }
+	if (bb == null) {
+	    throw new IOException("read on a closed InputStream");
+	}
 
-        if (bb.remaining() == 0) {
-            return -1;
-        }
-        return bb.get();
+	if (bb.remaining() == 0) {
+	    return -1;
+	}
+	return bb.get();
     }
 
     /**
@@ -69,11 +70,11 @@ class ByteBufferInputStream extends InputStream {
      */
     public int read(byte b[]) throws IOException {
 
-        if (bb == null) {
-            throw new IOException("read on a closed InputStream");
-        }
+	if (bb == null) {
+	    throw new IOException("read on a closed InputStream");
+	}
 
-        return read(b, 0, b.length);
+	return read(b, 0, b.length);
     }
 
     /**
@@ -83,26 +84,26 @@ class ByteBufferInputStream extends InputStream {
      */
     public int read(byte b[], int off, int len) throws IOException {
 
-        if (bb == null) {
-            throw new IOException("read on a closed InputStream");
-        }
+	if (bb == null) {
+	    throw new IOException("read on a closed InputStream");
+	}
 
-        if (b == null) {
-            throw new NullPointerException();
-        } else if ((off < 0) || (off > b.length) || (len < 0) ||
-                   ((off + len) > b.length) || ((off + len) < 0)) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0) {
-            return 0;
-        }
+	if (b == null) {
+	    throw new NullPointerException();
+	} else if ((off < 0) || (off > b.length) || (len < 0) ||
+		   ((off + len) > b.length) || ((off + len) < 0)) {
+	    throw new IndexOutOfBoundsException();
+	} else if (len == 0) {
+	    return 0;
+	}
 
-        int length = Math.min(bb.remaining(), len);
-        if (length == 0) {
-            return -1;
-        }
+	int length = Math.min(bb.remaining(), len);
+	if (length == 0) {
+	    return -1;
+	}
 
-        bb.get(b, off, length);
-        return length;
+	bb.get(b, off, length);
+	return length;
     }
 
     /**
@@ -111,24 +112,24 @@ class ByteBufferInputStream extends InputStream {
      */
     public long skip(long n) throws IOException {
 
-        if (bb == null) {
-            throw new IOException("skip on a closed InputStream");
-        }
+	if (bb == null) {
+	    throw new IOException("skip on a closed InputStream");
+	}
 
-        if (n <= 0) {
-            return 0;
-        }
+	if (n <= 0) {
+	    return 0;
+	}
 
-        /*
-         * ByteBuffers have at most an int, so lose the upper bits.
-         * The contract allows this.
-         */
-        int nInt = (int) n;
-        int skip = Math.min(bb.remaining(), nInt);
+	/*
+	 * ByteBuffers have at most an int, so lose the upper bits.
+	 * The contract allows this.
+	 */
+	int nInt = (int) n;
+	int skip = Math.min(bb.remaining(), nInt);
 
-        bb.position(bb.position() + skip);
+	bb.position(bb.position() + skip);
 
-        return nInt;
+	return nInt;
     }
 
     /**
@@ -138,11 +139,11 @@ class ByteBufferInputStream extends InputStream {
      */
     public int available() throws IOException {
 
-        if (bb == null) {
-            throw new IOException("available on a closed InputStream");
-        }
+	if (bb == null) {
+	    throw new IOException("available on a closed InputStream");
+	}
 
-        return bb.remaining();
+	return bb.remaining();
     }
 
     /**
@@ -152,7 +153,7 @@ class ByteBufferInputStream extends InputStream {
      * @exception  IOException  if an I/O error occurs.
      */
     public void close() throws IOException {
-        bb = null;
+	bb = null;
     }
 
     /**
@@ -165,7 +166,7 @@ class ByteBufferInputStream extends InputStream {
      * <code>mark</code> method was last called on this input stream.
      */
     public synchronized void reset() throws IOException {
-        throw new IOException("mark/reset not supported");
+	throw new IOException("mark/reset not supported");
     }
 
     /**
@@ -173,6 +174,6 @@ class ByteBufferInputStream extends InputStream {
      * <code>reset</code> methods.
      */
     public boolean markSupported() {
-        return false;
+	return false;
     }
 }

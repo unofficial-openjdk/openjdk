@@ -51,6 +51,7 @@ package sun.awt.X11;
  * <p><code>
  * XAtom xa = new XAtom(display,XAtom.XA_CUT_BUFFER0);<p>
  * String selection = xa.getProperty(root_window);<p></code>
+ * @version     1.0, 9/6/02
  * @author  Bino George
  * @since       JDK1.5
  */
@@ -59,7 +60,7 @@ import sun.misc.Unsafe;
 import java.util.HashMap;
 
 public class XAtom {
-
+    
     // Order of lock:  XAWTLock -> XAtom.class
 
     /* Predefined Atoms - automatically extracted from XAtom.h */
@@ -576,13 +577,13 @@ public class XAtom {
         checkWindow(window.getWindow());
         XToolkit.awtLock();
         try {
-            XlibWrapper.XDeleteProperty(XToolkit.getDisplay(),
+            XlibWrapper.XDeleteProperty(XToolkit.getDisplay(), 
                 window.getWindow(), atom);
         } finally {
             XToolkit.awtUnlock();
         }
     }
-
+    
     public void setAtomData(long window, long property_type, byte[] data) {
         long bdata = Native.toData(data);
         try {
@@ -813,7 +814,7 @@ public class XAtom {
     /**
      * Sets property on the <code>window</code> to the value <code>window_value</window>
      * Property is assumed to be of type WINDOW/32
-     */
+     */ 
     public void setWindowProperty(long window, long window_value) {
         if (atom == 0) {
             throw new IllegalStateException("Atom should be initialized");
@@ -827,7 +828,7 @@ public class XAtom {
                                     XlibWrapper.larg1, 1);
         } finally {
             XToolkit.awtUnlock();
-        }
+        }        
     }
     public void setWindowProperty(XBaseWindow window, XBaseWindow window_value) {
         setWindowProperty(window.getWindow(), window_value.getWindow());
@@ -857,5 +858,6 @@ public class XAtom {
         } finally {
             getter.dispose();
         }
-    }
+    }    
 }
+

@@ -46,6 +46,7 @@ import javax.security.auth.x500.X500Principal;
  * @see SSLSession
  *
  * @since 1.4
+ * @version %I%
  * @author David Brownell
  */
 public class HandshakeCompletedEvent extends EventObject
@@ -62,8 +63,8 @@ public class HandshakeCompletedEvent extends EventObject
      */
     public HandshakeCompletedEvent(SSLSocket sock, SSLSession s)
     {
-        super(sock);
-        session = s;
+	super(sock);
+	session = s;
     }
 
 
@@ -74,7 +75,7 @@ public class HandshakeCompletedEvent extends EventObject
      */
     public SSLSession getSession()
     {
-        return session;
+	return session;
     }
 
 
@@ -87,7 +88,7 @@ public class HandshakeCompletedEvent extends EventObject
      */
     public String getCipherSuite()
     {
-        return session.getCipherSuite();
+	return session.getCipherSuite();
     }
 
 
@@ -104,14 +105,14 @@ public class HandshakeCompletedEvent extends EventObject
      * which certificate chain was actually used.
      *
      * @return an ordered array of certificates, with the local
-     *          certificate first followed by any
-     *          certificate authorities.  If no certificates were sent,
-     *          then null is returned.
+     *		certificate first followed by any
+     *		certificate authorities.  If no certificates were sent,
+     *		then null is returned.
      * @see #getLocalPrincipal()
      */
     public java.security.cert.Certificate [] getLocalCertificates()
     {
-        return session.getLocalCertificates();
+	return session.getLocalCertificates();
     }
 
 
@@ -123,15 +124,15 @@ public class HandshakeCompletedEvent extends EventObject
      * such as Kerberos, will throw an SSLPeerUnverifiedException.
      *
      * @return an ordered array of the peer certificates,
-     *          with the peer's own certificate first followed by
-     *          any certificate authorities.
+     *		with the peer's own certificate first followed by
+     *		any certificate authorities.
      * @exception SSLPeerUnverifiedException if the peer is not verified.
      * @see #getPeerPrincipal()
      */
     public java.security.cert.Certificate [] getPeerCertificates()
-            throws SSLPeerUnverifiedException
+	    throws SSLPeerUnverifiedException
     {
-        return session.getPeerCertificates();
+	return session.getPeerCertificates();
     }
 
 
@@ -147,17 +148,17 @@ public class HandshakeCompletedEvent extends EventObject
      * {@link #getPeerCertificates} instead.</em></p>
      *
      * @return an ordered array of peer X.509 certificates,
-     *          with the peer's own certificate first followed by any
-     *          certificate authorities.  (The certificates are in
-     *          the original JSSE
-     *          {@link javax.security.cert.X509Certificate} format).
+     *		with the peer's own certificate first followed by any
+     *		certificate authorities.  (The certificates are in
+     *		the original JSSE
+     *		{@link javax.security.cert.X509Certificate} format).
      * @exception SSLPeerUnverifiedException if the peer is not verified.
      * @see #getPeerPrincipal()
      */
     public javax.security.cert.X509Certificate [] getPeerCertificateChain()
-            throws SSLPeerUnverifiedException
+	    throws SSLPeerUnverifiedException
     {
-        return session.getPeerCertificateChain();
+	return session.getPeerCertificateChain();
     }
 
     /**
@@ -169,7 +170,7 @@ public class HandshakeCompletedEvent extends EventObject
      * KerberosPrincipal for Kerberos cipher suites.
      *
      * @throws SSLPeerUnverifiedException if the peer's identity has not
-     *          been verified
+     *		been verified
      *
      * @see #getPeerCertificates()
      * @see #getLocalPrincipal()
@@ -177,19 +178,19 @@ public class HandshakeCompletedEvent extends EventObject
      * @since 1.5
      */
     public Principal getPeerPrincipal()
-            throws SSLPeerUnverifiedException
+	    throws SSLPeerUnverifiedException
     {
-        Principal principal;
-        try {
-            principal = session.getPeerPrincipal();
-        } catch (AbstractMethodError e) {
-            // if the provider does not support it, fallback to peer certs.
-            // return the X500Principal of the end-entity cert.
-            Certificate[] certs = getPeerCertificates();
-            principal = (X500Principal)
-                ((X509Certificate)certs[0]).getSubjectX500Principal();
-        }
-        return principal;
+	Principal principal;
+	try {
+	    principal = session.getPeerPrincipal();
+	} catch (AbstractMethodError e) {
+	    // if the provider does not support it, fallback to peer certs.
+	    // return the X500Principal of the end-entity cert.
+	    Certificate[] certs = getPeerCertificates();
+	    principal = (X500Principal)
+		((X509Certificate)certs[0]).getSubjectX500Principal();
+	}
+	return principal;
     }
 
     /**
@@ -207,20 +208,20 @@ public class HandshakeCompletedEvent extends EventObject
      */
     public Principal getLocalPrincipal()
     {
-        Principal principal;
-        try {
-            principal = session.getLocalPrincipal();
-        } catch (AbstractMethodError e) {
-            principal = null;
-            // if the provider does not support it, fallback to local certs.
-            // return the X500Principal of the end-entity cert.
-            Certificate[] certs = getLocalCertificates();
-            if (certs != null) {
-                principal = (X500Principal)
-                        ((X509Certificate)certs[0]).getSubjectX500Principal();
-            }
-        }
-        return principal;
+	Principal principal;
+	try {
+	    principal = session.getLocalPrincipal();
+	} catch (AbstractMethodError e) {
+	    principal = null;
+	    // if the provider does not support it, fallback to local certs.
+	    // return the X500Principal of the end-entity cert.
+	    Certificate[] certs = getLocalCertificates();
+	    if (certs != null) {
+		principal = (X500Principal)
+			((X509Certificate)certs[0]).getSubjectX500Principal();
+	    }
+	}
+	return principal;
     }
 
     /**
@@ -232,6 +233,6 @@ public class HandshakeCompletedEvent extends EventObject
      */
     public SSLSocket getSocket()
     {
-        return (SSLSocket) getSource();
+	return (SSLSocket) getSource();
     }
 }

@@ -30,7 +30,7 @@
 import java.security.SecureRandom;
 
 public class PrngSlow {
-
+    
     public static void main(String[] args) throws Exception {
         double t = 0.0;
         try {

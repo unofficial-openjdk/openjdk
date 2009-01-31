@@ -264,7 +264,7 @@ class RegularEnumSet<E extends Enum<E>> extends EnumSet<E> {
 
         RegularEnumSet<?> es = (RegularEnumSet<?>)c;
         if (es.elementType != elementType) {
-            boolean changed = (elements != 0);
+	    boolean changed = (elements != 0);
             elements = 0;
             return changed;
         }

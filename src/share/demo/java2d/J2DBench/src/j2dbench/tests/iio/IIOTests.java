@@ -55,10 +55,10 @@ public abstract class IIOTests extends Test {
     static boolean hasImageIO;
 
     static {
-        try {
-            hasImageIO = (javax.imageio.ImageIO.class != null);
-        } catch (NoClassDefFoundError e) {
-        }
+	try {
+	    hasImageIO = (javax.imageio.ImageIO.class != null);
+	} catch (NoClassDefFoundError e) {
+	}
     }
 
     protected static Group iioRoot;
@@ -92,7 +92,7 @@ public abstract class IIOTests extends Test {
             "Large Images (1000x1000)",
             "Huge Images (4000x4000)",
         };
-        sizeList = new Option.IntList(iioOptRoot,
+	sizeList = new Option.IntList(iioOptRoot,
                                       "size", "Image Size",
                                       sizes, sizeStrs, sizeDescs, 0x4);
         ((Option.ObjectList) sizeList).setNumRows(5);

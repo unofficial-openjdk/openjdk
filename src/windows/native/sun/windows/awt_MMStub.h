@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-#ifndef _INC_MMSTUB
+#ifndef	_INC_MMSTUB
 #define _INC_MMSTUB
 
 #ifndef     _WINDOWS_
@@ -37,8 +37,8 @@
 
 /*  Cdecl for C++               */
 #ifdef __cplusplus
-extern "C" {
-#endif
+extern "C" {            
+#endif  
 
 /*  Constants                   */
 #define SM_XVSCREEN                         76
@@ -51,9 +51,9 @@ extern "C" {
 #define MONITOR_DEFAULT_TO_NULL             0x00000000
 #define MONITOR_DEFAULT_TO_PRIMARY          0x00000001
 #define MONITOR_DEFAULT_TO_NEAR             0x00000002
-
-
-
+                                            
+                                            
+                                            
 #define MONITOR_INFO_FLAG_PRIMARY           0x00000001
 
 #define DISPLAY_DEVICE_ATTACHED_TO_DESKTOP  0x00000001
@@ -69,7 +69,7 @@ extern "C" {
 
 #define PRIMARY_MONITOR                     ((MHND)0x42)
 
-
+                                            
 #define DEV_NAME_LEN                        32
 #define DEV_STR_LEN                         128
 
@@ -104,8 +104,8 @@ typedef struct tagDISPLAY_DEVICE
     WCHAR       deviceID[128];
     WCHAR       deviceKey[128];
 } _DISPLAY_DEVICE, *P_DISPLAY_DEVICE;
-
-/*  Basic API's  */
+ 
+/*  Basic API's  */                              
 BOOL WINAPI                     _enumDisplayMonitors(HDC,LPCRECT,MON_ENUM_CALLBACK_PROC,LPARAM);
 BOOL WINAPI                     _enumDisplayDevices (LPVOID,int,P_DISPLAY_DEVICE,DWORD);
 BOOL WINAPI                     _getMonitorInfo     (MHND,PMONITOR_INFO);
@@ -119,13 +119,13 @@ int WINAPI                      _countMonitors      (void);
 int WINAPI                      _collectMonitors    (MHND*,int);
 BOOL WINAPI                     _monitorBounds      (MHND,RECT*);
 HDC WINAPI                      _makeDCFromMonitor  (MHND);
-HWND WINAPI                     _createWindowOM     (MHND,LPCTSTR,LPCTSTR,DWORD,int,int,int,
-                                                     int,HWND,HMENU,HANDLE,LPVOID);
-
+HWND WINAPI                     _createWindowOM     (MHND,LPCTSTR,LPCTSTR,DWORD,int,int,int, 
+                                                     int,HWND,HMENU,HANDLE,LPVOID); 
+                                
 #ifdef __cplusplus
 }
 #endif  /* __cplusplus */
 
 #endif  /* !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0500) */
 
-#endif  /* _INC_MMSTUB */
+#endif	/* _INC_MMSTUB */

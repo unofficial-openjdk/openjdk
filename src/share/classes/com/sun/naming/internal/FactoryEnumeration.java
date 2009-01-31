@@ -30,13 +30,14 @@ import javax.naming.NamingException;
 
 /**
   * The FactoryEnumeration is used for returning factory instances.
-  *
+  * 
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
  */
 
 // no need to implement Enumeration since this is only for internal use
-public final class FactoryEnumeration {
+public final class FactoryEnumeration { 
     private List factories;
     private int posn = 0;
     private ClassLoader loader;
@@ -44,7 +45,7 @@ public final class FactoryEnumeration {
     /**
      * Records the input list and uses it directly to satisfy
      * hasMore()/next() requests. An alternative would have been to use
-     * an enumeration/iterator from the list, but we want to update the
+     * an enumeration/iterator from the list, but we want to update the 
      * list so we keep the
      * original list. The list initially contains Class objects.
      * As each element is used, the Class object is replaced by an
@@ -56,55 +57,55 @@ public final class FactoryEnumeration {
      * weak reference is tagged with the factory's class name so the
      * class can be reloaded if the reference is cleared.
 
-     * @param factories A non-null list
-     * @param loader    The class loader of the list's contents
+     * @param factories	A non-null list
+     * @param loader	The class loader of the list's contents
      */
     FactoryEnumeration(List factories, ClassLoader loader) {
-        this.factories = factories;
-        this.loader = loader;
+	this.factories = factories;
+	this.loader = loader;
     }
-
+ 
     public Object next() throws NamingException {
-        synchronized (factories) {
+	synchronized (factories) {
 
-            NamedWeakReference ref = (NamedWeakReference) factories.get(posn++);
-            Object answer = ref.get();
-            if ((answer != null) && !(answer instanceof Class)) {
-                return answer;
-            }
+	    NamedWeakReference ref = (NamedWeakReference) factories.get(posn++);
+	    Object answer = ref.get();
+	    if ((answer != null) && !(answer instanceof Class)) {
+		return answer;
+	    }
 
-            String className = ref.getName();
+	    String className = ref.getName();
 
-            try {
-                if (answer == null) {   // reload class if weak ref cleared
-                    answer = Class.forName(className, true, loader);
-                }
-                // Instantiate Class to get factory
-                answer = ((Class) answer).newInstance();
-                ref = new NamedWeakReference(answer, className);
-                factories.set(posn-1, ref);  // replace Class object or null
-                return answer;
-            } catch (ClassNotFoundException e) {
-                NamingException ne =
-                    new NamingException("No longer able to load " + className);
-                ne.setRootCause(e);
-                throw ne;
-            } catch (InstantiationException e) {
-                NamingException ne =
-                    new NamingException("Cannot instantiate " + answer);
-                ne.setRootCause(e);
-                throw ne;
-            } catch (IllegalAccessException e) {
-                NamingException ne = new NamingException("Cannot access " + answer);
-                ne.setRootCause(e);
-                throw ne;
-            }
-        }
+	    try {
+		if (answer == null) {	// reload class if weak ref cleared
+		    answer = Class.forName(className, true, loader);
+		}
+		// Instantiate Class to get factory
+		answer = ((Class) answer).newInstance();
+		ref = new NamedWeakReference(answer, className);
+		factories.set(posn-1, ref);  // replace Class object or null
+		return answer;
+	    } catch (ClassNotFoundException e) {
+		NamingException ne = 
+		    new NamingException("No longer able to load " + className);
+		ne.setRootCause(e);
+		throw ne;
+	    } catch (InstantiationException e) {
+		NamingException ne = 
+		    new NamingException("Cannot instantiate " + answer);
+		ne.setRootCause(e);
+		throw ne;
+	    } catch (IllegalAccessException e) {
+		NamingException ne = new NamingException("Cannot access " + answer);
+		ne.setRootCause(e);
+		throw ne;
+	    }
+	}
     }
 
     public boolean hasMore() {
-        synchronized (factories) {
-            return posn < factories.size();
-        }
+	synchronized (factories) {
+	    return posn < factories.size();
+	}
     }
 }

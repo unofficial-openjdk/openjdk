@@ -44,34 +44,34 @@ public class Environment {
     private boolean verbose;
 
     public Environment() {
-        this.classManager = new ClassManager(this);
-        //### Order of the next three lines is important!  (FIX THIS)
-        this.runtime = new ExecutionManager();
-        this.sourceManager = new SourceManager(this);
-        this.contextManager = new ContextManager(this);
-        this.monitorListModel = new MonitorListModel(this);
+	this.classManager = new ClassManager(this);
+	//### Order of the next three lines is important!  (FIX THIS)
+	this.runtime = new ExecutionManager();
+	this.sourceManager = new SourceManager(this);
+	this.contextManager = new ContextManager(this);
+	this.monitorListModel = new MonitorListModel(this);
     }
 
     // Services used by debugging tools.
-
+    
     public SourceManager getSourceManager() {
-        return sourceManager;
+	return sourceManager;
     }
 
     public ClassManager getClassManager() {
-        return classManager;
+	return classManager;
     }
 
     public ContextManager getContextManager() {
-        return contextManager;
+	return contextManager;
     }
 
     public MonitorListModel getMonitorListModel() {
-        return monitorListModel;
+	return monitorListModel;
     }
 
     public ExecutionManager getExecutionManager() {
-        return runtime;
+	return runtime;
     }
 
     //### TODO:
@@ -88,7 +88,7 @@ public class Environment {
     // public void removeTool(Tool t);
 
      public void terminate() {
-         System.exit(0);
+	 System.exit(0);
      }
 
     // public void refresh();    // notify all tools to refresh their views
@@ -101,58 +101,58 @@ public class Environment {
     // public void removeOutputListener(OutputListener l);
 
     public void setTypeScript(PrintWriter writer) {
-        typeScript = writer;
+	typeScript = writer;
     }
 
     public void error(String message) {
-        if (typeScript != null) {
-            typeScript.println(message);
-        } else {
-            System.out.println(message);
-        }
+	if (typeScript != null) {
+	    typeScript.println(message);
+	} else {
+	    System.out.println(message);
+	}
     }
-
+    
     public void failure(String message) {
-        if (typeScript != null) {
-            typeScript.println(message);
-        } else {
-            System.out.println(message);
-        }
+	if (typeScript != null) {
+	    typeScript.println(message);
+	} else {
+	    System.out.println(message);
+	}
     }
 
     public void notice(String message) {
-        if (typeScript != null) {
-            typeScript.println(message);
-        } else {
-            System.out.println(message);
-        }
+	if (typeScript != null) {
+	    typeScript.println(message);
+	} else {
+	    System.out.println(message);
+	}
     }
 
     public OutputSink getOutputSink() {
-        return new OutputSink(typeScript);
+	return new OutputSink(typeScript);
     }
 
     public void viewSource(String fileName) {
-        //### HACK ###
-        //### Should use listener here.
-        com.sun.tools.example.debug.gui.GUI.srcTool.showSourceFile(fileName);
+	//### HACK ###
+	//### Should use listener here.
+	com.sun.tools.example.debug.gui.GUI.srcTool.showSourceFile(fileName);
     }
 
     public void viewLocation(Location locn) {
-        //### HACK ###
-        //### Should use listener here.
-        //### Should we use sourceForLocation here?
-        com.sun.tools.example.debug.gui.GUI.srcTool.showSourceForLocation(locn);
+	//### HACK ###
+	//### Should use listener here.
+	//### Should we use sourceForLocation here?
+	com.sun.tools.example.debug.gui.GUI.srcTool.showSourceForLocation(locn);
     }
 
     //### Also in 'ContextManager'.  Do we need both?
 
     public boolean getVerboseFlag() {
-        return verbose;
+	return verbose;
     }
 
     public void setVerboseFlag(boolean verbose) {
-        this.verbose = verbose;
+	this.verbose = verbose;
     }
 
 }

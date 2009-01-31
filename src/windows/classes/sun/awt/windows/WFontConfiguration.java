@@ -36,55 +36,55 @@ public class WFontConfiguration extends FontConfiguration {
 
     // whether compatibility fallbacks for TimesRoman and Co. are used
     private boolean useCompatibilityFallbacks;
-
+    
     public WFontConfiguration(SunGraphicsEnvironment environment) {
-        super(environment);
+	super(environment);
         useCompatibilityFallbacks = "windows-1252".equals(encoding);
         initTables(encoding);
     }
-
+    
     public WFontConfiguration(SunGraphicsEnvironment environment,
-                              boolean preferLocaleFonts,
-                              boolean preferPropFonts) {
-        super(environment, preferLocaleFonts, preferPropFonts);
+			      boolean preferLocaleFonts,
+			      boolean preferPropFonts) {
+	super(environment, preferLocaleFonts, preferPropFonts);
         useCompatibilityFallbacks = "windows-1252".equals(encoding);
     }
 
     protected void initReorderMap() {
-        if (encoding.equalsIgnoreCase("windows-31j")) {
-            localeMap = new Hashtable();
-            /* Substitute Mincho for Gothic in this one case.
-             * Note the windows fontconfig files already contain the mapping:
-             * filename.MS_Mincho=MSMINCHO.TTC
-             * which isn't essential to this usage but avoids a call
-             * to loadfonts in the event MSMINCHO.TTC has not otherwise
-             * been opened and its fonts loaded.
-             * Also note this usage is only enabled if a private flag is set.
-             */
+	if (encoding.equalsIgnoreCase("windows-31j")) {
+	    localeMap = new Hashtable();
+	    /* Substitute Mincho for Gothic in this one case.
+	     * Note the windows fontconfig files already contain the mapping:
+	     * filename.MS_Mincho=MSMINCHO.TTC
+	     * which isn't essential to this usage but avoids a call
+	     * to loadfonts in the event MSMINCHO.TTC has not otherwise
+	     * been opened and its fonts loaded.
+	     * Also note this usage is only enabled if a private flag is set.
+	     */
             if ("98".equals(osName) || "Me".equals(osName)) {
                 localeMap.put("dialoginput.plain.japanese", "\uff2d\uff33 \u660e\u671d");
-                localeMap.put("dialoginput.bold.japanese", "\uff2d\uff33 \u660e\u671d");
-                localeMap.put("dialoginput.italic.japanese", "\uff2d\uff33 \u660e\u671d");
-                localeMap.put("dialoginput.bolditalic.japanese", "\uff2d\uff33 \u660e\u671d");
-            } else {
+		localeMap.put("dialoginput.bold.japanese", "\uff2d\uff33 \u660e\u671d");
+		localeMap.put("dialoginput.italic.japanese", "\uff2d\uff33 \u660e\u671d");
+		localeMap.put("dialoginput.bolditalic.japanese", "\uff2d\uff33 \u660e\u671d");
+	    } else {
 
                 localeMap.put("dialoginput.plain.japanese", "MS Mincho");
-                localeMap.put("dialoginput.bold.japanese", "MS Mincho");
-                localeMap.put("dialoginput.italic.japanese", "MS Mincho");
-                localeMap.put("dialoginput.bolditalic.japanese", "MS Mincho");
+		localeMap.put("dialoginput.bold.japanese", "MS Mincho");
+		localeMap.put("dialoginput.italic.japanese", "MS Mincho");
+		localeMap.put("dialoginput.bolditalic.japanese", "MS Mincho");
             }
-        }
-        reorderMap = new HashMap();
-        reorderMap.put("UTF-8.hi", "devanagari");
-        reorderMap.put("windows-1255", "hebrew");
-        reorderMap.put("x-windows-874", "thai");
-        reorderMap.put("windows-31j", "japanese");
-        reorderMap.put("x-windows-949", "korean");
-        reorderMap.put("GBK", "chinese-ms936");
-        reorderMap.put("GB18030", "chinese-gb18030");
-        reorderMap.put("x-windows-950", "chinese-ms950");
-        reorderMap.put("x-MS950-HKSCS", split("chinese-ms950,chinese-hkscs"));
-//      reorderMap.put("windows-1252", "alphabetic");
+	}
+	reorderMap = new HashMap();
+	reorderMap.put("UTF-8.hi", "devanagari");
+	reorderMap.put("windows-1255", "hebrew");
+	reorderMap.put("x-windows-874", "thai");
+	reorderMap.put("windows-31j", "japanese");
+	reorderMap.put("x-windows-949", "korean");
+	reorderMap.put("GBK", "chinese-ms936");
+	reorderMap.put("GB18030", "chinese-gb18030");
+	reorderMap.put("x-windows-950", "chinese-ms950");
+	reorderMap.put("x-MS950-HKSCS", split("chinese-ms950,chinese-hkscs"));
+// 	reorderMap.put("windows-1252", "alphabetic");
     }
 
     protected void setOsNameAndVersion(){
@@ -99,11 +99,11 @@ public class WFontConfiguration extends FontConfiguration {
                 q = osName.indexOf(' ', p + 1);
                 if (q == -1){
                     osName = osName.substring(p + 1);
-                }
+		}
                 else{
                     osName = osName.substring(p + 1, q);
                 }
-            }
+	    }
             osVersion = null;
         }
     }
@@ -128,7 +128,7 @@ public class WFontConfiguration extends FontConfiguration {
         }
         return platformFontName + "," + windowsCharset;
     }
-
+    
     protected String getEncoding(String awtFontName, String characterSubsetName) {
         String encoding = (String) subsetEncodingMap.get(characterSubsetName);
         if (encoding == null) {
@@ -138,7 +138,7 @@ public class WFontConfiguration extends FontConfiguration {
     }
 
     protected Charset getDefaultFontCharset(String fontName) {
-        return new WDefaultFontCharset(fontName);
+	return new WDefaultFontCharset(fontName);
     }
 
     public String getFaceNameFromComponentFontName(String componentFontName) {
@@ -147,7 +147,7 @@ public class WFontConfiguration extends FontConfiguration {
     }
 
     protected String getFileNameFromComponentFontName(String componentFontName) {
-        return getFileNameFromPlatformName(componentFontName);
+	return getFileNameFromPlatformName(componentFontName);
     }
 
     /**
@@ -162,7 +162,7 @@ public class WFontConfiguration extends FontConfiguration {
         }
         return fontName;
     }
-
+    
     private String findFontWithCharset(FontDescriptor[] fontDescriptors, String charset) {
         String fontName = null;
         for (int i = 0; i < fontDescriptors.length; i++) {
@@ -173,11 +173,11 @@ public class WFontConfiguration extends FontConfiguration {
         }
         return fontName;
     }
-
+    
     private static HashMap subsetCharsetMap = new HashMap();
     private static HashMap subsetEncodingMap = new HashMap();
     private static String textInputCharset;
-
+    
     private void initTables(String defaultEncoding) {
         subsetCharsetMap.put("alphabetic", "ANSI_CHARSET");
         subsetCharsetMap.put("alphabetic/1252", "ANSI_CHARSET");
@@ -215,12 +215,12 @@ public class WFontConfiguration extends FontConfiguration {
         subsetEncodingMap.put("dingbats", "sun.awt.windows.WingDings");
         subsetEncodingMap.put("greek", "windows-1253");
         subsetEncodingMap.put("hebrew", "windows-1255");
-        subsetEncodingMap.put("japanese", "windows-31j");
-        subsetEncodingMap.put("korean", "x-windows-949");
+        subsetEncodingMap.put("japanese", "windows-31j"); 
+        subsetEncodingMap.put("korean", "x-windows-949"); 
         subsetEncodingMap.put("latin", "windows-1252");
         subsetEncodingMap.put("symbol", "sun.awt.Symbol");
         subsetEncodingMap.put("thai", "x-windows-874");
-
+        
         if ("windows-1256".equals(defaultEncoding)) {
             textInputCharset = "ARABIC_CHARSET";
         } else if ("GBK".equals(defaultEncoding)) {
@@ -250,3 +250,5 @@ public class WFontConfiguration extends FontConfiguration {
         }
     }
 }
+
+

@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM1047;
  * Tables and data to convert Unicode to Cp1047
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp1047 extends CharToByteSingleByte {

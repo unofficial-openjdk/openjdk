@@ -67,7 +67,7 @@ static int32_t isXTestAvailable() {
     if (isXTestAvailable) {
         /* check if XTest version is OK */
         XTestQueryExtension(awt_display, &event_basep, &error_basep, &majorp, &minorp);
-        DTRACE_PRINTLN4("RobotPeer: XTestQueryExtension returns event_basep = %d, error_basep = %d, majorp = %d, minorp = %d",
+        DTRACE_PRINTLN4("RobotPeer: XTestQueryExtension returns event_basep = %d, error_basep = %d, majorp = %d, minorp = %d", 
                         event_basep, error_basep, majorp, minorp);
         if (majorp < 2 || (majorp == 2 && minorp < 2)) {
             /* bad version*/
@@ -164,11 +164,11 @@ static XImage *getWindowImage(Display * display, Window window,
      */
 
     GetMultiVisualRegions(
-        display,
+        display, 
         window,
         x, y, w, h,
         &transparentOverlays,
-        &numVisuals,
+        &numVisuals, 
         &pVisuals,
         &numOverlayVisuals,
         &pOverlayVisuals,
@@ -179,14 +179,14 @@ static XImage *getWindowImage(Display * display, Window window,
         &allImage );
 
     image = ReadAreaToImage(
-        display,
+        display, 
         window,
         x, y, w, h,
         numVisuals,
         pVisuals,
         numOverlayVisuals,
         pOverlayVisuals,
-        numImageVisuals,
+        numImageVisuals, 
         pImageVisuals,
         vis_regions,
         vis_image_regions,
@@ -210,7 +210,7 @@ static XImage *getWindowImage(Display * display, Window window,
 #define FUNC_NAME(name) Java_sun_awt_motif_MRobotPeer_ ## name
 #endif
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 FUNC_NAME(setup) (JNIEnv * env, jclass cls) {
     int32_t xtestAvailable;
 
@@ -231,7 +231,7 @@ FUNC_NAME(setup) (JNIEnv * env, jclass cls) {
     AWT_UNLOCK();
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 FUNC_NAME(getRGBPixelsImpl)( JNIEnv *env,
                              jclass cls,
                              jobject xgc,
@@ -242,8 +242,8 @@ FUNC_NAME(getRGBPixelsImpl)( JNIEnv *env,
                              jintArray pixelArray) {
 
     XImage *image;
-    jint *ary;               /* Array of jints for sending pixel values back
-                              * to parent process.
+    jint *ary;               /* Array of jints for sending pixel values back 
+                              * to parent process. 
                               */
     Window rootWindow;
     AwtGraphicsConfigDataPtr adata;
@@ -294,7 +294,7 @@ FUNC_NAME(getRGBPixelsImpl)( JNIEnv *env,
     AWT_UNLOCK();
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 FUNC_NAME(keyPressImpl) (JNIEnv *env,
                          jclass cls,
                          jint keycode) {
@@ -311,7 +311,7 @@ FUNC_NAME(keyPressImpl) (JNIEnv *env,
     XSync(awt_display, False);
 
     AWT_UNLOCK();
-
+    
 }
 
 JNIEXPORT void JNICALL
@@ -332,7 +332,7 @@ FUNC_NAME(keyReleaseImpl) (JNIEnv *env,
     AWT_UNLOCK();
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 FUNC_NAME(mouseMoveImpl) (JNIEnv *env,
                           jclass cls,
                           jobject xgc,
@@ -410,7 +410,7 @@ FUNC_NAME(mouseWheelImpl) (JNIEnv *env,
 /* probably could have been hacked into robot_mouseButtonEvent, but it's */
 /* cleaner to give it its own command type, in case the implementation   */
 /* needs to be changed later.  -bchristi, 6/20/01                        */
-
+    
     int32_t repeat = abs(wheelAmt);
     int32_t button = wheelAmt < 0 ? 4 : 5;  /* wheel up:   button 4 */
                                                  /* wheel down: button 5 */

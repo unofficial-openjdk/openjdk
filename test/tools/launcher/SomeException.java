@@ -23,10 +23,10 @@
 
 /*
  *
- *
+ * 
  * Used by unresolvedExceptions.sh
  */
 
 public class SomeException extends RuntimeException {
-
+    
 }

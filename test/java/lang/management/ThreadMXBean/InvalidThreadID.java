@@ -35,13 +35,13 @@ import java.lang.management.ThreadMXBean;
 import java.lang.management.ManagementFactory;
 
 public class InvalidThreadID {
-
-    public static void main(String argv[]) {
+    
+    public static void main(String argv[]) { 
 
         ThreadMXBean mbean = ManagementFactory.getThreadMXBean();
         int cnt = 0;
         long [] idArr = {0, -1, -2, (Long.MIN_VALUE + 1), Long.MIN_VALUE};
-
+ 
         if (mbean.isThreadCpuTimeSupported()) {
             for (int i = 0; i < idArr.length; i++) {
                 try {
@@ -54,9 +54,9 @@ public class InvalidThreadID {
             }
             if (cnt != idArr.length) {
                 throw new RuntimeException("Unexpected number of " +
-                    "IllegalArgumentException = " + cnt +
+                    "IllegalArgumentException = " + cnt + 
                     " expected = " + idArr.length);
-            }
+            } 
 
             // CPU time for a non-existence thread
             long time = mbean.getThreadCpuTime(999999);

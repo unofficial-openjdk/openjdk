@@ -109,6 +109,9 @@ IMPORT_LIST += $(MS_RUNTIME_LIBRARIES:%=$(BINDIR)/%)
 $(BINDIR)/msvcrt.dll: $(MSVCRT_DLL_PATH)/msvcrt.dll
 	$(install-import-file)
 	$(CHMOD) a+x $@
+$(BINDIR)/unicows.dll: $(UNICOWS_DLL_PATH)/unicows.dll
+	$(install-import-file)
+	$(CHMOD) a+x $@
 $(BINDIR)/msvcr71.dll: $(MSVCR71_DLL_PATH)/msvcr71.dll
 	$(install-import-file)
 	$(CHMOD) a+x $@

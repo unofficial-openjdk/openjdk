@@ -65,7 +65,7 @@ public class GenerifyStackTraces {
             int depth = 2;
             while (true) {
                 // At each iterator, wait until ThreadOne blocks
-                // to wait for thread dump.
+                // to wait for thread dump. 
                 // Then dump stack trace and notify ThreadOne to continue.
                 try {
                     sleep(2000);
@@ -82,7 +82,7 @@ public class GenerifyStackTraces {
 
     static class ThreadOne extends Thread {
         public void run() {
-            A();
+            A(); 
         }
         private void A() {
             waitForDump();
@@ -98,7 +98,7 @@ public class GenerifyStackTraces {
         }
         private void Done() {
             waitForDump();
-
+    
             // Get stack trace of current thread
             StackTraceElement[] stack = getStackTrace();
             try {
@@ -115,7 +115,7 @@ public class GenerifyStackTraces {
     static private void waitForDump() {
         synchronized(go) {
             try {
-               go.wait();
+               go.wait(); 
             } catch (Exception e) {
                throw new RuntimeException("Unexpected exception" + e);
             }
@@ -151,14 +151,14 @@ public class GenerifyStackTraces {
             }
         }
     }
-
-    private static void checkStack(Thread t, StackTraceElement[] stack,
+ 
+    private static void checkStack(Thread t, StackTraceElement[] stack, 
                                    int depth) throws Exception {
-        if (trace) {
+        if (trace) { 
             printStack(t, stack);
         }
         int frame = stack.length - 1;
-        for (int i = 0; i < depth; i++) {
+        for (int i = 0; i < depth; i++) {   
             if (! stack[frame].getMethodName().equals(methodNames[i])) {
                 throw new RuntimeException("Expected " + methodNames[i] +
                                            " in frame " + frame + " but got " +
@@ -169,10 +169,10 @@ public class GenerifyStackTraces {
     }
 
     private static void printStack(Thread t, StackTraceElement[] stack) {
-        System.out.println(t +
+        System.out.println(t + 
                            " stack: (length = " + stack.length + ")");
         if (t != null) {
-            for (int j = 0; j < stack.length; j++) {
+	    for (int j = 0; j < stack.length; j++) {
                 System.out.println(stack[j]);
             }
             System.out.println();

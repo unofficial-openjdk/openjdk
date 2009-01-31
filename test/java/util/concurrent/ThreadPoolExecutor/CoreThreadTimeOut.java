@@ -37,41 +37,41 @@ public class CoreThreadTimeOut {
     static void unexpected(Throwable t) { failed++; t.printStackTrace(); }
     static void check(boolean cond) { if (cond) pass(); else fail(); }
     static void equal(Object x, Object y) {
-        if (x == null ? y == null : x.equals(y)) pass();
-        else {System.out.println(x + " not equal to " + y); fail(); }}
+	if (x == null ? y == null : x.equals(y)) pass();
+	else {System.out.println(x + " not equal to " + y); fail(); }}
 
     static int countExecutorThreads() {
-        Thread[] threads = new Thread[Thread.activeCount()+100];
-        Thread.enumerate(threads);
-        int count = 0;
-        for (Thread t : threads)
-            if (t != null && t.getName().matches("pool-[0-9]+-thread-[0-9]+"))
-                count++;
-        return count;
+	Thread[] threads = new Thread[Thread.activeCount()+100];
+	Thread.enumerate(threads);
+	int count = 0;
+	for (Thread t : threads)
+	    if (t != null && t.getName().matches("pool-[0-9]+-thread-[0-9]+"))
+		count++;
+	return count;
     }
 
     public static void main(String[] args) throws Throwable {
-        final int threadCount = 10;
-        BlockingQueue<Runnable> q
-            = new ArrayBlockingQueue<Runnable>(2*threadCount);
-        ThreadPoolExecutor tpe
-            = new ThreadPoolExecutor(threadCount, threadCount,
-                                     30, TimeUnit.MILLISECONDS,
-                                     q);
-        equal(tpe.getCorePoolSize(), threadCount);
-        check(! tpe.allowsCoreThreadTimeOut());
-        tpe.allowCoreThreadTimeOut(true);
-        check(tpe.allowsCoreThreadTimeOut());
-        equal(countExecutorThreads(), 0);
-        for (int i = 0; i < threadCount; i++)
-            tpe.submit(new Runnable() { public void run() {}});
-        equal(countExecutorThreads(), threadCount);
-        Thread.sleep(500);
-        equal(countExecutorThreads(), 0);
-        tpe.shutdown();
-        check(tpe.allowsCoreThreadTimeOut());
+	final int threadCount = 10;
+	BlockingQueue<Runnable> q
+	    = new ArrayBlockingQueue<Runnable>(2*threadCount);
+	ThreadPoolExecutor tpe
+	    = new ThreadPoolExecutor(threadCount, threadCount,
+				     30, TimeUnit.MILLISECONDS,
+				     q);
+	equal(tpe.getCorePoolSize(), threadCount);
+	check(! tpe.allowsCoreThreadTimeOut());
+	tpe.allowCoreThreadTimeOut(true);
+	check(tpe.allowsCoreThreadTimeOut());
+	equal(countExecutorThreads(), 0);
+	for (int i = 0; i < threadCount; i++)
+	    tpe.submit(new Runnable() { public void run() {}});
+	equal(countExecutorThreads(), threadCount);
+	Thread.sleep(500);
+	equal(countExecutorThreads(), 0);
+	tpe.shutdown();
+	check(tpe.allowsCoreThreadTimeOut());
 
-        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-        if (failed > 0) throw new Exception("Some tests failed");
+	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+	if (failed > 0) throw new Exception("Some tests failed");
     }
 }

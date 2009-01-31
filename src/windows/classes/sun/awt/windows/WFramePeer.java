@@ -57,11 +57,11 @@ class WFramePeer extends WWindowPeer implements FramePeer {
                 "sun.awt.keepWorkingSetOnMinimize")));
 
     public void setMaximizedBounds(Rectangle b) {
-        if (b == null) {
-            clearMaximizedBounds();
-        } else {
-            setMaximizedBounds(b.x, b.y, b.width, b.height);
-        }
+	if (b == null) {
+	    clearMaximizedBounds();
+	} else {
+	    setMaximizedBounds(b.x, b.y, b.width, b.height);
+	}
     }
 
     public void reshape(int x, int y, int width, int height) {
@@ -87,7 +87,7 @@ class WFramePeer extends WWindowPeer implements FramePeer {
     // by client code, this method must not be executed on the toolkit
     // thread.
     public void setMenuBar(MenuBar mb) {
-        WMenuBarPeer mbPeer = (WMenuBarPeer) WToolkit.targetToPeer(mb);
+	WMenuBarPeer mbPeer = (WMenuBarPeer) WToolkit.targetToPeer(mb);
         setMenuBar0(mbPeer);
         updateInsets(insets_);
     }
@@ -100,14 +100,14 @@ class WFramePeer extends WWindowPeer implements FramePeer {
     // Toolkit & peer internals
 
     WFramePeer(Frame target) {
-        super(target);
+	super(target);
 
-        InputMethodManager imm = InputMethodManager.getInstance();
-        String menuString = imm.getTriggerMenuString();
-        if (menuString != null)
-        {
-          pSetIMMOption(menuString);
-        }
+	InputMethodManager imm = InputMethodManager.getInstance();
+	String menuString = imm.getTriggerMenuString();
+	if (menuString != null)
+	{ 
+	  pSetIMMOption(menuString);
+	}
     }
 
     native void createAwtFrame(WComponentPeer parent);
@@ -120,11 +120,11 @@ class WFramePeer extends WWindowPeer implements FramePeer {
 
         Frame target = (Frame)this.target;
 
-        if (target.getTitle() != null) {
-            setTitle(target.getTitle());
-        }
-        setResizable(target.isResizable());
-        setState(target.getExtendedState());
+	if (target.getTitle() != null) {
+	    setTitle(target.getTitle());
+	}
+	setResizable(target.isResizable());
+	setState(target.getExtendedState());
     }
 
     private native static int getSysMenuHeight();

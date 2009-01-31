@@ -37,7 +37,7 @@ class ConstantExpression extends Expression {
      * Constructor
      */
     public ConstantExpression(int op, long where, Type type) {
-        super(op, where, type);
+	super(op, where, type);
     }
 
     /**

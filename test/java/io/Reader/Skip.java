@@ -32,7 +32,7 @@ import java.io.*;
 
 public class Skip {
     public static void main(String argv[]) throws Exception {
-        File f = new File(System.getProperty("test.src", "."),
+        File f = new File(System.getProperty("test.src", "."), 
                           "SkipInput.txt");
         FileReader fr = new FileReader(f);
         long nchars = 8200;

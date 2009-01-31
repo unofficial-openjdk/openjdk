@@ -67,6 +67,7 @@ package com.sun.jdi;
  * the security policy file.
  *
  * @author  Tim Bell
+ * @version %I%, %G% 
  * @since   1.5
  *
  * @see com.sun.jdi.Bootstrap
@@ -100,7 +101,7 @@ public final class JDIPermission extends java.security.BasicPermission {
      * @param actions Must be either null or the empty string.
      * @throws IllegalArgumentException if arguments are invalid.
      */
-    public JDIPermission(String name, String actions)
+    public JDIPermission(String name, String actions) 
         throws IllegalArgumentException {
         super(name);
         if (!name.equals("virtualMachineManager")) {

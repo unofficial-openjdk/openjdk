@@ -56,9 +56,9 @@ INLINE void AwtCmdIDList::BuildFreeList(UINT first_index)
 {
     DASSERT(m_first_free == -1);
     for (UINT i = first_index; i < m_capacity-1; ++i)
-        m_array[i].next_free_index = i+1;
-    m_array[m_capacity-1].next_free_index = -1; // nil
-    m_first_free = first_index; // head of the free list
+	m_array[i].next_free_index = i+1;
+    m_array[m_capacity-1].next_free_index = -1;	// nil
+    m_first_free = first_index;	// head of the free list
 }
 
 // Assign an id to the object.  Recycle the first free entry from the
@@ -67,27 +67,27 @@ UINT AwtCmdIDList::Add(AwtObject* obj)
 {
     CriticalSection::Lock l(m_lock);
 
-    if (m_first_free == -1) {   // out of free ids
-        if (m_capacity == ARRAY_MAXIMUM_SIZE) {
-            // Really bad - out of ids.  Since we hardly can have *so*
-            // many items simultaneously in existence, we have an id
-            // leak somewhere.
-            DASSERT(FALSE);
-            return 0;
-        }
-        else {                  // snarf a bigger arena
-            UINT old_capacity = m_capacity; // will be the first free entry
-            m_capacity += ARRAY_SIZE_INCREMENT;
-            if (m_capacity > ARRAY_MAXIMUM_SIZE)
-                m_capacity = ARRAY_MAXIMUM_SIZE;
-            m_array = (CmdIDEntry *)safe_Realloc(m_array,
-                                        m_capacity * sizeof(CmdIDEntry*));
-            BuildFreeList(old_capacity);
-        }
+    if (m_first_free == -1) {	// out of free ids
+	if (m_capacity == ARRAY_MAXIMUM_SIZE) {
+	    // Really bad - out of ids.  Since we hardly can have *so*
+	    // many items simultaneously in existence, we have an id
+	    // leak somewhere.
+	    DASSERT(FALSE);
+	    return 0;
+	}
+	else {			// snarf a bigger arena
+	    UINT old_capacity = m_capacity; // will be the first free entry
+	    m_capacity += ARRAY_SIZE_INCREMENT;
+	    if (m_capacity > ARRAY_MAXIMUM_SIZE)
+		m_capacity = ARRAY_MAXIMUM_SIZE;
+	    m_array = (CmdIDEntry *)safe_Realloc(m_array,
+				        m_capacity * sizeof(CmdIDEntry*));
+	    BuildFreeList(old_capacity);
+	}
     }
 
     DASSERT(m_first_free != -1);
-    UINT newid = m_first_free;  // use the entry from the head of the list
+    UINT newid = m_first_free;	// use the entry from the head of the list
     m_first_free = m_array[newid].next_free_index; // advance free pointer
     m_array[newid].obj = obj;
 

@@ -36,3 +36,4 @@ JNIEXPORT jlong JNICALL Java_sun_io_Win32ErrorMode_setErrorMode
 {
     return (jlong)SetErrorMode((UINT)mode);
 }
+

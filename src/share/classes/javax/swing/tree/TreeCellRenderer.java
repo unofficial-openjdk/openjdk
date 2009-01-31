@@ -35,6 +35,7 @@ import javax.swing.JTree;
  * for an example of implementing a tree cell renderer
  * that displays custom icons.
  *
+ * @version %I% %G%
  * @author Rob Davis
  * @author Ray Ryan
  * @author Scott Violet
@@ -67,10 +68,10 @@ public interface TreeCellRenderer {
      *     }
      * </pre>
      *
-     * @return  the <code>Component</code> that the renderer uses to draw the value
+     * @return	the <code>Component</code> that the renderer uses to draw the value
      */
     Component getTreeCellRendererComponent(JTree tree, Object value,
-                                   boolean selected, boolean expanded,
-                                   boolean leaf, int row, boolean hasFocus);
+				   boolean selected, boolean expanded,
+				   boolean leaf, int row, boolean hasFocus);
 
 }

@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)ContextualSubstSubtables.h	1.6 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -60,7 +61,7 @@ struct ContextualSubstitutionBase : GlyphSubstitutionSubtable
         GlyphIterator *glyphIterator, const char *offsetBase, le_bool backtrack = FALSE);
 
     static void applySubstitutionLookups(
-        const LookupProcessor *lookupProcessor,
+        const LookupProcessor *lookupProcessor, 
         const SubstitutionLookupRecord *substLookupRecordArray,
         le_uint16 substCount,
         GlyphIterator *glyphIterator,

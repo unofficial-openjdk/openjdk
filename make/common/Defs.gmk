@@ -177,6 +177,15 @@ else
 _OUTPUTDIR=$(JDK_TOPDIR)/build/$(PLATFORM)-$(ARCH)
 endif
 
+#
+# Motif is should not be built with the openjdk target.
+# Set this before including the platform definitions.
+#
+ifndef OPENJDK
+  ifndef MOTIF_REQUIRED
+    MOTIF_REQUIRED = true
+  endif
+endif
 
 #
 # Get platform definitions

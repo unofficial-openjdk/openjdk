@@ -74,7 +74,7 @@ public class CompilerThreadStat implements java.io.Serializable {
      * Returns the information about the last method compiled by
      * the compiler thread associated with this compiler thread statistic.
      *
-     * @return a {@link MethodInfo} object for the last method
+     * @return a {@link MethodInfo} object for the last method 
      * compiled by the compiler thread.
      */
     public MethodInfo getLastCompiledMethodInfo() {
@@ -82,7 +82,7 @@ public class CompilerThreadStat implements java.io.Serializable {
     }
 
     public String toString() {
-        return getName() + " compileTasks = " + getCompileTaskCount()
+        return getName() + " compileTasks = " + getCompileTaskCount() 
             + " compileTime = " + getCompileTime();
     }
 

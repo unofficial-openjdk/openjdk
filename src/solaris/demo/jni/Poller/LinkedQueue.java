@@ -52,8 +52,8 @@
  * A linked list based channel implementation,
  * adapted from the TwoLockQueue class from CPJ.
  * The algorithm avoids contention between puts
- * and takes when the queue is not empty.
- * Normally a put and a take can proceed simultaneously.
+ * and takes when the queue is not empty. 
+ * Normally a put and a take can proceed simultaneously. 
  * (Although it does not allow multiple concurrent puts or takes.)
  * This class tends to perform more efficently than
  * other Channel implementations in producer/consumer
@@ -64,22 +64,22 @@
 public class LinkedQueue {
 
 
-  /**
-   * Dummy header node of list. The first actual node, if it exists, is always
+  /** 
+   * Dummy header node of list. The first actual node, if it exists, is always 
    * at head_.next. After each take, the old first node becomes the head.
    **/
-  protected LinkedNode head_;
+  protected LinkedNode head_;         
   protected int count_;
   /**
    * Helper monitor for managing access to last node, in case it is also first.
    * last_ and waitingForTake_ ONLY used with synch on appendMonitor_
    **/
-  protected final Object lastMonitor_ = new Object();
+  protected final Object lastMonitor_ = new Object(); 
 
-  /**
+  /** 
    * The last node of list. Put() appends to list, so modifies last_
    **/
-  protected LinkedNode last_;
+  protected LinkedNode last_;         
 
   /**
    * The number of threads waiting for a take.
@@ -88,23 +88,23 @@ public class LinkedQueue {
    * usages, the notifications will hardly ever be necessary, so
    * the call overhead to notify can be eliminated.
    **/
-  protected int waitingForTake_ = 0;
+  protected int waitingForTake_ = 0;  
 
   public LinkedQueue() {
-    head_ = new LinkedNode(null);
+    head_ = new LinkedNode(null); 
     last_ = head_;
     count_ = 0;
   }
 
   /** Main mechanics for put/offer **/
-  protected void insert(Object x) {
+  protected void insert(Object x) { 
     synchronized(lastMonitor_) {
       LinkedNode p = new LinkedNode(x);
       last_.next = p;
       last_ = p;
       count_++;
       if (count_ > 1000 && (count_ % 1000 == 0))
-        System.out.println("In Queue : " + count_);
+	System.out.println("In Queue : " + count_);
       if (waitingForTake_ > 0)
         lastMonitor_.notify();
     }
@@ -117,7 +117,7 @@ public class LinkedQueue {
     if (first != null) {
       x = first.value;
       first.value = null;
-      head_ = first;
+      head_ = first; 
       count_ --;
     }
     return x;
@@ -127,13 +127,13 @@ public class LinkedQueue {
   public void put(Object x) throws InterruptedException {
     if (x == null) throw new IllegalArgumentException();
     if (Thread.interrupted()) throw new InterruptedException();
-    insert(x);
+    insert(x); 
   }
 
-  public boolean offer(Object x, long msecs) throws InterruptedException {
+  public boolean offer(Object x, long msecs) throws InterruptedException { 
     if (x == null) throw new IllegalArgumentException();
     if (Thread.interrupted()) throw new InterruptedException();
-    insert(x);
+    insert(x); 
     return true;
   }
 
@@ -143,7 +143,7 @@ public class LinkedQueue {
     Object x = extract();
     if (x != null)
       return x;
-    else {
+    else { 
       synchronized(lastMonitor_) {
         try {
           ++waitingForTake_;
@@ -154,14 +154,14 @@ public class LinkedQueue {
               return x;
             }
             else {
-              lastMonitor_.wait();
+              lastMonitor_.wait(); 
             }
           }
         }
-        catch(InterruptedException ex) {
-          --waitingForTake_;
+        catch(InterruptedException ex) { 
+          --waitingForTake_; 
           lastMonitor_.notify();
-          throw ex;
+          throw ex; 
         }
       }
     }
@@ -169,21 +169,21 @@ public class LinkedQueue {
 
   public synchronized Object peek() {
     LinkedNode first = head_.next;
-    if (first != null)
+    if (first != null) 
       return first.value;
-    else
+    else 
       return null;
-  }
+  }    
 
 
   public synchronized boolean isEmpty() {
     return head_.next == null;
-  }
+  }    
 
   public Object poll(long msecs) throws InterruptedException {
     if (Thread.interrupted()) throw new InterruptedException();
     Object x = extract();
-    if (x != null)
+    if (x != null) 
       return x;
     else {
       synchronized(lastMonitor_) {
@@ -198,24 +198,26 @@ public class LinkedQueue {
               return x;
             }
             else {
-              lastMonitor_.wait(waitTime);
+              lastMonitor_.wait(waitTime); 
               waitTime = msecs - (System.currentTimeMillis() - start);
             }
           }
         }
-        catch(InterruptedException ex) {
-          --waitingForTake_;
+        catch(InterruptedException ex) { 
+          --waitingForTake_; 
           lastMonitor_.notify();
-          throw ex;
+          throw ex; 
         }
       }
     }
   }
 
-  class LinkedNode {
+  class LinkedNode { 
     Object value;
     LinkedNode next = null;
     LinkedNode(Object x) { value = x; }
     LinkedNode(Object x, LinkedNode n) { value = x; next = n; }
   }
 }
+
+

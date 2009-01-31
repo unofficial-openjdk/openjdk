@@ -62,8 +62,8 @@ public class Introspector {
     // private constructor defined to "hide" the default public constructor
     private Introspector() {
 
-        // ------------------------------
-        // ------------------------------
+	// ------------------------------
+	// ------------------------------
 
     }
 
@@ -93,8 +93,8 @@ public class Introspector {
      *
      **/
     public static final boolean isDynamic(final Class c) {
-        // Check if the MBean implements the DynamicMBean interface
-        return javax.management.DynamicMBean.class.isAssignableFrom(c);
+	// Check if the MBean implements the DynamicMBean interface
+	return javax.management.DynamicMBean.class.isAssignableFrom(c);
     }
 
     /**
@@ -112,18 +112,18 @@ public class Introspector {
      *
      **/
     public static void testCreation(Class c)
-        throws NotCompliantMBeanException {
-        // Check if the class is a concrete class
-        final int mods = c.getModifiers();
-        if (Modifier.isAbstract(mods) || Modifier.isInterface(mods)) {
-            throw new NotCompliantMBeanException("MBean class must be concrete");
-        }
+	throws NotCompliantMBeanException {
+	// Check if the class is a concrete class
+	final int mods = c.getModifiers();
+	if (Modifier.isAbstract(mods) || Modifier.isInterface(mods)) {
+	    throw new NotCompliantMBeanException("MBean class must be concrete");
+	}
 
-        // Check if the MBean has a public constructor
-        final Constructor[] consList = c.getConstructors();
-        if (consList.length == 0) {
-            throw new NotCompliantMBeanException("MBean class must have public constructor");
-        }
+	// Check if the MBean has a public constructor
+	final Constructor[] consList = c.getConstructors();
+	if (consList.length == 0) {
+	    throw new NotCompliantMBeanException("MBean class must have public constructor");
+	}
     }
 
     public static void checkCompliance(Class mbeanClass)
@@ -197,22 +197,22 @@ public class Introspector {
      *            JMX compliant MBean
      */
     public static MBeanInfo testCompliance(Class baseClass)
-        throws NotCompliantMBeanException {
+	throws NotCompliantMBeanException {
 
-        // ------------------------------
-        // ------------------------------
+	// ------------------------------
+	// ------------------------------
 
-        // Check if the MBean implements the MBean or the Dynamic
-        // MBean interface
-        if (isDynamic(baseClass))
-            return null;
+	// Check if the MBean implements the MBean or the Dynamic
+	// MBean interface
+	if (isDynamic(baseClass))
+	    return null;
 
-        return testCompliance(baseClass, null);
+	return testCompliance(baseClass, null);
     }
 
     public static void testComplianceMXBeanInterface(Class interfaceClass)
-            throws NotCompliantMBeanException {
-        MXBeanIntrospector.getInstance().getAnalyzer(interfaceClass);
+	    throws NotCompliantMBeanException {
+	MXBeanIntrospector.getInstance().getAnalyzer(interfaceClass);
     }
 
     /**
@@ -232,7 +232,7 @@ public class Introspector {
     public static synchronized MBeanInfo
             testCompliance(final Class<?> baseClass,
                            Class<?> mbeanInterface)
-            throws NotCompliantMBeanException {
+	    throws NotCompliantMBeanException {
         if (mbeanInterface == null)
             mbeanInterface = getStandardMBeanInterface(baseClass);
         MBeanIntrospector<?> introspector = StandardMBeanIntrospector.getInstance();
@@ -330,18 +330,18 @@ public class Introspector {
      * - i.e. <i>aName</i>MBean, from within aClass and its superclasses.
      **/
     private static Class findMBeanInterface(Class aClass, String aName) {
-        Class current = aClass;
-        while (current != null) {
-            final Class[] interfaces = current.getInterfaces();
-            final int len = interfaces.length;
-            for (int i=0;i<len;i++)  {
-                final Class inter =
-                    implementsMBean(interfaces[i], aName);
-                if (inter != null) return inter;
-            }
-            current = current.getSuperclass();
-        }
-        return null;
+	Class current = aClass;
+	while (current != null) {
+	    final Class[] interfaces = current.getInterfaces();
+	    final int len = interfaces.length;
+	    for (int i=0;i<len;i++)  {
+		final Class inter =
+		    implementsMBean(interfaces[i], aName);
+		if (inter != null) return inter;
+	    }
+	    current = current.getSuperclass();
+	}
+	return null;
     }
 
     public static Descriptor descriptorForElement(final AnnotatedElement elmt) {
@@ -471,15 +471,15 @@ public class Introspector {
      */
     private static Class implementsMBean(Class c, String clName) {
         String clMBeanName = clName + "MBean";
-        if (c.getName().equals(clMBeanName)) {
-            return c;
-        }
-        Class[] interfaces = c.getInterfaces();
-        for (int i = 0;i < interfaces.length; i++) {
+	if (c.getName().equals(clMBeanName)) {
+	    return c;
+	}
+	Class[] interfaces = c.getInterfaces();
+	for (int i = 0;i < interfaces.length; i++) {
             if (interfaces[i].getName().equals(clMBeanName))
                 return interfaces[i];
-        }
+	}
 
-        return null;
+	return null;
     }
 }

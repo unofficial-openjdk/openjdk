@@ -34,7 +34,7 @@
 #include <winscard.h>
 
 #include <jni_util.h>
-
+ 
 #include "sun_security_smartcardio_PlatformPCSC.h"
 
 #include "pcsc_md.h"
@@ -54,23 +54,23 @@ FPTR_SCardControl scardControl;
 void *findFunction(JNIEnv *env, void *hModule, char *functionName) {
     void *fAddress = dlsym(hModule, functionName);
     if (fAddress == NULL) {
-        char errorMessage[256];
-        snprintf(errorMessage, sizeof(errorMessage), "Symbol not found: %s", functionName);
-        JNU_ThrowNullPointerException(env, errorMessage);
-        return NULL;
+	char errorMessage[256];
+	snprintf(errorMessage, sizeof(errorMessage), "Symbol not found: %s", functionName);
+	JNU_ThrowNullPointerException(env, errorMessage);
+	return NULL;
     }
     return fAddress;
 }
 
 JNIEXPORT void JNICALL Java_sun_security_smartcardio_PlatformPCSC_initialize
-        (JNIEnv *env, jclass thisClass, jstring jLibName) {
+	(JNIEnv *env, jclass thisClass, jstring jLibName) {
     const char *libName = (*env)->GetStringUTFChars(env, jLibName, NULL);
     hModule = dlopen(libName, RTLD_LAZY);
     (*env)->ReleaseStringUTFChars(env, jLibName, libName);
 
     if (hModule == NULL) {
-        JNU_ThrowIOException(env, dlerror());
-        return;
+	JNU_ThrowIOException(env, dlerror());
+	return;
     }
     scardEstablishContext = (FPTR_SCardEstablishContext)findFunction(env, hModule, "SCardEstablishContext");
     scardConnect          = (FPTR_SCardConnect)         findFunction(env, hModule, "SCardConnect");

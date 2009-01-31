@@ -28,19 +28,19 @@ package java.security.cert;
 import java.security.GeneralSecurityException;
 
 /**
- * An exception indicating one of a variety of problems encountered when
- * validating a certification path.
+ * An exception indicating one of a variety of problems encountered when 
+ * validating a certification path. 
  * <p>
  * A <code>CertPathValidatorException</code> provides support for wrapping
- * exceptions. The {@link #getCause getCause} method returns the throwable,
- * if any, that caused this exception to be thrown.
+ * exceptions. The {@link #getCause getCause} method returns the throwable, 
+ * if any, that caused this exception to be thrown. 
  * <p>
- * A <code>CertPathValidatorException</code> may also include the
- * certification path that was being validated when the exception was thrown
- * and the index of the certificate in the certification path that caused the
+ * A <code>CertPathValidatorException</code> may also include the 
+ * certification path that was being validated when the exception was thrown 
+ * and the index of the certificate in the certification path that caused the 
  * exception to be thrown. Use the {@link #getCertPath getCertPath} and
  * {@link #getIndex getIndex} methods to retrieve this information.
- *
+ * 
  * <p>
  * <b>Concurrent Access</b>
  * <p>
@@ -52,28 +52,29 @@ import java.security.GeneralSecurityException;
  *
  * @see CertPathValidator
  *
- * @since       1.4
- * @author      Yassir Elley
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author 	Yassir Elley
  */
 public class CertPathValidatorException extends GeneralSecurityException {
 
     private static final long serialVersionUID = -3083180014971893139L;
 
     /**
-     * @serial the index of the certificate in the certification path
+     * @serial the index of the certificate in the certification path  
      * that caused the exception to be thrown
      */
     private int index = -1;
 
     /**
-     * @serial the <code>CertPath</code> that was being validated when
+     * @serial the <code>CertPath</code> that was being validated when 
      * the exception was thrown
      */
     private CertPath certPath;
 
     /**
-     * Creates a <code>CertPathValidatorException</code> with
-     * no detail message.
+     * Creates a <code>CertPathValidatorException</code> with 
+     * no detail message. 
      */
     public CertPathValidatorException() {
         super();
@@ -81,7 +82,7 @@ public class CertPathValidatorException extends GeneralSecurityException {
 
     /**
      * Creates a <code>CertPathValidatorException</code> with the given
-     * detail message. A detail message is a <code>String</code> that
+     * detail message. A detail message is a <code>String</code> that 
      * describes this particular exception.
      *
      * @param msg the detail message
@@ -91,29 +92,29 @@ public class CertPathValidatorException extends GeneralSecurityException {
     }
 
     /**
-     * Creates a <code>CertPathValidatorException</code> that wraps the
-     * specified throwable. This allows any exception to be converted into a
-     * <code>CertPathValidatorException</code>, while retaining information
-     * about the wrapped exception, which may be useful for debugging. The
+     * Creates a <code>CertPathValidatorException</code> that wraps the 
+     * specified throwable. This allows any exception to be converted into a 
+     * <code>CertPathValidatorException</code>, while retaining information 
+     * about the wrapped exception, which may be useful for debugging. The 
      * detail message is set to (<code>cause==null ? null : cause.toString()
-     * </code>) (which typically contains the class and detail message of
+     * </code>) (which typically contains the class and detail message of 
      * cause).
      *
-     * @param cause the cause (which is saved for later retrieval by the
-     * {@link #getCause getCause()} method). (A <code>null</code> value is
+     * @param cause the cause (which is saved for later retrieval by the 
+     * {@link #getCause getCause()} method). (A <code>null</code> value is 
      * permitted, and indicates that the cause is nonexistent or unknown.)
      */
     public CertPathValidatorException(Throwable cause) {
-        super(cause);
+	super(cause);
     }
 
     /**
      * Creates a <code>CertPathValidatorException</code> with the specified
      * detail message and cause.
      *
-     * @param msg the detail message
-     * @param cause the cause (which is saved for later retrieval by the
-     * {@link #getCause getCause()} method). (A <code>null</code> value is
+     * @param msg the detail message 
+     * @param cause the cause (which is saved for later retrieval by the 
+     * {@link #getCause getCause()} method). (A <code>null</code> value is 
      * permitted, and indicates that the cause is nonexistent or unknown.)
      */
     public CertPathValidatorException(String msg, Throwable cause) {
@@ -129,26 +130,26 @@ public class CertPathValidatorException extends GeneralSecurityException {
      * @param certPath the certification path that was in the process of
      * being validated when the error was encountered
      * @param index the index of the certificate in the certification path
-     * that caused the error (or -1 if not applicable). Note that
+     * that caused the error (or -1 if not applicable). Note that 
      * the list of certificates in a <code>CertPath</code> is zero based.
      * @throws IndexOutOfBoundsException if the index is out of range
      * <code>(index < -1 || (certPath != null && index >=
      * certPath.getCertificates().size())</code>
-     * @throws IllegalArgumentException if <code>certPath</code> is
+     * @throws IllegalArgumentException if <code>certPath</code> is 
      * <code>null</code> and <code>index</code> is not -1
      */
-    public CertPathValidatorException(String msg, Throwable cause,
-            CertPath certPath, int index) {
+    public CertPathValidatorException(String msg, Throwable cause, 
+	    CertPath certPath, int index) {
         super(msg, cause);
-        if (certPath == null && index != -1) {
-            throw new IllegalArgumentException();
-        }
-        if (index < -1 ||
-            (certPath != null && index >= certPath.getCertificates().size())) {
-            throw new IndexOutOfBoundsException();
-        }
-        this.certPath = certPath;
-        this.index = index;
+	if (certPath == null && index != -1) {
+	    throw new IllegalArgumentException();
+	}
+	if (index < -1 || 
+	    (certPath != null && index >= certPath.getCertificates().size())) {
+	    throw new IndexOutOfBoundsException();
+	}
+	this.certPath = certPath;
+	this.index = index;
     }
 
     /**
@@ -163,15 +164,15 @@ public class CertPathValidatorException extends GeneralSecurityException {
     }
 
     /**
-     * Returns the index of the certificate in the certification path
+     * Returns the index of the certificate in the certification path 
      * that caused the exception to be thrown. Note that the list of
-     * certificates in a <code>CertPath</code> is zero based. If no
+     * certificates in a <code>CertPath</code> is zero based. If no 
      * index has been set, -1 is returned.
      *
      * @return the index that has been set, or -1 if none has been set
      */
     public int getIndex() {
-        return this.index;
+	return this.index;
     }
 
 }

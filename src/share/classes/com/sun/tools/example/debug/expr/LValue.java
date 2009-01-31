@@ -32,7 +32,7 @@ abstract class LValue {
 
     // The JDI Value object for this LValue.  Once we have this Value,
     // we have to remember it since after we return the LValue object
-    // to the ExpressionParser, it might decide that it needs
+    // to the ExpressionParser, it might decide that it needs 
     // the 'toString' value for the LValue in which case it will
     // call getMassagedValue to get this toString value.  At that
     // point, we don't want to call JDI a 2nd time to get the Value
@@ -44,17 +44,17 @@ abstract class LValue {
     // get/set values in this file.  To minimize confusion,
     // jdiValue is set/tested at the lowest level - right
     // next to the actual calls to JDI methods to get/set the
-    // value in the debuggee.
+    // value in the debuggee.  
     protected Value jdiValue;
 
-    abstract Value getValue() throws InvocationException,
+    abstract Value getValue() throws InvocationException, 
                                      IncompatibleThreadStateException,
                                      InvalidTypeException,
                                      ClassNotLoadedException,
                                      ParseException;
 
-    abstract void setValue0(Value value)
-                   throws ParseException, InvalidTypeException,
+    abstract void setValue0(Value value) 
+                   throws ParseException, InvalidTypeException, 
                           ClassNotLoadedException;
 
     abstract void invokeWith(List<Value> arguments) throws ParseException;
@@ -71,13 +71,13 @@ abstract class LValue {
                 "Attempt to set value before " + exc.className() + " was loaded" +
                 exc);
         }
-    }
+    }        
 
     void setValue(LValue lval) throws ParseException {
         setValue(lval.interiorGetValue());
     }
 
-    LValue memberLValue(ExpressionParser.GetFrame frameGetter,
+    LValue memberLValue(ExpressionParser.GetFrame frameGetter, 
                         String fieldName) throws ParseException {
         try {
             return memberLValue(fieldName, frameGetter.get().thread());
@@ -87,7 +87,7 @@ abstract class LValue {
     }
 
     LValue memberLValue(String fieldName, ThreadReference thread) throws ParseException {
-
+        
         Value val = interiorGetValue();
         if ((val instanceof ArrayReference) &&
             "length".equals(fieldName)){
@@ -104,7 +104,7 @@ abstract class LValue {
         // If vv is an ObjectReference, then we have to
         // do the implicit call to toString().
         if (vv instanceof ObjectReference &&
-            !(vv instanceof StringReference) &&
+            !(vv instanceof StringReference) && 
             !(vv instanceof ArrayReference)) {
             StackFrame frame;
             try {
@@ -136,7 +136,7 @@ abstract class LValue {
                                      "argument type mismatch");
         } catch (ClassNotLoadedException tnle) {
             throw new ParseException("Unable to complete expression. Method " +
-                                     "argument type " + tnle.className() +
+                                     "argument type " + tnle.className() + 
                                      " not yet loaded");
         }
         return value;
@@ -171,13 +171,13 @@ abstract class LValue {
         /*
          * TO DO: Note that this currently fails to find superclass
          * or implemented interface fields. This is due to a temporary
-         * limititation of RefType.fieldByName. Once that method is
+         * limititation of RefType.fieldByName. Once that method is 
          * fixed, superclass fields will be found.
          */
         Field field = refType.fieldByName(name);
         if (field != null) {
             boolean isStatic = field.isStatic();
-            if (((kind == STATIC) && !isStatic) ||
+            if (((kind == STATIC) && !isStatic) || 
                 ((kind == INSTANCE) && isStatic)) {
                 field = null;
             }
@@ -185,7 +185,7 @@ abstract class LValue {
 /***
         System.err.println("fieldByName: " + refType.name() + " " +
                                              name + " " +
-                                             kind + " " +
+                                             kind + " " + 
                                              (field != null));
 ***/
         return field;
@@ -197,7 +197,7 @@ abstract class LValue {
         while (iter.hasNext()) {
             Method method = (Method)iter.next();
             boolean isStatic = method.isStatic();
-            if (((kind == STATIC) && !isStatic) ||
+            if (((kind == STATIC) && !isStatic) || 
                 ((kind == INSTANCE) && isStatic)) {
                 iter.remove();
             }
@@ -289,7 +289,7 @@ abstract class LValue {
                 Type toComponentType = ((ArrayType)toType).componentType();
                 return isComponentAssignable(fromType.componentType(), toComponentType);
             } catch (ClassNotLoadedException e) {
-                // One or both component types has not yet been
+                // One or both component types has not yet been 
                 // loaded => can't assign
                 return false;
             }
@@ -297,7 +297,7 @@ abstract class LValue {
         if (toType instanceof InterfaceType) {
             // Only valid InterfaceType assignee is Cloneable
             return toType.name().equals("java.lang.Cloneable");
-        }
+        } 
         // Only valid ClassType assignee is Object
         return toType.name().equals("java.lang.Object");
     }
@@ -324,7 +324,7 @@ abstract class LValue {
                 return true;
             }
             return false;
-        }
+        } 
         if (toType instanceof PrimitiveType) {
             return false;
         }
@@ -354,7 +354,7 @@ abstract class LValue {
         return false;
     }
 
-    static Method resolveOverload(List overloads, List arguments)
+    static Method resolveOverload(List overloads, List arguments) 
                                        throws ParseException {
 
         // If there is only one method to call, we'll just choose
@@ -402,7 +402,7 @@ abstract class LValue {
 
         // At this point, we didn't find an exact match,
         // but we found one for which the args are assignable.
-        //
+        // 
         if (retVal != null) {
             if (assignableCount == 1) {
                 return retVal;
@@ -420,7 +420,7 @@ abstract class LValue {
             this.frame = frame;
             this.var = var;
         }
-
+        
         Value getValue() {
             if (jdiValue == null) {
                 jdiValue = frame.getValue(var);
@@ -428,7 +428,7 @@ abstract class LValue {
             return jdiValue;
         }
 
-        void setValue0(Value val) throws InvalidTypeException,
+        void setValue0(Value val) throws InvalidTypeException, 
                                          ClassNotLoadedException {
             frame.setValue(var, val);
             jdiValue = val;
@@ -447,8 +447,8 @@ abstract class LValue {
         Method matchingMethod = null;
         List<Value> methodArguments = null;
 
-        LValueInstanceMember(Value value,
-                            String memberName,
+        LValueInstanceMember(Value value, 
+                            String memberName, 
                             ThreadReference thread) throws ParseException {
             if (!(value instanceof ObjectReference)) {
                 throw new ParseException(
@@ -461,7 +461,7 @@ abstract class LValue {
              * Can't tell yet whether this LValue will be accessed as a
              * field or method, so we keep track of all the possibilities
              */
-            matchingField = LValue.fieldByName(refType, memberName,
+            matchingField = LValue.fieldByName(refType, memberName, 
                                                LValue.INSTANCE);
             overloads = LValue.methodsByName(refType, memberName,
                                               LValue.INSTANCE);
@@ -470,7 +470,7 @@ abstract class LValue {
                                + memberName + " in " + refType.name());
             }
         }
-
+        
         Value getValue() throws InvocationException, InvalidTypeException,
                                 ClassNotLoadedException, IncompatibleThreadStateException,
                                 ParseException {
@@ -487,7 +487,7 @@ abstract class LValue {
             }
         }
 
-        void setValue0(Value val) throws ParseException,
+        void setValue0(Value val) throws ParseException, 
                                          InvalidTypeException,
                                         ClassNotLoadedException {
             if (matchingMethod != null) {
@@ -514,7 +514,7 @@ abstract class LValue {
         Method matchingMethod = null;
         List<Value> methodArguments = null;
 
-        LValueStaticMember(ReferenceType refType,
+        LValueStaticMember(ReferenceType refType, 
                           String memberName,
                           ThreadReference thread) throws ParseException {
             this.refType = refType;
@@ -523,7 +523,7 @@ abstract class LValue {
              * Can't tell yet whether this LValue will be accessed as a
              * field or method, so we keep track of all the possibilities
              */
-            matchingField = LValue.fieldByName(refType, memberName,
+            matchingField = LValue.fieldByName(refType, memberName, 
                                                LValue.STATIC);
             overloads = LValue.methodsByName(refType, memberName,
                                               LValue.STATIC);
@@ -532,7 +532,7 @@ abstract class LValue {
                                + memberName + " in " + refType.name());
             }
         }
-
+        
         Value getValue() throws InvocationException, InvalidTypeException,
                                 ClassNotLoadedException, IncompatibleThreadStateException,
                                 ParseException {
@@ -550,7 +550,7 @@ abstract class LValue {
             }
         }
 
-        void setValue0(Value val)
+        void setValue0(Value val) 
                            throws ParseException, InvalidTypeException,
                                   ClassNotLoadedException {
             if (matchingMethod != null) {
@@ -619,7 +619,7 @@ abstract class LValue {
             this.array = (ArrayReference)value;
             this.index = index;
         }
-
+        
         Value getValue() {
             if (jdiValue == null) {
                 jdiValue = array.getValue(index);
@@ -627,7 +627,7 @@ abstract class LValue {
             return jdiValue;
         }
 
-        void setValue0(Value val) throws InvalidTypeException,
+        void setValue0(Value val) throws InvalidTypeException, 
                                          ClassNotLoadedException  {
             array.setValue(index, val);
             jdiValue = val;
@@ -644,7 +644,7 @@ abstract class LValue {
         LValueConstant(Value value) {
             this.value = value;
         }
-
+        
         Value getValue() {
             if (jdiValue == null) {
                 jdiValue = value;
@@ -729,19 +729,19 @@ abstract class LValue {
         return make(vm, Byte.parseByte(token.image));
     }
 
-    static LValue makeString(VirtualMachine vm,
+    static LValue makeString(VirtualMachine vm, 
                              Token token) throws ParseException {
         int len = token.image.length();
         return make(vm, token.image.substring(1,len-1));
     }
 
-    static LValue makeNull(VirtualMachine vm,
+    static LValue makeNull(VirtualMachine vm, 
                            Token token) throws ParseException {
         return new LValueConstant(null);
     }
 
-    static LValue makeThisObject(VirtualMachine vm,
-                                 ExpressionParser.GetFrame frameGetter,
+    static LValue makeThisObject(VirtualMachine vm, 
+                                 ExpressionParser.GetFrame frameGetter, 
                                  Token token) throws ParseException {
         if (frameGetter == null) {
             throw new ParseException("No current thread");
@@ -749,12 +749,12 @@ abstract class LValue {
             try {
                 StackFrame frame = frameGetter.get();
                 ObjectReference thisObject = frame.thisObject();
-
-                if (thisObject==null) {
-                        throw new ParseException(
+                
+		if (thisObject==null) {
+       			throw new ParseException(
                             "No 'this'.  In native or static method");
-                } else {
-                        return new LValueConstant(thisObject);
+		} else {
+			return new LValueConstant(thisObject);
                 }
             } catch (IncompatibleThreadStateException exc) {
                 throw new ParseException("Thread not suspended");
@@ -762,8 +762,8 @@ abstract class LValue {
         }
     }
 
-    static LValue makeNewObject(VirtualMachine vm,
-                                 ExpressionParser.GetFrame frameGetter,
+    static LValue makeNewObject(VirtualMachine vm, 
+                                 ExpressionParser.GetFrame frameGetter, 
                                 String className, List<Value> arguments) throws ParseException {
         List classes = vm.classesByName(className);
         if (classes.size() == 0) {
@@ -798,7 +798,7 @@ abstract class LValue {
             ThreadReference thread = frameGetter.get().thread();
             newObject = classType.newInstance(thread, constructor, arguments, 0);
         } catch (InvocationException ie) {
-            throw new ParseException("Exception in " + className + " constructor: " +
+            throw new ParseException("Exception in " + className + " constructor: " + 
                                      ie.exception().referenceType().name());
         } catch (IncompatibleThreadStateException exc) {
             throw new ParseException("Thread not suspended");
@@ -808,22 +808,22 @@ abstract class LValue {
              */
             throw new ParseException("Unable to create " + className + " instance");
         }
-        return new LValueConstant(newObject);
+	return new LValueConstant(newObject);
     }
 
-    private static LValue nFields(LValue lval,
+    private static LValue nFields(LValue lval, 
                                   StringTokenizer izer,
-                                  ThreadReference thread)
+                                  ThreadReference thread) 
                                           throws ParseException {
         if (!izer.hasMoreTokens()) {
             return lval;
         } else {
             return nFields(lval.memberLValue(izer.nextToken(), thread), izer, thread);
-        }
+        }                    
     }
 
-    static LValue makeName(VirtualMachine vm,
-                           ExpressionParser.GetFrame frameGetter,
+    static LValue makeName(VirtualMachine vm, 
+                           ExpressionParser.GetFrame frameGetter, 
                            String name) throws ParseException {
         StringTokenizer izer = new StringTokenizer(name, ".");
         String first = izer.nextToken();
@@ -865,7 +865,7 @@ abstract class LValue {
                                                      first);
                         } else {
                             ReferenceType refType = (ReferenceType)classes.get(0);
-                            LValue lval = new LValueStaticMember(refType,
+                            LValue lval = new LValueStaticMember(refType, 
                                                             izer.nextToken(), thread);
                             return nFields(lval, izer, thread);
                         }
@@ -891,20 +891,20 @@ abstract class LValue {
         return val.toString();  // is this correct in all cases?
     }
 
-    static LValue booleanOperation(VirtualMachine vm, Token token,
-                            LValue rightL,
+    static LValue booleanOperation(VirtualMachine vm, Token token, 
+                            LValue rightL, 
                             LValue leftL) throws ParseException {
         String op = token.image;
         Value right = rightL.interiorGetValue();
         Value left = leftL.interiorGetValue();
-        if ( !(right instanceof PrimitiveValue) ||
+        if ( !(right instanceof PrimitiveValue) || 
              !(left instanceof PrimitiveValue) ) {
             if (op.equals("==")) {
                 return make(vm, right.equals(left));
             } else if (op.equals("!=")) {
                 return make(vm, !right.equals(left));
             } else {
-                throw new ParseException("Operands or '" + op +
+                throw new ParseException("Operands or '" + op + 
                                      "' must be primitive");
             }
         }
@@ -928,9 +928,9 @@ abstract class LValue {
             throw new ParseException("Unknown operation: " + op);
         }
         return make(vm, res);
-    }
+    }                                
 
-    static LValue operation(VirtualMachine vm, Token token,
+    static LValue operation(VirtualMachine vm, Token token, 
                             LValue rightL, LValue leftL,
                             ExpressionParser.GetFrame frameGetter
                             ) throws ParseException {
@@ -941,7 +941,7 @@ abstract class LValue {
                               (left instanceof StringReference)) {
             if (op.equals("+")) {
                 // If one is an ObjectRef, we will need to invoke
-                // toString on it, so we need the thread.
+                // toString on it, so we need the thread. 
                 return make(vm, stringValue(rightL, frameGetter) +
                             stringValue(leftL, frameGetter));
             }
@@ -1035,5 +1035,5 @@ abstract class LValue {
             }
             return make(vm, res);
         }
-    }
+    }   
 }

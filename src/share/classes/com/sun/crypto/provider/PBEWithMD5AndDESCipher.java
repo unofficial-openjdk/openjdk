@@ -60,12 +60,12 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * its own integrity
      */
     public PBEWithMD5AndDESCipher()
-        throws NoSuchAlgorithmException, NoSuchPaddingException {
-        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have " +
-                                        "been tampered.");
-        }
-        core = new PBECipherCore("DES");
+	throws NoSuchAlgorithmException, NoSuchPaddingException {
+	if (!SunJCE.verifySelfIntegrity(this.getClass())) {
+	    throw new SecurityException("The SunJCE provider may have " +
+					"been tampered.");
+	}
+	core = new PBECipherCore("DES");
     }
 
     /**
@@ -76,11 +76,11 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      *
      * @exception NoSuchAlgorithmException if the requested cipher mode is
      * invalid
-     */
+     */ 
     protected void engineSetMode(String mode) throws NoSuchAlgorithmException {
-        if ((mode != null) && (!mode.equalsIgnoreCase("CBC"))) {
-            throw new NoSuchAlgorithmException("Invalid cipher mode: " + mode);
-        }
+	if ((mode != null) && (!mode.equalsIgnoreCase("CBC"))) {
+	    throw new NoSuchAlgorithmException("Invalid cipher mode: " + mode);
+	}
     }
 
      /**
@@ -92,25 +92,25 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * @exception NoSuchPaddingException if the requested padding mechanism
      * is invalid
      */
-    protected void engineSetPadding(String paddingScheme)
-        throws NoSuchPaddingException
+    protected void engineSetPadding(String paddingScheme) 
+	throws NoSuchPaddingException
     {
-        if ((paddingScheme != null) &&
-            (!paddingScheme.equalsIgnoreCase("PKCS5Padding"))) {
-            throw new NoSuchPaddingException("Invalid padding scheme: " +
-                                             paddingScheme);
-        }
+	if ((paddingScheme != null) &&
+	    (!paddingScheme.equalsIgnoreCase("PKCS5Padding"))) {
+	    throw new NoSuchPaddingException("Invalid padding scheme: " +
+					     paddingScheme);
+	}
     }
-
+    
     /**
      * Returns the block size (in bytes).
      *
      * @return the block size (in bytes)
      */
     protected int engineGetBlockSize() {
-        return core.getBlockSize();
+	return core.getBlockSize();
     }
-
+    
     /**
      * Returns the length in bytes that an output buffer would need to be in
      * order to hold the result of the next <code>update</code> or
@@ -130,23 +130,23 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      *
      */
     protected int engineGetOutputSize(int inputLen) {
-        return core.getOutputSize(inputLen);
+	return core.getOutputSize(inputLen);
     }
-
+    
     /**
      * Returns the initialization vector (IV) in a new buffer.
      *
      * <p> This is useful in the case where a random IV has been created
      * (see <a href = "#init">init</a>),
      * or in the context of password-based encryption or
-     * decryption, where the IV is derived from a user-supplied password.
+     * decryption, where the IV is derived from a user-supplied password. 
      *
      * @return the initialization vector in a new buffer, or null if the
      * underlying algorithm does not use an IV, or if the IV has not yet
      * been set.
      */
     protected byte[] engineGetIV() {
-        return core.getIV();
+	return core.getIV();
     }
 
     /**
@@ -155,7 +155,7 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * <p>The returned parameters may be the same that were used to initialize
      * this cipher, or may contain the default set of parameters or a set of
      * randomly generated parameters used by the underlying cipher
-     * implementation (provided that the underlying cipher implementation
+     * implementation (provided that the underlying cipher implementation 
      * uses a default set of parameters or creates new parameters if it needs
      * parameters but was not initialized with any).
      *
@@ -163,7 +163,7 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * does not use any parameters.
      */
     protected AlgorithmParameters engineGetParameters() {
-        return core.getParameters();
+	return core.getParameters();
     }
 
     /**
@@ -187,14 +187,14 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * initializing this cipher
      */
     protected void engineInit(int opmode, Key key, SecureRandom random)
-        throws InvalidKeyException {
-        try {
-            engineInit(opmode, key, (AlgorithmParameterSpec) null, random);
-        } catch (InvalidAlgorithmParameterException ie) {
-            InvalidKeyException ike =
-                new InvalidKeyException("requires PBE parameters");
-            ike.initCause(ie);
-            throw ike;
+	throws InvalidKeyException {
+	try {
+	    engineInit(opmode, key, (AlgorithmParameterSpec) null, random);
+	} catch (InvalidAlgorithmParameterException ie) {
+	    InvalidKeyException ike = 
+		new InvalidKeyException("requires PBE parameters");
+	    ike.initCause(ie);
+	    throw ike;
         }
     }
 
@@ -222,17 +222,17 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * parameters are inappropriate for this cipher
      */
     protected void engineInit(int opmode, Key key,
-                              AlgorithmParameterSpec params,
-                              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        core.init(opmode, key, params, random);
+			      AlgorithmParameterSpec params,
+			      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	core.init(opmode, key, params, random);
     }
 
     protected void engineInit(int opmode, Key key,
-                              AlgorithmParameters params,
-                              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        core.init(opmode, key, params, random);
+			      AlgorithmParameters params,
+			      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	core.init(opmode, key, params, random);
     }
 
     /**
@@ -254,7 +254,7 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      */
     protected byte[] engineUpdate(byte[] input, int inputOffset, int inputLen)
     {
-        return core.update(input, inputOffset, inputLen);
+	return core.update(input, inputOffset, inputLen);
     }
 
     /**
@@ -281,11 +281,11 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * to hold the result
      */
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen,
-                               byte[] output, int outputOffset)
-        throws ShortBufferException
+			       byte[] output, int outputOffset)
+	throws ShortBufferException
     {
-        return core.update(input, inputOffset, inputLen,
-                           output, outputOffset);
+	return core.update(input, inputOffset, inputLen,
+			   output, outputOffset);
     }
 
     /**
@@ -318,9 +318,9 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * but the last input data does not have proper padding bytes.
      */
     protected byte[] engineDoFinal(byte[] input, int inputOffset, int inputLen)
-        throws IllegalBlockSizeException, BadPaddingException
+	throws IllegalBlockSizeException, BadPaddingException
     {
-        return core.doFinal(input, inputOffset, inputLen);
+	return core.doFinal(input, inputOffset, inputLen);
     }
 
     /**
@@ -359,27 +359,27 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * but the last input data does not have proper padding bytes.
      */
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen,
-                                byte[] output, int outputOffset)
-        throws ShortBufferException, IllegalBlockSizeException,
-               BadPaddingException
+				byte[] output, int outputOffset)
+	throws ShortBufferException, IllegalBlockSizeException, 
+	       BadPaddingException
     {
-        return core.doFinal(input, inputOffset, inputLen,
-                            output, outputOffset);
+	return core.doFinal(input, inputOffset, inputLen,
+			    output, outputOffset);
     }
 
     /**
      *  Returns the key size of the given key object.
      *
      * @param key the key object.
-     *
+     * 
      * @return the key size of the given key object.
      *
      * @exception InvalidKeyException if <code>key</code> is invalid.
      */
     protected int engineGetKeySize(Key key) throws InvalidKeyException {
-        // Always returns 56 since the encryption key
-        // is a DES key.
-        return 56;
+	// Always returns 56 since the encryption key
+	// is a DES key.
+	return 56;
     }
 
     /**
@@ -388,9 +388,9 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * @param key the key to be wrapped.
      *
      * @return the wrapped key.
-     *
-     * @exception IllegalBlockSizeException if this cipher is a block
-     * cipher, no padding has been requested, and the length of the
+     * 
+     * @exception IllegalBlockSizeException if this cipher is a block 
+     * cipher, no padding has been requested, and the length of the 
      * encoding of the key to be wrapped is not a
      * multiple of the block size.
      *
@@ -399,12 +399,12 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * being passed to a software only cipher).
      */
     protected byte[] engineWrap(Key key)
-        throws IllegalBlockSizeException, InvalidKeyException {
-        return core.wrap(key);
+	throws IllegalBlockSizeException, InvalidKeyException {
+	return core.wrap(key);
     }
 
     /**
-     * Unwrap a previously wrapped key.
+     * Unwrap a previously wrapped key. 
      *
      * @param wrappedKey the key to be unwrapped.
      *
@@ -415,7 +415,7 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * <code>Cipher.PRIVATE_KEY</code>, or <code>Cipher.PUBLIC_KEY</code>.
      *
      * @return the unwrapped key.
-     *
+     * 
      * @exception NoSuchAlgorithmException if no installed providers
      * can create keys of type <code>wrappedKeyType</code> for the
      * <code>wrappedKeyAlgorithm</code>.
@@ -425,12 +425,12 @@ public final class PBEWithMD5AndDESCipher extends CipherSpi {
      * the <code>wrappedKeyAlgorithm</code>.
      */
     protected Key engineUnwrap(byte[] wrappedKey,
-                               String wrappedKeyAlgorithm,
-                               int wrappedKeyType)
-        throws InvalidKeyException, NoSuchAlgorithmException {
-        byte[] encodedKey;
-
-        return core.unwrap(wrappedKey, wrappedKeyAlgorithm,
-                           wrappedKeyType);
+			       String wrappedKeyAlgorithm,
+			       int wrappedKeyType)
+	throws InvalidKeyException, NoSuchAlgorithmException {
+	byte[] encodedKey;
+	
+        return core.unwrap(wrappedKey, wrappedKeyAlgorithm, 
+			   wrappedKeyType);
     }
 }

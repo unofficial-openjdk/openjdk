@@ -60,22 +60,22 @@ public final class DOMManifest extends DOMStructure implements Manifest {
      *    entries that are not of type {@link Reference}
      */
     public DOMManifest(List references, String id) {
-        if (references == null) {
-            throw new NullPointerException("references cannot be null");
-        }
-        List refCopy = new ArrayList(references);
-        if (refCopy.isEmpty()) {
-            throw new IllegalArgumentException("list of references must " +
-                "contain at least one entry");
-        }
+	if (references == null) {
+	    throw new NullPointerException("references cannot be null");
+	}
+	List refCopy = new ArrayList(references);
+	if (refCopy.isEmpty()) {
+	    throw new IllegalArgumentException("list of references must " +
+	        "contain at least one entry");
+	}
         for (int i = 0, size = refCopy.size(); i < size; i++) {
             if (!(refCopy.get(i) instanceof Reference)) {
                 throw new ClassCastException
                     ("references["+i+"] is not a valid type");
             }
         }
-        this.references = Collections.unmodifiableList(refCopy);
-        this.id = id;
+	this.references = Collections.unmodifiableList(refCopy);
+	this.id = id;
     }
 
     /**
@@ -83,28 +83,28 @@ public final class DOMManifest extends DOMStructure implements Manifest {
      *
      * @param manElem a Manifest element
      */
-    public DOMManifest(Element manElem, XMLCryptoContext context)
-        throws MarshalException {
+    public DOMManifest(Element manElem, XMLCryptoContext context) 
+	throws MarshalException {
         this.id = DOMUtils.getAttributeValue(manElem, "Id");
         Element refElem = DOMUtils.getFirstChildElement(manElem);
-        List refs = new ArrayList();
-        while (refElem != null) {
-            refs.add(new DOMReference(refElem, context));
-            refElem = DOMUtils.getNextSiblingElement(refElem);
-        }
-        this.references = Collections.unmodifiableList(refs);
+	List refs = new ArrayList();
+	while (refElem != null) {
+	    refs.add(new DOMReference(refElem, context));
+	    refElem = DOMUtils.getNextSiblingElement(refElem);
+	}
+	this.references = Collections.unmodifiableList(refs);
     }
 
     public String getId() {
-        return id;
+	return id;
     }
-
+    
     public List getReferences() {
         return references;
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-        throws MarshalException {
+	throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element manElem = DOMUtils.createElement
@@ -112,27 +112,27 @@ public final class DOMManifest extends DOMStructure implements Manifest {
 
         DOMUtils.setAttributeID(manElem, "Id", id);
 
-        // add references
-        for (int i = 0, size = references.size(); i < size; i++) {
-            DOMReference ref = (DOMReference) references.get(i);
-            ref.marshal(manElem, dsPrefix, context);
-        }
+	// add references
+	for (int i = 0, size = references.size(); i < size; i++) {
+	    DOMReference ref = (DOMReference) references.get(i);
+	    ref.marshal(manElem, dsPrefix, context);
+	}
         parent.appendChild(manElem);
     }
 
     public boolean equals(Object o) {
-        if (this == o) {
+	if (this == o) {
             return true;
-        }
+	}
 
-        if (!(o instanceof Manifest)) {
+	if (!(o instanceof Manifest)) {
             return false;
-        }
+	}
         Manifest oman = (Manifest) o;
 
-        boolean idsEqual = (id == null ? oman.getId() == null :
+	boolean idsEqual = (id == null ? oman.getId() == null :
             id.equals(oman.getId()));
 
-        return (idsEqual && references.equals(oman.getReferences()));
+	return (idsEqual && references.equals(oman.getReferences()));
     }
 }

@@ -72,6 +72,7 @@ import sun.misc.FileURLMapper;
  * and resources from both JAR files and directories.
  *
  * @author  David Connelly
+ * @version %I%, %G%
  */
 public class URLClassPath {
     final static String USER_AGENT_JAVA_VERSION = "UA-Java-Version";
@@ -79,9 +80,9 @@ public class URLClassPath {
     private static final boolean DEBUG;
 
     static {
-        JAVA_VERSION = java.security.AccessController.doPrivileged(
+ 	JAVA_VERSION = java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("java.version"));
-        DEBUG        = (java.security.AccessController.doPrivileged(
+ 	DEBUG        = (java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.misc.URLClassPath.debug")) != null);
     }
 
@@ -111,61 +112,58 @@ public class URLClassPath {
      * @param factory the URLStreamHandlerFactory to use when creating new URLs
      */
     public URLClassPath(URL[] urls, URLStreamHandlerFactory factory) {
-        for (int i = 0; i < urls.length; i++) {
-            path.add(urls[i]);
-        }
-        push(urls);
-        if (factory != null) {
-            jarHandler = factory.createURLStreamHandler("jar");
-        }
+	for (int i = 0; i < urls.length; i++) {
+	    path.add(urls[i]);
+	}
+	push(urls);
+	if (factory != null) {
+	    jarHandler = factory.createURLStreamHandler("jar");
+	}
     }
 
     public URLClassPath(URL[] urls) {
-        this(urls, null);
+	this(urls, null);
     }
 
     /**
      * Appends the specified URL to the search path of directory and JAR
      * file URLs from which to load classes and resources.
-     * <p>
-     * If the URL specified is null or is already in the list of
-     * URLs, then invoking this method has no effect.
      */
     public void addURL(URL url) {
-        synchronized (urls) {
-            if (url == null || path.contains(url))
+	synchronized (urls) {
+            if (path.contains(url))
                 return;
 
-            urls.add(0, url);
-            path.add(url);
-        }
+	    urls.add(0, url);
+	    path.add(url);
+	}
     }
 
     /**
      * Returns the original search path of URLs.
      */
     public URL[] getURLs() {
-        synchronized (urls) {
-            return (URL[])path.toArray(new URL[path.size()]);
-        }
+	synchronized (urls) {
+	    return (URL[])path.toArray(new URL[path.size()]);
+	}
     }
 
     /**
      * Finds the resource with the specified name on the URL search path
      * or null if not found or security check fails.
      *
-     * @param name      the name of the resource
+     * @param name 	the name of the resource
      * @param check     whether to perform a security check
      * @return a <code>URL</code> for the resource, or <code>null</code>
      * if the resource could not be found.
      */
     public URL findResource(String name, boolean check) {
-        Loader loader;
+	Loader loader;
         for (int i = 0; (loader = getLoader(i)) != null; i++) {
             URL url = loader.findResource(name, check);
             if (url != null) {
                 return url;
-            }
+            }	
         }
         return null;
     }
@@ -175,7 +173,7 @@ public class URLClassPath {
      * name. Returns null if no Resource could be found.
      *
      * @param name the name of the Resource
-     * @param check     whether to perform a security check
+     * @param check 	whether to perform a security check
      * @return the Resource, or null if not found
      */
     public Resource getResource(String name, boolean check) {
@@ -183,14 +181,14 @@ public class URLClassPath {
             System.err.println("URLClassPath.getResource(\"" + name + "\")");
         }
 
-        Loader loader;
-        for (int i = 0; (loader = getLoader(i)) != null; i++) {
-            Resource res = loader.getResource(name, check);
-            if (res != null) {
-                return res;
-            }
-        }
-        return null;
+	Loader loader;
+	for (int i = 0; (loader = getLoader(i)) != null; i++) {
+	    Resource res = loader.getResource(name, check);
+	    if (res != null) {
+		return res;
+	    }
+	}
+	return null;
     }
 
     /**
@@ -237,7 +235,7 @@ public class URLClassPath {
     }
 
     public Resource getResource(String name) {
-        return getResource(name, true);
+	return getResource(name, true);
     }
 
     /**
@@ -247,44 +245,44 @@ public class URLClassPath {
      * @param name the resource name
      * @return an Enumeration of all the resources having the specified name
      */
-    public Enumeration getResources(final String name,
-                                    final boolean check) {
-        return new Enumeration() {
-            private int index = 0;
-            private Resource res = null;
+    public Enumeration getResources(final String name, 
+				    final boolean check) {
+	return new Enumeration() {
+	    private int index = 0;
+	    private Resource res = null;
 
-            private boolean next() {
-                if (res != null) {
-                    return true;
-                } else {
-                    Loader loader;
-                    while ((loader = getLoader(index++)) != null) {
-                        res = loader.getResource(name, check);
-                        if (res != null) {
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            }
+	    private boolean next() {
+		if (res != null) {
+		    return true;
+		} else {
+		    Loader loader;
+		    while ((loader = getLoader(index++)) != null) {
+			res = loader.getResource(name, check);
+			if (res != null) {
+			    return true;
+			}
+		    }
+		    return false;
+		}
+	    }
 
-            public boolean hasMoreElements() {
-                return next();
-            }
-
-            public Object nextElement() {
-                if (!next()) {
-                    throw new NoSuchElementException();
-                }
-                Resource r = res;
-                res = null;
-                return r;
-            }
-        };
-    }
+	    public boolean hasMoreElements() {
+		return next();
+	    }
+	
+	    public Object nextElement() {
+		if (!next()) {
+		    throw new NoSuchElementException();
+		}
+		Resource r = res;
+		res = null;
+		return r;
+	    }
+	};
+    }	 
 
     public Enumeration getResources(final String name) {
-        return getResources(name, true);
+	return getResources(name, true);
     }
 
     /*
@@ -293,79 +291,79 @@ public class URLClassPath {
      * if the specified index is out of range.
      */
      private synchronized Loader getLoader(int index) {
-         // Expand URL search path until the request can be satisfied
-         // or the URL stack is empty.
-        while (loaders.size() < index + 1) {
-            // Pop the next URL from the URL stack
-            URL url;
-            synchronized (urls) {
-                if (urls.empty()) {
-                    return null;
-                } else {
-                    url = (URL)urls.pop();
-                }
-            }
+	 // Expand URL search path until the request can be satisfied
+	 // or the URL stack is empty.
+	while (loaders.size() < index + 1) {
+	    // Pop the next URL from the URL stack
+	    URL url;
+	    synchronized (urls) {
+	        if (urls.empty()) {
+		    return null;
+ 		} else {
+		    url = (URL)urls.pop();
+		}
+	    }
             // Skip this URL if it already has a Loader. (Loader
             // may be null in the case where URL has not been opened
             // but is referenced by a JAR index.)
-            if (lmap.containsKey(url)) {
-                continue;
-            }
-            // Otherwise, create a new Loader for the URL.
-            Loader loader;
-            try {
-                loader = getLoader(url);
-                // If the loader defines a local class path then add the
-                // URLs to the list of URLs to be opened.
-                URL[] urls = loader.getClassPath();
-                if (urls != null) {
-                    push(urls);
-                }
-            } catch (IOException e) {
-                // Silently ignore for now...
-                continue;
-            }
-            // Finally, add the Loader to the search path.
-            loaders.add(loader);
-            lmap.put(url, loader);
-        }
-        return (Loader)loaders.get(index);
+	    if (lmap.containsKey(url)) {
+		continue;
+	    }
+	    // Otherwise, create a new Loader for the URL.
+	    Loader loader;
+	    try {
+		loader = getLoader(url);
+		// If the loader defines a local class path then add the
+		// URLs to the list of URLs to be opened.
+		URL[] urls = loader.getClassPath();
+		if (urls != null) {
+		    push(urls);
+		}
+	    } catch (IOException e) {
+		// Silently ignore for now...
+		continue;
+	    }
+	    // Finally, add the Loader to the search path.
+	    loaders.add(loader);
+	    lmap.put(url, loader);
+	}
+	return (Loader)loaders.get(index);
     }
 
     /*
      * Returns the Loader for the specified base URL.
      */
     private Loader getLoader(final URL url) throws IOException {
-        try {
-            return (Loader)java.security.AccessController.doPrivileged
-                (new java.security.PrivilegedExceptionAction() {
-                public Object run() throws IOException {
-                    String file = url.getFile();
-                    if (file != null && file.endsWith("/")) {
-                        if ("file".equals(url.getProtocol())) {
-                            return new FileLoader(url);
-                        } else {
-                            return new Loader(url);
-                        }
-                    } else {
-                        return new JarLoader(url, jarHandler, lmap);
-                    }
-                }
-            });
-        } catch (java.security.PrivilegedActionException pae) {
-            throw (IOException)pae.getException();
-        }
+	try {
+	    return (Loader)java.security.AccessController.doPrivileged
+		(new java.security.PrivilegedExceptionAction() {
+		public Object run() throws IOException {
+		    String file = url.getFile();
+		    if (file != null && file.endsWith("/")) {
+			if ("file".equals(url.getProtocol())) {
+			    return new FileLoader(url);
+			} else {
+			    return new Loader(url);
+			}
+		    } else {
+			return new JarLoader(url, jarHandler, lmap);
+		    }
+		}
+	    });
+	} catch (java.security.PrivilegedActionException pae) {
+	    throw (IOException)pae.getException();
+	}
     }
 
     /*
      * Pushes the specified URLs onto the list of unopened URLs.
      */
     private void push(URL[] us) {
-        synchronized (urls) {
-            for (int i = us.length - 1; i >= 0; --i) {
-                urls.push(us[i]);
-            }
-        }
+	synchronized (urls) {
+	    for (int i = us.length - 1; i >= 0; --i) {
+		urls.push(us[i]);
+	    }
+	}
     }
 
     /**
@@ -404,13 +402,13 @@ public class URLClassPath {
      * Called by java.net.URLClassLoader.
      */
     public URL checkURL(URL url) {
-        try {
-            check(url);
+	try {
+	    check(url);
         } catch (Exception e) {
-            return null;
-        }
+	    return null;
+	}
 
-        return url;
+	return url;
     }
 
     /*
@@ -419,34 +417,34 @@ public class URLClassPath {
      * Called internally within this file.
      */
     static void check(URL url) throws IOException {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            URLConnection urlConnection = url.openConnection();
-            Permission perm = urlConnection.getPermission();
-            if (perm != null) {
-                try {
-                    security.checkPermission(perm);
-                } catch (SecurityException se) {
-                    // fallback to checkRead/checkConnect for pre 1.2
-                    // security managers
-                    if ((perm instanceof java.io.FilePermission) &&
-                        perm.getActions().indexOf("read") != -1) {
-                        security.checkRead(perm.getName());
-                    } else if ((perm instanceof
-                        java.net.SocketPermission) &&
-                        perm.getActions().indexOf("connect") != -1) {
-                        URL locUrl = url;
-                        if (urlConnection instanceof JarURLConnection) {
-                            locUrl = ((JarURLConnection)urlConnection).getJarFileURL();
-                        }
-                        security.checkConnect(locUrl.getHost(),
-                                              locUrl.getPort());
-                    } else {
-                        throw se;
-                    }
-                }
-            }
-        }
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+	    URLConnection urlConnection = url.openConnection();
+	    Permission perm = urlConnection.getPermission();
+	    if (perm != null) {
+		try {
+		    security.checkPermission(perm);
+		} catch (SecurityException se) {
+		    // fallback to checkRead/checkConnect for pre 1.2
+		    // security managers
+		    if ((perm instanceof java.io.FilePermission) &&
+		        perm.getActions().indexOf("read") != -1) {
+			security.checkRead(perm.getName());
+		    } else if ((perm instanceof 
+			java.net.SocketPermission) &&
+			perm.getActions().indexOf("connect") != -1) {
+			URL locUrl = url;
+			if (urlConnection instanceof JarURLConnection) {
+			    locUrl = ((JarURLConnection)urlConnection).getJarFileURL();
+			}
+			security.checkConnect(locUrl.getHost(), 
+					      locUrl.getPort());
+		    } else {
+			throw se;
+		    }
+		}
+	    }
+	}
     }
 
     /**
@@ -454,26 +452,26 @@ public class URLClassPath {
      * from a base URL.
      */
     private static class Loader {
-        private final URL base;
+	private final URL base;
 
-        /*
-         * Creates a new Loader for the specified URL.
-         */
-        Loader(URL url) {
-            base = url;
-        }
+	/*
+	 * Creates a new Loader for the specified URL.
+	 */
+	Loader(URL url) {
+	    base = url;
+	}
 
-        /*
-         * Returns the base URL for this Loader.
-         */
-        URL getBaseURL() {
-            return base;
-        }
+	/*
+	 * Returns the base URL for this Loader.
+	 */
+	URL getBaseURL() {
+	    return base;
+	}
 
-        URL findResource(final String name, boolean check) {
-            URL url;
-            try {
-                url = new URL(base, ParseUtil.encodePath(name, false));
+	URL findResource(final String name, boolean check) {
+	    URL url;
+	    try {
+		url = new URL(base, ParseUtil.encodePath(name, false));
             } catch (MalformedURLException e) {
                 throw new IllegalArgumentException("name");
             }
@@ -483,129 +481,129 @@ public class URLClassPath {
                     URLClassPath.check(url);
                 }
 
-                /*
-                 * For a HTTP connection we use the HEAD method to
-                 * check if the resource exists.
-                 */
-                URLConnection uc = url.openConnection();
+		/*
+		 * For a HTTP connection we use the HEAD method to
+	 	 * check if the resource exists.
+		 */
+		URLConnection uc = url.openConnection();
                 if (uc instanceof HttpURLConnection) {
-                    HttpURLConnection hconn = (HttpURLConnection)uc;
-                    hconn.setRequestMethod("HEAD");
+		    HttpURLConnection hconn = (HttpURLConnection)uc;
+		    hconn.setRequestMethod("HEAD");
                     if (hconn.getResponseCode() >= HttpURLConnection.HTTP_BAD_REQUEST) {
                         return null;
                     }
-                } else {
-                    // our best guess for the other cases
-                    InputStream is = url.openStream();
+		} else {
+		    // our best guess for the other cases 
+		    InputStream is = url.openStream();
                     is.close();
-                }
-                return url;
-            } catch (Exception e) {
-                return null;
-            }
-        }
+		}
+		return url;
+	    } catch (Exception e) {
+		return null;
+	    }
+	}
 
-        Resource getResource(final String name, boolean check) {
-            final URL url;
-            try {
-                url = new URL(base, ParseUtil.encodePath(name, false));
-            } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("name");
-            }
-            final URLConnection uc;
-            try {
-                if (check) {
-                    URLClassPath.check(url);
-                }
-                uc = url.openConnection();
-                InputStream in = uc.getInputStream();
-            } catch (Exception e) {
-                return null;
-            }
-            return new Resource() {
-                public String getName() { return name; }
-                public URL getURL() { return url; }
-                public URL getCodeSourceURL() { return base; }
-                public InputStream getInputStream() throws IOException {
-                    return uc.getInputStream();
-                }
-                public int getContentLength() throws IOException {
-                    return uc.getContentLength();
-                }
-            };
-        }
+	Resource getResource(final String name, boolean check) {
+	    final URL url;
+	    try {
+		url = new URL(base, ParseUtil.encodePath(name, false));
+	    } catch (MalformedURLException e) {
+		throw new IllegalArgumentException("name");
+	    }
+	    final URLConnection uc;
+	    try {
+		if (check) {
+		    URLClassPath.check(url);
+		}
+		uc = url.openConnection();
+		InputStream in = uc.getInputStream();
+	    } catch (Exception e) {
+		return null;
+	    }
+	    return new Resource() {
+		public String getName() { return name; }
+		public URL getURL() { return url; }
+		public URL getCodeSourceURL() { return base; }
+		public InputStream getInputStream() throws IOException {
+		    return uc.getInputStream();
+		}
+		public int getContentLength() throws IOException {
+		    return uc.getContentLength();
+		}
+	    };
+	}
 
-        /*
-         * Returns the Resource for the specified name, or null if not
-         * found or the caller does not have the permission to get the
-         * resource.
-         */
-        Resource getResource(final String name) {
-            return getResource(name, true);
-        }
+	/*
+	 * Returns the Resource for the specified name, or null if not
+	 * found or the caller does not have the permission to get the
+	 * resource.
+	 */
+	Resource getResource(final String name) {
+	    return getResource(name, true);
+	}
 
-        /*
-         * Returns the local class path for this loader, or null if none.
-         */
-        URL[] getClassPath() throws IOException {
-            return null;
-        }
+	/*
+	 * Returns the local class path for this loader, or null if none.
+	 */
+	URL[] getClassPath() throws IOException {
+	    return null;
+	}
     }
 
     /*
      * Inner class used to represent a Loader of resources from a JAR URL.
      */
     static class JarLoader extends Loader {
-        private JarFile jar;
-        private URL csu;
+	private JarFile jar;
+	private URL csu;
         private JarIndex index;
         private MetaIndex metaIndex;
         private URLStreamHandler handler;
         private HashMap lmap;
-
-        /*
-         * Creates a new JarLoader for the specified URL referring to
-         * a JAR file.
-         */
-        JarLoader(URL url, URLStreamHandler jarHandler, HashMap loaderMap)
-            throws IOException
+        
+	/*
+	 * Creates a new JarLoader for the specified URL referring to
+	 * a JAR file.
+	 */
+	JarLoader(URL url, URLStreamHandler jarHandler, HashMap loaderMap) 
+            throws IOException 
         {
-            super(new URL("jar", "", -1, url + "!/", jarHandler));
-            csu = url;
+	    super(new URL("jar", "", -1, url + "!/", jarHandler));
+	    csu = url;
             handler = jarHandler;
             lmap = loaderMap;
 
             if (!isOptimizable(url)) {
                 ensureOpen();
             } else {
-                 String fileName = url.getFile();
+		 String fileName = url.getFile();
                 if (fileName != null) {
-                    fileName = ParseUtil.decode(fileName);
-                    File f = new File(fileName);
+		    fileName = ParseUtil.decode(fileName);
+		    File f = new File(fileName);
                     metaIndex = MetaIndex.forJar(f);
-                    // If the meta index is found but the file is not
-                    // installed, set metaIndex to null. A typical
-                    // senario is charsets.jar which won't be installed
-                    // when the user is running in certain locale environment.
-                    // The side effect of null metaIndex will cause
-                    // ensureOpen get called so that IOException is thrown.
-                    if (metaIndex != null && !f.exists()) {
-                        metaIndex = null;
-                    }
+		    // If the meta index is found but the file is not
+		    // installed, set metaIndex to null. A typical
+		    // senario is charsets.jar which won't be installed
+		    // when the user is running in certain locale environment.
+		    // The side effect of null metaIndex will cause 
+		    // ensureOpen get called so that IOException is thrown.
+		    if (metaIndex != null && !f.exists()) {
+			metaIndex = null;
+		    }
                 }
 
-                // metaIndex is null when either there is no such jar file
-                // entry recorded in meta-index file or such jar file is
-                // missing in JRE. See bug 6340399.
-                if (metaIndex == null) {
-                    ensureOpen();
-                }
+		// metaIndex is null when either there is no such jar file
+		// entry recorded in meta-index file or such jar file is
+		// missing in JRE. See bug 6340399.
+		if (metaIndex == null) {
+		    ensureOpen();
+		}
             }
         }
 
-        JarFile getJarFile () {
-            return jar;
-        }
+	JarFile getJarFile () {
+	    return jar;
+	}
 
         private boolean isOptimizable(URL url) {
             return "file".equals(url.getProtocol());
@@ -628,8 +626,8 @@ public class URLClassPath {
                                     String[] jarfiles = index.getJarFiles();
                                 // Add all the dependent URLs to the lmap so that loaders
                                 // will not be created for them by URLClassPath.getLoader(int)
-                                // if the same URL occurs later on the main class path.  We set
-                                // Loader to null here to avoid creating a Loader for each
+                                // if the same URL occurs later on the main class path.  We set 
+                                // Loader to null here to avoid creating a Loader for each 
                                 // URL until we actually need to try to load something from them.
                                     for(int i = 0; i < jarfiles.length; i++) {
                                         try {
@@ -651,21 +649,21 @@ public class URLClassPath {
                     throw (IOException)pae.getException();
                 }
             }
-        }
+	}
 
-        private JarFile getJarFile(URL url) throws IOException {
-            // Optimize case where url refers to a local jar file
-            if (isOptimizable(url)) {
-                FileURLMapper p = new FileURLMapper (url);
-                if (!p.exists()) {
-                    throw new FileNotFoundException(p.getPath());
-                }
-                return new JarFile (p.getPath());
-            }
-            URLConnection uc = getBaseURL().openConnection();
-            uc.setRequestProperty(USER_AGENT_JAVA_VERSION, JAVA_VERSION);
-            return ((JarURLConnection)uc).getJarFile();
-        }
+	private JarFile getJarFile(URL url) throws IOException {
+	    // Optimize case where url refers to a local jar file
+	    if (isOptimizable(url)) {
+		FileURLMapper p = new FileURLMapper (url);
+		if (!p.exists()) {
+		    throw new FileNotFoundException(p.getPath());
+		}
+		return new JarFile (p.getPath());
+	    }
+	    URLConnection uc = getBaseURL().openConnection();
+	    uc.setRequestProperty(USER_AGENT_JAVA_VERSION, JAVA_VERSION);
+	    return ((JarURLConnection)uc).getJarFile();
+	}
 
         /*
          * Returns the index of this JarLoader if it exists.
@@ -678,88 +676,88 @@ public class URLClassPath {
             }
             return index;
         }
+        
+	/* 
+	 * Creates the resource and if the check flag is set to true, checks if
+	 * is its okay to return the resource.
+	 */
+	Resource checkResource(final String name, boolean check, 
+	    final JarEntry entry) {
 
-        /*
-         * Creates the resource and if the check flag is set to true, checks if
-         * is its okay to return the resource.
-         */
-        Resource checkResource(final String name, boolean check,
-            final JarEntry entry) {
+	    final URL url;
+	    try {
+		url = new URL(getBaseURL(), ParseUtil.encodePath(name, false));
+		if (check) {
+		    URLClassPath.check(url);
+		}
+	    } catch (MalformedURLException e) {
+		return null;
+		// throw new IllegalArgumentException("name");
+	    } catch (IOException e) {
+		return null;
+	    } catch (AccessControlException e) {
+		return null;
+	    }
 
-            final URL url;
-            try {
-                url = new URL(getBaseURL(), ParseUtil.encodePath(name, false));
-                if (check) {
-                    URLClassPath.check(url);
-                }
-            } catch (MalformedURLException e) {
-                return null;
-                // throw new IllegalArgumentException("name");
-            } catch (IOException e) {
-                return null;
-            } catch (AccessControlException e) {
-                return null;
-            }
-
-            return new Resource() {
-                public String getName() { return name; }
-                public URL getURL() { return url; }
-                public URL getCodeSourceURL() { return csu; }
-                public InputStream getInputStream() throws IOException
-                    { return jar.getInputStream(entry); }
-                public int getContentLength()
-                    { return (int)entry.getSize(); }
-                public Manifest getManifest() throws IOException
-                    { return jar.getManifest(); };
-                public Certificate[] getCertificates()
-                    { return entry.getCertificates(); };
-                public CodeSigner[] getCodeSigners()
-                    { return entry.getCodeSigners(); };
-            };
-        }
+	    return new Resource() {
+		public String getName() { return name; }
+		public URL getURL() { return url; }
+		public URL getCodeSourceURL() { return csu; }
+		public InputStream getInputStream() throws IOException
+		    { return jar.getInputStream(entry); }
+		public int getContentLength()
+		    { return (int)entry.getSize(); }
+		public Manifest getManifest() throws IOException
+		    { return jar.getManifest(); };
+		public Certificate[] getCertificates()
+		    { return entry.getCertificates(); };
+		public CodeSigner[] getCodeSigners()
+		    { return entry.getCodeSigners(); };
+	    };
+	}
 
 
-        /*
-         * Returns true iff atleast one resource in the jar file has the same
-         * package name as that of the specified resource name.
-         */
-        boolean validIndex(final String name) {
-            String packageName = name;
-            int pos;
-            if((pos = name.lastIndexOf("/")) != -1) {
-                packageName = name.substring(0, pos);
-            }
+	/*
+	 * Returns true iff atleast one resource in the jar file has the same
+	 * package name as that of the specified resource name.
+	 */
+	boolean validIndex(final String name) {
+	    String packageName = name;
+	    int pos;
+	    if((pos = name.lastIndexOf("/")) != -1) {
+		packageName = name.substring(0, pos);
+	    }
 
-            String entryName;
-            ZipEntry entry;
-            Enumeration enum_ = jar.entries();
-            while (enum_.hasMoreElements()) {
-                entry = (ZipEntry)enum_.nextElement();
-                entryName = entry.getName();
-                if((pos = entryName.lastIndexOf("/")) != -1)
-                    entryName = entryName.substring(0, pos);
-                if (entryName.equals(packageName)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+	    String entryName;
+	    ZipEntry entry;
+	    Enumeration enum_ = jar.entries();
+	    while (enum_.hasMoreElements()) {
+		entry = (ZipEntry)enum_.nextElement();
+	        entryName = entry.getName();
+		if((pos = entryName.lastIndexOf("/")) != -1) 
+		    entryName = entryName.substring(0, pos);
+		if (entryName.equals(packageName)) {
+		    return true;
+		}
+	    }
+	    return false;
+	}
 
-        /*
-         * Returns the URL for a resource with the specified name
-         */
-        URL findResource(final String name, boolean check) {
+	/*
+	 * Returns the URL for a resource with the specified name
+	 */
+	URL findResource(final String name, boolean check) {
             Resource rsc = getResource(name, check);
             if (rsc != null) {
                 return rsc.getURL();
-            }
+            }   
             return null;
         }
 
-        /*
-         * Returns the JAR Resource for the specified name.
-         */
-        Resource getResource(final String name, boolean check) {
+	/*
+	 * Returns the JAR Resource for the specified name.
+	 */
+	Resource getResource(final String name, boolean check) {
             if (metaIndex != null) {
                 if (!metaIndex.mayContain(name)) {
                     return null;
@@ -772,139 +770,139 @@ public class URLClassPath {
                 throw (InternalError) new InternalError().initCause(e);
             }
             final JarEntry entry = jar.getJarEntry(name);
-            if (entry != null)
-                return checkResource(name, check, entry);
+            if (entry != null) 
+		return checkResource(name, check, entry);
 
-            if (index == null)
-                return null;
+	    if (index == null) 
+		return null;
 
-            HashSet visited = new HashSet();
-            return getResource(name, check, visited);
-        }
+	    HashSet visited = new HashSet();
+	    return getResource(name, check, visited);
+	}
 
-        /*
-         * Version of getResource() that tracks the jar files that have been
-         * visited by linking through the index files. This helper method uses
-         * a HashSet to store the URLs of jar files that have been searched and
-         * uses it to avoid going into an infinite loop, looking for a
-         * non-existent resource
-         */
-        Resource getResource(final String name, boolean check,
-                Set visited) {
+	/*
+	 * Version of getResource() that tracks the jar files that have been
+	 * visited by linking through the index files. This helper method uses
+	 * a HashSet to store the URLs of jar files that have been searched and
+	 * uses it to avoid going into an infinite loop, looking for a
+	 * non-existent resource
+	 */
+	Resource getResource(final String name, boolean check, 
+		Set visited) {
 
             Resource res;
-            Object[] jarFiles;
-            boolean done = false;
-            int count = 0;
-            LinkedList jarFilesList = null;
+	    Object[] jarFiles;
+	    boolean done = false;
+	    int count = 0;
+	    LinkedList jarFilesList = null;
+	    
+	    /* If there no jar files in the index that can potential contain
+	     * this resource then return immediately.
+	     */
+	    if((jarFilesList = index.get(name)) == null)
+		return null;
 
-            /* If there no jar files in the index that can potential contain
-             * this resource then return immediately.
-             */
-            if((jarFilesList = index.get(name)) == null)
-                return null;
+	    do {
+		jarFiles = jarFilesList.toArray();
+		int size = jarFilesList.size();
+		/* loop through the mapped jar file list */
+		while(count < size) {
+		    String jarName = (String)jarFiles[count++];
+		    JarLoader newLoader;
+		    final URL url;
+		    
+		    try{
+			url = new URL(csu, jarName);
+			if ((newLoader = (JarLoader)lmap.get(url)) == null) {
+			    /* no loader has been set up for this jar file
+			     * before 
+			     */
+			    newLoader = (JarLoader)
+				AccessController.doPrivileged(
+				    new PrivilegedExceptionAction() {
+				    public Object run() throws IOException {
+					return new JarLoader(url, handler, 
+					    lmap);
+				    }
+				});
 
-            do {
-                jarFiles = jarFilesList.toArray();
-                int size = jarFilesList.size();
-                /* loop through the mapped jar file list */
-                while(count < size) {
-                    String jarName = (String)jarFiles[count++];
-                    JarLoader newLoader;
-                    final URL url;
-
-                    try{
-                        url = new URL(csu, jarName);
-                        if ((newLoader = (JarLoader)lmap.get(url)) == null) {
-                            /* no loader has been set up for this jar file
-                             * before
-                             */
-                            newLoader = (JarLoader)
-                                AccessController.doPrivileged(
-                                    new PrivilegedExceptionAction() {
-                                    public Object run() throws IOException {
-                                        return new JarLoader(url, handler,
-                                            lmap);
-                                    }
-                                });
-
-                            /* this newly opened jar file has its own index,
-                             * merge it into the parent's index, taking into
-                             * account the relative path.
-                             */
-                            JarIndex newIndex = newLoader.getIndex();
-                            if(newIndex != null) {
-                                int pos = jarName.lastIndexOf("/");
-                                newIndex.merge(this.index, (pos == -1 ?
-                                    null : jarName.substring(0, pos + 1)));
-                            }
-
-                            /* put it in the global hashtable */
-                            lmap.put(url, newLoader);
-                        }
-                    } catch (java.security.PrivilegedActionException pae) {
-                        continue;
-                    } catch (MalformedURLException e) {
-                        continue;
-                    }
+			    /* this newly opened jar file has its own index,
+			     * merge it into the parent's index, taking into
+			     * account the relative path.
+			     */
+			    JarIndex newIndex = newLoader.getIndex();
+			    if(newIndex != null) {
+				int pos = jarName.lastIndexOf("/");
+				newIndex.merge(this.index, (pos == -1 ? 
+				    null : jarName.substring(0, pos + 1)));
+			    }
+			     
+			    /* put it in the global hashtable */
+			    lmap.put(url, newLoader);
+			} 
+		    } catch (java.security.PrivilegedActionException pae) {
+			continue;
+		    } catch (MalformedURLException e) {
+			continue;
+		    }
 
 
-                    /* Note that the addition of the url to the list of visited
-                     * jars incorporates a check for presence in the hashmap
-                     */
-                    boolean visitedURL = !visited.add(url);
-                    if (!visitedURL) {
+		    /* Note that the addition of the url to the list of visited
+		     * jars incorporates a check for presence in the hashmap
+		     */
+		    boolean visitedURL = !visited.add(url);
+		    if (!visitedURL) {
                         try {
                             newLoader.ensureOpen();
                         } catch (IOException e) {
                             throw (InternalError) new InternalError().initCause(e);
                         }
-                        final JarEntry entry = newLoader.jar.getJarEntry(name);
-                        if (entry != null) {
-                            return newLoader.checkResource(name, check, entry);
-                        }
+			final JarEntry entry = newLoader.jar.getJarEntry(name);
+			if (entry != null) {
+			    return newLoader.checkResource(name, check, entry);
+			}
 
-                        /* Verify that at least one other resource with the
-                         * same package name as the lookedup resource is
-                         * present in the new jar
-                         */
-                        if (!newLoader.validIndex(name)) {
-                            /* the mapping is wrong */
-                            throw new InvalidJarIndexException("Invalid index");
-                        }
-                    }
+			/* Verify that at least one other resource with the
+			 * same package name as the lookedup resource is
+			 * present in the new jar
+		 	 */
+			if (!newLoader.validIndex(name)) {
+			    /* the mapping is wrong */
+			    throw new InvalidJarIndexException("Invalid index");
+			}
+		    }
 
-                    /* If newLoader is the current loader or if it is a
-                     * loader that has already been searched or if the new
-                     * loader does not have an index then skip it
-                     * and move on to the next loader.
-                     */
-                    if (visitedURL || newLoader == this ||
-                            newLoader.getIndex() == null) {
-                        continue;
-                    }
+		    /* If newLoader is the current loader or if it is a
+		     * loader that has already been searched or if the new
+		     * loader does not have an index then skip it
+		     * and move on to the next loader. 
+		     */
+		    if (visitedURL || newLoader == this || 
+			    newLoader.getIndex() == null) {
+			continue;
+		    }
 
-                    /* Process the index of the new loader
-                     */
-                    if((res = newLoader.getResource(name, check, visited))
-                            != null) {
-                        return res;
-                    }
-                }
-                // Get the list of jar files again as the list could have grown
-                // due to merging of index files.
-                jarFilesList = index.get(name);
+		    /* Process the index of the new loader
+		     */
+		    if((res = newLoader.getResource(name, check, visited)) 
+			    != null) {
+			return res;
+		    }
+		}
+		// Get the list of jar files again as the list could have grown
+		// due to merging of index files.
+		jarFilesList = index.get(name);
 
-            // If the count is unchanged, we are done.
-            } while(count < jarFilesList.size());
+	    // If the count is unchanged, we are done.
+	    } while(count < jarFilesList.size());
             return null;
         }
+        
 
-
-        /*
-         * Returns the JAR file local class path, or null if none.
-         */
-        URL[] getClassPath() throws IOException {
+	/*
+	 * Returns the JAR file local class path, or null if none.
+	 */
+	URL[] getClassPath() throws IOException {
             if (index != null) {
                 return null;
             }
@@ -914,7 +912,7 @@ public class URLClassPath {
             }
 
             ensureOpen();
-            parseExtensionsDependencies();
+	    parseExtensionsDependencies();
             if (SharedSecrets.javaUtilJarAccess().jarFileHasClassPathAttribute(jar)) { // Only get manifest when necessary
                 Manifest man = jar.getManifest();
                 if (man != null) {
@@ -926,34 +924,34 @@ public class URLClassPath {
                         }
                     }
                 }
-            }
-            return null;
-        }
+	    }
+	    return null;
+	}
 
-        /*
-         * parse the standard extension dependencies
-         */
-        private void  parseExtensionsDependencies() throws IOException {
-            ExtensionDependency.checkExtensionsDependencies(jar);
-        }
+	/*
+	 * parse the standard extension dependencies
+	 */
+	private void  parseExtensionsDependencies() throws IOException {
+	    ExtensionDependency.checkExtensionsDependencies(jar);
+	}
 
-        /*
-         * Parses value of the Class-Path manifest attribute and returns
-         * an array of URLs relative to the specified base URL.
-         */
-        private URL[] parseClassPath(URL base, String value)
-            throws MalformedURLException
-        {
-            StringTokenizer st = new StringTokenizer(value);
-            URL[] urls = new URL[st.countTokens()];
-            int i = 0;
-            while (st.hasMoreTokens()) {
-                String path = st.nextToken();
-                urls[i] = new URL(base, path);
-                i++;
-            }
-            return urls;
-        }
+	/*
+	 * Parses value of the Class-Path manifest attribute and returns
+	 * an array of URLs relative to the specified base URL.
+	 */
+	private URL[] parseClassPath(URL base, String value)
+	    throws MalformedURLException
+	{
+	    StringTokenizer st = new StringTokenizer(value);
+	    URL[] urls = new URL[st.countTokens()];
+	    int i = 0;
+	    while (st.hasMoreTokens()) {
+		String path = st.nextToken();
+		urls[i] = new URL(base, path);
+		i++;
+	    }
+	    return urls;
+	}
     }
 
     /*
@@ -961,59 +959,59 @@ public class URLClassPath {
      * from a file URL that refers to a directory.
      */
     private static class FileLoader extends Loader {
-        private File dir;
+	private File dir;
 
-        FileLoader(URL url) throws IOException {
-            super(url);
-            if (!"file".equals(url.getProtocol())) {
-                throw new IllegalArgumentException("url");
-            }
-            String path = url.getFile().replace('/', File.separatorChar);
-            path = ParseUtil.decode(path);
-            dir = new File(path);
-        }
+	FileLoader(URL url) throws IOException {
+	    super(url);
+	    if (!"file".equals(url.getProtocol())) {
+		throw new IllegalArgumentException("url");
+	    }
+	    String path = url.getFile().replace('/', File.separatorChar);
+	    path = ParseUtil.decode(path);
+	    dir = new File(path);
+	}
 
-        /*
+	/*
          * Returns the URL for a resource with the specified name
          */
-        URL findResource(final String name, boolean check) {
+	URL findResource(final String name, boolean check) {
             Resource rsc = getResource(name, check);
-            if (rsc != null) {
-                return rsc.getURL();
-            }
-            return null;
-        }
+	    if (rsc != null) {
+		return rsc.getURL();
+ 	    }
+	    return null;
+	}
 
-        Resource getResource(final String name, boolean check) {
-            final URL url;
-            try {
-                URL normalizedBase = new URL(getBaseURL(), ".");
-                url = new URL(getBaseURL(), ParseUtil.encodePath(name, false));
+	Resource getResource(final String name, boolean check) {
+	    final URL url;
+	    try {
+		URL normalizedBase = new URL(getBaseURL(), ".");
+		url = new URL(getBaseURL(), ParseUtil.encodePath(name, false));
 
                 if (url.getFile().startsWith(normalizedBase.getFile()) == false) {
                     // requested resource had ../..'s in path
                     return null;
-                }
+		}
 
-                if (check)
-                    URLClassPath.check(url);
-                final File file =
-                    new File(dir, name.replace('/', File.separatorChar));
-                if (file.exists()) {
-                    return new Resource() {
-                        public String getName() { return name; };
-                        public URL getURL() { return url; };
-                        public URL getCodeSourceURL() { return getBaseURL(); };
-                        public InputStream getInputStream() throws IOException
-                            { return new FileInputStream(file); };
-                        public int getContentLength() throws IOException
-                            { return (int)file.length(); };
-                    };
-                }
-            } catch (Exception e) {
-                return null;
-            }
-            return null;
-        }
+		if (check)
+		    URLClassPath.check(url);
+		final File file =
+		    new File(dir, name.replace('/', File.separatorChar));
+		if (file.exists()) {
+		    return new Resource() {
+			public String getName() { return name; };
+			public URL getURL() { return url; };
+			public URL getCodeSourceURL() { return getBaseURL(); };
+			public InputStream getInputStream() throws IOException
+			    { return new FileInputStream(file); };
+			public int getContentLength() throws IOException
+			    { return (int)file.length(); };
+		    };
+		}
+	    } catch (Exception e) {
+		return null;
+	    }
+	    return null;
+	}
     }
 }

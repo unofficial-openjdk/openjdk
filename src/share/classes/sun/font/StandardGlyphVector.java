@@ -80,7 +80,7 @@ import sun.java2d.loops.FontInfo;
  * bounds including the glyph transform, and the positions are as
  * computed, and the advances are the deltas between the positions.
  *
- * (There's a bug in the logical bounds of a rotated glyph for
+ * (There's a bug in the logical bounds of a rotated glyph for 
  * composite fonts, it's not to spec (in 1.4.0, 1.4.1, 1.4.2).  The
  * problem is that the rotated composite doesn't handle the multiple
  * ascents and descents properly in both x and y.  You end up with
@@ -94,13 +94,13 @@ import sun.java2d.loops.FontInfo;
  *
  * Small fonts drawn at large magnification have odd advances when
  * fractional metrics is off-- that's because the advances depend on
- * the frc.  When the frc is scaled appropriately, the advances are
+ * the frc.  When the frc is scaled appropriately, the advances are 
  * fine.  FM or a large frc (high numbers) make the advances right.
  *
  * The buffer aa flag doesn't affect rendering, the glyph vector
  * renders as AA if aa is set in its frc, and as non-aa if aa is not
  * set in its frc.
- *
+ * 
  * font rotation, baseline, vertical etc.
  *
  * Font rotation and baseline Line metrics should be measured along a
@@ -110,14 +110,14 @@ import sun.java2d.loops.FontInfo;
  * vector.  This definition makes ascent, descent, etc independent of
  * shear, so shearing can be used to simulate italic. This means no
  * fonts have 'negative ascents' or 'zero ascents' etc.
- *
+ * 
  * Having a coordinate system with orthogonal axes where one is
  * parallel to the baseline means we could use rectangles and interpret
  * them in terms of this coordinate system.  Unfortunately there
  * is support for rotated fonts in the jdk already so maintaining
  * the semantics of existing code (getlogical bounds, etc) might
  * be difficult.
- *
+ * 
  * A font transform transforms both the baseline and all the glyphs
  * in the font, so it does not rotate the glyph w.r.t the baseline.
  * If you do want to rotate individual glyphs, you need to apply a
@@ -143,7 +143,7 @@ public class StandardGlyphVector extends GlyphVector {
     private int flags; // indicates whether positions, charIndices is interesting
 
     private static final int UNINITIALIZED_FLAGS = -1;
-
+  
     // transforms information
     private GlyphTransformInfo gti; // information about per-glyph transforms
 
@@ -173,52 +173,52 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     private float getTracking(Font font) {
-        if (font.hasLayoutAttributes()) {
-            AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
-            return values.getTracking();
-        }
-        return 0;
+	if (font.hasLayoutAttributes()) {
+	    AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
+	    return values.getTracking();
+	}
+	return 0;
     }
 
      // used by GlyphLayout to construct a glyphvector
-    public StandardGlyphVector(Font font, FontRenderContext frc, int[] glyphs, float[] positions,
-                               int[] indices, int flags) {
+    public StandardGlyphVector(Font font, FontRenderContext frc, int[] glyphs, float[] positions, 
+			       int[] indices, int flags) {
         initGlyphVector(font, frc, glyphs, positions, indices, flags);
 
-        // this code should go into layout
-        float track = getTracking(font);
-        if (track != 0) {
-            track *= font.getSize2D();
-            Point2D.Float trackPt = new Point2D.Float(track, 0); // advance delta
-            if (font.isTransformed()) {
-                AffineTransform at = font.getTransform();
-                at.deltaTransform(trackPt, trackPt);
-            }
+	// this code should go into layout
+	float track = getTracking(font);
+	if (track != 0) {
+	    track *= font.getSize2D();
+	    Point2D.Float trackPt = new Point2D.Float(track, 0); // advance delta
+	    if (font.isTransformed()) {
+		AffineTransform at = font.getTransform();
+		at.deltaTransform(trackPt, trackPt);
+	    }
 
-            // how do we know its a base glyph
-            // for now, it is if the natural advance of the glyph is non-zero
-            Font2D f2d = FontManager.getFont2D(font);
-            FontStrike strike = f2d.getStrike(font, frc);
+	    // how do we know its a base glyph
+	    // for now, it is if the natural advance of the glyph is non-zero
+	    Font2D f2d = FontManager.getFont2D(font);
+	    FontStrike strike = f2d.getStrike(font, frc);
 
-            float[] deltas = { trackPt.x, trackPt.y };
-            for (int j = 0; j < deltas.length; ++j) {
-                float inc = deltas[j];
-                if (inc != 0) {
-                    float delta = 0;
-                    for (int i = j, n = 0; n < glyphs.length; i += 2) {
-                        if (strike.getGlyphAdvance(glyphs[n++]) != 0) { // might be an inadequate test
-                            positions[i] += delta;
-                            delta += inc;
-                        }
-                    }
-                    positions[positions.length-2+j] += delta;
-                }
-            }
-        }
+	    float[] deltas = { trackPt.x, trackPt.y };
+	    for (int j = 0; j < deltas.length; ++j) {
+		float inc = deltas[j];
+		if (inc != 0) {
+		    float delta = 0;
+		    for (int i = j, n = 0; n < glyphs.length; i += 2) {
+			if (strike.getGlyphAdvance(glyphs[n++]) != 0) { // might be an inadequate test
+			    positions[i] += delta;
+			    delta += inc;
+			}
+		    } 
+		    positions[positions.length-2+j] += delta;
+		}
+	    }
+	}
     }
 
-    public void initGlyphVector(Font font, FontRenderContext frc, int[] glyphs, float[] positions,
-                                int[] indices, int flags) {
+    public void initGlyphVector(Font font, FontRenderContext frc, int[] glyphs, float[] positions, 
+				int[] indices, int flags) {
         this.font = font;
         this.frc = frc;
         this.glyphs = glyphs;
@@ -238,7 +238,7 @@ public class StandardGlyphVector extends GlyphVector {
             c = iter.next()) {
             text[iter.getIndex() - offset] = c;
         }
-        init(font, text, 0, text.length, frc, UNINITIALIZED_FLAGS);
+	init(font, text, 0, text.length, frc, UNINITIALIZED_FLAGS);
     }
 
     public StandardGlyphVector(Font font, int[] glyphs, FontRenderContext frc) {
@@ -249,8 +249,8 @@ public class StandardGlyphVector extends GlyphVector {
         this.flags = UNINITIALIZED_FLAGS;
 
         initFontData();
-        this.userGlyphs = glyphs;
-        this.glyphs = getValidatedGlyphs(this.userGlyphs);
+	this.userGlyphs = glyphs;
+	this.glyphs = getValidatedGlyphs(this.userGlyphs);
     }
 
     /* This is called from the rendering loop. FontInfo is supplied
@@ -264,7 +264,7 @@ public class StandardGlyphVector extends GlyphVector {
      * need to check any more precisely what value is in the FRC.
      */
     public static StandardGlyphVector getStandardGV(GlyphVector gv,
-                                                    FontInfo info) {
+						    FontInfo info) {
         if (info.aaHint == SunHints.INTVAL_TEXT_ANTIALIAS_ON) {
             Object aaHint = gv.getFontRenderContext().getAntiAliasingHint();
             if (aaHint != VALUE_TEXT_ANTIALIAS_ON &&
@@ -276,11 +276,11 @@ public class StandardGlyphVector extends GlyphVector {
                                             frc.getFractionalMetricsHint());
                 return new StandardGlyphVector(gv, frc);
             }
-        }
+	}
         if (gv instanceof StandardGlyphVector) {
-            return (StandardGlyphVector)gv;
-        }
-        return new StandardGlyphVector(gv, gv.getFontRenderContext());
+	    return (StandardGlyphVector)gv;
+	}
+	return new StandardGlyphVector(gv, gv.getFontRenderContext());
     }
 
     /////////////////////////////
@@ -353,12 +353,12 @@ public class StandardGlyphVector extends GlyphVector {
         if (result == null) {
             result = new int[count];
         }
-        if (charIndices == null) {
+	if (charIndices == null) {
             if ((getLayoutFlags() & FLAG_RUN_RTL) != 0) {
                 for (int i = 0, n = glyphs.length - 1 - start;
-                     i < count; ++i, --n) {
-                         result[i] = n;
-                     }
+		     i < count; ++i, --n) {
+			 result[i] = n;
+		     }
             } else {
                 for (int i = 0, n = start; i < count; ++i, ++n) {
                     result[i] = n;
@@ -378,32 +378,32 @@ public class StandardGlyphVector extends GlyphVector {
     public Rectangle2D getLogicalBounds() {
         setFRCTX();
         initPositions();
-
+        
         LineMetrics lm = font.getLineMetrics("", frc);
 
-        float minX, minY, maxX, maxY;
+	float minX, minY, maxX, maxY;
         // horiz only for now...
         minX = 0;
-        minY = -lm.getAscent();
+ 	minY = -lm.getAscent();
         maxX = 0;
         maxY = lm.getDescent() + lm.getLeading();
         if (glyphs.length > 0) {
-            maxX = positions[positions.length - 2];
+	    maxX = positions[positions.length - 2];
         }
-
+        
         return new Rectangle2D.Float(minX, minY, maxX - minX, maxY - minY);
     }
 
     // !!! not cached, assume TextLayout will cache if necessary
     public Rectangle2D getVisualBounds() {
-        if (glyphs.length == 0) {
-            return new Rectangle2D.Float(0, 0, 0, 0);
-        }
-        Rectangle2D result = getGlyphVisualBounds(0).getBounds2D();
-        for (int i = 1; i < glyphs.length; ++i) {
-            Rectangle2D.union(result, getGlyphVisualBounds(i).getBounds2D(), result);
-        }
-        return result;
+	if (glyphs.length == 0) {
+	    return new Rectangle2D.Float(0, 0, 0, 0);
+	}
+	Rectangle2D result = getGlyphVisualBounds(0).getBounds2D();
+	for (int i = 1; i < glyphs.length; ++i) {
+	    Rectangle2D.union(result, getGlyphVisualBounds(i).getBounds2D(), result);
+	}
+	return result;
     }
 
     // !!! not cached, assume TextLayout will cache if necessary
@@ -444,8 +444,8 @@ public class StandardGlyphVector extends GlyphVector {
         positions[ix2] = (float)pos.getX();
         positions[ix2 + 1] = (float)pos.getY();
 
-        clearCaches(ix);
-        addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
+	clearCaches(ix);
+	addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
     }
 
     public AffineTransform getGlyphTransform(int ix) {
@@ -476,29 +476,29 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     public int getLayoutFlags() {
-        if (flags == UNINITIALIZED_FLAGS) {
-            flags = 0;
+	if (flags == UNINITIALIZED_FLAGS) {
+	    flags = 0;
 
-            if (charIndices != null && glyphs.length > 1) {
-                boolean ltr = true;
-                boolean rtl = true;
+	    if (charIndices != null && glyphs.length > 1) {
+		boolean ltr = true;
+		boolean rtl = true;
 
-                int rtlix = charIndices.length; // rtl index
-                for (int i = 0; i < charIndices.length && (ltr || rtl); ++i) {
-                    int cx = charIndices[i];
+		int rtlix = charIndices.length; // rtl index
+		for (int i = 0; i < charIndices.length && (ltr || rtl); ++i) {
+		    int cx = charIndices[i];
 
-                    ltr = ltr && (cx == i);
-                    rtl = rtl && (cx == --rtlix);
-                }
+		    ltr = ltr && (cx == i);
+		    rtl = rtl && (cx == --rtlix);
+		}
 
-                if (rtl) flags |= FLAG_RUN_RTL;
-                if (!rtl && !ltr) flags |= FLAG_COMPLEX_GLYPHS;
-            }
-        }
-
-        return flags;
+		if (rtl) flags |= FLAG_RUN_RTL;
+		if (!rtl && !ltr) flags |= FLAG_COMPLEX_GLYPHS;
+	    }
+	}
+	    
+	return flags;
     }
-
+    
     public float[] getGlyphPositions(int start, int count, float[] result) {
         if (count < 0) {
             throw new IllegalArgumentException("count = " + count);
@@ -518,21 +518,21 @@ public class StandardGlyphVector extends GlyphVector {
             throw new IndexOutOfBoundsException("ix = " + ix);
         }
 
-        Shape[] lbcache;
-        if (lbcacheRef == null || (lbcache = (Shape[])lbcacheRef.get()) == null) {
-            lbcache = new Shape[glyphs.length];
-            lbcacheRef = new SoftReference(lbcache);
-        }
+	Shape[] lbcache;
+	if (lbcacheRef == null || (lbcache = (Shape[])lbcacheRef.get()) == null) {
+	    lbcache = new Shape[glyphs.length];
+	    lbcacheRef = new SoftReference(lbcache);
+	}
 
-        Shape result = lbcache[ix];
-        if (result == null) {
+	Shape result = lbcache[ix];
+	if (result == null) {
             setFRCTX();
-            initPositions();
+	    initPositions();
 
             // !!! ought to return a rectangle2d for simple cases, though the following works for all
 
             // get the position, the tx offset, and the x,y advance and x,y adl.  The
-            // shape is the box formed by adv (width) and adl (height) offset by
+            // shape is the box formed by adv (width) and adl (height) offset by 
             // the position plus the tx offset minus the ascent.
 
             ADL adl = new ADL();
@@ -540,14 +540,14 @@ public class StandardGlyphVector extends GlyphVector {
             gs.getADL(adl);
 
             Point2D.Float adv = gs.strike.getGlyphMetrics(glyphs[ix]);
-
+            
             float wx = adv.x;
             float wy = adv.y;
             float hx = adl.descentX + adl.leadingX + adl.ascentX;
             float hy = adl.descentY + adl.leadingY + adl.ascentY;
             float x = positions[ix*2] + gs.dx - adl.ascentX;
             float y = positions[ix*2+1] + gs.dy - adl.ascentY;
-
+            
             GeneralPath gp = new GeneralPath();
             gp.moveTo(x, y);
             gp.lineTo(x + wx, y + wy);
@@ -556,10 +556,10 @@ public class StandardGlyphVector extends GlyphVector {
             gp.closePath();
 
             result = new DelegatingShape(gp);
-            lbcache[ix] = result;
-        }
+      	    lbcache[ix] = result;
+	}
 
-        return result;
+	return result;
     }
     private SoftReference lbcacheRef;
 
@@ -568,19 +568,19 @@ public class StandardGlyphVector extends GlyphVector {
             throw new IndexOutOfBoundsException("ix = " + ix);
         }
 
-        Shape[] vbcache;
-        if (vbcacheRef == null || (vbcache = (Shape[])vbcacheRef.get()) == null) {
-            vbcache = new Shape[glyphs.length];
-            vbcacheRef = new SoftReference(vbcache);
-        }
+	Shape[] vbcache;
+	if (vbcacheRef == null || (vbcache = (Shape[])vbcacheRef.get()) == null) {
+	    vbcache = new Shape[glyphs.length];
+	    vbcacheRef = new SoftReference(vbcache);
+	}
 
-        Shape result = vbcache[ix];
-        if (result == null) {
+	Shape result = vbcache[ix];
+	if (result == null) {
             result = new DelegatingShape(getGlyphOutlineBounds(ix));
-            vbcache[ix] = result;
-        }
+      	    vbcache[ix] = result;
+	}
 
-        return result;
+	return result;
     }
     private SoftReference vbcacheRef;
 
@@ -594,14 +594,14 @@ public class StandardGlyphVector extends GlyphVector {
         }
 
         Rectangle2D vb = getGlyphVisualBounds(ix).getBounds2D();
-        Point2D pt = getGlyphPosition(ix);
-        vb.setRect(vb.getMinX() - pt.getX(),
-                   vb.getMinY() - pt.getY(),
-                   vb.getWidth(),
-                   vb.getHeight());
+	Point2D pt = getGlyphPosition(ix);
+	vb.setRect(vb.getMinX() - pt.getX(),
+		   vb.getMinY() - pt.getY(),
+		   vb.getWidth(),
+		   vb.getHeight());
         Point2D.Float adv =
-            getGlyphStrike(ix).strike.getGlyphMetrics(glyphs[ix]);
-        GlyphMetrics gm = new GlyphMetrics(true, adv.x, adv.y,
+	    getGlyphStrike(ix).strike.getGlyphMetrics(glyphs[ix]);
+        GlyphMetrics gm = new GlyphMetrics(true, adv.x, adv.y, 
                                            vb,
                                            GlyphMetrics.STANDARD);
         return gm;
@@ -687,7 +687,7 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     /**
-     * Since we implement equality comparisons for GlyphVector, we implement
+     * Since we implement equality comparisons for GlyphVector, we implement 
      * the inherited Object.equals(Object) as well.  GlyphVector should do
      * this, and define two glyphvectors as not equal if the classes differ.
      */
@@ -717,17 +717,17 @@ public class StandardGlyphVector extends GlyphVector {
         try {
             StandardGlyphVector result = (StandardGlyphVector)super.clone();
 
-            result.clearCaches();
+	    result.clearCaches();
 
             if (positions != null) {
                 result.positions = (float[])positions.clone();
             }
 
-            if (gti != null) {
-                result.gti = new GlyphTransformInfo(result, gti);
-            }
+	    if (gti != null) {
+		result.gti = new GlyphTransformInfo(result, gti);
+	    }
 
-            return result;
+	    return result;
         }
         catch (CloneNotSupportedException e) {
         }
@@ -754,8 +754,8 @@ public class StandardGlyphVector extends GlyphVector {
             positions[i] = srcPositions[p];
         }
 
-        clearCaches();
-        addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
+	clearCaches();
+	addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
     }
 
     /**
@@ -770,8 +770,8 @@ public class StandardGlyphVector extends GlyphVector {
 
         positions = (float[])srcPositions.clone();
 
-        clearCaches();
-        addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
+	clearCaches();
+	addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
     }
 
     /**
@@ -784,16 +784,16 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     /**
-     * Get transform information for the requested range of glyphs.
+     * Get transform information for the requested range of glyphs.  
      * If no glyphs have a transform, return null.
      * If a glyph has no transform (or is the identity transform) its entry in the result array will be null.
      * If the passed-in result is null an array will be allocated for the caller.
      * Each transform instance in the result array will unique, and independent of the GlyphVector's transform.
      */
-    public AffineTransform[] getGlyphTransforms(int start, int count, AffineTransform[] result) {
-        if (start < 0 || count < 0 || start + count > glyphs.length) {
-            throw new IllegalArgumentException("start: " + start + " count: " + count);
-        }
+    public AffineTransform[] getGlyphTransforms(int start, int count, AffineTransform[] result) { 
+        if (start < 0 || count < 0 || start + count > glyphs.length) { 
+            throw new IllegalArgumentException("start: " + start + " count: " + count); 
+	}
 
         if (gti == null) {
             return null;
@@ -814,7 +814,7 @@ public class StandardGlyphVector extends GlyphVector {
      * Convenience overload for getGlyphTransforms(int, int, AffineTransform[], int);
      */
     public AffineTransform[] getGlyphTransforms() {
-        return getGlyphTransforms(0, glyphs.length, null);
+	return getGlyphTransforms(0, glyphs.length, null);
     }
 
     /**
@@ -823,16 +823,16 @@ public class StandardGlyphVector extends GlyphVector {
      * contain multiple references to the same transform instance.
      */
     public void setGlyphTransforms(AffineTransform[] srcTransforms, int srcStart, int start, int count) {
-        for (int i = start, e = start + count; i < e; ++i) {
-            setGlyphTransform(i, srcTransforms[srcStart + i]);
-        }
+	for (int i = start, e = start + count; i < e; ++i) {
+	    setGlyphTransform(i, srcTransforms[srcStart + i]);
+	}
     }
 
     /**
      * Convenience overload of setGlyphTransforms(AffineTransform[], int, int, int).
      */
     public void setGlyphTransforms(AffineTransform[] srcTransforms) {
-        setGlyphTransforms(srcTransforms, 0, 0, glyphs.length);
+	setGlyphTransforms(srcTransforms, 0, 0, glyphs.length);
     }
 
     /**
@@ -847,7 +847,7 @@ public class StandardGlyphVector extends GlyphVector {
             float y = positions[i*2+1];
             result[n] = x;
             result[n+1] = y;
-
+        
             int glyphID = glyphs[i];
             GlyphStrike s = getGlyphStrike(i);
             Point2D.Float adv = s.strike.getGlyphMetrics(glyphID);
@@ -895,11 +895,11 @@ public class StandardGlyphVector extends GlyphVector {
     // need positions if the rendering dtx is different from the frctx.
 
     boolean needsPositions(double[] devTX) {
-        return gti != null ||
+        return gti != null || 
             (getLayoutFlags() & FLAG_HAS_POSITION_ADJUSTMENTS) != 0 ||
             !matchTX(devTX, frctx);
     }
-
+    
     // used by glyphList to get strong refs to font strikes for duration of rendering call
     // if devTX matches current devTX, we're ready to go
     // if we don't have multiple transforms, we're already ok
@@ -916,7 +916,7 @@ public class StandardGlyphVector extends GlyphVector {
      * default positions based on the frctx first. Then we set the devTX, and use
      * strikes based on it to generate the images.  Finally, we fill in the positions
      * array.
-     * If we have transforms, we delegate to gti.  It depends on our having first
+     * If we have transforms, we delegate to gti.  It depends on our having first 
      * initialized the positions and devTX.
      */
     Object setupGlyphImages(long[] images, float[] positions, double[] devTX) {
@@ -925,7 +925,7 @@ public class StandardGlyphVector extends GlyphVector {
 
         if (gti != null) {
             return gti.setupGlyphImages(images, positions, dtx);
-        }
+        } 
 
         GlyphStrike gs = getDefaultStrike();
         gs.strike.getGlyphImagePtrs(glyphs, images, glyphs.length);
@@ -1029,7 +1029,7 @@ public class StandardGlyphVector extends GlyphVector {
     private StandardGlyphVector(GlyphVector gv, FontRenderContext frc) {
         this.font = gv.getFont();
         this.frc = frc;
-        initFontData();
+	initFontData();
 
         int nGlyphs = gv.getNumGlyphs();
         this.userGlyphs = gv.getGlyphCodes(0, nGlyphs, null);
@@ -1059,7 +1059,7 @@ public class StandardGlyphVector extends GlyphVector {
             for (int i = 0; i < nGlyphs; ++i) {
                 txs[i] = gv.getGlyphTransform(i); // gv doesn't have getGlyphsTransforms
             }
-
+            
             setGlyphTransforms(txs);
         }
     }
@@ -1070,16 +1070,16 @@ public class StandardGlyphVector extends GlyphVector {
      * those as the missing glyph.
      */
     int[] getValidatedGlyphs(int[] oglyphs) {
-        int len = oglyphs.length;
-        int[] vglyphs = new int[len];
-        for (int i=0; i<len; i++) {
+	int len = oglyphs.length;
+	int[] vglyphs = new int[len];
+	for (int i=0; i<len; i++) {
             if (oglyphs[i] == 0xFFFE || oglyphs[i] == 0xFFFF) {
                 vglyphs[i] = oglyphs[i];
             } else {
                 vglyphs[i] = font2D.getValidatedGlyphCode(oglyphs[i]);
             }
-        }
-        return vglyphs;
+	}
+	return vglyphs;    
     }
 
     // utility used by constructors
@@ -1094,9 +1094,9 @@ public class StandardGlyphVector extends GlyphVector {
         this.frc = frc;
         this.flags = flags;
 
-        if (getTracking(font) != 0) {
-            addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
-        }
+	if (getTracking(font) != 0) {
+	    addFlags(FLAG_HAS_POSITION_ADJUSTMENTS);
+	}
 
         // !!! change mapper interface?
         if (start != 0) {
@@ -1110,8 +1110,8 @@ public class StandardGlyphVector extends GlyphVector {
         // !!! no layout for now, should add checks
         // !!! need to support creating a StandardGlyphVector from a TextMeasurer's info...
         glyphs = new int[count]; // hmmm
-        /* Glyphs obtained here are already validated by the font */
-        userGlyphs = glyphs;
+	/* Glyphs obtained here are already validated by the font */
+	userGlyphs = glyphs;
         font2D.getMapper().charsToGlyphs(count, text, glyphs);
     }
 
@@ -1162,9 +1162,9 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     private Rectangle2D getGlyphOutlineBounds(int ix) {
-        setFRCTX();
-        initPositions();
-        return getGlyphStrike(ix).getGlyphOutlineBounds(glyphs[ix], positions[ix*2], positions[ix*2+1]);
+	setFRCTX();
+	initPositions();
+	return getGlyphStrike(ix).getGlyphOutlineBounds(glyphs[ix], positions[ix*2], positions[ix*2+1]);
     }
 
     /**
@@ -1172,7 +1172,7 @@ public class StandardGlyphVector extends GlyphVector {
      */
     private Shape getGlyphsOutline(int start, int count, float x, float y) {
         setFRCTX();
-        initPositions();
+	initPositions();
 
         GeneralPath result = new GeneralPath(GeneralPath.WIND_NON_ZERO);
         for (int i = start, e = start + count, n = start * 2; i < e; ++i, n += 2) {
@@ -1198,7 +1198,7 @@ public class StandardGlyphVector extends GlyphVector {
 
         if (gti != null) {
             return gti.getGlyphsPixelBounds(tx, x, y, start, count);
-        }
+        } 
 
         FontStrike fs = getDefaultStrike().strike;
         Rectangle result = null;
@@ -1222,24 +1222,24 @@ public class StandardGlyphVector extends GlyphVector {
     }
 
     private void clearCaches(int ix) {
-        if (lbcacheRef != null) {
+	if (lbcacheRef != null) {
             Shape[] lbcache = (Shape[])lbcacheRef.get();
             if (lbcache != null) {
                 lbcache[ix] = null;
             }
-        }
+	}
 
-        if (vbcacheRef != null) {
-            Shape[] vbcache = (Shape[])vbcacheRef.get();
-            if (vbcache != null) {
-                vbcache[ix] = null;
-            }
-        }
+	if (vbcacheRef != null) {
+	    Shape[] vbcache = (Shape[])vbcacheRef.get();
+	    if (vbcache != null) {
+		vbcache[ix] = null;
+	    }
+	}
     }
 
     private void clearCaches() {
-        lbcacheRef = null;
-        vbcacheRef = null;
+	lbcacheRef = null;
+	vbcacheRef = null;
     }
 
     // internal use only for possible future extension
@@ -1259,17 +1259,17 @@ public class StandardGlyphVector extends GlyphVector {
 
     /**
      * A flag used with getLayoutFlags that indicates whether this <code>GlyphVector</code> uses
-     * the 'alternate orientation.'  Glyphs have a default orientation given a
+     * the 'alternate orientation.'  Glyphs have a default orientation given a 
      * particular baseline and metrics orientation, this is the orientation appropriate
-     * for left-to-right text.  For example, the letter 'A' can have four orientations,
+     * for left-to-right text.  For example, the letter 'A' can have four orientations, 
      * with the point at 12, 3, 6, or 9 'o clock.  The following table shows where the
-     * point displays for different values of vertical baseline (vb), vertical
+     * point displays for different values of vertical baseline (vb), vertical 
      * metrics (vm) and alternate orientation (fo):<br>
      * <blockquote>
      * vb vm ao
      * -- -- --  --
      *  f  f  f  12   ^  horizontal metrics on horizontal lines
-     *  f  f  t   6   v
+     *  f  f  t   6   v 
      *  f  t  f   9   <  vertical metrics on horizontal lines
      *  f  t  t   3   >
      *  t  f  f   3   >  horizontal metrics on vertical lines
@@ -1291,12 +1291,12 @@ public class StandardGlyphVector extends GlyphVector {
 
             positions = new float[glyphs.length * 2 + 2];
 
-            Point2D.Float trackPt = null;
-            float track = getTracking(font);
-            if (track != 0) {
-                track *= font.getSize2D();
-                trackPt = new Point2D.Float(track, 0); // advance delta
-            }
+	    Point2D.Float trackPt = null;
+	    float track = getTracking(font);
+	    if (track != 0) {
+		track *= font.getSize2D();
+		trackPt = new Point2D.Float(track, 0); // advance delta
+	    }
 
             Point2D.Float pt = new Point2D.Float(0, 0);
             if (font.isTransformed()) {
@@ -1305,16 +1305,16 @@ public class StandardGlyphVector extends GlyphVector {
                 positions[0] = pt.x;
                 positions[1] = pt.y;
 
-                if (trackPt != null) {
-                    at.deltaTransform(trackPt, trackPt);
-                }
+		if (trackPt != null) {
+		    at.deltaTransform(trackPt, trackPt);
+		}
             }
             for (int i = 0, n = 2; i < glyphs.length; ++i, n += 2) {
                 getGlyphStrike(i).addDefaultGlyphAdvance(glyphs[i], pt);
-                if (trackPt != null) {
-                    pt.x += trackPt.x;
-                    pt.y += trackPt.y;
-                }
+		if (trackPt != null) {
+		    pt.x += trackPt.x;
+		    pt.y += trackPt.y;
+		}
                 positions[n] = pt.x;
                 positions[n+1] = pt.y;
             }
@@ -1325,14 +1325,14 @@ public class StandardGlyphVector extends GlyphVector {
      * OR newFlags with existing flags.  First computes existing flags if needed.
      */
     private void addFlags(int newflags) {
-        flags = getLayoutFlags() | newflags;
+	flags = getLayoutFlags() | newflags;
     }
 
     /**
      * AND the complement of clearedFlags with existing flags.  First computes existing flags if needed.
      */
     private void clearFlags(int clearedFlags) {
-        flags = getLayoutFlags() & ~clearedFlags;
+	flags = getLayoutFlags() & ~clearedFlags;
     }
 
     // general utility methods
@@ -1363,7 +1363,7 @@ public class StandardGlyphVector extends GlyphVector {
     /////////////////////
     // Internal utility classes
     /////////////////////
-
+    
     // !!! I have this as a separate class instead of just inside SGV,
     // but I previously didn't bother.  Now I'm trying this again.
     // Probably still not worth it, but I'd like to keep sgv's small in the common case.
@@ -1406,7 +1406,7 @@ public class StandardGlyphVector extends GlyphVector {
 
             // slow since we end up processing the same transforms multiple
             // times, but since transforms can be in any order, we either do
-            // this or create a mapping.  Equality tests aren't common so
+            // this or create a mapping.  Equality tests aren't common so 
             // leave it like this.
             for (int i = 0; i < this.indices.length; ++i) {
                 int tix = this.indices[i];
@@ -1434,7 +1434,7 @@ public class StandardGlyphVector extends GlyphVector {
             // is an entry in the txIndices array indicating which transform to use.  0 means
             // there's no transform, 1 means use the first transform (the 6 doubles at offset
             // 0), 2 means use the second transform (the 6 doubles at offset 6), etc.
-            //
+            // 
             // Since this can be called multiple times, and since the number of transforms
             // affects the time it takes to construct the glyphs, we try to keep the arrays as
             // compact as possible, by removing transforms that are no longer used, and reusing
@@ -1455,7 +1455,7 @@ public class StandardGlyphVector extends GlyphVector {
                 if (isIdentity) { // no change
                     return;
                 }
-
+	
                 indices = new int[sgv.glyphs.length];
                 indices[glyphIndex] = 1;
                 transforms = temp;
@@ -1467,7 +1467,7 @@ public class StandardGlyphVector extends GlyphVector {
                 } else {
                     addSlot = true; // assume no match
                     int i;
-                loop:
+	        loop: 
                     for (i = 0; i < transforms.length; i += 6) {
                         for (int j = 0; j < 6; ++j) {
                             if (transforms[i + j] != temp[j]) {
@@ -1494,7 +1494,7 @@ public class StandardGlyphVector extends GlyphVector {
                             }
                         }
                     }
-
+			
                     if (removeSlot && addSlot) { // reuse old slot with new transform
                         newIndex = oldIndex;
                         System.arraycopy(temp, 0, transforms, (newIndex - 1) * 6, 6);
@@ -1512,7 +1512,7 @@ public class StandardGlyphVector extends GlyphVector {
 
                         double[] ttemp = new double[transforms.length - 6];
                         System.arraycopy(transforms, 0, ttemp, 0, (oldIndex - 1) * 6);
-                        System.arraycopy(transforms, oldIndex * 6, ttemp, (oldIndex - 1) * 6,
+                        System.arraycopy(transforms, oldIndex * 6, ttemp, (oldIndex - 1) * 6, 
                                          transforms.length - oldIndex * 6);
                         transforms = ttemp;
 
@@ -1531,7 +1531,7 @@ public class StandardGlyphVector extends GlyphVector {
                         System.arraycopy(temp, 0, ttemp, transforms.length, 6);
                         transforms = ttemp;
                     }
-
+		    
                     indices[glyphIndex] = newIndex;
                 }
             }
@@ -1670,7 +1670,7 @@ public class StandardGlyphVector extends GlyphVector {
                                                               transforms[ix+3],
                                                               transforms[ix+4],
                                                               transforms[ix+5]);
-
+                    
                     strike = GlyphStrike.create(sgv, sgv.dtx, gtx);
                 }
                 strikes[strikeIndex] = strike;
@@ -1706,33 +1706,33 @@ public class StandardGlyphVector extends GlyphVector {
                     tx.preConcatenate(dtx);
                 }
             }
-
+            
             int ptSize = 1; // only matters for 'gasp' case.
-            Object aaHint = sgv.frc.getAntiAliasingHint();
-            if (aaHint == VALUE_TEXT_ANTIALIAS_GASP) {
-                /* Must pass in the calculated point size for rendering.
-                 * If the glyph tx is anything other than identity or a
-                 *  simple translate, calculate the transformed point size.
-                 */
-                if (!tx.isIdentity() &&
-                    (tx.getType() & ~AffineTransform.TYPE_TRANSLATION) != 0) {
-                    double shearx = tx.getShearX();
-                    if (shearx != 0) {
-                        double scaley = tx.getScaleY();
-                        ptSize =
-                            (int)Math.sqrt(shearx * shearx + scaley * scaley);
-                    } else {
-                        ptSize = (int)(Math.abs(tx.getScaleY()));
-                    }
-                }
-            }
+	    Object aaHint = sgv.frc.getAntiAliasingHint();
+	    if (aaHint == VALUE_TEXT_ANTIALIAS_GASP) {
+		/* Must pass in the calculated point size for rendering.
+		 * If the glyph tx is anything other than identity or a
+		 *  simple translate, calculate the transformed point size.
+		 */
+		if (!tx.isIdentity() &&
+		    (tx.getType() & ~AffineTransform.TYPE_TRANSLATION) != 0) {
+		    double shearx = tx.getShearX();
+		    if (shearx != 0) {
+			double scaley = tx.getScaleY();
+			ptSize =
+			    (int)Math.sqrt(shearx * shearx + scaley * scaley);
+		    } else {
+			ptSize = (int)(Math.abs(tx.getScaleY()));
+		    }
+		}
+	    }
             int aa = FontStrikeDesc.getAAHintIntVal(aaHint,sgv.font2D, ptSize);
             int fm = FontStrikeDesc.getFMHintIntVal
-                (sgv.frc.getFractionalMetricsHint());
-            FontStrikeDesc desc = new FontStrikeDesc(dtx,
-                                                     tx,
-                                                     sgv.font.getStyle(),
-                                                     aa, fm);
+		(sgv.frc.getFractionalMetricsHint());
+            FontStrikeDesc desc = new FontStrikeDesc(dtx, 
+                                                     tx, 
+                                                     sgv.font.getStyle(), 
+						     aa, fm);
 
             FontStrike strike = sgv.font2D.getStrike(desc);  // !!! getStrike(desc, false)
 
@@ -1754,7 +1754,7 @@ public class StandardGlyphVector extends GlyphVector {
                 delta.x = (float)sgv.font.getTransform().getTranslateX();
                 delta.y = (float)sgv.font.getTransform().getTranslateY();
             }
-
+                
             result.ascentX = -sm.ascentX;
             result.ascentY = -sm.ascentY;
             result.descentX = sm.descentX;
@@ -1777,20 +1777,20 @@ public class StandardGlyphVector extends GlyphVector {
             result.y += adv.y + dy;
         }
 
-        Rectangle2D getGlyphOutlineBounds(int glyphID, float x, float y) {
-            Rectangle2D result = null;
-            if (sgv.invdtx == null) {
-                result = new Rectangle2D.Float();
-                result.setRect(strike.getGlyphOutlineBounds(glyphID)); // don't mutate cached rect
-            } else {
-                GeneralPath gp = strike.getGlyphOutline(glyphID, 0, 0);
-                gp.transform(sgv.invdtx);
-                result = gp.getBounds2D();
-            }
-            result.setRect(result.getMinX() + x + dx, result.getMinY() + y + dy,
-                           result.getWidth(), result.getHeight());
-            return result;
-        }
+	Rectangle2D getGlyphOutlineBounds(int glyphID, float x, float y) {
+	    Rectangle2D result = null;
+	    if (sgv.invdtx == null) {
+		result = new Rectangle2D.Float();
+		result.setRect(strike.getGlyphOutlineBounds(glyphID)); // don't mutate cached rect
+	    } else {
+		GeneralPath gp = strike.getGlyphOutline(glyphID, 0, 0);
+		gp.transform(sgv.invdtx);
+		result = gp.getBounds2D();
+	    }
+	    result.setRect(result.getMinX() + x + dx, result.getMinY() + y + dy,
+			   result.getWidth(), result.getHeight());
+	    return result;
+	}
 
         void appendGlyphOutline(int glyphID, GeneralPath result, float x, float y) {
             // !!! fontStrike needs a method for this.  For that matter, GeneralPath does.
@@ -1804,7 +1804,7 @@ public class StandardGlyphVector extends GlyphVector {
             }
             PathIterator iterator = gp.getPathIterator(null);
             result.append(iterator, false);
-        }
+        } 
     }
 
     public String toString() {
@@ -1873,7 +1873,7 @@ public class StandardGlyphVector extends GlyphVector {
                     buf.append(" complex");
                 }
             }
-        }
+        } 
         catch(Exception e) {
             buf.append(" " + e.getMessage());
         }

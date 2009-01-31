@@ -43,7 +43,7 @@ import javax.sql.rowset.*;
  * <code>JOIN</code> relationship.
  * <P>
  * The <code>Joinable</code> interface provides the methods for setting,
- * retrieving, and unsetting a match column, the basis for
+ * retrieving, and unsetting a match column, the basis for 
  * establishing an SQL <code>JOIN</code> relationship. The match column may
  * alternatively be set by supplying it to the appropriate version of the
  * <code>JointRowSet</code> method <code>addRowSet</code>.
@@ -52,22 +52,22 @@ import javax.sql.rowset.*;
  * <h3>1.0 Overview</h3>
  * Disconnected <code>RowSet</code> objects (<code>CachedRowSet</code> objects
  * and implementations extending the <code>CachedRowSet</code> interface)
- * do not have a standard way to establish an SQL <code>JOIN</code> between
- * <code>RowSet</code> objects without the expensive operation of
- * reconnecting to the data source. The <code>JoinRowSet</code>
- * interface is specifically designed to address this need.
+ * do not have a standard way to establish an SQL <code>JOIN</code> between 
+ * <code>RowSet</code> objects without the expensive operation of 
+ * reconnecting to the data source. The <code>JoinRowSet</code> 
+ * interface is specifically designed to address this need. 
  * <P>
- * Any <code>RowSet</code> object
+ * Any <code>RowSet</code> object 
  * can be added to a <code>JoinRowSet</code> object to become
  * part of an SQL <code>JOIN</code> relationship. This means that both connected
  * and disconnected <code>RowSet</code> objects can be part of a <code>JOIN</code>.
- * <code>RowSet</code> objects operating in a connected environment
+ * <code>RowSet</code> objects operating in a connected environment 
  * (<code>JdbcRowSet</code> objects) are
- * encouraged to use the database to which they are already
+ * encouraged to use the database to which they are already 
  * connected to establish SQL <code>JOIN</code> relationships between
  * tables directly. However, it is possible for a
- * <code>JdbcRowSet</code> object to be added to a <code>JoinRowSet</code> object
- * if necessary.
+ * <code>JdbcRowSet</code> object to be added to a <code>JoinRowSet</code> object 
+ * if necessary.  
  * <P>
  * Any number of <code>RowSet</code> objects can be added to an
  * instance of <code>JoinRowSet</code> provided that they
@@ -80,7 +80,7 @@ import javax.sql.rowset.*;
  * the primary key, but there is
  * no requirement that the match column be the same as the primary key.
  * By establishing and then enforcing column matches,
- * a <code>JoinRowSet</code> object establishes <code>JOIN</code> relationships
+ * a <code>JoinRowSet</code> object establishes <code>JOIN</code> relationships 
  * between <code>RowSet</code> objects without the assistance of an available
  * relational database.
  * <P>
@@ -97,65 +97,65 @@ import javax.sql.rowset.*;
  * Note that if no type is set, the <code>JOIN</code> will automatically be an
  * inner join. The comments for the fields in the
  * <code>JoinRowSet</code> interface explain these <code>JOIN</code> types, which are
- * standard SQL <code>JOIN</code> types.
+ * standard SQL <code>JOIN</code> types. 
  * <P>
  * <h3>2.0 Using a <code>JoinRowSet</code> Object for Creating a <code>JOIN</code></h3>
  * When a <code>JoinRowSet</code> object is created, it is empty.
  * The first <code>RowSet</code> object to be added becomes the basis for the
  * <code>JOIN</code> relationship.
  * Applications must determine which column in each of the
- * <code>RowSet</code> objects to be added to the <code>JoinRowSet</code> object
- * should be the match column. All of the
+ * <code>RowSet</code> objects to be added to the <code>JoinRowSet</code> object 
+ * should be the match column. All of the 
  * <code>RowSet</code> objects must contain a match column, and the values in
  * each match column must be ones that can be compared to values in the other match
- * columns. The columns do not have to have the same name, though they often do,
+ * columns. The columns do not have to have the same name, though they often do, 
  * and they do not have to store the exact same data type as long as the data types
- * can be compared.
+ * can be compared.  
  * <P>
- * A match column can be be set in two ways:
+ * A match column can be be set in two ways: 
  * <ul>
  *  <li>By calling the <code>Joinable</code> method <code>setMatchColumn</code><br>
- *  This is the only method that can set the match column before a <code>RowSet</code>
+ *  This is the only method that can set the match column before a <code>RowSet</code> 
  *  object is added to a <code>JoinRowSet</code> object. The <code>RowSet</code> object
  *  must have implemented the <code>Joinable</code> interface in order to use the method
  *  <code>setMatchColumn</code>. Once the match column value
  *  has been set, this method can be used to reset the match column at any time.
- *  <li>By calling one of the versions of the <code>JoinRowSet</code> method
+ *  <li>By calling one of the versions of the <code>JoinRowSet</code> method 
  *  <code>addRowSet</code> that takes a column name or number (or an array of
  *  column names or numbers)<BR>
  *  Four of the five <code>addRowSet</code> methods take a match column as a parameter.
- *  These four methods set or reset the match column at the time a <code>RowSet</code>
+ *  These four methods set or reset the match column at the time a <code>RowSet</code> 
  *  object is being added to a <code>JoinRowSet</code> object.
  * </ul>
  * <h3>3.0 Sample Usage</h3>
  * <p>
- * The following code fragment adds two <code>CachedRowSet</code>
+ * The following code fragment adds two <code>CachedRowSet</code> 
  * objects to a <code>JoinRowSet</code> object. Note that in this example,
  * no SQL <code>JOIN</code> type is set, so the default <code>JOIN</code> type,
- * which is <i>INNER_JOIN</i>, is established.
+ * which is <i>INNER_JOIN</i>, is established. 
  * <p>
- * In the following code fragment, the table <code>EMPLOYEES</code>, whose match
+ * In the following code fragment, the table <code>EMPLOYEES</code>, whose match 
  * column is set to the first column (<code>EMP_ID</code>), is added to the
  * <code>JoinRowSet</code> object <i>jrs</i>. Then
- * the table <code>ESSP_BONUS_PLAN</code>, whose match column is likewise
+ * the table <code>ESSP_BONUS_PLAN</code>, whose match column is likewise 
  * the <code>EMP_ID</code> column, is added. When this second
- * table is added to <i>jrs</i>, only the rows in
+ * table is added to <i>jrs</i>, only the rows in 
  * <code>ESSP_BONUS_PLAN</code> whose <code>EMP_ID</code> value matches an
  * <code>EMP_ID</code> value in the <code>EMPLOYEES</code> table are added.
  * In this case, everyone in the bonus plan is an employee, so all of the rows
  * in the table <code>ESSP_BONUS_PLAN</code> are added to the <code>JoinRowSet</code>
  * object.  In this example, both <code>CachedRowSet</code> objects being added
- * have implemented the <code>Joinable</code> interface and can therefore call
+ * have implemented the <code>Joinable</code> interface and can therefore call 
  * the <code>Joinable</code> method <code>setMatchColumn</code>.
  * <PRE>
  *     JoinRowSet jrs = new JoinRowSetImpl();
- *
+ * 
  *     ResultSet rs1 = stmt.executeQuery("SELECT * FROM EMPLOYEES");
  *     CachedRowSet empl = new CachedRowSetImpl();
  *     empl.populate(rs1);
- *     empl.setMatchColumn(1);
+ *     empl.setMatchColumn(1); 
  *     jrs.addRowSet(empl);
- *
+ * 
  *     ResultSet rs2 = stmt.executeQuery("SELECT * FROM ESSP_BONUS_PLAN");
  *     CachedRowSet bonus = new CachedRowSetImpl();
  *     bonus.populate(rs2);
@@ -180,8 +180,8 @@ import javax.sql.rowset.*;
  * being performed.
  * <P>
  * The following code fragment adds an additional <code>CachedRowSet</code> object.
- * In this case, the match column (<code>EMP_ID</code>) is set when the
- * <code>CachedRowSet</code> object is added to the <code>JoinRowSet</code> object.
+ * In this case, the match column (<code>EMP_ID</code>) is set when the 
+ * <code>CachedRowSet</code> object is added to the <code>JoinRowSet</code> object. 
  * <PRE>
  *     ResultSet rs3 = stmt.executeQuery("SELECT * FROM 401K_CONTRIB");
  *     CachedRowSet fourO1k = new CachedRowSetImpl();
@@ -190,25 +190,25 @@ import javax.sql.rowset.*;
  * </PRE>
  * <P>
  * The <code>JoinRowSet</code> object <i>jrs</i> now contains values from all three
- * tables. The data in each row in <i>four01k</i> in which the value for the
- * <code>EMP_ID</code> column matches a value for the <code>EMP_ID</code> column
+ * tables. The data in each row in <i>four01k</i> in which the value for the 
+ * <code>EMP_ID</code> column matches a value for the <code>EMP_ID</code> column 
  * in <i>jrs</i> has been added to <i>jrs</i>.
  * <P>
  * <h3>4.0 <code>JoinRowSet</code> Methods</h3>
- * The <code>JoinRowSet</code> interface supplies several methods for adding
- * <code>RowSet</code> objects and for getting information about the
+ * The <code>JoinRowSet</code> interface supplies several methods for adding 
+ * <code>RowSet</code> objects and for getting information about the 
  * <code>JoinRowSet</code> object.
  * <UL>
  *   <LI>Methods for adding one or more <code>RowSet</code> objects<BR>
  *       These methods allow an application to add one <code>RowSet</code> object
  *       at a time or to add multiple <code>RowSet</code> objects at one time. In
- *       either case, the methods may specify the match column for each
+ *       either case, the methods may specify the match column for each 
  *       <code>RowSet</code> object being added.
  *   <LI>Methods for getting information<BR>
- *       One method retrieves the <code>RowSet</code> objects in the
- *       <code>JoinRowSet</code> object, and another method retrieves the
- *       <code>RowSet</code> names.  A third method retrieves either the SQL
- *       <code>WHERE</code> clause used behind the scenes to form the
+ *       One method retrieves the <code>RowSet</code> objects in the 
+ *       <code>JoinRowSet</code> object, and another method retrieves the 
+ *       <code>RowSet</code> names.  A third method retrieves either the SQL 
+ *       <code>WHERE</code> clause used behind the scenes to form the 
  *       <code>JOIN</code> or a text description of what the <code>WHERE</code>
  *       clause does.
  *   <LI>Methods related to the type of <code>JOIN</code><BR>
@@ -226,7 +226,7 @@ public interface JoinRowSet extends WebRowSet {
      * Adds the given <code>RowSet</code> object to this <code>JoinRowSet</code>
      * object. If the <code>RowSet</code> object
      * is the first to be added to this <code>JoinRowSet</code>
-     * object, it forms the basis of the <code>JOIN</code> relationship to be
+     * object, it forms the basis of the <code>JOIN</code> relationship to be 
      * established.
      * <P>
      * This method should be used only when the given <code>RowSet</code>
@@ -234,10 +234,10 @@ public interface JoinRowSet extends WebRowSet {
      * method <code>setMatchColumn</code>.
      * <p>
      * Note: A <code>Joinable</code> object is any <code>RowSet</code> object
-     * that has implemented the <code>Joinable</code> interface.
+     * that has implemented the <code>Joinable</code> interface. 
      *
      * @param rowset the <code>RowSet</code> object that is to be added to this
-     *        <code>JoinRowSet</code> object; it must implement the
+     *        <code>JoinRowSet</code> object; it must implement the 
      *        <code>Joinable</code> interface and have a match column set
      * @throws SQLException if (1) an empty rowset is added to the to this
      *         <code>JoinRowSet</code> object, (2) a match column has not been
@@ -252,15 +252,15 @@ public interface JoinRowSet extends WebRowSet {
      * object and sets the designated column as the match column for
      * the <code>RowSet</code> object. If the <code>RowSet</code> object
      * is the first to be added to this <code>JoinRowSet</code>
-     * object, it forms the basis of the <code>JOIN</code> relationship to be
+     * object, it forms the basis of the <code>JOIN</code> relationship to be 
      * established.
      * <P>
      * This method should be used when <i>RowSet</i> does not already have a match
      * column set.
      *
      * @param rowset the <code>RowSet</code> object that is to be added to this
-     *        <code>JoinRowSet</code> object; it may implement the
-     *        <code>Joinable</code> interface
+     *        <code>JoinRowSet</code> object; it may implement the 
+     *        <code>Joinable</code> interface 
      * @param columnIdx an <code>int</code> that identifies the column to become the
      *         match column
      * @throws SQLException if (1) <i>rowset</i> is an empty rowset or
@@ -273,30 +273,30 @@ public interface JoinRowSet extends WebRowSet {
      * Adds <i>rowset</i> to this <code>JoinRowSet</code> object and
      * sets the designated column as the match column. If <i>rowset</i>
      * is the first to be added to this <code>JoinRowSet</code>
-     * object, it forms the basis for the <code>JOIN</code> relationship to be
-     * established.
+     * object, it forms the basis for the <code>JOIN</code> relationship to be 
+     * established. 
      * <P>
      * This method should be used when the given <code>RowSet</code> object
-     * does not already have a match column.
-     *
+     * does not already have a match column.     
+     * 
      * @param rowset the <code>RowSet</code> object that is to be added to this
-     *        <code>JoinRowSet</code> object; it may implement the
-     *        <code>Joinable</code> interface
-     * @param columnName the <code>String</code> object giving the name of the
+     *        <code>JoinRowSet</code> object; it may implement the 
+     *        <code>Joinable</code> interface 
+     * @param columnName the <code>String</code> object giving the name of the 
      *        column to be set as the match column
      * @throws SQLException if (1) <i>rowset</i> is an empty rowset or
      *         (2) the match column for <i>rowset</i> does not satisfy the
      *         conditions of the <code>JOIN</code>
      */
-     public void addRowSet(RowSet rowset,
+     public void addRowSet(RowSet rowset, 
                            String columnName) throws SQLException;
 
     /**
-     * Adds one or more <code>RowSet</code> objects contained in the given
-     * array of <code>RowSet</code> objects to this <code>JoinRowSet</code>
+     * Adds one or more <code>RowSet</code> objects contained in the given 
+     * array of <code>RowSet</code> objects to this <code>JoinRowSet</code> 
      * object and sets the match column for
-     * each of the <code>RowSet</code> objects to the match columns
-     * in the given array of column indexes. The first element in
+     * each of the <code>RowSet</code> objects to the match columns 
+     * in the given array of column indexes. The first element in 
      * <i>columnIdx</i> is set as the match column for the first
      * <code>RowSet</code> object in <i>rowset</i>, the second element of
      * <i>columnIdx</i> is set as the match column for the second element
@@ -308,27 +308,27 @@ public interface JoinRowSet extends WebRowSet {
      * This method should be used when the given <code>RowSet</code> object
      * does not already have a match column.
      *
-     * @param rowset an array of one or more <code>RowSet</code> objects
-     *        to be added to the <code>JOIN</code>; it may implement the
-     *        <code>Joinable</code> interface
+     * @param rowset an array of one or more <code>RowSet</code> objects 
+     *        to be added to the <code>JOIN</code>; it may implement the 
+     *        <code>Joinable</code> interface  
      * @param columnIdx an array of <code>int</code> values indicating the index(es)
      *        of the columns to be set as the match columns for the <code>RowSet</code>
      *        objects in <i>rowset</i>
-     * @throws SQLException if (1) an empty rowset is added to this
+     * @throws SQLException if (1) an empty rowset is added to this 
      *         <code>JoinRowSet</code> object, (2) a match column is not set
-     *         for a <code>RowSet</code> object in <i>rowset</i>, or (3)
+     *         for a <code>RowSet</code> object in <i>rowset</i>, or (3) 
      *         a <code>RowSet</code> object being added violates the active
      *         <code>JOIN</code>
      */
-    public void addRowSet(RowSet[] rowset,
+    public void addRowSet(RowSet[] rowset, 
                           int[] columnIdx) throws SQLException;
 
     /**
-     * Adds one or more <code>RowSet</code> objects contained in the given
-     * array of <code>RowSet</code> objects to this <code>JoinRowSet</code>
+     * Adds one or more <code>RowSet</code> objects contained in the given 
+     * array of <code>RowSet</code> objects to this <code>JoinRowSet</code> 
      * object and sets the match column for
-     * each of the <code>RowSet</code> objects to the match columns
-     * in the given array of column names. The first element in
+     * each of the <code>RowSet</code> objects to the match columns 
+     * in the given array of column names. The first element in 
      * <i>columnName</i> is set as the match column for the first
      * <code>RowSet</code> object in <i>rowset</i>, the second element of
      * <i>columnName</i> is set as the match column for the second element
@@ -340,36 +340,36 @@ public interface JoinRowSet extends WebRowSet {
      * This method should be used when the given <code>RowSet</code> object(s)
      * does not already have a match column.
      *
-     * @param rowset an array of one or more <code>RowSet</code> objects
-     *        to be added to the <code>JOIN</code>; it may implement the
-     *        <code>Joinable</code> interface
-     * @param columnName an array of <code>String</code> values indicating the
-     *        names of the columns to be set as the match columns for the
+     * @param rowset an array of one or more <code>RowSet</code> objects 
+     *        to be added to the <code>JOIN</code>; it may implement the 
+     *        <code>Joinable</code> interface 
+     * @param columnName an array of <code>String</code> values indicating the 
+     *        names of the columns to be set as the match columns for the 
      *        <code>RowSet</code> objects in <i>rowset</i>
-     * @throws SQLException if (1) an empty rowset is added to this
+     * @throws SQLException if (1) an empty rowset is added to this 
      *         <code>JoinRowSet</code> object, (2) a match column is not set
-     *         for a <code>RowSet</code> object in <i>rowset</i>, or (3)
+     *         for a <code>RowSet</code> object in <i>rowset</i>, or (3) 
      *         a <code>RowSet</code> object being added violates the active
      *         <code>JOIN</code>
      */
-    public void addRowSet(RowSet[] rowset,
+    public void addRowSet(RowSet[] rowset, 
                           String[] columnName) throws SQLException;
-
+    
     /**
-     * Returns a <code>Collection</code> object containing the
+     * Returns a <code>Collection</code> object containing the 
      * <code>RowSet</code> objects that have been added to this
      * <code>JoinRowSet</code> object.
      * This should return the 'n' number of RowSet contained
      * within the <code>JOIN</code> and maintain any updates that have occured while in
      * this union.
-     *
-     * @return a <code>Collection</code> object consisting of the
+     * 
+     * @return a <code>Collection</code> object consisting of the 
      *        <code>RowSet</code> objects added to this <code>JoinRowSet</code>
      *        object
-     * @throws SQLException if an error occurs generating the
+     * @throws SQLException if an error occurs generating the 
      *         <code>Collection</code> object to be returned
      */
-    public Collection<?> getRowSets() throws java.sql.SQLException;
+    public Collection<?> getRowSets() throws java.sql.SQLException; 
 
     /**
      * Returns a <code>String</code> array containing the names of the
@@ -383,17 +383,17 @@ public interface JoinRowSet extends WebRowSet {
      *         the <code>RowSet</code> objects
      * @see CachedRowSet#setTableName
      */
-    public String[] getRowSetNames() throws java.sql.SQLException;
+    public String[] getRowSetNames() throws java.sql.SQLException;   
 
     /**
-     * Creates a new <code>CachedRowSet</code> object containing the
+     * Creates a new <code>CachedRowSet</code> object containing the 
      * data in this <code>JoinRowSet</code> object, which can be saved
      * to a data source using the <code>SyncProvider</code> object for
      * the <code>CachedRowSet</code> object.
      * <P>
      * If any updates or modifications have been applied to the JoinRowSet
      * the CachedRowSet returned by the method will not be able to persist
-     * it's changes back to the originating rows and tables in the
+     * it's changes back to the originating rows and tables in the 
      * in the datasource. The CachedRowSet instance returned should not
      * contain modification data and it should clear all properties of
      * it's originating SQL statement. An application should reset the
@@ -402,13 +402,13 @@ public interface JoinRowSet extends WebRowSet {
      * In order to allow changes to be persisted back to the datasource
      * to the originating tables, the <code>acceptChanges</code> method
      * should be used and called on a JoinRowSet object instance. Implementations
-     * can leverage the internal data and update tracking in their
+     * can leverage the internal data and update tracking in their 
      * implementations to interact with the SyncProvider to persist any
-     * changes.
+     * changes. 
      *
      * @return a CachedRowSet containing the contents of the JoinRowSet
      * @throws SQLException if an error occurs assembling the CachedRowSet
-     * object
+     * object 
      * @see javax.sql.RowSet
      * @see javax.sql.rowset.CachedRowSet
      * @see javax.sql.rowset.spi.SyncProvider
@@ -416,7 +416,7 @@ public interface JoinRowSet extends WebRowSet {
     public CachedRowSet toCachedRowSet() throws java.sql.SQLException;
 
     /**
-     * Indicates if CROSS_JOIN is supported by a JoinRowSet
+     * Indicates if CROSS_JOIN is supported by a JoinRowSet 
      * implementation
      *
      * @return true if the CROSS_JOIN is supported; false otherwise
@@ -424,7 +424,7 @@ public interface JoinRowSet extends WebRowSet {
     public boolean supportsCrossJoin();
 
     /**
-     * Indicates if INNER_JOIN is supported by a JoinRowSet
+     * Indicates if INNER_JOIN is supported by a JoinRowSet 
      * implementation
      *
      * @return true is the INNER_JOIN is supported; false otherwise
@@ -432,7 +432,7 @@ public interface JoinRowSet extends WebRowSet {
     public boolean supportsInnerJoin();
 
     /**
-     * Indicates if LEFT_OUTER_JOIN is supported by a JoinRowSet
+     * Indicates if LEFT_OUTER_JOIN is supported by a JoinRowSet 
      * implementation
      *
      * @return true is the LEFT_OUTER_JOIN is supported; false otherwise
@@ -440,7 +440,7 @@ public interface JoinRowSet extends WebRowSet {
     public boolean supportsLeftOuterJoin();
 
     /**
-     * Indicates if RIGHT_OUTER_JOIN is supported by a JoinRowSet
+     * Indicates if RIGHT_OUTER_JOIN is supported by a JoinRowSet 
      * implementation
      *
      * @return true is the RIGHT_OUTER_JOIN is supported; false otherwise
@@ -448,7 +448,7 @@ public interface JoinRowSet extends WebRowSet {
     public boolean supportsRightOuterJoin();
 
     /**
-     * Indicates if FULL_JOIN is supported by a JoinRowSet
+     * Indicates if FULL_JOIN is supported by a JoinRowSet 
      * implementation
      *
      * @return true is the FULL_JOIN is supported; false otherwise
@@ -458,7 +458,7 @@ public interface JoinRowSet extends WebRowSet {
     /**
      * Allow the application to adjust the type of <code>JOIN</code> imposed
      * on tables contained within the JoinRowSet object instance.
-     * Implementations should throw a SQLException if they do
+     * Implementations should throw a SQLException if they do 
      * not support a given <code>JOIN</code> type.
      *
      * @param joinType the standard JoinRowSet.XXX static field definition
@@ -467,7 +467,7 @@ public interface JoinRowSet extends WebRowSet {
      * @throws SQLException if an unsupported <code>JOIN</code> type is set
      * @see #getJoinType
      */
-    public void setJoinType(int joinType) throws SQLException;
+    public void setJoinType(int joinType) throws SQLException;   
 
     /**
      * Return a SQL-like description of the WHERE clause being used
@@ -482,15 +482,15 @@ public interface JoinRowSet extends WebRowSet {
      * of the WHERE clause.
      */
     public String getWhereClause() throws SQLException;
-
+    
     /**
-     * Returns a <code>int</code> describing the set SQL <code>JOIN</code> type
+     * Returns a <code>int</code> describing the set SQL <code>JOIN</code> type 
      * governing this JoinRowSet instance. The returned type will be one of
-     * standard JoinRowSet types: <code>CROSS_JOIN</code>, <code>INNER_JOIN</code>,
-     * <code>LEFT_OUTER_JOIN</code>, <code>RIGHT_OUTER_JOIN</code> or
+     * standard JoinRowSet types: <code>CROSS_JOIN</code>, <code>INNER_JOIN</code>, 
+     * <code>LEFT_OUTER_JOIN</code>, <code>RIGHT_OUTER_JOIN</code> or 
      * <code>FULL_JOIN</code>.
      *
-     * @return joinType one of the standard JoinRowSet static field
+     * @return joinType one of the standard JoinRowSet static field 
      *     definitions of a SQL <code>JOIN</code>. <code>JoinRowSet.INNER_JOIN</code>
      *     is returned as the default <code>JOIN</code> type is no type has been
      *     explicitly set.
@@ -513,25 +513,26 @@ public interface JoinRowSet extends WebRowSet {
 
     /**
      * An ANSI-style <code>JOIN</code> providing a left outer join between two
-     * tables. In SQL, this is described where all records should be
+     * tables. In SQL, this is described where all records should be 
      * returned from the left side of the JOIN statement.
      */
     public static int LEFT_OUTER_JOIN = 2;
-
+    
     /**
      * An ANSI-style <code>JOIN</code> providing a right outer join between
      * two tables. In SQL, this is described where all records from the
-     * table on the right side of the JOIN statement even if the table
+     * table on the right side of the JOIN statement even if the table 
      * on the left has no matching record.
      */
     public static int RIGHT_OUTER_JOIN = 3;
 
     /**
-     * An ANSI-style <code>JOIN</code> providing a a full JOIN. Specifies that all
+     * An ANSI-style <code>JOIN</code> providing a a full JOIN. Specifies that all 
      * rows from either table be returned regardless of matching
      * records on the other table.
      */
     public static int FULL_JOIN = 4;
 
-
+        
 }
+

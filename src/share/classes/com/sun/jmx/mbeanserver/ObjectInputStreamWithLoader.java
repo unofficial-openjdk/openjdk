@@ -49,19 +49,19 @@ class ObjectInputStreamWithLoader extends ObjectInputStream {
      * @exception StreamCorruptedException The object stream is corrupt.
      */
     public ObjectInputStreamWithLoader(InputStream in, ClassLoader theLoader)
-            throws IOException {
-        super(in);
-        this.loader = theLoader;
+	    throws IOException {
+	super(in);
+	this.loader = theLoader;
     }
 
     protected Class resolveClass(ObjectStreamClass aClass)
-            throws IOException, ClassNotFoundException {
-        if (loader == null) {
-            return super.resolveClass(aClass);
-        } else {
-            String name = aClass.getName();
-            // Query the class loader ...
-            return Class.forName(name, false, loader);
-        }
+	    throws IOException, ClassNotFoundException {
+	if (loader == null) {
+	    return super.resolveClass(aClass);
+	} else {
+	    String name = aClass.getName();
+	    // Query the class loader ...
+	    return Class.forName(name, false, loader);
+	}
     }
 }

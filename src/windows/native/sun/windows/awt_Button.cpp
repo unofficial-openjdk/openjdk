@@ -76,70 +76,70 @@ AwtButton* AwtButton::Create(jobject self, jobject parent)
 
     try {
         LPCWSTR labelStr;
-        DWORD style;
-        DWORD exStyle = 0;
-        jint x, y, height, width;
+	DWORD style;
+	DWORD exStyle = 0;
+	jint x, y, height, width;
 
-        if (env->EnsureLocalCapacity(2) < 0) {
-            return NULL;
-        }
+	if (env->EnsureLocalCapacity(2) < 0) {
+	    return NULL;
+	}
 
-        PDATA pData;
-        AwtCanvas* awtParent;
+	PDATA pData;
+	AwtCanvas* awtParent;
+    
+	JNI_CHECK_PEER_GOTO(parent, done);
+	awtParent = (AwtCanvas*)pData;
+	JNI_CHECK_NULL_GOTO(awtParent, "awtParent", done);
 
-        JNI_CHECK_PEER_GOTO(parent, done);
-        awtParent = (AwtCanvas*)pData;
-        JNI_CHECK_NULL_GOTO(awtParent, "awtParent", done);
+	target = env->GetObjectField(self, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "target", done);
 
-        target = env->GetObjectField(self, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "target", done);
+	c = new AwtButton();
 
-        c = new AwtButton();
+	label = (jstring)env->GetObjectField(target, AwtButton::labelID);
 
-        label = (jstring)env->GetObjectField(target, AwtButton::labelID);
+	x = env->GetIntField(target, AwtComponent::xID);
+	y = env->GetIntField(target, AwtComponent::yID);
+	width = env->GetIntField(target, AwtComponent::widthID);
+	height = env->GetIntField(target, AwtComponent::heightID);
 
-        x = env->GetIntField(target, AwtComponent::xID);
-        y = env->GetIntField(target, AwtComponent::yID);
-        width = env->GetIntField(target, AwtComponent::widthID);
-        height = env->GetIntField(target, AwtComponent::heightID);
+	if (label == NULL) {
+	    labelStr = L"";
+	} else {
+	    labelStr = env->GetStringChars(label, JNI_FALSE);
+	}
+	style = 0;
 
-        if (label == NULL) {
-            labelStr = L"";
-        } else {
-            labelStr = env->GetStringChars(label, JNI_FALSE);
-        }
-        style = 0;
+	if (labelStr == NULL) {
+	    throw std::bad_alloc();
+	}
 
-        if (labelStr == NULL) {
-            throw std::bad_alloc();
-        }
+	style = WS_CHILD | WS_CLIPSIBLINGS | BS_PUSHBUTTON | BS_OWNERDRAW;
+	if (GetRTLReadingOrder())
+	    exStyle |= WS_EX_RTLREADING;
 
-        style = WS_CHILD | WS_CLIPSIBLINGS | BS_PUSHBUTTON | BS_OWNERDRAW;
-        if (GetRTLReadingOrder())
-            exStyle |= WS_EX_RTLREADING;
-
-        c->CreateHWnd(env, labelStr, style, exStyle, x, y, width, height,
-                      awtParent->GetHWnd(),
-                      reinterpret_cast<HMENU>(static_cast<INT_PTR>(
+	c->CreateHWnd(env, labelStr, style, exStyle, x, y, width, height,
+		      awtParent->GetHWnd(),
+		      reinterpret_cast<HMENU>(static_cast<INT_PTR>(
                   awtParent->CreateControlID())),
-                      ::GetSysColor(COLOR_BTNTEXT),
-                      ::GetSysColor(COLOR_BTNFACE),
-                      self);
+		      ::GetSysColor(COLOR_BTNTEXT),
+		      ::GetSysColor(COLOR_BTNFACE),
+		      self);
         c->m_backgroundColorSet = TRUE;  // suppress inheriting parent's color
         c->UpdateBackground(env, target);
-        if (label != NULL)
-            env->ReleaseStringChars(label, labelStr);
+	if (label != NULL)
+	    env->ReleaseStringChars(label, labelStr);
     } catch (...) {
         env->DeleteLocalRef(target);
-        if (label != NULL)
-            env->DeleteLocalRef(label);
-        throw;
+	if (label != NULL)
+	    env->DeleteLocalRef(label);
+	throw;
     }
 
 done:
     env->DeleteLocalRef(target);
     if (label != NULL)
-        env->DeleteLocalRef(label);
+	env->DeleteLocalRef(label);
     return c;
 }
 
@@ -147,16 +147,16 @@ BOOL AwtButton::ActMouseMessage(MSG * pMsg) {
     if (!IsFocusingMessage(pMsg->message)) {
         return FALSE;
     }
-
+    
     if (pMsg->message == WM_LBUTTONDOWN) {
         SendMessage(BM_SETSTATE, TRUE, 0);
     } else if (pMsg->message == WM_LBUTTONUP) {
         SendMessage(BM_SETSTATE, FALSE, 0);
-    }
+    } 
     return TRUE;
 }
 
-MsgRouting
+MsgRouting 
 AwtButton::WmMouseDown(UINT flags, int x, int y, int button)
 {
     // 4530087: keep track of the when the left mouse button is pressed
@@ -166,7 +166,7 @@ AwtButton::WmMouseDown(UINT flags, int x, int y, int button)
     return AwtComponent::WmMouseDown(flags, x, y, button);
 }
 
-MsgRouting
+MsgRouting 
 AwtButton::WmMouseUp(UINT flags, int x, int y, int button)
 {
     MsgRouting mrResult = AwtComponent::WmMouseUp(flags, x, y, button);
@@ -209,7 +209,7 @@ AwtButton::NotifyListeners()
  * grabs are done for all presses in order to correctly send drag and release
  * events.  However, WM_COMMAND message aren't sent when the mouse is grabbed,
  * so ActionListeners for mouse clicks are sent via WmMouseUp/WmNotify().
- * For some reason, if the right mouse button is held down when left-clicking
+ * For some reason, if the right mouse button is held down when left-clicking 
  * on a Button, WM_COMMAND _IS_ sent.  This resulted in two ActionEvents being
  * sent in this case.  To fix the problem, we handle typing space bar similar to
  * left clicks - in WmKeyUp(), and do nothing for WM_COMMAND.  -bchristi
@@ -227,8 +227,8 @@ AwtButton::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
     if (env->EnsureLocalCapacity(3) < 0) {
-        /* is this OK? */
-        return mrConsume;
+	/* is this OK? */
+	return mrConsume;
     }
 
     jobject self = GetPeer(env);
@@ -272,7 +272,7 @@ AwtButton::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
         const int inf = 3; /* heuristic decision */
         RECT focusRect;
         VERIFY(::CopyRect(&focusRect, &rect));
-        VERIFY(::InflateRect(&focusRect,-inf,-inf));
+	VERIFY(::InflateRect(&focusRect,-inf,-inf));
         VERIFY(::DrawFocusRect(hDC, &focusRect));
     }
 
@@ -320,7 +320,7 @@ void AwtButton::_SetLabel(void *param)
 
     int badAlloc = 0;
     AwtComponent *c = NULL;
-
+    
     PDATA pData;
     JNI_CHECK_PEER_GOTO(button, done);
 
@@ -376,7 +376,7 @@ Java_sun_awt_windows_WButtonPeer_initIDs(JNIEnv *env, jclass cls)
 
     cls = env->FindClass("java/awt/Button");
     if (cls == NULL) {
-        return;
+	return;
     }
     AwtButton::labelID = env->GetFieldID(cls, "label", "Ljava/lang/String;");
     DASSERT(AwtButton::labelID != NULL);
@@ -391,7 +391,7 @@ Java_sun_awt_windows_WButtonPeer_initIDs(JNIEnv *env, jclass cls)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WButtonPeer_setLabel(JNIEnv *env, jobject self,
-                                          jstring label)
+					  jstring label)
 {
     TRY;
 
@@ -415,7 +415,7 @@ Java_sun_awt_windows_WButtonPeer_setLabel(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WButtonPeer_create(JNIEnv *env, jobject self,
-                                        jobject parent)
+					jobject parent)
 {
     TRY;
 

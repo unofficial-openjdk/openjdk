@@ -34,48 +34,48 @@ public class MySSLSocketFacImpl extends SSLSocketFactory {
     private static String[] supportedCS = CipherSuites.CUSTOM;
 
     public static void useStandardCipherSuites() {
-        supportedCS = CipherSuites.STANDARD;
+	supportedCS = CipherSuites.STANDARD;
     }
     public static void useCustomCipherSuites() {
         supportedCS = CipherSuites.CUSTOM;
     }
 
     public MySSLSocketFacImpl() {
-        super();
+	super();
     }
     public String[] getDefaultCipherSuites() {
-        return (String[]) supportedCS.clone();
+	return (String[]) supportedCS.clone();
     }
     public String[] getSupportedCipherSuites() {
-        return getDefaultCipherSuites();
+	return getDefaultCipherSuites();
     }
     public Socket createSocket(Socket s, String host, int port,
-        boolean autoClose) { return new MySSLSocket(this); }
+	boolean autoClose) { return new MySSLSocket(this); }
     public Socket createSocket(InetAddress host, int port) {
-        return new MySSLSocket(this);
+	return new MySSLSocket(this); 
     }
-    public Socket createSocket(InetAddress address, int port,
-        InetAddress localAddress, int localPort) {
-        return new MySSLSocket(this);
+    public Socket createSocket(InetAddress address, int port, 
+	InetAddress localAddress, int localPort) {
+	return new MySSLSocket(this); 
     }
     public Socket createSocket(String host, int port) {
-        return new MySSLSocket(this);
+	return new MySSLSocket(this);
     }
-    public Socket createSocket(String host, int port, InetAddress
-        localHost, int localPort) { return new MySSLSocket(this); }
+    public Socket createSocket(String host, int port, InetAddress 
+	localHost, int localPort) { return new MySSLSocket(this); }
 }
 
 class MySSLSocket extends SSLSocket {
     SSLSocketFactory fac = null;
 
     public MySSLSocket(SSLSocketFactory fac) {
-        this.fac = fac;
+	this.fac = fac;
     }
     public String[] getSupportedCipherSuites() {
-        return fac.getSupportedCipherSuites();
+	return fac.getSupportedCipherSuites();
     }
     public String[] getEnabledCipherSuites() {
-        return fac.getSupportedCipherSuites();
+	return fac.getSupportedCipherSuites();
     }
     public void setEnabledCipherSuites(String suites[]) {}
     public String[] getSupportedProtocols() { return null; }
@@ -83,9 +83,9 @@ class MySSLSocket extends SSLSocket {
     public void setEnabledProtocols(String protocols[]) {}
     public SSLSession getSession() { return null; }
     public void addHandshakeCompletedListener
-        (HandshakeCompletedListener listener) {}
+	(HandshakeCompletedListener listener) {}
     public void removeHandshakeCompletedListener
-        (HandshakeCompletedListener listener) {}
+	(HandshakeCompletedListener listener) {}
     public void startHandshake() throws IOException {}
     public void setUseClientMode(boolean mode) {}
     public boolean getUseClientMode() { return true; }

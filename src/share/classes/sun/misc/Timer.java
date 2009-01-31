@@ -25,10 +25,10 @@
 
 package sun.misc;
 
-/**
-    A Timer object is used by algorithms that require timed events.
+/** 
+    A Timer object is used by algorithms that require timed events.  
     For example, in an animation loop, a timer would help in
-    determining when to change frames.
+    determining when to change frames.  
 
     A timer has an interval which determines when it "ticks";
     that is, a timer delays for the specified interval and then
@@ -41,12 +41,12 @@ package sun.misc;
         public void tick(Timer timer) {
             System.out.println("tick");
         }
-        public static void main(String args[]) {
+	public static void main(String args[]) {
             (new Timer(this, 5000)).cont();
         }
     }
     </pre>
-
+        
     A timer can be stopped, continued, or reset at any time.
     A timer's state is not stopped while it's calling the
     owner's tick() method.
@@ -65,9 +65,9 @@ package sun.misc;
     while calling any of the Timer operations below otherwise
     the Timer class will deadlock.
 
-    @author     Patrick Chan
+    @author	Patrick Chan
 */
-
+    
 /*
     Synchronization issues:  there are two data structures that
     require locking.  A Timer object and the Timer queue
@@ -88,12 +88,12 @@ package sun.misc;
 public class Timer {
     /**
      * This is the owner of the timer.  Its tick method is
-     * called when the timer ticks.
+     * called when the timer ticks. 
      */
     public Timeable owner;
 
     /*
-     * This is the interval of time in ms.
+     * This is the interval of time in ms. 
      */
     long interval;
 
@@ -110,26 +110,26 @@ public class Timer {
     /*
      * This is the time remaining before the timer ticks.  It
      * is only valid if 'stopped' is true.  If the timer is
-     * continued, the next tick will happen remaingTime
+     * continued, the next tick will happen remaingTime 
      * milliseconds later.
      */
     long remainingTime;
 
-    /*
+    /*     
      * True iff the timer is in regular mode.
      */
     boolean regular;
 
-    /*
-     * True iff the timer has been stopped.
+    /*     
+     * True iff the timer has been stopped. 
      */
     boolean stopped;
 
     /* **************************************************************
-     * Timer queue-related variables
+     * Timer queue-related variables 
      * ************************************************************** */
 
-    /*
+    /* 
      * A link to another timer object.  This is used while the
      * timer object is enqueued in the timer queue.
      */
@@ -164,26 +164,26 @@ public class Timer {
         sleepUntil = System.currentTimeMillis();
         stopped = true;
         synchronized (getClass()) {
-            if (timerThread == null) {
-                timerThread = new TimerThread();
-            }
+	    if (timerThread == null) {
+		timerThread = new TimerThread();
+	    }
         }
     }
 
-    /**
-     * Returns true if this timer is stopped.
+    /** 
+     * Returns true if this timer is stopped. 
      */
     public synchronized boolean isStopped() {
         return stopped;
     }
 
-    /**
+    /** 
      * Stops the timer.  The amount of time the timer has already
      * delayed is saved so if the timer is continued, it will only
-     * delay for the amount of time remaining.
-     * Note that even after stopping a timer, one more tick may
+     * delay for the amount of time remaining. 
+     * Note that even after stopping a timer, one more tick may 
      * still occur.
-     * This method is MT-safe; i.e. it is synchronized but for
+     * This method is MT-safe; i.e. it is synchronized but for 
      * implementation reasons, the synchronized modifier cannot
      * be included in the method declaration.
      */
@@ -193,43 +193,43 @@ public class Timer {
         synchronized (timerThread) {
             synchronized (this) {
                 if (!stopped) {
-                    TimerThread.dequeue(this);
-                    remainingTime = Math.max(0, sleepUntil - now);
+		    TimerThread.dequeue(this);
+		    remainingTime = Math.max(0, sleepUntil - now);
                     sleepUntil = now;        // stop time
-                    stopped = true;
+		    stopped = true;
                 }
-            }
+	    }
         }
     }
-
-    /**
+    
+    /** 
      * Continue the timer.  The next tick will come at getRemainingTime()
-     * milliseconds later.  If the timer is not stopped, this
-     * call will be a no-op.
-     * This method is MT-safe; i.e. it is synchronized but for
+     * milliseconds later.  If the timer is not stopped, this 
+     * call will be a no-op. 
+     * This method is MT-safe; i.e. it is synchronized but for 
      * implementation reasons, the synchronized modifier cannot
      * be included in the method declaration.
      */
     public void cont() {
         synchronized (timerThread) {
             synchronized (this) {
-                if (stopped) {
+		if (stopped) {
                     // The TimerTickThread avoids requeuing the
                     // timer only if the sleepUntil value has changed.
                     // The following guarantees that the sleepUntil
                     // value will be different; without this guarantee,
-                    // it's theoretically possible for the timer to be
+                    // it's theoretically possible for the timer to be 
                     // inserted twice.
-                    sleepUntil = Math.max(sleepUntil + 1,
+		    sleepUntil = Math.max(sleepUntil + 1, 
                         System.currentTimeMillis() + remainingTime);
-                    TimerThread.enqueue(this);
-                    stopped = false;
-                }
+		    TimerThread.enqueue(this);
+		    stopped = false;
+		}
             }
         }
     }
 
-    /**
+    /** 
      * Resets the timer's remaining time to the timer's interval.
      * If the timer's running state is not altered.
      */
@@ -240,8 +240,8 @@ public class Timer {
             }
         }
     }
-
-    /**
+        
+    /** 
      * Returns the time at which the timer was last stopped.  The
      * return value is valid only if the timer is stopped.
      */
@@ -249,7 +249,7 @@ public class Timer {
         return sleepUntil;
     }
 
-    /**
+    /** 
      * Returns the timer's interval.
      */
     public synchronized long getInterval() {
@@ -264,11 +264,11 @@ public class Timer {
      * @param interval new interval of the timer in milliseconds
      */
     public synchronized void setInterval(long interval) {
-        this.interval = interval;
+	this.interval = interval;
     }
 
-    /**
-     * Returns the remaining time before the timer's next tick.
+    /** 
+     * Returns the remaining time before the timer's next tick. 
      * The return value is valid only if timer is stopped.
      */
     public synchronized long getRemainingTime() {
@@ -278,7 +278,7 @@ public class Timer {
     /**
      * Sets the remaining time before the timer's next tick.
      * This method does not alter the timer's running state.
-     * This method is MT-safe; i.e. it is synchronized but for
+     * This method is MT-safe; i.e. it is synchronized but for 
      * implementation reasons, the synchronized modifier cannot
      * be included in the method declaration.
      * @param time new remaining time in milliseconds.
@@ -287,10 +287,10 @@ public class Timer {
         synchronized (timerThread) {
             synchronized (this) {
                 if (stopped) {
-                    remainingTime = time;
+		    remainingTime = time;
                 } else {
                     stop();
-                    remainingTime = time;
+		    remainingTime = time;
                     cont();
                 }
             }
@@ -298,11 +298,11 @@ public class Timer {
     }
 
     /**
-     * In regular mode, a timer ticks at the specified interval,
-     * regardless of how long the owner's tick() method takes.
-     * While the timer is running, no ticks are ever discarded.
-     * That means that if the owner's tick() method takes longer
-     * than the interval, the ticks that would have occurred are
+     * In regular mode, a timer ticks at the specified interval, 
+     * regardless of how long the owner's tick() method takes.  
+     * While the timer is running, no ticks are ever discarded.  
+     * That means that if the owner's tick() method takes longer 
+     * than the interval, the ticks that would have occurred are 
      * delivered immediately.
      *
      * In irregular mode, a timer starts delaying for exactly
@@ -312,14 +312,14 @@ public class Timer {
         this.regular = regular;
     }
 
-    /*
+    /* 
      * This method is used only for testing purposes.
      */
     protected Thread getTimerThread() {
         return TimerThread.timerThread;
     }
 }
-
+    
 
 /*
 
@@ -373,40 +373,40 @@ class TimerThread extends Thread {
             long delay;
 
             while (timerQueue == null) {
-                try {
+		try {
                     wait();
-                } catch (InterruptedException ex) {
-                   // Just drop through and check timerQueue.
-                }
+		} catch (InterruptedException ex) {
+		   // Just drop through and check timerQueue.
+		}
             }
-            notified = false;
-            delay = timerQueue.sleepUntil - System.currentTimeMillis();
+	    notified = false;
+	    delay = timerQueue.sleepUntil - System.currentTimeMillis();
             if (delay > 0) {
-                try {
-                    wait(delay);
-                } catch (InterruptedException ex) {
-                    // Just drop through.
-                }
+		try {
+		    wait(delay);
+		} catch (InterruptedException ex) {
+		    // Just drop through.
+		}
             }
             // remove from timer queue.
-            if (!notified) {
+	    if (!notified) {
                 Timer timer = timerQueue;
-                timerQueue = timerQueue.next;
-                TimerTickThread thr = TimerTickThread.call(
-                    timer, timer.sleepUntil);
+		timerQueue = timerQueue.next;
+		TimerTickThread thr = TimerTickThread.call(
+                    timer, timer.sleepUntil);    
                 if (debug) {
                     long delta = (System.currentTimeMillis() - timer.sleepUntil);
-                    System.out.println("tick(" + thr.getName() + ","
+                    System.out.println("tick(" + thr.getName() + "," 
                         + timer.interval + ","+delta+ ")");
                     if (delta > 250) {
-                        System.out.println("*** BIG DELAY ***");
+			System.out.println("*** BIG DELAY ***");
                     }
                 }
             }
         }
     }
 
-    /* *******************************************************
+    /* ******************************************************* 
        Timer Queue
        ******************************************************* */
 
@@ -417,90 +417,90 @@ class TimerThread extends Thread {
 
     /*
      * Uses timer.sleepUntil to determine where in the queue
-     * to insert the timer object.
+     * to insert the timer object.  
      * A new ticker thread is created only if the timer
      * is inserted at the beginning of the queue.
      * The timer must not already be in the queue.
      * Assumes the caller has the TimerThread monitor.
      */
     static protected void enqueue(Timer timer) {
-        Timer prev = null;
+        Timer prev = null; 
         Timer cur = timerQueue;
 
         if (cur == null || timer.sleepUntil <= cur.sleepUntil) {
-            // insert at front of queue
+	    // insert at front of queue
             timer.next = timerQueue;
             timerQueue = timer;
-            notified = true;
-            timerThread.notify();
+	    notified = true;
+	    timerThread.notify();
         } else {
             do {
-                prev = cur;
-                cur = cur.next;
+		prev = cur;
+		cur = cur.next;
             } while (cur != null && timer.sleepUntil > cur.sleepUntil);
-            // insert or append to the timer queue
-            timer.next = cur;
-            prev.next = timer;
-        }
+	    // insert or append to the timer queue
+	    timer.next = cur;
+	    prev.next = timer;
+	}
         if (debug) {
-            long now = System.currentTimeMillis();
+	    long now = System.currentTimeMillis();
 
-            System.out.print(Thread.currentThread().getName()
+	    System.out.print(Thread.currentThread().getName() 
                 + ": enqueue " + timer.interval + ": ");
-            cur = timerQueue;
-            while(cur != null) {
+	    cur = timerQueue;
+	    while(cur != null) {
                 long delta = cur.sleepUntil - now;
-                System.out.print(cur.interval + "(" + delta + ") ");
-                cur = cur.next;
-            }
-            System.out.println();
+		System.out.print(cur.interval + "(" + delta + ") ");
+		cur = cur.next;
+	    }
+	    System.out.println();
         }
     }
 
     /*
      * If the timer is not in the queue, returns false;
-     * otherwise removes the timer from the timer queue and returns true.
+     * otherwise removes the timer from the timer queue and returns true. 
      * Assumes the caller has the TimerThread monitor.
      */
     static protected boolean dequeue(Timer timer) {
-        Timer prev = null;
-        Timer cur = timerQueue;
+	Timer prev = null;
+	Timer cur = timerQueue;
 
-        while (cur != null && cur != timer) {
-            prev = cur;
-            cur = cur.next;
-        }
+	while (cur != null && cur != timer) {
+	    prev = cur;
+	    cur = cur.next;
+	}
         if (cur == null) {
             if (debug) {
-                System.out.println(Thread.currentThread().getName()
-                    + ": dequeue " + timer.interval + ": no-op");
+		System.out.println(Thread.currentThread().getName() 
+		    + ": dequeue " + timer.interval + ": no-op");
             }
             return false;
-        }       if (prev == null) {
-            timerQueue = timer.next;
-            notified = true;
-            timerThread.notify();
-        } else {
-            prev.next = timer.next;
-        }
-        timer.next = null;
+        }	if (prev == null) {
+	    timerQueue = timer.next;
+	    notified = true;
+	    timerThread.notify();
+	} else {
+	    prev.next = timer.next;
+	}
+	timer.next = null;
         if (debug) {
-            long now = System.currentTimeMillis();
+	    long now = System.currentTimeMillis();
 
-            System.out.print(Thread.currentThread().getName()
+            System.out.print(Thread.currentThread().getName() 
                 + ": dequeue " + timer.interval + ": ");
-            cur = timerQueue;
-            while(cur != null) {
+	    cur = timerQueue;
+	    while(cur != null) {
                 long delta = cur.sleepUntil - now;
-                System.out.print(cur.interval + "(" + delta + ") ");
-                cur = cur.next;
-            }
-            System.out.println();
+		System.out.print(cur.interval + "(" + delta + ") ");
+		cur = cur.next;
+	    }
+	    System.out.println();
         }
-        return true;
+	return true;
     }
 
-    /*
+    /* 
      * Inserts the timer back into the queue.  This method
      * is used by a callback thread after it has called the
      * timer owner's tick() method.  This method recomputes
@@ -508,22 +508,22 @@ class TimerThread extends Thread {
      * Assumes the caller has the TimerThread and Timer monitor.
      */
     protected static void requeue(Timer timer) {
-        if (!timer.stopped) {
-            long now = System.currentTimeMillis();
-            if (timer.regular) {
-                timer.sleepUntil += timer.interval;
-            } else {
-                timer.sleepUntil = now + timer.interval;
-            }
-            enqueue(timer);
-        } else if (debug) {
-            System.out.println(Thread.currentThread().getName()
-                + ": requeue " + timer.interval + ": no-op");
-        }
+	if (!timer.stopped) {
+	    long now = System.currentTimeMillis();
+	    if (timer.regular) {
+		timer.sleepUntil += timer.interval;
+	    } else {
+		timer.sleepUntil = now + timer.interval;
+	    }
+	    enqueue(timer);
+	} else if (debug) {
+	    System.out.println(Thread.currentThread().getName() 
+		+ ": requeue " + timer.interval + ": no-op");
+	}
     }
 }
 
-/*
+/* 
 
 This class implements a simple thread whose only purpose is to call a
 timer owner's tick() method.  A small fixed-sized pool of threads is
@@ -538,8 +538,8 @@ monitor.
 */
 
 class TimerTickThread extends Thread {
-    /*
-     * Maximum size of the thread pool.
+    /* 
+     * Maximum size of the thread pool. 
      */
     static final int MAX_POOL_SIZE = 3;
 
@@ -549,18 +549,18 @@ class TimerTickThread extends Thread {
     static int curPoolSize = 0;
 
     /*
-     * The pool of timer threads.
+     * The pool of timer threads. 
      */
     static TimerTickThread pool = null;
 
-    /*
-     * Is used when linked into the thread pool.
+    /* 
+     * Is used when linked into the thread pool. 
      */
     TimerTickThread next = null;
 
     /*
      * This is the handle to the timer whose owner's
-     * tick() method will be called.
+     * tick() method will be called. 
      */
     Timer timer;
 
@@ -572,7 +572,7 @@ class TimerTickThread extends Thread {
      */
     long lastSleepUntil;
 
-    /*
+    /* 
      * Creates a new callback thread to call the timer owner's
      * tick() method.  A thread is taken from the pool if one
      * is available, otherwise, a new thread is created.
@@ -593,53 +593,53 @@ class TimerTickThread extends Thread {
             thread.timer = timer;
             thread.lastSleepUntil = sleepUntil;
             synchronized (thread) {
-                thread.notify();
+		thread.notify();
             }
         }
         return thread;
     }
 
-    /*
+    /* 
      * Returns false if the thread should simply exit;
-     * otherwise the thread is returned the pool, where
-     * it waits to be notified.  (I did try to use the
+     * otherwise the thread is returned the pool, where 
+     * it waits to be notified.  (I did try to use the 
      * class monitor but the time between the notify
-     * and breaking out of the wait seemed to take
+     * and breaking out of the wait seemed to take 
      * significantly longer; need to look into this later.)
      */
     private boolean returnToPool() {
         synchronized (getClass()) {
-            if (curPoolSize >= MAX_POOL_SIZE) {
-                return false;
-            }
-            next = pool;
-            pool = this;
-            curPoolSize++;
-            timer = null;
-        }
-        while (timer == null) {
-            synchronized (this) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                   // Just drop through and retest timer.
-                }
-            }
-        }
+	    if (curPoolSize >= MAX_POOL_SIZE) {
+		return false;
+	    }
+	    next = pool;
+	    pool = this;
+	    curPoolSize++;
+	    timer = null;
+	}
+	while (timer == null) {
+       	    synchronized (this) {
+	        try {
+	    	    wait();
+		} catch (InterruptedException ex) {
+		   // Just drop through and retest timer.
+		}
+	    }
+        } 
         synchronized (getClass()) {
-            curPoolSize--;
+	    curPoolSize--;
         }
-        return true;
+	return true;
     }
 
     public void run() {
         do {
-            timer.owner.tick(timer);
+	    timer.owner.tick(timer);
             synchronized (TimerThread.timerThread) {
-                synchronized (timer) {
-                    if (lastSleepUntil == timer.sleepUntil) {
-                        TimerThread.requeue(timer);
-                    }
+		synchronized (timer) {
+		    if (lastSleepUntil == timer.sleepUntil) {
+			TimerThread.requeue(timer);
+		    }
                 }
             }
         } while (returnToPool());

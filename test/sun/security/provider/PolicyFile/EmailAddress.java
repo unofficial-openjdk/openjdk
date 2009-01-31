@@ -28,27 +28,27 @@
  *
  *      fix has compatibility ramifications for policy.
  *
- *      this test is related to the Alias.java test in the same directory.
- *      the email address encoding in EmailAddress.policy is the one
- *      taken from the persistent certificate stored in Alias.keystore,
- *      and which has the incorrect encoding.  the alias is 'duke',
- *      and the DN is:  "emailaddress=duke@sun".  the cert was generated
- *      by a 1.4 JDK, so it has the wrong encoding for "duke@sun"
- *      (UTF-8 string instead of IA5String, i believe).
+ *	this test is related to the Alias.java test in the same directory.
+ *	the email address encoding in EmailAddress.policy is the one
+ *	taken from the persistent certificate stored in Alias.keystore,
+ *	and which has the incorrect encoding.  the alias is 'duke',
+ *	and the DN is:  "emailaddress=duke@sun".  the cert was generated
+ *	by a 1.4 JDK, so it has the wrong encoding for "duke@sun"
+ *	(UTF-8 string instead of IA5String, i believe).
  *
- *      administrators would have placed an incorrectly encoded DN entry
- *      like this in their policies.  the fix for the above bug
- *      would have broken their policy because the incorrect
- *      encoding would be compared to a properly encoded DN from
- *      the current call thread.  if you run this test without
- *      a fix for the compatibility issue, the debug output will
- *      show the differences in the encodings.
+ *	administrators would have placed an incorrectly encoded DN entry
+ *	like this in their policies.  the fix for the above bug
+ *	would have broken their policy because the incorrect
+ *	encoding would be compared to a properly encoded DN from
+ *	the current call thread.  if you run this test without
+ *	a fix for the compatibility issue, the debug output will
+ *	show the differences in the encodings.
  *
- *      so in addition to fixing the encoding,
- *      the policy implementation was updated to read the
- *      incorrectly encoded DN strings, generate new X500Principals,
- *      and dump out new DN strings that had the correct encoding.
- *      thus access control checks would no longer fail.
+ *	so in addition to fixing the encoding,
+ *	the policy implementation was updated to read the
+ *	incorrectly encoded DN strings, generate new X500Principals,
+ *	and dump out new DN strings that had the correct encoding.
+ *	thus access control checks would no longer fail.
  *
  * @run main/othervm/policy=EmailAddress.policy -Djava.security.debug=policy EmailAddress
  */
@@ -60,33 +60,33 @@ public class EmailAddress {
 
     public static void main(String[] args) {
 
-        Principal[] principals = new Principal[1];
-        principals[0] = new javax.security.auth.x500.X500Principal
-                                        ("emailaddress=duke@sun");
+	Principal[] principals = new Principal[1];
+	principals[0] = new javax.security.auth.x500.X500Principal
+					("emailaddress=duke@sun");
 
-        java.net.URL url = null;
-        try {
-            url = new java.net.URL("http://emailaddress");
-        } catch (java.net.MalformedURLException mue) {
-            System.out.println("test 1 failed");
-            throw new SecurityException(mue.getMessage());
-        }
-        CodeSource cs =
-            new CodeSource(url, (java.security.cert.Certificate[]) null);
+	java.net.URL url = null;
+	try {
+	    url = new java.net.URL("http://emailaddress");
+	} catch (java.net.MalformedURLException mue) {
+	    System.out.println("test 1 failed");
+	    throw new SecurityException(mue.getMessage());
+	}
+	CodeSource cs =
+	    new CodeSource(url, (java.security.cert.Certificate[]) null);
 
-        ProtectionDomain pd = new ProtectionDomain
-                (cs,
-                null,
-                null,
-                principals);
+	ProtectionDomain pd = new ProtectionDomain
+		(cs,
+		null,
+		null,
+		principals);
 
-        PermissionCollection perms = Policy.getPolicy().getPermissions(pd);
+	PermissionCollection perms = Policy.getPolicy().getPermissions(pd);
 
-        if (perms.implies(new SecurityPermission("EMAILADDRESS"))) {
-            System.out.println("test succeeded");
-        } else {
-            System.out.println("test 2 failed");
-            throw new SecurityException("test failed");
-        }
+	if (perms.implies(new SecurityPermission("EMAILADDRESS"))) {
+	    System.out.println("test succeeded");
+	} else {
+	    System.out.println("test 2 failed");
+	    throw new SecurityException("test failed");
+	}
     }
 }

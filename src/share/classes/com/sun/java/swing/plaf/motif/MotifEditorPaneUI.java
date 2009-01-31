@@ -40,6 +40,7 @@ import javax.swing.plaf.basic.BasicEditorPaneUI;
  * long term persistence.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class MotifEditorPaneUI extends BasicEditorPaneUI {
 
@@ -62,7 +63,9 @@ public class MotifEditorPaneUI extends BasicEditorPaneUI {
      * @return the caret object
      */
     protected Caret createCaret() {
-        return MotifTextUI.createCaret();
+	return MotifTextUI.createCaret();
     }
 
 }
+
+

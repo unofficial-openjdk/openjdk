@@ -25,7 +25,7 @@
  * @test
  * @bug 4511783
  * @summary Test that setTrafficClass/getTraffiClass don't
- *          throw an exception
+ *	    throw an exception
  */
 import java.net.*;
 import java.nio.*;
@@ -38,44 +38,44 @@ public class TrafficClass {
     static int failures = 0;
 
     static void testDatagramSocket(DatagramSocket s) {
-        try {
-            s.setTrafficClass( IPTOS_RELIABILITY );
-            int tc = s.getTrafficClass();
-        } catch (Exception e) {
-            failures++;
-            System.err.println("testDatagramSocket failed: " + e);
-        }
+	try {
+	    s.setTrafficClass( IPTOS_RELIABILITY );
+	    int tc = s.getTrafficClass();
+	} catch (Exception e) {
+	    failures++;
+	    System.err.println("testDatagramSocket failed: " + e);
+	}
     }
 
     static void testSocket(Socket s) {
-        try {
+	try {
             s.setTrafficClass(IPTOS_RELIABILITY);
             int tc = s.getTrafficClass();
         } catch (Exception e) {
-            failures++;
-            System.err.println("testSocket failed: " + e);
+	    failures++;
+	    System.err.println("testSocket failed: " + e);
         }
 
     }
 
     public static void main(String args[]) throws Exception {
 
-        DatagramSocket ds = new DatagramSocket();
-        testDatagramSocket(ds);
+	DatagramSocket ds = new DatagramSocket();	
+	testDatagramSocket(ds);
 
-        DatagramChannel dc = DatagramChannel.open();
-        testDatagramSocket(dc.socket());
+	DatagramChannel dc = DatagramChannel.open();
+	testDatagramSocket(dc.socket());
+	 
+	Socket s = new Socket();
+	testSocket(s);
 
-        Socket s = new Socket();
-        testSocket(s);
+	SocketChannel sc = SocketChannel.open();
+	testSocket(sc.socket()); 
 
-        SocketChannel sc = SocketChannel.open();
-        testSocket(sc.socket());
-
-        if (failures > 0) {
-            throw new Exception(failures + " sub-test(s) failed - " +
-                "see log for details.");
-        }
+	if (failures > 0) {
+	    throw new Exception(failures + " sub-test(s) failed - " +
+		"see log for details.");
+	}
     }
 
 }

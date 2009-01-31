@@ -30,7 +30,7 @@ import sun.net.spi.nameservice.*;
 public class Simple1NameServiceDescriptor implements NameServiceDescriptor {
     public NameService createNameService() {
         SimpleNameService ns = new SimpleNameService();
-
+        
         // both providers know this host, but the address is different
         ns.put("blade", "10.0.0.1");
         // only this provider knows this host

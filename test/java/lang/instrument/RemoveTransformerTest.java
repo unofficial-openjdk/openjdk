@@ -31,8 +31,8 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar RemoveTransformerTest RemoveTransformerTest
  */
-public class
-RemoveTransformerTest
+public class 
+RemoveTransformerTest 
     extends ATransformerManagementTestCase
 {
 
@@ -46,19 +46,19 @@ RemoveTransformerTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new RemoveTransformerTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testRemoveTransformer();
     }
-
-
+        
+    
     /**
      * Add and remove a bunch of transformers to the manager and
      * check that they get called.
@@ -74,8 +74,8 @@ RemoveTransformerTest
                 removeTransformerFromManager(fInst, kTransformerSamples[i]);
             }
         }
-
+        
         verifyTransformers(fInst);
-    }
-
+    }   
+    
 }

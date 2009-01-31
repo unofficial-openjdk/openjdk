@@ -35,7 +35,7 @@ import java.util.logging.*;
 import java.util.List;
 import java.util.ListIterator;
 
-public class LoggingMXBeanTest2
+public class LoggingMXBeanTest2 
 {
 
     static LoggingMXBean mbean = LogManager.getLoggingMXBean();
@@ -85,23 +85,23 @@ public class LoggingMXBeanTest2
         System.out.println("  : Level for Logger " + LOGGER_NAME_1 + " : " + l1);
         if (!l1.equals(Level.FINE.getName())) {
             throw new RuntimeException(
-                "Expected level for " + LOGGER_NAME_1 + " = " +
+                "Expected level for " + LOGGER_NAME_1 + " = " + 
                  Level.FINE.getName() + " but got " + l1);
         }
         String l2 = mbean.getLoggerLevel(LOGGER_NAME_2);
         System.out.println("  : Level for Logger " + LOGGER_NAME_2 + " : " + l2);
         if (!l2.equals("")) {
             throw new RuntimeException(
-                "Expected level for " + LOGGER_NAME_2 + " = \"\"" +
+                "Expected level for " + LOGGER_NAME_2 + " = \"\"" + 
                  " but got " + l2);
         }
         String l3 = mbean.getLoggerLevel(UNKNOWN_LOGGER_NAME);
         System.out.println("  : Level for unknown logger : " + l3);
         if (l3 != null) {
             throw new RuntimeException(
-                "Expected level for " + UNKNOWN_LOGGER_NAME + " = null" +
+                "Expected level for " + UNKNOWN_LOGGER_NAME + " = null" + 
                  " but got " + l3);
-        }
+        } 
 
         System.out.println("Test setLoggerLevel");
         mbean.setLoggerLevel(LOGGER_NAME_1, "INFO");
@@ -109,7 +109,7 @@ public class LoggingMXBeanTest2
         Level l = logger1.getLevel();
         if (l != Level.INFO) {
             throw new RuntimeException(
-                "Expected level for " + LOGGER_NAME_1 + " = " +
+                "Expected level for " + LOGGER_NAME_1 + " = " + 
                  Level.INFO + " but got " + l);
         }
 
@@ -118,19 +118,19 @@ public class LoggingMXBeanTest2
         l = logger2.getLevel();
         if (l != Level.SEVERE) {
             throw new RuntimeException(
-                "Expected level for " + LOGGER_NAME_2 + " = " +
+                "Expected level for " + LOGGER_NAME_2 + " = " + 
                  Level.SEVERE+ " but got " + l);
         }
 
-        mbean.setLoggerLevel(LOGGER_NAME_1, null);
+        mbean.setLoggerLevel(LOGGER_NAME_1, null); 
         System.out.println("  : Set Level for Logger " + LOGGER_NAME_1 + " to: null");
         l = logger1.getLevel();
         if (l != null) {
             throw new RuntimeException(
-                "Expected level for " + LOGGER_NAME_1 + " = null " +
+                "Expected level for " + LOGGER_NAME_1 + " = null " + 
                  " but got " + l);
         }
-
+      
         boolean iaeCaught = false;
         System.out.println("  : Set Level for unknown Logger to: FINE");
         try {
@@ -144,7 +144,7 @@ public class LoggingMXBeanTest2
             throw new RuntimeException(
                 "Expected IllegalArgumentException for setting level for " +
                 UNKNOWN_LOGGER_NAME + " not thrown");
-        }
+        } 
         iaeCaught = false;
         System.out.println("  : Set Level for Logger " + LOGGER_NAME_1 + " to: DUMMY");
         try {
@@ -157,29 +157,29 @@ public class LoggingMXBeanTest2
         if (!iaeCaught) {
             throw new RuntimeException(
                 "Expected IllegalArgumentException for invalid level.");
-        }
+        } 
 
-
+         
         System.out.println("Test getParentLoggerName");
         String p1 = mbean.getParentLoggerName(LOGGER_NAME_2);
         System.out.println("  : Parent Logger for " + LOGGER_NAME_2 + " : " + p1);
         if (!p1.equals(LOGGER_NAME_1)) {
             throw new RuntimeException(
-                "Expected parent for " + LOGGER_NAME_2 + " = " +
+                "Expected parent for " + LOGGER_NAME_2 + " = " + 
                 LOGGER_NAME_1 + " but got " + p1);
-        }
+        } 
         String p2 = mbean.getParentLoggerName("");
         System.out.println("  : Parent Logger for \"\" : " + p2);
         if (!p2.equals("")) {
             throw new RuntimeException(
-                "Expected parent for root logger \"\" = \"\"" +
+                "Expected parent for root logger \"\" = \"\"" + 
                 " but got " + p2);
-        }
+        } 
         String p3 = mbean.getParentLoggerName(UNKNOWN_LOGGER_NAME);
         System.out.println("  : Parent Logger for unknown logger : " + p3);
         if (p3 != null) {
             throw new RuntimeException(
-                "Expected level for " + UNKNOWN_LOGGER_NAME + " = null" +
+                "Expected level for " + UNKNOWN_LOGGER_NAME + " = null" + 
                  " but got " + p3);
         }
     }
@@ -188,3 +188,5 @@ public class LoggingMXBeanTest2
         LoggingMXBeanTest2 p = new LoggingMXBeanTest2();
     }
 }
+
+ 

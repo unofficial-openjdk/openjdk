@@ -66,7 +66,7 @@ int isAbsolute(const char* path) {
 
 /* A normal Unix pathname contains no duplicate slashes and does not end
    with a slash.  It may be the empty string. */
-
+                                                                                                   
 /* Normalize the given pathname, whose length is len, starting at the given
    offset; everything before this offset is already normal. */
 static char* normalizePath(const char* pathname, int len, int off) {
@@ -83,20 +83,20 @@ static char* normalizePath(const char* pathname, int len, int off) {
     sbLen = 0;
 
     if (off > 0) {
-        memcpy(sb, pathname, off);
-        sbLen = off;
+	memcpy(sb, pathname, off);
+	sbLen = off;
     }
-
+       
     prevChar = 0;
     for (i = off; i < n; i++) {
         char c = pathname[i];
         if ((prevChar == slash) && (c == slash)) continue;
-        sb[sbLen++] = c;
+	sb[sbLen++] = c;
         prevChar = c;
     }
     return sb;
 }
-
+                                                                                                    
 /* Check that the given pathname is normal.  If not, invoke the real
    normalizer on the part of the pathname that requires normalization.
    This way we iterate through the whole pathname string only once. */
@@ -119,26 +119,26 @@ char* resolve(const char* parent, const char* child) {
     char* theChars;
     int pn = strlen(parent);
     int cn = strlen(child);
-    int childStart = 0;
+    int childStart = 0;  
     int parentEnd = pn;
 
     if (pn > 0 && parent[pn-1] == slash) {
-        parentEnd--;
+	parentEnd--;
     }
     len = parentEnd + cn - childStart;
     if (child[0] == slash) {
         theChars = (char*)malloc(len+1);
-        if (parentEnd > 0)
+	if (parentEnd > 0) 
             memcpy(theChars, parent, parentEnd);
-        if (cn > 0)
+	if (cn > 0) 
             memcpy(theChars+parentEnd, child, cn);
         theChars[len] = '\0';
     } else {
         theChars = (char*)malloc(len+2);
-        if (parentEnd > 0)
+	if (parentEnd > 0) 
             memcpy(theChars, parent, parentEnd);
         theChars[parentEnd] = slash;
-        if (cn > 0)
+	if (cn > 0)
             memcpy(theChars+parentEnd+1, child, cn);
         theChars[len+1] = '\0';
     }
@@ -148,14 +148,15 @@ char* resolve(const char* parent, const char* child) {
 char* fromURIPath(const char* path) {
     int len = strlen(path);
     if (len > 1 && path[len-1] == slash) {
-        // "/foo/" --> "/foo", but "/" --> "/"
+	// "/foo/" --> "/foo", but "/" --> "/"
         char* str = (char*)malloc(len);
-        if (str != NULL) {
-            memcpy(str, path, len-1);
-            str[len-1] = '\0';
-        }
-        return str;
+	if (str != NULL) {
+	    memcpy(str, path, len-1);
+	    str[len-1] = '\0';
+	}
+	return str;
     } else {
-        return (char*)path;
+	return (char*)path;
     }
 }
+

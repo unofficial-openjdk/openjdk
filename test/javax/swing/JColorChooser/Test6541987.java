@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test %I% %G%
  * @bug 6541987
  * @summary Tests closing by ESC
  * @author Sergey Malenkov

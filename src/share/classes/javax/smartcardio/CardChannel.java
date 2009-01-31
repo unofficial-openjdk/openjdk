@@ -37,6 +37,7 @@ import java.nio.*;
  * @see CommandAPDU
  * @see ResponseAPDU
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
@@ -45,8 +46,8 @@ public abstract class CardChannel {
 
     /**
      * Constructs a new CardChannel object.
-     *
-     * <p>This constructor is called by subclasses only. Application should
+     * 
+     * <p>This constructor is called by subclasses only. Application should 
      * call the {@linkplain Card#getBasicChannel} and
      * {@linkplain Card#openLogicalChannel} methods to obtain a CardChannel
      * object.
@@ -68,7 +69,7 @@ public abstract class CardChannel {
      *
      * @return the channel number of this CardChannel.
      *
-     * @throws IllegalStateException if this channel has been
+     * @throws IllegalStateException if this channel has been 
      *   {@linkplain #close closed} or if the corresponding Card has been
      *   {@linkplain Card#disconnect disconnected}.
      */
@@ -106,14 +107,14 @@ public abstract class CardChannel {
      *
      * <p>The ResponseAPDU returned by this method is the result
      * after this processing has been performed.
-     *
+     * 
      * @param command the command APDU
      * @return the response APDU received from the card
      *
-     * @throws IllegalStateException if this channel has been
+     * @throws IllegalStateException if this channel has been 
      *   {@linkplain #close closed} or if the corresponding Card has been
      *   {@linkplain Card#disconnect disconnected}.
-     * @throws IllegalArgumentException if the APDU encodes a
+     * @throws IllegalArgumentException if the APDU encodes a 
      *   <code>MANAGE CHANNEL</code> command
      * @throws NullPointerException if command is null
      * @throws CardException if the card operation failed
@@ -149,19 +150,19 @@ public abstract class CardChannel {
      *   the card
      * @return the length of the received response APDU
      *
-     * @throws IllegalStateException if this channel has been
+     * @throws IllegalStateException if this channel has been 
      *   {@linkplain #close closed} or if the corresponding Card has been
      *   {@linkplain Card#disconnect disconnected}.
      * @throws NullPointerException if command or response is null
      * @throws ReadOnlyBufferException if the response buffer is read-only
      * @throws IllegalArgumentException if command and response are the
-     *   same object, if <code>response</code> may not have
+     *   same object, if <code>response</code> may not have 
      *   sufficient space to receive the response APDU
      *   or if the APDU encodes a <code>MANAGE CHANNEL</code> command
      * @throws CardException if the card operation failed
      */
     public abstract int transmit(ByteBuffer command, ByteBuffer response)
-        throws CardException;
+	throws CardException;
 
     /**
      * Closes this CardChannel. The logical channel is closed by issuing
@@ -182,3 +183,4 @@ public abstract class CardChannel {
     public abstract void close() throws CardException;
 
 }
+

@@ -29,7 +29,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public class LocationTriggerEventSet extends LocatableEventSet {
-
+    
     LocationTriggerEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
@@ -38,3 +38,4 @@ public class LocationTriggerEventSet extends LocatableEventSet {
         listener.locationTrigger(this);
     }
 }
+

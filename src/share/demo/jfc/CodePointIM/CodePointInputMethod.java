@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package com.sun.inputmethods.internal.codepointim;
@@ -112,23 +113,23 @@ public class CodePointInputMethod implements InputMethod {
                     return;
                 }
 
-                startComposition();     // Enter to composition mode
+                startComposition();	// Enter to composition mode
             } else {
-                switch (c) {
-                case ' ':       // Exit from composition mode
+                switch (c) { 
+                case ' ':	// Exit from composition mode
                     finishComposition();
                     break;
-                case '\u007f':  // Delete
+                case '\u007f':	// Delete
                     deleteCharacter();
                     break;
-                case '\b':      // BackSpace
+                case '\b':	// BackSpace
                     deletePreviousCharacter();
                     break;
-                case '\u001b':  // Escape
+                case '\u001b':	// Escape
                     cancelComposition();
                     break;
-                case '\n':      // Return
-                case '\t':      // Tab
+                case '\n':	// Return
+                case '\t':	// Tab
                     sendCommittedText();
                     break;
                 default:
@@ -387,7 +388,7 @@ public class CodePointInputMethod implements InputMethod {
             if (Character.isValidCodePoint(codePoint) && codePoint != 0xFFFF) {
                 buffer.setLength(0);
                 buffer.append(codePoint);
-                sendCommittedText();
+	        sendCommittedText();
                 return;
             }
         } else if (len == 8 && format == SPECIAL_ESCAPE) {
@@ -395,19 +396,19 @@ public class CodePointInputMethod implements InputMethod {
             if (Character.isValidCodePoint(codePoint) && codePoint != 0xFFFF) {
                 buffer.setLength(0);
                 buffer.appendCodePoint(codePoint);
-                sendCommittedText();
+	        sendCommittedText();
                 return;
             }
         } else if (len == 12 && format == SURROGATE_PAIR) {
-            char[] codePoint = {
+	    char[] codePoint = {
                 (char)getCodePoint(buffer, 2, 5),
-                (char)getCodePoint(buffer, 8, 11)
+	        (char)getCodePoint(buffer, 8, 11)
             };
             if (Character.isHighSurrogate(codePoint[0]) &&
                 Character.isLowSurrogate(codePoint[1])) {
-                buffer.setLength(0);
-                buffer.append(codePoint);
-                sendCommittedText();
+	        buffer.setLength(0);
+	        buffer.append(codePoint);
+	        sendCommittedText();
                 return;
             }
         }

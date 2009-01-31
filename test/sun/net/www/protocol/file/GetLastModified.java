@@ -31,21 +31,21 @@ import java.net.URL;
 import java.net.URLConnection;
 
 public class GetLastModified {
-    public static void main(String[] args) {
-        try {
-            File f = File.createTempFile("test", null);
-            f.deleteOnExit();
-            String s = f.getAbsolutePath();
-            s = s.startsWith("/") ? s : "/" + s;
-            URL url = new URL("file://localhost"+s);
-            URLConnection conn = null;
-            conn = url.openConnection();
-            conn.connect();
-            if (f.lastModified() != conn.getLastModified())
-                throw new RuntimeException("file.lastModified() & FileURLConnection.getLastModified() should be equal");
-            f.delete();
-        } catch (IOException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+    public static void main(String[] args) { 
+	try {
+	    File f = File.createTempFile("test", null);
+	    f.deleteOnExit();
+	    String s = f.getAbsolutePath();
+	    s = s.startsWith("/") ? s : "/" + s;
+	    URL url = new URL("file://localhost"+s);
+	    URLConnection conn = null;
+	    conn = url.openConnection();
+	    conn.connect();
+	    if (f.lastModified() != conn.getLastModified())
+		throw new RuntimeException("file.lastModified() & FileURLConnection.getLastModified() should be equal");
+	    f.delete();
+	} catch (IOException e) {
+	    throw new RuntimeException(e.getMessage());
+	}
     }
 }

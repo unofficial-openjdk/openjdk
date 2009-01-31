@@ -109,7 +109,7 @@ class IIONamedNodeMap implements NamedNodeMap {
 }
 
 class IIONodeList implements NodeList {
-
+    
     List nodes;
 
     public IIONodeList(List nodes) {
@@ -119,7 +119,7 @@ class IIONodeList implements NodeList {
     public int getLength() {
         return nodes.size();
     }
-
+    
     public Node item(int index) {
         if (index < 0 || index > nodes.size()) {
             return null;
@@ -147,7 +147,7 @@ class IIOAttr extends IIOMetadataNode implements Attr {
     public String getNodeName() {
         return name;
     }
-
+    
     public short getNodeType() {
         return ATTRIBUTE_NODE;
     }
@@ -212,12 +212,12 @@ class IIOAttr extends IIOMetadataNode implements Attr {
  *
  * <p> Namespaces are ignored in this implementation.  The terms "tag
  * name" and "node name" are always considered to be synonymous.
- *
+ * 
  * <em>Note:</em>
  * The DOM Level 3 specification added a number of new methods to the
  * {@code Node}, {@code Element} and {@code Attr} interfaces that are not
  * of value to the {@code IIOMetadataNode} implementation or specification.
- *
+ * 
  * Calling such methods on an {@code IIOMetadataNode}, or an {@code Attr}
  * instance returned from an {@code IIOMetadataNode} will result in a
  * {@code DOMException} being thrown.
@@ -267,7 +267,7 @@ public class IIOMetadataNode implements Element, NodeList {
      * <code>null</code> if this node is a leaf node.
      */
     private IIOMetadataNode lastChild = null;
-
+    
     /**
      * The next (right) sibling node of this node, or
      * <code>null</code> if this node is its parent's last child node.
@@ -351,14 +351,14 @@ public class IIOMetadataNode implements Element, NodeList {
     public short getNodeType() {
         return ELEMENT_NODE;
     }
-
+    
     /**
      * Returns the parent of this node.  A <code>null</code> value
      * indicates that the node is the root of its own tree.  To add a
      * node to an existing tree, use one of the
      * <code>insertBefore</code>, <code>replaceChild</code>, or
      * <code>appendChild</code> methods.
-     *
+     * 
      * @return the parent, as a <code>Node</code>.
      *
      * @see #insertBefore
@@ -459,7 +459,7 @@ public class IIOMetadataNode implements Element, NodeList {
      * @exception IllegalArgumentException if <code>newChild</code> is
      * <code>null</code>.
      */
-    public Node insertBefore(Node newChild,
+    public Node insertBefore(Node newChild, 
                              Node refChild) {
         if (newChild == null) {
             throw new IllegalArgumentException("newChild == null!");
@@ -494,7 +494,7 @@ public class IIOMetadataNode implements Element, NodeList {
         newChildNode.parent = this;
         newChildNode.previousSibling = previous;
         newChildNode.nextSibling = next;
-
+        
         // N.B.: O.K. if refChild == null
         if (this.firstChild == refChildNode) {
             this.firstChild = newChildNode;
@@ -517,12 +517,12 @@ public class IIOMetadataNode implements Element, NodeList {
      * @exception IllegalArgumentException if <code>newChild</code> is
      * <code>null</code>.
      */
-    public Node replaceChild(Node newChild,
+    public Node replaceChild(Node newChild, 
                              Node oldChild) {
         if (newChild == null) {
             throw new IllegalArgumentException("newChild == null!");
         }
-
+        
         checkNode(newChild);
         checkNode(oldChild);
 
@@ -657,7 +657,7 @@ public class IIOMetadataNode implements Element, NodeList {
                 newNode.appendChild(child.cloneNode(true));
             }
         }
-
+        
         return newNode;
     }
 
@@ -699,7 +699,7 @@ public class IIOMetadataNode implements Element, NodeList {
         return null;
     }
 
-    /**
+    /** 
      * Does nothing, since namespaces are not supported.
      *
      * @param prefix a <code>String</code>, which is ignored.
@@ -733,7 +733,7 @@ public class IIOMetadataNode implements Element, NodeList {
     /**
      * Retrieves an attribute value by name.
      * @param name The name of the attribute to retrieve.
-     * @return The <code>Attr</code> value as a string, or the empty string
+     * @return The <code>Attr</code> value as a string, or the empty string 
      * if that attribute does not have a specified or default value.
      */
     public String getAttribute(String name) {
@@ -802,7 +802,7 @@ public class IIOMetadataNode implements Element, NodeList {
                                       "No such attribute!");
         }
     }
-
+    
     /**
      * Equivalent to <code>removeAttribute(localName)</code>.
      */
@@ -820,7 +820,7 @@ public class IIOMetadataNode implements Element, NodeList {
      * Equivalent to <code>getAttributeNode(localName)</code>.
      *
      * @see #setAttributeNodeNS
-     */
+     */ 
    public Attr getAttributeNodeNS(String namespaceURI,
                                    String localName) {
         return getAttributeNode(localName);
@@ -856,7 +856,7 @@ public class IIOMetadataNode implements Element, NodeList {
 
         return oldAttr;
     }
-
+    
     /**
      * Equivalent to <code>setAttributeNode(newAttr)</code>.
      *
@@ -870,7 +870,7 @@ public class IIOMetadataNode implements Element, NodeList {
         removeAttribute(oldAttr.getName());
         return oldAttr;
     }
-
+     
     public NodeList getElementsByTagName(String name) {
         List l = new ArrayList();
         getElementsByTagName(name, l);
@@ -888,7 +888,7 @@ public class IIOMetadataNode implements Element, NodeList {
             child = child.getNextSibling();
         }
     }
-
+    
     /**
      * Equivalent to <code>getElementsByTagName(localName)</code>.
      */
@@ -898,7 +898,7 @@ public class IIOMetadataNode implements Element, NodeList {
     }
 
     public boolean hasAttributes() {
-        return attributes.size() > 0;
+	return attributes.size() > 0;
     }
 
     public boolean hasAttribute(String name) {
@@ -1029,7 +1029,7 @@ public class IIOMetadataNode implements Element, NodeList {
      * and will throw a {@code DOMException}.
      * @throws DOMException - always.
      */
-    public Object getFeature(String feature, String version)
+    public Object getFeature(String feature, String version) 
                               throws DOMException {
         throw new DOMException(DOMException.NOT_SUPPORTED_ERR,
                                "Method not supported");

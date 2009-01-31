@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test %I% %E%
  * @bug 6599079
  * @summary Non-standard ConfirmationCallback throws NPE
  */
@@ -38,9 +38,10 @@ public class Confirm {
         // Provide answer in an individual stream so that the program
         // does not block.
         System.setIn(new ByteArrayInputStream("1\n".getBytes()));
-
+        
         new TextCallbackHandler().handle(new Callback[]{
-            new ConfirmationCallback("Prince", ConfirmationCallback.INFORMATION,
+            new ConfirmationCallback("Prince", ConfirmationCallback.INFORMATION, 
                     new String[]{"To be", "Not to be"}, 0)});
     }
 }
+

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,9 +34,9 @@ import java.net.*;
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        ClassLoader ldr =
-            new URLClassLoader(new URL[]{ new URL("file:cb.jar") });
-        Runnable r = (Runnable) Class.forName("Foo", true, ldr).newInstance();
-        r.run();
+	ClassLoader ldr = 
+	    new URLClassLoader(new URL[]{ new URL("file:cb.jar") });
+	Runnable r = (Runnable) Class.forName("Foo", true, ldr).newInstance();
+	r.run();
     }
 }

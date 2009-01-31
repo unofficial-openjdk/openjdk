@@ -41,7 +41,7 @@
 
 #define HPROF_JVMTI_ERROR(error,msg) \
     error_handler(HPROF_BOOL(error!=JVMTI_ERROR_NONE), \
-            error, msg, __FILE__, __LINE__)
+	    error, msg, __FILE__, __LINE__)
 
 #if defined(DEBUG) || !defined(NDEBUG)
     #define HPROF_ASSERT(cond) \
@@ -76,8 +76,8 @@
 
 #define LOG(str) LOG1(str)
 
-void       error_handler(jboolean fatal, jvmtiError error,
-                const char *message, const char *file, int line);
+void       error_handler(jboolean fatal, jvmtiError error, 
+		const char *message, const char *file, int line);
 void       error_assert(const char *condition, const char *file, int line);
 void       error_exit_process(int exit_code);
 void       error_do_pause(void);

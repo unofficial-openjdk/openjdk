@@ -28,7 +28,7 @@ import java.util.EventObject;
 
 
 /**
- * ChangeEvent is used to notify interested parties that
+ * ChangeEvent is used to notify interested parties that 
  * state has changed in the event source.
  * <p>
  * <strong>Warning:</strong>
@@ -40,6 +40,7 @@ import java.util.EventObject;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class ChangeEvent extends EventObject {
@@ -53,3 +54,4 @@ public class ChangeEvent extends EventObject {
         super(source);
     }
 }
+

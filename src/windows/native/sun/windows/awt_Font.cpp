@@ -43,16 +43,16 @@
 
 AwtFontCache fontCache;
 
-extern jboolean IsMultiFont(JNIEnv *env, jobject obj)
+extern jboolean IsMultiFont(JNIEnv *env, jobject obj) 
 {
     if (obj == NULL) {
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
     if (env->EnsureLocalCapacity(2))
         return JNI_FALSE;
     jobject peer = env->CallObjectMethod(obj, AwtFont::peerMID);
     if (peer == NULL) {
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
     jobject fontConfig = env->GetObjectField(peer, AwtFont::fontConfigID);
     jboolean result = fontConfig != NULL;
@@ -61,7 +61,7 @@ extern jboolean IsMultiFont(JNIEnv *env, jobject obj)
     return result;
 }
 
-extern jstring GetTextComponentFontName(JNIEnv *env, jobject font)
+extern jstring GetTextComponentFontName(JNIEnv *env, jobject font) 
 {
     DASSERT(font != NULL);
     if (env->EnsureLocalCapacity(2)) {
@@ -127,7 +127,7 @@ jmethodID AwtFont::getHeightMID;
 
 
 /************************************************************************
- * AwtFont methods
+ * AwtFont methods 
  */
 AwtFont::AwtFont(int num, JNIEnv *env, jobject javaFont)
 {
@@ -140,7 +140,7 @@ AwtFont::AwtFont(int num, JNIEnv *env, jobject javaFont)
 
     for (int i = 0; i < num; i++) {
         m_hFont[i] = NULL;
-    }
+    }  
 
     m_textInput = -1;
     m_ascent = -1;
@@ -168,7 +168,7 @@ void AwtFont::Dispose() {
     AwtObject::Dispose();
 }
 
-static void pDataDisposeMethod(JNIEnv *env, jlong pData)
+static void pDataDisposeMethod(JNIEnv *env, jlong pData) 
 {
     TRY_NO_VERIFY;
 
@@ -178,13 +178,13 @@ static void pDataDisposeMethod(JNIEnv *env, jlong pData)
 }
 
 AwtFont* AwtFont::GetFont(JNIEnv *env, jobject font,
-                          jint angle, jfloat awScale)
+			  jint angle, jfloat awScale)
 {
     jlong pData = env->GetLongField(font, AwtFont::pDataID);
     AwtFont* awtFont = (AwtFont*)jlong_to_ptr(pData);
 
     if (awtFont != NULL) {
-        return awtFont;
+	return awtFont;
     }
 
     awtFont = Create(env, font, angle, awScale);
@@ -249,108 +249,108 @@ AwtFont* AwtFont::Create(JNIEnv *env, jobject font, jint angle, jfloat awScale)
 
     try {
         if (env->EnsureLocalCapacity(3) < 0)
-            return 0;
+	    return 0;
 
-        if (IsMultiFont(env, font)) {
-            compFont = GetComponentFonts(env, font);
-            cfnum = env->GetArrayLength(compFont);
-        } else {
-            compFont = NULL;
-            cfnum = 0;
-        }
+	if (IsMultiFont(env, font)) {
+	    compFont = GetComponentFonts(env, font);
+	    cfnum = env->GetArrayLength(compFont);
+	} else {
+	    compFont = NULL;
+	    cfnum = 0;
+	}
 
-        WCHAR* wName;
+	WCHAR* wName;
 
-        awtFont = new AwtFont(cfnum, env, font);
+	awtFont = new AwtFont(cfnum, env, font);
 
         awtFont->textAngle = angle;
-        awtFont->awScale = awScale;
+	awtFont->awScale = awScale;
 
-        if (cfnum > 0) {
-            // Ask peer class for the text component font name
-            jstring jTextComponentFontName = GetTextComponentFontName(env, font);
-            WCHAR* textComponentFontName = TO_WSTRING(jTextComponentFontName);
+	if (cfnum > 0) {
+	    // Ask peer class for the text component font name
+	    jstring jTextComponentFontName = GetTextComponentFontName(env, font);
+	    WCHAR* textComponentFontName = TO_WSTRING(jTextComponentFontName);
 
-            env->DeleteLocalRef(jTextComponentFontName);
+	    env->DeleteLocalRef(jTextComponentFontName);
 
-            awtFont->m_textInput = -1;
-            for (int i = 0; i < cfnum; i++) {
-                // nativeName is a pair of platform fontname and its charset
-                // tied with a comma; "Times New Roman,ANSI_CHARSET".
-                jobject fontDescriptor = env->GetObjectArrayElement(compFont,
-                                                                    i);
-                jstring nativeName =
-                    (jstring)env->GetObjectField(fontDescriptor,
-                                                 AwtFont::nativeNameID);
-                wName = TO_WSTRING(nativeName);
-                DASSERT(wName);
+	    awtFont->m_textInput = -1;
+	    for (int i = 0; i < cfnum; i++) { 
+	        // nativeName is a pair of platform fontname and its charset
+	        // tied with a comma; "Times New Roman,ANSI_CHARSET".
+	        jobject fontDescriptor = env->GetObjectArrayElement(compFont,
+								    i);
+		jstring nativeName = 
+		    (jstring)env->GetObjectField(fontDescriptor, 
+						 AwtFont::nativeNameID);
+		wName = TO_WSTRING(nativeName);
+		DASSERT(wName);
 
                 //On NT platforms, if the font is not Symbol or Dingbats
                 //use "W" version of Win32 APIs directly, info the FontDescription
                 //no need to convert characters from Unicode to locale encodings.
                 if (IS_NT && GetNativeCharset(wName) != SYMBOL_CHARSET) {
-                    env->SetBooleanField(fontDescriptor, AwtFont::useUnicodeID, TRUE);
-                }
+		    env->SetBooleanField(fontDescriptor, AwtFont::useUnicodeID, TRUE);
+		}
 
-                // Check to see if this font is suitable for input
-                // on AWT TextComponent
-                if ((awtFont->m_textInput == -1) &&
-                        (textComponentFontName != NULL) &&
-                        (wcscmp(wName, textComponentFontName) == 0)) {
-                    awtFont->m_textInput = i;
-                }
-                HFONT hfonttmp = CreateHFont(wName, fontStyle, fontSize,
-                                             angle, awScale);
-                awtFont->m_hFont[i] = hfonttmp;
+		// Check to see if this font is suitable for input
+		// on AWT TextComponent
+		if ((awtFont->m_textInput == -1) &&
+			(textComponentFontName != NULL) &&
+			(wcscmp(wName, textComponentFontName) == 0)) {
+		    awtFont->m_textInput = i;
+		}
+		HFONT hfonttmp = CreateHFont(wName, fontStyle, fontSize,
+					     angle, awScale);
+		awtFont->m_hFont[i] = hfonttmp;
 
-                env->DeleteLocalRef(fontDescriptor);
-                env->DeleteLocalRef(nativeName);
-            }
-            if (awtFont->m_textInput == -1) {
-                // no text component font was identified, so default
-                // to first component
-                awtFont->m_textInput = 0;
-            }
-        } else {
-            // Instantiation for English version.
-            jstring fontName = (jstring)env->GetObjectField(font,
-                                                            AwtFont::nameID);
-            wName = TO_WSTRING(fontName);
+		env->DeleteLocalRef(fontDescriptor);
+		env->DeleteLocalRef(nativeName);
+	    }
+	    if (awtFont->m_textInput == -1) {
+	        // no text component font was identified, so default
+		// to first component
+	        awtFont->m_textInput = 0;
+	    }
+	} else { 
+	    // Instantiation for English version.
+	    jstring fontName = (jstring)env->GetObjectField(font,
+							    AwtFont::nameID);
+	    wName = TO_WSTRING(fontName);
+	    
+	    WCHAR* wEName;
+	    if (!wcscmp(wName, L"Helvetica") || !wcscmp(wName, L"SansSerif")) {
+	        wEName = L"Arial";
+	    } else if (!wcscmp(wName, L"TimesRoman") ||
+		       !wcscmp(wName, L"Serif")) {
+	        wEName = L"Times New Roman";
+	    } else if (!wcscmp(wName, L"Courier") ||
+		       !wcscmp(wName, L"Monospaced")) {
+	        wEName = L"Courier New";
+	    } else if (!wcscmp(wName, L"Dialog")) {
+	        wEName = L"MS Sans Serif";
+	    } else if (!wcscmp(wName, L"DialogInput")) {
+	        wEName = L"MS Sans Serif";
+	    } else if (!wcscmp(wName, L"ZapfDingbats")) {
+	        wEName = L"WingDings";
+	    } else
+	        wEName = L"Arial";
 
-            WCHAR* wEName;
-            if (!wcscmp(wName, L"Helvetica") || !wcscmp(wName, L"SansSerif")) {
-                wEName = L"Arial";
-            } else if (!wcscmp(wName, L"TimesRoman") ||
-                       !wcscmp(wName, L"Serif")) {
-                wEName = L"Times New Roman";
-            } else if (!wcscmp(wName, L"Courier") ||
-                       !wcscmp(wName, L"Monospaced")) {
-                wEName = L"Courier New";
-            } else if (!wcscmp(wName, L"Dialog")) {
-                wEName = L"MS Sans Serif";
-            } else if (!wcscmp(wName, L"DialogInput")) {
-                wEName = L"MS Sans Serif";
-            } else if (!wcscmp(wName, L"ZapfDingbats")) {
-                wEName = L"WingDings";
-            } else
-                wEName = L"Arial";
-
-            awtFont->m_textInput = 0;
-            awtFont->m_hFont[0] = CreateHFont(wEName, fontStyle, fontSize,
+	    awtFont->m_textInput = 0;
+	    awtFont->m_hFont[0] = CreateHFont(wEName, fontStyle, fontSize,
                                               angle, awScale);
-            env->DeleteLocalRef(fontName);
-        }
+	    env->DeleteLocalRef(fontName);
+	} 
         /* The several callers of this method also set the pData field.
          * That's unnecessary but harmless duplication. However we definitely
          * want only one disposer record.
          */
-        env->SetLongField(font, AwtFont::pDataID,
+	env->SetLongField(font, AwtFont::pDataID,
         reinterpret_cast<jlong>(awtFont));
         Disposer_AddRecord(env, font, pDataDisposeMethod,
                        reinterpret_cast<jlong>(awtFont));
     } catch (...) {
         env->DeleteLocalRef(compFont);
-        throw;
+	throw;
     }
 
     env->DeleteLocalRef(compFont);
@@ -382,7 +382,7 @@ static void strip_tail(wchar_t* text, wchar_t* tail) { // strips tail and any po
 }
 
 static HFONT CreateHFont_sub(WCHAR* name, int style, int height,
-                             int angle=0, float awScale=1.0f)
+			     int angle=0, float awScale=1.0f)
 {
     LOGFONTW logFont;
 
@@ -425,37 +425,37 @@ static HFONT CreateHFont_sub(WCHAR* name, int style, int height,
 #ifdef WIN32
         DASSERT(IS_WIN95);
 #endif
-        HDC hdc = ::GetDC(NULL);
-        ::EnumFontFamiliesEx(hdc, &logFont, (FONTENUMPROC)FindFamilyName,
-                             (LPARAM)tmpname, 0L);
-        ::ReleaseDC(NULL, hdc);
+	HDC hdc = ::GetDC(NULL);
+        ::EnumFontFamiliesEx(hdc, &logFont, (FONTENUMPROC)FindFamilyName, 
+                             (LPARAM)tmpname, 0L); 
+	::ReleaseDC(NULL, hdc);
         wcscpy(&logFont.lfFaceName[0], tmpname);
     }
     hFont = ::CreateFontIndirectW(&logFont);
     DASSERT(hFont != NULL);
     // get a expanded or condensed version if its specified.
     if (awScale != 1.0f) {
-        HDC hDC = ::GetDC(0);
-        HFONT oldFont = (HFONT)::SelectObject(hDC, hFont);
-        TEXTMETRIC tm;
-        DWORD avgWidth;
-        GetTextMetrics(hDC, &tm);
-        oldFont = (HFONT)::SelectObject(hDC, oldFont);
-        if (oldFont != NULL) { // should be the same as hFont
-            VERIFY(::DeleteObject(oldFont));
-        }
-        avgWidth = tm.tmAveCharWidth;
-        logFont.lfWidth = (LONG)((fabs)(avgWidth*awScale));
-        hFont = CreateFontIndirectW(&logFont);
-        DASSERT(hFont != NULL);
-        VERIFY(::ReleaseDC(0, hDC));
+	HDC hDC = ::GetDC(0);
+ 	HFONT oldFont = (HFONT)::SelectObject(hDC, hFont);
+	TEXTMETRIC tm;
+	DWORD avgWidth;
+	GetTextMetrics(hDC, &tm);
+	oldFont = (HFONT)::SelectObject(hDC, oldFont);
+	if (oldFont != NULL) { // should be the same as hFont
+	    VERIFY(::DeleteObject(oldFont));
+	}
+	avgWidth = tm.tmAveCharWidth;
+	logFont.lfWidth = (LONG)((fabs)(avgWidth*awScale));
+	hFont = CreateFontIndirectW(&logFont);
+	DASSERT(hFont != NULL);
+	VERIFY(::ReleaseDC(0, hDC));
     }
 
     return hFont;
 }
 
 HFONT AwtFont::CreateHFont(WCHAR* name, int style, int height,
-                           int angle, float awScale)
+			   int angle, float awScale)
 {
     WCHAR longName[80];
     // 80 > (max face name(=30) + strlen("CHINESEBIG5_CHARSET"))
@@ -468,7 +468,7 @@ HFONT AwtFont::CreateHFont(WCHAR* name, int style, int height,
         DASSERT(IS_WIN95);
 #endif
         swprintf(longName, L"%ls-%d-%d", name, style, height);
-    }
+    }    
 
     HFONT hFont = NULL;
 
@@ -486,7 +486,7 @@ HFONT AwtFont::CreateHFont(WCHAR* name, int style, int height,
         fontCache.Add(longName, hFont);
     }
     return hFont;
-}
+} 
 
 void AwtFont::Cleanup()
 {
@@ -503,7 +503,7 @@ void AwtFont::SetupAscent(AwtFont* font)
     VERIFY(::GetTextMetrics(hDC, &metrics));
     font->SetAscent(metrics.tmAscent);
 
-    ::SelectObject(hDC, oldFont);
+    ::SelectObject(hDC, oldFont); 
     VERIFY(::ReleaseDC(0, hDC));
 }
 
@@ -514,31 +514,31 @@ void AwtFont::LoadMetrics(JNIEnv *env, jobject fontMetrics)
     jintArray widths = env->NewIntArray(256);
     if (widths == NULL) {
         /* no local refs to delete yet. */
-        return;
+	return;
     }
     jobject font = env->GetObjectField(fontMetrics, AwtFont::fontID);
     AwtFont* awtFont = AwtFont::GetFont(env, font);
-
+    
     HDC hDC = ::GetDC(0);
     DASSERT(hDC != NULL);
-
+    
     HGDIOBJ oldFont = ::SelectObject(hDC, awtFont->GetHFont());
     TEXTMETRIC metrics;
     VERIFY(::GetTextMetrics(hDC, &metrics));
-
+    
     awtFont->m_ascent = metrics.tmAscent;
-
+    
     int ascent = metrics.tmAscent;
     int descent = metrics.tmDescent;
     int leading = metrics.tmExternalLeading;
     env->SetIntField(fontMetrics, AwtFont::ascentID, ascent);
     env->SetIntField(fontMetrics, AwtFont::descentID, descent);
     env->SetIntField(fontMetrics, AwtFont::leadingID, leading);
-    env->SetIntField(fontMetrics, AwtFont::heightID, metrics.tmAscent +
-                     metrics.tmDescent + leading);
-    env->SetIntField(fontMetrics, AwtFont::maxAscentID, ascent);
+    env->SetIntField(fontMetrics, AwtFont::heightID, metrics.tmAscent + 
+		     metrics.tmDescent + leading);
+    env->SetIntField(fontMetrics, AwtFont::maxAscentID, ascent); 
     env->SetIntField(fontMetrics, AwtFont::maxDescentID, descent);
-
+    
     int maxHeight =  ascent + descent + leading;
     env->SetIntField(fontMetrics, AwtFont::maxHeightID, maxHeight);
 
@@ -546,36 +546,36 @@ void AwtFont::LoadMetrics(JNIEnv *env, jobject fontMetrics)
     env->SetIntField(fontMetrics, AwtFont::maxAdvanceID, maxAdvance);
 
     awtFont->m_overhang = metrics.tmOverhang;
-
+	
     jint intWidths[256];
     memset(intWidths, 0, 256 * sizeof(int));
-    VERIFY(::GetCharWidth(hDC, metrics.tmFirstChar,
-                          min(metrics.tmLastChar, 255),
-                          (int *)&intWidths[metrics.tmFirstChar]));
+    VERIFY(::GetCharWidth(hDC, metrics.tmFirstChar, 
+			  min(metrics.tmLastChar, 255), 
+			  (int *)&intWidths[metrics.tmFirstChar]));
     env->SetIntArrayRegion(widths, 0, 256, intWidths);
     env->SetObjectField(fontMetrics, AwtFont::widthsID, widths);
 
     // Get font metrics on remaining fonts (if multifont).
     for (int j = 1; j < awtFont->GetHFontNum(); j++) {
-        ::SelectObject(hDC, awtFont->GetHFont(j));
-        VERIFY(::GetTextMetrics(hDC, &metrics));
-        env->SetIntField(fontMetrics, AwtFont::maxAscentID,
-                         ascent = max(ascent, metrics.tmAscent));
-        env->SetIntField(fontMetrics, AwtFont::maxDescentID,
-                         descent = max(descent, metrics.tmDescent));
-        env->SetIntField(fontMetrics, AwtFont::maxHeightID,
-                         maxHeight = max(maxHeight,
-                                         metrics.tmAscent +
-                                         metrics.tmDescent +
-                                         metrics.tmExternalLeading));
-        env->SetIntField(fontMetrics, AwtFont::maxAdvanceID,
-                         maxAdvance = max(maxAdvance, metrics.tmMaxCharWidth));
+	::SelectObject(hDC, awtFont->GetHFont(j));
+	VERIFY(::GetTextMetrics(hDC, &metrics));
+	env->SetIntField(fontMetrics, AwtFont::maxAscentID, 
+			 ascent = max(ascent, metrics.tmAscent));
+	env->SetIntField(fontMetrics, AwtFont::maxDescentID,
+			 descent = max(descent, metrics.tmDescent));
+	env->SetIntField(fontMetrics, AwtFont::maxHeightID,
+			 maxHeight = max(maxHeight,
+					 metrics.tmAscent + 
+					 metrics.tmDescent +
+					 metrics.tmExternalLeading));
+	env->SetIntField(fontMetrics, AwtFont::maxAdvanceID, 
+			 maxAdvance = max(maxAdvance, metrics.tmMaxCharWidth));
     }
 
     VERIFY(::SelectObject(hDC, oldFont));
     VERIFY(::ReleaseDC(0, hDC));
     env->DeleteLocalRef(font);
-    env->DeleteLocalRef(widths);
+    env->DeleteLocalRef(widths);    
 }
 
 SIZE AwtFont::TextSize(AwtFont* font, int columns, int rows)
@@ -587,7 +587,7 @@ SIZE AwtFont::TextSize(AwtFont* font, int columns, int rows)
                                            : font->GetHFont());
 
     SIZE size;
-    VERIFY(::GetTextExtentPoint(hDC,
+    VERIFY(::GetTextExtentPoint(hDC, 
         TEXT("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 52, &size));
 
     VERIFY(::SelectObject(hDC, oldFont));
@@ -599,7 +599,7 @@ SIZE AwtFont::TextSize(AwtFont* font, int columns, int rows)
 }
 
 int AwtFont::getFontDescriptorNumber(JNIEnv *env, jobject font,
-                                     jobject fontDescriptor)
+				     jobject fontDescriptor)
 {
     int i, num;
     jobject refFontDescriptor;
@@ -609,43 +609,43 @@ int AwtFont::getFontDescriptorNumber(JNIEnv *env, jobject font,
         return 0;
 
     if (IsMultiFont(env, font)) {
-        array = GetComponentFonts(env, font);
+	array = GetComponentFonts(env, font);
         num = env->GetArrayLength(array);
     } else {
         array = NULL;
         num = 0;
     }
-
+    
     for (i = 0; i < num; i++){
-        // Trying to identify the same FontDescriptor by comparing the
-        // pointers.
-        refFontDescriptor = env->GetObjectArrayElement(array, i);
-        if (env->IsSameObject(refFontDescriptor, fontDescriptor)) {
-            env->DeleteLocalRef(refFontDescriptor);
-            env->DeleteLocalRef(array);
-            return i;
-        }
-        env->DeleteLocalRef(refFontDescriptor);
+	// Trying to identify the same FontDescriptor by comparing the
+	// pointers.  
+	refFontDescriptor = env->GetObjectArrayElement(array, i);
+	if (env->IsSameObject(refFontDescriptor, fontDescriptor)) {
+	    env->DeleteLocalRef(refFontDescriptor);
+	    env->DeleteLocalRef(array);
+	    return i;
+	}
+	env->DeleteLocalRef(refFontDescriptor);
     }
     env->DeleteLocalRef(array);
-    return 0;   // Not found.  Use default.
+    return 0;	// Not found.  Use default.
 }
 
 /*
- * This is a faster version of the same function, which does most of
+ * This is a faster version of the same function, which does most of 
  * the work in Java.
  */
-SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC,
-                                  jobject font, long x, long y, BOOL draw,
-                                  UINT codePage)
+SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC, 
+				  jobject font, long x, long y, BOOL draw,
+				  UINT codePage)
 {
     SIZE size, temp;
     size.cx = size.cy = 0;
 
     if (str == NULL) {
-        return size;
+	return size;
     }
-
+  
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(3) < 0)
         return size;
@@ -657,22 +657,22 @@ SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC,
         return size;
     }
 
-    //Init AwtFont object, which will "create" a AwtFont object if necessry,
+    //Init AwtFont object, which will "create" a AwtFont object if necessry, 
     //before calling makeconvertedMultiFontString(), otherwise, the FontDescriptor's
     //"useUnicode" field might not be initialized correctly (font in Menu Component,
     //for example").
     AwtFont* awtFont = AwtFont::GetFont(env, font);
 
     if (IsMultiFont(env, font)) {
-        jobject peer = env->CallObjectMethod(font, AwtFont::peerMID);
-        array =  (jobjectArray)(env->CallObjectMethod(
-        peer, AwtFont::makeConvertedMultiFontStringMID, str));
-        DASSERT(!safe_ExceptionOccurred(env));
+	jobject peer = env->CallObjectMethod(font, AwtFont::peerMID);
+	array =  (jobjectArray)(env->CallObjectMethod(
+	peer, AwtFont::makeConvertedMultiFontStringMID, str));
+	DASSERT(!safe_ExceptionOccurred(env));
 
-        if (array != NULL) {
-            arrayLength = env->GetArrayLength(array);
-        }
-        env->DeleteLocalRef(peer);
+	if (array != NULL) {
+	    arrayLength = env->GetArrayLength(array);
+	}
+	env->DeleteLocalRef(peer);
     } else {
         array = NULL;
         arrayLength = 0;
@@ -681,89 +681,89 @@ SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC,
     HFONT oldFont = (HFONT)::SelectObject(hDC, awtFont->GetHFont());
 
     if (arrayLength == 0) {
-        int length = env->GetStringLength(str);
+      	int length = env->GetStringLength(str);
         WCHAR* string = TO_WSTRING(str);
         VERIFY(::SelectObject(hDC, awtFont->GetHFont()));
         if (AwtComponent::GetRTLReadingOrder()){
-            if (IS_WIN95) {
-                // Start of conversion Code to fix arabic shaping problems
-                // with unicode support in win 95
-                LPSTR buffer =  (LPSTR) alloca((wcslen(string) + 1) * 2);
-                int count = ::WideCharToMultiByte(codePage, 0, string, length,
-                                                  buffer,
-                                                  static_cast<int>((wcslen(string) + 1) * 2),
-                                                  NULL, NULL);
-                VERIFY(!draw || ::ExtTextOutA(hDC, x, y,  ETO_RTLREADING, NULL,
-                                              buffer, count, NULL));
-                // End Of Conversion Code
-            } else {
-                VERIFY(!draw || ::ExtTextOutW(hDC, x, y, ETO_RTLREADING, NULL,
-                                              string, length, NULL));
-            }
-        } else {
-            VERIFY(!draw || ::TextOutW(hDC, x, y, string, length));
-        }
+	    if (IS_WIN95) {
+	        // Start of conversion Code to fix arabic shaping problems
+	        // with unicode support in win 95
+	        LPSTR buffer =  (LPSTR) alloca((wcslen(string) + 1) * 2);
+		int count = ::WideCharToMultiByte(codePage, 0, string, length,
+						  buffer,
+						  static_cast<int>((wcslen(string) + 1) * 2),
+						  NULL, NULL);
+		VERIFY(!draw || ::ExtTextOutA(hDC, x, y,  ETO_RTLREADING, NULL,
+					      buffer, count, NULL));
+		// End Of Conversion Code 
+	    } else {
+	        VERIFY(!draw || ::ExtTextOutW(hDC, x, y, ETO_RTLREADING, NULL,
+					      string, length, NULL));
+	    }
+	} else {
+	    VERIFY(!draw || ::TextOutW(hDC, x, y, string, length));
+	}
         VERIFY(::GetTextExtentPoint32W(hDC, string, length, &size));
     } else {
         for (int i = 0; i < arrayLength; i = i + 2) {
-            jobject fontDescriptor = env->GetObjectArrayElement(array, i);
-            if (fontDescriptor == NULL) {
-                break;
-            }
+	    jobject fontDescriptor = env->GetObjectArrayElement(array, i);
+	    if (fontDescriptor == NULL) {
+	        break;
+	    }
 
-            jbyteArray convertedBytes =
-                (jbyteArray)env->GetObjectArrayElement(array, i + 1);
-            if (convertedBytes == NULL) {
-                env->DeleteLocalRef(fontDescriptor);
-                break;
-            }
+	    jbyteArray convertedBytes = 
+	        (jbyteArray)env->GetObjectArrayElement(array, i + 1);
+	    if (convertedBytes == NULL) {
+	        env->DeleteLocalRef(fontDescriptor);
+		break;
+	    }
 
             int fdIndex = getFontDescriptorNumber(env, font, fontDescriptor);
             VERIFY(::SelectObject(hDC, awtFont->GetHFont(fdIndex)));
 
-            /*
-             * The strange-looking code that follows this comment is
-             * the result of upstream optimizations. In the array of
-             * alternating font descriptor and buffers, the buffers
-             * contain their length in the first four bytes, a la
-             * Pascal arrays.
-             *
-             * Note: the buffer MUST be unsigned, or VC++ will sign
-             * extend buflen and bad things will happen.
-             */
-            unsigned char* buffer = NULL;
+	    /* 
+	     * The strange-looking code that follows this comment is
+	     * the result of upstream optimizations. In the array of
+	     * alternating font descriptor and buffers, the buffers
+	     * contain their length in the first four bytes, a la
+	     * Pascal arrays.
+	     *
+	     * Note: the buffer MUST be unsigned, or VC++ will sign
+	     * extend buflen and bad things will happen.
+	     */
+	    unsigned char* buffer = NULL;
             jboolean unicodeUsed = env->GetBooleanField(fontDescriptor,AwtFont::useUnicodeID);
-            try {
-                buffer = (unsigned char *)
-                    env->GetPrimitiveArrayCritical(convertedBytes, 0);
-                int buflen = (buffer[0] << 24) | (buffer[1] << 16) |
-                    (buffer[2] << 8) | buffer[3];
+	    try {
+	        buffer = (unsigned char *)
+		    env->GetPrimitiveArrayCritical(convertedBytes, 0);
+		int buflen = (buffer[0] << 24) | (buffer[1] << 16) | 
+		    (buffer[2] << 8) | buffer[3];
 
-                DASSERT(buflen >= 0);
+		DASSERT(buflen >= 0);
 
-                /*
-                 * the offsetBuffer, on the other hand, must be signed because
-                 * TextOutA and GetTextExtentPoint32A expect it.
-                 */
+		/*
+		 * the offsetBuffer, on the other hand, must be signed because
+		 * TextOutA and GetTextExtentPoint32A expect it.
+		 */
                 char* offsetBuffer = (char *)(buffer + 4);
 
-                if (unicodeUsed) {
-                    VERIFY(!draw || ::TextOutW(hDC, x, y, (LPCWSTR)offsetBuffer, buflen / 2));
-                    VERIFY(::GetTextExtentPoint32W(hDC, (LPCWSTR)offsetBuffer, buflen / 2, &temp));
+		if (unicodeUsed) {
+		    VERIFY(!draw || ::TextOutW(hDC, x, y, (LPCWSTR)offsetBuffer, buflen / 2));
+		    VERIFY(::GetTextExtentPoint32W(hDC, (LPCWSTR)offsetBuffer, buflen / 2, &temp));
                 }
                 else {
-                    VERIFY(!draw || ::TextOutA(hDC, x, y, offsetBuffer, buflen));
-                    VERIFY(::GetTextExtentPoint32A(hDC, offsetBuffer, buflen, &temp));
+		    VERIFY(!draw || ::TextOutA(hDC, x, y, offsetBuffer, buflen));
+		    VERIFY(::GetTextExtentPoint32A(hDC, offsetBuffer, buflen, &temp));
                 }
-            } catch (...) {
-                if (buffer != NULL) {
-                    env->ReleasePrimitiveArrayCritical(convertedBytes, buffer,
-                                                       0);
-                }
-                throw;
-            }
-            env->ReleasePrimitiveArrayCritical(convertedBytes, buffer, 0);
-
+	    } catch (...) {
+	        if (buffer != NULL) {
+		    env->ReleasePrimitiveArrayCritical(convertedBytes, buffer,
+						       0);
+		}
+		throw;
+	    }
+	    env->ReleasePrimitiveArrayCritical(convertedBytes, buffer, 0);
+	    
             if (awtFont->textAngle == 0) {
                 x += temp.cx;
             } else {
@@ -777,9 +777,9 @@ SIZE  AwtFont::DrawStringSize_sub(jstring str, HDC hDC,
             }
             size.cx += temp.cx;
             size.cy = (size.cy < temp.cy) ? temp.cy : size.cy;
-            env->DeleteLocalRef(fontDescriptor);
-            env->DeleteLocalRef(convertedBytes);
-        }
+	    env->DeleteLocalRef(fontDescriptor);
+	    env->DeleteLocalRef(convertedBytes);
+	}
     }
     env->DeleteLocalRef(array);
 
@@ -800,18 +800,18 @@ extern "C" {
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_windows_WFontMetrics_stringWidth(JNIEnv *env, jobject self,
-                                              jstring str)
+					      jstring str)
 {
     TRY;
 
     if (str == NULL) {
-        JNU_ThrowNullPointerException(env, "str argument");
-        return NULL;
+	JNU_ThrowNullPointerException(env, "str argument");
+	return NULL;
     }
     HDC hDC = ::GetDC(0);    DASSERT(hDC != NULL);
 
     jobject font = env->GetObjectField(self, AwtFont::fontID);
-
+    
     long ret = AwtFont::getMFStringWidth(hDC, font, str);
     VERIFY(::ReleaseDC(0, hDC));
     return ret;
@@ -826,25 +826,25 @@ Java_sun_awt_windows_WFontMetrics_stringWidth(JNIEnv *env, jobject self,
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_windows_WFontMetrics_charsWidth(JNIEnv *env, jobject self,
-                                             jcharArray str,
-                                             jint off, jint len)
+					     jcharArray str, 
+					     jint off, jint len) 
 {
     TRY;
 
     if (str == NULL) {
-        JNU_ThrowNullPointerException(env, "str argument");
-        return NULL;
+	JNU_ThrowNullPointerException(env, "str argument");
+	return NULL;
     }
     if ((len < 0) || (off < 0) || (len + off > (env->GetArrayLength(str)))) {
-        JNU_ThrowArrayIndexOutOfBoundsException(env, "off/len argument");
-        return NULL;
+	JNU_ThrowArrayIndexOutOfBoundsException(env, "off/len argument");
+	return NULL;
     }
 
     jchar *strp = new jchar[len];
     env->GetCharArrayRegion(str, off, len, strp);
     jstring jstr = env->NewString(strp, len);
     jint result = Java_sun_awt_windows_WFontMetrics_stringWidth(env, self,
-                                                                jstr);
+								jstr);
     delete [] strp;
     return result;
 
@@ -859,59 +859,59 @@ Java_sun_awt_windows_WFontMetrics_charsWidth(JNIEnv *env, jobject self,
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_windows_WFontMetrics_bytesWidth(JNIEnv *env, jobject self,
-                                             jbyteArray str,
-                                             jint off, jint len)
+					     jbyteArray str, 
+					     jint off, jint len)
 {
     TRY;
 
     if (str == NULL) {
-        JNU_ThrowNullPointerException(env, "bytes argument");
-        return NULL;
+	JNU_ThrowNullPointerException(env, "bytes argument");
+	return NULL;
     }
     if ((len < 0) || (off < 0) || (len + off > (env->GetArrayLength(str)))) {
-        JNU_ThrowArrayIndexOutOfBoundsException(env, "off or len argument");
-        return NULL;
+	JNU_ThrowArrayIndexOutOfBoundsException(env, "off or len argument");
+	return NULL;
     }
     char *pStrBody = NULL;
     jint result = 0;
     try {
-        jintArray array = (jintArray)env->GetObjectField(self,
-                                                         AwtFont::widthsID);
+	jintArray array = (jintArray)env->GetObjectField(self,
+							 AwtFont::widthsID);
         pStrBody = (char *)env->GetPrimitiveArrayCritical(str, 0);
-        char *pStr = pStrBody + off;
+	char *pStr = pStrBody + off;
+	
+	jint *widths = NULL;
+	try {
+	    widths = (jint *)env->GetPrimitiveArrayCritical(array, 0);
 
-        jint *widths = NULL;
-        try {
-            widths = (jint *)env->GetPrimitiveArrayCritical(array, 0);
+	    for (; len; len--) {
+	        result += widths[*pStr++];
+	    }
+	} catch (...) {
+	    if (widths != NULL) {
+	        env->ReleasePrimitiveArrayCritical(array, widths, 0);
+	    }
+	    throw;
+	}
 
-            for (; len; len--) {
-                result += widths[*pStr++];
-            }
-        } catch (...) {
-            if (widths != NULL) {
-                env->ReleasePrimitiveArrayCritical(array, widths, 0);
-            }
-            throw;
-        }
-
-        env->ReleasePrimitiveArrayCritical(array, widths, 0);
+	env->ReleasePrimitiveArrayCritical(array, widths, 0);
 
     } catch (...) {
         if (pStrBody != NULL) {
-            env->ReleasePrimitiveArrayCritical(str, pStrBody, 0);
-        }
-        throw;
+	    env->ReleasePrimitiveArrayCritical(str, pStrBody, 0);
+	}
+	throw;
     }
 
     env->ReleasePrimitiveArrayCritical(str, pStrBody, 0);
     return result;
 
     CATCH_BAD_ALLOC_RET(0);
-}
+}    
 
 
 /*
- * Class:     sun_awt_windows_WFontMetrics
+ * Class:     sun_awt_windows_WFontMetrics 
  * Method:    init
  * Signature: ()V
  */
@@ -922,8 +922,8 @@ Java_sun_awt_windows_WFontMetrics_init(JNIEnv *env, jobject self)
 
     jobject font = env->GetObjectField(self, AwtFont::fontID);
     if (font == NULL) {
-        JNU_ThrowNullPointerException(env, "fontMetrics' font");
-        return;
+	JNU_ThrowNullPointerException(env, "fontMetrics' font");
+	return;
     }
     // This local variable is unused. Is there some subtle side-effect here?
     jlong pData = env->GetLongField(font, AwtFont::pDataID);
@@ -935,7 +935,7 @@ Java_sun_awt_windows_WFontMetrics_init(JNIEnv *env, jobject self)
 
 
 /*
- * Class:     sun_awt_windows_WFontMetrics
+ * Class:     sun_awt_windows_WFontMetrics 
  * Method:    initIDs
  * Signature: ()V
  */
@@ -977,7 +977,7 @@ Java_sun_awt_windows_WFontMetrics_initIDs(JNIEnv *env, jclass cls)
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_java_awt_Font_initIDs(JNIEnv *env, jclass cls)
+Java_java_awt_Font_initIDs(JNIEnv *env, jclass cls) 
 {
     TRY;
 
@@ -988,9 +988,9 @@ Java_java_awt_Font_initIDs(JNIEnv *env, jclass cls)
     AwtFont::sizeID = env->GetFieldID(cls, "size", "I");
     AwtFont::styleID = env->GetFieldID(cls, "style", "I");
 
-    AwtFont::getFontMID =
-      env->GetStaticMethodID(cls, "getFont",
-                             "(Ljava/lang/String;)Ljava/awt/Font;");
+    AwtFont::getFontMID = 
+      env->GetStaticMethodID(cls, "getFont", 
+			     "(Ljava/lang/String;)Ljava/awt/Font;");
 
     DASSERT(AwtFont::peerMID != NULL);
     DASSERT(AwtFont::pDataID != NULL);
@@ -1013,7 +1013,7 @@ Java_java_awt_Font_initIDs(JNIEnv *env, jclass cls)
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_java_awt_FontMetrics_initIDs(JNIEnv *env, jclass cls)
+Java_java_awt_FontMetrics_initIDs(JNIEnv *env, jclass cls) 
 {
     TRY;
 
@@ -1035,12 +1035,12 @@ Java_java_awt_FontMetrics_initIDs(JNIEnv *env, jclass cls)
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_sun_awt_FontDescriptor_initIDs(JNIEnv *env, jclass cls)
+Java_sun_awt_FontDescriptor_initIDs(JNIEnv *env, jclass cls) 
 {
     TRY;
 
     AwtFont::nativeNameID = env->GetFieldID(cls, "nativeName",
-                                            "Ljava/lang/String;");
+					    "Ljava/lang/String;");
     AwtFont::useUnicodeID = env->GetFieldID(cls, "useUnicode", "Z");
 
     DASSERT(AwtFont::nativeNameID != NULL);
@@ -1059,16 +1059,16 @@ Java_sun_awt_FontDescriptor_initIDs(JNIEnv *env, jclass cls)
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_sun_awt_PlatformFont_initIDs(JNIEnv *env, jclass cls)
+Java_sun_awt_PlatformFont_initIDs(JNIEnv *env, jclass cls) 
 {
     TRY;
 
     AwtFont::fontConfigID = env->GetFieldID(cls, "fontConfig", "Lsun/awt/FontConfiguration;");
-    AwtFont::componentFontsID =
-        env->GetFieldID(cls, "componentFonts", "[Lsun/awt/FontDescriptor;");
+    AwtFont::componentFontsID = 
+	env->GetFieldID(cls, "componentFonts", "[Lsun/awt/FontDescriptor;");
     AwtFont::makeConvertedMultiFontStringMID =
-        env->GetMethodID(cls, "makeConvertedMultiFontString",
-                         "(Ljava/lang/String;)[Ljava/lang/Object;");
+	env->GetMethodID(cls, "makeConvertedMultiFontString", 
+			 "(Ljava/lang/String;)[Ljava/lang/Object;"); 
 
     DASSERT(AwtFont::makeConvertedMultiFontStringMID != NULL);
     DASSERT(AwtFont::componentFontsID != NULL);
@@ -1087,7 +1087,7 @@ Java_sun_awt_PlatformFont_initIDs(JNIEnv *env, jclass cls)
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WFontPeer_initIDs(JNIEnv *env, jclass cls)
+Java_sun_awt_windows_WFontPeer_initIDs(JNIEnv *env, jclass cls) 
 {
     TRY;
 
@@ -1117,10 +1117,10 @@ HFONT AwtFontCache::Lookup(WCHAR* name)
 
     while (item != NULL) {
         if (wcscmp(item->name, name) == 0) {
-            return item->font;
-        }
-        lastItem = item;
-        item = item->next;
+	    return item->font;
+	}
+	lastItem = item;
+	item = item->next;
     }
     return NULL;
 }
@@ -1131,7 +1131,7 @@ BOOL AwtFontCache::Search(HFONT font)
 
     while (item != NULL) {
         if (item->font == font) {
-            return TRUE;
+	    return TRUE;
         }
         item = item->next;
     }
@@ -1145,15 +1145,15 @@ void AwtFontCache::Remove(HFONT font)
 
     while (item != NULL) {
         if (item->font == font) {
-            if (DecRefCount(item) <= 0){
-                if (lastItem == NULL) {
-                    fontCache.m_head = item->next;
-                } else {
-                lastItem->next = item->next;
-                }
-             delete item;
-             }
-             return;
+  	    if (DecRefCount(item) <= 0){
+  	        if (lastItem == NULL) {
+	            fontCache.m_head = item->next;
+	        } else {
+	        lastItem->next = item->next;
+	        }
+	     delete item;
+	     }
+   	     return;
         }
         lastItem = item;
         item = item->next;
@@ -1167,8 +1167,8 @@ void AwtFontCache::Clear()
 
     while (item != NULL) {
         next = item->next;
-        delete item;
-        item = next;
+	delete item;
+	item = next;
     }
 
     m_head = NULL;
@@ -1176,8 +1176,8 @@ void AwtFontCache::Clear()
 
 /* NOTE: In the interlock calls below the return value is different
          depending on which version of windows. However, all versions
-         return a 0 or less than value when the count gets there. Only
-         under NT 4.0 & 98 does the value actaully represent the new value. */
+	 return a 0 or less than value when the count gets there. Only
+	 under NT 4.0 & 98 does the value actaully represent the new value. */
 
 void AwtFontCache::IncRefCount(HFONT hFont){
     Item* item = fontCache.m_head;
@@ -1186,12 +1186,12 @@ void AwtFontCache::IncRefCount(HFONT hFont){
 
         if (item->font == hFont){
             IncRefCount(item);
-            return;
+	    return;
         }
         item = item->next;
     }
 }
-
+         
 LONG AwtFontCache::IncRefCount(Item* item){
     LONG    newVal;
 
@@ -1234,7 +1234,7 @@ public:
     virtual void Create(LPWSTR name);
     virtual BOOL In(USHORT iChar) { DASSERT(FALSE); return FALSE; };
     LPWSTR GetFontName(){
-        DASSERT(m_lpszFontName != NULL); return m_lpszFontName;
+	DASSERT(m_lpszFontName != NULL); return m_lpszFontName;
     };
 
 private:
@@ -1249,7 +1249,7 @@ CSegTableComponent::CSegTableComponent()
 CSegTableComponent::~CSegTableComponent()
 {
     if (m_lpszFontName != NULL) {
-        free(m_lpszFontName);
+	free(m_lpszFontName);
         m_lpszFontName = NULL;
     }
 }
@@ -1257,7 +1257,7 @@ CSegTableComponent::~CSegTableComponent()
 void CSegTableComponent::Create(LPWSTR name)
 {
     if (m_lpszFontName != NULL) {
-        free(m_lpszFontName);
+	free(m_lpszFontName);
         m_lpszFontName = NULL;
     }
     m_lpszFontName = wcsdup(name);
@@ -1278,16 +1278,16 @@ public:
 
 protected:
     virtual void GetData(DWORD dwOffset, LPVOID lpData, DWORD cbData) {
-        DASSERT(FALSE); };
+	DASSERT(FALSE); };
     void MakeTable();
     static void SwapShort(USHORT& p);
     static void SwapULong(ULONG& p);
 
 private:
-    USHORT m_cSegCount;     // number of segments
-    PUSHORT m_piStart;      // pointer to array of starting values
-    PUSHORT m_piEnd;        // pointer to array of ending values (inclusive)
-    USHORT m_cSeg;          // current segment (cache)
+    USHORT m_cSegCount;	    // number of segments
+    PUSHORT m_piStart;	    // pointer to array of starting values
+    PUSHORT m_piEnd;	    // pointer to array of ending values (inclusive)
+    USHORT m_cSeg;	    // current segment (cache)
 };
 
 CSegTable::CSegTable()
@@ -1301,9 +1301,9 @@ CSegTable::CSegTable()
 CSegTable::~CSegTable()
 {
     if (m_piStart != NULL)
-        delete[] m_piStart;
+	delete[] m_piStart;
     if (m_piEnd != NULL)
-        delete[] m_piEnd;
+	delete[] m_piEnd;
 }
 
 #define OFFSETERROR 0
@@ -1342,15 +1342,15 @@ typedef struct tagSUBTABLE{
     ULONG offsetFormat4 = OFFSETERROR;
     USHORT i;
     for (i = 0; i < nTables; i++) {
-        SwapShort(pTable->encodingID);
-        SwapShort(pTable->platformID);
-        //for a Unicode font for Windows, platformID == 3, encodingID == 1
-        if ((pTable->platformID == 3)&&(pTable->encodingID == 1)) {
-            offsetFormat4 = pTable->offset;
-            SwapULong(offsetFormat4);
-            break;
-        }
-        pTable++;
+	SwapShort(pTable->encodingID);
+	SwapShort(pTable->platformID);
+	//for a Unicode font for Windows, platformID == 3, encodingID == 1
+	if ((pTable->platformID == 3)&&(pTable->encodingID == 1)) {
+	    offsetFormat4 = pTable->offset;
+	    SwapULong(offsetFormat4);
+	    break;
+	}
+	pTable++;
     }
     delete[] pTables;
     if (offsetFormat4 == OFFSETERROR) {
@@ -1370,27 +1370,27 @@ typedef struct tagSUBTABLE{
     m_piEnd = new USHORT[m_cSegCount];
 
     ULONG offset = offsetFormat4
-        + sizeof(SUBTABLE); //skip constant # bytes in subtable
+	+ sizeof(SUBTABLE); //skip constant # bytes in subtable
     cbData = m_cSegCount * sizeof(USHORT);
     (void) GetData(offset, m_piEnd, cbData);
     for (i = 0; i < m_cSegCount; i++)
-        SwapShort(m_piEnd[i]);
+	SwapShort(m_piEnd[i]);
     DASSERT(m_piEnd[m_cSegCount-1] == 0xffff);
 
     // read in the array of segment start values
     try {
         m_piStart = new USHORT[m_cSegCount];
     } catch (std::bad_alloc&) {
-        delete [] m_piEnd;
-        m_piEnd = NULL;
-        throw;
+	delete [] m_piEnd;
+	m_piEnd = NULL;
+	throw;
     }
 
-    offset += cbData        //skip SegEnd array
-        + sizeof(USHORT);   //skip reservedPad
+    offset += cbData	    //skip SegEnd array
+	+ sizeof(USHORT);   //skip reservedPad
     (void) GetData(offset, m_piStart, cbData);
     for (i = 0; i < m_cSegCount; i++)
-        SwapShort(m_piStart[i]);
+	SwapShort(m_piStart[i]);
     DASSERT(m_piStart[m_cSegCount-1] == 0xffff);
 }
 
@@ -1403,15 +1403,15 @@ BOOL CSegTable::In(USHORT iChar)
 //    DASSERT(m_piEnd);
 
     if (iChar > m_piEnd[m_cSeg]) {
-        for (; (m_cSeg < m_cSegCount)&&(iChar > m_piEnd[m_cSeg]); m_cSeg++);
+	for (; (m_cSeg < m_cSegCount)&&(iChar > m_piEnd[m_cSeg]); m_cSeg++);
     } else if (iChar < m_piStart[m_cSeg]) {
-        for (; (m_cSeg > 0)&&(iChar < m_piStart[m_cSeg]); m_cSeg--);
+	for (; (m_cSeg > 0)&&(iChar < m_piStart[m_cSeg]); m_cSeg--);
     }
 
     if ((iChar <= m_piEnd[m_cSeg])&&(iChar >= m_piStart[m_cSeg])&&(iChar != 0xffff))
-        return TRUE;
+	return TRUE;
     else
-        return FALSE;
+	return FALSE;
 }
 
 inline BOOL CSegTable::HasCmap()
@@ -1473,11 +1473,11 @@ CStdSegTable::~CStdSegTable()
 }
 
 inline void CStdSegTable::GetData(DWORD dwOffset,
-                                  LPVOID lpData, DWORD cbData)
+				  LPVOID lpData, DWORD cbData)
 {
     DASSERT(m_hTmpDC);
     DWORD nBytes =
-        ::GetFontData(m_hTmpDC, CMAPHEX, dwOffset, lpData, cbData);
+	::GetFontData(m_hTmpDC, CMAPHEX, dwOffset, lpData, cbData);
     DASSERT(nBytes != GDI_ERROR);
 }
 
@@ -1532,12 +1532,12 @@ CEUDCSegTable::~CEUDCSegTable()
 }
 
 inline void CEUDCSegTable::GetData(DWORD dwOffset,
-                                   LPVOID lpData, DWORD cbData)
+				   LPVOID lpData, DWORD cbData)
 {
     DASSERT(m_hTmpFile);
     DASSERT(m_hTmpCMapOffset);
     ::SetFilePointer(m_hTmpFile, m_hTmpCMapOffset + dwOffset,
-        NULL, FILE_BEGIN);
+	NULL, FILE_BEGIN);
     DWORD dwRead;
     VERIFY(::ReadFile(m_hTmpFile, lpData, cbData, &dwRead, NULL));
     DASSERT(dwRead == cbData);
@@ -1565,21 +1565,21 @@ typedef struct tagENTRY{
     // create EUDC font file and make EUDCSegTable
     // after wrapper function for CreateFileW, we use only CreateFileW
     if (IS_NT) {
-        m_hTmpFile = ::CreateFileW(name, GENERIC_READ,
-            FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	m_hTmpFile = ::CreateFileW(name, GENERIC_READ,
+	    FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     } else {
 #ifdef WIN32
-        DASSERT(IS_WIN95);
+	DASSERT(IS_WIN95);
 #endif
-        char szFileName[_MAX_PATH];
-        ::WideCharToMultiByte(CP_ACP, 0, name, -1,
-            szFileName, sizeof(szFileName), NULL, NULL);
-        m_hTmpFile = ::CreateFileA(szFileName, GENERIC_READ,
-            FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	char szFileName[_MAX_PATH];
+	::WideCharToMultiByte(CP_ACP, 0, name, -1,
+	    szFileName, sizeof(szFileName), NULL, NULL);
+	m_hTmpFile = ::CreateFileA(szFileName, GENERIC_READ,
+	    FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     }
     if (m_hTmpFile == INVALID_HANDLE_VALUE){
-        m_hTmpFile = NULL;
-        return;
+	m_hTmpFile = NULL;
+	return;
     }
 
     HEAD head;
@@ -1589,10 +1589,10 @@ typedef struct tagENTRY{
     SwapShort(head.numTables);
     ENTRY entry;
     for (int i = 0; i < head.numTables; i++){
-        VERIFY(::ReadFile(m_hTmpFile, &entry, sizeof(entry), &dwRead, NULL));
-        DASSERT(dwRead == sizeof(ENTRY));
-        if (entry.tag == CMAPHEX)
-            break;
+	VERIFY(::ReadFile(m_hTmpFile, &entry, sizeof(entry), &dwRead, NULL));
+	DASSERT(dwRead == sizeof(ENTRY));
+	if (entry.tag == CMAPHEX)
+	    break;
     }
     DASSERT(entry.tag == CMAPHEX);
     SwapULong(entry.offset);
@@ -1630,8 +1630,8 @@ CSegTableManagerComponent::CSegTableManagerComponent()
 CSegTableManagerComponent::~CSegTableManagerComponent()
 {
     for (int i = 0; i < m_nTable; i++) {
-        DASSERT(m_tables[i]);
-        delete m_tables[i];
+	DASSERT(m_tables[i]);
+	delete m_tables[i];
     }
     delete [] m_tables;
     m_tables = NULL;
@@ -1640,10 +1640,10 @@ CSegTableManagerComponent::~CSegTableManagerComponent()
 void CSegTableManagerComponent::MakeBiggerTable()
 {
     CSegTableComponent **tables =
-        new CSegTableComponent*[m_nMaxTable + TABLENUM];
+	new CSegTableComponent*[m_nMaxTable + TABLENUM];
 
     for (int i = 0; i < m_nMaxTable; i++)
-        tables[i] = m_tables[i];
+	tables[i] = m_tables[i];
 
     delete[] m_tables;
 
@@ -1660,20 +1660,20 @@ public:
 CSegTable* CSegTableManager::GetTable(LPWSTR lpszFontName, BOOL fEUDC)
 {
     for (int i = 0; i < m_nTable; i++) {
-        if ((((CSegTable*)m_tables[i])->IsEUDC() == fEUDC) &&
-            (wcscmp(m_tables[i]->GetFontName(),lpszFontName) == 0))
-            return (CSegTable*) m_tables[i];
+	if ((((CSegTable*)m_tables[i])->IsEUDC() == fEUDC) &&
+	    (wcscmp(m_tables[i]->GetFontName(),lpszFontName) == 0))
+	    return (CSegTable*) m_tables[i];
     }
 
     if (m_nTable == m_nMaxTable) {
-        (void) MakeBiggerTable();
+	(void) MakeBiggerTable();
     }
     DASSERT(m_nTable < m_nMaxTable);
 
     if (!fEUDC) {
-        m_tables[m_nTable] = new CStdSegTable;
+	m_tables[m_nTable] = new CStdSegTable;
     } else {
-        m_tables[m_nTable] = new CEUDCSegTable;
+	m_tables[m_nTable] = new CEUDCSegTable;
     }
     m_tables[m_nTable]->Create(lpszFontName);
     return (CSegTable*) m_tables[m_nTable++];
@@ -1741,20 +1741,20 @@ LPSTR CCombinedSegTable::GetCodePageSubkey()
 void CCombinedSegTable::GetEUDCFileName(LPWSTR lpszFileName, int cchFileName)
 {
     if (m_fEUDCSubKeyExist == FALSE)
-        return;
+	return;
 
     // get filename of typeface-specific TureType EUDC font
     LPSTR lpszSubKey = GetCodePageSubkey();
     if (lpszSubKey == NULL) {
-        m_fEUDCSubKeyExist = FALSE;
-        return; // can not get codepage information
+	m_fEUDCSubKeyExist = FALSE;
+	return; // can not get codepage information
     }
     HKEY hRootKey = HKEY_CURRENT_USER;
     HKEY hKey;
     LONG lRet = ::RegOpenKeyExA(hRootKey, lpszSubKey, 0, KEY_ALL_ACCESS, &hKey);
     if (lRet != ERROR_SUCCESS) {
-        m_fEUDCSubKeyExist = FALSE;
-        return; // no EUDC font
+	m_fEUDCSubKeyExist = FALSE;
+	return; // no EUDC font
     }
 
     // get EUDC font file name
@@ -1762,7 +1762,7 @@ void CCombinedSegTable::GetEUDCFileName(LPWSTR lpszFileName, int cchFileName)
     wcscpy(szFamilyName, GetFontName());
     WCHAR* delimit = wcschr(szFamilyName, L',');
     if (delimit != NULL)
-        *delimit = L'\0';
+	*delimit = L'\0';
     DWORD dwType;
     UCHAR szFileName[_MAX_PATH];
     ::ZeroMemory(szFileName, sizeof(szFileName));
@@ -1770,41 +1770,41 @@ void CCombinedSegTable::GetEUDCFileName(LPWSTR lpszFileName, int cchFileName)
     // try Typeface-specific EUDC font
     char szTmpName[80];
     VERIFY(::WideCharToMultiByte(CP_ACP, 0, szFamilyName, -1,
-        szTmpName, sizeof(szTmpName), NULL, NULL));
+	szTmpName, sizeof(szTmpName), NULL, NULL));
     LONG lStatus = ::RegQueryValueExA(hKey, (LPCSTR) szTmpName,
-        NULL, &dwType, szFileName, &dwBytes);
+	NULL, &dwType, szFileName, &dwBytes);
     BOOL fUseDefault = FALSE;
     if (lStatus != ERROR_SUCCESS){ // try System default EUDC font
-        if (m_fTTEUDCFileExist == FALSE)
-            return;
-        if (wcslen(m_szDefaultEUDCFile) > 0) {
-            wcscpy(lpszFileName, m_szDefaultEUDCFile);
-            return;
-        }
-        char szDefault[] = "SystemDefaultEUDCFont";
-        lStatus = ::RegQueryValueExA(hKey, (LPCSTR) szDefault,
-            NULL, &dwType, szFileName, &dwBytes);
-        fUseDefault = TRUE;
-        if (lStatus != ERROR_SUCCESS) {
-            m_fTTEUDCFileExist = FALSE;
-            // This font is associated with no EUDC font
-            // and there is no system default EUDC font
-            return;
-        }
+	if (m_fTTEUDCFileExist == FALSE)
+	    return;
+	if (wcslen(m_szDefaultEUDCFile) > 0) {
+	    wcscpy(lpszFileName, m_szDefaultEUDCFile);
+	    return;
+	}
+	char szDefault[] = "SystemDefaultEUDCFont";
+	lStatus = ::RegQueryValueExA(hKey, (LPCSTR) szDefault,
+	    NULL, &dwType, szFileName, &dwBytes);
+	fUseDefault = TRUE;
+	if (lStatus != ERROR_SUCCESS) {
+	    m_fTTEUDCFileExist = FALSE;
+	    // This font is associated with no EUDC font
+	    // and there is no system default EUDC font
+	    return;
+	}
     }
 
     if (strcmp((LPCSTR) szFileName, "userfont.fon") == 0) {
-        // This font is associated with no EUDC font
-        // and the system default EUDC font is not TrueType
-        m_fTTEUDCFileExist = FALSE;
-        return;
+	// This font is associated with no EUDC font
+	// and the system default EUDC font is not TrueType
+	m_fTTEUDCFileExist = FALSE;
+	return;
     }
 
     DASSERT(strlen((LPCSTR)szFileName) > 0);
     VERIFY(::MultiByteToWideChar(CP_ACP, 0,
-        (LPCSTR)szFileName, -1, lpszFileName, cchFileName) != 0);
+	(LPCSTR)szFileName, -1,	lpszFileName, cchFileName) != 0);
     if (fUseDefault)
-        wcscpy(m_szDefaultEUDCFile, lpszFileName);
+	wcscpy(m_szDefaultEUDCFile, lpszFileName);
 }
 
 void CCombinedSegTable::Create(LPWSTR name)
@@ -1812,16 +1812,16 @@ void CCombinedSegTable::Create(LPWSTR name)
     CSegTableComponent::Create(name);
 
     m_pStdSegTable =
-        (CStdSegTable*) g_segTableManager.GetTable(name, FALSE/*not EUDC*/);
+	(CStdSegTable*) g_segTableManager.GetTable(name, FALSE/*not EUDC*/);
     WCHAR szEUDCFileName[_MAX_PATH];
     ::ZeroMemory(szEUDCFileName, sizeof(szEUDCFileName));
     (void) GetEUDCFileName(szEUDCFileName,
-        sizeof(szEUDCFileName)/sizeof(WCHAR));
+	sizeof(szEUDCFileName)/sizeof(WCHAR));
     if (wcslen(szEUDCFileName) > 0) {
-        m_pEUDCSegTable = (CEUDCSegTable*) g_segTableManager.GetTable(
-            szEUDCFileName, TRUE/*EUDC*/);
-        if (m_pEUDCSegTable->HasCmap() == FALSE)
-            m_pEUDCSegTable = NULL;
+	m_pEUDCSegTable = (CEUDCSegTable*) g_segTableManager.GetTable(
+	    szEUDCFileName, TRUE/*EUDC*/);
+	if (m_pEUDCSegTable->HasCmap() == FALSE)
+	    m_pEUDCSegTable = NULL;
     }
 }
 
@@ -1829,10 +1829,10 @@ BOOL CCombinedSegTable::In(USHORT iChar)
 {
     DASSERT(m_pStdSegTable);
     if (m_pStdSegTable->In(iChar))
-        return TRUE;
+	return TRUE;
 
     if (m_pEUDCSegTable != NULL)
-        return m_pEUDCSegTable->In(iChar);
+	return m_pEUDCSegTable->In(iChar);
 
     return FALSE;
 }
@@ -1846,12 +1846,12 @@ public:
 CCombinedSegTable* CCombinedSegTableManager::GetTable(LPWSTR lpszFontName)
 {
     for (int i = 0; i < m_nTable; i++) {
-        if (wcscmp(m_tables[i]->GetFontName(),lpszFontName) == 0)
-            return (CCombinedSegTable*) m_tables[i];
+	if (wcscmp(m_tables[i]->GetFontName(),lpszFontName) == 0)
+	    return (CCombinedSegTable*) m_tables[i];
     }
 
     if (m_nTable == m_nMaxTable) {
-        (void) MakeBiggerTable();
+	(void) MakeBiggerTable();
     }
     DASSERT(m_nTable < m_nMaxTable);
 
@@ -1869,12 +1869,12 @@ CCombinedSegTable* CCombinedSegTableManager::GetTable(LPWSTR lpszFontName)
 extern "C" {
 
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WDefaultFontCharset_initIDs(JNIEnv *env, jclass cls)
+Java_sun_awt_windows_WDefaultFontCharset_initIDs(JNIEnv *env, jclass cls) 
 {
     TRY;
 
-    AwtFont::fontNameID = env->GetFieldID(cls, "fontName",
-                                          "Ljava/lang/String;");
+    AwtFont::fontNameID = env->GetFieldID(cls, "fontName", 
+					  "Ljava/lang/String;");
     DASSERT(AwtFont::fontNameID != NULL);
 
     CATCH_BAD_ALLOC;
@@ -1889,11 +1889,11 @@ Java_sun_awt_windows_WDefaultFontCharset_initIDs(JNIEnv *env, jclass cls)
  *
  * I suspect may be running out of C stack: see alloca in
  * JNI_GET_STRING, the alloca in it.
- *
+ * 
  * (the method is prefixed with XXX so that the linker won't find it) */
 JNIEXPORT jboolean JNICALL
 Java_sun_awt_windows_WDefaultFontCharset_canConvert(JNIEnv *env, jobject self,
-                                                    jchar ch)
+						    jchar ch)
 {
     TRY;
 

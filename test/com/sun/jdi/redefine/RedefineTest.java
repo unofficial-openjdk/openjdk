@@ -75,8 +75,8 @@ public class RedefineTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        new RedefineTest(args).startTests();
+    public static void main(String[] args)	throws Exception {
+	new RedefineTest(args).startTests();
     }
 
     /********** event handlers **********/
@@ -116,7 +116,7 @@ public class RedefineTest extends TestScaffold {
             }
         }
     }
-
+    
     public void breakpointReached(BreakpointEvent event) {
         ThreadReference thread = event.thread();
         try {
@@ -194,7 +194,7 @@ public class RedefineTest extends TestScaffold {
             n = method.location().lineNumber();
             int m = frame.location().lineNumber();
             if ((n != expectedLine) || (n != m)) {
-                failure("Test Failure: line number disagreement: " +
+                failure("Test Failure: line number disagreement: " + 
                         n + " (event) versus " + m + " (frame) versus " + expectedLine +
                         " (expected)");
             } else {
@@ -253,20 +253,20 @@ public class RedefineTest extends TestScaffold {
             } else if (receivedException instanceof UnsupportedOperationException) {
                 println("Received expected exception: " + receivedException);
             } else {
-                failure("FAIL: got exception: " + receivedException +
+                failure("FAIL: got exception: " + receivedException + 
                         ", expected: UnsupportedOperationException");
-            }
+            }                
             break;
         default:
             if (receivedException != null) {
-                failure("FAIL: unexpected exception: " +
+                failure("FAIL: unexpected exception: " + 
                         receivedException);
             }
             break;
         }
         return;
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
@@ -287,16 +287,16 @@ public class RedefineTest extends TestScaffold {
          */
         List lastlys = targetClass.methodsByName("lastly");
         if (lastlys.size() != 1) {
-            throw new Exception ("TestFailure: Expected one 'lastly' method, found: " +
+            throw new Exception ("TestFailure: Expected one 'lastly' method, found: " + 
                                  lastlys);
         }
         Location loc = ((Method)(lastlys.get(0))).location();
         EventRequest req = erm.createBreakpointRequest(loc);
-        req.enable();
+        req.enable();        
 
         // Allow application to complete and shut down
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

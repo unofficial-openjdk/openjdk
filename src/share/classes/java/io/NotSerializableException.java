@@ -31,25 +31,26 @@ package java.io;
  * this exception. The argument should be the name of the class.
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.1
  */
 public class NotSerializableException extends ObjectStreamException {
 
     private static final long serialVersionUID = 2906642554793891381L;
 
-    /**
-     * Constructs a NotSerializableException object with message string.
+    /** 
+     * Constructs a NotSerializableException object with message string. 
      *
      * @param classname Class of the instance being serialized/deserialized.
      */
     public NotSerializableException(String classname) {
-        super(classname);
+	super(classname);
     }
 
     /**
      *  Constructs a NotSerializableException object.
      */
     public NotSerializableException() {
-        super();
+	super();
     }
 }

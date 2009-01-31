@@ -31,7 +31,7 @@ import javax.print.attribute.PrintJobAttributeSet;
 
 /**
  * Class PrintJobAttributeEvent encapsulates an event a PrintService
- * reports to let the client know that one or more printing attributes for a
+ * reports to let the client know that one or more printing attributes for a 
  * PrintJob have changed.
  */
 
@@ -40,7 +40,7 @@ public class PrintJobAttributeEvent extends PrintEvent {
     private static final long serialVersionUID = -6534469883874742101L;
 
     private PrintJobAttributeSet attributes;
-
+    
     /**
      * Constructs a PrintJobAttributeEvent object.
      * @param source the print job generating  this event
@@ -49,8 +49,8 @@ public class PrintJobAttributeEvent extends PrintEvent {
      *         <code>null</code>.
      */
     public PrintJobAttributeEvent (DocPrintJob source,
-                                   PrintJobAttributeSet attributes)  {
-        super(source);
+    	                           PrintJobAttributeSet attributes)  {
+	super(source);
 
         this.attributes = AttributeSetUtilities.unmodifiableView(attributes);
     }
@@ -61,9 +61,9 @@ public class PrintJobAttributeEvent extends PrintEvent {
      *
      * @return  Print Job object.
      */
-    public DocPrintJob getPrintJob() {
+    public DocPrintJob getPrintJob() {	
 
-        return (DocPrintJob) getSource();
+    	return (DocPrintJob) getSource();
     }
 
 
@@ -75,7 +75,7 @@ public class PrintJobAttributeEvent extends PrintEvent {
      */
     public PrintJobAttributeSet getAttributes() {
 
-        return attributes;
+	return attributes;
 
     }
 

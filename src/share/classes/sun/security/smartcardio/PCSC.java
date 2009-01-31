@@ -35,64 +35,65 @@ import sun.security.action.LoadLibraryAction;
  * the platform specific superclass.
  *
  * @since   1.6
+ * @version %I%, %G%
  * @author  Andreas Sterbenz
  */
 final class PCSC extends PlatformPCSC {
-
+    
     private PCSC() {
-        // no instantiation
+	// no instantiation
     }
 
     static void checkAvailable() throws RuntimeException {
-        if (initException != null) {
-            throw new UnsupportedOperationException
-                    ("PC/SC not available on this platform", initException);
-        }
+	if (initException != null) {
+	    throw new UnsupportedOperationException
+		    ("PC/SC not available on this platform", initException);
+	}
     }
 
     // returns SCARDCONTEXT (contextId)
     static native long SCardEstablishContext
-            (int scope)
-            throws PCSCException;
+	    (int scope) 
+	    throws PCSCException;
 
     static native String[] SCardListReaders
-            (long contextId)
-            throws PCSCException;
+	    (long contextId)
+	    throws PCSCException;
 
     // returns SCARDHANDLE (cardId)
     static native long SCardConnect
-            (long contextId, String readerName, int shareMode, int preferredProtocols)
-            throws PCSCException;
+	    (long contextId, String readerName, int shareMode, int preferredProtocols)
+	    throws PCSCException;
 
     static native byte[] SCardTransmit
-            (long cardId, int protocol, byte[] buf, int ofs, int len)
-            throws PCSCException;
+	    (long cardId, int protocol, byte[] buf, int ofs, int len)
+	    throws PCSCException;
 
     // returns the ATR of the card, updates status[] with reader state and protocol
     static native byte[] SCardStatus
-            (long cardId, byte[] status)
-            throws PCSCException;
+	    (long cardId, byte[] status)
+	    throws PCSCException;
 
     static native void SCardDisconnect
-            (long cardId, int disposition)
-            throws PCSCException;
+	    (long cardId, int disposition)
+	    throws PCSCException;
 
     // returns dwEventState[] of the same size and order as readerNames[]
     static native int[] SCardGetStatusChange
-            (long contextId, long timeout, int[] currentState, String[] readerNames)
-            throws PCSCException;
+	    (long contextId, long timeout, int[] currentState, String[] readerNames)
+	    throws PCSCException;
 
     static native void SCardBeginTransaction
-            (long cardId)
-            throws PCSCException;
+	    (long cardId)
+	    throws PCSCException;
 
     static native void SCardEndTransaction
-            (long cardId, int disposition)
-            throws PCSCException;
+	    (long cardId, int disposition) 
+	    throws PCSCException;
 
     static native byte[] SCardControl
-            (long cardId, int controlCode, byte[] sendBuffer)
-            throws PCSCException;
+	    (long cardId, int controlCode, byte[] sendBuffer)
+	    throws PCSCException;
 
     // PCSC success/error/failure/warning codes
     final static int SCARD_S_SUCCESS             = 0x00000000;
@@ -137,10 +138,10 @@ final class PCSC extends PlatformPCSC {
 
     // MS undocumented
     final static int SCARD_E_NO_READERS_AVAILABLE = 0x8010002E;
-    // std. Windows invalid handle return code, used instead of SCARD code
+    // std. Windows invalid handle return code, used instead of SCARD code 
     final static int WINDOWS_ERROR_INVALID_HANDLE = 6;
     final static int WINDOWS_ERROR_INVALID_PARAMETER = 87;
-
+    
     //
     final static int SCARD_SCOPE_USER      =  0x0000;
     final static int SCARD_SCOPE_TERMINAL  =  0x0001;
@@ -156,34 +157,34 @@ final class PCSC extends PlatformPCSC {
     final static int SCARD_UNPOWER_CARD    =  0x0002;
     final static int SCARD_EJECT_CARD      =  0x0003;
 
-    final static int SCARD_STATE_UNAWARE     = 0x0000;
-    final static int SCARD_STATE_IGNORE      = 0x0001;
-    final static int SCARD_STATE_CHANGED     = 0x0002;
-    final static int SCARD_STATE_UNKNOWN     = 0x0004;
-    final static int SCARD_STATE_UNAVAILABLE = 0x0008;
-    final static int SCARD_STATE_EMPTY       = 0x0010;
-    final static int SCARD_STATE_PRESENT     = 0x0020;
-    final static int SCARD_STATE_ATRMATCH    = 0x0040;
-    final static int SCARD_STATE_EXCLUSIVE   = 0x0080;
-    final static int SCARD_STATE_INUSE       = 0x0100;
-    final static int SCARD_STATE_MUTE        = 0x0200;
+    final static int SCARD_STATE_UNAWARE     = 0x0000; 
+    final static int SCARD_STATE_IGNORE      = 0x0001; 
+    final static int SCARD_STATE_CHANGED     = 0x0002; 
+    final static int SCARD_STATE_UNKNOWN     = 0x0004; 
+    final static int SCARD_STATE_UNAVAILABLE = 0x0008; 
+    final static int SCARD_STATE_EMPTY       = 0x0010; 
+    final static int SCARD_STATE_PRESENT     = 0x0020; 
+    final static int SCARD_STATE_ATRMATCH    = 0x0040; 
+    final static int SCARD_STATE_EXCLUSIVE   = 0x0080; 
+    final static int SCARD_STATE_INUSE       = 0x0100; 
+    final static int SCARD_STATE_MUTE        = 0x0200; 
     final static int SCARD_STATE_UNPOWERED   = 0x0400;
-
+    
     final static int TIMEOUT_INFINITE = 0xffffffff;
 
     private final static char[] hexDigits = "0123456789abcdef".toCharArray();
-
+    
     public static String toString(byte[] b) {
-        StringBuffer sb = new StringBuffer(b.length * 3);
-        for (int i = 0; i < b.length; i++) {
-            int k = b[i] & 0xff;
-            if (i != 0) {
-                sb.append(':');
-            }
-            sb.append(hexDigits[k >>> 4]);
-            sb.append(hexDigits[k & 0xf]);
-        }
-        return sb.toString();
+	StringBuffer sb = new StringBuffer(b.length * 3);
+	for (int i = 0; i < b.length; i++) {
+	    int k = b[i] & 0xff;
+	    if (i != 0) {
+		sb.append(':');
+	    }
+	    sb.append(hexDigits[k >>> 4]);
+	    sb.append(hexDigits[k & 0xf]);
+	}
+	return sb.toString();
     }
 
 }

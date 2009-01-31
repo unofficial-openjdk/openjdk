@@ -30,7 +30,7 @@ import com.sun.jdi.request.*;
 
 class AccessWatchpointSpec extends WatchpointSpec {
 
-    AccessWatchpointSpec(ReferenceTypeSpec refSpec, String fieldId)
+    AccessWatchpointSpec(ReferenceTypeSpec refSpec, String fieldId) 
                                   throws MalformedMemberNameException {
         super(refSpec, fieldId);
     }
@@ -38,7 +38,7 @@ class AccessWatchpointSpec extends WatchpointSpec {
     /**
      * The 'refType' is known to match, return the EventRequest.
      */
-    EventRequest resolveEventRequest(ReferenceType refType)
+    EventRequest resolveEventRequest(ReferenceType refType) 
                                       throws NoSuchFieldException {
         Field field = refType.fieldByName(fieldId);
         EventRequestManager em = refType.virtualMachine().eventRequestManager();

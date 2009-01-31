@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 4143651 5085148
- *
+ * 
  * @summary Test if Writer methods will check if the stream
  *           has been closed.
  */
@@ -37,58 +37,58 @@ public class WriteAfterClose {
 
     static void testWrite(Writer wtr) throws Exception {
 
-        // These tests could be tighted to only check for a particular
-        // kind of exception, but in 1.2beta4 StringWriter and
-        // other writers throw RuntimeExceptions
+	// These tests could be tighted to only check for a particular
+	// kind of exception, but in 1.2beta4 StringWriter and
+	// other writers throw RuntimeExceptions 
         char[] cbuf = new char[2];
         wtr.close();
-        System.out.println("Class " + wtr.getClass().getName());
+	System.out.println("Class " + wtr.getClass().getName());
 
         try {
             wtr.write('a');
             System.out.println("FAILED: Allows char write on a closed stream");
-            failed = true;
+	    failed = true;
         } catch (Exception e) {
         }
 
         try {
             wtr.write(cbuf, 0, 1);
             System.out.println("FAILED: Allows buffer write on a closed stream");
-            failed = true;
+	    failed = true;
         } catch (Exception e) {
         }
 
         try {
             wtr.write(cbuf, 0, 0);
             System.out.println("FAILED: Allows empty write on a closed stream");
-            failed = true;
+	    failed = true;
         } catch (Exception e) {
         }
 
         try {
             wtr.write("a");
             System.out.println("FAILED: Allows string write on a closed stream");
-            failed = true;
+	    failed = true;
         } catch (Exception e) {
         }
 
         try {
             wtr.write("a", 0, 1);
             System.out.println("FALIED: Allows string buf write on a closed stream");
-            failed = true;
+	    failed = true;
         } catch (Exception e) {
-        }
+	}
 
-        try {
-            wtr.flush();
+	try {
+	    wtr.flush();
             System.out.println("FAILED: Allows flushing writer on a closed stream");
-            failed = true;
+	    failed = true;
         } catch (Exception e) {
         }
 
-        wtr.close();
+	wtr.close();
     }
-
+    
     public static void main(String argv[]) throws Exception {
         StringWriter sw = new StringWriter();
         testWrite(new BufferedWriter(sw));
@@ -97,16 +97,16 @@ public class WriteAfterClose {
         OutputStreamWriter osw = new OutputStreamWriter(bos);
         testWrite(osw);
 
-        File f = new File(System.getProperty("test.dir", "."),
+	File f = new File(System.getProperty("test.dir", "."),
                           "NewFile");
         f.createNewFile();
-        f.deleteOnExit();
+	f.deleteOnExit();
         FileWriter fr = new FileWriter(f);
         testWrite(fr);
 
-        if (failed) {
-            throw new Exception("The test failed because one of the"
-                +  " writer operation{s} failed. Check the messages");
-        }
+	if (failed) {
+	    throw new Exception("The test failed because one of the"
+		+  " writer operation{s} failed. Check the messages");
+	}
     }
 }

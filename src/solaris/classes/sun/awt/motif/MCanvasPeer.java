@@ -43,18 +43,18 @@ class MCanvasPeer extends MComponentPeer implements CanvasPeer,
     MCanvasPeer() {}
 
     MCanvasPeer(Component target) {
-        super(target);
+	super(target);
     }
 
     MCanvasPeer(Component target, Object arg) {
-        super(target, arg);
+	super(target, arg);
     }
 
 /* --- DisplayChangedListener Stuff --- */
     public void displayChanged() {}
     public void paletteChanged() {}
     native void resetTargetGC(Component target);
-
+                                                                                  
     /*
      * Called when the Window this
      * Canvas is on is moved onto another Xinerama screen.
@@ -62,7 +62,7 @@ class MCanvasPeer extends MComponentPeer implements CanvasPeer,
      * Canvases can be created with a non-defulat GraphicsConfiguration.  The
      * GraphicsConfiguration needs to be changed to one on the new screen,
      * preferably with the same visual ID.
-     *
+     * 
      * Up-called for other windows peer instances (WPanelPeer, WWindowPeer).
      *
      * Should only be called from the event thread.
@@ -111,3 +111,4 @@ class MCanvasPeer extends MComponentPeer implements CanvasPeer,
         return true;
     }
 }
+

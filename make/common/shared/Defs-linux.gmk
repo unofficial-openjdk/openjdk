@@ -117,9 +117,34 @@ ifndef ALT_BOOTDIR
   _BOOTDIR2  =$(USRJDKINSTANCES_PATH)/jdk$(PREVIOUS_JDK_VERSION)
 endif
 
-# Always build headless on Linux
-BUILD_HEADLESS = true
+# MOTIF_DIR: must point to a directory containing the Xm and include directories
+ifdef ALT_MOTIF_DIR
+  MOTIF_DIR=$(ALT_MOTIF_DIR)
+else
+  ifdef ALT_JDK_DEVTOOLS_DIR
+    MOTIF_DIR = $(JDK_DEVTOOLS_DIR)/$(PLATFORM)/motif-$(ARCH)
+  else
+    ifdef OPENJDK
+      MOTIF_DIR = /usr
+    else
+      MOTIF_DIR = $(JDK_DEVTOOLS_DIR)/$(PLATFORM)/motif-$(ARCH)
+    endif
+  endif
+endif
+
+# Motif settings, always build headless on Linux
+STATIC_MOTIF=true
 LIBM=-lm
+ifdef MOTIF_REQUIRED
+  BUILD_MOTIF21 = true
+endif
+BUILD_HEADLESS = true
+ifeq ($(ARCH_DATA_MODEL), 32)
+  MOTIF_LIB = $(MOTIF_DIR)/lib
+else
+  MOTIF_LIB = $(MOTIF_DIR)/lib64
+endif
+MOTIF_INCLUDE = $(MOTIF_DIR)/include
 
 # GCC29_COMPILER_PATH: is the path to where the gcc 2.9 compiler is installed
 #  NOTE: Must end with / so that it could be empty, allowing PATH usage.

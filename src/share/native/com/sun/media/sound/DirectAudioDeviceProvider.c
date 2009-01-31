@@ -75,32 +75,33 @@ JNIEXPORT jobject JNICALL Java_com_sun_media_sound_DirectAudioDeviceProvider_nNe
     // retrieve class and constructor of DirectAudioDeviceProvider.DirectAudioDeviceInfo
     directAudioDeviceInfoClass = (*env)->FindClass(env, IMPLEMENTATION_PACKAGE_NAME"/DirectAudioDeviceProvider$DirectAudioDeviceInfo");
     if (directAudioDeviceInfoClass == NULL) {
-        ERROR0("Java_com_sun_media_sound_DirectAudioDeviceProvider_nNewDirectAudioDeviceInfo: directAudioDeviceInfoClass is NULL\n");
-        return NULL;
+	ERROR0("Java_com_sun_media_sound_DirectAudioDeviceProvider_nNewDirectAudioDeviceInfo: directAudioDeviceInfoClass is NULL\n");
+	return NULL;
     }
     directAudioDeviceInfoConstructor = (*env)->GetMethodID(env, directAudioDeviceInfoClass, "<init>",
                   "(IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     if (directAudioDeviceInfoConstructor == NULL) {
-        ERROR0("Java_com_sun_media_sound_DirectAudioDeviceProvider_nNewDirectAudioDeviceInfo: directAudioDeviceInfoConstructor is NULL\n");
-        return NULL;
+	ERROR0("Java_com_sun_media_sound_DirectAudioDeviceProvider_nNewDirectAudioDeviceInfo: directAudioDeviceInfoConstructor is NULL\n");
+	return NULL;
     }
 
     TRACE1("Get description for device %d\n", mixerIndex);
 
     if (getDirectAudioDeviceDescription(mixerIndex, &desc)) {
-        // create a new DirectAudioDeviceInfo object and return it
-        info = (*env)->NewObject(env, directAudioDeviceInfoClass, directAudioDeviceInfoConstructor,
-                                 mixerIndex,
-                                 desc.deviceID,
-                                 desc.maxSimulLines,
-                                 (*env)->NewStringUTF(env, desc.name),
-                                 (*env)->NewStringUTF(env, desc.vendor),
-                                 (*env)->NewStringUTF(env, desc.description),
-                                 (*env)->NewStringUTF(env, desc.version));
+	// create a new DirectAudioDeviceInfo object and return it
+	info = (*env)->NewObject(env, directAudioDeviceInfoClass, directAudioDeviceInfoConstructor, 
+				 mixerIndex, 
+	                         desc.deviceID,
+	                         desc.maxSimulLines,
+	                         (*env)->NewStringUTF(env, desc.name),
+	                         (*env)->NewStringUTF(env, desc.vendor),
+	                         (*env)->NewStringUTF(env, desc.description),
+	                         (*env)->NewStringUTF(env, desc.version));
     } else {
-        ERROR1("ERROR: getDirectAudioDeviceDescription(%d, desc) returned FALSE!\n", mixerIndex);
+	ERROR1("ERROR: getDirectAudioDeviceDescription(%d, desc) returned FALSE!\n", mixerIndex);
     }
 
     TRACE0("Java_com_sun_media_sound_DirectAudioDeviceProvider_nNewDirectAudioDeviceInfo succeeded.\n");
     return info;
 }
+

@@ -41,9 +41,9 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
 
     /* Serial version */
     static final long serialVersionUID = 4433990064191844427L;
-
+        
     static final MBeanConstructorInfo[] NO_CONSTRUCTORS =
-        new MBeanConstructorInfo[0];
+	new MBeanConstructorInfo[0];
 
     /** @see MBeanInfo#arrayGettersSafe */
     private final transient boolean arrayGettersSafe;
@@ -65,8 +65,8 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
      * object describing the MBean constructor.
      */
     public MBeanConstructorInfo(String description, Constructor constructor) {
-        this(constructor.getName(), description,
-             constructorSignature(constructor),
+	this(constructor.getName(), description,
+	     constructorSignature(constructor),
              Introspector.descriptorForElement(constructor));
     }
 
@@ -79,9 +79,9 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
      * may be null with the same effect as a zero-length array.
      * @param description A human readable description of the constructor.
      */
-    public MBeanConstructorInfo(String name,
-                                String description,
-                                MBeanParameterInfo[] signature) {
+    public MBeanConstructorInfo(String name, 
+				String description,
+				MBeanParameterInfo[] signature) {
         this(name, description, signature, null);
     }
 
@@ -98,20 +98,20 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
      *
      * @since 1.6
      */
-    public MBeanConstructorInfo(String name,
-                                String description,
-                                MBeanParameterInfo[] signature,
+    public MBeanConstructorInfo(String name, 
+				String description,
+				MBeanParameterInfo[] signature,
                                 Descriptor descriptor) {
-        super(name, description, descriptor);
+	super(name, description, descriptor);
 
-        if (signature == null || signature.length == 0)
-            signature = MBeanParameterInfo.NO_PARAMS;
-        else
-            signature = signature.clone();
-        this.signature = signature;
-        this.arrayGettersSafe =
-            MBeanInfo.arrayGettersSafe(this.getClass(),
-                                       MBeanConstructorInfo.class);
+	if (signature == null || signature.length == 0)
+	    signature = MBeanParameterInfo.NO_PARAMS;
+	else
+	    signature = signature.clone();
+	this.signature = signature;
+	this.arrayGettersSafe =
+	    MBeanInfo.arrayGettersSafe(this.getClass(),
+				       MBeanConstructorInfo.class);
     }
 
 
@@ -126,14 +126,14 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
      * interest to subclasses.</p>
      */
      public Object clone () {
-         try {
-             return super.clone() ;
-         } catch (CloneNotSupportedException e) {
-             // should not happen as this class is cloneable
-             return null;
-         }
+	 try {
+	     return super.clone() ;
+	 } catch (CloneNotSupportedException e) {
+	     // should not happen as this class is cloneable
+	     return null;
+	 }
      }
-
+    
     /**
      * <p>Returns the list of parameters for this constructor.  Each
      * parameter is described by an <CODE>MBeanParameterInfo</CODE>
@@ -148,17 +148,17 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
      * @return  An array of <CODE>MBeanParameterInfo</CODE> objects.
      */
     public MBeanParameterInfo[] getSignature() {
-        if (signature.length == 0)
+	if (signature.length == 0)
             return signature;
-        else
-            return signature.clone();
+	else
+	    return signature.clone();
     }
 
     private MBeanParameterInfo[] fastGetSignature() {
-        if (arrayGettersSafe)
-            return signature;
-        else
-            return getSignature();
+	if (arrayGettersSafe)
+	    return signature;
+	else
+	    return getSignature();
     }
 
     public String toString() {
@@ -170,7 +170,7 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
             "descriptor=" + getDescriptor() +
             "]";
     }
-
+    
     /**
      * Compare this MBeanConstructorInfo to another.
      *
@@ -185,14 +185,14 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
      * equal.
      */
     public boolean equals(Object o) {
-        if (o == this)
-            return true;
-        if (!(o instanceof MBeanConstructorInfo))
-            return false;
-        MBeanConstructorInfo p = (MBeanConstructorInfo) o;
-        return (p.getName().equals(getName()) &&
-                p.getDescription().equals(getDescription()) &&
-                Arrays.equals(p.fastGetSignature(), fastGetSignature()) &&
+	if (o == this)
+	    return true;
+	if (!(o instanceof MBeanConstructorInfo))
+	    return false;
+	MBeanConstructorInfo p = (MBeanConstructorInfo) o;
+	return (p.getName().equals(getName()) &&
+		p.getDescription().equals(getDescription()) &&
+		Arrays.equals(p.fastGetSignature(), fastGetSignature()) &&
                 p.getDescriptor().equals(getDescriptor()));
     }
 
@@ -203,15 +203,15 @@ public class MBeanConstructorInfo extends MBeanFeatureInfo implements Cloneable 
        quite long and yet the same between constructors.  Likewise for
        the descriptor.  */
     public int hashCode() {
-        int hash = getName().hashCode();
-        MBeanParameterInfo[] sig = fastGetSignature();
-        for (int i = 0; i < sig.length; i++)
-            hash ^= sig[i].hashCode();
-        return hash;
+	int hash = getName().hashCode();
+	MBeanParameterInfo[] sig = fastGetSignature();
+	for (int i = 0; i < sig.length; i++)
+	    hash ^= sig[i].hashCode();
+	return hash;
     }
 
     private static MBeanParameterInfo[] constructorSignature(Constructor cn) {
-        final Class[] classes = cn.getParameterTypes();
+	final Class[] classes = cn.getParameterTypes();
         final Annotation[][] annots = cn.getParameterAnnotations();
         return MBeanOperationInfo.parameters(classes, annots);
     }

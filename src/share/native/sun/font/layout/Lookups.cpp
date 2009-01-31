@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)Lookups.cpp	1.9 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -63,3 +64,4 @@ le_int32 LookupSubtable::getGlyphCoverage(Offset tableOffset, LEGlyphID glyphID)
 
     return coverageTable->getGlyphCoverage(glyphID);
 }
+

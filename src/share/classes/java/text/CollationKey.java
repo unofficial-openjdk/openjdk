@@ -94,6 +94,7 @@ package java.text;
  *
  * @see          Collator
  * @see          RuleBasedCollator
+ * @version      %I%, %G%
  * @author       Helena Shih
  */
 
@@ -126,14 +127,14 @@ public abstract class CollationKey implements Comparable<CollationKey> {
      */
     abstract public byte[] toByteArray();
 
-
+    
   /**
    * CollationKey constructor.
    *
    * @param source - the source string.
    * @exception NullPointerException if <code>source</code> is null.
    * @since 1.6
-   */
+   */ 
     protected CollationKey(String source) {
         if (source==null){
             throw new NullPointerException();
@@ -143,3 +144,4 @@ public abstract class CollationKey implements Comparable<CollationKey> {
 
     final private String source;
 }
+

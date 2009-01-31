@@ -28,11 +28,11 @@ import org.w3c.dom.Node;
  *
  */
 public interface NodeFilter {
-        /**
-         * Tells if a node must be outputed in c14n.
-         * @param n
-         * @return true if node must be outputed, false otherwise.
-         */
-        public boolean isNodeInclude(Node n);
+	/**
+	 * Tells if a node must be outputed in c14n.
+	 * @param n
+	 * @return true if node must be outputed, false otherwise.
+	 */
+	public boolean isNodeInclude(Node n);
 
 }

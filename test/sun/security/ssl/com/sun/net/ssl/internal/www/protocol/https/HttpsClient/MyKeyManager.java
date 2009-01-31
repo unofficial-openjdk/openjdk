@@ -36,32 +36,32 @@ final class MyKeyManager implements X509KeyManager {
     private HashMap certChainMap = new HashMap();
 
     MyKeyManager(KeyStore ks, char[] password)
-        throws KeyStoreException, NoSuchAlgorithmException,
-        UnrecoverableKeyException
+	throws KeyStoreException, NoSuchAlgorithmException,
+	UnrecoverableKeyException
     {
-        if (ks == null) {
-            return;
-        }
+	if (ks == null) {
+	    return;
+	}
 
-        Enumeration aliases = ks.aliases();
-        while (aliases.hasMoreElements()) {
-            String alias = (String)aliases.nextElement();
-            if (ks.isKeyEntry(alias)) {
-                Certificate[] certs;
-                certs = ks.getCertificateChain(alias);
-                if (certs != null && certs.length > 0 &&
-                    certs[0] instanceof X509Certificate) {
-                    if (!(certs instanceof X509Certificate[])) {
-                        Certificate[] tmp = new X509Certificate[certs.length];
-                        System.arraycopy(certs, 0, tmp, 0, certs.length);
-                        certs = tmp;
-                    }
-                    Key key = ks.getKey(alias, password);
-                    certChainMap.put(alias, certs);
-                    keyMap.put(alias, key);
-                }
-            }
-        }
+	Enumeration aliases = ks.aliases();
+	while (aliases.hasMoreElements()) {
+	    String alias = (String)aliases.nextElement();
+	    if (ks.isKeyEntry(alias)) {
+		Certificate[] certs;
+		certs = ks.getCertificateChain(alias);
+		if (certs != null && certs.length > 0 &&
+		    certs[0] instanceof X509Certificate) {
+		    if (!(certs instanceof X509Certificate[])) {
+			Certificate[] tmp = new X509Certificate[certs.length];
+			System.arraycopy(certs, 0, tmp, 0, certs.length);
+			certs = tmp;
+		    }
+		    Key key = ks.getKey(alias, password);
+		    certChainMap.put(alias, certs);
+		    keyMap.put(alias, key);
+		}
+	    }
+	}
     }
 
     /*
@@ -70,8 +70,8 @@ final class MyKeyManager implements X509KeyManager {
      * certificate issuer authorities recognized by the peer (if any).
      */
     public String chooseClientAlias(String[] keyTypes, Principal[] issuers,
-            Socket socket) {
-        return "client";
+	    Socket socket) {
+	return "client";
     }
 
     /*
@@ -80,9 +80,9 @@ final class MyKeyManager implements X509KeyManager {
      * certificate issuer authorities recognized by the peer (if any).
      */
     public String[] getClientAliases(String keyType, Principal[] issuers) {
-        String[] s = new String[1];
-        s[0] = "client";
-        return s;
+	String[] s = new String[1];
+	s[0] = "client";
+	return s;
     }
 
     private HashMap serverAliasCache = new HashMap();
@@ -93,8 +93,8 @@ final class MyKeyManager implements X509KeyManager {
      * certificate issuer authorities recognized by the peer (if any).
      */
     public synchronized String chooseServerAlias(String keyType,
-            Principal[] issuers, Socket socket) {
-        return "server";
+	    Principal[] issuers, Socket socket) {
+	return "server";
     }
 
     /*
@@ -103,9 +103,9 @@ final class MyKeyManager implements X509KeyManager {
      * certificate issuer authorities recognized by the peer (if any).
      */
     public String[] getServerAliases(String keyType, Principal[] issuers) {
-        String[] s = new String[1];
-        s[0] = "server";
-        return s;
+	String[] s = new String[1];
+	s[0] = "server";
+	return s;
     }
 
     /**
@@ -119,12 +119,12 @@ final class MyKeyManager implements X509KeyManager {
      * @exception KeyStoreException if the alias is invalid
      */
     public X509Certificate[] getCertificateChain(String alias) {
-        Object chain;
+	Object chain;
 
-        chain = certChainMap.get(alias);
-        if (!(chain instanceof X509Certificate[]))
-            return null;
-        return (X509Certificate[]) chain;
+	chain = certChainMap.get(alias);
+	if (!(chain instanceof X509Certificate[]))
+	    return null;
+	return (X509Certificate[]) chain;
     }
 
     /*
@@ -137,11 +137,11 @@ final class MyKeyManager implements X509KeyManager {
      * @exception KeyStoreException if the alias is invalid
      */
     public PrivateKey getPrivateKey(String alias) {
-        Object key;
+	Object key;
 
-        key = keyMap.get(alias);
-        if (!(key instanceof PrivateKey))
-            return null;
-        return (PrivateKey)key;
+	key = keyMap.get(alias);
+	if (!(key instanceof PrivateKey))
+	    return null;
+	return (PrivateKey)key;
     }
 }

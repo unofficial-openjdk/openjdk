@@ -25,7 +25,7 @@
  * @test
  * @bug 4291610
  * @summary BasicPermission.newPermissionCollection collection does not
- *      enforce homogeneity
+ *	enforce homogeneity
  */
 
 import java.security.BasicPermission;
@@ -34,37 +34,37 @@ public class Homogeneity {
 
     public static void main(String[] args) {
 
-        java.lang.RuntimePermission rp = new java.lang.RuntimePermission
-                                        ("*");
-        java.lang.RuntimePermission rp2 = new java.lang.RuntimePermission
-                                        ("exitVM");
-        java.net.NetPermission np = new java.net.NetPermission
-                                        ("setDefaultAuthenticator");
+	java.lang.RuntimePermission rp = new java.lang.RuntimePermission
+					("*");
+	java.lang.RuntimePermission rp2 = new java.lang.RuntimePermission
+					("exitVM");
+	java.net.NetPermission np = new java.net.NetPermission
+					("setDefaultAuthenticator");
 
-        // should be able to add identical BasicPermission subclasses to the
-        // same collection
-        java.security.PermissionCollection perms = rp.newPermissionCollection();
-        try {
-            perms.add(rp);
-            perms.add(rp2);
-        } catch (IllegalArgumentException iae) {
-            throw new SecurityException("GOOD ADD TEST FAILED");
-        }
+	// should be able to add identical BasicPermission subclasses to the
+	// same collection
+	java.security.PermissionCollection perms = rp.newPermissionCollection();
+	try {
+	    perms.add(rp);
+	    perms.add(rp2);
+	} catch (IllegalArgumentException iae) {
+	    throw new SecurityException("GOOD ADD TEST FAILED");
+	}
 
-        // make sure you can't add different BasicPermission subclasses
-        // to the same collection
-        try {
-            // this should fail
-            perms.add(np);
-            throw new SecurityException("BAD ADD TEST FAILED");
-        } catch (IllegalArgumentException iae) {
-            // good
-        }
+	// make sure you can't add different BasicPermission subclasses
+	// to the same collection
+	try {
+	    // this should fail
+	    perms.add(np);
+	    throw new SecurityException("BAD ADD TEST FAILED");
+	} catch (IllegalArgumentException iae) {
+	    // good
+	}
 
-        // make sure a BasicPermissionCollection doesn't imply
-        // random BasicPermission subclasses
-        if (perms.implies(np)) {
-            throw new SecurityException("IMPLIES TEST FAILED");
-        }
+	// make sure a BasicPermissionCollection doesn't imply
+	// random BasicPermission subclasses
+	if (perms.implies(np)) {
+	    throw new SecurityException("IMPLIES TEST FAILED");
+	}
     }
 }

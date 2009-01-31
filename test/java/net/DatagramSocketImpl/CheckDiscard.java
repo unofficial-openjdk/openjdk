@@ -30,58 +30,58 @@ import java.net.*;
 
 public class CheckDiscard {
 
-    CheckDiscard() throws Exception {
+    CheckDiscard() throws Exception { 
 
-        DatagramSocket s = new DatagramSocket();
+	DatagramSocket s = new DatagramSocket();
 
-        /*
-         * Create two sender threads
-         */
-        Sender s1 = new Sender( s.getLocalPort() );
-        Sender s2 = new Sender( s.getLocalPort() );
+	/*
+	 * Create two sender threads
+	 */
+	Sender s1 = new Sender( s.getLocalPort() );
+	Sender s2 = new Sender( s.getLocalPort() );
 
-        /*
-         * "connect" to sender 1
-         */
-        InetAddress ia = InetAddress.getLocalHost();
-        s.connect( ia, s1.getLocalPort() );
+	/*
+	 * "connect" to sender 1
+	 */
+	InetAddress ia = InetAddress.getLocalHost();
+	s.connect( ia, s1.getLocalPort() );
 
-        /*
-         * Kick off the senders
-         */
-        (new Thread(s1)).start();
-        (new Thread(s2)).start();
+	/*
+	 * Kick off the senders 
+	 */
+	(new Thread(s1)).start();
+	(new Thread(s2)).start();
 
-        /*
-         * Receive packets and verify that they came from the
-         * right sender
-         */
-        byte b[] = new byte[512];
-        DatagramPacket p = new DatagramPacket(b, b.length);
-        s.setSoTimeout(4000);
-        try {
-            for (int i=0; i<20; i++) {
-                s.receive(p);
-                if ((p.getPort() != s1.getLocalPort()) ||
-                    (!p.getAddress().equals(ia))) {
-                    throw new Exception("Received packet from wrong sender");
-                }
-            }
-        } catch (SocketTimeoutException e) {
-        }
+	/*
+	 * Receive packets and verify that they came from the
+	 * right sender
+	 */
+	byte b[] = new byte[512];
+	DatagramPacket p = new DatagramPacket(b, b.length);
+	s.setSoTimeout(4000);
+	try {
+	    for (int i=0; i<20; i++) {
+	        s.receive(p);
+	        if ((p.getPort() != s1.getLocalPort()) ||
+		    (!p.getAddress().equals(ia))) {
+		    throw new Exception("Received packet from wrong sender");
+	        }
+	    }
+        } catch (SocketTimeoutException e) { 
+	}
 
-        /*
-         * Finally check if either sender threw an exception
-         */
-        Exception e;
-        e = s1.getException();
-        if (e != null) throw e;
-        e = s2.getException();
-        if (e != null) throw e;
+	/*
+	 * Finally check if either sender threw an exception
+	 */
+	Exception e;
+	e = s1.getException();
+	if (e != null) throw e;
+	e = s2.getException();
+	if (e != null) throw e;
     }
 
     public static void main(String args[]) throws Exception {
-        new CheckDiscard();
+	new CheckDiscard();
     }
 
 
@@ -89,48 +89,49 @@ public class CheckDiscard {
     public class Sender implements Runnable {
 
         Exception exc = null;
-        DatagramSocket s;
-        int port;
+	DatagramSocket s;
+	int port;
 
-        Sender(int port) throws Exception {
-            s = new DatagramSocket();
-            this.port = port;
+        Sender(int port) throws Exception { 
+	    s = new DatagramSocket();
+	    this.port = port;
         }
 
-        public int getLocalPort() {
-            return s.getLocalPort();
-        }
+	public int getLocalPort() {
+	    return s.getLocalPort();
+	}
 
         public void setException(Exception e) {
-            exc = e;
+	    exc = e;
         }
 
         public Exception getException() {
-            return exc;
+	    return exc;
         }
 
-        /*
-         * Send 10 packets to the receiver
-         */
-        public void run() {
-            try {
+	/*
+	 * Send 10 packets to the receiver
+	 */
+	public void run() {
+	    try {
 
-                byte b[] = "Hello".getBytes();
-                DatagramPacket p = new DatagramPacket(b, b.length);
-                p.setAddress( InetAddress.getLocalHost() );
-                p.setPort( port );
+		byte b[] = "Hello".getBytes();
+		DatagramPacket p = new DatagramPacket(b, b.length);
+		p.setAddress( InetAddress.getLocalHost() );
+		p.setPort( port );
 
-                for (int i=0; i<10; i++) {
-                    s.send(p);
-                    Thread.currentThread().sleep(1000);
-                }
+		for (int i=0; i<10; i++) {
+		    s.send(p);
+		    Thread.currentThread().sleep(1000);
+		}
 
-            } catch (Exception e) {
-                setException(e);
-            }
+	    } catch (Exception e) {
+		setException(e);
+	    }
 
-            s.close();
-        }
+	    s.close();
+	}
     }
 
 }
+

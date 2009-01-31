@@ -29,6 +29,7 @@ import javax.swing.JMenuItem;
 
 /**
  *
+ * @version %I% %G%
  * @author Igor Kushnirskiy
  */
 

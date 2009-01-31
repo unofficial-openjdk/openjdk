@@ -45,6 +45,8 @@
         <make-run target="all" dir="${make.dir}/sun/awt"/>
         <make-run target="all" dir="${make.dir}/sun/splashscreen"/>
         <make-run target="all" dir="${make.dir}/sun/xawt"/>
+        <make-run target="all" dir="${make.dir}/sun/motif12"/>
+        <make-run target="all" dir="${make.dir}/sun/motif21"/>
         <make-run target="all" dir="${make.dir}/sun/headless"/>
         <make-run target="all" dir="${make.dir}/sun/font"/>
         <make-run target="all" dir="${make.dir}/sun/jpeg"/>
@@ -76,6 +78,8 @@
         <make-run target="clean" dir="${make.dir}/sun/awt"/>
         <make-run target="clean" dir="${make.dir}/sun/splashscreen"/>
         <make-run target="clean" dir="${make.dir}/sun/xawt"/>
+        <make-run target="clean" dir="${make.dir}/sun/motif12"/>
+        <make-run target="clean" dir="${make.dir}/sun/motif21"/>
         <make-run target="clean" dir="${make.dir}/sun/font"/>
         <make-run target="clean" dir="${make.dir}/sun/jpeg"/>
         <make-run target="clean" dir="${make.dir}/sun/cmm"/>

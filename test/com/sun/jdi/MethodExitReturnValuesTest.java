@@ -77,7 +77,7 @@ class MethodExitReturnValuesTarg {
     public static String      stringValue = "abc";
     public static int[]       intArrayValue = new int[] {1, 2, 3};
 
-    public static MethodExitReturnValuesTarg  objectValue =
+    public static MethodExitReturnValuesTarg  objectValue = 
         new MethodExitReturnValuesTarg();
     public String ivar = stringValue;
 
@@ -110,7 +110,7 @@ class MethodExitReturnValuesTarg {
                                       { return classLoaderValue; }
     public static Thread s_threadf()  { threadValue = Thread.currentThread();
                                         return threadValue; }
-    public static ThreadGroup s_threadGroupf()
+    public static ThreadGroup s_threadGroupf()  
                                       { threadGroupValue = threadValue.getThreadGroup();
                                         return threadGroupValue; }
     public static int[] s_intArrayf() { return intArrayValue; }
@@ -132,7 +132,7 @@ class MethodExitReturnValuesTarg {
     public ClassLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue; }
-    public ThreadGroup i_threadGroupf()
+    public ThreadGroup i_threadGroupf()  
                                      { return threadGroupValue; }
     public int[] i_intArrayf()       { return intArrayValue; }
     public Object i_nullObjectf()    { return null; }
@@ -199,9 +199,9 @@ class MethodExitReturnValuesTarg {
         // enable method exit events, and then do
         // a resume.
 
-        MethodExitReturnValuesTarg xx =
+        MethodExitReturnValuesTarg xx = 
             new MethodExitReturnValuesTarg();
-
+        
         doit(xx);
     }
 }
@@ -209,15 +209,15 @@ class MethodExitReturnValuesTarg {
 
 
 public class MethodExitReturnValuesTest extends TestScaffold {
-
+    
     /*
      * Class patterns for which we don't want events (copied
      * from the "Trace.java" example):
      *     http://java.sun.com/javase/technologies/core/toolsapis/jpda/
      */
     private String[] excludes = {
-        "javax.*",
-        "sun.*",
+        "javax.*", 
+        "sun.*", 
         "com.sun.*"};
 
     static VirtualMachineManager vmm ;
@@ -227,13 +227,13 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     static final int expectedSuccesses = 44;  // determined by inspection :-)
 
     MethodExitReturnValuesTest(String args[]) {
-        super(args);
+	super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        MethodExitReturnValuesTest meee = new MethodExitReturnValuesTest(args);
+    public static void main(String[] args)	throws Exception {
+	MethodExitReturnValuesTest meee = new MethodExitReturnValuesTest(args);
         vmm = Bootstrap.virtualMachineManager();
-        meee.startTests();
+	meee.startTests();
     }
 
     // These are the methods that check for correct return values.
@@ -241,7 +241,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckByteValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("byteValue");
         ByteValue theValue = (ByteValue)targetClass.getValue(theValueField);
-
+        
         byte vv = theValue.value();
         byte rv = ((ByteValue)retValue).value();
         if (vv != rv) {
@@ -255,7 +255,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckCharValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("charValue");
         CharValue theValue = (CharValue)targetClass.getValue(theValueField);
-
+            
         char vv = theValue.value();
         char rv = ((CharValue)retValue).value();
         if (vv != rv) {
@@ -269,7 +269,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckDoubleValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("doubleValue");
         DoubleValue theValue = (DoubleValue)targetClass.getValue(theValueField);
-
+            
         double vv = theValue.value();
         double rv = ((DoubleValue)retValue).value();
         if (vv != rv) {
@@ -283,7 +283,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckFloatValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("floatValue");
         FloatValue theValue = (FloatValue)targetClass.getValue(theValueField);
-
+        
         float vv = theValue.value();
         float rv = ((FloatValue)retValue).value();
         if (vv != rv) {
@@ -297,7 +297,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckIntValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("intValue");
         IntegerValue theValue = (IntegerValue)targetClass.getValue(theValueField);
-
+            
         int vv = theValue.value();
         int rv = ((IntegerValue)retValue).value();
         if (vv != rv) {
@@ -311,7 +311,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckLongValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("longValue");
         LongValue theValue = (LongValue)targetClass.getValue(theValueField);
-
+            
         long vv = theValue.value();
         long rv = ((LongValue)retValue).value();
         if (vv != rv) {
@@ -325,7 +325,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckShortValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("shortValue");
         ShortValue theValue = (ShortValue)targetClass.getValue(theValueField);
-
+            
         short vv = theValue.value();
         short rv = ((ShortValue)retValue).value();
         if (vv != rv) {
@@ -339,7 +339,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckBooleanValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("booleanValue");
         BooleanValue theValue = (BooleanValue)targetClass.getValue(theValueField);
-
+            
         boolean vv = theValue.value();
         boolean rv = ((BooleanValue)retValue).value();
         if (vv != rv) {
@@ -353,7 +353,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     void ckStringValue(Value retValue) {
         Field theValueField = targetClass.fieldByName("stringValue");
         StringReference theValue = (StringReference)targetClass.getValue(theValueField);
-
+            
         String vv = theValue.value();
         String rv = ((StringReference)retValue).value();
         if (vv != rv) {
@@ -368,7 +368,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("classValue");
         ClassObjectReference vv = (ClassObjectReference)targetClass.
             getValue(theValueField);
-
+            
         ClassObjectReference rv = (ClassObjectReference)retValue;
         if (vv != rv) {
             failure("failure: Class: expected " + vv + ", got " + rv);
@@ -382,7 +382,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("classLoaderValue");
         ClassLoaderReference vv = (ClassLoaderReference)targetClass.
             getValue(theValueField);
-
+            
         ClassLoaderReference rv = (ClassLoaderReference)retValue;
         if (vv != rv) {
             failure("failure: ClassLoader: expected " + vv + ", got " + rv);
@@ -396,7 +396,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("threadValue");
         ThreadReference vv = (ThreadReference)targetClass.
             getValue(theValueField);
-
+            
         ThreadReference rv = (ThreadReference)retValue;
         if (vv != rv) {
             failure("failure: Thread: expected " + vv + ", got " + rv);
@@ -410,7 +410,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         Field theValueField = targetClass.fieldByName("threadGroupValue");
         ThreadGroupReference vv = (ThreadGroupReference)targetClass.
             getValue(theValueField);
-
+            
         ThreadGroupReference rv = (ThreadGroupReference)retValue;
         if (vv != rv) {
             failure("failure: ThreadgGroup: expected " + vv + ", got " + rv);
@@ -447,7 +447,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
     }
 
     void ckObjectValue(Value retValue) {
-        // We will check the ivar field which we know contains
+        // We will check the ivar field which we know contains 
         // the value of 'stringValue'
         Field theValueField = targetClass.fieldByName("stringValue");
         StringReference theValue = (StringReference)targetClass.getValue(theValueField);
@@ -455,11 +455,11 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         Field theIVarField = targetClass.fieldByName("ivar");
         ObjectReference theRetValue = (ObjectReference)retValue;
         StringReference theRetValField = (StringReference)theRetValue.getValue(theIVarField);
-
+            
         String vv = theValue.value();
         String rv = theRetValField.value();
         if (vv != rv) {
-            failure("failure: Object: expected " + vv + ", got " + rv);
+            failure("failure: Object: expected " + vv + ", got " + rv); 
        } else {
             System.out.println("Passed: Object: " + rv);
             successes++;
@@ -482,7 +482,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         }
     }
 
-    // This is the MethodExitEvent handler.
+    // This is the MethodExitEvent handler.  
     public void methodExited(MethodExitEvent event) {
         String origMethodName = event.method().name();
         if (vmm.majorInterfaceVersion() >= 1 &&
@@ -544,13 +544,13 @@ public class MethodExitReturnValuesTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("MethodExitReturnValuesTarg");
         targetClass = (ClassType)bpe.location().declaringType();
         mainThread = bpe.thread();
-
+        
         theValueField = targetClass.fieldByName("theValue");
 
         /*
@@ -558,7 +558,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
          */
         MethodExitRequest exitRequest =
             eventRequestManager().createMethodExitRequest();
-
+        
         for (int i=0; i<excludes.length; ++i) {
             exitRequest.addClassExclusionFilter(excludes[i]);
         }
@@ -573,7 +573,7 @@ public class MethodExitReturnValuesTest extends TestScaffold {
          * Here we go.  This adds 'this' as a listener so
          * that our handlers above will be called.
          */
-
+            
         listenUntilVMDisconnect();
 
         if (successes != expectedSuccesses) {
@@ -582,13 +582,13 @@ public class MethodExitReturnValuesTest extends TestScaffold {
         System.out.println("All done, " + successes + " passed");
 
 
-        if (!testFailed) {
+	if (!testFailed) { 
             System.out.println();
             System.out.println("MethodExitReturnValuesTest: passed");
         } else {
             System.out.println();
             System.out.println("MethodExitReturnValuesTest: failed");
             throw new Exception("MethodExitReturnValuesTest: failed");
-        }
+	}
     }
 }

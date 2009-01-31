@@ -140,7 +140,7 @@ import javax.security.auth.callback.*;
  *    javax.crypto.SecretKey mySecretKey;
  *    KeyStore.SecretKeyEntry skEntry =
  *        new KeyStore.SecretKeyEntry(mySecretKey);
- *    ks.setEntry("secretKeyAlias", skEntry,
+ *    ks.setEntry("secretKeyAlias", skEntry, 
  *        new KeyStore.PasswordProtection(password));
  *
  *    // store away the keystore
@@ -164,6 +164,7 @@ import javax.security.auth.callback.*;
  *
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @see java.security.PrivateKey
  * @see javax.crypto.SecretKey
@@ -181,7 +182,7 @@ public class KeyStore {
      * <pre>
      * keystore.type=jks
      * </pre>
-     */
+     */  
     private static final String KEYSTORE_TYPE = "keystore.type";
 
     // The keystore type
@@ -206,12 +207,12 @@ public class KeyStore {
      * @since 1.5
      */
     public static interface LoadStoreParameter {
-        /**
-         * Gets the parameter used to protect keystore data.
-         *
-         * @return the parameter used to protect keystore data, or null
-         */
-        public ProtectionParameter getProtectionParameter();
+	/**
+	 * Gets the parameter used to protect keystore data.
+	 *
+	 * @return the parameter used to protect keystore data, or null
+	 */
+	public ProtectionParameter getProtectionParameter();
     }
 
     /**
@@ -234,65 +235,65 @@ public class KeyStore {
      * @since 1.5
      */
     public static class PasswordProtection implements
-                ProtectionParameter, javax.security.auth.Destroyable {
+		ProtectionParameter, javax.security.auth.Destroyable {
 
-        private final char[] password;
-        private volatile boolean destroyed = false;
+	private final char[] password;
+	private volatile boolean destroyed = false;
 
-        /**
-         * Creates a password parameter.
-         *
-         * <p> The specified <code>password</code> is cloned before it is stored
-         * in the new <code>PasswordProtection</code> object.
-         *
-         * @param password the password, which may be <code>null</code>
-         */
-        public PasswordProtection(char[] password) {
-            this.password = (password == null) ? null : password.clone();
-        }
+	/**
+	 * Creates a password parameter.
+	 *
+	 * <p> The specified <code>password</code> is cloned before it is stored
+	 * in the new <code>PasswordProtection</code> object.
+	 *
+	 * @param password the password, which may be <code>null</code>
+	 */
+	public PasswordProtection(char[] password) {
+	    this.password = (password == null) ? null : password.clone();
+	}
 
-        /**
-         * Gets the password.
-         *
-         * <p>Note that this method returns a reference to the password.
-         * If a clone of the array is created it is the caller's
-         * responsibility to zero out the password information
-         * after it is no longer needed.
-         *
-         * @see #destroy()
-         * @return the password, which may be <code>null</code>
-         * @exception IllegalStateException if the password has
-         *              been cleared (destroyed)
-         */
-        public synchronized char[] getPassword() {
-            if (destroyed) {
-                throw new IllegalStateException("password has been cleared");
-            }
-            return password;
-        }
+	/**
+	 * Gets the password.
+	 *
+	 * <p>Note that this method returns a reference to the password.
+	 * If a clone of the array is created it is the caller's
+	 * responsibility to zero out the password information
+	 * after it is no longer needed.
+	 *
+	 * @see #destroy()
+	 * @return the password, which may be <code>null</code>
+	 * @exception IllegalStateException if the password has
+	 *		been cleared (destroyed)
+	 */
+	public synchronized char[] getPassword() {
+	    if (destroyed) {
+		throw new IllegalStateException("password has been cleared");
+	    }
+	    return password;
+	}
 
-        /**
-         * Clears the password.
-         *
-         * @exception DestroyFailedException if this method was unable
-         *      to clear the password
-         */
-        public synchronized void destroy()
-                throws javax.security.auth.DestroyFailedException {
-            destroyed = true;
-            if (password != null) {
-                Arrays.fill(password, ' ');
-            }
-        }
+	/**
+	 * Clears the password.
+	 *
+	 * @exception DestroyFailedException if this method was unable
+	 *	to clear the password
+	 */
+	public synchronized void destroy()
+		throws javax.security.auth.DestroyFailedException {
+	    destroyed = true;
+	    if (password != null) {
+		Arrays.fill(password, ' ');
+	    }
+	}
 
-        /**
-         * Determines if password has been cleared.
-         *
-         * @return true if the password has been cleared, false otherwise
-         */
-        public synchronized boolean isDestroyed() {
-            return destroyed;
-        }
+	/**
+	 * Determines if password has been cleared.
+	 *
+	 * @return true if the password has been cleared, false otherwise
+	 */
+	public synchronized boolean isDestroyed() {
+	    return destroyed;
+	}
     }
 
     /**
@@ -300,34 +301,34 @@ public class KeyStore {
      *
      * @since 1.5
      */
-    public static class CallbackHandlerProtection
-            implements ProtectionParameter {
-
-        private final CallbackHandler handler;
-
-        /**
-         * Constructs a new CallbackHandlerProtection from a
-         * CallbackHandler.
-         *
-         * @param handler the CallbackHandler
-         * @exception NullPointerException if handler is null
-         */
-        public CallbackHandlerProtection(CallbackHandler handler) {
-            if (handler == null) {
-                throw new NullPointerException("handler must not be null");
-            }
-            this.handler = handler;
-        }
-
-        /**
-         * Returns the CallbackHandler.
-         *
-         * @return the CallbackHandler.
-         */
-        public CallbackHandler getCallbackHandler() {
-            return handler;
-        }
-
+    public static class CallbackHandlerProtection 
+	    implements ProtectionParameter {
+		
+	private final CallbackHandler handler;
+	
+	/**
+	 * Constructs a new CallbackHandlerProtection from a
+	 * CallbackHandler.
+	 *
+	 * @param handler the CallbackHandler
+	 * @exception NullPointerException if handler is null
+	 */
+	public CallbackHandlerProtection(CallbackHandler handler) {
+	    if (handler == null) {
+		throw new NullPointerException("handler must not be null");
+	    }
+	    this.handler = handler;
+	}
+	
+	/**
+	 * Returns the CallbackHandler.
+	 *
+	 * @return the CallbackHandler.
+	 */
+	public CallbackHandler getCallbackHandler() {
+	    return handler;
+	}
+	
     }
 
     /**
@@ -345,123 +346,123 @@ public class KeyStore {
      */
     public static final class PrivateKeyEntry implements Entry {
 
-        private final PrivateKey privKey;
-        private final Certificate[] chain;
+	private final PrivateKey privKey;
+	private final Certificate[] chain;
 
-        /**
-         * Constructs a <code>PrivateKeyEntry</code> with a
-         * <code>PrivateKey</code> and corresponding certificate chain.
-         *
-         * <p> The specified <code>chain</code> is cloned before it is stored
-         * in the new <code>PrivateKeyEntry</code> object.
-         *
-         * @param privateKey the <code>PrivateKey</code>
-         * @param chain an array of <code>Certificate</code>s
-         *      representing the certificate chain.
-         *      The chain must be ordered and contain a
-         *      <code>Certificate</code> at index 0
-         *      corresponding to the private key.
-         *
-         * @exception NullPointerException if
-         *      <code>privateKey</code> or <code>chain</code>
-         *      is <code>null</code>
-         * @exception IllegalArgumentException if the specified chain has a
-         *      length of 0, if the specified chain does not contain
-         *      <code>Certificate</code>s of the same type,
-         *      or if the <code>PrivateKey</code> algorithm
-         *      does not match the algorithm of the <code>PublicKey</code>
-         *      in the end entity <code>Certificate</code> (at index 0)
-         */
-        public PrivateKeyEntry(PrivateKey privateKey, Certificate[] chain) {
-            if (privateKey == null || chain == null) {
-                throw new NullPointerException("invalid null input");
-            }
-            if (chain.length == 0) {
-                throw new IllegalArgumentException
-                                ("invalid zero-length input chain");
-            }
+	/**
+	 * Constructs a <code>PrivateKeyEntry</code> with a
+	 * <code>PrivateKey</code> and corresponding certificate chain.
+	 *
+	 * <p> The specified <code>chain</code> is cloned before it is stored
+	 * in the new <code>PrivateKeyEntry</code> object.
+	 *
+	 * @param privateKey the <code>PrivateKey</code>
+	 * @param chain an array of <code>Certificate</code>s
+	 *	representing the certificate chain.
+	 *	The chain must be ordered and contain a
+	 *	<code>Certificate</code> at index 0
+	 *	corresponding to the private key.
+	 *
+	 * @exception NullPointerException if
+	 *	<code>privateKey</code> or <code>chain</code>
+	 *	is <code>null</code>
+	 * @exception IllegalArgumentException if the specified chain has a
+	 *	length of 0, if the specified chain does not contain
+	 *	<code>Certificate</code>s of the same type,
+	 *	or if the <code>PrivateKey</code> algorithm
+	 *	does not match the algorithm of the <code>PublicKey</code>
+	 *	in the end entity <code>Certificate</code> (at index 0)
+	 */
+	public PrivateKeyEntry(PrivateKey privateKey, Certificate[] chain) {
+	    if (privateKey == null || chain == null) {
+		throw new NullPointerException("invalid null input");
+	    }
+	    if (chain.length == 0) {
+		throw new IllegalArgumentException
+				("invalid zero-length input chain");
+	    }
 
-            Certificate[] clonedChain = chain.clone();
-            String certType = clonedChain[0].getType();
-            for (int i = 1; i < clonedChain.length; i++) {
-                if (!certType.equals(clonedChain[i].getType())) {
-                    throw new IllegalArgumentException
-                                ("chain does not contain certificates " +
-                                "of the same type");
-                }
-            }
-            if (!privateKey.getAlgorithm().equals
-                        (clonedChain[0].getPublicKey().getAlgorithm())) {
-                throw new IllegalArgumentException
-                                ("private key algorithm does not match " +
-                                "algorithm of public key in end entity " +
-                                "certificate (at index 0)");
-            }
-            this.privKey = privateKey;
+	    Certificate[] clonedChain = chain.clone();
+	    String certType = clonedChain[0].getType();
+	    for (int i = 1; i < clonedChain.length; i++) {
+		if (!certType.equals(clonedChain[i].getType())) {
+		    throw new IllegalArgumentException
+				("chain does not contain certificates " +
+				"of the same type");
+		}
+	    }
+	    if (!privateKey.getAlgorithm().equals
+			(clonedChain[0].getPublicKey().getAlgorithm())) {
+		throw new IllegalArgumentException
+				("private key algorithm does not match " +
+				"algorithm of public key in end entity " +
+				"certificate (at index 0)");
+	    }
+	    this.privKey = privateKey;
 
-            if (clonedChain[0] instanceof X509Certificate &&
-                !(clonedChain instanceof X509Certificate[])) {
+	    if (clonedChain[0] instanceof X509Certificate &&
+		!(clonedChain instanceof X509Certificate[])) {
 
-                this.chain = new X509Certificate[clonedChain.length];
-                System.arraycopy(clonedChain, 0,
-                                this.chain, 0, clonedChain.length);
-            } else {
-                this.chain = clonedChain;
-            }
-        }
+		this.chain = new X509Certificate[clonedChain.length];
+		System.arraycopy(clonedChain, 0,
+				this.chain, 0, clonedChain.length);
+	    } else {
+		this.chain = clonedChain;
+	    }
+	}
 
-        /**
-         * Gets the <code>PrivateKey</code> from this entry.
-         *
-         * @return the <code>PrivateKey</code> from this entry
-         */
-        public PrivateKey getPrivateKey() {
-            return privKey;
-        }
+	/**
+	 * Gets the <code>PrivateKey</code> from this entry.
+	 *
+	 * @return the <code>PrivateKey</code> from this entry
+	 */
+	public PrivateKey getPrivateKey() {
+	    return privKey;
+	}
 
-        /**
-         * Gets the <code>Certificate</code> chain from this entry.
-         *
-         * <p> The stored chain is cloned before being returned.
-         *
-         * @return an array of <code>Certificate</code>s corresponding
-         *      to the certificate chain for the public key.
-         *      If the certificates are of type X.509,
-         *      the runtime type of the returned array is
-         *      <code>X509Certificate[]</code>.
-         */
-        public Certificate[] getCertificateChain() {
-            return chain.clone();
-        }
+	/**
+	 * Gets the <code>Certificate</code> chain from this entry.
+	 *
+	 * <p> The stored chain is cloned before being returned.
+	 *
+	 * @return an array of <code>Certificate</code>s corresponding
+	 *	to the certificate chain for the public key.
+	 *	If the certificates are of type X.509,
+	 *	the runtime type of the returned array is
+	 *	<code>X509Certificate[]</code>.
+	 */
+	public Certificate[] getCertificateChain() {
+	    return chain.clone();
+	}
 
-        /**
-         * Gets the end entity <code>Certificate</code>
-         * from the certificate chain in this entry.
-         *
-         * @return the end entity <code>Certificate</code> (at index 0)
-         *      from the certificate chain in this entry.
-         *      If the certificate is of type X.509,
-         *      the runtime type of the returned certificate is
-         *      <code>X509Certificate</code>.
-         */
-        public Certificate getCertificate() {
-            return chain[0];
-        }
+	/**
+	 * Gets the end entity <code>Certificate</code>
+	 * from the certificate chain in this entry.
+	 *
+	 * @return the end entity <code>Certificate</code> (at index 0)
+	 *	from the certificate chain in this entry.
+	 *	If the certificate is of type X.509,
+	 *	the runtime type of the returned certificate is
+	 *	<code>X509Certificate</code>.
+	 */
+	public Certificate getCertificate() {
+	    return chain[0];
+	}
 
-        /**
-         * Returns a string representation of this PrivateKeyEntry.
-         * @return a string representation of this PrivateKeyEntry.
-         */
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Private key entry and certificate chain with "
-                + chain.length + " elements:\r\n");
-            for (Certificate cert : chain) {
-                sb.append(cert);
-                sb.append("\r\n");
-            }
-            return sb.toString();
-        }
+	/**
+	 * Returns a string representation of this PrivateKeyEntry.
+	 * @return a string representation of this PrivateKeyEntry.
+	 */	
+	public String toString() {
+	    StringBuilder sb = new StringBuilder();
+	    sb.append("Private key entry and certificate chain with "
+		+ chain.length + " elements:\r\n");
+	    for (Certificate cert : chain) {
+		sb.append(cert);
+		sb.append("\r\n");
+	    }
+	    return sb.toString();
+	}
 
     }
 
@@ -472,40 +473,40 @@ public class KeyStore {
      */
     public static final class SecretKeyEntry implements Entry {
 
-        private final SecretKey sKey;
+	private final SecretKey sKey;
 
-        /**
-         * Constructs a <code>SecretKeyEntry</code> with a
-         * <code>SecretKey</code>.
-         *
-         * @param secretKey the <code>SecretKey</code>
-         *
-         * @exception NullPointerException if <code>secretKey</code>
-         *      is <code>null</code>
-         */
-        public SecretKeyEntry(SecretKey secretKey) {
-            if (secretKey == null) {
-                throw new NullPointerException("invalid null input");
-            }
-            this.sKey = secretKey;
-        }
+	/**
+	 * Constructs a <code>SecretKeyEntry</code> with a
+	 * <code>SecretKey</code>.
+	 *
+	 * @param secretKey the <code>SecretKey</code>
+	 *
+	 * @exception NullPointerException if <code>secretKey</code>
+	 *	is <code>null</code>
+	 */
+	public SecretKeyEntry(SecretKey secretKey) {
+	    if (secretKey == null) {
+		throw new NullPointerException("invalid null input");
+	    }
+	    this.sKey = secretKey;
+	}
 
-        /**
-         * Gets the <code>SecretKey</code> from this entry.
-         *
-         * @return the <code>SecretKey</code> from this entry
-         */
-        public SecretKey getSecretKey() {
-            return sKey;
-        }
-
-        /**
-         * Returns a string representation of this SecretKeyEntry.
-         * @return a string representation of this SecretKeyEntry.
-         */
-        public String toString() {
-            return "Secret key entry with algorithm " + sKey.getAlgorithm();
-        }
+	/**
+	 * Gets the <code>SecretKey</code> from this entry.
+	 *
+	 * @return the <code>SecretKey</code> from this entry
+	 */
+	public SecretKey getSecretKey() {
+	    return sKey;
+	}
+	
+	/**
+	 * Returns a string representation of this SecretKeyEntry.
+	 * @return a string representation of this SecretKeyEntry.
+	 */	
+	public String toString() {
+	    return "Secret key entry with algorithm " + sKey.getAlgorithm();
+	}
     }
 
     /**
@@ -516,40 +517,40 @@ public class KeyStore {
      */
     public static final class TrustedCertificateEntry implements Entry {
 
-        private final Certificate cert;
+	private final Certificate cert;
 
-        /**
-         * Constructs a <code>TrustedCertificateEntry</code> with a
-         * trusted <code>Certificate</code>.
-         *
-         * @param trustedCert the trusted <code>Certificate</code>
-         *
-         * @exception NullPointerException if
-         *      <code>trustedCert</code> is <code>null</code>
-         */
-        public TrustedCertificateEntry(Certificate trustedCert) {
-            if (trustedCert == null) {
-                throw new NullPointerException("invalid null input");
-            }
-            this.cert = trustedCert;
-        }
+	/**
+	 * Constructs a <code>TrustedCertificateEntry</code> with a
+	 * trusted <code>Certificate</code>.
+	 *
+	 * @param trustedCert the trusted <code>Certificate</code>
+	 *
+	 * @exception NullPointerException if
+	 *	<code>trustedCert</code> is <code>null</code>
+	 */
+	public TrustedCertificateEntry(Certificate trustedCert) {
+	    if (trustedCert == null) {
+		throw new NullPointerException("invalid null input");
+	    }
+	    this.cert = trustedCert;
+	}
 
-        /**
-         * Gets the trusted <code>Certficate</code> from this entry.
-         *
-         * @return the trusted <code>Certificate</code> from this entry
-         */
-        public Certificate getTrustedCertificate() {
-            return cert;
-        }
-
-        /**
-         * Returns a string representation of this TrustedCertificateEntry.
-         * @return a string representation of this TrustedCertificateEntry.
-         */
-        public String toString() {
-            return "Trusted certificate entry:\r\n" + cert.toString();
-        }
+	/**
+	 * Gets the trusted <code>Certficate</code> from this entry.
+	 *
+	 * @return the trusted <code>Certificate</code> from this entry
+	 */
+	public Certificate getTrustedCertificate() {
+	    return cert;
+	}
+	
+	/**
+	 * Returns a string representation of this TrustedCertificateEntry.
+	 * @return a string representation of this TrustedCertificateEntry.
+	 */	
+	public String toString() {
+	    return "Trusted certificate entry:\r\n" + cert.toString();
+	}
     }
 
     /**
@@ -562,14 +563,14 @@ public class KeyStore {
      */
     protected KeyStore(KeyStoreSpi keyStoreSpi, Provider provider, String type)
     {
-        this.keyStoreSpi = keyStoreSpi;
-        this.provider = provider;
-        this.type = type;
+	this.keyStoreSpi = keyStoreSpi;
+	this.provider = provider;
+	this.type = type;
     }
 
     /**
      * Returns a keystore object of the specified type.
-     *
+     * 
      * <p> This method traverses the list of registered security Providers,
      * starting with the most preferred Provider.
      * A new KeyStore object encapsulating the
@@ -579,10 +580,10 @@ public class KeyStore {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
-     * @param type the type of keystore.
+     * @param type the type of keystore. 
      * See Appendix A in the <a href=
      * "../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
-     * Java Cryptography Architecture API Specification &amp; Reference </a>
+     * Java Cryptography Architecture API Specification &amp; Reference </a> 
      * for information about standard keystore types.
      *
      * @return a keystore object of the specified type.
@@ -593,22 +594,22 @@ public class KeyStore {
      *
      * @see Provider
      */
-    public static KeyStore getInstance(String type)
-        throws KeyStoreException
+    public static KeyStore getInstance(String type) 
+	throws KeyStoreException
     {
-        try {
-            Object[] objs = Security.getImpl(type, "KeyStore", (String)null);
-            return new KeyStore((KeyStoreSpi)objs[0], (Provider)objs[1], type);
-        } catch (NoSuchAlgorithmException nsae) {
-            throw new KeyStoreException(type + " not found", nsae);
-        } catch (NoSuchProviderException nspe) {
-            throw new KeyStoreException(type + " not found", nspe);
-        }
+	try {
+	    Object[] objs = Security.getImpl(type, "KeyStore", (String)null);
+	    return new KeyStore((KeyStoreSpi)objs[0], (Provider)objs[1], type);
+	} catch (NoSuchAlgorithmException nsae) {
+	    throw new KeyStoreException(type + " not found", nsae);
+	} catch (NoSuchProviderException nspe) {
+	    throw new KeyStoreException(type + " not found", nspe);
+	}
     }
 
     /**
      * Returns a keystore object of the specified type.
-     *
+     * 
      * <p> A new KeyStore object encapsulating the
      * KeyStoreSpi implementation from the specified provider
      * is returned.  The specified provider must be registered
@@ -620,7 +621,7 @@ public class KeyStore {
      * @param type the type of keystore.
      * See Appendix A in the <a href=
      * "../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
-     * Java Cryptography Architecture API Specification &amp; Reference </a>
+     * Java Cryptography Architecture API Specification &amp; Reference </a> 
      * for information about standard keystore types.
      *
      * @param provider the name of the provider.
@@ -630,31 +631,31 @@ public class KeyStore {
      * @exception KeyStoreException if a KeyStoreSpi
      *          implementation for the specified type is not
      *          available from the specified provider.
-     *
+     * 
      * @exception NoSuchProviderException if the specified provider is not
      *          registered in the security provider list.
      *
      * @exception IllegalArgumentException if the provider name is null
-     *          or empty.
+     *		or empty.
      *
      * @see Provider
      */
     public static KeyStore getInstance(String type, String provider)
-        throws KeyStoreException, NoSuchProviderException
+	throws KeyStoreException, NoSuchProviderException
     {
-        if (provider == null || provider.length() == 0)
-            throw new IllegalArgumentException("missing provider");
-        try {
-            Object[] objs = Security.getImpl(type, "KeyStore", provider);
-            return new KeyStore((KeyStoreSpi)objs[0], (Provider)objs[1], type);
-        } catch (NoSuchAlgorithmException nsae) {
-            throw new KeyStoreException(type + " not found", nsae);
-        }
+	if (provider == null || provider.length() == 0)
+	    throw new IllegalArgumentException("missing provider");
+	try {
+	    Object[] objs = Security.getImpl(type, "KeyStore", provider);
+	    return new KeyStore((KeyStoreSpi)objs[0], (Provider)objs[1], type);
+	} catch (NoSuchAlgorithmException nsae) {
+	    throw new KeyStoreException(type + " not found", nsae);
+	}
     }
 
     /**
      * Returns a keystore object of the specified type.
-     *
+     * 
      * <p> A new KeyStore object encapsulating the
      * KeyStoreSpi implementation from the specified Provider
      * object is returned.  Note that the specified Provider object
@@ -663,7 +664,7 @@ public class KeyStore {
      * @param type the type of keystore.
      * See Appendix A in the <a href=
      * "../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
-     * Java Cryptography Architecture API Specification &amp; Reference </a>
+     * Java Cryptography Architecture API Specification &amp; Reference </a> 
      * for information about standard keystore types.
      *
      * @param provider the provider.
@@ -681,16 +682,16 @@ public class KeyStore {
      * @since 1.4
      */
     public static KeyStore getInstance(String type, Provider provider)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (provider == null)
-            throw new IllegalArgumentException("missing provider");
-        try {
-            Object[] objs = Security.getImpl(type, "KeyStore", provider);
-            return new KeyStore((KeyStoreSpi)objs[0], (Provider)objs[1], type);
-        } catch (NoSuchAlgorithmException nsae) {
-            throw new KeyStoreException(type + " not found", nsae);
-        }
+	if (provider == null)
+	    throw new IllegalArgumentException("missing provider");
+	try {
+	    Object[] objs = Security.getImpl(type, "KeyStore", provider);
+	    return new KeyStore((KeyStoreSpi)objs[0], (Provider)objs[1], type);
+	} catch (NoSuchAlgorithmException nsae) {
+	    throw new KeyStoreException(type + " not found", nsae);
+	}
     }
 
     /**
@@ -712,31 +713,31 @@ public class KeyStore {
      * "keystore.type" security property (in the Java security properties
      * file) to the desired keystore type.
      *
-     * @return the default keystore type as specified in the
+     * @return the default keystore type as specified in the 
      * Java security properties file, or the string &quot;jks&quot;
      * if no such property exists.
      */
     public final static String getDefaultType() {
-        String kstype;
-        kstype = AccessController.doPrivileged(new PrivilegedAction<String>() {
-            public String run() {
-                return Security.getProperty(KEYSTORE_TYPE);
-            }
-        });
-        if (kstype == null) {
-            kstype = "jks";
-        }
-        return kstype;
+	String kstype;
+	kstype = AccessController.doPrivileged(new PrivilegedAction<String>() {
+	    public String run() {
+		return Security.getProperty(KEYSTORE_TYPE);
+	    }
+	});
+	if (kstype == null) {
+	    kstype = "jks";
+	}
+	return kstype;
     }
 
-    /**
+    /** 
      * Returns the provider of this keystore.
-     *
+     * 
      * @return the provider of this keystore.
      */
     public final Provider getProvider()
     {
-        return this.provider;
+	return this.provider;
     }
 
     /**
@@ -746,7 +747,7 @@ public class KeyStore {
      */
     public final String getType()
     {
-        return this.type;
+	return this.type;
     }
 
     /**
@@ -770,13 +771,13 @@ public class KeyStore {
      * (e.g., the given password is wrong).
      */
     public final Key getKey(String alias, char[] password)
-        throws KeyStoreException, NoSuchAlgorithmException,
-            UnrecoverableKeyException
+	throws KeyStoreException, NoSuchAlgorithmException,
+	    UnrecoverableKeyException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineGetKey(alias, password);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineGetKey(alias, password);
     }
 
     /**
@@ -796,12 +797,12 @@ public class KeyStore {
      * (loaded).
      */
     public final Certificate[] getCertificateChain(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineGetCertificateChain(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineGetCertificateChain(alias);
     }
 
     /**
@@ -819,7 +820,7 @@ public class KeyStore {
      * <code>PrivateKeyEntry</code>,
      * then the first element of the certificate chain in that entry
      * is returned.
-     *
+     * 
      * @param alias the alias name
      *
      * @return the certificate, or null if the given alias does not exist or
@@ -829,12 +830,12 @@ public class KeyStore {
      * (loaded).
      */
     public final Certificate getCertificate(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineGetCertificate(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineGetCertificate(alias);
     }
 
     /**
@@ -849,12 +850,12 @@ public class KeyStore {
      * (loaded).
      */
     public final Date getCreationDate(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineGetCreationDate(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineGetCreationDate(alias);
     }
 
     /**
@@ -881,25 +882,25 @@ public class KeyStore {
      * for some other reason
      */
     public final void setKeyEntry(String alias, Key key, char[] password,
-                                  Certificate[] chain)
-        throws KeyStoreException
+				  Certificate[] chain)
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        if ((key instanceof PrivateKey) &&
-            (chain == null || chain.length == 0)) {
-            throw new IllegalArgumentException("Private key must be "
-                                               + "accompanied by certificate "
-                                               + "chain");
-        }
-        keyStoreSpi.engineSetKeyEntry(alias, key, password, chain);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	if ((key instanceof PrivateKey) && 
+	    (chain == null || chain.length == 0)) {
+	    throw new IllegalArgumentException("Private key must be "
+					       + "accompanied by certificate "
+					       + "chain");
+	}
+	keyStoreSpi.engineSetKeyEntry(alias, key, password, chain);
     }
 
     /**
      * Assigns the given key (that has already been protected) to the given
      * alias.
-     *
+     * 
      * <p>If the protected key is of type
      * <code>java.security.PrivateKey</code>, it must be accompanied by a
      * certificate chain certifying the corresponding public key. If the
@@ -914,20 +915,20 @@ public class KeyStore {
      * @param alias the alias name
      * @param key the key (in protected format) to be associated with the alias
      * @param chain the certificate chain for the corresponding public
-     *          key (only useful if the protected key is of type
-     *          <code>java.security.PrivateKey</code>).
+     *		key (only useful if the protected key is of type
+     *		<code>java.security.PrivateKey</code>).
      *
      * @exception KeyStoreException if the keystore has not been initialized
      * (loaded), or if this operation fails for some other reason.
      */
     public final void setKeyEntry(String alias, byte[] key,
-                                  Certificate[] chain)
-        throws KeyStoreException
+				  Certificate[] chain)
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        keyStoreSpi.engineSetKeyEntry(alias, key, chain);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	keyStoreSpi.engineSetKeyEntry(alias, key, chain);
     }
 
     /**
@@ -949,12 +950,12 @@ public class KeyStore {
      * or this operation fails for some other reason.
      */
     public final void setCertificateEntry(String alias, Certificate cert)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        keyStoreSpi.engineSetCertificateEntry(alias, cert);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	keyStoreSpi.engineSetCertificateEntry(alias, cert);
     }
 
     /**
@@ -966,12 +967,12 @@ public class KeyStore {
      * or if the entry cannot be removed.
      */
     public final void deleteEntry(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        keyStoreSpi.engineDeleteEntry(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	keyStoreSpi.engineDeleteEntry(alias);
     }
 
     /**
@@ -983,12 +984,12 @@ public class KeyStore {
      * (loaded).
      */
     public final Enumeration<String> aliases()
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineAliases();
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineAliases();
     }
 
     /**
@@ -1002,12 +1003,12 @@ public class KeyStore {
      * (loaded).
      */
     public final boolean containsAlias(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineContainsAlias(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineContainsAlias(alias);
     }
 
     /**
@@ -1019,12 +1020,12 @@ public class KeyStore {
      * (loaded).
      */
     public final int size()
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineSize();
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineSize();
     }
 
     /**
@@ -1042,12 +1043,12 @@ public class KeyStore {
      * (loaded).
      */
     public final boolean isKeyEntry(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineIsKeyEntry(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineIsKeyEntry(alias);
     }
 
     /**
@@ -1065,12 +1066,12 @@ public class KeyStore {
      * (loaded).
      */
     public final boolean isCertificateEntry(String alias)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineIsCertificateEntry(alias);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineIsCertificateEntry(alias);
     }
 
     /**
@@ -1100,12 +1101,12 @@ public class KeyStore {
      * (loaded).
      */
     public final String getCertificateAlias(Certificate cert)
-        throws KeyStoreException
+	throws KeyStoreException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineGetCertificateAlias(cert);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineGetCertificateAlias(cert);
     }
 
     /**
@@ -1124,42 +1125,42 @@ public class KeyStore {
      * the keystore data could not be stored
      */
     public final void store(OutputStream stream, char[] password)
-        throws KeyStoreException, IOException, NoSuchAlgorithmException,
-            CertificateException
+	throws KeyStoreException, IOException, NoSuchAlgorithmException,
+	    CertificateException
     {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        keyStoreSpi.engineStore(stream, password);
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	keyStoreSpi.engineStore(stream, password);
     }
 
     /**
      * Stores this keystore using the given <code>LoadStoreParameter</code>.
      *
      * @param param the <code>LoadStoreParameter</code>
-     *          that specifies how to store the keystore,
-     *          which may be <code>null</code>
+     *		that specifies how to store the keystore,
+     *		which may be <code>null</code>
      *
      * @exception IllegalArgumentException if the given
-     *          <code>LoadStoreParameter</code>
-     *          input is not recognized
+     *		<code>LoadStoreParameter</code>
+     *		input is not recognized
      * @exception KeyStoreException if the keystore has not been initialized
-     *          (loaded)
+     *		(loaded)
      * @exception IOException if there was an I/O problem with data
      * @exception NoSuchAlgorithmException if the appropriate data integrity
-     *          algorithm could not be found
+     *		algorithm could not be found
      * @exception CertificateException if any of the certificates included in
-     *          the keystore data could not be stored
+     *		the keystore data could not be stored
      *
      * @since 1.5
      */
     public final void store(LoadStoreParameter param)
-                throws KeyStoreException, IOException,
-                NoSuchAlgorithmException, CertificateException {
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        keyStoreSpi.engineStore(param);
+		throws KeyStoreException, IOException,
+		NoSuchAlgorithmException, CertificateException {
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	keyStoreSpi.engineStore(param);
     }
 
     /**
@@ -1187,8 +1188,8 @@ public class KeyStore {
      * @exception IOException if there is an I/O or format problem with the
      * keystore data, if a password is required but not given,
      * or if the given password was incorrect. If the error is due to a
-     * wrong password, the {@link Throwable#getCause cause} of the
-     * <code>IOException</code> should be an
+     * wrong password, the {@link Throwable#getCause cause} of the 
+     * <code>IOException</code> should be an 
      * <code>UnrecoverableKeyException</code>
      * @exception NoSuchAlgorithmException if the algorithm used to check
      * the integrity of the keystore cannot be found
@@ -1196,10 +1197,10 @@ public class KeyStore {
      * keystore could not be loaded
      */
     public final void load(InputStream stream, char[] password)
-        throws IOException, NoSuchAlgorithmException, CertificateException
+	throws IOException, NoSuchAlgorithmException, CertificateException
     {
-        keyStoreSpi.engineLoad(stream, password);
-        initialized = true;
+	keyStoreSpi.engineLoad(stream, password);
+	initialized = true;
     }
 
     /**
@@ -1209,31 +1210,31 @@ public class KeyStore {
      * reinitialized and loaded again from the given parameter.
      *
      * @param param the <code>LoadStoreParameter</code>
-     *          that specifies how to load the keystore,
-     *          which may be <code>null</code>
+     *		that specifies how to load the keystore,
+     *		which may be <code>null</code>
      *
      * @exception IllegalArgumentException if the given
-     *          <code>LoadStoreParameter</code>
-     *          input is not recognized
+     *		<code>LoadStoreParameter</code>
+     *		input is not recognized
      * @exception IOException if there is an I/O or format problem with the
-     *          keystore data. If the error is due to an incorrect
+     *		keystore data. If the error is due to an incorrect 
      *         <code>ProtectionParameter</code> (e.g. wrong password)
-     *         the {@link Throwable#getCause cause} of the
-     *         <code>IOException</code> should be an
+     *         the {@link Throwable#getCause cause} of the 
+     *         <code>IOException</code> should be an 
      *         <code>UnrecoverableKeyException</code>
      * @exception NoSuchAlgorithmException if the algorithm used to check
-     *          the integrity of the keystore cannot be found
+     *		the integrity of the keystore cannot be found
      * @exception CertificateException if any of the certificates in the
-     *          keystore could not be loaded
+     *		keystore could not be loaded
      *
      * @since 1.5
      */
     public final void load(LoadStoreParameter param)
-                throws IOException, NoSuchAlgorithmException,
-                CertificateException {
+		throws IOException, NoSuchAlgorithmException,
+		CertificateException {
 
-        keyStoreSpi.engineLoad(param);
-        initialized = true;
+	keyStoreSpi.engineLoad(param);
+	initialized = true;
     }
 
     /**
@@ -1242,39 +1243,39 @@ public class KeyStore {
      *
      * @param alias get the keystore <code>Entry</code> for this alias
      * @param protParam the <code>ProtectionParameter</code>
-     *          used to protect the <code>Entry</code>,
-     *          which may be <code>null</code>
+     *		used to protect the <code>Entry</code>,
+     *		which may be <code>null</code>
      *
      * @return the keystore <code>Entry</code> for the specified alias,
-     *          or <code>null</code> if there is no such entry
+     *		or <code>null</code> if there is no such entry
      *
      * @exception NullPointerException if
-     *          <code>alias</code> is <code>null</code>
+     *		<code>alias</code> is <code>null</code>
      * @exception NoSuchAlgorithmException if the algorithm for recovering the
-     *          entry cannot be found
+     *		entry cannot be found
      * @exception UnrecoverableEntryException if the specified
-     *          <code>protParam</code> were insufficient or invalid
-     * @exception UnrecoverableKeyException if the entry is a
+     *		<code>protParam</code> were insufficient or invalid
+     * @exception UnrecoverableKeyException if the entry is a 
      *          <code>PrivateKeyEntry</code> or <code>SecretKeyEntry</code>
      *          and the specified <code>protParam</code> does not contain
      *          the information needed to recover the key (e.g. wrong password)
      * @exception KeyStoreException if the keystore has not been initialized
-     *          (loaded).
+     *		(loaded).
      * @see #setEntry(String, KeyStore.Entry, KeyStore.ProtectionParameter)
      *
      * @since 1.5
      */
     public final Entry getEntry(String alias, ProtectionParameter protParam)
-                throws NoSuchAlgorithmException, UnrecoverableEntryException,
-                KeyStoreException {
+    		throws NoSuchAlgorithmException, UnrecoverableEntryException,
+		KeyStoreException {
 
-        if (alias == null) {
-            throw new NullPointerException("invalid null input");
-        }
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineGetEntry(alias, protParam);
+	if (alias == null) {
+	    throw new NullPointerException("invalid null input");
+	}
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineGetEntry(alias, protParam);
     }
 
     /**
@@ -1288,29 +1289,29 @@ public class KeyStore {
      * @param alias save the keystore <code>Entry</code> under this alias
      * @param entry the <code>Entry</code> to save
      * @param protParam the <code>ProtectionParameter</code>
-     *          used to protect the <code>Entry</code>,
-     *          which may be <code>null</code>
+     *		used to protect the <code>Entry</code>,
+     *		which may be <code>null</code>
      *
      * @exception NullPointerException if
-     *          <code>alias</code> or <code>entry</code>
-     *          is <code>null</code>
+     *		<code>alias</code> or <code>entry</code>
+     *		is <code>null</code>
      * @exception KeyStoreException if the keystore has not been initialized
-     *          (loaded), or if this operation fails for some other reason
+     *		(loaded), or if this operation fails for some other reason
      *
      * @see #getEntry(String, KeyStore.ProtectionParameter)
      *
      * @since 1.5
      */
     public final void setEntry(String alias, Entry entry,
-                        ProtectionParameter protParam)
-                throws KeyStoreException {
-        if (alias == null || entry == null) {
-            throw new NullPointerException("invalid null input");
-        }
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        keyStoreSpi.engineSetEntry(alias, entry, protParam);
+			ProtectionParameter protParam)
+		throws KeyStoreException {
+	if (alias == null || entry == null) {
+	    throw new NullPointerException("invalid null input");
+	}
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	keyStoreSpi.engineSetEntry(alias, entry, protParam);
     }
 
     /**
@@ -1319,35 +1320,35 @@ public class KeyStore {
      * <code>entryClass</code>.
      *
      * @param alias the alias name
-     * @param entryClass the entry class
+     * @param entryClass the entry class 
      *
      * @return true if the keystore <code>Entry</code> for the specified
-     *          <code>alias</code> is an instance or subclass of the
-     *          specified <code>entryClass</code>, false otherwise
+     *		<code>alias</code> is an instance or subclass of the
+     *		specified <code>entryClass</code>, false otherwise
      *
      * @exception NullPointerException if
-     *          <code>alias</code> or <code>entryClass</code>
-     *          is <code>null</code>
+     *		<code>alias</code> or <code>entryClass</code>
+     *		is <code>null</code>
      * @exception KeyStoreException if the keystore has not been
-     *          initialized (loaded)
+     *		initialized (loaded)
      *
      * @since 1.5
      */
     public final boolean
-        entryInstanceOf(String alias,
-                        Class<? extends KeyStore.Entry> entryClass)
-        throws KeyStoreException
+	entryInstanceOf(String alias,
+			Class<? extends KeyStore.Entry> entryClass)
+	throws KeyStoreException
     {
 
-        if (alias == null || entryClass == null) {
-            throw new NullPointerException("invalid null input");
-        }
-        if (!initialized) {
-            throw new KeyStoreException("Uninitialized keystore");
-        }
-        return keyStoreSpi.engineEntryInstanceOf(alias, entryClass);
+	if (alias == null || entryClass == null) {
+	    throw new NullPointerException("invalid null input");
+	}
+	if (!initialized) {
+	    throw new KeyStoreException("Uninitialized keystore");
+	}
+	return keyStoreSpi.engineEntryInstanceOf(alias, entryClass);
     }
-
+    
     /**
      * A description of a to-be-instantiated KeyStore object.
      *
@@ -1365,392 +1366,392 @@ public class KeyStore {
      */
     public static abstract class Builder {
 
-        // maximum times to try the callbackhandler if the password is wrong
-        static final int MAX_CALLBACK_TRIES = 3;
+	// maximum times to try the callbackhandler if the password is wrong
+	static final int MAX_CALLBACK_TRIES = 3;
+	
+	/**
+	 * Construct a new Builder.
+	 */
+	protected Builder() {
+	    // empty
+	}
 
-        /**
-         * Construct a new Builder.
-         */
-        protected Builder() {
-            // empty
-        }
+	/**
+	 * Returns the KeyStore described by this object.
+	 *
+	 * @exception KeyStoreException if an error occured during the
+	 *   operation, for example if the KeyStore could not be
+	 *   instantiated or loaded
+	 */
+	public abstract KeyStore getKeyStore() throws KeyStoreException;
 
-        /**
-         * Returns the KeyStore described by this object.
+	/**
+	 * Returns the ProtectionParameters that should be used to obtain
+	 * the {@link KeyStore.Entry Entry} with the given alias.
+	 * The <code>getKeyStore</code> method must be invoked before this
+	 * method may be called.
+	 *
+	 * @return the ProtectionParameters that should be used to obtain
+	 *   the {@link KeyStore.Entry Entry} with the given alias.
+	 * @param alias the alias of the KeyStore entry
+	 * @throws NullPointerException if alias is null
+	 * @throws KeyStoreException if an error occured during the
+	 *   operation
+	 * @throws IllegalStateException if the getKeyStore method has
+	 *   not been invoked prior to calling this method
+	 */
+	public abstract ProtectionParameter getProtectionParameter(String alias)
+	    throws KeyStoreException;
+
+	/**
+	 * Returns a new Builder that encapsulates the given KeyStore.
+	 * The {@linkplain #getKeyStore} method of the returned object 
+	 * will return <code>keyStore</code>, the {@linkplain 
+	 * #getProtectionParameter getProtectionParameter()} method will 
+	 * return <code>protectionParameters</code>.
          *
-         * @exception KeyStoreException if an error occured during the
-         *   operation, for example if the KeyStore could not be
-         *   instantiated or loaded
-         */
-        public abstract KeyStore getKeyStore() throws KeyStoreException;
+	 * <p> This is useful if an existing KeyStore object needs to be
+	 * used with Builder-based APIs.
+	 *
+	 * @return a new Builder object
+	 * @param keyStore the KeyStore to be encapsulated
+	 * @param protectionParameter the ProtectionParameter used to
+	 *   protect the KeyStore entries
+	 * @throws NullPointerException if keyStore or
+	 *   protectionParameters is null
+	 * @throws IllegalArgumentException if the keyStore has not been
+	 *   initialized
+	 */
+	public static Builder newInstance(final KeyStore keyStore,
+		final ProtectionParameter protectionParameter) {
+	    if ((keyStore == null) || (protectionParameter == null)) {
+		throw new NullPointerException();
+	    }
+	    if (keyStore.initialized == false) {
+		throw new IllegalArgumentException("KeyStore not initialized");
+	    }
+	    return new Builder() {
+		private volatile boolean getCalled;
+		
+		public KeyStore getKeyStore() {
+		    getCalled = true;
+		    return keyStore;
+		}
+		
+		public ProtectionParameter getProtectionParameter(String alias)
+		{
+		    if (alias == null) {
+			throw new NullPointerException();
+		    }
+		    if (getCalled == false) {
+			throw new IllegalStateException
+			    ("getKeyStore() must be called first");
+		    }
+		    return protectionParameter;
+		}
+	    };
+	}
 
-        /**
-         * Returns the ProtectionParameters that should be used to obtain
-         * the {@link KeyStore.Entry Entry} with the given alias.
-         * The <code>getKeyStore</code> method must be invoked before this
-         * method may be called.
-         *
-         * @return the ProtectionParameters that should be used to obtain
-         *   the {@link KeyStore.Entry Entry} with the given alias.
-         * @param alias the alias of the KeyStore entry
-         * @throws NullPointerException if alias is null
-         * @throws KeyStoreException if an error occured during the
-         *   operation
-         * @throws IllegalStateException if the getKeyStore method has
-         *   not been invoked prior to calling this method
-         */
-        public abstract ProtectionParameter getProtectionParameter(String alias)
-            throws KeyStoreException;
-
-        /**
-         * Returns a new Builder that encapsulates the given KeyStore.
-         * The {@linkplain #getKeyStore} method of the returned object
-         * will return <code>keyStore</code>, the {@linkplain
-         * #getProtectionParameter getProtectionParameter()} method will
-         * return <code>protectionParameters</code>.
-         *
-         * <p> This is useful if an existing KeyStore object needs to be
-         * used with Builder-based APIs.
-         *
-         * @return a new Builder object
-         * @param keyStore the KeyStore to be encapsulated
-         * @param protectionParameter the ProtectionParameter used to
-         *   protect the KeyStore entries
-         * @throws NullPointerException if keyStore or
-         *   protectionParameters is null
-         * @throws IllegalArgumentException if the keyStore has not been
-         *   initialized
-         */
-        public static Builder newInstance(final KeyStore keyStore,
-                final ProtectionParameter protectionParameter) {
-            if ((keyStore == null) || (protectionParameter == null)) {
-                throw new NullPointerException();
-            }
-            if (keyStore.initialized == false) {
-                throw new IllegalArgumentException("KeyStore not initialized");
-            }
-            return new Builder() {
-                private volatile boolean getCalled;
-
-                public KeyStore getKeyStore() {
-                    getCalled = true;
-                    return keyStore;
-                }
-
-                public ProtectionParameter getProtectionParameter(String alias)
-                {
-                    if (alias == null) {
-                        throw new NullPointerException();
-                    }
-                    if (getCalled == false) {
-                        throw new IllegalStateException
-                            ("getKeyStore() must be called first");
-                    }
-                    return protectionParameter;
-                }
-            };
-        }
-
-        /**
-         * Returns a new Builder object.
-         *
-         * <p>The first call to the {@link #getKeyStore} method on the returned
-         * builder will create a KeyStore of type <code>type</code> and call
-         * its {@link KeyStore#load load()} method.
-         * The <code>inputStream</code> argument is constructed from
-         * <code>file</code>.
-         * If <code>protection</code> is a
-         * <code>PasswordProtection</code>, the password is obtained by
-         * calling the <code>getPassword</code> method.
-         * Otherwise, if <code>protection</code> is a
-         * <code>CallbackHandlerProtection</code>, the password is obtained
-         * by invoking the CallbackHandler.
-         *
-         * <p>Subsequent calls to {@link #getKeyStore} return the same object
-         * as the initial call. If the initial call to failed with a
-         * KeyStoreException, subsequent calls also throw a
-         * KeyStoreException.
-         *
-         * <p>The KeyStore is instantiated from <code>provider</code> if
-         * non-null. Otherwise, all installed providers are searched.
-         *
-         * <p>Calls to {@link #getProtectionParameter getProtectionParameter()}
-         * will return a {@link KeyStore.PasswordProtection PasswordProtection}
-         * object encapsulating the password that was used to invoke the
-         * <code>load</code> method.
-         *
-         * <p><em>Note</em> that the {@link #getKeyStore} method is executed
-         * within the {@link AccessControlContext} of the code invoking this
-         * method.
-         *
-         * @return a new Builder object
-         * @param type the type of KeyStore to be constructed
-         * @param provider the provider from which the KeyStore is to
-         *   be instantiated (or null)
-         * @param file the File that contains the KeyStore data
-         * @param protection the ProtectionParameter securing the KeyStore data
-         * @throws NullPointerException if type, file or protection is null
-         * @throws IllegalArgumentException if protection is not an instance
-         *   of either PasswordProtection or CallbackHandlerProtection; or
-         *   if file does not exist or does not refer to a normal file
-         */
-        public static Builder newInstance(String type, Provider provider,
-                File file, ProtectionParameter protection) {
-            if ((type == null) || (file == null) || (protection == null)) {
-                throw new NullPointerException();
-            }
-            if ((protection instanceof PasswordProtection == false) &&
-                (protection instanceof CallbackHandlerProtection == false)) {
-                throw new IllegalArgumentException
-                ("Protection must be PasswordProtection or " +
-                 "CallbackHandlerProtection");
-            }
-            if (file.isFile() == false) {
-                throw new IllegalArgumentException
-                    ("File does not exist or it does not refer " +
-                     "to a normal file: " + file);
-            }
-            return new FileBuilder(type, provider, file, protection,
-                AccessController.getContext());
-        }
-
-        private static final class FileBuilder extends Builder {
-
-            private final String type;
-            private final Provider provider;
-            private final File file;
-            private ProtectionParameter protection;
-            private ProtectionParameter keyProtection;
-            private final AccessControlContext context;
-
-            private KeyStore keyStore;
-
-            private Throwable oldException;
-
-            FileBuilder(String type, Provider provider, File file,
-                    ProtectionParameter protection,
-                    AccessControlContext context) {
-                this.type = type;
-                this.provider = provider;
-                this.file = file;
-                this.protection = protection;
-                this.context = context;
-            }
-
-            public synchronized KeyStore getKeyStore() throws KeyStoreException
-            {
-                if (keyStore != null) {
-                    return keyStore;
-                }
-                if (oldException != null) {
-                    throw new KeyStoreException
-                        ("Previous KeyStore instantiation failed",
-                         oldException);
-                }
-                PrivilegedExceptionAction<KeyStore> action =
-                        new PrivilegedExceptionAction<KeyStore>() {
-                    public KeyStore run() throws Exception {
-                        if (protection instanceof CallbackHandlerProtection == false) {
-                            return run0();
-                        }
-                        // when using a CallbackHandler,
-                        // reprompt if the password is wrong
-                        int tries = 0;
-                        while (true) {
-                            tries++;
-                            try {
-                                return run0();
-                            } catch (IOException e) {
-                                if ((tries < MAX_CALLBACK_TRIES)
-                                        && (e.getCause() instanceof UnrecoverableKeyException)) {
-                                    continue;
-                                }
-                                throw e;
-                            }
-                        }
-                    }
-                    public KeyStore run0() throws Exception {
-                        KeyStore ks;
-                        if (provider == null) {
-                            ks = KeyStore.getInstance(type);
-                        } else {
-                            ks = KeyStore.getInstance(type, provider);
-                        }
-                        InputStream in = null;
-                        char[] password = null;
-                        try {
-                            in = new FileInputStream(file);
-                            if (protection instanceof PasswordProtection) {
-                                password =
-                                ((PasswordProtection)protection).getPassword();
-                                keyProtection = protection;
-                            } else {
-                                CallbackHandler handler =
-                                    ((CallbackHandlerProtection)protection)
-                                    .getCallbackHandler();
-                                PasswordCallback callback = new PasswordCallback
-                                    ("Password for keystore " + file.getName(),
-                                    false);
-                                handler.handle(new Callback[] {callback});
-                                password = callback.getPassword();
-                                if (password == null) {
-                                    throw new KeyStoreException("No password" +
-                                                                " provided");
-                                }
-                                callback.clearPassword();
-                                keyProtection = new PasswordProtection(password);
-                            }
-                            ks.load(in, password);
-                            return ks;
-                        } finally {
-                            if (in != null) {
-                                in.close();
-                            }
-                        }
-                    }
-                };
-                try {
-                    keyStore = AccessController.doPrivileged(action, context);
-                    return keyStore;
-                } catch (PrivilegedActionException e) {
-                    oldException = e.getCause();
-                    throw new KeyStoreException
-                        ("KeyStore instantiation failed", oldException);
-                }
-            }
-
-            public synchronized ProtectionParameter
-                        getProtectionParameter(String alias) {
-                if (alias == null) {
-                    throw new NullPointerException();
-                }
-                if (keyStore == null) {
-                    throw new IllegalStateException
-                        ("getKeyStore() must be called first");
-                }
-                return keyProtection;
-            }
-        }
-
-        /**
-         * Returns a new Builder object.
-         *
-         * <p>Each call to the {@link #getKeyStore} method on the returned
-         * builder will return a new KeyStore object of type <code>type</code>.
-         * Its {@link KeyStore#load(KeyStore.LoadStoreParameter) load()}
-         * method is invoked using a
-         * <code>LoadStoreParameter</code> that encapsulates
-         * <code>protection</code>.
-         *
-         * <p>The KeyStore is instantiated from <code>provider</code> if
-         * non-null. Otherwise, all installed providers are searched.
-         *
-         * <p>Calls to {@link #getProtectionParameter getProtectionParameter()}
-         * will return <code>protection</code>.
-         *
-         * <p><em>Note</em> that the {@link #getKeyStore} method is executed
-         * within the {@link AccessControlContext} of the code invoking this
-         * method.
-         *
-         * @return a new Builder object
-         * @param type the type of KeyStore to be constructed
-         * @param provider the provider from which the KeyStore is to
-         *   be instantiated (or null)
-         * @param protection the ProtectionParameter securing the Keystore
-         * @throws NullPointerException if type or protection is null
-         */
-        public static Builder newInstance(final String type,
-                final Provider provider, final ProtectionParameter protection) {
-            if ((type == null) || (protection == null)) {
-                throw new NullPointerException();
-            }
-            final AccessControlContext context = AccessController.getContext();
-            return new Builder() {
-                private volatile boolean getCalled;
-                private IOException oldException;
-
-                private final PrivilegedExceptionAction<KeyStore> action
-                        = new PrivilegedExceptionAction<KeyStore>() {
-
-                    public KeyStore run() throws Exception {
-                        KeyStore ks;
-                        if (provider == null) {
-                            ks = KeyStore.getInstance(type);
-                        } else {
-                            ks = KeyStore.getInstance(type, provider);
-                        }
-                        LoadStoreParameter param = new SimpleLoadStoreParameter(protection);
-                        if (protection instanceof CallbackHandlerProtection == false) {
-                            ks.load(param);
-                        } else {
-                            // when using a CallbackHandler,
-                            // reprompt if the password is wrong
-                            int tries = 0;
-                            while (true) {
-                                tries++;
-                                try {
-                                    ks.load(param);
-                                    break;
-                                } catch (IOException e) {
-                                    if (e.getCause() instanceof UnrecoverableKeyException) {
-                                        if (tries < MAX_CALLBACK_TRIES) {
-                                            continue;
-                                        } else {
-                                            oldException = e;
-                                        }
-                                    }
-                                    throw e;
-                                }
-                            }
-                        }
-                        getCalled = true;
-                        return ks;
-                    }
-                };
-
-                public synchronized KeyStore getKeyStore()
-                        throws KeyStoreException {
-                    if (oldException != null) {
-                        throw new KeyStoreException
-                            ("Previous KeyStore instantiation failed",
-                             oldException);
-                    }
-                    try {
-                        return AccessController.doPrivileged(action);
-                    } catch (PrivilegedActionException e) {
-                        Throwable cause = e.getCause();
-                        throw new KeyStoreException
-                            ("KeyStore instantiation failed", cause);
-                    }
-                }
-
-                public ProtectionParameter getProtectionParameter(String alias)
-                {
-                    if (alias == null) {
-                        throw new NullPointerException();
-                    }
-                    if (getCalled == false) {
-                        throw new IllegalStateException
-                            ("getKeyStore() must be called first");
-                    }
-                    return protection;
-                }
-            };
-        }
+	/**
+	 * Returns a new Builder object.
+	 *
+	 * <p>The first call to the {@link #getKeyStore} method on the returned
+	 * builder will create a KeyStore of type <code>type</code> and call
+	 * its {@link KeyStore#load load()} method. 
+	 * The <code>inputStream</code> argument is constructed from
+	 * <code>file</code>. 
+	 * If <code>protection</code> is a
+	 * <code>PasswordProtection</code>, the password is obtained by
+	 * calling the <code>getPassword</code> method.
+	 * Otherwise, if <code>protection</code> is a 
+	 * <code>CallbackHandlerProtection</code>, the password is obtained
+	 * by invoking the CallbackHandler.
+	 *
+	 * <p>Subsequent calls to {@link #getKeyStore} return the same object 
+	 * as the initial call. If the initial call to failed with a
+	 * KeyStoreException, subsequent calls also throw a 
+	 * KeyStoreException.
+	 *
+	 * <p>The KeyStore is instantiated from <code>provider</code> if
+	 * non-null. Otherwise, all installed providers are searched.
+	 *
+	 * <p>Calls to {@link #getProtectionParameter getProtectionParameter()}
+	 * will return a {@link KeyStore.PasswordProtection PasswordProtection}
+	 * object encapsulating the password that was used to invoke the
+	 * <code>load</code> method.
+	 *
+	 * <p><em>Note</em> that the {@link #getKeyStore} method is executed 
+	 * within the {@link AccessControlContext} of the code invoking this 
+	 * method.
+	 *
+	 * @return a new Builder object
+	 * @param type the type of KeyStore to be constructed
+	 * @param provider the provider from which the KeyStore is to
+	 *   be instantiated (or null)
+	 * @param file the File that contains the KeyStore data
+	 * @param protection the ProtectionParameter securing the KeyStore data
+	 * @throws NullPointerException if type, file or protection is null
+	 * @throws IllegalArgumentException if protection is not an instance
+	 *   of either PasswordProtection or CallbackHandlerProtection; or
+	 *   if file does not exist or does not refer to a normal file
+	 */
+	public static Builder newInstance(String type, Provider provider, 
+		File file, ProtectionParameter protection) {
+	    if ((type == null) || (file == null) || (protection == null)) {
+		throw new NullPointerException();
+	    }
+	    if ((protection instanceof PasswordProtection == false) &&
+		(protection instanceof CallbackHandlerProtection == false)) {
+		throw new IllegalArgumentException
+		("Protection must be PasswordProtection or " +
+		 "CallbackHandlerProtection");
+	    }
+	    if (file.isFile() == false) {
+		throw new IllegalArgumentException
+		    ("File does not exist or it does not refer " +
+		     "to a normal file: " + file);
+	    }
+	    return new FileBuilder(type, provider, file, protection, 
+		AccessController.getContext());
+	}
+	
+	private static final class FileBuilder extends Builder {
+	    
+	    private final String type;
+	    private final Provider provider;
+	    private final File file;
+	    private ProtectionParameter protection;
+	    private ProtectionParameter keyProtection;
+	    private final AccessControlContext context;
+	    
+	    private KeyStore keyStore;
+	    
+	    private Throwable oldException;
+	    
+	    FileBuilder(String type, Provider provider, File file, 
+		    ProtectionParameter protection, 
+		    AccessControlContext context) {
+		this.type = type;
+		this.provider = provider;
+		this.file = file;
+		this.protection = protection;
+		this.context = context;
+	    }
+	    
+	    public synchronized KeyStore getKeyStore() throws KeyStoreException
+	    {
+		if (keyStore != null) {
+		    return keyStore;
+		}
+		if (oldException != null) {
+		    throw new KeyStoreException
+			("Previous KeyStore instantiation failed",
+			 oldException);
+		}
+		PrivilegedExceptionAction<KeyStore> action = 
+			new PrivilegedExceptionAction<KeyStore>() {
+		    public KeyStore run() throws Exception {
+			if (protection instanceof CallbackHandlerProtection == false) {
+			    return run0();
+			}
+			// when using a CallbackHandler,
+			// reprompt if the password is wrong
+			int tries = 0;
+			while (true) {
+			    tries++;
+			    try {
+				return run0();
+			    } catch (IOException e) {
+				if ((tries < MAX_CALLBACK_TRIES)
+					&& (e.getCause() instanceof UnrecoverableKeyException)) {
+				    continue;
+				}
+				throw e;
+			    }
+			}
+		    }
+		    public KeyStore run0() throws Exception {
+			KeyStore ks;
+			if (provider == null) {
+			    ks = KeyStore.getInstance(type);
+			} else {
+			    ks = KeyStore.getInstance(type, provider);
+			}
+			InputStream in = null;
+			char[] password = null;
+			try {
+			    in = new FileInputStream(file);
+			    if (protection instanceof PasswordProtection) {
+				password = 
+				((PasswordProtection)protection).getPassword();
+				keyProtection = protection;
+			    } else {
+				CallbackHandler handler = 
+				    ((CallbackHandlerProtection)protection)
+				    .getCallbackHandler();
+				PasswordCallback callback = new PasswordCallback
+				    ("Password for keystore " + file.getName(), 
+				    false);
+				handler.handle(new Callback[] {callback});
+				password = callback.getPassword();
+				if (password == null) {
+				    throw new KeyStoreException("No password" +
+								" provided");
+				}
+				callback.clearPassword();
+				keyProtection = new PasswordProtection(password);
+			    }
+			    ks.load(in, password);
+			    return ks;
+			} finally {
+			    if (in != null) {
+				in.close();
+			    }
+			}
+		    }
+		};
+		try {
+		    keyStore = AccessController.doPrivileged(action, context);
+		    return keyStore;
+		} catch (PrivilegedActionException e) {
+		    oldException = e.getCause();
+		    throw new KeyStoreException
+			("KeyStore instantiation failed", oldException);
+		}
+	    }
+	    
+	    public synchronized ProtectionParameter 
+			getProtectionParameter(String alias) {
+		if (alias == null) {
+		    throw new NullPointerException();
+		}
+		if (keyStore == null) {
+		    throw new IllegalStateException
+			("getKeyStore() must be called first");
+		}
+		return keyProtection;
+	    }
+	}
+	
+	/**
+	 * Returns a new Builder object.
+	 *
+	 * <p>Each call to the {@link #getKeyStore} method on the returned
+	 * builder will return a new KeyStore object of type <code>type</code>.
+	 * Its {@link KeyStore#load(KeyStore.LoadStoreParameter) load()} 
+	 * method is invoked using a
+	 * <code>LoadStoreParameter</code> that encapsulates 
+	 * <code>protection</code>.
+	 *
+	 * <p>The KeyStore is instantiated from <code>provider</code> if
+	 * non-null. Otherwise, all installed providers are searched.
+	 *
+	 * <p>Calls to {@link #getProtectionParameter getProtectionParameter()}
+	 * will return <code>protection</code>.
+	 *
+	 * <p><em>Note</em> that the {@link #getKeyStore} method is executed 
+	 * within the {@link AccessControlContext} of the code invoking this 
+	 * method.
+	 *
+	 * @return a new Builder object
+	 * @param type the type of KeyStore to be constructed
+	 * @param provider the provider from which the KeyStore is to
+	 *   be instantiated (or null)
+	 * @param protection the ProtectionParameter securing the Keystore
+	 * @throws NullPointerException if type or protection is null
+	 */
+	public static Builder newInstance(final String type, 
+		final Provider provider, final ProtectionParameter protection) {
+	    if ((type == null) || (protection == null)) {
+		throw new NullPointerException();
+	    }
+	    final AccessControlContext context = AccessController.getContext();
+	    return new Builder() {
+		private volatile boolean getCalled;
+		private IOException oldException;
+		
+		private final PrivilegedExceptionAction<KeyStore> action
+			= new PrivilegedExceptionAction<KeyStore>() {
+		    
+		    public KeyStore run() throws Exception {
+			KeyStore ks;
+			if (provider == null) {
+			    ks = KeyStore.getInstance(type);
+			} else {
+			    ks = KeyStore.getInstance(type, provider);
+			}
+			LoadStoreParameter param = new SimpleLoadStoreParameter(protection);
+			if (protection instanceof CallbackHandlerProtection == false) {
+			    ks.load(param);
+			} else {
+			    // when using a CallbackHandler,
+			    // reprompt if the password is wrong
+			    int tries = 0;
+			    while (true) {
+				tries++;
+				try {
+				    ks.load(param);
+				    break;
+				} catch (IOException e) {
+				    if (e.getCause() instanceof UnrecoverableKeyException) {
+					if (tries < MAX_CALLBACK_TRIES) {
+					    continue;
+					} else {
+					    oldException = e;
+					}
+				    }
+				    throw e;
+				}
+			    }
+			}
+			getCalled = true;
+			return ks;
+		    }
+		};
+		
+		public synchronized KeyStore getKeyStore()
+			throws KeyStoreException {
+		    if (oldException != null) {
+			throw new KeyStoreException
+			    ("Previous KeyStore instantiation failed",
+			     oldException);
+		    }
+		    try {
+			return AccessController.doPrivileged(action);
+		    } catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			throw new KeyStoreException
+			    ("KeyStore instantiation failed", cause);
+		    }
+		}
+		
+		public ProtectionParameter getProtectionParameter(String alias)
+		{
+		    if (alias == null) {
+			throw new NullPointerException();
+		    }
+		    if (getCalled == false) {
+			throw new IllegalStateException
+			    ("getKeyStore() must be called first");
+		    }
+		    return protection;
+		}
+	    };
+	}
 
     }
-
+    
     static class SimpleLoadStoreParameter implements LoadStoreParameter {
-
-        private final ProtectionParameter protection;
-
-        SimpleLoadStoreParameter(ProtectionParameter protection) {
-            this.protection = protection;
-        }
-
-        public ProtectionParameter getProtectionParameter() {
-            return protection;
-        }
+	
+	private final ProtectionParameter protection;
+	
+	SimpleLoadStoreParameter(ProtectionParameter protection) {
+	    this.protection = protection;
+	}
+	
+	public ProtectionParameter getProtectionParameter() {
+	    return protection;
+	}
     }
-
+    
 }

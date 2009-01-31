@@ -129,7 +129,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
         if (xembedLog.isLoggable(Level.FINE)) {
             xembedLog.fine(xe.toString());
         }
-
+        
         // fix for 5063031
         // if we use super.handleConfigureNotifyEvent() we would get wrong
         // size and position because embedded frame really is NOT a decorated one
@@ -137,19 +137,19 @@ public class XEmbeddedFramePeer extends XFramePeer {
                 xe.get_y(),
                 xe.get_width(),
                 xe.get_height())));
-
+        
         Rectangle oldBounds = getBounds();
-
+        
         synchronized (getStateLock()) {
             x = xe.get_x();
             y = xe.get_y();
             width = xe.get_width();
             height = xe.get_height();
-
+            
             dimensions.setClientSize(width, height);
             dimensions.setLocation(x, y);
         }
-
+        
         if (!getLocation().equals(oldBounds.getLocation())) {
             handleMoved(dimensions);
         }
@@ -158,16 +158,16 @@ public class XEmbeddedFramePeer extends XFramePeer {
 
     protected void traverseOutForward() {
         if (embedder != null && embedder.isActive()) {
-            if (embedder.isApplicationActive()) {
+            if (embedder.isApplicationActive()) {  
                 xembedLog.fine("Traversing out Forward");
                 embedder.traverseOutForward();
             }
         }
     }
-
+    
     protected void traverseOutBackward() {
         if (embedder != null && embedder.isActive()) {
-            if (embedder.isApplicationActive()) {
+            if (embedder.isApplicationActive()) {  
                 xembedLog.fine("Traversing out Backward");
                 embedder.traverseOutBackward();
             }
@@ -175,7 +175,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
     }
 
     // don't use getLocationOnScreen() inherited from XDecoratedPeer
-    public Point getLocationOnScreen() {
+    public Point getLocationOnScreen() {        
         XToolkit.awtLock();
         try {
             return toGlobal(0, 0);
@@ -200,7 +200,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
 
         XToolkit.awtLock();
         try {
-            XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
+            XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(), 
                 getWindow(), attr.pData);
             x = attr.get_x();
             y = attr.get_y();
@@ -227,7 +227,7 @@ public class XEmbeddedFramePeer extends XFramePeer {
             int index = strokes.indexOf(stroke);
             embedder.unregisterAccelerator(index);
         }
-    }
+    }    
 
     void notifyStarted() {
         // Register accelerators

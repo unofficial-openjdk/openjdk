@@ -84,7 +84,7 @@ import java.util.Date;
  * </pre>
  * <p>
  * Here is sample code to instantiate an X.509 certificate:
- * <pre>
+ * <pre> 
  * InputStream inStream = new FileInputStream("fileName-of-cert");
  * X509Certificate cert = X509Certificate.getInstance(inStream);
  * inStream.close();
@@ -109,7 +109,7 @@ import java.util.Date;
  * cert.provider.x509v1=com.sun.security.cert.internal.x509.X509V1CertImpl
  * </pre>
  * <p>
- * The value of this <code>cert.provider.x509v1</code> property has to be
+ * The value of this <code>cert.provider.x509v1</code> property has to be 
  * changed to instatiate another implementation. If this security
  * property is not set, a default implementation will be used.
  * Currently, due to possible security restrictions on access to
@@ -124,6 +124,7 @@ import java.util.Date;
  * <code>java.security.cert</code>.</em></p>
  *
  * @author Hemma Prafullchandra
+ * @version %I%
  * @since 1.4
  * @see Certificate
  * @see java.security.cert.X509Extension
@@ -137,17 +138,17 @@ public abstract class X509Certificate extends Certificate {
      * <pre>
      * cert.provider.x509v1=com.sun.security.cert.internal.x509.X509V1CertImpl
      * </pre>
-     */
+     */  
     private static final String X509_PROVIDER = "cert.provider.x509v1";
     private static String X509Provider;
-
+    
     static {
         X509Provider = AccessController.doPrivileged(
             new PrivilegedAction<String>() {
                 public String run() {
                     return Security.getProperty(X509_PROVIDER);
-                }
-            }
+	        }
+	    }
         );
     }
 
@@ -155,7 +156,7 @@ public abstract class X509Certificate extends Certificate {
      * Instantiates an X509Certificate object, and initializes it with
      * the data read from the input stream <code>inStream</code>.
      * The implementation (X509Certificate is an abstract class) is
-     * provided by the class specified as the value of the
+     * provided by the class specified as the value of the 
      * <code>cert.provider.x509v1</code>
      * property in the security properties file.
      *
@@ -166,7 +167,7 @@ public abstract class X509Certificate extends Certificate {
      * <code><pre>
      * public &lt;subClass&gt;(InputStream inStream) ...
      * </pre></code>
-     *
+     *   
      * @param inStream an input stream with the data to be read to
      *        initialize the certificate.
      * @return an X509Certificate object initialized with the data
@@ -183,7 +184,7 @@ public abstract class X509Certificate extends Certificate {
      * Instantiates an X509Certificate object, and initializes it with
      * the specified byte array.
      * The implementation (X509Certificate is an abstract class) is
-     * provided by the class specified as the value of the
+     * provided by the class specified as the value of the 
      * <code>cert.provider.x509v1</code>
      * property in the security properties file.
      *
@@ -192,7 +193,7 @@ public abstract class X509Certificate extends Certificate {
      * <code><pre>
      * public &lt;subClass&gt;(InputStream inStream) ...
      * </pre></code>
-     *
+     *   
      * @param certData a byte array containing the DER-encoded
      *        certificate.
      * @return an X509Certificate object initialized with the data
@@ -207,11 +208,11 @@ public abstract class X509Certificate extends Certificate {
 
     private static final X509Certificate getInst(Object value)
     throws CertificateException {
-        /*
-         * This turns out not to work for now. To run under JDK1.2 we would
-         * need to call beginPrivileged() but we can't do that and run
-         * under JDK1.1.
-         */
+	/*
+	 * This turns out not to work for now. To run under JDK1.2 we would
+	 * need to call beginPrivileged() but we can't do that and run
+	 * under JDK1.1.
+	 */
         String className = X509Provider;
         if (className == null || className.length() == 0) {
             // shouldn't happen, but assume corrupted properties file
@@ -255,8 +256,8 @@ public abstract class X509Certificate extends Certificate {
      * the current date and time are within the validity period given in the
      * certificate.
      * <p>
-     * The validity period consists of two date/time values:
-     * the first and last dates (and times) on which the certificate
+     * The validity period consists of two date/time values: 
+     * the first and last dates (and times) on which the certificate 
      * is valid. It is defined in
      * ASN.1 as:
      * <pre>
@@ -268,7 +269,7 @@ public abstract class X509Certificate extends Certificate {
      *     utcTime        UTCTime,
      *     generalTime    GeneralizedTime }
      * </pre>
-     *
+     * 
      * @exception CertificateExpiredException if the certificate has expired.
      * @exception CertificateNotYetValidException if the certificate is not
      *            yet valid.
@@ -278,7 +279,7 @@ public abstract class X509Certificate extends Certificate {
 
     /**
      * Checks that the specified date is within the certificate's
-     * validity period. In other words, this determines whether the
+     * validity period. In other words, this determines whether the 
      * certificate would be valid at the specified date/time.
      *
      * @param date the Date to check against to see if this certificate
@@ -313,7 +314,7 @@ public abstract class X509Certificate extends Certificate {
      * The ASN.1 definition for this is:
      * <pre>
      * serialNumber     CertificateSerialNumber<p>
-     *
+     * 
      * CertificateSerialNumber  ::=  INTEGER
      * </pre>
      *
@@ -322,10 +323,10 @@ public abstract class X509Certificate extends Certificate {
     public abstract BigInteger getSerialNumber();
 
     /**
-     * Gets the <code>issuer</code> (issuer distinguished name) value from
+     * Gets the <code>issuer</code> (issuer distinguished name) value from 
      * the certificate. The issuer name identifies the entity that signed (and
-     * issued) the certificate.
-     *
+     * issued) the certificate. 
+     * 
      * <p>The issuer name field contains an
      * X.500 distinguished name (DN).
      * The ASN.1 definition for this is:
@@ -346,38 +347,38 @@ public abstract class X509Certificate extends Certificate {
      * The <code>Name</code> describes a hierarchical name composed of
      * attributes, such as country name, and corresponding values, such as US.
      * The type of the <code>AttributeValue</code> component is determined by
-     * the <code>AttributeType</code>; in general it will be a
-     * <code>directoryString</code>. A <code>directoryString</code> is usually
+     * the <code>AttributeType</code>; in general it will be a 
+     * <code>directoryString</code>. A <code>directoryString</code> is usually 
      * one of <code>PrintableString</code>,
      * <code>TeletexString</code> or <code>UniversalString</code>.
-     *
+     * 
      * @return a Principal whose name is the issuer distinguished name.
      */
     public abstract Principal getIssuerDN();
 
     /**
-     * Gets the <code>subject</code> (subject distinguished name) value
+     * Gets the <code>subject</code> (subject distinguished name) value 
      * from the certificate.
      * The ASN.1 definition for this is:
      * <pre>
      * subject    Name
      * </pre>
-     *
-     * <p>See <a href = "#getIssuerDN">getIssuerDN</a> for <code>Name</code>
+     * 
+     * <p>See <a href = "#getIssuerDN">getIssuerDN</a> for <code>Name</code> 
      * and other relevant definitions.
-     *
+     * 
      * @return a Principal whose name is the subject name.
      * @see #getIssuerDN()
      */
     public abstract Principal getSubjectDN();
 
     /**
-     * Gets the <code>notBefore</code> date from the validity period of
+     * Gets the <code>notBefore</code> date from the validity period of 
      * the certificate.
      * The relevant ASN.1 definitions are:
      * <pre>
      * validity             Validity<p>
-     *
+     * 
      * Validity ::= SEQUENCE {
      *     notBefore      CertificateValidityDate,
      *     notAfter       CertificateValidityDate }<p>
@@ -392,7 +393,7 @@ public abstract class X509Certificate extends Certificate {
     public abstract Date getNotBefore();
 
     /**
-     * Gets the <code>notAfter</code> date from the validity period of
+     * Gets the <code>notAfter</code> date from the validity period of 
      * the certificate. See <a href = "#getNotBefore">getNotBefore</a>
      * for relevant ASN.1 definitions.
      *
@@ -414,7 +415,7 @@ public abstract class X509Certificate extends Certificate {
      *                             -- registered for use with the
      *                             -- algorithm object identifier value
      * </pre>
-     *
+     * 
      * <p>The algorithm name is determined from the <code>algorithm</code>
      * OID string.
      *
@@ -428,8 +429,8 @@ public abstract class X509Certificate extends Certificate {
      * by periods.
      * For example, the string "1.2.840.10040.4.3" identifies the SHA-1
      * with DSA signature algorithm, as per the PKIX part I.
-     *
-     * <p>See <a href = "#getSigAlgName">getSigAlgName</a> for
+     * 
+     * <p>See <a href = "#getSigAlgName">getSigAlgName</a> for 
      * relevant ASN.1 definitions.
      *
      * @return the signature algorithm OID string.
@@ -441,8 +442,8 @@ public abstract class X509Certificate extends Certificate {
      * certificate's signature algorithm. In most cases, the signature
      * algorithm parameters are null; the parameters are usually
      * supplied with the certificate's public key.
-     *
-     * <p>See <a href = "#getSigAlgName">getSigAlgName</a> for
+     * 
+     * <p>See <a href = "#getSigAlgName">getSigAlgName</a> for 
      * relevant ASN.1 definitions.
      *
      * @return the DER-encoded signature algorithm parameters, or

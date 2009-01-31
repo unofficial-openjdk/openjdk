@@ -23,8 +23,8 @@
  * have any questions.
  */
 /*-
- *      Reads JPEG images from an InputStream and reports the
- *      image data to an InputStreamImageSource object.
+ *	Reads JPEG images from an InputStream and reports the
+ *	image data to an InputStreamImageSource object.
  *
  * The native implementation of the JPEG image decoder was adapted from
  * release 6 of the free JPEG software from the Independent JPEG Group.
@@ -40,6 +40,7 @@ import java.awt.image.*;
 /**
  * JPEG Image converter
  *
+ * @version %I% %G%
  * @author Jim Graham
  */
 public class JPEGImageDecoder extends ImageDecoder {
@@ -54,40 +55,40 @@ public class JPEGImageDecoder extends ImageDecoder {
 
     static {
         java.security.AccessController.doPrivileged(
-                  new sun.security.action.LoadLibraryAction("jpeg"));
-        initIDs(InputStreamClass);
-        RGBcolormodel = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
+		  new sun.security.action.LoadLibraryAction("jpeg"));
+	initIDs(InputStreamClass);
+	RGBcolormodel = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
         ARGBcolormodel = ColorModel.getRGBdefault();
-        byte g[] = new byte[256];
-        for (int i = 0; i < 256; i++) {
-            g[i] = (byte) i;
-        }
-        Graycolormodel = new IndexColorModel(8, 256, g, g, g);
+	byte g[] = new byte[256];
+	for (int i = 0; i < 256; i++) {
+	    g[i] = (byte) i;
+	}
+	Graycolormodel = new IndexColorModel(8, 256, g, g, g);
     }
 
     private native void readImage(InputStream is, byte buf[])
-        throws ImageFormatException, IOException;
+	throws ImageFormatException, IOException;
 
     Hashtable props = new Hashtable();
 
     public JPEGImageDecoder(InputStreamImageSource src, InputStream is) {
-        super(src, is);
+	super(src, is);
     }
 
     /**
      * An error has occurred. Throw an exception.
      */
     private static void error(String s1) throws ImageFormatException {
-        throw new ImageFormatException(s1);
+	throw new ImageFormatException(s1);
     }
 
     public boolean sendHeaderInfo(int width, int height,
-                                  boolean gray, boolean hasalpha,
-                                  boolean multipass)
+				  boolean gray, boolean hasalpha,
+                                  boolean multipass) 
     {
-        setDimensions(width, height);
+	setDimensions(width, height);
 
-        setProperties(props);
+	setProperties(props);
         if (gray) {
             colormodel = Graycolormodel;
         } else {
@@ -98,58 +99,58 @@ public class JPEGImageDecoder extends ImageDecoder {
             }
         }
 
-        setColorModel(colormodel);
+	setColorModel(colormodel);
 
-        int flags = hintflags;
-        if (!multipass) {
-            flags |= ImageConsumer.SINGLEPASS;
-        }
-        setHints(hintflags);
-        headerComplete();
+	int flags = hintflags;
+	if (!multipass) {
+	    flags |= ImageConsumer.SINGLEPASS;
+	}
+	setHints(hintflags);
+	headerComplete();
 
-        return true;
+	return true;
     }
 
     public boolean sendPixels(int pixels[], int y) {
-        int count = setPixels(0, y, pixels.length, 1, colormodel,
-                              pixels, 0, pixels.length);
-        if (count <= 0) {
-            aborted = true;
-        }
-        return !aborted;
+	int count = setPixels(0, y, pixels.length, 1, colormodel,
+			      pixels, 0, pixels.length);
+	if (count <= 0) {
+	    aborted = true;
+	}
+	return !aborted;
     }
 
     public boolean sendPixels(byte pixels[], int y) {
-        int count = setPixels(0, y, pixels.length, 1, colormodel,
-                              pixels, 0, pixels.length);
-        if (count <= 0) {
-            aborted = true;
-        }
-        return !aborted;
+	int count = setPixels(0, y, pixels.length, 1, colormodel,
+			      pixels, 0, pixels.length);
+	if (count <= 0) {
+	    aborted = true;
+	}
+	return !aborted;
     }
 
     /**
      * produce an image from the stream.
      */
     public void produceImage() throws IOException, ImageFormatException {
-        try {
-            readImage(input, new byte[1024]);
-            if (!aborted) {
-                imageComplete(ImageConsumer.STATICIMAGEDONE, true);
-            }
-        } catch (IOException e) {
-            if (!aborted) {
-                throw e;
-            }
-        } finally {
-            close();
-        }
+	try {
+	    readImage(input, new byte[1024]);
+	    if (!aborted) {
+		imageComplete(ImageConsumer.STATICIMAGEDONE, true);
+	    }
+	} catch (IOException e) {
+	    if (!aborted) {
+		throw e;
+	    }
+	} finally {
+	    close();
+	}
     }
 
     /**
      * The ImageConsumer hints flag for a JPEG image.
      */
     private static final int hintflags =
-        ImageConsumer.TOPDOWNLEFTRIGHT | ImageConsumer.COMPLETESCANLINES |
-        ImageConsumer.SINGLEFRAME;
+	ImageConsumer.TOPDOWNLEFTRIGHT | ImageConsumer.COMPLETESCANLINES |
+	ImageConsumer.SINGLEFRAME;
 }

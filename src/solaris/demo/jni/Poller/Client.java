@@ -53,7 +53,7 @@ public class Client
       System.out.println("Usage : java Client <num_connects>");
       System.out.println("      | java Client <num_connects> <server_name>");
       System.out.println("      | java Client <num_connects> <server_name>" +
-                         " <max_Kbytes>");
+			 " <max_Kbytes>");
       System.exit(-1);
     }
 
@@ -71,37 +71,37 @@ public class Client
     }
 
     System.out.println("Using " + totalConn + " connections for sending " +
-                       bytesToSend + " bytes to " + host);
-
+		       bytesToSend + " bytes to " + host);
+    
 
     try {
       Socket ctrlSock = new Socket (host, PORTNUM);
       PrintStream ctrlStream =
-        new PrintStream(ctrlSock.getOutputStream());
+	new PrintStream(ctrlSock.getOutputStream());
       ctrlStream.println(bytesToSend);
       ctrlStream.println(totalConn);
-
+      
       while (connections < totalConn ) {
-        sockArr[connections] = new Socket (host, PORTNUM);
-        connections ++;
+	sockArr[connections] = new Socket (host, PORTNUM);
+	connections ++;
       }
       System.out.println("Connections made : " + connections);
-
+      
       byte[] buff = new byte[BYTESPEROP];
       for (int i = 0; i < BYTESPEROP; i++) // just put some junk in!
-        buff[i] = (byte) i;
-
+	buff[i] = (byte) i;
+      
       Random rand = new Random(5321L);
       while (sends < bytesToSend/BYTESPEROP) {
-        int idx = java.lang.Math.abs(rand.nextInt()) % totalConn;
-        sockArr[idx].getOutputStream().write(buff,0,BYTESPEROP);
-        sends++;
+	int idx = java.lang.Math.abs(rand.nextInt()) % totalConn;
+	sockArr[idx].getOutputStream().write(buff,0,BYTESPEROP);
+	sends++;
       }
       // Wait for server to say done.
       int bytes = ctrlSock.getInputStream().read(buff, 0, BYTESPEROP);
       System.out.println (" Total connections : " + connections +
-                          " Bytes sent : " + sends * BYTESPEROP +
-                          "...Done!");
+			  " Bytes sent : " + sends * BYTESPEROP +
+			  "...Done!");
     } catch (Exception e) { e.printStackTrace(); }
   }
 }

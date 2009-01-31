@@ -45,7 +45,7 @@ public interface DynamicMBean2 extends DynamicMBean {
      * object.
      */
     public Object getResource();
-
+    
     /**
      * The name of this MBean's class, as used by permission checks.
      * This is typically equal to getResource().getClass().getName().
@@ -54,7 +54,7 @@ public interface DynamicMBean2 extends DynamicMBean {
      * result.
      */
     public String getClassName();
-
+    
     /**
      * Additional registration hook.  This method is called after
      * {@link javax.management.MBeanRegistration#preRegister preRegister}.
@@ -67,7 +67,7 @@ public interface DynamicMBean2 extends DynamicMBean {
      */
     public void preRegister2(MBeanServer mbs, ObjectName name)
             throws Exception;
-
+    
     /**
      * Additional registration hook.  This method is called if preRegister
      * and preRegister2 succeed, but then the MBean cannot be registered

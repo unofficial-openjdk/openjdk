@@ -33,8 +33,10 @@ import java.awt.event.MouseMotionListener;
  * {@code MouseMotionListener} interfaces.
  *
  * @see MouseInputAdapter
+ * @version %I% %G%
  * @author Philip Milne
  */
 
 public interface MouseInputListener extends MouseListener, MouseMotionListener {
 }
+

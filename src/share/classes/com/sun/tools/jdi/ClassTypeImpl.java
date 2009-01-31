@@ -52,7 +52,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
             }
 
             /*
-             * If there is a superclass, cache its
+             * If there is a superclass, cache its 
              * ClassType here. Otherwise,
              * leave the cache reference null.
              */
@@ -61,7 +61,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
             }
             cachedSuperclass = true;
         }
-
+       
         return superclass;
     }
 
@@ -121,7 +121,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         return false;
     }
 
-    public void setValue(Field field, Value value)
+    public void setValue(Field field, Value value) 
         throws InvalidTypeException, ClassNotLoadedException {
 
         validateMirror(field);
@@ -131,17 +131,17 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         // More validation specific to setting from a ClassType
         if(!field.isStatic()) {
             throw new IllegalArgumentException(
-                            "Must set non-static field through an instance");
+			    "Must set non-static field through an instance");
         }
 
         try {
-            JDWP.ClassType.SetValues.FieldValue[] values =
+            JDWP.ClassType.SetValues.FieldValue[] values = 
                           new JDWP.ClassType.SetValues.FieldValue[1];
             values[0] = new JDWP.ClassType.SetValues.FieldValue(
                     ((FieldImpl)field).ref(),
                     // validate and convert if necessary
                     ValueImpl.prepareForAssignment(value, (FieldImpl)field));
-
+    
             try {
                 JDWP.ClassType.SetValues.process(vm, this, values);
             } catch (JDWPException exc) {
@@ -153,7 +153,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
              * the field type must be a reference type. The value
              * we're trying to set is null, but if the field's
              * class has not yet been loaded through the enclosing
-             * class loader, then setting to null is essentially a
+             * class loader, then setting to null is essentially a 
              * no-op, and we should allow it without an exception.
              */
             if (value != null) {
@@ -163,14 +163,14 @@ public class ClassTypeImpl extends ReferenceTypeImpl
     }
 
     PacketStream sendInvokeCommand(final ThreadReferenceImpl thread,
-                                   final MethodImpl method,
-                                   final ValueImpl[] args,
+                                   final MethodImpl method, 
+                                   final ValueImpl[] args, 
                                    final int options) {
-        CommandSender sender =
+        CommandSender sender = 
             new CommandSender() {
                 public PacketStream send() {
                     return JDWP.ClassType.InvokeMethod.enqueueCommand(
-                                          vm, ClassTypeImpl.this, thread,
+                                          vm, ClassTypeImpl.this, thread, 
                                           method.ref(), args, options);
                 }
         };
@@ -185,14 +185,14 @@ public class ClassTypeImpl extends ReferenceTypeImpl
     }
 
     PacketStream sendNewInstanceCommand(final ThreadReferenceImpl thread,
-                                   final MethodImpl method,
-                                   final ValueImpl[] args,
+                                   final MethodImpl method, 
+                                   final ValueImpl[] args, 
                                    final int options) {
-        CommandSender sender =
+        CommandSender sender = 
             new CommandSender() {
                 public PacketStream send() {
                     return JDWP.ClassType.NewInstance.enqueueCommand(
-                                          vm, ClassTypeImpl.this, thread,
+                                          vm, ClassTypeImpl.this, thread, 
                                           method.ref(), args, options);
                 }
         };
@@ -216,26 +216,26 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         validateMirror(methodIntf);
         validateMirrorsOrNulls(origArguments);
 
-        MethodImpl method = (MethodImpl)methodIntf;
+	MethodImpl method = (MethodImpl)methodIntf;
         ThreadReferenceImpl thread = (ThreadReferenceImpl)threadIntf;
 
         validateMethodInvocation(method);
 
         List<? extends Value> arguments = method.validateAndPrepareArgumentsForInvoke(origArguments);
 
-        ValueImpl[] args = (ValueImpl[])arguments.toArray(new ValueImpl[0]);
-        JDWP.ClassType.InvokeMethod ret;
-        try {
-            PacketStream stream =
+	ValueImpl[] args = (ValueImpl[])arguments.toArray(new ValueImpl[0]);
+	JDWP.ClassType.InvokeMethod ret;
+	try {
+            PacketStream stream = 
                 sendInvokeCommand(thread, method, args, options);
             ret = JDWP.ClassType.InvokeMethod.waitForReply(vm, stream);
-        } catch (JDWPException exc) {
+	} catch (JDWPException exc) {
             if (exc.errorCode() == JDWP.Error.INVALID_THREAD) {
                 throw new IncompatibleThreadStateException();
             } else {
                 throw exc.toJDIException();
             }
-        }
+	}
 
         /*
          * There is an implict VM-wide suspend at the conclusion
@@ -252,10 +252,10 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         }
     }
 
-    public ObjectReference newInstance(ThreadReference threadIntf,
-                                       Method methodIntf,
+    public ObjectReference newInstance(ThreadReference threadIntf, 
+                                       Method methodIntf, 
                                        List<? extends Value> origArguments,
-                                       int options)
+				       int options)
                                    throws InvalidTypeException,
                                           ClassNotLoadedException,
                                           IncompatibleThreadStateException,
@@ -263,7 +263,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         validateMirror(threadIntf);
         validateMirror(methodIntf);
         validateMirrorsOrNulls(origArguments);
-
+	
         MethodImpl method = (MethodImpl)methodIntf;
         ThreadReferenceImpl thread = (ThreadReferenceImpl)threadIntf;
 
@@ -271,19 +271,19 @@ public class ClassTypeImpl extends ReferenceTypeImpl
 
         List<Value> arguments = method.validateAndPrepareArgumentsForInvoke(
                                                        origArguments);
-        ValueImpl[] args = (ValueImpl[])arguments.toArray(new ValueImpl[0]);
-        JDWP.ClassType.NewInstance ret = null;
-        try {
-            PacketStream stream =
+	ValueImpl[] args = (ValueImpl[])arguments.toArray(new ValueImpl[0]);
+	JDWP.ClassType.NewInstance ret = null;
+	try {
+            PacketStream stream = 
                 sendNewInstanceCommand(thread, method, args, options);
             ret = JDWP.ClassType.NewInstance.waitForReply(vm, stream);
-        } catch (JDWPException exc) {
+	} catch (JDWPException exc) {
             if (exc.errorCode() == JDWP.Error.INVALID_THREAD) {
                 throw new IncompatibleThreadStateException();
             } else {
                 throw exc.toJDIException();
             }
-        }
+	}
 
         /*
          * There is an implict VM-wide suspend at the conclusion
@@ -316,7 +316,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
        }
        return method;
    }
-
+   
    public List<Method> allMethods() {
         ArrayList<Method> list = new ArrayList<Method>(methods());
 
@@ -327,14 +327,14 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         }
 
         /*
-         * Avoid duplicate checking on each method by iterating through
+         * Avoid duplicate checking on each method by iterating through 
          * duplicate-free allInterfaces() rather than recursing
          */
         Iterator iter = allInterfaces().iterator();
         while (iter.hasNext()) {
             InterfaceType interfaze = (InterfaceType)iter.next();
             list.addAll(interfaze.methods());
-        }
+        } 
 
         return list;
     }
@@ -344,13 +344,13 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         if (superclass() != null) {
             inherited.add(0, (ReferenceType)superclass()); /* insert at front */
         }
-        for (ReferenceType rt : interfaces()) {
-            inherited.add(rt);
-        }
+	for (ReferenceType rt : interfaces()) {
+ 	    inherited.add(rt);
+	}
         return inherited;
     }
 
-    void validateMethodInvocation(Method method)
+    void validateMethodInvocation(Method method) 
                                    throws InvalidTypeException,
                                           InvocationException {
         /*
@@ -371,7 +371,7 @@ public class ClassTypeImpl extends ReferenceTypeImpl
         }
     }
 
-    void validateConstructorInvocation(Method method)
+    void validateConstructorInvocation(Method method) 
                                    throws InvalidTypeException,
                                           InvocationException {
         /*
@@ -387,12 +387,12 @@ public class ClassTypeImpl extends ReferenceTypeImpl
          */
         if (!method.isConstructor()) {
             throw new IllegalArgumentException("Cannot create instance with non-constructor");
-        }
+        } 
     }
 
     void addVisibleMethods(Map<String, Method> methodMap) {
         /*
-         * Add methods from
+         * Add methods from 
          * parent types first, so that the methods in this class will
          * overwrite them in the hash table
          */

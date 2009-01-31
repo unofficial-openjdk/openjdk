@@ -45,7 +45,7 @@ public:
 
 protected:
     /*
-     * Decrement the reference count of a cached GDI object.  When it hits
+     * Decrement the reference count of a cached GDI object.  When it hits 
      * zero, notify the cache that the object can be safely removed.
      * The cache will eventually delete the GDI object and this wrapper.
      */

@@ -116,11 +116,11 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                              String connectionId,
                              ClassLoader defaultClassLoader,
                              Subject subject,
-                             Map<String,?> env) {
-        if (rmiServer == null || connectionId == null)
-            throw new NullPointerException("Illegal null argument");
-        if (env == null)
-            env = Collections.emptyMap();
+			     Map<String,?> env) {
+	if (rmiServer == null || connectionId == null)
+	    throw new NullPointerException("Illegal null argument");
+	if (env == null)
+	    env = Collections.emptyMap();
         this.rmiServer = rmiServer;
         this.connectionId = connectionId;
         this.defaultClassLoader = defaultClassLoader;
@@ -154,10 +154,10 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                     }
                 });
 
-        serverCommunicatorAdmin = new
-          RMIServerCommunicatorAdmin(EnvHelp.getServerConnectionTimeout(env));
+	serverCommunicatorAdmin = new
+	  RMIServerCommunicatorAdmin(EnvHelp.getServerConnectionTimeout(env));
 
-        this.env = env;
+	this.env = env;
     }
 
     private synchronized ServerNotifForwarder getServerNotifFwd() {
@@ -173,32 +173,32 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     }
 
     public String getConnectionId() throws IOException {
-        // We should call reqIncomming() here... shouldn't we?
-        return connectionId;
+	// We should call reqIncomming() here... shouldn't we?
+	return connectionId;
     }
 
     public void close() throws IOException {
         final boolean debug = logger.debugOn();
         final String  idstr = (debug?"["+this.toString()+"]":null);
 
-        synchronized (this) {
-            if (terminated) {
-                if (debug) logger.debug("close",idstr + " already terminated.");
-                return;
-            }
+	synchronized (this) {
+	    if (terminated) {
+		if (debug) logger.debug("close",idstr + " already terminated.");
+		return;
+	    }
 
-            if (debug) logger.debug("close",idstr + " closing.");
+	    if (debug) logger.debug("close",idstr + " closing.");
 
-            terminated = true;
+	    terminated = true;
 
-            if (serverCommunicatorAdmin != null) {
-                serverCommunicatorAdmin.terminate();
-            }
+	    if (serverCommunicatorAdmin != null) {
+		serverCommunicatorAdmin.terminate();
+	    }
 
-            if (serverNotifForwarder != null) {
-                serverNotifForwarder.terminate();
-            }
-        }
+	    if (serverNotifForwarder != null) {
+		serverNotifForwarder.terminate();
+	    }
+	}
 
         rmiServer.clientClosed(this);
 
@@ -234,9 +234,9 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                 new Object[] { className, name };
 
             if (logger.debugOn())
-                logger.debug("createMBean(String,ObjectName)",
-                             "connectionId=" + connectionId +", className=" +
-                             className+", name=" + name);
+		logger.debug("createMBean(String,ObjectName)",
+			     "connectionId=" + connectionId +", className=" +
+			     className+", name=" + name);
 
             return (ObjectInstance)
                 doPrivilegedOperation(
@@ -278,11 +278,11 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                 new Object[] { className, name, loaderName };
 
             if (logger.debugOn())
-                logger.debug("createMBean(String,ObjectName,ObjectName)",
-                      "connectionId=" + connectionId
-                      +", className=" + className
-                      +", name=" + name
-                      +", loaderName=" + loaderName);
+		logger.debug("createMBean(String,ObjectName,ObjectName)",
+		      "connectionId=" + connectionId
+		      +", className=" + className
+		      +", name=" + name
+		      +", loaderName=" + loaderName);
 
             return (ObjectInstance)
                 doPrivilegedOperation(
@@ -325,18 +325,18 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         final Object[] values;
         final boolean debug = logger.debugOn();
 
-        if (debug) logger.debug(
-                  "createMBean(String,ObjectName,Object[],String[])",
+	if (debug) logger.debug(
+		  "createMBean(String,ObjectName,Object[],String[])",
                   "connectionId=" + connectionId
                   +", unwrapping parameters using classLoaderWithRepository.");
 
-        values =
+	values =
             nullIsEmpty(unwrap(params, classLoaderWithRepository, Object[].class));
 
         try {
             final Object params2[] =
                 new Object[] { className, name, values,
-                               nullIsEmpty(signature) };
+			       nullIsEmpty(signature) };
 
             if (debug)
                logger.debug("createMBean(String,ObjectName,Object[],String[])",
@@ -387,12 +387,12 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         final Object[] values;
         final boolean debug = logger.debugOn();
 
-        if (debug) logger.debug(
-                 "createMBean(String,ObjectName,ObjectName,Object[],String[])",
+	if (debug) logger.debug(
+		 "createMBean(String,ObjectName,ObjectName,Object[],String[])",
                  "connectionId=" + connectionId
                  +", unwrapping params with MBean extended ClassLoader.");
 
-        values = nullIsEmpty(unwrap(params,
+	values = nullIsEmpty(unwrap(params,
                                     getClassLoader(loaderName),
                                     defaultClassLoader,
                                     Object[].class));
@@ -400,10 +400,10 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         try {
             final Object params2[] =
                new Object[] { className, name, loaderName, values,
-                              nullIsEmpty(signature) };
+			      nullIsEmpty(signature) };
 
            if (debug) logger.debug(
-                 "createMBean(String,ObjectName,ObjectName,Object[],String[])",
+		 "createMBean(String,ObjectName,ObjectName,Object[],String[])",
                  "connectionId=" + connectionId
                  +", className=" + className
                  +", name=" + name
@@ -470,7 +470,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         InstanceNotFoundException,
         IOException {
 
-        checkNonNull("ObjectName", name);
+	checkNonNull("ObjectName", name);
 
         try {
             final Object params[] = new Object[] { name };
@@ -495,18 +495,18 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     }
 
     public Set<ObjectInstance>
-        queryMBeans(ObjectName name,
-                    MarshalledObject query,
-                    Subject delegationSubject)
+	queryMBeans(ObjectName name,
+		    MarshalledObject query,
+		    Subject delegationSubject)
         throws IOException {
         final QueryExp queryValue;
         final boolean debug=logger.debugOn();
 
-        if (debug) logger.debug("queryMBeans",
+	if (debug) logger.debug("queryMBeans",
                  "connectionId=" + connectionId
                  +" unwrapping query with defaultClassLoader.");
 
-        queryValue = unwrap(query, defaultClassLoader, QueryExp.class);
+	queryValue = unwrap(query, defaultClassLoader, QueryExp.class);
 
         try {
             final Object params[] = new Object[] { name, queryValue };
@@ -529,18 +529,18 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     }
 
     public Set<ObjectName>
-        queryNames(ObjectName name,
-                   MarshalledObject query,
-                   Subject delegationSubject)
+	queryNames(ObjectName name,
+		   MarshalledObject query,
+		   Subject delegationSubject)
         throws IOException {
         final QueryExp queryValue;
         final boolean debug=logger.debugOn();
 
-        if (debug) logger.debug("queryNames",
+	if (debug) logger.debug("queryNames",
                  "connectionId=" + connectionId
                  +" unwrapping query with defaultClassLoader.");
 
-        queryValue = unwrap(query, defaultClassLoader, QueryExp.class);
+	queryValue = unwrap(query, defaultClassLoader, QueryExp.class);
 
         try {
             final Object params[] = new Object[] { name, queryValue };
@@ -682,13 +682,13 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         final Attribute attr;
         final boolean debug=logger.debugOn();
 
-        if (debug) logger.debug("setAttribute",
+	if (debug) logger.debug("setAttribute",
                  "connectionId=" + connectionId
                  +" unwrapping attribute with MBean extended ClassLoader.");
 
-        attr = unwrap(attribute,
-                      getClassLoaderFor(name),
-                      defaultClassLoader,
+	attr = unwrap(attribute,
+		      getClassLoaderFor(name),
+		      defaultClassLoader,
                       Attribute.class);
 
         try {
@@ -731,14 +731,14 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         final AttributeList attrlist;
         final boolean debug=logger.debugOn();
 
-        if (debug) logger.debug("setAttributes",
+	if (debug) logger.debug("setAttributes",
                  "connectionId=" + connectionId
                  +" unwrapping attributes with MBean extended ClassLoader.");
 
-        attrlist =
-            unwrap(attributes,
-                   getClassLoaderFor(name),
-                   defaultClassLoader,
+	attrlist =
+	    unwrap(attributes,
+		   getClassLoaderFor(name),
+		   defaultClassLoader,
                    AttributeList.class);
 
         try {
@@ -777,25 +777,25 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         ReflectionException,
         IOException {
 
-        checkNonNull("ObjectName", name);
-        checkNonNull("Operation name", operationName);
+	checkNonNull("ObjectName", name);
+	checkNonNull("Operation name", operationName);
 
         final Object[] values;
         final boolean debug=logger.debugOn();
 
-        if (debug) logger.debug("invoke",
+	if (debug) logger.debug("invoke",
                  "connectionId=" + connectionId
                  +" unwrapping params with MBean extended ClassLoader.");
 
-        values = nullIsEmpty(unwrap(params,
-                                    getClassLoaderFor(name),
+	values = nullIsEmpty(unwrap(params,
+                                    getClassLoaderFor(name), 
                                     defaultClassLoader,
                                     Object[].class));
 
         try {
             final Object params2[] =
                 new Object[] { name, operationName, values,
-                               nullIsEmpty(signature) };
+			       nullIsEmpty(signature) };
 
             if (debug) logger.debug("invoke",
                              "connectionId=" + connectionId
@@ -871,7 +871,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         ReflectionException,
         IOException {
 
-        checkNonNull("ObjectName", name);
+	checkNonNull("ObjectName", name);
 
         try {
             final Object params[] = new Object[] { name };
@@ -904,7 +904,7 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                                 Subject delegationSubject)
         throws InstanceNotFoundException, IOException {
 
-        checkNonNull("ObjectName", name);
+	checkNonNull("ObjectName", name);
 
         try {
             final Object params[] = new Object[] { name, className };
@@ -932,88 +932,88 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     public Integer[] addNotificationListeners(ObjectName[] names,
                       MarshalledObject[] filters,
                       Subject[] delegationSubjects)
-            throws InstanceNotFoundException, IOException {
+	    throws InstanceNotFoundException, IOException {
 
-        if (names == null || filters == null) {
-            throw new IllegalArgumentException("Got null arguments.");
-        }
+	if (names == null || filters == null) {
+	    throw new IllegalArgumentException("Got null arguments.");
+	}
 
-        Subject[] sbjs = (delegationSubjects != null) ? delegationSubjects :
-        new Subject[names.length];
-        if (names.length != filters.length || filters.length != sbjs.length) {
-            final String msg =
-                "The value lengths of 3 parameters are not same.";
-            throw new IllegalArgumentException(msg);
-        }
+	Subject[] sbjs = (delegationSubjects != null) ? delegationSubjects :
+	new Subject[names.length];
+	if (names.length != filters.length || filters.length != sbjs.length) {
+	    final String msg =
+		"The value lengths of 3 parameters are not same.";
+	    throw new IllegalArgumentException(msg);
+	}
 
-        for (int i=0; i<names.length; i++) {
-            if (names[i] == null) {
-                throw new IllegalArgumentException("Null Object name.");
-            }
-        }
+	for (int i=0; i<names.length; i++) {
+	    if (names[i] == null) {
+		throw new IllegalArgumentException("Null Object name.");
+	    }
+	}
 
-        int i=0;
-        ClassLoader targetCl;
-        NotificationFilter[] filterValues =
-        new NotificationFilter[names.length];
-        Object params[];
-        Integer[] ids = new Integer[names.length];
-        final boolean debug=logger.debugOn();
+	int i=0;
+	ClassLoader targetCl;
+	NotificationFilter[] filterValues =
+	new NotificationFilter[names.length];
+	Object params[];
+	Integer[] ids = new Integer[names.length];
+	final boolean debug=logger.debugOn();
 
-        try {
-            for (; i<names.length; i++) {
-                targetCl = getClassLoaderFor(names[i]);
+	try {
+	    for (; i<names.length; i++) {
+		targetCl = getClassLoaderFor(names[i]);
 
-                if (debug) logger.debug("addNotificationListener"+
-                                        "(ObjectName,NotificationFilter)",
-                                        "connectionId=" + connectionId +
-                      " unwrapping filter with target extended ClassLoader.");
+		if (debug) logger.debug("addNotificationListener"+
+					"(ObjectName,NotificationFilter)",
+					"connectionId=" + connectionId +
+		      " unwrapping filter with target extended ClassLoader.");
 
-                filterValues[i] =
+		filterValues[i] =
                     unwrap(filters[i], targetCl, defaultClassLoader,
                            NotificationFilter.class);
 
-                if (debug) logger.debug("addNotificationListener"+
-                                        "(ObjectName,NotificationFilter)",
-                                        "connectionId=" + connectionId
-                                        +", name=" + names[i]
-                                        +", filter=" + filterValues[i]);
+		if (debug) logger.debug("addNotificationListener"+
+					"(ObjectName,NotificationFilter)",
+					"connectionId=" + connectionId
+					+", name=" + names[i]
+					+", filter=" + filterValues[i]);
 
-                ids[i] = (Integer)
-                    doPrivilegedOperation(ADD_NOTIFICATION_LISTENERS,
-                                          new Object[] { names[i],
-                                                         filterValues[i] },
-                                          sbjs[i]);
-            }
+		ids[i] = (Integer)
+		    doPrivilegedOperation(ADD_NOTIFICATION_LISTENERS,
+					  new Object[] { names[i],
+							 filterValues[i] },
+					  sbjs[i]);
+	    }
 
-            return ids;
-        } catch (Exception e) {
-            // remove all registered listeners
-            for (int j=0; j<i; j++) {
-                try {
-                    getServerNotifFwd().removeNotificationListener(names[j],
-                                                                   ids[j]);
-                } catch (Exception eee) {
-                    // strange
-                }
-            }
+	    return ids;
+	} catch (Exception e) {
+	    // remove all registered listeners
+	    for (int j=0; j<i; j++) {
+		try {
+		    getServerNotifFwd().removeNotificationListener(names[j],
+								   ids[j]);
+		} catch (Exception eee) {
+		    // strange
+		}
+	    }
 
-            if (e instanceof PrivilegedActionException) {
-                e = extractException(e);
-            }
+	    if (e instanceof PrivilegedActionException) {
+		e = extractException(e);
+	    }
 
-            if (e instanceof ClassCastException) {
-                throw (ClassCastException) e;
-            } else if (e instanceof IOException) {
-                throw (IOException)e;
-            } else if (e instanceof InstanceNotFoundException) {
-                throw (InstanceNotFoundException) e;
-            } else if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
-            } else {
-                throw newIOException("Got unexpected server exception: "+e,e);
-            }
-        }
+	    if (e instanceof ClassCastException) {
+		throw (ClassCastException) e;
+	    } else if (e instanceof IOException) {
+		throw (IOException)e;
+	    } else if (e instanceof InstanceNotFoundException) {
+		throw (InstanceNotFoundException) e;
+	    } else if (e instanceof RuntimeException) {
+		throw (RuntimeException) e;
+	    } else {
+		throw newIOException("Got unexpected server exception: "+e,e);
+	    }
+	}
     }
 
     public void addNotificationListener(ObjectName name,
@@ -1023,29 +1023,29 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                        Subject delegationSubject)
         throws InstanceNotFoundException, IOException {
 
-        checkNonNull("Target MBean name", name);
-        checkNonNull("Listener MBean name", listener);
+	checkNonNull("Target MBean name", name);
+	checkNonNull("Listener MBean name", listener);
 
         final NotificationFilter filterValue;
         final Object handbackValue;
         final boolean debug=logger.debugOn();
 
-        final ClassLoader targetCl = getClassLoaderFor(name);
+	final ClassLoader targetCl = getClassLoaderFor(name);
 
-        if (debug) logger.debug("addNotificationListener"+
+	if (debug) logger.debug("addNotificationListener"+
                  "(ObjectName,ObjectName,NotificationFilter,Object)",
                  "connectionId=" + connectionId
                  +" unwrapping filter with target extended ClassLoader.");
 
-        filterValue =
+	filterValue =
             unwrap(filter, targetCl, defaultClassLoader, NotificationFilter.class);
 
-        if (debug) logger.debug("addNotificationListener"+
+	if (debug) logger.debug("addNotificationListener"+
                  "(ObjectName,ObjectName,NotificationFilter,Object)",
                  "connectionId=" + connectionId
                  +" unwrapping handback with target extended ClassLoader.");
 
-        handbackValue =
+	handbackValue =
             unwrap(handback, targetCl, defaultClassLoader, Object.class);
 
         try {
@@ -1075,20 +1075,20 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     }
 
     public void removeNotificationListeners(ObjectName name,
-                                            Integer[] listenerIDs,
-                                            Subject delegationSubject)
+					    Integer[] listenerIDs,
+					    Subject delegationSubject)
         throws
         InstanceNotFoundException,
         ListenerNotFoundException,
         IOException {
 
-        if (name == null || listenerIDs == null)
-            throw new IllegalArgumentException("Illegal null parameter");
+	if (name == null || listenerIDs == null)
+	    throw new IllegalArgumentException("Illegal null parameter");
 
-        for (int i = 0; i < listenerIDs.length; i++) {
-            if (listenerIDs[i] == null)
-                throw new IllegalArgumentException("Null listener ID");
-        }
+	for (int i = 0; i < listenerIDs.length; i++) {
+	    if (listenerIDs[i] == null)
+		throw new IllegalArgumentException("Null listener ID");
+	}
 
         try {
             final Object params[] = new Object[] { name, listenerIDs };
@@ -1123,8 +1123,8 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         ListenerNotFoundException,
         IOException {
 
-        checkNonNull("Target MBean name", name);
-        checkNonNull("Listener MBean name", listener);
+	checkNonNull("Target MBean name", name);
+	checkNonNull("Listener MBean name", listener);
 
         try {
             final Object params[] = new Object[] { name, listener };
@@ -1161,29 +1161,29 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
         ListenerNotFoundException,
         IOException {
 
-        checkNonNull("Target MBean name", name);
-        checkNonNull("Listener MBean name", listener);
+	checkNonNull("Target MBean name", name);
+	checkNonNull("Listener MBean name", listener);
 
         final NotificationFilter filterValue;
         final Object handbackValue;
         final boolean debug=logger.debugOn();
 
-        final ClassLoader targetCl = getClassLoaderFor(name);
+	final ClassLoader targetCl = getClassLoaderFor(name);
 
-        if (debug) logger.debug("removeNotificationListener"+
+	if (debug) logger.debug("removeNotificationListener"+
                  "(ObjectName,ObjectName,NotificationFilter,Object)",
                  "connectionId=" + connectionId
                  +" unwrapping filter with target extended ClassLoader.");
 
-        filterValue =
+	filterValue =
             unwrap(filter, targetCl, defaultClassLoader, NotificationFilter.class);
 
-        if (debug) logger.debug("removeNotificationListener"+
+	if (debug) logger.debug("removeNotificationListener"+
                  "(ObjectName,ObjectName,NotificationFilter,Object)",
                  "connectionId=" + connectionId
                  +" unwrapping handback with target extended ClassLoader.");
 
-        handbackValue =
+	handbackValue =
             unwrap(handback, targetCl, defaultClassLoader, Object.class);
 
         try {
@@ -1223,20 +1223,20 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                                "connectionId=" + connectionId
                                +", timeout=" + timeout);
 
-        if (maxNotifications < 0 || timeout < 0)
-            throw new IllegalArgumentException("Illegal negative argument");
+	if (maxNotifications < 0 || timeout < 0)
+	    throw new IllegalArgumentException("Illegal negative argument");
 
-        final boolean serverTerminated =
-            serverCommunicatorAdmin.reqIncoming();
-        try {
-            if (serverTerminated) {
-                // we must not call fetchNotifs() if the server is
-                // terminated (timeout elapsed).
-                //
-                return new NotificationResult(0L, 0L,
-                                              new TargetedNotification[0]);
+	final boolean serverTerminated =
+	    serverCommunicatorAdmin.reqIncoming();
+	try {
+	    if (serverTerminated) {
+		// we must not call fetchNotifs() if the server is
+		// terminated (timeout elapsed).
+		//
+		return new NotificationResult(0L, 0L,
+					      new TargetedNotification[0]);
 
-            }
+	    }
             final long csn = clientSequenceNumber;
             final int mn = maxNotifications;
             final long t = timeout;
@@ -1250,9 +1250,9 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                 return action.run();
             else
                 return AccessController.doPrivileged(action, acc);
-        } finally {
-            serverCommunicatorAdmin.rspOutgoing();
-        }
+	} finally {
+	    serverCommunicatorAdmin.rspOutgoing();
+	}
     }
 
     /**
@@ -1292,19 +1292,19 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     // private classes
     //------------------------------------------------------------------------
     private class RMIServerCommunicatorAdmin extends ServerCommunicatorAdmin {
-        public RMIServerCommunicatorAdmin(long timeout) {
-            super(timeout);
-        }
+	public RMIServerCommunicatorAdmin(long timeout) {
+	    super(timeout);
+	}
 
-        protected void doStop() {
-            try {
-                close();
-            } catch (IOException ie) {
-                logger.warning("RMIServerCommunicatorAdmin-doStop",
-                               "Failed to close: " + ie);
-                logger.debug("RMIServerCommunicatorAdmin-doStop",ie);
-            }
-        }
+	protected void doStop() {
+	    try {
+		close();
+	    } catch (IOException ie) {
+		logger.warning("RMIServerCommunicatorAdmin-doStop",
+			       "Failed to close: " + ie);
+		logger.debug("RMIServerCommunicatorAdmin-doStop",ie);
+	    }
+	}
 
     }
 
@@ -1358,184 +1358,184 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                                          final Subject delegationSubject)
         throws PrivilegedActionException, IOException {
 
-        serverCommunicatorAdmin.reqIncoming();
-        try {
+	serverCommunicatorAdmin.reqIncoming();
+	try {
 
-            final AccessControlContext reqACC;
-            if (delegationSubject == null)
-                reqACC = acc;
-            else {
-                if (subject == null) {
-                    final String msg =
-                        "Subject delegation cannot be enabled unless " +
-                        "an authenticated subject is put in place";
-                    throw new SecurityException(msg);
-                }
-                reqACC = subjectDelegator.delegatedContext(
+	    final AccessControlContext reqACC;
+	    if (delegationSubject == null)
+		reqACC = acc;
+	    else {
+		if (subject == null) {
+		    final String msg =
+			"Subject delegation cannot be enabled unless " +
+			"an authenticated subject is put in place";
+		    throw new SecurityException(msg);
+		}
+		reqACC = subjectDelegator.delegatedContext(
                     acc, delegationSubject, removeCallerContext);
-            }
+	    }
 
-            PrivilegedOperation op =
-                new PrivilegedOperation(operation, params);
-            if (reqACC == null) {
-                try {
-                    return op.run();
-                } catch (Exception e) {
-                    if (e instanceof RuntimeException)
-                        throw (RuntimeException) e;
-                    throw new PrivilegedActionException(e);
-                }
-            } else {
-                return AccessController.doPrivileged(op, reqACC);
-            }
-        } catch (Error e) {
-            throw new JMXServerErrorException(e.toString(),e);
-        } finally {
-            serverCommunicatorAdmin.rspOutgoing();
-        }
+	    PrivilegedOperation op =
+		new PrivilegedOperation(operation, params);
+	    if (reqACC == null) {
+		try {
+		    return op.run();
+		} catch (Exception e) {
+		    if (e instanceof RuntimeException)
+			throw (RuntimeException) e;
+		    throw new PrivilegedActionException(e);
+		}
+	    } else {
+		return AccessController.doPrivileged(op, reqACC);
+	    }
+	} catch (Error e) {
+	    throw new JMXServerErrorException(e.toString(),e);
+	} finally {
+	    serverCommunicatorAdmin.rspOutgoing();
+	}
     }
 
     private Object doOperation(int operation, Object[] params)
         throws Exception {
 
-        switch (operation) {
+	switch (operation) {
 
-        case CREATE_MBEAN:
-            return mbeanServer.createMBean((String)params[0],
-                                           (ObjectName)params[1]);
+	case CREATE_MBEAN:
+	    return mbeanServer.createMBean((String)params[0],
+					   (ObjectName)params[1]);
 
-        case CREATE_MBEAN_LOADER:
-            return mbeanServer.createMBean((String)params[0],
-                                           (ObjectName)params[1],
-                                           (ObjectName)params[2]);
+	case CREATE_MBEAN_LOADER:
+	    return mbeanServer.createMBean((String)params[0],
+					   (ObjectName)params[1],
+					   (ObjectName)params[2]);
 
-        case CREATE_MBEAN_PARAMS:
-            return mbeanServer.createMBean((String)params[0],
-                                           (ObjectName)params[1],
-                                           (Object[])params[2],
-                                           (String[])params[3]);
+	case CREATE_MBEAN_PARAMS:
+	    return mbeanServer.createMBean((String)params[0],
+					   (ObjectName)params[1],
+					   (Object[])params[2],
+					   (String[])params[3]);
 
-        case CREATE_MBEAN_LOADER_PARAMS:
-            return mbeanServer.createMBean((String)params[0],
-                                           (ObjectName)params[1],
-                                           (ObjectName)params[2],
-                                           (Object[])params[3],
-                                           (String[])params[4]);
+	case CREATE_MBEAN_LOADER_PARAMS:
+	    return mbeanServer.createMBean((String)params[0],
+					   (ObjectName)params[1],
+					   (ObjectName)params[2],
+					   (Object[])params[3],
+					   (String[])params[4]);
 
-        case GET_ATTRIBUTE:
-            return mbeanServer.getAttribute((ObjectName)params[0],
-                                            (String)params[1]);
+	case GET_ATTRIBUTE:
+	    return mbeanServer.getAttribute((ObjectName)params[0],
+					    (String)params[1]);
 
-        case GET_ATTRIBUTES:
-            return mbeanServer.getAttributes((ObjectName)params[0],
-                                             (String[])params[1]);
+	case GET_ATTRIBUTES:
+	    return mbeanServer.getAttributes((ObjectName)params[0],
+					     (String[])params[1]);
 
-        case GET_DEFAULT_DOMAIN:
-            return mbeanServer.getDefaultDomain();
+	case GET_DEFAULT_DOMAIN:
+	    return mbeanServer.getDefaultDomain();
 
-        case GET_DOMAINS:
-            return mbeanServer.getDomains();
+	case GET_DOMAINS:
+	    return mbeanServer.getDomains();
 
-        case GET_MBEAN_COUNT:
-            return mbeanServer.getMBeanCount();
+	case GET_MBEAN_COUNT:
+	    return mbeanServer.getMBeanCount();
 
-        case GET_MBEAN_INFO:
-            return mbeanServer.getMBeanInfo((ObjectName)params[0]);
+	case GET_MBEAN_INFO:
+	    return mbeanServer.getMBeanInfo((ObjectName)params[0]);
 
-        case GET_OBJECT_INSTANCE:
-            return mbeanServer.getObjectInstance((ObjectName)params[0]);
+	case GET_OBJECT_INSTANCE:
+	    return mbeanServer.getObjectInstance((ObjectName)params[0]);
 
-        case INVOKE:
-            return mbeanServer.invoke((ObjectName)params[0],
-                                      (String)params[1],
-                                      (Object[])params[2],
-                                      (String[])params[3]);
+	case INVOKE:
+	    return mbeanServer.invoke((ObjectName)params[0],
+				      (String)params[1],
+				      (Object[])params[2],
+				      (String[])params[3]);
 
-        case IS_INSTANCE_OF:
-            return mbeanServer.isInstanceOf((ObjectName)params[0],
-                                            (String)params[1])
-                ? Boolean.TRUE : Boolean.FALSE;
+	case IS_INSTANCE_OF:
+	    return mbeanServer.isInstanceOf((ObjectName)params[0],
+					    (String)params[1])
+		? Boolean.TRUE : Boolean.FALSE;
 
-        case IS_REGISTERED:
-            return mbeanServer.isRegistered((ObjectName)params[0])
-                ? Boolean.TRUE : Boolean.FALSE;
+	case IS_REGISTERED:
+	    return mbeanServer.isRegistered((ObjectName)params[0])
+		? Boolean.TRUE : Boolean.FALSE;
 
-        case QUERY_MBEANS:
-            return mbeanServer.queryMBeans((ObjectName)params[0],
-                                           (QueryExp)params[1]);
+	case QUERY_MBEANS:
+	    return mbeanServer.queryMBeans((ObjectName)params[0],
+					   (QueryExp)params[1]);
 
-        case QUERY_NAMES:
-            return mbeanServer.queryNames((ObjectName)params[0],
-                                          (QueryExp)params[1]);
+	case QUERY_NAMES:
+	    return mbeanServer.queryNames((ObjectName)params[0],
+					  (QueryExp)params[1]);
 
-        case SET_ATTRIBUTE:
-            mbeanServer.setAttribute((ObjectName)params[0],
-                                     (Attribute)params[1]);
-            return null;
+	case SET_ATTRIBUTE:
+	    mbeanServer.setAttribute((ObjectName)params[0],
+				     (Attribute)params[1]);
+	    return null;
 
-        case SET_ATTRIBUTES:
-            return mbeanServer.setAttributes((ObjectName)params[0],
+	case SET_ATTRIBUTES:
+	    return mbeanServer.setAttributes((ObjectName)params[0],
                                              (AttributeList)params[1]);
 
-        case UNREGISTER_MBEAN:
-            mbeanServer.unregisterMBean((ObjectName)params[0]);
-            return null;
+	case UNREGISTER_MBEAN:
+	    mbeanServer.unregisterMBean((ObjectName)params[0]);
+	    return null;
 
-        case ADD_NOTIFICATION_LISTENERS:
-            return getServerNotifFwd().addNotificationListener(
-                                                (ObjectName)params[0],
-                                                (NotificationFilter)params[1]);
+	case ADD_NOTIFICATION_LISTENERS:
+	    return getServerNotifFwd().addNotificationListener(
+						(ObjectName)params[0],
+						(NotificationFilter)params[1]);
 
-        case ADD_NOTIFICATION_LISTENER_OBJECTNAME:
-            mbeanServer.addNotificationListener((ObjectName)params[0],
+	case ADD_NOTIFICATION_LISTENER_OBJECTNAME:
+	    mbeanServer.addNotificationListener((ObjectName)params[0],
                                                 (ObjectName)params[1],
                                                 (NotificationFilter)params[2],
                                                 params[3]);
-            return null;
+	    return null;
 
-        case REMOVE_NOTIFICATION_LISTENER:
-            getServerNotifFwd().removeNotificationListener(
+	case REMOVE_NOTIFICATION_LISTENER:
+	    getServerNotifFwd().removeNotificationListener(
                                                    (ObjectName)params[0],
                                                    (Integer[])params[1]);
-            return null;
+	    return null;
 
-        case REMOVE_NOTIFICATION_LISTENER_OBJECTNAME:
-            mbeanServer.removeNotificationListener((ObjectName)params[0],
+	case REMOVE_NOTIFICATION_LISTENER_OBJECTNAME:
+	    mbeanServer.removeNotificationListener((ObjectName)params[0],
                                                    (ObjectName)params[1]);
-            return null;
+	    return null;
 
-        case REMOVE_NOTIFICATION_LISTENER_OBJECTNAME_FILTER_HANDBACK:
-            mbeanServer.removeNotificationListener(
+	case REMOVE_NOTIFICATION_LISTENER_OBJECTNAME_FILTER_HANDBACK:
+	    mbeanServer.removeNotificationListener(
                                           (ObjectName)params[0],
                                           (ObjectName)params[1],
                                           (NotificationFilter)params[2],
                                           params[3]);
-            return null;
+	    return null;
 
-        default:
-            throw new IllegalArgumentException("Invalid operation");
-        }
+	default:
+	    throw new IllegalArgumentException("Invalid operation");
+	}
     }
 
     private static <T> T unwrap(final MarshalledObject mo,
-                                final ClassLoader cl,
+				final ClassLoader cl,
                                 final Class<T> wrappedClass)
-            throws IOException {
+	    throws IOException {
         if (mo == null) {
             return null;
         }
         try {
             return AccessController.doPrivileged(
-                new PrivilegedExceptionAction<T>() {
+		new PrivilegedExceptionAction<T>() {
                     public T run()
-                            throws IOException {
+			    throws IOException {
                         final ClassLoader old =
                             Thread.currentThread().getContextClassLoader();
                         Thread.currentThread().setContextClassLoader(cl);
                         try {
-                            return wrappedClass.cast(mo.get());
-                        } catch (ClassNotFoundException cnfe) {
-                            throw new UnmarshalException(cnfe.toString(), cnfe);
+			    return wrappedClass.cast(mo.get());
+			} catch (ClassNotFoundException cnfe) {
+			    throw new UnmarshalException(cnfe.toString(), cnfe);
                         } finally {
                             Thread.currentThread().setContextClassLoader(old);
                         }
@@ -1547,17 +1547,17 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
                 throw (IOException) e;
             }
             if (e instanceof ClassNotFoundException) {
-                throw new UnmarshalException(e.toString(), e);
+		throw new UnmarshalException(e.toString(), e);
             }
-            logger.warning("unwrap", "Failed to unmarshall object: " + e);
-            logger.debug("unwrap", e);
+	    logger.warning("unwrap", "Failed to unmarshall object: " + e);
+	    logger.debug("unwrap", e);
         }
         return null;
     }
 
     private static <T> T unwrap(final MarshalledObject mo,
-                                final ClassLoader cl1,
-                                final ClassLoader cl2,
+				final ClassLoader cl1,
+				final ClassLoader cl2,
                                 final Class<T> wrappedClass)
         throws IOException {
         if (mo == null) {
@@ -1580,8 +1580,8 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
             if (e instanceof ClassNotFoundException) {
                 throw new UnmarshalException(e.toString(), e);
             }
-            logger.warning("unwrap", "Failed to unmarshall object: " + e);
-            logger.debug("unwrap", e);
+	    logger.warning("unwrap", "Failed to unmarshall object: " + e);
+	    logger.debug("unwrap", e);
         }
         return null;
     }
@@ -1619,11 +1619,11 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
      * that.  This should be clarified in the next version of JMX.
      */
     private static Object[] nullIsEmpty(Object[] array) {
-        return (array == null) ? NO_OBJECTS : array;
+	return (array == null) ? NO_OBJECTS : array;
     }
 
     private static String[] nullIsEmpty(String[] array) {
-        return (array == null) ? NO_STRINGS : array;
+	return (array == null) ? NO_STRINGS : array;
     }
 
     /*
@@ -1634,11 +1634,11 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
      * the JMX implementation doesn't do so.
      */
     private static void checkNonNull(String what, Object x) {
-        if (x == null) {
-            RuntimeException wrapped =
-                new IllegalArgumentException(what + " must not be null");
-            throw new RuntimeOperationsException(wrapped);
-        }
+	if (x == null) {
+	    RuntimeException wrapped =
+		new IllegalArgumentException(what + " must not be null");
+	    throw new RuntimeOperationsException(wrapped);
+	}
     }
 
     //------------------------------------------------------------------------
@@ -1738,9 +1738,9 @@ public class RMIConnectionImpl implements RMIConnection, Unreferenced {
     }
 
     private static String strings(final String[] strs) {
-        return objects(strs);
+	return objects(strs);
     }
 
     private static final ClassLogger logger =
-        new ClassLogger("javax.management.remote.rmi", "RMIConnectionImpl");
+	new ClassLogger("javax.management.remote.rmi", "RMIConnectionImpl");
 }

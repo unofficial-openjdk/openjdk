@@ -29,9 +29,9 @@ import java.math.BigInteger;
 
 /**
  * This class represents the triplet (prime, exponent, and coefficient)
- * inside RSA's OtherPrimeInfo structure, as defined in the PKCS#1 v2.1.
- * The ASN.1 syntax of RSA's OtherPrimeInfo is as follows:
- *
+ * inside RSA's OtherPrimeInfo structure, as defined in the PKCS#1 v2.1. 
+ * The ASN.1 syntax of RSA's OtherPrimeInfo is as follows: 
+ * 
  * <pre>
  * OtherPrimeInfo ::= SEQUENCE {
  *   prime INTEGER,
@@ -43,6 +43,7 @@ import java.math.BigInteger;
  *
  * @author Valerie Peng
  *
+ * @version %I% %E%
  *
  * @see RSAPrivateCrtKeySpec
  * @see java.security.interfaces.RSAMultiPrimePrivateCrtKey
@@ -66,29 +67,29 @@ public class RSAOtherPrimeInfo {
     * @param primeExponent the exponent.
     * @param crtCoefficient the Chinese Remainder Theorem
     * coefficient.
-    * @exception NullPointerException if any of the parameters, i.e.
-    * <code>prime</code>, <code>primeExponent</code>,
+    * @exception NullPointerException if any of the parameters, i.e. 
+    * <code>prime</code>, <code>primeExponent</code>, 
     * <code>crtCoefficient</code>, is null.
-    *
+    * 
     */
     public RSAOtherPrimeInfo(BigInteger prime,
-                          BigInteger primeExponent,
-                          BigInteger crtCoefficient) {
-        if (prime == null) {
-            throw new NullPointerException("the prime parameter must be " +
-                                            "non-null");
-        }
-        if (primeExponent == null) {
-            throw new NullPointerException("the primeExponent parameter " +
-                                            "must be non-null");
-        }
-        if (crtCoefficient == null) {
-            throw new NullPointerException("the crtCoefficient parameter " +
-                                            "must be non-null");
-        }
-        this.prime = prime;
-        this.primeExponent = primeExponent;
-        this.crtCoefficient = crtCoefficient;
+			  BigInteger primeExponent,
+			  BigInteger crtCoefficient) {
+	if (prime == null) {
+	    throw new NullPointerException("the prime parameter must be " +
+					    "non-null");
+	}
+	if (primeExponent == null) {
+	    throw new NullPointerException("the primeExponent parameter " +
+					    "must be non-null");
+	}
+	if (crtCoefficient == null) {
+	    throw new NullPointerException("the crtCoefficient parameter " +
+					    "must be non-null");
+	}	
+	this.prime = prime;
+	this.primeExponent = primeExponent;
+	this.crtCoefficient = crtCoefficient;
     }
 
     /**
@@ -97,7 +98,7 @@ public class RSAOtherPrimeInfo {
      * @return the prime.
      */
     public final BigInteger getPrime() {
-        return this.prime;
+	return this.prime;
     }
 
     /**
@@ -106,7 +107,7 @@ public class RSAOtherPrimeInfo {
      * @return the primeExponent.
      */
     public final BigInteger getExponent() {
-        return this.primeExponent;
+	return this.primeExponent;
     }
 
     /**
@@ -115,6 +116,6 @@ public class RSAOtherPrimeInfo {
      * @return the crtCoefficient.
      */
     public final BigInteger getCrtCoefficient() {
-        return this.crtCoefficient;
+	return this.crtCoefficient;
     }
 }

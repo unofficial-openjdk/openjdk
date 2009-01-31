@@ -162,6 +162,7 @@ import java.util.Arrays;
  *
  * @see          DecimalFormat
  * @see          MessageFormat
+ * @version      1.22 09/21/98
  * @author       Mark Davis
  */
 public class ChoiceFormat extends NumberFormat {
@@ -608,7 +609,7 @@ public class ChoiceFormat extends NumberFormat {
         System.arraycopy(array, 0, newArray, 0, oldSize);
         return newArray;
     }
-
+    
     private String[] doubleArraySize(String[] array) {
         int oldSize = array.length;
         String[] newArray = new String[oldSize * 2];
@@ -617,3 +618,4 @@ public class ChoiceFormat extends NumberFormat {
     }
 
 }
+

@@ -34,7 +34,7 @@ public interface ModalityListener {
     * Called by AWT when it enters a new level of modality
     */
     public void modalityPushed(ModalityEvent ev);
-
+    
    /**
     * Called by AWT when it exits a level of modality
     */

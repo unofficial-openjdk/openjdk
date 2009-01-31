@@ -54,8 +54,8 @@ typedef struct _X11SDOps X11SDOps;
  * pixels of the image should be se set to.
  */
 typedef Drawable GetPixmapBgFunc(JNIEnv *env,
-                                 X11SDOps *xsdo,
-                                 jint pixel);
+				 X11SDOps *xsdo,
+				 jint pixel);
 
 /*
  * This function releases the lock set by GetPixmapBg
@@ -67,7 +67,7 @@ typedef Drawable GetPixmapBgFunc(JNIEnv *env,
  * this function is being invoked.
  */
 typedef void ReleasePixmapBgFunc(JNIEnv *env,
-                                 X11SDOps *xsdo);
+				 X11SDOps *xsdo);
 
 
 #ifdef MITSHM
@@ -77,37 +77,36 @@ typedef struct {
     jboolean            xRequestSent;   /* true if x request is sent w/o XSync */
     jint                pmSize;
 
-    jboolean            usingShmPixmap;
-    Drawable            pixmap;
-    Drawable            shmPixmap;
-    jint                numBltsSinceRead;
-    jint                pixelsReadSinceBlt;
-    jint                pixelsReadThreshold;
-    jint                numBltsThreshold;
+    jboolean		usingShmPixmap;
+    Drawable		pixmap;
+    Drawable		shmPixmap;
+    jint		numBltsSinceRead;
+    jint		pixelsReadSinceBlt;
+    jint		pixelsReadThreshold;
+    jint		numBltsThreshold;
 } ShmPixmapData;
 #endif /* MITSHM */
 
 struct _X11SDOps {
-    SurfaceDataOps      sdOps;
+    SurfaceDataOps	sdOps;
     GetPixmapBgFunc     *GetPixmapWithBg;
-    ReleasePixmapBgFunc *ReleasePixmapWithBg;
-    jboolean            invalid;
-    jboolean            isPixmap;
-    jobject             peer;
-    Drawable            drawable;
+    ReleasePixmapBgFunc	*ReleasePixmapWithBg;
+    jboolean		invalid;
+    jboolean		isPixmap;
+    jobject		peer;
+    Drawable		drawable;
     Widget              widget;
     GC                  javaGC;        /* used for Java-level GC validation */
     GC                  cachedGC;      /* cached for use in X11SD_Unlock() */
-    jint                depth;
-    jint                pixelmask;
-    JDgaSurfaceInfo     surfInfo;
+    jint		depth;
+    jint		pixelmask;
+    JDgaSurfaceInfo	surfInfo;
     AwtGraphicsConfigData *configData;
-    ColorData           *cData;
-    jboolean            dgaAvailable;
-    void                *dgaDev;
-    Pixmap              bitmask;
-    jint                bgPixel;       /* bg pixel for the pixmap */
-    jboolean            isBgInitialized; /* whether the bg pixel is valid */
+    ColorData		*cData;
+    jboolean		dgaAvailable;
+    void		*dgaDev;
+    Pixmap		bitmask;
+    jint		bgPixel;       /* bg pixel for the pixmap */
     jint                pmWidth;       /* width, height of the */
     jint                pmHeight;      /* pixmap */
 #ifdef MITSHM
@@ -115,19 +114,19 @@ struct _X11SDOps {
 #endif /* MITSHM */
 };
 
-#define X11SD_LOCK_UNLOCKED     0       /* surface is not locked */
-#define X11SD_LOCK_BY_NULL      1       /* surface locked for NOP */
-#define X11SD_LOCK_BY_XIMAGE    2       /* surface locked by Get/PutImage */
-#define X11SD_LOCK_BY_DGA       3       /* surface locked by DGA */
-#define X11SD_LOCK_BY_SHMEM     4       /* surface locked by ShMemExt */
+#define X11SD_LOCK_UNLOCKED	0	/* surface is not locked */
+#define X11SD_LOCK_BY_NULL	1	/* surface locked for NOP */
+#define X11SD_LOCK_BY_XIMAGE	2	/* surface locked by Get/PutImage */
+#define X11SD_LOCK_BY_DGA	3	/* surface locked by DGA */
+#define X11SD_LOCK_BY_SHMEM	4	/* surface locked by ShMemExt */
 
 #ifdef MITSHM
-XImage * X11SD_GetSharedImage       (X11SDOps *xsdo, jint width, jint height, jboolean readBits);
+XImage * X11SD_GetSharedImage	    (X11SDOps *xsdo, jint width, jint height, jboolean readBits);
 XImage * X11SD_CreateSharedImage    (X11SDOps *xsdo, jint width, jint height);
 Drawable X11SD_CreateSharedPixmap   (X11SDOps *xsdo);
-void     X11SD_DropSharedSegment    (XShmSegmentInfo *shminfo);
-void     X11SD_PuntPixmap           (X11SDOps *xsdo, jint width, jint height);
-void     X11SD_UnPuntPixmap         (X11SDOps *xsdo);
+void	 X11SD_DropSharedSegment    (XShmSegmentInfo *shminfo);
+void	 X11SD_PuntPixmap	    (X11SDOps *xsdo, jint width, jint height);
+void	 X11SD_UnPuntPixmap	    (X11SDOps *xsdo);
 jboolean X11SD_CachedXImageFits     (jint width, jint height, jint depth, jboolean readBits);
 XImage * X11SD_GetCachedXImage      (jint width, jint height, jboolean readBits);
 #endif /* MITSHM */
@@ -146,13 +145,13 @@ void     X11SD_DirectRenderNotify(JNIEnv *env, X11SDOps *xsdo);
  * the caller can simply return.
  *
  * Note to callers:
- *      This function uses JNI methods so it is important that the
- *      caller not have any outstanding GetPrimitiveArrayCritical or
- *      GetStringCritical locks which have not been released.
+ *	This function uses JNI methods so it is important that the
+ *	caller not have any outstanding GetPrimitiveArrayCritical or
+ *	GetStringCritical locks which have not been released.
  *
- *      The caller may continue to use JNI methods after this method
- *      is called since this function will not leave any outstanding
- *      JNI Critical locks unreleased.
+ *	The caller may continue to use JNI methods after this method
+ *	is called since this function will not leave any outstanding
+ *	JNI Critical locks unreleased.
  */
 JNIEXPORT X11SDOps * JNICALL
 X11SurfaceData_GetOps(JNIEnv *env, jobject sData);

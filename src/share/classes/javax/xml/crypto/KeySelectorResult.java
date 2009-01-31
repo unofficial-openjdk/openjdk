@@ -30,7 +30,7 @@ package javax.xml.crypto;
 import java.security.Key;
 
 /**
- * The result returned by the {@link KeySelector#select KeySelector.select}
+ * The result returned by the {@link KeySelector#select KeySelector.select} 
  * method.
  * <p>
  * At a minimum, a <code>KeySelectorResult</code> contains the <code>Key</code>

@@ -37,7 +37,8 @@ package java.rmi;
  * server, parameters may have been deserialized.  A call may not be
  * retransmitted after a <code>MarshalException</code> and reliably preserve
  * "at most once" call semantics.
- *
+ * 
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  */
@@ -54,7 +55,7 @@ public class MarshalException extends RemoteException {
      * @since JDK1.1
      */
     public MarshalException(String s) {
-        super(s);
+	super(s);
     }
 
     /**
@@ -66,6 +67,6 @@ public class MarshalException extends RemoteException {
      * @since JDK1.1
      */
     public MarshalException(String s, Exception ex) {
-        super(s, ex);
+	super(s, ex);
     }
 }

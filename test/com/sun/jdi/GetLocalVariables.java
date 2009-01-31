@@ -1,5 +1,5 @@
 /** hard coded linenumbers in this test - DO NOT CHANGE
- *  @test/nodynamiccopyright/
+ *  @test/nodynamiccopyright/ 
  *  @bug 4359312 4450091
  *  @summary Test PTR 1421 JVM exceptions making a call to LocalVariable.type().name()
  *

@@ -66,7 +66,7 @@ public abstract class PixelTests extends Test {
     static Group dbtestroot;
 
     public static void init() {
-        pixelroot = new Group("pixel", "Pixel Access Benchmarks");
+	pixelroot = new Group("pixel", "Pixel Access Benchmarks");
 
         pixeloptroot = new Group(pixelroot, "opts", "Pixel Access Options");
         doRenderTo = new Option.Toggle(pixeloptroot, "renderto",
@@ -190,14 +190,14 @@ public abstract class PixelTests extends Test {
             0xffff00ff,  // E: opaque magenta
             0xffffff00,  // F: opaque yellow
         };
-
+                
         int type;
         int nbits;
 
         public BufImg(int type) {
             super(bufimgsrcroot,
-                  Destinations.BufImg.ShortNames[type],
-                  Destinations.BufImg.Descriptions[type], false);
+		  Destinations.BufImg.ShortNames[type],
+		  Destinations.BufImg.Descriptions[type], false);
             this.type = type;
             this.nbits = 0;
         }
@@ -210,9 +210,9 @@ public abstract class PixelTests extends Test {
             this.nbits = nbits;
         }
 
-        public String getModifierValueName(Object val) {
-            return "BufImg("+getNodeName()+")";
-        }
+	public String getModifierValueName(Object val) {
+	    return "BufImg("+getNodeName()+")";
+	}
 
         public BufferedImage getImage() {
             BufferedImage bimg;
@@ -254,7 +254,7 @@ public abstract class PixelTests extends Test {
                 BufferedImage bimg = ((Context) context).bimg;
                 do {
                     bimg.getRGB(numReps&7, 0);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
 
@@ -267,7 +267,7 @@ public abstract class PixelTests extends Test {
                 BufferedImage bimg = ((Context) context).bimg;
                 do {
                     bimg.setRGB(numReps&7, 0, BufImg.rgbvals[numReps&3]);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
     }
@@ -299,7 +299,7 @@ public abstract class PixelTests extends Test {
                 Object elemdata = ((Context) context).elemdata;
                 do {
                     ras.getDataElements(numReps&7, 0, elemdata);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
 
@@ -313,7 +313,7 @@ public abstract class PixelTests extends Test {
                 Object elemdata = ((Context) context).elemdata;
                 do {
                     ras.setDataElements(numReps&7, 0, elemdata);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
 
@@ -327,7 +327,7 @@ public abstract class PixelTests extends Test {
                 int pixeldata[] = ((Context) context).pixeldata;
                 do {
                     ras.getPixel(numReps&7, 0, pixeldata);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
 
@@ -341,7 +341,7 @@ public abstract class PixelTests extends Test {
                 int pixeldata[] = ((Context) context).pixeldata;
                 do {
                     ras.setPixel(numReps&7, 0, pixeldata);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
     }
@@ -370,7 +370,7 @@ public abstract class PixelTests extends Test {
                 DataBuffer db = ((Context) context).db;
                 do {
                     db.getElem(numReps&7);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
 
@@ -383,7 +383,7 @@ public abstract class PixelTests extends Test {
                 DataBuffer db = ((Context) context).db;
                 do {
                     db.setElem(numReps&7, 0);
-                } while (--numReps > 0);
+		} while (--numReps > 0);
             }
         }
     }

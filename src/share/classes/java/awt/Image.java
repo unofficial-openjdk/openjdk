@@ -34,23 +34,24 @@ import java.awt.image.ReplicateScaleFilter;
 import sun.awt.image.SurfaceManager;
 
 /**
- * The abstract class <code>Image</code> is the superclass of all
- * classes that represent graphical images. The image must be
+ * The abstract class <code>Image</code> is the superclass of all 
+ * classes that represent graphical images. The image must be 
  * obtained in a platform-specific manner.
  *
- * @author      Sami Shaio
- * @author      Arthur van Hoff
+ * @version 	%I%, %G%
+ * @author 	Sami Shaio
+ * @author 	Arthur van Hoff
  * @since       JDK1.0
  */
 public abstract class Image {
-
+    
     /**
-     * convenience object; we can use this single static object for
+     * convenience object; we can use this single static object for 
      * all images that do not create their own image caps; it holds the
      * default (unaccelerated) properties.
      */
-    private static ImageCapabilities defaultImageCaps =
-        new ImageCapabilities(false);
+    private static ImageCapabilities defaultImageCaps = 
+	new ImageCapabilities(false);
 
     /**
      * Priority for accelerating this image.  Subclasses are free to
@@ -62,11 +63,11 @@ public abstract class Image {
     protected float accelerationPriority = .5f;
 
     /**
-     * Determines the width of the image. If the width is not yet known,
-     * this method returns <code>-1</code> and the specified
+     * Determines the width of the image. If the width is not yet known, 
+     * this method returns <code>-1</code> and the specified   
      * <code>ImageObserver</code> object is notified later.
      * @param     observer   an object waiting for the image to be loaded.
-     * @return    the width of this image, or <code>-1</code>
+     * @return    the width of this image, or <code>-1</code> 
      *                   if the width is not yet known.
      * @see       java.awt.Image#getHeight
      * @see       java.awt.image.ImageObserver
@@ -74,11 +75,11 @@ public abstract class Image {
     public abstract int getWidth(ImageObserver observer);
 
     /**
-     * Determines the height of the image. If the height is not yet known,
-     * this method returns <code>-1</code> and the specified
+     * Determines the height of the image. If the height is not yet known, 
+     * this method returns <code>-1</code> and the specified  
      * <code>ImageObserver</code> object is notified later.
      * @param     observer   an object waiting for the image to be loaded.
-     * @return    the height of this image, or <code>-1</code>
+     * @return    the height of this image, or <code>-1</code> 
      *                   if the height is not yet known.
      * @see       java.awt.Image#getWidth
      * @see       java.awt.image.ImageObserver
@@ -87,19 +88,19 @@ public abstract class Image {
 
     /**
      * Gets the object that produces the pixels for the image.
-     * This method is called by the image filtering classes and by
+     * This method is called by the image filtering classes and by 
      * methods that perform image conversion and scaling.
-     * @return     the image producer that produces the pixels
+     * @return     the image producer that produces the pixels 
      *                                  for this image.
      * @see        java.awt.image.ImageProducer
      */
     public abstract ImageProducer getSource();
 
     /**
-     * Creates a graphics context for drawing to an off-screen image.
-     * This method can only be called for off-screen images.
-     * @return  a graphics context to draw to the off-screen image.
-     * @exception UnsupportedOperationException if called for a
+     * Creates a graphics context for drawing to an off-screen image. 
+     * This method can only be called for off-screen images. 
+     * @return  a graphics context to draw to the off-screen image. 
+     * @exception UnsupportedOperationException if called for a 
      *            non-off-screen image.
      * @see     java.awt.Graphics
      * @see     java.awt.Component#createImage(int, int)
@@ -107,19 +108,19 @@ public abstract class Image {
     public abstract Graphics getGraphics();
 
     /**
-     * Gets a property of this image by name.
+     * Gets a property of this image by name. 
      * <p>
-     * Individual property names are defined by the various image
-     * formats. If a property is not defined for a particular image, this
-     * method returns the <code>UndefinedProperty</code> object.
+     * Individual property names are defined by the various image 
+     * formats. If a property is not defined for a particular image, this 
+     * method returns the <code>UndefinedProperty</code> object. 
      * <p>
-     * If the properties for this image are not yet known, this method
-     * returns <code>null</code>, and the <code>ImageObserver</code>
-     * object is notified later.
+     * If the properties for this image are not yet known, this method 
+     * returns <code>null</code>, and the <code>ImageObserver</code> 
+     * object is notified later. 
      * <p>
-     * The property name <code>"comment"</code> should be used to store
-     * an optional comment which can be presented to the application as a
-     * description of the image, its source, or its author.
+     * The property name <code>"comment"</code> should be used to store 
+     * an optional comment which can be presented to the application as a 
+     * description of the image, its source, or its author. 
      * @param       name   a property name.
      * @param       observer   an object waiting for this image to be loaded.
      * @return      the value of the named property.
@@ -137,17 +138,17 @@ public abstract class Image {
 
     /**
      * Creates a scaled version of this image.
-     * A new <code>Image</code> object is returned which will render
-     * the image at the specified <code>width</code> and
+     * A new <code>Image</code> object is returned which will render 
+     * the image at the specified <code>width</code> and 
      * <code>height</code> by default.  The new <code>Image</code> object
      * may be loaded asynchronously even if the original source image
-     * has already been loaded completely.
+     * has already been loaded completely.  
      *
      * <p>
-     *
-     * If either <code>width</code>
-     * or <code>height</code> is a negative number then a value is
-     * substituted to maintain the aspect ratio of the original image
+     * 
+     * If either <code>width</code> 
+     * or <code>height</code> is a negative number then a value is 
+     * substituted to maintain the aspect ratio of the original image 
      * dimensions. If both <code>width</code> and <code>height</code>
      * are negative, then the original image dimensions are used.
      *
@@ -159,22 +160,22 @@ public abstract class Image {
      * @exception IllegalArgumentException if <code>width</code>
      *             or <code>height</code> is zero.
      * @see        java.awt.Image#SCALE_DEFAULT
-     * @see        java.awt.Image#SCALE_FAST
+     * @see        java.awt.Image#SCALE_FAST 
      * @see        java.awt.Image#SCALE_SMOOTH
      * @see        java.awt.Image#SCALE_REPLICATE
      * @see        java.awt.Image#SCALE_AREA_AVERAGING
      * @since      JDK1.1
      */
     public Image getScaledInstance(int width, int height, int hints) {
-        ImageFilter filter;
-        if ((hints & (SCALE_SMOOTH | SCALE_AREA_AVERAGING)) != 0) {
-            filter = new AreaAveragingScaleFilter(width, height);
-        } else {
-            filter = new ReplicateScaleFilter(width, height);
-        }
-        ImageProducer prod;
-        prod = new FilteredImageSource(getSource(), filter);
-        return Toolkit.getDefaultToolkit().createImage(prod);
+	ImageFilter filter;
+	if ((hints & (SCALE_SMOOTH | SCALE_AREA_AVERAGING)) != 0) {
+	    filter = new AreaAveragingScaleFilter(width, height);
+	} else {
+	    filter = new ReplicateScaleFilter(width, height);
+	}
+	ImageProducer prod;
+	prod = new FilteredImageSource(getSource(), filter);
+	return Toolkit.getDefaultToolkit().createImage(prod);
     }
 
     /**
@@ -198,9 +199,9 @@ public abstract class Image {
     public static final int SCALE_SMOOTH = 4;
 
     /**
-     * Use the image scaling algorithm embodied in the
-     * <code>ReplicateScaleFilter</code> class.
-     * The <code>Image</code> object is free to substitute a different filter
+     * Use the image scaling algorithm embodied in the 
+     * <code>ReplicateScaleFilter</code> class.  
+     * The <code>Image</code> object is free to substitute a different filter 
      * that performs the same algorithm yet integrates more efficiently
      * into the imaging infrastructure supplied by the toolkit.
      * @see        java.awt.image.ReplicateScaleFilter
@@ -284,18 +285,18 @@ public abstract class Image {
      * @since 1.5
      */
     public ImageCapabilities getCapabilities(GraphicsConfiguration gc) {
-        if (surfaceManager != null) {
-            return surfaceManager.getCapabilities(gc);
-        }
-        // Note: this is just a default object that gets returned in the
-        // absence of any more specific information from a surfaceManager.
-        // Subclasses of Image should either override this method or
-        // make sure that they always have a non-null SurfaceManager
-        // to return an ImageCapabilities object that is appropriate
-        // for their given subclass type.
-        return defaultImageCaps;
+	if (surfaceManager != null) {
+	    return surfaceManager.getCapabilities(gc);
+	}
+	// Note: this is just a default object that gets returned in the
+	// absence of any more specific information from a surfaceManager.
+	// Subclasses of Image should either override this method or
+	// make sure that they always have a non-null SurfaceManager
+	// to return an ImageCapabilities object that is appropriate
+	// for their given subclass type.
+	return defaultImageCaps;
     }
-
+    
     /**
      * Sets a hint for this image about how important acceleration is.
      * This priority hint is used to compare to the priorities of other
@@ -319,9 +320,9 @@ public abstract class Image {
     public void setAccelerationPriority(float priority) {
         if (priority < 0 || priority > 1) {
             throw new IllegalArgumentException("Priority must be a value " +
-                                               "between 0 and 1, inclusive");
+					       "between 0 and 1, inclusive");
         }
-        accelerationPriority = priority;
+	accelerationPriority = priority;
         if (surfaceManager != null) {
             surfaceManager.setAccelerationPriority(accelerationPriority);
         }
@@ -335,19 +336,19 @@ public abstract class Image {
      * @since 1.5
      */
     public float getAccelerationPriority() {
-        return accelerationPriority;
+	return accelerationPriority;
     }
 
     SurfaceManager surfaceManager;
 
     static {
-        SurfaceManager.setImageAccessor(new SurfaceManager.ImageAccessor() {
-            public SurfaceManager getSurfaceManager(Image img) {
-                return img.surfaceManager;
-            }
-            public void setSurfaceManager(Image img, SurfaceManager mgr) {
-                img.surfaceManager = mgr;
-            }
-        });
+	SurfaceManager.setImageAccessor(new SurfaceManager.ImageAccessor() {
+	    public SurfaceManager getSurfaceManager(Image img) {
+		return img.surfaceManager;
+	    }
+	    public void setSurfaceManager(Image img, SurfaceManager mgr) {
+		img.surfaceManager = mgr;
+	    }
+	});
     }
 }

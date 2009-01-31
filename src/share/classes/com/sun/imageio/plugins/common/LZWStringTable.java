@@ -27,7 +27,7 @@ package com.sun.imageio.plugins.common;
 
 import java.io.PrintStream;
 
-/**
+/** 
  * General purpose LZW String Table.
  * Extracted from GIFEncoder by Adam Doppelt
  * Comments added by Robin Luiten
@@ -41,18 +41,18 @@ public class LZWStringTable {
 
     private final static short HASH_FREE = (short)0xFFFF;
     private final static short NEXT_FIRST = (short)0xFFFF;
-
+    
     private final static int MAXBITS = 12;
     private final static int MAXSTR = (1 << MAXBITS);
-
+    
     private final static short HASHSIZE = 9973;
     private final static short HASHSTEP = 2039;
 
     byte[]  strChr;  // after predecessor character
-    short[] strNxt;  // predecessor string
+    short[] strNxt;  // predecessor string 
     short[] strHsh;  // hash table to find  predecessor + char pairs
     short numStrings;  // next code if adding new prestring + char
-
+    
     /*
      * each entry corresponds to a code and contains the length of data
      * that the code expands to when decoded.
@@ -66,7 +66,7 @@ public class LZWStringTable {
         strChr = new byte[MAXSTR];
         strNxt = new short[MAXSTR];
         strLen = new int[MAXSTR];
-        strHsh = new short[HASHSIZE];
+        strHsh = new short[HASHSIZE];   
     }
 
     /*
@@ -78,16 +78,16 @@ public class LZWStringTable {
      */
     public int addCharString(short index, byte b) {
         int hshidx;
-
+        
         if (numStrings >= MAXSTR) { // if used up all codes
             return 0xFFFF;
         }
-
+  
         hshidx = hash(index, b);
         while (strHsh[hshidx] != HASH_FREE) {
             hshidx = (hshidx + HASHSTEP) % HASHSIZE;
         }
-
+  
         strHsh[hshidx] = numStrings;
         strChr[numStrings] = b;
         if (index == HASH_FREE) {
@@ -106,10 +106,10 @@ public class LZWStringTable {
      * @param b the character that follws the index prefix
      * @return b if param index is HASH_FREE. Else return the code
      * for this prefix and byte successor
-     */
+     */ 
     public short findCharString(short index, byte b) {
         int hshidx, nxtidx;
-
+        
         if (index == HASH_FREE) {
             return (short)(b & 0xFF);    // Rob fixed used to sign extend
         }
@@ -121,7 +121,7 @@ public class LZWStringTable {
             }
             hshidx = (hshidx + HASHSTEP) % HASHSIZE;
         }
-
+        
         return (short)0xFFFF;
     }
 
@@ -131,7 +131,7 @@ public class LZWStringTable {
      */
     public void clearTable(int codesize) {
         numStrings = 0;
-
+        
         for (int q = 0; q < HASHSIZE; q++) {
             strHsh[q] = HASH_FREE;
         }
@@ -149,8 +149,8 @@ public class LZWStringTable {
     /*
      * If expanded data doesn't fit into array only what will fit is written
      * to buf and the return value indicates how much of the expanded code has
-     * been written to the buf. The next call to expandCode() should be with
-     * the same code and have the skip parameter set the negated value of the
+     * been written to the buf. The next call to expandCode() should be with 
+     * the same code and have the skip parameter set the negated value of the 
      * previous return. Succesive negative return values should be negated and
      * added together for next skip parameter value with same code.
      *
@@ -158,7 +158,7 @@ public class LZWStringTable {
      * @param offset offset to place expanded data
      * @param code the code to expand to the byte array it represents.
      * PRECONDITION This code must already be in the LZSS
-     * @param skipHead is the number of bytes at the start of the expanded code to
+     * @param skipHead is the number of bytes at the start of the expanded code to 
      * be skipped before data is written to buf. It is possible that skipHead is
      * equal to codeLen.
      * @return the length of data expanded into buf. If the expanded code is longer
@@ -206,7 +206,7 @@ public class LZWStringTable {
             return expandLen;     // indicate length of dat unpacked
         }
     }
-
+    
     public void dump(PrintStream out) {
         int i;
         for (i = 258; i < numStrings; ++i) {

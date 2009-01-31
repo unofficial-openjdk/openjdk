@@ -32,6 +32,7 @@ import sun.nio.cs.ext.MacDingbat;
  * A table to convert to MacDingbat to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacDingbat extends ByteToCharSingleByte {

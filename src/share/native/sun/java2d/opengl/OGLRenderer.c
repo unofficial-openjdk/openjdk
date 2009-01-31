@@ -195,7 +195,7 @@ OGLRenderer_DrawPoly(OGLContext *oglc,
         jint x = xPoints[i];
         jint y = yPoints[i];
 
-        isEmpty = isEmpty && (x == mx && y == my);
+        isEmpty = isEmpty && (x == mx && y == my);        
 
         // Translate each vertex by a fraction so that we hit pixel centers.
         j2d_glVertex2f((GLfloat)(x + transX) + 0.5f,

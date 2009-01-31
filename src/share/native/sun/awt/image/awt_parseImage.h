@@ -109,7 +109,7 @@ typedef struct {
     int width;             /* Width of the raster */
     int height;            /* Height of the raster */
     int minX;              /* origin of this raster x */
-    int minY;              /* origin of this raster x */
+    int minY;              /* origin of this raster x */ 
 
     int baseOriginX;       /* origin of base raster */
     int baseOriginY;       /* origin of base raster x */

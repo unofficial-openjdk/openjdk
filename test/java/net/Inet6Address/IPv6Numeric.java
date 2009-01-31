@@ -25,7 +25,7 @@
  * @test
  * @bug 4865061
  * @summary REGRESSION: InetAddress.getByName(":") throws ArrayIndexOutOfBoundsException
- *
+ * 
  */
 
 import java.net.InetAddress;
@@ -33,11 +33,11 @@ import java.net.InetAddress;
 public class IPv6Numeric {
     public static void main(String[] args) {
         try {
-            InetAddress addr = InetAddress.getByName(":");
-        } catch (java.net.UnknownHostException uhe) {
-            // what we expect. So everything is OK
-        } catch (Exception e) {
-            throw new RuntimeException(e.toString());
-        }
+	    InetAddress addr = InetAddress.getByName(":");
+	} catch (java.net.UnknownHostException uhe) {
+	    // what we expect. So everything is OK
+	} catch (Exception e) {
+	    throw new RuntimeException(e.toString());
+	}
     }
 }

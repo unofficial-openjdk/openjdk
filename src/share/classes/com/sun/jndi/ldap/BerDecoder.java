@@ -42,11 +42,11 @@ public final class BerDecoder extends Ber {
      */
     public BerDecoder(byte buf[], int offset, int bufsize) {
 
-        this.buf = buf;
-        this.bufsize = bufsize;
-        this.origOffset = offset;
+	this.buf = buf;
+	this.bufsize = bufsize;
+	this.origOffset = offset;
 
-        reset();
+	reset();
     }
 
     /**
@@ -54,7 +54,7 @@ public final class BerDecoder extends Ber {
      * (ie., same state as after calling the constructor).
      */
     public void reset() {
-        offset = origOffset;
+	offset = origOffset;
     }
 
     /**
@@ -63,7 +63,7 @@ public final class BerDecoder extends Ber {
       * Useful for parsing sequences.
       */
     public int getParsePosition() {
-        return offset;
+	return offset;
     }
 
     /**
@@ -71,50 +71,50 @@ public final class BerDecoder extends Ber {
       */
     public int parseLength() throws DecodeException {
 
-        int lengthbyte = parseByte();
+	int lengthbyte = parseByte();
 
-        if ((lengthbyte & 0x80) == 0x80) {
+	if ((lengthbyte & 0x80) == 0x80) {
 
-            lengthbyte &= 0x7f;
+	    lengthbyte &= 0x7f;
 
-            if (lengthbyte == 0) {
-                throw new DecodeException(
-                    "Indefinite length not supported");
-            }
+	    if (lengthbyte == 0) {
+		throw new DecodeException(
+		    "Indefinite length not supported");
+	    }
 
-            if (lengthbyte > 4) {
-                throw new DecodeException("encoding too long");
-            }
+	    if (lengthbyte > 4) {
+		throw new DecodeException("encoding too long");
+	    }
 
-            if (bufsize - offset < lengthbyte) {
-                throw new DecodeException("Insufficient data");
-            }
+	    if (bufsize - offset < lengthbyte) {
+		throw new DecodeException("Insufficient data");
+	    }
 
-            int retval = 0;
+	    int retval = 0;
 
-            for( int i = 0; i < lengthbyte; i++) {
-                retval = (retval << 8) + (buf[offset++] & 0xff);
-            }
-            return retval;
-        } else {
-            return lengthbyte;
-        }
+	    for( int i = 0; i < lengthbyte; i++) {
+		retval = (retval << 8) + (buf[offset++] & 0xff);
+	    }
+	    return retval;
+	} else {
+	    return lengthbyte;
+	}
     }
 
     /**
      * Parses the next sequence in this BER buffer.
      * @param rlen An array for returning size of the sequence in bytes. If null,
-     *          the size is not returned.
+     * 		the size is not returned.
      * @return The sequence's tag.
      */
     public int parseSeq(int rlen[]) throws DecodeException {
-
-        int seq = parseByte();
-        int len = parseLength();
-        if (rlen != null) {
-            rlen[0] = len;
-        }
-        return seq;
+	
+	int seq = parseByte();
+	int len = parseLength();
+	if (rlen != null) {
+	    rlen[0] = len;
+	}
+	return seq;
     }
 
     /**
@@ -123,10 +123,10 @@ public final class BerDecoder extends Ber {
      * @param i The number of bytes to skip
      */
     void seek(int i) throws DecodeException {
-        if (offset + i > bufsize || offset + i < 0) {
-            throw new DecodeException("array index out of bounds");
-        }
-        offset += i;
+	if (offset + i > bufsize || offset + i < 0) {
+	    throw new DecodeException("array index out of bounds");
+	}
+	offset += i;
     }
 
     /**
@@ -134,10 +134,10 @@ public final class BerDecoder extends Ber {
      * @return The byte parsed.
      */
     public int parseByte() throws DecodeException {
-        if (bufsize - offset < 1) {
-            throw new DecodeException("Insufficient data");
-        }
-        return buf[offset++] & 0xff;
+	if (bufsize - offset < 1) {
+	    throw new DecodeException("Insufficient data");
+	}
+	return buf[offset++] & 0xff;
     }
 
 
@@ -146,10 +146,10 @@ public final class BerDecoder extends Ber {
      * @return The next byte.
      */
     public int peekByte() throws DecodeException {
-        if (bufsize - offset < 1) {
-            throw new DecodeException("Insufficient data");
-        }
-        return buf[offset] & 0xff;
+	if (bufsize - offset < 1) {
+	    throw new DecodeException("Insufficient data");
+	}
+	return buf[offset] & 0xff;
     }
 
     /**
@@ -157,7 +157,7 @@ public final class BerDecoder extends Ber {
      * @return true if the tagged integer is 0; false otherwise.
      */
     public boolean parseBoolean() throws DecodeException {
-        return ((parseIntWithTag(ASN_BOOLEAN) == 0x00) ? false : true);
+	return ((parseIntWithTag(ASN_BOOLEAN) == 0x00) ? false : true);
     }
 
     /**
@@ -165,7 +165,7 @@ public final class BerDecoder extends Ber {
      * @return The tag of enumeration.
      */
     public int parseEnumeration() throws DecodeException {
-        return parseIntWithTag(ASN_ENUMERATED);
+	return parseIntWithTag(ASN_ENUMERATED);
     }
 
     /**
@@ -173,7 +173,7 @@ public final class BerDecoder extends Ber {
      * @return The value of the integer.
      */
     public int parseInt() throws DecodeException {
-        return parseIntWithTag(ASN_INTEGER);
+	return parseIntWithTag(ASN_INTEGER);
     }
 
     /**
@@ -185,41 +185,41 @@ public final class BerDecoder extends Ber {
     private int parseIntWithTag(int tag) throws DecodeException {
 
 
-        if (parseByte() != tag) {
-            throw new DecodeException("Encountered ASN.1 tag " +
-                Integer.toString(buf[offset - 1] & 0xff) +
-                " (expected tag " + Integer.toString(tag) + ")");
-        }
+	if (parseByte() != tag) {
+	    throw new DecodeException("Encountered ASN.1 tag " +
+		Integer.toString(buf[offset - 1] & 0xff) +
+		" (expected tag " + Integer.toString(tag) + ")");
+	}
 
-        int len = parseLength();
+	int len = parseLength();
 
-        if (len > 4) {
-            throw new DecodeException("INTEGER too long");
-        } else if (len > bufsize - offset) {
-            throw new DecodeException("Insufficient data");
-        }
+	if (len > 4) {
+	    throw new DecodeException("INTEGER too long");
+	} else if (len > bufsize - offset) {
+	    throw new DecodeException("Insufficient data");
+	}
 
-        byte fb = buf[offset++];
-        int value = 0;
+	byte fb = buf[offset++];
+	int value = 0;
 
-        value = fb & 0x7F;
-        for( int i = 1 /* first byte already read */ ; i < len; i++) {
-            value <<= 8;
-            value |= (buf[offset++] & 0xff);
-        }
+	value = fb & 0x7F;
+	for( int i = 1 /* first byte already read */ ; i < len; i++) {
+	    value <<= 8;
+	    value |= (buf[offset++] & 0xff);
+	}
 
-        if ((fb & 0x80) == 0x80) {
-            value = -value;
-        }
+	if ((fb & 0x80) == 0x80) {
+	    value = -value;
+	}
 
-        return value;
+	return value;
     }
 
     /**
       * Parses a string.
       */
     public String parseString(boolean decodeUTF8) throws DecodeException {
-        return parseStringWithTag(ASN_SIMPLE_STRING, decodeUTF8, null);
+	return parseStringWithTag(ASN_SIMPLE_STRING, decodeUTF8, null);
     }
 
     /**
@@ -227,7 +227,7 @@ public final class BerDecoder extends Ber {
       *<blockquote><pre>
       *BER simple string ::= tag length {byte}*
       *</pre></blockquote>
-      * @param rlen An array for holding the relative parsed offset; if null
+      * @param rlen An array for holding the relative parsed offset; if null 
       *  offset not set.
       * @param decodeUTF8 If true, use UTF-8 when decoding the string; otherwise
       * use ISO-Latin-1 (8859_1). Use true for LDAPv3; false for LDAPv2.
@@ -235,50 +235,50 @@ public final class BerDecoder extends Ber {
       * @return The non-null parsed string.
       */
     public String parseStringWithTag(int tag, boolean decodeUTF8, int rlen[])
-        throws DecodeException {
+	throws DecodeException {
 
-        int st;
-        int origOffset = offset;
+	int st;
+	int origOffset = offset;
 
-        if ((st = parseByte()) != tag) {
-            throw new DecodeException("Encountered ASN.1 tag " +
-                Integer.toString((byte)st) + " (expected tag " + tag + ")");
-        }
+	if ((st = parseByte()) != tag) {
+	    throw new DecodeException("Encountered ASN.1 tag " +
+		Integer.toString((byte)st) + " (expected tag " + tag + ")");
+	}
 
-        int len = parseLength();
+	int len = parseLength();
 
-        if (len > bufsize - offset) {
-            throw new DecodeException("Insufficient data");
-        }
+	if (len > bufsize - offset) {
+	    throw new DecodeException("Insufficient data");
+	}
 
-        String retstr;
-        if (len == 0) {
-            retstr = "";
-        } else {
-            byte[] buf2 = new byte[len];
+	String retstr;
+	if (len == 0) {
+	    retstr = "";
+	} else {
+	    byte[] buf2 = new byte[len];
 
-            System.arraycopy(buf, offset, buf2, 0, len);
-            if (decodeUTF8) {
-                try {
-                    retstr = new String(buf2, "UTF8");
-                } catch (UnsupportedEncodingException e) {
-                    throw new DecodeException("UTF8 not available on platform");
-                }
-            } else {
-                try {
-                    retstr = new String(buf2, "8859_1");
-                } catch (UnsupportedEncodingException e) {
-                    throw new DecodeException("8859_1 not available on platform");
-                }
-            }
-            offset += len;
-        }
+	    System.arraycopy(buf, offset, buf2, 0, len);
+	    if (decodeUTF8) {
+		try {
+		    retstr = new String(buf2, "UTF8");
+		} catch (UnsupportedEncodingException e) {
+		    throw new DecodeException("UTF8 not available on platform");
+		}
+	    } else {
+		try {
+		    retstr = new String(buf2, "8859_1");
+		} catch (UnsupportedEncodingException e) {
+		    throw new DecodeException("8859_1 not available on platform");
+		}
+	    }
+	    offset += len;
+	}
 
-        if (rlen != null) {
-            rlen[0] = offset - origOffset;
-        }
+	if (rlen != null) {
+	    rlen[0] = offset - origOffset;
+	}
 
-        return retstr;
+	return retstr;
     }
 
     /**
@@ -289,46 +289,46 @@ public final class BerDecoder extends Ber {
      *
      * @param tag The tag to look for.
      * @param rlen An array for returning the relative parsed position. If null,
-     *          the relative parsed position is not returned.
+     * 		the relative parsed position is not returned.
      * @return A non-null array containing the octet string.
-     * @throws DecodeException If the next byte in the BER buffer is not
+     * @throws DecodeException If the next byte in the BER buffer is not 
      * <tt>tag</tt>, or if length specified in the BER buffer exceeds the
      * number of bytes left in the buffer.
      */
     public byte[] parseOctetString(int tag, int rlen[]) throws DecodeException {
 
-        int origOffset = offset;
-        int st;
-        if ((st = parseByte()) != tag) {
+	int origOffset = offset;
+	int st;
+	if ((st = parseByte()) != tag) {
 
-            throw new DecodeException("Encountered ASN.1 tag " +
-                Integer.toString(st) +
-                " (expected tag " + Integer.toString(tag) + ")");
-        }
+	    throw new DecodeException("Encountered ASN.1 tag " +
+		Integer.toString(st) +
+		" (expected tag " + Integer.toString(tag) + ")");
+	}
 
-        int len = parseLength();
+	int len = parseLength();
 
-        if (len > bufsize - offset) {
-            throw new DecodeException("Insufficient data");
-        }
+	if (len > bufsize - offset) {
+	    throw new DecodeException("Insufficient data");
+	}
 
-        byte retarr[] = new byte[len];
-        if (len > 0) {
-            System.arraycopy(buf, offset, retarr, 0, len);
-            offset += len;
-        }
+	byte retarr[] = new byte[len];
+	if (len > 0) {
+	    System.arraycopy(buf, offset, retarr, 0, len);
+	    offset += len;
+	}
 
-        if (rlen != null) {
-            rlen[0] = offset - origOffset;
-        }
+	if (rlen != null) {
+	    rlen[0] = offset - origOffset;
+	}
 
-        return retarr;
+	return retarr;
     }
 
     /**
      * Returns the number of unparsed bytes in this BER buffer.
      */
     public int bytesLeft() {
-        return bufsize - offset;
+	return bufsize - offset;
     }
 }

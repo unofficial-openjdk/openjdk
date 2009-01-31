@@ -33,7 +33,8 @@ package sun.tools.java;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @author      Arthur van Hoff
+ * @author 	Arthur van Hoff
+ * @version 	%I%, %G%
  */
 public final
 class ArrayType extends Type {
@@ -47,19 +48,19 @@ class ArrayType extends Type {
      * a new array type.
      */
     ArrayType(String typeSig, Type elemType) {
-        super(TC_ARRAY, typeSig);
-        this.elemType = elemType;
+	super(TC_ARRAY, typeSig);
+	this.elemType = elemType;
     }
-
+    
     public Type getElementType() {
-        return elemType;
+	return elemType;
     }
 
     public int getArrayDimension() {
-        return elemType.getArrayDimension() + 1;
+	return elemType.getArrayDimension() + 1;
     }
-
+    
     public String typeString(String id, boolean abbrev, boolean ret) {
-        return getElementType().typeString(id, abbrev, ret) + "[]";
+	return getElementType().typeString(id, abbrev, ret) + "[]";
     }
 }

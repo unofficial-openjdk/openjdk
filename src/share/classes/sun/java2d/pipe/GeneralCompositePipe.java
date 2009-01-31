@@ -44,37 +44,37 @@ import sun.java2d.loops.CompositeType;
 
 public class GeneralCompositePipe implements CompositePipe {
     class TileContext {
-        SunGraphics2D sunG2D;
-        PaintContext paintCtxt;
-        CompositeContext compCtxt;
-        ColorModel compModel;
+	SunGraphics2D sunG2D;
+	PaintContext paintCtxt;
+	CompositeContext compCtxt;
+	ColorModel compModel;
         Object pipeState;
 
-        public TileContext(SunGraphics2D sg, PaintContext pCtx,
-                           CompositeContext cCtx, ColorModel cModel) {
-            sunG2D = sg;
-            paintCtxt = pCtx;
-            compCtxt = cCtx;
-            compModel = cModel;
-        }
+	public TileContext(SunGraphics2D sg, PaintContext pCtx,
+			   CompositeContext cCtx, ColorModel cModel) {
+	    sunG2D = sg;
+	    paintCtxt = pCtx;
+	    compCtxt = cCtx;
+	    compModel = cModel;
+	}
     }
 
     public Object startSequence(SunGraphics2D sg, Shape s, Rectangle devR,
-                                int[] abox) {
-        RenderingHints hints = sg.getRenderingHints();
-        ColorModel model = sg.getDeviceColorModel();
+				int[] abox) {
+	RenderingHints hints = sg.getRenderingHints();
+	ColorModel model = sg.getDeviceColorModel();
         PaintContext paintContext =
-            sg.paint.createContext(model, devR, s.getBounds2D(),
+	    sg.paint.createContext(model, devR, s.getBounds2D(),
                                    sg.cloneTransform(),
                                    hints);
         CompositeContext compositeContext =
-            sg.composite.createContext(paintContext.getColorModel(), model,
+	    sg.composite.createContext(paintContext.getColorModel(), model,
                                        hints);
-        return new TileContext(sg, paintContext, compositeContext, model);
+	return new TileContext(sg, paintContext, compositeContext, model);
     }
 
     public boolean needTile(Object ctx, int x, int y, int w, int h) {
-        return true;
+	return true;
     }
 
     /**
@@ -82,67 +82,67 @@ public class GeneralCompositePipe implements CompositePipe {
     * provided by an application
     */
     public void renderPathTile(Object ctx,
-                               byte[] atile, int offset, int tilesize,
-                               int x, int y, int w, int h) {
-        TileContext context = (TileContext) ctx;
-        PaintContext paintCtxt = context.paintCtxt;
-        CompositeContext compCtxt = context.compCtxt;
-        SunGraphics2D sg = context.sunG2D;
+			       byte[] atile, int offset, int tilesize,
+			       int x, int y, int w, int h) {
+	TileContext context = (TileContext) ctx;
+	PaintContext paintCtxt = context.paintCtxt;
+	CompositeContext compCtxt = context.compCtxt;
+	SunGraphics2D sg = context.sunG2D;
 
         Raster srcRaster = paintCtxt.getRaster(x, y, w, h);
-        ColorModel paintModel = paintCtxt.getColorModel();
+	ColorModel paintModel = paintCtxt.getColorModel();
 
-        Raster dstRaster;
-        Raster dstIn;
-        WritableRaster dstOut;
+	Raster dstRaster;
+	Raster dstIn;
+	WritableRaster dstOut;
 
-        SurfaceData sd = sg.getSurfaceData();
-        dstRaster = sd.getRaster(x, y, w, h);
-        if (dstRaster instanceof WritableRaster && atile == null) {
-            dstOut = (WritableRaster) dstRaster;
-            dstOut = dstOut.createWritableChild(x, y, w, h, 0, 0, null);
-            dstIn = dstOut;
-        } else {
-            dstIn = dstRaster.createChild(x, y, w, h, 0, 0, null);
-            dstOut = dstIn.createCompatibleWritableRaster();
-        }
+	SurfaceData sd = sg.getSurfaceData();
+	dstRaster = sd.getRaster(x, y, w, h);
+	if (dstRaster instanceof WritableRaster && atile == null) {
+	    dstOut = (WritableRaster) dstRaster;
+	    dstOut = dstOut.createWritableChild(x, y, w, h, 0, 0, null);
+	    dstIn = dstOut;
+	} else {
+	    dstIn = dstRaster.createChild(x, y, w, h, 0, 0, null);
+	    dstOut = dstIn.createCompatibleWritableRaster();
+	}
 
-        compCtxt.compose(srcRaster, dstIn, dstOut);
+	compCtxt.compose(srcRaster, dstIn, dstOut);
 
-        if (dstRaster != dstOut && dstOut.getParent() != dstRaster) {
-            if (dstRaster instanceof WritableRaster && atile == null) {
-                ((WritableRaster) dstRaster).setDataElements(x, y, dstOut);
-            } else {
-                ColorModel cm = sg.getDeviceColorModel();
-                BufferedImage resImg =
-                    new BufferedImage(cm, dstOut,
-                                      cm.isAlphaPremultiplied(),
-                                      null);
-                SurfaceData resData = BufImgSurfaceData.createData(resImg);
-                if (atile == null) {
-                    Blit blit = Blit.getFromCache(resData.getSurfaceType(),
-                                                  CompositeType.SrcNoEa,
-                                                  sd.getSurfaceType());
-                    blit.Blit(resData, sd, AlphaComposite.Src, null,
-                              0, 0, x, y, w, h);
-                } else {
-                    MaskBlit blit = MaskBlit.getFromCache(resData.getSurfaceType(),
-                                                          CompositeType.SrcNoEa,
-                                                          sd.getSurfaceType());
-                    blit.MaskBlit(resData, sd, AlphaComposite.Src, null,
-                                  0, 0, x, y, w, h,
-                                  atile, offset, tilesize);
-                }
-            }
-        }
+	if (dstRaster != dstOut && dstOut.getParent() != dstRaster) {
+	    if (dstRaster instanceof WritableRaster && atile == null) {
+		((WritableRaster) dstRaster).setDataElements(x, y, dstOut);
+	    } else {
+		ColorModel cm = sg.getDeviceColorModel();
+		BufferedImage resImg =
+		    new BufferedImage(cm, dstOut,
+				      cm.isAlphaPremultiplied(),
+				      null);
+		SurfaceData resData = BufImgSurfaceData.createData(resImg);
+		if (atile == null) {
+		    Blit blit = Blit.getFromCache(resData.getSurfaceType(),
+						  CompositeType.SrcNoEa,
+						  sd.getSurfaceType());
+		    blit.Blit(resData, sd, AlphaComposite.Src, null,
+			      0, 0, x, y, w, h);
+		} else {
+		    MaskBlit blit = MaskBlit.getFromCache(resData.getSurfaceType(),
+							  CompositeType.SrcNoEa,
+							  sd.getSurfaceType());
+		    blit.MaskBlit(resData, sd, AlphaComposite.Src, null,
+				  0, 0, x, y, w, h,
+				  atile, offset, tilesize);
+		}
+	    }
+	}
     }
 
     public void skipTile(Object ctx, int x, int y) {
-        return;
+	return;
     }
 
     public void endSequence(Object ctx) {
-        TileContext context = (TileContext) ctx;
+	TileContext context = (TileContext) ctx;
         if (context.paintCtxt != null) {
             context.paintCtxt.dispose();
         }

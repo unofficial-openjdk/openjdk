@@ -31,8 +31,8 @@ import sun.misc.Version;
 
 public class PrintVersion {
 
-        public static void main(String argv[]) {
-                Version.print();
-        }
+	public static void main(String argv[]) {
+		Version.print();
+	}
 
 }

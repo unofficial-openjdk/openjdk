@@ -35,28 +35,28 @@ public class GetInstanceSecurity {
     private static final String JAVA_POLICY = "JavaPolicy";
 
     public static void main(String[] args) throws Exception {
-        try {
-            Policy p = Policy.getInstance(JAVA_POLICY, null);
-            throw new RuntimeException("did not catch security exception");
-        } catch (SecurityException se) {
-            // good
-        }
+	try {
+	    Policy p = Policy.getInstance(JAVA_POLICY, null);
+	    throw new RuntimeException("did not catch security exception");
+	} catch (SecurityException se) {
+	    // good
+	}
 
-        try {
-            Policy p = Policy.getInstance(JAVA_POLICY, null, "SUN");
-            throw new RuntimeException("did not catch security exception");
-        } catch (SecurityException se) {
-            // good
-        }
+	try {
+	    Policy p = Policy.getInstance(JAVA_POLICY, null, "SUN");
+	    throw new RuntimeException("did not catch security exception");
+	} catch (SecurityException se) {
+	    // good
+	}
 
-        try {
-            Policy p = Policy.getInstance(JAVA_POLICY, null,
-                                        Security.getProvider("SUN"));
-            throw new RuntimeException("did not catch security exception");
-        } catch (SecurityException se) {
-            // good
-        }
+	try {
+	    Policy p = Policy.getInstance(JAVA_POLICY, null,
+					Security.getProvider("SUN"));
+	    throw new RuntimeException("did not catch security exception");
+	} catch (SecurityException se) {
+	    // good
+	}
 
-        System.out.println("test passed");
+	System.out.println("test passed");
     }
 }

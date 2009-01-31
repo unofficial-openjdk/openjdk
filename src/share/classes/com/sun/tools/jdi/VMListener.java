@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package com.sun.tools.jdi;
 
 import com.sun.jdi.*;
@@ -32,3 +32,5 @@ interface VMListener extends EventListener {
     boolean vmSuspended(VMAction action);
     boolean vmNotSuspended(VMAction action);
 }
+
+

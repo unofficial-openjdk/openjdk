@@ -56,7 +56,7 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      * been allocated for it.
      **/
     protected TreeMap names = new TreeMap();
-
+    
     /**
      * The last allocate index.
      **/
@@ -69,68 +69,68 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
 
     /**
      * Returns the key to use as name for the given <var>item</var>.
-     * <br>This method is called by {@link #getIndex(Object,List,int,Object)}.
+     * <br>This method is called by {@link #getIndex(Object,List,int,Object)}. 
      * The given <var>item</var> is expected to be always associated with
      * the same name.
-     * @param context The context passed to
+     * @param context The context passed to 
      *        {@link #updateCachedDatas(Object,List)}.
-     * @param rawDatas Raw table datas passed to
+     * @param rawDatas Raw table datas passed to 
      *        {@link #updateCachedDatas(Object,List)}.
-     * @param rank Rank of the given <var>item</var> in the
+     * @param rank Rank of the given <var>item</var> in the 
      *        <var>rawDatas</var> list iterator.
      * @param item The raw data object for which a key name must be determined.
      **/
-    protected abstract String getKey(Object context, List rawDatas,
-                                     int rank, Object item);
+    protected abstract String getKey(Object context, List rawDatas, 
+				     int rank, Object item);
 
     /**
-     * Find a new index for the entry corresponding to the
+     * Find a new index for the entry corresponding to the 
      * given <var>item</var>.
      * <br>This method is called by {@link #getIndex(Object,List,int,Object)}
-     * when a new index needs to be allocated for an <var>item</var>. The
+     * when a new index needs to be allocated for an <var>item</var>. The 
      * index returned must not be already in used.
-     * @param context The context passed to
+     * @param context The context passed to 
      *        {@link #updateCachedDatas(Object,List)}.
-     * @param rawDatas Raw table datas passed to
+     * @param rawDatas Raw table datas passed to 
      *        {@link #updateCachedDatas(Object,List)}.
-     * @param rank Rank of the given <var>item</var> in the
+     * @param rank Rank of the given <var>item</var> in the 
      *        <var>rawDatas</var> list iterator.
      * @param item The raw data object for which an index must be determined.
      **/
-    protected SnmpOid makeIndex(Object context, List rawDatas,
-                                int rank, Object item) {
+    protected SnmpOid makeIndex(Object context, List rawDatas, 
+				int rank, Object item) {
+	
+	// check we are in the limits of an unsigned32.
+	if (++last > 0x00000000FFFFFFFFL) {
+	    // we just wrapped. 
+	    log.debug("makeIndex", "Index wrapping...");
+	    last = 0; 
+	    wrapped=true;
+	}
 
-        // check we are in the limits of an unsigned32.
-        if (++last > 0x00000000FFFFFFFFL) {
-            // we just wrapped.
-            log.debug("makeIndex", "Index wrapping...");
-            last = 0;
-            wrapped=true;
-        }
+	// If we never wrapped, we can safely return last as new index.
+	if (!wrapped) return new SnmpOid(last);
 
-        // If we never wrapped, we can safely return last as new index.
-        if (!wrapped) return new SnmpOid(last);
+	// We wrapped. We must look for an unused index. 
+	for (int i=1;i < 0x00000000FFFFFFFFL;i++) {
+	    if (++last >  0x00000000FFFFFFFFL) last = 1;
+	    final SnmpOid testOid = new SnmpOid(last);
 
-        // We wrapped. We must look for an unused index.
-        for (int i=1;i < 0x00000000FFFFFFFFL;i++) {
-            if (++last >  0x00000000FFFFFFFFL) last = 1;
-            final SnmpOid testOid = new SnmpOid(last);
+	    // Was this index already in use?
+	    if (names == null) return testOid;
+	    if (names.containsValue(testOid)) continue;
 
-            // Was this index already in use?
-            if (names == null) return testOid;
-            if (names.containsValue(testOid)) continue;
+	    // Have we just used it in a previous iteration?
+	    if (context == null) return testOid;
+	    if (((Map)context).containsValue(testOid)) continue;
 
-            // Have we just used it in a previous iteration?
-            if (context == null) return testOid;
-            if (((Map)context).containsValue(testOid)) continue;
-
-            // Ok, not in use.
-            return testOid;
-        }
-        // all indexes are in use! we're stuck.
-        // // throw new IndexOutOfBoundsException("No index available.");
-        // better to return null and log an error.
-        return null;
+	    // Ok, not in use.
+	    return testOid;
+	}
+	// all indexes are in use! we're stuck.
+	// // throw new IndexOutOfBoundsException("No index available.");
+	// better to return null and log an error.
+	return null;
     }
 
     /**
@@ -141,29 +141,29 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      * index for that entry.
      * Finally store the association between
      * the name and index in the context TreeMap.
-     * @param context The context passed to
-     *        {@link #updateCachedDatas(Object,List)}.
+     * @param context The context passed to 
+     *        {@link #updateCachedDatas(Object,List)}. 
      *        It is expected to
      *        be an instance of  {@link TreeMap}.
-     * @param rawDatas Raw table datas passed to
+     * @param rawDatas Raw table datas passed to 
      *        {@link #updateCachedDatas(Object,List)}.
-     * @param rank Rank of the given <var>item</var> in the
+     * @param rank Rank of the given <var>item</var> in the 
      *        <var>rawDatas</var> list iterator.
      * @param item The raw data object for which an index must be determined.
      **/
-    protected SnmpOid getIndex(Object context, List rawDatas,
-                               int rank, Object item) {
-        final String key   = getKey(context,rawDatas,rank,item);
-        final Object index = (names==null||key==null)?null:names.get(key);
-        final SnmpOid result =
-            ((index != null)?((SnmpOid)index):makeIndex(context,rawDatas,
-                                                      rank,item));
-        if ((context != null) && (key != null) && (result != null)) {
+    protected SnmpOid getIndex(Object context, List rawDatas, 
+			       int rank, Object item) {
+	final String key   = getKey(context,rawDatas,rank,item);
+	final Object index = (names==null||key==null)?null:names.get(key);
+	final SnmpOid result = 
+	    ((index != null)?((SnmpOid)index):makeIndex(context,rawDatas,
+						      rank,item));
+	if ((context != null) && (key != null) && (result != null)) {
             Map<Object, Object> map = Util.cast(context);
-            map.put(key,result);
+	    map.put(key,result);
         }
-        log.debug("getIndex","key="+key+", index="+result);
-        return result;
+	log.debug("getIndex","key="+key+", index="+result);
+	return result;
     }
 
     /**
@@ -175,11 +175,11 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      *        computed.
      **/
     protected SnmpCachedData updateCachedDatas(Object context, List rawDatas) {
-        TreeMap ctxt = new TreeMap();
-        final SnmpCachedData result =
-            super.updateCachedDatas(context,rawDatas);
-        names = ctxt;
-        return result;
+	TreeMap ctxt = new TreeMap();
+	final SnmpCachedData result = 
+	    super.updateCachedDatas(context,rawDatas);
+	names = ctxt;
+	return result;
     }
 
 
@@ -189,7 +189,7 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      * contextual cache.
      * @param userData The request contextual cache allocated by
      *        the {@link JvmContextFactory}.
-     *
+     * 
      **/
     protected abstract List   loadRawDatas(Map userData);
 
@@ -198,7 +198,7 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      *        the request contextual cache.
      **/
     protected abstract String getRawDatasKey();
-
+    
     /**
      * Get a list of raw data from which to build the cached data.
      * Obtains a list of raw data by first looking it up in the
@@ -213,28 +213,28 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      *
      **/
     protected List getRawDatas(Map<Object, Object> userData, String key) {
-        List rawDatas = null;
+	List rawDatas = null;
 
-        // Look for memory manager list in request contextual cache.
-        if (userData != null)
-            rawDatas = (List) userData.get(key);
+	// Look for memory manager list in request contextual cache.
+	if (userData != null) 
+	    rawDatas = (List) userData.get(key);
 
-        if (rawDatas == null) {
-            // No list in contextual cache, get it from API
-            rawDatas =  loadRawDatas(userData);
+	if (rawDatas == null) {
+	    // No list in contextual cache, get it from API
+	    rawDatas =  loadRawDatas(userData);
+		
 
+	    // Put list in cache...
+	    if (rawDatas != null && userData != null) 
+		userData.put(key, rawDatas);
+	}
 
-            // Put list in cache...
-            if (rawDatas != null && userData != null)
-                userData.put(key, rawDatas);
-        }
-
-        return rawDatas;
+	return rawDatas;
     }
 
     /**
      * Update cahed datas.
-     * Obtains a {@link List} of raw datas by calling
+     * Obtains a {@link List} of raw datas by calling 
      * {@link #getRawDatas(Map,String) getRawDatas((Map)context,getRawDatasKey())}.<br>
      * Then allocate a new {@link TreeMap} to serve as temporary map between
      * names and indexes, and call {@link #updateCachedDatas(Object,List)}
@@ -246,21 +246,21 @@ public abstract class SnmpNamedListTableCache extends SnmpListTableCache {
      **/
     protected SnmpCachedData updateCachedDatas(Object context) {
 
-        final Map<Object, Object> userData =
+	final Map<Object, Object> userData =
             (context instanceof Map)?Util.<Map<Object, Object>>cast(context):null;
 
-        // Look for memory manager list in request contextual cache.
-        final List rawDatas = getRawDatas(userData,getRawDatasKey());
+	// Look for memory manager list in request contextual cache.
+	final List rawDatas = getRawDatas(userData,getRawDatasKey());
 
-        log.debug("updateCachedDatas","rawDatas.size()=" +
-              ((rawDatas==null)?"<no data>":""+rawDatas.size()));
+	log.debug("updateCachedDatas","rawDatas.size()=" + 
+	      ((rawDatas==null)?"<no data>":""+rawDatas.size()));
 
-        TreeMap ctxt = new TreeMap();
-        final SnmpCachedData result =
-            super.updateCachedDatas(ctxt,rawDatas);
-        names = ctxt;
-        return result;
+	TreeMap ctxt = new TreeMap();
+	final SnmpCachedData result = 
+	    super.updateCachedDatas(ctxt,rawDatas);
+	names = ctxt;
+	return result;
     }
-
-    static final MibLogger log = new MibLogger(SnmpNamedListTableCache.class);
+    
+    static final MibLogger log = new MibLogger(SnmpNamedListTableCache.class); 
 }

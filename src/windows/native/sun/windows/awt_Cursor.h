@@ -60,9 +60,9 @@ public:
 
     INLINE HCURSOR GetHCursor() {
         if (dirty) {
-            Rebuild();
-        }
-        return hCursor;
+	    Rebuild();
+	}
+	return hCursor;
     }
     static AwtCursor * CreateSystemCursor(jobject jCursor);
     static void UpdateCursor(AwtComponent *comp);

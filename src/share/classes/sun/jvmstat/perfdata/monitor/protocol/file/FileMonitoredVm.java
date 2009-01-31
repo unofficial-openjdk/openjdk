@@ -41,6 +41,7 @@ import java.io.*;
  * <em>file</em> URI to a file containing the instrmentation buffer data.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class FileMonitoredVm extends AbstractMonitoredVm {

@@ -31,6 +31,7 @@ import sun.jvmstat.monitor.MonitorException;
  * An interface for the JStatLogger formatting.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public interface OutputFormatter {

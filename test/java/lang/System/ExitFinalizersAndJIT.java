@@ -24,8 +24,8 @@
 /* @test
    @bug 4119554
    @summary runFinalizersOnExit(true) causes JIT to be unloaded and
-            crashes the VM.  Interim fix for 1.2 beta4 -- don't unload
-            native libraries loaded by system classes.
+	    crashes the VM.  Interim fix for 1.2 beta4 -- don't unload
+	    native libraries loaded by system classes.
 */
 
 public class ExitFinalizersAndJIT {

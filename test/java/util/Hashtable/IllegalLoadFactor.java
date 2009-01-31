@@ -23,7 +23,7 @@
 
 /* @test
    @bug 4093817 4189594
-   @summary Test for an illegalargumentexception on loadFactor
+   @summary Test for an illegalargumentexception on loadFactor 
 */
 
 
@@ -132,5 +132,5 @@ public class IllegalLoadFactor {
           Set goodSet = new HashSet(100, .69f);
           goodMap = new WeakHashMap(100, .69f);
      }
-
+       
 }

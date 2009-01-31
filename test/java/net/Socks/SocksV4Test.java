@@ -33,24 +33,24 @@ import java.io.*;
 
 public class SocksV4Test {
     public static void main(String[] args) throws IOException {
-        // Create a SOCKS V4 proxy on port 8888
+	// Create a SOCKS V4 proxy on port 8888
         SocksServer srvr = new SocksServer(8888, true);
-        srvr.start();
-        System.setProperty("socksProxyHost", "localhost");
-        System.setProperty("socksProxyPort", "8888");
-        // Let's create an unresolved address
-        InetSocketAddress ad = new InetSocketAddress("doesnt.exist.name", 1234);
-        Socket s = new Socket();
-        try {
-            s.connect(ad,10000);
-        } catch (UnknownHostException ex) {
-            // OK, that's what we expected
-        } catch (NullPointerException npe) {
-            // Not OK, this used to be the bug
-            throw new RuntimeException("Got a NUllPointerException");
-        } finally {
-            srvr.terminate();
-            srvr.interrupt();
-        }
+	srvr.start();
+	System.setProperty("socksProxyHost", "localhost");
+	System.setProperty("socksProxyPort", "8888");
+	// Let's create an unresolved address
+	InetSocketAddress ad = new InetSocketAddress("doesnt.exist.name", 1234);
+	Socket s = new Socket();
+	try {
+	    s.connect(ad,10000);
+	} catch (UnknownHostException ex) {
+	    // OK, that's what we expected
+	} catch (NullPointerException npe) {
+	    // Not OK, this used to be the bug
+	    throw new RuntimeException("Got a NUllPointerException");
+	} finally {
+	    srvr.terminate();
+	    srvr.interrupt();
+	}
     }
 }

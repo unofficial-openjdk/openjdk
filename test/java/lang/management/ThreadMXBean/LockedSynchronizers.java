@@ -30,9 +30,9 @@
  *
  * @author  Mandy Chung
  *
- * @build Barrier
+ * @build Barrier 
  * @build SynchronizerLockingThread
- * @build ThreadDump
+ * @build ThreadDump 
  * @run main LockedSynchronizers
  */
 

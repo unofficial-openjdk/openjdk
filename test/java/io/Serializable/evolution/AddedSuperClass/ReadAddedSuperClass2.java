@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
 
 /*
  * @bug 4070080
- *
+ * 
  * @build WriteAddedSuperClass ReadAddedSuperClass2
  * @run main ReadAddedSuperClass2
  * @summary  2nd part of test deserializes the serialization stream into an
@@ -53,10 +53,10 @@ class A implements Serializable {
 
 public class ReadAddedSuperClass2 {
     public static void main(String args[]) throws IOException, ClassNotFoundException {
-        File f = new File("tmp.ser");
-        ObjectInput in =
-            new ObjectInputStream(new FileInputStream(f));
-        A a = (A)in.readObject();
-        in.close();
+	File f = new File("tmp.ser");
+	ObjectInput in =
+	    new ObjectInputStream(new FileInputStream(f));
+	A a = (A)in.readObject();
+	in.close();
     }
 }

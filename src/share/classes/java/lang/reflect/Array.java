@@ -62,17 +62,17 @@ class Array {
      * @exception NullPointerException if the specified
      * {@code componentType} parameter is null
      * @exception IllegalArgumentException if componentType is {@link Void#TYPE}
-     * @exception NegativeArraySizeException if the specified {@code length}
+     * @exception NegativeArraySizeException if the specified {@code length} 
      * is negative
      */
     public static Object newInstance(Class<?> componentType, int length)
-        throws NegativeArraySizeException {
-        return newArray(componentType, length);
+	throws NegativeArraySizeException {
+	return newArray(componentType, length);
     }
 
     /**
      * Creates a new array
-     * with the specified component type and dimensions.
+     * with the specified component type and dimensions. 
      * If {@code componentType}
      * represents a non-array class or interface, the new array
      * has {@code dimensions.length} dimensions and
@@ -83,7 +83,7 @@ class Array {
      * dimensions of {@code componentType}. In this case, the
      * component type of the new array is the component type of
      * {@code componentType}.
-     *
+     * 
      * <p>The number of dimensions of the new array must not
      * exceed the number of array dimensions supported by the
      * implementation (typically 255).
@@ -93,19 +93,19 @@ class Array {
      * @param dimensions an array of {@code int} representing the dimensions of
      * the new array
      * @return the new array
-     * @exception NullPointerException if the specified
+     * @exception NullPointerException if the specified 
      * {@code componentType} argument is null
-     * @exception IllegalArgumentException if the specified {@code dimensions}
+     * @exception IllegalArgumentException if the specified {@code dimensions} 
      * argument is a zero-dimensional array, or if the number of
-     * requested dimensions exceeds the limit on the number of array dimensions
-     * supported by the implementation (typically 255), or if componentType
+     * requested dimensions exceeds the limit on the number of array dimensions 
+     * supported by the implementation (typically 255), or if componentType 
      * is {@link Void#TYPE}.
      * @exception NegativeArraySizeException if any of the components in
      * the specified {@code dimensions} argument is negative.
      */
     public static Object newInstance(Class<?> componentType, int... dimensions)
-        throws IllegalArgumentException, NegativeArraySizeException {
-        return multiNewArray(componentType, dimensions);
+	throws IllegalArgumentException, NegativeArraySizeException {
+	return multiNewArray(componentType, dimensions);
     }
 
     /**
@@ -117,7 +117,7 @@ class Array {
      * an array
      */
     public static native int getLength(Object array)
-        throws IllegalArgumentException;
+	throws IllegalArgumentException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -131,12 +131,12 @@ class Array {
      * @exception NullPointerException If the specified object is null
      * @exception IllegalArgumentException If the specified object is not
      * an array
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      */
     public static native Object get(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+ 	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -149,13 +149,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native boolean getBoolean(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -168,13 +168,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native byte getByte(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -187,13 +187,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native char getChar(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -206,13 +206,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native short getShort(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -225,13 +225,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native int getInt(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -244,13 +244,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native long getLong(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -263,13 +263,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native float getFloat(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Returns the value of the indexed component in the specified
@@ -282,13 +282,13 @@ class Array {
      * @exception IllegalArgumentException If the specified object is not
      * an array, or if the indexed element cannot be converted to the
      * return type by an identity or widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to the
      * length of the specified array
      * @see Array#get
      */
     public static native double getDouble(Object array, int index)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -303,12 +303,12 @@ class Array {
      * @exception IllegalArgumentException If the specified object argument
      * is not an array, or if the array component type is primitive and
      * an unwrapping conversion fails
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      */
     public static native void set(Object array, int index, Object value)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -322,13 +322,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setBoolean(Object array, int index, boolean z)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -342,13 +342,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setByte(Object array, int index, byte b)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -362,13 +362,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setChar(Object array, int index, char c)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -382,13 +382,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setShort(Object array, int index, short s)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -402,13 +402,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setInt(Object array, int index, int i)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -422,13 +422,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setLong(Object array, int index, long l)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -442,13 +442,13 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setFloat(Object array, int index, float f)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /**
      * Sets the value of the indexed component of the specified array
@@ -462,24 +462,24 @@ class Array {
      * is not an array, or if the specified value cannot be converted
      * to the underlying array's component type by an identity or a
      * primitive widening conversion
-     * @exception ArrayIndexOutOfBoundsException If the specified {@code index}
+     * @exception ArrayIndexOutOfBoundsException If the specified {@code index} 
      * argument is negative, or if it is greater than or equal to
      * the length of the specified array
      * @see Array#set
      */
     public static native void setDouble(Object array, int index, double d)
-        throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
+	throws IllegalArgumentException, ArrayIndexOutOfBoundsException;
 
     /*
      * Private
      */
 
     private static native Object newArray(Class componentType, int length)
-        throws NegativeArraySizeException;
+	throws NegativeArraySizeException;
 
     private static native Object multiNewArray(Class componentType,
-        int[] dimensions)
-        throws IllegalArgumentException, NegativeArraySizeException;
+	int[] dimensions)
+	throws IllegalArgumentException, NegativeArraySizeException;
 
 
 }

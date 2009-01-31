@@ -36,13 +36,13 @@ public class ConstructorScope extends AbstractScope<Constructor> {
 
     // constructor is private to enforce use of factory method
     private ConstructorScope(Constructor c){
-        super(c);
+	super(c);
     }
 
     // utility method; computes enclosing class, from which we can
     // derive enclosing scope.
-    private Class<?> getEnclosingClass(){
-        return getRecvr().getDeclaringClass();
+    private Class<?> getEnclosingClass(){ 
+	return getRecvr().getDeclaringClass();
     }
 
     /**
@@ -50,9 +50,9 @@ public class ConstructorScope extends AbstractScope<Constructor> {
      * @return the enclosing scope
      */
     protected Scope computeEnclosingScope() {
-        // the enclosing scope of a (generic) constructor is the scope of the
-        // class in which it was declared.
-        return ClassScope.make(getEnclosingClass());
+	// the enclosing scope of a (generic) constructor is the scope of the
+	// class in which it was declared.
+	return ClassScope.make(getEnclosingClass());
     }
 
     /**
@@ -61,7 +61,7 @@ public class ConstructorScope extends AbstractScope<Constructor> {
      * @param m - A Constructor whose scope we want to obtain
      * @return The type-variable scope for the constructor m
      */
-    public static ConstructorScope make(Constructor c) {
-        return new ConstructorScope(c);
+    public static ConstructorScope make(Constructor c) { 
+	return new ConstructorScope(c);
     }
 }

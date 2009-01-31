@@ -73,7 +73,7 @@ UINT AwtMenuItem::m_CodePage =
 BOOL AwtMenuItem::m_isWin95 = IS_WIN95;
 BOOL AwtMenuItem::sm_rtl = PRIMARYLANGID(GetInputLanguage()) == LANG_ARABIC ||
                            PRIMARYLANGID(GetInputLanguage()) == LANG_HEBREW;
-BOOL AwtMenuItem::sm_rtlReadingOrder =
+BOOL AwtMenuItem::sm_rtlReadingOrder = 
     PRIMARYLANGID(GetInputLanguage()) == LANG_ARABIC;
 
 /*
@@ -196,26 +196,26 @@ AwtMenuItem* AwtMenuItem::Create(jobject peer, jobject menuPeer)
 
     try {
         if (env->EnsureLocalCapacity(1) < 0) {
-            return NULL;
-        }
-        PDATA pData;
-        JNI_CHECK_PEER_RETURN_NULL(menuPeer);
+	    return NULL;
+	}
+	PDATA pData;
+	JNI_CHECK_PEER_RETURN_NULL(menuPeer);
 
-        /* target is a java.awt.MenuItem  */
-        target = env->GetObjectField(peer, AwtObject::targetID);
+	/* target is a java.awt.MenuItem  */
+	target = env->GetObjectField(peer, AwtObject::targetID);
 
-        AwtMenu* menu = (AwtMenu *)pData;
-        item = new AwtMenuItem();
+	AwtMenu* menu = (AwtMenu *)pData;
+	item = new AwtMenuItem();
         jboolean isCheckbox =
             (jboolean)env->GetBooleanField(peer, AwtMenuItem::isCheckboxID);
         if (isCheckbox) {
             item->SetCheckbox();
         }
 
-        item->LinkObjects(env, peer);
-        item->SetMenuContainer(menu);
-        item->SetNewID();
-        menu->AddItem(item);
+	item->LinkObjects(env, peer);
+	item->SetMenuContainer(menu);
+	item->SetNewID();
+	menu->AddItem(item);
     } catch (...) {
         env->DeleteLocalRef(target);
         throw;
@@ -266,7 +266,7 @@ AwtMenuItem::DrawSelf(DRAWITEMSTRUCT& drawInfo)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(4) < 0) {
-        return;
+	return;
     }
 
     // self is sun.awt.windows.WMenuItemPeer
@@ -305,16 +305,16 @@ AwtMenuItem::DrawSelf(DRAWITEMSTRUCT& drawInfo)
 
     //Check whether the MenuItem is disabled.
     BOOL bEnabled = (jboolean)env->GetBooleanField(target,
-                                                   AwtMenuItem::enabledID);
+						   AwtMenuItem::enabledID);
     if (menu != NULL) {
         bEnabled = bEnabled && !menu->IsDisabledAndPopup();
     }
 
     if ((drawInfo.itemState) & (ODS_SELECTED)) {
-        // Set background and text colors for selected item
-        crBack = ::GetSysColor (COLOR_HIGHLIGHT);
+	// Set background and text colors for selected item
+	crBack = ::GetSysColor (COLOR_HIGHLIGHT);
         // Disabled text must be drawn in gray.
-        crText = ::GetSysColor(bEnabled? COLOR_HIGHLIGHTTEXT : COLOR_GRAYTEXT);
+	crText = ::GetSysColor(bEnabled? COLOR_HIGHLIGHTTEXT : COLOR_GRAYTEXT);
     } else {
         // COLOR_MENUBAR is only defined on WindowsXP. Our binaries are
         // built on NT, hence the below ifdef.
@@ -322,14 +322,14 @@ AwtMenuItem::DrawSelf(DRAWITEMSTRUCT& drawInfo)
 #ifndef COLOR_MENUBAR
 #define COLOR_MENUBAR 30
 #endif
-        // Set background and text colors for unselected item
+	// Set background and text colors for unselected item
         if (IS_WINXP && IsTopMenu() && AwtDesktopProperties::IsXPStyle()) {
             crBack = ::GetSysColor (COLOR_MENUBAR);
         } else {
             crBack = ::GetSysColor (COLOR_MENU);
         }
         // Disabled text must be drawn in gray.
-        crText = ::GetSysColor (bEnabled ? COLOR_MENUTEXT : COLOR_GRAYTEXT);
+	crText = ::GetSysColor (bEnabled ? COLOR_MENUTEXT : COLOR_GRAYTEXT);
     }
 
     // Fill item rectangle with background color
@@ -374,11 +374,11 @@ AwtMenuItem::DrawSelf(DRAWITEMSTRUCT& drawInfo)
     //draw string
     if (!IsTopMenu()){
         textRect.left += checkWidth;
-        x = (GetRTL()) ? textRect.right - checkWidth - size.cx : textRect.left;
+	x = (GetRTL()) ? textRect.right - checkWidth - size.cx : textRect.left;
     } else {
         x = textRect.left = (textRect.left + textRect.right - size.cx) / 2;
     }
-
+    
     int y = (textRect.top+textRect.bottom-size.cy)/2;
 
     // Text must be drawn in emboss if the Menu is disabled and not selected.
@@ -391,19 +391,19 @@ AwtMenuItem::DrawSelf(DRAWITEMSTRUCT& drawInfo)
     AwtFont::drawMFString(hDC, font, text, x, y, GetCodePage());
 
     jstring shortcutLabel =
-        (jstring)env->GetObjectField(self, AwtMenuItem::shortcutLabelID);
+	(jstring)env->GetObjectField(self, AwtMenuItem::shortcutLabelID);
     if (!IsTopMenu() && shortcutLabel != NULL) {
         UINT oldAlign = 0;
-        if (GetRTL()){
-            oldAlign = ::SetTextAlign(hDC, TA_LEFT);
-            AwtFont::drawMFString(hDC, font, shortcutLabel, textRect.left, y,
-                                  GetCodePage());
-        } else {
-            oldAlign = ::SetTextAlign(hDC, TA_RIGHT);
-            AwtFont::drawMFString(hDC, font, shortcutLabel,
-                                  textRect.right - checkWidth, y,
-                                  GetCodePage());
-        }
+	if (GetRTL()){
+	    oldAlign = ::SetTextAlign(hDC, TA_LEFT);
+	    AwtFont::drawMFString(hDC, font, shortcutLabel, textRect.left, y,
+				  GetCodePage());
+	} else {
+	    oldAlign = ::SetTextAlign(hDC, TA_RIGHT);
+	    AwtFont::drawMFString(hDC, font, shortcutLabel,
+				  textRect.right - checkWidth, y, 
+				  GetCodePage());
+	}
 
         ::SetTextAlign(hDC, oldAlign);
     }
@@ -435,7 +435,7 @@ void AwtMenuItem::DrawItem(DRAWITEMSTRUCT& drawInfo)
     if (drawInfo.itemID != m_Id)
         return;
 
-    /* Fixed bug 4349969. Since the problem occurs on Windows 98 and not on
+    /* Fixed bug 4349969. Since the problem occurs on Windows 98 and not on 
        Windows NT, the fix is to check for Windows 95/98 and to check if the
        handle to the menu of the item to be drawn is the same as the handle to the
        menu of the menu object. If they're not the same, just return and don't do
@@ -451,7 +451,7 @@ void AwtMenuItem::MeasureSelf(HDC hDC, MEASUREITEMSTRUCT& measureInfo)
 {
     JNIEnv *env =(JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     if (env->EnsureLocalCapacity(4) < 0) {
-        return;
+	return;
     }
 
     /* self is a sun.awt.windows.WMenuItemPeer */
@@ -474,8 +474,8 @@ void AwtMenuItem::MeasureSelf(HDC hDC, MEASUREITEMSTRUCT& measureInfo)
     }
 
     jstring fontName =
-        (jstring)JNU_CallMethodByName(env, 0,font, "getName",
-                                      "()Ljava/lang/String;").l;
+	(jstring)JNU_CallMethodByName(env, 0,font, "getName",
+				      "()Ljava/lang/String;").l;
     /* fontMetrics is a Hsun_awt_windows_WFontMetrics */
     jobject fontMetrics =  GetFontMetrics(env, font);
 
@@ -494,15 +494,15 @@ void AwtMenuItem::MeasureSelf(HDC hDC, MEASUREITEMSTRUCT& measureInfo)
         if (IS_WINVISTA) {
             AdjustCheckWidth(checkWidth);
         }
-        measureInfo.itemWidth += checkWidth;
+	measureInfo.itemWidth += checkWidth;
 
         // Add in shortcut width, if one exists.
-        jstring shortcutLabel =
-            (jstring)env->GetObjectField(self, AwtMenuItem::shortcutLabelID);
+	jstring shortcutLabel =
+	    (jstring)env->GetObjectField(self, AwtMenuItem::shortcutLabelID);
         if (shortcutLabel != NULL) {
             size = AwtFont::getMFStringSize(hDC, font, shortcutLabel);
             measureInfo.itemWidth += size.cx + checkWidth;
-            env->DeleteLocalRef(shortcutLabel);
+	    env->DeleteLocalRef(shortcutLabel);
         }
     }
     env->DeleteLocalRef(text);
@@ -516,7 +516,7 @@ void AwtMenuItem::MeasureItem(HDC hDC, MEASUREITEMSTRUCT& measureInfo)
     DASSERT(measureInfo.CtlType == ODT_MENU);
 
     if (measureInfo.itemID != m_Id)
-        return;
+	return;
 
     MeasureSelf(hDC, measureInfo);
 }
@@ -526,13 +526,13 @@ jobject AwtMenuItem::GetFontMetrics(JNIEnv *env, jobject font)
     static jobject toolkit = NULL;
     if (toolkit == NULL) {
         if (env->PushLocalFrame(2) < 0)
-            return NULL;
-        jclass cls = env->FindClass("java/awt/Toolkit");
-        jobject toolkitLocal =
-            env->CallStaticObjectMethod(cls, AwtToolkit::getDefaultToolkitMID);
-        toolkit = env->NewGlobalRef(toolkitLocal);
-        DASSERT(!safe_ExceptionOccurred(env));
-        env->PopLocalFrame(0);
+	    return NULL;
+	jclass cls = env->FindClass("java/awt/Toolkit");
+	jobject toolkitLocal =
+	    env->CallStaticObjectMethod(cls, AwtToolkit::getDefaultToolkitMID);
+	toolkit = env->NewGlobalRef(toolkitLocal);
+	DASSERT(!safe_ExceptionOccurred(env));
+	env->PopLocalFrame(0);
     }
     /*
     JNU_PrintClass(env, "toolkit", toolkit);
@@ -540,10 +540,10 @@ jobject AwtMenuItem::GetFontMetrics(JNIEnv *env, jobject font)
 
     jclass cls = env->FindClass("java/awt/Toolkit");
     jmethodID mid = env->GetMethodID(cls, "getFontMetrics",
-                                     "(Ljava/awt/Font;)Ljava/awt/FontMetrics;");
+				     "(Ljava/awt/Font;)Ljava/awt/FontMetrics;");
     jstring fontName =
-        (jstring)JNU_CallMethodByName(env, 0,font, "getName",
-                                      "()Ljava/lang/String;").l;
+	(jstring)JNU_CallMethodByName(env, 0,font, "getName",
+				      "()Ljava/lang/String;").l;
     JNU_PrintString(env, "font name", fontName);
 
     fprintf(stderr, "mid: %x\n", mid);
@@ -637,7 +637,7 @@ void AwtMenuItem::SetLabel(LPCTSTR sb)
     int nMenuItemCount = ::GetMenuItemCount(hMenu);;
     int idx;
     for (idx = 0; (idx < nMenuItemCount); idx++) {
-        memset(&mii1, 0, sizeof(MENUITEMINFO));
+	memset(&mii1, 0, sizeof(MENUITEMINFO));
         mii1.cbSize = sizeof mii1;
         mii1.fMask = MIIM_ID;
         ::GetMenuItemInfo(hMenu, idx, TRUE, &mii1);
@@ -693,31 +693,31 @@ void AwtMenuItem::SetState(BOOL isChecked)
 LRESULT AwtMenuItem::WinThreadExecProc(ExecuteArgs * args)
 {
     switch( args->cmdId ) {
-        case MENUITEM_SETLABEL:
-        {
-            LPCTSTR sb = (LPCTSTR)args->param1;
-            DASSERT(!IsBadStringPtr(sb, 20));
-            this->SetLabel(sb);
-        }
-        break;
+	case MENUITEM_SETLABEL:
+	{
+	    LPCTSTR sb = (LPCTSTR)args->param1;
+	    DASSERT(!IsBadStringPtr(sb, 20));
+	    this->SetLabel(sb);
+	}
+	break;
 
-        case MENUITEM_ENABLE:
-        {
-            BOOL        isEnabled = (BOOL)args->param1;
-            this->Enable(isEnabled);
-        }
-        break;
+	case MENUITEM_ENABLE:
+	{
+	    BOOL	isEnabled = (BOOL)args->param1;
+	    this->Enable(isEnabled);
+	}
+	break;
 
-        case MENUITEM_SETSTATE:
-        {
-            BOOL        isChecked = (BOOL)args->param1;
-            this->SetState(isChecked);
-        }
-        break;
+	case MENUITEM_SETSTATE:
+	{
+	    BOOL	isChecked = (BOOL)args->param1;
+	    this->SetState(isChecked);
+	}
+	break;
 
-        default:
-            AwtObject::WinThreadExecProc(args);
-            break;
+	default:
+	    AwtObject::WinThreadExecProc(args);
+	    break;
     }
     return 0L;
 }
@@ -738,7 +738,7 @@ void AwtMenuItem::_SetLabel(void *param)
     m = (AwtMenuItem *)pData;
 //    if (::IsWindow(m->GetOwnerHWnd()))
     {
-        // fix for bug 4251036 MenuItem setLabel(null/"") behaves differently
+        // fix for bug 4251036 MenuItem setLabel(null/"") behaves differently 
         // under Win32 and Solaris
         jstring empty = NULL;
         if (JNU_IsNull(env, label))
@@ -754,7 +754,7 @@ void AwtMenuItem::_SetLabel(void *param)
         {
             labelPtr = JNU_GetStringPlatformChars(env, label, 0);
         }
-        if (labelPtr == NULL)
+        if (labelPtr == NULL) 
         {
             badAlloc = 1;
         }
@@ -895,9 +895,9 @@ Java_sun_awt_windows_WMenuItemPeer_initIDs(JNIEnv *env, jclass cls)
 
     AwtMenuItem::isCheckboxID = env->GetFieldID(cls, "isCheckbox", "Z");
     AwtMenuItem::shortcutLabelID = env->GetFieldID(cls, "shortcutLabel",
-                                                   "Ljava/lang/String;");
+						   "Ljava/lang/String;");
     AwtMenuItem::getDefaultFontMID =
-        env->GetStaticMethodID(cls, "getDefaultFont", "()Ljava/awt/Font;");
+	env->GetStaticMethodID(cls, "getDefaultFont", "()Ljava/awt/Font;");
 
     DASSERT(AwtMenuItem::isCheckboxID != NULL);
     DASSERT(AwtMenuItem::shortcutLabelID != NULL);
@@ -913,7 +913,7 @@ Java_sun_awt_windows_WMenuItemPeer_initIDs(JNIEnv *env, jclass cls)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WMenuItemPeer__1setLabel(JNIEnv *env, jobject self,
-                                              jstring label)
+					      jstring label)
 {
     TRY;
 
@@ -934,14 +934,14 @@ Java_sun_awt_windows_WMenuItemPeer__1setLabel(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WMenuItemPeer_create(JNIEnv *env, jobject self,
-                                          jobject menu)
+					  jobject menu)
 {
     TRY;
 
     JNI_CHECK_NULL_RETURN(menu, "null Menu");
     AwtToolkit::CreateComponent(self, menu,
-                                (AwtToolkit::ComponentFactory)
-                                AwtMenuItem::Create);
+				(AwtToolkit::ComponentFactory)
+				AwtMenuItem::Create);
     PDATA pData;
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
@@ -955,7 +955,7 @@ Java_sun_awt_windows_WMenuItemPeer_create(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WMenuItemPeer_enable(JNIEnv *env, jobject self,
-                                          jboolean on)
+					  jboolean on)
 {
     TRY;
 
@@ -997,7 +997,7 @@ extern "C" {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WCheckboxMenuItemPeer_setState(JNIEnv *env, jobject self,
-                                                    jboolean on)
+						    jboolean on)
 {
     TRY;
 

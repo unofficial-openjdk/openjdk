@@ -32,8 +32,8 @@ import java.net.*;
 
 public class Receive {
     public static void main(String args[]) throws Exception {
-        ByteBuffer bb = ByteBuffer.allocate(10);
-        DatagramChannel dc1 = DatagramChannel.open();
+	ByteBuffer bb = ByteBuffer.allocate(10);
+	DatagramChannel dc1 = DatagramChannel.open();
         dc1.close();
         try {
             dc1.receive(bb);

@@ -113,19 +113,19 @@ JNIEXPORT void JNICALL
 Java_sun_awt_motif_MScrollbarPeer_initIDs(JNIEnv *env, jclass cls)
 {
     peerIDs.lineUp =
-        (*env)->GetMethodID(env, cls, "lineUp",   "(I)V");
+	(*env)->GetMethodID(env, cls, "lineUp",   "(I)V");
     peerIDs.lineDown =
-        (*env)->GetMethodID(env, cls, "lineDown", "(I)V");
+	(*env)->GetMethodID(env, cls, "lineDown", "(I)V");
     peerIDs.pageUp =
-        (*env)->GetMethodID(env, cls, "pageUp",   "(I)V");
+	(*env)->GetMethodID(env, cls, "pageUp",   "(I)V");
     peerIDs.pageDown =
-        (*env)->GetMethodID(env, cls, "pageDown", "(I)V");
+	(*env)->GetMethodID(env, cls, "pageDown", "(I)V");
     peerIDs.drag =
-        (*env)->GetMethodID(env, cls, "drag",     "(I)V");
+	(*env)->GetMethodID(env, cls, "drag",     "(I)V");
     peerIDs.dragEnd =
-        (*env)->GetMethodID(env, cls, "dragEnd",  "(I)V");
+	(*env)->GetMethodID(env, cls, "dragEnd",  "(I)V");
     peerIDs.warp =
-        (*env)->GetMethodID(env, cls, "warp",     "(I)V");
+	(*env)->GetMethodID(env, cls, "warp",     "(I)V");
 }
 
 /*
@@ -221,7 +221,7 @@ Java_sun_awt_motif_MScrollbarPeer_create(JNIEnv *env, jobject this,
 
     jobject target;
     XtPointer globalRef = (XtPointer) /* jobject */
-        awtJNI_CreateAndSetGlobalRef(env, this);
+	awtJNI_CreateAndSetGlobalRef(env, this);
 
     struct ComponentData *pdata; /* for parent     */
     struct ComponentData *sdata; /* for scrollbar */
@@ -241,11 +241,11 @@ Java_sun_awt_motif_MScrollbarPeer_create(JNIEnv *env, jobject this,
     if (JNU_IsNull(env, parent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
-        return;
+	return;
     }
 
     pdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, parent, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, parent, mComponentPeerIDs.pData);
 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
 
@@ -258,19 +258,19 @@ Java_sun_awt_motif_MScrollbarPeer_create(JNIEnv *env, jobject this,
 
     switch ((*env)->GetIntField(env, target, targetIDs.orientation)) {
       case java_awt_Scrollbar_HORIZONTAL:
-          XtSetArg(args[argc], XmNorientation, XmHORIZONTAL);
-          argc++;
-          break;
+	  XtSetArg(args[argc], XmNorientation, XmHORIZONTAL);
+	  argc++;
+	  break;
 
       case java_awt_Scrollbar_VERTICAL:
-          XtSetArg(args[argc], XmNorientation, XmVERTICAL);
-          argc++;
-          break;
+	  XtSetArg(args[argc], XmNorientation, XmVERTICAL);
+	  argc++;
+	  break;
 
       default:
-          JNU_ThrowIllegalArgumentException(env, "bad scrollbar orientation");
-          AWT_UNLOCK();
-          return;
+	  JNU_ThrowIllegalArgumentException(env, "bad scrollbar orientation");
+	  AWT_UNLOCK();
+	  return;
     }
 
     adata = copyGraphicsConfigToPeer(env, this);
@@ -281,9 +281,9 @@ Java_sun_awt_motif_MScrollbarPeer_create(JNIEnv *env, jobject this,
     minimum = (int32_t) (*env)->GetIntField(env, target, targetIDs.minimum);
     maximum = (int32_t) (*env)->GetIntField(env, target, targetIDs.maximum);
     lineIncrement =
-              (int32_t) (*env)->GetIntField(env, target, targetIDs.lineIncrement);
+	      (int32_t) (*env)->GetIntField(env, target, targetIDs.lineIncrement);
     pageIncrement =
-              (int32_t) (*env)->GetIntField(env, target, targetIDs.pageIncrement);
+	      (int32_t) (*env)->GetIntField(env, target, targetIDs.pageIncrement);
 
     /*
      * Sanity check.  Scrollbar.setValues should have taken care.
@@ -294,22 +294,22 @@ Java_sun_awt_motif_MScrollbarPeer_create(JNIEnv *env, jobject this,
     DASSERT(value >= minimum);
     DASSERT(value <= maximum - visible);
 
-    XtSetArg(args[argc], XmNx,             0);                  argc++;
-    XtSetArg(args[argc], XmNy,             0);                  argc++;
-    XtSetArg(args[argc], XmNvalue,         value);              argc++;
-    XtSetArg(args[argc], XmNsliderSize,    visible);            argc++;
-    XtSetArg(args[argc], XmNminimum,       minimum);            argc++;
-    XtSetArg(args[argc], XmNmaximum,       maximum);            argc++;
-    XtSetArg(args[argc], XmNincrement,     lineIncrement);      argc++;
-    XtSetArg(args[argc], XmNpageIncrement, pageIncrement);      argc++;
-    XtSetArg(args[argc], XmNbackground,    bg);                 argc++;
-    XtSetArg(args[argc], XmNrecomputeSize, False);              argc++;
-    XtSetArg(args[argc], XmNuserData,      globalRef);          argc++;
+    XtSetArg(args[argc], XmNx,		   0);			argc++;
+    XtSetArg(args[argc], XmNy,		   0);			argc++;
+    XtSetArg(args[argc], XmNvalue,	   value);		argc++;
+    XtSetArg(args[argc], XmNsliderSize,	   visible);		argc++;
+    XtSetArg(args[argc], XmNminimum,	   minimum);		argc++;
+    XtSetArg(args[argc], XmNmaximum,	   maximum);		argc++;
+    XtSetArg(args[argc], XmNincrement,	   lineIncrement);	argc++;
+    XtSetArg(args[argc], XmNpageIncrement, pageIncrement);	argc++;
+    XtSetArg(args[argc], XmNbackground,	   bg);			argc++;
+    XtSetArg(args[argc], XmNrecomputeSize, False);		argc++;
+    XtSetArg(args[argc], XmNuserData,	   globalRef);		argc++;
     XtSetArg(args[argc], XmNscreen,
-                             ScreenOfDisplay(awt_display,
-                                 adata->awt_visInfo.screen));   argc++;
+			     ScreenOfDisplay(awt_display,
+				 adata->awt_visInfo.screen));	argc++;
 
-    DASSERT(argc <= MAX_ARGC);  /* sanity check */
+    DASSERT(argc <= MAX_ARGC);	/* sanity check */
 
     sdata = ZALLOC(ComponentData);
     if (sdata == NULL) {
@@ -321,28 +321,28 @@ Java_sun_awt_motif_MScrollbarPeer_create(JNIEnv *env, jobject this,
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.pData, sdata);
 
     sdata->widget = w =
-        XmCreateScrollBar(pdata->widget, "scrollbar", args, argc);
+	XmCreateScrollBar(pdata->widget, "scrollbar", args, argc);
 
     XtAddCallback(w, XmNdecrementCallback,
-        (XtCallbackProc)decrementCallback, globalRef);
+	(XtCallbackProc)decrementCallback, globalRef);
     XtAddCallback(w, XmNincrementCallback,
-        (XtCallbackProc)incrementCallback, globalRef);
+	(XtCallbackProc)incrementCallback, globalRef);
     XtAddCallback(w, XmNpageDecrementCallback,
-        (XtCallbackProc)pageDecrementCallback, globalRef);
+	(XtCallbackProc)pageDecrementCallback, globalRef);
     XtAddCallback(w, XmNpageIncrementCallback,
-        (XtCallbackProc)pageIncrementCallback, globalRef);
+	(XtCallbackProc)pageIncrementCallback, globalRef);
     XtAddCallback(w, XmNtoTopCallback,
-        (XtCallbackProc)toTopCallback, globalRef);
+	(XtCallbackProc)toTopCallback, globalRef);
     XtAddCallback(w, XmNtoBottomCallback,
-        (XtCallbackProc)toBottomCallback, globalRef);
+	(XtCallbackProc)toBottomCallback, globalRef);
     XtAddCallback(w, XmNdragCallback,
-        (XtCallbackProc)dragCallback, globalRef);
+	(XtCallbackProc)dragCallback, globalRef);
     XtAddCallback(w, XmNvalueChangedCallback,
-        (XtCallbackProc)dragEndCallback, globalRef);
+	(XtCallbackProc)dragEndCallback, globalRef);
 
     /* Set up workaround for the continuous scrolling bug */
     XtAddEventHandler(w, ButtonReleaseMask, False,
-        awt_motif_Scrollbar_ButtonReleaseHandler, NULL);
+	awt_motif_Scrollbar_ButtonReleaseHandler, NULL);
 
     /* Fix for 4955950. ButtonRelease & MotionNotify should be handled as well */
     XtAddEventHandler(w, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
@@ -368,7 +368,7 @@ Java_sun_awt_motif_MScrollbarPeer_pSetValues(JNIEnv *env, jobject this,
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (sdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -400,7 +400,7 @@ Java_sun_awt_motif_MScrollbarPeer_setLineIncrement(JNIEnv *env, jobject this,
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (sdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -427,7 +427,7 @@ Java_sun_awt_motif_MScrollbarPeer_setPageIncrement(JNIEnv *env, jobject this,
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (sdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -438,3 +438,4 @@ Java_sun_awt_motif_MScrollbarPeer_setPageIncrement(JNIEnv *env, jobject this,
                   NULL);
     AWT_FLUSH_UNLOCK();
 }
+

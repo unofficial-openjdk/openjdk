@@ -56,239 +56,240 @@ import java.security.SecureRandom;
  * there may me many NativePRNG instances created by the JCA framework.
  *
  * @since   1.5
+ * @version %I%, %G%
  * @author  Andreas Sterbenz
  */
 public final class NativePRNG extends SecureRandomSpi {
-
+    
     private static final long serialVersionUID = -6599091113397072932L;
 
     // name of the pure random file (also used for setSeed())
     private static final String NAME_RANDOM = "/dev/random";
     // name of the pseudo random file
     private static final String NAME_URANDOM = "/dev/urandom";
-
+    
     // singleton instance or null if not available
     private static final RandomIO INSTANCE = initIO();
-
+    
     private static RandomIO initIO() {
-        Object o = AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
-                File randomFile = new File(NAME_RANDOM);
-                if (randomFile.exists() == false) {
-                    return null;
-                }
-                File urandomFile = new File(NAME_URANDOM);
-                if (urandomFile.exists() == false) {
-                    return null;
-                }
-                try {
-                    return new RandomIO(randomFile, urandomFile);
-                } catch (Exception e) {
-                    return null;
-                }
-            }
-        });
-        return (RandomIO)o;
+	Object o = AccessController.doPrivileged(new PrivilegedAction() {
+	    public Object run() {
+		File randomFile = new File(NAME_RANDOM);
+		if (randomFile.exists() == false) {
+		    return null;
+		}
+		File urandomFile = new File(NAME_URANDOM);
+		if (urandomFile.exists() == false) {
+		    return null;
+		}
+		try {
+		    return new RandomIO(randomFile, urandomFile);
+		} catch (Exception e) {
+		    return null;
+		}
+	    }
+	});
+	return (RandomIO)o;
     }
-
+    
     // return whether the NativePRNG is available
     static boolean isAvailable() {
-        return INSTANCE != null;
+	return INSTANCE != null;
     }
-
+    
     // constructor, called by the JCA framework
     public NativePRNG() {
-        super();
-        if (INSTANCE == null) {
-            throw new AssertionError("NativePRNG not available");
-        }
+	super();
+	if (INSTANCE == null) {
+	    throw new AssertionError("NativePRNG not available");
+	}
     }
-
+    
     // set the seed
     protected void engineSetSeed(byte[] seed) {
-        INSTANCE.implSetSeed(seed);
+	INSTANCE.implSetSeed(seed);
     }
-
+    
     // get pseudo random bytes
     protected void engineNextBytes(byte[] bytes) {
-        INSTANCE.implNextBytes(bytes);
+	INSTANCE.implNextBytes(bytes);
     }
-
+    
     // get true random bytes
     protected byte[] engineGenerateSeed(int numBytes) {
-        return INSTANCE.implGenerateSeed(numBytes);
+	return INSTANCE.implGenerateSeed(numBytes);
     }
-
+    
     /**
      * Nested class doing the actual work. Singleton, see INSTANCE above.
      */
     private static class RandomIO {
+	
+	// we buffer data we read from /dev/urandom for efficiency,
+	// but we limit the lifetime to avoid using stale bits
+	// lifetime in ms, currently 100 ms (0.1 s)
+	private final static long MAX_BUFFER_TIME = 100;
+	
+	// size of the /dev/urandom buffer
+	private final static int BUFFER_SIZE = 32;
+	
+	// In/OutputStream for /dev/random and /dev/urandom
+	private final InputStream randomIn, urandomIn;
+	private OutputStream randomOut;
+	
+	// flag indicating if we have tried to open randomOut yet
+	private boolean randomOutInitialized;
+	
+	// SHA1PRNG instance for mixing
+	// initialized lazily on demand to avoid problems during startup
+	private volatile sun.security.provider.SecureRandom mixRandom;
+	
+	// buffer for /dev/urandom bits
+	private final byte[] urandomBuffer;
+	
+	// number of bytes left in urandomBuffer
+	private int buffered;
+	
+	// time we read the data into the urandomBuffer
+	private long lastRead;
+	
+	// mutex lock for nextBytes()
+	private final Object LOCK_GET_BYTES = new Object();
 
-        // we buffer data we read from /dev/urandom for efficiency,
-        // but we limit the lifetime to avoid using stale bits
-        // lifetime in ms, currently 100 ms (0.1 s)
-        private final static long MAX_BUFFER_TIME = 100;
+	// mutex lock for getSeed()
+	private final Object LOCK_GET_SEED = new Object();
 
-        // size of the /dev/urandom buffer
-        private final static int BUFFER_SIZE = 32;
-
-        // In/OutputStream for /dev/random and /dev/urandom
-        private final InputStream randomIn, urandomIn;
-        private OutputStream randomOut;
-
-        // flag indicating if we have tried to open randomOut yet
-        private boolean randomOutInitialized;
-
-        // SHA1PRNG instance for mixing
-        // initialized lazily on demand to avoid problems during startup
-        private volatile sun.security.provider.SecureRandom mixRandom;
-
-        // buffer for /dev/urandom bits
-        private final byte[] urandomBuffer;
-
-        // number of bytes left in urandomBuffer
-        private int buffered;
-
-        // time we read the data into the urandomBuffer
-        private long lastRead;
-
-        // mutex lock for nextBytes()
-        private final Object LOCK_GET_BYTES = new Object();
-
-        // mutex lock for getSeed()
-        private final Object LOCK_GET_SEED = new Object();
-
-        // mutex lock for setSeed()
-        private final Object LOCK_SET_SEED = new Object();
-
-        // constructor, called only once from initIO()
-        private RandomIO(File randomFile, File urandomFile) throws IOException {
-            randomIn = new FileInputStream(randomFile);
-            urandomIn = new FileInputStream(urandomFile);
-            urandomBuffer = new byte[BUFFER_SIZE];
-        }
-
-        // get the SHA1PRNG for mixing
-        // initialize if not yet created
-        private sun.security.provider.SecureRandom getMixRandom() {
-            sun.security.provider.SecureRandom r = mixRandom;
-            if (r == null) {
-                synchronized (LOCK_GET_BYTES) {
-                    r = mixRandom;
-                    if (r == null) {
-                        r = new sun.security.provider.SecureRandom();
-                        try {
-                            byte[] b = new byte[20];
-                            readFully(urandomIn, b);
-                            r.engineSetSeed(b);
-                        } catch (IOException e) {
-                            throw new ProviderException("init failed", e);
-                        }
-                        mixRandom = r;
-                    }
-                }
-            }
-            return r;
-        }
-
-        // read data.length bytes from in
-        // /dev/[u]random are not normal files, so we need to loop the read.
-        // just keep trying as long as we are making progress
-        private static void readFully(InputStream in, byte[] data)
-                throws IOException {
-            int len = data.length;
-            int ofs = 0;
-            while (len > 0) {
-                int k = in.read(data, ofs, len);
-                if (k <= 0) {
-                    throw new EOFException("/dev/[u]random closed?");
-                }
-                ofs += k;
-                len -= k;
-            }
-            if (len > 0) {
-                throw new IOException("Could not read from /dev/[u]random");
-            }
-        }
-
-        // get true random bytes, just read from /dev/random
-        private byte[] implGenerateSeed(int numBytes) {
-            synchronized (LOCK_GET_SEED) {
-                try {
-                    byte[] b = new byte[numBytes];
-                    readFully(randomIn, b);
-                    return b;
-                } catch (IOException e) {
-                    throw new ProviderException("generateSeed() failed", e);
-                }
-            }
-        }
-
-        // supply random bytes to the OS
-        // write to /dev/random if possible
-        // always add the seed to our mixing random
-        private void implSetSeed(byte[] seed) {
-            synchronized (LOCK_SET_SEED) {
-                if (randomOutInitialized == false) {
-                    randomOutInitialized = true;
-                    randomOut = AccessController.doPrivileged(
-                            new PrivilegedAction<OutputStream>() {
-                        public OutputStream run() {
-                            try {
-                                return new FileOutputStream(NAME_RANDOM, true);
-                            } catch (Exception e) {
-                                return null;
-                            }
-                        }
-                    });
-                }
-                if (randomOut != null) {
-                    try {
-                        randomOut.write(seed);
-                    } catch (IOException e) {
-                        throw new ProviderException("setSeed() failed", e);
-                    }
-                }
-                getMixRandom().engineSetSeed(seed);
-            }
-        }
-
-        // ensure that there is at least one valid byte in the buffer
-        // if not, read new bytes
-        private void ensureBufferValid() throws IOException {
-            long time = System.currentTimeMillis();
-            if ((buffered > 0) && (time - lastRead < MAX_BUFFER_TIME)) {
-                return;
-            }
-            lastRead = time;
-            readFully(urandomIn, urandomBuffer);
-            buffered = urandomBuffer.length;
-        }
-
-        // get pseudo random bytes
-        // read from /dev/urandom and XOR with bytes generated by the
-        // mixing SHA1PRNG
-        private void implNextBytes(byte[] data) {
-            synchronized (LOCK_GET_BYTES) {
-                try {
-                    getMixRandom().engineNextBytes(data);
-                    int len = data.length;
-                    int ofs = 0;
-                    while (len > 0) {
-                        ensureBufferValid();
-                        int bufferOfs = urandomBuffer.length - buffered;
-                        while ((len > 0) && (buffered > 0)) {
-                            data[ofs++] ^= urandomBuffer[bufferOfs++];
-                            len--;
-                            buffered--;
-                        }
-                    }
-                } catch (IOException e) {
-                    throw new ProviderException("nextBytes() failed", e);
-                }
-            }
-        }
-
+	// mutex lock for setSeed()
+	private final Object LOCK_SET_SEED = new Object();
+	
+	// constructor, called only once from initIO()
+	private RandomIO(File randomFile, File urandomFile) throws IOException {
+	    randomIn = new FileInputStream(randomFile);
+	    urandomIn = new FileInputStream(urandomFile);
+	    urandomBuffer = new byte[BUFFER_SIZE];
+	}
+	
+	// get the SHA1PRNG for mixing
+	// initialize if not yet created
+	private sun.security.provider.SecureRandom getMixRandom() {
+	    sun.security.provider.SecureRandom r = mixRandom;
+	    if (r == null) {
+		synchronized (LOCK_GET_BYTES) {
+		    r = mixRandom;
+		    if (r == null) {
+			r = new sun.security.provider.SecureRandom();
+			try {
+			    byte[] b = new byte[20];
+			    readFully(urandomIn, b);
+			    r.engineSetSeed(b);
+			} catch (IOException e) {
+			    throw new ProviderException("init failed", e);
+			}
+			mixRandom = r;
+		    }
+		}
+	    }
+	    return r;
+	}
+	
+	// read data.length bytes from in
+	// /dev/[u]random are not normal files, so we need to loop the read.
+	// just keep trying as long as we are making progress
+	private static void readFully(InputStream in, byte[] data) 
+		throws IOException {
+	    int len = data.length;
+	    int ofs = 0;
+	    while (len > 0) {
+		int k = in.read(data, ofs, len);
+		if (k <= 0) {
+		    throw new EOFException("/dev/[u]random closed?");
+		}
+		ofs += k;
+		len -= k;
+	    }
+	    if (len > 0) {
+		throw new IOException("Could not read from /dev/[u]random");
+	    }
+	}
+	
+	// get true random bytes, just read from /dev/random
+	private byte[] implGenerateSeed(int numBytes) {
+	    synchronized (LOCK_GET_SEED) {
+		try {
+		    byte[] b = new byte[numBytes];
+		    readFully(randomIn, b);
+		    return b;
+		} catch (IOException e) {
+		    throw new ProviderException("generateSeed() failed", e);
+		}
+	    }
+	}
+	
+	// supply random bytes to the OS
+	// write to /dev/random if possible
+	// always add the seed to our mixing random
+	private void implSetSeed(byte[] seed) {
+	    synchronized (LOCK_SET_SEED) {
+		if (randomOutInitialized == false) {
+		    randomOutInitialized = true;
+		    randomOut = AccessController.doPrivileged(
+			    new PrivilegedAction<OutputStream>() {
+			public OutputStream run() {
+			    try {
+				return new FileOutputStream(NAME_RANDOM, true);
+			    } catch (Exception e) {
+				return null;
+			    }
+			}
+		    });
+		}
+		if (randomOut != null) {
+		    try {
+			randomOut.write(seed);
+		    } catch (IOException e) {
+			throw new ProviderException("setSeed() failed", e);
+		    }
+		}
+		getMixRandom().engineSetSeed(seed);
+	    }
+	}
+	
+	// ensure that there is at least one valid byte in the buffer
+	// if not, read new bytes
+	private void ensureBufferValid() throws IOException {
+	    long time = System.currentTimeMillis();
+	    if ((buffered > 0) && (time - lastRead < MAX_BUFFER_TIME)) {
+		return;
+	    }
+	    lastRead = time;
+	    readFully(urandomIn, urandomBuffer);
+	    buffered = urandomBuffer.length;
+	}
+    
+    	// get pseudo random bytes
+	// read from /dev/urandom and XOR with bytes generated by the
+	// mixing SHA1PRNG
+	private void implNextBytes(byte[] data) {
+	    synchronized (LOCK_GET_BYTES) {
+		try {
+		    getMixRandom().engineNextBytes(data);
+		    int len = data.length;
+		    int ofs = 0;
+		    while (len > 0) {
+			ensureBufferValid();
+			int bufferOfs = urandomBuffer.length - buffered;
+			while ((len > 0) && (buffered > 0)) {
+			    data[ofs++] ^= urandomBuffer[bufferOfs++];
+			    len--;
+			    buffered--;
+			}
+		    }
+		} catch (IOException e) {
+		    throw new ProviderException("nextBytes() failed", e);
+		}
+	    }
+	}
+	
     }
-
+    
 }

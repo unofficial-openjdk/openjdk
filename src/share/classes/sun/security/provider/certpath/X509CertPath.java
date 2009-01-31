@@ -59,8 +59,9 @@ import sun.security.util.DerInputStream;
  * departure from this convention and throw a
  * <code>CertPathValidatorException</code>.
  *
- * @author      Yassir Elley
- * @since       1.4
+ * @version 	%I%, %G%
+ * @author	Yassir Elley
+ * @since	1.4
  */
 public class X509CertPath extends CertPath {
 
@@ -82,14 +83,14 @@ public class X509CertPath extends CertPath {
      * List of supported encodings
      */
     private static final Collection<String> encodingList;
-
+    
     static {
-        List<String> list = new ArrayList<String>(2);
-        list.add(PKIPATH_ENCODING);
-        list.add(PKCS7_ENCODING);
-        encodingList = Collections.unmodifiableCollection(list);
+ 	List<String> list = new ArrayList<String>(2);
+	list.add(PKIPATH_ENCODING);
+	list.add(PKCS7_ENCODING);
+	encodingList = Collections.unmodifiableCollection(list);
     }
-
+   
     /**
      * Creates an <code>X509CertPath</code> from a <code>List</code> of
      * <code>X509Certificate</code>s.
@@ -102,23 +103,23 @@ public class X509CertPath extends CertPath {
      *                      that is not an <code>X509Certificate</code>
      */
     public X509CertPath(List<? extends Certificate> certs) throws CertificateException {
-        super("X.509");
+	super("X.509");
 
-        // Ensure that the List contains only X509Certificates
-        for (Object obj : (List<?>)certs) {
-            if (obj instanceof X509Certificate == false) {
-                throw new CertificateException
-                    ("List is not all X509Certificates: "
-                    + obj.getClass().getName());
-            }
-        }
+	// Ensure that the List contains only X509Certificates
+	for (Object obj : (List<?>)certs) {
+	    if (obj instanceof X509Certificate == false) {
+		throw new CertificateException
+		    ("List is not all X509Certificates: "
+		    + obj.getClass().getName());
+	    }
+	}
 
         // Assumes that the resulting List is thread-safe. This is true
-        // because we ensure that it cannot be modified after construction
+        // because we ensure that it cannot be modified after construction 
         // and the methods in the Sun JDK 1.4 implementation of ArrayList that
         // allow read-only access are thread-safe.
-        this.certs = Collections.unmodifiableList(
-                new ArrayList<X509Certificate>((List<X509Certificate>)certs));
+	this.certs = Collections.unmodifiableList(
+		new ArrayList<X509Certificate>((List<X509Certificate>)certs));
     }
 
     /**
@@ -143,17 +144,17 @@ public class X509CertPath extends CertPath {
      * @exception CertificateException if an exception occurs while decoding or
      *   the encoding requested is not supported
      */
-    public X509CertPath(InputStream is, String encoding)
-            throws CertificateException {
+    public X509CertPath(InputStream is, String encoding) 
+	    throws CertificateException {
         super("X.509");
 
         if (PKIPATH_ENCODING.equals(encoding)) {
-            certs = parsePKIPATH(is);
+	    certs = parsePKIPATH(is);
         } else if (PKCS7_ENCODING.equals(encoding)) {
-            certs = parsePKCS7(is);
+	    certs = parsePKCS7(is);
         } else {
-            throw new CertificateException("unsupported encoding");
-        }
+	    throw new CertificateException("unsupported encoding");
+	}
     }
 
     /**
@@ -164,38 +165,38 @@ public class X509CertPath extends CertPath {
      * @return an unmodifiable List of the certificates
      * @exception CertificateException if an exception occurs
      */
-    private static List<X509Certificate> parsePKIPATH(InputStream is)
-            throws CertificateException {
+    private static List<X509Certificate> parsePKIPATH(InputStream is) 
+	    throws CertificateException {
         List<X509Certificate> certList = null;
         CertificateFactory certFac = null;
 
-        if (is == null) {
-            throw new CertificateException("input stream is null");
-        }
+	if (is == null) {
+	    throw new CertificateException("input stream is null");
+	}
 
         try {
-            DerInputStream dis = new DerInputStream(readAllBytes(is));
+	    DerInputStream dis = new DerInputStream(readAllBytes(is));
             DerValue[] seq = dis.getSequence(3);
-            if (seq.length == 0) {
-                return Collections.<X509Certificate>emptyList();
-            }
+	    if (seq.length == 0) {
+		return Collections.<X509Certificate>emptyList();
+	    }
 
-            certFac = CertificateFactory.getInstance("X.509");
-            certList = new ArrayList<X509Certificate>(seq.length);
+	    certFac = CertificateFactory.getInstance("X.509");
+	    certList = new ArrayList<X509Certificate>(seq.length);
 
-            // append certs in reverse order (target to trust anchor)
-            for (int i = seq.length-1; i >= 0; i--) {
-                certList.add((X509Certificate)certFac.generateCertificate
-                    (new ByteArrayInputStream(seq[i].toByteArray())));
-            }
+	    // append certs in reverse order (target to trust anchor)
+	    for (int i = seq.length-1; i >= 0; i--) {
+		certList.add((X509Certificate)certFac.generateCertificate
+		    (new ByteArrayInputStream(seq[i].toByteArray())));
+	    }
 
-            return Collections.unmodifiableList(certList);
+	    return Collections.unmodifiableList(certList);
 
         } catch (IOException ioe) {
-            CertificateException ce = new CertificateException("IOException" +
-                " parsing PkiPath data: " + ioe);
-            ce.initCause(ioe);
-            throw ce;
+	    CertificateException ce = new CertificateException("IOException" +
+		" parsing PkiPath data: " + ioe);
+	    ce.initCause(ioe);
+	    throw ce;
         }
     }
 
@@ -207,36 +208,36 @@ public class X509CertPath extends CertPath {
      * @return an unmodifiable List of the certificates
      * @exception CertificateException if an exception occurs
      */
-    private static List<X509Certificate> parsePKCS7(InputStream is)
-            throws CertificateException {
+    private static List<X509Certificate> parsePKCS7(InputStream is) 
+	    throws CertificateException {
         List<X509Certificate> certList;
 
-        if (is == null) {
-            throw new CertificateException("input stream is null");
-        }
+	if (is == null) {
+	    throw new CertificateException("input stream is null");
+	}
 
         try {
-            if (is.markSupported() == false) {
-                // Copy the entire input stream into an InputStream that does
-                // support mark
-                is = new ByteArrayInputStream(readAllBytes(is));
-            };
-            PKCS7 pkcs7 = new PKCS7(is);
-
-            X509Certificate[] certArray = pkcs7.getCertificates();
-            // certs are optional in PKCS #7
-            if (certArray != null) {
-                certList = Arrays.asList(certArray);
-            } else {
-                // no certs provided
-                certList = new ArrayList<X509Certificate>(0);
-            }
+	    if (is.markSupported() == false) {
+	        // Copy the entire input stream into an InputStream that does
+	        // support mark
+	        is = new ByteArrayInputStream(readAllBytes(is));
+	    };
+	    PKCS7 pkcs7 = new PKCS7(is);
+    
+	    X509Certificate[] certArray = pkcs7.getCertificates();
+	    // certs are optional in PKCS #7
+	    if (certArray != null) {
+	        certList = Arrays.asList(certArray);
+	    } else {
+	        // no certs provided
+	        certList = new ArrayList<X509Certificate>(0);
+	    }
         } catch (IOException ioe) {
-            throw new CertificateException("IOException parsing PKCS7 data: " +
-                                        ioe);
+	    throw new CertificateException("IOException parsing PKCS7 data: " +
+					ioe);
         }
         // Assumes that the resulting List is thread-safe. This is true
-        // because we ensure that it cannot be modified after construction
+        // because we ensure that it cannot be modified after construction 
         // and the methods in the Sun JDK 1.4 implementation of ArrayList that
         // allow read-only access are thread-safe.
         return Collections.unmodifiableList(certList);
@@ -249,13 +250,13 @@ public class X509CertPath extends CertPath {
      * @return the bytes read from the InputStream
      */
     private static byte[] readAllBytes(InputStream is) throws IOException {
-        byte[] buffer = new byte[8192];
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
-        int n;
-        while ((n = is.read(buffer)) != -1) {
-            baos.write(buffer, 0, n);
-        }
-        return baos.toByteArray();
+	byte[] buffer = new byte[8192];
+	ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
+	int n;
+	while ((n = is.read(buffer)) != -1) {
+	    baos.write(buffer, 0, n);
+	}
+	return baos.toByteArray();
     }
 
     /**
@@ -281,19 +282,19 @@ public class X509CertPath extends CertPath {
         ListIterator<X509Certificate> li = certs.listIterator(certs.size());
         try {
             DerOutputStream bytes = new DerOutputStream();
-            // encode certs in reverse order (trust anchor to target)
+	    // encode certs in reverse order (trust anchor to target) 
             // according to PkiPath format
-            while (li.hasPrevious()) {
-                X509Certificate cert = li.previous();
-                // check for duplicate cert
-                if (certs.lastIndexOf(cert) != certs.indexOf(cert)) {
-                    throw new CertificateEncodingException
-                        ("Duplicate Certificate");
-                }
-                // get encoded certificates
+	    while (li.hasPrevious()) {
+	        X509Certificate cert = li.previous();
+	        // check for duplicate cert
+	        if (certs.lastIndexOf(cert) != certs.indexOf(cert)) {
+		    throw new CertificateEncodingException
+		    	("Duplicate Certificate");
+	        }
+      	        // get encoded certificates
                 byte[] encoded = cert.getEncoded();
                 bytes.write(encoded);
-            }
+	    }
 
             // Wrap the data in a SEQUENCE
             DerOutputStream derout = new DerOutputStream();
@@ -316,18 +317,18 @@ public class X509CertPath extends CertPath {
      */
     private byte[] encodePKCS7() throws CertificateEncodingException {
         PKCS7 p7 = new PKCS7(new AlgorithmId[0],
-                             new ContentInfo(ContentInfo.DATA_OID, null),
-                             certs.toArray(new X509Certificate[certs.size()]),
-                             new SignerInfo[0]);
+			     new ContentInfo(ContentInfo.DATA_OID, null),
+			     certs.toArray(new X509Certificate[certs.size()]),
+			     new SignerInfo[0]);
         DerOutputStream derout = new DerOutputStream();
         try {
-            p7.encodeSignedData(derout);
+	    p7.encodeSignedData(derout);
         } catch (IOException ioe) {
-            throw new CertificateEncodingException(ioe.getMessage());
+	    throw new CertificateEncodingException(ioe.getMessage());
         }
         return derout.toByteArray();
     }
-
+    
     /**
      * Returns the encoded form of this certification path, using the
      * specified encoding.
@@ -337,15 +338,15 @@ public class X509CertPath extends CertPath {
      * @exception CertificateEncodingException if an encoding error occurs or
      *   the encoding requested is not supported
      */
-    public byte[] getEncoded(String encoding)
-            throws CertificateEncodingException {
+    public byte[] getEncoded(String encoding) 
+	    throws CertificateEncodingException {
         if (PKIPATH_ENCODING.equals(encoding)) {
-            return encodePKIPATH();
-        } else if (PKCS7_ENCODING.equals(encoding)) {
-            return encodePKCS7();
-        } else {
-            throw new CertificateEncodingException("unsupported encoding");
-        }
+	    return encodePKIPATH();
+	} else if (PKCS7_ENCODING.equals(encoding)) {
+	    return encodePKCS7();
+	} else {
+	    throw new CertificateEncodingException("unsupported encoding");
+	}
     }
 
     /**
@@ -358,9 +359,9 @@ public class X509CertPath extends CertPath {
     public static Iterator<String> getEncodingsStatic() {
         return encodingList.iterator();
     }
-
+      
     /**
-     * Returns an iteration of the encodings supported by this certification
+     * Returns an iteration of the encodings supported by this certification 
      * path, with the default encoding first.
      * <p>
      * Attempts to modify the returned <code>Iterator</code> via its

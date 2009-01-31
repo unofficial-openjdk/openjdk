@@ -111,13 +111,13 @@ mlib_d64 vis_d64_div_tbl[256] = {
 /***************************************************************/
 
 static void vis_ByteGrayBlendMask(mlib_u8  *rasBase,
-                                  mlib_u8  *pMask,
-                                  mlib_s32 rasScan,
-                                  mlib_s32 maskScan,
-                                  mlib_s32 width,
-                                  mlib_s32 height,
-                                  mlib_s32 *a0_S32,
-                                  mlib_s32 srcG)
+				  mlib_u8  *pMask,
+				  mlib_s32 rasScan,
+				  mlib_s32 maskScan,
+				  mlib_s32 width,
+				  mlib_s32 height,
+				  mlib_s32 *a0_S32,
+				  mlib_s32 srcG)
 {
     mlib_f32 ff, srcG_f;
     mlib_d64 dd, a0, a1;
@@ -133,73 +133,73 @@ static void vis_ByteGrayBlendMask(mlib_u8  *rasBase,
     vis_write_gsr((0 << 3) | 6);
 
     for (j = 0; j < height; j++) {
-        mlib_u8 *dst = rasBase;
-        mlib_u8 *dst_end;
+	mlib_u8 *dst = rasBase;
+	mlib_u8 *dst_end;
 
-        dst_end = dst + width;
+	dst_end = dst + width;
 
-        while (((mlib_s32)dst & 3) && dst < dst_end) {
-            dd = vis_ld_u8(dst);
-            pathA = *pMask++;
-            a0 = vis_ld_u16(a0_S32 + pathA);
-            a1 = vis_fpsub16(d_one, a0);
-            a0 = vis_fmul8x16(vis_read_lo(dd), a0);
-            a1 = vis_fmul8x16(srcG_f, a1);
-            a0 = vis_fpadd16(a0, d_round);
-            a0 = vis_fpadd16(a0, a1);
-            ff = vis_fpack16(a0);
-            dd = D64_FROM_F32x2(ff);
-            vis_st_u8(dd, dst);
-            dst++;
-        }
+	while (((mlib_s32)dst & 3) && dst < dst_end) {
+	    dd = vis_ld_u8(dst);
+	    pathA = *pMask++;
+	    a0 = vis_ld_u16(a0_S32 + pathA);
+	    a1 = vis_fpsub16(d_one, a0);
+	    a0 = vis_fmul8x16(vis_read_lo(dd), a0);
+	    a1 = vis_fmul8x16(srcG_f, a1);
+	    a0 = vis_fpadd16(a0, d_round);
+	    a0 = vis_fpadd16(a0, a1);
+	    ff = vis_fpack16(a0);
+	    dd = D64_FROM_F32x2(ff);
+	    vis_st_u8(dd, dst);
+	    dst++;
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= (dst_end - 4); dst += 4) {
-            ff = *(mlib_f32*)dst;
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[3]), a0);
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[2]), a0);
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[1]), a0);
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[0]), a0);
-            a1 = vis_fpsub16(d_one, a0);
-            a0 = vis_fmul8x16(ff, a0);
-            a1 = vis_fmul8x16(srcG_f, a1);
-            a0 = vis_fpadd16(a0, d_round);
-            a0 = vis_fpadd16(a0, a1);
-            ff = vis_fpack16(a0);
-            *(mlib_f32*)dst = ff;
-            pMask += 4;
-        }
+	for (; dst <= (dst_end - 4); dst += 4) {
+	    ff = *(mlib_f32*)dst;
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[3]), a0);
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[2]), a0);
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[1]), a0);
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[0]), a0);
+	    a1 = vis_fpsub16(d_one, a0);
+	    a0 = vis_fmul8x16(ff, a0);
+	    a1 = vis_fmul8x16(srcG_f, a1);
+	    a0 = vis_fpadd16(a0, d_round);
+	    a0 = vis_fpadd16(a0, a1);
+	    ff = vis_fpack16(a0);
+	    *(mlib_f32*)dst = ff;
+	    pMask += 4;
+	}
 
-        while (dst < dst_end) {
-            dd = vis_ld_u8(dst);
-            pathA = *pMask++;
-            a0 = vis_ld_u16(a0_S32 + pathA);
-            a1 = vis_fpsub16(d_one, a0);
-            a0 = vis_fmul8x16(vis_read_lo(dd), a0);
-            a1 = vis_fmul8x16(srcG_f, a1);
-            a0 = vis_fpadd16(a0, d_round);
-            a0 = vis_fpadd16(a0, a1);
-            ff = vis_fpack16(a0);
-            dd = D64_FROM_F32x2(ff);
-            vis_st_u8(dd, dst);
-            dst++;
-        }
+	while (dst < dst_end) {
+	    dd = vis_ld_u8(dst);
+	    pathA = *pMask++;
+	    a0 = vis_ld_u16(a0_S32 + pathA);
+	    a1 = vis_fpsub16(d_one, a0);
+	    a0 = vis_fmul8x16(vis_read_lo(dd), a0);
+	    a1 = vis_fmul8x16(srcG_f, a1);
+	    a0 = vis_fpadd16(a0, d_round);
+	    a0 = vis_fpadd16(a0, a1);
+	    ff = vis_fpack16(a0);
+	    dd = D64_FROM_F32x2(ff);
+	    vis_st_u8(dd, dst);
+	    dst++;
+	}
 
-        PTR_ADD(rasBase, rasScan);
-        PTR_ADD(pMask, maskScan);
+	PTR_ADD(rasBase, rasScan);
+	PTR_ADD(pMask, maskScan);
     }
 }
 
 /***************************************************************/
 
 static void vis_ByteGrayBlendMask2(mlib_u8  *rasBase,
-                                  mlib_u8  *pMask,
-                                  mlib_s32 rasScan,
-                                  mlib_s32 maskScan,
-                                  mlib_s32 width,
-                                  mlib_s32 height,
-                                  mlib_s32 *a0_S32,
-                                  mlib_s16 *d1_S16)
+				  mlib_u8  *pMask,
+				  mlib_s32 rasScan,
+				  mlib_s32 maskScan,
+				  mlib_s32 width,
+				  mlib_s32 height,
+				  mlib_s32 *a0_S32,
+				  mlib_s16 *d1_S16)
 {
     mlib_f32 ff;
     mlib_d64 dd, a0, a1;
@@ -210,68 +210,68 @@ static void vis_ByteGrayBlendMask2(mlib_u8  *rasBase,
     vis_write_gsr((0 << 3) | 6);
 
     for (j = 0; j < height; j++) {
-        mlib_u8 *dst = rasBase;
-        mlib_u8 *dst_end;
+	mlib_u8 *dst = rasBase;
+	mlib_u8 *dst_end;
 
-        dst_end = dst + width;
+	dst_end = dst + width;
 
-        while (((mlib_s32)dst & 3) && dst < dst_end) {
-            dd = vis_ld_u8(dst);
-            pathA = *pMask++;
-            a0 = vis_ld_u16(a0_S32 + pathA);
-            a1 = vis_ld_u16(d1_S16 + pathA);
-            a0 = vis_fmul8x16(vis_read_lo(dd), a0);
-            a0 = vis_fpadd16(a0, a1);
-            ff = vis_fpack16(a0);
-            dd = D64_FROM_F32x2(ff);
-            vis_st_u8(dd, dst);
-            dst++;
-        }
+	while (((mlib_s32)dst & 3) && dst < dst_end) {
+	    dd = vis_ld_u8(dst);
+	    pathA = *pMask++;
+	    a0 = vis_ld_u16(a0_S32 + pathA);
+	    a1 = vis_ld_u16(d1_S16 + pathA);
+	    a0 = vis_fmul8x16(vis_read_lo(dd), a0);
+	    a0 = vis_fpadd16(a0, a1);
+	    ff = vis_fpack16(a0);
+	    dd = D64_FROM_F32x2(ff);
+	    vis_st_u8(dd, dst);
+	    dst++;
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= (dst_end - 4); dst += 4) {
-            ff = *(mlib_f32*)dst;
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[3]), a0);
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[2]), a0);
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[1]), a0);
-            a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[0]), a0);
-            a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[3]), a1);
-            a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[2]), a1);
-            a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[1]), a1);
-            a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[0]), a1);
-            a0 = vis_fmul8x16(ff, a0);
-            a0 = vis_fpadd16(a0, a1);
-            ff = vis_fpack16(a0);
-            *(mlib_f32*)dst = ff;
-            pMask += 4;
-        }
+	for (; dst <= (dst_end - 4); dst += 4) {
+	    ff = *(mlib_f32*)dst;
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[3]), a0);
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[2]), a0);
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[1]), a0);
+	    a0 = vis_faligndata(vis_ld_u16(a0_S32 + pMask[0]), a0);
+	    a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[3]), a1);
+	    a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[2]), a1);
+	    a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[1]), a1);
+	    a1 = vis_faligndata(vis_ld_u16(d1_S16 + pMask[0]), a1);
+	    a0 = vis_fmul8x16(ff, a0);
+	    a0 = vis_fpadd16(a0, a1);
+	    ff = vis_fpack16(a0);
+	    *(mlib_f32*)dst = ff;
+	    pMask += 4;
+	}
 
-        while (dst < dst_end) {
-            dd = vis_ld_u8(dst);
-            pathA = *pMask++;
-            a0 = vis_ld_u16(a0_S32 + pathA);
-            a1 = vis_ld_u16(d1_S16 + pathA);
-            a0 = vis_fmul8x16(vis_read_lo(dd), a0);
-            a0 = vis_fpadd16(a0, a1);
-            ff = vis_fpack16(a0);
-            dd = D64_FROM_F32x2(ff);
-            vis_st_u8(dd, dst);
-            dst++;
-        }
+	while (dst < dst_end) {
+	    dd = vis_ld_u8(dst);
+	    pathA = *pMask++;
+	    a0 = vis_ld_u16(a0_S32 + pathA);
+	    a1 = vis_ld_u16(d1_S16 + pathA);
+	    a0 = vis_fmul8x16(vis_read_lo(dd), a0);
+	    a0 = vis_fpadd16(a0, a1);
+	    ff = vis_fpack16(a0);
+	    dd = D64_FROM_F32x2(ff);
+	    vis_st_u8(dd, dst);
+	    dst++;
+	}
 
-        PTR_ADD(rasBase, rasScan);
-        PTR_ADD(pMask, maskScan);
+	PTR_ADD(rasBase, rasScan);
+	PTR_ADD(pMask, maskScan);
     }
 }
 
 /***************************************************************/
 
 static void vis_ByteGrayBlend(mlib_u8  *rasBase,
-                              mlib_s32 rasScan,
-                              mlib_s32 width,
-                              mlib_s32 height,
-                              mlib_f32 a0,
-                              mlib_d64 d1)
+			      mlib_s32 rasScan,
+			      mlib_s32 width,
+			      mlib_s32 height,
+			      mlib_f32 a0,
+			      mlib_d64 d1)
 {
     mlib_f32 ff;
     mlib_d64 dd;
@@ -280,56 +280,56 @@ static void vis_ByteGrayBlend(mlib_u8  *rasBase,
     vis_write_gsr((0 << 3) | 6);
 
     for (j = 0; j < height; j++) {
-        mlib_u8 *dst = rasBase;
-        mlib_u8 *dst_end;
+	mlib_u8 *dst = rasBase;
+	mlib_u8 *dst_end;
 
-        dst_end = dst + width;
+	dst_end = dst + width;
 
-        while (((mlib_s32)dst & 3) && dst < dst_end) {
-            dd = vis_ld_u8(dst);
-            dd = vis_fmul8x16al(vis_read_lo(dd), a0);
-            dd = vis_fpadd16(dd, d1);
-            ff = vis_fpack16(dd);
-            dd = D64_FROM_F32x2(ff);
-            vis_st_u8(dd, dst);
-            dst++;
-        }
+	while (((mlib_s32)dst & 3) && dst < dst_end) {
+	    dd = vis_ld_u8(dst);
+	    dd = vis_fmul8x16al(vis_read_lo(dd), a0);
+	    dd = vis_fpadd16(dd, d1);
+	    ff = vis_fpack16(dd);
+	    dd = D64_FROM_F32x2(ff);
+	    vis_st_u8(dd, dst);
+	    dst++;
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= (dst_end - 4); dst += 4) {
-            ff = *(mlib_f32*)dst;
-            dd = vis_fmul8x16al(ff, a0);
-            dd = vis_fpadd16(dd, d1);
-            ff = vis_fpack16(dd);
-            *(mlib_f32*)dst = ff;
-        }
+	for (; dst <= (dst_end - 4); dst += 4) {
+	    ff = *(mlib_f32*)dst;
+	    dd = vis_fmul8x16al(ff, a0);
+	    dd = vis_fpadd16(dd, d1);
+	    ff = vis_fpack16(dd);
+	    *(mlib_f32*)dst = ff;
+	}
 
-        while (dst < dst_end) {
-            dd = vis_ld_u8(dst);
-            dd = vis_fmul8x16al(vis_read_lo(dd), a0);
-            dd = vis_fpadd16(dd, d1);
-            ff = vis_fpack16(dd);
-            dd = D64_FROM_F32x2(ff);
-            vis_st_u8(dd, dst);
-            dst++;
-        }
+	while (dst < dst_end) {
+	    dd = vis_ld_u8(dst);
+	    dd = vis_fmul8x16al(vis_read_lo(dd), a0);
+	    dd = vis_fpadd16(dd, d1);
+	    ff = vis_fpack16(dd);
+	    dd = D64_FROM_F32x2(ff);
+	    vis_st_u8(dd, dst);
+	    dst++;
+	}
 
-        PTR_ADD(rasBase, rasScan);
+	PTR_ADD(rasBase, rasScan);
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(ByteGraySrcMaskFill)(void *rasBase,
-                                   jubyte *pMask,
-                                   jint maskOff,
-                                   jint maskScan,
-                                   jint width,
-                                   jint height,
-                                   jint fgColor,
-                                   SurfaceDataRasInfo *pRasInfo,
-                                   NativePrimitive *pPrim,
-                                   CompositeInfo *pCompInfo)
+				   jubyte *pMask,
+				   jint maskOff,
+				   jint maskScan,
+				   jint width,
+				   jint height,
+				   jint fgColor,
+				   SurfaceDataRasInfo *pRasInfo,
+				   NativePrimitive *pPrim,
+				   CompositeInfo *pCompInfo)
 {
     mlib_s32 rasScan = pRasInfo->scanStride;
     mlib_s32 r, g, b, i, j;
@@ -347,70 +347,70 @@ void ADD_SUFF(ByteGraySrcMaskFill)(void *rasBase,
     if (srcA == 0) return;
 
     if (pMask == NULL) {
-        AnyByteSetRect(pRasInfo, 0, 0, width, height, srcG, pPrim, pCompInfo);
-        return;
+	AnyByteSetRect(pRasInfo, 0, 0, width, height, srcG, pPrim, pCompInfo);
+	return;
     }
 #else
     if (pMask == NULL) {
-        if (srcA == 0) srcG = 0;
-        ADD_SUFF(AnyByteSetRect)(pRasInfo,
-                                 pRasInfo->bounds.x1, pRasInfo->bounds.y1,
-                                 pRasInfo->bounds.x2, pRasInfo->bounds.y2,
-                                 srcG, pPrim, pCompInfo);
-        return;
+	if (srcA == 0) srcG = 0;
+	ADD_SUFF(AnyByteSetRect)(pRasInfo,
+				 pRasInfo->bounds.x1, pRasInfo->bounds.y1,
+				 pRasInfo->bounds.x2, pRasInfo->bounds.y2,
+				 srcG, pPrim, pCompInfo);
+	return;
     }
 #endif
 
     pMask += maskOff;
 
     if (width < 32) {
-        srcG = mul8table[srcA][srcG];
+	srcG = mul8table[srcA][srcG];
 
-        for (j = 0; j < height; j++) {
-            mlib_u8 *dst = rasBase;
+	for (j = 0; j < height; j++) {
+	    mlib_u8 *dst = rasBase;
 
-            for (i = 0; i < width; i++) {
-                pathA = pMask[i];
-                resG = dst[i];
-                dstF = 0xff - pathA;
-                resA = dstF + mul8table[pathA][srcA];
-                resG = mul8table[dstF][resG] + mul8table[pathA][srcG];
-                resG = div8table[resA][resG];
-                dst[i] = resG;
-            }
+	    for (i = 0; i < width; i++) {
+		pathA = pMask[i];
+		resG = dst[i];
+		dstF = 0xff - pathA;
+		resA = dstF + mul8table[pathA][srcA];
+		resG = mul8table[dstF][resG] + mul8table[pathA][srcG];
+		resG = div8table[resA][resG];
+		dst[i] = resG;
+	    }
 
-            PTR_ADD(rasBase, rasScan);
-            PTR_ADD(pMask, maskScan);
-        }
-        return;
+	    PTR_ADD(rasBase, rasScan);
+	    PTR_ADD(pMask, maskScan);
+	}
+	return;
     }
 
     dscale = (mlib_d64)(1 << 15)*(1 << 16);
     a0_S32[0] = dscale - 1;
 #pragma pipeloop(0)
     for (pathA = 1; pathA < 256; pathA++) {
-        dstF = 0xff - pathA;
-        resA = dstF + mul8table[pathA][srcA];
-        dstF = dscale*dstF*vis_d64_div_tbl[resA];
-        a0_S32[pathA] = dstF;
+	dstF = 0xff - pathA;
+	resA = dstF + mul8table[pathA][srcA];
+	dstF = dscale*dstF*vis_d64_div_tbl[resA];
+	a0_S32[pathA] = dstF;
     }
 
     vis_ByteGrayBlendMask(rasBase, pMask, rasScan, maskScan,
-                          width, height, a0_S32, srcG);
+			  width, height, a0_S32, srcG);
 }
 
 /***************************************************************/
 
 void ADD_SUFF(ByteGraySrcOverMaskFill)(void *rasBase,
-                                       jubyte *pMask,
-                                       jint maskOff,
-                                       jint maskScan,
-                                       jint width,
-                                       jint height,
-                                       jint fgColor,
-                                       SurfaceDataRasInfo *pRasInfo,
-                                       NativePrimitive *pPrim,
-                                       CompositeInfo *pCompInfo)
+				       jubyte *pMask,
+				       jint maskOff,
+				       jint maskScan,
+				       jint width,
+				       jint height,
+				       jint fgColor,
+				       SurfaceDataRasInfo *pRasInfo,
+				       NativePrimitive *pPrim,
+				       CompositeInfo *pCompInfo)
 {
     mlib_s32 rasScan = pRasInfo->scanStride;
     mlib_s32 r, g, b, i, j;
@@ -427,79 +427,79 @@ void ADD_SUFF(ByteGraySrcOverMaskFill)(void *rasBase,
     if (pMask != NULL) pMask += maskOff;
 
     if (width < 16) {
-        srcG = mul8table[srcA][srcG];
+	srcG = mul8table[srcA][srcG];
 
-        if (pMask != NULL) {
-            for (j = 0; j < height; j++) {
-                mlib_u8 *dst = rasBase;
+	if (pMask != NULL) {
+	    for (j = 0; j < height; j++) {
+		mlib_u8 *dst = rasBase;
 
-                for (i = 0; i < width; i++) {
-                    pathA = pMask[i];
-                    dstA = 0xff - mul8table[pathA][srcA];
-                    dst[i] = mul8table[dstA][dst[i]] + mul8table[pathA][srcG];
-                }
+		for (i = 0; i < width; i++) {
+		    pathA = pMask[i];
+		    dstA = 0xff - mul8table[pathA][srcA];
+		    dst[i] = mul8table[dstA][dst[i]] + mul8table[pathA][srcG];
+		}
 
-                PTR_ADD(rasBase, rasScan);
-                PTR_ADD(pMask, maskScan);
-            }
-        } else {
-            mlib_u8 *mul8_dstA = mul8table[0xff - srcA];
+		PTR_ADD(rasBase, rasScan);
+		PTR_ADD(pMask, maskScan);
+	    }
+	} else {
+	    mlib_u8 *mul8_dstA = mul8table[0xff - srcA];
 
-            for (j = 0; j < height; j++) {
-                mlib_u8 *dst = rasBase;
+	    for (j = 0; j < height; j++) {
+		mlib_u8 *dst = rasBase;
 
-                for (i = 0; i < width; i++) {
-                    dst[i] = mul8_dstA[dst[i]] + srcG;
-                }
+		for (i = 0; i < width; i++) {
+		    dst[i] = mul8_dstA[dst[i]] + srcG;
+		}
 
-                PTR_ADD(rasBase, rasScan);
-            }
-        }
-        return;
+		PTR_ADD(rasBase, rasScan);
+	    }
+	}
+	return;
     }
 
     if (pMask != NULL) {
-        mlib_s32 a0_S32[256];
-        mlib_d64 dscale = (mlib_d64)(1 << 15)*(1 << 16);
+	mlib_s32 a0_S32[256];
+	mlib_d64 dscale = (mlib_d64)(1 << 15)*(1 << 16);
 
-        a0_S32[0] = dscale - 1;
+	a0_S32[0] = dscale - 1;
 #pragma pipeloop(0)
-        for (pathA = 1; pathA < 256; pathA++) {
-            a0_S32[pathA] = dscale - pathA*srcA*(dscale*(1.0/(255*255)));
-        }
+	for (pathA = 1; pathA < 256; pathA++) {
+	    a0_S32[pathA] = dscale - pathA*srcA*(dscale*(1.0/(255*255)));
+	}
 
-        vis_ByteGrayBlendMask(rasBase, pMask, rasScan, maskScan,
-                              width, height, a0_S32, srcG);
+	vis_ByteGrayBlendMask(rasBase, pMask, rasScan, maskScan,
+			      width, height, a0_S32, srcG);
     } else {
-        mlib_s32 a0_int = (1 << 15)*(1.0 - srcA*(1.0/255));
-        mlib_f32 a0, a1, srcG_f;
-        mlib_d64 d1;
-        mlib_d64 d_round = vis_to_double_dup(((1 << 16) | 1) << 6);
+	mlib_s32 a0_int = (1 << 15)*(1.0 - srcA*(1.0/255));
+	mlib_f32 a0, a1, srcG_f;
+	mlib_d64 d1;
+	mlib_d64 d_round = vis_to_double_dup(((1 << 16) | 1) << 6);
 
-        srcG = (srcG << 8) | srcG;
-        srcG_f = vis_to_float((srcG << 16) | srcG);
+	srcG = (srcG << 8) | srcG;
+	srcG_f = vis_to_float((srcG << 16) | srcG);
 
-        a0 = vis_to_float(a0_int);
-        a1 = vis_to_float(0x7FFF - a0_int);
-        d1 = vis_fmul8x16al(srcG_f, a1);
-        d1 = vis_fpadd16(d1, d_round);
+	a0 = vis_to_float(a0_int);
+	a1 = vis_to_float(0x7FFF - a0_int);
+	d1 = vis_fmul8x16al(srcG_f, a1);
+	d1 = vis_fpadd16(d1, d_round);
 
-        vis_ByteGrayBlend(rasBase, rasScan, width, height, a0, d1);
+	vis_ByteGrayBlend(rasBase, rasScan, width, height, a0, d1);
     }
 }
 
 /***************************************************************/
 
 void ADD_SUFF(ByteGrayAlphaMaskFill)(void *rasBase,
-                                     jubyte *pMask,
-                                     jint maskOff,
-                                     jint maskScan,
-                                     jint width,
-                                     jint height,
-                                     jint fgColor,
-                                     SurfaceDataRasInfo *pRasInfo,
-                                     NativePrimitive *pPrim,
-                                     CompositeInfo *pCompInfo)
+				     jubyte *pMask,
+				     jint maskOff,
+				     jint maskScan,
+				     jint width,
+				     jint height,
+				     jint fgColor,
+				     SurfaceDataRasInfo *pRasInfo,
+				     NativePrimitive *pPrim,
+				     CompositeInfo *pCompInfo)
 {
     mlib_s32 rasScan = pRasInfo->scanStride;
     mlib_s32 pathA, srcA, srcG, dstA, dstFbase, srcFbase;
@@ -530,81 +530,81 @@ void ADD_SUFF(ByteGrayAlphaMaskFill)(void *rasBase,
     srcG = mul8table[srcA][srcG];
 
     if (width < 100) {
-        if (pMask != NULL) {
-            for (j = 0; j < height; j++) {
-                mlib_u8 *dst = rasBase;
+	if (pMask != NULL) {
+	    for (j = 0; j < height; j++) {
+		mlib_u8 *dst = rasBase;
 
-                for (i = 0; i < width; i++) {
-                    pathA = pMask[i];
-                    srcF = mul8table[pathA][srcFbase];
-                    dstA = 0xff - pathA + mul8table[pathA][dstFbase];
+		for (i = 0; i < width; i++) {
+		    pathA = pMask[i];
+		    srcF = mul8table[pathA][srcFbase];
+		    dstA = 0xff - pathA + mul8table[pathA][dstFbase];
 
-                    resA = dstA + mul8table[srcF][srcA];
-                    resG = mul8table[dstA][dst[i]] + mul8table[srcF][srcG];
+		    resA = dstA + mul8table[srcF][srcA];
+		    resG = mul8table[dstA][dst[i]] + mul8table[srcF][srcG];
 
-                    dst[i] = div8table[resA][resG];
-                }
+		    dst[i] = div8table[resA][resG];
+		}
 
-                PTR_ADD(rasBase, rasScan);
-                PTR_ADD(pMask, maskScan);
-            }
-        } else {
-            mlib_u8 *mul8_dstA;
+		PTR_ADD(rasBase, rasScan);
+		PTR_ADD(pMask, maskScan);
+	    }
+	} else {
+	    mlib_u8 *mul8_dstA;
 
-            srcF = srcFbase;
-            dstA = dstFbase;
-            resA = dstA + mul8table[srcF][srcA];
-            srcG = mul8table[srcF][srcG];
-            mul8_dstA = mul8table[dstA];
+	    srcF = srcFbase;
+	    dstA = dstFbase;
+	    resA = dstA + mul8table[srcF][srcA];
+	    srcG = mul8table[srcF][srcG];
+	    mul8_dstA = mul8table[dstA];
 
-            for (j = 0; j < height; j++) {
-                mlib_u8 *dst = rasBase;
+	    for (j = 0; j < height; j++) {
+		mlib_u8 *dst = rasBase;
 
-                for (i = 0; i < width; i++) {
-                    resG = mul8_dstA[dst[i]] + srcG;
-                    dst[i] = div8table[resA][resG];
-                }
+		for (i = 0; i < width; i++) {
+		    resG = mul8_dstA[dst[i]] + srcG;
+		    dst[i] = div8table[resA][resG];
+		}
 
-                PTR_ADD(rasBase, rasScan);
-            }
-        }
-        return;
+		PTR_ADD(rasBase, rasScan);
+	    }
+	}
+	return;
     }
 
     if (pMask != NULL) {
-        mlib_s32 a0_S32[256];
-        mlib_s16 d1_S16[256];
-        mlib_d64 dscale = (mlib_d64)(1 << 15)*(1 << 16);
+	mlib_s32 a0_S32[256];
+	mlib_s16 d1_S16[256];
+	mlib_d64 dscale = (mlib_d64)(1 << 15)*(1 << 16);
 
-        a0_S32[0] = dscale - 1;
-        d1_S16[0] = (1 << 6);
+	a0_S32[0] = dscale - 1;
+	d1_S16[0] = (1 << 6);
 #pragma pipeloop(0)
-        for (pathA = 1; pathA < 256; pathA++) {
-            srcF = mul8table[pathA][srcFbase];
-            dstA = 0xff - pathA + mul8table[pathA][dstFbase];
-            resA = dstA + mul8table[srcF][srcA];
-            a0_S32[pathA] = dscale*dstA*vis_d64_div_tbl[resA] + (1 << 15);
-            d1_S16[pathA] = (1 << 7)*srcG*srcF*vis_d64_div_tbl[resA] + (1 << 6);
-        }
+	for (pathA = 1; pathA < 256; pathA++) {
+	    srcF = mul8table[pathA][srcFbase];
+	    dstA = 0xff - pathA + mul8table[pathA][dstFbase];
+	    resA = dstA + mul8table[srcF][srcA];
+	    a0_S32[pathA] = dscale*dstA*vis_d64_div_tbl[resA] + (1 << 15);
+	    d1_S16[pathA] = (1 << 7)*srcG*srcF*vis_d64_div_tbl[resA] + (1 << 6);
+	}
 
-        vis_ByteGrayBlendMask2(rasBase, pMask, rasScan, maskScan,
-                               width, height, a0_S32, d1_S16);
+	vis_ByteGrayBlendMask2(rasBase, pMask, rasScan, maskScan,
+			       width, height, a0_S32, d1_S16);
     } else {
-        mlib_d64 dscale = (mlib_d64)(1 << 15)*(1 << 16);
-        mlib_s32 _a0, _d1;
-        mlib_f32 a0;
-        mlib_d64 d1;
+	mlib_d64 dscale = (mlib_d64)(1 << 15)*(1 << 16);
+	mlib_s32 _a0, _d1;
+	mlib_f32 a0;
+	mlib_d64 d1;
 
-        srcF = srcFbase;
-        dstA = dstFbase;
-        resA = dstA + mul8table[srcF][srcA];
-        _a0 = dscale*dstA*vis_d64_div_tbl[resA] + (1 << 15);
-        _d1 = (1 << 7)*vis_d64_div_tbl[resA]*srcF*srcG + (1 << 6);
+	srcF = srcFbase;
+	dstA = dstFbase;
+	resA = dstA + mul8table[srcF][srcA];
+	_a0 = dscale*dstA*vis_d64_div_tbl[resA] + (1 << 15);
+	_d1 = (1 << 7)*vis_d64_div_tbl[resA]*srcF*srcG + (1 << 6);
 
-        a0 = vis_to_float(_a0 >> 16);
-        d1 = vis_to_double_dup((_d1 << 16) | _d1);
+	a0 = vis_to_float(_a0 >> 16);
+	d1 = vis_to_double_dup((_d1 << 16) | _d1);
 
-        vis_ByteGrayBlend(rasBase, rasScan, width, height, a0, d1);
+	vis_ByteGrayBlend(rasBase, rasScan, width, height, a0, d1);
     }
 }
 
@@ -630,138 +630,138 @@ void ADD_SUFF(ByteGrayDrawGlyphListAA)(GLYPH_LIST_PARAMS)
     srcG = RGB2GRAY(r, g, b);
 
     if (clipRight - clipLeft >= 16) {
-        done = vis_to_double_dup(0x7fff7fff);
-        d_half = vis_to_double_dup((1 << (16 + 6)) | (1 << 6));
+	done = vis_to_double_dup(0x7fff7fff);
+	d_half = vis_to_double_dup((1 << (16 + 6)) | (1 << 6));
 
-        fgpixel &= 0xff;
-        fgpixel_f = F32_FROM_U8x4(fgpixel, fgpixel, fgpixel, fgpixel);
-        fgpixel_d = vis_freg_pair(fgpixel_f, fgpixel_f);
-        srcG_f = F32_FROM_U8x4(srcG, srcG, srcG, srcG);
+	fgpixel &= 0xff;
+	fgpixel_f = F32_FROM_U8x4(fgpixel, fgpixel, fgpixel, fgpixel);
+	fgpixel_d = vis_freg_pair(fgpixel_f, fgpixel_f);
+	srcG_f = F32_FROM_U8x4(srcG, srcG, srcG, srcG);
 
-        vis_write_gsr((0 << 3) | 6);
+	vis_write_gsr((0 << 3) | 6);
     }
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        const jubyte *pixels;
-        unsigned int rowBytes;
-        int left, top;
-        int width, height;
-        int right, bottom;
+	const jubyte *pixels;
+	unsigned int rowBytes;
+	int left, top;
+	int width, height;
+	int right, bottom;
 
-        pixels = (const jubyte *) glyphs[glyphCounter].pixels;
+	pixels = (const jubyte *) glyphs[glyphCounter].pixels;
 
-        if (!pixels) continue;
+	if (!pixels) continue;
 
-        left = glyphs[glyphCounter].x;
-        top = glyphs[glyphCounter].y;
-        width = glyphs[glyphCounter].width;
-        height = glyphs[glyphCounter].height;
-        rowBytes = width;
-        right = left + width;
-        bottom = top + height;
-        if (left < clipLeft) {
-            pixels += clipLeft - left;
-            left = clipLeft;
-        }
-        if (top < clipTop) {
-            pixels += (clipTop - top) * rowBytes;
-            top = clipTop;
-        }
-        if (right > clipRight) {
-            right = clipRight;
-        }
-        if (bottom > clipBottom) {
-            bottom = clipBottom;
-        }
-        if (right <= left || bottom <= top) {
-            continue;
-        }
-        width = right - left;
-        height = bottom - top;
+	left = glyphs[glyphCounter].x;
+	top = glyphs[glyphCounter].y;
+	width = glyphs[glyphCounter].width;
+	height = glyphs[glyphCounter].height;
+	rowBytes = width;
+	right = left + width;
+	bottom = top + height;
+	if (left < clipLeft) {
+	    pixels += clipLeft - left;
+	    left = clipLeft;
+	}
+	if (top < clipTop) {
+	    pixels += (clipTop - top) * rowBytes;
+	    top = clipTop;
+	}
+	if (right > clipRight) {
+	    right = clipRight;
+	}
+	if (bottom > clipBottom) {
+	    bottom = clipBottom;
+	}
+	if (right <= left || bottom <= top) {
+	    continue;
+	}
+	width = right - left;
+	height = bottom - top;
 
-        pPix = pRasInfo->rasBase;
-        PTR_ADD(pPix, top * scan + left);
+	pPix = pRasInfo->rasBase;
+	PTR_ADD(pPix, top * scan + left);
 
-        if (width < 16) {
-            for (j = 0; j < height; j++) {
-                for (i = 0; i < width; i++) {
-                    jint dstG;
-                    jint mixValSrc = pixels[i];
-                    if (mixValSrc) {
-                        if (mixValSrc < 255) {
-                            jint mixValDst = 255 - mixValSrc;
-                            dstG = pPix[i];
-                            dstG =
-                                mul8table[mixValDst][dstG] +
-                                mul8table[mixValSrc][srcG];
-                            pPix[i] = dstG;
-                        } else {
-                            pPix[i] = fgpixel;
-                        }
-                    }
-                }
+	if (width < 16) {
+	    for (j = 0; j < height; j++) {
+		for (i = 0; i < width; i++) {
+		    jint dstG;
+		    jint mixValSrc = pixels[i];
+		    if (mixValSrc) {
+			if (mixValSrc < 255) {
+			    jint mixValDst = 255 - mixValSrc;
+			    dstG = pPix[i];
+			    dstG =
+				mul8table[mixValDst][dstG] +
+				mul8table[mixValSrc][srcG];
+			    pPix[i] = dstG;
+			} else {
+			    pPix[i] = fgpixel;
+			}
+		    }
+		}
 
-                PTR_ADD(pPix, scan);
-                pixels += rowBytes;
-            }
-        } else {
-            for (j = 0; j < height; j++) {
-                mlib_u8 *src = (void*)pixels;
-                mlib_u8 *dst = pPix;
-                mlib_u8 *dst_end = dst + width;
+		PTR_ADD(pPix, scan);
+		pixels += rowBytes;
+	    }
+	} else {
+	    for (j = 0; j < height; j++) {
+		mlib_u8 *src = (void*)pixels;
+		mlib_u8 *dst = pPix;
+		mlib_u8 *dst_end = dst + width;
 
-                while (((mlib_s32)dst & 7) && dst < dst_end) {
-                    pix = *src++;
-                    d0 = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
-                    d1 = MUL8_VIS(vis_read_lo(vis_ld_u8(dst)), 255 - pix);
-                    dd = vis_fpadd16(d0, d1);
-                    vis_st_u8(D64_FROM_F32x2(vis_fpack16(dd)), dst);
-                    if (pix == 255) *dst = fgpixel;
-                    dst++;
-                }
+		while (((mlib_s32)dst & 7) && dst < dst_end) {
+		    pix = *src++;
+		    d0 = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+		    d1 = MUL8_VIS(vis_read_lo(vis_ld_u8(dst)), 255 - pix);
+		    dd = vis_fpadd16(d0, d1);
+		    vis_st_u8(D64_FROM_F32x2(vis_fpack16(dd)), dst);
+		    if (pix == 255) *dst = fgpixel;
+		    dst++;
+		}
 
 #pragma pipeloop(0)
-                for (; dst <= (dst_end - 8); dst += 8) {
-                    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[3]), mix0);
-                    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[7]), mix1);
-                    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[2]), mix0);
-                    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[6]), mix1);
-                    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[1]), mix0);
-                    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[5]), mix1);
-                    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[0]), mix0);
-                    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[4]), mix1);
-                    src += 8;
+		for (; dst <= (dst_end - 8); dst += 8) {
+		    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[3]), mix0);
+		    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[7]), mix1);
+		    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[2]), mix0);
+		    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[6]), mix1);
+		    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[1]), mix0);
+		    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[5]), mix1);
+		    mix0 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[0]), mix0);
+		    mix1 = vis_faligndata(vis_ld_u16(TBL_MUL + 2*src[4]), mix1);
+		    src += 8;
 
-                    dd = *(mlib_d64*)dst;
-                    d0 = vis_fpadd16(vis_fmul8x16(srcG_f, mix0), d_half);
-                    d1 = vis_fpadd16(vis_fmul8x16(srcG_f, mix1), d_half);
-                    e0 = vis_fmul8x16(vis_read_hi(dd), vis_fpsub16(done, mix0));
-                    e1 = vis_fmul8x16(vis_read_lo(dd), vis_fpsub16(done, mix1));
-                    d0 = vis_fpadd16(e0, d0);
-                    d1 = vis_fpadd16(e1, d1);
-                    dd = vis_fpack16_pair(d0, d1);
+		    dd = *(mlib_d64*)dst;
+		    d0 = vis_fpadd16(vis_fmul8x16(srcG_f, mix0), d_half);
+		    d1 = vis_fpadd16(vis_fmul8x16(srcG_f, mix1), d_half);
+		    e0 = vis_fmul8x16(vis_read_hi(dd), vis_fpsub16(done, mix0));
+		    e1 = vis_fmul8x16(vis_read_lo(dd), vis_fpsub16(done, mix1));
+		    d0 = vis_fpadd16(e0, d0);
+		    d1 = vis_fpadd16(e1, d1);
+		    dd = vis_fpack16_pair(d0, d1);
 
-                    mask0 = vis_fcmplt16(mix0, done);
-                    mask1 = vis_fcmplt16(mix1, done);
+		    mask0 = vis_fcmplt16(mix0, done);
+		    mask1 = vis_fcmplt16(mix1, done);
 
-                    *(mlib_d64*)dst = fgpixel_d;
-                    vis_pst_8(dd, dst, (mask0 << 4) | mask1);
-                }
+		    *(mlib_d64*)dst = fgpixel_d;
+		    vis_pst_8(dd, dst, (mask0 << 4) | mask1);
+		}
 
-                while (dst < dst_end) {
-                    pix = *src++;
-                    d0 = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
-                    d1 = MUL8_VIS(vis_read_lo(vis_ld_u8(dst)), 255 - pix);
-                    dd = vis_fpadd16(d0, d1);
-                    vis_st_u8(D64_FROM_F32x2(vis_fpack16(dd)), dst);
-                    if (pix == 255) *dst = fgpixel;
-                    dst++;
-                }
+		while (dst < dst_end) {
+		    pix = *src++;
+		    d0 = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+		    d1 = MUL8_VIS(vis_read_lo(vis_ld_u8(dst)), 255 - pix);
+		    dd = vis_fpadd16(d0, d1);
+		    vis_st_u8(D64_FROM_F32x2(vis_fpack16(dd)), dst);
+		    if (pix == 255) *dst = fgpixel;
+		    dst++;
+		}
 
-                PTR_ADD(pPix, scan);
-                pixels += rowBytes;
-            }
-        }
+		PTR_ADD(pPix, scan);
+		pixels += rowBytes;
+	    }
+	}
     }
 }
 

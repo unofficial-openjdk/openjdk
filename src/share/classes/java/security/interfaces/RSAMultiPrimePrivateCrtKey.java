@@ -29,13 +29,14 @@ import java.math.BigInteger;
 import java.security.spec.RSAOtherPrimeInfo;
 
 /**
- * The interface to an RSA multi-prime private key, as defined in the
- * PKCS#1 v2.1, using the <i>Chinese Remainder Theorem</i>
+ * The interface to an RSA multi-prime private key, as defined in the 
+ * PKCS#1 v2.1, using the <i>Chinese Remainder Theorem</i> 
  * (CRT) information values.
  *
  * @author Valerie Peng
  *
- *
+ * @version %I% %E%
+ * 
  * @see java.security.spec.RSAPrivateKeySpec
  * @see java.security.spec.RSAMultiPrimePrivateCrtKeySpec
  * @see RSAPrivateKey
@@ -91,7 +92,7 @@ public interface RSAMultiPrimePrivateCrtKey extends RSAPrivateKey {
     public BigInteger getCrtCoefficient();
 
     /**
-     * Returns the otherPrimeInfo or null if there are only
+     * Returns the otherPrimeInfo or null if there are only 
      * two prime factors (p and q).
      *
      * @return the otherPrimeInfo.

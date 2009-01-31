@@ -24,11 +24,11 @@
 /**
  *  @test
  *  @bug 4312961
- *  @summary Verify that an instance filter on a MethodEntryRequest works
+ *  @summary Verify that an instance filter on a MethodEntryRequest works 
  *   properly.
  *
  *  @author Robert Field/Jim Holmlund
- *
+ *  
  *  @run build TestScaffold VMConnection TargetAdapter TargetListener
  *  @run compile -g InstanceFilter.java
  *  @run main/othervm InstanceFilter
@@ -57,13 +57,13 @@ class InstanceFilterTarg {
         two();
         three();
     }
-
+    
     void one() {
     }
-
+    
     void two() {
     }
-
+    
     void three() {
     }
 }
@@ -76,7 +76,7 @@ public class InstanceFilter extends TestScaffold {
     int methodCount = 0;
     // These are the methods for which we expect to get MethodEntryEvents.
     String[] expectedMethods = new String[] { "go", "one", "two", "three"};
-
+    
     public static void main(String args[]) throws Exception {
         new InstanceFilter(args).startTests();
     }
@@ -108,15 +108,15 @@ public class InstanceFilter extends TestScaffold {
             methodEntryRequest.disable();
             return;
         }
-
+        
         if (!theThis.equals(theInstance)) {
             failure("FAILED: Got a hit on a non-selected instance");
         }
-
+        
         // fail if we don't get called for each of the expected methods
         {
             String methodStr = event.location().method().name();
-
+            
             if (methodCount >= expectedMethods.length) {
                 failure("FAILED: Got too many methodEntryEvents");
             } else if (methodStr.indexOf(expectedMethods[methodCount]) == -1) {

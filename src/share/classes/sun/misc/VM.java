@@ -48,14 +48,14 @@ public class VM {
     }
 
     public static boolean allowThreadSuspension(ThreadGroup g, boolean b) {
-        return g.allowThreadSuspension(b);
+	return g.allowThreadSuspension(b);
     }
 
     /** @deprecated */
     @Deprecated
     public static boolean suspendThreads() {
         suspended = true;
-        return true;
+	return true;
     }
 
     // Causes any suspended threadgroups to be resumed.
@@ -88,7 +88,7 @@ public class VM {
     /** @deprecated */
     @Deprecated
     public static final int getState() {
-        return STATE_GREEN;
+	return STATE_GREEN;
     }
 
     /** @deprecated */
@@ -121,8 +121,8 @@ public class VM {
      * java.prof report to be automatically generated on exit; if not,
      * writeJavaProfilerReport must be invoked to write a report.
      *
-     * @see     resetJavaProfiler
-     * @see     writeJavaProfilerReport
+     * @see 	resetJavaProfiler
+     * @see 	writeJavaProfilerReport
      */
 
     // public native static void resumeJavaProfiler();
@@ -153,11 +153,11 @@ public class VM {
     // application class loader has been set up.
     //
     public static void booted() {
-        booted = true;
+	booted = true;
     }
 
     public static boolean isBooted() {
-        return booted;
+	return booted;
     }
 
     // A user-settable upper limit on the maximum amount of allocatable direct
@@ -179,36 +179,36 @@ public class VM {
     // maximum amount of allocatable direct buffer memory.
     //
     public static long maxDirectMemory() {
-        if (booted)
-            return directMemory;
+	if (booted)
+	    return directMemory;
 
-        Properties p = System.getProperties();
-        String s = (String)p.remove("sun.nio.MaxDirectMemorySize");
-        System.setProperties(p);
+	Properties p = System.getProperties();
+	String s = (String)p.remove("sun.nio.MaxDirectMemorySize");
+	System.setProperties(p);
 
-        if (s != null) {
-            if (s.equals("-1")) {
-                // -XX:MaxDirectMemorySize not given, take default
-                directMemory = Runtime.getRuntime().maxMemory();
-            } else {
-                long l = Long.parseLong(s);
-                if (l > -1)
-                    directMemory = l;
-            }
-        }
+	if (s != null) {
+	    if (s.equals("-1")) {
+		// -XX:MaxDirectMemorySize not given, take default
+		directMemory = Runtime.getRuntime().maxMemory();
+	    } else {
+		long l = Long.parseLong(s);
+		if (l > -1)
+		    directMemory = l;
+	    }
+	}
 
-        return directMemory;
+	return directMemory;
     }
 
     // A user-settable boolean to determine whether ClassLoader.loadClass should
-    // accept array syntax.  This value may be changed during VM initialization
-    // via the system property "sun.lang.ClassLoader.allowArraySyntax".
+    // accept array syntax.  This value may be changed during VM initialization 
+    // via the system property "sun.lang.ClassLoader.allowArraySyntax". 
     //
     // The default for 1.5 is "true", array syntax is allowed.  In 1.6, the
     // default will be "false".  The presence of this system property to
     // control array syntax allows applications the ability to preview this new
     // behaviour.
-    //
+    // 
     private static boolean defaultAllowArraySyntax = false;
     private static boolean allowArraySyntax = defaultAllowArraySyntax;
 
@@ -217,25 +217,25 @@ public class VM {
     // "sun.lang.ClassLoader.allowArraySyntax".  If the system property is not
     // provided, the default for 1.5 is "true".  In 1.6, the default will be
     // "false".  If the system property is provided, then the value of
-    // allowArraySyntax will be equal to "true" if Boolean.parseBoolean()
+    // allowArraySyntax will be equal to "true" if Boolean.parseBoolean() 
     // returns "true".   Otherwise, the field will be set to "false".
     //
     // If this method is invoked after the VM is booted, it returns the
     // allowArraySyntax boolean set during initialization.
-    //
+    //    
     public static boolean allowArraySyntax() {
-        if (!booted) {
-            String s
-                = System.getProperty("sun.lang.ClassLoader.allowArraySyntax");
-            allowArraySyntax = (s == null
-                                ? defaultAllowArraySyntax
-                                : Boolean.parseBoolean(s));
-        }
-        return allowArraySyntax;
+	if (!booted) {
+	    String s
+		= System.getProperty("sun.lang.ClassLoader.allowArraySyntax");
+	    allowArraySyntax = (s == null 
+				? defaultAllowArraySyntax
+				: Boolean.parseBoolean(s));
+	}
+	return allowArraySyntax;
     }
-
+    
     // Initialize any miscellenous operating system settings that need to be
-    // set for the class libraries.
+    // set for the class libraries. 
     //
     public static void initializeOSEnvironment() {
         if (!booted) {
@@ -269,12 +269,12 @@ public class VM {
 
     /*
      * Add <tt>n</tt> to the objects pending for finalization count.
-     *
+     * 
      * @param n an integer value to be added to the objects pending
      * for finalization count
      */
     public static void addFinalRefCount(int n) {
-        // The caller must hold lock to synchronize the update.
+        // The caller must hold lock to synchronize the update. 
 
         finalRefCount += n;
         if (finalRefCount > peakFinalRefCount) {

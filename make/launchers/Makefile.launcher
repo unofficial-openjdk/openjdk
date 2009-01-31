@@ -49,24 +49,19 @@ endif
 # Some tools need the wildcard expansion option
 ifeq ($(PROGRAM),apt)
   WILDCARDS=true
-  NEVER_ACT_AS_SERVER_CLASS_MACHINE=true
 endif
 ifeq ($(PROGRAM),javac)
   WILDCARDS=true
   MAIN_JAVA_ARGS += -J-Xss4m -J-ea:com.sun.tools...
-  NEVER_ACT_AS_SERVER_CLASS_MACHINE=true
 endif
 ifeq ($(PROGRAM),javadoc)
   WILDCARDS=true
-  NEVER_ACT_AS_SERVER_CLASS_MACHINE=true
 endif
 ifeq ($(PROGRAM),javap)
   WILDCARDS=true
-  NEVER_ACT_AS_SERVER_CLASS_MACHINE=true
 endif
 ifeq ($(PROGRAM),javah)
   WILDCARDS=true
-  NEVER_ACT_AS_SERVER_CLASS_MACHINE=true
 endif
 ifeq ($(PROGRAM),serialver)
   WILDCARDS=true

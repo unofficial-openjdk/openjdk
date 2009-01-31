@@ -34,6 +34,7 @@ import java.nio.LongBuffer;
  * Class for monitoring a PerfData Long instrument.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class PerfLongMonitor extends AbstractMonitor implements LongMonitor {

@@ -28,9 +28,9 @@ package javax.sql;
 import java.sql.*;
 
 /**
- * The interface that a <code>RowSet</code> object implements in order to
+ * The interface that a <code>RowSet</code> object implements in order to 
  * present itself to a <code>RowSetReader</code> or <code>RowSetWriter</code>
- * object. The <code>RowSetInternal</code> interface contains
+ * object. The <code>RowSetInternal</code> interface contains 
  * methods that let the reader or writer access and modify the internal
  * state of the rowset.
  *
@@ -44,7 +44,7 @@ public interface RowSetInternal {
    * <code>RowSet</code> object's command.
    *
    * @return an array of the current parameter values for this <code>RowSet</code>
-   *         object's command
+   *         object's command 
    * @exception SQLException if a database access error occurs
    */
   Object[] getParams() throws SQLException;
@@ -53,27 +53,27 @@ public interface RowSetInternal {
    * Retrieves the <code>Connection</code> object that was passed to this
    * <code>RowSet</code> object.
    *
-   * @return the <code>Connection</code> object passed to the rowset
+   * @return the <code>Connection</code> object passed to the rowset 
    *      or <code>null</code> if none was passed
    * @exception SQLException if a database access error occurs
    */
   Connection getConnection() throws SQLException;
 
-  /**
+  /**    
    * Sets the given <code>RowSetMetaData</code> object as the
    * <code>RowSetMetaData</code> object for this <code>RowSet</code>
-   * object. The <code>RowSetReader</code> object associated with the rowset
+   * object. The <code>RowSetReader</code> object associated with the rowset 
    * will use <code>RowSetMetaData</code> methods to set the values giving
    * information about the rowset's columns.
    *
    * @param md the <code>RowSetMetaData</code> object that will be set with
    *        information about the rowset's columns
-   *
+   * 
    * @exception SQLException if a database access error occurs
    */
   void setMetaData(RowSetMetaData md) throws SQLException;
 
-  /**
+  /** 
    * Retrieves a <code>ResultSet</code> object containing the original
    * value of this <code>RowSet</code> object.
    * <P>
@@ -95,9 +95,14 @@ public interface RowSetInternal {
    * @return the original value of the current row as a <code>ResultSet</code>
    *          object
    * @exception SQLException if a database access error occurs or this method
-   *           is called while the cursor is on the insert row, before the
+   *           is called while the cursor is on the insert row, before the 
    *           first row, or after the last row
    */
   public ResultSet getOriginalRow() throws SQLException;
 
 }
+
+
+
+
+

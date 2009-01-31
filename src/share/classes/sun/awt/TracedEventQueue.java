@@ -28,11 +28,12 @@
  * are posted to an EventQueue.  Tracing is globally enabled and disabled
  * by the AWT.TraceEventPosting property in awt.properties.  <P>
  *
- * The optional AWT.NoTraceIDs property defines a list of AWTEvent IDs
- * which should not be traced, such as MouseEvent.MOUSE_MOVED or PaintEvents.
+ * The optional AWT.NoTraceIDs property defines a list of AWTEvent IDs 
+ * which should not be traced, such as MouseEvent.MOUSE_MOVED or PaintEvents.  
  * This list is declared by specifying the decimal value of each event's ID,
- * separated by commas.
+ * separated by commas.  
  *
+ * @version %I% %G%
  * @author  Thomas Ball
  */
 
@@ -63,7 +64,7 @@ public class TracedEventQueue extends EventQueue {
                     suppressedIDs[i] = Integer.parseInt(idString);
                 } catch (NumberFormatException e) {
                     System.err.println("Bad ID listed in AWT.IgnoreEventIDs " +
-                                       "in awt.properties: \"" +
+                                       "in awt.properties: \"" + 
                                        idString + "\" -- skipped");
                     suppressedIDs[i] = 0;
                 }
@@ -83,7 +84,7 @@ public class TracedEventQueue extends EventQueue {
             }
         }
         if (printEvent) {
-            System.out.println(Thread.currentThread().getName() +
+            System.out.println(Thread.currentThread().getName() + 
                                ": " + theEvent);
         }
         super.postEvent(theEvent);

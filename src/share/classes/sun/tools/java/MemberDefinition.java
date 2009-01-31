@@ -65,18 +65,18 @@ class MemberDefinition implements Constants {
      * Constructor
      */
     public MemberDefinition(long where, ClassDefinition clazz, int modifiers,
-                            Type type, Identifier name,
-                            IdentifierToken expIds[], Node value) {
-        if (expIds == null) {
-            expIds = new IdentifierToken[0];
-        }
-        this.where = where;
-        this.clazz = clazz;
-        this.modifiers = modifiers;
-        this.type = type;
-        this.name = name;
-        this.expIds = expIds;
-        this.value = value;
+			    Type type, Identifier name,
+			    IdentifierToken expIds[], Node value) {
+	if (expIds == null) {
+	    expIds = new IdentifierToken[0];
+	}
+	this.where = where;
+	this.clazz = clazz;
+	this.modifiers = modifiers;
+	this.type = type;
+	this.name = name;
+	this.expIds = expIds;
+	this.value = value;
     }
 
     /**
@@ -89,13 +89,13 @@ class MemberDefinition implements Constants {
      * class, extracting all necessary values from the innerClass.
      */
     public MemberDefinition(ClassDefinition innerClass) {
-        this(innerClass.getWhere(),
-             innerClass.getOuterClass(),
-             innerClass.getModifiers(),
-             innerClass.getType(),
-             innerClass.getName().getFlatName().getName(),
-             null, null);
-        this.innerClass = innerClass;
+	this(innerClass.getWhere(),
+	     innerClass.getOuterClass(),
+	     innerClass.getModifiers(),
+	     innerClass.getType(),
+	     innerClass.getName().getFlatName().getName(),
+	     null, null);
+	this.innerClass = innerClass;
     }
 
     /**
@@ -122,42 +122,42 @@ class MemberDefinition implements Constants {
      * constant pool entries during code generation.
      */
     public static MemberDefinition makeProxyMember(MemberDefinition field,
-                                                   ClassDefinition classDef,
-                                                   Environment env) {
+						   ClassDefinition classDef,
+						   Environment env) {
 
-        if (proxyCache == null) {
-            proxyCache = new HashMap();
-        }
+	if (proxyCache == null) {
+	    proxyCache = new HashMap();
+	}
 
-        String key = field.toString() + "@" + classDef.toString();
-        // System.out.println("Key is : " + key);
-        MemberDefinition proxy = (MemberDefinition)proxyCache.get(key);
+	String key = field.toString() + "@" + classDef.toString();
+	// System.out.println("Key is : " + key);
+	MemberDefinition proxy = (MemberDefinition)proxyCache.get(key);
 
-        if (proxy != null)
-            return proxy;
+	if (proxy != null)
+	    return proxy;
 
-        proxy = new MemberDefinition(field.getWhere(), classDef,
-                                     field.getModifiers(), field.getType(),
-                                     field.getName(), field.getExceptionIds(),
-                                     null);
-        proxy.exp = field.getExceptions(env);
-        proxyCache.put(key, proxy);
+	proxy = new MemberDefinition(field.getWhere(), classDef,
+				     field.getModifiers(), field.getType(),
+				     field.getName(), field.getExceptionIds(),
+				     null);
+	proxy.exp = field.getExceptions(env);
+	proxyCache.put(key, proxy);
 
-        return proxy;
+	return proxy;
     }
 
     /**
      * Get the position in the input
      */
     public final long getWhere() {
-        return where;
+	return where;
     }
 
     /**
      * Get the class declaration
      */
     public final ClassDeclaration getClassDeclaration() {
-        return clazz.getClassDeclaration();
+	return clazz.getClassDeclaration();
     }
 
     /**
@@ -170,80 +170,80 @@ class MemberDefinition implements Constants {
      * Get the class declaration in which the field is actually defined
      */
     public ClassDeclaration getDefiningClassDeclaration() {
-        return getClassDeclaration();
+	return getClassDeclaration();
     }
 
     /**
      * Get the class definition
      */
     public final ClassDefinition getClassDefinition() {
-        return clazz;
+	return clazz;
     }
 
     /**
      * Get the field's top-level enclosing class
      */
     public final ClassDefinition getTopClass() {
-        return clazz.getTopClass();
+	return clazz.getTopClass();
     }
 
     /**
      * Get the field's modifiers
      */
     public final int getModifiers() {
-        return modifiers;
+	return modifiers;
     }
     public final void subModifiers(int mod) {
-        modifiers &= ~mod;
+	modifiers &= ~mod;
     }
     public final void addModifiers(int mod) {
-        modifiers |= mod;
+	modifiers |= mod;
     }
 
     /**
      * Get the field's type
      */
     public final Type getType() {
-        return type;
+	return type;
     }
 
     /**
      * Get the field's name
      */
     public final Identifier getName() {
-        return name;
+	return name;
     }
 
     /**
      * Get arguments (a vector of LocalMember)
      */
     public Vector getArguments() {
-        return isMethod() ? new Vector() : null;
+	return isMethod() ? new Vector() : null;
     }
 
     /**
      * Get the exceptions that are thrown by this method.
      */
     public ClassDeclaration[] getExceptions(Environment env) {
-        if (expIds != null && exp == null) {
-            if (expIds.length == 0)
-                exp = new ClassDeclaration[0];
-            else
-                // we should have translated this already!
-                throw new CompilerError("getExceptions "+this);
-        }
-        return exp;
+	if (expIds != null && exp == null) {
+	    if (expIds.length == 0)
+		exp = new ClassDeclaration[0];
+	    else
+		// we should have translated this already!
+		throw new CompilerError("getExceptions "+this);
+	}
+	return exp;
     }
 
     public final IdentifierToken[] getExceptionIds() {
-        return expIds;
+	return expIds;
     }
 
     /**
      * Get an inner class.
      */
     public ClassDefinition getInnerClass() {
-        return innerClass;
+	return innerClass;
     }
 
     /**
@@ -251,26 +251,26 @@ class MemberDefinition implements Constants {
      * or reference to, a local variable or enclosing instance?
      */
     public boolean isUplevelValue() {
-        if (!isSynthetic() || !isVariable() || isStatic()) {
-            return false;
-        }
-        String name = this.name.toString();
-        return name.startsWith(prefixVal)
-            || name.toString().startsWith(prefixLoc)
-            || name.toString().startsWith(prefixThis);
+	if (!isSynthetic() || !isVariable() || isStatic()) {
+	    return false;
+	}
+	String name = this.name.toString();
+	return name.startsWith(prefixVal)
+	    || name.toString().startsWith(prefixLoc)
+	    || name.toString().startsWith(prefixThis);
     }
 
     public boolean isAccessMethod() {
-        // This no longer works, because access methods
-        // for constructors do not use the standard naming
-        // scheme.
-        //    return isSynthetic() && isMethod()
-        //        && name.toString().startsWith(prefixAccess);
-        // Assume that a method is an access method if it has
-        // an access peer.  NOTE: An access method will not be
-        // recognized as such until 'setAccessMethodTarget' has
-        // been called on it.
-        return isSynthetic() && isMethod() && (accessPeer != null);
+	// This no longer works, because access methods
+	// for constructors do not use the standard naming
+	// scheme.
+	//    return isSynthetic() && isMethod()
+	//        && name.toString().startsWith(prefixAccess);
+	// Assume that a method is an access method if it has
+	// an access peer.  NOTE: An access method will not be
+	// recognized as such until 'setAccessMethodTarget' has
+	// been called on it.
+	return isSynthetic() && isMethod() && (accessPeer != null);
     }
 
     /**
@@ -278,56 +278,56 @@ class MemberDefinition implements Constants {
      * visible private member?
      */
     public MemberDefinition getAccessMethodTarget() {
-        if (isAccessMethod()) {
-            for (MemberDefinition f = accessPeer; f != null; f = f.accessPeer) {
-                // perhaps skip over another access for the same field
-                if (!f.isAccessMethod()) {
-                    return f;
-                }
-            }
-        }
-        return null;
+	if (isAccessMethod()) {
+	    for (MemberDefinition f = accessPeer; f != null; f = f.accessPeer) {
+		// perhaps skip over another access for the same field
+		if (!f.isAccessMethod()) {
+		    return f;
+		}
+	    }
+	}
+	return null;
     }
 
 
     public void setAccessMethodTarget(MemberDefinition target) {
-        if (getAccessMethodTarget() != target) {
-            /*-------------------*
-            if (!isAccessMethod() || accessPeer != null ||
-                    target.accessPeer != null) {
-                throw new CompilerError("accessPeer");
-            }
-            *-------------------*/
-            if (accessPeer != null || target.accessPeer != null) {
-                throw new CompilerError("accessPeer");
-            }
-            accessPeer = target;
-        }
+	if (getAccessMethodTarget() != target) {
+	    /*-------------------*
+	    if (!isAccessMethod() || accessPeer != null ||
+		    target.accessPeer != null) {
+		throw new CompilerError("accessPeer");
+	    }
+	    *-------------------*/
+	    if (accessPeer != null || target.accessPeer != null) {
+		throw new CompilerError("accessPeer");
+	    }
+	    accessPeer = target;
+	}
     }
 
     /**
      * If this method is a getter for a private field, return the setter.
      */
     public MemberDefinition getAccessUpdateMember() {
-        if (isAccessMethod()) {
-            for (MemberDefinition f = accessPeer; f != null; f = f.accessPeer) {
-                if (f.isAccessMethod()) {
-                    return f;
-                }
-            }
-        }
-        return null;
+	if (isAccessMethod()) {
+	    for (MemberDefinition f = accessPeer; f != null; f = f.accessPeer) {
+		if (f.isAccessMethod()) {
+		    return f;
+		}
+	    }
+	}
+	return null;
     }
 
     public void setAccessUpdateMember(MemberDefinition updater) {
-        if (getAccessUpdateMember() != updater) {
-            if (!isAccessMethod() ||
-                    updater.getAccessMethodTarget() != getAccessMethodTarget()) {
-                throw new CompilerError("accessPeer");
-            }
-            updater.accessPeer = accessPeer;
-            accessPeer = updater;
-        }
+	if (getAccessUpdateMember() != updater) {
+	    if (!isAccessMethod() ||
+		    updater.getAccessMethodTarget() != getAccessMethodTarget()) {
+		throw new CompilerError("accessPeer");
+	    }
+	    updater.accessPeer = accessPeer;
+	    accessPeer = updater;
+	}
     }
 
     /**
@@ -335,7 +335,7 @@ class MemberDefinition implements Constants {
      * of the form '...super.foo' or '...super.foo()'?
      */
     public final boolean isSuperAccessMethod() {
-        return superAccessMethod;
+	return superAccessMethod;
     }
 
     /**
@@ -343,7 +343,7 @@ class MemberDefinition implements Constants {
      * or method call via the 'super' keyword.
      */
     public final void setIsSuperAccessMethod(boolean b) {
-        superAccessMethod = b;
+	superAccessMethod = b;
     }
 
     /**
@@ -351,48 +351,48 @@ class MemberDefinition implements Constants {
      * Such variables are subject to definite single assignment.
      */
     public final boolean isBlankFinal() {
-        return isFinal() && !isSynthetic() && getValue() == null;
+	return isFinal() && !isSynthetic() && getValue() == null;
     }
 
     public boolean isNeverNull() {
-        if (isUplevelValue()) {
-            // loc$x and this$C are never null
-            return !name.toString().startsWith(prefixVal);
-        }
-        return false;
+	if (isUplevelValue()) {
+	    // loc$x and this$C are never null
+	    return !name.toString().startsWith(prefixVal);
+	}
+	return false;
     }
 
     /**
      * Get the field's final value (may return null)
      */
     public Node getValue(Environment env) throws ClassNotFound {
-        return value;
+	return value;
     }
     public final Node getValue() {
-        return value;
+	return value;
     }
     public final void setValue(Node value) {
-        this.value = value;
+	this.value = value;
     }
     public Object getInitialValue() {
-        return null;
+	return null;
     }
 
     /**
      * Get the next field or the next match
      */
     public final MemberDefinition getNextMember() {
-        return nextMember;
+	return nextMember;
     }
     public final MemberDefinition getNextMatch() {
-        return nextMatch;
+	return nextMatch;
     }
 
     /**
      * Get the field's documentation
      */
     public String getDocumentation() {
-        return documentation;
+	return documentation;
     }
 
     /**
@@ -405,24 +405,24 @@ class MemberDefinition implements Constants {
      * Really check the field definition.
      */
     public Vset check(Environment env, Context ctx, Vset vset) throws ClassNotFound {
-        return vset;
+	return vset;
     }
 
     /**
      * Generate code
      */
     public void code(Environment env, Assembler asm) throws ClassNotFound {
-        throw new CompilerError("code");
+	throw new CompilerError("code");
     }
     public void codeInit(Environment env, Context ctx, Assembler asm) throws ClassNotFound {
-        throw new CompilerError("codeInit");
+	throw new CompilerError("codeInit");
     }
 
     /**
      * Tells whether to report a deprecation error for this field.
      */
     public boolean reportDeprecated(Environment env) {
-        return (isDeprecated() || clazz.reportDeprecated(env));
+	return (isDeprecated() || clazz.reportDeprecated(env));
     }
 
     /**
@@ -430,16 +430,16 @@ class MemberDefinition implements Constants {
      * forward references, not the access modifiers).
      */
     public final boolean canReach(Environment env, MemberDefinition f) {
-        if (f.isLocal() || !f.isVariable() || !(isVariable() || isInitializer()))
-            return true;
-        if ((getClassDeclaration().equals(f.getClassDeclaration())) &&
-            (isStatic() == f.isStatic())) {
-            // They are located in the same class, and are either both
-            // static or both non-static.  Check the initialization order.
-            while (((f = f.getNextMember()) != null) && (f != this));
-            return f != null;
-        }
-        return true;
+	if (f.isLocal() || !f.isVariable() || !(isVariable() || isInitializer()))
+	    return true;
+	if ((getClassDeclaration().equals(f.getClassDeclaration())) &&
+	    (isStatic() == f.isStatic())) {
+	    // They are located in the same class, and are either both
+	    // static or both non-static.  Check the initialization order.
+	    while (((f = f.getNextMember()) != null) && (f != this));
+	    return f != null;
+	}
+	return true;
     }
 
     //-----------------------------------------------------------------
@@ -471,19 +471,19 @@ class MemberDefinition implements Constants {
      * This is an internal utility method.
      */
     private int getAccessLevel() {
-        // Could just compute this once instead of recomputing.
-        // Check to see if this is worth it.
-        if (isPublic()) {
-            return PUBLIC_ACCESS;
-        } else if (isProtected()) {
-            return PROTECTED_ACCESS;
-        } else if (isPackagePrivate()) {
-            return PACKAGE_ACCESS;
-        } else if (isPrivate()) {
-            return PRIVATE_ACCESS;
-        } else {
-            throw new CompilerError("getAccessLevel()");
-        }
+	// Could just compute this once instead of recomputing.
+	// Check to see if this is worth it.
+	if (isPublic()) {
+	    return PUBLIC_ACCESS;
+	} else if (isProtected()) {
+	    return PROTECTED_ACCESS;
+	} else if (isPackagePrivate()) {
+	    return PACKAGE_ACCESS;
+	} else if (isPrivate()) {
+	    return PRIVATE_ACCESS;
+	} else {
+	    throw new CompilerError("getAccessLevel()");
+	}
     }
 
     /**
@@ -491,43 +491,43 @@ class MemberDefinition implements Constants {
      * came from an inherited method or a declared method.
      */
     private void reportError(Environment env, String errorString,
-                             ClassDeclaration clazz,
-                             MemberDefinition method) {
+			     ClassDeclaration clazz,
+			     MemberDefinition method) {
 
-        if (clazz == null) {
-            // For example:
-            // "Instance method BLAH inherited from CLASSBLAH1 cannot be
-            //  overridden by the static method declared in CLASSBLAH2."
-            env.error(getWhere(), errorString,
-                      this, getClassDeclaration(),
-                      method.getClassDeclaration());
-        } else {
-            // For example:
-            // "In CLASSBLAH1, instance method BLAH inherited from CLASSBLAH2
-            //  cannot be overridden by the static method inherited from
-            //  CLASSBLAH3."
-            env.error(clazz.getClassDefinition().getWhere(),
-                      //"inherit." + errorString,
-                      errorString,
-                      //clazz,
-                      this, getClassDeclaration(),
-                      method.getClassDeclaration());
-        }
+	if (clazz == null) {
+	    // For example:
+	    // "Instance method BLAH inherited from CLASSBLAH1 cannot be
+	    //  overridden by the static method declared in CLASSBLAH2."
+	    env.error(getWhere(), errorString,
+		      this, getClassDeclaration(),
+		      method.getClassDeclaration());
+	} else {
+	    // For example:
+	    // "In CLASSBLAH1, instance method BLAH inherited from CLASSBLAH2
+	    //  cannot be overridden by the static method inherited from
+	    //  CLASSBLAH3."
+	    env.error(clazz.getClassDefinition().getWhere(),
+		      //"inherit." + errorString,
+		      errorString,
+		      //clazz,
+		      this, getClassDeclaration(),
+		      method.getClassDeclaration());
+	}
     }
 
     /**
      * Convenience method to see if two methods return the same type
      */
     public boolean sameReturnType(MemberDefinition method) {
-        // Make sure both are methods.
-        if (!isMethod() || !method.isMethod()) {
-            throw new CompilerError("sameReturnType: not method");
-        }
+	// Make sure both are methods.
+	if (!isMethod() || !method.isMethod()) {
+	    throw new CompilerError("sameReturnType: not method");
+	}
 
-        Type myReturnType = getType().getReturnType();
-        Type yourReturnType = method.getType().getReturnType();
+	Type myReturnType = getType().getReturnType();
+	Type yourReturnType = method.getType().getReturnType();
 
-        return (myReturnType == yourReturnType);
+	return (myReturnType == yourReturnType);
     }
 
     /**
@@ -545,7 +545,7 @@ class MemberDefinition implements Constants {
      * </pre>
      */
     public boolean checkOverride(Environment env, MemberDefinition method) {
-        return checkOverride(env, method, null);
+	return checkOverride(env, method, null);
     }
 
     /**
@@ -554,113 +554,113 @@ class MemberDefinition implements Constants {
      * declared.  If `clazz' is not null, it reports the error in `clazz'.
      */
     private boolean checkOverride(Environment env,
-                                  MemberDefinition method,
-                                  ClassDeclaration clazz) {
-        // This section of code is largely based on section 8.4.6.3
-        // of the JLS.
+				  MemberDefinition method,
+				  ClassDeclaration clazz) {
+	// This section of code is largely based on section 8.4.6.3
+	// of the JLS.
 
-        boolean success = true;
+	boolean success = true;
 
-        // Sanity
-        if (!isMethod()) {
-            throw new CompilerError("checkOverride(), expected method");
-        }
+	// Sanity
+	if (!isMethod()) {
+	    throw new CompilerError("checkOverride(), expected method");
+	}
 
-        // Suppress checks for synthetic methods, as the compiler presumably
-        // knows what it is doing, e.g., access methods.
-        if (isSynthetic()) {
-            // Sanity check: We generally do not intend for one synthetic
-            // method to override another, though hiding of static members
-            // is expected.  This check may need to be changed if new uses
-            // of synthetic methods are devised.
-            //
-            // Query: this code was copied from elsewhere.  What
-            // exactly is the role of the !isStatic() in the test?
-            if (method.isFinal() ||
-                (!method.isConstructor() &&
-                 !method.isStatic() && !isStatic())) {
-                ////////////////////////////////////////////////////////////
-                // NMG 2003-01-28 removed the following test because it is
-                // invalidated by bridge methods inserted by the "generic"
-                // (1.5) Java compiler.  In 1.5, this code is used,
-                // indirectly, by rmic
-                ////////////////////////////////////////////////////////////
-                // throw new CompilerError("checkOverride() synthetic");
-                ////////////////////////////////////////////////////////////
-            }
+	// Suppress checks for synthetic methods, as the compiler presumably
+	// knows what it is doing, e.g., access methods.
+	if (isSynthetic()) {
+	    // Sanity check: We generally do not intend for one synthetic
+	    // method to override another, though hiding of static members
+	    // is expected.  This check may need to be changed if new uses
+	    // of synthetic methods are devised.
+	    //
+	    // Query: this code was copied from elsewhere.  What
+	    // exactly is the role of the !isStatic() in the test?
+	    if (method.isFinal() ||
+		(!method.isConstructor() &&
+		 !method.isStatic() && !isStatic())) {
+		////////////////////////////////////////////////////////////
+		// NMG 2003-01-28 removed the following test because it is
+		// invalidated by bridge methods inserted by the "generic"
+		// (1.5) Java compiler.  In 1.5, this code is used,
+		// indirectly, by rmic
+		////////////////////////////////////////////////////////////
+		// throw new CompilerError("checkOverride() synthetic");
+		////////////////////////////////////////////////////////////
+	    }
 
-            // We trust the compiler.  (Ha!)  We're done checking.
-            return true;
-        }
+	    // We trust the compiler.  (Ha!)  We're done checking.
+	    return true;
+	}
 
-        // Our caller should have verified that the method had the
-        // same signature.
-        if (getName() != method.getName() ||
-            !getType().equalArguments(method.getType())) {
+	// Our caller should have verified that the method had the
+	// same signature.
+	if (getName() != method.getName() ||
+	    !getType().equalArguments(method.getType())) {
 
-            throw new CompilerError("checkOverride(), signature mismatch");
-        }
+	    throw new CompilerError("checkOverride(), signature mismatch");
+	}
 
-        // It is forbidden to `override' a static method with an instance
-        // method.
-        if (method.isStatic() && !isStatic()) {
-            reportError(env, "override.static.with.instance", clazz, method);
-            success = false;
-        }
+	// It is forbidden to `override' a static method with an instance
+	// method.
+	if (method.isStatic() && !isStatic()) {
+	    reportError(env, "override.static.with.instance", clazz, method);
+	    success = false;
+	}
 
-        // It is forbidden to `hide' an instance method with a static
-        // method.
-        if (!method.isStatic() && isStatic()) {
-            reportError(env, "hide.instance.with.static", clazz, method);
-            success = false;
-        }
+	// It is forbidden to `hide' an instance method with a static
+	// method.
+	if (!method.isStatic() && isStatic()) {
+	    reportError(env, "hide.instance.with.static", clazz, method);
+	    success = false;
+	}
 
-        // We cannot override a final method.
-        if (method.isFinal()) {
-            reportError(env, "override.final.method", clazz, method);
-            success = false;
-        }
+	// We cannot override a final method.
+	if (method.isFinal()) {
+	    reportError(env, "override.final.method", clazz, method);
+	    success = false;
+	}
 
-        // Give a warning when we override a deprecated method with
-        // a non-deprecated one.
-        //
-        // We bend over backwards to suppress this warning if
-        // the `method' has not been already compiled or
-        // `this' has been already compiled.
-        if (method.reportDeprecated(env) && !isDeprecated()
-               && this instanceof sun.tools.javac.SourceMember) {
-            reportError(env, "warn.override.is.deprecated",
-                        clazz, method);
-        }
+	// Give a warning when we override a deprecated method with
+	// a non-deprecated one.
+	//
+	// We bend over backwards to suppress this warning if
+	// the `method' has not been already compiled or
+	// `this' has been already compiled.
+	if (method.reportDeprecated(env) && !isDeprecated()
+	       && this instanceof sun.tools.javac.SourceMember) {
+	    reportError(env, "warn.override.is.deprecated",
+			clazz, method);
+	}
 
-        // Visibility may not be more restrictive
-        if (getAccessLevel() > method.getAccessLevel()) {
-            reportError(env, "override.more.restrictive", clazz, method);
-            success = false;
-        }
+	// Visibility may not be more restrictive
+	if (getAccessLevel() > method.getAccessLevel()) {
+	    reportError(env, "override.more.restrictive", clazz, method);
+	    success = false;
+	}
 
-        // Return type equality
-        if (!sameReturnType(method)) {
-            ////////////////////////////////////////////////////////////
-            // PCJ 2003-07-30 removed the following error because it is
-            // invalidated by the covariant return type feature of the
-            // 1.5 compiler.  The resulting check is now much looser
-            // than the actual 1.5 language spec, but that should be OK
-            // because this code is only still used by rmic.  See 4892308.
-            ////////////////////////////////////////////////////////////
-            // reportError(env, "override.different.return", clazz, method);
-            // success = false;
-            ////////////////////////////////////////////////////////////
-        }
+	// Return type equality
+	if (!sameReturnType(method)) {
+	    ////////////////////////////////////////////////////////////
+	    // PCJ 2003-07-30 removed the following error because it is
+	    // invalidated by the covariant return type feature of the
+	    // 1.5 compiler.  The resulting check is now much looser
+	    // than the actual 1.5 language spec, but that should be OK
+	    // because this code is only still used by rmic.  See 4892308.
+	    ////////////////////////////////////////////////////////////
+	    // reportError(env, "override.different.return", clazz, method);
+	    // success = false;
+	    ////////////////////////////////////////////////////////////
+	}
 
-        // Exception agreeement
-        if (!exceptionsFit(env, method)) {
-            reportError(env, "override.incompatible.exceptions",
-                        clazz, method);
-            success = false;
-        }
+	// Exception agreeement
+	if (!exceptionsFit(env, method)) {
+	    reportError(env, "override.incompatible.exceptions",
+			clazz, method);
+	    success = false;
+	}
 
-        return success;
+	return success;
     }
 
     /**
@@ -682,56 +682,56 @@ class MemberDefinition implements Constants {
      * </pre>
      */
     public boolean checkMeet(Environment env,
-                             MemberDefinition method,
-                             ClassDeclaration clazz) {
-        // This section of code is largely based on Section 8.4.6
-        // and 9.4.1 of the JLS.
+			     MemberDefinition method,
+			     ClassDeclaration clazz) {
+	// This section of code is largely based on Section 8.4.6
+	// and 9.4.1 of the JLS.
 
-        // Sanity
-        if (!isMethod()) {
-            throw new CompilerError("checkMeet(), expected method");
-        }
+	// Sanity
+	if (!isMethod()) {
+	    throw new CompilerError("checkMeet(), expected method");
+	}
 
-        // Check for both non-abstract.
-        if (!isAbstract() && !method.isAbstract()) {
-            throw new CompilerError("checkMeet(), no abstract method");
-        }
+	// Check for both non-abstract.
+	if (!isAbstract() && !method.isAbstract()) {
+	    throw new CompilerError("checkMeet(), no abstract method");
+	}
 
-        // If either method is non-abstract, then we need to check that
-        // the abstract method can be properly overridden.  We call
-        // the checkOverride method to check this and generate any errors.
-        // This test must follow the previous test.
-        else if (!isAbstract()) {
-            return checkOverride(env, method, clazz);
-        } else if (!method.isAbstract()) {
-            return method.checkOverride(env, this, clazz);
-        }
+	// If either method is non-abstract, then we need to check that
+	// the abstract method can be properly overridden.  We call
+	// the checkOverride method to check this and generate any errors.
+	// This test must follow the previous test.
+	else if (!isAbstract()) {
+	    return checkOverride(env, method, clazz);
+	} else if (!method.isAbstract()) {
+	    return method.checkOverride(env, this, clazz);
+	}
 
-        // Both methods are abstract.
+	// Both methods are abstract.
 
-        // Our caller should have verified that the method has the
-        // same signature.
-        if (getName() != method.getName() ||
-            !getType().equalArguments(method.getType())) {
+	// Our caller should have verified that the method has the
+	// same signature.
+	if (getName() != method.getName() ||
+	    !getType().equalArguments(method.getType())) {
 
-            throw new CompilerError("checkMeet(), signature mismatch");
-        }
+	    throw new CompilerError("checkMeet(), signature mismatch");
+	}
 
-        // Check for return type equality
-        if (!sameReturnType(method)) {
-            // More args?
-            env.error(clazz.getClassDefinition().getWhere(),
-                      "meet.different.return",
-                      this, this.getClassDeclaration(),
-                      method.getClassDeclaration());
-            return false;
-        }
+	// Check for return type equality
+	if (!sameReturnType(method)) {
+	    // More args?
+	    env.error(clazz.getClassDefinition().getWhere(),
+		      "meet.different.return",
+		      this, this.getClassDeclaration(),
+		      method.getClassDeclaration());
+	    return false;
+	}
 
-        // We don't have to check visibility -- there always
-        // potentially exists a meet.  Similarly with exceptions.
+	// We don't have to check visibility -- there always
+	// potentially exists a meet.  Similarly with exceptions.
 
-        // There does exist a meet.
-        return true;
+	// There does exist a meet.
+	return true;
     }
 
     /**
@@ -744,42 +744,42 @@ class MemberDefinition implements Constants {
      * you are on your own.
      */
     public boolean couldOverride(Environment env,
-                                 MemberDefinition method) {
+				 MemberDefinition method) {
 
-        // Sanity
-        if (!isMethod()) {
-            throw new CompilerError("coulcOverride(), expected method");
-        }
+	// Sanity
+	if (!isMethod()) {
+	    throw new CompilerError("coulcOverride(), expected method");
+	}
 
-        // couldOverride() is only called with `this' and `method' both
-        // being inherited methods.  Neither of them is defined in the
-        // class which we are currently working on.  Even though an
-        // abstract method defined *in* a class can override a non-abstract
-        // method defined in a superclass, an abstract method inherited
-        // from an interface *never* can override a non-abstract method.
-        // This comment may sound odd, but that's the way inheritance is.
-        // The following check makes sure we aren't trying to override
-        // an inherited non-abstract definition with an abstract definition
-        // from an interface.
-        if (!method.isAbstract()) {
-            return false;
-        }
+	// couldOverride() is only called with `this' and `method' both
+	// being inherited methods.  Neither of them is defined in the
+	// class which we are currently working on.  Even though an
+	// abstract method defined *in* a class can override a non-abstract
+	// method defined in a superclass, an abstract method inherited
+	// from an interface *never* can override a non-abstract method.
+	// This comment may sound odd, but that's the way inheritance is.
+	// The following check makes sure we aren't trying to override
+	// an inherited non-abstract definition with an abstract definition
+	// from an interface.
+	if (!method.isAbstract()) {
+	    return false;
+	}
 
-        // Visibility should be less restrictive
-        if (getAccessLevel() > method.getAccessLevel()) {
-            return false;
-        }
+	// Visibility should be less restrictive
+	if (getAccessLevel() > method.getAccessLevel()) {
+	    return false;
+	}
 
-        // Exceptions
-        if (!exceptionsFit(env, method)) {
-            return false;
-        }
+	// Exceptions
+	if (!exceptionsFit(env, method)) {
+	    return false;
+	}
 
-        // Potentially some deprecation warnings could be given here
-        // when we merge two abstract methods, one of which is deprecated.
-        // This is not currently reported.
+	// Potentially some deprecation warnings could be given here
+	// when we merge two abstract methods, one of which is deprecated.
+	// This is not currently reported.
 
-        return true;
+	return true;
     }
 
     /**
@@ -787,41 +787,41 @@ class MemberDefinition implements Constants {
      * exceptions of `method'.
      */
     private boolean exceptionsFit(Environment env,
-                                  MemberDefinition method) {
-        ClassDeclaration e1[] = getExceptions(env);        // my exceptions
-        ClassDeclaration e2[] = method.getExceptions(env); // parent's
+				  MemberDefinition method) {
+	ClassDeclaration e1[] = getExceptions(env);        // my exceptions
+	ClassDeclaration e2[] = method.getExceptions(env); // parent's
 
-        // This code is taken nearly verbatim from the old implementation
-        // of checkOverride() in SourceClass.
+	// This code is taken nearly verbatim from the old implementation
+	// of checkOverride() in SourceClass.
     outer:
-        for (int i = 0 ; i < e1.length ; i++) {
-            try {
-                ClassDefinition c1 = e1[i].getClassDefinition(env);
-                for (int j = 0 ; j < e2.length ; j++) {
-                    if (c1.subClassOf(env, e2[j])) {
-                        continue outer;
-                    }
-                }
-                if (c1.subClassOf(env,
-                                  env.getClassDeclaration(idJavaLangError)))
-                    continue outer;
-                if (c1.subClassOf(env,
-                                  env.getClassDeclaration(idJavaLangRuntimeException)))
-                    continue outer;
+	for (int i = 0 ; i < e1.length ; i++) {
+	    try {
+		ClassDefinition c1 = e1[i].getClassDefinition(env);
+		for (int j = 0 ; j < e2.length ; j++) {
+		    if (c1.subClassOf(env, e2[j])) {
+			continue outer;
+		    }
+		}
+		if (c1.subClassOf(env,
+				  env.getClassDeclaration(idJavaLangError)))
+		    continue outer;
+		if (c1.subClassOf(env,
+				  env.getClassDeclaration(idJavaLangRuntimeException)))
+		    continue outer;
 
-                // the throws was neither something declared by a parent,
-                // nor one of the ignorables.
-                return false;
+		// the throws was neither something declared by a parent,
+		// nor one of the ignorables.
+		return false;
 
-            } catch (ClassNotFound ee) {
-                // We were unable to find one of the exceptions.
-                env.error(getWhere(), "class.not.found",
-                          ee.name, method.getClassDeclaration());
-            }
-        }
+	    } catch (ClassNotFound ee) {
+		// We were unable to find one of the exceptions.
+		env.error(getWhere(), "class.not.found",
+			  ee.name, method.getClassDeclaration());
+	    }
+	}
 
-        // All of the exceptions `fit'.
-        return true;
+	// All of the exceptions `fit'.
+	return true;
     }
 
     //-----------------------------------------------------------------
@@ -830,178 +830,178 @@ class MemberDefinition implements Constants {
      * Checks
      */
     public final boolean isPublic() {
-        return (modifiers & M_PUBLIC) != 0;
+	return (modifiers & M_PUBLIC) != 0;
     }
     public final boolean isPrivate() {
-        return (modifiers & M_PRIVATE) != 0;
+	return (modifiers & M_PRIVATE) != 0;
     }
     public final boolean isProtected() {
-        return (modifiers & M_PROTECTED) != 0;
+	return (modifiers & M_PROTECTED) != 0;
     }
     public final boolean isPackagePrivate() {
-        return (modifiers & (M_PUBLIC | M_PRIVATE | M_PROTECTED)) == 0;
+	return (modifiers & (M_PUBLIC | M_PRIVATE | M_PROTECTED)) == 0;
     }
     public final boolean isFinal() {
-        return (modifiers & M_FINAL) != 0;
+	return (modifiers & M_FINAL) != 0;
     }
     public final boolean isStatic() {
-        return (modifiers & M_STATIC) != 0;
+	return (modifiers & M_STATIC) != 0;
     }
     public final boolean isSynchronized() {
-        return (modifiers & M_SYNCHRONIZED) != 0;
+	return (modifiers & M_SYNCHRONIZED) != 0;
     }
     public final boolean isAbstract() {
-        return (modifiers & M_ABSTRACT) != 0;
+	return (modifiers & M_ABSTRACT) != 0;
     }
     public final boolean isNative() {
-        return (modifiers & M_NATIVE) != 0;
+	return (modifiers & M_NATIVE) != 0;
     }
     public final boolean isVolatile() {
-        return (modifiers & M_VOLATILE) != 0;
+	return (modifiers & M_VOLATILE) != 0;
     }
     public final boolean isTransient() {
-        return (modifiers & M_TRANSIENT) != 0;
+	return (modifiers & M_TRANSIENT) != 0;
     }
     public final boolean isMethod() {
-        return type.isType(TC_METHOD);
+	return type.isType(TC_METHOD);
     }
     public final boolean isVariable() {
-        return !type.isType(TC_METHOD) && innerClass == null;
+	return !type.isType(TC_METHOD) && innerClass == null;
     }
     public final boolean isSynthetic() {
-        return (modifiers & M_SYNTHETIC) != 0;
+	return (modifiers & M_SYNTHETIC) != 0;
     }
     public final boolean isDeprecated() {
-        return (modifiers & M_DEPRECATED) != 0;
+	return (modifiers & M_DEPRECATED) != 0;
     }
     public final boolean isStrict() {
-        return (modifiers & M_STRICTFP) != 0;
+	return (modifiers & M_STRICTFP) != 0;
     }
     public final boolean isInnerClass() {
-        return innerClass != null;
+	return innerClass != null;
     }
     public final boolean isInitializer() {
-        return getName().equals(idClassInit);
+	return getName().equals(idClassInit);
     }
     public final boolean isConstructor() {
-        return getName().equals(idInit);
+	return getName().equals(idInit);
     }
     public boolean isLocal() {
-        return false;
+	return false;
     }
     public boolean isInlineable(Environment env, boolean fromFinal) throws ClassNotFound {
-        return (isStatic() || isPrivate() || isFinal() || isConstructor() || fromFinal) &&
-            !(isSynchronized() || isNative());
+	return (isStatic() || isPrivate() || isFinal() || isConstructor() || fromFinal) &&
+	    !(isSynchronized() || isNative());
     }
 
     /**
      * Check if constant:  Will it inline away to a constant?
      */
     public boolean isConstant() {
-        if (isFinal() && isVariable() && value != null) {
-            try {
-                // If an infinite regress requeries this name,
-                // deny that it is a constant.
-                modifiers &= ~M_FINAL;
-                return ((Expression)value).isConstant();
-            } finally {
-                modifiers |= M_FINAL;
-            }
-        }
-        return false;
+	if (isFinal() && isVariable() && value != null) {
+	    try {
+		// If an infinite regress requeries this name,
+		// deny that it is a constant.
+		modifiers &= ~M_FINAL;
+		return ((Expression)value).isConstant();
+	    } finally {
+		modifiers |= M_FINAL;
+	    }
+	}
+	return false;
     }
 
     /**
      * toString
      */
     public String toString() {
-        Identifier name = getClassDefinition().getName();
-        if (isInitializer()) {
-            return isStatic() ? "static {}" : "instance {}";
-        } else if (isConstructor()) {
-            StringBuffer buf = new StringBuffer();
-            buf.append(name);
-            buf.append('(');
-            Type argTypes[] = getType().getArgumentTypes();
-            for (int i = 0 ; i < argTypes.length ; i++) {
-                if (i > 0) {
-                    buf.append(',');
-                }
-                buf.append(argTypes[i].toString());
-            }
-            buf.append(')');
-            return buf.toString();
-        } else if (isInnerClass()) {
-            return getInnerClass().toString();
-        }
-        return type.typeString(getName().toString());
+	Identifier name = getClassDefinition().getName();
+	if (isInitializer()) {
+	    return isStatic() ? "static {}" : "instance {}";
+	} else if (isConstructor()) {
+	    StringBuffer buf = new StringBuffer();
+	    buf.append(name);
+	    buf.append('(');
+	    Type argTypes[] = getType().getArgumentTypes();
+	    for (int i = 0 ; i < argTypes.length ; i++) {
+		if (i > 0) {
+		    buf.append(',');
+		}
+		buf.append(argTypes[i].toString());
+	    }
+	    buf.append(')');
+	    return buf.toString();
+	} else if (isInnerClass()) {
+	    return getInnerClass().toString();
+	}
+	return type.typeString(getName().toString());
     }
 
     /**
      * Print for debugging
      */
     public void print(PrintStream out) {
-        if (isPublic()) {
-            out.print("public ");
-        }
-        if (isPrivate()) {
-            out.print("private ");
-        }
-        if (isProtected()) {
-            out.print("protected ");
-        }
-        if (isFinal()) {
-            out.print("final ");
-        }
-        if (isStatic()) {
-            out.print("static ");
-        }
-        if (isSynchronized()) {
-            out.print("synchronized ");
-        }
-        if (isAbstract()) {
-            out.print("abstract ");
-        }
-        if (isNative()) {
-            out.print("native ");
-        }
-        if (isVolatile()) {
-            out.print("volatile ");
-        }
-        if (isTransient()) {
-            out.print("transient ");
-        }
-        out.println(toString() + ";");
+	if (isPublic()) {
+	    out.print("public ");
+	}
+	if (isPrivate()) {
+	    out.print("private ");
+	}
+	if (isProtected()) {
+	    out.print("protected ");
+	}
+	if (isFinal()) {
+	    out.print("final ");
+	}
+	if (isStatic()) {
+	    out.print("static ");
+	}
+	if (isSynchronized()) {
+	    out.print("synchronized ");
+	}
+	if (isAbstract()) {
+	    out.print("abstract ");
+	}
+	if (isNative()) {
+	    out.print("native ");
+	}
+	if (isVolatile()) {
+	    out.print("volatile ");
+	}
+	if (isTransient()) {
+	    out.print("transient ");
+	}
+	out.println(toString() + ";");
     }
 
     public void cleanup(Environment env) {
-        documentation = null;
-        if (isMethod() && value != null) {
-            int cost = 0;
-            if (isPrivate() || isInitializer()) {
-                value = Statement.empty;
-            } else if ((cost =
-                        ((Statement)value)
-                       .costInline(Statement.MAXINLINECOST, null, null))
-                                >= Statement.MAXINLINECOST) {
-                // will never be inlined
-                value = Statement.empty;
-            } else {
-                try {
-                    if (!isInlineable(null, true)) {
-                        value = Statement.empty;
-                    }
-                }
-                catch (ClassNotFound ee) { }
-            }
-            if (value != Statement.empty && env.dump()) {
-                env.output("[after cleanup of " + getName() + ", " +
-                           cost + " expression cost units remain]");
-            }
-        } else if (isVariable()) {
-            if (isPrivate() || !isFinal() || type.isType(TC_ARRAY)) {
-                value = null;
-            }
-        }
+	documentation = null;
+	if (isMethod() && value != null) {
+	    int cost = 0;
+	    if (isPrivate() || isInitializer()) {
+		value = Statement.empty;
+	    } else if ((cost =
+			((Statement)value)
+		       .costInline(Statement.MAXINLINECOST, null, null))
+				>= Statement.MAXINLINECOST) {
+		// will never be inlined
+		value = Statement.empty;
+	    } else {
+		try {
+		    if (!isInlineable(null, true)) {
+			value = Statement.empty;
+		    }
+		}
+		catch (ClassNotFound ee) { }
+	    }
+	    if (value != Statement.empty && env.dump()) {
+		env.output("[after cleanup of " + getName() + ", " +
+			   cost + " expression cost units remain]");
+	    }
+	} else if (isVariable()) {
+	    if (isPrivate() || !isFinal() || type.isType(TC_ARRAY)) {
+		value = null;
+	    }
+	}
     }
 }

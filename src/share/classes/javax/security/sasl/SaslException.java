@@ -49,7 +49,7 @@ public class SaslException extends IOException {
      * The root exception and the detailed message are null.
      */
     public SaslException () {
-        super();
+	super();
     }
 
     /**
@@ -60,7 +60,7 @@ public class SaslException extends IOException {
      * @see java.lang.Throwable#getMessage
      */
     public SaslException (String detail) {
-        super(detail);
+	super(detail);
     }
 
     /**
@@ -80,10 +80,10 @@ public class SaslException extends IOException {
      * @see #getCause
      */
     public SaslException (String detail, Throwable ex) {
-        super(detail);
-        if (ex != null) {
-            initCause(ex);
-        }
+	super(detail);
+	if (ex != null) {
+	    initCause(ex);
+	}
     }
 
     /*
@@ -91,7 +91,7 @@ public class SaslException extends IOException {
      * JSR 28 would return same value for getCause() (i.e., _exception).
      */
     public Throwable getCause() {
-        return _exception;
+	return _exception;
     }
 
     /*
@@ -99,9 +99,9 @@ public class SaslException extends IOException {
      * _exception as well.
      */
     public Throwable initCause(Throwable cause) {
-        super.initCause(cause);
-        _exception = cause;
-        return this;
+	super.initCause(cause);
+	_exception = cause;
+	return this;
     }
 
     /**
@@ -117,13 +117,13 @@ public class SaslException extends IOException {
      */
     // Override Throwable.toString() to conform to JSR 28
     public String toString() {
-        String answer = super.toString();
-        if (_exception != null && _exception != this) {
-            answer += " [Caused by " + _exception.toString() + "]";
-        }
-        return answer;
+	String answer = super.toString();
+	if (_exception != null && _exception != this) {
+	    answer += " [Caused by " + _exception.toString() + "]";
+	}
+	return answer;
     }
 
-    /** Use serialVersionUID from JSR 28 RI for interoperability */
+    /** Use serialVersionUID from JSR 28 RI for interoperability */ 
     private static final long serialVersionUID = 4579784287983423626L;
 }

@@ -1,23 +1,23 @@
 /*
  * Portions Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -40,7 +40,7 @@ import java.io.*;
  * Additionally, BigInteger provides operations for modular arithmetic, GCD
  * calculation, primality testing, prime generation, bit manipulation,
  * and a few other miscellaneous operations.
- *
+ * 
  * <p>Semantics of arithmetic operations exactly mimic those of Java's integer
  * arithmetic operators, as defined in <i>The Java Language Specification</i>.
  * For example, division by zero throws an {@code ArithmeticException}, and
@@ -48,27 +48,27 @@ import java.io.*;
  * All of the details in the Spec concerning overflow are ignored, as
  * BigIntegers are made as large as necessary to accommodate the results of an
  * operation.
- *
+ * 
  * <p>Semantics of shift operations extend those of Java's shift operators
  * to allow for negative shift distances.  A right-shift with a negative
  * shift distance results in a left shift, and vice-versa.  The unsigned
  * right shift operator ({@code >>>}) is omitted, as this operation makes
  * little sense in combination with the "infinite word size" abstraction
  * provided by this class.
- *
+ * 
  * <p>Semantics of bitwise logical operations exactly mimic those of Java's
  * bitwise integer operators.  The binary operators ({@code and},
  * {@code or}, {@code xor}) implicitly perform sign extension on the shorter
  * of the two operands prior to performing the operation.
- *
+ * 
  * <p>Comparison operations perform signed integer comparisons, analogous to
  * those performed by Java's relational and equality operators.
- *
+ * 
  * <p>Modular arithmetic operations are provided to compute residues, perform
  * exponentiation, and compute multiplicative inverses.  These methods always
  * return a non-negative result, between {@code 0} and {@code (modulus - 1)},
  * inclusive.
- *
+ * 
  * <p>Bit operations operate on a single bit of the two's-complement
  * representation of their operand.  If necessary, the operand is sign-
  * extended so that it contains the designated bit.  None of the single-bit
@@ -76,7 +76,7 @@ import java.io.*;
  * BigInteger being operated on, as they affect only a single bit, and the
  * "infinite word size" abstraction provided by this class ensures that there
  * are infinitely many "virtual sign bits" preceding each BigInteger.
- *
+ * 
  * <p>For the sake of brevity and clarity, pseudo-code is used throughout the
  * descriptions of BigInteger methods.  The pseudo-code expression
  * {@code (i + j)} is shorthand for "a BigInteger whose value is
@@ -85,7 +85,7 @@ import java.io.*;
  * "{@code true} if and only if the BigInteger {@code i} represents the same
  * value as the BigInteger {@code j}."  Other pseudo-code expressions are
  * interpreted similarly.
- *
+ * 
  * <p>All methods and constructors in this class throw
  * {@code NullPointerException} when passed
  * a null object reference for any input parameter.
@@ -181,20 +181,20 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * byte is in the zeroth element.
      *
      * @param  val big-endian two's-complement binary representation of
-     *         BigInteger.
+     *	       BigInteger.
      * @throws NumberFormatException {@code val} is zero bytes long.
      */
     public BigInteger(byte[] val) {
-        if (val.length == 0)
-            throw new NumberFormatException("Zero length BigInteger");
+	if (val.length == 0)
+	    throw new NumberFormatException("Zero length BigInteger");
 
-        if (val[0] < 0) {
+	if (val[0] < 0) {
             mag = makePositive(val);
-            signum = -1;
-        } else {
-            mag = stripLeadingZeroBytes(val);
-            signum = (mag.length == 0 ? 0 : 1);
-        }
+	    signum = -1;
+	} else {
+	    mag = stripLeadingZeroBytes(val);
+	    signum = (mag.length == 0 ? 0 : 1);
+	}
     }
 
     /**
@@ -204,16 +204,16 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * int-order: the most significant int is in the zeroth element.
      */
     private BigInteger(int[] val) {
-        if (val.length == 0)
-            throw new NumberFormatException("Zero length BigInteger");
+	if (val.length == 0)
+	    throw new NumberFormatException("Zero length BigInteger");
 
-        if (val[0] < 0) {
+	if (val[0] < 0) {
             mag = makePositive(val);
-            signum = -1;
-        } else {
-            mag = trustedStripLeadingZeroInts(val);
-            signum = (mag.length == 0 ? 0 : 1);
-        }
+	    signum = -1;
+	} else {
+	    mag = trustedStripLeadingZeroInts(val);
+	    signum = (mag.length == 0 ? 0 : 1);
+	}
     }
 
     /**
@@ -225,26 +225,26 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * result in a BigInteger value of 0, whether signum is -1, 0 or 1.
      *
      * @param  signum signum of the number (-1 for negative, 0 for zero, 1
-     *         for positive).
+     * 	       for positive).
      * @param  magnitude big-endian binary representation of the magnitude of
-     *         the number.
+     * 	       the number.
      * @throws NumberFormatException {@code signum} is not one of the three
-     *         legal values (-1, 0, and 1), or {@code signum} is 0 and
-     *         {@code magnitude} contains one or more non-zero bytes.
+     *	       legal values (-1, 0, and 1), or {@code signum} is 0 and
+     *	       {@code magnitude} contains one or more non-zero bytes.
      */
     public BigInteger(int signum, byte[] magnitude) {
-        this.mag = stripLeadingZeroBytes(magnitude);
+	this.mag = stripLeadingZeroBytes(magnitude);
 
-        if (signum < -1 || signum > 1)
-            throw(new NumberFormatException("Invalid signum value"));
+	if (signum < -1 || signum > 1)
+	    throw(new NumberFormatException("Invalid signum value"));
 
-        if (this.mag.length==0) {
-            this.signum = 0;
-        } else {
-            if (signum == 0)
-                throw(new NumberFormatException("signum-magnitude mismatch"));
-            this.signum = signum;
-        }
+	if (this.mag.length==0) {
+	    this.signum = 0;
+	} else {
+	    if (signum == 0)
+		throw(new NumberFormatException("signum-magnitude mismatch"));
+	    this.signum = signum;
+	}
     }
 
     /**
@@ -254,73 +254,71 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * safe for external use.
      */
     private BigInteger(int signum, int[] magnitude) {
-        this.mag = stripLeadingZeroInts(magnitude);
+	this.mag = stripLeadingZeroInts(magnitude);
 
-        if (signum < -1 || signum > 1)
-            throw(new NumberFormatException("Invalid signum value"));
+	if (signum < -1 || signum > 1)
+	    throw(new NumberFormatException("Invalid signum value"));
 
-        if (this.mag.length==0) {
-            this.signum = 0;
-        } else {
-            if (signum == 0)
-                throw(new NumberFormatException("signum-magnitude mismatch"));
-            this.signum = signum;
-        }
+	if (this.mag.length==0) {
+	    this.signum = 0;
+	} else {
+	    if (signum == 0)
+		throw(new NumberFormatException("signum-magnitude mismatch"));
+	    this.signum = signum;
+	}
     }
 
     /**
      * Translates the String representation of a BigInteger in the
      * specified radix into a BigInteger.  The String representation
-     * consists of an optional minus or plus sign followed by a
-     * sequence of one or more digits in the specified radix.  The
-     * character-to-digit mapping is provided by {@code
-     * Character.digit}.  The String may not contain any extraneous
-     * characters (whitespace, for example).
+     * consists of an optional minus followed by a sequence of one or
+     * more digits in the specified radix.  The character-to-digit
+     * mapping is provided by {@code Character.digit}.  The String may
+     * not contain any extraneous characters (whitespace, for
+     * example).
      *
      * @param val String representation of BigInteger.
      * @param radix radix to be used in interpreting {@code val}.
      * @throws NumberFormatException {@code val} is not a valid representation
-     *         of a BigInteger in the specified radix, or {@code radix} is
-     *         outside the range from {@link Character#MIN_RADIX} to
-     *         {@link Character#MAX_RADIX}, inclusive.
+     *	       of a BigInteger in the specified radix, or {@code radix} is
+     *	       outside the range from {@link Character#MIN_RADIX} to
+     *	       {@link Character#MAX_RADIX}, inclusive.
      * @see    Character#digit
      */
     public BigInteger(String val, int radix) {
-        int cursor = 0, numDigits;
+	int cursor = 0, numDigits;
         int len = val.length();
 
-        if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
-            throw new NumberFormatException("Radix out of range");
-        if (val.length() == 0)
-            throw new NumberFormatException("Zero length BigInteger");
+	if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
+	    throw new NumberFormatException("Radix out of range");
+	if (val.length() == 0)
+	    throw new NumberFormatException("Zero length BigInteger");
 
-        // Check for at most one leading sign
-        signum = 1;
-        int index1 = val.lastIndexOf('-');
-        int index2 = val.lastIndexOf('+');
-        if ((index1 + index2) <= -1) {
-            // No leading sign character or at most one leading sign character
-            if (index1 == 0 || index2 == 0) {
-                cursor = 1;
+	// Check for at most one leading sign
+	signum = 1;
+        int index = val.lastIndexOf('-');
+	if (index != -1) {
+            if (index == 0 ) {
                 if (val.length() == 1)
                     throw new NumberFormatException("Zero length BigInteger");
-            }
-            if (index1 == 0)
-                signum = -1;
-        } else
-            throw new NumberFormatException("Illegal embedded sign character");
+		signum = -1;
+		cursor = 1;
+	    } else {
+		throw new NumberFormatException("Illegal embedded sign character");
+	    }
+	} 
 
         // Skip leading zeros and compute number of digits in magnitude
-        while (cursor < len &&
+	while (cursor < len &&
                Character.digit(val.charAt(cursor), radix) == 0)
-            cursor++;
-        if (cursor == len) {
-            signum = 0;
-            mag = ZERO.mag;
-            return;
-        } else {
-            numDigits = len - cursor;
-        }
+	    cursor++;
+	if (cursor == len) {
+	    signum = 0;
+	    mag = ZERO.mag;
+	    return;
+	} else {
+	    numDigits = len - cursor;
+	}
 
         // Pre-allocate array of expected size. May be too large but can
         // never be too small. Typically exact.
@@ -328,25 +326,25 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         int numWords = (numBits + 31) /32;
         mag = new int[numWords];
 
-        // Process first (potentially short) digit group
-        int firstGroupLen = numDigits % digitsPerInt[radix];
-        if (firstGroupLen == 0)
-            firstGroupLen = digitsPerInt[radix];
-        String group = val.substring(cursor, cursor += firstGroupLen);
+	// Process first (potentially short) digit group
+	int firstGroupLen = numDigits % digitsPerInt[radix];
+	if (firstGroupLen == 0)
+	    firstGroupLen = digitsPerInt[radix];
+	String group = val.substring(cursor, cursor += firstGroupLen);
         mag[mag.length - 1] = Integer.parseInt(group, radix);
-        if (mag[mag.length - 1] < 0)
-            throw new NumberFormatException("Illegal digit");
-
-        // Process remaining digit groups
+	if (mag[mag.length - 1] < 0)
+	    throw new NumberFormatException("Illegal digit");
+        
+	// Process remaining digit groups
         int superRadix = intRadix[radix];
         int groupVal = 0;
-        while (cursor < val.length()) {
-            group = val.substring(cursor, cursor += digitsPerInt[radix]);
-            groupVal = Integer.parseInt(group, radix);
-            if (groupVal < 0)
-                throw new NumberFormatException("Illegal digit");
+	while (cursor < val.length()) {
+	    group = val.substring(cursor, cursor += digitsPerInt[radix]);
+	    groupVal = Integer.parseInt(group, radix);
+	    if (groupVal < 0)
+		throw new NumberFormatException("Illegal digit");
             destructiveMulAdd(mag, superRadix, groupVal);
-        }
+	}
         // Required for cases where the array was overallocated.
         mag = trustedStripLeadingZeroInts(mag);
     }
@@ -356,51 +354,47 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         int cursor = 0, numDigits;
         int len = val.length;
 
-        // Check for leading minus sign
-        signum = 1;
-        if (val[0] == '-') {
-            if (len == 1)
-                throw new NumberFormatException("Zero length BigInteger");
-            signum = -1;
-            cursor = 1;
-        } else if (val[0] == '+') {
-            if (len == 1)
-                throw new NumberFormatException("Zero length BigInteger");
-            cursor = 1;
-        }
+	// Check for leading minus sign
+	signum = 1;
+	if (val[0] == '-') {
+	    if (len == 1)
+		throw new NumberFormatException("Zero length BigInteger");
+	    signum = -1;
+	    cursor = 1;
+	}
 
         // Skip leading zeros and compute number of digits in magnitude
-        while (cursor < len && Character.digit(val[cursor], 10) == 0)
-            cursor++;
-        if (cursor == len) {
-            signum = 0;
-            mag = ZERO.mag;
-            return;
-        } else {
-            numDigits = len - cursor;
-        }
+	while (cursor < len && Character.digit(val[cursor], 10) == 0)
+	    cursor++;
+	if (cursor == len) {
+	    signum = 0;
+	    mag = ZERO.mag;
+	    return;
+	} else {
+	    numDigits = len - cursor;
+	}
 
         // Pre-allocate array of expected size
         int numWords;
         if (len < 10) {
             numWords = 1;
-        } else {
+        } else {    
             int numBits = (int)(((numDigits * bitsPerDigit[10]) >>> 10) + 1);
             numWords = (numBits + 31) /32;
         }
         mag = new int[numWords];
-
-        // Process first (potentially short) digit group
-        int firstGroupLen = numDigits % digitsPerInt[10];
-        if (firstGroupLen == 0)
-            firstGroupLen = digitsPerInt[10];
+ 
+	// Process first (potentially short) digit group
+	int firstGroupLen = numDigits % digitsPerInt[10];
+	if (firstGroupLen == 0)
+	    firstGroupLen = digitsPerInt[10];
         mag[mag.length-1] = parseInt(val, cursor,  cursor += firstGroupLen);
-
-        // Process remaining digit groups
-        while (cursor < len) {
-            int groupVal = parseInt(val, cursor, cursor += digitsPerInt[10]);
+        
+	// Process remaining digit groups
+	while (cursor < len) {
+	    int groupVal = parseInt(val, cursor, cursor += digitsPerInt[10]);
             destructiveMulAdd(mag, intRadix[10], groupVal);
-        }
+	}
         mag = trustedStripLeadingZeroInts(mag);
     }
 
@@ -466,11 +460,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *
      * @param val decimal String representation of BigInteger.
      * @throws NumberFormatException {@code val} is not a valid representation
-     *         of a BigInteger.
+     *	       of a BigInteger.
      * @see    Character#digit
      */
     public BigInteger(String val) {
-        this(val, 10);
+	this(val, 10);
     }
 
     /**
@@ -482,27 +476,27 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *
      * @param  numBits maximum bitLength of the new BigInteger.
      * @param  rnd source of randomness to be used in computing the new
-     *         BigInteger.
+     *	       BigInteger.
      * @throws IllegalArgumentException {@code numBits} is negative.
      * @see #bitLength()
      */
     public BigInteger(int numBits, Random rnd) {
-        this(1, randomBits(numBits, rnd));
+	this(1, randomBits(numBits, rnd));
     }
 
     private static byte[] randomBits(int numBits, Random rnd) {
-        if (numBits < 0)
-            throw new IllegalArgumentException("numBits must be non-negative");
-        int numBytes = (int)(((long)numBits+7)/8); // avoid overflow
-        byte[] randomBits = new byte[numBytes];
+	if (numBits < 0)
+	    throw new IllegalArgumentException("numBits must be non-negative");
+	int numBytes = (int)(((long)numBits+7)/8); // avoid overflow
+	byte[] randomBits = new byte[numBytes];
 
-        // Generate random bytes and mask out any excess bits
-        if (numBytes > 0) {
-            rnd.nextBytes(randomBits);
-            int excessBits = 8*numBytes - numBits;
-            randomBits[0] &= (1 << (8-excessBits)) - 1;
-        }
-        return randomBits;
+	// Generate random bytes and mask out any excess bits
+	if (numBytes > 0) {
+	    rnd.nextBytes(randomBits);
+	    int excessBits = 8*numBytes - numBits;
+	    randomBits[0] &= (1 << (8-excessBits)) - 1;
+	}
+	return randomBits;
     }
 
     /**
@@ -516,24 +510,24 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  bitLength bitLength of the returned BigInteger.
      * @param  certainty a measure of the uncertainty that the caller is
      *         willing to tolerate.  The probability that the new BigInteger
-     *         represents a prime number will exceed
-     *         (1 - 1/2<sup>{@code certainty}</sup>).  The execution time of
-     *         this constructor is proportional to the value of this parameter.
+     *	       represents a prime number will exceed
+     *	       (1 - 1/2<sup>{@code certainty}</sup>).  The execution time of
+     *	       this constructor is proportional to the value of this parameter.
      * @param  rnd source of random bits used to select candidates to be
-     *         tested for primality.
+     *	       tested for primality.
      * @throws ArithmeticException {@code bitLength < 2}.
      * @see    #bitLength()
      */
     public BigInteger(int bitLength, int certainty, Random rnd) {
         BigInteger prime;
 
-        if (bitLength < 2)
-            throw new ArithmeticException("bitLength < 2");
+	if (bitLength < 2)
+	    throw new ArithmeticException("bitLength < 2");
         // The cutoff of 95 was chosen empirically for best performance
         prime = (bitLength < 95 ? smallPrime(bitLength, certainty, rnd)
                                 : largePrime(bitLength, certainty, rnd));
-        signum = 1;
-        mag = prime.mag;
+	signum = 1;
+	mag = prime.mag;
     }
 
     // Minimum size in bits that the requested prime number has
@@ -550,15 +544,15 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *
      * @param  bitLength bitLength of the returned BigInteger.
      * @param  rnd source of random bits used to select candidates to be
-     *         tested for primality.
+     *	       tested for primality.
      * @return a BigInteger of {@code bitLength} bits that is probably prime
      * @throws ArithmeticException {@code bitLength < 2}.
      * @see    #bitLength()
      * @since 1.4
      */
     public static BigInteger probablePrime(int bitLength, Random rnd) {
-        if (bitLength < 2)
-            throw new ArithmeticException("bitLength < 2");
+	if (bitLength < 2)
+	    throw new ArithmeticException("bitLength < 2");
 
         // The cutoff of 95 was chosen empirically for best performance
         return (bitLength < SMALL_PRIME_THRESHOLD ?
@@ -592,12 +586,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             // Do cheap "pre-test" if applicable
             if (bitLength > 6) {
                 long r = p.remainder(SMALL_PRIME_PRODUCT).longValue();
-                if ((r%3==0)  || (r%5==0)  || (r%7==0)  || (r%11==0) ||
-                    (r%13==0) || (r%17==0) || (r%19==0) || (r%23==0) ||
+                if ((r%3==0)  || (r%5==0)  || (r%7==0)  || (r%11==0) || 
+                    (r%13==0) || (r%17==0) || (r%19==0) || (r%23==0) || 
                     (r%29==0) || (r%31==0) || (r%37==0) || (r%41==0))
                     continue; // Candidate is composite; try another
             }
-
+            
             // All candidates of bitLength 2 and 3 are prime by this point
             if (bitLength < 4)
                 return p;
@@ -653,7 +647,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     public BigInteger nextProbablePrime() {
         if (this.signum < 0)
             throw new ArithmeticException("start < 0: " + this);
-
+        
         // Handle trivial cases
         if ((this.signum == 0) || this.equals(ONE))
             return TWO;
@@ -662,7 +656,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         // Fastpath for small numbers
         if (result.bitLength() < SMALL_PRIME_THRESHOLD) {
-
+ 
             // Ensure an odd number
             if (!result.testBit(0))
                 result = result.add(ONE);
@@ -671,14 +665,14 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
                 // Do cheap "pre-test" if applicable
                 if (result.bitLength() > 6) {
                     long r = result.remainder(SMALL_PRIME_PRODUCT).longValue();
-                    if ((r%3==0)  || (r%5==0)  || (r%7==0)  || (r%11==0) ||
-                        (r%13==0) || (r%17==0) || (r%19==0) || (r%23==0) ||
+                    if ((r%3==0)  || (r%5==0)  || (r%7==0)  || (r%11==0) || 
+                        (r%13==0) || (r%17==0) || (r%19==0) || (r%23==0) || 
                         (r%29==0) || (r%31==0) || (r%37==0) || (r%41==0)) {
                         result = result.add(TWO);
                         continue; // Candidate is composite; try another
                     }
                 }
-
+            
                 // All candidates of bitLength 2 and 3 are prime by this point
                 if (result.bitLength() < 4)
                     return result;
@@ -701,7 +695,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         while(true) {
            BitSieve searchSieve = new BitSieve(result, searchLen);
            BigInteger candidate = searchSieve.retrieve(result,
-                                                 DEFAULT_PRIME_CERTAINTY, null);
+						 DEFAULT_PRIME_CERTAINTY, null);
            if (candidate != null)
                return candidate;
            result = result.add(BigInteger.valueOf(2 * searchLen));
@@ -715,12 +709,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * This method assumes bitLength > 2.
      *
      * @param  certainty a measure of the uncertainty that the caller is
-     *         willing to tolerate: if the call returns {@code true}
-     *         the probability that this BigInteger is prime exceeds
-     *         {@code (1 - 1/2<sup>certainty</sup>)}.  The execution time of
-     *         this method is proportional to the value of this parameter.
+     *	       willing to tolerate: if the call returns {@code true}
+     *	       the probability that this BigInteger is prime exceeds
+     *	       {@code (1 - 1/2<sup>certainty</sup>)}.  The execution time of
+     * 	       this method is proportional to the value of this parameter.
      * @return {@code true} if this BigInteger is probably prime,
-     *         {@code false} if it's definitely composite.
+     * 	       {@code false} if it's definitely composite.
      */
     boolean primeToCertainty(int certainty, Random random) {
         int rounds = 0;
@@ -767,7 +761,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             // 5, -7, 9, -11, ...
             d = (d<0) ? Math.abs(d)+2 : -(d+2);
         }
-
+        
         // Step 2
         BigInteger u = lucasLehmerSequence(d, thisPlusOne, this);
 
@@ -784,8 +778,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             return 0;
 
         // Algorithm and comments adapted from Colin Plumb's C library.
-        int j = 1;
-        int u = n.mag[n.mag.length-1];
+	int j = 1;
+	int u = n.mag[n.mag.length-1];
 
         // Make p positive
         if (p < 0) {
@@ -795,30 +789,30 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
                 j = -j; // 3 (011) or 7 (111) mod 8
         }
 
-        // Get rid of factors of 2 in p
-        while ((p & 3) == 0)
+	// Get rid of factors of 2 in p
+	while ((p & 3) == 0)
             p >>= 2;
-        if ((p & 1) == 0) {
+	if ((p & 1) == 0) {
             p >>= 1;
             if (((u ^ (u>>1)) & 2) != 0)
-                j = -j; // 3 (011) or 5 (101) mod 8
-        }
-        if (p == 1)
-            return j;
-        // Then, apply quadratic reciprocity
-        if ((p & u & 2) != 0)   // p = u = 3 (mod 4)?
-            j = -j;
-        // And reduce u mod p
-        u = n.mod(BigInteger.valueOf(p)).intValue();
+                j = -j;	// 3 (011) or 5 (101) mod 8
+	}
+	if (p == 1)
+	    return j;
+	// Then, apply quadratic reciprocity
+	if ((p & u & 2) != 0)	// p = u = 3 (mod 4)?
+	    j = -j;
+	// And reduce u mod p
+	u = n.mod(BigInteger.valueOf(p)).intValue();
 
-        // Now compute Jacobi(u,p), u < p
-        while (u != 0) {
+	// Now compute Jacobi(u,p), u < p
+	while (u != 0) {
             while ((u & 3) == 0)
                 u >>= 2;
             if ((u & 1) == 0) {
                 u >>= 1;
                 if (((p ^ (p>>1)) & 2) != 0)
-                    j = -j;     // 3 (011) or 5 (101) mod 8
+                    j = -j;	// 3 (011) or 5 (101) mod 8
             }
             if (u == 1)
                 return j;
@@ -829,8 +823,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
                 j = -j;
             // Now u >= p, so it can be reduced
             u %= p;
-        }
-        return 0;
+	}
+	return 0;
     }
 
     private static BigInteger lucasLehmerSequence(int z, BigInteger k, BigInteger n) {
@@ -856,7 +850,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
                     u2.signum = - u2.signum;
                 }
                 u2 = u2.shiftRight(1);
-
+                
                 v2 = v.add(d.multiply(u)).mod(n);
                 if (v2.testBit(0)) {
                     v2 = n.subtract(v2);
@@ -873,10 +867,10 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     private static volatile Random staticRandom;
 
     private static Random getSecureRandom() {
-        if (staticRandom == null) {
-            staticRandom = new java.security.SecureRandom();
-        }
-        return staticRandom;
+	if (staticRandom == null) {
+	    staticRandom = new java.security.SecureRandom();
+	}
+	return staticRandom;
     }
 
     /**
@@ -889,32 +883,32 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * iterations<=50.
      */
     private boolean passesMillerRabin(int iterations, Random rnd) {
-        // Find a and m such that m is odd and this == 1 + 2**a * m
+	// Find a and m such that m is odd and this == 1 + 2**a * m
         BigInteger thisMinusOne = this.subtract(ONE);
-        BigInteger m = thisMinusOne;
-        int a = m.getLowestSetBit();
-        m = m.shiftRight(a);
+	BigInteger m = thisMinusOne;
+	int a = m.getLowestSetBit();
+	m = m.shiftRight(a);
 
-        // Do the tests
-        if (rnd == null) {
-            rnd = getSecureRandom();
-        }
-        for (int i=0; i<iterations; i++) {
-            // Generate a uniform random on (1, this)
-            BigInteger b;
-            do {
-                b = new BigInteger(this.bitLength(), rnd);
-            } while (b.compareTo(ONE) <= 0 || b.compareTo(this) >= 0);
+	// Do the tests
+	if (rnd == null) {
+	    rnd = getSecureRandom();
+	}
+	for (int i=0; i<iterations; i++) {
+	    // Generate a uniform random on (1, this)
+	    BigInteger b;
+	    do {
+		b = new BigInteger(this.bitLength(), rnd);
+	    } while (b.compareTo(ONE) <= 0 || b.compareTo(this) >= 0);
 
-            int j = 0;
-            BigInteger z = b.modPow(m, this);
-            while(!((j==0 && z.equals(ONE)) || z.equals(thisMinusOne))) {
-                if (j>0 && z.equals(ONE) || ++j==a)
-                    return false;
-                z = z.modPow(TWO, this);
-            }
-        }
-        return true;
+	    int j = 0;
+	    BigInteger z = b.modPow(m, this);
+	    while(!((j==0 && z.equals(ONE)) || z.equals(thisMinusOne))) {
+		if (j>0 && z.equals(ONE) || ++j==a)
+		    return false;
+		z = z.modPow(TWO, this);
+	    }
+	}
+	return true;
     }
 
     /**
@@ -923,8 +917,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * arguments are correct, and it doesn't copy the magnitude array.
      */
     private BigInteger(int[] magnitude, int signum) {
-        this.signum = (magnitude.length==0 ? 0 : signum);
-        this.mag = magnitude;
+	this.signum = (magnitude.length==0 ? 0 : signum);
+	this.mag = magnitude;
     }
 
     /**
@@ -932,7 +926,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * arguments are correct.
      */
     private BigInteger(byte[] magnitude, int signum) {
-        this.signum = (magnitude.length==0 ? 0 : signum);
+	this.signum = (magnitude.length==0 ? 0 : signum);
         this.mag = stripLeadingZeroBytes(magnitude);
     }
 
@@ -949,7 +943,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             mag = val.value;
         }
 
-        this.signum = (val.intLen == 0) ? 0 : sign;
+	this.signum = (val.intLen == 0) ? 0 : sign;
     }
 
     //Static Factory Methods
@@ -964,15 +958,15 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return a BigInteger with the specified value.
      */
     public static BigInteger valueOf(long val) {
-        // If -MAX_CONSTANT < val < MAX_CONSTANT, return stashed constant
-        if (val == 0)
-            return ZERO;
-        if (val > 0 && val <= MAX_CONSTANT)
-            return posConst[(int) val];
-        else if (val < 0 && val >= -MAX_CONSTANT)
-            return negConst[(int) -val];
+	// If -MAX_CONSTANT < val < MAX_CONSTANT, return stashed constant
+	if (val == 0)
+	    return ZERO;
+	if (val > 0 && val <= MAX_CONSTANT)
+	    return posConst[(int) val];
+	else if (val < 0 && val >= -MAX_CONSTANT)
+	    return negConst[(int) -val];
 
-        return new BigInteger(val);
+	return new BigInteger(val);
     }
 
     /**
@@ -1015,12 +1009,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     private static BigInteger posConst[] = new BigInteger[MAX_CONSTANT+1];
     private static BigInteger negConst[] = new BigInteger[MAX_CONSTANT+1];
     static {
-        for (int i = 1; i <= MAX_CONSTANT; i++) {
-            int[] magnitude = new int[1];
-            magnitude[0] = i;
-            posConst[i] = new BigInteger(magnitude,  1);
-            negConst[i] = new BigInteger(magnitude, -1);
-        }
+	for (int i = 1; i <= MAX_CONSTANT; i++) {
+	    int[] magnitude = new int[1];
+	    magnitude[0] = i;
+	    posConst[i] = new BigInteger(magnitude,  1);
+	    negConst[i] = new BigInteger(magnitude, -1);
+	}
     }
 
     /**
@@ -1059,11 +1053,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     public BigInteger add(BigInteger val) {
         int[] resultMag;
-        if (val.signum == 0)
+	if (val.signum == 0)
             return this;
-        if (signum == 0)
-            return val;
-        if (val.signum == signum)
+	if (signum == 0)
+	    return val;
+	if (val.signum == signum)
             return new BigInteger(add(mag, val.mag), signum);
 
         int cmp = intArrayCmp(mag, val.mag);
@@ -1096,7 +1090,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         // Add common parts of both numbers
         while(yIndex > 0) {
-            sum = (x[--xIndex] & LONG_MASK) +
+            sum = (x[--xIndex] & LONG_MASK) + 
                   (y[--yIndex] & LONG_MASK) + (sum >>> 32);
             result[xIndex] = (int)sum;
         }
@@ -1130,11 +1124,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     public BigInteger subtract(BigInteger val) {
         int[] resultMag;
-        if (val.signum == 0)
+	if (val.signum == 0)
             return this;
-        if (signum == 0)
-            return val.negate();
-        if (val.signum != signum)
+	if (signum == 0)
+	    return val.negate();
+	if (val.signum != signum)
             return new BigInteger(add(mag, val.mag), signum);
 
         int cmp = intArrayCmp(mag, val.mag);
@@ -1160,7 +1154,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         // Subtract common parts of both numbers
         while(littleIndex > 0) {
-            difference = (big[--bigIndex] & LONG_MASK) -
+            difference = (big[--bigIndex] & LONG_MASK) - 
                          (little[--littleIndex] & LONG_MASK) +
                          (difference >> 32);
             result[bigIndex] = (int)difference;
@@ -1186,9 +1180,9 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     public BigInteger multiply(BigInteger val) {
         if (val.signum == 0 || signum == 0)
-            return ZERO;
-
-        int[] result = multiplyToLen(mag, mag.length,
+	    return ZERO;
+        
+        int[] result = multiplyToLen(mag, mag.length, 
                                      val.mag, val.mag.length, null);
         result = trustedStripLeadingZeroInts(result);
         return new BigInteger(result, signum*val.signum);
@@ -1217,8 +1211,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         for (int i = xstart-1; i >= 0; i--) {
             carry = 0;
             for (int j=ystart, k=ystart+1+i; j>=0; j--, k--) {
-                long product = (y[j] & LONG_MASK) *
-                               (x[i] & LONG_MASK) +
+                long product = (y[j] & LONG_MASK) * 
+                               (x[i] & LONG_MASK) + 
                                (z[k] & LONG_MASK) + carry;
                 z[k] = (int)product;
                 carry = product >>> 32;
@@ -1235,7 +1229,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     private BigInteger square() {
         if (signum == 0)
-            return ZERO;
+	    return ZERO;
         int[] z = squareToLen(mag, mag.length, null);
         return new BigInteger(trustedStripLeadingZeroInts(z), 1);
     }
@@ -1282,7 +1276,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         int zlen = len << 1;
         if (z == null || z.length < zlen)
             z = new int[zlen];
-
+        
         // Store the squares, right shifted one bit (i.e., divided by 2)
         int lastProductLowWord = 0;
         for (int j=0, i=0; j<len; j++) {
@@ -1329,10 +1323,10 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * followed by {@code (this % val)}.
      *
      * @param  val value by which this BigInteger is to be divided, and the
-     *         remainder computed.
+     *	       remainder computed.
      * @return an array of two BigIntegers: the quotient {@code (this / val)}
-     *         is the initial element, and the remainder {@code (this % val)}
-     *         is the final element.
+     *	       is the initial element, and the remainder {@code (this % val)}
+     *	       is the final element.
      * @throws ArithmeticException {@code val==0}
      */
     public BigInteger[] divideAndRemainder(BigInteger val) {
@@ -1351,7 +1345,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * Returns a BigInteger whose value is {@code (this % val)}.
      *
      * @param  val value by which this BigInteger is to be divided, and the
-     *         remainder computed.
+     *	       remainder computed.
      * @return {@code this % val}
      * @throws ArithmeticException {@code val==0}
      */
@@ -1372,31 +1366,31 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  exponent exponent to which this BigInteger is to be raised.
      * @return <tt>this<sup>exponent</sup></tt>
      * @throws ArithmeticException {@code exponent} is negative.  (This would
-     *         cause the operation to yield a non-integer value.)
+     *	       cause the operation to yield a non-integer value.)
      */
     public BigInteger pow(int exponent) {
-        if (exponent < 0)
-            throw new ArithmeticException("Negative exponent");
-        if (signum==0)
-            return (exponent==0 ? ONE : this);
+	if (exponent < 0)
+	    throw new ArithmeticException("Negative exponent");
+	if (signum==0)
+	    return (exponent==0 ? ONE : this);
 
-        // Perform exponentiation using repeated squaring trick
+	// Perform exponentiation using repeated squaring trick
         int newSign = (signum<0 && (exponent&1)==1 ? -1 : 1);
-        int[] baseToPow2 = this.mag;
+	int[] baseToPow2 = this.mag;
         int[] result = {1};
 
-        while (exponent != 0) {
-            if ((exponent & 1)==1) {
-                result = multiplyToLen(result, result.length,
+	while (exponent != 0) {
+	    if ((exponent & 1)==1) {
+		result = multiplyToLen(result, result.length, 
                                        baseToPow2, baseToPow2.length, null);
-                result = trustedStripLeadingZeroInts(result);
-            }
-            if ((exponent >>>= 1) != 0) {
+		result = trustedStripLeadingZeroInts(result);
+	    }
+	    if ((exponent >>>= 1) != 0) {
                 baseToPow2 = squareToLen(baseToPow2, baseToPow2.length, null);
-                baseToPow2 = trustedStripLeadingZeroInts(baseToPow2);
-            }
-        }
-        return new BigInteger(result, newSign);
+		baseToPow2 = trustedStripLeadingZeroInts(baseToPow2);
+	    }
+	}
+	return new BigInteger(result, newSign);
     }
 
     /**
@@ -1409,9 +1403,9 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     public BigInteger gcd(BigInteger val) {
         if (val.signum == 0)
-            return this.abs();
-        else if (this.signum == 0)
-            return val.abs();
+	    return this.abs();
+	else if (this.signum == 0)
+	    return val.abs();
 
         MutableBigInteger a = new MutableBigInteger(this);
         MutableBigInteger b = new MutableBigInteger(val);
@@ -1429,7 +1423,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         int nInts = n >>> 5;
         int nBits = n&0x1F;
         int bitsInHighWord = bitLen(a[0]);
-
+        
         // If shift can be done without recopy, do so
         if (n <= (32-bitsInHighWord)) {
             primitiveLeftShift(a, len, nBits);
@@ -1488,12 +1482,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
     /**
      * Returns a BigInteger whose value is the absolute value of this
-     * BigInteger.
+     * BigInteger. 
      *
      * @return {@code abs(this)}
      */
     public BigInteger abs() {
-        return (signum >= 0 ? this : this.negate());
+	return (signum >= 0 ? this : this.negate());
     }
 
     /**
@@ -1502,17 +1496,17 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code -this}
      */
     public BigInteger negate() {
-        return new BigInteger(this.mag, -this.signum);
+	return new BigInteger(this.mag, -this.signum);
     }
 
     /**
      * Returns the signum function of this BigInteger.
      *
      * @return -1, 0 or 1 as the value of this BigInteger is negative, zero or
-     *         positive.
+     *	       positive.
      */
     public int signum() {
-        return this.signum;
+	return this.signum;
     }
 
     // Modular Arithmetic Operations
@@ -1528,11 +1522,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @see    #remainder
      */
     public BigInteger mod(BigInteger m) {
-        if (m.signum <= 0)
-            throw new ArithmeticException("BigInteger: modulus not positive");
+	if (m.signum <= 0)
+	    throw new ArithmeticException("BigInteger: modulus not positive");
 
-        BigInteger result = this.remainder(m);
-        return (result.signum >= 0 ? result : result.add(m));
+	BigInteger result = this.remainder(m);
+	return (result.signum >= 0 ? result : result.add(m));
     }
 
     /**
@@ -1547,11 +1541,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @see    #modInverse
      */
     public BigInteger modPow(BigInteger exponent, BigInteger m) {
-        if (m.signum <= 0)
-            throw new ArithmeticException("BigInteger: modulus not positive");
+	if (m.signum <= 0)
+	    throw new ArithmeticException("BigInteger: modulus not positive");
 
-        // Trivial cases
-        if (exponent.signum == 0)
+	// Trivial cases
+	if (exponent.signum == 0)
             return (m.equals(ONE) ? ZERO : ONE);
 
         if (this.equals(ONE))
@@ -1562,28 +1556,28 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         if (this.equals(negConst[1]) && (!exponent.testBit(0)))
             return (m.equals(ONE) ? ZERO : ONE);
+            
+	boolean invertResult;
+	if ((invertResult = (exponent.signum < 0)))
+	    exponent = exponent.negate();
 
-        boolean invertResult;
-        if ((invertResult = (exponent.signum < 0)))
-            exponent = exponent.negate();
-
-        BigInteger base = (this.signum < 0 || this.compareTo(m) >= 0
-                           ? this.mod(m) : this);
-        BigInteger result;
-        if (m.testBit(0)) { // odd modulus
-            result = base.oddModPow(exponent, m);
-        } else {
-            /*
-             * Even modulus.  Tear it into an "odd part" (m1) and power of two
+	BigInteger base = (this.signum < 0 || this.compareTo(m) >= 0
+			   ? this.mod(m) : this);
+	BigInteger result;
+	if (m.testBit(0)) { // odd modulus
+	    result = base.oddModPow(exponent, m);
+	} else {
+	    /*
+	     * Even modulus.  Tear it into an "odd part" (m1) and power of two
              * (m2), exponentiate mod m1, manually exponentiate mod m2, and
              * use Chinese Remainder Theorem to combine results.
-             */
+	     */
 
-            // Tear m apart into odd part (m1) and power of 2 (m2)
-            int p = m.getLowestSetBit();   // Max pow of 2 that divides m
+	    // Tear m apart into odd part (m1) and power of 2 (m2)
+	    int p = m.getLowestSetBit();   // Max pow of 2 that divides m
 
-            BigInteger m1 = m.shiftRight(p);  // m/2**p
-            BigInteger m2 = ONE.shiftLeft(p); // 2**p
+	    BigInteger m1 = m.shiftRight(p);  // m/2**p
+	    BigInteger m2 = ONE.shiftLeft(p); // 2**p
 
             // Calculate new base from m1
             BigInteger base2 = (this.signum < 0 || this.compareTo(m1) >= 0
@@ -1593,18 +1587,18 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             BigInteger a1 = (m1.equals(ONE) ? ZERO :
                              base2.oddModPow(exponent, m1));
 
-            // Calculate (this ** exponent) mod m2
-            BigInteger a2 = base.modPow2(exponent, p);
+	    // Calculate (this ** exponent) mod m2
+	    BigInteger a2 = base.modPow2(exponent, p);
 
-            // Combine results using Chinese Remainder Theorem
-            BigInteger y1 = m2.modInverse(m1);
-            BigInteger y2 = m1.modInverse(m2);
+	    // Combine results using Chinese Remainder Theorem
+	    BigInteger y1 = m2.modInverse(m1);
+	    BigInteger y2 = m1.modInverse(m2);
 
-            result = a1.multiply(m2).multiply(y1).add
-                     (a2.multiply(m1).multiply(y2)).mod(m);
-        }
+	    result = a1.multiply(m2).multiply(y1).add
+		     (a2.multiply(m1).multiply(y2)).mod(m);
+	}
 
-        return (invertResult ? result.modInverse(m) : result);
+	return (invertResult ? result.modInverse(m) : result);
     }
 
     static int[] bnExpModThreshTable = {7, 25, 81, 241, 673, 1793,
@@ -1688,16 +1682,16 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         // Select an appropriate window size
         int wbits = 0;
         int ebits = bitLength(exp, exp.length);
-        // if exponent is 65537 (0x10001), use minimum window size
-        if ((ebits != 17) || (exp[0] != 65537)) {
-            while (ebits > bnExpModThreshTable[wbits]) {
-                wbits++;
-            }
-        }
+	// if exponent is 65537 (0x10001), use minimum window size
+	if ((ebits != 17) || (exp[0] != 65537)) {
+	    while (ebits > bnExpModThreshTable[wbits]) {
+		wbits++;
+	    }
+	}
 
         // Calculate appropriate table size
         int tblmask = 1 << wbits;
-
+        
         // Allocate table for precomputed odd powers of base in Montgomery form
         int[][] table = new int[tblmask][];
         for (int i=0; i<tblmask; i++)
@@ -1735,7 +1729,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         for(int i=0; i<modLen; i++)
             t[i] = b[i];
 
-        // Fill in the table with odd powers of the base
+        // Fill in the table with odd powers of the base        
         for (int i=1; i<tblmask; i++) {
             int[] prod = multiplyToLen(t, modLen, table[i-1], modLen, null);
             table[i] = montReduce(prod, mod, modLen, inv);
@@ -1743,11 +1737,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         // Pre load the window that slides over the exponent
         int bitpos = 1 << ((ebits-1) & (32-1));
-
+        
         int buf = 0;
         int elen = exp.length;
         int eIndex = 0;
-        for (int i = 0; i <= wbits; i++) {
+	for (int i = 0; i <= wbits; i++) {
             buf = (buf << 1) | (((exp[eIndex] & bitpos) != 0)?1:0);
             bitpos >>>= 1;
             if (bitpos == 0) {
@@ -1755,7 +1749,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
                 bitpos = 1 << (32-1);
                 elen--;
             }
-        }
+	}
 
         int multpos = ebits;
 
@@ -1763,17 +1757,17 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         ebits--;
         boolean isone = true;
 
-        multpos = ebits - wbits;
-        while ((buf & 1) == 0) {
+	multpos = ebits - wbits;
+	while ((buf & 1) == 0) {
             buf >>>= 1;
             multpos++;
-        }
+	}
 
-        int[] mult = table[buf >>> 1];
+	int[] mult = table[buf >>> 1];
 
-        buf = 0;
+	buf = 0;
         if (multpos == ebits)
-            isone = false;
+	    isone = false;
 
         // The main loop
         while(true) {
@@ -1826,7 +1820,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
                 a = montReduce(a, mod, modLen, inv);
                 t = a; a = b; b = t;
             }
-        }
+	}
 
         // Convert result out of Montgomery form and return
         int[] t2 = new int[2*modLen];
@@ -1838,7 +1832,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         t2 = new int[modLen];
         for(int i=0; i<modLen; i++)
             t2[i] = b[i];
-
+           
         return new BigInteger(1, t2);
     }
 
@@ -1857,7 +1851,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             c += addOne(n, offset, mlen, carry);
             offset++;
         } while(--len > 0);
-
+        
         while(c>0)
             c += subN(n, mod, mlen);
 
@@ -1873,15 +1867,15 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * equal to, or greater than arg2 up to length len.
      */
     private static int intArrayCmpToLen(int[] arg1, int[] arg2, int len) {
-        for (int i=0; i<len; i++) {
-            long b1 = arg1[i] & LONG_MASK;
-            long b2 = arg2[i] & LONG_MASK;
-            if (b1 < b2)
-                return -1;
-            if (b1 > b2)
-                return 1;
-        }
-        return 0;
+	for (int i=0; i<len; i++) {
+	    long b1 = arg1[i] & LONG_MASK;
+	    long b2 = arg2[i] & LONG_MASK;
+	    if (b1 < b2)
+		return -1;
+	    if (b1 > b2)
+		return 1;
+	}
+	return 0;
     }
 
     /**
@@ -1891,7 +1885,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         long sum = 0;
 
         while(--len >= 0) {
-            sum = (a[len] & LONG_MASK) -
+            sum = (a[len] & LONG_MASK) - 
                  (b[len] & LONG_MASK) + (sum >> 32);
             a[len] = (int)sum;
         }
@@ -1923,7 +1917,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     static int addOne(int[] a, int offset, int mlen, int carry) {
         offset = a.length-1-mlen-offset;
         long t = (a[offset] & LONG_MASK) + (carry & LONG_MASK);
-
+        
         a[offset] = (int)t;
         if ((t >>> 32) == 0)
             return 0;
@@ -1943,12 +1937,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * Returns a BigInteger whose value is (this ** exponent) mod (2**p)
      */
     private BigInteger modPow2(BigInteger exponent, int p) {
-        /*
-         * Perform exponentiation using repeated squaring trick, chopping off
-         * high order bits as indicated by modulus.
-         */
-        BigInteger result = valueOf(1);
-        BigInteger baseToPow2 = this.mod2(p);
+	/*
+	 * Perform exponentiation using repeated squaring trick, chopping off
+	 * high order bits as indicated by modulus.
+	 */
+	BigInteger result = valueOf(1);
+	BigInteger baseToPow2 = this.mod2(p);
         int expOffset = 0;
 
         int limit = exponent.bitLength();
@@ -1956,15 +1950,15 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         if (this.testBit(0))
            limit = (p-1) < limit ? (p-1) : limit;
 
-        while (expOffset < limit) {
-            if (exponent.testBit(expOffset))
-                result = result.multiply(baseToPow2).mod2(p);
+	while (expOffset < limit) {
+	    if (exponent.testBit(expOffset))
+		result = result.multiply(baseToPow2).mod2(p);
             expOffset++;
-            if (expOffset < limit)
+	    if (expOffset < limit)
                 baseToPow2 = baseToPow2.square().mod2(p);
-        }
+	}
 
-        return result;
+	return result;
     }
 
     /**
@@ -1972,20 +1966,20 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * Assumes that this {@code BigInteger >= 0} and {@code p > 0}.
      */
     private BigInteger mod2(int p) {
-        if (bitLength() <= p)
-            return this;
+	if (bitLength() <= p)
+	    return this;
 
-        // Copy remaining ints of mag
-        int numInts = (p+31)/32;
-        int[] mag = new int[numInts];
-        for (int i=0; i<numInts; i++)
-            mag[i] = this.mag[i + (this.mag.length - numInts)];
+	// Copy remaining ints of mag
+	int numInts = (p+31)/32;
+	int[] mag = new int[numInts];
+	for (int i=0; i<numInts; i++)
+	    mag[i] = this.mag[i + (this.mag.length - numInts)];
 
-        // Mask out any excess bits
-        int excessBits = (numInts << 5) - p;
-        mag[0] &= (1L << (32-excessBits)) - 1;
+	// Mask out any excess bits
+	int excessBits = (numInts << 5) - p;
+	mag[0] &= (1L << (32-excessBits)) - 1;
 
-        return (mag[0]==0 ? new BigInteger(1, mag) : new BigInteger(mag, 1));
+	return (mag[0]==0 ? new BigInteger(1, mag) : new BigInteger(mag, 1));
     }
 
     /**
@@ -1994,17 +1988,17 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @param  m the modulus.
      * @return {@code this}<sup>-1</sup> {@code mod m}.
      * @throws ArithmeticException {@code  m <= 0}, or this BigInteger
-     *         has no multiplicative inverse mod m (that is, this BigInteger
-     *         is not <i>relatively prime</i> to m).
+     *	       has no multiplicative inverse mod m (that is, this BigInteger
+     *	       is not <i>relatively prime</i> to m).
      */
     public BigInteger modInverse(BigInteger m) {
-        if (m.signum != 1)
-            throw new ArithmeticException("BigInteger: modulus not positive");
+	if (m.signum != 1)
+	    throw new ArithmeticException("BigInteger: modulus not positive");
 
         if (m.equals(ONE))
             return ZERO;
 
-        // Calculate (this mod m)
+	// Calculate (this mod m)
         BigInteger modVal = this;
         if (signum < 0 || (intArrayCmp(mag, m.mag) >= 0))
             modVal = this.mod(m);
@@ -2014,8 +2008,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         MutableBigInteger a = new MutableBigInteger(modVal);
         MutableBigInteger b = new MutableBigInteger(m);
-
-        MutableBigInteger result = a.mutableModInverse(b);
+  
+        MutableBigInteger result = a.mutableModInverse(b);  
         return new BigInteger(result, 1);
     }
 
@@ -2071,7 +2065,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * Returns a BigInteger whose value is {@code (this >> n)}.  Sign
      * extension is performed.  The shift distance, {@code n}, may be
      * negative, in which case this method performs a left shift.
-     * (Computes <tt>floor(this / 2<sup>n</sup>)</tt>.)
+     * (Computes <tt>floor(this / 2<sup>n</sup>)</tt>.) 
      *
      * @param  n shift distance, in bits.
      * @return {@code this >> n}
@@ -2150,29 +2144,29 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this & val}
      */
     public BigInteger and(BigInteger val) {
-        int[] result = new int[Math.max(intLength(), val.intLength())];
-        for (int i=0; i<result.length; i++)
-            result[i] = (getInt(result.length-i-1)
-                         & val.getInt(result.length-i-1));
+	int[] result = new int[Math.max(intLength(), val.intLength())];
+	for (int i=0; i<result.length; i++)
+	    result[i] = (getInt(result.length-i-1)
+			 & val.getInt(result.length-i-1));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
      * Returns a BigInteger whose value is {@code (this | val)}.  (This method
      * returns a negative BigInteger if and only if either this or val is
-     * negative.)
+     * negative.) 
      *
      * @param val value to be OR'ed with this BigInteger.
      * @return {@code this | val}
      */
     public BigInteger or(BigInteger val) {
-        int[] result = new int[Math.max(intLength(), val.intLength())];
-        for (int i=0; i<result.length; i++)
-            result[i] = (getInt(result.length-i-1)
-                         | val.getInt(result.length-i-1));
+	int[] result = new int[Math.max(intLength(), val.intLength())];
+	for (int i=0; i<result.length; i++)
+	    result[i] = (getInt(result.length-i-1)
+			 | val.getInt(result.length-i-1));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
@@ -2184,12 +2178,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this ^ val}
      */
     public BigInteger xor(BigInteger val) {
-        int[] result = new int[Math.max(intLength(), val.intLength())];
-        for (int i=0; i<result.length; i++)
-            result[i] = (getInt(result.length-i-1)
-                         ^ val.getInt(result.length-i-1));
+	int[] result = new int[Math.max(intLength(), val.intLength())];
+	for (int i=0; i<result.length; i++)
+	    result[i] = (getInt(result.length-i-1)
+			 ^ val.getInt(result.length-i-1));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
@@ -2200,11 +2194,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code ~this}
      */
     public BigInteger not() {
-        int[] result = new int[intLength()];
-        for (int i=0; i<result.length; i++)
-            result[i] = ~getInt(result.length-i-1);
+	int[] result = new int[intLength()];
+	for (int i=0; i<result.length; i++)
+	    result[i] = ~getInt(result.length-i-1);
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
@@ -2218,12 +2212,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return {@code this & ~val}
      */
     public BigInteger andNot(BigInteger val) {
-        int[] result = new int[Math.max(intLength(), val.intLength())];
-        for (int i=0; i<result.length; i++)
-            result[i] = (getInt(result.length-i-1)
-                         & ~val.getInt(result.length-i-1));
+	int[] result = new int[Math.max(intLength(), val.intLength())];
+	for (int i=0; i<result.length; i++)
+	    result[i] = (getInt(result.length-i-1)
+			 & ~val.getInt(result.length-i-1));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
 
@@ -2238,10 +2232,10 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException {@code n} is negative.
      */
     public boolean testBit(int n) {
-        if (n<0)
-            throw new ArithmeticException("Negative bit address");
+	if (n<0)
+	    throw new ArithmeticException("Negative bit address");
 
-        return (getInt(n/32) & (1 << (n%32))) != 0;
+	return (getInt(n/32) & (1 << (n%32))) != 0;
     }
 
     /**
@@ -2253,18 +2247,18 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException {@code n} is negative.
      */
     public BigInteger setBit(int n) {
-        if (n<0)
-            throw new ArithmeticException("Negative bit address");
+	if (n<0)
+	    throw new ArithmeticException("Negative bit address");
 
-        int intNum = n/32;
-        int[] result = new int[Math.max(intLength(), intNum+2)];
+	int intNum = n/32;
+	int[] result = new int[Math.max(intLength(), intNum+2)];
 
-        for (int i=0; i<result.length; i++)
-            result[result.length-i-1] = getInt(i);
+	for (int i=0; i<result.length; i++)
+	    result[result.length-i-1] = getInt(i);
 
-        result[result.length-intNum-1] |= (1 << (n%32));
+	result[result.length-intNum-1] |= (1 << (n%32));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
@@ -2277,18 +2271,18 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException {@code n} is negative.
      */
     public BigInteger clearBit(int n) {
-        if (n<0)
-            throw new ArithmeticException("Negative bit address");
+	if (n<0)
+	    throw new ArithmeticException("Negative bit address");
 
-        int intNum = n/32;
-        int[] result = new int[Math.max(intLength(), (n+1)/32+1)];
+	int intNum = n/32;
+	int[] result = new int[Math.max(intLength(), (n+1)/32+1)];
 
-        for (int i=0; i<result.length; i++)
-            result[result.length-i-1] = getInt(i);
+	for (int i=0; i<result.length; i++)
+	    result[result.length-i-1] = getInt(i);
 
-        result[result.length-intNum-1] &= ~(1 << (n%32));
+	result[result.length-intNum-1] &= ~(1 << (n%32));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
@@ -2301,18 +2295,18 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @throws ArithmeticException {@code n} is negative.
      */
     public BigInteger flipBit(int n) {
-        if (n<0)
-            throw new ArithmeticException("Negative bit address");
+	if (n<0)
+	    throw new ArithmeticException("Negative bit address");
 
-        int intNum = n/32;
-        int[] result = new int[Math.max(intLength(), intNum+2)];
+	int intNum = n/32;
+	int[] result = new int[Math.max(intLength(), intNum+2)];
 
-        for (int i=0; i<result.length; i++)
-            result[result.length-i-1] = getInt(i);
+	for (int i=0; i<result.length; i++)
+	    result[result.length-i-1] = getInt(i);
 
-        result[result.length-intNum-1] ^= (1 << (n%32));
+	result[result.length-intNum-1] ^= (1 << (n%32));
 
-        return valueOf(result);
+	return valueOf(result);
     }
 
     /**
@@ -2324,23 +2318,23 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return index of the rightmost one bit in this BigInteger.
      */
     public int getLowestSetBit() {
-        /*
-         * Initialize lowestSetBit field the first time this method is
-         * executed. This method depends on the atomicity of int modifies;
-         * without this guarantee, it would have to be synchronized.
-         */
-        if (lowestSetBit == -2) {
-            if (signum == 0) {
-                lowestSetBit = -1;
-            } else {
-                // Search for lowest order nonzero int
-                int i,b;
-                for (i=0; (b = getInt(i))==0; i++)
-                    ;
-                lowestSetBit = (i << 5) + trailingZeroCnt(b);
-            }
-        }
-        return lowestSetBit;
+	/*
+	 * Initialize lowestSetBit field the first time this method is
+	 * executed. This method depends on the atomicity of int modifies;
+	 * without this guarantee, it would have to be synchronized.
+	 */
+	if (lowestSetBit == -2) {
+	    if (signum == 0) {
+		lowestSetBit = -1;
+	    } else {
+		// Search for lowest order nonzero int
+		int i,b;
+		for (i=0; (b = getInt(i))==0; i++)
+		    ;
+		lowestSetBit = (i << 5) + trailingZeroCnt(b);
+	    }
+	}
+	return lowestSetBit;
     }
 
 
@@ -2357,31 +2351,31 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *         representation of this BigInteger, <i>excluding</i> a sign bit.
      */
     public int bitLength() {
-        /*
-         * Initialize bitLength field the first time this method is executed.
-         * This method depends on the atomicity of int modifies; without
-         * this guarantee, it would have to be synchronized.
-         */
-        if (bitLength == -1) {
-            if (signum == 0) {
-                bitLength = 0;
-            } else {
-                // Calculate the bit length of the magnitude
-                int magBitLength = ((mag.length-1) << 5) + bitLen(mag[0]);
+	/*
+	 * Initialize bitLength field the first time this method is executed.
+	 * This method depends on the atomicity of int modifies; without
+	 * this guarantee, it would have to be synchronized.
+	 */
+	if (bitLength == -1) {
+	    if (signum == 0) {
+		bitLength = 0;
+	    } else {
+		// Calculate the bit length of the magnitude
+		int magBitLength = ((mag.length-1) << 5) + bitLen(mag[0]);
 
-                if (signum < 0) {
-                    // Check if magnitude is a power of two
-                    boolean pow2 = (bitCnt(mag[0]) == 1);
-                    for(int i=1; i<mag.length && pow2; i++)
-                        pow2 = (mag[i]==0);
+		if (signum < 0) {
+		    // Check if magnitude is a power of two
+		    boolean pow2 = (bitCnt(mag[0]) == 1);
+		    for(int i=1; i<mag.length && pow2; i++)
+			pow2 = (mag[i]==0);
 
-                    bitLength = (pow2 ? magBitLength-1 : magBitLength);
-                } else {
-                    bitLength = magBitLength;
-                }
-            }
-        }
-        return bitLength;
+		    bitLength = (pow2 ? magBitLength-1 : magBitLength);
+		} else {
+		    bitLength = magBitLength;
+		}
+	    }
+	}
+	return bitLength;
     }
 
     /**
@@ -2413,21 +2407,21 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     final static byte trailingZeroTable[] = {
       -25, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
-        4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0};
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	7, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	6, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	5, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0,
+	4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0};
 
     /**
      * Returns the number of bits in the two's complement representation
@@ -2438,31 +2432,31 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *         of this BigInteger that differ from its sign bit.
      */
     public int bitCount() {
-        /*
-         * Initialize bitCount field the first time this method is executed.
-         * This method depends on the atomicity of int modifies; without
-         * this guarantee, it would have to be synchronized.
-         */
-        if (bitCount == -1) {
-            // Count the bits in the magnitude
-            int magBitCount = 0;
-            for (int i=0; i<mag.length; i++)
-                magBitCount += bitCnt(mag[i]);
+	/*
+	 * Initialize bitCount field the first time this method is executed.
+	 * This method depends on the atomicity of int modifies; without
+	 * this guarantee, it would have to be synchronized.
+	 */
+	if (bitCount == -1) {
+	    // Count the bits in the magnitude
+	    int magBitCount = 0;
+	    for (int i=0; i<mag.length; i++)
+		magBitCount += bitCnt(mag[i]);
 
-            if (signum < 0) {
-                // Count the trailing zeros in the magnitude
-                int magTrailingZeroCount = 0, j;
-                for (j=mag.length-1; mag[j]==0; j--)
-                    magTrailingZeroCount += 32;
-                magTrailingZeroCount +=
+	    if (signum < 0) {
+		// Count the trailing zeros in the magnitude
+		int magTrailingZeroCount = 0, j;
+		for (j=mag.length-1; mag[j]==0; j--)
+		    magTrailingZeroCount += 32;
+		magTrailingZeroCount +=
                             trailingZeroCnt(mag[j]);
 
-                bitCount = magBitCount + magTrailingZeroCount - 1;
-            } else {
-                bitCount = magBitCount;
-            }
-        }
-        return bitCount;
+		bitCount = magBitCount + magTrailingZeroCount - 1;
+	    } else {
+		bitCount = magBitCount;
+	    }
+	}
+	return bitCount;
     }
 
     static int bitCnt(int val) {
@@ -2501,21 +2495,21 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * returned.
      *
      * @param  certainty a measure of the uncertainty that the caller is
-     *         willing to tolerate: if the call returns {@code true}
-     *         the probability that this BigInteger is prime exceeds
-     *         (1 - 1/2<sup>{@code certainty}</sup>).  The execution time of
-     *         this method is proportional to the value of this parameter.
+     *	       willing to tolerate: if the call returns {@code true}
+     *	       the probability that this BigInteger is prime exceeds
+     *	       (1 - 1/2<sup>{@code certainty}</sup>).  The execution time of
+     * 	       this method is proportional to the value of this parameter.
      * @return {@code true} if this BigInteger is probably prime,
-     *         {@code false} if it's definitely composite.
+     * 	       {@code false} if it's definitely composite.
      */
     public boolean isProbablePrime(int certainty) {
-        if (certainty <= 0)
-            return true;
-        BigInteger w = this.abs();
-        if (w.equals(TWO))
-            return true;
-        if (!w.testBit(0) || w.equals(ONE))
-            return false;
+	if (certainty <= 0)
+	    return true;
+	BigInteger w = this.abs();
+	if (w.equals(TWO))
+	    return true;
+	if (!w.testBit(0) || w.equals(ONE))
+	    return false;
 
         return w.primeToCertainty(certainty, null);
     }
@@ -2536,9 +2530,9 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *         to, or greater than {@code val}.
      */
     public int compareTo(BigInteger val) {
-        return (signum==val.signum
-                ? signum*intArrayCmp(mag, val.mag)
-                : (signum>val.signum ? 1 : -1));
+	return (signum==val.signum
+		? signum*intArrayCmp(mag, val.mag)
+		: (signum>val.signum ? 1 : -1));
     }
 
     /*
@@ -2546,21 +2540,21 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * less than, equal to, or greater than arg2.
      */
     private static int intArrayCmp(int[] arg1, int[] arg2) {
-        if (arg1.length < arg2.length)
-            return -1;
-        if (arg1.length > arg2.length)
-            return 1;
+	if (arg1.length < arg2.length)
+	    return -1;
+	if (arg1.length > arg2.length)
+	    return 1;
 
-        // Argument lengths are equal; compare the values
-        for (int i=0; i<arg1.length; i++) {
-            long b1 = arg1[i] & LONG_MASK;
-            long b2 = arg2[i] & LONG_MASK;
-            if (b1 < b2)
-                return -1;
-            if (b1 > b2)
-                return 1;
-        }
-        return 0;
+	// Argument lengths are equal; compare the values
+	for (int i=0; i<arg1.length; i++) {
+	    long b1 = arg1[i] & LONG_MASK;
+	    long b2 = arg2[i] & LONG_MASK;
+	    if (b1 < b2)
+		return -1;
+	    if (b1 > b2)
+		return 1;
+	}
+	return 0;
     }
 
     /**
@@ -2568,36 +2562,36 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *
      * @param  x Object to which this BigInteger is to be compared.
      * @return {@code true} if and only if the specified Object is a
-     *         BigInteger whose value is numerically equal to this BigInteger.
+     *	       BigInteger whose value is numerically equal to this BigInteger.
      */
     public boolean equals(Object x) {
-        // This test is just an optimization, which may or may not help
-        if (x == this)
-            return true;
+	// This test is just an optimization, which may or may not help
+	if (x == this)
+	    return true;
 
-        if (!(x instanceof BigInteger))
-            return false;
-        BigInteger xInt = (BigInteger) x;
+	if (!(x instanceof BigInteger))
+	    return false;
+	BigInteger xInt = (BigInteger) x;
 
-        if (xInt.signum != signum || xInt.mag.length != mag.length)
-            return false;
+	if (xInt.signum != signum || xInt.mag.length != mag.length)
+	    return false;
 
-        for (int i=0; i<mag.length; i++)
-            if (xInt.mag[i] != mag[i])
-                return false;
+	for (int i=0; i<mag.length; i++)
+	    if (xInt.mag[i] != mag[i])
+		return false;
 
-        return true;
+	return true;
     }
 
     /**
      * Returns the minimum of this BigInteger and {@code val}.
      *
      * @param  val value with which the minimum is to be computed.
-     * @return the BigInteger whose value is the lesser of this BigInteger and
-     *         {@code val}.  If they are equal, either may be returned.
+     * @return the BigInteger whose value is the lesser of this BigInteger and 
+     *	       {@code val}.  If they are equal, either may be returned.
      */
     public BigInteger min(BigInteger val) {
-        return (compareTo(val)<0 ? this : val);
+	return (compareTo(val)<0 ? this : val);
     }
 
     /**
@@ -2608,7 +2602,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      *         {@code val}.  If they are equal, either may be returned.
      */
     public BigInteger max(BigInteger val) {
-        return (compareTo(val)>0 ? this : val);
+	return (compareTo(val)>0 ? this : val);
     }
 
 
@@ -2620,12 +2614,12 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return hash code for this BigInteger.
      */
     public int hashCode() {
-        int hashCode = 0;
+	int hashCode = 0;
 
-        for (int i=0; i<mag.length; i++)
-            hashCode = (int)(31*hashCode + (mag[i] & LONG_MASK));
+	for (int i=0; i<mag.length; i++)
+	    hashCode = (int)(31*hashCode + (mag[i] & LONG_MASK));
 
-        return hashCode * signum;
+	return hashCode * signum;
     }
 
     /**
@@ -2646,19 +2640,19 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @see    #BigInteger(java.lang.String, int)
      */
     public String toString(int radix) {
-        if (signum == 0)
-            return "0";
-        if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
-            radix = 10;
+	if (signum == 0)
+	    return "0";
+	if (radix < Character.MIN_RADIX || radix > Character.MAX_RADIX)
+	    radix = 10;
 
-        // Compute upper bound on number of digit groups and allocate space
-        int maxNumDigitGroups = (4*mag.length + 6)/7;
-        String digitGroup[] = new String[maxNumDigitGroups];
-
-        // Translate number to string, a digit group at a time
-        BigInteger tmp = this.abs();
-        int numGroups = 0;
-        while (tmp.signum != 0) {
+	// Compute upper bound on number of digit groups and allocate space
+	int maxNumDigitGroups = (4*mag.length + 6)/7;
+	String digitGroup[] = new String[maxNumDigitGroups];
+        
+	// Translate number to string, a digit group at a time
+	BigInteger tmp = this.abs();
+	int numGroups = 0;
+	while (tmp.signum != 0) {
             BigInteger d = longRadix[radix];
 
             MutableBigInteger q = new MutableBigInteger(),
@@ -2671,32 +2665,32 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
             digitGroup[numGroups++] = Long.toString(r2.longValue(), radix);
             tmp = q2;
-        }
+	}
 
-        // Put sign (if any) and first digit group into result buffer
-        StringBuilder buf = new StringBuilder(numGroups*digitsPerLong[radix]+1);
-        if (signum<0)
-            buf.append('-');
-        buf.append(digitGroup[numGroups-1]);
+	// Put sign (if any) and first digit group into result buffer
+	StringBuilder buf = new StringBuilder(numGroups*digitsPerLong[radix]+1);
+	if (signum<0)
+	    buf.append('-');
+	buf.append(digitGroup[numGroups-1]);
 
-        // Append remaining digit groups padded with leading zeros
-        for (int i=numGroups-2; i>=0; i--) {
-            // Prepend (any) leading zeros for this digit group
-            int numLeadingZeros = digitsPerLong[radix]-digitGroup[i].length();
-            if (numLeadingZeros != 0)
-                buf.append(zeros[numLeadingZeros]);
-            buf.append(digitGroup[i]);
-        }
-        return buf.toString();
+	// Append remaining digit groups padded with leading zeros
+	for (int i=numGroups-2; i>=0; i--) {
+	    // Prepend (any) leading zeros for this digit group
+	    int numLeadingZeros = digitsPerLong[radix]-digitGroup[i].length();
+	    if (numLeadingZeros != 0)
+		buf.append(zeros[numLeadingZeros]);
+	    buf.append(digitGroup[i]);
+	}
+	return buf.toString();
     }
 
     /* zero[i] is a string of i consecutive zeros. */
     private static String zeros[] = new String[64];
     static {
-        zeros[63] =
-            "000000000000000000000000000000000000000000000000000000000000000";
-        for (int i=0; i<63; i++)
-            zeros[i] = zeros[63].substring(0, i);
+	zeros[63] =
+	    "000000000000000000000000000000000000000000000000000000000000000";
+	for (int i=0; i<63; i++)
+	    zeros[i] = zeros[63].substring(0, i);
     }
 
     /**
@@ -2712,7 +2706,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @see    #BigInteger(java.lang.String)
      */
     public String toString() {
-        return toString(10);
+	return toString(10);
     }
 
     /**
@@ -2726,7 +2720,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * {@link #BigInteger(byte[]) (byte[])} constructor.)
      *
      * @return a byte array containing the two's-complement representation of
-     *         this BigInteger.
+     *	       this BigInteger.
      * @see    #BigInteger(byte[])
      */
     public byte[] toByteArray() {
@@ -2762,9 +2756,9 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return this BigInteger converted to an {@code int}.
      */
     public int intValue() {
-        int result = 0;
-        result = getInt(0);
-        return result;
+	int result = 0;
+	result = getInt(0);
+	return result;
     }
 
     /**
@@ -2783,11 +2777,11 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return this BigInteger converted to a {@code long}.
      */
     public long longValue() {
-        long result = 0;
+	long result = 0;
 
-        for (int i=1; i>=0; i--)
-            result = (result << 32) + (getInt(i) & LONG_MASK);
-        return result;
+	for (int i=1; i>=0; i--)
+	    result = (result << 32) + (getInt(i) & LONG_MASK);
+	return result;
     }
 
     /**
@@ -2807,8 +2801,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return this BigInteger converted to a {@code float}.
      */
     public float floatValue() {
-        // Somewhat inefficient, but guaranteed to work.
-        return Float.parseFloat(this.toString());
+	// Somewhat inefficient, but guaranteed to work.
+	return Float.parseFloat(this.toString());
     }
 
     /**
@@ -2828,8 +2822,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @return this BigInteger converted to a {@code double}.
      */
     public double doubleValue() {
-        // Somewhat inefficient, but guaranteed to work.
-        return Double.parseDouble(this.toString());
+	// Somewhat inefficient, but guaranteed to work.
+	return Double.parseDouble(this.toString());
     }
 
     /**
@@ -2837,9 +2831,9 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     private static int[] stripLeadingZeroInts(int val[]) {
         int byteLength = val.length;
-        int keep;
+	int keep;
 
-        // Find first nonzero byte
+	// Find first nonzero byte
         for (keep=0; keep<val.length && val[keep]==0; keep++)
             ;
 
@@ -2856,9 +2850,9 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     private static int[] trustedStripLeadingZeroInts(int val[]) {
         int byteLength = val.length;
-        int keep;
+	int keep;
 
-        // Find first nonzero byte
+	// Find first nonzero byte
         for (keep=0; keep<val.length && val[keep]==0; keep++)
             ;
 
@@ -2867,7 +2861,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             int result[] = new int[val.length - keep];
             for(int i=0; i<val.length - keep; i++)
                result[i] = val[keep+i];
-            return result;
+            return result; 
         }
         return val;
     }
@@ -2877,15 +2871,15 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      */
     private static int[] stripLeadingZeroBytes(byte a[]) {
         int byteLength = a.length;
-        int keep;
+	int keep;
 
-        // Find first nonzero byte
-        for (keep=0; keep<a.length && a[keep]==0; keep++)
-            ;
+	// Find first nonzero byte
+	for (keep=0; keep<a.length && a[keep]==0; keep++)
+	    ;
 
-        // Allocate new array and copy relevant part of input array
+	// Allocate new array and copy relevant part of input array
         int intLength = ((byteLength - keep) + 3)/4;
-        int[] result = new int[intLength];
+	int[] result = new int[intLength];
         int b = byteLength - 1;
         for (int i = intLength-1; i >= 0; i--) {
             result[i] = a[b--] & 0xff;
@@ -2902,25 +2896,25 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * returns the minimal (no leading zero bytes) unsigned whose value is -a.
      */
     private static int[] makePositive(byte a[]) {
-        int keep, k;
+	int keep, k;
         int byteLength = a.length;
 
-        // Find first non-sign (0xff) byte of input
-        for (keep=0; keep<byteLength && a[keep]==-1; keep++)
-            ;
+	// Find first non-sign (0xff) byte of input
+	for (keep=0; keep<byteLength && a[keep]==-1; keep++)
+	    ;
 
+        
+	/* Allocate output array.  If all non-sign bytes are 0x00, we must
+	 * allocate space for one extra output byte. */
+	for (k=keep; k<byteLength && a[k]==0; k++)
+	    ;
 
-        /* Allocate output array.  If all non-sign bytes are 0x00, we must
-         * allocate space for one extra output byte. */
-        for (k=keep; k<byteLength && a[k]==0; k++)
-            ;
-
-        int extraByte = (k==byteLength) ? 1 : 0;
+	int extraByte = (k==byteLength) ? 1 : 0;
         int intLength = ((byteLength - keep + extraByte) + 3)/4;
-        int result[] = new int[intLength];
+	int result[] = new int[intLength];
 
-        /* Copy one's complement of input into output, leaving extra
-         * byte (if it exists) == 0x00 */
+	/* Copy one's complement of input into output, leaving extra
+	 * byte (if it exists) == 0x00 */
         int b = byteLength - 1;
         for (int i = intLength-1; i >= 0; i--) {
             result[i] = a[b--] & 0xff;
@@ -2935,14 +2929,14 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
             result[i] = ~result[i] & mask;
         }
 
-        // Add one to one's complement to generate two's complement
-        for (int i=result.length-1; i>=0; i--) {
+	// Add one to one's complement to generate two's complement
+	for (int i=result.length-1; i>=0; i--) {
             result[i] = (int)((result[i] & LONG_MASK) + 1);
-            if (result[i] != 0)
+	    if (result[i] != 0)
                 break;
         }
 
-        return result;
+	return result;
     }
 
     /**
@@ -2950,29 +2944,29 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * returns the minimal (no leading zero ints) unsigned whose value is -a.
      */
     private static int[] makePositive(int a[]) {
-        int keep, j;
+	int keep, j;
 
-        // Find first non-sign (0xffffffff) int of input
-        for (keep=0; keep<a.length && a[keep]==-1; keep++)
-            ;
+	// Find first non-sign (0xffffffff) int of input
+	for (keep=0; keep<a.length && a[keep]==-1; keep++)
+	    ;
 
-        /* Allocate output array.  If all non-sign ints are 0x00, we must
-         * allocate space for one extra output int. */
-        for (j=keep; j<a.length && a[j]==0; j++)
-            ;
-        int extraInt = (j==a.length ? 1 : 0);
-        int result[] = new int[a.length - keep + extraInt];
+	/* Allocate output array.  If all non-sign ints are 0x00, we must
+	 * allocate space for one extra output int. */
+	for (j=keep; j<a.length && a[j]==0; j++)
+	    ;
+	int extraInt = (j==a.length ? 1 : 0);
+	int result[] = new int[a.length - keep + extraInt];
 
-        /* Copy one's complement of input into output, leaving extra
-         * int (if it exists) == 0x00 */
-        for (int i = keep; i<a.length; i++)
-            result[i - keep + extraInt] = ~a[i];
+	/* Copy one's complement of input into output, leaving extra
+	 * int (if it exists) == 0x00 */
+	for (int i = keep; i<a.length; i++)
+	    result[i - keep + extraInt] = ~a[i];
 
-        // Add one to one's complement to generate two's complement
-        for (int i=result.length-1; ++result[i]==0; i--)
-            ;
+	// Add one to one's complement to generate two's complement
+	for (int i=result.length-1; ++result[i]==0; i--)
+	    ;
 
-        return result;
+	return result;
     }
 
     /*
@@ -2987,28 +2981,28 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * used.
      */
     private static int digitsPerLong[] = {0, 0,
-        62, 39, 31, 27, 24, 22, 20, 19, 18, 18, 17, 17, 16, 16, 15, 15, 15, 14,
-        14, 14, 14, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12, 12, 12, 12};
+	62, 39, 31, 27, 24, 22, 20, 19, 18, 18, 17, 17, 16, 16, 15, 15, 15, 14,
+	14, 14, 14, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12, 12, 12, 12};
 
     private static BigInteger longRadix[] = {null, null,
         valueOf(0x4000000000000000L), valueOf(0x383d9170b85ff80bL),
-        valueOf(0x4000000000000000L), valueOf(0x6765c793fa10079dL),
-        valueOf(0x41c21cb8e1000000L), valueOf(0x3642798750226111L),
+	valueOf(0x4000000000000000L), valueOf(0x6765c793fa10079dL),
+	valueOf(0x41c21cb8e1000000L), valueOf(0x3642798750226111L),
         valueOf(0x1000000000000000L), valueOf(0x12bf307ae81ffd59L),
-        valueOf( 0xde0b6b3a7640000L), valueOf(0x4d28cb56c33fa539L),
-        valueOf(0x1eca170c00000000L), valueOf(0x780c7372621bd74dL),
-        valueOf(0x1e39a5057d810000L), valueOf(0x5b27ac993df97701L),
-        valueOf(0x1000000000000000L), valueOf(0x27b95e997e21d9f1L),
-        valueOf(0x5da0e1e53c5c8000L), valueOf( 0xb16a458ef403f19L),
-        valueOf(0x16bcc41e90000000L), valueOf(0x2d04b7fdd9c0ef49L),
-        valueOf(0x5658597bcaa24000L), valueOf( 0x6feb266931a75b7L),
-        valueOf( 0xc29e98000000000L), valueOf(0x14adf4b7320334b9L),
-        valueOf(0x226ed36478bfa000L), valueOf(0x383d9170b85ff80bL),
-        valueOf(0x5a3c23e39c000000L), valueOf( 0x4e900abb53e6b71L),
-        valueOf( 0x7600ec618141000L), valueOf( 0xaee5720ee830681L),
-        valueOf(0x1000000000000000L), valueOf(0x172588ad4f5f0981L),
-        valueOf(0x211e44f7d02c1000L), valueOf(0x2ee56725f06e5c71L),
-        valueOf(0x41c21cb8e1000000L)};
+	valueOf( 0xde0b6b3a7640000L), valueOf(0x4d28cb56c33fa539L),
+	valueOf(0x1eca170c00000000L), valueOf(0x780c7372621bd74dL),
+	valueOf(0x1e39a5057d810000L), valueOf(0x5b27ac993df97701L),
+	valueOf(0x1000000000000000L), valueOf(0x27b95e997e21d9f1L),
+	valueOf(0x5da0e1e53c5c8000L), valueOf( 0xb16a458ef403f19L),
+	valueOf(0x16bcc41e90000000L), valueOf(0x2d04b7fdd9c0ef49L),
+	valueOf(0x5658597bcaa24000L), valueOf( 0x6feb266931a75b7L),
+	valueOf( 0xc29e98000000000L), valueOf(0x14adf4b7320334b9L),
+	valueOf(0x226ed36478bfa000L), valueOf(0x383d9170b85ff80bL),
+	valueOf(0x5a3c23e39c000000L), valueOf( 0x4e900abb53e6b71L),
+	valueOf( 0x7600ec618141000L), valueOf( 0xaee5720ee830681L),
+	valueOf(0x1000000000000000L), valueOf(0x172588ad4f5f0981L),
+	valueOf(0x211e44f7d02c1000L), valueOf(0x2ee56725f06e5c71L),
+	valueOf(0x41c21cb8e1000000L)};
 
     /*
      * These two arrays are the integer analogue of above.
@@ -3037,17 +3031,17 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * including space for at least one sign bit.
      */
     private int intLength() {
-        return bitLength()/32 + 1;
+	return bitLength()/32 + 1;
     }
 
     /* Returns sign bit */
     private int signBit() {
-        return signum < 0 ? 1 : 0;
+	return signum < 0 ? 1 : 0;
     }
 
     /* Returns an int of sign bits */
     private int signInt() {
-        return signum < 0 ? -1 : 0;
+	return signum < 0 ? -1 : 0;
     }
 
     /**
@@ -3059,13 +3053,13 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
     private int getInt(int n) {
         if (n < 0)
             return 0;
-        if (n >= mag.length)
-            return signInt();
+	if (n >= mag.length)
+	    return signInt();
 
-        int magInt = mag[mag.length-n-1];
+	int magInt = mag[mag.length-n-1];
 
-        return (signum >= 0 ? magInt :
-                (n <= firstNonzeroIntNum() ? -magInt : ~magInt));
+	return (signum >= 0 ? magInt :
+		(n <= firstNonzeroIntNum() ? -magInt : ~magInt));
     }
 
     /**
@@ -3074,19 +3068,19 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * least significant). If the magnitude is zero, return value is undefined.
      */
      private int firstNonzeroIntNum() {
-        /*
-         * Initialize firstNonzeroIntNum field the first time this method is
-         * executed. This method depends on the atomicity of int modifies;
-         * without this guarantee, it would have to be synchronized.
-         */
-        if (firstNonzeroIntNum == -2) {
-            // Search for the first nonzero int
-            int i;
-            for (i=mag.length-1; i>=0 && mag[i]==0; i--)
-                ;
-            firstNonzeroIntNum = mag.length-i-1;
-        }
-        return firstNonzeroIntNum;
+	/*
+	 * Initialize firstNonzeroIntNum field the first time this method is
+	 * executed. This method depends on the atomicity of int modifies;
+	 * without this guarantee, it would have to be synchronized.
+	 */
+	if (firstNonzeroIntNum == -2) {
+	    // Search for the first nonzero int
+	    int i;
+	    for (i=mag.length-1; i>=0 && mag[i]==0; i--)
+		;
+	    firstNonzeroIntNum = mag.length-i-1;
+	}
+	return firstNonzeroIntNum;
     }
 
     /** use serialVersionUID from JDK 1.1. for interoperability */
@@ -3094,7 +3088,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
     /**
      * Serializable fields for BigInteger.
-     *
+     * 
      * @serialField signum  int
      *              signum of this BigInteger.
      * @serialField magnitude int[]
@@ -3107,8 +3101,8 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
      * @serialField lowestSetBit int
      *              lowest set bit in the twos complement representation
      */
-    private static final ObjectStreamField[] serialPersistentFields = {
-        new ObjectStreamField("signum", Integer.TYPE),
+    private static final ObjectStreamField[] serialPersistentFields = { 
+        new ObjectStreamField("signum", Integer.TYPE), 
         new ObjectStreamField("magnitude", byte[].class),
         new ObjectStreamField("bitCount", Integer.TYPE),
         new ObjectStreamField("bitLength", Integer.TYPE),
@@ -3134,23 +3128,23 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
 
         // prepare to read the alternate persistent fields
         ObjectInputStream.GetField fields = s.readFields();
-
+            
         // Read the alternate persistent fields that we care about
         signum = fields.get("signum", -2);
         byte[] magnitude = (byte[])fields.get("magnitude", null);
 
         // Validate signum
-        if (signum < -1 || signum > 1) {
+	if (signum < -1 || signum > 1) {
             String message = "BigInteger: Invalid signum value";
             if (fields.defaulted("signum"))
                 message = "BigInteger: Signum not present in stream";
-            throw new java.io.StreamCorruptedException(message);
+	    throw new java.io.StreamCorruptedException(message);
         }
-        if ((magnitude.length==0) != (signum==0)) {
+	if ((magnitude.length==0) != (signum==0)) {
             String message = "BigInteger: signum-magnitude mismatch";
             if (fields.defaulted("magnitude"))
                 message = "BigInteger: Magnitude not present in stream";
-            throw new java.io.StreamCorruptedException(message);
+	    throw new java.io.StreamCorruptedException(message);
         }
 
         // Set "cached computation" fields to their initial values
@@ -3158,14 +3152,14 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         lowestSetBit = firstNonzeroByteNum = firstNonzeroIntNum = -2;
 
         // Calculate mag field from magnitude and discard magnitude
-        mag = stripLeadingZeroBytes(magnitude);
+	mag = stripLeadingZeroBytes(magnitude);
     }
 
     /**
      * Save the {@code BigInteger} instance to a stream.
      * The magnitude of a BigInteger is serialized as a byte array for
      * historical reasons.
-     *
+     * 
      * @serialData two necessary fields are written as well as obsolete
      *             fields for compatibility with older versions.
      */
@@ -3178,7 +3172,7 @@ public class BigInteger extends Number implements Comparable<BigInteger> {
         fields.put("bitLength", -1);
         fields.put("lowestSetBit", -2);
         fields.put("firstNonzeroByteNum", -2);
-
+            
         // save them
         s.writeFields();
 }

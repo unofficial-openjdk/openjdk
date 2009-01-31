@@ -29,10 +29,10 @@ import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * This class defines the <i>Service Provider Interface</i> (<b>SPI</b>)
- * for the <code>AlgorithmParameterGenerator</code> class, which
+ * for the <code>AlgorithmParameterGenerator</code> class, which 
  * is used to generate a set of parameters to be used with a certain algorithm.
  *
- * <p> All the abstract methods in this class must be implemented by each
+ * <p> All the abstract methods in this class must be implemented by each 
  * cryptographic service provider who wishes to supply the implementation
  * of a parameter generator for a particular algorithm.
  *
@@ -44,6 +44,7 @@ import java.security.spec.AlgorithmParameterSpec;
  *
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @see AlgorithmParameterGenerator
  * @see AlgorithmParameters
@@ -74,8 +75,8 @@ public abstract class AlgorithmParameterGeneratorSpi {
      * generation values are inappropriate for this parameter generator.
      */
     protected abstract void engineInit(AlgorithmParameterSpec genParamSpec,
-                                       SecureRandom random)
-        throws InvalidAlgorithmParameterException;
+				       SecureRandom random)
+	throws InvalidAlgorithmParameterException;
 
     /**
      * Generates the parameters.

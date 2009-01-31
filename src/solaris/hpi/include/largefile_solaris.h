@@ -44,7 +44,7 @@ typedef jlong longlong_t;
  * support large files (e.g., Solaris 2.5.1).
  */
 
-typedef longlong_t      off64_t;        /* offsets within files */
+typedef longlong_t	off64_t;	/* offsets within files */
 
 
 #ifdef __GLIBC__
@@ -60,27 +60,27 @@ typedef int timestruc_t;
  * sys/stat.h and sys/types.h.
  */
 
-typedef u_longlong_t    ino64_t;        /* expanded inode type  */
-typedef longlong_t      blkcnt64_t;     /* count of file blocks */
+typedef u_longlong_t	ino64_t;	/* expanded inode type	*/
+typedef longlong_t	blkcnt64_t;	/* count of file blocks */
 
-struct  stat64 {
-        dev_t   st_dev;
-        long    st_pad1[3];
-        ino64_t st_ino;
-        mode_t  st_mode;
-        nlink_t st_nlink;
-        uid_t   st_uid;
-        gid_t   st_gid;
-        dev_t   st_rdev;
-        long    st_pad2[2];
-        off64_t st_size;
-        timestruc_t st_atim;
-        timestruc_t st_mtim;
-        timestruc_t st_ctim;
-        long    st_blksize;
-        blkcnt64_t st_blocks;
-        char    st_fstype[_ST_FSTYPSZ];
-        long    st_pad4[8];
+struct	stat64 {
+	dev_t	st_dev;
+	long	st_pad1[3];
+	ino64_t	st_ino;
+	mode_t	st_mode;
+	nlink_t st_nlink;
+	uid_t 	st_uid;
+	gid_t 	st_gid;
+	dev_t	st_rdev;
+	long	st_pad2[2];
+	off64_t	st_size;
+	timestruc_t st_atim;
+	timestruc_t st_mtim;
+	timestruc_t st_ctim;
+	long	st_blksize;
+	blkcnt64_t st_blocks;
+	char	st_fstype[_ST_FSTYPSZ];
+	long	st_pad4[8];
 };
 
 #define O_LARGEFILE     0x2000  /* Solaris 2.6 sys/fcntl.h */

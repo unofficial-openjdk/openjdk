@@ -56,166 +56,166 @@ public class DiffHBTest {
     public static final String[] hbs = new String[] {"0", "1"};
 
     public static void main(String[] args) throws Exception {
-        System.out.println(">>> test on one listener with two different handbacks.");
+	System.out.println(">>> test on one listener with two different handbacks.");
 
-        delegateName = new ObjectName("JMImplementation:type=MBeanServerDelegate");
-        timerName = new ObjectName("MBean:name=Timer");
+	delegateName = new ObjectName("JMImplementation:type=MBeanServerDelegate");
+	timerName = new ObjectName("MBean:name=Timer");
 
-        boolean ok = true;
-        for (int i = 0; i < protocols.length; i++) {
-            try {
-                if (!test(protocols[i])) {
-                    System.out.println(">>> Test failed for " + protocols[i]);
-                    ok = false;
-                } else {
-                    System.out.println(">>> Test successed for " + protocols[i]);
-                }
-            } catch (Exception e) {
-                System.out.println(">>> Test failed for " + protocols[i]);
-                e.printStackTrace(System.out);
-                ok = false;
-            }
-        }
+	boolean ok = true;
+	for (int i = 0; i < protocols.length; i++) {
+	    try {
+		if (!test(protocols[i])) {
+		    System.out.println(">>> Test failed for " + protocols[i]);
+		    ok = false;
+		} else {
+		    System.out.println(">>> Test successed for " + protocols[i]);
+		}
+	    } catch (Exception e) {
+		System.out.println(">>> Test failed for " + protocols[i]);
+		e.printStackTrace(System.out);
+		ok = false;
+	    }
+	}
 
-        if (ok) {
-            System.out.println(">>> Test passed");
-        } else {
-            System.out.println(">>> TEST FAILED");
-            System.exit(1);
-        }
+	if (ok) {
+	    System.out.println(">>> Test passed");
+	} else {
+	    System.out.println(">>> TEST FAILED");
+	    System.exit(1);
+	}
     }
-
+ 
     private static boolean test(String proto) throws Exception {
-        System.out.println(">>> Test for protocol " + proto);
-        JMXServiceURL u = new JMXServiceURL(proto, null, 0);
-        JMXConnectorServer server;
-        JMXServiceURL addr;
-        JMXConnector client;
-        MBeanServerConnection mserver;
+	System.out.println(">>> Test for protocol " + proto);
+	JMXServiceURL u = new JMXServiceURL(proto, null, 0);
+	JMXConnectorServer server;
+	JMXServiceURL addr;
+	JMXConnector client;
+	MBeanServerConnection mserver;
 
-        final NotificationListener dummyListener = new NotificationListener() {
-                public void handleNotification(Notification n, Object o) {
-                    synchronized(receivedLock) {
-                        if (n == null) {
-                            System.out.println(">>> Got a null notification.");
-                            System.exit(1);
-                        }
+	final NotificationListener dummyListener = new NotificationListener() {
+		public void handleNotification(Notification n, Object o) {
+		    synchronized(receivedLock) {
+			if (n == null) {
+			    System.out.println(">>> Got a null notification.");
+			    System.exit(1);
+			}
 
-                        // check number
-                        if (received > 2) {
-                            System.out.println(">>> Expect to receive 2 notifs,  but get "+received);
-                            System.exit(1);
-                        }
+			// check number
+			if (received > 2) {
+			    System.out.println(">>> Expect to receive 2 notifs,  but get "+received);
+			    System.exit(1);
+			}
 
-                        if (received == 0) { // first time
-                            receivedNotif = n;
-                            receivedHB = o;
+			if (received == 0) { // first time
+			    receivedNotif = n;
+			    receivedHB = o;
 
-                            if (!hbs[0].equals(o) && !hbs[1].equals(o)) {
-                                System.out.println(">>> Unkown handback: "+o);
-                                System.exit(1);
-                            }
-                        } else { // second time
-                            if (!receivedNotif.equals(n)) {
-                                System.out.println(">>> Not get same notif twice.");
-                                System.exit(1);
-                            } else if (!hbs[0].equals(o) && !hbs[1].equals(o)) { // validate handback
-                                System.out.println(">>> Unkown handback: "+o);
-                                System.exit(1);
-                            } else if (receivedHB.equals(o)) {
-                                System.out.println(">>> Got same handback twice: "+o);
-                                System.exit(1);
-                            }
-                        }
+			    if (!hbs[0].equals(o) && !hbs[1].equals(o)) {
+				System.out.println(">>> Unkown handback: "+o);
+				System.exit(1);
+			    }
+			} else { // second time
+			    if (!receivedNotif.equals(n)) {
+				System.out.println(">>> Not get same notif twice.");
+				System.exit(1);
+			    } else if (!hbs[0].equals(o) && !hbs[1].equals(o)) { // validate handback
+				System.out.println(">>> Unkown handback: "+o);
+				System.exit(1);
+			    } else if (receivedHB.equals(o)) {
+				System.out.println(">>> Got same handback twice: "+o);
+				System.exit(1);
+			    }
+			}
 
-                        ++received;
+			++received;
 
-                        if (received == 2) {
-                            receivedLock.notify();
-                        }
-                    }
-                }
-            };
+			if (received == 2) {
+			    receivedLock.notify();
+			}
+		    }
+		}
+	    };
 
-        try {
-            server = JMXConnectorServerFactory.newJMXConnectorServer(u, null, mbs);
-            server.start();
+	try {
+	    server = JMXConnectorServerFactory.newJMXConnectorServer(u, null, mbs);
+	    server.start();
 
-            addr = server.getAddress();
-            client = JMXConnectorFactory.newJMXConnector(addr, null);
-            client.connect(null);
+	    addr = server.getAddress();
+	    client = JMXConnectorFactory.newJMXConnector(addr, null);
+	    client.connect(null);
 
-            mserver = client.getMBeanServerConnection();
+	    mserver = client.getMBeanServerConnection();
 
-            mserver.addNotificationListener(delegateName, dummyListener, null, hbs[0]);
-            mserver.addNotificationListener(delegateName, dummyListener, null, hbs[1]);
+	    mserver.addNotificationListener(delegateName, dummyListener, null, hbs[0]);
+	    mserver.addNotificationListener(delegateName, dummyListener, null, hbs[1]);
 
-            for (int i=0; i<20; i++) {
-                synchronized(receivedLock) {
-                    received = 0;
-                }
+	    for (int i=0; i<20; i++) {
+		synchronized(receivedLock) {
+		    received = 0;
+		}
 
-                mserver.createMBean("javax.management.timer.Timer", timerName);
+		mserver.createMBean("javax.management.timer.Timer", timerName);
 
-                synchronized(receivedLock) {
-                    if (received != 2) {
-                        long remainingTime = waitingTime;
-                        final long startTime = System.currentTimeMillis();
+		synchronized(receivedLock) {
+		    if (received != 2) {
+			long remainingTime = waitingTime;
+			final long startTime = System.currentTimeMillis();
 
-                        while (received != 2 && remainingTime > 0) {
-                            receivedLock.wait(remainingTime);
-                            remainingTime = waitingTime -
-                                (System.currentTimeMillis() - startTime);
-                        }
-                    }
+			while (received != 2 && remainingTime > 0) {
+			    receivedLock.wait(remainingTime);
+			    remainingTime = waitingTime -
+				(System.currentTimeMillis() - startTime);	
+			}
+		    }
 
-                    if (received != 2) {
-                        System.out.println(">>> Expected 2 notifis, but received "+received);
+		    if (received != 2) {
+			System.out.println(">>> Expected 2 notifis, but received "+received);
 
-                        return false;
-                    }
-                }
+			return false;
+		    }
+		}
 
 
-                synchronized(receivedLock) {
-                    received = 0;
-                }
+		synchronized(receivedLock) {
+		    received = 0;
+		}
 
-                mserver.unregisterMBean(timerName);
+		mserver.unregisterMBean(timerName);
 
-                synchronized(receivedLock) {
-                    if (received != 2) {
+		synchronized(receivedLock) {
+		    if (received != 2) {
+			
+			long remainingTime = waitingTime;
+			final long startTime = System.currentTimeMillis();
+		
+			while (received != 2 && remainingTime >0) {
+			    receivedLock.wait(remainingTime);
+			    remainingTime = waitingTime -
+				(System.currentTimeMillis() - startTime);	
+			}
+		    }
 
-                        long remainingTime = waitingTime;
-                        final long startTime = System.currentTimeMillis();
+		    if (received != 2) {
+			System.out.println(">>> Expected 2 notifis, but received "+received);
 
-                        while (received != 2 && remainingTime >0) {
-                            receivedLock.wait(remainingTime);
-                            remainingTime = waitingTime -
-                                (System.currentTimeMillis() - startTime);
-                        }
-                    }
+			return false;
+		    }
+		}
+	    }
 
-                    if (received != 2) {
-                        System.out.println(">>> Expected 2 notifis, but received "+received);
+	    mserver.removeNotificationListener(delegateName, dummyListener);		
 
-                        return false;
-                    }
-                }
-            }
+	    client.close();
 
-            mserver.removeNotificationListener(delegateName, dummyListener);
+	    server.stop();
 
-            client.close();
+	} catch (MalformedURLException e) {
+	    System.out.println(">>> Skipping unsupported URL " + u);
+	    return true;
+	}
 
-            server.stop();
-
-        } catch (MalformedURLException e) {
-            System.out.println(">>> Skipping unsupported URL " + u);
-            return true;
-        }
-
-        return true;
+	return true;
     }
 
     private final static long waitingTime = 10000;

@@ -26,10 +26,10 @@
  * @bug 4151665
  * @summary Test for FileNotFoundException when loading bogus class
  */
-
+   
 import java.net.*;
 import java.io.*;
-
+ 
 public class ClassLoad {
      public static void main(String[] args) throws Exception {
          boolean error = true;

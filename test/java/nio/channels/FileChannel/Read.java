@@ -52,7 +52,7 @@ public class Read {
         sb.setLength(4);
 
         blah = File.createTempFile("blah", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         initTestFile(blah);
 
         FileInputStream fis = new FileInputStream(blah);
@@ -99,7 +99,7 @@ public class Read {
     private static void initTestFile(File blah) throws Exception {
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<4000; i++) {
             String number = new Integer(i).toString();

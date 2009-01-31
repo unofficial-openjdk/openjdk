@@ -29,10 +29,11 @@ import javax.swing.KeyStroke;
 
 /**
  * A collection of bindings of KeyStrokes to actions.  The
- * bindings are basically name-value pairs that potentially
- * resolve in a hierarchy.
+ * bindings are basically name-value pairs that potentially 
+ * resolve in a hierarchy.  
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public interface Keymap {
 
@@ -44,11 +45,11 @@ public interface Keymap {
     public String getName();
 
     /**
-     * Fetches the default action to fire if a
+     * Fetches the default action to fire if a 
      * key is typed (i.e. a KEY_TYPED KeyEvent is received)
      * and there is no binding for it.  Typically this
-     * would be some action that inserts text so that
-     * the keymap doesn't require an action for each
+     * would be some action that inserts text so that 
+     * the keymap doesn't require an action for each 
      * possible key.
      *
      * @return the default action
@@ -64,7 +65,7 @@ public interface Keymap {
 
     /**
      * Fetches the action appropriate for the given symbolic
-     * event sequence.  This is used by JTextController to
+     * event sequence.  This is used by JTextController to 
      * determine how to interpret key sequences.  If the
      * binding is not resolved locally, an attempt is made
      * to resolve through the parent keymap, if one is set.
@@ -91,7 +92,7 @@ public interface Keymap {
     public Action[] getBoundActions();
 
     /**
-     * Fetches the keystrokes that will result in
+     * Fetches the keystrokes that will result in 
      * the given action.
      *
      * @param a the action
@@ -122,7 +123,7 @@ public interface Keymap {
      */
     public void removeKeyStrokeBinding(KeyStroke keys);
 
-    /**
+    /** 
      * Removes all bindings from the keymap.
      */
     public void removeBindings();
@@ -135,7 +136,7 @@ public interface Keymap {
     public Keymap getResolveParent();
 
     /**
-     * Sets the parent keymap, which will be used to
+     * Sets the parent keymap, which will be used to 
      * resolve key-bindings.
      *
      * @param parent the parent keymap

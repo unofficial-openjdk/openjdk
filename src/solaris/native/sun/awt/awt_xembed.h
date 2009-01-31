@@ -47,7 +47,7 @@
 #define XEMBED_REGISTER_ACCELERATOR     12
 #define XEMBED_UNREGISTER_ACCELERATOR   13
 #define XEMBED_ACTIVATE_ACCELERATOR     14
-
+    
 #define XEMBED_LAST_MSG XEMBED_ACTIVATE_ACCELERATOR
 
 #define  NON_STANDARD_XEMBED_GTK_GRAB_KEY  108
@@ -57,11 +57,11 @@
 #define _SUN_XEMBED_START  1119
 
 
-//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:
+//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:    
 /* Details for  XEMBED_FOCUS_IN: */
 #define XEMBED_FOCUS_CURRENT        0
 #define XEMBED_FOCUS_FIRST          1
-#define XEMBED_FOCUS_LAST           2
+#define XEMBED_FOCUS_LAST           2    
 
 
 extern void init_xembed();
@@ -72,7 +72,7 @@ extern void deinstall_xembed(struct FrameData* wdata);
 extern Boolean isXEmbedActive(struct FrameData * wdata);
 extern Boolean isXEmbedActiveByWindow(Window client);
 extern Boolean isXEmbedApplicationActive(struct FrameData * wdata);
-extern void sendMessageHelper(Window window, int message, long detail,
+extern void sendMessageHelper(Window window, int message, long detail, 
                               long data1, long data2);
 extern void sendMessage(Window window, int message);
 extern void xembed_traverse_out(struct FrameData * wdata, jboolean);

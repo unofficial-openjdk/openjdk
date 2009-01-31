@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 6355340
   @summary Test correctness of laying out the contents of a frame on maximize
@@ -56,10 +56,10 @@ public class LayoutOnMaximizeTest
 
 
     private static void init() {
-
+        
         //*** Create instructions for the user here ***
-
-        String[] instructions =
+      
+        String[] instructions = 
         {
             "This is an AUTOMATIC test, simply wait until it is done.",
             "The result (passed or failed) will be shown in the",
@@ -73,10 +73,10 @@ public class LayoutOnMaximizeTest
 
 
         String s = Toolkit.getDefaultToolkit().getClass().getName();
-
+        
         // This is Windows-only test
-        if (!s.contains("WToolkit")) {
-            pass();
+        if (!s.contains("WToolkit")) { 
+            pass(); 
         }
 
         // MAXIMIZED_BOTH is known to be supported on MS Windows.
@@ -93,7 +93,7 @@ public class LayoutOnMaximizeTest
         JTextField jf = new JTextField (10);
         JTextField jf1 = new JTextField (10);
         JButton jb = new JButton("Test");
-
+        
         panel.add(jf);
         panel.add(jf1);
         panel.add(jb);
@@ -104,7 +104,7 @@ public class LayoutOnMaximizeTest
 
         Robot robot = Util.createRobot();
         robot.setAutoDelay(20);
-
+        
         // To be sure the window is shown and packed
         Util.waitForIdle(robot);
 
@@ -122,13 +122,13 @@ public class LayoutOnMaximizeTest
         robot.keyRelease(KeyEvent.VK_SPACE);
         robot.keyRelease(KeyEvent.VK_ALT);
 
-
+        
         // Two "down arrow" presses move the menu selection to the Size menu item.
         for (int i = 0; i < 2; i++) {
             robot.keyPress(KeyEvent.VK_DOWN);
             robot.keyRelease(KeyEvent.VK_DOWN);
         }
-
+        
         // And finally select the Size command
         robot.keyPress(KeyEvent.VK_ENTER);
         robot.keyRelease(KeyEvent.VK_ENTER);
@@ -168,7 +168,7 @@ public class LayoutOnMaximizeTest
 
     /*****************************************************
      * Standard Test Machinery Section
-     * DO NOT modify anything in this section -- it's a
+     * DO NOT modify anything in this section -- it's a 
      * standard chunk of code which has all of the
      * synchronisation necessary for the test harness.
      * By keeping it the same in all tests, it is easier
@@ -209,13 +209,13 @@ public class LayoutOnMaximizeTest
 
         //Test involves other threads, so sleep and wait for them to
         // called pass() or fail()
-        try
+        try 
         {
             Thread.sleep( sleepTime );
             //Timed out, so fail the test
             throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
-        }
-        catch (InterruptedException e)
+        } 
+        catch (InterruptedException e) 
         {
             //The test harness may have interrupted the test.  If so, rethrow the exception
             // so that the harness gets it and deals with it.
@@ -291,15 +291,15 @@ class TestPassedException extends RuntimeException
 
 //************ Begin classes defined for the test ****************
 
-// if want to make listeners, here is the recommended place for them, then instantiate
+// if want to make listeners, here is the recommended place for them, then instantiate 
 //  them in init()
 
 /* Example of a class which may be written as part of a test
-   class NewClass implements anInterface
+   class NewClass implements anInterface 
    {
    static int newVar = 0;
 
-   public void eventDispatched(AWTEvent e)
+   public void eventDispatched(AWTEvent e) 
    {
 //Counting events to see if we get enough
 eventCount++;
@@ -331,8 +331,8 @@ LayoutOnMaximizeTest.fail();
 
 /****************************************************
   Standard Test Machinery
-  DO NOT modify anything below -- it's a standard
-  chunk of code whose purpose is to make user
+  DO NOT modify anything below -- it's a standard 
+  chunk of code whose purpose is to make user 
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -345,12 +345,12 @@ LayoutOnMaximizeTest.fail();
   WithInstructions method.  Put one line of instructions per array entry.
   To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
-  This mimics System.out.println but works within the test harness as well
+  This mimics System.out.println but works within the test harness as well 
   as standalone.
   */
 
-class Sysout
-{
+class Sysout 
+{ 
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -401,7 +401,7 @@ class TestDialog extends Dialog
     int maxStringLength = 80;
 
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name )
+    public TestDialog( Frame frame, String name ) 
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
@@ -426,7 +426,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        {
+        { 
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -444,8 +444,8 @@ class TestDialog extends Dialog
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else
-                {
+                else 
+                { 
                     printStr = remainingStr;
                     remainingStr = "";
                 }
@@ -463,6 +463,8 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }
+    }  
 
-}// TestDialog  class
+}// TestDialog  class    
+
+

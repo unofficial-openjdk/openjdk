@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __ORIG_MLIB_IMAGE_PROTO_H
 #define __ORIG_MLIB_IMAGE_PROTO_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_image_proto.h	1.113	02/12/25 SMI"
+#endif /* __SUNPRO_C */
 
 #include <mlib_types.h>
 #include <mlib_status.h>
@@ -38,7 +42,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#if defined ( __USE_J2D_NAMES )
+#if defined ( __USE_J2D_NAMES ) 
 #include "j2d_names.h"
 #endif // __USE_J2D_NAMES
 

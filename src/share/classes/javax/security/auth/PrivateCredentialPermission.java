@@ -43,7 +43,7 @@ import sun.security.util.ResourcesMgr;
  * The target name must abide by the following syntax:
  *
  * <pre>
- *      CredentialClass {PrincipalClass "PrincipalName"}*
+ *	CredentialClass {PrincipalClass "PrincipalName"}*
  * </pre>
  *
  * For example, the following permission grants access to the
@@ -57,9 +57,9 @@ import sun.security.util.ResourcesMgr;
  * <pre>
  *
  *    grant {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "com.sun.PrivateCredential com.sun.Principal \"duke\"",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"com.sun.PrivateCredential com.sun.Principal \"duke\"",
+ *		"read";
  *    };
  * </pre>
  *
@@ -72,26 +72,26 @@ import sun.security.util.ResourcesMgr;
  * For example, the following grants access to the
  * a.b.Credential owned by any <code>Subject</code> that has
  * an a.b.Principal.
- *
+ * 
  * <pre>
  *    grant {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "a.b.Credential a.b.Principal "*"",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"a.b.Credential a.b.Principal "*"",
+ *		"read";
  *    };
  * </pre>
  *
  * If both the PrincipalClass and "PrincipalName" are "*",
  * then access is granted to the specified Credential owned by
  * any <code>Subject</code>.
- *
+ * 
  * <p> In addition, the PrincipalClass/PrincipalName pairing may be repeated:
  *
  * <pre>
  *    grant {
- *      permission javax.security.auth.PrivateCredentialPermission
- *              "a.b.Credential a.b.Principal "duke" c.d.Principal "dukette"",
- *              "read";
+ *	permission javax.security.auth.PrivateCredentialPermission
+ *		"a.b.Credential a.b.Principal "duke" c.d.Principal "dukette"",
+ *		"read";
  *    };
  * </pre>
  *
@@ -100,6 +100,7 @@ import sun.security.util.ResourcesMgr;
  * "a.b.Principal" with the name, "duke", and "c.d.Principal", with the name,
  * "dukette".
  *
+ * @version %I%, %G%
  */
 public final class PrivateCredentialPermission extends Permission {
 
@@ -114,8 +115,8 @@ public final class PrivateCredentialPermission extends Permission {
 
     /**
      * @serial The Principals associated with this permission.
-     *          The set contains elements of type,
-     *          <code>PrivateCredentialPermission.CredOwner</code>.
+     *		The set contains elements of type,
+     *		<code>PrivateCredentialPermission.CredOwner</code>.
      */
     private Set principals;  // ignored - kept around for compatibility
     private transient CredOwner[] credOwners;
@@ -130,26 +131,26 @@ public final class PrivateCredentialPermission extends Permission {
      * with the specified <code>credentialClass</code> and Principals.
      */
     PrivateCredentialPermission(String credentialClass,
-                        Set<Principal> principals) {
+			Set<Principal> principals) {
 
-        super(credentialClass);
-        this.credentialClass = credentialClass;
+	super(credentialClass);
+	this.credentialClass = credentialClass;
 
-        synchronized(principals) {
-            if (principals.size() == 0) {
-                this.credOwners = EMPTY_PRINCIPALS;
-            } else {
-                this.credOwners = new CredOwner[principals.size()];
-                int index = 0;
-                Iterator<Principal> i = principals.iterator();
-                while (i.hasNext()) {
-                    Principal p = i.next();
-                    this.credOwners[index++] = new CredOwner
-                                                (p.getClass().getName(),
-                                                p.getName());
-                }
-            }
-        }
+	synchronized(principals) {
+	    if (principals.size() == 0) {
+		this.credOwners = EMPTY_PRINCIPALS;
+	    } else {
+		this.credOwners = new CredOwner[principals.size()];
+		int index = 0;
+		Iterator<Principal> i = principals.iterator();
+		while (i.hasNext()) {
+		    Principal p = i.next();
+		    this.credOwners[index++] = new CredOwner
+						(p.getClass().getName(),
+						p.getName());
+		}
+	    }
+	}
     }
 
     /**
@@ -160,20 +161,20 @@ public final class PrivateCredentialPermission extends Permission {
      * <p>
      *
      * @param name the name specifying the Credential class and
-     *          <code>Principal</code> Set. <p>
+     *		<code>Principal</code> Set. <p>
      *
      * @param actions the actions specifying that the Credential can be read.
      *
      * @throws IllegalArgumentException if <code>name</code> does not conform
-     *          to the correct syntax or if <code>actions</code> is not "read".
+     *		to the correct syntax or if <code>actions</code> is not "read".
      */
     public PrivateCredentialPermission(String name, String actions) {
-        super(name);
+	super(name);
 
-        if (!"read".equalsIgnoreCase(actions))
-            throw new IllegalArgumentException
-                (ResourcesMgr.getString("actions can only be 'read'"));
-        init(name);
+	if (!"read".equalsIgnoreCase(actions))
+	    throw new IllegalArgumentException
+		(ResourcesMgr.getString("actions can only be 'read'"));
+	init(name);
     }
 
     /**
@@ -183,10 +184,10 @@ public final class PrivateCredentialPermission extends Permission {
      * <p>
      *
      * @return the Class name of the Credential associated with this
-     *          <code>PrivateCredentialPermission</code>.
+     *		<code>PrivateCredentialPermission</code>.
      */
     public String getCredentialClass() {
-        return credentialClass;
+	return credentialClass;
     }
 
     /**
@@ -205,20 +206,20 @@ public final class PrivateCredentialPermission extends Permission {
      * <p>
      *
      * @return the <code>Principal</code> class and names associated
-     *          with this <code>PrivateCredentialPermission</code>.
+     *		with this <code>PrivateCredentialPermission</code>.
      */
     public String[][] getPrincipals() {
 
-        if (credOwners == null || credOwners.length == 0) {
-            return new String[0][0];
-        }
+	if (credOwners == null || credOwners.length == 0) {
+	    return new String[0][0];
+	}
 
-        String[][] pArray = new String[credOwners.length][2];
-        for (int i = 0; i < credOwners.length; i++) {
-            pArray[i][0] = credOwners[i].principalClass;
-            pArray[i][1] = credOwners[i].principalName;
-        }
-        return pArray;
+	String[][] pArray = new String[credOwners.length][2];
+	for (int i = 0; i < credOwners.length; i++) {
+	    pArray[i][0] = credOwners[i].principalClass;
+	    pArray[i][1] = credOwners[i].principalName;
+	}
+	return pArray;
     }
 
     /**
@@ -231,13 +232,13 @@ public final class PrivateCredentialPermission extends Permission {
      * <p><ul>
      * <li> <i>p</i> is an instanceof PrivateCredentialPermission and <p>
      * <li> the target name for <i>p</i> is implied by this object's
-     *          target name.  For example:
+     *		target name.  For example:
      * <pre>
-     *  [* P1 "duke"] implies [a.b.Credential P1 "duke"].
-     *  [C1 P1 "duke"] implies [C1 P1 "duke" P2 "dukette"].
-     *  [C1 P2 "dukette"] implies [C1 P1 "duke" P2 "dukette"].
+     *	[* P1 "duke"] implies [a.b.Credential P1 "duke"].
+     *	[C1 P1 "duke"] implies [C1 P1 "duke" P2 "dukette"].
+     *	[C1 P2 "dukette"] implies [C1 P1 "duke" P2 "dukette"].
      * </pre>
-     * </ul>
+     * </ul>		
      *
      * <p>
      *
@@ -248,15 +249,15 @@ public final class PrivateCredentialPermission extends Permission {
      */
     public boolean implies(Permission p) {
 
-        if (p == null || !(p instanceof PrivateCredentialPermission))
-            return false;
+	if (p == null || !(p instanceof PrivateCredentialPermission))
+	    return false;
 
-        PrivateCredentialPermission that = (PrivateCredentialPermission)p;
+	PrivateCredentialPermission that = (PrivateCredentialPermission)p;
 
-        if (!impliesCredentialClass(credentialClass, that.credentialClass))
-            return false;
+	if (!impliesCredentialClass(credentialClass, that.credentialClass))
+	    return false;
 
-        return impliesPrincipalSet(credOwners, that.credOwners);
+	return impliesPrincipalSet(credOwners, that.credOwners);
     }
 
     /**
@@ -273,8 +274,8 @@ public final class PrivateCredentialPermission extends Permission {
      * @param obj the object we are testing for equality with this object.
      *
      * @return true if obj is a <code>PrivateCredentialPermission</code>,
-     *          has the same credential class as this object,
-     *          and has the same Principals as this object.
+     *		has the same credential class as this object,
+     *		and has the same Principals as this object.
      */
     public boolean equals(Object obj) {
         if (obj == this)
@@ -285,7 +286,7 @@ public final class PrivateCredentialPermission extends Permission {
 
         PrivateCredentialPermission that = (PrivateCredentialPermission)obj;
 
-        return (this.implies(that) && that.implies(this));
+	return (this.implies(that) && that.implies(this));
     }
 
     /**
@@ -306,7 +307,7 @@ public final class PrivateCredentialPermission extends Permission {
      * @return the actions (always returns "read").
      */
     public String getActions() {
-        return "read";
+	return "read";
     }
 
     /**
@@ -320,179 +321,179 @@ public final class PrivateCredentialPermission extends Permission {
      * @return null in all cases.
      */
     public PermissionCollection newPermissionCollection() {
-        return null;
+	return null;
     }
 
     private void init(String name) {
 
-        if (name == null || name.trim().length() == 0) {
-            throw new IllegalArgumentException("invalid empty name");
-        }
+	if (name == null || name.trim().length() == 0) {
+	    throw new IllegalArgumentException("invalid empty name");
+	}
 
-        ArrayList<CredOwner> pList = new ArrayList<CredOwner>();
-        StringTokenizer tokenizer = new StringTokenizer(name, " ", true);
-        String principalClass = null;
-        String principalName = null;
+	ArrayList<CredOwner> pList = new ArrayList<CredOwner>();
+	StringTokenizer tokenizer = new StringTokenizer(name, " ", true);
+	String principalClass = null;
+	String principalName = null;
 
-        if (testing)
-            System.out.println("whole name = " + name);
+	if (testing)
+	    System.out.println("whole name = " + name);
 
-        // get the Credential Class
-        credentialClass = tokenizer.nextToken();
-        if (testing)
-            System.out.println("Credential Class = " + credentialClass);
+	// get the Credential Class
+	credentialClass = tokenizer.nextToken();
+	if (testing)
+	    System.out.println("Credential Class = " + credentialClass);
 
-        if (tokenizer.hasMoreTokens() == false) {
-            MessageFormat form = new MessageFormat(ResourcesMgr.getString
-                ("permission name [name] syntax invalid: "));
-            Object[] source = {name};
-            throw new IllegalArgumentException
-                (form.format(source) + ResourcesMgr.getString
-                        ("Credential Class not followed by a " +
-                        "Principal Class and Name"));
-        }
+	if (tokenizer.hasMoreTokens() == false) {
+	    MessageFormat form = new MessageFormat(ResourcesMgr.getString
+		("permission name [name] syntax invalid: "));
+	    Object[] source = {name};
+	    throw new IllegalArgumentException
+		(form.format(source) + ResourcesMgr.getString
+			("Credential Class not followed by a " +
+			"Principal Class and Name"));
+	}
 
-        while (tokenizer.hasMoreTokens()) {
+	while (tokenizer.hasMoreTokens()) {
 
-            // skip delimiter
-            tokenizer.nextToken();
+	    // skip delimiter
+	    tokenizer.nextToken();
 
-            // get the Principal Class
-            principalClass = tokenizer.nextToken();
-            if (testing)
-                System.out.println("    Principal Class = " + principalClass);
+	    // get the Principal Class
+	    principalClass = tokenizer.nextToken();
+	    if (testing)
+		System.out.println("    Principal Class = " + principalClass);
 
-            if (tokenizer.hasMoreTokens() == false) {
-                MessageFormat form = new MessageFormat(ResourcesMgr.getString
-                        ("permission name [name] syntax invalid: "));
-                Object[] source = {name};
-                throw new IllegalArgumentException
-                        (form.format(source) + ResourcesMgr.getString
-                        ("Principal Class not followed by a Principal Name"));
-            }
+	    if (tokenizer.hasMoreTokens() == false) {
+		MessageFormat form = new MessageFormat(ResourcesMgr.getString
+			("permission name [name] syntax invalid: "));
+		Object[] source = {name};
+		throw new IllegalArgumentException
+			(form.format(source) + ResourcesMgr.getString
+			("Principal Class not followed by a Principal Name"));
+	    }
 
-            // skip delimiter
-            tokenizer.nextToken();
+	    // skip delimiter
+	    tokenizer.nextToken();
 
-            // get the Principal Name
-            principalName = tokenizer.nextToken();
+	    // get the Principal Name
+	    principalName = tokenizer.nextToken();
 
-            if (!principalName.startsWith("\"")) {
-                MessageFormat form = new MessageFormat(ResourcesMgr.getString
-                        ("permission name [name] syntax invalid: "));
-                Object[] source = {name};
-                throw new IllegalArgumentException
-                        (form.format(source) + ResourcesMgr.getString
-                        ("Principal Name must be surrounded by quotes"));
-            }
+	    if (!principalName.startsWith("\"")) {
+		MessageFormat form = new MessageFormat(ResourcesMgr.getString
+			("permission name [name] syntax invalid: "));
+		Object[] source = {name};
+		throw new IllegalArgumentException
+			(form.format(source) + ResourcesMgr.getString
+			("Principal Name must be surrounded by quotes"));
+	    }
 
-            if (!principalName.endsWith("\"")) {
+	    if (!principalName.endsWith("\"")) {
 
-                // we have a name with spaces in it --
-                // keep parsing until we find the end quote,
-                // and keep the spaces in the name
+		// we have a name with spaces in it --
+		// keep parsing until we find the end quote,
+		// and keep the spaces in the name
 
-                while (tokenizer.hasMoreTokens()) {
-                    principalName = principalName + tokenizer.nextToken();
-                    if (principalName.endsWith("\""))
-                        break;
-                }
+		while (tokenizer.hasMoreTokens()) {
+		    principalName = principalName + tokenizer.nextToken();
+		    if (principalName.endsWith("\""))
+			break;
+		}
 
-                if (!principalName.endsWith("\"")) {
-                    MessageFormat form = new MessageFormat
-                        (ResourcesMgr.getString
-                        ("permission name [name] syntax invalid: "));
-                    Object[] source = {name};
-                    throw new IllegalArgumentException
-                        (form.format(source) + ResourcesMgr.getString
-                                ("Principal Name missing end quote"));
-                }
-            }
+		if (!principalName.endsWith("\"")) {
+		    MessageFormat form = new MessageFormat
+			(ResourcesMgr.getString
+			("permission name [name] syntax invalid: "));
+		    Object[] source = {name};
+		    throw new IllegalArgumentException
+			(form.format(source) + ResourcesMgr.getString
+				("Principal Name missing end quote"));
+		}
+	    }
 
-            if (testing)
-                System.out.println("\tprincipalName = '" + principalName + "'");
+	    if (testing)
+		System.out.println("\tprincipalName = '" + principalName + "'");
 
-            principalName = principalName.substring
-                                        (1, principalName.length() - 1);
+	    principalName = principalName.substring
+					(1, principalName.length() - 1);
 
-            if (principalClass.equals("*") &&
-                !principalName.equals("*")) {
-                    throw new IllegalArgumentException(ResourcesMgr.getString
-                        ("PrivateCredentialPermission Principal Class " +
-                        "can not be a wildcard (*) value if Principal Name " +
-                        "is not a wildcard (*) value"));
-            }
+	    if (principalClass.equals("*") &&
+		!principalName.equals("*")) {
+		    throw new IllegalArgumentException(ResourcesMgr.getString
+			("PrivateCredentialPermission Principal Class " +
+			"can not be a wildcard (*) value if Principal Name " +
+			"is not a wildcard (*) value"));
+	    }
 
-            if (testing)
-                System.out.println("\tprincipalName = '" + principalName + "'");
+	    if (testing)
+		System.out.println("\tprincipalName = '" + principalName + "'");
 
-            pList.add(new CredOwner(principalClass, principalName));
-        }
+	    pList.add(new CredOwner(principalClass, principalName));
+	}
 
-        this.credOwners = new CredOwner[pList.size()];
-        pList.toArray(this.credOwners);
+	this.credOwners = new CredOwner[pList.size()];
+	pList.toArray(this.credOwners);
     }
 
     private boolean impliesCredentialClass(String thisC, String thatC) {
 
-        // this should never happen
-        if (thisC == null || thatC == null)
-            return false;
+	// this should never happen
+	if (thisC == null || thatC == null)
+	    return false;
 
-        if (testing)
-            System.out.println("credential class comparison: " +
-                                thisC + "/" + thatC);
+	if (testing)
+	    System.out.println("credential class comparison: " +
+				thisC + "/" + thatC);
 
-        if (thisC.equals("*"))
-            return true;
+	if (thisC.equals("*"))
+	    return true;
 
-        /**
-         * XXX let's not enable this for now --
-         *      if people want it, we'll enable it later
-         */
-        /*
-        if (thisC.endsWith("*")) {
-            String cClass = thisC.substring(0, thisC.length() - 2);
-            return thatC.startsWith(cClass);
-        }
-        */
+	/**
+	 * XXX let's not enable this for now --
+	 *	if people want it, we'll enable it later
+	 */
+	/*
+	if (thisC.endsWith("*")) {
+	    String cClass = thisC.substring(0, thisC.length() - 2);
+	    return thatC.startsWith(cClass);
+	}
+	*/
 
-        return thisC.equals(thatC);
+	return thisC.equals(thatC);
     }
 
     private boolean impliesPrincipalSet(CredOwner[] thisP, CredOwner[] thatP) {
 
-        // this should never happen
-        if (thisP == null || thatP == null)
-            return false;
+	// this should never happen
+	if (thisP == null || thatP == null)
+	    return false;
 
-        if (thatP.length == 0)
-            return true;
+	if (thatP.length == 0)
+	    return true;
 
-        if (thisP.length == 0)
-            return false;
+	if (thisP.length == 0)
+	    return false;
 
-        for (int i = 0; i < thisP.length; i++) {
-            boolean foundMatch = false;
-            for (int j = 0; j < thatP.length; j++) {
-                if (thisP[i].implies(thatP[j])) {
-                    foundMatch = true;
-                    break;
-                }
-            }
-            if (!foundMatch) {
-                return false;
-            }
-        }
-        return true;
+	for (int i = 0; i < thisP.length; i++) {
+	    boolean foundMatch = false;
+	    for (int j = 0; j < thatP.length; j++) {
+		if (thisP[i].implies(thatP[j])) {
+		    foundMatch = true;
+		    break;
+		}
+	    }
+	    if (!foundMatch) {
+		return false;
+	    }
+	}
+	return true;
     }
 
     /**
      * Reads this object from a stream (i.e., deserializes it)
      */
     private void readObject(java.io.ObjectInputStream s) throws
-                                        java.io.IOException,
-                                        ClassNotFoundException {
+					java.io.IOException,
+					ClassNotFoundException {
 
         s.defaultReadObject();
 
@@ -500,14 +501,14 @@ public final class PrivateCredentialPermission extends Permission {
 
         if (getName().indexOf(" ") == -1 && getName().indexOf("\"") == -1) {
 
-            // name only has a credential class specified
-            credentialClass = getName();
-            credOwners = EMPTY_PRINCIPALS;
+	    // name only has a credential class specified
+	    credentialClass = getName();
+	    credOwners = EMPTY_PRINCIPALS;
 
         } else {
 
-            // perform regular initialization
-            init(getName());
+	    // perform regular initialization
+	    init(getName());
         }
     }
 
@@ -516,50 +517,50 @@ public final class PrivateCredentialPermission extends Permission {
      */
     static class CredOwner implements java.io.Serializable {
 
-        private static final long serialVersionUID = -5607449830436408266L;
+	private static final long serialVersionUID = -5607449830436408266L;
 
-        /**
-         * @serial
-         */
-        String principalClass;
-        /**
-         * @serial
-         */
-        String principalName;
+	/**
+	 * @serial
+	 */
+	String principalClass;
+	/**
+	 * @serial
+	 */
+	String principalName;
 
-        CredOwner(String principalClass, String principalName) {
-            this.principalClass = principalClass;
-            this.principalName = principalName;
-        }
+	CredOwner(String principalClass, String principalName) {
+	    this.principalClass = principalClass;
+	    this.principalName = principalName;
+	}
 
-        public boolean implies(Object obj) {
-            if (obj == null || !(obj instanceof CredOwner))
-                return false;
+	public boolean implies(Object obj) {
+	    if (obj == null || !(obj instanceof CredOwner))
+		return false;
 
-            CredOwner that = (CredOwner)obj;
+	    CredOwner that = (CredOwner)obj;
 
-            if (principalClass.equals("*") ||
-                principalClass.equals(that.principalClass)) {
+	    if (principalClass.equals("*") ||
+		principalClass.equals(that.principalClass)) {
 
-                if (principalName.equals("*") ||
-                    principalName.equals(that.principalName)) {
-                    return true;
-                }
-            }
+		if (principalName.equals("*") ||
+		    principalName.equals(that.principalName)) {
+		    return true;
+		}
+	    }
 
-            /**
-             * XXX no code yet to support a.b.*
-             */
+	    /**
+	     * XXX no code yet to support a.b.*
+	     */
 
-            return false;
-        }
+	    return false;
+	}
 
-        public String toString() {
-            MessageFormat form = new MessageFormat(ResourcesMgr.getString
-                ("CredOwner:\n\tPrincipal Class = class\n\t" +
-                        "Principal Name = name"));
-            Object[] source = {principalClass, principalName};
-            return (form.format(source));
-        }
+	public String toString() {
+	    MessageFormat form = new MessageFormat(ResourcesMgr.getString
+		("CredOwner:\n\tPrincipal Class = class\n\t" +
+			"Principal Name = name"));
+	    Object[] source = {principalClass, principalName};
+	    return (form.format(source));
+	}
     }
 }

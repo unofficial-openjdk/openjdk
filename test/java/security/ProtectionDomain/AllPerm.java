@@ -40,30 +40,30 @@ public class AllPerm {
 
     public static void main(String[]args) throws Exception {
 
-        // create custom class loader that assigns AllPermission to
-        // classes it loads
+	// create custom class loader that assigns AllPermission to
+	// classes it loads
 
-        File file = new File(System.getProperty("test.src"), "AllPerm.jar");
-        URL[] urls = new URL[] { file.toURL() };
-        ClassLoader parent = Thread.currentThread().getContextClassLoader();
-        AllPermLoader loader = new AllPermLoader(urls, parent);
+	File file = new File(System.getProperty("test.src"), "AllPerm.jar");
+	URL[] urls = new URL[] { file.toURL() };
+	ClassLoader parent = Thread.currentThread().getContextClassLoader();
+	AllPermLoader loader = new AllPermLoader(urls, parent);
 
-        // load a class from AllPerm.jar using custom loader
+	// load a class from AllPerm.jar using custom loader
 
-        Object o = loader.loadClass("AllPermClass").newInstance();
-        Method doCheck = o.getClass().getMethod("doCheck", ARGS);
-        allPermClassDomain = o.getClass().getProtectionDomain();
+	Object o = loader.loadClass("AllPermClass").newInstance();
+	Method doCheck = o.getClass().getMethod("doCheck", ARGS);
+	allPermClassDomain = o.getClass().getProtectionDomain();
 
-        // set a custom Policy and set the SecurityManager
+	// set a custom Policy and set the SecurityManager
 
-        Policy.setPolicy(new AllPermPolicy());
-        System.setSecurityManager(new SecurityManager());
+	Policy.setPolicy(new AllPermPolicy());
+	System.setSecurityManager(new SecurityManager());
 
-        // invoke method on loaded class, which will perform a
-        // security-sensitive operation.  custom policy will check
-        // to see if it is called (it should not be called)
+	// invoke method on loaded class, which will perform a
+	// security-sensitive operation.  custom policy will check
+	// to see if it is called (it should not be called)
 
-        doCheck.invoke(o, ARGS);
+	doCheck.invoke(o, ARGS);
     }
 
     /**
@@ -71,14 +71,14 @@ public class AllPerm {
      */
     private static class AllPermLoader extends URLClassLoader {
 
-        public AllPermLoader(URL[] urls, ClassLoader parent) {
-            super(urls, parent);
-        }
+	public AllPermLoader(URL[] urls, ClassLoader parent) {
+	    super(urls, parent);
+	}
 
-        protected PermissionCollection getPermissions(CodeSource codesource) {
-            Permissions perms = new Permissions();
-            perms.add(new AllPermission());
-            return perms;
+	protected PermissionCollection getPermissions(CodeSource codesource) {
+	    Permissions perms = new Permissions();
+	    perms.add(new AllPermission());
+	    return perms;
         }
     }
 
@@ -86,13 +86,13 @@ public class AllPerm {
      * this policy should not be called if domain is allPermClassDomain
      */
     private static class AllPermPolicy extends Policy {
-        public boolean implies(ProtectionDomain domain, Permission permission) {
-            if (domain == allPermClassDomain) {
-                throw new SecurityException
-                        ("Unexpected call into AllPermPolicy");
-            }
-            return true;
-        }
+	public boolean implies(ProtectionDomain domain, Permission permission) {
+	    if (domain == allPermClassDomain) {
+		throw new SecurityException
+			("Unexpected call into AllPermPolicy");
+	    }
+	    return true;
+	}
     }
 }
 
@@ -102,7 +102,7 @@ public class AllPerm {
 /*
 public class AllPermClass {
     public void doCheck() {
-        System.getProperty("user.name");
+	System.getProperty("user.name");
     }
 }
 */

@@ -51,21 +51,22 @@ import sun.java2d.windows.WindowsFlags;
  *
  * @see GraphicsDevice
  * @see GraphicsConfiguration
+ * @version %I% %G%
  */
 
 public class Win32GraphicsEnvironment
     extends SunGraphicsEnvironment
 {
     static {
-        // Ensure awt is loaded already.  Also, this forces static init
-        // of WToolkit and Toolkit, which we depend upon
-        WToolkit.loadLibraries();
-        // setup flags before initializing native layer
-        WindowsFlags.initFlags();
-        initDisplayWrapper();
-        eudcFontFileName = getEUDCFontFile();
+	// Ensure awt is loaded already.  Also, this forces static init
+	// of WToolkit and Toolkit, which we depend upon
+	WToolkit.loadLibraries();
+	// setup flags before initializing native layer
+	WindowsFlags.initFlags();
+	initDisplayWrapper();
+	eudcFontFileName = getEUDCFontFile();
     }
-
+    
     /**
      * Noop function that just acts as an entry point for someone to force
      * a static initialization of this class.
@@ -79,14 +80,14 @@ public class Win32GraphicsEnvironment
      */
     private static native void initDisplay();
 
-    private static boolean displayInitialized;      // = false;
+    private static boolean displayInitialized;	    // = false;
     public static void initDisplayWrapper() {
-        if (!displayInitialized) {
-            displayInitialized = true;
-            initDisplay();
-        }
+	if (!displayInitialized) {
+	    displayInitialized = true;
+	    initDisplay();
+	}
     }
-
+    
     public Win32GraphicsEnvironment() {
     }
 
@@ -94,9 +95,9 @@ public class Win32GraphicsEnvironment
     protected native int getDefaultScreen();
 
     public GraphicsDevice getDefaultScreenDevice() {
-        return getScreenDevices()[getDefaultScreen()];
+	return getScreenDevices()[getDefaultScreen()];
     }
-
+    
     /**
      * Returns the number of pixels per logical inch along the screen width.
      * In a system with multiple display monitors, this value is the same for
@@ -111,8 +112,8 @@ public class Win32GraphicsEnvironment
      * @returns number of pixels per logical inch in Y direction
      */
     public native int getYResolution();
-
-
+    
+  
 /*
  * ----DISPLAY CHANGE SUPPORT----
  */
@@ -140,7 +141,7 @@ public class Win32GraphicsEnvironment
                 }
                 Win32GraphicsDevice gd = (Win32GraphicsDevice)oldScreens[i];
                 // devices may be invalidated from the native code when the
-                // display change happens (device add/removal also causes a
+                // display change happens (device add/removal also causes a 
                 // display change)
                 if (!gd.isValid()) {
                     if (oldDevices == null) {
@@ -232,7 +233,7 @@ public class Win32GraphicsEnvironment
         if (registeredFontFiles.contains(fontFileName)) {
             return;
         }
-        registeredFontFiles.add(fontFileName);
+	registeredFontFiles.add(fontFileName);
 
         int fontFormat;
         if (ttFilter.accept(null, fontFileName)) {
@@ -240,49 +241,49 @@ public class Win32GraphicsEnvironment
         } else if (t1Filter.accept(null, fontFileName)) {
             fontFormat = FontManager.FONTFORMAT_TYPE1;
         } else {
-            /* on windows we don't use/register native fonts */
-            return;
-        }
+	    /* on windows we don't use/register native fonts */
+	    return;
+	}
 
-        if (fontPath == null) {
-            fontPath = getPlatformFontPath(noType1Font);
-        }
+	if (fontPath == null) {
+	    fontPath = getPlatformFontPath(noType1Font);
+	}
 
-        /* Look in the JRE font directory first.
-         * This is playing it safe as we would want to find fonts in the
-         * JRE font directory ahead of those in the system directory
-         */
-        String tmpFontPath = jreFontDirName+File.pathSeparator+fontPath;
-        StringTokenizer parser = new StringTokenizer(tmpFontPath,
+	/* Look in the JRE font directory first.
+	 * This is playing it safe as we would want to find fonts in the
+	 * JRE font directory ahead of those in the system directory
+	 */
+	String tmpFontPath = jreFontDirName+File.pathSeparator+fontPath;
+        StringTokenizer parser = new StringTokenizer(tmpFontPath, 
                                                      File.pathSeparator);
 
-        boolean found = false;
+	boolean found = false;
         try {
             while (!found && parser.hasMoreTokens()) {
                 String newPath = parser.nextToken();
-                File theFile = new File(newPath, fontFileName);
+		File theFile = new File(newPath, fontFileName);
                 if (theFile.canRead()) {
-                    found = true;
-                    String path = theFile.getAbsolutePath();
-                    if (defer) {
-                        FontManager.registerDeferredFont(fontFileName, path,
-                                                         nativeNames,
-                                                         fontFormat, true,
-                                                         fontRank);
-                    } else {
-                        FontManager.registerFontFile(path, nativeNames,
-                                                     fontFormat, true,
-                                                     fontRank);
-                    }
+		    found = true;
+		    String path = theFile.getAbsolutePath();
+		    if (defer) {
+			FontManager.registerDeferredFont(fontFileName, path,
+							 nativeNames,
+							 fontFormat, true,
+							 fontRank);
+		    } else {
+			FontManager.registerFontFile(path, nativeNames,
+						     fontFormat, true,
+						     fontRank);
+		    }
                     break;
                 }
             }
         } catch (NoSuchElementException e) {
             System.err.println(e);
         }
-        if (!found) {
-            addToMissingFontFileList(fontFileName);
-        }
+	if (!found) {
+	    addToMissingFontFileList(fontFileName);
+	}
     }
 
     /* register only TrueType/OpenType fonts
@@ -292,28 +293,28 @@ public class Win32GraphicsEnvironment
      */
     static String fontsForPrinting = null;
     protected void registerJREFontsWithPlatform(String pathName) {
-        fontsForPrinting = pathName;
+	fontsForPrinting = pathName;
     }
 
     public static void registerJREFontsForPrinting() {
-        String pathName = null;
-        synchronized (Win32GraphicsEnvironment.class) {
+	String pathName = null;
+	synchronized (Win32GraphicsEnvironment.class) {
             GraphicsEnvironment.getLocalGraphicsEnvironment();
-            if (fontsForPrinting == null) {
-                return;
-            }
-            pathName = fontsForPrinting;
-            fontsForPrinting = null;
-        }
+	    if (fontsForPrinting == null) {
+		return;
+	    }
+	    pathName = fontsForPrinting;
+	    fontsForPrinting = null;
+	}
         File f1 = new File(pathName);
-        String[] ls = f1.list(new TTFilter());
-        if (ls == null) {
-          return;
-        }
-        for (int i=0; i <ls.length; i++ ) {
-          File fontFile = new File(f1, ls[i]);
-          registerFontWithPlatform(fontFile.getAbsolutePath());
-        }
+	String[] ls = f1.list(new TTFilter());
+	if (ls == null) {
+	  return;
+	}
+	for (int i=0; i <ls.length; i++ ) {
+	  File fontFile = new File(f1, ls[i]);	  
+	  registerFontWithPlatform(fontFile.getAbsolutePath());
+	}
     }
 
     protected static native void registerFontWithPlatform(String fontName);
@@ -326,12 +327,13 @@ public class Win32GraphicsEnvironment
 
     // Implements SunGraphicsEnvironment.createFontConfiguration.
     protected FontConfiguration createFontConfiguration() {
-        return new WFontConfiguration(this);
+	return new WFontConfiguration(this);
     }
 
     public FontConfiguration createFontConfiguration(boolean preferLocaleFonts,
-                                                     boolean preferPropFonts) {
-
-        return new WFontConfiguration(this, preferLocaleFonts,preferPropFonts);
+						     boolean preferPropFonts) {
+	
+	return new WFontConfiguration(this, preferLocaleFonts,preferPropFonts);
     }
 }
+

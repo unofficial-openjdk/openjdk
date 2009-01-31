@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug     5024531
+ * @bug     5024531 
  * @summary Basic Test for ManagementFactory.newPlatformMXBean().
  * @author  Mandy Chung
  *
@@ -68,7 +68,7 @@ public class MXBeanProxyTest {
             throw new RuntimeException("Non existent MXBean " +
                 " was not detected");
         }
-
+    
         try {
             // Mismatch MXBean interface
             newPlatformMXBeanProxy(server,
@@ -89,7 +89,7 @@ public class MXBeanProxyTest {
         final ObjectName objName = new ObjectName("java.lang:type=Foo");
         server.registerMBean(foo, objName);
         try {
-            // non-platform MXBean
+            // non-platform MXBean 
             newPlatformMXBeanProxy(server,
                                    "java.lang:type=Foo",
                                    FooMBean.class);
@@ -103,7 +103,7 @@ public class MXBeanProxyTest {
             throw new RuntimeException("Non-platform MXBean " +
                 " was not detected");
         }
-
+     
 
         // Successfully get MXBean
         RuntimeMXBean rm = newPlatformMXBeanProxy(server,

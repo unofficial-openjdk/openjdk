@@ -36,9 +36,10 @@ SPEC=$1; shift
 DST=$1; shift
 
 eval `$NAWK <$SPEC '
-  /^[ \t]*copyright / { printf "COPYRIGHT_YEARS=%s\n", $2; }
   /^[ \t]*package / { printf "PKG=%s\n", $2; }
   /^[ \t]*class / { printf "CLASS=%s\n", $2; }
+  /^[ \t]*id / { printf "ID=%s\n", $2; }
+  /^[ \t]*date / { printf "DATE=%s\n", $2; }
 '`
 
 OUT=$DST/$CLASS.java
@@ -47,10 +48,7 @@ echo '-->' $OUT
 
 # Header
 #
-
-$SHELL addNotices.sh "$COPYRIGHT_YEARS" > $OUT
-
-cat <<__END__ >>$OUT
+cat <<__END__ >$OUT
 
 // -- This file was mechanically generated: Do not edit! -- //
 

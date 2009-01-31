@@ -30,10 +30,10 @@
 #include "com_sun_tools_jdi_SharedMemoryConnection.h"
 #include "jdwpTransport.h"
 #include "shmemBase.h"
-#include "sys.h"
+#include "sys.h" 
 
 /*
- * JNI interface to the shared memory transport. These JNI methods
+ * JNI interface to the shared memory transport. These JNI methods 
  * call the base shared memory support to do the real work.
  *
  * That is, this is the front-ends interface to our shared memory
@@ -54,11 +54,11 @@ static int isBigEndian() {
     if (!byte_ordering_known) {
         unsigned int i = 0xff000000;
         if (((char *)(&i))[0] != 0) {
-            is_big_endian = 1;
-        } else {
-            is_big_endian = 0;
-        }
-        byte_ordering_known = 1;
+	    is_big_endian = 1;
+	} else {
+	    is_big_endian = 0;
+	}
+	byte_ordering_known = 1;
     }
     return is_big_endian;
 }
@@ -69,14 +69,14 @@ static int isBigEndian() {
 static jint intToBigInt(jint i) {
     unsigned int b[4];
     if (isBigEndian()) {
-        return i;
+	return i;
     }
     b[0] = (i >> 24) & 0xff;
     b[1] = (i >> 16) & 0xff;
     b[2] = (i >> 8) & 0xff;
     b[3] = i & 0xff;
 
-    /*
+    /* 
      * It doesn't matter that jint is signed as we are or'ing
      * and hence end up with the correct bits.
      */
@@ -89,17 +89,17 @@ static jint intToBigInt(jint i) {
 static unsigned short shortToBigShort(unsigned short s) {
     unsigned int b[2];
     if (isBigEndian()) {
-        return s;
+	return s;
     }
     b[0] = (s >> 8) & 0xff;
     b[1] = s & 0xff;
     return (b[1] << 8) + b[0];
 }
-
+ 
 /*
  * Create a byte[] from a packet struct. All data in the byte array
  * is JDWP packet suitable for wire transmission. That is, all fields,
- * and data are in big-endian format as required by the JDWP
+ * and data are in big-endian format as required by the JDWP 
  * specification.
  */
 static jbyteArray
@@ -112,14 +112,14 @@ packetToByteArray(JNIEnv *env, jdwpPacket *str)
 
     total_length = str->type.cmd.len;
     data_length = total_length - 11;
-
+    
     /* total packet length is header + data */
     array = (*env)->NewByteArray(env, total_length);
     if ((*env)->ExceptionOccurred(env)) {
         return NULL;
     }
 
-    /* First 4 bytes of packet are the length (in big endian format) */
+    /* First 4 bytes of packet are the length (in big endian format) */    
     tmpInt = intToBigInt((unsigned int)total_length);
     (*env)->SetByteArrayRegion(env, array, 0, 4, (const jbyte *)&tmpInt);
 
@@ -132,33 +132,33 @@ packetToByteArray(JNIEnv *env, jdwpPacket *str)
 
     /* next two bytes are either the error code or the command set/command */
     if (str->type.cmd.flags & JDWPTRANSPORT_FLAGS_REPLY) {
-        short s = shortToBigShort(str->type.reply.errorCode);
+	short s = shortToBigShort(str->type.reply.errorCode);
         (*env)->SetByteArrayRegion(env, array, 9, 2, (const jbyte *)&(s));
     } else {
-        (*env)->SetByteArrayRegion(env, array, 9, 1, (const jbyte *)&(str->type.cmd.cmdSet));
-        (*env)->SetByteArrayRegion(env, array, 10, 1, (const jbyte *)&(str->type.cmd.cmd));
-    }
+	(*env)->SetByteArrayRegion(env, array, 9, 1, (const jbyte *)&(str->type.cmd.cmdSet));
+	(*env)->SetByteArrayRegion(env, array, 10, 1, (const jbyte *)&(str->type.cmd.cmd));
+    }    
 
     /* finally the data */
-
+    
     if (data_length > 0) {
-        (*env)->SetByteArrayRegion(env, array, 11,
-                                   data_length, str->type.cmd.data);
-        if ((*env)->ExceptionOccurred(env)) {
-            return NULL;
-        }
+	(*env)->SetByteArrayRegion(env, array, 11, 
+				   data_length, str->type.cmd.data);			       
+	if ((*env)->ExceptionOccurred(env)) {
+	    return NULL;
+	}
     }
-
+        
     return array;
 }
 
 /*
- * Fill a packet struct from a byte array. The byte array is a
+ * Fill a packet struct from a byte array. The byte array is a 
  * JDWP packet suitable for wire transmission. That is, all fields,
- * and data are in big-endian format as required by the JDWP
+ * and data are in big-endian format as required by the JDWP 
  * specification. We thus need to convert the fields from big
  * endian to the platform endian.
- *
+ * 
  * The jbyteArray provided to this function is assumed to
  * of a length than is equal or greater than the length of
  * the JDWP packet that is contains.
@@ -177,38 +177,38 @@ byteArrayToPacket(JNIEnv *env, jbyteArray b, jdwpPacket *str)
 
     total_length = (int)pktHeader[3] | ((int)pktHeader[2] << 8) |
                    ((int)pktHeader[1] << 16) | ((int)pktHeader[0] << 24);
-    /*
+    /* 
      * The id field is in big endian (also errorCode field in the case
      * of reply packets).
      */
     str->type.cmd.id = (int)pktHeader[7] | ((int)pktHeader[6] << 8) |
-                       ((int)pktHeader[5] << 16) | ((int)pktHeader[4] << 24);
+		       ((int)pktHeader[5] << 16) | ((int)pktHeader[4] << 24);
 
     str->type.cmd.flags = (jbyte)pktHeader[8];
 
     if (str->type.cmd.flags & JDWPTRANSPORT_FLAGS_REPLY) {
-        str->type.reply.errorCode = (int)pktHeader[9] + ((int)pktHeader[10] << 8);
+	str->type.reply.errorCode = (int)pktHeader[9] + ((int)pktHeader[10] << 8);
     } else {
-        /* command packet */
-        str->type.cmd.cmdSet = (jbyte)pktHeader[9];
-        str->type.cmd.cmd = (jbyte)pktHeader[10];
+	/* command packet */
+	str->type.cmd.cmdSet = (jbyte)pktHeader[9];
+	str->type.cmd.cmd = (jbyte)pktHeader[10]; 
     }
 
     /*
      * The length of the JDWP packet is 11 + data
      */
     data_length = total_length - 11;
-
+    
     if (data_length == 0) {
         data = NULL;
     } else {
         data = malloc(data_length);
         if (data == NULL) {
-            throwException(env, "java/lang/OutOfMemoryError",
+            throwException(env, "java/lang/OutOfMemoryError", 
                            "Unable to allocate command data buffer");
             return;
         }
-
+    
         (*env)->GetByteArrayRegion(env, b, 11, /*sizeof(CmdPacket)+4*/ data_length, data);
         if ((*env)->ExceptionOccurred(env)) {
             free(data);
@@ -221,11 +221,11 @@ byteArrayToPacket(JNIEnv *env, jbyteArray b, jdwpPacket *str)
 }
 
 static void
-freePacketData(jdwpPacket *packet)
+freePacketData(jdwpPacket *packet) 
 {
     if (packet->type.cmd.len > 0) {
         free(packet->type.cmd.data);
-    }
+    }    
 }
 
 /*
@@ -275,13 +275,13 @@ JNIEXPORT jbyteArray JNICALL Java_com_sun_tools_jdi_SharedMemoryConnection_recei
     rc = shmemBase_receivePacket(connection, &packet);
     if (rc != SYS_OK) {
         throwShmemException(env, "shmemBase_receivePacket failed", rc);
-        return NULL;
+	return NULL;
     } else {
-        jbyteArray array = packetToByteArray(env, &packet);
+	jbyteArray array = packetToByteArray(env, &packet);
 
         /* Free the packet even if there was an exception above */
         freePacketData(&packet);
-        return array;
+	return array;
     }
 }
 
@@ -322,6 +322,9 @@ JNIEXPORT void JNICALL Java_com_sun_tools_jdi_SharedMemoryConnection_sendPacket0
     rc = shmemBase_sendPacket(connection, &packet);
     if (rc != SYS_OK) {
         throwShmemException(env, "shmemBase_sendPacket failed", rc);
-    }
+    }  
     freePacketData(&packet);
 }
+ 
+ 
+

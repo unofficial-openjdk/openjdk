@@ -39,7 +39,7 @@ import org.w3c.dom.Attr;
 public class ResolverLocalFilesystem extends ResourceResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                     ResolverLocalFilesystem.class.getName());
 
@@ -103,7 +103,7 @@ public class ResolverLocalFilesystem extends ResourceResolverSpi {
       }
 
       if (subStr.charAt(1) == ':') {
-         // we're running M$ Windows, so this works fine
+      	 // we're running M$ Windows, so this works fine
          return subStr;
       }
       // we're running some UNIX, so we have to prepend a slash
@@ -126,17 +126,17 @@ public class ResolverLocalFilesystem extends ResourceResolverSpi {
       }
 
       try {
-                 //URI uriNew = new URI(new URI(BaseURI), uri.getNodeValue());
-                 if (true)
-                        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I was asked whether I can resolve " + uriNodeValue/*uriNew.toString()*/);
+	         //URI uriNew = new URI(new URI(BaseURI), uri.getNodeValue());
+	         if (true)
+	         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I was asked whether I can resolve " + uriNodeValue/*uriNew.toString()*/);
 
-                 if ( uriNodeValue.startsWith("file:") ||
-                                         BaseURI.startsWith("file:")/*uriNew.getScheme().equals("file")*/) {
-                    if (true)
-                        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I state that I can resolve " + uriNodeValue/*uriNew.toString()*/);
+	         if ( uriNodeValue.startsWith("file:") ||
+					 BaseURI.startsWith("file:")/*uriNew.getScheme().equals("file")*/) {
+	            if (true)
+	            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I state that I can resolve " + uriNodeValue/*uriNew.toString()*/);
 
-                    return true;
-                 }
+	            return true;
+	         }
       } catch (Exception e) {}
 
       if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "But I can't");

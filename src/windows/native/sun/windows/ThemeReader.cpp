@@ -32,20 +32,20 @@
 #include "awt_Component.h"
 
 // Important note about VC6 and VC7 (or XP Platform SDK)   !
-//
+// 
 // These type definitions have been imported from UxTheme.h
-// They have been imported instead of including them, because
+// They have been imported instead of including them, because 
 // currently we dont require Platform SDK for building J2SE and
 // VC6 includes do not have UxTheme.h. When we move to VC7
-// we should remove these imports and just include
+// we should remove these imports and just include 
 //
-//  Uncomment these when we start using VC 7 (or XP Platform SDK)
+//  Uncomment these when we start using VC 7 (or XP Platform SDK) 
 //
 //  #include <uxtheme.h>
 //  #incldue <tmschema.h>
 
 
-// Remove everyting inside this ifdef when we start using VC 7 (or XP Platform SDK)
+// Remove everyting inside this ifdef when we start using VC 7 (or XP Platform SDK) 
 #ifndef  _UXTHEME_H_
 typedef HANDLE HTHEME;          // handle to a section of theme data for class
 
@@ -56,7 +56,7 @@ typedef enum {
 } THEME_SIZE;
 
 
-// Remove these when we start using VC 7 (or XP Platform SDK)
+// Remove these when we start using VC 7 (or XP Platform SDK) 
 typedef struct _MARGINS
 {
     int cxLeftWidth;      // width of left border that retains its size
@@ -75,46 +75,46 @@ typedef struct _MARGINS
 #define BLUE_MASK 0xff
 #define ALPHA_SHIFT 24
 #define RED_SHIFT 16
-#define GREEN_SHIFT 8
+#define GREEN_SHIFT 8 
 
 
 typedef HRESULT(__stdcall *PFNCLOSETHEMEDATA)(HTHEME hTheme);
 
-typedef HRESULT(__stdcall *PFNDRAWTHEMEBACKGROUND)(HTHEME hTheme, HDC hdc,
+typedef HRESULT(__stdcall *PFNDRAWTHEMEBACKGROUND)(HTHEME hTheme, HDC hdc, 
         int iPartId, int iStateId, const RECT *pRect,  const RECT *pClipRect);
 
 typedef HTHEME(__stdcall *PFNOPENTHEMEDATA)(HWND hwnd, LPCWSTR pszClassList);
 
-typedef HRESULT (__stdcall *PFNDRAWTHEMETEXT)(HTHEME hTheme, HDC hdc,
-          int iPartId, int iStateId, LPCWSTR pszText, int iCharCount,
+typedef HRESULT (__stdcall *PFNDRAWTHEMETEXT)(HTHEME hTheme, HDC hdc, 
+          int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, 
           DWORD dwTextFlags, DWORD dwTextFlags2, const RECT *pRect);
 
-typedef HRESULT (__stdcall *PFNGETTHEMEBACKGROUNDCONTENTRECT)(HTHEME hTheme,
-        HDC hdc, int iPartId, int iStateId,  const RECT *pBoundingRect,
+typedef HRESULT (__stdcall *PFNGETTHEMEBACKGROUNDCONTENTRECT)(HTHEME hTheme, 
+        HDC hdc, int iPartId, int iStateId,  const RECT *pBoundingRect, 
         RECT *pContentRect);
 
-typedef HRESULT (__stdcall *PFNGETTHEMEMARGINS)(HTHEME hTheme,
-        OPTIONAL HDC hdc, int iPartId, int iStateId, int iPropId,
+typedef HRESULT (__stdcall *PFNGETTHEMEMARGINS)(HTHEME hTheme, 
+        OPTIONAL HDC hdc, int iPartId, int iStateId, int iPropId, 
         OPTIONAL RECT *prc, OUT MARGINS *pMargins);
 
 typedef BOOL (__stdcall *PFNISTHEMEPARTDEFINED)(HTHEME hTheme, int iPartId, int iStateId);
 
-typedef HRESULT (__stdcall *PFNGETTHEMEBOOL)(HTHEME hTheme, int iPartId,
+typedef HRESULT (__stdcall *PFNGETTHEMEBOOL)(HTHEME hTheme, int iPartId, 
         int iStateId, int iPropId, BOOL *pfVal);
 
 typedef BOOL (__stdcall *PFNGETTHEMESYSBOOL)(HTHEME hTheme, int iPropId);
 
-typedef HRESULT (__stdcall *PFNGETTHEMECOLOR)(HTHEME hTheme, int iPartId,
+typedef HRESULT (__stdcall *PFNGETTHEMECOLOR)(HTHEME hTheme, int iPartId, 
         int iStateId, int iPropId, COLORREF *pColor);
 
-typedef HRESULT (__stdcall *PFNGETTHEMEENUMVALUE)(HTHEME hTheme, int iPartId,
+typedef HRESULT (__stdcall *PFNGETTHEMEENUMVALUE)(HTHEME hTheme, int iPartId, 
         int iStateId, int iPropId, int *val);
-typedef HRESULT (__stdcall *PFNGETTHEMEINT)(HTHEME hTheme, int iPartId,
+typedef HRESULT (__stdcall *PFNGETTHEMEINT)(HTHEME hTheme, int iPartId, 
         int iStateId, int iPropId, int *val);
-typedef HRESULT (__stdcall *PFNGETTHEMEPARTSIZE)(HTHEME hTheme, HDC hdc,
+typedef HRESULT (__stdcall *PFNGETTHEMEPARTSIZE)(HTHEME hTheme, HDC hdc, 
         int iPartId, int iStateId, RECT *prc, THEME_SIZE eSize, SIZE *size);
 
-typedef HRESULT (__stdcall *PFNGETTHEMEPOSITION)(HTHEME hTheme, int iPartId,
+typedef HRESULT (__stdcall *PFNGETTHEMEPOSITION)(HTHEME hTheme, int iPartId, 
         int iStateId, int propID, POINT *point);
 
 typedef HRESULT(__stdcall *PFNSETWINDOWTHEME)(HWND hwnd, LPCWSTR pszSubAppName,
@@ -154,45 +154,45 @@ BOOL InitThemes() {
     DTRACE_PRINTLN1("InitThemes hModThemes = %x\n", hModThemes);
     if(hModThemes) {
         DTRACE_PRINTLN("Loaded UxTheme.dll\n");
-        OpenThemeData = (PFNOPENTHEMEDATA)GetProcAddress(hModThemes,
-                                                        "OpenThemeData");
+        OpenThemeData = (PFNOPENTHEMEDATA)GetProcAddress(hModThemes, 
+							"OpenThemeData");
         DrawThemeBackground = (PFNDRAWTHEMEBACKGROUND)GetProcAddress(
-                                        hModThemes, "DrawThemeBackground");
+					hModThemes, "DrawThemeBackground");
         CloseThemeData = (PFNCLOSETHEMEDATA)GetProcAddress(
-                                                hModThemes, "CloseThemeData");
+						hModThemes, "CloseThemeData");
         DrawThemeText = (PFNDRAWTHEMETEXT)GetProcAddress(
-                                        hModThemes, "DrawThemeText");
+					hModThemes, "DrawThemeText");
         GetThemeBackgroundContentRect = (PFNGETTHEMEBACKGROUNDCONTENTRECT)
-                GetProcAddress(hModThemes, "GetThemeBackgroundContentRect");
+		GetProcAddress(hModThemes, "GetThemeBackgroundContentRect");
         GetThemeMargins = (PFNGETTHEMEMARGINS)GetProcAddress(
-                                        hModThemes, "GetThemeMargins");
+					hModThemes, "GetThemeMargins");
         IsThemePartDefined = (PFNISTHEMEPARTDEFINED)GetProcAddress(
                                         hModThemes, "IsThemePartDefined");
         GetThemeBool = (PFNGETTHEMEBOOL)GetProcAddress(
-                                        hModThemes, "GetThemeBool");
-        GetThemeSysBool = (PFNGETTHEMESYSBOOL)GetProcAddress(hModThemes,
-                                                        "GetThemeSysBool");
-        GetThemeColor = (PFNGETTHEMECOLOR)GetProcAddress(hModThemes,
-                                                        "GetThemeColor");
-        GetThemeEnumValue = (PFNGETTHEMEENUMVALUE)GetProcAddress(hModThemes,
-                                                "GetThemeEnumValue");
+					hModThemes, "GetThemeBool");
+	GetThemeSysBool = (PFNGETTHEMESYSBOOL)GetProcAddress(hModThemes, 
+							"GetThemeSysBool");
+        GetThemeColor = (PFNGETTHEMECOLOR)GetProcAddress(hModThemes, 
+							"GetThemeColor");
+        GetThemeEnumValue = (PFNGETTHEMEENUMVALUE)GetProcAddress(hModThemes, 
+						"GetThemeEnumValue");
         GetThemeInt = (PFNGETTHEMEINT)GetProcAddress(hModThemes, "GetThemeInt");
-        GetThemePosition = (PFNGETTHEMEPOSITION)GetProcAddress(hModThemes,
-                                                        "GetThemePosition");
+        GetThemePosition = (PFNGETTHEMEPOSITION)GetProcAddress(hModThemes, 
+							"GetThemePosition");
         GetThemePartSize = (PFNGETTHEMEPARTSIZE)GetProcAddress(hModThemes,
-                                                         "GetThemePartSize");
-        SetWindowTheme = (PFNSETWINDOWTHEME)GetProcAddress(hModThemes,
-                                                        "SetWindowTheme");
+							 "GetThemePartSize");
+        SetWindowTheme = (PFNSETWINDOWTHEME)GetProcAddress(hModThemes, 
+							"SetWindowTheme");
         IsThemeBackgroundPartiallyTransparent =
             (PFNISTHEMEBACKGROUNDPARTIALLYTRANSPARENT)GetProcAddress(hModThemes,
                                        "IsThemeBackgroundPartiallyTransparent");
         //this function might not exist
-        GetThemeTransitionDuration =
+        GetThemeTransitionDuration = 
             (PFNGETTHEMETRANSITIONDURATION)GetProcAddress(hModThemes,
                                         "GetThemeTransitionDuration");
 
-        if(OpenThemeData
-           && DrawThemeBackground
+        if(OpenThemeData 
+           && DrawThemeBackground 
            && CloseThemeData
            && DrawThemeText
            && GetThemeBackgroundContentRect
@@ -206,7 +206,7 @@ BOOL InitThemes() {
            && GetThemePartSize
            && GetThemePosition
            && SetWindowTheme
-           && IsThemeBackgroundPartiallyTransparent
+           && IsThemeBackgroundPartiallyTransparent 
           ) {
               DTRACE_PRINTLN("Loaded function pointers.\n");
               // We need to make sure we can load the Theme. This may not be
@@ -250,11 +250,11 @@ static void assert_result(HRESULT hres, JNIEnv *env) {
                     NULL,
                     lastError,
                     MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                    (LPSTR)&msgBuffer,
+                    (LPSTR)&msgBuffer, 
                     // it's an output parameter when allocate buffer is used
                     0,
                     NULL);
-            DTRACE_PRINTLN3("Error: hres=0x%x lastError=0x%x %s\n", hres,
+            DTRACE_PRINTLN3("Error: hres=0x%x lastError=0x%x %s\n", hres, 
                                                 lastError, msgBuffer);
         }
     }
@@ -270,7 +270,7 @@ static void assert_result(HRESULT hres, JNIEnv *env) {
 JNIEXPORT jlong JNICALL Java_sun_awt_windows_ThemeReader_openTheme
 (JNIEnv *env, jclass klass, jstring widget) {
 
-    LPCTSTR str = (LPCTSTR) JNU_GetStringPlatformChars(env, widget, NULL);
+    LPCTSTR str = (LPCTSTR) JNU_GetStringPlatformChars(env, widget, NULL); 
     // We need to open the Theme on a Window that will stick around.
     // The best one for that purpose is the Toolkit window.
     HTHEME htheme = OpenThemeData(AwtToolkit::GetInstance().GetHWnd(), str);
@@ -288,7 +288,7 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_setWindowTheme
 
     LPCTSTR str = NULL;
     if (subAppName != NULL) {
-        str = (LPCTSTR) JNU_GetStringPlatformChars(env, subAppName, NULL);
+        str = (LPCTSTR) JNU_GetStringPlatformChars(env, subAppName, NULL); 
     }
     // We need to set the Window theme on the same theme that we opened it with.
     HRESULT hres = SetWindowTheme(AwtToolkit::GetInstance().GetHWnd(), str, NULL);
@@ -305,18 +305,18 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_setWindowTheme
  */
 JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_closeTheme
 (JNIEnv *env, jclass klass, jlong theme) {
-
+   
     HRESULT hres = CloseThemeData((HTHEME)theme);
     assert_result(hres, env);
 }
 
-static void copyDIBToBufferedImage(int *pDstBits, int *pSrcBits,
+static void copyDIBToBufferedImage(int *pDstBits, int *pSrcBits, 
                 BOOL transparent, int w, int h, int stride) {
 
     int offsetToNextLine = stride - w;
-    int *dst = pDstBits;
-    int *src = pSrcBits;
-    double alphaScale;
+    int *dst = pDstBits; 
+    int *src = pSrcBits; 
+    double alphaScale; 
     int r,g,b,a;
     int pixel;
 
@@ -325,30 +325,30 @@ static void copyDIBToBufferedImage(int *pDstBits, int *pSrcBits,
     for (int i=0;i<h;i++) {
         for (int j=0;j<w;j++) {
             pixel = *src++;
-            a = (pixel & ALPHA_MASK)  >> ALPHA_SHIFT;
+            a = (pixel & ALPHA_MASK)  >> ALPHA_SHIFT; 
             if ((a != 0) && (a != 255)) {
-                translucent = TRUE;
+                translucent = TRUE; 
                 break;
             }
         }
         if (translucent) break;
     }
-    src = pSrcBits;
+    src = pSrcBits; 
 
     if (translucent) {
         for (int i=0;i<h;i++) {
             for (int j=0;j<w;j++) {
                 pixel = *src++;
                 if (pixel != 0) {
-                    // The UxTheme API seems to do the blending and
+                    // The UxTheme API seems to do the blending and 
                     // premultiply the resulting values.
-                    // so we have to divide by the alpha to get the
+                    // so we have to divide by the alpha to get the 
                     // original component values.
-                    a = (pixel & ALPHA_MASK)  >> ALPHA_SHIFT;
+                    a = (pixel & ALPHA_MASK)  >> ALPHA_SHIFT; 
                     if ((a != 255) && (a != 0)) {
-                        r = (pixel & RED_MASK)  >> RED_SHIFT;
-                        g = (pixel & GREEN_MASK)  >> GREEN_SHIFT;
-                        b = (pixel & BLUE_MASK);
+                        r = (pixel & RED_MASK)  >> RED_SHIFT; 
+                        g = (pixel & GREEN_MASK)  >> GREEN_SHIFT; 
+                        b = (pixel & BLUE_MASK); 
                         alphaScale = 255.0 / a;
                         r = (int) ((double) r * alphaScale);
                         if (r > 255) r = 255;
@@ -359,17 +359,17 @@ static void copyDIBToBufferedImage(int *pDstBits, int *pSrcBits,
                         pixel = (a << ALPHA_SHIFT) | (r << RED_SHIFT) |
                                                    (g << GREEN_SHIFT) | b ;
                     }
-                    else {
-                        // Frame maximize and minimize buttons
-                        // have transparent pixels with alpha
+                    else {  
+                        // Frame maximize and minimize buttons 
+                        // have transparent pixels with alpha 
                         // set to FF and nontransparent pixels have zero alpha.
-                        pixel |= 0xFF000000;
+                        pixel |= 0xFF000000;    
                     }
                 }
                 *dst++ = pixel;
             }
             dst += offsetToNextLine;
-        }
+        } 
     }
     else if (transparent) {
          for (int i=0;i<h;i++) {
@@ -379,20 +379,20 @@ static void copyDIBToBufferedImage(int *pDstBits, int *pSrcBits,
                      *dst++ = 0;
                  }
                  else {
-                     *dst++ = 0xFF000000 | pixel;
+                     *dst++ = 0xFF000000 | pixel;    
                  }
              }
              dst += offsetToNextLine;
-         }
-     }
+         } 
+     }       
      else {
          for (int i=0;i<h;i++) {
              for (int j=0;j<w;j++) {
                  pixel = *src++;
-                 *dst++ = 0xFF000000 | pixel;
+                 *dst++ = 0xFF000000 | pixel;    
              }
              dst += offsetToNextLine;
-         }
+         } 
      }
 
 }
@@ -405,7 +405,7 @@ static void copyDIBToBufferedImage(int *pDstBits, int *pSrcBits,
  * Signature: ([IJIIIIIII)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_paintBackground
-  (JNIEnv *env, jclass klass, jintArray array, jlong theme, jint part, jint state,
+  (JNIEnv *env, jclass klass, jintArray array, jlong theme, jint part, jint state, 
     jint x, jint y, jint w, jint h, jint stride) {
 
     int *pDstBits=NULL;
@@ -417,11 +417,11 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_paintBackground
     HTHEME hTheme = (HTHEME) theme;
 
     DTRACE_PRINTLN3("Java_sun_awt_windows_ThemeReader_paintButtonBackground w=%d h=%d\n stride=%d\n",w,h,stride);
-
+    
     if (hTheme == NULL) {
-        JNU_ThrowInternalError(env, "HTHEME is null");
-        return;
-    }
+	JNU_ThrowInternalError(env, "HTHEME is null");
+	return;
+    }       
 
     defaultDC = GetDC(NULL);
 
@@ -441,11 +441,11 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_paintBackground
 
     hDibSection = ::CreateDIBSection(memDC, (BITMAPINFO*) &bmi,
             DIB_RGB_COLORS, (void **) &pSrcBits,
-            NULL, 0);
+            NULL, 0); 
     if (hDibSection == NULL) {
         DTRACE_PRINTLN("Error creating DIB section");
-        ReleaseDC(NULL,defaultDC);
-        return;
+        ReleaseDC(NULL,defaultDC); 
+        return;   
     }
 
     SelectObject(memDC,hDibSection);
@@ -473,22 +473,22 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_ThemeReader_paintBackground
     // Delete resources.
     DeleteObject(hDibSection);
     DeleteDC(memDC);
-    ReleaseDC(NULL,defaultDC);
+    ReleaseDC(NULL,defaultDC); 
 }
 
 jobject newInsets(JNIEnv *env, jint top, jint left, jint bottom, jint right) {
     if (env->EnsureLocalCapacity(2) < 0) {
         return NULL;
     }
-
+  
     static jclass insetsClassID = NULL;
-
+  
     if (insetsClassID == NULL) {
         jclass insetsClassIDLocal = env->FindClass("java/awt/Insets");
         insetsClassID = (jclass)env->NewGlobalRef(insetsClassIDLocal);
         env->DeleteLocalRef(insetsClassIDLocal);
     }
-
+  
     jobject insets = env->NewObject(insetsClassID,
         AwtToolkit::insetsMID,
         top, left, bottom, right);
@@ -497,8 +497,8 @@ jobject newInsets(JNIEnv *env, jint top, jint left, jint bottom, jint right) {
         env->ExceptionDescribe();
         env->ExceptionClear();
     }
-
-    return insets;
+  
+    return insets; 
 }
 
 /*
@@ -510,9 +510,9 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getThemeMargins
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint property) {
     MARGINS margins;
     HTHEME hTheme = (HTHEME) theme;
-
+    
     if (hTheme != NULL) {
-        HRESULT hres = GetThemeMargins(hTheme, NULL, part, state, property, NULL, &margins);
+        HRESULT hres = GetThemeMargins(hTheme, NULL, part, state, property, NULL, &margins); 
         assert_result(hres, env);
         if (FAILED(hres)) {
             return NULL;
@@ -525,7 +525,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getThemeMargins
     return NULL;
 }
 
-/*
+/* 
  * Class: sun_awt_windows_ThemeReader
  * Method: isThemePartDefined
  * Signature: (JII)Z
@@ -541,7 +541,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_windows_ThemeReader_isThemePartDefined
  * Method:    getColor
  * Signature: (JIII)Ljava/awt/Color;
  */
-JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getColor
+JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getColor 
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint type) {
 
     HTHEME hTheme = (HTHEME) theme;
@@ -577,9 +577,9 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getColor
             env->ExceptionClear();
         }
 
-        return colorObj;
+        return colorObj; 
     }
-    return NULL;
+    return NULL; 
 }
 
 /*
@@ -587,7 +587,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getColor
  * Method:    getInt
  * Signature: (JIII)I
  */
-JNIEXPORT jint JNICALL Java_sun_awt_windows_ThemeReader_getInt
+JNIEXPORT jint JNICALL Java_sun_awt_windows_ThemeReader_getInt 
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint prop) {
 
     HTHEME hTheme = (HTHEME) theme;
@@ -596,7 +596,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_windows_ThemeReader_getInt
         HRESULT hres = GetThemeInt(hTheme, part, state, prop, &retVal);
         assert_result(hres, env);
     }
-    return retVal;
+    return retVal; 
 }
 
 /*
@@ -609,10 +609,10 @@ JNIEXPORT jint JNICALL Java_sun_awt_windows_ThemeReader_getEnum
     HTHEME hTheme = (HTHEME) theme;
     int retVal = -1;
     if (hTheme != NULL) {
-        HRESULT hres = GetThemeEnumValue(hTheme, part, state, prop, &retVal);
-        assert_result(hres, env);
+        HRESULT hres = GetThemeEnumValue(hTheme, part, state, prop, &retVal); 
+	assert_result(hres, env);
     }
-    return retVal;
+    return retVal; 
 }
 
 /*
@@ -628,7 +628,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_windows_ThemeReader_getBoolean
         HRESULT hres = GetThemeBool(hTheme, part, state, prop, &retVal);
         assert_result(hres, env);
     }
-    return retVal;
+    return retVal; 
 }
 
 /*
@@ -654,7 +654,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_windows_ThemeReader_getSysBoolean
  * Method:    getPoint
  * Signature: (JIII)Ljava/awt/Point;
  */
-JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPoint
+JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPoint 
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint prop) {
     HTHEME hTheme = (HTHEME) theme;
     POINT point;
@@ -697,7 +697,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPoint
  * Method:    getPosition
  * Signature: (JIII)Ljava/awt/Dimension;
  */
-JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPosition
+JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPosition 
 (JNIEnv *env, jclass klass, jlong theme, jint part, jint state, jint prop) {
 
     HTHEME hTheme = (HTHEME) theme;
@@ -733,9 +733,9 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPosition
             env->ExceptionClear();
         }
 
-        return dimObj;
+        return dimObj; 
     }
-    return NULL;
+    return NULL; 
 }
 
 /*
@@ -748,7 +748,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
     if (theme != NULL) {
         SIZE size;
 
-        if (SUCCEEDED(GetThemePartSize((HTHEME)theme, NULL, part, state,
+        if (SUCCEEDED(GetThemePartSize((HTHEME)theme, NULL, part, state, 
            NULL, TS_TRUE, &size)) && (env->EnsureLocalCapacity(2) >= 0)) {
 
             static jmethodID dimMID = NULL;
@@ -767,10 +767,10 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
                 env->ExceptionClear();
             }
 
-            return dimObj;
+            return dimObj; 
         }
     }
-    return NULL;
+    return NULL; 
 }
 
 /*
@@ -779,7 +779,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getPartSize
  * Signature: (JIIII)Ljava/awt/Insets;
  */
 JNIEXPORT jobject JNICALL Java_sun_awt_windows_ThemeReader_getThemeBackgroundContentMargins
-(JNIEnv *env, jclass klass, jlong hTheme, jint part, jint state,
+(JNIEnv *env, jclass klass, jlong hTheme, jint part, jint state, 
 jint boundingWidth, jint boundingHeight) {
     if (hTheme != NULL) {
         RECT boundingRect;
@@ -789,10 +789,10 @@ jint boundingWidth, jint boundingHeight) {
         boundingRect.bottom = boundingHeight;
         RECT contentRect;
         if (SUCCEEDED(GetThemeBackgroundContentRect((HTHEME) hTheme, NULL, part,
-                                                    state, &boundingRect,
+                                                    state, &boundingRect, 
                                                     &contentRect))) {
             return newInsets(env,
-                             contentRect.top, contentRect.left,
+                             contentRect.top, contentRect.left, 
                              boundingHeight - contentRect.bottom,
                              boundingWidth - contentRect.right);
         }
@@ -805,14 +805,14 @@ jint boundingWidth, jint boundingHeight) {
  * Method:    getThemeTransitionDuration
  * Signature: (JIIII)J
  */
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_sun_awt_windows_ThemeReader_getThemeTransitionDuration
-(JNIEnv *env, jclass klass, jlong theme, jint part, jint stateFrom,
+(JNIEnv *env, jclass klass, jlong theme, jint part, jint stateFrom, 
  jint stateTo, jint propId) {
     jlong rv = -1;
     if (GetThemeTransitionDuration != NULL) {
         DWORD duration = 0;
-        if (SUCCEEDED(GetThemeTransitionDuration((HTHEME) theme, part,
+        if (SUCCEEDED(GetThemeTransitionDuration((HTHEME) theme, part, 
                                       stateFrom, stateTo, propId, &duration))) {
             rv = duration;
         }
@@ -825,8 +825,9 @@ Java_sun_awt_windows_ThemeReader_getThemeTransitionDuration
  * Method:    isGetThemeTransitionDurationDefined
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jboolean JNICALL 
 Java_sun_awt_windows_ThemeReader_isGetThemeTransitionDurationDefined
 (JNIEnv *env, jclass klass) {
     return (GetThemeTransitionDuration != NULL) ? JNI_TRUE : JNI_FALSE;
 }
+

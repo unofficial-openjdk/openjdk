@@ -36,29 +36,29 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
     private String[] NativeFilteredFiles;
     native void create(MComponentPeer parent);
     void create(MComponentPeer parent, Object arg) {
-        create(parent);
+	create(parent);
     }
     public MFileDialogPeer(FileDialog target) {
-        super(target);
-        FileDialog      fdialog = (FileDialog)target;
-        String          dir = fdialog.getDirectory();
+	super(target);
+	FileDialog	fdialog = (FileDialog)target;
+	String		dir = fdialog.getDirectory();
         String          file = fdialog.getFile();
-        FilenameFilter  filter = fdialog.getFilenameFilter();
+	FilenameFilter  filter = fdialog.getFilenameFilter();
 
-        insets = new Insets(0, 0, 0, 0);
-        setDirectory(dir);
-        if (file != null) {
-            setFile(file);
-        }
-            setFilenameFilter(filter);
+	insets = new Insets(0, 0, 0, 0);
+	setDirectory(dir);
+	if (file != null) {
+	    setFile(file);
+	}
+	    setFilenameFilter(filter);
     }
-    native void         pReshape(int x, int y, int width, int height);
+    native void		pReshape(int x, int y, int width, int height);
     native void         pDispose();
-    native void         pShow();
-    native void         pHide();
-    native void         setFileEntry(String dir, String file, String[] ffiles);
+    native void		pShow();
+    native void		pHide();
+    native void		setFileEntry(String dir, String file, String[] ffiles);
     native void insertReplaceFileDialogText(String l);
-    public native void  setFont(Font f);
+    public native void	setFont(Font f);
 
     String getFilteredFile(String file) {
         if (file == null) {
@@ -73,12 +73,12 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
         }
         if (filter != null && !filter.accept(new File(dir), file)) {
             file = "";
-        }
+        }        
         return file;
     }
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
-    public void         handleSelected(final String file) {
+    public void		handleSelected(final String file) {
         final FileDialog fileDialog = (FileDialog)target;
         MToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
             public void run() {
@@ -100,7 +100,7 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
 
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
-    public void         handleCancel() {
+    public void		handleCancel() {
         final FileDialog fileDialog = (FileDialog)target;
         MToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
             public void run() {
@@ -112,7 +112,7 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
 
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
-    public void         handleQuit() {
+    public void		handleQuit() {
         final FileDialog fileDialog = (FileDialog)target;
         MToolkit.executeOnEventHandlerThread(fileDialog, new Runnable() {
             public void run() {
@@ -123,8 +123,8 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
 
     public  void setDirectory(String dir) {
         String file = ((FileDialog)target).getFile();
-        setFileEntry((dir != null) ? dir : "./", (file != null) ? file
-                     : "", null);
+	setFileEntry((dir != null) ? dir : "./", (file != null) ? file
+		     : "", null);
     }
 
 
@@ -153,9 +153,9 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
     }
     public void doFilter(FilenameFilter filter, String dir) {
         String d = (dir == null) ? (((FileDialog)target).getDirectory()):(dir);
-        String f = getFilteredFile(null);
-        File df = new File((d != null) ? d : ".");
-        String[] files = df.list(new DirectoryFilter(filter));
+        String f = getFilteredFile(null);       
+	File df = new File((d != null) ? d : ".");        
+	String[] files = df.list(new DirectoryFilter(filter));
         String[] nffiles = NativeFilteredFiles;
 
         // At this point we have two file lists.
@@ -166,7 +166,7 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
         // We should find an intersection of these two lists. The result
         // will be exactly what we expect to see in setFileEntry.
         // For more details please see 4784704.
-        if ( files != null ) {
+	if ( files != null ) {
             ArrayList filearr = new ArrayList();
             if (nffiles != null) {
                 for (int j = 0; j < files.length; j++) {
@@ -187,9 +187,9 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
             files = new String[1];
             files[0] = "";
         }
-        setFileEntry((d != null) ? d : ".", (f != null) ? f : "", files);
+	setFileEntry((d != null) ? d : ".", (f != null) ? f : "", files);
     }
-    private boolean proceedFiltering(final String dir, String[] nffiles,
+    private boolean proceedFiltering(final String dir, String[] nffiles, 
                                      boolean isPrivileged)
     {
         // Transfer the native filtered file list to the doFilter method.
@@ -203,10 +203,10 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
             } catch(Exception e) {
                 e.printStackTrace();
                 return false;
-            }
+            }               
         }
         // Otherwise we have to call user code on EvenDispatchThread
-        final ToolkitThreadBlockedHandler priveleged_lock =
+        final ToolkitThreadBlockedHandler priveleged_lock = 
             MToolkitThreadBlockedHandler.getToolkitThreadBlockedHandler();
         final boolean[] finished = new boolean[1];
         final boolean[] result = new boolean[1];
@@ -232,7 +232,7 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
                     priveleged_lock.unlock();
                 }
             }
-        });
+        });     
 
         while (!finished[0]) {
             priveleged_lock.enter();
@@ -258,14 +258,14 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
     //
     public void pasteFromClipboard() {
         Clipboard clipboard = target.getToolkit().getSystemClipboard();
-
-        Transferable content = clipboard.getContents(this);
-        if (content != null) {
-            try {
-                String data = (String)(content.getTransferData(DataFlavor.stringFlavor));
-                insertReplaceFileDialogText(data);
-            } catch (Exception e) {
-            }
+        
+	Transferable content = clipboard.getContents(this);
+	if (content != null) {
+	    try {
+		String data = (String)(content.getTransferData(DataFlavor.stringFlavor));
+		insertReplaceFileDialogText(data);
+	    } catch (Exception e) {       
+	    }
         }
     }
 
@@ -289,7 +289,7 @@ public class MFileDialogPeer extends MDialogPeer implements FileDialogPeer {
      * @see java.awt.peer.ContainerPeer#restack
      */
     public void restack() {
-    }
+    }    
 
     /**
      * @see java.awt.peer.ContainerPeer#isRestackSupported

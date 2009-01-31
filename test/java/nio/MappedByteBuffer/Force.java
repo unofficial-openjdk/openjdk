@@ -33,17 +33,17 @@ import java.nio.channels.*;
 
 public class Force {
     public static void main(String[] args) throws Exception {
-        Random random = new Random();
-        long filesize = random.nextInt(3*1024*1024);
-        int cut = random.nextInt((int)filesize);
-        File file = new File("Blah");
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        raf.setLength(filesize);
-        FileChannel fc = raf.getChannel();
-        MappedByteBuffer buf1 = fc.map(
-                        FileChannel.MapMode.READ_WRITE, cut, filesize-cut);
-        buf1.force();
-        fc.close();
-        raf.close();
+	Random random = new Random();
+	long filesize = random.nextInt(3*1024*1024);
+	int cut = random.nextInt((int)filesize);
+	File file = new File("Blah");
+	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+	raf.setLength(filesize);
+	FileChannel fc = raf.getChannel();
+	MappedByteBuffer buf1 = fc.map(
+			FileChannel.MapMode.READ_WRITE, cut, filesize-cut);
+	buf1.force();
+	fc.close();
+	raf.close();
     }
 }

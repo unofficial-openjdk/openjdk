@@ -103,14 +103,14 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_connect
 #endif /* DEBUG */
 
     if (hModule == NULL) {
-        systemErrorMessage = dlerror();
-        exceptionMessage = (char *) malloc(sizeof(char) * (strlen(systemErrorMessage) + strlen(libraryNameStr) + 1));
-        strcpy(exceptionMessage, systemErrorMessage);
-        strcat(exceptionMessage, libraryNameStr);
-        throwIOException(env, exceptionMessage);
-        (*env)->ReleaseStringUTFChars(env, jPkcs11ModulePath, libraryNameStr);
-        free(exceptionMessage);
-        return;
+	systemErrorMessage = dlerror();
+	exceptionMessage = (char *) malloc(sizeof(char) * (strlen(systemErrorMessage) + strlen(libraryNameStr) + 1));
+	strcpy(exceptionMessage, systemErrorMessage);
+	strcat(exceptionMessage, libraryNameStr);
+	throwIOException(env, exceptionMessage);
+	(*env)->ReleaseStringUTFChars(env, jPkcs11ModulePath, libraryNameStr);
+	free(exceptionMessage);
+	return;
     }
 
     /*
@@ -119,13 +119,16 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_connect
     dlerror(); /* clear any old error message not fetched */
     // with the old JAR file jGetFunctionList is null, temporarily check for that
     if (jGetFunctionList != NULL) {
-        getFunctionListStr = (*env)->GetStringUTFChars(env, jGetFunctionList, 0);
-        C_GetFunctionList = (CK_C_GetFunctionList) dlsym(hModule, getFunctionListStr);
-        (*env)->ReleaseStringUTFChars(env, jGetFunctionList, getFunctionListStr);
+	getFunctionListStr = (*env)->GetStringUTFChars(env, jGetFunctionList, 0);
+	C_GetFunctionList = (CK_C_GetFunctionList) dlsym(hModule, getFunctionListStr);
+	(*env)->ReleaseStringUTFChars(env, jGetFunctionList, getFunctionListStr);
     }
-    if ((C_GetFunctionList == NULL) || ((systemErrorMessage = dlerror()) != NULL)){
-        throwIOException(env, systemErrorMessage);
-        return;
+    if (C_GetFunctionList == NULL) {
+	throwIOException(env, "ERROR: C_GetFunctionList == NULL");
+	return;
+    } else if ( (systemErrorMessage = dlerror()) != NULL ){
+	throwIOException(env, systemErrorMessage);
+	return;
     }
 
     /*
@@ -157,7 +160,7 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_disconnect
     moduleData = removeModuleEntry(env, obj);
 
     if (moduleData != NULL) {
-        dlclose(moduleData->hModule);
+	dlclose(moduleData->hModule);
     }
 
     free(moduleData);

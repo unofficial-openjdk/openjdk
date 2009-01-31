@@ -85,10 +85,6 @@ InputStream in = url.openStream();
 As mentioned, URL and URLConnection rely on protocol handlers which must be present, otherwise an Exception is thrown. This is the major difference with URIs which only identify resources, and therefore don't need to have access to the protocol handler. So, while it is possible to create an URI with any kind of protocol scheme (e.g. <code>myproto://myhost.mydomain/resource/</code>), a similar URL will try to instantiate the handler for the specified protocol; if it doesn't exist an exception will be thrown.</p>
 <p>By default the protocol handlers are loaded dynamically from the default location. It is, however, possible to add to the search path by setting the <code>java.protocol.handler.pkgs</code> system property. For instance if it is set to <code>myapp.protocols</code>, then the URL code will try, in the case of http, first to load <code>myapp.protocols.http.Handler</code>, then, if this fails, <code>http.Handler</code> from the default location.<p>
 <p>Note that the Handler class <b>has to</b> be a subclass of the abstract class {@link java.net.URLStreamHandler}.</p>
-<h2>Additional Specification</h2>
-<ul>
-      <li><a href="doc-files/net-properties.html">Networking System Properties</a></li>
-</ul>
 <!--
 <h2>Package Specification</h2>
 

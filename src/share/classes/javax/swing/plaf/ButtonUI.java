@@ -33,6 +33,7 @@ import java.awt.Insets;
 /**
  * Pluggable look and feel interface for JButton.
  *
+ * @version %I% %G%
  * @author Jeff Dinkins
  */
 public abstract class ButtonUI extends ComponentUI {

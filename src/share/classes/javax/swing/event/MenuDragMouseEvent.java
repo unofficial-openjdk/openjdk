@@ -45,6 +45,7 @@ import java.awt.Component;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Georges Saab
  */
 public class MenuDragMouseEvent extends MouseEvent {
@@ -76,12 +77,12 @@ public class MenuDragMouseEvent extends MouseEvent {
      * @see MouseEvent#MouseEvent(java.awt.Component, int, long, int, int, int, int, int, int, boolean, int)
      */
     public MenuDragMouseEvent(Component source, int id, long when,
-                              int modifiers, int x, int y, int clickCount,
-                              boolean popupTrigger, MenuElement p[],
-                              MenuSelectionManager m) {
+			      int modifiers, int x, int y, int clickCount,
+			      boolean popupTrigger, MenuElement p[],
+			      MenuSelectionManager m) {
         super(source, id, when, modifiers, x, y, clickCount, popupTrigger);
-        path = p;
-        manager = m;
+  	path = p;
+  	manager = m;
     }
 
     /**
@@ -114,14 +115,14 @@ public class MenuDragMouseEvent extends MouseEvent {
      * @since 1.6
      */
     public MenuDragMouseEvent(Component source, int id, long when,
-                              int modifiers, int x, int y, int xAbs,
+			      int modifiers, int x, int y, int xAbs,
                               int yAbs, int clickCount,
-                              boolean popupTrigger, MenuElement p[],
-                              MenuSelectionManager m) {
+			      boolean popupTrigger, MenuElement p[],
+			      MenuSelectionManager m) {
         super(source, id, when, modifiers, x, y, xAbs, yAbs, clickCount,
               popupTrigger, MouseEvent.NOBUTTON);
-        path = p;
-        manager = m;
+	path = p;
+	manager = m;
     }
 
     /**
@@ -130,7 +131,7 @@ public class MenuDragMouseEvent extends MouseEvent {
      * @return an array of MenuElement objects representing the path value
      */
     public MenuElement[] getPath() {
-        return path;
+	return path;
     }
 
     /**
@@ -139,6 +140,7 @@ public class MenuDragMouseEvent extends MouseEvent {
      * @return a MenuSelectionManager object
      */
     public MenuSelectionManager getMenuSelectionManager() {
-        return manager;
+	return manager;
     }
 }
+

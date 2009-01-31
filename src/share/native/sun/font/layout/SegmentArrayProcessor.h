@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)SegmentArrayProcessor.h	1.9 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -57,3 +58,4 @@ protected:
 };
 
 #endif
+

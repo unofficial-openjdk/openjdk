@@ -129,8 +129,8 @@ abstract class OutputTests extends IIOTests {
     protected static class OutputType extends Option.Enable {
         private int type;
 
-        public OutputType(String nodeName, String description, int type) {
-            super(generalDestRoot, nodeName, description, false);
+	public OutputType(String nodeName, String description, int type) {
+	    super(generalDestRoot, nodeName, description, false);
             this.type = type;
         }
 
@@ -138,13 +138,13 @@ abstract class OutputTests extends IIOTests {
             return type;
         }
 
-        public String getAbbreviatedModifierDescription(Object value) {
-            return getModifierValueName(value);
-        }
+	public String getAbbreviatedModifierDescription(Object value) {
+	    return getModifierValueName(value);
+	}
 
-        public String getModifierValueName(Object val) {
-            return getNodeName();
-        }
+	public String getModifierValueName(Object val) {
+	    return getNodeName();
+	}
     }
 
     protected static abstract class Context {

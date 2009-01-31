@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM277;
  * Tables and data to convert Unicode to Cp277
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp277 extends CharToByteSingleByte {

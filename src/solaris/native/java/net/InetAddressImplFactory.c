@@ -41,10 +41,12 @@ Java_java_net_InetAddressImplFactory_isIPv6Supported(JNIEnv *env, jclass cls)
 {
 #ifdef AF_INET6
     if (ipv6_available()) {
-        return JNI_TRUE;
+	return JNI_TRUE;
     } else
-#endif /* AF_INET6 */
-        {
-            return JNI_FALSE;
-        }
+#endif /* AF_INET6 */ 
+	{
+	    return JNI_FALSE;
+	}
 }
+
+

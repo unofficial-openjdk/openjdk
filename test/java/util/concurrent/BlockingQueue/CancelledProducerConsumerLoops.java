@@ -70,8 +70,8 @@ public class CancelledProducerConsumerLoops {
             Thread.sleep(100);
         }
         pool.shutdown();
-        if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
-            throw new Error();
+	if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
+	    throw new Error();
    }
 
     static void oneRun(BlockingQueue<Integer> q, int npairs, int iters) throws Exception {

@@ -32,14 +32,14 @@ import com.sun.jdi.event.*;
  * Abstract event set for events with location and thread.
  */
 public abstract class LocatableEventSet extends AbstractEventSet {
-
+    
     LocatableEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
 
     /**
      * Returns the {@link Location} of this mirror. Depending on context
-     * and on available debug information, this location will have
+     * and on available debug information, this location will have 
      * varying precision.
      *
      * @return the {@link Location} of this mirror.
@@ -49,12 +49,13 @@ public abstract class LocatableEventSet extends AbstractEventSet {
     }
 
     /**
-     * Returns the thread in which this event has occurred.
+     * Returns the thread in which this event has occurred. 
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in
+     * @return a {@link ThreadReference} which mirrors the event's thread in 
      * the target VM.
      */
     public ThreadReference getThread() {
         return ((LocatableEvent)oneEvent).thread();
     }
 }
+

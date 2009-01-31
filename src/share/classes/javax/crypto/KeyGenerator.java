@@ -125,22 +125,22 @@ public class KeyGenerator {
      * @param algorithm the algorithm
      */
     protected KeyGenerator(KeyGeneratorSpi keyGenSpi, Provider provider,
-                           String algorithm) {
-        this.spi = keyGenSpi;
-        this.provider = provider;
-        this.algorithm = algorithm;
+			   String algorithm) {
+	this.spi = keyGenSpi;
+	this.provider = provider;
+	this.algorithm = algorithm;
     }
 
     private KeyGenerator(String algorithm) throws NoSuchAlgorithmException {
-        this.algorithm = algorithm;
-        List list = GetInstance.getServices("KeyGenerator", algorithm);
-        serviceIterator = list.iterator();
-        initType = I_NONE;
-        // fetch and instantiate initial spi
-        if (nextSpi(null, false) == null) {
-            throw new NoSuchAlgorithmException
-                (algorithm + " KeyGenerator not available");
-        }
+	this.algorithm = algorithm;
+	List list = GetInstance.getServices("KeyGenerator", algorithm);
+	serviceIterator = list.iterator();
+	initType = I_NONE;
+	// fetch and instantiate initial spi
+	if (nextSpi(null, false) == null) {
+	    throw new NoSuchAlgorithmException
+		(algorithm + " KeyGenerator not available");
+	}
     }
 
     /**
@@ -153,7 +153,7 @@ public class KeyGenerator {
      * @return the algorithm name of this <code>KeyGenerator</code> object.
      */
     public final String getAlgorithm() {
-        return this.algorithm;
+	return this.algorithm;
     }
 
     /**
@@ -181,14 +181,14 @@ public class KeyGenerator {
      * @exception NullPointerException if the specified algorithm is null.
      *
      * @exception NoSuchAlgorithmException if no Provider supports a
-     *          KeyGeneratorSpi implementation for the
-     *          specified algorithm.
+     *		KeyGeneratorSpi implementation for the
+     *		specified algorithm.
      *
      * @see java.security.Provider
      */
     public static final KeyGenerator getInstance(String algorithm)
-            throws NoSuchAlgorithmException {
-        return new KeyGenerator(algorithm);
+	    throws NoSuchAlgorithmException {
+	return new KeyGenerator(algorithm);
     }
 
     /**
@@ -217,24 +217,24 @@ public class KeyGenerator {
      * @exception NullPointerException if the specified algorithm is null.
      *
      * @exception NoSuchAlgorithmException if a KeyGeneratorSpi
-     *          implementation for the specified algorithm is not
-     *          available from the specified provider.
+     *		implementation for the specified algorithm is not
+     *		available from the specified provider.
      *
      * @exception NoSuchProviderException if the specified provider is not
-     *          registered in the security provider list.
+     *		registered in the security provider list.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *          is null or empty.
+     *		is null or empty.
      *
      * @see java.security.Provider
      */
     public static final KeyGenerator getInstance(String algorithm,
-            String provider) throws NoSuchAlgorithmException,
-            NoSuchProviderException {
-        Instance instance = JceSecurity.getInstance("KeyGenerator",
-                KeyGeneratorSpi.class, algorithm, provider);
-        return new KeyGenerator((KeyGeneratorSpi)instance.impl,
-                instance.provider, algorithm);
+	    String provider) throws NoSuchAlgorithmException,
+	    NoSuchProviderException {
+	Instance instance = JceSecurity.getInstance("KeyGenerator",
+		KeyGeneratorSpi.class, algorithm, provider);
+	return new KeyGenerator((KeyGeneratorSpi)instance.impl,
+		instance.provider, algorithm);
     }
 
     /**
@@ -260,20 +260,20 @@ public class KeyGenerator {
      * @exception NullPointerException if the specified algorithm is null.
      *
      * @exception NoSuchAlgorithmException if a KeyGeneratorSpi
-     *          implementation for the specified algorithm is not available
-     *          from the specified Provider object.
+     *		implementation for the specified algorithm is not available
+     *		from the specified Provider object.
      *
      * @exception IllegalArgumentException if the <code>provider</code>
-     *          is null.
+     *		is null.
      *
      * @see java.security.Provider
      */
     public static final KeyGenerator getInstance(String algorithm,
-            Provider provider) throws NoSuchAlgorithmException {
-        Instance instance = JceSecurity.getInstance("KeyGenerator",
-                KeyGeneratorSpi.class, algorithm, provider);
-        return new KeyGenerator((KeyGeneratorSpi)instance.impl,
-                instance.provider, algorithm);
+	    Provider provider) throws NoSuchAlgorithmException {
+	Instance instance = JceSecurity.getInstance("KeyGenerator",
+		KeyGeneratorSpi.class, algorithm, provider);
+	return new KeyGenerator((KeyGeneratorSpi)instance.impl,
+		instance.provider, algorithm);
     }
 
     /**
@@ -282,10 +282,10 @@ public class KeyGenerator {
      * @return the provider of this <code>KeyGenerator</code> object
      */
     public final Provider getProvider() {
-        synchronized (lock) {
-            disableFailover();
-            return provider;
-        }
+	synchronized (lock) {
+	    disableFailover();
+	    return provider;
+	}
     }
 
     /**
@@ -295,57 +295,57 @@ public class KeyGenerator {
      * this class is never set to null.
      */
     private KeyGeneratorSpi nextSpi(KeyGeneratorSpi oldSpi,
-            boolean reinit) {
-        synchronized (lock) {
-            // somebody else did a failover concurrently
-            // try that spi now
-            if ((oldSpi != null) && (oldSpi != spi)) {
-                return spi;
-            }
-            if (serviceIterator == null) {
-                return null;
-            }
-            while (serviceIterator.hasNext()) {
-                Service s = (Service)serviceIterator.next();
-                if (JceSecurity.canUseProvider(s.getProvider()) == false) {
-                    continue;
-                }
-                try {
-                    Object inst = s.newInstance(null);
-                    // ignore non-spis
-                    if (inst instanceof KeyGeneratorSpi == false) {
-                        continue;
-                    }
-                    KeyGeneratorSpi spi = (KeyGeneratorSpi)inst;
-                    if (reinit) {
-                        if (initType == I_SIZE) {
-                            spi.engineInit(initKeySize, initRandom);
-                        } else if (initType == I_PARAMS) {
-                            spi.engineInit(initParams, initRandom);
-                        } else if (initType == I_RANDOM) {
-                            spi.engineInit(initRandom);
-                        } else if (initType != I_NONE) {
-                            throw new AssertionError
-                                ("KeyGenerator initType: " + initType);
-                        }
-                    }
-                    provider = s.getProvider();
-                    this.spi = spi;
-                    return spi;
-                } catch (Exception e) {
-                    // ignore
-                }
-            }
-            disableFailover();
-            return null;
-        }
+	    boolean reinit) {
+	synchronized (lock) {
+	    // somebody else did a failover concurrently
+	    // try that spi now
+	    if ((oldSpi != null) && (oldSpi != spi)) {
+		return spi;
+	    }
+	    if (serviceIterator == null) {
+		return null;
+	    }
+	    while (serviceIterator.hasNext()) {
+		Service s = (Service)serviceIterator.next();
+		if (JceSecurity.canUseProvider(s.getProvider()) == false) {
+		    continue;
+		}
+		try {
+		    Object inst = s.newInstance(null);
+		    // ignore non-spis
+		    if (inst instanceof KeyGeneratorSpi == false) {
+			continue;
+		    }
+		    KeyGeneratorSpi spi = (KeyGeneratorSpi)inst;
+		    if (reinit) {
+			if (initType == I_SIZE) {
+			    spi.engineInit(initKeySize, initRandom);
+			} else if (initType == I_PARAMS) {
+			    spi.engineInit(initParams, initRandom);
+			} else if (initType == I_RANDOM) {
+			    spi.engineInit(initRandom);
+			} else if (initType != I_NONE) {
+			    throw new AssertionError
+				("KeyGenerator initType: " + initType);
+			}
+		    }
+		    provider = s.getProvider();
+		    this.spi = spi;
+		    return spi;
+		} catch (Exception e) {
+		    // ignore
+		}
+	    }
+	    disableFailover();
+	    return null;
+	}
     }
 
     void disableFailover() {
-        serviceIterator = null;
-        initType = 0;
-        initParams = null;
-        initRandom = null;
+	serviceIterator = null;
+	initType = 0;
+	initParams = null;
+	initRandom = null;
     }
 
     /**
@@ -354,28 +354,28 @@ public class KeyGenerator {
      * @param random the source of randomness for this generator
      */
     public final void init(SecureRandom random) {
-        if (serviceIterator == null) {
-            spi.engineInit(random);
-            return;
-        }
-        RuntimeException failure = null;
-        KeyGeneratorSpi mySpi = spi;
-        do {
-            try {
-                mySpi.engineInit(random);
-                initType = I_RANDOM;
-                initKeySize = 0;
-                initParams = null;
-                initRandom = random;
-                return;
-            } catch (RuntimeException e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi, false);
-            }
-        } while (mySpi != null);
-        throw failure;
+	if (serviceIterator == null) {
+	    spi.engineInit(random);
+	    return;
+	}
+	RuntimeException failure = null;
+	KeyGeneratorSpi mySpi = spi;
+	do {
+	    try {
+		mySpi.engineInit(random);
+		initType = I_RANDOM;
+		initKeySize = 0;
+		initParams = null;
+		initRandom = random;
+		return;
+	    } catch (RuntimeException e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi, false);
+	    }
+	} while (mySpi != null);
+	throw failure;
     }
 
     /**
@@ -395,9 +395,9 @@ public class KeyGenerator {
      * are inappropriate for this key generator
      */
     public final void init(AlgorithmParameterSpec params)
-        throws InvalidAlgorithmParameterException
+	throws InvalidAlgorithmParameterException
     {
-        init(params, JceSecurity.RANDOM);
+	init(params, JceSecurity.RANDOM);
     }
 
     /**
@@ -411,36 +411,36 @@ public class KeyGenerator {
      * inappropriate for this key generator
      */
     public final void init(AlgorithmParameterSpec params, SecureRandom random)
-        throws InvalidAlgorithmParameterException
+	throws InvalidAlgorithmParameterException
     {
-        if (serviceIterator == null) {
-            spi.engineInit(params, random);
-            return;
-        }
-        Exception failure = null;
-        KeyGeneratorSpi mySpi = spi;
-        do {
-            try {
-                mySpi.engineInit(params, random);
-                initType = I_PARAMS;
-                initKeySize = 0;
-                initParams = params;
-                initRandom = random;
-                return;
-            } catch (Exception e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi, false);
-            }
-        } while (mySpi != null);
-        if (failure instanceof InvalidAlgorithmParameterException) {
-            throw (InvalidAlgorithmParameterException)failure;
-        }
-        if (failure instanceof RuntimeException) {
-            throw (RuntimeException)failure;
-        }
-        throw new InvalidAlgorithmParameterException("init() failed", failure);
+	if (serviceIterator == null) {
+	    spi.engineInit(params, random);
+	    return;
+	}
+	Exception failure = null;
+	KeyGeneratorSpi mySpi = spi;
+	do {
+	    try {
+		mySpi.engineInit(params, random);
+		initType = I_PARAMS;
+		initKeySize = 0;
+		initParams = params;
+		initRandom = random;
+		return;
+	    } catch (Exception e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi, false);
+	    }
+	} while (mySpi != null);
+	if (failure instanceof InvalidAlgorithmParameterException) {
+	    throw (InvalidAlgorithmParameterException)failure;
+	}
+	if (failure instanceof RuntimeException) {
+	    throw (RuntimeException)failure;
+	}
+	throw new InvalidAlgorithmParameterException("init() failed", failure);
     }
 
     /**
@@ -461,7 +461,7 @@ public class KeyGenerator {
      * supported.
      */
     public final void init(int keysize) {
-        init(keysize, JceSecurity.RANDOM);
+	init(keysize, JceSecurity.RANDOM);
     }
 
     /**
@@ -476,28 +476,28 @@ public class KeyGenerator {
      * supported.
      */
     public final void init(int keysize, SecureRandom random) {
-        if (serviceIterator == null) {
-            spi.engineInit(keysize, random);
-            return;
-        }
-        RuntimeException failure = null;
-        KeyGeneratorSpi mySpi = spi;
-        do {
-            try {
-                mySpi.engineInit(keysize, random);
-                initType = I_SIZE;
-                initKeySize = keysize;
-                initParams = null;
-                initRandom = random;
-                return;
-            } catch (RuntimeException e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi, false);
-            }
-        } while (mySpi != null);
-        throw failure;
+	if (serviceIterator == null) {
+	    spi.engineInit(keysize, random);
+	    return;
+	}
+	RuntimeException failure = null;
+	KeyGeneratorSpi mySpi = spi;
+	do {
+	    try {
+		mySpi.engineInit(keysize, random);
+		initType = I_SIZE;
+		initKeySize = keysize;
+		initParams = null;
+		initRandom = random;
+		return;
+	    } catch (RuntimeException e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi, false);
+	    }
+	} while (mySpi != null);
+	throw failure;
     }
 
     /**
@@ -506,21 +506,21 @@ public class KeyGenerator {
      * @return the new key
      */
     public final SecretKey generateKey() {
-        if (serviceIterator == null) {
-            return spi.engineGenerateKey();
-        }
-        RuntimeException failure = null;
-        KeyGeneratorSpi mySpi = spi;
-        do {
-            try {
-                return mySpi.engineGenerateKey();
-            } catch (RuntimeException e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi, true);
-            }
-        } while (mySpi != null);
-        throw failure;
+	if (serviceIterator == null) {
+	    return spi.engineGenerateKey();
+	}
+	RuntimeException failure = null;
+	KeyGeneratorSpi mySpi = spi;
+	do {
+	    try {
+		return mySpi.engineGenerateKey();
+	    } catch (RuntimeException e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi, true);
+	    }
+	} while (mySpi != null);
+	throw failure;
    }
 }

@@ -50,7 +50,7 @@ typedef struct {
      * See ShapeSpanIterator.ShapeSIIntersectClipBox
      */
     void      (*intersectClipBox)(JNIEnv *env, void *clientData,
-                                    jint lox, jint loy, jint hix, jint hiy);
+				    jint lox, jint loy, jint hix, jint hiy);
 
     /**
      * See SpanIterator.nextSpan()

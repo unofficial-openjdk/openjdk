@@ -23,9 +23,9 @@
 
 /*
  * @test
- * @bug     6260131
+ * @bug	    6260131
  * @summary Test for RuntimeMXBean.getSystemProperties() if the system
- *          properties contain another list of properties as the defaults.
+ *          properties contain another list of properties as the defaults.  
  * @author  Mandy Chung
  *
  * @run build PropertiesTest
@@ -42,21 +42,21 @@ public class PropertiesTest {
     public static void main(String[] argv) throws Exception {
         Properties sysProps = System.getProperties();
 
-        // Create a new system properties using the old one
+        // Create a new system properties using the old one 
         // as the defaults
         Properties myProps = new Properties( System.getProperties() );
-
+        
         // add several new properties
         myProps.put("good.property.1", "good.value.1");
         myProps.put("good.property.2", "good.value.2");
         myProps.put("good.property.3", "good.value.3");
         myProps.put("good.property.4", new Integer(4));
-        myProps.put(new Integer(5), "good.value.5");
+        myProps.put(new Integer(5), "good.value.5"); 
         myProps.put(new Object(), new Object());
-
+        
         System.setProperties(myProps);
 
-        Map<String,String> props =
+        Map<String,String> props = 
             ManagementFactory.getRuntimeMXBean().getSystemProperties();
         int i=0;
         for (Map.Entry<String,String> e : props.entrySet()) {
@@ -67,7 +67,7 @@ public class PropertiesTest {
 
         if (props.size() != NUM_MYPROPS + sysProps.size()) {
             throw new RuntimeException("Test Failed: " +
-                "Expected number of properties = " +
+                "Expected number of properties = " + 
                 NUM_MYPROPS + sysProps.size() +
                 " but found = " + props.size());
         }

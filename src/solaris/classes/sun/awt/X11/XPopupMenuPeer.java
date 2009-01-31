@@ -54,7 +54,7 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
 
     /*
      * If mouse button is clicked on item showing submenu
-     * we have to hide its submenu.
+     * we have to hide its submenu. 
      * This member saves the submenu under cursor
      * Only if it's showing
      */
@@ -128,7 +128,7 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
     public void enable() {
         setEnabled( true );
     }
-
+    
     /**
      * DEPRECATED:  Replaced by setEnabled(boolean).
      * @see java.awt.peer.MenuItemPeer
@@ -141,8 +141,8 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
      * From MenuPeer
      */
     /**
-     * addSeparator routines are not used
-     * in peers. Shared code invokes addItem("-")
+     * addSeparator routines are not used 
+     * in peers. Shared code invokes addItem("-") 
      * for adding separators
      */
     public void addSeparator() {
@@ -167,7 +167,7 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
                 return;
             }
             Dimension dim = getDesiredSize();
-            //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened
+            //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened 
             //near the periphery of the screen, XToolkit
             Rectangle bounds = getWindowBounds(pt, dim);
             reshape(bounds);
@@ -196,7 +196,7 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
-        return XWindow.defaultFont;
+        return XWindow.defaultFont; 
     }
 
     String getTargetLabel() {
@@ -209,9 +209,9 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        return "";
+        return ""; 
     }
-
+    
     //Fix for 6184485: Popup menu is not disabled on XToolkit even when calling setEnabled (false)
     boolean isTargetEnabled() {
         if (popupMenuTarget == null) {
@@ -222,9 +222,9 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        return false;
+        return false; 
     }
-
+    
     Vector getMenuTargetItems() {
         try {
             return (Vector)f_items.get(popupMenuTarget);
@@ -240,14 +240,14 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
      *
      ************************************************/
 
-    //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened
+    //Fix for 6267162: PIT: Popup Menu gets hidden below the screen when opened 
     //near the periphery of the screen, XToolkit
 
     /**
      * Calculates placement of popup menu window
      * given origin in global coordinates and
-     * size of menu window. Returns suggested
-     * rectangle for menu window in global coordinates
+     * size of menu window. Returns suggested 
+     * rectangle for menu window in global coordinates 
      * @param origin the origin point specified in show()
      * function converted to global coordinates
      * @param windowSize the desired size of menu's window
@@ -336,7 +336,7 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
      ************************************************/
     protected void doDispose() {
         super.doDispose();
-        XToolkit.targetDisposedPeer(popupMenuTarget, this);
+        XToolkit.targetDisposedPeer(popupMenuTarget, this);        
     }
 
     protected void handleEvent(AWTEvent event) {
@@ -357,7 +357,7 @@ public class XPopupMenuPeer extends XMenuWindow implements PopupMenuPeer {
         default:
             super.handleEvent(event);
             break;
-        }
+        }        
     }
 
     /************************************************

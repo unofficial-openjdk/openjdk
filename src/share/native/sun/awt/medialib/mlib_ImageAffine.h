@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __MLIB_IMAGEAFFINE_H
 #define __MLIB_IMAGEAFFINE_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_ImageAffine.h	1.9	02/05/08 SMI"
+#endif /* __SUNPRO_C */
 
 #include "mlib_image.h"
 #include "mlib_ImageDivTables.h"
@@ -293,7 +297,7 @@ typedef union {
 
 #endif /* MLIB_USE_FTOI_CLAMPING */
 
-//we still need this for mlib_ImageAffine_BC_S32.c
+//we still need this for mlib_ImageAffine_BC_S32.c 
 #define SAT32(DST) SAT_32(DST, val0)
 
 /***************************************************************/

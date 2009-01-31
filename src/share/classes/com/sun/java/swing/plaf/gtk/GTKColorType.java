@@ -29,6 +29,7 @@ import java.awt.Color;
 import javax.swing.plaf.ColorUIResource;
 
 /**
+ * @version %I%, %G%
  * @author Scott Violet
  */
 public class GTKColorType extends ColorType {
@@ -68,8 +69,8 @@ public class GTKColorType extends ColorType {
             g = hlsValue(m1, m2, h);
             b = hlsValue(m1, m2, h - 120);
         }
-        return (((int)(r * 255)) << 16) | (((int)(g * 255.0)) << 8) |
-               ((int)(b * 255));
+	return (((int)(r * 255)) << 16) | (((int)(g * 255.0)) << 8) |
+	       ((int)(b * 255));
     }
 
     private static float hlsValue(float n1, float n2, float h) {
@@ -95,18 +96,18 @@ public class GTKColorType extends ColorType {
      * Converts from RGB color space to HLS colorspace.
      */
     private static float[] rgbToHLS(int rgb, float[] hls) {
-        float r = ((rgb & 0xFF0000) >> 16) / 255.0f;
-        float g = ((rgb & 0xFF00) >> 8) / 255.0f;
-        float b = (rgb & 0xFF) / 255.0f;
+	float r = ((rgb & 0xFF0000) >> 16) / 255.0f;
+	float g = ((rgb & 0xFF00) >> 8) / 255.0f;
+	float b = (rgb & 0xFF) / 255.0f;
 
-        /* calculate lightness */
-        float max = Math.max(Math.max(r, g), b);
-        float min = Math.min(Math.min(r, g), b);
-        float l = (max + min) / 2.0f;
-        float s = 0;
-        float h = 0;
+	/* calculate lightness */ 
+	float max = Math.max(Math.max(r, g), b);
+	float min = Math.min(Math.min(r, g), b);
+	float l = (max + min) / 2.0f;
+	float s = 0;
+	float h = 0;
 
-        if (max != min) {
+	if (max != min) {
             float delta = max - min;
             s = (l <= .5f) ? (delta / (max + min)) : (delta / (2.0f - max -min));
             if (r == max) {
@@ -123,13 +124,13 @@ public class GTKColorType extends ColorType {
                 h += 360.0f;
             }
         }
-        if (hls == null) {
-            hls = new float[3];
-        }
-        hls[0] = h;
-        hls[1] = l;
-        hls[2] = s;
-        return hls;
+	if (hls == null) {
+	    hls = new float[3];
+	}
+	hls[0] = h;
+	hls[1] = l;
+	hls[2] = s;
+	return hls;
     }
 
     /**

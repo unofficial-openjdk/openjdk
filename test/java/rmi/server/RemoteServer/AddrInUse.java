@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -44,64 +44,64 @@ public class AddrInUse implements Runnable {
 
     public void run() {
 
-        /*
-         * Attempt to create (i.e. export) a registry on the port that
-         * has already been bound, and record the result.
-         */
-        try {
-            LocateRegistry.createRegistry(PORT);
-            synchronized (this) {
-                exportSucceeded = true;
-                notifyAll();
-            }
-        } catch (Throwable t) {
-            synchronized (this) {
-                exportException = t;
-                notifyAll();
-            }
-        }
+	/*
+	 * Attempt to create (i.e. export) a registry on the port that
+	 * has already been bound, and record the result.
+	 */
+	try {
+	    LocateRegistry.createRegistry(PORT);
+	    synchronized (this) {
+		exportSucceeded = true;
+		notifyAll();
+	    }
+	} catch (Throwable t) {
+	    synchronized (this) {
+		exportException = t;
+		notifyAll();
+	    }
+	}
     }
-
+    
     public static void main(String[] args) throws Exception {
-        System.err.println("\nRegression test for bug 4111507\n");
+	System.err.println("\nRegression test for bug 4111507\n");
 
-        /*
-         * Bind a server socket to a port.
-         */
-        System.err.println("create a ServerSocket on port " + PORT + "...");
-        ServerSocket server = new ServerSocket(PORT);
+	/*
+	 * Bind a server socket to a port.
+	 */
+	System.err.println("create a ServerSocket on port " + PORT + "...");
+	ServerSocket server = new ServerSocket(PORT);
 
-        /*
-         * Start a thread that creates a registry on the same port,
-         * and analyze the result.
-         */
-        System.err.println("create a registry on the same port...");
-        System.err.println("(should cause an ExportException)");
-        AddrInUse obj = new AddrInUse();
-        synchronized (obj) {
-            (new Thread(obj, "AddrInUse")).start();
+	/*
+	 * Start a thread that creates a registry on the same port,
+	 * and analyze the result.
+	 */
+	System.err.println("create a registry on the same port...");
+	System.err.println("(should cause an ExportException)");
+	AddrInUse obj = new AddrInUse();
+	synchronized (obj) {
+	    (new Thread(obj, "AddrInUse")).start();
 
-            /*
-             * Don't wait forever (original bug is that the export
-             * hangs).
-             */
-            obj.wait(TIMEOUT);
+	    /*
+	     * Don't wait forever (original bug is that the export
+	     * hangs).
+	     */
+	    obj.wait(TIMEOUT);
 
-            if (obj.exportSucceeded) {
-                throw new RuntimeException(
-                    "TEST FAILED: export on already-bound port succeeded");
-            } else if (obj.exportException != null) {
-                obj.exportException.printStackTrace();
-                if (obj.exportException instanceof ExportException) {
-                    System.err.println("TEST PASSED");
-                } else {
-                    throw new RuntimeException(
-                        "TEST FAILED: unexpected exception occurred",
-                        obj.exportException);
-                }
-            } else {
-                throw new RuntimeException("TEST FAILED: export timed out");
-            }
-        }
+	    if (obj.exportSucceeded) {
+		throw new RuntimeException(
+		    "TEST FAILED: export on already-bound port succeeded");
+	    } else if (obj.exportException != null) {
+		obj.exportException.printStackTrace();
+		if (obj.exportException instanceof ExportException) {
+		    System.err.println("TEST PASSED");
+		} else {
+		    throw new RuntimeException(
+			"TEST FAILED: unexpected exception occurred",
+			obj.exportException);
+		}
+	    } else {
+		throw new RuntimeException("TEST FAILED: export timed out");
+	    }
+	}
     }
 }

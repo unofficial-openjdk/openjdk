@@ -42,7 +42,7 @@ class WRobotPeer extends WObjectPeer implements RobotPeer
     protected void disposeImpl() {
         _dispose();
     }
-
+      
     public native void create();
     public native void mouseMoveImpl(int x, int y);
     public void mouseMove(int x, int y) {
@@ -59,7 +59,7 @@ class WRobotPeer extends WObjectPeer implements RobotPeer
         return getRGBPixelImpl(x, y);
     }
     public native int getRGBPixelImpl(int x, int y);
-
+    
     public int [] getRGBPixels(Rectangle bounds) {
         int pixelArray[] = new int[bounds.width*bounds.height];
         getRGBPixels(bounds.x, bounds.y, bounds.width, bounds.height, pixelArray);

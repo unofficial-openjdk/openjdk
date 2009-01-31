@@ -46,7 +46,7 @@ public class TestExtra {
     final static int TEST_HEADER = 0xbabe;
 
     final static Charset ascii = Charset.forName("ASCII");
-
+    
     // ZipEntry extra data
     final static byte[][] extra = new byte[][] {
         ascii.encode("hello, world").array(),
@@ -98,7 +98,7 @@ public class TestExtra {
 
         ZipEntry ze = zis.getNextEntry();
         checkEntry(ze, 0, extra[0].length);
-
+                
         ze = zis.getNextEntry();
         checkEntry(ze, 1, extra[1].length);
     }
@@ -111,7 +111,7 @@ public class TestExtra {
         set16(data, 2, 0); // Length of data is 0.
         ze.setExtra(data);
         zos.putNextEntry(ze);
-
+        
         zos.close();
 
         ZipInputStream zis = getInputStream();
@@ -134,7 +134,7 @@ public class TestExtra {
 
         ze.setExtra(data);
         zos.putNextEntry(ze);
-
+        
         zos.close();
 
         ZipInputStream zis = getInputStream();
@@ -143,7 +143,7 @@ public class TestExtra {
         check(e.length == 8, "expected extra length is 8, got " + e.length);
         checkEntry(ze, 0, 0);
     }
-
+        
 
     /** Check that the entry's extra data is correct. */
     void checkEntry(ZipEntry ze, int count, int dataLength) {
@@ -188,7 +188,7 @@ public class TestExtra {
         return new ZipInputStream(
             new ByteArrayInputStream(baos.toByteArray()));
     }
-
+    
     ZipOutputStream getOutputStream(ByteArrayOutputStream baos) throws IOException {
         return new ZipOutputStream(baos);
     }
@@ -201,12 +201,12 @@ public class TestExtra {
 
 
     private static int get16(byte[] b, int off) {
-        return (b[off] & 0xff) | ((b[off+1] & 0xff) << 8);
+	return (b[off] & 0xff) | ((b[off+1] & 0xff) << 8);
     }
 
     private static void set16(byte[] b, int off, int value) {
-        b[off+0] = (byte)value;
-        b[off+1] = (byte)(value >> 8);
+	b[off+0] = (byte)value;
+	b[off+1] = (byte)(value >> 8);
     }
 
     /** Test extra field of a JAR file. */
@@ -225,7 +225,7 @@ public class TestExtra {
             // zeroth entry should have JAR_MAGIC
             if (count == 0) {
                 byte[] extraData = ze.getExtra();
-                byte[] data = getField(JAR_MAGIC, extraData);
+                byte[] data = getField(JAR_MAGIC, extraData); 
                 if (!check(data != null, "unexpected null data for JAR_MAGIC")) {
                     check(data.length != 0, "unexpected non-zero data length for JAR_MAGIC");
                 }

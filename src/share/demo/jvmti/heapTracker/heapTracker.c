@@ -39,13 +39,13 @@
 
 #include "agent_util.h"
 
-/* -------------------------------------------------------------------
+/* ------------------------------------------------------------------- 
  * Some constant names that tie to Java class/method names.
  *    We assume the Java class whose static methods we will be calling
  *    looks like:
  *
  * public class HeapTracker {
- *     private static int engaged;
+ *     private static int engaged; 
  *     private static native void _newobj(Object thr, Object o);
  *     public static void newobj(Object o)
  *     {
@@ -65,7 +65,7 @@
  *    The engaged field allows us to inject all classes (even system classes)
  *    and delay the actual calls to the native code until the VM has reached
  *    a safe time to call native methods (Past the JVMTI VM_START event).
- *
+ * 
  */
 
 #define HEAP_TRACKER_class           HeapTracker /* Name of class we are using */
@@ -83,14 +83,14 @@
 
 /* Flavors of traces (to separate out stack traces) */
 
-typedef enum {
+typedef enum { 
     TRACE_FIRST                        = 0,
-    TRACE_USER                        = 0,
-    TRACE_BEFORE_VM_START        = 1,
-    TRACE_BEFORE_VM_INIT        = 2,
+    TRACE_USER                        = 0, 
+    TRACE_BEFORE_VM_START        = 1, 
+    TRACE_BEFORE_VM_INIT        = 2, 
     TRACE_VM_OBJECT                = 3,
     TRACE_MYSTERY                = 4,
-    TRACE_LAST                        = 4
+    TRACE_LAST                        = 4 
 } TraceFlavor;
 
 static char * flavorDesc[] = {
@@ -163,7 +163,7 @@ static void
 enterCriticalSection(jvmtiEnv *jvmti)
 {
     jvmtiError error;
-
+    
     error = (*jvmti)->RawMonitorEnter(jvmti, gdata->lock);
     check_jvmti_error(jvmti, error, "Cannot enter with raw monitor");
 }
@@ -173,7 +173,7 @@ static void
 exitCriticalSection(jvmtiEnv *jvmti)
 {
     jvmtiError error;
-
+    
     error = (*jvmti)->RawMonitorExit(jvmti, gdata->lock);
     check_jvmti_error(jvmti, error, "Cannot exit with raw monitor");
 }
@@ -199,7 +199,7 @@ static TraceInfo *
 newTraceInfo(Trace *trace, jlong hashCode, TraceFlavor flavor)
 {
     TraceInfo *tinfo;
-
+    
     tinfo = (TraceInfo*)calloc(1, sizeof(TraceInfo));
     if ( tinfo == NULL ) {
         fatal_error("ERROR: Ran out of malloc() space\n");
@@ -223,12 +223,12 @@ hashTrace(Trace *trace)
 {
     jlong hashCode;
     int   i;
-
+    
     hashCode = 0;
     for ( i = 0 ; i < trace->nframes ; i++ ) {
-        hashCode = (hashCode << 3) +
+        hashCode = (hashCode << 3) + 
                 (jlong)(ptrdiff_t)(void*)(trace->frames[i].method);
-        hashCode = (hashCode << 2) +
+        hashCode = (hashCode << 2) + 
                 (jlong)(trace->frames[i].location);
     }
     hashCode = (hashCode << 3) + trace->nframes;
@@ -280,9 +280,9 @@ lookupOrEnter(jvmtiEnv *jvmti, Trace *trace, TraceFlavor flavor)
 
         /* Update stats */
         (void)updateStats(tinfo);
-
+    
     } exitCriticalSection(jvmti);
-
+    
     return tinfo;
 }
 
@@ -292,7 +292,7 @@ findTraceInfo(jvmtiEnv *jvmti, jthread thread, TraceFlavor flavor)
 {
     TraceInfo *tinfo;
     jvmtiError error;
-
+    
     tinfo = NULL;
     if ( thread != NULL ) {
         static Trace  empty;
@@ -332,7 +332,7 @@ tagObjectWithTraceInfo(jvmtiEnv *jvmti, jobject object, TraceInfo *tinfo)
 {
     jvmtiError error;
     jlong      tag;
-
+    
     /* Tag this object with this TraceInfo pointer */
     tag = (jlong)(ptrdiff_t)(void*)tinfo;
     error = (*jvmti)->SetTag(jvmti, object, tag);
@@ -344,7 +344,7 @@ static void
 HEAP_TRACKER_native_newobj(JNIEnv *env, jclass klass, jthread thread, jobject o)
 {
     TraceInfo *tinfo;
-
+    
     if ( gdata->vmDead ) {
         return;
     }
@@ -357,7 +357,7 @@ static void
 HEAP_TRACKER_native_newarr(JNIEnv *env, jclass klass, jthread thread, jobject a)
 {
     TraceInfo *tinfo;
-
+    
     if ( gdata->vmDead ) {
         return;
     }
@@ -376,45 +376,45 @@ cbVMStart(jvmtiEnv *jvmti, JNIEnv *env)
 
         /* Java Native Methods for class */
         static JNINativeMethod registry[2] = {
-            {STRING(HEAP_TRACKER_native_newobj), "(Ljava/lang/Object;Ljava/lang/Object;)V",
+            {STRING(HEAP_TRACKER_native_newobj), "(Ljava/lang/Object;Ljava/lang/Object;)V", 
                 (void*)&HEAP_TRACKER_native_newobj},
-            {STRING(HEAP_TRACKER_native_newarr), "(Ljava/lang/Object;Ljava/lang/Object;)V",
+            {STRING(HEAP_TRACKER_native_newarr), "(Ljava/lang/Object;Ljava/lang/Object;)V", 
                 (void*)&HEAP_TRACKER_native_newarr}
         };
-
+        
         /* Register Natives for class whose methods we use */
         klass = (*env)->FindClass(env, STRING(HEAP_TRACKER_class));
         if ( klass == NULL ) {
-            fatal_error("ERROR: JNI: Cannot find %s with FindClass\n",
+            fatal_error("ERROR: JNI: Cannot find %s with FindClass\n", 
                         STRING(HEAP_TRACKER_class));
         }
         rc = (*env)->RegisterNatives(env, klass, registry, 2);
         if ( rc != 0 ) {
-            fatal_error("ERROR: JNI: Cannot register natives for class %s\n",
+            fatal_error("ERROR: JNI: Cannot register natives for class %s\n", 
                         STRING(HEAP_TRACKER_class));
         }
-
+        
         /* Engage calls. */
         field = (*env)->GetStaticFieldID(env, klass, STRING(HEAP_TRACKER_engaged), "I");
         if ( field == NULL ) {
-            fatal_error("ERROR: JNI: Cannot get field from %s\n",
+            fatal_error("ERROR: JNI: Cannot get field from %s\n", 
                         STRING(HEAP_TRACKER_class));
         }
         (*env)->SetStaticIntField(env, klass, field, 1);
 
         /* Indicate VM has started */
         gdata->vmStarted = JNI_TRUE;
-
+    
     } exitCriticalSection(jvmti);
 }
 
 /* Iterate Through Heap callback */
 static jint JNICALL
-cbObjectTagger(jlong class_tag, jlong size, jlong* tag_ptr, jint length,
+cbObjectTagger(jlong class_tag, jlong size, jlong* tag_ptr, jint length, 
                void *user_data)
 {
     TraceInfo *tinfo;
-
+    
     tinfo = emptyTrace(TRACE_BEFORE_VM_INIT);
     *tag_ptr = (jlong)(ptrdiff_t)(void*)tinfo;
     return JVMTI_VISIT_OBJECTS;
@@ -426,19 +426,19 @@ cbVMInit(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
 {
     jvmtiHeapCallbacks heapCallbacks;
     jvmtiError         error;
-
+    
     /* Iterate through heap, find all untagged objects allocated before this */
     (void)memset(&heapCallbacks, 0, sizeof(heapCallbacks));
     heapCallbacks.heap_iteration_callback = &cbObjectTagger;
-    error = (*jvmti)->IterateThroughHeap(jvmti, JVMTI_HEAP_FILTER_TAGGED,
+    error = (*jvmti)->IterateThroughHeap(jvmti, JVMTI_HEAP_FILTER_TAGGED, 
                                          NULL, &heapCallbacks, NULL);
     check_jvmti_error(jvmti, error, "Cannot iterate through heap");
 
     enterCriticalSection(jvmti); {
-
+        
         /* Indicate VM is initialized */
         gdata->vmInitialized = JNI_TRUE;
-
+    
     } exitCriticalSection(jvmti);
 }
 
@@ -448,7 +448,7 @@ cbObjectSpaceCounter(jlong class_tag, jlong size, jlong* tag_ptr, jint length,
                      void *user_data)
 {
     TraceInfo *tinfo;
-
+    
     tinfo = (TraceInfo*)(ptrdiff_t)(*tag_ptr);
     if ( tinfo == NULL ) {
         tinfo = emptyTrace(TRACE_MYSTERY);
@@ -463,7 +463,7 @@ static int
 compareInfo(const void *p1, const void *p2)
 {
     TraceInfo *tinfo1, *tinfo2;
-
+    
     tinfo1 = *((TraceInfo**)p1);
     tinfo2 = *((TraceInfo**)p2);
     return (int)(tinfo2->totalSpace - tinfo1->totalSpace);
@@ -483,7 +483,7 @@ frameToString(jvmtiEnv *jvmti, char *buf, int buflen, jvmtiFrameInfo *finfo)
     int                  lineCount;
     jvmtiLineNumberEntry*lineTable;
     int                  lineNumber;
-
+   
     /* Initialize defaults */
     buf[0]     = 0;
     klass      = NULL;
@@ -495,7 +495,7 @@ frameToString(jvmtiEnv *jvmti, char *buf, int buflen, jvmtiFrameInfo *finfo)
     lineCount  = 0;
     lineTable  = NULL;
     lineNumber = 0;
-
+   
     /* Get jclass object for the jmethodID */
     error = (*jvmti)->GetMethodDeclaringClass(jvmti, finfo->method, &klass);
     check_jvmti_error(jvmti, error, "Cannot get method's class");
@@ -511,20 +511,20 @@ frameToString(jvmtiEnv *jvmti, char *buf, int buflen, jvmtiFrameInfo *finfo)
     }
 
     /* Get the name and signature for the method */
-    error = (*jvmti)->GetMethodName(jvmti, finfo->method,
+    error = (*jvmti)->GetMethodName(jvmti, finfo->method, 
                 &methodname, &methodsig, NULL);
     check_jvmti_error(jvmti, error, "Cannot method name");
-
+   
     /* Check to see if it's a native method, which means no lineNumber */
     error = (*jvmti)->IsMethodNative(jvmti, finfo->method, &isNative);
     check_jvmti_error(jvmti, error, "Cannot get method native status");
-
+  
     /* Get source file name */
     error = (*jvmti)->GetSourceFileName(jvmti, klass, &filename);
     if ( error != JVMTI_ERROR_NONE && error != JVMTI_ERROR_ABSENT_INFORMATION ) {
         check_jvmti_error(jvmti, error, "Cannot get source filename");
     }
-
+        
     /* Get lineNumber if we can */
     if ( !isNative ) {
         int i;
@@ -552,11 +552,11 @@ frameToString(jvmtiEnv *jvmti, char *buf, int buflen, jvmtiFrameInfo *finfo)
      *          printf() without converting them is actually an I18n
      *          (Internationalization) error.
      */
-    (void)sprintf(buf, "%s.%s@%d[%s:%d]",
-            (signature==NULL?"UnknownClass":signature),
-            (methodname==NULL?"UnknownMethod":methodname),
-            (int)finfo->location,
-            (filename==NULL?"UnknownFile":filename),
+    (void)sprintf(buf, "%s.%s@%d[%s:%d]", 
+            (signature==NULL?"UnknownClass":signature), 
+            (methodname==NULL?"UnknownMethod":methodname), 
+            (int)finfo->location, 
+            (filename==NULL?"UnknownFile":filename), 
             lineNumber);
 
     /* Free up JVMTI space allocated by the above calls */
@@ -575,11 +575,11 @@ printTraceInfo(jvmtiEnv *jvmti, int index, TraceInfo* tinfo)
         fatal_error("%d: NULL ENTRY ERROR\n", index);
         return;
     }
-
+    
     stdout_message("%2d: %7d bytes %5d objects %5d live %s",
-                index, (int)tinfo->totalSpace, tinfo->totalCount,
+                index, (int)tinfo->totalSpace, tinfo->totalCount, 
                 tinfo->useCount, flavorDesc[tinfo->trace.flavor]);
-
+    
     if (  tinfo->trace.nframes > 0 ) {
         int i;
         int fcount;
@@ -617,7 +617,7 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
     /* Force garbage collection now so we get our ObjectFree calls */
     error = (*jvmti)->ForceGarbageCollection(jvmti);
     check_jvmti_error(jvmti, error, "Cannot force garbage collection");
-
+    
     /* Iterate through heap and find all objects */
     (void)memset(&heapCallbacks, 0, sizeof(heapCallbacks));
     heapCallbacks.heap_iteration_callback = &cbObjectSpaceCounter;
@@ -633,12 +633,12 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
         /* Disengage calls in HEAP_TRACKER_class. */
         klass = (*env)->FindClass(env, STRING(HEAP_TRACKER_class));
         if ( klass == NULL ) {
-            fatal_error("ERROR: JNI: Cannot find %s with FindClass\n",
+            fatal_error("ERROR: JNI: Cannot find %s with FindClass\n", 
                         STRING(HEAP_TRACKER_class));
         }
         field = (*env)->GetStaticFieldID(env, klass, STRING(HEAP_TRACKER_engaged), "I");
         if ( field == NULL ) {
-            fatal_error("ERROR: JNI: Cannot get field from %s\n",
+            fatal_error("ERROR: JNI: Cannot get field from %s\n", 
                         STRING(HEAP_TRACKER_class));
         }
         (*env)->SetStaticIntField(env, klass, field, 0);
@@ -649,10 +649,10 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
 
         /* Clear out all callbacks. */
         (void)memset(&callbacks,0, sizeof(callbacks));
-        error = (*jvmti)->SetEventCallbacks(jvmti, &callbacks,
+        error = (*jvmti)->SetEventCallbacks(jvmti, &callbacks, 
                                             (jint)sizeof(callbacks));
         check_jvmti_error(jvmti, error, "Cannot set jvmti callbacks");
-
+        
         /* Since this critical section could be holding up other threads
          *   in other event callbacks, we need to indicate that the VM is
          *   dead so that the other callbacks can short circuit their work.
@@ -667,13 +667,13 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
             TraceInfo **list;
             int         count;
             int         i;
-
+           
             stdout_message("Dumping heap trace information\n");
 
             /* Create single array of pointers to TraceInfo's, sort, and
              *   print top gdata->maxDump top space users.
              */
-            list = (TraceInfo**)calloc(gdata->traceInfoCount,
+            list = (TraceInfo**)calloc(gdata->traceInfoCount, 
                                               sizeof(TraceInfo*));
             if ( list == NULL ) {
                 fatal_error("ERROR: Ran out of malloc() space\n");
@@ -706,16 +706,16 @@ cbVMDeath(jvmtiEnv *jvmti, JNIEnv *env)
         }
 
     } exitCriticalSection(jvmti);
-
-}
+        
+}  
 
 /* Callback for JVMTI_EVENT_VM_OBJECT_ALLOC */
 static void JNICALL
-cbVMObjectAlloc(jvmtiEnv *jvmti, JNIEnv *env, jthread thread,
+cbVMObjectAlloc(jvmtiEnv *jvmti, JNIEnv *env, jthread thread, 
                 jobject object, jclass object_klass, jlong size)
 {
     TraceInfo *tinfo;
-
+    
     if ( gdata->vmDead ) {
         return;
     }
@@ -728,14 +728,14 @@ static void JNICALL
 cbObjectFree(jvmtiEnv *jvmti, jlong tag)
 {
     TraceInfo *tinfo;
-
+  
     if ( gdata->vmDead ) {
         return;
     }
-
+    
     /* The object tag is actually a pointer to a TraceInfo structure */
     tinfo = (TraceInfo*)(void*)(ptrdiff_t)tag;
-
+    
     /* Decrement the use count */
     tinfo->useCount--;
 }
@@ -827,7 +827,7 @@ cbClassFileLoadHook(jvmtiEnv *jvmti, JNIEnv* env,
                     (void)free((void*)newImage); /* Free malloc() space with free() */
                 }
             }
-
+        
             (void)free((void*)classname);
         }
     } exitCriticalSection(jvmti);
@@ -848,7 +848,7 @@ parse_agent_options(char *options)
     if ( options==NULL ) {
         return;
     }
-
+   
     /* Get the first token from the options string. */
     next = get_token(options, ",=", token, (int)sizeof(token));
 
@@ -866,7 +866,7 @@ parse_agent_options(char *options)
             exit(0);
         } else if ( strcmp(token,"maxDump")==0 ) {
             char  number[MAX_TOKEN_LENGTH];
-
+            
             next = get_token(next, ",=", number, (int)sizeof(number));
             if ( next == NULL ) {
                 fatal_error("ERROR: Cannot parse maxDump=number: %s\n", options);
@@ -881,10 +881,10 @@ parse_agent_options(char *options)
     }
 }
 
-/* Agent_OnLoad: This is called immediately after the shared library is
+/* Agent_OnLoad: This is called immediately after the shared library is 
  *   loaded. This is the first code executed.
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 {
     static GlobalAgentData data;
@@ -895,8 +895,8 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     jvmtiCapabilities      capabilities;
     jvmtiEventCallbacks    callbacks;
     static Trace           empty;
-
-    /* Setup initial global agent data area
+    
+    /* Setup initial global agent data area 
      *   Use of static/extern data should be handled carefully here.
      *   We need to make sure that we are able to cleanup after ourselves
      *     so anything allocated in this library needs to be freed in
@@ -904,7 +904,7 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
      */
     (void)memset((void*)&data, 0, sizeof(data));
     gdata = &data;
-
+   
     /* First thing we need to do is get the jvmtiEnv* or JVMTI environment */
     res = (*vm)->GetEnv(vm, (void **)&jvmti, JVMTI_VERSION_1);
     if (res != JNI_OK) {
@@ -919,12 +919,12 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 
     /* Here we save the jvmtiEnv* for Agent_OnUnload(). */
     gdata->jvmti = jvmti;
-
+   
     /* Parse any options supplied on java command line */
     parse_agent_options(options);
-
+   
     /* Immediately after getting the jvmtiEnv* we need to ask for the
-     *   capabilities this agent will need.
+     *   capabilities this agent will need. 
      */
     (void)memset(&capabilities,0, sizeof(capabilities));
     capabilities.can_generate_all_class_hook_events = 1;
@@ -935,49 +935,49 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     capabilities.can_generate_vm_object_alloc_events  = 1;
     error = (*jvmti)->AddCapabilities(jvmti, &capabilities);
     check_jvmti_error(jvmti, error, "Unable to get necessary JVMTI capabilities.");
-
+    
     /* Next we need to provide the pointers to the callback functions to
      *   to this jvmtiEnv*
      */
     (void)memset(&callbacks,0, sizeof(callbacks));
     /* JVMTI_EVENT_VM_START */
-    callbacks.VMStart           = &cbVMStart;
+    callbacks.VMStart           = &cbVMStart;      
     /* JVMTI_EVENT_VM_INIT */
-    callbacks.VMInit            = &cbVMInit;
+    callbacks.VMInit            = &cbVMInit;      
     /* JVMTI_EVENT_VM_DEATH */
-    callbacks.VMDeath           = &cbVMDeath;
+    callbacks.VMDeath           = &cbVMDeath;     
     /* JVMTI_EVENT_OBJECT_FREE */
-    callbacks.ObjectFree        = &cbObjectFree;
+    callbacks.ObjectFree        = &cbObjectFree;     
     /* JVMTI_EVENT_VM_OBJECT_ALLOC */
-    callbacks.VMObjectAlloc     = &cbVMObjectAlloc;
+    callbacks.VMObjectAlloc     = &cbVMObjectAlloc;     
     /* JVMTI_EVENT_CLASS_FILE_LOAD_HOOK */
-    callbacks.ClassFileLoadHook = &cbClassFileLoadHook;
+    callbacks.ClassFileLoadHook = &cbClassFileLoadHook; 
     error = (*jvmti)->SetEventCallbacks(jvmti, &callbacks, (jint)sizeof(callbacks));
     check_jvmti_error(jvmti, error, "Cannot set jvmti callbacks");
-
+   
     /* At first the only initial events we are interested in are VM
-     *   initialization, VM death, and Class File Loads.
+     *   initialization, VM death, and Class File Loads. 
      *   Once the VM is initialized we will request more events.
      */
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
                           JVMTI_EVENT_VM_START, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
                           JVMTI_EVENT_VM_INIT, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
                           JVMTI_EVENT_VM_DEATH, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
                           JVMTI_EVENT_OBJECT_FREE, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
                           JVMTI_EVENT_VM_OBJECT_ALLOC, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
+    error = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
                           JVMTI_EVENT_CLASS_FILE_LOAD_HOOK, (jthread)NULL);
     check_jvmti_error(jvmti, error, "Cannot set event notification");
-
+   
     /* Here we create a raw monitor for our use in this agent to
      *   protect critical sections of code.
      */
@@ -986,7 +986,7 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
 
     /* Create the TraceInfo for various flavors of empty traces */
     for ( flavor = TRACE_FIRST ; flavor <= TRACE_LAST ; flavor++ ) {
-        gdata->emptyTrace[flavor] =
+        gdata->emptyTrace[flavor] = 
                newTraceInfo(&empty, hashTrace(&empty), flavor);
     }
 
@@ -997,11 +997,12 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     return JNI_OK;
 }
 
-/* Agent_OnUnload: This is called immediately before the shared library is
+/* Agent_OnUnload: This is called immediately before the shared library is 
  *   unloaded. This is the last code executed.
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Agent_OnUnload(JavaVM *vm)
 {
     /* Skip any cleanup, VM is about to die anyway */
 }
+

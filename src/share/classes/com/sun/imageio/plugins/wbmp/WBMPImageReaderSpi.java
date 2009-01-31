@@ -96,3 +96,4 @@ public class WBMPImageReaderSpi extends ImageReaderSpi {
         return new WBMPImageReader(this);
     }
 }
+

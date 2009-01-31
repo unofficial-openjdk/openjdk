@@ -32,6 +32,7 @@ import java.awt.event.PaintEvent;
  * PaintEventDispatcher is responsible for dispatching PaintEvents.  There
  * can be only one PaintEventDispatcher active at a particular time.
  *
+ * @version %I%, %G%
  */
 public class PaintEventDispatcher {
     /**
@@ -91,10 +92,10 @@ public class PaintEventDispatcher {
 
     /**
      * This method is invoked from the toolkit thread when the surface
-     * data of the component needs to be replaced. The method run() of
+     * data of the component needs to be replaced. The method run() of 
      * the Runnable argument performs surface data replacing, run()
      * should be invoked on the EDT of this component's AppContext.
-     * Returns true if the Runnable has been enqueued to be invoked
+     * Returns true if the Runnable has been enqueued to be invoked 
      * on the EDT.
      * (Fix 6255371.)
      */

@@ -45,7 +45,7 @@
 class AwtFrame : public AwtWindow {
 public:
     enum FrameExecIds {
-        FRAME_SETMENUBAR
+	FRAME_SETMENUBAR
     };
 
     /* int handle field for sun.awt.windows.WEmbeddedFrame */
@@ -66,7 +66,7 @@ public:
     virtual void Dispose();
 
     virtual LPCTSTR GetClassName();
-
+    
     /* Create a new AwtFrame.  This must be run on the main thread. */
     static AwtFrame* Create(jobject self, jobject parent);
 
@@ -91,7 +91,7 @@ public:
 
     virtual void DoUpdateIcon();
     virtual HICON GetEffectiveIcon(int iconType);
-
+    
     /*for WmDrawItem and WmMeasureItem method */
     AwtMenuBar* GetMenuBar();
     void SetMenuBar(AwtMenuBar*);
@@ -109,7 +109,6 @@ public:
     MsgRouting WmNcMouseUp(WPARAM hitTest, int x, int y, int button);
     MsgRouting WmGetIcon(WPARAM iconType, LRESULT& retVal);
     MsgRouting WmWindowPosChanged(LPARAM windowPos);
-    MsgRouting WmShowWindow(BOOL show, UINT status);
 
     virtual MsgRouting WmSysCommand(UINT uCmdType, int xPos, int yPos);
 
@@ -118,17 +117,17 @@ public:
     INLINE BOOL IsUndecorated() { return m_isUndecorated; }
 
     INLINE HWND GetProxyFocusOwner() {
-        DASSERT(AwtToolkit::MainThread() == ::GetCurrentThreadId());
-        if (m_proxyFocusOwner == NULL) {
-            CreateProxyFocusOwner();
-        }
-        return m_proxyFocusOwner;
+	DASSERT(AwtToolkit::MainThread() == ::GetCurrentThreadId());
+	if (m_proxyFocusOwner == NULL) {
+	    CreateProxyFocusOwner();
+	}
+	return m_proxyFocusOwner;
     }
 
     void SetMaximizedBounds(int x, int y, int w, int h);
     void ClearMaximizedBounds();
 
-    // returns true if the frame is inputmethod window
+    // returns true if the frame is inputmethod window 
     INLINE BOOL isInputMethodWindow() { return m_isInputMethodWindow; }
     // adjusts the IME candidate window position if needed
     void AdjustCandidateWindowPos();
@@ -159,7 +158,7 @@ protected:
 
 private:
     static LRESULT CALLBACK ProxyWindowProc(HWND hwnd, UINT message,
-                                            WPARAM wParam, LPARAM lParam);
+					    WPARAM wParam, LPARAM lParam);
     void CreateProxyFocusOwner();
     void DestroyProxyFocusOwner();
 
@@ -189,19 +188,19 @@ private:
        or an AwtDialog (or one of its children) has the logical input focus. */
     HWND m_proxyFocusOwner;
 
-    /*
+    /* 
      * Fix for 4823903.
      * Retains a focus proxied window to set the focus correctly
      * when its owner get activated.
      */
     AwtWindow *m_actualFocusedWindow;
-
+    
     /* The original, default WndProc for m_proxyFocusOwner. */
     WNDPROC m_proxyDefWindowProc;
 
     BOOL m_iconic;          /* are we in an iconic state */
     BOOL m_zoomed;          /* are we in a zoomed state */
-
+    
     /* whether WmSize() must unconditionally reset zoomed state */
     BOOL m_forceResetZoomed;
 

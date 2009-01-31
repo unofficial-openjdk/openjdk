@@ -39,7 +39,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -52,9 +52,9 @@ public interface Connection {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param byteBuffer ...
  * </p>
  */
@@ -63,7 +63,7 @@ public interface Connection {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a EPTFactory with ...
  * </p>
  */
@@ -72,7 +72,7 @@ public interface Connection {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a int with ...
  * </p><p>
  * @param byteBuffer ...
@@ -83,9 +83,16 @@ public interface Connection {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p>
  */
     public ByteBuffer readUntilEnd();
 
 } // end Connection
+
+
+
+
+
+
+

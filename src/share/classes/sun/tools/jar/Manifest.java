@@ -38,8 +38,9 @@ import sun.misc.BASE64Decoder;
  * instead. It has to stay here because some apps (namely HJ and HJV)
  * call directly into it.
  *
+ * @version           %I%, %G%
  * @author David Brown
- * @author Benjamin Renaud
+ * @author Benjamin Renaud 
  */
 
 public class Manifest {
@@ -58,18 +59,18 @@ public class Manifest {
     static final boolean debug = false;
     static final String VERSION = "1.0";
     static final void debug(String s) {
-        if (debug)
-            System.out.println("man> " + s);
+	if (debug)
+	    System.out.println("man> " + s);
     }
 
     public Manifest() {}
 
     public Manifest(byte[] bytes) throws IOException {
-        this(new ByteArrayInputStream(bytes), false);
+	this(new ByteArrayInputStream(bytes), false);
     }
 
     public Manifest(InputStream is) throws IOException {
-        this(is, true);
+	this(is, true);
     }
 
     /**
@@ -77,71 +78,71 @@ public class Manifest {
      * for the files.
      */
     public Manifest(InputStream is, boolean compute) throws IOException {
-        if (!is.markSupported()) {
-            is = new BufferedInputStream(is);
-        }
-        /* do not rely on available() here! */
-        while (true) {
-            is.mark(1);
-            if (is.read() == -1) { // EOF
-                break;
-            }
-            is.reset();
-            MessageHeader m = new MessageHeader(is);
-            if (compute) {
-                doHashes(m);
-            }
-            addEntry(m);
-        }
+	if (!is.markSupported()) {
+	    is = new BufferedInputStream(is);
+	}
+	/* do not rely on available() here! */
+	while (true) {
+	    is.mark(1);
+	    if (is.read() == -1) { // EOF
+		break;
+	    }
+	    is.reset();
+	    MessageHeader m = new MessageHeader(is);
+	    if (compute) {
+		doHashes(m);
+	    }
+	    addEntry(m);
+	}
     }
 
     /* recursively generate manifests from directory tree */
     public Manifest(String[] files) throws IOException {
-        MessageHeader globals = new MessageHeader();
-        globals.add("Manifest-Version", VERSION);
-        String jdkVersion = System.getProperty("java.version");
-        globals.add("Created-By", "Manifest JDK "+jdkVersion);
-        addEntry(globals);
-        addFiles(null, files);
+	MessageHeader globals = new MessageHeader();
+	globals.add("Manifest-Version", VERSION);
+	String jdkVersion = System.getProperty("java.version");
+	globals.add("Created-By", "Manifest JDK "+jdkVersion);
+	addEntry(globals);
+	addFiles(null, files);
     }
 
     public void addEntry(MessageHeader entry) {
-        entries.addElement(entry);
-        String name = entry.findValue("Name");
-        debug("addEntry for name: "+name);
-        if (name != null) {
-            tableEntries.put(name, entry);
-        }
+	entries.addElement(entry);
+	String name = entry.findValue("Name");
+	debug("addEntry for name: "+name);
+	if (name != null) {
+	    tableEntries.put(name, entry);
+	}
     }
 
     public MessageHeader getEntry(String name) {
-        return (MessageHeader) tableEntries.get(name);
+	return (MessageHeader) tableEntries.get(name);
     }
 
     public MessageHeader entryAt(int i) {
-        return (MessageHeader) entries.elementAt(i);
+	return (MessageHeader) entries.elementAt(i);
     }
 
     public Enumeration entries() {
-        return entries.elements();
+	return entries.elements();
     }
 
     public void addFiles(File dir, String[] files) throws IOException {
-        if (files == null)
-            return;
-        for (int i = 0; i < files.length; i++) {
-            File file;
-            if (dir == null) {
-                file = new File(files[i]);
-            } else {
-                file = new File(dir, files[i]);
-            }
-            if (file.isDirectory()) {
-                addFiles(file, file.list());
-            } else {
-                addFile(file);
-            }
-        }
+	if (files == null)
+	    return;
+	for (int i = 0; i < files.length; i++) {
+	    File file;
+	    if (dir == null) {
+		file = new File(files[i]);
+	    } else {
+		file = new File(dir, files[i]);
+	    }
+	    if (file.isDirectory()) {
+		addFiles(file, file.list());
+	    } else {
+		addFile(file);
+	    }
+	}
     }
 
     /**
@@ -150,111 +151,111 @@ public class Manifest {
      */
 
     private final String stdToLocal(String name) {
-        return name.replace('/', java.io.File.separatorChar);
+	return name.replace('/', java.io.File.separatorChar);
     }
 
     private final String localToStd(String name) {
-        name = name.replace(java.io.File.separatorChar, '/');
-        if (name.startsWith("./"))
-            name = name.substring(2);
-        else if (name.startsWith("/"))
-            name = name.substring(1);
-        return name;
+	name = name.replace(java.io.File.separatorChar, '/');
+	if (name.startsWith("./"))
+	    name = name.substring(2);
+	else if (name.startsWith("/"))
+	    name = name.substring(1);
+	return name;
     }
 
     public void addFile(File f) throws IOException {
-        String stdName = localToStd(f.getPath());
-        if (tableEntries.get(stdName) == null) {
-            MessageHeader mh = new MessageHeader();
-            mh.add("Name", stdName);
-            addEntry(mh);
-        }
+	String stdName = localToStd(f.getPath());
+	if (tableEntries.get(stdName) == null) {
+	    MessageHeader mh = new MessageHeader();
+	    mh.add("Name", stdName);
+	    addEntry(mh);
+	}
     }
 
     public void doHashes(MessageHeader mh) throws IOException {
-        // If unnamed or is a directory return immediately
-        String name = mh.findValue("Name");
-        if (name == null || name.endsWith("/")) {
-            return;
-        }
+	// If unnamed or is a directory return immediately
+	String name = mh.findValue("Name");
+	if (name == null || name.endsWith("/")) {
+	    return;
+	}
 
-        BASE64Encoder enc = new BASE64Encoder();
+	BASE64Encoder enc = new BASE64Encoder();
 
-        /* compute hashes, write over any other "Hash-Algorithms" (?) */
-        for (int j = 0; j < hashes.length; ++j) {
-            InputStream is = new FileInputStream(stdToLocal(name));
-            try {
-                MessageDigest dig = MessageDigest.getInstance(hashes[j]);
+	/* compute hashes, write over any other "Hash-Algorithms" (?) */
+	for (int j = 0; j < hashes.length; ++j) {
+	    InputStream is = new FileInputStream(stdToLocal(name));
+	    try {
+		MessageDigest dig = MessageDigest.getInstance(hashes[j]);
 
-                int len;
-                while ((len = is.read(tmpbuf, 0, tmpbuf.length)) != -1) {
-                    dig.update(tmpbuf, 0, len);
-                }
-                mh.set(hashes[j] + "-Digest", enc.encode(dig.digest()));
-            } catch (NoSuchAlgorithmException e) {
-                throw new JarException("Digest algorithm " + hashes[j] +
-                                       " not available.");
-            } finally {
-                is.close();
-            }
-        }
+		int len;
+		while ((len = is.read(tmpbuf, 0, tmpbuf.length)) != -1) {
+		    dig.update(tmpbuf, 0, len);
+		}
+		mh.set(hashes[j] + "-Digest", enc.encode(dig.digest()));
+	    } catch (NoSuchAlgorithmException e) {
+		throw new JarException("Digest algorithm " + hashes[j] +
+				       " not available.");
+	    } finally {
+		is.close();
+	    }
+	}
     }
 
     /* Add a manifest file at current position in a stream
      */
     public void stream(OutputStream os) throws IOException {
 
-        PrintStream ps;
-        if (os instanceof PrintStream) {
-            ps = (PrintStream) os;
-        } else {
-            ps = new PrintStream(os);
-        }
+	PrintStream ps;
+	if (os instanceof PrintStream) {
+	    ps = (PrintStream) os;
+	} else {
+	    ps = new PrintStream(os);
+	}
 
-        /* the first header in the file should be the global one.
-         * It should say "Manifest-Version: x.x"; if not add it
-         */
-        MessageHeader globals = (MessageHeader) entries.elementAt(0);
+	/* the first header in the file should be the global one.
+	 * It should say "Manifest-Version: x.x"; if not add it
+	 */
+	MessageHeader globals = (MessageHeader) entries.elementAt(0);
 
-        if (globals.findValue("Manifest-Version") == null) {
-            /* Assume this is a user-defined manifest.  If it has a Name: <..>
-             * field, then it is not global, in which case we just add our own
-             * global Manifest-version: <version>
-             * If the first MessageHeader has no Name: <..>, we assume it
-             * is a global header and so prepend Manifest to it.
-             */
-            String jdkVersion = System.getProperty("java.version");
+	if (globals.findValue("Manifest-Version") == null) {
+	    /* Assume this is a user-defined manifest.  If it has a Name: <..>
+	     * field, then it is not global, in which case we just add our own
+	     * global Manifest-version: <version>
+	     * If the first MessageHeader has no Name: <..>, we assume it
+	     * is a global header and so prepend Manifest to it.
+	     */
+	    String jdkVersion = System.getProperty("java.version");
 
-            if (globals.findValue("Name") == null) {
-                globals.prepend("Manifest-Version", VERSION);
-                globals.add("Created-By", "Manifest JDK "+jdkVersion);
-            } else {
-                ps.print("Manifest-Version: "+VERSION+"\r\n"+
-                         "Created-By: "+jdkVersion+"\r\n\r\n");
-            }
-            ps.flush();
-        }
+	    if (globals.findValue("Name") == null) {
+		globals.prepend("Manifest-Version", VERSION);
+		globals.add("Created-By", "Manifest JDK "+jdkVersion);
+	    } else {
+		ps.print("Manifest-Version: "+VERSION+"\r\n"+
+			 "Created-By: "+jdkVersion+"\r\n\r\n");
+	    }
+	    ps.flush();
+	}
 
-        globals.print(ps);
+	globals.print(ps);
 
-        for (int i = 1; i < entries.size(); ++i) {
-            MessageHeader mh = (MessageHeader) entries.elementAt(i);
-            mh.print(ps);
-        }
+	for (int i = 1; i < entries.size(); ++i) {
+	    MessageHeader mh = (MessageHeader) entries.elementAt(i);
+	    mh.print(ps);
+	}
     }
 
     public static boolean isManifestName(String name) {
 
-        // remove leading /
-        if (name.charAt(0) == '/') {
-            name = name.substring(1, name.length());
-        }
-        // case insensitive
-        name = name.toUpperCase();
+	// remove leading /
+	if (name.charAt(0) == '/') {
+	    name = name.substring(1, name.length());
+	}
+	// case insensitive
+	name = name.toUpperCase();
 
-        if (name.equals("META-INF/MANIFEST.MF")) {
-            return true;
-        }
-        return false;
+	if (name.equals("META-INF/MANIFEST.MF")) {
+	    return true;
+	}
+	return false;
     }
 }

@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import javax.swing.tree.DefaultTreeModel;
@@ -45,6 +46,7 @@ import java.awt.Color;
   * and the user object of the TreeNodes is not a String, then you're going
   * to have to subclass JTreeModel as this example does.
   *
+  * @version %I% %G%
   * @author Scott Violet
   */
 
@@ -55,23 +57,23 @@ public class SampleTreeModel extends DefaultTreeModel
       * to the root of this model.
       */
     public SampleTreeModel(TreeNode newRoot) {
-        super(newRoot);
+	super(newRoot);
     }
 
     /**
       * Subclassed to message setString() to the changed path item.
       */
     public void valueForPathChanged(TreePath path, Object newValue) {
-        /* Update the user object. */
-        DefaultMutableTreeNode      aNode = (DefaultMutableTreeNode)path.getLastPathComponent();
-        SampleData    sampleData = (SampleData)aNode.getUserObject();
+	/* Update the user object. */
+	DefaultMutableTreeNode      aNode = (DefaultMutableTreeNode)path.getLastPathComponent();
+	SampleData    sampleData = (SampleData)aNode.getUserObject();
 
-        sampleData.setString((String)newValue);
-        /* UUUhhhhh, pretty colors. */
-        sampleData.setColor(Color.green);
+	sampleData.setString((String)newValue);
+	/* UUUhhhhh, pretty colors. */
+	sampleData.setColor(Color.green);
 
-        /* Since we've changed how the data is to be displayed, message
-           nodeChanged. */
-        nodeChanged(aNode);
+	/* Since we've changed how the data is to be displayed, message
+	   nodeChanged. */
+	nodeChanged(aNode);
     }
 }

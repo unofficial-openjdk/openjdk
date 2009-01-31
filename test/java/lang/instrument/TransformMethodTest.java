@@ -34,7 +34,7 @@
 import java.lang.instrument.*;
 
 public class
-TransformMethodTest
+TransformMethodTest 
     extends ATransformerManagementTestCase
 {
 
@@ -48,18 +48,18 @@ TransformMethodTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new TransformMethodTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testTransform();
     }
-
+    
     /**
      * Verify that the transformers can be added and removed correctly
      */
@@ -74,5 +74,5 @@ TransformMethodTest
             removeTransformerFromManager(fInst, transformer, true);
         }
     }
-
+    
 }

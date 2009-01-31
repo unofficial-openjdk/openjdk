@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4297026
- * @summary Make sure that RSA Keypair generation using
+ * @summary Make sure that RSA Keypair generation using 
  * java.security.spec.RSAKeyGenParameterSpec passes
  */
 
@@ -36,15 +36,15 @@ public class GenerateRSAKeyPair {
 
     public static void main(String[] args) throws Exception {
 
-        RSAKeyGenParameterSpec rsaSpec =
-        new RSAKeyGenParameterSpec (1024, RSAKeyGenParameterSpec.F4);
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", "SunRsaSign");
-        kpg.initialize(rsaSpec);
+	RSAKeyGenParameterSpec rsaSpec =
+	new RSAKeyGenParameterSpec (1024, RSAKeyGenParameterSpec.F4);
+	KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", "SunRsaSign");
+	kpg.initialize(rsaSpec);
 
-        // test generateKeyPair
-        KeyPair kpair = kpg.generateKeyPair();
-        if (kpair == null) {
-            throw new Exception("no keypair generated");
-        }
+	// test generateKeyPair
+	KeyPair kpair = kpg.generateKeyPair();
+	if (kpair == null) {
+	    throw new Exception("no keypair generated");
+	}
     }
 }

@@ -31,7 +31,7 @@
 
 /**
  * HTMLSeriesReporter.java
- *
+ * 
  * Show series data in graphical form.
  */
 
@@ -70,9 +70,9 @@ public class HTMLSeriesReporter {
      */
     public static int LEVEL = 2;
 
-    private static final DecimalFormat decimalFormat =
+    private static final DecimalFormat decimalFormat = 
         new DecimalFormat("0.##");
-    private static final SimpleDateFormat dateFormat =
+    private static final SimpleDateFormat dateFormat = 
         new SimpleDateFormat("EEE, MMM d, yyyy G 'at' HH:mm:ss z");
 
     static final Comparator numericComparator = new Comparator() {
@@ -137,17 +137,17 @@ public class HTMLSeriesReporter {
         // sets, and the values of the system properties that are common to all sets
 
         File reportFile = new File(resultsDir, "series.html");
-        PrintWriter w =
-            openFile(reportFile.getAbsolutePath(), HTMLGEN_FILE_NEW);
+        PrintWriter w = 
+            openFile(reportFile.getAbsolutePath(), HTMLGEN_FILE_NEW); 
 
         w.println("<html><body bgcolor='#ffffff'>");
         w.println("<hr size='1'/><center><h2>J2DBench Series</h2></center><hr size='1'/>");
-
+            
         // collect system properties common to all result sets
         // and those unique to only some sets
         // first collect all the property keys.  these should be the same, but we'll play
         // it safe.
-
+        
         // final since referenced from inner class comparator below
         final SingleResultSetHolder[] results = new SingleResultSetHolder[J2DAnalyzer.results.size()];
         Set propKeys = new HashSet();
@@ -195,7 +195,7 @@ public class HTMLSeriesReporter {
 
         String[] hexColor = {
             "#fc9505", "#fcd805", "#fc5c05", "#b5fc05", "1cfc05", "#05fc7a",
-            "#44ff88", "#77ff77", "#aaff66", "#ddff55", "#ffff44", "#ffdd33",
+            "#44ff88", "#77ff77", "#aaff66", "#ddff55", "#ffff44", "#ffdd33", 
         };
         Comparator comparator = new Comparator() {
                 public int compare(Object lhs, Object rhs) {
@@ -244,7 +244,7 @@ public class HTMLSeriesReporter {
             }
         }
         w.println("</table>");
-
+        
         // for each test that appears in one or more result sets
         // for each option that has multiple values
         // for each value
@@ -281,7 +281,7 @@ public class HTMLSeriesReporter {
             double bestScore = 0;
 
             // get sorted list of variable options for this test
-            // optionMap maps each option to a value map.  the value map contains all the values,
+            // optionMap maps each option to a value map.  the value map contains all the values, 
             // sorted depending on the value type (numeric or string).  it maps
             // from each (string) value to a list of all the resultholders for that value
             // value.
@@ -331,7 +331,7 @@ public class HTMLSeriesReporter {
                     }
                 }
             }
-
+            
             Iterator oi = optionMap.keySet().iterator();
             while (oi.hasNext()) {
                 String optionName = (String)oi.next();
@@ -364,7 +364,7 @@ public class HTMLSeriesReporter {
                     String valueName = (String)vi.next();
                     w.print("<tr><td align='right' valign='center' width='10%'>"+valueName+"&nbsp;</td><td>");
                     ArrayList resultList = (ArrayList)optionValues.get(valueName);
-
+                    
                     // sort the result list in order of the sets the results come from
                     // we count on this being a stable sort, otherwise we'd have to also sort
                     // within each result set on all other variables
@@ -411,8 +411,8 @@ public class HTMLSeriesReporter {
 
                             pix = (int)(scale*80.0);
                         }
-
-                        w.println("   <div style='width: " + pix +
+                        
+                        w.println("   <div style='width: " + pix + 
                                   "%; height: 15; font-size: smaller; valign: center; background-color: " +  color+"'>" +
                                   "<div align='right' style='height: 15'>" + (int)score + "&nbsp;</div></div>");
                     }
@@ -431,7 +431,7 @@ public class HTMLSeriesReporter {
     }
 
     private static void printUsage() {
-        String usage =
+        String usage = 
             "\njava HTMLSeriesReporter [options] resultfile...   "     +
             "                                     \n\n" +
             "where options include:                "     +
@@ -460,12 +460,12 @@ public class HTMLSeriesReporter {
      * main
      */
     public static void main(String args[]) {
-
+        
         String resDir = ".";
         ArrayList results = new ArrayList();
         int group = 2;
-
-        /* ---- Analysis Mode ----
+        
+        /* ---- Analysis Mode ---- 
             BEST    = 1;
             WORST   = 2;
             AVERAGE = 3;
@@ -478,19 +478,19 @@ public class HTMLSeriesReporter {
             for (int i = 0; i < args.length; i++) {
                 if (args[i].startsWith("-ls")) {
                     logScale = true;
-                } else if (args[i].startsWith("-results") ||
-                    args[i].startsWith("-r"))
+                } else if (args[i].startsWith("-results") || 
+                    args[i].startsWith("-r")) 
                 {
                     i++;
                     resDir = args[i];
-                } else if (args[i].startsWith("-group") ||
-                           args[i].startsWith("-g"))
+                } else if (args[i].startsWith("-group") || 
+                           args[i].startsWith("-g")) 
                 {
                     i++;
                     group = Integer.parseInt(args[i]);
                     System.out.println("Grouping Level for tests: " + group);
-                } else if (args[i].startsWith("-analyzermode") ||
-                           args[i].startsWith("-am"))
+                } else if (args[i].startsWith("-analyzermode") || 
+                           args[i].startsWith("-am")) 
                 {
                     i++;
                     String strAnalyzerMode = args[i];

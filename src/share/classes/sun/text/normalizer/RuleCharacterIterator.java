@@ -66,7 +66,7 @@ public class RuleCharacterIterator {
 
     /**
      * Text being iterated.
-     */
+     */    
     private String text;
 
     /**
@@ -111,7 +111,7 @@ public class RuleCharacterIterator {
      * PARSE_ESCAPES) != 0, then an embedded escape sequence will be expanded
      * to its value.  Escapes are parsed using Utility.unescapeAt().
      */
-    public static final int PARSE_ESCAPES   = 2;
+    public static final int PARSE_ESCAPES   = 2;    
 
     /**
      * Bitmask option to enable skipping of whitespace.  If (options &
@@ -142,7 +142,7 @@ public class RuleCharacterIterator {
         this.pos = pos;
         buf = null;
     }
-
+    
     /**
      * Returns true if this iterator has no more characters to return.
      */
@@ -346,7 +346,7 @@ public class RuleCharacterIterator {
             return (i < text.length()) ? UTF16.charAt(text, i) : DONE;
         }
     }
-
+    
     /**
      * Advances the position by the given amount.
      * @param count the number of 16-bit code units to advance past

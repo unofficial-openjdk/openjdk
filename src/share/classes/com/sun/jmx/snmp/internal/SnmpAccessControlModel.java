@@ -29,7 +29,7 @@ import com.sun.jmx.snmp.SnmpOid;
 import com.sun.jmx.snmp.SnmpPdu;
 /**
  * Access Control Model interface. Every access control model must implement this interface in order to be integrated in the engine based framework.
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  * @since 1.5
  */
@@ -46,13 +46,13 @@ public interface SnmpAccessControlModel extends SnmpModel {
      * @param oid The OID to check.
      */
     public void checkAccess(int version,
-                            String principal,
-                            int securityLevel,
-                            int pduType,
-                            int securityModel,
-                            byte[] contextName,
-                            SnmpOid oid)
-        throws SnmpStatusException;
+			    String principal,
+			    int securityLevel,
+			    int pduType,
+			    int securityModel,
+			    byte[] contextName,
+			    SnmpOid oid)
+	throws SnmpStatusException;
     /**
      * Method called by the dispatcher in order to control the access at an SNMP pdu Level. If access is not allowed, an <CODE>SnmpStatusException</CODE> is thrown. In case of exception, the access control is aborted. OIDs are not checked.
      * This method should be called prior to the <CODE>checkAccess</CODE> OID based method.
@@ -65,13 +65,13 @@ public interface SnmpAccessControlModel extends SnmpModel {
      * @param pdu The pdu to check.
      */
     public void checkPduAccess(int version,
-                               String principal,
-                               int securityLevel,
-                               int pduType,
-                               int securityModel,
-                               byte[] contextName,
-                               SnmpPdu pdu)
-        throws SnmpStatusException;
+			       String principal,
+			       int securityLevel,
+			       int pduType,
+			       int securityModel,
+			       byte[] contextName,
+			       SnmpPdu pdu)
+	throws SnmpStatusException;
 
     /**
      * Enable SNMP V1 and V2 set requests. Be aware that can lead to a security hole in a context of SNMP V3 management. By default SNMP V1 and V2 set requests are not authorized.
@@ -83,7 +83,7 @@ public interface SnmpAccessControlModel extends SnmpModel {
      * @return boolean True the deactivation suceeded.
      */
     public boolean disableSnmpV1V2SetRequest();
-
+    
     /**
      * The SNMP V1 and V2 set requests authorization status. By default SNMP V1 and V2 set requests are not authorized.
      * @return boolean True SNMP V1 and V2 requests are authorized.

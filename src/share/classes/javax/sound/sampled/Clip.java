@@ -51,18 +51,19 @@ import java.io.IOException;
  * of the clip.
  *
  * @author Kara Kytle
+ * @version %I%, %E%
  * @since 1.3
  */
 public interface Clip extends DataLine {
-
-
+    
+    
     /**
      * A value indicating that looping should continue indefinitely rather than
      * complete after a specific number of loops.
      * @see #loop
      */
     public static final int LOOP_CONTINUOUSLY = -1;
-
+    
     /**
      * Opens the clip, meaning that it should acquire any required
      * system resources and become operational.  The clip is opened
@@ -98,7 +99,7 @@ public interface Clip extends DataLine {
      * @see LineListener
      */
     public void open(AudioFormat format, byte[] data, int offset, int bufferSize) throws LineUnavailableException;
-
+    
     /**
      * Opens the clip with the format and audio data present in the provided audio
      * input stream.  Opening a clip means that it should acquire any required
@@ -132,7 +133,7 @@ public interface Clip extends DataLine {
      * @see LineListener
      */
     public void open(AudioInputStream stream) throws LineUnavailableException, IOException;
-
+    
     /**
      * Obtains the media length in sample frames.
      * @return the media length, expressed in sample frames,
@@ -140,7 +141,7 @@ public interface Clip extends DataLine {
      * @see AudioSystem#NOT_SPECIFIED
      */
     public int getFrameLength();
-
+    
     /**
      * Obtains the media duration in microseconds
      * @return the media duration, expressed in microseconds,
@@ -148,7 +149,7 @@ public interface Clip extends DataLine {
      * @see AudioSystem#NOT_SPECIFIED
      */
     public long getMicrosecondLength();
-
+    
     /**
      * Sets the media position in sample frames.  The position is zero-based;
      * the first frame is frame number zero.  When the clip begins playing the
@@ -161,7 +162,7 @@ public interface Clip extends DataLine {
      * @param frames the desired new media position, expressed in sample frames
      */
     public void setFramePosition(int frames);
-
+    
     /**
      * Sets the media position in microseconds.  When the clip begins playing the
      * next time, it will start at this position.
@@ -177,7 +178,7 @@ public interface Clip extends DataLine {
      * @param microseconds the desired new media position, expressed in microseconds
      */
     public void setMicrosecondPosition(long microseconds);
-
+    
     /**
      * Sets the first and last sample frames that will be played in
      * the loop.  The ending point must be greater than
@@ -194,7 +195,7 @@ public interface Clip extends DataLine {
      * before the starting point
      */
     public void setLoopPoints(int start, int end);
-
+    
     /**
      * Starts looping playback from the current position.   Playback will
      * continue to the loop's end point, then loop back to the loop start point

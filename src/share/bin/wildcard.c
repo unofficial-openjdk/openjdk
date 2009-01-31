@@ -90,7 +90,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include "java.h"       /* Strictly for PATH_SEPARATOR/FILE_SEPARATOR */
+#include "java.h"	/* Strictly for PATH_SEPARATOR/FILE_SEPARATOR */
 #include "jli_util.h"
 
 #ifdef _WIN32
@@ -137,7 +137,7 @@ WildcardIterator_for(const char *wildcard)
     WildcardIterator it = NEW_(WildcardIterator);
     HANDLE handle = FindFirstFile(wildcard, &find_data);
     if (handle == INVALID_HANDLE_VALUE)
-        return NULL;
+	return NULL;
     it->handle = handle;
     it->firstFile = find_data.cFileName;
     return it;
@@ -148,21 +148,21 @@ WildcardIterator_next(WildcardIterator it)
 {
     WIN32_FIND_DATA find_data;
     if (it->firstFile != NULL) {
-        char *firstFile = it->firstFile;
-        it->firstFile = NULL;
-        return firstFile;
+	char *firstFile = it->firstFile;
+	it->firstFile = NULL;
+	return firstFile;
     }
     return FindNextFile(it->handle, &find_data)
-        ? find_data.cFileName : NULL;
+	? find_data.cFileName : NULL;
 }
 
 static void
 WildcardIterator_close(WildcardIterator it)
 {
     if (it) {
-        FindClose(it->handle);
-        JLI_MemFree(it->firstFile);
-        JLI_MemFree(it);
+	FindClose(it->handle);
+	JLI_MemFree(it->firstFile);
+	JLI_MemFree(it);
     }
 }
 
@@ -176,21 +176,21 @@ static WildcardIterator
 WildcardIterator_for(const char *wildcard)
 {
     DIR *dir;
-    int wildlen = JLI_StrLen(wildcard);
+    int wildlen = strlen(wildcard);
     if (wildlen < 2) {
-        dir = opendir(".");
+	dir = opendir(".");
     } else {
-        char *dirname = JLI_StringDup(wildcard);
-        dirname[wildlen - 1] = '\0';
-        dir = opendir(dirname);
-        JLI_MemFree(dirname);
+	char *dirname = JLI_StringDup(wildcard);
+	dirname[wildlen - 1] = '\0';
+	dir = opendir(dirname);
+	JLI_MemFree(dirname);
     }
     if (dir == NULL)
-        return NULL;
+	return NULL;
     else {
-        WildcardIterator it = NEW_(WildcardIterator);
-        it->dir = dir;
-        return it;
+	WildcardIterator it = NEW_(WildcardIterator);
+	it->dir = dir;
+	return it;
     }
 }
 
@@ -205,8 +205,8 @@ static void
 WildcardIterator_close(WildcardIterator it)
 {
     if (it) {
-        closedir(it->dir);
-        JLI_MemFree(it);
+	closedir(it->dir);
+	JLI_MemFree(it);
     }
 }
 #endif /* Unix */
@@ -214,7 +214,7 @@ WildcardIterator_close(WildcardIterator it)
 static int
 equal(const char *s1, const char *s2)
 {
-    return JLI_StrCmp(s1, s2) == 0;
+    return strcmp(s1, s2) == 0;
 }
 
 /*
@@ -238,19 +238,31 @@ FileList_new(int capacity)
     return fl;
 }
 
-
+#ifdef DEBUG_WILDCARD
+static void
+FileList_print(FileList fl)
+{
+    int i;
+    putchar('[');
+    for (i = 0; i < fl->size; i++) {
+	if (i > 0) printf(", ");
+	printf("\"%s\"",fl->files[i]);
+    }
+    putchar(']');
+}
+#endif
 
 static void
 FileList_free(FileList fl)
 {
     if (fl) {
-        if (fl->files) {
-            int i;
-            for (i = 0; i < fl->size; i++)
-                JLI_MemFree(fl->files[i]);
-            JLI_MemFree(fl->files);
-        }
-        JLI_MemFree(fl);
+	if (fl->files) {
+	    int i;
+	    for (i = 0; i < fl->size; i++)
+		JLI_MemFree(fl->files[i]);
+	    JLI_MemFree(fl->files);
+	}
+	JLI_MemFree(fl);
     }
 }
 
@@ -258,10 +270,10 @@ static void
 FileList_ensureCapacity(FileList fl, int capacity)
 {
     if (fl->capacity < capacity) {
-        while (fl->capacity < capacity)
-            fl->capacity *= 2;
-        fl->files = JLI_MemRealloc(fl->files,
-                               fl->capacity * sizeof(fl->files[0]));
+	while (fl->capacity < capacity)
+	    fl->capacity *= 2;
+	fl->files = JLI_MemRealloc(fl->files,
+			       fl->capacity * sizeof(fl->files[0]));
     }
 }
 
@@ -290,15 +302,15 @@ FileList_join(FileList fl, char sep)
     char *path;
     char *p;
     for (i = 0, size = 1; i < fl->size; i++)
-        size += JLI_StrLen(fl->files[i]) + 1;
+	size += strlen(fl->files[i]) + 1;
 
     path = JLI_MemAlloc(size);
 
     for (i = 0, p = path; i < fl->size; i++) {
-        int len = JLI_StrLen(fl->files[i]);
-        if (i > 0) *p++ = sep;
-        memcpy(p, fl->files[i], len);
-        p += len;
+	int len = strlen(fl->files[i]);
+	if (i > 0) *p++ = sep;
+	memcpy(p, fl->files[i], len);
+	p += len;
     }
     *p = '\0';
 
@@ -309,41 +321,41 @@ static FileList
 FileList_split(const char *path, char sep)
 {
     const char *p, *q;
-    int len = JLI_StrLen(path);
+    int len = strlen(path);
     int count;
     FileList fl;
     for (count = 1, p = path; p < path + len; p++)
-        count += (*p == sep);
+	count += (*p == sep);
     fl = FileList_new(count);
     for (p = path;;) {
-        for (q = p; q <= path + len; q++) {
-            if (*q == sep || *q == '\0') {
-                FileList_addSubstring(fl, p, q - p);
-                if (*q == '\0')
-                    return fl;
-                p = q + 1;
-            }
-        }
+	for (q = p; q <= path + len; q++) {
+	    if (*q == sep || *q == '\0') {
+		FileList_addSubstring(fl, p, q - p);
+		if (*q == '\0')
+		    return fl;
+		p = q + 1;
+	    }
+	}
     }
 }
 
 static int
 isJarFileName(const char *filename)
 {
-    int len = JLI_StrLen(filename);
+    int len = strlen(filename);
     return (len >= 4) &&
-        (filename[len - 4] == '.') &&
-        (equal(filename + len - 3, "jar") ||
-         equal(filename + len - 3, "JAR")) &&
-        /* Paranoia: Maybe filename is "DIR:foo.jar" */
-        (JLI_StrChr(filename, PATH_SEPARATOR) == NULL);
+	(filename[len - 4] == '.') &&
+	(equal(filename + len - 3, "jar") ||
+	 equal(filename + len - 3, "JAR")) &&
+	/* Paranoia: Maybe filename is "DIR:foo.jar" */
+	(strchr(filename, PATH_SEPARATOR) == NULL);
 }
 
 static char *
 wildcardConcat(const char *wildcard, const char *basename)
 {
-    int wildlen = JLI_StrLen(wildcard);
-    int baselen = JLI_StrLen(basename);
+    int wildlen = strlen(wildcard);
+    int baselen = strlen(basename);
     char *filename = (char *) JLI_MemAlloc(wildlen + baselen);
     /* Replace the trailing '*' with basename */
     memcpy(filename, wildcard, wildlen-1);
@@ -358,10 +370,10 @@ wildcardFileList(const char *wildcard)
     FileList fl = FileList_new(16);
     WildcardIterator it = WildcardIterator_for(wildcard);
     if (it == NULL)
-        return NULL;
+	return NULL;
     while ((basename = WildcardIterator_next(it)) != NULL)
-        if (isJarFileName(basename))
-            FileList_add(fl, wildcardConcat(wildcard, basename));
+	if (isJarFileName(basename))
+	    FileList_add(fl, wildcardConcat(wildcard, basename));
     WildcardIterator_close(it);
     return fl;
 }
@@ -369,11 +381,11 @@ wildcardFileList(const char *wildcard)
 static int
 isWildcard(const char *filename)
 {
-    int len = JLI_StrLen(filename);
+    int len = strlen(filename);
     return (len > 0) &&
-        (filename[len - 1] == '*') &&
-        (len == 1 || IS_FILE_SEPARATOR(filename[len - 2])) &&
-        (! exists(filename));
+	(filename[len - 1] == '*') &&
+	(len == 1 || IS_FILE_SEPARATOR(filename[len - 2])) &&
+	(! exists(filename));
 }
 
 static void
@@ -381,22 +393,22 @@ FileList_expandWildcards(FileList fl)
 {
     int i, j;
     for (i = 0; i < fl->size; i++) {
-        if (isWildcard(fl->files[i])) {
-            FileList expanded = wildcardFileList(fl->files[i]);
-            if (expanded != NULL && expanded->size > 0) {
-                JLI_MemFree(fl->files[i]);
-                FileList_ensureCapacity(fl, fl->size + expanded->size);
-                for (j = fl->size - 1; j >= i+1; j--)
-                    fl->files[j+expanded->size-1] = fl->files[j];
-                for (j = 0; j < expanded->size; j++)
-                    fl->files[i+j] = expanded->files[j];
-                i += expanded->size - 1;
-                fl->size += expanded->size - 1;
-                /* fl expropriates expanded's elements. */
-                expanded->size = 0;
-            }
-            FileList_free(expanded);
-        }
+	if (isWildcard(fl->files[i])) {
+	    FileList expanded = wildcardFileList(fl->files[i]);
+	    if (expanded != NULL && expanded->size > 0) {
+		JLI_MemFree(fl->files[i]);
+		FileList_ensureCapacity(fl, fl->size + expanded->size);
+		for (j = fl->size - 1; j >= i+1; j--)
+		    fl->files[j+expanded->size-1] = fl->files[j];
+		for (j = 0; j < expanded->size; j++)
+		    fl->files[i+j] = expanded->files[j];
+		i += expanded->size - 1;
+		fl->size += expanded->size - 1;
+		/* fl expropriates expanded's elements. */
+		expanded->size = 0;
+	    }
+	    FileList_free(expanded);
+	}
     }
 }
 
@@ -406,43 +418,31 @@ JLI_WildcardExpandClasspath(const char *classpath)
     char *expanded;
     FileList fl;
 
-    if (JLI_StrChr(classpath, '*') == NULL)
-        return classpath;
+    if (strchr(classpath, '*') == NULL)
+	return classpath;
     fl = FileList_split(classpath, PATH_SEPARATOR);
     FileList_expandWildcards(fl);
     expanded = FileList_join(fl, PATH_SEPARATOR);
     FileList_free(fl);
     if (getenv("_JAVA_LAUNCHER_DEBUG") != 0)
-        printf("Expanded wildcards:\n"
-               "    before: \"%s\"\n"
-               "    after : \"%s\"\n",
-               classpath, expanded);
+	printf("Expanded wildcards:\n"
+	       "    before: \"%s\"\n"
+	       "    after : \"%s\"\n",
+	       classpath, expanded);
     return expanded;
 }
 
 #ifdef DEBUG_WILDCARD
 static void
-FileList_print(FileList fl)
-{
-    int i;
-    putchar('[');
-    for (i = 0; i < fl->size; i++) {
-        if (i > 0) printf(", ");
-        printf("\"%s\"",fl->files[i]);
-    }
-    putchar(']');
-}
-
-static void
 wildcardExpandArgv(const char ***argv)
 {
     int i;
     for (i = 0; (*argv)[i]; i++) {
-        if (equal((*argv)[i], "-cp") ||
-            equal((*argv)[i], "-classpath")) {
-            i++;
-            (*argv)[i] = wildcardExpandClasspath((*argv)[i]);
-        }
+	if (equal((*argv)[i], "-cp") ||
+	    equal((*argv)[i], "-classpath")) {
+	    i++;
+	    (*argv)[i] = wildcardExpandClasspath((*argv)[i]);
+	}
     }
 }
 
@@ -452,8 +452,8 @@ debugPrintArgv(char *argv[])
     int i;
     putchar('[');
     for (i = 0; argv[i]; i++) {
-        if (i > 0) printf(", ");
-        printf("\"%s\"", argv[i]);
+	if (i > 0) printf(", ");
+	printf("\"%s\"", argv[i]);
     }
     printf("]\n");
 }

@@ -44,12 +44,12 @@ extern jboolean VerifyFixClassname(char *utf_name);
  */
 JNIEXPORT jclass JNICALL
 Java_java_lang_reflect_Proxy_defineClass0(JNIEnv *env,
-                                          jclass ignore,
-                                          jobject loader,
-                                          jstring name,
-                                          jbyteArray data,
-                                          jint offset,
-                                          jint length)
+					  jclass ignore,
+					  jobject loader,
+					  jstring name,
+					  jbyteArray data,
+					  jint offset,
+					  jint length)
 {
     jbyte *body;
     char *utfName;
@@ -57,8 +57,8 @@ Java_java_lang_reflect_Proxy_defineClass0(JNIEnv *env,
     char buf[128];
 
     if (data == NULL) {
-        JNU_ThrowNullPointerException(env, 0);
-        return 0;
+	JNU_ThrowNullPointerException(env, 0);
+	return 0;
     }
 
     /* Work around 4153825. malloc crashes on Solaris when passed a
@@ -66,14 +66,14 @@ Java_java_lang_reflect_Proxy_defineClass0(JNIEnv *env,
      */
     if (length < 0) {
         JNU_ThrowArrayIndexOutOfBoundsException(env, 0);
-        return 0;
+	return 0;
     }
 
     body = (jbyte *)malloc(length);
 
     if (body == 0) {
         JNU_ThrowOutOfMemoryError(env, 0);
-        return 0;
+	return 0;
     }
 
     (*env)->GetByteArrayRegion(env, data, offset, length, body);
@@ -83,7 +83,7 @@ Java_java_lang_reflect_Proxy_defineClass0(JNIEnv *env,
 
     if (name != NULL) {
         int len = (*env)->GetStringUTFLength(env, name);
-        int unicode_len = (*env)->GetStringLength(env, name);
+	int unicode_len = (*env)->GetStringLength(env, name);
         if (len >= sizeof(buf)) {
             utfName = malloc(len + 1);
             if (utfName == NULL) {
@@ -93,15 +93,15 @@ Java_java_lang_reflect_Proxy_defineClass0(JNIEnv *env,
         } else {
             utfName = buf;
         }
-        (*env)->GetStringUTFRegion(env, name, 0, unicode_len, utfName);
-        VerifyFixClassname(utfName);
+    	(*env)->GetStringUTFRegion(env, name, 0, unicode_len, utfName);
+	VerifyFixClassname(utfName);
     } else {
-        utfName = NULL;
+	utfName = NULL;
     }
 
     result = (*env)->DefineClass(env, utfName, loader, body, length);
 
-    if (utfName && utfName != buf)
+    if (utfName && utfName != buf) 
         free(utfName);
 
  free_body:

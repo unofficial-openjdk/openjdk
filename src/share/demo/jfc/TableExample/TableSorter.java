@@ -30,22 +30,24 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /**
- * A sorter for TableModels. The sorter has a model (conforming to TableModel)
- * and itself implements TableModel. TableSorter does not store or copy
- * the data in the TableModel, instead it maintains an array of
- * integers which it keeps the same size as the number of rows in its
- * model. When the model changes it notifies the sorter that something
- * has changed eg. "rowsAdded" so that its internal array of integers
- * can be reallocated. As requests are made of the sorter (like
- * getValueAt(row, col) it redirects them to its model via the mapping
- * array. That way the TableSorter appears to hold another copy of the table
- * with the rows in a different order. The sorting algorthm used is stable
- * which means that it does not move around rows when its comparison
- * function returns 0 to denote that they are equivalent.
+ * A sorter for TableModels. The sorter has a model (conforming to TableModel) 
+ * and itself implements TableModel. TableSorter does not store or copy 
+ * the data in the TableModel, instead it maintains an array of 
+ * integers which it keeps the same size as the number of rows in its 
+ * model. When the model changes it notifies the sorter that something 
+ * has changed eg. "rowsAdded" so that its internal array of integers 
+ * can be reallocated. As requests are made of the sorter (like 
+ * getValueAt(row, col) it redirects them to its model via the mapping 
+ * array. That way the TableSorter appears to hold another copy of the table 
+ * with the rows in a different order. The sorting algorthm used is stable 
+ * which means that it does not move around rows when its comparison 
+ * function returns 0 to denote that they are equivalent. 
  *
+ * @version %I% %G%
  * @author Philip Milne
  */
 
@@ -54,7 +56,7 @@ import java.util.*;
 import javax.swing.table.TableModel;
 import javax.swing.event.TableModelEvent;
 
-// Imports for picking up mouse events from the JTable.
+// Imports for picking up mouse events from the JTable. 
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -73,7 +75,7 @@ public class TableSorter extends TableMap
 
     public TableSorter()
     {
-        indexes = new int[0]; // For consistency.
+        indexes = new int[0]; // For consistency.        
     }
 
     public TableSorter(TableModel model)
@@ -82,8 +84,8 @@ public class TableSorter extends TableMap
     }
 
     public void setModel(TableModel model) {
-        super.setModel(model);
-        reallocateIndexes();
+        super.setModel(model); 
+        reallocateIndexes(); 
     }
 
     public int compareRowsByColumn(int row1, int row2, int column)
@@ -94,24 +96,24 @@ public class TableSorter extends TableMap
         // Check for nulls
 
         Object o1 = data.getValueAt(row1, column);
-        Object o2 = data.getValueAt(row2, column);
+        Object o2 = data.getValueAt(row2, column); 
 
         // If both values are null return 0
         if (o1 == null && o2 == null) {
-            return 0;
+            return 0; 
         }
-        else if (o1 == null) { // Define null less than everything.
-            return -1;
-        }
-        else if (o2 == null) {
-            return 1;
+        else if (o1 == null) { // Define null less than everything. 
+            return -1; 
+        } 
+        else if (o2 == null) { 
+            return 1; 
         }
 
 /* We copy all returned values from the getValue call in case
 an optimised model is reusing one object to return many values.
-The Number subclasses in the JDK are immutable and so will not be used in
-this way but other subclasses of Number might want to do this to save
-space and avoid unnecessary heap allocation.
+The Number subclasses in the JDK are immutable and so will not be used in 
+this way but other subclasses of Number might want to do this to save 
+space and avoid unnecessary heap allocation. 
 */
         if (type.getSuperclass() == java.lang.Number.class)
             {
@@ -210,7 +212,7 @@ space and avoid unnecessary heap allocation.
 
     public void tableChanged(TableModelEvent e)
     {
-        System.out.println("Sorter: tableChanged");
+	System.out.println("Sorter: tableChanged"); 
         reallocateIndexes();
 
         super.tableChanged(e);
@@ -284,7 +286,7 @@ space and avoid unnecessary heap allocation.
             return;
         }
 
-        // A normal merge.
+        // A normal merge. 
 
         for(int i = low; i < high; i++) {
             if (q >= high || (p < middle && compare(from[p], from[q]) <= 0)) {
@@ -326,31 +328,31 @@ space and avoid unnecessary heap allocation.
         sortingColumns.removeAllElements();
         sortingColumns.addElement(new Integer(column));
         sort(this);
-        super.tableChanged(new TableModelEvent(this));
+        super.tableChanged(new TableModelEvent(this)); 
     }
 
-    // There is no-where else to put this.
-    // Add a mouse listener to the Table to trigger a table sort
-    // when a column heading is clicked in the JTable.
-    public void addMouseListenerToHeaderInTable(JTable table) {
-        final TableSorter sorter = this;
-        final JTable tableView = table;
-        tableView.setColumnSelectionAllowed(false);
+    // There is no-where else to put this. 
+    // Add a mouse listener to the Table to trigger a table sort 
+    // when a column heading is clicked in the JTable. 
+    public void addMouseListenerToHeaderInTable(JTable table) { 
+        final TableSorter sorter = this; 
+        final JTable tableView = table; 
+        tableView.setColumnSelectionAllowed(false); 
         MouseAdapter listMouseListener = new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 TableColumnModel columnModel = tableView.getColumnModel();
-                int viewColumn = columnModel.getColumnIndexAtX(e.getX());
-                int column = tableView.convertColumnIndexToModel(viewColumn);
+                int viewColumn = columnModel.getColumnIndexAtX(e.getX()); 
+                int column = tableView.convertColumnIndexToModel(viewColumn); 
                 if(e.getClickCount() == 1 && column != -1) {
-                    System.out.println("Sorting ...");
-                    int shiftPressed = e.getModifiers()&InputEvent.SHIFT_MASK;
-                    boolean ascending = (shiftPressed == 0);
-                    sorter.sortByColumn(column, ascending);
+                    System.out.println("Sorting ..."); 
+                    int shiftPressed = e.getModifiers()&InputEvent.SHIFT_MASK; 
+                    boolean ascending = (shiftPressed == 0); 
+                    sorter.sortByColumn(column, ascending); 
                 }
              }
          };
-        JTableHeader th = tableView.getTableHeader();
-        th.addMouseListener(listMouseListener);
+        JTableHeader th = tableView.getTableHeader(); 
+        th.addMouseListener(listMouseListener); 
     }
 
 

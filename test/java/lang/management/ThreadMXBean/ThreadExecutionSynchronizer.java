@@ -33,45 +33,45 @@ public class ThreadExecutionSynchronizer {
 
     private boolean  waiting;
     private Semaphore semaphore;
-
+                   
     public ThreadExecutionSynchronizer() {
         semaphore = new Semaphore(1);
-        waiting = false;
+	waiting = false;
     }
 
-    // Synchronizes two threads execution points.
-    // Basically any thread could get scheduled to run and
+    // Synchronizes two threads execution points. 
+    // Basically any thread could get scheduled to run and 
     // it is not possible to know which thread reaches expected
-    // execution point. So whichever thread reaches a execution
+    // execution point. So whichever thread reaches a execution 
     // point first wait for the second thread. When the second thread
     // reaches the expected execution point will wake up
-    // the thread which is waiting here.
+    // the thread which is waiting here. 
     void stopOrGo() {
-        semaphore.acquireUninterruptibly(); // Thread can get blocked.
-        if (!waiting) {
-            waiting = true;
-            // Wait for second thread to enter this method.
-            while(!semaphore.hasQueuedThreads()) {
-                try {
-                    Thread.sleep(20);
-                } catch (InterruptedException xx) {}
-            }
-            semaphore.release();
-        } else {
-            waiting = false;
-            semaphore.release();
-        }
+	semaphore.acquireUninterruptibly(); // Thread can get blocked.
+	if (!waiting) {
+	    waiting = true;
+	    // Wait for second thread to enter this method. 
+	    while(!semaphore.hasQueuedThreads()) {
+		try {
+		    Thread.sleep(20);
+		} catch (InterruptedException xx) {}
+	    }
+	    semaphore.release();
+	} else {
+	    waiting = false;
+	    semaphore.release();
+	}
     }
-
+	
     // Wrapper function just for code readability.
     void waitForSignal() {
-        stopOrGo();
-        goSleep(50);
+	stopOrGo();
+	goSleep(50);
     }
 
     void signal() {
-        stopOrGo();
-        goSleep(50);
+	stopOrGo();
+	goSleep(50);
     }
 
     private static void goSleep(long ms) {

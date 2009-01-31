@@ -121,7 +121,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
 
     /**
      * Reads a single byte from the stream and returns it as an
-     * <code>int</code> between 0 and 255.  If EOF is reached,
+     * <code>int</code> between 0 and 255.  If EOF is reached, 
      * <code>-1</code> is returned.
      *
      * <p> Subclasses must provide an implementation for this method.
@@ -166,7 +166,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
      *
      * <p> Subclasses must provide an implementation for this method.
      * The subclass implementation should update the stream position
-     * before exiting.
+     * before exiting. 
      *
      * @param b an array of bytes to be written to.
      * @param off the starting position within <code>b</code> to write to.
@@ -194,39 +194,39 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
 
         byte[] data = new byte[len];
         len = read(data, 0, len);
-
+        
         buf.setData(data);
         buf.setOffset(0);
         buf.setLength(len);
     }
 
     public boolean readBoolean() throws IOException {
-        int ch = this.read();
-        if (ch < 0) {
-            throw new EOFException();
+	int ch = this.read();
+	if (ch < 0) {
+	    throw new EOFException();
         }
-        return (ch != 0);
+	return (ch != 0);
     }
 
     public byte readByte() throws IOException {
-        int ch = this.read();
-        if (ch < 0) {
-            throw new EOFException();
+	int ch = this.read();
+	if (ch < 0) {
+	    throw new EOFException();
         }
-        return (byte)ch;
+	return (byte)ch;
     }
 
     public int readUnsignedByte() throws IOException {
         int ch = this.read();
         if (ch < 0) {
-            throw new EOFException();
+    	    throw new EOFException();
         }
         return ch;
     }
 
     public short readShort() throws IOException {
         if (read(byteBuf, 0, 2) < 0) {
-            throw new EOFException();
+	    throw new EOFException();
         }
 
         if (byteOrder == ByteOrder.BIG_ENDIAN) {
@@ -248,7 +248,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
 
     public int readInt() throws IOException {
         if (read(byteBuf, 0, 4) < 0) {
-            throw new EOFException();
+	    throw new EOFException();
         }
 
         if (byteOrder == ByteOrder.BIG_ENDIAN) {
@@ -285,42 +285,42 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
     }
 
     public double readDouble() throws IOException {
-        return Double.longBitsToDouble(readLong());
+	return Double.longBitsToDouble(readLong());
     }
 
     public String readLine() throws IOException {
-        StringBuffer input = new StringBuffer();
-        int c = -1;
-        boolean eol = false;
+	StringBuffer input = new StringBuffer();
+	int c = -1;
+	boolean eol = false;
 
-        while (!eol) {
-            switch (c = read()) {
-            case -1:
-            case '\n':
-                eol = true;
-                break;
-            case '\r':
-                eol = true;
-                long cur = getStreamPosition();
-                if ((read()) != '\n') {
-                    seek(cur);
-                }
-                break;
-            default:
-                input.append((char)c);
-                break;
-            }
-        }
+	while (!eol) {
+	    switch (c = read()) {
+	    case -1:
+	    case '\n':
+		eol = true;
+		break;
+	    case '\r':
+		eol = true;
+		long cur = getStreamPosition();
+		if ((read()) != '\n') {
+		    seek(cur);
+		}
+		break;
+	    default:
+		input.append((char)c);
+		break;
+	    }
+	}
 
-        if ((c == -1) && (input.length() == 0)) {
-            return null;
-        }
-        return input.toString();
+	if ((c == -1) && (input.length() == 0)) {
+	    return null;
+	}
+	return input.toString();
     }
 
     public String readUTF() throws IOException {
         this.bitOffset = 0;
-
+        
         // Fix 4494369: method ImageInputStreamImpl.readUTF()
         // does not work as specified (it should always assume
         // network byte order).
@@ -337,7 +337,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
         }
 
         setByteOrder(oldByteOrder);
-        return ret;
+	return ret;
     }
 
     public void readFully(byte[] b, int off, int len) throws IOException {
@@ -530,10 +530,10 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
                 int b5 = b[boff + 5] & 0xff;
                 int b6 = b[boff + 6] & 0xff;
                 int b7 = b[boff + 7] & 0xff;
-
+                
                 int i0 = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
                 int i1 = (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
-
+                
                 l[off + j] = ((long)i0 << 32) | (i1 & 0xffffffffL);
                 boff += 8;
             }
@@ -547,10 +547,10 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
                 int b5 = b[boff + 2] & 0xff;
                 int b6 = b[boff + 1] & 0xff;
                 int b7 = b[boff]     & 0xff;
-
+                
                 int i0 = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
                 int i1 = (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
-
+                
                 l[off + j] = ((long)i0 << 32) | (i1 & 0xffffffffL);
                 boff += 8;
             }
@@ -594,7 +594,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
                 int b5 = b[boff + 5] & 0xff;
                 int b6 = b[boff + 6] & 0xff;
                 int b7 = b[boff + 7] & 0xff;
-
+                
                 int i0 = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
                 int i1 = (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
                 long l = ((long)i0 << 32) | (i1 & 0xffffffffL);
@@ -612,7 +612,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
                 int b5 = b[boff + 2] & 0xff;
                 int b6 = b[boff + 1] & 0xff;
                 int b7 = b[boff] & 0xff;
-
+                
                 int i0 = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3;
                 int i1 = (b4 << 24) | (b5 << 16) | (b6 << 8) | b7;
                 long l = ((long)i0 << 32) | (i1 & 0xffffffffL);
@@ -678,7 +678,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
 
         // Compute final bit offset before we call read() and seek()
         int newBitOffset = (this.bitOffset + numBits) & 0x7;
-
+        
         // Read a byte at a time, accumulate
         long accum = 0L;
         while (bitsToRead > 0) {
@@ -700,7 +700,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
 
         // Shift away unwanted bits on the right.
         accum >>>= (-bitsToRead); // Negative of bitsToRead == extra bits read
-
+        
         // Mask out unwanted bits on the left
         accum &= (-1L >>> (64 - numBits));
 
@@ -829,7 +829,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
         return flushedPos;
     }
 
-    /**
+    /** 
      * Default implementation returns false.  Subclasses should
      * override this if they cache data.
      */
@@ -837,7 +837,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
         return false;
     }
 
-    /**
+    /** 
      * Default implementation returns false.  Subclasses should
      * override this if they cache data in main memory.
      */
@@ -845,7 +845,7 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
         return false;
     }
 
-    /**
+    /** 
      * Default implementation returns false.  Subclasses should
      * override this if they cache data in a temporary file.
      */

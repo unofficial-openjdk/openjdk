@@ -40,8 +40,8 @@ import java.io.InterruptedIOException;
 abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnector {
 
     abstract public VirtualMachine
-        launch(Map<String,? extends Connector.Argument> arguments)
-                                 throws IOException,
+	launch(Map<String,? extends Connector.Argument> arguments)
+                                 throws IOException, 
                                         IllegalConnectorArgumentsException,
                                         VMStartException;
     abstract public String name();
@@ -50,22 +50,22 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
     ThreadGroup grp;
 
     AbstractLauncher() {
-        super();
+	super();
 
-        grp = Thread.currentThread().getThreadGroup();
+	grp = Thread.currentThread().getThreadGroup();
         ThreadGroup parent = null;
         while ((parent = grp.getParent()) != null) {
             grp = parent;
         }
     }
-
+     
     String[] tokenizeCommand(String command, char quote) {
         String quoteStr = String.valueOf(quote); // easier to deal with
 
         /*
          * Tokenize the command, respecting the given quote character.
          */
-        StringTokenizer tokenizer = new StringTokenizer(command,
+        StringTokenizer tokenizer = new StringTokenizer(command, 
                                                         quote + " \t\r\n\f",
                                                         true);
         String quoted = null;
@@ -83,7 +83,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
             } else if (pending != null) {
                 if (token.equals(quoteStr)) {
                     quoted = pending;
-                } else if ((token.length() == 1) &&
+                } else if ((token.length() == 1) && 
                            Character.isWhitespace(token.charAt(0))) {
                     tokenList.add(pending);
                 } else {
@@ -93,7 +93,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
             } else {
                 if (token.equals(quoteStr)) {
                     quoted = "";
-                } else if ((token.length() == 1) &&
+                } else if ((token.length() == 1) && 
                            Character.isWhitespace(token.charAt(0))) {
                     // continue
                 } else {
@@ -110,7 +110,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
         }
 
         /*
-         * An unclosed quote at the end of the command. Do an
+         * An unclosed quote at the end of the command. Do an 
          * implicit end quote.
          */
         if (quoted != null) {
@@ -124,31 +124,31 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
         return tokenArray;
     }
 
-    protected VirtualMachine launch(String[] commandArray, String address,
-                                    TransportService.ListenKey listenKey,
-                                    TransportService ts)
+    protected VirtualMachine launch(String[] commandArray, String address, 
+				    TransportService.ListenKey listenKey,  
+				    TransportService ts) 
                                     throws IOException, VMStartException {
         Helper helper = new Helper(commandArray, address, listenKey, ts);
         helper.launchAndAccept();
 
-        VirtualMachineManager manager =
-            Bootstrap.virtualMachineManager();
+	VirtualMachineManager manager = 
+	    Bootstrap.virtualMachineManager();
 
         return manager.createVirtualMachine(helper.connection(),
                                             helper.process());
     }
 
     /**
-     * This class simply provides a context for a single launch and
-     * accept. It provides instance fields that can be used by
+     * This class simply provides a context for a single launch and 
+     * accept. It provides instance fields that can be used by 
      * all threads involved. This stuff can't be in the Connector proper
      * because the connector is is a singleton and not specific to any
-     * one launch.
+     * one launch. 
      */
     private class Helper {
         private final String address;
-        private TransportService.ListenKey listenKey;
-        private TransportService ts;
+	private TransportService.ListenKey listenKey;
+	private TransportService ts;
         private final String[] commandArray;
         private Process process = null;
         private Connection connection = null;
@@ -156,11 +156,11 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
         private boolean exited = false;
 
         Helper(String[] commandArray, String address, TransportService.ListenKey listenKey,
-            TransportService ts) {
+	    TransportService ts) {
             this.commandArray = commandArray;
             this.address = address;
-            this.listenKey = listenKey;
-            this.ts = ts;
+	    this.listenKey = listenKey;
+	    this.ts = ts;
         }
 
         String commandString() {
@@ -174,7 +174,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
             return str;
         }
 
-        synchronized void launchAndAccept() throws
+        synchronized void launchAndAccept() throws 
                                 IOException, VMStartException {
 
             process = Runtime.getRuntime().exec(commandArray);
@@ -182,8 +182,8 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
             Thread acceptingThread = acceptConnection();
             Thread monitoringThread = monitorTarget();
             try {
-                while ((connection == null) &&
-                       (acceptException == null) &&
+                while ((connection == null) && 
+                       (acceptException == null) && 
                        !exited) {
                     wait();
                 }
@@ -191,7 +191,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
                 if (exited) {
                     throw new VMStartException(
                         "VM initialization failed for: " + commandString(), process);
-                }
+                } 
                 if (acceptException != null) {
                     // Rethrow the exception in this thread
                     throw acceptException;
@@ -229,16 +229,16 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
 
         Thread monitorTarget() {
             Thread thread = new Thread(grp,
-                                       "launched target monitor") {
+				       "launched target monitor") {
                 public void run() {
                     try {
                         process.waitFor();
                         /*
-                         * Notify waiting thread of VM error termination
+                         * Notify waiting thread of VM error termination 
                          */
                         notifyOfExit();
                     } catch (InterruptedException e) {
-                        // Connection has been established, stop monitoring
+                        // Connection has been established, stop monitoring 
                     }
                 }
             };
@@ -249,7 +249,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
 
         Thread acceptConnection() {
             Thread thread = new Thread(grp,
-                                       "connection acceptor") {
+				       "connection acceptor") {
                 public void run() {
                     try {
                         Connection connection = ts.accept(listenKey, 0, 0);
@@ -258,7 +258,7 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
                          */
                         notifyOfConnection(connection);
                     } catch (InterruptedIOException e) {
-                        // VM terminated, stop accepting
+                        // VM terminated, stop accepting 
                     } catch (IOException e) {
                         // Report any other exception to waiting thread
                         notifyOfAcceptException(e);
@@ -271,3 +271,4 @@ abstract class AbstractLauncher extends ConnectorImpl implements LaunchingConnec
         }
     }
 }
+

@@ -36,7 +36,8 @@ package sun.misc;
  * simply call Unlock(), that thread will not be able to acquire the
  * lock until the state variable equals its desired value. <p>
  *
- * @author      Peter King
+ * @version 	%I%, %G%
+ * @author 	Peter King
  */
 public final
 class ConditionLock extends Lock {
@@ -52,7 +53,7 @@ class ConditionLock extends Lock {
      * Creates a ConditionLock in an initialState.
      */
     public ConditionLock (int initialState) {
-        state = initialState;
+	state = initialState;
     }
 
     /**
@@ -62,13 +63,13 @@ class ConditionLock extends Lock {
      * @exception  java.lang.InterruptedException if any thread has
      *               interrupted this thread.
      */
-    public synchronized void lockWhen(int desiredState)
-        throws InterruptedException
+    public synchronized void lockWhen(int desiredState) 
+	throws InterruptedException
     {
-        while (state != desiredState) {
-            wait();
-        }
-        lock();
+	while (state != desiredState) {
+	    wait();
+	}
+	lock();
     }
 
     /**
@@ -76,7 +77,7 @@ class ConditionLock extends Lock {
      * @param newState the new state
      */
     public synchronized void unlockWith(int newState) {
-        state = newState;
-        unlock();
+	state = newState;
+	unlock();
     }
 }

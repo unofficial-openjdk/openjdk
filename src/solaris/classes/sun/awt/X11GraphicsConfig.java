@@ -63,6 +63,7 @@ import sun.awt.X11ComponentPeer;
  *
  * @see GraphicsEnvironment
  * @see GraphicsDevice
+ * @version %I%, %G%
  */
 public class X11GraphicsConfig extends GraphicsConfiguration
     implements SurfaceManager.ProxiedGraphicsConfig
@@ -83,7 +84,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
     protected int bitsPerPixel;
 
     protected SurfaceType surfaceType;
-
+    
     public RenderLoops solidloops;
 
     public static X11GraphicsConfig getConfig(X11GraphicsDevice device,
@@ -91,7 +92,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
                                               int colormap,
                                               boolean doubleBuffer)
     {
-        return new X11GraphicsConfig(device, visualnum, depth, colormap, doubleBuffer);
+	return new X11GraphicsConfig(device, visualnum, depth, colormap, doubleBuffer);
     }
 
     /*
@@ -104,26 +105,26 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      * released!
      */
     public static X11GraphicsConfig getConfig(X11GraphicsDevice device,
-                                              int visualnum, int depth,
+					      int visualnum, int depth,
                                               int colormap, int type)
     {
-        return new X11GraphicsConfig(device, visualnum, depth, colormap, false);
+	return new X11GraphicsConfig(device, visualnum, depth, colormap, false);
     }
 
     private native int getNumColors();
     private native void init(int visualNum, int screen);
     private native ColorModel makeColorModel();
-
+    
     protected X11GraphicsConfig(X11GraphicsDevice device,
-                                int visualnum, int depth,
+			        int visualnum, int depth,
                                 int colormap, boolean doubleBuffer)
     {
-        this.screen = device;
-        this.visual = visualnum;
+	this.screen = device;
+	this.visual = visualnum;
         this.doubleBuffer = doubleBuffer;
         this.depth = depth;
         this.colormap = colormap;
-        init (visualnum, screen.getScreen());
+	init (visualnum, screen.getScreen());
 
         // add a record to the Disposer so that we destroy the native
         // AwtGraphicsConfigData when this object goes away (i.e. after a
@@ -137,14 +138,14 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      * Return the graphics device associated with this configuration.
      */
     public GraphicsDevice getDevice() {
-        return screen;
+	return screen;
     }
 
     /**
      * Returns the visual id associated with this configuration.
      */
     public int getVisual () {
-        return visual;
+	return visual;
     }
 
 
@@ -152,31 +153,31 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      * Returns the depth associated with this configuration.
      */
     public int getDepth () {
-        return depth;
+	return depth;
     }
 
     /**
      * Returns the colormap associated with this configuration.
      */
     public int getColormap () {
-        return colormap;
+	return colormap;
     }
 
     /**
-     * Returns a number of bits allocated per pixel
+     * Returns a number of bits allocated per pixel 
      * (might be different from depth)
      */
     public int getBitsPerPixel() {
-        return bitsPerPixel;
+	return bitsPerPixel;
     }
 
     public synchronized SurfaceType getSurfaceType() {
-        if (surfaceType != null) {
-            return surfaceType;
-        }
+	if (surfaceType != null) {
+	    return surfaceType;
+	}
 
-        surfaceType = X11SurfaceData.getSurfaceType(this, Transparency.OPAQUE);
-        return surfaceType;
+	surfaceType = X11SurfaceData.getSurfaceType(this, Transparency.OPAQUE);
+	return surfaceType;
     }
 
     public Object getProxyKey() {
@@ -188,32 +189,32 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      * solid fills and strokes.
      */
     public synchronized RenderLoops getSolidLoops(SurfaceType stype) {
-        if (solidloops == null) {
-            solidloops = SurfaceData.makeRenderLoops(SurfaceType.OpaqueColor,
-                                                     CompositeType.SrcNoEa,
-                                                     stype);
-        }
-        return solidloops;
+	if (solidloops == null) {
+	    solidloops = SurfaceData.makeRenderLoops(SurfaceType.OpaqueColor,
+						     CompositeType.SrcNoEa,
+						     stype);
+	}
+	return solidloops;
     }
 
     /**
      * Returns the color model associated with this configuration.
      */
     public synchronized ColorModel getColorModel() {
-        if (colorModel == null)  {
-            // Force SystemColors to be resolved before we create the CM
-            java.awt.SystemColor.window.getRGB();
+	if (colorModel == null)  {
+	    // Force SystemColors to be resolved before we create the CM
+	    java.awt.SystemColor.window.getRGB();
             // This method, makeColorModel(), can return null if the
             // toolkit is not initialized yet.
             // The toolkit will then call back to this routine after it
             // is initialized and makeColorModel() should return a non-null
             // colorModel.
-            colorModel = makeColorModel();
-            if (colorModel == null)
-                colorModel = Toolkit.getDefaultToolkit ().getColorModel ();
-        }
-
-        return colorModel;
+	    colorModel = makeColorModel();
+	    if (colorModel == null)
+		colorModel = Toolkit.getDefaultToolkit ().getColorModel ();
+	}
+	
+	return colorModel;
     }
 
     /**
@@ -221,15 +222,15 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      * supports the specified transparency.
      */
     public ColorModel getColorModel(int transparency) {
-        switch (transparency) {
-        case Transparency.OPAQUE:
+	switch (transparency) {
+	case Transparency.OPAQUE:
             return getColorModel();
-        case Transparency.BITMASK:
+	case Transparency.BITMASK:
             return new DirectColorModel(25, 0xff0000, 0xff00, 0xff, 0x1000000);
-        case Transparency.TRANSLUCENT:
+	case Transparency.TRANSLUCENT:
             return ColorModel.getRGBdefault();
-        default:
-            return null;
+	default:
+	    return null;
         }
     }
 
@@ -243,14 +244,14 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      * For image buffers, this Transform will be the Identity transform.
      */
     public AffineTransform getDefaultTransform() {
-        return new AffineTransform();
+	return new AffineTransform();
     }
-
+    
     /**
      *
      * Returns a Transform that can be composed with the default Transform
      * of a Graphics2D so that 72 units in user space will equal 1 inch
-     * in device space.
+     * in device space.  
      * Given a Graphics2D, g, one can reset the transformation to create
      * such a mapping by using the following pseudocode:
      * <pre>
@@ -259,16 +260,16 @@ public class X11GraphicsConfig extends GraphicsConfiguration
      *      g.setTransform(gc.getDefaultTransform());
      *      g.transform(gc.getNormalizingTransform());
      * </pre>
-     * Note that sometimes this Transform will be identity (e.g. for
+     * Note that sometimes this Transform will be identity (e.g. for 
      * printers or metafile output) and that this Transform is only
      * as accurate as the information supplied by the underlying system.
      * For image buffers, this Transform will be the Identity transform,
      * since there is no valid distance measurement.
      */
     public AffineTransform getNormalizingTransform() {
-        double xscale = getXResolution(screen.getScreen()) / 72.0;
-        double yscale = getYResolution(screen.getScreen()) / 72.0;
-        return new AffineTransform(xscale, 0.0, 0.0, yscale, 0.0, 0.0);
+	double xscale = getXResolution(screen.getScreen()) / 72.0;
+	double yscale = getYResolution(screen.getScreen()) / 72.0;
+	return new AffineTransform(xscale, 0.0, 0.0, yscale, 0.0, 0.0);
     }
 
     private native double getXResolution(int screen);
@@ -279,19 +280,19 @@ public class X11GraphicsConfig extends GraphicsConfiguration
     }
 
     public String toString() {
-        return ("X11GraphicsConfig[dev="+screen+
-                ",vis=0x"+Integer.toHexString(visual)+
-                "]");
+	return ("X11GraphicsConfig[dev="+screen+
+		",vis=0x"+Integer.toHexString(visual)+
+		"]");
     }
 
     /*
      * Initialize JNI field and method IDs for fields that may be
      *  accessed from C.
-     */
+     */  
     private static native void initIDs();
 
     static {
-        initIDs ();
+	initIDs ();
     }
 
     public Rectangle getBounds() {
@@ -305,7 +306,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
             super(imageCaps, imageCaps, FlipContents.UNDEFINED);
         }
     }
-
+    
     public BufferCapabilities getBufferCapabilities() {
         if (bufferCaps == null) {
             if (doubleBuffer) {
@@ -316,7 +317,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
         }
         return bufferCaps;
     }
-
+    
     public ImageCapabilities getImageCapabilities() {
         return imageCaps;
     }
@@ -365,7 +366,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
     {
         // As of 1.7 we no longer create pmoffscreens here...
         ColorModel model = getColorModel(Transparency.OPAQUE);
-        WritableRaster wr =
+        WritableRaster wr = 
             model.createCompatibleWritableRaster(width, height);
         return new OffScreenImage(target, model, wr,
                                   model.isAlphaPremultiplied());
@@ -435,7 +436,7 @@ public class X11GraphicsConfig extends GraphicsConfiguration
         int swapAction = getSwapAction(flipAction);
         swapBuffers(window, swapAction);
     }
-
+    
     /**
      * Maps the given FlipContents constant to the associated XDBE swap
      * action constant.

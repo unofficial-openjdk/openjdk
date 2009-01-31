@@ -26,7 +26,7 @@ package com.sun.jmx.snmp;
 
 /**
  * This exception is thrown when an error occurs in an <CODE> SnmpSecurityModel </CODE>.
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  * @since 1.5
  */
@@ -62,6 +62,6 @@ public class SnmpSecurityException extends Exception {
      * @param msg The exception msg to display.
      */
     public SnmpSecurityException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

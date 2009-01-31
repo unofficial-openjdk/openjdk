@@ -67,8 +67,8 @@ public final class TimeoutLockLoops {
             Thread.sleep(10);
         }
         pool.shutdown();
-        if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
-            throw new Error();
+	if (! pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS))
+	    throw new Error();
     }
 
     static final class ReentrantLockLoop implements Runnable {

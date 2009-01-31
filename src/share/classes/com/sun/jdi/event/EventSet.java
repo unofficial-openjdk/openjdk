@@ -32,9 +32,9 @@ import java.util.Set;
 /**
  * Several {@link Event} objects may be created at a given time by
  * the target {@link VirtualMachine}. For example, there may be
- * more than one {@link com.sun.jdi.request.BreakpointRequest}
+ * more than one {@link com.sun.jdi.request.BreakpointRequest} 
  * for a given {@link Location}
- * or you might single step to the same location as a
+ * or you might single step to the same location as a 
  * BreakpointRequest.  These {@link Event} objects are delivered
  * together as an EventSet.  For uniformity, an EventSet is always used
  * to deliver {@link Event} objects.  EventSets are delivered by
@@ -43,10 +43,10 @@ import java.util.Set;
  * <P>
  * Associated with the issuance of an event set, suspensions may
  * have occurred in the target VM.  These suspensions correspond
- * with the {@link #suspendPolicy() suspend policy}.
+ * with the {@link #suspendPolicy() suspend policy}. 
  * To assure matching resumes occur, it is recommended,
  * where possible,
- * to complete the processing of an event set with
+ * to complete the processing of an event set with 
  * {@link #resume() EventSet.resume()}.
  * <P>
  * The events that are grouped in an EventSet are restricted in the
@@ -82,7 +82,7 @@ import java.util.Set;
  *     <UL>
  *     <LI>{@link AccessWatchpointEvent}
  *     </UL>
- * <LI>Only with other ModificationWatchpointEvents for the same field
+ * <LI>Only with other ModificationWatchpointEvents for the same field 
  * modification:
  *     <UL>
  *     <LI>{@link ModificationWatchpointEvent}
@@ -95,7 +95,7 @@ import java.util.Set;
  *     <UL>
  *     <LI>{@link MethodExitEvent}
  *     </UL>
- * <LI>Only with other Monitor contended enter events for the same monitor object:
+ * <LI>Only with other Monitor contended enter events for the same monitor object: 
  *     <UL>
  *     <LI>Monitor Contended Enter Event
  *     </UL>
@@ -103,11 +103,11 @@ import java.util.Set;
  *     <UL>
  *     <LI>Monitor Contended Entered Event
  *    </UL>
- * <LI>Only with other Monitor wait events for the same monitor object:
+ * <LI>Only with other Monitor wait events for the same monitor object: 
  *     <UL>
  *     <LI>Monitor Wait Event
  *     </UL>
- * <LI>Only with other Monitor waited events for the same monitor object:
+ * <LI>Only with other Monitor waited events for the same monitor object: 
  *     <UL>
  *     <LI>Monitor Waited Event
  *     </UL>
@@ -135,15 +135,15 @@ public interface EventSet extends Mirror, Set<Event> {
      * policies for each event's request; the target VM chooses the
      * policy which suspends the most threads.  The target VM
      * suspends threads according to that policy
-     * and that policy is returned here. See
-     * {@link com.sun.jdi.request.EventRequest} for the possible
+     * and that policy is returned here. See 
+     * {@link com.sun.jdi.request.EventRequest} for the possible 
      * policy values.
      * <p>
      * In rare cases, the suspend policy may differ from the requested
-     * value if a {@link ClassPrepareEvent} has occurred in a
+     * value if a {@link ClassPrepareEvent} has occurred in a 
      * debugger system thread. See {@link ClassPrepareEvent#thread}
      * for details.
-     *
+     * 
      * @return the suspendPolicy which is either
      * {@link com.sun.jdi.request.EventRequest#SUSPEND_ALL SUSPEND_ALL},
      * {@link com.sun.jdi.request.EventRequest#SUSPEND_EVENT_THREAD SUSPEND_EVENT_THREAD} or
@@ -157,15 +157,15 @@ public interface EventSet extends Mirror, Set<Event> {
     EventIterator eventIterator();
 
     /**
-     * Resumes threads suspended by this event set. If the {@link #suspendPolicy}
+     * Resumes threads suspended by this event set. If the {@link #suspendPolicy} 
      * is {@link com.sun.jdi.request.EventRequest#SUSPEND_ALL}, a call
-     * to this method is equivalent to
-     * {@link com.sun.jdi.VirtualMachine#resume}. If the
-     * suspend policy is
+     * to this method is equivalent to 
+     * {@link com.sun.jdi.VirtualMachine#resume}. If the 
+     * suspend policy is 
      * {@link com.sun.jdi.request.EventRequest#SUSPEND_EVENT_THREAD},
-     * a call to this method is equivalent to
-     * {@link com.sun.jdi.ThreadReference#resume} for the event thread.
-     * Otherwise, a call to this method is a no-op.
+     * a call to this method is equivalent to 
+     * {@link com.sun.jdi.ThreadReference#resume} for the event thread. 
+     * Otherwise, a call to this method is a no-op. 
      */
     void resume();
 }

@@ -43,32 +43,32 @@
  * files.
  */
 #ifndef DecodeDeclared
-#define DeclareDecodeVars       DeclareICMVars
-#define InitPixelDecode(CM)     InitPixelICM(unhand(CM))
-#define PixelDecode             PixelICMDecode
+#define DeclareDecodeVars	DeclareICMVars
+#define InitPixelDecode(CM)	InitPixelICM(unhand(CM))
+#define PixelDecode		PixelICMDecode
 #define DecodeDeclared
 #endif
 
 #include "java_awt_image_IndexColorModel.h"
 
-#define DeclareICMVars                                  \
-    unsigned int mapsize;                               \
+#define DeclareICMVars					\
+    unsigned int mapsize;				\
     unsigned int *cmrgb;
 
-#define InitPixelICM(CM)                                        \
-    do {                                                        \
-        Classjava_awt_image_IndexColorModel *icm =              \
-            (Classjava_awt_image_IndexColorModel *) CM;         \
-        cmrgb = (unsigned int *) unhand(icm->rgb);              \
-        mapsize = obj_length(icm->rgb);                         \
+#define InitPixelICM(CM)					\
+    do {							\
+	Classjava_awt_image_IndexColorModel *icm =		\
+	    (Classjava_awt_image_IndexColorModel *) CM;		\
+	cmrgb = (unsigned int *) unhand(icm->rgb);		\
+	mapsize = obj_length(icm->rgb);				\
     } while (0)
 
-#define PixelICMDecode(CM, pixel, red, green, blue, alpha)      \
-    do {                                                        \
-        VerifyPixelRange(pixel, mapsize);                       \
-        pixel = cmrgb[pixel];                                   \
-        IfAlpha(alpha = (pixel >> ALPHASHIFT) & 0xff;)          \
-        red = (pixel >> REDSHIFT) & 0xff;                       \
-        green = (pixel >> GREENSHIFT) & 0xff;                   \
-        blue = (pixel >> BLUESHIFT) & 0xff;                     \
+#define PixelICMDecode(CM, pixel, red, green, blue, alpha)	\
+    do {							\
+	VerifyPixelRange(pixel, mapsize);			\
+	pixel = cmrgb[pixel];					\
+	IfAlpha(alpha = (pixel >> ALPHASHIFT) & 0xff;)		\
+	red = (pixel >> REDSHIFT) & 0xff;			\
+	green = (pixel >> GREENSHIFT) & 0xff;			\
+	blue = (pixel >> BLUESHIFT) & 0xff;			\
     } while (0)

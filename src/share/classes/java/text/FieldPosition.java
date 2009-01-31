@@ -67,6 +67,7 @@ package java.text;
  * formatted string use the <code>Format</code> method
  * <code>formatToCharacterIterator</code>.
  *
+ * @version     %I% %G%
  * @author      Mark Davis
  * @see         java.text.Format
  */

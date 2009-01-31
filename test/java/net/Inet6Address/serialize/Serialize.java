@@ -30,75 +30,75 @@
 import java.net.*;
 import java.io.*;
 import java.util.*;
-
+  
 public class Serialize {
-
-     public static void main(String[] args)
+     
+     public static void main(String[] args) 
          throws Exception
      {
-         Enumeration nifs = NetworkInterface.getNetworkInterfaces();
-         while (nifs.hasMoreElements()) {
-            NetworkInterface nif = (NetworkInterface)nifs.nextElement();
-            Enumeration addrs = nif.getInetAddresses();
-            while (addrs.hasMoreElements()) {
-                Object o = addrs.nextElement();
-                if (o instanceof Inet6Address) {
-                    Inet6Address addr = (Inet6Address) o;
-                    System.out.println ("serializing " + addr);
-                    if (!test (addr)) {
-                        throw new RuntimeException ("failed on " + addr.toString());
-                    }
+	 Enumeration nifs = NetworkInterface.getNetworkInterfaces();
+	 while (nifs.hasMoreElements()) {
+	    NetworkInterface nif = (NetworkInterface)nifs.nextElement();
+	    Enumeration addrs = nif.getInetAddresses();
+	    while (addrs.hasMoreElements()) {
+		Object o = addrs.nextElement();
+		if (o instanceof Inet6Address) {
+		    Inet6Address addr = (Inet6Address) o;
+		    System.out.println ("serializing " + addr);
+		    if (!test (addr)) {
+			throw new RuntimeException ("failed on " + addr.toString());
+		    }
 
-                    /* now reconstruct address with string name
-                     * and test again
-                     */
-                    byte[] bytes = addr.getAddress();
-                    Inet6Address addr1 = Inet6Address.getByAddress ("foo", bytes, nif);
-                    System.out.println ("serializing " + addr1);
-                    if (!test (addr1)) {
-                        throw new RuntimeException ("failed on " + addr1.toString());
-                    }
-                }
-            }
-        }
+		    /* now reconstruct address with string name 
+		     * and test again
+		     */
+		    byte[] bytes = addr.getAddress();
+		    Inet6Address addr1 = Inet6Address.getByAddress ("foo", bytes, nif);
+		    System.out.println ("serializing " + addr1);
+		    if (!test (addr1)) {
+		        throw new RuntimeException ("failed on " + addr1.toString());
+		    }
+		}
+	    }
+	}
+		
+	ObjectInputStream ois;
+	Inet6Address nobj;
 
-        ObjectInputStream ois;
-        Inet6Address nobj;
+	 // check ::1 object serialised with 1.4.2 is readable
 
-         // check ::1 object serialised with 1.4.2 is readable
-
-         File file = new File (System.getProperty("test.src"), "serial1.4.2.ser");
+	 File file = new File (System.getProperty("test.src"), "serial1.4.2.ser");
          ois = new ObjectInputStream(new FileInputStream(file));
          nobj = (Inet6Address) ois.readObject();
-         if (!nobj.equals (InetAddress.getByName ("::1"))) {
-            throw new RuntimeException ("old ::1 not deserialized right");
-         }
+	 if (!nobj.equals (InetAddress.getByName ("::1"))) {
+	    throw new RuntimeException ("old ::1 not deserialized right");
+	 }
 
-         System.out.println(nobj);
+     	 System.out.println(nobj);
 
-        // create an address with an unlikely numeric scope_id
-        if (!test ((Inet6Address)InetAddress.getByName ("fe80::1%99"))) {
-            throw new RuntimeException ("test failed on fe80::1%99");
+	// create an address with an unlikely numeric scope_id
+	if (!test ((Inet6Address)InetAddress.getByName ("fe80::1%99"))) {
+	    throw new RuntimeException ("test failed on fe80::1%99");
         }
 
-         System.out.println("All tests passed");
+     	 System.out.println("All tests passed");
      }
 
      static boolean test (Inet6Address obj) throws Exception {
          ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("i6a1.ser"));
          oos.writeObject(obj);
          oos.close();
-
+         
          ObjectInputStream ois = new ObjectInputStream(new FileInputStream("i6a1.ser"));
          Inet6Address nobj = (Inet6Address) ois.readObject();
-
+         
          if (nobj.equals(obj)) {
              return true;
          } else {
              return false;
          }
-
+	
 
      }
-
+ 
  }

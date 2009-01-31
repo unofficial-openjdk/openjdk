@@ -43,7 +43,7 @@ JNIEXPORT jint JNICALL Java_sun_management_GcInfoBuilder_getNumGcExtAttributes
 }
 
 JNIEXPORT void JNICALL Java_sun_management_GcInfoBuilder_fillGcAttributeInfo
-  (JNIEnv *env, jobject dummy, jobject gc,
+  (JNIEnv *env, jobject dummy, jobject gc, 
    jint num_attributes, jobjectArray attributeNames,
    jcharArray types, jobjectArray descriptions) {
 
@@ -64,7 +64,7 @@ JNIEXPORT void JNICALL Java_sun_management_GcInfoBuilder_fillGcAttributeInfo
         return;
     }
 
-    ext_att_info = (jmmExtAttributeInfo*) malloc(num_attributes *
+    ext_att_info = (jmmExtAttributeInfo*) malloc(num_attributes * 
                                                  sizeof(jmmExtAttributeInfo));
     if (ext_att_info == NULL) {
         JNU_ThrowOutOfMemoryError(env, 0);
@@ -88,20 +88,20 @@ JNIEXPORT void JNICALL Java_sun_management_GcInfoBuilder_fillGcAttributeInfo
         nativeTypes[i] = ext_att_info[i].type;
         attName = (*env)->NewStringUTF(env, ext_att_info[i].name);
         desc = (*env)->NewStringUTF(env, ext_att_info[i].description);
-        (*env)->SetObjectArrayElement(env, attributeNames, i, attName);
-        (*env)->SetObjectArrayElement(env, descriptions, i, desc);
+        (*env)->SetObjectArrayElement(env, attributeNames, i, attName); 
+        (*env)->SetObjectArrayElement(env, descriptions, i, desc); 
     }
     (*env)->SetCharArrayRegion(env, types, 0, num_attributes, nativeTypes);
 
     if (ext_att_info != NULL) {
         free(ext_att_info);
-    }
+    } 
     if (nativeTypes != NULL) {
         free(nativeTypes);
-    }
+    } 
 }
 
-static void setLongValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setLongValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                       jsize index, jlong value) {
     static const char* class_name = "java/lang/Long";
     static const char* signature = "(J)V";
@@ -110,7 +110,7 @@ static void setLongValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setBooleanValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setBooleanValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                          jsize index, jboolean value) {
     static const char* class_name = "java/lang/Boolean";
     static const char* signature = "(Z)V";
@@ -119,7 +119,7 @@ static void setBooleanValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setByteValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setByteValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                       jsize index, jbyte value) {
     static const char* class_name = "java/lang/Byte";
     static const char* signature = "(B)V";
@@ -128,7 +128,7 @@ static void setByteValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setIntValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setIntValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                      jsize index, jint value) {
     static const char* class_name = "java/lang/Integer";
     static const char* signature = "(I)V";
@@ -137,7 +137,7 @@ static void setIntValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setShortValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setShortValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                        jsize index, jshort value) {
     static const char* class_name = "java/lang/Short";
     static const char* signature = "(S)V";
@@ -146,7 +146,7 @@ static void setShortValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setDoubleValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setDoubleValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                         jsize index, jdouble value) {
     static const char* class_name = "java/lang/Double";
     static const char* signature = "(D)V";
@@ -155,7 +155,7 @@ static void setDoubleValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setFloatValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setFloatValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                        jsize index, jfloat value) {
     static const char* class_name = "java/lang/Float";
     static const char* signature = "(D)V";
@@ -164,7 +164,7 @@ static void setFloatValueAtObjectArray(JNIEnv *env, jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, index, obj);
 }
 
-static void setCharValueAtObjectArray(JNIEnv *env, jobjectArray array,
+static void setCharValueAtObjectArray(JNIEnv *env, jobjectArray array, 
                                       jsize index, jchar value) {
     static const char* class_name = "java/lang/Character";
     static const char* signature = "(C)V";
@@ -210,7 +210,7 @@ JNIEXPORT jobject JNICALL Java_sun_management_GcInfoBuilder_getLastGcInfo0
         }
         return 0;
     }
-
+    
     // convert the ext_att_types to native types
     nativeTypes = (jchar*) malloc(ext_att_count * sizeof(jchar));
     if (nativeTypes == NULL) {
@@ -266,8 +266,8 @@ JNIEXPORT jobject JNICALL Java_sun_management_GcInfoBuilder_getLastGcInfo0
         free(nativeTypes);
     }
 
-    return JNU_NewObjectByName(env,
-       "com/sun/management/GcInfo",
+    return JNU_NewObjectByName(env, 
+       "com/sun/management/GcInfo", 
        "(Lsun/management/GcInfoBuilder;JJJ[Ljava/lang/management/MemoryUsage;[Ljava/lang/management/MemoryUsage;[Ljava/lang/Object;)V",
        builder,
        gc_stat.gc_index,

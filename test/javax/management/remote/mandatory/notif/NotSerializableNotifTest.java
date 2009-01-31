@@ -55,17 +55,17 @@ public class NotSerializableNotifTest {
     public static void main(String[] args) throws Exception {
         System.out.println(">>> Test to send a not serializable notification");
 
-        // IIOP fails on JDK1.4, see 5034318
-        final String v = System.getProperty("java.version");
-        float f = Float.parseFloat(v.substring(0, 3));
-        if (f<1.5) {
-            protocols = new String[] {"rmi", "jmxmp"};
-        } else {
-            protocols = new String[] {"rmi", "iiop", "jmxmp"};
-        }
+	// IIOP fails on JDK1.4, see 5034318
+	final String v = System.getProperty("java.version");
+	float f = Float.parseFloat(v.substring(0, 3));
+	if (f<1.5) {
+	    protocols = new String[] {"rmi", "jmxmp"};
+	} else {
+	    protocols = new String[] {"rmi", "iiop", "jmxmp"};
+	}
 
-        emitter = new ObjectName("Default:name=NotificationEmitter");
-        mbeanServer.registerMBean(new NotificationEmitter(), emitter);
+	emitter = new ObjectName("Default:name=NotificationEmitter");
+	mbeanServer.registerMBean(new NotificationEmitter(), emitter);
 
         boolean ok = true;
         for (int i = 0; i < protocols.length; i++) {
@@ -95,14 +95,14 @@ public class NotSerializableNotifTest {
     private static boolean test(String proto) throws Exception {
         System.out.println("\n>>> Test for protocol " + proto);
 
-        JMXServiceURL url = new JMXServiceURL(proto, null, port++);
+	JMXServiceURL url = new JMXServiceURL(proto, null, port++);
 
         System.out.println(">>> Create a server: "+url);
 
-        JMXConnectorServer server = null;
-        try {
-            server = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbeanServer);
-        } catch (MalformedURLException e) {
+	JMXConnectorServer server = null;
+	try {
+	    server = JMXConnectorServerFactory.newJMXConnectorServer(url, null, mbeanServer);
+	} catch (MalformedURLException e) {
             System.out.println("System does not recognize URL: " + url +
                                "; ignoring");
             return true;
@@ -110,59 +110,59 @@ public class NotSerializableNotifTest {
 
         server.start();
 
-        url = server.getAddress();
+	url = server.getAddress();
 
         System.out.println(">>> Creating a client connectint to: "+url);
         JMXConnector conn = JMXConnectorFactory.connect(url, null);
-        MBeanServerConnection client = conn.getMBeanServerConnection();
+	MBeanServerConnection client = conn.getMBeanServerConnection();
 
-        // add listener from the client side
-        Listener listener = new Listener();
-        client.addNotificationListener(emitter, listener, null, null);
+	// add listener from the client side
+	Listener listener = new Listener();
+	client.addNotificationListener(emitter, listener, null, null);
 
-        // ask to send one not serializable notif
-        Object[] params = new Object[] {new Integer(1)};
-        String[] signatures = new String[] {"java.lang.Integer"};
-        client.invoke(emitter, "sendNotserializableNotifs", params, signatures);
+	// ask to send one not serializable notif
+	Object[] params = new Object[] {new Integer(1)};
+	String[] signatures = new String[] {"java.lang.Integer"};
+	client.invoke(emitter, "sendNotserializableNotifs", params, signatures);
 
-        // listener clean
-        client.removeNotificationListener(emitter, listener);
-        listener = new Listener();
-        client.addNotificationListener(emitter, listener, null, null);
+	// listener clean
+	client.removeNotificationListener(emitter, listener);
+	listener = new Listener();
+	client.addNotificationListener(emitter, listener, null, null);
 
-        //ask to send serializable notifs
-        params = new Object[] {new Integer(sentNotifs)};
-        client.invoke(emitter, "sendNotifications", params, signatures);
+	//ask to send serializable notifs
+	params = new Object[] {new Integer(sentNotifs)};
+	client.invoke(emitter, "sendNotifications", params, signatures);
 
-        // waiting ...
-        synchronized (listener) {
-            for (int i=0; i<10; i++) {
-                if (listener.received() < sentNotifs) {
-                    listener.wait(1000);
-                } else {
-                    break;
-                }
-            }
-        }
+	// waiting ...
+	synchronized (listener) {
+	    for (int i=0; i<10; i++) {
+		if (listener.received() < sentNotifs) {
+		    listener.wait(1000);	    
+		} else {
+		    break;
+		}
+	    }
+	}
 
-        // check
-        boolean ok = true;
+	// check
+	boolean ok = true;
 
-        if (listener.received() != sentNotifs) {
-           System.out.println("Failed: received "+listener.received()+
-                                   " but should be "+sentNotifs);
-           ok = false;
-        } else {
-           System.out.println("The client received all notifications.");
-        }
+	if (listener.received() != sentNotifs) {
+	   System.out.println("Failed: received "+listener.received()+
+				   " but should be "+sentNotifs);
+	   ok = false;
+	} else {
+	   System.out.println("The client received all notifications.");
+	}
 
-        // clean
-        client.removeNotificationListener(emitter, listener);
+	// clean
+	client.removeNotificationListener(emitter, listener);
 
-        conn.close();
-        server.stop();
+	conn.close();
+	server.stop();
 
-        return ok;
+	return ok;
     }
 
 //--------------------------
@@ -170,71 +170,71 @@ public class NotSerializableNotifTest {
 //--------------------------
 
     private static class Listener implements NotificationListener {
-        public void handleNotification(Notification notif, Object handback) {
-            synchronized (this) {
-                if(++receivedNotifs == sentNotifs) {
-                    this.notifyAll();
-                }
-            }
-        }
+	public void handleNotification(Notification notif, Object handback) {
+	    synchronized (this) {
+		if(++receivedNotifs == sentNotifs) {		
+		    this.notifyAll();
+		}
+	    }
+	}
 
-        public int received() {
-            return receivedNotifs;
-        }
+	public int received() {
+	    return receivedNotifs;
+	}
 
-        private int receivedNotifs = 0;
+	private int receivedNotifs = 0;
     }
 
     public static class NotificationEmitter extends NotificationBroadcasterSupport
-        implements NotificationEmitterMBean {
+	implements NotificationEmitterMBean {
 
-        public MBeanNotificationInfo[] getNotificationInfo() {
-            final String[] ntfTypes = {myType};
+	public MBeanNotificationInfo[] getNotificationInfo() {
+	    final String[] ntfTypes = {myType};
 
-            final MBeanNotificationInfo[] ntfInfoArray  = {
-                new MBeanNotificationInfo(ntfTypes,
-                                          "javax.management.Notification",
-                                          "Notifications sent by the NotificationEmitter")};
+	    final MBeanNotificationInfo[] ntfInfoArray  = {
+		new MBeanNotificationInfo(ntfTypes,
+					  "javax.management.Notification",
+					  "Notifications sent by the NotificationEmitter")};
 
-            return ntfInfoArray;
-        }
+	    return ntfInfoArray;
+	}  
+	
+	/**
+	 * Send not serializable Notifications.
+	 *
+	 * @param nb The number of notifications to send
+	 */
+	public void sendNotserializableNotifs(Integer nb) {
 
-        /**
-         * Send not serializable Notifications.
-         *
-         * @param nb The number of notifications to send
-         */
-        public void sendNotserializableNotifs(Integer nb) {
+	    Notification notif;
+	    for (int i=1; i<=nb.intValue(); i++) {
+		notif = new Notification(myType, this, i);
 
-            Notification notif;
-            for (int i=1; i<=nb.intValue(); i++) {
-                notif = new Notification(myType, this, i);
+		notif.setUserData(new Object());
+		sendNotification(notif);
+	    }
+	}
 
-                notif.setUserData(new Object());
-                sendNotification(notif);
-            }
-        }
+	/**
+	 * Send Notification objects.
+	 *
+	 * @param nb The number of notifications to send
+	 */
+	public void sendNotifications(Integer nb) {
+	    Notification notif;
+	    for (int i=1; i<=nb.intValue(); i++) {
+		notif = new Notification(myType, this, i);
 
-        /**
-         * Send Notification objects.
-         *
-         * @param nb The number of notifications to send
-         */
-        public void sendNotifications(Integer nb) {
-            Notification notif;
-            for (int i=1; i<=nb.intValue(); i++) {
-                notif = new Notification(myType, this, i);
-
-                sendNotification(notif);
-            }
-        }
-
-        private final String myType = "notification.my_notification";
+		sendNotification(notif);
+	    }
+	}
+    
+	private final String myType = "notification.my_notification";
     }
-
+    
     public interface NotificationEmitterMBean {
-        public void sendNotifications(Integer nb);
+	public void sendNotifications(Integer nb);
 
-        public void sendNotserializableNotifs(Integer nb);
+	public void sendNotserializableNotifs(Integer nb);
     }
 }

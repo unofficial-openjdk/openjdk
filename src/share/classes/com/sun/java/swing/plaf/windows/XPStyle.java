@@ -35,7 +35,7 @@
  * <code>JComponent</code>s may also produce unexpected results,
  * such as the wrong colors showing up, and is generally not
  * encouraged.
- *
+ * 
  */
 
 package com.sun.java.swing.plaf.windows;
@@ -61,6 +61,7 @@ import static com.sun.java.swing.plaf.windows.TMSchema.*;
 /**
  * Implements Windows XP Styles for the Windows Look and Feel.
  *
+ * @version 1.34 07/13/06
  * @author Leif Samuelsson
  */
 class XPStyle {
@@ -144,10 +145,10 @@ class XPStyle {
                                             prop.getValue());
         return TypeEnum.getTypeEnum(prop, enumValue);
     }
-
+    
     private static String getTypeEnumName(Component c, Part part, State state, Prop prop) {
         int enumValue = ThemeReader.getEnum(part.getControlName(c), part.getValue(),
-                                            State.getValue(part, state),
+					    State.getValue(part, state),
                                             prop.getValue());
         if (enumValue == -1) {
             return null;
@@ -166,7 +167,7 @@ class XPStyle {
      */
     int getInt(Component c, Part part, State state, Prop prop, int fallback) {
         return ThemeReader.getInt(part.getControlName(c), part.getValue(),
-                                  State.getValue(part, state),
+				  State.getValue(part, state),
                                   prop.getValue());
     }
 
@@ -181,7 +182,7 @@ class XPStyle {
      */
     Dimension getDimension(Component c, Part part, State state, Prop prop) {
         return ThemeReader.getPosition(part.getControlName(c), part.getValue(),
-                                       State.getValue(part, state),
+				       State.getValue(part, state),
                                        prop.getValue());
     }
 
@@ -197,7 +198,7 @@ class XPStyle {
      */
     Point getPoint(Component c, Part part, State state, Prop prop) {
         Dimension d = ThemeReader.getPosition(part.getControlName(c), part.getValue(),
-                                              State.getValue(part, state),
+					      State.getValue(part, state),
                                               prop.getValue());
         if (d != null) {
             return new Point(d.width, d.height);
@@ -218,7 +219,7 @@ class XPStyle {
      */
     Insets getMargin(Component c, Part part, State state, Prop prop) {
         return ThemeReader.getThemeMargins(part.getControlName(c), part.getValue(),
-                                           State.getValue(part, state),
+					   State.getValue(part, state),
                                            prop.getValue());
     }
 
@@ -230,13 +231,13 @@ class XPStyle {
      *    in the current style
      */
     synchronized Color getColor(Skin skin, Prop prop, Color fallback) {
-        String key = skin.toString() + "." + prop.name();
-        Part part = skin.part;
+	String key = skin.toString() + "." + prop.name();
+	Part part = skin.part;
         Color color = colorMap.get(key);
         if (color == null) {
             color = ThemeReader.getColor(part.getControlName(null), part.getValue(),
                                          State.getValue(part, skin.state),
-                                         prop.getValue());
+					 prop.getValue());
             if (color != null) {
                 color = new ColorUIResource(color);
                 colorMap.put(key, color);
@@ -246,7 +247,7 @@ class XPStyle {
     }
 
     Color getColor(Component c, Part part, State state, Prop prop, Color fallback) {
-        return getColor(new Skin(c, part, state), prop, fallback);
+	return getColor(new Skin(c, part, state), prop, fallback);
     }
 
 
@@ -310,6 +311,10 @@ class XPStyle {
             super(color, thickness);
         }
 
+        public Insets getBorderInsets(Component c)       {
+            return getBorderInsets(c, new Insets(0,0,0,0));
+        }
+
         public Insets getBorderInsets(Component c, Insets insets)       {
             Insets margin = null;
             //
@@ -328,7 +333,7 @@ class XPStyle {
            insets.left   = (margin != null? margin.left : 0)   + thickness;
            insets.bottom = (margin != null? margin.bottom : 0) + thickness;
            insets.right =  (margin != null? margin.right : 0)  + thickness;
-
+               
            return insets;
         }
     }
@@ -341,7 +346,7 @@ class XPStyle {
             this.part = part;
             this.prop = prop;
         }
-
+        
         public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
             State state = State.NORMAL;
             // special casing for comboboxes.
@@ -372,6 +377,10 @@ class XPStyle {
             skin.paintSkin(g, x, y, width, height, null);
         }
 
+        public Insets getBorderInsets(Component c)       {
+            return getBorderInsets(c, new Insets(0,0,0,0));
+        }
+
         public Insets getBorderInsets(Component c, Insets insets)       {
             Insets margin = null;
             Insets borderInsets = skin.getContentMargin();
@@ -394,7 +403,7 @@ class XPStyle {
            insets.left   = (margin != null? margin.left : 0)   + borderInsets.left;
            insets.bottom = (margin != null? margin.bottom : 0) + borderInsets.bottom;
            insets.right  = (margin != null? margin.right : 0)  + borderInsets.right;
-
+               
            return insets;
         }
     }
@@ -404,15 +413,19 @@ class XPStyle {
             super(m.top+2, m.left+2, m.bottom+2, m.right+2);
         }
 
+        public Insets getBorderInsets(Component c)       {
+            return getBorderInsets(c, getBorderInsets());
+        }
+
         public Insets getBorderInsets(Component c, Insets insets)       {
             insets = super.getBorderInsets(c, insets);
-
+                
             Insets margin = null;
             if (c instanceof AbstractButton) {
                 Insets m = ((AbstractButton)c).getMargin();
                 // if this is a toolbar button then ignore getMargin()
                 // and subtract the padding added by the constructor
-                if(c.getParent() instanceof JToolBar
+                if(c.getParent() instanceof JToolBar 
                    && ! (c instanceof JRadioButton)
                    && ! (c instanceof JCheckBox)
                    && m instanceof InsetsUIResource) {
@@ -438,7 +451,7 @@ class XPStyle {
         }
     }
     boolean isSkinDefined(Component c, Part part) {
-        return (part.getValue() == 0)
+        return (part.getValue() == 0) 
             || ThemeReader.isThemePartDefined(
                    part.getControlName(c), part.getValue(), 0);
     }
@@ -448,7 +461,7 @@ class XPStyle {
      * for a named part (component type)
      *
      * @param part a <code>Part</code>
-     * @return a <code>Skin</code> object
+     * @return a <code>Skin</code> object 
      */
     synchronized Skin getSkin(Component c, Part part) {
         assert isSkinDefined(c, part) : "part " + part + " is not defined";
@@ -456,7 +469,7 @@ class XPStyle {
     }
 
 
-    long getThemeTransitionDuration(Component c, Part part, State stateFrom,
+    long getThemeTransitionDuration(Component c, Part part, State stateFrom, 
                                     State stateTo, Prop prop) {
          return ThemeReader.getThemeTransitionDuration(part.getControlName(c),
                                           part.getValue(),
@@ -471,35 +484,35 @@ class XPStyle {
      * and glyphs
      */
     static class Skin {
-        final Component component;
-        final Part part;
-        final State state;
+	final Component component;
+	final Part part;
+	final State state;
 
-        private final String string;
+	private final String string;
         private Dimension size = null;
 
-        Skin(Component component, Part part) {
-            this(component, part, null);
-        }
+	Skin(Component component, Part part) {
+	    this(component, part, null);
+	}
 
-        Skin(Part part, State state) {
-            this(null, part, state);
-        }
+	Skin(Part part, State state) {
+	    this(null, part, state);
+	}
 
-        Skin(Component component, Part part, State state) {
-            this.component = component;
-            this.part  = part;
-            this.state = state;
+	Skin(Component component, Part part, State state) {
+	    this.component = component;
+	    this.part  = part;
+	    this.state = state;
 
-            String str = part.getControlName(component) +"." + part.name();
-            if (state != null) {
-                str += "("+state.name()+")";
-            }
-            string = str;
-        }
+	    String str = part.getControlName(component) +"." + part.name();
+	    if (state != null) {
+		str += "("+state.name()+")";
+	    }
+	    string = str;
+	}
 
         Insets getContentMargin() {
-            /* idk: it seems margins are the same for all 'big enough'
+            /* idk: it seems margins are the same for all 'big enough' 
              * bounding rectangles.
              */
             int boundingWidth = 100;
@@ -532,17 +545,17 @@ class XPStyle {
             return getHeight((state != null) ? state : State.NORMAL);
         }
 
-        public String toString() {
-            return string;
-        }
+	public String toString() {
+	    return string;
+	}
 
-        public boolean equals(Object obj) {
-            return (obj instanceof Skin && ((Skin)obj).string.equals(string));
-        }
+	public boolean equals(Object obj) {
+	    return (obj instanceof Skin && ((Skin)obj).string.equals(string));
+	}
 
-        public int hashCode() {
-            return string.hashCode();
-        }
+	public int hashCode() {
+	    return string.hashCode();
+	}
 
         /** Paint a skin at x, y.
          *
@@ -552,9 +565,9 @@ class XPStyle {
          * @param state which state to paint
          */
         void paintSkin(Graphics g, int dx, int dy, State state) {
-            if (state == null) {
-                state = this.state;
-            }
+	    if (state == null) {
+		state = this.state;
+	    }
             paintSkin(g, dx, dy, getWidth(state), getHeight(state), state);
         }
 
@@ -582,11 +595,11 @@ class XPStyle {
          * @param state which state to paint
          */
         void paintSkin(Graphics g, int dx, int dy, int dw, int dh, State state) {
-            if (ThemeReader.isGetThemeTransitionDurationDefined()
-                  && component instanceof JComponent
-                  && SwingUtilities.getAncestorOfClass(CellRendererPane.class,
+            if (ThemeReader.isGetThemeTransitionDurationDefined() 
+                  && component instanceof JComponent 
+                  && SwingUtilities.getAncestorOfClass(CellRendererPane.class, 
                                                        component) == null) {
-                AnimationController.paintSkin((JComponent) component, this,
+                AnimationController.paintSkin((JComponent) component, this, 
                                               g, dx, dy, dw, dh, state);
             } else {
                 paintSkinRaw(g, dx, dy, dw, dh, state);
@@ -623,9 +636,9 @@ class XPStyle {
          * @param borderFill should test if the component uses a border fill
                             and skip painting if it is
          */
-        void paintSkin(Graphics g, int dx, int dy, int dw, int dh, State state,
+        void paintSkin(Graphics g, int dx, int dy, int dw, int dh, State state, 
                 boolean borderFill) {
-            if(borderFill && "borderfill".equals(getTypeEnumName(component, part,
+            if(borderFill && "borderfill".equals(getTypeEnumName(component, part, 
                     state, Prop.BGTYPE))) {
                 return;
             }
@@ -638,23 +651,23 @@ class XPStyle {
             super(30);
             flush();
         }
-
+        
         public void flush() {
             super.flush();
         }
-
+        
         protected void paintToImage(Component c, Image image, Graphics g,
                                     int w, int h, Object[] args) {
             boolean accEnabled = false;
-            Skin skin = (Skin)args[0];
-            Part part = skin.part;
+	    Skin skin = (Skin)args[0];
+	    Part part = skin.part;
             State state = (State)args[1];
-            if (state == null) {
-                state = skin.state;
-            }
-            if (c == null) {
-                c = skin.component;
-            }
+	    if (state == null) {
+		state = skin.state;
+	    }
+	    if (c == null) {
+		c = skin.component;
+	    }
             BufferedImage bi = (BufferedImage)image;
 
             WritableRaster raster = bi.getRaster();
@@ -662,9 +675,9 @@ class XPStyle {
             // Note that stealData() requires a markDirty() afterwards
             // since we modify the data in it.
             ThemeReader.paintBackground(SunWritableRaster.stealData(dbi, 0),
-                                        part.getControlName(c), part.getValue(),
-                                        State.getValue(part, state),
-                                        0, 0, w, h, w);
+					part.getControlName(c), part.getValue(),
+					State.getValue(part, state),
+					0, 0, w, h, w);
             SunWritableRaster.markDirty(dbi);
         }
 
@@ -685,7 +698,7 @@ class XPStyle {
             setMinimumSize(new Dimension(5, 5));
             setPreferredSize(new Dimension(16, 16));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-        }
+        }   
 
         public boolean isFocusTraversable() {
             return false;
@@ -694,11 +707,11 @@ class XPStyle {
         protected State getState() {
             State state = State.NORMAL;
             if (!isEnabled()) {
-                state = State.DISABLED;
+		state = State.DISABLED;
             } else if (getModel().isPressed()) {
-                state = State.PRESSED;
+		state = State.PRESSED;
             } else if (getModel().isRollover()) {
-                state = State.HOT;
+		state = State.HOT;
             }
             return state;
         }
@@ -715,9 +728,9 @@ class XPStyle {
             repaint();
         }
 
-        protected void paintBorder(Graphics g) {
+        protected void paintBorder(Graphics g) {    
         }
-
+        
 
     }
 
@@ -733,7 +746,7 @@ class XPStyle {
 
     private boolean getBoolean(Component c, Part part, State state, Prop prop) {
         return ThemeReader.getBoolean(part.getControlName(c), part.getValue(),
-                                      State.getValue(part, state),
+				      State.getValue(part, state),
                                       prop.getValue());
     }
 
@@ -741,7 +754,7 @@ class XPStyle {
 
     static Dimension getPartSize(Part part, State state) {
         return ThemeReader.getPartSize(part.getControlName(null), part.getValue(),
-                                       State.getValue(part, state));
+				       State.getValue(part, state));
     }
 
     private static boolean getSysBoolean(Prop prop) {

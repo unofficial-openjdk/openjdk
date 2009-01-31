@@ -46,7 +46,7 @@ public class SelectorTest {
      * Usage note
      *
      * java SelectorTest [server] [client <host>] [<port>]
-     *
+     * 
      * No arguments runs both client and server in separate threads
      * using the default port of 31452.
      *
@@ -58,7 +58,7 @@ public class SelectorTest {
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             InetSocketAddress isa
-                = new InetSocketAddress(InetAddress.getLocalHost(), TEST_PORT);
+		= new InetSocketAddress(InetAddress.getLocalHost(), TEST_PORT);
             Server server = new Server(isa);
             server.start();
             try {
@@ -75,7 +75,7 @@ public class SelectorTest {
             if (args.length > 1)
                 TEST_PORT = Integer.parseInt(args[1]);
             InetSocketAddress isa
-                = new InetSocketAddress(InetAddress.getLocalHost(), TEST_PORT);
+		= new InetSocketAddress(InetAddress.getLocalHost(), TEST_PORT);
             Server server = new Server(isa);
             server.start();
             if (server.finish(FINISH_TIME) == 0)
@@ -110,10 +110,10 @@ public class SelectorTest {
 
     static class Client extends TestThread {
         InetSocketAddress isa;
-        Client(InetSocketAddress isa) {
-            super("Client", SelectorTest.log);
-            this.isa = isa;
-        }
+	Client(InetSocketAddress isa) {
+	    super("Client", SelectorTest.log);
+	    this.isa = isa;
+	}
 
         public void go() throws Exception {
             log.println("starting client...");
@@ -146,7 +146,7 @@ public class SelectorTest {
         private Set pskeys;
 
         Server(InetSocketAddress isa) {
-            super("Server", SelectorTest.log);
+	    super("Server", SelectorTest.log);
             this.isa = isa;
         }
 
@@ -159,12 +159,12 @@ public class SelectorTest {
             Set readyKeys = acceptSelector.selectedKeys();
             RequestHandler rh = new RequestHandler(pollSelector, log);
             Thread requestThread = new Thread(rh);
-
+        
             requestThread.start();
 
             ServerSocketChannel ssc = ServerSocketChannel.open();
             ssc.configureBlocking(false);
-            ssc.socket().setReuseAddress(true);
+	    ssc.socket().setReuseAddress(true);
             ssc.socket().bind(isa);
 
             SelectionKey acceptKey = ssc.register(acceptSelector,
@@ -316,7 +316,7 @@ class RemoteEntity {
             sc.socket().shutdownOutput();
         }
     }
-
+        
 }
 
 

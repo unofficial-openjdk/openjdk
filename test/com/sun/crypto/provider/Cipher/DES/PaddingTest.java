@@ -44,21 +44,21 @@ public class PaddingTest {
     String poutfile = null;
 
     public static byte[] key = {
-        (byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,
-        (byte)0x89,(byte)0xab,(byte)0xcd,(byte)0xef
+	(byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,
+	(byte)0x89,(byte)0xab,(byte)0xcd,(byte)0xef
     };
 
     public static byte[] key3 = {
-        (byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,
-        (byte)0x89,(byte)0xab,(byte)0xcd,(byte)0xef,
-        (byte)0xf0,(byte)0xe1,(byte)0xd2,(byte)0xc3,
-        (byte)0xb4,(byte)0xa5,(byte)0x96,(byte)0x87,
-        (byte)0xfe,(byte)0xdc,(byte)0xba,(byte)0x98,
-        (byte)0x76,(byte)0x54,(byte)0x32,(byte)0x10};
+	(byte)0x01,(byte)0x23,(byte)0x45,(byte)0x67,
+	(byte)0x89,(byte)0xab,(byte)0xcd,(byte)0xef,
+	(byte)0xf0,(byte)0xe1,(byte)0xd2,(byte)0xc3,
+	(byte)0xb4,(byte)0xa5,(byte)0x96,(byte)0x87,
+	(byte)0xfe,(byte)0xdc,(byte)0xba,(byte)0x98,
+	(byte)0x76,(byte)0x54,(byte)0x32,(byte)0x10};
 
     public static byte[] iv  = {
-        (byte)0xfe,(byte)0xdc,(byte)0xba,(byte)0x98,
-        (byte)0x76,(byte)0x54,(byte)0x32,(byte)0x10};
+	(byte)0xfe,(byte)0xdc,(byte)0xba,(byte)0x98,
+	(byte)0x76,(byte)0x54,(byte)0x32,(byte)0x10};
 
     static String[] crypts = {"DES", "DESede"};
     static String[] modes = {"ECB", "CBC", "CFB", "OFB", "PCBC"};
@@ -70,8 +70,8 @@ public class PaddingTest {
     private String padding = null;
 
     public static void main(String argv[]) throws Exception {
-        PaddingTest pt = new PaddingTest();
-        pt.run();
+	PaddingTest pt = new PaddingTest();
+	pt.run();
     }
 
     public PaddingTest() {
@@ -79,151 +79,151 @@ public class PaddingTest {
 
     public void run() throws Exception {
 
-        for (int l=0; l<numFiles; l++) {
-            pinfile = new String(dataDir + "plain" + l + ".txt");
-            for (int i=0; i<crypts.length; i++) {
-                for (int j=0; j<modes.length; j++) {
-                    for (int k=0; k<paddings.length; k++) {
-                        System.out.println
-                            ("===============================");
-                        System.out.println
-                            (crypts[i]+" "+modes[j]+" " + paddings[k]+ " " +
-                             "plain" + l + " test");
-                        cfile = new String
-                            ("c" + l + "_" +
-                             crypts[i] + "_" +
-                             modes[j] + "_" +
-                             paddings[k] + ".bin");
-                        poutfile = new String
-                            ("p" + l +
-                             "_" + crypts[i] + modes[j] + paddings[k] + ".txt");
+	for (int l=0; l<numFiles; l++) {
+	    pinfile = new String(dataDir + "plain" + l + ".txt");
+	    for (int i=0; i<crypts.length; i++) {
+		for (int j=0; j<modes.length; j++) {
+		    for (int k=0; k<paddings.length; k++) {
+			System.out.println
+			    ("===============================");
+			System.out.println
+			    (crypts[i]+" "+modes[j]+" " + paddings[k]+ " " +
+			     "plain" + l + " test");
+			cfile = new String
+			    ("c" + l + "_" +
+			     crypts[i] + "_" +
+			     modes[j] + "_" +
+			     paddings[k] + ".bin");
+			poutfile = new String
+			    ("p" + l +
+			     "_" + crypts[i] + modes[j] + paddings[k] + ".txt");
 
-                        init(crypts[i], modes[j], paddings[k]);
-                        padding = paddings[k];
-                        runTest();
-                    }
-                }
-            }
-        }
+			init(crypts[i], modes[j], paddings[k]);
+			padding = paddings[k];
+			runTest();
+		    }
+		}
+	    }
+	}
     }
 
     public void init(String crypt, String mode, String padding)
-        throws Exception {
+	throws Exception {
 
-        SunJCE jce = new SunJCE();
-        Security.addProvider(jce);
+	SunJCE jce = new SunJCE();
+	Security.addProvider(jce);
 
-        KeySpec desKeySpec = null;
-        SecretKeyFactory factory = null;
+	KeySpec desKeySpec = null;
+	SecretKeyFactory factory = null;
 
-        StringBuffer cipherName = new StringBuffer(crypt);
-        if (mode.length() != 0)
-            cipherName.append("/" + mode);
-        if (padding.length() != 0)
-            cipherName.append("/" + padding);
+	StringBuffer cipherName = new StringBuffer(crypt);
+	if (mode.length() != 0)
+	    cipherName.append("/" + mode);
+	if (padding.length() != 0)
+	    cipherName.append("/" + padding);
 
-        cipher = Cipher.getInstance(cipherName.toString());
-        if (crypt.endsWith("ede")) {
-            desKeySpec = new DESedeKeySpec(key3);
-            factory = SecretKeyFactory.getInstance("DESede", "SunJCE");
-        } else {
-            desKeySpec = new DESKeySpec(key);
-            factory = SecretKeyFactory.getInstance("DES", "SunJCE");
-        }
+	cipher = Cipher.getInstance(cipherName.toString());
+	if (crypt.endsWith("ede")) {
+	    desKeySpec = new DESedeKeySpec(key3);
+	    factory = SecretKeyFactory.getInstance("DESede", "SunJCE");
+	} else {
+	    desKeySpec = new DESKeySpec(key);
+	    factory = SecretKeyFactory.getInstance("DES", "SunJCE");
+	}
 
-        // retrieve the cipher key
-        cipherKey = factory.generateSecret(desKeySpec);
+	// retrieve the cipher key
+	cipherKey = factory.generateSecret(desKeySpec);
 
-        // retrieve iv
-        if (!mode.equals("ECB"))
-            params = new IvParameterSpec(iv);
-        else
-            params = null;
+	// retrieve iv
+	if (!mode.equals("ECB"))
+	    params = new IvParameterSpec(iv);
+	else
+	    params = null;
     }
 
     public void runTest() throws Exception {
 
-        int bufferLen = 512;
-        byte[] input = new byte[bufferLen];
-        int len;
-        int totalInputLen = 0;
+	int bufferLen = 512;
+	byte[] input = new byte[bufferLen];
+	int len;
+	int totalInputLen = 0;
 
-        BufferedInputStream pin = null;
-        BufferedOutputStream cout = null;
-        BufferedInputStream cin = null;
-        BufferedOutputStream pout = null;
+	BufferedInputStream pin = null;
+	BufferedOutputStream cout = null;
+	BufferedInputStream cin = null;
+	BufferedOutputStream pout = null;
 
-        try {
-            pin = new BufferedInputStream(new FileInputStream(pinfile));
-            cout = new BufferedOutputStream(new FileOutputStream(cfile));
-            cipher.init(Cipher.ENCRYPT_MODE, cipherKey, params);
+	try {
+	    pin = new BufferedInputStream(new FileInputStream(pinfile));
+	    cout = new BufferedOutputStream(new FileOutputStream(cfile));
+	    cipher.init(Cipher.ENCRYPT_MODE, cipherKey, params);
 
-            while ((len = pin.read(input, 0, bufferLen)) > 0) {
-                totalInputLen += len;
-                byte[] output = cipher.update(input, 0, len);
-                cout.write(output, 0, output.length);
-                cout.flush();
-            }
+	    while ((len = pin.read(input, 0, bufferLen)) > 0) {
+		totalInputLen += len;
+		byte[] output = cipher.update(input, 0, len);
+		cout.write(output, 0, output.length);
+		cout.flush();
+	    }
 
-            len = cipher.getOutputSize(0);
+	    len = cipher.getOutputSize(0);
 
-            byte[] out = new byte[len];
-            len = cipher.doFinal(out, 0);
-            cout.write(out, 0, len);
-            cout.flush();
+	    byte[] out = new byte[len];
+	    len = cipher.doFinal(out, 0);
+	    cout.write(out, 0, len);
+	    cout.flush();
 
-            cin = new BufferedInputStream(new FileInputStream(cfile));
-            pout = new BufferedOutputStream(new FileOutputStream(poutfile));
-            cipher.init(Cipher.DECRYPT_MODE, cipherKey, params);
+	    cin = new BufferedInputStream(new FileInputStream(cfile));
+	    pout = new BufferedOutputStream(new FileOutputStream(poutfile));
+	    cipher.init(Cipher.DECRYPT_MODE, cipherKey, params);
 
-            byte[] output = null;
-            while ((len = cin.read(input, 0, bufferLen)) > 0) {
-                output = cipher.update(input, 0, len);
-                pout.write(output, 0, output.length);
-                pout.flush();
-            }
+	    byte[] output = null;
+	    while ((len = cin.read(input, 0, bufferLen)) > 0) {
+		output = cipher.update(input, 0, len);
+		pout.write(output, 0, output.length);
+		pout.flush();
+	    }
 
-            len = cipher.getOutputSize(0);
-            out = new byte[len];
-            len = cipher.doFinal(out, 0);
-            pout.write(out, 0, len);
-            pout.flush();
+	    len = cipher.getOutputSize(0);
+	    out = new byte[len];
+	    len = cipher.doFinal(out, 0);
+	    pout.write(out, 0, len);
+	    pout.flush();
 
-            Process child = Runtime.getRuntime().exec
-                ("diff " + pinfile + " " + poutfile);
-            InputStream in = child.getInputStream();
-            byte[] data = new byte[64];
+	    Process child = Runtime.getRuntime().exec
+		("diff " + pinfile + " " + poutfile);
+	    InputStream in = child.getInputStream();
+	    byte[] data = new byte[64];
 
-            while((len = in.read(data)) != -1)
-                System.out.write(data, 0, len);
-            in.close();
-            child.waitFor();
-            System.out.println("child exited with " + child.exitValue());
-        }
-        catch (IllegalBlockSizeException ex) {
-            if ((totalInputLen % 8 != 0) && (padding.equals("NoPadding")))
-                return;
-            else {
-                System.out.println("Test failed!");
-                throw ex;
-            }
-        }
-        finally {
-            try {
-                if (pin != null)
-                    pin.close();
-                if (pout != null)
-                    pout.close();
-                if (cin != null)
-                    cin.close();
-                if (cout != null)
-                    cout.close();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        }
+	    while((len = in.read(data)) != -1)
+		System.out.write(data, 0, len);
+	    in.close();
+	    child.waitFor();
+	    System.out.println("child exited with " + child.exitValue());
+	}
+	catch (IllegalBlockSizeException ex) {
+	    if ((totalInputLen % 8 != 0) && (padding.equals("NoPadding")))
+		return;
+	    else {
+		System.out.println("Test failed!");
+		throw ex;
+	    }
+	}
+	finally {
+	    try {
+		if (pin != null)
+		    pin.close();
+		if (pout != null)
+		    pout.close();
+		if (cin != null)
+		    cin.close();
+		if (cout != null)
+		    cout.close();
+	    }
+	    catch (IOException e) {
+		e.printStackTrace();
+		return;
+	    }
+	}
     }
 
 }

@@ -22,5 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-void exitTransportWithError(char *msg, char *fileName,
+void exitTransportWithError(char *msg, char *fileName, 
                             char *date, int lineNumber);
+

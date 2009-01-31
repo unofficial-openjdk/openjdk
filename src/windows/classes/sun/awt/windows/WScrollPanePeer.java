@@ -34,22 +34,22 @@ import java.util.logging.*;
 class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
 
     private static final Logger log = Logger.getLogger("sun.awt.windows.WScrollPanePeer");
-
+ 
     int scrollbarWidth;
     int scrollbarHeight;
     int prevx;
     int prevy;
 
     static {
-        initIDs();
+	initIDs();
     }
 
     static native void initIDs();
-    native void create(WComponentPeer parent);
+    native void create(WComponentPeer parent);	    
     native int getOffset(int orient);
 
     WScrollPanePeer(Component target) {
-        super(target);
+	super(target);
         scrollbarWidth = _getVScrollbarWidth();
         scrollbarHeight = _getHScrollbarHeight();
     }
@@ -57,8 +57,8 @@ class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
     void initialize() {
         super.initialize();
         setInsets();
-        Insets i = getInsets();
-        setScrollPosition(-i.left,-i.top);
+	Insets i = getInsets();
+	setScrollPosition(-i.left,-i.top);
     }
 
     public void setUnitIncrement(Adjustable adj, int p) {
@@ -83,9 +83,9 @@ class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
     private native int _getVScrollbarWidth();
 
     public Point getScrollOffset() {
-        int x = getOffset(Adjustable.HORIZONTAL);
-        int y = getOffset(Adjustable.VERTICAL);
-        return new Point(x, y);
+	int x = getOffset(Adjustable.HORIZONTAL);
+	int y = getOffset(Adjustable.VERTICAL);
+	return new Point(x, y);
     }
 
     /**
@@ -95,38 +95,38 @@ class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
      * information from the java-level is passed down and used.
      */
     public void childResized(int width, int height) {
-        ScrollPane sp = (ScrollPane)target;
-        Dimension vs = sp.getSize();
-        setSpans(vs.width, vs.height, width, height);
+	ScrollPane sp = (ScrollPane)target;
+	Dimension vs = sp.getSize();
+	setSpans(vs.width, vs.height, width, height);
         setInsets();
     }
 
-    native synchronized void setSpans(int viewWidth, int viewHeight,
+    native synchronized void setSpans(int viewWidth, int viewHeight, 
                                       int childWidth, int childHeight);
 
     /**
      * Called by ScrollPane's internal observer of the scrollpane's adjustables.
      * This is called whenever a scroll position is changed in one
      * of adjustables, whether it was modified externally or from the
-     * native scrollbars themselves.
+     * native scrollbars themselves.  
      */
     public void setValue(Adjustable adj, int v) {
-        Component c = getScrollChild();
+	Component c = getScrollChild();
         if (c == null) {
             return;
         }
 
-        Point p = c.getLocation();
-        switch(adj.getOrientation()) {
-        case Adjustable.VERTICAL:
-            setScrollPosition(-(p.x), v);
-            break;
-        case Adjustable.HORIZONTAL:
-            setScrollPosition(v, -(p.y));
-            break;
-        }
+	Point p = c.getLocation();
+	switch(adj.getOrientation()) {
+	case Adjustable.VERTICAL:
+	    setScrollPosition(-(p.x), v);
+	    break;
+	case Adjustable.HORIZONTAL:
+	    setScrollPosition(v, -(p.y));
+	    break;
+	}
     }
-
+	    
     private Component getScrollChild() {
         ScrollPane sp = (ScrollPane)target;
         Component child = null;
@@ -142,10 +142,10 @@ class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
      * Called from Windows in response to WM_VSCROLL/WM_HSCROLL message
      */
     private void postScrollEvent(int orient, int type,
-                                 int pos, boolean isAdjusting)
+				 int pos, boolean isAdjusting)
     {
-        Runnable adjustor = new Adjustor(orient, type, pos, isAdjusting);
-        WToolkit.executeOnEventHandlerThread(new ScrollEvent(target, adjustor));
+	Runnable adjustor = new Adjustor(orient, type, pos, isAdjusting);
+	WToolkit.executeOnEventHandlerThread(new ScrollEvent(target, adjustor));
     }
 
     /*
@@ -175,98 +175,98 @@ class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
      * Runnable for the ScrollEvent that performs the adjustment.
      */
     class Adjustor implements Runnable {
-        int orient;             // selects scrollbar
-        int type;               // adjustment type
-        int pos;                // new position (only used for absolute)
-        boolean isAdjusting;    // isAdjusting status
+	int orient;		// selects scrollbar
+	int type;		// adjustment type
+	int pos;		// new position (only used for absolute)
+	boolean isAdjusting;	// isAdjusting status
 
-        Adjustor(int orient, int type, int pos, boolean isAdjusting) {
-            this.orient = orient;
-            this.type = type;
-            this.pos = pos;
-            this.isAdjusting = isAdjusting;
-        }
+	Adjustor(int orient, int type, int pos, boolean isAdjusting) {
+	    this.orient = orient;
+	    this.type = type;
+	    this.pos = pos;
+	    this.isAdjusting = isAdjusting;
+	}
 
-        public void run() {
+	public void run() {
             if (getScrollChild() == null) {
                 return;
             }
-            ScrollPane sp = (ScrollPane)WScrollPanePeer.this.target;
-            ScrollPaneAdjustable adj = null;
+	    ScrollPane sp = (ScrollPane)WScrollPanePeer.this.target;
+	    ScrollPaneAdjustable adj = null;
 
-            // ScrollPaneAdjustable made public in 1.4, but
-            // get[HV]Adjustable can't be declared to return
-            // ScrollPaneAdjustable because it would break backward
-            // compatibility -- hence the cast
+	    // ScrollPaneAdjustable made public in 1.4, but
+	    // get[HV]Adjustable can't be declared to return
+	    // ScrollPaneAdjustable because it would break backward
+	    // compatibility -- hence the cast
 
-            if (orient == Adjustable.VERTICAL) {
-                adj = (ScrollPaneAdjustable)sp.getVAdjustable();
-            } else if (orient == Adjustable.HORIZONTAL) {
-                adj = (ScrollPaneAdjustable)sp.getHAdjustable();
-            } else {
+	    if (orient == Adjustable.VERTICAL) {
+		adj = (ScrollPaneAdjustable)sp.getVAdjustable();
+	    } else if (orient == Adjustable.HORIZONTAL) {
+		adj = (ScrollPaneAdjustable)sp.getHAdjustable();
+	    } else {
                 if (log.isLoggable(Level.FINE)) {
                     log.log(Level.FINE, "Assertion failed: unknown orient");
                 }
-            }
+	    }
 
-            if (adj == null) {
-                return;
-            }
+	    if (adj == null) {
+		return;
+	    }
 
-            int newpos = adj.getValue();
-            switch (type) {
-              case AdjustmentEvent.UNIT_DECREMENT:
-                  newpos -= adj.getUnitIncrement();
-                  break;
-              case AdjustmentEvent.UNIT_INCREMENT:
-                  newpos += adj.getUnitIncrement();
-                  break;
-              case AdjustmentEvent.BLOCK_DECREMENT:
-                  newpos -= adj.getBlockIncrement();
-                  break;
-              case AdjustmentEvent.BLOCK_INCREMENT:
-                  newpos += adj.getBlockIncrement();
-                  break;
-              case AdjustmentEvent.TRACK:
-                  newpos = this.pos;
-                  break;
-              default:
+	    int newpos = adj.getValue();
+	    switch (type) {
+	      case AdjustmentEvent.UNIT_DECREMENT:
+		  newpos -= adj.getUnitIncrement();
+		  break;
+	      case AdjustmentEvent.UNIT_INCREMENT:
+		  newpos += adj.getUnitIncrement();
+		  break;
+	      case AdjustmentEvent.BLOCK_DECREMENT:
+		  newpos -= adj.getBlockIncrement();
+		  break;
+	      case AdjustmentEvent.BLOCK_INCREMENT:
+		  newpos += adj.getBlockIncrement();
+		  break;
+	      case AdjustmentEvent.TRACK:
+		  newpos = this.pos;
+		  break;
+	      default:
                   if (log.isLoggable(Level.FINE)) {
                       log.log(Level.FINE, "Assertion failed: unknown type");
                   }
-                  return;
-            }
+		  return;
+	    }
 
-            // keep scroll position in acceptable range
-            newpos = Math.max(adj.getMinimum(), newpos);
-            newpos = Math.min(adj.getMaximum(), newpos);
+	    // keep scroll position in acceptable range
+	    newpos = Math.max(adj.getMinimum(), newpos);
+	    newpos = Math.min(adj.getMaximum(), newpos);
 
-            // set value, this will synchronously fire an AdjustmentEvent
-            adj.setValueIsAdjusting(isAdjusting);
+	    // set value, this will synchronously fire an AdjustmentEvent
+	    adj.setValueIsAdjusting(isAdjusting);
 
             // Fix for 4075484 - consider type information when creating AdjustmentEvent
             // We can't just call adj.setValue() because it creates AdjustmentEvent with type=TRACK
-            // Instead, we call private method setTypedValue of ScrollPaneAdjustable.
-            // Because ScrollPaneAdjustable is in another package we should call it through native code.
+            // Instead, we call private method setTypedValue of ScrollPaneAdjustable. 
+            // Because ScrollPaneAdjustable is in another package we should call it through native code.                
             setTypedValue(adj, newpos, type);
 
-            // Paint the exposed area right away.  To do this - find
-            // the heavyweight ancestor of the scroll child.
-            Component hwAncestor = getScrollChild();
-            while (hwAncestor != null
-                   && !(hwAncestor.getPeer() instanceof WComponentPeer))
-            {
-                hwAncestor = hwAncestor.getParent();
-            }
+	    // Paint the exposed area right away.  To do this - find
+	    // the heavyweight ancestor of the scroll child.
+	    Component hwAncestor = getScrollChild();
+	    while (hwAncestor != null
+		   && !(hwAncestor.getPeer() instanceof WComponentPeer))
+	    {
+		hwAncestor = hwAncestor.getParent();
+	    }
             if (log.isLoggable(Level.FINE)) {
                 if (hwAncestor == null) {
                     log.log(Level.FINE, "Assertion (hwAncestor != null) failed, " +
                             "couldn't find heavyweight ancestor of scroll pane child");
                 }
             }
-            WComponentPeer hwPeer = (WComponentPeer)hwAncestor.getPeer();
-            hwPeer.paintDamagedAreaImmediately();
-        }
+	    WComponentPeer hwPeer = (WComponentPeer)hwAncestor.getPeer();
+	    hwPeer.paintDamagedAreaImmediately();
+	}
     }
 
     /**
@@ -274,5 +274,5 @@ class WScrollPanePeer extends WPanelPeer implements ScrollPanePeer {
      */
     public void restack() {
         // Since ScrollPane can only have one child its restacking does nothing.
-    }
+    }    
 }

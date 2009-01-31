@@ -33,7 +33,7 @@ import com.sun.jmx.snmp.Enumerated;
 /**
  * Represents an SNMP integer.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -46,7 +46,7 @@ public class SnmpInt extends SnmpValue {
      * Constructs a new <CODE>SnmpInt</CODE> from the specified integer value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
-     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>. 
      */
     public SnmpInt(int v) throws IllegalArgumentException {
         if ( isInitValueValid(v) == false ) {
@@ -59,7 +59,7 @@ public class SnmpInt extends SnmpValue {
      * Constructs a new <CODE>SnmpInt</CODE> from the specified <CODE>Integer</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
-     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>. 
      */
     public SnmpInt(Integer v) throws IllegalArgumentException {
         this(v.intValue()) ;
@@ -69,7 +69,7 @@ public class SnmpInt extends SnmpValue {
      * Constructs a new <CODE>SnmpInt</CODE> from the specified long value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
-     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>. 
      */
     public SnmpInt(long v) throws IllegalArgumentException {
         if ( isInitValueValid(v) == false ) {
@@ -82,7 +82,7 @@ public class SnmpInt extends SnmpValue {
      * Constructs a new <CODE>SnmpInt</CODE> from the specified <CODE>Long</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
-     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>. 
      */
     public SnmpInt(Long v) throws IllegalArgumentException {
         this(v.longValue()) ;
@@ -92,7 +92,7 @@ public class SnmpInt extends SnmpValue {
      * Constructs a new <CODE>SnmpInt</CODE> from the specified <CODE>Enumerated</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is smaller than <CODE>Integer.MIN_VALUE</CODE>
-     * or larger than <CODE>Integer.MAX_VALUE</CODE>.
+     * or larger than <CODE>Integer.MAX_VALUE</CODE>. 
      * @see Enumerated
      */
     public SnmpInt(Enumerated v) throws IllegalArgumentException {
@@ -148,7 +148,7 @@ public class SnmpInt extends SnmpValue {
     public Integer toInteger() {
         return new Integer((int)value) ;
     }
-
+  
     /**
      * Converts the integer value to its <CODE>String</CODE> form.
      * @return The <CODE>String</CODE> representation of the value.
@@ -164,7 +164,7 @@ public class SnmpInt extends SnmpValue {
     public SnmpOid toOid() {
         return new SnmpOid(value) ;
     }
-
+  
     /**
      * Extracts the integer from an index OID and returns its
      * value converted as an <CODE>SnmpOid</CODE>.
@@ -182,7 +182,7 @@ public class SnmpInt extends SnmpValue {
             throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
         }
     }
-
+  
     /**
      * Scans an index OID, skips the integer value and returns the position
      * of the next value.
@@ -200,7 +200,7 @@ public class SnmpInt extends SnmpValue {
             return start + 1 ;
         }
     }
-
+  
     /**
      * Appends an <CODE>SnmpOid</CODE> representing an <CODE>SnmpInt</CODE> to another OID.
      * @param source An OID representing an <CODE>SnmpInt</CODE> value.
@@ -236,7 +236,7 @@ public class SnmpInt extends SnmpValue {
         }
         return newclone ;
     }
-
+    
     /**
      * Returns a textual description of the type object.
      * @return ASN.1 textual description.

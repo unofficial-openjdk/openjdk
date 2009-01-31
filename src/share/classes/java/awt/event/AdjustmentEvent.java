@@ -34,6 +34,7 @@ import java.awt.AWTEvent;
  * @see AdjustmentListener
  *
  * @author Amy Fowler
+ * @version %I% %G%
  * @since 1.1
  */
 public class AdjustmentEvent extends AWTEvent {
@@ -41,12 +42,12 @@ public class AdjustmentEvent extends AWTEvent {
     /**
      * Marks the first integer id for the range of adjustment event ids.
      */
-    public static final int ADJUSTMENT_FIRST    = 601;
+    public static final int ADJUSTMENT_FIRST 	= 601;
 
     /**
      * Marks the last integer id for the range of adjustment event ids.
      */
-    public static final int ADJUSTMENT_LAST     = 601;
+    public static final int ADJUSTMENT_LAST 	= 601;
 
     /**
      * The adjustment value changed event.
@@ -56,12 +57,12 @@ public class AdjustmentEvent extends AWTEvent {
     /**
      * The unit increment adjustment type.
      */
-    public static final int UNIT_INCREMENT      = 1;
+    public static final int UNIT_INCREMENT	= 1;
 
     /**
      * The unit decrement adjustment type.
      */
-    public static final int UNIT_DECREMENT      = 2;
+    public static final int UNIT_DECREMENT	= 2;
 
     /**
      * The block decrement adjustment type.
@@ -76,7 +77,7 @@ public class AdjustmentEvent extends AWTEvent {
     /**
      * The absolute tracking adjustment type.
      */
-    public static final int TRACK               = 5;
+    public static final int TRACK	        = 5;
 
     /**
      * The adjustable object that fired the event.
@@ -121,7 +122,7 @@ public class AdjustmentEvent extends AWTEvent {
 
 
     /*
-     * JDK 1.1 serialVersionUID
+     * JDK 1.1 serialVersionUID 
      */
      private static final long serialVersionUID = 5700290645205279921L;
 
@@ -129,7 +130,7 @@ public class AdjustmentEvent extends AWTEvent {
     /**
      * Constructs an <code>AdjustmentEvent</code> object with the
      * specified <code>Adjustable</code> source, event type,
-     * adjustment type, and value.
+     * adjustment type, and value. 
      * <p>Note that passing in an invalid <code>id</code> results in
      * unspecified behavior.  This method throws an
      * <code>IllegalArgumentException</code> if <code>source</code>
@@ -138,12 +139,12 @@ public class AdjustmentEvent extends AWTEvent {
      * @param source the <code>Adjustable</code> object where the
      *               event originated
      * @param id     the event type
-     * @param type   the adjustment type
+     * @param type   the adjustment type 
      * @param value  the current value of the adjustment
      * @throws IllegalArgumentException if <code>source</code> is null
      */
     public AdjustmentEvent(Adjustable source, int id, int type, int value) {
-        this(source, id, type, value, false);
+	this(source, id, type, value, false);
     }
 
     /**
@@ -154,11 +155,11 @@ public class AdjustmentEvent extends AWTEvent {
      * <code>IllegalArgumentException</code> if <code>source</code>
      * is <code>null</code>.
 
-     *
+     * 
      * @param source the <code>Adjustable</code> object where the
      *               event originated
      * @param id     the event type
-     * @param type   the adjustment type
+     * @param type   the adjustment type 
      * @param value  the current value of the adjustment
      * @param isAdjusting <code>true</code> if the event is one
      *               of a series of multiple adjusting events,
@@ -168,10 +169,10 @@ public class AdjustmentEvent extends AWTEvent {
      */
     public AdjustmentEvent(Adjustable source, int id, int type, int value, boolean isAdjusting) {
         super(source, id);
-        adjustable = source;
+	adjustable = source;
         this.adjustmentType = type;
-        this.value = value;
-        this.isAdjusting = isAdjusting;
+	this.value = value;
+	this.isAdjusting = isAdjusting;
     }
 
     /**
@@ -217,7 +218,7 @@ public class AdjustmentEvent extends AWTEvent {
      * @since 1.4
      */
     public boolean getValueIsAdjusting() {
-        return isAdjusting;
+	return isAdjusting;
     }
 
     public String paramString() {
@@ -250,8 +251,8 @@ public class AdjustmentEvent extends AWTEvent {
               adjTypeStr = "unknown type";
         }
         return typeStr
-            + ",adjType="+adjTypeStr
-            + ",value="+value
-            + ",isAdjusting="+isAdjusting;
+	    + ",adjType="+adjTypeStr
+	    + ",value="+value
+	    + ",isAdjusting="+isAdjusting;
     }
 }

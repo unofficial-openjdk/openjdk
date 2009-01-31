@@ -37,7 +37,7 @@ jmethodID ia4_ctrID;
 /*
  * Class:     java_net_Inet4Address
  * Method:    init
- * Signature: ()V
+ * Signature: ()V 
  */
 JNIEXPORT void JNICALL
 Java_java_net_Inet4Address_init(JNIEnv *env, jclass cls) {

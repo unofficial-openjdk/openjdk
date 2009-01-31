@@ -37,10 +37,11 @@ import javax.swing.plaf.basic.BasicSeparatorUI;
 
 
 /**
- * A Basic L&F implementation of ToolBarSeparatorUI.  This implementation
+ * A Basic L&F implementation of ToolBarSeparatorUI.  This implementation 
  * is a "combined" view/controller.
  * <p>
  *
+ * @version %I% %G%
  * @author Jeff Shapiro
  */
 
@@ -55,17 +56,17 @@ public class BasicToolBarSeparatorUI extends BasicSeparatorUI
     {
         Dimension size = ( (JToolBar.Separator)s ).getSeparatorSize();
 
-        if ( size == null || size instanceof UIResource )
-        {
-            JToolBar.Separator sep = (JToolBar.Separator)s;
-            size = (Dimension)(UIManager.get("ToolBar.separatorSize"));
-            if (size != null) {
-                if (sep.getOrientation() == JSeparator.HORIZONTAL) {
-                    size = new Dimension(size.height, size.width);
-                }
-                sep.setSeparatorSize(size);
-            }
-        }
+	if ( size == null || size instanceof UIResource )
+	{
+	    JToolBar.Separator sep = (JToolBar.Separator)s;
+	    size = (Dimension)(UIManager.get("ToolBar.separatorSize"));
+	    if (size != null) {
+		if (sep.getOrientation() == JSeparator.HORIZONTAL) {
+		    size = new Dimension(size.height, size.width);
+		}
+		sep.setSeparatorSize(size);
+	    }
+	}
     }
 
     public void paint( Graphics g, JComponent c )
@@ -76,13 +77,16 @@ public class BasicToolBarSeparatorUI extends BasicSeparatorUI
     {
         Dimension size = ( (JToolBar.Separator)c ).getSeparatorSize();
 
-        if ( size != null )
-        {
-            return size.getSize();
-        }
-        else
-        {
-            return null;
-        }
+	if ( size != null )
+	{
+	    return size.getSize();
+	}
+	else
+	{
+	    return null;
+	}
     }
 }
+
+
+

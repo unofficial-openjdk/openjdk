@@ -28,10 +28,11 @@ package sun.io;
 import sun.nio.cs.ext.JIS_X_0208_Solaris_Decoder;
 import sun.nio.cs.ext.JIS_X_0212_Solaris_Decoder;
 /**
+ * @version %I%, %E%
  *
  * @author Limin Shi
  * @author Ian Little
- *
+ * 
  * EUC_JP variant converter for Solaris with vendor defined chars
  * added (4765370)
  */
@@ -94,18 +95,18 @@ public class ByteToCharEUC_JP_Solaris extends ByteToCharEUC_JP {
             || ((byte2 < start) || (byte2 > end)))
             return REPLACE_CHAR;
 
-        char result = super.getUnicode(byte1, byte2);
-        if (result != '\uFFFD') {
-            return result;
-        } else {
-            int n = (j0208Index1[byte1 - 0x80] & 0xf) * (end - start + 1)
+	char result = super.getUnicode(byte1, byte2);
+	if (result != '\uFFFD') {
+	    return result;
+	} else {
+	    int n = (j0208Index1[byte1 - 0x80] & 0xf) * (end - start + 1)
                 + (byte2 - start);
         return j0208Index2[j0208Index1[byte1 - 0x80] >> 4].charAt(n);
-        }
+	}
     }
 
     protected char decode0212(int byte1, int byte2) {
-        return j0212Decoder.getUnicode(byte1, byte2);
+	return j0212Decoder.getUnicode(byte1, byte2);
     }
 
     /**
@@ -207,3 +208,4 @@ public class ByteToCharEUC_JP_Solaris extends ByteToCharEUC_JP {
     }
 
 }
+

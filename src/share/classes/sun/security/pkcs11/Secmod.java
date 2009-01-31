@@ -44,7 +44,7 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
  * <pre>
  *   Secmod secmod = Secmod.getInstance();
  *   if (secmod.isInitialized() == false) {
- *       secmod.initialize("/home/myself/.mozilla", "/usr/sfw/lib/mozilla");
+ *	 secmod.initialize("/home/myself/.mozilla", "/usr/sfw/lib/mozilla");
  *   }
  *
  *   Provider p = secmod.getModule(ModuleType.KEYSTORE).getProvider();
@@ -52,18 +52,19 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
  *   ks.load(null, password);
  * </pre>
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  */
 public final class Secmod {
-
+    
     private final static boolean DEBUG = false;
 
     private final static Secmod INSTANCE;
 
     static {
-        sun.security.pkcs11.wrapper.PKCS11.loadNative();
-        INSTANCE = new Secmod();
+	sun.security.pkcs11.wrapper.PKCS11.loadNative();
+	INSTANCE = new Secmod();
     }
 
     private final static String NSS_LIB_NAME = "nss3";
@@ -80,34 +81,34 @@ public final class Secmod {
 
     // list of the modules
     private List<Module> modules;
-
+    
     private String configDir;
-
+    
     private String nssLibDir;
 
     private Secmod() {
-        // empty
+	// empty
     }
 
     /**
      * Return the singleton Secmod instance.
      */
     public static Secmod getInstance() {
-        return INSTANCE;
+	return INSTANCE;
     }
 
     private boolean isLoaded() {
-        if (nssHandle == 0) {
-            nssHandle = nssGetLibraryHandle(System.mapLibraryName(NSS_LIB_NAME));
-            if (nssHandle != 0) {
-                fetchVersions();
-            }
-        }
-        return (nssHandle != 0);
+	if (nssHandle == 0) {
+	    nssHandle = nssGetLibraryHandle(System.mapLibraryName(NSS_LIB_NAME));
+	    if (nssHandle != 0) {
+		fetchVersions();
+	    }
+	}
+	return (nssHandle != 0);
     }
 
     private void fetchVersions() {
-        supported = nssVersionCheck(nssHandle, "3.7");
+	supported = nssVersionCheck(nssHandle, "3.7");
     }
 
     /**
@@ -121,25 +122,25 @@ public final class Secmod {
      *   has been loaded
      */
     public synchronized boolean isInitialized() throws IOException {
-        // NSS does not allow us to check if it is initialized already
-        // assume that if it is loaded it is also initialized
-        if (isLoaded() == false) {
-            return false;
-        }
-        if (supported == false) {
-            throw new IOException
-                ("An incompatible version of NSS is already loaded, "
-                + "3.7 or later required");
-        }
-        return true;
+	// NSS does not allow us to check if it is initialized already
+	// assume that if it is loaded it is also initialized
+	if (isLoaded() == false) {
+	    return false;
+	}
+	if (supported == false) {
+	    throw new IOException
+		("An incompatible version of NSS is already loaded, "
+		+ "3.7 or later required");
+	}
+	return true;
     }
-
+    
     String getConfigDir() {
-        return configDir;
+	return configDir;
     }
-
+    
     String getLibDir() {
-        return nssLibDir;
+	return nssLibDir;
     }
 
     /**
@@ -156,68 +157,68 @@ public final class Secmod {
      *   fails for any other reason
      */
     public void initialize(String configDir, String nssLibDir)
-            throws IOException {
-        initialize(DbMode.READ_WRITE, configDir, nssLibDir);
+	    throws IOException {
+	initialize(DbMode.READ_WRITE, configDir, nssLibDir);
     }
 
     public synchronized void initialize(DbMode dbMode, String configDir, String nssLibDir)
-            throws IOException {
-        if (isInitialized()) {
-            throw new IOException("NSS is already initialized");
-        }
+	    throws IOException {
+	if (isInitialized()) {
+	    throw new IOException("NSS is already initialized");
+	}
 
-        if (dbMode == null) {
-            throw new NullPointerException();
-        }
-        if ((dbMode != DbMode.NO_DB) && (configDir == null)) {
-            throw new NullPointerException();
-        }
-        String platformLibName = System.mapLibraryName("nss3");
-        String platformPath;
-        if (nssLibDir == null) {
-            platformPath = platformLibName;
-        } else {
-            File base = new File(nssLibDir);
-            if (base.isDirectory() == false) {
-                throw new IOException("nssLibDir must be a directory:" + nssLibDir);
-            }
-            File platformFile = new File(base, platformLibName);
-            if (platformFile.isFile() == false) {
-                throw new FileNotFoundException(platformFile.getPath());
-            }
-            platformPath = platformFile.getPath();
-        }
+	if (dbMode == null) {
+	    throw new NullPointerException();
+	}
+	if ((dbMode != DbMode.NO_DB) && (configDir == null)) {
+	    throw new NullPointerException();
+	}
+	String platformLibName = System.mapLibraryName("nss3");
+	String platformPath;
+	if (nssLibDir == null) {
+	    platformPath = platformLibName;
+	} else {
+	    File base = new File(nssLibDir);
+	    if (base.isDirectory() == false) {
+		throw new IOException("nssLibDir must be a directory:" + nssLibDir);
+	    }
+	    File platformFile = new File(base, platformLibName);
+	    if (platformFile.isFile() == false) {
+		throw new FileNotFoundException(platformFile.getPath());
+	    }
+	    platformPath = platformFile.getPath();
+	}
+    
+	if (configDir != null) {
+	    File configBase = new File(configDir);
+	    if (configBase.isDirectory() == false ) {
+		throw new IOException("configDir must be a directory: " + configDir);
+	    }
+	    File secmodFile = new File(configBase, "secmod.db");
+	    if (secmodFile.isFile() == false) {
+		throw new FileNotFoundException(secmodFile.getPath());
+	    }
+	}
 
-        if (configDir != null) {
-            File configBase = new File(configDir);
-            if (configBase.isDirectory() == false ) {
-                throw new IOException("configDir must be a directory: " + configDir);
-            }
-            File secmodFile = new File(configBase, "secmod.db");
-            if (secmodFile.isFile() == false) {
-                throw new FileNotFoundException(secmodFile.getPath());
-            }
-        }
+	if (DEBUG) System.out.println("lib: " + platformPath);
+	nssHandle = nssLoadLibrary(platformPath);
+	if (DEBUG) System.out.println("handle: " + nssHandle);
+	fetchVersions();
+	if (supported == false) {
+	    throw new IOException
+		("The specified version of NSS is incompatible, "
+		+ "3.7 or later required");
+	}
 
-        if (DEBUG) System.out.println("lib: " + platformPath);
-        nssHandle = nssLoadLibrary(platformPath);
-        if (DEBUG) System.out.println("handle: " + nssHandle);
-        fetchVersions();
-        if (supported == false) {
-            throw new IOException
-                ("The specified version of NSS is incompatible, "
-                + "3.7 or later required");
-        }
-
-        if (DEBUG) System.out.println("dir: " + configDir);
-        boolean initok = nssInit(dbMode.functionName, nssHandle, configDir);
-        if (DEBUG) System.out.println("init: " + initok);
-        if (initok == false) {
-            throw new IOException("NSS initialization failed");
-        }
-
-        this.configDir = configDir;
-        this.nssLibDir = nssLibDir;
+	if (DEBUG) System.out.println("dir: " + configDir);
+	boolean initok = nssInit(dbMode.functionName, nssHandle, configDir);
+	if (DEBUG) System.out.println("init: " + initok);
+	if (initok == false) {
+	    throw new IOException("NSS initialization failed");
+	}
+	
+	this.configDir = configDir;
+	this.nssLibDir = nssLibDir;
     }
 
     /**
@@ -227,46 +228,46 @@ public final class Secmod {
      *   or not initialized
      */
     public synchronized List<Module> getModules() {
-        try {
-            if (isInitialized() == false) {
-                throw new IllegalStateException("NSS not initialized");
-            }
-        } catch (IOException e) {
-            // IOException if misconfigured
-            throw new IllegalStateException(e);
-        }
-        if (modules == null) {
-            List<Module> modules = (List<Module>)nssGetModuleList(nssHandle);
-            this.modules = Collections.unmodifiableList(modules);
-        }
-        return modules;
+	try {
+	    if (isInitialized() == false) {
+		throw new IllegalStateException("NSS not initialized");
+	    }
+	} catch (IOException e) {
+	    // IOException if misconfigured
+	    throw new IllegalStateException(e);
+	}
+	if (modules == null) {
+	    List<Module> modules = (List<Module>)nssGetModuleList(nssHandle);
+	    this.modules = Collections.unmodifiableList(modules);
+	}
+	return modules;
     }
-
+    
     private static byte[] getDigest(X509Certificate cert, String algorithm) {
-        try {
-            MessageDigest md = MessageDigest.getInstance(algorithm);
-            return md.digest(cert.getEncoded());
-        } catch (GeneralSecurityException e) {
-            throw new ProviderException(e);
-        }
+	try {
+	    MessageDigest md = MessageDigest.getInstance(algorithm);
+	    return md.digest(cert.getEncoded());
+	} catch (GeneralSecurityException e) {
+	    throw new ProviderException(e);
+	}
     }
 
     boolean isTrusted(X509Certificate cert, TrustType trustType) {
-        Bytes bytes = new Bytes(getDigest(cert, "SHA-1"));
-        TrustAttributes attr = getModuleTrust(ModuleType.KEYSTORE, bytes);
-        if (attr == null) {
-            attr = getModuleTrust(ModuleType.FIPS, bytes);
-            if (attr == null) {
-                attr = getModuleTrust(ModuleType.TRUSTANCHOR, bytes);
-            }
-        }
-        return (attr == null) ? false : attr.isTrusted(trustType);
+	Bytes bytes = new Bytes(getDigest(cert, "SHA-1"));
+	TrustAttributes attr = getModuleTrust(ModuleType.KEYSTORE, bytes);
+	if (attr == null) {
+	    attr = getModuleTrust(ModuleType.FIPS, bytes);
+	    if (attr == null) {
+		attr = getModuleTrust(ModuleType.TRUSTANCHOR, bytes);
+	    }
+	}
+	return (attr == null) ? false : attr.isTrusted(trustType);
     }
-
+    
     private TrustAttributes getModuleTrust(ModuleType type, Bytes bytes) {
-        Module module = getModule(type);
-        TrustAttributes t = (module == null) ? null : module.getTrust(bytes);
-        return t;
+	Module module = getModule(type);
+	TrustAttributes t = (module == null) ? null : module.getTrust(bytes);
+	return t;
     }
 
     /**
@@ -276,36 +277,36 @@ public final class Secmod {
      * as an external module provided by a 3rd party.
      */
     public static enum ModuleType {
-        /**
-         * The NSS Softtoken crypto module. This is the first
-         * slot of the softtoken object.
-         * This module provides
-         * implementations for cryptographic algorithms but no KeyStore.
-         */
-        CRYPTO,
-        /**
-         * The NSS Softtoken KeyStore module. This is the second
-         * slot of the softtoken object.
-         * This module provides
-         * implementations for cryptographic algorithms (after login)
-         * and the KeyStore.
-         */
-        KEYSTORE,
-        /**
-         * The NSS Softtoken module in FIPS mode. Note that in FIPS mode the
-         * softtoken presents only one slot, not separate CRYPTO and KEYSTORE
-         * slots as in non-FIPS mode.
-         */
-        FIPS,
-        /**
-         * The NSS builtin trust anchor module. This is the
-         * NSSCKBI object. It provides no crypto functions.
-         */
-        TRUSTANCHOR,
-        /**
-         * An external module.
-         */
-        EXTERNAL,
+	/**
+	 * The NSS Softtoken crypto module. This is the first
+	 * slot of the softtoken object.
+	 * This module provides
+	 * implementations for cryptographic algorithms but no KeyStore.
+	 */
+	CRYPTO,
+	/**
+	 * The NSS Softtoken KeyStore module. This is the second
+	 * slot of the softtoken object.
+	 * This module provides
+	 * implementations for cryptographic algorithms (after login)
+	 * and the KeyStore.
+	 */
+	KEYSTORE,
+	/**
+	 * The NSS Softtoken module in FIPS mode. Note that in FIPS mode the
+	 * softtoken presents only one slot, not separate CRYPTO and KEYSTORE
+	 * slots as in non-FIPS mode.
+	 */
+	FIPS,
+	/**
+	 * The NSS builtin trust anchor module. This is the
+	 * NSSCKBI object. It provides no crypto functions.
+	 */
+	TRUSTANCHOR,
+	/**
+	 * An external module.
+	 */
+	EXTERNAL,
     }
 
     /**
@@ -316,12 +317,12 @@ public final class Secmod {
      *   or not initialized
      */
     public Module getModule(ModuleType type) {
-        for (Module module : getModules()) {
-            if (module.getType() == type) {
-                return module;
-            }
-        }
-        return null;
+	for (Module module : getModules()) {
+	    if (module.getType() == type) {
+		return module;
+	    }
+	}
+	return null;
     }
 
     static final String TEMPLATE_EXTERNAL =
@@ -358,193 +359,193 @@ public final class Secmod {
      * A representation of one PKCS#11 slot in a PKCS#11 module.
      */
     public static final class Module {
-        // name of the native library
-        final String libraryName;
-        // descriptive name used by NSS
-        final String commonName;
-        final int slot;
-        final ModuleType type;
+	// name of the native library
+	final String libraryName;
+	// descriptive name used by NSS
+	final String commonName;
+	final int slot;
+	final ModuleType type;
 
-        private String config;
-        private SunPKCS11 provider;
+	private String config;
+	private SunPKCS11 provider;
+	
+	// trust attributes. Used for the KEYSTORE and TRUSTANCHOR modules only
+	private Map<Bytes,TrustAttributes> trust;
 
-        // trust attributes. Used for the KEYSTORE and TRUSTANCHOR modules only
-        private Map<Bytes,TrustAttributes> trust;
+	Module(String libraryName, String commonName, boolean fips, int slot) {
+	    ModuleType type;
+	    if ((libraryName == null) || (libraryName.length() == 0)) {
+		// must be softtoken
+		libraryName = System.mapLibraryName(SOFTTOKEN_LIB_NAME);
+		if (fips == false) {
+		    type = (slot == 0) ? ModuleType.CRYPTO : ModuleType.KEYSTORE;
+		} else {
+		    type = ModuleType.FIPS;
+		    if (slot != 0) {
+			throw new RuntimeException
+			    ("Slot index should be 0 for FIPS slot");
+		    }
+		}
+	    } else {
+		if (libraryName.endsWith(System.mapLibraryName(TRUST_LIB_NAME))
+			|| commonName.equals("Builtin Roots Module")) {
+		    type = ModuleType.TRUSTANCHOR;
+		} else {
+		    type = ModuleType.EXTERNAL;
+		}
+		if (fips) {
+		    throw new RuntimeException("FIPS flag set for non-internal "
+			+ "module: " + libraryName + ", " + commonName);
+		}
+	    }
+	    this.libraryName = libraryName;
+	    this.commonName = commonName;
+	    this.slot = slot;
+	    this.type = type;
+	    initConfiguration();
+	}
 
-        Module(String libraryName, String commonName, boolean fips, int slot) {
-            ModuleType type;
-            if ((libraryName == null) || (libraryName.length() == 0)) {
-                // must be softtoken
-                libraryName = System.mapLibraryName(SOFTTOKEN_LIB_NAME);
-                if (fips == false) {
-                    type = (slot == 0) ? ModuleType.CRYPTO : ModuleType.KEYSTORE;
-                } else {
-                    type = ModuleType.FIPS;
-                    if (slot != 0) {
-                        throw new RuntimeException
-                            ("Slot index should be 0 for FIPS slot");
-                    }
-                }
-            } else {
-                if (libraryName.endsWith(System.mapLibraryName(TRUST_LIB_NAME))
-                        || commonName.equals("Builtin Roots Module")) {
-                    type = ModuleType.TRUSTANCHOR;
-                } else {
-                    type = ModuleType.EXTERNAL;
-                }
-                if (fips) {
-                    throw new RuntimeException("FIPS flag set for non-internal "
-                        + "module: " + libraryName + ", " + commonName);
-                }
-            }
-            this.libraryName = libraryName;
-            this.commonName = commonName;
-            this.slot = slot;
-            this.type = type;
-            initConfiguration();
-        }
+	private void initConfiguration() {
+	    switch (type) {
+	    case EXTERNAL:
+	        config = String.format(TEMPLATE_EXTERNAL, libraryName,
+					    commonName + " " + slot, slot);
+	        break;
+	    case CRYPTO:
+	        config = String.format(TEMPLATE_CRYPTO, libraryName);
+	        break;
+	    case KEYSTORE:
+	        config = String.format(TEMPLATE_KEYSTORE, libraryName);
+	        break;
+	    case FIPS:
+	        config = String.format(TEMPLATE_FIPS, libraryName);
+	        break;
+	    case TRUSTANCHOR:
+	        config = String.format(TEMPLATE_TRUSTANCHOR, libraryName);
+	        break;
+	    default:
+	        throw new RuntimeException("Unknown module type: " + type);
+	    }
+	}
 
-        private void initConfiguration() {
-            switch (type) {
-            case EXTERNAL:
-                config = String.format(TEMPLATE_EXTERNAL, libraryName,
-                                            commonName + " " + slot, slot);
-                break;
-            case CRYPTO:
-                config = String.format(TEMPLATE_CRYPTO, libraryName);
-                break;
-            case KEYSTORE:
-                config = String.format(TEMPLATE_KEYSTORE, libraryName);
-                break;
-            case FIPS:
-                config = String.format(TEMPLATE_FIPS, libraryName);
-                break;
-            case TRUSTANCHOR:
-                config = String.format(TEMPLATE_TRUSTANCHOR, libraryName);
-                break;
-            default:
-                throw new RuntimeException("Unknown module type: " + type);
-            }
-        }
+	/**
+	 * Get the configuration for this module. This is a string
+	 * in the SunPKCS11 configuration format. It can be
+	 * customized with additional options and then made
+	 * current using the setConfiguration() method.
+	 */
+	@Deprecated
+	public synchronized String getConfiguration() {
+	    return config;
+	}
 
-        /**
-         * Get the configuration for this module. This is a string
-         * in the SunPKCS11 configuration format. It can be
-         * customized with additional options and then made
-         * current using the setConfiguration() method.
-         */
-        @Deprecated
-        public synchronized String getConfiguration() {
-            return config;
-        }
+	/**
+	 * Set the configuration for this module.
+	 *
+	 * @throws IllegalStateException if the associated provider
+	 *   instance has already been created.
+	 */
+	@Deprecated
+	public synchronized void setConfiguration(String config) {
+	    if (provider != null) {
+		throw new IllegalStateException("Provider instance already created");
+	    }
+	    this.config = config;
+	}
 
-        /**
-         * Set the configuration for this module.
-         *
-         * @throws IllegalStateException if the associated provider
-         *   instance has already been created.
-         */
-        @Deprecated
-        public synchronized void setConfiguration(String config) {
-            if (provider != null) {
-                throw new IllegalStateException("Provider instance already created");
-            }
-            this.config = config;
-        }
+	/**
+	 * Return the pathname of the native library that implements
+	 * this module. For example, /usr/lib/libpkcs11.so.
+	 */
+	public String getLibraryName() {
+	    return libraryName;
+	}
 
-        /**
-         * Return the pathname of the native library that implements
-         * this module. For example, /usr/lib/libpkcs11.so.
-         */
-        public String getLibraryName() {
-            return libraryName;
-        }
+	/**
+	 * Returns the type of this module.
+	 */
+	public ModuleType getType() {
+	    return type;
+	}
 
-        /**
-         * Returns the type of this module.
-         */
-        public ModuleType getType() {
-            return type;
-        }
+	/**
+	 * Returns the provider instance that is associated with this
+	 * module. The first call to this method creates the provider
+	 * instance.
+	 */
+	@Deprecated
+	public synchronized Provider getProvider() {
+	    if (provider == null) {
+		provider = newProvider();
+	    }
+	    return provider;
+	}
+	
+	synchronized boolean hasInitializedProvider() {
+	    return provider != null;
+	}
+	
+	void setProvider(SunPKCS11 p) {
+	    if (provider != null) {
+		throw new ProviderException("Secmod provider already initialized");
+	    }
+	    provider = p;
+	}
 
-        /**
-         * Returns the provider instance that is associated with this
-         * module. The first call to this method creates the provider
-         * instance.
-         */
-        @Deprecated
-        public synchronized Provider getProvider() {
-            if (provider == null) {
-                provider = newProvider();
-            }
-            return provider;
-        }
+	private SunPKCS11 newProvider() {
+	    try {
+		InputStream in = new ByteArrayInputStream(config.getBytes("UTF8"));
+		return new SunPKCS11(in);
+	    } catch (Exception e) {
+		// XXX
+		throw new ProviderException(e);
+	    }
+	}
+	
+	synchronized void setTrust(Token token, X509Certificate cert) {
+	    Bytes bytes = new Bytes(getDigest(cert, "SHA-1"));
+	    TrustAttributes attr = getTrust(bytes);
+	    if (attr == null) {
+		attr = new TrustAttributes(token, cert, bytes, CKT_NETSCAPE_TRUSTED_DELEGATOR);
+		trust.put(bytes, attr);
+	    } else {
+		// does it already have the correct trust settings?
+		if (attr.isTrusted(TrustType.ALL) == false) {
+		    // XXX not yet implemented
+		    throw new ProviderException("Cannot change existing trust attributes");
+		}
+	    }
+	}
 
-        synchronized boolean hasInitializedProvider() {
-            return provider != null;
-        }
+	TrustAttributes getTrust(Bytes hash) {
+	    if (trust == null) {
+		// If provider is not set, create a temporary provider to
+		// retrieve the trust information. This can happen if we need
+		// to get the trust information for the trustanchor module
+		// because we need to look for user customized settings in the
+		// keystore module (which may not have a provider created yet).
+		// Creating a temporary provider and then dropping it on the
+		// floor immediately is flawed, but it's the best we can do
+		// for now.
+		synchronized (this) {
+		    SunPKCS11 p = provider;
+		    if (p == null) {
+			p = newProvider();
+		    }
+		    try {
+			trust = Secmod.getTrust(p);
+		    } catch (PKCS11Exception e) {
+			throw new RuntimeException(e);
+		    }
+		}
+	    }
+	    return trust.get(hash);
+	}
 
-        void setProvider(SunPKCS11 p) {
-            if (provider != null) {
-                throw new ProviderException("Secmod provider already initialized");
-            }
-            provider = p;
-        }
-
-        private SunPKCS11 newProvider() {
-            try {
-                InputStream in = new ByteArrayInputStream(config.getBytes("UTF8"));
-                return new SunPKCS11(in);
-            } catch (Exception e) {
-                // XXX
-                throw new ProviderException(e);
-            }
-        }
-
-        synchronized void setTrust(Token token, X509Certificate cert) {
-            Bytes bytes = new Bytes(getDigest(cert, "SHA-1"));
-            TrustAttributes attr = getTrust(bytes);
-            if (attr == null) {
-                attr = new TrustAttributes(token, cert, bytes, CKT_NETSCAPE_TRUSTED_DELEGATOR);
-                trust.put(bytes, attr);
-            } else {
-                // does it already have the correct trust settings?
-                if (attr.isTrusted(TrustType.ALL) == false) {
-                    // XXX not yet implemented
-                    throw new ProviderException("Cannot change existing trust attributes");
-                }
-            }
-        }
-
-        TrustAttributes getTrust(Bytes hash) {
-            if (trust == null) {
-                // If provider is not set, create a temporary provider to
-                // retrieve the trust information. This can happen if we need
-                // to get the trust information for the trustanchor module
-                // because we need to look for user customized settings in the
-                // keystore module (which may not have a provider created yet).
-                // Creating a temporary provider and then dropping it on the
-                // floor immediately is flawed, but it's the best we can do
-                // for now.
-                synchronized (this) {
-                    SunPKCS11 p = provider;
-                    if (p == null) {
-                        p = newProvider();
-                    }
-                    try {
-                        trust = Secmod.getTrust(p);
-                    } catch (PKCS11Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            }
-            return trust.get(hash);
-        }
-
-        public String toString() {
-            return
-            commonName + " (" + type + ", " + libraryName + ", slot " + slot + ")";
-        }
+	public String toString() {
+	    return 
+	    commonName + " (" + type + ", " + libraryName + ", slot " + slot + ")";
+	}
 
     }
 
@@ -552,27 +553,27 @@ public final class Secmod {
      * Constants representing NSS trust categories.
      */
     public static enum TrustType {
-        /** Trusted for all purposes */
-        ALL,
-        /** Trusted for SSL client authentication */
-        CLIENT_AUTH,
-        /** Trusted for SSL server authentication */
-        SERVER_AUTH,
-        /** Trusted for code signing */
-        CODE_SIGNING,
-        /** Trusted for email protection */
-        EMAIL_PROTECTION,
+	/** Trusted for all purposes */
+	ALL,
+	/** Trusted for SSL client authentication */
+	CLIENT_AUTH,
+	/** Trusted for SSL server authentication */
+	SERVER_AUTH,
+	/** Trusted for code signing */
+	CODE_SIGNING,
+	/** Trusted for email protection */
+	EMAIL_PROTECTION,
     }
-
+    
     public static enum DbMode {
-        READ_WRITE("NSS_InitReadWrite"),
-        READ_ONLY ("NSS_Init"),
-        NO_DB     ("NSS_NoDB_Init");
+	READ_WRITE("NSS_InitReadWrite"),
+	READ_ONLY ("NSS_Init"),
+	NO_DB     ("NSS_NoDB_Init");
 
-        final String functionName;
-        DbMode(String functionName) {
-            this.functionName = functionName;
-        }
+	final String functionName;
+	DbMode(String functionName) {
+	    this.functionName = functionName;
+	}
     }
 
     /**
@@ -583,165 +584,165 @@ public final class Secmod {
      * the KeyStore to be specified.
      */
     public static final class KeyStoreLoadParameter implements LoadStoreParameter {
-        final TrustType trustType;
-        final ProtectionParameter protection;
-        public KeyStoreLoadParameter(TrustType trustType, char[] password) {
-            this(trustType, new PasswordProtection(password));
+	final TrustType trustType;
+	final ProtectionParameter protection;
+	public KeyStoreLoadParameter(TrustType trustType, char[] password) {
+	    this(trustType, new PasswordProtection(password));
 
-        }
-        public KeyStoreLoadParameter(TrustType trustType, ProtectionParameter prot) {
-            if (trustType == null) {
-                throw new NullPointerException("trustType must not be null");
-            }
-            this.trustType = trustType;
-            this.protection = prot;
-        }
-        public ProtectionParameter getProtectionParameter() {
-            return protection;
-        }
-        public TrustType getTrustType() {
-            return trustType;
-        }
+	}
+	public KeyStoreLoadParameter(TrustType trustType, ProtectionParameter prot) {
+	    if (trustType == null) {
+		throw new NullPointerException("trustType must not be null");
+	    }
+	    this.trustType = trustType;
+	    this.protection = prot;
+	}
+	public ProtectionParameter getProtectionParameter() {
+	    return protection;
+	}
+	public TrustType getTrustType() {
+	    return trustType;
+	}
     }
 
     static class TrustAttributes {
-        final long handle;
-        final long clientAuth, serverAuth, codeSigning, emailProtection;
-        final byte[] shaHash;
-        TrustAttributes(Token token, X509Certificate cert, Bytes bytes, long trustValue) {
-            Session session = null;
-            try {
-                session = token.getOpSession();
-                // XXX use KeyStore TrustType settings to determine which
-                // attributes to set
-                CK_ATTRIBUTE[] attrs = new CK_ATTRIBUTE[] {
-                    new CK_ATTRIBUTE(CKA_TOKEN, true),
-                    new CK_ATTRIBUTE(CKA_CLASS, CKO_NETSCAPE_TRUST),
-                    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_SERVER_AUTH, trustValue),
-                    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CODE_SIGNING, trustValue),
-                    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_EMAIL_PROTECTION, trustValue),
-                    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CLIENT_AUTH, trustValue),
-                    new CK_ATTRIBUTE(CKA_NETSCAPE_CERT_SHA1_HASH, bytes.b),
-                    new CK_ATTRIBUTE(CKA_NETSCAPE_CERT_MD5_HASH, getDigest(cert, "MD5")),
-                    new CK_ATTRIBUTE(CKA_ISSUER, cert.getIssuerX500Principal().getEncoded()),
-                    new CK_ATTRIBUTE(CKA_SERIAL_NUMBER, cert.getSerialNumber().toByteArray()),
-                    // XXX per PKCS#11 spec, the serial number should be in ASN.1
-                };
-                handle = token.p11.C_CreateObject(session.id(), attrs);
-                shaHash = bytes.b;
-                clientAuth = trustValue;
-                serverAuth = trustValue;
-                codeSigning = trustValue;
-                emailProtection = trustValue;
-            } catch (PKCS11Exception e) {
-                throw new ProviderException("Could not create trust object", e);
-            } finally {
-                token.releaseSession(session);
-            }
-        }
-        TrustAttributes(Token token, Session session, long handle)
-                        throws PKCS11Exception {
-            this.handle = handle;
-            CK_ATTRIBUTE[] attrs = new CK_ATTRIBUTE[] {
-                new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_SERVER_AUTH),
-                new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CODE_SIGNING),
-                new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_EMAIL_PROTECTION),
-                new CK_ATTRIBUTE(CKA_NETSCAPE_CERT_SHA1_HASH),
-            };
+	final long handle;
+	final long clientAuth, serverAuth, codeSigning, emailProtection;
+	final byte[] shaHash;
+	TrustAttributes(Token token, X509Certificate cert, Bytes bytes, long trustValue) {
+	    Session session = null;
+	    try {
+		session = token.getOpSession();
+		// XXX use KeyStore TrustType settings to determine which
+		// attributes to set
+		CK_ATTRIBUTE[] attrs = new CK_ATTRIBUTE[] {
+		    new CK_ATTRIBUTE(CKA_TOKEN, true),
+		    new CK_ATTRIBUTE(CKA_CLASS, CKO_NETSCAPE_TRUST),
+		    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_SERVER_AUTH, trustValue),
+		    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CODE_SIGNING, trustValue),
+		    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_EMAIL_PROTECTION, trustValue),
+		    new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CLIENT_AUTH, trustValue),
+		    new CK_ATTRIBUTE(CKA_NETSCAPE_CERT_SHA1_HASH, bytes.b),
+		    new CK_ATTRIBUTE(CKA_NETSCAPE_CERT_MD5_HASH, getDigest(cert, "MD5")),
+		    new CK_ATTRIBUTE(CKA_ISSUER, cert.getIssuerX500Principal().getEncoded()),
+		    new CK_ATTRIBUTE(CKA_SERIAL_NUMBER, cert.getSerialNumber().toByteArray()),
+		    // XXX per PKCS#11 spec, the serial number should be in ASN.1
+		};
+		handle = token.p11.C_CreateObject(session.id(), attrs);
+		shaHash = bytes.b;
+		clientAuth = trustValue;
+		serverAuth = trustValue;
+		codeSigning = trustValue;
+		emailProtection = trustValue;
+	    } catch (PKCS11Exception e) {
+		throw new ProviderException("Could not create trust object", e);
+	    } finally {
+		token.releaseSession(session);
+	    }
+	}
+	TrustAttributes(Token token, Session session, long handle)
+			throws PKCS11Exception {
+	    this.handle = handle;
+	    CK_ATTRIBUTE[] attrs = new CK_ATTRIBUTE[] {
+		new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_SERVER_AUTH),
+		new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CODE_SIGNING),
+		new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_EMAIL_PROTECTION),
+		new CK_ATTRIBUTE(CKA_NETSCAPE_CERT_SHA1_HASH),
+	    };
 
-            token.p11.C_GetAttributeValue(session.id(), handle, attrs);
-            serverAuth = attrs[0].getLong();
-            codeSigning = attrs[1].getLong();
-            emailProtection = attrs[2].getLong();
-            shaHash = attrs[3].getByteArray();
+	    token.p11.C_GetAttributeValue(session.id(), handle, attrs);
+	    serverAuth = attrs[0].getLong();
+	    codeSigning = attrs[1].getLong();
+	    emailProtection = attrs[2].getLong();
+	    shaHash = attrs[3].getByteArray();
 
-            attrs = new CK_ATTRIBUTE[] {
-                new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CLIENT_AUTH),
-            };
-            long c;
-            try {
-                token.p11.C_GetAttributeValue(session.id(), handle, attrs);
-                c = attrs[0].getLong();
-            } catch (PKCS11Exception e) {
-                // trust anchor module does not support this attribute
-                c = serverAuth;
-            }
-            clientAuth = c;
-        }
-        Bytes getHash() {
-            return new Bytes(shaHash);
-        }
-        boolean isTrusted(TrustType type) {
-            switch (type) {
-            case CLIENT_AUTH:
-                return isTrusted(clientAuth);
-            case SERVER_AUTH:
-                return isTrusted(serverAuth);
-            case CODE_SIGNING:
-                return isTrusted(codeSigning);
-            case EMAIL_PROTECTION:
-                return isTrusted(emailProtection);
-            case ALL:
-                return isTrusted(TrustType.CLIENT_AUTH)
-                    && isTrusted(TrustType.SERVER_AUTH)
-                    && isTrusted(TrustType.CODE_SIGNING)
-                    && isTrusted(TrustType.EMAIL_PROTECTION);
-            default:
-                return false;
-            }
-        }
+	    attrs = new CK_ATTRIBUTE[] {
+		new CK_ATTRIBUTE(CKA_NETSCAPE_TRUST_CLIENT_AUTH),
+	    };
+	    long c;
+	    try {
+		token.p11.C_GetAttributeValue(session.id(), handle, attrs);
+		c = attrs[0].getLong();
+	    } catch (PKCS11Exception e) {
+		// trust anchor module does not support this attribute
+		c = serverAuth;
+	    }
+	    clientAuth = c;
+	}
+	Bytes getHash() {
+	    return new Bytes(shaHash);
+	}
+	boolean isTrusted(TrustType type) {
+	    switch (type) {
+	    case CLIENT_AUTH:
+	        return isTrusted(clientAuth);
+	    case SERVER_AUTH:
+	        return isTrusted(serverAuth);
+	    case CODE_SIGNING:
+	        return isTrusted(codeSigning);
+	    case EMAIL_PROTECTION:
+	        return isTrusted(emailProtection);
+	    case ALL:
+	        return isTrusted(TrustType.CLIENT_AUTH)
+	            && isTrusted(TrustType.SERVER_AUTH)
+	            && isTrusted(TrustType.CODE_SIGNING)
+	            && isTrusted(TrustType.EMAIL_PROTECTION);
+	    default:
+	        return false;
+	    }
+	}
 
-        private boolean isTrusted(long l) {
-            // XXX CKT_TRUSTED?
-            return (l == CKT_NETSCAPE_TRUSTED_DELEGATOR);
-        }
+	private boolean isTrusted(long l) {
+	    // XXX CKT_TRUSTED?
+	    return (l == CKT_NETSCAPE_TRUSTED_DELEGATOR);
+	}
 
     }
 
     private static class Bytes {
-        final byte[] b;
-        Bytes(byte[] b) {
-            this.b = b;
-        }
-        public int hashCode() {
-            return Arrays.hashCode(b);
-        }
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o instanceof Bytes == false) {
-                return false;
-            }
-            Bytes other = (Bytes)o;
-            return Arrays.equals(this.b, other.b);
-        }
+	final byte[] b;
+	Bytes(byte[] b) {
+	    this.b = b;
+	}
+	public int hashCode() {
+	    return Arrays.hashCode(b);
+	}
+	public boolean equals(Object o) {
+	    if (this == o) {
+		return true;
+	    }
+	    if (o instanceof Bytes == false) {
+		return false;
+	    }
+	    Bytes other = (Bytes)o;
+	    return Arrays.equals(this.b, other.b);
+	}
     }
 
     private static Map<Bytes,TrustAttributes> getTrust(SunPKCS11 provider)
-            throws PKCS11Exception {
-        Map<Bytes,TrustAttributes> trustMap = new HashMap<Bytes,TrustAttributes>();
-        Token token = provider.getToken();
-        Session session = null;
-        try {
-            session = token.getOpSession();
-            int MAX_NUM = 8192;
-            CK_ATTRIBUTE[] attrs = new CK_ATTRIBUTE[] {
-                new CK_ATTRIBUTE(CKA_CLASS, CKO_NETSCAPE_TRUST),
-            };
-            token.p11.C_FindObjectsInit(session.id(), attrs);
-            long[] handles = token.p11.C_FindObjects(session.id(), MAX_NUM);
-            token.p11.C_FindObjectsFinal(session.id());
-            if (DEBUG) System.out.println("handles: " + handles.length);
+	    throws PKCS11Exception {
+	Map<Bytes,TrustAttributes> trustMap = new HashMap<Bytes,TrustAttributes>();
+	Token token = provider.getToken();
+	Session session = null;
+	try {
+	    session = token.getOpSession();
+	    int MAX_NUM = 8192;
+	    CK_ATTRIBUTE[] attrs = new CK_ATTRIBUTE[] {
+		new CK_ATTRIBUTE(CKA_CLASS, CKO_NETSCAPE_TRUST),
+	    };
+	    token.p11.C_FindObjectsInit(session.id(), attrs);
+	    long[] handles = token.p11.C_FindObjects(session.id(), MAX_NUM);
+	    token.p11.C_FindObjectsFinal(session.id());
+	    if (DEBUG) System.out.println("handles: " + handles.length);
 
-            for (long handle : handles) {
-                TrustAttributes trust = new TrustAttributes(token, session, handle);
-                trustMap.put(trust.getHash(), trust);
-            }
-        } finally {
-            token.releaseSession(session);
-        }
-        return trustMap;
+	    for (long handle : handles) {
+		TrustAttributes trust = new TrustAttributes(token, session, handle);
+		trustMap.put(trust.getHash(), trust);
+	    }
+	} finally {
+	    token.releaseSession(session);
+	}
+	return trustMap;
     }
 
     private static native long nssGetLibraryHandle(String libraryName);

@@ -54,6 +54,7 @@ package javax.swing;
  * needs to know about when it cannot be serialized.
  *
  * @author  Shannon Hickey
+ * @version %I% %G%
  */
 enum ClientPropertyKey {
 
@@ -93,7 +94,7 @@ enum ClientPropertyKey {
     private ClientPropertyKey() {
         this(false);
     }
-
+    
     /**
      * Constructs a key with the {@code reportValueNotSerializable} property
      * set to the given value.

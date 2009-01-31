@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @summary it is a new version of an old test which was
+ * @summary it is a new version of an old test which was 
  *          /src/share/test/serialization/piotest.java
  *          Test of serialization/deserialization
  *          of objects with fields of array type
@@ -37,42 +37,42 @@ public class ArrayFields {
 
    public static void main (String argv[]) {
        System.err.println("\nRegression test for testing of " +
-           "serialization/deserialization of objects with " +
+	   "serialization/deserialization of objects with " +
            "fields of array type\n");
 
        try {
-           FileOutputStream ostream = new FileOutputStream("piotest4.tmp");
-           ObjectOutputStream p = new ObjectOutputStream(ostream);
+	   FileOutputStream ostream = new FileOutputStream("piotest4.tmp");
+	   ObjectOutputStream p = new ObjectOutputStream(ostream);
 
-           ArrayTest array = new ArrayTest();
-           p.writeObject(array);
-           p.flush();
+	   ArrayTest array = new ArrayTest();
+	   p.writeObject(array);
+	   p.flush();
 
-           FileInputStream istream = new FileInputStream("piotest4.tmp");
-           ObjectInputStream q = new ObjectInputStream(istream);
+	   FileInputStream istream = new FileInputStream("piotest4.tmp");
+	   ObjectInputStream q = new ObjectInputStream(istream);
 
-           Object obj = null;
-           try {
-               obj = q.readObject();
-           } catch (ClassCastException ee) {
-               System.err.println("\nTEST FAILED: An Exception occurred " +
+	   Object obj = null;
+	   try {
+	       obj = q.readObject();
+	   } catch (ClassCastException ee) {
+	       System.err.println("\nTEST FAILED: An Exception occurred " +
                    ee.getMessage());
-               System.err.println("\nBoolean array read as byte array" +
-                   " could not be assigned to field z");
-               throw new Error();
-           }
-
-           ArrayTest array_u = (ArrayTest)obj;
-           if (!array.equals(array_u)) {
-               System.out.println("\nTEST FAILED: Unpickling of objects " +
-                                  "with ArrayTest failed");
-               throw new Error();
-           }
-           System.err.println("\nTEST PASSED");
+	       System.err.println("\nBoolean array read as byte array" +
+		   " could not be assigned to field z");
+	       throw new Error();
+	   }
+	   
+	   ArrayTest array_u = (ArrayTest)obj;
+	   if (!array.equals(array_u)) {
+	       System.out.println("\nTEST FAILED: Unpickling of objects " +
+				  "with ArrayTest failed");
+	       throw new Error();
+	   }
+	   System.err.println("\nTEST PASSED");            
        } catch (Exception e) {
-           System.err.print("TEST FAILED: ");
-           e.printStackTrace();
-           throw new Error();
+	   System.err.print("TEST FAILED: ");
+	   e.printStackTrace();
+	   throw new Error();
        }
    }
 }

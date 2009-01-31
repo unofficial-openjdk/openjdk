@@ -47,7 +47,7 @@ void initScreens(JNIEnv *env) {
  * This function attempts to make a Win32 API call to
  *   BOOL SetProcessDPIAware(VOID);
  * which is only present on Windows Vista, and which instructs the
- * Vista Windows Display Manager that this application is High DPI Aware
+ * Vista Windows Display Manager that this application is High DPI Aware 
  * and does not need to be scaled by the WDM and lied about the
  * actual system dpi.
  */
@@ -67,8 +67,8 @@ SetProcessDPIAwareProperty()
     HINSTANCE hLibUser32Dll = ::LoadLibrary(TEXT("user32.dll"));
 
     if (hLibUser32Dll != NULL) {
-        SetProcessDPIAwareFunc *lpSetProcessDPIAware =
-            (SetProcessDPIAwareFunc*)GetProcAddress(hLibUser32Dll,
+        SetProcessDPIAwareFunc *lpSetProcessDPIAware = 
+            (SetProcessDPIAwareFunc*)GetProcAddress(hLibUser32Dll, 
                                                     "SetProcessDPIAware");
         if (lpSetProcessDPIAware != NULL) {
             lpSetProcessDPIAware();
@@ -112,7 +112,7 @@ Java_sun_awt_Win32GraphicsEnvironment_getNumScreens(JNIEnv *env,
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_Win32GraphicsEnvironment_getDefaultScreen(JNIEnv *env,
-                                                       jobject thisobj)
+						       jobject thisobj)
 {
     return AwtWin32GraphicsDevice::GetDefaultDeviceIndex();
 }
@@ -132,24 +132,24 @@ static int getWinVer() {
         osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
         GetVersionEx(&osvi);
         winVer = osvi.dwMajorVersion;
-        if (winVer >= 5) {
-          // REMIND verify on 64 bit windows
-          HMODULE hGDI = LoadLibrary(TEXT("gdi32.dll"));
-          if (hGDI != NULL) {
-            procAddFontResourceEx =
-              (AddFontResourceExType)GetProcAddress(hGDI,"AddFontResourceExW");
-            if (procAddFontResourceEx == NULL) {
-              winVer = 0;
-            }
-            procRemoveFontResourceEx =
-              (RemoveFontResourceExType)GetProcAddress(hGDI,
-                                                      "RemoveFontResourceExW");
-            if (procRemoveFontResourceEx == NULL) {
-              winVer = 0;
-            }
-            FreeLibrary(hGDI);
-          }
-        }
+	if (winVer >= 5) {
+	  // REMIND verify on 64 bit windows
+	  HMODULE hGDI = LoadLibrary(TEXT("gdi32.dll"));
+	  if (hGDI != NULL) {
+	    procAddFontResourceEx = 
+	      (AddFontResourceExType)GetProcAddress(hGDI,"AddFontResourceExW");
+	    if (procAddFontResourceEx == NULL) {
+	      winVer = 0;
+	    }
+	    procRemoveFontResourceEx = 
+	      (RemoveFontResourceExType)GetProcAddress(hGDI,
+						      "RemoveFontResourceExW");
+	    if (procRemoveFontResourceEx == NULL) {
+	      winVer = 0;
+	    }
+	    FreeLibrary(hGDI);
+	  }
+	}
     }
 
     return winVer;
@@ -162,8 +162,8 @@ static int getWinVer() {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_Win32GraphicsEnvironment_registerFontWithPlatform(JNIEnv *env,
-                                                              jclass cl,
-                                                              jstring fontName)
+							      jclass cl,
+							      jstring fontName)
 {
     if (getWinVer() >= 5 && procAddFontResourceEx != NULL) {
       LPTSTR file = (LPTSTR)JNU_GetStringPlatformChars(env, fontName, NULL);
@@ -181,8 +181,8 @@ Java_sun_awt_Win32GraphicsEnvironment_registerFontWithPlatform(JNIEnv *env,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_Win32GraphicsEnvironment_deRegisterFontWithPlatform(JNIEnv *env,
-                                                              jclass cl,
-                                                              jstring fontName)
+							      jclass cl,
+							      jstring fontName)
 {
     if (getWinVer() >= 5 && procRemoveFontResourceEx != NULL) {
       LPTSTR file = (LPTSTR)JNU_GetStringPlatformChars(env, fontName, NULL);
@@ -205,7 +205,7 @@ Java_sun_awt_Win32GraphicsEnvironment_deRegisterFontWithPlatform(JNIEnv *env,
 
 JNIEXPORT jstring JNICALL
 Java_sun_awt_Win32GraphicsEnvironment_getEUDCFontFile(JNIEnv *env, jclass cl) {
-    int    rc;
+    int	   rc;
     HKEY   key;
     DWORD  type;
     WCHAR  fontPathBuf[MAX_PATH + 1];
@@ -213,58 +213,58 @@ Java_sun_awt_Win32GraphicsEnvironment_getEUDCFontFile(JNIEnv *env, jclass cl) {
     WCHAR  tmpPath[MAX_PATH + 1];
     LPWSTR fontPath = fontPathBuf;
     LPWSTR eudcKey = NULL;
-
+      
     LANGID langID = GetSystemDefaultLangID();
     //lookup for encoding ID, EUDC only supported in
     //codepage 932, 936, 949, 950 (and unicode)
     if (langID == LANGID_JA_JP) {
-        eudcKey = EUDCKEY_JA_JP;
+	eudcKey = EUDCKEY_JA_JP;
     } else if (langID == LANGID_ZH_CN || langID == LANGID_ZH_SG) {
-        eudcKey = EUDCKEY_ZH_CN;
+	eudcKey = EUDCKEY_ZH_CN;
     } else if (langID == LANGID_ZH_HK || langID == LANGID_ZH_TW ||
-               langID == LANGID_ZH_MO) {
+	       langID == LANGID_ZH_MO) {
       eudcKey = EUDCKEY_ZH_TW;
     } else if (langID == LANGID_KO_KR) {
-        eudcKey = EUDCKEY_KO_KR;
+	eudcKey = EUDCKEY_KO_KR;
     } else {
-        return NULL;
+	return NULL;
     }
 
     rc = RegOpenKeyEx(HKEY_CURRENT_USER, eudcKey, 0, KEY_READ, &key);
     if (rc != ERROR_SUCCESS) {
-        return NULL;
+	return NULL;
     }
     rc = RegQueryValueEx(key,
-                         L"SystemDefaultEUDCFont",
-                         0,
-                         &type,
-                         (LPBYTE)fontPath,
-                         &fontPathLen);
+			 L"SystemDefaultEUDCFont",
+			 0,
+			 &type,
+			 (LPBYTE)fontPath,
+			 &fontPathLen);
     RegCloseKey(key);
     if (rc != ERROR_SUCCESS || type != REG_SZ) {
-        return NULL;
+	return NULL;
     }
     fontPath[fontPathLen] = L'\0';
     if (wcsstr(fontPath, L"%SystemRoot%")) {
-        //if the fontPath includes %SystemRoot%
-        LPWSTR systemRoot = _wgetenv(L"SystemRoot");
-        if (systemRoot != NULL
-            && swprintf(tmpPath, L"%s%s", systemRoot, fontPath + 12) != -1) {
-            fontPath = tmpPath;
-        }
-        else {
-            return NULL;
-        }
+	//if the fontPath includes %SystemRoot%
+	LPWSTR systemRoot = _wgetenv(L"SystemRoot");
+	if (systemRoot != NULL
+	    && swprintf(tmpPath, L"%s%s", systemRoot, fontPath + 12) != -1) {
+	    fontPath = tmpPath;
+	}
+	else {
+	    return NULL;
+	}
     } else if (wcscmp(fontPath, L"EUDC.TTE") == 0) {
-        //else to see if it only inludes "EUDC.TTE"
-        WCHAR systemRoot[MAX_PATH + 1];
-        if (GetWindowsDirectory(systemRoot, MAX_PATH + 1) != 0) {
-            swprintf(tmpPath, L"%s\\FONTS\\EUDC.TTE", systemRoot);
-            fontPath = tmpPath;
-        }
-        else {
-            return NULL;
-        }
+	//else to see if it only inludes "EUDC.TTE"
+	WCHAR systemRoot[MAX_PATH + 1];
+	if (GetWindowsDirectory(systemRoot, MAX_PATH + 1) != 0) {
+	    swprintf(tmpPath, L"%s\\FONTS\\EUDC.TTE", systemRoot);
+	    fontPath = tmpPath;
+	}
+	else {
+	    return NULL;
+	}
     }
     return JNU_NewStringPlatform(env, fontPath);
 }

@@ -43,11 +43,11 @@ public class MultipleEnd {
 class MultipleEndFrame extends Frame {
     public MultipleEndFrame() {
         super("MultipleEnd");
-        setVisible(true);
-        PrintJob pj  = getToolkit().getPrintJob(this, "MuiltipleEnd", null);
-        if (pj != null) {
-            pj.end();
-            pj.end();
-        }
+	setVisible(true);
+	PrintJob pj  = getToolkit().getPrintJob(this, "MuiltipleEnd", null);
+	if (pj != null) {
+	    pj.end();
+	    pj.end();
+	}
     }
 }

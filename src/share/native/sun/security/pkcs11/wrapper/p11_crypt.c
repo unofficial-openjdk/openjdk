@@ -65,9 +65,9 @@
  * @param   jobject jMechanism          CK_MECHANISM_PTR pMechanism
  * @param   jlong jKeyHandle            CK_OBJECT_HANDLE hKey
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptInit
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
  jobject jMechanism, jlong jKeyHandle)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -82,11 +82,11 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptInit
     ckKeyHandle = jLongToCKULong(jKeyHandle);
     jMechanismToCKMechanism(env, jMechanism, &ckMechanism);
 
-    rv = (*ckpFunctions->C_EncryptInit)(ckSessionHandle, &ckMechanism,
+    rv = (*ckpFunctions->C_EncryptInit)(ckSessionHandle, &ckMechanism, 
                                         ckKeyHandle);
 
     if (ckMechanism.pParameter != NULL_PTR) {
-        free(ckMechanism.pParameter);
+	free(ckMechanism.pParameter);
     }
 
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
@@ -105,10 +105,10 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptInit
  * @return  jbyteArray jEncryptedData   CK_BYTE_PTR pEncryptedData
  *                                      CK_ULONG_PTR pulEncryptedDataLen
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1Encrypt
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
- jbyteArray jIn, jint jInOfs, jint jInLen,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
+ jbyteArray jIn, jint jInOfs, jint jInLen, 
  jbyteArray jOut, jint jOutOfs, jint jOutLen)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -138,12 +138,12 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Encrypt
       outBufP = OBUF;
     }
 
-    rv = (*ckpFunctions->C_Encrypt)(ckSessionHandle, inBufP, jInLen,
+    rv = (*ckpFunctions->C_Encrypt)(ckSessionHandle, inBufP, jInLen, 
                                     outBufP, &ckEncryptedPartLen);
 
     if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
       if (ckEncryptedPartLen > 0) {
-        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckEncryptedPartLen,
+        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckEncryptedPartLen, 
                                    (jbyte *)outBufP);
       }
     }
@@ -169,10 +169,10 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Encrypt
  * @return  jbyteArray jEncryptedPart   CK_BYTE_PTR pEncryptedPart
  *                                      CK_ULONG_PTR pulEncryptedPartLen
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptUpdate
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
- jlong directIn, jbyteArray jIn, jint jInOfs, jint jInLen,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
+ jlong directIn, jbyteArray jIn, jint jInOfs, jint jInLen, 
  jlong directOut, jbyteArray jOut, jint jOutOfs, jint jOutLen)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -210,11 +210,11 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptUpdate
       }
     }
 
-    //printf("EU: inBufP=%i, jInOfs=%i, jInLen=%i, outBufP=%i\n",
+    //printf("EU: inBufP=%i, jInOfs=%i, jInLen=%i, outBufP=%i\n", 
     //       inBufP, jInOfs, jInLen, outBufP);
 
-    rv = (*ckpFunctions->C_EncryptUpdate)(ckSessionHandle,
-                                          inBufP, jInLen,
+    rv = (*ckpFunctions->C_EncryptUpdate)(ckSessionHandle, 
+                                          inBufP, jInLen, 
                                           outBufP, &ckEncryptedPartLen);
 
     //printf("EU: ckEncryptedPartLen=%i\n", ckEncryptedPartLen);
@@ -222,7 +222,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptUpdate
     if (directIn == 0 && inBufP != IBUF) {
       free(inBufP);
     }
-
+    
     if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
       if (directOut == 0 && ckEncryptedPartLen > 0) {
         (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckEncryptedPartLen,
@@ -246,10 +246,10 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptUpdate
  * @return  jbyteArray jLastEncryptedPart   CK_BYTE_PTR pLastEncryptedDataPart
  *                                          CK_ULONG_PTR pulLastEncryptedDataPartLen
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptFinal
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
- jlong directOut, jbyteArray jOut, jint jOutOfs, jint jOutLen)
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
+ jlong directOut, jbyteArray jOut, jint jOutOfs, jint jOutLen) 
 {
     CK_SESSION_HANDLE ckSessionHandle;
     CK_RV rv;
@@ -272,14 +272,14 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptFinal
 
     //printf("EF: outBufP=%i\n", outBufP);
 
-    rv = (*ckpFunctions->C_EncryptFinal)(ckSessionHandle, outBufP,
+    rv = (*ckpFunctions->C_EncryptFinal)(ckSessionHandle, outBufP, 
                                          &ckLastEncryptedPartLen);
 
     //printf("EF: ckLastEncryptedPartLen=%i", ckLastEncryptedPartLen);
 
     if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
       if (directOut == 0 && ckLastEncryptedPartLen > 0) {
-        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckLastEncryptedPartLen,
+        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckLastEncryptedPartLen, 
                                    (jbyte *)outBufP);
       }
     }
@@ -301,9 +301,9 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1EncryptFinal
  * @param   jobject jMechanism          CK_MECHANISM_PTR pMechanism
  * @param   jlong jKeyHandle            CK_OBJECT_HANDLE hKey
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptInit
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
  jobject jMechanism, jlong jKeyHandle)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -318,11 +318,11 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptInit
     ckKeyHandle = jLongToCKULong(jKeyHandle);
     jMechanismToCKMechanism(env, jMechanism, &ckMechanism);
 
-    rv = (*ckpFunctions->C_DecryptInit)(ckSessionHandle, &ckMechanism,
+    rv = (*ckpFunctions->C_DecryptInit)(ckSessionHandle, &ckMechanism, 
                                         ckKeyHandle);
 
     if (ckMechanism.pParameter != NULL_PTR) {
-        free(ckMechanism.pParameter);
+	free(ckMechanism.pParameter);
     }
 
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
@@ -341,10 +341,10 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptInit
  * @return  jbyteArray jData            CK_BYTE_PTR pData
  *                                      CK_ULONG_PTR pulDataLen
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1Decrypt
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
- jbyteArray jIn, jint jInOfs, jint jInLen,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
+ jbyteArray jIn, jint jInOfs, jint jInLen, 
  jbyteArray jOut, jint jOutOfs, jint jOutLen)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -378,7 +378,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Decrypt
 
     if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
       if (ckPartLen > 0) {
-        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckPartLen,
+        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckPartLen, 
                                    (jbyte *)outBufP);
       }
     }
@@ -405,10 +405,10 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Decrypt
  * @return  jbyteArray jPart            CK_BYTE_PTR pPart
  *                                      CK_ULONG_PTR pulPartLen
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptUpdate
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
- jlong directIn, jbyteArray jIn, jint jInOfs, jint jInLen,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
+ jlong directIn, jbyteArray jIn, jint jInOfs, jint jInLen, 
  jlong directOut, jbyteArray jOut, jint jOutOfs, jint jOutLen)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -443,16 +443,16 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptUpdate
         outBufP = (CK_BYTE_PTR)malloc((size_t)jOutLen);
       } else {
         outBufP = OBUF;
-      }
+      } 
     }
 
-    rv = (*ckpFunctions->C_DecryptUpdate)(ckSessionHandle, inBufP, jInLen,
+    rv = (*ckpFunctions->C_DecryptUpdate)(ckSessionHandle, inBufP, jInLen, 
                                           outBufP, &ckDecryptedPartLen);
 
     if (directIn == 0 && inBufP != IBUF) {
       free(inBufP);
     }
-
+ 
     if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
       if (directOut == 0 && ckDecryptedPartLen > 0) {
         (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckDecryptedPartLen,
@@ -478,9 +478,9 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptUpdate
  * @return  jbyteArray jLastPart        CK_BYTE_PTR pLastPart
  *                                      CK_ULONG_PTR pulLastPartLen
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptFinal
-(JNIEnv *env, jobject obj, jlong jSessionHandle,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, 
  jlong directOut, jbyteArray jOut, jint jOutOfs, jint jOutLen)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -501,13 +501,13 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptFinal
       // jOutLen should always be less than MAX_STACK_BUFFER_LEN
       outBufP = BUF;
     }
-
+    
     rv = (*ckpFunctions->C_DecryptFinal)(ckSessionHandle, outBufP,
                                          &ckLastPartLen);
 
     if (ckAssertReturnValueOK(env, rv) == CK_ASSERT_OK) {
       if (directOut == 0 && ckLastPartLen > 0) {
-        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckLastPartLen,
+        (*env)->SetByteArrayRegion(env, jOut, jOutOfs, ckLastPartLen, 
                                    (jbyte *)outBufP);
       }
     }
@@ -518,3 +518,4 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1DecryptFinal
     return ckLastPartLen;
 }
 #endif
+

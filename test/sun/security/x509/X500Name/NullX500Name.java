@@ -34,7 +34,7 @@ import sun.misc.HexDumpEncoder;
 public class NullX500Name {
 
     public static void main(String[] argv) throws Exception {
-        X500Name subject;
+	X500Name subject;
         String name = "";
 
         subject = new X500Name(name);
@@ -62,7 +62,7 @@ public class NullX500Name {
         byte[] out = dos.toByteArray();
         byte[] enc = subject.getEncoded();
         HexDumpEncoder e = new HexDumpEncoder();
-        if (Arrays.equals(out, enc))
+        if (Arrays.equals(out, enc)) 
             System.out.println("Sucess: out:" + e.encodeBuffer(out));
         else {
             System.out.println("Failed: encode:" + e.encodeBuffer(out));

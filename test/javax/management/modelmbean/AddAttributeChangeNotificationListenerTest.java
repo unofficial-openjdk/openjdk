@@ -52,11 +52,11 @@ import javax.management.modelmbean.*;
  * of the RequiredModelMBean instance used.
  */
 public class AddAttributeChangeNotificationListenerTest {
-
+    
     public static void main(String args[] ) {
         AddAttributeChangeNotificationListenerTest test =
             new AddAttributeChangeNotificationListenerTest();
-
+        
         try {
             test.run(args);
         } catch(Exception e) {
@@ -64,10 +64,10 @@ public class AddAttributeChangeNotificationListenerTest {
             e.printStackTrace();
             System.exit(1);
         }
-
+        
         System.out.println("PASS");
     }
-
+    
     private void run( String[] args) throws Exception {
         int errCount = 0;
         String testName = "AddAttributeChangeNotificationListenerTest0001";
@@ -77,14 +77,14 @@ public class AddAttributeChangeNotificationListenerTest {
         String modelMBeanName = "RequiredModelMBean";
         String modelMBeanClassName =
             "javax.management.modelmbean.RequiredModelMBean";
-
+        
         modelMBeanObjectName =
             new ObjectName("AddAttributeChangeNotificationListenerTest:type=" +
             modelMBeanName);
-
+        
         System.out.println("Build a ModelMBeanInfo without attribute State");
         modelMBeanInfo = createModelMBeanInfo();
-
+        
         System.out.println("Create and register a RequiredModelMBean " +
             "with that MBeanInfo");
         Object[] params = { modelMBeanInfo };
@@ -93,9 +93,9 @@ public class AddAttributeChangeNotificationListenerTest {
             modelMBeanObjectName,
             params,
             sig);
-
+        
         ModelMBeanListener aListener = new ModelMBeanListener();
-
+        
         // add an attribute change listener
         System.out.println("Add an attribute change listener for State");
         try {
@@ -116,7 +116,7 @@ public class AddAttributeChangeNotificationListenerTest {
                     (RuntimeOperationsException) e;
                 Exception target = roe.getTargetException();
                 System.out.println("OK: Got expected RuntimeOperationsException");
-
+                
                 if ( target instanceof IllegalArgumentException ) {
                     System.out.println("OK: Got expected " +
                         "wrapped IllegalArgumentException");
@@ -133,12 +133,12 @@ public class AddAttributeChangeNotificationListenerTest {
                 errCount++;
             }
         }
-
+        
         if ( errCount != 0 )
             throw new Exception(errCount
                 + " error(s) occured");
     }
-
+    
     /**
      * Returns a ModelMBeanInfo with two operations:
      * setManagedResource
@@ -155,7 +155,7 @@ public class AddAttributeChangeNotificationListenerTest {
             ModelMBeanOperationInfo operation1Set =
                 new  ModelMBeanOperationInfo(descriptionOp1Set,
                 oper1Set);
-
+            
             // operation addAttributeChangeNotificationListener
             String descriptionop2Set =
                 "addAttributeChangeNotificationListener description";
@@ -170,7 +170,7 @@ public class AddAttributeChangeNotificationListenerTest {
                  ModelMBeanOperationInfo operation2Set =
                      new  ModelMBeanOperationInfo(descriptionop2Set,
                      oper2Set);
-
+                 
                  // define ModelMBeanInfo
                  String className = "ModelMBeansInfo";
                  String descriptionmodel = "Model MBean Test";
@@ -181,7 +181,7 @@ public class AddAttributeChangeNotificationListenerTest {
                  };
                  ModelMBeanNotificationInfo[] notifications = null;
                  ModelMBeanConstructorInfo[] constructors = null;
-
+                 
                  ModelMBeanInfoSupport modelMBeanInfo =
                      new ModelMBeanInfoSupport(className,
                      descriptionmodel,
@@ -191,27 +191,27 @@ public class AddAttributeChangeNotificationListenerTest {
                      notifications);
                  return modelMBeanInfo;
     }
-
+    
     public static class ModelMBeanListener implements NotificationListener {
-
+        
         public ModelMBeanListener() {
             tally = 0;
         }
-
+        
         public void handleNotification(Notification acn, Object handback) {
             tally++;
         }
-
+        
         public int getCount() {
             return tally;
         }
-
+        
         public int setCount(int newTally) {
             tally = newTally;
             return tally;
         }
-
+        
         private int tally = 0;
-
+        
     }
 }

@@ -37,7 +37,7 @@ import javax.naming.NamingEnumeration;
   * of the Attributes interface.
   *<p>
   * BasicAttributes is either case-sensitive or case-insensitive (case-ignore).
-  * This property is determined at the time the BasicAttributes constructor
+  * This property is determined at the time the BasicAttributes constructor 
   * is called.
   * In a case-insensitive BasicAttributes, the case of its attribute identifiers
   * is ignored when searching for an attribute, or adding attributes.
@@ -47,7 +47,7 @@ import javax.naming.NamingEnumeration;
   * uses BasicAttribute. There is no other dependency on BasicAttribute.
   *<p>
   * Note that updates to BasicAttributes (such as adding or removing an attribute)
-  * does not affect the corresponding representation in the directory.
+  * does not affect the corresponding representation in the directory.  
   * Updates to the directory can only be effected
   * using operations in the DirContext interface.
   *<p>
@@ -57,6 +57,7 @@ import javax.naming.NamingEnumeration;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   *
   * @see DirContext#getAttributes
   * @see DirContext#modifyAttributes
@@ -93,12 +94,12 @@ public class BasicAttributes implements Attributes {
       * If <code>ignoreCase</code> is true, the character case of attribute
       * identifiers is ignored; otherwise the case is significant.
       * @param ignoreCase true means this attribute set will ignore
-      *                   the case of its attribute identifiers
-      *                   when retrieving or adding attributes;
-      *                   false means case is respected.
+      *        		  the case of its attribute identifiers
+      *			  when retrieving or adding attributes;
+      *			  false means case is respected.
       */
     public BasicAttributes(boolean ignoreCase) {
-        this.ignoreCase = ignoreCase;
+	this.ignoreCase = ignoreCase;
     }
 
     /**
@@ -107,13 +108,13 @@ public class BasicAttributes implements Attributes {
       * created attribute.
       * The character case of attribute identifiers
       * is significant when subsequently retrieving or adding attributes.
-      * @param attrID   non-null The id of the attribute to add.
+      * @param attrID 	non-null The id of the attribute to add.
       * @param val The value of the attribute to add. If null, a null
       *        value is added to the attribute.
       */
     public BasicAttributes(String attrID, Object val) {
-        this();
-        this.put(new BasicAttribute(attrID, val));
+	this();
+	this.put(new BasicAttribute(attrID, val));
     }
 
     /**
@@ -122,70 +123,70 @@ public class BasicAttributes implements Attributes {
       * created attribute.
       * If <code>ignoreCase</code> is true, the character case of attribute
       * identifiers is ignored; otherwise the case is significant.
-      * @param attrID   non-null The id of the attribute to add.
-      *           If this attribute set ignores the character
-      *           case of its attribute ids, the case of attrID
-      *           is ignored.
+      * @param attrID 	non-null The id of the attribute to add.
+      * 	  If this attribute set ignores the character
+      *		  case of its attribute ids, the case of attrID
+      *		  is ignored.
       * @param val The value of the attribute to add. If null, a null
       *        value is added to the attribute.
       * @param ignoreCase true means this attribute set will ignore
-      *                   the case of its attribute identifiers
-      *                   when retrieving or adding attributes;
-      *                   false means case is respected.
+      *        		  the case of its attribute identifiers
+      *			  when retrieving or adding attributes;
+      *			  false means case is respected.
       */
     public BasicAttributes(String attrID, Object val, boolean ignoreCase) {
-        this(ignoreCase);
-        this.put(new BasicAttribute(attrID, val));
+	this(ignoreCase);
+	this.put(new BasicAttribute(attrID, val));
     }
 
     public Object clone() {
-        BasicAttributes attrset;
-        try {
-            attrset = (BasicAttributes)super.clone();
-        } catch (CloneNotSupportedException e) {
-            attrset = new BasicAttributes(ignoreCase);
-        }
-        attrset.attrs = (Hashtable)attrs.clone();
-        return attrset;
+	BasicAttributes attrset;
+	try {
+	    attrset = (BasicAttributes)super.clone();
+	} catch (CloneNotSupportedException e) {
+	    attrset = new BasicAttributes(ignoreCase);
+	}
+	attrset.attrs = (Hashtable)attrs.clone();
+	return attrset;
     }
 
     public boolean isCaseIgnored() {
-        return ignoreCase;
+	return ignoreCase;
     }
 
     public int size() {
-        return attrs.size();
+	return attrs.size();
     }
 
     public Attribute get(String attrID) {
-        Attribute attr = (Attribute) attrs.get(
-                ignoreCase ? attrID.toLowerCase() : attrID);
-        return (attr);
+	Attribute attr = (Attribute) attrs.get(
+		ignoreCase ? attrID.toLowerCase() : attrID);
+	return (attr);
     }
 
     public NamingEnumeration<Attribute> getAll() {
-        return new AttrEnumImpl();
+	return new AttrEnumImpl();
     }
 
     public NamingEnumeration<String> getIDs() {
-        return new IDEnumImpl();
+	return new IDEnumImpl();
     }
 
     public Attribute put(String attrID, Object val) {
-        return this.put(new BasicAttribute(attrID, val));
+	return this.put(new BasicAttribute(attrID, val));
     }
 
     public Attribute put(Attribute attr) {
-        String id = attr.getID();
-        if (ignoreCase) {
-            id = id.toLowerCase();
-        }
-        return (Attribute)attrs.put(id, attr);
+	String id = attr.getID();
+	if (ignoreCase) {
+	    id = id.toLowerCase();
+	}
+	return (Attribute)attrs.put(id, attr);
     }
 
     public Attribute remove(String attrID) {
-        String id = (ignoreCase ? attrID.toLowerCase() : attrID);
-        return (Attribute)attrs.remove(id);
+	String id = (ignoreCase ? attrID.toLowerCase() : attrID);
+	return (Attribute)attrs.remove(id);
     }
 
     /**
@@ -193,15 +194,15 @@ public class BasicAttributes implements Attributes {
      * The string consists of each attribute identifier and the contents
      * of each attribute. The contents of this string is useful
      * for debugging and is not meant to be interpreted programmatically.
-     *
+     * 
      * @return A non-null string listing the contents of this attribute set.
      */
     public String toString() {
-        if (attrs.size() == 0) {
-            return("No attributes");
-        } else {
-            return attrs.toString();
-        }
+	if (attrs.size() == 0) {
+	    return("No attributes");
+	} else {
+	    return attrs.toString();
+	}
     }
 
     /**
@@ -211,11 +212,11 @@ public class BasicAttributes implements Attributes {
      * <tt>Attributes</tt>,
      * treat the case of attribute IDs the same way, and contain the
      * same attributes. Each <tt>Attribute</tt> in this <tt>BasicAttributes</tt>
-     * is checked for equality using <tt>Object.equals()</tt>, which may have
+     * is checked for equality using <tt>Object.equals()</tt>, which may have 
      * be overridden by implementations of <tt>Attribute</tt>).
      * If a subclass overrides <tt>equals()</tt>,
      * it should override <tt>hashCode()</tt>
-     * as well so that two <tt>Attributes</tt> instances that are equal
+     * as well so that two <tt>Attributes</tt> instances that are equal 
      * have the same hash code.
      * @param obj the possibly null object to compare against.
      *
@@ -223,32 +224,32 @@ public class BasicAttributes implements Attributes {
      * @see #hashCode
      */
     public boolean equals(Object obj) {
-        if ((obj != null) && (obj instanceof Attributes)) {
-            Attributes target = (Attributes)obj;
+	if ((obj != null) && (obj instanceof Attributes)) {
+	    Attributes target = (Attributes)obj;
+	    
+	    // Check case first
+	    if (ignoreCase != target.isCaseIgnored()) {
+		return false;
+	    }
 
-            // Check case first
-            if (ignoreCase != target.isCaseIgnored()) {
-                return false;
-            }
-
-            if (size() == target.size()) {
-                Attribute their, mine;
-                try {
-                    NamingEnumeration theirs = target.getAll();
-                    while (theirs.hasMore()) {
-                        their = (Attribute)theirs.next();
-                        mine = get(their.getID());
-                        if (!their.equals(mine)) {
-                            return false;
-                        }
-                    }
-                } catch (NamingException e) {
-                    return false;
-                }
-                return true;
-            }
-        }
-        return false;
+	    if (size() == target.size()) {
+		Attribute their, mine;
+		try {
+		    NamingEnumeration theirs = target.getAll();
+		    while (theirs.hasMore()) {
+			their = (Attribute)theirs.next();
+			mine = get(their.getID());
+			if (!their.equals(mine)) {
+			    return false;
+			}
+		    }
+		} catch (NamingException e) {
+		    return false;
+		}
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**
@@ -259,21 +260,21 @@ public class BasicAttributes implements Attributes {
      * ignores case of its attribute IDs, one is added to the hash code.
      * If a subclass overrides <tt>hashCode()</tt>,
      * it should override <tt>equals()</tt>
-     * as well so that two <tt>Attributes</tt> instances that are equal
+     * as well so that two <tt>Attributes</tt> instances that are equal 
      * have the same hash code.
      *
      * @return an int representing the hash code of this BasicAttributes instance.
      * @see #equals
      */
     public int hashCode() {
-        int hash = (ignoreCase ? 1 : 0);
-        try {
-            NamingEnumeration all = getAll();
-            while (all.hasMore()) {
-                hash += all.next().hashCode();
-            }
-        } catch (NamingException e) {}
-        return hash;
+	int hash = (ignoreCase ? 1 : 0);
+	try {
+	    NamingEnumeration all = getAll();
+	    while (all.hasMore()) {
+		hash += all.next().hashCode();
+	    }
+	} catch (NamingException e) {}
+	return hash;
     }
 
     /**
@@ -283,28 +284,28 @@ public class BasicAttributes implements Attributes {
      * (an int), and then the individual Attribute objects.
      */
     private void writeObject(java.io.ObjectOutputStream s)
-            throws java.io.IOException {
-        s.defaultWriteObject(); // write out the ignoreCase flag
-        s.writeInt(attrs.size());
-        Enumeration attrEnum = attrs.elements();
-        while (attrEnum.hasMoreElements()) {
-            s.writeObject(attrEnum.nextElement());
-        }
+	    throws java.io.IOException {
+	s.defaultWriteObject();	// write out the ignoreCase flag
+	s.writeInt(attrs.size());
+	Enumeration attrEnum = attrs.elements();
+	while (attrEnum.hasMoreElements()) {
+	    s.writeObject(attrEnum.nextElement());
+	}
     }
 
     /**
      * Overridden to avoid exposing implementation details.
      */
     private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
-        s.defaultReadObject();  // read in the ignoreCase flag
-        int n = s.readInt();    // number of attributes
-        attrs = (n >= 1)
-            ? new Hashtable(n * 2)
-            : new Hashtable(2); // can't have initial size of 0 (grrr...)
-        while (--n >= 0) {
-            put((Attribute)s.readObject());
-        }
+	    throws java.io.IOException, ClassNotFoundException {
+        s.defaultReadObject();	// read in the ignoreCase flag
+	int n = s.readInt();	// number of attributes
+	attrs = (n >= 1)
+	    ? new Hashtable(n * 2)
+	    : new Hashtable(2);	// can't have initial size of 0 (grrr...)
+	while (--n >= 0) {
+	    put((Attribute)s.readObject());
+	}
     }
 
 
@@ -313,27 +314,27 @@ class AttrEnumImpl implements NamingEnumeration<Attribute> {
     Enumeration<Attribute> elements;
 
     public AttrEnumImpl() {
-        this.elements = attrs.elements();
+	this.elements = attrs.elements();
     }
 
     public boolean hasMoreElements() {
-        return elements.hasMoreElements();
+	return elements.hasMoreElements();
     }
 
     public Attribute nextElement() {
-        return elements.nextElement();
+	return elements.nextElement();
     }
 
     public boolean hasMore() throws NamingException {
-        return hasMoreElements();
+	return hasMoreElements();
     }
 
     public Attribute next() throws NamingException {
-        return nextElement();
+	return nextElement();
     }
 
     public void close() throws NamingException {
-        elements = null;
+	elements = null;
     }
 }
 
@@ -342,30 +343,30 @@ class IDEnumImpl implements NamingEnumeration<String> {
     Enumeration<Attribute> elements;
 
     public IDEnumImpl() {
-        // Walking through the elements, rather than the keys, gives
-        // us attribute IDs that have not been converted to lowercase.
-        this.elements = attrs.elements();
+	// Walking through the elements, rather than the keys, gives
+	// us attribute IDs that have not been converted to lowercase.
+	this.elements = attrs.elements();
     }
 
     public boolean hasMoreElements() {
-        return elements.hasMoreElements();
+	return elements.hasMoreElements();
     }
 
     public String nextElement() {
-        Attribute attr = elements.nextElement();
-        return attr.getID();
+	Attribute attr = elements.nextElement();
+	return attr.getID();
     }
 
     public boolean hasMore() throws NamingException {
-        return hasMoreElements();
+	return hasMoreElements();
     }
 
     public String next() throws NamingException {
-        return nextElement();
+	return nextElement();
     }
 
     public void close() throws NamingException {
-        elements = null;
+	elements = null;
     }
 }
 

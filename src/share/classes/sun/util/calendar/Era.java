@@ -79,80 +79,80 @@ public final class Era {
      * <code>since</code> specifies UTC
      */
     public Era(String name, String abbr, long since, boolean localTime) {
-        this.name = name;
-        this.abbr = abbr;
-        this.since = since;
-        this.localTime = localTime;
-        Gregorian gcal = CalendarSystem.getGregorianCalendar();
-        BaseCalendar.Date d = (BaseCalendar.Date) gcal.newCalendarDate(null);
-        gcal.getCalendarDate(since, d);
-        sinceDate = new ImmutableGregorianDate(d);
+	this.name = name;
+	this.abbr = abbr;
+	this.since = since;
+	this.localTime = localTime;
+	Gregorian gcal = CalendarSystem.getGregorianCalendar();
+	BaseCalendar.Date d = (BaseCalendar.Date) gcal.newCalendarDate(null);
+	gcal.getCalendarDate(since, d);
+	sinceDate = new ImmutableGregorianDate(d);
     }
 
     public String getName() {
-        return name;
+	return name;
     }
 
     public String getDisplayName(Locale locale) {
-        return name;
+	return name;
     }
 
     public String getAbbreviation() {
-        return abbr;
+	return abbr;
     }
 
     public String getDiaplayAbbreviation(Locale locale) {
-        return abbr;
+	return abbr;
     }
 
     public long getSince(TimeZone zone) {
-        if (zone == null || !localTime) {
-            return since;
-        }
-        int offset = zone.getOffset(since);
-        return since - offset;
+	if (zone == null || !localTime) {
+	    return since;
+	}
+	int offset = zone.getOffset(since);
+	return since - offset;
     }
 
     public CalendarDate getSinceDate() {
-        return sinceDate;
+	return sinceDate;
     }
 
     public boolean isLocalTime() {
-        return localTime;
+	return localTime;
     }
 
     public boolean equals(Object o) {
-        if (!(o instanceof Era)) {
-            return false;
-        }
-        Era that = (Era) o;
-        return name.equals(that.name)
-            && abbr.equals(that.abbr)
-            && since == that.since
-            && localTime == that.localTime;
+	if (!(o instanceof Era)) {
+	    return false;
+	}
+	Era that = (Era) o;
+	return name.equals(that.name)
+	    && abbr.equals(that.abbr)
+	    && since == that.since
+	    && localTime == that.localTime;
     }
 
     private int hash = 0;
 
     public int hashCode() {
-        if (hash == 0) {
-            hash = name.hashCode() ^ abbr.hashCode() ^ (int)since ^ (int)(since >> 32)
-                ^ (localTime ? 1 : 0);
-        }
-        return hash;
+	if (hash == 0) {
+	    hash = name.hashCode() ^ abbr.hashCode() ^ (int)since ^ (int)(since >> 32)
+		^ (localTime ? 1 : 0);
+	}
+	return hash;
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append('[');
-        sb.append(getName()).append(" (");
-        sb.append(getAbbreviation()).append(')');
-        sb.append(" since ").append(getSinceDate());
-        if (localTime) {
-            sb.setLength(sb.length() - 1); // remove 'Z'
-            sb.append(" local time");
-        }
-        sb.append(']');
-        return sb.toString();
+	StringBuilder sb = new StringBuilder();
+	sb.append('[');
+	sb.append(getName()).append(" (");
+	sb.append(getAbbreviation()).append(')');
+	sb.append(" since ").append(getSinceDate());
+	if (localTime) {
+	    sb.setLength(sb.length() - 1); // remove 'Z'
+	    sb.append(" local time");
+	}
+	sb.append(']');
+	return sb.toString();
     }
 }

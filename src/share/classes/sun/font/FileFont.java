@@ -52,7 +52,7 @@ import java.awt.Font;
 public abstract class FileFont extends PhysicalFont {
 
     protected boolean useJavaRasterizer = true;
-
+   
     /* I/O and file operations are always synchronized on the font
      * object. Two threads can be accessing the font and retrieving
      * information, and synchronized only to the extent that filesystem
@@ -73,7 +73,7 @@ public abstract class FileFont extends PhysicalFont {
 
     protected FontScaler scaler;
 
-    /* The following variables are used, (and in the case of the arrays,
+    /* The following variables are used, (and in the case of the arrays, 
      * only initialised) for select fonts where a native scaler may be
      * used to get glyph images and metrics.
      * glyphToCharMap is filled in on the fly and used to do a reverse
@@ -92,11 +92,11 @@ public abstract class FileFont extends PhysicalFont {
      * @throws FontFormatException - if the font can't be opened
      */
     FileFont(String platname, Object nativeNames)
-        throws FontFormatException {
+	throws FontFormatException {
 
-        super(platname, nativeNames);
+	super(platname, nativeNames);
     }
-
+    
     FontStrike createStrike(FontStrikeDesc desc) {
         if (!checkedNatives) {
            checkUseNatives();
@@ -106,7 +106,7 @@ public abstract class FileFont extends PhysicalFont {
 
     protected boolean checkUseNatives() {
         checkedNatives = true;
-        return useNatives;
+	return useNatives;
     }
 
     /* This method needs to be accessible to FontManager if there is
@@ -115,32 +115,32 @@ public abstract class FileFont extends PhysicalFont {
     protected abstract void close();
 
 
-    /*
+    /* 
      * This is the public interface. The subclasses need to implement
      * this. The returned block may be longer than the requested length.
      */
     abstract ByteBuffer readBlock(int offset, int length);
 
     public boolean canDoStyle(int style) {
-        return true;
+	return true;
     }
 
     void setFileToRemove(File file) {
-        Disposer.addObjectRecord(this,
-                                 new CreatedFontFileDisposerRecord(file));
+	Disposer.addObjectRecord(this,
+				 new CreatedFontFileDisposerRecord(file));
     }
 
     /* This is called when a font scaler is determined to
-     * be unusable (ie bad).
-     * We want to replace current scaler with NullFontScaler, so
+     * be unusable (ie bad). 
+     * We want to replace current scaler with NullFontScaler, so 
      * we never try to use same font scaler again.
-     * Scaler native resources could have already been disposed
+     * Scaler native resources could have already been disposed 
      * or they will be eventually by Java2D disposer.
      * However, it should be safe to call dispose() explicitly here.
      *
      * For safety we also invalidate all strike's scaler context.
-     * So, in case they cache pointer to native scaler
-     * it will not ever be used.
+     * So, in case they cache pointer to native scaler 
+     * it will not ever be used. 
      *
      * It also appears desirable to remove all the entries from the
      * cache so no other code will pick them up. But we can't just
@@ -160,16 +160,16 @@ public abstract class FileFont extends PhysicalFont {
     synchronized void deregisterFontAndClearStrikeCache() {
         FontManager.deRegisterBadFont(this);
 
-        for (Reference strikeRef : strikeCache.values()) {
-            if (strikeRef != null) {
-                /* NB we know these are all FileFontStrike instances
-                 * because the cache is on this FileFont
-                 */
-                FileFontStrike strike = (FileFontStrike)strikeRef.get();
-                if (strike != null && strike.pScalerContext != 0L) {
-                    scaler.invalidateScalerContext(strike.pScalerContext);
-                }
-            }
+        for (Reference strikeRef : strikeCache.values()) { 
+            if (strikeRef != null) { 
+                /* NB we know these are all FileFontStrike instances 
+                 * because the cache is on this FileFont 
+                 */ 
+                FileFontStrike strike = (FileFontStrike)strikeRef.get(); 
+                if (strike != null && strike.pScalerContext != 0L) { 
+                    scaler.invalidateScalerContext(strike.pScalerContext); 
+                } 
+            } 
         }
         scaler.dispose();
         scaler = FontManager.getNullScaler();
@@ -179,7 +179,7 @@ public abstract class FileFont extends PhysicalFont {
         try {
             return getScaler().getFontMetrics(pScalerContext);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             return getFontMetrics(pScalerContext);
         }
     }
@@ -188,7 +188,7 @@ public abstract class FileFont extends PhysicalFont {
         try {
             return getScaler().getGlyphAdvance(pScalerContext, glyphCode);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             return getGlyphAdvance(pScalerContext, glyphCode);
         }
     }
@@ -197,7 +197,7 @@ public abstract class FileFont extends PhysicalFont {
         try {
             getScaler().getGlyphMetrics(pScalerContext, glyphCode, metrics);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             getGlyphMetrics(pScalerContext, glyphCode, metrics);
         }
     }
@@ -206,75 +206,83 @@ public abstract class FileFont extends PhysicalFont {
         try {
             return getScaler().getGlyphImage(pScalerContext, glyphCode);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             return getGlyphImage(pScalerContext, glyphCode);
-        }
+        } 
     }
 
     Rectangle2D.Float getGlyphOutlineBounds(long pScalerContext, int glyphCode) {
         try {
             return getScaler().getGlyphOutlineBounds(pScalerContext, glyphCode);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             return getGlyphOutlineBounds(pScalerContext, glyphCode);
-        }
+        } 
     }
-
+    
     GeneralPath getGlyphOutline(long pScalerContext, int glyphCode, float x, float y) {
         try {
             return getScaler().getGlyphOutline(pScalerContext, glyphCode, x, y);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             return getGlyphOutline(pScalerContext, glyphCode, x, y);
-        }
+        } 
     }
 
     GeneralPath getGlyphVectorOutline(long pScalerContext, int[] glyphs, int numGlyphs, float x, float y) {
         try {
             return getScaler().getGlyphVectorOutline(pScalerContext, glyphs, numGlyphs, x, y);
         } catch (FontScalerException fe) {
-            scaler = FontManager.getNullScaler();
+            scaler = FontManager.getNullScaler();            
             return getGlyphVectorOutline(pScalerContext, glyphs, numGlyphs, x, y);
-        }
+        } 
     }
-
+    
     /* T1 & TT implementation differ so this method is abstract.
        NB: null should not be returned here! */
     protected abstract FontScaler getScaler();
-
+    
     protected long getUnitsPerEm() {
         return getScaler().getUnitsPerEm();
     }
 
     private static class CreatedFontFileDisposerRecord implements DisposerRecord {
+	
+	File fontFile = null;
 
-        File fontFile = null;
+	private CreatedFontFileDisposerRecord(File file) {
+	    fontFile = file;
+	}
 
-        private CreatedFontFileDisposerRecord(File file) {
-            fontFile = file;
-        }
-
-        public void dispose() {
-            java.security.AccessController.doPrivileged(
-                 new java.security.PrivilegedAction() {
-                      public Object run() {
-                          if (fontFile != null) {
-                              try {
-                                  /* REMIND: is it possible that the file is
-                                   * still open? It will be closed when the
-                                   * font2D is disposed but could this code
-                                   * execute first? If so the file would not
-                                   * be deleted on MS-windows.
-                                   */
-                                  fontFile.delete();
-                                  /* remove from delete on exit hook list : */
-                                  FontManager.tmpFontFiles.remove(fontFile);
-                              } catch (Exception e) {
-                              }
-                          }
-                          return null;
-                      }
-            });
-        }
+	public void dispose() {
+	    java.security.AccessController.doPrivileged(
+	         new java.security.PrivilegedAction() {
+	              public Object run() {
+			  if (fontFile != null) {
+			      try {
+				  /* REMIND: is it possible that the file is
+				   * still open? It will be closed when the
+				   * font2D is disposed but could this code
+				   * execute first? If so the file would not
+				   * be deleted on MS-windows.
+				   */
+				  fontFile.delete();
+				  /* remove from delete on exit hook list : */
+				  FontManager.tmpFontFiles.remove(fontFile);
+			      } catch (Exception e) {
+			      }
+			  }
+			  return null;
+		      }
+	    }); 
+	}
     }
 }
+
+
+   
+
+
+    
+
+    

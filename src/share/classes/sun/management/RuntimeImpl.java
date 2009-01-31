@@ -73,7 +73,7 @@ class RuntimeImpl implements RuntimeMXBean {
 
     public String getVmVendor() {
         return jvm.getVmVendor();
-    }
+    } 
 
     public String getVmVersion() {
         return jvm.getVmVersion();
@@ -113,11 +113,11 @@ class RuntimeImpl implements RuntimeMXBean {
         return jvm.getVmArguments();
     }
 
-    public long getUptime() {
+    public long getUptime() {       
         long current = System.currentTimeMillis();
 
         // TODO: If called from client side when we support
-        // MBean proxy to read performance counters from shared memory,
+        // MBean proxy to read performance counters from shared memory, 
         // need to check if the monitored VM exitd.
         return (current - vmStartupTime);
     }
@@ -146,3 +146,4 @@ class RuntimeImpl implements RuntimeMXBean {
         return map;
     }
 }
+

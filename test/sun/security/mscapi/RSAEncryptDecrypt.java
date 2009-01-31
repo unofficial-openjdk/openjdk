@@ -37,38 +37,38 @@ public class RSAEncryptDecrypt {
 
     public static void main(String[] args) throws Exception {
 
-        KeyPairGenerator generator =
-            KeyPairGenerator.getInstance("RSA", "SunMSCAPI");
+	KeyPairGenerator generator = 
+	    KeyPairGenerator.getInstance("RSA", "SunMSCAPI");
 
-        KeyPair keyPair = generator.generateKeyPair();
-        Key publicKey = keyPair.getPublic();
-        Key privateKey = keyPair.getPrivate();
+	KeyPair keyPair = generator.generateKeyPair();
+	Key publicKey = keyPair.getPublic();
+	Key privateKey = keyPair.getPrivate();
 
-        Cipher cipher = null;
+	Cipher cipher = null;
 
-        try {
-            cipher = Cipher.getInstance("RSA", "SunMSCAPI");
+	try {
+	    cipher = Cipher.getInstance("RSA", "SunMSCAPI");
 
-        } catch (GeneralSecurityException e) {
-            System.out.println("Cipher not supported by provider, skipping...");
-            return;
-        }
+	} catch (GeneralSecurityException e) {
+	    System.out.println("Cipher not supported by provider, skipping...");
+	    return;
+	}
 
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-        displayBytes("Plaintext data:", PLAINTEXT);
-        byte[] data = cipher.doFinal(PLAINTEXT);
-        displayBytes("Encrypted data:", data);
+	cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+	displayBytes("Plaintext data:", PLAINTEXT);
+	byte[] data = cipher.doFinal(PLAINTEXT);
+	displayBytes("Encrypted data:", data);
 
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-        data = cipher.doFinal(data);
-        displayBytes("Decrypted data:", data);
+	cipher.init(Cipher.DECRYPT_MODE, privateKey);
+	data = cipher.doFinal(data);
+	displayBytes("Decrypted data:", data);
     }
 
     private static void displayBytes(String label, byte[] bytes) {
-        System.out.println(label + " [length=" + bytes.length + "]");
-        for (byte b : bytes) {
-            System.out.print("0x" + Integer.toHexString(b & 0xFF) + " ");
-        }
-        System.out.println();
+	System.out.println(label + " [length=" + bytes.length + "]");
+	for (byte b : bytes) {
+	    System.out.print("0x" + Integer.toHexString(b & 0xFF) + " ");
+	}
+	System.out.println();
     }
 }

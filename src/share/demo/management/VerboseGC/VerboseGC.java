@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import javax.management.*;
@@ -52,12 +53,12 @@ public class VerboseGC {
         String urlPath = "/jndi/rmi://" + hostname + ":" + port + "/jmxrmi";
         connect(urlPath);
    }
-
+   
    public void dump(long interval, long samples) {
         try {
             PrintGCStat pstat = new PrintGCStat(server);
             for (int i = 0; i < samples; i++) {
-                pstat.printVerboseGc();
+                pstat.printVerboseGc(); 
                 try {
                     Thread.sleep(interval);
                 } catch (InterruptedException e) {
@@ -71,7 +72,7 @@ public class VerboseGC {
     }
 
     /**
-     * Connect to a JMX agent of a given URL.
+     * Connect to a JMX agent of a given URL. 
      */
     private void connect(String urlPath) {
         try {

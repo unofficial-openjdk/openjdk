@@ -101,7 +101,7 @@ public class XPropertyCache {
             entryMap = new HashMap<XAtom, PropertyCacheEntry>();
             windowToMap.put(window, entryMap);
         }
-        entryMap.put(property, entry);
+        entryMap.put(property, entry);        
     }
 
     public static void clearCache(long window) {

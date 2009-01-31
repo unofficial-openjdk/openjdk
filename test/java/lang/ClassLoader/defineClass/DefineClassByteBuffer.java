@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test @(#)DefineClassByteBuffer.java	1.0 03/07/22
  * @bug 4894899
  * @summary Test various cases of passing java.nio.ByteBuffers
  * to defineClass().
@@ -39,85 +39,85 @@ public class DefineClassByteBuffer {
 
     static void test(ClassLoader cl) throws Exception {
         Class c = Class.forName("TestClass", true, cl);
-        if (!"TestClass".equals(c.getName())) {
-            throw new RuntimeException("Got wrong class: " + c);
-        }
+	if (!"TestClass".equals(c.getName())) {
+	    throw new RuntimeException("Got wrong class: " + c);
+	}
     }
-
+    
     public static void main(String arg[]) throws Exception {
-        ClassLoader[] cls = new ClassLoader[DummyClassLoader.MAX_TYPE];
-        for (int i = 0; i < cls.length; i++) {
-            cls[i] = new DummyClassLoader(i);
-        }
+	ClassLoader[] cls = new ClassLoader[DummyClassLoader.MAX_TYPE];
+	for (int i = 0; i < cls.length; i++) {
+	    cls[i] = new DummyClassLoader(i);
+	}
 
-        /* Create several instances of the class using different classloaders,
+	/* Create several instances of the class using different classloaders, 
            which are using different types of ByteBuffer. */
-        for (int i = 0; i < cls.length; i++) {
-          test(cls[i]);
-        }
+	for (int i = 0; i < cls.length; i++) {
+	  test(cls[i]);
+	}
     }
 
     /** Always loads the same class, using various types of ByteBuffers */
     public static class DummyClassLoader extends ClassLoader {
 
-        public static final String CLASS_NAME = "TestClass";
+	public static final String CLASS_NAME = "TestClass";
 
-        public static final int MAPPED_BUFFER = 0;
-        public static final int DIRECT_BUFFER = 1;
-        public static final int ARRAY_BUFFER = 2;
-        public static final int WRAPPED_BUFFER = 3;
-        public static final int READ_ONLY_ARRAY_BUFFER = 4;
-        public static final int READ_ONLY_DIRECT_BUFFER = 5;
-        public static final int DUP_ARRAY_BUFFER = 6;
-        public static final int DUP_DIRECT_BUFFER = 7;
-        public static final int MAX_TYPE = 7;
+	public static final int MAPPED_BUFFER = 0;
+	public static final int DIRECT_BUFFER = 1;
+	public static final int ARRAY_BUFFER = 2;
+	public static final int WRAPPED_BUFFER = 3;
+	public static final int READ_ONLY_ARRAY_BUFFER = 4;
+	public static final int READ_ONLY_DIRECT_BUFFER = 5;
+	public static final int DUP_ARRAY_BUFFER = 6;
+	public static final int DUP_DIRECT_BUFFER = 7;
+	public static final int MAX_TYPE = 7;
 
-        int loaderType;
+	int loaderType;
 
-        DummyClassLoader(int loaderType) {
-            this.loaderType = loaderType;
-        }
+	DummyClassLoader(int loaderType) {
+	    this.loaderType = loaderType;
+	}
+       
+	static ByteBuffer[] buffers = new ByteBuffer[MAX_TYPE + 1];
 
-        static ByteBuffer[] buffers = new ByteBuffer[MAX_TYPE + 1];
+	static ByteBuffer readClassFile(String name) {
+	    try {
+		File f = new File(System.getProperty("test.classes", "."), 
+				  name);
+		FileInputStream fin = new FileInputStream(f);
+		FileChannel fc = fin.getChannel();
+		return fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+	    } catch (FileNotFoundException e) {
+		throw new RuntimeException("Can't open file: " + name, e);
+	    } catch (IOException e) {
+		throw new RuntimeException("Can't open file: " + name, e);
+	    }
+	}
 
-        static ByteBuffer readClassFile(String name) {
-            try {
-                File f = new File(System.getProperty("test.classes", "."),
-                                  name);
-                FileInputStream fin = new FileInputStream(f);
-                FileChannel fc = fin.getChannel();
-                return fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException("Can't open file: " + name, e);
-            } catch (IOException e) {
-                throw new RuntimeException("Can't open file: " + name, e);
-            }
-        }
+	static {
+	    /* create a bunch of different ByteBuffers, starting with a mapped 
+	       buffer from a class file, and create various duplicate and wrapped
+	       buffers. */
+	    buffers[MAPPED_BUFFER] = readClassFile(CLASS_NAME + ".class");
+	    byte[] array = new byte[buffers[MAPPED_BUFFER].limit()];
 
-        static {
-            /* create a bunch of different ByteBuffers, starting with a mapped
-               buffer from a class file, and create various duplicate and wrapped
-               buffers. */
-            buffers[MAPPED_BUFFER] = readClassFile(CLASS_NAME + ".class");
-            byte[] array = new byte[buffers[MAPPED_BUFFER].limit()];
+	    buffers[DIRECT_BUFFER] = ByteBuffer.allocateDirect(array.length);
+	    buffers[DIRECT_BUFFER].put(array);
 
-            buffers[DIRECT_BUFFER] = ByteBuffer.allocateDirect(array.length);
-            buffers[DIRECT_BUFFER].put(array);
+	    buffers[ARRAY_BUFFER] = ByteBuffer.allocate(array.length);
+	    buffers[ARRAY_BUFFER].put(array);
 
-            buffers[ARRAY_BUFFER] = ByteBuffer.allocate(array.length);
-            buffers[ARRAY_BUFFER].put(array);
+	    buffers[WRAPPED_BUFFER] = ByteBuffer.wrap(array);
 
-            buffers[WRAPPED_BUFFER] = ByteBuffer.wrap(array);
+	    buffers[READ_ONLY_ARRAY_BUFFER] = buffers[ARRAY_BUFFER].asReadOnlyBuffer();
 
-            buffers[READ_ONLY_ARRAY_BUFFER] = buffers[ARRAY_BUFFER].asReadOnlyBuffer();
+	    buffers[READ_ONLY_DIRECT_BUFFER] = buffers[DIRECT_BUFFER].asReadOnlyBuffer();
 
-            buffers[READ_ONLY_DIRECT_BUFFER] = buffers[DIRECT_BUFFER].asReadOnlyBuffer();
+	    buffers[DUP_ARRAY_BUFFER] = buffers[ARRAY_BUFFER].duplicate();
 
-            buffers[DUP_ARRAY_BUFFER] = buffers[ARRAY_BUFFER].duplicate();
-
-            buffers[DUP_DIRECT_BUFFER] = buffers[DIRECT_BUFFER].duplicate();
-        }
-
+	    buffers[DUP_DIRECT_BUFFER] = buffers[DIRECT_BUFFER].duplicate();
+	}
+	
          public Class findClass(String name) {
              return defineClass(name, buffers[loaderType], null);
          }

@@ -30,11 +30,11 @@
 
 public class HelloWorld {
     public static void main(String args[]) {
-
+        
         /* Use a generic type */
         java.util.List<String> l = new java.util.ArrayList<String>();
         String.format("%s", "");
-
+        
         /* Just some code with branches */
         try {
             if ( args.length == 0 ) {

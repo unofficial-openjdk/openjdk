@@ -27,10 +27,10 @@
 /**
  * This class encapsulates the array of Win32GraphicsDevices,
  * allowing it to be accessed and recreated from multiple
- * threads in a thread-safe manner.
+ * threads in a thread-safe manner. 
  *
  * The MT-safeness of the array is assured in the following ways:
- *      - hide the actual array being used so that access to
+ *      - hide the actual array being used so that access to 
  *        it can only be made from this class
  *      - Do not delete the array until all references to the
  *        array have released it.  That way, anyone that happens
@@ -52,14 +52,14 @@
  *     // Then the object can be used, for example, to retrieve the awt device.
  *     // (note: ref count is not increased with GetDevice())
  *     AwtWin32GraphicsDevice *dev = devices->GetDevice(idx);
- *     dev->DoStuff();
+ *     dev->DoStuff(); 
  *     Data data = dev->GetData();
  *     return data;
  *     // don't need to release the reference, it's done automatically in
  *     // InstanceAccess destructor
  *   }
  *
- * 2. The array element will be used outside of this code block (i.e.
+ * 2. The array element will be used outside of this code block (i.e. 
  *    saved for later use).
  *   {
  *     Devices::InstanceAccess devices; // increases the ref count
@@ -91,7 +91,7 @@ CriticalSection Devices::arrayLock;
 /**
  * Create a new Devices object with numDevices elements.
  */
-Devices::Devices(int numDevices)
+Devices::Devices(int numDevices) 
 {
     J2dTraceLn1(J2D_TRACE_INFO, "Devices::Devices numDevices=%d", numDevices);
     this->numDevices = numDevices;
@@ -115,7 +115,7 @@ BOOL Devices::UpdateInstance(JNIEnv *env)
     int numScreens = ::CountMonitors();
     MHND *monHds = (MHND *)safe_Malloc(numScreens * sizeof(MHND));
     if (numScreens != ::CollectMonitors(monHds, numScreens)) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR,
+        J2dRlsTraceLn(J2D_TRACE_ERROR, 
                       "Devices::UpdateInstance: Failed to get all "\
                       "monitor handles.");
         free(monHds);
@@ -142,11 +142,11 @@ BOOL Devices::UpdateInstance(JNIEnv *env)
 
     {
         CriticalSection::Lock l(arrayLock);
-
+        
         // install the new devices array
         Devices *oldDevices = theInstance;
         theInstance = newDevices;
-
+        
         if (oldDevices) {
             // Invalidate the devices with indexes out of the new set of
             // devices. This doesn't cover all cases when the device
@@ -157,11 +157,11 @@ BOOL Devices::UpdateInstance(JNIEnv *env)
             J2dTraceLn(J2D_TRACE_VERBOSE, "  Invalidating removed devices");
             for (int i = newNumScreens; i < oldNumScreens; i++) {
                 // removed device, needs to be invalidated
-                J2dTraceLn1(J2D_TRACE_WARNING,
+                J2dTraceLn1(J2D_TRACE_WARNING, 
                             "Devices::UpdateInstance: device removed: %d", i);
                 oldDevices->GetDevice(i)->Invalidate(env);
             }
-
+        
             // Now that we have a new array in place, remove this (possibly the
             // last) reference to the old instance.
             oldDevices->Release();
@@ -175,12 +175,12 @@ BOOL Devices::UpdateInstance(JNIEnv *env)
  * Add a reference to the array.  This could be someone that wants
  * to register interest in the array, versus someone that actually
  * holds a reference to an array item (in which case they would
- * call GetDeviceReference() instead).  This mechanism can keep
+ * call GetDeviceReference() instead).  This mechanism can keep 
  * the array from being deleted when it has no elements being
  * referenced but is still a valid array to use for new elements
  * or references.
  */
-void Devices::AddReference()
+void Devices::AddReference() 
 {
     J2dTraceLn(J2D_TRACE_INFO, "Devices::AddReference");
     CriticalSection::Lock l(arrayLock);
@@ -190,21 +190,21 @@ void Devices::AddReference()
 
 /**
  * Static method for getting a reference
- * to the instance of the current devices array.
+ * to the instance of the current devices array. 
  * The instance will automatically have reference count increased.
  *
  * The caller thus must call Release() when done dealing with
  * the array.
  */
 // static
-Devices* Devices::GetInstance()
+Devices* Devices::GetInstance() 
 {
     J2dTraceLn(J2D_TRACE_INFO, "Devices::GetInstance");
     CriticalSection::Lock l(arrayLock);
     if (theInstance != NULL) {
         theInstance->AddReference();
     } else {
-        J2dTraceLn(J2D_TRACE_ERROR,
+        J2dTraceLn(J2D_TRACE_ERROR, 
                    "Devices::GetInstance NULL instance");
     }
     return theInstance;
@@ -217,17 +217,17 @@ Devices* Devices::GetInstance()
  *
  * This method must be called while holding a reference to the instance.
  *
- * If adjust parameter is true (default), adjust the index into the
- * devices array so that it falls within the current devices array.
- * This is needed because the devices array can be changed at any
- * time, and the index may be from the old array. But in some
+ * If adjust parameter is true (default), adjust the index into the 
+ * devices array so that it falls within the current devices array. 
+ * This is needed because the devices array can be changed at any 
+ * time, and the index may be from the old array. But in some 
  * cases we prefer to know that the index is incorrect.
  *
  */
 AwtWin32GraphicsDevice *Devices::GetDeviceReference(int index,
                                                     BOOL adjust)
 {
-    J2dTraceLn2(J2D_TRACE_INFO,
+    J2dTraceLn2(J2D_TRACE_INFO, 
                 "Devices::GetDeviceReference index=%d adjust?=%d",
                 index, adjust);
 
@@ -247,17 +247,17 @@ AwtWin32GraphicsDevice *Devices::GetDeviceReference(int index,
  */
 AwtWin32GraphicsDevice *Devices::GetDevice(int index, BOOL adjust)
 {
-    J2dTraceLn2(J2D_TRACE_INFO,
-                "Devices::GetDevice index=%d adjust?=%d",
+    J2dTraceLn2(J2D_TRACE_INFO, 
+                "Devices::GetDevice index=%d adjust?=%d", 
                 index, adjust);
     if (index < 0 || index >= numDevices) {
         if (!adjust) {
-            J2dTraceLn1(J2D_TRACE_WARNING,
+            J2dTraceLn1(J2D_TRACE_WARNING, 
                         "Devices::GetDevice: "\
                         "incorrect index %d, returning NULL.", index);
             return NULL;
         }
-        J2dTraceLn1(J2D_TRACE_WARNING,
+        J2dTraceLn1(J2D_TRACE_WARNING, 
                     "Devices::GetDevice: "\
                     "adjusted index %d to 0.", index);
         index = 0;
@@ -272,7 +272,7 @@ AwtWin32GraphicsDevice *Devices::GetDevice(int index, BOOL adjust)
  *
  * This method must be called while holding a reference to the instance.
  */
-AwtWin32GraphicsDevice **Devices::GetRawArray()
+AwtWin32GraphicsDevice **Devices::GetRawArray() 
 {
     J2dTraceLn(J2D_TRACE_INFO, "Devices::GetRawArray");
     return devices;
@@ -280,13 +280,13 @@ AwtWin32GraphicsDevice **Devices::GetRawArray()
 
 
 /**
- * Decreases the reference count of the array. If the refCount goes to 0,
- * then there are no more references to the array and all of the
+ * Decreases the reference count of the array. If the refCount goes to 0, 
+ * then there are no more references to the array and all of the 
  * array elements, the array itself, and this object can be destroyed.
  *
  * Returns the number of references left after it was decremented.
  */
-int Devices::Release()
+int Devices::Release() 
 {
     J2dTraceLn(J2D_TRACE_INFO, "Devices::Release");
     CriticalSection::Lock l(arrayLock);
@@ -315,8 +315,8 @@ int Devices::Release()
         // (note: can not reference refCount here!)
         return refs;
     } else if (refs < 0) {
-        J2dTraceLn1(J2D_TRACE_ERROR,
-                    "Devices::Release: Negative ref count! refCount=%d",
+        J2dTraceLn1(J2D_TRACE_ERROR, 
+                    "Devices::Release: Negative ref count! refCount=%d", 
                     refs);
     }
 

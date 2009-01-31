@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,17 +31,17 @@ public class MyObjectImpl extends UnicastRemoteObject implements MyObject {
     private boolean AliveMyObjectsCounterWasIncremented = false;
 
     public MyObjectImpl() throws RemoteException {
-        super();
+	super();
     }
 
-    public MyObjectImpl(int c, int size) //MyObjectFactory mof, int c, int size)
-                        throws RemoteException {
-        super();
-        //this.mof = mof;
-        this.clientNum = c;
-        this.data = new byte[size];
-        //mof.incAliveMyObjects(1);
-        AliveMyObjectsCounterWasIncremented = true;
+    public MyObjectImpl(int c, int size) //MyObjectFactory mof, int c, int size) 
+			throws RemoteException {
+	super();
+	//this.mof = mof;
+	this.clientNum = c;
+	this.data = new byte[size];
+	//mof.incAliveMyObjects(1);
+	AliveMyObjectsCounterWasIncremented = true;
     }
 
     public void method1(MyObject obj) throws RemoteException {
@@ -53,9 +53,9 @@ public class MyObjectImpl extends UnicastRemoteObject implements MyObject {
     public void method3() throws RemoteException {
     }
 
-    protected void finalize() throws Throwable {
-        if(AliveMyObjectsCounterWasIncremented)
-            ; //mof.decAliveMyObjects(1);
-        super.finalize();
+    protected void finalize() throws Throwable { 
+	if(AliveMyObjectsCounterWasIncremented) 
+	    ; //mof.decAliveMyObjects(1);
+	super.finalize();
     }
 }

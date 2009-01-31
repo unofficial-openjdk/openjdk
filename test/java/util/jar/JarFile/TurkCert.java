@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 4624534
- * @summary Make sure jar certificates work for Turkish locale
+ * @summary Make sure jar certificates work for Turkish locale 
  * @author kladko
  */
 

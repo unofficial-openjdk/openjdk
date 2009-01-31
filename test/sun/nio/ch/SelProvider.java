@@ -45,7 +45,7 @@ public class SelProvider {
                 if (major > 2 || (major == 2 && minor >= 6)) {
                     expected = "sun.nio.ch.EPollSelectorProvider";
                 } else {
-                    expected = "sun.nio.ch.PollSelectorProvider";
+                    expected = "sun.nio.ch.PollSelectorProvider";        
                 }
             } else {
                 throw new RuntimeException("Test does not recognize this operating system");

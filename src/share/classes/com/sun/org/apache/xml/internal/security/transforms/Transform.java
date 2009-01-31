@@ -61,7 +61,7 @@ import org.xml.sax.SAXException;
 public final class Transform extends SignatureElementProxy {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(Transform.class.getName());
 
    /** Field _alreadyInitialized */
@@ -77,8 +77,8 @@ public final class Transform extends SignatureElementProxy {
     * Constructs {@link Transform}
     *
     * @param doc the {@link Document} in which <code>Transform</code> will be placed
-    * @param algorithmURI URI representation of
-    * <code>Transform algorithm</code> will be specified as parameter of
+    * @param algorithmURI URI representation of 
+    * <code>Transform algorithm</code> will be specified as parameter of 
     * {@link #getInstance(Document, String)}, when generate. </br>
     * @param contextNodes the child node list of <code>Transform</code> element
     * @throws InvalidTransformException
@@ -94,7 +94,7 @@ public final class Transform extends SignatureElementProxy {
 
          Class implementingClass =
             Transform.getImplementingClass(algorithmURI);
-
+		 
          if(implementingClass == null) {
              Object exArgs[] = { algorithmURI };
 
@@ -102,9 +102,9 @@ public final class Transform extends SignatureElementProxy {
                 "signature.Transform.UnknownTransform", exArgs);
          }
          if (true) {
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
                    + implementingClass + "\"");
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "The NodeList is " + contextNodes);
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "The NodeList is " + contextNodes);
          }
 
          // create the custom Transform object
@@ -166,7 +166,7 @@ public final class Transform extends SignatureElementProxy {
       }
 
       try {
-         Class implementingClass = (Class) _transformHash.get(AlgorithmURI);
+         Class implementingClass = (Class) _transformHash.get(AlgorithmURI);		 
          this.transformSpi =
             (TransformSpi) implementingClass.newInstance();
 
@@ -182,11 +182,11 @@ public final class Transform extends SignatureElementProxy {
          throw new InvalidTransformException(
             "signature.Transform.UnknownTransform", exArgs);
       } catch (NullPointerException e) {
-                  Object exArgs[] = { AlgorithmURI };
+		  Object exArgs[] = { AlgorithmURI };
 
-                 throw new InvalidTransformException(
-                    "signature.Transform.UnknownTransform", exArgs);
-        }
+	         throw new InvalidTransformException(
+	            "signature.Transform.UnknownTransform", exArgs);
+	}
    }
 
    /**
@@ -274,7 +274,7 @@ public final class Transform extends SignatureElementProxy {
                "algorithm.alreadyRegistered", exArgs);
          }
 
-         ClassLoader cl = (ClassLoader) AccessController.doPrivileged(
+	 ClassLoader cl = (ClassLoader) AccessController.doPrivileged(
              new PrivilegedAction() {
                  public Object run() {
                      return Thread.currentThread().getContextClassLoader();
@@ -282,12 +282,12 @@ public final class Transform extends SignatureElementProxy {
              });
 
          try {
-             Transform._transformHash.put
-                 (algorithmURI, Class.forName(implementingClass, true, cl));
-         } catch (ClassNotFoundException e) {
-             // TODO Auto-generated catch block
-             e.printStackTrace();
-         }
+	     Transform._transformHash.put 
+                 (algorithmURI, Class.forName(implementingClass, true, cl)); 
+	 } catch (ClassNotFoundException e) {
+	     // TODO Auto-generated catch block
+	     e.printStackTrace();
+	 }
       }
    }
 
@@ -332,7 +332,7 @@ public final class Transform extends SignatureElementProxy {
 
       return result;
    }
-
+   
    /**
     * Transforms the input, and generats {@link XMLSignatureInput} as output.
     * @param input input {@link XMLSignatureInput} which can supplied Octect Stream and NodeSet as Input of Transformation
@@ -348,23 +348,23 @@ public final class Transform extends SignatureElementProxy {
    throws IOException, CanonicalizationException,
           InvalidCanonicalizerException, TransformationException {
 
-            XMLSignatureInput result = null;
+   	    XMLSignatureInput result = null;
 
-            try {
-                result = transformSpi.enginePerformTransform(input,os);
-            } catch (ParserConfigurationException ex) {
-                Object exArgs[] = { this.getURI(), "ParserConfigurationException" };
+   	    try {
+   	    	result = transformSpi.enginePerformTransform(input,os);
+   	    } catch (ParserConfigurationException ex) {
+   	    	Object exArgs[] = { this.getURI(), "ParserConfigurationException" };
 
-                throw new CanonicalizationException(
-                                "signature.Transform.ErrorDuringTransform", exArgs, ex);
-            } catch (SAXException ex) {
-                Object exArgs[] = { this.getURI(), "SAXException" };
+   	    	throw new CanonicalizationException(
+   	    			"signature.Transform.ErrorDuringTransform", exArgs, ex);
+   	    } catch (SAXException ex) {
+   	    	Object exArgs[] = { this.getURI(), "SAXException" };
 
-                throw new CanonicalizationException(
-                                "signature.Transform.ErrorDuringTransform", exArgs, ex);
-            }
+   	    	throw new CanonicalizationException(
+   	    			"signature.Transform.ErrorDuringTransform", exArgs, ex);
+   	    }
 
-            return result;
+   	    return result;
    }
 
    /**
@@ -377,7 +377,7 @@ public final class Transform extends SignatureElementProxy {
        return (Class)Transform._transformHash.get(URI);
    }
 
-
+   
    /** @inheritDoc */
    public String getBaseLocalName() {
       return Constants._TAG_TRANSFORM;

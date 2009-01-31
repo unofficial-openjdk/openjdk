@@ -26,7 +26,7 @@
 package sun.java2d;
 
 /**
- * This class is used to hold the resource to be
+ * This class is used to hold the resource to be 
  * disposed.
  */
 public interface DisposerRecord {

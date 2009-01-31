@@ -46,7 +46,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
     private final static String propertyPrefix = "Button" + ".";
     protected Color focusColor =  SystemColor.windowText;
 
-    private boolean disposed = false;
+    private boolean disposed = false; 
 
     String label;
 
@@ -73,7 +73,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
     public  void dispose() {
         synchronized (target)
         {
-            disposed = true;
+            disposed = true; 
         }
         super.dispose();
     }
@@ -98,7 +98,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
 
     void handleJavaMouseEvent(MouseEvent e) {
         super.handleJavaMouseEvent(e);
-        int id = e.getID();
+        int id = e.getID(); 
         switch (id) {
           case MouseEvent.MOUSE_PRESSED:
               if (XToolkit.isLeftMouseButton(e) ) {
@@ -109,20 +109,20 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
                           // Disabled buttons ignore all input...
                           return;
                       }
-                      pressed = true;
+                      pressed = true; 
                       armed = true;
                       repaint();
-                  }
+                  } 
               }
-
+    
               break;
 
           case MouseEvent.MOUSE_RELEASED:
               if (XToolkit.isLeftMouseButton(e)) {
-                  if (armed)
+                  if (armed) 
                   {
                       action(e.getWhen(),e.getModifiers());
-                  }
+                  } 
                   pressed = false;
                   armed = false;
                   repaint();
@@ -133,7 +133,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
           case  MouseEvent.MOUSE_ENTERED:
               if (pressed)
                   armed = true;
-//                 repaint();
+//                 repaint();     
 
               break;
 
@@ -146,7 +146,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
         }
     }
 
-
+ 
     // NOTE: This method is called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     public void action(final long when, final int modifiers) {
@@ -156,12 +156,12 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
     }
 
 
-    public void focusGained(FocusEvent e) {
+    public void focusGained(FocusEvent e) { 
         super.focusGained(e);
         repaint();
     }
 
-    public void focusLost(FocusEvent e) {
+    public void focusLost(FocusEvent e) { 
         super.focusLost(e);
         repaint();
     }
@@ -177,7 +177,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
                   repaint();
                   action(e.getWhen(),e.getModifiers());
               }
-
+    
               break;
 
           case KeyEvent.KEY_RELEASED:
@@ -187,19 +187,19 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
                   armed = false;
                   repaint();
               }
-
+    
               break;
 
 
         }
     }
-
+    
     public Dimension getMinimumSize() {
         FontMetrics fm = getFontMetrics(getPeerFont());
         if ( label == null ) {
             label = "";
         }
-        return new Dimension(fm.stringWidth(label) + 14,
+        return new Dimension(fm.stringWidth(label) + 14, 
                              fm.getHeight() + 8);
     }
 
@@ -211,11 +211,11 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
     }
 
 
-    /*
+    /* 
        This method is called from Toolkit Thread and so it should not call any client code
-
+        
     */
-    public void paint(Graphics g, Component c)
+    public void paint(Graphics g, Component c) 
     {
         if (!disposed && (g != null))
         {
@@ -225,7 +225,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
             g.fillRect(0,0, size.width , size.height);
             paintBorder(g,borderInsets.left,
                         borderInsets.top,
-                        size.width-(borderInsets.left+borderInsets.right),
+                        size.width-(borderInsets.left+borderInsets.right), 
                         size.height-(borderInsets.top+borderInsets.bottom));
 
             FontMetrics fm = g.getFontMetrics();
@@ -246,7 +246,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
 
             // layout the text and icon
             String text = SwingUtilities.layoutCompoundLabel(
-                                                             fm, llabel, null,
+                                                             fm, llabel, null, 
                                                              SwingConstants.CENTER, SwingConstants.CENTER,
                                                              SwingConstants.CENTER, SwingConstants.CENTER,
                                                              viewRect, iconRect, textRect, 0);
@@ -257,7 +257,7 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
 
             // perform UI specific press action, e.g. Windows L&F shifts text
             if (pressed && armed) {
-                paintButtonPressed(g,target);
+                paintButtonPressed(g,target); 
             }
 
             paintText(g, target, textRect, text);
@@ -282,9 +282,9 @@ public class XButtonPeer extends XComponentPeer implements ButtonPeer {
         target.repaint();
     }
     protected void paintFocus(Graphics g, int x, int y, int w, int h){
-        g.setColor(focusColor);
-        g.drawRect(x,y,w,h);
-    }
+	g.setColor(focusColor);
+	g.drawRect(x,y,w,h);
+    } 
 
     protected void paintButtonPressed(Graphics g, Component b) {
         Dimension size = getPeerSize();

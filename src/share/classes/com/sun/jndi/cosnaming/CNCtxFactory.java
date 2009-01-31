@@ -35,6 +35,7 @@ import java.util.Hashtable;
   * create  the InitialContext objects.
   *
   * @author Raj Krishnamurthy
+  * @version %I% %E%
   */
 
 public class CNCtxFactory implements InitialContextFactory {
@@ -49,3 +50,4 @@ public class CNCtxFactory implements InitialContextFactory {
       return new CNCtx(env);
   }
 }
+

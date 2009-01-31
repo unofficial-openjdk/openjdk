@@ -26,53 +26,16 @@
 #ifndef _JAVA_H_
 #define _JAVA_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
-
-#include <jni.h>
-#include <jvm.h>
-
 /*
  * Get system specific defines.
  */
-#include "emessages.h"
+#include "jni.h"
 #include "java_md.h"
 #include "jli_util.h"
 
-#include "manifest_info.h"
-#include "version_comp.h"
-#include "wildcard.h"
-#include "splashscreen.h"
-
-# define KB (1024UL)
-# define MB (1024UL * KB)
-# define GB (1024UL * MB)
+#include <limits.h>
 
 #define CURRENT_DATA_MODEL (CHAR_BIT * sizeof(void*))
-
-/*
- * The following environment variable is used to influence the behavior
- * of the jre exec'd through the SelectVersion routine.  The command line
- * options which specify the version are not passed to the exec'd version,
- * because that jre may be an older version which wouldn't recognize them.
- * This environment variable is known to this (and later) version and serves
- * to suppress the version selection code.  This is not only for efficiency,
- * but also for correctness, since any command line options have been
- * removed which would cause any value found in the manifest to be used.
- * This would be incorrect because the command line options are defined
- * to take precedence.
- *
- * The value associated with this environment variable is the MainClass
- * name from within the executable jar file (if any). This is strictly a
- * performance enhancement to avoid re-reading the jar file manifest.
- *
- */
-#define ENV_ENTRY "_JAVA_VERSION_SET"
-
-#define SPLASH_FILE_ENV_ENTRY "_JAVA_SPLASH_FILE"
-#define SPLASH_JAR_ENV_ENTRY "_JAVA_SPLASH_JAR"
 
 /*
  * Pointers to the needed JNI invocation API, initialized by LoadJavaVM.
@@ -84,20 +47,6 @@ typedef struct {
     CreateJavaVM_t CreateJavaVM;
     GetDefaultJavaVMInitArgs_t GetDefaultJavaVMInitArgs;
 } InvocationFunctions;
-
-int
-JLI_Launch(int argc, char ** argv,              /* main argc, argc */
-        int jargc, const char** jargv,          /* java args */
-        int appclassc, const char** appclassv,  /* app classpath */
-        const char* fullversion,                /* full version defined */
-        const char* dotversion,                 /* dot version defined */
-        const char* pname,                      /* program name */
-        const char* lname,                      /* launcher name */
-        jboolean javaargs,                      /* JAVA_ARGS */
-        jboolean cpwildcard,                    /* classpath wildcard */
-        jboolean javaw,                         /* windows-only javaw */
-        jint     ergo_class                     /* ergnomics policy */
-);
 
 /*
  * Prototypes for launcher functions in the system specific java_md.c.
@@ -112,26 +61,25 @@ GetXUsagePath(char *buf, jint bufsize);
 jboolean
 GetApplicationHome(char *buf, jint bufsize);
 
-#define GetArch() GetArchPath(CURRENT_DATA_MODEL)
+const char *
+GetArch();
 
 void CreateExecutionEnvironment(int *_argc,
-                                       char ***_argv,
-                                       char jrepath[],
-                                       jint so_jrepath,
-                                       char jvmpath[],
-                                       jint so_jvmpath,
-                                       char **original_argv);
+				       char ***_argv,
+				       char jrepath[],
+				       jint so_jrepath,
+				       char jvmpath[],
+				       jint so_jvmpath,
+				       char **original_argv);
 
 /*
- * Report an error message to stderr or a window as appropriate.
+ * Report an error message to stderr or a window as appropriate.  The
+ * flag always is set to JNI_TRUE if message is to be reported to both
+ * strerr and windows and set to JNI_FALSE if the message should only
+ * be sent to a window.
  */
-void ReportErrorMessage(const char * message, ...);
-void ReportErrorMessageSys(const char * format, ...);
-
-/*
- * Report an error message only to stderr.
- */
-void ReportMessage(const char * message, ...);
+void ReportErrorMessage(char * message, jboolean always);
+void ReportErrorMessage2(char * format, char * string, jboolean always);
 
 /*
  * Report an exception which terminates the vm to stderr or a window
@@ -139,46 +87,29 @@ void ReportMessage(const char * message, ...);
  */
 void ReportExceptionDescription(JNIEnv * env);
 
+jboolean RemovableMachineDependentOption(char * option);
 void PrintMachineDependentOptions();
 
 const char *jlong_format_specifier();
-
 /*
  * Block current thread and continue execution in new thread
  */
-int ContinueInNewThread0(int (JNICALL *continuation)(void *),
-                        jlong stack_size, void * args);
+int ContinueInNewThread(int (JNICALL *continuation)(void *), 
+                        jlong stack_size, void * args, int ret);
 
 /* sun.java.launcher.* platform properties. */
 void SetJavaLauncherPlatformProps(void);
-void SetJavaCommandLineProp(char* classname, char* jarfile, int argc, char** argv);
-void SetJavaLauncherProp(void);
 
-/*
+/* 
  * Functions defined in java.c and used in java_md.c.
  */
-jint ReadKnownVMs(const char *jrepath, const char * arch, jboolean speculative);
+jint ReadKnownVMs(const char *jrepath, char * arch, jboolean speculative); 
 char *CheckJvmType(int *argc, char ***argv, jboolean speculative);
 void AddOption(char *str, void *info);
 
-enum ergo_policy {
-   DEFAULT_POLICY = 0,
-   NEVER_SERVER_CLASS,
-   ALWAYS_SERVER_CLASS
-};
-
-const char* GetProgramName();
-const char* GetDotVersion();
-const char* GetFullVersion();
-jboolean IsJavaArgs();
-jboolean IsJavaw();
-void SetJavaw();
-jint GetErgoPolicy();
-
-jboolean ServerClassMachine();
-
-static int ContinueInNewThread(InvocationFunctions* ifn, int argc, char** argv,
-                        char* jarfile, char* classname, int ret);
-
+/*
+ * Make launcher spit debug output.
+ */
+extern jboolean _launcher_debug;
 
 #endif /* _JAVA_H_ */

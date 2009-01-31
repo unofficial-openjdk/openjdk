@@ -26,7 +26,7 @@ class LineNumberOnBraceTarg {
         System.out.println("Howdy!");
         if (args.length == 0) {
             System.out.println("No args to debuggee");             // stopLine
-        } else {
+        } else {                                                  
             System.out.println("Some args to debuggee");
         }
         if (args.length == 0) {
@@ -64,23 +64,23 @@ public class LineNumberOnBraceTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new LineNumberOnBraceTest(args).startTests();
     }
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("LineNumberOnBraceTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
-
+        
         resumeTo("LineNumberOnBraceTarg", LineNumberOnBraceTarg.stopLine);
         StepEvent stepev = stepOverLine(mainThread);       // step to 2nd if (args.length
-
+        
         // Bug 4952629 is that javac outputs a line number
         // on the goto around the else which causes us to
         // be stopped at that goto instead of the println("Goodbye ...")
@@ -90,7 +90,7 @@ public class LineNumberOnBraceTest extends TestScaffold {
         if (ln != LineNumberOnBraceTarg.stopLine + 4) {
             failure("FAIL: Bug 4952629: Should be at line " +
                     (LineNumberOnBraceTarg.stopLine + 4) +
-                    ", am at " + ln);
+                    ", am at " + ln); 
         } else {
             System.out.println("Passed test for 4952629");
         }
@@ -114,7 +114,7 @@ public class LineNumberOnBraceTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -126,3 +126,4 @@ public class LineNumberOnBraceTest extends TestScaffold {
         }
     }
 }
+

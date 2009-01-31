@@ -56,20 +56,20 @@ public class MethodRepository extends ConstructorRepository {
      * information represented in the signature <tt>rawSig</tt>
      */
     public static MethodRepository make(String rawSig, GenericsFactory f) {
-        return new MethodRepository(rawSig, f);
+	return new MethodRepository(rawSig, f);
     }
 
     // public API
 
     public Type getReturnType() {
-        if (returnType == null) { // lazily initialize return type
-            Reifier r = getReifier(); // obtain visitor
-            // Extract return type subtree from AST and reify
-            getTree().getReturnType().accept(r);
-            // extract result from visitor and cache it
-            returnType = r.getResult();
-            }
-        return returnType; // return cached result
+	if (returnType == null) { // lazily initialize return type
+	    Reifier r = getReifier(); // obtain visitor
+	    // Extract return type subtree from AST and reify
+	    getTree().getReturnType().accept(r);
+	    // extract result from visitor and cache it
+	    returnType = r.getResult();
+	    }
+	return returnType; // return cached result
     }
 
 

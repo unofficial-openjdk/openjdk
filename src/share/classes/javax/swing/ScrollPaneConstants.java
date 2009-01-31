@@ -29,6 +29,7 @@ package javax.swing;
 /**
  * Constants used with the JScrollPane component.
  *
+ * @version %I% %G%
  * @author Hans Muller
  */
 public interface ScrollPaneConstants
@@ -42,12 +43,12 @@ public interface ScrollPaneConstants
     String VERTICAL_SCROLLBAR = "VERTICAL_SCROLLBAR";
     /** Identifies a horizonal scrollbar. */
     String HORIZONTAL_SCROLLBAR = "HORIZONTAL_SCROLLBAR";
-    /**
+    /** 
      * Identifies the area along the left side of the viewport between the
      * upper left corner and the lower left corner.
      */
     String ROW_HEADER = "ROW_HEADER";
-    /**
+    /** 
      * Identifies the area at the top the viewport between the
      * upper left corner and the upper right corner.
      */
@@ -84,34 +85,35 @@ public interface ScrollPaneConstants
     String HORIZONTAL_SCROLLBAR_POLICY = "HORIZONTAL_SCROLLBAR_POLICY";
 
     /**
-     * Used to set the vertical scroll bar policy so that
+     * Used to set the vertical scroll bar policy so that 
      * vertical scrollbars are displayed only when needed.
      */
     int VERTICAL_SCROLLBAR_AS_NEEDED = 20;
     /**
-     * Used to set the vertical scroll bar policy so that
+     * Used to set the vertical scroll bar policy so that 
      * vertical scrollbars are never displayed.
      */
     int VERTICAL_SCROLLBAR_NEVER = 21;
     /**
-     * Used to set the vertical scroll bar policy so that
+     * Used to set the vertical scroll bar policy so that 
      * vertical scrollbars are always displayed.
      */
     int VERTICAL_SCROLLBAR_ALWAYS = 22;
 
     /**
-     * Used to set the horizontal scroll bar policy so that
+     * Used to set the horizontal scroll bar policy so that 
      * horizontal scrollbars are displayed only when needed.
      */
     int HORIZONTAL_SCROLLBAR_AS_NEEDED = 30;
     /**
-     * Used to set the horizontal scroll bar policy so that
+     * Used to set the horizontal scroll bar policy so that 
      * horizontal scrollbars are never displayed.
      */
     int HORIZONTAL_SCROLLBAR_NEVER = 31;
     /**
-     * Used to set the horizontal scroll bar policy so that
+     * Used to set the horizontal scroll bar policy so that 
      * horizontal scrollbars are always displayed.
      */
     int HORIZONTAL_SCROLLBAR_ALWAYS = 32;
 }
+

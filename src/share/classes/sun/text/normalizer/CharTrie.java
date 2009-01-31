@@ -56,27 +56,27 @@ public class CharTrie extends Trie
 
     /**
     * <p>Creates a new Trie with the settings for the trie data.</p>
-    * <p>Unserialize the 32-bit-aligned input stream and use the data for the
+    * <p>Unserialize the 32-bit-aligned input stream and use the data for the 
     * trie.</p>
-    * @param inputStream file input stream to a ICU data file, containing
+    * @param inputStream file input stream to a ICU data file, containing 
     *                    the trie
-    * @param dataManipulate object which provides methods to parse the char
+    * @param dataManipulate object which provides methods to parse the char 
     *                        data
     * @throws IOException thrown when data reading fails
     * @draft 2.1
     */
-    public CharTrie(InputStream inputStream,
+    public CharTrie(InputStream inputStream, 
                     DataManipulate dataManipulate) throws IOException
     {
         super(inputStream, dataManipulate);
-
+        
         if (!isCharTrie()) {
             throw new IllegalArgumentException(
                                "Data given does not belong to a char trie.");
         }
         m_friendAgent_ = new FriendAgent();
     }
-
+    
     /**
      * Java friend implementation
      */
@@ -85,37 +85,37 @@ public class CharTrie extends Trie
         /**
          * Gives out the index array of the trie
          * @return index array of trie
-         */
-        public char[] getPrivateIndex()
+         */ 
+        public char[] getPrivateIndex() 
         {
             return m_index_;
         }
         /**
          * Gives out the data array of the trie
          * @return data array of trie
-         */
-        public char[] getPrivateData()
+         */ 
+        public char[] getPrivateData() 
         {
             return m_data_;
         }
         /**
          * Gives out the data offset in the trie
          * @return data offset in the trie
-         */
-        public int getPrivateInitialValue()
+         */ 
+        public int getPrivateInitialValue() 
         {
             return m_initialValue_;
         }
     }
-
+    
     // public methods --------------------------------------------------
-
+    
     /**
      * Java friend implementation
      * To store the index and data array into the argument.
      * @param friend java friend UCharacterProperty object to store the array
      */
-    public void putIndexData(UCharacterProperty friend)
+    public void putIndexData(UCharacterProperty friend) 
     {
         friend.setIndexData(m_friendAgent_);
     }
@@ -131,7 +131,7 @@ public class CharTrie extends Trie
     public final char getCodePointValue(int ch)
     {
         int offset = getCodePointOffset(ch);
-
+        
         // return -1 if there is an error, in this case we return the default
         // value: m_initialValue_
         return (offset >= 0) ? m_data_[offset] : m_initialValue_;
@@ -170,7 +170,7 @@ public class CharTrie extends Trie
     /**
     * <p>Get a value from a folding offset (from the value of a lead surrogate)
     * and a trail surrogate.</p>
-    * <p>If the
+    * <p>If the 
     * @param leadvalue value associated with the lead surrogate which contains
     *        the folding offset
     * @param trail surrogate
@@ -185,12 +185,12 @@ public class CharTrie extends Trie
         }
         int offset = m_dataManipulate_.getFoldingOffset(leadvalue);
         if (offset > 0) {
-            return m_data_[getRawOffset(offset,
+            return m_data_[getRawOffset(offset, 
                                         (char)(trail & SURROGATE_MASK_))];
         }
         return m_initialValue_;
     }
-
+    
     // protected methods -----------------------------------------------
 
     /**
@@ -199,7 +199,7 @@ public class CharTrie extends Trie
     * @param inputStream data input stream containing trie data
     * @exception IOException thrown when data reading fails
     */
-    protected final void unserialize(InputStream inputStream)
+    protected final void unserialize(InputStream inputStream) 
                                                 throws IOException
     {
         DataInputStream input = new DataInputStream(inputStream);
@@ -211,7 +211,7 @@ public class CharTrie extends Trie
         m_data_           = m_index_;
         m_initialValue_   = m_data_[m_dataOffset_];
     }
-
+    
     /**
     * Gets the offset to the data which the surrogate pair points to.
     * @param lead lead surrogate
@@ -225,7 +225,7 @@ public class CharTrie extends Trie
             throw new NullPointerException(
                              "The field DataManipulate in this Trie is null");
         }
-
+        
         // get fold position for the next trail surrogate
         int offset = m_dataManipulate_.getFoldingOffset(getLeadValue(lead));
 
@@ -238,7 +238,7 @@ public class CharTrie extends Trie
         // value: m_initialValue_
         return -1;
     }
-
+    
     /**
     * Gets the value at the argument index.
     * For use internally in TrieIterator.
@@ -254,14 +254,14 @@ public class CharTrie extends Trie
 
     /**
     * Gets the default initial value
-    * @return 32 bit value
+    * @return 32 bit value 
     * @draft 2.1
     */
     protected final int getInitialValue()
     {
         return m_initialValue_;
     }
-
+  
     // private data members --------------------------------------------
 
     /**

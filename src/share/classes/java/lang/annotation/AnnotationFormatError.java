@@ -35,12 +35,12 @@ package java.lang.annotation;
 public class AnnotationFormatError extends Error {
     /**
      * Constructs a new <tt>AnnotationFormatError</tt> with the specified
-     * detail message.
+     * detail message. 
      *
      * @param   message   the detail message.
      */
     public AnnotationFormatError(String message) {
-        super(message);
+	super(message);
     }
 
     /**
@@ -49,7 +49,7 @@ public class AnnotationFormatError extends Error {
      * with <code>cause</code> is <i>not</i> automatically incorporated in
      * this error's detail message.
      *
-     * @param  message the detail message
+     * @param  message the detail message 
      * @param  cause the cause (A <tt>null</tt> value is permitted, and
      *     indicates that the cause is nonexistent or unknown.)
      */

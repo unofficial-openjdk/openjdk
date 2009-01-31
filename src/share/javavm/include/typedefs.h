@@ -26,7 +26,7 @@
 #ifndef _JAVASOFT_TYPEDEFS_H_
 #define _JAVASOFT_TYPEDEFS_H_
 
-#include "typedefs_md.h"        /* for int64_t */
+#include "typedefs_md.h"	/* for int64_t */
 
 /*
  * Macros to deal with the JavaVM's stack alignment. Many machines
@@ -38,11 +38,11 @@
 
 #ifdef HAVE_ALIGNED_LONGLONGS
 #define GET_INT64(_t,_addr)                                \
-        ((((int32_t*) &(_t))[0] = ((int32_t*)(_addr))[0]), \
+	((((int32_t*) &(_t))[0] = ((int32_t*)(_addr))[0]), \
          (((int32_t*) &(_t))[1] = ((int32_t*)(_addr))[1]), \
          (_t).j )
 #define SET_INT64(_t, _addr, _v)                           \
-        ( (_t).j = (_v),                                   \
+	( (_t).j = (_v),                                   \
           ((int32_t*)(_addr))[0] = ((int32_t*) &(_t))[0],  \
           ((int32_t*)(_addr))[1] = ((int32_t*) &(_t))[1] )
 #else
@@ -53,11 +53,11 @@
 /* If double's must be aligned on doubleword boundaries then define this */
 #ifdef HAVE_ALIGNED_DOUBLES
 #define GET_DOUBLE(_t,_addr)                               \
-        ((((int32_t*) &(_t))[0] = ((int32_t*)(_addr))[0]), \
+	((((int32_t*) &(_t))[0] = ((int32_t*)(_addr))[0]), \
          (((int32_t*) &(_t))[1] = ((int32_t*)(_addr))[1]), \
          (_t).d )
 #define SET_DOUBLE(_t, _addr, _v)                          \
-        ( (_t).d = (_v),                                   \
+	( (_t).d = (_v),                                   \
           ((int32_t*)(_addr))[0] = ((int32_t*) &(_t))[0],  \
           ((int32_t*)(_addr))[1] = ((int32_t*) &(_t))[1] )
 #else
@@ -68,11 +68,11 @@
 /* If pointers are 64bits then define this */
 #ifdef HAVE_64BIT_POINTERS
 #define GET_HANDLE(_t,_addr)                               \
-        ( ((int32_t*) &(_t))[0] = ((int32_t*)(_addr))[0]), \
+	( ((int32_t*) &(_t))[0] = ((int32_t*)(_addr))[0]), \
           ((int32_t*) &(_t))[1] = ((int32_t*)(_addr))[1]), \
           (void*) (_t).l )
 #define SET_HANDLE(_t, _addr, _v)                          \
-        ( *(void**) &((_t).l) = (_v),                      \
+	( *(void**) &((_t).l) = (_v),                      \
           ((int32_t*)(_addr))[0] = ((int32_t*) &(_t))[0],  \
           ((int32_t*)(_addr))[1] = ((int32_t*) &(_t))[1] )
 #else
@@ -102,17 +102,17 @@
 #define PTR64_FORMAT  "0x%016" FORMAT64_MODIFIER "x"
 
 /* Format pointers and size_t (or size_t-like integer types) which change size
- *  between 32- and 64-bit.
+ *  between 32- and 64-bit. 
  */
 #if defined(_LP64) || defined(_WIN64)
 #define PTR_FORMAT    PTR64_FORMAT
 #define SIZE_FORMAT   UINT64_FORMAT
 #define SSIZE_FORMAT  INT64_FORMAT
-#else
+#else   
 #define PTR_FORMAT    PTR32_FORMAT
 #define SIZE_FORMAT   UINT32_FORMAT
 #define SSIZE_FORMAT  INT32_FORMAT
-#endif
+#endif  
 
 #define INTPTR_FORMAT PTR_FORMAT
 

@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package sun.nio.ch;

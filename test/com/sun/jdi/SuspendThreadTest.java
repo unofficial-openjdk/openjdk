@@ -49,7 +49,7 @@ class SuspendThreadTarg {
 
     public static void main(String[] args){
         System.out.println("Howdy!");
-
+        
         // We need this to be running so the bkpt
         // can be hit immediately when it is enabled
         // in the back-end.
@@ -70,7 +70,7 @@ public class SuspendThreadTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new SuspendThreadTest(args).startTests();
     }
 
@@ -85,7 +85,7 @@ public class SuspendThreadTest extends TestScaffold {
     // When we get a bkpt we want to disable the request,
     // resume the debuggee, and then re-enable the request
     public void breakpointReached(BreakpointEvent event) {
-        System.out.println("Got BreakpointEvent: " + bkptCount +
+        System.out.println("Got BreakpointEvent: " + bkptCount + 
                            ", debuggeeCount = " +
                            ((LongValue)targetClass.
                             getValue(debuggeeCountField)).value()
@@ -95,7 +95,7 @@ public class SuspendThreadTest extends TestScaffold {
 
     public void eventSetComplete(EventSet set) {
         set.resume();
-
+        
         // The main thread watchs the bkptCount to
         // see if bkpts stop coming in.  The
         // test _should_ fail well before maxBkpts bkpts.
@@ -107,12 +107,12 @@ public class SuspendThreadTest extends TestScaffold {
     public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("SuspendThreadTarg");
@@ -170,3 +170,4 @@ public class SuspendThreadTest extends TestScaffold {
         }
     }
 }
+

@@ -109,6 +109,7 @@ import sun.misc.PerformanceLogger;
  * general framework for performing all of the requests in the
  * Graphics and Graphics2D APIs.
  *
+ * @version 1.211 05/07/98
  * @author Jim Graham
  */
 public final class SunGraphics2D
@@ -188,7 +189,7 @@ public final class SunGraphics2D
     protected static final Stroke defaultStroke = new BasicStroke();
     protected static final Composite defaultComposite = AlphaComposite.SrcOver;
     private static final Font defaultFont =
-        new Font(Font.DIALOG, Font.PLAIN, 12);
+	new Font(Font.DIALOG, Font.PLAIN, 12);
 
     public Paint paint;
     public Stroke stroke;
@@ -205,21 +206,21 @@ public final class SunGraphics2D
     public int lcdTextContrast;
     private static int lcdTextContrastDefaultValue = 140;
 
-    private int interpolationHint;      // raw value of rendering Hint
+    private int interpolationHint;	// raw value of rendering Hint
     public int strokeHint;
 
-    public int interpolationType;       // algorithm choice based on
-                                        // interpolation and render Hints
+    public int interpolationType;	// algorithm choice based on
+					// interpolation and render Hints
 
     public RenderingHints hints;
 
-    public Region constrainClip;                // lightweight bounds
+    public Region constrainClip;		// lightweight bounds
     public int constrainX;
     public int constrainY;
 
     public Region clipRegion;
     public Shape usrClip;
-    protected Region devClip;           // Actual physical drawable
+    protected Region devClip;		// Actual physical drawable
 
     // cached state for text rendering
     private boolean validFontInfo;
@@ -233,96 +234,96 @@ public final class SunGraphics2D
                         |   AffineTransform.TYPE_FLIP;
 
     static {
-        if (PerformanceLogger.loggingEnabled()) {
-            PerformanceLogger.setTime("SunGraphics2D static initialization");
-        }
+	if (PerformanceLogger.loggingEnabled()) {
+	    PerformanceLogger.setTime("SunGraphics2D static initialization");
+	}
     }
 
     public SunGraphics2D(SurfaceData sd, Color fg, Color bg, Font f) {
-        surfaceData = sd;
-        foregroundColor = fg;
-        backgroundColor = bg;
+	surfaceData = sd;
+	foregroundColor = fg;
+	backgroundColor = bg;
 
-        transform = new AffineTransform();
-        stroke = defaultStroke;
-        composite = defaultComposite;
-        paint = foregroundColor;
+	transform = new AffineTransform();
+	stroke = defaultStroke;
+	composite = defaultComposite;
+	paint = foregroundColor;
 
-        imageComp = CompositeType.SrcOverNoEa;
+	imageComp = CompositeType.SrcOverNoEa;
 
-        renderHint = SunHints.INTVAL_RENDER_DEFAULT;
-        antialiasHint = SunHints.INTVAL_ANTIALIAS_OFF;
-        textAntialiasHint = SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT;
-        fractionalMetricsHint = SunHints.INTVAL_FRACTIONALMETRICS_OFF;
-        lcdTextContrast = lcdTextContrastDefaultValue;
-        interpolationHint = -1;
-        strokeHint = SunHints.INTVAL_STROKE_DEFAULT;
+	renderHint = SunHints.INTVAL_RENDER_DEFAULT;
+	antialiasHint = SunHints.INTVAL_ANTIALIAS_OFF;
+	textAntialiasHint = SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT;
+	fractionalMetricsHint = SunHints.INTVAL_FRACTIONALMETRICS_OFF;
+	lcdTextContrast = lcdTextContrastDefaultValue;
+	interpolationHint = -1;
+	strokeHint = SunHints.INTVAL_STROKE_DEFAULT;
 
-        interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+	interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
 
         validateColor();
 
-        font = f;
-        if (font == null) {
-            font = defaultFont;
-        }
+	font = f;
+	if (font == null) {
+	    font = defaultFont;
+	}
 
-        loops = sd.getRenderLoops(this);
-        setDevClip(sd.getBounds());
-        invalidatePipe();
+	loops = sd.getRenderLoops(this);
+	setDevClip(sd.getBounds());
+	invalidatePipe();
     }
 
     protected Object clone() {
-        try {
-            SunGraphics2D g = (SunGraphics2D) super.clone();
-            g.transform = new AffineTransform(this.transform);
-            if (hints != null) {
-                g.hints = (RenderingHints) this.hints.clone();
-            }
-            /* FontInfos are re-used, so must be cloned too, if they
-             * are valid, and be nulled out if invalid.
-             * The implied trade-off is that there is more to be gained
-             * from re-using these objects than is lost by having to
-             * clone them when the SG2D is cloned.
-             */
-            if (this.fontInfo != null) {
-                if (this.validFontInfo) {
-                    g.fontInfo = (FontInfo)this.fontInfo.clone();
-                } else {
-                    g.fontInfo = null;
-                }
-            }
-            if (this.glyphVectorFontInfo != null) {
-                g.glyphVectorFontInfo =
-                    (FontInfo)this.glyphVectorFontInfo.clone();
-                g.glyphVectorFRC = this.glyphVectorFRC;
-            }
-            //g.invalidatePipe();
-            return g;
-        } catch (CloneNotSupportedException e) {
-        }
-        return null;
+	try {
+	    SunGraphics2D g = (SunGraphics2D) super.clone();
+	    g.transform = new AffineTransform(this.transform);
+	    if (hints != null) {
+		g.hints = (RenderingHints) this.hints.clone();
+	    }
+	    /* FontInfos are re-used, so must be cloned too, if they
+	     * are valid, and be nulled out if invalid.
+	     * The implied trade-off is that there is more to be gained
+	     * from re-using these objects than is lost by having to
+	     * clone them when the SG2D is cloned.
+	     */
+	    if (this.fontInfo != null) {
+		if (this.validFontInfo) {
+		    g.fontInfo = (FontInfo)this.fontInfo.clone();
+		} else {
+		    g.fontInfo = null;
+		}
+	    }
+	    if (this.glyphVectorFontInfo != null) {
+		g.glyphVectorFontInfo =
+		    (FontInfo)this.glyphVectorFontInfo.clone();
+		g.glyphVectorFRC = this.glyphVectorFRC;
+	    }
+	    //g.invalidatePipe();
+	    return g;
+	} catch (CloneNotSupportedException e) {
+	}
+	return null;
     }
 
     /**
      * Create a new SunGraphics2D based on this one.
      */
     public Graphics create() {
-        return (Graphics) clone();
+	return (Graphics) clone();
     }
 
     public void setDevClip(int x, int y, int w, int h) {
-        Region c = constrainClip;
-        if (c == null) {
-            devClip = Region.getInstanceXYWH(x, y, w, h);
-        } else {
-            devClip = c.getIntersectionXYWH(x, y, w, h);
-        }
-        validateCompClip();
+	Region c = constrainClip;
+	if (c == null) {
+	    devClip = Region.getInstanceXYWH(x, y, w, h);
+	} else {
+	    devClip = c.getIntersectionXYWH(x, y, w, h);
+	}
+	validateCompClip();
     }
 
     public void setDevClip(Rectangle r) {
-        setDevClip(r.x, r.y, r.width, r.height);
+	setDevClip(r.x, r.y, r.width, r.height);
     }
 
     /**
@@ -341,29 +342,29 @@ public final class SunGraphics2D
         if ((x|y) != 0) {
             translate(x, y);
         }
-        if (transformState >= TRANSFORM_TRANSLATESCALE) {
-            clipRect(0, 0, w, h);
-            return;
-        }
+	if (transformState >= TRANSFORM_TRANSLATESCALE) {
+	    clipRect(0, 0, w, h);
+	    return;
+	}
         x = constrainX = transX;
         y = constrainY = transY;
-        w = Region.dimAdd(x, w);
-        h = Region.dimAdd(y, h);
-        Region c = constrainClip;
-        if (c == null) {
-            c = Region.getInstanceXYXY(x, y, w, h);
-        } else {
-            c = c.getIntersectionXYXY(x, y, w, h);
-            if (c == constrainClip) {
-                // Common case to ignore
-                return;
-            }
-        }
-        constrainClip = c;
-        if (!devClip.isInsideQuickCheck(c)) {
-            devClip = devClip.getIntersection(c);
-            validateCompClip();
-        }
+	w = Region.dimAdd(x, w);
+	h = Region.dimAdd(y, h);
+	Region c = constrainClip;
+	if (c == null) {
+	    c = Region.getInstanceXYXY(x, y, w, h);
+	} else {
+	    c = c.getIntersectionXYXY(x, y, w, h);
+	    if (c == constrainClip) {
+		// Common case to ignore
+		return;
+	    }
+	}
+	constrainClip = c;
+	if (!devClip.isInsideQuickCheck(c)) {
+	    devClip = devClip.getIntersection(c);
+	    validateCompClip();
+	}
     }
 
     protected static ValidatePipe invalidpipe = new ValidatePipe();
@@ -372,15 +373,15 @@ public final class SunGraphics2D
      * Invalidate the pipeline
      */
     protected void invalidatePipe() {
-        drawpipe = invalidpipe;
-        fillpipe = invalidpipe;
-        shapepipe = invalidpipe;
-        textpipe = invalidpipe;
-        imagepipe = invalidpipe;
+	drawpipe = invalidpipe;
+	fillpipe = invalidpipe;
+	shapepipe = invalidpipe;
+	textpipe = invalidpipe;
+	imagepipe = invalidpipe;
     }
 
     public void validatePipe() {
-        surfaceData.validatePipe(this);
+	surfaceData.validatePipe(this);
     }
 
     /*
@@ -391,15 +392,15 @@ public final class SunGraphics2D
      * or whether that shape must be "kept" unmodified.
      */
     Shape intersectShapes(Shape s1, Shape s2, boolean keep1, boolean keep2) {
-        if (s1 instanceof Rectangle && s2 instanceof Rectangle) {
-            return ((Rectangle) s1).intersection((Rectangle) s2);
-        }
-        if (s1 instanceof Rectangle2D) {
-            return intersectRectShape((Rectangle2D) s1, s2, keep1, keep2);
-        } else if (s2 instanceof Rectangle2D) {
-            return intersectRectShape((Rectangle2D) s2, s1, keep2, keep1);
-        }
-        return intersectByArea(s1, s2, keep1, keep2);
+	if (s1 instanceof Rectangle && s2 instanceof Rectangle) {
+	    return ((Rectangle) s1).intersection((Rectangle) s2);
+	}
+	if (s1 instanceof Rectangle2D) {
+	    return intersectRectShape((Rectangle2D) s1, s2, keep1, keep2);
+	} else if (s2 instanceof Rectangle2D) {
+	    return intersectRectShape((Rectangle2D) s2, s1, keep2, keep1);
+	}
+	return intersectByArea(s1, s2, keep1, keep2);
     }
 
     /*
@@ -410,44 +411,44 @@ public final class SunGraphics2D
      * or whether that shape must be "kept" unmodified.
      */
     Shape intersectRectShape(Rectangle2D r, Shape s,
-                             boolean keep1, boolean keep2) {
-        if (s instanceof Rectangle2D) {
-            Rectangle2D r2 = (Rectangle2D) s;
-            Rectangle2D outrect;
-            if (!keep1) {
-                outrect = r;
-            } else if (!keep2) {
-                outrect = r2;
-            } else {
-                outrect = new Rectangle2D.Float();
-            }
-            double x1 = Math.max(r.getX(), r2.getX());
-            double x2 = Math.min(r.getX()  + r.getWidth(),
+			     boolean keep1, boolean keep2) {
+	if (s instanceof Rectangle2D) {
+	    Rectangle2D r2 = (Rectangle2D) s;
+	    Rectangle2D outrect;
+	    if (!keep1) {
+		outrect = r;
+	    } else if (!keep2) {
+		outrect = r2;
+	    } else {
+		outrect = new Rectangle2D.Float();
+	    }
+	    double x1 = Math.max(r.getX(), r2.getX());
+	    double x2 = Math.min(r.getX()  + r.getWidth(), 
                                  r2.getX() + r2.getWidth());
-            double y1 = Math.max(r.getY(), r2.getY());
-            double y2 = Math.min(r.getY()  + r.getHeight(),
+	    double y1 = Math.max(r.getY(), r2.getY());
+	    double y2 = Math.min(r.getY()  + r.getHeight(), 
                                  r2.getY() + r2.getHeight());
 
             if (((x2 - x1) < 0) || ((y2 - y1) < 0))
                 // Width or height is negative. No intersection.
-                outrect.setFrameFromDiagonal(0, 0, 0, 0);
+		outrect.setFrameFromDiagonal(0, 0, 0, 0);
             else
-                outrect.setFrameFromDiagonal(x1, y1, x2, y2);
-            return outrect;
-        }
-        if (r.contains(s.getBounds2D())) {
-            if (keep2) {
-                s = cloneShape(s);
-            }
-            return s;
-        }
-        return intersectByArea(r, s, keep1, keep2);
+		outrect.setFrameFromDiagonal(x1, y1, x2, y2);
+	    return outrect;
+	}
+	if (r.contains(s.getBounds2D())) {
+	    if (keep2) {
+		s = cloneShape(s);
+	    }
+	    return s;
+	}
+	return intersectByArea(r, s, keep1, keep2);
     }
 
     protected static Shape cloneShape(Shape s) {
-        return new GeneralPath(s);
+	return new GeneralPath(s);
     }
-
+    
     /*
      * Intersect two Shapes using the Area class.  Presumably other
      * attempts at simpler intersection methods proved fruitless.
@@ -458,31 +459,31 @@ public final class SunGraphics2D
      * @see #intersectRectShape
      */
     Shape intersectByArea(Shape s1, Shape s2, boolean keep1, boolean keep2) {
-        Area a1, a2;
+	Area a1, a2;
 
-        // First see if we can find an overwriteable source shape
-        // to use as our destination area to avoid duplication.
-        if (!keep1 && (s1 instanceof Area)) {
-            a1 = (Area) s1;
-        } else if (!keep2 && (s2 instanceof Area)) {
-            a1 = (Area) s2;
-            s2 = s1;
-        } else {
-            a1 = new Area(s1);
-        }
+	// First see if we can find an overwriteable source shape
+	// to use as our destination area to avoid duplication.
+	if (!keep1 && (s1 instanceof Area)) {
+	    a1 = (Area) s1;
+	} else if (!keep2 && (s2 instanceof Area)) {
+	    a1 = (Area) s2;
+	    s2 = s1;
+	} else {
+	    a1 = new Area(s1);
+	}
 
-        if (s2 instanceof Area) {
-            a2 = (Area) s2;
-        } else {
-            a2 = new Area(s2);
-        }
+	if (s2 instanceof Area) {
+	    a2 = (Area) s2;
+	} else {
+	    a2 = new Area(s2);
+	}
 
-        a1.intersect(a2);
-        if (a1.isRectangular()) {
-            return a1.getBounds();
-        }
+	a1.intersect(a2);
+	if (a1.isRectangular()) {
+	    return a1.getBounds();
+	}
 
-        return a1;
+	return a1;
     }
 
     /*
@@ -490,14 +491,14 @@ public final class SunGraphics2D
      * rendering boundaries.
      */
     public Region getCompClip() {
-        if (!surfaceData.isValid()) {
+	if (!surfaceData.isValid()) {
             // revalidateAll() implicitly recalculcates the composite clip
-            revalidateAll();
-        }
+	    revalidateAll();
+	}
 
-        return clipRegion;
+	return clipRegion;
     }
-
+    
     public Font getFont() {
         if (font == null) {
             font = defaultFont;
@@ -507,296 +508,296 @@ public final class SunGraphics2D
 
     private static final double[] IDENT_MATRIX = {1, 0, 0, 1};
     private static final AffineTransform IDENT_ATX =
-        new AffineTransform();
+	new AffineTransform();
 
     private static final int MINALLOCATED = 8;
     private static final int TEXTARRSIZE = 17;
     private static double[][] textTxArr = new double[TEXTARRSIZE][];
     private static AffineTransform[] textAtArr =
-        new AffineTransform[TEXTARRSIZE];
+	new AffineTransform[TEXTARRSIZE];
 
     static {
-        for (int i=MINALLOCATED;i<TEXTARRSIZE;i++) {
-          textTxArr[i] = new double [] {i, 0, 0, i};
-          textAtArr[i] = new AffineTransform( textTxArr[i]);
-        }
+	for (int i=MINALLOCATED;i<TEXTARRSIZE;i++) {
+	  textTxArr[i] = new double [] {i, 0, 0, i};
+	  textAtArr[i] = new AffineTransform( textTxArr[i]);
+	}
     }
 
     // cached state for various draw[String,Char,Byte] optimizations
     public FontInfo checkFontInfo(FontInfo info, Font font,
-                                  FontRenderContext frc) {
-        /* Do not create a FontInfo object as part of construction of an
-         * SG2D as its possible it may never be needed - ie if no text
-         * is drawn using this SG2D.
-         */
-        if (info == null) {
-            info = new FontInfo();
-        }
+				  FontRenderContext frc) {
+	/* Do not create a FontInfo object as part of construction of an
+	 * SG2D as its possible it may never be needed - ie if no text
+	 * is drawn using this SG2D.
+	 */
+	if (info == null) {
+	    info = new FontInfo();
+	}
+  
+	float ptSize = font.getSize2D();
+	int txFontType;
+	AffineTransform devAt, textAt=null;
+	if (font.isTransformed()) {
+	    textAt = font.getTransform();
+	    textAt.scale(ptSize, ptSize);
+	    txFontType = textAt.getType();
+	    info.originX = (float)textAt.getTranslateX();
+	    info.originY = (float)textAt.getTranslateY();
+	    textAt.translate(-info.originX, -info.originY);
+	    if (transformState >= TRANSFORM_TRANSLATESCALE) {
+		transform.getMatrix(info.devTx = new double[4]);
+		devAt = new AffineTransform(info.devTx);
+		textAt.preConcatenate(devAt);
+	    } else {
+		info.devTx = IDENT_MATRIX;
+		devAt = IDENT_ATX;
+	    }
+	    textAt.getMatrix(info.glyphTx = new double[4]);
+	    double shearx = textAt.getShearX();
+	    double scaley = textAt.getScaleY();
+	    if (shearx != 0) {
+		scaley = Math.sqrt(shearx * shearx + scaley * scaley);
+	    }
+	    info.pixelHeight = (int)(Math.abs(scaley)+0.5);
+	} else {
+	    txFontType = AffineTransform.TYPE_IDENTITY;
+	    info.originX = info.originY = 0;
+	    if (transformState >= TRANSFORM_TRANSLATESCALE) {
+		transform.getMatrix(info.devTx = new double[4]);
+		devAt = new AffineTransform(info.devTx);
+		info.glyphTx = new double[4];
+		for (int i = 0; i < 4; i++) {
+		    info.glyphTx[i] = info.devTx[i] * ptSize;
+		}
+		textAt = new AffineTransform(info.glyphTx);
+		double shearx = transform.getShearX();
+		double scaley = transform.getScaleY();
+		if (shearx != 0) {
+		    scaley = Math.sqrt(shearx * shearx + scaley * scaley);
+		}
+		info.pixelHeight = (int)(Math.abs(scaley * ptSize)+0.5);
+	    } else {
+		/* If the double represents a common integral, we
+		 * may have pre-allocated objects.
+		 * A "sparse" array be seems to be as fast as a switch
+		 * even for 3 or 4 pt sizes, and is more flexible.
+		 * This should perform comparably in single-threaded
+		 * rendering to the old code which synchronized on the
+		 * class and scale better on MP systems.
+		 */
+		int pszInt = (int)ptSize;
+		if (ptSize == pszInt &&
+		    pszInt >= MINALLOCATED && pszInt < TEXTARRSIZE) {
+		    info.glyphTx = textTxArr[pszInt];
+		    textAt = textAtArr[pszInt];
+		    info.pixelHeight = pszInt;
+		} else {
+		    info.pixelHeight = (int)(ptSize+0.5);
+		}
+		if (textAt == null) {
+		    info.glyphTx = new double[] {ptSize, 0, 0, ptSize};
+		    textAt = new AffineTransform(info.glyphTx);		    
+		}
 
-        float ptSize = font.getSize2D();
-        int txFontType;
-        AffineTransform devAt, textAt=null;
-        if (font.isTransformed()) {
-            textAt = font.getTransform();
-            textAt.scale(ptSize, ptSize);
-            txFontType = textAt.getType();
-            info.originX = (float)textAt.getTranslateX();
-            info.originY = (float)textAt.getTranslateY();
-            textAt.translate(-info.originX, -info.originY);
-            if (transformState >= TRANSFORM_TRANSLATESCALE) {
-                transform.getMatrix(info.devTx = new double[4]);
-                devAt = new AffineTransform(info.devTx);
-                textAt.preConcatenate(devAt);
-            } else {
-                info.devTx = IDENT_MATRIX;
-                devAt = IDENT_ATX;
-            }
-            textAt.getMatrix(info.glyphTx = new double[4]);
-            double shearx = textAt.getShearX();
-            double scaley = textAt.getScaleY();
-            if (shearx != 0) {
-                scaley = Math.sqrt(shearx * shearx + scaley * scaley);
-            }
-            info.pixelHeight = (int)(Math.abs(scaley)+0.5);
-        } else {
-            txFontType = AffineTransform.TYPE_IDENTITY;
-            info.originX = info.originY = 0;
-            if (transformState >= TRANSFORM_TRANSLATESCALE) {
-                transform.getMatrix(info.devTx = new double[4]);
-                devAt = new AffineTransform(info.devTx);
-                info.glyphTx = new double[4];
-                for (int i = 0; i < 4; i++) {
-                    info.glyphTx[i] = info.devTx[i] * ptSize;
-                }
-                textAt = new AffineTransform(info.glyphTx);
-                double shearx = transform.getShearX();
-                double scaley = transform.getScaleY();
-                if (shearx != 0) {
-                    scaley = Math.sqrt(shearx * shearx + scaley * scaley);
-                }
-                info.pixelHeight = (int)(Math.abs(scaley * ptSize)+0.5);
-            } else {
-                /* If the double represents a common integral, we
-                 * may have pre-allocated objects.
-                 * A "sparse" array be seems to be as fast as a switch
-                 * even for 3 or 4 pt sizes, and is more flexible.
-                 * This should perform comparably in single-threaded
-                 * rendering to the old code which synchronized on the
-                 * class and scale better on MP systems.
-                 */
-                int pszInt = (int)ptSize;
-                if (ptSize == pszInt &&
-                    pszInt >= MINALLOCATED && pszInt < TEXTARRSIZE) {
-                    info.glyphTx = textTxArr[pszInt];
-                    textAt = textAtArr[pszInt];
-                    info.pixelHeight = pszInt;
-                } else {
-                    info.pixelHeight = (int)(ptSize+0.5);
-                }
-                if (textAt == null) {
-                    info.glyphTx = new double[] {ptSize, 0, 0, ptSize};
-                    textAt = new AffineTransform(info.glyphTx);
-                }
+		info.devTx = IDENT_MATRIX;
+		devAt = IDENT_ATX;
+	    }
+	}
 
-                info.devTx = IDENT_MATRIX;
-                devAt = IDENT_ATX;
-            }
-        }
+	info.font2D = FontManager.getFont2D(font);
 
-        info.font2D = FontManager.getFont2D(font);
+	int fmhint = fractionalMetricsHint;
+	if (fmhint == SunHints.INTVAL_FRACTIONALMETRICS_DEFAULT) {
+	    fmhint = SunHints.INTVAL_FRACTIONALMETRICS_OFF;
+	}
+	info.lcdSubPixPos = false; // conditionally set true in LCD mode.
 
-        int fmhint = fractionalMetricsHint;
-        if (fmhint == SunHints.INTVAL_FRACTIONALMETRICS_DEFAULT) {
-            fmhint = SunHints.INTVAL_FRACTIONALMETRICS_OFF;
-        }
-        info.lcdSubPixPos = false; // conditionally set true in LCD mode.
-
-        /* The text anti-aliasing hints that are set by the client need
-         * to be interpreted for the current state and stored in the
-         * FontInfo.aahint which is what will actually be used and
-         * will be one of OFF, ON, LCD_HRGB or LCD_VRGB.
-         * This is what pipe selection code should typically refer to, not
-         * textAntialiasHint. This means we are now evaluating the meaning
-         * of "default" here. Any pipe that really cares about that will
-         * also need to consult that variable.
-         * Otherwise these are being used only as args to getStrike,
-         * and are encapsulated in that object which is part of the
-         * FontInfo, so we do not need to store them directly as fields
-         * in the FontInfo object.
-         * That could change if FontInfo's were more selectively
-         * revalidated when graphics state changed. Presently this
-         * method re-evaluates all fields in the fontInfo.
-         * The strike doesn't need to know the RGB subpixel order. Just
-         * if its H or V orientation, so if an LCD option is specified we
-         * always pass in the RGB hint to the strike.
-         * frc is non-null only if this is a GlyphVector. For reasons
-         * which are probably a historical mistake the AA hint in a GV
-         * is honoured when we render, overriding the Graphics setting.
-         */
-        int aahint;
-        if (frc == null) {
-            aahint = textAntialiasHint;
-        } else {
-            aahint = ((SunHints.Value)frc.getAntiAliasingHint()).getIndex();
-        }
-        if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT) {
-            if (antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
-                aahint = SunHints.INTVAL_TEXT_ANTIALIAS_ON;
-            } else {
-                aahint = SunHints.INTVAL_TEXT_ANTIALIAS_OFF;
-            }
-        } else {
-            /* If we are in checkFontInfo because a rendering hint has been
-             * set then all pipes are revalidated. But we can also
-             * be here because setFont() has been called when the 'gasp'
-             * hint is set, as then the font size determines the text pipe.
-             * See comments in SunGraphics2d.setFont(Font).
-             */
-            if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_GASP) {
-                if (info.font2D.useAAForPtSize(info.pixelHeight)) {
-                    aahint = SunHints.INTVAL_TEXT_ANTIALIAS_ON;
-                } else {
-                    aahint = SunHints.INTVAL_TEXT_ANTIALIAS_OFF;
-                }
-            } else if (aahint >= SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB) {
-                /* loops for default rendering modes are installed in the SG2D
-                 * constructor. If there are none this will be null.
-                 * Not all compositing modes update the render loops, so
-                 * we also test that this is a mode we know should support
-                 * this. One minor issue is that the loops aren't necessarily
-                 * installed for a new rendering mode until after this
-                 * method is called during pipeline validation. So it is
-                 * theoretically possible that it was set to null for a
-                 * compositing mode, the composite is then set back to Src,
-                 * but the loop is still null when this is called and AA=ON
-                 * is installed instead of an LCD mode.
-                 * However this is done in the right order in SurfaceData.java
-                 * so this is not likely to be a problem - but not
-                 * guaranteed.
-                 */
-                if (
-                    !surfaceData.canRenderLCDText(this)
-//                    loops.drawGlyphListLCDLoop == null ||
-//                    compositeState > COMP_ISCOPY ||
-//                    paintState > PAINT_ALPHACOLOR
-                      ) {
-                    aahint = SunHints.INTVAL_TEXT_ANTIALIAS_ON;
-                } else {
-                    info.lcdRGBOrder = true;
-                    /* Collapse these into just HRGB or VRGB.
-                     * Pipe selection code needs only to test for these two.
-                     * Since these both select the same pipe anyway its
-                     * tempting to collapse into one value. But they are
-                     * different strikes (glyph caches) so the distinction
-                     * needs to be made for that purpose.
-                     */
-                    if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HBGR) {
-                        aahint = SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
-                        info.lcdRGBOrder = false;
-                    } else if
-                        (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VBGR) {
-                        aahint = SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VRGB;
-                        info.lcdRGBOrder = false;
-                    }
-                    /* Support subpixel positioning only for the case in
-                     * which the horizontal resolution is increased
-                     */
-                    info.lcdSubPixPos =
-                        fmhint == SunHints.INTVAL_FRACTIONALMETRICS_ON &&
-                        aahint == SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
-                }
-            }
-        }
-        info.aaHint = aahint;
-        info.fontStrike = info.font2D.getStrike(font, devAt, textAt,
-                                                aahint, fmhint);
-        return info;
+	/* The text anti-aliasing hints that are set by the client need
+	 * to be interpreted for the current state and stored in the
+	 * FontInfo.aahint which is what will actually be used and
+	 * will be one of OFF, ON, LCD_HRGB or LCD_VRGB.
+	 * This is what pipe selection code should typically refer to, not
+	 * textAntialiasHint. This means we are now evaluating the meaning
+	 * of "default" here. Any pipe that really cares about that will
+	 * also need to consult that variable.
+	 * Otherwise these are being used only as args to getStrike,
+	 * and are encapsulated in that object which is part of the
+	 * FontInfo, so we do not need to store them directly as fields
+	 * in the FontInfo object.
+	 * That could change if FontInfo's were more selectively
+	 * revalidated when graphics state changed. Presently this
+	 * method re-evaluates all fields in the fontInfo.
+	 * The strike doesn't need to know the RGB subpixel order. Just
+	 * if its H or V orientation, so if an LCD option is specified we
+	 * always pass in the RGB hint to the strike.
+	 * frc is non-null only if this is a GlyphVector. For reasons
+	 * which are probably a historical mistake the AA hint in a GV
+	 * is honoured when we render, overriding the Graphics setting.
+	 */
+	int aahint;
+	if (frc == null) {
+	    aahint = textAntialiasHint;
+	} else {
+	    aahint = ((SunHints.Value)frc.getAntiAliasingHint()).getIndex();
+	}
+	if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT) {
+	    if (antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
+		aahint = SunHints.INTVAL_TEXT_ANTIALIAS_ON;
+	    } else {
+		aahint = SunHints.INTVAL_TEXT_ANTIALIAS_OFF;
+	    }
+	} else {
+	    /* If we are in checkFontInfo because a rendering hint has been
+	     * set then all pipes are revalidated. But we can also
+	     * be here because setFont() has been called when the 'gasp'
+	     * hint is set, as then the font size determines the text pipe.
+	     * See comments in SunGraphics2d.setFont(Font).
+	     */
+	    if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_GASP) {
+		if (info.font2D.useAAForPtSize(info.pixelHeight)) {
+		    aahint = SunHints.INTVAL_TEXT_ANTIALIAS_ON;
+		} else {
+		    aahint = SunHints.INTVAL_TEXT_ANTIALIAS_OFF;
+		}
+	    } else if (aahint >= SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB) {
+		/* loops for default rendering modes are installed in the SG2D
+		 * constructor. If there are none this will be null.
+		 * Not all compositing modes update the render loops, so
+		 * we also test that this is a mode we know should support
+		 * this. One minor issue is that the loops aren't necessarily
+		 * installed for a new rendering mode until after this
+		 * method is called during pipeline validation. So it is
+		 * theoretically possible that it was set to null for a
+		 * compositing mode, the composite is then set back to Src,
+		 * but the loop is still null when this is called and AA=ON
+		 * is installed instead of an LCD mode.
+		 * However this is done in the right order in SurfaceData.java
+		 * so this is not likely to be a problem - but not
+		 * guaranteed.
+		 */		
+		if (
+		    !surfaceData.canRenderLCDText(this)
+// 		      loops.drawGlyphListLCDLoop == null ||
+// 		      compositeState > COMP_ISCOPY ||
+// 		      paintState > PAINT_ALPHACOLOR
+		      ) {
+		    aahint = SunHints.INTVAL_TEXT_ANTIALIAS_ON;
+		} else {
+		    info.lcdRGBOrder = true;
+		    /* Collapse these into just HRGB or VRGB.
+		     * Pipe selection code needs only to test for these two.
+		     * Since these both select the same pipe anyway its
+		     * tempting to collapse into one value. But they are
+		     * different strikes (glyph caches) so the distinction
+		     * needs to be made for that purpose.
+		     */
+		    if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HBGR) {
+			aahint = SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
+			info.lcdRGBOrder = false;
+		    } else if
+			(aahint == SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VBGR) {
+			aahint = SunHints.INTVAL_TEXT_ANTIALIAS_LCD_VRGB;
+			info.lcdRGBOrder = false;
+		    }
+		    /* Support subpixel positioning only for the case in
+		     * which the horizontal resolution is increased
+		     */
+		    info.lcdSubPixPos =
+			fmhint == SunHints.INTVAL_FRACTIONALMETRICS_ON &&
+			aahint == SunHints.INTVAL_TEXT_ANTIALIAS_LCD_HRGB;
+		}
+	    }
+	}
+	info.aaHint = aahint;
+	info.fontStrike = info.font2D.getStrike(font, devAt, textAt,
+						aahint, fmhint);
+	return info;
     }
 
     public static boolean isRotated(double [] mtx) {
-        if ((mtx[0] == mtx[3]) &&
-            (mtx[1] == 0.0) &&
+	if ((mtx[0] == mtx[3]) &&
+	    (mtx[1] == 0.0) &&
             (mtx[2] == 0.0) &&
-            (mtx[0] > 0.0))
-        {
+	    (mtx[0] > 0.0))
+	{
             return false;
         }
-
+ 
         return true;
     }
 
     public void setFont(Font font) {
-        /* replacing the reference equality test font != this.font with
-         * !font.equals(this.font) did not yield any measurable difference
-         * in testing, but there may be yet to be identified cases where it
-         * is beneficial.
-         */
+	/* replacing the reference equality test font != this.font with
+	 * !font.equals(this.font) did not yield any measurable difference
+	 * in testing, but there may be yet to be identified cases where it
+	 * is beneficial.
+	 */
         if (font != null && font!=this.font/*!font.equals(this.font)*/) {
-            /* In the GASP AA case the textpipe depends on the glyph size
-             * as determined by graphics and font transforms as well as the
-             * font size, and information in the font. But we may invalidate
-             * the pipe only to find that it made no difference.
-             * Deferring pipe invalidation to checkFontInfo won't work because
-             * when called we may already be rendering to the wrong pipe.
-             * So, if the font is transformed, or the graphics has more than
-             * a simple scale, we'll take that as enough of a hint to
-             * revalidate everything. But if they aren't we will
-             * use the font's point size to query the gasp table and see if
-             * what it says matches what's currently being used, in which
-             * case there's no need to invalidate the textpipe.
-             * This should be sufficient for all typical uses cases.
-             */
-            if (textAntialiasHint == SunHints.INTVAL_TEXT_ANTIALIAS_GASP &&
-                textpipe != invalidpipe &&
-                (transformState > TRANSFORM_ANY_TRANSLATE ||
-                 font.isTransformed() ||
-                 fontInfo == null || // Precaution, if true shouldn't get here
-                 (fontInfo.aaHint == SunHints.INTVAL_TEXT_ANTIALIAS_ON) !=
-                 FontManager.getFont2D(font).useAAForPtSize(font.getSize()))) {
-                textpipe = invalidpipe;
-            }
+	    /* In the GASP AA case the textpipe depends on the glyph size
+	     * as determined by graphics and font transforms as well as the
+	     * font size, and information in the font. But we may invalidate
+	     * the pipe only to find that it made no difference. 
+	     * Deferring pipe invalidation to checkFontInfo won't work because
+	     * when called we may already be rendering to the wrong pipe.
+	     * So, if the font is transformed, or the graphics has more than
+	     * a simple scale, we'll take that as enough of a hint to
+	     * revalidate everything. But if they aren't we will 
+	     * use the font's point size to query the gasp table and see if
+	     * what it says matches what's currently being used, in which
+	     * case there's no need to invalidate the textpipe.
+	     * This should be sufficient for all typical uses cases.
+	     */
+	    if (textAntialiasHint == SunHints.INTVAL_TEXT_ANTIALIAS_GASP &&
+		textpipe != invalidpipe &&
+		(transformState > TRANSFORM_ANY_TRANSLATE ||
+		 font.isTransformed() ||
+		 fontInfo == null || // Precaution, if true shouldn't get here
+		 (fontInfo.aaHint == SunHints.INTVAL_TEXT_ANTIALIAS_ON) !=
+		 FontManager.getFont2D(font).useAAForPtSize(font.getSize()))) {
+		textpipe = invalidpipe;
+	    }
             this.font = font;
             this.fontMetrics = null;
-            this.validFontInfo = false;
+	    this.validFontInfo = false;
         }
     }
 
     public FontInfo getFontInfo() {
-        if (!validFontInfo) {
-            this.fontInfo = checkFontInfo(this.fontInfo, font, null);
-            validFontInfo = true;
-        }
+	if (!validFontInfo) {
+	    this.fontInfo = checkFontInfo(this.fontInfo, font, null);
+	    validFontInfo = true;
+	}
         return this.fontInfo;
     }
 
     /* Used by drawGlyphVector which specifies its own font. */
     public FontInfo getGVFontInfo(Font font, FontRenderContext frc) {
-        if (glyphVectorFontInfo != null &&
-            glyphVectorFontInfo.font == font &&
-            glyphVectorFRC == frc) {
-            return glyphVectorFontInfo;
-        } else {
-            glyphVectorFRC = frc;
-            return glyphVectorFontInfo =
-                checkFontInfo(glyphVectorFontInfo, font, frc);
-        }
+	if (glyphVectorFontInfo != null &&
+	    glyphVectorFontInfo.font == font &&
+	    glyphVectorFRC == frc) {
+	    return glyphVectorFontInfo;
+	} else {
+	    glyphVectorFRC = frc;
+	    return glyphVectorFontInfo =
+		checkFontInfo(glyphVectorFontInfo, font, frc);
+	}
     }
 
     public FontMetrics getFontMetrics() {
         if (this.fontMetrics != null) {
             return this.fontMetrics;
         }
-        /* NB the constructor and the setter disallow "font" being null */
-        return this.fontMetrics =
-           FontDesignMetrics.getMetrics(font, getFontRenderContext());
+	/* NB the constructor and the setter disallow "font" being null */
+	return this.fontMetrics =
+	   FontDesignMetrics.getMetrics(font, getFontRenderContext());
     }
 
     public FontMetrics getFontMetrics(Font font) {
         if ((this.fontMetrics != null) && (font == this.font)) {
             return this.fontMetrics;
         }
-        FontMetrics fm =
-          FontDesignMetrics.getMetrics(font, getFontRenderContext());
+	FontMetrics fm =
+	  FontDesignMetrics.getMetrics(font, getFontRenderContext());
 
         if (this.font == font) {
             this.fontMetrics = fm;
@@ -827,10 +828,10 @@ public final class SunGraphics2D
         }
 
         s = transformShape(s);
-        if ((constrainX|constrainY) != 0) {
-            rect = new Rectangle(rect);
-            rect.translate(constrainX, constrainY);
-        }
+	if ((constrainX|constrainY) != 0) {
+	    rect = new Rectangle(rect);
+	    rect.translate(constrainX, constrainY);
+	}
 
         return s.intersects(rect);
     }
@@ -839,14 +840,14 @@ public final class SunGraphics2D
      * Return the ColorModel associated with this Graphics2D.
      */
     public ColorModel getDeviceColorModel() {
-        return surfaceData.getColorModel();
+	return surfaceData.getColorModel();
     }
 
     /**
      * Return the device configuration associated with this Graphics2D.
      */
     public GraphicsConfiguration getDeviceConfiguration() {
-        return surfaceData.getDeviceConfiguration();
+	return surfaceData.getDeviceConfiguration();
     }
 
     /**
@@ -854,7 +855,7 @@ public final class SunGraphics2D
      * drawable surface of this Graphics2D.
      */
     public final SurfaceData getSurfaceData() {
-        return surfaceData;
+	return surfaceData;
     }
 
     /**
@@ -868,16 +869,16 @@ public final class SunGraphics2D
      * @see AlphaComposite
      */
     public void setComposite(Composite comp) {
-        if (composite == comp) {
-            return;
-        }
-        int newCompState;
-        CompositeType newCompType;
+	if (composite == comp) {
+	    return;
+	}
+	int newCompState;
+	CompositeType newCompType;
         if (comp instanceof AlphaComposite) {
-            AlphaComposite alphacomp = (AlphaComposite) comp;
-            newCompType = CompositeType.forAlphaComposite(alphacomp);
-            if (newCompType == CompositeType.SrcOverNoEa) {
-                if (paintState == PAINT_OPAQUECOLOR ||
+	    AlphaComposite alphacomp = (AlphaComposite) comp;
+	    newCompType = CompositeType.forAlphaComposite(alphacomp);
+	    if (newCompType == CompositeType.SrcOverNoEa) {
+		if (paintState == PAINT_OPAQUECOLOR ||
                     (paintState > PAINT_ALPHACOLOR &&
                      paint.getTransparency() == Transparency.OPAQUE))
                 {
@@ -885,7 +886,7 @@ public final class SunGraphics2D
                 } else {
                     newCompState = COMP_ALPHA;
                 }
-            } else if (newCompType == CompositeType.SrcNoEa ||
+	    } else if (newCompType == CompositeType.SrcNoEa ||
                        newCompType == CompositeType.Src ||
                        newCompType == CompositeType.Clear)
             {
@@ -896,26 +897,26 @@ public final class SunGraphics2D
                 newCompState = COMP_ISCOPY;
             } else {
                 newCompState = COMP_ALPHA;
-            }
+	    }
         } else if (comp instanceof XORComposite) {
             newCompState = COMP_XOR;
-            newCompType = CompositeType.Xor;
-        } else if (comp == null) {
-            throw new IllegalArgumentException("null Composite");
+	    newCompType = CompositeType.Xor;
+	} else if (comp == null) {
+	    throw new IllegalArgumentException("null Composite");
         } else {
-            surfaceData.checkCustomComposite();
+	    surfaceData.checkCustomComposite();
             newCompState = COMP_CUSTOM;
-            newCompType = CompositeType.General;
+	    newCompType = CompositeType.General;
         }
         if (compositeState != newCompState ||
-            imageComp != newCompType)
-        {
-            compositeState = newCompState;
-            imageComp = newCompType;
-            invalidatePipe();
+	    imageComp != newCompType)
+	{
+	    compositeState = newCompState;
+	    imageComp = newCompType;
+	    invalidatePipe();
             validFontInfo = false;
         }
-        composite = comp;
+	composite = comp;
         if (paintState <= PAINT_ALPHACOLOR) {
             validateColor();
         }
@@ -930,26 +931,26 @@ public final class SunGraphics2D
      * @see TexturePaint
      */
     public void setPaint(Paint paint) {
-        if (paint instanceof Color) {
-            setColor((Color) paint);
-            return;
-        }
-        if (paint == null || this.paint == paint) {
-            return;
-        }
+	if (paint instanceof Color) {
+	    setColor((Color) paint);
+	    return;
+	}
+	if (paint == null || this.paint == paint) {
+	    return;
+	}
         this.paint = paint;
-        if (imageComp == CompositeType.SrcOverNoEa) {
-            // special case where compState depends on opacity of paint
-            if (paint.getTransparency() == Transparency.OPAQUE) {
-                if (compositeState != COMP_ISCOPY) {
-                    compositeState = COMP_ISCOPY;
-                }
-            } else {
-                if (compositeState == COMP_ISCOPY) {
-                    compositeState = COMP_ALPHA;
-                }
-            }
-        }
+	if (imageComp == CompositeType.SrcOverNoEa) {
+	    // special case where compState depends on opacity of paint
+	    if (paint.getTransparency() == Transparency.OPAQUE) {
+		if (compositeState != COMP_ISCOPY) {
+		    compositeState = COMP_ISCOPY;
+		}
+	    } else {
+		if (compositeState == COMP_ISCOPY) {
+		    compositeState = COMP_ALPHA;
+		}
+	    }
+	}
         Class paintClass = paint.getClass();
         if (paintClass == GradientPaint.class) {
             paintState = PAINT_GRADIENT;
@@ -967,8 +968,8 @@ public final class SunGraphics2D
     }
 
     static final int NON_UNIFORM_SCALE_MASK =
-        (AffineTransform.TYPE_GENERAL_TRANSFORM |
-         AffineTransform.TYPE_GENERAL_SCALE);
+	(AffineTransform.TYPE_GENERAL_TRANSFORM |
+	 AffineTransform.TYPE_GENERAL_SCALE);
     public static final double MinPenSizeAA =
         sun.java2d.pipe.RenderingEngine.getInstance().getMinimumAAPenSize();
     public static final double MinPenSizeAASquared =
@@ -981,103 +982,103 @@ public final class SunGraphics2D
     public static final double MinPenSizeSquared = 1.000000001;
 
     private void validateBasicStroke(BasicStroke bs) {
-        boolean aa = (antialiasHint == SunHints.INTVAL_ANTIALIAS_ON);
-        if (transformState < TRANSFORM_TRANSLATESCALE) {
-            if (aa) {
-                if (bs.getLineWidth() <= MinPenSizeAA) {
-                    if (bs.getDashArray() == null) {
-                        strokeState = STROKE_THIN;
-                    } else {
-                        strokeState = STROKE_THINDASHED;
-                    }
-                } else {
-                    strokeState = STROKE_WIDE;
-                }
-            } else {
-                if (bs == defaultStroke) {
-                    strokeState = STROKE_THIN;
-                } else if (bs.getLineWidth() <= 1.0f) {
-                    if (bs.getDashArray() == null) {
-                        strokeState = STROKE_THIN;
-                    } else {
-                        strokeState = STROKE_THINDASHED;
-                    }
-                } else {
-                    strokeState = STROKE_WIDE;
-                }
-            }
-        } else {
-            double widthsquared;
-            if ((transform.getType() & NON_UNIFORM_SCALE_MASK) == 0) {
-                /* sqrt omitted, compare to squared limits below. */
-                widthsquared = Math.abs(transform.getDeterminant());
-            } else {
-                /* First calculate the "maximum scale" of this transform. */
-                double A = transform.getScaleX();       // m00
-                double C = transform.getShearX();       // m01
-                double B = transform.getShearY();       // m10
-                double D = transform.getScaleY();       // m11
+	boolean aa = (antialiasHint == SunHints.INTVAL_ANTIALIAS_ON);
+	if (transformState < TRANSFORM_TRANSLATESCALE) {
+	    if (aa) {
+		if (bs.getLineWidth() <= MinPenSizeAA) {
+		    if (bs.getDashArray() == null) {
+			strokeState = STROKE_THIN;
+		    } else {
+			strokeState = STROKE_THINDASHED;
+		    }
+		} else {
+		    strokeState = STROKE_WIDE;
+		}
+	    } else {
+		if (bs == defaultStroke) {
+		    strokeState = STROKE_THIN;
+		} else if (bs.getLineWidth() <= 1.0f) {
+		    if (bs.getDashArray() == null) {
+			strokeState = STROKE_THIN;
+		    } else {
+			strokeState = STROKE_THINDASHED;
+		    }
+		} else {
+		    strokeState = STROKE_WIDE;
+		}
+	    }
+	} else {
+	    double widthsquared;
+	    if ((transform.getType() & NON_UNIFORM_SCALE_MASK) == 0) {
+		/* sqrt omitted, compare to squared limits below. */
+		widthsquared = Math.abs(transform.getDeterminant());
+	    } else {
+		/* First calculate the "maximum scale" of this transform. */
+		double A = transform.getScaleX();	// m00
+		double C = transform.getShearX();	// m01
+		double B = transform.getShearY();	// m10
+		double D = transform.getScaleY();	// m11
 
-                /*
-                 * Given a 2 x 2 affine matrix [ A B ] such that
-                 *                             [ C D ]
-                 * v' = [x' y'] = [Ax + Cy, Bx + Dy], we want to
-                 * find the maximum magnitude (norm) of the vector v'
-                 * with the constraint (x^2 + y^2 = 1).
-                 * The equation to maximize is
-                 *     |v'| = sqrt((Ax+Cy)^2+(Bx+Dy)^2)
-                 * or  |v'| = sqrt((AA+BB)x^2 + 2(AC+BD)xy + (CC+DD)y^2).
-                 * Since sqrt is monotonic we can maximize |v'|^2
-                 * instead and plug in the substitution y = sqrt(1 - x^2).
-                 * Trigonometric equalities can then be used to get
-                 * rid of most of the sqrt terms.
-                 */
-                double EA = A*A + B*B;          // x^2 coefficient
-                double EB = 2*(A*C + B*D);      // xy coefficient
-                double EC = C*C + D*D;          // y^2 coefficient
+		/*
+		 * Given a 2 x 2 affine matrix [ A B ] such that
+		 *                             [ C D ]
+		 * v' = [x' y'] = [Ax + Cy, Bx + Dy], we want to
+		 * find the maximum magnitude (norm) of the vector v'
+		 * with the constraint (x^2 + y^2 = 1).
+		 * The equation to maximize is
+		 *     |v'| = sqrt((Ax+Cy)^2+(Bx+Dy)^2)
+		 * or  |v'| = sqrt((AA+BB)x^2 + 2(AC+BD)xy + (CC+DD)y^2).
+		 * Since sqrt is monotonic we can maximize |v'|^2
+		 * instead and plug in the substitution y = sqrt(1 - x^2).
+		 * Trigonometric equalities can then be used to get
+		 * rid of most of the sqrt terms.
+		 */
+		double EA = A*A + B*B;		// x^2 coefficient
+		double EB = 2*(A*C + B*D);	// xy coefficient
+		double EC = C*C + D*D;		// y^2 coefficient
 
-                /*
-                 * There is a lot of calculus omitted here.
-                 *
-                 * Conceptually, in the interests of understanding the
-                 * terms that the calculus produced we can consider
-                 * that EA and EC end up providing the lengths along
-                 * the major axes and the hypot term ends up being an
-                 * adjustment for the additional length along the off-axis
-                 * angle of rotated or sheared ellipses as well as an
-                 * adjustment for the fact that the equation below
-                 * averages the two major axis lengths.  (Notice that
-                 * the hypot term contains a part which resolves to the
-                 * difference of these two axis lengths in the absence
-                 * of rotation.)
-                 *
-                 * In the calculus, the ratio of the EB and (EA-EC) terms
-                 * ends up being the tangent of 2*theta where theta is
-                 * the angle that the long axis of the ellipse makes
-                 * with the horizontal axis.  Thus, this equation is
-                 * calculating the length of the hypotenuse of a triangle
-                 * along that axis.
-                 */
-                double hypot = Math.sqrt(EB*EB + (EA-EC)*(EA-EC));
+		/*
+		 * There is a lot of calculus omitted here.
+		 *
+		 * Conceptually, in the interests of understanding the
+		 * terms that the calculus produced we can consider
+		 * that EA and EC end up providing the lengths along
+		 * the major axes and the hypot term ends up being an
+		 * adjustment for the additional length along the off-axis
+		 * angle of rotated or sheared ellipses as well as an
+		 * adjustment for the fact that the equation below
+		 * averages the two major axis lengths.  (Notice that
+		 * the hypot term contains a part which resolves to the
+		 * difference of these two axis lengths in the absence
+		 * of rotation.)
+		 *
+		 * In the calculus, the ratio of the EB and (EA-EC) terms
+		 * ends up being the tangent of 2*theta where theta is
+		 * the angle that the long axis of the ellipse makes
+		 * with the horizontal axis.  Thus, this equation is
+		 * calculating the length of the hypotenuse of a triangle
+		 * along that axis.
+		 */
+		double hypot = Math.sqrt(EB*EB + (EA-EC)*(EA-EC));
 
-                /* sqrt omitted, compare to squared limits below. */
-                widthsquared = ((EA + EC + hypot)/2.0);
-            }
-            if (bs != defaultStroke) {
-                widthsquared *= bs.getLineWidth() * bs.getLineWidth();
-            }
-            if (widthsquared <=
-                (aa ? MinPenSizeAASquared : MinPenSizeSquared))
-            {
-                if (bs.getDashArray() == null) {
-                    strokeState = STROKE_THIN;
-                } else {
-                    strokeState = STROKE_THINDASHED;
-                }
-            } else {
-                strokeState = STROKE_WIDE;
-            }
-        }
+		/* sqrt omitted, compare to squared limits below. */
+		widthsquared = ((EA + EC + hypot)/2.0);
+	    }
+	    if (bs != defaultStroke) {
+		widthsquared *= bs.getLineWidth() * bs.getLineWidth();
+	    }
+	    if (widthsquared <=
+		(aa ? MinPenSizeAASquared : MinPenSizeSquared))
+	    {
+		if (bs.getDashArray() == null) {
+		    strokeState = STROKE_THIN;
+		} else {
+		    strokeState = STROKE_THINDASHED;
+		}
+	    } else {
+		strokeState = STROKE_WIDE;
+	    }
+	}
     }
 
     /*
@@ -1087,18 +1088,18 @@ public final class SunGraphics2D
      * @see BasicStroke
      */
     public void setStroke(Stroke s) {
-        if (s == null) {
-            throw new IllegalArgumentException("null Stroke");
-        }
+	if (s == null) {
+	    throw new IllegalArgumentException("null Stroke");
+	}
         int saveStrokeState = strokeState;
         stroke = s;
         if (s instanceof BasicStroke) {
-            validateBasicStroke((BasicStroke) s);
+	    validateBasicStroke((BasicStroke) s);
         } else {
             strokeState = STROKE_CUSTOM;
         }
         if (strokeState != saveStrokeState) {
-            invalidatePipe();
+	    invalidatePipe();
         }
     }
 
@@ -1107,120 +1108,120 @@ public final class SunGraphics2D
      * Hint categories include controls for rendering quality and
      * overall time/quality trade-off in the rendering process.
      * @param hintKey The key of hint to be set. The strings are
-     * defined in the RenderingHints class.
+     * defined in the RenderingHints class.  
      * @param hintValue The value indicating preferences for the specified
      * hint category. These strings are defined in the RenderingHints
-     * class.
+     * class.  
      * @see RenderingHints
      */
     public void setRenderingHint(Key hintKey, Object hintValue) {
-        // If we recognize the key, we must recognize the value
-        //     otherwise throw an IllegalArgumentException
-        //     and do not change the Hints object
-        // If we do not recognize the key, just pass it through
-        //     to the Hints object untouched
-        if (!hintKey.isCompatibleValue(hintValue)) {
-            throw new IllegalArgumentException
-                (hintValue+" is not compatible with "+hintKey);
-        }
-        if (hintKey instanceof SunHints.Key) {
-            boolean stateChanged;
-            boolean textStateChanged = false;
-            boolean recognized = true;
-            SunHints.Key sunKey = (SunHints.Key) hintKey;
-            int newHint;
-            if (sunKey == SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST) {
-                newHint = ((Integer)hintValue).intValue();
-            } else {
-                newHint = ((SunHints.Value) hintValue).getIndex();
-            }
-            switch (sunKey.getIndex()) {
-            case SunHints.INTKEY_RENDERING:
-                stateChanged = (renderHint != newHint);
-                if (stateChanged) {
-                    renderHint = newHint;
-                    if (interpolationHint == -1) {
-                        interpolationType =
-                            (newHint == SunHints.INTVAL_RENDER_QUALITY
-                             ? AffineTransformOp.TYPE_BILINEAR
-                             : AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
-                    }
-                }
-                break;
-            case SunHints.INTKEY_ANTIALIASING:
-                stateChanged = (antialiasHint != newHint);
-                antialiasHint = newHint;
-                if (stateChanged) {
-                    textStateChanged =
-                        (textAntialiasHint ==
+	// If we recognize the key, we must recognize the value
+	//     otherwise throw an IllegalArgumentException
+	//     and do not change the Hints object
+	// If we do not recognize the key, just pass it through
+	//     to the Hints object untouched
+	if (!hintKey.isCompatibleValue(hintValue)) {
+	    throw new IllegalArgumentException
+		(hintValue+" is not compatible with "+hintKey);
+	}
+	if (hintKey instanceof SunHints.Key) {
+	    boolean stateChanged;
+	    boolean textStateChanged = false;
+	    boolean recognized = true;
+	    SunHints.Key sunKey = (SunHints.Key) hintKey;
+	    int newHint;
+	    if (sunKey == SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST) {
+		newHint = ((Integer)hintValue).intValue();
+	    } else {
+		newHint = ((SunHints.Value) hintValue).getIndex();
+	    }
+	    switch (sunKey.getIndex()) {
+	    case SunHints.INTKEY_RENDERING:
+		stateChanged = (renderHint != newHint);
+		if (stateChanged) {
+		    renderHint = newHint;
+		    if (interpolationHint == -1) {
+			interpolationType =
+			    (newHint == SunHints.INTVAL_RENDER_QUALITY
+			     ? AffineTransformOp.TYPE_BILINEAR
+			     : AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+		    }
+		}
+		break;
+	    case SunHints.INTKEY_ANTIALIASING:
+		stateChanged = (antialiasHint != newHint);
+		antialiasHint = newHint;
+		if (stateChanged) {
+		    textStateChanged =
+			(textAntialiasHint ==
                          SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT);
-                    if (strokeState != STROKE_CUSTOM) {
-                        validateBasicStroke((BasicStroke) stroke);
-                    }
-                }
-                break;
-            case SunHints.INTKEY_TEXT_ANTIALIASING:
-                stateChanged = (textAntialiasHint != newHint);
-                textStateChanged = stateChanged;
-                textAntialiasHint = newHint;
-                break;
-            case SunHints.INTKEY_FRACTIONALMETRICS:
-                stateChanged = (fractionalMetricsHint != newHint);
-                textStateChanged = stateChanged;
-                fractionalMetricsHint = newHint;
-                break;
-            case SunHints.INTKEY_AATEXT_LCD_CONTRAST:
-                stateChanged = false;
-                /* Already have validated it is an int 100 <= newHint <= 250 */
-                lcdTextContrast = newHint;
-                break;
-            case SunHints.INTKEY_INTERPOLATION:
-                interpolationHint = newHint;
-                switch (newHint) {
-                case SunHints.INTVAL_INTERPOLATION_BICUBIC:
-                    newHint = AffineTransformOp.TYPE_BICUBIC;
-                    break;
-                case SunHints.INTVAL_INTERPOLATION_BILINEAR:
-                    newHint = AffineTransformOp.TYPE_BILINEAR;
-                    break;
-                default:
-                case SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR:
-                    newHint = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-                    break;
-                }
-                stateChanged = (interpolationType != newHint);
-                interpolationType = newHint;
-                break;
-            case SunHints.INTKEY_STROKE_CONTROL:
-                stateChanged = (strokeHint != newHint);
-                strokeHint = newHint;
-                break;
-            default:
-                recognized = false;
-                stateChanged = false;
-                break;
-            }
-            if (recognized) {
-                if (stateChanged) {
-                    invalidatePipe();
-                    if (textStateChanged) {
-                        fontMetrics = null;
-                        this.cachedFRC = null;
-                        validFontInfo = false;
-                        this.glyphVectorFontInfo = null;
-                    }
-                }
-                if (hints != null) {
-                    hints.put(hintKey, hintValue);
-                }
-                return;
-            }
-        }
-        // Nothing we recognize so none of "our state" has changed
-        if (hints == null) {
-            hints = makeHints(null);
-        }
-        hints.put(hintKey, hintValue);
+		    if (strokeState != STROKE_CUSTOM) {
+			validateBasicStroke((BasicStroke) stroke);
+		    }
+		}
+		break;
+	    case SunHints.INTKEY_TEXT_ANTIALIASING:
+		stateChanged = (textAntialiasHint != newHint);
+		textStateChanged = stateChanged;
+		textAntialiasHint = newHint;
+		break;
+	    case SunHints.INTKEY_FRACTIONALMETRICS:
+		stateChanged = (fractionalMetricsHint != newHint);
+		textStateChanged = stateChanged;
+		fractionalMetricsHint = newHint;
+		break;
+	    case SunHints.INTKEY_AATEXT_LCD_CONTRAST:
+		stateChanged = false;
+		/* Already have validated it is an int 100 <= newHint <= 250 */
+		lcdTextContrast = newHint;
+		break;
+	    case SunHints.INTKEY_INTERPOLATION:
+		interpolationHint = newHint;
+		switch (newHint) {
+		case SunHints.INTVAL_INTERPOLATION_BICUBIC:
+		    newHint = AffineTransformOp.TYPE_BICUBIC;
+		    break;
+		case SunHints.INTVAL_INTERPOLATION_BILINEAR:
+		    newHint = AffineTransformOp.TYPE_BILINEAR;
+		    break;
+		default:
+		case SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR:
+		    newHint = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+		    break;
+		}
+		stateChanged = (interpolationType != newHint);
+		interpolationType = newHint;
+		break;
+	    case SunHints.INTKEY_STROKE_CONTROL:
+		stateChanged = (strokeHint != newHint);
+		strokeHint = newHint;
+		break;
+	    default:
+		recognized = false;
+		stateChanged = false;
+		break;
+	    }
+	    if (recognized) {
+		if (stateChanged) {
+		    invalidatePipe();
+		    if (textStateChanged) {
+			fontMetrics = null;
+			this.cachedFRC = null;
+			validFontInfo = false;
+			this.glyphVectorFontInfo = null;
+		    }
+		}
+		if (hints != null) {
+		    hints.put(hintKey, hintValue);
+		}
+		return;
+	    }
+	}
+	// Nothing we recognize so none of "our state" has changed
+	if (hints == null) {
+	    hints = makeHints(null);
+	}
+	hints.put(hintKey, hintValue);
     }
 
 
@@ -1233,43 +1234,43 @@ public final class SunGraphics2D
      * @see RenderingHints
      */
     public Object getRenderingHint(Key hintKey) {
-        if (hints != null) {
-            return hints.get(hintKey);
-        }
-        if (!(hintKey instanceof SunHints.Key)) {
-            return null;
-        }
-        int keyindex = ((SunHints.Key)hintKey).getIndex();
-        switch (keyindex) {
-        case SunHints.INTKEY_RENDERING:
-            return SunHints.Value.get(SunHints.INTKEY_RENDERING,
-                                      renderHint);
-        case SunHints.INTKEY_ANTIALIASING:
-            return SunHints.Value.get(SunHints.INTKEY_ANTIALIASING,
-                                      antialiasHint);
-        case SunHints.INTKEY_TEXT_ANTIALIASING:
-            return SunHints.Value.get(SunHints.INTKEY_TEXT_ANTIALIASING,
-                                      textAntialiasHint);
-        case SunHints.INTKEY_FRACTIONALMETRICS:
-            return SunHints.Value.get(SunHints.INTKEY_FRACTIONALMETRICS,
-                                      fractionalMetricsHint);
-        case SunHints.INTKEY_AATEXT_LCD_CONTRAST:
-            return new Integer(lcdTextContrast);
-        case SunHints.INTKEY_INTERPOLATION:
-            switch (interpolationHint) {
-            case SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR:
-                return SunHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
-            case SunHints.INTVAL_INTERPOLATION_BILINEAR:
-                return SunHints.VALUE_INTERPOLATION_BILINEAR;
-            case SunHints.INTVAL_INTERPOLATION_BICUBIC:
-                return SunHints.VALUE_INTERPOLATION_BICUBIC;
-            }
-            return null;
-        case SunHints.INTKEY_STROKE_CONTROL:
-            return SunHints.Value.get(SunHints.INTKEY_STROKE_CONTROL,
-                                      strokeHint);
-        }
-        return null;
+	if (hints != null) {
+	    return hints.get(hintKey);
+	}
+	if (!(hintKey instanceof SunHints.Key)) {
+	    return null;
+	}
+	int keyindex = ((SunHints.Key)hintKey).getIndex();
+	switch (keyindex) {
+	case SunHints.INTKEY_RENDERING:
+	    return SunHints.Value.get(SunHints.INTKEY_RENDERING,
+				      renderHint);
+	case SunHints.INTKEY_ANTIALIASING:
+	    return SunHints.Value.get(SunHints.INTKEY_ANTIALIASING,
+				      antialiasHint);
+	case SunHints.INTKEY_TEXT_ANTIALIASING:
+	    return SunHints.Value.get(SunHints.INTKEY_TEXT_ANTIALIASING,
+				      textAntialiasHint);
+	case SunHints.INTKEY_FRACTIONALMETRICS:
+	    return SunHints.Value.get(SunHints.INTKEY_FRACTIONALMETRICS,
+				      fractionalMetricsHint);
+	case SunHints.INTKEY_AATEXT_LCD_CONTRAST:
+	    return new Integer(lcdTextContrast);
+	case SunHints.INTKEY_INTERPOLATION:
+	    switch (interpolationHint) {
+	    case SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR:
+		return SunHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+	    case SunHints.INTVAL_INTERPOLATION_BILINEAR:
+		return SunHints.VALUE_INTERPOLATION_BILINEAR;
+	    case SunHints.INTVAL_INTERPOLATION_BICUBIC:
+		return SunHints.VALUE_INTERPOLATION_BICUBIC;
+	    }
+	    return null;
+	case SunHints.INTKEY_STROKE_CONTROL:
+	    return SunHints.Value.get(SunHints.INTKEY_STROKE_CONTROL,
+				      strokeHint);
+	}
+	return null;
     }
 
     /**
@@ -1280,35 +1281,35 @@ public final class SunGraphics2D
      * @see RenderingHints
      */
     public void setRenderingHints(Map<?,?> hints) {
-        this.hints = null;
-        renderHint = SunHints.INTVAL_RENDER_DEFAULT;
-        antialiasHint = SunHints.INTVAL_ANTIALIAS_OFF;
-        textAntialiasHint = SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT;
-        fractionalMetricsHint = SunHints.INTVAL_FRACTIONALMETRICS_OFF;
-        lcdTextContrast = lcdTextContrastDefaultValue;
-        interpolationHint = -1;
-        interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
-        boolean customHintPresent = false;
-        Iterator iter = hints.keySet().iterator();
-        while (iter.hasNext()) {
-            Object key = iter.next();
-            if (key == SunHints.KEY_RENDERING ||
-                key == SunHints.KEY_ANTIALIASING ||
-                key == SunHints.KEY_TEXT_ANTIALIASING ||
-                key == SunHints.KEY_FRACTIONALMETRICS ||
-                key == SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST ||
-                key == SunHints.KEY_STROKE_CONTROL ||
-                key == SunHints.KEY_INTERPOLATION)
-            {
-                setRenderingHint((Key) key, hints.get(key));
-            } else {
-                customHintPresent = true;
-            }
-        }
-        if (customHintPresent) {
-            this.hints = makeHints(hints);
-        }
-        invalidatePipe();
+	this.hints = null;
+	renderHint = SunHints.INTVAL_RENDER_DEFAULT;
+	antialiasHint = SunHints.INTVAL_ANTIALIAS_OFF;
+	textAntialiasHint = SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT;
+	fractionalMetricsHint = SunHints.INTVAL_FRACTIONALMETRICS_OFF;
+	lcdTextContrast = lcdTextContrastDefaultValue;
+	interpolationHint = -1;
+	interpolationType = AffineTransformOp.TYPE_NEAREST_NEIGHBOR;
+	boolean customHintPresent = false;
+	Iterator iter = hints.keySet().iterator();
+	while (iter.hasNext()) {
+	    Object key = iter.next();
+	    if (key == SunHints.KEY_RENDERING ||
+		key == SunHints.KEY_ANTIALIASING ||
+		key == SunHints.KEY_TEXT_ANTIALIASING ||
+		key == SunHints.KEY_FRACTIONALMETRICS ||
+		key == SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST ||
+		key == SunHints.KEY_STROKE_CONTROL ||
+		key == SunHints.KEY_INTERPOLATION)
+	    {
+		setRenderingHint((Key) key, hints.get(key));
+	    } else {
+		customHintPresent = true;
+	    }
+	}
+	if (customHintPresent) {
+	    this.hints = makeHints(hints);
+	}
+	invalidatePipe();
     }
 
     /**
@@ -1319,30 +1320,30 @@ public final class SunGraphics2D
      * @see RenderingHints
      */
     public void addRenderingHints(Map<?,?> hints) {
-        boolean customHintPresent = false;
-        Iterator iter = hints.keySet().iterator();
-        while (iter.hasNext()) {
-            Object key = iter.next();
-            if (key == SunHints.KEY_RENDERING ||
-                key == SunHints.KEY_ANTIALIASING ||
-                key == SunHints.KEY_TEXT_ANTIALIASING ||
-                key == SunHints.KEY_FRACTIONALMETRICS ||
-                key == SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST ||
-                key == SunHints.KEY_STROKE_CONTROL ||
-                key == SunHints.KEY_INTERPOLATION)
-            {
-                setRenderingHint((Key) key, hints.get(key));
-            } else {
-                customHintPresent = true;
-            }
-        }
-        if (customHintPresent) {
-            if (this.hints == null) {
-                this.hints = makeHints(hints);
-            } else {
-                this.hints.putAll(hints);
-            }
-        }
+	boolean customHintPresent = false;
+	Iterator iter = hints.keySet().iterator();
+	while (iter.hasNext()) {
+	    Object key = iter.next();
+	    if (key == SunHints.KEY_RENDERING ||
+		key == SunHints.KEY_ANTIALIASING ||
+		key == SunHints.KEY_TEXT_ANTIALIASING ||
+		key == SunHints.KEY_FRACTIONALMETRICS ||
+		key == SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST ||
+		key == SunHints.KEY_STROKE_CONTROL ||
+		key == SunHints.KEY_INTERPOLATION)
+	    {
+		setRenderingHint((Key) key, hints.get(key));
+	    } else {
+		customHintPresent = true;
+	    }
+	}
+	if (customHintPresent) {
+	    if (this.hints == null) {
+		this.hints = makeHints(hints);
+	    } else {
+		this.hints.putAll(hints);
+	    }
+	}
     }
 
     /**
@@ -1352,67 +1353,67 @@ public final class SunGraphics2D
      * @see RenderingHints
      */
     public RenderingHints getRenderingHints() {
-        if (hints == null) {
-            return makeHints(null);
-        } else {
-            return (RenderingHints) hints.clone();
-        }
+	if (hints == null) {
+	    return makeHints(null);
+	} else {
+	    return (RenderingHints) hints.clone();
+	}
     }
 
     RenderingHints makeHints(Map hints) {
-        RenderingHints model = new RenderingHints(hints);
-        model.put(SunHints.KEY_RENDERING,
-                  SunHints.Value.get(SunHints.INTKEY_RENDERING,
-                                     renderHint));
-        model.put(SunHints.KEY_ANTIALIASING,
-                  SunHints.Value.get(SunHints.INTKEY_ANTIALIASING,
-                                     antialiasHint));
-        model.put(SunHints.KEY_TEXT_ANTIALIASING,
-                  SunHints.Value.get(SunHints.INTKEY_TEXT_ANTIALIASING,
-                                     textAntialiasHint));
-        model.put(SunHints.KEY_FRACTIONALMETRICS,
-                  SunHints.Value.get(SunHints.INTKEY_FRACTIONALMETRICS,
-                                     fractionalMetricsHint));
-        model.put(SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST,
-                  new Integer(lcdTextContrast));
-        Object value;
-        switch (interpolationHint) {
-        case SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR:
-            value = SunHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
-            break;
-        case SunHints.INTVAL_INTERPOLATION_BILINEAR:
-            value = SunHints.VALUE_INTERPOLATION_BILINEAR;
-            break;
-        case SunHints.INTVAL_INTERPOLATION_BICUBIC:
-            value = SunHints.VALUE_INTERPOLATION_BICUBIC;
-            break;
-        default:
-            value = null;
-            break;
-        }
-        if (value != null) {
-            model.put(SunHints.KEY_INTERPOLATION, value);
-        }
-        model.put(SunHints.KEY_STROKE_CONTROL,
-                  SunHints.Value.get(SunHints.INTKEY_STROKE_CONTROL,
-                                     strokeHint));
-        return model;
+	RenderingHints model = new RenderingHints(hints);
+	model.put(SunHints.KEY_RENDERING,
+		  SunHints.Value.get(SunHints.INTKEY_RENDERING,
+				     renderHint));
+	model.put(SunHints.KEY_ANTIALIASING,
+		  SunHints.Value.get(SunHints.INTKEY_ANTIALIASING,
+				     antialiasHint));
+	model.put(SunHints.KEY_TEXT_ANTIALIASING,
+		  SunHints.Value.get(SunHints.INTKEY_TEXT_ANTIALIASING,
+				     textAntialiasHint));
+	model.put(SunHints.KEY_FRACTIONALMETRICS,
+		  SunHints.Value.get(SunHints.INTKEY_FRACTIONALMETRICS,
+				     fractionalMetricsHint));
+	model.put(SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST,
+		  new Integer(lcdTextContrast));
+	Object value;
+	switch (interpolationHint) {
+	case SunHints.INTVAL_INTERPOLATION_NEAREST_NEIGHBOR:
+	    value = SunHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+	    break;
+	case SunHints.INTVAL_INTERPOLATION_BILINEAR:
+	    value = SunHints.VALUE_INTERPOLATION_BILINEAR;
+	    break;
+	case SunHints.INTVAL_INTERPOLATION_BICUBIC:
+	    value = SunHints.VALUE_INTERPOLATION_BICUBIC;
+	    break;
+	default:
+	    value = null;
+	    break;
+	}
+	if (value != null) {
+	    model.put(SunHints.KEY_INTERPOLATION, value);
+	}
+	model.put(SunHints.KEY_STROKE_CONTROL,
+		  SunHints.Value.get(SunHints.INTKEY_STROKE_CONTROL,
+				     strokeHint));
+	return model;
     }
-
+    
     /**
      * Concatenates the current transform of this Graphics2D with a
      * translation transformation.
      * This is equivalent to calling transform(T), where T is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *          [   1    0    tx  ]
-     *          [   0    1    ty  ]
-     *          [   0    0    1   ]
+     *		[   1    0    tx  ]
+     *		[   0    1    ty  ]
+     *		[   0    0    1   ]
      * </pre>
      */
     public void translate(double tx, double ty) {
-        transform.translate(tx, ty);
-        invalidateTransform();
+	transform.translate(tx, ty);
+	invalidateTransform();
     }
 
     /**
@@ -1421,17 +1422,17 @@ public final class SunGraphics2D
      * This is equivalent to calling transform(R), where R is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *          [   cos(theta)    -sin(theta)    0   ]
-     *          [   sin(theta)     cos(theta)    0   ]
-     *          [       0              0         1   ]
+     *		[   cos(theta)    -sin(theta)    0   ]
+     *		[   sin(theta)     cos(theta)    0   ]
+     *		[       0              0         1   ]
      * </pre>
      * Rotating with a positive angle theta rotates points on the positive
      * x axis toward the positive y axis.
      * @param theta The angle of rotation in radians.
      */
     public void rotate(double theta) {
-        transform.rotate(theta);
-        invalidateTransform();
+	transform.rotate(theta);
+	invalidateTransform();
     }
 
     /**
@@ -1439,9 +1440,9 @@ public final class SunGraphics2D
      * translated rotation transformation.
      * This is equivalent to the following sequence of calls:
      * <pre>
-     *          translate(x, y);
-     *          rotate(theta);
-     *          translate(-x, -y);
+     *		translate(x, y);
+     *		rotate(theta);
+     *		translate(-x, -y);
      * </pre>
      * Rotating with a positive angle theta rotates points on the positive
      * x axis toward the positive y axis.
@@ -1450,8 +1451,8 @@ public final class SunGraphics2D
      * @param y The x coordinate of the origin of the rotation
      */
     public void rotate(double theta, double x, double y) {
-        transform.rotate(theta, x, y);
-        invalidateTransform();
+	transform.rotate(theta, x, y);
+	invalidateTransform();
     }
 
     /**
@@ -1460,14 +1461,14 @@ public final class SunGraphics2D
      * This is equivalent to calling transform(S), where S is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *          [   sx   0    0   ]
-     *          [   0    sy   0   ]
-     *          [   0    0    1   ]
+     *		[   sx   0    0   ]
+     *		[   0    sy   0   ]
+     *		[   0    0    1   ]
      * </pre>
      */
     public void scale(double sx, double sy) {
-        transform.scale(sx, sy);
-        invalidateTransform();
+	transform.scale(sx, sy);
+	invalidateTransform();
     }
 
     /**
@@ -1476,9 +1477,9 @@ public final class SunGraphics2D
      * This is equivalent to calling transform(SH), where SH is an
      * AffineTransform represented by the following matrix:
      * <pre>
-     *          [   1   shx   0   ]
-     *          [  shy   1    0   ]
-     *          [   0    0    1   ]
+     *		[   1   shx   0   ]
+     *		[  shy   1    0   ]
+     *		[   0    0    1   ]
      * </pre>
      * @param shx The factor by which coordinates are shifted towards the
      * positive X axis direction according to their Y coordinate
@@ -1486,8 +1487,8 @@ public final class SunGraphics2D
      * positive Y axis direction according to their X coordinate
      */
     public void shear(double shx, double shy) {
-        transform.shear(shx, shy);
-        invalidateTransform();
+	transform.shear(shx, shy);
+	invalidateTransform();
     }
 
     /**
@@ -1508,23 +1509,23 @@ public final class SunGraphics2D
      * @see AffineTransform
      */
     public void transform(AffineTransform xform) {
-        this.transform.concatenate(xform);
-        invalidateTransform();
+        this.transform.concatenate(xform); 
+	invalidateTransform();
     }
-
+    
     /**
      * Translate
      */
     public void translate(int x, int y) {
-        transform.translate(x, y);
-        if (transformState <= TRANSFORM_INT_TRANSLATE) {
-            transX += x;
-            transY += y;
-            transformState = (((transX | transY) == 0) ?
-                              TRANSFORM_ISIDENT : TRANSFORM_INT_TRANSLATE);
-        } else {
-            invalidateTransform();
-        }
+	transform.translate(x, y);
+	if (transformState <= TRANSFORM_INT_TRANSLATE) {
+	    transX += x;
+	    transY += y;
+	    transformState = (((transX | transY) == 0) ?
+			      TRANSFORM_ISIDENT : TRANSFORM_INT_TRANSLATE);
+	} else {
+	    invalidateTransform();
+	}
     }
 
     /**
@@ -1535,60 +1536,60 @@ public final class SunGraphics2D
      * @see AffineTransform
      */
     public void setTransform(AffineTransform Tx) {
-        if ((constrainX|constrainY) == 0) {
-            transform.setTransform(Tx);
-        } else {
-            transform.setToTranslation(constrainX, constrainY);
-            transform.concatenate(Tx);
-        }
-        invalidateTransform();
+	if ((constrainX|constrainY) == 0) {
+	    transform.setTransform(Tx);
+	} else {
+	    transform.setToTranslation(constrainX, constrainY);
+	    transform.concatenate(Tx);
+	}
+	invalidateTransform();
     }
 
     protected void invalidateTransform() {
-        int type = transform.getType();
-        int origTransformState = transformState;
-        if (type == AffineTransform.TYPE_IDENTITY) {
+	int type = transform.getType();
+	int origTransformState = transformState;
+	if (type == AffineTransform.TYPE_IDENTITY) {
             transformState = TRANSFORM_ISIDENT;
-            transX = transY = 0;
-        } else if (type == AffineTransform.TYPE_TRANSLATION) {
-            double dtx = transform.getTranslateX();
-            double dty = transform.getTranslateY();
-            transX = (int) Math.floor(dtx + 0.5);
-            transY = (int) Math.floor(dty + 0.5);
-            if (dtx == transX && dty == transY) {
-                transformState = TRANSFORM_INT_TRANSLATE;
-            } else {
-                transformState = TRANSFORM_ANY_TRANSLATE;
-            }
-        } else if ((type & (AffineTransform.TYPE_FLIP |
-                            AffineTransform.TYPE_MASK_ROTATION |
-                            AffineTransform.TYPE_GENERAL_TRANSFORM)) == 0)
-        {
-            transformState = TRANSFORM_TRANSLATESCALE;
-            transX = transY = 0;
-        } else {
-            transformState = TRANSFORM_GENERIC;
-            transX = transY = 0;
-        }
+	    transX = transY = 0;
+	} else if (type == AffineTransform.TYPE_TRANSLATION) {
+	    double dtx = transform.getTranslateX();
+	    double dty = transform.getTranslateY();
+	    transX = (int) Math.floor(dtx + 0.5);
+	    transY = (int) Math.floor(dty + 0.5);
+	    if (dtx == transX && dty == transY) {
+		transformState = TRANSFORM_INT_TRANSLATE;
+	    } else {
+		transformState = TRANSFORM_ANY_TRANSLATE;
+	    }
+	} else if ((type & (AffineTransform.TYPE_FLIP |
+			    AffineTransform.TYPE_MASK_ROTATION |
+			    AffineTransform.TYPE_GENERAL_TRANSFORM)) == 0)
+	{
+	    transformState = TRANSFORM_TRANSLATESCALE;
+	    transX = transY = 0;
+	} else {
+	    transformState = TRANSFORM_GENERIC;
+	    transX = transY = 0;
+	}
 
-        if (transformState >= TRANSFORM_TRANSLATESCALE ||
-            origTransformState >= TRANSFORM_TRANSLATESCALE)
-        {
-            /* Its only in this case that the previous or current transform
-             * was more than a translate that font info is invalidated
-             */
-            cachedFRC = null;
-            this.validFontInfo = false;
-            this.fontMetrics = null;
-            this.glyphVectorFontInfo = null;
+	if (transformState >= TRANSFORM_TRANSLATESCALE ||
+	    origTransformState >= TRANSFORM_TRANSLATESCALE)
+	{
+	    /* Its only in this case that the previous or current transform
+	     * was more than a translate that font info is invalidated
+	     */
+	    cachedFRC = null;
+	    this.validFontInfo = false;
+	    this.fontMetrics = null;
+	    this.glyphVectorFontInfo = null;
 
-            if (transformState != origTransformState) {
-                invalidatePipe();
-            }
-        }
-        if (strokeState != STROKE_CUSTOM) {
-            validateBasicStroke((BasicStroke) stroke);
-        }
+	    if (transformState != origTransformState) {
+		invalidatePipe();
+	    }
+	}
+	if (strokeState != STROKE_CUSTOM) {
+	    validateBasicStroke((BasicStroke) stroke);
+	}
     }
 
     /**
@@ -1597,12 +1598,12 @@ public final class SunGraphics2D
      * @see #setTransform
      */
     public AffineTransform getTransform() {
-        if ((constrainX|constrainY) == 0) {
-            return new AffineTransform(transform);
-        }
-        AffineTransform tx =
-            AffineTransform.getTranslateInstance(-constrainX, -constrainY);
-        tx.concatenate(transform);
+	if ((constrainX|constrainY) == 0) {
+	    return new AffineTransform(transform);
+	}
+	AffineTransform tx =
+	    AffineTransform.getTranslateInstance(-constrainX, -constrainY);
+	tx.concatenate(transform);
         return tx;
     }
 
@@ -1611,7 +1612,7 @@ public final class SunGraphics2D
      * rectangle.
      */
     public AffineTransform cloneTransform() {
-        return new AffineTransform(transform);
+	return new AffineTransform(transform);
     }
 
     /**
@@ -1657,9 +1658,9 @@ public final class SunGraphics2D
      */
     final void validateColor() {
         int eargb;
-        if (imageComp == CompositeType.Clear) {
-            eargb = 0;
-        } else {
+	if (imageComp == CompositeType.Clear) {
+	    eargb = 0;
+	} else {
             eargb = foregroundColor.getRGB();
             if (compositeState <= COMP_ALPHA &&
                 imageComp != CompositeType.SrcNoEa &&
@@ -1669,38 +1670,38 @@ public final class SunGraphics2D
                 int a = Math.round(alphacomp.getAlpha() * (eargb >>> 24));
                 eargb = (eargb & 0x00ffffff) | (a << 24);
             }
-        }
+	}
         this.eargb = eargb;
-        this.pixel = surfaceData.pixelFor(eargb);
+	this.pixel = surfaceData.pixelFor(eargb);
     }
 
     public void setColor(Color color) {
-        if (color == null || color == paint) {
-            return;
-        }
+	if (color == null || color == paint) {
+	    return;
+	}
         this.paint = foregroundColor = color;
         validateColor();
-        if ((eargb >> 24) == -1) {
-            if (paintState == PAINT_OPAQUECOLOR) {
-                return;
-            }
-            paintState = PAINT_OPAQUECOLOR;
-            if (imageComp == CompositeType.SrcOverNoEa) {
-                // special case where compState depends on opacity of paint
-                compositeState = COMP_ISCOPY;
-            }
-        } else {
-            if (paintState == PAINT_ALPHACOLOR) {
-                return;
-            }
-            paintState = PAINT_ALPHACOLOR;
-            if (imageComp == CompositeType.SrcOverNoEa) {
-                // special case where compState depends on opacity of paint
-                compositeState = COMP_ALPHA;
-            }
-        }
+	if ((eargb >> 24) == -1) {
+	    if (paintState == PAINT_OPAQUECOLOR) {
+		return;
+	    }
+	    paintState = PAINT_OPAQUECOLOR;
+	    if (imageComp == CompositeType.SrcOverNoEa) {
+		// special case where compState depends on opacity of paint
+		compositeState = COMP_ISCOPY;
+	    }
+	} else {
+	    if (paintState == PAINT_ALPHACOLOR) {
+		return;
+	    }
+	    paintState = PAINT_ALPHACOLOR;
+	    if (imageComp == CompositeType.SrcOverNoEa) {
+		// special case where compState depends on opacity of paint
+		compositeState = COMP_ALPHA;
+	    }
+	}
         validFontInfo = false;
-        invalidatePipe();
+	invalidatePipe();
     }
 
     /**
@@ -1734,109 +1735,109 @@ public final class SunGraphics2D
     public Stroke getStroke() {
         return stroke;
     }
-
+    
     public Rectangle getClipBounds() {
-        Rectangle r;
-        if (clipState == CLIP_DEVICE) {
-            r = null;
-        } else if (transformState <= TRANSFORM_INT_TRANSLATE) {
-            if (usrClip instanceof Rectangle) {
-                r = new Rectangle((Rectangle) usrClip);
-            } else {
-                r = usrClip.getBounds();
-            }
-            r.translate(-transX, -transY);
-        } else {
-            r = getClip().getBounds();
-        }
-        return r;
+	Rectangle r;
+	if (clipState == CLIP_DEVICE) {
+	    r = null;
+	} else if (transformState <= TRANSFORM_INT_TRANSLATE) {
+	    if (usrClip instanceof Rectangle) {
+		r = new Rectangle((Rectangle) usrClip);
+	    } else {
+		r = usrClip.getBounds();
+	    }
+	    r.translate(-transX, -transY);
+	} else {
+	    r = getClip().getBounds();
+	}
+	return r;
     }
 
     public Rectangle getClipBounds(Rectangle r) {
-        if (clipState != CLIP_DEVICE) {
-            if (transformState <= TRANSFORM_INT_TRANSLATE) {
-                if (usrClip instanceof Rectangle) {
-                    r.setBounds((Rectangle) usrClip);
-                } else {
-                    r.setBounds(usrClip.getBounds());
-                }
-                r.translate(-transX, -transY);
-            } else {
-                r.setBounds(getClip().getBounds());
-            }
-        } else if (r == null) {
-            throw new NullPointerException("null rectangle parameter");
-        }
-        return r;
+	if (clipState != CLIP_DEVICE) {
+	    if (transformState <= TRANSFORM_INT_TRANSLATE) {
+		if (usrClip instanceof Rectangle) {
+		    r.setBounds((Rectangle) usrClip);
+		} else {
+		    r.setBounds(usrClip.getBounds());
+		}
+		r.translate(-transX, -transY);
+	    } else {
+		r.setBounds(getClip().getBounds());
+	    }
+	} else if (r == null) {
+	    throw new NullPointerException("null rectangle parameter");
+	}
+	return r;
     }
 
     public boolean hitClip(int x, int y, int width, int height) {
-        if (width <= 0 || height <= 0) {
-            return false;
-        }
-        if (transformState > TRANSFORM_INT_TRANSLATE) {
-            // Note: Technically the most accurate test would be to
-            // raster scan the parallelogram of the transformed rectangle
-            // and do a span for span hit test against the clip, but for
-            // speed we approximate the test with a bounding box of the
-            // transformed rectangle.  The cost of rasterizing the
-            // transformed rectangle is probably high enough that it is
-            // not worth doing so to save the caller from having to call
-            // a rendering method where we will end up discovering the
-            // same answer in about the same amount of time anyway.
-            // This logic breaks down if this hit test is being performed
-            // on the bounds of a group of shapes in which case it might
-            // be beneficial to be a little more accurate to avoid lots
-            // of subsequent rendering calls.  In either case, this relaxed
-            // test should not be significantly less accurate than the
-            // optimal test for most transforms and so the conservative
-            // answer should not cause too much extra work.
+	if (width <= 0 || height <= 0) {
+	    return false;
+	}
+	if (transformState > TRANSFORM_INT_TRANSLATE) {
+	    // Note: Technically the most accurate test would be to
+	    // raster scan the parallelogram of the transformed rectangle
+	    // and do a span for span hit test against the clip, but for
+	    // speed we approximate the test with a bounding box of the
+	    // transformed rectangle.  The cost of rasterizing the
+	    // transformed rectangle is probably high enough that it is
+	    // not worth doing so to save the caller from having to call
+	    // a rendering method where we will end up discovering the
+	    // same answer in about the same amount of time anyway.
+	    // This logic breaks down if this hit test is being performed
+	    // on the bounds of a group of shapes in which case it might
+	    // be beneficial to be a little more accurate to avoid lots
+	    // of subsequent rendering calls.  In either case, this relaxed
+	    // test should not be significantly less accurate than the
+	    // optimal test for most transforms and so the conservative
+	    // answer should not cause too much extra work.
 
-            double d[] = {
-                x, y,
-                x+width, y,
-                x, y+height,
-                x+width, y+height
-            };
-            transform.transform(d, 0, d, 0, 4);
-            x = (int) Math.floor(Math.min(Math.min(d[0], d[2]),
-                                          Math.min(d[4], d[6])));
-            y = (int) Math.floor(Math.min(Math.min(d[1], d[3]),
-                                          Math.min(d[5], d[7])));
-            width = (int) Math.ceil(Math.max(Math.max(d[0], d[2]),
-                                             Math.max(d[4], d[6])));
-            height = (int) Math.ceil(Math.max(Math.max(d[1], d[3]),
-                                              Math.max(d[5], d[7])));
-        } else {
-            x += transX;
-            y += transY;
-            width += x;
-            height += y;
-        }
-        if (!getCompClip().intersectsQuickCheckXYXY(x, y, width, height)) {
-            return false;
-        }
-        // REMIND: We could go one step further here and examine the
-        // non-rectangular clip shape more closely if there is one.
-        // Since the clip has already been rasterized, the performance
-        // penalty of doing the scan is probably still within the bounds
-        // of a good tradeoff between speed and quality of the answer.
-        return true;
+	    double d[] = {
+		x, y,
+		x+width, y,
+		x, y+height,
+		x+width, y+height
+	    };
+	    transform.transform(d, 0, d, 0, 4);
+	    x = (int) Math.floor(Math.min(Math.min(d[0], d[2]),
+					  Math.min(d[4], d[6])));
+	    y = (int) Math.floor(Math.min(Math.min(d[1], d[3]),
+					  Math.min(d[5], d[7])));
+	    width = (int) Math.ceil(Math.max(Math.max(d[0], d[2]),
+					     Math.max(d[4], d[6])));
+	    height = (int) Math.ceil(Math.max(Math.max(d[1], d[3]),
+					      Math.max(d[5], d[7])));
+	} else {
+	    x += transX;
+	    y += transY;
+	    width += x;
+	    height += y;
+	}
+	if (!getCompClip().intersectsQuickCheckXYXY(x, y, width, height)) {
+	    return false;
+	}
+	// REMIND: We could go one step further here and examine the
+	// non-rectangular clip shape more closely if there is one.
+	// Since the clip has already been rasterized, the performance
+	// penalty of doing the scan is probably still within the bounds
+	// of a good tradeoff between speed and quality of the answer.
+	return true;
     }
 
     protected void validateCompClip() {
-        int origClipState = clipState;
-        if (usrClip == null) {
-            clipState = CLIP_DEVICE;
+	int origClipState = clipState;
+	if (usrClip == null) {
+	    clipState = CLIP_DEVICE;
             clipRegion = devClip;
-        } else if (usrClip instanceof Rectangle2D) {
-            clipState = CLIP_RECTANGULAR;
+	} else if (usrClip instanceof Rectangle2D) {
+	    clipState = CLIP_RECTANGULAR;
             if (usrClip instanceof Rectangle) {
                 clipRegion = devClip.getIntersection((Rectangle)usrClip);
             } else {
                 clipRegion = devClip.getIntersection(usrClip.getBounds());
             }
-        } else {
+	} else {
             PathIterator cpi = usrClip.getPathIterator(null);
             int box[] = new int[4];
             ShapeSpanIterator sr = LoopPipe.getFillSSI(this);
@@ -1847,74 +1848,74 @@ public final class SunGraphics2D
                 Region r = Region.getInstance(box);
                 r.appendSpans(sr);
                 clipRegion = r;
-                clipState =
+                clipState = 
                     r.isRectangular() ? CLIP_RECTANGULAR : CLIP_SHAPE;
             } finally {
                 sr.dispose();
             }
-        }
-        if (origClipState != clipState &&
-            (clipState == CLIP_SHAPE || origClipState == CLIP_SHAPE))
-        {
+	}
+	if (origClipState != clipState &&
+	    (clipState == CLIP_SHAPE || origClipState == CLIP_SHAPE))
+	{
             validFontInfo = false;
-            invalidatePipe();
-        }
+	    invalidatePipe();
+	}
     }
 
     static final int NON_RECTILINEAR_TRANSFORM_MASK =
-        (AffineTransform.TYPE_GENERAL_TRANSFORM |
-         AffineTransform.TYPE_GENERAL_ROTATION);
+	(AffineTransform.TYPE_GENERAL_TRANSFORM |
+	 AffineTransform.TYPE_GENERAL_ROTATION);
 
     protected Shape transformShape(Shape s) {
-        if (s == null) {
-            return null;
-        }
-        if (transformState > TRANSFORM_INT_TRANSLATE) {
-            return transformShape(transform, s);
-        } else {
-            return transformShape(transX, transY, s);
-        }
+	if (s == null) {
+	    return null;
+	}
+	if (transformState > TRANSFORM_INT_TRANSLATE) {
+	    return transformShape(transform, s);
+	} else {
+	    return transformShape(transX, transY, s);
+	}
     }
 
     public Shape untransformShape(Shape s) {
-        if (s == null) {
-            return null;
-        }
-        if (transformState > TRANSFORM_INT_TRANSLATE) {
-            try {
-                return transformShape(transform.createInverse(), s);
-            } catch (NoninvertibleTransformException e) {
-                return null;
-            }
-        } else {
-            return transformShape(-transX, -transY, s);
-        }
+	if (s == null) {
+	    return null;
+	}
+	if (transformState > TRANSFORM_INT_TRANSLATE) {
+	    try {
+		return transformShape(transform.createInverse(), s);
+	    } catch (NoninvertibleTransformException e) {
+		return null;
+	    }
+	} else {
+	    return transformShape(-transX, -transY, s);
+	}
     }
 
     protected static Shape transformShape(int tx, int ty, Shape s) {
-        if (s == null) {
-            return null;
-        }
+	if (s == null) {
+	    return null;
+	}
 
-        if (s instanceof Rectangle) {
-            Rectangle r = s.getBounds();
-            r.translate(tx, ty);
-            return r;
-        }
-        if (s instanceof Rectangle2D) {
-            Rectangle2D rect = (Rectangle2D) s;
-            return new Rectangle2D.Double(rect.getX() + tx,
-                                          rect.getY() + ty,
-                                          rect.getWidth(),
-                                          rect.getHeight());
-        }
+	if (s instanceof Rectangle) {
+	    Rectangle r = s.getBounds();
+	    r.translate(tx, ty);
+	    return r;
+	}
+	if (s instanceof Rectangle2D) {
+	    Rectangle2D rect = (Rectangle2D) s;
+	    return new Rectangle2D.Double(rect.getX() + tx,
+					  rect.getY() + ty,
+					  rect.getWidth(),
+					  rect.getHeight());
+	}
 
-        if (tx == 0 && ty == 0) {
-            return cloneShape(s);
-        }
+	if (tx == 0 && ty == 0) {
+	    return cloneShape(s);
+	}
 
-        AffineTransform mat = AffineTransform.getTranslateInstance(tx, ty);
-        return mat.createTransformedShape(s);
+	AffineTransform mat = AffineTransform.getTranslateInstance(tx, ty);
+	return mat.createTransformedShape(s);
     }
 
     protected static Shape transformShape(AffineTransform tx, Shape clip) {
@@ -1922,44 +1923,44 @@ public final class SunGraphics2D
             return null;
         }
 
-        if (clip instanceof Rectangle2D &&
-            (tx.getType() & NON_RECTILINEAR_TRANSFORM_MASK) == 0)
-        {
-            Rectangle2D rect = (Rectangle2D) clip;
-            double matrix[] = new double[4];
-            matrix[0] = rect.getX();
-            matrix[1] = rect.getY();
-            matrix[2] = matrix[0] + rect.getWidth();
-            matrix[3] = matrix[1] + rect.getHeight();
-            tx.transform(matrix, 0, matrix, 0, 2);
-            rect = new Rectangle2D.Float();
-            rect.setFrameFromDiagonal(matrix[0], matrix[1],
-                                      matrix[2], matrix[3]);
-            return rect;
-        }
+	if (clip instanceof Rectangle2D &&
+	    (tx.getType() & NON_RECTILINEAR_TRANSFORM_MASK) == 0)
+	{
+	    Rectangle2D rect = (Rectangle2D) clip;
+	    double matrix[] = new double[4];
+	    matrix[0] = rect.getX();
+	    matrix[1] = rect.getY();
+	    matrix[2] = matrix[0] + rect.getWidth();
+	    matrix[3] = matrix[1] + rect.getHeight();
+	    tx.transform(matrix, 0, matrix, 0, 2);
+	    rect = new Rectangle2D.Float();
+	    rect.setFrameFromDiagonal(matrix[0], matrix[1],
+				      matrix[2], matrix[3]);
+	    return rect;
+	}
 
         if (tx.isIdentity()) {
-            return cloneShape(clip);
+	    return cloneShape(clip);
         }
 
-        return tx.createTransformedShape(clip);
+	return tx.createTransformedShape(clip);
     }
 
     public void clipRect(int x, int y, int w, int h) {
-        clip(new Rectangle(x, y, w, h));
+	clip(new Rectangle(x, y, w, h));
     }
 
     public void setClip(int x, int y, int w, int h) {
-        setClip(new Rectangle(x, y, w, h));
+	setClip(new Rectangle(x, y, w, h));
     }
 
     public Shape getClip() {
-        return untransformShape(usrClip);
+	return untransformShape(usrClip);
     }
 
     public void setClip(Shape sh) {
-        usrClip = transformShape(sh);
-        validateCompClip();
+	usrClip = transformShape(sh);
+	validateCompClip();
     }
 
     /**
@@ -1971,22 +1972,22 @@ public final class SunGraphics2D
      * @param p The Path to be intersected with the current clip.
      */
     public void clip(Shape s) {
-        s = transformShape(s);
-        if (usrClip != null) {
-            s = intersectShapes(usrClip, s, true, true);
-        }
-        usrClip = s;
-        validateCompClip();
+	s = transformShape(s);
+	if (usrClip != null) {
+	    s = intersectShapes(usrClip, s, true, true);
+	}
+	usrClip = s;
+	validateCompClip();
     }
 
     public void setPaintMode() {
         setComposite(AlphaComposite.SrcOver);
     }
-
+    
     public void setXORMode(Color c) {
-        if (c == null) {
-            throw new IllegalArgumentException("null XORColor");
-        }
+	if (c == null) {
+	    throw new IllegalArgumentException("null XORColor");
+	}
         setComposite(new XORComposite(c, surfaceData));
     }
 
@@ -1994,82 +1995,82 @@ public final class SunGraphics2D
     Composite lastCAcomp;
 
     public void copyArea(int x, int y, int w, int h, int dx, int dy) {
-        try {
-            doCopyArea(x, y, w, h, dx, dy);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
+	try {
+	    doCopyArea(x, y, w, h, dx, dy);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
                 doCopyArea(x, y, w, h, dx, dy);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     private void doCopyArea(int x, int y, int w, int h, int dx, int dy) {
-        if (w <= 0 || h <= 0) {
-            return;
-        }
-        SurfaceData theData = surfaceData;
-        if (theData.copyArea(this, x, y, w, h, dx, dy)) {
-            return;
-        }
-        if (transformState >= TRANSFORM_TRANSLATESCALE) {
-            throw new InternalError("transformed copyArea not implemented yet");
-        }
-        // REMIND: This method does not deal with missing data from the
-        // source object (i.e. it does not send exposure events...)
+	if (w <= 0 || h <= 0) {
+	    return;
+	}
+	SurfaceData theData = surfaceData;
+	if (theData.copyArea(this, x, y, w, h, dx, dy)) {
+	    return;
+	}
+	if (transformState >= TRANSFORM_TRANSLATESCALE) {
+	    throw new InternalError("transformed copyArea not implemented yet");
+	}
+	// REMIND: This method does not deal with missing data from the
+	// source object (i.e. it does not send exposure events...)
 
-        Region clip = getCompClip();
+	Region clip = getCompClip();
+	
+	Composite comp = composite;
+	if (lastCAcomp != comp) {
+	    SurfaceType dsttype = theData.getSurfaceType();
+	    CompositeType comptype = imageComp;
+	    if (CompositeType.SrcOverNoEa.equals(comptype) &&
+		theData.getTransparency() == Transparency.OPAQUE)
+	    {
+		comptype = CompositeType.SrcNoEa;
+	    }
+	    lastCAblit = Blit.locate(dsttype, comptype, dsttype);
+	    lastCAcomp = comp;
+	}
 
-        Composite comp = composite;
-        if (lastCAcomp != comp) {
-            SurfaceType dsttype = theData.getSurfaceType();
-            CompositeType comptype = imageComp;
-            if (CompositeType.SrcOverNoEa.equals(comptype) &&
-                theData.getTransparency() == Transparency.OPAQUE)
-            {
-                comptype = CompositeType.SrcNoEa;
-            }
-            lastCAblit = Blit.locate(dsttype, comptype, dsttype);
-            lastCAcomp = comp;
-        }
-
-        x += transX;
-        y += transY;
-
-        Blit ob = lastCAblit;
-        if (dy == 0 && dx > 0 && dx < w) {
-            while (w > 0) {
-                int partW = Math.min(w, dx);
-                w -= partW;
-                int sx = x + w;
-                ob.Blit(theData, theData, comp, clip,
-                        sx, y, sx+dx, y+dy, partW, h);
-            }
-            return;
-        }
-        if (dy > 0 && dy < h && dx > -w && dx < w) {
-            while (h > 0) {
-                int partH = Math.min(h, dy);
-                h -= partH;
-                int sy = y + h;
-                ob.Blit(theData, theData, comp, clip,
-                        x, sy, x+dx, sy+dy, w, partH);
-            }
-            return;
-        }
-        ob.Blit(theData, theData, comp, clip, x, y, x+dx, y+dy, w, h);
+	x += transX;
+	y += transY;
+	
+	Blit ob = lastCAblit;
+	if (dy == 0 && dx > 0 && dx < w) {
+	    while (w > 0) {
+		int partW = Math.min(w, dx);
+		w -= partW;
+		int sx = x + w;
+		ob.Blit(theData, theData, comp, clip,
+			sx, y, sx+dx, y+dy, partW, h);
+	    }
+	    return;
+	}
+	if (dy > 0 && dy < h && dx > -w && dx < w) {
+	    while (h > 0) {
+		int partH = Math.min(h, dy);
+		h -= partH;
+		int sy = y + h;
+		ob.Blit(theData, theData, comp, clip,
+			x, sy, x+dx, sy+dy, w, partH);
+	    }
+	    return;
+	}
+	ob.Blit(theData, theData, comp, clip, x, y, x+dx, y+dy, w, h);
     }
 
     /*
     public void XcopyArea(int x, int y, int w, int h, int dx, int dy) {
-        Rectangle rect = new Rectangle(x, y, w, h);
-        rect = transformBounds(rect, transform);
+	Rectangle rect = new Rectangle(x, y, w, h);
+	rect = transformBounds(rect, transform);
         Point2D    point = new Point2D.Float(dx, dy);
         Point2D    root  = new Point2D.Float(0, 0);
         point = transform.transform(point, point);
@@ -2089,288 +2090,288 @@ public final class SunGraphics2D
 
         if (clipState == CLIP_SHAPE) {
 
-            int box[] = new int[4];
+	    int box[] = new int[4];
 
-            clipRegion.getBounds(box);
-            Rectangle devR = new Rectangle(box[0], box[1],
-                                           box[2] - box[0],
-                                           box[3] - box[1]);
-            if (!devR.isEmpty()) {
-                OutputManager mgr = getOutputManager();
-                RegionIterator ri = clipRegion.getIterator();
-                while (ri.nextYRange(box)) {
-                    int spany = box[1];
-                    int spanh = box[3] - spany;
-                    while (ri.nextXBand(box)) {
-                        int spanx = box[0];
-                        int spanw = box[2] - spanx;
-                        mgr.copyArea(this, null,
-                                     spanw, 0,
-                                     spanx, spany,
-                                     spanw, spanh,
-                                     fdx, fdy,
-                                     null);
-                    }
-                }
-            }
-            return;
-        }
+	    clipRegion.getBounds(box);
+	    Rectangle devR = new Rectangle(box[0], box[1],
+					   box[2] - box[0],
+					   box[3] - box[1]);
+	    if (!devR.isEmpty()) {
+		OutputManager mgr = getOutputManager();
+		RegionIterator ri = clipRegion.getIterator();
+		while (ri.nextYRange(box)) {
+		    int spany = box[1];
+		    int spanh = box[3] - spany;
+		    while (ri.nextXBand(box)) {
+			int spanx = box[0];
+			int spanw = box[2] - spanx;
+			mgr.copyArea(this, null,
+				     spanw, 0,
+				     spanx, spany,
+				     spanw, spanh,
+				     fdx, fdy,
+				     null);
+		    }
+		}
+	    }
+	    return;
+	}
         // End Rasterizer for Clip Shape
 
         getOutputManager().copyArea(this, null,
-                                    r.width, 0,
-                                    r.x, r.y, r.width,
-                                    r.height, fdx, fdy,
-                                    null);
+				    r.width, 0,
+				    r.x, r.y, r.width,
+				    r.height, fdx, fdy,
+				    null);
     }
     */
 
     public void drawLine(int x1, int y1, int x2, int y2) {
-        try {
-            drawpipe.drawLine(this, x1, y1, x2, y2);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawLine(this, x1, y1, x2, y2);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    drawpipe.drawLine(this, x1, y1, x2, y2);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawLine(this, x1, y1, x2, y2);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawRoundRect(int x, int y, int w, int h, int arcW, int arcH) {
-        try {
-            drawpipe.drawRoundRect(this, x, y, w, h, arcW, arcH);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawRoundRect(this, x, y, w, h, arcW, arcH);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    drawpipe.drawRoundRect(this, x, y, w, h, arcW, arcH);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawRoundRect(this, x, y, w, h, arcW, arcH);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void fillRoundRect(int x, int y, int w, int h, int arcW, int arcH) {
-        try {
-            fillpipe.fillRoundRect(this, x, y, w, h, arcW, arcH);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                fillpipe.fillRoundRect(this, x, y, w, h, arcW, arcH);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    fillpipe.fillRoundRect(this, x, y, w, h, arcW, arcH);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		fillpipe.fillRoundRect(this, x, y, w, h, arcW, arcH);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawOval(int x, int y, int w, int h) {
-        try {
-            drawpipe.drawOval(this, x, y, w, h);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawOval(this, x, y, w, h);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    drawpipe.drawOval(this, x, y, w, h);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawOval(this, x, y, w, h);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void fillOval(int x, int y, int w, int h) {
-        try {
-            fillpipe.fillOval(this, x, y, w, h);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                fillpipe.fillOval(this, x, y, w, h);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    fillpipe.fillOval(this, x, y, w, h);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		fillpipe.fillOval(this, x, y, w, h);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawArc(int x, int y, int w, int h,
-                        int startAngl, int arcAngl) {
-        try {
-            drawpipe.drawArc(this, x, y, w, h, startAngl, arcAngl);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawArc(this, x, y, w, h, startAngl, arcAngl);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+			int startAngl, int arcAngl) {
+	try {
+	    drawpipe.drawArc(this, x, y, w, h, startAngl, arcAngl);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawArc(this, x, y, w, h, startAngl, arcAngl);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void fillArc(int x, int y, int w, int h,
-                        int startAngl, int arcAngl) {
-        try {
-            fillpipe.fillArc(this, x, y, w, h, startAngl, arcAngl);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                fillpipe.fillArc(this, x, y, w, h, startAngl, arcAngl);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+			int startAngl, int arcAngl) {
+	try {
+	    fillpipe.fillArc(this, x, y, w, h, startAngl, arcAngl);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		fillpipe.fillArc(this, x, y, w, h, startAngl, arcAngl);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawPolyline(int xPoints[], int yPoints[], int nPoints) {
-        try {
-            drawpipe.drawPolyline(this, xPoints, yPoints, nPoints);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawPolyline(this, xPoints, yPoints, nPoints);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    drawpipe.drawPolyline(this, xPoints, yPoints, nPoints);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawPolyline(this, xPoints, yPoints, nPoints);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawPolygon(int xPoints[], int yPoints[], int nPoints) {
-        try {
-            drawpipe.drawPolygon(this, xPoints, yPoints, nPoints);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawPolygon(this, xPoints, yPoints, nPoints);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    drawpipe.drawPolygon(this, xPoints, yPoints, nPoints);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawPolygon(this, xPoints, yPoints, nPoints);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void fillPolygon(int xPoints[], int yPoints[], int nPoints) {
-        try {
-            fillpipe.fillPolygon(this, xPoints, yPoints, nPoints);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                fillpipe.fillPolygon(this, xPoints, yPoints, nPoints);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    fillpipe.fillPolygon(this, xPoints, yPoints, nPoints);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		fillpipe.fillPolygon(this, xPoints, yPoints, nPoints);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawRect (int x, int y, int w, int h) {
-        try {
-            drawpipe.drawRect(this, x, y, w, h);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                drawpipe.drawRect(this, x, y, w, h);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    drawpipe.drawRect(this, x, y, w, h);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		drawpipe.drawRect(this, x, y, w, h);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
-
+    
     public void fillRect (int x, int y, int w, int h) {
-        try {
-            fillpipe.fillRect(this, x, y, w, h);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                fillpipe.fillRect(this, x, y, w, h);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    fillpipe.fillRect(this, x, y, w, h);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		fillpipe.fillRect(this, x, y, w, h);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     private void revalidateAll() {
-        try {
-            // REMIND: This locking needs to be done around the
-            // caller of this method so that the pipe stays valid
-            // long enough to call the new primitive.
-            // REMIND: No locking yet in screen SurfaceData objects!
-            // surfaceData.lock();
-            surfaceData = surfaceData.getReplacement();
-            if (surfaceData == null) {
-                surfaceData = NullSurfaceData.theInstance;
-            }
+	try {
+	    // REMIND: This locking needs to be done around the
+	    // caller of this method so that the pipe stays valid
+	    // long enough to call the new primitive.
+	    // REMIND: No locking yet in screen SurfaceData objects!
+	    // surfaceData.lock();
+	    surfaceData = surfaceData.getReplacement();
+	    if (surfaceData == null) {
+		surfaceData = NullSurfaceData.theInstance;
+	    }
 
             // this will recalculate the composite clip
-            setDevClip(surfaceData.getBounds());
+	    setDevClip(surfaceData.getBounds());
 
             if (paintState <= PAINT_ALPHACOLOR) {
                 validateColor();
             }
-            if (composite instanceof XORComposite) {
-                Color c = ((XORComposite) composite).getXorColor();
-                setComposite(new XORComposite(c, surfaceData));
-            }
-            validatePipe();
-        } finally {
-            // REMIND: No locking yet in screen SurfaceData objects!
-            // surfaceData.unlock();
-        }
+	    if (composite instanceof XORComposite) {
+		Color c = ((XORComposite) composite).getXorColor();
+		setComposite(new XORComposite(c, surfaceData));
+	    }
+	    validatePipe();
+	} finally {
+	    // REMIND: No locking yet in screen SurfaceData objects!
+	    // surfaceData.unlock();
+	}
     }
 
     public void clearRect(int x, int y, int w, int h) {
         // REMIND: has some "interesting" consequences if threads are
         // not synchronized
         Composite c = composite;
-        Paint p = paint;
+	Paint p = paint;
         setComposite(AlphaComposite.Src);
         setColor(getBackground());
-        validatePipe();
+	validatePipe();
         fillRect(x, y, w, h);
         setPaint(p);
-        setComposite(c);
+	setComposite(c);
     }
 
     /**
@@ -2388,20 +2389,20 @@ public final class SunGraphics2D
      * @see #setComposite
      */
     public void draw(Shape s) {
-        try {
-            shapepipe.draw(this, s);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                shapepipe.draw(this, s);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    shapepipe.draw(this, s);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		shapepipe.draw(this, s);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
 
@@ -2418,20 +2419,20 @@ public final class SunGraphics2D
      * @see #setClip
      */
     public void fill(Shape s) {
-        try {
-            shapepipe.fill(this, s);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                shapepipe.fill(this, s);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    shapepipe.fill(this, s);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		shapepipe.fill(this, s);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     /**
@@ -2457,7 +2458,7 @@ public final class SunGraphics2D
     private static int getTileIndex(int p, int tileGridOffset, int tileSize) {
         p -= tileGridOffset;
         if (p < 0) {
-            p += 1 - tileSize;          // force round to -infinity (ceiling)
+            p += 1 - tileSize;		// force round to -infinity (ceiling)
         }
         return p/tileSize;
     }
@@ -2477,18 +2478,18 @@ public final class SunGraphics2D
         Rectangle imageRect =
             new Rectangle(img.getMinX(), img.getMinY(),
                           img.getWidth(), img.getHeight());
-
+        
         Rectangle result = null;
         try {
-            double p[] = new double[8];
-            p[0] = p[2] = compClip.getLoX();
-            p[4] = p[6] = compClip.getHiX();
-            p[1] = p[5] = compClip.getLoY();
-            p[3] = p[7] = compClip.getHiY();
+	    double p[] = new double[8];
+	    p[0] = p[2] = compClip.getLoX();
+	    p[4] = p[6] = compClip.getHiX();
+	    p[1] = p[5] = compClip.getLoY();
+	    p[3] = p[7] = compClip.getHiY();
 
             // Inverse transform the output bounding rect
-            transform.inverseTransform(p, 0, p, 0, 4);
-            xform.inverseTransform(p, 0, p, 0, 4);
+	    transform.inverseTransform(p, 0, p, 0, 4);
+	    xform.inverseTransform(p, 0, p, 0, 4);
 
             // Determine a bounding box for the inverse transformed region
             double x0,x1,y0,y1;
@@ -2505,7 +2506,7 @@ public final class SunGraphics2D
                 pt = p[i++];
                 if (pt < y0)  {
                     y0 = pt;
-                } else if (pt > y1) {
+                } else if (pt > y1) { 
                     y1 = pt;
                 }
             }
@@ -2548,9 +2549,9 @@ public final class SunGraphics2D
     public void drawRenderedImage(RenderedImage img,
                                   AffineTransform xform) {
 
-        if (img == null) {
-            return;
-        }
+	if (img == null) {
+	    return;
+	}
 
         // BufferedImage case: use a simple drawImage call
         if (img instanceof BufferedImage) {
@@ -2563,8 +2564,8 @@ public final class SunGraphics2D
         // transX, transY contain the integer casts of the
         // translation factors
         boolean isIntegerTranslate =
-            (transformState <= TRANSFORM_INT_TRANSLATE) &&
-            isIntegerTranslation(xform);
+	    (transformState <= TRANSFORM_INT_TRANSLATE) &&
+	    isIntegerTranslation(xform);
 
         // Include padding for interpolation/antialiasing if necessary
         int pad = isIntegerTranslate ? 0 : 3;
@@ -2575,11 +2576,11 @@ public final class SunGraphics2D
                                           getCompClip(),
                                           transform,
                                           xform,
-                                          pad, pad);
+                                          pad, pad); 
         if (region.width <= 0 || region.height <= 0) {
             return;
         }
-
+        
         // Attempt to optimize integer translation of tiled images.
         // Although theoretically we are O.K. if the concatenation of
         // the user transform and the device transform is an integer
@@ -2600,7 +2601,7 @@ public final class SunGraphics2D
 
         // General case: cobble the necessary region into a single Raster
         Raster raster = img.getData(region);
-
+        
         // Make a new Raster with the same contents as raster
         // but starting at (0, 0).  This raster is thus in the same
         // coordinate system as the SampleModel of the original raster.
@@ -2637,7 +2638,7 @@ public final class SunGraphics2D
         // translation of (minX, minY).
         AffineTransform transXform = (AffineTransform)xform.clone();
         transXform.translate(minX, minY);
-
+      
         ColorModel cm = img.getColorModel();
         BufferedImage bufImg = new BufferedImage(cm,
                                                  wRaster,
@@ -2652,10 +2653,10 @@ public final class SunGraphics2D
      * Returns false if the intersection was empty, true otherwise.
      */
     private boolean clipTo(Rectangle destRect, Rectangle clip) {
-        int x1 = Math.max(destRect.x, clip.x);
-        int x2 = Math.min(destRect.x + destRect.width, clip.x + clip.width);
-        int y1 = Math.max(destRect.y, clip.y);
-        int y2 = Math.min(destRect.y + destRect.height, clip.y + clip.height);
+	int x1 = Math.max(destRect.x, clip.x);
+	int x2 = Math.min(destRect.x + destRect.width, clip.x + clip.width);
+	int y1 = Math.max(destRect.y, clip.y);
+	int y2 = Math.min(destRect.y + destRect.height, clip.y + clip.height);
         if (((x2 - x1) < 0) || ((y2 - y1) < 0)) {
             destRect.width = -1; // Set both just to be safe
             destRect.height = -1;
@@ -2683,7 +2684,7 @@ public final class SunGraphics2D
         int tileGridYOffset = img.getTileGridYOffset();
         int tileWidth = img.getTileWidth();
         int tileHeight = img.getTileHeight();
-
+        
         // Determine the tile index extrema in each direction
         int minTileX =
             getTileIndex(region.x, tileGridXOffset, tileWidth);
@@ -2751,7 +2752,7 @@ public final class SunGraphics2D
                 // to be translated by (i2uTransX, i2uTransY).  We call
                 // copyImage to draw just the region of interest
                 // without needing to create a child image.
-                copyImage(bufImg, tileRect.x + i2uTransX,
+		copyImage(bufImg, tileRect.x + i2uTransX,
                           tileRect.y + i2uTransY, 0, 0, tileRect.width,
                           tileRect.height, null, null);
             }
@@ -2761,15 +2762,15 @@ public final class SunGraphics2D
     public void drawRenderableImage(RenderableImage img,
                                     AffineTransform xform) {
 
-        if (img == null) {
-            return;
-        }
+	if (img == null) {
+	    return;
+	}
 
         AffineTransform pipeTransform = transform;
         AffineTransform concatTransform = new AffineTransform(xform);
         concatTransform.concatenate(pipeTransform);
         AffineTransform reverseTransform;
-
+ 
         RenderContext rc = new RenderContext(concatTransform);
 
         try {
@@ -2784,7 +2785,7 @@ public final class SunGraphics2D
     }
 
 
-
+    
     /*
      * Transform the bounding box of the BufferedImage
      */
@@ -2801,50 +2802,50 @@ public final class SunGraphics2D
     // text rendering methods
     public void drawString(String str, int x, int y) {
         if (str == null) {
-            throw new NullPointerException("String is null");
-        }
+	    throw new NullPointerException("String is null");
+	}
 
-        if (font.hasLayoutAttributes()) {
-            new TextLayout(str, font, getFontRenderContext()).draw(this, x, y);
-            return;
-        }
+	if (font.hasLayoutAttributes()) {
+	    new TextLayout(str, font, getFontRenderContext()).draw(this, x, y);
+	    return;
+	}
 
         try {
-            textpipe.drawString(this, str, x, y);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                textpipe.drawString(this, str, x, y);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	    textpipe.drawString(this, str, x, y);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		textpipe.drawString(this, str, x, y);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawString(String str, float x, float y) {
         if (str == null) {
-            throw new NullPointerException("String is null");
-        }
+	    throw new NullPointerException("String is null");
+	}
 
-        if (font.hasLayoutAttributes()) {
-            new TextLayout(str, font, getFontRenderContext()).draw(this, x, y);
-            return;
-        }
+	if (font.hasLayoutAttributes()) {
+	    new TextLayout(str, font, getFontRenderContext()).draw(this, x, y);
+	    return;
+	}
 
         try {
             textpipe.drawString(this, str, x, y);
-        } catch (InvalidPipeException e) {
+	} catch (InvalidPipeException e) {
             revalidateAll();
             try {
                 textpipe.drawString(this, str, x, y);
             } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.	Fail for now and
+		// try again next time around.
             }
         } finally {
             surfaceData.markDirty();
@@ -2852,19 +2853,19 @@ public final class SunGraphics2D
     }
 
     public void drawString(AttributedCharacterIterator iterator,
-                           int x, int y) {
+			   int x, int y) {
         if (iterator == null) {
-            throw new NullPointerException("AttributedCharacterIterator is null");
-        }
+	    throw new NullPointerException("AttributedCharacterIterator is null");
+	}
         TextLayout tl = new TextLayout(iterator, getFontRenderContext());
         tl.draw(this, (float) x, (float) y);
     }
 
     public void drawString(AttributedCharacterIterator iterator,
-                           float x, float y) {
+			   float x, float y) {
         if (iterator == null) {
-            throw new NullPointerException("AttributedCharacterIterator is null");
-        }
+	    throw new NullPointerException("AttributedCharacterIterator is null");
+	}
         TextLayout tl = new TextLayout(iterator, getFontRenderContext());
         tl.draw(this, x, y);
     }
@@ -2872,20 +2873,20 @@ public final class SunGraphics2D
     public void drawGlyphVector(GlyphVector gv, float x, float y)
     {
         if (gv == null) {
-            throw new NullPointerException("GlyphVector is null");
-        }
-
+	    throw new NullPointerException("GlyphVector is null");
+	}
+   
         try {
             textpipe.drawGlyphVector(this, gv, x, y);
         } catch (InvalidPipeException e) {
             revalidateAll();
-            try {
-                textpipe.drawGlyphVector(this, gv, x, y);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	    try {
+		textpipe.drawGlyphVector(this, gv, x, y);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
         }
@@ -2894,65 +2895,65 @@ public final class SunGraphics2D
     public void drawChars(char data[], int offset, int length, int x, int y) {
 
         if (data == null) {
-            throw new NullPointerException("char data is null");
-        }
-        if (offset < 0 || length < 0 || offset + length > data.length) {
-            throw new ArrayIndexOutOfBoundsException("bad offset/length");
-        }
-        if (font.hasLayoutAttributes()) {
-            new TextLayout(new String(data, offset, length),
-                           font, getFontRenderContext()).draw(this, x, y);
-            return;
-        }
+	    throw new NullPointerException("char data is null");
+	}
+	if (offset < 0 || length < 0 || offset + length > data.length) {
+	    throw new ArrayIndexOutOfBoundsException("bad offset/length");
+	}
+	if (font.hasLayoutAttributes()) {
+	    new TextLayout(new String(data, offset, length),
+			   font, getFontRenderContext()).draw(this, x, y);
+	    return;
+	}
 
         try {
             textpipe.drawChars(this, data, offset, length, x, y);
-        } catch (InvalidPipeException e) {
+	} catch (InvalidPipeException e) {
             revalidateAll();
             try {
                 textpipe.drawChars(this, data, offset, length, x, y);
             } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.	Fail for now and
+		// try again next time around.
             }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     public void drawBytes(byte data[], int offset, int length, int x, int y) {
         if (data == null) {
-            throw new NullPointerException("byte data is null");
-        }
-        if (offset < 0 || length < 0 || offset + length > data.length) {
-            throw new ArrayIndexOutOfBoundsException("bad offset/length");
-        }
+	    throw new NullPointerException("byte data is null");
+	}
+	if (offset < 0 || length < 0 || offset + length > data.length) {
+	    throw new ArrayIndexOutOfBoundsException("bad offset/length");
+	}
         /* Byte data is interpreted as 8-bit ASCII. Re-use drawChars loops */
-        char chData[] = new char[length];
-        for (int i = length; i-- > 0; ) {
+	char chData[] = new char[length];
+	for (int i = length; i-- > 0; ) {
             chData[i] = (char)(data[i+offset] & 0xff);
-        }
-        if (font.hasLayoutAttributes()) {
-            new TextLayout(new String(chData),
-                           font, getFontRenderContext()).draw(this, x, y);
-            return;
-        }
+	}
+	if (font.hasLayoutAttributes()) {
+	    new TextLayout(new String(chData), 
+			   font, getFontRenderContext()).draw(this, x, y);
+	    return;
+	}
 
         try {
             textpipe.drawChars(this, chData, 0, length, x, y);
-        } catch (InvalidPipeException e) {
+	} catch (InvalidPipeException e) {
             revalidateAll();
             try {
                 textpipe.drawChars(this, chData, 0, length, x, y);
             } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.	Fail for now and
+		// try again next time around.
             }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 // end of text rendering methods
 
@@ -2961,8 +2962,8 @@ public final class SunGraphics2D
      * callback object.
      */
     public boolean drawImage(Image img, int x, int y, int width, int height,
-                             ImageObserver observer) {
-        return drawImage(img, x, y, width, height, null, observer);
+			     ImageObserver observer) {
+	return drawImage(img, x, y, width, height, null, observer);
     }
 
     /**
@@ -2972,70 +2973,70 @@ public final class SunGraphics2D
      * but we guarantee that the weidth/height of the src and dest
      * areas are equal (no scale needed).
      */
-    public boolean copyImage(Image img, int dx, int dy, int sx, int sy,
-                             int width, int height, Color bgcolor,
-                             ImageObserver observer) {
-        try {
-            return imagepipe.copyImage(this, img, dx, dy, sx, sy,
-                                       width, height, bgcolor, observer);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                return imagepipe.copyImage(this, img, dx, dy, sx, sy,
-                                           width, height, bgcolor, observer);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-                return false;
-            }
+    public boolean copyImage(Image img, int dx, int dy, int sx, int sy, 
+			     int width, int height, Color bgcolor,
+			     ImageObserver observer) {
+	try {
+	    return imagepipe.copyImage(this, img, dx, dy, sx, sy, 
+				       width, height, bgcolor, observer);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		return imagepipe.copyImage(this, img, dx, dy, sx, sy, 
+					   width, height, bgcolor, observer);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+		return false;
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
-
+        
     /**
      * Draws an image scaled to x,y,w,h in nonblocking mode with a
      * solid background color and a callback object.
      */
     public boolean drawImage(Image img, int x, int y, int width, int height,
-                             Color bg, ImageObserver observer) {
+ 			     Color bg, ImageObserver observer) {
 
-        if (img == null) {
-            return true;
-        }
+	if (img == null) {
+	    return true;
+	}
 
-        if ((width == 0) || (height == 0)) {
-            return true;
-        }
-        if (width == img.getWidth(null) && height == img.getHeight(null)) {
-            return copyImage(img, x, y, 0, 0, width, height, bg, observer);
-        }
+	if ((width == 0) || (height == 0)) {
+	    return true;
+	}
+	if (width == img.getWidth(null) && height == img.getHeight(null)) {
+	    return copyImage(img, x, y, 0, 0, width, height, bg, observer);
+	}
 
-        try {
-            return imagepipe.scaleImage(this, img, x, y, width, height,
-                                        bg, observer);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                return imagepipe.scaleImage(this, img, x, y, width, height,
-                                            bg, observer);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-                return false;
-            }
+	try {
+	    return imagepipe.scaleImage(this, img, x, y, width, height, 
+					bg, observer);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		return imagepipe.scaleImage(this, img, x, y, width, height, 
+					    bg, observer);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+		return false;
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     /**
      * Draws an image at x,y in nonblocking mode.
      */
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
-        return drawImage(img, x, y, null, observer);
+	return drawImage(img, x, y, null, observer);
     }
 
     /**
@@ -3043,27 +3044,27 @@ public final class SunGraphics2D
      * color and a callback object.
      */
     public boolean drawImage(Image img, int x, int y, Color bg,
-                             ImageObserver observer) {
+			     ImageObserver observer) {
 
-        if (img == null) {
-            return true;
-        }
+	if (img == null) {
+	    return true;
+	}
 
-        try {
-            return imagepipe.copyImage(this, img, x, y, bg, observer);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                return imagepipe.copyImage(this, img, x, y, bg, observer);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-                return false;
-            }
+	try {
+	    return imagepipe.copyImage(this, img, x, y, bg, observer);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		return imagepipe.copyImage(this, img, x, y, bg, observer);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+		return false;
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     /**
@@ -3071,11 +3072,11 @@ public final class SunGraphics2D
      * in nonblocking mode with a callback object.
      */
     public boolean drawImage(Image img,
-                             int dx1, int dy1, int dx2, int dy2,
-                             int sx1, int sy1, int sx2, int sy2,
-                             ImageObserver observer) {
-        return drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null,
-                         observer);
+			     int dx1, int dy1, int dx2, int dy2,
+			     int sx1, int sy1, int sx2, int sy2,
+			     ImageObserver observer) {
+	return drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null, 
+			 observer);
     }
 
     /**
@@ -3083,66 +3084,66 @@ public final class SunGraphics2D
      * nonblocking mode with a solid background color and a callback object.
      */
     public boolean drawImage(Image img,
-                             int dx1, int dy1, int dx2, int dy2,
-                             int sx1, int sy1, int sx2, int sy2,
-                             Color bgcolor, ImageObserver observer) {
+			     int dx1, int dy1, int dx2, int dy2,
+			     int sx1, int sy1, int sx2, int sy2,
+			     Color bgcolor, ImageObserver observer) {
 
-        if (img == null) {
-            return true;
-        }
+	if (img == null) {
+	    return true;
+	}
 
-        if (dx1 == dx2 || dy1 == dy2 ||
-            sx1 == sx2 || sy1 == sy2)
-        {
-            return true;
-        }
+	if (dx1 == dx2 || dy1 == dy2 ||
+	    sx1 == sx2 || sy1 == sy2) 
+	{
+	    return true;
+	}
 
-        if (((sx2 - sx1) == (dx2 - dx1)) &&
-            ((sy2 - sy1) == (dy2 - dy1)))
-        {
-            // Not a scale - forward it to a copy routine
-            int srcX, srcY, dstX, dstY, width, height;
-            if (sx2 > sx1) {
-                width = sx2 - sx1;
-                srcX = sx1;
-                dstX = dx1;
-            } else {
-                width = sx1 - sx2;
-                srcX = sx2;
-                dstX = dx2;
-            }
-            if (sy2 > sy1) {
-                height = sy2-sy1;
-                srcY = sy1;
-                dstY = dy1;
-            } else {
-                height = sy1-sy2;
-                srcY = sy2;
-                dstY = dy2;
-            }
-            return copyImage(img, dstX, dstY, srcX, srcY,
-                             width, height, bgcolor, observer);
-        }
+	if (((sx2 - sx1) == (dx2 - dx1)) && 
+	    ((sy2 - sy1) == (dy2 - dy1)))
+	{
+	    // Not a scale - forward it to a copy routine
+	    int srcX, srcY, dstX, dstY, width, height;
+	    if (sx2 > sx1) {
+		width = sx2 - sx1;
+		srcX = sx1;
+		dstX = dx1;
+	    } else {
+		width = sx1 - sx2;
+		srcX = sx2;
+		dstX = dx2;
+	    }
+	    if (sy2 > sy1) {
+		height = sy2-sy1;
+		srcY = sy1;
+		dstY = dy1;
+	    } else {
+		height = sy1-sy2;
+		srcY = sy2;
+		dstY = dy2;
+	    }
+	    return copyImage(img, dstX, dstY, srcX, srcY, 
+			     width, height, bgcolor, observer);
+	}
 
-        try {
-            return imagepipe.scaleImage(this, img, dx1, dy1, dx2, dy2,
-                                          sx1, sy1, sx2, sy2, bgcolor,
-                                          observer);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                return imagepipe.scaleImage(this, img, dx1, dy1, dx2, dy2,
-                                              sx1, sy1, sx2, sy2, bgcolor,
-                                              observer);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-                return false;
-            }
+	try {
+	    return imagepipe.scaleImage(this, img, dx1, dy1, dx2, dy2,
+					  sx1, sy1, sx2, sy2, bgcolor, 
+					  observer);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		return imagepipe.scaleImage(this, img, dx1, dy1, dx2, dy2,
+					      sx1, sy1, sx2, sy2, bgcolor, 
+					      observer);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+		return false;
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     /**
@@ -3167,54 +3168,54 @@ public final class SunGraphics2D
                              AffineTransform xform,
                              ImageObserver observer) {
 
-        if (img == null) {
-            return true;
-        }
+	if (img == null) {
+	    return true;
+	}
 
         if (xform == null || xform.isIdentity()) {
-            return drawImage(img, 0, 0, null, observer);
-        }
+	    return drawImage(img, 0, 0, null, observer); 
+	}
 
-        try {
-            return imagepipe.transformImage(this, img, xform, observer);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                return imagepipe.transformImage(this, img, xform, observer);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-                return false;
-            }
+	try {
+	    return imagepipe.transformImage(this, img, xform, observer);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		return imagepipe.transformImage(this, img, xform, observer);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+		return false;
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
-
+    
     public void drawImage(BufferedImage bImg,
                           BufferedImageOp op,
                           int x,
                           int y)  {
 
-        if (bImg == null) {
-            return;
-        }
+	if (bImg == null) {
+	    return;
+	}
 
-        try {
-            imagepipe.transformImage(this, bImg, op, x, y);
-        } catch (InvalidPipeException e) {
-            revalidateAll();
-            try {
-                imagepipe.transformImage(this, bImg, op, x, y);
-            } catch (InvalidPipeException e2) {
-                // Still catching the exception; we are not yet ready to
-                // validate the surfaceData correctly.  Fail for now and
-                // try again next time around.
-            }
+	try {
+	    imagepipe.transformImage(this, bImg, op, x, y);
+	} catch (InvalidPipeException e) {
+	    revalidateAll();
+	    try {
+		imagepipe.transformImage(this, bImg, op, x, y);
+	    } catch (InvalidPipeException e2) {
+		// Still catching the exception; we are not yet ready to
+		// validate the surfaceData correctly.  Fail for now and 
+		// try again next time around.
+	    }
         } finally {
             surfaceData.markDirty();
-        }
+	}
     }
 
     /**
@@ -3222,7 +3223,7 @@ public final class SunGraphics2D
     * within this Graphics2D context.
     */
     public FontRenderContext getFontRenderContext() {
-        if (cachedFRC == null) {
+	if (cachedFRC == null) {
             int aahint = textAntialiasHint;
             if (aahint == SunHints.INTVAL_TEXT_ANTIALIAS_DEFAULT &&
                 antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
@@ -3242,12 +3243,12 @@ public final class SunGraphics2D
                                              0, 0);
                 }
             }
-            cachedFRC = new FontRenderContext(tx,
-             SunHints.Value.get(SunHints.INTKEY_TEXT_ANTIALIASING, aahint),
-             SunHints.Value.get(SunHints.INTKEY_FRACTIONALMETRICS,
-                                fractionalMetricsHint));
-        }
-        return cachedFRC;
+            cachedFRC = new FontRenderContext(tx, 
+	     SunHints.Value.get(SunHints.INTKEY_TEXT_ANTIALIASING, aahint),
+	     SunHints.Value.get(SunHints.INTKEY_FRACTIONALMETRICS,
+				fractionalMetricsHint));
+	}
+	return cachedFRC;
     }
     private FontRenderContext cachedFRC;
 
@@ -3261,8 +3262,8 @@ public final class SunGraphics2D
      * resources.
      */
     public void dispose() {
-        surfaceData = NullSurfaceData.theInstance;
-        invalidatePipe();
+	surfaceData = NullSurfaceData.theInstance;
+	invalidatePipe();
     }
 
     /**
@@ -3286,6 +3287,6 @@ public final class SunGraphics2D
      * responsible for returning the appropriate object.
      */
     public Object getDestination() {
-        return surfaceData.getDestination();
+	return surfaceData.getDestination();
     }
 }

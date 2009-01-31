@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /**
@@ -37,6 +38,7 @@
  * SortAlgorithm.java, Thu Oct 27 10:32:35 1994
  *
  * @author James Gosling
+ * @version 	1.6f, 31 Jan 1995
  */
 
 class SortAlgorithm {
@@ -54,51 +56,51 @@ class SortAlgorithm {
      * Set the parent.
      */
     public void setParent(SortItem p) {
-        parent = p;
+	parent = p;
     }
 
     /**
      * Pause for a while.
      */
     protected void pause() throws Exception {
-        if (stopRequested) {
-            throw new Exception("Sort Algorithm");
-        }
-        parent.pause(parent.h1, parent.h2);
+	if (stopRequested) {
+	    throw new Exception("Sort Algorithm");
+	}
+	parent.pause(parent.h1, parent.h2);
     }
 
     /**
      * Pause for a while and mark item 1.
      */
     protected void pause(int H1) throws Exception {
-        if (stopRequested) {
-            throw new Exception("Sort Algorithm");
-        }
-        parent.pause(H1, parent.h2);
+	if (stopRequested) {
+	    throw new Exception("Sort Algorithm");
+	}
+	parent.pause(H1, parent.h2);
     }
 
     /**
      * Pause for a while and mark item 1 & 2.
      */
     protected void pause(int H1, int H2) throws Exception {
-        if (stopRequested) {
-            throw new Exception("Sort Algorithm");
-        }
-        parent.pause(H1, H2);
+	if (stopRequested) {
+	    throw new Exception("Sort Algorithm");
+	}
+	parent.pause(H1, H2);
     }
 
     /**
      * Stop sorting.
      */
     public void stop() {
-        stopRequested = true;
+	stopRequested = true;
     }
 
     /**
      * Initialize
      */
     public void init() {
-        stopRequested = false;
+	stopRequested = false;
     }
 
     /**

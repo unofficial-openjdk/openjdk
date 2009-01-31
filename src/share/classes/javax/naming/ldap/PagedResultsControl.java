@@ -31,8 +31,8 @@ import com.sun.jndi.ldap.BerEncoder;
 
 /**
  * Requests that the results of a search operation be returned by the LDAP
- * server in batches of a specified size.
- * The requestor controls the rate at which batches are returned by the rate
+ * server in batches of a specified size. 
+ * The requestor controls the rate at which batches are returned by the rate 
  * at which it invokes search operations.
  * <p>
  * The following code sample shows how the class may be used:
@@ -45,7 +45,7 @@ import com.sun.jndi.ldap.BerEncoder;
  *     int pageSize = 20; // 20 entries per page
  *     byte[] cookie = null;
  *     int total;
- *     ctx.setRequestControls(new Control[]{
+ *     ctx.setRequestControls(new Control[]{ 
  *         new PagedResultsControl(pageSize, Control.CRITICAL) });
  *
  *     do {
@@ -65,7 +65,7 @@ import com.sun.jndi.ldap.BerEncoder;
  *                 // ((HasControls)entry).getControls();
  *             }
  *         }
- *         // Examine the paged results control response
+ *         // Examine the paged results control response 
  *         Control[] controls = ctx.getResponseControls();
  *         if (controls != null) {
  *             for (int i = 0; i < controls.length; i++) {
@@ -126,49 +126,49 @@ final public class PagedResultsControl extends BasicControl {
      * Constructs a control to set the number of entries to be returned per
      * page of results.
      *
-     * @param   pageSize        The number of entries to return in a page.
-     * @param   criticality     If true then the server must honor the control
-     *                          and return search results as indicated by
-     *                          pageSize or refuse to perform the search.
-     *                          If false, then the server need not honor the
+     * @param	pageSize	The number of entries to return in a page.
+     * @param	criticality	If true then the server must honor the control 
+     *                          and return search results as indicated by 
+     *                          pageSize or refuse to perform the search. 
+     *                          If false, then the server need not honor the 
      *                          control.
-     * @exception IOException   If an error was encountered while encoding the
+     * @exception IOException	If an error was encountered while encoding the
      *                          supplied arguments into a control.
      */
     public PagedResultsControl(int pageSize, boolean criticality)
-            throws IOException {
+	    throws IOException {
 
-        super(OID, criticality, null);
-        value = setEncodedValue(pageSize, EMPTY_COOKIE);
+	super(OID, criticality, null);
+	value = setEncodedValue(pageSize, EMPTY_COOKIE);
     }
 
     /**
      * Constructs a control to set the number of entries to be returned per
-     * page of results. The cookie is provided by the server and may be
+     * page of results. The cookie is provided by the server and may be 
      * obtained from the paged-results response control.
      * <p>
      * A sequence of paged-results can be abandoned by setting the pageSize
      * to zero and setting the cookie to the last cookie received from the
      * server.
      *
-     * @param   pageSize        The number of entries to return in a page.
-     * @param   cookie          A possibly null server-generated cookie.
-     * @param   criticality     If true then the server must honor the control
-     *                          and return search results as indicated by
-     *                          pageSize or refuse to perform the search.
-     *                          If false, then the server need not honor the
+     * @param	pageSize	The number of entries to return in a page.
+     * @param	cookie		A possibly null server-generated cookie.
+     * @param	criticality	If true then the server must honor the control 
+     *                          and return search results as indicated by 
+     *                          pageSize or refuse to perform the search. 
+     *                          If false, then the server need not honor the 
      *                          control.
-     * @exception IOException   If an error was encountered while encoding the
+     * @exception IOException	If an error was encountered while encoding the
      *                          supplied arguments into a control.
      */
     public PagedResultsControl(int pageSize, byte[] cookie,
-        boolean criticality) throws IOException {
+	boolean criticality) throws IOException {
 
-        super(OID, criticality, null);
-        if (cookie == null) {
-            cookie = EMPTY_COOKIE;
-        }
-        value = setEncodedValue(pageSize, cookie);
+	super(OID, criticality, null);
+	if (cookie == null) {
+	    cookie = EMPTY_COOKIE;
+	}
+	value = setEncodedValue(pageSize, cookie);
     }
 
     /*
@@ -176,23 +176,23 @@ final public class PagedResultsControl extends BasicControl {
      * The result includes the BER tag and length for the control's value but
      * does not include the control's object identifier and criticality setting.
      *
-     * @param   pageSize        The number of entries to return in a page.
-     * @param   cookie          A non-null server-generated cookie.
+     * @param	pageSize	The number of entries to return in a page.
+     * @param	cookie		A non-null server-generated cookie.
      * @return A possibly null byte array representing the ASN.1 BER encoded
      *         value of the LDAP paged-results control.
      * @exception IOException If a BER encoding error occurs.
      */
     private byte[] setEncodedValue(int pageSize, byte[] cookie)
-        throws IOException {
+	throws IOException {
 
-        // build the ASN.1 encoding
-        BerEncoder ber = new BerEncoder(10 + cookie.length);
+	// build the ASN.1 encoding
+	BerEncoder ber = new BerEncoder(10 + cookie.length);
 
-        ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
-            ber.encodeInt(pageSize);
+	ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
+	    ber.encodeInt(pageSize);
             ber.encodeOctetString(cookie, Ber.ASN_OCTET_STR);
-        ber.endSeq();
+	ber.endSeq();
 
-        return ber.getTrimmedBuf();
+	return ber.getTrimmedBuf();
     }
 }

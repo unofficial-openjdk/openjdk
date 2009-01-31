@@ -44,7 +44,7 @@ jmethodID ia6_ctrID;
 /*
  * Class:     java_net_Inet6Address
  * Method:    init
- * Signature: ()V
+ * Signature: ()V 
  */
 JNIEXPORT void JNICALL
 Java_java_net_Inet6Address_init(JNIEnv *env, jclass cls) {

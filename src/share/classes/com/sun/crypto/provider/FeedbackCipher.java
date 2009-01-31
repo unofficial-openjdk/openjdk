@@ -52,12 +52,12 @@ abstract class FeedbackCipher {
     byte[] iv;
 
     FeedbackCipher(SymmetricCipher embeddedCipher) {
-        this.embeddedCipher = embeddedCipher;
-        blockSize = embeddedCipher.getBlockSize();
+	this.embeddedCipher = embeddedCipher;
+	blockSize = embeddedCipher.getBlockSize();
     }
 
     final SymmetricCipher getEmbeddedCipher() {
-        return embeddedCipher;
+	return embeddedCipher;
     }
 
     /**
@@ -66,7 +66,7 @@ abstract class FeedbackCipher {
      * @return the block size of the embedded cipher
      */
     final int getBlockSize() {
-        return blockSize;
+	return blockSize;
     }
 
     /**
@@ -99,7 +99,7 @@ abstract class FeedbackCipher {
      * initializing this cipher
      */
     abstract void init(boolean decrypting, String algorithm, byte[] key,
-                       byte[] iv) throws InvalidKeyException;
+		       byte[] iv) throws InvalidKeyException;
 
    /**
      * Gets the initialization vector.
@@ -107,7 +107,7 @@ abstract class FeedbackCipher {
      * @return the initialization vector
      */
     final byte[] getIV() {
-        return iv;
+	return iv;
     }
 
     /**
@@ -135,7 +135,7 @@ abstract class FeedbackCipher {
      * @param cipherOffset the offset in <code>cipher</code>
      */
     abstract void encrypt(byte[] plain, int plainOffset, int plainLen,
-                          byte[] cipher, int cipherOffset);
+			  byte[] cipher, int cipherOffset);
     /**
      * Performs encryption operation for the last time.
      *
@@ -152,9 +152,9 @@ abstract class FeedbackCipher {
      * @param cipherOffset the offset in <code>cipher</code>
      */
      void encryptFinal(byte[] plain, int plainOffset, int plainLen,
-                       byte[] cipher, int cipherOffset)
-         throws IllegalBlockSizeException {
-         encrypt(plain, plainOffset, plainLen, cipher, cipherOffset);
+		       byte[] cipher, int cipherOffset)
+	 throws IllegalBlockSizeException {
+	 encrypt(plain, plainOffset, plainLen, cipher, cipherOffset);
      }
     /**
      * Performs decryption operation.
@@ -174,7 +174,7 @@ abstract class FeedbackCipher {
      * @param plainOffset the offset in <code>plain</code>
      */
     abstract void decrypt(byte[] cipher, int cipherOffset, int cipherLen,
-                          byte[] plain, int plainOffset);
+			  byte[] plain, int plainOffset);
 
     /**
      * Performs decryption operation for the last time.
@@ -192,8 +192,8 @@ abstract class FeedbackCipher {
      * @param plainOffset the offset in <code>plain</code>
      */
      void decryptFinal(byte[] cipher, int cipherOffset, int cipherLen,
-                       byte[] plain, int plainOffset)
-         throws IllegalBlockSizeException {
-         decrypt(cipher, cipherOffset, cipherLen, plain, plainOffset);
+		       byte[] plain, int plainOffset)
+	 throws IllegalBlockSizeException {
+	 decrypt(cipher, cipherOffset, cipherLen, plain, plainOffset);
      }
 }

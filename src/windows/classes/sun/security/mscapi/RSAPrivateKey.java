@@ -40,9 +40,9 @@ class RSAPrivateKey extends Key implements PrivateKey
      */
     RSAPrivateKey(long hCryptProv, long hCryptKey, int keyLength)
     {
-        super(hCryptProv, hCryptKey, keyLength);
+	super(hCryptProv, hCryptKey, keyLength);
     }
-
+    
     /**
      * Returns the standard algorithm name for this key. For
      * example, "RSA" would indicate that this key is a RSA key.
@@ -55,20 +55,20 @@ class RSAPrivateKey extends Key implements PrivateKey
      */
     public String getAlgorithm()
     {
-        return "RSA";
+	return "RSA";
     }
-
+        
     public String toString()
     {
-        return "RSAPrivateKey [size=" + keyLength + " bits, type=" +
-            getKeyType(hCryptKey) + ", container=" +
-            getContainerName(hCryptProv) + "]";
+	return "RSAPrivateKey [size=" + keyLength + " bits, type=" +
+	    getKeyType(hCryptKey) + ", container=" +
+	    getContainerName(hCryptProv) + "]";
     }
 
     // This class is not serializable
-    private void writeObject(java.io.ObjectOutputStream out)
-        throws java.io.IOException {
+    private void writeObject(java.io.ObjectOutputStream out) 
+	throws java.io.IOException {
 
-        throw new java.io.NotSerializableException();
+	throw new java.io.NotSerializableException();
     }
 }

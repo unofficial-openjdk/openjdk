@@ -40,10 +40,10 @@ private:
     int ddSurfaceCreation;
     int d3dCapsValidity;
     int d3dDeviceCaps;
-
+    
 public:
-        DxCapabilities() { keyName = NULL; }
-        ~DxCapabilities() { if (keyName) free(keyName); }
+	DxCapabilities() { keyName = NULL; }
+	~DxCapabilities() { if (keyName) free(keyName); }
     void Initialize(WCHAR *keyName);
 
     int GetDdCreationCap() { return ddCreation; }
@@ -52,14 +52,14 @@ public:
     int GetD3dDeviceCaps() { return d3dDeviceCaps; }
 
     WCHAR *GetDeviceName() { return keyName; }
-
+    
     void SetDdCreationCap(int value);
     void SetDdSurfaceCreationCap(int value);
     void SetD3dCapsValidity(int value);
     void SetD3dDeviceCaps(int value);
 
     void PrintCaps();
-
+    
 private:
     void SetCap(WCHAR *capName, int value);
 };

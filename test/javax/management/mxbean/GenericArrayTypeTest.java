@@ -52,46 +52,46 @@ import javax.management.remote.JMXServiceURL;
 public class GenericArrayTypeTest {
 
     public interface TestMXBean {
-
+        
         public String[] getT1();
         public void setT1(String[] v);
-
+        
         public MonitorInfo[] getT2();
         public void setT2(MonitorInfo[] v);
-
+        
         public Map<String,String[]> getT3();
         public void setT3(Map<String,String[]> v);
-
+        
         public Map<String,MonitorInfo[]> getT4();
         public void setT4(Map<String,MonitorInfo[]> v);
-
+        
         public Set<String[]> getT5();
         public void setT5(Set<String[]> v);
-
+        
         public Set<MonitorInfo[]> getT6();
         public void setT6(Set<MonitorInfo[]> v);
-
+        
         public List<String[]> getT7();
         public void setT7(List<String[]> v);
-
+        
         public List<MonitorInfo[]> getT8();
         public void setT8(List<MonitorInfo[]> v);
-
+        
         public Set<List<String[]>> getT9();
         public void setT9(Set<List<String[]>> v);
-
+        
         public Set<List<MonitorInfo[]>> getT10();
         public void setT10(Set<List<MonitorInfo[]>> v);
-
+        
         public Map<String,Set<List<String[]>>> getT11();
         public void setT11(Map<String,Set<List<String[]>>> v);
-
+        
         public Map<String,Set<List<MonitorInfo[]>>> getT12();
         public void setT12(Map<String,Set<List<MonitorInfo[]>>> v);
     }
 
     public static class Test implements TestMXBean {
-
+        
         public String[] getT1() {
             return t1;
         }
@@ -99,7 +99,7 @@ public class GenericArrayTypeTest {
             t1 = v;
         }
         private String[] t1;
-
+        
         public MonitorInfo[] getT2() {
             return t2;
         }
@@ -107,7 +107,7 @@ public class GenericArrayTypeTest {
             t2 = v;
         }
         private MonitorInfo[] t2;
-
+        
         public Map<String,String[]> getT3() {
             return t3;
         }
@@ -115,7 +115,7 @@ public class GenericArrayTypeTest {
             t3 = v;
         }
         private Map<String,String[]> t3;
-
+        
         public Map<String,MonitorInfo[]> getT4() {
             return t4;
         }
@@ -123,7 +123,7 @@ public class GenericArrayTypeTest {
             t4 = v;
         }
         private Map<String,MonitorInfo[]> t4;
-
+        
         public Set<String[]> getT5() {
             return t5;
         }
@@ -131,7 +131,7 @@ public class GenericArrayTypeTest {
             t5 = v;
         }
         private Set<String[]> t5;
-
+        
         public Set<MonitorInfo[]> getT6() {
             return t6;
         }
@@ -139,7 +139,7 @@ public class GenericArrayTypeTest {
             t6 = v;
         }
         private Set<MonitorInfo[]> t6;
-
+        
         public List<String[]> getT7() {
             return t7;
         }
@@ -147,7 +147,7 @@ public class GenericArrayTypeTest {
             t7 = v;
         }
         private List<String[]> t7;
-
+        
         public List<MonitorInfo[]> getT8() {
             return t8;
         }
@@ -155,7 +155,7 @@ public class GenericArrayTypeTest {
             t8 = v;
         }
         private List<MonitorInfo[]> t8;
-
+        
         public Set<List<String[]>> getT9() {
             return t9;
         }
@@ -163,7 +163,7 @@ public class GenericArrayTypeTest {
             t9 = v;
         }
         private Set<List<String[]>> t9;
-
+        
         public Set<List<MonitorInfo[]>> getT10() {
             return t10;
         }
@@ -171,7 +171,7 @@ public class GenericArrayTypeTest {
             t10 = v;
         }
         private Set<List<MonitorInfo[]>> t10;
-
+        
         public Map<String,Set<List<String[]>>> getT11() {
             return t11;
         }
@@ -179,7 +179,7 @@ public class GenericArrayTypeTest {
             t11 = v;
         }
         private Map<String,Set<List<String[]>>> t11;
-
+        
         public Map<String,Set<List<MonitorInfo[]>>> getT12() {
             return t12;
         }
@@ -201,14 +201,14 @@ public class GenericArrayTypeTest {
             echo("\n>>> Create the MBean server");
             MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-            // Get default domain
-            //
+	    // Get default domain
+	    //
             echo("\n>>> Get the MBean server's default domain");
-            String domain = mbs.getDefaultDomain();
-            echo("\tDefault Domain = " + domain);
+	    String domain = mbs.getDefaultDomain();
+	    echo("\tDefault Domain = " + domain);
 
             // Register TestMXBean
-            //
+	    //
             echo("\n>>> Register TestMXBean");
             ObjectName name =
                 ObjectName.getInstance(domain + ":type=" + TestMXBean.class);
@@ -340,23 +340,23 @@ public class GenericArrayTypeTest {
                 cc.close();
 
             // Stop server
-            //
+	    //
             echo("\n>>> Stop the RMI connector server");
             if (cs != null)
                 cs.stop();
 
-            echo("\n>>> Bye! Bye!");
+            echo("\n>>> Bye! Bye!");            
         }
 
         if (error > 0) {
-            echo("\nTest failed! " + error + " errors.\n");
+	    echo("\nTest failed! " + error + " errors.\n");
             throw new IllegalArgumentException("Test failed");
-        } else {
-            echo("\nTest passed!\n");
+	} else {
+	    echo("\nTest passed!\n");            
         }
     }
 
     private static void echo(String msg) {
-        System.out.println(msg);
+	System.out.println(msg);
     }
 }

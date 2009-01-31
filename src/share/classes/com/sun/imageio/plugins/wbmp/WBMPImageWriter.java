@@ -309,7 +309,7 @@ public class WBMPImageWriter extends ImageWriter {
     private void checkSampleModel(SampleModel sm) {
         int type = sm.getDataType();
         if (type < DataBuffer.TYPE_BYTE || type > DataBuffer.TYPE_INT
-            || sm.getNumBands() != 1 || sm.getSampleSize(0) != 1)
+	    || sm.getNumBands() != 1 || sm.getSampleSize(0) != 1)
             throw new IllegalArgumentException(I18N.getString("WBMPImageWriter2"));
     }
 }

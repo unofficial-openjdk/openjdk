@@ -48,7 +48,8 @@ import sun.awt.EventListenerAggregate;
  * @see java.awt.Toolkit#getSystemClipboard
  * @see java.awt.Toolkit#getSystemSelection
  *
- * @author      Amy Fowler
+ * @version 	%I%, %G%
+ * @author	Amy Fowler
  * @author      Alexander Gerasimov
  */
 public class Clipboard {
@@ -58,14 +59,14 @@ public class Clipboard {
     protected ClipboardOwner owner;
     protected Transferable contents;
 
-    /**
+    /** 
      * An aggregate of flavor listeners registered on this local clipboard.
      *
      * @since 1.5
      */
     private EventListenerAggregate flavorListeners;
 
-    /**
+    /** 
      * A set of <code>DataFlavor</code>s that is available on
      * this local clipboard. It is used for tracking changes
      * of <code>DataFlavor</code>s available on this clipboard.
@@ -120,7 +121,7 @@ public class Clipboard {
     public synchronized void setContents(Transferable contents, ClipboardOwner owner) {
         final ClipboardOwner oldOwner = this.owner;
         final Transferable oldContents = this.contents;
-
+  
         this.owner = owner;
         this.contents = contents;
 
@@ -138,9 +139,9 @@ public class Clipboard {
      * Returns a transferable object representing the current contents
      * of the clipboard.  If the clipboard currently has no contents,
      * it returns <code>null</code>. The parameter Object requestor is
-     * not currently used.  The method throws
-     * <code>IllegalStateException</code> if the clipboard is currently
-     * unavailable.  For example, on some platforms, the system clipboard is
+     * not currently used.  The method throws 
+     * <code>IllegalStateException</code> if the clipboard is currently 
+     * unavailable.  For example, on some platforms, the system clipboard is 
      * unavailable while it is accessed by another application.
      *
      * @param requestor the object requesting the clip data  (not used)
@@ -163,7 +164,7 @@ public class Clipboard {
      *         contents of this clipboard can be provided
      *
      * @throws IllegalStateException if this clipboard is currently unavailable
-     *
+     * 
      * @since 1.5
      */
     public DataFlavor[] getAvailableDataFlavors() {
@@ -186,7 +187,7 @@ public class Clipboard {
      *
      * @throws NullPointerException if <code>flavor</code> is <code>null</code>
      * @throws IllegalStateException if this clipboard is currently unavailable
-     *
+     * 
      * @since 1.5
      */
     public boolean isDataFlavorAvailable(DataFlavor flavor) {
@@ -220,7 +221,7 @@ public class Clipboard {
      *         can not be retrieved
      *
      * @see DataFlavor#getRepresentationClass
-     *
+     * 
      * @since 1.5
      */
     public Object getData(DataFlavor flavor)
@@ -282,7 +283,7 @@ public class Clipboard {
     public synchronized void removeFlavorListener(FlavorListener listener) {
         if (listener == null || flavorListeners == null) {
             return;
-        }
+        } 
         flavorListeners.remove(listener);
     }
 
@@ -352,3 +353,7 @@ public class Clipboard {
         return set;
     }
 }
+
+    
+
+    

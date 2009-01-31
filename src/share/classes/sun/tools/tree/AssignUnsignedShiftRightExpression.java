@@ -39,13 +39,13 @@ class AssignUnsignedShiftRightExpression extends AssignOpExpression {
      * Constructor
      */
     public AssignUnsignedShiftRightExpression(long where, Expression left, Expression right) {
-        super(ASGURSHIFT, where, left, right);
+	super(ASGURSHIFT, where, left, right);
     }
 
     /**
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-        asm.add(where, opc_iushr + itype.getTypeCodeOffset());
+	asm.add(where, opc_iushr + itype.getTypeCodeOffset());
     }
 }

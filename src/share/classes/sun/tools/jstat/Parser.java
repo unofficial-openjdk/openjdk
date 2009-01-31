@@ -33,6 +33,7 @@ import java.util.*;
  * specification language for the jstat command.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Parser {

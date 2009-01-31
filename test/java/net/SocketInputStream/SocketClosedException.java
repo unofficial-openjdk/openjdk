@@ -25,7 +25,7 @@
  * @test
  * @bug 4681556
  * @summary Wrong text if a read is performed on a socket after it
- *      has been closed
+ * 	has been closed
  */
 
 import java.io.*;
@@ -45,22 +45,22 @@ public class SocketClosedException {
      * to avoid infinite hangs.
      */
     static void doServerSide() throws Exception {
-        ServerSocket serverSocket = new ServerSocket(serverPort);
-        serverPort = serverSocket.getLocalPort();
+	ServerSocket serverSocket = new ServerSocket(serverPort);
+	serverPort = serverSocket.getLocalPort();
 
-        /*
-         * Signal Client, we're ready for a connect.
-         */
-        serverReady = true;
+	/*
+	 * Signal Client, we're ready for a connect.
+	 */
+	serverReady = true;
 
-        Socket socket = serverSocket.accept();
+	Socket socket = serverSocket.accept();
 
-        InputStream is = socket.getInputStream();
-        OutputStream os = socket.getOutputStream();
+	InputStream is = socket.getInputStream();
+	OutputStream os = socket.getOutputStream();
 
-        os.write(85);
-        os.flush();
-        socket.close();
+	os.write(85);
+	os.flush();
+	socket.close();
     }
 
     /*
@@ -71,58 +71,58 @@ public class SocketClosedException {
      */
     static void doClientSide() throws Exception {
 
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(5000);
-        }
+	/*
+	 * Wait for server to get started.
+	 */
+	while (!serverReady) {
+	    Thread.sleep(5000);
+	}
 
-        Socket socket = new Socket("localhost", serverPort);
-        InputStream is = socket.getInputStream();
-        OutputStream os = socket.getOutputStream();
+	Socket socket = new Socket("localhost", serverPort);
+	InputStream is = socket.getInputStream();
+	OutputStream os = socket.getOutputStream();
 
-        int read = is.read();
-        socket.close();
-        read = is.read();
+	int read = is.read();
+	socket.close();
+	read = is.read();
     }
 
     static int serverPort = 0;
     static Exception serverException = null;
 
     public static void main(String[] args) throws Exception {
-        startServer();
-        try {
-            doClientSide();
-        } catch (SocketException e) {
-            if (!e.getMessage().equalsIgnoreCase("Socket closed")) {
-                throw new Exception("Received a wrong exception message: " +
-                                        e.getMessage());
-            }
-            System.out.println("PASSED: received the right exception message: "
-                                        + e.getMessage());
-        }
-        if (serverException != null) {
-            throw serverException;
-        }
+	startServer();
+	try {
+	    doClientSide();
+	} catch (SocketException e) {
+	    if (!e.getMessage().equalsIgnoreCase("Socket closed")) {
+		throw new Exception("Received a wrong exception message: " +
+					e.getMessage());
+	    }
+	    System.out.println("PASSED: received the right exception message: "
+					+ e.getMessage());
+	}
+	if (serverException != null) {
+	    throw serverException;
+	}
     }
 
     static void startServer() {
-        Thread serverThread = new Thread() {
-            public void run() {
-                try {
-                    doServerSide();
-                } catch (Exception e) {
-                    /*
-                     * server thread just died.
-                     * Release the client, if not active already...
-                     */
-                    System.err.println("Server died...");
-                    serverReady = true;
-                    serverException = e;
-                }
-            }
-        };
-        serverThread.start();
+	Thread serverThread = new Thread() {
+	    public void run() {
+		try {
+		    doServerSide();
+		} catch (Exception e) {
+		    /*
+		     * server thread just died.
+		     * Release the client, if not active already...
+		     */
+		    System.err.println("Server died...");
+		    serverReady = true;
+		    serverException = e;
+		}
+	    }
+	};
+	serverThread.start();
     }
 }

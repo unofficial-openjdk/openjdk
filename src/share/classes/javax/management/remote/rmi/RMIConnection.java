@@ -73,7 +73,7 @@ import javax.security.auth.Subject;
  * <code>MarshalledObject</code> or <code>MarshalledObject[]</code>
  * must not be null; the behavior is unspecified if it is.</p>
  *
- * <p>Class loading aspects are detailed in the
+ * <p>Class loading aspects are detailed in the 
  * <a href="{@docRoot}/../technotes/guides/jmx/JMX_1_4_specification.pdf">
  * JMX Specification, version 1.4</a> PDF document.</p>
  *
@@ -158,14 +158,14 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public ObjectInstance createMBean(String className,
                                       ObjectName name,
-                                      Subject delegationSubject)
-        throws
-        ReflectionException,
-        InstanceAlreadyExistsException,
-        MBeanRegistrationException,
-        MBeanException,
-        NotCompliantMBeanException,
-        IOException;
+				      Subject delegationSubject)
+	throws
+	ReflectionException,
+	InstanceAlreadyExistsException,
+	MBeanRegistrationException,
+	MBeanException,
+	NotCompliantMBeanException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -213,15 +213,15 @@ public interface RMIConnection extends Closeable, Remote {
     public ObjectInstance createMBean(String className,
                                       ObjectName name,
                                       ObjectName loaderName,
-                                      Subject delegationSubject)
-        throws
-        ReflectionException,
-        InstanceAlreadyExistsException,
-        MBeanRegistrationException,
-        MBeanException,
-        NotCompliantMBeanException,
-        InstanceNotFoundException,
-        IOException;
+				      Subject delegationSubject)
+	throws
+	ReflectionException,
+	InstanceAlreadyExistsException,
+	MBeanRegistrationException,
+	MBeanException,
+	NotCompliantMBeanException,
+	InstanceNotFoundException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -275,14 +275,14 @@ public interface RMIConnection extends Closeable, Remote {
                                 ObjectName name,
                                 MarshalledObject params,
                                 String signature[],
-                                Subject delegationSubject)
-        throws
-        ReflectionException,
-        InstanceAlreadyExistsException,
-        MBeanRegistrationException,
-        MBeanException,
-        NotCompliantMBeanException,
-        IOException;
+				Subject delegationSubject)
+	throws
+	ReflectionException,
+	InstanceAlreadyExistsException,
+	MBeanRegistrationException,
+	MBeanException,
+	NotCompliantMBeanException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -341,15 +341,15 @@ public interface RMIConnection extends Closeable, Remote {
                                 ObjectName loaderName,
                                 MarshalledObject params,
                                 String signature[],
-                                Subject delegationSubject)
-        throws
-        ReflectionException,
-        InstanceAlreadyExistsException,
-        MBeanRegistrationException,
-        MBeanException,
-        NotCompliantMBeanException,
-        InstanceNotFoundException,
-        IOException;
+			        Subject delegationSubject)
+	throws
+	ReflectionException,
+	InstanceAlreadyExistsException,
+	MBeanRegistrationException,
+	MBeanException,
+	NotCompliantMBeanException,
+	InstanceNotFoundException,
+	IOException;
 
     /**
      * Handles the method
@@ -375,10 +375,10 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public void unregisterMBean(ObjectName name, Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        MBeanRegistrationException,
-        IOException;
+	throws
+	InstanceNotFoundException,
+	MBeanRegistrationException,
+	IOException;
 
     /**
      * Handles the method
@@ -404,8 +404,8 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public ObjectInstance getObjectInstance(ObjectName name,
-                                            Subject delegationSubject)
-        throws InstanceNotFoundException, IOException;
+					    Subject delegationSubject)
+	throws InstanceNotFoundException, IOException;
 
     /**
      * Handles the method {@link
@@ -433,10 +433,10 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public Set<ObjectInstance>
-        queryMBeans(ObjectName name,
-                    MarshalledObject query,
-                    Subject delegationSubject)
-        throws IOException;
+	queryMBeans(ObjectName name,
+		    MarshalledObject query,
+		    Subject delegationSubject)
+	throws IOException;
 
     /**
      * Handles the method {@link
@@ -464,10 +464,10 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public Set<ObjectName>
-        queryNames(ObjectName name,
-                   MarshalledObject query,
-                   Subject delegationSubject)
-        throws IOException;
+	queryNames(ObjectName name,
+		   MarshalledObject query,
+		   Subject delegationSubject)
+	throws IOException;
 
     /**
      * Handles the method
@@ -489,7 +489,7 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public boolean isRegistered(ObjectName name, Subject delegationSubject)
-        throws IOException;
+	throws IOException;
 
     /**
      * Handles the method
@@ -506,7 +506,7 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public Integer getMBeanCount(Subject delegationSubject)
-        throws IOException;
+	throws IOException;
 
     /**
      * Handles the method {@link
@@ -521,7 +521,7 @@ public interface RMIConnection extends Closeable, Remote {
      * delegation principals or <code>null</code> if the authentication
      * principal is used instead.
      *
-     * @return  The value of the retrieved attribute.
+     * @return	The value of the retrieved attribute.
      *
      * @throws AttributeNotFoundException The attribute specified
      * is not accessible in the MBean.
@@ -546,13 +546,13 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public Object getAttribute(ObjectName name,
                                String attribute,
-                               Subject delegationSubject)
-        throws
-        MBeanException,
-        AttributeNotFoundException,
-        InstanceNotFoundException,
-        ReflectionException,
-        IOException;
+			       Subject delegationSubject)
+	throws
+	MBeanException,
+	AttributeNotFoundException,
+	InstanceNotFoundException,
+	ReflectionException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -583,11 +583,11 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public AttributeList getAttributes(ObjectName name,
                                        String[] attributes,
-                                       Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        ReflectionException,
-        IOException;
+				       Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	ReflectionException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -627,14 +627,14 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public void setAttribute(ObjectName name,
                              MarshalledObject attribute,
-                             Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        AttributeNotFoundException,
-        InvalidAttributeValueException,
-        MBeanException,
-        ReflectionException,
-        IOException;
+			     Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	AttributeNotFoundException,
+	InvalidAttributeValueException,
+	MBeanException,
+	ReflectionException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -669,11 +669,11 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public AttributeList setAttributes(ObjectName name,
                           MarshalledObject attributes,
-                          Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        ReflectionException,
-        IOException;
+		          Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	ReflectionException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -718,12 +718,12 @@ public interface RMIConnection extends Closeable, Remote {
                          String operationName,
                          MarshalledObject params,
                          String signature[],
-                         Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        MBeanException,
-        ReflectionException,
-        IOException;
+			 Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	MBeanException,
+	ReflectionException,
+	IOException;
 
     /**
      * Handles the method
@@ -740,7 +740,7 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public String getDefaultDomain(Subject delegationSubject)
-        throws IOException;
+	throws IOException;
 
     /**
      * Handles the method
@@ -757,7 +757,7 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public String[] getDomains(Subject delegationSubject)
-        throws IOException;
+	throws IOException;
 
     /**
      * Handles the method
@@ -785,11 +785,11 @@ public interface RMIConnection extends Closeable, Remote {
      * name in parameter is null.
      */
     public MBeanInfo getMBeanInfo(ObjectName name, Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        IntrospectionException,
-        ReflectionException,
-        IOException;
+	throws
+	InstanceNotFoundException,
+	IntrospectionException,
+	ReflectionException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -816,8 +816,8 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public boolean isInstanceOf(ObjectName name,
                                 String className,
-                                Subject delegationSubject)
-        throws InstanceNotFoundException, IOException;
+				Subject delegationSubject)
+	throws InstanceNotFoundException, IOException;
 
     /**
      * Handles the method {@link
@@ -863,8 +863,8 @@ public interface RMIConnection extends Closeable, Remote {
                         ObjectName listener,
                         MarshalledObject filter,
                         MarshalledObject handback,
-                        Subject delegationSubject)
-        throws InstanceNotFoundException, IOException;
+			Subject delegationSubject)
+	throws InstanceNotFoundException, IOException;
 
     /**
      * Handles the method {@link
@@ -893,11 +893,11 @@ public interface RMIConnection extends Closeable, Remote {
      */
     public void removeNotificationListener(ObjectName name,
                                            ObjectName listener,
-                                           Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        ListenerNotFoundException,
-        IOException;
+					   Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	ListenerNotFoundException,
+	IOException;
 
     /**
      * Handles the method {@link
@@ -937,11 +937,11 @@ public interface RMIConnection extends Closeable, Remote {
                       ObjectName listener,
                       MarshalledObject filter,
                       MarshalledObject handback,
-                      Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        ListenerNotFoundException,
-        IOException;
+		      Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	ListenerNotFoundException,
+	IOException;
 
     // Special Handling of Notifications -------------------------------------
 
@@ -998,9 +998,9 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public Integer[] addNotificationListeners(ObjectName[] names,
-                    MarshalledObject[] filters,
-                    Subject[] delegationSubjects)
-        throws InstanceNotFoundException, IOException;
+		    MarshalledObject[] filters,
+		    Subject[] delegationSubjects)
+	throws InstanceNotFoundException, IOException;
 
     /**
      * <p>Handles the
@@ -1040,12 +1040,12 @@ public interface RMIConnection extends Closeable, Remote {
      * contains a null element.
      */
     public void removeNotificationListeners(ObjectName name,
-                                            Integer[] listenerIDs,
-                                            Subject delegationSubject)
-        throws
-        InstanceNotFoundException,
-        ListenerNotFoundException,
-        IOException;
+					    Integer[] listenerIDs,
+					    Subject delegationSubject)
+	throws
+	InstanceNotFoundException,
+	ListenerNotFoundException,
+	IOException;
 
     /**
      * <p>Retrieves notifications from the connector server.  This
@@ -1086,7 +1086,7 @@ public interface RMIConnection extends Closeable, Remote {
      * @throws IOException if a general communication exception occurred.
      */
     public NotificationResult fetchNotifications(long clientSequenceNumber,
-                                                 int maxNotifications,
-                                                 long timeout)
-            throws IOException;
+						 int maxNotifications,
+						 long timeout)
+	    throws IOException;
 }

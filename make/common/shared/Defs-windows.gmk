@@ -529,6 +529,37 @@ else
 endif
 INSTALL_MSIVAL2:=$(call AltCheckSpaces,INSTALL_MSIVAL2)
 
+# Windows 32bit only
+ifeq ($(ARCH_DATA_MODEL), 32)
+  
+  # UNICOWS_DLL_PATH: path to Microsoft Layer for Unicode DLL library
+  ifdef ALT_UNICOWS_DLL_PATH
+    xALT_UNICOWS_DLL_PATH :="$(subst \,/,$(ALT_UNICOWS_DLL_PATH))"
+    UNICOWS_DLL_PATH      :=$(call FullPath,$(xALT_UNICOWS_DLL_PATH))
+  else
+    _UNICOWS_DLL_PATH1 :=$(_system_drive)/MSLU
+    _UNICOWS_DLL_PATH2 :=$(JDK_DEVTOOLS_DIR)/windows/MSLU
+    _UNICOWS_DLL_PATH3 :=$(JDK_IMPORT_PATH)/jre/bin
+    UNICOWS_DLL_PATH  :=$(call DirExists,$(_UNICOWS_DLL_PATH1),$(_UNICOWS_DLL_PATH2),$(_UNICOWS_DLL_PATH3))
+  endif
+  UNICOWS_DLL_PATH:=$(call AltCheckSpaces,UNICOWS_DLL_PATH)
+  UNICOWS_DLL_PATH:=$(call AltCheckValue,UNICOWS_DLL_PATH)
+  
+  # UNICOWS_LIB_PATH: path to Microsoft Layer for Unicode LIB library
+  ifdef ALT_UNICOWS_LIB_PATH
+    xALT_UNICOWS_LIB_PATH :="$(subst \,/,$(ALT_UNICOWS_LIB_PATH))"
+    UNICOWS_LIB_PATH      :=$(call FullPath,$(xALT_UNICOWS_LIB_PATH))
+  else
+    _UNICOWS_LIB_PATH1 :=$(DEPLOY_MSSDK)/Lib
+    _UNICOWS_LIB_PATH2 :=$(_system_drive)/MSLU
+    _UNICOWS_LIB_PATH3 :=$(JDK_DEVTOOLS_DIR)/windows/MSLU
+    UNICOWS_LIB_PATH  :=$(call DirExists,$(_UNICOWS_LIB_PATH1),$(_UNICOWS_LIB_PATH2),$(_UNICOWS_LIB_PATH3))
+  endif
+  UNICOWS_LIB_PATH:=$(call AltCheckSpaces,UNICOWS_LIB_PATH)
+  UNICOWS_LIB_PATH:=$(call AltCheckValue,UNICOWS_LIB_PATH)
+
+endif
+
 # WSCRIPT: path to wscript.exe (used in creating install bundles)
 ifdef ALT_WSCRIPT
   xALT_WSCRIPT :="$(subst \,/,$(ALT_WSCRIPT))"

@@ -39,6 +39,7 @@ import java.text.CharacterIterator;
  * copying text into a string.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class Segment implements Cloneable, CharacterIterator, CharSequence {
 
@@ -67,7 +68,7 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * Creates a new segment.
      */
     public Segment() {
-        this(null, 0, 0);
+	this(null, 0, 0);
     }
 
     /**
@@ -78,35 +79,35 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @param count the number of characters
      */
     public Segment(char[] array, int offset, int count) {
-        this.array = array;
-        this.offset = offset;
-        this.count = count;
-        partialReturn = false;
+	this.array = array;
+	this.offset = offset;
+	this.count = count;
+	partialReturn = false;
     }
 
-    /**
-     * Flag to indicate that partial returns are valid.  If the flag is true,
-     * an implementation of the interface method Document.getText(position,length,Segment)
-     * should return as much text as possible without making a copy.  The default
-     * state of the flag is false which will cause Document.getText(position,length,Segment)
-     * to provide the same return behavior it always had, which may or may not
-     * make a copy of the text depending upon the request.
-     *
+    /** 
+     * Flag to indicate that partial returns are valid.  If the flag is true, 
+     * an implementation of the interface method Document.getText(position,length,Segment) 
+     * should return as much text as possible without making a copy.  The default 
+     * state of the flag is false which will cause Document.getText(position,length,Segment) 
+     * to provide the same return behavior it always had, which may or may not 
+     * make a copy of the text depending upon the request.   
+     * 
      * @param p whether or not partial returns are valid.
      * @since 1.4
      */
     public void setPartialReturn(boolean p) {
-        partialReturn = p;
+	partialReturn = p;
     }
 
     /**
-     * Flag to indicate that partial returns are valid.
+     * Flag to indicate that partial returns are valid. 
      *
      * @return whether or not partial returns are valid.
      * @since 1.4
      */
     public boolean isPartialReturn() {
-        return partialReturn;
+	return partialReturn;
     }
 
     /**
@@ -115,10 +116,10 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @return the string
      */
     public String toString() {
-        if (array != null) {
-            return new String(array, offset, count);
-        }
-        return new String();
+	if (array != null) {
+	    return new String(array, offset, count);
+	}
+	return new String();
     }
 
     // --- CharacterIterator methods -------------------------------------
@@ -131,11 +132,11 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public char first() {
-        pos = offset;
-        if (count != 0) {
-            return array[pos];
-        }
-        return DONE;
+	pos = offset;
+	if (count != 0) {
+	    return array[pos];
+	}
+	return DONE;
     }
 
     /**
@@ -146,12 +147,12 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public char last() {
-        pos = offset + count;
-        if (count != 0) {
-            pos -= 1;
-            return array[pos];
-        }
-        return DONE;
+	pos = offset + count;
+	if (count != 0) {
+	    pos -= 1;
+	    return array[pos];
+	}
+	return DONE;
     }
 
     /**
@@ -162,10 +163,10 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public char current() {
-        if (count != 0 && pos < offset + count) {
-            return array[pos];
-        }
-        return DONE;
+	if (count != 0 && pos < offset + count) {
+	    return array[pos];
+	}
+	return DONE;
     }
 
     /**
@@ -178,13 +179,13 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public char next() {
-        pos += 1;
-        int end = offset + count;
-        if (pos >= end) {
-            pos = end;
-            return DONE;
-        }
-        return current();
+	pos += 1;
+	int end = offset + count;
+	if (pos >= end) {
+	    pos = end;
+	    return DONE;
+	}
+	return current();
     }
 
     /**
@@ -196,11 +197,11 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public char previous() {
-        if (pos == offset) {
-            return DONE;
-        }
-        pos -= 1;
-        return current();
+	if (pos == offset) {
+	    return DONE;
+	}
+	pos -= 1;
+	return current();
     }
 
     /**
@@ -213,15 +214,15 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public char setIndex(int position) {
-        int end = offset + count;
-        if ((position < offset) || (position > end)) {
-            throw new IllegalArgumentException("bad position: " + position);
-        }
-        pos = position;
-        if ((pos != end) && (count != 0)) {
-            return array[pos];
-        }
-        return DONE;
+	int end = offset + count;
+	if ((position < offset) || (position > end)) {
+	    throw new IllegalArgumentException("bad position: " + position);
+	}
+	pos = position;
+	if ((pos != end) && (count != 0)) {
+	    return array[pos];
+	}
+	return DONE;
     }
 
     /**
@@ -230,7 +231,7 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public int getBeginIndex() {
-        return offset;
+	return offset;
     }
 
     /**
@@ -240,7 +241,7 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public int getEndIndex() {
-        return offset + count;
+	return offset + count;
     }
 
     /**
@@ -249,33 +250,33 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
      * @since 1.3
      */
     public int getIndex() {
-        return pos;
+	return pos;
     }
 
     // --- CharSequence methods -------------------------------------
-
-    /**
-     * {@inheritDoc}
+    
+    /** 
+     * {@inheritDoc} 
      * @since 1.6
      */
     public char charAt(int index) {
-        if (index < 0
+        if (index < 0 
             || index >= count) {
             throw new StringIndexOutOfBoundsException(index);
         }
         return array[offset + index];
     }
 
-    /**
-     * {@inheritDoc}
+    /** 
+     * {@inheritDoc} 
      * @since 1.6
      */
     public int length() {
         return count;
     }
 
-    /**
-     * {@inheritDoc}
+    /** 
+     * {@inheritDoc} 
      * @since 1.6
      */
     public CharSequence subSequence(int start, int end) {
@@ -294,23 +295,25 @@ public class Segment implements Cloneable, CharacterIterator, CharSequence {
         segment.count = end - start;
         return segment;
     }
-
+    
     /**
      * Creates a shallow copy.
      *
      * @return the copy
      */
     public Object clone() {
-        Object o;
-        try {
-            o = super.clone();
-        } catch (CloneNotSupportedException cnse) {
-            o = null;
-        }
-        return o;
+	Object o;
+	try {
+	    o = super.clone();
+	} catch (CloneNotSupportedException cnse) {
+	    o = null;
+	}
+	return o;
     }
 
     private int pos;
 
 
 }
+
+

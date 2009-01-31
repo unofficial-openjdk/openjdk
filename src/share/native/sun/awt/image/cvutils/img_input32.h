@@ -32,29 +32,29 @@
  * (srcOff + srcY * srcScan + srcX) in the array.
  */
 
-#define DeclareInputVars                                        \
+#define DeclareInputVars					\
     pixptr srcP;
 
-#define InitInput(srcBPP)                                               \
+#define InitInput(srcBPP)						\
     img_check(srcBPP == 32)
 
-#define SetInputRow(pixels, srcOff, srcScan, srcY, srcOY)               \
-    srcP.vp = pixels;                                                   \
+#define SetInputRow(pixels, srcOff, srcScan, srcY, srcOY)		\
+    srcP.vp = pixels;							\
     srcP.ip += srcOff + ((srcY-srcOY) * srcScan)
 
-#define GetPixelInc()                                                   \
+#define GetPixelInc()							\
     (*srcP.ip++)
 
-#define GetPixel(srcX)                                                  \
+#define GetPixel(srcX)							\
     (srcP.ip[srcX])
 
-#define InputPixelInc(X)                                                \
+#define InputPixelInc(X)						\
     srcP.ip += X
 
-#define VerifyPixelRange(pixel, mapsize)                                \
-    do {                                                                \
-        if (((unsigned int) pixel) >= mapsize) {                        \
-            SignalError(0, JAVAPKG "ArrayIndexOutOfBoundsException", 0);\
-            return SCALEFAILURE;                                        \
-        }                                                               \
+#define VerifyPixelRange(pixel, mapsize)				\
+    do {								\
+	if (((unsigned int) pixel) >= mapsize) {			\
+	    SignalError(0, JAVAPKG "ArrayIndexOutOfBoundsException", 0);\
+	    return SCALEFAILURE;					\
+	}								\
     } while (0)

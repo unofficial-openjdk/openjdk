@@ -33,11 +33,11 @@ import javax.swing.SizeRequirements;
 /**
  * View of a simple line-wrapping paragraph that supports
  * multiple fonts, colors, components, icons, etc.  It is
- * basically a vertical box with a margin around it.  The
- * contents of the box are a bunch of rows which are special
+ * basically a vertical box with a margin around it.  The 
+ * contents of the box are a bunch of rows which are special 
  * horizontal boxes.  This view creates a collection of
- * views that represent the child elements of the paragraph
- * element.  Each of these views are placed into a row
+ * views that represent the child elements of the paragraph 
+ * element.  Each of these views are placed into a row 
  * directly if they will fit, otherwise the <code>breakView</code>
  * method is called to try and carve the view into pieces
  * that fit.
@@ -45,6 +45,7 @@ import javax.swing.SizeRequirements;
  * @author  Timothy Prinzing
  * @author  Scott Violet
  * @author  Igor Kushnirskiy
+ * @version %I% %G%
  * @see     View
  */
 public class ParagraphView extends FlowView implements TabExpander {
@@ -55,31 +56,31 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @param elem the element that this view is responsible for
      */
     public ParagraphView(Element elem) {
-        super(elem, View.Y_AXIS);
-        setPropertiesFromAttributes();
-        Document doc = elem.getDocument();
-        Object i18nFlag = doc.getProperty(AbstractDocument.I18NProperty);
-        if ((i18nFlag != null) && i18nFlag.equals(Boolean.TRUE)) {
-            try {
-                if (i18nStrategy == null) {
-                    // the classname should probably come from a property file.
-                    String classname = "javax.swing.text.TextLayoutStrategy";
-                    ClassLoader loader = getClass().getClassLoader();
-                    if (loader != null) {
-                        i18nStrategy = loader.loadClass(classname);
-                    } else {
-                        i18nStrategy = Class.forName(classname);
-                    }
-                }
-                Object o = i18nStrategy.newInstance();
-                if (o instanceof FlowStrategy) {
-                    strategy = (FlowStrategy) o;
-                }
-            } catch (Throwable e) {
-                throw new StateInvariantError("ParagraphView: Can't create i18n strategy: "
-                                              + e.getMessage());
-            }
-        }
+	super(elem, View.Y_AXIS);
+	setPropertiesFromAttributes();
+	Document doc = elem.getDocument();
+	Object i18nFlag = doc.getProperty(AbstractDocument.I18NProperty);
+	if ((i18nFlag != null) && i18nFlag.equals(Boolean.TRUE)) {
+	    try {
+		if (i18nStrategy == null) {
+		    // the classname should probably come from a property file.
+		    String classname = "javax.swing.text.TextLayoutStrategy"; 
+		    ClassLoader loader = getClass().getClassLoader();
+		    if (loader != null) {
+			i18nStrategy = loader.loadClass(classname);
+		    } else {
+			i18nStrategy = Class.forName(classname);
+		    }
+		}
+		Object o = i18nStrategy.newInstance();
+		if (o instanceof FlowStrategy) {
+		    strategy = (FlowStrategy) o;
+		}
+	    } catch (Throwable e) {
+		throw new StateInvariantError("ParagraphView: Can't create i18n strategy: " 
+					      + e.getMessage());
+	    }
+	}
     }
 
     /**
@@ -93,7 +94,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * </ul>
      */
     protected void setJustification(int j) {
-        justification = j;
+	justification = j;
     }
 
     /**
@@ -102,7 +103,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @param ls the value is a factor of the line hight
      */
     protected void setLineSpacing(float ls) {
-        lineSpacing = ls;
+	lineSpacing = ls;
     }
 
     /**
@@ -111,33 +112,33 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @param fi the value in points
      */
     protected void setFirstLineIndent(float fi) {
-        firstLineIndent = (int) fi;
+	firstLineIndent = (int) fi;
     }
 
     /**
      * Set the cached properties from the attributes.
      */
     protected void setPropertiesFromAttributes() {
-        AttributeSet attr = getAttributes();
-        if (attr != null) {
-            setParagraphInsets(attr);
-            Integer a = (Integer)attr.getAttribute(StyleConstants.Alignment);
-            int alignment;
-            if (a == null) {
-                Document doc = getElement().getDocument();
-                Object o = doc.getProperty(TextAttribute.RUN_DIRECTION);
-                if ((o != null) && o.equals(TextAttribute.RUN_DIRECTION_RTL)) {
-                    alignment = StyleConstants.ALIGN_RIGHT;
-                } else {
-                    alignment = StyleConstants.ALIGN_LEFT;
-                }
-            } else {
-                alignment = a.intValue();
-            }
-            setJustification(alignment);
-            setLineSpacing(StyleConstants.getLineSpacing(attr));
-            setFirstLineIndent(StyleConstants.getFirstLineIndent(attr));
-        }
+	AttributeSet attr = getAttributes();
+	if (attr != null) {
+	    setParagraphInsets(attr);
+	    Integer a = (Integer)attr.getAttribute(StyleConstants.Alignment);
+	    int alignment;
+	    if (a == null) {
+		Document doc = getElement().getDocument();
+		Object o = doc.getProperty(TextAttribute.RUN_DIRECTION);
+		if ((o != null) && o.equals(TextAttribute.RUN_DIRECTION_RTL)) {
+		    alignment = StyleConstants.ALIGN_RIGHT;
+		} else {
+		    alignment = StyleConstants.ALIGN_LEFT;
+		}
+	    } else {
+		alignment = a.intValue();
+	    }
+	    setJustification(alignment);
+	    setLineSpacing(StyleConstants.getLineSpacing(attr));
+	    setFirstLineIndent(StyleConstants.getFirstLineIndent(attr));
+	}
     }
 
     /**
@@ -145,16 +146,16 @@ public class ParagraphView extends FlowView implements TabExpander {
      * responsible for.
      * The child views of the paragraph are rows which
      * have been used to arrange pieces of the <code>View</code>s
-     * that represent the child elements.  This is the number
+     * that represent the child elements.  This is the number 
      * of views that have been tiled in two dimensions,
      * and should be equivalent to the number of child elements
      * to the element this view is responsible for.
      *
      * @return the number of views that this <code>ParagraphView</code>
-     *          is responsible for
+     *		is responsible for
      */
     protected int getLayoutViewCount() {
-        return layoutPool.getViewCount();
+	return layoutPool.getViewCount();
     }
 
     /**
@@ -171,20 +172,20 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @return the view at <code>index</code>
      */
     protected View getLayoutView(int index) {
-        return layoutPool.getView(index);
+	return layoutPool.getView(index);
     }
 
     /**
      * Adjusts the given row if possible to fit within the
-     * layout span.  By default this will try to find the
+     * layout span.  By default this will try to find the 
      * highest break weight possible nearest the end of
      * the row.  If a forced break is encountered, the
      * break will be positioned there.
      * <p>
      * This is meant for internal usage, and should not be used directly.
-     *
+     * 
      * @param r the row to adjust to the current layout
-     *          span
+     *  	span
      * @param desiredSpan the current layout span >= 0
      * @param x the location r starts at
      */
@@ -192,7 +193,7 @@ public class ParagraphView extends FlowView implements TabExpander {
     }
 
     /**
-     * Returns the next visual position for the cursor, in
+     * Returns the next visual position for the cursor, in 
      * either the east or west direction.
      * Overridden from <code>CompositeView</code>.
      * @param pos position into the model
@@ -200,62 +201,62 @@ public class ParagraphView extends FlowView implements TabExpander {
      *          <code>Position.Bias.Backward</code>
      * @param a the allocated region to render into
      * @param direction either <code>SwingConstants.NORTH</code>
-     *          or <code>SwingConstants.SOUTH</code>
+     *		or <code>SwingConstants.SOUTH</code>
      * @param biasRet an array containing the bias that were checked
-     *  in this method
+     *	in this method
      * @return the location in the model that represents the
-     *  next location visual position
+     *	next location visual position
      */
     protected int getNextNorthSouthVisualPositionFrom(int pos, Position.Bias b,
-                                                      Shape a, int direction,
-                                                      Position.Bias[] biasRet)
-                                                throws BadLocationException {
-        int vIndex;
-        if(pos == -1) {
-            vIndex = (direction == NORTH) ?
-                     getViewCount() - 1 : 0;
-        }
-        else {
-            if(b == Position.Bias.Backward && pos > 0) {
-                vIndex = getViewIndexAtPosition(pos - 1);
-            }
-            else {
-                vIndex = getViewIndexAtPosition(pos);
-            }
-            if(direction == NORTH) {
-                if(vIndex == 0) {
-                    return -1;
-                }
-                vIndex--;
-            }
-            else if(++vIndex >= getViewCount()) {
-                return -1;
-            }
-        }
-        // vIndex gives index of row to look in.
-        JTextComponent text = (JTextComponent)getContainer();
-        Caret c = text.getCaret();
-        Point magicPoint;
-        magicPoint = (c != null) ? c.getMagicCaretPosition() : null;
-        int x;
-        if(magicPoint == null) {
-            Shape posBounds;
-            try {
-                posBounds = text.getUI().modelToView(text, pos, b);
-            } catch (BadLocationException exc) {
-                posBounds = null;
-            }
-            if(posBounds == null) {
-                x = 0;
-            }
-            else {
-                x = posBounds.getBounds().x;
-            }
-        }
-        else {
-            x = magicPoint.x;
-        }
-        return getClosestPositionTo(pos, b, a, direction, biasRet, vIndex, x);
+						      Shape a, int direction,
+						      Position.Bias[] biasRet)
+	                                        throws BadLocationException {
+	int vIndex;
+	if(pos == -1) {
+	    vIndex = (direction == NORTH) ?
+		     getViewCount() - 1 : 0;
+	}
+	else {
+	    if(b == Position.Bias.Backward && pos > 0) {
+		vIndex = getViewIndexAtPosition(pos - 1);
+	    }
+	    else {
+		vIndex = getViewIndexAtPosition(pos);
+	    }
+	    if(direction == NORTH) {
+		if(vIndex == 0) {
+		    return -1;
+		}
+		vIndex--;
+	    }
+	    else if(++vIndex >= getViewCount()) {
+		return -1;
+	    }
+	}
+	// vIndex gives index of row to look in.
+	JTextComponent text = (JTextComponent)getContainer();
+	Caret c = text.getCaret();
+	Point magicPoint;
+	magicPoint = (c != null) ? c.getMagicCaretPosition() : null;
+	int x;
+	if(magicPoint == null) {
+	    Shape posBounds;
+	    try {
+		posBounds = text.getUI().modelToView(text, pos, b);
+	    } catch (BadLocationException exc) {
+		posBounds = null;
+	    }
+	    if(posBounds == null) {
+		x = 0;
+	    }
+	    else {
+		x = posBounds.getBounds().x;
+	    }
+	}
+	else {
+	    x = magicPoint.x;
+	}
+	return getClosestPositionTo(pos, b, a, direction, biasRet, vIndex, x);
     }
 
     /**
@@ -270,7 +271,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * <li><code>SwingConstants.SOUTH</code>
      * </ul>
      * @param biasRet an array containing the bias that were checked
-     *  in this method
+     *	in this method
      * @param rowIndex the index of the view
      * @param x the x coordinate of interest
      * @return the closest model position to <code>x</code>
@@ -353,14 +354,14 @@ public class ParagraphView extends FlowView implements TabExpander {
      *         position, otherwise false.
      */
     protected boolean flipEastAndWestAtEnds(int position,
-                                            Position.Bias bias) {
-        Document doc = getDocument();
-        if(doc instanceof AbstractDocument &&
-           !((AbstractDocument)doc).isLeftToRight(getStartOffset(),
-                                                  getStartOffset() + 1)) {
-            return true;
-        }
-        return false;
+					    Position.Bias bias) {
+	Document doc = getDocument();
+	if(doc instanceof AbstractDocument &&
+	   !((AbstractDocument)doc).isLeftToRight(getStartOffset(),
+						  getStartOffset() + 1)) {
+	    return true;
+	}
+	return false;
     }
 
     // --- FlowView methods ---------------------------------------------
@@ -370,17 +371,17 @@ public class ParagraphView extends FlowView implements TabExpander {
      * the given child index.
      * @param index the index of the view being queried
      * @return the constraining span for the given view at
-     *  <code>index</code>
+     *	<code>index</code>
      * @since 1.3
      */
     public int getFlowSpan(int index) {
-        View child = getView(index);
-        int adjust = 0;
-        if (child instanceof Row) {
-            Row row = (Row) child;
-            adjust = row.getLeftInset() + row.getRightInset();
-        }
-        return (layoutSpan == Integer.MAX_VALUE) ? layoutSpan
+	View child = getView(index);
+	int adjust = 0;
+	if (child instanceof Row) {
+	    Row row = (Row) child;
+	    adjust = row.getLeftInset() + row.getRightInset();
+	}
+        return (layoutSpan == Integer.MAX_VALUE) ? layoutSpan 
                                                  : (layoutSpan - adjust);
     }
 
@@ -389,38 +390,38 @@ public class ParagraphView extends FlowView implements TabExpander {
      * flow span will start at.
      * @param index the index of the view being queried
      * @return the location for the given view at
-     *  <code>index</code>
+     *	<code>index</code>
      * @since 1.3
      */
     public int getFlowStart(int index) {
-        View child = getView(index);
-        int adjust = 0;
-        if (child instanceof Row) {
-            Row row = (Row) child;
-            adjust = row.getLeftInset();
-        }
-        return tabBase + adjust;
+	View child = getView(index);
+	int adjust = 0;
+	if (child instanceof Row) {
+	    Row row = (Row) child;
+	    adjust = row.getLeftInset();
+	}
+	return tabBase + adjust;
     }
 
     /**
-     * Create a <code>View</code> that should be used to hold a
+     * Create a <code>View</code> that should be used to hold a 
      * a row's worth of children in a flow.
      * @return the new <code>View</code>
      * @since 1.3
      */
     protected View createRow() {
-        return new Row(getElement());
+	return new Row(getElement());
     }
-
+	
     // --- TabExpander methods ------------------------------------------
 
     /**
      * Returns the next tab stop position given a reference position.
      * This view implements the tab coordinate system, and calls
-     * <code>getTabbedSpan</code> on the logical children in the process
+     * <code>getTabbedSpan</code> on the logical children in the process 
      * of layout to determine the desired span of the children.  The
      * logical children can delegate their tab expansion upward to
-     * the paragraph which knows how to expand tabs.
+     * the paragraph which knows how to expand tabs. 
      * <code>LabelView</code> is an example of a view that delegates
      * its tab expansion needs upward to the paragraph.
      * <p>
@@ -440,8 +441,8 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @see LabelView
      */
     public float nextTabStop(float x, int tabOffset) {
-        // If the text isn't left justified, offset by 10 pixels!
-        if(justification != StyleConstants.ALIGN_LEFT)
+	// If the text isn't left justified, offset by 10 pixels!
+	if(justification != StyleConstants.ALIGN_LEFT)
             return x + 10.0f;
         x -= tabBase;
         TabSet tabs = getTabSet();
@@ -486,7 +487,7 @@ public class ParagraphView extends FlowView implements TabExpander {
             // position will be the location of the tab less the
             // partialSize.
             return tabBase + Math.max(x, tab.getPosition() - charsSize);
-        case TabStop.ALIGN_CENTER:
+        case TabStop.ALIGN_CENTER: 
             // Similar to right, but half the partialSize.
             return tabBase + Math.max(x, tab.getPosition() - charsSize / 2.0f);
         }
@@ -500,15 +501,15 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @return the <code>TabSet</code>
      */
     protected TabSet getTabSet() {
-        return StyleConstants.getTabSet(getElement().getAttributes());
+	return StyleConstants.getTabSet(getElement().getAttributes());
     }
 
     /**
      * Returns the size used by the views between
      * <code>startOffset</code> and <code>endOffset</code>.
      * This uses <code>getPartialView</code> to calculate the
-     * size if the child view implements the
-     * <code>TabableView</code> interface. If a
+     * size if the child view implements the 
+     * <code>TabableView</code> interface. If a 
      * size is needed and a <code>View</code> does not implement
      * the <code>TabableView</code> interface,
      * the <code>preferredSpan</code> will be used.
@@ -584,7 +585,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @return where tabs are calculated from
      */
     protected float getTabBase() {
-        return (float)tabBase;
+	return (float)tabBase;
     }
 
     // ---- View methods ----------------------------------------------------
@@ -600,28 +601,28 @@ public class ParagraphView extends FlowView implements TabExpander {
      */
     public void paint(Graphics g, Shape a) {
         Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
-        tabBase = alloc.x + getLeftInset();
-        super.paint(g, a);
+       	tabBase = alloc.x + getLeftInset();
+	super.paint(g, a);
 
-        // line with the negative firstLineIndent value needs
-        // special handling
-        if (firstLineIndent < 0) {
-            Shape sh = getChildAllocation(0, a);
-            if ((sh != null) &&  sh.intersects(alloc)) {
-                int x = alloc.x + getLeftInset() + firstLineIndent;
-                int y = alloc.y + getTopInset();
-
-                Rectangle clip = g.getClipBounds();
-                tempRect.x = x + getOffset(X_AXIS, 0);
-                tempRect.y = y + getOffset(Y_AXIS, 0);
-                tempRect.width = getSpan(X_AXIS, 0) - firstLineIndent;
-                tempRect.height = getSpan(Y_AXIS, 0);
-                if (tempRect.intersects(clip)) {
-                    tempRect.x = tempRect.x - firstLineIndent;
-                    paintChild(g, tempRect, 0);
-                }
-            }
-        }
+	// line with the negative firstLineIndent value needs
+	// special handling
+	if (firstLineIndent < 0) {
+	    Shape sh = getChildAllocation(0, a);
+	    if ((sh != null) &&  sh.intersects(alloc)) {
+		int x = alloc.x + getLeftInset() + firstLineIndent;
+		int y = alloc.y + getTopInset();                                 
+                                                                              
+		Rectangle clip = g.getClipBounds();                              
+		tempRect.x = x + getOffset(X_AXIS, 0); 
+		tempRect.y = y + getOffset(Y_AXIS, 0);                       
+		tempRect.width = getSpan(X_AXIS, 0) - firstLineIndent;
+		tempRect.height = getSpan(Y_AXIS, 0);                            
+		if (tempRect.intersects(clip)) {                             
+		    tempRect.x = tempRect.x - firstLineIndent;                
+		    paintChild(g, tempRect, 0);                      
+		}                            
+	    }
+	}
     }
 
     /**
@@ -631,7 +632,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * along the x axis.
      *
      * @param axis may be either <code>View.X_AXIS</code> or
-     *   <code>View.Y_AXIS</code>
+     *	 <code>View.Y_AXIS</code>
      * @return the desired alignment.  This should be a value
      *   between 0.0 and 1.0 inclusive, where 0 indicates alignment at the
      *   origin and 1.0 indicates alignment to the full span
@@ -641,19 +642,19 @@ public class ParagraphView extends FlowView implements TabExpander {
     public float getAlignment(int axis) {
         switch (axis) {
         case Y_AXIS:
-            float a = 0.5f;
-            if (getViewCount() != 0) {
-                int paragraphSpan = (int) getPreferredSpan(View.Y_AXIS);
-                View v = getView(0);
-                int rowSpan = (int) v.getPreferredSpan(View.Y_AXIS);
-                a = (paragraphSpan != 0) ? ((float)(rowSpan / 2)) / paragraphSpan : 0;
-            }
+	    float a = 0.5f;
+	    if (getViewCount() != 0) {
+		int paragraphSpan = (int) getPreferredSpan(View.Y_AXIS);
+		View v = getView(0);
+		int rowSpan = (int) v.getPreferredSpan(View.Y_AXIS);
+		a = (paragraphSpan != 0) ? ((float)(rowSpan / 2)) / paragraphSpan : 0;
+	    }
             return a;
-        case X_AXIS:
-            return 0.5f;
-        default:
+	case X_AXIS:
+	    return 0.5f;
+	default:
             throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
+	}
     }
 
     /**
@@ -692,7 +693,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * Gets the break weight for a given location.
      * <p>
      * <code>ParagraphView</code> instances are breakable
-     * along the <code>Y_AXIS</code> only, and only if
+     * along the <code>Y_AXIS</code> only, and only if 
      * <code>len</code> is after the first row.  If the length
      * is less than one row, a value of <code>BadBreakWeight</code>
      * is returned.
@@ -701,14 +702,14 @@ public class ParagraphView extends FlowView implements TabExpander {
      *  or <code>View.Y_AXIS</code>
      * @param len specifies where a potential break is desired >= 0
      * @return a value indicating the attractiveness of breaking here;
-     *  either <code>GoodBreakWeight</code> or <code>BadBreakWeight</code>
+     *	either <code>GoodBreakWeight</code> or <code>BadBreakWeight</code>
      * @see View#getBreakWeight
      */
     public int getBreakWeight(int axis, float len) {
         if(axis == View.Y_AXIS) {
             // PENDING(prinz) make this return a reasonable value
             // when paragraph breaking support is re-implemented.
-            // If less than one row, bad weight value should be
+            // If less than one row, bad weight value should be 
             // returned.
             //return GoodBreakWeight;
             return BadBreakWeight;
@@ -731,7 +732,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * object is returned.</p>
      *
      * @param axis  the minor axis
-     * @param r     the input {@code SizeRequirements} object
+     * @param r     the input {@code SizeRequirements} object 
      * @return      the new or adjusted {@code SizeRequirements} object
      * @throw IllegalArgumentException  if the {@code axis} parameter is invalid
      */
@@ -739,7 +740,7 @@ public class ParagraphView extends FlowView implements TabExpander {
     protected SizeRequirements calculateMinorAxisRequirements(int axis,
                                                         SizeRequirements r) {
         r = super.calculateMinorAxisRequirements(axis, r);
-
+        
         float min = 0;
         float glue = 0;
         int n = getLayoutViewCount();
@@ -760,7 +761,7 @@ public class ParagraphView extends FlowView implements TabExpander {
                 // non-breakable view
                 glue += span;
                 min = Math.max(min, glue);
-            }
+            }           
         }
         r.minimum = Math.max(r.minimum, (int) min);
         r.preferred = Math.max(r.minimum,  r.preferred);
@@ -768,7 +769,7 @@ public class ParagraphView extends FlowView implements TabExpander {
 
         return r;
     }
-
+    
     /**
      * Binary search for the longest non-breakable fragment at the view edge.
      */
@@ -793,27 +794,27 @@ public class ParagraphView extends FlowView implements TabExpander {
             return findEdgeSpan(f, axis, fp, p0, p1);
         }
     }
-
+    
     /**
      * Gives notification from the document that attributes were changed
      * in a location that this view is responsible for.
      *
-     * @param changes the change information from the
-     *  associated document
+     * @param changes the change information from the 
+     *	associated document
      * @param a the current allocation of the view
      * @param f the factory to use to rebuild if the view has children
      * @see View#changedUpdate
      */
     public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
-        // update any property settings stored, and layout should be
-        // recomputed
-        setPropertiesFromAttributes();
-        layoutChanged(X_AXIS);
-        layoutChanged(Y_AXIS);
-        super.changedUpdate(changes, a, f);
+        // update any property settings stored, and layout should be 
+	// recomputed 
+	setPropertiesFromAttributes();
+	layoutChanged(X_AXIS);
+	layoutChanged(Y_AXIS);
+	super.changedUpdate(changes, a, f);
     }
 
-
+    
     // --- variables -----------------------------------------------
 
     private int justification;
@@ -865,15 +866,15 @@ public class ParagraphView extends FlowView implements TabExpander {
         protected void loadChildren(ViewFactory f) {
         }
 
-        /**
-         * Fetches the attributes to use when rendering.  This view
-         * isn't directly responsible for an element so it returns
-         * the outer classes attributes.
-         */
+	/**
+	 * Fetches the attributes to use when rendering.  This view
+	 * isn't directly responsible for an element so it returns
+	 * the outer classes attributes.
+	 */
         public AttributeSet getAttributes() {
-            View p = getParent();
-            return (p != null) ? p.getAttributes() : null;
-        }
+	    View p = getParent();
+	    return (p != null) ? p.getAttributes() : null;
+	}
 
         public float getAlignment(int axis) {
             if (axis == View.X_AXIS) {
@@ -900,9 +901,9 @@ public class ParagraphView extends FlowView implements TabExpander {
         /**
          * Provides a mapping from the document model coordinate space
          * to the coordinate space of the view mapped to it.  This is
-         * implemented to let the superclass find the position along
-         * the major axis and the allocation of the row is used
-         * along the minor axis, so that even though the children
+         * implemented to let the superclass find the position along 
+         * the major axis and the allocation of the row is used 
+         * along the minor axis, so that even though the children 
          * are different heights they all get the same caret height.
          *
          * @param pos the position to convert
@@ -914,12 +915,12 @@ public class ParagraphView extends FlowView implements TabExpander {
          */
         public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
             Rectangle r = a.getBounds();
-            View v = getViewAtPosition(pos, r);
-            if ((v != null) && (!v.getElement().isLeaf())) {
-                // Don't adjust the height if the view represents a branch.
-                return super.modelToView(pos, a, b);
-            }
-            r = a.getBounds();
+	    View v = getViewAtPosition(pos, r);
+	    if ((v != null) && (!v.getElement().isLeaf())) {
+		// Don't adjust the height if the view represents a branch.
+		return super.modelToView(pos, a, b);
+	    }
+	    r = a.getBounds();
             int height = r.height;
             int y = r.y;
             Shape loc = super.modelToView(pos, a, b);
@@ -935,53 +936,53 @@ public class ParagraphView extends FlowView implements TabExpander {
          * @see View#getRange
          */
         public int getStartOffset() {
-            int offs = Integer.MAX_VALUE;
+	    int offs = Integer.MAX_VALUE;
             int n = getViewCount();
-            for (int i = 0; i < n; i++) {
-                View v = getView(i);
-                offs = Math.min(offs, v.getStartOffset());
-            }
+	    for (int i = 0; i < n; i++) {
+		View v = getView(i);
+		offs = Math.min(offs, v.getStartOffset());
+	    }
             return offs;
         }
 
         public int getEndOffset() {
-            int offs = 0;
+	    int offs = 0;
             int n = getViewCount();
-            for (int i = 0; i < n; i++) {
-                View v = getView(i);
-                offs = Math.max(offs, v.getEndOffset());
-            }
+	    for (int i = 0; i < n; i++) {
+		View v = getView(i);
+		offs = Math.max(offs, v.getEndOffset());
+	    }
             return offs;
         }
 
-        /**
-         * Perform layout for the minor axis of the box (i.e. the
-         * axis orthoginal to the axis that it represents).  The results
-         * of the layout should be placed in the given arrays which represent
-         * the allocations to the children along the minor axis.
-         * <p>
-         * This is implemented to do a baseline layout of the children
-         * by calling BoxView.baselineLayout.
-         *
-         * @param targetSpan the total span given to the view, which
-         *  whould be used to layout the children.
-         * @param axis the axis being layed out.
-         * @param offsets the offsets from the origin of the view for
-         *  each of the child views.  This is a return value and is
-         *  filled in by the implementation of this method.
-         * @param spans the span of each child view.  This is a return
-         *  value and is filled in by the implementation of this method.
-         * @return the offset and span for each child view in the
-         *  offsets and spans parameters
-         */
+	/**
+	 * Perform layout for the minor axis of the box (i.e. the
+	 * axis orthoginal to the axis that it represents).  The results 
+	 * of the layout should be placed in the given arrays which represent 
+	 * the allocations to the children along the minor axis.
+	 * <p>
+	 * This is implemented to do a baseline layout of the children
+	 * by calling BoxView.baselineLayout.
+	 *
+	 * @param targetSpan the total span given to the view, which
+	 *  whould be used to layout the children.
+	 * @param axis the axis being layed out.
+	 * @param offsets the offsets from the origin of the view for
+	 *  each of the child views.  This is a return value and is
+	 *  filled in by the implementation of this method.
+	 * @param spans the span of each child view.  This is a return
+	 *  value and is filled in by the implementation of this method.
+	 * @return the offset and span for each child view in the
+	 *  offsets and spans parameters
+	 */
         protected void layoutMinorAxis(int targetSpan, int axis, int[] offsets, int[] spans) {
-            baselineLayout(targetSpan, axis, offsets, spans);
-        }
+	    baselineLayout(targetSpan, axis, offsets, spans);
+	}
 
-        protected SizeRequirements calculateMinorAxisRequirements(int axis,
-                                                                  SizeRequirements r) {
-            return baselineRequirements(axis, r);
-        }
+        protected SizeRequirements calculateMinorAxisRequirements(int axis, 
+								  SizeRequirements r) {
+	    return baselineRequirements(axis, r);
+	}
 
 
         private boolean isLastRow() {
@@ -989,25 +990,25 @@ public class ParagraphView extends FlowView implements TabExpander {
             return ((parent = getParent()) == null
                     || this == parent.getView(parent.getViewCount() - 1));
         }
-
+        
         private boolean isBrokenRow() {
             boolean rv = false;
             int viewsCount = getViewCount();
             if (viewsCount > 0) {
                 View lastView = getView(viewsCount - 1);
-                if (lastView.getBreakWeight(X_AXIS, 0, 0) >=
+                if (lastView.getBreakWeight(X_AXIS, 0, 0) >= 
                       ForcedBreakWeight) {
                     rv = true;
                 }
-            }
+            } 
             return rv;
         }
-
+        
         private boolean isJustifiableDocument() {
             return (! Boolean.TRUE.equals(getDocument().getProperty(
                           AbstractDocument.I18NProperty)));
         }
-
+        
         /**
          * Whether we need to justify this {@code Row}.
          * At this time (jdk1.6) we support justification on for non
@@ -1023,7 +1024,7 @@ public class ParagraphView extends FlowView implements TabExpander {
 
             //no justification for the last row
             ret = ret && ! isLastRow();
-
+            
             //no justification for the broken rows
             ret = ret && ! isBrokenRow();
 
@@ -1033,8 +1034,8 @@ public class ParagraphView extends FlowView implements TabExpander {
 
         //Calls super method after setting spaceAddon to 0.
         //Justification should not affect MajorAxisRequirements
-        @Override
-        protected SizeRequirements calculateMajorAxisRequirements(int axis,
+        @Override        
+        protected SizeRequirements calculateMajorAxisRequirements(int axis, 
                 SizeRequirements r) {
             int oldJustficationData[] = justificationData;
             justificationData = null;
@@ -1046,7 +1047,7 @@ public class ParagraphView extends FlowView implements TabExpander {
         }
 
         @Override
-        protected void layoutMajorAxis(int targetSpan, int axis,
+        protected void layoutMajorAxis(int targetSpan, int axis, 
                                        int[] offsets, int[] spans) {
             int oldJustficationData[] = justificationData;
             justificationData = null;
@@ -1063,12 +1064,12 @@ public class ParagraphView extends FlowView implements TabExpander {
                 //no need to justify
                 return;
             }
-
+            
             // we justify text by enlarging spaces by the {@code spaceAddon}.
             // justification is started to the right of the rightmost TAB.
             // leading and trailing spaces are not extendable.
             //
-            // GlyphPainter1 uses
+            // GlyphPainter1 uses 
             // justificationData
             // for all painting and measurement.
 
@@ -1084,7 +1085,7 @@ public class ParagraphView extends FlowView implements TabExpander {
             for (int i = getViewCount() - 1; i >= 0 ; i--) {
                 View view = getView(i);
                 if (view instanceof GlyphView) {
-                    GlyphView.JustificationInfo justificationInfo =
+                    GlyphView.JustificationInfo justificationInfo = 
                         ((GlyphView) view).getJustificationInfo(rowStartOffset);
                     final int viewStartOffset = view.getStartOffset();
                     final int offset = viewStartOffset - rowStartOffset;
@@ -1101,15 +1102,15 @@ public class ParagraphView extends FlowView implements TabExpander {
                         }
                     }
                     if (justificationInfo.start >= 0) {
-                        startJustifiableContent =
+                        startJustifiableContent = 
                             justificationInfo.start + viewStartOffset;
                         extendableSpaces += lastLeadingSpaces;
                     }
-                    if (justificationInfo.end >= 0
+                    if (justificationInfo.end >= 0 
                           && endJustifiableContent < 0) {
-                        endJustifiableContent =
-                            justificationInfo.end + viewStartOffset;
-                    }
+                        endJustifiableContent = 
+                            justificationInfo.end + viewStartOffset; 
+                    } 
                     extendableSpaces += justificationInfo.contentSpaces;
                     lastLeadingSpaces = justificationInfo.leadingSpaces;
                     if (justificationInfo.hasTab) {
@@ -1134,21 +1135,21 @@ public class ParagraphView extends FlowView implements TabExpander {
                 spaceAddonLeftoverEnd = i;
             }
             if (spaceAddon > 0 || spaceAddonLeftoverEnd >= 0) {
-                justificationData = (oldJustficationData != null)
+                justificationData = (oldJustficationData != null) 
                     ? oldJustficationData
                     : new int[END_JUSTIFIABLE + 1];
                 justificationData[SPACE_ADDON] = spaceAddon;
-                justificationData[SPACE_ADDON_LEFTOVER_END] =
+                justificationData[SPACE_ADDON_LEFTOVER_END] = 
                     spaceAddonLeftoverEnd;
-                justificationData[START_JUSTIFIABLE] =
+                justificationData[START_JUSTIFIABLE] = 
                     startJustifiableContent - rowStartOffset;
-                justificationData[END_JUSTIFIABLE] =
+                justificationData[END_JUSTIFIABLE] = 
                     endJustifiableContent - rowStartOffset;
                 super.layoutMajorAxis(targetSpan, axis, offsets, spans);
             }
         }
 
-        //for justified row we assume the maximum horizontal span
+        //for justified row we assume the maximum horizontal span 
         //is MAX_VALUE.
         @Override
         public float getMaximumSpan(int axis) {
@@ -1162,50 +1163,50 @@ public class ParagraphView extends FlowView implements TabExpander {
             return ret;
         }
 
-        /**
-         * Fetches the child view index representing the given position in
-         * the model.
-         *
-         * @param pos the position >= 0
-         * @return  index of the view representing the given position, or
-         *   -1 if no view represents that position
-         */
-        protected int getViewIndexAtPosition(int pos) {
-            // This is expensive, but are views are not necessarily layed
-            // out in model order.
-            if(pos < getStartOffset() || pos >= getEndOffset())
-                return -1;
-            for(int counter = getViewCount() - 1; counter >= 0; counter--) {
-                View v = getView(counter);
-                if(pos >= v.getStartOffset() &&
-                   pos < v.getEndOffset()) {
-                    return counter;
-                }
-            }
-            return -1;
-        }
+	/**
+	 * Fetches the child view index representing the given position in
+	 * the model.
+	 *
+	 * @param pos the position >= 0
+	 * @return  index of the view representing the given position, or 
+	 *   -1 if no view represents that position
+	 */
+	protected int getViewIndexAtPosition(int pos) {
+	    // This is expensive, but are views are not necessarily layed
+	    // out in model order.
+	    if(pos < getStartOffset() || pos >= getEndOffset())
+		return -1;
+	    for(int counter = getViewCount() - 1; counter >= 0; counter--) {
+		View v = getView(counter);
+		if(pos >= v.getStartOffset() &&
+		   pos < v.getEndOffset()) {
+		    return counter;
+		}
+	    }
+	    return -1;
+	}
 
-        /**
-         * Gets the left inset.
-         *
-         * @return the inset
-         */
-        protected short getLeftInset() {
-            View parentView;
-            int adjustment = 0;
-            if ((parentView = getParent()) != null) { //use firstLineIdent for the first row
-                if (this == parentView.getView(0)) {
-                    adjustment = firstLineIndent;
-                }
-            }
-            return (short)(super.getLeftInset() + adjustment);
-        }
-
-        protected short getBottomInset() {
-            return (short)(super.getBottomInset() +
-                           ((minorRequest != null) ? minorRequest.preferred : 0) *
-                           lineSpacing);
-        }
+	/**
+	 * Gets the left inset.
+	 *
+	 * @return the inset
+	 */
+	protected short getLeftInset() {
+	    View parentView;
+	    int adjustment = 0;
+	    if ((parentView = getParent()) != null) { //use firstLineIdent for the first row
+		if (this == parentView.getView(0)) {
+		    adjustment = firstLineIndent;
+		}
+	    }
+	    return (short)(super.getLeftInset() + adjustment);
+	}
+	
+	protected short getBottomInset() {
+	    return (short)(super.getBottomInset() + 
+			   ((minorRequest != null) ? minorRequest.preferred : 0) * 
+			   lineSpacing);
+	}
 
         final static int SPACE_ADDON = 0;
         final static int SPACE_ADDON_LEFTOVER_END = 1;

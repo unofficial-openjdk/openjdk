@@ -52,6 +52,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's PopupMenuUI.
  *
+ * @version %I%, %G%
  * @author Georges Saab
  * @author David Karlton
  * @author Arnaud Weber
@@ -89,13 +90,13 @@ class SynthPopupMenuUI extends BasicPopupMenuUI implements
     private SynthStyle style;
 
     public static ComponentUI createUI(JComponent x) {
-        return new SynthPopupMenuUI();
+	return new SynthPopupMenuUI();
     }
 
     public void installDefaults() {
-        if (popupMenu.getLayout() == null ||
-            popupMenu.getLayout() instanceof UIResource) {
-            popupMenu.setLayout(new DefaultMenuLayout(
+	if (popupMenu.getLayout() == null ||
+	    popupMenu.getLayout() instanceof UIResource) {
+	    popupMenu.setLayout(new DefaultMenuLayout(
                                     popupMenu, BoxLayout.Y_AXIS));
         }
         updateStyle(popupMenu);
@@ -154,7 +155,7 @@ class SynthPopupMenuUI extends BasicPopupMenuUI implements
     }
 
     /**
-     * Resets the max text and accerator widths,
+     * Resets the max text and accerator widths, 
      * text and icon offsets.
      */
     void resetAlignmentHints() {

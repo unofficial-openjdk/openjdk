@@ -45,7 +45,7 @@ public class WBMPMetadata extends IIOMetadata {
         "javax_imageio_wbmp_1.0";
 
     public int wbmpType;
-
+    
     public int width;
     public int height;
 
@@ -59,7 +59,7 @@ public class WBMPMetadata extends IIOMetadata {
     public boolean isReadOnly() {
         return true;
     }
-
+    
     public Node getAsTree(String formatName) {
         if (formatName.equals(nativeMetadataFormatName)) {
             return getNativeTree();
@@ -78,7 +78,7 @@ public class WBMPMetadata extends IIOMetadata {
         addChildNode(root, "WBMPType", new Integer(wbmpType));
         addChildNode(root, "Width", new Integer(width));
         addChildNode(root, "Height", new Integer(height));
-
+        
         return root;
     }
 
@@ -105,19 +105,19 @@ public class WBMPMetadata extends IIOMetadata {
         root.appendChild(child);
         return child;
     }
-
-
+    
+    
     protected IIOMetadataNode getStandardChromaNode() {
 
         IIOMetadataNode node = new IIOMetadataNode("Chroma");
         IIOMetadataNode subNode = new IIOMetadataNode("BlackIsZero");
         subNode.setAttribute("value", "TRUE");
-
+        
         node.appendChild(subNode);
         return node;
     }
 
-
+    
     protected IIOMetadataNode getStandardDimensionNode() {
         IIOMetadataNode dimension_node = new IIOMetadataNode("Dimension");
         IIOMetadataNode node = null; // scratch node

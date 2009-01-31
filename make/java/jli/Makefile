@@ -49,20 +49,10 @@ ZIP_SRC = $(SHARE_SRC)/native/java/util/zip/zlib-$(ZLIB_VERSION)
 LAUNCHER_SHARE_SRC = $(SHARE_SRC)/bin
 LAUNCHER_PLATFORM_SRC = $(PLATFORM_SRC)/bin
 
-ifeq ($(ARCH_FAMILY), amd64)
-ERGO_FAMILY=i586
-else
-ERGO_FAMILY=$(ARCH_FAMILY)
-endif
-
-
 #
 # Files to compile.
 #
 FILES_c = \
-	java.c \
-	splashscreen_stubs.c \
-	java_md.c \
 	parse_manifest.c \
 	version_comp.c \
 	wildcard.c \
@@ -76,43 +66,30 @@ FILES_c = \
 	zadler32.c \
 	zutil.c
 
-ifneq ($(PLATFORM), windows)
+OTHER_CPPFLAGS += -DEXPAND_CLASSPATH_WILDCARDS
 
-FILES_c += \
-	$(CTARGDIR)ergo.c \
-	$(CTARGDIR)ergo_$(ERGO_FAMILY).c
-endif
-
-
-# Names of arch directories
-LIBARCH_DEFINES = -DLIBARCHNAME='"$(LIBARCH)"'
-ifeq ($(PLATFORM), solaris)
-  LIBARCH_DEFINES += -DLIBARCH32NAME='"$(LIBARCH32)"'
-  LIBARCH_DEFINES += -DLIBARCH64NAME='"$(LIBARCH64)"'
-endif
-
-OTHER_CPPFLAGS += $(LIBARCH_DEFINES)
-
-
-ifneq ($(PLATFORM), windows)	# UNIX systems
+ifneq (,$(findstring $(PLATFORM), linux solaris))	# UNIX systems
 	LIB_LOCATION = $(LIBDIR)/$(LIBARCH)/jli
-	# Note: its important to keep this order meaning -lc is the
-	# last library otherwise it could cause compatibility issues
-	# by pulling in SUNW_private symbols from libc
-	LDLIBS = -ldl -lc
-ifeq ($(USE_PTHREADS),true)
-	LDLIBS += -lpthread
-endif # USE_PTHREADS 
-endif # PLATFORM
+	# Guarantee very limited dependencies
+	LDLIBS = -lc
+endif
 
 ifeq ($(PLATFORM), windows)
-	EXTRA_LIBS = advapi32.lib \
-		     user32.lib
-
+	EXTRA_LIBS =
 	JAVALIB =
-	OTHER_LCF =  -export:JLI_Launch \
-		     -export:JLI_ManifestIterate \
-		     -export:JLI_SetTraceLauncher
+	OTHER_LCF =  -export:JLI_ParseManifest \
+		     -export:JLI_JarUnpackFile \
+		     -export:JLI_FreeManifest \
+		     -export:JLI_ManifestIterate
+	OTHER_LCF += -export:JLI_ExactVersionId \
+		     -export:JLI_PrefixVersionId \
+		     -export:JLI_AcceptableRelease \
+		     -export:JLI_ValidVersionString
+	OTHER_LCF += -export:JLI_WildcardExpandClasspath
+	OTHER_LCF += -export:JLI_MemAlloc \
+		     -export:JLI_MemRealloc \
+		     -export:JLI_StringDup \
+		     -export:JLI_MemFree
 
 	# Files from zlib built here do not compile with warning level 3
 	# if warnings are fatal
@@ -162,4 +139,5 @@ endif	# PLATFORM
 #
 # Add to ambient vpath so we pick up the library files
 #
-vpath %.c $(LAUNCHER_SHARE_SRC) $(ZIP_SRC) $(LAUNCHER_PLATFORM_SRC)
+vpath %.c $(LAUNCHER_SHARE_SRC) $(ZIP_SRC)
+

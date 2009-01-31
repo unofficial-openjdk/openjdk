@@ -41,24 +41,25 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A simple in-memory java.net.CookieStore implementation
  *
+ * @version %I%, %E%
  * @author Edward Wang
  * @since 1.6
  */
 public class InMemoryCookieStore implements CookieStore {
     // the in-memory representation of cookies
     private List<HttpCookie> cookieJar = null;
-
+    
     // the cookies are indexed by its domain and associated uri (if present)
     // CAUTION: when a cookie removed from main data structure (i.e. cookieJar),
     //          it won't be cleared in domainIndex & uriIndex. Double-check the
     //          presence of cookie when retrieve one form index store.
     private Map<String, List<HttpCookie>> domainIndex = null;
     private Map<URI, List<HttpCookie>> uriIndex = null;
-
+    
     // use ReentrantLock instead of syncronized for scalability
     private ReentrantLock lock = null;
-
-
+    
+    
     /**
      * The default ctor
      */
@@ -66,10 +67,10 @@ public class InMemoryCookieStore implements CookieStore {
         cookieJar = new ArrayList<HttpCookie>();
         domainIndex = new HashMap<String, List<HttpCookie>>();
         uriIndex = new HashMap<URI, List<HttpCookie>>();
-
+        
         lock = new ReentrantLock(false);
     }
-
+    
     /**
      * Add one cookie into cookie store.
      */
@@ -78,13 +79,13 @@ public class InMemoryCookieStore implements CookieStore {
         if (cookie == null) {
             throw new NullPointerException("cookie is null");
         }
-
-
+        
+        
         lock.lock();
         try {
             // remove the ole cookie if there has had one
             cookieJar.remove(cookie);
-
+            
             // add new cookie if it has a non-zero max-age
             if (cookie.getMaxAge() != 0) {
                 cookieJar.add(cookie);
@@ -111,7 +112,7 @@ public class InMemoryCookieStore implements CookieStore {
         if (uri == null) {
             throw new NullPointerException("uri is null");
         }
-
+        
         List<HttpCookie> cookies = new ArrayList<HttpCookie>();
         lock.lock();
         try {
@@ -122,7 +123,7 @@ public class InMemoryCookieStore implements CookieStore {
         } finally {
             lock.unlock();
         }
-
+        
         return cookies;
     }
 
@@ -131,7 +132,7 @@ public class InMemoryCookieStore implements CookieStore {
      */
     public List<HttpCookie> getCookies() {
         List<HttpCookie> rt;
-
+        
         lock.lock();
         try {
             Iterator<HttpCookie> it = cookieJar.iterator();
@@ -144,17 +145,17 @@ public class InMemoryCookieStore implements CookieStore {
             rt = Collections.unmodifiableList(cookieJar);
             lock.unlock();
         }
-
+        
         return rt;
     }
-
+    
     /**
      * Get all URIs, which are associated with at least one cookie
      * of this cookie store.
-     */
+     */    
     public List<URI> getURIs() {
         List<URI> uris = new ArrayList<URI>();
-
+        
         lock.lock();
         try {
             Iterator<URI> it = uriIndex.keySet().iterator();
@@ -171,11 +172,11 @@ public class InMemoryCookieStore implements CookieStore {
             uris.addAll(uriIndex.keySet());
             lock.unlock();
         }
-
+        
         return uris;
     }
-
-
+    
+    
     /**
      * Remove a cookie from store
      */
@@ -184,7 +185,7 @@ public class InMemoryCookieStore implements CookieStore {
         if (ck == null) {
             throw new NullPointerException("cookie is null");
         }
-
+        
         boolean modified = false;
         lock.lock();
         try {
@@ -192,7 +193,7 @@ public class InMemoryCookieStore implements CookieStore {
         } finally {
             lock.unlock();
         }
-
+        
         return modified;
     }
 
@@ -209,21 +210,21 @@ public class InMemoryCookieStore implements CookieStore {
         } finally {
             lock.unlock();
         }
-
+        
         return true;
     }
-
-
+    
+    
     /* ---------------- Private operations -------------- */
-
-
+    
+    
     static class DomainComparator implements Comparable<String> {
         String host = null;
-
+        
         public DomainComparator(String host) {
             this.host = host;
         }
-
+        
         public int compareTo(String domain) {
             if (HttpCookie.domainMatches(domain, host)) {
                 return 0;
@@ -269,7 +270,7 @@ public class InMemoryCookieStore implements CookieStore {
             } // end of comparator.compareTo(index) == 0
         } // end of cookieIndex iteration
     }
-
+    
     // add 'cookie' indexed by 'index' into 'indexStore'
     private <T> void addIndex(Map<T, List<HttpCookie>> indexStore,
                               T index,
@@ -280,7 +281,7 @@ public class InMemoryCookieStore implements CookieStore {
             if (cookies != null) {
                 // there may already have the same cookie, so remove it first
                 cookies.remove(cookie);
-
+                
                 cookies.add(cookie);
             } else {
                 cookies = new ArrayList<HttpCookie>();
@@ -289,7 +290,7 @@ public class InMemoryCookieStore implements CookieStore {
             }
         }
     }
-
+    
 
     //
     // for cookie purpose, the effective uri should only be scheme://authority
@@ -307,7 +308,7 @@ public class InMemoryCookieStore implements CookieStore {
         } catch (URISyntaxException ignored) {
             effectiveURI = uri;
         }
-
+        
         return effectiveURI;
     }
 }

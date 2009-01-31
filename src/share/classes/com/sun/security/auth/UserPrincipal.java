@@ -30,11 +30,11 @@ import java.security.Principal;
 /**
  * A user principal identified by a username or account name.
  *
- * <p>
+ * <p> 
  * After successful authentication, a user {@link java.security.Principal}
- * can be associated with a particular {@link javax.security.auth.Subject}
- * to augment that <code>Subject</code> with an additional identity.
- * Authorization decisions can then be based upon the
+ * can be associated with a particular {@link javax.security.auth.Subject} 
+ * to augment that <code>Subject</code> with an additional identity.  
+ * Authorization decisions can then be based upon the 
  * <code>Principal</code>s that are associated with a <code>Subject</code>.
  *
  * <p>
@@ -47,7 +47,7 @@ public final class UserPrincipal implements Principal, java.io.Serializable {
     private static final long serialVersionUID = 892106070870210969L;
 
     /**
-     * The principal's name
+     * The principal's name 
      *
      * @serial
      */
@@ -57,14 +57,14 @@ public final class UserPrincipal implements Principal, java.io.Serializable {
      * Creates a principal.
      *
      * @param name The principal's string name.
-     * @exception NullPointerException If the <code>name</code> is
+     * @exception NullPointerException If the <code>name</code> is 
      * <code>null</code>.
      */
     public UserPrincipal(String name) {
-        if (name == null) {
-            throw new NullPointerException("null name is illegal");
-        }
-        this.name = name;
+	if (name == null) {
+	    throw new NullPointerException("null name is illegal");
+	}
+	this.name = name;
     }
 
     /**
@@ -74,13 +74,13 @@ public final class UserPrincipal implements Principal, java.io.Serializable {
      * @return true if they are equal; false otherwise.
      */
     public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (object instanceof UserPrincipal) {
-            return name.equals(((UserPrincipal)object).getName());
-        }
-        return false;
+	if (this == object) {
+	    return true;
+	}
+	if (object instanceof UserPrincipal) {
+	    return name.equals(((UserPrincipal)object).getName());
+	}
+	return false;
     }
 
     /**
@@ -89,7 +89,7 @@ public final class UserPrincipal implements Principal, java.io.Serializable {
      * @return The principal's hash code.
      */
     public int hashCode() {
-        return name.hashCode();
+	return name.hashCode();
     }
 
     /**
@@ -98,7 +98,7 @@ public final class UserPrincipal implements Principal, java.io.Serializable {
      * @return The principal's name.
      */
     public String getName() {
-        return name;
+	return name;
     }
 
     /**
@@ -107,6 +107,6 @@ public final class UserPrincipal implements Principal, java.io.Serializable {
      * @return The principal's name.
      */
     public String toString() {
-        return name;
+	return name;
     }
 }

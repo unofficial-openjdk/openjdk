@@ -67,15 +67,15 @@ Java_java_awt_KeyboardFocusManager_initIDs
         (*env)->GetStaticMethodID(env, cls, "markClearGlobalFocusOwner",
                                   "()Ljava/awt/Window;");
 
-    keyboardFocusManagerIDs.processSynchronousTransferMID =
+    keyboardFocusManagerIDs.processSynchronousTransferMID = 
         (*env)->GetStaticMethodID(env, cls, "processSynchronousLightweightTransfer",
                                   "(Ljava/awt/Component;Ljava/awt/Component;ZZJ)Z");
 
     keyclass = (*env)->FindClass(env, "java/awt/event/KeyEvent");
     DASSERT (keyclass != NULL);
 
-    keyboardFocusManagerIDs.isProxyActive =
-        (*env)->GetFieldID(env, keyclass, "isProxyActive",
+    keyboardFocusManagerIDs.isProxyActive = 
+        (*env)->GetFieldID(env, keyclass, "isProxyActive", 
                            "Z");
 
     (*env)->DeleteLocalRef(env, keyclass);
@@ -166,7 +166,7 @@ Java_sun_awt_KeyboardFocusManagerPeerImpl_clearNativeGlobalFocusOwner
 
             // Disable all but proxy widgets
             processTree(curFocusWidget, proxy, False);
-
+            
             XmProcessTraversal(proxy, XmTRAVERSE_CURRENT);
         }
     }

@@ -28,9 +28,9 @@
  *          and getThreadInfo of customized JSR-166 synchronizers.
  * @author  Mandy Chung
  *
- * @build Barrier
- * @build ThreadDump
- * @run main MyOwnSynchronizer
+ * @build Barrier 
+ * @build ThreadDump 
+ * @run main MyOwnSynchronizer 
  */
 
 import java.lang.management.*;
@@ -52,7 +52,7 @@ public class MyOwnSynchronizer {
         thread.setDaemon(true);
         thread.start();
 
-        // wait until myThread acquires mutex
+        // wait until myThread acquires mutex 
         while (!mutex.isLocked()) {
            try {
                Thread.sleep(100);
@@ -60,7 +60,7 @@ public class MyOwnSynchronizer {
                throw new RuntimeException(e);
            }
         }
-
+        
         ThreadDump.threadDump();
         // Test dumpAllThreads with locked synchronizers
         ThreadInfo[] tinfos = mbean.dumpAllThreads(false, true);
@@ -74,7 +74,7 @@ public class MyOwnSynchronizer {
            if (ti.getThreadId() == thread.getId()) {
                thread.checkLockedSyncs(ti, syncs);
            }
-        }
+        } 
 
         // Test getThreadInfo with locked synchronizers
         tinfos = mbean.getThreadInfo(new long[] {thread.getId()}, false, true);
@@ -85,23 +85,23 @@ public class MyOwnSynchronizer {
         ThreadInfo ti = tinfos[0];
         if (ti.getLockedMonitors().length != 0) {
             throw new RuntimeException("Name: " + ti.getThreadName() +
-               " has non-empty locked monitors = " +
+               " has non-empty locked monitors = " + 
                ti.getLockedMonitors().length);
         }
         thread.checkLockedSyncs(ti, ti.getLockedSynchronizers());
-
+ 
         System.out.println("Test passed");
     }
 
     static class Mutex implements Lock, java.io.Serializable {
-
+   
         // Our internal helper class
         class Sync extends AbstractQueuedSynchronizer {
             // Report whether in locked state
             protected boolean isHeldExclusively() {
                 return getState() == 1;
             }
-
+      
             // Acquire the lock if state is zero
             public boolean tryAcquire(int acquires) {
                 assert acquires == 1; // Otherwise unused
@@ -111,7 +111,7 @@ public class MyOwnSynchronizer {
                 }
                 return false;
             }
-
+      
             // Release the lock by setting state to zero
             protected boolean tryRelease(int releases) {
                 assert releases == 1; // Otherwise unused
@@ -120,18 +120,18 @@ public class MyOwnSynchronizer {
                 setState(0);
                 return true;
             }
-
+      
             // Provide a Condition
             Condition newCondition() { return new ConditionObject(); }
-
+      
             // Deserialize properly
-            private void readObject(ObjectInputStream s)
+            private void readObject(ObjectInputStream s) 
                 throws IOException, ClassNotFoundException {
                 s.defaultReadObject();
                 setState(0); // reset to unlocked state
             }
         }
-
+    
         // The sync object does all the hard work. We just forward to it.
         private final Sync sync = new Sync();
 
@@ -148,7 +148,7 @@ public class MyOwnSynchronizer {
             return sync.tryAcquireNanos(1, unit.toNanos(timeout));
         }
 
-        public AbstractOwnableSynchronizer getSync() { return sync; }
+        public AbstractOwnableSynchronizer getSync() { return sync; } 
     }
 
     static class MyThread extends Thread {

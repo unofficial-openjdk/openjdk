@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,214 +30,214 @@ import java.security.*;
 
 public class XObjectOutputStream extends AbstractObjectOutputStream {
     XObjectOutputStream(OutputStream out) throws IOException {
-        super(out);
+	super(out);
     }
 
     protected boolean enableReplaceObject(boolean enable)
     {
-        throw new Error("not implemented");
+	throw new Error("not implemented");
     }
 
     protected void annotateClass(Class<?> cl) throws IOException {
     }
-
+    
     public void close() throws IOException{
-        out.close();
+	out.close();
     }
-
+    
     protected Object replaceObject(Object obj) throws IOException {
-        return obj;
+	return obj;
     }
 
     protected void writeStreamHeader() throws IOException {
-        super.writeStreamHeader();
+	super.writeStreamHeader();
     }
 
     final protected void writeObjectOverride(Object obj) throws IOException {
-        Object prevCurrentObject = currentObject;
-        currentObject = obj;
-        System.out.println("writeObjectOverride(" + obj.toString() + ")");
-        try {
-        //     ** Preserving reference semantics.
-        //     if (obj already serialized) {
-        //       look up streamId for obj and write it into 'this' stream.
-        //       return;
-        //     }
-        //
-        //     if (obj instanceof Class) {
-        //       //Special processing for classes.
-        //       //Might need to call this.annotateClass(obj.getClass())
-        //       //someday.
-        //       return;
-        //     }
-        //
-        //     **Replacement semantics
-        //     Object replacement = obj;
-        //     if (enableReplace)
-        //       replacement = this.writeReplace(obj);
-        //     if (replacement instanceof Replaceable)
-        //       replacement = ((Replaceable)replacement).replaceObject(this);
-        //     if (obj != replacement) {
-        //       //record that all future occurances of obj should be replaced
-        //       //with replacement
-        //     }
-        //
-        //     if obj is Externalizeable {
-        //      Object[] argList = {this};
-        //      invokeMethod(obj, writeExternalMethod, argList);
-        //     else
+	Object prevCurrentObject = currentObject;
+	currentObject = obj;
+	System.out.println("writeObjectOverride(" + obj.toString() + ")");
+	try {
+	//     ** Preserving reference semantics.
+	//     if (obj already serialized) {
+	//	 look up streamId for obj and write it into 'this' stream.
+	//	 return;
+	//     }
+	//
+	//     if (obj instanceof Class) {
+	//	 //Special processing for classes.
+	//	 //Might need to call this.annotateClass(obj.getClass())
+	//	 //someday.
+	//	 return;
+	//     }
+	//
+	//     **Replacement semantics
+	//     Object replacement = obj;
+	//     if (enableReplace)
+	//	 replacement = this.writeReplace(obj);
+	//     if (replacement instanceof Replaceable)
+	//	 replacement = ((Replaceable)replacement).replaceObject(this);
+	//     if (obj != replacement) {
+	//	 //record that all future occurances of obj should be replaced
+	//	 //with replacement
+	//     }
+	//
+	//     if obj is Externalizeable {
+	//	Object[] argList = {this};
+	//	invokeMethod(obj, writeExternalMethod, argList);
+	//     else
 
-        Method writeObjectMethod = getWriteObjectMethod(obj.getClass());
+	Method writeObjectMethod = getWriteObjectMethod(obj.getClass());
 
-        if (writeObjectMethod != null) {
-            Object[] arglist = {this};
-            invokeMethod(obj, writeObjectMethod, arglist);
-        } else
-            defaultWriteObject();
-        } finally {
-            currentObject = prevCurrentObject;
-        }
+	if (writeObjectMethod != null) {
+	    Object[] arglist = {this};
+	    invokeMethod(obj, writeObjectMethod, arglist);
+	} else
+	    defaultWriteObject();
+	} finally {
+	    currentObject = prevCurrentObject;
+	}
     }
 
     /* Since defaultWriteObject() does not take the object to write as a parameter,
      * implementation is required to store currentObject when writeObject is called.
      */
     public void defaultWriteObject() throws IOException {
-        Object obj = currentObject;
-        System.out.println("XObjectOutputStream.defaultWriteObject(" +
-                            obj.toString() + ")");
+	Object obj = currentObject;
+	System.out.println("XObjectOutputStream.defaultWriteObject(" +
+			    obj.toString() + ")");
 
-        //In order to access package, private and protected fields,
-        //one needs to use Priviledged Access and be trusted code.
-        //This test will avoid that problem by only serializing public fields.
-        Field[] fields = obj.getClass().getFields();
-        for (int i= 0; i < fields.length; i++) {
-            //Skip non-Serializable fields.
-            int mods = fields[i].getModifiers();
-            if (Modifier.isStatic(mods) || Modifier.isTransient(mods))
-                continue;
-            Class FieldType = fields[i].getType();
-            if (FieldType.isPrimitive()) {
-                System.out.println("Field " + fields[i].getName() +
-                                    " has primitive type " + FieldType.toString());
-            } else {
-                System.out.println("**Field " + fields[i].getName() +
-                                   " is an Object of type " + FieldType.toString());
-                try {
-                    writeObject(fields[i].get(obj));
-                    if (FieldType.isArray()) {
-                        Object[] array = ((Object[]) fields[i].get(obj));
-                        Class componentType = FieldType.getComponentType();
-                        if (componentType.isPrimitive())
-                            System.out.println("Output " + array.length + " primitive elements of" +
-                                               componentType.toString());
-                        else {
-                            System.out.println("Output " + array.length + " of Object elements of" +
-                                               componentType.toString());
-                            for (int k = 0; k < array.length; k++) {
-                                writeObject(array[k]);
-                            }
-                        }
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new IOException(e.getMessage());
-                }
-            }
-        }
+	//In order to access package, private and protected fields,
+	//one needs to use Priviledged Access and be trusted code.
+	//This test will avoid that problem by only serializing public fields.
+	Field[] fields = obj.getClass().getFields();
+	for (int i= 0; i < fields.length; i++) {
+	    //Skip non-Serializable fields.
+	    int mods = fields[i].getModifiers();
+	    if (Modifier.isStatic(mods) || Modifier.isTransient(mods))
+		continue;
+	    Class FieldType = fields[i].getType();
+	    if (FieldType.isPrimitive()) {
+		System.out.println("Field " + fields[i].getName() +
+				    " has primitive type " + FieldType.toString());
+	    } else {
+		System.out.println("**Field " + fields[i].getName() +
+				   " is an Object of type " + FieldType.toString());
+		try {
+		    writeObject(fields[i].get(obj));
+		    if (FieldType.isArray()) {
+			Object[] array = ((Object[]) fields[i].get(obj));
+			Class componentType = FieldType.getComponentType();
+			if (componentType.isPrimitive())
+			    System.out.println("Output " + array.length + " primitive elements of" +
+					       componentType.toString());
+			else {
+			    System.out.println("Output " + array.length + " of Object elements of" +
+					       componentType.toString());
+			    for (int k = 0; k < array.length; k++) {
+				writeObject(array[k]);
+			    }
+			}
+		    }
+		} catch (IllegalAccessException e) {
+		    throw new IOException(e.getMessage());
+		}
+	    }
+	}
     }
-
+    
     public PutField putFields() throws IOException {
-        currentPutField = new InternalPutField();
-        return currentPutField;
+	currentPutField = new InternalPutField();
+	return currentPutField;
     }
 
     public void writeFields() throws IOException {
-        currentPutField.write(this);
+	currentPutField.write(this);
     }
 
     static final class InternalPutField extends ObjectOutputStream.PutField {
-        String fieldName[];
-        int    intValue[];
-        int next;
+	String fieldName[];
+	int    intValue[];
+	int next;
 
-        InternalPutField() {
-            fieldName = new String[10];
-            intValue = new int[10];
-            next = 0;
-        }
-        /**
-         * Put the value of the named boolean field into the persistent field.
-         */
-        public void put(String name, boolean value) {
-        }
+	InternalPutField() {
+	    fieldName = new String[10];
+	    intValue = new int[10];
+	    next = 0;
+	}
+	/**
+	 * Put the value of the named boolean field into the persistent field.
+	 */
+	public void put(String name, boolean value) {
+	}
 
-        /**
-         * Put the value of the named char field into the persistent fields.
-         */
-        public void put(String name, char value) {
-        }
+	/**
+	 * Put the value of the named char field into the persistent fields.
+	 */
+	public void put(String name, char value) {
+	}
 
-        /**
-         * Put the value of the named byte field into the persistent fields.
-         */
-        public void put(String name, byte value) {
-        }
+	/**
+	 * Put the value of the named byte field into the persistent fields.
+	 */
+	public void put(String name, byte value) {
+	}
+    
+	/**
+	 * Put the value of the named short field into the persistent fields.
+	 */
+	public void put(String name, short value) {
+	}
 
-        /**
-         * Put the value of the named short field into the persistent fields.
-         */
-        public void put(String name, short value) {
-        }
+	/**
+	 * Put the value of the named int field into the persistent fields.
+	 */
+	public void put(String name, int value) {
+	    if (next < fieldName.length) {
+		fieldName[next] = name;
+		intValue[next] = value;
+		next++;
+	    }
+	}
 
-        /**
-         * Put the value of the named int field into the persistent fields.
-         */
-        public void put(String name, int value) {
-            if (next < fieldName.length) {
-                fieldName[next] = name;
-                intValue[next] = value;
-                next++;
-            }
-        }
+	/**
+	 * Put the value of the named long field into the persistent fields.
+	 */
+	public void put(String name, long value) {
+	}
 
-        /**
-         * Put the value of the named long field into the persistent fields.
-         */
-        public void put(String name, long value) {
-        }
+	/**
+	 * Put the value of the named float field into the persistent fields.
+	 */
+	public void put(String name, float value) {
+	}
 
-        /**
-         * Put the value of the named float field into the persistent fields.
-         */
-        public void put(String name, float value) {
-        }
+	/**
+	 * Put the value of the named double field into the persistent field.
+	 */
+	public void put(String name, double value) {
+	}
 
-        /**
-         * Put the value of the named double field into the persistent field.
-         */
-        public void put(String name, double value) {
-        }
+	/**
+	 * Put the value of the named Object field into the persistent field.
+	 */
+	public void put(String name, Object value) {
+	}
 
-        /**
-         * Put the value of the named Object field into the persistent field.
-         */
-        public void put(String name, Object value) {
-        }
-
-        /**
-         * Write the data and fields to the specified ObjectOutput stream.
-         */
-        public void write(ObjectOutput out) throws IOException {
-            for (int i = 0; i < next; i++)
-                System.out.println(fieldName[i] + "=" + intValue[i]);
-        }
+	/**
+	 * Write the data and fields to the specified ObjectOutput stream.
+	 */
+	public void write(ObjectOutput out) throws IOException {
+	    for (int i = 0; i < next; i++)
+		System.out.println(fieldName[i] + "=" + intValue[i]);
+	}
     };
 
 
     /**
      * Writes a byte. This method will block until the byte is actually
      * written.
-     * @param b the byte
+     * @param b	the byte
      * @exception IOException If an I/O error has occurred.
      * @since     JDK1.1
      */
@@ -247,7 +247,7 @@ public class XObjectOutputStream extends AbstractObjectOutputStream {
     /**
      * Writes an array of bytes. This method will block until the bytes
      * are actually written.
-     * @param b the data to be written
+     * @param b	the data to be written
      * @exception IOException If an I/O error has occurred.
      * @since     JDK1.1
      */
@@ -255,10 +255,10 @@ public class XObjectOutputStream extends AbstractObjectOutputStream {
     }
 
     /**
-     * Writes a sub array of bytes.
-     * @param b the data to be written
-     * @param off       the start offset in the data
-     * @param len       the number of bytes that are written
+     * Writes a sub array of bytes. 
+     * @param b	the data to be written
+     * @param off	the start offset in the data
+     * @param len	the number of bytes that are written
      * @exception IOException If an I/O error has occurred.
      * @since     JDK1.1
      */
@@ -302,63 +302,64 @@ public class XObjectOutputStream extends AbstractObjectOutputStream {
      */
     static public Method getWriteObjectMethod(final Class cl) {
 
-        Method writeObjectMethod = (Method)
-            java.security.AccessController.doPrivileged
-            (new java.security.PrivilegedAction() {
-                public Object run() {
-                    Method m = null;
-                    try {
-                        Class[] args = {ObjectOutputStream.class};
-                        m = cl.getDeclaredMethod("writeObject", args);
-                        int mods = m.getModifiers();
-                        // Method must be private and non-static
-                        if (!Modifier.isPrivate(mods) ||
-                            Modifier.isStatic(mods)) {
-                            m = null;
-                        } else {
-                            m.setAccessible(true);
-                        }
-                    } catch (NoSuchMethodException e) {
-                        m = null;
-                    }
-                    return m;
-                }
-            });
-        return writeObjectMethod;
+	Method writeObjectMethod = (Method)
+	    java.security.AccessController.doPrivileged
+	    (new java.security.PrivilegedAction() {
+		public Object run() {
+		    Method m = null;
+		    try {
+			Class[] args = {ObjectOutputStream.class};
+			m = cl.getDeclaredMethod("writeObject", args);
+			int mods = m.getModifiers();
+			// Method must be private and non-static
+			if (!Modifier.isPrivate(mods) ||
+			    Modifier.isStatic(mods)) {
+			    m = null;
+			} else {
+			    m.setAccessible(true);
+			}
+		    } catch (NoSuchMethodException e) {
+			m = null;
+		    }
+		    return m;
+		}
+	    });
+	return writeObjectMethod;
     }
 
     /*************************************************************/
 
     /* CODE LIFTED FROM ObjectOutputStream. */
     static private void invokeMethod(final Object obj, final Method m,
-                                        final Object[] argList)
-        throws IOException
+					final Object[] argList)
+	throws IOException
     {
-        try {
-            java.security.AccessController.doPrivileged
-                (new java.security.PrivilegedExceptionAction() {
-                    public Object run() throws InvocationTargetException,
-                                        java.lang.IllegalAccessException {
-                        m.invoke(obj, argList);
-                        return null;
-                    }
-                });
-        } catch (java.security.PrivilegedActionException e) {
-            Exception ex = e.getException();
-            if (ex instanceof InvocationTargetException) {
-                Throwable t =
-                        ((InvocationTargetException)ex).getTargetException();
-                if (t instanceof IOException)
-                    throw (IOException)t;
-                else if (t instanceof RuntimeException)
-                    throw (RuntimeException) t;
-                else if (t instanceof Error)
-                    throw (Error) t;
-                else
-                    throw new Error("interal error");
-            } else {
-                // IllegalAccessException cannot happen
-            }
-        }
+	try {
+	    java.security.AccessController.doPrivileged
+		(new java.security.PrivilegedExceptionAction() {
+		    public Object run() throws InvocationTargetException,
+					java.lang.IllegalAccessException {
+			m.invoke(obj, argList);
+			return null;
+		    }
+		});
+	} catch (java.security.PrivilegedActionException e) {
+	    Exception ex = e.getException();
+	    if (ex instanceof InvocationTargetException) {
+		Throwable t =
+			((InvocationTargetException)ex).getTargetException();
+		if (t instanceof IOException)
+		    throw (IOException)t;
+		else if (t instanceof RuntimeException)
+		    throw (RuntimeException) t;
+		else if (t instanceof Error)
+		    throw (Error) t;
+		else
+		    throw new Error("interal error");
+	    } else {
+		// IllegalAccessException cannot happen
+	    }
+	}
     }
 };
+

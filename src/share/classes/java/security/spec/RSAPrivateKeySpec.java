@@ -32,6 +32,7 @@ import java.math.BigInteger;
  *
  * @author Jan Luehe
  *
+ * @version %I% %E%
  *
  * @see java.security.Key
  * @see java.security.KeyFactory
@@ -53,8 +54,8 @@ public class RSAPrivateKeySpec implements KeySpec {
      * @param privateExponent the private exponent
      */
     public RSAPrivateKeySpec(BigInteger modulus, BigInteger privateExponent) {
-        this.modulus = modulus;
-        this.privateExponent = privateExponent;
+	this.modulus = modulus;
+	this.privateExponent = privateExponent;
     }
 
     /**
@@ -63,7 +64,7 @@ public class RSAPrivateKeySpec implements KeySpec {
      * @return the modulus
      */
     public BigInteger getModulus() {
-        return this.modulus;
+	return this.modulus;
     }
 
     /**
@@ -72,6 +73,6 @@ public class RSAPrivateKeySpec implements KeySpec {
      * @return the private exponent
      */
     public BigInteger getPrivateExponent() {
-        return this.privateExponent;
+	return this.privateExponent;
     }
 }

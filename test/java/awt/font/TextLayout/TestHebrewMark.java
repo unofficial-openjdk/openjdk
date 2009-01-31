@@ -43,11 +43,11 @@ public class TestHebrewMark {
        System.out.println("String1 has " + string1len+" chars, and string2 (without the QAMATS) has " + string2.length());
        if(string1len == string2len) {
            throw new RuntimeException("Hey, string1 and string2 are both " + string1len + " chars long - shouldn't happen.");
-       }
+       } 
        Font f = null;
        // try to find a font that will work
        for(String fontname : fonts ) {
-          System.err.println("trying: " +fontname);
+	  System.err.println("trying: " +fontname);
            Font afont = new Font(fontname,Font.PLAIN,18);
            if(!afont.getFontName().equals(fontname)) {
              System.out.println(fontname + ": is actually  " + afont.getFontName() + " - skipping this font.");
@@ -58,7 +58,7 @@ public class TestHebrewMark {
              continue;
            }
            f = afont;
-        System.err.println("Might be OK: " + fontname);
+	System.err.println("Might be OK: " + fontname);
         System.out.println("Using font " + f.getFontName());
         TextLayout tl = new TextLayout(string1, f, frc);
         TextLayout tl2 = new TextLayout(string2, f, frc);
@@ -82,3 +82,4 @@ public class TestHebrewMark {
        }
    }
 }
+

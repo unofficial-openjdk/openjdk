@@ -32,7 +32,7 @@ import java.net.SocketException;
 /**
  * The WrappedSocket class provides a general wrapper for providing an
  * extended implementation of java.net.Socket that can be attached to
- * a pre-existing Socket object.  WrappedSocket itself provides a
+ * a pre-existing Socket object.  WrappedSocket itself provides a 
  * constructor for specifying alternate input or output streams to be
  * returned than those of the underlying Socket.
  */
@@ -58,12 +58,12 @@ class WrappedSocket extends Socket {
      * @param out the OutputStream to return to users (can be null)
      */
     public WrappedSocket(Socket socket, InputStream in, OutputStream out)
-        throws IOException
+	throws IOException
     {
-        super((java.net.SocketImpl)null);       // no underlying SocketImpl for this object
-        this.socket = socket;
-        this.in = in;
-        this.out = out;
+	super((java.net.SocketImpl)null);	// no underlying SocketImpl for this object
+	this.socket = socket;
+	this.in = in;
+	this.out = out;
     }
 
     /**
@@ -71,14 +71,14 @@ class WrappedSocket extends Socket {
      */
     public InetAddress getInetAddress()
     {
-        return socket.getInetAddress();
+	return socket.getInetAddress();
     }
 
     /**
      * Get the local address to which the socket is bound.
      */
     public InetAddress getLocalAddress() {
-        return socket.getLocalAddress();
+	return socket.getLocalAddress();
     }
 
     /**
@@ -86,7 +86,7 @@ class WrappedSocket extends Socket {
      */
     public int getPort()
     {
-        return socket.getPort();
+	return socket.getPort();
     }
 
     /**
@@ -94,7 +94,7 @@ class WrappedSocket extends Socket {
      */
     public int getLocalPort()
     {
-        return socket.getLocalPort();
+	return socket.getLocalPort();
     }
 
     /**
@@ -102,9 +102,9 @@ class WrappedSocket extends Socket {
      */
     public InputStream getInputStream() throws IOException
     {
-        if (in == null)
-            in = socket.getInputStream();
-        return in;
+	if (in == null)
+	    in = socket.getInputStream();
+	return in;
     }
 
     /**
@@ -112,9 +112,9 @@ class WrappedSocket extends Socket {
      */
     public OutputStream getOutputStream() throws IOException
     {
-        if (out == null)
-            out = socket.getOutputStream();
-        return out;
+	if (out == null)
+	    out = socket.getOutputStream();
+	return out;
     }
 
     /**
@@ -122,7 +122,7 @@ class WrappedSocket extends Socket {
      */
     public void setTcpNoDelay(boolean on) throws SocketException
     {
-        socket.setTcpNoDelay(on);
+	socket.setTcpNoDelay(on);
     }
 
     /**
@@ -130,15 +130,15 @@ class WrappedSocket extends Socket {
      */
     public boolean getTcpNoDelay() throws SocketException
     {
-        return socket.getTcpNoDelay();
+	return socket.getTcpNoDelay();
     }
 
     /**
-     * Enable/disable SO_LINGER with the specified linger time.
+     * Enable/disable SO_LINGER with the specified linger time.  
      */
     public void setSoLinger(boolean on, int val) throws SocketException
     {
-        socket.setSoLinger(on, val);
+	socket.setSoLinger(on, val);
     }
 
     /**
@@ -146,7 +146,7 @@ class WrappedSocket extends Socket {
      */
     public int getSoLinger() throws SocketException
     {
-        return socket.getSoLinger();
+	return socket.getSoLinger();
     }
 
     /**
@@ -154,7 +154,7 @@ class WrappedSocket extends Socket {
      */
     public synchronized void setSoTimeout(int timeout) throws SocketException
     {
-        socket.setSoTimeout(timeout);
+	socket.setSoTimeout(timeout);
     }
 
     /**
@@ -162,7 +162,7 @@ class WrappedSocket extends Socket {
      */
     public synchronized int getSoTimeout() throws SocketException
     {
-        return socket.getSoTimeout();
+	return socket.getSoTimeout();
     }
 
     /**
@@ -170,7 +170,7 @@ class WrappedSocket extends Socket {
      */
     public synchronized void close() throws IOException
     {
-        socket.close();
+	socket.close();
     }
 
     /**
@@ -178,6 +178,6 @@ class WrappedSocket extends Socket {
      */
     public String toString()
     {
-        return "Wrapped" + socket.toString();
+	return "Wrapped" + socket.toString();
     }
 }

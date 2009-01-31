@@ -33,7 +33,7 @@
  * patents. This notice and attribution to IBM may not be removed.
  */
 
-/*
+/*  
 *   file name:  ubidiln.c
 *   encoding:   US-ASCII
 *   tab size:   8 (not used)
@@ -994,3 +994,4 @@ ubidi_invertMap(const int32_t *srcMap, int32_t *destMap, int32_t length) {
         }
     }
 }
+

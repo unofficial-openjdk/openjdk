@@ -38,7 +38,7 @@ import sun.security.util.*;
  * <p>
  * The extension identifies a CRL as being a delta CRL.
  * Delta CRLs contain updates to revocation information previously distributed,
- * rather than all the information that would appear in a complete CRL.
+ * rather than all the information that would appear in a complete CRL. 
  * The extension contains a CRL number that identifies the CRL, complete for a
  * given scope, that was used as the starting point in the generation of
  * this delta CRL.
@@ -75,8 +75,8 @@ public class DeltaCRLIndicatorExtension extends CRLNumberExtension {
      * @param crlNum the value to be set for the extension.
      */
     public DeltaCRLIndicatorExtension(int crlNum) throws IOException {
-        super(PKIXExtensions.DeltaCRLIndicator_Id, true,
-            BigInteger.valueOf(crlNum), NAME, LABEL);
+	super(PKIXExtensions.DeltaCRLIndicator_Id, true, 
+	    BigInteger.valueOf(crlNum), NAME, LABEL);
     }
 
     /**
@@ -86,7 +86,7 @@ public class DeltaCRLIndicatorExtension extends CRLNumberExtension {
      * @param crlNum the value to be set for the extension.
      */
     public DeltaCRLIndicatorExtension(BigInteger crlNum) throws IOException {
-        super(PKIXExtensions.DeltaCRLIndicator_Id, true, crlNum, NAME, LABEL);
+	super(PKIXExtensions.DeltaCRLIndicator_Id, true, crlNum, NAME, LABEL);
     }
 
     /**
@@ -99,8 +99,8 @@ public class DeltaCRLIndicatorExtension extends CRLNumberExtension {
      */
     public DeltaCRLIndicatorExtension(Boolean critical, Object value)
     throws IOException {
-        super(PKIXExtensions.DeltaCRLIndicator_Id, critical.booleanValue(),
-            value, NAME, LABEL);
+	super(PKIXExtensions.DeltaCRLIndicator_Id, critical.booleanValue(),
+	    value, NAME, LABEL);
     }
 
     /**
@@ -110,7 +110,7 @@ public class DeltaCRLIndicatorExtension extends CRLNumberExtension {
      * @exception IOException on encoding errors.
      */
     public void encode(OutputStream out) throws IOException {
-       DerOutputStream  tmp = new DerOutputStream();
-        super.encode(out, PKIXExtensions.DeltaCRLIndicator_Id, true);
+       DerOutputStream	tmp = new DerOutputStream();
+	super.encode(out, PKIXExtensions.DeltaCRLIndicator_Id, true);
     }
 }

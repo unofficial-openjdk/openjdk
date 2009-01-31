@@ -39,9 +39,9 @@ abstract public class TypeComponentImpl extends MirrorImpl
     protected final ReferenceTypeImpl declaringType;
     private final int modifiers;
 
-    TypeComponentImpl(VirtualMachine vm, ReferenceTypeImpl declaringType,
+    TypeComponentImpl(VirtualMachine vm, ReferenceTypeImpl declaringType, 
                       long ref,
-                      String name, String signature,
+                      String name, String signature, 
                       String genericSignature, int modifiers) {
         // The generic signature is set when this is created.
         super(vm);
@@ -58,11 +58,11 @@ abstract public class TypeComponentImpl extends MirrorImpl
     }
 
     public String name() {
-        return name;
+        return name;     
     }
 
     public String signature() {
-        return signature;
+        return signature; 
     }
     public String genericSignature() {
         return genericSignature;
@@ -71,7 +71,7 @@ abstract public class TypeComponentImpl extends MirrorImpl
     public int modifiers() {
         return modifiers;
     }
-
+    
     public ReferenceType declaringType() {
         return declaringType;
     }

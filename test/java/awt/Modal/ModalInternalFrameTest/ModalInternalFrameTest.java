@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 6518753
   @summary Tests the functionality of modal Swing internal frames
@@ -212,3 +212,4 @@ public class ModalInternalFrameTest
         test.start();
     }
 }
+

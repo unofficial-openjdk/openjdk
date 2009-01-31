@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 package sun.security.jgss.krb5;
 
 import org.ietf.jgss.*;
@@ -43,7 +43,8 @@ import java.security.PrivilegedActionException;
  * Implements the krb5 initiator credential element.
  *
  * @author Mayank Upadhyay
- * @author Ram Marti
+ * @author Ram Marti 
+ * @version %I%, %G%
  * @since 1.4
  */
 
@@ -56,164 +57,164 @@ public class Krb5InitCredential
     private Krb5NameElement name;
     private Credentials krb5Credentials;
 
-    private Krb5InitCredential(Krb5NameElement name,
-                               byte[] asn1Encoding,
-                               KerberosPrincipal client,
-                               KerberosPrincipal server,
-                               byte[] sessionKey,
-                               int keyType,
-                               boolean[] flags,
-                               Date authTime,
-                               Date startTime,
-                               Date endTime,
-                               Date renewTill,
-                               InetAddress[] clientAddresses)
-                               throws GSSException {
-        super(asn1Encoding,
-              client,
-              server,
-              sessionKey,
-              keyType,
-              flags,
-              authTime,
-              startTime,
-              endTime,
-              renewTill,
-              clientAddresses);
+    private Krb5InitCredential(Krb5NameElement name, 
+			       byte[] asn1Encoding,
+			       KerberosPrincipal client,
+			       KerberosPrincipal server,
+			       byte[] sessionKey,
+			       int keyType,
+			       boolean[] flags,
+			       Date authTime,
+			       Date startTime,
+			       Date endTime,
+			       Date renewTill,
+			       InetAddress[] clientAddresses) 
+			       throws GSSException {
+	super(asn1Encoding,
+	      client,
+	      server,
+	      sessionKey,
+	      keyType,
+	      flags,
+	      authTime,
+	      startTime,
+	      endTime,
+	      renewTill,
+	      clientAddresses);
 
-        this.name = name;
+	this.name = name;
 
-        try {
-            // Cache this for later use by the sun.security.krb5 package.
-            krb5Credentials = new Credentials(asn1Encoding,
-                                              client.getName(),
-                                              server.getName(),
-                                              sessionKey,
-                                              keyType,
-                                              flags,
-                                              authTime,
-                                              startTime,
-                                              endTime,
-                                              renewTill,
-                                              clientAddresses);
-        } catch (KrbException e) {
-            throw new GSSException(GSSException.NO_CRED, -1,
-                                   e.getMessage());
-        } catch (IOException e) {
-            throw new GSSException(GSSException.NO_CRED, -1,
-                                   e.getMessage());
-        }
+	try {
+	    // Cache this for later use by the sun.security.krb5 package.
+	    krb5Credentials = new Credentials(asn1Encoding,
+					      client.getName(),
+					      server.getName(),
+					      sessionKey,
+					      keyType,
+					      flags,
+					      authTime,
+					      startTime,
+					      endTime,
+					      renewTill,
+					      clientAddresses);
+	} catch (KrbException e) {
+	    throw new GSSException(GSSException.NO_CRED, -1,
+				   e.getMessage());
+	} catch (IOException e) {
+	    throw new GSSException(GSSException.NO_CRED, -1,
+				   e.getMessage());
+	}
 
     }
 
-    private Krb5InitCredential(Krb5NameElement name,
-                               Credentials delegatedCred,
-                               byte[] asn1Encoding,
-                               KerberosPrincipal client,
-                               KerberosPrincipal server,
-                               byte[] sessionKey,
-                               int keyType,
-                               boolean[] flags,
-                               Date authTime,
-                               Date startTime,
-                               Date endTime,
-                               Date renewTill,
-                               InetAddress[] clientAddresses)
-                               throws GSSException {
-        super(asn1Encoding,
-              client,
-              server,
-              sessionKey,
-              keyType,
-              flags,
-              authTime,
-              startTime,
-              endTime,
-              renewTill,
-              clientAddresses);
+    private Krb5InitCredential(Krb5NameElement name, 
+			       Credentials delegatedCred,
+			       byte[] asn1Encoding,
+			       KerberosPrincipal client,
+			       KerberosPrincipal server,
+			       byte[] sessionKey,
+			       int keyType,
+			       boolean[] flags,
+			       Date authTime,
+			       Date startTime,
+			       Date endTime,
+			       Date renewTill,
+			       InetAddress[] clientAddresses) 
+			       throws GSSException {
+	super(asn1Encoding,
+	      client,
+	      server,
+	      sessionKey,
+	      keyType,
+	      flags,
+	      authTime,
+	      startTime,
+	      endTime,
+	      renewTill,
+	      clientAddresses);
 
-        this.name = name;
-        // A delegated cred does not have all fields set. So do not try to
-        // creat new Credentials out of the delegatedCred.
-        this.krb5Credentials = delegatedCred;
+	this.name = name;
+	// A delegated cred does not have all fields set. So do not try to
+	// creat new Credentials out of the delegatedCred.
+	this.krb5Credentials = delegatedCred;
     }
 
-    static Krb5InitCredential getInstance(int caller, Krb5NameElement name,
-                                   int initLifetime)
-        throws GSSException {
+    static Krb5InitCredential getInstance(int caller, Krb5NameElement name, 
+				   int initLifetime) 
+	throws GSSException {
 
-        KerberosTicket tgt = getTgt(caller, name, initLifetime);
-        if (tgt == null)
-            throw new GSSException(GSSException.NO_CRED, -1,
-                                   "Failed to find any Kerberos tgt");
+	KerberosTicket tgt = getTgt(caller, name, initLifetime);
+	if (tgt == null)
+	    throw new GSSException(GSSException.NO_CRED, -1, 
+				   "Failed to find any Kerberos tgt");
 
-        if (name == null) {
-            String fullName = tgt.getClient().getName();
-            name = Krb5NameElement.getInstance(fullName,
-                                       Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
-        }
+	if (name == null) {
+	    String fullName = tgt.getClient().getName();
+	    name = Krb5NameElement.getInstance(fullName, 
+				       Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
+	}
 
-        return new Krb5InitCredential(name,
-                                      tgt.getEncoded(),
-                                      tgt.getClient(),
-                                      tgt.getServer(),
-                                      tgt.getSessionKey().getEncoded(),
-                                      tgt.getSessionKeyType(),
-                                      tgt.getFlags(),
-                                      tgt.getAuthTime(),
-                                      tgt.getStartTime(),
-                                      tgt.getEndTime(),
-                                      tgt.getRenewTill(),
-                                      tgt.getClientAddresses());
+	return new Krb5InitCredential(name,
+				      tgt.getEncoded(),
+				      tgt.getClient(),
+				      tgt.getServer(),
+				      tgt.getSessionKey().getEncoded(),
+				      tgt.getSessionKeyType(),
+				      tgt.getFlags(),
+				      tgt.getAuthTime(),
+				      tgt.getStartTime(),
+				      tgt.getEndTime(),
+				      tgt.getRenewTill(),
+				      tgt.getClientAddresses());
     }
 
-    static Krb5InitCredential getInstance(Krb5NameElement name,
-                                   Credentials delegatedCred)
-        throws GSSException {
+    static Krb5InitCredential getInstance(Krb5NameElement name, 
+				   Credentials delegatedCred)
+	throws GSSException {
+	
+	EncryptionKey sessionKey = delegatedCred.getSessionKey();
 
-        EncryptionKey sessionKey = delegatedCred.getSessionKey();
+	/*
+	 * all of the following data is optional in a KRB-CRED
+	 * messages. This check for each field.
+	 */
 
-        /*
-         * all of the following data is optional in a KRB-CRED
-         * messages. This check for each field.
-         */
+	PrincipalName cPrinc = delegatedCred.getClient();
+	PrincipalName sPrinc = delegatedCred.getServer();
 
-        PrincipalName cPrinc = delegatedCred.getClient();
-        PrincipalName sPrinc = delegatedCred.getServer();
+	KerberosPrincipal client = null;
+	KerberosPrincipal server = null;
 
-        KerberosPrincipal client = null;
-        KerberosPrincipal server = null;
+	Krb5NameElement credName = null;
 
-        Krb5NameElement credName = null;
+	if (cPrinc != null) {
+	    String fullName = cPrinc.getName();
+	    credName = Krb5NameElement.getInstance(fullName, 
+			       Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
+	    client =  new KerberosPrincipal(fullName);
+	}
+	
+	// XXX Compare name to credName
 
-        if (cPrinc != null) {
-            String fullName = cPrinc.getName();
-            credName = Krb5NameElement.getInstance(fullName,
-                               Krb5MechFactory.NT_GSS_KRB5_PRINCIPAL);
-            client =  new KerberosPrincipal(fullName);
-        }
+	if (sPrinc != null) {
+	    server =
+		new KerberosPrincipal(sPrinc.getName(),
+					KerberosPrincipal.KRB_NT_SRV_INST);
+	}
 
-        // XXX Compare name to credName
-
-        if (sPrinc != null) {
-            server =
-                new KerberosPrincipal(sPrinc.getName(),
-                                        KerberosPrincipal.KRB_NT_SRV_INST);
-        }
-
-        return new Krb5InitCredential(credName,
-                                      delegatedCred,
-                                      delegatedCred.getEncoded(),
-                                      client,
-                                      server,
-                                      sessionKey.getBytes(),
-                                      sessionKey.getEType(),
-                                      delegatedCred.getFlags(),
-                                      delegatedCred.getAuthTime(),
-                                      delegatedCred.getStartTime(),
-                                      delegatedCred.getEndTime(),
-                                      delegatedCred.getRenewTill(),
-                                      delegatedCred.getClientAddresses());
+	return new Krb5InitCredential(credName,
+				      delegatedCred,
+				      delegatedCred.getEncoded(),
+				      client,
+				      server,
+				      sessionKey.getBytes(),
+				      sessionKey.getEType(),
+				      delegatedCred.getFlags(),
+				      delegatedCred.getAuthTime(),
+				      delegatedCred.getStartTime(),
+				      delegatedCred.getEndTime(),
+				      delegatedCred.getRenewTill(),
+				      delegatedCred.getClientAddresses());
     }
 
     /**
@@ -224,7 +225,7 @@ public class Krb5InitCredential
      * @exception GSSException may be thrown
      */
     public final GSSNameSpi getName() throws GSSException {
-        return name;
+	return name;
     }
 
     /**
@@ -234,11 +235,11 @@ public class Krb5InitCredential
      * @exception GSSException may be thrown
      */
     public int getInitLifetime() throws GSSException {
-        int retVal = 0;
-        retVal = (int)(getEndTime().getTime()
-                       - (new Date().getTime()));
-
-        return retVal;
+	int retVal = 0;
+	retVal = (int)(getEndTime().getTime() 
+		       - (new Date().getTime()));
+	
+	return retVal;
     }
 
     /**
@@ -248,15 +249,15 @@ public class Krb5InitCredential
      * @exception GSSException may be thrown
      */
     public int getAcceptLifetime() throws GSSException {
-        return 0;
+	return 0;
     }
 
     public boolean isInitiatorCredential() throws GSSException {
-        return true;
+	return true;
     }
 
     public boolean isAcceptorCredential() throws GSSException {
-        return false;
+	return false;
     }
 
     /**
@@ -267,11 +268,11 @@ public class Krb5InitCredential
      * @exception GSSException may be thrown
      */
     public final Oid getMechanism() {
-        return Krb5MechFactory.GSS_KRB5_MECH_OID;
+	return Krb5MechFactory.GSS_KRB5_MECH_OID;
     }
 
     public final java.security.Provider getProvider() {
-        return Krb5MechFactory.PROVIDER;
+	return Krb5MechFactory.PROVIDER;
     }
 
 
@@ -280,7 +281,7 @@ public class Krb5InitCredential
      * used in that package for th Kerberos protocol.
      */
     Credentials getKrb5Credentials() {
-        return krb5Credentials;
+	return krb5Credentials;
     }
 
     /*
@@ -288,72 +289,72 @@ public class Krb5InitCredential
      * of krb5Credentials also.
      */
 
-    /**
+    /** 
      * Called to invalidate this credential element.
-     */
+     */ 
     public void dispose() throws GSSException {
-        try {
-            destroy();
-        } catch (javax.security.auth.DestroyFailedException e) {
-            GSSException gssException =
-                new GSSException(GSSException.FAILURE, -1,
-                 "Could not destroy credentials - " + e.getMessage());
-            gssException.initCause(e);
-        }
+	try {
+	    destroy();
+	} catch (javax.security.auth.DestroyFailedException e) {
+	    GSSException gssException =
+		new GSSException(GSSException.FAILURE, -1,
+		 "Could not destroy credentials - " + e.getMessage());
+	    gssException.initCause(e);
+	}
     }
 
     // XXX call to this.destroy() should destroy the locally cached copy
     // of krb5Credentials and then call super.destroy().
 
-    private static KerberosTicket getTgt(int caller, Krb5NameElement name,
-                                                 int initLifetime)
-        throws GSSException {
+    private static KerberosTicket getTgt(int caller, Krb5NameElement name, 
+						 int initLifetime) 
+	throws GSSException {
 
-        String realm = null;
-        final String clientPrincipal, tgsPrincipal = null;
+	String realm = null;
+	final String clientPrincipal, tgsPrincipal = null;
 
-        /*
-         * Find the TGT for the realm that the client is in. If the client
-         * name is not available, then use the default realm.
-         */
-        if (name != null) {
-            clientPrincipal = (name.getKrb5PrincipalName()).getName();
-            realm = (name.getKrb5PrincipalName()).getRealmAsString();
-        } else {
-            clientPrincipal = null;
-            try {
-                Config config = Config.getInstance();
-                realm = config.getDefaultRealm();
-            } catch (KrbException e) {
-                GSSException ge =
-                        new GSSException(GSSException.NO_CRED, -1,
+	/*
+	 * Find the TGT for the realm that the client is in. If the client
+	 * name is not available, then use the default realm.
+	 */
+	if (name != null) {
+	    clientPrincipal = (name.getKrb5PrincipalName()).getName();
+	    realm = (name.getKrb5PrincipalName()).getRealmAsString();
+	} else {
+	    clientPrincipal = null;
+	    try {
+		Config config = Config.getInstance();
+		realm = config.getDefaultRealm();
+	    } catch (KrbException e) {
+		GSSException ge = 
+			new GSSException(GSSException.NO_CRED, -1,
                             "Attempt to obtain INITIATE credentials failed!" +
-                            " (" + e.getMessage() + ")");
-                ge.initCause(e);
-                throw ge;
-            }
-        }
+			    " (" + e.getMessage() + ")");
+		ge.initCause(e);
+		throw ge;
+	    }
+	}
 
-        final AccessControlContext acc = AccessController.getContext();
-
-        try {
+	final AccessControlContext acc = AccessController.getContext();
+         
+	try {
             final int realCaller = (caller == GSSUtil.CALLER_UNKNOWN)
-                                   ? GSSUtil.CALLER_INITIATE
+                                   ? GSSUtil.CALLER_INITIATE 
                                    : caller;
-            return AccessController.doPrivileged(
-                new PrivilegedExceptionAction<KerberosTicket>() {
-                public KerberosTicket run() throws Exception {
-                    return Krb5Util.getTicket(
-                        realCaller,
-                        clientPrincipal, tgsPrincipal, acc);
-                        }});
-        } catch (PrivilegedActionException e) {
-            GSSException ge =
-                new GSSException(GSSException.NO_CRED, -1,
-                    "Attempt to obtain new INITIATE credentials failed!" +
-                    " (" + e.getMessage() + ")");
-            ge.initCause(e.getException());
-            throw ge;
-        }
+	    return AccessController.doPrivileged(
+		new PrivilegedExceptionAction<KerberosTicket>() {
+		public KerberosTicket run() throws Exception {
+		    return Krb5Util.getTicket(
+			realCaller,
+			clientPrincipal, tgsPrincipal, acc);
+			}});
+	} catch (PrivilegedActionException e) {
+	    GSSException ge = 
+		new GSSException(GSSException.NO_CRED, -1,
+		    "Attempt to obtain new INITIATE credentials failed!" +
+		    " (" + e.getMessage() + ")");
+	    ge.initCause(e.getException());
+	    throw ge;
+	}
     }
 }

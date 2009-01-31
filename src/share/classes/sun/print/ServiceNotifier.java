@@ -49,7 +49,7 @@ class ServiceNotifier extends Thread {
 
     ServiceNotifier(PrintService service) {
         super(service.getName() + " notifier");
-        this.service = service;
+	this.service = service;
         listeners = new Vector();
         try {
               setPriority(Thread.NORM_PRIORITY-1);
@@ -58,14 +58,14 @@ class ServiceNotifier extends Thread {
         } catch (SecurityException e) {
         }
     }
-
+    
     void addListener(PrintServiceAttributeListener listener) {
-        synchronized (this) {
-            if (listener == null || listeners == null) {
-                return;
-            }
-            listeners.add(listener);
-        }
+	synchronized (this) {
+	    if (listener == null || listeners == null) {
+		return;
+	    }
+	    listeners.add(listener);
+	}	
     }
 
     void removeListener(PrintServiceAttributeListener listener) {
@@ -87,12 +87,12 @@ class ServiceNotifier extends Thread {
 
     /* If a service submits a job it may call this method which may prompt
      * immediate notification of listeners.
-     */
+     */ 
     void wake() {
-        try {
-            interrupt();
-        } catch (SecurityException e) {
-        }
+	try {
+	    interrupt();
+	} catch (SecurityException e) {
+	}
     }
 
    /* A heuristic is used to calculate sleep time.
@@ -112,7 +112,7 @@ class ServiceNotifier extends Thread {
        while (!stop) {
            try {
                 Thread.sleep(sleepTime);
-           } catch (InterruptedException e) {
+           } catch (InterruptedException e) {	
            }
            synchronized (this) {
                if (listeners == null) {
@@ -126,22 +126,22 @@ class ServiceNotifier extends Thread {
                     } else {
                        psa = service.getAttributes();
                     }
-                    if (psa != null && !psa.isEmpty()) {
-                        for (int i = 0; i < listeners.size() ; i++) {
-                            listener = (PrintServiceAttributeListener)
-                                listeners.elementAt(i);
-                            attrs =
-                                new HashPrintServiceAttributeSet(psa);
-                            attrEvent =
-                                new PrintServiceAttributeEvent(service, attrs);
-                            listener.attributeUpdate(attrEvent);
-                        }
-                    }
-               }
+		    if (psa != null && !psa.isEmpty()) {
+			for (int i = 0; i < listeners.size() ; i++) {
+			    listener = (PrintServiceAttributeListener)
+				listeners.elementAt(i);
+			    attrs =
+				new HashPrintServiceAttributeSet(psa);
+			    attrEvent =
+				new PrintServiceAttributeEvent(service, attrs);
+			    listener.attributeUpdate(attrEvent);
+			}
+		    }
+	       }
                sleepTime = (System.currentTimeMillis()-startTime)*10;
                if (sleepTime < minSleepTime) {
                    sleepTime = minSleepTime;
-               }
+               } 
            }
        }
     }

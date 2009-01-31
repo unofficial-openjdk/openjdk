@@ -61,23 +61,23 @@ extern int NET_Poll(struct pollfd *ufds, unsigned int nfds, int timeout);
 
 #else
 
-#define NET_Timeout     JVM_Timeout
-#define NET_Read        JVM_Read
-#define NET_RecvFrom    JVM_RecvFrom
-#define NET_ReadV       readv
-#define NET_Send        JVM_Send
-#define NET_SendTo      JVM_SendTo
-#define NET_WriteV      writev
-#define NET_Connect     JVM_Connect
-#define NET_Accept      JVM_Accept
+#define NET_Timeout	JVM_Timeout
+#define NET_Read	JVM_Read
+#define NET_RecvFrom	JVM_RecvFrom
+#define NET_ReadV	readv
+#define NET_Send	JVM_Send
+#define NET_SendTo	JVM_SendTo
+#define NET_WriteV	writev
+#define NET_Connect	JVM_Connect
+#define NET_Accept	JVM_Accept
 #define NET_SocketClose JVM_SocketClose
-#define NET_Dup2        dup2
-#define NET_Select      select
-#define NET_Poll        poll
+#define NET_Dup2	dup2
+#define NET_Select	select
+#define NET_Poll	poll
 
 #endif
 
-#if defined(__linux__) && defined(AF_INET6)
+#if defined(__linux__) && defined(AF_INET6) 
 int getDefaultIPv6Interface(struct in6_addr *target_addr);
 #endif
 
@@ -100,9 +100,9 @@ extern getnameinfo_f getnameinfo_ptr;
 
 extern jboolean NET_addrtransAvailable();
 
-#define NET_WAIT_READ   0x01
-#define NET_WAIT_WRITE  0x02
-#define NET_WAIT_CONNECT        0x04
+#define NET_WAIT_READ	0x01
+#define NET_WAIT_WRITE	0x02
+#define NET_WAIT_CONNECT	0x04
 
 extern jint NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout);
 
@@ -122,15 +122,15 @@ extern jint NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout);
 #define SOCKADDR        union { \
                             struct sockaddr_in him4; \
                             struct sockaddr_in6 him6; \
-                        }
+			} 
 
-#define SOCKADDR_LEN    (ipv6_available() ? sizeof(SOCKADDR) : \
+#define SOCKADDR_LEN	(ipv6_available() ? sizeof(SOCKADDR) : \
                          sizeof(struct sockaddr_in))
 
 #else
 
-#define SOCKADDR        union { struct sockaddr_in him4 }
-#define SOCKADDR_LEN    sizeof(SOCKADDR)
+#define SOCKADDR    	union { struct sockaddr_in him4 }
+#define SOCKADDR_LEN 	sizeof(SOCKADDR)
 
 #endif
 

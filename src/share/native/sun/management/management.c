@@ -34,7 +34,7 @@ const JmmInterface* jmm_interface = NULL;
 JavaVM* jvm = NULL;
 jint jmm_version = 0;
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
    JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv* env;
 
@@ -59,3 +59,4 @@ void throw_internal_error(JNIEnv* env, const char* msg) {
     sprintf(errmsg, "errno: %d error: %s\n", errno, msg);
     JNU_ThrowInternalError(env, errmsg);
 }
+

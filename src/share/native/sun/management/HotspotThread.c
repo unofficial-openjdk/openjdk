@@ -40,5 +40,5 @@ JNIEXPORT jint JNICALL
 Java_sun_management_HotspotThread_getInternalThreadTimes0
   (JNIEnv *env, jobject dummy, jobjectArray names, jobjectArray times)
 {
-    return jmm_interface->GetInternalThreadTimes(env, names, times);
+    return jmm_interface->GetInternalThreadTimes(env, names, times); 
 }

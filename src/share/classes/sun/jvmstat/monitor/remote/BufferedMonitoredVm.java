@@ -32,6 +32,7 @@ import sun.jvmstat.monitor.*;
  * instrumentation of a target Java Virtual Machine.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public interface BufferedMonitoredVm extends MonitoredVm {

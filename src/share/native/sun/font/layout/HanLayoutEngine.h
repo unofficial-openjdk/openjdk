@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)HanLayoutEngine.h	1.6 06/12/13
  *
  * HanLayoutEngine.h: OpenType processing for Han fonts.
  *
@@ -69,7 +70,7 @@ public:
      *
      * @internal
      */
-    HanOpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode,
+    HanOpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, 
         le_int32 languageCode,
         le_int32 typoFlags, const GlyphSubstitutionTableHeader *gsubTable);
 
@@ -92,9 +93,9 @@ protected:
      * @param offset - the index of the first character to process
      * @param count - the number of characters to process
      * @param max - the number of characters in the input context
-     * @param rightToLeft - <code>TRUE</code> if the characters are in a
+     * @param rightToLeft - <code>TRUE</code> if the characters are in a 
      *    right to left directional run
-     * @param glyphStorage - the object holding the glyph storage. The char
+     * @param glyphStorage - the object holding the glyph storage. The char 
      *    index and auxillary data arrays will be set.
      *
      * Output parameters:
@@ -113,3 +114,4 @@ protected:
 };
 
 #endif
+

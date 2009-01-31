@@ -72,7 +72,7 @@ import java.util.Iterator;
  * @stable ICU 2.0
  */
 public class UnicodeSetIterator {
-
+    
     /**
      * Value of <tt>codepoint</tt> if the iterator points to a string.
      * If <tt>codepoint == IS_STRING</tt>, then examine
@@ -80,7 +80,7 @@ public class UnicodeSetIterator {
      * @stable ICU 2.0
      */
     public static int IS_STRING = -1;
-
+    
     /**
      * Current code point, or the special value <tt>IS_STRING</tt>, if
      * the iterator points to a string.
@@ -115,7 +115,7 @@ public class UnicodeSetIterator {
     public UnicodeSetIterator(UnicodeSet set) {
         reset(set);
     }
-
+        
     /**
      * Returns the next element in the set, either a code point range
      * or a string.  If there are no more elements in the set, return
@@ -123,7 +123,7 @@ public class UnicodeSetIterator {
      * string in the <tt>string</tt> field.  Otherwise the value is a
      * range of one or more code points from <tt>codepoint</tt> to
      * <tt>codepointeEnd</tt> inclusive.
-     *
+     * 
      * <p>The order of iteration is all code points ranges in sorted
      * order, followed by all strings sorted order.  Ranges are
      * disjoint and non-contiguous.  <tt>string</tt> is undefined
@@ -150,16 +150,16 @@ public class UnicodeSetIterator {
             nextElement = endElement+1;
             return true;
         }
-
+        
         // stringIterator == null iff there are no string elements remaining
-
+        
         if (stringIterator == null) return false;
         codepoint = IS_STRING; // signal that value is actually a string
         string = (String)stringIterator.next();
         if (!stringIterator.hasNext()) stringIterator = null;
         return true;
     }
-
+        
     /**
      * Sets this iterator to visit the elements of the given set and
      * resets it to the start of that set.  The iterator is valid only
@@ -171,7 +171,7 @@ public class UnicodeSetIterator {
         this.set = set;
         reset();
     }
-
+        
     /**
      * Resets this iterator to the start of the set.
      * @stable ICU 2.0
@@ -180,7 +180,7 @@ public class UnicodeSetIterator {
         endRange = set.getRangeCount() - 1;
         range = 0;
         endElement = -1;
-        nextElement = 0;
+        nextElement = 0;            
         if (endRange >= 0) {
             loadRange(range);
         }
@@ -190,9 +190,9 @@ public class UnicodeSetIterator {
             if (!stringIterator.hasNext()) stringIterator = null;
         }
     }
-
+    
     // ======================= PRIVATES ===========================
-
+    
     private UnicodeSet set;
     private int endRange = 0;
     private int range = 0;
@@ -205,7 +205,7 @@ public class UnicodeSetIterator {
      */
     protected int nextElement;
     private Iterator stringIterator = null;
-
+    
     /**
      * Invariant: stringIterator is null when there are no (more) strings remaining
      */

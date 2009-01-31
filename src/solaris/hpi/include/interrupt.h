@@ -43,15 +43,15 @@
  *
  * An intr_handler_t is constrained:
  *
- *      - It runs on the exception stack.
- *      - It cannot yield.
- *      - It cannot allocate/free memory.
- *      - It can only call interrupt-safe routines.
+ *	- It runs on the exception stack.
+ *	- It cannot yield.
+ *	- It cannot allocate/free memory.
+ *	- It can only call interrupt-safe routines.
  *
  * "arg" is set to the "handlerArg" specified in intrRegister().
  */
 typedef void (*intr_handler_t)(int interrupt, void *siginfo,
-                              void *context, void *arg);
+			      void *context, void *arg);
 
 /*
  * Routines.
@@ -62,7 +62,7 @@ void intrInit(void);
 
 /* Set a handler for a particular interrupt */
 signal_handler_t intrRegister(int interrupt, intr_handler_t handler,
-                              void *handlerArg);
+			      void *handlerArg);
 
 /* Dispatch an interrupt (called from the low-level handlers) */
 void intrDispatch(int interrupt, void *siginfo, void *context);
@@ -72,23 +72,23 @@ void intrDispatch(int interrupt, void *siginfo, void *context);
  *
  * Constants
  *
- *      N_INTERRUPTS  - The number of interrupt channels.  These
- *                      are numbered from 0 to (N_INTERRUPTS - 1).
+ *	N_INTERRUPTS  -	The number of interrupt channels.  These
+ *			are numbered from 0 to (N_INTERRUPTS - 1).
  */
 #ifdef __linux__
 #define       N_INTERRUPTS    NSIG    /* 0 to NSIG - 1*/
 #else
-#define N_INTERRUPTS    32      /* 0 to 31 */
+#define	N_INTERRUPTS	32	/* 0 to 31 */
 #endif
 
 /*-
  * Routines/Macros that control whether interrupts are enabled or
  * not.
  *
- *      void intrLock(void)           - Disable all interrupts.
- *      void intrUnlock(void)         - Enable all interrupts.
+ *	void intrLock(void)	      -	Disable all interrupts.
+ *	void intrUnlock(void)	      -	Enable all interrupts.
  *
- *              Note: intrLock()/intrUnlock() pairs can be nested.
+ *		Note: intrLock()/intrUnlock() pairs can be nested.
  *
  */
 
@@ -97,12 +97,12 @@ void intrUnlock(void);
 
 /*-
  * intrInitMD() --
- *      Initialize the machine-dependant interrupt software.
+ *	Initialize the machine-dependant interrupt software.
  *
- *      This routine should leave the all interrupts disabled as if
- *      one (1) intrLock() had been called.  At the end of the
- *      bootstrap, a single intrUnlock(), will be called to turn
- *      interrupts on.
+ *	This routine should leave the all interrupts disabled as if
+ *	one (1) intrLock() had been called.  At the end of the
+ *	bootstrap, a single intrUnlock(), will be called to turn
+ *	interrupts on.
  */
 
 void intrInitMD(void);

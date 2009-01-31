@@ -54,7 +54,7 @@ public class InstrumentationImpl implements Instrumentation {
     private final     TransformerManager      mTransformerManager;
     private           TransformerManager      mRetransfomableTransformerManager;
     // needs to store a native pointer, so use 64 bits
-    private final     long                    mNativeAgent;
+    private final     long                    mNativeAgent;   
     private final     boolean                 mEnvironmentSupportsRedefineClasses;
     private volatile  boolean                 mEnvironmentSupportsRetransformClassesKnown;
     private volatile  boolean                 mEnvironmentSupportsRetransformClasses;
@@ -117,7 +117,7 @@ public class InstrumentationImpl implements Instrumentation {
     }
 
     public boolean
-    isModifiableClass(Class<?> theClass) {
+    isModifiableClass(Class<?> theClass) { 
         if (theClass == null) {
             throw new NullPointerException(
                          "null passed as 'theClass' in isModifiableClass");
@@ -134,7 +134,7 @@ public class InstrumentationImpl implements Instrumentation {
         }
         return mEnvironmentSupportsRetransformClasses;
     }
-
+        
     public void
     retransformClasses(Class<?>[] classes) {
         if (!isRetransformClassesSupported()) {
@@ -148,7 +148,7 @@ public class InstrumentationImpl implements Instrumentation {
     isRedefineClassesSupported() {
         return mEnvironmentSupportsRedefineClasses;
     }
-
+        
     public void
     redefineClasses(ClassDefinition[]   definitions)
             throws  ClassNotFoundException {
@@ -166,10 +166,10 @@ public class InstrumentationImpl implements Instrumentation {
         if (definitions.length == 0) {
             return; // short-circuit if there are no changes requested
         }
-
+            
         redefineClasses0(mNativeAgent, definitions);
     }
-
+    
     public Class[]
     getAllLoadedClasses() {
         return getAllLoadedClasses0(mNativeAgent);
@@ -179,7 +179,7 @@ public class InstrumentationImpl implements Instrumentation {
     getInitiatedClasses(ClassLoader loader) {
         return getInitiatedClasses0(mNativeAgent, loader);
     }
-
+    
     public long
     getObjectSize(Object objectToSize) {
         if (objectToSize == null) {
@@ -188,21 +188,21 @@ public class InstrumentationImpl implements Instrumentation {
         return getObjectSize0(mNativeAgent, objectToSize);
     }
 
-    public void
-    appendToBootstrapClassLoaderSearch(JarFile jarfile) {
-        appendToClassLoaderSearch0(mNativeAgent, jarfile.getName(), true);
+    public void 
+    appendToBootstrapClassLoaderSearch(JarFile jarfile) { 
+	appendToClassLoaderSearch0(mNativeAgent, jarfile.getName(), true);
     }
 
     public void
     appendToSystemClassLoaderSearch(JarFile jarfile) {
-        appendToClassLoaderSearch0(mNativeAgent, jarfile.getName(), false);
+	appendToClassLoaderSearch0(mNativeAgent, jarfile.getName(), false);
     }
 
     public boolean
     isNativeMethodPrefixSupported() {
         return mEnvironmentSupportsNativeMethodPrefix;
     }
-
+        
     public synchronized void
     setNativeMethodPrefix(ClassFileTransformer transformer, String prefix) {
         if (!isNativeMethodPrefixSupported()) {
@@ -238,7 +238,7 @@ public class InstrumentationImpl implements Instrumentation {
 
     /*
      *  Natives
-     */
+     */ 
     private native boolean
     isModifiableClass0(long nativeAgent, Class<?> theClass);
 
@@ -271,7 +271,7 @@ public class InstrumentationImpl implements Instrumentation {
     setNativeMethodPrefixes(long nativeAgent, String[] prefixes, boolean isRetransformable);
 
     static {
-        System.loadLibrary("instrument");
+	System.loadLibrary("instrument");
     }
 
     /*
@@ -291,59 +291,59 @@ public class InstrumentationImpl implements Instrumentation {
 
     // Attempt to load and start an agent
     private void
-    loadClassAndStartAgent( String  classname,
-                            String  methodname,
+    loadClassAndStartAgent( String  classname,	
+			    String  methodname, 
                             String  optionsString)
             throws Throwable {
-
+                                                                                                                         
         ClassLoader mainAppLoader   = ClassLoader.getSystemClassLoader();
         Class<?>    javaAgentClass  = mainAppLoader.loadClass(classname);
 
-        Method m = null;
-        NoSuchMethodException firstExc = null;
-        boolean twoArgAgent = false;
+	Method m = null;
+	NoSuchMethodException firstExc = null;
+	boolean twoArgAgent = false;
 
-        // The agent class has a premain or agentmain method that has 1 or 2
-        // arguments. We first check for a signature of (String, Instrumentation),
-        // and if not found we check for (String). If neither is found then we
-        // throw the NoSuchMethodException from the first attempt so that the
-        // exception text indicates the lookup failed for the 2-arg method
+	// The agent class has a premain or agentmain method that has 1 or 2 
+	// arguments. We first check for a signature of (String, Instrumentation),
+	// and if not found we check for (String). If neither is found then we
+	// throw the NoSuchMethodException from the first attempt so that the
+	// exception text indicates the lookup failed for the 2-arg method 
         // (same as JDK5.0).
 
-        try {
-            m = javaAgentClass.getMethod( methodname,
-                                          new Class[] {
+	try {
+  	    m = javaAgentClass.getMethod( methodname,
+                                          new Class[] { 
                                               String.class,
                                               java.lang.instrument.Instrumentation.class
                                           }
-                                        );
-            twoArgAgent = true;
-        } catch (NoSuchMethodException x) {
-            // remember the NoSuchMethodException
-            firstExc = x;
-        }
+					);
+	    twoArgAgent = true;
+	} catch (NoSuchMethodException x) {
+	    // remember the NoSuchMethodException 
+	    firstExc = x;
+	}
 
-        // check for the 1-arg method
-        if (m == null) {
-            try {
-                m = javaAgentClass.getMethod(methodname, new Class[] { String.class });
-            } catch (NoSuchMethodException x) {
-                // Neither method exists so we throw the first NoSuchMethodException
-                // as per 5.0
-                throw firstExc;
-            }
-        }
+	// check for the 1-arg method
+	if (m == null) {
+	    try {
+		m = javaAgentClass.getMethod(methodname, new Class[] { String.class });
+	    } catch (NoSuchMethodException x) {
+		// Neither method exists so we throw the first NoSuchMethodException
+		// as per 5.0
+		throw firstExc;
+	    }
+	}
 
-        // the premain method should not be required to be public,
+        // the premain method should not be required to be public, 
         // make it accessible so we can call it
         setAccessible(m, true);
 
-        // invoke the 1 or 2-arg method
-        if (twoArgAgent) {
+	// invoke the 1 or 2-arg method 
+	if (twoArgAgent) {
             m.invoke(null, new Object[] { optionsString, this });
-        } else {
-            m.invoke(null, new Object[] { optionsString });
-        }
+	} else {
+	    m.invoke(null, new Object[] { optionsString });
+	}
 
         // don't let others access a non-public premain method
         setAccessible(m, false);
@@ -354,8 +354,8 @@ public class InstrumentationImpl implements Instrumentation {
     loadClassAndCallPremain(    String  classname,
                                 String  optionsString)
             throws Throwable {
-
-        loadClassAndStartAgent( classname, "premain", optionsString );
+	
+	loadClassAndStartAgent( classname, "premain", optionsString );
     }
 
 
@@ -365,7 +365,7 @@ public class InstrumentationImpl implements Instrumentation {
                                 String  optionsString)
             throws Throwable {
 
-        loadClassAndStartAgent( classname, "agentmain", optionsString );
+	loadClassAndStartAgent( classname, "agentmain", optionsString );
     }
 
     // WARNING: the native code knows the name & signature of this method
@@ -376,8 +376,8 @@ public class InstrumentationImpl implements Instrumentation {
                 ProtectionDomain    protectionDomain,
                 byte[]              classfileBuffer,
                 boolean             isRetransformer) {
-        TransformerManager mgr = isRetransformer?
-                                        mRetransfomableTransformerManager :
+        TransformerManager mgr = isRetransformer? 
+                                        mRetransfomableTransformerManager : 
                                         mTransformerManager;
         if (mgr == null) {
             return null; // no manager, no transform

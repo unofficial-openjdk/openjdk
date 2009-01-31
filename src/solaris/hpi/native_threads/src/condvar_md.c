@@ -112,23 +112,23 @@ condvarWait(condvar_t *condvar, mutex_t *mutex, thread_state_t wtype)
 #else
     thr_setspecific(sigusr1Jmpbufkey, &jmpbuf);
     if (sigsetjmp(jmpbuf, 1) == 0) {
-        sigset_t osigset;
+	sigset_t osigset;
 
-        thr_sigsetmask(SIG_UNBLOCK, &sigusr1Mask, &osigset);
+	thr_sigsetmask(SIG_UNBLOCK, &sigusr1Mask, &osigset);
 again:
 #endif
-        err = cond_wait((cond_t *) condvar, (mutex_t *) mutex);
-        switch(err) {
-        case 0:
-            err = SYS_OK;
-            break;
+	err = cond_wait((cond_t *) condvar, (mutex_t *) mutex);
+	switch(err) {
+	case 0:
+	    err = SYS_OK;
+	    break;
 #ifndef __linux__
-        case EINTR: /* Signals other than USR1 were received. */
-            goto again;
+	case EINTR: /* Signals other than USR1 were received. */
+	    goto again;
 #endif
-        default:
-            err = SYS_ERR;
-        }
+	default:
+	    err = SYS_ERR;
+	}
 #ifdef __linux__
        /*
         * Disable cancellation and clear the jump buf.
@@ -136,21 +136,21 @@ again:
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         thr_setspecific(intrJmpbufkey, NULL);
 #else
-        thr_sigsetmask(SIG_SETMASK, &osigset, NULL);
+	thr_sigsetmask(SIG_SETMASK, &osigset, NULL);
 #endif
     } else {
-        /*
-         * we've received a SIGUSR1 to interrupt our wait. We just return
-         * and something above use notices the change.
-         * clear the jump buf just to be paranoid.
-         */
+	/*
+	 * we've received a SIGUSR1 to interrupt our wait. We just return
+	 * and something above use notices the change.
+	 * clear the jump buf just to be paranoid.
+	 */
 #ifndef __linux__
-         thr_setspecific(sigusr1Jmpbufkey, NULL);
+	 thr_setspecific(sigusr1Jmpbufkey, NULL);
 #endif
-         err = SYS_INTRPT;
+	 err = SYS_INTRPT;
     }
 #ifdef __linux__
-    pthread_cleanup_pop(0);
+    pthread_cleanup_pop(0);  
 #endif
     /*
      * After having woken up, change the thread state to RUNNABLE, since
@@ -179,12 +179,12 @@ condvarTimedWait(condvar_t *condvar, mutex_t *mutex,
     struct timespec timeout;
     sys_thread_t *self;
     jlong end_time;
-
+    
     if (millis < 0)
-        return SYS_ERR;
+	return SYS_ERR;
 
     if (millis > (jlong)INT_MAX) {
-        return condvarWait(condvar, mutex, wtype);
+	return condvarWait(condvar, mutex, wtype);
     }
 
     end_time = sysTimeMillis() + millis;
@@ -215,50 +215,50 @@ condvarTimedWait(condvar_t *condvar, mutex_t *mutex,
 #else
     thr_setspecific(sigusr1Jmpbufkey, &jmpbuf);
     if (sigsetjmp(jmpbuf, 1) == 0) {
-        sigset_t osigset;
+	sigset_t osigset;
 
-        thr_sigsetmask(SIG_UNBLOCK, &sigusr1Mask, &osigset);
+	thr_sigsetmask(SIG_UNBLOCK, &sigusr1Mask, &osigset);
 
     again:
-        timeout.tv_sec = end_time / 1000;
-        timeout.tv_nsec = (end_time % 1000) * 1000000;
+	timeout.tv_sec = end_time / 1000;
+	timeout.tv_nsec = (end_time % 1000) * 1000000;
 #endif
-        err = cond_timedwait((cond_t *)condvar, (mutex_t *)mutex, &timeout);
-        switch(err) {
-        case 0:
-            err = SYS_OK;
-            break;
-        case EINTR: /* Signals other than USR1 were received. */
-            if (sysTimeMillis() < end_time) {
-                goto again;
-            }
-            /*FALLTHRU*/
+	err = cond_timedwait((cond_t *)condvar, (mutex_t *)mutex, &timeout);
+	switch(err) {
+	case 0:
+	    err = SYS_OK;
+	    break;
+	case EINTR: /* Signals other than USR1 were received. */
+	    if (sysTimeMillis() < end_time) {
+	        goto again;
+	    }
+	    /*FALLTHRU*/
 #ifdef USE_PTHREADS
-        case ETIMEDOUT:
+	case ETIMEDOUT:
 #else
-        case ETIME:
+	case ETIME:
 #endif
-            err = SYS_TIMEOUT;
-            break;
-        default:
-            err = SYS_ERR;
-        }
+	    err = SYS_TIMEOUT;
+	    break;
+	default:
+	    err = SYS_ERR;
+	}
 #ifdef __linux__
         pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
         thr_setspecific(intrJmpbufkey, NULL);
 #else
-        thr_sigsetmask(SIG_SETMASK, &osigset, NULL);
+	thr_sigsetmask(SIG_SETMASK, &osigset, NULL);
 #endif
     } else {
-        /*
-         * we've received a SIGUSR1 to interrupt our wait. We just return
-         * and something above use notices the change.
-         * clear the jump buf just to be paranoid.
-         */
+	/*
+	 * we've received a SIGUSR1 to interrupt our wait. We just return
+	 * and something above use notices the change.
+	 * clear the jump buf just to be paranoid.
+	 */
 #ifndef __linux__
-         thr_setspecific(sigusr1Jmpbufkey, NULL);
+	 thr_setspecific(sigusr1Jmpbufkey, NULL);
 #endif
-         err = SYS_INTRPT;
+	 err = SYS_INTRPT;
     }
 #ifdef __linux__
      /* Remove intrHandler without calling it. */

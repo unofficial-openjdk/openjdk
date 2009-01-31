@@ -43,15 +43,15 @@ public final class DESedeKeyFactory extends SecretKeyFactorySpi {
 
     /**
      * Verify the SunJCE provider in the constructor.
-     *
+     * 
      * @exception SecurityException if fails to verify
      * its own integrity
      */
     public DESedeKeyFactory() {
-        if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have been " +
-                                        "tampered.");
-        }
+	if (!SunJCE.verifySelfIntegrity(this.getClass())) {
+	    throw new SecurityException("The SunJCE provider may have been " +
+					"tampered.");
+	}
     }
 
     /**
@@ -66,28 +66,28 @@ public final class DESedeKeyFactory extends SecretKeyFactorySpi {
      * is inappropriate for this key factory to produce a public key.
      */
     protected SecretKey engineGenerateSecret(KeySpec keySpec)
-        throws InvalidKeySpecException {
-        DESedeKey desEdeKey = null;
+	throws InvalidKeySpecException {
+	DESedeKey desEdeKey = null;
 
-        try {
-            if (keySpec instanceof DESedeKeySpec) {
-                DESedeKeySpec desEdeKeySpec = (DESedeKeySpec)keySpec;
-                desEdeKey = new DESedeKey(desEdeKeySpec.getKey());
-
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-        } catch (InvalidKeyException e) {
-        }
-        return desEdeKey;
+	try {
+	    if (keySpec instanceof DESedeKeySpec) {
+		DESedeKeySpec desEdeKeySpec = (DESedeKeySpec)keySpec;
+		desEdeKey = new DESedeKey(desEdeKeySpec.getKey());
+		
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	} catch (InvalidKeyException e) {
+	}
+	return desEdeKey;
     }
 
     /**
      * Returns a specification (key material) of the given key
      * in the requested format.
      *
-     * @param key the key
+     * @param key the key 
      *
      * @param keySpec the requested format in which the key material shall be
      * returned
@@ -100,29 +100,29 @@ public final class DESedeKeyFactory extends SecretKeyFactorySpi {
      * (e.g., the given key has an unrecognized algorithm or format).
      */
     protected KeySpec engineGetKeySpec(SecretKey key, Class keySpec)
-        throws InvalidKeySpecException {
+	throws InvalidKeySpecException {
+	    
+	try {
+	    if ((key instanceof SecretKey)
+		&& (key.getAlgorithm().equalsIgnoreCase("DESede"))
+		&& (key.getFormat().equalsIgnoreCase("RAW"))) {
+		
+		// Check if requested key spec is amongst the valid ones
+		if (DESedeKeySpec.class.isAssignableFrom(keySpec)) {
+		    return new DESedeKeySpec(key.getEncoded());
 
-        try {
-            if ((key instanceof SecretKey)
-                && (key.getAlgorithm().equalsIgnoreCase("DESede"))
-                && (key.getFormat().equalsIgnoreCase("RAW"))) {
-
-                // Check if requested key spec is amongst the valid ones
-                if (DESedeKeySpec.class.isAssignableFrom(keySpec)) {
-                    return new DESedeKeySpec(key.getEncoded());
-
-                } else {
-                    throw new InvalidKeySpecException
-                        ("Inappropriate key specification");
-                }
-
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key format/algorithm");
-            }
-        } catch (InvalidKeyException e) {
-            throw new InvalidKeySpecException("Secret key has wrong size");
-        }
+		} else {
+		    throw new InvalidKeySpecException
+		        ("Inappropriate key specification");
+		}
+		 
+	    } else {
+	        throw new InvalidKeySpecException
+		    ("Inappropriate key format/algorithm");
+	    }
+	} catch (InvalidKeyException e) {
+	    throw new InvalidKeySpecException("Secret key has wrong size");
+	}
     }
 
     /**
@@ -138,31 +138,33 @@ public final class DESedeKeyFactory extends SecretKeyFactorySpi {
      * this key factory.
      */
     protected SecretKey engineTranslateKey(SecretKey key)
-        throws InvalidKeyException {
+	throws InvalidKeyException {
 
-        try {
-
-            if ((key != null)
-                && (key.getAlgorithm().equalsIgnoreCase("DESede"))
-                && (key.getFormat().equalsIgnoreCase("RAW"))) {
-                // Check if key originates from this factory
-                if (key instanceof com.sun.crypto.provider.DESedeKey) {
-                    return key;
-                }
-                // Convert key to spec
-                DESedeKeySpec desEdeKeySpec
-                    = (DESedeKeySpec)engineGetKeySpec(key,
-                                                      DESedeKeySpec.class);
-                // Create key from spec, and return it
-                return engineGenerateSecret(desEdeKeySpec);
-
-            } else {
-                throw new InvalidKeyException
-                    ("Inappropriate key format/algorithm");
-            }
-
-        } catch (InvalidKeySpecException e) {
-            throw new InvalidKeyException("Cannot translate key");
-        }
+	try {
+	    
+	    if ((key != null) 
+		&& (key.getAlgorithm().equalsIgnoreCase("DESede"))
+		&& (key.getFormat().equalsIgnoreCase("RAW"))) {
+		// Check if key originates from this factory
+		if (key instanceof com.sun.crypto.provider.DESedeKey) {
+		    return key;
+		}
+		// Convert key to spec
+		DESedeKeySpec desEdeKeySpec
+		    = (DESedeKeySpec)engineGetKeySpec(key,
+						      DESedeKeySpec.class);
+		// Create key from spec, and return it
+		return engineGenerateSecret(desEdeKeySpec);
+		
+	    } else {
+		throw new InvalidKeyException
+		    ("Inappropriate key format/algorithm");
+	    }
+	    
+	} catch (InvalidKeySpecException e) {
+	    throw new InvalidKeyException("Cannot translate key");
+	}
     }
 }
+
+

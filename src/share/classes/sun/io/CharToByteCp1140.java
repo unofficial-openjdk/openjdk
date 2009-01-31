@@ -36,6 +36,7 @@ import sun.nio.cs.ext.IBM1140;
  * Tables and data to convert Unicode to Cp1140
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.7
  */
 
 public class CharToByteCp1140 extends CharToByteSingleByte {

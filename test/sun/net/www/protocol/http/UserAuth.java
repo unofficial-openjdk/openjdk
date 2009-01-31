@@ -29,7 +29,7 @@
  */
 
 import java.net.*;
-import com.sun.net.httpserver.*;
+import com.sun.net.httpserver.*; 
 import java.util.*;
 import java.io.*;
 import java.util.concurrent.Executors;
@@ -42,29 +42,29 @@ public class UserAuth
     ExecutorService executorService;
 
     public static void main(String[] args) {
-        new UserAuth();
+	new UserAuth();
     }
 
     public UserAuth() {
-        try {
-            startHttpServer();
-            doClient();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
+	try {
+	    startHttpServer();
+	    doClient();
+	} catch (IOException ioe) {
+	    ioe.printStackTrace();
+	}
     }
 
     void doClient() {
-        try {
+	try {
             InetSocketAddress address = httpServer.getAddress();
 
             // GET Request
             URL url = new URL("http://" + address.getHostName() + ":" + address.getPort() + "/redirect/");
             HttpURLConnection uc = (HttpURLConnection)url.openConnection();
-            uc.setRequestProperty("Authorization", "testString:ValueDoesNotMatter");
+	    uc.setRequestProperty("Authorization", "testString:ValueDoesNotMatter");
             int resp = uc.getResponseCode();
 
-            System.out.println("Response Code is " + resp);
+	    System.out.println("Response Code is " + resp);
             if (resp != 200)
                 throw new RuntimeException("Failed: Authorization header was not retained after redirect");
 
@@ -93,11 +93,11 @@ public class UserAuth
 
     class RedirectHandler implements HttpHandler {
         public void handle(HttpExchange t) throws IOException {
-            InetSocketAddress address = httpServer.getAddress();
+ 	    InetSocketAddress address = httpServer.getAddress();
             String redirectUrl = "http://" + address.getHostName() + ":" + address.getPort() + "/doStuff/";
 
             Headers resHeaders = t.getResponseHeaders();
-            resHeaders.add("Location", redirectUrl);
+	    resHeaders.add("Location", redirectUrl);
 
             t.sendResponseHeaders(307, -1);
             t.close();

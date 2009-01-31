@@ -45,8 +45,9 @@ package java.io;
  * @see OutputStreamWriter
  * @see FileOutputStream
  *
- * @author      Mark Reinhold
- * @since       JDK1.1
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
+ * @since	JDK1.1
  */
 
 public class FileWriter extends OutputStreamWriter {
@@ -60,7 +61,7 @@ public class FileWriter extends OutputStreamWriter {
      *                  created, or cannot be opened for any other reason
      */
     public FileWriter(String fileName) throws IOException {
-        super(new FileOutputStream(fileName));
+	super(new FileOutputStream(fileName));
     }
 
     /**
@@ -75,7 +76,7 @@ public class FileWriter extends OutputStreamWriter {
      *                  created, or cannot be opened for any other reason
      */
     public FileWriter(String fileName, boolean append) throws IOException {
-        super(new FileOutputStream(fileName, append));
+	super(new FileOutputStream(fileName, append));
     }
 
     /**
@@ -87,7 +88,7 @@ public class FileWriter extends OutputStreamWriter {
      *                  or cannot be opened for any other reason
      */
     public FileWriter(File file) throws IOException {
-        super(new FileOutputStream(file));
+	super(new FileOutputStream(file));
     }
 
     /**
@@ -113,7 +114,7 @@ public class FileWriter extends OutputStreamWriter {
      * @param fd  FileDescriptor object to write to.
      */
     public FileWriter(FileDescriptor fd) {
-        super(new FileOutputStream(fd));
+	super(new FileOutputStream(fd));
     }
 
 }

@@ -28,13 +28,13 @@ package com.sun.jdi;
 /**
  * The mirror for a type in the target VM.
  * This interface is the root of a type hierarchy encompassing primitive
- * types and reference types.
+ * types and reference types.  
  * <P>
  * A Type may be used to represent a run-time type:
  * <BLOCKQUOTE>
  *   {@link Value}.type()
  * </BLOCKQUOTE>
- * or a compile-time type:
+ * or a compile-time type: 
  * <BLOCKQUOTE>
  *  {@link Field#type()} <BR>
  *  {@link Method#returnType()} <BR>
@@ -43,9 +43,9 @@ package com.sun.jdi;
  *  {@link ArrayType#componentType()}
  * </BLOCKQUOTE>
  * <P>
- * The following table illustrates which subinterfaces of Type
+ * The following table illustrates which subinterfaces of Type 
  * are used to mirror types in the target VM --
- * <TABLE BORDER=1 SUMMARY="Maps each type declared in target to a mirrored
+ * <TABLE BORDER=1 SUMMARY="Maps each type declared in target to a mirrored 
  *  instance of a subinterface of PrimitiveType or ReferenceType">
  * <TR BGCOLOR="#EEEEFF">
  *   <TH id="primtype" colspan=3>Subinterfaces of {@link PrimitiveType}</TH>
@@ -117,8 +117,8 @@ package com.sun.jdi;
  *         {@link InterfaceType}</TD>
  * </TABLE>
  *
- * @see PrimitiveType Subinterface PrimitiveType
- * @see ReferenceType Subinterface ReferenceType
+ * @see PrimitiveType Subinterface PrimitiveType 
+ * @see ReferenceType Subinterface ReferenceType 
  * @see Value Value - for relationship between Type and Value
  * @see Field#type() Field.type() - for usage examples
  *
@@ -138,7 +138,7 @@ public interface Type extends Mirror
      * represented by {@link java.lang.Integer#TYPE}.
      *
      * @see <a href="doc-files/signature.html">Type Signatures</a>
-     * @return the string containing the type signature.
+     * @return the string containing the type signature. 
      */
     String signature();
 
@@ -147,3 +147,4 @@ public interface Type extends Mirror
      */
     String name();
 }
+

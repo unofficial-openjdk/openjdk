@@ -55,11 +55,12 @@ import java.rmi.activation.UnknownObjectException;
  * activation groups fail so that it can remove stale remote references
  * to groups and active object's within those groups.<p>
  *
- * @author      Ann Wollrath
- * @see         ActivationInstantiator
- * @see         ActivationGroupDesc
- * @see         ActivationGroupID
- * @since       1.2
+ * @author 	Ann Wollrath
+ * @version	%I%, %G%
+ * @see 	ActivationInstantiator
+ * @see		ActivationGroupDesc
+ * @see		ActivationGroupID
+ * @since 	1.2
  */
 public interface Activator extends Remote {
     /**
@@ -108,7 +109,7 @@ public interface Activator extends Remote {
      * @since 1.2
      */
     public MarshalledObject<? extends Remote> activate(ActivationID id,
-                                                       boolean force)
-        throws ActivationException, UnknownObjectException, RemoteException;
+						       boolean force)
+	throws ActivationException, UnknownObjectException, RemoteException;
 
 }

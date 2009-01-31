@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,26 +24,26 @@
 /* @test
  * @bug 4400609
  * @summary Verify that ObjectInputStream.registerValidation() throws a
- *          NotActiveException when invoked on inactive stream.
+ * 	    NotActiveException when invoked on inactive stream.
  */
 
 import java.io.*;
 
 public class InactiveRegistration {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        oout.writeObject("foo");
-        oout.close();
-        ObjectInputStream oin = new ObjectInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        try {
-            oin.registerValidation(new ObjectInputValidation() {
-                public void validateObject() throws InvalidObjectException {}
-            }, 0);
-            throw new Error(
-                "registerValidation should fail on inactive stream");
-        } catch (NotActiveException ex) {
-        }
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	oout.writeObject("foo");
+	oout.close();
+	ObjectInputStream oin = new ObjectInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	try {
+	    oin.registerValidation(new ObjectInputValidation() {
+		public void validateObject() throws InvalidObjectException {}
+	    }, 0);
+	    throw new Error(
+		"registerValidation should fail on inactive stream");
+	} catch (NotActiveException ex) {
+	}
     }
 }

@@ -43,6 +43,7 @@ package java.io;
  * </ul>
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.1
  */
 public class OptionalDataException extends ObjectStreamException {
@@ -53,8 +54,8 @@ public class OptionalDataException extends ObjectStreamException {
      * Create an <code>OptionalDataException</code> with a length.
      */
     OptionalDataException(int len) {
-        eof = false;
-        length = len;
+	eof = false;
+	length = len;
     }
 
     /*
@@ -62,8 +63,8 @@ public class OptionalDataException extends ObjectStreamException {
      * more primitive data is available.
      */
     OptionalDataException(boolean end) {
-        length = 0;
-        eof = end;
+	length = 0;
+	eof = end;
     }
 
     /**

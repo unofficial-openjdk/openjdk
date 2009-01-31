@@ -32,6 +32,7 @@ package java.net;
  *
  * <p>See RFC 2965 sec. 3.3 & 7 for more detail.
  *
+ * @version %I%, %E%
  * @author Edward Wang
  * @since 1.6
  */
@@ -74,3 +75,4 @@ public interface CookiePolicy {
      */
     public boolean shouldAccept(URI uri, HttpCookie cookie);
 }
+

@@ -26,6 +26,10 @@
 #ifndef __MLIB_IMAGELOGIC_H
 #define __MLIB_IMAGELOGIC_H
 
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_ImageLogic_proto.h	1.2	03/01/31 SMI"
+#endif /* __SUNPRO_C */
+
 #include <mlib_types.h>
 #include <mlib_image_types.h>
 #include <mlib_status.h>

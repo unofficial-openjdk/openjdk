@@ -36,7 +36,7 @@ typedef HINSTANCE (WINAPI* LoadLibraryFunc) (LPCTSTR);
 typedef FARPROC (WINAPI* GetProcAddressFunc)(HMODULE, LPCSTR);
 
 /* only on Windows 64-bit or 32-bit application running under WOW64 */
-typedef BOOL (WINAPI *IsWow64ProcessFunc) (HANDLE, PBOOL);
+typedef BOOL (WINAPI *IsWow64ProcessFunc) (HANDLE, PBOOL);		   
 
 static LoadLibraryFunc _LoadLibrary;
 static GetProcAddressFunc _GetProcAddress;
@@ -51,7 +51,7 @@ typedef jint (WINAPI* EnqueueOperationFunc)
     (const char* cmd, const char* arg1, const char* arg2, const char* arg3, const char* pipename);
 
 /* OpenProcess with SE_DEBUG_NAME privilege */
-static HANDLE
+static HANDLE 
 doPrivilegedOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProcessId);
 
 /* convert jstring to C string */
@@ -62,28 +62,28 @@ static void jstring_to_cstring(JNIEnv* env, jstring jstr, char* cstr, int len);
  * Data copied to target process
  */
 
-#define MAX_LIBNAME_LENGTH      16
-#define MAX_FUNC_LENGTH         32
-#define MAX_CMD_LENGTH          16
-#define MAX_ARG_LENGTH          1024
-#define MAX_ARGS                3
-#define MAX_PIPE_NAME_LENGTH    256
+#define MAX_LIBNAME_LENGTH	16
+#define MAX_FUNC_LENGTH		32
+#define MAX_CMD_LENGTH		16
+#define MAX_ARG_LENGTH		1024
+#define MAX_ARGS		3
+#define MAX_PIPE_NAME_LENGTH	256
 
 typedef struct {
    LoadLibraryFunc _LoadLibrary;
    GetProcAddressFunc _GetProcAddress;
-   char jvmLib[MAX_LIBNAME_LENGTH];         /* "jvm.dll" */
+   char jvmLib[MAX_LIBNAME_LENGTH];	    /* "jvm.dll" */
    char func1[MAX_FUNC_LENGTH];
    char func2[MAX_FUNC_LENGTH];
-   char cmd[MAX_CMD_LENGTH];                /* "load", "dump", ...      */
-   char arg[MAX_ARGS][MAX_ARG_LENGTH];      /* arguments to command     */
+   char cmd[MAX_CMD_LENGTH];		    /* "load", "dump", ...      */
+   char arg[MAX_ARGS][MAX_ARG_LENGTH];	    /* arguments to command     */
    char pipename[MAX_PIPE_NAME_LENGTH];
 } DataBlock;
 
 /*
  * Return codes from enqueue function executed in target VM
  */
-#define ERR_OPEN_JVM_FAIL           200
+#define ERR_OPEN_JVM_FAIL	    200
 #define ERR_GET_ENQUEUE_FUNC_FAIL   201
 
 
@@ -95,10 +95,10 @@ static DWORD WINAPI thread_func(DataBlock *pData)
 {
     HINSTANCE h;
     EnqueueOperationFunc addr;
-
+    
     h = pData->_LoadLibrary(pData->jvmLib);
     if (h == NULL) {
-        return ERR_OPEN_JVM_FAIL;
+	return ERR_OPEN_JVM_FAIL;
     }
 
     addr = (EnqueueOperationFunc)(pData->_GetProcAddress(h, pData->func1));
@@ -106,7 +106,7 @@ static DWORD WINAPI thread_func(DataBlock *pData)
         addr = (EnqueueOperationFunc)(pData->_GetProcAddress(h, pData->func2));
     }
     if (addr == NULL) {
-        return ERR_GET_ENQUEUE_FUNC_FAIL;
+	return ERR_GET_ENQUEUE_FUNC_FAIL;
     }
 
     /* "null" command - does nothing in the target VM */
@@ -120,7 +120,7 @@ static DWORD WINAPI thread_func(DataBlock *pData)
 /* This function marks the end of thread_func. */
 static void thread_end (void) {
 }
-#pragma check_stack
+#pragma check_stack 
 
 
 /*
@@ -134,11 +134,11 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_init
     HINSTANCE h = LoadLibrary("kernel32");
     if (h != NULL) {
         _LoadLibrary = (LoadLibraryFunc) GetProcAddress(h, "LoadLibraryA");
-        _GetProcAddress = (GetProcAddressFunc)GetProcAddress(h, "GetProcAddress");
-        _IsWow64Process = (IsWow64ProcessFunc)GetProcAddress(h, "IsWow64Process");
+	_GetProcAddress = (GetProcAddressFunc)GetProcAddress(h, "GetProcAddress");
+	_IsWow64Process = (IsWow64ProcessFunc)GetProcAddress(h, "IsWow64Process");
     }
     if (_LoadLibrary == NULL || _GetProcAddress == NULL) {
-        JNU_ThrowInternalError(env, "Unable to get address of LoadLibraryA or GetProcAddress");
+	JNU_ThrowInternalError(env, "Unable to get address of LoadLibraryA or GetProcAddress");
     }
 }
 
@@ -156,7 +156,7 @@ JNIEXPORT jbyteArray JNICALL Java_sun_tools_attach_WindowsVirtualMachine_generat
      */
     DWORD len;
     jbyteArray array;
-
+    
     len = (DWORD)((LPBYTE) thread_end - (LPBYTE) thread_func);
     array= (*env)->NewByteArray(env, (jsize)len);
     if (array != NULL) {
@@ -174,9 +174,9 @@ JNIEXPORT jlong JNICALL Java_sun_tools_attach_WindowsVirtualMachine_openProcess
   (JNIEnv *env, jclass cls, jint pid)
 {
     HANDLE hProcess;
-
+    
     /*
-     * Attempt to open process. If it fails then we try to enable the
+     * Attempt to open process. If it fails then we try to enable the 
      * SE_DEBUG_NAME privilege and retry.
      */
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, (DWORD)pid);
@@ -184,13 +184,13 @@ JNIEXPORT jlong JNICALL Java_sun_tools_attach_WindowsVirtualMachine_openProcess
         hProcess = doPrivilegedOpenProcess(PROCESS_ALL_ACCESS, FALSE, (DWORD)pid);
     }
 
-    if (hProcess == NULL) {
-        if (GetLastError() == ERROR_INVALID_PARAMETER) {
-            JNU_ThrowIOException(env, "no such process");
-        } else {
-            JNU_ThrowIOExceptionWithLastError(env, "OpenProcess failed");
-        }
-        return (jlong)0;
+    if (hProcess == NULL) {	
+	if (GetLastError() == ERROR_INVALID_PARAMETER) {
+	    JNU_ThrowIOException(env, "no such process");
+	} else {
+	    JNU_ThrowIOExceptionWithLastError(env, "OpenProcess failed");
+	}
+	return (jlong)0;
     }
 
     /*
@@ -198,21 +198,21 @@ JNIEXPORT jlong JNICALL Java_sun_tools_attach_WindowsVirtualMachine_openProcess
      * processes (and visa versa). X-architecture attaching is currently not supported
      * by this implementation.
      */
-    if (_IsWow64Process != NULL) {
-        BOOL isCurrent32bit, isTarget32bit;
-        (*_IsWow64Process)(GetCurrentProcess(), &isCurrent32bit);
-        (*_IsWow64Process)(hProcess, &isTarget32bit);
+    if (_IsWow64Process != NULL) {		    
+	BOOL isCurrent32bit, isTarget32bit;
+	(*_IsWow64Process)(GetCurrentProcess(), &isCurrent32bit);
+	(*_IsWow64Process)(hProcess, &isTarget32bit);
 
-        if (isCurrent32bit != isTarget32bit) {
-            CloseHandle(hProcess);
-            #ifdef _WIN64
-              JNU_ThrowByName(env, "com/sun/tools/attach/AttachNotSupportedException",
-                  "Unable to attach to 32-bit process running under WOW64");
-            #else
-              JNU_ThrowByName(env, "com/sun/tools/attach/AttachNotSupportedException",
-                  "Unable to attach to 64-bit process");
-            #endif
-        }
+	if (isCurrent32bit != isTarget32bit) {
+	    CloseHandle(hProcess);
+	    #ifdef _WIN64
+	      JNU_ThrowByName(env, "com/sun/tools/attach/AttachNotSupportedException", 
+		  "Unable to attach to 32-bit process running under WOW64");
+	    #else
+	      JNU_ThrowByName(env, "com/sun/tools/attach/AttachNotSupportedException", 
+		  "Unable to attach to 64-bit process");
+	    #endif	   
+	}
     }
 
     return (jlong)hProcess;
@@ -238,23 +238,23 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_closeProcess
  */
 JNIEXPORT jlong JNICALL Java_sun_tools_attach_WindowsVirtualMachine_createPipe
   (JNIEnv *env, jclass cls, jstring pipename)
-{
+{	
     HANDLE hPipe;
     char name[MAX_PIPE_NAME_LENGTH];
-
+    
     jstring_to_cstring(env, pipename, name, MAX_PIPE_NAME_LENGTH);
-
-    hPipe = CreateNamedPipe(
-          name,                         // pipe name
-          PIPE_ACCESS_INBOUND,          // read access
-          PIPE_TYPE_BYTE |              // byte mode
-            PIPE_READMODE_BYTE |
-            PIPE_WAIT,                  // blocking mode
-          1,                            // max. instances
-          128,                          // output buffer size
-          8192,                         // input buffer size
-          NMPWAIT_USE_DEFAULT_WAIT,     // client time-out
-          NULL);                        // default security attribute
+    
+    hPipe = CreateNamedPipe( 
+          name,             		// pipe name 
+          PIPE_ACCESS_INBOUND,       	// read access
+	  PIPE_TYPE_BYTE |		// byte mode
+            PIPE_READMODE_BYTE |       	
+            PIPE_WAIT,                	// blocking mode 
+          1,				// max. instances  
+          128,                  	// output buffer size 
+          8192,                  	// input buffer size 
+          NMPWAIT_USE_DEFAULT_WAIT, 	// client time-out 
+          NULL);                   	// default security attribute 
 
     if (hPipe == INVALID_HANDLE_VALUE) {
         JNU_ThrowIOExceptionWithLastError(env, "CreateNamedPipe failed");
@@ -283,8 +283,8 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_connectPipe
 {
     BOOL fConnected;
 
-    fConnected = ConnectNamedPipe((HANDLE)hPipe, NULL) ?
-        TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
+    fConnected = ConnectNamedPipe((HANDLE)hPipe, NULL) ?  
+        TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
     if (!fConnected) {
         JNU_ThrowIOExceptionWithLastError(env, "ConnectNamedPipe failed");
     }
@@ -296,7 +296,7 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_connectPipe
  * Signature: (J[BII)I
  */
 JNIEXPORT jint JNICALL Java_sun_tools_attach_WindowsVirtualMachine_readPipe
-  (JNIEnv *env, jclass cls, jlong hPipe, jbyteArray ba, jint off, jint baLen)
+  (JNIEnv *env, jclass cls, jlong hPipe, jbyteArray ba, jint off, jint baLen) 
 {
     unsigned char buf[128];
     DWORD len, nread, remaining;
@@ -305,28 +305,28 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_WindowsVirtualMachine_readPipe
     len = sizeof(buf);
     remaining = (DWORD)(baLen - off);
     if (len > remaining) {
-        len = remaining;
+	len = remaining;
     }
 
-    fSuccess = ReadFile(
-         (HANDLE)hPipe,         // handle to pipe
-         buf,                   // buffer to receive data
-         len,                   // size of buffer
-         &nread,                // number of bytes read
-         NULL);                 // not overlapped I/O
+    fSuccess = ReadFile( 
+         (HANDLE)hPipe,         // handle to pipe 
+         buf,			// buffer to receive data 
+         len,			// size of buffer 
+         &nread,		// number of bytes read 
+         NULL);			// not overlapped I/O 
 
     if (!fSuccess) {
-        if (GetLastError() == ERROR_BROKEN_PIPE) {
-            return (jint)-1;
-        } else {
+	if (GetLastError() == ERROR_BROKEN_PIPE) {
+	    return (jint)-1;
+	} else {
             JNU_ThrowIOExceptionWithLastError(env, "ReadFile");
-        }
+	}
     } else {
-        if (nread == 0) {
-            return (jint)-1;        // EOF
-        } else {
-            (*env)->SetByteArrayRegion(env, ba, off, (jint)nread, (jbyte *)(buf+off));
-        }
+	if (nread == 0) {
+	    return (jint)-1;	    // EOF
+	} else {
+	    (*env)->SetByteArrayRegion(env, ba, off, (jint)nread, (jbyte *)(buf+off));
+	}
     }
 
     return (jint)nread;
@@ -340,7 +340,7 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_WindowsVirtualMachine_readPipe
  */
 JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_enqueue
   (JNIEnv *env, jclass cls, jlong handle, jbyteArray stub, jstring cmd,
-   jstring pipename, jobjectArray args)
+   jstring pipename, jobjectArray args) 
 {
     DataBlock data;
     DataBlock* pData;
@@ -367,28 +367,28 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_enqueue
      */
     jstring_to_cstring(env, cmd, data.cmd, MAX_CMD_LENGTH);
     argsLen = (*env)->GetArrayLength(env, args);
-
+    
     if (argsLen > 0) {
-        if (argsLen > MAX_ARGS) {
-            JNU_ThrowInternalError(env, "Too many arguments");
-        }
-        for (i=0; i<argsLen; i++) {
-            jobject obj = (*env)->GetObjectArrayElement(env, args, i);
-            if (obj == NULL) {
-                data.arg[i][0] = '\0';
-            } else {
-                jstring_to_cstring(env, obj, data.arg[i], MAX_ARG_LENGTH);
-            }
-            if ((*env)->ExceptionOccurred(env)) return;
-        }
-    }
+	if (argsLen > MAX_ARGS) {
+	    JNU_ThrowInternalError(env, "Too many arguments");
+	}
+	for (i=0; i<argsLen; i++) {
+	    jobject obj = (*env)->GetObjectArrayElement(env, args, i);
+	    if (obj == NULL) {
+		data.arg[i][0] = '\0';  
+	    } else {
+		jstring_to_cstring(env, obj, data.arg[i], MAX_ARG_LENGTH);
+	    }
+	    if ((*env)->ExceptionOccurred(env)) return;
+	}
+    } 
     for (i=argsLen; i<MAX_ARGS; i++) {
-        data.arg[i][0] = '\0';
+	data.arg[i][0] = '\0';
     }
 
     /* pipe name */
     jstring_to_cstring(env, pipename, data.pipename, MAX_PIPE_NAME_LENGTH);
-
+    
     /*
      * Allocate memory in target process for data and code stub
      * (assumed aligned and matches architecture of target process)
@@ -397,8 +397,8 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_enqueue
 
     pData = (DataBlock*) VirtualAllocEx( hProcess, 0, sizeof(DataBlock), MEM_COMMIT, PAGE_READWRITE );
     if (pData == NULL) {
-        JNU_ThrowIOExceptionWithLastError(env, "VirtualAllocEx failed");
-        return;
+	JNU_ThrowIOExceptionWithLastError(env, "VirtualAllocEx failed");
+	return;
     }
     WriteProcessMemory( hProcess, (LPVOID)pData, (LPVOID)&data, (DWORD)sizeof(DataBlock), &numBytes );
 
@@ -406,12 +406,12 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_enqueue
     stubLen = (DWORD)(*env)->GetArrayLength(env, stub);
     stubCode = (*env)->GetByteArrayElements(env, stub, &isCopy);
 
-    pCode = (PDWORD) VirtualAllocEx( hProcess, 0, stubLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    pCode = (PDWORD) VirtualAllocEx( hProcess, 0, stubLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE );		
     if (pCode == NULL) {
-        JNU_ThrowIOExceptionWithLastError(env, "VirtualAllocEx failed");
-        VirtualFreeEx(hProcess, pData, 0, MEM_RELEASE);
-        return;
-    }
+	JNU_ThrowIOExceptionWithLastError(env, "VirtualAllocEx failed");
+	VirtualFreeEx(hProcess, pData, 0, MEM_RELEASE);
+	return;
+    }    
     WriteProcessMemory( hProcess, (LPVOID)pCode, (LPVOID)stubCode, (DWORD)stubLen, &numBytes );
     if (isCopy) {
         (*env)->ReleaseByteArrayElements(env, stub, stubCode, JNI_ABORT);
@@ -421,44 +421,44 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_WindowsVirtualMachine_enqueue
      * Create thread in target process to execute code
      */
     hThread = CreateRemoteThread( hProcess,
-                                  NULL,
-                                  0,
-                                  (LPTHREAD_START_ROUTINE) pCode,
-                                  pData,
-                                  0,
-                                  NULL );
+				  NULL, 
+				  0,
+				  (LPTHREAD_START_ROUTINE) pCode,
+				  pData, 
+				  0, 
+				  NULL );
     if (hThread != NULL) {
         if (WaitForSingleObject(hThread, INFINITE) != WAIT_OBJECT_0) {
-            JNU_ThrowIOExceptionWithLastError(env, "WaitForSingleObject failed");
-        } else {
-            DWORD exitCode;
-            GetExitCodeThread(hThread, &exitCode);
-            if (exitCode) {
-                switch (exitCode) {
-                    case ERR_OPEN_JVM_FAIL :
-                        JNU_ThrowIOException(env,
+	    JNU_ThrowIOExceptionWithLastError(env, "WaitForSingleObject failed");
+	} else {	
+	    DWORD exitCode;
+	    GetExitCodeThread(hThread, &exitCode);
+	    if (exitCode) {		
+		switch (exitCode) {
+		    case ERR_OPEN_JVM_FAIL : 
+			JNU_ThrowIOException(env,  
                             "jvm.dll not loaded by target process");
-                        break;
-                    case ERR_GET_ENQUEUE_FUNC_FAIL :
-                        JNU_ThrowIOException(env,
+			break;
+		    case ERR_GET_ENQUEUE_FUNC_FAIL : 
+			JNU_ThrowIOException(env, 
                             "Unable to enqueue operation: the target VM does not support attach mechanism");
-                        break;
-                    default :
-                        JNU_ThrowInternalError(env,
+			break;
+		    default : 
+			JNU_ThrowInternalError(env, 
                             "Remote thread failed for unknown reason");
-                }
-            }
-        }
+		}
+	    }
+	}	
         CloseHandle(hThread);
     } else {
-        JNU_ThrowIOExceptionWithLastError(env, "CreateRemoteThread failed");
+	JNU_ThrowIOExceptionWithLastError(env, "CreateRemoteThread failed");
     }
 
     VirtualFreeEx(hProcess, pCode, 0, MEM_RELEASE);
     VirtualFreeEx(hProcess, pData, 0, MEM_RELEASE);
 }
 
-/*
+/* 
  * Attempts to enable the SE_DEBUG_NAME privilege and open the given process.
  */
 static HANDLE
@@ -472,25 +472,25 @@ doPrivilegedOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProc
     /*
      * Get the access token
      */
-    if (!OpenThreadToken(GetCurrentThread(),
-                         TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY,
-                         FALSE,
+    if (!OpenThreadToken(GetCurrentThread(), 
+                         TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY, 
+                         FALSE, 
                          &hToken)) {
         if (GetLastError() != ERROR_NO_TOKEN) {
             return (HANDLE)NULL;
         }
 
-        /*
-         * No access token for the thread so impersonate the security context
-         * of the process.
+        /* 
+         * No access token for the thread so impersonate the security context 
+         * of the process. 
          */
         if (!ImpersonateSelf(SecurityImpersonation)) {
             return (HANDLE)NULL;
-        }
-        if (!OpenThreadToken(GetCurrentThread(),
-                             TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY,
-                             FALSE,
-                             &hToken)) {
+        }      
+        if (!OpenThreadToken(GetCurrentThread(), 
+                             TOKEN_ADJUST_PRIVILEGES|TOKEN_QUERY, 
+                             FALSE, 
+                             &hToken)) { 
             return (HANDLE)NULL;
         }
     }
@@ -515,14 +515,14 @@ doPrivilegedOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProc
 
     error = 0;
     if (AdjustTokenPrivileges(hToken,
-                              FALSE,
-                              &tp,
-                              sizeof(TOKEN_PRIVILEGES),
-                              &tpPrevious,
-                              &retLength)) {
+			      FALSE,
+			      &tp,
+			      sizeof(TOKEN_PRIVILEGES),
+			      &tpPrevious,
+			      &retLength)) {
         /*
          * If we enabled the privilege then attempt to open the
-         * process.
+         * process. 
          */
         if (GetLastError() == ERROR_SUCCESS) {
             hProcess = OpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
@@ -535,17 +535,17 @@ doPrivilegedOpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwProc
 
         /*
          * Revert to the previous privileges
-         */
-        AdjustTokenPrivileges(hToken,
-                              FALSE,
-                              &tpPrevious,
-                              retLength,
-                              NULL,
-                              NULL);
+         */   
+	AdjustTokenPrivileges(hToken,
+			      FALSE,
+			      &tpPrevious,
+			      retLength,
+			      NULL,
+			      NULL);
     } else {
         error = GetLastError();
     }
-
+        
 
     /*
      * Close token and restore error
@@ -565,10 +565,10 @@ static void jstring_to_cstring(JNIEnv* env, jstring jstr, char* cstr, int len) {
         cstr[0] = '\0';
     } else {
         str = JNU_GetStringPlatformChars(env, jstr, &isCopy);
-        strncpy(cstr, str, len);
-        cstr[len-1] = '\0';
-        if (isCopy) {
-            JNU_ReleaseStringPlatformChars(env, jstr, str);
-        }
+	strncpy(cstr, str, len);
+	cstr[len-1] = '\0';
+	if (isCopy) {
+	    JNU_ReleaseStringPlatformChars(env, jstr, str);
+	}
     }
 }

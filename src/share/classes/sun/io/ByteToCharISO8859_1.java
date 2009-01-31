@@ -39,16 +39,16 @@ public class ByteToCharISO8859_1 extends ByteToCharConverter {
     }
 
     public int flush(char[] output, int outStart, int outEnd) {
-        // This converter will not buffer any data.
-        byteOff = charOff = 0;
-        return 0;
+	// This converter will not buffer any data.
+	byteOff = charOff = 0;
+	return 0;
     }
 
     /**
     * Algorithmic character conversion
     */
     public int convert(byte[] input, int inOff, int inEnd,
-                       char[] output, int outOff, int outEnd)
+		       char[] output, int outOff, int outEnd)
 
         throws ConversionBufferFullException
     {
@@ -56,32 +56,32 @@ public class ByteToCharISO8859_1 extends ByteToCharConverter {
         if (bound >= inEnd) {
              bound = inEnd;
         }
-        int bytesWritten = inEnd - inOff;
+	int bytesWritten = inEnd - inOff;
 
 
         // Loop until we hit the end of the input
-        try {
-            while(inOff < bound) {
-                output[outOff++] = (char) (0xff & input[inOff++]);
-            }
-        } finally {
-            charOff = outOff;
-            byteOff = inOff;
-        }
+	try {
+	    while(inOff < bound) {
+		output[outOff++] = (char) (0xff & input[inOff++]);
+	    }
+	} finally {
+	    charOff = outOff;
+	    byteOff = inOff;
+	}
 
-        // If we don't have room for the output, throw an exception
-        if (bound < inEnd)
-            throw new ConversionBufferFullException();
+	// If we don't have room for the output, throw an exception
+	if (bound < inEnd)
+	    throw new ConversionBufferFullException();
 
-        // Return the length written to the output buffer
-        return bytesWritten;
+    	// Return the length written to the output buffer
+	return bytesWritten;
     }
 
     /*
         Reset after finding bad input
     */
     public void reset() {
-        byteOff = charOff = 0;
+	byteOff = charOff = 0;
     }
 
 }

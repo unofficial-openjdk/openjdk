@@ -174,7 +174,7 @@ public abstract class X11SurfaceDataProxy extends SurfaceDataProxy
             // same effect as SrcOverNoEa+bgColor, so we allow
             // copying from pixmap SD using accelerated blitbg loops:
             // SrcOver will be changed to SrcNoEa in DrawImage.blitSD
-            if (CompositeType.SrcOverNoEa.equals(comp) ||
+            if (CompositeType.SrcOverNoEa.equals(comp) || 
                 (CompositeType.SrcNoEa.equals(comp) &&
                  bgColor != null))
             {

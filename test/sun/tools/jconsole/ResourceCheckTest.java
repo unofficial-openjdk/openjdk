@@ -36,7 +36,7 @@ import java.awt.event.KeyEvent;
 import sun.tools.jconsole.Resources;
 
 public class ResourceCheckTest {
-
+    
     public static void main(String[] args){
         Object [][] testData = {
             {"<", "", "", "", ""},
@@ -195,7 +195,7 @@ public class ResourceCheckTest {
             {"Is", "", "", "", ""},
             {"Java Monitoring & Management Console", "", "", "", ""},
             {"Java Virtual Machine", "", "", "", ""},
-            {"JConsole: ", "", "", "", ""},
+	    {"JConsole: ", "", "", "", ""},
             {"JConsole.accessibleDescription", "", "", "", ""},
             {"JConsole version", "PhonyVersion", "", "", ""},
             {"JIT compiler", "", "", "", ""},
@@ -366,19 +366,19 @@ public class ResourceCheckTest {
         for (int ii = 0; ii < testData.length; ii++) {
             String key = (String)testData[ii][0];
 
-            if (key.endsWith(".mnemonic")) {
-                String baseKey = key.substring(0, key.length() - ".mnemonic".length());
-                int mnemonic = Resources.getMnemonicInt(baseKey);
-                if (mnemonic == 0) {
-                    badLookups++;
-                    System.out.println("****lookup failed for key = " + key);
-                } else {
-                    if (verbose) {
-                        System.out.println("    mnemonic: " + KeyEvent.getKeyText(mnemonic));
-                    }
-                }
-                continue;
-            }
+	    if (key.endsWith(".mnemonic")) {
+		String baseKey = key.substring(0, key.length() - ".mnemonic".length());
+		int mnemonic = Resources.getMnemonicInt(baseKey);
+		if (mnemonic == 0) {
+		    badLookups++;
+		    System.out.println("****lookup failed for key = " + key);
+		} else {
+		    if (verbose) {
+			System.out.println("    mnemonic: " + KeyEvent.getKeyText(mnemonic));
+		    }
+		}
+		continue;
+	    }
 
             String ss = Resources.getText(key,
                                           testData[ii][1],
@@ -395,7 +395,7 @@ public class ResourceCheckTest {
             }
         }
         if (badLookups > 0) {
-            throw new Error ("Resource lookup failed " + badLookups +
+            throw new Error ("Resource lookup failed " + badLookups + 
                              " time(s); Test failed");
         }
         System.out.println("...Finished.");

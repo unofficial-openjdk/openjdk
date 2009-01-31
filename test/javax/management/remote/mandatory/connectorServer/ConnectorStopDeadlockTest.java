@@ -47,12 +47,12 @@ import javax.management.remote.rmi.RMIJRMPServerImpl;
 public class ConnectorStopDeadlockTest {
     private static String failure;
     private static RMIConnectorServer connectorServer;
-
+    
     public static void main(String[] args) throws Exception {
         JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://");
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         RMIJRMPServerImplSub impl = new RMIJRMPServerImplSub();
-
+        
         System.out.println("Creating connectorServer");
         connectorServer = new RMIConnectorServer(url, null, impl, mbs);
         System.out.println("Starting connectorServer");
@@ -70,18 +70,18 @@ public class ConnectorStopDeadlockTest {
         else
             System.out.println("TEST FAILED");
     }
-
+    
     static void fail(Throwable e) {
         System.out.println("FAILED WITH EXCEPTION: " + e);
         e.printStackTrace(System.out);
         failure = e.toString();
     }
-
+    
     static void fail(String s) {
         System.out.println("FAILED: " + s);
         failure = s;
     }
-
+    
 //    static MonitorInfo[] threadLocks(Thread t) {
 //        ThreadMXBean tm = ManagementFactory.getThreadMXBean();
 //        ThreadInfo[] tis = tm.getThreadInfo(new long[] {t.getId()}, true, true);
@@ -90,7 +90,7 @@ public class ConnectorStopDeadlockTest {
 //        else
 //            return tis[0].getLockedMonitors();
 //    }
-//
+//    
 //    static void showLocks(Thread t) {
 //        System.out.println("Locks for " + t.getName() + ":");
 //        MonitorInfo[] mis = threadLocks(t);
@@ -103,7 +103,7 @@ public class ConnectorStopDeadlockTest {
 //                System.out.println("  " + mi);
 //        }
 //    }
-
+        
     // Wait until thread t blocks waiting for a lock held by the calling thread,
     // or until it exits.
     static void waitForBlock(Thread t) {
@@ -124,16 +124,16 @@ public class ConnectorStopDeadlockTest {
             Thread.yield();
         }
     }
-
+    
     public static class RMIJRMPServerImplSub extends RMIJRMPServerImpl {
         RMIJRMPServerImplSub() throws IOException {
             super(0, null, null, null);
         }
-
+        
         public RMIConnection makeClient() throws IOException {
             return super.makeClient("connection id", null);
         }
-
+        
         @Override
         protected void clientClosed(RMIConnection conn) throws IOException {
             System.out.println("clientClosed, will call connectorServer.stop");

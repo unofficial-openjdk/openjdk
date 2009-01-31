@@ -79,19 +79,19 @@ void AwtObject::_Dispose(PDATA pData)
         AwtObject *o = (AwtObject *)pData;
         AwtToolkit::GetInstance().SendMessage(WM_AWT_DISPOSE, (WPARAM)o, (LPARAM)0);
     }
-
+    
     CATCH_BAD_ALLOC;
 }
 
 /*
  * Return the peer associated with some target.  This information is
- * maintained in a hashtable at the java level.
+ * maintained in a hashtable at the java level.  
  */
 jobject AwtObject::GetPeerForTarget(JNIEnv *env, jobject target)
 {
-    jobject result =
-        env->CallStaticObjectMethod(AwtObject::wObjectPeerClass,
-                                    AwtObject::getPeerForTargetMID,
+    jobject result = 
+	env->CallStaticObjectMethod(AwtObject::wObjectPeerClass, 
+                                    AwtObject::getPeerForTargetMID, 
                                     target);
 
     DASSERT(!safe_ExceptionOccurred(env));
@@ -99,38 +99,38 @@ jobject AwtObject::GetPeerForTarget(JNIEnv *env, jobject target)
 }
 
 /* Execute a callback to the associated Java peer. */
-void
+void 
 AwtObject::DoCallback(const char* methodName, const char* methodSig, ...)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-
+    
     /* don't callback during the create & initialization process */
     if (m_peerObject != NULL && m_callbacksEnabled) {
         va_list args;
         va_start(args, methodSig);
 #ifdef DEBUG
         if (reportEvents) {
-            jstring targetStr =
-                (jstring)JNU_CallMethodByName(env, NULL, GetTarget(env),
-                                              "getName",
-                                              "()Ljava/lang/String;").l;
+	    jstring targetStr = 
+		(jstring)JNU_CallMethodByName(env, NULL, GetTarget(env), 
+					      "getName",
+					      "()Ljava/lang/String;").l;
             DASSERT(!safe_ExceptionOccurred(env));
             printf("Posting %s%s method to %S\n", methodName, methodSig,
-                   TO_WSTRING(targetStr));
+		   TO_WSTRING(targetStr));
         }
 #endif
-        /* caching would do much good here */
-        JNU_CallMethodByNameV(env, NULL, GetPeer(env),
-                              methodName, methodSig, args);
-        {
-            jthrowable exc = safe_ExceptionOccurred(env);
-            if (exc) {
-                env->DeleteLocalRef(exc);
-                env->ExceptionDescribe();
-                env->ExceptionClear();
-            }
+	/* caching would do much good here */
+	JNU_CallMethodByNameV(env, NULL, GetPeer(env), 
+			      methodName, methodSig, args);
+	{
+	    jthrowable exc = safe_ExceptionOccurred(env);
+	    if (exc) {
+	        env->DeleteLocalRef(exc);
+	        env->ExceptionDescribe();
+		env->ExceptionClear();
+	    }
         }
-        DASSERT(!safe_ExceptionOccurred(env));
+	DASSERT(!safe_ExceptionOccurred(env));
         va_end(args);
     }
 }
@@ -141,25 +141,25 @@ void AwtObject::SendEvent(jobject event)
 
 #ifdef DEBUG
     if (reportEvents) {
-        jstring eventStr = JNU_ToString(env, event);
+	jstring eventStr = JNU_ToString(env, event);
         DASSERT(!safe_ExceptionOccurred(env));
-        jstring targetStr =
-            (jstring)JNU_CallMethodByName(env, NULL, GetTarget(env),"getName",
-                                          "()Ljava/lang/String;").l;
+	jstring targetStr = 
+	    (jstring)JNU_CallMethodByName(env, NULL, GetTarget(env),"getName",
+					  "()Ljava/lang/String;").l;
         DASSERT(!safe_ExceptionOccurred(env));
         printf("Posting %S to %S\n", TO_WSTRING(eventStr),
-               TO_WSTRING(targetStr));
+	       TO_WSTRING(targetStr));
     }
 #endif
     /* Post event to the system EventQueue. */
-    JNU_CallMethodByName(env, NULL, GetPeer(env), "postEvent",
-                         "(Ljava/awt/AWTEvent;)V", event);
+    JNU_CallMethodByName(env, NULL, GetPeer(env), "postEvent", 
+			 "(Ljava/awt/AWTEvent;)V", event);
     {
         jthrowable exc = safe_ExceptionOccurred(env);
-        if (exc) {
-            env->DeleteLocalRef(exc);
-            env->ExceptionDescribe();
-        }
+	if (exc) {
+	    env->DeleteLocalRef(exc);
+	    env->ExceptionDescribe();
+	}
     }
     DASSERT(!safe_ExceptionOccurred(env));
 }
@@ -174,12 +174,12 @@ void AwtObject::SendEvent(jobject event)
 // what's happening on the Windows thread.
 //
 LRESULT AwtObject::WinThreadExec(
-    jobject                             peerObject,
-    UINT                                cmdId,
-    LPARAM                              param1,
-    LPARAM                              param2,
-    LPARAM                              param3,
-    LPARAM                              param4 )
+    jobject			 	peerObject,
+    UINT				cmdId,
+    LPARAM 				param1,
+    LPARAM 				param2,
+    LPARAM 				param3,
+    LPARAM 				param4 )
 {
     DASSERT( peerObject != NULL);
 
@@ -188,7 +188,7 @@ LRESULT AwtObject::WinThreadExec(
     //   make a global ref
     jobject peerObjectGlobalRef = env->NewGlobalRef(peerObject);
 
-    ExecuteArgs         args;
+    ExecuteArgs		args;
     LRESULT         retVal;
 
     // setup arguments
@@ -200,8 +200,8 @@ LRESULT AwtObject::WinThreadExec(
 
     // call WinThreadExecProc on the toolkit thread
     retVal = AwtToolkit::GetInstance().SendMessage(WM_AWT_EXECUTE_SYNC,
-                                                   (WPARAM)peerObjectGlobalRef,
-                                                   (LPARAM)&args);
+						   (WPARAM)peerObjectGlobalRef,
+						   (LPARAM)&args);
     return retVal;
 }
 
@@ -217,18 +217,18 @@ LRESULT AwtObject::WinThreadExecProc(ExecuteArgs * args)
 
 extern "C" {
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WObjectPeer_initIDs(JNIEnv *env, jclass cls) {
     TRY;
 
     AwtObject::wObjectPeerClass = (jclass)env->NewGlobalRef(cls);
     AwtObject::pDataID = env->GetFieldID(cls, "pData", "J");
-    AwtObject::targetID = env->GetFieldID(cls, "target",
-                                              "Ljava/lang/Object;");
+    AwtObject::targetID = env->GetFieldID(cls, "target", 
+					      "Ljava/lang/Object;");
 
-    AwtObject::getPeerForTargetMID =
-        env->GetStaticMethodID(cls, "getPeerForTarget",
-                         "(Ljava/lang/Object;)Lsun/awt/windows/WObjectPeer;");
+    AwtObject::getPeerForTargetMID = 
+	env->GetStaticMethodID(cls, "getPeerForTarget", 
+			 "(Ljava/lang/Object;)Lsun/awt/windows/WObjectPeer;");
 
     AwtObject::createErrorID = env->GetFieldID(cls, "createError", "Ljava/lang/Error;");
 

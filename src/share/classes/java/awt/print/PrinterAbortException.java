@@ -26,7 +26,7 @@
 package java.awt.print;
 
 /**
- * The <code>PrinterAbortException</code> class is a subclass of
+ * The <code>PrinterAbortException</code> class is a subclass of 
  * {@link PrinterException} and is used to indicate that a user
  * or application has terminated the print job while it was in
  * the process of printing.

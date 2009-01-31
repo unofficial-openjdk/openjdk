@@ -47,95 +47,95 @@ import static com.sun.jmx.mbeanserver.Util.*;
  */
 final class PerInterface<M> {
     PerInterface(Class<?> mbeanInterface, MBeanIntrospector<M> introspector,
-                 MBeanAnalyzer<M> analyzer, MBeanInfo mbeanInfo) {
-        this.mbeanInterface = mbeanInterface;
-        this.introspector = introspector;
+		 MBeanAnalyzer<M> analyzer, MBeanInfo mbeanInfo) {
+	this.mbeanInterface = mbeanInterface;
+	this.introspector = introspector;
         this.mbeanInfo = mbeanInfo;
-        analyzer.visit(new InitMaps());
+	analyzer.visit(new InitMaps());
     }
 
     Class<?> getMBeanInterface() {
-        return mbeanInterface;
+	return mbeanInterface;
     }
 
     MBeanInfo getMBeanInfo() {
-        return mbeanInfo;
+	return mbeanInfo;
     }
 
     boolean isMXBean() {
-        return introspector.isMXBean();
+	return introspector.isMXBean();
     }
 
     Object getAttribute(Object resource, String attribute, Object cookie)
-            throws AttributeNotFoundException,
-                   MBeanException,
-                   ReflectionException {
+	    throws AttributeNotFoundException,
+		   MBeanException,
+		   ReflectionException {
 
-        final M cm = getters.get(attribute);
-        if (cm == null) {
-            final String msg;
-            if (setters.containsKey(attribute))
-                msg = "Write-only attribute: " + attribute;
-            else
-                msg = "No such attribute: " + attribute;
-            throw new AttributeNotFoundException(msg);
-        }
-        return introspector.invokeM(cm, resource, (Object[]) null, cookie);
+	final M cm = getters.get(attribute);
+	if (cm == null) {
+	    final String msg;
+	    if (setters.containsKey(attribute))
+		msg = "Write-only attribute: " + attribute;
+	    else
+		msg = "No such attribute: " + attribute;
+	    throw new AttributeNotFoundException(msg);
+	}
+	return introspector.invokeM(cm, resource, (Object[]) null, cookie);
     }
 
     void setAttribute(Object resource, String attribute, Object value,
                       Object cookie)
-            throws AttributeNotFoundException,
-                   InvalidAttributeValueException,
-                   MBeanException,
-                   ReflectionException {
+	    throws AttributeNotFoundException,
+		   InvalidAttributeValueException,
+		   MBeanException,
+		   ReflectionException {
 
-        final M cm = setters.get(attribute);
-        if (cm == null) {
-            final String msg;
-            if (getters.containsKey(attribute))
-                msg = "Read-only attribute: " + attribute;
-            else
-                msg = "No such attribute: " + attribute;
-            throw new AttributeNotFoundException(msg);
-        }
+	final M cm = setters.get(attribute);
+	if (cm == null) {
+	    final String msg;
+	    if (getters.containsKey(attribute))
+		msg = "Read-only attribute: " + attribute;
+	    else
+		msg = "No such attribute: " + attribute;
+	    throw new AttributeNotFoundException(msg);
+	}
         introspector.invokeSetter(attribute, cm, resource, value, cookie);
     }
 
     Object invoke(Object resource, String operation, Object[] params,
-                  String[] signature, Object cookie)
-            throws MBeanException, ReflectionException {
+		  String[] signature, Object cookie)
+	    throws MBeanException, ReflectionException {
 
-        final List<MethodAndSig> list = ops.get(operation);
-        if (list == null) {
+	final List<MethodAndSig> list = ops.get(operation);
+	if (list == null) {
             final String msg = "No such operation: " + operation;
             return noSuchMethod(msg, resource, operation, params, signature,
                                 cookie);
-        }
-        if (signature == null)
-            signature = new String[0];
-        MethodAndSig found = null;
-        for (MethodAndSig mas : list) {
-            if (Arrays.equals(mas.signature, signature)) {
-                found = mas;
-                break;
-            }
-        }
-        if (found == null) {
-            final String badSig = sigString(signature);
-            final String msg;
-            if (list.size() == 1) {  // helpful exception message
-                msg = "Signature mismatch for operation " + operation +
-                        ": " + badSig + " should be " +
-                        sigString(list.get(0).signature);
-            } else {
-                msg = "Operation " + operation + " exists but not with " +
-                        "this signature: " + badSig;
-            }
-            return noSuchMethod(msg, resource, operation, params, signature,
+	}
+	if (signature == null)
+	    signature = new String[0];
+	MethodAndSig found = null;
+	for (MethodAndSig mas : list) {
+	    if (Arrays.equals(mas.signature, signature)) {
+		found = mas;
+		break;
+	    }
+	}
+	if (found == null) {
+	    final String badSig = sigString(signature);
+	    final String msg;
+	    if (list.size() == 1) {  // helpful exception message
+		msg = "Signature mismatch for operation " + operation +
+			": " + badSig + " should be " +
+			sigString(list.get(0).signature);
+	    } else {
+		msg = "Operation " + operation + " exists but not with " +
+			"this signature: " + badSig;
+	    }
+	    return noSuchMethod(msg, resource, operation, params, signature,
                                 cookie);
-        }
-        return introspector.invokeM(found.method, resource, params, cookie);
+	}
+	return introspector.invokeM(found.method, resource, params, cookie);
     }
 
     /*
@@ -160,9 +160,9 @@ final class PerInterface<M> {
      * the property at different times.
      */
     private Object noSuchMethod(String msg, Object resource, String operation,
-                                Object[] params, String[] signature,
-                                Object cookie)
-            throws MBeanException, ReflectionException {
+				Object[] params, String[] signature,
+				Object cookie)
+	    throws MBeanException, ReflectionException {
 
         // Construct the exception that we will probably throw
         final NoSuchMethodException nsme =
@@ -186,24 +186,24 @@ final class PerInterface<M> {
         if (invokeGettersS == null)
             throw exception;
 
-        int rest = 0;
+	int rest = 0;
         Map<String, M> methods = null;
-        if (signature == null || signature.length == 0) {
-            if (operation.startsWith("get"))
-                rest = 3;
-            else if (operation.startsWith("is"))
-                rest = 2;
+	if (signature == null || signature.length == 0) {
+	    if (operation.startsWith("get"))
+		rest = 3;
+	    else if (operation.startsWith("is"))
+		rest = 2;
             if (rest != 0)
                 methods = getters;
-        } else if (signature.length == 1 &&
-                   operation.startsWith("set")) {
-            rest = 3;
+	} else if (signature.length == 1 &&
+		   operation.startsWith("set")) {
+	    rest = 3;
             methods = setters;
         }
 
-        if (rest != 0) {
-            String attrName = operation.substring(rest);
-            M method = methods.get(attrName);
+	if (rest != 0) {
+	    String attrName = operation.substring(rest);
+	    M method = methods.get(attrName);
             if (method != null && introspector.getName(method).equals(operation)) {
                 String[] msig = introspector.getSignature(method);
                 if ((signature == null && msig.length == 0) ||
@@ -211,13 +211,13 @@ final class PerInterface<M> {
                     return introspector.invokeM(method, resource, params, cookie);
                 }
             }
-        }
+	}
 
         throw exception;
     }
 
     private String sigString(String[] signature) {
-        StringBuilder b = new StringBuilder("(");
+	StringBuilder b = new StringBuilder("(");
         if (signature != null) {
             for (String s : signature) {
                 if (b.length() > 1)
@@ -225,35 +225,35 @@ final class PerInterface<M> {
                 b.append(s);
             }
         }
-        return b.append(")").toString();
+	return b.append(")").toString();
     }
-
+    
     /**
      * Visitor that sets up the method maps (operations, getters, setters).
      */
     private class InitMaps implements MBeanAnalyzer.MBeanVisitor<M> {
-        public void visitAttribute(String attributeName,
-                                   M getter,
-                                   M setter) {
-            if (getter != null) {
+	public void visitAttribute(String attributeName,
+				   M getter,
+				   M setter) {
+	    if (getter != null) {
                 introspector.checkMethod(getter);
-                final Object old = getters.put(attributeName, getter);
-                assert(old == null);
-            }
-            if (setter != null) {
+		final Object old = getters.put(attributeName, getter);
+		assert(old == null);
+	    }
+	    if (setter != null) {
                 introspector.checkMethod(setter);
-                final Object old = setters.put(attributeName, setter);
-                assert(old == null);
-            }
-        }
+		final Object old = setters.put(attributeName, setter);
+		assert(old == null);
+	    }
+	}
 
-        public void visitOperation(String operationName,
-                                   M operation) {
+	public void visitOperation(String operationName,
+				   M operation) {
             introspector.checkMethod(operation);
-            final String[] sig = introspector.getSignature(operation);
-            final MethodAndSig mas = new MethodAndSig();
-            mas.method = operation;
-            mas.signature = sig;
+	    final String[] sig = introspector.getSignature(operation);
+	    final MethodAndSig mas = new MethodAndSig();
+	    mas.method = operation;
+	    mas.signature = sig;
             List<MethodAndSig> list = ops.get(operationName);
             if (list == null)
                 list = Collections.singletonList(mas);
@@ -263,7 +263,7 @@ final class PerInterface<M> {
                 list.add(mas);
             }
             ops.put(operationName, list);
-        }
+	}
     }
 
     private class MethodAndSig {

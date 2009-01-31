@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 5047639
- * @summary Check that the "java-level" APIs provide a consistent view of
+ * @summary Check that the "java-level" APIs provide a consistent view of 
  *          the thread list
  */
 import java.lang.management.ManagementFactory;
@@ -33,37 +33,37 @@ import java.util.Map;
 
 public class ThreadLists {
     public static void main(String args[]) {
+	
+	// get top-level thread group
+	ThreadGroup top = Thread.currentThread().getThreadGroup();
+	ThreadGroup parent;
+	do {
+	    parent = top.getParent();
+	    if (parent != null) top = parent;
+	} while (parent != null);
 
-        // get top-level thread group
-        ThreadGroup top = Thread.currentThread().getThreadGroup();
-        ThreadGroup parent;
-        do {
-            parent = top.getParent();
-            if (parent != null) top = parent;
-        } while (parent != null);
+	// get the thread count 
+	int activeCount = top.activeCount();
 
-        // get the thread count
-        int activeCount = top.activeCount();
+	Map<Thread, StackTraceElement[]> stackTraces = Thread.getAllStackTraces();
 
-        Map<Thread, StackTraceElement[]> stackTraces = Thread.getAllStackTraces();
+	ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
+	int threadCount = threadBean.getThreadCount();
+	long[] threadIds = threadBean.getAllThreadIds();
 
-        ThreadMXBean threadBean = ManagementFactory.getThreadMXBean();
-        int threadCount = threadBean.getThreadCount();
-        long[] threadIds = threadBean.getAllThreadIds();
+	System.out.println("ThreadGroup: " + activeCount + " active thread(s)");
+	System.out.println("Thread: " + stackTraces.size() + " stack trace(s) returned");
+	System.out.println("ThreadMXBean: " + threadCount + " live threads(s)");
+	System.out.println("ThreadMXBean: " + threadIds.length + " thread Id(s)");
 
-        System.out.println("ThreadGroup: " + activeCount + " active thread(s)");
-        System.out.println("Thread: " + stackTraces.size() + " stack trace(s) returned");
-        System.out.println("ThreadMXBean: " + threadCount + " live threads(s)");
-        System.out.println("ThreadMXBean: " + threadIds.length + " thread Id(s)");
+	// check results are consistent
+	boolean failed = false;
+	if (activeCount != stackTraces.size()) failed = true;
+	if (activeCount != threadCount) failed = true;
+	if (activeCount != threadIds.length) failed = true;
 
-        // check results are consistent
-        boolean failed = false;
-        if (activeCount != stackTraces.size()) failed = true;
-        if (activeCount != threadCount) failed = true;
-        if (activeCount != threadIds.length) failed = true;
-
-        if (failed) {
-            throw new RuntimeException("inconsistent results");
-        }
+	if (failed) {
+	    throw new RuntimeException("inconsistent results");
+	}
     }
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,18 +30,18 @@
  * @clean Write Read Foo
  * @compile Read.java
  * @run main Read
- *
+ * 
  * @summary Verify that array serialVersionUID conflicts caused by changes in
- *          package scope do not cause deserialization to fail.
+ * 	    package scope do not cause deserialization to fail.
  */
 
 import java.io.*;
 
 public class Write {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-        oout.writeObject(new Foo[0]);
-        oout.close();
+	ObjectOutputStream oout =
+	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+	oout.writeObject(new Foo[0]);
+	oout.close();
     }
 }

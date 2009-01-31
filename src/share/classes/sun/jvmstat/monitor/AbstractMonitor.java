@@ -34,6 +34,7 @@ import sun.management.counter.Variability;
  * to all classes implementing the Monitor interface..
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public abstract class AbstractMonitor implements Monitor  {

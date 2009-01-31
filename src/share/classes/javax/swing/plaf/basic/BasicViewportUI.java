@@ -36,6 +36,7 @@ import java.awt.event.*;
 /**
  * BasicViewport implementation
  *
+ * @version 1.1 05/01/98
  * @author Rich Schiavi
  */
 public class BasicViewportUI extends ViewportUI {
@@ -44,9 +45,9 @@ public class BasicViewportUI extends ViewportUI {
     private static ViewportUI viewportUI;
 
     public static ComponentUI createUI(JComponent c) {
-        if(viewportUI == null) {
+	if(viewportUI == null) {
             viewportUI = new BasicViewportUI();
-        }
+	}
         return viewportUI;
     }
 
@@ -62,9 +63,9 @@ public class BasicViewportUI extends ViewportUI {
 
     protected void installDefaults(JComponent c) {
         LookAndFeel.installColorsAndFont(c,
-                                         "Viewport.background",
-                                         "Viewport.foreground",
-                                         "Viewport.font");
+					 "Viewport.background",
+					 "Viewport.foreground",
+					 "Viewport.font");
         LookAndFeel.installProperty(c, "opaque", Boolean.TRUE);
     }
 

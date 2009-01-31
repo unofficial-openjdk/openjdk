@@ -40,11 +40,11 @@ public class Stream {
     static final String DAYTIME_HOST = TestUtil.HOST;
 
     static void test() throws Exception {
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-                                    DAYTIME_PORT);
-        SocketChannel sc = SocketChannel.open();
-        sc.connect(isa);
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+				    DAYTIME_PORT);
+	SocketChannel sc = SocketChannel.open();
+	sc.connect(isa);
         sc.configureBlocking(false);
         InputStream is = sc.socket().getInputStream();
         byte b[] = new byte[10];
@@ -54,11 +54,11 @@ public class Stream {
         } catch (IllegalBlockingModeException e) {
             // expected result
         }
-        sc.close();
+	sc.close();
     }
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
 }

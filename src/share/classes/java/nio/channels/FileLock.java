@@ -112,6 +112,7 @@ import java.io.IOException;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -144,18 +145,18 @@ public abstract class FileLock {
      *         If the preconditions on the parameters do not hold
      */
     protected FileLock(FileChannel channel,
-                       long position, long size, boolean shared)
+		       long position, long size, boolean shared)
     {
-        if (position < 0)
-            throw new IllegalArgumentException("Negative position");
-        if (size < 0)
-            throw new IllegalArgumentException("Negative size");
-        if (position + size < 0)
-            throw new IllegalArgumentException("Negative position + size");
-        this.channel = channel;
-        this.position = position;
-        this.size = size;
-        this.shared = shared;
+	if (position < 0)
+	    throw new IllegalArgumentException("Negative position");
+	if (size < 0)
+	    throw new IllegalArgumentException("Negative size");
+	if (position + size < 0)
+	    throw new IllegalArgumentException("Negative position + size");
+	this.channel = channel;
+	this.position = position;
+	this.size = size;
+	this.shared = shared;
     }
 
     /**
@@ -164,7 +165,7 @@ public abstract class FileLock {
      * @return  The file channel
      */
     public final FileChannel channel() {
-        return channel;
+	return channel;
     }
 
     /**
@@ -178,7 +179,7 @@ public abstract class FileLock {
      * @return  The position
      */
     public final long position() {
-        return position;
+	return position;
     }
 
     /**
@@ -191,7 +192,7 @@ public abstract class FileLock {
      * @return  The size of the locked region
      */
     public final long size() {
-        return size;
+	return size;
     }
 
     /**
@@ -201,7 +202,7 @@ public abstract class FileLock {
      *         <tt>false</tt> if it is exclusive
      */
     public final boolean isShared() {
-        return shared;
+	return shared;
     }
 
     /**
@@ -211,11 +212,11 @@ public abstract class FileLock {
      *          range overlap by at least one byte
      */
     public final boolean overlaps(long position, long size) {
-        if (position + size <= this.position)
-            return false;               // That is below this
-        if (this.position + this.size <= position)
-            return false;               // This is below that
-        return true;
+	if (position + size <= this.position)
+	    return false;		// That is below this
+	if (this.position + this.size <= position)
+	    return false;		// This is below that
+	return true;
     }
 
     /**
@@ -250,12 +251,12 @@ public abstract class FileLock {
      * @return  A descriptive string
      */
     public final String toString() {
-        return (this.getClass().getName()
-                + "[" + position
-                + ":" + size
-                + " " + (shared ? "shared" : "exclusive")
-                + " " + (isValid() ? "valid" : "invalid")
-                + "]");
+	return (this.getClass().getName()
+		+ "[" + position
+		+ ":" + size
+		+ " " + (shared ? "shared" : "exclusive")
+		+ " " + (isValid() ? "valid" : "invalid")
+		+ "]");
     }
 
 }

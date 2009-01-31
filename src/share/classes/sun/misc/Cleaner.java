@@ -54,6 +54,7 @@ import java.security.PrivilegedAction;
  *
  *
  * @author Mark Reinhold
+ * @version %I%, %E%
  */
 
 public class Cleaner
@@ -72,48 +73,48 @@ public class Cleaner
     static private Cleaner first = null;
 
     private Cleaner
-        next = null,
-        prev = null;
+	next = null,
+	prev = null;
 
     private static synchronized Cleaner add(Cleaner cl) {
-        if (first != null) {
-            cl.next = first;
-            first.prev = cl;
-        }
-        first = cl;
-        return cl;
+	if (first != null) {
+	    cl.next = first;
+	    first.prev = cl;
+	}
+	first = cl;
+	return cl;
     }
 
     private static synchronized boolean remove(Cleaner cl) {
 
-        // If already removed, do nothing
-        if (cl.next == cl)
-            return false;
+	// If already removed, do nothing
+	if (cl.next == cl)
+	    return false;
 
-        // Update list
-        if (first == cl) {
-            if (cl.next != null)
-                first = cl.next;
-            else
-                first = cl.prev;
-        }
-        if (cl.next != null)
-            cl.next.prev = cl.prev;
-        if (cl.prev != null)
-            cl.prev.next = cl.next;
+	// Update list
+	if (first == cl) {
+	    if (cl.next != null)
+		first = cl.next;
+	    else
+		first = cl.prev;
+	}
+	if (cl.next != null)
+	    cl.next.prev = cl.prev;
+	if (cl.prev != null)
+	    cl.prev.next = cl.next;
 
-        // Indicate removal by pointing the cleaner to itself
-        cl.next = cl;
-        cl.prev = cl;
-        return true;
+	// Indicate removal by pointing the cleaner to itself
+	cl.next = cl;
+	cl.prev = cl;
+	return true;
 
     }
 
     private final Runnable thunk;
 
     private Cleaner(Object referent, Runnable thunk) {
-        super(referent, dummyQueue);
-        this.thunk = thunk;
+	super(referent, dummyQueue);
+	this.thunk = thunk;
     }
 
     /**
@@ -127,29 +128,29 @@ public class Cleaner
      * @return  The new cleaner
      */
     public static Cleaner create(Object ob, Runnable thunk) {
-        if (thunk == null)
-            return null;
-        return add(new Cleaner(ob, thunk));
+	if (thunk == null)
+	    return null;
+	return add(new Cleaner(ob, thunk));
     }
 
     /**
      * Runs this cleaner, if it has not been run before.
      */
     public void clean() {
-        if (!remove(this))
-            return;
-        try {
-            thunk.run();
-        } catch (final Throwable x) {
-            AccessController.doPrivileged(new PrivilegedAction() {
-                    public Object run() {
-                        if (System.err != null)
-                            new Error("Cleaner terminated abnormally", x)
-                                .printStackTrace();
-                        System.exit(1);
-                        return null;
-                    }});
-        }
+	if (!remove(this))
+	    return;
+	try {
+	    thunk.run();
+	} catch (final Throwable x) {
+	    AccessController.doPrivileged(new PrivilegedAction() {
+		    public Object run() {
+			if (System.err != null)
+			    new Error("Cleaner terminated abnormally", x)
+				.printStackTrace();
+			System.exit(1);
+			return null;
+		    }});
+	}
     }
 
 }

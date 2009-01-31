@@ -48,7 +48,7 @@ interface AccessSpecifierPackagePrivateInterface {}
 class AccessSpecifierPackagePrivateClass {}
 
 /** Sample package-private class. */
-class AccessSpecifierPackagePrivateClassTwo implements
+class AccessSpecifierPackagePrivateClassTwo implements 
     AccessSpecifierPackagePrivateInterface {}
 
 class AccessSpecifierTarg {
@@ -108,7 +108,7 @@ class AccessSpecifierTarg {
     private static interface StaticInterface {}
     private static class ClassUsingStaticInterface
         implements StaticInterface {}
-
+    
     StaticInterface staticInterface_0 = new ClassUsingStaticInterface();
     StaticInterface staticInterface_1[]={staticInterface_0};
     StaticInterface staticInterface_2[][]={staticInterface_1};
@@ -119,7 +119,7 @@ class AccessSpecifierTarg {
     AccessSpecifierPackagePrivateClass ppc1[]={ppc0};
     AccessSpecifierPackagePrivateClass ppc2[][]={ppc1};
 
-    AccessSpecifierPackagePrivateInterface ppi0 =
+    AccessSpecifierPackagePrivateInterface ppi0 = 
         new AccessSpecifierPackagePrivateClassTwo ();
     AccessSpecifierPackagePrivateInterface ppi1[]={ppi0};
     AccessSpecifierPackagePrivateInterface ppi2[][]={ppi1};
@@ -186,7 +186,7 @@ public class AccessSpecifierTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new AccessSpecifierTest (args).startTests();
     }
 
@@ -202,7 +202,7 @@ public class AccessSpecifierTest extends TestScaffold {
                     " isPublic() was: " + a.isPublic());
         }
         if (a.isPrivate() != isPrivate) {
-            failure("**Name = " + name + " expecting: " + isPrivate +
+            failure("**Name = " + name + " expecting: " + isPrivate + 
                     " isPrivate() was: " + a.isPrivate());
         }
         if (a.isProtected() != isProtected) {
@@ -220,7 +220,7 @@ public class AccessSpecifierTest extends TestScaffold {
          * Get to the top of ready()
          */
         startTo(debugeeName, "ready", "()V");
-
+        
         ReferenceType rt = findReferenceType(debugeeName);
         if (rt == null) {
             throw new Exception ("ReferenceType not found for: " + debugeeName);
@@ -285,7 +285,7 @@ public class AccessSpecifierTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

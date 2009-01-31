@@ -171,67 +171,67 @@ public final class FontDesignMetrics extends FontMetrics {
      * out we can clear the keys from the table.
      */
     private static class KeyReference extends SoftReference
-        implements DisposerRecord {
+	implements DisposerRecord {
 
-        static ReferenceQueue queue = Disposer.getQueue();
+	static ReferenceQueue queue = Disposer.getQueue();
 
-        Object key;
+	Object key;
 
-        KeyReference(Object key, Object value) {
-            super(value, queue);
-            this.key = key;
-            Disposer.addReference(this, this);
-        }
+	KeyReference(Object key, Object value) {
+	    super(value, queue);
+	    this.key = key;
+	    Disposer.addReference(this, this);
+	}
 
-        /* It is possible that since this reference object has been
-         * enqueued, that a new metrics has been put into the table
-         * for the same key value. So we'll test to see if the table maps
-         * to THIS reference. If its a new one, we'll leave it alone.
+	/* It is possible that since this reference object has been
+	 * enqueued, that a new metrics has been put into the table
+	 * for the same key value. So we'll test to see if the table maps
+	 * to THIS reference. If its a new one, we'll leave it alone.
          * It is possible that a new entry comes in after our test, but
          * it is unlikely and if this were a problem we would need to
          * synchronize all 'put' and 'remove' accesses to the cache which
          * I would prefer not to do.
-         */
-        public void dispose() {
+	 */
+	public void dispose() {
             if (metricsCache.get(key) == this) {
                 metricsCache.remove(key);
-            }
-        }
+	    }
+	}
     }
 
     private static class MetricsKey {
-        Font font;
-        FontRenderContext frc;
-        int hash;
+	Font font;
+	FontRenderContext frc;
+	int hash;
 
-        MetricsKey() {
-        }
+	MetricsKey() {
+	}
+	
+	MetricsKey(Font font, FontRenderContext frc) {
+	    init(font, frc);
+	}
 
-        MetricsKey(Font font, FontRenderContext frc) {
-            init(font, frc);
-        }
+	void init(Font font, FontRenderContext frc) {
+	    this.font = font;
+	    this.frc = frc;
+	    this.hash = font.hashCode() + frc.hashCode();   
+	}
 
-        void init(Font font, FontRenderContext frc) {
-            this.font = font;
-            this.frc = frc;
-            this.hash = font.hashCode() + frc.hashCode();
-        }
+	public boolean equals(Object key) {
+	    if (!(key instanceof MetricsKey)) {
+		return false;
+	    }
+	    return
+		font.equals(((MetricsKey)key).font) &&
+		frc.equals(((MetricsKey)key).frc);
+	}
 
-        public boolean equals(Object key) {
-            if (!(key instanceof MetricsKey)) {
-                return false;
-            }
-            return
-                font.equals(((MetricsKey)key).font) &&
-                frc.equals(((MetricsKey)key).frc);
-        }
-
-        public int hashCode() {
-            return hash;
-        }
+	public int hashCode() {
+	    return hash;
+	}
 
         /* Synchronize access to this on the class */
-        static final MetricsKey key = new MetricsKey();
+	static final MetricsKey key = new MetricsKey();
     }
 
     /* All accesses to a CHM do not in general need to be synchronized,
@@ -240,20 +240,20 @@ public final class FontDesignMetrics extends FontMetrics {
      */
     private static final ConcurrentHashMap<Object, KeyReference>
         metricsCache = new ConcurrentHashMap<Object, KeyReference>();
-
+	
     private static final int MAXRECENT = 5;
     private static final FontDesignMetrics[]
-        recentMetrics = new FontDesignMetrics[MAXRECENT];
+	recentMetrics = new FontDesignMetrics[MAXRECENT];
     private static int recentIndex = 0;
 
     public static FontDesignMetrics getMetrics(Font font) {
-        return getMetrics(font, getDefaultFrc());
+	return getMetrics(font, getDefaultFrc());	
      }
 
     public static FontDesignMetrics getMetrics(Font font,
-                                               FontRenderContext frc) {
+					       FontRenderContext frc) {
 
-
+        
         /* When using alternate composites, can't cache based just on
          * the java.awt.Font. Since this is rarely used and we can still
          * cache the physical fonts, its not a problem to just return a
@@ -266,61 +266,61 @@ public final class FontDesignMetrics extends FontMetrics {
             return new FontDesignMetrics(font, frc);
         }
 
-        FontDesignMetrics m = null;
-        KeyReference r;
+	FontDesignMetrics m = null;
+	KeyReference r;
 
-        /* There are 2 possible keys used to perform lookups in metricsCache.
-         * If the FRC is set to all defaults, we just use the font as the key.
-         * If the FRC is non-default in any way, we construct a hybrid key
-         * that combines the font and FRC.
-         */
-        boolean usefontkey = frc.equals(getDefaultFrc());
+	/* There are 2 possible keys used to perform lookups in metricsCache.
+	 * If the FRC is set to all defaults, we just use the font as the key.
+	 * If the FRC is non-default in any way, we construct a hybrid key
+	 * that combines the font and FRC. 
+	 */
+	boolean usefontkey = frc.equals(getDefaultFrc());
 
-        if (usefontkey) {
+	if (usefontkey) {
             r = metricsCache.get(font);
         } else /* use hybrid key */ {
             // NB synchronization is not needed here because of updates to
             // the metrics cache but is needed for the shared key.
             synchronized (MetricsKey.class) {
-                MetricsKey.key.init(font, frc);
-                r = metricsCache.get(MetricsKey.key);
-            }
-        }
+		MetricsKey.key.init(font, frc);
+		r = metricsCache.get(MetricsKey.key);
+	    }
+	}
 
-        if (r != null) {
-            m = (FontDesignMetrics)r.get();
-        }
+	if (r != null) {
+	    m = (FontDesignMetrics)r.get();
+	}
 
-        if (m == null) {
-            /* either there was no reference, or it was cleared. Need a new
-             * metrics instance. The key to use in the map is a new
-             * MetricsKey instance when we've determined the FRC is
-             * non-default. Its constructed from local vars so we are
-             * thread-safe - no need to worry about the shared key changing.
-             */
-            m = new FontDesignMetrics(font, frc);
-            if (usefontkey) {
+	if (m == null) {
+	    /* either there was no reference, or it was cleared. Need a new
+	     * metrics instance. The key to use in the map is a new
+	     * MetricsKey instance when we've determined the FRC is
+	     * non-default. Its constructed from local vars so we are
+	     * thread-safe - no need to worry about the shared key changing.
+	     */
+	    m = new FontDesignMetrics(font, frc);
+	    if (usefontkey) {
                 metricsCache.put(font, new KeyReference(font, m));
             } else /* use hybrid key */ {
-                MetricsKey newKey = new MetricsKey(font, frc);
+		MetricsKey newKey = new MetricsKey(font, frc);
                 metricsCache.put(newKey, new KeyReference(newKey, m));
-            }
-        }
+	    }
+	}
 
-        /* Here's where we keep the recent metrics */
-        for (int i=0; i<recentMetrics.length; i++) {
-            if (recentMetrics[i]==m) {
-                return m;
-            }
-        }
-
-        synchronized (recentMetrics) {
-            recentMetrics[recentIndex++] = m;
-            if (recentIndex == MAXRECENT) {
-                recentIndex = 0;
-            }
-        }
-        return m;
+	/* Here's where we keep the recent metrics */
+	for (int i=0; i<recentMetrics.length; i++) {
+	    if (recentMetrics[i]==m) {
+		return m;
+	    }    
+	}
+	    
+	synchronized (recentMetrics) {
+	    recentMetrics[recentIndex++] = m;
+	    if (recentIndex == MAXRECENT) {
+		recentIndex = 0;
+	    }
+	}
+	return m;
     }
 
   /*
@@ -353,16 +353,16 @@ public final class FontDesignMetrics extends FontMetrics {
 
     private void initMatrixAndMetrics() {
 
-        Font2D font2D = FontManager.getFont2D(font);
+	Font2D font2D = FontManager.getFont2D(font);
         fontStrike = font2D.getStrike(font, frc);
-        StrikeMetrics metrics = fontStrike.getFontMetrics();
+	StrikeMetrics metrics = fontStrike.getFontMetrics();
         this.ascent = metrics.getAscent();
         this.descent = metrics.getDescent();
         this.leading = metrics.getLeading();
         this.maxAdvance = metrics.getMaxAdvance();
 
-        devmatrix = new double[4];
-        frcTx.getMatrix(devmatrix);
+	devmatrix = new double[4];
+	frcTx.getMatrix(devmatrix);
     }
 
     private void initAdvCache() {
@@ -373,9 +373,9 @@ public final class FontDesignMetrics extends FontMetrics {
         }
     }
 
-    private void readObject(ObjectInputStream in) throws IOException,
+    private void readObject(ObjectInputStream in) throws IOException, 
                                                   ClassNotFoundException {
-
+        
         in.defaultReadObject();
         if (serVersion != CURRENT_VERSION) {
             frc = getDefaultFrc();
@@ -386,11 +386,11 @@ public final class FontDesignMetrics extends FontMetrics {
         else {
             frc = new FontRenderContext(frcTx, isAntiAliased, usesFractionalMetrics);
         }
-
-        // when deserialized, members are set to their default values for their type--
-        // not to the values assigned during initialization before the constructor
-        // body!
-        height = -1;
+        
+	// when deserialized, members are set to their default values for their type--
+	// not to the values assigned during initialization before the constructor
+	// body!
+	height = -1;
 
         cache = null;
 
@@ -412,13 +412,13 @@ public final class FontDesignMetrics extends FontMetrics {
     }
 
     private float handleCharWidth(int ch) {
-        return fontStrike.getCodePointAdvance(ch); // x-component of result only
+	return fontStrike.getCodePointAdvance(ch); // x-component of result only
     }
 
     // Uses advCache to get character width
     // It is incorrect to call this method for ch > 255
     private float getLatinCharWidth(char ch) {
-
+        
         float w = advCache[ch];
         if (w == UNKNOWN_WIDTH) {
             w = handleCharWidth(ch);
@@ -430,7 +430,7 @@ public final class FontDesignMetrics extends FontMetrics {
 
     /* Override of FontMetrics.getFontRenderContext() */
     public FontRenderContext getFontRenderContext() {
-        return frc;
+	return frc;
     }
 
     public int charWidth(char ch) {
@@ -447,10 +447,10 @@ public final class FontDesignMetrics extends FontMetrics {
 
     public int charWidth(int ch) {
         if (!Character.isValidCodePoint(ch)) {
-            ch = 0xffff;
-        }
+	    ch = 0xffff;
+	}
 
-        float w = handleCharWidth(ch);
+	float w = handleCharWidth(ch);
 
         return (int)(0.5 + w);
     }
@@ -483,8 +483,8 @@ public final class FontDesignMetrics extends FontMetrics {
         }
 
         return (int) (0.5 + width);
-    }
-
+    }    
+    
     public int charsWidth(char data[], int off, int len) {
 
         float width = 0;
@@ -516,13 +516,13 @@ public final class FontDesignMetrics extends FontMetrics {
 
         return (int) (0.5 + width);
     }
-
+    
     /**
-     * Gets the advance widths of the first 256 characters in the
+     * Gets the advance widths of the first 256 characters in the 
      * <code>Font</code>.  The advance is the
      * distance from the leftmost point to the rightmost point on the
      * character's baseline.  Note that the advance of a
-     * <code>String</code> is not necessarily the sum of the advances
+     * <code>String</code> is not necessarily the sum of the advances 
      * of its characters.
      * @return    an array storing the advance widths of the
      *                 characters in the <code>Font</code>
@@ -531,18 +531,18 @@ public final class FontDesignMetrics extends FontMetrics {
     // More efficient than base class implementation - reuses existing cache
     public int[] getWidths() {
         int[] widths = new int[256];
-        for (char ch = 0 ; ch < 256 ; ch++) {
+	for (char ch = 0 ; ch < 256 ; ch++) {
             float w = advCache[ch];
             if (w == UNKNOWN_WIDTH) {
                 w = advCache[ch] = handleCharWidth(ch);
             }
             widths[ch] = (int) (0.5 + w);
-        }
-        return widths;
+	}
+	return widths;
     }
 
     public int getMaxAdvance() {
-        return (int)(0.99f + this.maxAdvance);
+	return (int)(0.99f + this.maxAdvance);
     }
 
   /*
@@ -563,16 +563,16 @@ public final class FontDesignMetrics extends FontMetrics {
     }
 
     public int getLeading() {
-        // nb this ensures the sum of the results of the public methods
-        // for leading, ascent & descent sum to height.
-        // if the calculations in any other methods change this needs
-        // to be changed too.
-        // the 0.95 value used here and in the other methods allows some
-        // tiny fraction of leeway before rouding up. A higher value (0.99)
-        // caused some excessive rounding up.
-        return
-            (int)(roundingUpValue + descent + leading) -
-            (int)(roundingUpValue + descent);
+	// nb this ensures the sum of the results of the public methods
+	// for leading, ascent & descent sum to height.
+	// if the calculations in any other methods change this needs
+	// to be changed too.
+	// the 0.95 value used here and in the other methods allows some
+	// tiny fraction of leeway before rouding up. A higher value (0.99)
+	// caused some excessive rounding up.
+	return
+	    (int)(roundingUpValue + descent + leading) -
+	    (int)(roundingUpValue + descent);
     }
 
     // height is calculated as the sum of two separately rounded up values
@@ -582,7 +582,7 @@ public final class FontDesignMetrics extends FontMetrics {
     public int getHeight() {
 
         if (height < 0) {
-            height = getAscent() + (int)(roundingUpValue + descent + leading);
+	    height = getAscent() + (int)(roundingUpValue + descent + leading);
         }
         return height;
     }

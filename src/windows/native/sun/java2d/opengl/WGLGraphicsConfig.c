@@ -666,7 +666,7 @@ Java_sun_java2d_opengl_WGLGraphicsConfig_getWGLConfigInfo(JNIEnv *env,
         j2d_wglReleasePbufferDCARB(scratch, scratchDC);
         j2d_wglDestroyPbufferARB(scratch);
         return 0L;
-    }
+    }    
 
     J2dTraceLn(J2D_TRACE_VERBOSE,
         "WGLGraphicsConfig_getWGLConfigInfo: finished checking dependencies");

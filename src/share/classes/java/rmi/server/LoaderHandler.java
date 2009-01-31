@@ -33,6 +33,7 @@ import java.net.URL;
  * runtime in previous implementation versions.  It should never be accessed
  * by application code.
  *
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  *
@@ -61,7 +62,7 @@ public interface LoaderHandler {
      */
     @Deprecated
     Class<?> loadClass(String name)
-        throws MalformedURLException, ClassNotFoundException;
+	throws MalformedURLException, ClassNotFoundException;
 
     /**
      * Loads a class from a URL.
@@ -80,7 +81,7 @@ public interface LoaderHandler {
      */
     @Deprecated
     Class<?> loadClass(URL codebase, String name)
-        throws MalformedURLException, ClassNotFoundException;
+	throws MalformedURLException, ClassNotFoundException;
 
     /**
      * Returns the security context of the given class loader.

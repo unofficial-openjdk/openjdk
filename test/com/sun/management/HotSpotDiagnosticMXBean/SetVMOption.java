@@ -44,7 +44,7 @@ public class SetVMOption {
     private static String BAD_VALUE = "yes";
     private static String NEW_VALUE = "false";
     private static String MANAGEMENT_SERVER = "ManagementServer";
-    private static HotSpotDiagnosticMXBean mbean =
+    private static HotSpotDiagnosticMXBean mbean = 
         ManagementFactory.getDiagnosticMXBean();
 
     public static void main(String[] args) throws Exception {
@@ -53,9 +53,9 @@ public class SetVMOption {
         // once build 52 is promoted.
         int build = Version.jvmBuildNumber();
         if (build > 0 && build < 52) {
-             // JVM support is integrated in build 52
-             // this test is skipped if running with VM earlier than 52
-             return;
+             // JVM support is integrated in build 52 
+             // this test is skipped if running with VM earlier than 52 
+             return; 
         }
 
         VMOption option = findPrintGCDetailsOption();

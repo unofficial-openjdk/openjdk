@@ -38,84 +38,85 @@ import sun.security.util.Debug;
  * implementations.
  *
  * @since   1.6
+ * @version %I%, %G%
  * @author  Andreas Sterbenz
  */
 class PlatformPCSC {
-
+    
     static final Debug debug = Debug.getInstance("pcsc");
-
+    
     static final Throwable initException;
-
+    
     private final static String PROP_NAME = "sun.security.smartcardio.library";
 
     private final static String LIB1 = "/usr/$LIBISA/libpcsclite.so";
     private final static String LIB2 = "/usr/local/$LIBISA/libpcsclite.so";
 
     PlatformPCSC() {
-        // empty
+	// empty
     }
-
+    
     static {
-        initException = AccessController.doPrivileged(new PrivilegedAction<Throwable>() {
-            public Throwable run() {
-                try {
-                    System.loadLibrary("j2pcsc");
-                    String library = getLibraryName();
-                    if (debug != null) {
-                        debug.println("Using PC/SC library: " + library);
-                    }
-                    initialize(library);
-                    return null;
-                } catch (Throwable e) {
-                    return e;
-                }
-            }
-        });
+	initException = AccessController.doPrivileged(new PrivilegedAction<Throwable>() {
+	    public Throwable run() {
+		try {
+		    System.loadLibrary("j2pcsc");
+		    String library = getLibraryName();
+		    if (debug != null) {
+			debug.println("Using PC/SC library: " + library);
+		    }
+		    initialize(library);
+		    return null;
+		} catch (Throwable e) {
+		    return e;
+		}
+	    }
+	});
     }
-
+    
     // expand $LIBISA to the system specific directory name for libraries
     private static String expand(String lib) {
-        int k = lib.indexOf("$LIBISA");
-        if (k == -1) {
-            return lib;
-        }
-        String s1 = lib.substring(0, k);
-        String s2 = lib.substring(k + 7);
-        String libDir;
-        if ("64".equals(System.getProperty("sun.arch.data.model"))) {
-            if ("SunOS".equals(System.getProperty("os.name"))) {
-                libDir = "lib/64";
-            } else {
-                // assume Linux convention
-                libDir = "lib64";
-            }
-        } else {
-            // must be 32-bit
-            libDir = "lib";
-        }
-        String s = s1 + libDir + s2;
-        return s;
+	int k = lib.indexOf("$LIBISA");
+	if (k == -1) {
+	    return lib;
+	}
+	String s1 = lib.substring(0, k);
+	String s2 = lib.substring(k + 7);
+	String libDir;
+	if ("64".equals(System.getProperty("sun.arch.data.model"))) {
+	    if ("SunOS".equals(System.getProperty("os.name"))) {
+		libDir = "lib/64";
+	    } else {
+		// assume Linux convention
+		libDir = "lib64";
+	    }
+	} else {
+	    // must be 32-bit
+	    libDir = "lib";
+	}
+	String s = s1 + libDir + s2;
+	return s;
     }
-
+    
     private static String getLibraryName() throws IOException {
-        // if system property is set, use that library
-        String lib = expand(System.getProperty(PROP_NAME, "").trim());
-        if (lib.length() != 0) {
-            return lib;
-        }
-        lib = expand(LIB1);
-        if (new File(lib).isFile()) {
-            // if LIB1 exists, use that
-            return lib;
-        }
-        lib = expand(LIB2);
-        if (new File(lib).isFile()) {
-            // if LIB2 exists, use that
-            return lib;
-        }
-        throw new IOException("No PC/SC library found on this system");
+	// if system property is set, use that library
+	String lib = expand(System.getProperty(PROP_NAME, "").trim());
+	if (lib.length() != 0) {
+	    return lib;
+	}
+	lib = expand(LIB1);
+	if (new File(lib).isFile()) {
+	    // if LIB1 exists, use that
+	    return lib;
+	}
+	lib = expand(LIB2);
+	if (new File(lib).isFile()) {
+	    // if LIB2 exists, use that
+	    return lib;
+	}
+	throw new IOException("No PC/SC library found on this system");
     }
-
+    
     private static native void initialize(String libraryName);
 
     // PCSC constants defined differently under Windows and MUSCLE

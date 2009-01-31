@@ -72,9 +72,9 @@ struct WmComponentSetFocusData;
 enum MsgRouting {
     mrPassAlong,    /* pass along to next in chain */
     mrDoDefault,    /* skip right to underlying default behavior */
-    mrConsume,      /* consume msg & terminate routing immediatly,
-                     * don't pass anywhere
-                     */
+    mrConsume,      /* consume msg & terminate routing immediatly, 
+		     * don't pass anywhere 
+		     */
 };
 
 /************************************************************************
@@ -84,8 +84,8 @@ enum MsgRouting {
 class AwtComponent : public AwtObject {
 public:
     enum {
-        // combination of all mouse button flags
-        ALL_MK_BUTTONS = MK_LBUTTON|MK_MBUTTON|MK_RBUTTON
+	// combination of all mouse button flags
+	ALL_MK_BUTTONS = MK_LBUTTON|MK_MBUTTON|MK_RBUTTON
     };
 
     /* java.awt.Component fields and method IDs */
@@ -118,7 +118,7 @@ public:
     virtual ~AwtComponent();
 
     /*
-     * Dynamic class registration & creation
+     * Dynamic class registration & creation 
      */
     virtual LPCTSTR GetClassName() = 0;
     /*
@@ -129,10 +129,10 @@ public:
     virtual void RegisterClass();
     virtual void UnregisterClass();
 
-    void CreateHWnd(JNIEnv *env, LPCWSTR title,
-                    DWORD windowStyle, DWORD windowExStyle,
+    void CreateHWnd(JNIEnv *env, LPCWSTR title, 
+		    DWORD windowStyle, DWORD windowExStyle,
                     int x, int y, int w, int h,
-                    HWND hWndParent, HMENU hMenu,
+                    HWND hWndParent, HMENU hMenu, 
                     COLORREF colorForeground, COLORREF colorBackground,
                     jobject peer);
     void InitPeerGraphicsConfig(JNIEnv *env, jobject peer);
@@ -144,11 +144,11 @@ public:
     virtual void SubclassHWND();
     virtual void UnsubclassHWND();
 
-    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, 
         WPARAM wParam, LPARAM lParam);
 
     /*
-     * Access to the various objects of this aggregate component
+     * Access to the various objects of this aggregate component 
      */
     INLINE HWND GetHWnd() { return m_hwnd; }
     INLINE void SetHWnd(HWND hwnd) { m_hwnd = hwnd; }
@@ -156,7 +156,7 @@ public:
     static AwtComponent* GetComponent(HWND hWnd);
 
     /*
-     * Access to the properties of the component
+     * Access to the properties of the component 
      */
     INLINE COLORREF GetColor() { return m_colorForeground; }
     virtual void SetColor(COLORREF c);
@@ -170,20 +170,20 @@ public:
     virtual void SetFont(AwtFont *pFont);
 
     INLINE void SetText(LPCTSTR text) { ::SetWindowText(GetHWnd(), text); }
-    INLINE int GetText(LPTSTR buffer, int size) {
-        return ::GetWindowText(GetHWnd(), buffer, size);
+    INLINE int GetText(LPTSTR buffer, int size) { 
+        return ::GetWindowText(GetHWnd(), buffer, size); 
     }
     INLINE int GetTextLength() { return ::GetWindowTextLength(GetHWnd()); }
 
-    virtual void GetInsets(RECT* rect) {
+    virtual void GetInsets(RECT* rect) { 
         VERIFY(::SetRectEmpty(rect));
     }
 
     BOOL IsVisible() { return m_visible;};
-
+    
     HDC GetDCFromComponent();
 
-    /*
+    /* 
      * Enable/disable component
      */
     virtual void Enable(BOOL bEnable);
@@ -199,7 +199,7 @@ public:
 
     /*
      * Returns the parent component.  If no parent window, or the
-     * parent window isn't an AwtComponent, returns NULL.
+     * parent window isn't an AwtComponent, returns NULL.  
      */
     AwtComponent* GetParent();
 
@@ -225,31 +225,31 @@ public:
     BOOL IsFocusable();
 
     /*
-     * Returns an increasing unsigned value used for child control IDs.
+     * Returns an increasing unsigned value used for child control IDs.  
      * There is no attempt to reclaim command ID's.
      */
     INLINE UINT CreateControlID() { return m_nextControlID++; }
 
     // returns the current keyboard layout
     INLINE static HKL GetKeyboardLayout() {
-        return m_hkl;
-    }
+	return m_hkl;
+    } 
 
-    // returns the current code page that should be used in
+    // returns the current code page that should be used in 
     // all MultiByteToWideChar and WideCharToMultiByte calls.
     // This code page should also be use in IsDBCSLeadByteEx.
     INLINE static UINT GetCodePage()
     {
         return m_CodePage;
     }
-
+    
 // Added by waleed for BIDI Support
     // returns the right to left status
     INLINE static BOOL GetRTLReadingOrder() {
         return sm_rtlReadingOrder;
     }
     // returns the right to left status
-    INLINE static BOOL GetRTL() {
+    INLINE static BOOL GetRTL()	{
         return sm_rtl;
     }
     // returns the current sub language
@@ -278,12 +278,12 @@ public:
      * Component size/position helper, for the values above the short int limit.
      */
     static BOOL SetWindowPos(HWND wnd, HWND after,
-                             int x, int y, int w, int h, UINT flags);
-
+			     int x, int y, int w, int h, UINT flags);
+ 
     /*
      * Sets the scrollbar values.  'bar' can be either SB_VERT or
      * SB_HORZ.  'min', 'value', and 'max' can have the value INT_MAX
-     * which means that the value should not be changed.
+     * which means that the value should not be changed. 
      */
     void SetScrollValues(UINT bar, int min, int value, int max);
 
@@ -321,9 +321,9 @@ public:
 
     /* for multifont component */
     static void DrawWindowText(HDC hDC, jobject font, jstring text,
-                               int x, int y);
+			       int x, int y);
     static void DrawGrayText(HDC hDC, jobject font, jstring text,
-                             int x, int y);
+			     int x, int y);
 
     void DrawListItem(JNIEnv *env, DRAWITEMSTRUCT &drawInfo);
 
@@ -336,16 +336,16 @@ public:
     virtual jobject PreferredItemSize(JNIEnv *env) {DASSERT(FALSE); return NULL; }
 
     INLINE BOOL isEnabled() {
-        JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        if (env->EnsureLocalCapacity(2) < 0) {
-            return NULL;
-        }
-        jobject self = GetPeer(env);
-        jobject target = env->GetObjectField(self, AwtObject::targetID);
-        BOOL e = env->CallBooleanMethod(target, AwtComponent::isEnabledMID);
+	JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+	if (env->EnsureLocalCapacity(2) < 0) {
+	    return NULL;
+	}
+	jobject self = GetPeer(env);
+	jobject target = env->GetObjectField(self, AwtObject::targetID);
+	BOOL e = env->CallBooleanMethod(target, AwtComponent::isEnabledMID);
         DASSERT(!safe_ExceptionOccurred(env));
-
-        env->DeleteLocalRef(target);
+	
+	env->DeleteLocalRef(target);
 
         return e;
     }
@@ -362,41 +362,41 @@ public:
     }
 
     void SendKeyEventToFocusOwner(jint id, jlong when, jint raw, jint cooked,
-                                  jint modifiers, jint keyLocation,
-                                  MSG *msg = NULL);
+				  jint modifiers, jint keyLocation,
+				  MSG *msg = NULL);
     /*
-     * Allocate and initialize a new java.awt.event.KeyEvent, and
-     * post it to the peer's target object.  No response is expected
+     * Allocate and initialize a new java.awt.event.KeyEvent, and  
+     * post it to the peer's target object.  No response is expected 
      * from the target.
      */
     void SendKeyEvent(jint id, jlong when, jint raw, jint cooked,
-                      jint modifiers, jint keyLocation,
-                      MSG *msg = NULL);
+		      jint modifiers, jint keyLocation,
+		      MSG *msg = NULL);
 
     /*
-     * Allocate and initialize a new java.awt.event.MouseEvent, and
-     * post it to the peer's target object.  No response is expected
+     * Allocate and initialize a new java.awt.event.MouseEvent, and 
+     * post it to the peer's target object.  No response is expected 
      * from the target.
      */
-    void SendMouseEvent(jint id, jlong when, jint x, jint y,
+    void SendMouseEvent(jint id, jlong when, jint x, jint y, 
                         jint modifiers, jint clickCount,
-                        jboolean popupTrigger, jint button = 0,
-                        MSG *msg = NULL);
+			jboolean popupTrigger, jint button = 0,
+			MSG *msg = NULL);
 
     /*
-     * Allocate and initialize a new java.awt.event.MouseWheelEvent, and
-     * post it to the peer's target object.  No response is expected
+     * Allocate and initialize a new java.awt.event.MouseWheelEvent, and 
+     * post it to the peer's target object.  No response is expected 
      * from the target.
      */
-    void SendMouseWheelEvent(jint id, jlong when, jint x, jint y,
-                             jint modifiers, jint clickCount,
-                             jboolean popupTrigger, jint scrollType,
-                             jint scrollAmount, jint wheelRotation,
-                             MSG *msg = NULL);
+    void SendMouseWheelEvent(jint id, jlong when, jint x, jint y, 
+			     jint modifiers, jint clickCount,
+			     jboolean popupTrigger, jint scrollType, 
+			     jint scrollAmount, jint wheelRotation, 
+			     MSG *msg = NULL);
 
     /*
-     * Allocate and initialize a new java.awt.event.FocusEvent, and
-     * post it to the peer's target object.  No response is expected
+     * Allocate and initialize a new java.awt.event.FocusEvent, and 
+     * post it to the peer's target object.  No response is expected 
      * from the target.
      */
     void SendFocusEvent(jint id, HWND opposite);
@@ -417,7 +417,7 @@ public:
     /* Components which inherit native mouse wheel behavior will
      * return TRUE.  These are TextArea, Choice, FileDialog, and
      * List.  All other Components return FALSE.
-     */
+     */ 
     virtual BOOL InheritsNativeMouseWheelBehavior();
 
     /* Functions for MouseWheel support on Windows95
@@ -448,30 +448,30 @@ public:
     static void JavaKeyToWindowsKey(UINT javaKey, UINT *windowsKey, UINT *modifiers, UINT originalWindowsKey);
 
     INLINE static void AwtComponent::JavaKeyToWindowsKey(UINT javaKey,
-                                       UINT *windowsKey, UINT *modifiers)
+				       UINT *windowsKey, UINT *modifiers)
     {
         JavaKeyToWindowsKey(javaKey, windowsKey, modifiers, IGNORE_KEY);
     }
 
     enum TransOps {NONE, LOAD, SAVE};
-
+    
     UINT WindowsKeyToJavaChar(UINT wkey, UINT modifiers, TransOps ops);
 
     /* routines used for input method support */
     void SetInputMethod(jobject im, BOOL useNativeCompWindow);
     void SendInputMethodEvent(jint id, jstring text, int cClause,
-                              int *rgClauseBoundary, jstring *rgClauseReading,
-                              int cAttrBlock, int *rgAttrBoundary,
-                              BYTE *rgAttrValue, int commitedTextLength,
-                              int caretPos, int visiblePos);
+			      int *rgClauseBoundary, jstring *rgClauseReading,
+			      int cAttrBlock, int *rgAttrBoundary,
+			      BYTE *rgAttrValue, int commitedTextLength,
+			      int caretPos, int visiblePos);
     void InquireCandidatePosition();
     INLINE LPARAM GetCandidateType() { return m_bitsCandType; }
     HIMC ImmGetContext();
     HIMC ImmAssociateContext(HIMC himc);
     HWND GetProxyFocusOwner();
-    void CallProxyDefWindowProc(UINT message,
-                                WPARAM wParam,
-                                LPARAM lParam,
+    void CallProxyDefWindowProc(UINT message, 
+                                WPARAM wParam, 
+                                LPARAM lParam, 
                                 LRESULT &retVal,
                                 MsgRouting &mr);
 
@@ -482,20 +482,20 @@ public:
     virtual LRESULT DefWindowProc(UINT msg, WPARAM wParam, LPARAM lParam);
 
     /* return true if msg is processed */
-    virtual MsgRouting PreProcessMsg(MSG& msg);
+    virtual MsgRouting PreProcessMsg(MSG& msg); 
 
     virtual MsgRouting WmCreate() {return mrDoDefault;}
     virtual MsgRouting WmClose() {return mrDoDefault;}
     virtual MsgRouting WmDestroy();
 
-    virtual MsgRouting WmActivate(UINT nState, BOOL fMinimized, HWND opposite)
+    virtual MsgRouting WmActivate(UINT nState, BOOL fMinimized, HWND opposite) 
     {
-        return mrDoDefault;
+	return mrDoDefault;
     }
 
-    virtual MsgRouting WmEraseBkgnd(HDC hDC, BOOL& didErase)
+    virtual MsgRouting WmEraseBkgnd(HDC hDC, BOOL& didErase) 
     {
-        return mrDoDefault;
+	return mrDoDefault;
     }
 
     virtual MsgRouting WmPaint(HDC hDC);
@@ -511,11 +511,11 @@ public:
     // Windows which are not Frames/Dialogs.
     BOOL AwtSetFocus();
 
-    virtual MsgRouting WmCtlColor(HDC hDC, HWND hCtrl,
-                                  UINT ctlColor, HBRUSH& retBrush);
+    virtual MsgRouting WmCtlColor(HDC hDC, HWND hCtrl, 
+				  UINT ctlColor, HBRUSH& retBrush);
     virtual MsgRouting WmHScroll(UINT scrollCode, UINT pos, HWND hScrollBar);
     virtual MsgRouting WmVScroll(UINT scrollCode, UINT pos, HWND hScrollBar);
-
+    
     virtual MsgRouting WmMouseEnter(UINT flags, int x, int y);
     virtual MsgRouting WmMouseDown(UINT flags, int x, int y, int button);
     virtual MsgRouting WmMouseUp(UINT flags, int x, int y, int button);
@@ -537,7 +537,7 @@ public:
     virtual MsgRouting WmIMEChar(UINT character, UINT repCnt, UINT flags, BOOL system);
     virtual MsgRouting WmInputLangChange(UINT charset, HKL hKeyBoardLayout);
     virtual MsgRouting WmForwardChar(WCHAR character, LPARAM lParam,
-                                     BOOL synthethic);
+				     BOOL synthethic);
     virtual MsgRouting WmPaste();
 
     virtual void SetCompositionWindow(RECT &r);
@@ -554,31 +554,31 @@ public:
     virtual MsgRouting WmCommand(UINT id, HWND hWndCtrl, UINT notifyCode);
 
     /* reflected WmCommand from parent */
-    virtual MsgRouting WmNotify(UINT notifyCode);
+    virtual MsgRouting WmNotify(UINT notifyCode);  
 
-    virtual MsgRouting WmCompareItem(UINT /*ctrlId*/,
-                                     COMPAREITEMSTRUCT &compareInfo,
+    virtual MsgRouting WmCompareItem(UINT /*ctrlId*/, 
+                                     COMPAREITEMSTRUCT &compareInfo, 
                                      LRESULT &result);
-    virtual MsgRouting WmDeleteItem(UINT /*ctrlId*/,
+    virtual MsgRouting WmDeleteItem(UINT /*ctrlId*/, 
                                     DELETEITEMSTRUCT &deleteInfo);
     virtual MsgRouting WmDrawItem(UINT ctrlId,
-                                  DRAWITEMSTRUCT &drawInfo);
+				  DRAWITEMSTRUCT &drawInfo);
     virtual MsgRouting WmMeasureItem(UINT ctrlId,
-                                     MEASUREITEMSTRUCT &measureInfo);
+				     MEASUREITEMSTRUCT &measureInfo);
     /* Fix 4181790 & 4223341 : These functions get overridden in owner-drawn
      * components instead of the Wm... versions.
      */
     virtual MsgRouting OwnerDrawItem(UINT ctrlId,
-                                     DRAWITEMSTRUCT &drawInfo);
+				     DRAWITEMSTRUCT &drawInfo);
     virtual MsgRouting OwnerMeasureItem(UINT ctrlId,
-                                        MEASUREITEMSTRUCT &measureInfo);
+					MEASUREITEMSTRUCT &measureInfo);
 
     virtual MsgRouting WmPrint(HDC hDC, LPARAM flags);
     virtual MsgRouting WmPrintClient(HDC hDC, LPARAM flags);
 
-    virtual MsgRouting WmNcCalcSize(BOOL fCalcValidRects,
-                                    LPNCCALCSIZE_PARAMS lpncsp,
-                                    LRESULT &retVal);
+    virtual MsgRouting WmNcCalcSize(BOOL fCalcValidRects, 
+				    LPNCCALCSIZE_PARAMS lpncsp,
+				    LRESULT &retVal);
     virtual MsgRouting WmNcPaint(HRGN hrgn);
     virtual MsgRouting WmNcHitTest(UINT x, UINT y, LRESULT &retVal);
     virtual MsgRouting WmSysCommand(UINT uCmdType, int xPos, int yPos);
@@ -610,9 +610,9 @@ public:
     static void   ClearGlobalFocusOwner();
 
     /*
-     * HWND, AwtComponent and Java Peer interaction
+     * HWND, AwtComponent and Java Peer interaction 
      *
-     * Link the C++, Java peer, and HWNDs together.
+     * Link the C++, Java peer, and HWNDs together. 
      */
     void LinkObjects(JNIEnv *env, jobject peer);
 
@@ -644,12 +644,12 @@ public:
     }
     static INLINE BOOL IsEmbeddedFrameHWnd(HWND hwnd) {
         AwtComponent *comp = AwtComponent::GetComponent(hwnd);
-        return (comp != NULL && comp->IsEmbeddedFrame());
+        return (comp != NULL && comp->IsEmbeddedFrame());  
     }
 
     static jint GetDrawState(HWND hwnd);
     static void SetDrawState(HWND hwnd, jint state);
-
+    
     static HWND GetHWnd(JNIEnv* env, jobject target);
 
     static MSG* CreateMessage(UINT message, WPARAM wParam, LPARAM lParam, int x, int y);
@@ -681,9 +681,9 @@ public:
     static HWND sm_focusOwner;
     static HWND sm_focusedWindow;
 
-    static BOOL m_isWin95;
-    static BOOL m_isWin2000;
-    static BOOL m_isWinNT;
+    static BOOL m_isWin95;  
+    static BOOL m_isWin2000;  
+    static BOOL m_isWinNT;  
 
     static BOOL sm_bMenuLoop;
     static INLINE BOOL isMenuLoopActive() {
@@ -703,7 +703,7 @@ protected:
     static int GetClickCount();
 
     HWND     m_hwnd;
-    UINT     m_myControlID;     /* its own ID from the view point of parent */
+    UINT     m_myControlID;	/* its own ID from the view point of parent */
     BOOL     m_backgroundColorSet;
     BOOL     m_visible;         /* copy of Component.visible */
 
@@ -716,7 +716,7 @@ protected:
 
     static BOOL sm_suppressFocusAndActivation;
     static HWND sm_realFocusOpposite;
-
+    
     virtual void SetDragCapture(UINT flags);
     virtual void ReleaseDragCapture(UINT flags);
 
@@ -766,10 +766,10 @@ private:
 
     // Determines whether a given virtual key is on the numpad
     static BOOL IsNumPadKey(UINT vkey, BOOL extended);
-
+  
     // Determines the keyLocation of a given key
-    static jint GetKeyLocation(UINT wkey, UINT flags);
-    static jint GetShiftKeyLocation(UINT wkey, UINT flags);
+    static jint GetKeyLocation(UINT wkey, UINT flags); 
+    static jint GetShiftKeyLocation(UINT wkey, UINT flags); 
 
     // Cache for FindComponent
     static HWND sm_cursorOn;
@@ -787,7 +787,7 @@ private:
 
 private:
     /*
-     * The association list of children's IDs and corresponding components.
+     * The association list of children's IDs and corresponding components. 
      * Some components like Choice or List are required their sizes while
      * the creations of themselfs are in progress.
      */
@@ -814,7 +814,7 @@ public:
         child->m_next = m_childList;
         m_childList = child;
     }
-
+    
     static void SetParent(void * param);
 private:
     AwtComponent* SearchChild(UINT id);
@@ -852,21 +852,21 @@ public:
 // leakage.
 class DCItem {
 public:
-    HDC             hDC;
-    HWND            hWnd;
-    DCItem          *next;
+    HDC		    hDC;
+    HWND	    hWnd;
+    DCItem	    *next;
 };
 class DCList {
-    DCItem          *head;
+    DCItem	    *head;
     CriticalSection listLock;
 public:
     DCList() { head = NULL; }
 
-    void            AddDC(HDC hDC, HWND hWnd);
-    void            AddDCItem(DCItem *newItem);
-    DCItem          *RemoveDC(HDC hDC);
-    DCItem          *RemoveAllDCs(HWND hWnd);
-    void            RealizePalettes(int screen);
+    void	    AddDC(HDC hDC, HWND hWnd);
+    void	    AddDCItem(DCItem *newItem);
+    DCItem	    *RemoveDC(HDC hDC);
+    DCItem	    *RemoveAllDCs(HWND hWnd);
+    void	    RealizePalettes(int screen);
 };
 
 struct WmComponentSetFocusData {

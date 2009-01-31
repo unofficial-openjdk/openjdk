@@ -57,6 +57,7 @@ package java.lang.ref;
  * strong referents to those entries, leaving the remaining entries to be
  * discarded at the discretion of the garbage collector.
  *
+ * @version  %I%, %G%
  * @author   Mark Reinhold
  * @since    1.2
  */
@@ -80,8 +81,8 @@ public class SoftReference<T> extends Reference<T> {
      * @param referent object the new soft reference will refer to
      */
     public SoftReference(T referent) {
-        super(referent);
-        this.timestamp = clock;
+	super(referent);
+	this.timestamp = clock;
     }
 
     /**
@@ -94,8 +95,8 @@ public class SoftReference<T> extends Reference<T> {
      *
      */
     public SoftReference(T referent, ReferenceQueue<? super T> q) {
-        super(referent, q);
-        this.timestamp = clock;
+	super(referent, q);
+	this.timestamp = clock;
     }
 
     /**
@@ -107,9 +108,9 @@ public class SoftReference<T> extends Reference<T> {
      *           <code>null</code> if this reference object has been cleared
      */
     public T get() {
-        T o = super.get();
-        if (o != null) this.timestamp = clock;
-        return o;
+	T o = super.get();
+	if (o != null) this.timestamp = clock;
+	return o;
     }
 
 }

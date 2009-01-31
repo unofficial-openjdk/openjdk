@@ -35,6 +35,7 @@ import java.util.EventListener;
  * type and allows to perform the typical operations on the listeners.
  * This class is thread-safe.
  *
+ * @version %I%, %G%
  * @author Alexander Gerasimov
  *
  * @since 1.5
@@ -51,7 +52,7 @@ public class EventListenerAggregate {
      * @throws NullPointerException if <code>listenerClass</code> is
      *         <code>null</code>
      * @throws ClassCastException if <code>listenerClass</code> is not
-     *         assignable to <code>java.util.EventListener</code>
+     *	       assignable to <code>java.util.EventListener</code>
      */
     public EventListenerAggregate(Class listenerClass) {
         if (listenerClass == null) {
@@ -76,7 +77,7 @@ public class EventListenerAggregate {
      * @param listener the listener to be added
      *
      * @throws ClassCastException if <code>listener</code> is not
-     *         an instatce of <code>listenerClass</code> specified
+     *	       an instatce of <code>listenerClass</code> specified
      *         in the constructor
      */
     public synchronized void add(EventListener listener) {
@@ -103,7 +104,7 @@ public class EventListenerAggregate {
      *         <code>listener</code>; <code>false</code> otherwise
      *
      * @throws ClassCastException if <code>listener</code> is not
-     *         an instatce of <code>listenerClass</code> specified
+     *	       an instatce of <code>listenerClass</code> specified
      *         in the constructor
      */
     public synchronized boolean remove(EventListener listener) {
@@ -133,7 +134,7 @@ public class EventListenerAggregate {
      * Returns an array of all the listeners contained in this aggregate.
      * The array is the data structure in which listeners are stored internally.
      * The runtime type of the returned array is "array of <code>listenerClass</code>"
-     * (<code>listenerClass</code> has been specified as a parameter to
+     * (<code>listenerClass</code> has been specified as a parameter to 
      * the constructor of this class).
      *
      * @return all the listeners contained in this aggregate (an empty
@@ -148,7 +149,7 @@ public class EventListenerAggregate {
      * The array is a copy of the data structure in which listeners are stored
      * internally.
      * The runtime type of the returned array is "array of <code>listenerClass</code>"
-     * (<code>listenerClass</code> has been specified as a parameter to
+     * (<code>listenerClass</code> has been specified as a parameter to 
      * the constructor of this class).
      *
      * @return a copy of all the listeners contained in this aggregate (an empty

@@ -35,52 +35,52 @@ public class Exceptions {
     private static Throwable first;
 
     static void pass() {
-        pass++;
+	pass++;
     }
 
     static void fail(String fs, Throwable ex) {
-        String s = "'" + fs + "': " + ex.getClass().getName() + " thrown";
-        if (first == null)
-            first = ex;
-        System.err.println("FAILED: " + s);
-        fail++;
+	String s = "'" + fs + "': " + ex.getClass().getName() + " thrown";
+	if (first == null)
+	    first = ex;
+	System.err.println("FAILED: " + s);
+	fail++;
     }
 
     public static void main(String [] args) {
-        RuntimeException re = new RuntimeException("no exception thrown");
-        try {
-            new ReflectPermission(null);
-            fail("null", re);
-        } catch (NullPointerException x) {
-            pass();
-        } catch (Exception x) {
-            fail("null", x);
-        }
-        try {
-            new ReflectPermission("");
-            fail("\"\"", re);
-        } catch (IllegalArgumentException x) {
-            pass();
-        } catch (Exception x) {
-            fail("\"\"", x);
-        }
+	RuntimeException re = new RuntimeException("no exception thrown");
+	try {
+	    new ReflectPermission(null);
+	    fail("null", re);
+	} catch (NullPointerException x) {
+	    pass();
+	} catch (Exception x) {
+	    fail("null", x);
+	}
+	try {
+	    new ReflectPermission("");
+	    fail("\"\"", re);
+	} catch (IllegalArgumentException x) {
+	    pass();
+	} catch (Exception x) {
+	    fail("\"\"", x);
+	}
 
-        try {
-            new ReflectPermission(null, null);
-            fail("null, null", re);
-        } catch (NullPointerException x) {
-            pass();
-        } catch (Exception x) {
-            fail("null, null", x);
-        }
-        try {
-            new ReflectPermission("", null);
-            fail("\"\", null", re);
-        } catch (IllegalArgumentException x) {
-            pass();
-        } catch (Exception x) {
-            fail("\"\", null", x);
-        }
+	try {
+	    new ReflectPermission(null, null);
+	    fail("null, null", re);
+	} catch (NullPointerException x) {
+	    pass();
+	} catch (Exception x) {
+	    fail("null, null", x);
+	}
+	try {
+	    new ReflectPermission("", null);
+	    fail("\"\", null", re);
+	} catch (IllegalArgumentException x) {
+	    pass();
+	} catch (Exception x) {
+	    fail("\"\", null", x);
+	}
 
         if (fail != 0)
             throw new RuntimeException((fail + pass) + " tests: "

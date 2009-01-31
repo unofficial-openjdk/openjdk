@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -38,7 +39,7 @@ import sun.security.util.DerOutputStream;
 
 /**
  * A wrapper class around sun.security.util.BitArray, so that KDCOptions,
- * TicketFlags and ApOptions in krb5 classes can utilize some functions
+ * TicketFlags and ApOptions in krb5 classes can utilize some functions 
  * in BitArray classes.
  *
  * The data type is defined in RFC 4120 as:
@@ -53,10 +54,11 @@ import sun.security.util.DerOutputStream;
  *                      -- but no fewer than 32
  *
  * @author Yanni Zhang
+ * @version 1.0 22 June 2000
  */
 public class KerberosFlags {
     BitArray bits;
-
+    
     // This constant is used by child classes.
     protected static final int BITS_PER_UNIT = 8;
 
@@ -95,13 +97,13 @@ public class KerberosFlags {
      * @exception IOException if an I/O error occurs while reading encoded data.
      * @return an byte array of encoded KDCOptions.
      */
-    public byte[] asn1Encode() throws IOException {
+    public byte[] asn1Encode() throws IOException {	
         DerOutputStream out = new DerOutputStream();
         out.putUnalignedBitString(bits);
         return out.toByteArray();
     }
-
+    
     public String toString() {
-        return bits.toString();
+	return bits.toString();
     }
 }

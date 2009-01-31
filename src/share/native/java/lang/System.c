@@ -47,7 +47,7 @@ JNIEXPORT void JNICALL
 Java_java_lang_System_registerNatives(JNIEnv *env, jclass cls)
 {
     (*env)->RegisterNatives(env, cls,
-                            methods, sizeof(methods)/sizeof(methods[0]));
+			    methods, sizeof(methods)/sizeof(methods[0]));
 }
 
 JNIEXPORT jint JNICALL
@@ -60,8 +60,8 @@ Java_java_lang_System_identityHashCode(JNIEnv *env, jobject this, jobject x)
     if (1) { \
         jstring jkey = (*env)->NewStringUTF(env, key); \
         jstring jval = (*env)->NewStringUTF(env, val); \
-        jobject r = (*env)->CallObjectMethod(env, props, putID, jkey, jval); \
-        if ((*env)->ExceptionOccurred(env)) return NULL; \
+	jobject r = (*env)->CallObjectMethod(env, props, putID, jkey, jval); \
+	if ((*env)->ExceptionOccurred(env)) return NULL; \
         (*env)->DeleteLocalRef(env, jkey); \
         (*env)->DeleteLocalRef(env, jval); \
         (*env)->DeleteLocalRef(env, r); \
@@ -71,8 +71,8 @@ Java_java_lang_System_identityHashCode(JNIEnv *env, jobject this, jobject x)
     if (1) { \
         jstring jkey = JNU_NewStringPlatform(env, key); \
         jstring jval = JNU_NewStringPlatform(env, val); \
-        jobject r = (*env)->CallObjectMethod(env, props, putID, jkey, jval); \
-        if ((*env)->ExceptionOccurred(env)) return NULL; \
+	jobject r = (*env)->CallObjectMethod(env, props, putID, jkey, jval); \
+	if ((*env)->ExceptionOccurred(env)) return NULL; \
         (*env)->DeleteLocalRef(env, jkey); \
         (*env)->DeleteLocalRef(env, jval); \
         (*env)->DeleteLocalRef(env, r); \
@@ -93,25 +93,25 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     char buf[128];
     java_props_t *sprops = GetJavaProperties(env);
     jmethodID putID = (*env)->GetMethodID(env,
-                                          (*env)->GetObjectClass(env, props),
-                                          "put",
+					  (*env)->GetObjectClass(env, props),
+					  "put",
             "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     if (sprops == NULL || putID == NULL ) return NULL;
-
+    
     PUTPROP(props, "java.specification.version",
-            JDK_MAJOR_VERSION "." JDK_MINOR_VERSION);
-    PUTPROP(props, "java.specification.name",
-            "Java Platform API Specification");
+	    JDK_MAJOR_VERSION "." JDK_MINOR_VERSION);
+    PUTPROP(props, "java.specification.name", 
+	    "Java Platform API Specification");
     PUTPROP(props, "java.specification.vendor", "Sun Microsystems Inc.");
 
     PUTPROP(props, "java.version", RELEASE);
     PUTPROP(props, "java.vendor", VENDOR);
-    PUTPROP(props, "java.vendor.url", VENDOR_URL);
+    PUTPROP(props, "java.vendor.url", VENDOR_URL); 
     PUTPROP(props, "java.vendor.url.bug", VENDOR_URL_BUG);
 
-    jio_snprintf(buf, sizeof(buf), "%d.%d", JAVA_MAX_SUPPORTED_VERSION,
-                                            JAVA_MAX_SUPPORTED_MINOR_VERSION);
+    jio_snprintf(buf, sizeof(buf), "%d.%d", JAVA_MAX_SUPPORTED_VERSION, 
+					    JAVA_MAX_SUPPORTED_MINOR_VERSION);
     PUTPROP(props, "java.class.version", buf);
 
     if (sprops->awt_toolkit) {
@@ -146,8 +146,8 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "file.encoding.pkg", "sun.io");
     /* unicode_encoding specifies the default endianness */
     PUTPROP(props, "sun.io.unicode.encoding", sprops->unicode_encoding);
-    PUTPROP(props, "sun.cpu.isalist",
-            (sprops->cpu_isalist ? sprops->cpu_isalist : ""));
+    PUTPROP(props, "sun.cpu.isalist", 
+	    (sprops->cpu_isalist ? sprops->cpu_isalist : ""));
     PUTPROP(props, "sun.cpu.endian",  sprops->cpu_endian);
 
     /* !!! DO NOT call PUTPROP_ForPlatformCString before this line !!!
@@ -180,7 +180,7 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
 
     /* patch level */
     PUTPROP(props, "sun.os.patch.level",  \
-                    sprops->patch_level);
+                    sprops->patch_level); 
 
     /* Java2D properties */
     /* Note: java.awt.graphicsenv is an implementation private property which
@@ -195,7 +195,7 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
      */
     PUTPROP(props, "java.awt.graphicsenv", sprops->graphics_env);
     if (sprops->font_dir != NULL) {
-        PUTPROP_ForPlatformCString(props,
+	PUTPROP_ForPlatformCString(props,
                                    "sun.java2d.fontpath", sprops->font_dir);
     }
 
@@ -277,7 +277,7 @@ Java_java_lang_System_mapLibraryName(JNIEnv *env, jclass ign, jstring libname)
     len = (*env)->GetStringLength(env, libname);
     if (len > 240) {
         JNU_ThrowIllegalArgumentException(env, "name too long");
-        return NULL;
+	return NULL;
     }
     cpchars(chars, JNI_LIB_PREFIX, prefix_len);
     (*env)->GetStringRegion(env, libname, 0, len, chars + prefix_len);

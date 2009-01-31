@@ -29,10 +29,10 @@ package com.sun.tools.attach;
  * The exception thrown when an agent fails to initialize in the target
  * Java virtual machine.
  *
- * <p> This exception is thrown by {@link
+ * <p> This exception is thrown by {@link 
  * com.sun.tools.attach.VirtualMachine#loadAgent VirtualMachine.loadAgent},
- * {@link com.sun.tools.attach.VirtualMachine#loadAgentLibrary
- * VirtualMachine.loadAgentLibrary}, {@link
+ * {@link com.sun.tools.attach.VirtualMachine#loadAgentLibrary 
+ * VirtualMachine.loadAgentLibrary}, {@link 
  * com.sun.tools.attach.VirtualMachine#loadAgentPath VirtualMachine.loadAgentPath}
  * methods if an agent, or agent library, cannot be initialized.
  * When thrown by <tt>VirtualMachine.loadAgentLibrary</tt>, or
@@ -52,8 +52,8 @@ public class AgentInitializationException extends Exception {
      * no detail message.
      */
     public AgentInitializationException() {
-        super();
-        this.returnValue = 0;
+	super();
+        this.returnValue = 0; 
     }
 
     /**
@@ -72,23 +72,23 @@ public class AgentInitializationException extends Exception {
      * the specified detail message and the return value from the
      * execution of the agent's <code>Agent_OnAttach</code> function.
      *
-     * @param   s               the detail message.
-     * @param   returnValue     the return value
+     * @param   s   		the detail message.
+     * @param	returnValue	the return value
      */
     public AgentInitializationException(String s, int returnValue) {
         super(s);
-        this.returnValue = returnValue;
+	this.returnValue = returnValue;
     }
 
-    /**
+    /** 
      * If the exception was created with the return value from the agent
      * <code>Agent_OnAttach</code> function then this returns that value,
      * otherwise returns <code>0</code>. </p>
      *
-     * @return  the return value
+     * @return	the return value
      */
     public int returnValue() {
-        return returnValue;
+	return returnValue;
     }
 
 }

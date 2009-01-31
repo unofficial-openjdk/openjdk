@@ -65,7 +65,7 @@ public class ShellFolderColumnInfo {
                                  SortOrder sortOrder, Comparator comparator) {
         this(title, width, alignment, visible, sortOrder, comparator, false);
     }
-
+    
     /**
      * This constructor is used by native code when getting column set for
      * a folder under Windows

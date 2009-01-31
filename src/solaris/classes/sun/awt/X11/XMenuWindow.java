@@ -32,7 +32,7 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.Point2D;
 
 import java.util.Vector;
-import java.util.logging.*;
+import java.util.logging.*;            
 
 public class XMenuWindow extends XBaseMenuWindow {
 
@@ -94,12 +94,12 @@ public class XMenuWindow extends XBaseMenuWindow {
          * of all item's text
          */
         private int leftMarkWidth;
-
+        
         /**
          * Left origin of all shortcut labels
          */
         private int shortcutOrigin;
-
+        
         /**
          * The origin of right mark
          * (submenu's arrow)
@@ -154,7 +154,7 @@ public class XMenuWindow extends XBaseMenuWindow {
      * Construction
      *
      ************************************************/
-
+    
     /**
      * Constructs XMenuWindow for specified XMenuPeer
      * null for XPopupMenuWindow
@@ -175,12 +175,12 @@ public class XMenuWindow extends XBaseMenuWindow {
      * Initialization
      *
      ************************************************/
-    /*
+    /* 
      * Overriden initialization
      */
     void postInit(XCreateWindowParams params) {
         super.postInit(params);
-        //Fixed 6267182: PIT: Menu is not visible after
+        //Fixed 6267182: PIT: Menu is not visible after 
         //showing and disposing a file dialog, XToolkit
         //toFront() is called on every show
     }
@@ -323,7 +323,7 @@ public class XMenuWindow extends XBaseMenuWindow {
      ************************************************/
 
     /**
-     * Returns size of menu window's caption or null
+     * Returns size of menu window's caption or null 
      * if window has no caption.
      * Can be overriden for popup menus and tear-off menus
      */
@@ -384,15 +384,15 @@ public class XMenuWindow extends XBaseMenuWindow {
             params.remove(DELAYED);
             params.add(OVERRIDE_REDIRECT, Boolean.TRUE);
             params.add(XWindow.TARGET, target);
-            init(params);
+            init(params);  
         }
         return true;
     }
-
+    
     /**
      * Init window if it's not inited yet
      * and show it at specified coordinates
-     * @param bounds bounding rectangle of window
+     * @param bounds bounding rectangle of window 
      * in global coordinates
      */
     void show(Rectangle bounds) {
@@ -406,7 +406,7 @@ public class XMenuWindow extends XBaseMenuWindow {
         try {
             reshape(bounds.x, bounds.y, bounds.width, bounds.height);
             xSetVisible(true);
-            //Fixed 6267182: PIT: Menu is not visible after
+            //Fixed 6267182: PIT: Menu is not visible after 
             //showing and disposing a file dialog, XToolkit
             toFront();
             selectItem(getFirstSelectableItem(), false);

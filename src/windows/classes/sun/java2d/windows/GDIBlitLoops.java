@@ -36,8 +36,8 @@ import sun.java2d.SurfaceData;
 
 /**
  * GDIBlitLoops
- *
- * This class accelerates Blits between certain surfaces and the
+ * 
+ * This class accelerates Blits between certain surfaces and the 
  * screen, using GDI.  The reason for these loops is to find
  * a way of copying to the screen without using DDraw locking
  * that is faster than our current fallback (which creates
@@ -53,52 +53,52 @@ public class GDIBlitLoops extends Blit {
 
     /**
      * Note that we do not register loops to 8-byte destinations.  This
-     * is due to faster processing of dithering through our software
+     * is due to faster processing of dithering through our software 
      * loops than through GDI StretchBlt processing.
      */
-    public static void register()
-    {
+    public static void register() 
+    {	    
         GraphicsPrimitive[] primitives = {
-            new GDIBlitLoops(SurfaceType.IntRgb,
+	    new GDIBlitLoops(SurfaceType.IntRgb,
                              Win32SurfaceData.AnyGdi),
-            new GDIBlitLoops(SurfaceType.Ushort555Rgb,
+	    new GDIBlitLoops(SurfaceType.Ushort555Rgb,
                              Win32SurfaceData.AnyGdi,
                              0x7C00, 0x03E0, 0x001F),
-            new GDIBlitLoops(SurfaceType.Ushort565Rgb,
+	    new GDIBlitLoops(SurfaceType.Ushort565Rgb,
                              Win32SurfaceData.AnyGdi,
                              0xF800, 0x07E0, 0x001F),
-            new GDIBlitLoops(SurfaceType.ThreeByteBgr,
+	    new GDIBlitLoops(SurfaceType.ThreeByteBgr,
                              Win32SurfaceData.AnyGdi),
-            new GDIBlitLoops(SurfaceType.ByteIndexedOpaque,
+	    new GDIBlitLoops(SurfaceType.ByteIndexedOpaque,
                              Win32SurfaceData.AnyGdi,
                              true),
-            new GDIBlitLoops(SurfaceType.Index8Gray,
+	    new GDIBlitLoops(SurfaceType.Index8Gray,
                              Win32SurfaceData.AnyGdi,
                              true),
-            new GDIBlitLoops(SurfaceType.ByteGray,
+	    new GDIBlitLoops(SurfaceType.ByteGray,
                              Win32SurfaceData.AnyGdi),
-        };
-        GraphicsPrimitiveMgr.register(primitives);
+	};
+	GraphicsPrimitiveMgr.register(primitives);
     }
 
     /**
      * This constructor exists for srcTypes that have no need of
-     * component masks. GDI only expects masks for 2- and 4-byte
+     * component masks. GDI only expects masks for 2- and 4-byte 
      * DIBs, so all 1- and 3-byte srcTypes can skip the mask setting.
      */
     public GDIBlitLoops(SurfaceType srcType, SurfaceType dstType) {
-        this(srcType, dstType, 0, 0, 0);
+	this(srcType, dstType, 0, 0, 0);
     }
 
     /**
      * This constructor exists for srcTypes that need lookup tables
      * during image copying.
      */
-    public GDIBlitLoops(SurfaceType srcType, SurfaceType dstType,
+    public GDIBlitLoops(SurfaceType srcType, SurfaceType dstType, 
                         boolean indexed)
     {
-        this(srcType, dstType, 0, 0, 0);
-        this.indexed = indexed;
+	this(srcType, dstType, 0, 0, 0);
+	this.indexed = indexed;
     }
 
     /**
@@ -108,10 +108,10 @@ public class GDIBlitLoops extends Blit {
     public GDIBlitLoops(SurfaceType srcType, SurfaceType dstType,
                         int rmask, int gmask, int bmask)
     {
-        super(srcType, CompositeType.SrcNoEa, dstType);
-        this.rmask = rmask;
-        this.gmask = gmask;
-        this.bmask = bmask;
+	super(srcType, CompositeType.SrcNoEa, dstType);
+	this.rmask = rmask;
+	this.gmask = gmask;
+	this.bmask = bmask;
     }
 
     /**
@@ -119,12 +119,12 @@ public class GDIBlitLoops extends Blit {
      * This native method is where all of the work happens in the
      * accelerated Blit.
      */
-    public native void nativeBlit(SurfaceData src, SurfaceData dst,
-                                  Region clip,
-                                  int sx, int sy, int dx, int dy,
-                                  int w, int h,
-                                  int rmask, int gmask, int bmask,
-                                  boolean needLut);
+    public native void nativeBlit(SurfaceData src, SurfaceData dst, 
+				  Region clip,
+				  int sx, int sy, int dx, int dy, 
+				  int w, int h, 
+				  int rmask, int gmask, int bmask,
+				  boolean needLut);
 
     /**
      * Blit
@@ -134,12 +134,12 @@ public class GDIBlitLoops extends Blit {
      * Composite data because we only register these loops for
      * SrcNoEa composite operations.
      */
-    public void Blit(SurfaceData src, SurfaceData dst,
-                     Composite comp, Region clip,
-                     int sx, int sy, int dx, int dy, int w, int h)
+    public void Blit(SurfaceData src, SurfaceData dst, 
+		     Composite comp, Region clip,
+		     int sx, int sy, int dx, int dy, int w, int h) 
     {
-        nativeBlit(src, dst, clip, sx, sy, dx, dy, w, h,
-                   rmask, gmask, bmask, indexed);
+	nativeBlit(src, dst, clip, sx, sy, dx, dy, w, h, 
+		   rmask, gmask, bmask, indexed);
     }
 
 

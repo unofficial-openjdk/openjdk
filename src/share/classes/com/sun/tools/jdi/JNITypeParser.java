@@ -88,7 +88,7 @@ public class JNITypeParser {
     List<String> argumentTypeNames() {
         return typeNameList().subList(0, typeNameList().size() - 1);
     }
-
+        
     String signature() {
         return (String)signatureList().get(signatureList().size()-1);
     }
@@ -109,14 +109,14 @@ public class JNITypeParser {
     String componentSignature(int level) {
         return signature().substring(level);
     }
-
+        
     private synchronized List<String> signatureList() {
         if (signatureList == null) {
             signatureList = new ArrayList<String>(10);
             String elem;
-
+            
             currentIndex = 0;
-
+    
             while(currentIndex < signature.length()) {
                 elem = nextSignature();
                 signatureList.add(elem);
@@ -133,9 +133,9 @@ public class JNITypeParser {
         if (typeNameList == null) {
             typeNameList = new ArrayList<String>(10);
             String elem;
-
+            
             currentIndex = 0;
-
+    
             while(currentIndex < signature.length()) {
                 elem = nextTypeName();
                 typeNameList.add(elem);
@@ -154,15 +154,15 @@ public class JNITypeParser {
         switch(key) {
             case (JDWP.Tag.ARRAY):
                 return  key + nextSignature();
-
+                
             case (JDWP.Tag.OBJECT):
-                int endClass = signature.indexOf(SIGNATURE_ENDCLASS,
+                int endClass = signature.indexOf(SIGNATURE_ENDCLASS, 
                                                  currentIndex);
-                String retVal = signature.substring(currentIndex - 1,
+                String retVal = signature.substring(currentIndex - 1, 
                                                     endClass + 1);
                 currentIndex = endClass + 1;
                 return retVal;
-
+            
             case (JDWP.Tag.VOID):
             case (JDWP.Tag.BOOLEAN):
             case (JDWP.Tag.BYTE):
@@ -177,11 +177,11 @@ public class JNITypeParser {
             case SIGNATURE_ENDFUNC:
             case SIGNATURE_FUNC:
                 return nextSignature();
-
+                
             default:
                 throw new IllegalArgumentException(
                     "Invalid JNI signature character '" + key + "'");
-
+                
         }
     }
 
@@ -191,51 +191,51 @@ public class JNITypeParser {
         switch(key) {
             case (JDWP.Tag.ARRAY):
                 return  nextTypeName() + "[]";
-
+                
             case (JDWP.Tag.BYTE):
                 return "byte";
-
+                
             case (JDWP.Tag.CHAR):
                 return "char";
-
+                
             case (JDWP.Tag.OBJECT):
-                int endClass = signature.indexOf(SIGNATURE_ENDCLASS,
+                int endClass = signature.indexOf(SIGNATURE_ENDCLASS, 
                                                  currentIndex);
-                String retVal = signature.substring(currentIndex,
+                String retVal = signature.substring(currentIndex, 
                                                     endClass);
                 retVal = retVal.replace('/','.');
                 currentIndex = endClass + 1;
                 return retVal;
-
+                
             case (JDWP.Tag.FLOAT):
                 return "float";
-
+                
             case (JDWP.Tag.DOUBLE):
                 return "double";
-
+                
             case (JDWP.Tag.INT):
                 return "int";
-
+                
             case (JDWP.Tag.LONG):
                 return "long";
-
+                
             case (JDWP.Tag.SHORT):
                 return "short";
-
+                
             case (JDWP.Tag.VOID):
                 return "void";
-
+                
             case (JDWP.Tag.BOOLEAN):
                 return "boolean";
 
             case SIGNATURE_ENDFUNC:
             case SIGNATURE_FUNC:
                 return nextTypeName();
-
+                
             default:
                 throw new IllegalArgumentException(
                     "Invalid JNI signature character '" + key + "'");
-
+                
         }
     }
 }

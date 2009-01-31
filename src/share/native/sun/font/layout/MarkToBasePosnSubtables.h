@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)MarkToBasePosnSubtables.h	1.4 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -57,3 +58,4 @@ struct BaseArray
 };
 
 #endif
+

@@ -88,8 +88,8 @@ D3DDrawGlyphList_UseCache(JNIEnv *env, Win32SDOps *wsdo,
 
     glyphCacheTexture = d3dc->GetGlyphCacheTexture();
     IDirect3DDevice7 *d3dDevice = d3dc->Get3DDevice();
-    if (d3dDevice == NULL ||
-        FAILED(res = d3dc->BeginScene(STATE_MASKOP)))
+    if (d3dDevice == NULL || 
+        FAILED(res = d3dc->BeginScene(STATE_MASKOP))) 
     {
         d3dc->ReleaseExclusiveAccess();
         ddTargetSurface->ReleaseExclusiveAccess();
@@ -108,8 +108,8 @@ D3DDrawGlyphList_UseCache(JNIEnv *env, Win32SDOps *wsdo,
         indicesInited = 1;
     }
 
-    for (glyphCounter = 0; (glyphCounter < totalGlyphs) && SUCCEEDED(res);
-         glyphCounter++)
+    for (glyphCounter = 0; (glyphCounter < totalGlyphs) && SUCCEEDED(res); 
+         glyphCounter++) 
     {
         // render glyph cached in texture object
         const jubyte *pixels = (const jubyte *)glyphs[glyphCounter].pixels;
@@ -124,8 +124,8 @@ D3DDrawGlyphList_UseCache(JNIEnv *env, Win32SDOps *wsdo,
             continue;
         }
 
-        if (ginfo->cellInfo == NULL ||
-            // REMIND: this is a temp fix to allow a glyph be cached
+        if (ginfo->cellInfo == NULL || 
+            // REMIND: this is a temp fix to allow a glyph be cached 
             // in caches for different devices.
             // REMIND: check if this is even a problem: we're using
             // managed textures, they may be automatically accelerated
@@ -138,11 +138,11 @@ D3DDrawGlyphList_UseCache(JNIEnv *env, Win32SDOps *wsdo,
             // while another thread is using this cell.
             // A proper fix would allow a glyph to be cached in multiple
             // caches at the same time.
-            d3dc->GetGlyphCache() != ginfo->cellInfo->cacheInfo)
+            d3dc->GetGlyphCache() != ginfo->cellInfo->cacheInfo) 
         {
             // attempt to add glyph to accelerated glyph cache
-            if (FAILED(d3dc->GlyphCacheAdd(env, ginfo)) ||
-                ginfo->cellInfo == NULL)
+            if (FAILED(d3dc->GlyphCacheAdd(env, ginfo)) || 
+                ginfo->cellInfo == NULL) 
             {
                 continue;
             }
@@ -164,8 +164,8 @@ D3DDrawGlyphList_UseCache(JNIEnv *env, Win32SDOps *wsdo,
         D3DU_INIT_VERTEX_QUAD(*quad, x1, y1, x2, y2, color     ,
                               tx1, ty1, tx2, ty2);
 
-        if (quadCounter == MAX_STATIC_QUADS_NUM &&
-            SUCCEEDED(res = ddTargetSurface->IsLost()))
+        if (quadCounter == MAX_STATIC_QUADS_NUM && 
+            SUCCEEDED(res = ddTargetSurface->IsLost())) 
         {
             res = d3dDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST,
                                                   D3DFVF_J2DLVERTEX,
@@ -229,8 +229,8 @@ D3DDrawGlyphList_NoCache(JNIEnv *env, Win32SDOps *wsdo,
     }
 
     maskTexture = d3dc->GetMaskTexture();
-    if (maskTexture == NULL ||
-        FAILED(res = d3dc->BeginScene(STATE_MASKOP)))
+    if (maskTexture == NULL || 
+        FAILED(res = d3dc->BeginScene(STATE_MASKOP))) 
     {
         d3dc->ReleaseExclusiveAccess();
         ddTargetSurface->ReleaseExclusiveAccess();
@@ -250,8 +250,8 @@ D3DDrawGlyphList_NoCache(JNIEnv *env, Win32SDOps *wsdo,
     th = D3DSD_MASK_TILE_SIZE;
 
     D3DU_INIT_VERTEX_QUAD_COLOR(quadVerts, d3dc->colorPixel);
-    for (glyphCounter = 0; (glyphCounter < totalGlyphs) && SUCCEEDED(res);
-         glyphCounter++)
+    for (glyphCounter = 0; (glyphCounter < totalGlyphs) && SUCCEEDED(res); 
+         glyphCounter++) 
     {
         // render system memory glyph image
         jint sx, sy, sw, sh;
@@ -275,9 +275,9 @@ D3DDrawGlyphList_NoCache(JNIEnv *env, Win32SDOps *wsdo,
             for (sx = 0; sx < w; sx += tw, x += tw) {
                 sw = ((sx + tw) > w) ? (w - sx) : tw;
 
-                if (FAILED(d3dc->UploadImageToTexture(maskTexture,
+                if (FAILED(d3dc->UploadImageToTexture(maskTexture, 
                                                       (jubyte*)pixels,
-                                                      0, 0, sx, sy,
+                                                      0, 0, sx, sy, 
                                                       sw, sh, w)))
                 {
                     continue;
@@ -288,7 +288,7 @@ D3DDrawGlyphList_NoCache(JNIEnv *env, Win32SDOps *wsdo,
                 ty2 = ((float)sh) / th;
 
                 D3DU_INIT_VERTEX_QUAD_XYUV(quadVerts,
-                                           (float)x, (float)y,
+                                           (float)x, (float)y, 
                                            (float)(x+sw), (float)(y+sh),
                                            tx1, ty1, tx2, ty2);
                 if (SUCCEEDED(res = ddTargetSurface->IsLost())) {
@@ -304,7 +304,7 @@ D3DDrawGlyphList_NoCache(JNIEnv *env, Win32SDOps *wsdo,
 
     d3dc->ReleaseExclusiveAccess();
     ddTargetSurface->ReleaseExclusiveAccess();
-
+    
     return res;
 }
 
@@ -328,13 +328,13 @@ D3DDrawGlyphList(JNIEnv *env, jobject d3dtr,
 
     if (useCache && SUCCEEDED(res = d3dc->InitGlyphCache())) {
         D3D_EXEC_PRIM_LOOP(env, res, wsdo,
-                      D3DDrawGlyphList_UseCache(env, wsdo, d3dc, glyphs,
+                      D3DDrawGlyphList_UseCache(env, wsdo, d3dc, glyphs, 
                                                 totalGlyphs));
         return;
     }
-
+    
     D3D_EXEC_PRIM_LOOP(env, res, wsdo,
-                  D3DDrawGlyphList_NoCache(env, wsdo, d3dc, glyphs,
+                  D3DDrawGlyphList_NoCache(env, wsdo, d3dc, glyphs, 
                                            totalGlyphs));
 }
 

@@ -46,47 +46,47 @@ public class BufferedImageGraphicsConfig
 {
     private static final int numconfigs = BufferedImage.TYPE_BYTE_BINARY;
     private static BufferedImageGraphicsConfig configs[] =
-        new BufferedImageGraphicsConfig[numconfigs];
+	new BufferedImageGraphicsConfig[numconfigs];
 
     public static BufferedImageGraphicsConfig getConfig(BufferedImage bImg) {
-        BufferedImageGraphicsConfig ret;
-        int type = bImg.getType();
-        if (type > 0 && type < numconfigs) {
-            ret = configs[type];
-            if (ret != null) {
-                return ret;
-            }
-        }
-        ret = new BufferedImageGraphicsConfig(bImg, null);
-        if (type > 0 && type < numconfigs) {
-            configs[type] = ret;
-        }
-        return ret;
+	BufferedImageGraphicsConfig ret;
+	int type = bImg.getType();
+	if (type > 0 && type < numconfigs) {
+	    ret = configs[type];
+	    if (ret != null) {
+		return ret;
+	    }
+	}
+	ret = new BufferedImageGraphicsConfig(bImg, null);
+	if (type > 0 && type < numconfigs) {
+	    configs[type] = ret;
+	}
+	return ret;
     }
 
     GraphicsDevice gd;
-    ColorModel model;
+    ColorModel model; 
     Raster raster;
     int width, height;
 
     public BufferedImageGraphicsConfig(BufferedImage bufImg, Component comp) {
         if (comp == null) {
-            this.gd = new BufferedImageDevice(this);
+	    this.gd = new BufferedImageDevice(this);
         } else {
             Graphics2D g2d = (Graphics2D)comp.getGraphics();
             this.gd = g2d.getDeviceConfiguration().getDevice();
         }
-        this.model = bufImg.getColorModel();
-        this.raster = bufImg.getRaster().createCompatibleWritableRaster(1, 1);
-        this.width = bufImg.getWidth();
-        this.height = bufImg.getHeight();
+	this.model = bufImg.getColorModel();
+	this.raster = bufImg.getRaster().createCompatibleWritableRaster(1, 1);
+	this.width = bufImg.getWidth();
+	this.height = bufImg.getHeight();
     }
 
     /**
      * Return the graphics device associated with this configuration.
      */
     public GraphicsDevice getDevice() {
-        return gd;
+	return gd;
     }
 
     /**
@@ -118,16 +118,16 @@ public class BufferedImageGraphicsConfig
 
         if (model.getTransparency() == transparency) {
             return model;
-        }
-        switch (transparency) {
-        case Transparency.OPAQUE:
+	}
+	switch (transparency) {
+	case Transparency.OPAQUE:
             return new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
-        case Transparency.BITMASK:
+	case Transparency.BITMASK:
             return new DirectColorModel(25, 0xff0000, 0xff00, 0xff, 0x1000000);
-        case Transparency.TRANSLUCENT:
+	case Transparency.TRANSLUCENT:
             return ColorModel.getRGBdefault();
-        default:
-            return null;
+	default:
+	    return null;
         }
     }
 
@@ -164,9 +164,9 @@ public class BufferedImageGraphicsConfig
      * since there is no valid distance measurement.
      */
     public AffineTransform getNormalizingTransform() {
-        return new AffineTransform();
+	return new AffineTransform();
     }
-
+    
     public Rectangle getBounds() {
         return new Rectangle(0, 0, width, height);
     }

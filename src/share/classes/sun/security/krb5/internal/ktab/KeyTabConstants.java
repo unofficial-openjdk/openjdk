@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -37,6 +38,7 @@ import sun.security.krb5.internal.*;
  * the key, time stamp, key version and secret key itself.
  *
  * @author Yanni Zhang
+ * @version 1.00  09 Mar 2000
  */
 public interface KeyTabConstants {
     final int principalComponentSize = 2;
@@ -47,6 +49,6 @@ public interface KeyTabConstants {
     final int keyVersionSize = 1;
     final int keyTypeSize = 2;
     final int keySize = 2;
-    static final int KRB5_KT_VNO_1 = 0x0501;    /* krb v5, keytab version 1 (DCE compat) */
-    static final int KRB5_KT_VNO        = 0x0502;       /* krb v5, keytab version 2 (standard)  */
+    static final int KRB5_KT_VNO_1 = 0x0501;	/* krb v5, keytab version 1 (DCE compat) */
+    static final int KRB5_KT_VNO	= 0x0502;	/* krb v5, keytab version 2 (standard)  */
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -48,7 +48,7 @@ extends NonSerializable.PackageCtor implements Serializable
 {
     int field1 = 5;
     DifferentPackageSerializable() {
-        super(1);
+	super(1);
     }
 };
 
@@ -83,7 +83,7 @@ class SamePackagePrivateSerializable
 extends Serialize.SamePackagePrivateCtor implements Serializable
 {
     SamePackagePrivateSerializable() {
-        super(1);
+	super(1);
     }
 };
 
@@ -93,7 +93,7 @@ extends NonSerializable.PrivateCtor implements Serializable
     int field1 = 5;
 
     PrivateSerializable() {
-        super(1);
+	super(1);
     }
 };
 
@@ -103,9 +103,9 @@ class ExternalizablePublicCtor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 class ExternalizableProtectedCtor implements Externalizable {
@@ -114,9 +114,9 @@ class ExternalizableProtectedCtor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 class ExternalizablePackageCtor implements Externalizable {
@@ -125,9 +125,9 @@ class ExternalizablePackageCtor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 class ExternalizablePrivateCtor implements Externalizable {
@@ -138,102 +138,103 @@ class ExternalizablePrivateCtor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 
 public class SubclassAcrossPackage {
     public static void main(String args[])
-        throws IOException, ClassNotFoundException
-        {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream out =   new ObjectOutputStream(baos);
-            out.writeObject(new PublicSerializable());
-            out.writeObject(new ProtectedSerializable());
-            out.writeObject(new SamePackageSerializable());
-            out.writeObject(new SamePackageProtectedSerializable());
-            out.writeObject(new DifferentPackageSerializable());
+	throws IOException, ClassNotFoundException
+	{
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    ObjectOutputStream out =   new ObjectOutputStream(baos);
+	    out.writeObject(new PublicSerializable());
+	    out.writeObject(new ProtectedSerializable());
+	    out.writeObject(new SamePackageSerializable());
+	    out.writeObject(new SamePackageProtectedSerializable());
+	    out.writeObject(new DifferentPackageSerializable());
+	
+	    InputStream is = new ByteArrayInputStream(baos.toByteArray());
+	    ObjectInputStream in = new ObjectInputStream(is);
+	    /* (PublicSerializable)*/ in.readObject();
+	    /* (ProtectedSerializable) */ in.readObject();
+	    /* (SamePackageSerializable) */ in.readObject();	 
+	    /* (SamePackageProtectedSerializable) */ in.readObject();
+	    try {
+	    /* (DifferentPackageSerializable) */ in.readObject();
+	    } catch (InvalidClassException e) {
+	    }
+	    in.close();
 
-            InputStream is = new ByteArrayInputStream(baos.toByteArray());
-            ObjectInputStream in = new ObjectInputStream(is);
-            /* (PublicSerializable)*/ in.readObject();
-            /* (ProtectedSerializable) */ in.readObject();
-            /* (SamePackageSerializable) */ in.readObject();
-            /* (SamePackageProtectedSerializable) */ in.readObject();
-            try {
-            /* (DifferentPackageSerializable) */ in.readObject();
-            } catch (InvalidClassException e) {
-            }
-            in.close();
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new PrivateSerializable());
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (PrivateSerializable) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading PrivateSerialziable");
+	    } catch (InvalidClassException e) {
+	    } 
+	    in.close();
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new PrivateSerializable());
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (PrivateSerializable) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading PrivateSerialziable");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new SamePackagePrivateSerializable());
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (SamePackagePrivateSerializable) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading PrivateSerialziable");
+	    } catch (InvalidClassException e) {
+	    } 
+	    in.close();
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new SamePackagePrivateSerializable());
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (SamePackagePrivateSerializable) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading PrivateSerialziable");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizablePublicCtor());
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizablePublicCtor());
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    /* (ExternalizablePublicCtor) */ in.readObject();
+	    in.close();
 
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            /* (ExternalizablePublicCtor) */ in.readObject();
-            in.close();
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizableProtectedCtor());
+	
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizableProtectedCtor());
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (ExternalizableProtectedCtor) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading ExternalizableProtectedCtor");
+	    } catch (InvalidClassException e) {
+	    }
+	    in.close();
 
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizablePackageCtor());
 
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (ExternalizableProtectedCtor) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading ExternalizableProtectedCtor");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (ExternalizablePackageCtor) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading ExternalizablePackageCtor");
+	    } catch (InvalidClassException e) {
+	    }
+	    in.close();
+      
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizablePrivateCtor(2));
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizablePackageCtor());
-
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (ExternalizablePackageCtor) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading ExternalizablePackageCtor");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
-
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizablePrivateCtor(2));
-
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (ExternalizablePrivateCtor) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading ExternalizablePrivateCtor");
-            } catch (InvalidClassException e) {
-            }
-            out.close();
-            in.close();
-        }
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (ExternalizablePrivateCtor) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading ExternalizablePrivateCtor");
+	    } catch (InvalidClassException e) {
+	    }
+	    out.close();
+	    in.close();
+	}
 }
+

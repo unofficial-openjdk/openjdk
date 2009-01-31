@@ -43,7 +43,7 @@ import java.util.*;
 class MonitorTestTarg {
     static void foo3() {
         System.out.println("executing foo3");
-
+           
     }
     static void foo2() {
         Object l1 = new Object();
@@ -72,22 +72,22 @@ public class MonitorFrameInfo extends TestScaffold {
 
     static int expectedCount = 2;
     static int[] expectedDepth = { 1, 3 };
-
+    
     static String[] expectedNames = {"foo3", "foo2", "foo1", "main"};
 
     MonitorFrameInfo (String args[]) {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new MonitorFrameInfo(args).startTests();
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("MonitorTestTarg");
@@ -95,7 +95,7 @@ public class MonitorFrameInfo extends TestScaffold {
         mainThread = bpe.thread();
 
         int initialSize = mainThread.frames().size();
-
+        
         resumeTo("MonitorTestTarg", "foo3", "()V");
 
         if (!mainThread.frame(0).location().method().name()
@@ -129,13 +129,13 @@ public class MonitorFrameInfo extends TestScaffold {
         } else {
             System.out.println("can not get monitors frame info");
         }
-
-
+        
+        
         /*
          * resume until end
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

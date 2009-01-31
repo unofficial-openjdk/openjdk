@@ -47,3 +47,4 @@ public class ShortEditor extends NumberEditor {
     }
 
 }
+

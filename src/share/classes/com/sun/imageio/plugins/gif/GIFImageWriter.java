@@ -58,16 +58,16 @@ import com.sun.imageio.plugins.common.PaletteBuilder;
 
 public class GIFImageWriter extends ImageWriter {
     private static final boolean DEBUG = false; // XXX false for release!
-
+    
     static final String STANDARD_METADATA_NAME =
     IIOMetadataFormatImpl.standardMetadataFormatName;
 
     static final String STREAM_METADATA_NAME =
     GIFWritableStreamMetadata.NATIVE_FORMAT_NAME;
-
+    
     static final String IMAGE_METADATA_NAME =
     GIFWritableImageMetadata.NATIVE_FORMAT_NAME;
-
+    
     /**
      * The <code>output</code> case to an <code>ImageOutputStream</code>.
      */
@@ -127,10 +127,10 @@ public class GIFImageWriter extends ImageWriter {
         default:
             throw new IOException("Bad palette length: "+value+"!");
         }
-
+        
         return numBits;
     }
-
+    
     /**
      * Compute the source region and destination dimensions taking any
      * parameter settings into account.
@@ -148,7 +148,7 @@ public class GIFImageWriter extends ImageWriter {
                  sourceBands[0] != 0)) {
                 throw new IllegalArgumentException("Cannot sub-band image!");
             }
-
+            
             // Get source region and subsampling factors
             Rectangle sourceRegion = p.getSourceRegion();
             if (sourceRegion != null) {
@@ -156,7 +156,7 @@ public class GIFImageWriter extends ImageWriter {
                 sourceRegion = sourceRegion.intersection(sourceBounds);
                 sourceBounds.setBounds(sourceRegion);
             }
-
+            
             // Adjust for subsampling offsets
             int gridX = p.getSubsamplingXOffset();
             int gridY = p.getSubsamplingYOffset();
@@ -164,12 +164,12 @@ public class GIFImageWriter extends ImageWriter {
             sourceBounds.y += gridY;
             sourceBounds.width -= gridX;
             sourceBounds.height -= gridY;
-
+            
             // Get subsampling factors
             periodX = p.getSourceXSubsampling();
             periodY = p.getSourceYSubsampling();
         }
-
+        
         // Compute output dimensions
         destSize.setSize((sourceBounds.width + periodX - 1)/periodX,
                          (sourceBounds.height + periodY - 1)/periodY);
@@ -191,11 +191,11 @@ public class GIFImageWriter extends ImageWriter {
 
             /**
              * The GIF image format assumes that size of image palette
-             * is power of two. We will use closest larger power of two
+             * is power of two. We will use closest larger power of two 
              * as size of color table.
              */
             int ctSize = getGifPaletteSize(mapSize);
-
+            
             byte[] reds = new byte[ctSize];
             byte[] greens = new byte[ctSize];
             byte[] blues = new byte[ctSize];
@@ -232,16 +232,16 @@ public class GIFImageWriter extends ImageWriter {
                 colorTable[i] = (byte)(i/3);
             }
         } else {
-            // We do not have enough information here
+            // We do not have enough information here 
             // to create well-fit color table for RGB image.
             colorTable = null;
         }
-
+        
         return colorTable;
     }
-
+    
     /**
-     * According do GIF specification size of clor table (palette here)
+     * According do GIF specification size of clor table (palette here) 
      * must be in range from 2 to 256 and must be power of 2.
      */
     private static int getGifPaletteSize(int x) {
@@ -258,18 +258,18 @@ public class GIFImageWriter extends ImageWriter {
     }
 
 
-
+                
     public GIFImageWriter(GIFImageWriterSpi originatingProvider) {
         super(originatingProvider);
         if (DEBUG) {
             System.err.println("GIF Writer is created");
         }
     }
-
+    
     public boolean canWriteSequence() {
         return true;
     }
-
+    
     /**
      * Merges <code>inData</code> into <code>outData</code>. The supplied
      * metadata format name is attempted first and failing that the standard
@@ -279,14 +279,14 @@ public class GIFImageWriter extends ImageWriter {
                                  IIOMetadata inData,
                                  IIOMetadata outData) {
         String formatName = null;
-
+        
         String nativeFormatName = inData.getNativeMetadataFormatName();
         if (nativeFormatName != null &&
             nativeFormatName.equals(metadataFormatName)) {
             formatName = metadataFormatName;
         } else {
             String[] extraFormatNames = inData.getExtraMetadataFormatNames();
-
+            
             if (extraFormatNames != null) {
                 for (int i = 0; i < extraFormatNames.length; i++) {
                     if (extraFormatNames[i].equals(metadataFormatName)) {
@@ -296,12 +296,12 @@ public class GIFImageWriter extends ImageWriter {
                 }
             }
         }
-
+        
         if (formatName == null &&
             inData.isStandardMetadataFormatSupported()) {
             formatName = STANDARD_METADATA_NAME;
         }
-
+        
         if (formatName != null) {
             try {
                 Node root = inData.getAsTree(formatName);
@@ -311,7 +311,7 @@ public class GIFImageWriter extends ImageWriter {
             }
         }
     }
-
+    
     /**
      * Creates a default stream metadata object and merges in the
      * supplied metadata.
@@ -321,14 +321,14 @@ public class GIFImageWriter extends ImageWriter {
         if (inData == null) {
             throw new IllegalArgumentException("inData == null!");
         }
-
+        
         IIOMetadata sm = getDefaultStreamMetadata(param);
-
+        
         convertMetadata(STREAM_METADATA_NAME, inData, sm);
-
+        
         return sm;
     }
-
+    
     /**
      * Creates a default image metadata object and merges in the
      * supplied metadata.
@@ -342,27 +342,27 @@ public class GIFImageWriter extends ImageWriter {
         if (imageType == null) {
             throw new IllegalArgumentException("imageType == null!");
         }
-
+        
         GIFWritableImageMetadata im =
             (GIFWritableImageMetadata)getDefaultImageMetadata(imageType,
                                                               param);
-
+        
         // Save interlace flag state.
-
+        
         boolean isProgressive = im.interlaceFlag;
-
+        
         convertMetadata(IMAGE_METADATA_NAME, inData, im);
-
+        
         // Undo change to interlace flag if not MODE_COPY_FROM_METADATA.
-
+        
         if (param != null && param.canWriteProgressive() &&
             param.getProgressiveMode() != param.MODE_COPY_FROM_METADATA) {
             im.interlaceFlag = isProgressive;
         }
-
+        
         return im;
     }
-
+    
     public void endWriteSequence() throws IOException {
         if (stream == null) {
             throw new IllegalStateException("output == null!");
@@ -371,26 +371,26 @@ public class GIFImageWriter extends ImageWriter {
             throw new IllegalStateException("prepareWriteSequence() was not invoked!");
         }
         writeTrailer();
-        resetLocal();
+        resetLocal();      
     }
-
+    
     public IIOMetadata getDefaultImageMetadata(ImageTypeSpecifier imageType,
                                                ImageWriteParam param) {
         GIFWritableImageMetadata imageMetadata =
             new GIFWritableImageMetadata();
-
+        
         // Image dimensions
-
+        
         SampleModel sampleModel = imageType.getSampleModel();
-
+        
         Rectangle sourceBounds = new Rectangle(sampleModel.getWidth(),
                                                sampleModel.getHeight());
         Dimension destSize = new Dimension();
         computeRegions(sourceBounds, destSize, param);
-
+        
         imageMetadata.imageWidth = destSize.width;
         imageMetadata.imageHeight = destSize.height;
-
+        
         // Interlacing
 
         if (param != null && param.canWriteProgressive() &&
@@ -399,16 +399,16 @@ public class GIFImageWriter extends ImageWriter {
         } else {
             imageMetadata.interlaceFlag = true;
         }
-
+        
         // Local color table
 
         ColorModel colorModel = imageType.getColorModel();
-
+        
         imageMetadata.localColorTable =
             createColorTable(colorModel, sampleModel);
-
+        
         // Transparency
-
+        
         if (colorModel instanceof IndexColorModel) {
             int transparentIndex =
                 ((IndexColorModel)colorModel).getTransparentPixel();
@@ -417,28 +417,28 @@ public class GIFImageWriter extends ImageWriter {
                 imageMetadata.transparentColorIndex = transparentIndex;
             }
         }
-
+        
         return imageMetadata;
     }
-
+    
     public IIOMetadata getDefaultStreamMetadata(ImageWriteParam param) {
         GIFWritableStreamMetadata streamMetadata =
             new GIFWritableStreamMetadata();
         streamMetadata.version = "89a";
         return streamMetadata;
     }
-
+    
     public ImageWriteParam getDefaultWriteParam() {
         return new GIFImageWriteParam(getLocale());
     }
-
+    
     public void prepareWriteSequence(IIOMetadata streamMetadata)
       throws IOException {
 
         if (stream == null) {
             throw new IllegalStateException("Output is not set.");
         }
-
+        
         resetLocal();
 
         // Save the possibly converted stream metadata as an instance variable.
@@ -458,7 +458,7 @@ public class GIFImageWriter extends ImageWriter {
         super.reset();
         resetLocal();
     }
-
+    
     /**
      * Resets locally defined instance variables.
      */
@@ -473,7 +473,7 @@ public class GIFImageWriter extends ImageWriter {
         super.setOutput(output);
         if (output != null) {
             if (!(output instanceof ImageOutputStream)) {
-                throw new
+                throw new 
                     IllegalArgumentException("output is not an ImageOutputStream");
             }
             this.stream = (ImageOutputStream)output;
@@ -495,9 +495,9 @@ public class GIFImageWriter extends ImageWriter {
         if (iioimage.hasRaster()) {
             throw new UnsupportedOperationException("canWriteRasters() == false!");
         }
-
+        
         resetLocal();
-
+        
         GIFWritableStreamMetadata streamMetadata;
         if (sm == null) {
             streamMetadata =
@@ -506,10 +506,10 @@ public class GIFImageWriter extends ImageWriter {
             streamMetadata =
                 (GIFWritableStreamMetadata)convertStreamMetadata(sm, p);
         }
-
+        
         write(true, true, streamMetadata, iioimage, p);
     }
-
+    
     public void writeToSequence(IIOImage image, ImageWriteParam param)
       throws IOException {
         if (stream == null) {
@@ -524,28 +524,28 @@ public class GIFImageWriter extends ImageWriter {
         if (!isWritingSequence) {
             throw new IllegalStateException("prepareWriteSequence() was not invoked!");
         }
-
+        
         write(!wroteSequenceHeader, false, theStreamMetadata,
               image, param);
-
+        
         if (!wroteSequenceHeader) {
             wroteSequenceHeader = true;
         }
-
+        
         this.imageIndex++;
     }
-
-
+    
+    
     private boolean needToCreateIndex(RenderedImage image) {
-
+        
         SampleModel sampleModel = image.getSampleModel();
         ColorModel colorModel = image.getColorModel();
-
+        
         return sampleModel.getNumBands() != 1 ||
             sampleModel.getSampleSize()[0] > 8 ||
             colorModel.getComponentSize()[0] > 8;
     }
-
+    
     /**
      * Writes any extension blocks, the Image Descriptor, the image data,
      * and optionally the header (Signature and Logical Screen Descriptor)
@@ -576,7 +576,7 @@ public class GIFImageWriter extends ImageWriter {
         clearAbortRequest();
 
         RenderedImage image = iioimage.getRenderedImage();
-
+        
         // Check for ability to encode image.
         if (needToCreateIndex(image)) {
             image = PaletteBuilder.createIndexedImage(image);
@@ -585,7 +585,7 @@ public class GIFImageWriter extends ImageWriter {
 
         ColorModel colorModel = image.getColorModel();
         SampleModel sampleModel = image.getSampleModel();
-
+        
         // Determine source region and destination dimensions.
         Rectangle sourceBounds = new Rectangle(image.getMinX(),
                                                image.getMinY(),
@@ -593,7 +593,7 @@ public class GIFImageWriter extends ImageWriter {
                                                image.getHeight());
         Dimension destSize = new Dimension();
         computeRegions(sourceBounds, destSize, p);
-
+        
         // Convert any provided image metadata.
         GIFWritableImageMetadata imageMetadata = null;
         if (iioimage.getMetadata() != null) {
@@ -610,8 +610,8 @@ public class GIFImageWriter extends ImageWriter {
             if (imageMetadata.localColorTable == null) {
                 imageMetadata.localColorTable =
                     createColorTable(colorModel, sampleModel);
-
-                // in case of indexed image we should take care of
+                
+                // in case of indexed image we should take care of 
                 // transparent pixels
                 if (colorModel instanceof IndexColorModel) {
                     IndexColorModel icm =
@@ -630,33 +630,33 @@ public class GIFImageWriter extends ImageWriter {
                 }
             }
         }
-
+        
         // Global color table values.
         byte[] globalColorTable = null;
-
+        
         // Write the header (Signature+Logical Screen Descriptor+
         // Global Color Table).
         if (writeHeader) {
             if (sm == null) {
                 throw new IllegalArgumentException("Cannot write null header!");
             }
-
+            
             GIFWritableStreamMetadata streamMetadata =
                 (GIFWritableStreamMetadata)sm;
-
+            
             // Set the version if not set.
             if (streamMetadata.version == null) {
                 streamMetadata.version = "89a";
             }
-
+            
             // Set the Logical Screen Desriptor if not set.
-            if (streamMetadata.logicalScreenWidth ==
-                GIFMetadata.UNDEFINED_INTEGER_VALUE)
+            if (streamMetadata.logicalScreenWidth == 
+                GIFMetadata.UNDEFINED_INTEGER_VALUE) 
             {
                 streamMetadata.logicalScreenWidth = destSize.width;
             }
 
-            if (streamMetadata.logicalScreenHeight ==
+            if (streamMetadata.logicalScreenHeight == 
                 GIFMetadata.UNDEFINED_INTEGER_VALUE)
             {
                 streamMetadata.logicalScreenHeight = destSize.height;
@@ -669,7 +669,7 @@ public class GIFImageWriter extends ImageWriter {
                     colorModel.getComponentSize()[0] :
                     sampleModel.getSampleSize()[0];
             }
-
+            
             // Set the Global Color Table if not set, i.e., if not
             // provided in the stream metadata.
             if (streamMetadata.globalColorTable == null) {
@@ -697,7 +697,7 @@ public class GIFImageWriter extends ImageWriter {
             //    should only be if a sequence is not being written and
             //    a local color table is provided in image metadata).
             globalColorTable = streamMetadata.globalColorTable;
-
+            
             // Write the header.
             int bitsPerPixel;
             if (globalColorTable != null) {
@@ -715,17 +715,17 @@ public class GIFImageWriter extends ImageWriter {
         } else {
             throw new IllegalArgumentException("Must write header for single image!");
         }
-
+        
         // Write extension blocks, Image Descriptor, and image data.
         writeImage(iioimage.getRenderedImage(), imageMetadata, p,
                    globalColorTable, sourceBounds, destSize);
-
+        
         // Write the trailer.
         if (writeTrailer) {
             writeTrailer();
         }
     }
-
+    
     /**
      * Writes any extension blocks, the Image Descriptor, and the image data
      *
@@ -742,13 +742,13 @@ public class GIFImageWriter extends ImageWriter {
       throws IOException {
         ColorModel colorModel = image.getColorModel();
         SampleModel sampleModel = image.getSampleModel();
-
+        
         boolean writeGraphicsControlExtension;
         if (imageMetadata == null) {
             // Create default metadata.
             imageMetadata = (GIFWritableImageMetadata)getDefaultImageMetadata(
                 new ImageTypeSpecifier(image), param);
-
+            
             // Set GraphicControlExtension flag only if there is
             // transparency.
             writeGraphicsControlExtension = imageMetadata.transparentColorFlag;
@@ -762,11 +762,11 @@ public class GIFImageWriter extends ImageWriter {
             } catch(IllegalArgumentException iae) {
                 // Should never happen.
             }
-
+            
             // Set GraphicControlExtension flag if element present.
             writeGraphicsControlExtension =
                 list != null && list.getLength() > 0;
-
+            
             // If progressive mode is not MODE_COPY_FROM_METADATA, ensure
             // the interlacing is set per the ImageWriteParam mode setting.
             if (param != null && param.canWriteProgressive()) {
@@ -779,26 +779,26 @@ public class GIFImageWriter extends ImageWriter {
                 }
             }
         }
-
+        
         // Unset local color table if equal to global color table.
         if (Arrays.equals(globalColorTable, imageMetadata.localColorTable)) {
             imageMetadata.localColorTable = null;
         }
-
+      
         // Override dimensions
         imageMetadata.imageWidth = destSize.width;
         imageMetadata.imageHeight = destSize.height;
-
+        
         // Write Graphics Control Extension.
         if (writeGraphicsControlExtension) {
             writeGraphicControlExtension(imageMetadata);
         }
-
+        
         // Write extension blocks.
         writePlainTextExtension(imageMetadata);
         writeApplicationExtension(imageMetadata);
         writeCommentExtension(imageMetadata);
-
+        
         // Write Image Descriptor
         int bitsPerPixel =
             getNumBits(imageMetadata.localColorTable == null ?
@@ -807,22 +807,22 @@ public class GIFImageWriter extends ImageWriter {
                         globalColorTable.length/3) :
                        imageMetadata.localColorTable.length/3);
         writeImageDescriptor(imageMetadata, bitsPerPixel);
-
+        
         // Write image data
         writeRasterData(image, sourceBounds, destSize,
                         param, imageMetadata.interlaceFlag);
     }
-
+    
     private void writeRows(RenderedImage image, LZWCompressor compressor,
                            int sx, int sdx, int sy, int sdy, int sw,
                            int dy, int ddy, int dw, int dh,
                            int numRowsWritten, int progressReportRowPeriod)
       throws IOException {
         if (DEBUG) System.out.println("Writing unoptimized");
-
+        
         int[] sbuf = new int[sw];
         byte[] dbuf = new byte[dw];
-
+        
         Raster raster =
             image.getNumXTiles() == 1 && image.getNumYTiles() == 1 ?
             image.getTile(0, 0) : image.getData();
@@ -834,7 +834,7 @@ public class GIFImageWriter extends ImageWriter {
                 }
                 processImageProgress((numRowsWritten*100.0F)/dh);
             }
-
+            
             raster.getSamples(sx, sy, sw, 1, 0, sbuf);
             for (int i = 0, j = 0; i < dw; i++, j += sdx) {
                 dbuf[i] = (byte)sbuf[j];
@@ -851,7 +851,7 @@ public class GIFImageWriter extends ImageWriter {
                               int numRowsWritten, int progressReportRowPeriod)
       throws IOException {
         if (DEBUG) System.out.println("Writing optimized");
-
+        
         offset += dy*lineStride;
         lineStride *= ddy;
         for (int y = dy; y < dh; y += ddy) {
@@ -862,7 +862,7 @@ public class GIFImageWriter extends ImageWriter {
                 }
                 processImageProgress((numRowsWritten*100.0F)/dh);
             }
-
+            
             compressor.compress(data, offset, dw);
             numRowsWritten++;
             offset += lineStride;
@@ -874,15 +874,15 @@ public class GIFImageWriter extends ImageWriter {
                                  Dimension destSize,
                                  ImageWriteParam param,
                                  boolean interlaceFlag) throws IOException {
-
+        
         int sourceXOffset = sourceBounds.x;
         int sourceYOffset = sourceBounds.y;
         int sourceWidth = sourceBounds.width;
         int sourceHeight = sourceBounds.height;
-
+        
         int destWidth = destSize.width;
         int destHeight = destSize.height;
-
+        
         int periodX;
         int periodY;
         if (param == null) {
@@ -892,34 +892,34 @@ public class GIFImageWriter extends ImageWriter {
             periodX = param.getSourceXSubsampling();
             periodY = param.getSourceYSubsampling();
         }
-
+        
         SampleModel sampleModel = image.getSampleModel();
         int bitsPerPixel = sampleModel.getSampleSize()[0];
-
+        
         int initCodeSize = bitsPerPixel;
         if (initCodeSize == 1) {
             initCodeSize++;
         }
         stream.write(initCodeSize);
-
+        
         LZWCompressor compressor =
             new LZWCompressor(stream, initCodeSize, false);
-
+        
         boolean isOptimizedCase =
             periodX == 1 && periodY == 1 &&
             sampleModel instanceof ComponentSampleModel &&
             image.getNumXTiles() == 1 && image.getNumYTiles() == 1 &&
             image.getTile(0, 0).getDataBuffer() instanceof DataBufferByte;
-
+        
         int numRowsWritten = 0;
-
+        
         int progressReportRowPeriod = Math.max(destHeight/20, 1);
-
+        
         processImageStarted(imageIndex);
-
+        
         if (interlaceFlag) {
             if (DEBUG) System.out.println("Writing interlaced");
-
+            
             if (isOptimizedCase) {
                 Raster tile = image.getTile(0, 0);
                 byte[] data = ((DataBufferByte)tile.getDataBuffer()).getData();
@@ -927,37 +927,37 @@ public class GIFImageWriter extends ImageWriter {
                     (ComponentSampleModel)tile.getSampleModel();
                 int offset = csm.getOffset(sourceXOffset, sourceYOffset, 0);
                 int lineStride = csm.getScanlineStride();
-
+                
                 writeRowsOpt(data, offset, lineStride, compressor,
                              0, 8, destWidth, destHeight,
                              numRowsWritten, progressReportRowPeriod);
-
+                
                 if (abortRequested()) {
                     return;
                 }
-
+                
                 numRowsWritten += destHeight/8;
-
+                
                 writeRowsOpt(data, offset, lineStride, compressor,
                              4, 8, destWidth, destHeight,
                              numRowsWritten, progressReportRowPeriod);
-
+                
                 if (abortRequested()) {
                     return;
                 }
-
+                
                 numRowsWritten += (destHeight - 4)/8;
-
+                
                 writeRowsOpt(data, offset, lineStride, compressor,
                              2, 4, destWidth, destHeight,
                              numRowsWritten, progressReportRowPeriod);
-
+                
                 if (abortRequested()) {
                     return;
                 }
-
+                
                 numRowsWritten += (destHeight - 2)/4;
-
+                
                 writeRowsOpt(data, offset, lineStride, compressor,
                              1, 2, destWidth, destHeight,
                              numRowsWritten, progressReportRowPeriod);
@@ -968,37 +968,37 @@ public class GIFImageWriter extends ImageWriter {
                           sourceWidth,
                           0, 8, destWidth, destHeight,
                           numRowsWritten, progressReportRowPeriod);
-
+                
                 if (abortRequested()) {
                     return;
                 }
-
+                
                 numRowsWritten += destHeight/8;
-
+                
                 writeRows(image, compressor, sourceXOffset, periodX,
                           sourceYOffset + 4*periodY, 8*periodY,
                           sourceWidth,
                           4, 8, destWidth, destHeight,
                           numRowsWritten, progressReportRowPeriod);
-
+                
                 if (abortRequested()) {
                     return;
                 }
-
+                
                 numRowsWritten += (destHeight - 4)/8;
-
+                
                 writeRows(image, compressor, sourceXOffset, periodX,
                           sourceYOffset + 2*periodY, 4*periodY,
                           sourceWidth,
                           2, 4, destWidth, destHeight,
                           numRowsWritten, progressReportRowPeriod);
-
+                
                 if (abortRequested()) {
                     return;
                 }
-
+                
                 numRowsWritten += (destHeight - 2)/4;
-
+                
                 writeRows(image, compressor, sourceXOffset, periodX,
                           sourceYOffset + periodY, 2*periodY,
                           sourceWidth,
@@ -1007,7 +1007,7 @@ public class GIFImageWriter extends ImageWriter {
             }
         } else {
             if (DEBUG) System.out.println("Writing non-interlaced");
-
+            
             if (isOptimizedCase) {
                 Raster tile = image.getTile(0, 0);
                 byte[] data = ((DataBufferByte)tile.getDataBuffer()).getData();
@@ -1015,7 +1015,7 @@ public class GIFImageWriter extends ImageWriter {
                     (ComponentSampleModel)tile.getSampleModel();
                 int offset = csm.getOffset(sourceXOffset, sourceYOffset, 0);
                 int lineStride = csm.getScanlineStride();
-
+                
                 writeRowsOpt(data, offset, lineStride, compressor,
                              0, 1, destWidth, destHeight,
                              numRowsWritten, progressReportRowPeriod);
@@ -1028,17 +1028,17 @@ public class GIFImageWriter extends ImageWriter {
                           numRowsWritten, progressReportRowPeriod);
             }
         }
-
+        
         if (abortRequested()) {
             return;
         }
-
+        
         processImageProgress(100.0F);
 
         compressor.flush();
-
+        
         stream.write(0x00);
-
+        
         processImageComplete();
     }
 
@@ -1054,14 +1054,14 @@ public class GIFImageWriter extends ImageWriter {
         try {
             // Signature
             stream.writeBytes("GIF"+version);
-
+            
             // Screen Descriptor
             // Width
             stream.writeShort((short)logicalScreenWidth);
-
+            
             // Height
             stream.writeShort((short)logicalScreenHeight);
-
+            
             // Global Color Table
             // Packed fields
             int packedFields = globalColorTable != null ? 0x80 : 0x00;
@@ -1071,13 +1071,13 @@ public class GIFImageWriter extends ImageWriter {
             }
             packedFields |= (bitsPerPixel - 1);
             stream.write(packedFields);
-
+            
             // Background color index
             stream.write(backgroundColorIndex);
 
             // Pixel aspect ratio
             stream.write(pixelAspectRatio);
-
+            
             // Global Color Table
             if (globalColorTable != null) {
                 stream.write(globalColorTable);
@@ -1086,7 +1086,7 @@ public class GIFImageWriter extends ImageWriter {
             throw new IIOException("I/O error writing header!", e);
         }
     }
-
+    
     private void writeHeader(IIOMetadata streamMetadata, int bitsPerPixel)
       throws IOException {
 
@@ -1099,7 +1099,7 @@ public class GIFImageWriter extends ImageWriter {
                 streamMetadata.getAsTree(STREAM_METADATA_NAME);
             sm.setFromTree(STREAM_METADATA_NAME, root);
         }
-
+        
         writeHeader(sm.version,
                     sm.logicalScreenWidth,
                     sm.logicalScreenHeight,
@@ -1110,7 +1110,7 @@ public class GIFImageWriter extends ImageWriter {
                     bitsPerPixel,
                     sm.globalColorTable);
     }
-
+    
     private void writeGraphicControlExtension(int disposalMethod,
                                               boolean userInputFlag,
                                               boolean transparentColorFlag,
@@ -1120,9 +1120,9 @@ public class GIFImageWriter extends ImageWriter {
         try {
             stream.write(0x21);
             stream.write(0xf9);
-
+            
             stream.write(4);
-
+            
             int packedFields = (disposalMethod & 0x3) << 2;
             if (userInputFlag) {
                 packedFields |= 0x2;
@@ -1131,16 +1131,16 @@ public class GIFImageWriter extends ImageWriter {
                 packedFields |= 0x1;
             }
             stream.write(packedFields);
-
+            
             stream.writeShort((short)delayTime);
-
+            
             stream.write(transparentColorIndex);
             stream.write(0x00);
         } catch (IOException e) {
             throw new IIOException("I/O error writing Graphic Control Extension!", e);
         }
     }
-
+    
     private void writeGraphicControlExtension(GIFWritableImageMetadata im)
       throws IOException {
         writeGraphicControlExtension(im.disposalMethod,
@@ -1149,7 +1149,7 @@ public class GIFImageWriter extends ImageWriter {
                                      im.delayTime,
                                      im.transparentColorIndex);
     }
-
+    
     private void writeBlocks(byte[] data) throws IOException {
         if (data != null && data.length > 0) {
             int offset = 0;
@@ -1161,16 +1161,16 @@ public class GIFImageWriter extends ImageWriter {
             }
         }
     }
-
+    
     private void writePlainTextExtension(GIFWritableImageMetadata im)
       throws IOException {
         if (im.hasPlainTextExtension) {
             try {
                 stream.write(0x21);
                 stream.write(0x1);
-
+                
                 stream.write(12);
-
+                
                 stream.writeShort(im.textGridLeft);
                 stream.writeShort(im.textGridTop);
                 stream.writeShort(im.textGridWidth);
@@ -1179,34 +1179,34 @@ public class GIFImageWriter extends ImageWriter {
                 stream.write(im.characterCellHeight);
                 stream.write(im.textForegroundColor);
                 stream.write(im.textBackgroundColor);
-
+                
                 writeBlocks(im.text);
-
+                
                 stream.write(0x00);
             } catch (IOException e) {
                 throw new IIOException("I/O error writing Plain Text Extension!", e);
             }
         }
     }
-
+    
     private void writeApplicationExtension(GIFWritableImageMetadata im)
       throws IOException {
         if (im.applicationIDs != null) {
             Iterator iterIDs = im.applicationIDs.iterator();
             Iterator iterCodes = im.authenticationCodes.iterator();
             Iterator iterData = im.applicationData.iterator();
-
+            
             while (iterIDs.hasNext()) {
                 try {
                     stream.write(0x21);
                     stream.write(0xff);
-
+                    
                     stream.write(11);
                     stream.write((byte[])iterIDs.next(), 0, 8);
                     stream.write((byte[])iterCodes.next(), 0, 3);
-
+                    
                     writeBlocks((byte[])iterData.next());
-
+                    
                     stream.write(0x00);
                 } catch (IOException e) {
                     throw new IIOException("I/O error writing Application Extension!", e);
@@ -1231,7 +1231,7 @@ public class GIFImageWriter extends ImageWriter {
             }
         }
     }
-
+    
     private void writeImageDescriptor(int imageLeftPosition,
                                       int imageTopPosition,
                                       int imageWidth,
@@ -1241,15 +1241,15 @@ public class GIFImageWriter extends ImageWriter {
                                       int bitsPerPixel,
                                       byte[] localColorTable)
       throws IOException {
-
+        
         try {
             stream.write(0x2c);
-
+            
             stream.writeShort((short)imageLeftPosition);
             stream.writeShort((short)imageTopPosition);
             stream.writeShort((short)imageWidth);
             stream.writeShort((short)imageHeight);
-
+            
             int packedFields = localColorTable != null ? 0x80 : 0x00;
             if (interlaceFlag) {
                 packedFields |= 0x40;
@@ -1259,7 +1259,7 @@ public class GIFImageWriter extends ImageWriter {
             }
             packedFields |= (bitsPerPixel - 1);
             stream.write(packedFields);
-
+            
             if (localColorTable != null) {
                 stream.write(localColorTable);
             }
@@ -1267,11 +1267,11 @@ public class GIFImageWriter extends ImageWriter {
             throw new IIOException("I/O error writing Image Descriptor!", e);
         }
     }
-
+    
     private void writeImageDescriptor(GIFWritableImageMetadata imageMetadata,
                                       int bitsPerPixel)
       throws IOException {
-
+        
         writeImageDescriptor(imageMetadata.imageLeftPosition,
                              imageMetadata.imageTopPosition,
                              imageMetadata.imageWidth,

@@ -35,13 +35,13 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Collections;
 
-public class StackFrameImpl extends MirrorImpl
+public class StackFrameImpl extends MirrorImpl 
                             implements StackFrame, ThreadListener
 {
     /* Once false, frame should not be used.
      * access synchronized on (vm.state())
      */
-    private boolean isValid = true;
+    private boolean isValid = true;  
 
     private final ThreadReferenceImpl thread;
     private final long id;
@@ -49,7 +49,7 @@ public class StackFrameImpl extends MirrorImpl
     private Map<String, LocalVariable> visibleVariables =  null;
     private ObjectReference thisObject = null;
 
-    StackFrameImpl(VirtualMachine vm, ThreadReferenceImpl thread,
+    StackFrameImpl(VirtualMachine vm, ThreadReferenceImpl thread, 
                    long id, Location location) {
         super(vm);
         this.thread = thread;
@@ -158,12 +158,12 @@ public class StackFrameImpl extends MirrorImpl
         if (visibleVariables == null) {
             List<LocalVariable> allVariables = location.method().variables();
             Map<String, LocalVariable> map = new HashMap<String, LocalVariable>(allVariables.size());
-
-            for (LocalVariable variable : allVariables) {
+	    
+	    for (LocalVariable variable : allVariables) {
                 String name = variable.name();
                 if (variable.isVisible(this)) {
                     LocalVariable existing = (LocalVariable)map.get(name);
-                    if ((existing == null) ||
+                    if ((existing == null) || 
                         ((LocalVariableImpl)variable).hides(existing)) {
                         map.put(name, variable);
                     }
@@ -201,18 +201,18 @@ public class StackFrameImpl extends MirrorImpl
         return getValues(list).get(variable);
     }
 
-    public Map<LocalVariable, Value> getValues(List<? extends LocalVariable> variables) {
+    public Map<LocalVariable, Value> getValues(List<? extends LocalVariable> variables) {      
         validateStackFrame();
         validateMirrors(variables);
 
         int count = variables.size();
-        JDWP.StackFrame.GetValues.SlotInfo[] slots =
+        JDWP.StackFrame.GetValues.SlotInfo[] slots = 
                            new JDWP.StackFrame.GetValues.SlotInfo[count];
 
         for (int i=0; i<count; ++i) {
             LocalVariableImpl variable = (LocalVariableImpl)variables.get(i);
             if (!variable.isVisible(this)) {
-                throw new IllegalArgumentException(variable.name() +
+                throw new IllegalArgumentException(variable.name() + 
                                  " is not valid at this frame location");
             }
             slots[i] = new JDWP.StackFrame.GetValues.SlotInfo(variable.slot(),
@@ -256,7 +256,7 @@ public class StackFrameImpl extends MirrorImpl
 
     public void setValue(LocalVariable variableIntf, Value valueIntf)
         throws InvalidTypeException, ClassNotLoadedException {
-
+        
         validateStackFrame();
         validateMirror(variableIntf);
         validateMirrorOrNull(valueIntf);
@@ -265,15 +265,15 @@ public class StackFrameImpl extends MirrorImpl
         ValueImpl value = (ValueImpl)valueIntf;
 
         if (!variable.isVisible(this)) {
-            throw new IllegalArgumentException(variable.name() +
+            throw new IllegalArgumentException(variable.name() + 
                              " is not valid at this frame location");
         }
 
         try {
             // Validate and convert value if necessary
             value = ValueImpl.prepareForAssignment(value, variable);
-
-            JDWP.StackFrame.SetValues.SlotInfo[] slotVals =
+    
+            JDWP.StackFrame.SetValues.SlotInfo[] slotVals = 
                 new JDWP.StackFrame.SetValues.SlotInfo[1];
             slotVals[0] = new JDWP.StackFrame.SetValues.
                                        SlotInfo(variable.slot(), value);
@@ -306,7 +306,7 @@ public class StackFrameImpl extends MirrorImpl
              * the variable type must be a reference type. The value
              * we're trying to set is null, but if the variable's
              * class has not yet been loaded through the enclosing
-             * class loader, then setting to null is essentially a
+             * class loader, then setting to null is essentially a 
              * no-op, and we should allow it without an exception.
              */
             if (value != null) {
@@ -320,7 +320,7 @@ public class StackFrameImpl extends MirrorImpl
         MethodImpl mmm = (MethodImpl)location.method();
         List<String> argSigs = mmm.argumentSignatures();
         int count = argSigs.size();
-        JDWP.StackFrame.GetValues.SlotInfo[] slots =
+        JDWP.StackFrame.GetValues.SlotInfo[] slots = 
                            new JDWP.StackFrame.GetValues.SlotInfo[count];
 
         int slot;
@@ -369,10 +369,10 @@ public class StackFrameImpl extends MirrorImpl
     void pop() throws IncompatibleThreadStateException {
         validateStackFrame();
         // flush caches and disable caching until command completion
-        CommandSender sender =
+        CommandSender sender = 
             new CommandSender() {
                 public PacketStream send() {
-                    return JDWP.StackFrame.PopFrames.enqueueCommand(vm,
+                    return JDWP.StackFrame.PopFrames.enqueueCommand(vm, 
                                  thread, id);
                 }
         };
@@ -402,3 +402,4 @@ public class StackFrameImpl extends MirrorImpl
        return location.toString() + " in thread " + thread.toString();
     }
 }
+

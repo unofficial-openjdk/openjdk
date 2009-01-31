@@ -57,7 +57,7 @@ import javax.swing.text.*;
  * <p>
  * If you are going to allow the user to enter decimal
  * values, you should either force the DecimalFormat to contain at least
- * one decimal (<code>#.0###</code>), or allow the value to be invalid
+ * one decimal (<code>#.0###</code>), or allow the value to be invalid 
  * <code>setAllowsInvalid(true)</code>. Otherwise users may not be able to
  * input decimal values.
  * <p>
@@ -88,6 +88,7 @@ import javax.swing.text.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version 1.4 03/05/01
  * @since 1.4
  */
 public class NumberFormatter extends InternationalFormatter {
@@ -376,7 +377,7 @@ public class NumberFormatter extends InternationalFormatter {
      * true if a sign change was attempted.
      */
     private boolean toggleSignIfNecessary(DocumentFilter.FilterBypass fb,
-                                              int offset, char aChar) throws
+                                              int offset, char aChar) throws 
                               BadLocationException {
         if (aChar == getMinusSign() || aChar == getPositiveSign()) {
             NumberFormat.Field field = getFieldFrom(offset, -1);
@@ -451,7 +452,7 @@ public class NumberFormatter extends InternationalFormatter {
                         string = string.substring(1);
                     }
                 }
-                else {
+                else { 
                     if (string.charAt(0) == '+') {
                         string = string.substring(1);
                     }

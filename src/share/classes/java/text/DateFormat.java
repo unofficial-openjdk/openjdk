@@ -97,7 +97,7 @@ import sun.util.LocaleServiceProviderPool;
  * <p>Use getDateInstance to get the normal date format for that country.
  * There are other static factory methods available.
  * Use getTimeInstance to get the time format for that country.
- * Use getDateTimeInstance to get a date and time format. You can pass in
+ * Use getDateTimeInstance to get a date and time format. You can pass in 
  * different options to these factory methods to control the length of the
  * result; from SHORT to MEDIUM to LONG to FULL. The exact result depends
  * on the locale, but generally:
@@ -138,6 +138,7 @@ import sun.util.LocaleServiceProviderPool;
  * @see          java.util.Calendar
  * @see          java.util.GregorianCalendar
  * @see          java.util.TimeZone
+ * @version      %I% %G%
  * @author       Mark Davis, Chen-Lieh Huang, Alan Liu
  */
 public abstract class DateFormat extends Format {
@@ -294,7 +295,7 @@ public abstract class DateFormat extends Format {
         else if (obj instanceof Number)
             return format( new Date(((Number)obj).longValue()),
                           toAppendTo, fieldPosition );
-        else
+        else 
             throw new IllegalArgumentException("Cannot format given Object as a Date");
     }
 
@@ -331,7 +332,7 @@ public abstract class DateFormat extends Format {
     public final String format(Date date)
     {
         return format(date, new StringBuffer(),
-                      DontCareFieldPosition.INSTANCE).toString();
+		      DontCareFieldPosition.INSTANCE).toString();
     }
 
     /**
@@ -550,10 +551,10 @@ public abstract class DateFormat extends Format {
      * Returns an array of all locales for which the
      * <code>get*Instance</code> methods of this class can return
      * localized instances.
-     * The returned array represents the union of locales supported by the Java
-     * runtime and by installed
-     * {@link java.text.spi.DateFormatProvider DateFormatProvider} implementations.
-     * It must contain at least a <code>Locale</code> instance equal to
+     * The returned array represents the union of locales supported by the Java 
+     * runtime and by installed 
+     * {@link java.text.spi.DateFormatProvider DateFormatProvider} implementations.  
+     * It must contain at least a <code>Locale</code> instance equal to 
      * {@link java.util.Locale#US Locale.US}.
      *
      * @return An array of locales for which localized
@@ -561,9 +562,9 @@ public abstract class DateFormat extends Format {
      */
     public static Locale[] getAvailableLocales()
     {
-        LocaleServiceProviderPool pool =
+        LocaleServiceProviderPool pool = 
             LocaleServiceProviderPool.getPool(DateFormatProvider.class);
-        return pool.getAvailableLocales();
+	return pool.getAvailableLocales();
     }
 
     /**
@@ -705,14 +706,14 @@ public abstract class DateFormat extends Format {
             dateStyle = -1;
         }
         try {
-            // Check whether a provider can provide an implementation that's closer
+            // Check whether a provider can provide an implementation that's closer 
             // to the requested locale than what the Java runtime itself can provide.
             LocaleServiceProviderPool pool =
                 LocaleServiceProviderPool.getPool(DateFormatProvider.class);
             if (pool.hasProviders()) {
                 DateFormat providersInstance = pool.getLocalizedObject(
                                                     DateFormatGetter.INSTANCE,
-                                                    loc,
+                                                    loc, 
                                                     timeStyle,
                                                     dateStyle,
                                                     flags);
@@ -819,7 +820,7 @@ public abstract class DateFormat extends Format {
         /**
          * Resolves instances being deserialized to the predefined constants.
          *
-         * @throws InvalidObjectException if the constant could not be
+	 * @throws InvalidObjectException if the constant could not be
          *         resolved.
          * @return resolved DateFormat.Field constant
          */
@@ -948,15 +949,15 @@ public abstract class DateFormat extends Format {
     }
 
     /**
-     * Obtains a DateFormat instance from a DateFormatProvider
+     * Obtains a DateFormat instance from a DateFormatProvider 
      * implementation.
      */
-    private static class DateFormatGetter
+    private static class DateFormatGetter 
         implements LocaleServiceProviderPool.LocalizedObjectGetter<DateFormatProvider, DateFormat> {
         private static final DateFormatGetter INSTANCE = new DateFormatGetter();
 
-        public DateFormat getObject(DateFormatProvider dateFormatProvider,
-                                Locale locale,
+        public DateFormat getObject(DateFormatProvider dateFormatProvider, 
+                                Locale locale, 
                                 String key,
                                 Object... params) {
             assert params.length == 3;
@@ -965,16 +966,16 @@ public abstract class DateFormat extends Format {
             int dateStyle = (Integer)params[1];
             int flags = (Integer)params[2];
 
-            switch (flags) {
-            case 1:
-                return dateFormatProvider.getTimeInstance(timeStyle, locale);
-            case 2:
-                return dateFormatProvider.getDateInstance(dateStyle, locale);
-            case 3:
-                return dateFormatProvider.getDateTimeInstance(dateStyle, timeStyle, locale);
-            default:
-                assert false : "should not happen";
-            }
+	    switch (flags) {
+	    case 1:
+		return dateFormatProvider.getTimeInstance(timeStyle, locale);
+	    case 2:
+		return dateFormatProvider.getDateInstance(dateStyle, locale);
+	    case 3:
+		return dateFormatProvider.getDateTimeInstance(dateStyle, timeStyle, locale);
+	    default:
+		assert false : "should not happen";
+	    }
 
             return null;
         }

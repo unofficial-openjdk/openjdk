@@ -47,28 +47,28 @@ public class ServerSocket_accept extends AsyncCloseTest implements Runnable {
     }
 
     public void run() {
-        try {
-            Socket s = ss.accept();
-        } catch (SocketException se) {
-            closed();
-        } catch (Exception e) {
-            failed(e.getMessage());
-        }
+	try {
+	    Socket s = ss.accept();
+	} catch (SocketException se) {
+	    closed();
+	} catch (Exception e) {
+	    failed(e.getMessage());
+	}
     }
 
     public boolean go() throws Exception {
-        ss = new ServerSocket(0);
+	ss = new ServerSocket(0);
 
-        Thread thr = new Thread(this);
-        thr.start();
+	Thread thr = new Thread(this);
+	thr.start();
 
-        Thread.currentThread().sleep(1000);
+	Thread.currentThread().sleep(1000);
 
-        ss.close();
+	ss.close();
 
-        Thread.currentThread().sleep(1000);
+	Thread.currentThread().sleep(1000);
 
-        if (isClosed()) {
+	if (isClosed()) {
             return true;
         } else {
             failed("ServerSocket.accept() wasn't preempted");

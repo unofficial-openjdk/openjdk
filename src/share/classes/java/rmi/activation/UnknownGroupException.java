@@ -33,7 +33,8 @@ package java.rmi.activation;
  * <code>UnknownGroupException</code> is also thrown if the
  * <code>ActivationGroupID</code> in an <code>ActivationDesc</code> refers to
  * a group that is not registered with the <code>ActivationSystem</code>
- *
+ * 
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   1.2
  * @see     java.rmi.activation.Activatable
@@ -55,6 +56,6 @@ public class UnknownGroupException extends ActivationException {
      * @since 1.2
      */
     public UnknownGroupException(String s) {
-        super(s);
+	super(s);
     }
 }

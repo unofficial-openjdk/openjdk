@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /*
  * @bug 4392325
  * @summary Ensure that ObjectInputStream can successfully skip over an object
- *          written using a class-defined writeObject method for which the
- *          class is not resolvable.
+ *	    written using a class-defined writeObject method for which the
+ *	    class is not resolvable.
  */
 
 import java.io.*;
@@ -36,11 +36,11 @@ class Foo implements Serializable {
 
 public class Read {
     public static void main(String[] args) throws Exception {
-        ObjectInputStream oin =
-            new ObjectInputStream(new FileInputStream("tmp.ser"));
-        Object[] array = (Object[]) oin.readObject();
-        if (! (array[0].equals("before") && array[2].equals("after"))) {
-            throw new Error();
-        }
+	ObjectInputStream oin = 
+	    new ObjectInputStream(new FileInputStream("tmp.ser"));
+	Object[] array = (Object[]) oin.readObject();
+	if (! (array[0].equals("before") && array[2].equals("after"))) {
+	    throw new Error();
+	}
     }
 }

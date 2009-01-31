@@ -51,28 +51,28 @@ final class PBECipherCore {
     private int iCount = 10;
 
     /**
-     * Creates an instance of PBE Cipher using the specified CipherSpi
+     * Creates an instance of PBE Cipher using the specified CipherSpi 
      * instance.
      *
      */
-    PBECipherCore(String cipherAlg) throws NoSuchAlgorithmException,
+    PBECipherCore(String cipherAlg) throws NoSuchAlgorithmException, 
         NoSuchPaddingException {
-        algo = cipherAlg;
-        if (algo.equals("DES")) {
-            cipher = new CipherCore(new DESCrypt(),
-                                    DESConstants.DES_BLOCK_SIZE);
-        } else if (algo.equals("DESede")) {
-
-            cipher = new CipherCore(new DESedeCrypt(),
-                                    DESConstants.DES_BLOCK_SIZE);
-        } else {
-            throw new NoSuchAlgorithmException("No Cipher implementation " +
-                                               "for PBEWithMD5And" + algo);
-        }
-        cipher.setMode("CBC");
-        cipher.setPadding("PKCS5Padding");
-        // get instance of MD5
-        md = MessageDigest.getInstance("MD5");
+	algo = cipherAlg;
+	if (algo.equals("DES")) {
+	    cipher = new CipherCore(new DESCrypt(), 
+				    DESConstants.DES_BLOCK_SIZE);
+	} else if (algo.equals("DESede")) {
+	    
+	    cipher = new CipherCore(new DESedeCrypt(), 
+				    DESConstants.DES_BLOCK_SIZE);
+	} else {
+	    throw new NoSuchAlgorithmException("No Cipher implementation " +
+					       "for PBEWithMD5And" + algo);
+	}
+	cipher.setMode("CBC");
+	cipher.setPadding("PKCS5Padding"); 
+	// get instance of MD5
+	md = MessageDigest.getInstance("MD5");
     }
 
     /**
@@ -83,9 +83,9 @@ final class PBECipherCore {
      *
      * @exception NoSuchAlgorithmException if the requested cipher mode is
      * invalid
-     */
+     */ 
     void setMode(String mode) throws NoSuchAlgorithmException {
-        cipher.setMode(mode);
+	cipher.setMode(mode);
     }
 
      /**
@@ -98,18 +98,18 @@ final class PBECipherCore {
      * is invalid
      */
     void setPadding(String paddingScheme) throws NoSuchPaddingException {
-        cipher.setPadding(paddingScheme);
+	cipher.setPadding(paddingScheme);
     }
-
+    
     /**
      * Returns the block size (in bytes).
      *
      * @return the block size (in bytes)
      */
     int getBlockSize() {
-        return DESConstants.DES_BLOCK_SIZE;
+	return DESConstants.DES_BLOCK_SIZE;
     }
-
+    
     /**
      * Returns the length in bytes that an output buffer would need to be in
      * order to hold the result of the next <code>update</code> or
@@ -129,23 +129,23 @@ final class PBECipherCore {
      *
      */
     int getOutputSize(int inputLen) {
-        return cipher.getOutputSize(inputLen);
+	return cipher.getOutputSize(inputLen);
     }
-
+    
     /**
      * Returns the initialization vector (IV) in a new buffer.
      *
      * <p> This is useful in the case where a random IV has been created
      * (see <a href = "#init">init</a>),
      * or in the context of password-based encryption or
-     * decryption, where the IV is derived from a user-supplied password.
+     * decryption, where the IV is derived from a user-supplied password. 
      *
      * @return the initialization vector in a new buffer, or null if the
      * underlying algorithm does not use an IV, or if the IV has not yet
      * been set.
      */
     byte[] getIV() {
-        return cipher.getIV();
+	return cipher.getIV();
     }
 
     /**
@@ -154,7 +154,7 @@ final class PBECipherCore {
      * <p>The returned parameters may be the same that were used to initialize
      * this cipher, or may contain the default set of parameters or a set of
      * randomly generated parameters used by the underlying cipher
-     * implementation (provided that the underlying cipher implementation
+     * implementation (provided that the underlying cipher implementation 
      * uses a default set of parameters or creates new parameters if it needs
      * parameters but was not initialized with any).
      *
@@ -162,29 +162,29 @@ final class PBECipherCore {
      * does not use any parameters.
      */
     AlgorithmParameters getParameters() {
-        AlgorithmParameters params = null;
-        if (salt == null) {
-            salt = new byte[8];
+	AlgorithmParameters params = null;
+	if (salt == null) {
+	    salt = new byte[8];
             SunJCE.RANDOM.nextBytes(salt);
-        }
-        PBEParameterSpec pbeSpec = new PBEParameterSpec(salt, iCount);
-        try {
-            params = AlgorithmParameters.getInstance("PBEWithMD5And" +
-                (algo.equalsIgnoreCase("DES")? "DES":"TripleDES"), "SunJCE");
-        } catch (NoSuchAlgorithmException nsae) {
-            // should never happen
-            throw new RuntimeException("SunJCE called, but not configured");
-        } catch (NoSuchProviderException nspe) {
-            // should never happen
-            throw new RuntimeException("SunJCE called, but not configured");
-        }
-        try {
-            params.init(pbeSpec);
-        } catch (InvalidParameterSpecException ipse) {
-            // should never happen
-            throw new RuntimeException("PBEParameterSpec not supported");
-        }
-        return params;
+	}
+	PBEParameterSpec pbeSpec = new PBEParameterSpec(salt, iCount);
+	try {
+	    params = AlgorithmParameters.getInstance("PBEWithMD5And" + 
+		(algo.equalsIgnoreCase("DES")? "DES":"TripleDES"), "SunJCE");
+	} catch (NoSuchAlgorithmException nsae) {
+	    // should never happen
+	    throw new RuntimeException("SunJCE called, but not configured");
+	} catch (NoSuchProviderException nspe) {
+	    // should never happen
+	    throw new RuntimeException("SunJCE called, but not configured");
+	}
+	try {
+	    params.init(pbeSpec);
+	} catch (InvalidParameterSpecException ipse) {
+	    // should never happen
+	    throw new RuntimeException("PBEParameterSpec not supported");
+	}
+	return params;
     }
 
     /**
@@ -211,130 +211,130 @@ final class PBECipherCore {
      * parameters are inappropriate for this cipher
      */
     void init(int opmode, Key key, AlgorithmParameterSpec params,
-              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        if (((opmode == Cipher.DECRYPT_MODE) ||
-             (opmode == Cipher.UNWRAP_MODE)) && (params == null)) {
-            throw new InvalidAlgorithmParameterException("Parameters "
-                                                         + "missing");
-        }
-        if ((key == null) ||
-            (key.getEncoded() == null) ||
-            !(key.getAlgorithm().regionMatches(true, 0, "PBE", 0, 3))) {
-            throw new InvalidKeyException("Missing password");
-        }
+	      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	if (((opmode == Cipher.DECRYPT_MODE) ||
+	     (opmode == Cipher.UNWRAP_MODE)) && (params == null)) {
+	    throw new InvalidAlgorithmParameterException("Parameters "
+							 + "missing");
+	}
+	if ((key == null) ||
+	    (key.getEncoded() == null) ||
+	    !(key.getAlgorithm().regionMatches(true, 0, "PBE", 0, 3))) {
+	    throw new InvalidKeyException("Missing password");
+	}
 
-        if (params == null) {
-            // create random salt and use default iteration count
-            salt = new byte[8];
-            random.nextBytes(salt);
-        } else {
+	if (params == null) {
+	    // create random salt and use default iteration count
+	    salt = new byte[8];
+	    random.nextBytes(salt);
+	} else {
             if (!(params instanceof PBEParameterSpec)) {
                 throw new InvalidAlgorithmParameterException
                     ("Wrong parameter type: PBE expected");
             }
-            salt = ((PBEParameterSpec) params).getSalt();
-            // salt must be 8 bytes long (by definition)
-            if (salt.length != 8) {
-                throw new InvalidAlgorithmParameterException
-                    ("Salt must be 8 bytes long");
-            }
-            iCount = ((PBEParameterSpec) params).getIterationCount();
-            if (iCount <= 0) {
-                throw new InvalidAlgorithmParameterException
-                    ("IterationCount must be a positive number");
-            }
-        }
+	    salt = ((PBEParameterSpec) params).getSalt();
+	    // salt must be 8 bytes long (by definition)
+	    if (salt.length != 8) {
+		throw new InvalidAlgorithmParameterException
+		    ("Salt must be 8 bytes long");
+	    }
+	    iCount = ((PBEParameterSpec) params).getIterationCount();
+	    if (iCount <= 0) {
+		throw new InvalidAlgorithmParameterException
+		    ("IterationCount must be a positive number");
+	    }
+	}
 
-        byte[] derivedKey = deriveCipherKey(key);
-        // use all but the last 8 bytes as the key value
-        SecretKeySpec cipherKey = new SecretKeySpec(derivedKey, 0,
-                                                    derivedKey.length-8, algo);
-        // use the last 8 bytes as the IV
-        IvParameterSpec ivSpec = new IvParameterSpec(derivedKey,
-                                                     derivedKey.length-8,
-                                                     8);
-        // initialize the underlying cipher
-        cipher.init(opmode, cipherKey, ivSpec, random);
+	byte[] derivedKey = deriveCipherKey(key);
+	// use all but the last 8 bytes as the key value
+	SecretKeySpec cipherKey = new SecretKeySpec(derivedKey, 0,
+						    derivedKey.length-8, algo);
+	// use the last 8 bytes as the IV
+	IvParameterSpec ivSpec = new IvParameterSpec(derivedKey, 
+						     derivedKey.length-8,
+						     8);	
+	// initialize the underlying cipher
+	cipher.init(opmode, cipherKey, ivSpec, random);
     }
 
     private byte[] deriveCipherKey(Key key) {
 
-        byte[] result = null;
-        byte[] passwdBytes = key.getEncoded();
+	byte[] result = null;
+	byte[] passwdBytes = key.getEncoded();
 
-        if (algo.equals("DES")) {
-            // P || S (password concatenated with salt)
-            byte[] concat = new byte[passwdBytes.length + salt.length];
-            System.arraycopy(passwdBytes, 0, concat, 0, passwdBytes.length);
-            java.util.Arrays.fill(passwdBytes, (byte)0x00);
-            System.arraycopy(salt, 0, concat, passwdBytes.length, salt.length);
+	if (algo.equals("DES")) {
+	    // P || S (password concatenated with salt)
+	    byte[] concat = new byte[passwdBytes.length + salt.length];
+	    System.arraycopy(passwdBytes, 0, concat, 0, passwdBytes.length);
+	    java.util.Arrays.fill(passwdBytes, (byte)0x00);
+	    System.arraycopy(salt, 0, concat, passwdBytes.length, salt.length);
 
-            // digest P || S with c iterations
-            byte[] toBeHashed = concat;
-            for (int i = 0; i < iCount; i++) {
-                md.update(toBeHashed);
-                toBeHashed = md.digest(); // this resets the digest
-            }
-            java.util.Arrays.fill(concat, (byte)0x00);
-            result = toBeHashed;
-        } else if (algo.equals("DESede")) {
-            // if the 2 salt halves are the same, invert one of them
-            int i;
-            for (i=0; i<4; i++) {
-                if (salt[i] != salt[i+4])
-                    break;
-            }
-            if (i==4) { // same, invert 1st half
-                for (i=0; i<2; i++) {
-                    byte tmp = salt[i];
-                    salt[i] = salt[3-i];
-                    salt[3-1] = tmp;
-                }
-            }
+	    // digest P || S with c iterations
+	    byte[] toBeHashed = concat;
+	    for (int i = 0; i < iCount; i++) {
+		md.update(toBeHashed);
+		toBeHashed = md.digest(); // this resets the digest
+	    }
+	    java.util.Arrays.fill(concat, (byte)0x00);
+	    result = toBeHashed;
+	} else if (algo.equals("DESede")) {
+	    // if the 2 salt halves are the same, invert one of them
+	    int i;
+	    for (i=0; i<4; i++) {
+		if (salt[i] != salt[i+4])
+		    break;
+	    }
+	    if (i==4) { // same, invert 1st half
+		for (i=0; i<2; i++) {
+		    byte tmp = salt[i];
+		    salt[i] = salt[3-i];
+		    salt[3-1] = tmp;
+		}
+	    }
 
-            // Now digest each half (concatenated with password). For each
-            // half, go through the loop as many times as specified by the
-            // iteration count parameter (inner for loop).
-            // Concatenate the output from each digest round with the
-            // password, and use the result as the input to the next digest
-            // operation.
-            byte[] kBytes = null;
-            IvParameterSpec iv = null;
-            byte[] toBeHashed = null;
-            result = new byte[DESedeKeySpec.DES_EDE_KEY_LEN +
-                              DESConstants.DES_BLOCK_SIZE];
-            for (i = 0; i < 2; i++) {
-                toBeHashed = new byte[salt.length/2];
-                System.arraycopy(salt, i*(salt.length/2), toBeHashed, 0,
-                                 toBeHashed.length);
-                for (int j=0; j < iCount; j++) {
-                    md.update(toBeHashed);
-                    md.update(passwdBytes);
-                    toBeHashed = md.digest(); // this resets the digest
-                }
-                System.arraycopy(toBeHashed, 0, result, i*16,
-                                 toBeHashed.length);
-            }
-        }
-        return result;
+	    // Now digest each half (concatenated with password). For each
+	    // half, go through the loop as many times as specified by the
+	    // iteration count parameter (inner for loop).
+	    // Concatenate the output from each digest round with the
+	    // password, and use the result as the input to the next digest
+	    // operation.
+	    byte[] kBytes = null;
+	    IvParameterSpec iv = null;
+	    byte[] toBeHashed = null;
+            result = new byte[DESedeKeySpec.DES_EDE_KEY_LEN + 
+			      DESConstants.DES_BLOCK_SIZE];
+	    for (i = 0; i < 2; i++) {
+		toBeHashed = new byte[salt.length/2];
+		System.arraycopy(salt, i*(salt.length/2), toBeHashed, 0,
+				 toBeHashed.length);
+		for (int j=0; j < iCount; j++) {
+		    md.update(toBeHashed);
+		    md.update(passwdBytes);
+		    toBeHashed = md.digest(); // this resets the digest
+		}
+		System.arraycopy(toBeHashed, 0, result, i*16,
+				 toBeHashed.length);
+	    }
+	}
+	return result;
     }
 
     void init(int opmode, Key key, AlgorithmParameters params,
-              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        PBEParameterSpec pbeSpec = null;
-        if (params != null) {
-            try {
-                pbeSpec = (PBEParameterSpec) params.getParameterSpec
-                    (PBEParameterSpec.class);
-            } catch (InvalidParameterSpecException ipse) {
-                throw new InvalidAlgorithmParameterException("Wrong parameter "
-                                                             + "type: PBE "
-                                                             + "expected");
-            }
-        }
-        init(opmode, key, pbeSpec, random);
+	      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	PBEParameterSpec pbeSpec = null;
+	if (params != null) {
+	    try {
+		pbeSpec = (PBEParameterSpec) params.getParameterSpec
+		    (PBEParameterSpec.class);
+	    } catch (InvalidParameterSpecException ipse) {
+		throw new InvalidAlgorithmParameterException("Wrong parameter "
+							     + "type: PBE "
+							     + "expected");
+	    }
+	}
+	init(opmode, key, pbeSpec, random);
     }
 
     /**
@@ -355,7 +355,7 @@ final class PBECipherCore {
      *
      */
     byte[] update(byte[] input, int inputOffset, int inputLen) {
-        return cipher.update(input, inputOffset, inputLen);
+	return cipher.update(input, inputOffset, inputLen);
     }
 
     /**
@@ -382,10 +382,10 @@ final class PBECipherCore {
      * to hold the result
      */
     int update(byte[] input, int inputOffset, int inputLen,
-               byte[] output, int outputOffset)
-        throws ShortBufferException {
-        return cipher.update(input, inputOffset, inputLen,
-                             output, outputOffset);
+	       byte[] output, int outputOffset)
+	throws ShortBufferException {
+	return cipher.update(input, inputOffset, inputLen,
+			     output, outputOffset);
     }
 
     /**
@@ -418,8 +418,8 @@ final class PBECipherCore {
      * but the last input data does not have proper padding bytes.
      */
     byte[] doFinal(byte[] input, int inputOffset, int inputLen)
-        throws IllegalBlockSizeException, BadPaddingException {
-        return cipher.doFinal(input, inputOffset, inputLen);
+	throws IllegalBlockSizeException, BadPaddingException {
+	return cipher.doFinal(input, inputOffset, inputLen);
     }
 
     /**
@@ -458,11 +458,11 @@ final class PBECipherCore {
      * but the last input data does not have proper padding bytes.
      */
     int doFinal(byte[] input, int inputOffset, int inputLen,
-                byte[] output, int outputOffset)
-        throws ShortBufferException, IllegalBlockSizeException,
-               BadPaddingException {
-        return cipher.doFinal(input, inputOffset, inputLen,
-                                    output, outputOffset);
+		byte[] output, int outputOffset)
+	throws ShortBufferException, IllegalBlockSizeException, 
+	       BadPaddingException {
+	return cipher.doFinal(input, inputOffset, inputLen,
+				    output, outputOffset);
     }
 
     /**
@@ -471,9 +471,9 @@ final class PBECipherCore {
      * @param key the key to be wrapped.
      *
      * @return the wrapped key.
-     *
-     * @exception IllegalBlockSizeException if this cipher is a block
-     * cipher, no padding has been requested, and the length of the
+     * 
+     * @exception IllegalBlockSizeException if this cipher is a block 
+     * cipher, no padding has been requested, and the length of the 
      * encoding of the key to be wrapped is not a
      * multiple of the block size.
      *
@@ -481,27 +481,27 @@ final class PBECipherCore {
      * wrap the key with this cipher (e.g., a hardware protected key is
      * being passed to a software only cipher).
      */
-    byte[] wrap(Key key)
-        throws IllegalBlockSizeException, InvalidKeyException {
-        byte[] result = null;
+    byte[] wrap(Key key) 
+	throws IllegalBlockSizeException, InvalidKeyException {
+	byte[] result = null;
 
-        try {
-            byte[] encodedKey = key.getEncoded();
-            if ((encodedKey == null) || (encodedKey.length == 0)) {
-                throw new InvalidKeyException("Cannot get an encoding of " +
-                                              "the key to be wrapped");
-            }
+	try {
+	    byte[] encodedKey = key.getEncoded();
+	    if ((encodedKey == null) || (encodedKey.length == 0)) {
+		throw new InvalidKeyException("Cannot get an encoding of " +
+					      "the key to be wrapped");
+	    }
 
-            result = doFinal(encodedKey, 0, encodedKey.length);
-        } catch (BadPaddingException e) {
-            // Should never happen
-        }
+	    result = doFinal(encodedKey, 0, encodedKey.length);
+	} catch (BadPaddingException e) {
+	    // Should never happen
+	}
 
-        return result;
+	return result;
     }
 
     /**
-     * Unwrap a previously wrapped key.
+     * Unwrap a previously wrapped key. 
      *
      * @param wrappedKey the key to be unwrapped.
      *
@@ -512,7 +512,7 @@ final class PBECipherCore {
      * <code>Cipher.PRIVATE_KEY</code>, or <code>Cipher.PUBLIC_KEY</code>.
      *
      * @return the unwrapped key.
-     *
+     * 
      * @exception NoSuchAlgorithmException if no installed providers
      * can create keys of type <code>wrappedKeyType</code> for the
      * <code>wrappedKeyAlgorithm</code>.
@@ -522,20 +522,20 @@ final class PBECipherCore {
      * the <code>wrappedKeyAlgorithm</code>.
      */
     Key unwrap(byte[] wrappedKey,
-               String wrappedKeyAlgorithm,
-               int wrappedKeyType)
-        throws InvalidKeyException, NoSuchAlgorithmException {
-        byte[] encodedKey;
-        try {
-            encodedKey = doFinal(wrappedKey, 0, wrappedKey.length);
-        } catch (BadPaddingException ePadding) {
-            throw new InvalidKeyException("The wrapped key is not padded " +
-                                          "correctly");
-        } catch (IllegalBlockSizeException eBlockSize) {
-            throw new InvalidKeyException("The wrapped key does not have " +
-                                          "the correct length");
-        }
-        return ConstructKeys.constructKey(encodedKey, wrappedKeyAlgorithm,
-                                          wrappedKeyType);
+	       String wrappedKeyAlgorithm,
+	       int wrappedKeyType)
+	throws InvalidKeyException, NoSuchAlgorithmException {
+	byte[] encodedKey;
+	try {
+	    encodedKey = doFinal(wrappedKey, 0, wrappedKey.length);
+	} catch (BadPaddingException ePadding) {
+	    throw new InvalidKeyException("The wrapped key is not padded " +
+					  "correctly");
+	} catch (IllegalBlockSizeException eBlockSize) {
+	    throw new InvalidKeyException("The wrapped key does not have " +
+					  "the correct length");
+	}
+        return ConstructKeys.constructKey(encodedKey, wrappedKeyAlgorithm, 
+					  wrappedKeyType);
     }
 }

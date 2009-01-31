@@ -38,6 +38,7 @@ import sun.jvmstat.monitor.remote.*;
  * provided through an RMI interface.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Jstatd {

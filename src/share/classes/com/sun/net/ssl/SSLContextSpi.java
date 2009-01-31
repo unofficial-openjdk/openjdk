@@ -23,9 +23,9 @@
  * have any questions.
  */
 
-/*
+/* 
  * NOTE:  this file was copied from javax.net.ssl.SSLContextSpi
- */
+ */ 
 
 package com.sun.net.ssl;
 
@@ -54,7 +54,7 @@ public abstract class SSLContextSpi {
      * @param random the source of randomness for this generator
      */
     protected abstract void engineInit(KeyManager[] ah, TrustManager[] th,
-        SecureRandom sr) throws KeyManagementException;
+	SecureRandom sr) throws KeyManagementException;
 
     /**
      * Returns a <code>SocketFactory</code> object for this

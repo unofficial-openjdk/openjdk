@@ -94,7 +94,7 @@ D3DContext::D3DContext(DDraw *ddObject, DXObject* dxObject)
 {
     GetExclusiveAccess();
     J2dRlsTraceLn(J2D_TRACE_INFO, "D3DContext::D3DContext");
-    J2dTraceLn2(J2D_TRACE_VERBOSE, "  ddObject=0x%d dxObject=0x%x",
+    J2dTraceLn2(J2D_TRACE_VERBOSE, "  ddObject=0x%d dxObject=0x%x", 
                 ddObject, dxObject);
     d3dDevice = NULL;
     d3dObject = NULL;
@@ -119,12 +119,12 @@ D3DContext::D3DContext(DDraw *ddObject, DXObject* dxObject)
                                *pDeviceGUID == IID_IDirect3DTnLHalDevice);
             CreateD3DDevice();
         } else {
-            J2dRlsTraceLn(J2D_TRACE_ERROR,
+            J2dRlsTraceLn(J2D_TRACE_ERROR, 
                           "D3CCoD3DContext::D3DContext: Can't find "\
                           "suitable D3D device");
         }
     } else {
-        J2dRlsTraceLn(J2D_TRACE_ERROR,
+        J2dRlsTraceLn(J2D_TRACE_ERROR, 
                       "D3DContext::D3DContext: Can't "\
                       "create IDirect3D7 interface");
     }
@@ -158,7 +158,7 @@ void D3DContext::SetJavaContext(JNIEnv *env, jobject newD3Dc) {
 
 void D3DContext::Release3DDevice() {
     GetExclusiveAccess();
-    J2dTraceLn1(J2D_TRACE_INFO,
+    J2dTraceLn1(J2D_TRACE_INFO, 
                 "D3DContext::Release3DDevice: d3dDevice = 0x%x",
                 d3dDevice);
 
@@ -175,7 +175,7 @@ void D3DContext::Release3DDevice() {
     ddTargetSurface = NULL;
 
     // disable the use of this context until we ensure the capabilities
-    // of the new device and run the tests
+    // of the new device and run the tests 
     deviceCaps = J2D_D3D_FAILURE;
 
     if (lpMaskTexture != NULL) {
@@ -202,7 +202,7 @@ void D3DContext::Release3DDevice() {
 }
 
 D3DContext::~D3DContext() {
-    J2dTraceLn2(J2D_TRACE_INFO,
+    J2dTraceLn2(J2D_TRACE_INFO, 
                 "~D3DContext: d3dDevice=0x%x, d3dObject =0x%x",
                 d3dDevice, d3dObject);
     GetExclusiveAccess();
@@ -223,7 +223,7 @@ HRESULT
 D3DContext::InitD3DDevice(IDirect3DDevice7 *d3dDevice)
 {
     HRESULT res = D3D_OK;
-    J2dRlsTraceLn1(J2D_TRACE_INFO,
+    J2dRlsTraceLn1(J2D_TRACE_INFO, 
                    "D3DContext::InitD3DDevice: d3dDevice=Ox%x", d3dDevice);
 
     d3dDevice->GetCaps(&d3dDevDesc);
@@ -258,26 +258,26 @@ D3DContext::InitD3DDevice(IDirect3DDevice7 *d3dDevice)
 
     D3DUtils_SetupTextureFormats(d3dDevice, textureTable);
 
-    // REMIND: debugging: allows testing the argb path in
+    // REMIND: debugging: allows testing the argb path in 
     // UploadImageToTexture on devices with alpha texture support
     if ((getenv("J2D_D3D_NOALPHATEXTURE") != NULL) ||
          FAILED(res = D3DUtils_FindMaskTileTextureFormat(d3dDevice,
                                                          &maskTileTexFormat)))
     {
-        // use ARGB if can't find alpha texture (or in case argb
+        // use ARGB if can't find alpha texture (or in case argb 
         // was specifically requested)
-        J2dTraceLn(J2D_TRACE_VERBOSE,
+        J2dTraceLn(J2D_TRACE_VERBOSE, 
                    "D3DContext::InitD3DDevice: "\
                    "Using IntARBG instead of Alpha texture");
-        if (textureTable[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pfType != PF_INVALID)
+        if (textureTable[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pfType != PF_INVALID) 
         {
-            memcpy(&maskTileTexFormat,
-                   &textureTable[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pddpf,
+            memcpy(&maskTileTexFormat, 
+                   &textureTable[TR_TRANSLUCENT_IDX][DEPTH32_IDX].pddpf, 
                    sizeof(maskTileTexFormat));
             res = D3D_OK;
         }
     } else {
-        J2dTraceLn(J2D_TRACE_VERBOSE,
+        J2dTraceLn(J2D_TRACE_VERBOSE, 
                    "D3DContext::InitD3DDevice: Found Alpha-texture format");
     }
     return res;
@@ -289,7 +289,7 @@ D3DContext::CreateAndTestD3DDevice(DxCapabilities *dxCaps)
     J2dRlsTraceLn(J2D_TRACE_INFO, "D3DContext::CreateAndTestD3DDevice");
     HRESULT res;
     if (pDeviceGUID == NULL) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR,
+        J2dRlsTraceLn(J2D_TRACE_ERROR, 
                       "D3DContext::CreateAndTestD3DDevice: "\
                       "No usable d3d device");
         deviceCaps = J2D_D3D_FAILURE;
@@ -300,29 +300,29 @@ D3DContext::CreateAndTestD3DDevice(DxCapabilities *dxCaps)
 
     // Create a temp surface so we can use it when creating a device
     DXSurface *target = NULL;
-    if (FAILED(res = CreateSurface(NULL, 10, 10, 32, TR_OPAQUE,
+    if (FAILED(res = CreateSurface(NULL, 10, 10, 32, TR_OPAQUE, 
                                    D3D_PLAIN_SURFACE|D3D_RENDER_TARGET,
                                    &target, NULL)))
     {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::CreateAndTestD3DDevice: "\
                                   "can't create scratch surface");
         return res;
     }
 
-    if (FAILED(res = d3dObject->CreateDevice(*pDeviceGUID,
-                                             target->GetDDSurface(),
-                                             &d3dDevice)))
+    if (FAILED(res = d3dObject->CreateDevice(*pDeviceGUID, 
+                                             target->GetDDSurface(), 
+                                             &d3dDevice))) 
     {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::CreateAndTestD3DDevice: "\
                                   "error creating d3d device");
     } else if (FAILED(res = InitD3DDevice(d3dDevice))) {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::CreateAndTestD3DDevice: "\
                                   "error initializing D3D device");
     } else {
-        J2dRlsTraceLn(J2D_TRACE_VERBOSE,
+        J2dRlsTraceLn(J2D_TRACE_VERBOSE, 
                       "D3DContext::CreateAndTestD3DDevice: "\
                       "D3D device creation/initialization successful");
         // the device is successfully created and initialized,
@@ -340,13 +340,13 @@ D3DContext::CreateAndTestD3DDevice(DxCapabilities *dxCaps)
 }
 
 void
-D3DContext::CreateD3DDevice()
+D3DContext::CreateD3DDevice() 
 {
     GetExclusiveAccess();
     J2dRlsTraceLn(J2D_TRACE_INFO, "D3DContext::CreateD3DDevice");
     // this is a weird way of getting a handle on the ddInstance
     HMONITOR hMonitor = dxObject->GetHMonitor();
-    DxCapabilities *dxCaps =
+    DxCapabilities *dxCaps = 
         AwtWin32GraphicsDevice::GetDxCapsForDevice(hMonitor);
 
     int d3dCapsValidity = dxCaps->GetD3dCapsValidity();
@@ -355,7 +355,7 @@ D3DContext::CreateD3DDevice()
     //   - the user may have disabled d3d acceleration in the display panel
     //     since the last run
     //   - the user may have installed the new drivers, which may cause BSODs
-    //   - if the test had failed previously because of quality issues, the
+    //   - if the test had failed previously because of quality issues, the 
     //     new driver may have fixed the problem, but we'd never know since we
     //     never try again
     //   - user (or developer, rather) may have specified a
@@ -370,7 +370,7 @@ D3DContext::CreateD3DDevice()
         dxCaps->SetD3dDeviceCaps(deviceCaps);
         dxCaps->SetD3dCapsValidity(J2D_ACCEL_SUCCESS);
     }
-    int requiredResults = forceD3DUsage ?
+    int requiredResults = forceD3DUsage ? 
         J2D_D3D_REQUIRED_RESULTS : J2D_D3D_DESIRED_RESULTS;
 
 #ifdef DEBUG
@@ -386,12 +386,12 @@ D3DContext::CreateD3DDevice()
         if (!(deviceCaps & J2D_D3D_HW_OK)) {
             // disable d3d for all devices, because we've encountered
             // known bad hardware. See comment in TestForBadHardware().
-            J2dRlsTraceLn(J2D_TRACE_ERROR,
+            J2dRlsTraceLn(J2D_TRACE_ERROR, 
                           "CreateD3DDevice: bad hardware found,"\
                           " disabling d3d for all devices.");
             SetD3DEnabledFlag(NULL, FALSE, FALSE);
         } else {
-            J2dRlsTraceLn(J2D_TRACE_ERROR,
+            J2dRlsTraceLn(J2D_TRACE_ERROR, 
                           "CreateD3DDevice: tests FAILED, d3d disabled.");
         }
         // REMIND: the first time the context initialization fails,
@@ -405,7 +405,7 @@ D3DContext::CreateD3DDevice()
         Release3DDevice();
     } else {
         deviceCaps |= J2D_D3D_ENABLED_OK;
-        J2dRlsTraceLn1(J2D_TRACE_INFO,
+        J2dRlsTraceLn1(J2D_TRACE_INFO, 
                        "CreateD3DDevice: tests PASSED, "\
                        "d3d enabled (forced: %s).",
                        forceD3DUsage ? "yes" : "no");
@@ -414,7 +414,7 @@ D3DContext::CreateD3DDevice()
     ReleaseExclusiveAccess();
 }
 
-HRESULT
+HRESULT 
 D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
 {
     static D3DVIEWPORT7 vp = { 0, 0, 0, 0, 0.0f, 1.0f };
@@ -423,18 +423,18 @@ D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
     HRESULT res = DDERR_GENERIC;
     GetExclusiveAccess();
 
-    J2dTraceLn2(J2D_TRACE_INFO,
+    J2dTraceLn2(J2D_TRACE_INFO, 
                 "D3DContext::SetRenderTarget: old=0x%x new=0x%x",
                 ddTargetSurface, ddSurface);
 
     ddTargetSurface = NULL;
 
     DXSurface *dxSurface = NULL;
-    if (d3dDevice == NULL || ddSurface == NULL ||
-        (dxSurface = ddSurface->GetDXSurface()) == NULL)
+    if (d3dDevice == NULL || ddSurface == NULL || 
+        (dxSurface = ddSurface->GetDXSurface()) == NULL) 
     {
         ReleaseExclusiveAccess();
-        J2dTraceLn3(J2D_TRACE_WARNING,
+        J2dTraceLn3(J2D_TRACE_WARNING, 
                     "D3DContext::SetRenderTarget invalid state:"\
                     "d3dDevice=0x%x ddSurface=0x%x dxSurface=0x%x",
                     d3dDevice, ddSurface, dxSurface);
@@ -447,7 +447,7 @@ D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
                                   "target surface (and/or depth buffer) lost");
         return res;
     }
-
+    
     ForceEndScene();
 
     if (FAILED(res = d3dDevice->SetRenderTarget(dxSurface->GetDDSurface(), 0)))
@@ -460,10 +460,10 @@ D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
 
     int width = dxSurface->GetWidth();
     int height = dxSurface->GetHeight();
-    // set the projection matrix if the the dimensions of the new
+    // set the projection matrix if the the dimensions of the new 
     // rendertarget are different from the old one.
     if (FAILED(d3dDevice->GetViewport(&vp)) ||
-        (int)vp.dwWidth != width  || (int)vp.dwHeight != height)
+        (int)vp.dwWidth != width  || (int)vp.dwHeight != height) 
     {
         bSetProjectionMatrix = TRUE;
     }
@@ -472,13 +472,13 @@ D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
     vp.dwWidth  = width;
     vp.dwHeight = height;
     vp.dvMinZ = 0.0f;
-    vp.dvMaxZ = 1.0f;
+    vp.dvMaxZ = 1.0f;    
 
     if (FAILED(res = d3dDevice->SetViewport(&vp))) {
         DebugPrintDirectDrawError(res, "D3DContext::SetRenderTarget: "\
                                   "error setting viewport");
         ReleaseExclusiveAccess();
-        return res;
+	return res;
     }
 
     if (bSetProjectionMatrix) {
@@ -488,7 +488,7 @@ D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
 
     if (SUCCEEDED(res)) {
         ddTargetSurface = ddSurface;
-        J2dTraceLn1(J2D_TRACE_VERBOSE,
+        J2dTraceLn1(J2D_TRACE_VERBOSE, 
                     "D3DContext::SetRenderTarget: succeeded, "\
                     "new target=0x%x", ddTargetSurface);
     } else {
@@ -499,11 +499,11 @@ D3DContext::SetRenderTarget(DDrawSurface *ddSurface)
     return res;
 }
 
-HRESULT
+HRESULT 
 D3DContext::SetTransform(jobject xform,
                          jdouble m00, jdouble m10,
                          jdouble m01, jdouble m11,
-                         jdouble m02, jdouble m12)
+                         jdouble m02, jdouble m12) 
 {
     GetExclusiveAccess();
 
@@ -523,15 +523,15 @@ D3DContext::SetTransform(jobject xform,
 
         // copy values from AffineTransform object into native matrix array
         memset(&tx, 0, sizeof(D3DMATRIX));
-        tx._11 = (float)m00;
+        tx._11 = (float)m00; 
         tx._12 = (float)m10;
-        tx._21 = (float)m01;
+        tx._21 = (float)m01; 
         tx._22 = (float)m11;
         // The -0.5 adjustment is needed to correctly align texels to
         // pixels with orgthogonal projection matrix.
         // Note that we readjust vertex coordinates for cases
         // when we don't do texture mapping or use D3DPT_LINESTRIP.
-        tx._41 = (float)m02-0.5f;
+        tx._41 = (float)m02-0.5f; 
         tx._42 = (float)m12-0.5f;
 
         tx._33 = 1.0f;
@@ -539,13 +539,13 @@ D3DContext::SetTransform(jobject xform,
     }
 
     J2dTraceLn(J2D_TRACE_VERBOSE, "  setting new tx matrix");
-    J2dTraceLn4(J2D_TRACE_VERBOSE,
+    J2dTraceLn4(J2D_TRACE_VERBOSE, 
                 "  %5f %5f %5f %5f", tx._11, tx._12, tx._13, tx._14);
     J2dTraceLn4(J2D_TRACE_VERBOSE,
                 "  %5f %5f %5f %5f", tx._21, tx._22, tx._23, tx._24);
     J2dTraceLn4(J2D_TRACE_VERBOSE,
                 "  %5f %5f %5f %5f", tx._31, tx._32, tx._33, tx._34);
-    J2dTraceLn4(J2D_TRACE_VERBOSE,
+    J2dTraceLn4(J2D_TRACE_VERBOSE, 
                 "  %5f %5f %5f %5f", tx._41, tx._42, tx._43, tx._44);
     if (FAILED(res = d3dDevice->SetTransform(D3DTRANSFORMSTATE_WORLD, &tx))) {
         DebugPrintDirectDrawError(res, "D3DContext::SetTransform failed");
@@ -557,7 +557,7 @@ D3DContext::SetTransform(jobject xform,
 
 /**
  * This method assumes that ::SetRenderTarget has already
- * been called. SetRenderTarget creates and attaches a
+ * been called. SetRenderTarget creates and attaches a 
  * depth buffer to the target surface prior to setting it
  * as target surface to the device.
  */
@@ -598,13 +598,13 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
     }
 
 
-    // Must do EndScene prior to setting a new clip, otherwise the
-    // primitives which are already in the pipeline will be rendered with
+    // Must do EndScene prior to setting a new clip, otherwise the 
+    // primitives which are already in the pipeline will be rendered with 
     // the new clip when we do EndScene.
     ForceEndScene();
-
+    
     if (clip == NULL) {
-        J2dTraceLn(J2D_TRACE_VERBOSE,
+        J2dTraceLn(J2D_TRACE_VERBOSE, 
                    "D3DContext::SetClip: disabling clip (== NULL)");
         res = d3dDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
         ReleaseExclusiveAccess();
@@ -615,7 +615,7 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
         int w = ddTargetSurface->GetDXSurface()->GetWidth();
         int h = ddTargetSurface->GetDXSurface()->GetHeight();
         if (x1 == 0 && y1 == 0 && x2 == w && y2 == h) {
-            J2dTraceLn(J2D_TRACE_VERBOSE,
+            J2dTraceLn(J2D_TRACE_VERBOSE, 
                        "D3DContext::SetClip: disabling clip (== viewport)");
             res = d3dDevice->SetRenderState(D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
             ReleaseExclusiveAccess();
@@ -628,7 +628,7 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
     d3dDevice->GetRenderState(D3DRENDERSTATE_ALPHABLENDENABLE, &dwAlphaSt);
     d3dDevice->GetRenderState(D3DRENDERSTATE_SRCBLEND, &dwSrcBlendSt);
     d3dDevice->GetRenderState(D3DRENDERSTATE_DESTBLEND, &dwDestBlendSt);
-
+                              
     d3dDevice->SetRenderState(D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
     d3dDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, D3DBLEND_ZERO);
     d3dDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
@@ -639,7 +639,7 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
         // it will be reset the next time a texturing operation is performed
         SetTexture(NULL);
     }
-
+    
     D3DMATRIX tx, idTx;
     d3dDevice->GetTransform(D3DTRANSFORMSTATE_WORLD, &tx);
     D3DUtils_SetIdentityMatrix(&idTx);
@@ -657,14 +657,14 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
     d3dDevice->SetRenderState(D3DRENDERSTATE_ZWRITEENABLE, TRUE);
     d3dDevice->SetRenderState(D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
     d3dDevice->Clear(0, NULL, D3DCLEAR_ZBUFFER, 0L, 0.0f, 0x0L);
-
+    
     float fx1, fy1, fx2, fy2;
     if (SUCCEEDED(d3dDevice->BeginScene())) {
         if (isRect) {
             fx1 = (float)x1; fy1 = (float)y1;
             fx2 = (float)x2; fy2 = (float)y2;
             D3DU_INIT_VERTEX_QUAD_XY(clipRect, fx1, fy1, fx2, fy2);
-            res = d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_XY_VERTEX,
+            res = d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, D3DFVF_XY_VERTEX, 
                                            clipRect, 4, NULL);
         } else {
             RegionData clipInfo;
@@ -705,7 +705,7 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
 
     // reset the transform
     d3dDevice->SetTransform(D3DTRANSFORMSTATE_WORLD, &tx);
-
+    
     // reset the alpha compositing
     d3dDevice->SetRenderState(D3DRENDERSTATE_ALPHABLENDENABLE, dwAlphaSt);
     d3dDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, dwSrcBlendSt);
@@ -722,7 +722,7 @@ D3DContext::SetClip(JNIEnv *env, jobject clip,
 }
 
 DXSurface *
-D3DContext::GetMaskTexture()
+D3DContext::GetMaskTexture() 
 {
     if (lpMaskTexture != NULL) {
         // This in theory should never happen since
@@ -738,11 +738,11 @@ D3DContext::GetMaskTexture()
 }
 
 
-HRESULT
-D3DContext::InitMaskTileTexture()
+HRESULT 
+D3DContext::InitMaskTileTexture() 
 {
     HRESULT res;
-
+    
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext::InitMaskTileTexture");
     if (lpMaskTexture != NULL) {
         lpMaskTexture->Release();
@@ -756,45 +756,45 @@ D3DContext::InitMaskTileTexture()
         caps |= DDSCAPS_SYSTEMMEMORY;
     }
 
-    if (FAILED(res =
+    if (FAILED(res = 
                dxObject->CreateSurface(DDSD_WIDTH|DDSD_HEIGHT|DDSD_CAPS|
                                        DDSD_PIXELFORMAT|DDSD_TEXTURESTAGE,
                                        caps,
                                        caps2,
                                        &maskTileTexFormat,
                                        D3DSD_MASK_TILE_SIZE, D3DSD_MASK_TILE_SIZE,
-                                       (DXSurface **)&lpMaskTexture, 0)))
+                                       (DXSurface **)&lpMaskTexture, 0))) 
     {
         // in case we want to do something here later..
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::InitMaskTileTexture: "\
                                   "failed to create mask tile texture");
     }
     return res;
 }
 
-HRESULT
+HRESULT 
 D3DContext::UploadImageToTexture(DXSurface *texture, jubyte *pixels,
                                  jint dstx, jint dsty,
                                  jint srcx, jint srcy,
                                  jint srcWidth, jint srcHeight,
-                                 jint srcStride)
+                                 jint srcStride) 
 {
     HRESULT res = D3D_OK;
     SurfaceDataRasInfo rasInfo;
-
+     
 
     RECT r = { dstx, dsty, dstx+srcWidth, dsty+srcHeight };
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext::UploadImageToTexture");
     J2dTraceLn4(J2D_TRACE_VERBOSE,
                 " rect={%-4d, %-4d, %-4d, %-4d}",
                 r.left, r.top, r.right, r.bottom);
-    // REMIND: it may be faster to lock for NULL instead of
+    // REMIND: it may be faster to lock for NULL instead of 
     // rect, need to test later.
-    if (FAILED(res = texture->Lock(&r, &rasInfo,
+    if (FAILED(res = texture->Lock(&r, &rasInfo, 
                                    DDLOCK_WAIT|DDLOCK_NOSYSLOCK, NULL)))
     {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::UploadImageToTexture: could "\
                                   "not lock texture");
         return res;
@@ -816,7 +816,7 @@ D3DContext::UploadImageToTexture(DXSurface *texture, jubyte *pixels,
         for (int yy = 0; yy < srcHeight; yy++) {
             for (int xx = 0; xx < srcWidth; xx++) {
                 jubyte pix = pSrcPixels[xx];
-                StoreIntArgbFrom4ByteArgb(pDstPixels, 0, xx,
+                StoreIntArgbFrom4ByteArgb(pDstPixels, 0, xx, 
                                           pix, pix, pix, pix);
             }
             pSrcPixels = (jubyte*)PtrAddBytes(pSrcPixels, srcStride);
@@ -826,8 +826,8 @@ D3DContext::UploadImageToTexture(DXSurface *texture, jubyte *pixels,
     return texture->Unlock(&r);
 }
 
-HRESULT
-D3DContext::InitGlyphCache()
+HRESULT 
+D3DContext::InitGlyphCache() 
 {
     HRESULT res = D3D_OK;
 
@@ -842,13 +842,13 @@ D3DContext::InitGlyphCache()
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext::InitGlyphCache");
 
     // init glyph cache data structure
-    glyphCache = AccelGlyphCache_Init(D3D_GCACHE_WIDTH,
-                                      D3D_GCACHE_HEIGHT,
-                                      D3D_GCACHE_CELL_WIDTH,
+    glyphCache = AccelGlyphCache_Init(D3D_GCACHE_WIDTH, 
+                                      D3D_GCACHE_HEIGHT, 
+                                      D3D_GCACHE_CELL_WIDTH, 
                                       D3D_GCACHE_CELL_HEIGHT,
                                       NULL);
     if (glyphCache == NULL) {
-        J2dRlsTraceLn(J2D_TRACE_ERROR,
+        J2dRlsTraceLn(J2D_TRACE_ERROR, 
                       "D3DContext::InitGlyphCache: "\
                       "could not init D3D glyph cache");
         glyphCacheAvailable = FALSE;
@@ -861,16 +861,16 @@ D3DContext::InitGlyphCache()
     } else {
         caps |= DDSCAPS_SYSTEMMEMORY;
     }
-    if (FAILED(res =
+    if (FAILED(res = 
                dxObject->CreateSurface(DDSD_WIDTH|DDSD_HEIGHT|DDSD_CAPS|
                                        DDSD_PIXELFORMAT|DDSD_TEXTURESTAGE,
                                        caps,
                                        caps2,
                                        &maskTileTexFormat,
                                        D3D_GCACHE_WIDTH, D3D_GCACHE_HEIGHT,
-                                       (DXSurface **)&lpGlyphCacheTexture, 0)))
+                                       (DXSurface **)&lpGlyphCacheTexture, 0))) 
     {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::InitGlyphCache: glyph cache "\
                                   "texture creation failed");
         glyphCacheAvailable = FALSE;
@@ -879,8 +879,8 @@ D3DContext::InitGlyphCache()
     return res;
 }
 
-HRESULT
-D3DContext::GlyphCacheAdd(JNIEnv *env, GlyphInfo *glyph)
+HRESULT 
+D3DContext::GlyphCacheAdd(JNIEnv *env, GlyphInfo *glyph) 
 {
     HRESULT res = D3D_OK;
     if (!glyphCacheAvailable || glyph->image == NULL) {
@@ -902,7 +902,7 @@ D3DContext::GlyphCacheAdd(JNIEnv *env, GlyphInfo *glyph)
 }
 
 void
-D3DContext::SetColor(jint eargb, jint flags)
+D3DContext::SetColor(jint eargb, jint flags) 
 {
     J2dTraceLn2(J2D_TRACE_INFO,
                 "D3DContext::SetColor: eargb=%08x flags=%d", eargb, flags);
@@ -925,7 +925,7 @@ D3DContext::SetColor(jint eargb, jint flags)
         jint b = (((eargb      ) & 0xff) * a2) >> 8;
         colorPixel = (a << 24) | (r << 16) | (g << 8) | (b << 0);
     }
-    J2dTraceLn1(J2D_TRACE_VERBOSE, "  updated color: colorPixel=%08x",
+    J2dTraceLn1(J2D_TRACE_VERBOSE, "  updated color: colorPixel=%08x", 
                 colorPixel);
 }
 
@@ -944,14 +944,14 @@ D3DContext::ResetComposite()
     ReleaseExclusiveAccess();
 }
 
-void
+void 
 D3DContext::SetAlphaComposite(jint rule, jfloat ea, jint flags)
 {
     J2dTraceLn3(J2D_TRACE_INFO,
-                "D3DContext::SetAlphaComposite: rule=%-1d ea=%f flags=%d",
+                "D3DContext::SetAlphaComposite: rule=%-1d ea=%f flags=%d", 
                 rule, ea, flags);
     GetExclusiveAccess();
-
+    
     if (d3dDevice == NULL) {
         ReleaseExclusiveAccess();
         return;
@@ -974,9 +974,9 @@ D3DContext::SetAlphaComposite(jint rule, jfloat ea, jint flags)
                     "  enabling alpha comp (rule=%-1d ea=%f)", rule, ea);
         d3dDevice->SetRenderState(D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
 
-        d3dDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND,
+        d3dDevice->SetRenderState(D3DRENDERSTATE_SRCBLEND, 
                                   StdBlendRules[rule].src);
-        d3dDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND,
+        d3dDevice->SetRenderState(D3DRENDERSTATE_DESTBLEND, 
                                   StdBlendRules[rule].dst);
      }
 
@@ -996,7 +996,7 @@ D3DContext::SetAlphaComposite(jint rule, jfloat ea, jint flags)
 }
 
 HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
-                                  jint depth, jint transparency,
+                                  jint depth, jint transparency, 
                                   jint d3dSurfaceType,
                                   DXSurface **dxSurface, jint* pType)
 {
@@ -1018,7 +1018,7 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
         cell = &textureTable[trIdx][depthIdx];
         if (cell->pfType == PF_INVALID) {
             ReleaseExclusiveAccess();
-            J2dTraceLn2(J2D_TRACE_ERROR,
+            J2dTraceLn2(J2D_TRACE_ERROR, 
                         "D3DContext::CreateSurface: no texture "\
                         "pixel format for depth: %d transparency=%d",
                         depth, transparency);
@@ -1028,7 +1028,7 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
         if (d3dSurfaceType & D3D_RENDER_TARGET) {
             // RTT is requested => must be allocated non-managed and
             // non-systemmemory pool.
-            // REMIND: must check if this is supported by
+            // REMIND: must check if this is supported by 
             // the device, as it may not have a local video memory, only AGP
             // may be we should just use VIDEOMEMORY
             // NOTE: this will likely fail if the device is not accelerated
@@ -1059,36 +1059,36 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
         }
 
         DWORD dwRatio = GetMaxTextureAspectRatio();
-        // Note: Reference rasterizer returns ratio '0',
+        // Note: Reference rasterizer returns ratio '0', 
         // which presumably means 'any'.
         if ((DWORD)width  > GetMaxTextureWidth()    ||
             (DWORD)height > GetMaxTextureHeight()   ||
             (DWORD)width  < GetMinTextureWidth()    ||
             (DWORD)height < GetMinTextureHeight()   ||
-            ((dwRatio > 0) && ((DWORD)(width/height) > dwRatio ||
+            ((dwRatio > 0) && ((DWORD)(width/height) > dwRatio || 
                                (DWORD)(height/width) > dwRatio)))
         {
             ReleaseExclusiveAccess();
-            J2dRlsTraceLn2(J2D_TRACE_ERROR,
+            J2dRlsTraceLn2(J2D_TRACE_ERROR, 
                            "D3DContext::CreateSurface: failed to create"\
-                           " texture: dimensions %dx%d not supported.",
+                           " texture: dimensions %dx%d not supported.", 
                            width, height);
-            J2dRlsTraceLn5(J2D_TRACE_ERROR,
+            J2dRlsTraceLn5(J2D_TRACE_ERROR, 
                            "  Supported texture dimensions: %dx%d-%dxd% "\
-                           " with max ratio %f.",
+                           " with max ratio %f.", 
                            GetMinTextureWidth(), GetMinTextureHeight(),
                            GetMaxTextureWidth(), GetMaxTextureHeight(),
                            GetMaxTextureAspectRatio());
             return D3DERR_TEXTURE_BADSIZE;
         }
     } else if (d3dSurfaceType & D3D_PLAIN_SURFACE) {
-        ddsCaps |= DDSCAPS_OFFSCREENPLAIN |
+        ddsCaps |= DDSCAPS_OFFSCREENPLAIN | 
             (bIsHWRasterizer ? DDSCAPS_VIDEOMEMORY : DDSCAPS_SYSTEMMEMORY);
     } else if (d3dSurfaceType & D3D_ATTACHED_SURFACE) {
         // can't handle this for now
-        J2dRlsTraceLn(J2D_TRACE_ERROR,
+        J2dRlsTraceLn(J2D_TRACE_ERROR, 
                       "D3DContext::CreateSurface: Can't create attached"\
-                      " surfaces using this code path yet");
+                      " surfaces using this code path yet"); 
         ReleaseExclusiveAccess();
         return DDERR_GENERIC;
     }
@@ -1097,10 +1097,10 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
     }
 
     if (SUCCEEDED(res = dxObject->CreateSurface(dwFlags, ddsCaps, ddsCaps2,
-                                                (cell != NULL) ?
+                                                (cell != NULL) ? 
                                                     &cell->pddpf : NULL,
                                                 width, height,
-                                                &lpRetSurface,
+                                                &lpRetSurface, 
                                                 0/*backbuffers*/)))
     {
         if (d3dSurfaceType & D3D_RENDER_TARGET) {
@@ -1120,7 +1120,7 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
                 IDirectDrawSurface7 *lpDDSurface = NULL;
                 HRESULT res1 = d3dDevice->GetRenderTarget(&lpDDSurface);
 
-                // we are holding a lock for the context, so we can
+                // we are holding a lock for the context, so we can 
                 // change/restore the current render target safely
                 res = d3dDevice->SetRenderTarget(lpRetSurface->GetDDSurface(), 0);
                 if (SUCCEEDED(res1) && lpDDSurface != NULL) {
@@ -1139,7 +1139,7 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
         }
         *dxSurface = lpRetSurface;
     } else {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::CreateSurface: error"\
                                   " creating surface");
     }
@@ -1149,7 +1149,7 @@ HRESULT D3DContext::CreateSurface(JNIEnv *env, jint width, jint height,
 }
 
 HRESULT
-D3DContext::AttachDepthBuffer(DXSurface *dxSurface)
+D3DContext::AttachDepthBuffer(DXSurface *dxSurface) 
 {
     HRESULT res;
 
@@ -1171,9 +1171,9 @@ D3DContext::AttachDepthBuffer(DXSurface *dxSurface)
         if (FAILED(res = D3DUtils_FindDepthBufferFormat(d3dObject,
                                                         prefDepth,
                                                         &depthBufferFormat,
-                                                        pDeviceGUID)))
+                                                        pDeviceGUID))) 
         {
-            DebugPrintDirectDrawError(res,
+            DebugPrintDirectDrawError(res, 
                                       "D3DContext::AttachDepthBuffer: "\
                                       "can't find depth buffer format");
             ReleaseExclusiveAccess();
@@ -1184,7 +1184,7 @@ D3DContext::AttachDepthBuffer(DXSurface *dxSurface)
                                                   bIsHWRasterizer,
                                                   &depthBufferFormat)))
     {
-        DebugPrintDirectDrawError(res,
+        DebugPrintDirectDrawError(res, 
                                   "D3DContext::AttachDepthBuffer: "\
                                   "can't attach depth buffer or it is lost");
     }
@@ -1200,20 +1200,20 @@ D3DContext::AttachDepthBuffer(DXSurface *dxSurface)
  * GetTexture() (note that we'd have to then call Release() on the
  * texture since GetTexture() increases texture's ref. count).
  */
-HRESULT /*NOLOCK*/
-D3DContext::SetTexture(DXSurface *dxSurface, DWORD dwStage)
+HRESULT /*NOLOCK*/ 
+D3DContext::SetTexture(DXSurface *dxSurface, DWORD dwStage) 
 {
     HRESULT res = D3D_OK;
-    IDirectDrawSurface7 *newTexture =
+    IDirectDrawSurface7 *newTexture = 
         dxSurface == NULL ? NULL : dxSurface->GetDDSurface();
 
     if (dwStage < 0 || dwStage > MAX_USED_TEXTURE_STAGE) {
-        J2dTraceLn1(J2D_TRACE_ERROR,
+        J2dTraceLn1(J2D_TRACE_ERROR, 
                     "D3DContext::SetTexture: incorrect stage: %d", dwStage);
         return DDERR_GENERIC;
     }
     if (lastTexture[dwStage] != newTexture) {
-        J2dTraceLn1(J2D_TRACE_VERBOSE,
+        J2dTraceLn1(J2D_TRACE_VERBOSE, 
                     "D3DContext::SetTexture: new texture=0x%x", newTexture);
         res = d3dDevice->SetTexture(dwStage, newTexture);
         lastTexture[dwStage] = SUCCEEDED(res) ? newTexture : NULL;
@@ -1225,12 +1225,12 @@ void
 D3DContext::FlushD3DQueueForTarget(DDrawSurface *ddSurface)
 {
     GetExclusiveAccess();
-    J2dTraceLn2(J2D_TRACE_VERBOSE,
+    J2dTraceLn2(J2D_TRACE_VERBOSE, 
                 "D3DContext::FlushD3DQueueForTarget surface=0x%x target=0x%x",
                 ddSurface, ddTargetSurface);
-
+    
     if ((ddSurface == ddTargetSurface || ddSurface == NULL) &&
-        d3dDevice != NULL)
+        d3dDevice != NULL) 
     {
         ForceEndScene();
     }
@@ -1241,15 +1241,15 @@ void
 D3DContext::InvalidateIfTarget(JNIEnv *env, DDrawSurface *ddSurface)
 {
     GetExclusiveAccess();
-    if ((ddSurface == ddTargetSurface) && d3dDevice != NULL &&
-        jD3DContext != NULL)
+    if ((ddSurface == ddTargetSurface) && d3dDevice != NULL && 
+        jD3DContext != NULL) 
     {
         J2dTraceLn(J2D_TRACE_VERBOSE,
                    "D3DContext:InvalidateIfTarget: invalidating java context");
 
         jobject jD3DContext_tmp = env->NewLocalRef(jD3DContext);
         if (jD3DContext_tmp != NULL) {
-            JNU_CallMethodByName(env, NULL, jD3DContext_tmp,
+            JNU_CallMethodByName(env, NULL, jD3DContext_tmp, 
                                  "invalidateContext", "()V");
             env->DeleteLocalRef(jD3DContext_tmp);
         }
@@ -1273,22 +1273,22 @@ D3DContext::UpdateState(jbyte newState)
             DWORD dwAA1, dwCA1;
             BOOL bUpdateStateNeeded = FALSE;
             if ((newState & STATE_TEXTURE_STAGE_MASK) &&
-                !(opState & STATE_TEXTURE_STAGE_MASK))
+                !(opState & STATE_TEXTURE_STAGE_MASK)) 
             {
                 // setup mask rendering
                 dwAA1 = (D3DTA_TEXTURE|D3DTA_ALPHAREPLICATE);
                 dwCA1 = (D3DTA_TEXTURE|D3DTA_ALPHAREPLICATE);
                 bUpdateStateNeeded = TRUE;
-                J2dTraceLn(J2D_TRACE_VERBOSE,
+                J2dTraceLn(J2D_TRACE_VERBOSE, 
                            "UpdateState: STATE_TEXTURE_STAGE_MASK");
             } else if ((newState & STATE_TEXTURE_STAGE_BLIT) &&
-                       !(opState & STATE_TEXTURE_STAGE_BLIT))
+                       !(opState & STATE_TEXTURE_STAGE_BLIT)) 
             {
                 // setup blit rendering
                 dwAA1 = D3DTA_TEXTURE;
                 dwCA1 = D3DTA_TEXTURE;
                 bUpdateStateNeeded = TRUE;
-                J2dTraceLn(J2D_TRACE_VERBOSE,
+                J2dTraceLn(J2D_TRACE_VERBOSE, 
                            "UpdateState: STATE_TEXTURE_STAGE_BLIT");
             }
 
@@ -1299,12 +1299,12 @@ D3DContext::UpdateState(jbyte newState)
                 d3dDevice->SetTextureStageState(0, D3DTSS_ALPHAARG1, dwAA1);
                 d3dDevice->SetTextureStageState(0, D3DTSS_COLORARG1, dwCA1);
             } else {
-                J2dTraceLn2(J2D_TRACE_WARNING,
+                J2dTraceLn2(J2D_TRACE_WARNING, 
                             "UpdateState: no context changes were made! "\
                             "current=0x%x new=0x%x", opState, newState);
             }
         } else {
-            J2dTraceLn(J2D_TRACE_VERBOSE,
+            J2dTraceLn(J2D_TRACE_VERBOSE, 
                        "UpdateState: STATE_RENDEROP");
             // if switching from a texture rendering state
             if (opState & STATE_TEXTURE) {
@@ -1321,13 +1321,13 @@ D3DContext::UpdateState(jbyte newState)
     }
 }
 
-HRESULT D3DContext::BeginScene(jbyte newState)
+HRESULT D3DContext::BeginScene(jbyte newState) 
 {
     if (!d3dDevice) {
-        return DDERR_GENERIC;
+	return DDERR_GENERIC;
     } else {
         UpdateState(newState);
-        if (!bBeginScenePending) {
+	if (!bBeginScenePending) {
             bBeginScenePending = TRUE;
 #ifdef DEBUG
             endSceneQueueDepth = 0;
@@ -1339,8 +1339,8 @@ HRESULT D3DContext::BeginScene(jbyte newState)
                 opState = STATE_UNDEFINED;
             }
             return res;
-        }
-        return D3D_OK;
+	}
+	return D3D_OK;
     }
 }
 
@@ -1356,14 +1356,14 @@ HRESULT D3DContext::EndScene(HRESULT ddResult) {
 
 HRESULT D3DContext::ForceEndScene() {
     if (bBeginScenePending) {
-        bBeginScenePending = FALSE;
+	bBeginScenePending = FALSE;
         J2dTraceLn(J2D_TRACE_INFO, "D3DContext::ForceEndScene");
 #ifdef DEBUG
-        J2dTraceLn1(J2D_TRACE_VERBOSE, "  queue depth=%d",
+        J2dTraceLn1(J2D_TRACE_VERBOSE, "  queue depth=%d", 
                     endSceneQueueDepth);
         endSceneQueueDepth = 0;
 #endif /* DEBUG */
-        return d3dDevice->EndScene();
+	return d3dDevice->EndScene();
     }
     return D3D_OK;
 }
@@ -1376,7 +1376,7 @@ static void
 D3DContext_CheckResult(JNIEnv *env, HRESULT res, jlong pDest) {
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_CheckResult");
     if (FAILED(res)) {
-        J2dTraceLn(J2D_TRACE_ERROR,
+        J2dTraceLn(J2D_TRACE_ERROR, 
                    "D3DContext_CheckResult: failed, restoring dest surface");
         Win32SDOps *dstOps = (Win32SDOps *)jlong_to_ptr(pDest);
         if (dstOps != NULL) {
@@ -1388,13 +1388,13 @@ D3DContext_CheckResult(JNIEnv *env, HRESULT res, jlong pDest) {
 
             // if this is an "unexpected" error, disable acceleration
             // of this image to avoid an infinite recreate/render/error loop
-            if (res != DDERR_SURFACELOST && res != DDERR_INVALIDMODE &&
-                res != DDERR_GENERIC && res != DDERR_WASSTILLDRAWING &&
-                res != DDERR_SURFACEBUSY)
-            {
+            if (res != DDERR_SURFACELOST && res != DDERR_INVALIDMODE && 
+                res != DDERR_GENERIC && res != DDERR_WASSTILLDRAWING && 
+                res != DDERR_SURFACEBUSY) 
+            { 
                 jobject sdObject = env->NewLocalRef(dstOps->sdOps.sdObject);
                 if (sdObject != NULL) {
-                    JNU_CallMethodByName(env, NULL, sdObject,
+                    JNU_CallMethodByName(env, NULL, sdObject, 
                                          "disableD3D", "()V");
                     env->DeleteLocalRef(sdObject);
                 }
@@ -1411,18 +1411,18 @@ D3DContext_CheckResult(JNIEnv *env, HRESULT res, jlong pDest) {
  * Signature: (JLLjava/awt/geom/AffineTransform;DDDDDD)V
  */
 JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DContext_setTransform
-    (JNIEnv *env, jobject d3dc, jlong pCtx, jlong pDest, jobject xform,
-     jdouble m00, jdouble m10,
-     jdouble m01, jdouble m11,
-     jdouble m02, jdouble m12)
+    (JNIEnv *env, jobject d3dc, jlong pCtx, jlong pDest, jobject xform, 
+     jdouble m00, jdouble m10, 
+     jdouble m01, jdouble m11, 
+     jdouble m02, jdouble m12) 
 {
     D3DContext *pd3dc = (D3DContext *)jlong_to_ptr(pCtx);
 
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_setTransform");
     if (pd3dc != NULL) {
-        HRESULT res = pd3dc->SetTransform(xform,
-                                          m00,  m10,
-                                          m01,  m11,
+        HRESULT res = pd3dc->SetTransform(xform, 
+                                          m00,  m10, 
+                                          m01,  m11, 
                                           m02,  m12);
         D3DContext_CheckResult(env, res, pDest);
     }
@@ -1451,7 +1451,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DContext_resetTransform
  * Signature: (JLLsun/java2d/pipe/Region;ZIIII)V
  */
 JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DContext_setClip
-    (JNIEnv *env, jobject d3dc, jlong pCtx, jlong pDest,
+    (JNIEnv *env, jobject d3dc, jlong pCtx, jlong pDest, 
      jobject clip, jboolean isRect,
      jint x1, jint y1, jint x2, jint y2)
 {
@@ -1491,7 +1491,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_d3d_D3DContext_setRenderTarget
 {
     D3DContext *pd3dc = (D3DContext *)jlong_to_ptr(pCtx);
     Win32SDOps *dstOps = (Win32SDOps *)jlong_to_ptr(pDest);
-
+    
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_setRenderTarget");
     if (pd3dc != NULL && dstOps != NULL) {
         HRESULT res = pd3dc->SetRenderTarget(dstOps->lpSurface);
@@ -1510,7 +1510,7 @@ Java_sun_java2d_d3d_D3DContext_setColor(JNIEnv *env, jobject oc,
                                         jint pixel, jint flags)
 {
     D3DContext *d3dc = (D3DContext *)jlong_to_ptr(pCtx);
-
+    
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_setColor");
     if (d3dc != NULL) {
         d3dc->SetColor(pixel, flags);
@@ -1530,7 +1530,7 @@ Java_sun_java2d_d3d_D3DContext_setAlphaComposite(JNIEnv *env, jobject oc,
                                                  jint flags)
 {
     D3DContext *d3dc = (D3DContext *)jlong_to_ptr(pCtx);
-
+    
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_setAlphaComposite");
     if (d3dc != NULL) {
         d3dc->SetAlphaComposite(rule, extraAlpha, flags);
@@ -1543,7 +1543,7 @@ Java_sun_java2d_d3d_D3DContext_resetComposite(JNIEnv *env, jobject oc,
                                               jlong pCtx)
 {
     D3DContext *d3dc = (D3DContext *)jlong_to_ptr(pCtx);
-
+    
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_resetComposite");
     if (d3dc != NULL) {
         d3dc->ResetComposite();
@@ -1555,11 +1555,11 @@ Java_sun_java2d_d3d_D3DContext_resetComposite(JNIEnv *env, jobject oc,
  * Method:    initNativeContext
  * Signature: (I)J
  */
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_sun_java2d_d3d_D3DContext_initNativeContext
   (JNIEnv *env, jobject d3dc, jint screen)
 {
-    J2dTraceLn1(J2D_TRACE_INFO, "D3DContext_initNativeContext screen=%d",
+    J2dTraceLn1(J2D_TRACE_INFO, "D3DContext_initNativeContext screen=%d", 
                 screen);
 
     HMONITOR hMon = (HMONITOR)AwtWin32GraphicsDevice::GetMonitor(screen);
@@ -1572,7 +1572,7 @@ Java_sun_java2d_d3d_D3DContext_initNativeContext
                                               NULL);
         d3dContext = tmpDdInstance->ddObject->GetD3dContext();
     }
-    J2dTraceLn1(J2D_TRACE_VERBOSE,
+    J2dTraceLn1(J2D_TRACE_VERBOSE, 
                 "D3DContext_initNativeContext created d3dContext=0x%x",
                 d3dContext);
 
@@ -1588,7 +1588,7 @@ JNIEXPORT jint JNICALL Java_sun_java2d_d3d_D3DContext_getNativeDeviceCaps
   (JNIEnv *env, jobject d3dc, jlong pCtx)
 {
     D3DContext *d3dContext = (D3DContext *)jlong_to_ptr(pCtx);
-
+    
     J2dTraceLn(J2D_TRACE_INFO, "D3DContext_getNativeDeviceCaps");
     if (d3dContext != NULL) {
         d3dContext->SetJavaContext(env, d3dc);

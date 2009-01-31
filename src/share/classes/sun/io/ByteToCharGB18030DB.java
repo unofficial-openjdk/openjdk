@@ -35,6 +35,7 @@ import sun.nio.cs.ext.GB18030;
  * convenience of the main GB18030 converter.
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.4
  */
 
 abstract class ByteToCharGB18030DB extends ByteToCharDoubleByte {
@@ -44,7 +45,7 @@ abstract class ByteToCharGB18030DB extends ByteToCharDoubleByte {
     }
 
     public ByteToCharGB18030DB() {
-        GB18030 nioCoder = new GB18030();
+	GB18030 nioCoder = new GB18030();
         super.index1 = nioCoder.getSubDecoderIndex1();
         super.index2 = nioCoder.getSubDecoderIndex2();
         start = 0x40;

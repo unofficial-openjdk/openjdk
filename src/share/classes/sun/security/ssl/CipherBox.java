@@ -53,6 +53,7 @@ import sun.misc.HexDumpEncoder;
  * NOTE that any ciphering involved in key exchange (e.g. with RSA) is
  * handled separately.
  *
+ * @version %I% %G%
  * @author David Brownell
  * @author Andreas Sterbenz
  */
@@ -79,8 +80,8 @@ final class CipherBox {
      * NULL cipherbox. Identity operation, no encryption.
      */
     private CipherBox() {
-        this.protocolVersion = ProtocolVersion.DEFAULT;
-        this.cipher = null;
+	this.protocolVersion = ProtocolVersion.DEFAULT;
+	this.cipher = null;
     }
 
     /**
@@ -89,46 +90,46 @@ final class CipherBox {
      * @exception NoSuchAlgorithmException if no appropriate JCE Cipher
      * implementation could be found.
      */
-    private CipherBox(ProtocolVersion protocolVersion, BulkCipher bulkCipher,
-            SecretKey key,  IvParameterSpec iv, boolean encrypt)
-            throws NoSuchAlgorithmException {
-        try {
-            this.protocolVersion = protocolVersion;
-            this.cipher = JsseJce.getCipher(bulkCipher.transformation);
-            int mode = encrypt ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
-            cipher.init(mode, key, iv);
-            // do not call getBlockSize until after init()
-            // otherwise we would disrupt JCE delayed provider selection
-            blockSize = cipher.getBlockSize();
-            // some providers implement getBlockSize() incorrectly
-            if (blockSize == 1) {
-                blockSize = 0;
-            }
-        } catch (NoSuchAlgorithmException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new NoSuchAlgorithmException
-                    ("Could not create cipher " + bulkCipher, e);
-        } catch (ExceptionInInitializerError e) {
-            throw new NoSuchAlgorithmException
-                    ("Could not create cipher " + bulkCipher, e);
-        }
+    private CipherBox(ProtocolVersion protocolVersion, BulkCipher bulkCipher, 
+	    SecretKey key,  IvParameterSpec iv, boolean encrypt)
+	    throws NoSuchAlgorithmException {
+	try {
+	    this.protocolVersion = protocolVersion;
+	    this.cipher = JsseJce.getCipher(bulkCipher.transformation);
+	    int mode = encrypt ? Cipher.ENCRYPT_MODE : Cipher.DECRYPT_MODE;
+	    cipher.init(mode, key, iv);
+	    // do not call getBlockSize until after init()
+	    // otherwise we would disrupt JCE delayed provider selection
+	    blockSize = cipher.getBlockSize();
+	    // some providers implement getBlockSize() incorrectly
+	    if (blockSize == 1) {
+		blockSize = 0;
+	    }
+	} catch (NoSuchAlgorithmException e) {
+	    throw e;
+	} catch (Exception e) {
+	    throw new NoSuchAlgorithmException
+		    ("Could not create cipher " + bulkCipher, e);
+	} catch (ExceptionInInitializerError e) {
+	    throw new NoSuchAlgorithmException
+		    ("Could not create cipher " + bulkCipher, e);
+	}
     }
 
     /*
      * Factory method to obtain a new CipherBox object.
      */
-    static CipherBox newCipherBox(ProtocolVersion version, BulkCipher cipher,
-            SecretKey key, IvParameterSpec iv, boolean encrypt)
-            throws NoSuchAlgorithmException {
-        if (cipher.allowed == false) {
-            throw new NoSuchAlgorithmException("Unsupported cipher " + cipher);
-        }
-        if (cipher == B_NULL) {
-            return NULL;
-        } else {
-            return new CipherBox(version, cipher, key, iv, encrypt);
-        }
+    static CipherBox newCipherBox(ProtocolVersion version, BulkCipher cipher, 
+	    SecretKey key, IvParameterSpec iv, boolean encrypt)
+	    throws NoSuchAlgorithmException {
+	if (cipher.allowed == false) {
+	    throw new NoSuchAlgorithmException("Unsupported cipher " + cipher);
+	}
+	if (cipher == B_NULL) {
+	    return NULL;
+	} else {
+	    return new CipherBox(version, cipher, key, iv, encrypt);
+	}
     }
 
     /*
@@ -136,35 +137,35 @@ final class CipherBox {
      * resulting block.
      */
     int encrypt(byte[] buf, int offset, int len) {
-        if (cipher == null) {
-            return len;
-        }
-        try {
-            if (blockSize != 0) {
-                len = addPadding(buf, offset, len, blockSize);
-            }
-            if (debug != null && Debug.isOn("plaintext")) {
-                try {
-                    HexDumpEncoder hd = new HexDumpEncoder();
+	if (cipher == null) {
+	    return len;
+	}
+	try {
+	    if (blockSize != 0) {
+		len = addPadding(buf, offset, len, blockSize);
+	    }
+	    if (debug != null && Debug.isOn("plaintext")) {
+		try {
+		    HexDumpEncoder hd = new HexDumpEncoder();
 
-                    System.out.println(
-                        "Padded plaintext before ENCRYPTION:  len = "
-                        + len);
-                    hd.encodeBuffer(
-                        new ByteArrayInputStream(buf, offset, len),
-                        System.out);
-                } catch (IOException e) { }
-            }
-            int newLen = cipher.update(buf, offset, len, buf, offset);
-            if (newLen != len) {
-                // catch BouncyCastle buffering error
-                throw new RuntimeException("Cipher buffering error " +
-                    "in JCE provider " + cipher.getProvider().getName());
-            }
-            return newLen;
-        } catch (ShortBufferException e) {
-            throw new ArrayIndexOutOfBoundsException(e.toString());
-        }
+		    System.out.println(
+			"Padded plaintext before ENCRYPTION:  len = "
+			+ len);
+		    hd.encodeBuffer(
+			new ByteArrayInputStream(buf, offset, len),
+			System.out);
+		} catch (IOException e) { }
+	    }
+	    int newLen = cipher.update(buf, offset, len, buf, offset);
+	    if (newLen != len) {
+		// catch BouncyCastle buffering error
+		throw new RuntimeException("Cipher buffering error " +
+		    "in JCE provider " + cipher.getProvider().getName());
+	    }
+	    return newLen;
+	} catch (ShortBufferException e) {
+	    throw new ArrayIndexOutOfBoundsException(e.toString());
+	}
     }
 
     /*
@@ -178,58 +179,58 @@ final class CipherBox {
      */
     int encrypt(ByteBuffer bb) {
 
-        int len = bb.remaining();
+	int len = bb.remaining();
 
-        if (cipher == null) {
-            bb.position(bb.limit());
-            return len;
-        }
+	if (cipher == null) {
+	    bb.position(bb.limit());
+	    return len;
+	}
 
-        try {
-            int pos = bb.position();
+	try {
+	    int pos = bb.position();
 
-            if (blockSize != 0) {
-                // addPadding adjusts pos/limit
-                len = addPadding(bb, blockSize);
-                bb.position(pos);
-            }
-            if (debug != null && Debug.isOn("plaintext")) {
-                try {
-                    HexDumpEncoder hd = new HexDumpEncoder();
+	    if (blockSize != 0) {
+		// addPadding adjusts pos/limit
+		len = addPadding(bb, blockSize);
+		bb.position(pos);
+	    }
+	    if (debug != null && Debug.isOn("plaintext")) {
+		try {
+		    HexDumpEncoder hd = new HexDumpEncoder();
 
-                    System.out.println(
-                        "Padded plaintext before ENCRYPTION:  len = "
-                        + len);
-                    hd.encodeBuffer(bb, System.out);
+		    System.out.println(
+			"Padded plaintext before ENCRYPTION:  len = "
+			+ len);
+		    hd.encodeBuffer(bb, System.out);
 
-                } catch (IOException e) { }
-                /*
-                 * reset back to beginning
-                 */
-                bb.position(pos);
-            }
+		} catch (IOException e) { }
+		/*
+		 * reset back to beginning
+		 */
+		bb.position(pos);
+	    }
 
-            /*
-             * Encrypt "in-place".  This does not add its own padding.
-             */
-            ByteBuffer dup = bb.duplicate();
-            int newLen = cipher.update(dup, bb);
+	    /*
+	     * Encrypt "in-place".  This does not add its own padding.
+	     */
+	    ByteBuffer dup = bb.duplicate();
+	    int newLen = cipher.update(dup, bb);
 
-            if (bb.position() != dup.position()) {
-                throw new RuntimeException("bytebuffer padding error");
-            }
+	    if (bb.position() != dup.position()) {
+		throw new RuntimeException("bytebuffer padding error");
+	    }
 
-            if (newLen != len) {
-                // catch BouncyCastle buffering error
-                throw new RuntimeException("Cipher buffering error " +
-                    "in JCE provider " + cipher.getProvider().getName());
-            }
-            return newLen;
-        } catch (ShortBufferException e) {
-            RuntimeException exc = new RuntimeException(e.toString());
-            exc.initCause(e);
-            throw exc;
-        }
+	    if (newLen != len) {
+		// catch BouncyCastle buffering error
+		throw new RuntimeException("Cipher buffering error " +
+		    "in JCE provider " + cipher.getProvider().getName());
+	    }
+	    return newLen;
+	} catch (ShortBufferException e) {
+	    RuntimeException exc = new RuntimeException(e.toString());
+	    exc.initCause(e);
+	    throw exc;
+	}
     }
 
 
@@ -238,36 +239,36 @@ final class CipherBox {
      * resulting block if padding was required.
      */
     int decrypt(byte[] buf, int offset, int len) throws BadPaddingException {
-        if (cipher == null) {
-            return len;
-        }
-        try {
-            int newLen = cipher.update(buf, offset, len, buf, offset);
-            if (newLen != len) {
-                // catch BouncyCastle buffering error
-                throw new RuntimeException("Cipher buffering error " +
-                    "in JCE provider " + cipher.getProvider().getName());
-            }
-            if (debug != null && Debug.isOn("plaintext")) {
-                try {
-                    HexDumpEncoder hd = new HexDumpEncoder();
+	if (cipher == null) {
+	    return len;
+	}
+	try {
+	    int newLen = cipher.update(buf, offset, len, buf, offset);
+	    if (newLen != len) {
+		// catch BouncyCastle buffering error
+		throw new RuntimeException("Cipher buffering error " +
+		    "in JCE provider " + cipher.getProvider().getName());
+	    }
+	    if (debug != null && Debug.isOn("plaintext")) {
+		try {
+		    HexDumpEncoder hd = new HexDumpEncoder();
 
-                    System.out.println(
-                        "Padded plaintext after DECRYPTION:  len = "
-                        + newLen);
-                    hd.encodeBuffer(
-                        new ByteArrayInputStream(buf, offset, newLen),
-                        System.out);
-                } catch (IOException e) { }
-            }
-            if (blockSize != 0) {
-                newLen = removePadding(buf, offset, newLen,
-                             blockSize, protocolVersion);
-            }
-            return newLen;
-        } catch (ShortBufferException e) {
-            throw new ArrayIndexOutOfBoundsException(e.toString());
-        }
+		    System.out.println(
+			"Padded plaintext after DECRYPTION:  len = "
+			+ newLen);
+		    hd.encodeBuffer(
+			new ByteArrayInputStream(buf, offset, newLen),
+			System.out);
+		} catch (IOException e) { }
+	    }
+	    if (blockSize != 0) {
+		newLen = removePadding(buf, offset, newLen,
+			     blockSize, protocolVersion);
+	    }
+	    return newLen;
+	} catch (ShortBufferException e) {
+	    throw new ArrayIndexOutOfBoundsException(e.toString());
+	}
     }
 
 
@@ -280,78 +281,78 @@ final class CipherBox {
      */
     int decrypt(ByteBuffer bb) throws BadPaddingException {
 
-        int len = bb.remaining();
+	int len = bb.remaining();
 
-        if (cipher == null) {
-            bb.position(bb.limit());
-            return len;
-        }
+	if (cipher == null) {
+	    bb.position(bb.limit());
+	    return len;
+	}
 
-        try {
-            /*
-             * Decrypt "in-place".
-             */
-            int pos = bb.position();
+	try {
+	    /*
+	     * Decrypt "in-place".
+	     */
+	    int pos = bb.position();
 
-            ByteBuffer dup = bb.duplicate();
-            int newLen = cipher.update(dup, bb);
-            if (newLen != len) {
-                // catch BouncyCastle buffering error
-                throw new RuntimeException("Cipher buffering error " +
-                    "in JCE provider " + cipher.getProvider().getName());
-            }
+	    ByteBuffer dup = bb.duplicate();
+	    int newLen = cipher.update(dup, bb);
+	    if (newLen != len) {
+		// catch BouncyCastle buffering error
+		throw new RuntimeException("Cipher buffering error " +
+		    "in JCE provider " + cipher.getProvider().getName());
+	    }
 
-            if (debug != null && Debug.isOn("plaintext")) {
-                bb.position(pos);
-                try {
-                    HexDumpEncoder hd = new HexDumpEncoder();
+	    if (debug != null && Debug.isOn("plaintext")) {
+		bb.position(pos);
+		try {
+		    HexDumpEncoder hd = new HexDumpEncoder();
 
-                    System.out.println(
-                        "Padded plaintext after DECRYPTION:  len = "
-                        + newLen);
+		    System.out.println(
+			"Padded plaintext after DECRYPTION:  len = "
+			+ newLen);
 
-                    hd.encodeBuffer(bb, System.out);
-                } catch (IOException e) { }
-            }
+		    hd.encodeBuffer(bb, System.out);
+		} catch (IOException e) { }
+	    }
 
-            /*
-             * Remove the block padding.
-             */
-            if (blockSize != 0) {
-                bb.position(pos);
-                newLen = removePadding(bb, blockSize, protocolVersion);
-            }
-            return newLen;
-        } catch (ShortBufferException e) {
-            RuntimeException exc = new RuntimeException(e.toString());
-            exc.initCause(e);
-            throw exc;
-        }
+	    /*
+	     * Remove the block padding.
+	     */
+	    if (blockSize != 0) {
+		bb.position(pos);
+		newLen = removePadding(bb, blockSize, protocolVersion);
+	    }
+	    return newLen;
+	} catch (ShortBufferException e) {
+	    RuntimeException exc = new RuntimeException(e.toString());
+	    exc.initCause(e);
+	    throw exc;
+	}
     }
 
     private static int addPadding(byte[] buf, int offset, int len,
-            int blockSize) {
-        int     newlen = len + 1;
-        byte    pad;
-        int     i;
+	    int blockSize) {
+	int	newlen = len + 1;
+	byte	pad;
+	int	i;
 
-        if ((newlen % blockSize) != 0) {
-            newlen += blockSize - 1;
-            newlen -= newlen % blockSize;
-        }
-        pad = (byte) (newlen - len);
+	if ((newlen % blockSize) != 0) {
+	    newlen += blockSize - 1;
+	    newlen -= newlen % blockSize;
+	}
+	pad = (byte) (newlen - len);
 
-        if (buf.length < (newlen + offset)) {
-            throw new IllegalArgumentException("no space to pad buffer");
-        }
+	if (buf.length < (newlen + offset)) {
+	    throw new IllegalArgumentException("no space to pad buffer");
+	}
 
-        /*
-         * TLS version of the padding works for both SSLv3 and TLSv1
-         */
-        for (i = 0, offset += len; i < pad; i++) {
-            buf [offset++] = (byte) (pad - 1);
-        }
-        return newlen;
+	/*
+	 * TLS version of the padding works for both SSLv3 and TLSv1
+	 */
+	for (i = 0, offset += len; i < pad; i++) {
+	    buf [offset++] = (byte) (pad - 1);
+	}
+	return newlen;
     }
 
     /*
@@ -362,35 +363,35 @@ final class CipherBox {
      */
     private static int addPadding(ByteBuffer bb, int blockSize) {
 
-        int     len = bb.remaining();
-        int     offset = bb.position();
+	int	len = bb.remaining();
+	int	offset = bb.position();
 
-        int     newlen = len + 1;
-        byte    pad;
-        int     i;
+	int	newlen = len + 1;
+	byte	pad;
+	int	i;
 
-        if ((newlen % blockSize) != 0) {
-            newlen += blockSize - 1;
-            newlen -= newlen % blockSize;
-        }
-        pad = (byte) (newlen - len);
+	if ((newlen % blockSize) != 0) {
+	    newlen += blockSize - 1;
+	    newlen -= newlen % blockSize;
+	}
+	pad = (byte) (newlen - len);
 
-        /*
-         * Update the limit to what will be padded.
-         */
-        bb.limit(newlen + offset);
+	/*
+	 * Update the limit to what will be padded.
+	 */
+	bb.limit(newlen + offset);
 
-        /*
-         * TLS version of the padding works for both SSLv3 and TLSv1
-         */
-        for (i = 0, offset += len; i < pad; i++) {
-            bb.put(offset++, (byte) (pad - 1));
-        }
+	/*
+	 * TLS version of the padding works for both SSLv3 and TLSv1
+	 */
+	for (i = 0, offset += len; i < pad; i++) {
+	    bb.put(offset++, (byte) (pad - 1));
+	}
 
-        bb.position(offset);
-        bb.limit(offset);
+	bb.position(offset);
+	bb.limit(offset);
 
-        return newlen;
+	return newlen;
     }
 
 
@@ -405,85 +406,85 @@ final class CipherBox {
      * as it makes the data a multiple of the block size
      */
     private static int removePadding(byte[] buf, int offset, int len,
-            int blockSize, ProtocolVersion protocolVersion)
-            throws BadPaddingException {
-        // last byte is length byte (i.e. actual padding length - 1)
-        int padOffset = offset + len - 1;
-        int pad = buf[padOffset] & 0x0ff;
+	    int blockSize, ProtocolVersion protocolVersion)
+	    throws BadPaddingException {
+	// last byte is length byte (i.e. actual padding length - 1)
+	int padOffset = offset + len - 1;
+	int pad = buf[padOffset] & 0x0ff;
 
-        int newlen = len - (pad + 1);
-        if (newlen < 0) {
-            throw new BadPaddingException("Padding length invalid: " + pad);
-        }
+	int newlen = len - (pad + 1);
+	if (newlen < 0) {
+	    throw new BadPaddingException("Padding length invalid: " + pad);
+	}
 
-        if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
-            for (int i = 1; i <= pad; i++) {
-                int val = buf[padOffset - i] & 0xff;
-                if (val != pad) {
-                    throw new BadPaddingException
-                                        ("Invalid TLS padding: " + val);
-                }
-            }
-        } else { // SSLv3
-            // SSLv3 requires 0 <= length byte < block size
-            // some implementations do 1 <= length byte <= block size,
-            // so accept that as well
-            // v3 does not require any particular value for the other bytes
-            if (pad > blockSize) {
-                throw new BadPaddingException("Invalid SSLv3 padding: " + pad);
-            }
-        }
-        return newlen;
+	if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
+	    for (int i = 1; i <= pad; i++) {
+		int val = buf[padOffset - i] & 0xff;
+		if (val != pad) {
+		    throw new BadPaddingException
+					("Invalid TLS padding: " + val);
+		}
+	    }
+	} else { // SSLv3
+	    // SSLv3 requires 0 <= length byte < block size
+	    // some implementations do 1 <= length byte <= block size,
+	    // so accept that as well
+	    // v3 does not require any particular value for the other bytes
+	    if (pad > blockSize) {
+		throw new BadPaddingException("Invalid SSLv3 padding: " + pad);
+	    }
+	}
+	return newlen;
     }
 
     /*
      * Position/limit is equal the removed padding.
      */
     private static int removePadding(ByteBuffer bb,
-            int blockSize, ProtocolVersion protocolVersion)
-            throws BadPaddingException {
+	    int blockSize, ProtocolVersion protocolVersion)
+	    throws BadPaddingException {
 
-        int len = bb.remaining();
-        int offset = bb.position();
+	int len = bb.remaining();
+	int offset = bb.position();
 
-        // last byte is length byte (i.e. actual padding length - 1)
-        int padOffset = offset + len - 1;
-        int pad = bb.get(padOffset) & 0x0ff;
+	// last byte is length byte (i.e. actual padding length - 1)
+	int padOffset = offset + len - 1;
+	int pad = bb.get(padOffset) & 0x0ff;
 
-        int newlen = len - (pad + 1);
-        if (newlen < 0) {
-            throw new BadPaddingException("Padding length invalid: " + pad);
-        }
+	int newlen = len - (pad + 1);
+	if (newlen < 0) {
+	    throw new BadPaddingException("Padding length invalid: " + pad);
+	}
 
-        /*
-         * We could zero the padding area, but not much useful
-         * information there.
-         */
-        if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
-            bb.put(padOffset, (byte)0);         // zero the padding.
-            for (int i = 1; i <= pad; i++) {
-                int val = bb.get(padOffset - i) & 0xff;
-                if (val != pad) {
-                    throw new BadPaddingException
-                                        ("Invalid TLS padding: " + val);
-                }
-            }
-        } else { // SSLv3
-            // SSLv3 requires 0 <= length byte < block size
-            // some implementations do 1 <= length byte <= block size,
-            // so accept that as well
-            // v3 does not require any particular value for the other bytes
-            if (pad > blockSize) {
-                throw new BadPaddingException("Invalid SSLv3 padding: " + pad);
-            }
-        }
+	/*
+	 * We could zero the padding area, but not much useful
+	 * information there.
+	 */
+	if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
+	    bb.put(padOffset, (byte)0);		// zero the padding.
+	    for (int i = 1; i <= pad; i++) {
+		int val = bb.get(padOffset - i) & 0xff;
+		if (val != pad) {
+		    throw new BadPaddingException
+					("Invalid TLS padding: " + val);
+		}
+	    }
+	} else { // SSLv3
+	    // SSLv3 requires 0 <= length byte < block size
+	    // some implementations do 1 <= length byte <= block size,
+	    // so accept that as well
+	    // v3 does not require any particular value for the other bytes
+	    if (pad > blockSize) {
+		throw new BadPaddingException("Invalid SSLv3 padding: " + pad);
+	    }
+	}
 
-        /*
-         * Reset buffer limit to remove padding.
-         */
-        bb.position(offset + newlen);
-        bb.limit(offset + newlen);
+	/*
+	 * Reset buffer limit to remove padding.
+	 */
+	bb.position(offset + newlen);
+	bb.limit(offset + newlen);
 
-        return newlen;
+	return newlen;
     }
 }

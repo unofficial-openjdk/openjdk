@@ -70,7 +70,7 @@ public class Pending {
         System.gc();
         Runtime.getRuntime().runFinalization();
 
-        // Let the finalizer to finish
+        // Let the finalizer to finish 
         try {
             Thread.sleep(200);
         } catch (Exception e) {
@@ -101,7 +101,7 @@ public class Pending {
         System.out.println("   Afer creating objects with ref: " + snapshot);
         printFinalizerInstanceCount();
 
-        // Now check the expected count - GC and runFinalization will be
+        // Now check the expected count - GC and runFinalization will be 
         // invoked.
         checkFinalizerCount(NO_REF_COUNT, 0);
 
@@ -137,13 +137,13 @@ public class Pending {
         throws Exception {
         int prevCount = -1;
         Snapshot snapshot = getSnapshot();
-        if (snapshot.curFinalized != curFinalized) {
+        if (snapshot.curFinalized != curFinalized) {  
             throw new RuntimeException(
                     "Unexpected finalized objects: " + snapshot +
                     " but expected = " + curFinalized);
         }
         int MAX_GC_LOOP = 6;
-        for (int i = 1;
+        for (int i = 1; 
              snapshot.curFinalized != expectedTotal && i <= MAX_GC_LOOP;
              i++) {
             System.gc();
@@ -211,7 +211,7 @@ public class Pending {
             curPending = p;
         }
         public String toString() {
-            return "Current finalized = " + curFinalized +
+            return "Current finalized = " + curFinalized + 
                    " Current pending = " + curPending;
         }
     }
@@ -237,3 +237,4 @@ public class Pending {
         }
     }
 }
+

@@ -37,7 +37,7 @@ import java.awt.Component;
  * a section in <em>The Java Tutorial.</em>
  * <p>
  * In the Swing component set, borders supercede Insets as the
- * mechanism for creating a (decorated or plain) area around the
+ * mechanism for creating a (decorated or plain) area around the 
  * edge of a component.
  * <p>
  * Usage Notes:
@@ -52,9 +52,10 @@ import java.awt.Component;
  *     common border types.
  * <li>Additional border styles include BevelBorder, SoftBevelBorder,
  *     EtchedBorder, LineBorder, TitledBorder, and MatteBorder.
- * <li>To create a new border class, subclass AbstractBorder.
+ * <li>To create a new border class, subclass AbstractBorder.   
  * </ul>
- *
+ * 
+ * @version %I% %G%
  * @author David Kloba
  * @author Amy Fowler
  * @see javax.swing.BorderFactory
@@ -64,7 +65,7 @@ import java.awt.Component;
 public interface Border
 {
     /**
-     * Paints the border for the specified component with the specified
+     * Paints the border for the specified component with the specified 
      * position and size.
      * @param c the component for which this border is being painted
      * @param g the paint graphics
@@ -76,7 +77,7 @@ public interface Border
     void paintBorder(Component c, Graphics g, int x, int y, int width, int height);
 
     /**
-     * Returns the insets of the border.
+     * Returns the insets of the border.  
      * @param c the component for which this border insets value applies
      */
     Insets getBorderInsets(Component c);

@@ -32,30 +32,30 @@ public class Basic {
     private static PrintStream out = System.err;
 
     private static <T> Set<T> setOf(Iterable<T> it) {
-        Set<T> s = new HashSet<T>();
-        for (T t : it)
-            s.add(t);
-        return s;
+	Set<T> s = new HashSet<T>();
+	for (T t : it)
+	    s.add(t);
+	return s;
     }
 
     private static <T> void checkEquals(Set<T> s1, Set<T> s2, boolean eq) {
-        if (s1.equals(s2) != eq)
-            throw new RuntimeException(String.format("%b %s : %s",
-                                                     eq, s1, s2));
+	if (s1.equals(s2) != eq)
+	    throw new RuntimeException(String.format("%b %s : %s",
+						     eq, s1, s2));
     }
 
     public static void main(String[] args) {
 
-        ServiceLoader<FooService> sl = ServiceLoader.load(FooService.class);
-        out.format("%s%n", sl);
+	ServiceLoader<FooService> sl = ServiceLoader.load(FooService.class);
+	out.format("%s%n", sl);
 
-        // Providers are cached
-        Set<FooService> ps = setOf(sl);
-        checkEquals(ps, setOf(sl), true);
+	// Providers are cached
+	Set<FooService> ps = setOf(sl);
+	checkEquals(ps, setOf(sl), true);
 
-        // The cache can be flushed and reloaded
-        sl.reload();
-        checkEquals(ps, setOf(sl), false);
+	// The cache can be flushed and reloaded
+	sl.reload();
+	checkEquals(ps, setOf(sl), false);
 
     }
 

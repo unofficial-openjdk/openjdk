@@ -32,20 +32,20 @@ public class TypeScriptOutputListener implements OutputListener {
 
     private TypeScript script;
     private boolean appendNewline;
-
+    
     public TypeScriptOutputListener(TypeScript script) {
-        this(script, false);
+	this(script, false);
     }
-
+    
     public TypeScriptOutputListener(TypeScript script, boolean appendNewline) {
-        this.script = script;
-        this.appendNewline = appendNewline;
+	this.script = script;
+	this.appendNewline = appendNewline;
     }
-
+    
     public void putString(String s) {
-        script.append(s);
-        if (appendNewline)
-            script.newline();
+	script.append(s);
+	if (appendNewline) 
+	    script.newline();
     }
 
 }

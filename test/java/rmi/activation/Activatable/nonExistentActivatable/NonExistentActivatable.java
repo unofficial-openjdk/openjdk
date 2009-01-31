@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -44,29 +44,29 @@ import java.rmi.registry.*;
 import java.util.Properties;
 
 public class NonExistentActivatable
-        extends Activatable
-        implements ActivateMe, Runnable
+	extends Activatable
+	implements ActivateMe, Runnable
 {
 
     public NonExistentActivatable(ActivationID id, MarshalledObject obj)
-        throws ActivationException, RemoteException
+	throws ActivationException, RemoteException
     {
-        super(id, 0);
+	super(id, 0);
     }
 
     public void ping()
     {}
 
     public void unregister() throws Exception {
-        super.unregister(super.getID());
+	super.unregister(super.getID());
     }
-
+    
     /**
      * Spawns a thread to deactivate the object.
      */
     public void shutdown() throws Exception
     {
-        (new Thread(this,"NonExistentActivatable")).start();
+	(new Thread(this,"NonExistentActivatable")).start();
     }
 
     /**
@@ -75,74 +75,74 @@ public class NonExistentActivatable
      * object may still have pending/executing calls), then
      * unexport the object forcibly.
      */
-    public void run()
+    public void run() 
     {
-        ActivationLibrary.deactivate(this, getID());
+	ActivationLibrary.deactivate(this, getID());
     }
-
+    
     public static void main(String[] args) {
 
-        System.out.println("\nRegression test for bug 4115331\n");
+	System.out.println("\nRegression test for bug 4115331\n");
+	
+	TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");	
 
-        TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
+	RMID rmid = null;
+	
+	try {
+	    RMID.removeLog();
+	    rmid = RMID.createRMID();
+	    rmid.start();
 
-        RMID rmid = null;
+	    /* Cause activation groups to have a security policy that will
+	     * allow security managers to be downloaded and installed
+	     */
+	    Properties p = new Properties();
+	    // this test must always set policies/managers in its
+	    // activation groups
+	    p.put("java.security.policy", 
+		  TestParams.defaultGroupPolicy);
+	    p.put("java.security.manager", 
+		  TestParams.defaultSecurityManager);
 
-        try {
-            RMID.removeLog();
-            rmid = RMID.createRMID();
-            rmid.start();
+	    System.err.println("Create activation group in this VM");
+	    ActivationGroupDesc groupDesc =
+		new ActivationGroupDesc(p, null);
+	    ActivationSystem system = ActivationGroup.getSystem();
+	    ActivationGroupID groupID = system.registerGroup(groupDesc);
+	    ActivationGroup.createGroup(groupID, groupDesc, 0);
+	    
+	    System.err.println("Creating descriptor");
+	    ActivationDesc desc =
+		new ActivationDesc("NonExistentActivatable", null, null);
+	    
+	    System.err.println("Registering descriptor");
+	    ActivateMe obj = (ActivateMe) Activatable.register(desc);
+	    
+	    System.err.println("Activate object via method call");
+	    obj.ping();
 
-            /* Cause activation groups to have a security policy that will
-             * allow security managers to be downloaded and installed
-             */
-            Properties p = new Properties();
-            // this test must always set policies/managers in its
-            // activation groups
-            p.put("java.security.policy",
-                  TestParams.defaultGroupPolicy);
-            p.put("java.security.manager",
-                  TestParams.defaultSecurityManager);
+	    System.err.println("Unregister object");
+	    obj.unregister();
 
-            System.err.println("Create activation group in this VM");
-            ActivationGroupDesc groupDesc =
-                new ActivationGroupDesc(p, null);
-            ActivationSystem system = ActivationGroup.getSystem();
-            ActivationGroupID groupID = system.registerGroup(groupDesc);
-            ActivationGroup.createGroup(groupID, groupDesc, 0);
+	    System.err.println("Make object inactive");
+	    obj.shutdown();
 
-            System.err.println("Creating descriptor");
-            ActivationDesc desc =
-                new ActivationDesc("NonExistentActivatable", null, null);
+	    System.err.println("Reactivate object");
+	    try {
+		obj.ping();
+	    } catch (NoSuchObjectException e) {
+		System.err.println("Test succeeded: " +
+				   "NoSuchObjectException caught");
+		return;
+	    } catch (Exception e) {
+		TestLibrary.bomb("Test failed: exception other than NoSuchObjectException",
+		     e);
+	    }
 
-            System.err.println("Registering descriptor");
-            ActivateMe obj = (ActivateMe) Activatable.register(desc);
-
-            System.err.println("Activate object via method call");
-            obj.ping();
-
-            System.err.println("Unregister object");
-            obj.unregister();
-
-            System.err.println("Make object inactive");
-            obj.shutdown();
-
-            System.err.println("Reactivate object");
-            try {
-                obj.ping();
-            } catch (NoSuchObjectException e) {
-                System.err.println("Test succeeded: " +
-                                   "NoSuchObjectException caught");
-                return;
-            } catch (Exception e) {
-                TestLibrary.bomb("Test failed: exception other than NoSuchObjectException",
-                     e);
-            }
-
-        } catch (Exception e) {
-            TestLibrary.bomb("test failed", e);
-        } finally {
-            ActivationLibrary.rmidCleanup(rmid);
-        }
+	} catch (Exception e) {
+	    TestLibrary.bomb("test failed", e);
+	} finally {
+	    ActivationLibrary.rmidCleanup(rmid);
+	}
     }
 }

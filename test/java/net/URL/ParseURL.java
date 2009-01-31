@@ -24,7 +24,7 @@
 /* @test
  * @bug 4255229
  * @summary URLStreamHandler.parseURL error
- *
+ * 
  */
 import java.io.*;
 import java.net.*;

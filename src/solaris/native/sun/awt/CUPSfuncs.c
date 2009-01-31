@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-#include <jni.h>
+#include <jni.h> 
 #include <jni_util.h>
 #include <dlfcn.h>
 #include <cups/cups.h>
@@ -64,7 +64,7 @@ fn_ppdPageSize j2d_ppdPageSize;
  */
 JNIEXPORT jboolean JNICALL
 Java_sun_print_CUPSPrinter_initIDs(JNIEnv *env,
-                                         jobject printObj) {
+					 jobject printObj) {
   void *handle = dlopen("libcups.so.2", RTLD_LAZY | RTLD_GLOBAL);
 
   if (handle == NULL) {
@@ -72,7 +72,7 @@ Java_sun_print_CUPSPrinter_initIDs(JNIEnv *env,
     if (handle == NULL) {
       return JNI_FALSE;
     }
-  }
+  } 
 
   j2d_cupsServer = (fn_cupsServer)dlsym(handle, "cupsServer");
   if (j2d_cupsServer == NULL) {
@@ -110,7 +110,7 @@ Java_sun_print_CUPSPrinter_initIDs(JNIEnv *env,
     return JNI_FALSE;
 
   }
-
+ 
   j2d_ppdClose = (fn_ppdClose)dlsym(handle, "ppdClose");
   if (j2d_ppdClose == NULL) {
     dlclose(handle);
@@ -135,33 +135,33 @@ Java_sun_print_CUPSPrinter_initIDs(JNIEnv *env,
 
 /*
  * Gets CUPS server name.
- *
+ * 
  */
 JNIEXPORT jstring JNICALL
 Java_sun_print_CUPSPrinter_getCupsServer(JNIEnv *env,
-                                         jobject printObj)
-{
+					 jobject printObj)
+{ 
     jstring cServer = NULL;
     const char* server = j2d_cupsServer();
     if (server != NULL) {
         // Is this a local domain socket?
         if (strncmp(server, "/", 1) == 0) {
-            cServer = JNU_NewStringPlatform(env, "localhost");
-        } else {
-            cServer = JNU_NewStringPlatform(env, server);
-        }
+	    cServer = JNU_NewStringPlatform(env, "localhost");
+	} else {
+	    cServer = JNU_NewStringPlatform(env, server);
+	}
     }
     return cServer;
 }
 
 /*
  * Gets CUPS port name.
- *
+ * 
  */
 JNIEXPORT jint JNICALL
 Java_sun_print_CUPSPrinter_getCupsPort(JNIEnv *env,
-                                         jobject printObj)
-{
+					 jobject printObj)
+{ 
     int port = j2d_ippPort();
     return (jint) port;
 }
@@ -169,23 +169,23 @@ Java_sun_print_CUPSPrinter_getCupsPort(JNIEnv *env,
 
 /*
  * Checks if connection can be made to the server.
- *
+ * 
  */
 JNIEXPORT jboolean JNICALL
 Java_sun_print_CUPSPrinter_canConnect(JNIEnv *env,
-                                      jobject printObj,
-                                      jstring server,
-                                      jint port)
-{
+				      jobject printObj,
+				      jstring server,
+				      jint port)
+{ 
     const char *serverName;
     serverName = (*env)->GetStringUTFChars(env, server, NULL);
     if (serverName != NULL) {
         http_t *http = j2d_httpConnect(serverName, (int)port);
-        (*env)->ReleaseStringUTFChars(env, server, serverName);
-        if (http != NULL) {
-            j2d_httpClose(http);
-            return JNI_TRUE;
-        }
+	(*env)->ReleaseStringUTFChars(env, server, serverName);
+	if (http != NULL) {      
+	    j2d_httpClose(http);
+	    return JNI_TRUE;
+	}
     }
     return JNI_FALSE;
 }
@@ -196,9 +196,9 @@ Java_sun_print_CUPSPrinter_canConnect(JNIEnv *env,
  */
 JNIEXPORT jobjectArray JNICALL
 Java_sun_print_CUPSPrinter_getMedia(JNIEnv *env,
-                                         jobject printObj,
-                                         jstring printer)
-{
+					 jobject printObj,
+					 jstring printer)
+{ 
     ppd_file_t *ppd;
     ppd_option_t *optionTray, *optionPage;
     ppd_choice_t *choice;
@@ -213,14 +213,14 @@ Java_sun_print_CUPSPrinter_getMedia(JNIEnv *env,
     if (name == NULL) {
         return NULL;
     }
-
+    
     // NOTE: cupsGetPPD returns a pointer to a filename of a temporary file.
     // unlink() must be caled to remove the file when finished using it.
     filename = j2d_cupsGetPPD(name);
     (*env)->ReleaseStringUTFChars(env, printer, name);
 
-    cls = (*env)->FindClass(env, "java/lang/String");
-
+    cls = (*env)->FindClass(env, "java/lang/String"); 
+    
     if (filename == NULL) {
         return NULL;
     }
@@ -228,10 +228,10 @@ Java_sun_print_CUPSPrinter_getMedia(JNIEnv *env,
     if ((ppd = j2d_ppdOpenFile(filename)) == NULL) {
         unlink(filename);
         DPRINTF("CUPSfuncs::unable to open PPD  %s\n", filename);
-        return NULL;
+	return NULL;
     }
 
-    optionPage = j2d_ppdFindOption(ppd, "PageSize");
+    optionPage = j2d_ppdFindOption(ppd, "PageSize"); 
     if (optionPage != NULL) {
         nPages = optionPage->num_choices;
     }
@@ -243,63 +243,63 @@ Java_sun_print_CUPSPrinter_getMedia(JNIEnv *env,
 
     if ((nTotal = (nPages+nTrays) *2) > 0) {
         nameArray = (*env)->NewObjectArray(env, nTotal, cls, NULL);
-        if (nameArray == NULL) {
-            unlink(filename);
-            j2d_ppdClose(ppd);
-            DPRINTF("CUPSfuncs::bad alloc new array\n", "")
-            JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-            return NULL;
-        }
+	if (nameArray == NULL) {
+	    unlink(filename);
+	    j2d_ppdClose(ppd);
+	    DPRINTF("CUPSfuncs::bad alloc new array\n", "")
+	    JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+	    return NULL;
+	}
 
         for (i = 0; optionPage!=NULL && i<nPages; i++) {
-            choice = (optionPage->choices)+i;
-            utf_str = JNU_NewStringPlatform(env, choice->text);
-            if (utf_str == NULL) {
-                unlink(filename);
-                j2d_ppdClose(ppd);
-                DPRINTF("CUPSfuncs::bad alloc new string ->text\n", "")
-                JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-                return NULL;
-            }
-            (*env)->SetObjectArrayElement(env, nameArray, i*2, utf_str);
-            (*env)->DeleteLocalRef(env, utf_str);
-            utf_str = JNU_NewStringPlatform(env, choice->choice);
-            if (utf_str == NULL) {
-                unlink(filename);
-                j2d_ppdClose(ppd);
-                DPRINTF("CUPSfuncs::bad alloc new string ->choice\n", "")
-                JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-                return NULL;
-            }
-            (*env)->SetObjectArrayElement(env, nameArray, i*2+1, utf_str);
-            (*env)->DeleteLocalRef(env, utf_str);
-        }
-
+	    choice = (optionPage->choices)+i;
+	    utf_str = JNU_NewStringPlatform(env, choice->text);
+	    if (utf_str == NULL) {
+	        unlink(filename);
+		j2d_ppdClose(ppd);
+		DPRINTF("CUPSfuncs::bad alloc new string ->text\n", "")
+		JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+		return NULL;
+	    }
+	    (*env)->SetObjectArrayElement(env, nameArray, i*2, utf_str);
+	    (*env)->DeleteLocalRef(env, utf_str);
+	    utf_str = JNU_NewStringPlatform(env, choice->choice);
+	    if (utf_str == NULL) {
+	        unlink(filename);
+		j2d_ppdClose(ppd);
+		DPRINTF("CUPSfuncs::bad alloc new string ->choice\n", "")
+		JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+		return NULL;
+	    }
+	    (*env)->SetObjectArrayElement(env, nameArray, i*2+1, utf_str);
+	    (*env)->DeleteLocalRef(env, utf_str);
+	}
+   
         for (i = 0; optionTray!=NULL && i<nTrays; i++) {
-            choice = (optionTray->choices)+i;
-            utf_str = JNU_NewStringPlatform(env, choice->text);
-            if (utf_str == NULL) {
-                unlink(filename);
-                j2d_ppdClose(ppd);
-                DPRINTF("CUPSfuncs::bad alloc new string text\n", "")
-                JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-                return NULL;
-            }
-            (*env)->SetObjectArrayElement(env, nameArray,
-                                          (nPages+i)*2, utf_str);
-            (*env)->DeleteLocalRef(env, utf_str);
-            utf_str = JNU_NewStringPlatform(env, choice->choice);
-            if (utf_str == NULL) {
-                unlink(filename);
-                j2d_ppdClose(ppd);
-                DPRINTF("CUPSfuncs::bad alloc new string choice\n", "")
-                JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-                return NULL;
-            }
-            (*env)->SetObjectArrayElement(env, nameArray,
-                                          (nPages+i)*2+1, utf_str);
-            (*env)->DeleteLocalRef(env, utf_str);
-        }
+  	    choice = (optionTray->choices)+i;      
+	    utf_str = JNU_NewStringPlatform(env, choice->text);	 
+	    if (utf_str == NULL) {
+	        unlink(filename);
+		j2d_ppdClose(ppd);
+		DPRINTF("CUPSfuncs::bad alloc new string text\n", "")
+		JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+		return NULL;
+	    }
+	    (*env)->SetObjectArrayElement(env, nameArray, 
+					  (nPages+i)*2, utf_str);
+	    (*env)->DeleteLocalRef(env, utf_str);
+	    utf_str = JNU_NewStringPlatform(env, choice->choice);
+	    if (utf_str == NULL) {
+	        unlink(filename);
+		j2d_ppdClose(ppd);
+		DPRINTF("CUPSfuncs::bad alloc new string choice\n", "")
+	        JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+		return NULL;
+	    }
+	    (*env)->SetObjectArrayElement(env, nameArray, 
+					  (nPages+i)*2+1, utf_str);
+	    (*env)->DeleteLocalRef(env, utf_str);
+	}  
     }
     j2d_ppdClose(ppd);
     unlink(filename);
@@ -312,66 +312,68 @@ Java_sun_print_CUPSPrinter_getMedia(JNIEnv *env,
  */
 JNIEXPORT jfloatArray JNICALL
 Java_sun_print_CUPSPrinter_getPageSizes(JNIEnv *env,
-                                         jobject printObj,
-                                         jstring printer)
-{
+					 jobject printObj,
+					 jstring printer)
+{ 
     ppd_file_t *ppd;
     ppd_option_t *option;
     ppd_choice_t *choice;
     ppd_size_t *size;
 
     const char *name = (*env)->GetStringUTFChars(env, printer, NULL);
-    const char *filename;
+    const char *filename; 
     int i;
     jobjectArray sizeArray = NULL;
     jfloat *dims;
 
     // NOTE: cupsGetPPD returns a pointer to a filename of a temporary file.
     // unlink() must be called to remove the file after using it.
-    filename = j2d_cupsGetPPD(name);
-    (*env)->ReleaseStringUTFChars(env, printer, name);
+    filename = j2d_cupsGetPPD(name); 
+    (*env)->ReleaseStringUTFChars(env, printer, name); 
     if (filename == NULL) {
         return NULL;
     }
     if ((ppd = j2d_ppdOpenFile(filename)) == NULL) {
         unlink(filename);
-        DPRINTF("unable to open PPD  %s\n", filename)
-        return NULL;
+	DPRINTF("unable to open PPD  %s\n", filename)
+	return NULL;
     }
     option = j2d_ppdFindOption(ppd, "PageSize");
     if (option != NULL && option->num_choices > 0) {
-        // create array of dimensions - (num_choices * 6)
-        //to cover length & height
-        DPRINTF( "CUPSfuncs::option->num_choices %d\n", option->num_choices)
-        sizeArray = (*env)->NewFloatArray(env, option->num_choices*6);
-        if (sizeArray == NULL) {
-            unlink(filename);
-            j2d_ppdClose(ppd);
-            DPRINTF("CUPSfuncs::bad alloc new float array\n", "")
-            JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-            return NULL;
-        }
+        // create array of dimensions - (num_choices * 6) 
+	//to cover length & height
+	DPRINTF( "CUPSfuncs::option->num_choices %d\n", option->num_choices)
+	sizeArray = (*env)->NewFloatArray(env, option->num_choices*6);
+	if (sizeArray == NULL) {
+	    unlink(filename);
+	    j2d_ppdClose(ppd);
+	    DPRINTF("CUPSfuncs::bad alloc new float array\n", "")
+	    JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+	    return NULL;
+	}
 
-        dims = (*env)->GetFloatArrayElements(env, sizeArray, NULL);
-        for (i = 0; i<option->num_choices; i++) {
-            choice = (option->choices)+i;
-            size = j2d_ppdPageSize(ppd, choice->choice);
-            if (size != NULL) {
-                // paper width and height
-                dims[i*6] = size->width;
-                dims[(i*6)+1] = size->length;
-                // paper printable area
-                dims[(i*6)+2] = size->left;
-                dims[(i*6)+3] = size->top;
-                dims[(i*6)+4] = size->right;
-                dims[(i*6)+5] = size->bottom;
-            }
-        }
+	dims = (*env)->GetFloatArrayElements(env, sizeArray, NULL);
+	for (i = 0; i<option->num_choices; i++) {
+  	    choice = (option->choices)+i;
+	    size = j2d_ppdPageSize(ppd, choice->choice);
+	    if (size != NULL) {
+  	        // paper width and height
+	        dims[i*6] = size->width;
+		dims[(i*6)+1] = size->length;   
+		// paper printable area
+		dims[(i*6)+2] = size->left;   
+		dims[(i*6)+3] = size->top;   
+		dims[(i*6)+4] = size->right;   
+		dims[(i*6)+5] = size->bottom;
+	    }      
+	}
 
-        (*env)->ReleaseFloatArrayElements(env, sizeArray, dims, 0);
+	(*env)->ReleaseFloatArrayElements(env, sizeArray, dims, 0);
     }
 
     j2d_ppdClose(ppd);
     unlink(filename);
     return sizeArray;
 }
+
+

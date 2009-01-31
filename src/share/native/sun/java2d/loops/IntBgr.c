@@ -89,26 +89,26 @@ NativePrimitive IntBgrPrimitives[] = {
     REGISTER_CONVERT_BLIT(IntArgb, IntBgr),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, IntBgr),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, IntBgr,
-                                NAME_CONVERT_BLIT(IntArgb, IntBgr)),
+				NAME_CONVERT_BLIT(IntArgb, IntBgr)),
     REGISTER_CONVERT_BLIT_EQUIV(IntArgbBm, IntBgr,
-                                NAME_CONVERT_BLIT(IntArgb, IntBgr)),
+				NAME_CONVERT_BLIT(IntArgb, IntBgr)),
     REGISTER_CONVERT_BLIT_EQUIV(IntBgr, IntRgb,
-                                NAME_CONVERT_BLIT(IntArgb, IntBgr)),
+				NAME_CONVERT_BLIT(IntArgb, IntBgr)),
     REGISTER_CONVERT_BLIT(ByteIndexed, IntBgr),
 
     REGISTER_SCALE_BLIT(IntBgr, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, IntBgr),
     REGISTER_SCALE_BLIT(ThreeByteBgr, IntBgr),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, IntBgr,
-                              NAME_SCALE_BLIT(IntArgb, IntBgr)),
+			      NAME_SCALE_BLIT(IntArgb, IntBgr)),
     REGISTER_SCALE_BLIT_EQUIV(IntArgbBm, IntBgr,
-                              NAME_SCALE_BLIT(IntArgb, IntBgr)),
+			      NAME_SCALE_BLIT(IntArgb, IntBgr)),
     REGISTER_SCALE_BLIT_EQUIV(IntBgr, IntRgb,
-                              NAME_SCALE_BLIT(IntArgb, IntBgr)),
+			      NAME_SCALE_BLIT(IntArgb, IntBgr)),
     REGISTER_SCALE_BLIT_EQUIV(Index8Gray, IntBgr,
-                              NAME_SCALE_BLIT(ByteIndexed, IntArgb)),
+			      NAME_SCALE_BLIT(ByteIndexed, IntArgb)),
     REGISTER_SCALE_BLIT_EQUIV(Index12Gray, IntBgr,
-                              NAME_SCALE_BLIT(Index12Gray, IntArgb)),
+			      NAME_SCALE_BLIT(Index12Gray, IntArgb)),
     REGISTER_SCALE_BLIT(ByteIndexed, IntBgr),
     REGISTER_XPAR_CONVERT_BLIT(ByteIndexedBm, IntBgr),
     REGISTER_XPAR_CONVERT_BLIT(IntArgbBm, IntBgr),
@@ -118,13 +118,13 @@ NativePrimitive IntBgrPrimitives[] = {
     REGISTER_XPAR_BLITBG(IntArgbBm, IntBgr),
 
     REGISTER_CONVERT_BLIT_EQUIV(ByteGray, IntBgr,
-                                NAME_CONVERT_BLIT(ByteGray, IntRgb)),
+				NAME_CONVERT_BLIT(ByteGray, IntRgb)),
     REGISTER_SCALE_BLIT_EQUIV(ByteGray, IntBgr,
-                              NAME_SCALE_BLIT(ByteGray, IntRgb)),
+			      NAME_SCALE_BLIT(ByteGray, IntRgb)),
     REGISTER_CONVERT_BLIT_EQUIV(Index8Gray, IntBgr,
-                                NAME_CONVERT_BLIT(ByteIndexed, IntArgb)),
+				NAME_CONVERT_BLIT(ByteIndexed, IntArgb)),
     REGISTER_CONVERT_BLIT_EQUIV(Index12Gray, IntBgr,
-                                NAME_CONVERT_BLIT(Index12Gray, IntArgb)),
+				NAME_CONVERT_BLIT(Index12Gray, IntArgb)),
 
     REGISTER_XOR_BLIT(IntArgb, IntBgr),
     REGISTER_SRC_MASKFILL(IntBgr),
@@ -145,7 +145,7 @@ NativePrimitive IntBgrPrimitives[] = {
 jboolean RegisterIntBgr(JNIEnv *env)
 {
     return RegisterPrimitives(env, IntBgrPrimitives,
-                              ArraySize(IntBgrPrimitives));
+			      ArraySize(IntBgrPrimitives));
 }
 
 jint PixelForIntBgr(SurfaceDataRasInfo *pRasInfo, jint rgb)

@@ -30,17 +30,18 @@ import javax.naming.Context;
 import javax.naming.CompositeName;
 import javax.naming.InvalidNameException;
 
-/**
+/** 
   * This class represents the result of resolution of a name.
   * It contains the object to which name was resolved, and the portion
   * of the name that has not been resolved.
   *<p>
-  * A ResolveResult instance is not synchronized against concurrent
+  * A ResolveResult instance is not synchronized against concurrent 
   * multithreaded access. Multiple threads trying to access and modify
   * a single ResolveResult instance should lock the object.
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version 1.10 03/12/19
   * @since 1.3
   */
 public class ResolveResult implements java.io.Serializable {
@@ -64,8 +65,8 @@ public class ResolveResult implements java.io.Serializable {
       * resolved object and remaining name both initialized to null.
       */
     protected ResolveResult() {
-        resolvedObj = null;
-        remainingName = null;
+	resolvedObj = null;
+	remainingName = null;
     }
 
     /**
@@ -74,16 +75,16 @@ public class ResolveResult implements java.io.Serializable {
       *
       * @param robj The non-null object resolved to.
       * @param rcomp The single remaining name component that has yet to be
-      *                 resolved. Cannot be null (but can be empty).
+      *			resolved. Cannot be null (but can be empty).
       */
     public ResolveResult(Object robj, String rcomp) {
-        resolvedObj = robj;
-        try {
-        remainingName = new CompositeName(rcomp);
-//          remainingName.appendComponent(rcomp);
-        } catch (InvalidNameException e) {
-            // ignore; shouldn't happen
-        }
+	resolvedObj = robj;
+	try {
+	remainingName = new CompositeName(rcomp);
+//	    remainingName.appendComponent(rcomp);
+	} catch (InvalidNameException e) {
+	    // ignore; shouldn't happen
+	}
     }
 
     /**
@@ -94,21 +95,21 @@ public class ResolveResult implements java.io.Serializable {
       * @param rname The non-null remaining name that has yet to be resolved.
       */
     public ResolveResult(Object robj, Name rname) {
-        resolvedObj = robj;
-        setRemainingName(rname);
+	resolvedObj = robj;
+	setRemainingName(rname);
     }
 
     /**
      * Retrieves the remaining unresolved portion of the name.
-     *
-     * @return The remaining unresolved portion of the name.
-     *          Cannot be null but empty OK.
+     * 
+     * @return The remaining unresolved portion of the name. 
+     *		Cannot be null but empty OK.
      * @see #appendRemainingName
      * @see #appendRemainingComponent
      * @see #setRemainingName
      */
     public Name getRemainingName() {
-        return this.remainingName;
+	return this.remainingName;
     }
 
     /**
@@ -118,7 +119,7 @@ public class ResolveResult implements java.io.Serializable {
       * @see #setResolvedObj
      */
     public Object getResolvedObj() {
-        return this.resolvedObj;
+	return this.resolvedObj;
     }
 
     /**
@@ -133,12 +134,12 @@ public class ResolveResult implements java.io.Serializable {
       * @see #appendRemainingComponent
       */
     public void setRemainingName(Name name) {
-        if (name != null)
-            this.remainingName = (Name)(name.clone());
-        else {
-            // ??? should throw illegal argument exception
-            this.remainingName = null;
-        }
+	if (name != null)
+	    this.remainingName = (Name)(name.clone());
+	else {
+	    // ??? should throw illegal argument exception
+	    this.remainingName = null;
+	}
     }
 
     /**
@@ -150,20 +151,20 @@ public class ResolveResult implements java.io.Serializable {
       * @see #appendRemainingComponent
       */
     public void appendRemainingName(Name name) {
-//      System.out.println("appendingRemainingName: " + name.toString());
-//      Exception e = new Exception();
-//      e.printStackTrace();
-        if (name != null) {
-            if (this.remainingName != null) {
-                try {
-                    this.remainingName.addAll(name);
-                } catch (InvalidNameException e) {
-                    // ignore; shouldn't happen for composite name
-                }
-            } else {
-                this.remainingName = (Name)(name.clone());
-            }
-        }
+//	System.out.println("appendingRemainingName: " + name.toString());
+//	Exception e = new Exception();
+//	e.printStackTrace();
+	if (name != null) {
+	    if (this.remainingName != null) {
+		try {
+		    this.remainingName.addAll(name);
+		} catch (InvalidNameException e) {
+		    // ignore; shouldn't happen for composite name
+		}
+	    } else {
+		this.remainingName = (Name)(name.clone());
+	    }
+	}
     }
 
     /**
@@ -174,27 +175,27 @@ public class ResolveResult implements java.io.Serializable {
       * @see #appendRemainingName
       */
     public void appendRemainingComponent(String name) {
-        if (name != null) {
-            CompositeName rname = new CompositeName();
-            try {
-                rname.add(name);
-            } catch (InvalidNameException e) {
-                // ignore; shouldn't happen for empty composite name
-            }
-            appendRemainingName(rname);
-        }
+	if (name != null) {
+	    CompositeName rname = new CompositeName();
+	    try {
+		rname.add(name);
+	    } catch (InvalidNameException e) {
+		// ignore; shouldn't happen for empty composite name
+	    }
+	    appendRemainingName(rname);
+	}
     }
 
     /**
       * Sets the resolved Object field of this result to obj.
       *
       * @param obj The object to use for setting the resolved obj field.
-      *            Cannot be null.
+      *		   Cannot be null.
       * @see #getResolvedObj
       */
     public void setResolvedObj(Object obj) {
-        this.resolvedObj = obj;
-        // ??? should check for null?
+	this.resolvedObj = obj;
+	// ??? should check for null?
     }
 
     private static final long serialVersionUID = -4552108072002407559L;

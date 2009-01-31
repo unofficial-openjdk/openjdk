@@ -95,7 +95,7 @@ import com.sun.naming.internal.ResourceManager;
  * <tt>NamingManager.setInitialContextFactoryBuilder()</tt>.
  *<p>
  * NoInitialContextException is thrown when an initial context cannot
- * be instantiated. This exception can be thrown during any interaction
+ * be instantiated. This exception can be thrown during any interaction 
  * with the InitialContext, not only when the InitialContext is constructed.
  * For example, the implementation of the initial context might lazily
  * retrieve the context only when actual methods are invoked on it.
@@ -121,10 +121,11 @@ import com.sun.naming.internal.ResourceManager;
  *
  * @author Rosanna Lee
  * @author Scott Seligman
+ * @version %I% %E%
  *
  * @see Context
  * @see NamingManager#setInitialContextFactoryBuilder
- *      NamingManager.setInitialContextFactoryBuilder
+ *	NamingManager.setInitialContextFactoryBuilder
  * @since JNDI 1.1 / Java 2 Platform, Standard Edition, v 1.3
  */
 
@@ -166,17 +167,17 @@ public class InitialContext implements Context {
      * and then call <tt>init()</tt> before returning.
      *
      * @param lazy
-     *          true means do not initialize the initial context; false
-     *          is equivalent to calling <tt>new InitialContext()</tt>
-     * @throws  NamingException if a naming exception is encountered
+     *		true means do not initialize the initial context; false
+     *		is equivalent to calling <tt>new InitialContext()</tt>
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #init(Hashtable)
      * @since 1.3
      */
     protected InitialContext(boolean lazy) throws NamingException {
-        if (!lazy) {
-            init(null);
-        }
+	if (!lazy) {
+	    init(null);
+	}
     }
 
     /**
@@ -184,12 +185,12 @@ public class InitialContext implements Context {
      * No environment properties are supplied.
      * Equivalent to <tt>new InitialContext(null)</tt>.
      *
-     * @throws  NamingException if a naming exception is encountered
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #InitialContext(Hashtable)
      */
     public InitialContext() throws NamingException {
-        init(null);
+	init(null);
     }
 
     /**
@@ -200,18 +201,18 @@ public class InitialContext implements Context {
      * or save a reference to it, but may save a clone.
      *
      * @param environment
-     *          environment used to create the initial context.
-     *          Null indicates an empty environment.
+     *		environment used to create the initial context.
+     *		Null indicates an empty environment.
      *
-     * @throws  NamingException if a naming exception is encountered
+     * @throws	NamingException if a naming exception is encountered
      */
     public InitialContext(Hashtable<?,?> environment)
-        throws NamingException
+	throws NamingException
     {
-        if (environment != null) {
-            environment = (Hashtable)environment.clone();
-        }
-        init(environment);
+	if (environment != null) {
+	    environment = (Hashtable)environment.clone();
+	}
+	init(environment);
     }
 
     /**
@@ -222,23 +223,23 @@ public class InitialContext implements Context {
      * a reference to it.  The caller may no longer modify it.
      *
      * @param environment
-     *          environment used to create the initial context.
-     *          Null indicates an empty environment.
+     *		environment used to create the initial context.
+     *		Null indicates an empty environment.
      *
-     * @throws  NamingException if a naming exception is encountered
+     * @throws	NamingException if a naming exception is encountered
      *
      * @see #InitialContext(boolean)
      * @since 1.3
      */
     protected void init(Hashtable<?,?> environment)
-        throws NamingException
+	throws NamingException
     {
-        myProps = ResourceManager.getInitialEnvironment(environment);
+	myProps = ResourceManager.getInitialEnvironment(environment);
 
-        if (myProps.get(Context.INITIAL_CONTEXT_FACTORY) != null) {
-            // user has specified initial context factory; try to get it
-            getDefaultInitCtx();
-        }
+	if (myProps.get(Context.INITIAL_CONTEXT_FACTORY) != null) {
+	    // user has specified initial context factory; try to get it
+	    getDefaultInitCtx();
+	}
     }
 
     /**
@@ -269,7 +270,7 @@ public class InitialContext implements Context {
     }
 
    /**
-     * A static method to retrieve the named object.
+     * A static method to retrieve the named object. 
      * See {@link #doLookup(Name)} for details.
      * @param name
      *          the name of the object to look up
@@ -283,16 +284,16 @@ public class InitialContext implements Context {
     }
 
     private static String getURLScheme(String str) {
-        int colon_posn = str.indexOf(':');
-        int slash_posn = str.indexOf('/');
+	int colon_posn = str.indexOf(':');
+	int slash_posn = str.indexOf('/');
 
-        if (colon_posn > 0 && (slash_posn == -1 || colon_posn < slash_posn))
-            return str.substring(0, colon_posn);
-        return null;
+	if (colon_posn > 0 && (slash_posn == -1 || colon_posn < slash_posn))
+	    return str.substring(0, colon_posn);
+	return null;
     }
 
     /**
-     * Retrieves the initial context by calling
+     * Retrieves the initial context by calling 
      * <code>NamingManager.getInitialContext()</code>
      * and cache it in defaultInitCtx.
      * Set <code>gotDefault</code> so that we know we've tried this before.
@@ -301,14 +302,14 @@ public class InitialContext implements Context {
      * @exception NamingException If a naming exception was encountered.
      */
     protected Context getDefaultInitCtx() throws NamingException{
-        if (!gotDefault) {
-            defaultInitCtx = NamingManager.getInitialContext(myProps);
-            gotDefault = true;
-        }
-        if (defaultInitCtx == null)
-            throw new NoInitialContextException();
+	if (!gotDefault) {
+	    defaultInitCtx = NamingManager.getInitialContext(myProps);
+	    gotDefault = true;
+	}
+	if (defaultInitCtx == null)
+	    throw new NoInitialContextException();
 
-        return defaultInitCtx;
+	return defaultInitCtx;
     }
 
     /**
@@ -321,184 +322,184 @@ public class InitialContext implements Context {
      * See getURLOrDefaultInitCtx(Name) for description
      * of how a subclass should use this method.
      * @param name The non-null name for which to get the context.
-     * @return A URL context for <code>name</code> or the cached
-     *         initial context. The result cannot be null.
+     * @return A URL context for <code>name</code> or the cached 
+     * 	       initial context. The result cannot be null.
      * @exception NoInitialContextException If cannot find an initial context.
      * @exception NamingException In a naming exception is encountered.
      * @see javax.naming.spi.NamingManager#getURLContext
      */
-    protected Context getURLOrDefaultInitCtx(String name)
-        throws NamingException {
-        if (NamingManager.hasInitialContextFactoryBuilder()) {
-            return getDefaultInitCtx();
-        }
-        String scheme = getURLScheme(name);
-        if (scheme != null) {
-            Context ctx = NamingManager.getURLContext(scheme, myProps);
-            if (ctx != null) {
-                return ctx;
-            }
-        }
-        return getDefaultInitCtx();
+    protected Context getURLOrDefaultInitCtx(String name) 
+	throws NamingException {
+	if (NamingManager.hasInitialContextFactoryBuilder()) {
+	    return getDefaultInitCtx();
+	}
+	String scheme = getURLScheme(name);
+	if (scheme != null) {
+	    Context ctx = NamingManager.getURLContext(scheme, myProps);
+	    if (ctx != null) {
+		return ctx;
+	    }
+	}
+	return getDefaultInitCtx();
     }
 
     /**
      * Retrieves a context for resolving <code>name</code>.
      * If the first component of <code>name</code> name is a URL string,
      * then attempt to find a URL context for it. If none is found, or if
-     * the first component of <code>name</code> is not a URL string,
+     * the first component of <code>name</code> is not a URL string, 
      * then return <code>getDefaultInitCtx()</code>.
      *<p>
-     * When creating a subclass of InitialContext, use this method as
+     * When creating a subclass of InitialContext, use this method as 
      * follows.
      * Define a new method that uses this method to get an initial
      * context of the desired subclass.
      * <p><blockquote><pre>
-     * protected XXXContext getURLOrDefaultInitXXXCtx(Name name)
+     * protected XXXContext getURLOrDefaultInitXXXCtx(Name name) 
      * throws NamingException {
      *  Context answer = getURLOrDefaultInitCtx(name);
      *  if (!(answer instanceof XXXContext)) {
      *    if (answer == null) {
-     *      throw new NoInitialContextException();
+     *	    throw new NoInitialContextException();
      *    } else {
-     *      throw new NotContextException("Not an XXXContext");
+     *	    throw new NotContextException("Not an XXXContext");
      *    }
-     *  }
-     *  return (XXXContext)answer;
+     * 	}
+     *	return (XXXContext)answer;
      * }
      * </pre></blockquote>
      * When providing implementations for the new methods in the subclass,
      * use this newly defined method to get the initial context.
      * <p><blockquote><pre>
      * public Object XXXMethod1(Name name, ...) {
-     *  throws NamingException {
+     *	throws NamingException {
      *    return getURLOrDefaultInitXXXCtx(name).XXXMethod1(name, ...);
      * }
      * </pre></blockquote>
      *
      * @param name The non-null name for which to get the context.
-     * @return A URL context for <code>name</code> or the cached
-     *         initial context. The result cannot be null.
+     * @return A URL context for <code>name</code> or the cached 
+     * 	       initial context. The result cannot be null.
      * @exception NoInitialContextException If cannot find an initial context.
      * @exception NamingException In a naming exception is encountered.
      *
      * @see javax.naming.spi.NamingManager#getURLContext
      */
-    protected Context getURLOrDefaultInitCtx(Name name)
-        throws NamingException {
-        if (NamingManager.hasInitialContextFactoryBuilder()) {
-            return getDefaultInitCtx();
-        }
-        if (name.size() > 0) {
-            String first = name.get(0);
-            String scheme = getURLScheme(first);
-            if (scheme != null) {
-                Context ctx = NamingManager.getURLContext(scheme, myProps);
-                if (ctx != null) {
-                    return ctx;
-                }
-            }
-        }
-        return getDefaultInitCtx();
+    protected Context getURLOrDefaultInitCtx(Name name) 
+	throws NamingException {
+	if (NamingManager.hasInitialContextFactoryBuilder()) {
+	    return getDefaultInitCtx();
+	}
+	if (name.size() > 0) {
+	    String first = name.get(0);
+	    String scheme = getURLScheme(first);
+	    if (scheme != null) {
+		Context ctx = NamingManager.getURLContext(scheme, myProps);
+		if (ctx != null) {
+		    return ctx;
+		}
+	    } 
+	}
+	return getDefaultInitCtx();
     }
 
 // Context methods
 // Most Javadoc is deferred to the Context interface.
 
     public Object lookup(String name) throws NamingException {
-        return getURLOrDefaultInitCtx(name).lookup(name);
+	return getURLOrDefaultInitCtx(name).lookup(name);
     }
 
     public Object lookup(Name name) throws NamingException {
-        return getURLOrDefaultInitCtx(name).lookup(name);
+	return getURLOrDefaultInitCtx(name).lookup(name);
     }
 
     public void bind(String name, Object obj) throws NamingException {
-        getURLOrDefaultInitCtx(name).bind(name, obj);
+	getURLOrDefaultInitCtx(name).bind(name, obj);
     }
 
     public void bind(Name name, Object obj) throws NamingException {
-        getURLOrDefaultInitCtx(name).bind(name, obj);
+	getURLOrDefaultInitCtx(name).bind(name, obj);
     }
 
     public void rebind(String name, Object obj) throws NamingException {
-        getURLOrDefaultInitCtx(name).rebind(name, obj);
+	getURLOrDefaultInitCtx(name).rebind(name, obj);
     }
 
     public void rebind(Name name, Object obj) throws NamingException {
-        getURLOrDefaultInitCtx(name).rebind(name, obj);
+	getURLOrDefaultInitCtx(name).rebind(name, obj);
     }
 
     public void unbind(String name) throws NamingException  {
-        getURLOrDefaultInitCtx(name).unbind(name);
+	getURLOrDefaultInitCtx(name).unbind(name);
     }
 
     public void unbind(Name name) throws NamingException  {
-        getURLOrDefaultInitCtx(name).unbind(name);
+	getURLOrDefaultInitCtx(name).unbind(name);
     }
 
     public void rename(String oldName, String newName) throws NamingException {
-        getURLOrDefaultInitCtx(oldName).rename(oldName, newName);
+	getURLOrDefaultInitCtx(oldName).rename(oldName, newName);
     }
 
     public void rename(Name oldName, Name newName)
-        throws NamingException
+	throws NamingException
     {
-        getURLOrDefaultInitCtx(oldName).rename(oldName, newName);
+	getURLOrDefaultInitCtx(oldName).rename(oldName, newName);
     }
 
     public NamingEnumeration<NameClassPair> list(String name)
-        throws NamingException
+	throws NamingException
     {
-        return (getURLOrDefaultInitCtx(name).list(name));
+	return (getURLOrDefaultInitCtx(name).list(name));
     }
 
     public NamingEnumeration<NameClassPair> list(Name name)
-        throws NamingException
+	throws NamingException
     {
-        return (getURLOrDefaultInitCtx(name).list(name));
+	return (getURLOrDefaultInitCtx(name).list(name));
     }
 
     public NamingEnumeration<Binding> listBindings(String name)
-            throws NamingException  {
-        return getURLOrDefaultInitCtx(name).listBindings(name);
+	    throws NamingException  {
+	return getURLOrDefaultInitCtx(name).listBindings(name);
     }
 
     public NamingEnumeration<Binding> listBindings(Name name)
-            throws NamingException  {
-        return getURLOrDefaultInitCtx(name).listBindings(name);
+	    throws NamingException  {
+	return getURLOrDefaultInitCtx(name).listBindings(name);
     }
 
     public void destroySubcontext(String name) throws NamingException  {
-        getURLOrDefaultInitCtx(name).destroySubcontext(name);
+	getURLOrDefaultInitCtx(name).destroySubcontext(name);
     }
 
     public void destroySubcontext(Name name) throws NamingException  {
-        getURLOrDefaultInitCtx(name).destroySubcontext(name);
+	getURLOrDefaultInitCtx(name).destroySubcontext(name);
     }
 
     public Context createSubcontext(String name) throws NamingException  {
-        return getURLOrDefaultInitCtx(name).createSubcontext(name);
+	return getURLOrDefaultInitCtx(name).createSubcontext(name);
     }
 
     public Context createSubcontext(Name name) throws NamingException  {
-        return getURLOrDefaultInitCtx(name).createSubcontext(name);
+	return getURLOrDefaultInitCtx(name).createSubcontext(name);
     }
 
     public Object lookupLink(String name) throws NamingException  {
-        return getURLOrDefaultInitCtx(name).lookupLink(name);
+	return getURLOrDefaultInitCtx(name).lookupLink(name);
     }
 
     public Object lookupLink(Name name) throws NamingException {
-        return getURLOrDefaultInitCtx(name).lookupLink(name);
+	return getURLOrDefaultInitCtx(name).lookupLink(name);
     }
 
     public NameParser getNameParser(String name) throws NamingException {
-        return getURLOrDefaultInitCtx(name).getNameParser(name);
-    }
+	return getURLOrDefaultInitCtx(name).getNameParser(name);
+    } 
 
     public NameParser getNameParser(Name name) throws NamingException {
-        return getURLOrDefaultInitCtx(name).getNameParser(name);
+	return getURLOrDefaultInitCtx(name).getNameParser(name);
     }
 
     /**
@@ -509,8 +510,8 @@ public class InitialContext implements Context {
      * <tt>prefix</tt> parameter must be an empty name (<tt>""</tt>).
      */
     public String composeName(String name, String prefix)
-            throws NamingException {
-        return name;
+	    throws NamingException {
+	return name;
     }
 
     /**
@@ -521,37 +522,37 @@ public class InitialContext implements Context {
      * <tt>prefix</tt> parameter must be an empty name.
      */
     public Name composeName(Name name, Name prefix)
-        throws NamingException
+	throws NamingException
     {
-        return (Name)name.clone();
+	return (Name)name.clone();
     }
 
-    public Object addToEnvironment(String propName, Object propVal)
-            throws NamingException {
-        myProps.put(propName, propVal);
-        return getDefaultInitCtx().addToEnvironment(propName, propVal);
+    public Object addToEnvironment(String propName, Object propVal) 
+	    throws NamingException {
+	myProps.put(propName, propVal);
+	return getDefaultInitCtx().addToEnvironment(propName, propVal);
     }
 
-    public Object removeFromEnvironment(String propName)
-            throws NamingException {
-        myProps.remove(propName);
-        return getDefaultInitCtx().removeFromEnvironment(propName);
+    public Object removeFromEnvironment(String propName) 
+	    throws NamingException {
+	myProps.remove(propName);
+	return getDefaultInitCtx().removeFromEnvironment(propName);
     }
 
     public Hashtable<?,?> getEnvironment() throws NamingException {
-        return getDefaultInitCtx().getEnvironment();
+	return getDefaultInitCtx().getEnvironment();
     }
 
     public void close() throws NamingException {
-        myProps = null;
-        if (defaultInitCtx != null) {
-            defaultInitCtx.close();
-            defaultInitCtx = null;
-        }
-        gotDefault = false;
+	myProps = null;
+	if (defaultInitCtx != null) {
+	    defaultInitCtx.close();
+	    defaultInitCtx = null;
+	}
+	gotDefault = false;
     }
 
     public String getNameInNamespace() throws NamingException {
-        return getDefaultInitCtx().getNameInNamespace();
+	return getDefaultInitCtx().getNameInNamespace();
     }
 };

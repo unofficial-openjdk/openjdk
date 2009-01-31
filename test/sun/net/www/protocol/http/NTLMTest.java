@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,53 +35,53 @@ import sun.net.www.MessageHeader;
 public class NTLMTest
 {
     public static void main(String[] args) {
-        Authenticator.setDefault(new NullAuthenticator());
+	Authenticator.setDefault(new NullAuthenticator());
 
-        try {
-            // Test with direct connection.
-            ServerSocket serverSS = new ServerSocket(0);
-            startServer(serverSS, false);
-            runClient(Proxy.NO_PROXY, serverSS.getLocalPort());
+	try {
+	    // Test with direct connection.
+	    ServerSocket serverSS = new ServerSocket(0);
+	    startServer(serverSS, false);
+	    runClient(Proxy.NO_PROXY, serverSS.getLocalPort());
 
-            // Test with proxy.
-            serverSS = new ServerSocket(0);
+	    // Test with proxy.
+	    serverSS = new ServerSocket(0);
             startServer(serverSS, true /*proxy*/);
-            SocketAddress proxyAddr = new InetSocketAddress("localhost", serverSS.getLocalPort());
+	    SocketAddress proxyAddr = new InetSocketAddress("localhost", serverSS.getLocalPort());
             runClient(new Proxy(java.net.Proxy.Type.HTTP, proxyAddr), 8888);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+	} catch (IOException e) {
+	    e.printStackTrace();
+	}
     }
 
     static void runClient(Proxy proxy, int serverPort) {
-        try {
-            String urlStr = "http://localhost:" + serverPort + "/";
-            URL url = new URL(urlStr);
-            HttpURLConnection uc = (HttpURLConnection) url.openConnection(proxy);
-            uc.getInputStream();
+	try {
+	    String urlStr = "http://localhost:" + serverPort + "/";
+	    URL url = new URL(urlStr);
+	    HttpURLConnection uc = (HttpURLConnection) url.openConnection(proxy);
+	    uc.getInputStream();
 
-        } catch (ProtocolException e) {
-            /* java.net.ProtocolException: Server redirected too many  times (20) */
-            throw new RuntimeException("Failed: ProtocolException", e);
-        } catch (IOException ioe) {
-            /* IOException is OK. We are expecting "java.io.IOException: Server
-             * returned HTTP response code: 401 for URL: ..."
-             */
-            //ioe.printStackTrace();
-        } catch (NullPointerException npe) {
-            throw new RuntimeException("Failed: NPE thrown ", npe);
-        }
+	} catch (ProtocolException e) {
+	    /* java.net.ProtocolException: Server redirected too many  times (20) */
+	    throw new RuntimeException("Failed: ProtocolException", e);
+	} catch (IOException ioe) {
+	    /* IOException is OK. We are expecting "java.io.IOException: Server 
+ 	     * returned HTTP response code: 401 for URL: ..."
+	     */
+	    //ioe.printStackTrace();
+	} catch (NullPointerException npe) {
+	    throw new RuntimeException("Failed: NPE thrown ", npe);
+	}
     }
 
-    static String[] serverResp = new String[] {
-                "HTTP/1.1 401 Unauthorized\r\n" +
-                "Content-Length: 0\r\n" +
-                "WWW-Authenticate: NTLM\r\n\r\n",
+    static String[] serverResp = new String[] { 
+		"HTTP/1.1 401 Unauthorized\r\n" +
+	    	"Content-Length: 0\r\n" +
+		"WWW-Authenticate: NTLM\r\n\r\n",
 
-                "HTTP/1.1 401 Unauthorized\r\n" +
+   		"HTTP/1.1 401 Unauthorized\r\n" +
                 "Content-Length: 0\r\n" +
-                "WWW-Authenticate: NTLM TlRMTVNTUAACAAAAAAAAACgAAAABggAAU3J2Tm9uY2UAAAAAAAAAAA==\r\n\r\n"};
+		"WWW-Authenticate: NTLM TlRMTVNTUAACAAAAAAAAACgAAAABggAAU3J2Tm9uY2UAAAAAAAAAAA==\r\n\r\n"};
 
     static String[] proxyResp = new String[] {
                 "HTTP/1.1 407 Proxy Authentication Required\r\n" +
@@ -93,16 +93,16 @@ public class NTLMTest
                 "Proxy-Authenticate: NTLM TlRMTVNTUAACAAAAAAAAACgAAAABggAAU3J2Tm9uY2UAAAAAAAAAAA==\r\n\r\n"};
 
     static void startServer(ServerSocket serverSS, boolean proxy) {
-        final ServerSocket ss = serverSS;
-        final boolean isProxy = proxy;
+	final ServerSocket ss = serverSS;
+	final boolean isProxy = proxy;
 
-        Thread thread = new Thread(new Runnable() {
-            public void run() {
-                boolean doing2ndStageNTLM = false;
-                while (true) {
-                    try {
-                        Socket s = ss.accept();
-                        if (!doing2ndStageNTLM) {
+	Thread thread = new Thread(new Runnable() {
+	    public void run() {
+	        boolean doing2ndStageNTLM = false;
+		while (true) {
+		    try {
+    	                Socket s = ss.accept();
+    	                if (!doing2ndStageNTLM) {
                             handleConnection(s, isProxy ? proxyResp : serverResp, 0, 1);
                             doing2ndStageNTLM = true;
                         } else {
@@ -112,22 +112,22 @@ public class NTLMTest
                         connectionCount++;
                         //System.out.println("connectionCount = " + connectionCount);
 
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
-                    }
-                }
-            } });
-            thread.setDaemon(true);
-            thread.start();
+	            } catch (IOException ioe) {
+	                ioe.printStackTrace();
+	            }
+	 	}
+	    } });
+	    thread.setDaemon(true);
+	    thread.start();
 
     }
 
     static int connectionCount = 0;
 
     static void handleConnection(Socket s, String[] resp, int start, int end) {
-        try {
-            OutputStream os = s.getOutputStream();
-
+	try {
+	    OutputStream os = s.getOutputStream();
+	    
             for (int i=start; i<end; i++) {
                 MessageHeader header = new MessageHeader (s.getInputStream());
                 //System.out.println("Input :" + header);
@@ -137,24 +137,24 @@ public class NTLMTest
 
             s.close();
         } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
+	    ioe.printStackTrace();
+	}
     }
 
     static class NullAuthenticator extends java.net.Authenticator
     {
-        public int count = 0;
+	public int count = 0;
 
-        protected PasswordAuthentication getPasswordAuthentication() {
-            count++;
-            System.out.println("NullAuthenticator.getPasswordAuthentication called " + count + " times");
+	protected PasswordAuthentication getPasswordAuthentication() {
+	    count++;
+	    System.out.println("NullAuthenticator.getPasswordAuthentication called " + count + " times");
 
-            return null;
-        }
+	    return null;
+	}
 
-        public int getCallCount() {
-            return count;
-        }
+	public int getCallCount() {
+	    return count;
+	}
     }
 
 }

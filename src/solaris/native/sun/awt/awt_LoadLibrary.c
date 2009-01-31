@@ -73,7 +73,7 @@ JNIEXPORT jboolean JNICALL AWTIsHeadless() {
     return isHeadless;
 }
 
-jint
+jint 
 AWT_OnLoad(JavaVM *vm, void *reserved)
 {
     Dl_info dlinfo;
@@ -81,7 +81,8 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     int32_t len;
     char *p;
     JNI_OnLoad_type *JNI_OnLoad_ptr;
-    struct utsname name;
+    int32_t motifVersion = 2;
+    struct utsname name; 
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(vm, JNI_VERSION_1_2);
     void *v;
     char *envvar;
@@ -105,16 +106,19 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
 
     /*
      * The code below is responsible for:
-     * 1. Loading appropriate awt library, i.e. xawt/libmawt or headless/libwawt
+     * 1. Loading appropriate awt library, i.e. motif/libmawt, xawt/libmawt or headless/libwawt
      * 2. Setting "awt.toolkit" system property to use the appropriate Java toolkit class,
      *    (if user has specified the toolkit in env varialble)
      */
 
     propname = (*env)->NewStringUTF(env, "awt.toolkit");
     /* Check if toolkit is specified in env variable */
-    envvar = getenv("AWT_TOOLKIT");
+    envvar = getenv("AWT_TOOLKIT"); 
     if (envvar) {
-        if (strstr(envvar, "XToolkit")) {
+        if (strstr(envvar, "MToolkit")) {
+            toolkit = (*env)->NewStringUTF(env, "sun.awt.motif.MToolkit");
+        }
+        else if (strstr(envvar, "XToolkit")) {
             toolkit = (*env)->NewStringUTF(env, "sun.awt.X11.XToolkit");
         }
         /* If user specified toolkit then set java system property */
@@ -127,22 +131,135 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
                                         propname,toolkit);
         }
     }
-
+    
     /* Calculate toolkit name, kind of toolkit (XAWT, Motif) and library to load */
     if (AWTIsHeadless()) {
         strcpy(p, "/headless/libmawt");
     } else {
-        /* Default AWT Toolkit on Linux and Solaris is XAWT. */
-        strcpy(p, "/xawt/libmawt");
-    }
+        /* Try java system property */
+        if (!toolkit && propname) {
+            toolkit = JNU_CallStaticMethodByName (env,
+                                                  NULL,
+                                                  "java/lang/System",
+                                                  "getProperty",
+                                                  "(Ljava/lang/String;)Ljava/lang/String;",
+                                                  propname).l;
+        }
 
-    if (toolkit) {
-        (*env)->DeleteLocalRef(env, toolkit);
-    }
-    if (propname) {
-        (*env)->DeleteLocalRef(env, propname);
-    }
+        /* Calculate kind of toolkit */
+        if (toolkit) {
+            const char* toolkit_name = (*env)->GetStringUTFChars(env, toolkit, 0);
+            if (strstr(toolkit_name,"MToolkit")) {
+                XAWT = 0;
+            } else {
+                XAWT = 1;
+            }
+            if (toolkit_name) {
+                (*env)->ReleaseStringUTFChars(env, toolkit, toolkit_name);
+            }
+        } else {
+            /* Default AWT Toolkit on Linux and Solaris is XAWT. */
+            XAWT = 1;
+        }
 
+        /* Find loaded Motif version and if Xt is loaded */
+        if (!XAWT) {
+            /* Has a Motif library been loaded already, e.g. by an application
+             * embedding java?   Netscape plugin?
+             */
+
+            v = dlsym(RTLD_DEFAULT, "vendorShellWidgetClass");
+            if (v != NULL && dladdr(v, &dlinfo)) {
+
+                /*
+                 * If we are picking up the vendorShellWigetClass from libXt
+                 * instead of libXm (it exists in both), then we are very stuck.
+                 * Abort.
+                 */
+                if (strstr(dlinfo.dli_fname, "libXt.so") != NULL) {
+                    xt_before_xm = 1;
+                }
+
+                if (strstr(dlinfo.dli_fname, "libXm.so.3") != NULL) {
+#ifdef VERBOSE_AWT_DEBUG
+                    fprintf(stderr, "Motif 1.2 detected, using that.\n");
+#endif
+                    motifVersion = 1;
+                }
+                else if (strstr(dlinfo.dli_fname, "libXm.so.4") != NULL) {
+#ifdef VERBOSE_AWT_DEBUG
+                    fprintf(stderr, "Motif 2.1 detected, using that.\n");
+#endif
+                    motifVersion = 2;
+                }
+            }
+
+            /* Determine desired Motif Version, and set appropriate properties
+             * to load the correct version of libmawt.so
+             */  
+            else {  
+                uname(&name); 
+    
+                if ((strcmp(name.release, "5.5.1") == 0) ||
+                    (strcmp(name.release, "5.6") == 0)) {
+#ifdef VERBOSE_AWT_DEBUG
+                    fprintf(stderr, "default to Motif 1.2, os is: %s\n",name.release);
+#endif
+                    motifVersion = 1;
+                } else {
+#ifdef VERBOSE_AWT_DEBUG
+                    fprintf(stderr, "default to Motif 2.1, os is: %s\n",name.release);
+#endif
+                    motifVersion = 2;
+                }
+                if (getenv("_JAVA_AWT_USE_MOTIF_1_2")) {
+#ifdef VERBOSE_AWT_DEBUG
+                    fprintf(stderr,"_JAVA_AWT_USE_MOTIF_1_2 is set, using Motif 1.2\n");
+#endif
+                    motifVersion = 1;
+                } else if (getenv("_JAVA_AWT_USE_MOTIF_2_1")) {
+#ifdef VERBOSE_AWT_DEBUG
+                    fprintf(stderr,"_JAVA_AWT_USE_MOTIF_2_1 is set, using Motif 2.1\n");
+#endif
+                    motifVersion = 2;
+                }
+            }
+        }
+    
+        /* Update library name */
+        if (toolkit) {
+            const char* toolkit_name = (*env)->GetStringUTFChars(env, toolkit, 0);
+            if (strstr(toolkit_name,"MToolkit")) {
+                strcpy(p, (motifVersion != 1) ? "/motif21/libmawt" : "/motif12/libmawt");
+            }
+            else {
+                strcpy(p, "/xawt/libmawt");
+            }
+            if (toolkit_name) {
+                (*env)->ReleaseStringUTFChars(env, toolkit, toolkit_name);
+            }
+        }
+        else {
+            /* Default AWT Toolkit on Linux and Solaris is XAWT. */
+            strcpy(p, "/xawt/libmawt");
+        }
+
+        if (toolkit) {
+            (*env)->DeleteLocalRef(env, toolkit);
+        }
+        if (propname) {
+            (*env)->DeleteLocalRef(env, propname);
+        }
+        if (xt_before_xm && !XAWT) {
+            fprintf(stderr, "\nRuntime link error - it appears that "
+                    "libXt got loaded before libXm,\n"
+                    "which is not allowed.\n");
+            JNU_ThrowByName(env, "java/lang/InternalError",
+                            "libXt loaded before libXm");
+            return JNI_VERSION_1_2;
+        }
+    }
+ 
     strcat(p, ".so");
 
     JNU_CallStaticMethodByName(env, NULL, "java/lang/System", "load",
@@ -266,7 +383,7 @@ return_type name arglist                                                \
 
 REFLECT_VOID_FUNCTION(getAwtLockFunctions,
                       (void (**AwtLock)(JNIEnv *), void (**AwtUnlock)(JNIEnv *),
-                       void (**AwtNoFlushUnlock)(JNIEnv *), void *reserved),
+                       void (**AwtNoFlushUnlock)(JNIEnv *), void *reserved), 
                       (AwtLock, AwtUnlock, AwtNoFlushUnlock, reserved))
 
 REFLECT_VOID_FUNCTION(getAwtData,
@@ -276,3 +393,6 @@ REFLECT_VOID_FUNCTION(getAwtData,
                        awt_num_colors, pReserved))
 
 REFLECT_FUNCTION(Display *, getAwtDisplay, (void), ())
+
+    
+  

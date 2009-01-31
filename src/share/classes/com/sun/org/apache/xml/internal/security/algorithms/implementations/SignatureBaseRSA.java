@@ -46,7 +46,7 @@ import com.sun.org.apache.xml.internal.security.signature.XMLSignatureException;
 public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(SignatureBaseRSA.class.getName());
 
     /** @inheritDoc */
@@ -65,25 +65,25 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
       String algorithmID = JCEMapper.translateURItoJCEID(this.engineGetURI());
 
       if (true)
-        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Created SignatureDSA using " + algorithmID);
+      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Created SignatureDSA using " + algorithmID);
       String provider=JCEMapper.getProviderId();
       try {
-         if (provider==null) {
-                this._signatureAlgorithm = Signature.getInstance(algorithmID);
-         } else {
-                this._signatureAlgorithm = Signature.getInstance(algorithmID,provider);
-         }
+      	 if (provider==null) {
+      	 	this._signatureAlgorithm = Signature.getInstance(algorithmID);
+      	 } else {
+      	 	this._signatureAlgorithm = Signature.getInstance(algorithmID,provider);
+      	 }
       } catch (java.security.NoSuchAlgorithmException ex) {
          Object[] exArgs = { algorithmID,
                              ex.getLocalizedMessage() };
 
          throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
       } catch (NoSuchProviderException ex) {
-         Object[] exArgs = { algorithmID,
-                                                 ex.getLocalizedMessage() };
+      	 Object[] exArgs = { algorithmID,
+      	 					 ex.getLocalizedMessage() };
 
-         throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
-        }
+      	 throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs);
+	}
    }
 
    /** @inheritDoc */
@@ -236,6 +236,7 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
     * Class SignatureRSASHA1
     *
     * @author $Author: raul $
+    * @version $Revision: 1.12 $
     */
    public static class SignatureRSASHA1 extends SignatureBaseRSA {
 
@@ -258,6 +259,7 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
     * Class SignatureRSASHA256
     *
     * @author $Author: raul $
+    * @version $Revision: 1.12 $
     */
    public static class SignatureRSASHA256 extends SignatureBaseRSA {
 
@@ -280,6 +282,7 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
     * Class SignatureRSASHA384
     *
     * @author $Author: raul $
+    * @version $Revision: 1.12 $
     */
    public static class SignatureRSASHA384 extends SignatureBaseRSA {
 
@@ -302,6 +305,7 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
     * Class SignatureRSASHA512
     *
     * @author $Author: raul $
+    * @version $Revision: 1.12 $
     */
    public static class SignatureRSASHA512 extends SignatureBaseRSA {
 
@@ -324,6 +328,7 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
     * Class SignatureRSARIPEMD160
     *
     * @author $Author: raul $
+    * @version $Revision: 1.12 $
     */
    public static class SignatureRSARIPEMD160 extends SignatureBaseRSA {
 
@@ -346,6 +351,7 @@ public abstract class SignatureBaseRSA extends SignatureAlgorithmSpi {
     * Class SignatureRSAMD5
     *
     * @author $Author: raul $
+    * @version $Revision: 1.12 $
     */
    public static class SignatureRSAMD5 extends SignatureBaseRSA {
 

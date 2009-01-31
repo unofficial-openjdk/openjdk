@@ -63,13 +63,13 @@ public class SelectAndClose {
                     }
                 }
             }).start();
-
+    
         // Wait for select() to be awakened, which should be done by close.
         Thread.sleep(3000);
 
         if (!awakened)
             selector.wakeup();
-
+    
         // Correct result is true and true
         if (!awakened)
             throw new RuntimeException("Select did not wake up");

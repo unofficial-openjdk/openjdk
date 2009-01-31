@@ -35,7 +35,7 @@ import javax.swing.event.*;
  * This class loosely implements the <code>java.util.Vector</code>
  * API, in that it implements the 1.1.x version of
  * <code>java.util.Vector</code>, has no collection class support,
- * and notifies the <code>ListDataListener</code>s when changes occur.
+ * and notifies the <code>ListDataListener</code>s when changes occur. 
  * Presently it delegates to a <code>Vector</code>,
  * in a future release it will be a real Collection implementation.
  * <p>
@@ -48,6 +48,7 @@ import javax.swing.event.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Hans Muller
  */
 public class DefaultListModel extends AbstractListModel
@@ -57,7 +58,7 @@ public class DefaultListModel extends AbstractListModel
     /**
      * Returns the number of components in this list.
      * <p>
-     * This method is identical to <code>size</code>, which implements the
+     * This method is identical to <code>size</code>, which implements the 
      * <code>List</code> interface defined in the 1.2 Collections framework.
      * This method exists in conjunction with <code>setSize</code> so that
      * <code>size</code> is identifiable as a JavaBean property.
@@ -66,75 +67,75 @@ public class DefaultListModel extends AbstractListModel
      * @see #size()
      */
     public int getSize() {
-        return delegate.size();
+	return delegate.size();
     }
 
     /**
      * Returns the component at the specified index.
      * <blockquote>
      * <b>Note:</b> Although this method is not deprecated, the preferred
-     *    method to use is <code>get(int)</code>, which implements the
+     *    method to use is <code>get(int)</code>, which implements the 
      *    <code>List</code> interface defined in the 1.2 Collections framework.
      * </blockquote>
      * @param      index   an index into this list
      * @return     the component at the specified index
-     * @exception  ArrayIndexOutOfBoundsException  if the <code>index</code>
-     *             is negative or greater than the current size of this
+     * @exception  ArrayIndexOutOfBoundsException  if the <code>index</code> 
+     *             is negative or greater than the current size of this 
      *             list
      * @see #get(int)
      */
     public Object getElementAt(int index) {
-        return delegate.elementAt(index);
+	return delegate.elementAt(index);
     }
 
     /**
      * Copies the components of this list into the specified array.
-     * The array must be big enough to hold all the objects in this list,
+     * The array must be big enough to hold all the objects in this list, 
      * else an <code>IndexOutOfBoundsException</code> is thrown.
      *
      * @param   anArray   the array into which the components get copied
      * @see Vector#copyInto(Object[])
      */
     public void copyInto(Object anArray[]) {
-        delegate.copyInto(anArray);
+	delegate.copyInto(anArray);
     }
 
     /**
      * Trims the capacity of this list to be the list's current size.
-     *
+     * 
      * @see Vector#trimToSize()
      */
     public void trimToSize() {
-        delegate.trimToSize();
+	delegate.trimToSize();
     }
 
     /**
-     * Increases the capacity of this list, if necessary, to ensure
-     * that it can hold at least the number of components specified by
-     * the minimum capacity argument.
+     * Increases the capacity of this list, if necessary, to ensure 
+     * that it can hold at least the number of components specified by 
+     * the minimum capacity argument. 
      *
      * @param   minCapacity   the desired minimum capacity
      * @see Vector#ensureCapacity(int)
      */
     public void ensureCapacity(int minCapacity) {
-        delegate.ensureCapacity(minCapacity);
+	delegate.ensureCapacity(minCapacity);
     }
 
     /**
-     * Sets the size of this list.
+     * Sets the size of this list. 
      *
      * @param   newSize   the new size of this list
      * @see Vector#setSize(int)
      */
     public void setSize(int newSize) {
-        int oldSize = delegate.size();
-        delegate.setSize(newSize);
-        if (oldSize > newSize) {
-            fireIntervalRemoved(this, newSize, oldSize-1);
-        }
-        else if (oldSize < newSize) {
-            fireIntervalAdded(this, oldSize, newSize-1);
-        }
+	int oldSize = delegate.size();
+	delegate.setSize(newSize);
+	if (oldSize > newSize) {
+	    fireIntervalRemoved(this, newSize, oldSize-1);
+	}
+	else if (oldSize < newSize) {
+	    fireIntervalAdded(this, oldSize, newSize-1);
+	}
     }
 
     /**
@@ -144,7 +145,7 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#capacity()
      */
     public int capacity() {
-        return delegate.capacity();
+	return delegate.capacity();
     }
 
     /**
@@ -154,19 +155,19 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#size()
      */
     public int size() {
-        return delegate.size();
+	return delegate.size();
     }
 
     /**
      * Tests whether this list has any components.
      *
-     * @return  <code>true</code> if and only if this list has
+     * @return  <code>true</code> if and only if this list has 
      *          no components, that is, its size is zero;
      *          <code>false</code> otherwise
      * @see Vector#isEmpty()
      */
     public boolean isEmpty() {
-        return delegate.isEmpty();
+	return delegate.isEmpty();
     }
 
     /**
@@ -176,19 +177,19 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#elements()
      */
     public Enumeration<?> elements() {
-        return delegate.elements();
+	return delegate.elements();
     }
 
     /**
      * Tests whether the specified object is a component in this list.
      *
      * @param   elem   an object
-     * @return  <code>true</code> if the specified object
+     * @return  <code>true</code> if the specified object 
      *          is the same as a component in this list
      * @see Vector#contains(Object)
      */
     public boolean contains(Object elem) {
-        return delegate.contains(elem);
+	return delegate.contains(elem);
     }
 
     /**
@@ -200,12 +201,12 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#indexOf(Object)
      */
     public int indexOf(Object elem) {
-        return delegate.indexOf(elem);
+	return delegate.indexOf(elem);
     }
 
     /**
-     * Searches for the first occurrence of <code>elem</code>, beginning
-     * the search at <code>index</code>.
+     * Searches for the first occurrence of <code>elem</code>, beginning 
+     * the search at <code>index</code>. 
      *
      * @param   elem    an desired component
      * @param   index   the index from which to begin searching
@@ -215,7 +216,7 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#indexOf(Object,int)
      */
      public int indexOf(Object elem, int index) {
-        return delegate.indexOf(elem, index);
+	return delegate.indexOf(elem, index);
     }
 
     /**
@@ -227,22 +228,22 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#lastIndexOf(Object)
      */
     public int lastIndexOf(Object elem) {
-        return delegate.lastIndexOf(elem);
+	return delegate.lastIndexOf(elem);
     }
 
     /**
-     * Searches backwards for <code>elem</code>, starting from the
-     * specified index, and returns an index to it.
+     * Searches backwards for <code>elem</code>, starting from the 
+     * specified index, and returns an index to it. 
      *
      * @param  elem    the desired component
      * @param  index   the index to start searching from
-     * @return the index of the last occurrence of the <code>elem</code>
+     * @return the index of the last occurrence of the <code>elem</code> 
      *          in this list at position less than <code>index</code>;
      *          returns <code>-1</code> if the object is not found
      * @see Vector#lastIndexOf(Object,int)
      */
     public int lastIndexOf(Object elem, int index) {
-        return delegate.lastIndexOf(elem, index);
+	return delegate.lastIndexOf(elem, index);
     }
 
     /**
@@ -251,7 +252,7 @@ public class DefaultListModel extends AbstractListModel
      * is negative or not less than the size of the list.
      * <blockquote>
      * <b>Note:</b> Although this method is not deprecated, the preferred
-     *    method to use is <code>get(int)</code>, which implements the
+     *    method to use is <code>get(int)</code>, which implements the 
      *    <code>List</code> interface defined in the 1.2 Collections framework.
      * </blockquote>
      *
@@ -261,7 +262,7 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#elementAt(int)
      */
     public Object elementAt(int index) {
-        return delegate.elementAt(index);
+	return delegate.elementAt(index);
     }
 
     /**
@@ -272,7 +273,7 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#firstElement()
      */
     public Object firstElement() {
-        return delegate.firstElement();
+	return delegate.firstElement();
     }
 
     /**
@@ -284,19 +285,19 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#lastElement()
      */
     public Object lastElement() {
-        return delegate.lastElement();
+	return delegate.lastElement();
     }
 
     /**
-     * Sets the component at the specified <code>index</code> of this
-     * list to be the specified object. The previous component at that
+     * Sets the component at the specified <code>index</code> of this 
+     * list to be the specified object. The previous component at that 
      * position is discarded.
      * <p>
-     * Throws an <code>ArrayIndexOutOfBoundsException</code> if the index
+     * Throws an <code>ArrayIndexOutOfBoundsException</code> if the index 
      * is invalid.
      * <blockquote>
      * <b>Note:</b> Although this method is not deprecated, the preferred
-     *    method to use is <code>set(int,Object)</code>, which implements the
+     *    method to use is <code>set(int,Object)</code>, which implements the 
      *    <code>List</code> interface defined in the 1.2 Collections framework.
      * </blockquote>
      *
@@ -306,18 +307,18 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#setElementAt(Object,int)
      */
     public void setElementAt(Object obj, int index) {
-        delegate.setElementAt(obj, index);
-        fireContentsChanged(this, index, index);
+	delegate.setElementAt(obj, index);
+	fireContentsChanged(this, index, index);
     }
 
     /**
      * Deletes the component at the specified index.
      * <p>
-     * Throws an <code>ArrayIndexOutOfBoundsException</code> if the index
+     * Throws an <code>ArrayIndexOutOfBoundsException</code> if the index 
      * is invalid.
      * <blockquote>
      * <b>Note:</b> Although this method is not deprecated, the preferred
-     *    method to use is <code>remove(int)</code>, which implements the
+     *    method to use is <code>remove(int)</code>, which implements the 
      *    <code>List</code> interface defined in the 1.2 Collections framework.
      * </blockquote>
      *
@@ -326,19 +327,19 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#removeElementAt(int)
      */
     public void removeElementAt(int index) {
-        delegate.removeElementAt(index);
-        fireIntervalRemoved(this, index, index);
+	delegate.removeElementAt(index);
+	fireIntervalRemoved(this, index, index);
     }
 
     /**
-     * Inserts the specified object as a component in this list at the
+     * Inserts the specified object as a component in this list at the 
      * specified <code>index</code>.
      * <p>
-     * Throws an <code>ArrayIndexOutOfBoundsException</code> if the index
+     * Throws an <code>ArrayIndexOutOfBoundsException</code> if the index 
      * is invalid.
      * <blockquote>
      * <b>Note:</b> Although this method is not deprecated, the preferred
-     *    method to use is <code>add(int,Object)</code>, which implements the
+     *    method to use is <code>add(int,Object)</code>, which implements the 
      *    <code>List</code> interface defined in the 1.2 Collections framework.
      * </blockquote>
      *
@@ -349,24 +350,24 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#insertElementAt(Object,int)
      */
     public void insertElementAt(Object obj, int index) {
-        delegate.insertElementAt(obj, index);
-        fireIntervalAdded(this, index, index);
+	delegate.insertElementAt(obj, index);
+	fireIntervalAdded(this, index, index);
     }
 
     /**
-     * Adds the specified component to the end of this list.
+     * Adds the specified component to the end of this list. 
      *
      * @param   obj   the component to be added
      * @see Vector#addElement(Object)
      */
     public void addElement(Object obj) {
-        int index = delegate.size();
-        delegate.addElement(obj);
-        fireIntervalAdded(this, index, index);
+	int index = delegate.size();
+	delegate.addElement(obj);
+	fireIntervalAdded(this, index, index);
     }
 
     /**
-     * Removes the first (lowest-indexed) occurrence of the argument
+     * Removes the first (lowest-indexed) occurrence of the argument 
      * from this list.
      *
      * @param   obj   the component to be removed
@@ -375,12 +376,12 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#removeElement(Object)
      */
     public boolean removeElement(Object obj) {
-        int index = indexOf(obj);
-        boolean rv = delegate.removeElement(obj);
-        if (index >= 0) {
-            fireIntervalRemoved(this, index, index);
-        }
-        return rv;
+	int index = indexOf(obj);
+	boolean rv = delegate.removeElement(obj);
+	if (index >= 0) {
+	    fireIntervalRemoved(this, index, index);
+	}
+	return rv;
     }
 
 
@@ -388,7 +389,7 @@ public class DefaultListModel extends AbstractListModel
      * Removes all components from this list and sets its size to zero.
      * <blockquote>
      * <b>Note:</b> Although this method is not deprecated, the preferred
-     *    method to use is <code>clear</code>, which implements the
+     *    method to use is <code>clear</code>, which implements the 
      *    <code>List</code> interface defined in the 1.2 Collections framework.
      * </blockquote>
      *
@@ -396,11 +397,11 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#removeAllElements()
      */
     public void removeAllElements() {
-        int index1 = delegate.size()-1;
-        delegate.removeAllElements();
-        if (index1 >= 0) {
-            fireIntervalRemoved(this, 0, index1);
-        }
+	int index1 = delegate.size()-1;
+	delegate.removeAllElements();
+	if (index1 >= 0) {
+	    fireIntervalRemoved(this, 0, index1);
+	}
     }
 
 
@@ -411,7 +412,7 @@ public class DefaultListModel extends AbstractListModel
      * @return a String representation of this object
      */
    public String toString() {
-        return delegate.toString();
+	return delegate.toString();
     }
 
 
@@ -427,9 +428,9 @@ public class DefaultListModel extends AbstractListModel
      * @see Vector#toArray()
      */
     public Object[] toArray() {
-        Object[] rv = new Object[delegate.size()];
-        delegate.copyInto(rv);
-        return rv;
+	Object[] rv = new Object[delegate.size()];
+	delegate.copyInto(rv);
+	return rv;
     }
 
     /**
@@ -442,7 +443,7 @@ public class DefaultListModel extends AbstractListModel
      * @param index index of element to return
      */
     public Object get(int index) {
-        return delegate.elementAt(index);
+	return delegate.elementAt(index);
     }
 
     /**
@@ -458,10 +459,10 @@ public class DefaultListModel extends AbstractListModel
      * @return the element previously at the specified position
      */
     public Object set(int index, Object element) {
-        Object rv = delegate.elementAt(index);
-        delegate.setElementAt(element, index);
-        fireContentsChanged(this, index, index);
-        return rv;
+	Object rv = delegate.elementAt(index);
+	delegate.setElementAt(element, index);
+	fireContentsChanged(this, index, index);
+	return rv;
     }
 
     /**
@@ -475,8 +476,8 @@ public class DefaultListModel extends AbstractListModel
      * @param element element to be inserted
      */
     public void add(int index, Object element) {
-        delegate.insertElementAt(element, index);
-        fireIntervalAdded(this, index, index);
+	delegate.insertElementAt(element, index);
+	fireIntervalAdded(this, index, index);
     }
 
     /**
@@ -490,10 +491,10 @@ public class DefaultListModel extends AbstractListModel
      * @param index the index of the element to removed
      */
     public Object remove(int index) {
-        Object rv = delegate.elementAt(index);
-        delegate.removeElementAt(index);
-        fireIntervalRemoved(this, index, index);
-        return rv;
+	Object rv = delegate.elementAt(index);
+	delegate.removeElementAt(index);
+	fireIntervalRemoved(this, index, index);
+	return rv;
     }
 
     /**
@@ -501,11 +502,11 @@ public class DefaultListModel extends AbstractListModel
      * be empty after this call returns (unless it throws an exception).
      */
     public void clear() {
-        int index1 = delegate.size()-1;
-        delegate.removeAllElements();
-        if (index1 >= 0) {
-            fireIntervalRemoved(this, 0, index1);
-        }
+	int index1 = delegate.size()-1;
+	delegate.removeAllElements();
+	if (index1 >= 0) {
+	    fireIntervalRemoved(this, 0, index1);
+	}
     }
 
     /**
@@ -521,16 +522,16 @@ public class DefaultListModel extends AbstractListModel
      *
      * @param      fromIndex the index of the lower end of the range
      * @param      toIndex   the index of the upper end of the range
-     * @see        #remove(int)
+     * @see	   #remove(int)
      */
     public void removeRange(int fromIndex, int toIndex) {
-        if (fromIndex > toIndex) {
-            throw new IllegalArgumentException("fromIndex must be <= toIndex");
-        }
-        for(int i = toIndex; i >= fromIndex; i--) {
-            delegate.removeElementAt(i);
-        }
-        fireIntervalRemoved(this, fromIndex, toIndex);
+	if (fromIndex > toIndex) {
+	    throw new IllegalArgumentException("fromIndex must be <= toIndex");
+	}
+	for(int i = toIndex; i >= fromIndex; i--) {
+	    delegate.removeElementAt(i);
+	}
+	fireIntervalRemoved(this, fromIndex, toIndex);
     }
 
     /*

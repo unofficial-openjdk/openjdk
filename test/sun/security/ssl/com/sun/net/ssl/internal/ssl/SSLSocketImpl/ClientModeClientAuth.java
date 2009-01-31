@@ -66,54 +66,54 @@ public class ClientModeClientAuth {
      */
     void doServerSide() throws Exception {
 
-        ServerSocket serverSocket = null;
-        serverSocket = new ServerSocket(serverPort);
-        serverPort = serverSocket.getLocalPort();
+	ServerSocket serverSocket = null;
+	serverSocket = new ServerSocket(serverPort);
+	serverPort = serverSocket.getLocalPort();
 
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady = true;
+	/*
+	 * Signal Client, we're ready for his connect.
+	 */
+	serverReady = true;
 
-        Socket socket = serverSocket.accept();
-        OutputStream out = socket.getOutputStream();
-        InputStream in = socket.getInputStream();
+	Socket socket = serverSocket.accept();
+	OutputStream out = socket.getOutputStream();
+	InputStream in = socket.getInputStream();
 
-        /*
-         * send data to make sure we are ok.
-         */
-        out.write(85);
-        out.flush();
-        in.read();
+	/*
+	 * send data to make sure we are ok.
+	 */
+	out.write(85);
+	out.flush();
+	in.read();
 
-        SSLSocketFactory sslsf =
-            (SSLSocketFactory) SSLSocketFactory.getDefault();
-        SSLSocket sslSocket =
-            (SSLSocket) sslsf.createSocket(
-                socket, socket.getInetAddress().getHostName(),
-                socket.getPort(), true);
+	SSLSocketFactory sslsf =
+	    (SSLSocketFactory) SSLSocketFactory.getDefault();
+	SSLSocket sslSocket =
+	    (SSLSocket) sslsf.createSocket(
+		socket, socket.getInetAddress().getHostName(),
+		socket.getPort(), true);
 
-        sslSocket.setUseClientMode(false);
-        sslSocket.setNeedClientAuth(true);
+	sslSocket.setUseClientMode(false);
+	sslSocket.setNeedClientAuth(true);
 
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
+	InputStream sslIS = sslSocket.getInputStream();
+	OutputStream sslOS = sslSocket.getOutputStream();
 
-        sslOS.write(85);
-        sslOS.flush();
-        sslIS.read();
+	sslOS.write(85);
+	sslOS.flush();
+	sslIS.read();
 
-        System.out.println("About to get PeerCertificates");
-        Certificate[] certs =
-            sslSocket.getSession().getPeerCertificates();
-        if (certs[0] instanceof X509Certificate) {
-            System.out.println("Peer: " +
-                ((X509Certificate)certs[0]).getSubjectDN());
-        }
+	System.out.println("About to get PeerCertificates");
+	Certificate[] certs =
+	    sslSocket.getSession().getPeerCertificates();
+	if (certs[0] instanceof X509Certificate) {
+	    System.out.println("Peer: " +
+		((X509Certificate)certs[0]).getSubjectDN());
+	}
 
-        sslIS.close();
-        sslOS.close();
-        sslSocket.close();
+	sslIS.close();
+	sslOS.close();
+	sslSocket.close();
     }
 
     /*
@@ -121,40 +121,40 @@ public class ClientModeClientAuth {
      */
     void doClientSide() throws Exception {
 
-        /*
-         * Wait for host to set up his port.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
-        }
+	/*
+	 * Wait for host to set up his port.
+	 */
+	while (!serverReady) {
+	    Thread.sleep(50);
+	}
 
-        Socket socket = new Socket("localhost", serverPort);
-        InputStream in = socket.getInputStream();
-        OutputStream out = socket.getOutputStream();
+	Socket socket = new Socket("localhost", serverPort);
+	InputStream in = socket.getInputStream();
+	OutputStream out = socket.getOutputStream();
 
-        in.read();
-        out.write(280);
-        out.flush();
+	in.read();
+	out.write(280);
+	out.flush();
 
-        SSLSocketFactory sslsf =
-            (SSLSocketFactory) SSLSocketFactory.getDefault();
+	SSLSocketFactory sslsf =
+	    (SSLSocketFactory) SSLSocketFactory.getDefault();
 
-        SSLSocket sslSocket = (SSLSocket)
-            sslsf.createSocket(socket, socket.getInetAddress().getHostName(),
-                socket.getPort(), true);
+	SSLSocket sslSocket = (SSLSocket)
+	    sslsf.createSocket(socket, socket.getInetAddress().getHostName(),
+		socket.getPort(), true);
 
-        sslSocket.setUseClientMode(true);
+	sslSocket.setUseClientMode(true);
 
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
+	InputStream sslIS = sslSocket.getInputStream();
+	OutputStream sslOS = sslSocket.getOutputStream();
 
-        sslIS.read();
-        sslOS.write(280);
-        sslOS.flush();
+	sslIS.read();
+	sslOS.write(280);
+	sslOS.flush();
 
-        sslIS.close();
-        sslOS.close();
-        sslSocket.close();
+	sslIS.close();
+	sslOS.close();
+	sslSocket.close();
     }
 
     /*
@@ -169,21 +169,21 @@ public class ClientModeClientAuth {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-        String keyFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + keyStoreFile;
-        String trustFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + trustStoreFile;
+	String keyFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + keyStoreFile;
+	String trustFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + trustStoreFile;
 
-        System.setProperty("javax.net.ssl.keyStore", keyFilename);
-        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-        System.setProperty("javax.net.ssl.trustStore", trustFilename);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+	System.setProperty("javax.net.ssl.keyStore", keyFilename);
+	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+	System.setProperty("javax.net.ssl.trustStore", trustFilename);
+	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-        /*
-         * Start the tests.
-         */
+	/*
+	 * Start the tests.
+	 */
         new ClientModeClientAuth();
     }
 
@@ -191,78 +191,78 @@ public class ClientModeClientAuth {
     Thread serverThread = null;
 
     ClientModeClientAuth() throws Exception {
-        if (separateServerThread) {
-            startServer(true);
-            startClient(false);
-        } else {
-            startClient(true);
-            startServer(false);
-        }
+	if (separateServerThread) {
+	    startServer(true);
+	    startClient(false);
+	} else {
+	    startClient(true);
+	    startServer(false);
+	}
 
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
+	/*
+	 * Wait for other side to close down.
+	 */
+	if (separateServerThread) {
+	    serverThread.join();
+	} else {
+	    clientThread.join();
+	}
 
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null)
-            throw serverException;
-        if (clientException != null)
-            throw clientException;
+	/*
+	 * When we get here, the test is pretty much over.
+	 *
+	 * If the main thread excepted, that propagates back
+	 * immediately.  If the other thread threw an exception, we
+	 * should report back.
+	 */
+	if (serverException != null)
+	    throw serverException;
+	if (clientException != null)
+	    throw clientException;
     }
 
     void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.out.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide();
-        }
+	if (newThread) {
+	    serverThread = new Thread() {
+		public void run() {
+		    try {
+			doServerSide();
+		    } catch (Exception e) {
+			/*
+			 * Our server thread just died.
+			 *
+			 * Release the client, if not active already...
+			 */
+			System.out.println("Server died...");
+			serverReady = true;
+			serverException = e;
+		    }
+		}
+	    };
+	    serverThread.start();
+	} else {
+	    doServerSide();
+	}
     }
 
     void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.out.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+	if (newThread) {
+	    clientThread = new Thread() {
+		public void run() {
+		    try {
+			doClientSide();
+		    } catch (Exception e) {
+			/*
+			 * Our client thread just died.
+			 */
+			System.out.println("Client died...");
+			clientException = e;
+		    }
+		}
+	    };
+	    clientThread.start();
+	} else {
+	    doClientSide();
+	}
     }
 }

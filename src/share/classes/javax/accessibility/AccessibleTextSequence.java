@@ -23,8 +23,8 @@
  * have any questions.
  */
 package javax.accessibility;
-
-
+ 
+ 
 /**
  * <P>The AccessibleTextSequence provides information about
  * a contiguous sequence of text.
@@ -35,9 +35,10 @@ package javax.accessibility;
  * @see AccessibleContext#getAccessibleText
  * @see AccessibleAttributeSequence
  *
+ * @version      %I% %G%
  * @author       Lynn Monsanto
  */
-
+ 
 /**
  * This class collects together key details of a span of text.  It
  * is used by implementors of the class <code>AccessibleExtendedText</code> in
@@ -74,3 +75,4 @@ public class AccessibleTextSequence {
         text = txt;
     }
 };
+

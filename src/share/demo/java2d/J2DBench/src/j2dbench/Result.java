@@ -62,206 +62,206 @@ public class Result {
     Throwable error;
 
     public Result(Test test) {
-        this.test = test;
-        this.repsPerRun = 1;
-        this.unitsPerRep = 1;
-        times = new Vector();
+	this.test = test;
+	this.repsPerRun = 1;
+	this.unitsPerRep = 1;
+	times = new Vector();
     }
 
     public void setReps(int reps) {
-        this.repsPerRun = reps;
+	this.repsPerRun = reps;
     }
 
     public void setUnits(int units) {
-        this.unitsPerRep = units;
+	this.unitsPerRep = units;
     }
 
     public void setUnitName(String name) {
-        this.unitname = name;
+	this.unitname = name;
     }
 
     public void addTime(long time) {
-        if (J2DBench.printresults.isEnabled()) {
-            System.out.println(test+" took "+time+"ms for "+
-                               getRepsPerRun()+" reps");
-        }
-        times.addElement(new Long(time));
+	if (J2DBench.printresults.isEnabled()) {
+	    System.out.println(test+" took "+time+"ms for "+
+			       getRepsPerRun()+" reps");
+	}
+	times.addElement(new Long(time));
     }
 
     public void setError(Throwable t) {
-        this.error = t;
+	this.error = t;
     }
 
     public void setModifiers(Hashtable modifiers) {
-        this.modifiers = modifiers;
+	this.modifiers = modifiers;
     }
 
     public Throwable getError() {
-        return error;
+	return error;
     }
 
     public int getRepsPerRun() {
-        return repsPerRun;
+	return repsPerRun;
     }
 
     public int getUnitsPerRep() {
-        return unitsPerRep;
+	return unitsPerRep;
     }
 
     public long getUnitsPerRun() {
-        return ((long) getRepsPerRun()) * ((long) getUnitsPerRep());
+	return ((long) getRepsPerRun()) * ((long) getUnitsPerRep());
     }
 
     public Hashtable getModifiers() {
-        return modifiers;
+	return modifiers;
     }
 
     public long getNumRuns() {
-        return times.size();
+	return times.size();
     }
 
     public long getTime(int index) {
-        return ((Long) times.elementAt(index)).longValue();
+	return ((Long) times.elementAt(index)).longValue();
     }
 
     public double getRepsPerSecond(int index) {
-        return (getRepsPerRun() * 1000.0) / getTime(index);
+	return (getRepsPerRun() * 1000.0) / getTime(index);
     }
 
     public double getUnitsPerSecond(int index) {
-        return (getUnitsPerRun() * 1000.0) / getTime(index);
+	return (getUnitsPerRun() * 1000.0) / getTime(index);
     }
 
     public long getTotalReps() {
-        return getRepsPerRun() * getNumRuns();
+	return getRepsPerRun() * getNumRuns();
     }
 
     public long getTotalUnits() {
-        return getUnitsPerRun() * getNumRuns();
+	return getUnitsPerRun() * getNumRuns();
     }
 
     public long getTotalTime() {
-        long totalTime = 0;
-        for (int i = 0; i < times.size(); i++) {
-            totalTime += getTime(i);
-        }
-        return totalTime;
+	long totalTime = 0;
+	for (int i = 0; i < times.size(); i++) {
+	    totalTime += getTime(i);
+	}
+	return totalTime;
     }
 
     public double getAverageRepsPerSecond() {
-        return (getTotalReps() * 1000.0) / getTotalTime();
+	return (getTotalReps() * 1000.0) / getTotalTime();
     }
 
     public double getAverageUnitsPerSecond() {
-        return (getTotalUnits() * 1000.0) / getTotalTime();
+	return (getTotalUnits() * 1000.0) / getTotalTime();
     }
 
     public String getAverageString() {
-        double units = (useUnits ? getTotalUnits() : getTotalReps());
-        double time = getTotalTime();
-        if (invertRate) {
-            double rate = time / units;
-            String prefix = "";
-            switch (timeScale) {
-            case SECONDS_WHOLE:
-                rate /= 1000;
-                break;
-            case SECONDS_MILLIS:
-                prefix = "m";
-                break;
-            case SECONDS_MICROS:
-                rate *= 1000.0;
-                prefix = "u";
-                break;
-            case SECONDS_NANOS:
-                rate *= 1000000.0;
-                prefix = "n";
-                break;
-            case SECONDS_AUTO:
-                rate /= 1000.0;
-                if (rate < 1.0) {
-                    rate *= 1000.0;
-                    prefix = "m";
-                    if (rate < 1.0) {
-                        rate *= 1000.0;
-                        prefix = "u";
-                        if (rate < 1.0) {
-                            rate *= 1000.0;
-                            prefix = "n";
-                        }
-                    }
-                }
-                break;
-            }
-            return rate+" "+prefix+"secs/"+(useUnits ? unitname : "op");
-        } else {
-            double rate = units / (time / 1000.0);
-            String prefix = "";
-            switch (unitScale) {
-            case UNITS_WHOLE:
-                break;
-            case UNITS_THOUSANDS:
-                rate /= 1000.0;
-                prefix = "K";
-                break;
-            case UNITS_MILLIONS:
-                rate /= 1000000.0;
-                prefix = "M";
-                break;
-            case UNITS_AUTO:
-                if (rate > 1000.0) {
-                    rate /= 1000.0;
-                    prefix = "K";
-                    if (rate > 1000.0) {
-                        rate /= 1000.0;
-                        prefix = "M";
-                    }
-                }
-                break;
-            }
-            return rate+" "+prefix+(useUnits ? unitname : "op")+"s/sec";
-        }
+	double units = (useUnits ? getTotalUnits() : getTotalReps());
+	double time = getTotalTime();
+	if (invertRate) {
+	    double rate = time / units;
+	    String prefix = "";
+	    switch (timeScale) {
+	    case SECONDS_WHOLE:
+		rate /= 1000;
+		break;
+	    case SECONDS_MILLIS:
+		prefix = "m";
+		break;
+	    case SECONDS_MICROS:
+		rate *= 1000.0;
+		prefix = "u";
+		break;
+	    case SECONDS_NANOS:
+		rate *= 1000000.0;
+		prefix = "n";
+		break;
+	    case SECONDS_AUTO:
+		rate /= 1000.0;
+		if (rate < 1.0) {
+		    rate *= 1000.0;
+		    prefix = "m";
+		    if (rate < 1.0) {
+			rate *= 1000.0;
+			prefix = "u";
+			if (rate < 1.0) {
+			    rate *= 1000.0;
+			    prefix = "n";
+			}
+		    }
+		}
+		break;
+	    }
+	    return rate+" "+prefix+"secs/"+(useUnits ? unitname : "op");
+	} else {
+	    double rate = units / (time / 1000.0);
+	    String prefix = "";
+	    switch (unitScale) {
+	    case UNITS_WHOLE:
+		break;
+	    case UNITS_THOUSANDS:
+		rate /= 1000.0;
+		prefix = "K";
+		break;
+	    case UNITS_MILLIONS:
+		rate /= 1000000.0;
+		prefix = "M";
+		break;
+	    case UNITS_AUTO:
+		if (rate > 1000.0) {
+		    rate /= 1000.0;
+		    prefix = "K";
+		    if (rate > 1000.0) {
+			rate /= 1000.0;
+			prefix = "M";
+		    }
+		}
+		break;
+	    }
+	    return rate+" "+prefix+(useUnits ? unitname : "op")+"s/sec";
+	}
     }
 
     public void summarize() {
-        if (error != null) {
-            System.out.println(test+" skipped due to "+error);
-            error.printStackTrace(System.out);
-        } else {
-            System.out.println(test+" averaged "+getAverageString());
-        }
-        if (true) {
-            Enumeration enum_ = modifiers.keys();
-            System.out.print("    with");
-            String sep = " ";
-            while (enum_.hasMoreElements()) {
-                Modifier mod = (Modifier) enum_.nextElement();
-                Object v = modifiers.get(mod);
-                System.out.print(sep);
-                System.out.print(mod.getAbbreviatedModifierDescription(v));
-                sep = ", ";
-            }
-            System.out.println();
-        }
+	if (error != null) {
+	    System.out.println(test+" skipped due to "+error);
+	    error.printStackTrace(System.out);
+	} else {
+	    System.out.println(test+" averaged "+getAverageString());
+	}
+	if (true) {
+	    Enumeration enum_ = modifiers.keys();
+	    System.out.print("    with");
+	    String sep = " ";
+	    while (enum_.hasMoreElements()) {
+		Modifier mod = (Modifier) enum_.nextElement();
+		Object v = modifiers.get(mod);
+		System.out.print(sep);
+		System.out.print(mod.getAbbreviatedModifierDescription(v));
+		sep = ", ";
+	    }
+	    System.out.println();
+	}
     }
 
     public void write(PrintWriter pw) {
-        pw.println("  <result "+
-                   "num-reps=\""+getRepsPerRun()+"\" "+
-                   "num-units=\""+getUnitsPerRep()+"\" "+
-                   "name=\""+test.getTreeName()+"\">");
-        Enumeration enum_ = modifiers.keys();
-        while (enum_.hasMoreElements()) {
-            Modifier mod = (Modifier) enum_.nextElement();
-            Object v = modifiers.get(mod);
-            String val = mod.getModifierValueName(v);
-            pw.println("    <option "+
-                       "key=\""+mod.getTreeName()+"\" "+
-                       "value=\""+val+"\"/>");
-        }
-        for (int i = 0; i < getNumRuns(); i++) {
-            pw.println("    <time value=\""+getTime(i)+"\"/>");
-        }
-        pw.println("  </result>");
+	pw.println("  <result "+
+		   "num-reps=\""+getRepsPerRun()+"\" "+
+		   "num-units=\""+getUnitsPerRep()+"\" "+
+		   "name=\""+test.getTreeName()+"\">");
+	Enumeration enum_ = modifiers.keys();
+	while (enum_.hasMoreElements()) {
+	    Modifier mod = (Modifier) enum_.nextElement();
+	    Object v = modifiers.get(mod);
+	    String val = mod.getModifierValueName(v);
+	    pw.println("    <option "+
+		       "key=\""+mod.getTreeName()+"\" "+
+		       "value=\""+val+"\"/>");
+	}
+	for (int i = 0; i < getNumRuns(); i++) {
+	    pw.println("    <time value=\""+getTime(i)+"\"/>");
+	}
+	pw.println("  </result>");
     }
 }

@@ -49,10 +49,10 @@ public class RegionSpanIterator implements SpanIterator {
 
 /*
     REMIND: For native implementation
-    long pData;     // Private storage of rect info
+    long pData;	    // Private storage of rect info
 
     static {
-        initIDs();
+	initIDs();
     }
 
     public static native void initIDs();
@@ -62,46 +62,46 @@ public class RegionSpanIterator implements SpanIterator {
      * Constructs an instance based on the given Region
      */
     public RegionSpanIterator(Region r) {
-        int[] bounds = new int[4];
+	int[] bounds = new int[4];
 
-        r.getBounds(bounds);
-        lox = bounds[0];
-        loy = bounds[1];
-        hix = bounds[2];
-        hiy = bounds[3];
+	r.getBounds(bounds);
+	lox = bounds[0];
+	loy = bounds[1];
+	hix = bounds[2];
+	hiy = bounds[3];
         isrect = r.isRectangular();
 
-        ri = r.getIterator();
+	ri = r.getIterator();
     }
-
+ 
     /**
      * Gets the bbox of the available region spans.
      */
     public void getPathBox(int pathbox[]) {
-        pathbox[0] = lox;
-        pathbox[1] = loy;
-        pathbox[2] = hix;
-        pathbox[3] = hiy;
+	pathbox[0] = lox;
+	pathbox[1] = loy;
+	pathbox[2] = hix;
+	pathbox[3] = hiy;
     }
-
+ 
     /**
      * Intersect the box used for clipping the output spans with the
      * given box.
      */
     public void intersectClipBox(int clox, int cloy, int chix, int chiy) {
-        if (clox > lox) {
-            lox = clox;
-        }
-        if (cloy > loy) {
-            loy = cloy;
-        }
-        if (chix < hix) {
-            hix = chix;
-        }
-        if (chiy < hiy) {
-            hiy = chiy;
-        }
-        done = lox >= hix || loy >= hiy;
+	if (clox > lox) {
+	    lox = clox;
+	}
+	if (cloy > loy) {
+	    loy = cloy;
+	}
+	if (chix < hix) {
+	    hix = chix;
+	}
+	if (chiy < hiy) {
+	    hiy = chiy;
+	}
+	done = lox >= hix || loy >= hiy;
     }
 
     /**
@@ -110,10 +110,10 @@ public class RegionSpanIterator implements SpanIterator {
      */
     public boolean nextSpan(int spanbox[]) {
 
-        // Quick test for end conditions
-        if (done) {
-            return false;
-        }
+	// Quick test for end conditions
+	if (done) {
+	    return false;
+	}
 
         // If the Region is rectangular, we store our bounds (possibly
         // clipped via intersectClipBox()) in spanbox and return true
@@ -125,54 +125,54 @@ public class RegionSpanIterator implements SpanIterator {
             return true;
         }
 
-        // Local cache of current span's bounds
-        int curlox, curhix;
-        int curloy = this.curloy;
-        int curhiy = this.curhiy;
+	// Local cache of current span's bounds
+	int curlox, curhix;
+	int curloy = this.curloy;
+	int curhiy = this.curhiy;
 
-        while (true) {
-            if (!ri.nextXBand(spanbox)) {
-                if (!ri.nextYRange(spanbox)) {
+	while (true) {
+	    if (!ri.nextXBand(spanbox)) {
+		if (!ri.nextYRange(spanbox)) {
                     done = true;
                     return false;
-                }
-                // Update the current y band and clip it
-                curloy = spanbox[1];
-                curhiy = spanbox[3];
-                if (curloy < loy) {
-                    curloy = loy;
-                }
-                if (curhiy > hiy) {
-                    curhiy = hiy;
-                }
-                // Check for moving below the clip rect
-                if (curloy >= hiy) {
-                    done = true;
-                    return false;
-                }
-                continue;
-            }
-            // Clip the x box
-            curlox = spanbox[0];
-            curhix = spanbox[2];
-            if (curlox < lox) {
-                curlox = lox;
-            }
-            if (curhix > hix) {
-                curhix = hix;
-            }
-            // If it's non- box, we're done
-            if (curlox < curhix && curloy < curhiy) {
-                break;
-            }
-        }
+		}
+		// Update the current y band and clip it
+		curloy = spanbox[1];
+		curhiy = spanbox[3];
+		if (curloy < loy) {
+		    curloy = loy;
+		}
+		if (curhiy > hiy) {
+		    curhiy = hiy;
+		}
+		// Check for moving below the clip rect
+		if (curloy >= hiy) {
+		    done = true;
+		    return false;
+		}
+		continue;
+	    }
+	    // Clip the x box	    
+	    curlox = spanbox[0];
+	    curhix = spanbox[2];
+	    if (curlox < lox) {
+		curlox = lox;
+	    }
+	    if (curhix > hix) {
+		curhix = hix;
+	    }
+	    // If it's non- box, we're done
+	    if (curlox < curhix && curloy < curhiy) {
+		break;
+	    }
+	}
 
-        // Update the result and the store y range
-        spanbox[0] = curlox;
-        spanbox[1] = this.curloy = curloy;
-        spanbox[2] = curhix;
-        spanbox[3] = this.curhiy = curhiy;
-        return true;
+	// Update the result and the store y range
+	spanbox[0] = curlox;
+	spanbox[1] = this.curloy = curloy;
+	spanbox[2] = curhix;
+	spanbox[3] = this.curhiy = curhiy;
+	return true;
     }
 
     /**
@@ -180,7 +180,7 @@ public class RegionSpanIterator implements SpanIterator {
      * whose Y range is completely above the indicated Y coordinate.
      */
     public void skipDownTo(int y) {
-        loy = y;
+	loy = y;
     }
 
     /**
@@ -195,7 +195,7 @@ public class RegionSpanIterator implements SpanIterator {
      * </pre>
      */
     public long getNativeIterator() {
-        return 0;
+	return 0;
     }
 
     /*
@@ -204,7 +204,7 @@ public class RegionSpanIterator implements SpanIterator {
     public native void dispose();
 
     protected void finalize() {
-        dispose();
+	dispose();
     }
      */
 }

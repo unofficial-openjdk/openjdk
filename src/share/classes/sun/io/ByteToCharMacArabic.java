@@ -32,6 +32,7 @@ import sun.nio.cs.ext.MacArabic;
  * A table to convert to MacArabic to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacArabic extends ByteToCharSingleByte {

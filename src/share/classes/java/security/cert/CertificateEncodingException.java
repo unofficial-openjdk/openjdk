@@ -30,6 +30,7 @@ package java.security.cert;
  * occurs while attempting to encode a certificate.
  *
  * @author Hemma Prafullchandra
+ * %I%
  */
 public class CertificateEncodingException extends CertificateException {
 
@@ -48,7 +49,7 @@ public class CertificateEncodingException extends CertificateException {
      * Constructs a CertificateEncodingException with the specified detail
      * message. A detail message is a String that describes this
      * particular exception.
-     *
+     *   
      * @param message the detail message.
      */
     public CertificateEncodingException(String message) {

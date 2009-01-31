@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,25 +36,25 @@ import java.lang.reflect.Modifier;
 
 /**
  * This abstract class enables one to subclass ObjectInputStream
- * for the purpose of re-implementing serialization while preserving the
- * existing public serialization API. A complimentary subclass of
+ * for the purpose of re-implementing serialization while preserving the 
+ * existing public serialization API. A complimentary subclass of 
  * AbstractObjectInputStream must also be implemented.<p>
  *
  * Since serialization must override java access rules in order to
  * access private, protected and package accessible Serializable fields,
  * only trusted classes are allowed to subclass AbstractObjectInputStream.
  * Subclasses of AbstractObjectInputStream must define SerializablePermission
- * "enableAbstractSubclass" within a security policy file or this
- * constructor will throw a SecurityException. Implementations of this
+ * "enableAbstractSubclass" within a security policy file or this 
+ * constructor will throw a SecurityException. Implementations of this 
  * class should protect themselves from being subclassed in a way that will
- * provide access to object references and other sensitive info.
+ * provide access to object references and other sensitive info. 
  * Specifically, readObjectOverride() should be made final.
  * <p>
  *
  * A subclass of AbstractObjectInputStream deserializes primitive data and
  * objects previously written by a subclass of AbstractObjectOutputStream.
- * The subclass ensures that the types of all objects in the graph created
- * from the stream match the classes present in the Java Virtual Machine.
+ * The subclass ensures that the types of all objects in the graph created 
+ * from the stream match the classes present in the Java Virtual Machine.  
  * Classes are loaded as required using the standard mechanisms. <p>
  *
  * Only objects that support the java.io.Serializable or
@@ -68,7 +68,7 @@ import java.lang.reflect.Modifier;
  *
  * Primitive data types can be read from the stream using the appropriate
  * method on DataInput. <p>
- *
+ * 
  * The default deserialization mechanism for objects restores the
  * contents of each field to the value and type it had when it was written.
  * References to other objects cause those
@@ -102,7 +102,7 @@ import java.lang.reflect.Modifier;
  * private void writeObject(java.io.ObjectOutputStream stream)
  *     throws IOException;
  * private void readObject(java.io.ObjectInputStream stream)
- *     throws IOException, ClassNotFoundException;
+ *     throws IOException, ClassNotFoundException; 
  * </PRE><p>
  *
  * The readObject method is responsible for reading and restoring the
@@ -118,7 +118,7 @@ import java.lang.reflect.Modifier;
  * object that does not implement the java.io.Serializable interface.
  * Subclasses of Objects that are not serializable can be
  * serializable. In this case the non-serializable class must have an
- * accessible no-arg constructor to allow its fields to be initialized.
+ * accessible no-arg constructor to allow its fields to be initialized.  
  * In this case it is the responsibility of the subclass to save and restore
  * the state of the non-serializable class. It is frequently the case that
  * the fields of that class are accessible (public, package, or
@@ -144,7 +144,7 @@ import java.lang.reflect.Modifier;
  * @since   JDK1.2
  */
 abstract public class AbstractObjectInputStream extends ObjectInputStream
-{
+{ 
     protected InputStream in;
     /**
      * Create an ObjectInputStream that reads from the specified InputStream.<p>
@@ -153,7 +153,7 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      * subclassing.
      *
      * <PRE>
-     *     permission SerializablePermission "enableAbstractSubclass" ;
+     * 	   permission SerializablePermission "enableAbstractSubclass" ;
      * </PRE><p>
      *
      * @exception StreamCorruptedException The version or magic number are incorrect.
@@ -162,10 +162,10 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      *            "enableAbstractSubclass".
      */
     public AbstractObjectInputStream(InputStream in)
-        throws IOException, StreamCorruptedException
-        {
-            this.in = in;
-        }
+	throws IOException, StreamCorruptedException
+	{
+	    this.in = in;
+	}
 
     abstract public void close() throws IOException;
 
@@ -176,11 +176,11 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      * Read an object from the ObjectInputStream.<p>
      *
      * NOTE: The override method of this class should have the modifier final.<p>
-     *
+     * 
      * Default deserializing for a class can be
      * overriden by defining a readObject method for the Serializable class.
      * Objects referenced by this object are read transitively so
-     * that a complete equivalent graph of objects is reconstructed by
+     * that a complete equivalent graph of objects is reconstructed by 
      * readObject. <p>
      *
      * The root object is completely restored when all of its fields
@@ -201,7 +201,7 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      *     serialization.
      * @exception StreamCorruptedException Control information in the
      *     stream is inconsistent.
-     * @exception OptionalDataException Primitive data was found in the
+     * @exception OptionalDataException Primitive data was found in the 
      * stream instead of objects.
      * @exception IOException Any of the usual Input/Output related exceptions.
      *
@@ -213,15 +213,15 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      * @see java.io.ObjectInputStream#resolveClass(ObjectStreamClass)
      */
     protected Object readObjectOverride()
-        throws OptionalDataException, ClassNotFoundException, IOException {
-            return null;
+	throws OptionalDataException, ClassNotFoundException, IOException {
+	    return null;
     }
 
     /**
      * Read the Serializable fields of the current object from this stream.<p>
-     *
-     * Note: The object being deserialized is not passed to this method.
-     *       For security purposes, the initial implementation maintained
+     * 
+     * Note: The object being deserialized is not passed to this method. 
+     *       For security purposes, the initial implementation maintained 
      *       the state of the last object to be read by readObject
      *       only allowed this method to be invoked for this object.<p>
      *
@@ -231,14 +231,14 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      *                                   found in the local JVM.
      */
     abstract public void defaultReadObject()
-        throws IOException, ClassNotFoundException, NotActiveException;
+	throws IOException, ClassNotFoundException, NotActiveException;
 
     /**
      * Enable allocation for subclass reimplementing serialization.<p>
      *
-     * Note: Default allocation does not have the java access priviledges
+     * Note: Default allocation does not have the java access priviledges 
      * to invoke package and protected constructors.<p>
-     *
+     * 
      * Security alert: this JVM native method is private within ObjectInputStream; however,
      *                 it was anticipated that re-implementors of serialization would need
      *                 access to this method. Is this allocator considered a security problem? <p>
@@ -247,59 +247,59 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
      * @param ofClass    the type of the object to allocate.
      * @return   an object of <STRONG>ofClass</STRONG> type.
      *
-     * @exception IllegalAccessException if no-arg constructor of
-     *            <STRONG>ctorClass</STRONG> is not accessible from
+     * @exception IllegalAccessException if no-arg constructor of 
+     *            <STRONG>ctorClass</STRONG> is not accessible from 
      *            <STRONG>ofClass</STRONG>.
      * @exception InstantiationException  TBD.
      */
     final protected native Object
         allocateNewObject(Class ofClass, Class ctorClass)
-        throws InstantiationException, IllegalAccessException;
+	throws InstantiationException, IllegalAccessException;
 
     /**
      * Enable allocation for subclass reimplementing serialization.<p>
      *
-     * Note: Default allocation does not have the java access priviledges
+     * Note: Default allocation does not have the java access priviledges 
      * to invoke package and protected constructors.<p>
      *
      * Security alert: this JVM native method is private within ObjectInputStream; however,
      *                 it was anticipated that re-implementors of serialization would need
      *                 access to this method. Is this allocator considered a security problem?<p>
      *
-     *
+     * 
      * @exception IllegalAccessException  TBD.
      * @exception InstantiationException  TBD.
      */
     final protected native Object
         allocateNewArray(Class componentClass, int length)
-        throws InstantiationException, IllegalAccessException;
+	throws InstantiationException, IllegalAccessException;
 
     /**
      * Reads the Serializable fields from the stream into a buffer
      * and makes the fields available by name.
-     *
+     * 
      * @exception java.lang.ClassNotFoundException if the class of a serialized
      *              object could not be found.
      * @exception IOException        if an I/O error occurs.
      * @exception NotActiveException if readObject() is not currently active.
      */
     abstract public ObjectInputStream.GetField readFields()
-        throws IOException, ClassNotFoundException, NotActiveException;
+    	throws IOException, ClassNotFoundException, NotActiveException;
 
     abstract protected boolean enableResolveObject(boolean enable) throws SecurityException;
 
     abstract public void registerValidation(ObjectInputValidation obj,
-                                            int prio)
-        throws NotActiveException, InvalidObjectException;
+					    int prio)
+	throws NotActiveException, InvalidObjectException;
 
 
     /****************************************************************/
 
     /* Use DataInput methods to read primitive data from the stream. */
-
+ 
     abstract public int read() throws IOException;
-    abstract public int read(byte[] data, int offset, int length)
-        throws IOException;
+    abstract public int read(byte[] data, int offset, int length) 
+	throws IOException;
     abstract public boolean readBoolean() throws IOException;
     abstract public byte readByte() throws IOException;
     abstract public int readUnsignedByte()  throws IOException;
@@ -319,3 +319,4 @@ abstract public class AbstractObjectInputStream extends ObjectInputStream
     /* @deprecated */
     abstract public String readLine() throws IOException;
 };
+

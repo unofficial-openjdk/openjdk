@@ -24,13 +24,13 @@
  */
 package javax.swing;
 
-import java.lang.ref.WeakReference;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.beans.PropertyChangeEvent;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
@@ -44,11 +44,11 @@ import sun.swing.AccumulativeRunnable;
 /**
  * An abstract class to perform lengthy GUI-interacting tasks in a
  * dedicated thread.
- *
+ * 
  * <p>
  * When writing a multi-threaded application using Swing, there are
  * two constraints to keep in mind:
- * (refer to
+ * (refer to 
  * <a href="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">
  *   How to Use Threads
  * </a> for more details):
@@ -71,17 +71,17 @@ import sun.swing.AccumulativeRunnable;
  * tricky to implement.
  *
  * <p>
- * {@code SwingWorker} is designed for situations where you need to have a long
- * running task run in a background thread and provide updates to the UI
- * either when done, or while processing.
- * Subclasses of {@code SwingWorker} must implement
+ * {@code SwingWorker} is designed for situations where you need to have a long 
+ * running task run in a background thread and provide updates to the UI 
+ * either when done, or while processing. 
+ * Subclasses of {@code SwingWorker} must implement 
  * the {@link #doInBackground} method to perform the background computation.
  *
  *
  * <p>
  * <b>Workflow</b>
  * <p>
- * There are three threads involved in the life cycle of a
+ * There are three threads involved in the life cycle of a 
  * {@code SwingWorker} :
  * <ul>
  * <li>
@@ -93,7 +93,7 @@ import sun.swing.AccumulativeRunnable;
  * complete using the {@link #get get} methods.
  * <li>
  * <p>
- * <i>Worker</i> thread: The {@link #doInBackground}
+ * <i>Worker</i> thread: The {@link #doInBackground} 
  * method is called on this thread.
  * This is where all background activities should happen. To notify
  * {@code PropertyChangeListeners} about bound properties changes use the
@@ -107,10 +107,10 @@ import sun.swing.AccumulativeRunnable;
  * {@link #process process} and {@link #done} methods and notifies
  * any {@code PropertyChangeListeners} on this thread.
  * </ul>
- *
+ * 
  * <p>
  * Often, the <i>Current</i> thread is the <i>Event Dispatch
- * Thread</i>.
+ * Thread</i>. 
  *
  *
  * <p>
@@ -129,14 +129,14 @@ import sun.swing.AccumulativeRunnable;
  * <p>
  * <b>Sample Usage</b>
  * <p>
- * The following example illustrates the simplest use case.  Some
- * processing is done in the background and when done you update a Swing
+ * The following example illustrates the simplest use case.  Some 
+ * processing is done in the background and when done you update a Swing 
  * component.
  *
  * <p>
  * Say we want to find the "Meaning of Life" and display the result in
  * a {@code JLabel}.
- *
+ * 
  * <pre>
  *   final JLabel label;
  *   class MeaningOfLifeFinder extends SwingWorker&lt;String, Object&gt; {
@@ -147,30 +147,30 @@ import sun.swing.AccumulativeRunnable;
  *
  *       {@code @Override}
  *       protected void done() {
- *           try {
+ *           try { 
  *               label.setText(get());
  *           } catch (Exception ignore) {
  *           }
  *       }
  *   }
- *
+ * 
  *   (new MeaningOfLifeFinder()).execute();
  * </pre>
- *
+ * 
  * <p>
- * The next example is useful in situations where you wish to process data
+ * The next example is useful in situations where you wish to process data 
  * as it is ready on the <i>Event Dispatch Thread</i>.
  *
  * <p>
  * Now we want to find the first N prime numbers and display the results in a
  * {@code JTextArea}.  While this is computing, we want to update our
- * progress in a {@code JProgressBar}.  Finally, we also want to print
+ * progress in a {@code JProgressBar}.  Finally, we also want to print 
  * the prime numbers to {@code System.out}.
  * <pre>
- * class PrimeNumbersTask extends
+ * class PrimeNumbersTask extends 
  *         SwingWorker&lt;List&lt;Integer&gt;, Integer&gt; {
- *     PrimeNumbersTask(JTextArea textArea, int numbersToFind) {
- *         //initialize
+ *     PrimeNumbersTask(JTextArea textArea, int numbersToFind) { 
+ *         //initialize 
  *     }
  *
  *     {@code @Override}
@@ -207,19 +207,20 @@ import sun.swing.AccumulativeRunnable;
  * task.execute();
  * System.out.println(task.get()); //prints all prime numbers we have got
  * </pre>
- *
+ * 
  * <p>
  * Because {@code SwingWorker} implements {@code Runnable}, a
  * {@code SwingWorker} can be submitted to an
  * {@link java.util.concurrent.Executor} for execution.
- *
+ *  
  * @author Igor Kushnirskiy
- *
+ * @version %I% %G%
+ * 
  * @param <T> the result type returned by this {@code SwingWorker's}
  *        {@code doInBackground} and {@code get} methods
  * @param <V> the type used for carrying out intermediate results by this
  *        {@code SwingWorker's} {@code publish} and {@code process} methods
- *
+ * 
  * @since 1.6
  */
 public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
@@ -271,7 +272,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
          */
         PENDING,
         /**
-         * {@code SwingWorker} is {@code STARTED}
+         * {@code SwingWorker} is {@code STARTED} 
          * before invoking {@code doInBackground}.
          */
         STARTED,
@@ -288,7 +289,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * Constructs this {@code SwingWorker}.
      */
     public SwingWorker() {
-        Callable<T> callable =
+        Callable<T> callable = 
                 new Callable<T>() {
                     public T call() throws Exception {
                         setState(StateValue.STARTED);
@@ -309,23 +310,23 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
        doProcess = null;
        doNotifyProgressChange = null;
     }
-
+    
     /**
      * Computes a result, or throws an exception if unable to do so.
      *
      * <p>
      * Note that this method is executed only once.
-     *
+     * 
      * <p>
      * Note: this method is executed in a background thread.
-     *
+     *  
      *
      * @return the computed result
      * @throws Exception if unable to compute a result
-     *
+     * 
      */
     protected abstract T doInBackground() throws Exception ;
-
+    
     /**
      * Sets this {@code Future} to the result of computation unless
      * it has been cancelled.
@@ -333,14 +334,14 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
     public final void run() {
         future.run();
     }
-
+    
     /**
      * Sends data chunks to the {@link #process} method. This method is to be
-     * used from inside the {@code doInBackground} method to deliver
+     * used from inside the {@code doInBackground} method to deliver 
      * intermediate results
      * for processing on the <i>Event Dispatch Thread</i> inside the
      * {@code process} method.
-     *
+     * 
      * <p>
      * Because the {@code process} method is invoked asynchronously on
      * the <i>Event Dispatch Thread</i>
@@ -348,18 +349,18 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * might occur before the {@code process} method is executed. For
      * performance purposes all these invocations are coalesced into one
      * invocation with concatenated arguments.
-     *
+     * 
      * <p>
      * For example:
-     *
+     * 
      * <pre>
      * publish(&quot;1&quot;);
      * publish(&quot;2&quot;, &quot;3&quot;);
      * publish(&quot;4&quot;, &quot;5&quot;, &quot;6&quot;);
      * </pre>
-     *
+     * 
      * might result in:
-     *
+     * 
      * <pre>
      * process(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;)
      * </pre>
@@ -367,28 +368,28 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * <p>
      * <b>Sample Usage</b>. This code snippet loads some tabular data and
      * updates {@code DefaultTableModel} with it. Note that it safe to mutate
-     * the tableModel from inside the {@code process} method because it is
+     * the tableModel from inside the {@code process} method because it is 
      * invoked on the <i>Event Dispatch Thread</i>.
-     *
+     * 
      * <pre>
-     * class TableSwingWorker extends
+     * class TableSwingWorker extends 
      *         SwingWorker&lt;DefaultTableModel, Object[]&gt; {
      *     private final DefaultTableModel tableModel;
-     *
+     * 
      *     public TableSwingWorker(DefaultTableModel tableModel) {
      *         this.tableModel = tableModel;
      *     }
-     *
+     * 
      *     {@code @Override}
      *     protected DefaultTableModel doInBackground() throws Exception {
-     *         for (Object[] row = loadData();
-     *                  ! isCancelled() &amp;&amp; row != null;
+     *         for (Object[] row = loadData(); 
+     *                  ! isCancelled() &amp;&amp; row != null; 
      *                  row = loadData()) {
      *             publish((Object[]) row);
      *         }
      *         return tableModel;
      *     }
-     *
+     * 
      *     {@code @Override}
      *     protected void process(List&lt;Object[]&gt; chunks) {
      *         for (Object[] row : chunks) {
@@ -397,11 +398,11 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      *     }
      * }
      * </pre>
-     *
+     * 
      * @param chunks intermediate results to process
-     *
+     * 
      * @see #process
-     *
+     * 
      */
     protected final void publish(V... chunks) {
         synchronized (this) {
@@ -424,14 +425,14 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
     /**
      * Receives data chunks from the {@code publish} method asynchronously on the
      * <i>Event Dispatch Thread</i>.
-     *
+     * 
      * <p>
      * Please refer to the {@link #publish} method for more details.
-     *
+     * 
      * @param chunks intermediate results to process
-     *
+     * 
      * @see #publish
-     *
+     * 
      */
     protected void process(List<V> chunks) {
     }
@@ -443,7 +444,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * perform completion actions on the <i>Event Dispatch Thread</i>. Note
      * that you can query status inside the implementation of this method to
      * determine the result of this task or whether this task has been cancelled.
-     *
+     * 
      * @see #doInBackground
      * @see #isCancelled()
      * @see #get
@@ -462,19 +463,19 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * {@code PropertyChangeListeners} are invoked. For performance purposes
      * all these invocations are coalesced into one invocation with the last
      * invocation argument only.
-     *
+     * 
      * <p>
      * For example, the following invokations:
-     *
+     * 
      * <pre>
      * setProgress(1);
      * setProgress(2);
      * setProgress(3);
      * </pre>
-     *
+     * 
      * might result in a single {@code PropertyChangeListener} notification with
      * the value {@code 3}.
-     *
+     * 
      * @param progress the progress value to set
      * @throws IllegalArgumentException is value not from 0 to 100
      */
@@ -492,12 +493,12 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
         }
         synchronized (this) {
             if (doNotifyProgressChange == null) {
-                doNotifyProgressChange =
+                doNotifyProgressChange = 
                     new AccumulativeRunnable<Integer>() {
                         @Override
                         public void run(List<Integer> args) {
-                            firePropertyChange("progress",
-                               args.get(0),
+                            firePropertyChange("progress", 
+                               args.get(0), 
                                args.get(args.size() - 1));
                         }
                         @Override
@@ -512,7 +513,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
 
     /**
      * Returns the {@code progress} bound property.
-     *
+     * 
      * @return the progress bound property.
      */
     public final int getProgress() {
@@ -564,22 +565,22 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * Note: calling {@code get} on the <i>Event Dispatch Thread</i> blocks
      * <i>all</i> events, including repaints, from being processed until this
      * {@code SwingWorker} is complete.
-     *
+     * 
      * <p>
      * When you want the {@code SwingWorker} to block on the <i>Event
      * Dispatch Thread</i> we recommend that you use a <i>modal dialog</i>.
      *
      * <p>
      * For example:
-     *
+     * 
      * <pre>
      * class SwingWorkerCompletionWaiter extends PropertyChangeListener {
      *     private JDialog dialog;
-     *
+     * 
      *     public SwingWorkerCompletionWaiter(JDialog dialog) {
      *         this.dialog = dialog;
      *     }
-     *
+     * 
      *     public void propertyChange(PropertyChangeEvent event) {
      *         if (&quot;state&quot;.equals(event.getPropertyName())
      *                 &amp;&amp; SwingWorker.StateValue.DONE == event.getNewValue()) {
@@ -593,7 +594,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      *     new SwingWorkerCompletionWaiter(dialog));
      * swingWorker.execute();
      * //the dialog will be visible until the SwingWorker is done
-     * dialog.setVisible(true);
+     * dialog.setVisible(true); 
      * </pre>
      */
     public final T get() throws InterruptedException, ExecutionException {
@@ -618,11 +619,11 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * is registered for all properties. The same listener object may be added
      * more than once, and will be called as many times as it is added. If
      * {@code listener} is {@code null}, no exception is thrown and no action is taken.
-     *
+     * 
      * <p>
      * Note: This is merely a convenience wrapper. All work is delegated to
      * {@code PropertyChangeSupport} from {@link #getPropertyChangeSupport}.
-     *
+     * 
      * @param listener the {@code PropertyChangeListener} to be added
      */
     public final void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -636,11 +637,11 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * event source, it will be notified one less time after being removed. If
      * {@code listener} is {@code null}, or was never added, no exception is
      * thrown and no action is taken.
-     *
+     * 
      * <p>
      * Note: This is merely a convenience wrapper. All work is delegated to
      * {@code PropertyChangeSupport} from {@link #getPropertyChangeSupport}.
-     *
+     * 
      * @param listener the {@code PropertyChangeListener} to be removed
      */
     public final void removePropertyChangeListener(PropertyChangeListener listener) {
@@ -650,9 +651,9 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
     /**
      * Reports a bound property update to any registered listeners. No event is
      * fired if {@code old} and {@code new} are equal and non-null.
-     *
+     * 
      * <p>
-     * This {@code SwingWorker} will be the source for
+     * This {@code SwingWorker} will be the source for 
      * any generated events.
      *
      * <p>
@@ -662,8 +663,8 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * <p>
      * Note: This is merely a convenience wrapper. All work is delegated to
      * {@code PropertyChangeSupport} from {@link #getPropertyChangeSupport}.
-     *
-     *
+     * 
+     * 
      * @param propertyName the programmatic name of the property that was
      *        changed
      * @param oldValue the old value of the property
@@ -676,20 +677,20 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
     }
 
     /**
-     * Returns the {@code PropertyChangeSupport} for this {@code SwingWorker}.
+     * Returns the {@code PropertyChangeSupport} for this {@code SwingWorker}. 
      * This method is used when flexible access to bound properties support is
      * needed.
      * <p>
-     * This {@code SwingWorker} will be the source for
+     * This {@code SwingWorker} will be the source for 
      * any generated events.
-     *
+     * 
      * <p>
      * Note: The returned {@code PropertyChangeSupport} notifies any
      * {@code PropertyChangeListener}s asynchronously on the <i>Event Dispatch
      * Thread</i> in the event that {@code firePropertyChange} or
      * {@code fireIndexedPropertyChange} are called off the <i>Event Dispatch
      * Thread</i>.
-     *
+     * 
      * @return {@code PropertyChangeSupport} for this {@code SwingWorker}
      */
     public final PropertyChangeSupport getPropertyChangeSupport() {
@@ -700,7 +701,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
 
     /**
      * Returns the {@code SwingWorker} state bound property.
-     *
+     * 
      * @return the current state
      */
     public final StateValue getState() {
@@ -714,10 +715,10 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
             return state;
         }
     }
-
+    
     /**
      * Sets this {@code SwingWorker} state bound property.
-     * @param state the state to set
+     * @param the state state to set
      */
     private void setState(StateValue state) {
         StateValue old = this.state;
@@ -729,7 +730,7 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * Invokes {@code done} on the EDT.
      */
     private void doneEDT() {
-        Runnable doDone =
+        Runnable doDone = 
             new Runnable() {
                 public void run() {
                     done();
@@ -747,70 +748,119 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
      * returns workersExecutorService.
      *
      * returns the service stored in the appContext or creates it if
-     * necessary.
-     *
+     * necessary. If the last one it triggers autoShutdown thread to
+     * get started.
+     * 
      * @return ExecutorService for the {@code SwingWorkers}
+     * @see #startAutoShutdownThread
      */
     private static synchronized ExecutorService getWorkersExecutorService() {
         final AppContext appContext = AppContext.getAppContext();
-        ExecutorService executorService =
-            (ExecutorService) appContext.get(SwingWorker.class);
-        if (executorService == null) {
-            //this creates daemon threads.
-            ThreadFactory threadFactory =
+        Object obj = appContext.get(SwingWorker.class);
+        if (obj == null) {
+            //this creates non-daemon threads. 
+            ThreadFactory threadFactory = 
                 new ThreadFactory() {
-                    final ThreadFactory defaultFactory =
+                    final ThreadFactory defaultFactory = 
                         Executors.defaultThreadFactory();
                     public Thread newThread(final Runnable r) {
-                        Thread thread =
+                        Thread thread = 
                             defaultFactory.newThread(r);
-                        thread.setName("SwingWorker-"
+                        thread.setName("SwingWorker-" 
                             + thread.getName());
-                        thread.setDaemon(true);
                         return thread;
                     }
                 };
 
-            executorService =
-                new ThreadPoolExecutor(1, MAX_WORKER_THREADS,
-                                       10L, TimeUnit.MINUTES,
-                                       new LinkedBlockingQueue<Runnable>(),
-                                       threadFactory);
-            appContext.put(SwingWorker.class, executorService);
+            /*
+             * We want a to have no more than MAX_WORKER_THREADS
+             * running threads.
+             *
+             * We want a worker thread to wait no longer than 1 second
+             * for new tasks before terminating.
+             */
+            obj = new ThreadPoolExecutor(0, MAX_WORKER_THREADS,
+                                         1L, TimeUnit.SECONDS,
+                                         new LinkedBlockingQueue<Runnable>(),
+                                         threadFactory) {
 
-            //register shutdown hook for this executor service
-            final ExecutorService es = executorService;
-            final Runnable shutdownHook =
-                new Runnable() {
-                    final WeakReference<ExecutorService> executorServiceRef =
-                        new WeakReference<ExecutorService>(es);
-                    public void run() {
-                        final ExecutorService executorService =
-                            executorServiceRef.get();
-                        if (executorService != null) {
-                            AccessController.doPrivileged(
-                                new PrivilegedAction<Void>() {
-                                    public Void run() {
-                                        executorService.shutdown();
-                                        return null;
-                                    }
-                                });
+                    private final ReentrantLock pauseLock = new ReentrantLock();
+                    private final Condition unpaused = pauseLock.newCondition();
+                    private boolean isPaused = false;
+                    private final ReentrantLock executeLock = new ReentrantLock();
+                    
+                    @Override
+                    public void execute(Runnable command) {
+                        /*
+                         * ThreadPoolExecutor first tries to run task
+                         * in a corePool. If all threads are busy it
+                         * tries to add task to the waiting queue. If it
+                         * fails it run task in maximumPool.
+                         *
+                         * We want corePool to be 0 and
+                         * maximumPool to be MAX_WORKER_THREADS
+                         * We need to change the order of the execution.
+                         * First try corePool then try maximumPool
+                         * pool and only then store to the waiting
+                         * queue. We can not do that because we would
+                         * need access to the private methods.
+                         *
+                         * Instead we enlarge corePool to
+                         * MAX_WORKER_THREADS before the execution and
+                         * shrink it back to 0 after. 
+                         * It does pretty much what we need.
+                         *
+                         * While we changing the corePoolSize we need
+                         * to stop running worker threads from accepting new
+                         * tasks.
+                         */
+                        
+                        //we need atomicity for the execute method.
+                        executeLock.lock();
+                        try {
+
+                            pauseLock.lock();
+                            try {
+                                isPaused = true;
+                            } finally {
+                                pauseLock.unlock();
+                            }
+                            
+                            setCorePoolSize(MAX_WORKER_THREADS);
+                            super.execute(command);
+                            setCorePoolSize(0);
+                            
+                            pauseLock.lock();
+                            try {
+                                isPaused = false;
+                                unpaused.signalAll();
+                            } finally {
+                                pauseLock.unlock();
+                            }
+                        } finally {
+                            executeLock.unlock();
+                        }
+                    }
+                    @Override 
+                    protected void afterExecute(Runnable r, Throwable t) { 
+                        super.afterExecute(r, t);
+                        pauseLock.lock();
+                        try {
+                            while(isPaused) {
+                                unpaused.await();
+                            }
+                        } catch(InterruptedException ignore) {
+                            
+                        } finally {
+                            pauseLock.unlock();
                         }
                     }
                 };
-
-            AccessController.doPrivileged(
-                new PrivilegedAction<Void>() {
-                    public Void run() {
-                        Runtime.getRuntime().addShutdownHook(
-                            new Thread(shutdownHook));
-                        return null;
-                    }
-            });
+            appContext.put(SwingWorker.class, obj);
         }
-        return executorService;
+        return (ExecutorService)obj; 
     }
-
+    
     private static final Object DO_SUBMIT_KEY = new StringBuilder("doSubmit");
     private static AccumulativeRunnable<Runnable> getDoSubmit() {
         synchronized (DO_SUBMIT_KEY) {
@@ -819,11 +869,11 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
             if (doSubmit == null) {
                 doSubmit = new DoSubmitAccumulativeRunnable();
                 appContext.put(DO_SUBMIT_KEY, doSubmit);
-            }
+            } 
             return (AccumulativeRunnable<Runnable>) doSubmit;
         }
     }
-    private static class DoSubmitAccumulativeRunnable
+    private static class DoSubmitAccumulativeRunnable 
           extends AccumulativeRunnable<Runnable> implements ActionListener {
         private final static int DELAY = (int) (1000 / 30);
         @Override
@@ -842,8 +892,8 @@ public abstract class SwingWorker<T, V> implements RunnableFuture<T> {
             run();
         }
     }
-
-    private class SwingWorkerPropertyChangeSupport
+    
+    private class SwingWorkerPropertyChangeSupport 
             extends PropertyChangeSupport {
         SwingWorkerPropertyChangeSupport(Object source) {
             super(source);

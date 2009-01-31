@@ -32,7 +32,7 @@ package java.io;
  * subclasses, however, will override some of the methods defined here in order
  * to provide higher efficiency, additional functionality, or both.
  *
- *
+ * 
  * @see BufferedReader
  * @see   LineNumberReader
  * @see CharArrayReader
@@ -44,8 +44,9 @@ package java.io;
  * @see StringReader
  * @see Writer
  *
- * @author      Mark Reinhold
- * @since       JDK1.1
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
+ * @since	JDK1.1
  */
 
 public abstract class Reader implements Readable, Closeable {
@@ -64,7 +65,7 @@ public abstract class Reader implements Readable, Closeable {
      * synchronize on the reader itself.
      */
     protected Reader() {
-        this.lock = this;
+	this.lock = this;
     }
 
     /**
@@ -74,10 +75,10 @@ public abstract class Reader implements Readable, Closeable {
      * @param lock  The Object to synchronize on.
      */
     protected Reader(Object lock) {
-        if (lock == null) {
-            throw new NullPointerException();
-        }
-        this.lock = lock;
+	if (lock == null) {
+	    throw new NullPointerException();
+	}
+	this.lock = lock;
     }
 
     /**
@@ -87,7 +88,7 @@ public abstract class Reader implements Readable, Closeable {
      * rewinding of the buffer is performed.
      *
      * @param target the buffer to read characters into
-     * @return The number of characters added to the buffer, or
+     * @return The number of characters added to the buffer, or 
      *         -1 if this source of characters is at its end
      * @throws IOException if an I/O error occurs
      * @throws NullPointerException if target is null
@@ -117,11 +118,11 @@ public abstract class Reader implements Readable, Closeable {
      * @exception  IOException  If an I/O error occurs
      */
     public int read() throws IOException {
-        char cb[] = new char[1];
-        if (read(cb, 0, 1) == -1)
-            return -1;
-        else
-            return cb[0];
+	char cb[] = new char[1];
+	if (read(cb, 0, 1) == -1)
+	    return -1;
+	else
+	    return cb[0];
     }
 
     /**
@@ -130,14 +131,14 @@ public abstract class Reader implements Readable, Closeable {
      *
      * @param       cbuf  Destination buffer
      *
-     * @return      The number of characters read, or -1
+     * @return      The number of characters read, or -1 
      *              if the end of the stream
      *              has been reached
      *
      * @exception   IOException  If an I/O error occurs
      */
     public int read(char cbuf[]) throws IOException {
-        return read(cbuf, 0, cbuf.length);
+	return read(cbuf, 0, cbuf.length);
     }
 
     /**
@@ -174,21 +175,21 @@ public abstract class Reader implements Readable, Closeable {
      * @exception  IOException  If an I/O error occurs
      */
     public long skip(long n) throws IOException {
-        if (n < 0L)
-            throw new IllegalArgumentException("skip value is negative");
-        int nn = (int) Math.min(n, maxSkipBufferSize);
-        synchronized (lock) {
-            if ((skipBuffer == null) || (skipBuffer.length < nn))
-                skipBuffer = new char[nn];
-            long r = n;
-            while (r > 0) {
-                int nc = read(skipBuffer, 0, (int)Math.min(r, nn));
-                if (nc == -1)
-                    break;
-                r -= nc;
-            }
-            return n - r;
-        }
+	if (n < 0L) 
+	    throw new IllegalArgumentException("skip value is negative");
+	int nn = (int) Math.min(n, maxSkipBufferSize);
+	synchronized (lock) {
+	    if ((skipBuffer == null) || (skipBuffer.length < nn))
+		skipBuffer = new char[nn];
+	    long r = n;
+	    while (r > 0) {
+		int nc = read(skipBuffer, 0, (int)Math.min(r, nn));
+		if (nc == -1)
+		    break;
+		r -= nc;
+	    }
+	    return n - r;
+	}
     }
 
     /**
@@ -201,7 +202,7 @@ public abstract class Reader implements Readable, Closeable {
      * @exception  IOException  If an I/O error occurs
      */
     public boolean ready() throws IOException {
-        return false;
+	return false;
     }
 
     /**
@@ -212,7 +213,7 @@ public abstract class Reader implements Readable, Closeable {
      * @return true if and only if this stream supports the mark operation.
      */
     public boolean markSupported() {
-        return false;
+	return false;
     }
 
     /**
@@ -229,7 +230,7 @@ public abstract class Reader implements Readable, Closeable {
      *                          or if some other I/O error occurs
      */
     public void mark(int readAheadLimit) throws IOException {
-        throw new IOException("mark() not supported");
+	throw new IOException("mark() not supported");
     }
 
     /**
@@ -246,7 +247,7 @@ public abstract class Reader implements Readable, Closeable {
      *                          or if some other I/O error occurs
      */
     public void reset() throws IOException {
-        throw new IOException("reset() not supported");
+	throw new IOException("reset() not supported");
     }
 
     /**

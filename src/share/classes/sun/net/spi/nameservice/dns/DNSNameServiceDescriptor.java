@@ -32,7 +32,7 @@ public final class DNSNameServiceDescriptor implements NameServiceDescriptor {
      * Create a new instance of the corresponding name service.
      */
     public NameService createNameService() throws Exception {
-        return new DNSNameService();
+	return new DNSNameService();
     }
 
     /**
@@ -40,7 +40,7 @@ public final class DNSNameServiceDescriptor implements NameServiceDescriptor {
      *
      */
     public String getProviderName() {
-        return "sun";
+	return "sun";
     }
 
     /**
@@ -48,6 +48,6 @@ public final class DNSNameServiceDescriptor implements NameServiceDescriptor {
      * "dns" "nis" etc
      */
     public String getType() {
-        return "dns";
+	return "dns";
     }
 }

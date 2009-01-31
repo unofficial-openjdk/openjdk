@@ -28,27 +28,28 @@ package javax.swing;
 import javax.swing.event.*;
 
 /**
- * This interface represents the current state of the
- * selection for any of the components that display a
- * list of values with stable indices.  The selection is
+ * This interface represents the current state of the 
+ * selection for any of the components that display a 
+ * list of values with stable indices.  The selection is 
  * modeled as a set of intervals, each interval represents
  * a contiguous range of selected list elements.
  * The methods for modifying the set of selected intervals
  * all take a pair of indices, index0 and index1, that represent
  * a closed interval, i.e. the interval includes both index0 and
  * index1.
- *
+ * 
+ * @version %I% %G%
  * @author Hans Muller
  * @author Philip Milne
  * @see DefaultListSelectionModel
  */
 
-public interface ListSelectionModel
+public interface ListSelectionModel 
 {
     /**
      * A value for the selectionMode property: select one list index
      * at a time.
-     *
+     * 
      * @see #setSelectionMode
      */
     int SINGLE_SELECTION = 0;
@@ -56,21 +57,21 @@ public interface ListSelectionModel
     /**
      * A value for the selectionMode property: select one contiguous
      * range of indices at a time.
-     *
+     * 
      * @see #setSelectionMode
      */
     int SINGLE_INTERVAL_SELECTION = 1;
 
     /**
-     * A value for the selectionMode property: select one or more
+     * A value for the selectionMode property: select one or more 
      * contiguous ranges of indices at a time.
-     *
+     * 
      * @see #setSelectionMode
      */
     int MULTIPLE_INTERVAL_SELECTION = 2;
 
 
-    /**
+    /** 
      * Changes the selection to be between {@code index0} and {@code index1}
      * inclusive. {@code index0} doesn't have to be less than or equal to
      * {@code index1}.
@@ -80,7 +81,7 @@ public interface ListSelectionModel
      * <p>
      * If this represents a change to the current selection, then each
      * {@code ListSelectionListener} is notified of the change.
-     *
+     * 
      * @param index0 one end of the interval.
      * @param index1 other end of the interval
      * @see #addListSelectionListener
@@ -88,7 +89,7 @@ public interface ListSelectionModel
     void setSelectionInterval(int index0, int index1);
 
 
-    /**
+    /** 
      * Changes the selection to be the set union of the current selection
      * and the indices between {@code index0} and {@code index1} inclusive.
      * {@code index0} doesn't have to be less than or equal to {@code index1}.
@@ -102,7 +103,7 @@ public interface ListSelectionModel
      * <p>
      * If this represents a change to the current selection, then each
      * {@code ListSelectionListener} is notified of the change.
-     *
+     * 
      * @param index0 one end of the interval.
      * @param index1 other end of the interval
      * @see #addListSelectionListener
@@ -111,7 +112,7 @@ public interface ListSelectionModel
     void addSelectionInterval(int index0, int index1);
 
 
-    /**
+    /** 
      * Changes the selection to be the set difference of the current selection
      * and the indices between {@code index0} and {@code index1} inclusive.
      * {@code index0} doesn't have to be less than or equal to {@code index1}.
@@ -124,7 +125,7 @@ public interface ListSelectionModel
      * <p>
      * If this represents a change to the current selection, then each
      * {@code ListSelectionListener} is notified of the change.
-     *
+     * 
      * @param index0 one end of the interval.
      * @param index1 other end of the interval
      * @see #addListSelectionListener
@@ -144,20 +145,20 @@ public interface ListSelectionModel
     int getMaxSelectionIndex();
 
 
-    /**
+    /** 
      * Returns true if the specified index is selected.
      */
     boolean isSelectedIndex(int index);
 
-
+    
     /**
-     * Return the first index argument from the most recent call to
+     * Return the first index argument from the most recent call to 
      * setSelectionInterval(), addSelectionInterval() or removeSelectionInterval().
      * The most recent index0 is considered the "anchor" and the most recent
      * index1 is considered the "lead".  Some interfaces display these
-     * indices specially, e.g. Windows95 displays the lead index with a
+     * indices specially, e.g. Windows95 displays the lead index with a 
      * dotted yellow outline.
-     *
+     * 
      * @see #getLeadSelectionIndex
      * @see #setSelectionInterval
      * @see #addSelectionInterval
@@ -166,17 +167,17 @@ public interface ListSelectionModel
 
 
     /**
-     * Set the anchor selection index.
-     *
+     * Set the anchor selection index. 
+     * 
      * @see #getAnchorSelectionIndex
      */
     void setAnchorSelectionIndex(int index);
 
 
     /**
-     * Return the second index argument from the most recent call to
+     * Return the second index argument from the most recent call to 
      * setSelectionInterval(), addSelectionInterval() or removeSelectionInterval().
-     *
+     * 
      * @see #getAnchorSelectionIndex
      * @see #setSelectionInterval
      * @see #addSelectionInterval
@@ -184,8 +185,8 @@ public interface ListSelectionModel
     int getLeadSelectionIndex();
 
     /**
-     * Set the lead selection index.
-     *
+     * Set the lead selection index. 
+     * 
      * @see #getLeadSelectionIndex
      */
     void setLeadSelectionIndex(int index);
@@ -193,7 +194,7 @@ public interface ListSelectionModel
     /**
      * Change the selection to the empty set.  If this represents
      * a change to the current selection then notify each ListSelectionListener.
-     *
+     * 
      * @see #addListSelectionListener
      */
     void clearSelection();
@@ -202,15 +203,15 @@ public interface ListSelectionModel
      * Returns true if no indices are selected.
      */
     boolean isSelectionEmpty();
-
-    /**
-     * Insert length indices beginning before/after index.  This is typically
+    
+    /** 
+     * Insert length indices beginning before/after index.  This is typically 
      * called to sync the selection model with a corresponding change
      * in the data model.
      */
     void insertIndexInterval(int index, int length, boolean before);
 
-    /**
+    /** 
      * Remove the indices in the interval index0,index1 (inclusive) from
      * the selection model.  This is typically called to sync the selection
      * model width a corresponding change in the data model.
@@ -238,7 +239,7 @@ public interface ListSelectionModel
      * back to {@code false}, an event is sent out characterizing the entire
      * selection change (if there was one), with the event's
      * {@code valueIsAdjusting} property set to {@code false}.
-     *
+     * 
      * @param valueIsAdjusting the new value of the property
      * @see #getValueIsAdjusting
      * @see javax.swing.event.ListSelectionEvent#getValueIsAdjusting
@@ -271,7 +272,7 @@ public interface ListSelectionModel
      * <li>{@code ListSelectionModel.MULTIPLE_INTERVAL_SELECTION} -
      *   In this mode, there's no restriction on what can be selected.
      * </ul>
-     *
+     * 
      * @see #getSelectionMode
      * @throws IllegalArgumentException if the selection mode isn't
      *         one of those allowed
@@ -289,7 +290,7 @@ public interface ListSelectionModel
     /**
      * Add a listener to the list that's notified each time a change
      * to the selection occurs.
-     *
+     * 
      * @param x the ListSelectionListener
      * @see #removeListSelectionListener
      * @see #setSelectionInterval
@@ -298,15 +299,16 @@ public interface ListSelectionModel
      * @see #clearSelection
      * @see #insertIndexInterval
      * @see #removeIndexInterval
-     */
+     */  
     void addListSelectionListener(ListSelectionListener x);
 
     /**
-     * Remove a listener from the list that's notified each time a
+     * Remove a listener from the list that's notified each time a 
      * change to the selection occurs.
-     *
+     * 
      * @param x the ListSelectionListener
      * @see #addListSelectionListener
-     */
+     */  
     void removeListSelectionListener(ListSelectionListener x);
 }
+

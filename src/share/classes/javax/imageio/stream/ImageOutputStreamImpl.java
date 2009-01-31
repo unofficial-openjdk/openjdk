@@ -34,11 +34,12 @@ import java.nio.ByteOrder;
  * This class is designed to reduce the number of methods that must
  * be implemented by subclasses.
  *
+ * @version 0.5
  */
 public abstract class ImageOutputStreamImpl
     extends ImageInputStreamImpl
     implements ImageOutputStream {
-
+    
     /**
      * Constructs an <code>ImageOutputStreamImpl</code>.
      */
@@ -54,11 +55,11 @@ public abstract class ImageOutputStreamImpl
     public abstract void write(byte b[], int off, int len) throws IOException;
 
     public void writeBoolean(boolean v) throws IOException {
-        write(v ? 1 : 0);
+	write(v ? 1 : 0);
     }
 
     public void writeByte(int v) throws IOException {
-        write(v);
+	write(v);
     }
 
     public void writeShort(int v) throws IOException {
@@ -128,14 +129,14 @@ public abstract class ImageOutputStreamImpl
     }
 
     public void writeBytes(String s) throws IOException {
-        int len = s.length();
-        for (int i = 0 ; i < len ; i++) {
-            write((byte)s.charAt(i));
-        }
+	int len = s.length();
+	for (int i = 0 ; i < len ; i++) {
+	    write((byte)s.charAt(i));
+	}
     }
 
     public void writeChars(String s) throws IOException {
-        int len = s.length();
+	int len = s.length();
 
         byte[] b = new byte[len*2];
         int boff = 0;
@@ -157,44 +158,44 @@ public abstract class ImageOutputStreamImpl
     }
 
     public void writeUTF(String s) throws IOException {
-        int strlen = s.length();
-        int utflen = 0;
-        char[] charr = new char[strlen];
-        int c, boff = 0;
+	int strlen = s.length();
+	int utflen = 0;
+ 	char[] charr = new char[strlen];
+	int c, boff = 0;
 
-        s.getChars(0, strlen, charr, 0);
+	s.getChars(0, strlen, charr, 0);
+ 
+	for (int i = 0; i < strlen; i++) {
+	    c = charr[i];
+	    if ((c >= 0x0001) && (c <= 0x007F)) {
+		utflen++;
+	    } else if (c > 0x07FF) {
+		utflen += 3;
+	    } else {
+		utflen += 2;
+	    }
+	}
 
-        for (int i = 0; i < strlen; i++) {
-            c = charr[i];
-            if ((c >= 0x0001) && (c <= 0x007F)) {
-                utflen++;
-            } else if (c > 0x07FF) {
-                utflen += 3;
-            } else {
-                utflen += 2;
-            }
+	if (utflen > 65535) {
+	    throw new UTFDataFormatException("utflen > 65536!");
         }
 
-        if (utflen > 65535) {
-            throw new UTFDataFormatException("utflen > 65536!");
-        }
-
-        byte[] b = new byte[utflen+2];
-        b[boff++] = (byte) ((utflen >>> 8) & 0xFF);
-        b[boff++] = (byte) ((utflen >>> 0) & 0xFF);
-        for (int i = 0; i < strlen; i++) {
-            c = charr[i];
-            if ((c >= 0x0001) && (c <= 0x007F)) {
-                b[boff++] = (byte) c;
-            } else if (c > 0x07FF) {
-                b[boff++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
-                b[boff++] = (byte) (0x80 | ((c >>  6) & 0x3F));
-                b[boff++] = (byte) (0x80 | ((c >>  0) & 0x3F));
-            } else {
-                b[boff++] = (byte) (0xC0 | ((c >>  6) & 0x1F));
-                b[boff++] = (byte) (0x80 | ((c >>  0) & 0x3F));
-            }
-        }
+	byte[] b = new byte[utflen+2];
+	b[boff++] = (byte) ((utflen >>> 8) & 0xFF);
+	b[boff++] = (byte) ((utflen >>> 0) & 0xFF);
+	for (int i = 0; i < strlen; i++) {
+	    c = charr[i];
+	    if ((c >= 0x0001) && (c <= 0x007F)) {
+		b[boff++] = (byte) c;
+	    } else if (c > 0x07FF) {
+		b[boff++] = (byte) (0xE0 | ((c >> 12) & 0x0F));
+		b[boff++] = (byte) (0x80 | ((c >>  6) & 0x3F));
+		b[boff++] = (byte) (0x80 | ((c >>  0) & 0x3F));
+	    } else {
+		b[boff++] = (byte) (0xC0 | ((c >>  6) & 0x1F));
+		b[boff++] = (byte) (0x80 | ((c >>  0) & 0x3F));
+	    }
+	}
         write(b, 0, utflen + 2);
     }
 
@@ -220,7 +221,7 @@ public abstract class ImageOutputStreamImpl
                 b[boff++] = (byte)(v >>> 8);
             }
         }
-
+        
         write(b, 0, len*2);
     }
 
@@ -246,7 +247,7 @@ public abstract class ImageOutputStreamImpl
                 b[boff++] = (byte)(v >>> 8);
             }
         }
-
+        
         write(b, 0, len*2);
     }
 
@@ -276,7 +277,7 @@ public abstract class ImageOutputStreamImpl
                 b[boff++] = (byte)(v >>> 24);
             }
         }
-
+        
         write(b, 0, len*4);
     }
 
@@ -314,7 +315,7 @@ public abstract class ImageOutputStreamImpl
                 b[boff++] = (byte)(v >>> 56);
             }
         }
-
+        
         write(b, 0, len*8);
     }
 
@@ -382,7 +383,7 @@ public abstract class ImageOutputStreamImpl
                 b[boff++] = (byte)(v >>> 56);
             }
         }
-
+        
         write(b, 0, len*8);
     }
 
@@ -412,7 +413,7 @@ public abstract class ImageOutputStreamImpl
             } else {
                 partialByte = 0;
             }
-
+            
             if (numBits + offset < 8) {
                 // Notch out the partial byte and drop in the new bits
                 int shift = 8 - (offset+numBits);
@@ -441,8 +442,8 @@ public abstract class ImageOutputStreamImpl
             int extra = numBits % 8;
             for (int numBytes = numBits / 8; numBytes > 0; numBytes--) {
                 int shift = (numBytes-1)*8+extra;
-                int value = (int) ((shift == 0)
-                                   ? bits & 0xFF
+                int value = (int) ((shift == 0) 
+                                   ? bits & 0xFF 
                                    : (bits>>shift) & 0xFF);
                 write(value);
             }
@@ -460,12 +461,12 @@ public abstract class ImageOutputStreamImpl
             if (partialByte != -1) {
                 seek(getStreamPosition() - 1);
             }
-            // Fix 4494976: writeBit(int) does not pad the remainder
+            // Fix 4494976: writeBit(int) does not pad the remainder 
             // of the current byte with 0s
             else { // EOF
                 partialByte = 0;
             }
-
+            
             int shift = 8 - numBits;
             int mask = -1 >>> (32 - numBits);
             partialByte &= ~(mask << shift);
@@ -481,7 +482,7 @@ public abstract class ImageOutputStreamImpl
      * If the bit offset is non-zero, forces the remaining bits
      * in the current byte to 0 and advances the stream position
      * by one.  This method should be called by subclasses at the
-     * beginning of the <code>write(int)</code> and
+     * beginning of the <code>write(int)</code> and 
      * <code>write(byte[], int, int)</code> methods.
      *
      * @exception IOException if an I/O error occurs.
@@ -493,7 +494,7 @@ public abstract class ImageOutputStreamImpl
             int partialByte = read(); // Sets bitOffset to 0
             if (partialByte < 0) {
                 // Fix 4465683: When bitOffset is set
-                // to something non-zero beyond EOF,
+                // to something non-zero beyond EOF, 
                 // we should set that whole byte to
                 // zero and write it to stream.
                 partialByte = 0;
@@ -505,6 +506,6 @@ public abstract class ImageOutputStreamImpl
             }
             write(partialByte);
         }
-    }
+    }   
 
 }

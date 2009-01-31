@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
 public class SignatureAlgorithm extends Algorithm {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(SignatureAlgorithm.class.getName());
 
    /** Field _alreadyInitialized */
@@ -71,7 +71,7 @@ public class SignatureAlgorithm extends Algorithm {
          Class implementingClass =
             SignatureAlgorithm.getImplementingClass(algorithmURI);
          if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
                    + implementingClass + "\"");
 
          this._signatureAlgorithm =
@@ -131,7 +131,7 @@ public class SignatureAlgorithm extends Algorithm {
          Class implementingClass =
             SignatureAlgorithm.getImplementingClass(algorithmURI);
          if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Create URI \"" + algorithmURI + "\" class \""
                    + implementingClass + "\"");
 
          this._signatureAlgorithm =
@@ -291,7 +291,7 @@ public class SignatureAlgorithm extends Algorithm {
     *
     * @param signature
     * @return true if if the signature is valid.
-    *
+    * 
     * @throws XMLSignatureException
     */
    public boolean verify(byte[] signature) throws XMLSignatureException {
@@ -334,42 +334,42 @@ public class SignatureAlgorithm extends Algorithm {
     * @param algorithmURI algorithmURI URI representation of <code>Transform algorithm</code>.
     * @param implementingClass <code>implementingClass</code> the implementing class of {@link SignatureAlgorithmSpi}
     * @throws AlgorithmAlreadyRegisteredException if specified algorithmURI is already registered
-    * @throws XMLSignatureException
+    * @throws XMLSignatureException 
     */
    public static void register(String algorithmURI, String implementingClass)
            throws AlgorithmAlreadyRegisteredException,XMLSignatureException {
 
       {
          if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try to register " + algorithmURI + " " + implementingClass);
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try to register " + algorithmURI + " " + implementingClass);
 
          // are we already registered?
          Class registeredClassClass =
             SignatureAlgorithm.getImplementingClass(algorithmURI);
-                 if (registeredClassClass!=null) {
-                         String registeredClass = registeredClassClass.getName();
+		 if (registeredClassClass!=null) {
+			 String registeredClass = registeredClassClass.getName();
 
-                         if ((registeredClass != null) && (registeredClass.length() != 0)) {
-                                 Object exArgs[] = { algorithmURI, registeredClass };
+			 if ((registeredClass != null) && (registeredClass.length() != 0)) {
+				 Object exArgs[] = { algorithmURI, registeredClass };
 
-                                 throw new AlgorithmAlreadyRegisteredException(
-                                                 "algorithm.alreadyRegistered", exArgs);
-                         }
-                 }
-                 try {
-                         SignatureAlgorithm._algorithmHash.put(algorithmURI, Class.forName(implementingClass));
-              } catch (ClassNotFoundException ex) {
-                 Object exArgs[] = { algorithmURI, ex.getMessage() };
+				 throw new AlgorithmAlreadyRegisteredException(
+						 "algorithm.alreadyRegistered", exArgs);
+			 }
+		 }
+		 try {	         	   			 
+			 SignatureAlgorithm._algorithmHash.put(algorithmURI, Class.forName(implementingClass));
+	      } catch (ClassNotFoundException ex) {
+	         Object exArgs[] = { algorithmURI, ex.getMessage() };
 
-                 throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs,
-                                                 ex);
-              } catch (NullPointerException ex) {
-                 Object exArgs[] = { algorithmURI, ex.getMessage() };
+	         throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs,
+	                                         ex);
+	      } catch (NullPointerException ex) {
+	         Object exArgs[] = { algorithmURI, ex.getMessage() };
 
-                 throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs,
-                                                 ex);
-              }
-
+	         throw new XMLSignatureException("algorithms.NoSuchAlgorithm", exArgs,
+	                                         ex);
+	      }
+         
       }
    }
 

@@ -37,8 +37,9 @@ import sun.awt.AppContext;
  * press followed by movement by <code>DragSource.getDragThreshold()</code>
  * pixels. An instance of this class is maintained per AppContext, and the
  * public static methods call into the appropriate instance.
- *
+ * 
  * @author Shannon Hickey
+ * @version %I% %G%
  */
 class DragRecognitionSupport {
     private int motionThreshold;

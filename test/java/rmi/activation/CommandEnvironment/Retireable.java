@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,5 +25,5 @@ public interface Retireable
     extends java.rmi.Remote
 {
     public void retire()
-        throws java.rmi.RemoteException;
+	throws java.rmi.RemoteException;
 }

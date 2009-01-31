@@ -31,6 +31,7 @@ package sun.tools.jstat;
  * operands can be literals or lazily bound variables.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Expression {

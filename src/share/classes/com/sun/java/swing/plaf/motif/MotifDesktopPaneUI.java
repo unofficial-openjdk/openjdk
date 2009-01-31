@@ -45,6 +45,7 @@ import java.io.Serializable;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version %I% %G%
  * @author David Kloba
  */
 public class MotifDesktopPaneUI extends javax.swing.plaf.basic.BasicDesktopPaneUI
@@ -59,12 +60,12 @@ public class MotifDesktopPaneUI extends javax.swing.plaf.basic.BasicDesktopPaneU
     }
 
     protected void installDesktopManager() {
-        desktopManager = desktop.getDesktopManager();
-        if(desktopManager == null) {
-            desktopManager = new MotifDesktopManager();
-            desktop.setDesktopManager(desktopManager);
+	desktopManager = desktop.getDesktopManager();
+	if(desktopManager == null) {
+	    desktopManager = new MotifDesktopManager();
+	    desktop.setDesktopManager(desktopManager);
             ((MotifDesktopManager)desktopManager).adjustIcons(desktop);
-        }
+	}
     }
 
     public Insets getInsets(JComponent c) {return new Insets(0,0,0,0);}
@@ -73,10 +74,10 @@ public class MotifDesktopPaneUI extends javax.swing.plaf.basic.BasicDesktopPaneU
 ///  DragPane class
 ////////////////////////////////////////////////////////////////////////////////////
     private class DragPane extends JComponent {
-        public void paint(Graphics g) {
-            g.setColor(Color.darkGray);
-            g.drawRect(0, 0, getWidth()-1, getHeight()-1);
-        }
+	public void paint(Graphics g) {
+	    g.setColor(Color.darkGray);
+	    g.drawRect(0, 0, getWidth()-1, getHeight()-1);
+	}
     };
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -89,84 +90,84 @@ public class MotifDesktopPaneUI extends javax.swing.plaf.basic.BasicDesktopPaneU
         int iconWidth, iconHeight;
 
     // PENDING(klobad) this should be optimized
-    public void setBoundsForFrame(JComponent f, int newX, int newY,
-                        int newWidth, int newHeight) {
-        if(!usingDragPane) {
+    public void setBoundsForFrame(JComponent f, int newX, int newY, 
+			int newWidth, int newHeight) {
+	if(!usingDragPane) {
             boolean didResize;
             didResize = (f.getWidth() != newWidth || f.getHeight() != newHeight);
-            Rectangle r = f.getBounds();
-            f.setBounds(newX, newY, newWidth, newHeight);
-            SwingUtilities.computeUnion(newX, newY, newWidth, newHeight, r);
-            f.getParent().repaint(r.x, r.y, r.width, r.height);
-            if(didResize) {
-                f.validate();
-            }
-        } else {
-            Rectangle r = dragPane.getBounds();
-            dragPane.setBounds(newX, newY, newWidth, newHeight);
-            SwingUtilities.computeUnion(newX, newY, newWidth, newHeight, r);
-            dragPane.getParent().repaint(r.x, r.y, r.width, r.height);
-        }
+	    Rectangle r = f.getBounds();
+	    f.setBounds(newX, newY, newWidth, newHeight);		
+	    SwingUtilities.computeUnion(newX, newY, newWidth, newHeight, r);
+	    f.getParent().repaint(r.x, r.y, r.width, r.height);
+	    if(didResize) {
+	        f.validate();
+  	    }
+	} else {
+	    Rectangle r = dragPane.getBounds();
+	    dragPane.setBounds(newX, newY, newWidth, newHeight);		
+	    SwingUtilities.computeUnion(newX, newY, newWidth, newHeight, r);
+	    dragPane.getParent().repaint(r.x, r.y, r.width, r.height);
+	}
     }
 
-    public void beginDraggingFrame(JComponent f) {
-        usingDragPane = false;
-        if(f.getParent() instanceof JLayeredPane) {
-            if(dragPane == null)
-                dragPane = new DragPane();
-            layeredPaneForDragPane = (JLayeredPane)f.getParent();
-            layeredPaneForDragPane.setLayer(dragPane, Integer.MAX_VALUE);
-            dragPane.setBounds(f.getX(), f.getY(), f.getWidth(), f.getHeight());
-            layeredPaneForDragPane.add(dragPane);
-            usingDragPane = true;
-        }
+    public void beginDraggingFrame(JComponent f) {	
+	usingDragPane = false;
+	if(f.getParent() instanceof JLayeredPane) {
+	    if(dragPane == null)
+		dragPane = new DragPane();
+	    layeredPaneForDragPane = (JLayeredPane)f.getParent();
+	    layeredPaneForDragPane.setLayer(dragPane, Integer.MAX_VALUE);
+	    dragPane.setBounds(f.getX(), f.getY(), f.getWidth(), f.getHeight());
+	    layeredPaneForDragPane.add(dragPane);
+	    usingDragPane = true;
+	}
     }
 
     public void dragFrame(JComponent f, int newX, int newY) {
-        setBoundsForFrame(f, newX, newY, f.getWidth(), f.getHeight());
+	setBoundsForFrame(f, newX, newY, f.getWidth(), f.getHeight());
     }
 
     public void endDraggingFrame(JComponent f) {
-        if(usingDragPane) {
-            layeredPaneForDragPane.remove(dragPane);
-            usingDragPane = false;
+	if(usingDragPane) {
+	    layeredPaneForDragPane.remove(dragPane);
+	    usingDragPane = false;
             if (f instanceof JInternalFrame) {
-                setBoundsForFrame(f, dragPane.getX(), dragPane.getY(),
+                setBoundsForFrame(f, dragPane.getX(), dragPane.getY(), 
                         dragPane.getWidth(), dragPane.getHeight());
             } else if (f instanceof JInternalFrame.JDesktopIcon) {
                 adjustBoundsForIcon((JInternalFrame.JDesktopIcon)f,
                         dragPane.getX(), dragPane.getY());
             }
-        }
+	}
     }
 
     public void beginResizingFrame(JComponent f, int direction) {
-        usingDragPane = false;
-        if(f.getParent() instanceof JLayeredPane) {
-            if(dragPane == null)
-                dragPane = new DragPane();
-            JLayeredPane p = (JLayeredPane)f.getParent();
-            p.setLayer(dragPane, Integer.MAX_VALUE);
-            dragPane.setBounds(f.getX(), f.getY(),
-                                f.getWidth(), f.getHeight());
-            p.add(dragPane);
-            usingDragPane = true;
-        }
+	usingDragPane = false;
+	if(f.getParent() instanceof JLayeredPane) {
+	    if(dragPane == null)
+		dragPane = new DragPane();
+	    JLayeredPane p = (JLayeredPane)f.getParent();
+	    p.setLayer(dragPane, Integer.MAX_VALUE);
+	    dragPane.setBounds(f.getX(), f.getY(), 
+				f.getWidth(), f.getHeight());
+	    p.add(dragPane);
+	    usingDragPane = true;
+	}
     }
 
-    public void resizeFrame(JComponent f, int newX, int newY,
-                                int newWidth, int newHeight) {
-        setBoundsForFrame(f, newX, newY, newWidth, newHeight);
+    public void resizeFrame(JComponent f, int newX, int newY, 
+				int newWidth, int newHeight) {
+	setBoundsForFrame(f, newX, newY, newWidth, newHeight);
     }
 
     public void endResizingFrame(JComponent f) {
-        if(usingDragPane) {
-            JLayeredPane p = (JLayeredPane)f.getParent();
-            p.remove(dragPane);
-            usingDragPane = false;
-            setBoundsForFrame(f, dragPane.getX(), dragPane.getY(),
-                                dragPane.getWidth(), dragPane.getHeight());
-        }
+	if(usingDragPane) {
+	    JLayeredPane p = (JLayeredPane)f.getParent();
+	    p.remove(dragPane);
+	    usingDragPane = false;
+            setBoundsForFrame(f, dragPane.getX(), dragPane.getY(), 
+				dragPane.getWidth(), dragPane.getHeight());
+	}
     }
 
         public void iconifyFrame(JInternalFrame f) {

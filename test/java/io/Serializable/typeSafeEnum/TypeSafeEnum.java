@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,7 +36,7 @@ public class TypeSafeEnum implements Serializable, ObjectInputValidation {
 
     private String value;
     private TypeSafeEnum(String value) {
-        this.value = value;
+	this.value = value;
     }
 
     final public static TypeSafeEnum FIRST = new TypeSafeEnum("First");
@@ -48,111 +48,111 @@ public class TypeSafeEnum implements Serializable, ObjectInputValidation {
 
 
     private Object writeReplace() throws IOException {
-        numWriteReplace++;
-        if (verbose) {
-            System.out.println("TypeSafeEnum.writeReplace() " +
-                               this.toString());
-        }
-        return this;
+	numWriteReplace++;
+	if (verbose) {
+	    System.out.println("TypeSafeEnum.writeReplace() " + 
+			       this.toString());
+	}
+	return this;
     }
-
+    
     private Object readResolve() throws IOException {
-        numReadResolve++;
-        if (verbose) {
-            System.out.println("readResolve called on " + this.toString());
-        }
-        if (value.equals(FIRST.value)) {
-            return FIRST;
-        } else if (value.equals(SECOND.value)) {
-            return SECOND;
-        } else if (value.equals(THIRD.value)) {
-            return THIRD;
-        } else {
-            //unknown type safe enum
-            return this;
-        }
+	numReadResolve++;
+	if (verbose) {
+	    System.out.println("readResolve called on " + this.toString());
+	}
+	if (value.equals(FIRST.value)) {
+	    return FIRST;
+	} else if (value.equals(SECOND.value)) {
+	    return SECOND;
+	} else if (value.equals(THIRD.value)) {
+	    return THIRD;
+	} else {
+	    //unknown type safe enum
+	    return this;
+	}
     }
 
     private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException 
     {
-        numReadObject++;
-        in.defaultReadObject();
-        if (verbose) {
-            System.out.println("TypeSafeEnum.readObject() " + this.toString());
-        }
-        if (value == null) {
-            in.registerValidation(this, 0);
-        }
+	numReadObject++;
+	in.defaultReadObject();
+	if (verbose) {
+	    System.out.println("TypeSafeEnum.readObject() " + this.toString());
+	}
+	if (value == null) {
+	    in.registerValidation(this, 0);
+	}
     }
 
     public void validateObject() throws InvalidObjectException {
-        // only top level case has null for value, validate.
-        if (numWriteObject != 4) {
-            throw new Error("Expected 4 calls to writeObject, only " +
-                            numWriteObject + " made");
-        }
-        if (numReadObject != 4) {
-            throw new Error("Expected 4 calls to readObject, only " +
-                            numReadObject + " made");
-        }
-        if (numWriteReplace != 4) {
-            throw new Error("Expected 4 calls to writeReplace, only " +
-                            numWriteReplace + " made");
-        }
-        if (numReadResolve != 4) {
-            throw new Error("Expected 4 calls to readResolve, only " +
-                            numReadResolve + " made");
-        }
+	// only top level case has null for value, validate.
+	if (numWriteObject != 4) {
+	    throw new Error("Expected 4 calls to writeObject, only " +
+			    numWriteObject + " made");
+	}
+	if (numReadObject != 4) {
+	    throw new Error("Expected 4 calls to readObject, only " +
+			    numReadObject + " made");
+	}
+	if (numWriteReplace != 4) {
+	    throw new Error("Expected 4 calls to writeReplace, only " +
+			    numWriteReplace + " made");
+	}
+	if (numReadResolve != 4) {
+	    throw new Error("Expected 4 calls to readResolve, only " +
+			    numReadResolve + " made");
+	}
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException
+    private void writeObject(ObjectOutputStream out) throws IOException 
     {
-        numWriteObject++;
-        out.defaultWriteObject();
-        if (verbose) {
-            System.out.println("TypeSafeEnum.writeObject() " +
-                               this.toString());
-        }
+	numWriteObject++;
+	out.defaultWriteObject();
+	if (verbose) {
+	    System.out.println("TypeSafeEnum.writeObject() " + 
+			       this.toString());
+	}
     }
 
     public String toString() {
-        return super.toString() + " value=" + value;
-    }
+	return super.toString() + " value=" + value;
+    } 
 
-    public static void main(String args[])
-        throws IOException, ClassNotFoundException
+    public static void main(String args[]) 
+	throws IOException, ClassNotFoundException  
     {
-        if (args.length > 0 && args[0].equals("-verbose"))
-            verbose = true;
+	if (args.length > 0 && args[0].equals("-verbose"))
+	    verbose = true;
 
-        TypeSafeEnum[] writeArray = new TypeSafeEnum[7];
-        writeArray[0] = FIRST;
-        writeArray[1] = SECOND;
-        writeArray[2] = THIRD;
-        writeArray[3] = FIRST;
-        writeArray[4] = SECOND;
-        writeArray[5] = THIRD;
-        writeArray[6] = new TypeSafeEnum("Third");
+	TypeSafeEnum[] writeArray = new TypeSafeEnum[7];
+	writeArray[0] = FIRST;
+	writeArray[1] = SECOND;
+	writeArray[2] = THIRD;
+	writeArray[3] = FIRST;
+	writeArray[4] = SECOND;
+	writeArray[5] = THIRD;
+	writeArray[6] = new TypeSafeEnum("Third");
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream os = new ObjectOutputStream(baos);
-        os.writeObject(writeArray);
-        os.close();
-
-        TypeSafeEnum[] readArray;
-        ObjectInputStream in =
-           new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        readArray = (TypeSafeEnum[])in.readObject();
-        in.close();
-
-        for (int i= 0; i < writeArray.length - 1 ; i++) {
-            if (writeArray[i] != readArray[i]) {
-                throw new Error("Serializa/deserialize did not preserve " +
-                                "singleton for " +
-                                readArray[i].toString() +
-                                " and " + writeArray[i].toString());
-            }
-        }
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	ObjectOutputStream os = new ObjectOutputStream(baos);
+	os.writeObject(writeArray);
+	os.close();
+	
+	TypeSafeEnum[] readArray;
+	ObjectInputStream in = 
+	   new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	readArray = (TypeSafeEnum[])in.readObject();
+	in.close();
+	
+	for (int i= 0; i < writeArray.length - 1 ; i++) {
+	    if (writeArray[i] != readArray[i]) {
+		throw new Error("Serializa/deserialize did not preserve " +
+				"singleton for " + 
+				readArray[i].toString() + 
+				" and " + writeArray[i].toString());
+	    }
+	}
    }
 };

@@ -30,6 +30,7 @@ import java.util.Map;
  * A mapping of key/value pairs, all of whose keys are
  * <code>Strings</code>.
  *
+ * @version 1.0
  * @author Mike Grogan
  * @since 1.6
  */
@@ -47,12 +48,12 @@ public interface Bindings extends Map<String, Object> {
      * @throws IllegalArgumentException if the name is empty String.
      */
     public Object put(String name, Object value);
-
+    
     /**
      * Adds all the mappings in a given <code>Map</code> to this <code>Bindings</code>.
      * @param toMerge The <code>Map</code> to merge with this one.
      *
-     * @throws NullPointerException
+     * @throws NullPointerException 
      *         if toMerge map is null or if some key in the map is null.
      * @throws IllegalArgumentException
      *         if some key in the map is an empty String.

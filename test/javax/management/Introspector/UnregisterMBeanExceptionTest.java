@@ -91,19 +91,19 @@ public class UnregisterMBeanExceptionTest {
     public static void main(String[] args) throws Exception {
 
         // Instantiate the MBean server
-        //
-        System.out.println("Create the MBean server");
-        MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+	//
+	System.out.println("Create the MBean server");
+	MBeanServer mbs = MBeanServerFactory.createMBeanServer();
 
-        // Register the MBean
-        //
-        System.out.println("Create a TestDynamicMBean");
-        TestDynamicMBean obj = new TestDynamicMBean();
-        ObjectName n = new ObjectName("d:k=v");
-        System.out.println("Register a TestDynamicMBean");
+	// Register the MBean
+	//
+	System.out.println("Create a TestDynamicMBean");
+	TestDynamicMBean obj = new TestDynamicMBean();
+	ObjectName n = new ObjectName("d:k=v");
+	System.out.println("Register a TestDynamicMBean");
         mbs.registerMBean(obj, n);
         obj.throwException = true;
-        System.out.println("Unregister a TestDynamicMBean");
+	System.out.println("Unregister a TestDynamicMBean");
         try {
             mbs.unregisterMBean(n);
         } catch (Exception e) {
@@ -112,11 +112,11 @@ public class UnregisterMBeanExceptionTest {
         boolean isRegistered = mbs.isRegistered(n);
         System.out.println("Is MBean Registered? " + isRegistered);
 
-        if (isRegistered) {
+	if (isRegistered) {
             throw new IllegalArgumentException(
                 "Test failed: the MBean is still registered");
-        } else {
-            System.out.println("Test passed");
+	} else {
+	    System.out.println("Test passed");            
         }
     }
 }

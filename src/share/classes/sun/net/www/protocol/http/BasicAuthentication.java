@@ -37,6 +37,7 @@ import sun.net.www.HeaderParser;
  * the "basic" scheme.
  *
  * @author Bill Foote
+ * @version %I%, %G% 
  */
 
 
@@ -47,105 +48,105 @@ class BasicAuthentication extends AuthenticationInfo {
     static final char BASIC_AUTH = 'B';
 
     /** The authentication string for this host, port, and realm.  This is
-        a simple BASE64 encoding of "login:password".    */
+	a simple BASE64 encoding of "login:password".    */
     String auth;
 
     /**
      * Create a BasicAuthentication
      */
     public BasicAuthentication(boolean isProxy, String host, int port,
-                               String realm, PasswordAuthentication pw) {
-        super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
-              BASIC_AUTH, host, port, realm);
-        String plain = pw.getUserName() + ":";
-        byte[] nameBytes = null;
-        try {
-            nameBytes = plain.getBytes("ISO-8859-1");
-        } catch (java.io.UnsupportedEncodingException uee) {
-            assert false;
-        }
+			       String realm, PasswordAuthentication pw) {
+	super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+	      BASIC_AUTH, host, port, realm);
+	String plain = pw.getUserName() + ":";
+	byte[] nameBytes = null;
+	try {
+	    nameBytes = plain.getBytes("ISO-8859-1");
+	} catch (java.io.UnsupportedEncodingException uee) {
+	    assert false;
+	}
 
-        // get password bytes
-        char[] passwd = pw.getPassword();
-        byte[] passwdBytes = new byte[passwd.length];
-        for (int i=0; i<passwd.length; i++)
-            passwdBytes[i] = (byte)passwd[i];
+	// get password bytes
+	char[] passwd = pw.getPassword();
+	byte[] passwdBytes = new byte[passwd.length];
+	for (int i=0; i<passwd.length; i++)
+	    passwdBytes[i] = (byte)passwd[i];
 
-        // concatenate user name and password bytes and encode them
-        byte[] concat = new byte[nameBytes.length + passwdBytes.length];
-        System.arraycopy(nameBytes, 0, concat, 0, nameBytes.length);
-        System.arraycopy(passwdBytes, 0, concat, nameBytes.length,
-                         passwdBytes.length);
-        this.auth = "Basic " + (new sun.misc.BASE64Encoder()).encode(concat);
-        this.pw = pw;
+	// concatenate user name and password bytes and encode them
+	byte[] concat = new byte[nameBytes.length + passwdBytes.length];
+	System.arraycopy(nameBytes, 0, concat, 0, nameBytes.length);
+	System.arraycopy(passwdBytes, 0, concat, nameBytes.length,
+			 passwdBytes.length);
+	this.auth = "Basic " + (new sun.misc.BASE64Encoder()).encode(concat);
+	this.pw = pw;
     }
 
     /**
      * Create a BasicAuthentication
      */
     public BasicAuthentication(boolean isProxy, String host, int port,
-                               String realm, String auth) {
-        super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
-              BASIC_AUTH, host, port, realm);
-        this.auth = "Basic " + auth;
+			       String realm, String auth) {
+	super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+	      BASIC_AUTH, host, port, realm);
+	this.auth = "Basic " + auth;
     }
 
     /**
      * Create a BasicAuthentication
      */
     public BasicAuthentication(boolean isProxy, URL url, String realm,
-                                   PasswordAuthentication pw) {
-        super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
-              BASIC_AUTH, url, realm);
-        String plain = pw.getUserName() + ":";
-        byte[] nameBytes = null;
-        try {
-            nameBytes = plain.getBytes("ISO-8859-1");
-        } catch (java.io.UnsupportedEncodingException uee) {
-            assert false;
-        }
+				   PasswordAuthentication pw) {
+	super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+	      BASIC_AUTH, url, realm);
+	String plain = pw.getUserName() + ":";
+	byte[] nameBytes = null;
+	try {
+	    nameBytes = plain.getBytes("ISO-8859-1");
+	} catch (java.io.UnsupportedEncodingException uee) {
+	    assert false;
+	}
 
-        // get password bytes
-        char[] passwd = pw.getPassword();
-        byte[] passwdBytes = new byte[passwd.length];
-        for (int i=0; i<passwd.length; i++)
-            passwdBytes[i] = (byte)passwd[i];
+	// get password bytes
+	char[] passwd = pw.getPassword();
+	byte[] passwdBytes = new byte[passwd.length];
+	for (int i=0; i<passwd.length; i++)
+	    passwdBytes[i] = (byte)passwd[i];
 
-        // concatenate user name and password bytes and encode them
-        byte[] concat = new byte[nameBytes.length + passwdBytes.length];
-        System.arraycopy(nameBytes, 0, concat, 0, nameBytes.length);
-        System.arraycopy(passwdBytes, 0, concat, nameBytes.length,
-                         passwdBytes.length);
-        this.auth = "Basic " + (new sun.misc.BASE64Encoder()).encode(concat);
-        this.pw = pw;
+	// concatenate user name and password bytes and encode them
+	byte[] concat = new byte[nameBytes.length + passwdBytes.length];
+	System.arraycopy(nameBytes, 0, concat, 0, nameBytes.length);
+	System.arraycopy(passwdBytes, 0, concat, nameBytes.length,
+			 passwdBytes.length);
+	this.auth = "Basic " + (new sun.misc.BASE64Encoder()).encode(concat);
+	this.pw = pw;
     }
 
     /**
      * Create a BasicAuthentication
      */
     public BasicAuthentication(boolean isProxy, URL url, String realm,
-                                   String auth) {
-        super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
-              BASIC_AUTH, url, realm);
-        this.auth = "Basic " + auth;
+				   String auth) {
+	super(isProxy ? PROXY_AUTHENTICATION : SERVER_AUTHENTICATION,
+	      BASIC_AUTH, url, realm);
+	this.auth = "Basic " + auth;
     }
 
     /**
      * @return true if this authentication supports preemptive authorization
      */
     boolean supportsPreemptiveAuthorization() {
-        return true;
+	return true;
     }
 
     /**
      * @return the name of the HTTP header this authentication wants set
      */
     String getHeaderName() {
-        if (type == SERVER_AUTHENTICATION) {
-            return "Authorization";
-        } else {
-            return "Proxy-authorization";
-        }
+	if (type == SERVER_AUTHENTICATION) {
+	    return "Authorization";
+	} else {
+	    return "Proxy-authorization";
+	}
     }
 
     /**
@@ -165,10 +166,10 @@ class BasicAuthentication extends AuthenticationInfo {
      * @return the value of the HTTP header this authentication wants set
      */
     String getHeaderValue(URL url, String method) {
-        /* For Basic the authorization string does not depend on the request URL
-         * or the request method
-         */
-        return auth;
+	/* For Basic the authorization string does not depend on the request URL 
+  	 * or the request method
+	 */
+	return auth;
     }
 
     /**
@@ -177,7 +178,7 @@ class BasicAuthentication extends AuthenticationInfo {
      * They are always either valid or invalid.
      */
     boolean isAuthorizationStale (String header) {
-        return false;
+	return false;
     }
 
     /**
@@ -188,7 +189,7 @@ class BasicAuthentication extends AuthenticationInfo {
     }
 
     /**
-     * @return the common root path between npath and path.
+     * @return the common root path between npath and path. 
      * This is used to detect when we have an authentication for two
      * paths and the root of th authentication space is the common root.
      */
@@ -198,12 +199,12 @@ class BasicAuthentication extends AuthenticationInfo {
         int toindex;
 
         /* Must normalize so we don't get confused by ../ and ./ segments */
-        try {
+	try {
             npath = new URI (npath).normalize().getPath();
             opath = new URI (opath).normalize().getPath();
-        } catch (URISyntaxException e) {
-            /* ignore error and use the old value */
-        }
+	} catch (URISyntaxException e) {
+	    /* ignore error and use the old value */
+	}
 
         while (index < opath.length()) {
             toindex = opath.indexOf('/', index+1);

@@ -59,3 +59,4 @@ public class TargetAdapter implements TargetListener {
     public void vmDied(VMDeathEvent event) {}
     public void vmDisconnected(VMDisconnectEvent event) {}
 }
+

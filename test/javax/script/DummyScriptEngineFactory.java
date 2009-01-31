@@ -31,7 +31,7 @@ import javax.script.*;
 import java.util.*;
 
 public class DummyScriptEngineFactory implements ScriptEngineFactory {
-    public String getEngineName() {
+    public String getEngineName() { 
         return "dummy";
     }
 
@@ -88,7 +88,7 @@ public class DummyScriptEngineFactory implements ScriptEngineFactory {
         } else {
             return null;
         }
-    }
+    } 
 
     public String getProgram(String... statements) {
         StringBuffer buf = new StringBuffer();

@@ -33,6 +33,7 @@ package com.sun.tools.example.debug.tty;
  * <li> com.sun.tools.example.debug.tty
  * </ol>
  *
+ * @version %W% %E%
  */
 public class TTYResources_ja extends java.util.ListResourceBundle {
 
@@ -284,12 +285,12 @@ public class TTYResources_ja extends java.util.ListResourceBundle {
         {"Threadgroup name not specified.", "Threadgroup \u540d\u304c\u6307\u5b9a\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002"},
         {"Threads must be suspended", "\u30b9\u30ec\u30c3\u30c9\u3092\u4e2d\u65ad\u3059\u308b\u5fc5\u8981\u304c\u3042\u308a\u307e\u3059"},
         {"trace method exit in effect for", "{0} \u306b\u5bfe\u3059\u308b\u30e1\u30bd\u30c3\u30c9\u7d42\u4e86\u306e\u30c8\u30ec\u30fc\u30b9\u6709\u52b9"},
-        {"trace method exits in effect", "\u30e1\u30bd\u30c3\u30c9\u7d42\u4e86\u306e\u30c8\u30ec\u30fc\u30b9\u6709\u52b9"},
-        {"trace methods in effect", "\u30e1\u30bd\u30c3\u30c9\u306e\u30c8\u30ec\u30fc\u30b9\u6709\u52b9"},
+        {"trace method exits in effect", "\u30e1\u30bd\u30c3\u30c9\u7d42\u4e86\u306e\u30c8\u30ec\u30fc\u30b9\u6709\u52b9"}, 
+        {"trace methods in effect", "\u30e1\u30bd\u30c3\u30c9\u306e\u30c8\u30ec\u30fc\u30b9\u6709\u52b9"}, 
         {"trace go method exit in effect for", "{0} \u306b\u5bfe\u3059\u308b\u30e1\u30bd\u30c3\u30c9\u7d42\u4e86\u306e\u30c8\u30ec\u30fc\u30b9 (go \u30aa\u30d7\u30b7\u30e7\u30f3\u4ed8\u304d) \u6709\u52b9"},
-        {"trace go method exits in effect", "\u30e1\u30bd\u30c3\u30c9\u7d42\u4e86\u306e\u30c8\u30ec\u30fc\u30b9 (go \u30aa\u30d7\u30b7\u30e7\u30f3\u4ed8\u304d) \u6709\u52b9"},
-        {"trace go methods in effect", "\u30e1\u30bd\u30c3\u30c9\u306e\u30c8\u30ec\u30fc\u30b9 (go \u30aa\u30d7\u30b7\u30e7\u30f3\u4ed8\u304d) \u6709\u52b9"},
-        {"trace not in effect", "\u30c8\u30ec\u30fc\u30b9\u304c\u6709\u52b9\u3067\u306f\u3042\u308a\u307e\u305b\u3093"},
+        {"trace go method exits in effect", "\u30e1\u30bd\u30c3\u30c9\u7d42\u4e86\u306e\u30c8\u30ec\u30fc\u30b9 (go \u30aa\u30d7\u30b7\u30e7\u30f3\u4ed8\u304d) \u6709\u52b9"}, 
+        {"trace go methods in effect", "\u30e1\u30bd\u30c3\u30c9\u306e\u30c8\u30ec\u30fc\u30b9 (go \u30aa\u30d7\u30b7\u30e7\u30f3\u4ed8\u304d) \u6709\u52b9"}, 
+        {"trace not in effect", "\u30c8\u30ec\u30fc\u30b9\u304c\u6709\u52b9\u3067\u306f\u3042\u308a\u307e\u305b\u3093"}, 
         {"Unable to attach to target VM.", "\u30bf\u30fc\u30b2\u30c3\u30c8 VM \u306b\u63a5\u7d9a\u3067\u304d\u307e\u305b\u3093"},
         {"Unable to display process output:", "\u30d7\u30ed\u30bb\u30b9\u51fa\u529b\u3092\u8868\u793a\u3067\u304d\u307e\u305b\u3093: {0}"},
         {"Unable to launch target VM.", "\u30bf\u30fc\u30b2\u30c3\u30c8 VM \u3092\u8d77\u52d5\u3067\u304d\u307e\u305b\u3093"},

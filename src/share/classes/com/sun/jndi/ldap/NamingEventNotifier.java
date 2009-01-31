@@ -60,50 +60,50 @@ final class NamingEventNotifier implements Runnable {
     // package private; used by EventSupport to remove it
     NotifierArgs info;
 
-    NamingEventNotifier(EventSupport support, LdapCtx ctx, NotifierArgs info,
-        NamingListener firstListener) throws NamingException {
-        this.info = info;
-        this.support = support;
+    NamingEventNotifier(EventSupport support, LdapCtx ctx, NotifierArgs info, 
+	NamingListener firstListener) throws NamingException {
+	this.info = info;
+	this.support = support;
 
-        Control psearch;
-        try {
-            psearch = new PersistentSearchControl(
-                info.mask,
-                true /* no info about original entry(s) */,
-                true /* additional info about changes */,
-                Control.CRITICAL);
-        } catch (java.io.IOException e) {
-            NamingException ne = new NamingException(
-                "Problem creating persistent search control");
-            ne.setRootCause(e);
-            throw ne;
-        }
+	Control psearch;
+	try {
+	    psearch = new PersistentSearchControl(
+		info.mask,
+		true /* no info about original entry(s) */,
+		true /* additional info about changes */,
+		Control.CRITICAL);
+	} catch (java.io.IOException e) {
+	    NamingException ne = new NamingException(
+		"Problem creating persistent search control");
+	    ne.setRootCause(e);
+	    throw ne;
+	}
 
-        // Add psearch control to existing list
-        context = (LdapCtx)ctx.newInstance(new Control[]{psearch});
-        eventSrc = ctx;
+	// Add psearch control to existing list
+	context = (LdapCtx)ctx.newInstance(new Control[]{psearch});
+	eventSrc = ctx;
 
-        namingListeners = new Vector();
-        namingListeners.addElement(firstListener);
+	namingListeners = new Vector();
+	namingListeners.addElement(firstListener);
 
-        worker = Obj.helper.createThread(this);
-        worker.setDaemon(true);  // not a user thread
-        worker.start();
+	worker = Obj.helper.createThread(this);
+	worker.setDaemon(true);  // not a user thread
+	worker.start();
     }
 
     // package private; used by EventSupport; namingListener already synchronized
     void addNamingListener(NamingListener l) {
-        namingListeners.addElement(l);
+	namingListeners.addElement(l);
     }
 
     // package private; used by EventSupport; namingListener already synchronized
     void removeNamingListener(NamingListener l) {
-        namingListeners.removeElement(l);
+	namingListeners.removeElement(l);
     }
 
     // package private; used by EventSupport; namingListener already synchronized
     boolean hasNamingListeners() {
-        return namingListeners.size() > 0;
+	return namingListeners.size() > 0;
     }
 
     /**
@@ -112,92 +112,92 @@ final class NamingEventNotifier implements Runnable {
      * queue to be dispatched to listeners.
      */
     public void run() {
-        try {
-            Continuation cont = new Continuation();
-            cont.setError(this, info.name);
-            Name nm = (info.name == null || info.name.equals("")) ?
-                new CompositeName() : new CompositeName().add(info.name);
+	try {
+	    Continuation cont = new Continuation();
+	    cont.setError(this, info.name);
+	    Name nm = (info.name == null || info.name.equals("")) ?
+		new CompositeName() : new CompositeName().add(info.name);
 
-            results = context.searchAux(nm, info.filter, info.controls,
-                true, false, cont);
+	    results = context.searchAux(nm, info.filter, info.controls,
+		true, false, cont);
 
-            // Change root of search results so that it will generate
-            // names relative to the event context instead of that
-            // named by nm
-            ((LdapSearchEnumeration)results).setStartName(context.currentParsedDN);
+	    // Change root of search results so that it will generate
+	    // names relative to the event context instead of that
+	    // named by nm
+	    ((LdapSearchEnumeration)results).setStartName(context.currentParsedDN);
 
-            SearchResult si;
-            Control[] respctls;
-            EntryChangeResponseControl ec;
-            long changeNum;
+	    SearchResult si;
+	    Control[] respctls;
+	    EntryChangeResponseControl ec;
+	    long changeNum;
 
-            while (results.hasMore()) {
-                si = (SearchResult)results.next();
-                respctls = (si instanceof HasControls) ?
-                    ((HasControls) si).getControls() : null;
+	    while (results.hasMore()) {
+		si = (SearchResult)results.next();
+		respctls = (si instanceof HasControls) ?
+		    ((HasControls) si).getControls() : null;
 
-                if (debug) {
-                    System.err.println("notifier: " + si);
-                    System.err.println("respCtls: " + respctls);
-                }
+		if (debug) {
+		    System.err.println("notifier: " + si);
+		    System.err.println("respCtls: " + respctls);
+		}
 
-                // Just process ECs; ignore all the rest
-                if (respctls != null) {
-                    for (int i = 0; i < respctls.length; i++) {
-                        // %%% Should be checking OID instead of class
-                        // %%% in case using someone else's  EC ctl
-                        if (respctls[i] instanceof EntryChangeResponseControl) {
-                            ec = (EntryChangeResponseControl)respctls[i];
-                            changeNum = ec.getChangeNumber();
-                            switch (ec.getChangeType()) {
-                            case EntryChangeResponseControl.ADD:
-                                fireObjectAdded(si, changeNum);
-                                break;
-                            case EntryChangeResponseControl.DELETE:
-                                fireObjectRemoved(si, changeNum);
-                                break;
-                            case EntryChangeResponseControl.MODIFY:
-                                fireObjectChanged(si, changeNum);
-                                break;
-                            case EntryChangeResponseControl.RENAME:
-                                fireObjectRenamed(si, ec.getPreviousDN(),
-                                    changeNum);
-                                break;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        } catch (InterruptedNamingException e) {
-            if (debug) System.err.println("NamingEventNotifier Interrupted");
-        } catch (NamingException e) {
-            // Fire event to notify NamingExceptionEvent listeners
-            fireNamingException(e);
+		// Just process ECs; ignore all the rest
+		if (respctls != null) {
+		    for (int i = 0; i < respctls.length; i++) {
+			// %%% Should be checking OID instead of class
+			// %%% in case using someone else's  EC ctl
+			if (respctls[i] instanceof EntryChangeResponseControl) {
+			    ec = (EntryChangeResponseControl)respctls[i];
+			    changeNum = ec.getChangeNumber();
+			    switch (ec.getChangeType()) {
+			    case EntryChangeResponseControl.ADD:
+				fireObjectAdded(si, changeNum);
+				break;
+			    case EntryChangeResponseControl.DELETE:
+				fireObjectRemoved(si, changeNum);
+				break;
+			    case EntryChangeResponseControl.MODIFY:
+				fireObjectChanged(si, changeNum);
+				break;
+			    case EntryChangeResponseControl.RENAME:
+				fireObjectRenamed(si, ec.getPreviousDN(),
+				    changeNum);
+				break;
+			    }
+			}
+			break;
+		    }
+		}
+	    }
+	} catch (InterruptedNamingException e) {
+	    if (debug) System.err.println("NamingEventNotifier Interrupted");
+	} catch (NamingException e) {
+	    // Fire event to notify NamingExceptionEvent listeners
+	    fireNamingException(e);
 
-            // This notifier is no longer valid
-            support.removeDeadNotifier(info);
-        } finally {
-            cleanup();
-        }
-        if (debug) System.err.println("NamingEventNotifier finished");
+	    // This notifier is no longer valid
+	    support.removeDeadNotifier(info);
+	} finally {
+	    cleanup();
+	}
+	if (debug) System.err.println("NamingEventNotifier finished");
     }
 
     private void cleanup() {
-        if (debug) System.err.println("NamingEventNotifier cleanup");
+	if (debug) System.err.println("NamingEventNotifier cleanup");
 
-        try {
-            if (results != null) {
-                if (debug) System.err.println("NamingEventNotifier enum closing");
-                results.close(); // this will abandon the search
-                results = null;
-            }
-            if (context != null) {
-                if (debug) System.err.println("NamingEventNotifier ctx closing");
-                context.close();
-                context = null;
-            }
-        } catch (NamingException e) {}
+	try {
+	    if (results != null) {
+		if (debug) System.err.println("NamingEventNotifier enum closing");
+		results.close(); // this will abandon the search
+		results = null;
+	    }
+	    if (context != null) {
+		if (debug) System.err.println("NamingEventNotifier ctx closing");
+		context.close();
+		context = null;	
+	    } 
+	} catch (NamingException e) {}
     }
 
     /**
@@ -205,82 +205,82 @@ final class NamingEventNotifier implements Runnable {
      * package private; used by EventSupport
      */
     void stop() {
-        if (debug) System.err.println("NamingEventNotifier being stopping");
-        if (worker != null) {
-            worker.interrupt(); // kill our thread
-            worker = null;
-        }
+	if (debug) System.err.println("NamingEventNotifier being stopping");
+	if (worker != null) {
+	    worker.interrupt();	// kill our thread
+	    worker = null;
+	}
     }
 
     /**
      * Fire an "object added" event to registered NamingListeners.
      */
     private void fireObjectAdded(Binding newBd, long changeID) {
-        if (namingListeners == null || namingListeners.size() == 0)
-            return;
+   	if (namingListeners == null || namingListeners.size() == 0)
+	    return;
 
-        NamingEvent e = new NamingEvent(eventSrc, NamingEvent.OBJECT_ADDED,
-            newBd, null, new Long(changeID));
-        support.queueEvent(e, namingListeners);
+	NamingEvent e = new NamingEvent(eventSrc, NamingEvent.OBJECT_ADDED,
+	    newBd, null, new Long(changeID));
+	support.queueEvent(e, namingListeners);
     }
 
     /**
      * Fire an "object removed" event to registered NamingListeners.
      */
     private void fireObjectRemoved(Binding oldBd, long changeID) {
-        if (namingListeners == null || namingListeners.size() == 0)
-            return;
+   	if (namingListeners == null || namingListeners.size() == 0)
+	    return;
 
-        NamingEvent e = new NamingEvent(eventSrc, NamingEvent.OBJECT_REMOVED,
-            null, oldBd, new Long(changeID));
-        support.queueEvent(e, namingListeners);
+	NamingEvent e = new NamingEvent(eventSrc, NamingEvent.OBJECT_REMOVED, 
+	    null, oldBd, new Long(changeID));
+	support.queueEvent(e, namingListeners);
     }
 
     /**
      * Fires an "object changed" event to registered NamingListeners.
      */
     private void fireObjectChanged(Binding newBd, long changeID) {
-        if (namingListeners == null || namingListeners.size() == 0)
-            return;
+   	if (namingListeners == null || namingListeners.size() == 0)
+	    return;
 
-        // Name hasn't changed; construct old binding using name from new binding
-        Binding oldBd = new Binding(newBd.getName(), null, newBd.isRelative());
+	// Name hasn't changed; construct old binding using name from new binding
+	Binding oldBd = new Binding(newBd.getName(), null, newBd.isRelative());
 
-        NamingEvent e = new NamingEvent(
-            eventSrc, NamingEvent.OBJECT_CHANGED, newBd, oldBd, new Long(changeID));
-        support.queueEvent(e, namingListeners);
+	NamingEvent e = new NamingEvent(
+	    eventSrc, NamingEvent.OBJECT_CHANGED, newBd, oldBd, new Long(changeID));
+	support.queueEvent(e, namingListeners);
     }
 
     /**
      * Fires an "object renamed" to registered NamingListeners.
      */
     private void fireObjectRenamed(Binding newBd, String oldDN, long changeID) {
-        if (namingListeners == null || namingListeners.size() == 0)
-            return;
+   	if (namingListeners == null || namingListeners.size() == 0)
+	    return;
 
-        Binding oldBd = null;
-        try {
-            LdapName dn = new LdapName(oldDN);
-            if (dn.startsWith(context.currentParsedDN)) {
-                String relDN = dn.getSuffix(context.currentParsedDN.size()).toString();
-                oldBd = new Binding(relDN, null);
-            }
-        } catch (NamingException e) {}
+	Binding oldBd = null;
+	try {
+	    LdapName dn = new LdapName(oldDN);
+	    if (dn.startsWith(context.currentParsedDN)) {
+		String relDN = dn.getSuffix(context.currentParsedDN.size()).toString();
+		oldBd = new Binding(relDN, null);
+	    } 
+	} catch (NamingException e) {}
 
-        if (oldBd == null) {
-            oldBd = new Binding(oldDN, null, false /* not relative name */);
-        }
+	if (oldBd == null) {
+	    oldBd = new Binding(oldDN, null, false /* not relative name */);
+	}
 
-        NamingEvent e = new NamingEvent(
-            eventSrc, NamingEvent.OBJECT_RENAMED, newBd, oldBd, new Long(changeID));
-        support.queueEvent(e, namingListeners);
+	NamingEvent e = new NamingEvent(
+	    eventSrc, NamingEvent.OBJECT_RENAMED, newBd, oldBd, new Long(changeID));
+	support.queueEvent(e, namingListeners);
     }
 
     private void fireNamingException(NamingException e) {
-        if (namingListeners == null || namingListeners.size() == 0)
-            return;
+	if (namingListeners == null || namingListeners.size() == 0)
+	    return;
 
-        NamingExceptionEvent evt = new NamingExceptionEvent(eventSrc, e);
-        support.queueEvent(evt, namingListeners);
+	NamingExceptionEvent evt = new NamingExceptionEvent(eventSrc, e);
+	support.queueEvent(evt, namingListeners);
     }
 }

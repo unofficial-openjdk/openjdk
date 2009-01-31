@@ -52,12 +52,13 @@ import sun.swing.ImageCache;
  * Finally, finishPainting() should be called. It fills the data buffer passed
  *   in with the image data.
  *
+ * @version %I%, %G%
  * @author Josh Outwater
  */
 class GTKEngine {
 
     final static GTKEngine INSTANCE = new GTKEngine();
-
+    
     /** Size of the image cache */
     private static final int CACHE_SIZE = 50;
 
@@ -92,7 +93,7 @@ class GTKEngine {
      * to all implementations of getGTKSetting().
      */
     static enum Settings {
-        GTK_FONT_NAME,
+        GTK_FONT_NAME, 
         GTK_ICON_SIZES
     }
 
@@ -105,19 +106,19 @@ class GTKEngine {
          * titled borders around components.
          */
         static Region TITLED_BORDER = new CustomRegion("TitledBorder");
-
+         
         private CustomRegion(String name) {
             super(name, null, false);
         }
     }
-
-
+     
+        
     private static HashMap regionToWidgetTypeMap;
     private ImageCache cache = new ImageCache(CACHE_SIZE);
     private int x0, y0, w0, h0;
     private Graphics graphics;
     private Object[] cacheArgs;
-
+    
     private native void native_paint_arrow(
             int widgetType, int state, int shadowType, String detail,
             int x, int y, int width, int height, int arrowType);
@@ -176,7 +177,7 @@ class GTKEngine {
         // Make sure the awt toolkit is loaded so we have access to native
         // methods.
         Toolkit.getDefaultToolkit();
-
+        
         // Initialize regionToWidgetTypeMap
         regionToWidgetTypeMap = new HashMap(50);
         regionToWidgetTypeMap.put(Region.ARROW_BUTTON, new WidgetType[] {
@@ -282,13 +283,13 @@ class GTKEngine {
         if (c == null ) {
             return widgets[0];
         }
-
+        
         if (c instanceof JScrollBar) {
             return (((JScrollBar)c).getOrientation() == JScrollBar.HORIZONTAL) ?
                 widgets[0] : widgets[1];
         } else if (c instanceof JSeparator) {
             JSeparator separator = (JSeparator)c;
-
+            
             /* We should return correrct WidgetType if the seperator is inserted
              * in Menu/PopupMenu/ToolBar. BugID: 6465603
              */
@@ -358,7 +359,7 @@ class GTKEngine {
                 return WidgetType.SPINNER_ARROW_BUTTON;
             }
         }
-
+        
         return null;
     }
 
@@ -374,7 +375,7 @@ class GTKEngine {
         }
         return dir.ordinal();
     }
-
+    
     public void paintArrow(Graphics g, SynthContext context,
             Region id, int state, ShadowType shadowType, ArrowType direction,
             String detail, int x, int y, int w, int h) {
@@ -402,7 +403,7 @@ class GTKEngine {
             Region id, int state, ShadowType shadowType,
             String detail, int x, int y, int w, int h,
             PositionType boxGapType, int tabBegin, int size) {
-
+        
         state = GTKLookAndFeel.synthStateToGTKStateType(state).ordinal();
         int widget = getWidgetType(context.getComponent(), id).ordinal();
         native_paint_box_gap(widget, state, shadowType.ordinal(), detail,
@@ -443,7 +444,7 @@ class GTKEngine {
 
         state = GTKLookAndFeel.synthStateToGTKStateType(state).ordinal();
         int widget = getWidgetType(context.getComponent(), id).ordinal();
-        native_paint_flat_box(widget, state, shadowType.ordinal(), detail,
+        native_paint_flat_box(widget, state, shadowType.ordinal(), detail, 
                               x - x0, y - y0, w, h,
                               context.getComponent().hasFocus());
     }
@@ -468,7 +469,7 @@ class GTKEngine {
 
     public void paintHline(Graphics g, SynthContext context,
             Region id, int state, String detail, int x, int y, int w, int h) {
-
+        
         state = GTKLookAndFeel.synthStateToGTKStateType(state).ordinal();
         int widget = getWidgetType(context.getComponent(), id).ordinal();
         native_paint_hline(widget, state, detail, x - x0, y - y0, w, h);
@@ -520,7 +521,7 @@ class GTKEngine {
         int widget = getWidgetType(context.getComponent(), id).ordinal();
         native_paint_background(widget, state, x - x0, y - y0, w, h);
     }
-
+    
     private final static ColorModel[] COLOR_MODELS = {
         // Transparency.OPAQUE
         new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000),
@@ -536,7 +537,7 @@ class GTKEngine {
         { 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }  // TRANSLUCENT
     };
 
-
+    
     /**
      * Paint a cached image identified by its size and a set of additional
      * arguments, if there's one.
@@ -548,7 +549,7 @@ class GTKEngine {
         if (w <= 0 || h <= 0) {
             return true;
         }
-
+        
         // look for cached image
         Image img = cache.getImage(getClass(), null, w, h, args);
         if (img != null) {
@@ -579,12 +580,12 @@ class GTKEngine {
     public void finishPainting() {
         finishPainting(true);
     }
-
+    
     /**
      * Called to indicate that painting is finished. We create a new
      * BufferedImage from the offscreen buffer, (optionally) cache it,
      * and paint it.
-     */
+     */ 
     public void finishPainting(boolean useCache) {
         DataBufferInt dataBuffer = new DataBufferInt(w0 * h0);
         // Note that stealData() requires a markDirty() afterwards
@@ -605,8 +606,8 @@ class GTKEngine {
         }
         graphics.drawImage(img, x0, y0, null);
     }
-
-    /**
+    
+    /** 
      * Notify native layer of theme change, and flush cache
      */
     public void themeChanged() {
@@ -615,7 +616,7 @@ class GTKEngine {
         }
         cache.flush();
     }
-
+    
     /* GtkSettings enum mirrors that in gtk2_interface.h */
     public Object getSetting(Settings property) {
         synchronized(sun.awt.UNIXToolkit.GTK_LOCK) {

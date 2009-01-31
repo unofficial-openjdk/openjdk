@@ -31,5 +31,5 @@ package sun.reflect.generics.tree;
  * Corresponds to the production of the same name in the JVMS
  * section on signatures.
  */
-public interface FieldTypeSignature
+public interface FieldTypeSignature 
     extends BaseType, TypeSignature, TypeArgument {}

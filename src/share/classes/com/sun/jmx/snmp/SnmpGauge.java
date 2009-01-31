@@ -31,7 +31,7 @@ package com.sun.jmx.snmp;
 /**
  * Represents an SNMP gauge.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -44,42 +44,42 @@ public class SnmpGauge extends SnmpUnsignedInt {
      * Constructs a new <CODE>SnmpGauge</CODE> from the specified integer value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpGauge(int v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     /**
      * Constructs a new <CODE>SnmpGauge</CODE> from the specified <CODE>Integer</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpGauge(Integer v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     /**
      * Constructs a new <CODE>SnmpGauge</CODE> from the specified long value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpGauge(long v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     /**
      * Constructs a new <CODE>SnmpGauge</CODE> from the specified <CODE>Long</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpGauge(Long v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
-
+  
     // PUBLIC METHODS
     //---------------
     /**
@@ -87,9 +87,9 @@ public class SnmpGauge extends SnmpUnsignedInt {
      * @return ASN.1 textual description.
      */
     final public String getTypeName() {
-        return name ;
+	return name ;
     }
-
+  
     // VARIABLES
     //----------
     /**

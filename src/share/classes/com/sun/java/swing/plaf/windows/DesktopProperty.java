@@ -37,6 +37,7 @@ import javax.swing.plaf.*;
  * will force the UIs to update all known Frames. You can invoke
  * <code>invalidate</code> to force the value to be fetched again.
  *
+ * @version %W% %E%
  */
 // NOTE: Don't rely on this class staying in this location. It is likely
 // to move to a different package in the future.
@@ -96,30 +97,30 @@ public class DesktopProperty implements UIDefaults.ActiveValue {
      * Sets whether or not an updateUI call is pending.
      */
     private static synchronized void setUpdatePending(boolean update) {
-        updatePending = update;
+	updatePending = update;
     }
 
     /**
      * Returns true if a UI update is pending.
      */
     private static synchronized boolean isUpdatePending() {
-        return updatePending;
+	return updatePending;
     }
-
+ 
     /**
      * Updates the UIs of all the known Frames.
      */
     private static void updateAllUIs() {
-        // Check if the current UI is WindowsLookAndfeel and flush the XP style map.
-        // Note: Change the package test if this class is moved to a different package.
-        Class uiClass = UIManager.getLookAndFeel().getClass();
-        if (uiClass.getPackage().equals(DesktopProperty.class.getPackage())) {
-            XPStyle.invalidateStyle();
-        }
+	// Check if the current UI is WindowsLookAndfeel and flush the XP style map.
+	// Note: Change the package test if this class is moved to a different package.
+	Class uiClass = UIManager.getLookAndFeel().getClass();
+ 	if (uiClass.getPackage().equals(DesktopProperty.class.getPackage())) {
+	    XPStyle.invalidateStyle();
+ 	}
         Frame appFrames[] = Frame.getFrames();
-        for (int j=0; j < appFrames.length; j++) {
-            updateWindowUI(appFrames[j]);
-        }
+	for (int j=0; j < appFrames.length; j++) {
+	    updateWindowUI(appFrames[j]);			    
+	}
     }
 
     /**
@@ -127,10 +128,10 @@ public class DesktopProperty implements UIDefaults.ActiveValue {
      */
     private static void updateWindowUI(Window window) {
         SwingUtilities.updateComponentTreeUI(window);
-        Window ownedWins[] = window.getOwnedWindows();
-        for (int i=0; i < ownedWins.length; i++) {
-            updateWindowUI(ownedWins[i]);
-        }
+	Window ownedWins[] = window.getOwnedWindows();
+	for (int i=0; i < ownedWins.length; i++) {
+	    updateWindowUI(ownedWins[i]);
+	}
     }
 
 
@@ -220,18 +221,18 @@ public class DesktopProperty implements UIDefaults.ActiveValue {
      * by uninstalling and re-installing the UI objects. Requests are
      * batched and collapsed into a single update pass because often
      * many desktop properties will change at once.
-     */
+     */    
     protected void updateUI() {
-        if (!isUpdatePending()) {
+	if (!isUpdatePending()) {
             setUpdatePending(true);
             Runnable uiUpdater = new Runnable() {
                 public void run() {
                     updateAllUIs();
-                    setUpdatePending(false);
+		    setUpdatePending(false);
                 }
             };
             SwingUtilities.invokeLater(uiUpdater);
-        }
+	}
     }
 
     /**

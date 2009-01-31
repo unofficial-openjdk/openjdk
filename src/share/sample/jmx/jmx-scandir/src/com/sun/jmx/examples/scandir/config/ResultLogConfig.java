@@ -37,25 +37,25 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * The <code>ResultLogConfig</code> Java Bean is used to model
- * the initial configuration of the {@link
+ * the initial configuration of the {@link 
  * com.sun.jmx.examples.scandir.ResultLogManagerMXBean}.
- *
+ * 
  * <p>
  * This class is annotated for XML binding.
- * </p>
- *
+ * </p> 
+ * 
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 @XmlRootElement(name="ResultLogConfig",
         namespace=XmlConfigUtils.NAMESPACE)
 public class ResultLogConfig {
-
+    
     //
     // A logger for this class.
     //
     // private static final Logger LOG =
     //        Logger.getLogger(ResultLogConfig.class.getName());
-
+    
     /**
      * The path to the result log file. {@code null} means that logging to
      * file is disabled.
@@ -92,7 +92,7 @@ public class ResultLogConfig {
     }
 
     /**
-     * Sets the path to the result log file. {@code null} means that
+     * Sets the path to the result log file. {@code null} means that 
      * logging to file is disabled.
      * @param logFileName the path to the result log file.
      */
@@ -115,7 +115,7 @@ public class ResultLogConfig {
      * Sets the maximum number of record that will be logged in the log file
      * before switching to a new log file.
      * A 0 or negative value means no limit.
-     * @param logFileMaxRecords the maximum number of record that will be
+     * @param logFileMaxRecords the maximum number of record that will be 
      * logged in the log file.
      */
     public void setLogFileMaxRecords(long logFileMaxRecords) {
@@ -123,11 +123,11 @@ public class ResultLogConfig {
     }
 
     /**
-     * Gets the maximum number of records that can be contained in the memory
+     * Gets the maximum number of records that can be contained in the memory 
      * log.
      * When this number is reached, the memory log drops its eldest record
      * to make way for the new one.
-     * @return the maximum number of records that can be contained in the
+     * @return the maximum number of records that can be contained in the 
      * memory log.
      */
     @XmlElement(name="MemoryMaxRecords",namespace=XmlConfigUtils.NAMESPACE)
@@ -136,24 +136,24 @@ public class ResultLogConfig {
     }
 
     /**
-     * Sets the maximum number of records that can be contained in the memory
+     * Sets the maximum number of records that can be contained in the memory 
      * log.
      * When this number is reached, the memory log drops its eldest record
      * to make way for the new one.
-     * @param memoryMaxRecords the maximum number of records that can be
+     * @param memoryMaxRecords the maximum number of records that can be 
      * contained in the memory log.
      */
     public void setMemoryMaxRecords(int memoryMaxRecords) {
         this.memoryMaxRecords = memoryMaxRecords;
     }
-
+    
     private Object[] toArray() {
         final Object[] thisconfig = {
             memoryMaxRecords,logFileMaxRecords,logFileName
         };
         return thisconfig;
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
@@ -161,7 +161,7 @@ public class ResultLogConfig {
         final ResultLogConfig other = (ResultLogConfig)o;
         return Arrays.deepEquals(toArray(),other.toArray());
     }
-
+    
     @Override
     public int hashCode() {
         return Arrays.deepHashCode(toArray());

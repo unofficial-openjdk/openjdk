@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  *
  * (C) Copyright IBM Corp. 2000 - All Rights Reserved
  *
@@ -69,13 +70,13 @@ public class ThaiInputMethodDescriptor implements InputMethodDescriptor {
      * @see java.awt.im.spi.InputMethodDescriptor#getInputMethodDisplayName
      */
     public synchronized String getInputMethodDisplayName(Locale inputLocale, Locale displayLanguage) {
-        try {
-            ResourceBundle resources = ResourceBundle.getBundle(
-                "com.sun.inputmethods.internal.thaiim.resources.DisplayNames", displayLanguage);
+	try {
+	    ResourceBundle resources = ResourceBundle.getBundle(
+		"com.sun.inputmethods.internal.thaiim.resources.DisplayNames", displayLanguage);
             return resources.getString("DisplayName.Thai");
-        } catch (MissingResourceException mre) {
-            return "Thai Input Method";
-        }
+	} catch (MissingResourceException mre) {
+	    return "Thai Input Method";
+	}
     }
 
     /**
@@ -89,7 +90,7 @@ public class ThaiInputMethodDescriptor implements InputMethodDescriptor {
      * @see java.awt.im.spi.InputMethodDescriptor#createInputMethod
      */
     public InputMethod createInputMethod() throws Exception {
-        ThaiInputMethodImpl impl = new ThaiInputMethodImpl();
+        ThaiInputMethodImpl impl = new ThaiInputMethodImpl(); 
         return new ThaiInputMethod(THAI, impl);
     }
 
@@ -97,3 +98,4 @@ public class ThaiInputMethodDescriptor implements InputMethodDescriptor {
         return getClass().getName();
     }
 }
+

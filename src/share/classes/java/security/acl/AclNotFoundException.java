@@ -26,10 +26,10 @@
 package java.security.acl;
 
 /**
- * This is an exception that is thrown whenever a reference is made to a
+ * This is an exception that is thrown whenever a reference is made to a 
  * non-existent ACL (Access Control List).
  *
- * @author      Satish Dharmaraj
+ * @author 	Satish Dharmaraj
  */
 public class AclNotFoundException extends Exception {
 

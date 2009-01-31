@@ -57,46 +57,46 @@ abstract class ConnectorImpl implements Connector {
         return defaults;
     }
 
-    void addStringArgument(String name, String label, String description,
+    void addStringArgument(String name, String label, String description, 
                            String defaultValue, boolean mustSpecify) {
-        defaultArguments.put(name,
-                             new StringArgumentImpl(name, label,
-                                                    description,
-                                                    defaultValue,
+        defaultArguments.put(name, 
+                             new StringArgumentImpl(name, label, 
+                                                    description, 
+                                                    defaultValue, 
                                                     mustSpecify));
     }
 
-    void addBooleanArgument(String name, String label, String description,
+    void addBooleanArgument(String name, String label, String description, 
                             boolean defaultValue, boolean mustSpecify) {
-        defaultArguments.put(name,
-                             new BooleanArgumentImpl(name, label,
-                                                     description,
-                                                     defaultValue,
+        defaultArguments.put(name, 
+                             new BooleanArgumentImpl(name, label, 
+                                                     description, 
+                                                     defaultValue, 
                                                      mustSpecify));
     }
 
-    void addIntegerArgument(String name, String label, String description,
+    void addIntegerArgument(String name, String label, String description, 
                             String defaultValue, boolean mustSpecify,
                             int min, int max) {
-        defaultArguments.put(name,
-                             new IntegerArgumentImpl(name, label,
-                                                     description,
-                                                     defaultValue,
-                                                     mustSpecify,
+        defaultArguments.put(name, 
+                             new IntegerArgumentImpl(name, label, 
+                                                     description, 
+                                                     defaultValue, 
+                                                     mustSpecify, 
                                                      min, max));
     }
 
-    void addSelectedArgument(String name, String label, String description,
+    void addSelectedArgument(String name, String label, String description, 
                              String defaultValue, boolean mustSpecify,
                              List<String> list) {
-        defaultArguments.put(name,
-                             new SelectedArgumentImpl(name, label,
-                                                      description,
-                                                      defaultValue,
+        defaultArguments.put(name, 
+                             new SelectedArgumentImpl(name, label, 
+                                                      description, 
+                                                      defaultValue, 
                                                       mustSpecify, list));
     }
 
-    ArgumentImpl argument(String name, Map arguments)
+    ArgumentImpl argument(String name, Map arguments) 
                 throws IllegalConnectorArgumentsException {
 
         ArgumentImpl argument = (ArgumentImpl)arguments.get(name);
@@ -122,7 +122,7 @@ abstract class ConnectorImpl implements Connector {
     private ResourceBundle messages = null;
 
     String getString(String key) {
-        if (messages == null) {
+	if (messages == null) {
             messages = ResourceBundle.getBundle("com.sun.tools.jdi.resources.jdi");
         }
         return messages.getString(key);
@@ -140,7 +140,7 @@ abstract class ConnectorImpl implements Connector {
             string += argument.toString();
             first = false;
         }
-        string += ")";
+	string += ")";
         return string;
     }
 
@@ -151,7 +151,7 @@ abstract class ConnectorImpl implements Connector {
         private String value;
         private boolean mustSpecify;
 
-        ArgumentImpl(String name, String label, String description,
+        ArgumentImpl(String name, String label, String description, 
                      String value,
                      boolean mustSpecify) {
             this.name = name;
@@ -166,26 +166,26 @@ abstract class ConnectorImpl implements Connector {
         public String name() {
             return name;
         }
-
+    
         public String label() {
             return label;
         }
-
+    
         public String description() {
             return description;
         }
-
+    
         public String value() {
             return value;
         }
-
+    
         public void setValue(String value) {
             if (value == null) {
                 throw new NullPointerException("Can't set null value");
             }
             this.value = value;
         }
-
+    
         public boolean mustSpecify() {
             return mustSpecify;
         }
@@ -201,7 +201,7 @@ abstract class ConnectorImpl implements Connector {
                 return false;
             }
         }
-
+    
         public int hashCode() {
             return description().hashCode();
         }
@@ -211,7 +211,7 @@ abstract class ConnectorImpl implements Connector {
                 return super.clone();
             } catch (CloneNotSupportedException e) {
                 // Object should always support clone
-                throw new InternalException();
+                throw new InternalException(); 
             }
         }
 
@@ -220,7 +220,7 @@ abstract class ConnectorImpl implements Connector {
         }
     }
 
-    class BooleanArgumentImpl extends ConnectorImpl.ArgumentImpl
+    class BooleanArgumentImpl extends ConnectorImpl.ArgumentImpl 
                               implements Connector.BooleanArgument {
 
         BooleanArgumentImpl(String name, String label, String description,
@@ -235,7 +235,7 @@ abstract class ConnectorImpl implements Connector {
         }
 
         /**
-         * Sets the value of the argument.
+         * Sets the value of the argument. 
          */
         public void setValue(boolean value) {
             setValue(stringValueOf(value));
@@ -263,12 +263,12 @@ abstract class ConnectorImpl implements Connector {
         }
 
         /**
-         * Return the value of the argument as a boolean.  Since
+         * Return the value of the argument as a boolean.  Since 
          * the argument may not have been set or may have an invalid
          * value {@link #isValid(String)} should be called on
          * {@link #value()} to check its validity.  If it is invalid
          * the boolean returned by this method is undefined.
-         * @return the value of the argument as a boolean.
+         * @return the value of the argument as a boolean.  
          */
         public boolean booleanValue() {
             return value().equals(trueString);
@@ -281,7 +281,7 @@ abstract class ConnectorImpl implements Connector {
         private final int min;
         private final int max;
 
-        IntegerArgumentImpl(String name, String label, String description,
+        IntegerArgumentImpl(String name, String label, String description, 
                             String value,
                             boolean mustSpecify, int min, int max) {
             super(name, label, description, value, mustSpecify);
@@ -290,7 +290,7 @@ abstract class ConnectorImpl implements Connector {
         }
 
         /**
-         * Sets the value of the argument.
+         * Sets the value of the argument. 
          * The value should be checked with {@link #isValid(int)}
          * before setting it; invalid values will throw an exception
          * when the connection is established - for example,
@@ -318,7 +318,7 @@ abstract class ConnectorImpl implements Connector {
 
         /**
          * Performs basic sanity check of argument.
-         * @return <code>true</code> if
+         * @return <code>true</code> if 
          * <code>{@link #min()} &lt;= value  &lt;= {@link #max()}</code>
          */
         public boolean isValid(int value) {
@@ -335,18 +335,18 @@ abstract class ConnectorImpl implements Connector {
         public String stringValueOf(int value) {
             // *** Should this be internationalized????
             // *** Even Brian Beck was unsure if an Arabic programmer
-            // *** would expect port numbers in Arabic numerals,
+            // *** would expect port numbers in Arabic numerals, 
             // *** so punt for now.
             return ""+value;
         }
 
         /**
-         * Return the value of the argument as a int.  Since
+         * Return the value of the argument as a int.  Since 
          * the argument may not have been set or may have an invalid
          * value {@link #isValid(String)} should be called on
          * {@link #value()} to check its validity.  If it is invalid
          * the int returned by this method is undefined.
-         * @return the value of the argument as a int.
+         * @return the value of the argument as a int.  
          */
         public int intValue() {
             if (value() == null) {
@@ -379,7 +379,7 @@ abstract class ConnectorImpl implements Connector {
     class StringArgumentImpl extends ConnectorImpl.ArgumentImpl
                               implements Connector.StringArgument {
 
-        StringArgumentImpl(String name, String label, String description,
+        StringArgumentImpl(String name, String label, String description, 
                            String value,
                            boolean mustSpecify) {
             super(name, label, description, value, mustSpecify);
@@ -394,12 +394,12 @@ abstract class ConnectorImpl implements Connector {
         }
     }
 
-    class SelectedArgumentImpl extends ConnectorImpl.ArgumentImpl
+    class SelectedArgumentImpl extends ConnectorImpl.ArgumentImpl 
                               implements Connector.SelectedArgument {
 
         private final List<String> choices;
 
-        SelectedArgumentImpl(String name, String label, String description,
+        SelectedArgumentImpl(String name, String label, String description, 
                              String value,
                              boolean mustSpecify, List<String> choices) {
             super(name, label, description, value, mustSpecify);

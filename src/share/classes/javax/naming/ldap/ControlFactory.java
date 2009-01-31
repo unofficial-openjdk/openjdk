@@ -36,15 +36,16 @@ import com.sun.naming.internal.ResourceManager;
 
 /**
   * This abstract class represents a factory for creating LDAPv3 controls.
-  * LDAPv3 controls are defined in
+  * LDAPv3 controls are defined in 
   * <A HREF="ftp://ftp.isi.edu/in-notes/rfc2251.txt">RFC 2251</A>.
   *<p>
-  * When a service provider receives a response control, it uses control
+  * When a service provider receives a response control, it uses control 
   * factories to return the specific/appropriate control class implementation.
-  *
+  * 
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author Vincent Ryan
+  * @version %I% %E%
   *
   * @see Control
   * @since 1.3
@@ -69,13 +70,13 @@ public abstract class ControlFactory {
       * BER encoded data. The factory is used to create a specialized
       * control implementation, usually by decoding the BER encoded data,
       * that provides methods to access that data in a type-safe and friendly
-      * manner.
+      * manner. 
       * <p>
       * For example, a factory might use the BER encoded data in
       * basic control and return an instance of a VirtualListReplyControl.
       *<p>
       * If this factory cannot create a control using the argument supplied,
-      * it should return null.
+      * it should return null. 
       * A factory should only throw an exception if it is sure that
       * it is the only intended factory and that no other control factories
       * should be tried. This might happen, for example, if the BER data
@@ -88,9 +89,9 @@ public abstract class ControlFactory {
       *
       * @return A possibly null Control.
       * @exception NamingException If <tt>ctl</tt> contains invalid data that prevents it
-      * from being used to create a control. A factory should only throw
+      * from being used to create a control. A factory should only throw 
       * an exception if it knows how to produce the control (identified by the OID)
-      * but is unable to because of, for example invalid BER data.
+      * but is unable to because of, for example invalid BER data. 
       */
     public abstract Control getControlInstance(Control ctl) throws NamingException;
 
@@ -99,7 +100,7 @@ public abstract class ControlFactory {
       * <p>
       * The following rule is used to create the control:
       *<ul>
-      * <li> Use the control factories specified in
+      * <li> Use the control factories specified in 
       *    the <tt>LdapContext.CONTROL_FACTORIES</tt> property of the
       *    environment, and of the provider resource file associated with
       *    <tt>ctx</tt>, in that order.
@@ -121,37 +122,37 @@ public abstract class ControlFactory {
       * @param env The possibly null environment of the context. This is used
       * to find the value of the <tt>LdapContext.CONTROL_FACTORIES</tt> property.
       * @return A control object created using <code>ctl</code>; or
-      *         <code>ctl</code> if a control object cannot be created using
-      *         the algorithm described above.
+      *		<code>ctl</code> if a control object cannot be created using
+      *		the algorithm described above.
       * @exception NamingException if a naming exception was encountered
-      *         while attempting to create the control object.
+      * 	while attempting to create the control object.
       *         If one of the factories accessed throws an
-      *         exception, it is propagated up to the caller.
+      *		exception, it is propagated up to the caller.
       * If an error was encountered while loading
-      * and instantiating the factory and object classes, the exception
+      *	and instantiating the factory and object classes, the exception
       * is wrapped inside a <tt>NamingException</tt> and then rethrown.
       */
-    public static Control getControlInstance(Control ctl, Context ctx,
-                                             Hashtable<?,?> env)
-        throws NamingException {
+    public static Control getControlInstance(Control ctl, Context ctx, 
+					     Hashtable<?,?> env) 
+	throws NamingException {
 
-        // Get object factories list from environment properties or
-        // provider resource file.
-        FactoryEnumeration factories = ResourceManager.getFactories(
-            LdapContext.CONTROL_FACTORIES, env, ctx);
+	// Get object factories list from environment properties or
+	// provider resource file.
+	FactoryEnumeration factories = ResourceManager.getFactories(
+	    LdapContext.CONTROL_FACTORIES, env, ctx);
 
-        if (factories == null) {
-            return ctl;
-        }
+	if (factories == null) {
+	    return ctl;
+	}
 
-        // Try each factory until one succeeds
-        Control answer = null;
-        ControlFactory factory;
-        while (answer == null && factories.hasMore()) {
-            factory = (ControlFactory)factories.next();
-            answer = factory.getControlInstance(ctl);
-        }
+	// Try each factory until one succeeds
+	Control answer = null;
+	ControlFactory factory;
+	while (answer == null && factories.hasMore()) {
+	    factory = (ControlFactory)factories.next();
+	    answer = factory.getControlInstance(ctl);
+	}
 
-        return (answer != null)? answer : ctl;
+	return (answer != null)? answer : ctl;
     }
 }

@@ -35,6 +35,7 @@ import java.util.List;
  * symmetric, but typically are.
  *
  * @author David Mendenhall
+ * @version %I%, %G%
  *
  * @since 1.4
  */
@@ -71,7 +72,7 @@ public interface FlavorTable extends FlavorMap {
      *
      * @param nat the native whose corresponding <code>DataFlavor</code>s
      *        should be returned. If <code>null</code> is specified, all
-     *        <code>DataFlavor</code>s currently known to this
+     *        <code>DataFlavor</code>s currently known to this 
      *        <code>FlavorTable</code> are returned in a non-deterministic
      *        order.
      * @return a <code>java.util.List</code> of <code>DataFlavor</code>

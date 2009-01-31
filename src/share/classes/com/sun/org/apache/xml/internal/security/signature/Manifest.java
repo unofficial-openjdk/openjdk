@@ -58,7 +58,7 @@ import org.xml.sax.SAXException;
 public class Manifest extends SignatureElementProxy {
 
   /** {@link java.util.logging} logging facility */
-  static java.util.logging.Logger log =
+  static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(Manifest.class.getName());
 
    /** Field _references */
@@ -212,17 +212,17 @@ public class Manifest extends SignatureElementProxy {
 
          // we already have real objects
          return (Reference) this._references.get(i);
-      }
+      } 
          if (this._references.get(i) == null) {
 
-            // not yet constructed, so _we_ have to
+            // not yet constructed, so _we_ have to            
             Reference ref = new Reference(_referencesEl[i], this._baseURI, this);
 
             this._references.set(i, ref);
          }
 
          return (Reference) this._references.get(i);
-
+      
    }
 
    /**
@@ -290,12 +290,12 @@ public class Manifest extends SignatureElementProxy {
    public boolean verifyReferences(boolean followManifests)
            throws MissingResourceFailureException, XMLSecurityException {
       if (_referencesEl==null) {
-        this._referencesEl =
+        this._referencesEl =  
             XMLUtils.selectDsNodes(this._constructionElement.getFirstChild(),
                          Constants._TAG_REFERENCE);
       }
-          if (true) {
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "verify " +_referencesEl.length + " References");
+   	  if (true) {
+   	  	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "verify " +_referencesEl.length + " References");
         if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I am " + (followManifests
                            ? ""
                            : "not") + " requested to follow nested Manifests");
@@ -326,7 +326,7 @@ public class Manifest extends SignatureElementProxy {
                verify = false;
             }
             if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "The Reference has Type " + currentRef.getType());
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "The Reference has Type " + currentRef.getType());
 
             // was verification successful till now and do we want to verify the Manifest?
             if (verify && followManifests

@@ -81,11 +81,11 @@ void band::readData(int expectedLength) {
     assert(defc->B() > 1 && defc->L() > 0);
     // must have already read from previous band:
     assert(bn >= BAND_LIMIT || bn <= 0
-           || bn == e_cp_Utf8_big_chars
-           || endsWith(name, "_lo")  // preceded by _hi conditional band
-           || bn == e_file_options  // preceded by conditional band
-           || u->rp == u->all_bands[bn-1].maxRP()
-           || u->all_bands[bn-1].defc == null);
+	   || bn == e_cp_Utf8_big_chars
+	   || endsWith(name, "_lo")  // preceded by _hi conditional band
+	   || bn == e_file_options  // preceded by conditional band
+	   || u->rp == u->all_bands[bn-1].maxRP()
+	   || u->all_bands[bn-1].defc == null);
 
     value_stream xvs;
     coding* valc = defc;
@@ -134,7 +134,7 @@ void band::readData(int expectedLength) {
 
 #ifndef PRODUCT
   printcr(3,"readFrom %s at %p [%d values, %d bytes, cp=%d/%d]",
-           (name?name:"(band)"), minRP(), length, size(), cp1, cp2);
+	   (name?name:"(band)"), minRP(), length, size(), cp1, cp2);
   if (u->verbose_bands || u->verbose >= 4) dump();
 
   if (ix != null && u->verbose != 0 && length > 0) {
@@ -186,9 +186,9 @@ void band::setIndexByTag(byte tag) {
 entry* band::getRefCommon(cpindex* ix_, bool nullOKwithCaller) {
   CHECK_0;
   assert(ix_->ixTag == ixTag
-         || (ixTag == CONSTANT_Literal
-             && ix_->ixTag >= CONSTANT_Integer
-             && ix_->ixTag <= CONSTANT_String));
+	 || (ixTag == CONSTANT_Literal
+	     && ix_->ixTag >= CONSTANT_Integer
+	     && ix_->ixTag <= CONSTANT_String));
   int n = vs[0].getInt() - nullOK;
   // Note: band-local nullOK means null encodes as 0.
   // But nullOKwithCaller means caller is willing to tolerate a null.
@@ -232,9 +232,9 @@ int band::getIntCount(int tag) {
       hist0 = U_NEW(int, (HIST0_MAX - HIST0_MIN)+1);
       CHECK_0;
       for (int k = length; k > 0; k--) {
-        int x = vs[0].getInt();
-        if (x >= HIST0_MIN && x <= HIST0_MAX)
-          hist0[x - HIST0_MIN] += 1;
+	int x = vs[0].getInt();
+	if (x >= HIST0_MIN && x <= HIST0_MAX)
+	  hist0[x - HIST0_MIN] += 1;
       }
       rewind();
     }
@@ -249,7 +249,7 @@ int band::getIntCount(int tag) {
 }
 
 #define INDEX_INIT(tag, nullOK, subindex) \
-        ((tag) + (subindex)*SUBINDEX_BIT + (nullOK)*256)
+	((tag) + (subindex)*SUBINDEX_BIT + (nullOK)*256)
 
 #define INDEX(tag)          INDEX_INIT(tag, 0, 0)
 #define NULL_OR_INDEX(tag)  INDEX_INIT(tag, 1, 0)
@@ -424,13 +424,13 @@ const band_init all_band_inits[] = {
   {0}
 };
 #define NUM_BAND_INITS \
-        (sizeof(all_band_inits)/sizeof(all_band_inits[0]))
+	(sizeof(all_band_inits)/sizeof(all_band_inits[0]))
 
 band* band::makeBands(unpacker* u) {
   band* all_bands = U_NEW(band, BAND_LIMIT);
   for (int i = 0; i < BAND_LIMIT; i++) {
     assert((byte*)&all_band_inits[i+1]
-           < (byte*)all_band_inits+sizeof(all_band_inits));
+	   < (byte*)all_band_inits+sizeof(all_band_inits));
     const band_init& bi = all_band_inits[i];
     band&            b  = all_bands[i];
     coding*          defc = coding::findBySpec(bi.defc);
@@ -459,3 +459,5 @@ void band::initIndexes(unpacker* u) {
     }
   }
 }
+
+

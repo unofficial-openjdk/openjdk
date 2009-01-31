@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)OpenTypeLayoutEngine.cpp	1.17 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -72,12 +73,12 @@
 #define ligaFeatures        (ligaFeatureMask | cligFeatureMask | minimalFeatures)
 #define kernFeatures        (kernFeatureMask | paltFeatureMask | minimalFeatures)
 #define kernAndLigaFeatures (ligaFeatures    | kernFeatures)
-
+ 
 static const FeatureMap featureMap[] =
 {
     {ccmpFeatureTag, ccmpFeatureMask},
     {ligaFeatureTag, ligaFeatureMask},
-    {cligFeatureTag, cligFeatureMask},
+    {cligFeatureTag, cligFeatureMask}, 
     {kernFeatureTag, kernFeatureMask},
     {paltFeatureTag, paltFeatureMask},
     {markFeatureTag, markFeatureMask},
@@ -86,18 +87,18 @@ static const FeatureMap featureMap[] =
 
 static const le_int32 featureMapCount = LE_ARRAY_SIZE(featureMap);
 
-OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance,
-    le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags,
+OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
+    le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags, 
     const GlyphSubstitutionTableHeader *gsubTable)
-    : LayoutEngine(fontInstance, scriptCode, languageCode, typoFlags),
-    fFeatureMask(minimalFeatures), fFeatureMap(featureMap),
+    : LayoutEngine(fontInstance, scriptCode, languageCode, typoFlags), 
+    fFeatureMask(minimalFeatures), fFeatureMap(featureMap), 
     fFeatureMapCount(featureMapCount), fFeatureOrder(FALSE),
-    fGSUBTable(gsubTable), fGDEFTable(NULL), fGPOSTable(NULL),
+    fGSUBTable(gsubTable), fGDEFTable(NULL), fGPOSTable(NULL), 
     fSubstitutionFilter(NULL)
 {
     static const le_uint32 gdefTableTag = LE_GDEF_TABLE_TAG;
     static const le_uint32 gposTableTag = LE_GPOS_TABLE_TAG;
-    const GlyphPositioningTableHeader *gposTable =
+    const GlyphPositioningTableHeader *gposTable = 
         (const GlyphPositioningTableHeader *) getFontTable(gposTableTag);
 
     // todo: switch to more flags and bitfield rather than list of feature tags?
@@ -112,7 +113,7 @@ OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance,
     setScriptAndLanguageTags();
 
     fGDEFTable = (const GlyphDefinitionTableHeader *) getFontTable(gdefTableTag);
-
+    
     if (gposTable != NULL && gposTable->coversScriptAndLanguage(fScriptTag, fLangSysTag)) {
         fGPOSTable = gposTable;
     }
@@ -127,9 +128,9 @@ void OpenTypeLayoutEngine::reset()
     LayoutEngine::reset();
 }
 
-OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance,
+OpenTypeLayoutEngine::OpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
     le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags)
-    : LayoutEngine(fontInstance, scriptCode, languageCode, typoFlags),
+    : LayoutEngine(fontInstance, scriptCode, languageCode, typoFlags), 
     fFeatureOrder(FALSE), fGSUBTable(NULL), fGDEFTable(NULL),
     fGPOSTable(NULL), fSubstitutionFilter(NULL)
 {
@@ -165,7 +166,7 @@ void OpenTypeLayoutEngine::setScriptAndLanguageTags()
     fLangSysTag = getLangSysTag(fLanguageCode);
 }
 
-le_int32 OpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
+le_int32 OpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_int32 max, le_bool rightToLeft,
  LEUnicode *&outChars, LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
@@ -197,7 +198,7 @@ le_int32 OpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
 
 // Input: characters, tags
 // Output: glyphs, char indices
-le_int32 OpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[], le_int32 offset,
+le_int32 OpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[], le_int32 offset, 
     le_int32 count, le_int32 max, le_bool rightToLeft,
     LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
@@ -218,15 +219,15 @@ le_int32 OpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[], le_int32
     }
 
     if (fGSUBTable != NULL) {
-        count = fGSUBTable->process(glyphStorage, rightToLeft,
-            fScriptTag, fLangSysTag, fGDEFTable, fSubstitutionFilter,
+        count = fGSUBTable->process(glyphStorage, rightToLeft, 
+            fScriptTag, fLangSysTag, fGDEFTable, fSubstitutionFilter, 
             fFeatureMap, fFeatureMapCount, fFeatureOrder);
     }
 
     return count;
 }
 
-le_int32 OpenTypeLayoutEngine::glyphPostProcessing(LEGlyphStorage &tempGlyphStorage,
+le_int32 OpenTypeLayoutEngine::glyphPostProcessing(LEGlyphStorage &tempGlyphStorage, 
     LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
     if (LE_FAILURE(success)) {
@@ -241,7 +242,7 @@ le_int32 OpenTypeLayoutEngine::glyphPostProcessing(LEGlyphStorage &tempGlyphStor
     return glyphStorage.getGlyphCount();
 }
 
-le_int32 OpenTypeLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset,
+le_int32 OpenTypeLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 offset, 
     le_int32 count, le_int32 max, le_bool rightToLeft, LEGlyphStorage &glyphStorage,
     LEErrorCode &success)
 {
@@ -259,18 +260,18 @@ le_int32 OpenTypeLayoutEngine::computeGlyphs(const LEUnicode chars[], le_int32 o
         return 0;
     }
 
-    outCharCount = characterProcessing(chars, offset, count, max, rightToLeft,
+    outCharCount = characterProcessing(chars, offset, count, max, rightToLeft, 
         outChars, fakeGlyphStorage, success);
 
     if (outChars != NULL) {
-        fakeGlyphCount = glyphProcessing(outChars, 0, outCharCount, outCharCount,
+        fakeGlyphCount = glyphProcessing(outChars, 0, outCharCount, outCharCount, 
             rightToLeft, fakeGlyphStorage, success);
-        // FIXME: a subclass may have allocated this, in which case
+        // FIXME: a subclass may have allocated this, in which case 
         // this delete might not work...
         LE_DELETE_ARRAY(outChars);
         //adjustGlyphs(outChars, 0, outCharCount, rightToLeft, fakeGlyphs, fakeGlyphCount);
     } else {
-        fakeGlyphCount = glyphProcessing(chars, offset, count, max, rightToLeft,
+        fakeGlyphCount = glyphProcessing(chars, offset, count, max, rightToLeft, 
             fakeGlyphStorage, success);
         //adjustGlyphs(chars, offset, count, rightToLeft, fakeGlyphs, fakeGlyphCount);
     }
@@ -318,7 +319,7 @@ void OpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], le_int3
         }
 #endif
 
-        fGPOSTable->process(glyphStorage, adjustments, reverse, fScriptTag, fLangSysTag,
+        fGPOSTable->process(glyphStorage, adjustments, reverse, fScriptTag, fLangSysTag, 
             fGDEFTable, fFontInstance, fFeatureMap, fFeatureMapCount, fFeatureOrder);
 
         float xAdjust = 0, yAdjust = 0;
@@ -355,3 +356,4 @@ void OpenTypeLayoutEngine::adjustGlyphPositions(const LEUnicode chars[], le_int3
         delete adjustments;
     }
 }
+

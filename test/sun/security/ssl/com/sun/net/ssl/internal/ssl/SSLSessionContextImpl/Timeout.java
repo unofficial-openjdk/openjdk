@@ -37,15 +37,15 @@ public class Timeout {
 
     public static void main(String[] args) throws Exception {
 //        try {
-            SSLServerSocketFactory ssf =
-                (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+            SSLServerSocketFactory ssf = 
+		(SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
             SSLServerSocket ss = (SSLServerSocket)ssf.createServerSocket();
             String[] protocols = ss.getSupportedProtocols();
             for (int i = 0; i < protocols.length; i++) {
 //                try {
-                    if (protocols[i].equals("SSLv2Hello")) {
-                        continue;
-                    }
+		    if (protocols[i].equals("SSLv2Hello")) {
+			continue;
+		    }
                     SSLContext sslc = SSLContext.getInstance(protocols[i]);
                     SSLSessionContext sslsc = sslc.getServerSessionContext();
                     System.out.println("Protocol: " + protocols[i]);

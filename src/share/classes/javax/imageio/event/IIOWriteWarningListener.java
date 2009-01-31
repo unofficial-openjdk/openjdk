@@ -42,9 +42,10 @@ import javax.imageio.ImageWriter;
  * @see javax.imageio.ImageWriter#addIIOWriteWarningListener
  * @see javax.imageio.ImageWriter#removeIIOWriteWarningListener
  *
+ * @version 0.5
  */
 public interface IIOWriteWarningListener extends EventListener {
-
+    
     /**
      * Reports the occurence of a non-fatal error in encoding.  Encoding
      * will continue following the call to this method.  The application

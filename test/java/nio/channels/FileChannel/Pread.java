@@ -55,7 +55,7 @@ public class Pread {
     // This test for bug 4862382
     private static void testNegativePosition() throws Exception {
         File blah = File.createTempFile("blah1", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(blah);
         fos.write(new byte[128]);
         fos.close();
@@ -71,7 +71,7 @@ public class Pread {
     // This test for bug 4862408
     private static void testUnreadableChannel() throws Exception {
         File blah = File.createTempFile("blah2", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         FileOutputStream fos = new FileOutputStream(blah);
         fos.write(new byte[128]);
         FileChannel fc = fos.getChannel();
@@ -88,7 +88,7 @@ public class Pread {
         sb.setLength(4);
 
         File blah = File.createTempFile("blah3", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         initTestFile(blah);
 
         FileInputStream fis = new FileInputStream(blah);
@@ -149,7 +149,7 @@ public class Pread {
     private static void initTestFile(File blah) throws Exception {
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<4000; i++) {
             String number = new Integer(i).toString();

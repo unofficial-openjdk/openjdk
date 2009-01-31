@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 5045936 5055171
   @summary Tests that there is no ClassCastException thrown in printing
@@ -37,7 +37,7 @@
 //  were valid as well as the html file.)
 // Also, note the area= after Your Name in the author tag.  Here, you
 //  should put which functional area the test falls in.  See the
-//  AWT-core home page -> test areas and/or -> AWT team  for a list of
+//  AWT-core home page -> test areas and/or -> AWT team  for a list of 
 //  areas.
 
 
@@ -63,20 +63,20 @@ public class PrintCheckboxManualTest extends Panel
     Frame f;
 
     public static void main(String[] args) {
-        PrintCheckboxManualTest a = new PrintCheckboxManualTest();
+	PrintCheckboxManualTest a = new PrintCheckboxManualTest();
 
-        a.init();
-        a.start();
+	a.init();
+	a.start();
     }
 
-    public void init()
+    public void init() 
     {
-        //Create instructions for the user here, as well as set up
+        //Create instructions for the user here, as well as set up 
         // the environment -- set the layout manager, add buttons,
         // etc.
         this.setLayout (new BorderLayout ());
 
-        String[] instructions =
+        String[] instructions = 
         {
             "Linux or Solaris with XToolkit ONLY!",
             "1. Click the 'Print' button on the frame",
@@ -110,36 +110,36 @@ public class PrintCheckboxManualTest extends Panel
         Scrollbar sb = new Scrollbar(Scrollbar.HORIZONTAL);
         f.add(sb);
 
-        Button b = new Button("Print");
-        b.addActionListener(new ActionListener()
-        {
-        public void actionPerformed(ActionEvent ev)
-        {
-                PrintJob pj = Toolkit.getDefaultToolkit().getPrintJob(f, "PrintCheckboxManualTest", null);
-                if (pj != null)
-                {
-                        try
-                        {
-                                Graphics g = pj.getGraphics();
-                                f.printAll(g);
-                                g.dispose();
-                                pj.end();
+	Button b = new Button("Print");
+	b.addActionListener(new ActionListener()
+	{
+	public void actionPerformed(ActionEvent ev)
+	{
+	        PrintJob pj = Toolkit.getDefaultToolkit().getPrintJob(f, "PrintCheckboxManualTest", null);
+		if (pj != null)
+		{       
+			try
+			{
+				Graphics g = pj.getGraphics();
+		        	f.printAll(g);
+				g.dispose();
+	        		pj.end();
                                 Sysout.println("Test PASSED");
-                        }
-                        catch (ClassCastException cce)
-                        {
+			}
+			catch (ClassCastException cce)
+			{
                                 Sysout.println("Test FAILED: ClassCastException");
-//                              throw new RuntimeException("Test FAILED: ClassCastException", cce);
-                        }
-                        catch (Exception e)
-                        {
+//				throw new RuntimeException("Test FAILED: ClassCastException", cce);
+			}
+			catch (Exception e)
+			{
                                 Sysout.println("Test FAILED: unknown Exception");
-//                              throw new Error("Test FAILED: unknown exception", e);
-                        }
-                }
-        }
-        });
-        f.add(b);
+//				throw new Error("Test FAILED: unknown exception", e);
+			}
+		}
+	}
+	});
+	f.add(b);
 
         f.setVisible(true);
     }// start()
@@ -156,11 +156,11 @@ public class PrintCheckboxManualTest extends Panel
 
 
 
-
+  
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard
-  chunk of code whose purpose is to make user
+ DO NOT modify anything below -- it's a standard 
+  chunk of code whose purpose is to make user 
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -173,12 +173,12 @@ public class PrintCheckboxManualTest extends Panel
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well
+ This mimics System.out.println but works within the test harness as well 
   as standalone.
  */
 
-class Sysout
-{
+class Sysout 
+{ 
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -188,7 +188,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
+   
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -197,8 +197,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
-
+   
+      
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -226,20 +226,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-
+   
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name )
+    public TestDialog( Frame frame, String name ) 
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-
+      
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-
+      
         pack();
-
+      
         setVisible(true);
     }// TestDialog()
 
@@ -253,7 +253,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        {
+        { 
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -264,25 +264,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-
+               
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-
+               
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else
-                {
+                else 
+                { 
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-
+            
                 instructionsText.append( printStr + "\n" );
-
+            
             }// while
-
+         
         }// for
-
+      
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -290,6 +290,7 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }
-
-}// TestDialog  class
+    }  
+   
+}// TestDialog  class    
+  

@@ -51,18 +51,18 @@ final class PCBC extends FeedbackCipher {
     private byte[] kSave = null;
 
     PCBC(SymmetricCipher embeddedCipher) {
-        super(embeddedCipher);
-        k = new byte[blockSize];
+	super(embeddedCipher);
+	k = new byte[blockSize];
     }
 
     /**
      * Gets the name of this feedback mode.
-     *
+     * 
      * @return the string <code>PCBC</code>
      */
     String getFeedback() {
-        return "PCBC";
-    }
+	return "PCBC";
+    }    
 
     /**
      * Initializes the cipher in the specified mode with the given key
@@ -77,13 +77,13 @@ final class PCBC extends FeedbackCipher {
      * initializing this cipher
      */
     void init(boolean decrypting, String algorithm, byte[] key, byte[] iv)
-            throws InvalidKeyException {
-        if ((key == null) || (iv == null) || (iv.length != blockSize)) {
-            throw new InvalidKeyException("Internal error");
-        }
-        this.iv = iv;
-        reset();
-        embeddedCipher.init(decrypting, algorithm, key);
+	    throws InvalidKeyException {
+	if ((key == null) || (iv == null) || (iv.length != blockSize)) {
+	    throw new InvalidKeyException("Internal error");
+	}
+	this.iv = iv;
+	reset();
+	embeddedCipher.init(decrypting, algorithm, key);
     }
 
     /**
@@ -92,7 +92,7 @@ final class PCBC extends FeedbackCipher {
      * cipher can be reused (with its original iv).
      */
     void reset() {
-        System.arraycopy(iv, 0, k, 0, blockSize);
+	System.arraycopy(iv, 0, k, 0, blockSize);
     }
 
     /**
@@ -115,7 +115,7 @@ final class PCBC extends FeedbackCipher {
 
     /**
      * Performs encryption operation.
-     *
+     * 
      * <p>The input plain text <code>plain</code>, starting at
      * <code>plainOffset</code> and ending at
      * <code>(plainOffset + len - 1)</code>, is encrypted.
@@ -137,26 +137,26 @@ final class PCBC extends FeedbackCipher {
      * @param cipherOffset the offset in <code>cipher</code>
      */
     void encrypt(byte[] plain, int plainOffset, int plainLen,
-                        byte[] cipher, int cipherOffset)
-    {
-        int i;
-        int endIndex = plainOffset + plainLen;
+			byte[] cipher, int cipherOffset) 
+    {    
+	int i;
+	int endIndex = plainOffset + plainLen;
 
-        for (; plainOffset < endIndex;
-             plainOffset += blockSize, cipherOffset += blockSize) {
-            for (i=0; i<blockSize; i++) {
-                k[i] ^= (byte)(plain[i+plainOffset]);
-            }
-            embeddedCipher.encryptBlock(k, 0, cipher, cipherOffset);
-            for (i = 0; i < blockSize; i++) {
-                k[i] = (byte)(plain[i+plainOffset] ^ cipher[i+cipherOffset]);
-            }
-        }
+	for (; plainOffset < endIndex;
+	     plainOffset += blockSize, cipherOffset += blockSize) {
+	    for (i=0; i<blockSize; i++) {
+		k[i] ^= (byte)(plain[i+plainOffset]);
+	    }
+	    embeddedCipher.encryptBlock(k, 0, cipher, cipherOffset);
+	    for (i = 0; i < blockSize; i++) {
+		k[i] = (byte)(plain[i+plainOffset] ^ cipher[i+cipherOffset]);
+	    }
+	}
     }
-
+    
     /**
      * Performs decryption operation.
-     *
+     * 
      * <p>The input cipher text <code>cipher</code>, starting at
      * <code>cipherOffset</code> and ending at
      * <code>(cipherOffset + len - 1)</code>, is decrypted.
@@ -178,21 +178,21 @@ final class PCBC extends FeedbackCipher {
      * @param plainOffset the offset in <code>plain</code>
      */
     void decrypt(byte[] cipher, int cipherOffset, int cipherLen,
-                        byte[] plain, int plainOffset)
-    {
-        int i;
-        int endIndex = cipherOffset + cipherLen;
+			byte[] plain, int plainOffset) 
+    {    
+	int i;
+	int endIndex = cipherOffset + cipherLen;
 
-        for (; cipherOffset < endIndex;
-             plainOffset += blockSize, cipherOffset += blockSize) {
-            embeddedCipher.decryptBlock(cipher, cipherOffset,
-                                   plain, plainOffset);
-            for (i = 0; i < blockSize; i++) {
-                plain[i+plainOffset] ^= k[i];
-            }
-            for (i = 0; i < blockSize; i++) {
-                k[i] = (byte)(plain[i+plainOffset] ^ cipher[i+cipherOffset]);
-            }
-        }
+	for (; cipherOffset < endIndex; 
+	     plainOffset += blockSize, cipherOffset += blockSize) {
+	    embeddedCipher.decryptBlock(cipher, cipherOffset,
+				   plain, plainOffset);
+	    for (i = 0; i < blockSize; i++) {
+		plain[i+plainOffset] ^= k[i];
+	    }
+	    for (i = 0; i < blockSize; i++) {
+		k[i] = (byte)(plain[i+plainOffset] ^ cipher[i+cipherOffset]);
+	    }
+	}
     }
 }

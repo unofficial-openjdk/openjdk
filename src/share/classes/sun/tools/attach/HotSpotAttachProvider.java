@@ -39,7 +39,7 @@ import java.net.URISyntaxException;
 
 import sun.jvmstat.monitor.HostIdentifier;
 import sun.jvmstat.monitor.Monitor;
-import sun.jvmstat.monitor.MonitoredHost;
+import sun.jvmstat.monitor.MonitoredHost;   
 import sun.jvmstat.monitor.MonitoredVm;
 import sun.jvmstat.monitor.MonitoredVmUtil;
 import sun.jvmstat.monitor.VmIdentifier;
@@ -49,7 +49,7 @@ import sun.jvmstat.monitor.MonitorException;
  * Platform specific provider implementations extend this
  */
 public abstract class HotSpotAttachProvider extends AttachProvider {
-
+    
     // perf count name for the JVM version
     private static final String JVM_VERSION = "java.property.java.vm.version";
 
@@ -57,29 +57,29 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
     }
 
     public void checkAttachPermission() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(
-                new AttachPermission("attachVirtualMachine")
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkPermission(
+		new AttachPermission("attachVirtualMachine")
             );
-        }
-    }
+	}    
+    }	
 
     /*
      * This listVirtualMachines implementation is based on jvmstat. Can override
      * this in platform implementations when there is a more efficient mechanism
-     * available.
+     * available. 
      */
     public List<VirtualMachineDescriptor> listVirtualMachines() {
         ArrayList<VirtualMachineDescriptor> result =
             new ArrayList<VirtualMachineDescriptor>();
 
-        MonitoredHost host;
+	MonitoredHost host;
         Set vms;
-        try {
-            host = MonitoredHost.getMonitoredHost(new HostIdentifier((String)null));
+	try {
+	    host = MonitoredHost.getMonitoredHost(new HostIdentifier((String)null));
             vms = host.activeVms();
-        } catch (Throwable t) {
+	} catch (Throwable t) {
             if (t instanceof ExceptionInInitializerError) {
                 t = t.getCause();
             }
@@ -89,53 +89,53 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
             if (t instanceof SecurityException) {
                 return result;
             }
-            throw new InternalError();          // shouldn't happen
-        }
+	    throw new InternalError();		// shouldn't happen
+	}
 
-        for (Object vmid: vms) {
-            if (vmid instanceof Integer) {
-                String pid = vmid.toString();
-                String name = pid;      // default to pid if name not available
+	for (Object vmid: vms) {
+	    if (vmid instanceof Integer) {
+	        String pid = vmid.toString();
+		String name = pid;  	// default to pid if name not available
                 boolean isAttachable = false;
                 MonitoredVm mvm = null;
-                try {
-                    mvm = host.getMonitoredVm(new VmIdentifier(pid));
+		try {
+		    mvm = host.getMonitoredVm(new VmIdentifier(pid));                        
                     try {
                         isAttachable = MonitoredVmUtil.isAttachable(mvm);
                         // use the command line as the display name
-                        name =  MonitoredVmUtil.commandLine(mvm);
-                    } catch (Exception e) {
+		        name =  MonitoredVmUtil.commandLine(mvm);
+                    } catch (Exception e) { 
                     }
                     if (isAttachable) {
                         result.add(new HotSpotVirtualMachineDescriptor(this, pid, name));
                     }
-                } catch (Throwable t) {
+		} catch (Throwable t) {
                     if (t instanceof ThreadDeath) {
                         throw (ThreadDeath)t;
                     }
-                } finally {
+		} finally {
                     if (mvm != null) {
                         mvm.detach();
                     }
                 }
             }
-        }
-        return result;
+	}
+	return result;
     }
-
+    
     /**
      * Test if a VM is attachable. If it's not attachable,
      * an AttachNotSupportedException will be thrown. For example,
-     * 1.4.2 or 5.0 VM are not attachable. There are cases that
+     * 1.4.2 or 5.0 VM are not attachable. There are cases that 
      * we can't determine if a VM is attachable or not and this method
      * will just return.
      *
-     * This method uses the jvmstat counter to determine if a VM
+     * This method uses the jvmstat counter to determine if a VM 
      * is attachable. If the target VM does not have a jvmstat
      * share memory buffer, this method returns.
      *
      * @exception AttachNotSupportedException if it's not attachable
-     */
+     */ 
     void testAttachable(String id) throws AttachNotSupportedException {
         MonitoredVm mvm = null;
         boolean isKernelVM = false;
@@ -145,9 +145,9 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
             mvm = host.getMonitoredVm(vmid);
 
             if (MonitoredVmUtil.isAttachable(mvm)) {
-                // it's attachable; so return false
+                // it's attachable; so return false 
                 return;
-            }
+            } 
             isKernelVM = MonitoredVmUtil.isKernelVM(mvm);
         } catch (Throwable t) {
             if (t instanceof ThreadDeath) {
@@ -164,10 +164,10 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
 
         // we're sure it's not attachable; throw exception
         if (isKernelVM) {
-            throw new AttachNotSupportedException("Kernel VM does not support the attach mechanism");
+	    throw new AttachNotSupportedException("Kernel VM does not support the attach mechanism");
         } else {
-            throw new AttachNotSupportedException("The VM does not support the attach mechanism");
-        }
+	    throw new AttachNotSupportedException("The VM does not support the attach mechanism");
+     	}
     }
 
 
@@ -175,8 +175,8 @@ public abstract class HotSpotAttachProvider extends AttachProvider {
      * A virtual machine descriptor to describe a HotSpot virtual machine.
      */
     static class HotSpotVirtualMachineDescriptor extends VirtualMachineDescriptor {
-        HotSpotVirtualMachineDescriptor(AttachProvider provider,
-                                        String id,
+        HotSpotVirtualMachineDescriptor(AttachProvider provider, 
+                                        String id, 
                                         String displayName) {
             super(provider, id, displayName);
         }

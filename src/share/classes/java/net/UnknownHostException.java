@@ -30,24 +30,25 @@ import java.io.IOException;
 /**
  * Thrown to indicate that the IP address of a host could not be determined.
  *
- * @author  Jonathan Payne
+ * @author  Jonathan Payne 
+ * @version %I%, %G%
  * @since   JDK1.0
  */
-public
+public 
 class UnknownHostException extends IOException {
     /**
-     * Constructs a new <code>UnknownHostException</code> with the
-     * specified detail message.
+     * Constructs a new <code>UnknownHostException</code> with the 
+     * specified detail message. 
      *
      * @param   host   the detail message.
      */
     public UnknownHostException(String host) {
-        super(host);
+	super(host);
     }
 
     /**
-     * Constructs a new <code>UnknownHostException</code> with no detail
-     * message.
+     * Constructs a new <code>UnknownHostException</code> with no detail 
+     * message. 
      */
     public UnknownHostException() {
     }

@@ -40,66 +40,66 @@ public class Basic {
     private static Throwable first;
 
     static void pass() {
-        pass++;
+	pass++;
     }
 
     static void fail(String fs, Class ex) {
-        String s = "'" + fs + "': " + ex.getName() + " not thrown";
-        if (first == null)
-            setFirst(s);
-        System.err.println("FAILED: " + s);
-        fail++;
+	String s = "'" + fs + "': " + ex.getName() + " not thrown";
+	if (first == null)
+	    setFirst(s);
+	System.err.println("FAILED: " + s);
+	fail++;
     }
 
     static void fail(String fs, String exp, String got) {
-        String s = "'" + fs + "': Expected '" + exp + "', got '" + got + "'";
-        if (first == null)
-            setFirst(s);
-        System.err.println("FAILED: " + s);
-        fail++;
+	String s = "'" + fs + "': Expected '" + exp + "', got '" + got + "'";
+	if (first == null)
+	    setFirst(s);
+	System.err.println("FAILED: " + s);
+	fail++;
     }
 
     private static void setFirst(String s) {
-        try {
-            throw new RuntimeException(s);
-        } catch (RuntimeException x) {
-            first = x;
-        }
+	try {
+	    throw new RuntimeException(s);
+	} catch (RuntimeException x) {
+	    first = x;
+	}
     }
 
     static void ck(String fs, String exp, String got) {
         if (!exp.equals(got))
-            fail(fs, exp, got);
-        else
-            pass();
+	    fail(fs, exp, got);
+	else
+	    pass();
     }
 
     public static void main(String[] args) {
-        BasicBoolean.test();
-        BasicBooleanObject.test();
-        BasicByte.test();
-        BasicByteObject.test();
-        BasicChar.test();
-        BasicCharObject.test();
-        BasicShort.test();
-        BasicShortObject.test();
-        BasicInt.test();
-        BasicIntObject.test();
-        BasicLong.test();
-        BasicLongObject.test();
-        BasicBigInteger.test();
-        BasicFloat.test();
-        BasicFloatObject.test();
-        BasicDouble.test();
-        BasicDoubleObject.test();
-        BasicBigDecimal.test();
+	BasicBoolean.test();
+	BasicBooleanObject.test();
+	BasicByte.test();
+	BasicByteObject.test();
+	BasicChar.test();
+	BasicCharObject.test();
+	BasicShort.test();
+	BasicShortObject.test();
+	BasicInt.test();
+	BasicIntObject.test();
+	BasicLong.test();
+	BasicLongObject.test();
+	BasicBigInteger.test();
+	BasicFloat.test();
+	BasicFloatObject.test();
+	BasicDouble.test();
+	BasicDoubleObject.test();
+	BasicBigDecimal.test();
 
-        BasicDateTime.test();
+	BasicDateTime.test();
 
-        if (fail != 0)
-            throw new RuntimeException((fail + pass) + " tests: "
-                                       + fail + " failure(s), first", first);
-        else
-            out.println("all " + (fail + pass) + " tests passed");
+	if (fail != 0)
+	    throw new RuntimeException((fail + pass) + " tests: "
+				       + fail + " failure(s), first", first);
+	else
+	    out.println("all " + (fail + pass) + " tests passed");
     }
 }

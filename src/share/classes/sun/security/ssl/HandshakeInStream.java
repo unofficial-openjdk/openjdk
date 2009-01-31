@@ -50,6 +50,7 @@ import javax.net.ssl.SSLException;
  * handshake and application data messages may be interleaved arbitrarily
  * and must be processed independently.
  *
+ * @version %I% %G%
  * @author David Brownell
  */
 class HandshakeInStream extends InputStream {
@@ -61,8 +62,8 @@ class HandshakeInStream extends InputStream {
      * input records using two sets of digests.
      */
     HandshakeInStream(HandshakeHash handshakeHash) {
-        r = new InputRecord();
-        r.setHandshakeHash(handshakeHash);
+	r = new InputRecord();
+	r.setHandshakeHash(handshakeHash);
     }
 
 
@@ -75,38 +76,38 @@ class HandshakeInStream extends InputStream {
      * the bytes remaining in the current handshake message.
      */
     public int available() {
-        return r.available();
+	return r.available();
     }
 
     /*
      * Get a byte of handshake data.
      */
     public int read() throws IOException {
-        int n = r.read();
-        if (n == -1) {
-            throw new SSLException("Unexpected end of handshake data");
-        }
-        return n;
+	int n = r.read();
+	if (n == -1) {
+	    throw new SSLException("Unexpected end of handshake data");
+	}
+	return n;
     }
 
     /*
      * Get a bunch of bytes of handshake data.
      */
     public int read(byte b [], int off, int len) throws IOException {
-        // we read from a ByteArrayInputStream, it always returns the
-        // data in a single read if enough is available
-        int n = r.read(b, off, len);
-        if (n != len) {
-            throw new SSLException("Unexpected end of handshake data");
-        }
-        return n;
+	// we read from a ByteArrayInputStream, it always returns the
+	// data in a single read if enough is available
+	int n = r.read(b, off, len);
+	if (n != len) {
+	    throw new SSLException("Unexpected end of handshake data");
+	}
+	return n;
     }
 
     /*
      * Skip some handshake data.
      */
     public long skip(long n) throws IOException {
-        return r.skip(n);
+	return r.skip(n);
     }
 
     /*
@@ -118,15 +119,15 @@ class HandshakeInStream extends InputStream {
      */
 
     public void mark(int readlimit) {
-        r.mark(readlimit);
+	r.mark(readlimit);
     }
 
     public void reset() {
-        r.reset();
+	r.reset();
     }
 
     public boolean markSupported() {
-        return true;
+	return true;
     }
 
 
@@ -138,7 +139,7 @@ class HandshakeInStream extends InputStream {
      * partly queued, or both.
      */
     void incomingRecord(InputRecord in) throws IOException {
-        r.queueHandshake(in);
+	r.queueHandshake(in);
     }
 
     /*
@@ -148,7 +149,7 @@ class HandshakeInStream extends InputStream {
      * (so we can compute our own finished message).
      */
     void digestNow() {
-        r.doHashes();
+	r.doHashes();
     }
 
     /*
@@ -156,7 +157,7 @@ class HandshakeInStream extends InputStream {
      * The difference is that the data does not get hashed.
      */
     void ignore(int n) {
-        r.ignore(n);
+	r.ignore(n);
     }
 
 
@@ -168,20 +169,20 @@ class HandshakeInStream extends InputStream {
      */
 
     int getInt8() throws IOException {
-        return read();
+	return read();
     }
 
     int getInt16() throws IOException {
-        return (getInt8() << 8) | getInt8();
+	return (getInt8() << 8) | getInt8();
     }
 
     int getInt24() throws IOException {
-        return (getInt8() << 16) | (getInt8() << 8) | getInt8();
+	return (getInt8() << 16) | (getInt8() << 8) | getInt8();
     }
 
     int getInt32() throws IOException {
-        return (getInt8() << 24) | (getInt8() << 16)
-             | (getInt8() << 8) | getInt8();
+	return (getInt8() << 24) | (getInt8() << 16)
+	     | (getInt8() << 8) | getInt8();
     }
 
     /*
@@ -189,27 +190,27 @@ class HandshakeInStream extends InputStream {
      */
 
     byte[] getBytes8() throws IOException {
-        int len = getInt8();
-        byte b[] = new byte[len];
+	int len = getInt8();
+	byte b[] = new byte[len];
 
-        read(b, 0, len);
-        return b;
+	read(b, 0, len);
+	return b;
     }
 
     byte[] getBytes16() throws IOException {
-        int len = getInt16();
-        byte b[] = new byte[len];
+	int len = getInt16();
+	byte b[] = new byte[len];
 
-        read(b, 0, len);
-        return b;
+	read(b, 0, len);
+	return b;
     }
 
     byte[] getBytes24() throws IOException {
-        int len = getInt24();
-        byte b[] = new byte[len];
+	int len = getInt24();
+	byte b[] = new byte[len];
 
-        read(b, 0, len);
-        return b;
+	read(b, 0, len);
+	return b;
     }
 
 }

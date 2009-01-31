@@ -36,59 +36,59 @@ public class PlotterPanel extends BorderedComponent {
     Plotter plotter;
 
     public PlotterPanel(String labelStr, Plotter.Unit unit, boolean collapsible) {
-        super(labelStr, new Plotter(unit), collapsible);
+	super(labelStr, new Plotter(unit), collapsible);
 
-        this.plotter = (Plotter)comp;
+	this.plotter = (Plotter)comp;
 
-        init();
+	init();
     }
 
     public PlotterPanel(String labelStr) {
-        super(labelStr, null);
+	super(labelStr, null);
 
-        init();
+	init();
     }
 
     public Plotter getPlotter() {
-        return this.plotter;
+	return this.plotter;
     }
 
     public void setPlotter(Plotter plotter) {
-        this.plotter = plotter;
-        setComponent(plotter);
+	this.plotter = plotter;
+	setComponent(plotter);
     }
 
     private void init() {
-        setFocusable(true);
+	setFocusable(true);
 
-        addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-                requestFocusInWindow();
-            }
-        });
+	addMouseListener(new MouseAdapter() {
+	    public void mousePressed(MouseEvent e) {
+		requestFocusInWindow();
+	    }
+	});
     }
 
     public JPopupMenu getComponentPopupMenu() {
-        return (getPlotter() != null)? getPlotter().getComponentPopupMenu() : null;
+	return (getPlotter() != null)? getPlotter().getComponentPopupMenu() : null;
     }
 
     public AccessibleContext getAccessibleContext() {
-        if (accessibleContext == null) {
-            accessibleContext = new AccessiblePlotterPanel();
-        }
-        return accessibleContext;
+	if (accessibleContext == null) {
+	    accessibleContext = new AccessiblePlotterPanel();
+	}
+	return accessibleContext;
     }
 
     protected class AccessiblePlotterPanel extends AccessibleJComponent {
         public String getAccessibleName() {
-            String name = null;
-            if (getPlotter() != null) {
-                name = getPlotter().getAccessibleContext().getAccessibleName();
-            }
-            if (name == null) {
-                name = super.getAccessibleName();
-            }
-            return name;
-        }
+	    String name = null;
+	    if (getPlotter() != null) {
+		name = getPlotter().getAccessibleContext().getAccessibleName();
+	    }
+	    if (name == null) {
+		name = super.getAccessibleName();
+	    }
+	    return name;
+	}
     }
 }

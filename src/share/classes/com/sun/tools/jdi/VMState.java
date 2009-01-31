@@ -40,7 +40,7 @@ class VMState {
     /*
      * Certain information can be cached only when the entire VM is
      * suspended and there are no pending resumes. The fields below
-     * are used to track whether there are pending resumes. (There
+     * are used to track whether there are pending resumes. (There 
      * is an assumption that JDWP command ids are increasing over time.)
      */
     private int lastCompletedCommandId = 0;   // synchronized (this)
@@ -89,8 +89,8 @@ class VMState {
     }
 
     /*
-     * A JDWP command has been completed (reply has been received).
-     * Update data that tracks pending resume commands.
+     * A JDWP command has been completed (reply has been received). 
+     * Update data that tracks pending resume commands. 
      */
     synchronized void notifyCommandComplete(int id) {
         lastCompletedCommandId = id;
@@ -100,14 +100,14 @@ class VMState {
         if (cache == null && (lastCompletedCommandId >= lastResumeCommandId)) {
             /*
              * No pending resumes to worry about. The VM is suspended
-             * and additional state can be cached. Notify all
-             * interested listeners.
+             * and additional state can be cached. Notify all 
+             * interested listeners. 
              */
             processVMAction(new VMAction(vm, VMAction.VM_SUSPENDED));
             enableCache();
         }
     }
-
+           
     synchronized PacketStream thawCommand(CommandSender sender) {
         PacketStream stream = sender.send();
         lastResumeCommandId = stream.id();
@@ -194,7 +194,7 @@ class VMState {
                 if (local != null) {
                     local.threads = threads;
                     if ((vm.traceFlags & vm.TRACE_OBJREFS) != 0) {
-                        vm.printTrace("Caching all threads (count = " +
+                        vm.printTrace("Caching all threads (count = " + 
                                       threads.size() + ") while VM suspended");
                     }
                 }
@@ -222,7 +222,7 @@ class VMState {
                     local.groups = groups;
                     if ((vm.traceFlags & vm.TRACE_OBJREFS) != 0) {
                         vm.printTrace(
-                          "Caching top level thread groups (count = " +
+                          "Caching top level thread groups (count = " + 
                           groups.size() + ") while VM suspended");
                     }
                 }
@@ -234,3 +234,4 @@ class VMState {
     }
 
 }
+

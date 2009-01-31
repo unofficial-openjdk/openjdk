@@ -56,22 +56,22 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
         addElement("IHDR", PNGMetadata.nativeMetadataFormatName,
                    CHILD_POLICY_EMPTY);
 
-        addAttribute("IHDR", "width",
-                     DATATYPE_INTEGER, true, null,
+        addAttribute("IHDR", "width", 
+                     DATATYPE_INTEGER, true, null, 
                      VALUE_1, VALUE_MAX_32, true, true);
 
-        addAttribute("IHDR", "height",
-                     DATATYPE_INTEGER, true, null,
+        addAttribute("IHDR", "height", 
+                     DATATYPE_INTEGER, true, null, 
                      VALUE_1, VALUE_MAX_32, true, true);
 
-        addAttribute("IHDR", "bitDepth",
+        addAttribute("IHDR", "bitDepth", 
                      DATATYPE_INTEGER, true, null,
                      Arrays.asList(PNGMetadata.IHDR_bitDepths));
 
         String[] colorTypes = {
             "Grayscale", "RGB", "Palette", "GrayAlpha", "RGBAlpha"
         };
-        addAttribute("IHDR", "colorType",
+        addAttribute("IHDR", "colorType", 
                      DATATYPE_STRING, true, null,
                      Arrays.asList(colorTypes));
 
@@ -90,7 +90,7 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
         // root -> PLTE
         addElement("PLTE", PNGMetadata.nativeMetadataFormatName,
                    1, 256);
-
+        
         // root -> PLTE -> PLTEEntry
         addElement("PLTEEntry", "PLTE",
                    CHILD_POLICY_EMPTY);
@@ -98,15 +98,15 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
         addAttribute("PLTEEntry", "index",
                      DATATYPE_INTEGER, true, null,
                      VALUE_0, VALUE_255, true, true);
-
+        
         addAttribute("PLTEEntry", "red",
                      DATATYPE_INTEGER, true, null,
                      VALUE_0, VALUE_255, true, true);
-
+        
         addAttribute("PLTEEntry", "green",
                      DATATYPE_INTEGER, true, null,
                      VALUE_0, VALUE_255, true, true);
-
+        
         addAttribute("PLTEEntry", "blue",
                      DATATYPE_INTEGER, true, null,
                      VALUE_0, VALUE_255, true, true);
@@ -389,7 +389,7 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
         // root -> tIME
         addElement("tIME", PNGMetadata.nativeMetadataFormatName,
                    CHILD_POLICY_EMPTY);
-
+        
         addAttribute("tIME", "year",
                      DATATYPE_INTEGER, true, null,
                      VALUE_0, VALUE_MAX_16, true, true);
@@ -417,7 +417,7 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
         // root -> tRNS
         addElement("tRNS", PNGMetadata.nativeMetadataFormatName,
                    CHILD_POLICY_CHOICE);
-
+        
         // root -> tRNS -> tRNS_Grayscale
         addElement("tRNS_Grayscale", "tRNS",
                    CHILD_POLICY_EMPTY);
@@ -469,7 +469,7 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
                      DATATYPE_STRING, true, null,
                      Arrays.asList(PNGMetadata.zTXt_compressionMethodNames));
 
-        addAttribute("zTXtEntry", "text",
+        addAttribute("zTXtEntry", "text", 
                      DATATYPE_STRING, true, null);
 
         // root -> UnknownChunks
@@ -490,7 +490,7 @@ public class PNGMetadataFormat extends IIOMetadataFormatImpl {
                                  ImageTypeSpecifier imageType) {
         return true;
     }
-
+    
     public static synchronized IIOMetadataFormat getInstance() {
         if (instance == null) {
             instance = new PNGMetadataFormat();

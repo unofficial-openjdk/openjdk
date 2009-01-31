@@ -43,7 +43,7 @@ public class XMLX509Certificate extends SignatureElementProxy
         implements XMLX509DataContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(XMLX509Certificate.class.getName());
 
    /** Field JCA_CERT_ID */

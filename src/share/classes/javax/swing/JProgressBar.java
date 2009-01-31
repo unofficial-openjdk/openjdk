@@ -68,14 +68,14 @@ import javax.swing.plaf.ProgressBarUI;
  * Here is an example of creating a progress bar,
  * where <code>task</code> is an object (representing some piece of work)
  * which returns information about the progress of the task:
- *
+ * 
  *<pre>
  *progressBar = new JProgressBar(0, task.getLengthOfTask());
  *progressBar.setValue(0);
  *progressBar.setStringPainted(true);
  *</pre>
  *
- * Here is an example of querying the current state of the task, and using
+ * Here is an example of querying the current state of the task, and using 
  * the returned value to update the progress bar:
  *
  *<pre>
@@ -98,7 +98,7 @@ import javax.swing.plaf.ProgressBarUI;
  *</pre>
  *
  * <p>
- *
+ * 
  * For complete examples and further documentation see
  * <a href="http://java.sun.com/docs/books/tutorial/uiswing/components/progress.html" target="_top">How to Monitor Progress</a>,
  * a section in <em>The Java Tutorial.</em>
@@ -126,6 +126,7 @@ import javax.swing.plaf.ProgressBarUI;
  *      attribute: isContainer false
  *    description: A component that displays an integer value.
  *
+ * @version %I% %G%
  * @author Michael C. Albers
  * @author Kathy Walrath
  */
@@ -225,7 +226,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     private transient Format format;
 
     /**
-     * Whether the progress bar is indeterminate (<code>true</code>) or
+     * Whether the progress bar is indeterminate (<code>true</code>) or 
      * normal (<code>false</code>); the default is <code>false</code>.
      *
      * @see #setIndeterminate
@@ -248,13 +249,13 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      */
     public JProgressBar()
     {
-        this(defaultOrientation);
+	this(defaultOrientation);
     }
 
    /**
      * Creates a progress bar with the specified orientation,
-     * which can be
-     * either {@code SwingConstants.VERTICAL} or
+     * which can be 
+     * either {@code SwingConstants.VERTICAL} or 
      * {@code SwingConstants.HORIZONTAL}.
      * By default, a border is painted but a progress string is not.
      * The initial and minimum values are 0,
@@ -271,7 +272,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      */
     public JProgressBar(int orient)
     {
-        this(orient, defaultMinimum, defaultMaximum);
+	this(orient, defaultMinimum, defaultMaximum);
     }
 
 
@@ -282,7 +283,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      * By default, a border is painted but a progress string is not.
      * <p>
      * The <code>BoundedRangeModel</code> that holds the progress bar's data
-     * handles any issues that may arise from improperly setting the
+     * handles any issues that may arise from improperly setting the 
      * minimum, initial, and maximum values on the progress bar.
      * See the {@code BoundedRangeModel} documentation for details.
      *
@@ -298,7 +299,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      */
     public JProgressBar(int min, int max)
     {
-        this(defaultOrientation, min, max);
+	this(defaultOrientation, min, max);
     }
 
 
@@ -309,7 +310,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      * Sets the initial value of the progress bar to the specified minimum.
      * <p>
      * The <code>BoundedRangeModel</code> that holds the progress bar's data
-     * handles any issues that may arise from improperly setting the
+     * handles any issues that may arise from improperly setting the 
      * minimum, initial, and maximum values on the progress bar.
      * See the {@code BoundedRangeModel} documentation for details.
      *
@@ -327,22 +328,22 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      */
     public JProgressBar(int orient, int min, int max)
     {
-        // Creating the model this way is a bit simplistic, but
-        //  I believe that it is the the most common usage of this
-        //  component - it's what people will expect.
+	// Creating the model this way is a bit simplistic, but
+	//  I believe that it is the the most common usage of this
+	//  component - it's what people will expect.
         setModel(new DefaultBoundedRangeModel(min, 0, min, max));
         updateUI();
 
         setOrientation(orient);      // documented with set/getOrientation()
         setBorderPainted(true);      // documented with is/setBorderPainted()
-        setStringPainted(false);     // see setStringPainted
-        setString(null);             // see getString
-        setIndeterminate(false);     // see setIndeterminate
+	setStringPainted(false);     // see setStringPainted
+	setString(null);             // see getString
+	setIndeterminate(false);     // see setIndeterminate
     }
 
 
     /**
-     * Creates a horizontal progress bar
+     * Creates a horizontal progress bar 
      * that uses the specified model
      * to hold the progress bar's data.
      * By default, a border is painted but a progress string is not.
@@ -362,16 +363,16 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
 
         setOrientation(defaultOrientation);  // see setOrientation()
         setBorderPainted(true);              // see setBorderPainted()
-        setStringPainted(false);             // see setStringPainted
-        setString(null);                     // see getString
-        setIndeterminate(false);             // see setIndeterminate
+	setStringPainted(false);             // see setStringPainted
+	setString(null);                     // see getString
+	setIndeterminate(false);             // see setIndeterminate
     }
 
 
     /**
      * Returns {@code SwingConstants.VERTICAL} or
      * {@code SwingConstants.HORIZONTAL}, depending on the orientation
-     * of the progress bar. The default orientation is
+     * of the progress bar. The default orientation is 
      * {@code SwingConstants.HORIZONTAL}.
      *
      * @return <code>HORIZONTAL</code> or <code>VERTICAL</code>
@@ -383,9 +384,9 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
 
 
    /**
-     * Sets the progress bar's orientation to <code>newOrientation</code>,
+     * Sets the progress bar's orientation to <code>newOrientation</code>, 
      * which must be {@code SwingConstants.VERTICAL} or
-     * {@code SwingConstants.HORIZONTAL}. The default orientation
+     * {@code SwingConstants.HORIZONTAL}. The default orientation 
      * is {@code SwingConstants.HORIZONTAL}.
      *
      * @param  newOrientation  <code>HORIZONTAL</code> or <code>VERTICAL</code>
@@ -409,14 +410,14 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
                 firePropertyChange("orientation", oldOrientation, newOrientation);
                 if (accessibleContext != null) {
                     accessibleContext.firePropertyChange(
-                            AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
-                            ((oldOrientation == VERTICAL)
-                             ? AccessibleState.VERTICAL
-                             : AccessibleState.HORIZONTAL),
-                            ((orientation == VERTICAL)
-                             ? AccessibleState.VERTICAL
-                             : AccessibleState.HORIZONTAL));
-                }
+			    AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
+                            ((oldOrientation == VERTICAL) 
+			     ? AccessibleState.VERTICAL 
+			     : AccessibleState.HORIZONTAL),
+                            ((orientation == VERTICAL) 
+			     ? AccessibleState.VERTICAL 
+			     : AccessibleState.HORIZONTAL));
+	        }
                 break;
             default:
                 throw new IllegalArgumentException(newOrientation +
@@ -458,12 +459,12 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      */
     public void setStringPainted(boolean b) {
         //PENDING: specify that string not painted when in indeterminate mode?
-        //         or just leave that to the L&F?
+	//         or just leave that to the L&F?
         boolean oldValue = paintString;
         paintString = b;
         firePropertyChange("stringPainted", oldValue, paintString);
         if (paintString != oldValue) {
-            revalidate();
+	    revalidate();
             repaint();
         }
     }
@@ -480,9 +481,9 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      * @see    #setString
      */
     public String getString(){
-        if (progressString != null) {
-            return progressString;
-        } else {
+	if (progressString != null) {
+	    return progressString;
+	} else {
             if (format == null) {
                 format = NumberFormat.getPercentInstance();
             }
@@ -494,7 +495,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      * Sets the value of the progress string. By default,
      * this string is <code>null</code>, implying the built-in behavior of
      * using a simple percent string.
-     * If you have provided a custom progress string and want to revert to
+     * If you have provided a custom progress string and want to revert to 
      * the built-in behavior, set the string back to <code>null</code>.
      * <p>
      * The progress string is painted only if
@@ -511,10 +512,10 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      */
     public void setString(String s){
         String oldValue = progressString;
-        progressString = s;
+	progressString = s;
         firePropertyChange("string", oldValue, progressString);
         if (progressString == null || oldValue == null || !progressString.equals(oldValue)) {
-            repaint();
+	    repaint();
         }
     }
 
@@ -525,10 +526,10 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      * @return the percent complete for this progress bar
      */
     public double getPercentComplete() {
-        long span = model.getMaximum() - model.getMinimum();
-        double currentValue = model.getValue();
-        double pc = (currentValue - model.getMinimum()) / span;
-        return pc;
+	long span = model.getMaximum() - model.getMinimum();
+	double currentValue = model.getValue();
+	double pc = (currentValue - model.getMinimum()) / span;
+	return pc;
     }
 
     /**
@@ -571,14 +572,14 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     /**
      * Paints the progress bar's border if the <code>borderPainted</code>
      * property is <code>true</code>.
-     *
+     * 
      * @param g  the <code>Graphics</code> context within which to paint the border
      * @see #paint
      * @see #setBorder
      * @see #isBorderPainted
      * @see #setBorderPainted
      */
-    protected void paintBorder(Graphics g) {
+    protected void paintBorder(Graphics g) {    
         if (isBorderPainted()) {
             super.paintBorder(g);
         }
@@ -603,7 +604,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      *        bound: true
      *       hidden: true
      *    attribute: visualUpdate true
-     *  description: The UI object that implements the Component's LookAndFeel.
+     *  description: The UI object that implements the Component's LookAndFeel. 
      */
     public void setUI(ProgressBarUI ui) {
         super.setUI(ui);
@@ -654,12 +655,12 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     }
 
     /**
-     * Subclasses that want to handle change events
+     * Subclasses that want to handle change events 
      * from the model differently
-     * can override this to return
+     * can override this to return 
      * an instance of a custom <code>ChangeListener</code> implementation.
      * The default {@code ChangeListener} simply calls the
-     * {@code fireStateChanged} method to forward {@code ChangeEvent}s
+     * {@code fireStateChanged} method to forward {@code ChangeEvent}s 
      * to the {@code ChangeListener}s that have been added directly to the
      * progress bar.
      *
@@ -680,7 +681,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     public void addChangeListener(ChangeListener l) {
         listenerList.add(ChangeListener.class, l);
     }
-
+    
     /**
      * Removes a <code>ChangeListener</code> from the progress bar.
      *
@@ -689,7 +690,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     public void removeChangeListener(ChangeListener l) {
         listenerList.remove(ChangeListener.class, l);
     }
-
+        
     /**
      * Returns an array of all the <code>ChangeListener</code>s added
      * to this progress bar with <code>addChangeListener</code>.
@@ -728,10 +729,10 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
                 if (changeEvent == null)
                     changeEvent = new ChangeEvent(this);
                 ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
-            }
+            }          
         }
-    }
-
+    } 
+      
     /**
      * Returns the data model used by this progress bar.
      *
@@ -771,18 +772,18 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
                 newModel.addChangeListener(changeListener);
             }
 
-            if (accessibleContext != null) {
+	    if (accessibleContext != null) {
                 accessibleContext.firePropertyChange(
-                        AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
-                        (oldModel== null
-                         ? null : new Integer(oldModel.getValue())),
-                        (newModel== null
-                         ? null : new Integer(newModel.getValue())));
-            }
+		        AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+                        (oldModel== null 
+			 ? null : new Integer(oldModel.getValue())),
+                        (newModel== null 
+			 ? null : new Integer(newModel.getValue())));
+	    }
 
-            if (model != null) {
-                model.setExtent(0);
-            }
+	    if (model != null) {
+		model.setExtent(0);
+	    }
             repaint();
         }
     }
@@ -793,7 +794,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     /**
      * Returns the progress bar's current {@code value}
      * from the <code>BoundedRangeModel</code>.
-     * The value is always between the
+     * The value is always between the 
      * minimum and maximum values, inclusive.
      *
      * @return  the current value of the progress bar
@@ -842,21 +843,21 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      *    preferred: true
      *  description: The progress bar's current value.
      */
-    public void setValue(int n) {
+    public void setValue(int n) { 
         BoundedRangeModel brm = getModel();
-        int oldValue = brm.getValue();
-        brm.setValue(n);
-
-        if (accessibleContext != null) {
+	int oldValue = brm.getValue();
+	brm.setValue(n);
+ 
+	if (accessibleContext != null) {
             accessibleContext.firePropertyChange(
-                    AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
+		    AccessibleContext.ACCESSIBLE_VALUE_PROPERTY,
                     new Integer(oldValue),
                     new Integer(brm.getValue()));
-        }
+	}
     }
 
     /**
-     * Sets the progress bar's minimum value
+     * Sets the progress bar's minimum value 
      * (stored in the progress bar's data model) to <code>n</code>.
      * <p>
      * The data model (a <code>BoundedRangeModel</code> instance)
@@ -907,32 +908,32 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      * By default, this property is <code>false</code>.
      * Some look and feels might not support indeterminate progress bars;
      * they will ignore this property.
-     *
+     * 
      * <p>
      *
-     * See
+     * See 
      * <a href="http://java.sun.com/docs/books/tutorial/uiswing/components/progress.html" target="_top">How to Monitor Progress</a>
      * for examples of using indeterminate progress bars.
      *
-     * @param newValue  <code>true</code> if the progress bar
-     *                  should change to indeterminate mode;
-     *                  <code>false</code> if it should revert to normal.
+     * @param newValue	<code>true</code> if the progress bar
+     * 			should change to indeterminate mode;
+     * 			<code>false</code> if it should revert to normal.
      *
      * @see #isIndeterminate
      * @see javax.swing.plaf.basic.BasicProgressBarUI
-     *
+     * 
      * @since 1.4
      *
      * @beaninfo
      *        bound: true
      *    attribute: visualUpdate true
      *  description: Set whether the progress bar is indeterminate (true)
-     *               or normal (false).
+     * 		     or normal (false).
      */
     public void setIndeterminate(boolean newValue) {
-        boolean oldValue = indeterminate;
-        indeterminate = newValue;
-        firePropertyChange("indeterminate", oldValue, indeterminate);
+	boolean oldValue = indeterminate;
+	indeterminate = newValue;
+	firePropertyChange("indeterminate", oldValue, indeterminate);
     }
 
     /**
@@ -943,7 +944,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
      *
      * @since 1.4
      *
-     * @beaninfo
+     * @beaninfo  
      *  description: Is the progress bar indeterminate (true)
      *               or normal (false)?
      */
@@ -952,8 +953,8 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     }
 
 
-    /**
-     * See readObject() and writeObject() in JComponent for more
+    /** 
+     * See readObject() and writeObject() in JComponent for more 
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -970,31 +971,31 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
 
     /**
      * Returns a string representation of this <code>JProgressBar</code>.
-     * This method is intended to be used only for debugging purposes. The
+     * This method is intended to be used only for debugging purposes. The 
      * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
-     *
+     * 
      * @return  a string representation of this <code>JProgressBar</code>
      */
     protected String paramString() {
-        String orientationString = (orientation == HORIZONTAL ?
-                                    "HORIZONTAL" : "VERTICAL");
-        String paintBorderString = (paintBorder ?
-                                    "true" : "false");
-        String progressStringString = (progressString != null ?
-                                       progressString : "");
-        String paintStringString = (paintString ?
-                                    "true" : "false");
-        String indeterminateString = (indeterminate ?
-                                    "true" : "false");
+	String orientationString = (orientation == HORIZONTAL ?
+				    "HORIZONTAL" : "VERTICAL");
+	String paintBorderString = (paintBorder ?
+				    "true" : "false");
+	String progressStringString = (progressString != null ?
+				       progressString : "");
+	String paintStringString = (paintString ?
+				    "true" : "false");
+	String indeterminateString = (indeterminate ?
+				    "true" : "false");
 
-        return super.paramString() +
-        ",orientation=" + orientationString +
-        ",paintBorder=" + paintBorderString +
-        ",paintString=" + paintStringString +
-        ",progressString=" + progressStringString +
-        ",indeterminateString=" + indeterminateString;
+	return super.paramString() +
+	",orientation=" + orientationString +
+	",paintBorder=" + paintBorderString +
+	",paintString=" + paintStringString +
+	",progressString=" + progressStringString +
+	",indeterminateString=" + indeterminateString;
     }
 
 /////////////////
@@ -1002,13 +1003,13 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
 ////////////////
 
     /**
-     * Gets the <code>AccessibleContext</code> associated with this
+     * Gets the <code>AccessibleContext</code> associated with this 
      * <code>JProgressBar</code>. For progress bars, the
-     * <code>AccessibleContext</code> takes the form of an
-     * <code>AccessibleJProgressBar</code>.
+     * <code>AccessibleContext</code> takes the form of an 
+     * <code>AccessibleJProgressBar</code>. 
      * A new <code>AccessibleJProgressBar</code> instance is created if necessary.
      *
-     * @return an <code>AccessibleJProgressBar</code> that serves as the
+     * @return an <code>AccessibleJProgressBar</code> that serves as the 
      *         <code>AccessibleContext</code> of this <code>JProgressBar</code>
      * @beaninfo
      *       expert: true
@@ -1022,9 +1023,9 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>JProgressBar</code> class.  It provides an implementation of the
-     * Java Accessibility API appropriate to progress bar user-interface
+     * This class implements accessibility support for the 
+     * <code>JProgressBar</code> class.  It provides an implementation of the 
+     * Java Accessibility API appropriate to progress bar user-interface 
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -1042,7 +1043,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
         /**
          * Gets the state set of this object.
          *
-         * @return an instance of AccessibleState containing the current state
+         * @return an instance of AccessibleState containing the current state 
          * of the object
          * @see AccessibleState
          */
@@ -1062,7 +1063,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
         /**
          * Gets the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the
+         * @return an instance of AccessibleRole describing the role of the 
          * object
          */
         public AccessibleRole getAccessibleRole() {
@@ -1071,11 +1072,11 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
 
         /**
          * Gets the <code>AccessibleValue</code> associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * returns this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * returns this object, which is responsible for implementing the
          * <code>AccessibleValue</code> interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object
          */
         public AccessibleValue getAccessibleValue() {
             return this;
@@ -1096,12 +1097,12 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
          * @return <code>true</code> if the value was set
          */
         public boolean setCurrentAccessibleValue(Number n) {
-            // TIGER- 4422535
-            if (n == null) {
-                return false;
-            }
-            setValue(n.intValue());
-            return true;
+	    // TIGER- 4422535 
+	    if (n == null) {
+		return false;
+	    }
+	    setValue(n.intValue());
+	    return true;
         }
 
         /**
@@ -1119,7 +1120,7 @@ public class JProgressBar extends JComponent implements SwingConstants, Accessib
          * @return the maximum value of this object
          */
         public Number getMaximumAccessibleValue() {
-            // TIGER - 4422362
+	    // TIGER - 4422362
             return new Integer(model.getMaximum() - model.getExtent());
         }
 

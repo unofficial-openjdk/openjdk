@@ -27,7 +27,7 @@
  * Solaris-dependent I/O Note: Routines here are just place holders -
  * eventually we need to put in a solution that involves using
  * setjmp/longjmp to avoid io races.  Look at green_threads/io_md.c for
- * more detailed comments on the architechture of the io modules.
+ * more detailed comments on the architechture of the io modules.  
  */
 #include <errno.h>
 #include <fcntl.h>
@@ -142,15 +142,15 @@ int sysClose(int fd)
         sys_thread_t *thread;
         sys_thread_t *next;
 
-        /* Lock the corresponding fd. */
+	/* Lock the corresponding fd. */
         mutexLock(&file->lock);
 
-        /* Read the blocking list. */
+	/* Read the blocking list. */
         thread = file->list;
 
-        /* Iterates the list and interrupt every thread in there. */
+	/* Iterates the list and interrupt every thread in there. */
         while (thread) {
-            /* This is the classic double-linked list operation. */
+	    /* This is the classic double-linked list operation. */
             if (thread->nextBlocked != thread) {
                 next = thread->nextBlocked;
 
@@ -163,10 +163,10 @@ int sysClose(int fd)
             thread->nextBlocked = 0;
             thread->prevBlocked = 0;
 
-            /*
-             * Use current interruptable IO mechanism to
-             * implement non-blocking closable IO.
-             */
+	    /*
+	     * Use current interruptable IO mechanism to
+	     * implement non-blocking closable IO.
+	     */
             sysThreadInterrupt(thread);
 
             thread = next;
@@ -261,7 +261,7 @@ static ssize_t EndIO(sys_thread_t* self, file_t* file, ssize_t ret) {
  * Note: It is also used by interruptable IO. If later we need to
  * deprecate interruptable IO, all we need to change the return
  * value and errno to EBADF instead of EINTR. The high level
- * routine will interpret it as IOException instead of
+ * routine will interpret it as IOException instead of 
  * InterruptedIOException. No other change is needed.
  * The underlying mechanism is using the SIGUSR1 signal to wake up the
  * blocking thread.  This may cause severe conflicts with any other
@@ -325,19 +325,19 @@ static ssize_t EndIO(sys_thread_t* self, file_t* file, ssize_t ret) {
     BeginIO(self, file);\
 \
     {\
-        sigjmp_buf jmpbuf;\
-        sigset_t omask;\
+    	sigjmp_buf jmpbuf;\
+    	sigset_t omask;\
 \
         thr_setspecific(sigusr1Jmpbufkey, &jmpbuf);\
-        if (sigsetjmp(jmpbuf, 1) == 0) {\
+    	if (sigsetjmp(jmpbuf, 1) == 0) {\
             thr_sigsetmask(SIG_UNBLOCK, &sigusr1Mask, &omask);\
             ret = cmd;\
             thr_sigsetmask(SIG_SETMASK, &omask, NULL);\
-        } else {\
+    	} else {\
             sysThreadIsInterrupted(self, TRUE);\
             errno = EINTR;\
             ret = SYS_INTRPT;\
-        }\
+    	}\
     }\
 \
     return EndIO(self, file, ret);\
@@ -425,24 +425,24 @@ sysAvailable(int fd, jlong *pbytes) {
 
     if (sysFfileMode(fd, &mode) >= 0) {
         if (S_ISCHR(mode) || S_ISFIFO(mode) || S_ISSOCK(mode)) {
-            /*
-             * XXX: is the following call interruptible? If so, this might
-             * need to go through the INTERRUPT_IO() wrapper as for other
-             * blocking, interruptible calls in this file.
-             */
-            int n;
+	    /*
+	     * XXX: is the following call interruptible? If so, this might
+	     * need to go through the INTERRUPT_IO() wrapper as for other
+	     * blocking, interruptible calls in this file.
+	     */
+	    int n;
             if (ioctl(fd, FIONREAD, &n) >= 0) {
-                *pbytes = n;
+		*pbytes = n;
                 return 1;
             }
         }
     }
     if ((cur = lseek64_w(fd, 0L, SEEK_CUR)) == -1) {
-        return 0;
+	return 0;
     } else if ((end = lseek64_w(fd, 0L, SEEK_END)) == -1) {
-        return 0;
+	return 0;
     } else if (lseek64_w(fd, cur, SEEK_SET) == -1) {
-        return 0;
+	return 0;
     }
     *pbytes = end - cur;
     return 1;
@@ -450,7 +450,7 @@ sysAvailable(int fd, jlong *pbytes) {
 
 /* IO routines that take in a FD object */
 
-int
+int 
 sysTimeout(int fd, long timeout) {
 #ifndef USE_SELECT
     struct pollfd pfd;
@@ -488,7 +488,7 @@ sysTimeout(int fd, long timeout) {
 
     t.tv_sec = timeout / 1000;
     t.tv_usec = (timeout % 1000) * 1000;
-
+    
     FD_ZERO(&tbl);
     FD_SET(fd, &tbl);
 
@@ -506,7 +506,7 @@ sysTimeout(int fd, long timeout) {
  */
 
 long
-sysSocketAvailable(int fd, jint *pbytes) {
+sysSocketAvailable(int fd, jint *pbytes) {  
     long ret = 1;
     /*
      * An ILP64 port of this code should pass the address of a local int
@@ -520,12 +520,12 @@ sysSocketAvailable(int fd, jint *pbytes) {
      * blocking, interruptible calls in this file.
      */
     if (fd < 0 || ioctl(fd, FIONREAD, pbytes) < 0) {
-        ret = 0;
-    }
+	ret = 0;
+    } 
     return ret;
 }
 
-int
+int 
 sysListen(int fd, int count) {
    return listen(fd, count);
 }
@@ -560,12 +560,12 @@ sysSocketShutdown(int fd, int howto) {
     return shutdown(fd, howto);
 }
 
-int
+int 
 sysGetSockOpt(int fd, int level, int optname, char *optval, int *optlen) {
     return getsockopt(fd, level, optname, optval, optlen);
 }
 
-int
+int 
 sysSetSockOpt(int fd, int level, int optname, const char *optval, int optlen) {
     return setsockopt(fd, level, optname, optval, optlen);
 }
@@ -585,7 +585,7 @@ sysGetHostByName(char *hostname) {
   return gethostbyname(hostname);
 }
 
-struct protoent *
+struct protoent * 
 sysGetProtoByName(char* name) {
     return getprotobyname(name);
 }
@@ -594,13 +594,13 @@ sysGetProtoByName(char* name) {
  * Routines to do datagrams
  */
 ssize_t
-sysSendTo(int fd, char *buf, int len,
-          int flags, struct sockaddr *to, int tolen) {
+sysSendTo(int fd, char *buf, int len, 
+	  int flags, struct sockaddr *to, int tolen) {
     INTERRUPT_IO(sendto(fd, buf, len, flags, to, tolen))
 }
 
 ssize_t
-sysRecvFrom(int fd, char *buf, int nBytes,
-            int flags, struct sockaddr *from, int *fromlen) {
+sysRecvFrom(int fd, char *buf, int nBytes, 
+	    int flags, struct sockaddr *from, int *fromlen) {
     INTERRUPT_IO(recvfrom(fd, buf, nBytes, flags, from, (uint *)fromlen))
 }

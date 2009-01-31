@@ -32,6 +32,7 @@ import sun.nio.cs.ext.MS874;
  * Tables and data to convert Unicode to MS874
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteMS874 extends CharToByteSingleByte {

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,9 +23,9 @@
 
 /* @test
  * @bug 4070080
- *
+ * 
  * @summary  Test reading an evolved class serialization into the original class
- *           version. Class evolved by adding a superclass.
+ *           version. Class evolved by adding a superclass. 
  *
  * @clean A WriteAddedSuperClass ReadAddedSuperClass ReadAddedSuperClass2
  * @compile WriteAddedSuperClass.java
@@ -59,15 +59,15 @@ class AddedSuperClass implements Serializable {
 class A extends AddedSuperClass implements Serializable  {
     // Version 1.1 of class A.  Added superclass NewSerializableSuper.
     private static final long serialVersionUID = 1L;
-}
+} 
 
 public class WriteAddedSuperClass {
     public static void main(String args[]) throws IOException {
-        A a = new A();
-        File f = new File("tmp.ser");
-        ObjectOutput out =
-            new ObjectOutputStream(new FileOutputStream(f));
-        out.writeObject(a);
-        out.close();
+	A a = new A();
+	File f = new File("tmp.ser");
+	ObjectOutput out =
+	    new ObjectOutputStream(new FileOutputStream(f));
+	out.writeObject(a);
+	out.close();
     }
 }

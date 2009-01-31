@@ -55,20 +55,20 @@ import org.jcp.xml.dsig.internal.MacOutputStream;
  */
 public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
 
-    private static Logger log =
-        Logger.getLogger("org.jcp.xml.dsig.internal.dom");
+    private static Logger log = 
+	Logger.getLogger("org.jcp.xml.dsig.internal.dom");
     private Mac hmac;
     private int outputLength;
 
     /**
-     * Creates a <code>DOMHMACSignatureMethod</code> with the specified params
+     * Creates a <code>DOMHMACSignatureMethod</code> with the specified params 
      *
      * @param params algorithm-specific parameters (may be <code>null</code>)
      * @throws InvalidAlgorithmParameterException if params are inappropriate
      */
-    DOMHMACSignatureMethod(AlgorithmParameterSpec params)
-        throws InvalidAlgorithmParameterException {
-        super(params);
+    DOMHMACSignatureMethod(AlgorithmParameterSpec params) 
+	throws InvalidAlgorithmParameterException {
+	super(params);
     }
 
     /**
@@ -77,52 +77,52 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
      * @param smElem a SignatureMethod element
      */
     DOMHMACSignatureMethod(Element smElem) throws MarshalException {
-        super(smElem);
+	super(smElem);
     }
 
-    void checkParams(SignatureMethodParameterSpec params)
-        throws InvalidAlgorithmParameterException {
+    void checkParams(SignatureMethodParameterSpec params) 
+	throws InvalidAlgorithmParameterException {
         if (params != null) {
             if (!(params instanceof HMACParameterSpec)) {
-                throw new InvalidAlgorithmParameterException
-                    ("params must be of type HMACParameterSpec");
-            }
-            outputLength = ((HMACParameterSpec) params).getOutputLength();
-            if (log.isLoggable(Level.FINE)) {
-                log.log(Level.FINE,
-                    "Setting outputLength from HMACParameterSpec to: "
-                    + outputLength);
-            }
+	        throw new InvalidAlgorithmParameterException
+	            ("params must be of type HMACParameterSpec");
+	    }
+	    outputLength = ((HMACParameterSpec) params).getOutputLength();
+	    if (log.isLoggable(Level.FINE)) {
+	        log.log(Level.FINE, 
+		    "Setting outputLength from HMACParameterSpec to: "
+		    + outputLength);
+	    }
         } else {
-            outputLength = -1;
+	    outputLength = -1;
         }
     }
 
-    SignatureMethodParameterSpec unmarshalParams(Element paramsElem)
-        throws MarshalException {
+    SignatureMethodParameterSpec unmarshalParams(Element paramsElem) 
+	throws MarshalException {
         outputLength = new Integer
-            (paramsElem.getFirstChild().getNodeValue()).intValue();
+	    (paramsElem.getFirstChild().getNodeValue()).intValue();
         if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "unmarshalled outputLength: " + outputLength);
-        }
-        return new HMACParameterSpec(outputLength);
+	}
+	return new HMACParameterSpec(outputLength);
     }
 
     void marshalParams(Element parent, String prefix)
-        throws MarshalException {
+	throws MarshalException {
 
-        Document ownerDoc = DOMUtils.getOwnerDocument(parent);
-        Element hmacElem = DOMUtils.createElement(ownerDoc, "HMACOutputLength",
-            XMLSignature.XMLNS, prefix);
+	Document ownerDoc = DOMUtils.getOwnerDocument(parent);
+        Element hmacElem = DOMUtils.createElement(ownerDoc, "HMACOutputLength", 
+	    XMLSignature.XMLNS, prefix);
         hmacElem.appendChild(ownerDoc.createTextNode
-           (String.valueOf(outputLength)));
+	   (String.valueOf(outputLength)));
 
         parent.appendChild(hmacElem);
     }
 
-    boolean verify(Key key, DOMSignedInfo si, byte[] sig,
-        XMLValidateContext context)
-        throws InvalidKeyException, SignatureException, XMLSignatureException {
+    boolean verify(Key key, DOMSignedInfo si, byte[] sig, 
+	XMLValidateContext context) 
+	throws InvalidKeyException, SignatureException, XMLSignatureException {
         if (key == null || si == null || sig == null) {
             throw new NullPointerException();
         }
@@ -136,29 +136,29 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
                 throw new XMLSignatureException(nsae);
             }
         }
-        if (log.isLoggable(Level.FINE)) {
-            log.log(Level.FINE, "outputLength = " + outputLength);
-        }
+	if (log.isLoggable(Level.FINE)) {
+	    log.log(Level.FINE, "outputLength = " + outputLength);
+	}
         hmac.init((SecretKey) key);
-        si.canonicalize(context, new MacOutputStream(hmac));
+	si.canonicalize(context, new MacOutputStream(hmac));
         byte[] result = hmac.doFinal();
-        if (log.isLoggable(Level.FINE)) {
+	if (log.isLoggable(Level.FINE)) {
             log.log(Level.FINE, "resultLength = " + result.length);
-        }
-        if (outputLength != -1) {
-            int byteLength = outputLength/8;
-            if (result.length > byteLength) {
+	}
+	if (outputLength != -1) {
+	    int byteLength = outputLength/8;
+	    if (result.length > byteLength) {
                 byte[] truncated = new byte[byteLength];
                 System.arraycopy(result, 0, truncated, 0, byteLength);
                 result = truncated;
-            }
+	    }
         }
 
         return MessageDigest.isEqual(sig, result);
     }
 
-    byte[] sign(Key key, DOMSignedInfo si, XMLSignContext context)
-        throws InvalidKeyException, XMLSignatureException {
+    byte[] sign(Key key, DOMSignedInfo si, XMLSignContext context) 
+	throws InvalidKeyException, XMLSignatureException {
         if (key == null || si == null) {
             throw new NullPointerException();
         }
@@ -173,29 +173,29 @@ public abstract class DOMHMACSignatureMethod extends DOMSignatureMethod {
             }
         }
         hmac.init((SecretKey) key);
-        si.canonicalize(context, new MacOutputStream(hmac));
+	si.canonicalize(context, new MacOutputStream(hmac));
         byte[] result = hmac.doFinal();
-        if (outputLength != -1) {
-            int byteLength = outputLength/8;
-            if (result.length > byteLength) {
+	if (outputLength != -1) {
+	    int byteLength = outputLength/8;
+	    if (result.length > byteLength) {
                 byte[] truncated = new byte[byteLength];
                 System.arraycopy(result, 0, truncated, 0, byteLength);
                 result = truncated;
-            }
+	    }
         }
-        return result;
+	return result;
     }
 
     boolean paramsEqual(AlgorithmParameterSpec spec) {
-        if (getParameterSpec() == spec) {
-            return true;
-        }
+	if (getParameterSpec() == spec) {
+	    return true;
+	}
         if (!(spec instanceof HMACParameterSpec)) {
-            return false;
-        }
-        HMACParameterSpec ospec = (HMACParameterSpec) spec;
+	    return false;
+	}
+	HMACParameterSpec ospec = (HMACParameterSpec) spec;
 
-        return (outputLength == ospec.getOutputLength());
+	return (outputLength == ospec.getOutputLength());
     }
 
     static final class SHA1 extends DOMHMACSignatureMethod {

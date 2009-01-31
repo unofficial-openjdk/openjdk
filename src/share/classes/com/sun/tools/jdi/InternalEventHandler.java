@@ -39,7 +39,7 @@ public class InternalEventHandler implements Runnable
         this.vm = vm;
         this.queue = queue;
         Thread thread = new Thread(vm.threadGroupForJDI(), this,
-                                   "JDI Internal Event Handler");
+				   "JDI Internal Event Handler");
         thread.setDaemon(true);
         thread.start();
     }
@@ -58,31 +58,31 @@ public class InternalEventHandler implements Runnable
                         if (event instanceof ClassUnloadEvent) {
                             ClassUnloadEvent cuEvent = (ClassUnloadEvent)event;
                             vm.removeReferenceType(cuEvent.classSignature());
-
+    
                             if ((vm.traceFlags & vm.TRACE_EVENTS) != 0) {
-                                vm.printTrace("Handled Unload Event for " +
+                                vm.printTrace("Handled Unload Event for " + 
                                               cuEvent.classSignature());
                             }
                         } else if (event instanceof ClassPrepareEvent) {
                             ClassPrepareEvent cpEvent = (ClassPrepareEvent)event;
                             ((ReferenceTypeImpl)cpEvent.referenceType())
                                                             .markPrepared();
-
+    
                             if ((vm.traceFlags & vm.TRACE_EVENTS) != 0) {
-                                vm.printTrace("Handled Prepare Event for " +
+                                vm.printTrace("Handled Prepare Event for " + 
                                               cpEvent.referenceType().name());
                             }
                         }
-
+    
                     }
 
                 /*
                  * Handle exceptions that can occur in normal operation
                  * but which can't be accounted for by event builder
                  * methods. The thread should not be terminated if they
-                 * occur.
+                 * occur.  
                  *
-                 * TO DO: We need a better way to log these conditions.
+                 * TO DO: We need a better way to log these conditions. 
                  */
                 } catch (VMOutOfMemoryException vmme) {
                     vmme.printStackTrace();
@@ -91,11 +91,11 @@ public class InternalEventHandler implements Runnable
 
                 /*
                  * If any of these exceptions below occurs, there is some
-                 * sort of programming error that should be addressed in
+                 * sort of programming error that should be addressed in 
                  * the JDI implemementation. However, it would cripple
-                 * the implementation if we let this thread die due to
+                 * the implementation if we let this thread die due to 
                  * one of them. So, a notification of the exception is
-                 * given and we attempt to continue.
+                 * given and we attempt to continue. 
                  */
                 } catch (ObjectCollectedException oce) {
                     oce.printStackTrace();
@@ -111,3 +111,4 @@ public class InternalEventHandler implements Runnable
         }
     }
 }
+

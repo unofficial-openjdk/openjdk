@@ -33,8 +33,9 @@ import java.util.Set;
 /**
  * A simple implementation of Bindings backed by
  * a <code>HashMap</code> or some other specified <code>Map</code>.
- *
+ * 
  * @author Mike Grogan
+ * @version 1.0
  * @since 1.6
  */
 public class SimpleBindings implements Bindings {
@@ -43,7 +44,7 @@ public class SimpleBindings implements Bindings {
      * The <code>Map</code> field stores the attributes.
      */
     private Map<String,Object> map;
-
+    
     /**
      * Constructor uses an existing <code>Map</code> to store the values.
      * @param m The <code>Map</code> backing this <code>SimpleBindings</code>.
@@ -55,7 +56,7 @@ public class SimpleBindings implements Bindings {
         }
         this.map = m;
     }
-
+    
     /**
      * Default constructor uses a <code>HashMap</code>.
      */
@@ -69,7 +70,7 @@ public class SimpleBindings implements Bindings {
      * @param name Name of value
      * @param value Value to set.
      *
-     * @return Previous value for the specified key.  Returns null if key was previously
+     * @return Previous value for the specified key.  Returns null if key was previously 
      * unset.
      *
      * @throws NullPointerException if the name is null.
@@ -79,33 +80,33 @@ public class SimpleBindings implements Bindings {
         checkKey(name);
         return map.put(name,value);
     }
-
+    
     /**
      * <code>putAll</code> is implemented using <code>Map.putAll</code>.
      *
      * @param toMerge The <code>Map</code> of values to add.
      *
-     * @throws NullPointerException
-     *         if toMerge map is null or if some key in the map is null.
-     * @throws IllegalArgumentException
+     * @throws NullPointerException 
+     *         if toMerge map is null or if some key in the map is null. 
+     * @throws IllegalArgumentException 
      *         if some key in the map is an empty String.
      */
     public void putAll(Map<? extends String, ? extends Object> toMerge) {
         if (toMerge == null) {
             throw new NullPointerException("toMerge map is null");
         }
-        for (Map.Entry<? extends String, ? extends Object> entry : toMerge.entrySet()) {
+        for (Map.Entry<? extends String, ? extends Object> entry : toMerge.entrySet()) { 
             String key = entry.getKey();
             checkKey(key);
             put(key, entry.getValue());
         }
     }
-
+    
     /** {@inheritDoc} */
     public void clear() {
         map.clear();
-    }
-
+    }    
+    
     /**
      * Returns <tt>true</tt> if this map contains a mapping for the specified
      * key.  More formally, returns <tt>true</tt> if and only if
@@ -124,18 +125,18 @@ public class SimpleBindings implements Bindings {
     public boolean containsKey(Object key) {
         checkKey(key);
         return map.containsKey(key);
-    }
-
+    }    
+    
     /** {@inheritDoc} */
     public boolean containsValue(Object value) {
         return map.containsValue(value);
-    }
-
+    }    
+    
     /** {@inheritDoc} */
     public Set<Map.Entry<String, Object>> entrySet() {
         return map.entrySet();
     }
-
+    
     /**
      * Returns the value to which this map maps the specified key.  Returns
      * <tt>null</tt> if the map contains no mapping for this key.  A return
@@ -156,22 +157,22 @@ public class SimpleBindings implements Bindings {
      * @throws NullPointerException if key is null
      * @throws ClassCastException if key is not String
      * @throws IllegalArgumentException if key is empty String
-     */
+     */  
     public Object get(Object key) {
         checkKey(key);
         return map.get(key);
     }
-
+    
     /** {@inheritDoc} */
     public boolean isEmpty() {
         return map.isEmpty();
     }
-
+    
     /** {@inheritDoc} */
     public Set<String> keySet() {
         return map.keySet();
     }
-
+ 
     /**
      * Removes the mapping for this key from this map if it is present
      * (optional operation).   More formally, if this map contains a mapping
@@ -193,17 +194,17 @@ public class SimpleBindings implements Bindings {
      * @throws NullPointerException if key is null
      * @throws ClassCastException if key is not String
      * @throws IllegalArgumentException if key is empty String
-     */
+     */   
     public Object remove(Object key) {
         checkKey(key);
         return map.remove(key);
     }
-
+    
     /** {@inheritDoc} */
     public int size() {
         return map.size();
     }
-
+    
     /** {@inheritDoc} */
     public Collection<Object> values() {
         return map.values();

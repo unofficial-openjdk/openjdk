@@ -36,20 +36,20 @@ import javax.management.openmbean.OpenType;
 
 final class ConvertingMethod {
     static ConvertingMethod from(Method m) {
-        try {
-            return new ConvertingMethod(m);
-        } catch (OpenDataException ode) {
-            final String msg = "Method " + m.getDeclaringClass().getName() +
-                "." + m.getName() + " has parameter or return type that " +
-                "cannot be translated into an open type";
-            throw new IllegalArgumentException(msg, ode);
-        }
+	try {
+	    return new ConvertingMethod(m);
+	} catch (OpenDataException ode) {
+	    final String msg = "Method " + m.getDeclaringClass().getName() +
+		"." + m.getName() + " has parameter or return type that " +
+		"cannot be translated into an open type";
+	    throw new IllegalArgumentException(msg, ode);
+	}
     }
 
     Method getMethod() {
-        return method;
+	return method;
     }
-
+    
     Descriptor getDescriptor() {
         return Introspector.descriptorForElement(method);
     }
@@ -63,20 +63,20 @@ final class ConvertingMethod {
     }
 
     String getName() {
-        return method.getName();
+	return method.getName();
     }
 
     OpenType getOpenReturnType() {
-        return returnConverter.getOpenType();
+	return returnConverter.getOpenType();
     }
 
     OpenType[] getOpenParameterTypes() {
-        final OpenType[] types = new OpenType[paramConverters.length];
-        for (int i = 0; i < paramConverters.length; i++)
-            types[i] = paramConverters[i].getOpenType();
-        return types;
+	final OpenType[] types = new OpenType[paramConverters.length];
+	for (int i = 0; i < paramConverters.length; i++)
+	    types[i] = paramConverters[i].getOpenType();
+	return types;
     }
-
+    
     /* Check that this method will be callable when we are going from
      * open types to Java types, for example when we are going from
      * an MXBean wrapper to the underlying resource.
@@ -101,7 +101,7 @@ final class ConvertingMethod {
      * must be "reconstructible".  The parameters will be converted to
      * open types, so if it is convertible at all there is no further
      * check needed.
-     */
+     */    
     void checkCallToOpen() throws IllegalArgumentException {
         try {
             returnConverter.checkReconstructible();
@@ -111,43 +111,43 @@ final class ConvertingMethod {
     }
 
     String[] getOpenSignature() {
-        if (paramConverters.length == 0)
-            return noStrings;
+	if (paramConverters.length == 0)
+	    return noStrings;
 
-        String[] sig = new String[paramConverters.length];
-        for (int i = 0; i < paramConverters.length; i++)
-            sig[i] = paramConverters[i].getOpenClass().getName();
-        return sig;
+	String[] sig = new String[paramConverters.length];
+	for (int i = 0; i < paramConverters.length; i++)
+	    sig[i] = paramConverters[i].getOpenClass().getName();
+	return sig;
     }
 
     final Object toOpenReturnValue(MXBeanLookup lookup, Object ret)
             throws OpenDataException {
-        return returnConverter.toOpenValue(lookup, ret);
+	return returnConverter.toOpenValue(lookup, ret);
     }
 
     final Object fromOpenReturnValue(MXBeanLookup lookup, Object ret)
             throws InvalidObjectException {
-        return returnConverter.fromOpenValue(lookup, ret);
+	return returnConverter.fromOpenValue(lookup, ret);
     }
 
     final Object[] toOpenParameters(MXBeanLookup lookup, Object[] params)
             throws OpenDataException {
-        if (paramConversionIsIdentity || params == null)
-            return params;
-        final Object[] oparams = new Object[params.length];
-        for (int i = 0; i < params.length; i++)
-            oparams[i] = paramConverters[i].toOpenValue(lookup, params[i]);
-        return oparams;
+	if (paramConversionIsIdentity || params == null)
+	    return params;
+	final Object[] oparams = new Object[params.length];
+	for (int i = 0; i < params.length; i++)
+	    oparams[i] = paramConverters[i].toOpenValue(lookup, params[i]);
+	return oparams;
     }
 
     final Object[] fromOpenParameters(MXBeanLookup lookup, Object[] params)
             throws InvalidObjectException {
-        if (paramConversionIsIdentity || params == null)
-            return params;
-        final Object[] jparams = new Object[params.length];
-        for (int i = 0; i < params.length; i++)
-            jparams[i] = paramConverters[i].fromOpenValue(lookup, params[i]);
-        return jparams;
+	if (paramConversionIsIdentity || params == null)
+	    return params;
+	final Object[] jparams = new Object[params.length];
+	for (int i = 0; i < params.length; i++)
+	    jparams[i] = paramConverters[i].fromOpenValue(lookup, params[i]);
+	return jparams;
     }
 
     final Object toOpenParameter(MXBeanLookup lookup,
@@ -166,43 +166,43 @@ final class ConvertingMethod {
 
     Object invokeWithOpenReturn(MXBeanLookup lookup,
                                 Object obj, Object[] params)
-            throws MBeanException, IllegalAccessException,
+	    throws MBeanException, IllegalAccessException,
                    InvocationTargetException {
-        final Object[] javaParams;
-        try {
-            javaParams = fromOpenParameters(lookup, params);
-        } catch (InvalidObjectException e) {
-            // probably can't happen
-            final String msg = methodName() + ": cannot convert parameters " +
-                "from open values: " + e;
-            throw new MBeanException(e, msg);
-        }
-        final Object javaReturn = method.invoke(obj, javaParams);
-        try {
-            return returnConverter.toOpenValue(lookup, javaReturn);
-        } catch (OpenDataException e) {
-            // probably can't happen
-            final String msg = methodName() + ": cannot convert return " +
-                "value to open value: " + e;
-            throw new MBeanException(e, msg);
-        }
+	final Object[] javaParams;
+	try {
+	    javaParams = fromOpenParameters(lookup, params);
+	} catch (InvalidObjectException e) {
+	    // probably can't happen
+	    final String msg = methodName() + ": cannot convert parameters " +
+		"from open values: " + e;
+	    throw new MBeanException(e, msg);
+	}
+	final Object javaReturn = method.invoke(obj, javaParams);
+	try {
+	    return returnConverter.toOpenValue(lookup, javaReturn);
+	} catch (OpenDataException e) {
+	    // probably can't happen
+	    final String msg = methodName() + ": cannot convert return " +
+		"value to open value: " + e;
+	    throw new MBeanException(e, msg);
+	}
     }
 
     private String methodName() {
-        return method.getDeclaringClass() + "." + method.getName();
+	return method.getDeclaringClass() + "." + method.getName();
     }
 
     private ConvertingMethod(Method m) throws OpenDataException {
-        this.method = m;
-        returnConverter = OpenConverter.toConverter(m.getGenericReturnType());
-        Type[] params = m.getGenericParameterTypes();
-        paramConverters = new OpenConverter[params.length];
-        boolean identity = true;
-        for (int i = 0; i < params.length; i++) {
-            paramConverters[i] = OpenConverter.toConverter(params[i]);
-            identity &= paramConverters[i].isIdentity();
-        }
-        paramConversionIsIdentity = identity;
+	this.method = m;
+	returnConverter = OpenConverter.toConverter(m.getGenericReturnType());
+	Type[] params = m.getGenericParameterTypes();
+	paramConverters = new OpenConverter[params.length];
+	boolean identity = true;
+	for (int i = 0; i < params.length; i++) {
+	    paramConverters[i] = OpenConverter.toConverter(params[i]);
+	    identity &= paramConverters[i].isIdentity();
+	}
+	paramConversionIsIdentity = identity;
     }
 
     private static final String[] noStrings = new String[0];

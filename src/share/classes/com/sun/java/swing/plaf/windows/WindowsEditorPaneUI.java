@@ -66,3 +66,4 @@ public class WindowsEditorPaneUI extends BasicEditorPaneUI
         return new WindowsTextUI.WindowsCaret();
     }
 }
+

@@ -33,7 +33,7 @@
 
 /* The error handling logic. */
 
-/*
+/* 
  * Most hprof error processing and error functions are kept here, along with
  *   termination functions and signal handling (used in debug version only).
  *
@@ -101,7 +101,7 @@ terminate_everything(jint exit_code)
 void
 error_setup(void)
 {
-    setup_signal_handler(SIGABRT);
+    setup_signal_handler(SIGABRT); 
 }
 
 void
@@ -134,16 +134,16 @@ source_basename(const char *file)
     const char *p;
 
     if ( file == NULL ) {
-        return "UnknownSourceFile";
+	return "UnknownSourceFile";
     }
     p = strrchr(file, '/');
     if ( p == NULL ) {
-        p = strrchr(file, '\\');
+	p = strrchr(file, '\\');
     }
     if ( p == NULL ) {
-        p = file;
+	p = file;
     } else {
-        p++; /* go past / */
+	p++; /* go past / */
     }
     return p;
 }
@@ -151,17 +151,17 @@ source_basename(const char *file)
 void
 error_assert(const char *condition, const char *file, int line)
 {
-    error_message("ASSERTION FAILURE: %s [%s:%d]\n", condition,
+    error_message("ASSERTION FAILURE: %s [%s:%d]\n", condition, 
         source_basename(file), line);
     error_abort();
 }
 
 void
-error_handler(jboolean fatal, jvmtiError error,
+error_handler(jboolean fatal, jvmtiError error, 
                 const char *message, const char *file, int line)
 {
     char *error_name;
-
+    
     if ( message==NULL ) {
         message = "";
     }
@@ -170,11 +170,11 @@ error_handler(jboolean fatal, jvmtiError error,
         if ( error_name == NULL ) {
             error_name = "?";
         }
-        error_message("HPROF ERROR: %s (JVMTI Error %s(%d)) [%s:%d]\n",
-                            message, error_name, error,
+        error_message("HPROF ERROR: %s (JVMTI Error %s(%d)) [%s:%d]\n", 
+                            message, error_name, error, 
                             source_basename(file), line);
     } else {
-        error_message("HPROF ERROR: %s [%s:%d]\n", message,
+        error_message("HPROF ERROR: %s [%s:%d]\n", message, 
                             source_basename(file), line);
     }
     if ( fatal || gdata->errorexit ) {
@@ -204,3 +204,4 @@ verbose_message(const char * format, ...)
         va_end(ap);
     }
 }
+

@@ -36,22 +36,22 @@ import java.security.SecureRandom;
 //
 class TestThread extends Thread
 {
-    protected String            basicCipherSuites [];
-    protected SecureRandom      prng;
-    protected int               iterations = -1;
+    protected String		basicCipherSuites [];
+    protected SecureRandom	prng;
+    protected int		iterations = -1;
 
     // basic test flags
-    protected boolean           doRenegotiate;
-    protected boolean           initiateHandshake;
-    protected boolean           listenHandshake;
-    protected boolean           reverseRole;
+    protected boolean		doRenegotiate;
+    protected boolean		initiateHandshake;
+    protected boolean		listenHandshake;
+    protected boolean		reverseRole;
 
     // how much output to have, where
-    protected int               verbosity = 0;
-    protected PrintStream       out = System.out;
+    protected int		verbosity = 0;
+    protected PrintStream	out = System.out;
 
     TestThread (String s)
-        { super (s); }
+	{ super (s); }
 
 
     //
@@ -59,21 +59,21 @@ class TestThread extends Thread
     // handshaking
     //
     public void setBasicCipherSuites (String suites [])
-        { basicCipherSuites = suites; }
+	{ basicCipherSuites = suites; }
 
     //
     // Says whether to register a callback on handshake
     // completeion.
     //
     public void setListenHandshake (boolean flag)
-        { listenHandshake = flag; }
+	{ listenHandshake = flag; }
 
     //
     // Says whether to renegotiate after sending some
     // initial data.
     //
     public void setDoRenegotiate (boolean flag)
-        { doRenegotiate = flag; }
+	{ doRenegotiate = flag; }
 
     //
     // Says whether to try initiating handshaking.  It's
@@ -81,32 +81,32 @@ class TestThread extends Thread
     // does it; sending data triggers it regardless.
     //
     public void setInitiateHandshake (boolean flag)
-        { initiateHandshake = flag; }
+	{ initiateHandshake = flag; }
 
     //
     // For half-duplex tests, who sends data first?
     //
     public void setReverseRole (boolean flag)
-        { reverseRole = flag; }
+	{ reverseRole = flag; }
 
     //
     // Where does the diagnostic output go?
     //
     public void setOutput (PrintStream out)
-        { this.out = out; }
+	{ this.out = out; }
 
 
     //
     // How much output is desired?  2 == noisy-typical, lower is less
     //
     public void setVerbosity (int level)
-        { verbosity = level; }
+	{ verbosity = level; }
 
     //
     // How many loops of random data should a given "client" start?
     //
     public void setIterations (int level)
-        { iterations = level; }
+	{ iterations = level; }
 
     //
     // Provide some randomness for use with random data I/O.
@@ -115,5 +115,6 @@ class TestThread extends Thread
     // client and server could agree to use truly random data.
     //
     void setPRNG (SecureRandom prng)
-        { this.prng = prng; }
+	{ this.prng = prng; }
 }
+

@@ -80,10 +80,10 @@ import javax.management.ObjectName;
  * </p>
  * <p>
  * The ScanManager MBean is a singleton MBean which controls
- * scan session. The ScanManager name is defined by
+ * scan session. The ScanManager name is defined by 
  * {@link #SCAN_MANAGER_NAME ScanManager.SCAN_MANAGER_NAME}.
  * </p>
- * <p>
+ * <p>  
  * The <code>ScanManager</code> MBean is the entry point of the <i>scandir</i>
  * application management interface. It is from this MBean that all other MBeans
  * will be created and registered.
@@ -107,7 +107,7 @@ public class ScanManager implements ScanManagerMXBean,
             makeSingletonName(ScanManagerMXBean.class);
 
     /**
-     * Sequence number used for sending notifications. We use this
+     * Sequence number used for sending notifications. We use this 
      * sequence number throughout the application.
      **/
     private static long seqNumber=0;
@@ -146,7 +146,7 @@ public class ScanManager implements ScanManagerMXBean,
      * The list of ScanDirConfigMXBean that were created by this MBean.
      **/
     private final Map<ObjectName, ScanDirConfigMXBean> configmap;
-
+    
     // The ResultLogManager for this application.
     private final ResultLogManager log;
 
@@ -167,13 +167,13 @@ public class ScanManager implements ScanManagerMXBean,
     private static <K, V> Map<K, V> newConcurrentHashMap() {
         return new ConcurrentHashMap<K, V>();
     }
-
+    
     // Avoid to write parameters twices when creating a new HashMap.
     //
     private static <K, V> Map<K, V> newHashMap() {
         return new HashMap<K, V>();
     }
-
+    
     /**
      * Creates a default singleton ObjectName for a given class.
      * @param clazz The interface class of the MBean for which we want to obtain
@@ -275,14 +275,14 @@ public class ScanManager implements ScanManagerMXBean,
 
     /**
      * Creates a new {@code ScanManagerMXBean} proxy over the given
-     * {@code MBeanServerConnection}. Does not check whether a
+     * {@code MBeanServerConnection}. Does not check whether a 
      * {@code ScanManagerMXBean}
      * is actually registered in that {@code MBeanServerConnection}.
      * @return a new {@code ScanManagerMXBean} proxy.
-     * @param mbs The {@code MBeanServerConnection} which holds the
+     * @param mbs The {@code MBeanServerConnection} which holds the 
      * {@code ScanManagerMXBean} to proxy.
      */
-    public static ScanManagerMXBean
+    public static ScanManagerMXBean 
             newSingletonProxy(MBeanServerConnection mbs) {
         final ScanManagerMXBean proxy =
                 JMX.newMXBeanProxy(mbs,SCAN_MANAGER_NAME,
@@ -292,7 +292,7 @@ public class ScanManager implements ScanManagerMXBean,
 
     /**
      * Creates a new {@code ScanManagerMXBean} proxy over the platform
-     * {@code MBeanServer}. This is equivalent to
+     * {@code MBeanServer}. This is equivalent to 
      * {@code newSingletonProxy(ManagementFactory.getPlatformMBeanServer())}.
      * @return a new {@code ScanManagerMXBean} proxy.
      **/
@@ -428,7 +428,7 @@ public class ScanManager implements ScanManagerMXBean,
     }
 
     // See ScanManagerMXBean
-    public ScanDirConfigMXBean createOtherConfigurationMBean(String name,
+    public ScanDirConfigMXBean createOtherConfigurationMBean(String name, 
             String filename)
         throws JMException {
         final ScanDirConfig profile = new ScanDirConfig(filename);
@@ -441,13 +441,13 @@ public class ScanManager implements ScanManagerMXBean,
         return proxy;
     }
 
-
+    
     // See ScanManagerMXBean
     public Map<String,DirectoryScannerMXBean> getDirectoryScanners() {
         final Map<String,DirectoryScannerMXBean> proxyMap = newHashMap();
         for (Entry<ObjectName,DirectoryScannerMXBean> item : scanmap.entrySet()){
             proxyMap.put(item.getKey().getKeyProperty("name"),item.getValue());
-        }
+        } 
         return proxyMap;
     }
 
@@ -508,14 +508,14 @@ public class ScanManager implements ScanManagerMXBean,
                 new AttributeChangeNotification(SCAN_MANAGER_NAME,sequence,time,
                 "ScanManager State changed to "+current,"State",
                 ScanState.class.getName(),old.toString(),current.toString());
-        // Queue the notification. We have created an unlimited queue, so
+        // Queue the notification. We have created an unlimited queue, so 
         // this method should always succeed.
         try {
             if (!pendingNotifs.offer(n,2,TimeUnit.SECONDS)) {
                 LOG.fine("Can't queue Notification: "+n);
             }
         } catch (InterruptedException x) {
-                LOG.fine("Can't queue Notification: "+x);
+                LOG.fine("Can't queue Notification: "+x);            
         }
     }
 
@@ -906,7 +906,7 @@ public class ScanManager implements ScanManagerMXBean,
     // ---------------------------------------------------------------
 
     /**
-     * Delegates the implementation of this method to the wrapped
+     * Delegates the implementation of this method to the wrapped 
      * {@code NotificationBroadcasterSupport} object.
      **/
     public void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) throws IllegalArgumentException {
@@ -928,7 +928,7 @@ public class ScanManager implements ScanManagerMXBean,
     }
 
     /**
-     * Delegates the implementation of this method to the wrapped
+     * Delegates the implementation of this method to the wrapped 
      * {@code NotificationBroadcasterSupport} object.
      **/
     public void removeNotificationListener(NotificationListener listener) throws ListenerNotFoundException {
@@ -936,7 +936,7 @@ public class ScanManager implements ScanManagerMXBean,
     }
 
     /**
-     * Delegates the implementation of this method to the wrapped
+     * Delegates the implementation of this method to the wrapped 
      * {@code NotificationBroadcasterSupport} object.
      **/
     public void removeNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback) throws ListenerNotFoundException {
@@ -945,7 +945,7 @@ public class ScanManager implements ScanManagerMXBean,
 
     /**
      * Returns and increment the sequence number used for
-     * notifications. We use the same sequence number throughout the
+     * notifications. We use the same sequence number throughout the 
      * application - this is why this method is only package protected.
      * @return A unique sequence number for the next notification.
      */
@@ -1016,12 +1016,12 @@ public class ScanManager implements ScanManagerMXBean,
      * <p>
      * If registration is successful, register the {@link ResultLogManager}
      * and default {@link ScanDirConfigMXBean}. If registering these
-     * MBean fails, the {@code ScanManager} state will be switched to
+     * MBean fails, the {@code ScanManager} state will be switched to 
      * {@link #close CLOSED}, and postRegister ends there.
      * </p>
-     * <p>Otherwise the {@code ScanManager} will ask the
-     * {@link ScanDirConfigMXBean} to load its configuration.
-     * If it succeeds, the configuration will be {@link
+     * <p>Otherwise the {@code ScanManager} will ask the 
+     * {@link ScanDirConfigMXBean} to load its configuration. 
+     * If it succeeds, the configuration will be {@link 
      * #applyConfiguration applied}. Otherwise, the method simply returns,
      * assuming that the user will later create/update a configuration and
      * apply it.
@@ -1100,7 +1100,7 @@ public class ScanManager implements ScanManagerMXBean,
      * unregistered by the MBean server.
      * This implementation also unregisters all the MXBeans
      * that were created by this object.
-     * @throws IllegalStateException if the lock can't be acquire, or if
+     * @throws IllegalStateException if the lock can't be acquire, or if 
      *         the MBean's state doesn't allow the MBean to be unregistered
      *         (e.g. because it's scheduled or running).
      * @throws Exception This exception will be caught by the MBean server and
@@ -1149,3 +1149,4 @@ public class ScanManager implements ScanManagerMXBean,
     // ---------------------------------------------------------------
 
 }
+

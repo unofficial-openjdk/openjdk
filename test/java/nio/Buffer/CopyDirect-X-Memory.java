@@ -29,42 +29,42 @@ public class CopyDirect$Type$Memory
     extends CopyDirectMemory
 {
     private static void init($Type$Buffer b) {
-        int n = b.capacity();
-        b.clear();
-        for (int i = 0; i < n; i++)
-            b.put(i, ($type$)ic(i));
-        b.limit(n);
-        b.position(0);
+	int n = b.capacity();
+	b.clear();
+	for (int i = 0; i < n; i++)
+	    b.put(i, ($type$)ic(i));
+	b.limit(n);
+	b.position(0);
     }
 
     private static void init($type$ [] a) {
-        for (int i = 0; i < a.length; i++)
-            a[i] = ($type$)ic(i + 1);
+	for (int i = 0; i < a.length; i++)
+	    a[i] = ($type$)ic(i + 1);
     }
 
     public static void test() {
 #if[byte]
-        ByteBuffer b = ByteBuffer.allocateDirect(1024 * 1024 + 1024);
+	ByteBuffer b = ByteBuffer.allocateDirect(1024 * 1024 + 1024);
 #else[byte]
-        ByteBuffer bb = ByteBuffer.allocateDirect(1024 * 1024 + 1024);
-        $Type$Buffer b = bb.as$Type$Buffer();
+	ByteBuffer bb = ByteBuffer.allocateDirect(1024 * 1024 + 1024);
+	$Type$Buffer b = bb.as$Type$Buffer();
 #end[byte]
-        init(b);
-        $type$ [] a = new $type$[b.capacity()];
-        init(a);
+	init(b);
+	$type$ [] a = new $type$[b.capacity()];
+	init(a);
 
-        // copyFrom$Type$Array (a -> b)
-        b.put(a);
-        for (int i = 0; i < a.length; i++)
-            ck(b, b.get(i), ($type$)ic(i + 1));
+	// copyFrom$Type$Array (a -> b)
+	b.put(a);
+	for (int i = 0; i < a.length; i++)
+	    ck(b, b.get(i), ($type$)ic(i + 1));
 
-        // copyTo$Type$Array (b -> a)
-        init(b);
-        init(a);
-        b.get(a);
-        for (int i = 0; i < a.length; i++)
-            if (a[i] != b.get(i))
-                fail("Copy failed at " + i + ": '"
-                     + a[i] + "' != '" + b.get(i) + "'");
+	// copyTo$Type$Array (b -> a)
+ 	init(b);
+	init(a);
+	b.get(a);
+	for (int i = 0; i < a.length; i++)
+	    if (a[i] != b.get(i))
+ 		fail("Copy failed at " + i + ": '"
+ 		     + a[i] + "' != '" + b.get(i) + "'");
     }
 }

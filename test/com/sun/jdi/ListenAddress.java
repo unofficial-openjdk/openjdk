@@ -62,52 +62,53 @@ public class ListenAddress {
      * returned address includes a host component. If 'addr' is not null
      * then set the localAddress argument to be the address.
      */
-    private static void check(ListeningConnector connector, InetAddress addr)
-        throws IOException, IllegalConnectorArgumentsException
+    private static void check(ListeningConnector connector, InetAddress addr) 
+	throws IOException, IllegalConnectorArgumentsException
     {
-        Map args = connector.defaultArguments();
-        if (addr != null) {
-            Connector.StringArgument addr_arg =
-              (Connector.StringArgument)args.get("localAddress");
-            addr_arg.setValue(addr.getHostAddress());
-        }
+	Map args = connector.defaultArguments();
+	if (addr != null) {
+	    Connector.StringArgument addr_arg =
+	      (Connector.StringArgument)args.get("localAddress");
+	    addr_arg.setValue(addr.getHostAddress());
+	}
 
-        String address = connector.startListening(args);
-        if (address.indexOf(':') < 0) {
-            System.out.println(address + " => Failed - no host component!");
-            failures++;
-        } else {
-            System.out.println(address);
-        }
-        connector.stopListening(args);
+	String address = connector.startListening(args);
+	if (address.indexOf(':') < 0) {
+	    System.out.println(address + " => Failed - no host component!");
+	    failures++;
+	} else {
+	    System.out.println(address);
+	}
+	connector.stopListening(args);
     }
 
     public static void main(String args[]) throws Exception {
-        ListeningConnector connector = (ListeningConnector)findConnector("com.sun.jdi.SocketListen");
+	ListeningConnector connector = (ListeningConnector)findConnector("com.sun.jdi.SocketListen");
 
-        // check wildcard address
-        check(connector, (InetAddress)null);
+	// check wildcard address
+	check(connector, (InetAddress)null);
 
-        // iterate over all IPv4 addresses and check that binding to
-        // that address results in the correct result from startListening(Map)
-        Enumeration nifs = NetworkInterface.getNetworkInterfaces();
-        while (nifs.hasMoreElements()) {
-            NetworkInterface ni = (NetworkInterface)nifs.nextElement();
-            Enumeration addrs = ni.getInetAddresses();
-            while (addrs.hasMoreElements()) {
-                InetAddress addr = (InetAddress)addrs.nextElement();
+	// iterate over all IPv4 addresses and check that binding to
+	// that address results in the correct result from startListening(Map)
+	Enumeration nifs = NetworkInterface.getNetworkInterfaces();
+	while (nifs.hasMoreElements()) {
+	    NetworkInterface ni = (NetworkInterface)nifs.nextElement();
+	    Enumeration addrs = ni.getInetAddresses();
+	    while (addrs.hasMoreElements()) {
+		InetAddress addr = (InetAddress)addrs.nextElement();
 
-                // JPDA implementation only currently supports IPv4
-                if (!(addr instanceof Inet4Address)) {
-                    continue;
-                }
+		// JPDA implementation only currently supports IPv4
+		if (!(addr instanceof Inet4Address)) {
+		    continue;
+		}
 
-                check(connector, addr);
-            }
-        }
+		check(connector, addr);
+	    }
+	}
 
-        if (failures > 0) {
-            throw new RuntimeException(failures + " test(s) failed - see output for details.");
-        }
+	if (failures > 0) {
+	    throw new RuntimeException(failures + " test(s) failed - see output for details.");
+	}
     }
 }
+

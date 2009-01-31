@@ -47,119 +47,119 @@ import javax.management.ObjectName;
 */
 public class MXBeanProxy {
     public MXBeanProxy(Class<?> mxbeanInterface)
-            throws IllegalArgumentException {
+	    throws IllegalArgumentException {
 
-        if (mxbeanInterface == null)
-            throw new IllegalArgumentException("Null parameter");
+	if (mxbeanInterface == null)
+	    throw new IllegalArgumentException("Null parameter");
 
-        final MBeanAnalyzer<ConvertingMethod> analyzer;
+	final MBeanAnalyzer<ConvertingMethod> analyzer;
         try {
             analyzer =
                 MXBeanIntrospector.getInstance().getAnalyzer(mxbeanInterface);
         } catch (NotCompliantMBeanException e) {
             throw new IllegalArgumentException(e);
         }
-        analyzer.visit(new Visitor());
+	analyzer.visit(new Visitor());
     }
 
     private class Visitor implements MBeanAnalyzer.MBeanVisitor<ConvertingMethod> {
-        public void visitAttribute(String attributeName,
-                                   ConvertingMethod getter,
-                                   ConvertingMethod setter) {
-            if (getter != null) {
-                getter.checkCallToOpen();
-                Method getterMethod = getter.getMethod();
-                handlerMap.put(getterMethod,
+	public void visitAttribute(String attributeName,
+				   ConvertingMethod getter,
+				   ConvertingMethod setter) {
+	    if (getter != null) {
+		getter.checkCallToOpen();
+		Method getterMethod = getter.getMethod();
+		handlerMap.put(getterMethod,
                                new GetHandler(attributeName, getter));
-            }
-            if (setter != null) {
-                // return type is void, no need for checkCallToOpen
-                Method setterMethod = setter.getMethod();
-                handlerMap.put(setterMethod,
+	    }
+	    if (setter != null) {
+		// return type is void, no need for checkCallToOpen
+		Method setterMethod = setter.getMethod();
+		handlerMap.put(setterMethod,
                                new SetHandler(attributeName, setter));
-            }
-        }
+	    }
+	}
 
-        public void visitOperation(String operationName,
-                                   ConvertingMethod operation) {
-            operation.checkCallToOpen();
-            Method operationMethod = operation.getMethod();
-            String[] sig = operation.getOpenSignature();
-            handlerMap.put(operationMethod,
-                           new InvokeHandler(operationName, sig, operation));
-        }
+	public void visitOperation(String operationName,
+				   ConvertingMethod operation) {
+	    operation.checkCallToOpen();
+	    Method operationMethod = operation.getMethod();
+	    String[] sig = operation.getOpenSignature();
+	    handlerMap.put(operationMethod,
+			   new InvokeHandler(operationName, sig, operation));
+	}
     }
 
     private static abstract class Handler {
-        Handler(String name, ConvertingMethod cm) {
-            this.name = name;
+	Handler(String name, ConvertingMethod cm) {
+	    this.name = name;
             this.convertingMethod = cm;
-        }
+	}
 
-        String getName() {
-            return name;
-        }
+	String getName() {
+	    return name;
+	}
 
         ConvertingMethod getConvertingMethod() {
             return convertingMethod;
         }
 
-        abstract Object invoke(MBeanServerConnection mbsc,
+	abstract Object invoke(MBeanServerConnection mbsc,
                                ObjectName name, Object[] args) throws Exception;
 
-        private final String name;
+	private final String name;
         private final ConvertingMethod convertingMethod;
     }
 
     private static class GetHandler extends Handler {
-        GetHandler(String attributeName, ConvertingMethod cm) {
-            super(attributeName, cm);
-        }
+	GetHandler(String attributeName, ConvertingMethod cm) {
+	    super(attributeName, cm);
+	}
 
-        @Override
+	@Override
         Object invoke(MBeanServerConnection mbsc, ObjectName name, Object[] args)
                 throws Exception {
-            assert(args == null || args.length == 0);
-            return mbsc.getAttribute(name, getName());
-        }
+	    assert(args == null || args.length == 0);
+	    return mbsc.getAttribute(name, getName());
+	}
     }
 
     private static class SetHandler extends Handler {
-        SetHandler(String attributeName, ConvertingMethod cm) {
-            super(attributeName, cm);
-        }
+	SetHandler(String attributeName, ConvertingMethod cm) {
+	    super(attributeName, cm);
+	}
 
-        @Override
+	@Override
         Object invoke(MBeanServerConnection mbsc, ObjectName name, Object[] args)
                 throws Exception {
-            assert(args.length == 1);
-            Attribute attr = new Attribute(getName(), args[0]);
-            mbsc.setAttribute(name, attr);
-            return null;
-        }
+	    assert(args.length == 1);
+	    Attribute attr = new Attribute(getName(), args[0]);
+	    mbsc.setAttribute(name, attr);
+	    return null;
+	}
     }
 
     private static class InvokeHandler extends Handler {
-        InvokeHandler(String operationName, String[] signature,
+	InvokeHandler(String operationName, String[] signature,
                       ConvertingMethod cm) {
-            super(operationName, cm);
-            this.signature = signature;
-        }
+	    super(operationName, cm);
+	    this.signature = signature;
+	}
 
         Object invoke(MBeanServerConnection mbsc, ObjectName name, Object[] args)
                 throws Exception {
-            return mbsc.invoke(name, getName(), args, signature);
-        }
+	    return mbsc.invoke(name, getName(), args, signature);
+	}
 
-        private final String[] signature;
+	private final String[] signature;
     }
 
     public Object invoke(MBeanServerConnection mbsc, ObjectName name,
                          Method method, Object[] args)
-            throws Throwable {
+	    throws Throwable {
 
-        Handler handler = handlerMap.get(method);
-        ConvertingMethod cm = handler.getConvertingMethod();
+	Handler handler = handlerMap.get(method);
+	ConvertingMethod cm = handler.getConvertingMethod();
         MXBeanLookup lookup = MXBeanLookup.lookupFor(mbsc);
         Object[] openArgs = cm.toOpenParameters(lookup, args);
         Object result = handler.invoke(mbsc, name, openArgs);

@@ -30,7 +30,7 @@
 
 #include "awt_p.h"
 
-/*
+/* 
  * Window Managers we care to distinguish.
  * See awt_wm_getRunningWM()
  */
@@ -60,11 +60,11 @@ extern void awt_wm_removeSizeHints(Widget shell, long mask);
 extern void awt_wm_setShellDecor(struct FrameData *wdata, Boolean resizable);
 extern void awt_wm_setShellResizable(struct FrameData *wdata);
 extern void awt_wm_setShellNotResizable(struct FrameData *wdata,
-                                        int32_t width, int32_t height,
-                                        Boolean justChangeSize);
+					int32_t width, int32_t height, 
+					Boolean justChangeSize);
 
 extern Boolean awt_wm_getInsetsFromProp(Window w,
-                 int32_t *top, int32_t *left, int32_t *bottom, int32_t *right);
+	         int32_t *top, int32_t *left, int32_t *bottom, int32_t *right);
 
 /*
  * WM_STATE: WithdrawnState, NormalState, IconicState.
@@ -74,7 +74,7 @@ extern int awt_wm_getWMState(Window w);
 
 extern void awt_wm_setExtendedState(struct FrameData *wdata, jint state);
 extern Boolean awt_wm_isStateChange(struct FrameData *wdata, XPropertyEvent *e,
-                                    jint *pstate);
+				    jint *pstate);
 
 extern void awt_wm_unshadeKludge(struct FrameData *wdata);
 extern void awt_wm_updateAlwaysOnTop(struct FrameData *wdata, jboolean bLayerState);

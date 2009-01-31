@@ -58,7 +58,7 @@ void operator delete(void *ptr) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-static void DumpRegion(HRGN rgn) {
+static void DumpRegion(HRGN rgn) {    
     DWORD size = ::GetRegionData(rgn, 0, NULL);
     char* buffer = (char *)safe_Malloc(size);
     memset(buffer, 0, size);
@@ -69,10 +69,10 @@ static void DumpRegion(HRGN rgn) {
 
     RECT* r = (RECT*)(buffer + rgndata->rdh.dwSize);
     for (DWORD i=0; i<rgndata->rdh.nCount; i++) {
-        if ( !::IsRectEmpty(r) ) {
-            DTrace_PrintImpl("\trect %d %d %d %d\n", r->left, r->top, r->right, r->bottom);
-        }
-        r++;
+	if ( !::IsRectEmpty(r) ) {
+	    DTrace_PrintImpl("\trect %d %d %d %d\n", r->left, r->top, r->right, r->bottom);
+	}
+	r++;
     }
 
     free(buffer);
@@ -83,9 +83,9 @@ static void DumpRegion(HRGN rgn) {
  */
 void DumpClipRectangle(const char * file, int line, int argc, const char * fmt, va_list arglist) {
     const char *msg = va_arg(arglist, const char *);
-    HDC         hdc = va_arg(arglist, HDC);
-    RECT        r;
-
+    HDC		hdc = va_arg(arglist, HDC);
+    RECT	r;
+    
     DASSERT(argc == 2 && hdc != NULL);
     DASSERT(msg != NULL);
 
@@ -98,9 +98,9 @@ void DumpClipRectangle(const char * file, int line, int argc, const char * fmt, 
  */
 void DumpUpdateRectangle(const char * file, int line, int argc, const char * fmt, va_list arglist) {
     const char *msg = va_arg(arglist, const char *);
-    HWND        hwnd = va_arg(arglist, HWND);
-    RECT        r;
-
+    HWND	hwnd = va_arg(arglist, HWND);
+    RECT	r;
+    
     DASSERT(argc == 2 && ::IsWindow(hwnd));
     DASSERT(msg != NULL);
 
@@ -115,13 +115,13 @@ void DumpUpdateRectangle(const char * file, int line, int argc, const char * fmt
 //
 // Declare a static object to init/fini the debug code
 //
-// specify that this static object will get constructed before
+// specify that this static object will get constructed before 
 // any other static objects (except CRT objects) so the debug
 // code can be used anywhere during the lifetime of the AWT dll
 #pragma warning( disable:4073 ) // disable warning about using init_seg(lib) in non-3rd party library code
 #pragma init_seg( lib )
 
-static volatile AwtDebugSupport DebugSupport;
+static volatile AwtDebugSupport	DebugSupport;
 static int report_leaks = 0;
 
 AwtDebugSupport::AwtDebugSupport() {
@@ -140,29 +140,29 @@ AwtDebugSupport::~AwtDebugSupport() {
 
 void AwtDebugSupport::AssertCallback(const char * expr, const char * file, int line) {
     static const int ASSERT_MSG_SIZE = 1024;
-    static const char * AssertFmt =
-            "%s\r\n"
-            "File '%s', at line %d\r\n"
-            "GetLastError() is %x : %s\r\n"
-            "Do you want to break into the debugger?";
+    static const char * AssertFmt = 
+	    "%s\r\n"
+	    "File '%s', at line %d\r\n"
+	    "GetLastError() is %x : %s\r\n"
+	    "Do you want to break into the debugger?";
 
-    static char assertMsg[ASSERT_MSG_SIZE+1];
+    static char	assertMsg[ASSERT_MSG_SIZE+1];
     DWORD   lastError = GetLastError();
-    LPSTR       msgBuffer = NULL;
+    LPSTR	msgBuffer = NULL;
     int     ret;
 
     FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                  FORMAT_MESSAGE_FROM_SYSTEM |
-                  FORMAT_MESSAGE_IGNORE_INSERTS,
-                  NULL,
-                  lastError,
-                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                  (LPSTR)&msgBuffer, // it's an output parameter when allocate buffer is used
-                  0,
-                  NULL);
+		  FORMAT_MESSAGE_FROM_SYSTEM |
+		  FORMAT_MESSAGE_IGNORE_INSERTS,
+		  NULL,
+		  lastError,
+		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		  (LPSTR)&msgBuffer, // it's an output parameter when allocate buffer is used
+		  0,
+		  NULL);
 
     if (msgBuffer == NULL) {
-        msgBuffer = "<Could not get GetLastError() message text>";
+	msgBuffer = "<Could not get GetLastError() message text>";
     }
     // format the assertion message
     _snprintf(assertMsg, ASSERT_MSG_SIZE, AssertFmt, expr, file, line, lastError, msgBuffer);
@@ -175,15 +175,15 @@ void AwtDebugSupport::AssertCallback(const char * expr, const char * file, int l
     fprintf(stderr, "%s\n", assertMsg);
     fprintf(stderr, "*********************\n");
     ret = MessageBoxA(NULL, assertMsg, "AWT Assertion Failure",
-        MB_YESNO|MB_ICONSTOP|MB_TASKMODAL);
-
+	MB_YESNO|MB_ICONSTOP|MB_TASKMODAL);
+    
     // if clicked Yes, break into the debugger
     if ( ret == IDYES ) {
-        # if defined(_M_IX86)
-            _asm { int 3 };
-        # else
-            DebugBreak();
-        # endif
+	# if defined(_M_IX86)
+	    _asm { int 3 };
+	# else
+	    DebugBreak();
+	# endif
     }
     // otherwise, try to continue execution
 }

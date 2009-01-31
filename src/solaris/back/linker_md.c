@@ -27,10 +27,10 @@
  * Adapted from JDK 1.2 linker_md.c v1.37. Note that we #define
  * NATIVE here, whether or not we're running solaris native threads.
  * Outside the VM, it's unclear how we can do the locking that is
- * done in the green threads version of the code below.
+ * done in the green threads version of the code below. 
  */
 #define NATIVE
-
+                         
 /*
  * Machine Dependent implementation of the dynamic linking support
  * for java.  This routine is Solaris specific.

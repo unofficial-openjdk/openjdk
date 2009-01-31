@@ -74,3 +74,4 @@ class MemoryManagerImpl implements MemoryManagerMXBean {
     private native MemoryPoolMXBean[] getMemoryPools0();
 
 }
+

@@ -197,10 +197,10 @@ public class JMXConnectorServerFactory {
 
     private static final String PROTOCOL_PROVIDER_DEFAULT_PACKAGE =
         "com.sun.jmx.remote.protocol";
-
+    
     private static final ClassLogger logger =
         new ClassLogger("javax.management.remote.misc","JMXConnectorServerFactory");
-
+    
     /** There are no instances of this class.  */
     private JMXConnectorServerFactory() {
     }
@@ -211,10 +211,10 @@ public class JMXConnectorServerFactory {
                                     Map<String, ?> map,
                                     MBeanServer mbs)
         throws IOException {
-        Iterator<JMXConnectorServerProvider> providers =
+        Iterator<JMXConnectorServerProvider> providers = 
                 JMXConnectorFactory.
                 getProviderIterator(JMXConnectorServerProvider.class, loader);
-
+        
         JMXConnectorServer connection = null;
         IOException exception = null;
         while (providers.hasNext()) {
@@ -299,11 +299,11 @@ public class JMXConnectorServerFactory {
 
         final Class<JMXConnectorServerProvider> targetInterface =
                 JMXConnectorServerProvider.class;
-        final ClassLoader loader =
+        final ClassLoader loader = 
             JMXConnectorFactory.resolveClassLoader(envcopy);
         final String protocol = serviceURL.getProtocol();
         final String providerClassName = "ServerProvider";
-
+        
         JMXConnectorServerProvider provider =
             JMXConnectorFactory.getProvider(serviceURL,
                                             envcopy,

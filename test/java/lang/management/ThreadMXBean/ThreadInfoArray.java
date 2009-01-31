@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug     5058327
- * @summary Test if getThreadInfo(long[]) returns a ThreadInfo[]
+ * @summary Test if getThreadInfo(long[]) returns a ThreadInfo[] 
  *          with null elements with no exception.
  *
  * @author  Mandy Chung
@@ -45,7 +45,7 @@ public class ThreadInfoArray {
         // ID for a new thread
         long [] ids = {new Thread().getId()};
         ThreadInfo[] tinfos = mbean.getThreadInfo(ids);
-
+        
         if (tinfos[0] != null) {
             throw new RuntimeException("TEST FAILED: " +
                 "Expected to have a null element");
@@ -53,7 +53,7 @@ public class ThreadInfoArray {
 
         // call getThreadInfo through MBeanServer
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        ObjectName on = new ObjectName(THREAD_MXBEAN_NAME);
+        ObjectName on = new ObjectName(THREAD_MXBEAN_NAME); 
         Object[] params = {ids};
         String[] sigs = {"[J"};
         Object[] result = (Object[]) mbs.invoke(on, "getThreadInfo", params, sigs);

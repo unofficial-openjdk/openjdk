@@ -35,12 +35,13 @@ import javax.swing.text.View;
 /**
  * Synth's RadioButtonUI.
  *
+ * @version %I%, %G%
  * @author Jeff Dinkins
  */
 class SynthRadioButtonUI extends SynthToggleButtonUI {
 
     // ********************************
-    //        Create PLAF
+    //        Create PLAF 
     // ********************************
     public static ComponentUI createUI(JComponent b) {
         return new SynthRadioButtonUI();

@@ -83,11 +83,11 @@ typedef unsigned SerialNumber;
 
 /* Name of prelude file, found at runtime relative to java binary location */
 
-#define PRELUDE_FILE            "jvm.hprof.txt"
+#define PRELUDE_FILE		"jvm.hprof.txt"
 
 /* File I/O buffer size to be used with any file i/o operation */
 
-#define FILE_IO_BUFFER_SIZE     (1024*64)
+#define FILE_IO_BUFFER_SIZE	(1024*64)
 
 /* Machine dependent functions. */
 
@@ -110,38 +110,38 @@ typedef TableIndex TraceIndex;
 
 /* Index for method tables in classes */
 
-typedef int        MethodIndex;
+typedef int	   MethodIndex;
 
 /* The different kinds of class status bits. */
 
 enum ClassStatus {
-        CLASS_PREPARED          = 0x00000001,
-        CLASS_LOADED            = 0x00000002,
-        CLASS_UNLOADED          = 0x00000004,
-        CLASS_SPECIAL           = 0x00000008,
-        CLASS_IN_LOAD_LIST      = 0x00000010,
-        CLASS_SYSTEM            = 0x00000020,
-        CLASS_DUMPED            = 0x00000040
+	CLASS_PREPARED		= 0x00000001,
+	CLASS_LOADED		= 0x00000002,
+	CLASS_UNLOADED		= 0x00000004,
+	CLASS_SPECIAL		= 0x00000008,
+	CLASS_IN_LOAD_LIST	= 0x00000010,
+	CLASS_SYSTEM		= 0x00000020,
+	CLASS_DUMPED		= 0x00000040
 };
-typedef jint       ClassStatus;
+typedef jint	   ClassStatus;
 
 /* The different kind of objects we track with heap=dump */
 
 typedef unsigned char ObjectKind;
-enum {
-        OBJECT_NORMAL = 1,
-        OBJECT_CLASS  = 2,
-        OBJECT_SYSTEM = 3,
-        OBJECT_HPROF  = 4,
-        OBJECT_LOADER = 5
+enum { 
+	OBJECT_NORMAL = 1, 
+	OBJECT_CLASS  = 2,
+	OBJECT_SYSTEM = 3,
+	OBJECT_HPROF  = 4,
+	OBJECT_LOADER = 5 
 };
 
 /* Used by site_write() when writing out the heap=sites data. */
 
 enum {
-        SITE_DUMP_INCREMENTAL   = 0x01,
-        SITE_SORT_BY_ALLOC      = 0x02,
-        SITE_FORCE_GC           = 0x04
+	SITE_DUMP_INCREMENTAL   = 0x01,
+	SITE_SORT_BY_ALLOC	= 0x02,
+	SITE_FORCE_GC		= 0x04
 };
 
 /* Used to hold information about a field, and potentially a value too. */
@@ -194,12 +194,12 @@ typedef struct ConstantPoolValue {
 struct LineTable;
 
 typedef struct {
-
-    jvmtiEnv            *jvmti; /* JVMTI env for this session */
-    JavaVM              *jvm;   /* JavaVM* for this session */
+    
+    jvmtiEnv            *jvmti;	/* JVMTI env for this session */
+    JavaVM              *jvm;	/* JavaVM* for this session */
 #ifndef SKIP_NPT
-    NptEnv              *npt;   /* NptEnv* for this session, see npt.h */
-#endif
+    NptEnv              *npt;	/* NptEnv* for this session, see npt.h */
+#endif 
     jint                cachedJvmtiVersion; /* JVMTI version number */
 
     char               *header; /* "JAVA PROFILE 1.0.[12]" */
@@ -208,19 +208,19 @@ typedef struct {
     jlong               maxMemory;
 
     /* Option settings */
-    char *              options;             /* option string copy */
+    char *              options;	     /* option string copy */
     char *              utf8_output_filename;/* file=filename */
     int                 net_port;            /* net=hostname:port */
     char *              net_hostname;        /* net=hostname:port */
-    char                output_format;       /* format=a|b */
-    int                 max_trace_depth;     /* depth=max_trace_depth */
+    char                output_format;	     /* format=a|b */
+    int                 max_trace_depth;     /* depth=max_trace_depth */ 
     int                 prof_trace_depth;    /* max_trace_depth or 2 (old) */
     int                 sample_interval;     /* interval=sample_interval (ms) */
     double              cutoff_point;        /* cutoff=cutoff_point */
     jboolean            cpu_sampling;        /* cpu=samples|y */
     jboolean            cpu_timing;          /* cpu=times */
     jboolean            old_timing_format;   /* cpu=old (old) output format */
-    jboolean            heap_dump;           /* heap=dump|all */
+    jboolean            heap_dump;	     /* heap=dump|all */
     jboolean            alloc_sites;         /* heap=sites|all */
     jboolean            thread_in_traces;    /* thread=y|n */
     jboolean            lineno_in_traces;    /* lineno=y|n */
@@ -229,35 +229,35 @@ typedef struct {
     jboolean            force_output;        /* force=y|n */
     jboolean            monitor_tracing;     /* monitor=y|n */
     jboolean            gc_okay;             /* gc_okay=y|n (Not used) */
-
-    unsigned            logflags;            /* logflags=bitmask */
-
+    
+    unsigned            logflags;	     /* logflags=bitmask */
+    
     #define DEBUGFLAG_UNPREPARED_CLASSES 0x001
-    unsigned            debugflags;          /* debugflags=bitmask */
-
+    unsigned            debugflags;	     /* debugflags=bitmask */
+    
     jboolean            coredump;            /* coredump=y|n */
     jboolean            errorexit;           /* errorexit=y|n */
     jboolean            pause;               /* pause=y|n */
-    jboolean            debug;               /* debug=y|n */
-    jboolean            verbose;             /* verbose=y|n */
-    jboolean            primfields;          /* primfields=y|n */
-    jboolean            primarrays;          /* primarrays=y|n */
+    jboolean            debug;		     /* debug=y|n */
+    jboolean            verbose;	     /* verbose=y|n */
+    jboolean            primfields;	     /* primfields=y|n */
+    jboolean            primarrays;	     /* primarrays=y|n */
     jint                experiment;          /* X=NUMBER */
 
     int                 fd;             /* file or socket (net=addr). */
     jboolean            socket;         /* True if fd is a socket (net=addr). */
     jboolean            bci;            /* True if any kind of BCI being done */
     jboolean            obj_watch;      /* True if bci and watching allocs */
-
-    int                 bci_counter;    /* Class BCI counter */
+   
+    int			bci_counter;    /* Class BCI counter */
 
     int                 heap_fd;
     char               *output_filename;     /* file=filename */
-    char               *heapfilename;
-
+    char	       *heapfilename;
+ 
     int                 check_fd;
-    char                *checkfilename;
-
+    char	        *checkfilename;
+ 
     volatile jboolean   dump_in_process;          /* Dump in process */
     volatile jboolean   jvm_initializing;         /* VMInit happening */
     volatile jboolean   jvm_initialized;          /* VMInit happened */
@@ -278,13 +278,13 @@ typedef struct {
     jrawMonitorID       callbackBlock;
     jrawMonitorID       callbackLock;
     jint                active_callbacks;
-
+   
     /* Running totals on all bytes allocated */
-    jlong               total_alloced_bytes;
+    jlong               total_alloced_bytes;	
     jlong               total_alloced_instances;
     jint                total_live_bytes;
     jint                total_live_instances;
-
+   
     /* Running total on all time spent in GC (very rough estimate) */
     jlong               gc_start_time;
     jlong               time_in_gc;
@@ -294,27 +294,27 @@ typedef struct {
 
     /* Global Dump lock */
     jrawMonitorID       dump_lock;
-
+   
     /* Milli-second clock when hprof onload started */
     jlong               micro_sec_ticks;
-
+  
     /* Thread class (for starting agent threads) */
     ClassIndex          thread_cnum;
-
+   
     /* Agent threads started information */
-    jboolean            listener_loop_running;
+    jboolean   		listener_loop_running;
     jrawMonitorID       listener_loop_lock;
-    jboolean            cpu_loop_running;
+    jboolean	        cpu_loop_running;
     jrawMonitorID       cpu_loop_lock;
     jrawMonitorID       cpu_sample_lock;        /* cpu=samples loop */
     jint                gc_finish;              /* Count of GC finish events */
     jboolean            gc_finish_active;       /* True if thread active */
     jboolean            gc_finish_stop_request; /* True if we want it to stop */
     jrawMonitorID       gc_finish_lock;
-
+    
     jboolean            pause_cpu_sampling; /* temp pause in cpu sampling */
 
-    /* Output buffer, position, size, and position in dump if reading */
+    /* Output buffer, position, size, and position in dump if reading */ 
     char *              write_buffer;
     int                 write_buffer_index;
     int                 write_buffer_size;
@@ -326,7 +326,7 @@ typedef struct {
     char *              check_buffer;
     int                 check_buffer_index;
     int                 check_buffer_size;
-
+   
     /* Serial number counters for tables (see hprof_table.c), classes,
      *     tls (thread local storage), and traces.
      */
@@ -337,7 +337,7 @@ typedef struct {
     SerialNumber        object_serial_number_start;
     SerialNumber        frame_serial_number_start;
     SerialNumber        gref_serial_number_start;
-
+    
     SerialNumber        table_serial_number_counter;
     SerialNumber        class_serial_number_counter;
     SerialNumber        thread_serial_number_counter;
@@ -350,13 +350,13 @@ typedef struct {
     jmethodID           object_init_method;
 
     /* Keeping track of the tracker class and it's methods */
-    volatile jint       tracking_engaged;       /* !=0 means it's on */
+    volatile jint       tracking_engaged;	/* !=0 means it's on */
     ClassIndex          tracker_cnum;
     int                 tracker_method_count;
-    struct {
-        StringIndex name;               /* String index for name */
-        StringIndex sig;                /* String index for signature */
-        jmethodID method;       /* Method ID */
+    struct {		
+        StringIndex name;		/* String index for name */
+        StringIndex sig;		/* String index for signature */
+        jmethodID method;	/* Method ID */
     } tracker_methods[12];      /* MAX 12 Tracker class methods */
 
     /* Index to some common items */
@@ -396,3 +396,4 @@ typedef struct {
 extern GlobalData * gdata;
 
 #endif
+

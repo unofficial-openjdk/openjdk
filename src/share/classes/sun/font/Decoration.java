@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)Decoration.java	1.10 06/06/14
  * (C) Copyright IBM Corp. 1999-2003, All Rights Reserved
  *
  */
@@ -56,7 +57,7 @@ import static sun.font.EAttribute.*;
  * of this class and hand them off to ExtendedTextLabels or GraphicComponents.
  */
 public class Decoration {
-
+    
     /**
      * This interface is implemented by clients that use Decoration.
      * Unfortunately, interface methods have to public;  ideally these
@@ -71,20 +72,20 @@ public class Decoration {
         Rectangle2D handleGetVisualBounds();
         Shape handleGetOutline(float x, float y);
     }
-
+    
     private Decoration() {
     }
-
+    
     /**
      * Return a Decoration which does nothing.
      */
     public static Decoration getPlainDecoration() {
-
+        
         return PLAIN;
     }
 
-    private static final int VALUES_MASK =
-        AttributeValues.getMask(EFOREGROUND, EBACKGROUND, ESWAP_COLORS,
+    private static final int VALUES_MASK = 
+        AttributeValues.getMask(EFOREGROUND, EBACKGROUND, ESWAP_COLORS, 
                                 ESTRIKETHROUGH, EUNDERLINE, EINPUT_METHOD_HIGHLIGHT,
                                 EINPUT_METHOD_UNDERLINE);
 
@@ -92,7 +93,7 @@ public class Decoration {
         if (values == null || !values.anyDefined(VALUES_MASK)) {
             return PLAIN;
         }
-
+        
         values = values.applyIMHighlight();
 
         return new DecorationImpl(values.getForeground(),
@@ -103,7 +104,7 @@ public class Decoration {
                                   Underline.getUnderline(values.getInputMethodUnderline()));
     }
 
-    /**
+    /** 
      * Return a Decoration appropriate for the the given Map.
      * @param attributes the Map used to determine the Decoration
      */
@@ -113,36 +114,36 @@ public class Decoration {
         }
         return getDecoration(AttributeValues.fromMap(attributes));
     }
-
+    
     public void drawTextAndDecorations(Label label,
-                                Graphics2D g2d,
-                                float x,
+                                Graphics2D g2d, 
+                                float x, 
                                 float y) {
-
+                                
         label.handleDraw(g2d, x, y);
     }
-
+    
     public Rectangle2D getVisualBounds(Label label) {
-
+        
         return label.handleGetVisualBounds();
     }
-
+    
     public Rectangle2D getCharVisualBounds(Label label, int index) {
-
+        
         return label.handleGetCharVisualBounds(index);
     }
-
+    
     Shape getOutline(Label label,
-                     float x,
+                     float x, 
                      float y) {
-
+        
         return label.handleGetOutline(x, y);
     }
-
+    
     private static final Decoration PLAIN = new Decoration();
-
+    
     private static final class DecorationImpl extends Decoration {
-
+        
         private Paint fgPaint = null;
         private Paint bgPaint = null;
         private boolean swapColors = false;
@@ -156,19 +157,19 @@ public class Decoration {
                        boolean strikethrough,
                        Underline stdUnderline,
                        Underline imUnderline) {
-
+                        
             fgPaint = (Paint) foreground;
             bgPaint = (Paint) background;
 
             this.swapColors = swapColors;
             this.strikethrough = strikethrough;
-
+                       
             this.stdUnderline = stdUnderline;
             this.imUnderline = imUnderline;
         }
-
+        
         private static boolean areEqual(Object lhs, Object rhs) {
-
+            
             if (lhs == null) {
                 return rhs == null;
             }
@@ -176,16 +177,16 @@ public class Decoration {
                 return lhs.equals(rhs);
             }
         }
-
+        
         public boolean equals(Object rhs) {
-
+            
             if (rhs == this) {
                 return true;
             }
             if (rhs == null) {
                 return false;
             }
-
+            
             DecorationImpl other = null;
             try {
                 other = (DecorationImpl) rhs;
@@ -193,12 +194,12 @@ public class Decoration {
             catch(ClassCastException e) {
                 return false;
             }
-
+            
             if (!(swapColors == other.swapColors &&
                         strikethrough == other.strikethrough)) {
                 return false;
             }
-
+            
             if (!areEqual(stdUnderline, other.stdUnderline)) {
                 return false;
             }
@@ -210,9 +211,9 @@ public class Decoration {
             }
             return areEqual(imUnderline, other.imUnderline);
         }
-
+        
         public int hashCode() {
-
+            
             int hc = 1;
             if (strikethrough) {
                 hc |= 2;
@@ -225,7 +226,7 @@ public class Decoration {
             }
             return hc;
         }
-
+        
         /**
         * Return the bottom of the Rectangle which encloses pixels
         * drawn by underlines.
@@ -254,7 +255,7 @@ public class Decoration {
                                                Graphics2D g2d,
                                                float x,
                                                float y) {
-
+                                                
             label.handleDraw(g2d, x, y);
 
             if (!strikethrough && stdUnderline == null && imUnderline == null) {
@@ -284,12 +285,12 @@ public class Decoration {
                 imUnderline.drawUnderline(g2d, ulThickness, x1, x2, y + ulOffset);
             }
         }
-
+        
         public void drawTextAndDecorations(Label label,
-                                    Graphics2D g2d,
-                                    float x,
+                                    Graphics2D g2d, 
+                                    float x, 
                                     float y) {
-
+                                    
             if (fgPaint == null && bgPaint == null && swapColors == false) {
                 drawTextAndEmbellishments(label, g2d, x, y);
             }
@@ -303,8 +304,8 @@ public class Decoration {
                         if (background instanceof Color) {
                             Color bg = (Color)background;
                             // 30/59/11 is standard weights, tweaked a bit
-                            int brightness = 33 * bg.getRed()
-                                + 53 * bg.getGreen()
+                            int brightness = 33 * bg.getRed() 
+                                + 53 * bg.getGreen() 
                                 + 14 * bg.getBlue();
                             foreground = brightness > 18500 ? Color.BLACK : Color.WHITE;
                         } else {
@@ -336,9 +337,9 @@ public class Decoration {
                 g2d.setPaint(savedPaint);
             }
         }
-
+        
         public Rectangle2D getVisualBounds(Label label) {
-
+            
             Rectangle2D visBounds = label.handleGetVisualBounds();
 
             if (swapColors || bgPaint != null
@@ -363,17 +364,17 @@ public class Decoration {
 
             return visBounds;
         }
-
+        
         Shape getOutline(Label label,
-                         float x,
+                         float x, 
                          float y) {
-
+            
             if (!strikethrough && stdUnderline == null && imUnderline == null) {
                 return label.handleGetOutline(x, y);
             }
 
             CoreMetrics cm = label.getCoreMetrics();
-
+            
             // NOTE:  The performace of the following code may
             // be very poor.
             float ulThickness = cm.underlineThickness;

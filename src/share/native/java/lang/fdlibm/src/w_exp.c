@@ -1,4 +1,5 @@
 
+ /* %W% %E%           */
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -39,24 +40,24 @@ o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
 u_threshold= -7.45133219101941108420e+02;  /* 0xc0874910, 0xD52D3051 */
 
 #ifdef __STDC__
-        double exp(double x)            /* wrapper exp */
+	double exp(double x)		/* wrapper exp */
 #else
-        double exp(x)                   /* wrapper exp */
-        double x;
+	double exp(x)			/* wrapper exp */
+	double x;
 #endif
 {
 #ifdef _IEEE_LIBM
-        return __ieee754_exp(x);
+	return __ieee754_exp(x);
 #else
-        double z;
-        z = __ieee754_exp(x);
-        if(_LIB_VERSION == _IEEE_) return z;
-        if(finite(x)) {
-            if(x>o_threshold)
-                return __kernel_standard(x,x,6); /* exp overflow */
-            else if(x<u_threshold)
-                return __kernel_standard(x,x,7); /* exp underflow */
-        }
-        return z;
+	double z;
+	z = __ieee754_exp(x);
+	if(_LIB_VERSION == _IEEE_) return z;
+	if(finite(x)) {
+	    if(x>o_threshold)
+	        return __kernel_standard(x,x,6); /* exp overflow */
+	    else if(x<u_threshold)
+	        return __kernel_standard(x,x,7); /* exp underflow */
+	}
+	return z;
 #endif
 }

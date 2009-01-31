@@ -28,7 +28,7 @@ package sun.management;
 import java.lang.management.LockInfo;
 
 /**
- * This interface is used for data conversion from LockInfo
+ * This interface is used for data conversion from LockInfo 
  * to CompositeData (its mapped type) or vice versa.
  */
 public interface LockDataConverterMXBean {

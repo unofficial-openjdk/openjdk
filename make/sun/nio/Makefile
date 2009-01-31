@@ -35,7 +35,6 @@ PRODUCT = sun
 # This re-directs all the class files to a separate location
 CLASSDESTDIR = $(TEMPDIR)/classes
 
-OTHER_JAVACFLAGS += -Xlint:serial -Werror
 include $(BUILDDIR)/common/Defs.gmk
 
 #
@@ -87,3 +86,4 @@ $(CHARSETS_JAR): $(FILES_class) $(CLASSDESTDIR)/$(SERVICE_DESCRIPTION_PATH)
 clean::
 	$(RM) -r $(CLASSDESTDIR)
 	$(RM) $(CHARSETS_JAR)
+

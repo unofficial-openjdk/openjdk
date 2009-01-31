@@ -46,49 +46,49 @@ public class LCMS implements PCMM {
 
     public native synchronized int getTagSize(long profileID, int tagSignature);
     public native synchronized void getTagData(long profileID, int tagSignature,
-                                               byte[] data);
+                                               byte[] data); 
     public native synchronized void setTagData(long profileID, int tagSignature,
                                                byte[] data);
-
+    
     public static native long getProfileID(ICC_Profile profile);
 
     public static native long createNativeTransform(
         long[] profileIDs, int renderType, Object disposerRef);
 
    /**
-     * Constructs ColorTransform object corresponding to an ICC_profile
+     * Constructs ColorTransform object corresponding to an ICC_profile 
      */
-    public ColorTransform createTransform(ICC_Profile profile,
+    public ColorTransform createTransform(ICC_Profile profile, 
                                                        int renderType,
-                                                       int transformType)
+                                                       int transformType) 
     {
         return new LCMSTransform(profile, renderType, renderType);
     }
 
     /**
-     * Constructs an ColorTransform object from a list of ColorTransform
+     * Constructs an ColorTransform object from a list of ColorTransform 
      * objects
      */
     public synchronized ColorTransform createTransform(
-        ColorTransform[] transforms)
+        ColorTransform[] transforms) 
     {
         return new LCMSTransform(transforms);
     }
 
     /* methods invoked from LCMSTransform */
-    public static native void colorConvert(LCMSTransform trans,
+    public static native void colorConvert(LCMSTransform trans, 
                                            LCMSImageLayout src,
                                            LCMSImageLayout dest);
     public static native void freeTransform(long ID);
 
-    public static native void initLCMS(Class Trans, Class IL, Class Pf);
+    public static native void initLCMS(Class Trans, Class IL, Class Pf); 
 
     /* the class initializer which loads the CMM */
     static {
         java.security.AccessController.doPrivileged(
             new java.security.PrivilegedAction() {
                 public Object run() {
-                    /* We need to load awt here because of usage trace and
+                    /* We need to load awt here because of usage trace and 
                      * disposer frameworks
                      */
                     System.loadLibrary("awt");

@@ -75,8 +75,8 @@ import java.io.IOException;
  * The following code example shows how to construct an Rdn using the
  * constructor that takes type and value as arguments:
  * <pre>
- *      Rdn rdn = new Rdn("cn", "Juicy, Fruit");
- *      System.out.println(rdn.toString());
+ *	Rdn rdn = new Rdn("cn", "Juicy, Fruit");
+ *	System.out.println(rdn.toString());
  * </pre>
  * The last line will print <tt>cn=Juicy\, Fruit</tt>. The
  * {@link #unescapeValue(String) <tt>unescapeValue()</tt>} method can be
@@ -87,8 +87,8 @@ import java.io.IOException;
  * This class can be instantiated by a string representation
  * of the RDN defined in RFC 2253 as shown in the following code example:
  * <pre>
- *      Rdn rdn = new Rdn("cn=Juicy\\, Fruit");
- *      System.out.println(rdn.toString());
+ * 	Rdn rdn = new Rdn("cn=Juicy\\, Fruit");
+ *	System.out.println(rdn.toString());
  * </pre>
  * The last line will print <tt>cn=Juicy\, Fruit</tt>.
  * <p>
@@ -99,6 +99,7 @@ import java.io.IOException;
  * to a constructor or method in this class will cause NullPointerException
  * to be thrown.
  *
+ * @version %I% %E%
  * @since 1.5
  */
 
@@ -124,29 +125,29 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @param attrSet The non-null and non-empty attributes containing
      * type/value mappings.
      * @throws InvalidNameException If contents of <tt>attrSet</tt> cannot
-     *          be used to construct a valid RDN.
+     * 		be used to construct a valid RDN.
      */
     public Rdn(Attributes attrSet) throws InvalidNameException {
-        if (attrSet.size() == 0) {
-            throw new InvalidNameException("Attributes cannot be empty");
-        }
-        entries = new ArrayList(attrSet.size());
-        NamingEnumeration attrs = attrSet.getAll();
-        try {
-            for (int nEntries = 0; attrs.hasMore(); nEntries++) {
-                RdnEntry entry = new RdnEntry();
-                Attribute attr = (Attribute) attrs.next();
-                entry.type = attr.getID();
-                entry.value = attr.get();
-                entries.add(nEntries, entry);
-            }
-        } catch (NamingException e) {
-            InvalidNameException e2 = new InvalidNameException(
-                                        e.getMessage());
-            e2.initCause(e);
-            throw e2;
-        }
-        sort(); // arrange entries for comparison
+	if (attrSet.size() == 0) {
+	    throw new InvalidNameException("Attributes cannot be empty");
+	}
+	entries = new ArrayList(attrSet.size());
+	NamingEnumeration attrs = attrSet.getAll();
+	try {
+	    for (int nEntries = 0; attrs.hasMore(); nEntries++) {
+		RdnEntry entry = new RdnEntry();
+		Attribute attr = (Attribute) attrs.next();
+		entry.type = attr.getID();
+		entry.value = attr.get();
+		entries.add(nEntries, entry);
+	    }
+	} catch (NamingException e) {
+	    InvalidNameException e2 = new InvalidNameException(
+					e.getMessage());
+	    e2.initCause(e);
+	    throw e2;
+	}
+	sort(); // arrange entries for comparison
     }
 
     /**
@@ -156,13 +157,13 @@ public class Rdn implements Serializable, Comparable<Object> {
      * and described in the class description for
      * {@link javax.naming.ldap.LdapName}.
      *
-     * @param rdnString The non-null and non-empty RFC2253 formatted string.
+     * @param rdnString	The non-null and non-empty RFC2253 formatted string.
      * @throws InvalidNameException If a syntax error occurs during
-     *                  parsing of the rdnString.
+     * 			parsing of the rdnString.
      */
     public Rdn(String rdnString) throws InvalidNameException {
-        entries = new ArrayList(DEFAULT_SIZE);
-        (new Rfc2253Parser(rdnString)).parseRdn(this);
+	entries = new ArrayList(DEFAULT_SIZE);
+	(new Rfc2253Parser(rdnString)).parseRdn(this);
     }
 
     /**
@@ -172,8 +173,8 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @param rdn The non-null Rdn to be copied.
      */
     public Rdn(Rdn rdn) {
-        entries = new ArrayList(rdn.entries.size());
-        entries.addAll(rdn.entries);
+	entries = new ArrayList(rdn.entries.size());
+	entries.addAll(rdn.entries);
     }
 
     /**
@@ -187,30 +188,30 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @param type The non-null and non-empty string attribute type.
      * @param value The non-null and non-empty attribute value.
      * @throws InvalidNameException If type/value cannot be used to
-     *                  construct a valid RDN.
+     *			construct a valid RDN.
      * @see #toString()
      */
     public Rdn(String type, Object value) throws InvalidNameException {
-        if (value == null) {
-            throw new NullPointerException("Cannot set value to null");
-        }
-        if (type.equals("") || isEmptyValue(value)) {
-            throw new InvalidNameException(
-                "type or value cannot be empty, type:" + type +
-                " value:" + value);
-        }
-        entries = new ArrayList(DEFAULT_SIZE);
-        put(type, value);
+	if (value == null) {
+	    throw new NullPointerException("Cannot set value to null");
+	}
+	if (type.equals("") || isEmptyValue(value)) {
+	    throw new InvalidNameException(
+		"type or value cannot be empty, type:" + type +
+		" value:" + value);
+	}
+	entries = new ArrayList(DEFAULT_SIZE);
+	put(type, value);
     }
 
     private boolean isEmptyValue(Object val) {
-        return ((val instanceof String) && val.equals("")) ||
-        ((val instanceof byte[]) && (((byte[]) val).length == 0));
+	return ((val instanceof String) && val.equals("")) ||
+	((val instanceof byte[]) && (((byte[]) val).length == 0));
     }
 
     // An empty constructor used by the parser
     Rdn() {
-        entries = new ArrayList(DEFAULT_SIZE);
+	entries = new ArrayList(DEFAULT_SIZE);
     }
 
     /*
@@ -227,22 +228,22 @@ public class Rdn implements Serializable, Comparable<Object> {
      */
     Rdn put(String type, Object value) {
 
-        // create new Entry
-        RdnEntry newEntry = new RdnEntry();
-        newEntry.type =  type;
-        if (value instanceof byte[]) {  // clone the byte array
-            newEntry.value = ((byte[]) value).clone();
-        } else {
-            newEntry.value = value;
-        }
-        entries.add(newEntry);
-        return this;
+	// create new Entry
+	RdnEntry newEntry = new RdnEntry();
+	newEntry.type =  type;
+        if (value instanceof byte[]) {	// clone the byte array
+	    newEntry.value = ((byte[]) value).clone();
+	} else {
+	    newEntry.value = value;
+	}
+	entries.add(newEntry);
+	return this;
     }
 
     void sort() {
-        if (entries.size() > 1) {
-            Collections.sort(entries);
-        }
+	if (entries.size() > 1) {
+	    Collections.sort(entries);
+	}
     }
 
     /**
@@ -257,7 +258,7 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @return The non-null attribute value.
      */
     public Object getValue() {
-        return ((RdnEntry) entries.get(0)).getValue();
+	return ((RdnEntry) entries.get(0)).getValue();
     }
 
     /**
@@ -275,7 +276,7 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @return The non-null attribute type.
      */
     public String getType() {
-        return ((RdnEntry) entries.get(0)).getType();
+	return ((RdnEntry) entries.get(0)).getType();
     }
 
     /**
@@ -286,12 +287,12 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @return The string representation of the Rdn.
      */
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        int size = entries.size();
-        if (size > 0) {
+	StringBuilder builder = new StringBuilder();
+	int size = entries.size();
+	if (size > 0) {
             builder.append(entries.get(0));
-        }
-        for (int next = 1; next < size; next++) {
+	}
+	for (int next = 1; next < size; next++) {
             builder.append('+');
             builder.append(entries.get(next));
         }
@@ -313,29 +314,29 @@ public class Rdn implements Serializable, Comparable<Object> {
      *
      * @param obj The non-null object to compare against.
      * @return  A negative integer, zero, or a positive integer as this Rdn
-     *          is less than, equal to, or greater than the given Object.
+     * 		is less than, equal to, or greater than the given Object.
      * @exception ClassCastException if obj is null or not a Rdn.
      * <p>
      */
     public int compareTo(Object obj) {
-        if (!(obj instanceof Rdn)) {
+	if (!(obj instanceof Rdn)) {
             throw new ClassCastException("The obj is not a Rdn");
         }
-        if (obj == this) {
-            return 0;
-        }
-        Rdn that = (Rdn) obj;
+	if (obj == this) {
+	    return 0;
+	}
+	Rdn that = (Rdn) obj;
         int minSize = Math.min(entries.size(), that.entries.size());
         for (int i = 0; i < minSize; i++) {
 
-            // Compare a single pair of type/value pairs.
+	    // Compare a single pair of type/value pairs.
             int diff = ((RdnEntry) entries.get(i)).compareTo(
-                                        that.entries.get(i));
+					that.entries.get(i));
             if (diff != 0) {
-                return diff;
+		return diff;
             }
         }
-        return (entries.size() - that.entries.size());  // longer RDN wins
+	return (entries.size() - that.entries.size());  // longer RDN wins
     }
 
     /**
@@ -360,22 +361,22 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @see #hashCode()
      */
     public boolean equals(Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (!(obj instanceof Rdn)) {
-            return false;
-        }
-        Rdn that = (Rdn) obj;
-        if (entries.size() != that.size()) {
-            return false;
-        }
+	if (obj == this) {
+	    return true;
+	}
+	if (!(obj instanceof Rdn)) {
+	    return false;
+	}
+	Rdn that = (Rdn) obj;
+	if (entries.size() != that.size()) {
+	    return false;
+	}
         for (int i = 0; i < entries.size(); i++) {
-            if (!entries.get(i).equals(that.entries.get(i))) {
-                return false;
-            }
-        }
-        return true;
+	    if (!entries.get(i).equals(that.entries.get(i))) {
+		return false;
+	    }
+	}
+	return true;
     }
 
     /**
@@ -388,12 +389,12 @@ public class Rdn implements Serializable, Comparable<Object> {
      */
     public int hashCode() {
 
-        // Sum up the hash codes of the components.
+	// Sum up the hash codes of the components.
         int hash = 0;
 
         // For each type/value pair...
         for (int i = 0; i < entries.size(); i++) {
-            hash += entries.get(i).hashCode();
+	    hash += entries.get(i).hashCode();
         }
         return hash;
     }
@@ -402,42 +403,42 @@ public class Rdn implements Serializable, Comparable<Object> {
      * Retrieves the {@link javax.naming.directory.Attributes Attributes}
      * view of the type/value mappings contained in this Rdn.
      *
-     * @return  The non-null attributes containing the type/value
-     *          mappings of this Rdn.
+     * @return 	The non-null attributes containing the type/value
+     *		mappings of this Rdn.
      */
     public Attributes toAttributes() {
-        Attributes attrs = new BasicAttributes(true);
+	Attributes attrs = new BasicAttributes(true);
         for (int i = 0; i < entries.size(); i++) {
-            RdnEntry entry = (RdnEntry) entries.get(i);
-            Attribute attr = attrs.put(entry.getType(), entry.getValue());
-            if (attr != null) {
-                attr.add(entry.getValue());
-                attrs.put(attr);
-            }
-        }
+	    RdnEntry entry = (RdnEntry) entries.get(i);
+	    Attribute attr = attrs.put(entry.getType(), entry.getValue());
+	    if (attr != null) {
+		attr.add(entry.getValue());
+		attrs.put(attr);
+	    }
+	}
         return attrs;
     }
 
 
     private static class RdnEntry implements Comparable {
-        private String type;
-        private Object value;
+	private String type;
+	private Object value;
 
-        // If non-null, a cannonical representation of the value suitable
+	// If non-null, a cannonical representation of the value suitable
         // for comparison using String.compareTo()
-        private String comparable = null;
+	private String comparable = null;
 
-        String getType() {
-            return type;
-        }
+	String getType() {
+	    return type;
+	}
 
-        Object getValue() {
-            return value;
-        }
+	Object getValue() {
+	    return value;
+	}
 
-        public int compareTo(Object obj) {
+	public int compareTo(Object obj) {
 
-            // Any change here affecting equality must be
+	    // Any change here affecting equality must be
             // reflected in hashCode().
             RdnEntry that = (RdnEntry) obj;
 
@@ -446,49 +447,49 @@ public class Rdn implements Serializable, Comparable<Object> {
             if (diff != 0) {
                 return diff;
             }
-            if (value.equals(that.value)) {     // try shortcut
+	    if (value.equals(that.value)) {	// try shortcut
                 return 0;
             }
             return getValueComparable().compareTo(
-                        that.getValueComparable());
+			that.getValueComparable());
         }
 
-        public boolean equals(Object obj) {
-            if (obj == this) {
-                return true;
-            }
-            if (!(obj instanceof RdnEntry)) {
-                return false;
-            }
+	public boolean equals(Object obj) {
+	    if (obj == this) {
+		return true;
+	    }
+	    if (!(obj instanceof RdnEntry)) {
+		return false;
+	    }
 
             // Any change here must be reflected in hashCode()
-            RdnEntry that = (RdnEntry) obj;
-            return (type.equalsIgnoreCase(that.type)) &&
-                        (getValueComparable().equals(
-                        that.getValueComparable()));
-        }
+	    RdnEntry that = (RdnEntry) obj;
+	    return (type.equalsIgnoreCase(that.type)) &&
+			(getValueComparable().equals(
+			that.getValueComparable()));
+	}
 
-        public int hashCode() {
-            return (type.toUpperCase().hashCode() +
-                getValueComparable().hashCode());
-        }
+	public int hashCode() {
+	    return (type.toUpperCase().hashCode() +
+		getValueComparable().hashCode());
+	}
 
-        public String toString() {
-            return type + "=" + escapeValue(value);
-        }
+	public String toString() {
+	    return type + "=" + escapeValue(value);
+	}
 
-        private String getValueComparable() {
-            if (comparable != null) {
-                return comparable;              // return cached result
-            }
+	private String getValueComparable() {
+	    if (comparable != null) {
+		return comparable;		// return cached result
+	    }
 
-            // cache result
-            if (value instanceof byte[]) {
-                comparable = escapeBinaryValue((byte[]) value);
-            } else {
-                comparable = ((String) value).toUpperCase();
-            }
-            return comparable;
+	    // cache result
+	    if (value instanceof byte[]) {
+		comparable = escapeBinaryValue((byte[]) value);
+	    } else {
+		comparable = ((String) value).toUpperCase();
+	    }
+	    return comparable;
         }
     }
 
@@ -516,47 +517,47 @@ public class Rdn implements Serializable, Comparable<Object> {
      * @throws ClassCastException if val is is not a String or byte array.
      */
     public static String escapeValue(Object val) {
-        return (val instanceof byte[])
-                ? escapeBinaryValue((byte[])val)
-                : escapeStringValue((String)val);
+	return (val instanceof byte[])
+		? escapeBinaryValue((byte[])val)
+		: escapeStringValue((String)val);
     }
 
     /*
      * Given the value of a string-valued attribute, returns a
      * string suitable for inclusion in a DN.  This is accomplished by
      * using backslash (\) to escape the following characters:
-     *  leading and trailing whitespace
-     *  , = + < > # ; " \
+     *	leading and trailing whitespace
+     *	, = + < > # ; " \
      */
     private static final String escapees = ",=+<>#;\"\\";
 
     private static String escapeStringValue(String val) {
 
-            char[] chars = val.toCharArray();
-            StringBuilder builder = new StringBuilder(2 * val.length());
+	    char[] chars = val.toCharArray();
+	    StringBuilder builder = new StringBuilder(2 * val.length());
 
-            // Find leading and trailing whitespace.
-            int lead;   // index of first char that is not leading whitespace
-            for (lead = 0; lead < chars.length; lead++) {
-                if (!isWhitespace(chars[lead])) {
-                    break;
-                }
-            }
-            int trail;  // index of last char that is not trailing whitespace
-            for (trail = chars.length - 1; trail >= 0; trail--) {
-                if (!isWhitespace(chars[trail])) {
-                    break;
-                }
-            }
+	    // Find leading and trailing whitespace.
+	    int lead;	// index of first char that is not leading whitespace
+	    for (lead = 0; lead < chars.length; lead++) {
+		if (!isWhitespace(chars[lead])) {
+		    break;
+		}
+	    }
+	    int trail;	// index of last char that is not trailing whitespace
+	    for (trail = chars.length - 1; trail >= 0; trail--) {
+		if (!isWhitespace(chars[trail])) {
+		    break;
+		}
+	    }
 
-            for (int i = 0; i < chars.length; i++) {
-                char c = chars[i];
-                if ((i < lead) || (i > trail) || (escapees.indexOf(c) >= 0)) {
-                    builder.append('\\');
-                }
-                builder.append(c);
-            }
-            return builder.toString();
+	    for (int i = 0; i < chars.length; i++) {
+		char c = chars[i];
+		if ((i < lead) || (i > trail) || (escapees.indexOf(c) >= 0)) {
+		    builder.append('\\');
+		}
+		builder.append(c);
+	    }
+	    return builder.toString();
     }
 
     /*
@@ -567,16 +568,16 @@ public class Rdn implements Serializable, Comparable<Object> {
      */
     private static String escapeBinaryValue(byte[] val) {
 
-        StringBuilder builder = new StringBuilder(1 + 2 * val.length);
-        builder.append("#");
+	StringBuilder builder = new StringBuilder(1 + 2 * val.length);
+	builder.append("#");
 
-        for (int i = 0; i < val.length; i++) {
-            byte b = val[i];
-            builder.append(Character.forDigit(0xF & (b >>> 4), 16));
-            builder.append(Character.forDigit(0xF & b, 16));
-        }
-        return builder.toString();
-        // return builder.toString().toUpperCase();
+	for (int i = 0; i < val.length; i++) {
+	    byte b = val[i];
+	    builder.append(Character.forDigit(0xF & (b >>> 4), 16));
+	    builder.append(Character.forDigit(0xF & b, 16));
+	}
+	return builder.toString();
+	// return builder.toString().toUpperCase();
     }
 
     /**
@@ -594,144 +595,144 @@ public class Rdn implements Serializable, Comparable<Object> {
      * Therefore, passing in an illegal value might not necessarily
      * trigger an <tt>IllegalArgumentException</tt>.
      *
-     * @param   val     The non-null string to be unescaped.
-     * @return          Unescaped value.
-     * @throws          IllegalArgumentException When an Illegal value
-     *                  is provided.
+     * @param	val	The non-null string to be unescaped.
+     * @return 		Unescaped value.
+     * @throws 		IllegalArgumentException When an Illegal value
+     *			is provided.
      */
     public static Object unescapeValue(String val) {
 
-            char[] chars = val.toCharArray();
-            int beg = 0;
-            int end = chars.length;
+	    char[] chars = val.toCharArray();
+	    int beg = 0;
+	    int end = chars.length;
 
-            // Trim off leading and trailing whitespace.
-            while ((beg < end) && isWhitespace(chars[beg])) {
-                ++beg;
-            }
+	    // Trim off leading and trailing whitespace.
+	    while ((beg < end) && isWhitespace(chars[beg])) {
+		++beg;
+	    }
 
-            while ((beg < end) && isWhitespace(chars[end - 1])) {
-                --end;
-            }
+	    while ((beg < end) && isWhitespace(chars[end - 1])) {
+		--end;
+	    }
 
-            // Add back the trailing whitespace with a preceeding '\'
-            // (escaped or unescaped) that was taken off in the above
-            // loop. Whether or not to retain this whitespace is decided below.
-            if (end != chars.length &&
-                    (beg < end) &&
-                    chars[end - 1] == '\\') {
-                end++;
-            }
-            if (beg >= end) {
-                return "";
-            }
+	    // Add back the trailing whitespace with a preceeding '\'
+	    // (escaped or unescaped) that was taken off in the above
+	    // loop. Whether or not to retain this whitespace is decided below.
+	    if (end != chars.length &&
+		    (beg < end) &&
+		    chars[end - 1] == '\\') {
+		end++;
+	    }
+	    if (beg >= end) {
+		return "";
+	    }
 
-            if (chars[beg] == '#') {
-                // Value is binary (eg: "#CEB1DF80").
-                return decodeHexPairs(chars, ++beg, end);
-            }
+	    if (chars[beg] == '#') {
+		// Value is binary (eg: "#CEB1DF80").
+		return decodeHexPairs(chars, ++beg, end);
+	    }
 
-            // Trim off quotes.
-            if ((chars[beg] == '\"') && (chars[end - 1] == '\"')) {
-                ++beg;
-                --end;
-            }
+	    // Trim off quotes.
+	    if ((chars[beg] == '\"') && (chars[end - 1] == '\"')) {
+		++beg;
+		--end;
+	    }
 
-            StringBuilder builder = new StringBuilder(end - beg);
-            int esc = -1; // index of the last escaped character
+	    StringBuilder builder = new StringBuilder(end - beg);
+	    int esc = -1; // index of the last escaped character
 
-            for (int i = beg; i < end; i++) {
-                if ((chars[i] == '\\') && (i + 1 < end)) {
-                    if (!Character.isLetterOrDigit(chars[i + 1])) {
-                        ++i;                            // skip backslash
-                        builder.append(chars[i]);       // snarf escaped char
-                        esc = i;
-                    } else {
+	    for (int i = beg; i < end; i++) {
+		if ((chars[i] == '\\') && (i + 1 < end)) {
+		    if (!Character.isLetterOrDigit(chars[i + 1])) {
+			++i;				// skip backslash
+			builder.append(chars[i]);	// snarf escaped char
+			esc = i;
+		    } else {
 
-                        // Convert hex-encoded UTF-8 to 16-bit chars.
-                        byte[] utf8 = getUtf8Octets(chars, i, end);
-                        if (utf8.length > 0) {
-                            try {
-                                builder.append(new String(utf8, "UTF8"));
-                            } catch (java.io.UnsupportedEncodingException e) {
-                                // shouldn't happen
-                            }
-                            i += utf8.length * 3 - 1;
-                        } else { // no utf8 bytes available, invalid DN
+			// Convert hex-encoded UTF-8 to 16-bit chars.
+			byte[] utf8 = getUtf8Octets(chars, i, end);
+			if (utf8.length > 0) {
+			    try {
+				builder.append(new String(utf8, "UTF8"));
+			    } catch (java.io.UnsupportedEncodingException e) {
+				// shouldn't happen
+			    }
+			    i += utf8.length * 3 - 1;
+			} else { // no utf8 bytes available, invalid DN
 
-                            // '/' has no meaning, throw exception
-                            throw new IllegalArgumentException(
-                                "Not a valid attribute string value:" +
-                                val + ",improper usage of backslash");
-                        }
-                    }
-                } else {
-                    builder.append(chars[i]);   // snarf unescaped char
-                }
-            }
+			    // '/' has no meaning, throw exception
+			    throw new IllegalArgumentException(
+				"Not a valid attribute string value:" +
+				val + ",improper usage of backslash");
+			}
+		    }
+		} else {
+		    builder.append(chars[i]);	// snarf unescaped char
+		}
+	    }
 
-            // Get rid of the unescaped trailing whitespace with the
-            // preceeding '\' character that was previously added back.
-            int len = builder.length();
-            if (isWhitespace(builder.charAt(len - 1)) && esc != (end - 1)) {
-                builder.setLength(len - 1);
-            }
-            return builder.toString();
-        }
+	    // Get rid of the unescaped trailing whitespace with the
+	    // preceeding '\' character that was previously added back.
+	    int len = builder.length();
+	    if (isWhitespace(builder.charAt(len - 1)) && esc != (end - 1)) {
+		builder.setLength(len - 1);
+	    }
+	    return builder.toString();
+	}
 
 
-        /*
-         * Given an array of chars (with starting and ending indexes into it)
-         * representing bytes encoded as hex-pairs (such as "CEB1DF80"),
-         * returns a byte array containing the decoded bytes.
-         */
-        private static byte[] decodeHexPairs(char[] chars, int beg, int end) {
-            byte[] bytes = new byte[(end - beg) / 2];
-            for (int i = 0; beg + 1 < end; i++) {
-                int hi = Character.digit(chars[beg], 16);
-                int lo = Character.digit(chars[beg + 1], 16);
-                if (hi < 0 || lo < 0) {
-                    break;
-                }
-                bytes[i] = (byte)((hi<<4) + lo);
-                beg += 2;
-            }
-            if (beg != end) {
-                throw new IllegalArgumentException(
-                        "Illegal attribute value: " + new String(chars));
-            }
-            return bytes;
-        }
+	/*
+	 * Given an array of chars (with starting and ending indexes into it)
+	 * representing bytes encoded as hex-pairs (such as "CEB1DF80"),
+	 * returns a byte array containing the decoded bytes.
+	 */
+	private static byte[] decodeHexPairs(char[] chars, int beg, int end) {
+	    byte[] bytes = new byte[(end - beg) / 2];
+	    for (int i = 0; beg + 1 < end; i++) {
+		int hi = Character.digit(chars[beg], 16);
+		int lo = Character.digit(chars[beg + 1], 16);
+		if (hi < 0 || lo < 0) {
+		    break;
+		}
+		bytes[i] = (byte)((hi<<4) + lo);
+		beg += 2;
+	    }
+	    if (beg != end) {
+		throw new IllegalArgumentException(
+			"Illegal attribute value: " + new String(chars));
+	    }
+	    return bytes;
+	}
 
-        /*
-         * Given an array of chars (with starting and ending indexes into it),
-         * finds the largest prefix consisting of hex-encoded UTF-8 octets,
-         * and returns a byte array containing the corresponding UTF-8 octets.
-         *
-         * Hex-encoded UTF-8 octets look like this:
-         *      \03\B1\DF\80
-         */
-        private static byte[] getUtf8Octets(char[] chars, int beg, int end) {
-            byte[] utf8 = new byte[(end - beg) / 3];    // allow enough room
-            int len = 0;        // index of first unused byte in utf8
+	/*
+	 * Given an array of chars (with starting and ending indexes into it),
+	 * finds the largest prefix consisting of hex-encoded UTF-8 octets,
+	 * and returns a byte array containing the corresponding UTF-8 octets.
+	 *
+	 * Hex-encoded UTF-8 octets look like this:
+	 *	\03\B1\DF\80
+	 */
+	private static byte[] getUtf8Octets(char[] chars, int beg, int end) {
+	    byte[] utf8 = new byte[(end - beg) / 3];	// allow enough room
+	    int len = 0;	// index of first unused byte in utf8
 
-            while ((beg + 2 < end) &&
-                   (chars[beg++] == '\\')) {
-                int hi = Character.digit(chars[beg++], 16);
-                int lo = Character.digit(chars[beg++], 16);
-                if (hi < 0 || lo < 0) {
-                   break;
-                }
-                utf8[len++] = (byte)((hi<<4) + lo);
-            }
-            if (len == utf8.length) {
-                return utf8;
-            } else {
-                byte[] res = new byte[len];
-                System.arraycopy(utf8, 0, res, 0, len);
-                return res;
-            }
-        }
+	    while ((beg + 2 < end) &&
+		   (chars[beg++] == '\\')) {
+		int hi = Character.digit(chars[beg++], 16);
+		int lo = Character.digit(chars[beg++], 16);
+		if (hi < 0 || lo < 0) {
+		   break;
+		}
+		utf8[len++] = (byte)((hi<<4) + lo);
+	    }
+	    if (len == utf8.length) {
+		return utf8;
+	    } else {
+		byte[] res = new byte[len];
+		System.arraycopy(utf8, 0, res, 0, len);
+		return res;
+	    }
+	}
 
     /*
      * Best guess as to what RFC 2253 means by "whitespace".
@@ -744,21 +745,21 @@ public class Rdn implements Serializable, Comparable<Object> {
      * Serializes only the unparsed RDN, for compactness and to avoid
      * any implementation dependency.
      *
-     * @serialData      The RDN string
+     * @serialData	The RDN string
      */
     private void writeObject(ObjectOutputStream s)
             throws java.io.IOException {
-        s.defaultWriteObject();
+	s.defaultWriteObject();
         s.writeObject(toString());
     }
 
     private void readObject(ObjectInputStream s)
             throws IOException, ClassNotFoundException {
-        s.defaultReadObject();
-        entries = new ArrayList(DEFAULT_SIZE);
+	s.defaultReadObject();
+	entries = new ArrayList(DEFAULT_SIZE);
         String unparsed = (String) s.readObject();
         try {
-            (new Rfc2253Parser(unparsed)).parseRdn(this);
+	    (new Rfc2253Parser(unparsed)).parseRdn(this);
         } catch (InvalidNameException e) {
             // shouldn't happen
             throw new java.io.StreamCorruptedException(

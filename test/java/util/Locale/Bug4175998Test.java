@@ -1,21 +1,21 @@
-/*
+/* 
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -55,7 +55,7 @@ import java.io.*;
 
 /**
  *  Bug4175998Test verifies that the following bug has been fixed:
- *  Bug 4175998 - The java.util.Locale.getISO3Language() returns wrong result for a locale with
+ *  Bug 4175998 - The java.util.Locale.getISO3Language() returns wrong result for a locale with 
  *           language code 'ta'(Tamil).
  */
 public class Bug4175998Test extends LocaleTestFmwk {
@@ -231,7 +231,7 @@ public class Bug4175998Test extends LocaleTestFmwk {
                     i639.put(arg1, arg2);
                 }
             }
-
+            
             BufferedReader ISO6392File = new BufferedReader(new FileReader(ISO6392));
             Hashtable i6392 = new Hashtable();
             for (String line = ISO6392File.readLine(); line != null; line = ISO6392File.readLine()) {
@@ -244,13 +244,13 @@ public class Bug4175998Test extends LocaleTestFmwk {
                 final String arg3 = line.substring(ndx2+1, ndx3);
                 i6392.put(arg3, new ISO6392Entry(arg1, arg2));
             }
-
+            
             Enumeration keys = i639.keys();
             while (keys.hasMoreElements()) {
                 final Object key = keys.nextElement();
                 final Object name = i639.get(key);
                 final Object value = i6392.get(name);
-
+                
                 if (value != null) {
                     System.out.print("{");
                     System.out.print("\""+key+"\",");
@@ -262,8 +262,8 @@ public class Bug4175998Test extends LocaleTestFmwk {
             System.out.println(e);
         }
     }
-
-
+    
+    
     private static final class ISO6392Entry {
         public final String code;
         public final String name;
@@ -276,11 +276,11 @@ public class Bug4175998Test extends LocaleTestFmwk {
         }
 
     }
-*/
+*/    
 
 }
 
-/*
+/* 
 
 data from ftp://dkuug.dk on March 4, 1999
 verified by http://www.triacom.com/archive/iso639-2.en.html

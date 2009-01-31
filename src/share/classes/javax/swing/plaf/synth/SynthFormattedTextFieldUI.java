@@ -32,6 +32,7 @@ import javax.swing.plaf.ComponentUI;
  * Provides the look and feel implementation for
  * <code>JFormattedTextField</code>.
  *
+ * @version %I%, %G%
  */
 class SynthFormattedTextFieldUI extends SynthTextFieldUI {
     /**
@@ -52,7 +53,7 @@ class SynthFormattedTextFieldUI extends SynthTextFieldUI {
      * @return the name "FormattedTextField"
      */
     protected String getPropertyPrefix() {
-        return "FormattedTextField";
+	return "FormattedTextField";
     }
 
     void paintBackground(SynthContext context, Graphics g, JComponent c) {

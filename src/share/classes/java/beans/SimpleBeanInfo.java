@@ -43,7 +43,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * You can override this if you wish to provide explicit info.
      */
     public BeanDescriptor getBeanDescriptor() {
-        return null;
+	return null;
     }
 
     /**
@@ -51,7 +51,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * if you wish to provide explicit property info.
      */
     public PropertyDescriptor[] getPropertyDescriptors() {
-        return null;
+	return null;
     }
 
     /**
@@ -59,7 +59,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * if you wish to define a default property for the bean.
      */
     public int getDefaultPropertyIndex() {
-        return -1;
+	return -1;
     }
 
     /**
@@ -67,7 +67,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * if you wish to provide explicit event set info.
      */
     public EventSetDescriptor[] getEventSetDescriptors() {
-        return null;
+	return null;
     }
 
     /**
@@ -75,7 +75,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * if you wish to define a default event for the bean.
      */
     public int getDefaultEventIndex() {
-        return -1;
+	return -1;
     }
 
     /**
@@ -83,7 +83,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * if you wish to provide explicit method info.
      */
     public MethodDescriptor[] getMethodDescriptors() {
-        return null;
+	return null;
     }
 
     /**
@@ -92,7 +92,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * BeanInfo for a base class.
      */
     public BeanInfo[] getAdditionalBeanInfo() {
-        return null;
+	return null;
     }
 
     /**
@@ -100,7 +100,7 @@ public class SimpleBeanInfo implements BeanInfo {
      * this if you want to provide icons for your bean.
      */
     public java.awt.Image getIcon(int iconKind) {
-        return null;
+	return null;
     }
 
     /**
@@ -110,37 +110,37 @@ public class SimpleBeanInfo implements BeanInfo {
      * from that file.  Typically images will be GIFs.
      * <p>
      * @param resourceName  A pathname relative to the directory
-     *          holding the class file of the current class.  For example,
-     *          "wombat.gif".
+     *		holding the class file of the current class.  For example,
+     *		"wombat.gif".
      * @return  an image object.  May be null if the load failed.
      */
     public java.awt.Image loadImage(final String resourceName) {
-        try {
-            final Class c = getClass();
-            java.awt.image.ImageProducer ip = (java.awt.image.ImageProducer)
-                java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                    public Object run() {
-                        java.net.URL url;
-                        if ((url = c.getResource(resourceName)) == null) {
-                            return null;
-                        } else {
-                            try {
-                                return url.getContent();
-                            } catch (java.io.IOException ioe) {
-                                return null;
-                            }
-                        }
-                    }
-            });
+	try {
+	    final Class c = getClass();
+	    java.awt.image.ImageProducer ip = (java.awt.image.ImageProducer)
+		java.security.AccessController.doPrivileged(
+		new java.security.PrivilegedAction() {
+		    public Object run() {
+			java.net.URL url;
+			if ((url = c.getResource(resourceName)) == null) {
+			    return null;
+			} else {
+			    try {
+				return url.getContent();
+			    } catch (java.io.IOException ioe) {
+				return null;
+			    }
+			}
+		    }
+	    });
 
-            if (ip == null)
-                return null;
-            java.awt.Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
-            return tk.createImage(ip);
-        } catch (Exception ex) {
-            return null;
-        }
+	    if (ip == null)
+		return null;
+	    java.awt.Toolkit tk = java.awt.Toolkit.getDefaultToolkit();
+	    return tk.createImage(ip);
+	} catch (Exception ex) {
+	    return null;
+	}
     }
 
 }

@@ -45,11 +45,11 @@ public class ClassRepository extends GenericDeclRepository<ClassSignature> {
 
  // private, to enforce use of static factory
     private ClassRepository(String rawSig, GenericsFactory f) {
-        super(rawSig, f);
+	super(rawSig, f);
     }
 
     protected ClassSignature parse(String s) {
-        return SignatureParser.make().parseClassSig(s);
+	return SignatureParser.make().parseClassSig(s);
     }
 
     /**
@@ -62,7 +62,7 @@ public class ClassRepository extends GenericDeclRepository<ClassSignature> {
      * information represented in the signature <tt>rawSig</tt>
      */
     public static ClassRepository make(String rawSig, GenericsFactory f) {
-        return new ClassRepository(rawSig, f);
+	return new ClassRepository(rawSig, f);
     }
 
     // public API
@@ -70,39 +70,39 @@ public class ClassRepository extends GenericDeclRepository<ClassSignature> {
  * When queried for a particular piece of type information, the
  * general pattern is to consult the corresponding cached value.
  * If the corresponding field is non-null, it is returned.
- * If not, it is created lazily. This is done by selecting the appropriate
+ * If not, it is created lazily. This is done by selecting the appropriate 
  * part of the tree and transforming it into a reflective object
- * using a visitor.
+ * using a visitor. 
  * a visitor, which is created by feeding it the factory
  * with which the repository was created.
  */
 
     public Type getSuperclass(){
-        if (superclass == null) { // lazily initialize superclass
-            Reifier r = getReifier(); // obtain visitor
-            // Extract superclass subtree from AST and reify
-            getTree().getSuperclass().accept(r);
-            // extract result from visitor and cache it
-            superclass = r.getResult();
-            }
-        return superclass; // return cached result
+	if (superclass == null) { // lazily initialize superclass
+	    Reifier r = getReifier(); // obtain visitor
+	    // Extract superclass subtree from AST and reify
+	    getTree().getSuperclass().accept(r);
+	    // extract result from visitor and cache it
+	    superclass = r.getResult();
+	    }
+	return superclass; // return cached result
     }
 
     public Type[] getSuperInterfaces(){
-        if (superInterfaces == null) { // lazily initialize super interfaces
-            // first, extract super interface subtree(s) from AST
-            TypeTree[] ts  = getTree().getSuperInterfaces();
-            // create array to store reified subtree(s)
-            Type[] sis = new Type[ts.length];
-            // reify all subtrees
-            for (int i = 0; i < ts.length; i++) {
-                Reifier r = getReifier(); // obtain visitor
-                ts[i].accept(r);// reify subtree
-                // extract result from visitor and store it
-                sis[i] = r.getResult();
-            }
-            superInterfaces = sis; // cache overall result
-        }
-        return superInterfaces.clone(); // return cached result
+	if (superInterfaces == null) { // lazily initialize super interfaces
+	    // first, extract super interface subtree(s) from AST
+	    TypeTree[] ts  = getTree().getSuperInterfaces();
+	    // create array to store reified subtree(s)
+	    Type[] sis = new Type[ts.length];
+	    // reify all subtrees
+	    for (int i = 0; i < ts.length; i++) {
+		Reifier r = getReifier(); // obtain visitor
+		ts[i].accept(r);// reify subtree
+		// extract result from visitor and store it
+		sis[i] = r.getResult();
+	    }
+	    superInterfaces = sis; // cache overall result
+	}
+	return superInterfaces.clone(); // return cached result
     }
 }

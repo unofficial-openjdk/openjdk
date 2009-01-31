@@ -28,7 +28,7 @@
 #include "inStream.h"
 #include "outStream.h"
 
-static jboolean
+static jboolean 
 lineTable(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
@@ -50,7 +50,7 @@ lineTable(PacketInputStream *in, PacketOutputStream *out)
     }
 
     /*
-     * JVMTI behavior for the calls below is unspecified for native
+     * JVMTI behavior for the calls below is unspecified for native 
      * methods, so we must check explicitly.
      */
     isNative = isMethodNative(method);
@@ -70,7 +70,7 @@ lineTable(PacketInputStream *in, PacketOutputStream *out)
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetLineNumberTable)
                 (gdata->jvmti, method, &count, &table);
     if (error == JVMTI_ERROR_ABSENT_INFORMATION) {
-        /*
+        /* 
          * Indicate no line info with an empty table. The code indices
          * are still useful, so we don't want to return an error
          */
@@ -90,8 +90,8 @@ lineTable(PacketInputStream *in, PacketOutputStream *out)
 }
 
 
-static jboolean
-doVariableTable(PacketInputStream *in, PacketOutputStream *out,
+static jboolean 
+doVariableTable(PacketInputStream *in, PacketOutputStream *out, 
                 int outputGenerics)
 {
     jvmtiError error;
@@ -112,7 +112,7 @@ doVariableTable(PacketInputStream *in, PacketOutputStream *out,
     }
 
     /*
-     * JVMTI behavior for the calls below is unspecified for native
+     * JVMTI behavior for the calls below is unspecified for native 
      * methods, so we must check explicitly.
      */
     isNative = isMethodNative(method);
@@ -141,7 +141,7 @@ doVariableTable(PacketInputStream *in, PacketOutputStream *out,
             (void)outStream_writeString(out, entry->signature);
             if (outputGenerics == 1) {
                 writeGenericSignature(out, entry->generic_signature);
-            }
+            }  
             (void)outStream_writeInt(out, entry->length);
             (void)outStream_writeInt(out, entry->slot);
 
@@ -160,25 +160,25 @@ doVariableTable(PacketInputStream *in, PacketOutputStream *out,
 }
 
 
-static jboolean
+static jboolean 
 variableTable(PacketInputStream *in, PacketOutputStream *out) {
     return doVariableTable(in, out, 0);
 }
 
-static jboolean
+static jboolean 
 variableTableWithGenerics(PacketInputStream *in, PacketOutputStream *out) {
     return doVariableTable(in, out, 1);
 }
 
 
-static jboolean
+static jboolean 
 bytecodes(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
     unsigned char * bcp;
     jint bytecodeCount;
     jmethodID method;
-
+    
     /* JVMDI needed the class, but JVMTI does not so we ignore it */
     (void)inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
@@ -205,16 +205,16 @@ bytecodes(PacketInputStream *in, PacketOutputStream *out)
         (void)outStream_writeByteArray(out, bytecodeCount, (jbyte *)bcp);
         jvmtiDeallocate(bcp);
     }
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
+static jboolean 
 isObsolete(PacketInputStream *in, PacketOutputStream *out)
 {
     jboolean isObsolete;
     jmethodID method;
-
+    
     /* JVMDI needed the class, but JVMTI does not so we ignore it */
     (void)inStream_readClassRef(getEnv(), in);
     if (inStream_error(in)) {
@@ -227,7 +227,7 @@ isObsolete(PacketInputStream *in, PacketOutputStream *out)
 
     isObsolete = isMethodObsolete(method);
     (void)outStream_writeBoolean(out, isObsolete);
-
+    
     return JNI_TRUE;
 }
 

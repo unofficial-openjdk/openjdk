@@ -24,9 +24,9 @@
 /*
  * @test
  * @bug     4994705
- *
+ * 
  * @summary deadlock in LogManager
- * @author  Serguei Spitsyn / SAP
+ * @author  Serguei Spitsyn / SAP 
  *
  * @build    LoggingDeadlock
  * @run  main/timeout=15 LoggingDeadlock
@@ -82,7 +82,7 @@ public class LoggingDeadlock {
 
         t1.start();
         t2.start();
-
+        
         t1.join();
         t2.join();
         System.out.println("\nTest passed");

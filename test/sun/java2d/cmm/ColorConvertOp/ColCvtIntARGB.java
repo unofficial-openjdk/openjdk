@@ -38,7 +38,7 @@ public class ColCvtIntARGB {
         //
         // Build a 1 pixel ARGB, non-premultiplied image
         //
-        BufferedImage src
+        BufferedImage src 
             = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 
         // Set src pixel value
@@ -53,7 +53,7 @@ public class ColCvtIntARGB {
         //
         // Test ARGB -> ARGB_PRE
         //
-        BufferedImage dst
+        BufferedImage dst 
             = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB_PRE);
         op.filter(src, dst);
         if (((dst.getRGB(0, 0) >> 24) & 0xff) != 128) {
@@ -70,3 +70,4 @@ public class ColCvtIntARGB {
         }
     }
 }
+

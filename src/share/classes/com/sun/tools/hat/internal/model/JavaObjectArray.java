@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
@@ -47,6 +47,7 @@ import java.io.IOException;
 import com.sun.tools.hat.internal.parser.ReadBuffer;
 
 /**
+ * @version     @(#)JavaObjectArray.java	1.9 06/10/25 21:22:27
  * @author      Bill Foote
  */
 public class JavaObjectArray extends JavaLazyReadObject {
@@ -54,12 +55,12 @@ public class JavaObjectArray extends JavaLazyReadObject {
     private Object clazz;  // Long before resolve, the class after resolve
 
     public JavaObjectArray(long classID, long offset) {
-        super(offset);
-        this.clazz = makeId(classID);
+	super(offset);
+	this.clazz = makeId(classID);
     }
 
     public JavaClass getClazz() {
-        return (JavaClass) clazz;
+	return (JavaClass) clazz;
     }
 
     public void resolve(Snapshot snapshot) {
@@ -68,29 +69,29 @@ public class JavaObjectArray extends JavaLazyReadObject {
         }
         long classID = getIdValue((Number)clazz);
         if (snapshot.isNewStyleArrayClass()) {
-            // Modern heap dumps do this
-            JavaThing t = snapshot.findThing(classID);
-            if (t instanceof JavaClass) {
-                clazz = (JavaClass) t;
-            }
-        }
-        if (!(clazz instanceof JavaClass)) {
-            JavaThing t = snapshot.findThing(classID);
-            if (t != null && t instanceof JavaClass) {
-                JavaClass el = (JavaClass) t;
-                String nm = el.getName();
-                if (!nm.startsWith("[")) {
-                    nm = "L" + el.getName() + ";";
-                }
-                clazz = snapshot.getArrayClass(nm);
-            }
-        }
+	    // Modern heap dumps do this
+	    JavaThing t = snapshot.findThing(classID);
+	    if (t instanceof JavaClass) {
+		clazz = (JavaClass) t;
+	    }
+	} 
+	if (!(clazz instanceof JavaClass)) {
+	    JavaThing t = snapshot.findThing(classID);
+	    if (t != null && t instanceof JavaClass) {
+	        JavaClass el = (JavaClass) t;
+	        String nm = el.getName();
+	        if (!nm.startsWith("[")) {
+	            nm = "L" + el.getName() + ";";
+	        }	 
+               	clazz = snapshot.getArrayClass(nm);
+	    } 
+	}
 
         if (!(clazz instanceof JavaClass)) {
-            clazz = snapshot.getOtherArrayType();
+	    clazz = snapshot.getOtherArrayType();
         }
-        ((JavaClass)clazz).addInstance(this);
-        super.resolve(snapshot);
+	((JavaClass)clazz).addInstance(this);
+	super.resolve(snapshot);
     }
 
     public JavaThing[] getValues() {
@@ -98,25 +99,25 @@ public class JavaObjectArray extends JavaLazyReadObject {
     }
 
     public JavaThing[] getElements() {
-        Snapshot snapshot = getClazz().getSnapshot();
+	Snapshot snapshot = getClazz().getSnapshot();
         byte[] data = getValue();
         final int idSize = snapshot.getIdentifierSize();
         final int numElements = data.length / idSize;
-        JavaThing[] elements = new JavaThing[numElements];
+	JavaThing[] elements = new JavaThing[numElements];
         int index = 0;
-        for (int i = 0; i < elements.length; i++) {
+	for (int i = 0; i < elements.length; i++) {
             long id = objectIdAt(index, data);
             index += idSize;
             elements[i] = snapshot.findThing(id);
-        }
-        return elements;
+	}
+	return elements;
     }
 
     public int compareTo(JavaThing other) {
-        if (other instanceof JavaObjectArray) {
-            return 0;
-        }
-        return super.compareTo(other);
+	if (other instanceof JavaObjectArray) {
+	    return 0;
+	}
+	return super.compareTo(other);
     }
 
     public int getLength() {
@@ -124,13 +125,13 @@ public class JavaObjectArray extends JavaLazyReadObject {
     }
 
     public void visitReferencedObjects(JavaHeapObjectVisitor v) {
-        super.visitReferencedObjects(v);
+	super.visitReferencedObjects(v);
         JavaThing[] elements = getElements();
-        for (int i = 0; i < elements.length; i++) {
-            if (elements[i] != null && elements[i] instanceof JavaHeapObject) {
-                v.visit((JavaHeapObject) elements[i]);
-            }
-        }
+	for (int i = 0; i < elements.length; i++) {
+	    if (elements[i] != null && elements[i] instanceof JavaHeapObject) {
+		v.visit((JavaHeapObject) elements[i]);
+	    }
+	}
     }
 
     /**
@@ -139,12 +140,12 @@ public class JavaObjectArray extends JavaLazyReadObject {
      */
     public String describeReferenceTo(JavaThing target, Snapshot ss) {
         JavaThing[] elements = getElements();
-        for (int i = 0; i < elements.length; i++) {
-            if (elements[i] == target) {
-                return "Element " + i + " of " + this;
-            }
-        }
-        return super.describeReferenceTo(target, ss);
+	for (int i = 0; i < elements.length; i++) {
+	    if (elements[i] == target) {
+		return "Element " + i + " of " + this;
+	    }
+	}
+	return super.describeReferenceTo(target, ss);
     }
 
     /*

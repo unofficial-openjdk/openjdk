@@ -44,7 +44,7 @@ import java.lang.annotation.Annotation;
  * <p>Similarly, attempting to read an enum-valued member will result in
  * a {@link EnumConstantNotPresentException} if the enum constant in the
  * annotation is no longer present in the enum type.
- *
+ * 
  * <p>Finally, Attempting to read a member whose definition has evolved
  * incompatibly will result in a {@link
  * java.lang.annotation.AnnotationTypeMismatchException} or an
@@ -72,7 +72,7 @@ public interface AnnotatedElement {
      * Returns this element's annotation for the specified type if
      * such an annotation is present, else null.
      *
-     * @param annotationClass the Class object corresponding to the
+     * @param annotationClass the Class object corresponding to the 
      *        annotation type
      * @return this element's annotation for the specified annotation type if
      *     present on this element, else null

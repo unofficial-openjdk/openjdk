@@ -31,7 +31,7 @@ import sun.management.counter.*;
 /**
  * Implementation class of HotspotMemoryMBean interface.
  *
- * Internal, uncommitted management interface for Hotspot memory
+ * Internal, uncommitted management interface for Hotspot memory 
  * system.
  *
  */
@@ -42,7 +42,7 @@ class HotspotMemory
 
     /**
      * Constructor of HotspotRuntime class.
-     */
+     */ 
     HotspotMemory(VMManagement vm) {
         jvm = vm;
     }
@@ -55,6 +55,6 @@ class HotspotMemory
         JAVA_GC + "|" + COM_SUN_GC + "|" + SUN_GC;
 
     public java.util.List<Counter> getInternalMemoryCounters() {
-        return jvm.getInternalCounters(GC_COUNTER_NAME_PATTERN);
-    }
+        return jvm.getInternalCounters(GC_COUNTER_NAME_PATTERN); 
+    } 
 }

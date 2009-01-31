@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -35,7 +36,7 @@ import sun.security.krb5.internal.*;
 import java.io.IOException;
 import java.io.File;
 
-//Windows supports the "API: cache" type, which is a shared memory cache.  This is
+//Windows supports the "API: cache" type, which is a shared memory cache.  This is 
 //implemented by krbcc32.dll as part of the MIT Kerberos for Win32 distribution.
 //MemoryCredentialsCache will provide future functions to access shared memeory cache on
 //Windows platform. Native code implementation may be necessary.
@@ -44,15 +45,16 @@ import java.io.File;
  * cache on Windows platforms.
  *
  * @author Yanni Zhang
+ * @version 1.00
  */
 public abstract class MemoryCredentialsCache extends CredentialsCache {
 
     private static CredentialsCache getCCacheInstance(PrincipalName p) {
-        return null;
+	return null;
     }
 
     private static CredentialsCache getCCacheInstance(PrincipalName p, File cacheFile) {
-        return null;
+	return null;
     }
 
 
@@ -64,8 +66,8 @@ public abstract class MemoryCredentialsCache extends CredentialsCache {
 
     public abstract Credentials[] getCredsList();
 
-    public abstract Credentials getCreds(PrincipalName sname, Realm srealm) ;
-
+    public abstract Credentials getCreds(PrincipalName sname, Realm srealm) ;		 
+    
     public abstract PrincipalName getPrimaryPrincipal();
 
-}
+}  

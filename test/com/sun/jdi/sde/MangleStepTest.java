@@ -30,7 +30,7 @@ public class MangleStepTest extends TestScaffold {
         this.stratum = stratum;
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         testSetUp();
         for (int i = 0; i < args.length; ++i) {
             new MangleStepTest(args[i]).startTests();
@@ -40,7 +40,7 @@ public class MangleStepTest extends TestScaffold {
         }
 
     }
-
+    
     /********** test set-up **********/
 
     static void testSetUp() throws Exception {
@@ -49,7 +49,7 @@ public class MangleStepTest extends TestScaffold {
                            new File(System.getProperty("test.src", "."),
                                     "Mangle.sde"));
     }
-
+    
     /********** test assist **********/
 
     void lineMatch(Location loc, int javaLine, int defaultLine) {
@@ -69,12 +69,12 @@ public class MangleStepTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          */
         int[] lines;
         int[] jLines;
         String targetName = "onion.pickle.Mangle";
-        startUp(targetName);
+	startUp(targetName);
         if (!stratum.equals("unset")) {
             vm().setDefaultStratum(stratum);
         }
@@ -108,7 +108,7 @@ public class MangleStepTest extends TestScaffold {
          * resume the target to completion
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -121,3 +121,4 @@ public class MangleStepTest extends TestScaffold {
         }
     }
 }
+

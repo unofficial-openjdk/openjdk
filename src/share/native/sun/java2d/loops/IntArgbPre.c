@@ -109,14 +109,14 @@ NativePrimitive IntArgbPrePrimitives[] = {
 jboolean RegisterIntArgbPre(JNIEnv *env)
 {
     return RegisterPrimitives(env, IntArgbPrePrimitives,
-                              ArraySize(IntArgbPrePrimitives));
+			      ArraySize(IntArgbPrePrimitives));
 }
 
 jint PixelForIntArgbPre(SurfaceDataRasInfo *pRasInfo, jint rgb)
 {
     jint a, r, g, b;
     if (((rgb >> 24) + 1) == 0) {
-        return rgb;
+	return rgb;
     }
     ExtractIntDcmComponents1234(rgb, a, r, g, b);
     r = MUL8(a, r);

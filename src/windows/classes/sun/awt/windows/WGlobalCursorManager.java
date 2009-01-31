@@ -43,7 +43,7 @@ public final class WGlobalCursorManager extends GlobalCursorManager {
      * button released message. Should not be called during a mouse drag.
      */
     public static void nativeUpdateCursor(Component heavy) {
-        WGlobalCursorManager.getCursorManager().updateCursorLater(heavy);
+	WGlobalCursorManager.getCursorManager().updateCursorLater(heavy);
     }
 
     protected native void setCursor(Component comp, Cursor cursor, boolean u);

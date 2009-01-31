@@ -238,7 +238,7 @@ public abstract class CipherSpi {
      * not exist
      */
     protected abstract void engineSetMode(String mode)
-        throws NoSuchAlgorithmException;
+	throws NoSuchAlgorithmException;
 
     /**
      * Sets the padding mechanism of this cipher.
@@ -249,7 +249,7 @@ public abstract class CipherSpi {
      * does not exist
      */
     protected abstract void engineSetPadding(String padding)
-        throws NoSuchPaddingException;
+	throws NoSuchPaddingException;
 
     /**
      * Returns the block size (in bytes).
@@ -344,8 +344,8 @@ public abstract class CipherSpi {
      * determined from the given key.
      */
     protected abstract void engineInit(int opmode, Key key,
-                                       SecureRandom random)
-        throws InvalidKeyException;
+				       SecureRandom random)
+	throws InvalidKeyException;
 
     /**
      * Initializes this cipher with a key, a set of
@@ -391,9 +391,9 @@ public abstract class CipherSpi {
      * algorithm parameters and <code>params</code> is null.
      */
     protected abstract void engineInit(int opmode, Key key,
-                                       AlgorithmParameterSpec params,
-                                       SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException;
+				       AlgorithmParameterSpec params,
+				       SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException;
 
     /**
      * Initializes this cipher with a key, a set of
@@ -439,9 +439,9 @@ public abstract class CipherSpi {
      * algorithm parameters and <code>params</code> is null.
      */
     protected abstract void engineInit(int opmode, Key key,
-                                       AlgorithmParameters params,
-                                       SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException;
+				       AlgorithmParameters params,
+				       SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException;
 
     /**
      * Continues a multiple-part encryption or decryption operation
@@ -462,7 +462,7 @@ public abstract class CipherSpi {
      * new block.
      */
     protected abstract byte[] engineUpdate(byte[] input, int inputOffset,
-                                           int inputLen);
+					   int inputLen);
 
     /**
      * Continues a multiple-part encryption or decryption operation
@@ -491,9 +491,9 @@ public abstract class CipherSpi {
      * to hold the result
      */
     protected abstract int engineUpdate(byte[] input, int inputOffset,
-                                        int inputLen, byte[] output,
-                                        int outputOffset)
-        throws ShortBufferException;
+					int inputLen, byte[] output,
+					int outputOffset)
+	throws ShortBufferException;
 
     /**
      * Continues a multiple-part encryption or decryption operation
@@ -526,16 +526,16 @@ public abstract class CipherSpi {
      * @since 1.5
      */
     protected int engineUpdate(ByteBuffer input, ByteBuffer output)
-            throws ShortBufferException {
-        try {
-            return bufferCrypt(input, output, true);
-        } catch (IllegalBlockSizeException e) {
-            // never thrown for engineUpdate()
-            throw new ProviderException("Internal error in update()");
-        } catch (BadPaddingException e) {
-            // never thrown for engineUpdate()
-            throw new ProviderException("Internal error in update()");
-        }
+	    throws ShortBufferException {
+	try {
+	    return bufferCrypt(input, output, true);
+	} catch (IllegalBlockSizeException e) {
+	    // never thrown for engineUpdate()
+	    throw new ProviderException("Internal error in update()");
+	} catch (BadPaddingException e) {
+	    // never thrown for engineUpdate()
+	    throw new ProviderException("Internal error in update()");
+	}
     }
 
     /**
@@ -577,8 +577,8 @@ public abstract class CipherSpi {
      * bounded by the appropriate padding bytes
      */
     protected abstract byte[] engineDoFinal(byte[] input, int inputOffset,
-                                            int inputLen)
-        throws IllegalBlockSizeException, BadPaddingException;
+					    int inputLen)
+	throws IllegalBlockSizeException, BadPaddingException;
 
     /**
      * Encrypts or decrypts data in a single-part operation,
@@ -628,10 +628,10 @@ public abstract class CipherSpi {
      * bounded by the appropriate padding bytes
      */
     protected abstract int engineDoFinal(byte[] input, int inputOffset,
-                                         int inputLen, byte[] output,
-                                         int outputOffset)
-        throws ShortBufferException, IllegalBlockSizeException,
-               BadPaddingException;
+					 int inputLen, byte[] output,
+					 int outputOffset)
+	throws ShortBufferException, IllegalBlockSizeException,
+	       BadPaddingException;
 
     /**
      * Encrypts or decrypts data in a single-part operation,
@@ -683,16 +683,16 @@ public abstract class CipherSpi {
      * @since 1.5
      */
     protected int engineDoFinal(ByteBuffer input, ByteBuffer output)
-            throws ShortBufferException, IllegalBlockSizeException,
-            BadPaddingException {
-        return bufferCrypt(input, output, false);
+	    throws ShortBufferException, IllegalBlockSizeException,
+	    BadPaddingException {
+	return bufferCrypt(input, output, false);
     }
 
     // copied from sun.security.jca.JCAUtil
     // will be changed to reference that method once that code has been
     // integrated and promoted
     static int getTempArraySize(int totalSize) {
-        return Math.min(4096, totalSize);
+	return Math.min(4096, totalSize);
     }
 
     /**
@@ -700,111 +700,111 @@ public abstract class CipherSpi {
      * engineUpdate() and engineDoFinal().
      */
     private int bufferCrypt(ByteBuffer input, ByteBuffer output,
-            boolean isUpdate) throws ShortBufferException,
-            IllegalBlockSizeException, BadPaddingException {
-        if ((input == null) || (output == null)) {
-            throw new NullPointerException
-                ("Input and output buffers must not be null");
-        }
-        int inPos = input.position();
-        int inLimit = input.limit();
-        int inLen = inLimit - inPos;
-        if (isUpdate && (inLen == 0)) {
-            return 0;
-        }
-        int outLenNeeded = engineGetOutputSize(inLen);
-        if (output.remaining() < outLenNeeded) {
-            throw new ShortBufferException("Need at least " + outLenNeeded
-                + " bytes of space in output buffer");
-        }
+	    boolean isUpdate) throws ShortBufferException,
+	    IllegalBlockSizeException, BadPaddingException {
+	if ((input == null) || (output == null)) {
+	    throw new NullPointerException
+		("Input and output buffers must not be null");
+	}
+	int inPos = input.position();
+	int inLimit = input.limit();
+	int inLen = inLimit - inPos;
+	if (isUpdate && (inLen == 0)) {
+	    return 0;
+	}
+	int outLenNeeded = engineGetOutputSize(inLen);
+	if (output.remaining() < outLenNeeded) {
+	    throw new ShortBufferException("Need at least " + outLenNeeded
+		+ " bytes of space in output buffer");
+	}
 
-        boolean a1 = input.hasArray();
-        boolean a2 = output.hasArray();
+	boolean a1 = input.hasArray();
+	boolean a2 = output.hasArray();
 
-        if (a1 && a2) {
-            byte[] inArray = input.array();
-            int inOfs = input.arrayOffset() + inPos;
-            byte[] outArray = output.array();
-            int outPos = output.position();
-            int outOfs = output.arrayOffset() + outPos;
-            int n;
-            if (isUpdate) {
-                n = engineUpdate(inArray, inOfs, inLen, outArray, outOfs);
-            } else {
-                n = engineDoFinal(inArray, inOfs, inLen, outArray, outOfs);
-            }
-            input.position(inLimit);
-            output.position(outPos + n);
-            return n;
-        } else if (!a1 && a2) {
-            int outPos = output.position();
-            byte[] outArray = output.array();
-            int outOfs = output.arrayOffset() + outPos;
-            byte[] inArray = new byte[getTempArraySize(inLen)];
-            int total = 0;
-            while (inLen > 0) {
-                int chunk = Math.min(inLen, inArray.length);
-                input.get(inArray, 0, chunk);
-                int n;
-                if (isUpdate || (inLen != chunk)) {
-                    n = engineUpdate(inArray, 0, chunk, outArray, outOfs);
-                } else {
-                    n = engineDoFinal(inArray, 0, chunk, outArray, outOfs);
-                }
-                total += n;
-                outOfs += n;
-                inLen -= chunk;
-            }
-            output.position(outPos + total);
-            return total;
-        } else { // output is not backed by an accessible byte[]
-            byte[] inArray;
-            int inOfs;
-            if (a1) {
-                inArray = input.array();
-                inOfs = input.arrayOffset() + inPos;
-            } else {
-                inArray = new byte[getTempArraySize(inLen)];
-                inOfs = 0;
-            }
-            byte[] outArray = new byte[getTempArraySize(outLenNeeded)];
-            int outSize = outArray.length;
-            int total = 0;
-            boolean resized = false;
-            while (inLen > 0) {
-                int chunk = Math.min(inLen, outSize);
-                if ((a1 == false) && (resized == false)) {
-                    input.get(inArray, 0, chunk);
-                    inOfs = 0;
-                }
-                try {
-                    int n;
-                    if (isUpdate || (inLen != chunk)) {
-                        n = engineUpdate(inArray, inOfs, chunk, outArray, 0);
-                    } else {
-                        n = engineDoFinal(inArray, inOfs, chunk, outArray, 0);
-                    }
-                    resized = false;
-                    inOfs += chunk;
-                    inLen -= chunk;
-                    output.put(outArray, 0, n);
-                    total += n;
-                } catch (ShortBufferException e) {
-                    if (resized) {
-                        // we just resized the output buffer, but it still
-                        // did not work. Bug in the provider, abort
-                        throw (ProviderException)new ProviderException
-                            ("Could not determine buffer size").initCause(e);
-                    }
-                    // output buffer is too small, realloc and try again
-                    resized = true;
-                    int newOut = engineGetOutputSize(chunk);
-                    outArray = new byte[newOut];
-                }
-            }
-            input.position(inLimit);
-            return total;
-        }
+	if (a1 && a2) {
+	    byte[] inArray = input.array();
+	    int inOfs = input.arrayOffset() + inPos;
+	    byte[] outArray = output.array();
+	    int outPos = output.position();
+	    int outOfs = output.arrayOffset() + outPos;
+	    int n;
+	    if (isUpdate) {
+		n = engineUpdate(inArray, inOfs, inLen, outArray, outOfs);
+	    } else {
+		n = engineDoFinal(inArray, inOfs, inLen, outArray, outOfs);
+	    }
+	    input.position(inLimit);
+	    output.position(outPos + n);
+	    return n;
+	} else if (!a1 && a2) {
+	    int outPos = output.position();
+	    byte[] outArray = output.array();
+	    int outOfs = output.arrayOffset() + outPos;
+	    byte[] inArray = new byte[getTempArraySize(inLen)];
+	    int total = 0;
+	    while (inLen > 0) {
+		int chunk = Math.min(inLen, inArray.length);
+		input.get(inArray, 0, chunk);
+		int n;
+		if (isUpdate || (inLen != chunk)) {
+		    n = engineUpdate(inArray, 0, chunk, outArray, outOfs);
+		} else {
+		    n = engineDoFinal(inArray, 0, chunk, outArray, outOfs);
+		}
+		total += n;
+		outOfs += n;
+		inLen -= chunk;
+	    }
+	    output.position(outPos + total);
+	    return total;
+	} else { // output is not backed by an accessible byte[]
+	    byte[] inArray;
+	    int inOfs;
+	    if (a1) {
+		inArray = input.array();
+		inOfs = input.arrayOffset() + inPos;
+	    } else {
+		inArray = new byte[getTempArraySize(inLen)];
+		inOfs = 0;
+	    }
+	    byte[] outArray = new byte[getTempArraySize(outLenNeeded)];
+	    int outSize = outArray.length;
+	    int total = 0;
+	    boolean resized = false;
+	    while (inLen > 0) {
+		int chunk = Math.min(inLen, outSize);
+		if ((a1 == false) && (resized == false)) {
+		    input.get(inArray, 0, chunk);
+		    inOfs = 0;
+		}
+		try {
+		    int n;
+		    if (isUpdate || (inLen != chunk)) {
+			n = engineUpdate(inArray, inOfs, chunk, outArray, 0);
+		    } else {
+			n = engineDoFinal(inArray, inOfs, chunk, outArray, 0);
+		    }
+		    resized = false;
+		    inOfs += chunk;
+		    inLen -= chunk;
+		    output.put(outArray, 0, n);
+		    total += n;
+		} catch (ShortBufferException e) {
+		    if (resized) {
+			// we just resized the output buffer, but it still
+			// did not work. Bug in the provider, abort
+			throw (ProviderException)new ProviderException
+			    ("Could not determine buffer size").initCause(e);
+		    }
+		    // output buffer is too small, realloc and try again
+		    resized = true;
+		    int newOut = engineGetOutputSize(chunk);
+		    outArray = new byte[newOut];
+		}
+	    }
+	    input.position(inLimit);
+	    return total;
+	}
     }
 
     /**
@@ -832,9 +832,9 @@ public abstract class CipherSpi {
      * being passed to a software-only cipher).
      */
     protected byte[] engineWrap(Key key)
-        throws IllegalBlockSizeException, InvalidKeyException
+	throws IllegalBlockSizeException, InvalidKeyException
     {
-        throw new UnsupportedOperationException();
+	throw new UnsupportedOperationException();
     }
 
     /**
@@ -868,11 +868,11 @@ public abstract class CipherSpi {
      * the <code>wrappedKeyAlgorithm</code>.
      */
     protected Key engineUnwrap(byte[] wrappedKey,
-                               String wrappedKeyAlgorithm,
-                               int wrappedKeyType)
-        throws InvalidKeyException, NoSuchAlgorithmException
+			       String wrappedKeyAlgorithm,
+			       int wrappedKeyType)
+	throws InvalidKeyException, NoSuchAlgorithmException
     {
-        throw new UnsupportedOperationException();
+	throw new UnsupportedOperationException();
     }
 
     /**
@@ -888,8 +888,8 @@ public abstract class CipherSpi {
      * @exception InvalidKeyException if <code>key</code> is invalid.
      */
     protected int engineGetKeySize(Key key)
-        throws InvalidKeyException
+	throws InvalidKeyException
     {
-        throw new UnsupportedOperationException();
+	throw new UnsupportedOperationException();
     }
 }

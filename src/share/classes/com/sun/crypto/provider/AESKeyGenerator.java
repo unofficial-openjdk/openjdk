@@ -43,30 +43,30 @@ import javax.crypto.spec.SecretKeySpec;
  */
 
 public final class AESKeyGenerator extends KeyGeneratorSpi {
-
+    
     private SecureRandom random = null;
     private int keySize = 16; // default keysize (in number of bytes)
 
     /**
      * Verify the SunJCE provider in the constructor.
-     *
+     * 
      * @exception SecurityException if fails to verify
      * its own integrity
      */
     public AESKeyGenerator() {
         if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have " +
-                                        "been tampered.");
-        }
+	    throw new SecurityException("The SunJCE provider may have " +
+					"been tampered.");
+	}
     }
 
     /**
      * Initializes this key generator.
-     *
+     * 
      * @param random the source of randomness for this generator
      */
     protected void engineInit(SecureRandom random) {
-        this.random = random;
+	this.random = random;
     }
 
     /**
@@ -80,10 +80,10 @@ public final class AESKeyGenerator extends KeyGeneratorSpi {
      * inappropriate for this key generator
      */
     protected void engineInit(AlgorithmParameterSpec params,
-                              SecureRandom random)
-        throws InvalidAlgorithmParameterException {
-            throw new InvalidAlgorithmParameterException
-                ("AES key generation does not take any parameters");
+			      SecureRandom random)
+	throws InvalidAlgorithmParameterException {
+	    throw new InvalidAlgorithmParameterException
+		("AES key generation does not take any parameters");
     }
 
     /**
@@ -95,13 +95,13 @@ public final class AESKeyGenerator extends KeyGeneratorSpi {
      * @param random the source of randomness for this key generator
      */
     protected void engineInit(int keysize, SecureRandom random) {
-        if (((keysize % 8) != 0) ||
-            (!AESCrypt.isKeySizeValid(keysize/8))) {
-            throw new InvalidParameterException
-                ("Wrong keysize: must be equal to 128, 192 or 256");
-        }
-        this.keySize = keysize/8;
-        this.engineInit(random);
+	if (((keysize % 8) != 0) || 
+	    (!AESCrypt.isKeySizeValid(keysize/8))) { 
+	    throw new InvalidParameterException
+		("Wrong keysize: must be equal to 128, 192 or 256");
+	}
+	this.keySize = keysize/8;
+	this.engineInit(random);
     }
 
     /**
@@ -110,15 +110,15 @@ public final class AESKeyGenerator extends KeyGeneratorSpi {
      * @return the new AES key
      */
     protected SecretKey engineGenerateKey() {
-        SecretKeySpec aesKey = null;
+	SecretKeySpec aesKey = null;
 
-        if (this.random == null) {
-            this.random = SunJCE.RANDOM;
-        }
+	if (this.random == null) {
+	    this.random = SunJCE.RANDOM;
+	}
 
-        byte[] keyBytes = new byte[keySize];
-        this.random.nextBytes(keyBytes);
-        aesKey = new SecretKeySpec(keyBytes, "AES");
-        return aesKey;
+	byte[] keyBytes = new byte[keySize];
+	this.random.nextBytes(keyBytes);
+	aesKey = new SecretKeySpec(keyBytes, "AES");
+	return aesKey;
     }
 }

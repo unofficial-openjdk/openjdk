@@ -33,7 +33,7 @@ import sun.awt.X11InputMethodDescriptor;
  * Provides sufficient information about an input method
  * to enable selection and loading of that input method.
  * The input method itself is only loaded when it is actually used.
- *
+ * 
  * @since JDK1.3
  */
 

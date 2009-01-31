@@ -33,7 +33,7 @@ import java.awt.Color;
 import javax.swing.Icon;
 
 /**
- * A class which provides a matte-like border of either a solid color
+ * A class which provides a matte-like border of either a solid color 
  * or a tiled icon.
  * <p>
  * <strong>Warning:</strong>
@@ -45,6 +45,7 @@ import javax.swing.Icon;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Amy Fowler
  */
 public class MatteBorder extends EmptyBorder
@@ -191,7 +192,16 @@ public class MatteBorder extends EmptyBorder
     }
 
     /**
-     * Reinitialize the insets parameter with this Border's current Insets.
+     * Returns the insets of the border.
+     * @param c the component for which this border insets value applies
+     * @since 1.3
+     */
+    public Insets getBorderInsets(Component c) {
+        return getBorderInsets();
+    }
+
+    /** 
+     * Reinitialize the insets parameter with this Border's current Insets. 
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      * @since 1.3
@@ -210,7 +220,7 @@ public class MatteBorder extends EmptyBorder
 
     /* should be protected once api changes area allowed */
     private Insets computeInsets(Insets insets) {
-        if (tileIcon != null && top == -1 && bottom == -1 &&
+        if (tileIcon != null && top == -1 && bottom == -1 && 
             left == -1 && right == -1) {
             int w = tileIcon.getIconWidth();
             int h = tileIcon.getIconHeight();
@@ -248,9 +258,9 @@ public class MatteBorder extends EmptyBorder
     /**
      * Returns whether or not the border is opaque.
      */
-    public boolean isBorderOpaque() {
+    public boolean isBorderOpaque() { 
         // If a tileIcon is set, then it may contain transparent bits
-        return color != null;
+        return color != null; 
     }
 
 }

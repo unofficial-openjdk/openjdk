@@ -46,6 +46,7 @@ import java.net.SocketException;
  * @since 1.4
  * @see SocketFactory
  *
+ * @version %I%
  * @author David Brownell
  */
 public abstract class ServerSocketFactory
@@ -54,7 +55,7 @@ public abstract class ServerSocketFactory
     // NOTE:  JDK 1.1 bug in class GC, this can get collected
     // even though it's always accessible via getDefault().
     //
-    private static ServerSocketFactory          theFactory;
+    private static ServerSocketFactory		theFactory;
 
 
     /**
@@ -69,19 +70,19 @@ public abstract class ServerSocketFactory
      */
     public static ServerSocketFactory getDefault()
     {
-        synchronized (ServerSocketFactory.class) {
-            if (theFactory == null) {
-                //
-                // Different implementations of this method could
-                // work rather differently.  For example, driving
-                // this from a system property, or using a different
-                // implementation than JavaSoft's.
-                //
-                theFactory = new DefaultServerSocketFactory();
-            }
-        }
+	synchronized (ServerSocketFactory.class) {
+	    if (theFactory == null) {
+		//
+		// Different implementations of this method could
+		// work rather differently.  For example, driving
+		// this from a system property, or using a different
+		// implementation than JavaSoft's.
+		//
+		theFactory = new DefaultServerSocketFactory();
+	    }
+	}
 
-        return theFactory;
+	return theFactory;
     }
 
 
@@ -96,58 +97,32 @@ public abstract class ServerSocketFactory
      * @see java.net.ServerSocket#ServerSocket()
      */
     public ServerSocket createServerSocket() throws IOException {
-        throw new SocketException("Unbound server sockets not implemented");
+	throw new SocketException("Unbound server sockets not implemented");
     }
 
     /**
      * Returns a server socket bound to the specified port.
      * The socket is configured with the socket options
      * (such as accept timeout) given to this factory.
-     * <P>
-     * If there is a security manager, its <code>checkListen</code>
-     * method is called with the <code>port</code> argument as its
-     * argument to ensure the operation is allowed. This could result
-     * in a SecurityException.
      *
      * @param port the port to listen to
      * @return the <code>ServerSocket</code>
-     * @throws IOException for networking errors
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkListen</code> method doesn't allow the operation.
-     * @throws IllegalArgumentException if the port parameter is outside the
-     *         specified range of valid port values, which is between 0 and
-     *         65535, inclusive.
-     * @see    SecurityManager#checkListen
+     * @exception IOException for networking errors
      * @see java.net.ServerSocket#ServerSocket(int)
      */
     public abstract ServerSocket createServerSocket(int port)
-        throws IOException;
+	throws IOException;
 
 
     /**
      * Returns a server socket bound to the specified port, and uses the
      * specified connection backlog.  The socket is configured with
      * the socket options (such as accept timeout) given to this factory.
-     * <P>
-     * The <code>backlog</code> argument must be a positive
-     * value greater than 0. If the value passed if equal or less
-     * than 0, then the default value will be assumed.
-     * <P>
-     * If there is a security manager, its <code>checkListen</code>
-     * method is called with the <code>port</code> argument as its
-     * argument to ensure the operation is allowed. This could result
-     * in a SecurityException.
      *
      * @param port the port to listen to
      * @param backlog how many connections are queued
      * @return the <code>ServerSocket</code>
-     * @throws IOException for networking errors
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkListen</code> method doesn't allow the operation.
-     * @throws IllegalArgumentException if the port parameter is outside the
-     *         specified range of valid port values, which is between 0 and
-     *         65535, inclusive.
-     * @see    SecurityManager#checkListen
+     * @exception IOException for networking errors
      * @see java.net.ServerSocket#ServerSocket(int, int)
      */
     public abstract ServerSocket
@@ -158,34 +133,18 @@ public abstract class ServerSocketFactory
     /**
      * Returns a server socket bound to the specified port,
      * with a specified listen backlog and local IP.
-     * <P>
      * The <code>ifAddress</code> argument can be used on a multi-homed
      * host for a <code>ServerSocket</code> that will only accept connect
      * requests to one of its addresses. If <code>ifAddress</code> is null,
      * it will accept connections on all local addresses. The socket is
      * configured with the socket options (such as accept timeout) given
      * to this factory.
-     * <P>
-     * The <code>backlog</code> argument must be a positive
-     * value greater than 0. If the value passed if equal or less
-     * than 0, then the default value will be assumed.
-     * <P>
-     * If there is a security manager, its <code>checkListen</code>
-     * method is called with the <code>port</code> argument as its
-     * argument to ensure the operation is allowed. This could result
-     * in a SecurityException.
      *
      * @param port the port to listen to
      * @param backlog how many connections are queued
      * @param ifAddress the network interface address to use
      * @return the <code>ServerSocket</code>
-     * @throws IOException for networking errors
-     * @throws SecurityException if a security manager exists and its
-     *         <code>checkListen</code> method doesn't allow the operation.
-     * @throws IllegalArgumentException if the port parameter is outside the
-     *         specified range of valid port values, which is between 0 and
-     *         65535, inclusive.
-     * @see    SecurityManager#checkListen
+     * @exception IOException for networking errors
      * @see java.net.ServerSocket#ServerSocket(int, int, java.net.InetAddress)
      */
     public abstract ServerSocket
@@ -203,31 +162,31 @@ class DefaultServerSocketFactory extends ServerSocketFactory {
 
     DefaultServerSocketFactory()
     {
-        /* NOTHING */
+	/* NOTHING */
     }
 
     public ServerSocket createServerSocket()
     throws IOException
     {
-        return new ServerSocket();
+	return new ServerSocket();
     }
 
     public ServerSocket createServerSocket(int port)
     throws IOException
     {
-        return new ServerSocket(port);
+	return new ServerSocket(port);
     }
 
     public ServerSocket createServerSocket(int port, int backlog)
     throws IOException
     {
-        return new ServerSocket(port, backlog);
+	return new ServerSocket(port, backlog);
     }
 
     public ServerSocket
     createServerSocket(int port, int backlog, InetAddress ifAddress)
     throws IOException
     {
-        return new ServerSocket(port, backlog, ifAddress);
+	return new ServerSocket(port, backlog, ifAddress);
     }
 }

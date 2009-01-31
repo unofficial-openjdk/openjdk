@@ -34,6 +34,7 @@ import java.util.Date;
  * Print a brief summary of the LogRecord in a human readable
  * format.  The summary will typically be 1 or 2 lines.
  *
+ * @version %I%, %G%
  * @since 1.4
  */
 
@@ -61,42 +62,42 @@ public class SimpleFormatter extends Formatter {
      * @return a formatted log record
      */
     public synchronized String format(LogRecord record) {
-        StringBuffer sb = new StringBuffer();
-        // Minimize memory allocations here.
-        dat.setTime(record.getMillis());
-        args[0] = dat;
-        StringBuffer text = new StringBuffer();
-        if (formatter == null) {
-            formatter = new MessageFormat(format);
-        }
-        formatter.format(args, text, null);
-        sb.append(text);
-        sb.append(" ");
-        if (record.getSourceClassName() != null) {
-            sb.append(record.getSourceClassName());
-        } else {
-            sb.append(record.getLoggerName());
-        }
-        if (record.getSourceMethodName() != null) {
-            sb.append(" ");
-            sb.append(record.getSourceMethodName());
-        }
-        sb.append(lineSeparator);
-        String message = formatMessage(record);
-        sb.append(record.getLevel().getLocalizedName());
-        sb.append(": ");
-        sb.append(message);
-        sb.append(lineSeparator);
-        if (record.getThrown() != null) {
-            try {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                record.getThrown().printStackTrace(pw);
-                pw.close();
-                sb.append(sw.toString());
-            } catch (Exception ex) {
-            }
-        }
-        return sb.toString();
+	StringBuffer sb = new StringBuffer();
+	// Minimize memory allocations here.
+	dat.setTime(record.getMillis());
+	args[0] = dat;
+	StringBuffer text = new StringBuffer();
+	if (formatter == null) {
+	    formatter = new MessageFormat(format);
+	}
+	formatter.format(args, text, null);
+	sb.append(text);
+	sb.append(" ");
+	if (record.getSourceClassName() != null) {	
+	    sb.append(record.getSourceClassName());
+	} else {
+	    sb.append(record.getLoggerName());
+	}
+	if (record.getSourceMethodName() != null) {	
+	    sb.append(" ");
+	    sb.append(record.getSourceMethodName());
+	}
+	sb.append(lineSeparator);
+	String message = formatMessage(record);
+	sb.append(record.getLevel().getLocalizedName());
+	sb.append(": ");
+	sb.append(message);
+	sb.append(lineSeparator);
+	if (record.getThrown() != null) {
+	    try {
+	        StringWriter sw = new StringWriter();
+	        PrintWriter pw = new PrintWriter(sw);
+	        record.getThrown().printStackTrace(pw);
+	        pw.close();
+		sb.append(sw.toString());
+	    } catch (Exception ex) {
+	    }
+	}
+	return sb.toString();
     }
 }

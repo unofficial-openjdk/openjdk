@@ -33,6 +33,7 @@ import java.awt.Shape;
  * with colored areas.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public interface Highlighter {
 
@@ -111,15 +112,15 @@ public interface Highlighter {
      */
     public interface HighlightPainter {
 
-        /**
-         * Renders the highlight.
+	/**
+	 * Renders the highlight.
          *
          * @param g the graphics context
          * @param p0 the starting offset in the model >= 0
          * @param p1 the ending offset in the model >= p0
          * @param bounds the bounding box for the highlight
          * @param c the editor
-         */
+	 */
         public void paint(Graphics g, int p0, int p1, Shape bounds, JTextComponent c);
 
     }
@@ -131,22 +132,23 @@ public interface Highlighter {
          *
          * @return the starting offset >= 0
          */
-        public int getStartOffset();
+	public int getStartOffset();
 
         /**
          * Gets the ending model offset for the highlight.
          *
          * @return the ending offset >= 0
          */
-        public int getEndOffset();
+	public int getEndOffset();
 
         /**
          * Gets the painter for the highlighter.
          *
          * @return the painter
          */
-        public HighlightPainter getPainter();
+	public HighlightPainter getPainter();
 
     }
 
 };
+

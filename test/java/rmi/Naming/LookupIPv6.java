@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,11 +23,11 @@
 
 /* @test
  * @bug 4402708
- *
+ * 
  * @run main/othervm -Djava.net.preferIPv6Addresses=true LookupIPv6
- *
+ * 
  * @summary Ensure that java.rmi.Naming.lookup can handle URLs containing
- *          IPv6 addresses.
+ * 	    IPv6 addresses.
  */
 
 import java.net.InetAddress;
@@ -39,41 +39,41 @@ import java.rmi.registry.Registry;
 
 public class LookupIPv6 {
     public static void main(String[] args) throws Exception {
-        // use loopback IPv6 address to avoid lengthy socket connection delays
-        String[] urls = {
-            "rmi://[0000:0000:0000:0000:0000:0000:0000:0001]/foo",
-            "//[0:0:0:0:0:0:0:1]:88/foo",
-            "rmi://[0::0:0:0:1]/foo:bar",
-            "//[::1]:88"
-        };
-        for (int i = 0; i < urls.length; i++) {
-            try {
-                Naming.lookup(urls[i]);
-            } catch (MalformedURLException ex) {
-                throw ex;
-            } catch (Exception ex) {
-                // URLs are bogus, lookups expected to fail
-            }
-        }
-
-        /* Attempt to use IPv6-based URL to look up object in local registry.
-         * Since not all platforms support IPv6, this portion of the test may
-         * be a no-op in some cases.  On supporting platforms, the first
-         * element of the array returned by InetAddress.getAllByName should be
-         * an Inet6Address since this test is run with
-         * -Djava.net.preferIPv6Addresses=true.
-         */
-        InetAddress localAddr = InetAddress.getAllByName(null)[0];
-        if (localAddr instanceof Inet6Address) {
-            System.out.println("IPv6 detected");
-            Registry reg;
-            try {
-                reg = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-            } catch (Exception ex) {
-                reg = LocateRegistry.getRegistry();
-            }
-            reg.rebind("foo", reg);
-            Naming.lookup("rmi://[" + localAddr.getHostAddress() + "]/foo");
-        }
+	// use loopback IPv6 address to avoid lengthy socket connection delays
+	String[] urls = {
+	    "rmi://[0000:0000:0000:0000:0000:0000:0000:0001]/foo",
+	    "//[0:0:0:0:0:0:0:1]:88/foo",
+	    "rmi://[0::0:0:0:1]/foo:bar",
+	    "//[::1]:88"
+	};
+	for (int i = 0; i < urls.length; i++) {
+	    try {
+		Naming.lookup(urls[i]);
+	    } catch (MalformedURLException ex) {
+		throw ex;
+	    } catch (Exception ex) {
+		// URLs are bogus, lookups expected to fail
+	    }
+	}
+	
+	/* Attempt to use IPv6-based URL to look up object in local registry.
+	 * Since not all platforms support IPv6, this portion of the test may
+	 * be a no-op in some cases.  On supporting platforms, the first
+	 * element of the array returned by InetAddress.getAllByName should be
+	 * an Inet6Address since this test is run with
+	 * -Djava.net.preferIPv6Addresses=true.
+	 */
+	InetAddress localAddr = InetAddress.getAllByName(null)[0];
+	if (localAddr instanceof Inet6Address) {
+	    System.out.println("IPv6 detected");
+	    Registry reg;
+	    try {
+		reg = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+	    } catch (Exception ex) {
+		reg = LocateRegistry.getRegistry();
+	    }
+	    reg.rebind("foo", reg);
+	    Naming.lookup("rmi://[" + localAddr.getHostAddress() + "]/foo");
+	}
     }
 }

@@ -43,35 +43,35 @@ import org.w3c.dom.Node;
  *
  * @author Sean Mullan
  */
-public final class DOMX509IssuerSerial extends DOMStructure
+public final class DOMX509IssuerSerial extends DOMStructure 
     implements X509IssuerSerial {
 
     private final String issuerName;
     private final BigInteger serialNumber;
 
     /**
-     * Creates a <code>DOMX509IssuerSerial</code> containing the specified
+     * Creates a <code>DOMX509IssuerSerial</code> containing the specified 
      * issuer distinguished name/serial number pair.
      *
-     * @param issuerName the X.509 issuer distinguished name in RFC 2253
+     * @param issuerName the X.509 issuer distinguished name in RFC 2253 
      *    String format
      * @param serialNumber the serial number
      * @throws IllegalArgumentException if the format of <code>issuerName</code>
      *    is not RFC 2253 compliant
-     * @throws NullPointerException if <code>issuerName</code> or
-     *    <code>serialNumber</code> is <code>null</code>
+     * @throws NullPointerException if <code>issuerName</code> or 
+     *    <code>serialNumber</code> is <code>null</code> 
      */
     public DOMX509IssuerSerial(String issuerName, BigInteger serialNumber) {
-        if (issuerName == null) {
-            throw new NullPointerException("issuerName cannot be null");
-        }
-        if (serialNumber == null) {
-            throw new NullPointerException("serialNumber cannot be null");
-        }
-        // check that issuer distinguished name conforms to RFC 2253
-        new X500Principal(issuerName);
-        this.issuerName = issuerName;
-        this.serialNumber = serialNumber;
+	if (issuerName == null) {
+	    throw new NullPointerException("issuerName cannot be null");
+	}
+	if (serialNumber == null) {
+	    throw new NullPointerException("serialNumber cannot be null");
+	}
+	// check that issuer distinguished name conforms to RFC 2253
+	new X500Principal(issuerName);
+	this.issuerName = issuerName;
+	this.serialNumber = serialNumber;
     }
 
     /**
@@ -83,19 +83,19 @@ public final class DOMX509IssuerSerial extends DOMStructure
         Element iNElem = DOMUtils.getFirstChildElement(isElem);
         Element sNElem = DOMUtils.getNextSiblingElement(iNElem);
         issuerName = iNElem.getFirstChild().getNodeValue();
-        serialNumber = new BigInteger(sNElem.getFirstChild().getNodeValue());
+	serialNumber = new BigInteger(sNElem.getFirstChild().getNodeValue());
     }
 
     public String getIssuerName() {
-        return issuerName;
+	return issuerName;
     }
 
     public BigInteger getSerialNumber() {
-        return serialNumber;
+	return serialNumber;
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-        throws MarshalException {
+	throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element isElem = DOMUtils.createElement
@@ -112,14 +112,14 @@ public final class DOMX509IssuerSerial extends DOMStructure
     }
 
     public boolean equals(Object obj) {
-        if (this == obj) {
+	if (this == obj) {
             return true;
-        }
+	}
         if (!(obj instanceof X509IssuerSerial)) {
             return false;
-        }
+	}
         X509IssuerSerial ois = (X509IssuerSerial) obj;
-        return (issuerName.equals(ois.getIssuerName()) &&
-            serialNumber.equals(ois.getSerialNumber()));
+	return (issuerName.equals(ois.getIssuerName()) && 
+	    serialNumber.equals(ois.getSerialNumber()));
     }
 }

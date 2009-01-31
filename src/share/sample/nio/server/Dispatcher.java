@@ -39,10 +39,11 @@ import java.nio.channels.*;
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
+ * @version %I%, %E%
  */
 interface Dispatcher extends Runnable {
 
     void register(SelectableChannel ch, int ops, Handler h)
-        throws IOException;
+	throws IOException;
 
 }

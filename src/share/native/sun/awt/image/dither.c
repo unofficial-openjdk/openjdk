@@ -45,45 +45,45 @@ void initInverseGrayLut(int* prgb, int rgbsize, ColorData *cData) {
     cData->pGrayInverseLutData = inverse;
 
     for (i = 0; i < 256; i++) {
-        inverse[i] = -1;
+	inverse[i] = -1;
     }
 
     /* First, fill the gray values */
     for (i = 0; i < rgbsize; i++) {
-        int r, g, b, rgb = prgb[i];
-        if (rgb == 0x0) {
-            /* ignore transparent black */
-            continue;
-        }
-        r = (rgb >> 16) & 0xff;
-        g = (rgb >> 8 ) & 0xff;
-        b = rgb & 0xff;
-        if (b == r && b == g) {
-            inverse[b] = i;
-        }
+	int r, g, b, rgb = prgb[i];
+	if (rgb == 0x0) {
+	    /* ignore transparent black */
+	    continue;
+	}
+	r = (rgb >> 16) & 0xff;
+	g = (rgb >> 8 ) & 0xff;
+	b = rgb & 0xff;
+	if (b == r && b == g) {
+	    inverse[b] = i;
+	}
     }
 
     /* fill the missing gaps by taking the valid values
-     * on either side and filling them halfway into the gap
+     * on either side and filling them halfway into the gap 
      */
     lastindex = -1;
     lastgray = -1;
     missing = 0;
     for (i = 0; i < 256; i++) {
-        if (inverse[i] < 0) {
-            inverse[i] = lastgray;
-            missing = 1;
-        } else {
-            lastgray = inverse[i];
-            if (missing) {
-                lastindex = lastindex < 0 ? 0 : (i+lastindex)/2;
-                while (lastindex < i) {
-                    inverse[lastindex++] = lastgray;
-                }
-            }
-            lastindex = i;
-            missing = 0;
-        }
+	if (inverse[i] < 0) {
+	    inverse[i] = lastgray;
+	    missing = 1;
+	} else {
+	    lastgray = inverse[i];
+	    if (missing) {
+		lastindex = lastindex < 0 ? 0 : (i+lastindex)/2;
+		while (lastindex < i) {
+		    inverse[lastindex++] = lastgray;
+		}
+	    }
+	    lastindex = i;
+	    missing = 0;
+	}
     }
 }
 
@@ -95,7 +95,7 @@ void freeICMColorData(ColorData *pData) {
         if (pData->pGrayInverseLutData) {
             free(pData->pGrayInverseLutData);
         }
-        free(pData);
+	free(pData);
     }
 }
 
@@ -140,15 +140,15 @@ recurseLevel(CubeStateInfo *priorState) {
     }
     if (currentState.activeEntries) {
         if (!recurseLevel(&currentState)) {
-            free(currentState.rgb);
-            free(currentState.indices);
+	    free(currentState.rgb);
+	    free(currentState.indices);
             return 0;
         }
     }
     if (currentState.maxDepth > priorState->maxDepth) {
         priorState->maxDepth = currentState.maxDepth;
     }
-
+    
     free(currentState.rgb);
     free(currentState.indices);
     return  1;
@@ -172,15 +172,15 @@ initCubemap(int* cmap,
     if (newILut) {
 
       useFlags = (unsigned char *)calloc(cubesize, 1);
-
+      
       if (useFlags == 0) {
           free(newILut);
 #ifdef DEBUG
-        fprintf(stderr, "Out of memory in color:initCubemap()1\n");
+	fprintf(stderr, "Out of memory in color:initCubemap()1\n");
 #endif
           return NULL;
       }
-
+      
         currentState.depth          = 0;
         currentState.maxDepth       = 0;
         currentState.usedFlags      = useFlags;
@@ -191,9 +191,9 @@ initCubemap(int* cmap,
                                 malloc(256 * sizeof(unsigned short));
         if (currentState.rgb == NULL) {
             free(newILut);
-            free(useFlags);
+	    free(useFlags);
 #ifdef DEBUG
-        fprintf(stderr, "Out of memory in color:initCubemap()2\n");
+	fprintf(stderr, "Out of memory in color:initCubemap()2\n");
 #endif
             return NULL;
         }
@@ -201,15 +201,15 @@ initCubemap(int* cmap,
         currentState.indices = (unsigned char *)
                                 malloc(256 * sizeof(unsigned char));
         if (currentState.indices == NULL) {
-            free(currentState.rgb);
+	    free(currentState.rgb);
             free(newILut);
-            free(useFlags);
+	    free(useFlags);
 #ifdef DEBUG
-        fprintf(stderr, "Out of memory in color:initCubemap()3\n");
+	fprintf(stderr, "Out of memory in color:initCubemap()3\n");
 #endif
             return NULL;
         }
-
+ 
         for (i = 0; i < 128; i++) {
             unsigned short rgb;
             int pixel = cmap[i];
@@ -228,22 +228,22 @@ initCubemap(int* cmap,
             free(newILut);
             free(useFlags);
             free(currentState.rgb);
-            free(currentState.indices);
+	    free(currentState.indices);
 #ifdef DEBUG
-        fprintf(stderr, "Out of memory in color:initCubemap()4\n");
+	fprintf(stderr, "Out of memory in color:initCubemap()4\n");
 #endif
-            return NULL;
-        }
+	    return NULL;
+	}
 
-        free(useFlags);
-        free(currentState.rgb);
-        free(currentState.indices);
-
+	free(useFlags);
+	free(currentState.rgb);
+	free(currentState.indices);
+	
         return newILut;
     }
 
 #ifdef DEBUG
-        fprintf(stderr, "Out of memory in color:initCubemap()5\n");
+	fprintf(stderr, "Out of memory in color:initCubemap()5\n");
 #endif
     return NULL;
 }

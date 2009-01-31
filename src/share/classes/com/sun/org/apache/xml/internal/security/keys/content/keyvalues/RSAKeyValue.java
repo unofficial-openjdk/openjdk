@@ -48,9 +48,9 @@ public class RSAKeyValue extends SignatureElementProxy
         implements KeyValueContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
-                        RSAKeyValue.class.getName());
+			RSAKeyValue.class.getName());
 
    /**
     * Constructor RSAKeyValue

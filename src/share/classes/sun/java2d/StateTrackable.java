@@ -156,46 +156,46 @@ public interface StateTrackable {
      * @since 1.7
      */
     public enum State {
-        /**
-         * The complex data will never change again.
-         * Information related to the current contents of the complex
-         * data can be calculated and cached indefinitely with no
-         * further checks to see if the information is stale.
-         */
-        IMMUTABLE,
+	/**
+	 * The complex data will never change again.
+	 * Information related to the current contents of the complex
+	 * data can be calculated and cached indefinitely with no
+	 * further checks to see if the information is stale.
+	 */
+	IMMUTABLE,
 
-        /**
-         * The complex data is currently stable, but could change at
-         * some point in the future.
-         * Information related to the current contents of the complex
-         * data can be calculated and cached, but a StateTracker should
-         * be used to verify the freshness of such precalculated data
-         * before each future use.
-         */
-        STABLE,
+	/**
+	 * The complex data is currently stable, but could change at
+	 * some point in the future.
+	 * Information related to the current contents of the complex
+	 * data can be calculated and cached, but a StateTracker should
+	 * be used to verify the freshness of such precalculated data
+	 * before each future use.
+	 */
+	STABLE,
 
-        /**
-         * The complex data is currently in flux and is frequently
-         * changing.
-         * While information related to the current contents of the
-         * complex data could be calculated and cached, there is a
-         * reasonably high probability that the cached information
-         * would be found to be out of date by the next time it is
-         * used.
-         * It may also be the case that the current contents are
-         * temporarily untrackable, but that they may become trackable
-         * again in the future.
-         */
-        DYNAMIC,
+	/**
+	 * The complex data is currently in flux and is frequently
+	 * changing.
+	 * While information related to the current contents of the
+	 * complex data could be calculated and cached, there is a
+	 * reasonably high probability that the cached information
+	 * would be found to be out of date by the next time it is
+	 * used.
+	 * It may also be the case that the current contents are
+	 * temporarily untrackable, but that they may become trackable
+	 * again in the future.
+	 */
+	DYNAMIC,
 
-        /**
-         * The complex data can currently be changed by external
-         * references and agents in a way that cannot be tracked.
-         * If any information about the current contents of the complex
-         * data were to be cached, there would be no way to determine
-         * whether or not that cached information was out of date.
-         */
-        UNTRACKABLE,
+	/**
+	 * The complex data can currently be changed by external
+	 * references and agents in a way that cannot be tracked.
+	 * If any information about the current contents of the complex
+	 * data were to be cached, there would be no way to determine
+	 * whether or not that cached information was out of date.
+	 */
+	UNTRACKABLE,
     };
 
     /**

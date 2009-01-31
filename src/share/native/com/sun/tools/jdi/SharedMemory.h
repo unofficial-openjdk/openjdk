@@ -39,3 +39,7 @@
  */
 void throwException(JNIEnv *env, char *exceptionClassName, char *message);
 void throwShmemException(JNIEnv *env, char *message, jint errorCode);
+
+
+
+

@@ -40,3 +40,4 @@ public class Iteration {
             throw new RuntimeException("hasNext advances iterator");
     }
 }
+

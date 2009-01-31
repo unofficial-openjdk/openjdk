@@ -52,7 +52,7 @@ import java.io.Serializable;
  *
  * <p>
  * Generally, a format's <code>parseObject</code> method must be able to parse
- * any string formatted by its <code>format</code> method. However, there may
+ * any string formatted by its <code>format</code> method. However, there may 
  * be exceptional cases where this is not possible. For example, a
  * <code>format</code> method might create two adjacent integer numbers with
  * no separator in between, and in this case the <code>parseObject</code> could
@@ -128,6 +128,7 @@ import java.io.Serializable;
  * @see          java.text.NumberFormat
  * @see          java.text.DateFormat
  * @see          java.text.MessageFormat
+ * @version      %I%, %G%
  * @author       Mark Davis
  */
 public abstract class Format implements Serializable, Cloneable {
@@ -265,7 +266,7 @@ public abstract class Format implements Serializable, Cloneable {
     //
     // Convenience methods for creating AttributedCharacterIterators from
     // different parameters.
-    //
+    // 
 
     /**
      * Creates an <code>AttributedCharacterIterator</code> for the String
@@ -275,9 +276,9 @@ public abstract class Format implements Serializable, Cloneable {
      * @return AttributedCharacterIterator wrapping s
      */
     AttributedCharacterIterator createAttributedCharacterIterator(String s) {
-        AttributedString as = new AttributedString(s);
+	AttributedString as = new AttributedString(s);
 
-        return as.getIterator();
+	return as.getIterator();
     }
 
     /**
@@ -327,12 +328,12 @@ public abstract class Format implements Serializable, Cloneable {
      * @return AttributedCharacterIterator wrapping args
      */
     AttributedCharacterIterator createAttributedCharacterIterator(
-              AttributedCharacterIterator iterator,
+	      AttributedCharacterIterator iterator,
               AttributedCharacterIterator.Attribute key, Object value) {
-        AttributedString as = new AttributedString(iterator);
+	AttributedString as = new AttributedString(iterator);
 
-        as.addAttribute(key, value);
-        return as.getIterator();
+	as.addAttribute(key, value);
+	return as.getIterator();
     }
 
 

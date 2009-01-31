@@ -38,12 +38,12 @@ import javax.crypto.*;
 import javax.crypto.spec.*;
 
 public class TestShort extends PKCS11Test {
-
+    
     private final static BigInteger p = new BigInteger
     ("132323768951986124075479307182674357577285270296234088722451560397577130"
     + "29036368719146452186041204237350521785240337048752071462798273003935646"
     + "236777459223");
-
+    
     private final static BigInteger g = new BigInteger
     ("542164405743647514160964848832570512804742839438047437683466730076610826"
     + "26139005426812890807137245973106730741193551360857959820973906708903671"
@@ -53,10 +53,10 @@ public class TestShort extends PKCS11Test {
     ("917822587297202019713917824657175324360828836418754472207798053179332700"
     + "39938196470323405362414543604756313574842317687108720161868374135893507"
     + "32549013008");
-
+    
     private final static BigInteger x1 = new BigInteger
     ("44680539865608058021525420137770558786664900449");
-
+    
     private final static BigInteger y2 = new BigInteger
     ("971516093764754129400636279042779828227876735997548759620533874940954728"
     + "96003923584532197641582422156725687657451980378160229472095259392582713"
@@ -64,7 +64,7 @@ public class TestShort extends PKCS11Test {
 
     private final static BigInteger x2 = new BigInteger
     ("433011588852527167500079509018272713204454720683");
-
+    
     private final static byte[] s2 = parse
     ("19:c7:f1:bb:2e:3d:93:fa:02:d2:e9:9f:75:32:b9:e6:7a:a0:4a:10:45:81:d4:2b:"
     + "e2:77:4c:70:41:39:7c:19:fa:65:64:47:49:8a:ad:0a:fa:9d:e9:62:68:97:c5:52"
@@ -77,7 +77,7 @@ public class TestShort extends PKCS11Test {
 
     private final static BigInteger x3 = new BigInteger
     ("1105612503769813327556221318510360767544481637404");
-
+    
     private final static byte[] s3 = parse
     ("98:62:f3:e4:ff:2b:8d:8a:5a:20:fe:52:35:56:73:09:8e:b3:e2:cb:e2:45:e5:b7:"
     + "1a:6a:15:d8:a4:8c:0a:ce:f0:15:03:0c:c2:56:82:a2:75:9b:49:fe:ed:60:c5:6e"
@@ -88,56 +88,56 @@ public class TestShort extends PKCS11Test {
             System.out.println("DH not supported, skipping");
             return;
         }
-        DHPublicKeySpec publicSpec;
-        DHPrivateKeySpec privateSpec;
-        KeyFactory kf = KeyFactory.getInstance("DH", provider);
-        KeyAgreement ka = KeyAgreement.getInstance("DH", provider);
-//      KeyAgreement ka = KeyAgreement.getInstance("DH");
+	DHPublicKeySpec publicSpec;
+	DHPrivateKeySpec privateSpec;
+	KeyFactory kf = KeyFactory.getInstance("DH", provider);
+	KeyAgreement ka = KeyAgreement.getInstance("DH", provider);
+//	KeyAgreement ka = KeyAgreement.getInstance("DH");
+	
+	PrivateKey pr1 = kf.generatePrivate(new DHPrivateKeySpec(x1, p, g));
+	PublicKey pu2 = kf.generatePublic(new DHPublicKeySpec(y2, p, g));
+	PublicKey pu3 = kf.generatePublic(new DHPublicKeySpec(y3, p, g));
+	
+	ka.init(pr1);
+	ka.doPhase(pu2, true);
+	byte[] n2 = ka.generateSecret();
+	if (Arrays.equals(s2, n2) == false) {
+	    throw new Exception("mismatch 2");
+	}
+	System.out.println("short ok");
+	
+	ka.init(pr1);
+	ka.doPhase(pu3, true);
+	byte[] n3 = ka.generateSecret();
+	if (Arrays.equals(s3, n3) == false) {
+	    throw new Exception("mismatch 3");
+	}
+	System.out.println("normal ok");
 
-        PrivateKey pr1 = kf.generatePrivate(new DHPrivateKeySpec(x1, p, g));
-        PublicKey pu2 = kf.generatePublic(new DHPublicKeySpec(y2, p, g));
-        PublicKey pu3 = kf.generatePublic(new DHPublicKeySpec(y3, p, g));
-
-        ka.init(pr1);
-        ka.doPhase(pu2, true);
-        byte[] n2 = ka.generateSecret();
-        if (Arrays.equals(s2, n2) == false) {
-            throw new Exception("mismatch 2");
-        }
-        System.out.println("short ok");
-
-        ka.init(pr1);
-        ka.doPhase(pu3, true);
-        byte[] n3 = ka.generateSecret();
-        if (Arrays.equals(s3, n3) == false) {
-            throw new Exception("mismatch 3");
-        }
-        System.out.println("normal ok");
-
-/*
+/*	
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("DH", provider);
         kpg.initialize(512);
 //        KeyPair kp1 = kpg.generateKeyPair();
-//      System.out.println(kp1.getPublic());
-//      System.out.println(kp1.getPrivate());
-        while (true) {
-            KeyAgreement ka = KeyAgreement.getInstance("DH", provider);
-            ka.init(pr1);
-            KeyPair kp2 = kpg.generateKeyPair();
-            ka.doPhase(kp2.getPublic(), true);
-            byte[] sec = ka.generateSecret();
-            if (sec.length == 64) {
-                System.out.println(kp2.getPrivate());
-                System.out.println(kp2.getPublic());
-                System.out.println(toString(sec));
-                break;
-            }
-        }
+//	System.out.println(kp1.getPublic());
+//	System.out.println(kp1.getPrivate());
+	while (true) {
+	    KeyAgreement ka = KeyAgreement.getInstance("DH", provider);
+	    ka.init(pr1);
+	    KeyPair kp2 = kpg.generateKeyPair();
+	    ka.doPhase(kp2.getPublic(), true);
+	    byte[] sec = ka.generateSecret();
+	    if (sec.length == 64) {
+		System.out.println(kp2.getPrivate());
+		System.out.println(kp2.getPublic());
+		System.out.println(toString(sec));
+		break;
+	    }
+	}
 /**/
     }
 
     public static void main(String[] args) throws Exception {
         main(new TestShort());
     }
-
+    
 }

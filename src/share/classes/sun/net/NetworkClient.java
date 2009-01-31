@@ -38,18 +38,19 @@ import java.security.PrivilegedAction;
 /**
  * This is the base class for network clients.
  *
- * @author      Jonathan Payne
+ * @version	%I%, %G%
+ * @author	Jonathan Payne
  */
 public class NetworkClient {
-    protected Proxy     proxy = Proxy.NO_PROXY;
+    protected Proxy	proxy = Proxy.NO_PROXY;
     /** Socket for communicating with server. */
-    protected Socket    serverSocket = null;
+    protected Socket	serverSocket = null;
 
     /** Stream for printing to the server. */
-    public PrintStream  serverOutput;
+    public PrintStream	serverOutput;
 
     /** Buffered stream for reading replies from server. */
-    public InputStream  serverInput;
+    public InputStream	serverInput;
 
     protected static int defaultSoTimeout;
     protected static int defaultConnectTimeout;
@@ -60,22 +61,22 @@ public class NetworkClient {
     protected static String encoding;
 
     static {
-        final int vals[] = {0, 0};
-        final String encs[] = { null };
+	final int vals[] = {0, 0};
+	final String encs[] = { null };
 
-        AccessController.doPrivileged(
-                new PrivilegedAction() {
-                    public Object run() {
-                        vals[0] = Integer.getInteger("sun.net.client.defaultReadTimeout", 0).intValue();
-                        vals[1] = Integer.getInteger("sun.net.client.defaultConnectTimeout", 0).intValue();
-                        encs[0] = System.getProperty("file.encoding", "ISO8859_1");
-                        return null;
-            }
-        });
-        if (vals[0] == 0)
-            defaultSoTimeout = -1;
-        else
-            defaultSoTimeout = vals[0];
+	AccessController.doPrivileged(
+		new PrivilegedAction() {
+		    public Object run() {
+			vals[0] = Integer.getInteger("sun.net.client.defaultReadTimeout", 0).intValue();
+			vals[1] = Integer.getInteger("sun.net.client.defaultConnectTimeout", 0).intValue();
+			encs[0] = System.getProperty("file.encoding", "ISO8859_1");
+			return null;
+	    }
+	});
+	if (vals[0] == 0)
+	    defaultSoTimeout = -1;
+	else 
+	    defaultSoTimeout = vals[0];
 
         if (vals[1] == 0)
             defaultConnectTimeout = -1;
@@ -83,64 +84,64 @@ public class NetworkClient {
             defaultConnectTimeout = vals[1];
 
 
-        encoding = encs[0];
-        try {
-            if (!isASCIISuperset (encoding)) {
-                encoding = "ISO8859_1";
-            }
-        } catch (Exception e) {
-            encoding = "ISO8859_1";
-        }
+	encoding = encs[0];
+	try {
+    	    if (!isASCIISuperset (encoding)) {
+	    	encoding = "ISO8859_1";
+    	    }
+	} catch (Exception e) {
+	    encoding = "ISO8859_1";
+    	}
     }
 
 
     /**
-     * Test the named character encoding to verify that it converts ASCII
-     * characters correctly. We have to use an ASCII based encoding, or else
+     * Test the named character encoding to verify that it converts ASCII 
+     * characters correctly. We have to use an ASCII based encoding, or else 
      * the NetworkClients will not work correctly in EBCDIC based systems.
-     * However, we cannot just use ASCII or ISO8859_1 universally, because in
-     * Asian locales, non-ASCII characters may be embedded in otherwise
-     * ASCII based protocols (eg. HTTP). The specifications (RFC2616, 2398)
-     * are a little ambiguous in this matter. For instance, RFC2398 [part 2.1]
-     * says that the HTTP request URI should be escaped using a defined
-     * mechanism, but there is no way to specify in the escaped string what
-     * the original character set is. It is not correct to assume that
-     * UTF-8 is always used (as in URLs in HTML 4.0).  For this reason,
+     * However, we cannot just use ASCII or ISO8859_1 universally, because in 
+     * Asian locales, non-ASCII characters may be embedded in otherwise 
+     * ASCII based protocols (eg. HTTP). The specifications (RFC2616, 2398) 
+     * are a little ambiguous in this matter. For instance, RFC2398 [part 2.1] 
+     * says that the HTTP request URI should be escaped using a defined 
+     * mechanism, but there is no way to specify in the escaped string what 
+     * the original character set is. It is not correct to assume that 
+     * UTF-8 is always used (as in URLs in HTML 4.0).  For this reason, 
      * until the specifications are updated to deal with this issue more
-     * comprehensively, and more importantly, HTTP servers are known to
-     * support these mechanisms, we will maintain the current behavior
-     * where it is possible to send non-ASCII characters in their original
-     * unescaped form.
+     * comprehensively, and more importantly, HTTP servers are known to 
+     * support these mechanisms, we will maintain the current behavior 
+     * where it is possible to send non-ASCII characters in their original 
+     * unescaped form. 
      */
     private static boolean isASCIISuperset (String encoding) throws Exception {
-        String chkS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
-                        "abcdefghijklmnopqrstuvwxyz-_.!~*'();/?:@&=+$,";
+	String chkS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"+
+			"abcdefghijklmnopqrstuvwxyz-_.!~*'();/?:@&=+$,";
 
-        // Expected byte sequence for string above
-        byte[] chkB = { 48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,
-                73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,
-                100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,
-                115,116,117,118,119,120,121,122,45,95,46,33,126,42,39,40,41,59,
-                47,63,58,64,38,61,43,36,44};
+	// Expected byte sequence for string above
+	byte[] chkB = { 48,49,50,51,52,53,54,55,56,57,65,66,67,68,69,70,71,72,
+		73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,
+		100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,
+		115,116,117,118,119,120,121,122,45,95,46,33,126,42,39,40,41,59,
+		47,63,58,64,38,61,43,36,44};
 
-        byte[] b = chkS.getBytes (encoding);
-        return Arrays.equals (b, chkB);
+	byte[] b = chkS.getBytes (encoding);
+	return Arrays.equals (b, chkB);
     }
 
     /** Open a connection to the server. */
     public void openServer(String server, int port)
-        throws IOException, UnknownHostException {
-        if (serverSocket != null)
-            closeServer();
-        serverSocket = doConnect (server, port);
-        try {
-            serverOutput = new PrintStream(new BufferedOutputStream(
-                                        serverSocket.getOutputStream()),
-                                        true, encoding);
-        } catch (UnsupportedEncodingException e) {
-            throw new InternalError(encoding +"encoding not found");
-        }
-        serverInput = new BufferedInputStream(serverSocket.getInputStream());
+	throws IOException, UnknownHostException {
+	if (serverSocket != null)
+	    closeServer();
+	serverSocket = doConnect (server, port);
+	try {
+	    serverOutput = new PrintStream(new BufferedOutputStream(
+					serverSocket.getOutputStream()),
+				       	true, encoding);
+	} catch (UnsupportedEncodingException e) {
+	    throw new InternalError(encoding +"encoding not found");
+	}
+	serverInput = new BufferedInputStream(serverSocket.getInputStream());
     }
 
     /**
@@ -149,88 +150,88 @@ public class NetworkClient {
      */
     protected Socket doConnect (String server, int port)
     throws IOException, UnknownHostException {
-        Socket s;
-        if (proxy != null) {
-            if (proxy.type() == Proxy.Type.SOCKS) {
-                s = (Socket) AccessController.doPrivileged(
-                               new PrivilegedAction() {
-                                   public Object run() {
-                                       return new Socket(proxy);
-                                   }});
-            } else
-                s = new Socket(Proxy.NO_PROXY);
-        } else
-            s = new Socket();
-        // Instance specific timeouts do have priority, that means
-        // connectTimeout & readTimeout (-1 means not set)
-        // Then global default timeouts
-        // Then no timeout.
-        if (connectTimeout >= 0) {
-            s.connect(new InetSocketAddress(server, port), connectTimeout);
-        } else {
-            if (defaultConnectTimeout > 0) {
-                s.connect(new InetSocketAddress(server, port), defaultConnectTimeout);
-            } else {
-                s.connect(new InetSocketAddress(server, port));
-            }
-        }
-        if (readTimeout >= 0)
-            s.setSoTimeout(readTimeout);
-        else if (defaultSoTimeout > 0) {
+	Socket s;
+	if (proxy != null) {
+	    if (proxy.type() == Proxy.Type.SOCKS) {
+		s = (Socket) AccessController.doPrivileged(
+			       new PrivilegedAction() {
+				   public Object run() {
+				       return new Socket(proxy);
+				   }});
+	    } else
+		s = new Socket(Proxy.NO_PROXY);
+	} else
+	    s = new Socket();
+	// Instance specific timeouts do have priority, that means
+	// connectTimeout & readTimeout (-1 means not set)
+	// Then global default timeouts
+	// Then no timeout.
+	if (connectTimeout >= 0) {
+	    s.connect(new InetSocketAddress(server, port), connectTimeout);
+	} else {
+	    if (defaultConnectTimeout > 0) {
+		s.connect(new InetSocketAddress(server, port), defaultConnectTimeout);
+	    } else {
+		s.connect(new InetSocketAddress(server, port));
+	    }
+	}
+	if (readTimeout >= 0)
+	    s.setSoTimeout(readTimeout);
+	else if (defaultSoTimeout > 0) {
             s.setSoTimeout(defaultSoTimeout);
         }
-        return s;
+	return s;
     }
 
     protected InetAddress getLocalAddress() throws IOException {
-        if (serverSocket == null)
-            throw new IOException("not connected");
-        return serverSocket.getLocalAddress();
+	if (serverSocket == null)
+	    throw new IOException("not connected");
+	return serverSocket.getLocalAddress();
     }
 
     /** Close an open connection to the server. */
     public void closeServer() throws IOException {
-        if (! serverIsOpen()) {
-            return;
-        }
-        serverSocket.close();
-        serverSocket = null;
-        serverInput = null;
-        serverOutput = null;
+	if (! serverIsOpen()) {
+	    return;
+	}
+	serverSocket.close();
+	serverSocket = null;
+	serverInput = null;
+	serverOutput = null;
     }
 
     /** Return server connection status */
     public boolean serverIsOpen() {
-        return serverSocket != null;
+	return serverSocket != null;
     }
 
     /** Create connection with host <i>host</i> on port <i>port</i> */
     public NetworkClient(String host, int port) throws IOException {
-        openServer(host, port);
+	openServer(host, port);
     }
 
     public NetworkClient() {}
 
     public void setConnectTimeout(int timeout) {
-        connectTimeout = timeout;
+	connectTimeout = timeout;
     }
 
     public int getConnectTimeout() {
-        return connectTimeout;
+	return connectTimeout;
     }
 
     public void setReadTimeout(int timeout) {
-        if (serverSocket != null && timeout >= 0) {
-            try {
-                serverSocket.setSoTimeout(timeout);
-            } catch(IOException e) {
-                // We tried...
-            }
-        }
-        readTimeout = timeout;
+	if (serverSocket != null && timeout >= 0) {
+	    try {
+		serverSocket.setSoTimeout(timeout);
+	    } catch(IOException e) {
+		// We tried...
+	    }
+	}
+	readTimeout = timeout;
     }
 
     public int getReadTimeout() {
-        return readTimeout;
+	return readTimeout;
     }
 }

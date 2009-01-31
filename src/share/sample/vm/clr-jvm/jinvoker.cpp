@@ -54,29 +54,29 @@ int MakeJavaVMInitArgs( void** ppArgs ){
     JavaVMInitArgs* pArgs    = new JavaVMInitArgs();
     JavaVMOption*   pOptions = new JavaVMOption[nOptSize];
 
-    //provide CLASSPATH value to java.class.path
+    //provide CLASSPATH value to java.class.path 
 
     char* szClassPath = getenv("CLASSPATH");
     if( szClassPath == NULL )
         szClassPath = ".";
-
+	
     pOptions[0].optionString = new char[strlen("-Djava.class.path=")+
                                         strlen(szClassPath)+1];
     sprintf( pOptions[0].optionString, "-Djava.class.path=%s", szClassPath );
 
     //redefine java.lang.System.exit()
-
+    
     pOptions[1].optionString = "exit";
     pOptions[1].extraInfo    = system_exit;
 
     //Fill the arguments
-
+    
     memset(pArgs, 0, sizeof(JavaVMInitArgs));
     pArgs->version = 0x00010002;
     pArgs->options = pOptions;
     pArgs->nOptions = nOptSize;
     pArgs->ignoreUnrecognized = JNI_TRUE;
-
+	
     *ppArgs = pArgs;
 
     return 0;
@@ -122,18 +122,18 @@ http://jre.sfbay/java/re/jdk/6/promoted/latest/docs/technotes/guides/jni/spec/fu
 */
 
 int GetStaticMethodID(JNIEnv*     pEnv,
-                      jclass      pClass,
-                      const char* szName,
-                      const char* szArgs,
+                      jclass      pClass, 
+                      const char* szName, 
+                      const char* szArgs, 
                       jmethodID*  pMid){
-
+	
     *pMid = pEnv->GetStaticMethodID( pClass, szName, szArgs);
-
+	
     if(pEnv->ExceptionCheck() == JNI_TRUE){
         pEnv->ExceptionDescribe();
         return -1;
     }
-
+    
     if( *pMid != NULL )
         return 0;
     else
@@ -150,14 +150,14 @@ int NewObjectArray( JNIEnv*       pEnv,
                     int           nDimension,
                     const char*   szType,
                     jobjectArray* pArray ){
-
+	
     *pArray = pEnv->NewObjectArray( nDimension, pEnv->FindClass( szType ), NULL);
 
     if(pEnv->ExceptionCheck() == JNI_TRUE){
         pEnv->ExceptionDescribe();
         return -1;
     }
-
+    
     if( pArray != NULL )
         return 0;
     else

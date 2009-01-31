@@ -29,11 +29,12 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.Proxy;
 
-/**
+/** 
  * This class exists for compatibility with previous JSSE releases
  * only. The HTTPS implementation can now be found in
  * sun.net.www.protocol.https.
  *
+ * @version %I% %G%
  */
 public class Handler extends sun.net.www.protocol.https.Handler {
 
@@ -46,10 +47,10 @@ public class Handler extends sun.net.www.protocol.https.Handler {
     }
 
     protected java.net.URLConnection openConnection(URL u) throws IOException {
-        return openConnection(u, (Proxy)null);
+	return openConnection(u, (Proxy)null);
     }
 
     protected java.net.URLConnection openConnection(URL u, Proxy p) throws IOException {
-        return new HttpsURLConnectionOldImpl(u, p, this);
+	return new HttpsURLConnectionOldImpl(u, p, this);
     }
 }

@@ -21,10 +21,10 @@
  * have any questions.
  */
 
-/**
+/** 
  *
  * Utility class for tests. A simple server, which waits for a connection,
- * writes out n bytes and waits.
+ * writes out n bytes and waits.   
  * @author kladko
  */
 
@@ -32,7 +32,7 @@ import java.net.Socket;
 import java.net.ServerSocket;
 
 public class ByteServer {
-
+    
     public static final int PORT = 31415;
     public static final String LOCALHOST = "localhost";
     private int bytecount;
@@ -48,23 +48,23 @@ public class ByteServer {
 
     public void start() {
         serverthread = new Thread() {
-            public void run() {
+            public void run() { 
                 try {
                     socket = serversocket.accept();
                     socket.getOutputStream().write(new byte[bytecount]);
                     socket.getOutputStream().flush();
                 } catch (Exception e) {
                     System.err.println("Exception in ByteServer: " + e);
-                    System.exit(1);
+                    System.exit(1); 
                 }
             }
-        };
+        }; 
         serverthread.start();
     }
 
     public void exit() throws Exception {
         serverthread.join();
         socket.close();
-        serversocket.close();
-    }
+        serversocket.close(); 
+    }        
 }

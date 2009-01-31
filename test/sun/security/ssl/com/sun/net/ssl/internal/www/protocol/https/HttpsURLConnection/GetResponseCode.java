@@ -80,24 +80,24 @@ public class GetResponseCode implements HostnameVerifier {
      * to avoid infinite hangs.
      */
     void doServerSide() throws Exception {
-        SSLServerSocketFactory sslssf =
-            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-        SSLServerSocket sslServerSocket =
-            (SSLServerSocket) sslssf.createServerSocket(serverPort);
-        serverPort = sslServerSocket.getLocalPort();
+	SSLServerSocketFactory sslssf =
+	    (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	SSLServerSocket sslServerSocket =
+	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
+	serverPort = sslServerSocket.getLocalPort();
 
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady = true;
+	/*
+	 * Signal Client, we're ready for his connect.
+	 */
+	serverReady = true;
 
-        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-        OutputStream sslOS = sslSocket.getOutputStream();
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(sslOS));
-        bw.write("HTTP/1.1 200 OK\r\n\r\n\r\n");
-        bw.flush();
-        Thread.sleep(5000);
-        sslSocket.close();
+	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+	OutputStream sslOS = sslSocket.getOutputStream();
+	BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(sslOS));
+	bw.write("HTTP/1.1 200 OK\r\n\r\n\r\n");
+	bw.flush();
+	Thread.sleep(5000);
+	sslSocket.close();
     }
 
     /*
@@ -108,21 +108,21 @@ public class GetResponseCode implements HostnameVerifier {
      */
     void doClientSide() throws Exception {
 
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
-        }
+	/*
+	 * Wait for server to get started.
+	 */
+	while (!serverReady) {
+	    Thread.sleep(50);
+	}
 
-        URL url = new URL("https://localhost:"+serverPort+"/index.html");
-        HttpsURLConnection urlc = (HttpsURLConnection)url.openConnection();
-        urlc.setHostnameVerifier(this);
-        urlc.getInputStream();
+	URL url = new URL("https://localhost:"+serverPort+"/index.html");
+	HttpsURLConnection urlc = (HttpsURLConnection)url.openConnection();
+	urlc.setHostnameVerifier(this);
+	urlc.getInputStream();
 
-        if (urlc.getResponseCode() == -1) {
-            throw new RuntimeException("getResponseCode() returns -1");
-        }
+	if (urlc.getResponseCode() == -1) {
+	    throw new RuntimeException("getResponseCode() returns -1");
+	}
     }
 
     /*
@@ -137,24 +137,24 @@ public class GetResponseCode implements HostnameVerifier {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-        String keyFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + keyStoreFile;
-        String trustFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + trustStoreFile;
+	String keyFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + keyStoreFile;
+	String trustFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + trustStoreFile;
 
-        System.setProperty("javax.net.ssl.keyStore", keyFilename);
-        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-        System.setProperty("javax.net.ssl.trustStore", trustFilename);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+	System.setProperty("javax.net.ssl.keyStore", keyFilename);
+	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+	System.setProperty("javax.net.ssl.trustStore", trustFilename);
+	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
+	if (debug)
+	    System.setProperty("javax.net.debug", "all");
 
-        /*
-         * Start the tests.
-         */
+	/*
+	 * Start the tests.
+	 */
         new GetResponseCode();
     }
 
@@ -167,84 +167,84 @@ public class GetResponseCode implements HostnameVerifier {
      * Fork off the other side, then do your work.
      */
     GetResponseCode() throws Exception {
-        if (separateServerThread) {
-            startServer(true);
-            startClient(false);
-        } else {
-            startClient(true);
-            startServer(false);
-        }
+	if (separateServerThread) {
+	    startServer(true);
+	    startClient(false);
+	} else {
+	    startClient(true);
+	    startServer(false);
+	}
 
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
+	/*
+	 * Wait for other side to close down.
+	 */
+	if (separateServerThread) {
+	    serverThread.join();
+	} else {
+	    clientThread.join();
+	}
 
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null)
-            throw serverException;
-        if (clientException != null)
-            throw clientException;
+	/*
+	 * When we get here, the test is pretty much over.
+	 *
+	 * If the main thread excepted, that propagates back
+	 * immediately.  If the other thread threw an exception, we
+	 * should report back.
+	 */
+	if (serverException != null)
+	    throw serverException;
+	if (clientException != null)
+	    throw clientException;
     }
 
     void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.err.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide();
-        }
+	if (newThread) {
+	    serverThread = new Thread() {
+		public void run() {
+		    try {
+			doServerSide();
+		    } catch (Exception e) {
+			/*
+			 * Our server thread just died.
+			 *
+			 * Release the client, if not active already...
+			 */
+			System.err.println("Server died...");
+			serverReady = true;
+			serverException = e;
+		    }
+		}
+	    };
+	    serverThread.start();
+	} else {
+	    doServerSide();
+	}
     }
 
     void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+	if (newThread) {
+	    clientThread = new Thread() {
+		public void run() {
+		    try {
+			doClientSide();
+		    } catch (Exception e) {
+			/*
+			 * Our client thread just died.
+			 */
+			System.err.println("Client died...");
+			clientException = e;
+		    }
+		}
+	    };
+	    clientThread.start();
+	} else {
+	    doClientSide();
+	}
     }
 
     // Simple test method to blindly agree that hostname and certname match
     public boolean verify(String hostname, SSLSession session) {
-        return true;
+	return true;
     }
-
+ 
 }

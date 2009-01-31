@@ -41,37 +41,37 @@ public class DefaultHandlerModule implements LoginModule {
     private char[] password;
 
     public void initialize(Subject subject, CallbackHandler callbackHandler,
-                        Map<String,?> sharedState, Map<String,?> options) {
-
-        this.subject = subject;
-        this.callbackHandler = callbackHandler;
-        this.sharedState = sharedState;
-        this.options = options;
+			Map<String,?> sharedState, Map<String,?> options) {
+ 
+	this.subject = subject;
+	this.callbackHandler = callbackHandler;
+	this.sharedState = sharedState;
+	this.options = options;
     }
 
     public boolean login() throws LoginException {
 
-        // prompt for a username and password
-        if (callbackHandler == null) {
-            throw new LoginException("Error: no CallbackHandler available " +
-                        "to garner authentication information from the user");
-        } else {
-            System.out.println("DefaultHandlerModule got CallbackHandler: " +
-                        callbackHandler.toString());
-        }
+	// prompt for a username and password
+	if (callbackHandler == null) {
+	    throw new LoginException("Error: no CallbackHandler available " +
+			"to garner authentication information from the user");
+	} else {
+	    System.out.println("DefaultHandlerModule got CallbackHandler: " +
+			callbackHandler.toString());
+	}
 
-        return true;
+	return true;
     }
 
     public boolean commit() throws LoginException {
-        return true;
+	return true;
     }
 
     public boolean abort() throws LoginException {
-        return true;
+	return true;
     }
 
     public boolean logout() throws LoginException {
-        return true;
+	return true;
     }
 }

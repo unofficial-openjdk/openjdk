@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,54 +24,54 @@
 /* @test
  * @bug 4771562
  * @summary Verify that if ObjectInputStream.read(byte[], int, int) is called
- *          with a null byte array and invalid offset/length values, a
- *          NullPointerException is thrown rather than an
- *          IndexOutOfBoundsException.
+ * 	    with a null byte array and invalid offset/length values, a
+ * 	    NullPointerException is thrown rather than an
+ * 	    IndexOutOfBoundsException.
  */
 
 import java.io.*;
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        byte[] b = new byte[10];
-        int[][] badBounds =
-            { { -1, -1}, { -1, 5 }, { 5, -1 }, { 100, 5 }, { 5, 100 } };
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	byte[] b = new byte[10];
+	int[][] badBounds =
+	    { { -1, -1}, { -1, 5 }, { 5, -1 }, { 100, 5 }, { 5, 100 } };
 
-        for (int i = 0; i < badBounds.length; i++) {
-            try {
-                oout.write(null, badBounds[i][0], badBounds[i][1]);
-                throw new Error();
-            } catch (NullPointerException e) {
-            }
-        }
-        for (int i = 0; i < badBounds.length; i++) {
-            try {
-                oout.write(b, badBounds[i][0], badBounds[i][1]);
-                throw new Error();
-            } catch (IndexOutOfBoundsException e) {
-            }
-        }
-        oout.write(b);
-        oout.flush();
+	for (int i = 0; i < badBounds.length; i++) {
+	    try {
+		oout.write(null, badBounds[i][0], badBounds[i][1]);
+		throw new Error();
+	    } catch (NullPointerException e) {
+	    }
+	}
+	for (int i = 0; i < badBounds.length; i++) {
+	    try {
+		oout.write(b, badBounds[i][0], badBounds[i][1]);
+		throw new Error();
+	    } catch (IndexOutOfBoundsException e) {
+	    }
+	}
+	oout.write(b);
+	oout.flush();
 
-        ObjectInputStream oin = new ObjectInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        for (int i = 0; i < badBounds.length; i++) {
-            try {
-                oin.read(null, badBounds[i][0], badBounds[i][1]);
-                throw new Error();
-            } catch (NullPointerException e) {
-            }
-        }
-        for (int i = 0; i < badBounds.length; i++) {
-            try {
-                oin.read(b, badBounds[i][0], badBounds[i][1]);
-                throw new Error();
-            } catch (IndexOutOfBoundsException e) {
-            }
-        }
-        oin.read(b);
+	ObjectInputStream oin = new ObjectInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	for (int i = 0; i < badBounds.length; i++) {
+	    try {
+		oin.read(null, badBounds[i][0], badBounds[i][1]);
+		throw new Error();
+	    } catch (NullPointerException e) {
+	    }
+	}
+	for (int i = 0; i < badBounds.length; i++) {
+	    try {
+		oin.read(b, badBounds[i][0], badBounds[i][1]);
+		throw new Error();
+	    } catch (IndexOutOfBoundsException e) {
+	    }
+	}
+	oin.read(b);
     }
 }

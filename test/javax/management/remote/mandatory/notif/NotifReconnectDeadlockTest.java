@@ -51,78 +51,78 @@ import javax.management.remote.*;
  * succeed, so we meet the two conditions above.
  * The test succeeds if there is indeed a reconnection, detected by the connection
  * listener seeing an OPENED notification.  The connection listener should not see
- * a CLOSED or FAILED notification."
+ * a CLOSED or FAILED notification." 
  */
 public class NotifReconnectDeadlockTest {
 
     public static void main(String[] args) throws Exception {
         System.out.println(
-           ">>> Tests reconnection done by a fetching notif thread.");
+	   ">>> Tests reconnection done by a fetching notif thread.");
 
-        ObjectName oname = new ObjectName ("Default:name=NotificationEmitter");
-        JMXServiceURL url = new JMXServiceURL("rmi", null, 0);
-        Map env = new HashMap(2);
-        env.put("jmx.remote.x.server.connection.timeout", new Long(serverTimeout));
-        env.put("jmx.remote.x.client.connection.check.period", new Long(Long.MAX_VALUE));
+	ObjectName oname = new ObjectName ("Default:name=NotificationEmitter");
+	JMXServiceURL url = new JMXServiceURL("rmi", null, 0);
+	Map env = new HashMap(2);
+	env.put("jmx.remote.x.server.connection.timeout", new Long(serverTimeout));
+	env.put("jmx.remote.x.client.connection.check.period", new Long(Long.MAX_VALUE));
 
-        final MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+	final MBeanServer mbs = MBeanServerFactory.newMBeanServer();
 
-        mbs.registerMBean(new NotificationEmitter(), oname);
-        JMXConnectorServer server = JMXConnectorServerFactory.newJMXConnectorServer(
-                                                                               url,
-                                                                               env,
-                                                                               mbs);
-        server.start();
+	mbs.registerMBean(new NotificationEmitter(), oname);
+	JMXConnectorServer server = JMXConnectorServerFactory.newJMXConnectorServer(
+									       url,
+									       env,
+									       mbs);
+	server.start();
 
-        JMXServiceURL addr = server.getAddress();
-        JMXConnector client = JMXConnectorFactory.connect(addr, env);
+	JMXServiceURL addr = server.getAddress();
+	JMXConnector client = JMXConnectorFactory.connect(addr, env);
 
-        Thread.sleep(100); // let pass the first client open notif if there is
-        client.getMBeanServerConnection().addNotificationListener(oname,
-                                                                  listener,
-                                                                  null,
-                                                                  null);
+	Thread.sleep(100); // let pass the first client open notif if there is
+	client.getMBeanServerConnection().addNotificationListener(oname,
+								  listener,
+								  null,
+								  null);
 
-        client.addConnectionNotificationListener(listener, null, null);
+	client.addConnectionNotificationListener(listener, null, null);
 
-        // max test time: 2 minutes
-        final long end = System.currentTimeMillis()+120000;
+	// max test time: 2 minutes
+	final long end = System.currentTimeMillis()+120000;
 
-        synchronized(lock) {
-            while(clientState == null && System.currentTimeMillis() < end) {
-                mbs.invoke(oname, "sendNotifications",
-                           new Object[] {new Notification("MyType", "", 0)},
-                           new String[] {"javax.management.Notification"});
+	synchronized(lock) {
+	    while(clientState == null && System.currentTimeMillis() < end) {
+		mbs.invoke(oname, "sendNotifications",
+			   new Object[] {new Notification("MyType", "", 0)},
+			   new String[] {"javax.management.Notification"});
 
-                try {
-                    lock.wait(10);
-                } catch (Exception e) {}
+		try {
+		    lock.wait(10);
+		} catch (Exception e) {}
             }
         }
 
-        if (clientState == null) {
-            throw new RuntimeException(
-                  "No reconnection happened, need to reconfigure the test.");
-        } else if (JMXConnectionNotification.FAILED.equals(clientState) ||
-                   JMXConnectionNotification.CLOSED.equals(clientState)) {
-            throw new RuntimeException("Failed to reconnect.");
-        }
+	if (clientState == null) {
+	    throw new RuntimeException(
+		  "No reconnection happened, need to reconfigure the test.");
+	} else if (JMXConnectionNotification.FAILED.equals(clientState) ||
+		   JMXConnectionNotification.CLOSED.equals(clientState)) {
+	    throw new RuntimeException("Failed to reconnect.");
+	} 
 
-        System.out.println(">>> Passed!");
+	System.out.println(">>> Passed!");
 
-        client.removeConnectionNotificationListener(listener);
-        client.close();
-        server.stop();
+	client.removeConnectionNotificationListener(listener);
+	client.close();
+	server.stop();
     }
 
 //--------------------------
 // private classes
 //--------------------------
     public static class NotificationEmitter extends NotificationBroadcasterSupport
-        implements NotificationEmitterMBean {
+	implements NotificationEmitterMBean {
 
         public void sendNotifications(Notification n) {
-            sendNotification(n);
+	    sendNotification(n);
         }
     }
 
@@ -131,34 +131,34 @@ public class NotifReconnectDeadlockTest {
     }
 
     private final static NotificationListener listener = new NotificationListener() {
-            public void handleNotification(Notification n, Object hb) {
+	    public void handleNotification(Notification n, Object hb) {
 
-                // treat the client notif to know the end
-                if (n instanceof JMXConnectionNotification) {
-                    if (!JMXConnectionNotification.NOTIFS_LOST.equals(n.getType())) {
+		// treat the client notif to know the end
+		if (n instanceof JMXConnectionNotification) {
+		    if (!JMXConnectionNotification.NOTIFS_LOST.equals(n.getType())) {
+			
+			clientState = n.getType();
+			System.out.println(
+	      		   ">>> The client state has been changed to: "+clientState);
+			
+			synchronized(lock) {
+			    lock.notifyAll();
+			}
+		    }
 
-                        clientState = n.getType();
-                        System.out.println(
-                           ">>> The client state has been changed to: "+clientState);
+		    return;
+		}
 
-                        synchronized(lock) {
-                            lock.notifyAll();
-                        }
-                    }
-
-                    return;
-                }
-
-                System.out.println(">>> Do sleep to make reconnection.");
-                synchronized(lock) {
-                    try {
-                        lock.wait(listenerSleep);
-                    } catch (Exception e) {
-                        // OK
-                    }
-                }
-            }
-        };
+		System.out.println(">>> Do sleep to make reconnection.");
+		synchronized(lock) {
+		    try {
+			lock.wait(listenerSleep);
+		    } catch (Exception e) {
+			// OK
+		    }
+		}
+	    }
+	};
 
     private static final long serverTimeout = 1000;
     private static final long listenerSleep = serverTimeout*6;

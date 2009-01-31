@@ -1,6 +1,6 @@
 /**
  *  @test
- *  @bug 4836939
+ *  @bug 4836939 
  *  @summary JDI add addSourceNameFilter to ClassPrepareRequest
  *
  *  @author Robert Field / Jim Holmlund
@@ -61,7 +61,7 @@ public class FilterMangleTest extends TestScaffold {
     ClassPrepareRequest cpReq;
     boolean shouldResume = false;
     boolean gotIt = false;
-
+    
     static boolean shouldPass = true;
     static String pattern;
 
@@ -72,7 +72,7 @@ public class FilterMangleTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         testSetUp();
         if (args.length != 0) {
             if (args[0].startsWith("SDE-")) {
@@ -85,7 +85,7 @@ public class FilterMangleTest extends TestScaffold {
                 System.arraycopy(args, 1, args2, 0, args.length - 1);
                 new FilterMangleTest(args2).startTests();
                 return;
-            }
+            } 
             // could be -trace 255 or whatever
             pattern = "Mangle.java";
         } else {
@@ -95,7 +95,7 @@ public class FilterMangleTest extends TestScaffold {
 
         new FilterMangleTest(args).startTests();
     }
-
+    
     /********** test set-up **********/
 
     static void testSetUp() throws Exception {
@@ -132,10 +132,10 @@ public class FilterMangleTest extends TestScaffold {
                 } catch (AbsentInformationException ee) {
                     failure("failure: absent info on sourceName(): " + ee);
                 }
-
+                
                 String stratum = rt.defaultStratum();
                 println("    defaultStratum = " + stratum);
-
+                
                 try {
                     println("    sourceNames = " + rt.sourceNames(stratum));
                 } catch (AbsentInformationException ee) {
@@ -152,7 +152,7 @@ public class FilterMangleTest extends TestScaffold {
          * For example, if you try to set a bkpt on a class not yet
          * loaded, TestScaffold will create a class prepare request
          * to catch the load of that class so the bkpt can be
-         * set after the class is loaded.  If our event handler
+         * set after the class is loaded.  If our event handler 
          * resumes the event set, then I think that the debuggee
          * runs off to completion before the bkpt can actually be
          * set.
@@ -168,11 +168,11 @@ public class FilterMangleTest extends TestScaffold {
 
         EventRequestManager erm = vm().eventRequestManager();
         cpReq = erm.createClassPrepareRequest();
-        if (true)  {
-            cpReq.addSourceNameFilter(pattern);
+        if (true)  {                                
+            cpReq.addSourceNameFilter(pattern);     
         } else {
             // a manual test for passing mulitple filters.
-            cpReq.addSourceNameFilter("Mangle.j*");
+            cpReq.addSourceNameFilter("Mangle.j*");     
             cpReq.addSourceNameFilter("Mangle.jav*");
         }
         cpReq.enable();
@@ -184,12 +184,12 @@ public class FilterMangleTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         if (!gotIt) {
             if (shouldPass) {
                 failure("FAIL: Did not get class prepare event for " +
                     "onion.pickle.Mangle, pattern = " + pattern);
-            }
+            }                 
         } else {
             if (!shouldPass) {
                 failure("FAIL: Got unexpected class prepare event for " +
@@ -208,3 +208,4 @@ public class FilterMangleTest extends TestScaffold {
         }
     }
 }
+

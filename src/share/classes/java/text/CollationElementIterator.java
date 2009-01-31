@@ -95,6 +95,7 @@ import sun.text.normalizer.NormalizerBase;
  *
  * @see                Collator
  * @see                RuleBasedCollator
+ * @version            1.24 07/27/98
  * @author             Helena Shih, Laura Werner, Richard Gillam
  */
 public final class CollationElementIterator
@@ -227,7 +228,7 @@ public final class CollationElementIterator
         if (ordering.isSEAsianSwapping()) {
             int consonant;
             if (isThaiPreVowel(ch)) {
-                consonant = text.next();
+	        consonant = text.next();
                 if (isThaiBaseConsonant(consonant)) {
                     buffer = makeReorderedBuffer(consonant, value, buffer, true);
                     value = buffer[0];
@@ -237,7 +238,7 @@ public final class CollationElementIterator
                 }
             }
             if (isLaoPreVowel(ch)) {
-                consonant = text.next();
+	        consonant = text.next();
                 if (isLaoBaseConsonant(consonant)) {
                     buffer = makeReorderedBuffer(consonant, value, buffer, true);
                     value = buffer[0];
@@ -316,7 +317,7 @@ public final class CollationElementIterator
 
         if (ordering.isSEAsianSwapping()) {
             int vowel;
-            if (isThaiBaseConsonant(ch)) {
+            if (isThaiBaseConsonant(ch)) { 
                 vowel = text.previous();
                 if (isThaiPreVowel(vowel)) {
                     buffer = makeReorderedBuffer(vowel, value, buffer, false);
@@ -327,7 +328,7 @@ public final class CollationElementIterator
                 }
             }
             if (isLaoBaseConsonant(ch)) {
-                vowel = text.previous();
+	        vowel = text.previous();
                 if (isLaoPreVowel(vowel)) {
                     buffer = makeReorderedBuffer(vowel, value, buffer, false);
                     expIndex = buffer.length - 1;
@@ -403,7 +404,7 @@ public final class CollationElementIterator
      *
      * @param newOffset The new character offset into the original text.
      * @since 1.2
-     */
+     */  
     public void setOffset(int newOffset)
     {
         if (text != null) {
@@ -420,7 +421,7 @@ public final class CollationElementIterator
                     // walk backwards through the string until we see a character
                     // that DOESN'T participate in a contracting character sequence
                     while (ordering.usedInContractSeq(c)) {
-                        c = text.previous();
+		        c = text.previous();
                     }
                     // now walk forward using this object's next() method until
                     // we pass the starting point and set our current position
@@ -432,10 +433,10 @@ public final class CollationElementIterator
                         next();
                     }
                     text.setIndexOnly(last);
-                    // we don't need this, since last is the last index
-                    // that is the starting of the contraction which encompass
-                    // newOffset
-                    // text.previous();
+		    // we don't need this, since last is the last index 
+		    // that is the starting of the contraction which encompass
+		    // newOffset 
+		    // text.previous();
                 }
             }
         }
@@ -656,7 +657,7 @@ public final class CollationElementIterator
         // iterator is using) and store it in "fragment".
         tempText.previous();
         key.setLength(0);
-        int c = tempText.next();
+        int c = tempText.next();  
         while (maxLength > 0 && c != NormalizerBase.DONE) {
             if (Character.isSupplementaryCodePoint(c)) {
                 key.append(Character.toChars(c));

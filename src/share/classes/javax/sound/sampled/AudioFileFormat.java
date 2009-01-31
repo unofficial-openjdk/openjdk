@@ -98,6 +98,7 @@ import java.util.Map;
  * @author David Rivas
  * @author Kara Kytle
  * @author Florian Bomers
+ * @version %I% %E%
  * @see AudioInputStream
  * @since 1.3
  */
@@ -146,11 +147,11 @@ public class AudioFileFormat {
      */
     protected AudioFileFormat(Type type, int byteLength, AudioFormat format, int frameLength) {
 
-        this.type = type;
-        this.byteLength = byteLength;
-        this.format = format;
-        this.frameLength = frameLength;
-        this.properties = null;
+	this.type = type;
+	this.byteLength = byteLength;
+	this.format = format;
+	this.frameLength = frameLength;
+	this.properties = null;
     }
 
 
@@ -165,7 +166,7 @@ public class AudioFileFormat {
     public AudioFileFormat(Type type, AudioFormat format, int frameLength) {
 
 
-        this(type,AudioSystem.NOT_SPECIFIED,format,frameLength);
+	this(type,AudioSystem.NOT_SPECIFIED,format,frameLength);
     }
 
     /**
@@ -185,9 +186,9 @@ public class AudioFileFormat {
      * @since 1.5
      */
     public AudioFileFormat(Type type, AudioFormat format,
-                           int frameLength, Map<String, Object> properties) {
-        this(type,AudioSystem.NOT_SPECIFIED,format,frameLength);
-        this.properties = new HashMap<String, Object>(properties);
+			   int frameLength, Map<String, Object> properties) {
+	this(type,AudioSystem.NOT_SPECIFIED,format,frameLength);
+	this.properties = new HashMap<String, Object>(properties);
     }
 
 
@@ -202,7 +203,7 @@ public class AudioFileFormat {
      * @see Type#SND
      */
     public Type getType() {
-        return type;
+	return type;
     }
 
     /**
@@ -211,7 +212,7 @@ public class AudioFileFormat {
      * @see AudioSystem#NOT_SPECIFIED
      */
     public int getByteLength() {
-        return byteLength;
+	return byteLength;
     }
 
     /**
@@ -219,7 +220,7 @@ public class AudioFileFormat {
      * @return the audio data format
      */
     public AudioFormat getFormat() {
-        return format;
+	return format;
     }
 
     /**
@@ -228,7 +229,7 @@ public class AudioFileFormat {
      * @see AudioSystem#NOT_SPECIFIED
      */
     public int getFrameLength() {
-        return frameLength;
+	return frameLength;
     }
 
     /**
@@ -244,13 +245,13 @@ public class AudioFileFormat {
      * @since 1.5
      */
     public Map<String,Object> properties() {
-        Map<String,Object> ret;
-        if (properties == null) {
-            ret = new HashMap<String,Object>(0);
-        } else {
-            ret = (Map<String,Object>) (properties.clone());
-        }
-        return (Map<String,Object>) Collections.unmodifiableMap(ret);
+ 	Map<String,Object> ret;
+	if (properties == null) {
+	    ret = new HashMap<String,Object>(0);
+	} else {
+	    ret = (Map<String,Object>) (properties.clone());
+	}
+	return (Map<String,Object>) Collections.unmodifiableMap(ret);
     }
 
 
@@ -271,10 +272,10 @@ public class AudioFileFormat {
      * @since 1.5
      */
     public Object getProperty(String key) {
-        if (properties == null) {
-            return null;
-        }
-        return properties.get(key);
+	if (properties == null) {
+	    return null;
+	}
+	return properties.get(key);
     }
 
 
@@ -284,26 +285,26 @@ public class AudioFileFormat {
      */
     public String toString() {
 
-        StringBuffer buf = new StringBuffer();
+	StringBuffer buf = new StringBuffer();
 
-        //$$fb2002-11-01: fix for 4672864: AudioFileFormat.toString() throws unexpected NullPointerException
-        if (type != null) {
-            buf.append(type.toString() + " (." + type.getExtension() + ") file");
-        } else {
-            buf.append("unknown file format");
-        }
+	//$$fb2002-11-01: fix for 4672864: AudioFileFormat.toString() throws unexpected NullPointerException
+	if (type != null) {
+	    buf.append(type.toString() + " (." + type.getExtension() + ") file");
+	} else {
+	    buf.append("unknown file format");
+	}
 
-        if (byteLength != AudioSystem.NOT_SPECIFIED) {
-            buf.append(", byte length: " + byteLength);
-        }
+	if (byteLength != AudioSystem.NOT_SPECIFIED) {
+	    buf.append(", byte length: " + byteLength);
+	}
 
-        buf.append(", data format: " + format);
+	buf.append(", data format: " + format);
 
-        if (frameLength != AudioSystem.NOT_SPECIFIED) {
-            buf.append(", frame length: " + frameLength);
-        }
+	if (frameLength != AudioSystem.NOT_SPECIFIED) {
+	    buf.append(", frame length: " + frameLength);
+	}
 
-        return new String(buf);
+	return new String(buf);
     }
 
 
@@ -314,103 +315,103 @@ public class AudioFileFormat {
      */
     public static class Type {
 
-        // FILE FORMAT TYPE DEFINES
+	// FILE FORMAT TYPE DEFINES
 
-        /**
-         * Specifies a WAVE file.
-         */
-        public static final Type WAVE = new Type("WAVE", "wav");
+	/**
+	 * Specifies a WAVE file.
+	 */
+	public static final Type WAVE = new Type("WAVE", "wav");
 
-        /**
-         * Specifies an AU file.
-         */
-        public static final Type AU = new Type("AU", "au");
+	/**
+	 * Specifies an AU file.
+	 */
+	public static final Type AU = new Type("AU", "au");
 
-        /**
-         * Specifies an AIFF file.
-         */
-        public static final Type AIFF = new Type("AIFF", "aif");
+	/**
+	 * Specifies an AIFF file.
+	 */
+	public static final Type AIFF = new Type("AIFF", "aif");
 
-        /**
-         * Specifies an AIFF-C file.
-         */
-        public static final Type AIFC = new Type("AIFF-C", "aifc");
+	/**
+	 * Specifies an AIFF-C file.
+	 */
+	public static final Type AIFC = new Type("AIFF-C", "aifc");
 
-        /**
-         * Specifies a SND file.
-         */
-        public static final Type SND = new Type("SND", "snd");
-
-
-        // INSTANCE VARIABLES
-
-        /**
-         * File type name.
-         */
-        private final String name;
-
-        /**
-         * File type extension.
-         */
-        private final String extension;
+	/**
+	 * Specifies a SND file.
+	 */
+	public static final Type SND = new Type("SND", "snd");
 
 
-        // CONSTRUCTOR
+	// INSTANCE VARIABLES
 
-        /**
-         * Constructs a file type.
-         * @param name the string that names the file type
-         * @param extension the string that commonly marks the file type
-         * without leading dot.
-         */
-        public Type(String name, String extension) {
+	/**
+	 * File type name.
+	 */
+	private final String name;
 
-            this.name = name;
-            this.extension = extension;
-        }
+	/**
+	 * File type extension.
+	 */
+	private final String extension;
 
 
-        // METHODS
+	// CONSTRUCTOR
 
-        /**
-         * Finalizes the equals method
-         */
-        public final boolean equals(Object obj) {
-            if (toString() == null) {
-                return (obj != null) && (obj.toString() == null);
-            }
-            if (obj instanceof Type) {
-                return toString().equals(obj.toString());
-            }
-            return false;
-        }
+	/**
+	 * Constructs a file type.
+	 * @param name the string that names the file type
+	 * @param extension the string that commonly marks the file type
+	 * without leading dot.
+	 */
+	public Type(String name, String extension) {
 
-        /**
-         * Finalizes the hashCode method
-         */
-        public final int hashCode() {
-            if (toString() == null) {
-                return 0;
-            }
-            return toString().hashCode();
-        }
+	    this.name = name;
+	    this.extension = extension;
+	}
 
-        /**
-         * Provides the file type's name as the <code>String</code> representation
-         * of the file type.
-         * @return the file type's name
-         */
-        public final String toString() {
-            return name;
-        }
 
-        /**
-         * Obtains the common file name extension for this file type.
-         * @return file type extension
-         */
-        public String getExtension() {
-            return extension;
-        }
+	// METHODS
+
+	/**
+	 * Finalizes the equals method
+	 */
+	public final boolean equals(Object obj) {
+	    if (toString() == null) {
+		return (obj != null) && (obj.toString() == null);
+	    }
+	    if (obj instanceof Type) {
+		return toString().equals(obj.toString());
+	    }
+	    return false;
+	}
+
+	/**
+	 * Finalizes the hashCode method
+	 */
+	public final int hashCode() {
+	    if (toString() == null) {
+		return 0;
+	    }
+	    return toString().hashCode();
+	}
+
+	/**
+	 * Provides the file type's name as the <code>String</code> representation
+	 * of the file type.
+	 * @return the file type's name
+	 */
+	public final String toString() {
+	    return name;
+	}
+
+	/**
+	 * Obtains the common file name extension for this file type.
+	 * @return file type extension
+	 */
+	public String getExtension() {
+	    return extension;
+	}
 
     } // class Type
 

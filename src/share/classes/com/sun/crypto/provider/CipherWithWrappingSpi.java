@@ -65,9 +65,9 @@ public abstract class CipherWithWrappingSpi extends CipherSpi {
      * @param key the key to be wrapped.
      *
      * @return the wrapped key.
-     *
-     * @exception IllegalBlockSizeException if this cipher is a block
-     * cipher, no padding has been requested, and the length of the
+     * 
+     * @exception IllegalBlockSizeException if this cipher is a block 
+     * cipher, no padding has been requested, and the length of the 
      * encoding of the key to be wrapped is not a
      * multiple of the block size.
      *
@@ -76,27 +76,27 @@ public abstract class CipherWithWrappingSpi extends CipherSpi {
      * being passed to a software only cipher).
      */
     protected final byte[] engineWrap(Key key)
-        throws IllegalBlockSizeException, InvalidKeyException
+	throws IllegalBlockSizeException, InvalidKeyException
     {
-        byte[] result = null;
+	byte[] result = null;
 
-        try {
-            byte[] encodedKey = key.getEncoded();
-            if ((encodedKey == null) || (encodedKey.length == 0)) {
-                throw new InvalidKeyException("Cannot get an encoding of " +
-                                              "the key to be wrapped");
-            }
+	try {
+	    byte[] encodedKey = key.getEncoded();
+	    if ((encodedKey == null) || (encodedKey.length == 0)) {
+		throw new InvalidKeyException("Cannot get an encoding of " +
+					      "the key to be wrapped");
+	    }
 
-            result = engineDoFinal(encodedKey, 0, encodedKey.length);
-        } catch (BadPaddingException e) {
-            // Should never happen
-        }
+	    result = engineDoFinal(encodedKey, 0, encodedKey.length);
+	} catch (BadPaddingException e) {
+	    // Should never happen
+	}
 
-        return result;
+	return result;
     }
 
     /**
-     * Unwrap a previously wrapped key.
+     * Unwrap a previously wrapped key. 
      *
      * @param wrappedKey the key to be unwrapped.
      *
@@ -107,49 +107,49 @@ public abstract class CipherWithWrappingSpi extends CipherSpi {
      * <code>Cipher.PRIVATE_KEY</code>, or <code>Cipher.PUBLIC_KEY</code>.
      *
      * @return the unwrapped key.
-     *
+     * 
      * @exception InvalidKeyException if <code>wrappedKey</code> does not
      * represent a wrapped key, or if the algorithm associated with the
-     * wrapped key is different from <code>wrappedKeyAlgorithm</code>
+     * wrapped key is different from <code>wrappedKeyAlgorithm</code> 
      * and/or its key type is different from <code>wrappedKeyType</code>.
      *
      * @exception NoSuchAlgorithmException if no installed providers
      * can create keys for the <code>wrappedKeyAlgorithm</code>.
      */
     protected final Key engineUnwrap(byte[] wrappedKey,
-                                     String wrappedKeyAlgorithm,
-                                     int wrappedKeyType)
-        throws InvalidKeyException, NoSuchAlgorithmException
+				     String wrappedKeyAlgorithm,
+				     int wrappedKeyType)
+	throws InvalidKeyException, NoSuchAlgorithmException
     {
-        byte[] encodedKey;
-        Key result = null;
+	byte[] encodedKey;
+	Key result = null;
 
-        try {
-            encodedKey = engineDoFinal(wrappedKey, 0,
-                                       wrappedKey.length);
-        } catch (BadPaddingException ePadding) {
-            throw new InvalidKeyException();
-        } catch (IllegalBlockSizeException eBlockSize) {
-            throw new InvalidKeyException();
-        }
+	try {
+	    encodedKey = engineDoFinal(wrappedKey, 0, 
+				       wrappedKey.length);
+	} catch (BadPaddingException ePadding) {
+	    throw new InvalidKeyException();
+	} catch (IllegalBlockSizeException eBlockSize) {
+	    throw new InvalidKeyException();
+	}
 
-        switch (wrappedKeyType) {
-        case Cipher.SECRET_KEY:
-            result = constructSecretKey(encodedKey,
-                                        wrappedKeyAlgorithm);
-            break;
-        case Cipher.PRIVATE_KEY:
-            result = constructPrivateKey(encodedKey,
-                                         wrappedKeyAlgorithm);
-            break;
-        case Cipher.PUBLIC_KEY:
-            result = constructPublicKey(encodedKey,
-                                        wrappedKeyAlgorithm);
-            break;
-        }
+	switch (wrappedKeyType) {
+	case Cipher.SECRET_KEY:
+	    result = constructSecretKey(encodedKey,
+					wrappedKeyAlgorithm);
+	    break;
+	case Cipher.PRIVATE_KEY:
+	    result = constructPrivateKey(encodedKey,
+					 wrappedKeyAlgorithm);
+	    break;
+	case Cipher.PUBLIC_KEY:
+	    result = constructPublicKey(encodedKey,
+					wrappedKeyAlgorithm);
+	    break;
+	}
 
         return result;
-
+	                        
     }
 
     /**
@@ -162,40 +162,40 @@ public abstract class CipherWithWrappingSpi extends CipherSpi {
      * @return a public key constructed from the encodedKey.
      */
     private final PublicKey constructPublicKey(byte[] encodedKey,
-                                               String encodedKeyAlgorithm)
-        throws InvalidKeyException, NoSuchAlgorithmException
+				               String encodedKeyAlgorithm)
+	throws InvalidKeyException, NoSuchAlgorithmException
     {
-        PublicKey key = null;
+	PublicKey key = null;
+	
+	try {
+	    KeyFactory keyFactory = 
+		KeyFactory.getInstance(encodedKeyAlgorithm, "SunJCE");
+	    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
+	    key = keyFactory.generatePublic(keySpec);
+	} catch (NoSuchAlgorithmException nsae) {
+	    // Try to see whether there is another
+	    // provider which supports this algorithm
+	    try {
+		KeyFactory keyFactory =
+		    KeyFactory.getInstance(encodedKeyAlgorithm);
+		X509EncodedKeySpec keySpec = 
+		    new X509EncodedKeySpec(encodedKey);
+		key = keyFactory.generatePublic(keySpec);
+	    } catch (NoSuchAlgorithmException nsae2) {
+		throw new NoSuchAlgorithmException("No installed providers " +
+					           "can create keys for the " +
+					           encodedKeyAlgorithm +
+						   "algorithm");
+	    } catch (InvalidKeySpecException ikse2) {
+		// Should never happen.
+	    }
+	} catch (InvalidKeySpecException ikse) {
+	    // Should never happen.
+	} catch (NoSuchProviderException nspe) {
+	    // Should never happen.
+	}
 
-        try {
-            KeyFactory keyFactory =
-                KeyFactory.getInstance(encodedKeyAlgorithm, "SunJCE");
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(encodedKey);
-            key = keyFactory.generatePublic(keySpec);
-        } catch (NoSuchAlgorithmException nsae) {
-            // Try to see whether there is another
-            // provider which supports this algorithm
-            try {
-                KeyFactory keyFactory =
-                    KeyFactory.getInstance(encodedKeyAlgorithm);
-                X509EncodedKeySpec keySpec =
-                    new X509EncodedKeySpec(encodedKey);
-                key = keyFactory.generatePublic(keySpec);
-            } catch (NoSuchAlgorithmException nsae2) {
-                throw new NoSuchAlgorithmException("No installed providers " +
-                                                   "can create keys for the " +
-                                                   encodedKeyAlgorithm +
-                                                   "algorithm");
-            } catch (InvalidKeySpecException ikse2) {
-                // Should never happen.
-            }
-        } catch (InvalidKeySpecException ikse) {
-            // Should never happen.
-        } catch (NoSuchProviderException nspe) {
-            // Should never happen.
-        }
-
-        return key;
+	return key;
     }
 
     /**
@@ -208,40 +208,40 @@ public abstract class CipherWithWrappingSpi extends CipherSpi {
      * @return a private key constructed from the encodedKey.
      */
     private final PrivateKey constructPrivateKey(byte[] encodedKey,
-                                                 String encodedKeyAlgorithm)
-        throws InvalidKeyException, NoSuchAlgorithmException
+						 String encodedKeyAlgorithm)
+	throws InvalidKeyException, NoSuchAlgorithmException
     {
-        PrivateKey key = null;
+	PrivateKey key = null;
 
-        try {
-            KeyFactory keyFactory =
-                KeyFactory.getInstance(encodedKeyAlgorithm, "SunJCE");
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedKey);
-            return keyFactory.generatePrivate(keySpec);
-        } catch (NoSuchAlgorithmException nsae) {
-            // Try to see whether there is another
-            // provider which supports this algorithm
-            try {
-                KeyFactory keyFactory =
-                    KeyFactory.getInstance(encodedKeyAlgorithm);
-                PKCS8EncodedKeySpec keySpec =
-                    new PKCS8EncodedKeySpec(encodedKey);
-                key = keyFactory.generatePrivate(keySpec);
-            } catch (NoSuchAlgorithmException nsae2) {
-                throw new NoSuchAlgorithmException("No installed providers " +
-                                                   "can create keys for the " +
-                                                   encodedKeyAlgorithm +
-                                                   "algorithm");
-            } catch (InvalidKeySpecException ikse2) {
-                // Should never happen.
-            }
-        } catch (InvalidKeySpecException ikse) {
-            // Should never happen.
-        } catch (NoSuchProviderException nspe) {
-            // Should never happen.
-        }
+	try {
+	    KeyFactory keyFactory =
+		KeyFactory.getInstance(encodedKeyAlgorithm, "SunJCE");
+	    PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encodedKey);
+	    return keyFactory.generatePrivate(keySpec);
+	} catch (NoSuchAlgorithmException nsae) {
+	    // Try to see whether there is another
+	    // provider which supports this algorithm
+	    try {
+		KeyFactory keyFactory =
+		    KeyFactory.getInstance(encodedKeyAlgorithm);
+		PKCS8EncodedKeySpec keySpec = 
+		    new PKCS8EncodedKeySpec(encodedKey);
+		key = keyFactory.generatePrivate(keySpec);
+	    } catch (NoSuchAlgorithmException nsae2) {
+		throw new NoSuchAlgorithmException("No installed providers " +
+					           "can create keys for the " +
+					           encodedKeyAlgorithm +
+						   "algorithm");
+	    } catch (InvalidKeySpecException ikse2) {
+		// Should never happen.
+	    }
+	} catch (InvalidKeySpecException ikse) {
+	    // Should never happen.
+	} catch (NoSuchProviderException nspe) {
+	    // Should never happen.
+	}
 
-        return key;
+	return key;
     }
 
     /**
@@ -254,8 +254,8 @@ public abstract class CipherWithWrappingSpi extends CipherSpi {
      * @return a secret key constructed from the encodedKey.
      */
     private final SecretKey constructSecretKey(byte[] encodedKey,
-                                               String encodedKeyAlgorithm)
+					       String encodedKeyAlgorithm)
     {
-        return (new SecretKeySpec(encodedKey, encodedKeyAlgorithm));
+	return (new SecretKeySpec(encodedKey, encodedKeyAlgorithm));
     }
 }

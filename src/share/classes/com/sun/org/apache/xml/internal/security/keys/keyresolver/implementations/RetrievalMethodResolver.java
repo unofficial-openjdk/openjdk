@@ -60,7 +60,7 @@ import org.w3c.dom.Node;
 public class RetrievalMethodResolver extends KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                         RetrievalMethodResolver.class.getName());
 
@@ -75,9 +75,9 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
    public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
 
-      if
+      if 
          (!XMLUtils.elementIsInSignatureSpace(element,
-                 Constants._TAG_RETRIEVALMETHOD)) {
+                 Constants._TAG_RETRIEVALMETHOD)) {      
          return false;
       }
 
@@ -108,7 +108,7 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
          if (resRes != null) {
             XMLSignatureInput resource = resRes.resolve(uri, BaseURI);
             if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Before applying Transforms, resource has "
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Before applying Transforms, resource has "
                       + resource.getBytes().length + "bytes");
 
             if (transforms != null) {
@@ -117,9 +117,9 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
                resource = transforms.performTransforms(resource);
             }
             if (true) {
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "After applying Transforms, resource has "
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "After applying Transforms, resource has "
                       + resource.getBytes().length + "bytes");
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Resolved to resource " + resource.getSourceURI());
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Resolved to resource " + resource.getSourceURI());
             }
 
             byte inputBytes[] = resource.getBytes();
@@ -141,11 +141,11 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
 
                // otherwise, we parse the resource, create an Element and delegate
                 if (true)
-                        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "we have to parse " + inputBytes.length + " bytes");
+                	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "we have to parse " + inputBytes.length + " bytes");
 
                Element e = this.getDocFromBytes(inputBytes);
                if (true)
-                    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Now we have a {" + e.getNamespaceURI() + "}"
+               	    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Now we have a {" + e.getNamespaceURI() + "}"
                          + e.getLocalName() + " Element");
 
                if (e != null) {
@@ -187,14 +187,14 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
          Attr uri = rm.getURIAttr();
          Transforms transforms = rm.getTransforms();
          if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Asked to resolve URI " + uri);
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Asked to resolve URI " + uri);
 
          ResourceResolver resRes = ResourceResolver.getInstance(uri, BaseURI);
 
          if (resRes != null) {
             XMLSignatureInput resource = resRes.resolve(uri, BaseURI);
             if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Before applying Transforms, resource has "
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Before applying Transforms, resource has "
                       + resource.getBytes().length + "bytes");
 
             if (transforms != null) {
@@ -202,11 +202,11 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
 
                resource = transforms.performTransforms(resource);
             }
-
+            
             if (true) {
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "After applying Transforms, resource has "
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "After applying Transforms, resource has "
                       + resource.getBytes().length + "bytes");
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Resolved to resource " + resource.getSourceURI());
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Resolved to resource " + resource.getSourceURI());
             }
 
             byte inputBytes[] = resource.getBytes();
@@ -229,12 +229,12 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
 
                // otherwise, we parse the resource, create an Element and delegate
                 if (true)
-                        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "we have to parse " + inputBytes.length + " bytes");
+                	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "we have to parse " + inputBytes.length + " bytes");
 
                Element e = this.getDocFromBytes(inputBytes);
 
                if (true)
-                    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Now we have a {" + e.getNamespaceURI() + "}"
+               	    if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Now we have a {" + e.getNamespaceURI() + "}"
                          + e.getLocalName() + " Element");
 
                if (e != null) {
@@ -263,7 +263,7 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
     * Parses a byte array and returns the parsed Element.
     *
     * @param bytes
-    * @return the Document Element after parsing bytes
+    * @return the Document Element after parsing bytes 
     * @throws KeyResolverException if something goes wrong
     */
    Element getDocFromBytes(byte[] bytes) throws KeyResolverException {
@@ -302,10 +302,10 @@ public class RetrievalMethodResolver extends KeyResolverSpi {
       return null;
    }
    static Element getFirstElementChild(Element e){
-            Node n=e.getFirstChild();
-            while (n!=null && n.getNodeType()!=Node.ELEMENT_NODE) {
-                n=n.getNextSibling();
-            }
-                return (Element)n;
+   	    Node n=e.getFirstChild();
+   	    while (n!=null && n.getNodeType()!=Node.ELEMENT_NODE) {
+   	    	n=n.getNextSibling();
+   	    }
+   		return (Element)n;
    }
 }

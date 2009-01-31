@@ -40,18 +40,18 @@ import java.io.File;
 import java.util.Arrays;
 
 /**
- * The <code>ResultRecord</code> Java Bean is used to write the
+ * The <code>ResultRecord</code> Java Bean is used to write the 
  * results of a directory scan to a result log.
- *
+ * 
  * <p>
  * This class is annotated for XML binding.
- * </p>
- *
+ * </p> 
+ * 
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 @XmlRootElement(name="ResultRecord",namespace=XmlConfigUtils.NAMESPACE)
 public class ResultRecord {
-
+    
     /**
      * The name of the file for which this result record is built.
      */
@@ -78,10 +78,10 @@ public class ResultRecord {
      */
     public ResultRecord() {
     }
-
+    
     /**
      * Creates a new instance of ResultRecord.
-     * @param scan The DirectoryScannerConfig for which this result was
+     * @param scan The DirectoryScannerConfig for which this result was 
      *        obtained.
      * @param actions The list of actions that were successfully carried out.
      * @param f The file for which these actions were successfully carried out.
@@ -105,7 +105,7 @@ public class ResultRecord {
 
     /**
      * Sets the name of the file for which this result record is being built.
-     * @param filename the name of the file for which this result record is
+     * @param filename the name of the file for which this result record is 
      *        being built.
      */
     public void setFilename(String filename) {
@@ -134,10 +134,10 @@ public class ResultRecord {
     }
 
     /**
-     * Gets the short name of the directory scanner which performed the
+     * Gets the short name of the directory scanner which performed the 
      * operation.
      * @see DirectoryScannerConfig#getName()
-     * @return the short name of the directory scanner which performed the
+     * @return the short name of the directory scanner which performed the 
      * operation.
      */
     @XmlElement(name="DirectoryScanner",namespace=XmlConfigUtils.NAMESPACE)
@@ -146,10 +146,10 @@ public class ResultRecord {
     }
 
     /**
-     * Sets the short name of the directory scanner which performed the
+     * Sets the short name of the directory scanner which performed the 
      * operation.
      * @see DirectoryScannerConfig#getName()
-     * @param directoryScanner the short name of the directory scanner which
+     * @param directoryScanner the short name of the directory scanner which 
      * performed the operation.
      */
     public void setDirectoryScanner(String directoryScanner) {
@@ -173,7 +173,7 @@ public class ResultRecord {
     public void setActions(Action[] actions) {
         this.actions = (actions == null)?null:actions.clone();
     }
-
+    
     // Used for equality
     private Object[] toArray() {
         final Object[] thisconfig = {
@@ -181,15 +181,15 @@ public class ResultRecord {
         };
         return thisconfig;
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ResultRecord)) return false;
         return Arrays.deepEquals(toArray(),((ResultRecord)o).toArray());
     }
-
-    @Override
+    
+    @Override 
     public int hashCode() {
         return Arrays.deepHashCode(toArray());
     }

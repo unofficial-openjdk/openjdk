@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -36,10 +37,10 @@ public class KdcErrException extends sun.security.krb5.KrbException {
     private static final long serialVersionUID = -8788186031117310306L;
 
     public KdcErrException(int i) {
-        super(i);
+	super(i);
     }
 
     public KdcErrException(int i, String s) {
-        super(i, s);
+	super(i, s);
     }
 }

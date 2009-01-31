@@ -74,6 +74,7 @@ package java.util;
  * Java Collections Framework</a>.
  *
  * @since 1.5
+ * @version %I%, %G%
  * @author Josh Bloch, Doug Lea
  * @param <E> the type of elements held in this collection
  */
@@ -243,7 +244,7 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     private void grow(int minCapacity) {
         if (minCapacity < 0) // overflow
             throw new OutOfMemoryError();
-        int oldCapacity = queue.length;
+	int oldCapacity = queue.length;
         // Double size if small; else grow by 50%
         int newCapacity = ((oldCapacity < 64)?
                            ((oldCapacity + 1) * 2):
@@ -299,7 +300,7 @@ public class PriorityQueue<E> extends AbstractQueue<E>
     }
 
     private int indexOf(Object o) {
-        if (o != null) {
+	if (o != null) {
             for (int i = 0; i < size; i++)
                 if (o.equals(queue[i]))
                     return i;
@@ -319,13 +320,13 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @return {@code true} if this queue changed as a result of the call
      */
     public boolean remove(Object o) {
-        int i = indexOf(o);
-        if (i == -1)
-            return false;
-        else {
-            removeAt(i);
-            return true;
-        }
+	int i = indexOf(o);
+	if (i == -1)
+	    return false;
+	else {
+	    removeAt(i);
+	    return true;
+	}
     }
 
     /**
@@ -336,8 +337,8 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @return {@code true} if removed
      */
     boolean removeEq(Object o) {
-        for (int i = 0; i < size; i++) {
-            if (o == queue[i]) {
+	for (int i = 0; i < size; i++) {
+	    if (o == queue[i]) {
                 removeAt(i);
                 return true;
             }
@@ -354,7 +355,7 @@ public class PriorityQueue<E> extends AbstractQueue<E>
      * @return {@code true} if this queue contains the specified element
      */
     public boolean contains(Object o) {
-        return indexOf(o) != -1;
+	return indexOf(o) != -1;
     }
 
     /**
@@ -415,7 +416,7 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         if (a.length < size)
             // Make a new array of a's runtime type, but my contents:
             return (T[]) Arrays.copyOf(queue, size, a.getClass());
-        System.arraycopy(queue, 0, a, 0, size);
+	System.arraycopy(queue, 0, a, 0, size);
         if (a.length > size)
             a[size] = null;
         return a;
@@ -508,7 +509,7 @@ public class PriorityQueue<E> extends AbstractQueue<E>
                 lastRetElt = null;
             } else {
                 throw new IllegalStateException();
-            }
+	    }
             expectedModCount = modCount;
         }
     }
@@ -724,14 +725,14 @@ public class PriorityQueue<E> extends AbstractQueue<E>
         // Read in (and discard) array length
         s.readInt();
 
-        queue = new Object[size];
+	queue = new Object[size];
 
         // Read in all elements.
         for (int i = 0; i < size; i++)
             queue[i] = s.readObject();
 
-        // Elements are guaranteed to be in "proper order", but the
-        // spec has never explained what that might be.
-        heapify();
+	// Elements are guaranteed to be in "proper order", but the
+	// spec has never explained what that might be.
+	heapify();
     }
 }

@@ -45,12 +45,12 @@ class MyProvider extends Provider {
     private String name;
 
     public MyProvider(String name, double version, String info) {
-        super(name, version, info);
-        this.name = name;
+	super(name, version, info);
+	this.name = name;
         put("Signature.sigalg", "sigimpl");
     }
 
     public String getName() {
-        return this.name;
+	return this.name;
     }
 }

@@ -44,7 +44,7 @@ class XCanvasPeer extends XComponentPeer implements CanvasPeer {
     }
 
     XCanvasPeer(Component target) {
-        super(target);
+	super(target);
     }
 
     void preInit(XCreateWindowParams params) {
@@ -65,7 +65,7 @@ class XCanvasPeer extends XComponentPeer implements CanvasPeer {
      * Canvases can be created with a non-defulat GraphicsConfiguration.  The
      * GraphicsConfiguration needs to be changed to one on the new screen,
      * preferably with the same visual ID.
-     *
+     * 
      * Up-called for other windows peer instances (XPanelPeer, XWindowPeer).
      *
      * Should only be called from the event thread.
@@ -121,13 +121,14 @@ class XCanvasPeer extends XComponentPeer implements CanvasPeer {
     }
     public void setBackground(Color c) {
         boolean doRepaint = false;
-        if( getPeerBackground() == null ||
+        if( getPeerBackground() == null || 
            !getPeerBackground().equals( c ) ) {
             doRepaint = true;
-        }
+        }    
         super.setBackground(c);
         if( doRepaint ) {
             target.repaint();
         }
     }
 }
+

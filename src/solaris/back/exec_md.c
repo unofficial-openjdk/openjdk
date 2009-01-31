@@ -52,7 +52,7 @@ static char *skipNonWhitespace(char *p) {
     return p;
 }
 
-int
+int 
 dbgsysExec(char *cmdLine)
 {
     int i;
@@ -124,3 +124,4 @@ dbgsysExec(char *cmdLine)
         return SYS_OK;
     }
 }
+

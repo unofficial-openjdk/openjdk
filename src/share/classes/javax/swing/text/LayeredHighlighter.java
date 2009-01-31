@@ -28,9 +28,10 @@ import java.awt.Graphics;
 import java.awt.Shape;
 
 /**
- *
+ * 
  * @author  Scott Violet
  * @author  Timothy Prinzing
+ * @version %I% %G%
  * @see     Highlighter
  */
 public abstract class LayeredHighlighter implements Highlighter {
@@ -47,17 +48,17 @@ public abstract class LayeredHighlighter implements Highlighter {
      * @param view View instance being rendered
      */
     public abstract void paintLayeredHighlights(Graphics g, int p0, int p1,
-                                                Shape viewBounds,
-                                                JTextComponent editor,
-                                                View view);
+						Shape viewBounds,
+						JTextComponent editor,
+						View view);
 
 
     /**
      * Layered highlight renderer.
      */
     static public abstract class LayerPainter implements Highlighter.HighlightPainter {
-        public abstract Shape paintLayer(Graphics g, int p0, int p1,
-                                        Shape viewBounds,JTextComponent editor,
-                                        View view);
+	public abstract Shape paintLayer(Graphics g, int p0, int p1,
+					Shape viewBounds,JTextComponent editor,
+					View view);
     }
 }

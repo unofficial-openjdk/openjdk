@@ -36,7 +36,7 @@
 #endif
 
 #if defined(__solaris__) && !defined(_SOCKLEN_T)
-typedef size_t socklen_t;       /* New in SunOS 5.7, so need this for 5.6 */
+typedef size_t socklen_t;	/* New in SunOS 5.7, so need this for 5.6 */
 #endif
 
 #include "jni.h"
@@ -51,7 +51,7 @@ typedef size_t socklen_t;       /* New in SunOS 5.7, so need this for 5.6 */
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_SocketChannelImpl_checkConnect(JNIEnv *env, jobject this,
-                                               jobject fdo, jboolean block,
+					       jobject fdo, jboolean block,
                                                jboolean ready)
 {
     int error = 0;
@@ -70,8 +70,8 @@ Java_sun_nio_ch_SocketChannelImpl_checkConnect(JNIEnv *env, jobject this,
             JNU_ThrowIOExceptionWithLastError(env, "Poll failed");
             return IOS_THROWN;
         }
-        if (!block && (result == 0))
-            return IOS_UNAVAILABLE;
+	if (!block && (result == 0))
+	    return IOS_UNAVAILABLE;
     }
 
     if (poller.revents) {
@@ -92,8 +92,8 @@ Java_sun_nio_ch_SocketChannelImpl_checkConnect(JNIEnv *env, jobject this,
 
 JNIEXPORT void JNICALL
 Java_sun_nio_ch_SocketChannelImpl_shutdown(JNIEnv *env, jclass cl,
-                                           jobject fdo, jint how)
+					   jobject fdo, jint how)
 {
     if (shutdown(fdval(env, fdo), how) < 0)
-        handleSocketError(env, errno);
+	handleSocketError(env, errno);
 }

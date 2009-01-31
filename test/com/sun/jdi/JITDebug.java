@@ -31,18 +31,18 @@
  *  versus "SYSTEMROOT" environment variables in different win32 O/S
  *  installations.  Refer to the Comments and Evaluation on bugs
  *  4522770 and 4461673 for more information.
- *
+ * 
  *  Undefined SystemRoot in a win32 environment causes the O/S socket()
  *  layer to fail with WSAEPROVIDERFAILEDINIT.  The workaround used by
  *  JITDebug.sh and JITDebug.java is to select the dt_shmem transport
  *  on any win32 platform where SystemRoot is not found.
- *
+ * 
  *  Note 2: What seems to be an excessive use of System.xxx.flush();
  *  is actually necessary to combat lost output on win32 systems.
  *
  *  @t e s t
  *  @bug 4291701 4376819 4422312 4522770
- *  @summary Test JIT debugging -
+ *  @summary Test JIT debugging - 
  *  assure that launching on uncaught exception works
  *
  *  @author Robert Field
@@ -56,12 +56,12 @@ import java.io.*;
 
 /*
  * This class implements three separate small programs, each
- * of which (directly or indirectly) invokes the next.  These
+ * of which (directly or indirectly) invokes the next.  These 
  * programs are:
  *    test launcher -
  *        Runs the debug target.  It exists to work around a
  *        bug in the test tools which do not allow quoted spaces
- *        in command lines.  It launchs the debug target in
+ *        in command lines.  It launchs the debug target in 
  *        such a way that when it encounters an uncaught exception
  *        it (in turn) will launch the trivial debugger.
  *    debug target -
@@ -85,7 +85,7 @@ public class JITDebug {
 
     boolean parseArgs(String[] args) {
         switch (args.length) {
-        case 0:
+        case 0: 
             testLaunch();
             return true;
         case 1:
@@ -106,7 +106,7 @@ public class JITDebug {
             return false;
         }
     }
-
+        
     void testLaunch() {
         class DisplayOutput extends Thread {
             InputStream in;
@@ -130,12 +130,12 @@ public class JITDebug {
                 }
                 in.close();
             }
-        }
+        }               
         String transportMethod = System.getProperty("TRANSPORT_METHOD");
         if (transportMethod == null) {
             transportMethod = "dt_socket"; //Default to socket transport.
         }
-        String javaExe = System.getProperty("java.home") +
+        String javaExe = System.getProperty("java.home") + 
                          File.separator + "bin" + File.separator +"java";
         List largs = new ArrayList();
         largs.add(javaExe);
@@ -158,7 +158,7 @@ public class JITDebug {
             erThread.join();
             int exitValue = proc.waitFor();
             if (exitValue != 0) {
-                throw new RuntimeException("Failure exit status: " +
+                throw new RuntimeException("Failure exit status: " + 
                                            exitValue);
             }
         } catch (Exception exc) {
@@ -170,7 +170,7 @@ public class JITDebug {
     void displayOutput(InputStream in) throws IOException {
 
     }
-
+            
 
     // Target VM code
     void debugTarget() {
@@ -200,7 +200,7 @@ public class JITDebug {
             if (conn.name().equals(connectorName)) {
                 doAttach(connectorName, conn, transportAddress);
                 return;
-            }
+            } 
         }
         System.err.flush();
         System.err.println("No attaching connector matching: " + connectorName + " - hanging");

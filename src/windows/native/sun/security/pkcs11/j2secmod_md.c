@@ -26,19 +26,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+ 
 #include <jni_util.h>
-
+ 
 #include "j2secmod.h"
 
 void *findFunction(JNIEnv *env, jlong jHandle, const char *functionName) {
     HINSTANCE hModule = (HINSTANCE)jHandle;
     void *fAddress = GetProcAddress(hModule, functionName);
     if (fAddress == NULL) {
-        char errorMessage[256];
-        _snprintf(errorMessage, sizeof(errorMessage), "Symbol not found: %s", functionName);
-        JNU_ThrowNullPointerException(env, errorMessage);
-        return NULL;
+	char errorMessage[256];
+	_snprintf(errorMessage, sizeof(errorMessage), "Symbol not found: %s", functionName);
+	JNU_ThrowNullPointerException(env, errorMessage);
+	return NULL;
     }
     return fAddress;
 }
@@ -66,22 +66,23 @@ JNIEXPORT jlong JNICALL Java_sun_security_pkcs11_Secmod_nssLoadLibrary
     (*env)->ReleaseStringUTFChars(env, jName, libName);
 
     if (hModule == NULL) {
-        FormatMessage(
-            FORMAT_MESSAGE_ALLOCATE_BUFFER |
-            FORMAT_MESSAGE_FROM_SYSTEM |
-            FORMAT_MESSAGE_IGNORE_INSERTS,
-            NULL,
-            GetLastError(),
-            0, /* Default language */
-            (LPTSTR) &lpMsgBuf,
-            0,
-            NULL
-        );
-        dprintf1("-error: %s\n", lpMsgBuf);
-        JNU_ThrowIOException(env, (char*)lpMsgBuf);
-        LocalFree(lpMsgBuf);
-        return 0;
+	FormatMessage(
+	    FORMAT_MESSAGE_ALLOCATE_BUFFER |
+	    FORMAT_MESSAGE_FROM_SYSTEM |
+	    FORMAT_MESSAGE_IGNORE_INSERTS,
+	    NULL,
+	    GetLastError(),
+	    0, /* Default language */
+	    (LPTSTR) &lpMsgBuf,
+	    0,
+	    NULL
+	);
+	dprintf1("-error: %s\n", lpMsgBuf);
+	JNU_ThrowIOException(env, (char*)lpMsgBuf);
+	LocalFree(lpMsgBuf);
+	return 0;
     }
     dprintf2("-handle: %d (0X%X)\n", hModule, hModule);
     return (jlong)hModule;
 }
+

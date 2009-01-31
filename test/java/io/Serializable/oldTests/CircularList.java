@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @summary it is new version of old test which was
+ * @summary it is new version of old test which was 
  *          /src/share/test/serialization/piotest.java
  *          Test of serialization/deserialization of
  *          objects with CircularListType types
@@ -37,28 +37,28 @@ public class CircularList {
             "objects with CirculalListType types \n");
 
        try {
-           FileOutputStream ostream = new FileOutputStream("piotest7.tmp");
-           ObjectOutputStream p = new ObjectOutputStream(ostream);
+	   FileOutputStream ostream = new FileOutputStream("piotest7.tmp");
+	   ObjectOutputStream p = new ObjectOutputStream(ostream);
 
-           CircularListTest.setup();
-           p.writeObject(CircularListTest.list);
-           p.flush();
+	   CircularListTest.setup();
+	   p.writeObject(CircularListTest.list);
+	   p.flush();
 
-           FileInputStream istream = new FileInputStream("piotest7.tmp");
-           ObjectInputStream q = new ObjectInputStream(istream);
+	   FileInputStream istream = new FileInputStream("piotest7.tmp");
+	   ObjectInputStream q = new ObjectInputStream(istream);
 
-           CircularListTest cv = (CircularListTest)q.readObject();
-           if (cv != cv.next) {
-               System.err.println("\nTEST FAILED: " +
+	   CircularListTest cv = (CircularListTest)q.readObject();
+	   if (cv != cv.next) {
+	       System.err.println("\nTEST FAILED: " +
                     "Circular List Test failed, next != self");
-               throw new Error();
-           }
-           System.err.println("\nTEST PASSED");
+	       throw new Error();
+	   }
+	   System.err.println("\nTEST PASSED");
        } catch (Exception e) {
-           System.err.print("TEST FAILED: ");
-           e.printStackTrace();
-           throw new Error();
-        }
+	   System.err.print("TEST FAILED: ");
+	   e.printStackTrace();
+	   throw new Error();
+    	}
     }
 }
 
@@ -67,7 +67,7 @@ class CircularListTest implements java.io.Serializable {
     public static CircularListTest list = null;
 
     public static void setup() {
-        list = new CircularListTest();
-        list.next = list;
+    	list = new CircularListTest();
+	list.next = list;
     }
 }

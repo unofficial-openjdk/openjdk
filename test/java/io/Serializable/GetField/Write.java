@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
 
 /* @test
  * @bug 4402830 4427881
- *
+ * 
  * @clean Write Read Read2 Foo
  * @compile Write.java
  * @run main Write
@@ -34,9 +34,9 @@
  * @compile Read2.java
  * @run main Read2
  * @clean Read2 Foo
- *
+ * 
  * @summary Verify proper basic functionality of the
- *          ObjectInputStream.GetField API
+ * 	    ObjectInputStream.GetField API
  */
 
 import java.io.*;
@@ -57,9 +57,9 @@ class Foo implements Serializable {
 
 public class Write {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-        oout.writeObject(new Foo());
-        oout.close();
+	ObjectOutputStream oout =
+	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+	oout.writeObject(new Foo());
+	oout.close();
     }
 }

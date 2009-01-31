@@ -42,10 +42,11 @@ import java.security.Principal;
  * on how to achieve this.  Authorization decisions can then be based upon
  * the Principals associated with a <code>Subject</code>.
  *
+ * @version %I%, %G%
  * @see java.security.Principal
  * @see javax.security.auth.Subject
  */
-public class NTDomainPrincipal implements Principal, java.io.Serializable {
+public class NTDomainPrincipal implements Principal, java.io.Serializable {  
 
     private static final long serialVersionUID = -4408637351440771220L;
 
@@ -53,7 +54,7 @@ public class NTDomainPrincipal implements Principal, java.io.Serializable {
      * @serial
      */
     private String name;
-
+    
     /**
      * Create an <code>NTDomainPrincipal</code> with a Windows NT domain name.
      *
@@ -66,16 +67,16 @@ public class NTDomainPrincipal implements Principal, java.io.Serializable {
      */
     public NTDomainPrincipal(String name) {
         if (name == null) {
-            java.text.MessageFormat form = new java.text.MessageFormat
-                (sun.security.util.ResourcesMgr.getString
-                        ("invalid null input: value",
-                        "sun.security.util.AuthResources"));
-            Object[] source = {"name"};
-            throw new NullPointerException(form.format(source));
-        }
+	    java.text.MessageFormat form = new java.text.MessageFormat
+		(sun.security.util.ResourcesMgr.getString
+			("invalid null input: value",
+			"sun.security.util.AuthResources"));
+	    Object[] source = {"name"};
+	    throw new NullPointerException(form.format(source));
+	}
         this.name = name;
     }
-
+    
     /**
      * Return the Windows NT domain name for this
      * <code>NTDomainPrincipal</code>.
@@ -83,7 +84,7 @@ public class NTDomainPrincipal implements Principal, java.io.Serializable {
      * <p>
      *
      * @return the Windows NT domain name for this
-     *                  <code>NTDomainPrincipal</code>
+     *			<code>NTDomainPrincipal</code>
      */
     public String getName() {
         return name;
@@ -97,14 +98,14 @@ public class NTDomainPrincipal implements Principal, java.io.Serializable {
      * @return a string representation of this <code>NTDomainPrincipal</code>.
      */
     public String toString() {
-        java.text.MessageFormat form = new java.text.MessageFormat
-                (sun.security.util.ResourcesMgr.getString
-                        ("NTDomainPrincipal: name",
-                        "sun.security.util.AuthResources"));
-        Object[] source = {name};
-        return form.format(source);
+	java.text.MessageFormat form = new java.text.MessageFormat
+		(sun.security.util.ResourcesMgr.getString
+			("NTDomainPrincipal: name",
+			"sun.security.util.AuthResources"));
+	Object[] source = {name};
+	return form.format(source);
     }
-
+    
     /**
      * Compares the specified Object with this <code>NTDomainPrincipal</code>
      * for equality.  Returns true if the given object is also a
@@ -114,27 +115,27 @@ public class NTDomainPrincipal implements Principal, java.io.Serializable {
      * <p>
      *
      * @param o Object to be compared for equality with this
-     *          <code>NTDomainPrincipal</code>.
+     *		<code>NTDomainPrincipal</code>.
      *
      * @return true if the specified Object is equal equal to this
-     *          <code>NTDomainPrincipal</code>.
+     *		<code>NTDomainPrincipal</code>.
      */
     public boolean equals(Object o) {
-        if (o == null)
-                return false;
+    	if (o == null)
+	        return false;
 
         if (this == o)
             return true;
-
+ 
         if (!(o instanceof NTDomainPrincipal))
             return false;
         NTDomainPrincipal that = (NTDomainPrincipal)o;
 
-            if (name.equals(that.getName()))
-                return true;
-            return false;
+	    if (name.equals(that.getName()))
+	        return true;
+	    return false;
     }
-
+ 
     /**
      * Return a hash code for this <code>NTDomainPrincipal</code>.
      *
@@ -143,6 +144,6 @@ public class NTDomainPrincipal implements Principal, java.io.Serializable {
      * @return a hash code for this <code>NTDomainPrincipal</code>.
      */
     public int hashCode() {
-        return this.getName().hashCode();
+	return this.getName().hashCode();
     }
 }

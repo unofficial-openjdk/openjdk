@@ -39,7 +39,7 @@ import sun.rmi.transport.LiveRef;
  * @author Ann Wollrath
  */
 public class ActivatableServerRef extends UnicastServerRef2 {
-
+    
     private static final long serialVersionUID = 2002967993223003793L;
 
     private ActivationID id;
@@ -50,7 +50,7 @@ public class ActivatableServerRef extends UnicastServerRef2 {
      */
     public ActivatableServerRef(ActivationID id, int port)
     {
-        this(id, port, null, null);
+	this(id, port, null, null);
     }
 
     /**
@@ -58,11 +58,11 @@ public class ActivatableServerRef extends UnicastServerRef2 {
      * on the specified port.
      */
     public ActivatableServerRef(ActivationID id, int port,
-                                RMIClientSocketFactory csf,
-                                RMIServerSocketFactory ssf)
+				RMIClientSocketFactory csf,
+				RMIServerSocketFactory ssf)
     {
-        super(new LiveRef(port, csf, ssf));
-        this.id = id;
+	super(new LiveRef(port, csf, ssf));
+	this.id = id;
     }
 
     /**
@@ -70,7 +70,7 @@ public class ActivatableServerRef extends UnicastServerRef2 {
      */
     public String getRefClass(ObjectOutput out)
     {
-        return "ActivatableServerRef";
+	return "ActivatableServerRef";
     }
 
     /**
@@ -80,14 +80,14 @@ public class ActivatableServerRef extends UnicastServerRef2 {
      * found or created.
      */
     protected RemoteRef getClientRef() {
-        return new ActivatableRef(id, new UnicastRef2(ref));
+	return new ActivatableRef(id, new UnicastRef2(ref));
     }
 
     /**
      * Prevents serialization (because deserializaion is impossible).
      */
     public void writeExternal(ObjectOutput out) throws IOException {
-        throw new NotSerializableException(
-            "ActivatableServerRef not serializable");
+	throw new NotSerializableException(
+	    "ActivatableServerRef not serializable");
     }
 }

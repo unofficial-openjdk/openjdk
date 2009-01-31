@@ -48,26 +48,26 @@ final class ConnectionDesc {
     private long useCount = 0;  // for stats & debugging only
 
     ConnectionDesc(PooledConnection conn) {
-        this.conn = conn;
+	this.conn = conn;
     }
 
     ConnectionDesc(PooledConnection conn, boolean use) {
-        this.conn = conn;
-        if (use) {
-            state = BUSY;
-            ++useCount;
-        }
+	this.conn = conn;
+	if (use) {
+	    state = BUSY;
+	    ++useCount;
+	}
     }
 
     /**
      * Two desc are equal if their PooledConnections are the same.
-     * This is useful when searching for a ConnectionDesc using only its
+     * This is useful when searching for a ConnectionDesc using only its 
      * PooledConnection.
      */
     public boolean equals(Object obj) {
-        return obj != null
-            && obj instanceof ConnectionDesc
-            && ((ConnectionDesc)obj).conn == conn;
+	return obj != null 
+	    && obj instanceof ConnectionDesc
+	    && ((ConnectionDesc)obj).conn == conn;
     }
 
     /**
@@ -75,86 +75,86 @@ final class ConnectionDesc {
      * searching for a ConnectionDesc using only its PooledConnection.
      */
     public int hashCode() {
-        return conn.hashCode();
+	return conn.hashCode();
     }
 
     /**
-     * Changes the state of a ConnectionDesc from BUSY to IDLE and
+     * Changes the state of a ConnectionDesc from BUSY to IDLE and 
      * records the current time so that we will know how long it has been idle.
      * @return true if state change occurred.
      */
     synchronized boolean release() {
-        d("release()");
-        if (state == BUSY) {
-            state = IDLE;
+	d("release()");
+	if (state == BUSY) {
+	    state = IDLE;
 
-            idleSince = System.currentTimeMillis();
-            return true;  // Connection released, ready for reuse
-        } else {
-            return false; // Connection wasn't busy to begin with
-        }
+	    idleSince = System.currentTimeMillis();
+	    return true;  // Connection released, ready for reuse
+	} else {
+	    return false; // Connection wasn't busy to begin with
+	}
     }
 
     /**
-     * If ConnectionDesc is IDLE, change its state to BUSY and return
+     * If ConnectionDesc is IDLE, change its state to BUSY and return 
      * its connection.
      *
      * @return ConnectionDesc's PooledConnection if it was idle; null otherwise.
      */
     synchronized PooledConnection tryUse() {
-        d("tryUse()");
+	d("tryUse()");
 
-        if (state == IDLE) {
-            state = BUSY;
-            ++useCount;
-            return conn;
-        }
-
-        return null;
+	if (state == IDLE) {
+	    state = BUSY;
+	    ++useCount;
+	    return conn;
+	}
+ 
+	return null;
     }
 
     /**
      * If ConnectionDesc is IDLE and has expired, close the corresponding
      * PooledConnection.
      *
-     * @param threshold a connection that has been idle before this time
+     * @param threshold a connection that has been idle before this time 
      *     have expired.
      *
      * @return true if entry is idle and has expired; false otherwise.
      */
     synchronized boolean expire(long threshold) {
-        if (state == IDLE && idleSince < threshold) {
+	if (state == IDLE && idleSince < threshold) {
 
-            d("expire(): expired");
+	    d("expire(): expired");
 
-            state = EXPIRED;
-            conn.closeConnection();  // Close real connection
+	    state = EXPIRED;
+	    conn.closeConnection();  // Close real connection
 
-            return true;  // Expiration successful
-        } else {
-            d("expire(): not expired");
-            return false; // Expiration did not occur
-        }
+	    return true;  // Expiration successful
+	} else {
+	    d("expire(): not expired");
+	    return false; // Expiration did not occur
+	}
     }
 
     public String toString() {
-        return conn.toString() + " " +
-            (state == BUSY ? "busy" : (state == IDLE ? "idle" : "expired"));
+	return conn.toString() + " " +
+	    (state == BUSY ? "busy" : (state == IDLE ? "idle" : "expired"));
     }
 
     // Used by Pool.showStats()
     int getState() {
-        return state;
+	return state;
     }
 
     // Used by Pool.showStats()
     long getUseCount() {
-        return useCount;
+	return useCount;
     }
 
     private void d(String msg) {
-        if (debug) {
-            System.err.println("ConnectionDesc." + msg + " " + toString());
-        }
+	if (debug) {
+	    System.err.println("ConnectionDesc." + msg + " " + toString());
+	}
     }
 }

@@ -26,8 +26,8 @@
 #ifndef JDWP_COMMONREF_H
 #define JDWP_COMMONREF_H
 
-void commonRef_initialize(void);
-void commonRef_reset(JNIEnv *env);
+void commonRef_initialize(void);            
+void commonRef_reset(JNIEnv *env);            
 
 jlong commonRef_refToID(JNIEnv *env, jobject ref);
 jobject commonRef_idToRef(JNIEnv *env, jlong id);
@@ -42,3 +42,4 @@ void commonRef_lock(void);
 void commonRef_unlock(void);
 
 #endif
+

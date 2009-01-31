@@ -41,7 +41,7 @@ jfieldID AwtInsets::bottomID;
 
 extern "C" {
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_java_awt_Insets_initIDs(JNIEnv *env, jclass cls) {
     TRY;
 

@@ -37,7 +37,7 @@ import java.util.Map.Entry;
 /**
  * Parameters for the <a href="http://www.w3.org/TR/xmldsig-core/#sec-XPath">
  * XPath Filtering Transform Algorithm</a>.
- * The parameters include the XPath expression and an optional <code>Map</code>
+ * The parameters include the XPath expression and an optional <code>Map</code> 
  * of additional namespace prefix mappings. The XML Schema Definition of
  * the XPath Filtering transform parameters is defined as:
  * <pre><code>
@@ -55,22 +55,22 @@ public final class XPathFilterParameterSpec implements TransformParameterSpec {
     private Map nsMap;
 
     /**
-     * Creates an <code>XPathFilterParameterSpec</code> with the specified
+     * Creates an <code>XPathFilterParameterSpec</code> with the specified 
      * XPath expression.
      *
      * @param xPath the XPath expression to be evaluated
      * @throws NullPointerException if <code>xPath</code> is <code>null</code>
      */
     public XPathFilterParameterSpec(String xPath) {
-        if (xPath == null) {
-            throw new NullPointerException();
-        }
-        this.xPath = xPath;
-        this.nsMap = Collections.EMPTY_MAP;
+	if (xPath == null) {
+	    throw new NullPointerException();
+	}
+	this.xPath = xPath;
+	this.nsMap = Collections.EMPTY_MAP;
     }
 
     /**
-     * Creates an <code>XPathFilterParameterSpec</code> with the specified
+     * Creates an <code>XPathFilterParameterSpec</code> with the specified 
      * XPath expression and namespace map. The map is copied to protect against
      * subsequent modification.
      *
@@ -88,16 +88,16 @@ public final class XPathFilterParameterSpec implements TransformParameterSpec {
             throw new NullPointerException();
         }
         this.xPath = xPath;
-        nsMap = new HashMap(namespaceMap);
-        Iterator entries = nsMap.entrySet().iterator();
-        while (entries.hasNext()) {
-            Map.Entry me = (Map.Entry) entries.next();
-            if (!(me.getKey() instanceof String) ||
-                !(me.getValue() instanceof String)) {
-                throw new ClassCastException("not a String");
-            }
-        }
-        nsMap = Collections.unmodifiableMap(nsMap);
+	nsMap = new HashMap(namespaceMap);
+	Iterator entries = nsMap.entrySet().iterator();
+	while (entries.hasNext()) {
+	    Map.Entry me = (Map.Entry) entries.next();
+	    if (!(me.getKey() instanceof String) || 
+		!(me.getValue() instanceof String)) {
+		throw new ClassCastException("not a String");
+	    }
+	}
+	nsMap = Collections.unmodifiableMap(nsMap);
     }
 
     /**
@@ -106,21 +106,21 @@ public final class XPathFilterParameterSpec implements TransformParameterSpec {
      * @return the XPath expression to be evaluated
      */
     public String getXPath() {
-        return xPath;
+	return xPath;
     }
 
     /**
-     * Returns a map of namespace prefixes. Each key is a namespace prefix
-     * <code>String</code> that maps to a corresponding namespace URI
+     * Returns a map of namespace prefixes. Each key is a namespace prefix 
+     * <code>String</code> that maps to a corresponding namespace URI 
      * <code>String</code>.
      * <p>
-     * This implementation returns an {@link Collections#unmodifiableMap
+     * This implementation returns an {@link Collections#unmodifiableMap 
      * unmodifiable map}.
      *
-     * @return a <code>Map</code> of namespace prefixes to namespace URIs (may
+     * @return a <code>Map</code> of namespace prefixes to namespace URIs (may 
      *    be empty, but never <code>null</code>)
      */
     public Map getNamespaceMap() {
-        return nsMap;
+	return nsMap;
     }
 }

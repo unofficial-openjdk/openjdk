@@ -28,7 +28,7 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
+#endif 
 
 /*
  * Previously private structure in GlyphVector.cpp, exposed in order
@@ -49,7 +49,7 @@ typedef struct {
 
 #ifdef  __cplusplus
 }
-#endif
+#endif 
 
 
 #endif /* GlyphImageRef_h_Included */

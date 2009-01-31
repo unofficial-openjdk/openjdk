@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)LESwaps.h	1.11 07/02/07
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *

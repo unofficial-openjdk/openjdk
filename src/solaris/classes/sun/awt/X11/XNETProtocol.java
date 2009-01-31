@@ -179,9 +179,9 @@ class XNETProtocol extends XProtocol implements XStateProtocol, XLayerProtocol {
      * @param reset Indicates operation, 'set' if false, 'reset' if true
      */
     private void setStateHelper(XWindowPeer window, XAtom state, boolean set) {
-        log.log(Level.FINER, "Window visibility is: withdrawn={0}, visible={1}, mapped={2} showing={3}",
-                new Object[] {Boolean.valueOf(window.isWithdrawn()), Boolean.valueOf(window.isVisible()),
-                              Boolean.valueOf(window.isMapped()), Boolean.valueOf(window.isShowing())});
+        log.log(Level.FINER, "Window visibility is: withdrawn={0}, visible={1}, mapped={2} showing={3}", 
+                new Object[] {Boolean.valueOf(window.isWithdrawn()), Boolean.valueOf(window.isVisible()), 
+                              Boolean.valueOf(window.isMapped()), Boolean.valueOf(window.isShowing())});        
         if (window.isShowing()) {
             XClientMessageEvent req = new XClientMessageEvent();
             try {
@@ -340,7 +340,7 @@ class XNETProtocol extends XProtocol implements XStateProtocol, XLayerProtocol {
      */
     public void setWMIcons(XWindowPeer window, java.util.List<XIconInfo> icons) {
         if (window == null) return;
-
+        
         XAtom iconsAtom = XAtom.get("_NET_WM_ICON");
         if (icons == null) {
             iconsAtom.DeleteProperty(window);
@@ -355,7 +355,7 @@ class XNETProtocol extends XProtocol implements XStateProtocol, XLayerProtocol {
         int bufferSize = length * cardinalSize;
 
         if (bufferSize != 0) {
-            long buffer = XlibWrapper.unsafe.allocateMemory(bufferSize);
+            long buffer = XlibWrapper.unsafe.allocateMemory(bufferSize);        
             try {
                 long ptr = buffer;
                 for (XIconInfo ii : icons) {

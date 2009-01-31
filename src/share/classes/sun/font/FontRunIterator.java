@@ -24,6 +24,7 @@
  */
 
 /*
+ *  @(#)FontRunIterator.java	1.2 03/11/26
  *
  * (C) Copyright IBM Corp. 2003 - All Rights Reserved
  */
@@ -53,7 +54,7 @@ public final class FontRunIterator {
         this.text = text;
         this.start = start;
         this.limit = limit;
-
+        
         this.mapper = (CompositeGlyphMapper)font.getMapper();
         this.slot = -1;
         this.pos = start;
@@ -72,7 +73,7 @@ public final class FontRunIterator {
     }
 
     /*
-     * characters that are in the 'common' script become part of the
+     * characters that are in the 'common' script become part of the 
      * surrounding script run.  we want to fetch these from the same font
      * used to get surrounding characters, where possible.  but we don't
      * want to force non-common characters to come from other than their

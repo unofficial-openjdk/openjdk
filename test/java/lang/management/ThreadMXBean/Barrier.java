@@ -38,7 +38,7 @@ public class Barrier {
         }
         this.count = count;
     }
-
+  
     public void set(int count) {
         if (waiters != 0) {
             throw new IllegalArgumentException();

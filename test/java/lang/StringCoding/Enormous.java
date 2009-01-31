@@ -29,11 +29,11 @@
 
 public class Enormous {
     public static void main(String[] args) throws Exception {
-        new String(new char[16777217]).getBytes("ASCII");
-        byte[] bytes = new byte[16777217];
-        new String(bytes,"ASCII");
+	new String(new char[16777217]).getBytes("ASCII");
+	byte[] bytes = new byte[16777217];
+	new String(bytes,"ASCII");
 
-        // Another manifestation of this bug, reported in bug 6192102.
-        new sun.misc.BASE64Encoder().encode(bytes);
+	// Another manifestation of this bug, reported in bug 6192102.
+	new sun.misc.BASE64Encoder().encode(bytes);
     }
 }

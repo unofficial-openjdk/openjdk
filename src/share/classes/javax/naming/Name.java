@@ -52,6 +52,7 @@ import java.util.Enumeration;
  * @author Rosanna Lee
  * @author Scott Seligman
  * @author R. Vasudevan
+ * @version %I% %E%
  * @since 1.3
  */
 
@@ -71,7 +72,7 @@ public interface Name
      * Subsequent changes to the components of this name will not
      * affect the new copy, and vice versa.
      *
-     * @return  a copy of this name
+     * @return	a copy of this name
      *
      * @see Object#clone()
      */
@@ -82,7 +83,7 @@ public interface Name
      * Returns a negative integer, zero, or a positive integer as this
      * name is less than, equal to, or greater than the given name.
      *
-     * <p> As with <tt>Object.equals()</tt>, the notion of ordering for names
+     * <p> As with <tt>Object.equals()</tt>, the notion of ordering for names 
      * depends on the class that implements this interface.
      * For example, the ordering may be
      * based on lexicographical ordering of the name components.
@@ -92,9 +93,9 @@ public interface Name
      *
      * @param   obj the non-null object to compare against.
      * @return  a negative integer, zero, or a positive integer as this name
-     *          is less than, equal to, or greater than the given name
-     * @throws  ClassCastException if obj is not a <tt>Name</tt> of a
-     *          type that may be compared with this name
+     *		is less than, equal to, or greater than the given name
+     * @throws	ClassCastException if obj is not a <tt>Name</tt> of a
+     *		type that may be compared with this name
      *
      * @see Comparable#compareTo(Object)
      */
@@ -103,7 +104,7 @@ public interface Name
     /**
      * Returns the number of components in this name.
      *
-     * @return  the number of components in this name
+     * @return	the number of components in this name
      */
     public int size();
 
@@ -111,7 +112,7 @@ public interface Name
      * Determines whether this name is empty.
      * An empty name is one with zero components.
      *
-     * @return  true if this name is empty, false otherwise
+     * @return	true if this name is empty, false otherwise
      */
     public boolean isEmpty();
 
@@ -121,7 +122,7 @@ public interface Name
      * this name is undefined.  If the name has zero components,
      * an empty (non-null) enumeration is returned.
      *
-     * @return  an enumeration of the components of this name, each a string
+     * @return	an enumeration of the components of this name, each a string
      */
     public Enumeration<String> getAll();
 
@@ -129,11 +130,11 @@ public interface Name
      * Retrieves a component of this name.
      *
      * @param posn
-     *          the 0-based index of the component to retrieve.
-     *          Must be in the range [0,size()).
-     * @return  the component at index posn
-     * @throws  ArrayIndexOutOfBoundsException
-     *          if posn is outside the specified range
+     *		the 0-based index of the component to retrieve.
+     *		Must be in the range [0,size()).
+     * @return	the component at index posn
+     * @throws	ArrayIndexOutOfBoundsException
+     *		if posn is outside the specified range
      */
     public String get(int posn);
 
@@ -143,12 +144,12 @@ public interface Name
      * this name will not affect the name that is returned and vice versa.
      *
      * @param posn
-     *          the 0-based index of the component at which to stop.
-     *          Must be in the range [0,size()].
-     * @return  a name consisting of the components at indexes in
-     *          the range [0,posn).
-     * @throws  ArrayIndexOutOfBoundsException
-     *          if posn is outside the specified range
+     *		the 0-based index of the component at which to stop.
+     *		Must be in the range [0,size()].
+     * @return	a name consisting of the components at indexes in
+     *		the range [0,posn).
+     * @throws	ArrayIndexOutOfBoundsException
+     *		if posn is outside the specified range
      */
     public Name getPrefix(int posn);
 
@@ -158,13 +159,13 @@ public interface Name
      * this name do not affect the name that is returned and vice versa.
      *
      * @param posn
-     *          the 0-based index of the component at which to start.
-     *          Must be in the range [0,size()].
-     * @return  a name consisting of the components at indexes in
-     *          the range [posn,size()).  If posn is equal to
-     *          size(), an empty name is returned.
-     * @throws  ArrayIndexOutOfBoundsException
-     *          if posn is outside the specified range
+     *		the 0-based index of the component at which to start.
+     *		Must be in the range [0,size()].
+     * @return	a name consisting of the components at indexes in
+     *		the range [posn,size()).  If posn is equal to 
+     *		size(), an empty name is returned.
+     * @throws	ArrayIndexOutOfBoundsException
+     *		if posn is outside the specified range
      */
     public Name getSuffix(int posn);
 
@@ -174,8 +175,8 @@ public interface Name
      * <tt>getPrefix(n.size())</tt>.
      *
      * @param n
-     *          the name to check
-     * @return  true if <tt>n</tt> is a prefix of this name, false otherwise
+     *		the name to check
+     * @return	true if <tt>n</tt> is a prefix of this name, false otherwise
      */
     public boolean startsWith(Name n);
 
@@ -185,8 +186,8 @@ public interface Name
      * <tt>getSuffix(size()-n.size())</tt>.
      *
      * @param n
-     *          the name to check
-     * @return  true if <tt>n</tt> is a suffix of this name, false otherwise
+     *		the name to check
+     * @return	true if <tt>n</tt> is a suffix of this name, false otherwise
      */
     public boolean endsWith(Name n);
 
@@ -194,12 +195,12 @@ public interface Name
      * Adds the components of a name -- in order -- to the end of this name.
      *
      * @param suffix
-     *          the components to add
-     * @return  the updated name (not a new one)
+     *		the components to add
+     * @return	the updated name (not a new one)
      *
-     * @throws  InvalidNameException if <tt>suffix</tt> is not a valid name,
-     *          or if the addition of the components would violate the syntax
-     *          rules of this name
+     * @throws	InvalidNameException if <tt>suffix</tt> is not a valid name,
+     *		or if the addition of the components would violate the syntax
+     *		rules of this name
      */
     public Name addAll(Name suffix) throws InvalidNameException;
 
@@ -211,17 +212,17 @@ public interface Name
      * components.
      *
      * @param n
-     *          the components to add
+     *		the components to add
      * @param posn
-     *          the index in this name at which to add the new
-     *          components.  Must be in the range [0,size()].
-     * @return  the updated name (not a new one)
+     *		the index in this name at which to add the new
+     *		components.  Must be in the range [0,size()].
+     * @return	the updated name (not a new one)
      *
-     * @throws  ArrayIndexOutOfBoundsException
-     *          if posn is outside the specified range
-     * @throws  InvalidNameException if <tt>n</tt> is not a valid name,
-     *          or if the addition of the components would violate the syntax
-     *          rules of this name
+     * @throws	ArrayIndexOutOfBoundsException
+     *		if posn is outside the specified range
+     * @throws	InvalidNameException if <tt>n</tt> is not a valid name,
+     *		or if the addition of the components would violate the syntax
+     *		rules of this name
      */
     public Name addAll(int posn, Name n) throws InvalidNameException;
 
@@ -229,11 +230,11 @@ public interface Name
      * Adds a single component to the end of this name.
      *
      * @param comp
-     *          the component to add
-     * @return  the updated name (not a new one)
+     *		the component to add
+     * @return	the updated name (not a new one)
      *
-     * @throws  InvalidNameException if adding <tt>comp</tt> would violate
-     *          the syntax rules of this name
+     * @throws	InvalidNameException if adding <tt>comp</tt> would violate
+     *		the syntax rules of this name
      */
     public Name add(String comp) throws InvalidNameException;
 
@@ -244,16 +245,16 @@ public interface Name
      * component.
      *
      * @param comp
-     *          the component to add
+     *		the component to add
      * @param posn
-     *          the index at which to add the new component.
-     *          Must be in the range [0,size()].
-     * @return  the updated name (not a new one)
+     *		the index at which to add the new component.
+     *		Must be in the range [0,size()].
+     * @return	the updated name (not a new one)
      *
-     * @throws  ArrayIndexOutOfBoundsException
-     *          if posn is outside the specified range
-     * @throws  InvalidNameException if adding <tt>comp</tt> would violate
-     *          the syntax rules of this name
+     * @throws	ArrayIndexOutOfBoundsException
+     *		if posn is outside the specified range
+     * @throws	InvalidNameException if adding <tt>comp</tt> would violate
+     *		the syntax rules of this name
      */
     public Name add(int posn, String comp) throws InvalidNameException;
 
@@ -264,14 +265,14 @@ public interface Name
      * are shifted down (toward index 0) by one.
      *
      * @param posn
-     *          the index of the component to remove.
-     *          Must be in the range [0,size()).
-     * @return  the component removed (a String)
+     *		the index of the component to remove.
+     *		Must be in the range [0,size()).
+     * @return	the component removed (a String)
      *
-     * @throws  ArrayIndexOutOfBoundsException
-     *          if posn is outside the specified range
-     * @throws  InvalidNameException if deleting the component
-     *          would violate the syntax rules of the name
+     * @throws	ArrayIndexOutOfBoundsException
+     *		if posn is outside the specified range
+     * @throws	InvalidNameException if deleting the component
+     *		would violate the syntax rules of the name
      */
     public Object remove(int posn) throws InvalidNameException;
 }

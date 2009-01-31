@@ -26,31 +26,32 @@
 package java.lang;
 
 /**
- * Thrown to indicate that a method has been passed an illegal or
+ * Thrown to indicate that a method has been passed an illegal or 
  * inappropriate argument.
  *
  * @author  unascribed
- * @see     java.lang.Thread#setPriority(int)
+ * @version %I%, %G%
+ * @see	    java.lang.Thread#setPriority(int)
  * @since   JDK1.0
  */
 public
 class IllegalArgumentException extends RuntimeException {
     /**
-     * Constructs an <code>IllegalArgumentException</code> with no
-     * detail message.
+     * Constructs an <code>IllegalArgumentException</code> with no 
+     * detail message. 
      */
     public IllegalArgumentException() {
-        super();
+	super();
     }
 
     /**
-     * Constructs an <code>IllegalArgumentException</code> with the
-     * specified detail message.
+     * Constructs an <code>IllegalArgumentException</code> with the 
+     * specified detail message. 
      *
      * @param   s   the detail message.
      */
     public IllegalArgumentException(String s) {
-        super(s);
+	super(s);
     }
 
     /**
@@ -72,7 +73,7 @@ class IllegalArgumentException extends RuntimeException {
     public IllegalArgumentException(String message, Throwable cause) {
         super(message, cause);
     }
-
+ 
     /**
      * Constructs a new exception with the specified cause and a detail
      * message of <tt>(cause==null ? null : cause.toString())</tt> (which

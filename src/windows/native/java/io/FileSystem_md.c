@@ -30,7 +30,7 @@
 extern jboolean onNT;
 extern void initializeWindowsVersion();
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL  
 Java_java_io_FileSystem_getFileSystem(JNIEnv *env, jclass ignored)
 {
     initializeWindowsVersion();

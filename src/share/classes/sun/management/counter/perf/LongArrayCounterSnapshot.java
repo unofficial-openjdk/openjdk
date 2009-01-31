@@ -36,16 +36,16 @@ class LongArrayCounterSnapshot extends AbstractCounter
     long[] value;
 
     // package private
-    LongArrayCounterSnapshot(String name, Units u, Variability v, int flags,
+    LongArrayCounterSnapshot(String name, Units u, Variability v, int flags, 
                              int vectorLength, long[] value) {
         super(name, u, v, flags, vectorLength);
         this.value = value;
     }
-
+    
     public Object getValue() {
         return value;
     }
-
+    
     public long[] longArrayValue() {
         return value;
     }

@@ -86,21 +86,21 @@ Java_sun_awt_windows_WInputMethod_destroyNativeContext(JNIEnv *env, jobject self
  * Signature: (Lsun/awt/windows/WComponentPeer;I)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WInputMethod_enableNativeIME(JNIEnv *env, jobject self, jobject peer,
+Java_sun_awt_windows_WInputMethod_enableNativeIME(JNIEnv *env, jobject self, jobject peer, 
                                                   jint context, jboolean useNativeCompWindow)
 {
     TRY;
 
     //get C++ Class of Focused Component
-    if (peer == 0)      return;
+    if (peer == 0)	return;
     AwtComponent* p = (AwtComponent*)JNI_GET_PDATA(peer);
-    if (p == 0)         return;
+    if (p == 0)		return;
 
     p->SetInputMethod(self, useNativeCompWindow);
 
     // use special message to call ImmAssociateContext() in main thread.
     AwtToolkit::GetInstance().SendMessage(WM_AWT_ASSOCIATECONTEXT,
-                                          reinterpret_cast<WPARAM>(p->GetHWnd()), context);
+					  reinterpret_cast<WPARAM>(p->GetHWnd()), context);
 
     CATCH_BAD_ALLOC;
 }
@@ -117,15 +117,15 @@ Java_sun_awt_windows_WInputMethod_disableNativeIME(JNIEnv *env, jobject self, jo
     TRY_NO_VERIFY;
 
     //get C++ Class of Focused Component
-    if (peer == 0)      return;
+    if (peer == 0)	return;
     AwtComponent* p = (AwtComponent*)JNI_GET_PDATA(peer);
-    if (p == 0)         return;
+    if (p == 0)		return;
 
     p->SetInputMethod(NULL, TRUE);
 
     // use special message to call ImmAssociateContext() in main thread.
     AwtToolkit::GetInstance().SendMessage(WM_AWT_ASSOCIATECONTEXT,
-                                          reinterpret_cast<WPARAM>(p->GetHWnd()), NULL);
+					  reinterpret_cast<WPARAM>(p->GetHWnd()), NULL);
 
     CATCH_BAD_ALLOC;
 }
@@ -137,7 +137,7 @@ Java_sun_awt_windows_WInputMethod_disableNativeIME(JNIEnv *env, jobject self, jo
  * Signature: (Lsun/awt/windows/WComponentPeer;Ljava/awt/AWTEvent;)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WInputMethod_handleNativeIMEEvent(JNIEnv *env, jobject self,
+Java_sun_awt_windows_WInputMethod_handleNativeIMEEvent(JNIEnv *env, jobject self, 
                                                        jobject peer, jobject event)
 {
     TRY;
@@ -148,11 +148,11 @@ Java_sun_awt_windows_WInputMethod_handleNativeIMEEvent(JNIEnv *env, jobject self
 
     JNI_CHECK_NULL_RETURN(event, "null AWTEvent");
     if (env->EnsureLocalCapacity(1) < 0) {
-        return;
+	return;
     }
     jbyteArray bdata = (jbyteArray)(env)->GetObjectField(event, AwtAWTEvent::bdataID);
     if (bdata == 0) {
-        return;
+	return;
     }
     MSG msg;
     (env)->GetByteArrayRegion(bdata, 0, sizeof(MSG), (jbyte *)&msg);
@@ -162,27 +162,27 @@ Java_sun_awt_windows_WInputMethod_handleNativeIMEEvent(JNIEnv *env, jobject self
     int id = (env)->GetIntField(event, AwtAWTEvent::idID);
     DASSERT(!safe_ExceptionOccurred(env));
 
-    if (isConsumed || p==NULL)  return;
+    if (isConsumed || p==NULL)	return;
 
     if (id >= java_awt_event_InputMethodEvent_INPUT_METHOD_FIRST &&
-        id <= java_awt_event_InputMethodEvent_INPUT_METHOD_LAST)
+        id <= java_awt_event_InputMethodEvent_INPUT_METHOD_LAST) 
     {
-        long modifiers = p->GetJavaModifiers();
+	long modifiers = p->GetJavaModifiers();
         if (msg.message==WM_CHAR || msg.message==WM_SYSCHAR) {
             WCHAR unicodeChar = L'\0';
-            unicodeChar = (WCHAR)msg.wParam;
-            p->SendKeyEvent(java_awt_event_KeyEvent_KEY_TYPED,
-                            0, //to be fixed nowMillis(),
-                            java_awt_event_KeyEvent_CHAR_UNDEFINED,
-                            unicodeChar,
-                            modifiers,
-                            java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN,
+	    unicodeChar = (WCHAR)msg.wParam;
+            p->SendKeyEvent(java_awt_event_KeyEvent_KEY_TYPED, 
+                            0, //to be fixed nowMillis(), 
+                            java_awt_event_KeyEvent_CHAR_UNDEFINED, 
+                            unicodeChar, 
+                            modifiers, 
+                            java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN, 
                             &msg);
         } else {
             MSG* pCopiedMsg = new MSG;
             *pCopiedMsg = msg;
             p->SendMessage(WM_AWT_HANDLE_EVENT, (WPARAM) FALSE,
-                        (LPARAM) pCopiedMsg);
+			(LPARAM) pCopiedMsg);
         }
         (env)->SetBooleanField(event, AwtAWTEvent::consumedID, JNI_TRUE);
     }
@@ -197,7 +197,7 @@ Java_sun_awt_windows_WInputMethod_handleNativeIMEEvent(JNIEnv *env, jobject self
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WInputMethod_endCompositionNative(JNIEnv *env, jobject self,
-                                                       jint context, jboolean flag)
+						       jint context, jboolean flag)
 {
     TRY;
 
@@ -205,9 +205,9 @@ Java_sun_awt_windows_WInputMethod_endCompositionNative(JNIEnv *env, jobject self
     //       always discarded.
     //       If the flag value is Java_sun_awt_windows_WInputMethod_COMMIT_INPUT,
     //       then input text should be committed. Otherwise, should be discarded.
-    //
+    // 
     // 10/29/98 - Changed to commit it according to the flag.
-
+    
     // use special message to call ImmNotifyIME() in main thread.
     AwtToolkit::GetInstance().SendMessage(WM_AWT_ENDCOMPOSITION, context,
         (LPARAM)(flag != sun_awt_windows_WInputMethod_DISCARD_INPUT));
@@ -226,9 +226,9 @@ Java_sun_awt_windows_WInputMethod_setConversionStatus(JNIEnv *env, jobject self,
     TRY;
 
     // use special message to call ImmSetConversionStatus() in main thread.
-    AwtToolkit::GetInstance().SendMessage(WM_AWT_SETCONVERSIONSTATUS,
-                                          context,
-                                          MAKELPARAM((WORD)request, (WORD)0));
+    AwtToolkit::GetInstance().SendMessage(WM_AWT_SETCONVERSIONSTATUS, 
+					  context, 
+					  MAKELPARAM((WORD)request, (WORD)0));
 
     CATCH_BAD_ALLOC;
 }
@@ -261,8 +261,8 @@ Java_sun_awt_windows_WInputMethod_setOpenStatus(JNIEnv *env, jobject self, jint 
     TRY;
 
     // use special message to call ImmSetConversionStatus() in main thread.
-    AwtToolkit::GetInstance().SendMessage(WM_AWT_SETOPENSTATUS,
-                                          context, flag);
+    AwtToolkit::GetInstance().SendMessage(WM_AWT_SETOPENSTATUS, 
+					  context, flag);
 
     CATCH_BAD_ALLOC;
 }
@@ -279,8 +279,8 @@ Java_sun_awt_windows_WInputMethod_getOpenStatus(JNIEnv *env, jobject self, jint 
 
     // use special message to call ImmSetConversionStatus() in main thread.
     return (jboolean)(AwtToolkit::GetInstance().SendMessage(
-                                                       WM_AWT_GETOPENSTATUS,
-                                                       context, 0));
+						       WM_AWT_GETOPENSTATUS, 
+						       context, 0));
     CATCH_BAD_ALLOC_RET(0);
 }
 
@@ -297,7 +297,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_windows_WInputMethod_getNativeLocale
     const char * javaLocaleName = getJavaIDFromLangID(AwtComponent::GetInputLanguage());
     if (javaLocaleName != NULL) {
         // Now WInputMethod.currentLocale and AwtComponent::m_idLang are get sync'ed,
-        // so we can reset this flag.
+	// so we can reset this flag.
         g_bUserHasChangedInputLang = FALSE;
 
         return CreateLocaleObject(env, javaLocaleName);
@@ -319,45 +319,45 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_windows_WInputMethod_setNativeLocale
     TRY;
 
     // check if current language ID is the requested one.  Note that the
-    // current language ID (returned from 'getJavaIDFromLangID') is in
-    // ASCII encoding, so we use 'GetStringUTFChars' to retrieve requested
+    // current language ID (returned from 'getJavaIDFromLangID') is in 
+    // ASCII encoding, so we use 'GetStringUTFChars' to retrieve requested 
     // language ID from the 'localeString' object.
     const char * current = getJavaIDFromLangID(AwtComponent::GetInputLanguage());
     jboolean isCopy;
     const char * requested = env->GetStringUTFChars(localeString, &isCopy);
     if ((current != NULL) && (strcmp(current, requested) == 0)) {
-        env->ReleaseStringUTFChars(localeString, requested);
-        return JNI_TRUE;
+	env->ReleaseStringUTFChars(localeString, requested);
+	return JNI_TRUE;
     }
-
+    
     // get list of available HKLs.  Adding the user's preferred layout on top of the layout
-    // list which is returned by GetKeyboardLayoutList ensures to match first when
+    // list which is returned by GetKeyboardLayoutList ensures to match first when 
     // looking up suitable layout.
     int layoutCount = ::GetKeyboardLayoutList(0, NULL) + 1;  // +1 for user's preferred HKL
     HKL FAR * hKLList = (HKL FAR *)safe_Malloc(sizeof(HKL)*layoutCount);
     DASSERT(!safe_ExceptionOccurred(env));
     ::GetKeyboardLayoutList(layoutCount - 1, &(hKLList[1]));
     hKLList[0] = getDefaultKeyboardLayout(); // put user's preferred layout on top of the list
-
-    // lookup matching LangID
+    
+    // lookup matching LangID 
     jboolean retValue = JNI_FALSE;
     for (int i = 0; i < layoutCount; i++) {
         const char * supported = getJavaIDFromLangID(LOWORD(hKLList[i]));
-        if ((supported != NULL) && (strcmp(supported, requested) == 0)) {
-            // use special message to call ActivateKeyboardLayout() in main thread.
+	if ((supported != NULL) && (strcmp(supported, requested) == 0)) {
+	    // use special message to call ActivateKeyboardLayout() in main thread.
             if (AwtToolkit::GetInstance().SendMessage(WM_AWT_ACTIVATEKEYBOARDLAYOUT, (WPARAM)onActivate, (LPARAM)hKLList[i])) {
                 //also need to change the same keyboard layout for the Java AWT-EventQueue thread
                 AwtToolkit::activateKeyboardLayout(hKLList[i]);
-                retValue = JNI_TRUE;
-            }
-            break;
-        }
+	        retValue = JNI_TRUE;
+	    }
+	    break;
+	}
     }
 
     env->ReleaseStringUTFChars(localeString, requested);
     free(hKLList);
     return retValue;
-
+	
     CATCH_BAD_ALLOC_RET(JNI_FALSE);
 }
 
@@ -370,25 +370,25 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WInputMethod_setStatusWindowVisible
   (JNIEnv *env, jobject self, jobject peer, jboolean visible)
 {
     /* Retrieve the default input method Window handler from AwtToolkit.
-       Windows system creates a default input method window for the
-       toolkit thread.
+       Windows system creates a default input method window for the 
+       toolkit thread. 
     */
     HWND hwndIME = AwtToolkit::GetInstance().GetInputMethodWindow();
     if (hwndIME == NULL) {
-        if (peer == NULL) {
-            return;
-        }
+	if (peer == NULL) {
+	    return;
+	}
 
-        AwtComponent* p = (AwtComponent*)JNI_GET_PDATA(peer);
-        if (p == NULL || (hwndIME = ImmGetDefaultIMEWnd(p->GetHWnd())) == NULL) {
-            return;
-        }
+	AwtComponent* p = (AwtComponent*)JNI_GET_PDATA(peer);
+	if (p == NULL || (hwndIME = ImmGetDefaultIMEWnd(p->GetHWnd())) == NULL) {
+	    return;
+	}
 
-        AwtToolkit::GetInstance().SetInputMethodWindow(hwndIME);
+	AwtToolkit::GetInstance().SetInputMethodWindow(hwndIME);
     }
 
-    ::SendMessage(hwndIME, WM_IME_CONTROL,
-                  visible ? IMC_OPENSTATUSWINDOW : IMC_CLOSESTATUSWINDOW, 0);
+    ::SendMessage(hwndIME, WM_IME_CONTROL, 
+		  visible ? IMC_OPENSTATUSWINDOW : IMC_CLOSESTATUSWINDOW, 0); 
 }
 
 /*
@@ -415,8 +415,8 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WInputMethod_openCandidateWindow
     // See CR 4805862, AwtToolkit::WndProc
 
     // use special message to open candidate window in main thread.
-    AwtToolkit::GetInstance().SendMessage(WM_AWT_OPENCANDIDATEWINDOW,
-                                          (WPARAM)peerGlobalRef, MAKELONG(x, y));
+    AwtToolkit::GetInstance().SendMessage(WM_AWT_OPENCANDIDATEWINDOW, 
+					  (WPARAM)peerGlobalRef, MAKELONG(x, y));
 
     CATCH_BAD_ALLOC;
 }
@@ -432,7 +432,7 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WInputMethod_openCandidateWindow
  * Signature: ()[Ljava/util/Locale;
  */
 JNIEXPORT jobjectArray JNICALL Java_sun_awt_windows_WInputMethodDescriptor_getNativeAvailableLocales
-  (JNIEnv *env, jclass self)
+  (JNIEnv *env, jclass self) 
 {
     TRY;
 
@@ -441,7 +441,7 @@ JNIEXPORT jobjectArray JNICALL Java_sun_awt_windows_WInputMethodDescriptor_getNa
     HKL FAR * hKLList = (HKL FAR *)safe_Malloc(sizeof(HKL)*layoutCount);
     DASSERT(!safe_ExceptionOccurred(env));
     ::GetKeyboardLayoutList(layoutCount, hKLList);
-
+    
     // get list of Java locale names while getting rid of duplicates
     int srcIndex = 0;
     int destIndex = 0;
@@ -450,37 +450,37 @@ JNIEXPORT jobjectArray JNICALL Java_sun_awt_windows_WInputMethodDescriptor_getNa
     const char ** javaLocaleNames = (const char **)safe_Malloc(sizeof(char *)*layoutCount);
     DASSERT(!safe_ExceptionOccurred(env));
     for (; srcIndex < layoutCount; srcIndex++) {
-        const char * srcLocaleName = getJavaIDFromLangID(LOWORD(hKLList[srcIndex]));
+	const char * srcLocaleName = getJavaIDFromLangID(LOWORD(hKLList[srcIndex]));
 
-        if (srcLocaleName == NULL) {
-            // could not find corresponding Java locale name for this HKL.
-            continue;
-        }
+	if (srcLocaleName == NULL) {
+	    // could not find corresponding Java locale name for this HKL.
+	    continue;
+	}
+	
+	for (current = 0; current < destIndex; current++) {
+	    if (strcmp(javaLocaleNames[current], srcLocaleName) == 0) {
+	        // duplicated. ignore this HKL
+		break;
+	    }
+	}
 
-        for (current = 0; current < destIndex; current++) {
-            if (strcmp(javaLocaleNames[current], srcLocaleName) == 0) {
-                // duplicated. ignore this HKL
-                break;
-            }
-        }
-
-        if (current == destIndex) {
-            javaLocaleNameCount++;
-            destIndex++;
-            javaLocaleNames[current] = srcLocaleName;
-        }
+	if (current == destIndex) {
+	    javaLocaleNameCount++;
+	    destIndex++;
+	    javaLocaleNames[current] = srcLocaleName;
+	}
     }
-
-    // convert it to an array of Java locale objects
+	
+    // convert it to an array of Java locale objects 
     jclass localeClass = env->FindClass("java/util/Locale");
-    jobjectArray locales = env->NewObjectArray(javaLocaleNameCount, localeClass, NULL);
+    jobjectArray locales = env->NewObjectArray(javaLocaleNameCount, localeClass, NULL); 
     for (current = 0; current < javaLocaleNameCount; current++) {
-        env->SetObjectArrayElement(locales,
-                                   current,
-                                   CreateLocaleObject(env, javaLocaleNames[current]));
+        env->SetObjectArrayElement(locales, 
+	                           current, 
+				   CreateLocaleObject(env, javaLocaleNames[current]));
     }
     DASSERT(!safe_ExceptionOccurred(env));
-
+    
     env->DeleteLocalRef(localeClass);
     free(hKLList);
     free(javaLocaleNames);
@@ -493,7 +493,7 @@ JNIEXPORT jobjectArray JNICALL Java_sun_awt_windows_WInputMethodDescriptor_getNa
  * Class:     sun_awt_windows_WInputMethod
  * Method:    getNativeIMMDescription
  * Signature: ()Ljava/lang/String;
- *
+ * 
  * This method tries to get the information about the input method associated with
  * the current active thread.
  *
@@ -508,19 +508,19 @@ JNIEXPORT jstring JNICALL Java_sun_awt_windows_WInputMethod_getNativeIMMDescript
     LPTSTR szImmDescription = NULL;
     UINT buffSize = 0;
     jstring infojStr = NULL;
-
+  
     if ((buffSize = ::ImmGetDescription(hkl, szImmDescription, 0)) > 0) {
-        szImmDescription = (LPTSTR) safe_Malloc(buffSize * sizeof(TCHAR));
+	szImmDescription = (LPTSTR) safe_Malloc(buffSize * sizeof(TCHAR));
 
-        if (szImmDescription != NULL) {
-            ImmGetDescription(hkl, szImmDescription, buffSize);
+	if (szImmDescription != NULL) {
+	    ImmGetDescription(hkl, szImmDescription, buffSize);
 
-            infojStr = JNU_NewStringPlatform(env, szImmDescription);
-
-            free(szImmDescription);
-        }
+	    infojStr = JNU_NewStringPlatform(env, szImmDescription);
+      
+	    free(szImmDescription);
+	}
     }
-
+  
     return infojStr;
 
     CATCH_BAD_ALLOC_RET(NULL);
@@ -529,10 +529,10 @@ JNIEXPORT jstring JNICALL Java_sun_awt_windows_WInputMethod_getNativeIMMDescript
 /*
  * Create a Java locale object from its name string
  */
-jobject CreateLocaleObject(JNIEnv *env, const char * name)
+jobject CreateLocaleObject(JNIEnv *env, const char * name) 
 {
     TRY;
-
+    
     // get language, country, variant information
     char * language = (char *)safe_Malloc(strlen(name) + 1);
     char * country;
@@ -556,7 +556,7 @@ jobject CreateLocaleObject(JNIEnv *env, const char * name)
     jobject vrntObj = env->NewStringUTF(variant);
     jobject localeObj = JNU_NewObjectByName(env, "java/util/Locale",
                                             "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V",
-                                            langObj, ctryObj, vrntObj);
+					    langObj, ctryObj, vrntObj);
     free(language);
     env->DeleteLocalRef(langObj);
     env->DeleteLocalRef(ctryObj);
@@ -579,28 +579,29 @@ HKL getDefaultKeyboardLayout() {
     BYTE szHKL[16];
     DWORD cbHKL = 16;
     LPTSTR end;
-
+    
     if (IS_NT) {
         ret = ::RegOpenKeyEx(HKEY_CURRENT_USER, TEXT("Keyboard Layout\\Preload"), NULL, KEY_READ, &hKey);
     } else {
         ret = ::RegOpenKeyEx(HKEY_CURRENT_USER, TEXT("keyboard layout\\preload\\1"), NULL, KEY_READ, &hKey);
     }
-
+    
     if (ret == ERROR_SUCCESS) {
         if (IS_NT) {
             ret = ::RegQueryValueEx(hKey, TEXT("1"), 0, 0, szHKL, &cbHKL);
-        } else {
+	} else {
             ret = ::RegQueryValueEx(hKey, NULL, 0, 0, szHKL, &cbHKL);
-        }
+	}
 
         if (ret == ERROR_SUCCESS) {
             hkl = reinterpret_cast<HKL>(static_cast<INT_PTR>(
                 _tcstoul((LPCTSTR)szHKL, &end, 16)));
         }
 
-        ::RegCloseKey(hKey);
+	::RegCloseKey(hKey);
     }
 
     return hkl;
 }
 } /* extern "C" */
+

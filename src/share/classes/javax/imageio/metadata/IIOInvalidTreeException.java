@@ -42,9 +42,10 @@ import org.w3c.dom.Node;
  * @see IIOMetadata#mergeTree
  * @see IIOMetadataNode
  *
+ * @version 0.5
  */
 public class IIOInvalidTreeException extends IIOException {
-
+    
     /**
      * The <code>Node</code> that led to the parsing error, or
      * <code>null</code>.
@@ -88,7 +89,7 @@ public class IIOInvalidTreeException extends IIOException {
 
     /**
      * Returns the <code>Node</code> that caused the error in parsing.
-     *
+     * 
      * @return the offending <code>Node</code>.
      */
     public Node getOffendingNode() {

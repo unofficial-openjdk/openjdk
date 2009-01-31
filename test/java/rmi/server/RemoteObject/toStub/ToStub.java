@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -43,75 +43,75 @@ public class ToStub implements RemoteInterface {
 
 
     public Object passObject(Object obj) {
-        return obj;
+	return obj;
     }
 
 
     public static void main(String[] args) throws Exception {
+	
+	RemoteInterface server1 = null;
+	RemoteInterface server2 = null;
+	RemoteInterface stub = null;
+	RemoteInterface proxy = null;
+	
+	try {
+	    System.setProperty("java.rmi.server.ignoreStubClasses", "true");
 
-        RemoteInterface server1 = null;
-        RemoteInterface server2 = null;
-        RemoteInterface stub = null;
-        RemoteInterface proxy = null;
+	    if (System.getSecurityManager() == null) {
+		System.setSecurityManager(new SecurityManager());
+	    }
 
-        try {
-            System.setProperty("java.rmi.server.ignoreStubClasses", "true");
+	    System.err.println("export objects");
+	    server1 = new ToStub();
+	    server2 = new ToStub();
+	    stub = (RemoteInterface) UnicastRemoteObject.exportObject(server1);
+	    proxy = (RemoteInterface)
+		UnicastRemoteObject.exportObject(server2, 0);
 
-            if (System.getSecurityManager() == null) {
-                System.setSecurityManager(new SecurityManager());
-            }
+	    System.err.println("test toStub");
+	    if (stub != RemoteObject.toStub(server1)) {
+		throw new RuntimeException(
+		    "toStub returned incorrect value for server1");
+	    }
 
-            System.err.println("export objects");
-            server1 = new ToStub();
-            server2 = new ToStub();
-            stub = (RemoteInterface) UnicastRemoteObject.exportObject(server1);
-            proxy = (RemoteInterface)
-                UnicastRemoteObject.exportObject(server2, 0);
+	    if (!Proxy.isProxyClass(proxy.getClass())) {
+		throw new RuntimeException("proxy is not a dynamic proxy");
+	    }
+		  
+	    if (proxy != RemoteObject.toStub(server2)) {
+		throw new RuntimeException(
+		    "toStub returned incorrect value for server2");
+	    }
 
-            System.err.println("test toStub");
-            if (stub != RemoteObject.toStub(server1)) {
-                throw new RuntimeException(
-                    "toStub returned incorrect value for server1");
-            }
+	    try {
+		RemoteObject.toStub(new ToStub());
+		throw new RuntimeException(
+		    "stub returned for exported object!");
+	    } catch (NoSuchObjectException nsoe) {
+	    }
 
-            if (!Proxy.isProxyClass(proxy.getClass())) {
-                throw new RuntimeException("proxy is not a dynamic proxy");
-            }
+	    System.err.println("invoke methods");
+	    Object obj = stub.passObject(stub);
+	    if (!stub.equals(obj)) {
+		throw new RuntimeException("returned stub not equal");
+	    }
 
-            if (proxy != RemoteObject.toStub(server2)) {
-                throw new RuntimeException(
-                    "toStub returned incorrect value for server2");
-            }
+	    obj = proxy.passObject(proxy);
+	    if (!proxy.equals(obj)) {
+		throw new RuntimeException("returned proxy not equal");
+	    }
 
-            try {
-                RemoteObject.toStub(new ToStub());
-                throw new RuntimeException(
-                    "stub returned for exported object!");
-            } catch (NoSuchObjectException nsoe) {
-            }
-
-            System.err.println("invoke methods");
-            Object obj = stub.passObject(stub);
-            if (!stub.equals(obj)) {
-                throw new RuntimeException("returned stub not equal");
-            }
-
-            obj = proxy.passObject(proxy);
-            if (!proxy.equals(obj)) {
-                throw new RuntimeException("returned proxy not equal");
-            }
-
-            System.err.println("TEST PASSED");
-
-        } finally {
-            if (stub != null) {
-                UnicastRemoteObject.unexportObject(server1, true);
-            }
-
-            if (proxy != null) {
-                UnicastRemoteObject.unexportObject(server2, true);
-            }
-        }
+	    System.err.println("TEST PASSED");
+	    
+	} finally {
+	    if (stub != null) {
+		UnicastRemoteObject.unexportObject(server1, true);
+	    }
+	    
+	    if (proxy != null) {
+		UnicastRemoteObject.unexportObject(server2, true);
+	    }
+	}
     }
 }
 

@@ -160,7 +160,7 @@ void GDIHashtable::BatchDestructionManager::update() {
                     flushAll();
                     nFreeResources = (*get_free_system_resources)(GFSR_GDIRESOURCES);
                 }
-            }
+            } 
             if (nFreeResources < m_nSecondThreshold) {
                 m_bBatchingEnabled = FALSE;
                 m_nCounter = m_nDestroyPeriod;
@@ -183,3 +183,4 @@ void GDIHashtable::BatchDestructionManager::update() {
         }
     }
 }
+

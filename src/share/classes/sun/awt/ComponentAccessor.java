@@ -49,13 +49,14 @@ import java.security.PrivilegedAction;
  * A collection of methods for modifying package private fields in AWT components.
  * This class is meant to be used by Peer code only. Previously peer code
  * got around this problem by modifying fields from native code. However
- * as we move away from native code to Pure-java peers we need this class.
+ * as we move away from native code to Pure-java peers we need this class. 
  *
  * @author Bino George
+ * @version  %I%
  */
 
 
-public class ComponentAccessor
+public class ComponentAccessor 
 {
     private static Class componentClass;
     private static Field fieldX;
@@ -88,7 +89,7 @@ public class ComponentAccessor
         AccessController.doPrivileged( new PrivilegedAction() {
                 public Object run() {
                     try {
-                        componentClass = Class.forName("java.awt.Component");
+                        componentClass = Class.forName("java.awt.Component");   
                         fieldX  = componentClass.getDeclaredField("x");
                         fieldX.setAccessible(true);
                         fieldY  = componentClass.getDeclaredField("y");
@@ -107,10 +108,10 @@ public class ComponentAccessor
                         methodGetParentNoClientCode.setAccessible(true);
                         methodGetFontNoClientCode = componentClass.getDeclaredMethod("getFont_NoClientCode", (Class[]) null);
                         methodGetFontNoClientCode.setAccessible(true);
-                        Class[] argTypes = { AWTEvent.class };
+                        Class[] argTypes = { AWTEvent.class }; 
                         methodProcessEvent = componentClass.getDeclaredMethod("processEvent",argTypes);
                         methodProcessEvent.setAccessible(true);
-                        Class[] argTypesForMethodEnableEvents = { Long.TYPE };
+                        Class[] argTypesForMethodEnableEvents = { Long.TYPE }; 
                         methodEnableEvents = componentClass.getDeclaredMethod("enableEvents",argTypesForMethodEnableEvents);
                         methodEnableEvents.setAccessible(true);
 
@@ -164,7 +165,7 @@ public class ComponentAccessor
             log.log(Level.FINE, "Unable to access the Component object", e);
         }
     }
-
+    
     public static void setY(Component c, int y)
     {
         try {
@@ -186,7 +187,7 @@ public class ComponentAccessor
             log.log(Level.FINE, "Unable to access the Component object", e);
         }
     }
-
+    
     public static void setHeight(Component c, int height)
     {
         try {
@@ -283,7 +284,7 @@ public class ComponentAccessor
 
         return parent;
     }
-
+    
     public static Font getFont_NoClientCode(Component c) {
         Font font=null;
 
@@ -411,7 +412,7 @@ public class ComponentAccessor
         } catch (IllegalAccessException e)
         {
             log.log(Level.FINE, "Unable to access the Component object", e);
-        }
+        }            
     }
 
     public static boolean getIgnoreRepaint(Component comp) {

@@ -66,7 +66,7 @@
    The {@link com.sun.net.httpserver.HttpExchange} class encapsulates everything an application needs to
    process incoming requests and to generate appropriate responses.
    <p>
-   Registering a handler with a HttpServer creates a {@link com.sun.net.httpserver.HttpContext} object and
+   Registering a handler with a HttpServer creates a {@link com.sun.net.httpserver.HttpContext} object and 
    {@link com.sun.net.httpserver.Filter}
    objects can be added to the returned context. Filters are used to perform automatic pre- and
    post-processing of exchanges before they are passed to the exchange handler.
@@ -77,19 +77,19 @@
    {@link com.sun.net.httpserver.HttpsConfigurator} object, which contains an
    initialized {@link javax.net.ssl.SSLContext}.
    HttpsConfigurator can be used to configure the
-   cipher suites and other SSL operating parameters.
+   cipher suites and other SSL operating parameters. 
    A simple example SSLContext could be created as follows:
    <blockquote><pre>
    char[] passphrase = "passphrase".toCharArray();
    KeyStore ks = KeyStore.getInstance("JKS");
    ks.load(new FileInputStream("testkeys"), passphrase);
-
+       
    KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
    kmf.init(ks, passphrase);
-
+       
    TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
    tmf.init(ks);
-
+       
    SSLContext ssl = SSLContext.getInstance("TLS");
    ssl.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
    </blockquote></pre>
@@ -116,7 +116,7 @@
         params.setSSLParameters(sslparams);
         // statement above could throw IAE if any params invalid.
         // eg. if app has a UI and parameters supplied by a user.
-
+        
         }
     });
    </blockquote></pre>

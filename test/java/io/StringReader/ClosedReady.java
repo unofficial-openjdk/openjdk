@@ -39,13 +39,13 @@ public class ClosedReady {
         StringReader in = new StringReader("aaaaaaaaaaaaaaa");
         in.read();
         in.close();
-
+   
         try {
             in.ready(); // IOException should be thrown here
             throw new RuntimeException(" No exception during read on closed stream");
-        }
+        } 
         catch (IOException e) {
             System.err.println("Test passed: IOException is thrown");
-        }
+        } 
     }
 }

@@ -33,7 +33,7 @@ class StratumLineInfo implements LineInfo {
     private final String sourceName;
     private final String sourcePath;
 
-    StratumLineInfo(String stratumID, int lineNumber,
+    StratumLineInfo(String stratumID, int lineNumber, 
                     String sourceName, String sourcePath) {
         this.stratumID = stratumID;
         this.lineNumber = lineNumber;
@@ -65,3 +65,4 @@ class StratumLineInfo implements LineInfo {
         return sourcePath;
     }
 }
+

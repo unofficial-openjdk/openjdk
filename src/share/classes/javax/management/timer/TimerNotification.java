@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management.timer;
+package javax.management.timer; 
 
 /**
  * This class provides definitions of the notifications sent by timer MBeans.
@@ -34,7 +34,7 @@ package javax.management.timer;
  *
  * @since 1.5
  */
-public class TimerNotification extends javax.management.Notification {
+public class TimerNotification extends javax.management.Notification { 
 
 
     /* Serial version */
@@ -45,20 +45,20 @@ public class TimerNotification extends javax.management.Notification {
      *  PRIVATE VARIABLES
      * ------------------------------------------
      */
-
+    
     /**
      * @serial Timer notification identifier.
      *         This identifier is used to retrieve a timer notification from the timer list of notifications.
      */
     private Integer notificationID;
 
-
+    
     /*
      * ------------------------------------------
      *  CONSTRUCTORS
      * ------------------------------------------
      */
-
+    
     /**
      * Creates a timer notification object.
      *
@@ -71,44 +71,44 @@ public class TimerNotification extends javax.management.Notification {
      *
      */
     public TimerNotification(String type, Object source, long sequenceNumber, long timeStamp, String msg, Integer id) {
-
+        
         super(type, source, sequenceNumber, timeStamp, msg);
         this.notificationID = id;
     }
-
+    
     /*
      * ------------------------------------------
      *  PUBLIC METHODS
      * ------------------------------------------
      */
-
+    
     // GETTERS AND SETTERS
-    //--------------------
-
+    //--------------------    
+    
     /**
      * Gets the identifier of this timer notification.
      *
      * @return The identifier.
      */
-    public Integer getNotificationID() {
+    public Integer getNotificationID() { 
         return notificationID;
-    }
+    } 
 
     /*
      * ------------------------------------------
      *  PACKAGE METHODS
      * ------------------------------------------
      */
-
+    
     /**
      * Creates and returns a copy of this object.
      *
      */
-    Object cloneTimerNotification() {
-
-        TimerNotification clone = new TimerNotification(this.getType(), this.getSource(), this.getSequenceNumber(),
+    Object cloneTimerNotification() { 
+        
+        TimerNotification clone = new TimerNotification(this.getType(), this.getSource(), this.getSequenceNumber(), 
                                                         this.getTimeStamp(), this.getMessage(), notificationID);
         clone.setUserData(this.getUserData());
         return clone;
-    }
+    } 
 }

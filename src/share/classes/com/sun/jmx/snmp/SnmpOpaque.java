@@ -32,7 +32,7 @@ package com.sun.jmx.snmp;
  * Is used to represent an SNMP value.
  * The <CODE>Opaque</CODE> type is defined in RFC 1155.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -46,7 +46,7 @@ public class SnmpOpaque extends SnmpString {
      * @param v The bytes composing the opaque value.
      */
     public SnmpOpaque(byte[] v) {
-        super(v) ;
+	super(v) ;
     }
 
     /**
@@ -54,7 +54,7 @@ public class SnmpOpaque extends SnmpString {
      * @param v The <CODE>Bytes</CODE> composing the opaque value.
      */
     public SnmpOpaque(Byte[] v) {
-        super(v) ;
+	super(v) ;
     }
 
     /**
@@ -62,7 +62,7 @@ public class SnmpOpaque extends SnmpString {
      * @param v The initialization value.
      */
     public SnmpOpaque(String v) {
-        super(v) ;
+	super(v) ;
     }
 
     // PUBLIC METHODS
@@ -73,14 +73,14 @@ public class SnmpOpaque extends SnmpString {
      * @return The <CODE>String</CODE> representation of the value.
      */
     public String toString() {
-        StringBuffer result = new StringBuffer() ;
-        for (int i = 0 ; i < value.length ; i++) {
-            byte b = value[i] ;
-            int n = (b >= 0) ? b : b + 256 ;
-            result.append(Character.forDigit(n / 16, 16)) ;
-            result.append(Character.forDigit(n % 16, 16)) ;
-        }
-        return result.toString() ;
+	StringBuffer result = new StringBuffer() ;
+	for (int i = 0 ; i < value.length ; i++) {
+	    byte b = value[i] ;
+	    int n = (b >= 0) ? b : b + 256 ;
+	    result.append(Character.forDigit(n / 16, 16)) ;
+	    result.append(Character.forDigit(n % 16, 16)) ;
+	}
+	return result.toString() ;
     }
 
     /**

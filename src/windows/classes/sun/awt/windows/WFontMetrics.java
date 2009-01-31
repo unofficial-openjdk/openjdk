@@ -28,9 +28,10 @@ package sun.awt.windows;
 import java.awt.*;
 import java.util.Hashtable;
 
-/**
+/** 
  * A font metrics object for a WServer font.
- *
+ * 
+ * @version 1.6 24 Nov 1995
  * @author Jim Graham
  */
 class WFontMetrics extends FontMetrics {
@@ -44,7 +45,7 @@ class WFontMetrics extends FontMetrics {
      */
     int widths[];
 
-    /**
+    /** 
      * The standard ascent of the font.  This is the logical height
      * above the baseline for the Alphanumeric characters and should
      * be used for determining line spacing.  Note, however, that some
@@ -52,7 +53,7 @@ class WFontMetrics extends FontMetrics {
      */
     int ascent;
 
-    /**
+    /** 
      * The standard descent of the font.  This is the logical height
      * below the baseline for the Alphanumeric characters and should
      * be used for determining line spacing.  Note, however, that some
@@ -60,7 +61,7 @@ class WFontMetrics extends FontMetrics {
      */
     int descent;
 
-    /**
+    /** 
      * The standard leading for the font.  This is the logical amount
      * of space to be reserved between the descent of one line of text
      * and the ascent of the next line.  The height metric is calculated
@@ -68,7 +69,7 @@ class WFontMetrics extends FontMetrics {
      */
     int leading;
 
-    /**
+    /** 
      * The standard height of a line of text in this font.  This is
      * the distance between the baseline of adjacent lines of text.
      * It is the sum of the ascent+descent+leading.  There is no
@@ -78,19 +79,19 @@ class WFontMetrics extends FontMetrics {
      */
     int height;
 
-    /**
+    /** 
      * The maximum ascent for all characters in this font.  No character
      * will extend further above the baseline than this metric.
      */
     int maxAscent;
 
-    /**
+    /** 
      * The maximum descent for all characters in this font.  No character
      * will descend further below the baseline than this metric.
      */
     int maxDescent;
 
-    /**
+    /** 
      * The maximum possible height of a line of text in this font.
      * Adjacent lines of text spaced this distance apart will be
      * guaranteed not to overlap.  Note, however, that many paragraphs
@@ -101,8 +102,8 @@ class WFontMetrics extends FontMetrics {
      */
     int maxHeight;
 
-    /**
-     * The maximum advance width of any character in this font.
+    /** 
+     * The maximum advance width of any character in this font. 
      */
     int maxAdvance;
 
@@ -110,61 +111,61 @@ class WFontMetrics extends FontMetrics {
      * Calculate the metrics from the given WServer and font.
      */
     public WFontMetrics(Font font) {
-        super(font);
-        init();
+	super(font);
+	init();
     }
 
     /**
      * Get leading
      */
     public int getLeading() {
-        return leading;
+	return leading;
     }
 
     /**
      * Get ascent.
      */
     public int getAscent() {
-        return ascent;
+	return ascent;
     }
 
     /**
      * Get descent
      */
     public int getDescent() {
-        return descent;
+	return descent;
     }
 
     /**
      * Get height
      */
     public int getHeight() {
-        return height;
+	return height;
     }
 
     /**
      * Get maxAscent
      */
     public int getMaxAscent() {
-        return maxAscent;
+	return maxAscent;
     }
 
     /**
      * Get maxDescent
      */
     public int getMaxDescent() {
-        return maxDescent;
+	return maxDescent;
     }
 
     /**
      * Get maxAdvance
      */
     public int getMaxAdvance() {
-        return maxAdvance;
+	return maxAdvance;
     }
 
-    /**
-     * Return the width of the specified string in this Font.
+    /** 
+     * Return the width of the specified string in this Font. 
      */
     public native int stringWidth(String str);
 
@@ -174,7 +175,7 @@ class WFontMetrics extends FontMetrics {
     public native int charsWidth(char data[], int off, int len);
 
     /**
-     * Return the width of the specified byte[] in this Font.
+     * Return the width of the specified byte[] in this Font. 
      */
     public native int bytesWidth(byte data[], int off, int len);
 
@@ -182,19 +183,19 @@ class WFontMetrics extends FontMetrics {
      * Get the widths of the first 256 characters in the font.
      */
     public int[] getWidths() {
-        return widths;
+	return widths;
     }
 
     native void init();
 
     static Hashtable table = new Hashtable();
-
+    
     static FontMetrics getFontMetrics(Font font) {
-        FontMetrics fm = (FontMetrics)table.get(font);
-        if (fm == null) {
-            table.put(font, fm = new WFontMetrics(font));
-        }
-        return fm;
+	FontMetrics fm = (FontMetrics)table.get(font);
+	if (fm == null) {
+	    table.put(font, fm = new WFontMetrics(font));
+	}
+	return fm;
     }
 
     /**

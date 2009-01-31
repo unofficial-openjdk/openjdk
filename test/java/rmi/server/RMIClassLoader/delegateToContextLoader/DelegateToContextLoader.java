@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -49,45 +49,45 @@ public class DelegateToContextLoader {
 
     public static void main(String[] args) throws Exception {
 
-        /*
-         * Set a security manager so that RMI class loading will not
-         * be disabled.
-         */
-        TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
+	/*
+	 * Set a security manager so that RMI class loading will not
+	 * be disabled.
+	 */
+	TestLibrary.suggestSecurityManager("java.rmi.RMISecurityManager");
 
 
-        URL codebaseURL = TestLibrary.
-            installClassInCodebase(className, "codebase");
+	URL codebaseURL = TestLibrary.
+	    installClassInCodebase(className, "codebase");
 
-         /* Create a URLClassLoader to load from the codebase and set it
-          * as this thread's context class loader.  We do not use the
-          * URLClassLoader.newInstance() method so that the test will
-          * compile with more early versions of the JDK.
-          *
-          * We can get away with creating a class loader like this
-          * because there is no security manager set yet.
-          */
-        ClassLoader codebaseLoader =
-            new URLClassLoader(new URL[] { codebaseURL } );
-        Thread.currentThread().setContextClassLoader(codebaseLoader);
+	 /* Create a URLClassLoader to load from the codebase and set it
+	  * as this thread's context class loader.  We do not use the
+	  * URLClassLoader.newInstance() method so that the test will
+	  * compile with more early versions of the JDK.  
+	  * 
+	  * We can get away with creating a class loader like this
+	  * because there is no security manager set yet.  
+	  */
+	ClassLoader codebaseLoader =
+	    new URLClassLoader(new URL[] { codebaseURL } );
+	Thread.currentThread().setContextClassLoader(codebaseLoader);
 
-        File srcDir = new File(TestLibrary.getProperty("test.classes", "."));
+	File srcDir = new File(TestLibrary.getProperty("test.classes", "."));
 
-        URL dummyURL = new URL("file", "",
-            srcDir.getAbsolutePath().replace(File.separatorChar, '/') +
-            "/x-files/");
+	URL dummyURL = new URL("file", "",
+	    srcDir.getAbsolutePath().replace(File.separatorChar, '/') +
+	    "/x-files/");
 
-        try {
-            /*
-             * Attempt to load the target class from the dummy URL;
-             * it should be found in the context class loader.
-             */
-            Class cl = RMIClassLoader.loadClass(dummyURL, className);
-            System.err.println("TEST PASSED: loaded class: " + cl);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(
-                "TEST FAILED: target class in context class loader " +
-                "not found using RMIClassLoader");
-        }
+	try {
+	    /*
+	     * Attempt to load the target class from the dummy URL;
+	     * it should be found in the context class loader.
+	     */
+	    Class cl = RMIClassLoader.loadClass(dummyURL, className);
+	    System.err.println("TEST PASSED: loaded class: " + cl);
+	} catch (ClassNotFoundException e) {
+	    throw new RuntimeException(
+		"TEST FAILED: target class in context class loader " +
+		"not found using RMIClassLoader");
+	}
     }
 }

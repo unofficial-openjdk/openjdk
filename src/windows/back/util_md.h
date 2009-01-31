@@ -67,3 +67,4 @@ typedef unsigned long UNSIGNED_JINT;
 #define JAVA_TO_HOST_DOUBLE(x) HOST_TO_JAVA_DOUBLE(x)
 
 #endif
+

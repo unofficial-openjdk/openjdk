@@ -55,20 +55,20 @@ WCHAR *StringForValue(int value)
 {
     switch (value) {
     case J2D_ACCEL_UNVERIFIED:
-        return L"UNVERIFIED";
-        break;
+	return L"UNVERIFIED";
+	break;
     case J2D_ACCEL_TESTING:
-        return L"TESTING (may indicate crash during test)";
-        break;
+	return L"TESTING (may indicate crash during test)";
+	break;
     case J2D_ACCEL_FAILURE:
-        return L"FAILURE";
-        break;
+	return L"FAILURE";
+	break;
     case J2D_ACCEL_SUCCESS:
-        return L"SUCCESS";
-        break;
+	return L"SUCCESS";
+	break;
     default:
         return L"UNKNOWN";
-        break;
+	break;
     }
 }
 

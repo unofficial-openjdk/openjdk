@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 6346732
- * @summary should be able to assign null and undefined
+ * @summary should be able to assign null and undefined 
  * value to JavaScript global variables.
  */
 
@@ -32,9 +32,9 @@ import javax.script.*;
 
 public class NullUndefinedVarTest {
 
-        public static void main(String[] args) throws Exception {
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine jsengine = manager.getEngineByName("js");
+	public static void main(String[] args) throws Exception {
+	    ScriptEngineManager manager = new ScriptEngineManager();
+	    ScriptEngine jsengine = manager.getEngineByName("js");
             if (jsengine == null) {
                 throw new RuntimeException("no js engine found");
             }
@@ -42,5 +42,5 @@ public class NullUndefinedVarTest {
                           "if (n !== null) throw 'expecting null';" +
                           "var u = undefined; " +
                           "if (u !== undefined) throw 'undefined expected';");
-        }
+	}
 }

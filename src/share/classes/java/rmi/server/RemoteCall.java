@@ -37,6 +37,7 @@ import java.io.IOException;
  * deprecated because it is only used by deprecated methods of
  * <code>java.rmi.server.RemoteRef</code>.
  *
+ * @version %I%, %G%
  * @since   JDK1.1
  * @author  Ann Wollrath
  * @author  Roger Riggs
@@ -57,7 +58,7 @@ public interface RemoteCall {
      */
     @Deprecated
     ObjectOutput getOutputStream()  throws IOException;
-
+    
     /**
      * Release the output stream; in some transports this would release
      * the stream.
@@ -81,7 +82,7 @@ public interface RemoteCall {
     @Deprecated
     ObjectInput getInputStream()  throws IOException;
 
-
+    
     /**
      * Release the input stream. This would allow some transports to release
      * the channel early.
@@ -108,8 +109,8 @@ public interface RemoteCall {
      */
     @Deprecated
     ObjectOutput getResultStream(boolean success) throws IOException,
-        StreamCorruptedException;
-
+	StreamCorruptedException;
+    
     /**
      * Do whatever it takes to execute the call.
      *

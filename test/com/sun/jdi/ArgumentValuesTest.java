@@ -1,6 +1,6 @@
 /** hard coded linenumbers in other tests - DO NOT CHANGE
  *  @test/nodynamiccopyright/
- *  @bug 4490824
+ *  @bug 4490824 
  *  @summary JDI: provide arguments when no debug attributes present
  *
  *  @author jjh
@@ -33,7 +33,7 @@ class ArgumentValuesTarg {
     static String s_string2 = "xy";
     static String s_string3 = "wz";
     static List<Integer> intList;
-
+    
     public static void noArgs() {
         int index = 0;     // line 38
     }
@@ -61,7 +61,7 @@ class ArgumentValuesTarg {
         System.out.println("Howdy!");
         allArgs(
                 s_char1,   s_byte1,   s_short1,  s_int1,
-                s_long1,   s_float1,  s_double1, s_iarray1,
+                s_long1,   s_float1,  s_double1, s_iarray1, 
                 s_marray1, s_sarray1, s_string1);
 
         noArgs();
@@ -132,10 +132,10 @@ public class ArgumentValuesTest extends TestScaffold {
             }
             for (int ii = 0; ii < argVals.size(); ii++) {
                 Value gotVal = argVals.get(ii);
-
+                
                 Field theField = targetClass.fieldByName(fieldNames[ii]);
                 Value expectedVal = targetClass.getValue(theField);
-                System.out.println(fieldNames[ii] + ": gotVal = " + gotVal +
+                System.out.println(fieldNames[ii] + ": gotVal = " + gotVal + 
                                    ", expected = " + expectedVal);
                 //System.out.println(gotVal.getClass() + ", " + expectedVal.getClass());
                 if (!gotVal.equals(expectedVal)) {
@@ -158,7 +158,7 @@ public class ArgumentValuesTest extends TestScaffold {
                 System.out.println("Empty arg list ok");
             } else {
                 failure("failure: Expected empty val list, got: " + argVals);
-            }
+            } 
         }
 
         // var args.  3 Strings are passed in and they appear
@@ -184,10 +184,10 @@ public class ArgumentValuesTest extends TestScaffold {
 
             for (int ii = 0; ii < argVals.size(); ii++) {
                 Value gotVal = argVals.get(ii);
-
+                
                 Field theField = targetClass.fieldByName(fieldNamesVarArgs[ii]);
                 Value expectedVal = targetClass.getValue(theField);
-                System.out.println(fieldNamesVarArgs[ii] + ": gotVal = " + gotVal +
+                System.out.println(fieldNamesVarArgs[ii] + ": gotVal = " + gotVal + 
                                    ", expected = " + expectedVal);
                 //System.out.println(gotVal.getClass() + ", " + expectedVal.getClass());
                 if (!gotVal.equals(expectedVal)) {
@@ -210,15 +210,15 @@ public class ArgumentValuesTest extends TestScaffold {
                 failure("failure: Expected one arg, got: " + argVals);
             } else {
                 Value gotVal = argVals.get(0);
-
+                
                 Field theField = targetClass.fieldByName("intList");
                 Value expectedVal = targetClass.getValue(theField);
-                System.out.println("intList " + ": gotVal = " + gotVal +
+                System.out.println("intList " + ": gotVal = " + gotVal + 
                                    ", expected = " + expectedVal);
                 if (!gotVal.equals(expectedVal)) {
                     failure("failure: gotVal != expected");
                 }
-            }
+            } 
         }
 
         // test instance method call
@@ -238,10 +238,10 @@ public class ArgumentValuesTest extends TestScaffold {
             }
             for (int ii = 0; ii < argVals.size(); ii++) {
                 Value gotVal = argVals.get(ii);
-
+                
                 Field theField = targetClass.fieldByName(fieldNamesInstance[ii]);
                 Value expectedVal = targetClass.getValue(theField);
-                System.out.println(fieldNamesInstance[ii] + ": gotVal = " + gotVal +
+                System.out.println(fieldNamesInstance[ii] + ": gotVal = " + gotVal + 
                                    ", expected = " + expectedVal);
                 //System.out.println(gotVal.getClass() + ", " + expectedVal.getClass());
                 if (!gotVal.equals(expectedVal)) {
@@ -250,7 +250,7 @@ public class ArgumentValuesTest extends TestScaffold {
             }
         }
 
-
+        
         /*
          * resume the target listening for events
          */

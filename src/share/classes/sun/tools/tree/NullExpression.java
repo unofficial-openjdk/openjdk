@@ -40,31 +40,31 @@ class NullExpression extends ConstantExpression {
      * Constructor
      */
     public NullExpression(long where) {
-        super(NULL, where, Type.tNull);
+	super(NULL, where, Type.tNull);
     }
 
     /**
      * Check if the expression is equal to a value
      */
     public boolean equals(int i) {
-        return i == 0;
+	return i == 0;
     }
 
     public boolean isNull() {
-        return true;
+	return true;
     }
 
     /**
      * Code
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-        asm.add(where, opc_aconst_null);
+	asm.add(where, opc_aconst_null);
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-        out.print("null");
+	out.print("null");
     }
 }

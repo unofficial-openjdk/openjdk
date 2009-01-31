@@ -23,27 +23,27 @@
 
 /*
  * @test
- * @bug 4328748
- * @summary AbstractMap's clone() method is implemented to
+ * @bug 4328748 
+ * @summary AbstractMap's clone() method is implemented to 
  *  reset AbstractMap's private fields after super.clone()
- *
+ *                                
  * @author Konstantin Kladko
  */
 
 import java.util.*;
 
 public class AbstractMapClone extends AbstractMap implements Cloneable {
-
+    
     private Map map = new HashMap();
-
+    
     public Set entrySet() {
         return map.entrySet();
     }
-
+    
     public Object put(Object key, Object value) {
         return map.put(key, value);
     }
-
+    
     public Object clone() {
         AbstractMapClone clone = null;
         try {
@@ -53,7 +53,7 @@ public class AbstractMapClone extends AbstractMap implements Cloneable {
         clone.map = (Map)((HashMap)map).clone();
         return clone;
     }
-
+    
     public static void main(String[] args) {
         AbstractMapClone m1 = new AbstractMapClone();
         m1.put("1", "1");

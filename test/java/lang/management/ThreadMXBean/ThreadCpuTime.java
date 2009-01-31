@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug     4530538
- * @summary Basic test of ThreadMXBean.getThreadCpuTime and
+ * @summary Basic test of ThreadMXBean.getThreadCpuTime and 
  *          getCurrentThreadCpuTime.
  * @author  Mandy Chung
  */
@@ -43,12 +43,12 @@ public class ThreadCpuTime {
     // careful about this value
     private static final int DELTA = 100;
 
-    public static void main(String[] argv)
+    public static void main(String[] argv) 
         throws Exception {
         if (!mbean.isCurrentThreadCpuTimeSupported()) {
             return;
         }
-
+        
        // disable CPU time
         if (mbean.isThreadCpuTimeEnabled()) {
             mbean.setThreadCpuTimeEnabled(false);
@@ -91,7 +91,7 @@ public class ThreadCpuTime {
         // Expected to be time1 >= time
         long time1 = mbean.getThreadCpuTime(curThread.getId());
         if (time1 < time) {
-            throw new RuntimeException("CPU time " + time1 +
+            throw new RuntimeException("CPU time " + time1 + 
                 " expected >= " + time);
         }
         System.out.println(curThread.getName() +
@@ -109,29 +109,29 @@ public class ThreadCpuTime {
             times[i] = mbean.getThreadCpuTime(threads[i].getId());
         }
 
-        goSleep(200);
+        goSleep(200); 
 
         for (int i = 0; i < NUM_THREADS; i++) {
             long newTime = mbean.getThreadCpuTime(threads[i].getId());
             if (times[i] > newTime) {
-                throw new RuntimeException("TEST FAILED: " +
+                throw new RuntimeException("TEST FAILED: " + 
                     threads[i].getName() +
                     " previous CPU time = " + times[i] +
                     " > current CPU time = " + newTime);
             }
             if ((times[i] + DELTA) < newTime) {
-                throw new RuntimeException("TEST FAILED: " +
+                throw new RuntimeException("TEST FAILED: " + 
                     threads[i].getName() +
-                    " CPU time = " + newTime +
+                    " CPU time = " + newTime + 
                     " previous CPU time " + times[i] +
                     " out of expected range");
             }
 
             System.out.println(threads[i].getName() +
                 " Previous Cpu Time = " + times[i] +
-                " Current CPU time = " + newTime);
+                " Current CPU time = " + newTime); 
         }
-
+    
         synchronized (obj) {
             done = true;
             obj.notifyAll();
@@ -145,30 +145,30 @@ public class ThreadCpuTime {
                 e.printStackTrace(System.out);
                 testFailed = true;
                 break;
-            }
+            } 
         }
         if (testFailed) {
             throw new RuntimeException("TEST FAILED");
         }
-
+ 
         System.out.println("Test passed");
     }
 
-
+    
     private static void goSleep(long ms) throws Exception {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
             System.out.println("Unexpected exception is thrown.");
             throw e;
-        }
+        } 
     }
 
-    private static void waitUntilThreadBlocked()
+    private static void waitUntilThreadBlocked() 
         throws Exception {
         int count = 0;
         while (count != NUM_THREADS) {
-            goSleep(100);
+            goSleep(100); 
             count = 0;
             for (int i = 0; i < NUM_THREADS; i++) {
                 ThreadInfo info = mbean.getThreadInfo(threads[i].getId());
@@ -182,7 +182,7 @@ public class ThreadCpuTime {
     static class MyThread extends Thread {
         public MyThread(String name) {
             super(name);
-        }
+        } 
 
         public void run() {
             double sum = 0;
@@ -200,9 +200,9 @@ public class ThreadCpuTime {
                         e.printStackTrace(System.out);
                         testFailed = true;
                         break;
-                    }
-                }
-            }
+                    } 
+                } 
+            } 
 
             sum = 0;
             for (int i = 0; i < 5000; i++) {
@@ -222,10 +222,10 @@ public class ThreadCpuTime {
             System.out.println(getName() + ": " +
                 "CurrentThreadCpuTime  = " + time1 +
                 " ThreadCpuTime  = " + time2);
-
+        
             if (time1 > time2) {
                 throw new RuntimeException("TEST FAILED: " + getName() +
-                    " CurrentThreadCpuTime = " + time1 +
+                    " CurrentThreadCpuTime = " + time1 + 
                     " > ThreadCpuTime = " + time2);
             }
 /*************
@@ -233,7 +233,7 @@ public class ThreadCpuTime {
  * It occasionally returns a different current thread user time > thread user time
             if (utime1 > utime2) {
                 throw new RuntimeException("TEST FAILED: " + getName() +
-                    " CurrentThreadUserTime = " + utime1 +
+                    " CurrentThreadUserTime = " + utime1 + 
                     " > ThreadUserTime = " + utime2);
             }
 */

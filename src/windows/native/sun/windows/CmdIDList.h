@@ -47,14 +47,14 @@ private:
     // array index is less then 32k, we can't confuse in-use entry
     // (pointer) with an index of the next free entry.  NIL is -1.
     union CmdIDEntry {
-        int next_free_index;    // index of the next entry in the free list
-        AwtObject *obj;         // object that is assigned this id
+	int next_free_index;	// index of the next entry in the free list
+	AwtObject *obj;		// object that is assigned this id
     };
 
     CmdIDEntry *m_array;  // the vector's contents
 
-    int m_first_free;     // head of the free list, may be -1 (nil)
-    UINT m_capacity;      // size of currently allocated m_array
+    int m_first_free;	  // head of the free list, may be -1 (nil)
+    UINT m_capacity;	  // size of currently allocated m_array
 
     void BuildFreeList(UINT first_index);
 };

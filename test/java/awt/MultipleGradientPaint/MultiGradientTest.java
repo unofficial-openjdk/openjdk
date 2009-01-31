@@ -75,11 +75,11 @@ public class MultiGradientTest extends JPanel {
     private static final Color[] COLORS = {
         new Color(0, 0, 0),
         new Color(128, 128, 128),
-        new Color(255, 0, 0),
+        new Color(255, 0, 0), 
         new Color(255, 255, 0),
         new Color(0, 255, 0),
         new Color(0, 255, 255),
-        new Color(128, 0, 255),
+        new Color(128, 0, 255), 
         new Color(128, 128, 128),
     };
 
@@ -129,7 +129,7 @@ public class MultiGradientTest extends JPanel {
             radius = 100.0f;
 
             makeNewPaint();
-
+            
             MouseAdapter l = new MyMouseAdapter();
             addMouseListener(l);
             addMouseMotionListener(l);
@@ -147,7 +147,7 @@ public class MultiGradientTest extends JPanel {
                                  antialiasHint);
             g2d.setRenderingHint(RenderingHints.KEY_RENDERING,
                                  renderHint);
-
+            
             g2d.transform(transform);
             g2d.setPaint(paint);
 
@@ -174,7 +174,7 @@ public class MultiGradientTest extends JPanel {
                 g2d.fillPolygon(p);
                 break;
             }
-
+        
             switch (paintType) {
             default:
             case BASIC:
@@ -201,15 +201,15 @@ public class MultiGradientTest extends JPanel {
         private void updatePoints(int x, int y) {
             Point2D inv = new Point2D.Double(x, y);
 
-            try {
-                inv = transform.inverseTransform(inv, null);
+            try {            
+                inv = transform.inverseTransform(inv, null);            
             } catch (NoninvertibleTransformException e) {
                 e.printStackTrace();
             }
-
-            x = (int)inv.getX();
+       
+            x = (int)inv.getX();       
             y = (int)inv.getY();
-
+            
             switch (paintType) {
             default:
             case BASIC:
@@ -223,7 +223,7 @@ public class MultiGradientTest extends JPanel {
                     endY = y;
                 }
                 break;
-
+            
             case RADIAL:
                 // pick the closest point to move
                 if (inv.distance(ctrX, ctrY) < inv.distance(focusX, focusY)) {
@@ -270,7 +270,7 @@ public class MultiGradientTest extends JPanel {
                                             new Point2D.Float(focusX, focusY),
                                             fractions, colors,
                                             cycleMethod, colorSpace,
-                                            new AffineTransform());
+                                            new AffineTransform());	    
                 break;
             }
 
@@ -388,7 +388,7 @@ public class MultiGradientTest extends JPanel {
         }
     }
 
-    private static class EnumComboBoxModel<E extends Enum<E>>
+    private static class EnumComboBoxModel<E extends Enum<E>> 
         extends AbstractListModel
         implements ComboBoxModel
     {
@@ -413,7 +413,7 @@ public class MultiGradientTest extends JPanel {
             selected = (E)anItem;
             this.fireContentsChanged(this, 0, getSize());
         }
-
+    
         public E getSelectedItem() {
             return selected;
         }

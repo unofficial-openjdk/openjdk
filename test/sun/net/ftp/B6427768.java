@@ -37,98 +37,98 @@ public class B6427768 {
     // Need to test when login fails, so AuthHandler should always return
     // false
     static class MyAuthHandler implements FtpAuthHandler {
-        public int authType() {
-                return 2;
-        }
+	public int authType() {
+		return 2;
+	}
 
-        public boolean authenticate(String user, String password) {
-                return false;
-        }
+	public boolean authenticate(String user, String password) {
+		return false;
+	}
 
-        public boolean authenticate(String user, String password, String account) {
-                return false;
-        }
+	public boolean authenticate(String user, String password, String account) {
+		return false;
+	}
     }
 
     static class MyFileSystemHandler implements FtpFileSystemHandler {
-        private String currentDir = "/";
+	private String currentDir = "/";
 
-        public MyFileSystemHandler(String path) {
-                currentDir = path;
-        }
+	public MyFileSystemHandler(String path) {
+		currentDir = path;
+	}
 
-        public boolean cd(String path) {
-            currentDir = path;
-            return true;
-        }
+	public boolean cd(String path) {
+	    currentDir = path;
+	    return true;
+	}
 
-        public boolean cdUp() {
-            return true;
-        }
+	public boolean cdUp() {
+	    return true;
+	}
 
-        public String pwd() {
-            return currentDir;
-        }
+	public String pwd() {
+	    return currentDir;
+	}
 
-        public InputStream getFile(String name) {
-            return null;
-        }
+	public InputStream getFile(String name) {
+	    return null;
+	}
 
-        public long getFileSize(String name) {
-            return -1;
-        }
+	public long getFileSize(String name) {
+	    return -1;
+	}
 
-        public boolean fileExists(String name) {
-            return false;
-        }
+	public boolean fileExists(String name) {
+	    return false;
+	}
+	
+	public InputStream listCurrentDir() {
+	    return null;
+	}
 
-        public InputStream listCurrentDir() {
-            return null;
-        }
+	public OutputStream putFile(String name) {
+	    return null;
+	}
 
-        public OutputStream putFile(String name) {
-            return null;
-        }
+	public boolean removeFile(String name) {
+	    return false;
+	}
 
-        public boolean removeFile(String name) {
-            return false;
-        }
+	public boolean mkdir(String name) {
+	    return false;
+	}
 
-        public boolean mkdir(String name) {
-            return false;
-        }
-
-        public boolean rename(String from, String to) {
-            return false;
-        }
+	public boolean rename(String from, String to) {
+	    return false;
+	}
     }
 
     public static void main(String[] args) throws IOException {
         FtpServer server = new FtpServer(0);
-        int port = server.getLocalPort();
-        server.setFileSystemHandler(new MyFileSystemHandler("/"));
-        server.setAuthHandler(new MyAuthHandler());
-        server.start();
-        URL url = new URL("ftp://user:passwd@localhost:" + port + "/foo.txt");
-        URLConnection con = url.openConnection();
-        // triggers the connection
-        try {
-            con.getInputStream();
-        } catch(sun.net.ftp.FtpLoginException e) {
-            // Give some time to the client thread to properly terminate.
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException ie) {
-                // shouldn't happen
-            }
-            if (server.activeClientsCount() > 0) {
-                // If there are still active clients attached to the FTP
-                // server, it means we didn't quit properly
-                server.killClients();
-                throw new RuntimeException("URLConnection didn't close the ftp connection on failure to login");
-            }
-        } finally {
-            server.terminate();
-        }
+	int port = server.getLocalPort();
+	server.setFileSystemHandler(new MyFileSystemHandler("/"));
+	server.setAuthHandler(new MyAuthHandler());
+	server.start();
+	URL url = new URL("ftp://user:passwd@localhost:" + port + "/foo.txt");
+	URLConnection con = url.openConnection();
+	// triggers the connection
+	try {
+	    con.getInputStream();
+	} catch(sun.net.ftp.FtpLoginException e) {
+	    // Give some time to the client thread to properly terminate.
+	    try {
+		Thread.sleep(2000);
+	    } catch (InterruptedException ie) {
+		// shouldn't happen
+	    }
+	    if (server.activeClientsCount() > 0) {
+		// If there are still active clients attached to the FTP
+		// server, it means we didn't quit properly
+		server.killClients();
+		throw new RuntimeException("URLConnection didn't close the ftp connection on failure to login");
+	    }
+	} finally {
+	    server.terminate();
+	}
     }
 }

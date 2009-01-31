@@ -30,7 +30,7 @@ import com.sun.net.httpserver.*;
 import com.sun.net.httpserver.spi.*;
 
 /**
- * a (filter) input stream which can tell us if bytes are "left over"
+ * a (filter) input stream which can tell us if bytes are "left over" 
  * on the underlying stream which can be read (without blocking)
  * on another instance of this class.
  *
@@ -48,55 +48,55 @@ abstract class LeftOverInputStream extends FilterInputStream {
     byte[] one = new byte [1];
 
     public LeftOverInputStream (ExchangeImpl t, InputStream src) {
-        super (src);
-        this.t = t;
-        this.server = t.getServerImpl();
+	super (src);
+	this.t = t;
+	this.server = t.getServerImpl();
     }
     /**
      * if bytes are left over buffered on *the UNDERLYING* stream
      */
     public boolean isDataBuffered () throws IOException {
-        assert eof;
-        return super.available() > 0;
+	assert eof;
+	return super.available() > 0;
     }
 
     public void close () throws IOException {
-        if (closed) {
-            return;
-        }
-        closed = true;
-        if (!eof) {
-            eof = drain (ServerConfig.getDrainAmount());
-        }
+	if (closed) {
+	    return;
+	}
+	closed = true;
+	if (!eof) {
+	    eof = drain (ServerConfig.getDrainAmount());
+	}
     }
 
     public boolean isClosed () {
-        return closed;
+	return closed;
     }
 
     public boolean isEOF () {
-        return eof;
+	return eof;
     }
 
     protected abstract int readImpl (byte[]b, int off, int len) throws IOException;
 
     public synchronized int read () throws IOException {
-        if (closed) {
-            throw new IOException ("Stream is closed");
-        }
-        int c = readImpl (one, 0, 1);
-        if (c == -1 || c == 0) {
-            return c;
-        } else {
-            return one[0] & 0xFF;
-        }
+	if (closed) {
+	    throw new IOException ("Stream is closed");
+	}
+	int c = readImpl (one, 0, 1);
+	if (c == -1 || c == 0) {
+	    return c;
+	} else {
+	    return one[0] & 0xFF;
+	}
     }
 
     public synchronized int read (byte[]b, int off, int len) throws IOException {
-        if (closed) {
-            throw new IOException ("Stream is closed");
-        }
-        return readImpl (b, off, len);
+	if (closed) {
+	    throw new IOException ("Stream is closed");
+	}
+	return readImpl (b, off, len);
     }
 
     /**
@@ -106,17 +106,17 @@ abstract class LeftOverInputStream extends FilterInputStream {
      * (still bytes to be read)
      */
     public boolean drain (long l) throws IOException {
-        int bufSize = 2048;
-        byte[] db = new byte [bufSize];
-        while (l > 0) {
-            long len = readImpl (db, 0, bufSize);
-            if (len == -1) {
-                eof = true;
-                return true;
-            } else {
-                l = l - len;
-            }
-        }
-        return false;
+	int bufSize = 2048;
+	byte[] db = new byte [bufSize];
+	while (l > 0) {
+	    long len = readImpl (db, 0, bufSize);
+	    if (len == -1) {
+		eof = true;
+		return true;
+	    } else {
+		l = l - len;
+	    }
+	}
+	return false;
     }
 }

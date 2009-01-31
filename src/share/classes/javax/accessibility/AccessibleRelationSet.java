@@ -31,12 +31,13 @@ import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
- * Class AccessibleRelationSet determines a component's relation set.  The
- * relation set of a component is a set of AccessibleRelation objects that
+ * Class AccessibleRelationSet determines a component's relation set.  The 
+ * relation set of a component is a set of AccessibleRelation objects that 
  * describe the component's relationships with other components.
  *
  * @see AccessibleRelation
  *
+ * @version     %I% %G%
  * @author      Lynn Monsanto
  * @since 1.3
  */
@@ -63,29 +64,29 @@ public class AccessibleRelationSet {
     }
 
     /**
-     * Creates a new relation with the initial set of relations contained in
+     * Creates a new relation with the initial set of relations contained in 
      * the array of relations passed in.  Duplicate entries are ignored.
      *
-     * @param relations an array of AccessibleRelation describing the
+     * @param relations an array of AccessibleRelation describing the 
      * relation set.
      */
     public AccessibleRelationSet(AccessibleRelation[] relations) {
         if (relations.length != 0) {
             this.relations = new Vector(relations.length);
             for (int i = 0; i < relations.length; i++) {
-                add(relations[i]);
+		add(relations[i]);
             }
         }
     }
 
     /**
-     * Adds a new relation to the current relation set.  If the relation
+     * Adds a new relation to the current relation set.  If the relation 
      * is already in the relation set, the target(s) of the specified
-     * relation is merged with the target(s) of the existing relation.
+     * relation is merged with the target(s) of the existing relation.  
      * Otherwise,  the new relation is added to the relation set.
      *
      * @param relation the relation to add to the relation set
-     * @return true if relation is added to the relation set; false if the
+     * @return true if relation is added to the relation set; false if the 
      * relation set is unchanged
      */
     public boolean add(AccessibleRelation relation) {
@@ -93,31 +94,31 @@ public class AccessibleRelationSet {
             relations = new Vector();
         }
 
-        // Merge the relation targets if the key exists
-        AccessibleRelation existingRelation = get(relation.getKey());
-        if (existingRelation == null) {
+	// Merge the relation targets if the key exists
+	AccessibleRelation existingRelation = get(relation.getKey());
+	if (existingRelation == null) {
             relations.addElement(relation);
             return true;
         } else {
-            Object [] existingTarget = existingRelation.getTarget();
-            Object [] newTarget = relation.getTarget();
-            int mergedLength = existingTarget.length + newTarget.length;
-            Object [] mergedTarget = new Object[mergedLength];
-            for (int i = 0; i < existingTarget.length; i++) {
-                mergedTarget[i] = existingTarget[i];
-            }
-            for (int i = existingTarget.length, j = 0;
-                 i < mergedLength;
-                 i++, j++) {
-                mergedTarget[i] = newTarget[j];
-            }
-            existingRelation.setTarget(mergedTarget);
+	    Object [] existingTarget = existingRelation.getTarget();
+	    Object [] newTarget = relation.getTarget();
+	    int mergedLength = existingTarget.length + newTarget.length;
+	    Object [] mergedTarget = new Object[mergedLength];
+	    for (int i = 0; i < existingTarget.length; i++) {
+		mergedTarget[i] = existingTarget[i];
+	    }
+	    for (int i = existingTarget.length, j = 0; 
+		 i < mergedLength; 
+		 i++, j++) {
+		mergedTarget[i] = newTarget[j];
+	    }
+	    existingRelation.setTarget(mergedTarget);
         }
-        return true;
+	return true;
     }
 
     /**
-     * Adds all of the relations to the existing relation set.  Duplicate
+     * Adds all of the relations to the existing relation set.  Duplicate 
      * entries are ignored.
      *
      * @param relations  AccessibleRelation array describing the relation set.
@@ -125,23 +126,23 @@ public class AccessibleRelationSet {
     public void addAll(AccessibleRelation[] relations) {
         if (relations.length != 0) {
             if (this.relations == null) {
-                this.relations = new Vector(relations.length);
+		this.relations = new Vector(relations.length);
             }
             for (int i = 0; i < relations.length; i++) {
-                add(relations[i]);
+		add(relations[i]);
             }
         }
     }
 
     /**
-     * Removes a relation from the current relation set.  If the relation
-     * is not in the set, the relation set will be unchanged and the
-     * return value will be false.  If the relation is in the relation
-     * set, it will be removed from the set and the return value will be
+     * Removes a relation from the current relation set.  If the relation 
+     * is not in the set, the relation set will be unchanged and the 
+     * return value will be false.  If the relation is in the relation 
+     * set, it will be removed from the set and the return value will be 
      * true.
-     *
+     *	
      * @param relation the relation to remove from the relation set
-     * @return true if the relation is in the relation set; false if the
+     * @return true if the relation is in the relation set; false if the 
      * relation set is unchanged
      */
     public boolean remove(AccessibleRelation relation) {
@@ -165,11 +166,11 @@ public class AccessibleRelationSet {
      * Returns the number of relations in the relation set.
      */
     public int size() {
-        if (relations == null) {
-            return 0;
-        } else {
-            return relations.size();
-        }
+	if (relations == null) {
+	    return 0;
+	} else {
+	    return relations.size();
+	}
     }
 
     /**
@@ -179,11 +180,11 @@ public class AccessibleRelationSet {
      * @return true if the relation is in the relation set; otherwise false
      */
     public boolean contains(String key) {
-        return get(key) != null;
+	return get(key) != null;
     }
 
     /**
-     * Returns the relation that matches the specified key.
+     * Returns the relation that matches the specified key.  
      * @param key the AccessibleRelation key
      * @return the relation, if one exists, that matches the specified key.
      * Otherwise, null is returned.
@@ -192,14 +193,14 @@ public class AccessibleRelationSet {
         if (relations == null) {
             return null;
         } else {
-            int len = relations.size();
-            for (int i = 0; i < len; i++) {
-                AccessibleRelation relation =
-                    (AccessibleRelation)relations.elementAt(i);
-                if (relation != null && relation.getKey().equals(key)) {
-                    return relation;
-                }
-            }
+	    int len = relations.size();
+	    for (int i = 0; i < len; i++) {
+		AccessibleRelation relation = 
+		    (AccessibleRelation)relations.elementAt(i);
+		if (relation != null && relation.getKey().equals(key)) {
+		    return relation;
+		}
+	    }
             return null;
         }
     }
@@ -212,8 +213,8 @@ public class AccessibleRelationSet {
         if (relations == null) {
             return new AccessibleRelation[0];
         } else {
-            AccessibleRelation[] relationArray
-                = new AccessibleRelation[relations.size()];
+            AccessibleRelation[] relationArray 
+		= new AccessibleRelation[relations.size()];
             for (int i = 0; i < relationArray.length; i++) {
                 relationArray[i] = (AccessibleRelation) relations.elementAt(i);
             }
@@ -222,7 +223,7 @@ public class AccessibleRelationSet {
     }
 
     /**
-     * Creates a localized String representing all the relations in the set
+     * Creates a localized String representing all the relations in the set 
      * using the default locale.
      *
      * @return comma separated localized String
@@ -233,9 +234,9 @@ public class AccessibleRelationSet {
         if ((relations != null) && (relations.size() > 0)) {
             ret = ((AccessibleRelation) (relations.elementAt(0))).toDisplayString();
             for (int i = 1; i < relations.size(); i++) {
-                ret = ret + ","
+                ret = ret + "," 
                         + ((AccessibleRelation) (relations.elementAt(i))).
-                                              toDisplayString();
+					      toDisplayString();
             }
         }
         return ret;

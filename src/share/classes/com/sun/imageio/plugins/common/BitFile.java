@@ -38,7 +38,7 @@ public class BitFile {
     byte buffer[];
     int index;
     int bitsLeft; // bits left at current index that are avail.
-
+    
     /** note this also indicates gif format BITFile. **/
     boolean blocks = false;
 
@@ -53,7 +53,7 @@ public class BitFile {
         index = 0;
         bitsLeft = 8;
     }
-
+    
     public void flush() throws IOException {
         int numBytes = index + (bitsLeft == 8 ? 0 : 1);
         if (numBytes > 0) {
@@ -76,15 +76,15 @@ public class BitFile {
                 if (blocks) {
                     output.write(numBytes);
                 }
-
+                
                 output.write(buffer, 0, numBytes);
-
+                
                 buffer[0] = 0;
                 index = 0;
                 bitsLeft = 8;
             }
-
-            if (numbits <= bitsLeft) { // bits contents fit in current index byte
+            
+            if (numbits <= bitsLeft) { // bits contents fit in current index byte                  
                 if (blocks) { // GIF
                     buffer[index] |= (bits & ((1 << numbits) - 1)) << (8 - bitsLeft);
                     bitsWritten += numbits;
@@ -94,7 +94,7 @@ public class BitFile {
                     buffer[index] |= (bits & ((1 << numbits) - 1)) << (bitsLeft - numbits);
                     bitsWritten += numbits;
                     bitsLeft -= numbits;
-                    numbits = 0;
+                    numbits = 0;                    
                 }
             } else { // bits overflow from current byte to next.
                 if (blocks) { // GIF
@@ -109,7 +109,7 @@ public class BitFile {
                 } else {
                     // if bits  > space left in current byte then the highest order bits
                     // of code are taken and put in current byte and rest put in next.
-                    // at highest order bit location !!
+                    // at highest order bit location !! 
                     int topbits = (bits >>> (numbits - bitsLeft)) & ((1 << bitsLeft) - 1);
                     buffer[index] |= topbits;
                     numbits -= bitsLeft;  // ok this many bits gone off the top

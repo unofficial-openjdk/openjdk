@@ -33,18 +33,18 @@ import java.net.ServerSocket;
 import sun.net.www.http.HttpClient;
 
 public class ImplicitFileName {
-
+    
     public static void main(String[] args) throws Exception {
 
-        ServerSocket ss = new ServerSocket(0);
+	ServerSocket ss = new ServerSocket(0);
 
-        URL url = new URL("http://localhost:" + ss.getLocalPort());
+	URL url = new URL("http://localhost:" + ss.getLocalPort());
 
-        HttpClient c = HttpClient.New(url);
+	HttpClient c = HttpClient.New(url);
 
-        if (!c.getURLFile().equals("/")) {
-            throw new Exception("Implicit filename in URL " +
-                                url.toString() + " is not '/'");
-        }
+	if (!c.getURLFile().equals("/")) {
+	    throw new Exception("Implicit filename in URL " + 
+				url.toString() + " is not '/'");
+	}
     }
 }

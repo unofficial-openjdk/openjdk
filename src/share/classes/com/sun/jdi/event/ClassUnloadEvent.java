@@ -30,7 +30,7 @@ import com.sun.jdi.*;
 /**
  * Notification of a class unload in the target VM.
  * <p>
- * There are severe constraints on the debugger back-end during
+ * There are severe constraints on the debugger back-end during 
  * garbage collection, so unload information is greatly limited.
  *
  * @see EventQueue
@@ -50,3 +50,4 @@ public interface ClassUnloadEvent extends Event {
      */
     public String classSignature();
 }
+

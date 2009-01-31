@@ -48,30 +48,31 @@ public class DebugUsingCustomConnector {
     }
 
     public static void main(String main_args[]) throws Exception {
-        /*
-         * In development builds the JDI classes are on the boot class
-         * path so defining class loader for the JDI classes will
-         * not find classes on the system class path.
-         */
-        VirtualMachineManager vmm = Bootstrap.virtualMachineManager();
-        if (vmm.getClass().getClassLoader() == null) {
-            System.out.println("JDI on bootclasspath - test skipped");
-            return;
-        }
+	/*
+	 * In development builds the JDI classes are on the boot class
+	 * path so defining class loader for the JDI classes will
+	 * not find classes on the system class path.
+	 */
+	VirtualMachineManager vmm = Bootstrap.virtualMachineManager();
+	if (vmm.getClass().getClassLoader() == null) {
+	    System.out.println("JDI on bootclasspath - test skipped");
+	    return;
+	}
 
-        List launchers = vmm.launchingConnectors();
+	List launchers = vmm.launchingConnectors();
 
-        LaunchingConnector connector =
-            (LaunchingConnector)find(launchers, "SimpleLaunchingConnector");
+	LaunchingConnector connector = 
+	    (LaunchingConnector)find(launchers, "SimpleLaunchingConnector");
 
-        Map args = connector.defaultArguments();
+	Map args = connector.defaultArguments();
 
-        Connector.StringArgument arg =
-            (Connector.StringArgument)args.get("class");
-        arg.setValue("Foo");
+	Connector.StringArgument arg = 
+	    (Connector.StringArgument)args.get("class");
+	arg.setValue("Foo");
 
-        VirtualMachine vm = connector.launch(args);
-        vm.resume();
+	VirtualMachine vm = connector.launch(args);
+	vm.resume();
     }
 
 }
+

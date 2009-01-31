@@ -32,6 +32,7 @@ import sun.nio.cs.MS1253;
  * A table to convert Cp1253 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp1253 extends ByteToCharSingleByte {

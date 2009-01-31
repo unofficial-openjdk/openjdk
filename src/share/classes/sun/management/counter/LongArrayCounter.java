@@ -35,7 +35,7 @@ public interface LongArrayCounter extends Counter {
      * Get a copy of the elements of the LongArrayCounter.
      */
     public long[] longArrayValue();
-
+  
     /**
      * Get the value of an element of the LongArrayCounter object.
      */

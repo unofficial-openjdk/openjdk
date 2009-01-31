@@ -31,6 +31,7 @@ package java.rmi.server;
  * the getClientHost method is called outside of servicing a remote
  * method call.
  *
+ * @version %I%, %G%
  * @author  Roger Riggs
  * @since   JDK1.1
  * @see java.rmi.server.RemoteServer#getClientHost()
@@ -54,8 +55,8 @@ public class ServerNotActiveException extends java.lang.Exception {
      * @param s the detail message.
      * @since JDK1.1
      */
-    public ServerNotActiveException(String s)
+    public ServerNotActiveException(String s) 
     {
-        super(s);
+	super(s);
     }
 }

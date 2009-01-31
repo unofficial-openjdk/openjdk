@@ -47,9 +47,10 @@ import javax.swing.tree.TreePath;
  * @see TreeSelectionListener
  * @see javax.swing.tree.TreeSelectionModel
  *
+ * @version %I% %G%
  * @author Scott Violet
  */
-public class TreeSelectionEvent extends EventObject
+public class TreeSelectionEvent extends EventObject 
 {
     /** Paths this event represents. */
     protected TreePath[]     paths;
@@ -69,14 +70,14 @@ public class TreeSelectionEvent extends EventObject
       * @param paths the paths that have changed in the selection
       */
     public TreeSelectionEvent(Object source, TreePath[] paths,
-                              boolean[] areNew, TreePath oldLeadSelectionPath,
-                              TreePath newLeadSelectionPath)
+			      boolean[] areNew, TreePath oldLeadSelectionPath,
+			      TreePath newLeadSelectionPath)
     {
-        super(source);
-        this.paths = paths;
-        this.areNew = areNew;
-        this.oldLeadSelectionPath = oldLeadSelectionPath;
-        this.newLeadSelectionPath = newLeadSelectionPath;
+	super(source);
+	this.paths = paths;
+	this.areNew = areNew;
+	this.oldLeadSelectionPath = oldLeadSelectionPath;
+	this.newLeadSelectionPath = newLeadSelectionPath;
     }
 
     /**
@@ -90,16 +91,16 @@ public class TreeSelectionEvent extends EventObject
       * means path was removed from the selection.
       */
     public TreeSelectionEvent(Object source, TreePath path, boolean isNew,
-                              TreePath oldLeadSelectionPath,
-                              TreePath newLeadSelectionPath)
+			      TreePath oldLeadSelectionPath,
+			      TreePath newLeadSelectionPath)
     {
-        super(source);
-        paths = new TreePath[1];
-        paths[0] = path;
-        areNew = new boolean[1];
-        areNew[0] = isNew;
-        this.oldLeadSelectionPath = oldLeadSelectionPath;
-        this.newLeadSelectionPath = newLeadSelectionPath;
+	super(source);
+	paths = new TreePath[1];
+	paths[0] = path;
+	areNew = new boolean[1];
+	areNew[0] = isNew;
+	this.oldLeadSelectionPath = oldLeadSelectionPath;
+	this.newLeadSelectionPath = newLeadSelectionPath;
     }
 
     /**
@@ -108,13 +109,13 @@ public class TreeSelectionEvent extends EventObject
       */
     public TreePath[] getPaths()
     {
-        int                  numPaths;
-        TreePath[]          retPaths;
+	int                  numPaths;
+	TreePath[]          retPaths;
 
-        numPaths = paths.length;
-        retPaths = new TreePath[numPaths];
-        System.arraycopy(paths, 0, retPaths, 0, numPaths);
-        return retPaths;
+	numPaths = paths.length;
+	retPaths = new TreePath[numPaths];
+	System.arraycopy(paths, 0, retPaths, 0, numPaths);
+	return retPaths;
     }
 
     /**
@@ -122,7 +123,7 @@ public class TreeSelectionEvent extends EventObject
       */
     public TreePath getPath()
     {
-        return paths[0];
+	return paths[0];
     }
 
     /**
@@ -136,7 +137,7 @@ public class TreeSelectionEvent extends EventObject
      *         {@code false} otherwise
      */
     public boolean isAddedPath() {
-        return areNew[0];
+	return areNew[0];
     }
 
     /**
@@ -156,10 +157,10 @@ public class TreeSelectionEvent extends EventObject
      * @see #getPaths
      */
     public boolean isAddedPath(TreePath path) {
-        for(int counter = paths.length - 1; counter >= 0; counter--)
-            if(paths[counter].equals(path))
-                return areNew[counter];
-        throw new IllegalArgumentException("path is not a path identified by the TreeSelectionEvent");
+	for(int counter = paths.length - 1; counter >= 0; counter--)
+	    if(paths[counter].equals(path))
+		return areNew[counter];
+	throw new IllegalArgumentException("path is not a path identified by the TreeSelectionEvent");
     }
 
     /**
@@ -178,24 +179,24 @@ public class TreeSelectionEvent extends EventObject
      * @since 1.3
      */
     public boolean isAddedPath(int index) {
-        if (paths == null || index < 0 || index >= paths.length) {
-            throw new IllegalArgumentException("index is beyond range of added paths identified by TreeSelectionEvent");
-        }
-        return areNew[index];
+	if (paths == null || index < 0 || index >= paths.length) {
+	    throw new IllegalArgumentException("index is beyond range of added paths identified by TreeSelectionEvent");
+	}
+	return areNew[index];
     }
 
     /**
      * Returns the path that was previously the lead path.
      */
     public TreePath getOldLeadSelectionPath() {
-        return oldLeadSelectionPath;
+	return oldLeadSelectionPath;
     }
 
     /**
      * Returns the current lead path.
      */
     public TreePath getNewLeadSelectionPath() {
-        return newLeadSelectionPath;
+	return newLeadSelectionPath;
     }
 
     /**
@@ -204,7 +205,7 @@ public class TreeSelectionEvent extends EventObject
     public Object cloneWithSource(Object newSource) {
       // Fix for IE bug - crashing
       return new TreeSelectionEvent(newSource, paths,areNew,
-                                    oldLeadSelectionPath,
-                                    newLeadSelectionPath);
+				    oldLeadSelectionPath,
+				    newLeadSelectionPath);
     }
 }

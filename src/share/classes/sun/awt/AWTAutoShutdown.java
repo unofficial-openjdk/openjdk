@@ -33,25 +33,25 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * This class is to let AWT shutdown automatically when a user is done
- * with AWT. It tracks AWT state using the following parameters:
+ * This class is to let AWT shutdown automatically when a user is done 
+ * with AWT. It tracks AWT state using the following parameters:  
  * <ul>
  * <li><code>peerMap</code> - the map between the existing peer objects
  *     and their associated targets
- * <li><code>toolkitThreadBusy</code> - whether the toolkit thread
- *     is waiting for a new native event to appear in its queue
+ * <li><code>toolkitThreadBusy</code> - whether the toolkit thread 
+ *     is waiting for a new native event to appear in its queue 
  *     or is dispatching an event
- * <li><code>busyThreadSet</code> - a set of all the event dispatch
- *     threads that are busy at this moment, i.e. those that are not
- *     waiting for a new event to appear in their event queue.
+ * <li><code>busyThreadSet</code> - a set of all the event dispatch 
+ *     threads that are busy at this moment, i.e. those that are not 
+ *     waiting for a new event to appear in their event queue.       
  * </ul><p>
- * AWT is considered to be in ready-to-shutdown state when
- * <code>peerMap</code> is empty and <code>toolkitThreadBusy</code>
- * is false and <code>busyThreadSet</code> is empty.
+ * AWT is considered to be in ready-to-shutdown state when  
+ * <code>peerMap</code> is empty and <code>toolkitThreadBusy</code> 
+ * is false and <code>busyThreadSet</code> is empty. 
  * The internal AWTAutoShutdown logic secures that the single non-daemon
- * thread (<code>blockerThread</code>) is running when AWT is not in
+ * thread (<code>blockerThread</code>) is running when AWT is not in 
  * ready-to-shutdown state. This blocker thread is to prevent AWT from
- * exiting since the toolkit thread is now daemon and all the event
+ * exiting since the toolkit thread is now daemon and all the event 
  * dispatch threads are started only when needed. Once it is detected
  * that AWT is in ready-to-shutdown state this blocker thread waits
  * for a certain timeout and if AWT state doesn't change during timeout
@@ -63,41 +63,41 @@ public final class AWTAutoShutdown implements Runnable {
     private static final AWTAutoShutdown theInstance = new AWTAutoShutdown();
 
     /**
-     * This lock object is used to synchronize shutdown operations.
-     */
+     * This lock object is used to synchronize shutdown operations. 
+     */ 
     private final Object mainLock = new Object();
 
-    /**
-     * This lock object is to secure that when a new blocker thread is
-     * started it will be the first who acquire the main lock after
+    /** 
+     * This lock object is to secure that when a new blocker thread is 
+     * started it will be the first who acquire the main lock after 
      * the thread that created the new blocker released the main lock
-     * by calling lock.wait() to wait for the blocker to start.
-     */
+     * by calling lock.wait() to wait for the blocker to start. 
+     */ 
     private final Object activationLock = new Object();
 
-    /**
+    /** 
      * This set keeps references to all the event dispatch threads that
      * are busy at this moment, i.e. those that are not waiting for a
-     * new event to appear in their event queue.
-     * Access is synchronized on the main lock object.
+     * new event to appear in their event queue.       
+     * Access is synchronized on the main lock object. 
      */
     private final HashSet busyThreadSet = new HashSet(7);
 
-    /**
+    /** 
      * Indicates whether the toolkit thread is waiting for a new native
-     * event to appear or is dispatching an event.
-     */
+     * event to appear or is dispatching an event. 
+     */ 
     private boolean toolkitThreadBusy = false;
 
-    /**
+    /** 
      * This is a map between components and their peers.
      * we should work with in under activationLock&mainLock lock.
-     */
+     */ 
     private final Map peerMap = new IdentityHashMap();
 
-    /**
-     * References the alive non-daemon thread that is currently used
-     * for keeping AWT from exiting.
+    /** 
+     * References the alive non-daemon thread that is currently used 
+     * for keeping AWT from exiting. 
      */
     private Thread blockerThread = null;
 
@@ -114,9 +114,9 @@ public final class AWTAutoShutdown implements Runnable {
     private static final int SAFETY_TIMEOUT = 1000;
 
     /**
-     * Constructor method is intentionally made private to secure
+     * Constructor method is intentionally made private to secure 
      * a single instance. Use getInstance() to reference it.
-     *
+     * 
      * @see     AWTAutoShutdown#getInstance
      */
     private AWTAutoShutdown() {}
@@ -130,7 +130,7 @@ public final class AWTAutoShutdown implements Runnable {
 
     /**
      * Notify that the toolkit thread is not waiting for a native event
-     * to appear in its queue.
+     * to appear in its queue. 
      *
      * @see     AWTAutoShutdown#notifyToolkitThreadFree
      * @see     AWTAutoShutdown#setToolkitBusy
@@ -142,7 +142,7 @@ public final class AWTAutoShutdown implements Runnable {
 
     /**
      * Notify that the toolkit thread is waiting for a native event
-     * to appear in its queue.
+     * to appear in its queue. 
      *
      * @see     AWTAutoShutdown#notifyToolkitThreadFree
      * @see     AWTAutoShutdown#setToolkitBusy
@@ -154,7 +154,7 @@ public final class AWTAutoShutdown implements Runnable {
 
     /**
      * Add a specified thread to the set of busy event dispatch threads.
-     * If this set already contains the specified thread, the call leaves
+     * If this set already contains the specified thread, the call leaves 
      * this set unchanged and returns silently.
      *
      * @param thread thread to be added to this set, if not present.
@@ -162,7 +162,7 @@ public final class AWTAutoShutdown implements Runnable {
      * @see     AWTAutoShutdown#isReadyToShutdown
      */
     public void notifyThreadBusy(final Thread thread) {
-        synchronized (activationLock) {
+        synchronized (activationLock) {        
             synchronized (mainLock) {
                 if (blockerThread == null) {
                     activateBlockerThread();
@@ -173,11 +173,11 @@ public final class AWTAutoShutdown implements Runnable {
                 busyThreadSet.add(thread);
             }
         }
-    }
-
+    }       
+        
     /**
      * Remove a specified thread from the set of busy event dispatch threads.
-     * If this set doesn't contain the specified thread, the call leaves
+     * If this set doesn't contain the specified thread, the call leaves 
      * this set unchanged and returns silently.
      *
      * @param thread thread to be removed from this set, if present.
@@ -197,7 +197,7 @@ public final class AWTAutoShutdown implements Runnable {
     }
 
     /**
-     * Notify that the peermap has been updated, that means a new peer
+     * Notify that the peermap has been updated, that means a new peer 
      * has been created or some existing peer has been disposed.
      *
      * @see     AWTAutoShutdown#isReadyToShutdown
@@ -217,20 +217,20 @@ public final class AWTAutoShutdown implements Runnable {
 
     /**
      * Determine whether AWT is currently in ready-to-shutdown state.
-     * AWT is considered to be in ready-to-shutdown state if
-     * <code>peerMap</code> is empty and <code>toolkitThreadBusy</code>
-     * is false and <code>busyThreadSet</code> is empty.
+     * AWT is considered to be in ready-to-shutdown state if 
+     * <code>peerMap</code> is empty and <code>toolkitThreadBusy</code> 
+     * is false and <code>busyThreadSet</code> is empty. 
      *
      * @return true if AWT is in ready-to-shutdown state.
      */
     private boolean isReadyToShutdown() {
-        return (!toolkitThreadBusy &&
-                 peerMap.isEmpty() &&
+        return (!toolkitThreadBusy && 
+                 peerMap.isEmpty() && 
                  busyThreadSet.isEmpty());
     }
 
     /**
-     * Notify about the toolkit thread state change.
+     * Notify about the toolkit thread state change. 
      *
      * @param busy true if the toolkit thread state changes from idle
      *             to busy.
@@ -266,7 +266,7 @@ public final class AWTAutoShutdown implements Runnable {
 
     /**
      * Implementation of the Runnable interface.
-     * Incapsulates the blocker thread functionality.
+     * Incapsulates the blocker thread functionality. 
      *
      * @see     AWTAutoShutdown#isReadyToShutdown
      */
@@ -282,12 +282,12 @@ public final class AWTAutoShutdown implements Runnable {
                     timeoutPassed = false;
                     /*
                      * This loop is introduced to handle the following case:
-                     * it is possible that while we are waiting for the
-                     * safety timeout to pass AWT state can change to
+                     * it is possible that while we are waiting for the 
+                     * safety timeout to pass AWT state can change to 
                      * not-ready-to-shutdown and back to ready-to-shutdown.
                      * In this case we have to wait once again.
-                     * NOTE: we shouldn't break into the outer loop
-                     * in this case, since we may never be notified
+                     * NOTE: we shouldn't break into the outer loop 
+                     * in this case, since we may never be notified 
                      * in an outer infinite wait at this point.
                      */
                     while (isReadyToShutdown()) {

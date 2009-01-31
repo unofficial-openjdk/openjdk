@@ -42,7 +42,7 @@ import org.w3c.dom.Node;
 public class ResolverFragment extends ResourceResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                             ResolverFragment.class.getName());
 
@@ -56,7 +56,7 @@ public class ResolverFragment extends ResourceResolverSpi {
     * @param BaseURI
     *
     */
-   public XMLSignatureInput engineResolve(Attr uri, String BaseURI)
+   public XMLSignatureInput engineResolve(Attr uri, String BaseURI) 
        throws ResourceResolverException
    {
 
@@ -73,7 +73,7 @@ public class ResolverFragment extends ResourceResolverSpi {
           */
 
          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "ResolverFragment with empty URI (means complete document)");
-         selectedElem = doc;
+	 selectedElem = doc;
       } else {
 
          /*
@@ -89,21 +89,21 @@ public class ResolverFragment extends ResourceResolverSpi {
          // Element selectedElem = doc.getElementById(id);
          selectedElem = IdResolver.getElementById(doc, id);
          if (selectedElem==null) {
-                Object exArgs[] = { id };
+         	Object exArgs[] = { id };
             throw new ResourceResolverException(
                "signature.Verification.MissingID", exArgs, uri, BaseURI);
          }
          if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try to catch an Element with ID " + id + " and Element was " + selectedElem);
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Try to catch an Element with ID " + id + " and Element was " + selectedElem);
       }
 
       XMLSignatureInput result = new XMLSignatureInput(selectedElem);
       result.setExcludeComments(true);
 
       //if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "We return a nodeset with " + resultSet.size() + " nodes");
-      result.setMIMEType("text/xml");
-          result.setSourceURI((BaseURI != null) ? BaseURI.concat(uri.getNodeValue()) :
-                  uri.getNodeValue());
+      result.setMIMEType("text/xml");	  
+	  result.setSourceURI((BaseURI != null) ? BaseURI.concat(uri.getNodeValue()) :
+		  uri.getNodeValue());      
       return result;
    }
 
@@ -127,11 +127,11 @@ public class ResolverFragment extends ResourceResolverSpi {
               || ((uriNodeValue.charAt(0)=='#')
                   &&!uriNodeValue.startsWith("#xpointer("))) {
          if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "State I can resolve reference: \"" + uriNodeValue + "\"");
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "State I can resolve reference: \"" + uriNodeValue + "\"");
          return true;
       }
       if (true)
-        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Do not seem to be able to resolve reference: \"" + uriNodeValue + "\"");
+      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Do not seem to be able to resolve reference: \"" + uriNodeValue + "\"");
       return false;
    }
 

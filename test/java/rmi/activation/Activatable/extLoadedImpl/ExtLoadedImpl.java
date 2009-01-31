@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,24 +27,24 @@ import java.rmi.activation.*;
 public class ExtLoadedImpl implements CheckLoader {
 
     public ExtLoadedImpl(ActivationID id, MarshalledObject obj)
-        throws ActivationException, RemoteException
+	throws ActivationException, RemoteException
     {
-        Activatable.exportObject(this, id, 0);
+	Activatable.exportObject(this, id, 0);
     }
 
     public boolean isCorrectContextLoader() {
-        ClassLoader contextLoader =
-            Thread.currentThread().getContextClassLoader();
-        ClassLoader implLoader = this.getClass().getClassLoader();
-        if (contextLoader == implLoader) {
-            System.err.println("contextLoader same as implLoader");
-            return false;
-        } else if (contextLoader.getParent() == implLoader) {
-            System.err.println("contextLoader is child of implLoader");
-            return true;
-        } else {
-            System.err.println("unknown loader relationship");
-            return false;
-        }
+	ClassLoader contextLoader =
+	    Thread.currentThread().getContextClassLoader();
+	ClassLoader implLoader = this.getClass().getClassLoader();
+	if (contextLoader == implLoader) {
+	    System.err.println("contextLoader same as implLoader");
+	    return false;
+	} else if (contextLoader.getParent() == implLoader) {
+	    System.err.println("contextLoader is child of implLoader");
+	    return true;
+	} else {
+	    System.err.println("unknown loader relationship");
+	    return false;
+	}
     }
 }

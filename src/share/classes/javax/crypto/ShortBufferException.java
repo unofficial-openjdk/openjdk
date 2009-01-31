@@ -46,7 +46,7 @@ public class ShortBufferException extends GeneralSecurityException {
      * particular exception.
      */
     public ShortBufferException() {
-        super();
+	super();
     }
 
     /**
@@ -56,6 +56,6 @@ public class ShortBufferException extends GeneralSecurityException {
      * @param msg the detail message.
      */
     public ShortBufferException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

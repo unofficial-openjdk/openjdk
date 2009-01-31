@@ -38,6 +38,7 @@ import java.security.*;
  * @since 1.4
  * @see TrustManagerFactory
  * @see TrustManager
+ * @version %I%
  */
 public abstract class TrustManagerFactorySpi {
     /**
@@ -63,13 +64,13 @@ public abstract class TrustManagerFactorySpi {
      * implementation to obtain the needed information.
      *
      * @param spec an implementation of a provider-specific parameter
-     *          specification
+     *		specification
      * @throws InvalidAlgorithmParameterException if there is problem
-     *          with the parameters
+     *		with the parameters
      * @see TrustManagerFactory#init(ManagerFactoryParameters spec)
      */
     protected abstract void engineInit(ManagerFactoryParameters spec)
-        throws InvalidAlgorithmParameterException;
+	throws InvalidAlgorithmParameterException;
 
     /**
      * Returns one trust manager for each type of trust material.

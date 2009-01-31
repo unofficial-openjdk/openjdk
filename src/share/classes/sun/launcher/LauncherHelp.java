@@ -44,16 +44,16 @@ import java.util.ResourceBundle;
 import java.text.MessageFormat;
 
 public class LauncherHelp {
-
+    
     private static final String defaultBundleName = "sun.launcher.resources.launcher";
     private static ResourceBundle javarb = ResourceBundle.getBundle(defaultBundleName);
-
+    
     private static StringBuilder outBuf = new StringBuilder();
-
+    
     /** Creates a new instance of LauncherHelp, keep it a singleton */
     private LauncherHelp(){}
-
-
+    
+  
     /**
      * A private helper method to get a localized message and also
      * apply any arguments that we might pass.
@@ -62,7 +62,7 @@ public class LauncherHelp {
         String msg = javarb.getString(key);
         return (args != null) ? MessageFormat.format(msg, args) : msg;
     }
-
+    
     /**
      * The java -help message is split into 3 parts, an invariant, followed
      * by a set of platform dependent variant messages, finally an invariant
@@ -70,12 +70,12 @@ public class LauncherHelp {
      * This method initializes the help message for the first time, and also
      * assembles the invariant header part of the message.
      */
-    static void initHelpMessage(String progname) {
-        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.header", (progname == null) ? "java" : progname ));
-        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.datamodel", 32));
-        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.datamodel", 64));
+    static void initHelpMessage(String progname) {      
+        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.header", (progname == null) ? "java" : progname ));      
+        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.datamodel", 32));     
+        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.datamodel", 64));     
     }
-
+    
     /**
      * Appends the vm selection messages to the header, already created.
      * initHelpSystem must already be called.
@@ -83,7 +83,7 @@ public class LauncherHelp {
     static void appendVmSelectMessage(String vm1, String vm2) {
         outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.vmselect", vm1, vm2));
     }
-
+    
     /**
      * Appends the vm synoym message to the header, already created.
      * initHelpSystem must be called before using this method.
@@ -91,37 +91,37 @@ public class LauncherHelp {
     static void appendVmSynonymMessage(String vm1, String vm2) {
         outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.hotspot", vm1, vm2));
     }
-
+    
     /**
      * Appends the vm Ergo message to the header, already created.
      * initHelpSystem must be called before using this method.
      */
-    static void appendVmErgoMessage(boolean isServerClass, String vm) {
+    static void appendVmErgoMessage(boolean isServerClass, String vm) {       
         outBuf = outBuf.append(getLocalizedMessage("java.launcher.ergo.message1", vm));
-        outBuf = (isServerClass)
+        outBuf = (isServerClass) 
              ? outBuf.append(",\n" + getLocalizedMessage("java.launcher.ergo.message2") + "\n\n")
              : outBuf.append(".\n\n");
     }
-
+    
     /**
      * Appends the last invariant part to the previously created messages,
      * and finishes up the printing to the desired output stream.
      * initHelpSystem must be called before using this method.
      */
     static void printHelpMessage(boolean printToStderr) {
-        PrintStream ostream = (printToStderr) ? System.err : System.out;
-        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.footer",  File.pathSeparator));
+        PrintStream ostream = (printToStderr) ? System.err : System.out; 
+        outBuf = outBuf.append(getLocalizedMessage("java.launcher.opt.footer",  File.pathSeparator));        
         ostream.println(outBuf.toString());
     }
-
-    /**
+    
+    /** 
      * Prints the Xusage text to the desired output stream.
      */
     static void printXUsageMessage(boolean printToStderr) {
-        PrintStream ostream =  (printToStderr) ? System.err : System.out;
-        ostream.println(getLocalizedMessage("java.launcher.X.usage",  File.pathSeparator));
+        PrintStream ostream =  (printToStderr) ? System.err : System.out;   
+        ostream.println(getLocalizedMessage("java.launcher.X.usage",  File.pathSeparator));    
     }
-
+    
     /* Test code */
     public static void main(String[] args) {
         initHelpMessage("java");
@@ -130,9 +130,10 @@ public class LauncherHelp {
         appendVmSynonymMessage("-hotspot", "client");
         appendVmErgoMessage(true, "server");
         printHelpMessage(true);
-
+        
         System.err.println("------------------------------------");
-
+        
         printXUsageMessage(true);
     }
 }
+

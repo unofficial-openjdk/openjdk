@@ -98,7 +98,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
 
     // Actually used only by XDecoratedPeer
     protected int boundsOperation;
-
+ 
     Color foreground;
     Color background;
 
@@ -143,18 +143,18 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         Color c;
         Font  f;
         Cursor cursor;
-
+ 
         pSetCursor(target.getCursor());
-
+ 
         foreground = target.getForeground();
         background = target.getBackground();
         font = target.getFont();
-
+  
         if (isInitialReshape()) {
             Rectangle r = target.getBounds();
             reshape(r.x, r.y, r.width, r.height);
         }
-
+ 
         enabled = target.isEnabled();
 
         // If any of our heavyweight ancestors are disable, we should be too
@@ -173,7 +173,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
             show();
         }
     }
-
+  
     protected boolean isInitialReshape() {
         return true;
     }
@@ -195,16 +195,16 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     public boolean isObscured() {
         Container container  = (target instanceof Container) ?
             (Container)target : target.getParent();
-
+        
         if (container == null) {
             return true;
         }
-
+        
         Container parent;
         while ((parent = container.getParent()) != null) {
             container = parent;
         }
-
+        
         if (container instanceof Window) {
             XWindowPeer wpeer = (XWindowPeer)(container.getPeer());
             if (wpeer != null) {
@@ -251,7 +251,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
 
     /**
      * Descendants should use this method to determine whether or not native window
-     * has focus.
+     * has focus.    
      */
     final public boolean hasFocus() {
         return bHasFocus;
@@ -281,7 +281,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     private static Class seClass;
     private static Constructor seCtor;
 
-    final static AWTEvent wrapInSequenced(AWTEvent event) {
+    final static AWTEvent wrapInSequenced(AWTEvent event) { 
         try {
             if (seClass == null) {
                 seClass = Class.forName("java.awt.SequencedEvent");
@@ -331,7 +331,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     /**
      * Checks whether or not this component would be focused by native system if it would be allowed to do so.
      * Currently it checks that it displayable, visible, enabled and focusable.
-     */
+     */ 
     static boolean canBeFocusedByClick(Component component) {
         if (component == null) {
             return false;
@@ -351,21 +351,21 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     static Method processSynchronousLightweightTransferMethod;
     static boolean processSynchronousLightweightTransfer(Component heavyweight, Component descendant,
                                                   boolean temporary, boolean focusedWindowChangeAllowed,
-                                                  long time)
+                                                  long time) 
     {
         try {
             if (processSynchronousLightweightTransferMethod == null) {
                 processSynchronousLightweightTransferMethod =
                     (Method)AccessController.doPrivileged(
                         new PrivilegedExceptionAction() {
-                                public Object run() throws IllegalAccessException, NoSuchMethodException
+                                public Object run() throws IllegalAccessException, NoSuchMethodException 
                                 {
                                     Method m = KeyboardFocusManager.class.
-                                        getDeclaredMethod("processSynchronousLightweightTransfer",
+                                        getDeclaredMethod("processSynchronousLightweightTransfer", 
                                                           new Class[] {Component.class, Component.class,
-                                                                       Boolean.TYPE, Boolean.TYPE,
+                                                                       Boolean.TYPE, Boolean.TYPE, 
                                                                        Long.TYPE});
-                                    m.setAccessible(true);
+                                    m.setAccessible(true); 
                                     return m;
                                 }
                             });
@@ -374,7 +374,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
                         heavyweight,
                         descendant,
                         Boolean.valueOf(temporary),
-                        Boolean.valueOf(focusedWindowChangeAllowed),
+                        Boolean.valueOf(focusedWindowChangeAllowed), 
                         Long.valueOf(time)
                     };
             return ((Boolean)processSynchronousLightweightTransferMethod.invoke(null, params)).booleanValue();
@@ -386,7 +386,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
             return false;
         } catch (IllegalArgumentException iaee) {
             iaee.printStackTrace();
-            return false;
+            return false;            
         } catch (InvocationTargetException ite) {
             ite.printStackTrace();
             return false;
@@ -411,7 +411,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     final public boolean requestFocus(Component lightweightChild, boolean temporary,
                                       boolean focusedWindowChangeAllowed, long time, CausedFocusEvent.Cause cause)
     {
-        if (processSynchronousLightweightTransfer(target, lightweightChild, temporary,
+        if (processSynchronousLightweightTransfer(target, lightweightChild, temporary, 
                                                   focusedWindowChangeAllowed, time))
         {
             return true;
@@ -430,8 +430,8 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
               if (focusLog.isLoggable(Level.FINER)) focusLog.finer("Proceeding with request to " + lightweightChild + " in " + target);
               /**
                * The problems with requests in non-focused window arise because shouldNativelyFocusHeavyweight
-               * checks that native window is focused while appropriate WINDOW_GAINED_FOCUS has not yet
-               * been processed - it is in EventQueue. Thus, SNFH allows native request and stores request record
+               * checks that native window is focused while appropriate WINDOW_GAINED_FOCUS has not yet 
+               * been processed - it is in EventQueue. Thus, SNFH allows native request and stores request record 
                * in requests list - and it breaks our requests sequence as first record on WGF should be the last focus
                * owner which had focus before WLF. So, we should not add request record for such requests
                * but store this component in mostRecent - and return true as before for compatibility.
@@ -466,7 +466,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
               // NOTE: We simulate heavyweight behavior of Motif - component receives focus right
               // after request, not after event. Normally, we should better listen for event
               // by listeners.
-              return XKeyboardFocusManagerPeer.simulateMotifRequestFocus(lightweightChild, target, temporary,
+              return XKeyboardFocusManagerPeer.simulateMotifRequestFocus(lightweightChild, target, temporary, 
                                                                          focusedWindowChangeAllowed, time, cause);
               // Motif compatibility code
           case SNFH_SUCCESS_HANDLED:
@@ -484,16 +484,16 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
             focusLost((FocusEvent)e);
         }
     }
-
+    
     void handleJavaWindowFocusEvent(AWTEvent e) {
     }
-
+    
     /*************************************************
      * END OF FOCUS STUFF
      *************************************************/
 
-
-
+   
+    
     public void setVisible(boolean b) {
         xSetVisible(b);
     }
@@ -506,7 +506,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         setVisible(false);
     }
 
-
+    
     /**
      * @see java.awt.peer.ComponentPeer
      */
@@ -552,13 +552,13 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         repaint();
     }
 
-
+  
     public Graphics getGraphics() {
         return getGraphics(surfaceData, getPeerForeground(), getPeerBackground(), getPeerFont());
     }
 
-
-
+    
+  
     public void print(Graphics g) {
         // clear rect here to emulate X clears rect before Expose
         g.setColor(target.getBackground());
@@ -591,7 +591,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         }
         if (true) {
             switch(e.getID()) {
-              case PaintEvent.UPDATE:
+              case PaintEvent.UPDATE:       
                   log.finer("XCP coalescePaintEvent : UPDATE : add : x = " +
                             r.x + ", y = " + r.y + ", width = " + r.width + ",height = " + r.height);
                   return;
@@ -608,25 +608,25 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         // Search for parent window
         while (parent != null && !(parent instanceof Window)) {
             parent = ComponentAccessor.getParent_NoClientCode(parent);
-        }
-        if (parent != null) {
+        }        
+        if (parent != null) {                
             return (XWindowPeer)ComponentAccessor.getPeer(parent);
         } else {
             return null;
-        }
+        }        
     }
 
     /* This method is intended to be over-ridden by peers to perform user interaction */
     void handleJavaMouseEvent(MouseEvent e) {
         switch (e.getID()) {
-          case MouseEvent.MOUSE_PRESSED:
+          case MouseEvent.MOUSE_PRESSED:              
               if (target == e.getSource() && shouldFocusOnClick()
-                  && !target.isFocusOwner() && canBeFocusedByClick(target))
+                  && !target.isFocusOwner() && canBeFocusedByClick(target)) 
               {
                   XWindowPeer parentXWindow = getParentTopLevel();
                   Window parentWindow = ((Window)parentXWindow.getTarget());
                   // Simple windows are non-focusable in X terms but focusable in Java terms.
-                  // As X-non-focusable they don't receive any focus events - we should generate them
+                  // As X-non-focusable they don't receive any focus events - we should generate them 
                   // by ourselfves.
 //                   if (parentXWindow.isFocusableWindow() /*&& parentXWindow.isSimpleWindow()*/ &&
 //                       !(getCurrentNativeFocusedWindow() == parentWindow))
@@ -649,14 +649,14 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     void handleJavaMouseWheelEvent(MouseWheelEvent e) {
     }
 
-
+   
     /* This method is intended to be over-ridden by peers to perform user interaction */
     void handleJavaInputMethodEvent(InputMethodEvent e) {
     }
 
     void handleF10JavaKeyEvent(KeyEvent e) {
         if (e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_F10) {
-            XWindowPeer winPeer = this.getToplevelXWindow();
+            XWindowPeer winPeer = this.getToplevelXWindow(); 
             if (winPeer instanceof XFramePeer) {
                 XMenuBarPeer mPeer = ((XFramePeer)winPeer).getMenubarPeer();
                 if (mPeer != null) {
@@ -676,7 +676,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
                     handleJavaMouseEvent((MouseEvent) e);
             }
             else if (e instanceof KeyEvent) {
-                handleF10JavaKeyEvent((KeyEvent)e);
+                handleF10JavaKeyEvent((KeyEvent)e); 
                 handleJavaKeyEvent((KeyEvent)e);
             }
         }
@@ -804,7 +804,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
 
     /**
      * Gets the font metrics for the specified font.
-     * @param font the font for which font metrics is to be
+     * @param font the font for which font metrics is to be 
      *      obtained
      * @return the font metrics for <code>font</code>
      * @see       #getFont
@@ -815,7 +815,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
      */
     public FontMetrics getFontMetrics(Font font) {
         if (fontLog.isLoggable(Level.FINE)) fontLog.fine("Getting font metrics for " + font);
-        return sun.font.FontDesignMetrics.getMetrics(font);
+	return sun.font.FontDesignMetrics.getMetrics(font);
     }
 
     public void setFont(Font f) {
@@ -843,7 +843,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     public void pSetCursor(Cursor cursor) {
         XToolkit.awtLock();
         try {
-            long xcursor = XGlobalCursorManager.getCursor(cursor);
+            long xcursor = XGlobalCursorManager.getCursor(cursor);   
 
             XSetWindowAttributes xwa = new XSetWindowAttributes();
             xwa.set_cursor(xcursor);
@@ -926,7 +926,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
             && !ComponentAccessor.getIgnoreRepaint(target))
         {
             // if not waiting for native painting repaint damaged area
-            postEvent(new PaintEvent(target, PaintEvent.PAINT,
+            postEvent(new PaintEvent(target, PaintEvent.PAINT, 
                                      new Rectangle()));
         }
         isLayouting = false;
@@ -1025,7 +1025,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
             // Calculate the NTSC gray (NB: REC709 L* might be better!)
             // for foreground and background; then multiply the foreground
             // by the average lightness
-
+        
 
             Color tc = c[BACKGROUND_COLOR];
             int bg = tc.getRed() * 30 + tc.getGreen() * 59 + tc.getBlue() * 11;
@@ -1073,7 +1073,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
      * Draw a 3D oval.
      */
     public void draw3DOval(Graphics g, Color colors[],
-                           int x, int y, int w, int h, boolean raised)
+                           int x, int y, int w, int h, boolean raised) 
         {
         Color c = g.getColor();
         g.setColor(raised ? colors[HIGHLIGHT_COLOR] : colors[SHADOW_COLOR]);
@@ -1084,7 +1084,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     }
 
     public void draw3DRect(Graphics g, Color colors[],
-                           int x, int y, int width, int height, boolean raised)
+                           int x, int y, int width, int height, boolean raised) 
         {
             Color c = g.getColor();
             g.setColor(raised ? colors[HIGHLIGHT_COLOR] : colors[SHADOW_COLOR]);
@@ -1097,18 +1097,18 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         }
 
     /*
-     * drawXXX() methods are used to print the native components by
+     * drawXXX() methods are used to print the native components by 
      * rendering the Motif look ourselves.
      * ToDo(aim): needs to query native motif for more accurate color
      * information.
      */
     void draw3DOval(Graphics g, Color bg,
-                    int x, int y, int w, int h, boolean raised)
+                    int x, int y, int w, int h, boolean raised) 
         {
             Color c = g.getColor();
             Color shadow = bg.darker();
             Color highlight = bg.brighter();
-
+            
             g.setColor(raised ? highlight : shadow);
             g.drawArc(x, y, w, h, 45, 180);
             g.setColor(raised ? shadow : highlight);
@@ -1122,7 +1122,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         Color c = g.getColor();
         Color shadow = bg.darker();
         Color highlight = bg.brighter();
-
+        
         g.setColor(raised ? highlight : shadow);
         g.drawLine(x, y, x, y + height);
         g.drawLine(x + 1, y, x + width - 1, y);
@@ -1131,7 +1131,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         g.drawLine(x + width, y, x + width, y + height - 1);
         g.setColor(c);
     }
-
+    
     void drawScrollbar(Graphics g, Color bg, int thickness, int length,
                int min, int max, int val, int vis, boolean horizontal) {
         Color c = g.getColor();
@@ -1253,7 +1253,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         } else {
             g.drawLine(0, 0, thickness, 0);
             g.drawLine(0, 0, 0, length - 1);
-
+    
             // arrows
             g.drawLine(sbmin, w2, sbmax, w2);
             g.drawLine(sbmax, w2, ctr, 1);
@@ -1326,10 +1326,10 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         while(!(parent == null ||
                 parent instanceof java.awt.Frame ||
                 parent instanceof java.awt.Dialog)) {
-        parent = ComponentAccessor.getParent_NoClientCode(parent);
+        parent = ComponentAccessor.getParent_NoClientCode(parent); 
         }
 
-/*      FIX ME - FIX ME need to implement InputMethods
+/*      FIX ME - FIX ME need to implement InputMethods 
     if (parent instanceof java.awt.Frame ||
         parent instanceof java.awt.Dialog) {
         if (add)
@@ -1390,7 +1390,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
                 boundsOperation = operation;
             } else if (operation == RESET_OPERATION) {
                 boundsOperation = DEFAULT_OPERATION;
-            }
+            }            
         }
     }
 
@@ -1401,7 +1401,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
           case SET_SIZE:
               return "SET_SIZE";
           case SET_CLIENT_SIZE:
-              return "SET_CLIENT_SIZE";
+              return "SET_CLIENT_SIZE";              
           default:
           case SET_BOUNDS:
               return "SET_BOUNDS";
@@ -1434,7 +1434,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
                                     set.add(w);
                                     order.add(j++, w);
                                 }
-                            }
+                            }                             
                         }
                     }
 
@@ -1460,7 +1460,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
     public boolean isRestackSupported() {
         return true;
     }
-
+    
     private void addTree(Collection order, Set set, Container cont) {
         for (int i = 0; i < cont.getComponentCount(); i++) {
             Component comp = cont.getComponent(i);
@@ -1508,7 +1508,7 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
             }
         }
     }
-
+        
     /**
      * Applies the shape to the X-window.
      * @since 1.7
@@ -1517,15 +1517,15 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         if (XlibUtil.isShapingSupported()) {
             if (shapeLog.isLoggable(Level.FINER)) {
                 shapeLog.finer(
-                        "*** INFO: Setting shape: PEER: " + this
+                        "*** INFO: Setting shape: PEER: " + this 
                         + "; WINDOW: " + getWindow()
-                        + "; TARGET: " + target
+                        + "; TARGET: " + target 
                         + "; SHAPE: " + shape);
             }
             XToolkit.awtLock();
             try {
                 XlibWrapper.SetRectangularShape(
-                        XToolkit.getDisplay(),
+                        XToolkit.getDisplay(), 
                         getWindow(),
                         shape.getLoX(), shape.getLoY(),
                         shape.getHiX(), shape.getHiY(),
@@ -1541,3 +1541,4 @@ public class XComponentPeer extends XWindow implements ComponentPeer, DropTarget
         }
     }
 }
+

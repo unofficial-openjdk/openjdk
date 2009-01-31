@@ -31,14 +31,15 @@ import java.io.OutputStream;
 import java.io.FileDescriptor;
 
 /**
- * The abstract class <code>SocketImpl</code> is a common superclass
- * of all classes that actually implement sockets. It is used to
- * create both client and server sockets.
+ * The abstract class <code>SocketImpl</code> is a common superclass 
+ * of all classes that actually implement sockets. It is used to 
+ * create both client and server sockets. 
  * <p>
- * A "plain" socket implements these methods exactly as
- * described, without attempting to go through a firewall or proxy.
+ * A "plain" socket implements these methods exactly as 
+ * described, without attempting to go through a firewall or proxy. 
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.0
  */
 public abstract class SocketImpl implements SocketOptions {
@@ -49,27 +50,27 @@ public abstract class SocketImpl implements SocketOptions {
     ServerSocket serverSocket = null;
 
     /**
-     * The file descriptor object for this socket.
+     * The file descriptor object for this socket. 
      */
     protected FileDescriptor fd;
-
+    
     /**
-     * The IP address of the remote end of this socket.
+     * The IP address of the remote end of this socket. 
      */
     protected InetAddress address;
-
+   
     /**
-     * The port number on the remote host to which this socket is connected.
+     * The port number on the remote host to which this socket is connected. 
      */
     protected int port;
 
     /**
-     * The local port number to which this socket is connected.
+     * The local port number to which this socket is connected. 
      */
-    protected int localport;
+    protected int localport;   
 
     /**
-     * Creates either a stream or a datagram socket.
+     * Creates either a stream or a datagram socket. 
      *
      * @param      stream   if <code>true</code>, create a stream socket;
      *                      otherwise, create a datagram socket.
@@ -79,7 +80,7 @@ public abstract class SocketImpl implements SocketOptions {
     protected abstract void create(boolean stream) throws IOException;
 
     /**
-     * Connects this socket to the specified port on the named host.
+     * Connects this socket to the specified port on the named host. 
      *
      * @param      host   the name of the remote host.
      * @param      port   the port number.
@@ -104,7 +105,7 @@ public abstract class SocketImpl implements SocketOptions {
      * will then block until established or an error occurs.
      *
      * @param      address   the Socket address of the remote host.
-     * @param     timeout  the timeout value, in milliseconds, or zero for no timeout.
+     * @param	  timeout  the timeout value, in milliseconds, or zero for no timeout.
      * @exception  IOException  if an I/O error occurs when attempting a
      *               connection.
      * @since 1.4
@@ -121,10 +122,10 @@ public abstract class SocketImpl implements SocketOptions {
     protected abstract void bind(InetAddress host, int port) throws IOException;
 
     /**
-     * Sets the maximum queue length for incoming connection indications
-     * (a request to connect) to the <code>count</code> argument. If a
-     * connection indication arrives when the queue is full, the
-     * connection is refused.
+     * Sets the maximum queue length for incoming connection indications 
+     * (a request to connect) to the <code>count</code> argument. If a 
+     * connection indication arrives when the queue is full, the 
+     * connection is refused. 
      *
      * @param      backlog   the maximum length of the queue.
      * @exception  IOException  if an I/O error occurs when creating the queue.
@@ -132,7 +133,7 @@ public abstract class SocketImpl implements SocketOptions {
     protected abstract void listen(int backlog) throws IOException;
 
     /**
-     * Accepts a connection.
+     * Accepts a connection. 
      *
      * @param      s   the accepted connection.
      * @exception  IOException  if an I/O error occurs when accepting the
@@ -170,7 +171,7 @@ public abstract class SocketImpl implements SocketOptions {
     protected abstract int available() throws IOException;
 
     /**
-     * Closes this socket.
+     * Closes this socket. 
      *
      * @exception  IOException  if an I/O error occurs when closing this socket.
      */
@@ -181,7 +182,7 @@ public abstract class SocketImpl implements SocketOptions {
      * Any data sent to this socket is acknowledged and then
      * silently discarded.
      *
-     * If you read from a socket input stream after invoking
+     * If you read from a socket input stream after invoking 
      * shutdownInput() on the socket, the stream will return EOF.
      *
      * @exception IOException if an I/O error occurs when shutting down this
@@ -194,14 +195,14 @@ public abstract class SocketImpl implements SocketOptions {
     protected void shutdownInput() throws IOException {
       throw new IOException("Method not implemented!");
     }
-
+    
     /**
      * Disables the output stream for this socket.
      * For a TCP socket, any previously written data will be sent
      * followed by TCP's normal connection termination sequence.
      *
-     * If you write to a socket output stream after invoking
-     * shutdownOutput() on the socket, the stream will throw
+     * If you write to a socket output stream after invoking 
+     * shutdownOutput() on the socket, the stream will throw 
      * an IOException.
      *
      * @exception IOException if an I/O error occurs when shutting down this
@@ -213,7 +214,7 @@ public abstract class SocketImpl implements SocketOptions {
      */
     protected void shutdownOutput() throws IOException {
       throw new IOException("Method not implemented!");
-    }
+    }  
 
     /**
      * Returns the value of this socket's <code>fd</code> field.
@@ -222,7 +223,7 @@ public abstract class SocketImpl implements SocketOptions {
      * @see     java.net.SocketImpl#fd
      */
     protected FileDescriptor getFileDescriptor() {
-        return fd;
+	return fd;
     }
 
     /**
@@ -232,7 +233,7 @@ public abstract class SocketImpl implements SocketOptions {
      * @see     java.net.SocketImpl#address
      */
     protected InetAddress getInetAddress() {
-        return address;
+	return address;
     }
 
     /**
@@ -242,11 +243,11 @@ public abstract class SocketImpl implements SocketOptions {
      * @see     java.net.SocketImpl#port
      */
     protected int getPort() {
-        return port;
+	return port;
     }
 
     /**
-     * Returns whether or not this SocketImpl supports sending
+     * Returns whether or not this SocketImpl supports sending 
      * urgent data. By default, false is returned
      * unless the method is overridden in a sub-class
      *
@@ -275,23 +276,23 @@ public abstract class SocketImpl implements SocketOptions {
      * @see     java.net.SocketImpl#localport
      */
     protected int getLocalPort() {
-        return localport;
+	return localport;
     }
-
+    
     void setSocket(Socket soc) {
-        this.socket = soc;
+	this.socket = soc;
     }
 
     Socket getSocket() {
-        return socket;
+	return socket;
     }
 
     void setServerSocket(ServerSocket soc) {
-        this.serverSocket = soc;
+	this.serverSocket = soc;
     }
 
     ServerSocket getServerSocket() {
-        return serverSocket;
+	return serverSocket;
     }
 
     /**
@@ -300,14 +301,14 @@ public abstract class SocketImpl implements SocketOptions {
      * @return  a string representation of this socket.
      */
     public String toString() {
-        return "Socket[addr=" + getInetAddress() +
-            ",port=" + getPort() + ",localport=" + getLocalPort()  + "]";
+	return "Socket[addr=" + getInetAddress() +
+	    ",port=" + getPort() + ",localport=" + getLocalPort()  + "]";
     }
 
     void reset() throws IOException {
-        address = null;
-        port = 0;
-        localport = 0;
+   	address = null;
+    	port = 0;
+    	localport = 0;
     }
 
     /**
@@ -345,13 +346,13 @@ public abstract class SocketImpl implements SocketOptions {
      * @param  bandwidth
      *         An <tt>int</tt> expressing the relative importance of high
      *         bandwidth
-     *
+     *  
      * @since 1.5
      */
     protected void setPerformancePreferences(int connectionTime,
                                           int latency,
                                           int bandwidth)
     {
-        /* Not implemented yet */
+	/* Not implemented yet */
     }
 }

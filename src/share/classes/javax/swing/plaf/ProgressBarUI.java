@@ -29,6 +29,7 @@ package javax.swing.plaf;
 /**
  * Pluggable look and feel interface for JProgressBar.
  *
+ * @version %I% %G%
  * @author Rob Davis
  */
 public abstract class ProgressBarUI extends ComponentUI {

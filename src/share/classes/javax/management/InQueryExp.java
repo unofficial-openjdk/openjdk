@@ -60,8 +60,8 @@ class InQueryExp extends QueryEval implements QueryExp {
      * a specified array of ValueExp.
      */
     public InQueryExp(ValueExp v1, ValueExp items[]) {
-        val       = v1;
-        valueList = items;
+	val	  = v1;
+	valueList = items;
     }
 
 
@@ -69,14 +69,14 @@ class InQueryExp extends QueryEval implements QueryExp {
      * Returns the checked value of the query.
      */
     public ValueExp getCheckedValue()  {
-        return val;
+	return val;
     }
 
     /**
      * Returns the array of values of the query.
      */
     public ValueExp[] getExplicitValues()  {
-        return valueList;
+	return valueList;
     }
 
     /**
@@ -92,50 +92,50 @@ class InQueryExp extends QueryEval implements QueryExp {
      * @exception InvalidApplicationException
      */
     public boolean apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
-        BadAttributeValueExpException, InvalidApplicationException  {
-        if (valueList != null) {
-            ValueExp v      = val.apply(name);
-            boolean numeric = v instanceof NumericValueExp;
+	BadAttributeValueExpException, InvalidApplicationException  {
+	if (valueList != null) {
+	    ValueExp v	    = val.apply(name);
+	    boolean numeric = v instanceof NumericValueExp;
 
-            for (int i = 0; i < valueList.length; i++) {
-                if (numeric) {
-                    if (((NumericValueExp)valueList[i]).doubleValue() ==
-                        ((NumericValueExp)v).doubleValue()) {
-                        return true;
-                    }
-                } else {
-                    if (((StringValueExp)valueList[i]).getValue().equals(
-                        ((StringValueExp)v).getValue())) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
+	    for (int i = 0; i < valueList.length; i++) {
+		if (numeric) {
+		    if (((NumericValueExp)valueList[i]).doubleValue() ==
+			((NumericValueExp)v).doubleValue()) {
+			return true;
+		    }
+		} else {
+		    if (((StringValueExp)valueList[i]).getValue().equals(
+			((StringValueExp)v).getValue())) {
+			return true;
+		    }
+		}
+	    }
+	}
+	return false;
     }
 
     /**
      * Returns the string representing the object.
      */
     public String toString()  {
-        return val + " in (" + generateValueList() + ")";
+	return val + " in (" + generateValueList() + ")";
     }
 
 
     private String generateValueList() {
-        if (valueList == null || valueList.length == 0) {
-            return "";
-        }
+	if (valueList == null || valueList.length == 0) {
+	    return "";
+	}
 
-        final StringBuilder result =
+	final StringBuilder result =
                 new StringBuilder(valueList[0].toString());
 
-        for (int i = 1; i < valueList.length; i++) {
-            result.append(", ");
-            result.append(valueList[i]);
-        }
+	for (int i = 1; i < valueList.length; i++) {
+	    result.append(", ");
+	    result.append(valueList[i]);
+	}
 
-        return result.toString();
+	return result.toString();
     }
 
  }

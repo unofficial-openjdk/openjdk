@@ -1,5 +1,6 @@
 README.txt
 
+%E% %W%
 
 This Poller class demonstrates access to poll(2) functionality in Java.
 

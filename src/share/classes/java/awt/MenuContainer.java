@@ -27,7 +27,8 @@ package java.awt;
 /**
  * The super class of all menu related containers.
  *
- * @author      Arthur van Hoff
+ * @version 	%I%, %G%
+ * @author 	Arthur van Hoff
  */
 
 public interface MenuContainer {

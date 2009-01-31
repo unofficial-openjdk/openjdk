@@ -48,8 +48,8 @@ static jlong page_size = 0;
 
 /* This gets us the new structured proc interfaces of 5.6 & later */
 /* - see comment in <sys/procfs.h> */
-#define _STRUCTURED_PROC 1
-#include <sys/procfs.h>
+#define _STRUCTURED_PROC 1  
+#include <sys/procfs.h>     
 
 static struct dirent* read_dir(DIR* dirp, struct dirent* entry) {
 #ifdef __solaris__
@@ -73,7 +73,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
     int nswap, i, count;
     swaptbl_t *stbl;
     char *strtab;
-
+  
     // First get the number of swap resource entries
     if ((nswap = swapctl(SC_GETNSWP, NULL)) == -1) {
         throw_internal_error(env, "swapctl failed to get nswap");
@@ -82,7 +82,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
     if (nswap == 0) {
         return 0;
     }
-
+  
     // Allocate storage for resource entries
     stbl = (swaptbl_t*) malloc(nswap * sizeof(swapent_t) +
                                sizeof(struct swaptable));
@@ -90,7 +90,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
         JNU_ThrowOutOfMemoryError(env, 0);
         return -1;
     }
-
+  
     // Allocate storage for the table
     strtab = (char*) malloc((nswap + 1) * MAXPATHLEN);
     if (strtab == NULL) {
@@ -103,7 +103,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
       stbl->swt_ent[i].ste_path = strtab + (i * MAXPATHLEN);
     }
     stbl->swt_n = nswap + 1;
-
+  
     // Get the entries
     if ((count = swapctl(SC_LIST, stbl)) < 0) {
         free(stbl);
@@ -111,7 +111,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
         throw_internal_error(env, "swapctl failed to get swap list");
         return -1;
     }
-
+  
     // Sum the entries to get total and free swap
     total = 0;
     avail = 0;
@@ -119,7 +119,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
       total += stbl->swt_ent[i].ste_pages;
       avail += stbl->swt_ent[i].ste_free;
     }
-
+  
     free(stbl);
     free(strtab);
     return available ? ((jlong)avail * page_size) :
@@ -128,7 +128,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
     int ret;
     FILE *fp;
     jlong total = 0, avail = 0;
-
+   
     struct sysinfo si;
     ret = sysinfo(&si);
     if (ret != 0) {
@@ -139,7 +139,7 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
 
     return available ? avail : total;
 #endif
-}
+}   
 
 JNIEXPORT void JNICALL
 Java_com_sun_management_UnixOperatingSystem_initialize
@@ -158,13 +158,13 @@ Java_com_sun_management_UnixOperatingSystem_getCommittedVirtualMemorySize
     size_t remaining;
     char* addr;
     int fd;
-
+  
     fd = JVM_Open("/proc/self/psinfo", O_RDONLY, 0);
     if (fd < 0) {
         throw_internal_error(env, "Unable to open /proc/self/psinfo");
         return -1;
     }
-
+  
     addr = (char *)&psinfo;
     for (remaining = sizeof(psinfo_t); remaining > 0;) {
         result = JVM_Read(fd, addr, remaining);
@@ -176,25 +176,25 @@ Java_com_sun_management_UnixOperatingSystem_getCommittedVirtualMemorySize
         remaining -= result;
         addr += result;
     }
-
+  
     JVM_Close(fd);
     return (jlong) psinfo.pr_size * 1024;
 #else /* __linux__ */
     FILE *fp;
     unsigned long vsize = 0;
-
+  
     if ((fp = fopen("/proc/self/stat", "r")) == NULL) {
         throw_internal_error(env, "Unable to open /proc/self/stat");
         return -1;
     }
-
+  
     // Ignore everything except the vsize entry
     if (fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %*u %*u %*d %lu %*[^\n]\n", &vsize) == EOF) {
         throw_internal_error(env, "Unable to get virtual memory usage");
         fclose(fp);
         return -1;
     }
-
+  
     fclose(fp);
     return (jlong)vsize;
 #endif
@@ -228,14 +228,14 @@ Java_com_sun_management_UnixOperatingSystem_getProcessCpuTime
     clk_tck = 100;
 #endif
     if (clk_tck == -1) {
-        throw_internal_error(env,
+        throw_internal_error(env, 
                              "sysconf failed - not able to get clock tick");
         return -1;
     }
 
     times(&time);
     ns_per_clock_tick = (jlong) 1000 * 1000 * 1000 / (jlong) clk_tck;
-    cpu_time_ns = ((jlong)time.tms_utime + (jlong) time.tms_stime) *
+    cpu_time_ns = ((jlong)time.tms_utime + (jlong) time.tms_stime) * 
                       ns_per_clock_tick;
     return cpu_time_ns;
 }
@@ -264,13 +264,13 @@ Java_com_sun_management_UnixOperatingSystem_getOpenFileDescriptorCount
     struct dirent dbuf;
     struct dirent* dentp;
     jlong fds = 0;
-
+   
     dirp = opendir("/proc/self/fd");
     if (dirp == NULL) {
         throw_internal_error(env, "Unable to open directory /proc/self/fd");
         return -1;
     }
-
+  
     // iterate through directory entries, skipping '.' and '..'
     // each entry represents an open file descriptor.
     while ((dentp = read_dir(dirp, &dbuf)) != NULL) {
@@ -278,7 +278,7 @@ Java_com_sun_management_UnixOperatingSystem_getOpenFileDescriptorCount
             fds++;
         }
     }
-
+  
     closedir(dirp);
     // subtract by 1 which was the fd open for this implementation
     return (fds - 1);

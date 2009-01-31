@@ -45,7 +45,7 @@ import sun.security.util.*;
  * @see DHPublicKey
  * @see java.security.KeyAgreement
  */
-final class DHPrivateKey implements PrivateKey,
+final class DHPrivateKey implements PrivateKey, 
 javax.crypto.interfaces.DHPrivateKey, Serializable {
 
     static final long serialVersionUID = 7565477590005668886L;
@@ -83,9 +83,9 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      *
      * @exception ProviderException if the key cannot be encoded
      */
-    DHPrivateKey(BigInteger x, BigInteger p, BigInteger g)
-        throws InvalidKeyException {
-        this(x, p, g, 0);
+    DHPrivateKey(BigInteger x, BigInteger p, BigInteger g) 
+	throws InvalidKeyException {
+	this(x, p, g, 0);
     }
 
     /**
@@ -101,17 +101,17 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      * @exception InvalidKeyException if the key cannot be encoded
      */
     DHPrivateKey(BigInteger x, BigInteger p, BigInteger g, int l) {
-        this.x = x;
-        this.p = p;
-        this.g = g;
-        this.l = l;
-        try {
-            this.key = new DerValue(DerValue.tag_Integer,
-                                    this.x.toByteArray()).toByteArray();
-            this.encodedKey = getEncoded();
-        } catch (IOException e) {
-            throw new ProviderException("Cannot produce ASN.1 encoding", e);
-        }
+	this.x = x;
+	this.p = p;
+	this.g = g;
+	this.l = l;
+	try {
+	    this.key = new DerValue(DerValue.tag_Integer, 
+				    this.x.toByteArray()).toByteArray();
+	    this.encodedKey = getEncoded();
+	} catch (IOException e) {
+	    throw new ProviderException("Cannot produce ASN.1 encoding", e);
+	}
     }
 
     /**
@@ -123,139 +123,139 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      * a Diffie-Hellman private key
      */
     DHPrivateKey(byte[] encodedKey) throws InvalidKeyException {
-        InputStream inStream = new ByteArrayInputStream(encodedKey);
-        try {
-            DerValue val = new DerValue(inStream);
-            if (val.tag != DerValue.tag_Sequence) {
-                throw new InvalidKeyException ("Key not a SEQUENCE");
-            }
+	InputStream inStream = new ByteArrayInputStream(encodedKey);
+	try {
+	    DerValue val = new DerValue(inStream);
+	    if (val.tag != DerValue.tag_Sequence) {
+		throw new InvalidKeyException ("Key not a SEQUENCE");
+	    }
 
-            //
-            // version
-            //
-            BigInteger parsedVersion = val.data.getBigInteger();
-            if (!parsedVersion.equals(PKCS8_VERSION)) {
-                throw new IOException("version mismatch: (supported: " +
-                                      PKCS8_VERSION + ", parsed: " +
-                                      parsedVersion);
-            }
+	    //
+	    // version
+	    //
+	    BigInteger parsedVersion = val.data.getBigInteger();
+	    if (!parsedVersion.equals(PKCS8_VERSION)) {
+		throw new IOException("version mismatch: (supported: " + 
+				      PKCS8_VERSION + ", parsed: " + 
+				      parsedVersion);
+	    }
 
-            //
-            // privateKeyAlgorithm
-            //
-            DerValue algid = val.data.getDerValue();
-            if (algid.tag != DerValue.tag_Sequence) {
-                throw new InvalidKeyException("AlgId is not a SEQUENCE");
-            }
-            DerInputStream derInStream = algid.toDerInputStream();
-            ObjectIdentifier oid = derInStream.getOID();
-            if (oid == null) {
-                throw new InvalidKeyException("Null OID");
-            }
-            if (derInStream.available() == 0) {
-                throw new InvalidKeyException("Parameters missing");
-            }
-            // parse the parameters
-            DerValue params = derInStream.getDerValue();
-            if (params.tag == DerValue.tag_Null) {
-                throw new InvalidKeyException("Null parameters");
-            }
-            if (params.tag != DerValue.tag_Sequence) {
-                throw new InvalidKeyException("Parameters not a SEQUENCE");
-            }
-            params.data.reset();
-            this.p = params.data.getBigInteger();
-            this.g = params.data.getBigInteger();
-            // Private-value length is OPTIONAL
-            if (params.data.available() != 0) {
-                this.l = params.data.getInteger();
-            }
-            if (params.data.available() != 0) {
-                throw new InvalidKeyException("Extra parameter data");
-            }
+	    //
+	    // privateKeyAlgorithm
+	    //
+	    DerValue algid = val.data.getDerValue();
+	    if (algid.tag != DerValue.tag_Sequence) {
+		throw new InvalidKeyException("AlgId is not a SEQUENCE");
+	    }
+	    DerInputStream derInStream = algid.toDerInputStream();
+	    ObjectIdentifier oid = derInStream.getOID();
+	    if (oid == null) {
+		throw new InvalidKeyException("Null OID");
+	    }
+	    if (derInStream.available() == 0) {
+		throw new InvalidKeyException("Parameters missing");
+	    }
+	    // parse the parameters
+	    DerValue params = derInStream.getDerValue();
+	    if (params.tag == DerValue.tag_Null) {
+		throw new InvalidKeyException("Null parameters");
+	    }
+	    if (params.tag != DerValue.tag_Sequence) {
+		throw new InvalidKeyException("Parameters not a SEQUENCE");
+	    }
+	    params.data.reset();
+	    this.p = params.data.getBigInteger();
+	    this.g = params.data.getBigInteger();
+	    // Private-value length is OPTIONAL
+	    if (params.data.available() != 0) {
+		this.l = params.data.getInteger();
+	    }
+	    if (params.data.available() != 0) {
+		throw new InvalidKeyException("Extra parameter data");
+	    }
 
-            //
-            // privateKey
-            //
-            this.key = val.data.getOctetString();
-            parseKeyBits();
+	    //
+	    // privateKey
+	    //
+	    this.key = val.data.getOctetString();
+	    parseKeyBits();
 
-            // ignore OPTIONAL attributes
+	    // ignore OPTIONAL attributes
 
-            this.encodedKey = (byte[])encodedKey.clone();
+	    this.encodedKey = (byte[])encodedKey.clone();
 
-        } catch (NumberFormatException e) {
-            InvalidKeyException ike = new InvalidKeyException(
-                "Private-value length too big");
-            ike.initCause(e);
-            throw ike;
-        } catch (IOException e) {
-            InvalidKeyException ike = new InvalidKeyException("Error parsing key encoding: " + e.getMessage());
-            ike.initCause(e);
-            throw ike;
-        }
+	} catch (NumberFormatException e) {
+	    InvalidKeyException ike = new InvalidKeyException(
+	        "Private-value length too big");
+	    ike.initCause(e);
+	    throw ike;
+	} catch (IOException e) {
+	    InvalidKeyException ike = new InvalidKeyException("Error parsing key encoding: " + e.getMessage());
+	    ike.initCause(e);
+	    throw ike;
+	}
     }
 
     /**
      * Returns the encoding format of this key: "PKCS#8"
      */
     public String getFormat() {
-        return "PKCS#8";
+	return "PKCS#8";
     }
 
     /**
      * Returns the name of the algorithm associated with this key: "DH"
      */
     public String getAlgorithm() {
-        return "DH";
+	return "DH";
     }
 
     /**
      * Get the encoding of the key.
      */
     public synchronized byte[] getEncoded() {
-        if (this.encodedKey == null) {
-            try {
-                DerOutputStream tmp = new DerOutputStream();
+	if (this.encodedKey == null) {
+	    try {
+		DerOutputStream tmp = new DerOutputStream();
 
-                //
-                // version
-                //
-                tmp.putInteger(PKCS8_VERSION);
+		//
+		// version
+		//
+		tmp.putInteger(PKCS8_VERSION);
 
-                //
-                // privateKeyAlgorithm
-                //
-                DerOutputStream algid = new DerOutputStream();
+		//
+		// privateKeyAlgorithm
+		//
+		DerOutputStream algid = new DerOutputStream();
 
-                // store OID
-                algid.putOID(new ObjectIdentifier(DH_data));
-                // encode parameters
-                DerOutputStream params = new DerOutputStream();
-                params.putInteger(this.p);
-                params.putInteger(this.g);
-                if (this.l != 0)
-                    params.putInteger(this.l);
-                // wrap parameters into SEQUENCE
-                DerValue paramSequence = new DerValue(DerValue.tag_Sequence,
-                                                      params.toByteArray());
-                // store parameter SEQUENCE in algid
-                algid.putDerValue(paramSequence);
-                // wrap algid into SEQUENCE
-                tmp.write(DerValue.tag_Sequence, algid);
+		// store OID
+		algid.putOID(new ObjectIdentifier(DH_data));
+		// encode parameters
+		DerOutputStream params = new DerOutputStream();
+		params.putInteger(this.p);
+		params.putInteger(this.g);
+		if (this.l != 0)
+		    params.putInteger(this.l);
+		// wrap parameters into SEQUENCE
+		DerValue paramSequence = new DerValue(DerValue.tag_Sequence,
+						      params.toByteArray());
+		// store parameter SEQUENCE in algid
+		algid.putDerValue(paramSequence);
+		// wrap algid into SEQUENCE
+		tmp.write(DerValue.tag_Sequence, algid);
 
-                // privateKey
-                tmp.putOctetString(this.key);
+		// privateKey
+		tmp.putOctetString(this.key);
 
-                // make it a SEQUENCE
-                DerOutputStream derKey = new DerOutputStream();
-                derKey.write(DerValue.tag_Sequence, tmp);
-                this.encodedKey = derKey.toByteArray();
-            } catch (IOException e) {
-                return null;
-            }
-        }
-        return (byte[])this.encodedKey.clone();
+		// make it a SEQUENCE
+		DerOutputStream derKey = new DerOutputStream();
+		derKey.write(DerValue.tag_Sequence, tmp);
+		this.encodedKey = derKey.toByteArray();
+	    } catch (IOException e) {
+		return null;
+	    }
+	}
+	return (byte[])this.encodedKey.clone();
     }
 
     /**
@@ -264,7 +264,7 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      * @return the private value, <code>x</code>
      */
     public BigInteger getX() {
-        return this.x;
+	return this.x;
     }
 
     /**
@@ -273,37 +273,37 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      * @return the key parameters
      */
     public DHParameterSpec getParams() {
-        if (this.l != 0)
-            return new DHParameterSpec(this.p, this.g, this.l);
-        else
-            return new DHParameterSpec(this.p, this.g);
+	if (this.l != 0)
+	    return new DHParameterSpec(this.p, this.g, this.l);
+	else
+	    return new DHParameterSpec(this.p, this.g);
     }
 
     public String toString() {
         String LINE_SEP = System.getProperty("line.separator");
 
-        StringBuffer strbuf
-            = new StringBuffer("SunJCE Diffie-Hellman Private Key:"
-                               + LINE_SEP + "x:" + LINE_SEP
-                               + Debug.toHexString(this.x)
+	StringBuffer strbuf
+	    = new StringBuffer("SunJCE Diffie-Hellman Private Key:"
+			       + LINE_SEP + "x:" + LINE_SEP
+			       + Debug.toHexString(this.x)
                                + LINE_SEP + "p:" + LINE_SEP
-                               + Debug.toHexString(this.p)
+			       + Debug.toHexString(this.p)
                                + LINE_SEP + "g:" + LINE_SEP
-                               + Debug.toHexString(this.g));
-        if (this.l != 0)
-            strbuf.append(LINE_SEP + "l:" + LINE_SEP + "    " + this.l);
-        return strbuf.toString();
+			       + Debug.toHexString(this.g));
+	if (this.l != 0)	    
+	    strbuf.append(LINE_SEP + "l:" + LINE_SEP + "    " + this.l);
+	return strbuf.toString();
     }
 
     private void parseKeyBits() throws InvalidKeyException {
-        try {
-            DerInputStream in = new DerInputStream(this.key);
-            this.x = in.getBigInteger();
-        } catch (IOException e) {
-            InvalidKeyException ike = new InvalidKeyException("Error parsing key encoding: " + e.getMessage());
-            ike.initCause(e);
-            throw ike;
-        }
+	try {
+	    DerInputStream in = new DerInputStream(this.key);
+	    this.x = in.getBigInteger();
+	} catch (IOException e) {
+	    InvalidKeyException ike = new InvalidKeyException("Error parsing key encoding: " + e.getMessage());
+	    ike.initCause(e);
+	    throw ike;
+	}
     }
 
     /**
@@ -312,7 +312,7 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      */
     public int hashCode() {
         int retval = 0;
-        byte[] enc = getEncoded();
+	byte[] enc = getEncoded();
 
         for (int i = 1; i < enc.length; i++) {
             retval += enc[i] * i;
@@ -327,10 +327,10 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
         if (!(obj instanceof PrivateKey))
             return false;
 
-        byte[] thisEncoded = this.getEncoded();
-        byte[] thatEncoded = ((PrivateKey)obj).getEncoded();
+	byte[] thisEncoded = this.getEncoded();
+	byte[] thatEncoded = ((PrivateKey)obj).getEncoded();
 
-        return java.util.Arrays.equals(thisEncoded, thatEncoded);
+	return java.util.Arrays.equals(thisEncoded, thatEncoded);
     }
 
     /**
@@ -342,9 +342,9 @@ javax.crypto.interfaces.DHPrivateKey, Serializable {
      * this DH private key could not be created
      */
     private Object writeReplace() throws java.io.ObjectStreamException {
-        return new KeyRep(KeyRep.Type.PRIVATE,
-                        getAlgorithm(),
-                        getFormat(),
-                        getEncoded());
+	return new KeyRep(KeyRep.Type.PRIVATE,
+			getAlgorithm(),
+			getFormat(),
+			getEncoded());
     }
 }

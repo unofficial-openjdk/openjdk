@@ -29,11 +29,11 @@ public class MethodNotFoundException extends Exception
 {
     public MethodNotFoundException()
     {
-        super();
+	super();
     }
 
     public MethodNotFoundException(String s)
     {
-        super(s);
+	super(s);
     }
 }

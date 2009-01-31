@@ -71,6 +71,7 @@ package java.util;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
+ * @version %I%, %G%
  * @see Collection
  * @see List
  * @see SortedSet
@@ -254,7 +255,7 @@ public interface Set<E> extends Collection<E> {
      *
      * @param  c collection to be checked for containment in this set
      * @return <tt>true</tt> if this set contains all of the elements of the
-     *         specified collection
+     * 	       specified collection
      * @throws ClassCastException if the types of one or more elements
      *         in the specified collection are incompatible with this
      *         set (optional)

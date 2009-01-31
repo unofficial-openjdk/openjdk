@@ -27,7 +27,7 @@
  *  @summary UnpreparedByName verifies that unprepared classes
  *  won't be returned by classesByName.
  *  @author Robert Field
- *
+ *  
  *  @library scaffold
  *  @run build JDIScaffold VMConnection
  *  @run compile -g InnerTarg.java

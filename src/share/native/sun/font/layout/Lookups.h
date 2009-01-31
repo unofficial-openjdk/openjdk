@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)Lookups.h	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -37,7 +38,7 @@
 
 enum LookupFlags
 {
-    lfBaselineIsLogicalEnd  = 0x0001,  // The MS spec. calls this flag "RightToLeft" but this name is more accurate
+    lfBaselineIsLogicalEnd  = 0x0001,  // The MS spec. calls this flag "RightToLeft" but this name is more accurate 
     lfIgnoreBaseGlyphs      = 0x0002,
     lfIgnoreLigatures       = 0x0004,
     lfIgnoreMarks           = 0x0008,

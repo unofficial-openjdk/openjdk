@@ -34,6 +34,7 @@ import javax.sound.sampled.spi.MixerProvider;
 /**
  * DirectAudioDevice provider.
  *
+ * @version %I% %E%
  * @author Florian Bomers
  */
 public class DirectAudioDeviceProvider extends MixerProvider {
@@ -54,8 +55,8 @@ public class DirectAudioDeviceProvider extends MixerProvider {
     // STATIC
 
     static {
-        // initialize
-        Platform.initialize();
+	// initialize
+	Platform.initialize();
     }
 
 
@@ -66,69 +67,69 @@ public class DirectAudioDeviceProvider extends MixerProvider {
      * Required public no-arg constructor.
      */
     public DirectAudioDeviceProvider() {
-        //if (Printer.trace) Printer.trace("DirectAudioDeviceProvider: constructor");
-        if (Platform.isDirectAudioEnabled()) {
-            init();
-        } else {
-            infos = new DirectAudioDeviceInfo[0];
-            devices = new DirectAudioDevice[0];
-        }
+	//if (Printer.trace) Printer.trace("DirectAudioDeviceProvider: constructor");
+	if (Platform.isDirectAudioEnabled()) {
+	    init();
+	} else {
+	    infos = new DirectAudioDeviceInfo[0];
+	    devices = new DirectAudioDevice[0];
+	}
     }
 
     private synchronized static void init() {
-        // get the number of input devices
-        int numDevices = nGetNumDevices();
+	// get the number of input devices
+	int numDevices = nGetNumDevices();
 
-        if (infos == null || infos.length != numDevices) {
-            if (Printer.trace) Printer.trace("DirectAudioDeviceProvider: init()");
-            // initialize the arrays
-            infos = new DirectAudioDeviceInfo[numDevices];
-            devices = new DirectAudioDevice[numDevices];
+	if (infos == null || infos.length != numDevices) {
+	    if (Printer.trace) Printer.trace("DirectAudioDeviceProvider: init()");
+	    // initialize the arrays
+	    infos = new DirectAudioDeviceInfo[numDevices];
+	    devices = new DirectAudioDevice[numDevices];
 
-            // fill in the info objects now.
-            for (int i = 0; i < infos.length; i++) {
-                infos[i] = nNewDirectAudioDeviceInfo(i);
-            }
-            if (Printer.trace) Printer.trace("DirectAudioDeviceProvider: init(): found numDevices: " + numDevices);
-        }
+	    // fill in the info objects now.
+	    for (int i = 0; i < infos.length; i++) {
+		infos[i] = nNewDirectAudioDeviceInfo(i);
+	    }
+	    if (Printer.trace) Printer.trace("DirectAudioDeviceProvider: init(): found numDevices: " + numDevices);
+	}
     }
 
     public Mixer.Info[] getMixerInfo() {
-        Mixer.Info[] localArray = new Mixer.Info[infos.length];
-        System.arraycopy(infos, 0, localArray, 0, infos.length);
-        return localArray;
+	Mixer.Info[] localArray = new Mixer.Info[infos.length];
+	System.arraycopy(infos, 0, localArray, 0, infos.length);
+	return localArray;
     }
 
 
     public Mixer getMixer(Mixer.Info info) {
-        // if the default device is asked, we provide the mixer
-        // with SourceDataLine's
-        if (info == null) {
-            for (int i = 0; i < infos.length; i++) {
-                Mixer mixer = getDevice(infos[i]);
-                if (mixer.getSourceLineInfo().length > 0) {
-                    return mixer;
-                }
-            }
-        }
-        // otherwise get the first mixer that matches
-        // the requested info object
-        for (int i = 0; i < infos.length; i++) {
-            if (infos[i].equals(info)) {
-                return getDevice(infos[i]);
-            }
-        }
-
-        throw new IllegalArgumentException("Mixer " + info.toString() + " not supported by this provider.");
+	// if the default device is asked, we provide the mixer
+	// with SourceDataLine's
+	if (info == null) {
+	    for (int i = 0; i < infos.length; i++) {
+	    	Mixer mixer = getDevice(infos[i]);
+	    	if (mixer.getSourceLineInfo().length > 0) {
+	    	    return mixer;
+		}
+	    }
+	}
+	// otherwise get the first mixer that matches
+	// the requested info object
+	for (int i = 0; i < infos.length; i++) {
+	    if (infos[i].equals(info)) {
+		return getDevice(infos[i]);
+	    }
+	}
+    
+	throw new IllegalArgumentException("Mixer " + info.toString() + " not supported by this provider.");
     }
 
 
     private Mixer getDevice(DirectAudioDeviceInfo info) {
-        int index = info.getIndex();
-        if (devices[index] == null) {
-            devices[index] = new DirectAudioDevice(info);
-        }
-        return devices[index];
+	int index = info.getIndex();
+	if (devices[index] == null) {
+	    devices[index] = new DirectAudioDevice(info);
+	}
+	return devices[index];
     }
 
     // INNER CLASSES
@@ -140,32 +141,32 @@ public class DirectAudioDeviceProvider extends MixerProvider {
      * This constructor is called from native.
      */
     static class DirectAudioDeviceInfo extends Mixer.Info {
-        private int index;
-        private int maxSimulLines;
+	private int index;
+	private int maxSimulLines;
 
-        // For ALSA, the deviceID contains the encoded card index, device index, and sub-device-index
-        private int deviceID;
+	// For ALSA, the deviceID contains the encoded card index, device index, and sub-device-index
+	private int deviceID;
 
-        private DirectAudioDeviceInfo(int index, int deviceID, int maxSimulLines,
-                                      String name, String vendor,
-                                      String description, String version) {
-            super(name, vendor, "Direct Audio Device: "+description, version);
-            this.index = index;
-            this.maxSimulLines = maxSimulLines;
-            this.deviceID = deviceID;
-        }
+	private DirectAudioDeviceInfo(int index, int deviceID, int maxSimulLines,
+				      String name, String vendor, 
+				      String description, String version) {
+	    super(name, vendor, "Direct Audio Device: "+description, version);
+	    this.index = index;
+	    this.maxSimulLines = maxSimulLines;
+	    this.deviceID = deviceID;
+	}
+	
+	int getIndex() {
+	    return index;
+	}
 
-        int getIndex() {
-            return index;
-        }
+	int getMaxSimulLines() {
+	    return maxSimulLines;
+	}
 
-        int getMaxSimulLines() {
-            return maxSimulLines;
-        }
-
-        int getDeviceID() {
-            return deviceID;
-        }
+	int getDeviceID() {
+	    return deviceID;
+	}
     } // class DirectAudioDeviceInfo
 
     // NATIVE METHODS

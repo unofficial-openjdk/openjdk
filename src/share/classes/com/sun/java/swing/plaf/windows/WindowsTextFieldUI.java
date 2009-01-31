@@ -38,7 +38,7 @@ import sun.swing.DefaultLookup;
 
 
 /**
- * Provides the Windows look and feel for a text field.  This
+ * Provides the Windows look and feel for a text field.  This 
  * is basically the following customizations to the default
  * look-and-feel.
  * <ul>
@@ -50,7 +50,7 @@ import sun.swing.DefaultLookup;
  * <li>The cursor blinks at about 1/2 second intervals.
  * <li>The entire value is selected when focus is gained.
  * <li>Shift-left-arrow and shift-right-arrow extend selection
- * <li>Cntrl-left-arrow and cntrl-right-arrow act like home and
+ * <li>Cntrl-left-arrow and cntrl-right-arrow act like home and 
  *   end respectively.
  * </ul>
  * <p>
@@ -62,6 +62,7 @@ import sun.swing.DefaultLookup;
  * long term persistence.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class WindowsTextFieldUI extends BasicTextFieldUI
 {
@@ -78,13 +79,13 @@ public class WindowsTextFieldUI extends BasicTextFieldUI
     /**
      * Paints a background for the view.  This will only be
      * called if isOpaque() on the associated component is
-     * true.  The default is to paint the background color
+     * true.  The default is to paint the background color 
      * of the component.
      *
      * @param g the graphics context
      */
     protected void paintBackground(Graphics g) {
-        super.paintBackground(g);
+	super.paintBackground(g);
     }
 
     /**
@@ -93,7 +94,7 @@ public class WindowsTextFieldUI extends BasicTextFieldUI
      * @return the caret
      */
     protected Caret createCaret() {
-        return new WindowsFieldCaret();
+	return new WindowsFieldCaret();
     }
 
     /**
@@ -102,28 +103,28 @@ public class WindowsTextFieldUI extends BasicTextFieldUI
      */
     static class WindowsFieldCaret extends DefaultCaret implements UIResource {
 
-        public WindowsFieldCaret() {
-            super();
-        }
+	public WindowsFieldCaret() {
+	    super();
+	}
 
-        /**
-         * Adjusts the visibility of the caret according to
-         * the windows feel which seems to be to move the
-         * caret out into the field by about a quarter of
-         * a field length if not visible.
-         */
-        protected void adjustVisibility(Rectangle r) {
+	/**
+	 * Adjusts the visibility of the caret according to
+	 * the windows feel which seems to be to move the
+	 * caret out into the field by about a quarter of
+	 * a field length if not visible.
+	 */
+	protected void adjustVisibility(Rectangle r) {
             SwingUtilities.invokeLater(new SafeScroller(r));
-        }
+	}
 
-        /**
-         * Gets the painter for the Highlighter.
-         *
-         * @return the painter
-         */
-        protected Highlighter.HighlightPainter getSelectionPainter() {
-            return WindowsTextUI.WindowsPainter;
-        }
+	/**
+	 * Gets the painter for the Highlighter.
+	 *
+	 * @return the painter
+	 */
+	protected Highlighter.HighlightPainter getSelectionPainter() {
+	    return WindowsTextUI.WindowsPainter;
+	}
 
 
         private class SafeScroller implements Runnable {
@@ -173,3 +174,4 @@ public class WindowsTextFieldUI extends BasicTextFieldUI
     }
 
 }
+

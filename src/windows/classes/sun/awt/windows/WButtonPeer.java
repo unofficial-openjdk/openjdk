@@ -38,16 +38,16 @@ class WButtonPeer extends WComponentPeer implements ButtonPeer {
     // ComponentPeer overrides
 
     public Dimension getMinimumSize() {
-        FontMetrics fm = getFontMetrics(((Button)target).getFont());
-        String label = ((Button)target).getLabel();
-        if ( label == null ) {
-            label = "";
-        }
-        return new Dimension(fm.stringWidth(label) + 14,
-                             fm.getHeight() + 8);
+	FontMetrics fm = getFontMetrics(((Button)target).getFont());
+	String label = ((Button)target).getLabel();
+	if ( label == null ) {
+	    label = "";
+	}
+	return new Dimension(fm.stringWidth(label) + 14,
+			     fm.getHeight() + 8);
     }
     public boolean isFocusable() {
-        return true;
+	return true;
     }
 
     // ButtonPeer implementation
@@ -57,7 +57,7 @@ class WButtonPeer extends WComponentPeer implements ButtonPeer {
     // Toolkit & peer internals
 
     WButtonPeer(Button target) {
-        super(target);
+	super(target);
     }
 
     native void create(WComponentPeer peer);
@@ -69,32 +69,32 @@ class WButtonPeer extends WComponentPeer implements ButtonPeer {
     public void handleAction(final long when, final int modifiers) {
         // Fixed 5064013: the InvocationEvent time should be equals
         // the time of the ActionEvent
-        WToolkit.executeOnEventHandlerThread(target, new Runnable() {
-            public void run() {
+	WToolkit.executeOnEventHandlerThread(target, new Runnable() {
+	    public void run() {
                 postEvent(new ActionEvent(target, ActionEvent.ACTION_PERFORMED,
                                           ((Button)target).getActionCommand(),
                                           when, modifiers));
-            }
-        }, when);
+	    }
+	}, when);
     }
 
 
     public boolean shouldClearRectBeforePaint() {
         return false;
     }
-
+    
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-        return getMinimumSize();
+	return getMinimumSize();
     }
 
     /**
      * Initialize JNI field and method IDs
      */
     private static native void initIDs();
-
+    
     public boolean handleJavaKeyEvent(KeyEvent e) {
          switch (e.getID()) {
             case KeyEvent.KEY_RELEASED:

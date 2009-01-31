@@ -41,14 +41,14 @@ void ADD_SUFF(ANYTYPE##FUNC)(BLIT_PARAMS)            \
     mlib_s32 i;                                      \
                                                      \
     if (srcScan == xsize && dstScan == xsize) {      \
-        xsize *= height;                             \
-        height = 1;                                  \
+	xsize *= height;                             \
+	height = 1;                                  \
     }                                                \
                                                      \
     for (i = 0; i < height; i++) {                   \
-        mlib_ImageCopy_na(srcBase, dstBase, xsize);  \
-        srcBase = (mlib_u8*)srcBase + srcScan;       \
-        dstBase = (mlib_u8*)dstBase + dstScan;       \
+	mlib_ImageCopy_na(srcBase, dstBase, xsize);  \
+	srcBase = (mlib_u8*)srcBase + srcScan;       \
+	dstBase = (mlib_u8*)dstBase + dstScan;       \
     }                                                \
 }
 
@@ -69,10 +69,10 @@ DEFINE_ISO_COPY(IsomorphicCopy, AnyShort)
 
 #define DEFINE_SET_RECT(FUNC, ANYTYPE, NCHAN)                       \
 void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
-                             jint lox, jint loy, jint hix,          \
-                             jint hiy, jint pixel,                  \
-                             NativePrimitive * pPrim,               \
-                             CompositeInfo * pCompInfo)             \
+			     jint lox, jint loy, jint hix,          \
+			     jint hiy, jint pixel,                  \
+			     NativePrimitive * pPrim,               \
+			     CompositeInfo * pCompInfo)             \
 {                                                                   \
     mlib_image dst[1];                                              \
     mlib_s32 dstScan = pRasInfo->scanStride;                        \
@@ -84,16 +84,16 @@ void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
     dstBase += loy*dstScan + lox*ANYTYPE##PixelStride;              \
                                                                     \
     if (width <= W_LEVEL_##NCHAN) {                                 \
-        EXTRACT_CONST_##NCHAN(pixel);                               \
+	EXTRACT_CONST_##NCHAN(pixel);                               \
                                                                     \
-        LOOP_DST(ANYTYPE, NCHAN, dstBase, dstScan, SET_PIX);        \
-        return;                                                     \
+	LOOP_DST(ANYTYPE, NCHAN, dstBase, dstScan, SET_PIX);        \
+	return;                                                     \
     }                                                               \
                                                                     \
     STORE_CONST_##NCHAN(c_arr, pixel);                              \
                                                                     \
     MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN,                      \
-                   width, height, dstScan, dstBase);                \
+		   width, height, dstScan, dstBase);                \
                                                                     \
     mlib_ImageClear(dst, c_arr);                                    \
 }
@@ -111,10 +111,10 @@ DEFINE_SET_RECT(SetRect, AnyShort, 1)
 
 #define DEFINE_XOR_RECT(FUNC, ANYTYPE, NCHAN)                       \
 void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
-                             jint lox, jint loy, jint hix,          \
-                             jint hiy, jint pixel,                  \
-                             NativePrimitive * pPrim,               \
-                             CompositeInfo * pCompInfo)             \
+			     jint lox, jint loy, jint hix,          \
+			     jint hiy, jint pixel,                  \
+			     NativePrimitive * pPrim,               \
+			     CompositeInfo * pCompInfo)             \
 {                                                                   \
     mlib_image dst[1];                                              \
     mlib_s32 dstScan = pRasInfo->scanStride;                        \
@@ -130,16 +130,16 @@ void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
     dstBase += loy*dstScan + lox*ANYTYPE##PixelStride;              \
                                                                     \
     if (width < 8) {                                                \
-        EXTRACT_CONST_##NCHAN(pixel);                               \
+	EXTRACT_CONST_##NCHAN(pixel);                               \
                                                                     \
-        LOOP_DST(ANYTYPE, NCHAN, dstBase, dstScan, XOR_PIX);        \
-        return;                                                     \
+	LOOP_DST(ANYTYPE, NCHAN, dstBase, dstScan, XOR_PIX);        \
+	return;                                                     \
     }                                                               \
                                                                     \
     STORE_CONST_##NCHAN(c_arr, pixel);                              \
                                                                     \
     MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN,                      \
-                   width, height, dstScan, dstBase);                \
+		   width, height, dstScan, dstBase);                \
                                                                     \
     mlib_ImageConstXor(dst, dst, c_arr);                            \
 }
@@ -157,13 +157,13 @@ DEFINE_XOR_RECT(XorRect, AnyShort, 1)
 
 #define DEFINE_XOR_COPY(FUNC, ANYTYPE, NCHAN)                  \
 void ADD_SUFF(ANYTYPE##FUNC)(void *srcBase,                    \
-                             void *dstBase,                    \
-                             juint width,                      \
-                             juint height,                     \
-                             SurfaceDataRasInfo *pSrcInfo,     \
-                             SurfaceDataRasInfo *pDstInfo,     \
-                             NativePrimitive *pPrim,           \
-                             CompositeInfo *pCompInfo)         \
+			     void *dstBase,                    \
+			     juint width,                      \
+			     juint height,                     \
+			     SurfaceDataRasInfo *pSrcInfo,     \
+			     SurfaceDataRasInfo *pDstInfo,     \
+			     NativePrimitive *pPrim,           \
+			     CompositeInfo *pCompInfo)         \
 {                                                              \
     mlib_image src[1], dst[1];                                 \
     mlib_s32 srcScan = pSrcInfo->scanStride;                   \
@@ -172,19 +172,19 @@ void ADD_SUFF(ANYTYPE##FUNC)(void *srcBase,                    \
     mlib_s32 pixel  = pCompInfo->details.xorPixel;             \
                                                                \
     if (width < 8*sizeof(ANYTYPE##DataType)) {                 \
-        EXTRACT_CONST_##NCHAN(pixel);                          \
+	EXTRACT_CONST_##NCHAN(pixel);                          \
                                                                \
-        LOOP_DST_SRC(ANYTYPE, NCHAN, dstBase, dstScan,         \
-                     srcBase, srcScan, XOR_COPY);              \
-        return;                                                \
+	LOOP_DST_SRC(ANYTYPE, NCHAN, dstBase, dstScan,         \
+		     srcBase, srcScan, XOR_COPY);              \
+	return;                                                \
     }                                                          \
                                                                \
     STORE_CONST_##NCHAN(c_arr, pixel);                         \
                                                                \
     MLIB_IMAGE_SET(src, MLIB_##ANYTYPE, NCHAN,                 \
-                   width, height, srcScan, srcBase);           \
+		   width, height, srcScan, srcBase);           \
     MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN,                 \
-                   width, height, dstScan, dstBase);           \
+		   width, height, dstScan, dstBase);           \
                                                                \
     mlib_ImageXor(dst, dst, src);                              \
     mlib_ImageConstXor(dst, dst, c_arr);                       \
@@ -200,10 +200,10 @@ DEFINE_XOR_COPY(IsomorphicXorCopy, AnyShort, 1)
 
 #define DEFINE_SET_SPANS(FUNC, ANYTYPE, NCHAN)                      \
 void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
-                             SpanIteratorFuncs * pSpanFuncs,        \
-                             void *siData, jint pixel,              \
-                             NativePrimitive * pPrim,               \
-                             CompositeInfo * pCompInfo)             \
+			     SpanIteratorFuncs * pSpanFuncs,        \
+			     void *siData, jint pixel,              \
+			     NativePrimitive * pPrim,               \
+			     CompositeInfo * pCompInfo)             \
 {                                                                   \
     mlib_image dst[1];                                              \
     mlib_s32 dstScan = pRasInfo->scanStride;                        \
@@ -216,17 +216,17 @@ void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
     STORE_CONST_##NCHAN(c_arr, pixel);                              \
                                                                     \
     while ((*pSpanFuncs->nextSpan)(siData, bbox)) {                 \
-        mlib_s32 lox = bbox[0];                                     \
-        mlib_s32 loy = bbox[1];                                     \
-        mlib_s32 width  = bbox[2] - lox;                            \
-        mlib_s32 height = bbox[3] - loy;                            \
+	mlib_s32 lox = bbox[0];                                     \
+	mlib_s32 loy = bbox[1];                                     \
+	mlib_s32 width  = bbox[2] - lox;                            \
+	mlib_s32 height = bbox[3] - loy;                            \
                                                                     \
-        pdst = dstBase + loy*dstScan + lox*ANYTYPE##PixelStride;    \
+	pdst = dstBase + loy*dstScan + lox*ANYTYPE##PixelStride;    \
                                                                     \
-        MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN_##ANYTYPE,        \
-                       width, height, dstScan, pdst);               \
+	MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN_##ANYTYPE,        \
+		       width, height, dstScan, pdst);               \
                                                                     \
-        mlib_ImageClear(dst, c_arr);                                \
+	mlib_ImageClear(dst, c_arr);                                \
     }                                                               \
 }
 
@@ -240,10 +240,10 @@ DEFINE_SET_SPANS(SetSpans, AnyShort, 1)
 
 #define DEFINE_XOR_SPANS(FUNC, ANYTYPE, NCHAN)                      \
 void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
-                             SpanIteratorFuncs * pSpanFuncs,        \
-                             void *siData, jint pixel,              \
-                             NativePrimitive * pPrim,               \
-                             CompositeInfo * pCompInfo)             \
+			     SpanIteratorFuncs * pSpanFuncs,        \
+			     void *siData, jint pixel,              \
+			     NativePrimitive * pPrim,               \
+			     CompositeInfo * pCompInfo)             \
 {                                                                   \
     mlib_image dst[1];                                              \
     mlib_s32 dstScan = pRasInfo->scanStride;                        \
@@ -260,17 +260,17 @@ void ADD_SUFF(ANYTYPE##FUNC)(SurfaceDataRasInfo * pRasInfo,         \
     STORE_CONST_##NCHAN(c_arr, pixel);                              \
                                                                     \
     while ((*pSpanFuncs->nextSpan)(siData, bbox)) {                 \
-        mlib_s32 lox = bbox[0];                                     \
-        mlib_s32 loy = bbox[1];                                     \
-        mlib_s32 width  = bbox[2] - lox;                            \
-        mlib_s32 height = bbox[3] - loy;                            \
+	mlib_s32 lox = bbox[0];                                     \
+	mlib_s32 loy = bbox[1];                                     \
+	mlib_s32 width  = bbox[2] - lox;                            \
+	mlib_s32 height = bbox[3] - loy;                            \
                                                                     \
-        pdst = dstBase + loy*dstScan + lox*ANYTYPE##PixelStride;    \
+	pdst = dstBase + loy*dstScan + lox*ANYTYPE##PixelStride;    \
                                                                     \
-        MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN_##ANYTYPE,        \
-                       width, height, dstScan, pdst);               \
+	MLIB_IMAGE_SET(dst, MLIB_##ANYTYPE, NCHAN_##ANYTYPE,        \
+		       width, height, dstScan, pdst);               \
                                                                     \
-        mlib_ImageConstXor(dst, dst, c_arr);                        \
+	mlib_ImageConstXor(dst, dst, c_arr);                        \
     }                                                               \
 }
 
@@ -293,27 +293,27 @@ DEFINE_XOR_SPANS(XorSpans, AnyShort, 1)
 #define MLIB_ZOOM_NN_Any4Byte                                      \
 {                                                                  \
     mlib_s32 b_align = (mlib_s32)srcBase | (mlib_s32)dstBase |     \
-                       srcScan | dstScan;                          \
+		       srcScan | dstScan;                          \
                                                                    \
     if (!(b_align & 3)) {                                          \
-        mlib_ImageZoom_S32_1_Nearest(param);                       \
+	mlib_ImageZoom_S32_1_Nearest(param);                       \
     } else if (!(b_align & 1)) {                                   \
-        mlib_ImageZoom_S16_2_Nearest(param);                       \
+	mlib_ImageZoom_S16_2_Nearest(param);                       \
     } else {                                                       \
-        mlib_ImageZoom_U8_4_Nearest(param);                        \
+	mlib_ImageZoom_U8_4_Nearest(param);                        \
     }                                                              \
 }
 
 #define DEFINE_ISO_SCALE(FUNC, ANYTYPE, NCHAN)                     \
 void ADD_SUFF(ANYTYPE##FUNC)(void *srcBase, void *dstBase,         \
-                             juint width, juint height,            \
-                             jint sxloc, jint syloc,               \
-                             jint sxinc, jint syinc,               \
-                             jint shift,                           \
-                             SurfaceDataRasInfo *pSrcInfo,         \
-                             SurfaceDataRasInfo *pDstInfo,         \
-                             NativePrimitive *pPrim,               \
-                             CompositeInfo *pCompInfo)             \
+			     juint width, juint height,            \
+			     jint sxloc, jint syloc,               \
+			     jint sxinc, jint syinc,               \
+			     jint shift,                           \
+			     SurfaceDataRasInfo *pSrcInfo,         \
+			     SurfaceDataRasInfo *pDstInfo,         \
+			     NativePrimitive *pPrim,               \
+			     CompositeInfo *pCompInfo)             \
 {                                                                  \
     mlib_work_image param[1];                                      \
     mlib_clipping current[1];                                      \
@@ -321,43 +321,43 @@ void ADD_SUFF(ANYTYPE##FUNC)(void *srcBase, void *dstBase,         \
     mlib_s32 dstScan = pDstInfo->scanStride;                       \
                                                                    \
     if (width <= 32) {                                             \
-        ANYTYPE##DataType *pSrc;                                   \
-        ANYTYPE##DataType *pDst = dstBase;                         \
-        dstScan -= (width) * ANYTYPE##PixelStride;                 \
+	ANYTYPE##DataType *pSrc;                                   \
+	ANYTYPE##DataType *pDst = dstBase;                         \
+	dstScan -= (width) * ANYTYPE##PixelStride;                 \
                                                                    \
-        do {                                                       \
-            juint w = width;                                       \
-            jint  tmpsxloc = sxloc;                                \
-            pSrc = srcBase;                                        \
-            PTR_ADD(pSrc, (syloc >> shift) * srcScan);             \
-            do {                                                   \
-                jint i = (tmpsxloc >> shift);                      \
-                PROCESS_PIX_##NCHAN(SCALE_COPY);                   \
-                pDst += NCHAN;                                     \
-                tmpsxloc += sxinc;                                 \
-            }                                                      \
-            while (--w > 0);                                       \
-            PTR_ADD(pDst, dstScan);                                \
-            syloc += syinc;                                        \
-        }                                                          \
-        while (--height > 0);                                      \
-        return;                                                    \
+	do {                                                       \
+	    juint w = width;                                       \
+	    jint  tmpsxloc = sxloc;                                \
+	    pSrc = srcBase;                                        \
+	    PTR_ADD(pSrc, (syloc >> shift) * srcScan);             \
+	    do {                                                   \
+		jint i = (tmpsxloc >> shift);                      \
+		PROCESS_PIX_##NCHAN(SCALE_COPY);                   \
+		pDst += NCHAN;                                     \
+		tmpsxloc += sxinc;                                 \
+	    }                                                      \
+	    while (--w > 0);                                       \
+	    PTR_ADD(pDst, dstScan);                                \
+	    syloc += syinc;                                        \
+	}                                                          \
+	while (--height > 0);                                      \
+	return;                                                    \
     }                                                              \
                                                                    \
     param->current = current;                                      \
                                                                    \
     if (shift <= MLIB_SHIFT /* 16 */) {                            \
-        jint dshift = MLIB_SHIFT - shift;                          \
-        sxloc <<= dshift;                                          \
-        syloc <<= dshift;                                          \
-        sxinc <<= dshift;                                          \
-        syinc <<= dshift;                                          \
+	jint dshift = MLIB_SHIFT - shift;                          \
+	sxloc <<= dshift;                                          \
+	syloc <<= dshift;                                          \
+	sxinc <<= dshift;                                          \
+	syinc <<= dshift;                                          \
     } else {                                                       \
-        jint dshift = shift - MLIB_SHIFT;                          \
-        sxloc >>= dshift;                                          \
-        syloc >>= dshift;                                          \
-        sxinc >>= dshift;                                          \
-        syinc >>= dshift;                                          \
+	jint dshift = shift - MLIB_SHIFT;                          \
+	sxloc >>= dshift;                                          \
+	syloc >>= dshift;                                          \
+	sxinc >>= dshift;                                          \
+	syinc >>= dshift;                                          \
     }                                                              \
                                                                    \
     current->width  = width;                                       \
@@ -369,8 +369,8 @@ void ADD_SUFF(ANYTYPE##FUNC)(void *srcBase, void *dstBase,         \
     current->srcX = sxloc;                                         \
     current->srcY = syloc;                                         \
     current->sp = (mlib_u8*)srcBase                                \
-          + (sxloc >> MLIB_SHIFT)*ANYTYPE##PixelStride             \
-          + (syloc >> MLIB_SHIFT)*srcScan;                         \
+	  + (sxloc >> MLIB_SHIFT)*ANYTYPE##PixelStride             \
+	  + (syloc >> MLIB_SHIFT)*srcScan;                         \
     current->dp = dstBase;                                         \
                                                                    \
     MLIB_ZOOM_NN_##ANYTYPE                                         \

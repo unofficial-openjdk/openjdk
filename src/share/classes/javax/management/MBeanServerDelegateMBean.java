@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management;
+package javax.management; 
 
 
 /**

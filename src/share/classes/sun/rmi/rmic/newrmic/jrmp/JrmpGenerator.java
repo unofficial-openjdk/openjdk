@@ -51,29 +51,30 @@ import static sun.rmi.rmic.newrmic.jrmp.Constants.*;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
+ * @version %I%, %E%
  * @author Peter Jones
  **/
 public class JrmpGenerator implements Generator {
 
     private static final Map<String,StubVersion> versionOptions =
-        new HashMap<String,StubVersion>();
+	new HashMap<String,StubVersion>();
     static {
-        versionOptions.put("-v1.1", StubVersion.V1_1);
-        versionOptions.put("-vcompat", StubVersion.VCOMPAT);
-        versionOptions.put("-v1.2", StubVersion.V1_2);
+	versionOptions.put("-v1.1", StubVersion.V1_1);
+	versionOptions.put("-vcompat", StubVersion.VCOMPAT);
+	versionOptions.put("-v1.2", StubVersion.V1_2);
     }
 
     private static final Set<String> bootstrapClassNames =
-        new HashSet<String>();
+	new HashSet<String>();
     static {
-        bootstrapClassNames.add("java.lang.Exception");
-        bootstrapClassNames.add("java.rmi.Remote");
-        bootstrapClassNames.add("java.rmi.RemoteException");
-        bootstrapClassNames.add("java.lang.RuntimeException");
+	bootstrapClassNames.add("java.lang.Exception");
+	bootstrapClassNames.add("java.rmi.Remote");
+	bootstrapClassNames.add("java.rmi.RemoteException");
+	bootstrapClassNames.add("java.lang.RuntimeException");
     };
 
     /** version of the JRMP stub protocol to generate code for */
-    private StubVersion version = StubVersion.V1_2;     // default is -v1.2
+    private StubVersion version = StubVersion.V1_2;	// default is -v1.2
 
     /**
      * Creates a new JrmpGenerator.
@@ -86,20 +87,20 @@ public class JrmpGenerator implements Generator {
      * for.  Only one such option is allowed.
      **/
     public boolean parseArgs(String[] args, Main main) {
-        String explicitVersion = null;
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (versionOptions.containsKey(arg)) {
-                if (explicitVersion != null && !explicitVersion.equals(arg)) {
-                    main.error("rmic.cannot.use.both", explicitVersion, arg);
-                    return false;
-                }
-                explicitVersion = arg;
-                version = versionOptions.get(arg);
-                args[i] = null;
-            }
-        }
-        return true;
+	String explicitVersion = null;
+	for (int i = 0; i < args.length; i++) {
+	    String arg = args[i];
+	    if (versionOptions.containsKey(arg)) {
+		if (explicitVersion != null && !explicitVersion.equals(arg)) {
+		    main.error("rmic.cannot.use.both", explicitVersion, arg);
+		    return false;
+		}
+		explicitVersion = arg;
+		version = versionOptions.get(arg);
+		args[i] = null;
+	    }
+	}
+	return true;
     }
 
     /**
@@ -107,11 +108,11 @@ public class JrmpGenerator implements Generator {
      * specific than BatchEnvironment.
      **/
     public Class<? extends BatchEnvironment> envClass() {
-        return BatchEnvironment.class;
+	return BatchEnvironment.class;
     }
 
     public Set<String> bootstrapClassNames() {
-        return Collections.unmodifiableSet(bootstrapClassNames);
+	return Collections.unmodifiableSet(bootstrapClassNames);
     }
 
     /**
@@ -120,69 +121,69 @@ public class JrmpGenerator implements Generator {
      * implementation class.
      **/
     public void generate(BatchEnvironment env,
-                         ClassDoc inputClass,
-                         File destDir)
+			 ClassDoc inputClass,
+			 File destDir)
     {
-        RemoteClass remoteClass = RemoteClass.forClass(env, inputClass);
-        if (remoteClass == null) {
-            return;     // an error must have occurred
-        }
+	RemoteClass remoteClass = RemoteClass.forClass(env, inputClass);
+	if (remoteClass == null) {
+	    return;	// an error must have occurred
+	}
 
-        StubSkeletonWriter writer =
-            new StubSkeletonWriter(env, remoteClass, version);
+	StubSkeletonWriter writer =
+	    new StubSkeletonWriter(env, remoteClass, version);
 
-        File stubFile = sourceFileForClass(writer.stubClassName(), destDir);
-        try {
-            IndentingWriter out = new IndentingWriter(
-                new OutputStreamWriter(new FileOutputStream(stubFile)));
-            writer.writeStub(out);
-            out.close();
-            if (env.verbose()) {
-                env.output(Resources.getText("rmic.wrote",
-                                             stubFile.getPath()));
-            }
-            env.addGeneratedFile(stubFile);
-        } catch (IOException e) {
-            env.error("rmic.cant.write", stubFile.toString());
-            return;
-        }
+	File stubFile = sourceFileForClass(writer.stubClassName(), destDir);
+	try {
+	    IndentingWriter out = new IndentingWriter(
+		new OutputStreamWriter(new FileOutputStream(stubFile)));
+	    writer.writeStub(out);
+	    out.close();
+	    if (env.verbose()) {
+		env.output(Resources.getText("rmic.wrote",
+					     stubFile.getPath()));
+	    }
+	    env.addGeneratedFile(stubFile);
+	} catch (IOException e) {
+	    env.error("rmic.cant.write", stubFile.toString());
+	    return;
+	}
 
-        File skeletonFile =
-            sourceFileForClass(writer.skeletonClassName(), destDir);
-        if (version == StubVersion.V1_1 ||
-            version == StubVersion.VCOMPAT)
-        {
-            try {
-                IndentingWriter out = new IndentingWriter(
-                    new OutputStreamWriter(
-                        new FileOutputStream(skeletonFile)));
-                writer.writeSkeleton(out);
-                out.close();
-                if (env.verbose()) {
-                    env.output(Resources.getText("rmic.wrote",
-                                                 skeletonFile.getPath()));
-                }
-                env.addGeneratedFile(skeletonFile);
-            } catch (IOException e) {
-                env.error("rmic.cant.write", skeletonFile.toString());
-                return;
-            }
-        } else {
-            /*
-             * If skeleton files are not being generated for this run,
-             * delete old skeleton source or class files for this
-             * remote implementation class that were (presumably) left
-             * over from previous runs, to avoid user confusion from
-             * extraneous or inconsistent generated files.
-             */
-            File skeletonClassFile =
-                classFileForClass(writer.skeletonClassName(), destDir);
+	File skeletonFile =
+	    sourceFileForClass(writer.skeletonClassName(), destDir);
+	if (version == StubVersion.V1_1 ||
+	    version == StubVersion.VCOMPAT)
+	{
+	    try {
+		IndentingWriter out = new IndentingWriter(
+		    new OutputStreamWriter(
+			new FileOutputStream(skeletonFile)));
+		writer.writeSkeleton(out);
+		out.close();
+		if (env.verbose()) {
+		    env.output(Resources.getText("rmic.wrote",
+						 skeletonFile.getPath()));
+		}
+		env.addGeneratedFile(skeletonFile);
+	    } catch (IOException e) {
+		env.error("rmic.cant.write", skeletonFile.toString());
+		return;
+	    }
+	} else {
+	    /*
+	     * If skeleton files are not being generated for this run,
+	     * delete old skeleton source or class files for this
+	     * remote implementation class that were (presumably) left
+	     * over from previous runs, to avoid user confusion from
+	     * extraneous or inconsistent generated files.
+	     */
+	    File skeletonClassFile =
+		classFileForClass(writer.skeletonClassName(), destDir);
 
-            skeletonFile.delete();      // ignore failures (no big deal)
-            skeletonClassFile.delete();
-        }
+	    skeletonFile.delete();	// ignore failures (no big deal)
+	    skeletonClassFile.delete();
+	}
     }
-
+    
 
     /**
      * Returns the File object to be used as the source file for a
@@ -190,7 +191,7 @@ public class JrmpGenerator implements Generator {
      * destination directory as the top of the package hierarchy.
      **/
     private File sourceFileForClass(String binaryName, File destDir) {
-        return fileForClass(binaryName, destDir, ".java");
+	return fileForClass(binaryName, destDir, ".java");
     }
 
     /**
@@ -199,28 +200,28 @@ public class JrmpGenerator implements Generator {
      * destination directory as the top of the package hierarchy.
      **/
     private File classFileForClass(String binaryName, File destDir) {
-        return fileForClass(binaryName, destDir, ".class");
+	return fileForClass(binaryName, destDir, ".class");
     }
 
     private File fileForClass(String binaryName, File destDir, String ext) {
-        int i = binaryName.lastIndexOf('.');
-        String classFileName = binaryName.substring(i + 1) + ext;
-        if (i != -1) {
-            String packageName = binaryName.substring(0, i);
-            String packagePath = packageName.replace('.', File.separatorChar);
-            File packageDir = new File(destDir, packagePath);
-            /*
-             * Make sure that the directory for this package exists.
-             * We assume that the caller has verified that the top-
-             * level destination directory exists, so we need not
-             * worry about creating it unintentionally.
-             */
-            if (!packageDir.exists()) {
-                packageDir.mkdirs();
-            }
-            return new File(packageDir, classFileName);
-        } else {
-            return new File(destDir, classFileName);
-        }
+	int i = binaryName.lastIndexOf('.');
+	String classFileName = binaryName.substring(i + 1) + ext;
+	if (i != -1) {
+	    String packageName = binaryName.substring(0, i);
+	    String packagePath = packageName.replace('.', File.separatorChar);
+	    File packageDir = new File(destDir, packagePath);
+	    /*
+	     * Make sure that the directory for this package exists.
+	     * We assume that the caller has verified that the top-
+	     * level destination directory exists, so we need not
+	     * worry about creating it unintentionally.
+	     */
+	    if (!packageDir.exists()) {
+		packageDir.mkdirs();
+	    }
+	    return new File(packageDir, classFileName);
+	} else {
+	    return new File(destDir, classFileName);
+	}
     }
 }

@@ -30,17 +30,17 @@
   @build      Util
   @run       main ClearLwQueueBreakTest
 */
-
+ 
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.applet.Applet;
 import test.java.awt.regtesthelpers.Util;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+ 
 public class ClearLwQueueBreakTest extends Applet {
     JFrame f1 = new JFrame("frame");
-    JFrame f2 = new JFrame("frame");
+    JFrame f2 = new JFrame("frame");    
     JButton b = new JButton("button");
     JTextField tf1 = new JTextField("     ");
     JTextField tf2 = new JTextField("     ");
@@ -50,16 +50,16 @@ public class ClearLwQueueBreakTest extends Applet {
     FocusListener listener2;
 
     Robot robot;
-
+ 
     public static void main(String[] args) {
         ClearLwQueueBreakTest app = new ClearLwQueueBreakTest();
         app.init();
         app.start();
     }
-
+ 
     public void init() {
         robot = Util.createRobot();
-
+ 
         // Create instructions for the user here, as well as set up
         // the environment -- set the layout manager, add buttons,
         // etc.
@@ -68,7 +68,7 @@ public class ClearLwQueueBreakTest extends Applet {
             {"This is an automatic test. Simply wait until it is done."
             });
     }
-
+ 
     public void start() {
         b.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -190,17 +190,17 @@ public class ClearLwQueueBreakTest extends Applet {
         }
     }
 }
-
+ 
 class TestFailedException extends RuntimeException {
     TestFailedException(String msg) {
         super("Test failed: " + msg);
     }
 }
-
+ 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard
-  chunk of code whose purpose is to make user
+ DO NOT modify anything below -- it's a standard 
+  chunk of code whose purpose is to make user 
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -213,12 +213,12 @@ class TestFailedException extends RuntimeException {
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well
+ This mimics System.out.println but works within the test harness as well 
   as standalone.
  */
 
-class Sysout
-{
+class Sysout 
+{ 
     static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -228,7 +228,7 @@ class Sysout
 //        dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
+   
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -237,8 +237,8 @@ class Sysout
 //        dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
-
+   
+      
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -266,20 +266,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-
+   
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name )
+    public TestDialog( Frame frame, String name ) 
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-
+      
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-
+      
         pack();
-
+      
 //        setVisible(true);
     }// TestDialog()
 
@@ -293,7 +293,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        {
+        { 
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -304,25 +304,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-
+               
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-
+               
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else
-                {
+                else 
+                { 
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-
+            
                 instructionsText.append( printStr + "\n" );
-
+            
             }// while
-
+         
         }// for
-
+      
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -330,6 +330,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }
-
+    }  
+   
 }// TestDialog  class

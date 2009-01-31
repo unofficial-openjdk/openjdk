@@ -247,14 +247,14 @@ public class EqualsTest {
                     ct8,
                     new String[] {"a"},
                     new Object[] {new boolean[][]
-                          {new boolean[] {true, true},
+                          {new boolean[] {true, true}, 
                            new boolean[] {true, true}}});
 
         CompositeData compositeData11 = new CompositeDataSupport(
                     ct8,
                     new String[] {"a"},
                     new Object[] {new boolean[][]
-                          {new boolean[] {true, true},
+                          {new boolean[] {true, true}, 
                            new boolean[] {true, true}}});
 
         if (!compositeData10.equals(compositeData11)) {

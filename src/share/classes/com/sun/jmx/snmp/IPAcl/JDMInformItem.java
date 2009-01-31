@@ -44,7 +44,7 @@ class JDMInformItem extends SimpleNode {
     public static Node jjtCreate(Parser p, int id) {
         return new JDMInformItem(p, id);
     }
-
+  
     public JDMInformCommunity getCommunity(){
         return comm;
     }

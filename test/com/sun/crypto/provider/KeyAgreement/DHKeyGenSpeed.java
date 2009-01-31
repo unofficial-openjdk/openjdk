@@ -71,34 +71,34 @@ public class DHKeyGenSpeed {
     };
 
     public static void main(String[] args) throws Exception {
-        SunJCE jce = new SunJCE();
-        Security.addProvider(jce);
-        DHKeyGenSpeed test = new DHKeyGenSpeed();
-        test.run();
-        System.out.println("Test Passed");
+	SunJCE jce = new SunJCE();
+	Security.addProvider(jce);
+	DHKeyGenSpeed test = new DHKeyGenSpeed();
+	test.run();
+	System.out.println("Test Passed");
     }
 
     public void run() throws Exception {
-        long start, end;
+	long start, end;
 
-        BigInteger p = new BigInteger(1, DHPrime);
-        BigInteger g = new BigInteger(1, DHBase);
-        int l = 576;
+	BigInteger p = new BigInteger(1, DHPrime);
+	BigInteger g = new BigInteger(1, DHBase);
+	int l = 576;
 
-        DHParameterSpec spec =
-            new DHParameterSpec(p, g, l);
+	DHParameterSpec spec =
+	    new DHParameterSpec(p, g, l);
 
-        // generate keyPairs using parameters
-        KeyPairGenerator keyGen =
-            KeyPairGenerator.getInstance("DH", "SunJCE");
-        start = System.currentTimeMillis();
-        keyGen.initialize(spec);
-        KeyPair keys = keyGen.generateKeyPair();
-        end = System.currentTimeMillis();
+	// generate keyPairs using parameters
+	KeyPairGenerator keyGen =
+	    KeyPairGenerator.getInstance("DH", "SunJCE");
+	start = System.currentTimeMillis();
+	keyGen.initialize(spec);
+	KeyPair keys = keyGen.generateKeyPair();
+	end = System.currentTimeMillis();
 
-        System.out.println("PrimeBits\tExponentBits");
-        System.out.println(DHPrime.length*8 + "\t\t" + l);
-        System.out.println("keyGen(millisecond): " + (end - start));
-        System.out.println("Test Passed!");
+	System.out.println("PrimeBits\tExponentBits");
+	System.out.println(DHPrime.length*8 + "\t\t" + l);
+	System.out.println("keyGen(millisecond): " + (end - start));
+	System.out.println("Test Passed!");
     }
 }

@@ -35,7 +35,7 @@ import java.awt.MenuBar;
 
 public
 interface AppletViewerFactory {
-        public AppletViewer createAppletViewer(int x, int y, URL doc, Hashtable atts);
-        public MenuBar getBaseMenuBar();
-        public boolean isStandalone();
+	public AppletViewer createAppletViewer(int x, int y, URL doc, Hashtable atts);
+	public MenuBar getBaseMenuBar();
+	public boolean isStandalone();
 }

@@ -32,9 +32,9 @@ import java.nio.channels.*;
 public class ConfigureBlocking {
     public static void main (String [] str) throws Exception {
         SelectableChannel [] channels = null;
-        channels = new SelectableChannel [] {
-            DatagramChannel.open(),
-            SocketChannel.open(),
+        channels = new SelectableChannel [] { 
+            DatagramChannel.open(), 
+            SocketChannel.open(), 
             ServerSocketChannel.open()};
         for (int i = 0; i < channels.length; i++) {
             SelectableChannel channel = channels[i];

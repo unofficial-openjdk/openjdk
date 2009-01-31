@@ -24,10 +24,10 @@
 /* @test
  * @bug 6306165
  * @summary Check that a bad handshake doesn't cause a debuggee to abort
- *
+ * 
  * @build VMConnection BadHandshakeTest Exit0
  * @run main BadHandshakeTest
- *
+ * 
  */
 import java.io.InputStream;
 import java.io.IOException;
@@ -38,7 +38,6 @@ import java.net.Socket;
 import java.net.InetAddress;
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.VirtualMachine;
-import com.sun.jdi.event.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.AttachingConnector;
 import java.util.Map;
@@ -47,7 +46,7 @@ import java.util.Iterator;
 
 public class BadHandshakeTest {
 
-    static volatile boolean ready = false;
+    static Object locker = new Object();
 
     /*
      * Helper class to redirect process output/error
@@ -56,36 +55,38 @@ public class BadHandshakeTest {
         InputStream in;
 
         IOHandler(InputStream in) {
-            this.in = in;
+	    this.in = in;
         }
 
-        static void handle(InputStream in) {
-            IOHandler handler = new IOHandler(in);
-            Thread thr = new Thread(handler);
-            thr.setDaemon(true);
-            thr.start();
-        }
+  	static void handle(InputStream in) {
+	    IOHandler handler = new IOHandler(in);
+	    Thread thr = new Thread(handler);
+	    thr.setDaemon(true);
+	    thr.start();
+  	}
 
-        public void run() {
-            try {
-                byte b[] = new byte[100];
-                for (;;) {
-                    int n = in.read(b, 0, 100);
+	public void run() {
+	    try {
+		byte b[] = new byte[100];
+		for (;;) {
+		    int n = in.read(b, 0, 100);
                     // The first thing that will get read is
                     //    Listening for transport dt_socket at address: xxxxx
                     // which shows the debuggee is ready to accept connections.
-                    ready = true;
-                    if (n < 0) {
-                        break;
+                    synchronized(locker) {
+                        locker.notify();
                     }
+		    if (n < 0) {
+			break;
+		    }
                     String s = new String(b, 0, n, "UTF-8");
-                    System.out.print(s);
-                }
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
+	            System.out.print(s);
+	 	}
+	    } catch (IOException ioe) { 
+	        ioe.printStackTrace();
             }
-        }
-
+	}
+	
     }
 
     /*
@@ -107,8 +108,8 @@ public class BadHandshakeTest {
      * Launch a server debuggee with the given address
      */
     private static Process launch(String address, String class_name) throws IOException {
-        String exe =   System.getProperty("java.home")
-                     + File.separator + "bin" + File.separator;
+	String exe =   System.getProperty("java.home") 
+		     + File.separator + "bin" + File.separator;
         String arch = System.getProperty("os.arch");
         if (arch.equals("sparcv9")) {
             exe += "sparcv9/java";
@@ -121,13 +122,13 @@ public class BadHandshakeTest {
             " " + class_name;
 
         System.out.println("Starting: " + cmd);
+        
+	Process p = Runtime.getRuntime().exec(cmd);
 
-        Process p = Runtime.getRuntime().exec(cmd);
+	IOHandler.handle(p.getInputStream());
+	IOHandler.handle(p.getErrorStream());
 
-        IOHandler.handle(p.getInputStream());
-        IOHandler.handle(p.getErrorStream());
-
-        return p;
+	return p;
     }
 
     /*
@@ -137,23 +138,19 @@ public class BadHandshakeTest {
      * - verify we saw no error
      */
     public static void main(String args[]) throws Exception {
-        // find a free port
-        ServerSocket ss = new ServerSocket(0);
-        int port = ss.getLocalPort();
-        ss.close();
+	// find a free port
+	ServerSocket ss = new ServerSocket(0);
+	int port = ss.getLocalPort();
+	ss.close();
 
-        String address = String.valueOf(port);
+	String address = String.valueOf(port);
 
-        // launch the server debuggee
-        Process process = launch(address, "Exit0");
+	// launch the server debuggee
+	Process process = launch(address, "Exit0");
 
         // wait for the debugge to be ready
-        while (!ready) {
-            try {
-                Thread.sleep(1000);
-            } catch(Exception ee) {
-                throw ee;
-            }
+        synchronized(locker) {
+            locker.wait();
         }
 
         // Connect to the debuggee and handshake with garbage
@@ -162,32 +159,22 @@ public class BadHandshakeTest {
         s.close();
 
         // Re-connect and to a partial handshake - don't disconnect
-        s = new Socket(InetAddress.getLocalHost(), port);
+        s = new Socket(InetAddress.getLocalHost(), port); 
         s.getOutputStream().write("JDWP-".getBytes("UTF-8"));
 
-
-        // attach to server debuggee and resume it so it can exit
-        AttachingConnector conn = (AttachingConnector)findConnector("com.sun.jdi.SocketAttach");
-        Map conn_args = conn.defaultArguments();
-        Connector.IntegerArgument port_arg =
+        
+	// attach to server debuggee and resume it so it can exit
+	AttachingConnector conn = (AttachingConnector)findConnector("com.sun.jdi.SocketAttach");
+	Map conn_args = conn.defaultArguments();
+	Connector.IntegerArgument port_arg =
             (Connector.IntegerArgument)conn_args.get("port");
-        port_arg.setValue(port);
-        VirtualMachine vm = conn.attach(conn_args);
-
-        // The first event is always a VMStartEvent, and it is always in
-        // an EventSet by itself.  Wait for it.
-        EventSet evtSet = vm.eventQueue().remove();
-        for (Event event: evtSet) {
-            if (event instanceof VMStartEvent) {
-                break;
-            }
-            throw new RuntimeException("Test failed - debuggee did not start properly");
-        }
-
-        vm.eventRequestManager().deleteAllBreakpoints();
-        vm.resume();
-
-        process.waitFor();
+	port_arg.setValue(port);
+	VirtualMachine vm = conn.attach(conn_args);
+	vm.eventRequestManager().deleteAllBreakpoints();
+	vm.resume();
+	
+	process.waitFor();
     }
 
 }
+

@@ -39,12 +39,12 @@ public class NonBlockingAccept {
 
     public static void main(String[] args) throws Exception {
 
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        InetSocketAddress isa = TestUtil.bindToRandomPort(ssc);
+	ServerSocketChannel ssc = ServerSocketChannel.open();
+	InetSocketAddress isa = TestUtil.bindToRandomPort(ssc);
         ssc.configureBlocking(false);
         ServerSocket ss = ssc.socket();
 
-        // Exception should be thrown when no connection is waiting
+	// Exception should be thrown when no connection is waiting
         try {
             ss.accept();
             throw new RuntimeException("Expected exception not thrown");
@@ -52,12 +52,12 @@ public class NonBlockingAccept {
             // Correct result
         }
 
-        // No exception should be thrown when a connection is waiting (5046333)
-        SocketChannel sc = SocketChannel.open();
-        sc.configureBlocking(false);
-        sc.connect(isa);
-        Thread.sleep(100);
-        ss.accept();
+	// No exception should be thrown when a connection is waiting (5046333)
+	SocketChannel sc = SocketChannel.open();
+	sc.configureBlocking(false);
+	sc.connect(isa);
+	Thread.sleep(100);
+	ss.accept();
 
     }
 

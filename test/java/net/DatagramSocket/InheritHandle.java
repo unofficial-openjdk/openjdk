@@ -30,19 +30,27 @@ import java.net.*;
 
 public class InheritHandle {
     public static void main(String[] args) throws Exception {
-        DatagramSocket sock = new DatagramSocket (0);
+	DatagramSocket sock = new DatagramSocket (0);
         sock.setReuseAddress(true);
-        int port = sock.getLocalPort();
+	int port = sock.getLocalPort();
 
         /**
          * spawn a child to check whether handle passed to it or not;
          * it shouldn't
          */
-        Runtime.getRuntime().exec ("sleep 10");
+	Runtime.getRuntime().exec ("sleep 10");
 
-        sock.close();
-        sock = new DatagramSocket (null);
+	sock.close();
+	sock = new DatagramSocket (null);
         sock.setReuseAddress(true);
         sock.bind(new InetSocketAddress(port));
     }
 }
+
+
+
+
+
+
+
+

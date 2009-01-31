@@ -34,10 +34,10 @@ public class BlockIsDirectory {
         String osname = System.getProperty("os.name");
         if (osname.equals("SunOS")) {
             File dir = new File("/dev/dsk");
-            String dirList[] = dir.list();
-
+            String dirList[] = dir.list(); 
+       
             File aFile = new File( "/dev/dsk/" + dirList[0] );
-
+  
             boolean result = aFile.isDirectory();
             if (result == true)
                 throw new RuntimeException(
@@ -61,3 +61,4 @@ public class BlockIsDirectory {
         }
     }
 }
+

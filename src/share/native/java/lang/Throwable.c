@@ -57,7 +57,7 @@ Java_java_lang_Throwable_getStackTraceDepth(JNIEnv *env, jobject throwable)
 }
 
 JNIEXPORT jobject JNICALL
-Java_java_lang_Throwable_getStackTraceElement(JNIEnv *env,
+Java_java_lang_Throwable_getStackTraceElement(JNIEnv *env, 
                                               jobject throwable, jint index)
 {
     return JVM_GetStackTraceElement(env, throwable, index);

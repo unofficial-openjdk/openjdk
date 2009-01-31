@@ -30,12 +30,14 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.awt.Color;
 import java.awt.Font;
 
 /**
+  * @version %I% %G%
   * @author Scott Violet
   */
 
@@ -56,54 +58,54 @@ public class SampleData extends Object
       * arguments.
       */
     public SampleData(Font newFont, Color newColor, String newString) {
-        font = newFont;
-        color = newColor;
-        string = newString;
+	font = newFont;
+	color = newColor;
+	string = newString;
     }
 
     /**
       * Sets the font that is used to represent this object.
       */
     public void setFont(Font newFont) {
-        font = newFont;
+	font = newFont;
     }
 
     /**
       * Returns the Font used to represent this object.
       */
     public Font getFont() {
-        return font;
+	return font;
     }
 
     /**
       * Sets the color used to draw the text.
       */
     public void setColor(Color newColor) {
-        color = newColor;
+	color = newColor;
     }
 
     /**
       * Returns the color used to draw the text.
       */
     public Color getColor() {
-        return color;
+	return color;
     }
 
     /**
       * Sets the string to display for this object.
       */
     public void setString(String newString) {
-        string = newString;
+	string = newString;
     }
 
     /**
       * Returnes the string to display for this object.
       */
     public String string() {
-        return string;
+	return string;
     }
 
     public String toString() {
-        return string;
+	return string;
     }
 }

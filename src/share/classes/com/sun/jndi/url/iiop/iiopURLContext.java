@@ -35,15 +35,16 @@ import com.sun.jndi.cosnaming.CorbanameUrl;
 
 /**
  * An IIOP URL context.
- *
+ * 
  * @author Rosanna Lee
+ * @version %I% %E%
  */
 
 public class iiopURLContext
-        extends com.sun.jndi.toolkit.url.GenericURLContext {
+	extends com.sun.jndi.toolkit.url.GenericURLContext {
 
     iiopURLContext(Hashtable env) {
-        super(env);
+	super(env);
     }
 
     /**
@@ -53,12 +54,12 @@ public class iiopURLContext
       *
       * For example, with a iiop URL "iiop://localhost:900/rest/of/name",
       * this method resolves "iiop://localhost:900/" to the "NameService"
-      * context on for the ORB at 'localhost' on port 900,
+      * context on for the ORB at 'localhost' on port 900, 
       * and returns as the remaining name "rest/of/name".
       */
-    protected ResolveResult getRootURLContext(String name, Hashtable env)
+    protected ResolveResult getRootURLContext(String name, Hashtable env) 
     throws NamingException {
-        return iiopURLContextFactory.getUsingURLIgnoreRest(name, env);
+	return iiopURLContextFactory.getUsingURLIgnoreRest(name, env);
     }
 
     /**
@@ -66,19 +67,19 @@ public class iiopURLContext
      * prefix parameter is ignored.
      */
     protected Name getURLSuffix(String prefix, String url)
-        throws NamingException {
-        try {
-            if (url.startsWith("iiop://") || url.startsWith("iiopname://")) {
-                IiopUrl parsedUrl = new IiopUrl(url);
-                return parsedUrl.getCosName();
-            } else if (url.startsWith("corbaname:")) {
-                CorbanameUrl parsedUrl = new CorbanameUrl(url);
-                return parsedUrl.getCosName();
-            } else {
-                throw new MalformedURLException("Not a valid URL: " + url);
-            }
-        } catch (MalformedURLException e) {
-            throw new InvalidNameException(e.getMessage());
-        }
+	throws NamingException {
+	try {
+	    if (url.startsWith("iiop://") || url.startsWith("iiopname://")) {
+		IiopUrl parsedUrl = new IiopUrl(url);
+		return parsedUrl.getCosName();
+	    } else if (url.startsWith("corbaname:")) {
+		CorbanameUrl parsedUrl = new CorbanameUrl(url);
+		return parsedUrl.getCosName();
+	    } else {
+		throw new MalformedURLException("Not a valid URL: " + url);
+	    }
+	} catch (MalformedURLException e) {
+	    throw new InvalidNameException(e.getMessage());
+	}
     }
 }

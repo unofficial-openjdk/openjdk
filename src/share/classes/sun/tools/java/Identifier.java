@@ -50,7 +50,8 @@ import java.util.Enumeration;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @author      Arthur van Hoff
+ * @author 	Arthur van Hoff
+ * @version 	%I%, %G%
  */
 
 public final
@@ -90,51 +91,51 @@ class Identifier implements Constants {
      * @see Identifier.lookup
      */
     private Identifier(String name) {
-        this.name = name;
-        this.ipos = name.indexOf(INNERCLASS_PREFIX);
+	this.name = name;
+	this.ipos = name.indexOf(INNERCLASS_PREFIX);
     }
 
     /**
      * Get the type of the identifier.
      */
     int getType() {
-        return ((value != null) && (value instanceof Integer)) ?
-                ((Integer)value).intValue() : IDENT;
+	return ((value != null) && (value instanceof Integer)) ?
+	    	((Integer)value).intValue() : IDENT;
     }
 
     /**
      * Set the type of the identifier.
      */
     void setType(int t) {
-        value = new Integer(t);
-        //System.out.println("type(" + this + ")=" + t);
+	value = new Integer(t);
+	//System.out.println("type(" + this + ")=" + t);
     }
 
     /**
      * Lookup an identifier.
      */
     public static synchronized Identifier lookup(String s) {
-        //System.out.println("lookup(" + s + ")");
-        Identifier id = (Identifier)hash.get(s);
-        if (id == null) {
-            hash.put(s, id = new Identifier(s));
-        }
-        return id;
+	//System.out.println("lookup(" + s + ")");
+	Identifier id = (Identifier)hash.get(s);
+	if (id == null) {
+	    hash.put(s, id = new Identifier(s));
+	}
+	return id;
     }
 
     /**
      * Lookup a qualified identifier.
      */
     public static Identifier lookup(Identifier q, Identifier n) {
-        // lookup("", x) => x
-        if (q == idNull)  return n;
-        // lookup(lookupInner(c, ""), n) => lookupInner(c, lookup("", n))
-        if (q.name.charAt(q.name.length()-1) == INNERCLASS_PREFIX)
-            return lookup(q.name+n.name);
-        Identifier id = lookup(q + "." + n);
-        if (!n.isQualified() && !q.isInner())
-            id.value = q;
-        return id;
+	// lookup("", x) => x
+	if (q == idNull)  return n;
+	// lookup(lookupInner(c, ""), n) => lookupInner(c, lookup("", n))
+	if (q.name.charAt(q.name.length()-1) == INNERCLASS_PREFIX)
+	    return lookup(q.name+n.name);
+	Identifier id = lookup(q + "." + n);
+	if (!n.isQualified() && !q.isInner())
+	    id.value = q;
+	return id;
     }
 
     /**
@@ -142,40 +143,40 @@ class Identifier implements Constants {
      * (Note:  n can be idNull.)
      */
     public static Identifier lookupInner(Identifier c, Identifier n) {
-        Identifier id;
-        if (c.isInner()) {
-            if (c.name.charAt(c.name.length()-1) == INNERCLASS_PREFIX)
-                id = lookup(c.name+n);
-            else
-                id = lookup(c, n);
-        } else {
-            id = lookup(c + "." + INNERCLASS_PREFIX + n);
-        }
-        id.value = c.value;
-        return id;
+	Identifier id;
+	if (c.isInner()) {
+	    if (c.name.charAt(c.name.length()-1) == INNERCLASS_PREFIX)
+		id = lookup(c.name+n);
+	    else
+		id = lookup(c, n);
+	} else {
+	    id = lookup(c + "." + INNERCLASS_PREFIX + n);
+	}
+	id.value = c.value;
+	return id;
     }
 
     /**
      * Convert to a string.
      */
     public String toString() {
-        return name;
+	return name;
     }
 
     /**
      * Check if the name is qualified (ie: it contains a '.').
      */
     public boolean isQualified() {
-        if (value == null) {
-            int idot = ipos;
-            if (idot <= 0)
-                idot = name.length();
-            else
-                idot -= 1;      // back up over previous dot
-            int index = name.lastIndexOf('.', idot-1);
-            value = (index < 0) ? idNull : Identifier.lookup(name.substring(0, index));
-        }
-        return (value instanceof Identifier) && (value != idNull);
+	if (value == null) {
+	    int idot = ipos;
+	    if (idot <= 0)
+		idot = name.length();
+	    else
+		idot -= 1;	// back up over previous dot
+	    int index = name.lastIndexOf('.', idot-1);
+	    value = (index < 0) ? idNull : Identifier.lookup(name.substring(0, index));
+	}
+	return (value instanceof Identifier) && (value != idNull);
     }
 
     /**
@@ -184,7 +185,7 @@ class Identifier implements Constants {
      * any inner part of the name.
      */
     public Identifier getQualifier() {
-        return isQualified() ? (Identifier)value : idNull;
+	return isQualified() ? (Identifier)value : idNull;
     }
 
     /**
@@ -193,8 +194,8 @@ class Identifier implements Constants {
      * will itself contain components.
      */
     public Identifier getName() {
-        return isQualified() ?
-            Identifier.lookup(name.substring(((Identifier)value).name.length() + 1)) : this;
+	return isQualified() ?
+	    Identifier.lookup(name.substring(((Identifier)value).name.length() + 1)) : this;
     }
 
     /** A space character, which precedes the first inner class
@@ -221,7 +222,7 @@ class Identifier implements Constants {
      * Check if the name is inner (ie: it contains a ' ').
      */
     public boolean isInner() {
-        return (ipos > 0);
+	return (ipos > 0);
     }
 
     /**
@@ -239,25 +240,25 @@ class Identifier implements Constants {
      * </pre>
      */
     public Identifier getFlatName() {
-        if (isQualified()) {
-            return getName().getFlatName();
-        }
-        if (ipos > 0 && name.charAt(ipos-1) == '.') {
-            if (ipos+1 == name.length()) {
-                // last component is idNull
-                return Identifier.lookup(name.substring(0,ipos-1));
-            }
-            String n = name.substring(ipos+1);
-            String t = name.substring(0,ipos);
-            return Identifier.lookup(t+n);
-        }
-        // Not inner.  Just return the same as getName()
-        return this;
+	if (isQualified()) {
+	    return getName().getFlatName();
+	}
+	if (ipos > 0 && name.charAt(ipos-1) == '.') {
+	    if (ipos+1 == name.length()) {
+		// last component is idNull
+		return Identifier.lookup(name.substring(0,ipos-1));
+	    }
+	    String n = name.substring(ipos+1);
+	    String t = name.substring(0,ipos);
+	    return Identifier.lookup(t+n);
+	}
+	// Not inner.  Just return the same as getName()
+	return this;
     }
 
     public Identifier getTopName() {
-        if (!isInner())  return this;
-        return Identifier.lookup(getQualifier(), getFlatName().getHead());
+	if (!isInner())  return this;
+	return Identifier.lookup(getQualifier(), getFlatName().getHead());
     }
 
     /**
@@ -266,21 +267,21 @@ class Identifier implements Constants {
      * and the tail is the rest of them.
      */
     public Identifier getHead() {
-        Identifier id = this;
-        while (id.isQualified())
-            id = id.getQualifier();
-        return id;
+	Identifier id = this;
+	while (id.isQualified())
+	    id = id.getQualifier();
+	return id;
     }
 
     /**
      * @see getHead
      */
     public Identifier getTail() {
-        Identifier id = getHead();
-        if (id == this)
-            return idNull;
-        else
-            return Identifier.lookup(name.substring(id.name.length() + 1));
+	Identifier id = getHead();
+	if (id == this)
+	    return idNull;
+	else
+	    return Identifier.lookup(name.substring(id.name.length() + 1));
     }
 
     // Unfortunately, the current structure of the compiler requires
@@ -304,7 +305,7 @@ class Identifier implements Constants {
      * Determine whether an Identifier has been marked as ambiguous.
      */
     public boolean hasAmbigPrefix() {
-        return (name.startsWith(ambigPrefix));
+	return (name.startsWith(ambigPrefix));
     }
 
     /**
@@ -313,17 +314,17 @@ class Identifier implements Constants {
      * to an existing class.
      */
     public Identifier addAmbigPrefix() {
-        return Identifier.lookup(ambigPrefix + name);
+	return Identifier.lookup(ambigPrefix + name);
     }
 
     /**
      * Remove the ambigPrefix from `this' to get the original identifier.
      */
     public Identifier removeAmbigPrefix() {
-        if (hasAmbigPrefix()) {
-            return Identifier.lookup(name.substring(ambigPrefix.length()));
-        } else {
-            return this;
-        }
+	if (hasAmbigPrefix()) {
+	    return Identifier.lookup(name.substring(ambigPrefix.length()));
+	} else {
+	    return this;
+	}
     }
 }

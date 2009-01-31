@@ -43,6 +43,7 @@ import sun.security.util.*;
  *
  * @see Extension
  *
+ * @version %I%
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
@@ -198,15 +199,15 @@ public class PKIXExtensions {
     public static final ObjectIdentifier CertificateIssuer_Id;
 
     /**
-     * This extension indicates how to access CA information and services for
+     * This extension indicates how to access CA information and services for 
      * the issuer of the certificate in which the extension appears.
-     * This information may be used for on-line certification validation
+     * This information may be used for on-line certification validation 
      * services.
      */
     public static final ObjectIdentifier AuthInfoAccess_Id;
 
     /**
-     * This extension indicates how to access CA information and services for
+     * This extension indicates how to access CA information and services for 
      * the subject of the certificate in which the extension appears.
      */
     public static final ObjectIdentifier SubjectInfoAccess_Id;
@@ -215,47 +216,48 @@ public class PKIXExtensions {
      * Identifies how delta CRL information is obtained.
      */
     public static final ObjectIdentifier FreshestCRL_Id;
-
+    
     static {
-        AuthorityKey_Id = ObjectIdentifier.newInternal(AuthorityKey_data);
-        SubjectKey_Id   = ObjectIdentifier.newInternal(SubjectKey_data);
-        KeyUsage_Id     = ObjectIdentifier.newInternal(KeyUsage_data);
-        PrivateKeyUsage_Id = ObjectIdentifier.newInternal(PrivateKeyUsage_data);
-        CertificatePolicies_Id =
-            ObjectIdentifier.newInternal(CertificatePolicies_data);
-        PolicyMappings_Id = ObjectIdentifier.newInternal(PolicyMappings_data);
-        SubjectAlternativeName_Id =
-            ObjectIdentifier.newInternal(SubjectAlternativeName_data);
-        IssuerAlternativeName_Id =
-            ObjectIdentifier.newInternal(IssuerAlternativeName_data);
-        ExtendedKeyUsage_Id = ObjectIdentifier.newInternal(ExtendedKeyUsage_data);
-        InhibitAnyPolicy_Id = ObjectIdentifier.newInternal(InhibitAnyPolicy_data);
-        SubjectDirectoryAttributes_Id =
-            ObjectIdentifier.newInternal(SubjectDirectoryAttributes_data);
-        BasicConstraints_Id =
-            ObjectIdentifier.newInternal(BasicConstraints_data);
-        ReasonCode_Id = ObjectIdentifier.newInternal(ReasonCode_data);
-        HoldInstructionCode_Id  =
-            ObjectIdentifier.newInternal(HoldInstructionCode_data);
-        InvalidityDate_Id = ObjectIdentifier.newInternal(InvalidityDate_data);
-
-        NameConstraints_Id = ObjectIdentifier.newInternal(NameConstraints_data);
-        PolicyConstraints_Id =
-            ObjectIdentifier.newInternal(PolicyConstraints_data);
-        CRLDistributionPoints_Id =
-            ObjectIdentifier.newInternal(CRLDistributionPoints_data);
-        CRLNumber_Id =
-            ObjectIdentifier.newInternal(CRLNumber_data);
-        IssuingDistributionPoint_Id =
-            ObjectIdentifier.newInternal(IssuingDistributionPoint_data);
-        DeltaCRLIndicator_Id =
-            ObjectIdentifier.newInternal(DeltaCRLIndicator_data);
-        CertificateIssuer_Id =
-            ObjectIdentifier.newInternal(CertificateIssuer_data);
-        AuthInfoAccess_Id =
-            ObjectIdentifier.newInternal(AuthInfoAccess_data);
-        SubjectInfoAccess_Id =
-            ObjectIdentifier.newInternal(SubjectInfoAccess_data);
-        FreshestCRL_Id = ObjectIdentifier.newInternal(FreshestCRL_data);
+	AuthorityKey_Id = ObjectIdentifier.newInternal(AuthorityKey_data);
+	SubjectKey_Id   = ObjectIdentifier.newInternal(SubjectKey_data);
+	KeyUsage_Id     = ObjectIdentifier.newInternal(KeyUsage_data);
+	PrivateKeyUsage_Id = ObjectIdentifier.newInternal(PrivateKeyUsage_data);
+	CertificatePolicies_Id =
+	    ObjectIdentifier.newInternal(CertificatePolicies_data);
+	PolicyMappings_Id = ObjectIdentifier.newInternal(PolicyMappings_data);
+	SubjectAlternativeName_Id =
+	    ObjectIdentifier.newInternal(SubjectAlternativeName_data);
+	IssuerAlternativeName_Id =
+	    ObjectIdentifier.newInternal(IssuerAlternativeName_data);
+	ExtendedKeyUsage_Id = ObjectIdentifier.newInternal(ExtendedKeyUsage_data);
+	InhibitAnyPolicy_Id = ObjectIdentifier.newInternal(InhibitAnyPolicy_data);
+	SubjectDirectoryAttributes_Id =
+	    ObjectIdentifier.newInternal(SubjectDirectoryAttributes_data);
+	BasicConstraints_Id =
+	    ObjectIdentifier.newInternal(BasicConstraints_data);
+	ReasonCode_Id = ObjectIdentifier.newInternal(ReasonCode_data);
+	HoldInstructionCode_Id  =
+	    ObjectIdentifier.newInternal(HoldInstructionCode_data);
+	InvalidityDate_Id = ObjectIdentifier.newInternal(InvalidityDate_data);
+	
+	NameConstraints_Id = ObjectIdentifier.newInternal(NameConstraints_data);
+	PolicyConstraints_Id =
+	    ObjectIdentifier.newInternal(PolicyConstraints_data);
+	CRLDistributionPoints_Id =
+	    ObjectIdentifier.newInternal(CRLDistributionPoints_data);
+	CRLNumber_Id =
+	    ObjectIdentifier.newInternal(CRLNumber_data);
+	IssuingDistributionPoint_Id =
+	    ObjectIdentifier.newInternal(IssuingDistributionPoint_data);
+	DeltaCRLIndicator_Id =
+	    ObjectIdentifier.newInternal(DeltaCRLIndicator_data);
+	CertificateIssuer_Id =
+	    ObjectIdentifier.newInternal(CertificateIssuer_data);
+	AuthInfoAccess_Id =
+	    ObjectIdentifier.newInternal(AuthInfoAccess_data);
+	SubjectInfoAccess_Id =
+	    ObjectIdentifier.newInternal(SubjectInfoAccess_data);
+	FreshestCRL_Id = ObjectIdentifier.newInternal(FreshestCRL_data);
     }
 }
+

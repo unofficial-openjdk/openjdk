@@ -29,55 +29,55 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import java.text.*;
-
+  
 public class HttpInputStream implements Runnable {
 
   ServerSocket serverSock;
 
   public void run() {
       try {
-          Socket s = serverSock.accept();
-          InputStream in = s.getInputStream();
-          byte b[] = new byte[4096];
+	  Socket s = serverSock.accept();
+	  InputStream in = s.getInputStream();
+	  byte b[] = new byte[4096];
 
-          // assume we read the entire http request
-          // (bad assumption but okay for test case)
-          int nread = in.read(b);
+	  // assume we read the entire http request
+  	  // (bad assumption but okay for test case)
+	  int nread = in.read(b);
 
-          OutputStream o = s.getOutputStream();
+	  OutputStream o = s.getOutputStream();
 
-          o.write( "HTTP/1.1 200 OK".getBytes() );
-          o.write( "Content-Length: 20".getBytes() );
-          o.write( (byte)'\r' );
-          o.write( (byte)'\n' );
-          o.write( (byte)'\r' );
-          o.write( (byte)'\n' );
+	  o.write( "HTTP/1.1 200 OK".getBytes() );
+	  o.write( "Content-Length: 20".getBytes() );
+	  o.write( (byte)'\r' );
+	  o.write( (byte)'\n' );
+	  o.write( (byte)'\r' );
+	  o.write( (byte)'\n' );
 
-          for (int i = 0; i < 20; i++) {
-              o.write((byte)0xff);
-          }
+	  for (int i = 0; i < 20; i++) {
+	      o.write((byte)0xff);
+	  }
 
-          o.flush();
-          o.close();
+	  o.flush();
+	  o.close();
 
       } catch (Exception e) { }
   }
+  
 
-
-  public HttpInputStream() throws Exception {
+  public HttpInputStream() throws Exception {  
 
      serverSock = new ServerSocket(0);
      int port = serverSock.getLocalPort();
-
+   
      Thread thr = new Thread(this);
      thr.start();
 
      Date date = new Date(new Date().getTime()-1440000); // this time yesterday
      URL url;
      HttpURLConnection con;
-
-     url = new URL("http://localhost:" + String.valueOf(port) +
-                   "/anything");
+    
+     url = new URL("http://localhost:" + String.valueOf(port) + 
+		   "/anything");
      con = (HttpURLConnection)url.openConnection();
 
      int ret = con.getResponseCode();
@@ -85,11 +85,11 @@ public class HttpInputStream implements Runnable {
      InputStream is = con.getInputStream();
      int i = 0, count = 0;
      while ((i = is.read()) != -1) {
-         System.out.println("i = "+i);
-         count++;
+	 System.out.println("i = "+i);
+	 count++;
      }
      if (count != 20) {
-         throw new RuntimeException("HttpInputStream.read() failed with 0xff");
+	 throw new RuntimeException("HttpInputStream.read() failed with 0xff"); 
      }
   }
 

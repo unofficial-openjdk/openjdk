@@ -38,6 +38,7 @@ import java.io.*;
  * See Annex H on page 556 of the SGML handbook for more information.
  *
  * @author   Arthur van Hoff
+ * @version  %I%,%G%
  *
  */
 public final class ContentModel implements Serializable {
@@ -63,23 +64,23 @@ public final class ContentModel implements Serializable {
      * Create a content model for an element.
      */
     public ContentModel(Element content) {
-        this(0, content, null);
+	this(0, content, null);
     }
 
     /**
      * Create a content model of a particular type.
      */
     public ContentModel(int type, ContentModel content) {
-        this(type, content, null);
+	this(type, content, null);
     }
 
     /**
      * Create a content model of a particular type.
      */
     public ContentModel(int type, Object content, ContentModel next) {
-        this.type = type;
-        this.content = content;
-        this.next = next;
+	this.type = type;
+	this.content = content;
+	this.next = next;
     }
 
     /**
@@ -87,32 +88,32 @@ public final class ContentModel implements Serializable {
      * match an empty input stream.
      */
     public boolean empty() {
-        switch (type) {
-          case '*':
-          case '?':
-            return true;
+	switch (type) {
+	  case '*':
+	  case '?':
+	    return true;
 
-          case '+':
-          case '|':
-            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
-                if (m.empty()) {
-                    return true;
-                }
-            }
-            return false;
+	  case '+':
+	  case '|':
+	    for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+		if (m.empty()) {
+		    return true;
+		}
+	    }
+	    return false;
 
-          case ',':
-          case '&':
-            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
-                if (!m.empty()) {
-                    return false;
-                }
-            }
-            return true;
+	  case ',':
+	  case '&':
+	    for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+		if (!m.empty()) {
+		    return false;
+		}
+	    }
+	    return true;
 
-          default:
-            return false;
-        }
+	  default:
+	    return false;
+	}
     }
 
     /**
@@ -120,22 +121,22 @@ public final class ContentModel implements Serializable {
      * part of the this contentModel.
      */
      public void getElements(Vector<Element> elemVec) {
-         switch (type) {
-         case '*':
-         case '?':
-         case '+':
-             ((ContentModel)content).getElements(elemVec);
-             break;
-         case ',':
-         case '|':
-         case '&':
-             for (ContentModel m=(ContentModel)content; m != null; m=m.next){
-                 m.getElements(elemVec);
-             }
-             break;
-         default:
-             elemVec.addElement((Element)content);
-         }
+	 switch (type) {
+	 case '*':
+	 case '?':
+	 case '+':
+	     ((ContentModel)content).getElements(elemVec);
+	     break;
+	 case ',':
+	 case '|':
+	 case '&':
+	     for (ContentModel m=(ContentModel)content; m != null; m=m.next){
+		 m.getElements(elemVec);
+	     }
+	     break;
+	 default:
+	     elemVec.addElement((Element)content);
+	 }
      }
 
      private boolean valSet[];
@@ -149,46 +150,46 @@ public final class ContentModel implements Serializable {
      * first token in the input stream.
      */
     public boolean first(Object token) {
-        switch (type) {
-          case '*':
-          case '?':
-          case '+':
-            return ((ContentModel)content).first(token);
+	switch (type) {
+	  case '*':
+	  case '?':
+	  case '+':
+	    return ((ContentModel)content).first(token);
 
-          case ',':
-            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
-                if (m.first(token)) {
-                    return true;
-                }
-                if (!m.empty()) {
-                    return false;
-                }
-            }
-            return false;
+	  case ',':
+	    for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+		if (m.first(token)) {
+		    return true;
+		}
+		if (!m.empty()) {
+		    return false;
+		}
+	    }
+	    return false;
 
-          case '|':
-          case '&': {
-            Element e = (Element) token;
-            if (valSet == null) {
-                valSet = new boolean[Element.maxIndex + 1];
-                val = new boolean[Element.maxIndex + 1];
-                // All Element instances are created before this ever executes
-            }
-            if (valSet[e.index]) {
-                return val[e.index];
-            }
-            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
-                if (m.first(token)) {
-                    val[e.index] = true;
-                    break;
-                }
-            }
-            valSet[e.index] = true;
-            return val[e.index];
-          }
+	  case '|':
+	  case '&': {
+	    Element e = (Element) token;
+	    if (valSet == null) {
+		valSet = new boolean[Element.maxIndex + 1];
+		val = new boolean[Element.maxIndex + 1];
+		// All Element instances are created before this ever executes
+	    }
+	    if (valSet[e.index]) {
+		return val[e.index];
+	    }
+	    for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+		if (m.first(token)) {
+		    val[e.index] = true;
+		    break;
+		}
+	    }
+	    valSet[e.index] = true;
+	    return val[e.index];
+	  }
 
-          default:
-            return (content == token);
+	  default:
+	    return (content == token);
             // PENDING: refer to comment in ContentModelState
 /*
               if (content == token) {
@@ -200,56 +201,56 @@ public final class ContentModel implements Serializable {
               }
               return false;
 */
-        }
+	}
     }
 
     /**
      * Return the element that must be next.
      */
     public Element first() {
-        switch (type) {
-          case '&':
-          case '|':
-          case '*':
-          case '?':
-            return null;
+	switch (type) {
+	  case '&':
+	  case '|':
+	  case '*':
+	  case '?':
+	    return null;
 
-          case '+':
-          case ',':
-            return ((ContentModel)content).first();
+	  case '+':
+	  case ',':
+	    return ((ContentModel)content).first();
 
-          default:
-            return (Element)content;
-        }
+	  default:
+	    return (Element)content;
+	}
     }
 
     /**
      * Convert to a string.
      */
     public String toString() {
-        switch (type) {
-          case '*':
-            return content + "*";
-          case '?':
-            return content + "?";
-          case '+':
-            return content + "+";
+	switch (type) {
+	  case '*':
+	    return content + "*";
+	  case '?':
+	    return content + "?";
+	  case '+':
+	    return content + "+";
 
-          case ',':
-          case '|':
-          case '&':
-            char data[] = {' ', (char)type, ' '};
-            String str = "";
-            for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
-                str = str + m;
-                if (m.next != null) {
-                    str += new String(data);
-                }
-            }
-            return "(" + str + ")";
+	  case ',':
+	  case '|':
+	  case '&':
+	    char data[] = {' ', (char)type, ' '};
+	    String str = "";
+	    for (ContentModel m = (ContentModel)content ; m != null ; m = m.next) {
+		str = str + m;
+		if (m.next != null) {
+		    str += new String(data);
+		}
+	    }
+	    return "(" + str + ")";
 
-          default:
-            return content.toString();
-        }
+	  default:
+	    return content.toString();
+	}
     }
 }

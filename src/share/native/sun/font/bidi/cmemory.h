@@ -64,3 +64,4 @@
 #define icu_memcmp(buffer1, buffer2, size) memcmp(buffer1, buffer2,size)
 
 #endif
+

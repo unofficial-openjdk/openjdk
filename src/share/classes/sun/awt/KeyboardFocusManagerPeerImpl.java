@@ -45,13 +45,13 @@ public class KeyboardFocusManagerPeerImpl implements KeyboardFocusManagerPeer {
     public Window getCurrentFocusedWindow() {
         return getNativeFocusedWindow();
     }
-
+    
     public void setCurrentFocusOwner(Component comp) {
     }
 
     public Component getCurrentFocusOwner() {
         return getNativeFocusOwner();
-    }
+    }    
     public void clearGlobalFocusOwner(Window activeWindow) {
         clearNativeGlobalFocusOwner(activeWindow);
     }
@@ -68,6 +68,6 @@ public class KeyboardFocusManagerPeerImpl implements KeyboardFocusManagerPeer {
             ite.printStackTrace();
         } catch (IllegalAccessException ex) {
             ex.printStackTrace();
-        }
+        }        
     }
 }

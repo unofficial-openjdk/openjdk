@@ -42,6 +42,7 @@ import javax.swing.plaf.basic.BasicSplitPaneDivider;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version 1.2 10/25/97
  * @author Jeff Dinkins
  */
 public class WindowsSplitPaneDivider extends BasicSplitPaneDivider
@@ -52,7 +53,7 @@ public class WindowsSplitPaneDivider extends BasicSplitPaneDivider
      */
     public WindowsSplitPaneDivider(BasicSplitPaneUI ui) {
         super(ui);
-    }
+    } 
 
     /**
       * Paints the divider.

@@ -25,7 +25,7 @@
  * @test
  * @bug 4092605
  * @summary Test HttpURLConnection setIfModifiedSince
- *
+ * 
  */
 
 import java.net.*;
@@ -36,54 +36,54 @@ public class Modified implements Runnable {
     ServerSocket ss;
 
     public void run() {
-        try {
-            Socket s = ss.accept();
-            boolean gotIfModified = false;
+	try {
+	    Socket s = ss.accept();
+	    boolean gotIfModified = false;
 
-            BufferedReader in = new BufferedReader(
-                new InputStreamReader(s.getInputStream()) );
+	    BufferedReader in = new BufferedReader(
+		new InputStreamReader(s.getInputStream()) );
 
-            String str = null;
-            do {
-                str = in.readLine();
-                if (str.startsWith("If-Modified-Since")) {
-                    gotIfModified = true;
-                }
-                if (str.equals("")) {
-                    break;
-                }
-            } while (str != null);
+	    String str = null;
+	    do {
+		str = in.readLine();
+		if (str.startsWith("If-Modified-Since")) {
+		    gotIfModified = true;
+		}
+		if (str.equals("")) {
+		    break;
+		}
+	    } while (str != null);
 
             PrintStream out = new PrintStream(
                                  new BufferedOutputStream(
                                     s.getOutputStream() ));
 
-            if (gotIfModified) {
-                out.print("HTTP/1.1 304 Not Modified\r\n");
-            } else {
-                out.print("HTTP/1.1 200 OK\r\n");
-            }
+	    if (gotIfModified) {
+		out.print("HTTP/1.1 304 Not Modified\r\n");
+	    } else {
+		out.print("HTTP/1.1 200 OK\r\n");
+	    }
 
-            out.print("Content-Type: text/html\r\n");
-            out.print("Connection: close\r\n");
-            out.print("\r\n");
-            out.flush();
+	    out.print("Content-Type: text/html\r\n");
+	    out.print("Connection: close\r\n");
+	    out.print("\r\n");
+	    out.flush();
+	
+	    s.close();
 
-            s.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
     }
 
     Modified() throws Exception {
 
-        ss = new ServerSocket(0);
-        Thread thr = new Thread(this);
-        thr.start();
+	ss = new ServerSocket(0);
+	Thread thr = new Thread(this);
+	thr.start();
 
         URL testURL = new URL("http://localhost:" + ss.getLocalPort() +
-                              "/index.html");
+			      "/index.html");
         URLConnection URLConn = testURL.openConnection();
         HttpURLConnection httpConn;
 
@@ -98,6 +98,6 @@ public class Modified implements Runnable {
     }
 
     public static void main(String args[]) throws Exception {
-        new Modified();
+	new Modified();
     }
 }

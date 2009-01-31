@@ -45,15 +45,15 @@ extern "C" int  JINVOKERAPI MakeJavaVMInitArgs( void** ppArgs );
 extern "C" void JINVOKERAPI FreeJavaVMInitArgs( void* pArgs );
 
 // Static wrapper on FindClass() JNI function.
-extern "C" int  JINVOKERAPI FindClass( JNIEnv* pEnv,
-                                       const char* szName,
+extern "C" int  JINVOKERAPI FindClass( JNIEnv* pEnv, 
+                                       const char* szName, 
                                        jclass*     ppClass );
 
 // Static wrapper on GetStaticMethodID() JNI function.
 extern "C" int JINVOKERAPI GetStaticMethodID( JNIEnv*     pEnv,
-                                              jclass      pClass,
-                                              const char* szName,
-                                              const char* szArgs,
+                                              jclass      pClass, 
+                                              const char* szName, 
+                                              const char* szArgs, 
                                               jmethodID*  ppMid );
 
 // Static wrapper on NewObjectArray() JNI function.
@@ -70,3 +70,4 @@ extern "C" int JINVOKERAPI CallStaticVoidMethod( JNIEnv*   pEnv,
 
 // Static wrapper on DestroyJavaVM() JNI function.
 extern "C" int JINVOKERAPI DestroyJavaVM( JavaVM* pEnv );
+

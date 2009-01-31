@@ -32,7 +32,7 @@ import java.io.*;
 
 public class ClosedChannelTransfer {
     public static void main (String args []) throws Exception {
-        File file = File.createTempFile("test1", null);
+        File file = File.createTempFile("test1", null);   
         file.deleteOnExit();
         FileChannel channel = (new RandomAccessFile("aaa","rw")).getChannel();
         test1(channel);

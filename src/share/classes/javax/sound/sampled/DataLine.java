@@ -62,12 +62,13 @@ package javax.sound.sampled;
  * for a more complete description.
  *
  * @author Kara Kytle
+ * @version %I%, %E%
  * @see LineEvent
  * @since 1.3
  */
 public interface DataLine extends Line {
-
-
+    
+    
     /**
      * Drains queued data from the line by continuing data I/O until the
      * data line's internal buffer has been emptied.
@@ -82,7 +83,7 @@ public interface DataLine extends Line {
      * @see #flush()
      */
     public void drain();
-
+    
     /**
      * Flushes queued data from the line.  The flushed data is discarded.
      * In some cases, not all queued data can be discarded.  For example, a
@@ -98,7 +99,7 @@ public interface DataLine extends Line {
      * @see #drain()
      */
     public void flush();
-
+    
     /**
      * Allows a line to engage in data I/O.  If invoked on a line
      * that is already running, this method does nothing.  Unless the data in
@@ -112,7 +113,7 @@ public interface DataLine extends Line {
      * @see LineEvent
      */
     public void start();
-
+    
     /**
      * Stops the line.  A stopped line should cease I/O activity.
      * If the line is open and running, however, it should retain the resources required
@@ -130,7 +131,7 @@ public interface DataLine extends Line {
      * @see LineEvent
      */
     public void stop();
-
+    
     /**
      * Indicates whether the line is running.  The default is <code>false</code>.
      * An open line begins running when the first data is presented in response to an
@@ -142,7 +143,7 @@ public interface DataLine extends Line {
      * @see #stop()
      */
     public boolean isRunning();
-
+    
     /**
      * Indicates whether the line is engaging in active I/O (such as playback
      * or capture).  When an inactive line becomes active, it sends a
@@ -158,7 +159,7 @@ public interface DataLine extends Line {
      * @see LineListener
      */
     public boolean isActive();
-
+    
     /**
      * Obtains the current format (encoding, sample rate, number of channels,
      * etc.) of the data line's audio data.
@@ -177,7 +178,7 @@ public interface DataLine extends Line {
      * @see AudioFormat
      */
     public AudioFormat getFormat();
-
+    
     /**
      * Obtains the maximum number of bytes of data that will fit in the data line's
      * internal buffer.  For a source data line, this is the size of the buffer to
@@ -189,7 +190,7 @@ public interface DataLine extends Line {
      * @return the size of the buffer in bytes
      */
     public int getBufferSize();
-
+    
     /**
      * Obtains the number of bytes of data currently available to the
      * application for processing in the data line's internal buffer.  For a
@@ -210,7 +211,7 @@ public interface DataLine extends Line {
      * @return the amount of data available, in bytes
      */
     public int available();
-
+    
     /**
      * Obtains the current position in the audio data, in sample frames.
      * The frame position measures the number of sample
@@ -222,7 +223,7 @@ public interface DataLine extends Line {
      * @see #getLongFramePosition()
      */
     public int getFramePosition();
-
+    
 
     /**
      * Obtains the current position in the audio data, in sample frames.
@@ -233,7 +234,7 @@ public interface DataLine extends Line {
      * @since 1.5
      */
     public long getLongFramePosition();
-
+ 
 
     /**
      * Obtains the current position in the audio data, in microseconds.
@@ -247,7 +248,7 @@ public interface DataLine extends Line {
      * @return the number of microseconds of data processed since the line was opened
      */
     public long getMicrosecondPosition();
-
+    
     /**
      * Obtains the current volume level for the line.  This level is a measure
      * of the signal's current amplitude, and should not be confused with the
@@ -259,7 +260,7 @@ public interface DataLine extends Line {
      * <code>{@link AudioSystem#NOT_SPECIFIED}</code>
      */
     public float getLevel();
-
+    
     /**
      * Besides the class information inherited from its superclass,
      * <code>DataLine.Info</code> provides additional information specific to data lines.
@@ -278,219 +279,220 @@ public interface DataLine extends Line {
      *
      * @see Line.Info
      * @author Kara Kytle
+     * @version %I%, %E%
      * @since 1.3
      */
     public static class Info extends Line.Info {
+	
+	private AudioFormat[] formats;
+	private int minBufferSize;
+	private int maxBufferSize;
+	
+	/**
+	 * Constructs a data line's info object from the specified information,
+	 * which includes a set of supported audio formats and a range for the buffer size.
+	 * This constructor is typically used by mixer implementations
+	 * when returning information about a supported line.
+	 *
+	 * @param lineClass the class of the data line described by the info object
+	 * @param formats set of formats supported
+	 * @param minBufferSize minimum buffer size supported by the data line, in bytes
+	 * @param maxBufferSize maximum buffer size supported by the data line, in bytes
+	 */
+	public Info(Class<?> lineClass, AudioFormat[] formats, int minBufferSize, int maxBufferSize) {
+	    
+	    super(lineClass);
+	    
+	    if (formats == null) {
+		this.formats = new AudioFormat[0];
+	    } else {
+		this.formats = formats;
+	    }
+	    
+	    this.minBufferSize = minBufferSize;
+	    this.maxBufferSize = maxBufferSize;
+	}
+	
+	
+	/**
+	 * Constructs a data line's info object from the specified information,
+	 * which includes a single audio format and a desired buffer size.
+	 * This constructor is typically used by an application to
+	 * describe a desired line.
+	 *
+	 * @param lineClass the class of the data line described by the info object
+	 * @param format desired format
+	 * @param bufferSize desired buffer size in bytes
+	 */
+	public Info(Class<?> lineClass, AudioFormat format, int bufferSize) {
+	    
+	    super(lineClass);
+	    
+	    if (format == null) {
+		this.formats = new AudioFormat[0];
+	    } else {
+		AudioFormat[] formats = { format };
+		this.formats = formats;
+	    }
+	    
+	    this.minBufferSize = bufferSize;
+	    this.maxBufferSize = bufferSize;
+	}
+	
+	
+	/**
+	 * Constructs a data line's info object from the specified information,
+	 * which includes a single audio format.
+	 * This constructor is typically used by an application to
+	 * describe a desired line.
+	 *
+	 * @param lineClass the class of the data line described by the info object
+	 * @param format desired format
+	 */
+	public Info(Class<?> lineClass, AudioFormat format) {
+	    this(lineClass, format, AudioSystem.NOT_SPECIFIED);
+	}
+	
+	
+	/**
+	 * Obtains a set of audio formats supported by the data line.
+	 * Note that <code>isFormatSupported(AudioFormat)</code> might return
+	 * <code>true</code> for certain additional formats that are missing from
+	 * the set returned by <code>getFormats()</code>.  The reverse is not
+	 * the case: <code>isFormatSupported(AudioFormat)</code> is guaranteed to return
+	 * <code>true</code> for all formats returned by <code>getFormats()</code>.
+	 *
+	 * Some fields in the AudioFormat instances can be set to
+	 * {@link javax.sound.sampled.AudioSystem#NOT_SPECIFIED NOT_SPECIFIED}
+	 * if that field does not apply to the format,
+	 * or if the format supports a wide range of values for that field.
+	 * For example, a multi-channel device supporting up to
+	 * 64 channels, could set the channel field in the
+	 * <code>AudioFormat</code> instances returned by this
+	 * method to <code>NOT_SPECIFIED</code>.
+	 *
+	 * @return a set of supported audio formats.
+	 * @see #isFormatSupported(AudioFormat)
+	 */
+	public AudioFormat[] getFormats() {
+	    
+	    AudioFormat[] returnedArray = new AudioFormat[formats.length];
+	    System.arraycopy(formats, 0, returnedArray, 0, formats.length);
+	    return returnedArray;
+	}
+	
+	/**
+	 * Indicates whether this data line supports a particular audio format.
+	 * The default implementation of this method simply returns <code>true</code> if
+	 * the specified format matches any of the supported formats.
+	 *
+	 * @param format the audio format for which support is queried.
+	 * @return <code>true</code> if the format is supported, otherwise <code>false</code>
+	 * @see #getFormats
+	 * @see AudioFormat#matches
+	 */
+	public boolean isFormatSupported(AudioFormat format) {
+	    
+	    for (int i = 0; i < formats.length; i++) {
+		if (format.matches(formats[i])) {
+		    return true;
+		}
+	    }
+	    
+	    return false;
+	}
+	
+	/**
+	 * Obtains the minimum buffer size supported by the data line.
+	 * @return minimum buffer size in bytes, or <code>AudioSystem.NOT_SPECIFIED</code>
+	 */
+	public int getMinBufferSize() {
+	    return minBufferSize;
+	}
+	
+	
+	/**
+	 * Obtains the maximum buffer size supported by the data line.
+	 * @return maximum buffer size in bytes, or <code>AudioSystem.NOT_SPECIFIED</code>
+	 */
+	public int getMaxBufferSize() {
+	    return maxBufferSize;
+	}
+	
+	
+	/**
+	 * Determines whether the specified info object matches this one.
+	 * To match, the superclass match requirements must be met.  In
+	 * addition, this object's minimum buffer size must be at least as
+	 * large as that of the object specified, its maximum buffer size must
+	 * be at most as large as that of the object specified, and all of its
+	 * formats must match formats supported by the object specified.
+	 * @return <code>true</code> if this object matches the one specified,
+	 * otherwise <code>false</code>.
+	 */
+	public boolean matches(Line.Info info) {
+	    
+	    if (! (super.matches(info)) ) {
+		return false;
+	    }
+	    
+	    Info dataLineInfo = (Info)info;
 
-        private AudioFormat[] formats;
-        private int minBufferSize;
-        private int maxBufferSize;
-
-        /**
-         * Constructs a data line's info object from the specified information,
-         * which includes a set of supported audio formats and a range for the buffer size.
-         * This constructor is typically used by mixer implementations
-         * when returning information about a supported line.
-         *
-         * @param lineClass the class of the data line described by the info object
-         * @param formats set of formats supported
-         * @param minBufferSize minimum buffer size supported by the data line, in bytes
-         * @param maxBufferSize maximum buffer size supported by the data line, in bytes
-         */
-        public Info(Class<?> lineClass, AudioFormat[] formats, int minBufferSize, int maxBufferSize) {
-
-            super(lineClass);
-
-            if (formats == null) {
-                this.formats = new AudioFormat[0];
-            } else {
-                this.formats = formats;
-            }
-
-            this.minBufferSize = minBufferSize;
-            this.maxBufferSize = maxBufferSize;
-        }
-
-
-        /**
-         * Constructs a data line's info object from the specified information,
-         * which includes a single audio format and a desired buffer size.
-         * This constructor is typically used by an application to
-         * describe a desired line.
-         *
-         * @param lineClass the class of the data line described by the info object
-         * @param format desired format
-         * @param bufferSize desired buffer size in bytes
-         */
-        public Info(Class<?> lineClass, AudioFormat format, int bufferSize) {
-
-            super(lineClass);
-
-            if (format == null) {
-                this.formats = new AudioFormat[0];
-            } else {
-                AudioFormat[] formats = { format };
-                this.formats = formats;
-            }
-
-            this.minBufferSize = bufferSize;
-            this.maxBufferSize = bufferSize;
-        }
-
-
-        /**
-         * Constructs a data line's info object from the specified information,
-         * which includes a single audio format.
-         * This constructor is typically used by an application to
-         * describe a desired line.
-         *
-         * @param lineClass the class of the data line described by the info object
-         * @param format desired format
-         */
-        public Info(Class<?> lineClass, AudioFormat format) {
-            this(lineClass, format, AudioSystem.NOT_SPECIFIED);
-        }
-
-
-        /**
-         * Obtains a set of audio formats supported by the data line.
-         * Note that <code>isFormatSupported(AudioFormat)</code> might return
-         * <code>true</code> for certain additional formats that are missing from
-         * the set returned by <code>getFormats()</code>.  The reverse is not
-         * the case: <code>isFormatSupported(AudioFormat)</code> is guaranteed to return
-         * <code>true</code> for all formats returned by <code>getFormats()</code>.
-         *
-         * Some fields in the AudioFormat instances can be set to
-         * {@link javax.sound.sampled.AudioSystem#NOT_SPECIFIED NOT_SPECIFIED}
-         * if that field does not apply to the format,
-         * or if the format supports a wide range of values for that field.
-         * For example, a multi-channel device supporting up to
-         * 64 channels, could set the channel field in the
-         * <code>AudioFormat</code> instances returned by this
-         * method to <code>NOT_SPECIFIED</code>.
-         *
-         * @return a set of supported audio formats.
-         * @see #isFormatSupported(AudioFormat)
-         */
-        public AudioFormat[] getFormats() {
-
-            AudioFormat[] returnedArray = new AudioFormat[formats.length];
-            System.arraycopy(formats, 0, returnedArray, 0, formats.length);
-            return returnedArray;
-        }
-
-        /**
-         * Indicates whether this data line supports a particular audio format.
-         * The default implementation of this method simply returns <code>true</code> if
-         * the specified format matches any of the supported formats.
-         *
-         * @param format the audio format for which support is queried.
-         * @return <code>true</code> if the format is supported, otherwise <code>false</code>
-         * @see #getFormats
-         * @see AudioFormat#matches
-         */
-        public boolean isFormatSupported(AudioFormat format) {
-
-            for (int i = 0; i < formats.length; i++) {
-                if (format.matches(formats[i])) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /**
-         * Obtains the minimum buffer size supported by the data line.
-         * @return minimum buffer size in bytes, or <code>AudioSystem.NOT_SPECIFIED</code>
-         */
-        public int getMinBufferSize() {
-            return minBufferSize;
-        }
-
-
-        /**
-         * Obtains the maximum buffer size supported by the data line.
-         * @return maximum buffer size in bytes, or <code>AudioSystem.NOT_SPECIFIED</code>
-         */
-        public int getMaxBufferSize() {
-            return maxBufferSize;
-        }
-
-
-        /**
-         * Determines whether the specified info object matches this one.
-         * To match, the superclass match requirements must be met.  In
-         * addition, this object's minimum buffer size must be at least as
-         * large as that of the object specified, its maximum buffer size must
-         * be at most as large as that of the object specified, and all of its
-         * formats must match formats supported by the object specified.
-         * @return <code>true</code> if this object matches the one specified,
-         * otherwise <code>false</code>.
-         */
-        public boolean matches(Line.Info info) {
-
-            if (! (super.matches(info)) ) {
-                return false;
-            }
-
-            Info dataLineInfo = (Info)info;
-
-            // treat anything < 0 as NOT_SPECIFIED
-            // demo code in old Java Sound Demo used a wrong buffer calculation
-            // that would lead to arbitrary negative values
-            if ((getMaxBufferSize() >= 0) && (dataLineInfo.getMaxBufferSize() >= 0)) {
-                if (getMaxBufferSize() > dataLineInfo.getMaxBufferSize()) {
-                    return false;
-                }
-            }
-
-            if ((getMinBufferSize() >= 0) && (dataLineInfo.getMinBufferSize() >= 0)) {
-                if (getMinBufferSize() < dataLineInfo.getMinBufferSize()) {
-                    return false;
-                }
-            }
-
-            AudioFormat[] localFormats = getFormats();
-
-            if (localFormats != null) {
-
-                for (int i = 0; i < localFormats.length; i++) {
-                    if (! (localFormats[i] == null) ) {
-                        if (! (dataLineInfo.isFormatSupported(localFormats[i])) ) {
-                            return false;
-                        }
-                    }
-                }
-            }
-
-            return true;
-        }
-
-        /**
-         * Obtains a textual description of the data line info.
-         * @return a string description
-         */
-        public String toString() {
-
-            StringBuffer buf = new StringBuffer();
-
-            if ( (formats.length == 1) && (formats[0] != null) ) {
-                buf.append(" supporting format " + formats[0]);
-            } else if (getFormats().length > 1) {
-                buf.append(" supporting " + getFormats().length + " audio formats");
-            }
-
-            if ( (minBufferSize != AudioSystem.NOT_SPECIFIED) && (maxBufferSize != AudioSystem.NOT_SPECIFIED) ) {
-                buf.append(", and buffers of " + minBufferSize + " to " + maxBufferSize + " bytes");
-            } else if ( (minBufferSize != AudioSystem.NOT_SPECIFIED) && (minBufferSize > 0) ) {
-                buf.append(", and buffers of at least " + minBufferSize + " bytes");
-            } else if (maxBufferSize != AudioSystem.NOT_SPECIFIED) {
-                buf.append(", and buffers of up to " + minBufferSize + " bytes");
-            }
-
-            return new String(super.toString() + buf);
-        }
+	    // treat anything < 0 as NOT_SPECIFIED
+	    // demo code in old Java Sound Demo used a wrong buffer calculation
+	    // that would lead to arbitrary negative values
+	    if ((getMaxBufferSize() >= 0) && (dataLineInfo.getMaxBufferSize() >= 0)) {
+		if (getMaxBufferSize() > dataLineInfo.getMaxBufferSize()) {
+		    return false;
+		}
+	    }
+	    
+	    if ((getMinBufferSize() >= 0) && (dataLineInfo.getMinBufferSize() >= 0)) {
+		if (getMinBufferSize() < dataLineInfo.getMinBufferSize()) {
+		    return false;
+		}
+	    }
+	    
+	    AudioFormat[] localFormats = getFormats();
+	    
+	    if (localFormats != null) {
+		
+		for (int i = 0; i < localFormats.length; i++) {
+		    if (! (localFormats[i] == null) ) {
+			if (! (dataLineInfo.isFormatSupported(localFormats[i])) ) {
+			    return false;
+			}
+		    }
+		}
+	    }
+	    
+	    return true;
+	}
+	
+	/**
+	 * Obtains a textual description of the data line info.
+	 * @return a string description
+	 */
+	public String toString() {
+	    
+	    StringBuffer buf = new StringBuffer();
+	    
+	    if ( (formats.length == 1) && (formats[0] != null) ) {
+		buf.append(" supporting format " + formats[0]);
+	    } else if (getFormats().length > 1) {
+		buf.append(" supporting " + getFormats().length + " audio formats");
+	    }
+	    
+	    if ( (minBufferSize != AudioSystem.NOT_SPECIFIED) && (maxBufferSize != AudioSystem.NOT_SPECIFIED) ) {
+		buf.append(", and buffers of " + minBufferSize + " to " + maxBufferSize + " bytes");
+	    } else if ( (minBufferSize != AudioSystem.NOT_SPECIFIED) && (minBufferSize > 0) ) {
+		buf.append(", and buffers of at least " + minBufferSize + " bytes");
+	    } else if (maxBufferSize != AudioSystem.NOT_SPECIFIED) {
+		buf.append(", and buffers of up to " + minBufferSize + " bytes");
+	    }
+	    
+	    return new String(super.toString() + buf);
+	}
     } // class Info
-
+    
 } // interface DataLine

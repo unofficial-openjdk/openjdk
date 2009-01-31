@@ -59,9 +59,9 @@ static void prtsigset(char *s, sigset_t *set)
     int sig;
     dprintf(2, "%s:", s);
     for (sig = 1; sig < _NSIG; sig++) {
-        if (sigismember(set, sig)) {
-            dprintf(2, " %d", sig);
-        }
+	if (sigismember(set, sig)) {
+	    dprintf(2, " %d", sig);
+	}
     }
     dprintf(2, "\n");
 }
@@ -90,7 +90,7 @@ susp_handler(int sig)
     sigsuspend(&set);
 }
 
-static void
+static void 
 #ifdef SA_SIGINFO
 resu_handler(int sig, siginfo_t* info, void* arg)
 #else
@@ -111,7 +111,7 @@ np_initialize()
     int err;
 
     /* Signal numbers used to suspend and resume */
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ == 0
+#if __GLIBC__ == 2 && __GLIBC_MINOR__ == 0 
 #ifdef SIGUNUSED
     sr_sigsusp = SIGUNUSED;
 #else
@@ -160,7 +160,7 @@ np_initialize()
     if (sigaction(sr_sigresu, &act, 0) == -1) {
         return -1;
     }
-
+    
     /* Initialize semaphore used by np_{suspend/resume} */
     if (sem_init(&sr_sem, 0, 0) == -1) {
         return SYS_ERR;
@@ -169,7 +169,7 @@ np_initialize()
     /* Initialize mutex used by np_{suspend/resume} */
     err = mutexInit(&sr_lock);
     sysAssert(err == 0);
-
+     
     return SYS_OK;
 }
 
@@ -212,12 +212,12 @@ np_suspend(sys_thread_t *tid)
     count = tid->suspend_count++;
 #ifdef LOG_THREADS
     dprintf(2, "[Suspending fromtid = %ld, tid = %ld, pid = %d, count = %d]\n",
-            pthread_self(), tid->sys_thread, tid->lwp_id, count);
+	    pthread_self(), tid->sys_thread, tid->lwp_id, count);
 #endif
     if (count == 0) {
         if (tid->selfsuspended) {
 #ifdef LOG_THREADS
-            dprintf(2,
+            dprintf(2, 
                     "[Self-suspending [tid = %ld, sys_thread = %ld]\n",
                     pthread_self(), tid->sys_thread);
 #endif
@@ -231,13 +231,13 @@ np_suspend(sys_thread_t *tid)
             return SYS_OK;
 
         } else {
-            sr_tid = tid;
+            sr_tid = tid; 
             ret = pthread_kill(tid->sys_thread, sr_sigsusp);
             if (ret == 0) {
                 sem_wait(&sr_sem);
             }
 #ifdef LOG_THREADS
-            dprintf(2,
+            dprintf(2, 
                     "[Suspended fromtid = %ld, pthread_kill(%ld, %d) = %d]\n",
                     pthread_self(), tid->sys_thread, sr_sigsusp, ret);
 #endif
@@ -246,7 +246,7 @@ np_suspend(sys_thread_t *tid)
 
     err = mutexUnlock(&sr_lock);
     sysAssert(err == 0);
-
+ 
     return ret == 0 ? SYS_OK : SYS_ERR;
 }
 
@@ -257,11 +257,11 @@ np_continue(sys_thread_t *tid)
 
     int err = mutexLock(&sr_lock);
     sysAssert(err == 0);
-
+ 
     count = --tid->suspend_count;
 #ifdef LOG_THREADS
     dprintf(2, "[Resuming fromtid = %ld, tid = %ld, pid = %d, count = %d]\n",
-            pthread_self(), tid->sys_thread, tid->lwp_id, count);
+	    pthread_self(), tid->sys_thread, tid->lwp_id, count);
 #endif
     if (count == 0) {
         if (tid->selfsuspended) {
@@ -272,8 +272,8 @@ np_continue(sys_thread_t *tid)
             ret = pthread_kill(tid->sys_thread, sr_sigresu);
         }
 #ifdef LOG_THREADS
-        dprintf(2, "[Resumed fromtid = %ld, pthread_kill(%ld, %d) = %d]\n",
-                pthread_self(), tid->sys_thread, sr_sigresu, ret);
+	dprintf(2, "[Resumed fromtid = %ld, pthread_kill(%ld, %d) = %d]\n",
+		pthread_self(), tid->sys_thread, sr_sigresu, ret);
 #endif
     } else if (count < 0) {
         /* Ignore attempts to resume a thread that has not been suspended */
@@ -299,7 +299,7 @@ np_stackinfo(void **addr, long *size)
 
     *addr = (void *)(((unsigned long)sp | (STACK_SIZE-1))+1) - 1;
     *size = STACK_SIZE;
-
+    
     return SYS_OK;
 }
 
@@ -323,12 +323,12 @@ np_single()
     /* Stop all other threads. */
     tid = ThreadQueue;
     for (i = 0; i < ActiveThreadCount && tid != 0; i++) {
-        if ((tid->sys_thread != me) && (tid->state != SUSPENDED)) {
-            np_suspend(tid);
+	if ((tid->sys_thread != me) && (tid->state != SUSPENDED)) {
+	    np_suspend(tid);
             sysAssert(VALID_SP(tid->sp, tid->stack_bottom, tid->stack_top));
-            tid->onproc = FALSE; /* REMIND: Might not need this */
-        }
-        tid = tid->next;
+	    tid->onproc = FALSE; /* REMIND: Might not need this */
+	}
+	tid = tid->next;
     }
 #ifdef LOG_THREADS
     dprintf(2, "[Leaving np_single]\n");
@@ -351,14 +351,14 @@ np_initialize_thread(sys_thread_t *tid)
     /* Set process id */
     tid->lwp_id = getpid();
     tid->suspend_count = 0;
-
+    
     /* Semaphore used for self-suspension */
     sem_init(&tid->sem_selfsuspend, 0, 0);
     tid->selfsuspended = 0;
 
 #ifdef LOG_THREADS
     dprintf(2, "[Init thread, tid = %ld, pid = %d, base = %p, size = %lu]\n",
-            pthread_self(), tid->lwp_id, tid->stack_bottom, tid->stack_size);
+	    pthread_self(), tid->lwp_id, tid->stack_bottom, tid->stack_size);
 #endif
 }
 
@@ -380,10 +380,10 @@ np_multi()
 
     tid = ThreadQueue;
     for (i = 0; i < ActiveThreadCount && tid != 0; i++) {
-        if ((tid->sys_thread != me) && (tid->state != SUSPENDED)) {
-            np_continue(tid);
-        }
-        tid = tid->next;
+	if ((tid->sys_thread != me) && (tid->state != SUSPENDED)) {
+	    np_continue(tid);
+	}
+	tid = tid->next;
     }
 }
 
@@ -409,3 +409,6 @@ np_profiler_thread_is_running(sys_thread_t *tid)
 {
     return TRUE;
 }
+
+
+

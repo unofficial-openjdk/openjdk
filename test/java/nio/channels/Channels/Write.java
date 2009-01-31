@@ -31,11 +31,11 @@ import java.nio.*;
 import java.nio.channels.*;
 
 public class Write {
-
+    
     public static void main(String[] args) throws Exception {
         byte[] bb = new byte[3];
         File testFile = File.createTempFile("test1", null);
-        testFile.deleteOnExit();
+	testFile.deleteOnExit();
 
         FileOutputStream fos = new FileOutputStream(testFile);
         FileChannel fc = fos.getChannel();

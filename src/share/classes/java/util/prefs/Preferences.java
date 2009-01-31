@@ -51,7 +51,7 @@ import java.lang.Double;
  * implementations include flat files, OS-specific registries,
  * directory servers and SQL databases.  The user of this class needn't
  * be concerned with details of the backing store.
- *
+ * 
  * <p>There are two separate trees of preference nodes, one for user
  * preferences and one for system preferences.  Each user has a separate user
  * preference tree, and all users in a given system share the same system
@@ -108,7 +108,7 @@ import java.lang.Double;
  * Machine will <i>not</i> result in the loss of pending updates -- an explicit
  * <tt>flush</tt> invocation is <i>not</i> required upon termination to ensure
  * that pending updates are made persistent.
- *
+ * 
  * <p>All of the methods that read preferences from a <tt>Preferences</tt>
  * object require the invoker to provide a default value.  The default value is
  * returned if no value has been previously set <i>or if the backing store is
@@ -149,10 +149,10 @@ import java.lang.Double;
  *    &lt;!-- The preferences element is at the root of an XML document
  *         representing a Preferences tree. --&gt;
  *    &lt;!ELEMENT preferences (root)&gt;
- *
+ *  
  *    &lt;!-- The preferences element contains an optional version attribute,
  *          which specifies version of DTD. --&gt;
- *    &lt;!ATTLIST preferences EXTERNAL_XML_VERSION CDATA "0.0" &gt
+ *    &lt;!ATTLIST preferences EXTERNAL_XML_VERSION CDATA "0.0" &gt  
  *
  *    &lt;!-- The root element has a map representing the root's preferences
  *         (if any), and one node for each child of the root (if any). --&gt;
@@ -220,6 +220,7 @@ import java.lang.Double;
  * </ol>
  *
  * @author  Josh Bloch
+ * @version %I%, %G%
  * @since   1.4
  */
 public abstract class Preferences {
@@ -227,83 +228,83 @@ public abstract class Preferences {
     private static final PreferencesFactory factory = factory();
 
     private static PreferencesFactory factory() {
-        // 1. Try user-specified system property
-        String factoryName = AccessController.doPrivileged(
-            new PrivilegedAction<String>() {
-                public String run() {
-                    return System.getProperty(
-                        "java.util.prefs.PreferencesFactory");}});
-        if (factoryName != null) {
-            // FIXME: This code should be run in a doPrivileged and
-            // not use the context classloader, to avoid being
-            // dependent on the invoking thread.
-            // Checking AllPermission also seems wrong.
-            try {
-                return (PreferencesFactory)
-                    Class.forName(factoryName, false,
-                                  ClassLoader.getSystemClassLoader())
-                    .newInstance();
-            } catch (Exception ex) {
-                try {
-                    // workaround for javaws, plugin,
-                    // load factory class using non-system classloader
-                    SecurityManager sm = System.getSecurityManager();
-                    if (sm != null) {
-                        sm.checkPermission(new java.security.AllPermission());
-                    }
-                    return (PreferencesFactory)
-                        Class.forName(factoryName, false,
-                                      Thread.currentThread()
-                                      .getContextClassLoader())
-                        .newInstance();
-                } catch (Exception e) {
-                    InternalError error = new InternalError(
-                        "Can't instantiate Preferences factory "
-                        + factoryName);
-                    error.initCause(e);
-                    throw error;
-                }
-            }
-        }
+	// 1. Try user-specified system property
+	String factoryName = AccessController.doPrivileged(
+	    new PrivilegedAction<String>() {
+		public String run() {
+		    return System.getProperty(
+			"java.util.prefs.PreferencesFactory");}});
+	if (factoryName != null) {
+	    // FIXME: This code should be run in a doPrivileged and
+	    // not use the context classloader, to avoid being
+	    // dependent on the invoking thread.
+	    // Checking AllPermission also seems wrong.
+	    try {
+		return (PreferencesFactory)
+		    Class.forName(factoryName, false,
+				  ClassLoader.getSystemClassLoader())
+		    .newInstance();
+	    } catch (Exception ex) {
+		try {
+		    // workaround for javaws, plugin,
+		    // load factory class using non-system classloader
+		    SecurityManager sm = System.getSecurityManager();
+		    if (sm != null) {
+			sm.checkPermission(new java.security.AllPermission());
+		    }
+		    return (PreferencesFactory)
+			Class.forName(factoryName, false,
+				      Thread.currentThread()
+				      .getContextClassLoader())
+			.newInstance();
+		} catch (Exception e) {
+		    InternalError error = new InternalError(
+			"Can't instantiate Preferences factory "
+			+ factoryName);
+		    error.initCause(e);
+		    throw error;
+		}
+	    }
+	}
 
-        return AccessController.doPrivileged(
-            new PrivilegedAction<PreferencesFactory>() {
-                public PreferencesFactory run() {
-                    return factory1();}});
+	return AccessController.doPrivileged(
+	    new PrivilegedAction<PreferencesFactory>() {
+		public PreferencesFactory run() {
+		    return factory1();}});
     }
 
     private static PreferencesFactory factory1() {
-        // 2. Try service provider interface
-        Iterator i = Service.providers(PreferencesFactory.class,
-                                       ClassLoader.getSystemClassLoader());
-        // choose first provider instance
-        while (i.hasNext()) {
-            try {
-                return (PreferencesFactory) i.next();
-            } catch (ServiceConfigurationError sce) {
-                if (sce.getCause() instanceof SecurityException) {
-                    // Ignore the security exception, try the next provider
-                    continue;
-                }
-                throw sce;
-            }
-        }
+	// 2. Try service provider interface
+	Iterator i = Service.providers(PreferencesFactory.class,
+				       ClassLoader.getSystemClassLoader());
+	// choose first provider instance
+	while (i.hasNext()) {
+	    try {
+		return (PreferencesFactory) i.next();
+	    } catch (ServiceConfigurationError sce) {
+		if (sce.getCause() instanceof SecurityException) {
+		    // Ignore the security exception, try the next provider
+		    continue;
+		}
+		throw sce;
+	    }
+	}
 
-        // 3. Use platform-specific system-wide default
-        String platformFactory =
-            System.getProperty("os.name").startsWith("Windows")
-            ? "java.util.prefs.WindowsPreferencesFactory"
-            : "java.util.prefs.FileSystemPreferencesFactory";
-        try {
-            return (PreferencesFactory)
-                Class.forName(platformFactory, false, null).newInstance();
-        } catch (Exception e) {
-            InternalError error = new InternalError(
-                "Can't instantiate platform default Preferences factory "
-                + platformFactory);
-            error.initCause(e);
-            throw error;
-        }
+	// 3. Use platform-specific system-wide default
+	String platformFactory =
+	    System.getProperty("os.name").startsWith("Windows")
+	    ? "java.util.prefs.WindowsPreferencesFactory"
+	    : "java.util.prefs.FileSystemPreferencesFactory";
+	try {
+	    return (PreferencesFactory)
+		Class.forName(platformFactory, false, null).newInstance();
+	} catch (Exception e) {
+	    InternalError error = new InternalError(
+		"Can't instantiate platform default Preferences factory "
+		+ platformFactory);
+	    error.initCause(e);
+	    throw error;
+	}
     }
 
     /**
@@ -327,13 +328,13 @@ public abstract class Preferences {
      * The convention is as follows: the absolute path name of the node is the
      * fully qualified package name, preceded by a slash (<tt>'/'</tt>), and
      * with each period (<tt>'.'</tt>) replaced by a slash.  For example the
-     * absolute path name of the node associated with the class
+     * absolute path name of the node associated with the class 
      * <tt>com.acme.widget.Foo</tt> is <tt>/com/acme/widget</tt>.
      *
      * <p>This convention does not apply to the unnamed package, whose
      * associated preference node is <tt>&lt;unnamed&gt;</tt>.  This node
      * is not intended for long term use, but for convenience in the early
-     * development of programs that do not yet belong to a package, and
+     * development of programs that do not yet belong to a package, and 
      * for "throwaway" programs.  <i>Valuable data should not be stored
      * at this node as it is shared by all programs that use it.</i>
      *
@@ -377,7 +378,7 @@ public abstract class Preferences {
      * <p>This convention does not apply to the unnamed package, whose
      * associated preference node is <tt>&lt;unnamed&gt;</tt>.  This node
      * is not intended for long term use, but for convenience in the early
-     * development of programs that do not yet belong to a package, and
+     * development of programs that do not yet belong to a package, and 
      * for "throwaway" programs.  <i>Valuable data should not be stored
      * at this node as it is shared by all programs that use it.</i>
      *
@@ -414,7 +415,7 @@ public abstract class Preferences {
      * of the specified object.
      *
      * @throws IllegalArgumentException if the package has node preferences
-     *         node associated with it.
+     *         node associated with it. 
      */
     private static String nodeName(Class c) {
         if (c.isArray())
@@ -444,8 +445,8 @@ public abstract class Preferences {
      * @see    RuntimePermission
      */
     public static Preferences userRoot() {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null)
+	SecurityManager security = System.getSecurityManager();
+	if (security != null)
             security.checkPermission(prefsPerm);
 
         return factory.userRoot();
@@ -460,8 +461,8 @@ public abstract class Preferences {
      * @see    RuntimePermission
      */
     public static Preferences systemRoot() {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null)
+	SecurityManager security = System.getSecurityManager();
+	if (security != null)
             security.checkPermission(prefsPerm);
 
         return factory.systemRoot();
@@ -469,7 +470,7 @@ public abstract class Preferences {
 
     /**
      * Sole constructor. (For invocation by subclass constructors, typically
-     * implicit.)
+     * implicit.) 
      */
     protected Preferences() {
     }
@@ -507,7 +508,7 @@ public abstract class Preferences {
      *         store is inaccessible.
      * @throws IllegalStateException if this node (or an ancestor) has been
      *         removed with the {@link #removeNode()} method.
-     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.  (A
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.  (A 
      *         <tt>null</tt> value for <tt>def</tt> <i>is</i> permitted.)
      */
     public abstract String get(String key, String def);
@@ -539,7 +540,7 @@ public abstract class Preferences {
      * they will be returned by succeeding calls to <tt>get</tt>.
      *
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @throws IllegalStateException if this node (or an ancestor) has been
      *         removed with the {@link #removeNode()} method.
@@ -829,7 +830,7 @@ public abstract class Preferences {
      * Returns the byte array value represented by the string associated with
      * the specified key in this preference node.  Valid strings are
      * <i>Base64</i> encoded binary data, as defined in <a
-     * href=http://www.ietf.org/rfc/rfc2045.txt>RFC 2045</a>, Section 6.8,
+     * href=http://www.ietf.org/rfc/rfc2045.txt>RFC 2045</a>, Section 6.8, 
      * with one minor change: the string must consist solely of characters
      * from the <i>Base64 Alphabet</i>; no newline characters or
      * extraneous characters are permitted.  This method is intended for use
@@ -857,7 +858,7 @@ public abstract class Preferences {
      *         a byte array.
      * @throws IllegalStateException if this node (or an ancestor) has been
      *         removed with the {@link #removeNode()} method.
-     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.  (A
+     * @throws NullPointerException if <tt>key</tt> is <tt>null</tt>.  (A 
      *         <tt>null</tt> value for <tt>def</tt> <i>is</i> permitted.)
      * @see #get(String,String)
      * @see #putByteArray(String,byte[])
@@ -877,7 +878,7 @@ public abstract class Preferences {
      * @return an array of the keys that have an associated value in this
      *         preference node.
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @throws IllegalStateException if this node (or an ancestor) has been
      *         removed with the {@link #removeNode()} method.
@@ -891,7 +892,7 @@ public abstract class Preferences {
      *
      * @return the names of the children of this preference node.
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @throws IllegalStateException if this node (or an ancestor) has been
      *         removed with the {@link #removeNode()} method.
@@ -908,7 +909,7 @@ public abstract class Preferences {
      */
     public abstract Preferences parent();
 
-    /**
+    /** 
      * Returns the named preference node in the same tree as this node,
      * creating it and any of its ancestors if they do not already exist.
      * Accepts a relative or absolute path name.  Relative path names
@@ -932,13 +933,13 @@ public abstract class Preferences {
      */
     public abstract Preferences node(String pathName);
 
-    /**
+    /** 
      * Returns true if the named preference node exists in the same tree
      * as this node.  Relative path names (which do not begin with the slash
      * character <tt>('/')</tt>) are interpreted relative to this preference
      * node.
      *
-     * <p>If this node (or an ancestor) has already been removed with the
+     * <p>If this node (or an ancestor) has already been removed with the 
      * {@link #removeNode()} method, it <i>is</i> legal to invoke this method,
      * but only with the path name <tt>""</tt>; the invocation will return
      * <tt>false</tt>.  Thus, the idiom <tt>p.nodeExists("")</tt> may be
@@ -948,7 +949,7 @@ public abstract class Preferences {
      *        is to be checked.
      * @return true if the specified node exists.
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @throws IllegalArgumentException if the path name is invalid (i.e.,
      *         it contains multiple consecutive slash characters, or ends
@@ -961,7 +962,7 @@ public abstract class Preferences {
     public abstract boolean nodeExists(String pathName)
         throws BackingStoreException;
 
-    /**
+    /** 
      * Removes this preference node and all of its descendants, invalidating
      * any preferences contained in the removed nodes.  Once a node has been
      * removed, attempting any method other than {@link #name()},
@@ -983,11 +984,11 @@ public abstract class Preferences {
      * representing a non-empty collection of preferences and/or children.
      *
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @throws IllegalStateException if this node (or an ancestor) has already
      *         been removed with the {@link #removeNode()} method.
-     * @throws UnsupportedOperationException if this method is invoked on
+     * @throws UnsupportedOperationException if this method is invoked on 
      *         the root node.
      * @see #flush()
      */
@@ -1030,7 +1031,7 @@ public abstract class Preferences {
      * successfully, it is safe to assume that all changes made in the
      * subtree rooted at this node prior to the method invocation have become
      * permanent.
-     *
+     * 
      * <p>Implementations are free to flush changes into the persistent store
      * at any time.  They do not need to wait for this method to be called.
      *
@@ -1039,12 +1040,12 @@ public abstract class Preferences {
      * persistent.  Note however that any preference value changes in
      * ancestors are <i>not</i> guaranteed to be made persistent.
      *
-     * <p> If this method is invoked on a node that has been removed with
-     * the {@link #removeNode()} method, flushSpi() is invoked on this node,
+     * <p> If this method is invoked on a node that has been removed with 
+     * the {@link #removeNode()} method, flushSpi() is invoked on this node, 
      * but not on others.
      *
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @see    #sync()
      */
@@ -1059,7 +1060,7 @@ public abstract class Preferences {
      * method had been invoked on this node.
      *
      * @throws BackingStoreException if this operation cannot be completed
-     *         due to a failure in the backing store, or inability to
+     *         due to a failure in the backing store, or inability to 
      *         communicate with it.
      * @throws IllegalStateException if this node (or an ancestor) has been
      *         removed with the {@link #removeNode()} method.
@@ -1083,7 +1084,7 @@ public abstract class Preferences {
      * before the changes have been made persistent.  Events are not generated
      * when preferences are modified in descendants of this node; a caller
      * desiring such events must register with each descendant.
-     *
+     * 
      * @param pcl The preference change listener to add.
      * @throws NullPointerException if <tt>pcl</tt> is null.
      * @throws IllegalStateException if this node (or an ancestor) has been
@@ -1098,7 +1099,7 @@ public abstract class Preferences {
      * Removes the specified preference change listener, so it no longer
      * receives preference change events.
      *
-     * @param pcl The preference change listener to remove.
+     * @param pcl The preference change listener to remove. 
      * @throws IllegalArgumentException if <tt>pcl</tt> was not a registered
      *         preference change listener on this node.
      * @throws IllegalStateException if this node (or an ancestor) has been
@@ -1129,7 +1130,7 @@ public abstract class Preferences {
      * unreachable or cached information is out of date).  Under these
      * circumstances, implementations are neither required to generate node
      * change events nor prohibited from doing so.
-     *
+     * 
      * @param ncl The <tt>NodeChangeListener</tt> to add.
      * @throws NullPointerException if <tt>ncl</tt> is null.
      * @throws IllegalStateException if this node (or an ancestor) has been
@@ -1143,7 +1144,7 @@ public abstract class Preferences {
      * Removes the specified <tt>NodeChangeListener</tt>, so it no longer
      * receives change events.
      *
-     * @param ncl The <tt>NodeChangeListener</tt> to remove.
+     * @param ncl The <tt>NodeChangeListener</tt> to remove. 
      * @throws IllegalArgumentException if <tt>ncl</tt> was not a registered
      *         <tt>NodeChangeListener</tt> on this node.
      * @throws IllegalStateException if this node (or an ancestor) has been

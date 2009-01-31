@@ -47,7 +47,7 @@ import java.util.ListResourceBundle;
 public class FormatData_sr_BA extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "MonthNames",
+            { "MonthNames", 
                 new String[] {
                     "\u0458\u0430\u043d\u0443\u0430\u0440",
                     "\u0444\u0435\u0431\u0440\u0443\u0430\u0440",
@@ -64,7 +64,7 @@ public class FormatData_sr_BA extends ListResourceBundle {
                     "",
                 }
             },
-            { "DayNames",
+            { "DayNames", 
                 new String[] {
                     "\u043d\u0435\u0434\u0435\u0459\u0430",
                     "\u043f\u043e\u043d\u0435\u0434\u0435\u0459\u0430\u043a",
@@ -75,7 +75,7 @@ public class FormatData_sr_BA extends ListResourceBundle {
                     "\u0441\u0443\u0431\u043e\u0442\u0430",
                 }
             },
-            { "DayAbbreviations",
+            { "DayAbbreviations", 
                 new String[] {
                     "\u043d\u0435\u0434",
                     "\u043f\u043e\u043d",
@@ -86,7 +86,7 @@ public class FormatData_sr_BA extends ListResourceBundle {
                     "\u0441\u0443\u0431",
                 }
             },
-            { "DateTimePatterns",
+            { "DateTimePatterns", 
                 new String[] {
                     "HH '\u0447\u0430\u0441\u043e\u0432\u0430', mm '\u043c\u0438\u043d\u0443\u0442\u0430', ss' \u0441\u0435\u043a\u0443\u043d\u0434\u0438'",
                     "HH.mm.ss z",

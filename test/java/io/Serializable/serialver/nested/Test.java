@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,7 +25,7 @@
  *
  * @bug 4312217
  * @summary  To test the use of nested class specification using the '.'
- *           notation instead of the '$' notation.
+ * 	     notation instead of the '$' notation.
  */
 package serialver;
 
@@ -33,8 +33,8 @@ import java.io.*;
 
 public class Test implements Serializable {
     public static class Test1 implements Serializable {
-        public static class Test2 implements Serializable{
-            private static final long serialVersionUID = 100L;
-        }
+	public static class Test2 implements Serializable{
+	    private static final long serialVersionUID = 100L;
+	}
     }
 }

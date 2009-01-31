@@ -52,7 +52,7 @@ final class DESKey implements SecretKey {
      * the key.
      */
     DESKey(byte[] key) throws InvalidKeyException {
-        this(key, 0);
+	this(key, 0);
     }
 
     /**
@@ -67,26 +67,26 @@ final class DESKey implements SecretKey {
      * the key.
      */
     DESKey(byte[] key, int offset) throws InvalidKeyException {
-        if (key == null || key.length - offset < DESKeySpec.DES_KEY_LEN) {
-            throw new InvalidKeyException("Wrong key size");
-        }
-        this.key = new byte[DESKeySpec.DES_KEY_LEN];
-        System.arraycopy(key, offset, this.key, 0, DESKeySpec.DES_KEY_LEN);
-        DESKeyGenerator.setParityBit(this.key, 0);
+	if (key == null || key.length - offset < DESKeySpec.DES_KEY_LEN) {
+	    throw new InvalidKeyException("Wrong key size");
+	}
+	this.key = new byte[DESKeySpec.DES_KEY_LEN];
+	System.arraycopy(key, offset, this.key, 0, DESKeySpec.DES_KEY_LEN);
+	DESKeyGenerator.setParityBit(this.key, 0);
     }
 
     public byte[] getEncoded() {
-        // Return a copy of the key, rather than a reference,
-        // so that the key data cannot be modified from outside
-        return (byte[])this.key.clone();
+	// Return a copy of the key, rather than a reference,
+	// so that the key data cannot be modified from outside
+	return (byte[])this.key.clone();
     }
 
     public String getAlgorithm() {
-        return "DES";
+	return "DES";
     }
 
     public String getFormat() {
-        return "RAW";
+	return "RAW";
     }
 
     /**
@@ -94,28 +94,28 @@ final class DESKey implements SecretKey {
      * Objects that are equal will also have the same hashcode.
      */
     public int hashCode() {
-        int retval = 0;
-        for (int i = 1; i < this.key.length; i++) {
-            retval += this.key[i] * i;
-        }
-        return(retval ^= "des".hashCode());
+	int retval = 0;
+	for (int i = 1; i < this.key.length; i++) {
+	    retval += this.key[i] * i;
+	}
+	return(retval ^= "des".hashCode());
     }
 
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
+	if (this == obj)
+	    return true;
 
-        if (!(obj instanceof SecretKey))
-            return false;
+	if (!(obj instanceof SecretKey))
+	    return false;
 
-        String thatAlg = ((SecretKey)obj).getAlgorithm();
-        if (!(thatAlg.equalsIgnoreCase("DES")))
-            return false;
+	String thatAlg = ((SecretKey)obj).getAlgorithm();
+	if (!(thatAlg.equalsIgnoreCase("DES")))
+	    return false;
 
-        byte[] thatKey = ((SecretKey)obj).getEncoded();
-        boolean ret = java.util.Arrays.equals(this.key, thatKey);
-        java.util.Arrays.fill(thatKey, (byte)0x00);
-        return ret;
+	byte[] thatKey = ((SecretKey)obj).getEncoded();
+	boolean ret = java.util.Arrays.equals(this.key, thatKey);
+	java.util.Arrays.fill(thatKey, (byte)0x00);
+	return ret;
     }
 
     /**
@@ -123,10 +123,10 @@ final class DESKey implements SecretKey {
      * a stream.
      */
     private void readObject(java.io.ObjectInputStream s)
-         throws java.io.IOException, ClassNotFoundException
+	 throws java.io.IOException, ClassNotFoundException
     {
-        s.defaultReadObject();
-        key = (byte[])key.clone();
+	s.defaultReadObject();
+	key = (byte[])key.clone();
     }
 
     /**
@@ -138,10 +138,10 @@ final class DESKey implements SecretKey {
      * this DES key could not be created
      */
     private Object writeReplace() throws java.io.ObjectStreamException {
-        return new KeyRep(KeyRep.Type.SECRET,
-                        getAlgorithm(),
-                        getFormat(),
-                        getEncoded());
+	return new KeyRep(KeyRep.Type.SECRET,
+			getAlgorithm(),
+			getFormat(),
+			getEncoded());
     }
 
     /**
@@ -149,13 +149,14 @@ final class DESKey implements SecretKey {
      * set to zero when there are no more references to it.
      */
     protected void finalize() throws Throwable {
-        try {
-            if (this.key != null) {
-                java.util.Arrays.fill(this.key, (byte)0x00);
-                this.key = null;
-            }
-        } finally {
-            super.finalize();
-        }
+	try {
+	    if (this.key != null) {
+		java.util.Arrays.fill(this.key, (byte)0x00);
+		this.key = null;
+	    }
+	} finally {
+	    super.finalize();
+	}
     }
 }
+

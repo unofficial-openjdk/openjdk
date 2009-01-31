@@ -25,8 +25,8 @@
  * @test
  * @bug 4241351
  * @summary Ensure that initial context constructor clones its environment
- *      parameter before calling init(), and that it doesn't clone it
- *      within init().
+ *	parameter before calling init(), and that it doesn't clone it
+ *	within init().
  */
 
 import java.util.Hashtable;
@@ -35,28 +35,28 @@ import javax.naming.*;
 public class EnvClone extends InitialContext {
 
     EnvClone(Hashtable env) throws NamingException{
-        super(env);
+	super(env);
     }
 
     EnvClone(boolean lazy) throws NamingException{
-        super(lazy);
+	super(lazy);
     }
 
     public static void main(String[] args) throws Exception {
 
-        Hashtable env = new Hashtable(5);
-        EnvClone ctx = new EnvClone(env);
+	Hashtable env = new Hashtable(5);
+	EnvClone ctx = new EnvClone(env);
 
-        if (env == ctx.myProps) {
-            throw new Exception(
-                    "Test failed:  constructor didn't clone environment");
-        }
+	if (env == ctx.myProps) {
+	    throw new Exception(
+		    "Test failed:  constructor didn't clone environment");
+	}
 
-        ctx = new EnvClone(true);
-        ctx.init(env);
+	ctx = new EnvClone(true);
+	ctx.init(env);
 
-        if (env != ctx.myProps) {
-            throw new Exception("Test failed:  init() cloned environment");
-        }
+	if (env != ctx.myProps) {
+	    throw new Exception("Test failed:  init() cloned environment");
+	}
     }
 }

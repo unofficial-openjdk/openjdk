@@ -20,71 +20,72 @@ extern "C"
 {
 #endif
 
-        LONG SCardEstablishContext(DWORD dwScope,
-                LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
+	LONG SCardEstablishContext(DWORD dwScope,
+		LPCVOID pvReserved1, LPCVOID pvReserved2, LPSCARDCONTEXT phContext);
 
-        LONG SCardReleaseContext(SCARDCONTEXT hContext);
+	LONG SCardReleaseContext(SCARDCONTEXT hContext);
 
-        LONG SCardSetTimeout(SCARDCONTEXT hContext, DWORD dwTimeout);
+	LONG SCardSetTimeout(SCARDCONTEXT hContext, DWORD dwTimeout);
 
-        LONG SCardConnect(SCARDCONTEXT hContext,
-                LPCTSTR szReader,
-                DWORD dwShareMode,
-                DWORD dwPreferredProtocols,
-                LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
+	LONG SCardConnect(SCARDCONTEXT hContext,
+		LPCTSTR szReader,
+		DWORD dwShareMode,
+		DWORD dwPreferredProtocols,
+		LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol);
 
-        LONG SCardReconnect(SCARDHANDLE hCard,
-                DWORD dwShareMode,
-                DWORD dwPreferredProtocols,
-                DWORD dwInitialization, LPDWORD pdwActiveProtocol);
+	LONG SCardReconnect(SCARDHANDLE hCard,
+		DWORD dwShareMode,
+		DWORD dwPreferredProtocols,
+		DWORD dwInitialization, LPDWORD pdwActiveProtocol);
 
-        LONG SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition);
+	LONG SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition);
 
-        LONG SCardBeginTransaction(SCARDHANDLE hCard);
+	LONG SCardBeginTransaction(SCARDHANDLE hCard);
 
-        LONG SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition);
+	LONG SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition);
 
-        LONG SCardCancelTransaction(SCARDHANDLE hCard);
+	LONG SCardCancelTransaction(SCARDHANDLE hCard);
 
-        LONG SCardStatus(SCARDHANDLE hCard,
-                LPTSTR mszReaderNames, LPDWORD pcchReaderLen,
-                LPDWORD pdwState,
-                LPDWORD pdwProtocol,
-                LPBYTE pbAtr, LPDWORD pcbAtrLen);
+	LONG SCardStatus(SCARDHANDLE hCard,
+		LPTSTR mszReaderNames, LPDWORD pcchReaderLen,
+		LPDWORD pdwState,
+		LPDWORD pdwProtocol,
+		LPBYTE pbAtr, LPDWORD pcbAtrLen);
 
-        LONG SCardGetStatusChange(SCARDCONTEXT hContext,
-                DWORD dwTimeout,
-                LPSCARD_READERSTATE_A rgReaderStates, DWORD cReaders);
+	LONG SCardGetStatusChange(SCARDCONTEXT hContext,
+		DWORD dwTimeout,
+		LPSCARD_READERSTATE_A rgReaderStates, DWORD cReaders);
 
-        LONG SCardControl(SCARDHANDLE hCard, DWORD dwControlCode,
-                LPCVOID pbSendBuffer, DWORD cbSendLength,
-                LPVOID pbRecvBuffer, DWORD cbRecvLength, LPDWORD lpBytesReturned);
+	LONG SCardControl(SCARDHANDLE hCard, DWORD dwControlCode,
+		LPCVOID pbSendBuffer, DWORD cbSendLength,
+		LPVOID pbRecvBuffer, DWORD cbRecvLength, LPDWORD lpBytesReturned);
 
-        LONG SCardTransmit(SCARDHANDLE hCard,
-                LPCSCARD_IO_REQUEST pioSendPci,
-                LPCBYTE pbSendBuffer, DWORD cbSendLength,
-                LPSCARD_IO_REQUEST pioRecvPci,
-                LPBYTE pbRecvBuffer, LPDWORD pcbRecvLength);
+	LONG SCardTransmit(SCARDHANDLE hCard,
+		LPCSCARD_IO_REQUEST pioSendPci,
+		LPCBYTE pbSendBuffer, DWORD cbSendLength,
+		LPSCARD_IO_REQUEST pioRecvPci,
+		LPBYTE pbRecvBuffer, LPDWORD pcbRecvLength);
 
-        LONG SCardListReaderGroups(SCARDCONTEXT hContext,
-                LPTSTR mszGroups, LPDWORD pcchGroups);
+	LONG SCardListReaderGroups(SCARDCONTEXT hContext,
+		LPTSTR mszGroups, LPDWORD pcchGroups);
 
-        LONG SCardListReaders(SCARDCONTEXT hContext,
-                LPCTSTR mszGroups,
-                LPTSTR mszReaders, LPDWORD pcchReaders);
+	LONG SCardListReaders(SCARDCONTEXT hContext,
+		LPCTSTR mszGroups,
+		LPTSTR mszReaders, LPDWORD pcchReaders);
 
-        LONG SCardCancel(SCARDCONTEXT hContext);
+	LONG SCardCancel(SCARDCONTEXT hContext);
 
-        LONG SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
-                        LPDWORD pcbAttrLen);
+	LONG SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
+			LPDWORD pcbAttrLen);
 
-        LONG SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr,
-                        DWORD cbAttrLen);
+	LONG SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr,
+			DWORD cbAttrLen);
 
-        void SCardUnload(void);
+	void SCardUnload(void);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+

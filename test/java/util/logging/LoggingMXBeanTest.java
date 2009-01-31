@@ -24,9 +24,9 @@
 /*
  * @test
  * @bug     5007165
- *
+ * 
  * @summary Basic Test for LoggingMXBean via MBeanServer
- * @author  Ron Mann
+ * @author  Ron Mann 
  *
  * @build LoggingMXBeanTest
  * @run main LoggingMXBeanTest
@@ -248,3 +248,5 @@ public class LoggingMXBeanTest
         LoggingMXBeanTest p = new LoggingMXBeanTest();
     }
 }
+
+ 

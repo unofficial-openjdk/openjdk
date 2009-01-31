@@ -42,32 +42,32 @@ import java.awt.Transparency;
  */
 public class Win32ColorModel24 extends ComponentColorModel {
     public Win32ColorModel24() {
-        super(ColorSpace.getInstance(ColorSpace.CS_sRGB),
-              new int[] {8, 8, 8}, false, false,
-              Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+	super(ColorSpace.getInstance(ColorSpace.CS_sRGB),
+	      new int[] {8, 8, 8}, false, false,
+	      Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
     }
 
     /**
-     * Creates a WritableRaster with the specified width and height, that
-     * has a data layout (SampleModel) compatible with this ColorModel.
+     * Creates a WritableRaster with the specified width and height, that 
+     * has a data layout (SampleModel) compatible with this ColorModel.  
      * @see WritableRaster
      * @see SampleModel
      */
     public WritableRaster createCompatibleWritableRaster (int w, int h) {
-        int[] bOffs = {2, 1, 0};
-        return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,
-                                              w, h, w*3, 3,
-                                              bOffs, null);
+	int[] bOffs = {2, 1, 0};
+	return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,
+					      w, h, w*3, 3,
+					      bOffs, null);
     }
 
     /**
-     * Creates a SampleModel with the specified width and height, that
-     * has a data layout compatible with this ColorModel.
+     * Creates a SampleModel with the specified width and height, that 
+     * has a data layout compatible with this ColorModel.  
      * @see SampleModel
      */
     public SampleModel createCompatibleSampleModel(int w, int h) {
-        int[] bOffs = {2, 1, 0};
+	int[] bOffs = {2, 1, 0};
         return new PixelInterleavedSampleModel(DataBuffer.TYPE_BYTE,
-                                               w, h, 3, w*3, bOffs);
+					       w, h, 3, w*3, bOffs);
     }
 }

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,47 +33,47 @@ import java.net.*;
 
 class MixedSuperclassStream extends ObjectInputStream {
     MixedSuperclassStream(InputStream in) throws IOException { super(in); }
-
+    
     protected Class resolveClass(ObjectStreamClass desc)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        // resolve A's classdesc to class != B's superclass
-        String name = desc.getName();
-        if (name.equals("A")) {
-            return Class.forName(name, true, Test.ldr1);
-        } else if (name.equals("B")) {
-            return Class.forName(name, true, Test.ldr2);
-        } else {
-            return super.resolveClass(desc);
-        }
+	// resolve A's classdesc to class != B's superclass
+	String name = desc.getName();
+	if (name.equals("A")) {
+	    return Class.forName(name, true, Test.ldr1);
+	} else if (name.equals("B")) {
+	    return Class.forName(name, true, Test.ldr2);
+	} else {
+	    return super.resolveClass(desc);
+	}
     }
 }
 
 public class Test {
-
+    
     static URLClassLoader ldr1, ldr2;
     static {
-        try {
-            ldr1 = new URLClassLoader(new URL[] { new URL("file:cb1.jar") });
-            ldr2 = new URLClassLoader(new URL[] { new URL("file:cb2.jar") });
-        } catch (MalformedURLException ex) {
-            throw new Error();
-        }
+	try {
+	    ldr1 = new URLClassLoader(new URL[] { new URL("file:cb1.jar") });
+	    ldr2 = new URLClassLoader(new URL[] { new URL("file:cb2.jar") });
+	} catch (MalformedURLException ex) {
+	    throw new Error();
+	}
     }
 
     public static void main(String[] args) throws Exception {
-        Runnable a = (Runnable) Class.forName("B", true, ldr1).newInstance();
-        a.run();
-
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        oout.writeObject(a);
-        oout.close();
-
-        ByteArrayInputStream bin =
-            new ByteArrayInputStream(bout.toByteArray());
-        ObjectInputStream oin = new MixedSuperclassStream(bin);
-        a = (Runnable) oin.readObject();
-        a.run();
+	Runnable a = (Runnable) Class.forName("B", true, ldr1).newInstance();
+	a.run();
+	
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	oout.writeObject(a);
+	oout.close();
+	
+	ByteArrayInputStream bin = 
+	    new ByteArrayInputStream(bout.toByteArray());
+	ObjectInputStream oin = new MixedSuperclassStream(bin);
+	a = (Runnable) oin.readObject();
+	a.run();
     }
 }

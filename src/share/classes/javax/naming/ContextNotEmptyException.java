@@ -31,7 +31,7 @@ package javax.naming;
   *<p>
   * If the program wants to handle this exception in particular, it
   * should catch ContextNotEmptyException explicitly before attempting to
-  * catch NamingException. For example, after catching ContextNotEmptyException,
+  * catch NamingException. For example, after catching ContextNotEmptyException, 
   * the program might try to remove the contents of the context before
   * reattempting the destroy.
   * <p>
@@ -40,6 +40,7 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   *
   * @see Context#destroySubcontext
   * @since 1.3
@@ -49,12 +50,12 @@ public class ContextNotEmptyException extends NamingException {
      * Constructs a new instance of ContextNotEmptyException using an
      * explanation. All other fields default to null.
      *
-     * @param   explanation     Possibly null string containing
+     * @param	explanation	Possibly null string containing
      * additional detail about this exception.
      * @see java.lang.Throwable#getMessage
      */
     public ContextNotEmptyException(String explanation) {
-        super(explanation);
+	super(explanation);
     }
 
     /**
@@ -62,7 +63,7 @@ public class ContextNotEmptyException extends NamingException {
       * all name resolution fields and explanation initialized to null.
       */
     public ContextNotEmptyException() {
-        super();
+	super();
     }
 
     /**

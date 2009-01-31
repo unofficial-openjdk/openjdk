@@ -49,6 +49,7 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -76,10 +77,10 @@ implements CertAttrSet<String> {
         }
         DerOutputStream os = new DerOutputStream();
         DerOutputStream tmp = new DerOutputStream();
-
-        for (CertificatePolicyMap map : maps) {
-            map.encode(tmp);
-        }
+	
+	for (CertificatePolicyMap map : maps) {
+	    map.encode(tmp);
+	}
 
         os.write(DerValue.tag_Sequence, tmp);
         this.extensionValue = os.toByteArray();
@@ -90,8 +91,8 @@ implements CertAttrSet<String> {
      *
      * @param maps the List of CertificatePolicyMap.
      */
-    public PolicyMappingsExtension(List<CertificatePolicyMap> map)
-            throws IOException {
+    public PolicyMappingsExtension(List<CertificatePolicyMap> map) 
+	    throws IOException {
         this.maps = map;
         this.extensionId = PKIXExtensions.PolicyMappings_Id;
         this.critical = false;
@@ -159,23 +160,23 @@ implements CertAttrSet<String> {
             encodeThis();
         }
         super.encode(tmp);
-        out.write(tmp.toByteArray());
+	out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-        if (name.equalsIgnoreCase(MAP)) {
-            if (!(obj instanceof List)) {
-              throw new IOException("Attribute value should be of" +
+	if (name.equalsIgnoreCase(MAP)) {
+	    if (!(obj instanceof List)) {
+	      throw new IOException("Attribute value should be of" +
                                     " type List.");
-            }
-            maps = (List<CertificatePolicyMap>)obj;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:PolicyMappingsExtension.");
-        }
+	    }
+	    maps = (List<CertificatePolicyMap>)obj;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:PolicyMappingsExtension.");
+	}
         encodeThis();
     }
 
@@ -183,24 +184,24 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(MAP)) {
-            return (maps);
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:PolicyMappingsExtension.");
-        }
+	if (name.equalsIgnoreCase(MAP)) {
+	    return (maps);
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:PolicyMappingsExtension.");
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(MAP)) {
-            maps = null;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:PolicyMappingsExtension.");
-        }
+	if (name.equalsIgnoreCase(MAP)) {
+	    maps = null;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:PolicyMappingsExtension.");
+	}
         encodeThis();
     }
 
@@ -212,7 +213,7 @@ implements CertAttrSet<String> {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(MAP);
 
-        return elements.elements();
+	return elements.elements();
     }
 
     /**

@@ -29,7 +29,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Table of class information.
+/* Table of class information. 
  *
  *   Each element in this table is identified with a ClassIndex.
  *   Each element is uniquely identified by it's signature and loader.
@@ -54,7 +54,7 @@
 
 typedef struct ClassKey {
     StringIndex    sig_string_index;    /* Signature of class */
-    LoaderIndex    loader_index;        /* Index for class loader */
+    LoaderIndex    loader_index;	/* Index for class loader */
 } ClassKey;
 
 /* Each class could contain method information, gotten from BCI callback */
@@ -62,23 +62,23 @@ typedef struct ClassKey {
 typedef struct MethodInfo {
     StringIndex  name_index;    /* Method name, index into string table */
     StringIndex  sig_index;     /* Method signature, index into string table */
-    jmethodID    method_id;     /* Method ID, possibly NULL at first */
+    jmethodID    method_id;	/* Method ID, possibly NULL at first */
 } MethodInfo;
 
 /* The basic class information we save */
 
 typedef struct ClassInfo {
-    jclass         classref;            /* Global ref to jclass */
-    MethodInfo    *method;              /* Array of method data */
-    int            method_count;        /* Count of methods */
-    ObjectIndex    object_index;        /* Optional object index for jclass */
-    SerialNumber   serial_num;          /* Unique to the actual class load */
-    ClassStatus    status;              /* Current class status (bit mask) */
-    ClassIndex     super;               /* Super class in this table */
+    jclass         classref;	        /* Global ref to jclass */
+    MethodInfo    *method;		/* Array of method data */
+    int            method_count;	/* Count of methods */
+    ObjectIndex    object_index;	/* Optional object index for jclass */
+    SerialNumber   serial_num; 		/* Unique to the actual class load */
+    ClassStatus    status;		/* Current class status (bit mask) */
+    ClassIndex     super;		/* Super class in this table */
     StringIndex    name;                /* Name of class */
     jint           inst_size;           /* #bytes needed for instance fields */
     jint           field_count;         /* Number of all fields */
-    FieldInfo     *field;               /* Pointer to all FieldInfo's */
+    FieldInfo     *field;		/* Pointer to all FieldInfo's */
 } ClassInfo;
 
 /* Private interfaces */
@@ -99,7 +99,7 @@ static void
 fillin_pkey(const char *sig, LoaderIndex loader_index, ClassKey *pkey)
 {
     static ClassKey empty_key;
-
+    
     HPROF_ASSERT(loader_index!=0);
     *pkey                  = empty_key;
     pkey->sig_string_index = string_find_or_create(sig);
@@ -120,7 +120,7 @@ fill_info(TableIndex index, ClassKey *pkey)
 {
     ClassInfo *info;
     char      *sig;
-
+    
     info = get_info(index);
     info->serial_num = gdata->class_serial_number_counter++;
     info->method_count = 0;
@@ -129,24 +129,24 @@ fill_info(TableIndex index, ClassKey *pkey)
     info->field = NULL;
     sig = string_get(pkey->sig_string_index);
     if ( sig[0] != JVM_SIGNATURE_CLASS ) {
-        info->name = pkey->sig_string_index;
+	info->name = pkey->sig_string_index;
     } else {
-        int        len;
+	int        len;
 
-        len = string_get_len(pkey->sig_string_index);
-        if ( len > 2  ) {
-            char      *name;
-
-            /* Class signature looks like "Lname;", we want "name" here. */
-            name = HPROF_MALLOC(len-1);
-            (void)memcpy(name, sig+1, len-2);
-            name[len-2] = 0;
-            info->name = string_find_or_create(name);
-            HPROF_FREE(name);
-        } else {
-            /* This would be strange, a class signature not in "Lname;" form? */
-            info->name = pkey->sig_string_index;
-        }
+	len = string_get_len(pkey->sig_string_index);
+	if ( len > 2  ) {
+	    char      *name;
+	    
+	    /* Class signature looks like "Lname;", we want "name" here. */
+	    name = HPROF_MALLOC(len-1);
+	    (void)memcpy(name, sig+1, len-2);
+	    name[len-2] = 0;
+	    info->name = string_find_or_create(name);
+	    HPROF_FREE(name);
+	} else {
+	    /* This would be strange, a class signature not in "Lname;" form? */
+	    info->name = pkey->sig_string_index;
+	}
    }
 }
 
@@ -154,9 +154,9 @@ static ClassIndex
 find_entry(ClassKey *pkey)
 {
     ClassIndex index;
-
-    index = table_find_entry(gdata->class_table,
-                                (void*)pkey, (int)sizeof(ClassKey));
+    
+    index = table_find_entry(gdata->class_table, 
+				(void*)pkey, (int)sizeof(ClassKey));
     return index;
 }
 
@@ -164,9 +164,9 @@ static ClassIndex
 create_entry(ClassKey *pkey)
 {
     ClassIndex index;
-
-    index = table_create_entry(gdata->class_table,
-                                (void*)pkey, (int)sizeof(ClassKey), NULL);
+    
+    index = table_create_entry(gdata->class_table, 
+				(void*)pkey, (int)sizeof(ClassKey), NULL);
     fill_info(index, pkey);
     return index;
 }
@@ -175,12 +175,12 @@ static ClassIndex
 find_or_create_entry(ClassKey *pkey)
 {
     ClassIndex      index;
-
+    
     HPROF_ASSERT(pkey!=NULL);
     HPROF_ASSERT(pkey->loader_index!=0);
     index = find_entry(pkey);
     if ( index == 0 ) {
-        index = create_entry(pkey);
+	index = create_entry(pkey);
     }
     return index;
 }
@@ -190,12 +190,12 @@ delete_classref(JNIEnv *env, ClassInfo *info, jclass klass)
 {
     jclass ref;
     int    i;
-
+    
     HPROF_ASSERT(env!=NULL);
     HPROF_ASSERT(info!=NULL);
-
+    
     for ( i = 0 ; i < info->method_count ; i++ ) {
-        info->method[i].method_id  = NULL;
+	info->method[i].method_id  = NULL;
     }
     ref = info->classref;
     if ( klass != NULL ) {
@@ -209,8 +209,8 @@ delete_classref(JNIEnv *env, ClassInfo *info, jclass klass)
 }
 
 static void
-cleanup_item(TableIndex index, void *key_ptr, int key_len,
-                                void *info_ptr, void *arg)
+cleanup_item(TableIndex index, void *key_ptr, int key_len, 
+				void *info_ptr, void *arg)
 {
     ClassInfo *info;
 
@@ -221,26 +221,26 @@ cleanup_item(TableIndex index, void *key_ptr, int key_len,
     info = (ClassInfo *)info_ptr;
     if ( info->method_count > 0 ) {
         HPROF_FREE((void*)info->method);
-        info->method_count = 0;
+	info->method_count = 0;
         info->method       = NULL;
     }
     if ( info->field != NULL ) {
         HPROF_FREE((void*)info->field);
-        info->field_count = 0;
+	info->field_count = 0;
         info->field      = NULL;
     }
 }
 
 static void
-delete_ref_item(TableIndex index, void *key_ptr, int key_len,
-                                void *info_ptr, void *arg)
+delete_ref_item(TableIndex index, void *key_ptr, int key_len, 
+				void *info_ptr, void *arg)
 {
     delete_classref((JNIEnv*)arg, (ClassInfo*)info_ptr, NULL);
 }
 
 static void
-list_item(TableIndex index, void *key_ptr, int key_len,
-                                void *info_ptr, void *arg)
+list_item(TableIndex index, void *key_ptr, int key_len, 
+				void *info_ptr, void *arg)
 {
     ClassInfo *info;
     ClassKey   key;
@@ -253,30 +253,30 @@ list_item(TableIndex index, void *key_ptr, int key_len,
     key = *((ClassKey*)key_ptr);
     sig = string_get(key.sig_string_index);
     info = (ClassInfo *)info_ptr;
-    debug_message(
-             "0x%08x: Class %s, SN=%u, status=0x%08x, ref=%p,"
-             " method_count=%d\n",
-             index,
-             (const char *)sig,
-             info->serial_num,
-             info->status,
-             (void*)info->classref,
-             info->method_count);
+    debug_message( 
+	     "0x%08x: Class %s, SN=%u, status=0x%08x, ref=%p,"
+	     " method_count=%d\n",
+             index, 
+             (const char *)sig, 
+	     info->serial_num,
+             info->status, 
+	     (void*)info->classref,
+	     info->method_count);
     if ( info->method_count > 0 ) {
-        for ( i = 0 ; i < info->method_count ; i++ ) {
-            debug_message(
-                "    Method %d: \"%s\", sig=\"%s\", method=%p\n",
-                i,
-                string_get(info->method[i].name_index),
-                string_get(info->method[i].sig_index),
-                (void*)info->method[i].method_id);
-        }
+	for ( i = 0 ; i < info->method_count ; i++ ) {
+            debug_message( 
+		"    Method %d: \"%s\", sig=\"%s\", method=%p\n",
+		i,
+		string_get(info->method[i].name_index),
+		string_get(info->method[i].sig_index),
+		(void*)info->method[i].method_id);
+	}
     }
 }
 
 static void
-all_status_remove(TableIndex index, void *key_ptr, int key_len,
-                                void *info_ptr, void *arg)
+all_status_remove(TableIndex index, void *key_ptr, int key_len, 
+				void *info_ptr, void *arg)
 {
     ClassInfo   *info;
     ClassStatus  status;
@@ -289,19 +289,19 @@ all_status_remove(TableIndex index, void *key_ptr, int key_len,
 }
 
 static void
-unload_walker(TableIndex index, void *key_ptr, int key_len,
-                                void *info_ptr, void *arg)
+unload_walker(TableIndex index, void *key_ptr, int key_len, 
+				void *info_ptr, void *arg)
 {
     ClassInfo        *info;
 
     HPROF_ASSERT(info_ptr!=NULL);
     info = (ClassInfo *)info_ptr;
     if ( ! ( info->status & CLASS_IN_LOAD_LIST ) ) {
-        if ( ! (info->status & (CLASS_SPECIAL|CLASS_SYSTEM|CLASS_UNLOADED)) ) {
+	if ( ! (info->status & (CLASS_SPECIAL|CLASS_SYSTEM|CLASS_UNLOADED)) ) {
             io_write_class_unload(info->serial_num, info->object_index);
             info->status |= CLASS_UNLOADED;
             delete_classref((JNIEnv*)arg, info, NULL);
-        }
+	}
     }
 }
 
@@ -319,7 +319,7 @@ ClassIndex
 class_find_or_create(const char *sig, LoaderIndex loader_index)
 {
     ClassKey key;
-
+    
     fillin_pkey(sig, loader_index, &key);
     return find_or_create_entry(&key);
 }
@@ -328,7 +328,7 @@ ClassIndex
 class_create(const char *sig, LoaderIndex loader_index)
 {
     ClassKey key;
-
+    
     fillin_pkey(sig, loader_index, &key);
     return create_entry(&key);
 }
@@ -340,7 +340,7 @@ class_prime_system_classes(void)
      *   Or classes loaded before env arg is non-NULL.
      *   Or any of the classes listed below.
      */
-    static const char * signatures[] =
+    static const char * signatures[] =      
         {
             "Ljava/lang/Object;",
             "Ljava/io/Serializable;",
@@ -354,15 +354,15 @@ class_prime_system_classes(void)
     int n_signatures;
     int i;
     LoaderIndex loader_index;
-
+   
     n_signatures = (int)sizeof(signatures)/(int)sizeof(signatures[0]);
     loader_index = loader_find_or_create(NULL, NULL);
     for ( i = 0 ; i < n_signatures ; i++ ) {
         ClassInfo  *info;
         ClassIndex  index;
-        ClassKey    key;
-
-        fillin_pkey(signatures[i], loader_index, &key);
+	ClassKey    key;
+	
+	fillin_pkey(signatures[i], loader_index, &key);
         index = find_or_create_entry(&key);
         info = get_info(index);
         info->status |= CLASS_SYSTEM;
@@ -402,7 +402,7 @@ class_get_serial_number(ClassIndex index)
     ClassInfo *info;
 
     if ( index == 0 ) {
-        return 0;
+	return 0;
     }
     info = get_info(index);
     return info->serial_num;
@@ -411,8 +411,8 @@ class_get_serial_number(ClassIndex index)
 void
 class_all_status_remove(ClassStatus status)
 {
-    table_walk_items(gdata->class_table, &all_status_remove,
-                (void*)(ptrdiff_t)(long)status);
+    table_walk_items(gdata->class_table, &all_status_remove, 
+		(void*)(ptrdiff_t)(long)status);
 }
 
 void
@@ -424,10 +424,10 @@ class_do_unloads(JNIEnv *env)
 void
 class_list(void)
 {
-    debug_message(
+    debug_message( 
         "--------------------- Class Table ------------------------\n");
     table_walk_items(gdata->class_table, &list_item, NULL);
-    debug_message(
+    debug_message( 
         "----------------------------------------------------------\n");
 }
 
@@ -445,8 +445,8 @@ class_delete_global_references(JNIEnv* env)
 }
 
 void
-class_set_methods(ClassIndex index, const char **name, const char **sig,
-                        int count)
+class_set_methods(ClassIndex index, const char **name, const char **sig, 
+			int count)
 {
     ClassInfo *info;
     int        i;
@@ -454,17 +454,17 @@ class_set_methods(ClassIndex index, const char **name, const char **sig,
     info               = get_info(index);
     if ( info->method_count > 0 ) {
         HPROF_FREE((void*)info->method);
-        info->method_count = 0;
+	info->method_count = 0;
         info->method       = NULL;
     }
     info->method_count = count;
     if ( count > 0 ) {
-        info->method = (MethodInfo *)HPROF_MALLOC(count*(int)sizeof(MethodInfo));
-        for ( i = 0 ; i < count ; i++ ) {
-            info->method[i].name_index = string_find_or_create(name[i]);
-            info->method[i].sig_index  = string_find_or_create(sig[i]);
-            info->method[i].method_id  = NULL;
-        }
+	info->method = (MethodInfo *)HPROF_MALLOC(count*(int)sizeof(MethodInfo));
+	for ( i = 0 ; i < count ; i++ ) {
+	    info->method[i].name_index = string_find_or_create(name[i]); 
+	    info->method[i].sig_index  = string_find_or_create(sig[i]);
+	    info->method[i].method_id  = NULL;
+	}
     }
 }
 
@@ -472,7 +472,7 @@ jclass
 class_new_classref(JNIEnv *env, ClassIndex index, jclass classref)
 {
     ClassInfo *info;
-
+    
     HPROF_ASSERT(classref!=NULL);
     info = get_info(index);
     if ( ! isSameObject(env, classref, info->classref) ) {
@@ -486,26 +486,26 @@ class_get_class(JNIEnv *env, ClassIndex index)
 {
     ClassInfo *info;
     jclass     clazz;
-
-    info        = get_info(index);
-    clazz       = info->classref;
+    
+    info 	= get_info(index);
+    clazz 	= info->classref;
     if ( env != NULL && clazz == NULL ) {
-        WITH_LOCAL_REFS(env, 1) {
-            jclass   new_clazz;
-            char    *class_name;
-
-            class_name = string_get(info->name);
-            /* This really only makes sense for the bootclass classes,
-             *   since FindClass doesn't provide a way to load a class in
-             *   a specific class loader.
-             */
-            new_clazz = findClass(env, class_name);
-            if ( new_clazz == NULL ) {
-                HPROF_ERROR(JNI_TRUE, "Cannot load class with findClass");
-            }
-            HPROF_ASSERT(new_clazz!=NULL);
-            clazz = class_new_classref(env, index, new_clazz);
-        } END_WITH_LOCAL_REFS;
+	WITH_LOCAL_REFS(env, 1) {
+	    jclass   new_clazz;
+	    char    *class_name;
+	    
+	    class_name = string_get(info->name);
+	    /* This really only makes sense for the bootclass classes, 
+	     *   since FindClass doesn't provide a way to load a class in
+	     *   a specific class loader.
+	     */
+	    new_clazz = findClass(env, class_name);
+	    if ( new_clazz == NULL ) {
+		HPROF_ERROR(JNI_TRUE, "Cannot load class with findClass");
+	    }
+	    HPROF_ASSERT(new_clazz!=NULL);
+	    clazz = class_new_classref(env, index, new_clazz);
+	} END_WITH_LOCAL_REFS;
         HPROF_ASSERT(clazz!=NULL);
     }
     return clazz;
@@ -516,7 +516,7 @@ class_get_methodID(JNIEnv *env, ClassIndex index, MethodIndex mnum)
 {
     ClassInfo *info;
     jmethodID  method;
-
+    
     info = get_info(index);
     HPROF_ASSERT(mnum < info->method_count);
     method = info->method[mnum].method_id;
@@ -524,18 +524,18 @@ class_get_methodID(JNIEnv *env, ClassIndex index, MethodIndex mnum)
         char * name;
         char * sig;
         jclass clazz;
-
+        
         name  = (char *)string_get(info->method[mnum].name_index);
         HPROF_ASSERT(name!=NULL);
         sig   = (char *)string_get(info->method[mnum].sig_index);
         HPROF_ASSERT(sig!=NULL);
         clazz = class_get_class(env, index);
-        if ( clazz != NULL ) {
-            method = getMethodID(env, clazz, name, sig);
-            HPROF_ASSERT(method!=NULL);
-            info = get_info(index);
-            info->method[mnum].method_id = method;
-        }
+	if ( clazz != NULL ) {
+	    method = getMethodID(env, clazz, name, sig);
+	    HPROF_ASSERT(method!=NULL);
+	    info = get_info(index);
+	    info->method[mnum].method_id = method;
+	}
     }
     return method;
 }
@@ -544,7 +544,7 @@ void
 class_set_inst_size(ClassIndex index, jint inst_size)
 {
     ClassInfo *info;
-
+    
     info = get_info(index);
     info->inst_size = inst_size;
 }
@@ -553,7 +553,7 @@ jint
 class_get_inst_size(ClassIndex index)
 {
     ClassInfo *info;
-
+    
     info = get_info(index);
     return info->inst_size;
 }
@@ -562,7 +562,7 @@ void
 class_set_object_index(ClassIndex index, ObjectIndex object_index)
 {
     ClassInfo *info;
-
+    
     info = get_info(index);
     info->object_index = object_index;
 }
@@ -571,30 +571,30 @@ ObjectIndex
 class_get_object_index(ClassIndex index)
 {
     ClassInfo *info;
-
+    
     info = get_info(index);
     return info->object_index;
 }
 
-ClassIndex
+ClassIndex	
 class_get_super(ClassIndex index)
 {
     ClassInfo *info;
-
+    
     info = get_info(index);
     return info->super;
 }
 
-void
+void	
 class_set_super(ClassIndex index, ClassIndex super)
 {
     ClassInfo *info;
-
+    
     info = get_info(index);
     info->super = super;
 }
 
-LoaderIndex
+LoaderIndex     
 class_get_loader(ClassIndex index)
 {
     ClassKey *pkey;
@@ -613,55 +613,56 @@ class_get_all_fields(JNIEnv *env, ClassIndex index,
     FieldInfo  *finfo;
     jint        count;
     jint        ret;
-
+    
     count = 0;
     finfo = NULL;
     ret   = 1;       /* Default is to return an error condition */
-
+    
     info = get_info(index);
     if ( info != NULL ) {
         if ( info->field_count >= 0 ) {
-            /* Get cache */
-            count = info->field_count;
-            finfo = info->field;
-            ret   = 0;                 /* Return of cache data, no error */
+	    /* Get cache */
+	    count = info->field_count;
+	    finfo = info->field;
+	    ret   = 0;                 /* Return of cache data, no error */
         } else {
-            jclass     klass;
+	    jclass     klass;
+    	
+	    klass = info->classref;
+	    if ( klass == NULL || isSameObject(env, klass, NULL) ) {
+	        /* This is probably an error because this will cause the field
+	         *    index values to be off, but I'm hesitant to generate a
+	         *    fatal error here, so I will issue something and continue.
+	         *    I should have been holding a global reference to all the
+	         *    jclass, so I'm not sure how this could happen.
+		 *    Issuing a FindClass() here is just asking for trouble
+		 *    because if the class went away, we aren't even sure
+		 *    what ClassLoader to use.
+	         */
+	        HPROF_ERROR(JNI_FALSE, "Missing jclass when fields needed");
+	    } else {
+		jint status;
 
-            klass = info->classref;
-            if ( klass == NULL || isSameObject(env, klass, NULL) ) {
-                /* This is probably an error because this will cause the field
-                 *    index values to be off, but I'm hesitant to generate a
-                 *    fatal error here, so I will issue something and continue.
-                 *    I should have been holding a global reference to all the
-                 *    jclass, so I'm not sure how this could happen.
-                 *    Issuing a FindClass() here is just asking for trouble
-                 *    because if the class went away, we aren't even sure
-                 *    what ClassLoader to use.
-                 */
-                HPROF_ERROR(JNI_FALSE, "Missing jclass when fields needed");
-            } else {
-                jint status;
-
-                status = getClassStatus(klass);
-                if ( status &
-                    (JVMTI_CLASS_STATUS_PRIMITIVE|JVMTI_CLASS_STATUS_ARRAY) ) {
-                    /* Set cache */
-                    info->field_count = count;
-                    info->field       = finfo;
-                    ret               = 0;      /* Primitive or array ok */
-                } else if ( status & JVMTI_CLASS_STATUS_PREPARED ) {
-                    /* Call JVMTI to get them */
-                    getAllClassFieldInfo(env, klass, &count, &finfo);
-                    /* Set cache */
-                    info->field_count = count;
-                    info->field       = finfo;
-                    ret               = 0;
-                }
-            }
+		status = getClassStatus(klass);
+		if ( status & 
+		    (JVMTI_CLASS_STATUS_PRIMITIVE|JVMTI_CLASS_STATUS_ARRAY) ) {
+		    /* Set cache */
+		    info->field_count = count;
+		    info->field       = finfo;
+		    ret               = 0;      /* Primitive or array ok */
+		} else if ( status & JVMTI_CLASS_STATUS_PREPARED ) {
+		    /* Call JVMTI to get them */
+		    getAllClassFieldInfo(env, klass, &count, &finfo);
+		    /* Set cache */
+		    info->field_count = count;
+		    info->field       = finfo;
+		    ret               = 0;
+		}
+	    }
         }
     }
     *pfield_count = count;
     *pfield       = finfo;
     return ret;
 }
+

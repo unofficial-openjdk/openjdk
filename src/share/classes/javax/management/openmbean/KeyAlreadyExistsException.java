@@ -40,7 +40,7 @@ public class KeyAlreadyExistsException extends IllegalArgumentException {
      * A KeyAlreadyExistsException with no detail message.
      */
     public KeyAlreadyExistsException() {
-        super();
+	super();
     }
 
     /**
@@ -49,7 +49,7 @@ public class KeyAlreadyExistsException extends IllegalArgumentException {
      * @param msg the detail message.
      */
     public KeyAlreadyExistsException(String msg) {
-        super(msg);
+	super(msg);
     }
 
 }

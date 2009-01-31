@@ -52,13 +52,13 @@ public class ServerNotifs {
     public static void main(String[] args) {
 
         try {
-            // Create MBeanServer
-            //
+	    // Create MBeanServer
+	    //
             echo("---Create the MBeanServer...");
             MBeanServer mbs = MBeanServerFactory.createMBeanServer();
 
-            // Create RMIConnectorServer
-            //
+	    // Create RMIConnectorServer
+	    //
             echo("---Instantiate the RMIConnectorServer...");
             JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://");
             JMXConnectorServer cs =
@@ -68,7 +68,7 @@ public class ServerNotifs {
 
             echo("---Register the RMIConnectorServer in the MBeanServer...");
             ObjectName on =
-                new ObjectName("JMXConnectors:name=RMIConnectorServer");
+		new ObjectName("JMXConnectors:name=RMIConnectorServer");
             mbs.registerMBean(cs, on);
 
             echo("---Start the RMIConnectorServer...");
@@ -79,40 +79,40 @@ public class ServerNotifs {
             echo("---Add a local listener to the RMIConnectorServer...");
             mbs.addNotificationListener(on, new MyListener(), null, null);
 
-            // Create RMI connector
-            //
+	    // Create RMI connector
+	    //
             echo("---Instantiate the RMIConnector...");
             JMXConnector c = JMXConnectorFactory.newJMXConnector(url, null);
 
             // Expect to get a "jmx.remote.connection.opened" notification
-            //
+	    //
             echo("---Open connection...");
             c.connect(null);
             Thread.sleep(100);
 
             // Expect to get a "jmx.remote.connection.closed" notification
-            //
+	    //
             echo("---Close connection...");
             c.close();
             Thread.sleep(100);
 
             // Waiting for all notifications
-            //
+	    //
             synchronized(waiting) {
                 if (!succeeded) {
-                    final long waitingTime = 10000;
-                    long remainingTime = waitingTime;
-                    final long startTime = System.currentTimeMillis();
-                    while (!succeeded && remainingTime > 0) {
-                        waiting.wait(remainingTime);
-                        remainingTime = waitingTime -
-                            (System.currentTimeMillis() - startTime);
-                    }
+		    final long waitingTime = 10000;
+		    long remainingTime = waitingTime;
+		    final long startTime = System.currentTimeMillis();
+		    while (!succeeded && remainingTime > 0) {
+			waiting.wait(remainingTime);
+			remainingTime = waitingTime -
+			    (System.currentTimeMillis() - startTime);
+		    }
                 }
             }
 
-            // Stop the RMIConnectorServer
-            //
+	    // Stop the RMIConnectorServer
+	    //
             echo("---Stop the RMIConnectorServer...");
             cs.stop();
 
@@ -140,9 +140,9 @@ public class ServerNotifs {
 
     private static class MyListener implements NotificationListener {
         public void handleNotification(Notification n, Object o) {
-            if (index == types.length) {
-                return;
-            }
+	    if (index == types.length) {
+		return;
+	    }
             echo("---Got a notification: " + n.getType());
             echo(n.getMessage());
             if (n instanceof JMXConnectionNotification) {

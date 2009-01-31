@@ -50,6 +50,7 @@ import java.io.DataInputStream;
  * data encodings which are defined.  That subset is sufficient for parsing
  * most X.509 certificates.
  *
+ * @version %I%
  *
  * @author David Brownell
  * @author Amit Kapoor
@@ -64,10 +65,10 @@ public class DerInputStream {
      * awkward to deal with.  That's where BER is useful, since BER
      * handles streaming data relatively well.
      */
-    DerInputBuffer      buffer;
+    DerInputBuffer	buffer;
 
     /** The DER tag of the value; one of the tag_ constants. */
-    public byte         tag;
+    public byte		tag;
 
     /**
      * Create a DER input stream from a data buffer.  The buffer is not
@@ -87,9 +88,9 @@ public class DerInputStream {
      *
      * @param data the buffer from which to create the string (CONSUMED)
      * @param offset the first index of <em>data</em> which will
-     *          be read as DER input in the new stream
+     *		be read as DER input in the new stream
      * @param len how long a chunk of the buffer to use,
-     *          starting at "offset"
+     *		starting at "offset"
      */
     public DerInputStream(byte[] data, int offset, int len) throws IOException {
         init(data, offset, len);
@@ -99,9 +100,9 @@ public class DerInputStream {
      * private helper routine
      */
     private void init(byte[] data, int offset, int len) throws IOException {
-        if ((offset+2 > data.length) || (offset+len > data.length)) {
-            throw new IOException("Encoding bytes too short");
-        }
+	if ((offset+2 > data.length) || (offset+len > data.length)) {
+	    throw new IOException("Encoding bytes too short");
+	}
         // check for indefinite length encoding
         if (DerIndefLenConverter.isIndefinite(data[offset+1])) {
             byte[] inData = new byte[len];
@@ -110,34 +111,34 @@ public class DerInputStream {
             DerIndefLenConverter derIn = new DerIndefLenConverter();
             buffer = new DerInputBuffer(derIn.convert(inData));
         } else
-            buffer = new DerInputBuffer(data, offset, len);
-        buffer.mark(Integer.MAX_VALUE);
+	    buffer = new DerInputBuffer(data, offset, len);
+ 	buffer.mark(Integer.MAX_VALUE);
     }
 
     DerInputStream(DerInputBuffer buf) {
-        buffer = buf;
-        buffer.mark(Integer.MAX_VALUE);
+	buffer = buf;
+	buffer.mark(Integer.MAX_VALUE);
     }
 
     /**
      * Creates a new DER input stream from part of this input stream.
      *
      * @param len how long a chunk of the current input stream to use,
-     *          starting at the current position.
+     *		starting at the current position.
      * @param do_skip true if the existing data in the input stream should
-     *          be skipped.  If this value is false, the next data read
-     *          on this stream and the newly created stream will be the
-     *          same.
+     *		be skipped.  If this value is false, the next data read
+     *		on this stream and the newly created stream will be the
+     *		same.
      */
     public DerInputStream subStream(int len, boolean do_skip)
     throws IOException {
-        DerInputBuffer  newbuf = buffer.dup();
+	DerInputBuffer	newbuf = buffer.dup();
 
-        newbuf.truncate(len);
-        if (do_skip) {
-            buffer.skip(len);
-        }
-        return new DerInputStream(newbuf);
+	newbuf.truncate(len);
+	if (do_skip) {
+	    buffer.skip(len);
+	}
+	return new DerInputStream(newbuf);
     }
 
     /**
@@ -151,9 +152,9 @@ public class DerInputStream {
     /*
      * PRIMITIVES -- these are "universal" ASN.1 simple types.
      *
-     *  INTEGER, ENUMERATED, BIT STRING, OCTET STRING, NULL
-     *  OBJECT IDENTIFIER, SEQUENCE (OF), SET (OF)
-     *  UTF8String, PrintableString, T61String, IA5String, UTCTime,
+     * 	INTEGER, ENUMERATED, BIT STRING, OCTET STRING, NULL
+     *	OBJECT IDENTIFIER, SEQUENCE (OF), SET (OF)
+     *	UTF8String, PrintableString, T61String, IA5String, UTCTime,
      *  GeneralizedTime, BMPString.
      * Note: UniversalString not supported till encoder is available.
      */
@@ -162,13 +163,13 @@ public class DerInputStream {
      * Get an integer from the input stream as an integer.
      *
      * @return the integer held in this DER input stream.
-     */
-    public int getInteger() throws IOException {
+     */ 
+    public int getInteger() throws IOException { 
         if (buffer.read() != DerValue.tag_Integer) {
             throw new IOException("DER input, Integer tag error");
-        }
-        return buffer.getInteger(getLength(buffer));
-    }
+	}
+	return buffer.getInteger(getLength(buffer));
+    } 
 
     /**
      * Get a integer from the input stream as a BigInteger object.
@@ -178,8 +179,8 @@ public class DerInputStream {
     public BigInteger getBigInteger() throws IOException {
         if (buffer.read() != DerValue.tag_Integer) {
             throw new IOException("DER input, Integer tag error");
-        }
-        return buffer.getBigInteger(getLength(buffer), false);
+	}
+	return buffer.getBigInteger(getLength(buffer), false);
     }
 
     /**
@@ -192,20 +193,20 @@ public class DerInputStream {
     public BigInteger getPositiveBigInteger() throws IOException {
         if (buffer.read() != DerValue.tag_Integer) {
             throw new IOException("DER input, Integer tag error");
-        }
-        return buffer.getBigInteger(getLength(buffer), true);
+	}
+	return buffer.getBigInteger(getLength(buffer), true);
     }
 
-    /**
-     * Get an enumerated from the input stream.
+    /** 
+     * Get an enumerated from the input stream. 
      *
      * @return the integer held in this DER input stream.
-     */
-    public int getEnumerated() throws IOException {
-        if (buffer.read() != DerValue.tag_Enumerated) {
-            throw new IOException("DER input, Enumerated tag error");
-        }
-        return buffer.getInteger(getLength(buffer));
+     */ 
+    public int getEnumerated() throws IOException { 
+	if (buffer.read() != DerValue.tag_Enumerated) {
+	    throw new IOException("DER input, Enumerated tag error"); 
+	}
+	return buffer.getInteger(getLength(buffer));
     }
 
     /**
@@ -213,10 +214,10 @@ public class DerInputStream {
      * will be stripped off before the bit string is returned.
      */
     public byte[] getBitString() throws IOException {
-        if (buffer.read() != DerValue.tag_BitString)
-            throw new IOException("DER input not an bit string");
+	if (buffer.read() != DerValue.tag_BitString)
+	    throw new IOException("DER input not an bit string");
 
-        return buffer.getBitString(getLength(buffer));
+	return buffer.getBitString(getLength(buffer));
     }
 
     /**
@@ -224,37 +225,37 @@ public class DerInputStream {
      * not be byte-aligned.
      */
     public BitArray getUnalignedBitString() throws IOException {
-        if (buffer.read() != DerValue.tag_BitString)
-            throw new IOException("DER input not a bit string");
+	if (buffer.read() != DerValue.tag_BitString)
+	    throw new IOException("DER input not a bit string");
 
-        int length = getLength(buffer) - 1;
+	int length = getLength(buffer) - 1;
 
-        /*
-         * First byte = number of excess bits in the last octet of the
-         * representation.
-         */
-        int validBits = length*8 - buffer.read();
+	/*
+	 * First byte = number of excess bits in the last octet of the
+	 * representation.
+	 */
+	int validBits = length*8 - buffer.read();
 
-        byte[] repn = new byte[length];
+	byte[] repn = new byte[length];
 
-        if ((length != 0) && (buffer.read(repn) != length))
-            throw new IOException("short read of DER bit string");
-        return new BitArray(validBits, repn);
+	if ((length != 0) && (buffer.read(repn) != length))
+	    throw new IOException("short read of DER bit string");
+	return new BitArray(validBits, repn);
     }
 
     /**
      * Returns an ASN.1 OCTET STRING from the input stream.
      */
     public byte[] getOctetString() throws IOException {
-        if (buffer.read() != DerValue.tag_OctetString)
-            throw new IOException("DER input not an octet string");
+	if (buffer.read() != DerValue.tag_OctetString)
+	    throw new IOException("DER input not an octet string");
 
-        int length = getLength(buffer);
-        byte[] retval = new byte[length];
-        if ((length != 0) && (buffer.read(retval) != length))
-            throw new IOException("short read of DER octet string");
+	int length = getLength(buffer);
+	byte[] retval = new byte[length];
+	if ((length != 0) && (buffer.read(retval) != length))
+	    throw new IOException("short read of DER octet string");
 
-        return retval;
+	return retval;
     }
 
     /**
@@ -262,23 +263,23 @@ public class DerInputStream {
      */
     public void getBytes(byte[] val) throws IOException {
         if ((val.length != 0) && (buffer.read(val) != val.length)) {
-            throw new IOException("short read of DER octet string");
-        }
+	    throw new IOException("short read of DER octet string");
+	}
     }
 
     /**
      * Reads an encoded null value from the input stream.
      */
     public void getNull() throws IOException {
-        if (buffer.read() != DerValue.tag_Null || buffer.read() != 0)
-            throw new IOException("getNull, bad data");
+	if (buffer.read() != DerValue.tag_Null || buffer.read() != 0)
+	    throw new IOException("getNull, bad data");
     }
 
     /**
      * Reads an X.200 style Object Identifier from the stream.
      */
     public ObjectIdentifier getOID() throws IOException {
-        return new ObjectIdentifier(this);
+	return new ObjectIdentifier(this);
     }
 
     /**
@@ -292,10 +293,10 @@ public class DerInputStream {
      * @return array of the values in the sequence
      */
     public DerValue[] getSequence(int startLen) throws IOException {
-        tag = (byte)buffer.read();
-        if (tag != DerValue.tag_Sequence)
-            throw new IOException("Sequence tag error");
-        return readVector(startLen);
+	tag = (byte)buffer.read();
+	if (tag != DerValue.tag_Sequence)
+	    throw new IOException("Sequence tag error");
+	return readVector(startLen);
     }
 
     /**
@@ -309,10 +310,10 @@ public class DerInputStream {
      * @return array of the values in the sequence
      */
     public DerValue[] getSet(int startLen) throws IOException {
-        tag = (byte)buffer.read();
-        if (tag != DerValue.tag_Set)
-            throw new IOException("Set tag error");
-        return readVector(startLen);
+	tag = (byte)buffer.read();
+	if (tag != DerValue.tag_Set)
+	    throw new IOException("Set tag error");
+	return readVector(startLen);
     }
 
     /**
@@ -326,15 +327,15 @@ public class DerInputStream {
      * @param implicit if true tag is assumed implicit.
      * @return array of the values in the sequence
      */
-    public DerValue[] getSet(int startLen, boolean implicit)
-        throws IOException {
+    public DerValue[] getSet(int startLen, boolean implicit) 
+	throws IOException {
         tag = (byte)buffer.read();
-        if (!implicit) {
-            if (tag != DerValue.tag_Set) {
-                throw new IOException("Set tag error");
-            }
-        }
-        return (readVector(startLen));
+	if (!implicit) {
+	    if (tag != DerValue.tag_Set) {
+	        throw new IOException("Set tag error");
+	    }
+	}
+	return (readVector(startLen));
     }
 
     /*
@@ -343,67 +344,67 @@ public class DerInputStream {
      * this same helper routine.
      */
     protected DerValue[] readVector(int startLen) throws IOException {
-        DerInputStream  newstr;
+	DerInputStream	newstr;
 
-        byte lenByte = (byte)buffer.read();
-        int len = getLength((lenByte & 0xff), buffer);
+	byte lenByte = (byte)buffer.read();
+	int len = getLength((lenByte & 0xff), buffer);
 
-        if (len == -1) {
-           // indefinite length encoding found
-           int readLen = buffer.available();
-           int offset = 2;     // for tag and length bytes
-           byte[] indefData = new byte[readLen + offset];
-           indefData[0] = tag;
-           indefData[1] = lenByte;
-           DataInputStream dis = new DataInputStream(buffer);
-           dis.readFully(indefData, offset, readLen);
-           dis.close();
-           DerIndefLenConverter derIn = new DerIndefLenConverter();
-           buffer = new DerInputBuffer(derIn.convert(indefData));
-           if (tag != buffer.read())
-                throw new IOException("Indefinite length encoding" +
-                        " not supported");
-           len = DerInputStream.getLength(buffer);
+	if (len == -1) { 
+	   // indefinite length encoding found
+	   int readLen = buffer.available();
+	   int offset = 2;     // for tag and length bytes
+	   byte[] indefData = new byte[readLen + offset];
+	   indefData[0] = tag;
+	   indefData[1] = lenByte;
+	   DataInputStream dis = new DataInputStream(buffer);
+	   dis.readFully(indefData, offset, readLen);
+	   dis.close();
+	   DerIndefLenConverter derIn = new DerIndefLenConverter();
+	   buffer = new DerInputBuffer(derIn.convert(indefData));
+	   if (tag != buffer.read())
+		throw new IOException("Indefinite length encoding" +
+			" not supported");
+	   len = DerInputStream.getLength(buffer);
         }
 
-        if (len == 0)
-            // return empty array instead of null, which should be
-            // used only for missing optionals
-            return new DerValue[0];
+	if (len == 0)
+	    // return empty array instead of null, which should be
+	    // used only for missing optionals
+	    return new DerValue[0];
 
-        /*
-         * Create a temporary stream from which to read the data,
-         * unless it's not really needed.
-         */
-        if (buffer.available() == len)
-            newstr = this;
-        else
-            newstr = subStream(len, true);
+	/*
+	 * Create a temporary stream from which to read the data,
+	 * unless it's not really needed.
+	 */
+	if (buffer.available() == len)
+	    newstr = this;
+	else
+	    newstr = subStream(len, true);
 
-        /*
-         * Pull values out of the stream.
-         */
-        Vector<DerValue> vec = new Vector<DerValue>(startLen);
-        DerValue value;
+	/*
+	 * Pull values out of the stream.
+	 */
+	Vector<DerValue> vec = new Vector<DerValue>(startLen);
+	DerValue value;
 
-        do {
-            value = new DerValue(newstr.buffer);
-            vec.addElement(value);
-        } while (newstr.available() > 0);
+	do {
+	    value = new DerValue(newstr.buffer);
+	    vec.addElement(value);
+	} while (newstr.available() > 0);
 
-        if (newstr.available() != 0)
-            throw new IOException("extra data at end of vector");
+	if (newstr.available() != 0)
+	    throw new IOException("extra data at end of vector");
 
-        /*
-         * Now stick them into the array we're returning.
-         */
-        int             i, max = vec.size();
-        DerValue[]      retval = new DerValue[max];
+	/*
+	 * Now stick them into the array we're returning.
+	 */
+	int		i, max = vec.size();
+	DerValue[]	retval = new DerValue[max];
 
-        for (i = 0; i < max; i++)
-            retval[i] = vec.elementAt(i);
+	for (i = 0; i < max; i++)
+	    retval[i] = vec.elementAt(i);
 
-        return retval;
+	return retval;
     }
 
     /**
@@ -414,59 +415,59 @@ public class DerInputStream {
      * later when you really need to.
      */
     public DerValue getDerValue() throws IOException {
-        return new DerValue(buffer);
+	return new DerValue(buffer);
     }
 
     /**
      * Read a string that was encoded as a UTF8String DER value.
      */
     public String getUTF8String() throws IOException {
-        return readString(DerValue.tag_UTF8String, "UTF-8", "UTF8");
+	return readString(DerValue.tag_UTF8String, "UTF-8", "UTF8");
     }
 
     /**
      * Read a string that was encoded as a PrintableString DER value.
      */
     public String getPrintableString() throws IOException {
-        return readString(DerValue.tag_PrintableString, "Printable",
-                          "ASCII");
+	return readString(DerValue.tag_PrintableString, "Printable",
+			  "ASCII");
     }
 
     /**
      * Read a string that was encoded as a T61String DER value.
      */
     public String getT61String() throws IOException {
-        /*
-         * Works for common characters between T61 and ASCII.
-         */
-        return readString(DerValue.tag_T61String, "T61", "ISO-8859-1");
+	/*
+	 * Works for common characters between T61 and ASCII.
+	 */
+	return readString(DerValue.tag_T61String, "T61", "ISO-8859-1");
     }
 
     /**
      * Read a string that was encoded as a IA5tring DER value.
      */
     public String getIA5String() throws IOException {
-        return readString(DerValue.tag_IA5String, "IA5", "ASCII");
+	return readString(DerValue.tag_IA5String, "IA5", "ASCII");
     }
 
     /**
      * Read a string that was encoded as a BMPString DER value.
      */
     public String getBMPString() throws IOException {
-        return readString(DerValue.tag_BMPString, "BMP",
-                          "UnicodeBigUnmarked");
+	return readString(DerValue.tag_BMPString, "BMP",
+			  "UnicodeBigUnmarked");
     }
 
     /**
      * Read a string that was encoded as a GeneralString DER value.
      */
     public String getGeneralString() throws IOException {
-        return readString(DerValue.tag_GeneralString, "General",
-                          "ASCII");
+	return readString(DerValue.tag_GeneralString, "General",
+			  "ASCII");
     }
 
     /**
-     * Private helper routine to read an encoded string from the input
+     * Private helper routine to read an encoded string from the input 
      * stream.
      * @param stringTag the tag for the type of string to read
      * @param stringName a name to display in error messages
@@ -474,19 +475,19 @@ public class DerInputStream {
      * correspond to the stringTag above.
      */
     private String readString(byte stringTag, String stringName,
-                              String enc) throws IOException {
+			      String enc) throws IOException {
 
-        if (buffer.read() != stringTag)
-            throw new IOException("DER input not a " +
-                                  stringName + " string");
+	if (buffer.read() != stringTag)
+	    throw new IOException("DER input not a " +
+				  stringName + " string");
 
-        int length = getLength(buffer);
-        byte[] retval = new byte[length];
-        if ((length != 0) && (buffer.read(retval) != length))
-            throw new IOException("short read of DER " +
-                                  stringName + " string");
+	int length = getLength(buffer);
+	byte[] retval = new byte[length];
+	if ((length != 0) && (buffer.read(retval) != length))
+	    throw new IOException("short read of DER " +
+				  stringName + " string");
 
-        return new String(retval, enc);
+	return new String(retval, enc);
     }
 
     /**
@@ -495,7 +496,7 @@ public class DerInputStream {
     public Date getUTCTime() throws IOException {
         if (buffer.read() != DerValue.tag_UtcTime)
             throw new IOException("DER input, UTCtime tag invalid ");
-        return buffer.getUTCTime(getLength(buffer));
+	return buffer.getUTCTime(getLength(buffer));
     }
 
     /**
@@ -504,7 +505,7 @@ public class DerInputStream {
     public Date getGeneralizedTime() throws IOException {
         if (buffer.read() != DerValue.tag_GeneralizedTime)
             throw new IOException("DER input, GeneralizedTime tag invalid ");
-        return buffer.getGeneralizedTime(getLength(buffer));
+	return buffer.getGeneralizedTime(getLength(buffer));
     }
 
     /*
@@ -512,16 +513,16 @@ public class DerInputStream {
      */
     // package private
     int getByte() throws IOException {
-        return (0x00ff & buffer.read());
+	return (0x00ff & buffer.read());
     }
 
     public int peekByte() throws IOException {
-        return buffer.peek();
+	return buffer.peek();
     }
 
     // package private
     int getLength() throws IOException {
-        return getLength(buffer);
+	return getLength(buffer);
     }
 
     /*
@@ -532,7 +533,7 @@ public class DerInputStream {
      * @exception IOException on parsing error or unsupported lengths.
      */
     static int getLength(InputStream in) throws IOException {
-        return getLength(in.read(), in);
+	return getLength(in.read(), in);
     }
 
     /*
@@ -543,31 +544,31 @@ public class DerInputStream {
      * @exception IOException on parsing error or unsupported lengths.
      */
     static int getLength(int lenByte, InputStream in) throws IOException {
-        int value, tmp;
+	int value, tmp;
 
         tmp = lenByte;
-        if ((tmp & 0x080) == 0x00) { // short form, 1 byte datum
-            value = tmp;
-        } else {                     // long form or indefinite
-            tmp &= 0x07f;
+	if ((tmp & 0x080) == 0x00) { // short form, 1 byte datum
+	    value = tmp;
+	} else {                     // long form or indefinite
+	    tmp &= 0x07f;
 
-            /*
-             * NOTE:  tmp == 0 indicates indefinite length encoded data.
-             * tmp > 4 indicates more than 4Gb of data.
-             */
+	    /*
+	     * NOTE:  tmp == 0 indicates indefinite length encoded data.
+	     * tmp > 4 indicates more than 4Gb of data.
+	     */
             if (tmp == 0)
                 return -1;
-            if (tmp < 0 || tmp > 4)
-                throw new IOException("DerInputStream.getLength(): lengthTag="
+	    if (tmp < 0 || tmp > 4)
+		throw new IOException("DerInputStream.getLength(): lengthTag="
                     + tmp + ", "
                     + ((tmp < 0) ? "incorrect DER encoding." : "too big."));
 
-            for (value = 0; tmp > 0; tmp --) {
-                value <<= 8;
-                value += 0x0ff & in.read();
-            }
-        }
-        return value;
+	    for (value = 0; tmp > 0; tmp --) {
+		value <<= 8;
+		value += 0x0ff & in.read();
+	    }
+	}
+	return value;
     }
 
     /**

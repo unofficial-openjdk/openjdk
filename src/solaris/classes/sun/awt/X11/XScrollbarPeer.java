@@ -92,7 +92,7 @@ class XScrollbarPeer extends XComponentPeer implements ScrollbarPeer, XScrollbar
     }
 
     public void repaint() {
-        Graphics g = getGraphics();
+        Graphics g = getGraphics(); 
         if (g != null) paint(g);
     }
 
@@ -119,7 +119,7 @@ class XScrollbarPeer extends XComponentPeer implements ScrollbarPeer, XScrollbar
         sb.setValue(value);
         postEvent( new AdjustmentEvent(sb, AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED, type, value, isAdjusting));
     }
-
+    
     /**
      *
      * @see java.awt.event.MouseEvent
@@ -135,7 +135,7 @@ class XScrollbarPeer extends XComponentPeer implements ScrollbarPeer, XScrollbar
         super.handleJavaMouseEvent(mouseEvent);
 
         int x = mouseEvent.getX();
-        int y = mouseEvent.getY();
+        int y = mouseEvent.getY(); 
         int modifiers = mouseEvent.getModifiers();
         int id = mouseEvent.getID();
 
@@ -200,7 +200,7 @@ class XScrollbarPeer extends XComponentPeer implements ScrollbarPeer, XScrollbar
             }
         }
     }
-
+    
     public void setValue(int value) {
         tsb.setValue(value);
         repaint();
@@ -211,7 +211,7 @@ class XScrollbarPeer extends XComponentPeer implements ScrollbarPeer, XScrollbar
         tsb.setValues(value, visible, minimum, maximum);
         repaint();
     }
-
+  
     public void setLineIncrement(int l) {
         tsb.setUnitIncrement(l);
     }

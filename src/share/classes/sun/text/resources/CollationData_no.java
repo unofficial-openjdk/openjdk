@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /*
@@ -50,9 +51,9 @@ public class CollationData_no extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
             { "Rule",
-                "& D <\u00D0,\u00F0" +      // eth
+	        "& D <\u00D0,\u00F0" +      // eth
                 "& ss,\u00DF" +             // s-zet
-                "& y , u\u0308" +   // u-umlaut is eq. to y.
+	        "& y , u\u0308" +   // u-umlaut is eq. to y.
                 "& y ; U\u0308" +  // u-umlaut is eq. to y.
                 "& Z < \u00e6, \u00c6 " +    // z < z-caron
                 " < a\u0308, A\u0308" +      // nt : a-umlaut

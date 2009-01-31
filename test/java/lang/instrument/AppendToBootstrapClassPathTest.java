@@ -56,8 +56,8 @@ AppendToBootstrapClassPathTest
     protected final void doRunTest() {
         testAppendToBootstrapClassPath();
     }
-
-    public void  testAppendToBootstrapClassPath() {
+    
+    public void  testAppendToBootstrapClassPath() {        
         // load the "hidden" class, it should be loaded by the boot loader
         Object instance = loadExampleClass();
         assertTrue(instance.getClass().getClassLoader() == null);

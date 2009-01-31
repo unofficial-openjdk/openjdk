@@ -23,7 +23,7 @@
 
 /**
  *  @test
- *  @bug 5089849
+ *  @bug 5089849 
  *  @summary Add support for backtracking reference graph.
  *  @author jjh
  *
@@ -39,11 +39,11 @@
  *  where <cmd line options> are the options to be used to
  *  launch the debuggee, with the classname prefixed with @@.
  *  For example, this would run java2d demo as the debuggee:
- *     runregress -no ReferrersTest -classpath
+ *     runregress -no ReferrersTest -classpath 
  *                                    $jdkDir/demo/jfc/Java2D/Java2Demo.jar \
  *                                    -client @@java2d.Java2Demo
  *
- * In this mode, the specified debuggee is launched in debug mode,
+ * In this mode, the specified debuggee is launched in debug mode, 
  * and the debugger waits for a keystroke before connecting to the debuggee.
  *
  * If <cmd line options> is not specified, then the ReferrersTarg class below
@@ -71,10 +71,10 @@ class ReferrersTarg {
     static int TARG_COUNT = 10;
     static ReferrersTarg theReferrersTarg;
     static ReferrersTarg[] allReferrersTargs;
-
+    
     // Each instance will point to the theReferrersTarg
     ReferrersTarg oneReferrersTarg;
-
+    
     public static void bkpt() {
     }
 
@@ -83,7 +83,7 @@ class ReferrersTarg {
         for (int ii = 0; ii < ReferrersFiller.lotsAndLots.length; ii++) {
             ReferrersFiller.lotsAndLots[ii] = new ReferrersFiller(ii);
         }
-
+        
         theReferrersTarg = new ReferrersTarg();
         allReferrersTargs = new ReferrersTarg[ReferrersTarg.TARG_COUNT];
         for (int ii = 0; ii < ReferrersTarg.TARG_COUNT; ii++) {
@@ -91,7 +91,7 @@ class ReferrersTarg {
             allReferrersTargs[ii].oneReferrersTarg = theReferrersTarg;
         }
         bkpt();
-
+        
         System.out.println("Goodbye from ReferrersTarg!");
     }
 }
@@ -143,7 +143,7 @@ public class ReferrersTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         int CUT_OFF = 1000;
@@ -151,7 +151,7 @@ public class ReferrersTest extends TestScaffold {
         bpe = startToMain(targetName);
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
-
+                
         if (targetName.equals("ReferrersTarg")) {
             resumeTo("ReferrersTarg", "bkpt", "()V");
         } else {
@@ -161,7 +161,7 @@ public class ReferrersTest extends TestScaffold {
                 System.err.println("Press <enter> to continue");
                 System.in.read();
                 System.err.println("running...");
-
+                
             } catch(Exception e) {
             }
             vm().suspend();
@@ -171,8 +171,8 @@ public class ReferrersTest extends TestScaffold {
         long start = System.currentTimeMillis();
         List<ReferenceType> allClasses = vm().allClasses();
         long end = System.currentTimeMillis();
-        System.out.println( allClasses.size() +
-                            " classes from vm.allClasses() took " +
+        System.out.println( allClasses.size() + 
+                            " classes from vm.allClasses() took " + 
                             (end - start) + " ms");
 
         long[] counts;
@@ -195,9 +195,9 @@ public class ReferrersTest extends TestScaffold {
             List<ReferenceType>someClasses = new ArrayList(2);
             counts = vm().instanceCounts(someClasses);
             if (counts.length != 0) {
-                failure("failure: instanceCounts with a zero length array fails: " +
+                failure("failure: instanceCounts with a zero length array fails: " + 
                         counts.length);
-            }
+            }                
         }
 
         // Test various values of maxInstances
@@ -227,8 +227,8 @@ public class ReferrersTest extends TestScaffold {
         end = System.currentTimeMillis();
 
         if (counts.length == 0) {
-            System.out.println("failure: No instances found");
-            throw new Exception("ReferrersTest: failed");
+            System.out.println("failure: No instances found"); 
+            throw new Exception("ReferrersTest: failed");           
         }
 
         // Create a list of ReferenceTypes sorted by instance count
@@ -240,8 +240,8 @@ public class ReferrersTest extends TestScaffold {
             sorted.add(tos);
         }
 
-        System.out.println("instance counts for " + counts.length +
-                           " classes got " + size + " instances and took " +
+        System.out.println("instance counts for " + counts.length + 
+                           " classes got " + size + " instances and took " + 
                             (end - start) + " ms");
 
 
@@ -293,13 +293,13 @@ public class ReferrersTest extends TestScaffold {
                 size += oneInstances.size();
                 count++;
                 System.out.println("Expected " + xxx.count + " instances, got " +
-                                   oneInstances.size() +
+                                   oneInstances.size() + 
                                    " instances for " + sorted.get(ii).rt +
                                    " in " + (end - start) + " ms");
 
                 if (xxx.rt.name().equals("ReferrersFiller") &&
                     oneInstances.size() != ReferrersFiller.FILLER_COUNT) {
-                    failure("failure: Expected " + ReferrersFiller.FILLER_COUNT +
+                    failure("failure: Expected " + ReferrersFiller.FILLER_COUNT + 
                             " instances of ReferrersFiller");
                 }
                 if (xxx.rt.name().equals("ReferrersTarg") &&
@@ -309,13 +309,13 @@ public class ReferrersTest extends TestScaffold {
                 }
                 allInstances.add(oneInstances);
             }
-
+            
             end = System.currentTimeMillis();
-
+            
             System.out.println(size + " instances via making one vm.instances" +
-                               " call for each of " + count +
+                               " call for each of " + count + 
                                " classes took " + (end - start1) + " ms");
-            System.out.println("Per class = " +
+            System.out.println("Per class = " + 
                                (end - start) / allClasses.size() + " ms");
         }
 
@@ -328,12 +328,12 @@ public class ReferrersTest extends TestScaffold {
             ObjectReference anInstance = (ObjectReference)targetClass.getValue(field1);
             List<ObjectReference> noReferrers = anInstance.referringObjects(0);
             if (noReferrers.size() != ReferrersTarg.TARG_COUNT + 1 ) {
-                failure("failure: referringObjects(0) got " + noReferrers.size() +
+                failure("failure: referringObjects(0) got " + noReferrers.size() + 
                         ", for " + anInstance);
             }
             noReferrers = anInstance.referringObjects(1);
             if (noReferrers.size() != 1 ) {
-                failure("failure: referringObjects(1) got " + noReferrers.size() +
+                failure("failure: referringObjects(1) got " + noReferrers.size() + 
                         ", for " + anInstance);
             }
             boolean pass = false;
@@ -346,7 +346,7 @@ public class ReferrersTest extends TestScaffold {
                 failure("failure: referringObjects(-1) did not get an exception");
             }
         }
-
+            
         List<ObjectReference> allReferrers = null;
         List<ObjectReference> someInstances = new ArrayList();
         if (targetName.equals("ReferrersTarg")) {
@@ -356,7 +356,7 @@ public class ReferrersTest extends TestScaffold {
             allReferrers = val.referringObjects(99999);  //LIMIT
             if (allReferrers.size() != ReferrersTarg.TARG_COUNT + 1) {
                 failure("failure: expected " + (ReferrersTarg.TARG_COUNT + 1) +
-                        "referrers, but got " + allReferrers.size() +
+                        "referrers, but got " + allReferrers.size() + 
                         " referrers for " + val);
             }
         } else {
@@ -375,9 +375,9 @@ public class ReferrersTest extends TestScaffold {
                     }
                 }
             }
-        }
-
-        for (ObjectReference objRef: someInstances) {
+        } 
+        
+        for (ObjectReference objRef: someInstances) {  
             //System.out.println( "Getting referrers for " + objRef);
             start = System.currentTimeMillis();
             if ( true) {

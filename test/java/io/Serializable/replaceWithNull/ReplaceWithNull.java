@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1997-1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,7 +20,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 /* @test
  * @bug 4065313
  * @clean A ReplaceWithNull MyObjectOutputStream
@@ -43,11 +43,11 @@ class MyObjectOutputStream extends ObjectOutputStream {
 
 public class ReplaceWithNull {
     public static void main(String args[]) throws IOException {
-        A a = new A();
-
-        MyObjectOutputStream out =
-            new MyObjectOutputStream(new ByteArrayOutputStream());
-        out.writeObject(a);     //raised NullPointerException.
-        out.close();
+	A a = new A();
+    
+	MyObjectOutputStream out =
+	    new MyObjectOutputStream(new ByteArrayOutputStream());
+	out.writeObject(a);	//raised NullPointerException.
+	out.close();
     }
 }

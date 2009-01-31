@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /* @test
  * @bug 4838379
  * @summary Verify that serialization of enum constant arrays functions
- *          properly.
+ * 	    properly.
  *
  * @compile -source 1.5 Test.java
  * @run main Test
@@ -37,36 +37,36 @@ enum Foo { klaatu, barada { int i = 1; }, nikto }
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        Foo[] fa = Foo.values();
-        Object[] oa = Arrays.asList(fa).toArray();
-        oout.writeObject(oa);
-        oout.writeObject(fa);
-        oout.close();
-        ObjectInputStream oin = new ObjectInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        Object[] oa2 = (Object[]) oin.readObject();
-        if (!elementsIdentical(oa, oa2)) {
-            throw new Error("arrays differ: " +
-                Arrays.asList(oa) + ", " + Arrays.asList(oa2));
-        }
-        Foo[] fa2 = (Foo[]) oin.readObject();
-        if (!elementsIdentical(fa, fa2)) {
-            throw new Error("arrays differ: " +
-                Arrays.asList(fa) + ", " + Arrays.asList(fa2));
-        }
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	Foo[] fa = Foo.values();
+	Object[] oa = Arrays.asList(fa).toArray();
+	oout.writeObject(oa);
+	oout.writeObject(fa);
+	oout.close();
+	ObjectInputStream oin = new ObjectInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	Object[] oa2 = (Object[]) oin.readObject();
+	if (!elementsIdentical(oa, oa2)) {
+	    throw new Error("arrays differ: " +
+		Arrays.asList(oa) + ", " + Arrays.asList(oa2));
+	}
+	Foo[] fa2 = (Foo[]) oin.readObject();
+	if (!elementsIdentical(fa, fa2)) {
+	    throw new Error("arrays differ: " +
+		Arrays.asList(fa) + ", " + Arrays.asList(fa2));
+	}
     }
 
     static boolean elementsIdentical(Object[] a1, Object[] a2) {
-        if (a1.length != a2.length) {
-            return false;
-        }
-        for (int i = 0; i < a1.length; i++) {
-            if (a1[i] != a2[i]) {
-                return false;
-            }
-        }
-        return true;
+	if (a1.length != a2.length) {
+	    return false;
+	}
+	for (int i = 0; i < a1.length; i++) {
+	    if (a1[i] != a2[i]) {
+		return false;
+	    }
+	}
+	return true;
     }
 }

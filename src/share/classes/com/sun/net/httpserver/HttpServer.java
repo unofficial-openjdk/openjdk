@@ -101,65 +101,65 @@ public abstract class HttpServer {
      * @throws IOException
      */
     public static HttpServer create () throws IOException {
-        return create (null, 0);
+	return create (null, 0);
     }
 
     /**
-     * Create a <code>HttpServer</code> instance which will bind to the
+     * Create a <code>HttpServer</code> instance which will bind to the 
      * specified {@link java.net.InetSocketAddress} (IP address and port number)
      *
-     * A maximum backlog can also be specified. This is the maximum number of
+     * A maximum backlog can also be specified. This is the maximum number of 
      * queued incoming connections to allow on the listening socket.
      * Queued TCP connections exceeding this limit may be rejected by the TCP implementation.
      * The HttpServer is acquired from the currently installed {@link HttpServerProvider}
-     *
+     * 
      * @param addr the address to listen on, if <code>null</code> then bind() must be called
-     *  to set the address
+     *	to set the address
      * @param backlog the socket backlog. If this value is less than or equal to zero,
-     *          then a system default value is used.
-     * @throws BindException if the server cannot bind to the requested address,
-     *          or if the server is already bound.
-     * @throws IOException
+     *		then a system default value is used.
+     * @throws BindException if the server cannot bind to the requested address, 
+     * 		or if the server is already bound.
+     * @throws IOException 
      */
 
     public static HttpServer create (
-        InetSocketAddress addr, int backlog
+	InetSocketAddress addr, int backlog
     ) throws IOException {
-        HttpServerProvider provider = HttpServerProvider.provider();
-        return provider.createHttpServer (addr, backlog);
+	HttpServerProvider provider = HttpServerProvider.provider();
+	return provider.createHttpServer (addr, backlog);
     }
 
     /**
      * Binds a currently unbound HttpServer to the given address and port number.
-     * A maximum backlog can also be specified. This is the maximum number of
+     * A maximum backlog can also be specified. This is the maximum number of 
      * queued incoming connections to allow on the listening socket.
      * Queued TCP connections exceeding this limit may be rejected by the TCP implementation.
      * @param addr the address to listen on
      * @param backlog the socket backlog. If this value is less than or equal to zero,
-     *          then a system default value is used.
+     *		then a system default value is used.
      * @throws BindException if the server cannot bind to the requested address or if the server
-     *          is already bound.
+     *		is already bound.
      * @throws NullPointerException if addr is <code>null</code>
      */
     public abstract void bind (InetSocketAddress addr, int backlog) throws IOException;
 
     /**
      * Starts this server in a new background thread. The background thread
-     * inherits the priority, thread group and context class loader
-     * of the caller.
+     * inherits the priority, thread group and context class loader 
+     * of the caller. 
      */
     public abstract void start () ;
 
     /**
-     * sets this server's {@link java.util.concurrent.Executor} object. An
+     * sets this server's {@link java.util.concurrent.Executor} object. An 
      * Executor must be established before {@link #start()} is called.
      * All HTTP requests are handled in tasks given to the executor.
      * If this method is not called (before start()) or if it is
      * called with a <code>null</code> Executor, then
-     * a default implementation is used, which uses the thread
+     * a default implementation is used, which uses the thread 
      * which was created by the {@link #start()} method.
      * @param executor the Executor to set, or <code>null</code> for  default
-     *          implementation
+     * 		implementation
      * @throws IllegalStateException if the server is already started
      */
     public abstract void setExecutor (Executor executor);
@@ -173,22 +173,22 @@ public abstract class HttpServer {
      */
     public abstract Executor getExecutor () ;
 
-    /**
+    /** 
      * stops this server by closing the listening socket and disallowing
      * any new exchanges from being processed. The method will then block
-     * until all current exchange handlers have completed or else when
-     * approximately <i>delay</i> seconds have elapsed (whichever happens
-     * sooner). Then, all open TCP connections are closed, the background
+     * until all current exchange handlers have completed or else when 
+     * approximately <i>delay</i> seconds have elapsed (whichever happens 
+     * sooner). Then, all open TCP connections are closed, the background 
      * thread created by start() exits, and the method returns.
      * Once stopped, a HttpServer cannot be re-used. <p>
      *
-     * @param delay the maximum time in seconds to wait until exchanges have finished.
+     * @param delay the maximum time in seconds to wait until exchanges have finished. 
      * @throws IllegalArgumentException if delay is less than zero.
      */
     public abstract void stop (int delay);
 
     /**
-     * Creates a HttpContext. A HttpContext represents a mapping from a
+     * Creates a HttpContext. A HttpContext represents a mapping from a 
      * URI path to a exchange handler on this HttpServer. Once created, all requests
      * received by the server for the path will be handled by calling
      * the given handler object. The context is identified by the path, and
@@ -201,7 +201,7 @@ public abstract class HttpServer {
      * @param path the root URI path to associate the context with
      * @param handler the handler to invoke for incoming requests.
      * @throws IllegalArgumentException if path is invalid, or if a context
-     *          already exists for this path
+     *		already exists for this path
      * @throws NullPointerException if either path, or handler are <code>null</code>
      */
     public abstract HttpContext createContext (String path, HttpHandler handler) ;
@@ -221,7 +221,7 @@ public abstract class HttpServer {
      * to HttpContext instances.
      * @param path the root URI path to associate the context with
      * @throws IllegalArgumentException if path is invalid, or if a context
-     *          already exists for this path
+     *		already exists for this path
      * @throws NullPointerException if path is <code>null</code>
      */
     public abstract HttpContext createContext (String path) ;
@@ -232,7 +232,7 @@ public abstract class HttpServer {
      * but prevents new ones from being accepted.
      * @param path the path of the handler to remove
      * @throws IllegalArgumentException if no handler corresponding to this
-     *          path exists.
+     *		path exists.
      * @throws NullPointerException if path is <code>null</code>
      */
     public abstract void removeContext (String path) throws IllegalArgumentException ;

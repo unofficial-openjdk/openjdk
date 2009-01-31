@@ -112,56 +112,56 @@ public class FormatData_ja extends ListResourceBundle {
             },
             { "Eras",
                 new String[] { // era strings for GregorianCalendar
-                    "\u7d00\u5143\u524d",
-                    "\u897f\u66a6"
+                    "\u7d00\u5143\u524d", 
+                    "\u897f\u66a6" 
                 }
             },
             { "sun.util.BuddhistCalendar.Eras",
                 new String[] { // era strings for Thai Buddhist calendar
                     "\u7d00\u5143\u524d", // Kigenzen
-                    "\u4ecf\u66a6",       // Butsureki
+                    "\u4ecf\u66a6",	  // Butsureki
                 }
             },
             { "java.util.JapaneseImperialCalendar.Eras",
                 new String[] { // era strings for Japanese imperial calendar
-                    "\u897f\u66a6",     // Seireki (Gregorian)
-                    "\u660e\u6cbb",     // Meiji
-                    "\u5927\u6b63",     // Taisho
-                    "\u662d\u548c",     // Showa
-                    "\u5e73\u6210",     // Heisei
+                    "\u897f\u66a6",	// Seireki (Gregorian)
+		    "\u660e\u6cbb",	// Meiji
+		    "\u5927\u6b63",	// Taisho
+		    "\u662d\u548c",	// Showa
+		    "\u5e73\u6210",	// Heisei
                 }
             },
             { "java.util.JapaneseImperialCalendar.FirstYear",
                 new String[] {  // first year name
-                    "\u5143",   // "Gan"-nen
+                    "\u5143",	// "Gan"-nen
                 }
             },
             { "NumberElements",
                 new String[] {
-                    ".",        // decimal separator
-                    ",",        // group (thousands) separator
-                    ";",        // list separator
-                    "%",        // percent sign
-                    "0",        // native 0 digit
-                    "#",        // pattern digit
-                    "-",        // minus sign
-                    "E",        // exponential
-                    "\u2030",   // per mille
-                    "\u221e",   // infinity
-                    "\ufffd"    // NaN
+                    ".",	// decimal separator
+                    ",",	// group (thousands) separator
+                    ";",	// list separator
+                    "%",	// percent sign
+                    "0",	// native 0 digit
+                    "#",	// pattern digit
+                    "-",	// minus sign
+                    "E",	// exponential
+                    "\u2030",	// per mille
+                    "\u221e",	// infinity
+                    "\ufffd"	// NaN
                 }
             },
             { "DateTimePatterns",
                 new String[] {
                     "H'\u6642'mm'\u5206'ss'\u79d2' z", // full time pattern
-                    "H:mm:ss z",                       // long time pattern
-                    "H:mm:ss",                         // medium time pattern
-                    "H:mm",                            // short time pattern
+                    "H:mm:ss z",		       // long time pattern
+                    "H:mm:ss",			       // medium time pattern
+                    "H:mm",			       // short time pattern
                     "yyyy'\u5e74'M'\u6708'd'\u65e5'",  // full date pattern
-                    "yyyy/MM/dd",                      // long date pattern
-                    "yyyy/MM/dd",                      // medium date pattern
-                    "yy/MM/dd",                        // short date pattern
-                    "{1} {0}"                          // date-time pattern
+                    "yyyy/MM/dd",		       // long date pattern
+                    "yyyy/MM/dd",		       // medium date pattern
+                    "yy/MM/dd",			       // short date pattern
+                    "{1} {0}"			       // date-time pattern
                 }
             },
             { "java.util.JapaneseImperialCalendar.DateTimePatterns",

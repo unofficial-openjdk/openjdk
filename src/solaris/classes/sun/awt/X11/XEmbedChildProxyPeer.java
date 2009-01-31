@@ -52,7 +52,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
         XToolkit.awtLock();
         try {
             XToolkit.addEventDispatcher(handle, this);
-            XlibWrapper.XSelectInput(XToolkit.getDisplay(), handle,
+            XlibWrapper.XSelectInput(XToolkit.getDisplay(), handle, 
                     XlibWrapper.StructureNotifyMask | XlibWrapper.PropertyChangeMask);
         }
         finally {
@@ -60,7 +60,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
         }
         container.notifyChildEmbedded(handle);
     }
-    public boolean isObscured() { return false; }
+    public boolean isObscured() { return false; } 
     public boolean canDetermineObscurity() { return false; }
     public void                 setVisible(boolean b) {
         if (!b) {
@@ -117,7 +117,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     public Point                getLocationOnScreen() {
         XWindowAttributes attr = new XWindowAttributes();
         XToolkit.awtLock();
-        try{
+        try{ 
             XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(), handle, attr.pData);
             return new Point(attr.get_x(), attr.get_y());
         } finally {
@@ -128,27 +128,27 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     public Dimension            getPreferredSize() {
         XToolkit.awtLock();
         long p_hints = XlibWrapper.XAllocSizeHints();
-        try {
+        try {            
             XSizeHints hints = new XSizeHints(p_hints);
             XlibWrapper.XGetWMNormalHints(XToolkit.getDisplay(), handle, p_hints, XlibWrapper.larg1);
             Dimension res = new Dimension(hints.get_width(), hints.get_height());
             return res;
         } finally {
             XlibWrapper.XFree(p_hints);
-            XToolkit.awtUnlock();
-        }
+            XToolkit.awtUnlock();            
+        }            
     }
     public Dimension            getMinimumSize() {
         XToolkit.awtLock();
         long p_hints = XlibWrapper.XAllocSizeHints();
         try {
             XSizeHints hints = new XSizeHints(p_hints);
-            XlibWrapper.XGetWMNormalHints(XToolkit.getDisplay(), handle, p_hints, XlibWrapper.larg1);
+            XlibWrapper.XGetWMNormalHints(XToolkit.getDisplay(), handle, p_hints, XlibWrapper.larg1);        
             Dimension res = new Dimension(hints.get_min_width(), hints.get_min_height());
             return res;
         } finally {
             XlibWrapper.XFree(p_hints);
-            XToolkit.awtUnlock();
+            XToolkit.awtUnlock();            
         }
     }
     public ColorModel           getColorModel() { return null; }
@@ -156,10 +156,10 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
 
     public Graphics             getGraphics() { return null; }
     public FontMetrics          getFontMetrics(Font font) { return null; }
-    public void         dispose() {
-        container.detachChild(handle);
+    public void         dispose() { 
+        container.detachChild(handle);        
     }
-    public void         setForeground(Color c) {}
+    public void         setForeground(Color c) {} 
     public void         setBackground(Color c) {}
     public void         setFont(Font f) {}
     public void                 updateCursorImmediately() {}
@@ -169,7 +169,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     }
 
     boolean simulateMotifRequestFocus(Component lightweightChild, boolean temporary,
-                                      boolean focusedWindowChangeAllowed, long time)
+                                      boolean focusedWindowChangeAllowed, long time) 
     {
         if (lightweightChild == null) {
             lightweightChild = (Component)proxy;
@@ -183,7 +183,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
         if (currentOwner != null) {
             fl = new FocusEvent(currentOwner, FocusEvent.FOCUS_LOST, false, lightweightChild);
         }
-
+        
         if (fl != null) {
             postEvent(XComponentPeer.wrapInSequenced(fl));
         }
@@ -195,11 +195,11 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     public boolean requestFocus(Component lightweightChild,
                                 boolean temporary,
                                 boolean focusedWindowChangeAllowed,
-                                long time,
-                                CausedFocusEvent.Cause cause)
+                                long time, 
+                                CausedFocusEvent.Cause cause) 
     {
         int result = XKeyboardFocusManagerPeer
-            .shouldNativelyFocusHeavyweight(proxy, lightweightChild,
+            .shouldNativelyFocusHeavyweight(proxy, lightweightChild, 
                                             temporary, false, time, cause);
 
         switch (result) {
@@ -211,8 +211,8 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
 
               /**
                * The problems with requests in non-focused window arise because shouldNativelyFocusHeavyweight
-               * checks that native window is focused while appropriate WINDOW_GAINED_FOCUS has not yet
-               * been processed - it is in EventQueue. Thus, SNFH allows native request and stores request record
+               * checks that native window is focused while appropriate WINDOW_GAINED_FOCUS has not yet 
+               * been processed - it is in EventQueue. Thus, SNFH allows native request and stores request record 
                * in requests list - and it breaks our requests sequence as first record on WGF should be the last focus
                * owner which had focus before WLF. So, we should not add request record for such requests
                * but store this component in mostRecent - and return true as before for compatibility.
@@ -222,7 +222,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
               while (parent != null && !(parent instanceof Window)) {
                   parent = parent.getParent();
               }
-              if (parent != null) {
+              if (parent != null) {                
                   Window parentWindow = (Window)parent;
                   // and check that it is focused
                   if (!parentWindow.isFocused() && XKeyboardFocusManagerPeer.getCurrentNativeFocusedWindow() == parentWindow) {
@@ -270,7 +270,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     /**
      * DEPRECATED:  Replaced by getPreferredSize().
      */
-    public Dimension            preferredSize() {
+    public Dimension            preferredSize() { 
         return getPreferredSize();
     }
 
@@ -358,7 +358,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
             }));
     }
 
-    public void reparent(ContainerPeer newNativeParent) {
+    public void reparent(ContainerPeer newNativeParent) {        
     }
     public boolean isReparentSupported() {
         return false;
@@ -374,7 +374,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
             attrs.dispose();
         }
     }
-    public void setBoundsOperation(int operation) {
+    public void setBoundsOperation(int operation) {        
     }
 
     public void applyShape(Region shape) {

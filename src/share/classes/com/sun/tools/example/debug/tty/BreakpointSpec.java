@@ -44,7 +44,7 @@ class BreakpointSpec extends EventRequestSpec {
         this.lineNumber = lineNumber;
     }
 
-    BreakpointSpec(ReferenceTypeSpec refSpec, String methodId,
+    BreakpointSpec(ReferenceTypeSpec refSpec, String methodId, 
                    List methodArgs) throws MalformedMemberNameException {
         super(refSpec);
         this.methodId = methodId;
@@ -58,16 +58,16 @@ class BreakpointSpec extends EventRequestSpec {
     /**
      * The 'refType' is known to match, return the EventRequest.
      */
-    EventRequest resolveEventRequest(ReferenceType refType)
+    EventRequest resolveEventRequest(ReferenceType refType) 
                            throws AmbiguousMethodException,
                                   AbsentInformationException,
                                   InvalidTypeException,
                                   NoSuchMethodException,
                                   LineNotFoundException {
         Location location = location(refType);
-        if (location == null) {
-            throw new InvalidTypeException();
-        }
+	if (location == null) {
+	    throw new InvalidTypeException();
+	}
         EventRequestManager em = refType.virtualMachine().eventRequestManager();
         EventRequest bp = em.createBreakpointRequest(location);
         bp.setSuspendPolicy(suspendPolicy);
@@ -92,7 +92,7 @@ class BreakpointSpec extends EventRequestSpec {
     }
 
     public int hashCode() {
-        return refSpec.hashCode() + lineNumber +
+        return refSpec.hashCode() + lineNumber + 
             ((methodId != null) ? methodId.hashCode() : 0) +
             ((methodArgs != null) ? methodArgs.hashCode() : 0);
     }
@@ -101,10 +101,10 @@ class BreakpointSpec extends EventRequestSpec {
         if (obj instanceof BreakpointSpec) {
             BreakpointSpec breakpoint = (BreakpointSpec)obj;
 
-            return ((methodId != null) ?
-                        methodId.equals(breakpoint.methodId)
+            return ((methodId != null) ? 
+                        methodId.equals(breakpoint.methodId) 
                       : methodId == breakpoint.methodId) &&
-                   ((methodArgs != null) ?
+                   ((methodArgs != null) ? 
                         methodArgs.equals(breakpoint.methodArgs)
                       : methodArgs == breakpoint.methodArgs) &&
                    refSpec.equals(breakpoint.refSpec) &&
@@ -114,7 +114,7 @@ class BreakpointSpec extends EventRequestSpec {
         }
     }
 
-    String errorMessageFor(Exception e) {
+    String errorMessageFor(Exception e) { 
         if (e instanceof AmbiguousMethodException) {
             return (MessageOutput.format("Method is overloaded; specify arguments",
                                          methodName()));
@@ -137,7 +137,7 @@ class BreakpointSpec extends EventRequestSpec {
                                          refSpec.toString()));
         } else {
             return super.errorMessageFor( e);
-        }
+        } 
     }
 
     public String toString() {
@@ -165,7 +165,7 @@ class BreakpointSpec extends EventRequestSpec {
         return MessageOutput.format("breakpoint", buffer.toString());
     }
 
-    private Location location(ReferenceType refType) throws
+    private Location location(ReferenceType refType) throws 
                                     AmbiguousMethodException,
                                     AbsentInformationException,
                                     NoSuchMethodException,
@@ -184,22 +184,22 @@ class BreakpointSpec extends EventRequestSpec {
             location = (Location)locs.get(0);
             if (location.method() == null) {
                 throw new LineNotFoundException();
-            }
+            } 
         }
         return location;
     }
 
     private boolean isValidMethodName(String s) {
-        return isJavaIdentifier(s) ||
+        return isJavaIdentifier(s) || 
                s.equals("<init>") ||
                s.equals("<clinit>");
     }
 
-    /*
+    /* 
      * Compare a method's argument types with a Vector of type names.
-     * Return true if each argument type has a name identical to the
+     * Return true if each argument type has a name identical to the 
      * corresponding string in the vector (allowing for varars)
-     * and if the number of arguments in the method matches the
+     * and if the number of arguments in the method matches the 
      * number of names passed
      */
     private boolean compareArgTypes(Method method, List nameList) {
@@ -223,7 +223,7 @@ class BreakpointSpec extends EventRequestSpec {
                  * Note that the nameList can also contain
                  * xxx[] in which case we don't get here.
                  */
-                if (i != nTypes - 1 ||
+                if (i != nTypes - 1 || 
                     !method.isVarArgs()  ||
                     !comp2.endsWith("...")) {
                     return false;
@@ -254,12 +254,12 @@ class BreakpointSpec extends EventRequestSpec {
 
 
     /*
-     * Remove unneeded spaces and expand class names to fully
+     * Remove unneeded spaces and expand class names to fully 
      * qualified names, if necessary and possible.
      */
     private String normalizeArgTypeName(String name) {
-        /*
-         * Separate the type name from any array modifiers,
+        /* 
+         * Separate the type name from any array modifiers, 
          * stripping whitespace after the name ends
          */
         int i = 0;
@@ -297,7 +297,7 @@ class BreakpointSpec extends EventRequestSpec {
         name = typePart.toString();
 
         /*
-         * When there's no sign of a package name already, try to expand the
+         * When there's no sign of a package name already, try to expand the 
          * the name to a fully qualified class name
          */
         if ((name.indexOf('.') == -1) || name.startsWith("*.")) {
@@ -307,7 +307,7 @@ class BreakpointSpec extends EventRequestSpec {
                     name = argClass.name();
                 }
             } catch (IllegalArgumentException e) {
-                // We'll try the name as is
+                // We'll try the name as is 
             }
         }
         name += arrayPart.toString();
@@ -317,13 +317,13 @@ class BreakpointSpec extends EventRequestSpec {
         return name;
     }
 
-    /*
-     * Attempt an unambiguous match of the method name and
-     * argument specification to a method. If no arguments
+    /* 
+     * Attempt an unambiguous match of the method name and 
+     * argument specification to a method. If no arguments 
      * are specified, the method must not be overloaded.
-     * Otherwise, the argument types much match exactly
+     * Otherwise, the argument types much match exactly 
      */
-    private Method findMatchingMethod(ReferenceType refType)
+    private Method findMatchingMethod(ReferenceType refType) 
                                         throws AmbiguousMethodException,
                                                NoSuchMethodException {
 
@@ -356,7 +356,7 @@ class BreakpointSpec extends EventRequestSpec {
                 }
 
                 // If argument types were specified, check against candidate
-                if ((argTypeNames != null)
+                if ((argTypeNames != null) 
                         && compareArgTypes(candidate, argTypeNames) == true) {
                     exactMatch = candidate;
                     break;

@@ -1,5 +1,5 @@
 <!--
- Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -112,7 +112,7 @@
       PropertyChangeListener that will receive PropertyChangeEvents when a
       change to the focus state occurs.
     <p>
-      KeyboardFocusManager introduces the following main concepts and their
+      KeyboardFocusManager introduces seven main concepts and their
       terminology:
     <ol>
       <li>The "focus owner" -- the Component which typically receives
@@ -141,11 +141,6 @@
           other Components. This cycle provides a mapping from an arbitrary
           Component in the cycle to its "next" (forward traversal) and
           "previous" (backward traversal) Components.
-      <li>"Traversable Component" -- Component that is in the focus traversal
-          cycle.
-      <li>"Non-traversable Component" -- Component that is not in the focus
-          traversal cycle. Note that a non-traversable Component can nevertheless
-          be focused in other way (e.g. by direct focus request).
       <li>"Focus cycle root" -- Container that is the root of the Component
           hierarchy for a particular "focus traversal cycle". When the
           "focus owner" is a Component inside a particular cycle, normal
@@ -562,14 +557,13 @@ implementations for use by client code.
         to their Containers. Each Component is tested for fitness using the
         accept(Component) method. By default, a Component is fit only if it
         is visible, displayable, enabled, and focusable.
-    <li>By default, ContainerOrderFocusTraversalPolicy implicitly transfers
+        <br>
+        By default, ContainerOrderFocusTraversalPolicy implicitly transfers
         focus down-cycle. That is, during normal forward focus traversal,
         the Component traversed after a focus cycle root will be the
-        focus-cycle-root's default Component to focus, regardless of whether
-        the focus cycle root is a traversable or non-traversable Container
-        (see the pic.1,2 below). Such behavior provides backward compatibility
-        with applications designed without the concepts of up- and down-cycle
-        traversal.
+        focus-cycle-root's default Component to focus. This provides
+        backward compatibility with applications designed without the
+        concepts of up- and down-cycle traversal.
     <li><code>DefaultFocusTraversalPolicy</code>: A subclass of
         <code>ContainerOrderFocusTraversalPolicy</code> which redefines
         the fitness test.  If client code has explicitly set the
@@ -607,11 +601,9 @@ InternalFrameFocusTraversalPolicy.
     <li>By default, SortingFocusTraversalPolicy implicitly transfers focus
         down-cycle. That is, during normal forward focus traversal, the
         Component traversed after a focus cycle root will be the
-        focus-cycle-root's default Component to focus, regardless of
-        whether the focus cycle root is a traversable or non-traversable
-        Container (see the pic.1,2 below). Such behavior provides backward
-        compatibility with applications designed without the concepts of
-        up- and down-cycle traversal.
+        focus-cycle-root's default Component to focus. This provides
+        backward compatibility with applications designed without the
+        concepts of up- and down-cycle traversal.
     <li>LayoutFocusTraversalPolicy: A subclass of
         SortingFocusTraversalPolicy which sorts Components based on their
         size, position, and orientation. Based on their size and position,
@@ -625,25 +617,6 @@ InternalFrameFocusTraversalPolicy.
         In addition, the fitness test is extended to exclude JComponents
         that have or inherit empty InputMaps.
   </ol>
-<p>
-The figure below shows an implicit focus transfer:
-<br><img src="ImplicitFocusTransfer.gif" align=middle alt="Implicit focus transfer."><br>
-
-Assume the following:
- <ul>
-   <li><b>A</b>, <b>B</b> and <b>C</b> are components in some window (a container)
-   <li><b>R</b> is a container in the window and it is a parent of <b>B</b> and <b>C</b>.
-       Besides, <b>R</b> is a focus cycle root.
-   <li><b>B</b> is the default component in the focul traversal cycle of <b>R</b>
-   <li><b>R</b> is a traversable Container in the pic.1, and it is a non-traversable
-       Container in the pic.2.
-   <li>In such a case a forward traversal will look as follows:
-   <ul>
-     <li> pic.1 : <b>A</b> -> <b>R</b> -> <b>B</b> -> <b>C</b>
-     <li> pic.2 : <b>A</b> -> <b>B</b> -> <b>C</b>
-   </ul>
- </ul>
-
 <p>
 Swing applications, or mixed Swing/AWT applications, that use one of
 the standard look and feels, or any other look and feel derived from
@@ -690,6 +663,10 @@ All other applications, including pure AWT applications, will use
         <code>FocusTraversalPolicy.getComponentAfter</code> or
         <code>FocusTraversalPolicy.getComponentBefore</code>,
         <ul>
+          <li>if obtained Component is a Container and a focus traversal policy
+              provider, that Container's FocusTraversalPolicy is inquired for
+              the default Component, and that default Component is returned as
+              the result
           <li>if a Component is a child of a focus traversal policy provider,
               the next and previous for this Component are determined using this
               focus traversal policy provider's FocusTraversalPolicy. However,
@@ -705,38 +682,15 @@ All other applications, including pure AWT applications, will use
                     provider, the Component before the focus traversal policy
                     provider is returned
               </ul>
-          <li> When calculating the next Component in
-              <code>FocusTraversalPolicy.getComponentAfter</code>,
-              <ul>
-                <li> if an obtained Component is a non-traversable Container and
-                     it is a focus traversal policy provider, then the default Component
-                     of that provider is returned
-                <li> if the Component passed to the <code>FocusTraversalPolicy.getComponentAfter</code>
-                     method is a traversable Container and it is a focus
-                     traversal policy provider, then the default Component of this provider
-                     is returned
-              </ul>
-          <li> When calculating the previous Component in
-              <code>FocusTraversalPolicy.getComponentBefore</code>,
-              <ul>
-                <li> if an obtained Component is a Container (traversable or
-                     non-traversable) and it is a focus traversal policy provider, then
-                     the last Component of that provider is returned
-              </ul>
         </ul>
-    <li> When calculating the first Component in FocusTraversalPolicy.getFirstComponent,
+    <li> When calculating the first or the last Component in
+        <code>FocusTraversalPolicy.getFirstComponent</code> or
+        <code>FocusTraversalPolicy.getLastComponent</code>,
         <ul>
-          <li> if an obtained Component is a non-traversable Container and it is a focus
-               traversal policy provider, then the default Component of that provider is
-               returned
-          <li> if an obtained Component is a traversable Container and it is a focus traversal
-               policy provider, then that Container itself is returned
-        </ul>
-    <li> When calculating the last Component in FocusTraversalPolicy.getLastComponent,
-        <ul>
-          <li> if an obtained Component is a Container (traversable or non-traversable)
-               and it is a focus traversal policy provider, then the last Component of
-               that provider is returned
+          <li>if obtained Component is a Container and a focus traversal policy
+              provider, that Container's FocusTraversalPolicy is inquired for
+              the default Component, and that default Component is returned as
+              the result
         </ul>
   </ul>
 

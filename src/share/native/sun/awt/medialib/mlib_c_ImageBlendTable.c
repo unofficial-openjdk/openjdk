@@ -22,6 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+  
+#ifdef __SUNPRO_C
+#pragma ident   "@(#)mlib_c_ImageBlendTable.c	1.12    98/06/26 SMI"
+#endif /* __SUNPRO_C */
 
 #include <mlib_image.h>
 #include "mlib_c_ImageBlendTable.h"

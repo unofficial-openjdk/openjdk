@@ -39,16 +39,16 @@ class PreIncExpression extends IncDecExpression {
      * Constructor
      */
     public PreIncExpression(long where, Expression right) {
-        super(PREINC, where, right);
+	super(PREINC, where, right);
     }
 
     /**
      * Code
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-        codeIncDec(env, ctx, asm, true, true, true);
+	codeIncDec(env, ctx, asm, true, true, true);
     }
     public void code(Environment env, Context ctx, Assembler asm) {
-        codeIncDec(env, ctx, asm, true, true, false);
+	codeIncDec(env, ctx, asm, true, true, false);
     }
 }

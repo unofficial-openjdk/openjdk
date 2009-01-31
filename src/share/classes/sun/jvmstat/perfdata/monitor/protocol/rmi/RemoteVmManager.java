@@ -43,6 +43,7 @@ import sun.jvmstat.monitor.remote.*;
  * principal running the RMI server application on the remote host.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class RemoteVmManager {

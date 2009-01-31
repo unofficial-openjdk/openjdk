@@ -46,11 +46,12 @@ import java.rmi.server.RMIClassLoader;
  * class from the location annotated by the sending MarshalOutputStream.
  * This location object must be a string representing a path of URLs.
  *
- * A new MarshalInputStream should be created to deserialize remote objects or
+ * A new MarshalInputStream should be created to deserialize remote objects or 
  * graphs containing remote objects.  Objects are created from the stream
  * using the ObjectInputStream.readObject method.
  *
- * @author      Peter Jones
+ * @author	Peter Jones
+ * @version	%I%, %E%
  */
 public class MarshalInputStream extends ObjectInputStream {
 
@@ -59,9 +60,9 @@ public class MarshalInputStream extends ObjectInputStream {
      * as cached at class initialization time.
      */
     private static final boolean useCodebaseOnlyProperty =
-        ((Boolean) java.security.AccessController.doPrivileged(
+	((Boolean) java.security.AccessController.doPrivileged(
             new sun.security.action.GetBooleanAction(
-                "java.rmi.server.useCodebaseOnly"))).booleanValue();
+		"java.rmi.server.useCodebaseOnly"))).booleanValue();
 
     /** table to hold sun classes to which access is explicitly permitted */
     protected static Map permittedSunClasses = new HashMap(3);
@@ -87,41 +88,41 @@ public class MarshalInputStream extends ObjectInputStream {
      * permission to access the sun implementation classes.
      *
      * Note: this fix should be redone when API changes may be
-     * integrated
+     * integrated 
      *
      * During parameter unmarshalling RMI needs to explicitly permit
-     * access to three sun.* stub classes
+     * access to three sun.* stub classes 
      */
     static {
-        try {
-            String system =
-                "sun.rmi.server.Activation$ActivationSystemImpl_Stub";
-            String registry = "sun.rmi.registry.RegistryImpl_Stub";
-
-            permittedSunClasses.put(system, Class.forName(system));
-            permittedSunClasses.put(registry, Class.forName(registry));
-
-        } catch (ClassNotFoundException e) {
-            throw new NoClassDefFoundError("Missing system class: " +
-                                           e.getMessage());
-        }
+	try {
+	    String system =
+		"sun.rmi.server.Activation$ActivationSystemImpl_Stub";
+	    String registry = "sun.rmi.registry.RegistryImpl_Stub";
+	    
+	    permittedSunClasses.put(system, Class.forName(system));
+	    permittedSunClasses.put(registry, Class.forName(registry));
+	    
+	} catch (ClassNotFoundException e) {
+	    throw new NoClassDefFoundError("Missing system class: " + 
+					   e.getMessage());
+	}
     }
 
     /**
      * Load the "rmi" native library.
      */
     static {
-        java.security.AccessController.doPrivileged(
-            new sun.security.action.LoadLibraryAction("rmi"));
+	java.security.AccessController.doPrivileged(
+	    new sun.security.action.LoadLibraryAction("rmi"));
     }
-
+    
     /**
      * Create a new MarshalInputStream object.
      */
     public MarshalInputStream(InputStream in)
-        throws IOException, StreamCorruptedException
-    {
-        super(in);
+	throws IOException, StreamCorruptedException
+    {	      
+	super(in);
     }
 
     /**
@@ -130,7 +131,7 @@ public class MarshalInputStream extends ObjectInputStream {
      * with that key.
      */
     public Runnable getDoneCallback(Object key) {
-        return (Runnable) doneCallbacks.get(key);       // not thread-safe
+	return (Runnable) doneCallbacks.get(key);	// not thread-safe
     }
 
     /**
@@ -139,8 +140,8 @@ public class MarshalInputStream extends ObjectInputStream {
      * subsequently from the getDoneCallback method.
      */
     public void setDoneCallback(Object key, Runnable callback) {
-        //assert(!doneCallbacks.contains(key));
-        doneCallbacks.put(key, callback);               // not thread-safe
+	//assert(!doneCallbacks.contains(key));
+	doneCallbacks.put(key, callback);		// not thread-safe
     }
 
     /**
@@ -153,20 +154,20 @@ public class MarshalInputStream extends ObjectInputStream {
      * the superclass's close method.
      */
     public void done() {
-        Iterator iter = doneCallbacks.values().iterator();
-        while (iter.hasNext()) {                        // not thread-safe
-            Runnable callback = (Runnable) iter.next();
-            callback.run();
-        }
-        doneCallbacks.clear();
+	Iterator iter = doneCallbacks.values().iterator();
+	while (iter.hasNext()) {			// not thread-safe
+	    Runnable callback = (Runnable) iter.next();
+	    callback.run();
+	}
+	doneCallbacks.clear();
     }
 
     /**
      * Closes this stream, implicitly invoking done() first.
      */
     public void close() throws IOException {
-        done();
-        super.close();
+	done();
+	super.close();
     }
 
     /**
@@ -175,61 +176,61 @@ public class MarshalInputStream extends ObjectInputStream {
      * It will find, load, and return the class.
      */
     protected Class resolveClass(ObjectStreamClass classDesc)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        /*
-         * Always read annotation written by MarshalOutputStream
-         * describing where to load class from.
-         */
-        Object annotation = readLocation();
+	/*
+	 * Always read annotation written by MarshalOutputStream
+	 * describing where to load class from.
+	 */
+	Object annotation = readLocation();
 
-        String className = classDesc.getName();
+	String className = classDesc.getName();
 
-        /*
-         * Unless we were told to skip this consideration, choose the
-         * "default loader" to simulate the default ObjectInputStream
-         * resolveClass mechanism (that is, choose the first non-null
-         * loader on the execution stack) to maximize the likelihood of
-         * type compatibility with calling code.  (This consideration
-         * is skipped during server parameter unmarshalling using the 1.2
-         * stub protocol, because there would never be a non-null class
-         * loader on the stack in that situation anyway.)
-         */
-        ClassLoader defaultLoader =
-            skipDefaultResolveClass ? null : latestUserDefinedLoader();
+	/*
+	 * Unless we were told to skip this consideration, choose the
+	 * "default loader" to simulate the default ObjectInputStream
+	 * resolveClass mechanism (that is, choose the first non-null
+	 * loader on the execution stack) to maximize the likelihood of
+	 * type compatibility with calling code.  (This consideration
+	 * is skipped during server parameter unmarshalling using the 1.2
+	 * stub protocol, because there would never be a non-null class
+	 * loader on the stack in that situation anyway.)
+	 */
+	ClassLoader defaultLoader =
+	    skipDefaultResolveClass ? null : latestUserDefinedLoader();
 
-        /*
-         * If the "java.rmi.server.useCodebaseOnly" property was true or
-         * useCodebaseOnly() was called or the annotation is not a String,
-         * load from the local loader using the "java.rmi.server.codebase"
-         * URL.  Otherwise, load from a loader using the codebase URL in
-         * the annotation.
-         */
-        String codebase = null;
-        if (!useCodebaseOnly && annotation instanceof String) {
-            codebase = (String) annotation;
-        }
+	/*
+	 * If the "java.rmi.server.useCodebaseOnly" property was true or
+	 * useCodebaseOnly() was called or the annotation is not a String,
+	 * load from the local loader using the "java.rmi.server.codebase"
+	 * URL.  Otherwise, load from a loader using the codebase URL in
+	 * the annotation.
+	 */
+	String codebase = null;
+	if (!useCodebaseOnly && annotation instanceof String) {
+	    codebase = (String) annotation;
+	}
 
-        try {
-            return RMIClassLoader.loadClass(codebase, className,
-                                            defaultLoader);
-        } catch (AccessControlException e) {
-            return checkSunClass(className, e);
-        } catch (ClassNotFoundException e) {
-            /*
-             * Fix for 4442373: delegate to ObjectInputStream.resolveClass()
-             * to resolve primitive classes.
-             */
-            try {
-                if (Character.isLowerCase(className.charAt(0)) &&
-                    className.indexOf('.') == -1)
-                {
-                    return super.resolveClass(classDesc);
-                }
-            } catch (ClassNotFoundException e2) {
-            }
-            throw e;
-        }
+	try {
+	    return RMIClassLoader.loadClass(codebase, className,
+					    defaultLoader);
+	} catch (AccessControlException e) {
+	    return checkSunClass(className, e);
+	} catch (ClassNotFoundException e) {
+	    /*
+	     * Fix for 4442373: delegate to ObjectInputStream.resolveClass()
+	     * to resolve primitive classes.
+	     */
+	    try {
+		if (Character.isLowerCase(className.charAt(0)) &&
+		    className.indexOf('.') == -1)
+		{
+		    return super.resolveClass(classDesc);
+		}
+	    } catch (ClassNotFoundException e2) {
+	    }
+	    throw e;
+	}
     }
 
     /**
@@ -237,23 +238,23 @@ public class MarshalInputStream extends ObjectInputStream {
      * to determine the class loader to define the proxy class in.
      */
     protected Class resolveProxyClass(String[] interfaces)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        /*
-         * Always read annotation written by MarshalOutputStream.
-         */
-        Object annotation = readLocation();
+	/*
+	 * Always read annotation written by MarshalOutputStream.
+	 */
+	Object annotation = readLocation();
 
-        ClassLoader defaultLoader =
-            skipDefaultResolveClass ? null : latestUserDefinedLoader();
+ 	ClassLoader defaultLoader =
+ 	    skipDefaultResolveClass ? null : latestUserDefinedLoader();
+	
+	String codebase = null;
+	if (!useCodebaseOnly && annotation instanceof String) {
+	    codebase = (String) annotation;
+	}
 
-        String codebase = null;
-        if (!useCodebaseOnly && annotation instanceof String) {
-            codebase = (String) annotation;
-        }
-
-        return RMIClassLoader.loadProxyClass(codebase, interfaces,
-                                             defaultLoader);
+	return RMIClassLoader.loadProxyClass(codebase, interfaces,
+					     defaultLoader);
     }
 
     /*
@@ -266,40 +267,40 @@ public class MarshalInputStream extends ObjectInputStream {
      * Fix for 4179055: Need to assist resolving sun stubs; resolve
      * class locally if it is a "permitted" sun class
      */
-    private Class checkSunClass(String className, AccessControlException e)
-        throws AccessControlException
+    private Class checkSunClass(String className, AccessControlException e) 
+	throws AccessControlException 
     {
-        // ensure that we are giving out a stub for the correct reason
-        Permission perm = e.getPermission();
-        String name = null;
-        if (perm != null) {
-            name = perm.getName();
-        }
+	// ensure that we are giving out a stub for the correct reason
+	Permission perm = e.getPermission();
+	String name = null;
+	if (perm != null) {
+	    name = perm.getName();
+	}
 
-        Class resolvedClass =
-            (Class) permittedSunClasses.get(className);
-
-        // if class not permitted, throw the SecurityException
-        if ((name == null) ||
-            (resolvedClass == null) ||
-            ((!name.equals("accessClassInPackage.sun.rmi.server")) &&
-            (!name.equals("accessClassInPackage.sun.rmi.registry"))))
+	Class resolvedClass = 
+	    (Class) permittedSunClasses.get(className);
+	
+	// if class not permitted, throw the SecurityException
+	if ((name == null) ||
+	    (resolvedClass == null) ||
+	    ((!name.equals("accessClassInPackage.sun.rmi.server")) && 
+	    (!name.equals("accessClassInPackage.sun.rmi.registry"))))
         {
-            throw e;
-        }
+	    throw e;
+	}
 
-        return resolvedClass;
+	return resolvedClass;
     }
-
+    
     /**
      * Return the location for the class in the stream.  This method can
      * be overridden by subclasses that store this annotation somewhere
      * else than as the next object in the stream, as is done by this class.
      */
     protected Object readLocation()
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        return readObject();
+	return readObject();
     }
 
     /**
@@ -307,7 +308,7 @@ public class MarshalInputStream extends ObjectInputStream {
      * implementation should not be invoked by our resolveClass().
      */
     void skipDefaultResolveClass() {
-        skipDefaultResolveClass = true;
+	skipDefaultResolveClass = true;
     }
 
     /**
@@ -315,6 +316,6 @@ public class MarshalInputStream extends ObjectInputStream {
      * "java.rmi.server.codebase" property.
      */
     void useCodebaseOnly() {
-        useCodebaseOnly = true;
+	useCodebaseOnly = true;
     }
 }

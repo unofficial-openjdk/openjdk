@@ -37,159 +37,159 @@ public class CorruptedZipFiles {
     static int passed = 0, failed = 0;
 
     static void fail(String msg) {
-        failed++;
-        err.println(msg);
+	failed++;
+	err.println(msg);
     }
 
     static void unexpected(Throwable t) {
-        failed++;
-        t.printStackTrace();
+	failed++;
+	t.printStackTrace();
     }
 
     public static void main(String[] args) throws Exception {
-        ZipOutputStream zos = new ZipOutputStream(
-            new FileOutputStream("x.zip"));
-        ZipEntry e = new ZipEntry("x");
-        zos.putNextEntry(e);
-        zos.write((int)'x');
-        zos.close();
-        zos = null;
+	ZipOutputStream zos = new ZipOutputStream(
+	    new FileOutputStream("x.zip"));
+	ZipEntry e = new ZipEntry("x");
+	zos.putNextEntry(e);
+	zos.write((int)'x');
+	zos.close();
+	zos = null;
 
-        int len = (int)(new File("x.zip").length());
-        byte[] good = new byte[len];
-        FileInputStream fis = new FileInputStream("x.zip");
-        fis.read(good);
-        fis.close();
-        fis = null;
-        new File("x.zip").delete();
+	int len = (int)(new File("x.zip").length());
+	byte[] good = new byte[len];
+	FileInputStream fis = new FileInputStream("x.zip");
+	fis.read(good);
+	fis.close();
+	fis = null;
+	new File("x.zip").delete();
 
-        int endpos = len - ENDHDR;
-        int cenpos = u16(good, endpos+ENDOFF);
-        int locpos = u16(good, cenpos+CENOFF);
-        if (u32(good, endpos) != ENDSIG) fail("Where's ENDSIG?");
-        if (u32(good, cenpos) != CENSIG) fail("Where's CENSIG?");
-        if (u32(good, locpos) != LOCSIG) fail("Where's LOCSIG?");
-        if (u16(good, locpos+LOCNAM) != u16(good,cenpos+CENNAM))
-            fail("Name field length mismatch");
-        if (u16(good, locpos+LOCEXT) != u16(good,cenpos+CENEXT))
-            fail("Extra field length mismatch");
+	int endpos = len - ENDHDR;
+	int cenpos = u16(good, endpos+ENDOFF);
+	int locpos = u16(good, cenpos+CENOFF);
+	if (u32(good, endpos) != ENDSIG) fail("Where's ENDSIG?");
+	if (u32(good, cenpos) != CENSIG) fail("Where's CENSIG?");
+	if (u32(good, locpos) != LOCSIG) fail("Where's LOCSIG?");
+	if (u16(good, locpos+LOCNAM) != u16(good,cenpos+CENNAM))
+	    fail("Name field length mismatch");
+	if (u16(good, locpos+LOCEXT) != u16(good,cenpos+CENEXT))
+	    fail("Extra field length mismatch");
 
-        byte[] bad;
+	byte[] bad;
 
-        err.println("corrupted ENDSIZ");
-        bad = good.clone();
-        bad[endpos+ENDSIZ]=(byte)0xff;
-        checkZipException(bad, ".*bad central directory size.*");
+	err.println("corrupted ENDSIZ");
+	bad = good.clone();
+	bad[endpos+ENDSIZ]=(byte)0xff;
+	checkZipException(bad, ".*bad central directory size.*");
 
-        err.println("corrupted ENDOFF");
-        bad = good.clone();
-        bad[endpos+ENDOFF]=(byte)0xff;
-        checkZipException(bad, ".*bad central directory offset.*");
+	err.println("corrupted ENDOFF");
+	bad = good.clone();
+	bad[endpos+ENDOFF]=(byte)0xff;
+	checkZipException(bad, ".*bad central directory offset.*");
 
-        err.println("corrupted CENSIG");
-        bad = good.clone();
-        bad[cenpos]++;
-        checkZipException(bad, ".*bad signature.*");
+	err.println("corrupted CENSIG");
+	bad = good.clone();
+	bad[cenpos]++;
+	checkZipException(bad, ".*bad signature.*");
 
-        err.println("corrupted CENFLG");
-        bad = good.clone();
-        bad[cenpos+CENFLG] |= 1;
-        checkZipException(bad, ".*encrypted entry.*");
+	err.println("corrupted CENFLG");
+	bad = good.clone();
+	bad[cenpos+CENFLG] |= 1;
+	checkZipException(bad, ".*encrypted entry.*");
 
-        err.println("corrupted CENNAM 1");
-        bad = good.clone();
-        bad[cenpos+CENNAM]++;
-        checkZipException(bad, ".*bad header size.*");
+	err.println("corrupted CENNAM 1");
+	bad = good.clone();
+	bad[cenpos+CENNAM]++;
+	checkZipException(bad, ".*bad header size.*");
 
-        err.println("corrupted CENNAM 2");
-        bad = good.clone();
-        bad[cenpos+CENNAM]--;
-        checkZipException(bad, ".*bad header size.*");
+	err.println("corrupted CENNAM 2");
+	bad = good.clone();
+	bad[cenpos+CENNAM]--;
+	checkZipException(bad, ".*bad header size.*");
 
-        err.println("corrupted CENNAM 3");
-        bad = good.clone();
-        bad[cenpos+CENNAM]   = (byte)0xfd;
-        bad[cenpos+CENNAM+1] = (byte)0xfd;
-        checkZipException(bad, ".*bad header size.*");
+	err.println("corrupted CENNAM 3");
+	bad = good.clone();
+	bad[cenpos+CENNAM]   = (byte)0xfd;
+	bad[cenpos+CENNAM+1] = (byte)0xfd;
+	checkZipException(bad, ".*bad header size.*");
 
-        err.println("corrupted CENEXT 1");
-        bad = good.clone();
-        bad[cenpos+CENEXT]++;
-        checkZipException(bad, ".*bad header size.*");
+	err.println("corrupted CENEXT 1");
+	bad = good.clone();
+	bad[cenpos+CENEXT]++;
+	checkZipException(bad, ".*bad header size.*");
 
-        err.println("corrupted CENEXT 2");
-        bad = good.clone();
-        bad[cenpos+CENEXT]   = (byte)0xfd;
-        bad[cenpos+CENEXT+1] = (byte)0xfd;
-        checkZipException(bad, ".*bad header size.*");
+	err.println("corrupted CENEXT 2");
+	bad = good.clone();
+	bad[cenpos+CENEXT]   = (byte)0xfd;
+	bad[cenpos+CENEXT+1] = (byte)0xfd;
+	checkZipException(bad, ".*bad header size.*");
 
-        err.println("corrupted CENCOM");
-        bad = good.clone();
-        bad[cenpos+CENCOM]++;
-        checkZipException(bad, ".*bad header size.*");
+	err.println("corrupted CENCOM");
+	bad = good.clone();
+	bad[cenpos+CENCOM]++;
+	checkZipException(bad, ".*bad header size.*");
 
-        err.println("corrupted CENHOW");
-        bad = good.clone();
-        bad[cenpos+CENHOW] = 2;
-        checkZipException(bad, ".*bad compression method.*");
+	err.println("corrupted CENHOW");
+	bad = good.clone();
+	bad[cenpos+CENHOW] = 2;
+	checkZipException(bad, ".*bad compression method.*");
 
-        err.println("corrupted LOCSIG");
-        bad = good.clone();
-        bad[locpos]++;
-        checkZipExceptionInGetInputStream(bad, ".*bad signature.*");
+	err.println("corrupted LOCSIG");
+	bad = good.clone();
+	bad[locpos]++;
+	checkZipExceptionInGetInputStream(bad, ".*bad signature.*");
 
-        out.printf("passed = %d, failed = %d%n", passed, failed);
-        if (failed > 0) throw new Exception("Some tests failed");
+	out.printf("passed = %d, failed = %d%n", passed, failed);
+	if (failed > 0) throw new Exception("Some tests failed");
     }
 
     static int uniquifier = 432;
 
     static void checkZipExceptionImpl(byte[] data,
-                                      String msgPattern,
-                                      boolean getInputStream) {
-        String zipName = "bad" + (uniquifier++) + ".zip";
-        try {
-            FileOutputStream fos = new FileOutputStream(zipName);
-            fos.write(data);
-            fos.close();
-            ZipFile zf = new ZipFile(zipName);
-            if (getInputStream) {
-                InputStream is = zf.getInputStream(new ZipEntry("x"));
-                is.read();
-            }
-            fail("Failed to throw expected ZipException");
-            zf.close();
-        } catch (ZipException e) {
-            if (e.getMessage().matches(msgPattern))
-                passed++;
-            else
-                unexpected(e);
-        } catch (Throwable t) {
-            unexpected(t);
-        }
-        finally {
-            new File(zipName).delete();
-        }
+				      String msgPattern,
+				      boolean getInputStream) {
+	String zipName = "bad" + (uniquifier++) + ".zip";
+	try {
+	    FileOutputStream fos = new FileOutputStream(zipName);
+	    fos.write(data);
+	    fos.close();
+	    ZipFile zf = new ZipFile(zipName);
+	    if (getInputStream) {
+		InputStream is = zf.getInputStream(new ZipEntry("x"));
+		is.read();
+	    }
+	    fail("Failed to throw expected ZipException");
+	    zf.close();
+	} catch (ZipException e) {
+	    if (e.getMessage().matches(msgPattern))
+		passed++;
+	    else
+		unexpected(e);
+	} catch (Throwable t) {
+	    unexpected(t);
+	}
+	finally {
+	    new File(zipName).delete();
+	}
     }
 
     static void checkZipException(byte[] data, String msgPattern) {
-        checkZipExceptionImpl(data, msgPattern, false);
+	checkZipExceptionImpl(data, msgPattern, false);
     }
 
     static void checkZipExceptionInGetInputStream(byte[] data, String msgPattern) {
-        checkZipExceptionImpl(data, msgPattern, true);
+	checkZipExceptionImpl(data, msgPattern, true);
     }
 
     static int u8(byte[] data, int offset) {
-        return data[offset]&0xff;
+	return data[offset]&0xff;
     }
 
     static int u16(byte[] data, int offset) {
-        return u8(data,offset) + (u8(data,offset+1)<<8);
+	return u8(data,offset) + (u8(data,offset+1)<<8);
     }
 
     static int u32(byte[] data, int offset) {
-        return u16(data,offset) + (u16(data,offset+2)<<16);
+	return u16(data,offset) + (u16(data,offset+2)<<16);
     }
 
     // The following can be deleted once this bug is fixed:

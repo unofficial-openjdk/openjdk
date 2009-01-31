@@ -42,7 +42,7 @@ public abstract class ScrollPaneWheelScroller {
     private static final Logger log = Logger.getLogger("sun.awt.ScrollPaneWheelScroller");
 
     private ScrollPaneWheelScroller() {}
-
+    
     /*
      * Called from ScrollPane.processMouseWheelEvent()
      */
@@ -53,7 +53,7 @@ public abstract class ScrollPaneWheelScroller {
         int increment = 0;
 
         if (sp != null && e.getScrollAmount() != 0) {
-            Adjustable adj = getAdjustableToScroll(sp);
+            Adjustable adj = getAdjustableToScroll(sp); 
             if (adj != null) {
                 increment = getIncrementFromAdjustable(adj, e);
                 if (log.isLoggable(Level.FINER)) {
@@ -172,7 +172,7 @@ public abstract class ScrollPaneWheelScroller {
                 return;
             }
         }
-        else if (amount < 0 && current > adj.getMinimum()) { // still some room
+        else if (amount < 0 && current > adj.getMinimum()) { // still some room 
                                                              // to scroll up
             if (current + amount > adj.getMinimum()) {
                 adj.setValue(current + amount);

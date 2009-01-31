@@ -221,7 +221,7 @@ typedef struct jawt_DrawingSurface {
      */
     void (JNICALL *FreeDrawingSurfaceInfo)
         (JAWT_DrawingSurfaceInfo* dsi);
-    /*
+    /* 
      * Unlock the drawing surface of the target component for native rendering.
      */
     void (JNICALL *Unlock)

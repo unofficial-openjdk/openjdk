@@ -215,7 +215,7 @@ final class ASCII_CharStream
   }
 
   /**
-   * @deprecated
+   * @deprecated 
    * @see #getEndColumn
    */
     @Deprecated
@@ -224,7 +224,7 @@ final class ASCII_CharStream
   }
 
   /**
-   * @deprecated
+   * @deprecated 
    * @see #getEndLine
    */
     @Deprecated
@@ -379,7 +379,7 @@ final class ASCII_CharStream
         bufcolumn[j] = newCol + columnDiff;
         columnDiff = nextColDiff;
         i++;
-     }
+     } 
 
      if (i < len)
      {

@@ -32,7 +32,7 @@ import java.util.*;
 public class ReadUTF {
 
     private static Random generator = new Random();
-
+    
     private static final int TEST_ITERATIONS = 1000;
 
     private static final int A_NUMBER_NEAR_65535 = 60000;
@@ -40,7 +40,7 @@ public class ReadUTF {
     private static final int MAX_CORRUPTIONS_PER_CYCLE = 3;
 
     public static final void main(String[] args) throws Exception {
-        for (int i=0; i<TEST_ITERATIONS; i++) {
+	for (int i=0; i<TEST_ITERATIONS; i++) {
             try {
                 writeAndReadAString();
             } catch (UTFDataFormatException utfdfe) {
@@ -72,7 +72,7 @@ public class ReadUTF {
             int index = generator.nextInt(dataLength);
             testBytes[index] = (byte)generator.nextInt();
         }
-
+        
         // Pay special attention to mangling the end to produce
         // partial characters at end
         testBytes[dataLength-1] = (byte)generator.nextInt();

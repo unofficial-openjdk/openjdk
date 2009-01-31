@@ -72,32 +72,32 @@ DECLARE_ALPHA_MASKBLIT(IntRgb, Index8Gray);
 DECLARE_SRCOVER_MASKFILL(Index8Gray);
 DECLARE_SRCOVER_MASKBLIT(IntArgb, Index8Gray);
 DECLARE_SRCOVER_MASKBLIT(IntArgbPre, Index8Gray);
-DECLARE_SOLID_DRAWGLYPHLISTAA(Index8Gray);
+DECLARE_SOLID_DRAWGLYPHLISTAA(Index8Gray); 
 
 DECLARE_TRANSFORMHELPER_FUNCS(Index8Gray);
 
 NativePrimitive Index8GrayPrimitives[] = {
     REGISTER_CONVERT_BLIT(IntArgb, Index8Gray),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, Index8Gray,
-                                NAME_CONVERT_BLIT(IntArgb, Index8Gray)),
+				NAME_CONVERT_BLIT(IntArgb, Index8Gray)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, Index8Gray),
     REGISTER_CONVERT_BLIT(ByteGray, Index8Gray),
     REGISTER_CONVERT_BLIT(Index12Gray, Index8Gray),
-    REGISTER_CONVERT_BLIT_FLAGS(Index8Gray, Index8Gray,
-                                SD_LOCK_LUT,
-                                SD_LOCK_LUT | SD_LOCK_INVGRAY),
+    REGISTER_CONVERT_BLIT_FLAGS(Index8Gray, Index8Gray, 
+				SD_LOCK_LUT,
+				SD_LOCK_LUT | SD_LOCK_INVGRAY),
     REGISTER_CONVERT_BLIT(ByteIndexed, Index8Gray),
 
     REGISTER_SCALE_BLIT(IntArgb, Index8Gray),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, Index8Gray,
-                              NAME_SCALE_BLIT(IntArgb, Index8Gray)),
+			      NAME_SCALE_BLIT(IntArgb, Index8Gray)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, Index8Gray),
     REGISTER_SCALE_BLIT(UshortGray, Index8Gray),
     REGISTER_SCALE_BLIT(ByteIndexed, Index8Gray),
     REGISTER_SCALE_BLIT(ByteGray, Index8Gray),
     REGISTER_SCALE_BLIT(Index12Gray, Index8Gray),
-    REGISTER_SCALE_BLIT_FLAGS(Index8Gray, Index8Gray, 0,
-                              SD_LOCK_LUT | SD_LOCK_INVGRAY),
+    REGISTER_SCALE_BLIT_FLAGS(Index8Gray, Index8Gray, 0, 
+			      SD_LOCK_LUT | SD_LOCK_INVGRAY),
 
     REGISTER_XPAR_CONVERT_BLIT(ByteIndexedBm, Index8Gray),
     REGISTER_XPAR_BLITBG(ByteIndexedBm, Index8Gray),
@@ -116,13 +116,13 @@ NativePrimitive Index8GrayPrimitives[] = {
 };
 
 extern jboolean checkSameLut(jint *SrcReadLut, jint *DstReadLut,
-                             SurfaceDataRasInfo *pSrcInfo,
-                             SurfaceDataRasInfo *pDstInfo);
+			     SurfaceDataRasInfo *pSrcInfo,
+			     SurfaceDataRasInfo *pDstInfo);
 
 jboolean RegisterIndex8Gray(JNIEnv *env)
 {
     return RegisterPrimitives(env, Index8GrayPrimitives,
-                              ArraySize(Index8GrayPrimitives));
+			      ArraySize(Index8GrayPrimitives));
 }
 
 jint PixelForIndex8Gray(SurfaceDataRasInfo *pRasInfo, jint rgb)
@@ -160,21 +160,21 @@ void NAME_CONVERT_BLIT(Index8Gray, Index8Gray)
     InitIndex8GrayLoadVars(DstRead, pDstInfo);
 
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {
-        do {
-            memcpy(dstBase, srcBase, width);
-            srcBase = PtrAddBytes(srcBase, srcScan);
-            dstBase = PtrAddBytes(dstBase, dstScan);
-        } while (--height > 0);
+	do {
+	    memcpy(dstBase, srcBase, width);
+	    srcBase = PtrAddBytes(srcBase, srcScan);
+	    dstBase = PtrAddBytes(dstBase, dstScan);
+	} while (--height > 0);
     } else {
-        DeclareIndex8GrayStoreVars(DstWrite);
-        InitIndex8GrayStoreVarsY(DstWrite, pDstInfo);
+	DeclareIndex8GrayStoreVars(DstWrite);
+	InitIndex8GrayStoreVarsY(DstWrite, pDstInfo);
 
-        BlitLoopWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
-                            Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
-                            width, height,
-                            ConvertVia1ByteGray
+	BlitLoopWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
+			    Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
+			    width, height,
+			    ConvertVia1ByteGray
                                 (pSrc, Index8Gray, SrcRead,
-                                 pDst, Index8Gray, DstWrite, 0, 0));
+				 pDst, Index8Gray, DstWrite, 0, 0));
     }
 }
 
@@ -198,21 +198,21 @@ void NAME_SCALE_BLIT(Index8Gray, Index8Gray)
     InitIndex8GrayLoadVars(DstRead, pDstInfo);
 
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {
-        BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
-                                 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
-                                 x, width, height,
-                                 sxloc, syloc, sxinc, syinc, shift,
-                                 pDst[0] = pSrc[x]);
+	BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
+				 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
+				 x, width, height,
+				 sxloc, syloc, sxinc, syinc, shift,
+				 pDst[0] = pSrc[x]);
     } else {
-        DeclareIndex8GrayStoreVars(DstWrite);
-        InitIndex8GrayStoreVarsY(DstWrite, pDstInfo);
-        BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
-                                 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
-                                 x, width, height,
-                                 sxloc, syloc, sxinc, syinc, shift,
-                                 ConvertVia1ByteGray(pSrc, Index8Gray, SrcRead,
-                                                     pDst, Index8Gray, DstWrite,
-                                                     x, 0));
+	DeclareIndex8GrayStoreVars(DstWrite);
+	InitIndex8GrayStoreVarsY(DstWrite, pDstInfo);
+	BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
+				 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
+				 x, width, height,
+				 sxloc, syloc, sxinc, syinc, shift,
+				 ConvertVia1ByteGray(pSrc, Index8Gray, SrcRead,
+						     pDst, Index8Gray, DstWrite,
+						     x, 0));
     }
 }
 

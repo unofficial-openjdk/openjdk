@@ -74,6 +74,7 @@ import java.security.BasicPermission;
  *<p>
  *
  * @author Kara Kytle
+ * @version %I% %E%
  * @since 1.3
  */
 /*
@@ -121,6 +122,7 @@ import java.security.BasicPermission;
  *<p>
  *
  * @author Kara Kytle
+ * @version %I% %E%
  * @since 1.3
  */
 
@@ -200,11 +202,12 @@ import java.security.BasicPermission;
  * </table>
  *<p>
  *
+ * @version %I% %E%
  * @author Kara Kytle
  */
 
 public class AudioPermission extends BasicPermission {
-
+    
     /**
      * Creates a new <code>AudioPermission</code> object that has the specified
      * symbolic name, such as "play" or "record". An asterisk can be used to indicate
@@ -215,10 +218,10 @@ public class AudioPermission extends BasicPermission {
      * @throws IllegalArgumentException if <code>name</code> is empty.
      */
     public AudioPermission(String name) {
-
-        super(name);
+	
+	super(name);
     }
-
+    
     /**
      * Creates a new <code>AudioPermission</code> object that has the specified
      * symbolic name, such as "play" or "record".  The <code>actions</code>
@@ -230,7 +233,8 @@ public class AudioPermission extends BasicPermission {
      * @throws IllegalArgumentException if <code>name</code> is empty.
      */
     public AudioPermission(String name, String actions) {
-
-        super(name, actions);
+	
+	super(name, actions);
     }
 }
+

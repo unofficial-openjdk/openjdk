@@ -33,6 +33,7 @@ import sun.nio.cs.ext.JIS_X_0212_Solaris_Decoder;
  * Solaris ==> vendor defined characters -- NEC row 13 + IBM extended
  *         selected character set.
  * @author  ConverterGenerator tool
+ * @version >= JDK1.3.1
  */
 
 public class ByteToCharJIS0212_Solaris extends ByteToCharDoubleByte {
@@ -53,3 +54,4 @@ public class ByteToCharJIS0212_Solaris extends ByteToCharDoubleByte {
         end = 0x7E;
     }
 }
+

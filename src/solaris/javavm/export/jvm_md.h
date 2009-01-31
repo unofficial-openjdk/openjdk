@@ -31,9 +31,9 @@
  * JNI conversion, which should be sorted out later.
  */
 
-#include <dirent.h>             /* For DIR */
-#include <sys/param.h>          /* For MAXPATHLEN */
-#include <unistd.h>             /* For F_OK, R_OK, W_OK */
+#include <dirent.h>		/* For DIR */
+#include <sys/param.h>		/* For MAXPATHLEN */
+#include <unistd.h>		/* For F_OK, R_OK, W_OK */
 
 #define JNI_ONLOAD_SYMBOLS   {"JNI_OnLoad"}
 #define JNI_ONUNLOAD_SYMBOLS {"JNI_OnUnload"}

@@ -29,9 +29,9 @@ package sun.management;
  * Configuration Error thrown by a management agent.
  */
 public class AgentConfigurationError extends Error {
-    public static final String AGENT_EXCEPTION =
+    public static final String AGENT_EXCEPTION = 
         "agent.err.exception";
-    public static final String CONFIG_FILE_NOT_FOUND    =
+    public static final String CONFIG_FILE_NOT_FOUND    = 
         "agent.err.configfile.notfound";
     public static final String CONFIG_FILE_OPEN_FAILED  =
         "agent.err.configfile.failed";
@@ -40,7 +40,7 @@ public class AgentConfigurationError extends Error {
     public static final String CONFIG_FILE_ACCESS_DENIED =
         "agent.err.configfile.access.denied";
     public static final String EXPORT_ADDRESS_FAILED =
-        "agent.err.exportaddress.failed";
+	"agent.err.exportaddress.failed";
     public static final String AGENT_CLASS_NOT_FOUND =
         "agent.err.agentclass.notfound";
     public static final String AGENT_CLASS_FAILED =
@@ -71,20 +71,10 @@ public class AgentConfigurationError extends Error {
         "agent.err.access.file.notfound";
     public static final String PASSWORD_FILE_ACCESS_NOT_RESTRICTED =
         "agent.err.password.file.access.notrestricted";
-    public static final String FILE_ACCESS_NOT_RESTRICTED =
-        "agent.err.file.access.not.restricted";
-    public static final String FILE_NOT_FOUND =
-        "agent.err.file.not.found";
-    public static final String FILE_NOT_READABLE =
-        "agent.err.file.not.readable";
-    public static final String FILE_NOT_SET =
-        "agent.err.file.not.set";
-    public static final String FILE_READ_FAILED =
-        "agent.err.file.read.failed";
     public static final String CONNECTOR_SERVER_IO_ERROR =
         "agent.err.connector.server.io.error";
     public static final String INVALID_OPTION =
-        "agent.err.invalid.option";
+	"agent.err.invalid.option";
     public static final String INVALID_SNMP_PORT =
         "agent.err.invalid.snmp.port";
     public static final String INVALID_SNMP_TRAP_PORT =

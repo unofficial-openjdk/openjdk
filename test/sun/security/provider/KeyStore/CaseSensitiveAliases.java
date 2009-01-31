@@ -70,76 +70,77 @@ public class CaseSensitiveAliases {
 "-----END CERTIFICATE-----";
 
     private static CertificateFactory cf;
-
+    
     private static X509Certificate parseCert(String s) throws Exception {
-        if (cf == null) {
-            cf = CertificateFactory.getInstance("X.509");
-        }
-        InputStream in = new ByteArrayInputStream(s.getBytes("UTF8"));
-        return (X509Certificate)cf.generateCertificate(in);
+	if (cf == null) {
+	    cf = CertificateFactory.getInstance("X.509");
+	}
+	InputStream in = new ByteArrayInputStream(s.getBytes("UTF8"));
+	return (X509Certificate)cf.generateCertificate(in);
     }
-
+    
     public static void main(String[] args) throws Exception {
-        main("JKS", true);
-        main("CaseExactJKS", false);
+	main("JKS", true);
+	main("CaseExactJKS", false);
     }
-
+	
     private static void main(String jks, boolean caseInsensitive) throws Exception {
-        X509Certificate c1 = parseCert(S1);
-        X509Certificate c2 = parseCert(S2);
-        X509Certificate[] a1 = {c1};
-        X509Certificate[] a2 = {c2};
-
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
-        kpg.initialize(512);
-        PrivateKey p1 = kpg.generateKeyPair().getPrivate();
-        PrivateKey p2 = kpg.generateKeyPair().getPrivate();
-
-        KeyStore ks = KeyStore.getInstance(jks);
-        ks.load(null, null);
-
-        char[] pw = "pw".toCharArray();
-
-        ks.setKeyEntry("Alias", p1, pw, a1);
-        ks.setKeyEntry("ALIAS", p2, pw, a2);
-
-        if (caseInsensitive) {
-            if (ks.size() != 1) {
-                throw new Exception("size mismatch: " + ks.size());
-            }
-            match(p2, ks.getKey("alias", pw));
-            match(p2, ks.getKey("Alias", pw));
-            match(p2, ks.getKey("ALIAS", pw));
-            match(a2, ks.getCertificateChain("alias"));
-            match(a2, ks.getCertificateChain("Alias"));
-            match(a2, ks.getCertificateChain("ALIAS"));
-        } else {
-            if (ks.size() != 2) {
-                throw new Exception("size mismatch: " + ks.size());
-            }
-            match(null, ks.getKey("alias", pw));
-            match(p1, ks.getKey("Alias", pw));
-            match(p2, ks.getKey("ALIAS", pw));
-            match(null, ks.getCertificateChain("alias"));
-            match(a1, ks.getCertificateChain("Alias"));
-            match(a2, ks.getCertificateChain("ALIAS"));
-        }
-
-        System.out.println("OK: " + jks);
+	X509Certificate c1 = parseCert(S1);
+	X509Certificate c2 = parseCert(S2);
+	X509Certificate[] a1 = {c1};
+	X509Certificate[] a2 = {c2};
+	
+	KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA");
+	kpg.initialize(512);
+	PrivateKey p1 = kpg.generateKeyPair().getPrivate();
+	PrivateKey p2 = kpg.generateKeyPair().getPrivate();
+	
+	KeyStore ks = KeyStore.getInstance(jks);
+	ks.load(null, null);
+	
+	char[] pw = "pw".toCharArray();
+	
+	ks.setKeyEntry("Alias", p1, pw, a1);
+	ks.setKeyEntry("ALIAS", p2, pw, a2);
+	
+	if (caseInsensitive) {
+	    if (ks.size() != 1) {
+		throw new Exception("size mismatch: " + ks.size());
+	    }
+	    match(p2, ks.getKey("alias", pw));
+	    match(p2, ks.getKey("Alias", pw));
+	    match(p2, ks.getKey("ALIAS", pw));
+	    match(a2, ks.getCertificateChain("alias"));
+	    match(a2, ks.getCertificateChain("Alias"));
+	    match(a2, ks.getCertificateChain("ALIAS"));
+	} else {
+	    if (ks.size() != 2) {
+		throw new Exception("size mismatch: " + ks.size());
+	    }
+	    match(null, ks.getKey("alias", pw));
+	    match(p1, ks.getKey("Alias", pw));
+	    match(p2, ks.getKey("ALIAS", pw));
+	    match(null, ks.getCertificateChain("alias"));
+	    match(a1, ks.getCertificateChain("Alias"));
+	    match(a2, ks.getCertificateChain("ALIAS"));
+	}
+	
+	System.out.println("OK: " + jks);
     }
-
+    
     private static void match(Key p1, Key p2) throws Exception {
-        System.out.println(String.valueOf(p2).split("\\n")[0]);
-        if ((p1 != p2) && (p1.equals(p2) == false)) {
-            throw new Exception("Private key mismatch");
-        }
+	System.out.println(String.valueOf(p2).split("\\n")[0]);
+	if ((p1 != p2) && (p1.equals(p2) == false)) {
+	    throw new Exception("Private key mismatch");
+	}
     }
-
+    
     private static void match(Certificate[] a1, Certificate[] a2) throws Exception {
-        System.out.println(String.valueOf(a2).split("\\n")[0]);
-        if ((a1 != a2) && (Arrays.equals(a1, a2) == false)) {
-            throw new Exception("chain mismatch");
-        }
+	System.out.println(String.valueOf(a2).split("\\n")[0]);
+	if ((a1 != a2) && (Arrays.equals(a1, a2) == false)) {
+	    throw new Exception("chain mismatch");
+	}
     }
 
 }
+

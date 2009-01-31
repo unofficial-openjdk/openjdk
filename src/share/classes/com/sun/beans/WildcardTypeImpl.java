@@ -41,6 +41,7 @@ import java.util.Arrays;
  *
  * @since 1.7
  *
+ * @version %I% %G%
  * @author Eamonn McManus
  * @author Sergey Malenkov
  */

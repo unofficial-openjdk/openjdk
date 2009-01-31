@@ -26,7 +26,7 @@
  *  @summary Test Method.variables() and the like.
  *
  *  @author Robert Field
- *
+ *  
  *  @library scaffold
  *  @run build JDIScaffold VMConnection
  *  @run compile -g Vars.java
@@ -83,7 +83,7 @@ public class Vars extends JDIScaffold {
     public static void main(String[] args) throws Exception {
         new Vars(args).runTests();
     }
-
+	
     static final int VARIABLES = 1;
     static final int BYNAME = 2;
     static final int ARGUMENTS = 3;
@@ -169,29 +169,29 @@ public class Vars extends JDIScaffold {
         if (method == null) {
             throw new Exception("Method not found");
         }
-        test(method, VARIABLES, "abstract/variables",
+        test(method, VARIABLES, "abstract/variables", 
              "AbsentInformationException");
-        test(method, BYNAME, "abstract/variablesByName",
+        test(method, BYNAME, "abstract/variablesByName", 
              "AbsentInformationException");
-        test(method, ARGUMENTS, "abstract/arguments",
+        test(method, ARGUMENTS, "abstract/arguments", 
              "AbsentInformationException");
 
         method = findMethod(rt, "test2", "(DZ)I");
         if (method == null) {
             throw new Exception("Method not found");
         }
-        test(method, VARIABLES, "native/variables",
+        test(method, VARIABLES, "native/variables", 
              "AbsentInformationException");
-        test(method, BYNAME, "native/variablesByName",
+        test(method, BYNAME, "native/variablesByName", 
              "AbsentInformationException");
-        test(method, ARGUMENTS, "native/arguments",
+        test(method, ARGUMENTS, "native/arguments", 
              "AbsentInformationException");
 
         method = findMethod(rt, "test3", "(SJ)Ljava/lang/String;");
         if (method == null) {
             throw new Exception("Method not found");
         }
-        // javac can put these in whatever order it desires.  hopper
+        // javac can put these in whatever order it desires.  hopper 
         // does it one way and mantis another.
         test2(method, VARIABLES, "normal/variables", "sh,lo,st", "st,sh,lo");
         test(method, BYNAME, "normal/variablesByName", "st");

@@ -55,32 +55,32 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_SolarisVirtualMachine_open
     jboolean isCopy;
     const char* p = GetStringPlatformChars(env, path, &isCopy);
     if (p == NULL) {
-        return 0;
+	return 0;
     } else {
-        int fd;
-        int err = 0;
+	int fd;
+	int err = 0;
 
-        fd = open(p, O_RDWR);
-        if (fd == -1) {
-            err = errno;
-        }
+	fd = open(p, O_RDWR);
+	if (fd == -1) {
+	    err = errno;
+	}
 
-        if (isCopy) {
+	if (isCopy) {
             JNU_ReleaseStringPlatformChars(env, path, p);
         }
 
-        if (fd == -1) {
-            if (err == ENOENT) {
-                JNU_ThrowByName(env, "java/io/FileNotFoundException", NULL);
-            } else {
-                char* msg = strdup(strerror(err));
-                JNU_ThrowIOException(env, msg);
-                if (msg != NULL) {
-                    free(msg);
-                }
-            }
-        }
-        return fd;
+	if (fd == -1) {
+	    if (err == ENOENT) {
+		JNU_ThrowByName(env, "java/io/FileNotFoundException", NULL);
+	    } else {
+		char* msg = strdup(strerror(err));
+	        JNU_ThrowIOException(env, msg);
+		if (msg != NULL) {
+		    free(msg);
+		}
+	    }
+	}
+	return fd;
     }
 }
 
@@ -95,40 +95,40 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_SolarisVirtualMachine_checkPermissi
     jboolean isCopy;
     const char* p = GetStringPlatformChars(env, path, &isCopy);
     if (p != NULL) {
-        struct stat64 sb;
-        uid_t uid, gid;
-        int res;
+	struct stat64 sb;
+	uid_t uid, gid;
+	int res;
 
-        /*
-         * Check that the path is owned by the effective uid/gid of this
-         * process. Also check that group/other access is not allowed.
-         */
-        uid = geteuid();
-        gid = getegid();
+	/*
+	 * Check that the path is owned by the effective uid/gid of this 
+	 * process. Also check that group/other access is not allowed.
+	 */
+	uid = geteuid();
+	gid = getegid();
 
-        res = stat64(p, &sb);
-        if (res != 0) {
-            /* save errno */
-            res = errno;
-        }
+	res = stat64(p, &sb);
+	if (res != 0) {
+	    /* save errno */
+	    res = errno;
+	}
 
-        /* release p here before we throw an I/O exception */
-        if (isCopy) {
+	/* release p here before we throw an I/O exception */
+	if (isCopy) {
             JNU_ReleaseStringPlatformChars(env, path, p);
         }
 
-        if (res == 0) {
-            if ( (sb.st_uid != uid) || (sb.st_gid != gid) ||
-                 ((sb.st_mode & (S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)) != 0) ) {
-                JNU_ThrowIOException(env, "well-known file is not secure");
-            }
-        } else {
-            char* msg = strdup(strerror(res));
+	if (res == 0) {
+	    if ( (sb.st_uid != uid) || (sb.st_gid != gid) ||
+		 ((sb.st_mode & (S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)) != 0) ) {
+		JNU_ThrowIOException(env, "well-known file is not secure");
+	    }
+	} else {
+	    char* msg = strdup(strerror(res));
             JNU_ThrowIOException(env, msg);
             if (msg != NULL) {
                 free(msg);
             }
-        }
+	}
     }
 }
 
@@ -150,7 +150,7 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_SolarisVirtualMachine_close
  * Signature: (I[BI)I
  */
 JNIEXPORT jint JNICALL Java_sun_tools_attach_SolarisVirtualMachine_read
-  (JNIEnv *env, jclass cls, jint fd, jbyteArray ba, jint off, jint baLen)
+  (JNIEnv *env, jclass cls, jint fd, jbyteArray ba, jint off, jint baLen) 
 {
     unsigned char buf[128];
     size_t len = sizeof(buf);
@@ -158,18 +158,18 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_SolarisVirtualMachine_read
 
     size_t remaining = (size_t)(baLen - off);
     if (len > remaining) {
-        len = remaining;
+	len = remaining;
     }
 
     RESTARTABLE(read(fd, buf+off, len), n);
     if (n == -1) {
-        JNU_ThrowIOExceptionWithLastError(env, "read");
+	JNU_ThrowIOExceptionWithLastError(env, "read");
     } else {
-        if (n == 0) {
-            n = -1;     // EOF
-        } else {
-            (*env)->SetByteArrayRegion(env, ba, off, (jint)n, (jbyte *)(buf+off));
-        }
+	if (n == 0) {
+	    n = -1;	// EOF
+	} else {
+	    (*env)->SetByteArrayRegion(env, ba, off, (jint)n, (jbyte *)(buf+off));
+	}
     }
     return n;
 }
@@ -183,23 +183,23 @@ JNIEXPORT void JNICALL Java_sun_tools_attach_SolarisVirtualMachine_sigquit
   (JNIEnv *env, jclass cls, jint pid)
 {
     if (kill((pid_t)pid, SIGQUIT) == -1) {
-        JNU_ThrowIOExceptionWithLastError(env, "kill");
+	JNU_ThrowIOExceptionWithLastError(env, "kill");
     }
 }
 
 /*
- * A simple table to translate some known errors into reasonable
+ * A simple table to translate some known errors into reasonable 
  * error messages
  */
 static struct {
     jint err;
     const char* msg;
 } const error_messages[] = {
-    { 100,      "Bad request" },
-    { 101,      "Protocol mismatch" },
-    { 102,      "Resource failure" },
-    { 103,      "Internal error" },
-    { 104,      "Permission denied" },
+    { 100, 	"Bad request" },
+    { 101,	"Protocol mismatch" },
+    { 102, 	"Resource failure" },
+    { 103,	"Internal error" },
+    { 104,	"Permission denied" },
 };
 
 /*
@@ -211,18 +211,18 @@ static const char* translate_error(jint err) {
     int i;
 
     for (i=0; i<table_size; i++) {
-        if (err == error_messages[i].err) {
-            return error_messages[i].msg;
-        }
+	if (err == error_messages[i].err) {
+	    return error_messages[i].msg;
+	}
     }
     return NULL;
 }
 
 /*
- * Current protocol version
+ * Current protocol version 
  */
 static const char* PROTOCOL_VERSION = "1";
-
+  
 /*
  * Class:     sun_tools_attach_SolarisVirtualMachine
  * Method:    enqueue
@@ -242,28 +242,28 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_SolarisVirtualMachine_enqueue
     char* buf;
 
     /*
-     * First we get the command string and create the start of the
+     * First we get the command string and create the start of the 
      * argument string to send to the target VM:
      * <ver>\0<cmd>\0
      */
     cstr = JNU_GetStringPlatformChars(env, cmd, &isCopy);
     if (cstr == NULL) {
-        return -1;              /* pending exception */
-    }
+ 	return -1; 		/* pending exception */
+    } 
     size = strlen(PROTOCOL_VERSION) + strlen(cstr) + 2;
     buf = (char*)malloc(size);
     if (buf != NULL) {
-        char* pos = buf;
-        strcpy(buf, PROTOCOL_VERSION);
-        pos += strlen(PROTOCOL_VERSION)+1;
-        strcpy(pos, cstr);
+	char* pos = buf;
+	strcpy(buf, PROTOCOL_VERSION);
+	pos += strlen(PROTOCOL_VERSION)+1;
+	strcpy(pos, cstr);
     }
     if (isCopy) {
         JNU_ReleaseStringPlatformChars(env, cmd, cstr);
     }
     if (buf == NULL) {
-        JNU_ThrowOutOfMemoryError(env, "malloc failed");
-        return -1;
+	JNU_ThrowOutOfMemoryError(env, "malloc failed");
+	return -1;
     }
 
     /*
@@ -273,35 +273,35 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_SolarisVirtualMachine_enqueue
     arg_count = (*env)->GetArrayLength(env, args);
 
     for (i=0; i<arg_count; i++) {
-        jobject obj = (*env)->GetObjectArrayElement(env, args, i);
-        if (obj != NULL) {
-            cstr = JNU_GetStringPlatformChars(env, obj, &isCopy);
-            if (cstr != NULL) {
-                size_t len = strlen(cstr);
-                char* newbuf = (char*)realloc(buf, size+len+1);
-                if (newbuf != NULL) {
-                    buf = newbuf;
-                    strcpy(buf+size, cstr);
-                    size += len+1;
-                }
-                if (isCopy) {
-                    JNU_ReleaseStringPlatformChars(env, obj, cstr);
-                }
-                if (newbuf == NULL) {
-                    free(buf);
-                    JNU_ThrowOutOfMemoryError(env, "realloc failed");
-                    return -1;
-                }
-            }
+	jobject obj = (*env)->GetObjectArrayElement(env, args, i);
+	if (obj != NULL) {
+	    cstr = JNU_GetStringPlatformChars(env, obj, &isCopy);
+	    if (cstr != NULL) {
+	        size_t len = strlen(cstr);
+		char* newbuf = (char*)realloc(buf, size+len+1);
+	        if (newbuf != NULL) {
+		    buf = newbuf;
+		    strcpy(buf+size, cstr);
+		    size += len+1;
+	  	}
+		if (isCopy) {
+	            JNU_ReleaseStringPlatformChars(env, obj, cstr);
+	        }
+		if (newbuf == NULL) {
+		    free(buf);
+		    JNU_ThrowOutOfMemoryError(env, "realloc failed");
+		    return -1;
+		}
+	    }
         }
-        if ((*env)->ExceptionOccurred(env)) {
-            free(buf);
-            return -1;
-        }
+	if ((*env)->ExceptionOccurred(env)) {
+	    free(buf);
+	    return -1;
+	}
     }
 
     /*
-     * The arguments to the door function are in 'buf' so we now
+     * The arguments to the door function are in 'buf' so we now 
      * do the door call
      */
     door_args.data_ptr = buf;
@@ -314,43 +314,44 @@ JNIEXPORT jint JNICALL Java_sun_tools_attach_SolarisVirtualMachine_enqueue
     RESTARTABLE(door_call(fd, &door_args), rc);
 
     /*
-     * door_call failed
+     * door_call failed 
      */
     if (rc == -1) {
-        JNU_ThrowIOExceptionWithLastError(env, "door_call");
+	JNU_ThrowIOExceptionWithLastError(env, "door_call");
     } else {
-        /*
-         * door_call succeeded but the call didn't return the the expected jint.
-         */
-        if (door_args.data_size < sizeof(jint)) {
-            JNU_ThrowIOException(env, "Enqueue error - reason unknown as result is truncated!");
-        } else {
-            jint* res = (jint*)(door_args.data_ptr);
-            if (*res != JNI_OK) {
-                const char* msg = translate_error(*res);
-                char buf[255];
-                if (msg == NULL) {
-                    sprintf(buf, "Unable to enqueue command to target VM: %d", *res);
-                } else {
-                    sprintf(buf, "Unable to enqueue command to target VM: %s", msg);
-                }
+	/*
+	 * door_call succeeded but the call didn't return the the expected jint.
+	 */
+	if (door_args.data_size < sizeof(jint)) {
+	    JNU_ThrowIOException(env, "Enqueue error - reason unknown as result is truncated!");
+	} else {
+	    jint* res = (jint*)(door_args.data_ptr);
+	    if (*res != JNI_OK) {
+		const char* msg = translate_error(*res);
+		char buf[255];
+		if (msg == NULL) {
+		    sprintf(buf, "Unable to enqueue command to target VM: %d", *res);
+		} else {    
+		    sprintf(buf, "Unable to enqueue command to target VM: %s", msg);
+		}
                 JNU_ThrowIOException(env, buf);
-            } else {
-                /*
-                 * The door call should return a file descriptor to one end of
-                 * a socket pair
-                 */
-                if ((door_args.desc_ptr != NULL) &&
-                    (door_args.desc_num == 1) &&
-                    (door_args.desc_ptr->d_attributes & DOOR_DESCRIPTOR)) {
-                    result = door_args.desc_ptr->d_data.d_desc.d_descriptor;
-                } else {
-                    JNU_ThrowIOException(env, "Reply from enqueue missing descriptor!");
-                }
-            }
-        }
+	    } else {
+		/*
+	  	 * The door call should return a file descriptor to one end of	
+		 * a socket pair
+	  	 */
+	        if ((door_args.desc_ptr != NULL) &&
+	            (door_args.desc_num == 1) &&
+	            (door_args.desc_ptr->d_attributes & DOOR_DESCRIPTOR)) {
+	            result = door_args.desc_ptr->d_data.d_desc.d_descriptor;
+ 	        } else {
+		    JNU_ThrowIOException(env, "Reply from enqueue missing descriptor!");
+	 	}
+	    }
+	}
     }
 
     free(buf);
-    return result;
+    return result;	
 }
+

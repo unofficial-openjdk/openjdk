@@ -38,7 +38,7 @@ XmFontList awtJNI_GetFontList(JNIEnv *env,jobject font);
 #endif
 XFontSet awtJNI_MakeFontSet(JNIEnv *env,jobject font);
 struct FontData *awtJNI_GetFontData(JNIEnv *env,jobject font, char **errmsg);
-int32_t awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int32_t offset,
+int32_t awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int32_t offset, 
                                 int32_t length, jobject font);
 #endif /* !HEADLESS */
 

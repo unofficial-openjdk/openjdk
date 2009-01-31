@@ -35,5 +35,5 @@ public class Constructor {
     public static void main(String argv[]) throws Exception {
         ZipEntry e1 = new ZipEntry("foo");
         JarEntry e2 = new JarEntry("bar");
-    }
+    }      
 }

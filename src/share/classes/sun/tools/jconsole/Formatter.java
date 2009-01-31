@@ -42,7 +42,7 @@ class Formatter {
     private final static DateFormat timeWithSecondsDF = new SimpleDateFormat("HH:mm:ss");
     private final static DateFormat dateDF            = new SimpleDateFormat("yyyy-MM-dd");
     private final static String decimalZero =
-                                new DecimalFormatSymbols().getDecimalSeparator() + "0";
+				new DecimalFormatSymbols().getDecimalSeparator() + "0";
 
     static String formatTime(long t) {
         String str;
@@ -77,85 +77,85 @@ class Formatter {
 
 
     static String formatClockTime(long time) {
-        return timeDF.format(time);
+	return timeDF.format(time);
     }
 
     static String formatDate(long time) {
-        return dateDF.format(time);
+	return dateDF.format(time);
     }
 
     static String formatDateTime(long time) {
-        return dateDF.format(time) + " " + timeWithSecondsDF.format(time);
+	return dateDF.format(time) + " " + timeWithSecondsDF.format(time);
     }
 
     static DateFormat getDateTimeFormat(String key) {
-        String dtfStr = getText(key);
-        int dateStyle = -1;
-        int timeStyle = -1;
+	String dtfStr = getText(key);
+	int dateStyle = -1;
+	int timeStyle = -1;
 
-        if (dtfStr.startsWith("SHORT")) {
-            dateStyle = DateFormat.SHORT;
-        } else if (dtfStr.startsWith("MEDIUM")) {
-            dateStyle = DateFormat.MEDIUM;
-        } else if (dtfStr.startsWith("LONG")) {
-            dateStyle = DateFormat.LONG;
-        } else if (dtfStr.startsWith("FULL")) {
-            dateStyle = DateFormat.FULL;
-        }
+	if (dtfStr.startsWith("SHORT")) {
+	    dateStyle = DateFormat.SHORT;
+	} else if (dtfStr.startsWith("MEDIUM")) {
+	    dateStyle = DateFormat.MEDIUM;
+	} else if (dtfStr.startsWith("LONG")) {
+	    dateStyle = DateFormat.LONG;
+	} else if (dtfStr.startsWith("FULL")) {
+	    dateStyle = DateFormat.FULL;
+	}
 
-        if (dtfStr.endsWith("SHORT")) {
-            timeStyle = DateFormat.SHORT;
-        } else if (dtfStr.endsWith("MEDIUM")) {
-            timeStyle = DateFormat.MEDIUM;
-        } else if (dtfStr.endsWith("LONG")) {
-            timeStyle = DateFormat.LONG;
-        } else if (dtfStr.endsWith("FULL")) {
-            timeStyle = DateFormat.FULL;
-        }
+	if (dtfStr.endsWith("SHORT")) {
+	    timeStyle = DateFormat.SHORT;
+	} else if (dtfStr.endsWith("MEDIUM")) {
+	    timeStyle = DateFormat.MEDIUM;
+	} else if (dtfStr.endsWith("LONG")) {
+	    timeStyle = DateFormat.LONG;
+	} else if (dtfStr.endsWith("FULL")) {
+	    timeStyle = DateFormat.FULL;
+	}
 
-        if (dateStyle != -1 && timeStyle != -1) {
-            return DateFormat.getDateTimeInstance(dateStyle, timeStyle);
-        } else if (dtfStr.length() > 0) {
-            return new SimpleDateFormat(dtfStr);
-        } else {
-            return DateFormat.getDateTimeInstance();
-        }
+	if (dateStyle != -1 && timeStyle != -1) {
+	    return DateFormat.getDateTimeInstance(dateStyle, timeStyle);
+	} else if (dtfStr.length() > 0) {
+	    return new SimpleDateFormat(dtfStr);
+	} else {
+	    return DateFormat.getDateTimeInstance();
+	}
     }
 
     static double toExcelTime(long time) {
-        // Excel is bug compatible with Lotus 1-2-3 and pretends
-        // that 1900 was a leap year, so count from 1899-12-30.
-        // Note that the month index is zero-based in Calendar.
-        Calendar cal = new GregorianCalendar(1899, 11, 30);
+	// Excel is bug compatible with Lotus 1-2-3 and pretends
+	// that 1900 was a leap year, so count from 1899-12-30.
+	// Note that the month index is zero-based in Calendar.
+	Calendar cal = new GregorianCalendar(1899, 11, 30);
 
-        // Adjust for the fact that now may be DST but then wasn't
-        Calendar tmpCal = new GregorianCalendar();
-        tmpCal.setTimeInMillis(time);
-        int dst = tmpCal.get(Calendar.DST_OFFSET);
-        if (dst > 0) {
-            cal.set(Calendar.DST_OFFSET, dst);
-        }
+	// Adjust for the fact that now may be DST but then wasn't
+	Calendar tmpCal = new GregorianCalendar();
+	tmpCal.setTimeInMillis(time);
+	int dst = tmpCal.get(Calendar.DST_OFFSET);
+	if (dst > 0) { 
+	    cal.set(Calendar.DST_OFFSET, dst);
+	}
 
-        long millisSince1900 = time - cal.getTimeInMillis();
-        double value = (double)millisSince1900 / (24 * 60 * 60 * 1000);
+	long millisSince1900 = time - cal.getTimeInMillis();
+	double value = (double)millisSince1900 / (24 * 60 * 60 * 1000);
 
-        return value;
+	return value;
     }
 
 
 
     static String[] formatKByteStrings(long... bytes) {
-        int n = bytes.length;
-        for (int i = 0; i < n; i++) {
-            if (bytes[i] > 0) {
-                bytes[i] /= 1024;
-            }
-        }
-        String[] strings = formatLongs(bytes);
-        for (int i = 0; i < n; i++) {
-            strings[i] = getText("kbytes", strings[i]);
-        }
-        return strings;
+	int n = bytes.length;
+	for (int i = 0; i < n; i++) {
+	    if (bytes[i] > 0) {
+		bytes[i] /= 1024;
+	    }
+	}
+	String[] strings = formatLongs(bytes);
+	for (int i = 0; i < n; i++) {
+	    strings[i] = getText("kbytes", strings[i]);
+	}
+	return strings;
     }
 
     static String formatKBytes(long bytes) {
@@ -169,31 +169,31 @@ class Formatter {
 
 
     static String formatBytes(long v, boolean html) {
-        return formatBytes(v, v, html);
+	return formatBytes(v, v, html);
     }
 
     static String formatBytes(long v, long vMax) {
-        return formatBytes(v, vMax, false);
+	return formatBytes(v, vMax, false);
     }
 
     static String formatBytes(long v, long vMax, boolean html) {
-        String s;
+	String s;
 
-        int exp = (int)Math.log10((double)vMax);
+	int exp = (int)Math.log10((double)vMax);
 
-        if (exp < 3) {
-            s = Resources.getText("Size Bytes", v);
-        } else if (exp < 6) {
-            s = Resources.getText("Size Kb", trimDouble(v / Math.pow(10.0, 3)));
-        } else if (exp < 9) {
-            s = Resources.getText("Size Mb", trimDouble(v / Math.pow(10.0, 6)));
-        } else {
-            s = Resources.getText("Size Gb", trimDouble(v / Math.pow(10.0, 9)));
-        }
-        if (html) {
-            s = s.replace(" ", "&nbsp;");
-        }
-        return s;
+	if (exp < 3) {
+	    s = Resources.getText("Size Bytes", v);
+	} else if (exp < 6) {
+	    s = Resources.getText("Size Kb", trimDouble(v / Math.pow(10.0, 3)));
+	} else if (exp < 9) {
+	    s = Resources.getText("Size Mb", trimDouble(v / Math.pow(10.0, 6)));
+	} else {
+	    s = Resources.getText("Size Gb", trimDouble(v / Math.pow(10.0, 9)));
+	}
+	if (html) {
+	    s = s.replace(" ", "&nbsp;");
+	}
+	return s;
     }
 
     /*
@@ -210,21 +210,21 @@ class Formatter {
     }
 
     static String formatLong(long value) {
-        return String.format("%,d", value);
+	return String.format("%,d", value);
     }
 
     static String[] formatLongs(long... longs) {
-        int n = longs.length;
-        int size = 0;
-        String[] strings = new String[n];
-        for (int i = 0; i < n; i++) {
-            strings[i] = formatLong(longs[i]);
-            size = Math.max(size, strings[i].length());
-        }
-        for (int i = 0; i < n; i++) {
-            strings[i] = justify(strings[i], size);
-        }
-        return strings;
+	int n = longs.length;
+	int size = 0;
+	String[] strings = new String[n];
+	for (int i = 0; i < n; i++) {
+	    strings[i] = formatLong(longs[i]);
+	    size = Math.max(size, strings[i].length());
+	}
+	for (int i = 0; i < n; i++) {
+	    strings[i] = justify(strings[i], size);
+	}
+	return strings;
     }
 
 
@@ -235,13 +235,13 @@ class Formatter {
 
     static String justify(String str, int size) {
         StringBuffer buf = new StringBuffer();
-        buf.append("<TT>");
+	buf.append("<TT>");
         int n = size - str.length();
         for (int i = 0; i < n; i++) {
             buf.append("&nbsp;");
         }
         buf.append(str);
-        buf.append("</TT>");
+	buf.append("</TT>");
         return buf.toString();
     }
 
@@ -252,10 +252,10 @@ class Formatter {
     static String newRow(String label, String value, int columnPerRow) {
         if (label == null) {
             label = "";
-        } else {
+	} else {
             label += ":&nbsp;";
-        }
-        label = "<th nowrap align=right valign=top>" + label;
+	}
+	label = "<th nowrap align=right valign=top>" + label;
         value = "<td colspan=" + (columnPerRow-1) + "> <font size =-1>" + value;
 
         return "<tr>" + label + value + "</tr>";

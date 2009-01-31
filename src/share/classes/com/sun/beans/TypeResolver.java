@@ -41,6 +41,7 @@ import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
  *
  * @since 1.7
  *
+ * @version %I% %G%
  * @author Eamonn McManus
  * @author Sergey Malenkov
  */

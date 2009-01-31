@@ -40,13 +40,14 @@ import java.util.HashMap;
  * for external users (ie. plugin)
  *
  * @author Michael McMahon
+ * @version 1.1, 10/02/03 
  */
 
 public abstract class AuthCacheValue implements Serializable {
 
     public enum Type {
-        Proxy,
-        Server
+	Proxy,
+	Server
     };
 
     /**
@@ -55,7 +56,7 @@ public abstract class AuthCacheValue implements Serializable {
     static protected AuthCache cache = new AuthCacheImpl();
 
     public static void setAuthCache (AuthCache map) {
-        cache = map;
+	cache = map;
     }
 
     /* Package private ctor to prevent extension outside package */

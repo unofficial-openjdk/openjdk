@@ -42,6 +42,7 @@ import sun.security.util.*;
  * another CRL.
  *
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -78,8 +79,8 @@ implements CertAttrSet<String> {
      * @param crlNum the value to be set for the extension.
      */
     public CRLNumberExtension(int crlNum) throws IOException {
-        this(PKIXExtensions.CRLNumber_Id, false, BigInteger.valueOf(crlNum),
-        NAME, LABEL);
+	this(PKIXExtensions.CRLNumber_Id, false, BigInteger.valueOf(crlNum), 
+	NAME, LABEL);
     }
 
     /**
@@ -89,21 +90,21 @@ implements CertAttrSet<String> {
      * @param crlNum the value to be set for the extension.
      */
     public CRLNumberExtension(BigInteger crlNum) throws IOException {
-        this(PKIXExtensions.CRLNumber_Id, false, crlNum, NAME, LABEL);
+	this(PKIXExtensions.CRLNumber_Id, false, crlNum, NAME, LABEL);
     }
 
     /**
      * Creates the extension (also called by the subclass).
      */
-    protected CRLNumberExtension(ObjectIdentifier extensionId,
-        boolean isCritical, BigInteger crlNum, String extensionName,
-        String extensionLabel) throws IOException {
+    protected CRLNumberExtension(ObjectIdentifier extensionId, 
+	boolean isCritical, BigInteger crlNum, String extensionName, 
+	String extensionLabel) throws IOException {
 
-        this.extensionId = extensionId;
+	this.extensionId = extensionId;
         this.critical = isCritical;
         this.crlNumber = crlNum;
-        this.extensionName = extensionName;
-        this.extensionLabel = extensionLabel;
+	this.extensionName = extensionName;
+	this.extensionLabel = extensionLabel;
         encodeThis();
     }
 
@@ -117,38 +118,38 @@ implements CertAttrSet<String> {
      */
     public CRLNumberExtension(Boolean critical, Object value)
     throws IOException {
-        this(PKIXExtensions.CRLNumber_Id, critical, value, NAME, LABEL);
+	this(PKIXExtensions.CRLNumber_Id, critical, value, NAME, LABEL);
     }
 
     /**
      * Creates the extension (also called by the subclass).
      */
-    protected CRLNumberExtension(ObjectIdentifier extensionId,
-        Boolean critical, Object value, String extensionName,
-        String extensionLabel) throws IOException {
+    protected CRLNumberExtension(ObjectIdentifier extensionId, 
+	Boolean critical, Object value, String extensionName, 
+	String extensionLabel) throws IOException {
 
-        this.extensionId = extensionId;
+	this.extensionId = extensionId;
         this.critical = critical.booleanValue();
         this.extensionValue = (byte[]) value;
         DerValue val = new DerValue(this.extensionValue);
         this.crlNumber = val.getBigInteger();
-        this.extensionName = extensionName;
-        this.extensionLabel = extensionLabel;
+	this.extensionName = extensionName;
+	this.extensionLabel = extensionLabel;
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-        if (name.equalsIgnoreCase(NUMBER)) {
+	if (name.equalsIgnoreCase(NUMBER)) {
             if (!(obj instanceof BigInteger)) {
-                throw new IOException("Attribute must be of type BigInteger.");
-            }
+	        throw new IOException("Attribute must be of type BigInteger.");
+	    }
             crlNumber = (BigInteger)obj;
-        } else {
-          throw new IOException("Attribute name not recognized by"
+	} else {
+	  throw new IOException("Attribute name not recognized by"
                                 + " CertAttrSet:" + extensionName + ".");
-        }
+	}
         encodeThis();
     }
 
@@ -156,25 +157,25 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(NUMBER)) {
+	if (name.equalsIgnoreCase(NUMBER)) {
             if (crlNumber == null) return null;
             else return crlNumber;
-        } else {
-          throw new IOException("Attribute name not recognized by"
+	} else {
+	  throw new IOException("Attribute name not recognized by"
                                 + " CertAttrSet:" + extensionName + ".");
-        }
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(NUMBER)) {
+	if (name.equalsIgnoreCase(NUMBER)) {
             crlNumber = null;
-        } else {
-          throw new IOException("Attribute name not recognized by"
+	} else {
+	  throw new IOException("Attribute name not recognized by"
                                 + " CertAttrSet:" + extensionName + ".");
-        }
+	}
         encodeThis();
     }
 
@@ -195,8 +196,8 @@ implements CertAttrSet<String> {
      * @exception IOException on encoding errors.
      */
     public void encode(OutputStream out) throws IOException {
-       DerOutputStream  tmp = new DerOutputStream();
-        encode(out, PKIXExtensions.CRLNumber_Id, true);
+       DerOutputStream	tmp = new DerOutputStream();
+	encode(out, PKIXExtensions.CRLNumber_Id, true);
     }
 
     /**
@@ -204,9 +205,9 @@ implements CertAttrSet<String> {
      * (Also called by the subclass)
      */
     protected void encode(OutputStream out, ObjectIdentifier extensionId,
-        boolean isCritical) throws IOException {
+	boolean isCritical) throws IOException {
 
-       DerOutputStream  tmp = new DerOutputStream();
+       DerOutputStream	tmp = new DerOutputStream();
 
        if (this.extensionValue == null) {
            this.extensionId = extensionId;
@@ -224,7 +225,7 @@ implements CertAttrSet<String> {
     public Enumeration<String> getElements() {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(NUMBER);
-        return (elements.elements());
+	return (elements.elements());
     }
 
     /**

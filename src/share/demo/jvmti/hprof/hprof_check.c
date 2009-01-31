@@ -68,8 +68,8 @@ typedef struct CmapInfo {
 } CmapInfo;
 
 /* Read raw bytes from the file image, update the pointer */
-static void
-read_raw(unsigned char **pp, unsigned char *buf, int len)
+static void 
+read_raw(unsigned char **pp, unsigned char *buf, int len) 
 {
     while ( len > 0 ) {
         *buf = **pp;
@@ -82,32 +82,32 @@ read_raw(unsigned char **pp, unsigned char *buf, int len)
 /* Read various sized elements, properly converted from big to right endian.
  *    File will contain big endian format.
  */
-static unsigned
-read_u1(unsigned char **pp)
+static unsigned 
+read_u1(unsigned char **pp) 
 {
     unsigned char b;
-
+    
     read_raw(pp, &b, 1);
     return b;
 }
-static unsigned
-read_u2(unsigned char **pp)
+static unsigned 
+read_u2(unsigned char **pp) 
 {
     unsigned short s;
 
     read_raw(pp, (void*)&s, 2);
     return md_htons(s);
 }
-static unsigned
-read_u4(unsigned char **pp)
+static unsigned 
+read_u4(unsigned char **pp) 
 {
     unsigned int u;
 
     read_raw(pp, (void*)&u, 4);
     return md_htonl(u);
 }
-static jlong
-read_u8(unsigned char **pp)
+static jlong 
+read_u8(unsigned char **pp) 
 {
     unsigned int high;
     unsigned int low;
@@ -119,8 +119,8 @@ read_u8(unsigned char **pp)
     x = (x << 32) | low;
     return x;
 }
-static HprofId
-read_id(unsigned char **pp)
+static HprofId 
+read_id(unsigned char **pp) 
 {
     return (HprofId)read_u4(pp);
 }
@@ -147,11 +147,11 @@ system_error(const char *system_call, int rc, int errnum)
 }
 
 /* Write to a fd */
-static void
+static void 
 system_write(int fd, void *buf, int len)
 {
     int res;
-
+   
     HPROF_ASSERT(fd>=0);
     res = md_write(fd, buf, len);
     if (res < 0 || res!=len) {
@@ -178,27 +178,27 @@ read_val(unsigned char **pp, HprofType ty)
 {
     jvalue        val;
     static jvalue empty_val;
-
+   
     val = empty_val;
     switch ( ty ) {
         case 0:
-        case HPROF_ARRAY_OBJECT:
-        case HPROF_NORMAL_OBJECT:
+        case HPROF_ARRAY_OBJECT: 
+        case HPROF_NORMAL_OBJECT: 
             val.i = read_id(pp);
             break;
-        case HPROF_BYTE:
+        case HPROF_BYTE: 
         case HPROF_BOOLEAN:
             val.b = read_u1(pp);
             break;
-        case HPROF_CHAR:
+        case HPROF_CHAR: 
         case HPROF_SHORT:
             val.s = read_u2(pp);
             break;
-        case HPROF_FLOAT:
+        case HPROF_FLOAT: 
         case HPROF_INT:
             val.i = read_u4(pp);
             break;
-        case HPROF_DOUBLE:
+        case HPROF_DOUBLE: 
         case HPROF_LONG:
             val.j = read_u8(pp);
             break;
@@ -210,7 +210,7 @@ read_val(unsigned char **pp, HprofType ty)
 }
 
 /* Move arbitrary byte stream into gdata->check_fd */
-static void
+static void 
 check_raw(void *buf, int len)
 {
     if ( gdata->check_fd < 0 ) {
@@ -233,12 +233,12 @@ check_raw(void *buf, int len)
 }
 
 /* Printf for gdata->check_fd */
-static void
+static void 
 check_printf(char *fmt, ...)
 {
     char    buf[1024];
     va_list args;
-
+   
     if ( gdata->check_fd < 0 ) {
         return;
     }
@@ -361,13 +361,13 @@ static void
 add_inst_field_to_cmap(CmapInfo *cmap, HprofId id, HprofType ty)
 {
    int i;
-
+  
    HPROF_ASSERT(cmap!=NULL);
    i = cmap->n_finfo++;
    if ( i+1 >= cmap->max_finfo ) {
        int    osize;
        Finfo *new_finfo;
-
+       
        osize            = cmap->max_finfo;
        cmap->max_finfo += 12;
        new_finfo = (Finfo*)HPROF_MALLOC(cmap->max_finfo*(int)sizeof(Finfo));
@@ -385,7 +385,7 @@ add_inst_field_to_cmap(CmapInfo *cmap, HprofId id, HprofType ty)
 }
 
 /* LookupTable callback for cmap entry cleanup */
-static void
+static void 
 cmap_cleanup(TableIndex i, void *key_ptr, int key_len, void*info, void*data)
 {
     CmapInfo *cmap = info;
@@ -476,7 +476,7 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 trace_serial_num = read_u4(&p);
                 {
                     HprofId ld, si, pr, re1, re2;
-
+                    
                     sup      = read_id(&p);
                     ld       = read_id(&p);
                     si       = read_id(&p);
@@ -503,7 +503,7 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 for(i=0; i<num_elements; i++) {
                     HprofType ty;
                     HprofId   id;
-
+                    
                     id = read_id(&p);
                     ty = read_u1(&p);
                     add_inst_field_to_cmap(&cmap, id, ty);
@@ -533,14 +533,14 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 break;
             default:
                 label = "UNKNOWN";
-                check_printf("H#%d@%d %s: ERROR!\n",
+                check_printf("H#%d@%d %s: ERROR!\n", 
                                 nrecords, npos, label);
                 HPROF_ERROR(JNI_TRUE, "unknown heap record type");
                 break;
         }
     }
     CHECK_FOR_ERROR(p==pstart+nbytes);
-
+   
     /* Scan again once we have our cmap */
     nrecords = 0;
     p        = pstart;
@@ -552,49 +552,49 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
         switch ( tag ) {
             CASE_HEAP(HPROF_GC_ROOT_UNKNOWN)
                 id = read_id(&p);
-                check_printf("H#%d@%d %s: id=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x\n", 
                         nrecords, npos, label, id);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_JNI_GLOBAL)
                 id = read_id(&p);
                 id2 = read_id(&p);
-                check_printf("H#%d@%d %s: id=0x%x, id2=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x, id2=0x%x\n", 
                         nrecords, npos, label, id, id2);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_JNI_LOCAL)
                 id = read_id(&p);
                 thread_serial_num = read_u4(&p);
                 fr = read_u4(&p);
-                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u, fr=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u, fr=0x%x\n", 
                         nrecords, npos, label, id, thread_serial_num, fr);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_JAVA_FRAME)
                 id = read_id(&p);
                 thread_serial_num = read_u4(&p);
                 fr = read_u4(&p);
-                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u, fr=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u, fr=0x%x\n", 
                         nrecords, npos, label, id, thread_serial_num, fr);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_NATIVE_STACK)
                 id = read_id(&p);
                 thread_serial_num = read_u4(&p);
-                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u\n",
+                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u\n", 
                         nrecords, npos, label, id, thread_serial_num);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_STICKY_CLASS)
                 id = read_id(&p);
-                check_printf("H#%d@%d %s: id=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x\n", 
                         nrecords, npos, label, id);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_THREAD_BLOCK)
                 id = read_id(&p);
                 thread_serial_num = read_u4(&p);
-                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u\n",
+                check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u\n", 
                         nrecords, npos, label, id, thread_serial_num);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_MONITOR_USED)
                 id = read_id(&p);
-                check_printf("H#%d@%d %s: id=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x\n", 
                         nrecords, npos, label, id);
                 break;
             CASE_HEAP(HPROF_GC_ROOT_THREAD_OBJ)
@@ -603,19 +603,19 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 trace_serial_num = read_u4(&p);
                 CHECK_TRACE_SERIAL_NO(trace_serial_num);
                 check_printf("H#%d@%d %s: id=0x%x, thread_serial_num=%u,"
-                             " trace_serial_num=%u\n",
-                        nrecords, npos, label, id, thread_serial_num,
+                             " trace_serial_num=%u\n", 
+                        nrecords, npos, label, id, thread_serial_num, 
                         trace_serial_num);
                 break;
             CASE_HEAP(HPROF_GC_CLASS_DUMP)
                 id = read_id(&p);
                 trace_serial_num = read_u4(&p);
                 CHECK_TRACE_SERIAL_NO(trace_serial_num);
-                check_printf("H#%d@%d %s: id=0x%x, trace_serial_num=%u\n",
+                check_printf("H#%d@%d %s: id=0x%x, trace_serial_num=%u\n", 
                         nrecords, npos, label, id, trace_serial_num);
                 {
                     HprofId ld, si, pr, re1, re2;
-
+                    
                     sup = read_id(&p);
                     ld  = read_id(&p);
                     si  = read_id(&p);
@@ -623,34 +623,34 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                     re1 = read_id(&p);
                     re2 = read_id(&p);
                     check_printf("  su=0x%x, ld=0x%x, si=0x%x,"
-                                 " pr=0x%x, re1=0x%x, re2=0x%x\n",
+                                 " pr=0x%x, re1=0x%x, re2=0x%x\n", 
                         sup, ld, si, pr, re1, re2);
                 }
                 inst_size = read_u4(&p);
-                check_printf("  instance_size=%d\n", inst_size);
-
+                check_printf("  instance_size=%d\n", inst_size); 
+                
                 num_elements = read_u2(&p);
                 for(i=0; i<num_elements; i++) {
                     HprofType ty;
                     unsigned  cpi;
                     jvalue    val;
-
+                    
                     cpi = read_u2(&p);
                     ty  = read_u1(&p);
                     val = read_val(&p, ty);
-                    check_printf("  constant_pool %d: cpi=%d, ty=%d, val=",
+                    check_printf("  constant_pool %d: cpi=%d, ty=%d, val=", 
                                 i, cpi, ty);
                     check_printf_val(ty, val, 1);
                     check_printf("\n");
                 }
-
+                
                 num_elements = read_u2(&p);
                 check_printf("  static_field_count=%d\n", num_elements);
                 for(i=0; i<num_elements; i++) {
                     HprofType ty;
                     HprofId   id;
                     jvalue    val;
-
+                    
                     id  = read_id(&p);
                     ty  = read_u1(&p);
                     val = read_val(&p, ty);
@@ -660,13 +660,13 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                     check_printf_val(ty, val, 1);
                     check_printf("\n");
                 }
-
+                
                 num_elements = read_u2(&p);
                 check_printf("  instance_field_count=%d\n", num_elements);
                 for(i=0; i<num_elements; i++) {
                     HprofType ty;
                     HprofId   id;
-
+                    
                     id = read_id(&p);
                     ty = read_u1(&p);
                     check_printf("  instance_field %d: ", i);
@@ -681,24 +681,24 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 id2 = read_id(&p); /* class id */
                 num_bytes = read_u4(&p);
                 check_printf("H#%d@%d %s: id=0x%x, trace_serial_num=%u,"
-                             " cid=0x%x, nbytes=%d\n",
-                            nrecords, npos, label, id, trace_serial_num,
+                             " cid=0x%x, nbytes=%d\n", 
+                            nrecords, npos, label, id, trace_serial_num, 
                             id2, num_bytes);
                 /* This is a packed set of bytes for the instance fields */
                 if ( num_bytes > 0 ) {
                     TableIndex cindex;
                     int        ifield;
                     CmapInfo  *map;
-
+        
                     cindex = table_find_entry(ctab, &id2, sizeof(id2));
                     HPROF_ASSERT(cindex!=0);
                     map = (CmapInfo*)table_get_info(ctab, cindex);
                     HPROF_ASSERT(map!=NULL);
                     HPROF_ASSERT(num_bytes==map->inst_size);
-
+                        
                     psave  = p;
                     ifield = 0;
-
+                    
                     do {
                         for(i=0;i<map->n_finfo;i++) {
                             HprofType ty;
@@ -736,11 +736,11 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 CHECK_TRACE_SERIAL_NO(trace_serial_num);
                 num_elements = read_u4(&p);
                 id2 = read_id(&p);
-                check_printf("H#%d@%d %s: id=0x%x, trace_serial_num=%u, nelems=%d, eid=0x%x\n",
+                check_printf("H#%d@%d %s: id=0x%x, trace_serial_num=%u, nelems=%d, eid=0x%x\n", 
                                 nrecords, npos, label, id, trace_serial_num, num_elements, id2);
                 for(i=0; i<num_elements; i++) {
                     HprofId id;
-
+                    
                     id = read_id(&p);
                     check_printf("  [%d]: id=0x%x\n", i, id);
                 }
@@ -753,7 +753,7 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 ty = read_u1(&p);
                 psave = p;
                 check_printf("H#%d@%d %s: id=0x%x, trace_serial_num=%u, "
-                             "nelems=%d, ty=%d\n",
+                             "nelems=%d, ty=%d\n", 
                                 nrecords, npos, label, id, trace_serial_num, num_elements, ty);
                 HPROF_ASSERT(HPROF_TYPE_IS_PRIMITIVE(ty));
                 if ( num_elements > 0 ) {
@@ -767,22 +767,22 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                     max_count = 8;
                     count     = 0;
                     switch ( ty ) {
-                        case HPROF_CHAR:
+                        case HPROF_CHAR: 
                             long_form = 0;
                             max_count = 72;
                             quote     = "\"";
                             /*FALLTHRU*/
                         case HPROF_INT:
-                        case HPROF_DOUBLE:
+                        case HPROF_DOUBLE: 
                         case HPROF_LONG:
-                        case HPROF_BYTE:
+                        case HPROF_BYTE: 
                         case HPROF_BOOLEAN:
                         case HPROF_SHORT:
-                        case HPROF_FLOAT:
+                        case HPROF_FLOAT: 
                             check_printf("  val=%s", quote);
                             for(i=0; i<num_elements; i++) {
                                 jvalue val;
-
+                                
                                 if ( i > 0 && count == 0 ) {
                                     check_printf("  %s", quote);
                                 }
@@ -804,21 +804,21 @@ check_heap_tags(struct LookupTable *utab, unsigned char *pstart, int nbytes)
                 break;
             default:
                 label = "UNKNOWN";
-                check_printf("H#%d@%d %s: ERROR!\n",
+                check_printf("H#%d@%d %s: ERROR!\n", 
                                 nrecords, npos, label);
                 HPROF_ERROR(JNI_TRUE, "unknown heap record type");
                 break;
         }
     }
     CHECK_FOR_ERROR(p==pstart+nbytes);
-
+    
     table_cleanup(ctab, &cmap_cleanup, NULL);
-
+    
     return nrecords;
 }
 
 /* LookupTable cleanup callback for utab */
-static void
+static void 
 utab_cleanup(TableIndex i, void *key_ptr, int key_len, void*info, void*data)
 {
     UmapInfo *umap = info;
@@ -833,7 +833,7 @@ utab_cleanup(TableIndex i, void *key_ptr, int key_len, void*info, void*data)
 }
 
 /* Check all the heap tags in a heap dump */
-static int
+static int 
 check_tags(unsigned char *pstart, int nbytes)
 {
     unsigned char      *p;
@@ -870,7 +870,7 @@ check_tags(unsigned char *pstart, int nbytes)
         jlong        tinsts;
         jint         total_samples;
         jint         trace_count;
-
+        
         nrecord++;
         /*LINTED*/
         npos = (int)(p - pstart);
@@ -882,7 +882,7 @@ check_tags(unsigned char *pstart, int nbytes)
             CASE_TAG(HPROF_UTF8)
                 CHECK_FOR_ERROR(size>=(int)sizeof(HprofId));
                 id = read_id(&p);
-                check_printf("#%d@%d: %s, sz=%d, name_id=0x%x, \"",
+                check_printf("#%d@%d: %s, sz=%d, name_id=0x%x, \"", 
                                 nrecord, npos, label, size, id);
                 num_elements = size-(int)sizeof(HprofId);
                 check_raw(p, num_elements);
@@ -903,15 +903,15 @@ check_tags(unsigned char *pstart, int nbytes)
                 CHECK_TRACE_SERIAL_NO(trace_serial_num);
                 nm = read_id(&p);
                 check_printf("#%d@%d: %s, sz=%d, class_serial_num=%u,"
-                             " id=0x%x, trace_serial_num=%u, name_id=0x%x\n",
-                                nrecord, npos, label, size, class_serial_num,
+                             " id=0x%x, trace_serial_num=%u, name_id=0x%x\n", 
+                                nrecord, npos, label, size, class_serial_num, 
                                 id, trace_serial_num, nm);
                 break;
             CASE_TAG(HPROF_UNLOAD_CLASS)
                 CHECK_FOR_ERROR(size==4);
                 class_serial_num = read_u4(&p);
                 CHECK_CLASS_SERIAL_NO(class_serial_num);
-                check_printf("#%d@%d: %s, sz=%d, class_serial_num=%u\n",
+                check_printf("#%d@%d: %s, sz=%d, class_serial_num=%u\n", 
                                 nrecord, npos, label, size, class_serial_num);
                 break;
             CASE_TAG(HPROF_FRAME)
@@ -926,7 +926,7 @@ check_tags(unsigned char *pstart, int nbytes)
                 check_printf("#%d@%d: %s, sz=%d, ", nrecord, npos, label, size);
                 check_print_utf8(utab, "id=", id);
                 check_printf(" name_id=0x%x, sig_id=0x%x, source_id=0x%x,"
-                             " class_serial_num=%u, lineno=%d\n",
+                             " class_serial_num=%u, lineno=%d\n", 
                                 nm, sg, so, class_serial_num, li);
                 break;
             CASE_TAG(HPROF_TRACE)
@@ -936,8 +936,8 @@ check_tags(unsigned char *pstart, int nbytes)
                 thread_serial_num = read_u4(&p); /* Can be 0 */
                 num_elements = read_u4(&p);
                 check_printf("#%d@%d: %s, sz=%d, trace_serial_num=%u,"
-                             " thread_serial_num=%u, nelems=%d [",
-                                nrecord, npos, label, size,
+                             " thread_serial_num=%u, nelems=%d [", 
+                                nrecord, npos, label, size, 
                                 trace_serial_num, thread_serial_num, num_elements);
                 for(i=0; i< num_elements; i++) {
                     check_printf("0x%x,", read_id(&p));
@@ -956,9 +956,9 @@ check_tags(unsigned char *pstart, int nbytes)
                 num_elements     = read_u4(&p);
                 check_printf("#%d@%d: %s, sz=%d, flags=0x%x, cutoff=%g,"
                              " nblive=%d, nilive=%d, tbytes=(%d,%d),"
-                             " tinsts=(%d,%d), num_elements=%d\n",
+                             " tinsts=(%d,%d), num_elements=%d\n", 
                                 nrecord, npos, label, size,
-                                flags, cutoff, nblive, nilive,
+                                flags, cutoff, nblive, nilive, 
                                 jlong_high(tbytes), jlong_low(tbytes),
                                 jlong_high(tinsts), jlong_low(tinsts),
                                 num_elements);
@@ -987,9 +987,9 @@ check_tags(unsigned char *pstart, int nbytes)
                 tinsts = read_u8(&p);
                 check_printf("#%d@%d: %s, sz=%d,"
                              " nblive=%d, nilive=%d, tbytes=(%d,%d),"
-                             " tinsts=(%d,%d)\n",
+                             " tinsts=(%d,%d)\n", 
                                 nrecord, npos, label, size,
-                                nblive, nilive,
+                                nblive, nilive, 
                                 jlong_high(tbytes), jlong_low(tbytes),
                                 jlong_high(tinsts), jlong_low(tinsts));
                 break;
@@ -1005,38 +1005,38 @@ check_tags(unsigned char *pstart, int nbytes)
                 gn = read_id(&p);
                 check_printf("#%d@%d: %s, sz=%d, thread_serial_num=%u,"
                              " id=0x%x, trace_serial_num=%u, ",
-                                nrecord, npos, label, size,
+                                nrecord, npos, label, size, 
                                 thread_serial_num, id, trace_serial_num);
                 check_print_utf8(utab, "nm=", id);
                 check_printf(" trace_serial_num=%u, nm=0x%x,"
-                             " gr=0x%x, gn=0x%x\n",
+                             " gr=0x%x, gn=0x%x\n", 
                                 trace_serial_num, nm, gr, gn);
                 break;
             CASE_TAG(HPROF_END_THREAD)
                 CHECK_FOR_ERROR(size==4);
                 thread_serial_num = read_u4(&p);
                 CHECK_THREAD_SERIAL_NO(thread_serial_num);
-                check_printf("#%d@%d: %s, sz=%d, thread_serial_num=%u\n",
+                check_printf("#%d@%d: %s, sz=%d, thread_serial_num=%u\n", 
                                 nrecord, npos, label, size, thread_serial_num);
                 break;
             CASE_TAG(HPROF_HEAP_DUMP)
-                check_printf("#%d@%d: BEGIN: %s, sz=%d\n",
+                check_printf("#%d@%d: BEGIN: %s, sz=%d\n", 
                                 nrecord, npos, label, size);
                 nheap_records = check_heap_tags(utab, p, size);
-                check_printf("#%d@%d: END: %s, sz=%d, nheap_recs=%d\n",
+                check_printf("#%d@%d: END: %s, sz=%d, nheap_recs=%d\n", 
                                 nrecord, npos, label, size, nheap_records);
                 p += size;
                 break;
             CASE_TAG(HPROF_HEAP_DUMP_SEGMENT) /* 1.0.2 */
-                check_printf("#%d@%d: BEGIN SEGMENT: %s, sz=%d\n",
+                check_printf("#%d@%d: BEGIN SEGMENT: %s, sz=%d\n", 
                                 nrecord, npos, label, size);
                 nheap_records = check_heap_tags(utab, p, size);
-                check_printf("#%d@%d: END SEGMENT: %s, sz=%d, nheap_recs=%d\n",
+                check_printf("#%d@%d: END SEGMENT: %s, sz=%d, nheap_recs=%d\n", 
                                 nrecord, npos, label, size, nheap_records);
                 p += size;
                 break;
             CASE_TAG(HPROF_HEAP_DUMP_END) /* 1.0.2 */
-                check_printf("#%d@%d: SEGMENT END: %s, sz=%d\n",
+                check_printf("#%d@%d: SEGMENT END: %s, sz=%d\n", 
                                 nrecord, npos, label, size);
                 break;
             CASE_TAG(HPROF_CPU_SAMPLES)
@@ -1044,7 +1044,7 @@ check_tags(unsigned char *pstart, int nbytes)
                 total_samples = read_u4(&p);
                 trace_count = read_u4(&p);
                 check_printf("#%d@%d: %s, sz=%d, total_samples=%d,"
-                             " trace_count=%d\n",
+                             " trace_count=%d\n", 
                                 nrecord, npos, label, size,
                                 total_samples, trace_count);
                 for(i=0; i< trace_count; i++) {
@@ -1059,12 +1059,12 @@ check_tags(unsigned char *pstart, int nbytes)
                 CHECK_FOR_ERROR(size==4+2);
                 flags = read_u4(&p);
                 depth = read_u2(&p);
-                check_printf("#%d@%d: %s, sz=%d, flags=0x%x, depth=%d\n",
+                check_printf("#%d@%d: %s, sz=%d, flags=0x%x, depth=%d\n", 
                                 nrecord, npos, label, size, flags, depth);
                 break;
             default:
                 label = "UNKNOWN";
-                check_printf("#%d@%d: %s, sz=%d\n",
+                check_printf("#%d@%d: %s, sz=%d\n", 
                                 nrecord, npos, label, size);
                 HPROF_ERROR(JNI_TRUE, "unknown record type");
                 p += size;
@@ -1113,7 +1113,7 @@ get_binary_file_image(char *filename, int *pnbytes)
 
 /* ------------------------------------------------------------------ */
 
-void
+void 
 check_binary_file(char *filename)
 {
     unsigned char *image;
@@ -1129,7 +1129,7 @@ check_binary_file(char *filename)
     }
     p = image;
     CHECK_FOR_ERROR(strcmp((char*)p, gdata->header)==0);
-    check_printf("Filename=%s, nbytes=%d, header=\"%s\"\n",
+    check_printf("Filename=%s, nbytes=%d, header=\"%s\"\n", 
                         filename, nbytes, p);
     p+=((int)strlen((char*)p)+1);
     idsize = read_u4(&p);
@@ -1141,3 +1141,4 @@ check_binary_file(char *filename)
     check_printf("#%d total records found in %d bytes\n", nrecords, nbytes);
     HPROF_FREE(image);
 }
+

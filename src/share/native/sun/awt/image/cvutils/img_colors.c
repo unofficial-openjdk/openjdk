@@ -96,24 +96,24 @@ init_matrices()
     int i;
 
     if (done) {
-        return;
+	return;
     }
     for (i = 0; i < 256; ++i)
     {
-        float iG = (float) pow(i/255.0, monitor_gamma[0]);
-        Rmat[0][i] = mat[0][0] * iG;
-        Rmat[1][i] = mat[0][1] * iG;
-        Rmat[2][i] = mat[0][2] * iG;
+	float iG = (float) pow(i/255.0, monitor_gamma[0]);
+	Rmat[0][i] = mat[0][0] * iG;
+	Rmat[1][i] = mat[0][1] * iG;
+	Rmat[2][i] = mat[0][2] * iG;
 
-        iG = (float) pow(i/255.0, monitor_gamma[1]);
-        Gmat[0][i] = mat[1][0] * iG;
-        Gmat[1][i] = mat[1][1] * iG;
-        Gmat[2][i] = mat[1][2] * iG;
+	iG = (float) pow(i/255.0, monitor_gamma[1]);
+	Gmat[0][i] = mat[1][0] * iG;
+	Gmat[1][i] = mat[1][1] * iG;
+	Gmat[2][i] = mat[1][2] * iG;
 
-        iG = (float) pow(i/255.0, monitor_gamma[2]);
-        Bmat[0][i] = mat[2][0] * iG;
-        Bmat[1][i] = mat[2][1] * iG;
-        Bmat[2][i] = mat[2][2] * iG;
+	iG = (float) pow(i/255.0, monitor_gamma[2]);
+	Bmat[0][i] = mat[2][0] * iG;
+	Bmat[1][i] = mat[2][1] * iG;
+	Bmat[2][i] = mat[2][2] * iG;
     }
     done = 1;
 }
@@ -127,30 +127,30 @@ LUV_convert(int red, int grn, int blu, float *L, float *u, float *v)
     float sum = X+Y+Z;
 
     if (sum != 0.0f) {
-        float x    = X/sum;
-        float y    = Y/sum;
-        float dnm  = -2*x + 12*y + 3;
-        float ytmp = (float) pow(Y/whiteXYZ[1], 1.0/3.0);
+	float x    = X/sum;
+	float y    = Y/sum;
+	float dnm  = -2*x + 12*y + 3;
+	float ytmp = (float) pow(Y/whiteXYZ[1], 1.0/3.0);
 
-        if (ytmp < .206893f) {
-            *L = 903.3f*Y/whiteXYZ[1];
-        } else {
-            *L = 116*(ytmp) - 16;
-        }
-        if (dnm != 0.0f) {
-            float uprm = 4*x/dnm;
-            float vprm = 9*y/dnm;
+	if (ytmp < .206893f) {
+	    *L = 903.3f*Y/whiteXYZ[1];
+	} else {
+	    *L = 116*(ytmp) - 16;
+	}
+	if (dnm != 0.0f) {
+	    float uprm = 4*x/dnm;
+	    float vprm = 9*y/dnm;
 
-            *u = 13*(*L)*(uprm-uwht);
-            *v = 13*(*L)*(vprm-vwht);
-        } else {
-            *u = 0.0f;
-            *v = 0.0f;
-        }
+	    *u = 13*(*L)*(uprm-uwht);
+	    *v = 13*(*L)*(vprm-vwht);
+	} else {
+	    *u = 0.0f;
+	    *v = 0.0f;
+	}
     } else {
-        *L = 0.0f;
-        *u = 0.0f;
-        *v = 0.0f;
+	*L = 0.0f;
+	*u = 0.0f;
+	*v = 0.0f;
     }
 }
 
@@ -163,13 +163,13 @@ static int
 no_close_color(float l, float u, float v, int c_tot, int exact) {
     int i;
     for (i = 0; i < c_tot; ++i) {
-        float t, dist = 0.0f;
-        t = Ltab[i] - l; dist += t*t*Lscale;
-        t = Utab[i] - u; dist += t*t;
-        t = Vtab[i] - v; dist += t*t;
+	float t, dist = 0.0f;
+	t = Ltab[i] - l; dist += t*t*Lscale;
+	t = Utab[i] - u; dist += t*t;
+	t = Vtab[i] - v; dist += t*t;
 
-        if (dist < (exact ? 0.1 : DIST_THRESHOLD))
-            return 0;
+	if (dist < (exact ? 0.1 : DIST_THRESHOLD))
+	    return 0;
     }
 
     return 1;
@@ -178,17 +178,17 @@ no_close_color(float l, float u, float v, int c_tot, int exact) {
 static int
 add_color(int r, int g, int b, int f) {
     if (total >= cmapmax)
-        return 0;
+	return 0;
     cmap_r[total] = r;
     cmap_g[total] = g;
     cmap_b[total] = b;
     LUV_convert(cmap_r[total],cmap_g[total],cmap_b[total],
-                Ltab + total, Utab + total, Vtab + total);
+		Ltab + total, Utab + total, Vtab + total);
     if (no_close_color(Ltab[total], Utab[total], Vtab[total], total-1, f)) {
-        ++total;
-        return 1;
+	++total;
+	return 1;
     } else {
-        return 0;
+	return 0;
     }
 }
 
@@ -197,12 +197,12 @@ init_primaries() {
     int r, g, b;
 
     for (r = 0; r < 256; r += (r?128:127)) {
-        for (g = 0; g < 256; g += (g?128:127)) {
-            for (b = 0; b < 256; b += (b?128:127)) {
-                if ((r == g) && (g == b)) continue; /* black or white */
-                add_color(r, g, b, TRUE);
-            }
-        }
+	for (g = 0; g < 256; g += (g?128:127)) {
+	    for (b = 0; b < 256; b += (b?128:127)) {
+		if ((r == g) && (g == b)) continue; /* black or white */
+		add_color(r, g, b, TRUE);
+	    }
+	}
     }
 }
 
@@ -211,16 +211,16 @@ init_pastels() {
     int i;
     /* very light colors */
     for (i = 6; i >= 0; --i)
-        add_color((i&4) ? 0xff : 0xf0,
-                  (i&2) ? 0xff : 0xf0,
-                  (i&1) ? 0xff : 0xf0, TRUE);
+	add_color((i&4) ? 0xff : 0xf0,
+		  (i&2) ? 0xff : 0xf0,
+		  (i&1) ? 0xff : 0xf0, TRUE);
 }
 
 static void
 init_grays() {
     int i;
     for (i = 15; i < 255; i += 16)
-        add_color(i, i, i, TRUE);
+	add_color(i, i, i, TRUE);
 }
 
 static void
@@ -257,8 +257,8 @@ init_virt_cmap(int tablesize, int testsize)
     unsigned int dotest[256];
 
     if (virt_cmap) {
-        free(virt_cmap);
-        virt_cmap = 0;
+	free(virt_cmap);
+	virt_cmap = 0;
     }
 
     num_virt_cmap_entries = tablesize * tablesize * tablesize;
@@ -282,99 +282,99 @@ init_virt_cmap(int tablesize, int testsize)
     }
     pCmap = virt_cmap;
     for (r = 0; r < total; r++) {
-        if (cmap_r[r] == cmap_g[r] && cmap_g[r] == cmap_b[r]) {
-            if (gray < 0 || cmap_r[gray] < cmap_r[r]) {
-                gray = r;
-            }
-        }
+	if (cmap_r[r] == cmap_g[r] && cmap_g[r] == cmap_b[r]) {
+	    if (gray < 0 || cmap_r[gray] < cmap_r[r]) {
+		gray = r;
+	    }
+	}
     }
     if (gray < 0) {
 #ifdef DEBUG
-        jio_fprintf(stderr, "Didn't find any grays in color table!\n");
+	jio_fprintf(stderr, "Didn't find any grays in color table!\n");
 #endif /* DEBUG */
-        gray = 0;
+	gray = 0;
     }
     g = 0;
     b = 0;
     for (r = 0; r < tablesize - 1; ++r) {
-        if (g >= 0) {
-            b = r;
-            dotest[r] = 1;
-            g -= tablesize;
-        } else {
-            dotest[r] = 0;
-        }
-        prevtest[r] = b;
-        g += testsize;
+	if (g >= 0) {
+	    b = r;
+	    dotest[r] = 1;
+	    g -= tablesize;
+	} else {
+	    dotest[r] = 0;
+	}
+	prevtest[r] = b;
+	g += testsize;
     }
     b = r;
     prevtest[r] = b;
     dotest[r] = 1;
     for (r = tablesize - 1; r >= 0; --r) {
-        if (prevtest[r] == r) {
-            b = r;
-        }
-        nexttest[r] = b;
+	if (prevtest[r] == r) {
+	    b = r;
+	}
+	nexttest[r] = b;
     }
 #ifdef DEBUG
     for (r = 0; r < tablesize; ++r) {
-        if (dotest[r]) {
-            if (prevtest[r] != r || nexttest[r] != r) {
-                jio_fprintf(stderr, "prev/next != r!\n");
-            }
-        }
+	if (dotest[r]) {
+	    if (prevtest[r] != r || nexttest[r] != r) {
+		jio_fprintf(stderr, "prev/next != r!\n");
+	    }
+	}
     }
 #endif /* DEBUG */
     for (r = 0; r < tablesize; ++r)
     {
-        int red = (int)(floor(r*255.0/(tablesize - 1)));
-        for (g = 0; g < tablesize; ++g)
-        {
-            int green = (int)(floor(g*255.0/(tablesize - 1)));
-            for (b = 0; b < tablesize; ++b)
-            {
-                int blue = (int)(floor(b*255.0/(tablesize - 1)));
-                float t, d;
-                if (pCmap >= virt_cmap + num_virt_cmap_entries) {
+	int red = (int)(floor(r*255.0/(tablesize - 1)));
+	for (g = 0; g < tablesize; ++g)
+	{
+	    int green = (int)(floor(g*255.0/(tablesize - 1)));
+	    for (b = 0; b < tablesize; ++b)
+	    {
+		int blue = (int)(floor(b*255.0/(tablesize - 1)));
+		float t, d;
+		if (pCmap >= virt_cmap + num_virt_cmap_entries) {
 #ifdef DEBUG
-                    jio_fprintf(stderr, "OUT OF pCmap CONVERSION SPACE!\n");
+		    jio_fprintf(stderr, "OUT OF pCmap CONVERSION SPACE!\n");
 #endif /* DEBUG */
-                    continue;           /* Shouldn't happen */
-                }
-                pCmap->red = red;
-                pCmap->green = green;
-                pCmap->blue = blue;
-                LUV_convert(red, green, blue, &pCmap->L, &pCmap->U, &pCmap->V);
-                if ((red != green || green != blue) &&
-                    (!dotest[r] || !dotest[g] || !dotest[b]))
-                {
-                    pCmap->nextidx = -1;
-                    pCmap++;
-                    continue;
-                }
-                pCmap->bestidx = gray;
-                pCmap->nextidx = 0;
-                t = Ltab[gray] - pCmap->L;
-                d = t * t;
-                if (red == green && green == blue) {
-                    pCmap->dist = d;
-                    d *= Lscale;
-                } else {
-                    d *= Lscale;
-                    t = Utab[gray] - pCmap->U;
-                    d += t * t;
-                    t = Vtab[gray] - pCmap->V;
-                    d += t * t;
-                    pCmap->dist = d;
-                }
-                pCmap->dE = WEIGHT_DIST(d, pCmap->L);
-                pCmap++;
-            }
-        }
+		    continue;		/* Shouldn't happen */
+		}
+		pCmap->red = red;
+		pCmap->green = green;
+		pCmap->blue = blue;
+		LUV_convert(red, green, blue, &pCmap->L, &pCmap->U, &pCmap->V);
+		if ((red != green || green != blue) &&
+		    (!dotest[r] || !dotest[g] || !dotest[b]))
+		{
+		    pCmap->nextidx = -1;
+		    pCmap++;
+		    continue;
+		}
+		pCmap->bestidx = gray;
+		pCmap->nextidx = 0;
+		t = Ltab[gray] - pCmap->L;
+		d = t * t;
+		if (red == green && green == blue) {
+		    pCmap->dist = d;
+		    d *= Lscale;
+		} else {
+		    d *= Lscale;
+		    t = Utab[gray] - pCmap->U;
+		    d += t * t;
+		    t = Vtab[gray] - pCmap->V;
+		    d += t * t;
+		    pCmap->dist = d;
+		}
+		pCmap->dE = WEIGHT_DIST(d, pCmap->L);
+		pCmap++;
+	    }
+	}
     }
 #ifdef DEBUG
     if (pCmap < virt_cmap + num_virt_cmap_entries) {
-        jio_fprintf(stderr, "Didn't fill pCmap conversion table!\n");
+	jio_fprintf(stderr, "Didn't fill pCmap conversion table!\n");
     }
 #endif /* DEBUG */
 }
@@ -389,51 +389,51 @@ find_nearest(CmapEntry *pCmap) {
     int i;
 
     if ((red == grn) && (grn == blu)) {
-        dist = pCmap->dist;
+	dist = pCmap->dist;
 
-        for (i = pCmap->nextidx; i < total; ++i) {
-            float dL;
+	for (i = pCmap->nextidx; i < total; ++i) {
+	    float dL;
 
-            if (cmap_r[i] != cmap_g[i] || cmap_g[i] != cmap_b[i]) {
-                continue;
-            }
+	    if (cmap_r[i] != cmap_g[i] || cmap_g[i] != cmap_b[i]) {
+		continue;
+	    }
 
-            dL = Ltab[i] - L; dL *= dL;
+	    dL = Ltab[i] - L; dL *= dL;
 
-            if (dL < dist) {
-                dist = dL;
-                pCmap->dist = dist;
-                pCmap->dL = dist;
-                pCmap->dE = WEIGHT_DIST(dist*Lscale,L);
-                pCmap->bestidx = i;
-            }
-        }
-        pCmap->nextidx = total;
+	    if (dL < dist) {
+		dist = dL;
+		pCmap->dist = dist;
+		pCmap->dL = dist;
+		pCmap->dE = WEIGHT_DIST(dist*Lscale,L);
+		pCmap->bestidx = i;
+	    }
+	}
+	pCmap->nextidx = total;
     } else {
-        float U = pCmap->U;
-        float V = pCmap->V;
-        dist = pCmap->dist;
+	float U = pCmap->U;
+	float V = pCmap->V;
+	dist = pCmap->dist;
 
-        for (i = pCmap->nextidx; i < total; ++i) {
-            float dL, dU, dV, dE;
-            dL = Ltab[i] - L; dL *= (dL*Lscale);
-            dU = Utab[i] - U; dU *= dU;
-            dV = Vtab[i] - V; dV *= dV;
+	for (i = pCmap->nextidx; i < total; ++i) {
+	    float dL, dU, dV, dE;
+	    dL = Ltab[i] - L; dL *= (dL*Lscale);
+	    dU = Utab[i] - U; dU *= dU;
+	    dV = Vtab[i] - V; dV *= dV;
 
-            dE = dL + dU + dV;
-            if (dE < dist)
-            {
-                dist = dE;
-                /* *delta = (dL/4) + dU + dV; */
-                /* *delta = dist */
-                /* *delta = dL + 100*(dU+dV)/(100+L); */
-                pCmap->dist = dist;
-                pCmap->dE = WEIGHT_DIST(dE, L);
-                pCmap->dL = dL/Lscale;
-                pCmap->bestidx = i;
-            }
-        }
-        pCmap->nextidx = total;
+	    dE = dL + dU + dV;
+	    if (dE < dist)
+	    {
+		dist = dE;
+		/* *delta = (dL/4) + dU + dV; */
+		/* *delta = dist */
+		/* *delta = dL + 100*(dU+dV)/(100+L); */
+		pCmap->dist = dist;
+		pCmap->dE = WEIGHT_DIST(dE, L);
+		pCmap->dL = dL/Lscale;
+		pCmap->bestidx = i;
+	    }
+	}
+	pCmap->nextidx = total;
     }
 
     return pCmap->bestidx;
@@ -450,8 +450,8 @@ insert_in_list(CmapEntry *pCmap)
     float dE = pCmap->dE;
 
     for (i = num_offenders; i > 0; --i) {
-        if (dE < offenders[i-1]->dE) break;
-        offenders[i] = offenders[i-1];
+	if (dE < offenders[i-1]->dE) break;
+	offenders[i] = offenders[i-1];
     }
 
     offenders[i] = pCmap;
@@ -467,62 +467,62 @@ handle_biggest_offenders(int testtblsize, int maxcolors) {
     num_offenders = 0;
 
     for (pCmap = virt_cmap, i = 0; i < num_virt_cmap_entries; i++, pCmap++) {
-        if (pCmap->nextidx < 0) {
-            continue;
-        }
-        if (num_offenders == MAX_OFFENDERS
-            && pCmap->dE < offenders[MAX_OFFENDERS-1]->dE)
-        {
-            continue;
-        }
-        find_nearest(pCmap);
-        insert_in_list(pCmap);
+	if (pCmap->nextidx < 0) {
+	    continue;
+	}
+	if (num_offenders == MAX_OFFENDERS
+	    && pCmap->dE < offenders[MAX_OFFENDERS-1]->dE)
+	{
+	    continue;
+	}
+	find_nearest(pCmap);
+	insert_in_list(pCmap);
     }
 
     if (num_offenders > 0) {
-        dEthresh = offenders[num_offenders-1]->dE;
+	dEthresh = offenders[num_offenders-1]->dE;
     }
 
     for (i = 0; (total < maxcolors) && (i < num_offenders); ++i) {
-        pCmap = offenders[i];
+	pCmap = offenders[i];
 
-        if (!pCmap) continue;
+	if (!pCmap) continue;
 
-        j = add_color(pCmap->red, pCmap->green, pCmap->blue, FALSE);
+	j = add_color(pCmap->red, pCmap->green, pCmap->blue, FALSE);
 
-        if (j) {
-            for (j = i+1; j < num_offenders; ++j) {
-                float dE;
+	if (j) {
+	    for (j = i+1; j < num_offenders; ++j) {
+		float dE;
 
-                pCmap = offenders[j];
-                if (!pCmap) {
-                    continue;
-                }
+		pCmap = offenders[j];
+		if (!pCmap) {
+		    continue;
+		}
 
-                find_nearest(pCmap);
+		find_nearest(pCmap);
 
-                dE = pCmap->dE;
-                if (dE < dEthresh) {
-                    offenders[j] = 0;
-                } else {
-                    if (offenders[i+1] == 0 || dE > offenders[i+1]->dE) {
-                        offenders[j] = offenders[i+1];
-                        offenders[i+1] = pCmap;
-                    }
-                }
-            }
-        }
+		dE = pCmap->dE;
+		if (dE < dEthresh) {
+		    offenders[j] = 0;
+		} else {
+		    if (offenders[i+1] == 0 || dE > offenders[i+1]->dE) {
+			offenders[j] = offenders[i+1];
+			offenders[i+1] = pCmap;
+		    }
+		}
+	    }
+	}
     }
 }
 
 void
 img_makePalette(int cmapsize, int tablesize, int lookupsize,
-                float lscale, float weight,
-                int prevclrs, int doMac,
-                unsigned char *reds,
-                unsigned char *greens,
-                unsigned char *blues,
-                unsigned char *lookup)
+		float lscale, float weight,
+		int prevclrs, int doMac,
+		unsigned char *reds,
+		unsigned char *greens,
+		unsigned char *blues,
+		unsigned char *lookup)
 {
     CmapEntry *pCmap;
     int i, ix;
@@ -543,7 +543,7 @@ img_makePalette(int cmapsize, int tablesize, int lookupsize,
     cmapmax = cmapsize;
     total = 0;
     for (i = 0; i < prevclrs; i++) {
-        add_color(reds[i], greens[i], blues[i], TRUE);
+	add_color(reds[i], greens[i], blues[i], TRUE);
     }
 
     add_color(0, 0, 0, TRUE);
@@ -552,7 +552,7 @@ img_makePalette(int cmapsize, int tablesize, int lookupsize,
     /* do grays next; otherwise find_nearest may break! */
     init_grays();
     if (doMac) {
-        init_mac_palette();
+	init_mac_palette();
     }
     init_pastels();
 
@@ -566,7 +566,7 @@ img_makePalette(int cmapsize, int tablesize, int lookupsize,
     init_virt_cmap(lookupsize, tablesize);
 
     while (total < cmapsize) {
-        handle_biggest_offenders(tablesize, cmapsize);
+	handle_biggest_offenders(tablesize, cmapsize);
     }
 
     memcpy(reds, cmap_r, cmapsize);
@@ -579,12 +579,12 @@ img_makePalette(int cmapsize, int tablesize, int lookupsize,
 
     pCmap = virt_cmap;
     for (i = 0; i < num_virt_cmap_entries; i++, pCmap++) {
-        if (pCmap->nextidx < 0) {
-            continue;
-        }
-        if (pCmap->nextidx < total) {
-            ix = find_nearest(pCmap);
-        }
+	if (pCmap->nextidx < 0) {
+	    continue;
+	}
+	if (pCmap->nextidx < total) {
+	    ix = find_nearest(pCmap);
+	}
     }
 
 #ifdef TIMES
@@ -593,59 +593,59 @@ img_makePalette(int cmapsize, int tablesize, int lookupsize,
 
     pCmap = virt_cmap;
     if (tablesize != lookupsize) {
-        int r, g, b;
-        for (r = 0; r < lookupsize; ++r)
-        {
-            for (g = 0; g < lookupsize; ++g)
-            {
-                for (b = 0; b < lookupsize; ++b, pCmap++)
-                {
-                    float L, U, V;
-                    float bestd = 0;
-                    CmapEntry *pTest;
+	int r, g, b;
+	for (r = 0; r < lookupsize; ++r)
+	{
+	    for (g = 0; g < lookupsize; ++g)
+	    {
+		for (b = 0; b < lookupsize; ++b, pCmap++)
+		{
+		    float L, U, V;
+		    float bestd = 0;
+		    CmapEntry *pTest;
 
-                    if (pCmap->nextidx >= 0) {
-                        continue;
-                    }
+		    if (pCmap->nextidx >= 0) {
+			continue;
+		    }
 #ifdef DEBUG
-                    if (r == g && g == b) {
-                        jio_fprintf(stderr, "GRAY VALUE!?\n");
-                    }
+		    if (r == g && g == b) {
+			jio_fprintf(stderr, "GRAY VALUE!?\n");
+		    }
 #endif /* DEBUG */
-                    L = pCmap->L;
-                    U = pCmap->U;
-                    V = pCmap->V;
-                    for (i = 0; i < 8; i++) {
-                        int ri, gi, bi;
-                        float d, t;
-                        ri = (i & 1) ? prevtest[r] : nexttest[r];
-                        gi = (i & 2) ? prevtest[g] : nexttest[g];
-                        bi = (i & 4) ? prevtest[b] : nexttest[b];
-                        pTest = &virt_cmap[((ri * lookupsize)
-                                            + gi) * lookupsize
-                                           + bi];
+		    L = pCmap->L;
+		    U = pCmap->U;
+		    V = pCmap->V;
+		    for (i = 0; i < 8; i++) {
+			int ri, gi, bi;
+			float d, t;
+			ri = (i & 1) ? prevtest[r] : nexttest[r];
+			gi = (i & 2) ? prevtest[g] : nexttest[g];
+			bi = (i & 4) ? prevtest[b] : nexttest[b];
+			pTest = &virt_cmap[((ri * lookupsize)
+					    + gi) * lookupsize
+					   + bi];
 #ifdef DEBUG
-                        if (pTest->nextidx < 0) {
-                            jio_fprintf(stderr, "OOPS!\n");
-                        }
+			if (pTest->nextidx < 0) {
+			    jio_fprintf(stderr, "OOPS!\n");
+			}
 #endif /* DEBUG */
-                        ix = pTest->bestidx;
-                        t = Ltab[ix] - L; d  = t * t * Lscale;
-                        if (i != 0 && d > bestd) continue;
-                        t = Utab[ix] - U; d += t * t;
-                        if (i != 0 && d > bestd) continue;
-                        t = Vtab[ix] - V; d += t * t;
-                        if (i != 0 && d > bestd) continue;
-                        bestd = d;
-                        pCmap->bestidx = ix;
-                    }
-                }
-            }
-        }
+			ix = pTest->bestidx;
+			t = Ltab[ix] - L; d  = t * t * Lscale;
+			if (i != 0 && d > bestd) continue;
+			t = Utab[ix] - U; d += t * t;
+			if (i != 0 && d > bestd) continue;
+			t = Vtab[ix] - V; d += t * t;
+			if (i != 0 && d > bestd) continue;
+			bestd = d;
+			pCmap->bestidx = ix;
+		    }
+		}
+	    }
+	}
     }
     pCmap = virt_cmap;
     for (i = 0; i < num_virt_cmap_entries; i++) {
-        *lookup++ = (pCmap++)->bestidx;
+	*lookup++ = (pCmap++)->bestidx;
     }
 
 #ifdef TIMES
@@ -660,45 +660,45 @@ img_makePalette(int cmapsize, int tablesize, int lookupsize,
 
     pCmap = virt_cmap;
     for (i = 0; i < num_virt_cmap_entries; i++, pCmap++) {
-        double t, dL, dU, dV, dE;
-        if (pCmap->nextidx < 0) {
-            int ix = pCmap->bestidx;
-            dL = pCmap->L - Ltab[ix]; dL *= dL;
-            dU = pCmap->U - Utab[ix]; dU *= dU;
-            dV = pCmap->V - Vtab[ix]; dV *= dV;
-            dE = dL * Lscale + dU + dV;
-            dE = WEIGHT_DIST(dE, pCmap->L);
-        } else {
-            dL = pCmap->dL;
-            dE = pCmap->dE;
-        }
+	double t, dL, dU, dV, dE;
+	if (pCmap->nextidx < 0) {
+	    int ix = pCmap->bestidx;
+	    dL = pCmap->L - Ltab[ix]; dL *= dL;
+	    dU = pCmap->U - Utab[ix]; dU *= dU;
+	    dV = pCmap->V - Vtab[ix]; dV *= dV;
+	    dE = dL * Lscale + dU + dV;
+	    dE = WEIGHT_DIST(dE, pCmap->L);
+	} else {
+	    dL = pCmap->dL;
+	    dE = pCmap->dE;
+	}
 
-        if (dL > max_dL) max_dL = dL;
-        t = UNWEIGHT_DIST(dE,dL) - dL*(Lscale-1);
-        if (t > max_dE) max_dE = t;
+	if (dL > max_dL) max_dL = dL;
+	t = UNWEIGHT_DIST(dE,dL) - dL*(Lscale-1);
+	if (t > max_dE) max_dE = t;
 
-        ave_dL += (dL > 0) ? sqrt(dL) : 0.0;
-        ave_dE += (t > 0) ? sqrt(t) : 0.0;
+	ave_dL += (dL > 0) ? sqrt(dL) : 0.0;
+	ave_dE += (t > 0) ? sqrt(t) : 0.0;
     }
 
     jio_fprintf(stderr, "colors=%d, tablesize=%d, cubesize=%d, ",
-            cmapsize, tablesize, lookupsize);
+	    cmapsize, tablesize, lookupsize);
     jio_fprintf(stderr, "Lscale=%5.3f, Weight=%5.3f mac=%s\n",
-            (double)lscale, (double)weight, doMac ? "true" : "false");
-    jio_fprintf(stderr, "Worst case error dL = %5.3f, dE = %5.3f\n",
-            sqrt(max_dL), sqrt(max_dE));
-    jio_fprintf(stderr, "Average error dL = %5.3f, dE = %5.3f\n",
-            ave_dL / num_virt_cmap_entries,  ave_dE / num_virt_cmap_entries);
+	    (double)lscale, (double)weight, doMac ? "true" : "false");
+    jio_fprintf(stderr, "Worst case error dL = %5.3f, dE = %5.3f\n", 
+	    sqrt(max_dL), sqrt(max_dE));
+    jio_fprintf(stderr, "Average error dL = %5.3f, dE = %5.3f\n", 
+	    ave_dL / num_virt_cmap_entries,  ave_dE / num_virt_cmap_entries);
 #endif /* STATS */
 #ifdef TIMES
     jio_fprintf(stderr, "%f seconds to find colors\n",
-            (double)(mid - start) / CLOCKS_PER_SEC);
+	    (double)(mid - start) / CLOCKS_PER_SEC);
     jio_fprintf(stderr, "%f seconds to finish nearest colors\n",
-            (double)(tbl - mid) / CLOCKS_PER_SEC);
+	    (double)(tbl - mid) / CLOCKS_PER_SEC);
     jio_fprintf(stderr, "%f seconds to make lookup table\n",
-            (double)(end - tbl) / CLOCKS_PER_SEC);
+	    (double)(end - tbl) / CLOCKS_PER_SEC);
     jio_fprintf(stderr, "%f seconds total\n",
-            (double)(end - start) / CLOCKS_PER_SEC);
+	    (double)(end - start) / CLOCKS_PER_SEC);
 #endif /* TIMES */
 
     free(virt_cmap);

@@ -108,3 +108,4 @@ LRESULT ComCtl32Util::SharedWindowProc(HWND hwnd, UINT msg,
 
     CATCH_BAD_ALLOC_RET(0);
 }
+

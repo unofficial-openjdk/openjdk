@@ -45,6 +45,7 @@ import java.awt.Point;
  * bands.  This type of Raster can be used with a
  * ComponentColorModel. This class requires a BandedSampleModel.
  *
+ * @version 10 Feb 1997
  */
 public class ShortBandedRaster extends SunWritableRaster {
 
@@ -73,13 +74,13 @@ public class ShortBandedRaster extends SunWritableRaster {
      * @param origin          The Point that specified the origin.
      */
     public ShortBandedRaster(SampleModel sampleModel,
-                                Point origin) {
+				Point origin) {
         this(sampleModel,
              sampleModel.createDataBuffer(),
              new Rectangle(origin.x,
-                           origin.y,
-                           sampleModel.getWidth(),
-                           sampleModel.getHeight()),
+			   origin.y,
+			   sampleModel.getWidth(),
+			   sampleModel.getHeight()),
              origin,
              null);
     }
@@ -95,13 +96,13 @@ public class ShortBandedRaster extends SunWritableRaster {
      * @param origin          The Point that specifies the origin.
      */
     public ShortBandedRaster(SampleModel sampleModel,
-                                DataBuffer dataBuffer,
-                                Point origin) {
+				DataBuffer dataBuffer,
+				Point origin) {
         this(sampleModel, dataBuffer,
-             new Rectangle(origin.x, origin.y,
-                           sampleModel.getWidth(),
-                           sampleModel.getHeight()),
-             origin, null);
+	     new Rectangle(origin.x, origin.y,
+			   sampleModel.getWidth(),
+			   sampleModel.getHeight()),
+	     origin, null);
     }
 
     /**
@@ -123,10 +124,10 @@ public class ShortBandedRaster extends SunWritableRaster {
      * @param parent          The parent (if any) of this raster.
      */
     public ShortBandedRaster(SampleModel sampleModel,
-                                DataBuffer dataBuffer,
-                                Rectangle aRegion,
-                                Point origin,
-                                ShortBandedRaster parent) {
+				DataBuffer dataBuffer,
+				Rectangle aRegion,
+				Point origin,
+				ShortBandedRaster parent) {
 
         super(sampleModel, dataBuffer, aRegion, origin, parent);
         this.maxX = minX + width;
@@ -211,7 +212,7 @@ public class ShortBandedRaster extends SunWritableRaster {
 
     /**
      * Returns the data elements for all bands at the specified
-     * location.
+     * location.  
      * An ArrayIndexOutOfBounds exception will be thrown at runtime
      * if the pixel coordinate is out of bounds.
      * A ClassCastException will be thrown if the input object is non null
@@ -323,7 +324,7 @@ public class ShortBandedRaster extends SunWritableRaster {
      * @return         Data array with data elements for all bands.
      */
     public short[] getShortData(int x, int y, int w, int h,
-                                      int band, short[] outData) {
+				      int band, short[] outData) {
         // Bounds check for 'band' will be performed automatically
         if ((x < this.minX) || (y < this.minY) ||
             (x + w > this.maxX) || (y + h > this.maxY)) {
@@ -370,7 +371,7 @@ public class ShortBandedRaster extends SunWritableRaster {
      * @return         Data array with data elements for all bands.
      */
     public short[] getShortData(int x, int y, int w, int h,
-                                     short[] outData) {
+				     short[] outData) {
         if ((x < this.minX) || (y < this.minY) ||
             (x + w > this.maxX) || (y + h > this.maxY)) {
             throw new ArrayIndexOutOfBoundsException
@@ -467,7 +468,7 @@ public class ShortBandedRaster extends SunWritableRaster {
         if (width <= 0 || height <= 0) {
             return;
         }
-
+            
         // Write inRaster (minX, minY) to (dstX, dstY)
 
         int srcOffX = inRaster.getMinX();
@@ -554,7 +555,7 @@ public class ShortBandedRaster extends SunWritableRaster {
      * @param inData   The data elements to be stored.
      */
     public void putShortData(int x, int y, int w, int h,
-                                   int band, short[] inData) {
+				   int band, short[] inData) {
         // Bounds check for 'band' will be performed automatically
         if ((x < this.minX) || (y < this.minY) ||
             (x + w > this.maxX) || (y + h > this.maxY)) {
@@ -608,7 +609,7 @@ public class ShortBandedRaster extends SunWritableRaster {
             int off = c;
             short[] bank = data[c];
             int dataOffset = dataOffsets[c];
-
+            
             int yoff2 = yoff;
             for (int ystart=0; ystart < h; ystart++, yoff2 += scanlineStride) {
                 int xoff = dataOffset + yoff2;
@@ -646,17 +647,17 @@ public class ShortBandedRaster extends SunWritableRaster {
                                               int x0, int y0,
                                               int bandList[]) {
 
-        if (x < this.minX) {
-            throw new RasterFormatException("x lies outside raster");
-        }
-        if (y < this.minY) {
-            throw new RasterFormatException("y lies outside raster");
-        }
+	if (x < this.minX) {
+	    throw new RasterFormatException("x lies outside raster");
+	}
+	if (y < this.minY) {
+	    throw new RasterFormatException("y lies outside raster");
+	}
         if ((x+width < x) || (x+width > this.minX + this.width)) {
-            throw new RasterFormatException("(x + width) is outside of Raster");
+	    throw new RasterFormatException("(x + width) is outside of Raster");
         }
         if ((y+height < y) || (y+height > this.minY + this.height)) {
-            throw new RasterFormatException("(y + height) is outside of Raster");
+	    throw new RasterFormatException("(y + height) is outside of Raster");
         }
 
         SampleModel sm;
@@ -711,7 +712,7 @@ public class ShortBandedRaster extends SunWritableRaster {
     public WritableRaster createCompatibleWritableRaster(int w, int h) {
         if (w <= 0 || h <=0) {
             throw new RasterFormatException("negative "+
-                                            ((w <= 0) ? "width" : "height"));
+					    ((w <= 0) ? "width" : "height"));
         }
 
         SampleModel sm = sampleModel.createCompatibleSampleModel(w,h);
@@ -775,3 +776,5 @@ public class ShortBandedRaster extends SunWritableRaster {
     }
 
 }
+
+

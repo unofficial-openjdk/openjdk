@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetSafepointSyncTime {
 
     private static HotspotRuntimeMBean mbean =
-        (HotspotRuntimeMBean)ManagementFactory.getHotspotRuntimeMBean();
+	(HotspotRuntimeMBean)ManagementFactory.getHotspotRuntimeMBean();
 
     private static final long NUM_THREAD_DUMPS = 300;
 
@@ -51,44 +51,44 @@ public class GetSafepointSyncTime {
         if (args.length > 0 && args[0].equals("trace")) {
             trace = true;
         }
-
-        // Thread.getAllStackTraces() should cause safepoints.
-        // If this test is failing because it doesn't,
+	
+	// Thread.getAllStackTraces() should cause safepoints.  
+        // If this test is failing because it doesn't, 
         // MIN_VALUE_FOR_PASS should be reset to 0
-        for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
-            Thread.getAllStackTraces();
-        }
+	for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
+	    Thread.getAllStackTraces();
+	}
 
-        long value = mbean.getSafepointSyncTime();
+	long value = mbean.getSafepointSyncTime();
 
-        if (trace) {
-            System.out.println("Safepoint sync time (ms): " + value);
-        }
+	if (trace) {
+	    System.out.println("Safepoint sync time (ms): " + value);
+	}
 
-        if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
-            throw new RuntimeException("Safepoint sync time " +
-                                       "illegal value: " + value + " ms " +
-                                       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
-                                       "MAX = " + MAX_VALUE_FOR_PASS + ")");
-        }
+	if (value < MIN_VALUE_FOR_PASS || value > MAX_VALUE_FOR_PASS) {
+	    throw new RuntimeException("Safepoint sync time " + 
+				       "illegal value: " + value + " ms " + 
+				       "(MIN = " + MIN_VALUE_FOR_PASS + "; " +
+				       "MAX = " + MAX_VALUE_FOR_PASS + ")");
+	}
+	
+	for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
+	    Thread.getAllStackTraces();
+	}
 
-        for (int i = 0; i < NUM_THREAD_DUMPS; i++) {
-            Thread.getAllStackTraces();
-        }
+	long value2 = mbean.getSafepointSyncTime();
 
-        long value2 = mbean.getSafepointSyncTime();
+	if (trace) {
+	    System.out.println("Safepoint sync time2 (ms): " + value2);
+	}
 
-        if (trace) {
-            System.out.println("Safepoint sync time2 (ms): " + value2);
-        }
+	if (value2 <= value) {
+	    throw new RuntimeException("Safepoint sync time " + 
+				       "did not increase " +
+				       "(value = " + value + "; " +
+				       "value2 = " + value2 + ")");
+	}
 
-        if (value2 <= value) {
-            throw new RuntimeException("Safepoint sync time " +
-                                       "did not increase " +
-                                       "(value = " + value + "; " +
-                                       "value2 = " + value2 + ")");
-        }
-
-        System.out.println("Test passed.");
+	System.out.println("Test passed.");
     }
 }

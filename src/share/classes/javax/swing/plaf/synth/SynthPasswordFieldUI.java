@@ -33,11 +33,12 @@ import javax.swing.plaf.*;
 /**
  * Provides the Synth look and feel for a password field.
  * The only difference from the standard text field is that
- * the view of the text is simply a string of the echo
- * character as specified in JPasswordField, rather than the
+ * the view of the text is simply a string of the echo 
+ * character as specified in JPasswordField, rather than the 
  * real text contained in the field.
  *
  * @author  Shannon Hickey
+ * @version %I% %G%
  */
 class SynthPasswordFieldUI extends SynthTextFieldUI {
 
@@ -85,11 +86,11 @@ class SynthPasswordFieldUI extends SynthTextFieldUI {
     protected void installKeyboardActions() {
         super.installKeyboardActions();
         ActionMap map = SwingUtilities.getUIActionMap(getComponent());
-        if (map != null && map.get(DefaultEditorKit.selectWordAction) != null) {
-            Action a = map.get(DefaultEditorKit.selectLineAction);
-            if (a != null) {
-                map.put(DefaultEditorKit.selectWordAction, a);
-            }
-        }
+	if (map != null && map.get(DefaultEditorKit.selectWordAction) != null) {
+	    Action a = map.get(DefaultEditorKit.selectLineAction);
+	    if (a != null) {
+		map.put(DefaultEditorKit.selectWordAction, a);
+	    }
+	}
     }
 }

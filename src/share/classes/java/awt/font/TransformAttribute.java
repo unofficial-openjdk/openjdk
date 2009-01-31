@@ -50,8 +50,8 @@ import java.io.ObjectStreamException;
  */
 public final class TransformAttribute implements Serializable {
 
-    /**
-     * The <code>AffineTransform</code> for this
+    /** 
+     * The <code>AffineTransform</code> for this 
      * <code>TransformAttribute</code>, or <code>null</code>
      * if <code>AffineTransform</code> is the identity transform.
      */
@@ -60,7 +60,7 @@ public final class TransformAttribute implements Serializable {
     /**
      * Wraps the specified transform.  The transform is cloned and a
      * reference to the clone is kept.  The original transform is unchanged.
-     * If null is passed as the argument, this constructor behaves as though
+     * If null is passed as the argument, this constructor behaves as though 
      * it were the identity transform.  (Note that it is preferable to use
      * {@link #IDENTITY} in this case.)
      * @param transform the specified {@link AffineTransform} to be wrapped,
@@ -119,7 +119,7 @@ public final class TransformAttribute implements Serializable {
         }
         return this;
     }
-
+    
     // Added for serial backwards compatability (4348425)
     static final long serialVersionUID = 3356247357827709530L;
 

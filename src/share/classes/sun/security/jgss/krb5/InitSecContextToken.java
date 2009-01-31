@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 package sun.security.jgss.krb5;
 
 import org.ietf.jgss.*;
@@ -46,117 +46,117 @@ class InitSecContextToken extends InitialToken {
      * that it sends.)
      */
     InitSecContextToken(Krb5Context context,
-                               Credentials tgt,
-                               Credentials serviceTicket)
-        throws KrbException, IOException, GSSException {
+			       Credentials tgt,
+			       Credentials serviceTicket) 
+	throws KrbException, IOException, GSSException { 
+	
+	boolean mutualRequired = context.getMutualAuthState();
+	boolean useSubkey = true; // MIT Impl will crash if this is not set!
+	boolean useSequenceNumber = true;
 
-        boolean mutualRequired = context.getMutualAuthState();
-        boolean useSubkey = true; // MIT Impl will crash if this is not set!
-        boolean useSequenceNumber = true;
+	OverloadedChecksum gssChecksum = 
+	    new OverloadedChecksum(context, tgt, serviceTicket);
 
-        OverloadedChecksum gssChecksum =
-            new OverloadedChecksum(context, tgt, serviceTicket);
+	Checksum checksum = gssChecksum.getChecksum();
 
-        Checksum checksum = gssChecksum.getChecksum();
+	apReq = new KrbApReq(serviceTicket, 
+			     mutualRequired,
+			     useSubkey,
+			     useSequenceNumber,
+			     checksum);
+	
+	context.resetMySequenceNumber(apReq.getSeqNumber().intValue());
 
-        apReq = new KrbApReq(serviceTicket,
-                             mutualRequired,
-                             useSubkey,
-                             useSequenceNumber,
-                             checksum);
+	EncryptionKey subKey = apReq.getSubKey();
+	if (subKey != null)
+	    context.setKey(subKey);
+	else
+	    context.setKey(serviceTicket.getSessionKey());
 
-        context.resetMySequenceNumber(apReq.getSeqNumber().intValue());
-
-        EncryptionKey subKey = apReq.getSubKey();
-        if (subKey != null)
-            context.setKey(subKey);
-        else
-            context.setKey(serviceTicket.getSessionKey());
-
-        if (!mutualRequired)
-            context.resetPeerSequenceNumber(0);
+	if (!mutualRequired)
+	    context.resetPeerSequenceNumber(0);
     }
 
     /**
      * For the context acceptor to call. It reads the bytes out of an
      * InputStream and constructs an InitSecContextToken with them.
      */
-    InitSecContextToken(Krb5Context context, EncryptionKey[] keys,
-                               InputStream is)
-        throws IOException, GSSException, KrbException  {
+    InitSecContextToken(Krb5Context context, EncryptionKey[] keys, 
+			       InputStream is) 
+	throws IOException, GSSException, KrbException  {
+	
+	int tokenId = ((is.read()<<8) | is.read());
 
-        int tokenId = ((is.read()<<8) | is.read());
+	if (tokenId != Krb5Token.AP_REQ_ID)
+	    throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
+				   "AP_REQ token id does not match!");
 
-        if (tokenId != Krb5Token.AP_REQ_ID)
-            throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
-                                   "AP_REQ token id does not match!");
+	// XXX Modify KrbApReq cons to take an InputStream
+	byte[] apReqBytes = 
+	    new sun.security.util.DerValue(is).toByteArray();
+	//debug("=====ApReqBytes: [" + getHexBytes(apReqBytes) + "]\n");
 
-        // XXX Modify KrbApReq cons to take an InputStream
-        byte[] apReqBytes =
-            new sun.security.util.DerValue(is).toByteArray();
-        //debug("=====ApReqBytes: [" + getHexBytes(apReqBytes) + "]\n");
+	InetAddress addr = null;
+	if (context.getChannelBinding() != null) {
+	    addr = context.getChannelBinding().getInitiatorAddress();
+	}
+	apReq = new KrbApReq(apReqBytes, keys, addr);
+	//debug("\nReceived AP-REQ and authenticated it.\n");
 
-        InetAddress addr = null;
-        if (context.getChannelBinding() != null) {
-            addr = context.getChannelBinding().getInitiatorAddress();
-        }
-        apReq = new KrbApReq(apReqBytes, keys, addr);
-        //debug("\nReceived AP-REQ and authenticated it.\n");
+	EncryptionKey sessionKey 
+	    = (EncryptionKey) apReq.getCreds().getSessionKey();
 
-        EncryptionKey sessionKey
-            = (EncryptionKey) apReq.getCreds().getSessionKey();
+	/*
+	  System.out.println("\n\nSession key from service ticket is: " +
+	  getHexBytes(sessionKey.getBytes()));
+	*/
 
-        /*
-          System.out.println("\n\nSession key from service ticket is: " +
-          getHexBytes(sessionKey.getBytes()));
-        */
+	EncryptionKey subKey = apReq.getSubKey(); 
+	if (subKey != null) {
+	    context.setKey(subKey);
+	    /*
+	      System.out.println("Sub-Session key from authenticator is: " +
+	      getHexBytes(subKey.getBytes()) + "\n");
+	    */
+	} else {
+	    context.setKey(sessionKey);
+	    //System.out.println("Sub-Session Key Missing in Authenticator.\n");
+	}
 
-        EncryptionKey subKey = apReq.getSubKey();
-        if (subKey != null) {
-            context.setKey(subKey);
-            /*
-              System.out.println("Sub-Session key from authenticator is: " +
-              getHexBytes(subKey.getBytes()) + "\n");
-            */
-        } else {
-            context.setKey(sessionKey);
-            //System.out.println("Sub-Session Key Missing in Authenticator.\n");
-        }
+	OverloadedChecksum gssChecksum = 
+	    new OverloadedChecksum(context, apReq.getChecksum(), sessionKey);
+	gssChecksum.setContextFlags(context);
+	Credentials delegCred = gssChecksum.getDelegatedCreds();
+	if (delegCred != null) {
+	    Krb5CredElement credElement =
+		Krb5InitCredential.getInstance(
+				   (Krb5NameElement)context.getSrcName(), 
+				   delegCred);
+	    context.setDelegCred(credElement);
+	}
 
-        OverloadedChecksum gssChecksum =
-            new OverloadedChecksum(context, apReq.getChecksum(), sessionKey);
-        gssChecksum.setContextFlags(context);
-        Credentials delegCred = gssChecksum.getDelegatedCreds();
-        if (delegCred != null) {
-            Krb5CredElement credElement =
-                Krb5InitCredential.getInstance(
-                                   (Krb5NameElement)context.getSrcName(),
-                                   delegCred);
-            context.setDelegCred(credElement);
-        }
-
-        Integer apReqSeqNumber = apReq.getSeqNumber();
-        int peerSeqNumber = (apReqSeqNumber != null ?
-                             apReqSeqNumber.intValue() :
+        Integer apReqSeqNumber = apReq.getSeqNumber(); 
+        int peerSeqNumber = (apReqSeqNumber != null ?  
+                             apReqSeqNumber.intValue() : 
                              0);
-        context.resetPeerSequenceNumber(peerSeqNumber);
-        if (!context.getMutualAuthState())
-            // Use the same sequence number as the peer
-            // (Behaviour exhibited by the Windows SSPI server)
-            context.resetMySequenceNumber(peerSeqNumber);
+	context.resetPeerSequenceNumber(peerSeqNumber);
+	if (!context.getMutualAuthState())
+	    // Use the same sequence number as the peer
+	    // (Behaviour exhibited by the Windows SSPI server)
+	    context.resetMySequenceNumber(peerSeqNumber);
     }
-
+    
     public final KrbApReq getKrbApReq() {
-        return apReq;
+	return apReq;
     }
 
     public final byte[] encode() throws IOException {
-        byte[] apReqBytes = apReq.getMessage();
-        byte[] retVal = new byte[2 + apReqBytes.length];
-        writeInt(Krb5Token.AP_REQ_ID, retVal, 0);
-        System.arraycopy(apReqBytes, 0, retVal, 2, apReqBytes.length);
-        //      System.out.println("GSS-Token with AP_REQ is:");
-        //      System.out.println(getHexBytes(retVal));
-        return retVal;
+	byte[] apReqBytes = apReq.getMessage();
+	byte[] retVal = new byte[2 + apReqBytes.length];
+	writeInt(Krb5Token.AP_REQ_ID, retVal, 0);
+	System.arraycopy(apReqBytes, 0, retVal, 2, apReqBytes.length);
+	//	System.out.println("GSS-Token with AP_REQ is:");
+	//	System.out.println(getHexBytes(retVal));
+	return retVal;
     }
 }

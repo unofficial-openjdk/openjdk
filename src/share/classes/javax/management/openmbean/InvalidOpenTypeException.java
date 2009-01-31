@@ -38,7 +38,7 @@ public class InvalidOpenTypeException extends IllegalArgumentException {
 
     /** An InvalidOpenTypeException with no detail message.  */
     public InvalidOpenTypeException() {
-        super();
+	super();
     }
 
     /**
@@ -47,7 +47,7 @@ public class InvalidOpenTypeException extends IllegalArgumentException {
      * @param msg the detail message.
      */
     public InvalidOpenTypeException(String msg) {
-        super(msg);
+	super(msg);
     }
 
 }

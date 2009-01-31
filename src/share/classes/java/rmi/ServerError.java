@@ -33,7 +33,8 @@ package java.rmi;
  *
  * A <code>ServerError</code> instance contains the original
  * <code>Error</code> that occurred as its cause.
- *
+ * 
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  */
@@ -41,7 +42,7 @@ public class ServerError extends RemoteException {
 
     /* indicate compatibility with JDK 1.1.x version of class */
     private static final long serialVersionUID = 8455284893909696482L;
-
+    
     /**
      * Constructs a <code>ServerError</code> with the specified
      * detail message and nested error.
@@ -51,6 +52,6 @@ public class ServerError extends RemoteException {
      * @since JDK1.1
      */
     public ServerError(String s, Error err) {
-        super(s, err);
+	super(s, err);
     }
 }

@@ -25,7 +25,7 @@
  * @test
  * @bug 6454215
  * @summary Make sure there are no runtime errors when throwing Apache XML
- *      Security exceptions in a non-US default locale.
+ * 	Security exceptions in a non-US default locale.
  * @compile -XDignore.symbol.file LocaleTest.java
  * @run main LocaleTest
  */
@@ -36,15 +36,15 @@ public class LocaleTest {
 
     public static void main(String[] args) throws Exception {
 
-        Locale.setDefault(Locale.ITALY);
+	Locale.setDefault(Locale.ITALY);
 
-        try {
-            throw new XMLSecurityException("foo");
-        } catch (XMLSecurityException xse) {
-            System.out.println("Test PASSED");
-        } catch (Throwable t) {
-            System.out.println("Test FAILED");
-            t.printStackTrace();
-        }
+	try {
+	    throw new XMLSecurityException("foo");
+	} catch (XMLSecurityException xse) {
+	    System.out.println("Test PASSED");
+	} catch (Throwable t) {
+	    System.out.println("Test FAILED");
+	    t.printStackTrace();
+	}
     }
 }

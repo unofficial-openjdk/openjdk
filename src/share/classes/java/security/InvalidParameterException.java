@@ -26,11 +26,12 @@
 package java.security;
 
 /**
- * This exception, designed for use by the JCA/JCE engine classes,
- * is thrown when an invalid parameter is passed
+ * This exception, designed for use by the JCA/JCE engine classes, 
+ * is thrown when an invalid parameter is passed 
  * to a method.
  *
  * @author Benjamin Renaud
+ * @version %I%, %E%
  */
 
 public class InvalidParameterException extends IllegalArgumentException {
@@ -43,7 +44,7 @@ public class InvalidParameterException extends IllegalArgumentException {
      * exception.
      */
     public InvalidParameterException() {
-        super();
+	super();
     }
 
     /**
@@ -51,9 +52,9 @@ public class InvalidParameterException extends IllegalArgumentException {
      * detail message.  A detail message is a String that describes
      * this particular exception.
      *
-     * @param msg the detail message.
+     * @param msg the detail message.  
      */
     public InvalidParameterException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

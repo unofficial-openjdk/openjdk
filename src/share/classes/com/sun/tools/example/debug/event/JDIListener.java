@@ -40,3 +40,4 @@ public interface JDIListener extends EventListener {
     void vmDisconnect(VMDisconnectEventSet e);
     void vmStart(VMStartEventSet e);
 }
+

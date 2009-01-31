@@ -43,22 +43,22 @@ public class ClassLoaderTest {
 
     public static void main(String[] args) throws Exception {
 
-        Transform.init();
-        File file = new File(BASE);
-        URL[] urls = new URL[1];
-        urls[0] = file.toURI().toURL();
-        URLClassLoader ucl = new URLClassLoader(urls);
+	Transform.init();
+	File file = new File(BASE);
+	URL[] urls = new URL[1];
+	urls[0] = file.toURI().toURL();
+	URLClassLoader ucl = new URLClassLoader(urls);
         Class c = ucl.loadClass("MyTransform");
         Constructor cons = c.getConstructor();
         Object o = cons.newInstance();
-        // Apache code swallows the ClassNotFoundExc, so we need to
-        // check if the Transform has already been registered by registering
-        // it again and catching an AlgorithmAlreadyRegisteredExc
-        try {
-            Transform.register(MyTransform.URI, "MyTransform");
-            throw new Exception("ClassLoaderTest failed");
-        } catch (AlgorithmAlreadyRegisteredException e) {
-            // test passed
-        }
+	// Apache code swallows the ClassNotFoundExc, so we need to
+	// check if the Transform has already been registered by registering
+	// it again and catching an AlgorithmAlreadyRegisteredExc
+	try {
+	    Transform.register(MyTransform.URI, "MyTransform");
+	    throw new Exception("ClassLoaderTest failed");
+	} catch (AlgorithmAlreadyRegisteredException e) {
+	    // test passed
+	}
     }
 }

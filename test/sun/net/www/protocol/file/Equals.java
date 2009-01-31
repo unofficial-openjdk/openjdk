@@ -31,6 +31,6 @@ import java.net.URL;
 public class Equals {
     public static void main(String[] args) throws Exception {
         if (!(new URL("file://localhost/").equals(new URL("file:///"))))
-            throw new RuntimeException("file://localhost/ is not equal to file:///");
+	    throw new RuntimeException("file://localhost/ is not equal to file:///");
     }
 }

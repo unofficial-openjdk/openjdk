@@ -61,12 +61,12 @@
  * Method:    getLocalHostName
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL
+JNIEXPORT jstring JNICALL 
 Java_java_net_Inet6AddressImpl_getLocalHostName (JNIEnv *env, jobject this) {
     char hostname [256];
 
     if (gethostname (hostname, sizeof (hostname)) == -1) {
-        strcpy (hostname, "localhost");
+	strcpy (hostname, "localhost");
     }
     return JNU_NewStringPlatform (env, hostname);
 }
@@ -82,9 +82,9 @@ static jfieldID ni_iafamilyID;
 static jfieldID ni_ia6ipaddressID;
 static int initialized = 0;
 
-JNIEXPORT jobjectArray JNICALL
-Java_java_net_Inet6AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
-                                                jstring host) {
+JNIEXPORT jobjectArray JNICALL 
+Java_java_net_Inet6AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this, 
+						jstring host) {
     const char *hostname;
     jobject name;
     jobjectArray ret = 0;
@@ -110,196 +110,196 @@ Java_java_net_Inet6AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
       initialized = 1;
     }
     if (IS_NULL(host)) {
-        JNU_ThrowNullPointerException(env, "host is null");
-        return 0;
+	JNU_ThrowNullPointerException(env, "host is null");
+	return 0;
     }
     hostname = JNU_GetStringPlatformChars(env, host, JNI_FALSE);
     CHECK_NULL_RETURN(hostname, NULL);
 
     if (NET_addrtransAvailable()) {
-        static jfieldID ia_preferIPv6AddressID;
-        if (ia_preferIPv6AddressID == NULL) {
-            jclass c = (*env)->FindClass(env,"java/net/InetAddress");
-            if (c)  {
-                ia_preferIPv6AddressID =
+	static jfieldID ia_preferIPv6AddressID;
+	if (ia_preferIPv6AddressID == NULL) {
+	    jclass c = (*env)->FindClass(env,"java/net/InetAddress");
+	    if (c)  {
+		ia_preferIPv6AddressID =
                     (*env)->GetStaticFieldID(env, c, "preferIPv6Address", "Z");
-            }
-            if (ia_preferIPv6AddressID == NULL) {
-                JNU_ReleaseStringPlatformChars(env, host, hostname);
-                return NULL;
-            }
-        }
-        /* get the address preference */
-        preferIPv6Address
-            = (*env)->GetStaticBooleanField(env, ia_class, ia_preferIPv6AddressID);
+	    }
+	    if (ia_preferIPv6AddressID == NULL) {
+		JNU_ReleaseStringPlatformChars(env, host, hostname);
+		return NULL;
+	    }
+	} 
+	/* get the address preference */
+	preferIPv6Address 
+	    = (*env)->GetStaticBooleanField(env, ia_class, ia_preferIPv6AddressID); 
 
-        /* Try once, with our static buffer. */
-        memset(&hints, 0, sizeof(hints));
-        hints.ai_flags = AI_CANONNAME;
-        hints.ai_family = AF_UNSPEC;
+	/* Try once, with our static buffer. */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_CANONNAME;
+	hints.ai_family = AF_UNSPEC;
+	
+	error = (*getaddrinfo_ptr)(hostname, NULL, &hints, &res);
+	
+	if (error) {
+	    /* report error */
+	    JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException",
+			    (char *)hostname);
+	    JNU_ReleaseStringPlatformChars(env, host, hostname);
+	    return NULL;
+	} else {
+	    int i = 0;
+	    int inetCount = 0, inet6Count = 0, inetIndex, inet6Index;
+	    struct addrinfo *itr, *last, *iterator = res;
+	    while (iterator != NULL) {
+		int skip = 0;
+		itr = resNew;
+		while (itr != NULL) {
+		    if (iterator->ai_family == itr->ai_family &&
+			iterator->ai_addrlen == itr->ai_addrlen) {
+			if (itr->ai_family == AF_INET) { /* AF_INET */
+			    struct sockaddr_in *addr1, *addr2;
+			    addr1 = (struct sockaddr_in *)iterator->ai_addr;
+			    addr2 = (struct sockaddr_in *)itr->ai_addr;
+			    if (addr1->sin_addr.s_addr == 
+				addr2->sin_addr.s_addr) {
+				skip = 1;
+				break;
+			    } 
+			} else {
+			    int t;
+			    struct sockaddr_in6 *addr1, *addr2;
+			    addr1 = (struct sockaddr_in6 *)iterator->ai_addr;
+			    addr2 = (struct sockaddr_in6 *)itr->ai_addr;
+			    
+			    for (t = 0; t < 16; t++) {
+				if (addr1->sin6_addr.s6_addr[t] !=
+				    addr2->sin6_addr.s6_addr[t]) {
+				    break;
+				} 
+			    }
+			    if (t < 16) {
+				itr = itr->ai_next;
+				continue;
+			    } else {
+				skip = 1;
+				break;
+			    }
+			}
+		    } else if (iterator->ai_family != AF_INET && 
+			       iterator->ai_family != AF_INET6) { 
+			/* we can't handle other family types */
+			skip = 1;
+			break;	
+		    }
+		    itr = itr->ai_next;
+		}
+		
+		if (!skip) {
+		    struct addrinfo *next 
+			= (struct addrinfo*) malloc(sizeof(struct addrinfo));
+		    if (!next) {
+			JNU_ThrowOutOfMemoryError(env, "heap allocation failed");
+			ret = NULL;
+			goto cleanupAndReturn;
+		    }
+		    memcpy(next, iterator, sizeof(struct addrinfo));
+		    next->ai_next = NULL;
+		    if (resNew == NULL) {
+			resNew = next;
+		    } else {
+			last->ai_next = next;
+		    }
+		    last = next;
+		    i++;
+		    if (iterator->ai_family == AF_INET) {
+			inetCount ++;
+		    } else if (iterator->ai_family == AF_INET6) {
+			inet6Count ++;
+		    }
+		}
+		iterator = iterator->ai_next;
+	    }
+	    retLen = i;
+	    iterator = resNew;
+	    i = 0;
+	    ret = (*env)->NewObjectArray(env, retLen, ni_iacls, NULL);
+	    
+	    if (IS_NULL(ret)) {
+		/* we may have memory to free at the end of this */
+		goto cleanupAndReturn;
+	    }
 
-        error = (*getaddrinfo_ptr)(hostname, NULL, &hints, &res);
+	    if (preferIPv6Address) {
+		inetIndex = inet6Count;
+		inet6Index = 0;
+	    } else {
+		inetIndex = 0;
+		inet6Index = inetCount;
+	    }
 
-        if (error) {
-            /* report error */
-            JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException",
-                            (char *)hostname);
-            JNU_ReleaseStringPlatformChars(env, host, hostname);
-            return NULL;
-        } else {
-            int i = 0;
-            int inetCount = 0, inet6Count = 0, inetIndex, inet6Index;
-            struct addrinfo *itr, *last, *iterator = res;
-            while (iterator != NULL) {
-                int skip = 0;
-                itr = resNew;
-                while (itr != NULL) {
-                    if (iterator->ai_family == itr->ai_family &&
-                        iterator->ai_addrlen == itr->ai_addrlen) {
-                        if (itr->ai_family == AF_INET) { /* AF_INET */
-                            struct sockaddr_in *addr1, *addr2;
-                            addr1 = (struct sockaddr_in *)iterator->ai_addr;
-                            addr2 = (struct sockaddr_in *)itr->ai_addr;
-                            if (addr1->sin_addr.s_addr ==
-                                addr2->sin_addr.s_addr) {
-                                skip = 1;
-                                break;
-                            }
-                        } else {
-                            int t;
-                            struct sockaddr_in6 *addr1, *addr2;
-                            addr1 = (struct sockaddr_in6 *)iterator->ai_addr;
-                            addr2 = (struct sockaddr_in6 *)itr->ai_addr;
+	    name = (*env)->NewStringUTF(env, hostname);
+	    if (IS_NULL(name)) {
+	      ret = NULL;
+	      goto cleanupAndReturn;
+	    }
 
-                            for (t = 0; t < 16; t++) {
-                                if (addr1->sin6_addr.s6_addr[t] !=
-                                    addr2->sin6_addr.s6_addr[t]) {
-                                    break;
-                                }
-                            }
-                            if (t < 16) {
-                                itr = itr->ai_next;
-                                continue;
-                            } else {
-                                skip = 1;
-                                break;
-                            }
-                        }
-                    } else if (iterator->ai_family != AF_INET &&
-                               iterator->ai_family != AF_INET6) {
-                        /* we can't handle other family types */
-                        skip = 1;
-                        break;
-                    }
-                    itr = itr->ai_next;
-                }
-
-                if (!skip) {
-                    struct addrinfo *next
-                        = (struct addrinfo*) malloc(sizeof(struct addrinfo));
-                    if (!next) {
-                        JNU_ThrowOutOfMemoryError(env, "heap allocation failed");
-                        ret = NULL;
-                        goto cleanupAndReturn;
-                    }
-                    memcpy(next, iterator, sizeof(struct addrinfo));
-                    next->ai_next = NULL;
-                    if (resNew == NULL) {
-                        resNew = next;
-                    } else {
-                        last->ai_next = next;
-                    }
-                    last = next;
-                    i++;
-                    if (iterator->ai_family == AF_INET) {
-                        inetCount ++;
-                    } else if (iterator->ai_family == AF_INET6) {
-                        inet6Count ++;
-                    }
-                }
-                iterator = iterator->ai_next;
-            }
-            retLen = i;
-            iterator = resNew;
-            i = 0;
-            ret = (*env)->NewObjectArray(env, retLen, ni_iacls, NULL);
-
-            if (IS_NULL(ret)) {
-                /* we may have memory to free at the end of this */
-                goto cleanupAndReturn;
-            }
-
-            if (preferIPv6Address) {
-                inetIndex = inet6Count;
-                inet6Index = 0;
-            } else {
-                inetIndex = 0;
-                inet6Index = inetCount;
-            }
-
-            name = (*env)->NewStringUTF(env, hostname);
-            if (IS_NULL(name)) {
-              ret = NULL;
-              goto cleanupAndReturn;
-            }
-
-            while (iterator != NULL) {
-                if (iterator->ai_family == AF_INET) {
-                  jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
-                  if (IS_NULL(iaObj)) {
-                    ret = NULL;
-                    goto cleanupAndReturn;
-                  }
-                  (*env)->SetIntField(env, iaObj, ni_iaaddressID,
-                                      ntohl(((struct sockaddr_in*)iterator->ai_addr)->sin_addr.s_addr));
-                  (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
-                  (*env)->SetObjectArrayElement(env, ret, inetIndex, iaObj);
-                    inetIndex ++;
-                } else if (iterator->ai_family == AF_INET6) {
-                  jint scope = 0;
-                  jbyteArray ipaddress;
-                  jobject iaObj = (*env)->NewObject(env, ni_ia6cls, ni_ia6ctrID);
-                  if (IS_NULL(iaObj)) {
-                    ret = NULL;
-                    goto cleanupAndReturn;
-                  }
-                  ipaddress = (*env)->NewByteArray(env, 16);
-                  if (IS_NULL(ipaddress)) {
-                    ret = NULL;
-                    goto cleanupAndReturn;
-                  }
-                  (*env)->SetByteArrayRegion(env, ipaddress, 0, 16,
-                                             (jbyte *)&(((struct sockaddr_in6*)iterator->ai_addr)->sin6_addr));
-                  scope = ((struct sockaddr_in6*)iterator->ai_addr)->sin6_scope_id;
-                  if (scope != 0) { /* zero is default value, no need to set */
-                    (*env)->SetIntField(env, iaObj, ia6_scopeidID, scope);
-                    (*env)->SetBooleanField(env, iaObj, ia6_scopeidsetID, JNI_TRUE);
-                  }
-                  (*env)->SetObjectField(env, iaObj, ni_ia6ipaddressID, ipaddress);
-                  (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
-                  (*env)->SetObjectArrayElement(env, ret, inet6Index, iaObj);
-                  inet6Index ++;
-                }
-                iterator = iterator->ai_next;
-            }
-        }
+	    while (iterator != NULL) {
+		if (iterator->ai_family == AF_INET) {
+		  jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
+		  if (IS_NULL(iaObj)) {
+		    ret = NULL;
+		    goto cleanupAndReturn;
+		  }
+		  (*env)->SetIntField(env, iaObj, ni_iaaddressID, 
+				      ntohl(((struct sockaddr_in*)iterator->ai_addr)->sin_addr.s_addr));
+		  (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
+		  (*env)->SetObjectArrayElement(env, ret, inetIndex, iaObj);
+		    inetIndex ++;
+		} else if (iterator->ai_family == AF_INET6) {
+		  jint scope = 0;
+		  jbyteArray ipaddress;
+		  jobject iaObj = (*env)->NewObject(env, ni_ia6cls, ni_ia6ctrID);
+		  if (IS_NULL(iaObj)) {
+		    ret = NULL;
+		    goto cleanupAndReturn;
+		  }
+		  ipaddress = (*env)->NewByteArray(env, 16);
+		  if (IS_NULL(ipaddress)) {
+		    ret = NULL;
+		    goto cleanupAndReturn;
+		  }
+		  (*env)->SetByteArrayRegion(env, ipaddress, 0, 16,
+					     (jbyte *)&(((struct sockaddr_in6*)iterator->ai_addr)->sin6_addr));
+		  scope = ((struct sockaddr_in6*)iterator->ai_addr)->sin6_scope_id;
+		  if (scope != 0) { /* zero is default value, no need to set */
+		    (*env)->SetIntField(env, iaObj, ia6_scopeidID, scope);
+		    (*env)->SetBooleanField(env, iaObj, ia6_scopeidsetID, JNI_TRUE);
+		  }
+		  (*env)->SetObjectField(env, iaObj, ni_ia6ipaddressID, ipaddress);
+		  (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
+		  (*env)->SetObjectArrayElement(env, ret, inet6Index, iaObj);
+		  inet6Index ++;
+		}
+		iterator = iterator->ai_next;
+	    }
+	}
     }
-
+    
 cleanupAndReturn:
     {
-        struct addrinfo *iterator, *tmp;
-        iterator = resNew;
-        while (iterator != NULL) {
-            tmp = iterator;
-            iterator = iterator->ai_next;
-            free(tmp);
-        }
-        JNU_ReleaseStringPlatformChars(env, host, hostname);
+	struct addrinfo *iterator, *tmp;
+	iterator = resNew;
+	while (iterator != NULL) {
+	    tmp = iterator;
+	    iterator = iterator->ai_next;
+	    free(tmp);
+	}
+	JNU_ReleaseStringPlatformChars(env, host, hostname);
     }
-
+   
     if (NET_addrtransAvailable())
-        (*freeaddrinfo_ptr)(res);
-
+	(*freeaddrinfo_ptr)(res);
+    
     return ret;
 }
 
@@ -309,60 +309,60 @@ cleanupAndReturn:
  * Signature: (I)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL
-Java_java_net_Inet6AddressImpl_getHostByAddr(JNIEnv *env, jobject this,
-                                            jbyteArray addrArray) {
+Java_java_net_Inet6AddressImpl_getHostByAddr(JNIEnv *env, jobject this, 
+					    jbyteArray addrArray) {
     jstring ret = NULL;
 
     char host[NI_MAXHOST+1];
     jfieldID fid;
     int error = 0;
     jint family;
-    struct sockaddr *him ;
+    struct sockaddr *him ; 
     int len = 0;
     jbyte caddr[16];
 
     if (NET_addrtransAvailable()) {
-        struct sockaddr_in him4;
+	struct sockaddr_in him4;
         struct sockaddr_in6 him6;
-        struct sockaddr *sa;
+	struct sockaddr *sa;
 
-        /*
-         * For IPv4 addresses construct a sockaddr_in structure.
-         */
-        if ((*env)->GetArrayLength(env, addrArray) == 4) {
-            jint addr;
-            (*env)->GetByteArrayRegion(env, addrArray, 0, 4, caddr);
-            addr = ((caddr[0]<<24) & 0xff000000);
-            addr |= ((caddr[1] <<16) & 0xff0000);
+	/* 
+	 * For IPv4 addresses construct a sockaddr_in structure.
+	 */
+	if ((*env)->GetArrayLength(env, addrArray) == 4) {
+	    jint addr;
+	    (*env)->GetByteArrayRegion(env, addrArray, 0, 4, caddr);
+	    addr = ((caddr[0]<<24) & 0xff000000);
+    	    addr |= ((caddr[1] <<16) & 0xff0000);
             addr |= ((caddr[2] <<8) & 0xff00);
-            addr |= (caddr[3] & 0xff);
-            memset((char *) &him4, 0, sizeof(him4));
-            him4.sin_addr.s_addr = (uint32_t) htonl(addr);
-            him4.sin_family = AF_INET;
-            sa = (struct sockaddr *) &him4;
-            len = sizeof(him4);
-        } else {
-            /*
-             * For IPv6 address construct a sockaddr_in6 structure.
-             */
-            (*env)->GetByteArrayRegion(env, addrArray, 0, 16, caddr);
-            memset((char *) &him6, 0, sizeof(him6));
-            memcpy((void *)&(him6.sin6_addr), caddr, sizeof(struct in6_addr) );
-            him6.sin6_family = AF_INET6;
+    	    addr |= (caddr[3] & 0xff);
+	    memset((char *) &him4, 0, sizeof(him4));
+	    him4.sin_addr.s_addr = (uint32_t) htonl(addr);
+	    him4.sin_family = AF_INET;
+	    sa = (struct sockaddr *) &him4;
+	    len = sizeof(him4);
+	} else {
+	    /*
+	     * For IPv6 address construct a sockaddr_in6 structure.
+	     */
+	    (*env)->GetByteArrayRegion(env, addrArray, 0, 16, caddr); 
+            memset((char *) &him6, 0, sizeof(him6)); 
+            memcpy((void *)&(him6.sin6_addr), caddr, sizeof(struct in6_addr) ); 
+            him6.sin6_family = AF_INET6; 
             sa = (struct sockaddr *) &him6 ;
-            len = sizeof(him6) ;
+            len = sizeof(him6) ; 
         }
-
+    
         error = (*getnameinfo_ptr)(sa, len, host, NI_MAXHOST, NULL, 0,
-                                   NI_NAMEREQD);
+				   NI_NAMEREQD);
 
         if (!error) {
-            ret = (*env)->NewStringUTF(env, host);
+	    ret = (*env)->NewStringUTF(env, host);
         }
     }
 
     if (ret == NULL) {
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", NULL);
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", NULL);
     }
 
     return ret;
@@ -390,7 +390,7 @@ ping6(JNIEnv *env, jint fd, struct SOCKADDR_IN6* him, jint timeout,
     unsigned short pid, seq;
     int read_rv = 0;
     WSAEVENT hEvent;
-    struct ip6_pseudo_hdr *pseudo_ip6;
+    struct ip6_pseudo_hdr *pseudo_ip6; 
     int timestamp;
     int tmout2;
 
@@ -415,9 +415,9 @@ ping6(JNIEnv *env, jint fd, struct SOCKADDR_IN6* him, jint timeout,
      */
     if (netif != NULL) {
       if (NET_Bind(fd, (struct sockaddr*)netif, sizeof(struct sockaddr_in6)) < 0){
-        NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket to interface");
-        closesocket(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket to interface");
+	closesocket(fd);
+	return JNI_FALSE;
       }
     }
 
@@ -443,21 +443,21 @@ ping6(JNIEnv *env, jint fd, struct SOCKADDR_IN6* him, jint timeout,
       icmp6->icmp6_cksum = 0;
       memcpy((icmp6 + 1), &timestamp, sizeof(int));
       if (netif != NULL) {
-        memset(auxbuf, 0, 1500);
-        pseudo_ip6 = (struct ip6_pseudo_hdr*) auxbuf;
-        memcpy(&pseudo_ip6->ip6_src, &netif->sin6_addr, sizeof(struct in6_addr));
-        memcpy(&pseudo_ip6->ip6_dst, &him->sin6_addr, sizeof(struct in6_addr));
-        pseudo_ip6->ip6_plen= htonl( 64 );
-        pseudo_ip6->ip6_nxt = htonl( IPPROTO_ICMPV6 );
-        memcpy(auxbuf + sizeof(struct ip6_pseudo_hdr), icmp6, 64);
-        /**
-         * We shouldn't have to do that as computing the checksum is supposed
-         * to be done by the IPv6 stack. Unfortunately windows, here too, is
-         * uterly broken, or non compliant, so let's do it.
-         * Problem is to compute the checksum I need to know the source address
-         * which happens only if I know the interface to be used...
-         */
-        icmp6->icmp6_cksum = in_cksum((u_short *)pseudo_ip6, sizeof(struct ip6_pseudo_hdr) + 64);
+	memset(auxbuf, 0, 1500);
+	pseudo_ip6 = (struct ip6_pseudo_hdr*) auxbuf;
+	memcpy(&pseudo_ip6->ip6_src, &netif->sin6_addr, sizeof(struct in6_addr));
+	memcpy(&pseudo_ip6->ip6_dst, &him->sin6_addr, sizeof(struct in6_addr));
+	pseudo_ip6->ip6_plen= htonl( 64 );
+	pseudo_ip6->ip6_nxt = htonl( IPPROTO_ICMPV6 );
+	memcpy(auxbuf + sizeof(struct ip6_pseudo_hdr), icmp6, 64);
+	/**
+	 * We shouldn't have to do that as computing the checksum is supposed
+	 * to be done by the IPv6 stack. Unfortunately windows, here too, is
+	 * uterly broken, or non compliant, so let's do it.
+	 * Problem is to compute the checksum I need to know the source address
+	 * which happens only if I know the interface to be used...
+	 */
+	icmp6->icmp6_cksum = in_cksum((u_short *)pseudo_ip6, sizeof(struct ip6_pseudo_hdr) + 64);
       }
 
       /**
@@ -465,45 +465,45 @@ ping6(JNIEnv *env, jint fd, struct SOCKADDR_IN6* him, jint timeout,
        */
       n = sendto(fd, sendbuf, 64, 0, (struct sockaddr*) him, sizeof(struct sockaddr_in6));
       if (n < 0 && (WSAGetLastError() == WSAEINTR || WSAGetLastError() == WSAEADDRNOTAVAIL)) {
-        // Happens when using a "tunnel interface" for instance.
-        // Or trying to send a packet on a different scope.
-        closesocket(fd);
-        WSACloseEvent(hEvent);
-        return JNI_FALSE;
+	// Happens when using a "tunnel interface" for instance.
+	// Or trying to send a packet on a different scope.
+	closesocket(fd);
+	WSACloseEvent(hEvent);
+	return JNI_FALSE;
       }
       if (n < 0 && WSAGetLastError() != WSAEWOULDBLOCK) {
-        NET_ThrowNew(env, WSAGetLastError(), "Can't send ICMP packet");
-        closesocket(fd);
-        WSACloseEvent(hEvent);
-        return JNI_FALSE;
+	NET_ThrowNew(env, WSAGetLastError(), "Can't send ICMP packet");
+	closesocket(fd);
+	WSACloseEvent(hEvent);
+	return JNI_FALSE;
       }
 
       tmout2 = timeout > 1000 ? 1000 : timeout;
       do {
-        tmout2 = NET_Wait(env, fd, NET_WAIT_READ, tmout2);
-
-        if (tmout2 >= 0) {
-          len = sizeof(sa_recv);
-          memset(recvbuf, 0, 1500);
-          /**
-           * For some unknown reason, besides plain stupidity, windows
-           * truncates the first 4 bytes of the icmpv6 header some we can't
-           * check for the ICMP_ECHOREPLY value.
-           * we'll check the other values, though
-           */
-          n = recvfrom(fd, recvbuf + 4, sizeof(recvbuf) - 4, 0, (struct sockaddr*) &sa_recv, &len);
-          icmp6 = (struct icmp6_hdr *) (recvbuf);
-          memcpy(&i, (icmp6 + 1), sizeof(int));
-          /**
-           * Is that the reply we were expecting?
-           */
-          if (n >= 8 && ntohs(icmp6->icmp6_seq) == seq &&
+	tmout2 = NET_Wait(env, fd, NET_WAIT_READ, tmout2);
+	
+	if (tmout2 >= 0) {
+	  len = sizeof(sa_recv);
+	  memset(recvbuf, 0, 1500);
+	  /**
+	   * For some unknown reason, besides plain stupidity, windows
+	   * truncates the first 4 bytes of the icmpv6 header some we can't
+	   * check for the ICMP_ECHOREPLY value.
+	   * we'll check the other values, though
+	   */
+	  n = recvfrom(fd, recvbuf + 4, sizeof(recvbuf) - 4, 0, (struct sockaddr*) &sa_recv, &len);
+	  icmp6 = (struct icmp6_hdr *) (recvbuf);
+	  memcpy(&i, (icmp6 + 1), sizeof(int));
+	  /**
+	   * Is that the reply we were expecting?
+	   */
+	  if (n >= 8 && ntohs(icmp6->icmp6_seq) == seq &&
               ntohs(icmp6->icmp6_id) == pid && i == timestamp) {
-            closesocket(fd);
-            WSACloseEvent(hEvent);
-            return JNI_TRUE;
-          }
-        }
+	    closesocket(fd);
+	    WSACloseEvent(hEvent);
+	    return JNI_TRUE;
+	  }
+	}
       } while (tmout2 > 0);
       timeout -= 1000;
       seq++;
@@ -521,11 +521,11 @@ ping6(JNIEnv *env, jint fd, struct SOCKADDR_IN6* him, jint timeout,
  */
 JNIEXPORT jboolean JNICALL
 Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
-                                           jbyteArray addrArray,
-                                           jint scope,
-                                           jint timeout,
-                                           jbyteArray ifArray,
-                                           jint ttl, jint if_scope) {
+					   jbyteArray addrArray,
+					   jint scope,
+					   jint timeout,
+					   jbyteArray ifArray,
+					   jint ttl, jint if_scope) {
 #ifdef AF_INET6
     jint addr;
     jbyte caddr[16];
@@ -551,16 +551,16 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
     sz = (*env)->GetArrayLength(env, addrArray);
     if (sz == 4) {
       return Java_java_net_Inet4AddressImpl_isReachable0(env, this,
-                                                         addrArray,
-                                                         timeout,
-                                                         ifArray, ttl);
+							 addrArray,
+							 timeout,
+							 ifArray, ttl);
     }
 
     memset((char *) caddr, 0, 16);
     memset((char *) &him6, 0, sizeof(him6));
     (*env)->GetByteArrayRegion(env, addrArray, 0, 16, caddr);
     memcpy((void *)&(him6.sin6_addr), caddr, sizeof(struct in6_addr) );
-    him6.sin6_family = AF_INET6;
+    him6.sin6_family = AF_INET6; 
     if (scope > 0) {
       him6.sin6_scope_id = scope;
     }
@@ -573,7 +573,7 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
       memset((char *) &inf6, 0, sizeof(inf6));
       (*env)->GetByteArrayRegion(env, ifArray, 0, 16, caddr);
       memcpy((void *)&(inf6.sin6_addr), caddr, sizeof(struct in6_addr) );
-      inf6.sin6_family = AF_INET6;
+      inf6.sin6_family = AF_INET6; 
       inf6.sin6_port = 0;
       inf6.sin6_scope_id = if_scope;
       netif = &inf6;
@@ -601,9 +601,9 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
        * or the echo servioe has been disabled.
        */
       fd = NET_Socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
-
+      
       if (fd != -1) { /* Good to go, let's do a ping */
-        return ping6(env, fd, &him6, timeout, netif, ttl);
+	return ping6(env, fd, &him6, timeout, netif, ttl);
       }
     }
 #endif
@@ -611,12 +611,12 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
     /* No good, let's fall back on TCP */
     fd = NET_Socket(AF_INET6, SOCK_STREAM, 0);
     if (fd == JVM_IO_ERR) {
-        /* note: if you run out of fds, you may not be able to load
-         * the exception class, and get a NoClassDefFoundError
-         * instead.
-         */
-        NET_ThrowNew(env, errno, "Can't create socket");
-        return JNI_FALSE;
+	/* note: if you run out of fds, you may not be able to load
+	 * the exception class, and get a NoClassDefFoundError
+	 * instead.
+	 */
+	NET_ThrowNew(env, errno, "Can't create socket");
+	return JNI_FALSE;
     }
 
     /**
@@ -631,9 +631,9 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
      */
     if (netif != NULL) {
       if (NET_Bind(fd, (struct sockaddr*)netif, sizeof(struct sockaddr_in6)) < 0) {
-        NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket to interface");
-        closesocket(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket to interface");
+	closesocket(fd);
+	return JNI_FALSE;
       }
     }
 
@@ -652,46 +652,46 @@ Java_java_net_Inet6AddressImpl_isReachable0(JNIEnv *env, jobject this,
      * we were able to reach the host!
      */
     if (connect_rv == 0 || WSAGetLastError() == WSAECONNREFUSED) {
-        WSACloseEvent(hEvent);
-        closesocket(fd);
-        return JNI_TRUE;
+	WSACloseEvent(hEvent);
+	closesocket(fd);
+	return JNI_TRUE;
     } else {
-        int optlen;
+	int optlen;
 
         switch (WSAGetLastError()) {
-        case WSAEHOSTUNREACH:   /* Host Unreachable */
-        case WSAENETUNREACH:    /* Network Unreachable */
-        case WSAENETDOWN:       /* Network is down */
-        case WSAEPFNOSUPPORT:   /* Protocol Family unsupported */
-          WSACloseEvent(hEvent);
-          closesocket(fd);
-          return JNI_FALSE;
+        case WSAEHOSTUNREACH:	/* Host Unreachable */
+        case WSAENETUNREACH:	/* Network Unreachable */
+        case WSAENETDOWN:	/* Network is down */
+        case WSAEPFNOSUPPORT:	/* Protocol Family unsupported */
+	  WSACloseEvent(hEvent);
+	  closesocket(fd);   
+	  return JNI_FALSE;
         }
 
-        if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
-                                         "connect failed");
-            WSACloseEvent(hEvent);
-            closesocket(fd);
-            return JNI_FALSE;
-        }
+	if (WSAGetLastError() != WSAEWOULDBLOCK) {
+	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+					 "connect failed");
+	    WSACloseEvent(hEvent);
+	    closesocket(fd);
+	    return JNI_FALSE;
+	}
 
-        timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
+	timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
 
-        if (timeout >= 0) {
-          /* has connection been established? */
-          optlen = sizeof(connect_rv);
-          if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
-                             &optlen) <0) {
-            connect_rv = WSAGetLastError();
-          }
+	if (timeout >= 0) {
+	  /* has connection been established? */
+	  optlen = sizeof(connect_rv);
+	  if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
+			     &optlen) <0) {
+	    connect_rv = WSAGetLastError();
+	  }
 
-          if (connect_rv == 0 || connect_rv == WSAECONNREFUSED) {
-            WSACloseEvent(hEvent);
-            closesocket(fd);
-            return JNI_TRUE;
-          }
-        }
+	  if (connect_rv == 0 || connect_rv == WSAECONNREFUSED) {
+	    WSACloseEvent(hEvent);
+	    closesocket(fd);
+	    return JNI_TRUE;
+	  }
+	}
     }
     WSACloseEvent(hEvent);
     closesocket(fd);

@@ -34,6 +34,7 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
+ * @version 	%I%, %G%
  * @since 1.5
  */
 public class MissingFormatArgumentException extends IllegalFormatException {
@@ -50,9 +51,9 @@ public class MissingFormatArgumentException extends IllegalFormatException {
      *         Format specifier which does not have a corresponding argument
      */
     public MissingFormatArgumentException(String s) {
-        if (s == null)
-            throw new NullPointerException();
-        this.s = s;
+	if (s == null)
+	    throw new NullPointerException();
+	this.s = s;
     }
 
     /**
@@ -61,10 +62,10 @@ public class MissingFormatArgumentException extends IllegalFormatException {
      * @return  The unmatched format specifier
      */
     public String getFormatSpecifier() {
-        return s;
+	return s;
     }
 
     public String getMessage() {
-        return "Format specifier '" + s + "'";
+	return "Format specifier '" + s + "'";
     }
 }

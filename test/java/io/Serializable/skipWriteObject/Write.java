@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,17 +23,17 @@
 
 /* @test
  * @bug 4392325
- *
+ * 
  * @clean Write Read Foo Bar
  * @compile Write.java
  * @run main Write
  * @clean Write Read Foo Bar
  * @compile Read.java
  * @run main Read
- *
+ * 
  * @summary Ensure that ObjectInputStream can successfully skip over an object
- *          written using a class-defined writeObject method for which the
- *          class is not resolvable.
+ *	    written using a class-defined writeObject method for which the
+ *	    class is not resolvable.
  */
 
 import java.io.*;
@@ -46,15 +46,15 @@ class Foo implements Serializable {
 class Bar implements Serializable {
     int a, b;
     private void writeObject(ObjectOutputStream out) throws IOException {
-        out.defaultWriteObject();
+	out.defaultWriteObject();
     }
 }
 
 public class Write {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-        oout.writeObject(new Object[] { "before", new Foo(), "after" });
-        oout.close();
+	ObjectOutputStream oout = 
+	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+	oout.writeObject(new Object[] { "before", new Foo(), "after" });
+	oout.close();
     }
 }

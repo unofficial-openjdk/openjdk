@@ -37,9 +37,9 @@
  * Table elements are identified with a 32bit unsigned int.
  *   (Also see HARE trick below, which makes the TableIndex unique per table).
  *
- * Each element has a key (N bytes) and possible additional info.
+ * Each element has a key (N bytes) and possible additional info. 
  *
- * Two elements with the same key should be the same element.
+ * Two elements with the same key should be the same element. 
  *
  * The storage for the Key and Info cannot move, the table itself can.
  *
@@ -68,15 +68,15 @@
 #define BV_CHUNK_POWER_2         3  /* 2 to this power == BV_CHUNK_BITSIZE */
 #define BV_CHUNK_TYPE            unsigned char
 
-#define BV_CHUNK_BITSIZE         (((int)sizeof(BV_CHUNK_TYPE))<<3) /* x8 */
+#define BV_CHUNK_BITSIZE 	 (((int)sizeof(BV_CHUNK_TYPE))<<3) /* x8 */
 #define BV_CHUNK_INDEX_MASK      ( (1 << BV_CHUNK_POWER_2) - 1 )
 #define BV_ELEMENT_COUNT(nelems) ((((nelems+1)) >> BV_CHUNK_POWER_2) + 1)
 
 #define BV_CHUNK_ROUND(i) ((i) & ~(BV_CHUNK_INDEX_MASK))
 #define BV_CHUNK(ptr, i)          \
-                (((BV_CHUNK_TYPE*)(ptr))[(i) >> BV_CHUNK_POWER_2])
+		(((BV_CHUNK_TYPE*)(ptr))[(i) >> BV_CHUNK_POWER_2])
 #define BV_CHUNK_MASK(i)          \
-                (1 << ((i) & BV_CHUNK_INDEX_MASK))
+		(1 << ((i) & BV_CHUNK_INDEX_MASK))
 
 /* Hash code value */
 
@@ -85,14 +85,14 @@ typedef unsigned HashCode;
 /* Basic key for an element. What makes the element unique. */
 
 typedef struct TableKey {
-    void        *ptr;   /* Pointer to arbitrary data that forms the key. */
-    int          len;   /* Length in bytes of this key. */
+    void        *ptr;	/* Pointer to arbitrary data that forms the key. */
+    int          len;	/* Length in bytes of this key. */
 } TableKey;
 
 /* Basic TableElement (but only allocated if keys are used) */
 
 typedef struct TableElement {
-    TableKey     key;   /* The element key. */
+    TableKey	 key;	/* The element key. */
     HashCode     hcode; /* The full 32bit hashcode for the key. */
     TableIndex   next;  /* The next TableElement in the hash bucket chain. */
     void        *info;  /* Info pointer */
@@ -101,36 +101,36 @@ typedef struct TableElement {
 /* Generic Lookup Table structure */
 
 typedef struct LookupTable {
-    char           name[48];            /* Name of table. */
-    void          *table;               /* Pointer to array of elements. */
-    TableIndex    *hash_buckets;        /* Pointer to hash bucket chains. */
+    char           name[48];		/* Name of table. */
+    void          *table;		/* Pointer to array of elements. */
+    TableIndex    *hash_buckets;	/* Pointer to hash bucket chains. */
     Blocks        *info_blocks;         /* Blocks space for info */
     Blocks        *key_blocks;          /* Blocks space for keys */
-    TableIndex     next_index;          /* Next element available. */
-    TableIndex     table_size;          /* Current size of table. */
-    TableIndex     table_incr;          /* Suggested increment size. */
-    TableIndex     hash_bucket_count;   /* Number of hash buckets. */
-    int            elem_size;           /* Size of element. */
-    int            info_size;           /* Size of info structure. */
-    void          *freed_bv;            /* Freed element bit vector */
+    TableIndex     next_index;		/* Next element available. */
+    TableIndex     table_size;		/* Current size of table. */
+    TableIndex     table_incr;		/* Suggested increment size. */
+    TableIndex     hash_bucket_count;	/* Number of hash buckets. */
+    int		   elem_size;		/* Size of element. */
+    int            info_size;		/* Size of info structure. */
+    void          *freed_bv;		/* Freed element bit vector */
     int            freed_count;         /* Count of freed'd elements */
     TableIndex     freed_start;         /* First freed in table */
-    int            resizes;             /* Count of table resizes done. */
-    unsigned       bucket_walks;        /* Count of bucket walks. */
-    jrawMonitorID  lock;                /* Lock for table access. */
-    SerialNumber   serial_num;          /* Table serial number. */
-    TableIndex     hare;                /* Rabbit (HARE) trick. */
+    int            resizes;		/* Count of table resizes done. */
+    unsigned       bucket_walks;	/* Count of bucket walks. */
+    jrawMonitorID  lock;		/* Lock for table access. */
+    SerialNumber   serial_num;		/* Table serial number. */
+    TableIndex     hare;       		/* Rabbit (HARE) trick. */
 } LookupTable;
 
 /* To get a pointer to an element, regardless of element size. */
 
 #define ELEMENT_PTR(ltable, i) \
-        ((void*)(((char*)(ltable)->table) + (ltable)->elem_size * (i)))
+	((void*)(((char*)(ltable)->table) + (ltable)->elem_size * (i)))
 
 /* Sanity, check all the time. */
 
 #define SANITY_CHECK(condition) ( (condition) ? (void)0 : \
-                HPROF_ERROR(JNI_FALSE, "SANITY IN QUESTION: " #condition))
+		HPROF_ERROR(JNI_FALSE, "SANITY IN QUESTION: " #condition))
 
 /* To see if an index is valid. */
 
@@ -158,7 +158,7 @@ static jrawMonitorID
 lock_create(char *name)
 {
     jrawMonitorID stanley;
-
+    
     stanley = createRawMonitor(name);
     return stanley;
 }
@@ -167,7 +167,7 @@ static void
 lock_destroy(jrawMonitorID stanley)
 {
     if ( stanley != NULL ) {
-        destroyRawMonitor(stanley);
+	destroyRawMonitor(stanley);
     }
 }
 
@@ -175,7 +175,7 @@ static void
 lock_enter(jrawMonitorID stanley)
 {
     if ( stanley != NULL ) {
-        rawMonitorEnter(stanley);
+	rawMonitorEnter(stanley);
     }
 }
 
@@ -183,7 +183,7 @@ static void
 lock_exit(jrawMonitorID stanley)
 {
     if ( stanley != NULL ) {
-        rawMonitorExit(stanley);
+	rawMonitorExit(stanley);
     }
 }
 
@@ -198,9 +198,9 @@ static void *
 get_info(LookupTable *ltable, TableIndex index)
 {
     TableElement *element;
-
+    
     if ( ltable->info_size == 0 ) {
-        return NULL;
+	return NULL;
     }
     element = (TableElement*)ELEMENT_PTR(ltable,index);
     return element->info;
@@ -210,28 +210,28 @@ static void
 hash_out(LookupTable *ltable, TableIndex index)
 {
     if ( ltable->hash_bucket_count > 0 ) {
-        TableElement *element;
-        TableElement *prev_e;
-        TableIndex    bucket;
-        TableIndex    i;
-
-        element = (TableElement*)ELEMENT_PTR(ltable,index);
-        bucket = (element->hcode % ltable->hash_bucket_count);
-        i = ltable->hash_buckets[bucket];
-        HPROF_ASSERT(i!=0);
-        prev_e = NULL;
-        while ( i != 0 && i != index ) {
-            prev_e = (TableElement*)ELEMENT_PTR(ltable,i);
-            i = prev_e->next;
-        }
-        HPROF_ASSERT(i==index);
-        if ( prev_e == NULL ) {
-            ltable->hash_buckets[bucket] = element->next;
-        } else {
-            prev_e->next = element->next;
-        }
-        element->next = 0;
-        element->hcode = 0;
+	TableElement *element;
+	TableElement *prev_e;
+	TableIndex    bucket;
+	TableIndex    i;
+   
+	element = (TableElement*)ELEMENT_PTR(ltable,index);
+	bucket = (element->hcode % ltable->hash_bucket_count);
+	i = ltable->hash_buckets[bucket];
+	HPROF_ASSERT(i!=0);
+	prev_e = NULL;
+	while ( i != 0 && i != index ) {
+	    prev_e = (TableElement*)ELEMENT_PTR(ltable,i);
+	    i = prev_e->next;
+	}
+	HPROF_ASSERT(i==index);
+	if ( prev_e == NULL ) {
+	    ltable->hash_buckets[bucket] = element->next;
+	} else {
+	    prev_e->next = element->next;
+	}
+	element->next = 0;
+	element->hcode = 0;
     }
 }
 
@@ -239,11 +239,11 @@ static jboolean
 is_freed_entry(LookupTable *ltable, TableIndex index)
 {
     if ( ltable->freed_bv == NULL ) {
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
     if ( ( BV_CHUNK(ltable->freed_bv, index) & BV_CHUNK_MASK(index) ) != 0 ) {
         return JNI_TRUE;
-    }
+    } 
     return JNI_FALSE;
 }
 
@@ -255,26 +255,26 @@ set_freed_bit(LookupTable *ltable, TableIndex index)
     HPROF_ASSERT(!is_freed_entry(ltable, index));
     p = ltable->freed_bv;
     if ( p == NULL ) {
-        int size;
+	int size;
 
-        /* First time for a free */
+	/* First time for a free */
         HPROF_ASSERT(ltable->freed_start==0);
         HPROF_ASSERT(ltable->freed_start==0);
-        size             = BV_ELEMENT_COUNT(ltable->table_size);
-        p                = HPROF_MALLOC(size*(int)sizeof(BV_CHUNK_TYPE));
-        ltable->freed_bv = p;
-        (void)memset(p, 0, size*(int)sizeof(BV_CHUNK_TYPE));
+	size             = BV_ELEMENT_COUNT(ltable->table_size);
+	p                = HPROF_MALLOC(size*(int)sizeof(BV_CHUNK_TYPE));
+	ltable->freed_bv = p;
+	(void)memset(p, 0, size*(int)sizeof(BV_CHUNK_TYPE));
     }
     BV_CHUNK(p, index) |= BV_CHUNK_MASK(index);
     ltable->freed_count++;
     if ( ltable->freed_count == 1 ) {
-        /* Set freed_start for first time. */
+	/* Set freed_start for first time. */
         HPROF_ASSERT(ltable->freed_start==0);
-        ltable->freed_start = index;
+	ltable->freed_start = index;
     } else if ( index < ltable->freed_start ) {
-        /* Set freed_start to smaller value so we can be smart about search */
+	/* Set freed_start to smaller value so we can be smart about search */
         HPROF_ASSERT(ltable->freed_start!=0);
-        ltable->freed_start = index;
+	ltable->freed_start = index;
     }
     HPROF_ASSERT(ltable->freed_start!=0);
     HPROF_ASSERT(ltable->freed_start < ltable->next_index);
@@ -285,57 +285,57 @@ static TableIndex
 find_freed_entry(LookupTable *ltable)
 {
     if ( ltable->freed_count > 0 ) {
-        TableIndex i;
-        TableIndex istart;
-        void *p;
-        BV_CHUNK_TYPE chunk;
-
+	TableIndex i;
+	TableIndex istart;
+	void *p;
+	BV_CHUNK_TYPE chunk;
+	
         HPROF_ASSERT(BV_CHUNK_BITSIZE==(1<<BV_CHUNK_POWER_2));
-
-        p = ltable->freed_bv;
-        HPROF_ASSERT(p!=NULL);
-
-        /* Go to beginning of chunk */
-        HPROF_ASSERT(ltable->freed_start!=0);
-        HPROF_ASSERT(ltable->freed_start < ltable->next_index);
+	
+	p = ltable->freed_bv;
+	HPROF_ASSERT(p!=NULL);
+	
+	/* Go to beginning of chunk */
+	HPROF_ASSERT(ltable->freed_start!=0);
+	HPROF_ASSERT(ltable->freed_start < ltable->next_index);
         istart = BV_CHUNK_ROUND(ltable->freed_start);
+	
+	/* Find chunk with any bit set */
+	chunk = 0;
+	for( ; istart < ltable->next_index ; istart += BV_CHUNK_BITSIZE ) {
+	    chunk = BV_CHUNK(p, istart);
+	    if ( chunk != 0 ) {
+		break;
+	    }
+	}
+	HPROF_ASSERT(chunk!=0);
+	HPROF_ASSERT(chunk==BV_CHUNK(p,istart));
+	HPROF_ASSERT(istart < ltable->next_index);
+	
+	/* Find bit in chunk and return index of freed item */
+	for( i = istart ; i < (istart+BV_CHUNK_BITSIZE) ; i++) {
+	    BV_CHUNK_TYPE mask;
 
-        /* Find chunk with any bit set */
-        chunk = 0;
-        for( ; istart < ltable->next_index ; istart += BV_CHUNK_BITSIZE ) {
-            chunk = BV_CHUNK(p, istart);
-            if ( chunk != 0 ) {
-                break;
-            }
-        }
-        HPROF_ASSERT(chunk!=0);
-        HPROF_ASSERT(chunk==BV_CHUNK(p,istart));
-        HPROF_ASSERT(istart < ltable->next_index);
-
-        /* Find bit in chunk and return index of freed item */
-        for( i = istart ; i < (istart+BV_CHUNK_BITSIZE) ; i++) {
-            BV_CHUNK_TYPE mask;
-
-            mask = BV_CHUNK_MASK(i);
-            if ( (chunk & mask) != 0 ) {
-                HPROF_ASSERT(chunk==BV_CHUNK(p,i));
-                chunk &= ~mask;
-                BV_CHUNK(p, i) = chunk;
-                ltable->freed_count--;
-                HPROF_ASSERT(i < ltable->next_index);
-                if ( ltable->freed_count > 0 ) {
-                    /* Set freed_start so we can be smart about search */
-                    HPROF_ASSERT((i+1) < ltable->next_index);
-                    ltable->freed_start = i+1;
-                } else {
-                    /* Clear freed_start because there are no freed entries */
-                    ltable->freed_start = 0;
-                }
+	    mask = BV_CHUNK_MASK(i);
+	    if ( (chunk & mask) != 0 ) {
+		HPROF_ASSERT(chunk==BV_CHUNK(p,i));
+		chunk &= ~mask;
+		BV_CHUNK(p, i) = chunk;
+		ltable->freed_count--;
+	        HPROF_ASSERT(i < ltable->next_index);
+		if ( ltable->freed_count > 0 ) {
+		    /* Set freed_start so we can be smart about search */
+		    HPROF_ASSERT((i+1) < ltable->next_index);
+		    ltable->freed_start = i+1;
+		} else {
+		    /* Clear freed_start because there are no freed entries */
+		    ltable->freed_start = 0;
+		}
                 HPROF_ASSERT(!is_freed_entry(ltable, i));
-                return i;
-            }
-        }
-        HPROF_ASSERT(0);
+		return i;
+	    }
+	}
+	HPROF_ASSERT(0);
     }
     return 0;
 }
@@ -354,10 +354,10 @@ hashcode(void *key_ptr, int key_len)
     unsigned char *     p;
     HashCode            hcode;
     int                 i;
-
+   
     hcode       = 0;
     if ( key_ptr == NULL || key_len == 0 ) {
-        return hcode;
+	return hcode;
     }
     i           = 0;
     p           = (unsigned char*)key_ptr;
@@ -380,14 +380,14 @@ static void
 hash_in(LookupTable *ltable, TableIndex index, HashCode hcode)
 {
     if ( ltable->hash_bucket_count > 0 ) {
-        TableElement *element;
-        TableIndex    bucket;
-
-        bucket                        = (hcode % ltable->hash_bucket_count);
-        element                       = (TableElement*)ELEMENT_PTR(ltable, index);
-        element->hcode                = hcode;
-        element->next                 = ltable->hash_buckets[bucket];
-        ltable->hash_buckets[bucket]  = index;
+	TableElement *element;
+	TableIndex    bucket;
+	
+	bucket                        = (hcode % ltable->hash_bucket_count);
+	element                       = (TableElement*)ELEMENT_PTR(ltable, index);
+	element->hcode                = hcode;
+	element->next                 = ltable->hash_buckets[bucket];
+	ltable->hash_buckets[bucket]  = index;
     }
 }
 
@@ -395,52 +395,52 @@ static void
 resize_hash_buckets(LookupTable *ltable)
 {
     /*    Don't want to do this too often. */
-
+    
     /* Hash table needs resizing when it's smaller than 1/16 the number of
-     *   elements used in the table. This is just a guess.
+     *   elements used in the table. This is just a guess. 
      */
     if (    ( ltable->hash_bucket_count < (ltable->next_index >> 4) )
          && ( ltable->hash_bucket_count > 0 )
-         && ( ( ltable->resizes % 10 ) == 0 )
-         && ( ltable->bucket_walks > 1000*ltable->hash_bucket_count )
-         ) {
-        int         old_size;
-        int         new_size;
-        TableIndex *new_buckets;
-        TableIndex *old_buckets;
-        int         bucket;
+	 && ( ( ltable->resizes % 10 ) == 0 )
+	 && ( ltable->bucket_walks > 1000*ltable->hash_bucket_count )
+	 ) {
+	int         old_size;
+	int         new_size;
+	TableIndex *new_buckets;
+	TableIndex *old_buckets;
+	int         bucket;
 
-        /* Increase size of hash_buckets array, and rehash all elements */
+	/* Increase size of hash_buckets array, and rehash all elements */
+	
+	LOG3("Table resize", ltable->name, ltable->resizes);
+	
+	old_size    = ltable->hash_bucket_count;
+	old_buckets = ltable->hash_buckets;
+	new_size    = (ltable->next_index >> 3); /* 1/8 current used count */
+	SANITY_CHECK(new_size > old_size);
+	new_buckets = HPROF_MALLOC(new_size*(int)sizeof(TableIndex));
+	(void)memset(new_buckets, 0, new_size*(int)sizeof(TableIndex));
+	ltable->hash_bucket_count = new_size;
+	ltable->hash_buckets      = new_buckets;
+	
+	for ( bucket = 0 ; bucket < old_size ; bucket++ ) {
+	    TableIndex    index;
 
-        LOG3("Table resize", ltable->name, ltable->resizes);
-
-        old_size    = ltable->hash_bucket_count;
-        old_buckets = ltable->hash_buckets;
-        new_size    = (ltable->next_index >> 3); /* 1/8 current used count */
-        SANITY_CHECK(new_size > old_size);
-        new_buckets = HPROF_MALLOC(new_size*(int)sizeof(TableIndex));
-        (void)memset(new_buckets, 0, new_size*(int)sizeof(TableIndex));
-        ltable->hash_bucket_count = new_size;
-        ltable->hash_buckets      = new_buckets;
-
-        for ( bucket = 0 ; bucket < old_size ; bucket++ ) {
-            TableIndex    index;
-
-            index = old_buckets[bucket];
-            while ( index != 0 ) {
-                TableElement *element;
-                TableIndex    next;
-
-                element       = (TableElement*)ELEMENT_PTR(ltable, index);
-                next          = element->next;
-                element->next = 0;
-                hash_in(ltable, index, element->hcode);
-                index         = next;
-            }
-        }
-        HPROF_FREE(old_buckets);
-
-        ltable->bucket_walks = 0;
+	    index = old_buckets[bucket];
+	    while ( index != 0 ) {
+		TableElement *element;
+		TableIndex    next;
+		
+		element       = (TableElement*)ELEMENT_PTR(ltable, index);
+		next          = element->next;
+		element->next = 0;
+		hash_in(ltable, index, element->hcode);
+		index         = next;
+	    }
+	}
+	HPROF_FREE(old_buckets);
+	
+	ltable->bucket_walks = 0;
     }
 }
 
@@ -467,7 +467,7 @@ resize(LookupTable *ltable)
         ltable->table_incr = 512;
     }
     new_size  = old_size + ltable->table_incr;
-
+   
     /* Basic table element array */
     obytes    = old_size * ltable->elem_size;
     nbytes    = new_size * ltable->elem_size;
@@ -481,12 +481,12 @@ resize(LookupTable *ltable)
 
     /* Then bit vector for freed entries */
     if ( ltable->freed_bv != NULL ) {
-        void *old_bv;
+	void *old_bv;
         void *new_bv;
 
         obytes = BV_ELEMENT_COUNT(old_size)*(int)sizeof(BV_CHUNK_TYPE);
         nbytes = BV_ELEMENT_COUNT(new_size)*(int)sizeof(BV_CHUNK_TYPE);
-        old_bv = ltable->freed_bv;
+	old_bv = ltable->freed_bv;
         new_bv = HPROF_MALLOC(nbytes);
         (void)memcpy(new_bv, old_bv, obytes);
         (void)memset(((char*)new_bv)+obytes, 0, nbytes-obytes);
@@ -506,9 +506,9 @@ keys_equal(void *key_ptr1, void *key_ptr2, int key_len)
     unsigned char *     p1;
     unsigned char *     p2;
     int                 i;
-
+   
     if ( key_len == 0 ) {
-        return JNI_TRUE;
+	return JNI_TRUE;
     }
 
     /* We know these are aligned because we malloc'd them. */
@@ -517,15 +517,15 @@ keys_equal(void *key_ptr1, void *key_ptr2, int key_len)
     p1 = (unsigned char*)key_ptr1;
     p2 = (unsigned char*)key_ptr2;
     for ( i = 0 ; i < key_len-3 ; i += 4 ) {
-        /*LINTED*/
+	/*LINTED*/
         if ( *(unsigned*)(p1+i) != *(unsigned*)(p2+i) ) {
-            return JNI_FALSE;
-        }
+	    return JNI_FALSE;
+	}
     }
     for ( ; i < key_len ; i++ ) {
         if ( p1[i] != p2[i] ) {
-            return JNI_FALSE;
-        }
+	    return JNI_FALSE;
+	}
     }
     return JNI_TRUE;
 }
@@ -536,38 +536,38 @@ find_entry(LookupTable *ltable, void *key_ptr, int key_len, HashCode hcode)
     TableIndex index;
 
     HPROF_ASSERT(ltable!=NULL);
-
+    
     index = 0;
     if ( ltable->hash_bucket_count > 0 ) {
-        TableIndex bucket;
-        TableIndex prev_index;
+	TableIndex bucket;
+	TableIndex prev_index;
+	
+	HPROF_ASSERT(key_ptr!=NULL);
+	HPROF_ASSERT(key_len>0);
+	prev_index  = 0;
+	bucket      = (hcode % ltable->hash_bucket_count);
+	index       = ltable->hash_buckets[bucket];
+	while ( index != 0 ) {
+	    TableElement *element;
+	    TableElement *prev_element;
 
-        HPROF_ASSERT(key_ptr!=NULL);
-        HPROF_ASSERT(key_len>0);
-        prev_index  = 0;
-        bucket      = (hcode % ltable->hash_bucket_count);
-        index       = ltable->hash_buckets[bucket];
-        while ( index != 0 ) {
-            TableElement *element;
-            TableElement *prev_element;
-
-            element = (TableElement*)ELEMENT_PTR(ltable, index);
-            if ( hcode == element->hcode &&
-                 key_len == element->key.len &&
-                 keys_equal(key_ptr, element->key.ptr, key_len) ) {
-                /* Place this guy at the head of the bucket list */
-                if ( prev_index != 0 ) {
-                    prev_element = (TableElement*)ELEMENT_PTR(ltable, prev_index);
-                    prev_element->next  = element->next;
-                    element->next       = ltable->hash_buckets[bucket];
-                    ltable->hash_buckets[bucket]    = index;
-                }
-                break;
-            }
-            prev_index = index;
-            index      = element->next;
-            ltable->bucket_walks++;
-        }
+	    element = (TableElement*)ELEMENT_PTR(ltable, index);
+	    if ( hcode == element->hcode &&
+		 key_len == element->key.len &&
+		 keys_equal(key_ptr, element->key.ptr, key_len) ) {
+		/* Place this guy at the head of the bucket list */
+		if ( prev_index != 0 ) {
+		    prev_element = (TableElement*)ELEMENT_PTR(ltable, prev_index);
+		    prev_element->next  = element->next;
+		    element->next       = ltable->hash_buckets[bucket];
+		    ltable->hash_buckets[bucket]    = index;
+		}
+		break;
+	    }
+	    prev_index = index;
+	    index      = element->next;
+	    ltable->bucket_walks++;
+	}
     }
     return index;
 }
@@ -579,65 +579,65 @@ setup_new_entry(LookupTable *ltable, void *key_ptr, int key_len, void *info_ptr)
     TableElement *element;
     void         *info;
     void         *dup_key;
-
+   
     /* Assume we need new allocations for key and info */
     dup_key  = NULL;
     info     = NULL;
-
+   
     /* Look for a freed element */
     index = 0;
     if ( ltable->freed_count > 0 ) {
         index    = find_freed_entry(ltable);
     }
     if ( index != 0 ) {
-        int old_key_len;
+	int old_key_len;
 
-        /* Found a freed element, re-use what we can but clean it up. */
-        element     = (TableElement*)ELEMENT_PTR(ltable, index);
-        dup_key     = element->key.ptr;
-        old_key_len = element->key.len;
-        info        = element->info;
-        (void)memset(element, 0, ltable->elem_size);
-
-        /* Toss the key space if size is too small to hold new key */
-        if ( key_ptr != NULL ) {
-            if ( old_key_len < key_len ) {
-                /* This could leak space in the Blocks if keys are variable
-                 *    in size AND the table does frees of elements.
-                 */
-                dup_key = NULL;
-            }
-        }
+	/* Found a freed element, re-use what we can but clean it up. */
+	element     = (TableElement*)ELEMENT_PTR(ltable, index);
+	dup_key     = element->key.ptr;
+	old_key_len = element->key.len;
+	info        = element->info;
+	(void)memset(element, 0, ltable->elem_size);
+	
+	/* Toss the key space if size is too small to hold new key */
+	if ( key_ptr != NULL ) {
+	    if ( old_key_len < key_len ) {
+		/* This could leak space in the Blocks if keys are variable
+		 *    in size AND the table does frees of elements.
+		 */
+		dup_key = NULL;
+	    }
+	}
     } else {
 
-        /* Brand new table element */
-        if ( ltable->next_index >= ltable->table_size ) {
-            resize(ltable);
-        }
+	/* Brand new table element */
+	if ( ltable->next_index >= ltable->table_size ) {
+	    resize(ltable);
+	}
         index = ltable->next_index++;
         element = (TableElement*)ELEMENT_PTR(ltable, index);
     }
 
     /* Setup info area */
     if ( ltable->info_size > 0 ) {
-        if ( info == NULL ) {
-            info = blocks_alloc(ltable->info_blocks, ltable->info_size);
-        }
-        if ( info_ptr==NULL ) {
-            (void)memset(info, 0, ltable->info_size);
-        } else {
-            (void)memcpy(info, info_ptr, ltable->info_size);
-        }
+	if ( info == NULL ) {
+	    info = blocks_alloc(ltable->info_blocks, ltable->info_size);
+        } 
+	if ( info_ptr==NULL ) {
+	    (void)memset(info, 0, ltable->info_size);
+	} else {
+	    (void)memcpy(info, info_ptr, ltable->info_size);
+	}
     }
-
+   
     /* Setup key area if one was provided */
     if ( key_ptr != NULL ) {
-        if ( dup_key == NULL ) {
-            dup_key  = blocks_alloc(ltable->key_blocks, key_len);
-        }
-        (void)memcpy(dup_key, key_ptr, key_len);
+	if ( dup_key == NULL ) {
+	    dup_key  = blocks_alloc(ltable->key_blocks, key_len);
+	}
+	(void)memcpy(dup_key, key_ptr, key_len);
     }
-
+	
     /* Fill in element */
     element->key.ptr = dup_key;
     element->key.len = key_len;
@@ -647,26 +647,26 @@ setup_new_entry(LookupTable *ltable, void *key_ptr, int key_len, void *info_ptr)
 }
 
 LookupTable *
-table_initialize(const char *name, int size, int incr, int bucket_count,
-                        int info_size)
+table_initialize(const char *name, int size, int incr, int bucket_count, 
+			int info_size)
 {
     LookupTable * ltable;
     char          lock_name[80];
     int           elem_size;
     int           key_size;
-
+    
     HPROF_ASSERT(name!=NULL);
     HPROF_ASSERT(size>0);
     HPROF_ASSERT(incr>0);
     HPROF_ASSERT(bucket_count>=0);
     HPROF_ASSERT(info_size>=0);
-
+  
     key_size = 1;
     ltable = (LookupTable *)HPROF_MALLOC((int)sizeof(LookupTable));
     (void)memset(ltable, 0, (int)sizeof(LookupTable));
 
     (void)strncpy(ltable->name, name, sizeof(ltable->name));
-
+    
     elem_size = (int)sizeof(TableElement);
 
     ltable->next_index          = 1; /* Never use index 0 */
@@ -684,20 +684,20 @@ table_initialize(const char *name, int size, int incr, int bucket_count,
     ltable->table               = HPROF_MALLOC(size * elem_size);
     (void)memset(ltable->table, 0, size * elem_size);
     if ( bucket_count > 0 ) {
-        int nbytes;
-
-        nbytes               = (int)(bucket_count*sizeof(TableIndex));
-        ltable->hash_buckets = (TableIndex*)HPROF_MALLOC(nbytes);
+	int nbytes;
+	
+	nbytes               = (int)(bucket_count*sizeof(TableIndex));
+	ltable->hash_buckets = (TableIndex*)HPROF_MALLOC(nbytes);
         (void)memset(ltable->hash_buckets, 0, nbytes);
     }
 
     (void)md_snprintf(lock_name, sizeof(lock_name),
                 "HPROF %s table lock", name);
-    lock_name[sizeof(lock_name)-1] = 0;
+    lock_name[sizeof(lock_name)-1] = 0; 
     ltable->lock        = lock_create(lock_name);
     ltable->serial_num  = gdata->table_serial_number_counter++;
     ltable->hare        = (ltable->serial_num << 28);
-
+    
     LOG3("Table initialized", ltable->name, ltable->table_size);
     return ltable;
 }
@@ -706,27 +706,27 @@ int
 table_element_count(LookupTable *ltable)
 {
     int nelems;
-
+    
     HPROF_ASSERT(ltable!=NULL);
-
+    
     lock_enter(ltable->lock); {
         nelems = ltable->next_index-1;
     } lock_exit(ltable->lock);
-
+    
     return nelems;
 }
 
-void
+void                    
 table_free_entry(LookupTable *ltable, TableIndex index)
 {
     HPROF_ASSERT(ltable!=NULL);
     SANITY_CHECK_HARE(index, ltable->hare);
     index = SANITY_REMOVE_HARE(index);
     SANITY_CHECK_INDEX(ltable, index);
-
+    
     lock_enter(ltable->lock); {
         HPROF_ASSERT(!is_freed_entry(ltable, index));
-        free_entry(ltable, index);
+	free_entry(ltable, index);
     } lock_exit(ltable->lock);
 }
 
@@ -734,34 +734,34 @@ void
 table_walk_items(LookupTable *ltable, LookupTableIterator func, void* arg)
 {
     if ( ltable == NULL || ltable->next_index <= 1 ) {
-        return;
+	return;
     }
     HPROF_ASSERT(func!=NULL);
-
+    
     lock_enter(ltable->lock); {
         TableIndex index;
-        int        fcount;
+	int        fcount;
 
         LOG3("table_walk_items() count+free", ltable->name, ltable->next_index);
-        fcount = 0;
-        for ( index = 1 ; index < ltable->next_index ; index++ ) {
-            if ( ! is_freed_entry(ltable, index) ) {
-                void *key_ptr;
-                int   key_len;
-                void *info;
-
-                get_key(ltable, index, &key_ptr, &key_len);
-                info = get_info(ltable, index);
-                (*func)(SANITY_ADD_HARE(index, ltable->hare), key_ptr, key_len, info, arg);
-                if ( is_freed_entry(ltable, index) ) {
-                    fcount++;
-                }
-            } else {
-                fcount++;
-            }
+	fcount = 0;
+	for ( index = 1 ; index < ltable->next_index ; index++ ) {
+	    if ( ! is_freed_entry(ltable, index) ) {
+		void *key_ptr;
+		int   key_len;
+		void *info;
+		
+		get_key(ltable, index, &key_ptr, &key_len);
+		info = get_info(ltable, index);
+		(*func)(SANITY_ADD_HARE(index, ltable->hare), key_ptr, key_len, info, arg);
+		if ( is_freed_entry(ltable, index) ) {
+		    fcount++;
+		}
+	    } else {
+		fcount++;
+	    }
         }
         LOG3("table_walk_items() count-free", ltable->name, ltable->next_index);
-        HPROF_ASSERT(fcount==ltable->freed_count);
+	HPROF_ASSERT(fcount==ltable->freed_count);
     } lock_exit(ltable->lock);
 }
 
@@ -769,36 +769,36 @@ void
 table_cleanup(LookupTable *ltable, LookupTableIterator func, void *arg)
 {
     if ( ltable == NULL ) {
-        return;
+	return;
     }
 
     if ( func != NULL ) {
-        table_walk_items(ltable, func, arg);
+	table_walk_items(ltable, func, arg);
     }
 
     lock_enter(ltable->lock); {
 
         HPROF_FREE(ltable->table);
         if ( ltable->hash_buckets != NULL ) {
-            HPROF_FREE(ltable->hash_buckets);
+	    HPROF_FREE(ltable->hash_buckets);
         }
-        if ( ltable->freed_bv != NULL ) {
-            HPROF_FREE(ltable->freed_bv);
-        }
-        if ( ltable->info_blocks != NULL ) {
-            blocks_term(ltable->info_blocks);
-            ltable->info_blocks = NULL;
-        }
-        if ( ltable->key_blocks != NULL ) {
-            blocks_term(ltable->key_blocks);
-            ltable->key_blocks = NULL;
-        }
+	if ( ltable->freed_bv != NULL ) {
+	    HPROF_FREE(ltable->freed_bv);
+        } 
+	if ( ltable->info_blocks != NULL ) {
+	    blocks_term(ltable->info_blocks);
+	    ltable->info_blocks = NULL;
+	}
+	if ( ltable->key_blocks != NULL ) {
+	    blocks_term(ltable->key_blocks);
+	    ltable->key_blocks = NULL;
+	}
 
     } lock_exit(ltable->lock);
-
+    
     lock_destroy(ltable->lock);
     ltable->lock = NULL;
-
+    
     HPROF_FREE(ltable);
     ltable = NULL;
 }
@@ -808,26 +808,26 @@ table_create_entry(LookupTable *ltable, void *key_ptr, int key_len, void *info_p
 {
     TableIndex index;
     HashCode   hcode;
-
+    
     HPROF_ASSERT(ltable!=NULL);
-
+   
     /* Create hash code if needed */
     hcode = 0;
     if ( ltable->hash_bucket_count > 0 ) {
-        hcode = hashcode(key_ptr, key_len);
+	hcode = hashcode(key_ptr, key_len);
     }
-
+    
     /* Create a new entry */
     lock_enter(ltable->lock); {
-
-        /* Need to create a new entry */
-        index = setup_new_entry(ltable, key_ptr, key_len, info_ptr);
-
-        /* Add to hash table if we have one */
-        if ( ltable->hash_bucket_count > 0 ) {
-            hash_in(ltable, index, hcode);
-        }
-
+        
+	/* Need to create a new entry */
+	index = setup_new_entry(ltable, key_ptr, key_len, info_ptr);
+	
+	/* Add to hash table if we have one */
+	if ( ltable->hash_bucket_count > 0 ) {
+	    hash_in(ltable, index, hcode);
+	}
+    
     } lock_exit(ltable->lock);
     return SANITY_ADD_HARE(index, ltable->hare);
 }
@@ -837,61 +837,61 @@ table_find_entry(LookupTable *ltable, void *key_ptr, int key_len)
 {
     TableIndex index;
     HashCode   hcode;
-
+    
     /* Create hash code if needed */
     hcode = 0;
     if ( ltable->hash_bucket_count > 0 ) {
-        hcode = hashcode(key_ptr, key_len);
+	hcode = hashcode(key_ptr, key_len);
     }
-
+   
     /* Look for element */
     lock_enter(ltable->lock); {
         index = find_entry(ltable, key_ptr, key_len, hcode);
     } lock_exit(ltable->lock);
-
+    
     return index==0 ? index : SANITY_ADD_HARE(index, ltable->hare);
 }
 
 TableIndex
 table_find_or_create_entry(LookupTable *ltable, void *key_ptr, int key_len,
-                jboolean *pnew_entry, void *info_ptr)
+		jboolean *pnew_entry, void *info_ptr)
 {
     TableIndex index;
     HashCode   hcode;
-
+   
     /* Assume it is NOT a new entry for now */
     if ( pnew_entry ) {
-        *pnew_entry = JNI_FALSE;
+	*pnew_entry = JNI_FALSE;
     }
-
+    
     /* Create hash code if needed */
     hcode = 0;
     if ( ltable->hash_bucket_count > 0 ) {
-        hcode = hashcode(key_ptr, key_len);
+	hcode = hashcode(key_ptr, key_len);
     }
-
+    
     /* Look for element */
     index = 0;
     lock_enter(ltable->lock); {
-        if ( ltable->hash_bucket_count > 0 ) {
-            index = find_entry(ltable, key_ptr, key_len, hcode);
-        }
-        if ( index == 0 ) {
-
-            /* Need to create a new entry */
-            index = setup_new_entry(ltable, key_ptr, key_len, info_ptr);
-
-            /* Add to hash table if we have one */
-            if ( ltable->hash_bucket_count > 0 ) {
-                hash_in(ltable, index, hcode);
-            }
-
-            if ( pnew_entry ) {
-                *pnew_entry = JNI_TRUE;
-            }
-        }
+	if ( ltable->hash_bucket_count > 0 ) {
+	    index = find_entry(ltable, key_ptr, key_len, hcode);
+	}
+	if ( index == 0 ) {
+	    
+	    /* Need to create a new entry */
+	    index = setup_new_entry(ltable, key_ptr, key_len, info_ptr);
+	    
+	    /* Add to hash table if we have one */
+	    if ( ltable->hash_bucket_count > 0 ) {
+		hash_in(ltable, index, hcode);
+	    }
+	    
+	    if ( pnew_entry ) {
+		*pnew_entry = JNI_TRUE;
+	    }
+	}
     } lock_exit(ltable->lock);
-
+    
     return SANITY_ADD_HARE(index, ltable->hare);
 }
 
@@ -899,18 +899,18 @@ void *
 table_get_info(LookupTable *ltable, TableIndex index)
 {
     void *info;
-
+    
     HPROF_ASSERT(ltable!=NULL);
     HPROF_ASSERT(ltable->info_size > 0);
     SANITY_CHECK_HARE(index, ltable->hare);
     index = SANITY_REMOVE_HARE(index);
     SANITY_CHECK_INDEX(ltable, index);
-
+    
     lock_enter(ltable->lock); {
         HPROF_ASSERT(!is_freed_entry(ltable, index));
         info = get_info(ltable,index);
     } lock_exit(ltable->lock);
-
+    
     return info;
 }
 
@@ -924,10 +924,10 @@ table_get_key(LookupTable *ltable, TableIndex index, void **pkey_ptr, int *pkey_
     HPROF_ASSERT(ltable->elem_size!=0);
     index = SANITY_REMOVE_HARE(index);
     SANITY_CHECK_INDEX(ltable, index);
-
+    
     lock_enter(ltable->lock); {
         HPROF_ASSERT(!is_freed_entry(ltable, index));
-        get_key(ltable, index, pkey_ptr, pkey_len);
+	get_key(ltable, index, pkey_ptr, pkey_len);
     } lock_exit(ltable->lock);
 }
 
@@ -942,3 +942,4 @@ table_lock_exit(LookupTable *ltable)
 {
     lock_exit(ltable->lock);
 }
+

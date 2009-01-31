@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug     5014783
- * @summary Basic unit test of thread states returned by
+ * @summary Basic unit test of thread states returned by 
  *          Thread.getState().
  *
  * @author  Mandy Chung
@@ -51,12 +51,12 @@ public class ThreadStateTest {
     private static Lock globalLock = new Lock("my lock");
 
     public static void main(String[] argv) {
-        // Call Thread.getState to force all initialization done
-        // before test verification begins.
-        Thread.currentThread().getState();
+        // Call Thread.getState to force all initialization done  
+        // before test verification begins. 
+        Thread.currentThread().getState(); 
         MyThread myThread = new MyThread("MyThread");
-
-        // before myThread starts
+  
+        // before myThread starts 
         checkThreadState(myThread, Thread.State.NEW);
 
         myThread.start();
@@ -106,15 +106,15 @@ public class ThreadStateTest {
             throw new RuntimeException("TEST FAILED.");
         System.out.println("Test passed.");
     }
-
+ 
     private static void checkThreadState(Thread t, Thread.State expected) {
-        Thread.State state = t.getState();
-        System.out.println("Checking thread state " + state);
+        Thread.State state = t.getState(); 
+	System.out.println("Checking thread state " + state);
         if (state == null) {
             throw new RuntimeException(t.getName() + " expected to have " +
                 expected + " but got null.");
         }
-
+ 
         if (state != expected) {
             throw new RuntimeException(t.getName() + " expected to have " +
                 expected + " but got " + state);
@@ -171,7 +171,7 @@ public class ThreadStateTest {
                         break;
                     }
                     case BLOCKED: {
-                        // signal main thread.
+            	        // signal main thread. 
                         thrsync.signal();
                         System.out.println("  myThread is going to block.");
                         synchronized (globalLock) {
@@ -259,53 +259,53 @@ public class ThreadStateTest {
             System.out.println("Waiting myThread to go blocked.");
             setState(BLOCKED);
             // wait for MyThread to get blocked
-            thrsync.waitForSignal();
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
 
         public void goWaiting() {
             System.out.println("Waiting myThread to go waiting.");
             setState(WAITING);
             // wait for  MyThread to wait on object.
-            thrsync.waitForSignal();
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
         public void goTimedWaiting() {
             System.out.println("Waiting myThread to go timed waiting.");
             setState(TIMED_WAITING);
-            // wait for MyThread timed wait call.
-            thrsync.waitForSignal();
+            // wait for MyThread timed wait call. 
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
         public void goParked() {
             System.out.println("Waiting myThread to go parked.");
             setState(PARKED);
             // wait for  MyThread state change to PARKED.
-            thrsync.waitForSignal();
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
         public void goTimedParked() {
             System.out.println("Waiting myThread to go timed parked.");
             setState(TIMED_PARKED);
-            // wait for  MyThread.
-            thrsync.waitForSignal();
+            // wait for  MyThread.  
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
 
         public void goSleeping() {
             System.out.println("Waiting myThread to go sleeping.");
             setState(SLEEPING);
-            // wait for  MyThread.
-            thrsync.waitForSignal();
+            // wait for  MyThread.  
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
         public void terminate() {
             System.out.println("Waiting myThread to terminate.");
             setState(TERMINATE);
-            // wait for  MyThread.
-            thrsync.waitForSignal();
+            // wait for  MyThread.  
+	    thrsync.waitForSignal();
             goSleep(20);
-        }
+        } 
 
         private void setState(int newState) {
             switch (state) {
@@ -341,46 +341,46 @@ public class ThreadStateTest {
 
 
     static class ThreadExecutionSynchronizer {
-
+    
         private boolean  waiting;
         private Semaphore semaphore;
-
+                       
         public ThreadExecutionSynchronizer() {
             semaphore = new Semaphore(1);
-        waiting = false;
+    	waiting = false;
         }
-
-        // Synchronizes two threads execution points.
-        // Basically any thread could get scheduled to run and
+    
+        // Synchronizes two threads execution points. 
+        // Basically any thread could get scheduled to run and 
         // it is not possible to know which thread reaches expected
-        // execution point. So whichever thread reaches a execution
+        // execution point. So whichever thread reaches a execution 
         // point first wait for the second thread. When the second thread
         // reaches the expected execution point will wake up
-        // the thread which is waiting here.
+        // the thread which is waiting here. 
         void stopOrGo() {
-        semaphore.acquireUninterruptibly(); // Thread can get blocked.
-        if (!waiting) {
-            waiting = true;
-            // Wait for second thread to enter this method.
-            while(!semaphore.hasQueuedThreads()) {
-                try {
-                    Thread.sleep(20);
-                } catch (InterruptedException xx) {}
-            }
-            semaphore.release();
-        } else {
-            waiting = false;
-            semaphore.release();
+    	semaphore.acquireUninterruptibly(); // Thread can get blocked.
+    	if (!waiting) {
+    	    waiting = true;
+    	    // Wait for second thread to enter this method. 
+    	    while(!semaphore.hasQueuedThreads()) {
+    		try {
+    		    Thread.sleep(20);
+    		} catch (InterruptedException xx) {}
+    	    }
+    	    semaphore.release();
+    	} else {
+    	    waiting = false;
+    	    semaphore.release();
+    	}
         }
-        }
-
+    	
         // Wrapper function just for code readability.
         void waitForSignal() {
-        stopOrGo();
+    	stopOrGo();
         }
-
+    
         void signal() {
-        stopOrGo();
+    	stopOrGo();
         }
     }
 }

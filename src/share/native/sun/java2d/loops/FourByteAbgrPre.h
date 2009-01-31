@@ -31,10 +31,10 @@
  * LoopMacros.h to manipulate a surface of type "FourByteAbgrPre".
  */
 
-typedef jint    FourByteAbgrPrePixelType;
-typedef jubyte  FourByteAbgrPreDataType;
+typedef jint	FourByteAbgrPrePixelType;
+typedef jubyte	FourByteAbgrPreDataType;
 
-#define FourByteAbgrPrePixelStride              4
+#define FourByteAbgrPrePixelStride		4
 
 #define DeclareFourByteAbgrPreLoadVars(PREFIX)
 #define DeclareFourByteAbgrPreStoreVars(PREFIX)
@@ -63,10 +63,10 @@ typedef jubyte  FourByteAbgrPreDataType;
 
 #define StoreFourByteAbgrPrePixel(pRas, x, pixel) \
     do { \
-        (pRas)[4*(x)+0] = (jubyte) ((pixel) >> 0); \
-        (pRas)[4*(x)+1] = (jubyte) ((pixel) >> 8); \
-        (pRas)[4*(x)+2] = (jubyte) ((pixel) >> 16); \
-        (pRas)[4*(x)+3] = (jubyte) ((pixel) >> 24); \
+	(pRas)[4*(x)+0] = (jubyte) ((pixel) >> 0); \
+	(pRas)[4*(x)+1] = (jubyte) ((pixel) >> 8); \
+	(pRas)[4*(x)+2] = (jubyte) ((pixel) >> 16); \
+	(pRas)[4*(x)+3] = (jubyte) ((pixel) >> 24); \
     } while (0)
 
 #define DeclareFourByteAbgrPrePixelData(PREFIX) \
@@ -74,18 +74,18 @@ typedef jubyte  FourByteAbgrPreDataType;
 
 #define ExtractFourByteAbgrPrePixelData(PIXEL, PREFIX) \
     do { \
-        PREFIX ## 0 = (jubyte) (PIXEL >> 0); \
-        PREFIX ## 1 = (jubyte) (PIXEL >> 8); \
-        PREFIX ## 2 = (jubyte) (PIXEL >> 16); \
-        PREFIX ## 3 = (jubyte) (PIXEL >> 24); \
+	PREFIX ## 0 = (jubyte) (PIXEL >> 0); \
+	PREFIX ## 1 = (jubyte) (PIXEL >> 8); \
+	PREFIX ## 2 = (jubyte) (PIXEL >> 16); \
+	PREFIX ## 3 = (jubyte) (PIXEL >> 24); \
     } while (0)
 
 #define StoreFourByteAbgrPrePixelData(pPix, x, pixel, PREFIX) \
     do { \
-        pPix[4*(x)+0] = PREFIX ## 0; \
-        pPix[4*(x)+1] = PREFIX ## 1; \
-        pPix[4*(x)+2] = PREFIX ## 2; \
-        pPix[4*(x)+3] = PREFIX ## 3; \
+	pPix[4*(x)+0] = PREFIX ## 0; \
+	pPix[4*(x)+1] = PREFIX ## 1; \
+	pPix[4*(x)+2] = PREFIX ## 2; \
+	pPix[4*(x)+3] = PREFIX ## 3; \
     } while (0)
 
 
@@ -97,9 +97,9 @@ typedef jubyte  FourByteAbgrPreDataType;
         jint a = (pRas)[4*(x)+0]; \
         if ((a == 0xff) || (a == 0)) { \
             (argb) = (((pRas)[4*(x)+1] << 0) | \
-                      ((pRas)[4*(x)+2] << 8) | \
-                      ((pRas)[4*(x)+3] << 16) | \
-                      (a << 24)); \
+	              ((pRas)[4*(x)+2] << 8) | \
+	              ((pRas)[4*(x)+3] << 16) | \
+	              (a << 24)); \
         } else { \
             jint r, g, b; \
             b = DIV8((pRas)[4*(x)+1], a); \
@@ -118,9 +118,9 @@ typedef jubyte  FourByteAbgrPreDataType;
 #define LoadFourByteAbgrPreTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
         (a) = (pRas)[4*(x)+0]; \
-        (b) = (pRas)[4*(x)+1]; \
-        (g) = (pRas)[4*(x)+2]; \
-        (r) = (pRas)[4*(x)+3]; \
+	(b) = (pRas)[4*(x)+1]; \
+	(g) = (pRas)[4*(x)+2]; \
+	(r) = (pRas)[4*(x)+3]; \
         if ((a != 0xff) && (a != 0)) { \
             r = DIV8(r, a); \
             g = DIV8(g, a); \
@@ -131,18 +131,18 @@ typedef jubyte  FourByteAbgrPreDataType;
 #define StoreFourByteAbgrPreFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
         (pRas)[4*(x)+0] = (jubyte) 0xff; \
-        (pRas)[4*(x)+1] = (jubyte) ((rgb) >> 0); \
-        (pRas)[4*(x)+2] = (jubyte) ((rgb) >> 8); \
-        (pRas)[4*(x)+3] = (jubyte) ((rgb) >> 16); \
+	(pRas)[4*(x)+1] = (jubyte) ((rgb) >> 0); \
+	(pRas)[4*(x)+2] = (jubyte) ((rgb) >> 8); \
+	(pRas)[4*(x)+3] = (jubyte) ((rgb) >> 16); \
     } while (0)
 
 #define StoreFourByteAbgrPreFrom1IntArgb(pRas, PREFIX, x, argb) \
     do { \
         if ((((argb) >> 24) + 1) == 0) { \
             (pRas)[4*(x)+0] = (jubyte) ((argb) >> 24); \
-            (pRas)[4*(x)+1] = (jubyte) ((argb) >> 0); \
-            (pRas)[4*(x)+2] = (jubyte) ((argb) >> 8); \
-            (pRas)[4*(x)+3] = (jubyte) ((argb) >> 16); \
+	    (pRas)[4*(x)+1] = (jubyte) ((argb) >> 0); \
+	    (pRas)[4*(x)+2] = (jubyte) ((argb) >> 8); \
+	    (pRas)[4*(x)+3] = (jubyte) ((argb) >> 16); \
         } else { \
             jint a, r, g, b; \
             ExtractIntDcmComponents1234(argb, a, r, g, b); \
@@ -156,10 +156,10 @@ typedef jubyte  FourByteAbgrPreDataType;
 #define StoreFourByteAbgrPreFrom3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
         (pRas)[4*(x)+0] = (jubyte) 0xff; \
-        (pRas)[4*(x)+1] = (jubyte) (b); \
-        (pRas)[4*(x)+2] = (jubyte) (g); \
-        (pRas)[4*(x)+3] = (jubyte) (r); \
-    } while (0)
+	(pRas)[4*(x)+1] = (jubyte) (b); \
+	(pRas)[4*(x)+2] = (jubyte) (g); \
+	(pRas)[4*(x)+3] = (jubyte) (r); \
+    } while (0)    
 
 #define StoreFourByteAbgrPreFrom4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
@@ -175,9 +175,9 @@ typedef jubyte  FourByteAbgrPreDataType;
 
 #define CopyFourByteAbgrPreToIntArgbPre(pRGB, i, PREFIX, pRow, x) \
     (pRGB)[i] = (((pRow)[4*(x)+0] << 24) | \
-                 ((pRow)[4*(x)+1] << 0) | \
-                 ((pRow)[4*(x)+2] << 8) | \
-                 ((pRow)[4*(x)+3] << 16))
+		 ((pRow)[4*(x)+1] << 0) | \
+		 ((pRow)[4*(x)+2] << 8) | \
+		 ((pRow)[4*(x)+3] << 16))
 
 
 #define DeclareFourByteAbgrPreAlphaLoadData(PREFIX)
@@ -188,13 +188,13 @@ typedef jubyte  FourByteAbgrPreDataType;
 
 #define Postload4ByteArgbFromFourByteAbgrPre(pRas, PREFIX, COMP_PREFIX) \
     do { \
-        COMP_PREFIX ## B = (pRas)[1]; \
-        COMP_PREFIX ## G = (pRas)[2]; \
-        COMP_PREFIX ## R = (pRas)[3]; \
+	COMP_PREFIX ## B = (pRas)[1]; \
+	COMP_PREFIX ## G = (pRas)[2]; \
+	COMP_PREFIX ## R = (pRas)[3]; \
     } while (0)
 
 
-#define FourByteAbgrPreIsPremultiplied  1
+#define FourByteAbgrPreIsPremultiplied	1
 
 #define DeclareFourByteAbgrPreBlendFillVars(PREFIX)
 
@@ -209,10 +209,10 @@ typedef jubyte  FourByteAbgrPreDataType;
 
 #define StoreFourByteAbgrPreFrom4ByteArgbComps(pRas, PREFIX, x, COMP_PREFIX)\
     do { \
-        (pRas)[4*(x)+0] = (jubyte) COMP_PREFIX ## A; \
-        (pRas)[4*(x)+1] = (jubyte) COMP_PREFIX ## B; \
-        (pRas)[4*(x)+2] = (jubyte) COMP_PREFIX ## G; \
-        (pRas)[4*(x)+3] = (jubyte) COMP_PREFIX ## R; \
+	(pRas)[4*(x)+0] = (jubyte) COMP_PREFIX ## A; \
+	(pRas)[4*(x)+1] = (jubyte) COMP_PREFIX ## B; \
+	(pRas)[4*(x)+2] = (jubyte) COMP_PREFIX ## G; \
+	(pRas)[4*(x)+3] = (jubyte) COMP_PREFIX ## R; \
     } while (0)
 
 #endif /* FourByteAbgrPre_h_Included */

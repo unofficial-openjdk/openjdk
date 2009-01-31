@@ -41,14 +41,14 @@ import java.util.*;
 public class GeneratedConnectors {
 
     static Connector find(List l, String name) {
-        Iterator i = l.iterator();
-        while (i.hasNext()) {
-            Connector c = (Connector)i.next();
-            if (c.name().equals(name)) {
-                return c;
-            }
-        }
-        return null;
+	Iterator i = l.iterator();
+	while (i.hasNext()) {
+	    Connector c = (Connector)i.next();
+	    if (c.name().equals(name)) {
+		return c;
+	    }
+	}
+	return null;
     }
 
     public static void main(String args[]) throws Exception {
@@ -63,25 +63,25 @@ public class GeneratedConnectors {
             return;
         }
 
-        List connectors = vmm.allConnectors();
+	List connectors = vmm.allConnectors();
 
-        // test that the connectors are ceated and are of the
-        // correct type
-        //
-        AttachingConnector attacher =
-            (AttachingConnector)find(connectors, "NullAttach");
-        ListeningConnector listener =
-            (ListeningConnector)find(connectors, "NullListen");
+	// test that the connectors are ceated and are of the
+	// correct type
+	//
+	AttachingConnector attacher = 
+	    (AttachingConnector)find(connectors, "NullAttach");
+	ListeningConnector listener = 
+	    (ListeningConnector)find(connectors, "NullListen");
 
-        if (attacher == null || listener == null) {
-            throw new RuntimeException("One, or both, generated connectors are missing");
-        }
+	if (attacher == null || listener == null) {
+	    throw new RuntimeException("One, or both, generated connectors are missing");
+	}
 
-        // check that the connectors have the required "address" argument
-        //
-        Connector.StringArgument arg;
-        arg = (Connector.StringArgument)attacher.defaultArguments().get("address");
-        arg = (Connector.StringArgument)listener.defaultArguments().get("address");
+	// check that the connectors have the required "address" argument
+	//
+	Connector.StringArgument arg;
+	arg = (Connector.StringArgument)attacher.defaultArguments().get("address");
+	arg = (Connector.StringArgument)listener.defaultArguments().get("address");
     }
 
 }

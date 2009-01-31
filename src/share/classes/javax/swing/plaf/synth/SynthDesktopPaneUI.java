@@ -44,6 +44,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth L&F for a desktop.
  *
+ * @version %I%, %G%
  * @author Joshua Outwater
  * @author Steve Wilson
  */
@@ -91,7 +92,7 @@ class SynthDesktopPaneUI extends BasicDesktopPaneUI implements
                 if (desktopIcon.getParent() != taskBar) {
                     taskBar.add(desktopIcon);
                     desktopIcon.getInternalFrame().addComponentListener(
-                        taskBar);
+                        taskBar); 
                 }
             }
             taskBar.setBackground(desktop.getBackground());
@@ -276,7 +277,7 @@ class SynthDesktopPaneUI extends BasicDesktopPaneUI implements
                     }
                 }
                 add(desktopIcon);
-                f.addComponentListener(this);
+                f.addComponentListener(this); 
                 if (getComponentCount() == 1) {
                     adjustSize();
                 }

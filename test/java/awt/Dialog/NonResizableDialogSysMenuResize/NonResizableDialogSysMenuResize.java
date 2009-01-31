@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 6494016
   @summary Nonresizable dialogs should not be resized using the Size SystemMenu command
@@ -49,11 +49,11 @@ public class NonResizableDialogSysMenuResize
     //*** test-writer defined static variables go here ***
 
 
-    private static void init()
+    private static void init() 
     {
         //*** Create instructions for the user here ***
-
-        String[] instructions =
+      
+        String[] instructions = 
         {
             "This is an AUTOMATIC test, simply wait until it is done.",
             "The result (passed or failed) will be shown in the",
@@ -64,15 +64,15 @@ public class NonResizableDialogSysMenuResize
 
         // We must be sure that the Size system command has the S key as the shortcut one in the System menu.
         Sysout.println("NOTE: The test is known to work correctly with English MS Windows only.");
-
+        
         String s = Toolkit.getDefaultToolkit().getClass().getName();
-
+        
         // This is Windows-only test
-        if (!s.contains("WToolkit")) {
+        if (!s.contains("WToolkit")) { 
             pass();
             return;
         }
-
+        
         Dialog d = new Dialog((Frame)null, "dlg", false);
         d.setResizable(false);
         d.setSize(100, 100);
@@ -81,12 +81,12 @@ public class NonResizableDialogSysMenuResize
 
         Robot robot = Util.createRobot();
         robot.setAutoDelay(20);
-
+        
         // To be sure both the frame and the dialog are shown and packed
         Util.waitForIdle(robot);
 
 
-        // The initial dialog position and size.
+        // The initial dialog position and size. 
         Point loc1 = d.getLocation();
         Dimension dim1 = d.getSize();
 
@@ -111,14 +111,14 @@ public class NonResizableDialogSysMenuResize
             robot.keyPress(KeyEvent.VK_LEFT);
             robot.keyRelease(KeyEvent.VK_LEFT);
         }
-
+        
         // End the Size loop
         robot.keyPress(KeyEvent.VK_ENTER);
         robot.keyRelease(KeyEvent.VK_ENTER);
 
         Util.waitForIdle(robot);
-
-        // The dialog position and size after trying to change its size.
+        
+        // The dialog position and size after trying to change its size. 
         Point loc2 = d.getLocation();
         Dimension dim2 = d.getSize();
 
@@ -129,14 +129,14 @@ public class NonResizableDialogSysMenuResize
         } else {
             fail("The non-resizable dialog has changed its size and/or location.");
         }
-
+      
     }//End  init()
 
 
 
     /*****************************************************
      * Standard Test Machinery Section
-     * DO NOT modify anything in this section -- it's a
+     * DO NOT modify anything in this section -- it's a 
      * standard chunk of code which has all of the
      * synchronisation necessary for the test harness.
      * By keeping it the same in all tests, it is easier
@@ -177,13 +177,13 @@ public class NonResizableDialogSysMenuResize
 
         //Test involves other threads, so sleep and wait for them to
         // called pass() or fail()
-        try
+        try 
         {
             Thread.sleep( sleepTime );
             //Timed out, so fail the test
             throw new RuntimeException( "Timed out after " + sleepTime/1000 + " seconds" );
-        }
-        catch (InterruptedException e)
+        } 
+        catch (InterruptedException e) 
         {
             //The test harness may have interrupted the test.  If so, rethrow the exception
             // so that the harness gets it and deals with it.
@@ -197,14 +197,14 @@ public class NonResizableDialogSysMenuResize
                 throw new RuntimeException( failureMessage );
             }
         }
-
+      
     }//main
 
     public static synchronized void setTimeoutTo( int seconds )
     {
         sleepTime = seconds * 1000;
     }
-
+   
     public static synchronized void pass()
     {
         Sysout.println( "The test passed." );
@@ -256,22 +256,22 @@ class TestPassedException extends RuntimeException
 
 //*********** End Standard Test Machinery Section **********
 
-
+ 
 //************ Begin classes defined for the test ****************
 
-// if want to make listeners, here is the recommended place for them, then instantiate
+// if want to make listeners, here is the recommended place for them, then instantiate 
 //  them in init()
 
 /* Example of a class which may be written as part of a test
-class NewClass implements anInterface
+class NewClass implements anInterface 
  {
    static int newVar = 0;
-
-   public void eventDispatched(AWTEvent e)
+   
+   public void eventDispatched(AWTEvent e) 
     {
       //Counting events to see if we get enough
       eventCount++;
-
+      
       if( eventCount == 20 )
        {
          //got enough events, so pass
@@ -284,7 +284,7 @@ class NewClass implements anInterface
 
          NonResizableDialogSysMenuResize.fail();
        }
-
+      
     }// eventDispatched()
 
  }// NewClass class
@@ -293,14 +293,14 @@ class NewClass implements anInterface
 
 
 //************** End classes defined for the test *******************
-
+  
 
 
 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard
-  chunk of code whose purpose is to make user
+ DO NOT modify anything below -- it's a standard 
+  chunk of code whose purpose is to make user 
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -313,12 +313,12 @@ class NewClass implements anInterface
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well
+ This mimics System.out.println but works within the test harness as well 
   as standalone.
  */
 
-class Sysout
-{
+class Sysout 
+{ 
     private static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -328,7 +328,7 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
+   
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -337,8 +337,8 @@ class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
-
+   
+      
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -367,20 +367,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-
+   
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name )
+    public TestDialog( Frame frame, String name ) 
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-
+      
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-
+      
         pack();
-
+      
         setVisible(true);
     }// TestDialog()
 
@@ -394,7 +394,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        {
+        { 
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -405,25 +405,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-
+               
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-
+               
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else
-                {
+                else 
+                { 
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-
+            
                 instructionsText.append( printStr + "\n" );
-
+            
             }// while
-
+         
         }// for
-
+      
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -431,6 +431,8 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }
+    }  
+   
+}// TestDialog  class    
+  
 
-}// TestDialog  class

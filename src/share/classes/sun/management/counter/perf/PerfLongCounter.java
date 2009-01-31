@@ -40,13 +40,13 @@ public class PerfLongCounter extends AbstractCounter
         super(name, u, v, flags);
         this.lb = lb;
     }
-
+    
     public Object getValue() {
         return new Long(lb.get(0));
     }
-
+    
     /**
-     * Get the value of this Long performance counter
+     * Get the value of this Long performance counter 
      */
     public long longValue() {
         return lb.get(0);

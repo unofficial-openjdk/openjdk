@@ -31,9 +31,10 @@ package java.security.spec;
  * <P> This interface contains no methods or constants. Its only purpose
  * is to group (and provide type safety for) all parameter specifications.
  * All parameter specifications must implement this interface.
- *
+ * 
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @see java.security.AlgorithmParameters
  * @see DSAParameterSpec

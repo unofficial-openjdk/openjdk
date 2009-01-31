@@ -31,7 +31,7 @@ package java.awt.image;
  *  which each sample of a pixel occupies one data element of the DataBuffer.
  *  It subclasses ComponentSampleModel but provides a more efficent
  *  implementation for accessing pixel interleaved image data than is provided
- *  by ComponentSampleModel.  This class
+ *  by ComponentSampleModel.  This class 
  *  stores sample data for all bands in a single bank of the
  *  DataBuffer. Accessor methods are provided so that image data can be
  *  manipulated directly. Pixel stride is the number of
@@ -50,14 +50,14 @@ package java.awt.image;
  *  {@link DataBuffer#TYPE_SHORT TYPE_SHORT},
  *  {@link DataBuffer#TYPE_INT TYPE_INT},
  *  {@link DataBuffer#TYPE_FLOAT TYPE_FLOAT} and
- *  {@link DataBuffer#TYPE_DOUBLE TYPE_DOUBLE} datatypes.
+ *  {@link DataBuffer#TYPE_DOUBLE TYPE_DOUBLE} datatypes.  
  */
 
 public class PixelInterleavedSampleModel extends ComponentSampleModel
 {
     /**
      * Constructs a PixelInterleavedSampleModel with the specified parameters.
-     * The number of bands will be given by the length of the bandOffsets
+     * The number of bands will be given by the length of the bandOffsets 
      * array.
      * @param dataType  The data type for storing samples.
      * @param w         The width (in pixels) of the region of
@@ -71,10 +71,10 @@ public class PixelInterleavedSampleModel extends ComponentSampleModel
      *         <code>h</code> is not greater than 0
      * @throws IllegalArgumentException if any offset between bands is
      *         greater than the scanline stride
-     * @throws IllegalArgumentException if the product of
+     * @throws IllegalArgumentException if the product of 
      *         <code>pixelStride</code> and <code>w</code> is greater
      *         than <code>scanlineStride</code>
-     * @throws IllegalArgumentException if <code>pixelStride</code> is
+     * @throws IllegalArgumentException if <code>pixelStride</code> is 
      *         less than any offset between bands
      * @throws IllegalArgumentException if <code>dataType</code> is not
      *         one of the supported data types

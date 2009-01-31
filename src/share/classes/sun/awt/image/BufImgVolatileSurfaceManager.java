@@ -28,7 +28,7 @@ package sun.awt.image;
 import sun.java2d.SurfaceData;
 
 /**
- * This SurfaceManager variant manages an unaccelerated volatile surface.
+ * This SurfaceManager variant manages an unaccelerated volatile surface.  
  * This class is created in the event that someone requested a VolatileImage
  * to be created from a BufferedImageGraphicsConfig, which is not platform-
  * or hardware-based, thus the resulting surface and surface manager
@@ -46,13 +46,13 @@ public class BufImgVolatileSurfaceManager extends VolatileSurfaceManager {
     public BufImgVolatileSurfaceManager(SunVolatileImage vImg, Object context) {
         super(vImg, context);
     }
-
+    
     /**
      * Returns false to indicate that this surface manager cannot accelerate
      * the image.
      */
     protected boolean isAccelerationEnabled() {
-        return false;
+	return false;
     }
 
     /**
@@ -63,6 +63,6 @@ public class BufImgVolatileSurfaceManager extends VolatileSurfaceManager {
      * since it is abstract in our parent class.
      */
     protected SurfaceData initAcceleratedSurface() {
-        return null;
+	return null;
     }
 }

@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug     4902078
- * @summary concurrent modification not detected on 2nd to last iteration
+ * @summary concurrent modification not detected on 2nd to last iteration 
  * @author  Josh Bloch
  *
  * @ignore Bug fix temporarily removed as it uncovered other bugs (4992226)

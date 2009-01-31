@@ -28,10 +28,11 @@ package javax.naming.ldap;
 /**
  * This class represents an event fired in response to an unsolicited
  * notification sent by the LDAP server.
- *
+ * 
  * @author Rosanna Lee
  * @author Scott Seligman
  * @author Vincent Ryan
+ * @version %I% %E%
  *
  * @see UnsolicitedNotification
  * @see UnsolicitedNotificationListener
@@ -50,16 +51,16 @@ public class UnsolicitedNotificationEvent extends java.util.EventObject {
 
     /**
      * Constructs a new instance of <tt>UnsolicitedNotificationEvent</tt>.
-     *
+     * 
      * @param src The non-null source that fired the event.
      * @param notice The non-null unsolicited notification.
      */
-    public UnsolicitedNotificationEvent(Object src,
-        UnsolicitedNotification notice) {
-        super(src);
-        this.notice = notice;
+    public UnsolicitedNotificationEvent(Object src, 
+	UnsolicitedNotification notice) {
+	super(src);
+	this.notice = notice;
     }
-
+	
 
     /**
      * Returns the unsolicited notification.
@@ -67,7 +68,7 @@ public class UnsolicitedNotificationEvent extends java.util.EventObject {
      * event to be fired.
      */
     public UnsolicitedNotification getNotification() {
-        return notice;
+	return notice;
     }
 
     /**
@@ -77,7 +78,7 @@ public class UnsolicitedNotificationEvent extends java.util.EventObject {
      * <tt>notificationReceived</tt>.
      */
     public void dispatch(UnsolicitedNotificationListener listener) {
-        listener.notificationReceived(this);
+	listener.notificationReceived(this);
     }
 
     private static final long serialVersionUID = -2382603380799883705L;

@@ -32,6 +32,7 @@ import sun.nio.cs.ext.IBM500;
  * A table to convert to Cp500 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp500 extends ByteToCharSingleByte {

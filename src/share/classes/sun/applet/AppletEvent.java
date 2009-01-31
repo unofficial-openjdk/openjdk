@@ -31,6 +31,7 @@ import java.util.EventObject;
 /**
  * AppletEvent class.
  *
+ * @version %I%, %G%
  * @author  Sunita Mani
  */
 
@@ -41,25 +42,27 @@ public class AppletEvent extends EventObject {
 
 
     public AppletEvent(Object source, int id, Object argument) {
-        super(source);
-        this.arg = argument;
-        this.id = id;
+	super(source);
+	this.arg = argument;
+	this.id = id;
     }
 
     public int getID() {
-        return id;
+	return id;
     }
 
     public Object getArgument() {
-        return arg;
+	return arg;
     }
 
     public String toString() {
-        String str = getClass().getName() + "[source=" + source + " + id="+ id;
-        if (arg != null) {
-            str += " + arg=" + arg;
-        }
-        str += " ]";
-        return str;
+	String str = getClass().getName() + "[source=" + source + " + id="+ id;
+	if (arg != null) {
+	    str += " + arg=" + arg;
+	}
+	str += " ]";
+	return str;
     }
 }
+ 
+

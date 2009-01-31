@@ -39,10 +39,12 @@ import java.util.List;
 public interface LocatableEvent extends Event, Locatable {
 
     /**
-     * Returns the thread in which this event has occurred.
+     * Returns the thread in which this event has occurred. 
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in
+     * @return a {@link ThreadReference} which mirrors the event's thread in 
      * the target VM.
      */
     public ThreadReference thread();
 }
+    
+

@@ -36,6 +36,7 @@ import javax.swing.plaf.UIResource;
  * components, otherwise 12.  This class also provides helper methods for
  * subclasses.
  *
+ * @version %I%, %G%
  */
 public class DefaultLayoutStyle extends LayoutStyle {
     private static final DefaultLayoutStyle INSTANCE =
@@ -52,7 +53,7 @@ public class DefaultLayoutStyle extends LayoutStyle {
         if (component1 == null || component2 == null || type == null) {
             throw new NullPointerException();
         }
-        if (type == ComponentPlacement.INDENT &&
+        if (type == ComponentPlacement.INDENT && 
                 (position == SwingConstants.EAST ||
                  position == SwingConstants.WEST)) {
             int indent = getIndent(component1, position);

@@ -46,7 +46,7 @@ public class PrintARGBImage implements Printable {
         for (int i=0;i<text.length;i++) {
             System.out.println(text[i]);
         }
-
+      
         try {
             PrinterJob pj = PrinterJob.getPrinterJob();
             pj.setPrintable(new PrintARGBImage());
@@ -76,4 +76,4 @@ public class PrintARGBImage implements Printable {
         g2.drawImage(bi, 10, 0, 90, 90, null );
         return PAGE_EXISTS;
     }
-}
+} 

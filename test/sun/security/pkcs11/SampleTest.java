@@ -37,13 +37,14 @@ import java.security.*;
 import javax.crypto.*;
 
 public class SampleTest extends PKCS11Test {
-
+    
     public void main(Provider p) throws Exception {
-        // XXX todo
+	// XXX todo
     }
-
+    
     public static void main(String[] args) throws Exception {
-        main(new SampleTest());
+	main(new SampleTest());
     }
-
+    
 }
+

@@ -69,6 +69,7 @@ import sun.security.jca.GetInstance.Instance;
  *
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @see Key
  * @see PublicKey
@@ -83,8 +84,8 @@ import sun.security.jca.GetInstance.Instance;
 public class KeyFactory {
 
     private static final Debug debug =
-                        Debug.getInstance("jca", "KeyFactory");
-
+			Debug.getInstance("jca", "KeyFactory");
+    
     // The algorithm associated with this key factory
     private final String algorithm;
 
@@ -100,7 +101,7 @@ public class KeyFactory {
     // remaining services to try in provider selection
     // null once provider is selected
     private Iterator<Service> serviceIterator;
-
+    
     /**
      * Creates a KeyFactory object.
      *
@@ -110,21 +111,21 @@ public class KeyFactory {
      * to associate with this <tt>KeyFactory</tt>
      */
     protected KeyFactory(KeyFactorySpi keyFacSpi, Provider provider,
-                         String algorithm) {
-        this.spi = keyFacSpi;
-        this.provider = provider;
-        this.algorithm = algorithm;
+			 String algorithm) {
+	this.spi = keyFacSpi;
+	this.provider = provider;
+	this.algorithm = algorithm;
     }
-
+    
     private KeyFactory(String algorithm) throws NoSuchAlgorithmException {
-        this.algorithm = algorithm;
-        List<Service> list = GetInstance.getServices("KeyFactory", algorithm);
-        serviceIterator = list.iterator();
-        // fetch and instantiate initial spi
-        if (nextSpi(null) == null) {
-            throw new NoSuchAlgorithmException
-                (algorithm + " KeyFactory not available");
-        }
+	this.algorithm = algorithm;
+	List<Service> list = GetInstance.getServices("KeyFactory", algorithm);
+	serviceIterator = list.iterator();
+	// fetch and instantiate initial spi
+	if (nextSpi(null) == null) {
+	    throw new NoSuchAlgorithmException
+	    	(algorithm + " KeyFactory not available");
+	}
     }
 
     /**
@@ -140,10 +141,10 @@ public class KeyFactory {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
-     * @param algorithm the name of the requested key algorithm.
+     * @param algorithm the name of the requested key algorithm. 
      * See Appendix A in the <a href=
      * "../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
-     * Java Cryptography Architecture API Specification &amp; Reference </a>
+     * Java Cryptography Architecture API Specification &amp; Reference </a> 
      * for information about standard algorithm names.
      *
      * @return the new KeyFactory object.
@@ -155,8 +156,8 @@ public class KeyFactory {
      * @see Provider
      */
     public static KeyFactory getInstance(String algorithm)
-            throws NoSuchAlgorithmException {
-        return new KeyFactory(algorithm);
+	    throws NoSuchAlgorithmException { 
+	return new KeyFactory(algorithm);
     }
 
     /**
@@ -171,10 +172,10 @@ public class KeyFactory {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
-     * @param algorithm the name of the requested key algorithm.
+     * @param algorithm the name of the requested key algorithm. 
      * See Appendix A in the <a href=
      * "../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
-     * Java Cryptography Architecture API Specification &amp; Reference </a>
+     * Java Cryptography Architecture API Specification &amp; Reference </a> 
      * for information about standard algorithm names.
      *
      * @param provider the name of the provider.
@@ -190,15 +191,15 @@ public class KeyFactory {
      *
      * @exception IllegalArgumentException if the provider name is null
      *          or empty.
-     *
-     * @see Provider
+     * 
+     * @see Provider 
      */
     public static KeyFactory getInstance(String algorithm, String provider)
-            throws NoSuchAlgorithmException, NoSuchProviderException {
-        Instance instance = GetInstance.getInstance("KeyFactory",
-            KeyFactorySpi.class, algorithm, provider);
-        return new KeyFactory((KeyFactorySpi)instance.impl,
-            instance.provider, algorithm);
+	    throws NoSuchAlgorithmException, NoSuchProviderException {
+	Instance instance = GetInstance.getInstance("KeyFactory", 
+	    KeyFactorySpi.class, algorithm, provider);
+	return new KeyFactory((KeyFactorySpi)instance.impl,
+	    instance.provider, algorithm);
     }
 
     /**
@@ -210,10 +211,10 @@ public class KeyFactory {
      * object is returned.  Note that the specified Provider object
      * does not have to be registered in the provider list.
      *
-     * @param algorithm the name of the requested key algorithm.
+     * @param algorithm the name of the requested key algorithm. 
      * See Appendix A in the <a href=
      * "../../../technotes/guides/security/crypto/CryptoSpec.html#AppA">
-     * Java Cryptography Architecture API Specification &amp; Reference </a>
+     * Java Cryptography Architecture API Specification &amp; Reference </a> 
      * for information about standard algorithm names.
      *
      * @param provider the provider.
@@ -225,41 +226,41 @@ public class KeyFactory {
      *          from the specified Provider object.
      *
      * @exception IllegalArgumentException if the specified provider is null.
-     *
+     * 
      * @see Provider
      *
      * @since 1.4
      */
     public static KeyFactory getInstance(String algorithm, Provider provider)
-            throws NoSuchAlgorithmException {
-        Instance instance = GetInstance.getInstance("KeyFactory",
-            KeyFactorySpi.class, algorithm, provider);
-        return new KeyFactory((KeyFactorySpi)instance.impl,
-            instance.provider, algorithm);
+	    throws NoSuchAlgorithmException {
+	Instance instance = GetInstance.getInstance("KeyFactory", 
+	    KeyFactorySpi.class, algorithm, provider);
+	return new KeyFactory((KeyFactorySpi)instance.impl,
+	    instance.provider, algorithm);
     }
 
-    /**
+    /** 
      * Returns the provider of this key factory object.
-     *
+     * 
      * @return the provider of this key factory object
      */
     public final Provider getProvider() {
-        synchronized (lock) {
-            // disable further failover after this call
-            serviceIterator = null;
-            return provider;
-        }
+	synchronized (lock) {
+	    // disable further failover after this call
+	    serviceIterator = null;
+	    return provider;
+	}
     }
 
     /**
-     * Gets the name of the algorithm
+     * Gets the name of the algorithm 
      * associated with this <tt>KeyFactory</tt>.
      *
      * @return the name of the algorithm associated with this
      * <tt>KeyFactory</tt>
      */
     public final String getAlgorithm() {
-        return this.algorithm;
+	return this.algorithm;
     }
 
     /**
@@ -269,33 +270,33 @@ public class KeyFactory {
      * this class is never set to null.
      */
     private KeyFactorySpi nextSpi(KeyFactorySpi oldSpi) {
-        synchronized (lock) {
-            // somebody else did a failover concurrently
-            // try that spi now
-            if ((oldSpi != null) && (oldSpi != spi)) {
-                return spi;
-            }
-            if (serviceIterator == null) {
-                return null;
-            }
-            while (serviceIterator.hasNext()) {
-                Service s = serviceIterator.next();
-                try {
-                    Object obj = s.newInstance(null);
-                    if (obj instanceof KeyFactorySpi == false) {
-                        continue;
-                    }
-                    KeyFactorySpi spi = (KeyFactorySpi)obj;
-                    provider = s.getProvider();
-                    this.spi = spi;
-                    return spi;
-                } catch (NoSuchAlgorithmException e) {
-                    // ignore
-                }
-            }
-            serviceIterator = null;
-            return null;
-        }
+	synchronized (lock) {
+	    // somebody else did a failover concurrently
+	    // try that spi now
+	    if ((oldSpi != null) && (oldSpi != spi)) {
+		return spi;
+	    }
+	    if (serviceIterator == null) {
+		return null;
+	    }
+	    while (serviceIterator.hasNext()) {
+		Service s = serviceIterator.next();
+		try {
+		    Object obj = s.newInstance(null);
+		    if (obj instanceof KeyFactorySpi == false) {
+			continue;
+		    }
+		    KeyFactorySpi spi = (KeyFactorySpi)obj;
+		    provider = s.getProvider();
+		    this.spi = spi;
+		    return spi;
+		} catch (NoSuchAlgorithmException e) {
+		    // ignore
+		}
+	    }
+	    serviceIterator = null;
+	    return null;
+	}
     }
 
     /**
@@ -310,32 +311,32 @@ public class KeyFactory {
      * is inappropriate for this key factory to produce a public key.
      */
     public final PublicKey generatePublic(KeySpec keySpec)
-            throws InvalidKeySpecException {
-        if (serviceIterator == null) {
-            return spi.engineGeneratePublic(keySpec);
-        }
-        Exception failure = null;
-        KeyFactorySpi mySpi = spi;
-        do {
-            try {
-                return mySpi.engineGeneratePublic(keySpec);
-            } catch (Exception e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi);
-            }
-        } while (mySpi != null);
-        if (failure instanceof RuntimeException) {
-            throw (RuntimeException)failure;
-        }
-        if (failure instanceof InvalidKeySpecException) {
-            throw (InvalidKeySpecException)failure;
-        }
-        throw new InvalidKeySpecException
-                ("Could not generate public key", failure);
+	    throws InvalidKeySpecException {
+	if (serviceIterator == null) {
+	    return spi.engineGeneratePublic(keySpec);
+	}
+	Exception failure = null;
+	KeyFactorySpi mySpi = spi;
+	do {
+	    try {
+		return mySpi.engineGeneratePublic(keySpec);
+	    } catch (Exception e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi);
+	    }
+	} while (mySpi != null);
+	if (failure instanceof RuntimeException) {
+	    throw (RuntimeException)failure;
+	}
+	if (failure instanceof InvalidKeySpecException) {
+	    throw (InvalidKeySpecException)failure;
+	}
+	throw new InvalidKeySpecException
+		("Could not generate public key", failure);
     }
-
+    
     /**
      * Generates a private key object from the provided key specification
      * (key material).
@@ -348,43 +349,43 @@ public class KeyFactory {
      * is inappropriate for this key factory to produce a private key.
      */
     public final PrivateKey generatePrivate(KeySpec keySpec)
-            throws InvalidKeySpecException {
-        if (serviceIterator == null) {
-            return spi.engineGeneratePrivate(keySpec);
-        }
-        Exception failure = null;
-        KeyFactorySpi mySpi = spi;
-        do {
-            try {
-                return mySpi.engineGeneratePrivate(keySpec);
-            } catch (Exception e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi);
-            }
-        } while (mySpi != null);
-        if (failure instanceof RuntimeException) {
-            throw (RuntimeException)failure;
-        }
-        if (failure instanceof InvalidKeySpecException) {
-            throw (InvalidKeySpecException)failure;
-        }
-        throw new InvalidKeySpecException
-                ("Could not generate private key", failure);
+	    throws InvalidKeySpecException {
+	if (serviceIterator == null) {
+	    return spi.engineGeneratePrivate(keySpec);
+	}
+	Exception failure = null;
+	KeyFactorySpi mySpi = spi;
+	do {
+	    try {
+		return mySpi.engineGeneratePrivate(keySpec);
+	    } catch (Exception e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi);
+	    }
+	} while (mySpi != null);
+	if (failure instanceof RuntimeException) {
+	    throw (RuntimeException)failure;
+	}
+	if (failure instanceof InvalidKeySpecException) {
+	    throw (InvalidKeySpecException)failure;
+	}
+	throw new InvalidKeySpecException
+		("Could not generate private key", failure);
     }
 
     /**
      * Returns a specification (key material) of the given key object.
-     * <code>keySpec</code> identifies the specification class in which
+     * <code>keySpec</code> identifies the specification class in which 
      * the key material should be returned. It could, for example, be
      * <code>DSAPublicKeySpec.class</code>, to indicate that the
-     * key material should be returned in an instance of the
+     * key material should be returned in an instance of the 
      * <code>DSAPublicKeySpec</code> class.
      *
      * @param key the key.
      *
-     * @param keySpec the specification class in which
+     * @param keySpec the specification class in which 
      * the key material should be returned.
      *
      * @return the underlying key specification (key material) in an instance
@@ -395,30 +396,30 @@ public class KeyFactory {
      * (e.g., the given key has an unrecognized algorithm or format).
      */
     public final <T extends KeySpec> T getKeySpec(Key key, Class<T> keySpec)
-            throws InvalidKeySpecException {
-        if (serviceIterator == null) {
-            return spi.engineGetKeySpec(key, keySpec);
-        }
-        Exception failure = null;
-        KeyFactorySpi mySpi = spi;
-        do {
-            try {
-                return mySpi.engineGetKeySpec(key, keySpec);
-            } catch (Exception e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi);
-            }
-        } while (mySpi != null);
-        if (failure instanceof RuntimeException) {
-            throw (RuntimeException)failure;
-        }
-        if (failure instanceof InvalidKeySpecException) {
-            throw (InvalidKeySpecException)failure;
-        }
-        throw new InvalidKeySpecException
-                ("Could not get key spec", failure);
+	    throws InvalidKeySpecException {
+	if (serviceIterator == null) {
+	    return spi.engineGetKeySpec(key, keySpec);
+	}
+	Exception failure = null;
+	KeyFactorySpi mySpi = spi;
+	do {
+	    try {
+		return mySpi.engineGetKeySpec(key, keySpec);
+	    } catch (Exception e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi);
+	    }
+	} while (mySpi != null);
+	if (failure instanceof RuntimeException) {
+	    throw (RuntimeException)failure;
+	}
+	if (failure instanceof InvalidKeySpecException) {
+	    throw (InvalidKeySpecException)failure;
+	}
+	throw new InvalidKeySpecException
+		("Could not get key spec", failure);
     }
 
     /**
@@ -433,29 +434,29 @@ public class KeyFactory {
      * by this key factory.
      */
     public final Key translateKey(Key key) throws InvalidKeyException {
-        if (serviceIterator == null) {
-            return spi.engineTranslateKey(key);
-        }
-        Exception failure = null;
-        KeyFactorySpi mySpi = spi;
-        do {
-            try {
-                return mySpi.engineTranslateKey(key);
-            } catch (Exception e) {
-                if (failure == null) {
-                    failure = e;
-                }
-                mySpi = nextSpi(mySpi);
-            }
-        } while (mySpi != null);
-        if (failure instanceof RuntimeException) {
-            throw (RuntimeException)failure;
-        }
-        if (failure instanceof InvalidKeyException) {
-            throw (InvalidKeyException)failure;
-        }
-        throw new InvalidKeyException
-                ("Could not translate key", failure);
+	if (serviceIterator == null) {
+	    return spi.engineTranslateKey(key);
+	}
+	Exception failure = null;
+	KeyFactorySpi mySpi = spi;
+	do {
+	    try {
+		return mySpi.engineTranslateKey(key);
+	    } catch (Exception e) {
+		if (failure == null) {
+		    failure = e;
+		}
+		mySpi = nextSpi(mySpi);
+	    }
+	} while (mySpi != null);
+	if (failure instanceof RuntimeException) {
+	    throw (RuntimeException)failure;
+	}
+	if (failure instanceof InvalidKeyException) {
+	    throw (InvalidKeyException)failure;
+	}
+	throw new InvalidKeyException
+		("Could not translate key", failure);
     }
 
 }

@@ -42,6 +42,7 @@ import java.io.Serializable;
  * Please see {@link java.beans.XMLEncoder}.
  *
  * @author  Scott Violet
+ * @version %I% %G%
  */
 public class TabSet implements Serializable
 {
@@ -51,30 +52,30 @@ public class TabSet implements Serializable
      * Since this class is immutable the hash code could be
      * calculated once. MAX_VALUE means that it was not initialized
      * yet. Hash code shouldn't has MAX_VALUE value.
-     */
-    private int hashCode = Integer.MAX_VALUE;
+     */ 
+    private int hashCode = Integer.MAX_VALUE; 
 
     /**
      * Creates and returns an instance of TabSet. The array of Tabs
      * passed in must be sorted in ascending order.
      */
     public TabSet(TabStop[] tabs) {
-        // PENDING(sky): If this becomes a problem, make it sort.
-        if(tabs != null) {
-            int          tabCount = tabs.length;
+	// PENDING(sky): If this becomes a problem, make it sort.
+	if(tabs != null) {
+	    int          tabCount = tabs.length;
 
-            this.tabs = new TabStop[tabCount];
-            System.arraycopy(tabs, 0, this.tabs, 0, tabCount);
-        }
-        else
-            this.tabs = null;
+	    this.tabs = new TabStop[tabCount];
+	    System.arraycopy(tabs, 0, this.tabs, 0, tabCount);
+	}
+	else
+	    this.tabs = null;
     }
 
     /**
      * Returns the number of Tab instances the receiver contains.
      */
     public int getTabCount() {
-        return (tabs == null) ? 0 : tabs.length;
+	return (tabs == null) ? 0 : tabs.length;
     }
 
     /**
@@ -83,12 +84,12 @@ public class TabSet implements Serializable
      * of tabs.
      */
     public TabStop getTab(int index) {
-        int          numTabs = getTabCount();
+	int          numTabs = getTabCount();
 
-        if(index < 0 || index >= numTabs)
-            throw new IllegalArgumentException(index +
-                                              " is outside the range of tabs");
-        return tabs[index];
+	if(index < 0 || index >= numTabs)
+	    throw new IllegalArgumentException(index +
+					      " is outside the range of tabs");
+	return tabs[index];
     }
 
     /**
@@ -96,9 +97,9 @@ public class TabSet implements Serializable
      * return null if there are no tabs after <code>location</code>.
      */
     public TabStop getTabAfter(float location) {
-        int     index = getTabIndexAfter(location);
+	int     index = getTabIndexAfter(location);
 
-        return (index == -1) ? null : tabs[index];
+	return (index == -1) ? null : tabs[index];
     }
 
     /**
@@ -106,11 +107,11 @@ public class TabSet implements Serializable
      * <code>tab</code> is not contained in the receiver.
      */
     public int getTabIndex(TabStop tab) {
-        for(int counter = getTabCount() - 1; counter >= 0; counter--)
-            // should this use .equals?
-            if(getTab(counter) == tab)
-                return counter;
-        return -1;
+	for(int counter = getTabCount() - 1; counter >= 0; counter--)
+	    // should this use .equals?
+	    if(getTab(counter) == tab)
+		return counter;
+	return -1;
     }
 
     /**
@@ -118,28 +119,28 @@ public class TabSet implements Serializable
      * This will return -1 if there are no tabs after <code>location</code>.
      */
     public int getTabIndexAfter(float location) {
-        int     current, min, max;
+	int     current, min, max;
 
-        min = 0;
-        max = getTabCount();
-        while(min != max) {
-            current = (max - min) / 2 + min;
-            if(location > tabs[current].getPosition()) {
-                if(min == current)
-                    min = max;
-                else
-                    min = current;
-            }
-            else {
-                if(current == 0 || location > tabs[current - 1].getPosition())
-                    return current;
-                max = current;
-            }
-        }
-        // no tabs after the passed in location.
-        return -1;
+	min = 0;
+	max = getTabCount();
+	while(min != max) {
+	    current = (max - min) / 2 + min;
+	    if(location > tabs[current].getPosition()) {
+		if(min == current)
+		    min = max;
+		else
+		    min = current;
+	    }
+	    else {
+		if(current == 0 || location > tabs[current - 1].getPosition())
+		    return current;
+		max = current;
+	    }
+	}
+	// no tabs after the passed in location.
+	return -1;
     }
-
+    
     /**
      * Indicates whether this <code>TabSet</code> is equal to another one.
      * @param o the <code>TabSet</code> instance which this instance
@@ -149,7 +150,7 @@ public class TabSet implements Serializable
      * and they are all equal, <code>false</code> otherwise.
      *
      * @since 1.5
-     */
+     */ 
     public boolean equals(Object o) {
         if (o == this) {
             return true;
@@ -161,8 +162,8 @@ public class TabSet implements Serializable
                 return false;
             }
             for (int i=0; i < count; i++) {
-                TabStop ts1 = getTab(i);
-                TabStop ts2 = ts.getTab(i);
+                TabStop ts1 = getTab(i); 
+                TabStop ts2 = ts.getTab(i); 
                 if ((ts1 == null && ts2 != null) ||
                         (ts1 != null && !getTab(i).equals(ts.getTab(i)))) {
                     return false;
@@ -198,15 +199,15 @@ public class TabSet implements Serializable
      * Returns the string representation of the set of tabs.
      */
     public String toString() {
-        int            tabCount = getTabCount();
-        StringBuffer   buffer = new StringBuffer("[ ");
+	int            tabCount = getTabCount();
+	StringBuffer   buffer = new StringBuffer("[ ");
 
-        for(int counter = 0; counter < tabCount; counter++) {
-            if(counter > 0)
-                buffer.append(" - ");
-            buffer.append(getTab(counter).toString());
-        }
-        buffer.append(" ]");
-        return buffer.toString();
+	for(int counter = 0; counter < tabCount; counter++) {
+	    if(counter > 0)
+		buffer.append(" - ");
+	    buffer.append(getTab(counter).toString());
+	}
+	buffer.append(" ]");
+	return buffer.toString();
     }
 }

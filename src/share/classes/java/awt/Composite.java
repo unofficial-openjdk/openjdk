@@ -28,30 +28,30 @@ package java.awt;
 import java.awt.image.ColorModel;
 
 /**
- * The <code>Composite</code> interface, along with
+ * The <code>Composite</code> interface, along with 
  * {@link CompositeContext}, defines the methods to compose a draw
  * primitive with the underlying graphics area.
- * After the <code>Composite</code> is set in the
+ * After the <code>Composite</code> is set in the 
  * {@link Graphics2D} context, it combines a shape, text, or an image
  * being rendered with the colors that have already been rendered
  * according to pre-defined rules. The classes
  * implementing this interface provide the rules and a method to create
  * the context for a particular operation.
- * <code>CompositeContext</code> is an environment used by the
+ * <code>CompositeContext</code> is an environment used by the 
  * compositing operation, which is created by the <code>Graphics2D</code>
  * prior to the start of the operation.  <code>CompositeContext</code>
- * contains private information and resources needed for a compositing
+ * contains private information and resources needed for a compositing 
  * operation.  When the <code>CompositeContext</code> is no longer needed,
- * the <code>Graphics2D</code> object disposes of it in order to reclaim
+ * the <code>Graphics2D</code> object disposes of it in order to reclaim 
  * resources allocated for the operation.
  * <p>
- * Instances of classes implementing <code>Composite</code> must be
+ * Instances of classes implementing <code>Composite</code> must be 
  * immutable because the <code>Graphics2D</code> does not clone
- * these objects when they are set as an attribute with the
+ * these objects when they are set as an attribute with the 
  * <code>setComposite</code> method or when the <code>Graphics2D</code>
- * object is cloned.  This is to avoid undefined rendering behavior of
- * <code>Graphics2D</code>, resulting from the modification of
- * the <code>Composite</code> object after it has been set in the
+ * object is cloned.  This is to avoid undefined rendering behavior of 
+ * <code>Graphics2D</code>, resulting from the modification of 
+ * the <code>Composite</code> object after it has been set in the 
  * <code>Graphics2D</code> context.
  * <p>
  * Since this interface must expose the contents of pixels on the
@@ -64,6 +64,7 @@ import java.awt.image.ColorModel;
  * @see AlphaComposite
  * @see CompositeContext
  * @see Graphics2D#setComposite
+ * @version 10 Feb 1997
  */
 public interface Composite {
 
@@ -80,7 +81,7 @@ public interface Composite {
      * compositing operation.
      */
     public CompositeContext createContext(ColorModel srcColorModel,
-                                          ColorModel dstColorModel,
+					  ColorModel dstColorModel,
                                           RenderingHints hints);
 
 }

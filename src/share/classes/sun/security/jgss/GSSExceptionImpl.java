@@ -22,10 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
-package sun.security.jgss;
-
-import org.ietf.jgss.*;
+ 
+package sun.security.jgss; 
+ 
+import org.ietf.jgss.*; 
 
 /**
  * This class helps overcome a limitation of the org.ietf.jgss.GSSException
@@ -52,8 +52,8 @@ public class GSSExceptionImpl extends GSSException {
      * corresponds to it.
      */
     public GSSExceptionImpl(int majorCode, String majorMessage) {
-        super(majorCode);
-        this.majorMessage = majorMessage;
+	super(majorCode);
+	this.majorMessage = majorMessage;
     }
 
     /**
@@ -68,10 +68,10 @@ public class GSSExceptionImpl extends GSSException {
      * A constructor that takes the majorCode, the message that
      * corresponds to it, and the exception cause.
      */
-    public GSSExceptionImpl(int majorCode, String majorMessage,
-        Exception cause) {
+    public GSSExceptionImpl(int majorCode, String majorMessage, 
+	Exception cause) {
         this(majorCode, majorMessage);
-        initCause(cause);
+	initCause(cause);
     }
 
     /**
@@ -80,10 +80,10 @@ public class GSSExceptionImpl extends GSSException {
      * generates.
      */
     public String getMessage() {
-        if (majorMessage != null)
-            return majorMessage;
-        else
-            return super.getMessage();
+	if (majorMessage != null)
+	    return majorMessage;
+	else
+	    return super.getMessage();
     }
 
 }

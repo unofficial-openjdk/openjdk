@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /* @test
  * @bug 4838379
  * @summary Verify that serialization of enum constants that are instances of
- *          constant-specific subclasses functions properly.
+ * 	    constant-specific subclasses functions properly.
  *
  * @compile -source 1.5 Write.java
  * @run main Write
@@ -45,11 +45,11 @@ enum Foo {
 
 public class Write {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("foo.ser"));
-        for (Foo f : Foo.values()) {
-            oout.writeObject(f);
-        }
-        oout.close();
+	ObjectOutputStream oout =
+	    new ObjectOutputStream(new FileOutputStream("foo.ser"));
+	for (Foo f : Foo.values()) {
+	    oout.writeObject(f);
+	}
+	oout.close();
     }
 }

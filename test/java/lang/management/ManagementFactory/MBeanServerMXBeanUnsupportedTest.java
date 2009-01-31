@@ -44,68 +44,68 @@ import javax.management.StandardMBean;
 import javax.management.remote.MBeanServerForwarder;
 
 public class MBeanServerMXBeanUnsupportedTest {
-
+    
     /**
      * An MBeanServerBuilder that returns an MBeanServer which throws a
      * RuntimeException if MXBeans are not converted into StandardMBean.
      */
     public static class MBeanServerBuilderImpl extends MBeanServerBuilder {
-
+        
         private final MBeanServerBuilder inner;
-
+        
         public MBeanServerBuilderImpl() {
             inner = new MBeanServerBuilder();
         }
-
+        
         public MBeanServer newMBeanServer(
                 String defaultDomain,
                 MBeanServer outer,
                 MBeanServerDelegate delegate) {
             final MBeanServerForwarder mbsf =
                     MBeanServerForwarderInvocationHandler.newProxyInstance();
-
+            
             final MBeanServer innerMBeanServer =
                     inner.newMBeanServer(defaultDomain,
                     (outer == null ? mbsf : outer),
                     delegate);
-
+            
             mbsf.setMBeanServer(innerMBeanServer);
             return mbsf;
         }
     }
-
+    
     /**
      * An MBeanServerForwarderInvocationHandler that throws a
      * RuntimeException if we try to register a non StandardMBean.
      */
     public static class MBeanServerForwarderInvocationHandler
             implements InvocationHandler {
-
+        
         public static MBeanServerForwarder newProxyInstance() {
-
+            
             final InvocationHandler handler =
                     new MBeanServerForwarderInvocationHandler();
-
+            
             final Class[] interfaces =
                     new Class[] {MBeanServerForwarder.class};
-
+            
             Object proxy = Proxy.newProxyInstance(
                     MBeanServerForwarder.class.getClassLoader(),
                     interfaces,
                     handler);
-
+            
             return MBeanServerForwarder.class.cast(proxy);
         }
-
+        
         public Object invoke(Object proxy, Method method, Object[] args)
                 throws Throwable {
-
+            
             final String methodName = method.getName();
-
+            
             if (methodName.equals("getMBeanServer")) {
                 return mbs;
             }
-
+            
             if (methodName.equals("setMBeanServer")) {
                 if (args[0] == null)
                     throw new IllegalArgumentException("Null MBeanServer");
@@ -115,7 +115,7 @@ public class MBeanServerMXBeanUnsupportedTest {
                 mbs = (MBeanServer) args[0];
                 return null;
             }
-
+            
             if (methodName.equals("registerMBean")) {
                 Object mbean = args[0];
                 ObjectName name = (ObjectName) args[1];
@@ -139,13 +139,13 @@ public class MBeanServerMXBeanUnsupportedTest {
                 }
                 return result;
             }
-
+            
             return method.invoke(mbs, args);
         }
-
+        
         private MBeanServer mbs;
     }
-
+    
     /*
      * Standalone entry point.
      *

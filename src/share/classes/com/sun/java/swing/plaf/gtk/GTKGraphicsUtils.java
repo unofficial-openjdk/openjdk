@@ -31,6 +31,7 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 
 /**
+ * @version %I%, %G%
  * @author Joshua Outwater
  */
 class GTKGraphicsUtils extends SynthGraphicsUtils {
@@ -70,7 +71,7 @@ class GTKGraphicsUtils extends SynthGraphicsUtils {
                 super.paintText(context, g, text, x+1, y+1, mnemonicIndex);
                 g.setColor(Color.WHITE);
             }
-
+            
             super.paintText(context, g, text, x, y, mnemonicIndex);
         }
     }
@@ -92,7 +93,7 @@ class GTKGraphicsUtils extends SynthGraphicsUtils {
             // We don't need to paint empty strings
             return;
         }
-
+        
         Region id = context.getRegion();
         if ((id == Region.RADIO_BUTTON ||
              id == Region.CHECK_BOX ||
@@ -137,7 +138,7 @@ class GTKGraphicsUtils extends SynthGraphicsUtils {
         int gtkState = GTKLookAndFeel.synthStateToGTKState(id, state);
         return((gtkState == SynthConstants.MOUSE_OVER) &&
                (id == Region.MENU ||
-                id == Region.MENU_ITEM ||
+                id == Region.MENU_ITEM || 
                 id == Region.CHECK_BOX_MENU_ITEM ||
                 id == Region.RADIO_BUTTON_MENU_ITEM));
     }

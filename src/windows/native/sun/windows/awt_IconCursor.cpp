@@ -61,7 +61,7 @@ HBITMAP create_BMP(HWND hW,int* imageData,int nSS, int nW, int nH)
     int  *srcPtr = imageData;
     char *dstPtr = ptrImageData;
     if (!dstPtr) {
-        ReleaseDC(hW, hDC);
+	ReleaseDC(hW, hDC);
         return NULL;
     }
     for (int nOutern = 0; nOutern < nH; nOutern++ ) {
@@ -76,12 +76,12 @@ HBITMAP create_BMP(HWND hW,int* imageData,int nSS, int nW, int nH)
     }
 
     // convert it into DDB to make CustomCursor work on WIN95
-    hBitmap = CreateDIBitmap(hDC,
-                             (BITMAPINFOHEADER*)&bmhHeader,
-                             CBM_INIT,
-                             (void *)ptrImageData,
-                             (BITMAPINFO*)&bmhHeader,
-                             DIB_RGB_COLORS);
+    hBitmap = CreateDIBitmap(hDC, 
+			     (BITMAPINFOHEADER*)&bmhHeader,
+			     CBM_INIT,
+			     (void *)ptrImageData,
+			     (BITMAPINFO*)&bmhHeader,
+			     DIB_RGB_COLORS);
 
     ::DeleteObject(hbmpBitmap);
     ::ReleaseDC(hW, hDC);

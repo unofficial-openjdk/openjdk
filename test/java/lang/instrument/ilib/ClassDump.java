@@ -44,7 +44,7 @@ public class ClassDump implements RuntimeConstants {
     (new ClassDump(className, c)).doit();
   }
 
-    static boolean verbose = true;
+    static boolean verbose = true; 
 
     final String className;
     final ClassReaderWriter c;
@@ -181,36 +181,36 @@ public class ClassDump implements RuntimeConstants {
         for (int i = 0; i < attrCount; ++i) {
             copyAttrForCode();
         }
-    }
+    }        
 
     /**
      * Copy the exception table for this method code
-     */
+     */  
     void copyExceptionTable() throws IOException {
         int tableLength = c.copyU2();   // exception table len
         checkLength(tableLength, "Exception Table length");
-        if (tableLength > 0) {
-            traceln();
-            traceln("Exception table:");
-            traceln(" from:old/new  to:old/new target:old/new type");
-            for (int tcnt = tableLength; tcnt > 0; --tcnt) {
-                int startPC = c.readU2();
-                int endPC = c.readU2();
-                int handlerPC = c.readU2();
-                int catchType = c.copyU2();
+	if (tableLength > 0) {
+	    traceln();
+	    traceln("Exception table:");
+	    traceln(" from:old/new  to:old/new target:old/new type");
+	    for (int tcnt = tableLength; tcnt > 0; --tcnt) {
+		int startPC = c.readU2();
+		int endPC = c.readU2();
+		int handlerPC = c.readU2();
+		int catchType = c.copyU2();
                 if (verbose) {
                     traceFixedWidthInt(startPC, 6);
                     traceFixedWidthInt(endPC, 6);
                     traceFixedWidthInt(handlerPC, 6);
                     trace("    ");
-                    if (catchType == 0)
+                    if (catchType == 0) 
                         traceln("any");
                     else {
                         traceln("" + catchType);
                     }
                 }
-            }
-        }
+	    }
+	}
     }
 
     private void checkIndex(int index, String comment) {
@@ -256,7 +256,7 @@ public class ClassDump implements RuntimeConstants {
     /**
      * Print an integer so that it takes 'length' characters in
      * the output.  Temporary until formatting code is stable.
-     */
+     */  
     private void traceFixedWidthInt(int x, int length) {
         if (verbose) {
             CharArrayWriter baStream = new CharArrayWriter();
@@ -268,6 +268,6 @@ public class ClassDump implements RuntimeConstants {
             trace(str);
         }
     }
-
+    
 
 }

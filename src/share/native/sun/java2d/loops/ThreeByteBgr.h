@@ -31,10 +31,10 @@
  * LoopMacros.h to manipulate a surface of type "ThreeByteBgr".
  */
 
-typedef jint    ThreeByteBgrPixelType;
-typedef jubyte  ThreeByteBgrDataType;
+typedef jint	ThreeByteBgrPixelType;
+typedef jubyte	ThreeByteBgrDataType;
 
-#define ThreeByteBgrPixelStride         3
+#define ThreeByteBgrPixelStride		3
 
 #define DeclareThreeByteBgrLoadVars(PREFIX)
 #define DeclareThreeByteBgrStoreVars(PREFIX)
@@ -52,9 +52,9 @@ typedef jubyte  ThreeByteBgrDataType;
 
 #define StoreThreeByteBgrPixel(pRas, x, pixel) \
     do { \
-        (pRas)[3*(x)+0] = (jubyte) ((pixel) >> 0); \
-        (pRas)[3*(x)+1] = (jubyte) ((pixel) >> 8); \
-        (pRas)[3*(x)+2] = (jubyte) ((pixel) >> 16); \
+	(pRas)[3*(x)+0] = (jubyte) ((pixel) >> 0); \
+	(pRas)[3*(x)+1] = (jubyte) ((pixel) >> 8); \
+	(pRas)[3*(x)+2] = (jubyte) ((pixel) >> 16); \
     } while (0)
 
 #define DeclareThreeByteBgrPixelData(PREFIX) \
@@ -62,48 +62,48 @@ typedef jubyte  ThreeByteBgrDataType;
 
 #define ExtractThreeByteBgrPixelData(PIXEL, PREFIX) \
     do { \
-        PREFIX ## 0 = (jubyte) (PIXEL); \
-        PREFIX ## 1 = (jubyte) (PIXEL >> 8); \
-        PREFIX ## 2 = (jubyte) (PIXEL >> 16); \
+	PREFIX ## 0 = (jubyte) (PIXEL); \
+	PREFIX ## 1 = (jubyte) (PIXEL >> 8); \
+	PREFIX ## 2 = (jubyte) (PIXEL >> 16); \
     } while (0)
 
 #define StoreThreeByteBgrPixelData(pPix, x, pixel, PREFIX) \
     do { \
-        pPix[3*x+0] = PREFIX ## 0; \
-        pPix[3*x+1] = PREFIX ## 1; \
-        pPix[3*x+2] = PREFIX ## 2; \
+	pPix[3*x+0] = PREFIX ## 0; \
+	pPix[3*x+1] = PREFIX ## 1; \
+	pPix[3*x+2] = PREFIX ## 2; \
     } while (0)
 
 
 #define LoadThreeByteBgrTo1IntRgb(pRas, PREFIX, x, rgb) \
     (rgb) = (((pRas)[3*(x)+0] << 0) | \
-             ((pRas)[3*(x)+1] << 8) | \
-             ((pRas)[3*(x)+2] << 16))
+	     ((pRas)[3*(x)+1] << 8) | \
+	     ((pRas)[3*(x)+2] << 16))
 
 #define LoadThreeByteBgrTo1IntArgb(pRas, PREFIX, x, argb) \
     (argb) = (((pRas)[3*(x)+0] << 0) | \
-              ((pRas)[3*(x)+1] << 8) | \
-              ((pRas)[3*(x)+2] << 16) | \
-              0xff000000)
+	      ((pRas)[3*(x)+1] << 8) | \
+	      ((pRas)[3*(x)+2] << 16) | \
+	      0xff000000)
 
 #define LoadThreeByteBgrTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-        (b) = (pRas)[3*(x)+0]; \
-        (g) = (pRas)[3*(x)+1]; \
-        (r) = (pRas)[3*(x)+2]; \
+	(b) = (pRas)[3*(x)+0]; \
+	(g) = (pRas)[3*(x)+1]; \
+	(r) = (pRas)[3*(x)+2]; \
     } while (0)
 
 #define LoadThreeByteBgrTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-        LoadThreeByteBgrTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-        (a) = 0xff; \
+	LoadThreeByteBgrTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	(a) = 0xff; \
     } while (0)
 
 #define StoreThreeByteBgrFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        (pRas)[3*(x)+0] = (jubyte) ((rgb) >> 0); \
-        (pRas)[3*(x)+1] = (jubyte) ((rgb) >> 8); \
-        (pRas)[3*(x)+2] = (jubyte) ((rgb) >> 16); \
+	(pRas)[3*(x)+0] = (jubyte) ((rgb) >> 0); \
+	(pRas)[3*(x)+1] = (jubyte) ((rgb) >> 8); \
+	(pRas)[3*(x)+2] = (jubyte) ((rgb) >> 16); \
     } while (0)
 
 #define StoreThreeByteBgrFrom1IntArgb(pRas, PREFIX, x, argb) \
@@ -111,9 +111,9 @@ typedef jubyte  ThreeByteBgrDataType;
 
 #define StoreThreeByteBgrFrom3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-        (pRas)[3*(x)+0] = (jubyte) (b); \
-        (pRas)[3*(x)+1] = (jubyte) (g); \
-        (pRas)[3*(x)+2] = (jubyte) (r); \
+	(pRas)[3*(x)+0] = (jubyte) (b); \
+	(pRas)[3*(x)+1] = (jubyte) (g); \
+	(pRas)[3*(x)+2] = (jubyte) (r); \
     } while (0)
 
 #define StoreThreeByteBgrFrom4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
@@ -134,7 +134,7 @@ typedef jubyte  ThreeByteBgrDataType;
                                COMP_PREFIX ## G, COMP_PREFIX ## B)
 
 
-#define ThreeByteBgrIsPremultiplied     0
+#define ThreeByteBgrIsPremultiplied	0
 
 #define DeclareThreeByteBgrBlendFillVars(PREFIX) \
     jubyte PREFIX ## 0, PREFIX ## 1, PREFIX ## 2;
@@ -144,18 +144,18 @@ typedef jubyte  ThreeByteBgrDataType;
 
 #define InitThreeByteBgrBlendFillVarsNonPre(PREFIX, argb, COMP_PREFIX) \
     do { \
-        PREFIX ## 0 = (jubyte) COMP_PREFIX ## B; \
-        PREFIX ## 1 = (jubyte) COMP_PREFIX ## G; \
-        PREFIX ## 2 = (jubyte) COMP_PREFIX ## R; \
+	PREFIX ## 0 = (jubyte) COMP_PREFIX ## B; \
+	PREFIX ## 1 = (jubyte) COMP_PREFIX ## G; \
+	PREFIX ## 2 = (jubyte) COMP_PREFIX ## R; \
     } while (0)
 
 #define InitThreeByteBgrBlendFillVarsPre(PREFIX, argb, COMP_PREFIX)
 
 #define StoreThreeByteBgrBlendFill(pRas, PREFIX, x, argb, COMP_PREFIX) \
     do { \
-        pRas[3*x+0] = PREFIX ## 0; \
-        pRas[3*x+1] = PREFIX ## 1; \
-        pRas[3*x+2] = PREFIX ## 2; \
+	pRas[3*x+0] = PREFIX ## 0; \
+	pRas[3*x+1] = PREFIX ## 1; \
+	pRas[3*x+2] = PREFIX ## 2; \
     } while (0)
 
 #define StoreThreeByteBgrFrom4ByteArgbComps(pRas, PREFIX, x, COMP_PREFIX) \

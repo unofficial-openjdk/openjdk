@@ -31,6 +31,7 @@ import javax.swing.JTabbedPane;
 /**
  * Pluggable look and feel interface for JTabbedPane.
  *
+ * @version %I% %G%
  * @author Dave Moore
  * @author Amy Fowler
  */

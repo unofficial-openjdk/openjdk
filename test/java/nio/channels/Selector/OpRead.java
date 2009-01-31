@@ -40,12 +40,12 @@ public class OpRead {
     static final String DAYTIME_HOST = TestUtil.HOST;
 
     static void test() throws Exception {
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-                                    DAYTIME_PORT);
-        SocketChannel sc = SocketChannel.open();
-
-        sc.connect(isa);
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+				    DAYTIME_PORT);
+	SocketChannel sc = SocketChannel.open();
+        
+	sc.connect(isa);
 
         sc.configureBlocking(false);
 
@@ -76,7 +76,7 @@ public class OpRead {
         }
 
 
-        sc.close();
+	sc.close();
     }
 
     public static void main(String[] args) throws Exception {

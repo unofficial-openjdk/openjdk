@@ -36,16 +36,16 @@ class ByteArrayCounterSnapshot extends AbstractCounter
     byte[] value;
 
     // package private
-    ByteArrayCounterSnapshot(String name, Units u, Variability v, int flags,
+    ByteArrayCounterSnapshot(String name, Units u, Variability v, int flags, 
                              int vectorLength, byte[] value) {
         super(name, u, v, flags, vectorLength);
         this.value = value;
     }
-
+    
     public Object getValue() {
         return value;
     }
-
+    
     public byte[] byteArrayValue() {
         return value;
     }

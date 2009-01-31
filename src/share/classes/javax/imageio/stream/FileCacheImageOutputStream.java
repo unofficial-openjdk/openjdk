@@ -36,6 +36,7 @@ import com.sun.imageio.stream.StreamCloser;
  * output to a regular <code>OutputStream</code>.  A file is used to
  * cache data until it is flushed to the output stream.
  *
+ * @version 0.5
  */
 public class FileCacheImageOutputStream extends ImageOutputStreamImpl {
 
@@ -44,7 +45,7 @@ public class FileCacheImageOutputStream extends ImageOutputStreamImpl {
     private File cacheFile;
 
     private RandomAccessFile cache;
-
+    
     // Pos after last (rightmost) byte written
     private long maxStreamPos = 0L;
 
@@ -60,7 +61,7 @@ public class FileCacheImageOutputStream extends ImageOutputStreamImpl {
      * <code>File.createTempFile</code> for details).
      *
      * @param stream an <code>OutputStream</code> to write to.
-     * @param cacheDir a <code>File</code> indicating where the
+     * @param cacheDir a <code>File</code> indicating where the 
      * cache file should be created, or <code>null</code> to use the
      * system directory.
      *

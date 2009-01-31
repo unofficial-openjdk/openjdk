@@ -58,7 +58,7 @@ import java.util.StringTokenizer;
  *   <td>Creation of an AccessControlContext</td>
  *   <td>This allows someone to instantiate an AccessControlContext
  * with a <code>DomainCombiner</code>.  Extreme care must be taken when
- * granting this permission. Malicious code could create a DomainCombiner
+ * granting this permission. Malicious code could create a DomainCombiner 
  * that augments the set of permissions granted to code, and even grant the
  * code {@link java.security.AllPermission}.</td>
  * </tr>
@@ -152,7 +152,7 @@ import java.util.StringTokenizer;
  * a different provider will be chosen instead, or no suitable provider
  * will be found, thereby resulting in program failure.</td>
  * </tr>
- *
+ * 
  * <tr>
  *   <td>clearProviderProperties.{provider name}</td>
  *   <td>"Clearing" of a Provider so that it no longer contains the properties
@@ -187,7 +187,7 @@ import java.util.StringTokenizer;
  *
  * <P>
  * The following permissions are associated with classes that have been
- * deprecated: {@link Identity}, {@link IdentityScope}, {@link Signer}. Use of
+ * deprecated: {@link Identity}, {@link IdentityScope}, {@link Signer}. Use of 
  * them is discouraged. See the applicable classes for more information.
  * <P>
  *
@@ -204,7 +204,7 @@ import java.util.StringTokenizer;
  *   <td>This would allow an attacker to configure the system identity scope with
  * certificates that should not be trusted, thereby granting applet or
  * application code signed with those certificates privileges that
- * would have been denied by the system's original identity scope.</td>
+ * would have been denied by the system's original identity scope.</td> 
  * </tr>
  *
  * <tr>
@@ -286,6 +286,7 @@ import java.util.StringTokenizer;
  * @see java.security.PermissionCollection
  * @see java.lang.SecurityManager
  *
+ * @version %I% %E%
  *
  * @author Marianne Mueller
  * @author Roland Schemers
@@ -309,7 +310,7 @@ public final class SecurityPermission extends BasicPermission {
 
     public SecurityPermission(String name)
     {
-        super(name);
+	super(name);
     }
 
     /**
@@ -326,6 +327,6 @@ public final class SecurityPermission extends BasicPermission {
 
     public SecurityPermission(String name, String actions)
     {
-        super(name, actions);
+	super(name, actions);
     }
 }

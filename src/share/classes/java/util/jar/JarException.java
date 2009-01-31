@@ -30,6 +30,7 @@ package java.util.jar;
  * or writing to a JAR file.
  *
  * @author  David Connelly
+ * @version %I%, %G%
  * @since   1.2
  */
 public
@@ -45,6 +46,6 @@ class JarException extends java.util.zip.ZipException {
      * @param s the detail message
      */
     public JarException(String s) {
-        super(s);
+	super(s);
     }
 }

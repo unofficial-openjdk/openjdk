@@ -1,4 +1,5 @@
 
+ /* %W% %E%           */
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -35,11 +36,11 @@
 extern int signgam;
 
 #ifdef __STDC__
-        double __ieee754_lgamma(double x)
+	double __ieee754_lgamma(double x)
 #else
-        double __ieee754_lgamma(x)
-        double x;
+	double __ieee754_lgamma(x)
+	double x;
 #endif
 {
-        return __ieee754_lgamma_r(x,&signgam);
+	return __ieee754_lgamma_r(x,&signgam);
 }

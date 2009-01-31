@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W%	%E%
  */
 
 package sun.nio.cs.ext;
@@ -38,51 +39,51 @@ public class IBM949C extends Charset implements HistoricallyNamedCharset
 {
 
     public IBM949C() {
-        super("x-IBM949C", ExtendedCharsets.aliasesFor("x-IBM949C"));
+	super("x-IBM949C", ExtendedCharsets.aliasesFor("x-IBM949C"));
     }
 
     public String historicalName() {
-        return "Cp949C";
+	return "Cp949C";
     }
 
     public boolean contains(Charset cs) {
-        return ((cs.name().equals("US-ASCII"))
-                || (cs instanceof IBM949C));
+	return ((cs.name().equals("US-ASCII"))
+		|| (cs instanceof IBM949C));
     }
 
     public CharsetDecoder newDecoder() {
-        return new Decoder(this);
+	return new Decoder(this);
     }
 
     public CharsetEncoder newEncoder() {
-        return new Encoder(this);
+	return new Encoder(this);
     }
 
     public short[] getEncoderIndex1() {
-        return Encoder.index1;
+	return Encoder.index1;
 
     }
     public String getEncoderIndex2() {
-        return Encoder.index2;
+	return Encoder.index2;
 
     }
     public String getEncoderIndex2a() {
-        return Encoder.index2a;
+	return Encoder.index2a;
 
     }
     private static class Decoder extends IBM949.Decoder {
         protected static final String singleByteToChar;
 
-        static {
-          String indexs = "";
-          for (char c = '\0'; c < '\u0080'; ++c) indexs += c;
-              singleByteToChar = indexs +
-                                 IBM949.Decoder.singleByteToChar.substring(indexs.length());
-        }
+	static {
+	  String indexs = "";
+	  for (char c = '\0'; c < '\u0080'; ++c) indexs += c;
+	      singleByteToChar = indexs +
+				 IBM949.Decoder.singleByteToChar.substring(indexs.length());
+	}
 
-        public Decoder(Charset cs) {
-            super(cs, singleByteToChar);
-        }
+	public Decoder(Charset cs) {
+	    super(cs, singleByteToChar);
+	}
     }
 
    private static class Encoder extends IBM949.Encoder {
@@ -878,8 +879,8 @@ public class IBM949C extends Charset implements HistoricallyNamedCharset
                 "\uDAD7\uCCDF\uF2D3\uFBA9\uD8A5\u0000\u0000\u0000\u0000\uD5CB"
                 ;
 
-        public Encoder(Charset cs) {
-            super(cs, index2a);
-        }
+	public Encoder(Charset cs) {
+	    super(cs, index2a);
+	}
     }
 }

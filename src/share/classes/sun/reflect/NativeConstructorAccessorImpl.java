@@ -37,7 +37,7 @@ class NativeConstructorAccessorImpl extends ConstructorAccessorImpl {
 
     NativeConstructorAccessorImpl(Constructor c) {
         this.c = c;
-    }
+    }    
 
     public Object newInstance(Object[] args)
         throws InstantiationException,
@@ -53,7 +53,7 @@ class NativeConstructorAccessorImpl extends ConstructorAccessorImpl {
                                         c.getModifiers());
             parent.setDelegate(acc);
         }
-
+        
         return newInstance0(c, args);
     }
 

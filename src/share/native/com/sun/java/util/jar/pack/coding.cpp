@@ -115,13 +115,13 @@ coding* coding::init() {
       while (!IS_NEG_CODE(S, maxNegCode))  --maxNegCode;
       int maxPos = decode_sign(S, maxPosCode);
       if (maxPos < 0)
-        this->max = INT_MAX_VALUE;  // 32-bit wraparound
+	this->max = INT_MAX_VALUE;  // 32-bit wraparound
       else
-        this->max = maxPos;
+	this->max = maxPos;
       if (maxNegCode < 0)
-        this->min = 0;  // No negative codings at all.
+	this->min = 0;  // No negative codings at all.
       else
-        this->min = decode_sign(S, maxNegCode);
+	this->min = decode_sign(S, maxNegCode);
     }
   }
 
@@ -254,8 +254,8 @@ void coding::parseMultiple(byte* &rp, int N, byte* limit, int B, int H) {
     } else {
       int b = (ptr[-1] & 0xFF);
       if (b >= L) {
-        // keep going, unless we find a byte < L
-        continue;
+	// keep going, unless we find a byte < L
+	continue;
       }
     }
     // found the last byte
@@ -298,12 +298,12 @@ void value_stream::setCoding(coding* defc) {
   // choose cmk
   cmk = cmk_ERROR;
   switch (c.spec) {
-  case BYTE1_spec:      cmk = cmk_BYTE1;        break;
-  case CHAR3_spec:      cmk = cmk_CHAR3;        break;
-  case UNSIGNED5_spec:  cmk = cmk_UNSIGNED5;    break;
-  case DELTA5_spec:     cmk = cmk_DELTA5;       break;
-  case BCI5_spec:       cmk = cmk_BCI5;         break;
-  case BRANCH5_spec:    cmk = cmk_BRANCH5;      break;
+  case BYTE1_spec:	cmk = cmk_BYTE1; 	break;
+  case CHAR3_spec:	cmk = cmk_CHAR3; 	break;
+  case UNSIGNED5_spec:	cmk = cmk_UNSIGNED5; 	break;
+  case DELTA5_spec:	cmk = cmk_DELTA5; 	break;
+  case BCI5_spec:	cmk = cmk_BCI5; 	break;
+  case BRANCH5_spec:	cmk = cmk_BRANCH5; 	break;
   default:
     if (c.D() == 0) {
       switch (c.S()) {
@@ -313,8 +313,8 @@ void value_stream::setCoding(coding* defc) {
       }
     } else {
       if (c.S() == 1) {
-        if (c.isFullRange)   cmk = cmk_BHS1D1full;
-        if (c.isSubrange)    cmk = cmk_BHS1D1sub;
+	if (c.isFullRange)   cmk = cmk_BHS1D1full;
+	if (c.isSubrange)    cmk = cmk_BHS1D1sub;
       }
       if (cmk == cmk_ERROR)  cmk = cmk_BHSD1;
     }
@@ -483,7 +483,7 @@ int value_stream::getInt() {
     if (D != 0) {
       assert(c.isSubrange | c.isFullRange);
       if (c.isSubrange)
-        sum = c.sumInUnsignedRange(sum, (int) uval);
+	sum = c.sumInUnsignedRange(sum, (int) uval);
       else
         sum += (int) uval;
       uval = (uint) sum;
@@ -534,9 +534,9 @@ enum { POP_FAVORED_N = -2 };
 
 // This function knows all about meta-coding.
 void coding_method::init(byte* &band_rp, byte* band_limit,
-                         byte* &meta_rp, int mode,
-                         coding* defc, int N,
-                         intlist* valueSink) {
+			 byte* &meta_rp, int mode,
+			 coding* defc, int N,
+			 intlist* valueSink) {
   assert(N != 0);
 
   assert(u != null);  // must be pre-initialized
@@ -672,14 +672,14 @@ void coding_method::init(byte* &band_rp, byte* band_limit,
       coding* tcode = coding::findBySpec(1, 256);  // BYTE1
       // find the most narrowly sufficient code:
       for (int B = 2; B <= B_MAX; B++) {
-        if (fVlength <= tcode->umax)  break;  // found it
-        tcode->free();
-        tcode = coding::findBySpec(B, TH);
-        CHECK_NULL(tcode);
+	if (fVlength <= tcode->umax)  break;  // found it
+	tcode->free();
+	tcode = coding::findBySpec(B, TH);
+	CHECK_NULL(tcode);
       }
       if (!(fVlength <= tcode->umax)) {
-        abort("pop.L value too small");
-        return;
+	abort("pop.L value too small");
+	return;
       }
       this->init(band_rp, band_limit, NO_META, disPop, tcode, N, null);
       tcode->free();
@@ -696,8 +696,8 @@ void coding_method::init(byte* &band_rp, byte* band_limit,
       uint val = vs.getInt();
       if (val == 0)  UN += 1;
       if (!(val <= fVlength)) {
-        abort("pop token out of range");
-        return;
+	abort("pop token out of range");
+	return;
       }
     }
     vs.done();
@@ -708,16 +708,16 @@ void coding_method::init(byte* &band_rp, byte* band_limit,
       CHECK_NULL(uValues);
       uValues->u = u;
       if (UDef != 0) {
-        uValues->init(band_rp, band_limit, NO_META, disPop, defc, UN, null);
+	uValues->init(band_rp, band_limit, NO_META, disPop, defc, UN, null);
       } else {
-        uValues->init(band_rp, band_limit, meta_rp, disPop, defc, UN, null);
+	uValues->init(band_rp, band_limit, meta_rp, disPop, defc, UN, null);
       }
     } else {
       if (UDef == 0) {
-        int uop = (*meta_rp++ & 0xFF);
-        if (uop > _meta_canon_max)
-          // %%% Spec. requires the more strict (uop != _meta_default).
-          abort("bad meta-coding for empty pop/U");
+	int uop = (*meta_rp++ & 0xFF);
+	if (uop > _meta_canon_max)
+	  // %%% Spec. requires the more strict (uop != _meta_default).
+	  abort("bad meta-coding for empty pop/U");
       }
     }
 
@@ -799,8 +799,8 @@ void coding_method::init(byte* &band_rp, byte* band_limit,
     for (;;) {
       int val = vs.getInt();
       if (valueSink->length() > 0 &&
-          (val == last || val == min)) //|| val == min2
-        break;
+	  (val == last || val == min)) //|| val == min2
+	break;
       valueSink->add(val);
       CHECK;
       last = val;
@@ -951,7 +951,7 @@ coding basic_codings[] = {
   0
 };
 #define BASIC_INDEX_LIMIT \
-        (sizeof(basic_codings)/sizeof(basic_codings[0])-1)
+	(sizeof(basic_codings)/sizeof(basic_codings[0])-1)
 
 coding* coding::findByIndex(int idx) {
   assert(_meta_canon_min == 1);
@@ -973,7 +973,7 @@ const char* coding::string() {
   if (max == INT_MAX_VALUE)  strcpy(maxS, "max");
   if (min == INT_MIN_VALUE)  strcpy(minS, "min");
   sprintf((char*)buf.ptr, "(%d,%d,%d,%d) L=%d r=[%s,%s]",
-          B,H,S,D,L,minS,maxS);
+	  B,H,S,D,L,minS,maxS);
   return (const char*) buf.ptr;
 }
 #endif

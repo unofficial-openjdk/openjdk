@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -49,64 +49,64 @@ public class NoClassDefFoundErrorTrap {
      */
     public static class TestObjectInputStream extends ObjectInputStream {
 
-        public TestObjectInputStream(InputStream in)
-            throws IOException
-        {
-            super(in);
-        }
+	public TestObjectInputStream(InputStream in)
+	    throws IOException
+	{
+	    super(in);
+	}
 
-        protected Class resolveClass(ObjectStreamClass desc)
-            throws IOException, ClassNotFoundException
-        {
-            String name = desc.getName();
+	protected Class resolveClass(ObjectStreamClass desc)
+	    throws IOException, ClassNotFoundException
+	{
+	    String name = desc.getName();
 
-            if (name.equals(Foo.class.getName())) {
-                ncdfe = new NoClassDefFoundError("Bar");
-                throw ncdfe;
-            } else {
-                return super.resolveClass(desc);
-            }
-        }
+	    if (name.equals(Foo.class.getName())) {
+		ncdfe = new NoClassDefFoundError("Bar");
+		throw ncdfe;
+	    } else {
+		return super.resolveClass(desc);
+	    }
+	}
     }
 
     public static void main(String[] args) {
 
-        System.err.println("\nRegression test for bug 4205440\n");
+	System.err.println("\nRegression test for bug 4205440\n");
 
-        try {
-            /*
-             * Serialize a Foo instance to a byte array.
-             */
-            Foo foo = new Foo();
-            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bout);
-            out.writeObject(foo);
-            byte[] stream = bout.toByteArray();
+	try {
+	    /*
+	     * Serialize a Foo instance to a byte array.
+	     */
+	    Foo foo = new Foo();
+	    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	    ObjectOutputStream out = new ObjectOutputStream(bout);
+	    out.writeObject(foo);
+	    byte[] stream = bout.toByteArray();
 
-            /*
-             * Deserialize the Foo instance using our test subclass of
-             * ObjectInputStream that will throw NoClassDefFoundError.
-             */
-            ByteArrayInputStream bin = new ByteArrayInputStream(stream);
-            ObjectInputStream in = new TestObjectInputStream(bin);
+	    /*
+	     * Deserialize the Foo instance using our test subclass of
+	     * ObjectInputStream that will throw NoClassDefFoundError.
+	     */
+	    ByteArrayInputStream bin = new ByteArrayInputStream(stream);
+	    ObjectInputStream in = new TestObjectInputStream(bin);
 
-            /*
-             * The test succeeds if we get the NoClassDefFoundError.
-             */
-            try {
-                in.readObject();
-            } catch (NoClassDefFoundError e) {
-                if (e == ncdfe) {
-                    System.err.println("TEST PASSED: " + e.toString());
-                } else {
-                    throw e;
-                }
-            }
+	    /*
+	     * The test succeeds if we get the NoClassDefFoundError.
+	     */
+	    try {
+		in.readObject();
+	    } catch (NoClassDefFoundError e) {
+		if (e == ncdfe) {
+		    System.err.println("TEST PASSED: " + e.toString());
+		} else {
+		    throw e;
+		}
+	    }
 
-        } catch (Exception e) {
-            System.err.println("\nTEST FAILED:");
-            e.printStackTrace();
-            throw new RuntimeException("TEST FAILED: " + e.toString());
-        }
+	} catch (Exception e) {
+	    System.err.println("\nTEST FAILED:");
+	    e.printStackTrace();
+	    throw new RuntimeException("TEST FAILED: " + e.toString());
+	}	
     }
 }

@@ -35,6 +35,7 @@ import java.util.*;
  * a <code>SynthContext</code> that is passed to you and expect it to
  * remain valid.
  *
+ * @version %I%, %G%
  * @since 1.5
  * @author Scott Violet
  */
@@ -120,7 +121,7 @@ public class SynthContext {
     /**
      * Returns the hosting component containing the region.
      *
-     * @return Hosting Component
+     * @return Hosting Component 
      */
     public JComponent getComponent() {
         return component;

@@ -27,7 +27,7 @@
  * @test 1.1 01/06/27
  * @bug 4484246
  * @summary When an application enables anonymous SSL cipher suite,
- *        Hostname verification is not required
+ *	  Hostname verification is not required
  */
 
 import java.io.*;
@@ -77,33 +77,33 @@ public class JavaxHostnameVerifier {
      * parsing the HTML header.
      */
     private static String getPath(DataInputStream in)
-        throws IOException
+	throws IOException
     {
-        String line = in.readLine();
-        String path = "";
-        // extract class from GET line
-        if (line == null)
-                return null;
+	String line = in.readLine();
+	String path = "";
+	// extract class from GET line
+	if (line == null)
+		return null;
 
-        if (line.startsWith("GET /")) {
-            line = line.substring(5, line.length()-1).trim();
-            int index = line.indexOf(' ');
-            if (index != -1) {
-                path = line.substring(0, index);
-            }
-        }
+	if (line.startsWith("GET /")) {
+	    line = line.substring(5, line.length()-1).trim();
+	    int index = line.indexOf(' ');
+	    if (index != -1) {
+		path = line.substring(0, index);
+	    }
+	}
 
-        // eat the rest of header
-        do {
-            line = in.readLine();
-        } while ((line.length() != 0) &&
-                 (line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
+	// eat the rest of header
+	do {
+	    line = in.readLine();
+	} while ((line.length() != 0) &&
+		 (line.charAt(0) != '\r') && (line.charAt(0) != '\n'));
 
-        if (path.length() != 0) {
-            return path;
-        } else {
-            throw new IOException("Malformed Header");
-        }
+	if (path.length() != 0) {
+	    return path;
+	} else {
+	    throw new IOException("Malformed Header");
+	}
     }
 
     /**
@@ -117,9 +117,9 @@ public class JavaxHostnameVerifier {
      * to <b>path</b> could not be loaded.
      */
     private byte[] getBytes(String path)
-        throws IOException
+	throws IOException
     {
-        return "Hello world, I am here".getBytes();
+	return "Hello world, I am here".getBytes();
     }
 
     /*
@@ -130,55 +130,55 @@ public class JavaxHostnameVerifier {
      */
     void doServerSide() throws Exception {
 
-        SSLServerSocketFactory sslssf =
-          (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-        SSLServerSocket sslServerSocket =
-            (SSLServerSocket) sslssf.createServerSocket(serverPort);
-        serverPort = sslServerSocket.getLocalPort();
+	SSLServerSocketFactory sslssf =
+	  (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	SSLServerSocket sslServerSocket =
+	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
+	serverPort = sslServerSocket.getLocalPort();
 
-        String ciphers[]= { "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA" };
-        sslServerSocket.setEnabledCipherSuites(ciphers);
+	String ciphers[]= { "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA" };
+	sslServerSocket.setEnabledCipherSuites(ciphers);
 
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady = true;
+	/*
+	 * Signal Client, we're ready for his connect.
+	 */
+	serverReady = true;
 
-        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-        DataOutputStream out =
-                new DataOutputStream(sslSocket.getOutputStream());
+	SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+	DataOutputStream out =
+		new DataOutputStream(sslSocket.getOutputStream());
 
-        try {
-             // get path to class file from header
-             DataInputStream in =
-                        new DataInputStream(sslSocket.getInputStream());
-             String path = getPath(in);
-             // retrieve bytecodes
-             byte[] bytecodes = getBytes(path);
-             // send bytecodes in response (assumes HTTP/1.0 or later)
-             try {
-                out.writeBytes("HTTP/1.0 200 OK\r\n");
-                out.writeBytes("Content-Length: " + bytecodes.length + "\r\n");
-                out.writeBytes("Content-Type: text/html\r\n\r\n");
-                out.write(bytecodes);
-                out.flush();
-             } catch (IOException ie) {
-                ie.printStackTrace();
-                return;
-             }
+	try {
+	     // get path to class file from header
+	     DataInputStream in =
+			new DataInputStream(sslSocket.getInputStream());
+	     String path = getPath(in);
+	     // retrieve bytecodes
+	     byte[] bytecodes = getBytes(path);
+	     // send bytecodes in response (assumes HTTP/1.0 or later)
+	     try {
+		out.writeBytes("HTTP/1.0 200 OK\r\n");
+		out.writeBytes("Content-Length: " + bytecodes.length + "\r\n");
+		out.writeBytes("Content-Type: text/html\r\n\r\n");
+		out.write(bytecodes);
+		out.flush();
+	     } catch (IOException ie) {
+		ie.printStackTrace();
+		return;
+	     }
 
-        } catch (Exception e) {
-             e.printStackTrace();
-             // write out error response
-             out.writeBytes("HTTP/1.0 400 " + e.getMessage() + "\r\n");
-             out.writeBytes("Content-Type: text/html\r\n\r\n");
-             out.flush();
-        } finally {
-             // close the socket
-             System.out.println("Server closing socket");
-             sslSocket.close();
-             serverReady = false;
-        }
+	} catch (Exception e) {
+	     e.printStackTrace();
+	     // write out error response
+	     out.writeBytes("HTTP/1.0 400 " + e.getMessage() + "\r\n");
+	     out.writeBytes("Content-Type: text/html\r\n\r\n");
+	     out.flush();
+	} finally {
+	     // close the socket
+	     System.out.println("Server closing socket");
+	     sslSocket.close();
+	     serverReady = false;
+	}
     }
 
     /*
@@ -188,44 +188,44 @@ public class JavaxHostnameVerifier {
      * to avoid infinite hangs.
      */
     void doClientSide() throws Exception {
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
-        }
+	/*
+	 * Wait for server to get started.
+	 */
+	while (!serverReady) {
+	    Thread.sleep(50);
+	}
 
-        System.setProperty("https.cipherSuites",
-                "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA");
+	System.setProperty("https.cipherSuites",
+		"SSL_DH_anon_WITH_3DES_EDE_CBC_SHA");
 
-        // use the default hostname verifier
+	// use the default hostname verifier
 
-        URL url = new URL("https://" + "localhost:" + serverPort +
-                                "/etc/hosts");
-        URLConnection urlc = url.openConnection();
+	URL url = new URL("https://" + "localhost:" + serverPort +
+				"/etc/hosts");
+	URLConnection urlc = url.openConnection();
 
-        if (!(urlc instanceof javax.net.ssl.HttpsURLConnection)) {
-            throw new Exception(
-                "URLConnection ! instanceof javax.net.ssl.HttpsURLConnection");
-        }
+	if (!(urlc instanceof javax.net.ssl.HttpsURLConnection)) {
+	    throw new Exception(
+		"URLConnection ! instanceof javax.net.ssl.HttpsURLConnection");
+	}
 
-        BufferedReader in = null;
-        try {
-            in = new BufferedReader(new InputStreamReader(
-                               urlc.getInputStream()));
-            String inputLine;
-            System.out.print("Client reading... ");
-            while ((inputLine = in.readLine()) != null)
-                System.out.println(inputLine);
-            System.out.println("Cipher Suite: " +
-                ((HttpsURLConnection)urlc).getCipherSuite());
-            in.close();
-        } catch (SSLException e) {
-            if (in != null)
-                in.close();
-            throw e;
-        }
-        System.out.println("Client reports:  SUCCESS");
+	BufferedReader in = null;
+	try {
+	    in = new BufferedReader(new InputStreamReader(
+			       urlc.getInputStream()));
+	    String inputLine;
+	    System.out.print("Client reading... ");
+	    while ((inputLine = in.readLine()) != null)
+		System.out.println(inputLine);
+	    System.out.println("Cipher Suite: " +
+		((HttpsURLConnection)urlc).getCipherSuite());
+	    in.close();
+	} catch (SSLException e) {
+	    if (in != null)
+		in.close();
+	    throw e;
+	}
+	System.out.println("Client reports:  SUCCESS");
     }
 
     /*
@@ -241,13 +241,13 @@ public class JavaxHostnameVerifier {
 
     public static void main(String[] args) throws Exception {
 
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
+	if (debug)
+	    System.setProperty("javax.net.debug", "all");
 
-        /*
-         * Start the tests.
-         */
-        new JavaxHostnameVerifier();
+	/*
+	 * Start the tests.
+	 */
+	new JavaxHostnameVerifier();
     }
 
     Thread clientThread = null;
@@ -259,82 +259,82 @@ public class JavaxHostnameVerifier {
      * Fork off the other side, then do your work.
      */
     JavaxHostnameVerifier() throws Exception {
-        if (separateServerThread) {
-            startServer(true);
-            startClient(false);
-        } else {
-            startClient(true);
-            startServer(false);
-        }
+	if (separateServerThread) {
+	    startServer(true);
+	    startClient(false);
+	} else {
+	    startClient(true);
+	    startServer(false);
+	}
 
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
+	/*
+	 * Wait for other side to close down.
+	 */
+	if (separateServerThread) {
+	    serverThread.join();
+	} else {
+	    clientThread.join();
+	}
 
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null) {
-            System.out.print("Server Exception:");
-            throw serverException;
-        }
-        if (clientException != null) {
-            System.out.print("Client Exception:");
-            throw clientException;
-        }
+	/*
+	 * When we get here, the test is pretty much over.
+	 *
+	 * If the main thread excepted, that propagates back
+	 * immediately.  If the other thread threw an exception, we
+	 * should report back.
+	 */
+	if (serverException != null) {
+	    System.out.print("Server Exception:");
+	    throw serverException;
+	}
+	if (clientException != null) {
+	    System.out.print("Client Exception:");
+	    throw clientException;
+	}
     }
 
     void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.err.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide();
-        }
+	if (newThread) {
+	    serverThread = new Thread() {
+		public void run() {
+		    try {
+			doServerSide();
+		    } catch (Exception e) {
+			/*
+			 * Our server thread just died.
+			 *
+			 * Release the client, if not active already...
+			 */
+			System.err.println("Server died...");
+			serverReady = true;
+			serverException = e;
+		    }
+		}
+	    };
+	    serverThread.start();
+	} else {
+	    doServerSide();
+	}
     }
 
     void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+	if (newThread) {
+	    clientThread = new Thread() {
+		public void run() {
+		    try {
+			doClientSide();
+		    } catch (Exception e) {
+			/*
+			 * Our client thread just died.
+			 */
+			System.err.println("Client died...");
+			clientException = e;
+		    }
+		}
+	    };
+	    clientThread.start();
+	} else {
+	    doClientSide();
+	}
     }
 }

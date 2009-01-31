@@ -47,11 +47,11 @@ class XIconInfo {
      * Icon image.
      */
     private Image image;
-    /**
+    /** 
      * Width of icon image. Being set in constructor.
      */
     private final int width;
-    /**
+    /** 
      * Height of icon image. Being set in constructor.
      */
     private final int height;
@@ -79,7 +79,7 @@ class XIconInfo {
     }
 
     XIconInfo(long[] longIconData) {
-        this.longIconData =
+        this.longIconData = 
         (null == longIconData) ? null : Arrays.copyOf(longIconData, longIconData.length);
         this.width = (int)longIconData[0];
         this.height = (int)longIconData[1];
@@ -174,7 +174,7 @@ class XIconInfo {
             // Such a conversion is valid since the
             // original data (see
             // make/sun/xawt/ToBin.java) were ints
-            intData[i] = (int)longData[i];
+            intData[i] = (int)longData[i];                            
         }
         return intData;
     }
@@ -182,21 +182,21 @@ class XIconInfo {
     private static long[] intArrayToLongArray(int[] intData) {
         long[] longData = new long[intData.length];
         for (int i = 0; i < intData.length; i++) {
-            longData[i] = (int)intData[i];
+            longData[i] = (int)intData[i];                            
         }
         return longData;
     }
 
     static Image intArrayToImage(int[] raw) {
-        ColorModel cm =
-            new DirectColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), 32,
-                                 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000,
+        ColorModel cm = 
+            new DirectColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), 32, 
+                                 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, 
                                  false, DataBuffer.TYPE_INT);
         DataBuffer buffer = new DataBufferInt(raw, raw.length-2, 2);
-        WritableRaster raster =
+        WritableRaster raster = 
             Raster.createPackedRaster(buffer, raw[0], raw[1],
-                                      raw[0],
-                                      new int[] {0x00ff0000, 0x0000ff00,
+                                      raw[0], 
+                                      new int[] {0x00ff0000, 0x0000ff00, 
                                                  0x000000ff, 0xff000000},
                                       null);
         BufferedImage im = new BufferedImage(cm, raster, false, null);
@@ -211,15 +211,15 @@ class XIconInfo {
         if (width <= 0 || height <= 0) {
             return null;
         }
-        ColorModel cm =
-            new DirectColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), 32,
-                                 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000,
+        ColorModel cm = 
+            new DirectColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), 32, 
+                                 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000, 
                                  false, DataBuffer.TYPE_INT);
         DataBufferInt buffer = new DataBufferInt(width * height);
-        WritableRaster raster =
+        WritableRaster raster = 
             Raster.createPackedRaster(buffer, width, height,
-                                      width,
-                                      new int[] {0x00ff0000, 0x0000ff00,
+                                      width, 
+                                      new int[] {0x00ff0000, 0x0000ff00, 
                                                  0x000000ff, 0xff000000},
                                       null);
         BufferedImage im = new BufferedImage(cm, raster, false, null);

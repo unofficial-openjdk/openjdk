@@ -46,16 +46,16 @@ void            class_delete_global_references(JNIEnv* env);
 void            class_cleanup(void);
 void            class_set_methods(ClassIndex index, const char**name,
                                 const char**descr,  int count);
-jmethodID       class_get_methodID(JNIEnv *env, ClassIndex index,
+jmethodID       class_get_methodID(JNIEnv *env, ClassIndex index, 
                                 MethodIndex mnum);
-jclass          class_new_classref(JNIEnv *env, ClassIndex index,
+jclass          class_new_classref(JNIEnv *env, ClassIndex index, 
                                 jclass classref);
 void            class_delete_classref(JNIEnv *env, ClassIndex index);
 jclass          class_get_class(JNIEnv *env, ClassIndex index);
 void            class_set_inst_size(ClassIndex index, jint inst_size);
 jint            class_get_inst_size(ClassIndex index);
-void            class_set_object_index(ClassIndex index,
-                                ObjectIndex object_index);
+void            class_set_object_index(ClassIndex index, 
+				ObjectIndex object_index);
 ObjectIndex     class_get_object_index(ClassIndex index);
 ClassIndex      class_get_super(ClassIndex index);
 void            class_set_super(ClassIndex index, ClassIndex super);
@@ -63,6 +63,6 @@ void            class_set_loader(ClassIndex index, LoaderIndex loader);
 LoaderIndex     class_get_loader(ClassIndex index);
 void            class_prime_system_classes(void);
 jint            class_get_all_fields(JNIEnv *env, ClassIndex cnum,
-                                     jint *pfield_count, FieldInfo **pfield);
+				     jint *pfield_count, FieldInfo **pfield);
 
 #endif

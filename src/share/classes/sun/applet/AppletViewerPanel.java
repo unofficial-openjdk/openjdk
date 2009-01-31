@@ -40,7 +40,8 @@ import sun.tools.jar.*;
  * thread group to call the applet's init(), start(), stop(), and
  * destroy() methods.
  *
- * @author      Arthur van Hoff
+ * @version 	%I%, %G%
+ * @author 	Arthur van Hoff
  */
 class AppletViewerPanel extends AppletPanel {
 
@@ -71,33 +72,33 @@ class AppletViewerPanel extends AppletPanel {
      * Construct an applet viewer and start the applet.
      */
     AppletViewerPanel(URL documentURL, Hashtable atts) {
-        this.documentURL = documentURL;
-        this.atts = atts;
+	this.documentURL = documentURL;
+	this.atts = atts;
 
-        String att = getParameter("codebase");
-        if (att != null) {
-            if (!att.endsWith("/")) {
-                att += "/";
-            }
-            try {
-                baseURL = new URL(documentURL, att);
-            } catch (MalformedURLException e) {
-            }
-        }
-        if (baseURL == null) {
-            String file = documentURL.getFile();
-            int i = file.lastIndexOf('/');
-            if (i >= 0 && i < file.length() - 1) {
-                try {
-                    baseURL = new URL(documentURL, file.substring(0, i + 1));
-                } catch (MalformedURLException e) {
-                }
-            }
-        }
-
-        // when all is said & done, baseURL shouldn't be null
-        if (baseURL == null)
-                baseURL = documentURL;
+	String att = getParameter("codebase");
+	if (att != null) {
+	    if (!att.endsWith("/")) {
+		att += "/";
+	    }
+	    try {
+		baseURL = new URL(documentURL, att);
+	    } catch (MalformedURLException e) {
+	    }
+	}
+	if (baseURL == null) {
+	    String file = documentURL.getFile();
+	    int i = file.lastIndexOf('/');
+	    if (i >= 0 && i < file.length() - 1) {
+		try {
+		    baseURL = new URL(documentURL, file.substring(0, i + 1));
+		} catch (MalformedURLException e) {
+		}
+	    }
+	}
+	
+	// when all is said & done, baseURL shouldn't be null
+	if (baseURL == null)
+		baseURL = documentURL;
 
 
     }
@@ -106,14 +107,14 @@ class AppletViewerPanel extends AppletPanel {
      * Get an applet parameter.
      */
     public String getParameter(String name) {
-        return (String)atts.get(name.toLowerCase());
+	return (String)atts.get(name.toLowerCase());
     }
 
     /**
      * Get the document url.
      */
     public URL getDocumentBase() {
-        return documentURL;
+	return documentURL;
 
     }
 
@@ -121,18 +122,18 @@ class AppletViewerPanel extends AppletPanel {
      * Get the base url.
      */
     public URL getCodeBase() {
-        return baseURL;
+	return baseURL;
     }
 
     /**
      * Get the width.
      */
     public int getWidth() {
-        String w = getParameter("width");
-        if (w != null) {
-            return Integer.valueOf(w).intValue();
-        }
-        return 0;
+	String w = getParameter("width");
+	if (w != null) {
+	    return Integer.valueOf(w).intValue();
+	}
+	return 0;
     }
 
 
@@ -140,41 +141,41 @@ class AppletViewerPanel extends AppletPanel {
      * Get the height.
      */
     public int getHeight() {
-        String h = getParameter("height");
-        if (h != null) {
-            return Integer.valueOf(h).intValue();
-        }
-        return 0;
+	String h = getParameter("height");
+	if (h != null) {
+	    return Integer.valueOf(h).intValue();
+	} 
+	return 0;
     }
 
     /**
      * Get initial_focus
      */
-    public boolean hasInitialFocus()
+    public boolean hasInitialFocus() 
     {
+    
+	// 6234219: Do not set initial focus on an applet 
+	// during startup if applet is targeted for 
+	// JDK 1.1/1.2. [stanley.ho]
+	if (isJDK11Applet() || isJDK12Applet())
+	    return false;
+	    
+	String initialFocus = getParameter("initial_focus");
 
-        // 6234219: Do not set initial focus on an applet
-        // during startup if applet is targeted for
-        // JDK 1.1/1.2. [stanley.ho]
-        if (isJDK11Applet() || isJDK12Applet())
-            return false;
+	if (initialFocus != null) 
+	{
+	    if (initialFocus.toLowerCase().equals("false"))
+		return false;
+	}
 
-        String initialFocus = getParameter("initial_focus");
-
-        if (initialFocus != null)
-        {
-            if (initialFocus.toLowerCase().equals("false"))
-                return false;
-        }
-
-        return true;
+	return true;
     }
-
+    
     /**
      * Get the code parameter
      */
     public String getCode() {
-        return getParameter("code");
+	return getParameter("code");
     }
 
 
@@ -183,7 +184,7 @@ class AppletViewerPanel extends AppletPanel {
      * Otherwise return null.
      */
     public String getJarFiles() {
-        return getParameter("archive");
+	return getParameter("archive");
     }
 
     /**
@@ -199,18 +200,21 @@ class AppletViewerPanel extends AppletPanel {
      * also implemented by the AppletPanel class.
      */
     public AppletContext getAppletContext() {
-        return (AppletContext)getParent();
+	return (AppletContext)getParent();
     }
 
     static void debug(String s) {
-        if(debug)
-            System.err.println("AppletViewerPanel:::" + s);
+	if(debug)
+	    System.err.println("AppletViewerPanel:::" + s);
     }
 
     static void debug(String s, Throwable t) {
-        if(debug) {
-            t.printStackTrace();
-            debug(s);
-        }
+	if(debug) {
+	    t.printStackTrace();
+	    debug(s);
+	}
     }
 }
+
+
+

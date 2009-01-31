@@ -43,7 +43,7 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
     static final long serialVersionUID = -6178860474881375330L;
 
     static final MBeanOperationInfo[] NO_OPERATIONS =
-        new MBeanOperationInfo[0];
+	new MBeanOperationInfo[0];
 
     /**
      * Indicates that the operation is read-like,
@@ -103,11 +103,11 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * @param description A human readable description of the operation.
      */
     public MBeanOperationInfo(String description, Method method) {
-        this(method.getName(),
-             description,
-             methodSignature(method),
-             method.getReturnType().getName(),
-             UNKNOWN,
+	this(method.getName(),
+	     description,
+	     methodSignature(method),
+	     method.getReturnType().getName(),
+	     UNKNOWN,
              Introspector.descriptorForElement(method));
     }
 
@@ -124,13 +124,13 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * ACTION, ACTION_INFO, UNKNOWN</CODE>.
      */
     public MBeanOperationInfo(String name,
-                              String description,
-                              MBeanParameterInfo[] signature,
-                              String type,
-                              int impact) {
+			      String description,
+			      MBeanParameterInfo[] signature,
+			      String type,
+			      int impact) {
         this(name, description, signature, type, impact, (Descriptor) null);
     }
-
+    
     /**
      * Constructs an <CODE>MBeanOperationInfo</CODE> object.
      *
@@ -148,24 +148,24 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * @since 1.6
      */
     public MBeanOperationInfo(String name,
-                              String description,
-                              MBeanParameterInfo[] signature,
-                              String type,
-                              int impact,
+			      String description,
+			      MBeanParameterInfo[] signature,
+			      String type,
+			      int impact,
                               Descriptor descriptor) {
 
-        super(name, description, descriptor);
+	super(name, description, descriptor);
 
-        if (signature == null || signature.length == 0)
-            signature = MBeanParameterInfo.NO_PARAMS;
-        else
-            signature = signature.clone();
-        this.signature = signature;
-        this.type = type;
-        this.impact = impact;
-        this.arrayGettersSafe =
-            MBeanInfo.arrayGettersSafe(this.getClass(),
-                                       MBeanOperationInfo.class);
+	if (signature == null || signature.length == 0)
+	    signature = MBeanParameterInfo.NO_PARAMS;
+	else
+	    signature = signature.clone();
+	this.signature = signature;
+	this.type = type;
+	this.impact = impact;
+	this.arrayGettersSafe =
+	    MBeanInfo.arrayGettersSafe(this.getClass(),
+				       MBeanOperationInfo.class);
     }
 
     /**
@@ -179,12 +179,12 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * to subclasses.</p>
      */
      public Object clone () {
-         try {
-             return super.clone() ;
-         } catch (CloneNotSupportedException e) {
-             // should not happen as this class is cloneable
-             return null;
-         }
+	 try {
+	     return super.clone() ;
+	 } catch (CloneNotSupportedException e) {
+	     // should not happen as this class is cloneable
+	     return null;
+	 }
      }
 
     /**
@@ -193,7 +193,7 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * @return the return type.
      */
     public String getReturnType() {
-        return type;
+	return type;
     }
 
     /**
@@ -210,11 +210,11 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * @return  An array of <CODE>MBeanParameterInfo</CODE> objects.
      */
     public MBeanParameterInfo[] getSignature() {
-        // If MBeanOperationInfo was created in our implementation,
+        // If MBeanOperationInfo was created in our implementation, 
         // signature cannot be null - because our constructors replace
         // null with MBeanParameterInfo.NO_PARAMS;
         //
-        // However, signature could be null if an  MBeanOperationInfo is
+        // However, signature could be null if an  MBeanOperationInfo is 
         // deserialized from a byte array produced by another implementation.
         // This is not very likely but possible, since the serial form says
         // nothing against it. (see 6373150)
@@ -224,13 +224,13 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
             //
             return MBeanParameterInfo.NO_PARAMS;
         else if (signature.length == 0)
-            return signature;
-        else
-            return signature.clone();
+	    return signature;
+	else
+	    return signature.clone();
     }
 
     private MBeanParameterInfo[] fastGetSignature() {
-        if (arrayGettersSafe) {
+	if (arrayGettersSafe) {
             // if signature is null simply return an empty array .
             // see getSignature() above.
             //
@@ -247,7 +247,7 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * @return the impact code.
      */
     public int getImpact() {
-        return impact;
+	return impact;
     }
 
     public String toString() {
@@ -282,16 +282,16 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
      * are equal if their elements are pairwise equal.
      */
     public boolean equals(Object o) {
-        if (o == this)
-            return true;
-        if (!(o instanceof MBeanOperationInfo))
-            return false;
-        MBeanOperationInfo p = (MBeanOperationInfo) o;
-        return (p.getName().equals(getName()) &&
-                p.getReturnType().equals(getReturnType()) &&
-                p.getDescription().equals(getDescription()) &&
-                p.getImpact() == getImpact() &&
-                Arrays.equals(p.fastGetSignature(), fastGetSignature()) &&
+	if (o == this)
+	    return true;
+	if (!(o instanceof MBeanOperationInfo))
+	    return false;
+	MBeanOperationInfo p = (MBeanOperationInfo) o;
+	return (p.getName().equals(getName()) &&
+		p.getReturnType().equals(getReturnType()) &&
+		p.getDescription().equals(getDescription()) &&
+		p.getImpact() == getImpact() &&
+		Arrays.equals(p.fastGetSignature(), fastGetSignature()) &&
                 p.getDescriptor().equals(getDescriptor()));
     }
 
@@ -302,28 +302,28 @@ public class MBeanOperationInfo extends MBeanFeatureInfo implements Cloneable {
        right and we needlessly hashed in the description and the
        parameter array.  */
     public int hashCode() {
-        return getName().hashCode() ^ getReturnType().hashCode();
+	return getName().hashCode() ^ getReturnType().hashCode();
     }
 
     private static MBeanParameterInfo[] methodSignature(Method method) {
-        final Class[] classes = method.getParameterTypes();
+	final Class[] classes = method.getParameterTypes();
         final Annotation[][] annots = method.getParameterAnnotations();
         return parameters(classes, annots);
     }
 
     static MBeanParameterInfo[] parameters(Class[] classes,
                                            Annotation[][] annots) {
-        final MBeanParameterInfo[] params =
-            new MBeanParameterInfo[classes.length];
+	final MBeanParameterInfo[] params =
+	    new MBeanParameterInfo[classes.length];
         assert(classes.length == annots.length);
 
-        for (int i = 0; i < classes.length; i++) {
+	for (int i = 0; i < classes.length; i++) {
             Descriptor d = Introspector.descriptorForAnnotations(annots[i]);
-            final String pn = "p" + (i + 1);
-            params[i] =
+	    final String pn = "p" + (i + 1);
+	    params[i] =
                 new MBeanParameterInfo(pn, classes[i].getName(), "", d);
-        }
+	}
 
-        return params;
+	return params;
     }
 }

@@ -38,8 +38,8 @@ public final class UCompactIntArray implements Cloneable {
     }
 
     public UCompactIntArray(int defaultValue) {
-        this();
-        this.defaultValue = defaultValue;
+	this();
+	this.defaultValue = defaultValue;
     }
 
     /**
@@ -48,10 +48,10 @@ public final class UCompactIntArray implements Cloneable {
      * @return the mapped value of the given character
      */
     public int elementAt(int index) {
-        int plane = (index & PLANEMASK) >> PLANESHIFT;
+	int plane = (index & PLANEMASK) >> PLANESHIFT;
         if (!planeTouched[plane]) {
             return defaultValue;
-        }
+	}
         index &= CODEPOINTMASK;
         return values[plane][(indices[plane][index >> BLOCKSHIFT] & 0xFFFF)
                        + (index & BLOCKMASK)];
@@ -68,10 +68,10 @@ public final class UCompactIntArray implements Cloneable {
         if (isCompact) {
             expand();
         }
-        int plane = (index & PLANEMASK) >> PLANESHIFT;
-        if (!planeTouched[plane]) {
+	int plane = (index & PLANEMASK) >> PLANESHIFT;
+	if (!planeTouched[plane]) {
             initPlane(plane);
-        }
+	}
         index &= CODEPOINTMASK;
         values[plane][index] = value;
         blockTouched[plane][index >> BLOCKSHIFT] = true;
@@ -84,11 +84,11 @@ public final class UCompactIntArray implements Cloneable {
     public void compact() {
         if (isCompact) {
             return;
-        }
-        for (int plane = 0; plane < PLANECOUNT; plane++) {
-            if (!planeTouched[plane]) {
+	}
+	for (int plane = 0; plane < PLANECOUNT; plane++) { 
+	    if (!planeTouched[plane]) {
                 continue;
-            }
+	    }
             int limitCompacted = 0;
             int iBlockStart = 0;
             short iUntouched = -1;
@@ -103,9 +103,9 @@ public final class UCompactIntArray implements Cloneable {
                 } else {
                     int jBlockStart = limitCompacted * BLOCKCOUNT;
                     if (i > limitCompacted) {
-                        System.arraycopy(values[plane], iBlockStart,
-                                         values[plane], jBlockStart, BLOCKCOUNT);
-                    }
+                        System.arraycopy(values[plane], iBlockStart, 
+					 values[plane], jBlockStart, BLOCKCOUNT);
+		    }
                     if (!blockTouched[plane][i]) {
                         // If this is the first untouched block we've seen, remember it.
                         iUntouched = (short)jBlockStart;
@@ -121,7 +121,7 @@ public final class UCompactIntArray implements Cloneable {
             System.arraycopy(values[plane], 0, result, 0, newSize);
             values[plane] = result;
             blockTouched[plane] = null;
-        }
+	}
         isCompact = true;
     }
 
@@ -143,8 +143,8 @@ public final class UCompactIntArray implements Cloneable {
                 blockTouched[plane] = new boolean[INDEXCOUNT];
                 tempArray = new int[UNICODECOUNT];
                 for (i = 0; i < UNICODECOUNT; ++i) {
-                    tempArray[i] = values[plane][indices[plane][i >> BLOCKSHIFT]
-                                                & 0xffff + (i & BLOCKMASK)];
+                    tempArray[i] = values[plane][indices[plane][i >> BLOCKSHIFT] 
+						& 0xffff + (i & BLOCKMASK)];
                     blockTouched[plane][i >> BLOCKSHIFT] = true;
                 }
                 for (i = 0; i < INDEXCOUNT; ++i) {
@@ -160,7 +160,7 @@ public final class UCompactIntArray implements Cloneable {
         values[plane] = new int[UNICODECOUNT];
         indices[plane] = new short[INDEXCOUNT];
         blockTouched[plane] = new boolean[INDEXCOUNT];
-        planeTouched[plane] = true;
+	planeTouched[plane] = true;
 
         if (planeTouched[0] && plane != 0) {
             System.arraycopy(indices[0], 0, indices[plane], 0, INDEXCOUNT);
@@ -179,7 +179,7 @@ public final class UCompactIntArray implements Cloneable {
         for (int plane = 0; plane < PLANECOUNT; plane++) {
             if (planeTouched[plane]) {
                 size += (values[plane].length * 4 + indices[plane].length * 2);
-            }
+	    }
         }
         return size / 1024;
     }
@@ -203,3 +203,6 @@ public final class UCompactIntArray implements Cloneable {
     private boolean[][] blockTouched;
     private boolean[] planeTouched;
 };
+
+
+

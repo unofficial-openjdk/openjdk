@@ -30,6 +30,7 @@ package sun.management.counter;
  * <code>long</code> basic type.
  *
  * @author   Brian Doherty
+ * @version  %I%, %G%
  */
 public interface LongCounter extends Counter {
 

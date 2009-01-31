@@ -25,13 +25,13 @@
 
 #include "Hashtable.h"
 
-Hashtable::Hashtable(const char* name, void (*deleteProc)(void*),
+Hashtable::Hashtable(const char* name, void (*deleteProc)(void*), 
                      int initialCapacity, float loadFactor) {
     DASSERT ((initialCapacity > 0) && (loadFactor > 0.0));
 
     table = (HashtableEntry**)
         safe_Calloc(initialCapacity, sizeof(HashtableEntry*));
-
+        
     capacity = initialCapacity;
     count = 0;
     threshold = (int)(capacity * loadFactor);
@@ -124,7 +124,7 @@ void* Hashtable::put(void* key, void* value) {
     DASSERT(value != NULL);
     CriticalSection::Lock l(lock);
     HashtableEntry* e;
-
+    
     // Makes sure the key is not already in the hashtable.
     int index = (int)(((INT_PTR)key << 1) >> 1) % capacity;
     for (e = table[index]; e != NULL; e = e->next) {
@@ -135,14 +135,14 @@ void* Hashtable::put(void* key, void* value) {
             void* old = e->value;
             e->value = value;
             return old;
-        }
+	}
     }
 
     if (count >= threshold) {
         // Rehash the table if the threshold is exceeded
         rehash();
         return put(key, value);
-    }
+    } 
 
     // Creates the new entry.
     e = new HashtableEntry;
@@ -197,15 +197,15 @@ void Hashtable::clear() {
     count = 0;
 }
 
-HashtableEnumerator::HashtableEnumerator(HashtableEntry* table[], int size,
-                                         BOOL keys)
+HashtableEnumerator::HashtableEnumerator(HashtableEntry* table[], int size, 
+                                         BOOL keys) 
 {
     this->table = table;
     this->keys = keys;
     this->index = size;
     this->entry = NULL;
 }
-
+	
 BOOL HashtableEnumerator::hasMoreElements() {
     if (entry != NULL) {
         return TRUE;

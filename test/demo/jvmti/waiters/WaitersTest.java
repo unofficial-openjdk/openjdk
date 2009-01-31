@@ -29,24 +29,25 @@
  * @compile ../DemoRun.java
  * @compile ../Context.java
  * @build WaitersTest
- * @run main WaitersTest Context
+ * @run main WaitersTest Context	
  */
 
 public class WaitersTest {
 
     public static void main(String args[]) throws Exception {
-        DemoRun demo;
+	DemoRun demo;
 
-        /* Run demo that uses JVMTI waiters agent (no options) */
-        demo = new DemoRun("waiters", "" /* options to waiters */ );
-        demo.runit(args[0]);
+	/* Run demo that uses JVMTI waiters agent (no options) */
+	demo = new DemoRun("waiters", "" /* options to waiters */ );
+	demo.runit(args[0]);
 
-        /* Make sure patterns in output look ok */
-        if (demo.output_contains("ERROR")) {
-            throw new RuntimeException("Test failed - ERROR seen in output");
-        }
+	/* Make sure patterns in output look ok */
+	if (demo.output_contains("ERROR")) {
+	    throw new RuntimeException("Test failed - ERROR seen in output");
+	}
 
-        /* Must be a pass. */
-        System.out.println("Test passed - cleanly terminated");
+	/* Must be a pass. */
+	System.out.println("Test passed - cleanly terminated");
     }
 }
+

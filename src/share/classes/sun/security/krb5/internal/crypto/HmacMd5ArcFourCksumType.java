@@ -36,6 +36,7 @@ import java.security.GeneralSecurityException;
  * This class encapsulates the checksum type for HMAC RC4
  *
  * @author Seema Malkani
+ * @version %I%, %G%
  */
 
 public class HmacMd5ArcFourCksumType extends CksumType {
@@ -44,31 +45,31 @@ public class HmacMd5ArcFourCksumType extends CksumType {
     }
 
     public int confounderSize() {
-        return 8;
+	return 8;
     }
 
     public int cksumType() {
-        return Checksum.CKSUMTYPE_HMAC_MD5_ARCFOUR;
+	return Checksum.CKSUMTYPE_HMAC_MD5_ARCFOUR;
     }
 
     public boolean isSafe() {
-        return true;
+	return true;
     }
 
     public int cksumSize() {
-        return 16;  // bytes
+	return 16;  // bytes
     }
 
     public int keyType() {
-        return Krb5.KEYTYPE_ARCFOUR_HMAC;
+	return Krb5.KEYTYPE_ARCFOUR_HMAC;
     }
 
     public int keySize() {
-        return 16;   // bytes
+	return 16;   // bytes
     }
 
     public byte[] calculateChecksum(byte[] data, int size) {
-        return null;
+	return null;
     }
 
     /**
@@ -78,16 +79,16 @@ public class HmacMd5ArcFourCksumType extends CksumType {
      * @param key the key used to encrypt the checksum.
      * @return keyed checksum.
      */
-    public byte[] calculateKeyedChecksum(byte[] data, int size, byte[] key,
-        int usage) throws KrbCryptoException {
+    public byte[] calculateKeyedChecksum(byte[] data, int size, byte[] key, 
+	int usage) throws KrbCryptoException {
 
          try {
-             return ArcFourHmac.calculateChecksum(key, usage, data, 0, size);
-         } catch (GeneralSecurityException e) {
-             KrbCryptoException ke = new KrbCryptoException(e.getMessage());
-             ke.initCause(e);
-             throw ke;
-         }
+	     return ArcFourHmac.calculateChecksum(key, usage, data, 0, size);
+	 } catch (GeneralSecurityException e) {
+	     KrbCryptoException ke = new KrbCryptoException(e.getMessage());
+	     ke.initCause(e);
+	     throw ke;
+	 }
     }
 
     /**
@@ -99,17 +100,17 @@ public class HmacMd5ArcFourCksumType extends CksumType {
      * @return true if verification is successful.
      */
     public boolean verifyKeyedChecksum(byte[] data, int size,
-        byte[] key, byte[] checksum, int usage) throws KrbCryptoException {
+	byte[] key, byte[] checksum, int usage) throws KrbCryptoException {
 
-         try {
-             byte[] newCksum = ArcFourHmac.calculateChecksum(key, usage,
-                 data, 0, size);
+	 try {
+	     byte[] newCksum = ArcFourHmac.calculateChecksum(key, usage, 
+		 data, 0, size);
 
-             return isChecksumEqual(checksum, newCksum);
-         } catch (GeneralSecurityException e) {
-             KrbCryptoException ke = new KrbCryptoException(e.getMessage());
-             ke.initCause(e);
-             throw ke;
-         }
+	     return isChecksumEqual(checksum, newCksum);
+	 } catch (GeneralSecurityException e) {
+	     KrbCryptoException ke = new KrbCryptoException(e.getMessage());
+	     ke.initCause(e);
+	     throw ke;
+	 }
      }
 }

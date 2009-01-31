@@ -31,6 +31,7 @@ import java.io.IOException;
  * thrown when the charset is changed.
  *
  * @author Sunita Mani
+ * %I%, %G%
  */
 public class ChangedCharSetException extends IOException {
 
@@ -38,16 +39,16 @@ public class ChangedCharSetException extends IOException {
     boolean charSetKey;
 
     public ChangedCharSetException(String charSetSpec, boolean charSetKey) {
-        this.charSetSpec = charSetSpec;
-        this.charSetKey = charSetKey;
+	this.charSetSpec = charSetSpec;
+	this.charSetKey = charSetKey;
     }
 
     public String getCharSetSpec() {
-        return charSetSpec;
+	return charSetSpec;
     }
 
     public boolean keyEqualsCharSet() {
-        return charSetKey;
+	return charSetKey;
     }
 
 }

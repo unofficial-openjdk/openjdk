@@ -52,7 +52,7 @@ import java.beans.PropertyChangeListener;
  * EventQueues or change the look-and-feel of a Swing application.<p>
  *
  * Most application services use a singleton object to provide their
- * services, either as a default (such as getSystemEventQueue or
+ * services, either as a default (such as getSystemEventQueue or 
  * getDefaultToolkit) or as static methods with class data (System).
  * The AppContext works with the former method by extending the concept
  * of "default" to be ThreadGroup-specific.  Application services
@@ -96,19 +96,19 @@ import java.beans.PropertyChangeListener;
  * Since a separate AppContext can exist for each ThreadGroup, trusted
  * and untrusted code have access to different Foo instances.  This allows
  * untrusted code access to "system-wide" services -- the service remains
- * within the AppContext "sandbox".  For example, say a malicious applet
+ * within the AppContext "sandbox".  For example, say a malicious applet 
  * wants to peek all of the key events on the EventQueue to listen for
  * passwords; if separate EventQueues are used for each ThreadGroup
  * using AppContexts, the only key events that applet will be able to
  * listen to are its own.  A more reasonable applet request would be to
  * change the Swing default look-and-feel; with that default stored in
- * an AppContext, the applet's look-and-feel will change without
+ * an AppContext, the applet's look-and-feel will change without 
  * disrupting other applets or potentially the browser itself.<p>
  *
  * Because the AppContext is a facility for safely extending application
  * service support to applets, none of its methods may be blocked by a
  * a SecurityManager check in a valid Java implementation.  Applets may
- * therefore safely invoke any of its methods without worry of being
+ * therefore safely invoke any of its methods without worry of being 
  * blocked.
  *
  * Note: If a SecurityManager is installed which derives from
@@ -124,10 +124,11 @@ import java.beans.PropertyChangeListener;
  *
  * @author  Thomas Ball
  * @author  Fred Ecks
+ * @version %I% %G%
  */
 public final class AppContext {
 
-    /* Since the contents of an AppContext are unique to each Java
+    /* Since the contents of an AppContext are unique to each Java 
      * session, this class should never be serialized. */
 
     /* The key to put()/get() the Java EventQueue into/from the AppContext.
@@ -224,7 +225,7 @@ public final class AppContext {
      * created within that ThreadGroup, and that Thread calls
      * SunToolkit.createNewAppContext before calling anything else.
      * That creates both the new AppContext and its EventQueue.
-     *
+     * 
      * @param   threadGroup     The ThreadGroup for the new AppContext
      * @see     sun.awt.SunToolkit
      * @since   1.2
@@ -235,7 +236,7 @@ public final class AppContext {
         this.threadGroup = threadGroup;
         threadGroup2appContext.put(threadGroup, this);
 
-        this.contextClassLoader =
+        this.contextClassLoader = 
             (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
                     public Object run() {
                         return Thread.currentThread().getContextClassLoader();
@@ -246,7 +247,7 @@ public final class AppContext {
     private static MostRecentThreadAppContext mostRecentThreadAppContext = null;
 
     /**
-     * Returns the appropriate AppContext for the caller,
+     * Returns the appropriate AppContext for the caller, 
      * as determined by its ThreadGroup.  If the main "system" AppContext
      * would be returned and there's an AWTSecurityManager installed, it
      * is called to get the proper AppContext based on the execution
@@ -348,7 +349,7 @@ public final class AppContext {
     /**
      * Disposes of this AppContext, all of its top-level Frames, and
      * all Threads and ThreadGroups contained within it.
-     *
+     * 
      * This method must be called from a Thread which is not contained
      * within this AppContext.
      *
@@ -476,7 +477,7 @@ public final class AppContext {
                 threadGroup2appContext.remove(subGroups[subGroup]);
             }
         }
-        threadGroup2appContext.remove(this.threadGroup);
+	threadGroup2appContext.remove(this.threadGroup);
 
         MostRecentThreadAppContext recent = mostRecentThreadAppContext;
         if ((recent != null) && (recent.appContext == this))
@@ -505,7 +506,7 @@ public final class AppContext {
         public PostShutdownEventRunnable(AppContext ac) {
             appContext = ac;
         }
-
+        
         public void run() {
             final EventQueue eq = (EventQueue)appContext.get(EVENT_QUEUE_KEY);
             if (eq != null) {
@@ -522,7 +523,7 @@ public final class AppContext {
             appContext = ac;
             runnable = r;
         }
-
+        
         public Object run() {
             Thread t = new Thread(appContext.getThreadGroup(), runnable);
             t.setContextClassLoader(appContext.getContextClassLoader());
@@ -597,16 +598,16 @@ public final class AppContext {
     }
 
     /**
-     * Maps the specified <code>key</code> to the specified
-     * <code>value</code> in this AppContext.  Neither the key nor the
+     * Maps the specified <code>key</code> to the specified 
+     * <code>value</code> in this AppContext.  Neither the key nor the 
      * value can be <code>null</code>.
      * <p>
-     * The value can be retrieved by calling the <code>get</code> method
-     * with a key that is equal to the original key.
+     * The value can be retrieved by calling the <code>get</code> method 
+     * with a key that is equal to the original key. 
      *
      * @param      key     the AppContext key.
      * @param      value   the value.
-     * @return     the previous value of the specified key in this
+     * @return     the previous value of the specified key in this 
      *             AppContext, or <code>null</code> if it did not have one.
      * @exception  NullPointerException  if the key or value is
      *               <code>null</code>.
@@ -623,7 +624,7 @@ public final class AppContext {
     }
 
     /**
-     * Removes the key (and its corresponding value) from this
+     * Removes the key (and its corresponding value) from this 
      * AppContext. This method does nothing if the key is not in the
      * AppContext.
      *
@@ -688,7 +689,7 @@ public final class AppContext {
         }
         return changeSupport.getPropertyChangeListeners();
     }
-
+  
     /**
      * Adds a PropertyChangeListener to the listener list for a specific
      * property. The specified property may be one of the following:
@@ -715,13 +716,13 @@ public final class AppContext {
     public synchronized void addPropertyChangeListener(
                              String propertyName,
                              PropertyChangeListener listener) {
-        if (listener == null) {
-            return;
-        }
-        if (changeSupport == null) {
-            changeSupport = new PropertyChangeSupport(this);
-        }
-        changeSupport.addPropertyChangeListener(propertyName, listener);
+	if (listener == null) {
+	    return;
+	}
+	if (changeSupport == null) {
+	    changeSupport = new PropertyChangeSupport(this);
+	}
+	changeSupport.addPropertyChangeListener(propertyName, listener);
     }
 
     /**
@@ -748,11 +749,11 @@ public final class AppContext {
     }
 
     /**
-     * Returns an array of all the listeners which have been associated
+     * Returns an array of all the listeners which have been associated 
      * with the named property.
      *
      * @return all of the <code>PropertyChangeListeners</code> associated with
-     *         the named property or an empty array if no listeners have
+     *         the named property or an empty array if no listeners have 
      *         been added
      *
      * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)

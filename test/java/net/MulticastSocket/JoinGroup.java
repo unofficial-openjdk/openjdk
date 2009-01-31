@@ -25,7 +25,7 @@
  * @test
  * @bug 4091811 4148753
  * @summary Test java.net.MulticastSocket joinGroup and leaveGroup
- *
+ * 
  */
 
 import java.io.*;
@@ -33,7 +33,7 @@ import java.net.*;
 
 
 public class JoinGroup {
-
+  
     public static void main(String args[]) throws Exception  {
         MulticastSocket soc = null;
         InetAddress sin = null;
@@ -42,5 +42,5 @@ public class JoinGroup {
         sin = InetAddress.getByName("224.80.80.80");
         soc.joinGroup(sin);
         soc.leaveGroup(sin);
-    }
+    }    
 }

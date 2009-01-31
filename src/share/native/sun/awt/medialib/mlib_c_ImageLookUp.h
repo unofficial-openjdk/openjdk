@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __MLIB_IMAGE_LOOKUP_C_FUNC_INTENAL_H
 #define __MLIB_IMAGE_LOOKUP_C_FUNC_INTENAL_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_c_ImageLookUp.h	1.2	02/03/28 SMI"
+#endif /* __SUNPRO_C */
 
 #ifdef __cplusplus
 extern "C" {
@@ -310,3 +314,4 @@ void mlib_c_ImageLookUpSI_S32_S32(const mlib_s32 *src,
 }
 #endif
 #endif /* __MLIB_IMAGE_LOOKUP_C_FUNC_INTENAL_H */
+

@@ -31,6 +31,7 @@ import sun.nio.cs.IBM850;
  * Tables and data to convert Unicode to Cp850
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp850 extends CharToByteSingleByte {

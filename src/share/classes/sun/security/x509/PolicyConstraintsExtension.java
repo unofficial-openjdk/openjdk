@@ -53,6 +53,7 @@ import sun.security.util.*;
  * </pre>
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version 1.9
  * @see Extension
  * @see CertAttrSet
  */
@@ -98,7 +99,7 @@ implements CertAttrSet<String> {
                          false, TAG_INHIBIT), tmp);
         }
         seq.write(DerValue.tag_Sequence, tagged);
-        this.extensionValue = seq.toByteArray();
+	this.extensionValue = seq.toByteArray();
     }
 
     /**
@@ -111,12 +112,12 @@ implements CertAttrSet<String> {
      */
     public PolicyConstraintsExtension(int require, int inhibit)
     throws IOException {
-        this(Boolean.FALSE, require, inhibit);
+	this(Boolean.FALSE, require, inhibit);
     }
 
     /**
      * Create a PolicyConstraintsExtension object with specified
-     * criticality and both require explicit policy and inhibit
+     * criticality and both require explicit policy and inhibit 
      * policy mapping.
      *
      * @param critical true if the extension is to be treated as critical.
@@ -127,8 +128,8 @@ implements CertAttrSet<String> {
     throws IOException {
         this.require = require;
         this.inhibit = inhibit;
-        this.extensionId = PKIXExtensions.PolicyConstraints_Id;
-        this.critical = critical.booleanValue();
+	this.extensionId = PKIXExtensions.PolicyConstraints_Id;
+	this.critical = critical.booleanValue();
         encodeThis();
     }
 
@@ -142,11 +143,11 @@ implements CertAttrSet<String> {
      */
     public PolicyConstraintsExtension(Boolean critical, Object value)
     throws IOException {
-        this.extensionId = PKIXExtensions.PolicyConstraints_Id;
-        this.critical = critical.booleanValue();
+	this.extensionId = PKIXExtensions.PolicyConstraints_Id;
+	this.critical = critical.booleanValue();
 
         this.extensionValue = (byte[]) value;
-        DerValue val = new DerValue(this.extensionValue);
+	DerValue val = new DerValue(this.extensionValue);
         if (val.tag != DerValue.tag_Sequence) {
             throw new IOException("Sequence tag missing for PolicyConstraint.");
         }
@@ -201,30 +202,30 @@ implements CertAttrSet<String> {
     public void encode(OutputStream out) throws IOException {
         DerOutputStream tmp = new DerOutputStream();
         if (extensionValue == null) {
-          extensionId = PKIXExtensions.PolicyConstraints_Id;
-          critical = false;
-          encodeThis();
-        }
-        super.encode(tmp);
-        out.write(tmp.toByteArray());
+	  extensionId = PKIXExtensions.PolicyConstraints_Id;
+	  critical = false;
+	  encodeThis();
+	}
+	super.encode(tmp);
+	out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-        if (!(obj instanceof Integer)) {
-            throw new IOException("Attribute value should be of type Integer.");
+	if (!(obj instanceof Integer)) {
+	    throw new IOException("Attribute value should be of type Integer.");
         }
-        if (name.equalsIgnoreCase(REQUIRE)) {
-            require = ((Integer)obj).intValue();
-        } else if (name.equalsIgnoreCase(INHIBIT)) {
-            inhibit = ((Integer)obj).intValue();
-        } else {
-          throw new IOException("Attribute name " + "[" + name + "]" +
+	if (name.equalsIgnoreCase(REQUIRE)) {
+	    require = ((Integer)obj).intValue();
+	} else if (name.equalsIgnoreCase(INHIBIT)) {
+	    inhibit = ((Integer)obj).intValue();
+	} else {
+	  throw new IOException("Attribute name " + "[" + name + "]" +
                                 " not recognized by " +
-                                "CertAttrSet:PolicyConstraints.");
-        }
+				"CertAttrSet:PolicyConstraints.");
+	}
         encodeThis();
     }
 
@@ -232,28 +233,28 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(REQUIRE)) {
-            return new Integer(require);
-        } else if (name.equalsIgnoreCase(INHIBIT)) {
-            return new Integer(inhibit);
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                                "CertAttrSet:PolicyConstraints.");
-        }
+	if (name.equalsIgnoreCase(REQUIRE)) {
+	    return new Integer(require);
+	} else if (name.equalsIgnoreCase(INHIBIT)) {
+	    return new Integer(inhibit);
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+				"CertAttrSet:PolicyConstraints.");
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(REQUIRE)) {
-            require = -1;
-        } else if (name.equalsIgnoreCase(INHIBIT)) {
-            inhibit = -1;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                                "CertAttrSet:PolicyConstraints.");
-        }
+	if (name.equalsIgnoreCase(REQUIRE)) {
+	    require = -1;
+	} else if (name.equalsIgnoreCase(INHIBIT)) {
+	    inhibit = -1;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+				"CertAttrSet:PolicyConstraints.");
+	}
         encodeThis();
     }
 
@@ -266,7 +267,7 @@ implements CertAttrSet<String> {
         elements.addElement(REQUIRE);
         elements.addElement(INHIBIT);
 
-        return (elements.elements());
+	return (elements.elements());
     }
 
     /**

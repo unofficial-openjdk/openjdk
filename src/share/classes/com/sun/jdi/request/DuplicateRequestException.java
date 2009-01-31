@@ -35,11 +35,11 @@ public class DuplicateRequestException extends RuntimeException
 {
     public DuplicateRequestException()
     {
-        super();
+	super();
     }
 
     public DuplicateRequestException(String s)
     {
-        super(s);
+	super(s);
     }
 }

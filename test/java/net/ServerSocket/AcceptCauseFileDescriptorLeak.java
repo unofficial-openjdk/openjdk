@@ -60,7 +60,7 @@ public class AcceptCauseFileDescriptorLeak {
         }
         ss.close();
         t.join();
-
+        
         //
         // The threshold 20 below is a little arbitrary. The point here is that
         // the remaining open file descriptors should be constant independent
@@ -70,8 +70,8 @@ public class AcceptCauseFileDescriptorLeak {
             throw new RuntimeException("File descriptor leak detected.");
         }
     }
-
-
+    
+    
     /*
      * Actually, this approach to count open file descriptors only
      * works for Solaris/Linux. On Windows platform, this method

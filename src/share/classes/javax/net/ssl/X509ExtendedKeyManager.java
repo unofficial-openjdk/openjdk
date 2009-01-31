@@ -35,6 +35,7 @@ import java.security.Principal;
  * implementations.
  *
  * @since 1.5
+ * @version %I%
  * @author Brad R. Wetmore
  */
 public abstract class X509ExtendedKeyManager implements X509KeyManager {
@@ -54,19 +55,19 @@ public abstract class X509ExtendedKeyManager implements X509KeyManager {
      * The default implementation returns null.
      *
      * @param keyType the key algorithm type name(s), ordered
-     *          with the most-preferred key type first.
+     *		with the most-preferred key type first.
      * @param issuers the list of acceptable CA issuer subject names
-     *          or null if it does not matter which issuers are used.
+     *		or null if it does not matter which issuers are used.
      * @param engine the <code>SSLEngine</code> to be used for this
-     *          connection.  This parameter can be null, which indicates
-     *          that implementations of this interface are free to
-     *          select an alias applicable to any engine.
+     *		connection.  This parameter can be null, which indicates
+     *		that implementations of this interface are free to
+     *		select an alias applicable to any engine.
      * @return the alias name for the desired key, or null if there
-     *          are no matches.
+     *		are no matches.
      */
     public String chooseEngineClientAlias(String[] keyType,
-            Principal[] issuers, SSLEngine engine) {
-        return null;
+	    Principal[] issuers, SSLEngine engine) {
+	return null;
     }
 
     /**
@@ -79,17 +80,17 @@ public abstract class X509ExtendedKeyManager implements X509KeyManager {
      *
      * @param keyType the key algorithm type name.
      * @param issuers the list of acceptable CA issuer subject names
-     *          or null if it does not matter which issuers are used.
+     *		or null if it does not matter which issuers are used.
      * @param engine the <code>SSLEngine</code> to be used for this
-     *          connection.  This parameter can be null, which indicates
-     *          that implementations of this interface are free to
-     *          select an alias applicable to any engine.
+     *		connection.  This parameter can be null, which indicates
+     *		that implementations of this interface are free to
+     *		select an alias applicable to any engine.
      * @return the alias name for the desired key, or null if there
-     *          are no matches.
+     *		are no matches.
      */
     public String chooseEngineServerAlias(String keyType,
-            Principal[] issuers, SSLEngine engine) {
-        return null;
+	    Principal[] issuers, SSLEngine engine) {
+	return null;
     }
 
 }

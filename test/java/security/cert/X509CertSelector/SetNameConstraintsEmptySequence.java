@@ -25,7 +25,7 @@
  * @test
  * @bug 4391244
  * @summary Check setNameConstraints() doesn't throw exception when
- *      bytes parameter contains DER-encoded empty ASN.1 SEQUENCE.
+ * 	bytes parameter contains DER-encoded empty ASN.1 SEQUENCE.
  */
 
 import java.security.cert.X509CertSelector;

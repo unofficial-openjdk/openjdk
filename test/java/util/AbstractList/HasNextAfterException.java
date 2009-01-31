@@ -23,10 +23,10 @@
 
 /*
  * @test
- * @bug 4375048
- * @summary AbstractList's ListIterator.hasNext() returns
- *          true, after ListIterator.previous() causes
- *          an exception for an empty list.
+ * @bug 4375048 
+ * @summary AbstractList's ListIterator.hasNext() returns 
+ *          true, after ListIterator.previous() causes  
+ *          an exception for an empty list. 
  * @author Konstantin Kladko
  */
 
@@ -43,8 +43,8 @@ public class HasNextAfterException {
         }
         if (i.hasNext()) {
             throw new RuntimeException(
-               "ListIterator.hasNext() returns true for an empty "
+               "ListIterator.hasNext() returns true for an empty " 
                 + "List after ListIterator.previous().");
         }
     }
-}
+}    

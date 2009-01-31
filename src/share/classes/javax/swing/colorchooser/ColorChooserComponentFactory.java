@@ -43,6 +43,7 @@ import javax.swing.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class ColorChooserComponentFactory {
@@ -52,8 +53,8 @@ public class ColorChooserComponentFactory {
 
     public static AbstractColorChooserPanel[] getDefaultChooserPanels() {
         AbstractColorChooserPanel[] choosers = { new DefaultSwatchChooserPanel(),
-                                                 new DefaultHSBChooserPanel(),
-                                                 new DefaultRGBChooserPanel() };
+						 new DefaultHSBChooserPanel(),
+						 new DefaultRGBChooserPanel() };
         return choosers;
     }
 

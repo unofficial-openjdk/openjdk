@@ -26,11 +26,12 @@ package javax.swing.event;
 
 
 import java.util.EventListener;
-
+ 
 /**
- * Listener for changes in the caret position of a text
+ * Listener for changes in the caret position of a text 
  * component.
  *
+ * @version %I% %G%
  * @author  Timothy Prinzing
  */
 public interface CaretListener extends EventListener {
@@ -42,3 +43,4 @@ public interface CaretListener extends EventListener {
      */
     void caretUpdate(CaretEvent e);
 }
+

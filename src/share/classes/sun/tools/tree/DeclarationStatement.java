@@ -45,10 +45,10 @@ class DeclarationStatement extends Statement {
      * Constructor
      */
     public DeclarationStatement(long where, int mod, Expression type, Statement args[]) {
-        super(DECLARATION, where);
-        this.mod = mod;
-        this.type = type;
-        this.args = args;
+	super(DECLARATION, where);
+	this.mod = mod;
+	this.type = type;
+	this.args = args;
     }
 
     /**
@@ -56,34 +56,34 @@ class DeclarationStatement extends Statement {
      * Report an error unless the call is checkBlockStatement.
      */
     Vset check(Environment env, Context ctx, Vset vset, Hashtable exp) {
-        env.error(where, "invalid.decl");
-        return checkBlockStatement(env, ctx, vset, exp);
+	env.error(where, "invalid.decl");
+	return checkBlockStatement(env, ctx, vset, exp);
     }
     Vset checkBlockStatement(Environment env, Context ctx, Vset vset, Hashtable exp) {
-        if (labels != null) {
-            env.error(where, "declaration.with.label", labels[0]);
-        }
-        vset = reach(env, vset);
-        Type t = type.toType(env, ctx);
+	if (labels != null) {
+	    env.error(where, "declaration.with.label", labels[0]);
+	}
+	vset = reach(env, vset);
+	Type t = type.toType(env, ctx);
 
-        for (int i = 0 ; i < args.length ; i++) {
-            vset = args[i].checkDeclaration(env, ctx, vset, mod, t, exp);
-        }
+	for (int i = 0 ; i < args.length ; i++) {
+	    vset = args[i].checkDeclaration(env, ctx, vset, mod, t, exp);
+	}
 
-        return vset;
+	return vset;
     }
 
     /**
      * Inline
      */
     public Statement inline(Environment env, Context ctx) {
-        int n = 0;
-        for (int i = 0 ; i < args.length ; i++) {
-            if ((args[i] = args[i].inline(env, ctx)) != null) {
-                n++;
-            }
-        }
-        return (n == 0) ? null : this;
+	int n = 0;
+	for (int i = 0 ; i < args.length ; i++) {
+	    if ((args[i] = args[i].inline(env, ctx)) != null) {
+		n++;
+	    }
+	}
+	return (n == 0) ? null : this;
     }
 
     /**
@@ -94,12 +94,12 @@ class DeclarationStatement extends Statement {
         if (type != null) {
             s.type = type.copyInline(ctx);
         }
-        s.args = new Statement[args.length];
-        for (int i = 0; i < args.length; i++){
+	s.args = new Statement[args.length];
+	for (int i = 0; i < args.length; i++){
             if (args[i] != null){
-                s.args[i] = args[i].copyInline(ctx, valNeeded);
+		s.args[i] = args[i].copyInline(ctx, valNeeded);
             }
-        }
+	}
         return s;
     }
 
@@ -108,44 +108,44 @@ class DeclarationStatement extends Statement {
      */
     public int costInline(int thresh, Environment env, Context ctx) {
         int cost = 1;
-        for (int i = 0; i < args.length; i++){
+	for (int i = 0; i < args.length; i++){
             if (args[i] != null){
-                cost += args[i].costInline(thresh, env, ctx);
+		cost += args[i].costInline(thresh, env, ctx);
             }
-        }
+	}
         return cost;
     }
 
-
+    
     /**
      * Code
      */
     public void code(Environment env, Context ctx, Assembler asm) {
-        for (int i = 0 ; i < args.length ; i++) {
-            if (args[i] != null) {
-                args[i].code(env, ctx, asm);
-            }
-        }
+	for (int i = 0 ; i < args.length ; i++) {
+	    if (args[i] != null) {
+		args[i].code(env, ctx, asm);
+	    }
+	}
     }
 
     /**
      * Print
      */
     public void print(PrintStream out, int indent) {
-        out.print("declare ");
-        super.print(out, indent);
-        type.print(out);
-        out.print(" ");
-        for (int i = 0 ; i < args.length ; i++) {
-            if (i > 0) {
-                out.print(", ");
-            }
-            if (args[i] != null)  {
-                args[i].print(out);
-            } else {
-                out.print("<empty>");
-            }
-        }
-        out.print(";");
+	out.print("declare ");
+	super.print(out, indent);
+	type.print(out);
+	out.print(" ");
+	for (int i = 0 ; i < args.length ; i++) {
+	    if (i > 0) {
+		out.print(", ");
+	    }
+	    if (args[i] != null)  {
+		args[i].print(out);
+	    } else {
+		out.print("<empty>");
+	    }
+	}
+	out.print(";");
     }
 }

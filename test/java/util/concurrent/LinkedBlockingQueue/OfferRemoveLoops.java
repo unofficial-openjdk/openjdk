@@ -32,39 +32,39 @@ import java.util.concurrent.*;
 
 public class OfferRemoveLoops {
     private static void realMain(String[] args) throws Throwable {
-        testQueue(new LinkedBlockingQueue<String>(10));
-        testQueue(new LinkedBlockingQueue<String>());
-        testQueue(new LinkedBlockingDeque<String>(10));
-        testQueue(new LinkedBlockingDeque<String>());
-        testQueue(new ArrayBlockingQueue<String>(10));
-        testQueue(new PriorityBlockingQueue<String>(10));
+	testQueue(new LinkedBlockingQueue<String>(10));
+	testQueue(new LinkedBlockingQueue<String>());
+	testQueue(new LinkedBlockingDeque<String>(10));
+	testQueue(new LinkedBlockingDeque<String>());
+	testQueue(new ArrayBlockingQueue<String>(10));
+	testQueue(new PriorityBlockingQueue<String>(10));
     }
 
     private abstract static class ControlledThread extends Thread {
-        abstract protected void realRun();
-        public void run() {
-            try { realRun(); } catch (Throwable t) { unexpected(t); }
-        }
+	abstract protected void realRun();
+	public void run() {
+	    try { realRun(); } catch (Throwable t) { unexpected(t); }
+	}
     }
 
     private static void testQueue(final BlockingQueue<String> q) throws Throwable {
-        System.out.println(q.getClass());
-        final int count = 10000;
-        Thread t1 = new ControlledThread() {
-                protected void realRun() {
-                    for (int i = 0, j = 0; i < count; i++)
-                        while (! q.remove(String.valueOf(i)))
-                            Thread.yield();}};
+	System.out.println(q.getClass());
+	final int count = 10000;
+	Thread t1 = new ControlledThread() {
+		protected void realRun() {
+		    for (int i = 0, j = 0; i < count; i++)
+			while (! q.remove(String.valueOf(i)))
+			    Thread.yield();}};
         Thread t2 = new ControlledThread() {
-                protected void realRun() {
-                    for (int i = 0, j = 0; i < count; i++)
-                        while (! q.offer(String.valueOf(i)))
-                            Thread.yield();}};
-        t1.setDaemon(true); t2.setDaemon(true);
-        t1.start(); t2.start();
-        t1.join(10000); t2.join(10000);
-        check(! t1.isAlive());
-        check(! t2.isAlive());
+		protected void realRun() {
+		    for (int i = 0, j = 0; i < count; i++)
+			while (! q.offer(String.valueOf(i)))
+			    Thread.yield();}};
+	t1.setDaemon(true); t2.setDaemon(true);
+	t1.start(); t2.start();
+	t1.join(10000); t2.join(10000);
+	check(! t1.isAlive());
+	check(! t2.isAlive());
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -74,13 +74,13 @@ public class OfferRemoveLoops {
     static void unexpected(Throwable t) { failed++; t.printStackTrace(); }
     static void check(boolean cond) { if (cond) pass(); else fail(); }
     static void equal(Object x, Object y) {
-        if (x == null ? y == null : x.equals(y)) pass();
-        else {System.out.println(x + " not equal to " + y); fail(); }}
+	if (x == null ? y == null : x.equals(y)) pass();
+	else {System.out.println(x + " not equal to " + y); fail(); }}
 
     public static void main(String[] args) throws Throwable {
-        try { realMain(args); } catch (Throwable t) { unexpected(t); }
+	try { realMain(args); } catch (Throwable t) { unexpected(t); }
 
-        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-        if (failed > 0) throw new Exception("Some tests failed");
+	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+	if (failed > 0) throw new Exception("Some tests failed");
     }
 }

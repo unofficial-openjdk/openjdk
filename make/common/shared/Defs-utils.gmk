@@ -106,7 +106,7 @@ GUNZIP         = $(UTILS_COMMAND_PATH)gunzip
 HEAD           = $(UTILS_USR_BIN_PATH)head
 ID             = $(UTILS_COMMAND_PATH)id
 ISAINFO        = $(UTILS_COMMAND_PATH)isainfo
-KSH            = $(UTILS_COMMAND_PATH)ksh
+KSH	       = $(UTILS_COMMAND_PATH)ksh
 LD             = $(UTILS_CCS_BIN_PATH)ld
 LEX            = $(UTILS_CCS_BIN_PATH)lex
 LN             = $(UTILS_COMMAND_PATH)ln
@@ -119,13 +119,12 @@ MSGFMT         = $(UTILS_USR_BIN_PATH)msgfmt
 MV             = $(UTILS_COMMAND_PATH)mv
 NAWK           = $(UTILS_USR_BIN_PATH)nawk
 NM             = $(UTILS_CCS_BIN_PATH)nm
-PKGMK          = $(UTILS_COMMAND_PATH)pkgmk
+PKGMK	       = $(UTILS_COMMAND_PATH)pkgmk
 PRINTF         = $(UTILS_USR_BIN_PATH)printf
 PWD            = $(UTILS_COMMAND_PATH)pwd
 RC             = $(UTILS_COMMAND_PATH)rc
 RMDIR          = $(UTILS_COMMAND_PATH)rmdir
 RPM            = $(UTILS_COMMAND_PATH)rpm
-RPMBUILD       = $(UTILS_COMMAND_PATH)rpmbuild
 SCCS           = $(UTILS_CCS_BIN_PATH)sccs
 SED            = $(UTILS_COMMAND_PATH)sed
 SH             = $(UTILS_COMMAND_PATH)sh
@@ -173,19 +172,7 @@ ifeq ($(PLATFORM),linux)
   # Allows for builds on Debian GNU Linux, basename is in a different place
   BASENAME=$(firstword $(wildcard $(UTILS_COMMAND_PATH)basename) \
                        $(wildcard $(UTILS_USR_BIN_PATH)basename))
-  # RPM 4 has replaced "rpm -b" with an entirely new utility "rpmbuild".
-  # Also, some distribution (Ubuntu, Debian, others?) place the rpm command
-  # itself in /usr/bin rather than it's traditional home in /bin.
-  RPM=$(firstword $(wildcard $(UTILS_COMMAND_PATH)rpm) \
-		  $(wildcard $(UTILS_USR_BIN_PATH)rpm))
-  RPMBUILD=$(firstword $(wildcard $(UTILS_COMMAND_PATH)rpmbuild) \
-		       $(wildcard $(UTILS_USR_BIN_PATH)rpmbuild) \
-		       $(wildcard $(UTILS_COMMAND_PATH)rpm) \
-		       $(wildcard $(UTILS_USR_BIN_PATH)rpm))
-  # Most Linux distros have "sort" in /bin.  Ubuntu, Debian and perhaps
-  # others have it in /usr/bin.
-  SORT=$(firstword $(wildcard $(UTILS_COMMAND_PATH)sort) \
-		   $(wildcard $(UTILS_USR_BIN_PATH)sort))
+
   NAWK           = $(USRBIN_PATH)gawk
   # Intrinsic unix command, with backslash-escaped character interpretation
   ECHO           = /bin/echo -e

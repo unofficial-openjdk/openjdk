@@ -53,31 +53,31 @@ import javax.management.openmbean.OpenMBeanOperationInfo;
  * @author Sun Microsystems, 2005 - All rights reserved.
  */
 public class TooManyFooTest {
-
+    
     /**
      * A logger for this class.
      **/
     private static final Logger LOG =
             Logger.getLogger(TooManyFooTest.class.getName());
-
+    
     public static class NumberHolder {
         public Integer getNumber() { return 0;}
         public void setNumber(Integer n) {};
     }
     public static class MyNumberHolder extends NumberHolder {
-
+        
     }
     public interface Parent1 {
         public int foo(); // Both in Parent1 and Parent2
         public Integer barfoo(); // Subtype in Parent1, Super type in Parent2
-        public Long    foobar(); // Subtype in Parent1 & MBean, Super type in
+        public Long    foobar(); // Subtype in Parent1 & MBean, Super type in 
                                  // Parent2
         public Number  toofoo(); // Subtype in Parent1, Super type in Parent2
                                  // Concrete type in MBean
         public Object toofoofoo(); // Super type in Parent1, Subtype in Parent2,
         public NumberHolder toobarbar(); // toofoofoo reversed
     }
-
+    
     public interface Parent2 {
         public int foo(); // Both in Parent1 and Parent2
         public Number barfoo();
@@ -86,20 +86,20 @@ public class TooManyFooTest {
         public NumberHolder  toofoofoo();
         public Object toobarbar();
     }
-
+    
     public interface ChildMBean extends Parent1, Parent2 {
         public Long foobar();
         public Long toofoo();
     }
-
+    
     public interface ChildMXBean extends Parent1, Parent2 {
         public Long foobar();
         public Long toofoo();
     }
-
+    
     public interface ChildMixMXBean extends ChildMBean, ChildMXBean {
     }
-
+    
     public static class Child implements ChildMBean {
         public int foo() {return 0;}
         public Long foobar() {return 0L;}
@@ -108,7 +108,7 @@ public class TooManyFooTest {
         public MyNumberHolder toofoofoo() { return null;}
         public MyNumberHolder toobarbar() { return null;}
     }
-
+    
     public static class ChildMix implements ChildMXBean {
         public int foo() {return 0;}
         public Long foobar() {return 0L;}
@@ -120,14 +120,14 @@ public class TooManyFooTest {
 
     public static class ChildMixMix extends Child implements ChildMixMXBean {
     }
-
-
+    
+    
     /** Creates a new instance of TooManyFooTest */
     public TooManyFooTest() {
     }
 
     private static final int OPCOUNT;
-    private static final Map<String,String> EXPECTED_TYPES;
+    private static final Map<String,String> EXPECTED_TYPES; 
     private static final String[][] type_array = {
         { "foo", int.class.getName() },
         { "foobar", Long.class.getName()},
@@ -156,12 +156,12 @@ public class TooManyFooTest {
             throw new ExceptionInInitializerError(x);
         }
     }
-
-    private static void test(Object child, String name, boolean mxbean)
+    
+    private static void test(Object child, String name, boolean mxbean) 
         throws Exception {
-        final ObjectName childName =
+        final ObjectName childName = 
                 new ObjectName("test:type=Child,name="+name);
-        final MBeanServer server =
+        final MBeanServer server = 
                 ManagementFactory.getPlatformMBeanServer();
         server.registerMBean(child,childName);
         try {
@@ -182,35 +182,35 @@ public class TooManyFooTest {
                 throw new RuntimeException("Too " + qual +
                         " foos for "+name);
             }
-
+            
             final Descriptor d = info.getDescriptor();
             final String mxstr = String.valueOf(d.getFieldValue("mxbean"));
-            final boolean mxb =
+            final boolean mxb = 
                     (mxstr==null)?false:Boolean.valueOf(mxstr).booleanValue();
             System.out.println(name+": mxbean="+mxb);
             if (mxbean && !mxb)
                 throw new AssertionError("MXBean is not OpenMBean?");
-
+            
             for (MBeanOperationInfo mboi : info.getOperations()) {
-
+                
                 // Sanity check
                 if (mxbean && !mboi.getName().equals("foo")) {
                     // The spec doesn't guarantee that the MBeanOperationInfo
-                    // of an MXBean will be an OpenMBeanOperationInfo, and in
+                    // of an MXBean will be an OpenMBeanOperationInfo, and in 
                     // some circumstances in our implementation it will not.
-                    // However, in thsi tests, for all methods but foo(),
+                    // However, in thsi tests, for all methods but foo(), 
                     // it should.
-                    //
+                    // 
                     if (!(mboi instanceof OpenMBeanOperationInfo))
                         throw new AssertionError("Operation "+mboi.getName()+
                                 "() is not Open?");
                 }
-
+                
                 final String exp = EXPECTED_TYPES.get(mboi.getName());
-
-                // For MXBeans, we need to compare 'exp' with the original
+                
+                // For MXBeans, we need to compare 'exp' with the original 
                 // type - because mboi.getReturnType() returns the OpenType
-                //
+                // 
                 String type = (String)mboi.getDescriptor().
                             getFieldValue("originalType");
                 if (type == null) type = mboi.getReturnType();
@@ -225,7 +225,7 @@ public class TooManyFooTest {
             server.unregisterMBean(childName);
         }
     }
-
+    
     public static void main(String[] args) throws Exception {
         final Child child = new Child();
         test(child,"Child[MBean]",false);
@@ -235,10 +235,10 @@ public class TooManyFooTest {
         test(childmx,"ChildMixMix[MXBean]",false);
         final StandardMBean schild = new StandardMBean(child,ChildMBean.class);
         test(schild,"Child[StandarMBean(Child)]",false);
-        final StandardMBean schildx =
+        final StandardMBean schildx = 
                 new StandardMBean(childx,ChildMXBean.class,true);
         test(schildx,"ChildMix[StandarMXBean(ChildMix)]",true);
-        final StandardMBean schildmx =
+        final StandardMBean schildmx = 
                 new StandardMBean(childmx,ChildMixMXBean.class,true);
         test(schildmx,"ChildMixMix[StandarMXBean(ChildMixMix)]",true);
     }

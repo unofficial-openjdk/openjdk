@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /* @summary Ensure that serialization invokes writeReplace/readResolve methods
- *          on dynamic proxies, just as with normal objects.
+ * 	    on dynamic proxies, just as with normal objects.
  */
 
 public interface WriteReplace {

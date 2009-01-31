@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM875;
  * Tables and data to convert Unicode to Cp875
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp875 extends CharToByteSingleByte {

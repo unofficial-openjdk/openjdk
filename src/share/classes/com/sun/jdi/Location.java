@@ -29,13 +29,13 @@ import java.util.List;
 
 /**
  * A point within the executing code of the target VM.
- * Locations are used to identify the current position of
- * a suspended thread (analogous to an instruction pointer or
+ * Locations are used to identify the current position of 
+ * a suspended thread (analogous to an instruction pointer or 
  * program counter register in native programs). They are also used
  * to identify the position at which to set a breakpoint.
  * <p>
  * The availability of a line number for a location will
- * depend on the level of debugging information available from the
+ * depend on the level of debugging information available from the 
  * target VM.
  * <p>
  * Several mirror interfaces have locations. Each such mirror
@@ -50,7 +50,7 @@ import java.util.List;
  * "Foo" then translated to the language "Bar" and finally
  * translated into the Java programming language.  The
  * Java programming language stratum is named
- * <code>"Java"</code>, let's say the other strata are named
+ * <code>"Java"</code>, let's say the other strata are named 
  * "Foo" and "Bar".  A given location (as viewed by the
  * {@link #sourceName()} and {@link #lineNumber()} methods)
  * might be at line 14 of "baz.foo" in the <code>"Foo"</code>
@@ -72,7 +72,7 @@ import java.util.List;
  * defaultStratum()}).  Note that in the normal case, of code
  * that originates as Java programming language source, there
  * will be only one stratum (<code>"Java"</code>) and it will be
- * returned as the default.  To determine the available strata
+ * returned as the default.  To determine the available strata 
  * use {@link ReferenceType#availableStrata()}.
  *
  * @see com.sun.jdi.request.EventRequestManager
@@ -89,7 +89,7 @@ import java.util.List;
 public interface Location extends Mirror, Comparable<Location> {
 
     /**
-     * Gets the type to which this Location belongs. Normally
+     * Gets the type to which this Location belongs. Normally 
      * the declaring type is a {@link ClassType}, but executable
      * locations also may exist within the static initializer of an
      * {@link InterfaceType}.
@@ -106,8 +106,8 @@ public interface Location extends Mirror, Comparable<Location> {
     Method method();
 
     /**
-     * Gets the code position within this location's method.
-     *
+     * Gets the code position within this location's method.  
+     * 
      * @return the long representing the position within the method
      * or -1 if location is within a native method.
      */
@@ -136,7 +136,7 @@ public interface Location extends Mirror, Comparable<Location> {
      * <P>
      * Returned name is for the specified <i>stratum</i>
      * (see the {@link Location class comment} for a
-     * description of strata).
+     * description of strata). 
      * <P>
      * The returned string is the unqualified name of the source
      * file for this Location.  For example,
@@ -144,7 +144,7 @@ public interface Location extends Mirror, Comparable<Location> {
      * <CODE>"Thread.java"</CODE>.
      *
      * @param stratum The stratum to retrieve information from
-     * or <code>null</code> for the declaring type's
+     * or <code>null</code> for the declaring type's 
      * default stratum.
      *
      * @return a string specifying the source
@@ -181,9 +181,9 @@ public interface Location extends Mirror, Comparable<Location> {
      * <P>
      * Returned path is for the specified <i>stratum</i>
      * (see the {@link Location class comment} for a
-     * description of strata).
+     * description of strata). 
      * <P>
-     * In the reference implementation, for strata which
+     * In the reference implementation, for strata which 
      * do not explicitly specify source path (the Java
      * programming language stratum never does), the returned
      * string is the package name of {@link #declaringType()}
@@ -196,7 +196,7 @@ public interface Location extends Mirror, Comparable<Location> {
      * <CODE>"java\lang\Thread.java"</CODE>.
      *
      * @param stratum The stratum to retrieve information from
-     * or <code>null</code> for the declaring type's
+     * or <code>null</code> for the declaring type's 
      * default stratum.
      *
      * @return a string specifying the source
@@ -210,19 +210,19 @@ public interface Location extends Mirror, Comparable<Location> {
                          throws AbsentInformationException;
 
     /**
-     * Gets the line number of this Location.
+     * Gets the line number of this Location. 
      * <P>
      * This method is equivalent to
      * <code>lineNumber(vm.getDefaultStratum())</code> -
      * see {@link #lineNumber(String)}
      * for more information.
-     *
+     * 
      * @return an int specifying the line in the source, returns
      * -1 if the information is not available; specifically, always
-     * returns -1 for native methods.
+     * returns -1 for native methods. 
      */
     int lineNumber();
-
+    
     /**
      * The line number of this Location.  The line number is
      * relative to the source specified by
@@ -230,10 +230,10 @@ public interface Location extends Mirror, Comparable<Location> {
      * <P>
      * Returned line number is for the specified <i>stratum</i>
      * (see the {@link Location class comment} for a
-     * description of strata).
-     *
+     * description of strata). 
+     * 
      * @param stratum The stratum to retrieve information from
-     * or <code>null</code> for the declaring type's
+     * or <code>null</code> for the declaring type's 
      * default stratum.
      *
      * @return an int specifying the line in the source, returns
@@ -247,7 +247,7 @@ public interface Location extends Mirror, Comparable<Location> {
     /**
      * Compares the specified Object with this Location for equality.
      *
-     * @return true if the Object is a Location and if it refers to
+     * @return true if the Object is a Location and if it refers to 
      * the same point in the same VM as this Location.
      */
     boolean equals(Object obj);
@@ -259,3 +259,4 @@ public interface Location extends Mirror, Comparable<Location> {
      */
     int hashCode();
 }
+

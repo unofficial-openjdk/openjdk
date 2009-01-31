@@ -31,7 +31,7 @@ import sun.reflect.generics.visitor.Reifier;
 
 
 /**
- * Abstract superclass for representing the generic type information for
+ * Abstract superclass for representing the generic type information for 
  * a reflective entity.
  * The code is not dependent on a particular reflective implementation.
  * It is designed to be used unchanged by at least core reflection and JDI.
@@ -54,9 +54,9 @@ public abstract class AbstractRepository<T extends Tree> {
     protected T getTree(){ return tree;}
 
     /**
-     * Returns a <tt>Reifier</tt> used to convert parts of the
+     * Returns a <tt>Reifier</tt> used to convert parts of the 
      * AST into reflective objects.
-     * @return  a <tt>Reifier</tt> used to convert parts of the
+     * @return  a <tt>Reifier</tt> used to convert parts of the 
      * AST into reflective objects
      */
     protected Reifier getReifier(){return Reifier.make(getFactory());}
@@ -71,8 +71,8 @@ public abstract class AbstractRepository<T extends Tree> {
      * objects when this repository converts its AST
      */
     protected AbstractRepository(String rawSig, GenericsFactory f) {
-        tree = parse(rawSig);
-        factory = f;
+	tree = parse(rawSig);
+	factory = f;
     }
 
     /**

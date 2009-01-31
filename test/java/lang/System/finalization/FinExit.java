@@ -25,7 +25,7 @@
    @bug 4116016
    @summary Ensure that finalizers are not invoked more than once when on-exit
             finalization is enabled and a finalizer invokes System.exit after
-            System.exit has already been invoked
+	    System.exit has already been invoked
    @build FinExit
    @run shell FinExit.sh
  */
@@ -36,19 +36,19 @@ public class FinExit {
     boolean finalized = false;
 
     public void finalize() {
-        if (finalized) {
-            System.out.println("2");
-        } else {
-            finalized = true;
-            System.out.println("1");
-            System.exit(0);
-        }
+	if (finalized) {
+	    System.out.println("2");
+	} else {
+	    finalized = true;
+	    System.out.println("1");
+	    System.exit(0);
+	}
     }
 
     public static void main(String[] args) throws Exception {
-        System.runFinalizersOnExit(true);
-        Object o = new FinExit();
-        System.exit(0);
+	System.runFinalizersOnExit(true);
+	Object o = new FinExit();
+	System.exit(0);
     }
 
 }

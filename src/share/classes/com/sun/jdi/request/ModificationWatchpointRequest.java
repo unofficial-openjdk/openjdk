@@ -37,15 +37,15 @@ import com.sun.jdi.*;
  * Setting a field to a value which is the same as the previous value
  * still triggers this event.
  * Modification by JDI does not trigger this event.
- * When an enabled
+ * When an enabled 
  * ModificationWatchpointRequest is satisfied, an
  * {@link com.sun.jdi.event.EventSet event set} containing a
  * {@link com.sun.jdi.event.ModificationWatchpointEvent ModificationWatchpointEvent}
- * will be placed on
+ * will be placed on 
  * the {@link com.sun.jdi.event.EventQueue EventQueue}.
  * The collection of existing
- * watchpoints is
- * managed by the {@link EventRequestManager}.
+ * watchpoints is 
+ * managed by the {@link EventRequestManager}.  
  *
  * @see com.sun.jdi.event.ModificationWatchpointEvent
  * @see AccessWatchpointRequest
@@ -57,3 +57,6 @@ import com.sun.jdi.*;
  */
 public interface ModificationWatchpointRequest extends WatchpointRequest {
 }
+
+
+			

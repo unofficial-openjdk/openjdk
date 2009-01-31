@@ -39,6 +39,7 @@ import javax.xml.transform.stream.*;
  * code outside of Properties helps reduce the number of classes loaded
  * when Properties is loaded.
  *
+ * @version 1.9, 01/23/03
  * @author  Michael McCloskey
  * @since   1.3
  */
@@ -89,26 +90,26 @@ class XMLUtils {
     static Document getLoadingDoc(InputStream in)
         throws SAXException, IOException
     {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        dbf.setIgnoringElementContentWhitespace(true);
-        dbf.setValidating(true);
+	DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+	dbf.setIgnoringElementContentWhitespace(true);
+	dbf.setValidating(true);
         dbf.setCoalescing(true);
         dbf.setIgnoringComments(true);
-        try {
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            db.setEntityResolver(new Resolver());
-            db.setErrorHandler(new EH());
+	try {
+	    DocumentBuilder db = dbf.newDocumentBuilder();
+	    db.setEntityResolver(new Resolver());
+	    db.setErrorHandler(new EH());
             InputSource is = new InputSource(in);
-            return db.parse(is);
-        } catch (ParserConfigurationException x) {
-            throw new Error(x);
-        }
+	    return db.parse(is);
+	} catch (ParserConfigurationException x) {
+	    throw new Error(x);
+	}
     }
 
     static void importProperties(Properties props, Element propertiesElement) {
         NodeList entries = propertiesElement.getChildNodes();
         int numEntries = entries.getLength();
-        int start = numEntries > 0 &&
+        int start = numEntries > 0 && 
             entries.item(0).getNodeName().equals("comment") ? 1 : 0;
         for (int i=start; i<numEntries; i++) {
             Element entry = (Element)entries.item(i);
@@ -120,8 +121,8 @@ class XMLUtils {
         }
     }
 
-    static void save(Properties props, OutputStream os, String comment,
-                     String encoding)
+    static void save(Properties props, OutputStream os, String comment, 
+                     String encoding) 
         throws IOException
     {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

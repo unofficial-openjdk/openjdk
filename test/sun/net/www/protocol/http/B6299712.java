@@ -54,7 +54,7 @@ public class B6299712 {
     public static void main(String[] args) throws Exception {
         ResponseCache.setDefault(new DeployCacheHandler());
         startHttpServer();
-
+        
         makeHttpCall();
     }
 
@@ -107,63 +107,63 @@ class SimpleHttpTransaction implements HttpCallback {
 class DeployCacheHandler extends java.net.ResponseCache {
     private boolean inCacheHandler = false;
     private boolean _downloading = false;
-
+    
     public synchronized CacheResponse get(final URI uri, String rqstMethod,
             Map requestHeaders) throws IOException {
-        System.out.println("get!!!: " + uri);
+	System.out.println("get!!!: " + uri);
         try {
             if (!uri.toString().endsWith("redirect")) {
                 return null;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
 
-        return new DeployCacheResponse(new EmptyInputStream(), new HashMap());
+	return new DeployCacheResponse(new EmptyInputStream(), new HashMap());
     }
-
+    
     public synchronized CacheRequest put(URI uri, URLConnection conn)
     throws IOException {
         URL url = uri.toURL();
         return new DeployCacheRequest(url, conn);
-
+        
     }
 }
 
 class DeployCacheRequest extends java.net.CacheRequest {
-
+    
     private URL _url;
     private URLConnection _conn;
     private boolean _downloading = false;
-
+    
     DeployCacheRequest(URL url, URLConnection conn) {
         _url = url;
         _conn = conn;
     }
-
+    
     public void abort() {
 
     }
-
+    
     public OutputStream getBody() throws IOException {
-
-        return null;
+    
+	return null;
     }
 }
 
 class DeployCacheResponse extends java.net.CacheResponse {
     protected InputStream is;
     protected Map headers;
-
+    
     DeployCacheResponse(InputStream is, Map headers) {
         this.is = is;
         this.headers = headers;
     }
-
+    
     public InputStream getBody() throws IOException {
         return is;
     }
-
+    
     public Map getHeaders() throws IOException {
         return headers;
     }
@@ -172,7 +172,7 @@ class DeployCacheResponse extends java.net.CacheResponse {
 class EmptyInputStream extends InputStream {
     public EmptyInputStream() {
     }
-
+    
     public int read()
     throws IOException {
         return -1;

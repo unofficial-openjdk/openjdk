@@ -71,19 +71,19 @@ public class JMX {
      * maxValue}</a> field.
      */
     public static final String MAX_VALUE_FIELD = "maxValue";
-
+    
     /**
      * The name of the <a href="Descriptor.html#minValue">{@code
      * minValue}</a> field.
      */
     public static final String MIN_VALUE_FIELD = "minValue";
-
+    
     /**
      * The name of the <a href="Descriptor.html#mxbean">{@code
      * mxbean}</a> field.
      */
     public static final String MXBEAN_FIELD = "mxbean";
-
+    
     /**
      * The name of the <a href="Descriptor.html#openType">{@code
      * openType}</a> field.
@@ -160,9 +160,9 @@ public class JMX {
      * @return the new proxy instance.
      */
     public static <T> T newMBeanProxy(MBeanServerConnection connection,
-                                      ObjectName objectName,
-                                      Class<T> interfaceClass) {
-        return newMBeanProxy(connection, objectName, interfaceClass, false);
+				      ObjectName objectName,
+				      Class<T> interfaceClass) {
+	return newMBeanProxy(connection, objectName, interfaceClass, false);
     }
 
     /**
@@ -200,14 +200,14 @@ public class JMX {
      * @return the new proxy instance.
      */
     public static <T> T newMBeanProxy(MBeanServerConnection connection,
-                                      ObjectName objectName,
-                                      Class<T> interfaceClass,
-                                      boolean notificationBroadcaster) {
-        return MBeanServerInvocationHandler.newProxyInstance(
-                connection,
-                objectName,
-                interfaceClass,
-                notificationBroadcaster);
+				      ObjectName objectName,
+				      Class<T> interfaceClass,
+				      boolean notificationBroadcaster) {
+	return MBeanServerInvocationHandler.newProxyInstance(
+		connection,
+		objectName,
+		interfaceClass,
+		notificationBroadcaster);
     }
 
     /**
@@ -302,9 +302,9 @@ public class JMX {
      * @return the new proxy instance.
      */
     public static <T> T newMXBeanProxy(MBeanServerConnection connection,
-                                       ObjectName objectName,
-                                       Class<T> interfaceClass) {
-        return newMXBeanProxy(connection, objectName, interfaceClass, false);
+				       ObjectName objectName,
+				       Class<T> interfaceClass) {
+	return newMXBeanProxy(connection, objectName, interfaceClass, false);
     }
 
     /**
@@ -342,9 +342,9 @@ public class JMX {
      * @return the new proxy instance.
      */
     public static <T> T newMXBeanProxy(MBeanServerConnection connection,
-                                       ObjectName objectName,
-                                       Class<T> interfaceClass,
-                                       boolean notificationBroadcaster) {
+				       ObjectName objectName,
+				       Class<T> interfaceClass,
+				       boolean notificationBroadcaster) {
         // Check interface for MXBean compliance
         //
         try {
@@ -352,21 +352,21 @@ public class JMX {
         } catch (NotCompliantMBeanException e) {
             throw new IllegalArgumentException(e);
         }
-        InvocationHandler handler = new MBeanServerInvocationHandler(
-                connection, objectName, true);
-        final Class[] interfaces;
-        if (notificationBroadcaster) {
-            interfaces =
-                new Class<?>[] {interfaceClass, NotificationEmitter.class};
-        } else
-            interfaces = new Class[] {interfaceClass};
-        Object proxy = Proxy.newProxyInstance(
-                interfaceClass.getClassLoader(),
-                interfaces,
-                handler);
-        return interfaceClass.cast(proxy);
+	InvocationHandler handler = new MBeanServerInvocationHandler(
+		connection, objectName, true);
+	final Class[] interfaces;
+	if (notificationBroadcaster) {
+	    interfaces =
+		new Class<?>[] {interfaceClass, NotificationEmitter.class};
+	} else
+	    interfaces = new Class[] {interfaceClass};
+	Object proxy = Proxy.newProxyInstance(
+		interfaceClass.getClassLoader(),
+		interfaces,
+		handler);
+	return interfaceClass.cast(proxy);
     }
-
+    
     /**
      * <p>Test whether an interface is an MXBean interface.
      * An interface is an MXBean interface if it is annotated

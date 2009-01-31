@@ -28,24 +28,27 @@ import java.util.EventListener;
 
 /**
  * ProgressListener is an interface to be implemented by parties
- * interested to be notified of progress in network input stream.
+ * interested to be notified of progress in network input stream. 
  *
- * @author Stanley Man-Kit Ho
+ * @author Stanley Man-Kit Ho 
  */
 public interface ProgressListener extends EventListener
 {
     /**
-     * Start progress.
+     * Start progress. 
      */
     public void progressStart(ProgressEvent evt);
-
+    
     /**
-     * Update progress.
+     * Update progress. 
      */
     public void progressUpdate(ProgressEvent evt);
-
+    
     /**
-     * Finish progress.
-     */
+     * Finish progress. 
+     */    
     public void progressFinish(ProgressEvent evt);
 }
+
+
+

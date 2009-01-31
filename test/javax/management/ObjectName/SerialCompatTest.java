@@ -37,80 +37,80 @@ import javax.management.ObjectName;
 
 public class SerialCompatTest {
     public static void main(String[] args) throws Exception {
-        System.setProperty("jmx.serial.form", "1.0");
+	System.setProperty("jmx.serial.form", "1.0");
 
-        /* Check that we really are in jmx.serial.form=1.0 mode.
-           The property is frozen the first time the ObjectName class
-           is referenced so checking that it is set to the correct
-           value now is not enough.  */
-        ObjectStreamClass osc = ObjectStreamClass.lookup(ObjectName.class);
-        if (osc.getFields().length != 6) {
-            throw new Exception("Not using old serial form: fields: " +
-                                Arrays.asList(osc.getFields()));
-            // new serial form has no fields, uses writeObject
-        }
+	/* Check that we really are in jmx.serial.form=1.0 mode.
+	   The property is frozen the first time the ObjectName class
+	   is referenced so checking that it is set to the correct
+	   value now is not enough.  */
+	ObjectStreamClass osc = ObjectStreamClass.lookup(ObjectName.class);
+	if (osc.getFields().length != 6) {
+	    throw new Exception("Not using old serial form: fields: " +
+				Arrays.asList(osc.getFields()));
+	    // new serial form has no fields, uses writeObject
+	}
 
-        ObjectName on = new ObjectName("a:b=c");
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(bos);
-        oos.writeObject(on);
-        oos.close();
-        byte[] bytes = bos.toByteArray();
-        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        ObjectInputStream ois = new ObjectInputStream(bis);
-        ObjectName on1 = (ObjectName) ois.readObject();
+	ObjectName on = new ObjectName("a:b=c");
+	ByteArrayOutputStream bos = new ByteArrayOutputStream();
+	ObjectOutputStream oos = new ObjectOutputStream(bos);
+	oos.writeObject(on);
+	oos.close();
+	byte[] bytes = bos.toByteArray();
+	ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+	ObjectInputStream ois = new ObjectInputStream(bis);
+	ObjectName on1 = (ObjectName) ois.readObject();
 
-        // if the bug is present, these will get NullPointerException
-        for (int i = 0; i <= 11; i++) {
-            try {
-                switch (i) {
-                case 0:
-                    check(on1.getDomain().equals("a")); break;
-                case 1:
-                    check(on1.getCanonicalName().equals("a:b=c")); break;
-                case 2:
-                    check(on1.getKeyPropertyListString().equals("b=c")); break;
-                case 3:
-                    check(on1.getCanonicalKeyPropertyListString().equals("b=c"));
-                    break;
-                case 4:
-                    check(on1.getKeyProperty("b").equals("c")); break;
-                case 5:
-                    check(on1.getKeyPropertyList()
-                          .equals(Collections.singletonMap("b", "c"))); break;
-                case 6:
-                    check(!on1.isDomainPattern()); break;
-                case 7:
-                    check(!on1.isPattern()); break;
-                case 8:
-                    check(!on1.isPropertyPattern()); break;
-                case 9:
-                    check(on1.equals(on)); break;
-                case 10:
-                    check(on.equals(on1)); break;
-                case 11:
-                    check(on1.apply(on)); break;
-                default:
-                    throw new Exception("Test incorrect: case: " + i);
-                }
-            } catch (Exception e) {
-                System.out.println("Test failed with exception:");
-                e.printStackTrace(System.out);
-                failed = true;
-            }
-        }
+	// if the bug is present, these will get NullPointerException
+	for (int i = 0; i <= 11; i++) {
+	    try {
+		switch (i) {
+		case 0:
+		    check(on1.getDomain().equals("a")); break;
+		case 1:
+		    check(on1.getCanonicalName().equals("a:b=c")); break;
+		case 2:
+		    check(on1.getKeyPropertyListString().equals("b=c")); break;
+		case 3:
+		    check(on1.getCanonicalKeyPropertyListString().equals("b=c"));
+		    break;
+		case 4:
+		    check(on1.getKeyProperty("b").equals("c")); break;
+		case 5:
+		    check(on1.getKeyPropertyList()
+			  .equals(Collections.singletonMap("b", "c"))); break;
+		case 6:
+		    check(!on1.isDomainPattern()); break;
+		case 7:
+		    check(!on1.isPattern()); break;
+		case 8:
+		    check(!on1.isPropertyPattern()); break;
+		case 9:
+		    check(on1.equals(on)); break;
+		case 10:
+		    check(on.equals(on1)); break;
+		case 11:
+		    check(on1.apply(on)); break;
+		default:
+		    throw new Exception("Test incorrect: case: " + i);
+		}
+	    } catch (Exception e) {
+		System.out.println("Test failed with exception:");
+		e.printStackTrace(System.out);
+		failed = true;
+	    }
+	}
 
-        if (failed)
-            throw new Exception("Some tests failed");
-        else
-            System.out.println("All tests passed");
+	if (failed)
+	    throw new Exception("Some tests failed");
+	else
+	    System.out.println("All tests passed");
     }
 
     private static void check(boolean condition) {
-        if (!condition) {
-            new Throwable("Test failed").printStackTrace(System.out);
-            failed = true;
-        }
+	if (!condition) {
+	    new Throwable("Test failed").printStackTrace(System.out);
+	    failed = true;
+	}
     }
 
     private static boolean failed;

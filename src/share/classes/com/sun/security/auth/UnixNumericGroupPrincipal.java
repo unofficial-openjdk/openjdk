@@ -35,15 +35,16 @@ import java.security.Principal;
  * may be associated with a particular <code>Subject</code>
  * to augment that <code>Subject</code> with an additional
  * identity.  Refer to the <code>Subject</code> class for more information
- * on how to achieve this.  Authorization decisions can then be based upon
+ * on how to achieve this.  Authorization decisions can then be based upon 
  * the Principals associated with a <code>Subject</code>.
- *
+ * 
+ * @version 1.8, 01/14/00
  * @see java.security.Principal
  * @see javax.security.auth.Subject
  */
 public class UnixNumericGroupPrincipal implements
-                                        Principal,
-                                        java.io.Serializable {
+					Principal,
+					java.io.Serializable {
 
     private static final long serialVersionUID = 3941535899328403223L;
 
@@ -65,26 +66,26 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @param name the user's group identification number (GID)
-     *                  for this user. <p>
+     *			for this user. <p>
      *
      * @param primaryGroup true if the specified GID represents the
-     *                  primary group to which this user belongs.
+     *			primary group to which this user belongs.
      *
      * @exception NullPointerException if the <code>name</code>
-     *                  is <code>null</code>.
+     *			is <code>null</code>.
      */
     public UnixNumericGroupPrincipal(String name, boolean primaryGroup) {
-        if (name == null) {
-            java.text.MessageFormat form = new java.text.MessageFormat
-                (sun.security.util.ResourcesMgr.getString
-                        ("invalid null input: value",
-                        "sun.security.util.AuthResources"));
-            Object[] source = {"name"};
-            throw new NullPointerException(form.format(source));
-        }
+	if (name == null) {
+	    java.text.MessageFormat form = new java.text.MessageFormat
+		(sun.security.util.ResourcesMgr.getString
+			("invalid null input: value",
+			"sun.security.util.AuthResources"));
+	    Object[] source = {"name"};
+	    throw new NullPointerException(form.format(source));
+	}
 
-        this.name = name;
-        this.primaryGroup = primaryGroup;
+	this.name = name;
+	this.primaryGroup = primaryGroup;
     }
 
     /**
@@ -94,15 +95,15 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @param name the user's group identification number (GID) for this user
-     *                  represented as a long. <p>
+     *			represented as a long. <p>
      *
      * @param primaryGroup true if the specified GID represents the
-     *                  primary group to which this user belongs.
+     *			primary group to which this user belongs.
      *
      */
     public UnixNumericGroupPrincipal(long name, boolean primaryGroup) {
-        this.name = (new Long(name)).toString();
-        this.primaryGroup = primaryGroup;
+	this.name = (new Long(name)).toString();
+	this.primaryGroup = primaryGroup;
     }
 
     /**
@@ -112,10 +113,10 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @return the user's group identification number (GID) for this
-     *          <code>UnixNumericGroupPrincipal</code>
+     *		<code>UnixNumericGroupPrincipal</code>
      */
     public String getName() {
-        return name;
+	return name;
     }
 
     /**
@@ -125,10 +126,10 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @return the user's group identification number (GID) for this
-     *          <code>UnixNumericGroupPrincipal</code> as a long.
+     *		<code>UnixNumericGroupPrincipal</code> as a long.
      */
     public long longValue() {
-        return ((new Long(name)).longValue());
+	return ((new Long(name)).longValue());
     }
 
     /**
@@ -138,11 +139,11 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @return true if this group identification number (GID) represents
-     *          the primary group to which this user belongs,
-     *          or false otherwise.
+     *		the primary group to which this user belongs,
+     *		or false otherwise.
      */
     public boolean isPrimaryGroup() {
-        return primaryGroup;
+	return primaryGroup;
     }
 
     /**
@@ -152,25 +153,25 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @return a string representation of this
-     *          <code>UnixNumericGroupPrincipal</code>.
+     *		<code>UnixNumericGroupPrincipal</code>.
      */
     public String toString() {
 
-        if (primaryGroup) {
-            java.text.MessageFormat form = new java.text.MessageFormat
-                (sun.security.util.ResourcesMgr.getString
-                        ("UnixNumericGroupPrincipal [Primary Group]: name",
-                        "sun.security.util.AuthResources"));
-            Object[] source = {name};
-            return form.format(source);
-        } else {
-            java.text.MessageFormat form = new java.text.MessageFormat
-                (sun.security.util.ResourcesMgr.getString
-                    ("UnixNumericGroupPrincipal [Supplementary Group]: name",
-                    "sun.security.util.AuthResources"));
-            Object[] source = {name};
-            return form.format(source);
-        }
+	if (primaryGroup) {
+	    java.text.MessageFormat form = new java.text.MessageFormat
+		(sun.security.util.ResourcesMgr.getString
+			("UnixNumericGroupPrincipal [Primary Group]: name",
+			"sun.security.util.AuthResources"));
+	    Object[] source = {name};
+	    return form.format(source);
+	} else {
+	    java.text.MessageFormat form = new java.text.MessageFormat
+		(sun.security.util.ResourcesMgr.getString
+		    ("UnixNumericGroupPrincipal [Supplementary Group]: name",
+		    "sun.security.util.AuthResources"));
+	    Object[] source = {name};
+	    return form.format(source);
+	}
     }
 
     /**
@@ -184,28 +185,28 @@ public class UnixNumericGroupPrincipal implements
      * <p>
      *
      * @param o Object to be compared for equality with this
-     *          <code>UnixNumericGroupPrincipal</code>.
+     *		<code>UnixNumericGroupPrincipal</code>.
      *
      * @return true if the specified Object is equal equal to this
-     *          <code>UnixNumericGroupPrincipal</code>.
+     *		<code>UnixNumericGroupPrincipal</code>.
      */
     public boolean equals(Object o) {
-        if (o == null)
-            return false;
+	if (o == null)
+	    return false;
 
         if (this == o)
             return true;
-
+ 
         if (!(o instanceof UnixNumericGroupPrincipal))
             return false;
         UnixNumericGroupPrincipal that = (UnixNumericGroupPrincipal)o;
 
-        if (this.getName().equals(that.getName()) &&
-            this.isPrimaryGroup() == that.isPrimaryGroup())
-            return true;
-        return false;
+	if (this.getName().equals(that.getName()) &&
+	    this.isPrimaryGroup() == that.isPrimaryGroup())
+	    return true;
+	return false;
     }
-
+ 
     /**
      * Return a hash code for this <code>UnixNumericGroupPrincipal</code>.
      *
@@ -214,6 +215,6 @@ public class UnixNumericGroupPrincipal implements
      * @return a hash code for this <code>UnixNumericGroupPrincipal</code>.
      */
     public int hashCode() {
-        return toString().hashCode();
+	return toString().hashCode();
     }
 }

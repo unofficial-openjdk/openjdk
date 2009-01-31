@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)DictionaryBasedBreakIterator.java	1.3 99/05/03
  *
  * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved
  * (C) Copyright IBM Corp. 1996 - 2002 - All Rights Reserved
@@ -126,7 +127,7 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
     }
 
     private void prepareCategoryFlags(byte[] data) {
-        categoryFlags = new boolean[data.length];
+	categoryFlags = new boolean[data.length];
         for (int i = 0; i < data.length; i++) {
             categoryFlags[i] = (data[i] == (byte)1) ? true : false;
         }
@@ -187,7 +188,7 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
             int result = super.previous();
             if (cachedBreakPositions != null) {
                 positionInCache = cachedBreakPositions.length - 2;
-            }
+            } 
             return result;
         }
     }
@@ -270,8 +271,8 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
         // if there are no cached break positions, or if we've just moved
         // off the end of the range covered by the cache, we have to dump
         // and possibly regenerate the cache
-        if (cachedBreakPositions == null ||
-            positionInCache == cachedBreakPositions.length - 1) {
+        if (cachedBreakPositions == null || 
+	    positionInCache == cachedBreakPositions.length - 1) {
 
             // start by using the inherited handleNext() to find a tentative return
             // value.   dictionaryCharCount tells us how many dictionary characters
@@ -412,25 +413,25 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
                     bestBreakPositions = (Stack)(currentBreakPositions.clone());
                 }
 
-                // wrongBreakPositions is a list of all break positions
-                // we've tried starting that didn't allow us to traverse
-                // all the way through the text.  Every time we pop a
-                //break position off of currentBreakPositions, we put it
-                // into wrongBreakPositions to avoid trying it again later.
-                // If we make it to this spot, we're either going to back
-                // up to a break in possibleBreakPositions and try starting
-                // over from there, or we've exhausted all possible break
+                // wrongBreakPositions is a list of all break positions 
+		// we've tried starting that didn't allow us to traverse
+		// all the way through the text.  Every time we pop a
+		//break position off of currentBreakPositions, we put it
+		// into wrongBreakPositions to avoid trying it again later.
+		// If we make it to this spot, we're either going to back
+		// up to a break in possibleBreakPositions and try starting
+		// over from there, or we've exhausted all possible break
                 // positions and are going to do the fallback procedure.
-                // This loop prevents us from messing with anything in
-                // possibleBreakPositions that didn't work as a starting
-                // point the last time we tried it (this is to prevent a bunch of
+		// This loop prevents us from messing with anything in
+		// possibleBreakPositions that didn't work as a starting
+		// point the last time we tried it (this is to prevent a bunch of
                 // repetitive checks from slowing down some extreme cases)
                 Integer newStartingSpot = null;
                 while (!possibleBreakPositions.isEmpty() && wrongBreakPositions.contains(
                             possibleBreakPositions.peek())) {
                     possibleBreakPositions.pop();
                 }
-
+                
                 // if we've used up all possible break-position combinations, there's
                 // an error or an unknown word in the text.  In this case, we start
                 // over, treating the farthest character we've reached as the beginning
@@ -448,8 +449,8 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
                     }
                     else {
                         if ((currentBreakPositions.size() == 0 ||
-                             ((Integer)(currentBreakPositions.peek())).intValue() != text.getIndex())
-                            && text.getIndex() != startPos) {
+			     ((Integer)(currentBreakPositions.peek())).intValue() != text.getIndex())
+			    && text.getIndex() != startPos) {
                             currentBreakPositions.push(new Integer(text.getIndex()));
                         }
                         getNext();

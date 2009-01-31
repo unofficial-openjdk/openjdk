@@ -26,10 +26,10 @@
    @summary  Socket.setSoTimeout(T) can cause incorrect delay of T
              under green threads
    @author Tom Rodriguez
- */
+ */       
 
 /*
- * This program depends a bit on the particular behaviour of the green
+ * This program depends a bit on the particular behaviour of the green 
  * threads scheduler to produce the problem, but given that the underlying
  * bug a green threads bug, I think that's OK.
  */
@@ -43,44 +43,44 @@ public class SoTimeout implements Runnable {
     static int port;
 
     public static void main(String[] args) throws Exception {
-        addr = InetAddress.getLocalHost();
-        serverSocket = new ServerSocket(0);
-        port = serverSocket.getLocalPort();
+	addr = InetAddress.getLocalHost();
+	serverSocket = new ServerSocket(0);
+	port = serverSocket.getLocalPort();
 
-        byte[] b = new byte[12];
-        Thread t = new Thread(new SoTimeout());
-        t.start();
+	byte[] b = new byte[12];
+	Thread t = new Thread(new SoTimeout());
+	t.start();
+	
+	Socket s = serverSocket.accept();
 
-        Socket s = serverSocket.accept();
+	// set a 1 second timeout on the socket
+	s.setSoTimeout(1000);
+	
+	s.getInputStream().read(b, 0, b.length);
+	s.close();
+	
+	long waited = System.currentTimeMillis() - timeWritten;
 
-        // set a 1 second timeout on the socket
-        s.setSoTimeout(1000);
-
-        s.getInputStream().read(b, 0, b.length);
-        s.close();
-
-        long waited = System.currentTimeMillis() - timeWritten;
-
-        // this sequence should complete fairly quickly and if it
-        // takes something resembling the the SoTimeout value then
-        // we are probably incorrectly blocking and not waking up
-        if (waited > 500) {
-            throw new Exception("shouldn't take " + waited + " to complete");
-        }
+	// this sequence should complete fairly quickly and if it
+	// takes something resembling the the SoTimeout value then
+	// we are probably incorrectly blocking and not waking up
+	if (waited > 500) {
+	    throw new Exception("shouldn't take " + waited + " to complete");
+	}
     }
 
     public void run() {
-        try {
-            byte[] b = new byte[12];
-            Socket s = new Socket(addr, port);
-
-            Thread.yield();
-            timeWritten = System.currentTimeMillis();
-            s.getOutputStream().write(b, 0, 12);
-            s.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
+	try {
+	    byte[] b = new byte[12];
+	    Socket s = new Socket(addr, port);
+	    
+	    Thread.yield();
+	    timeWritten = System.currentTimeMillis();
+	    s.getOutputStream().write(b, 0, 12);
+	    s.close();
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+    }	
+	
 }

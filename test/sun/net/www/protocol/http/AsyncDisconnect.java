@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 6358532
+ * @bug 6358532 
  * @run main/othervm AsyncDisconnect
  * @summary HttpURLConnection.disconnect doesn't really do the job
  */
@@ -43,57 +43,57 @@ public class AsyncDisconnect implements Runnable
     HttpURLConnection uc;
 
     public static void main(String[] args) {
-        new AsyncDisconnect();
+	new AsyncDisconnect();
     }
 
     public AsyncDisconnect() {
-        try {
-            startHttpServer();
-            doClient();
-        } catch (IOException ioe) {
-            System.err.println(ioe);
-        }
+	try {
+	    startHttpServer();
+	    doClient();
+	} catch (IOException ioe) {
+	    System.err.println(ioe);
+	}
     }
 
     void doClient() {
-        try {
-            InetSocketAddress address = httpServer.getAddress();
-            URL url = new URL("http://" + address.getHostName() + ":" + address.getPort() + "/test/");
-            uc = (HttpURLConnection)url.openConnection();
+	try { 
+	    InetSocketAddress address = httpServer.getAddress();
+	    URL url = new URL("http://" + address.getHostName() + ":" + address.getPort() + "/test/");
+	    uc = (HttpURLConnection)url.openConnection();
 
-            // create a thread that will disconnect the connection
+	    // create a thread that will disconnect the connection
             (new Thread(this)).start();
 
-            uc.getInputStream();
+	    uc.getInputStream();
 
-            // if we reach here then we have failed
-            throw new RuntimeException("Failed: We Expect a SocketException to be thrown");
+	    // if we reach here then we have failed
+	    throw new RuntimeException("Failed: We Expect a SocketException to be thrown");
 
-        } catch (SocketException se) {
-            // this is what we expect to happen and is OK.
-            //System.out.println(se);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            httpServer.stop(1);
-            executorService.shutdown();
-        }
+	} catch (SocketException se) {
+	    // this is what we expect to happen and is OK.
+	    //System.out.println(se);
+	} catch (IOException e) {
+	    e.printStackTrace();
+	} finally {
+	    httpServer.stop(1);
+	    executorService.shutdown();
+	}
     }
 
     public void run() {
-        // wait for the request to be sent to the server before calling disconnect
-        try { Thread.sleep(2000); }
-        catch (Exception e) {}
+	// wait for the request to be sent to the server before calling disconnect
+	try { Thread.sleep(2000); } 
+	catch (Exception e) {}
 
-        uc.disconnect();
-    }
+	uc.disconnect();
+    }	
 
     /**
      * Http Server
      */
     public void startHttpServer() throws IOException {
         httpServer = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress(0), 0);
-        httpHandler = new MyHandler();
+	httpHandler = new MyHandler();
 
         HttpContext ctx = httpServer.createContext("/test/", httpHandler);
 
@@ -101,15 +101,15 @@ public class AsyncDisconnect implements Runnable
         httpServer.setExecutor(executorService);
         httpServer.start();
     }
-
+   
     class MyHandler implements HttpHandler {
         public void handle(HttpExchange t) throws IOException {
-            // give the other thread a chance to close the connection
-            try { Thread.sleep(4000); }
+	    // give the other thread a chance to close the connection
+	    try { Thread.sleep(4000); }
             catch (Exception e) {}
 
-            t.sendResponseHeaders(400, -1);
-            t.close();
+	    t.sendResponseHeaders(400, -1);
+	    t.close();	
         }
     }
 

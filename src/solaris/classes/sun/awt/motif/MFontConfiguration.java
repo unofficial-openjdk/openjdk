@@ -47,7 +47,7 @@ public class MFontConfiguration extends FontConfiguration {
     private static Logger logger;
 
     public MFontConfiguration(SunGraphicsEnvironment environment) {
-        super(environment);
+	super(environment);
         if (SunGraphicsEnvironment.debugFonts) {
             logger = Logger.getLogger("sun.awt.FontConfiguration");
         }
@@ -56,9 +56,9 @@ public class MFontConfiguration extends FontConfiguration {
 
 
     public MFontConfiguration(SunGraphicsEnvironment environment,
-                              boolean preferLocaleFonts,
-                              boolean preferPropFonts) {
-        super(environment, preferLocaleFonts, preferPropFonts);
+			      boolean preferLocaleFonts,
+			      boolean preferPropFonts) {
+	super(environment, preferLocaleFonts, preferPropFonts);
         if (SunGraphicsEnvironment.debugFonts) {
             logger = Logger.getLogger("sun.awt.FontConfiguration");
         }
@@ -69,83 +69,83 @@ public class MFontConfiguration extends FontConfiguration {
      * the fontconfig files.
      */
     protected void initReorderMap() {
-        reorderMap = new HashMap();
-        if (osName == null) {  /* null means SunOS */
-            initReorderMapForSolaris();
-        } else {
-            initReorderMapForLinux();
-        }
+	reorderMap = new HashMap();
+	if (osName == null) {  /* null means SunOS */
+	    initReorderMapForSolaris();
+	} else {
+	    initReorderMapForLinux();
+	}
     }
 
     private void initReorderMapForSolaris() {
-        /* Don't create a no-op entry, so we can optimize this case
-         * i.e. we don't need to do anything so can avoid slower paths in
-         * the code.
-         */
-//      reorderMap.put("UTF-8", "latin-1");
-        reorderMap.put("UTF-8.hi", "devanagari"); // NB is in Lucida.
-        reorderMap.put("UTF-8.ja",
-                       split("japanese-x0201,japanese-x0208,japanese-x0212"));
-        reorderMap.put("UTF-8.ko", "korean-johab");
-        reorderMap.put("UTF-8.th", "thai");
-        reorderMap.put("UTF-8.zh.TW", "chinese-big5");
-        reorderMap.put("UTF-8.zh.HK", split("chinese-big5,chinese-hkscs"));
-        if (sun.font.FontManager.isSolaris8) {
-            reorderMap.put("UTF-8.zh.CN", split("chinese-gb2312,chinese-big5"));
+	/* Don't create a no-op entry, so we can optimize this case
+	 * i.e. we don't need to do anything so can avoid slower paths in
+	 * the code.
+	 */
+// 	reorderMap.put("UTF-8", "latin-1");
+	reorderMap.put("UTF-8.hi", "devanagari"); // NB is in Lucida.
+	reorderMap.put("UTF-8.ja",
+		       split("japanese-x0201,japanese-x0208,japanese-x0212"));
+	reorderMap.put("UTF-8.ko", "korean-johab");
+	reorderMap.put("UTF-8.th", "thai");
+	reorderMap.put("UTF-8.zh.TW", "chinese-big5");
+	reorderMap.put("UTF-8.zh.HK", split("chinese-big5,chinese-hkscs"));
+	if (sun.font.FontManager.isSolaris8) {
+	    reorderMap.put("UTF-8.zh.CN", split("chinese-gb2312,chinese-big5"));
+	} else {
+	    reorderMap.put("UTF-8.zh.CN",
+			   split("chinese-gb18030-0,chinese-gb18030-1"));
+	}
+	reorderMap.put("UTF-8.zh",
+		       split("chinese-big5,chinese-hkscs,chinese-gb18030-0,chinese-gb18030-1"));
+	reorderMap.put("Big5", "chinese-big5");
+	reorderMap.put("Big5-HKSCS", split("chinese-big5,chinese-hkscs"));
+	if (! sun.font.FontManager.isSolaris8 && ! sun.font.FontManager.isSolaris9) {
+	    reorderMap.put("GB2312", split("chinese-gbk,chinese-gb2312"));
         } else {
-            reorderMap.put("UTF-8.zh.CN",
-                           split("chinese-gb18030-0,chinese-gb18030-1"));
+	    reorderMap.put("GB2312","chinese-gb2312");
         }
-        reorderMap.put("UTF-8.zh",
-                       split("chinese-big5,chinese-hkscs,chinese-gb18030-0,chinese-gb18030-1"));
-        reorderMap.put("Big5", "chinese-big5");
-        reorderMap.put("Big5-HKSCS", split("chinese-big5,chinese-hkscs"));
-        if (! sun.font.FontManager.isSolaris8 && ! sun.font.FontManager.isSolaris9) {
-            reorderMap.put("GB2312", split("chinese-gbk,chinese-gb2312"));
-        } else {
-            reorderMap.put("GB2312","chinese-gb2312");
-        }
-        reorderMap.put("x-EUC-TW",
+	reorderMap.put("x-EUC-TW",
             split("chinese-cns11643-1,chinese-cns11643-2,chinese-cns11643-3"));
-        reorderMap.put("GBK", "chinese-gbk");
-        reorderMap.put("GB18030",split("chinese-gb18030-0,chinese-gb18030-1"));
+	reorderMap.put("GBK", "chinese-gbk");
+	reorderMap.put("GB18030",split("chinese-gb18030-0,chinese-gb18030-1"));
 
-        reorderMap.put("TIS-620", "thai");
-        reorderMap.put("x-PCK",
-                       split("japanese-x0201,japanese-x0208,japanese-x0212"));
-        reorderMap.put("x-eucJP-Open",
-                       split("japanese-x0201,japanese-x0208,japanese-x0212"));
-        reorderMap.put("EUC-KR", "korean");
-        /* Don't create a no-op entry, so we can optimize this case */
-//      reorderMap.put("ISO-8859-1", "latin-1");
-        reorderMap.put("ISO-8859-2", "latin-2");
-        reorderMap.put("ISO-8859-5", "cyrillic-iso8859-5");
-        reorderMap.put("windows-1251", "cyrillic-cp1251");
-        reorderMap.put("KOI8-R", "cyrillic-koi8-r");
-        reorderMap.put("ISO-8859-6", "arabic");
-        reorderMap.put("ISO-8859-7", "greek");
-        reorderMap.put("ISO-8859-8", "hebrew");
-        reorderMap.put("ISO-8859-9", "latin-5");
-        reorderMap.put("ISO-8859-13", "latin-7");
-        reorderMap.put("ISO-8859-15", "latin-9");
+	reorderMap.put("TIS-620", "thai");
+	reorderMap.put("x-PCK",
+		       split("japanese-x0201,japanese-x0208,japanese-x0212"));
+	reorderMap.put("x-eucJP-Open",
+		       split("japanese-x0201,japanese-x0208,japanese-x0212"));
+	reorderMap.put("EUC-KR", "korean");
+	/* Don't create a no-op entry, so we can optimize this case */
+// 	reorderMap.put("ISO-8859-1", "latin-1");
+ 	reorderMap.put("ISO-8859-2", "latin-2");
+	reorderMap.put("ISO-8859-5", "cyrillic-iso8859-5");
+	reorderMap.put("windows-1251", "cyrillic-cp1251");
+	reorderMap.put("KOI8-R", "cyrillic-koi8-r");
+	reorderMap.put("ISO-8859-6", "arabic");
+	reorderMap.put("ISO-8859-7", "greek");
+	reorderMap.put("ISO-8859-8", "hebrew");
+	reorderMap.put("ISO-8859-9", "latin-5");
+	reorderMap.put("ISO-8859-13", "latin-7");
+	reorderMap.put("ISO-8859-15", "latin-9");
     }
 
     private void initReorderMapForLinux() {
-        reorderMap.put("UTF-8.ja.JP", "japanese-iso10646");
-        reorderMap.put("UTF-8.ko.KR", "korean-iso10646");
-        reorderMap.put("UTF-8.zh.TW", "chinese-tw-iso10646");
-        reorderMap.put("UTF-8.zh.HK", "chinese-tw-iso10646");
-        reorderMap.put("UTF-8.zh.CN", "chinese-cn-iso10646");
-        reorderMap.put("x-euc-jp-linux",
-                        split("japanese-x0201,japanese-x0208"));
-        reorderMap.put("GB2312", "chinese-gb18030");
-        reorderMap.put("Big5", "chinese-big5");
-        reorderMap.put("EUC-KR", "korean");
+	reorderMap.put("UTF-8.ja.JP", "japanese-iso10646");
+	reorderMap.put("UTF-8.ko.KR", "korean-iso10646");
+	reorderMap.put("UTF-8.zh.TW", "chinese-tw-iso10646");
+	reorderMap.put("UTF-8.zh.HK", "chinese-tw-iso10646");
+	reorderMap.put("UTF-8.zh.CN", "chinese-cn-iso10646");
+        reorderMap.put("x-euc-jp-linux", 
+                        split("japanese-x0201,japanese-x0208")); 
+	reorderMap.put("GB2312", "chinese-gb18030");
+	reorderMap.put("Big5", "chinese-big5");
+	reorderMap.put("EUC-KR", "korean");
         if (osName.equals("Sun")){
-            reorderMap.put("GB18030", "chinese-cn-iso10646");
+	    reorderMap.put("GB18030", "chinese-cn-iso10646");
         }
         else {
-            reorderMap.put("GB18030", "chinese-gb18030");
+	    reorderMap.put("GB18030", "chinese-gb18030"); 
         }
     }
 
@@ -156,25 +156,25 @@ public class MFontConfiguration extends FontConfiguration {
         super.setOsNameAndVersion();
 
         if (osName.equals("SunOS")) {
-            //don't care os name on Solaris
+ 	    //don't care os name on Solaris	   
             osName = null;
         } else if (osName.equals("Linux")) {
             try {
                 File f;
                 if ((f = new File("/etc/sun-release")).canRead()) {
-                    osName = "Sun";
+                    osName = "Sun";              
                     osVersion = getVersionString(f);
                 } else if ((f = new File("/etc/fedora-release")).canRead()) {
-                    osName = "Fedora";
+                    osName = "Fedora";              
                     osVersion = getVersionString(f);
                 } else if ((f = new File("/etc/redhat-release")).canRead()) {
-                    osName = "RedHat";
+                    osName = "RedHat";              
                     osVersion = getVersionString(f);
                 } else if ((f = new File("/etc/turbolinux-release")).canRead()) {
                     osName = "Turbo";
-                    osVersion = getVersionString(f);
+		    osVersion = getVersionString(f);
                 } else if ((f = new File("/etc/SuSE-release")).canRead()) {
-                    osName = "SuSE";
+                    osName = "SuSE";              
                     osVersion = getVersionString(f);
                 } else if ((f = new File("/etc/lsb-release")).canRead()) {
                     /* Ubuntu and (perhaps others) use only lsb-release.
@@ -185,10 +185,10 @@ public class MFontConfiguration extends FontConfiguration {
                     props.load(new FileInputStream(f));
                     osName = props.getProperty("DISTRIB_ID");
                     osVersion =  props.getProperty("DISTRIB_RELEASE");
-                }
+	        }
             } catch (Exception e) {
-            }
-        }
+	    }
+	}
         return;
     }
 
@@ -199,14 +199,14 @@ public class MFontConfiguration extends FontConfiguration {
         try {
             Scanner sc  = new Scanner(f);
             return sc.findInLine("(\\d)+((\\.)(\\d)+)*");
-        }
+	}
         catch (Exception e){
-        }
+	}
         return null;
     }
-
+    
     private static final String fontsDirPrefix = "$JRE_LIB_FONTS";
-
+    
     protected String mapFileName(String fileName) {
         if (fileName != null && fileName.startsWith(fontsDirPrefix)) {
             return SunGraphicsEnvironment.jreFontDirName
@@ -225,7 +225,7 @@ public class MFontConfiguration extends FontConfiguration {
         }
         return defaultFallback;
     }
-
+    
     protected String getEncoding(String awtFontName,
             String characterSubsetName) {
         // extract encoding field from XLFD
@@ -251,15 +251,15 @@ public class MFontConfiguration extends FontConfiguration {
         }
         return encoding;
     }
-
+    
     protected Charset getDefaultFontCharset(String fontName) {
-        return Charset.forName("ISO8859_1");
+	return Charset.forName("ISO8859_1");
     }
-
+    
     /* methods for Motif support *********************************************/
-
+    
     private String[][] motifFontSets = new String[NUM_FONTS][NUM_STYLES];
-
+    
     public String getMotifFontSet(String fontName, int style) {
         assert isLogicalFontFamilyName(fontName);
         fontName = fontName.toLowerCase(Locale.ENGLISH);
@@ -267,7 +267,7 @@ public class MFontConfiguration extends FontConfiguration {
         int styleIndex = getStyleIndex(style);
         return getMotifFontSet(fontIndex, styleIndex);
     }
-
+    
     private String getMotifFontSet(int fontIndex, int styleIndex) {
         String fontSet = motifFontSets[fontIndex][styleIndex];
         if (fontSet == null) {
@@ -276,7 +276,7 @@ public class MFontConfiguration extends FontConfiguration {
         }
         return fontSet;
     }
-
+    
     private String buildMotifFontSet(int fontIndex, int styleIndex) {
         StringBuilder buffer = new StringBuilder();
         short[] scripts = getCoreScripts(fontIndex);
@@ -298,7 +298,7 @@ public class MFontConfiguration extends FontConfiguration {
     }
 
     protected String getFaceNameFromComponentFontName(String componentFontName) {
-        return null;
+	return null;
     }
 
     protected String getFileNameFromComponentFontName(String componentFontName) {
@@ -307,9 +307,9 @@ public class MFontConfiguration extends FontConfiguration {
         // what the graphics environment can provide
         String fileName = getFileNameFromPlatformName(componentFontName);
         if (fileName != null && fileName.charAt(0) == '/' &&
-            !needToSearchForFile(fileName)) {
-            return fileName;
-        }
+	    !needToSearchForFile(fileName)) {
+	    return fileName;
+	}
         return ((X11GraphicsEnvironment) environment).getFileNameFromXLFD(componentFontName);
     }
 
@@ -334,13 +334,13 @@ public class MFontConfiguration extends FontConfiguration {
      */
     private static String getDefaultMotifFontSet() {
         String font = ((MFontConfiguration) getFontConfiguration()).getMotifFontSet("sansserif", Font.PLAIN);
-        if (font != null) {
+	if (font != null) {
             int i;
-            while ((i = font.indexOf("%d")) >= 0) {
-                font = font.substring(0, i) + "140" + font.substring(i+2);
+	    while ((i = font.indexOf("%d")) >= 0) {
+		font = font.substring(0, i) + "140" + font.substring(i+2);
             }
-        }
-        return font;
+	}
+	return font;
     }
 
     public HashSet<String> getAWTFontPathSet() {
@@ -348,24 +348,24 @@ public class MFontConfiguration extends FontConfiguration {
         short[] scripts = getCoreScripts(0);
         for (int i = 0; i< scripts.length; i++) {
             String path = getString(table_awtfontpaths[scripts[i]]);
-            if (path != null) {
-                int start = 0;
-                int colon = path.indexOf(':');
-                while (colon >= 0) {
-                    fontDirs.add(path.substring(start, colon));
-                    start = colon + 1;
-                    colon = path.indexOf(':', start);
-                }
-                fontDirs.add((start == 0) ? path : path.substring(start));
-            }
+	    if (path != null) {
+	        int start = 0;
+		int colon = path.indexOf(':');
+		while (colon >= 0) {
+		    fontDirs.add(path.substring(start, colon));
+		    start = colon + 1;
+		    colon = path.indexOf(':', start);
+		}
+		fontDirs.add((start == 0) ? path : path.substring(start));
+	    }
         }
         return fontDirs;
     }
-
+  
     /* methods for table setup ***********************************************/
-
+    
     private static HashMap encodingMap = new HashMap();
-
+    
     private void initTables() {
         // encodingMap maps XLFD encoding component to
         // name of corresponding java.nio charset

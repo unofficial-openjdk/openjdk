@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -47,7 +47,7 @@ class UCharacterEnums {
     private UCharacterEnums() {};
 
     /**
-     * 'Enum' for the CharacterCategory constants.  These constants are
+     * 'Enum' for the CharacterCategory constants.  These constants are 
      * compatible in name <b>but not in value</b> with those defined in
      * <code>java.lang.Character</code>.
      * @see UCharacterCategory
@@ -59,11 +59,11 @@ class UCharacterEnums {
          * Unassigned character type
          * @stable ICU 2.1
          */
-        public static final int UNASSIGNED              = 0;
+        public static final int UNASSIGNED              = 0; 
 
         /**
          * Character type Cn
-         * Not Assigned (no characters in [UnicodeData.txt] have this property)
+         * Not Assigned (no characters in [UnicodeData.txt] have this property) 
          * @stable ICU 2.6
          */
         public static final int GENERAL_OTHER_TYPES     = 0;
@@ -119,7 +119,7 @@ class UCharacterEnums {
 
         /**
          * Character type Nd
-         * @stable ICU 2.1
+         * @stable ICU 2.1      
          */
         public static final int DECIMAL_DIGIT_NUMBER    = 9;
 
@@ -128,7 +128,7 @@ class UCharacterEnums {
          * @stable ICU 2.1
          */
         public static final int LETTER_NUMBER           = 10;
-
+        
         /**
          * Character type No
          * @stable ICU 2.1
@@ -188,7 +188,7 @@ class UCharacterEnums {
          * @stable ICU 2.1
          */
         public static final int START_PUNCTUATION       = 20;
-
+        
         /**
          * Character type Pe
          * @stable ICU 2.1
@@ -218,19 +218,19 @@ class UCharacterEnums {
          * @stable ICU 2.1
          */
         public static final int CURRENCY_SYMBOL         = 25;
-
+        
         /**
          * Character type Sk
          * @stable ICU 2.1
          */
         public static final int MODIFIER_SYMBOL         = 26;
-
+        
         /**
          * Character type So
          * @stable ICU 2.1
          */
         public static final int OTHER_SYMBOL            = 27;
-
+        
         /**
          * Character type Pi
          * @see #INITIAL_QUOTE_PUNCTUATION
@@ -262,7 +262,7 @@ class UCharacterEnums {
      * @deprecated This is a draft API and might change in a future release of ICU.
          */
         public static final int FINAL_QUOTE_PUNCTUATION   = 29;
-
+        
         /**
          * Character type count
          * @stable ICU 2.1
@@ -273,7 +273,7 @@ class UCharacterEnums {
     /**
      * 'Enum' for the CharacterDirection constants.  There are two sets
      * of names, those used in ICU, and those used in the JDK.  The
-     * JDK constants are compatible in name <b>but not in value</b>
+     * JDK constants are compatible in name <b>but not in value</b> 
      * with those defined in <code>java.lang.Character</code>.
      * @see UCharacterDirection
      * @draft ICU 3.0
@@ -348,7 +348,7 @@ class UCharacterEnums {
         /**
          * Directional type AN
          * @stable ICU 2.1
-         */
+         */                                                    
         public static final int ARABIC_NUMBER              = 5;
 
         /**
@@ -387,7 +387,7 @@ class UCharacterEnums {
         /**
          * Directional type S
          * @stable ICU 2.1
-         */
+         */      
         public static final int SEGMENT_SEPARATOR          = 8;
 
         /**
@@ -440,7 +440,7 @@ class UCharacterEnums {
          * Directional type LRO
          * @stable ICU 2.1
          */
-        public static final int LEFT_TO_RIGHT_OVERRIDE     = 12;
+        public static final int LEFT_TO_RIGHT_OVERRIDE     = 12;  
 
         /**
          * JDK-compatible synonum for LEFT_TO_RIGHT_OVERRIDE.

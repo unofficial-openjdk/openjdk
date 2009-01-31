@@ -61,10 +61,10 @@ import java.awt.Rectangle;
 
 public class HeadlessGraphicsEnvironment extends GraphicsEnvironment
     implements FontSupport {
-
+    
     private GraphicsEnvironment ge;
     private FontSupport fontSupport;
-
+    
     public HeadlessGraphicsEnvironment(GraphicsEnvironment ge) {
         this.ge = ge;
         if (ge instanceof FontSupport) {
@@ -105,11 +105,11 @@ public class HeadlessGraphicsEnvironment extends GraphicsEnvironment
         if (fontSupport != null) {
             return fontSupport.getFontConfiguration();
         }
-        return null;
+	return null;
     }
 
     /* Used by FontManager : internal API */
     public GraphicsEnvironment getSunGraphicsEnvironment() {
-        return ge;
+	return ge;
     }
 }

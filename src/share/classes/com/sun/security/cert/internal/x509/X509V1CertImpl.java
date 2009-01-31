@@ -46,6 +46,7 @@ import java.util.Vector;
  * sun.security.x509.X509Cert certificates when running under JDK1.1.x.
  *
  * @author Jeff Nisewanger
+ * @version %I%
  */
 public class X509V1CertImpl extends X509Certificate implements Serializable {
     static final long serialVersionUID = -2048442350420423405L;
@@ -55,7 +56,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
     getFactory()
     throws java.security.cert.CertificateException
     {
-        return java.security.cert.CertificateFactory.getInstance("X.509");
+	return java.security.cert.CertificateFactory.getInstance("X.509");
     }
 
     /**
@@ -77,15 +78,15 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      */
     public X509V1CertImpl(byte[] certData)
     throws CertificateException {
-        try {
-            ByteArrayInputStream bs;
+	try {
+	    ByteArrayInputStream bs;
 
-            bs = new ByteArrayInputStream(certData);
-            wrappedCert = (java.security.cert.X509Certificate)
-                getFactory().generateCertificate(bs);
-        } catch (java.security.cert.CertificateException e) {
-            throw new CertificateException(e.getMessage());
-        }
+	    bs = new ByteArrayInputStream(certData);
+	    wrappedCert = (java.security.cert.X509Certificate)
+		getFactory().generateCertificate(bs);
+	} catch (java.security.cert.CertificateException e) {
+	    throw new CertificateException(e.getMessage());
+	}
     }
 
     /**
@@ -96,12 +97,12 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      */
     public X509V1CertImpl(InputStream in)
     throws CertificateException {
-        try {
-            wrappedCert = (java.security.cert.X509Certificate)
-                getFactory().generateCertificate(in);
-        } catch (java.security.cert.CertificateException e) {
-            throw new CertificateException(e.getMessage());
-        }
+	try {
+	    wrappedCert = (java.security.cert.X509Certificate)
+		getFactory().generateCertificate(in);
+	} catch (java.security.cert.CertificateException e) {
+	    throw new CertificateException(e.getMessage());
+	}
     }
 
     /**
@@ -109,13 +110,13 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * assumed that each certificate type would have only a single
      * form of encoding; for example, X.509 certificates would
      * be encoded as ASN.1 DER.
-     */
+     */  
     public byte[] getEncoded() throws CertificateEncodingException {
-        try {
-            return wrappedCert.getEncoded();
-        } catch (java.security.cert.CertificateEncodingException e) {
-            throw new CertificateEncodingException(e.getMessage());
-        }
+	try {
+	    return wrappedCert.getEncoded();
+	} catch (java.security.cert.CertificateEncodingException e) {
+	    throw new CertificateEncodingException(e.getMessage());
+	}
     }
 
     /**
@@ -131,11 +132,11 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
         InvalidKeyException, NoSuchProviderException,
         SignatureException
     {
-        try {
-            wrappedCert.verify(key);
-        } catch (java.security.cert.CertificateException e) {
-            throw new CertificateException(e.getMessage());
-        }
+	try {
+	    wrappedCert.verify(key);
+	} catch (java.security.cert.CertificateException e) {
+	    throw new CertificateException(e.getMessage());
+	}
     }
 
     /**
@@ -153,38 +154,38 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
         SignatureException
     {
         try {
-            wrappedCert.verify(key, sigProvider);
-        } catch (java.security.cert.CertificateException e) {
-            throw new CertificateException(e.getMessage());
-        }
+	    wrappedCert.verify(key, sigProvider);
+	} catch (java.security.cert.CertificateException e) {
+	    throw new CertificateException(e.getMessage());
+	}
     }
-
+  
     /**
      * Checks that the certificate is currently valid, i.e. the current
      * time is within the specified validity period.
-     */
+     */  
     public void checkValidity() throws
       CertificateExpiredException, CertificateNotYetValidException {
         checkValidity(new Date());
     }
-
+ 
     /**
-     * Checks that the specified date is within the certificate's
-     * validity period, or basically if the certificate would be
-     * valid at the specified date/time.
-     *
+     * Checks that the specified date is within the certificate's 
+     * validity period, or basically if the certificate would be 
+     * valid at the specified date/time. 
+     * 
      * @param date the Date to check against to see if this certificate
      *        is valid at that date/time.
      */
     public void checkValidity(Date date) throws
       CertificateExpiredException, CertificateNotYetValidException {
         try {
-            wrappedCert.checkValidity(date);
-        } catch (java.security.cert.CertificateNotYetValidException e) {
-            throw new CertificateNotYetValidException(e.getMessage());
-        } catch (java.security.cert.CertificateExpiredException e) {
-            throw new CertificateExpiredException(e.getMessage());
-        }
+	    wrappedCert.checkValidity(date);
+	} catch (java.security.cert.CertificateNotYetValidException e) {
+	    throw new CertificateNotYetValidException(e.getMessage());
+	} catch (java.security.cert.CertificateExpiredException e) {
+	    throw new CertificateExpiredException(e.getMessage());
+	}
     }
 
 
@@ -195,17 +196,17 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * before this function may be called.
      */
     public String toString() {
-        return wrappedCert.toString();
+	return wrappedCert.toString();
     }
 
     /**
      * Gets the publickey from this certificate.
-     *
+     *   
      * @return the publickey.
-     */
+     */  
     public PublicKey getPublicKey() {
-        PublicKey key = wrappedCert.getPublicKey();
-        return key;
+	PublicKey key = wrappedCert.getPublicKey();
+	return key;
     }
 
     /*
@@ -214,7 +215,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @return the version number.
      */
     public int getVersion() {
-        return wrappedCert.getVersion() - 1;
+	return wrappedCert.getVersion() - 1;
     }
 
     /**
@@ -223,7 +224,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @return the serial number.
      */
     public BigInteger getSerialNumber() {
-        return wrappedCert.getSerialNumber();
+	return wrappedCert.getSerialNumber();
     }
 
     /**
@@ -233,7 +234,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @exception CertificateException if a parsing error occurs.
      */
     public Principal getSubjectDN() {
-        return wrappedCert.getSubjectDN();
+	return wrappedCert.getSubjectDN();
     }
 
     /**
@@ -243,7 +244,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @exception CertificateException if a parsing error occurs.
      */
     public Principal getIssuerDN() {
-        return wrappedCert.getIssuerDN();
+	return wrappedCert.getIssuerDN();
     }
 
     /**
@@ -253,7 +254,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @exception CertificateException if a parsing error occurs.
      */
     public Date getNotBefore() {
-        return wrappedCert.getNotBefore();
+	return wrappedCert.getNotBefore();
     }
 
     /**
@@ -263,7 +264,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @exception CertificateException if a parsing error occurs.
      */
     public Date getNotAfter() {
-        return wrappedCert.getNotAfter();
+	return wrappedCert.getNotAfter();
     }
 
     /**
@@ -275,7 +276,7 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @exception CertificateException if a parsing error occurs.
      */
     public String getSigAlgName() {
-        return wrappedCert.getSigAlgName();
+	return wrappedCert.getSigAlgName();
     }
 
     /**
@@ -286,41 +287,41 @@ public class X509V1CertImpl extends X509Certificate implements Serializable {
      * @exception CertificateException if a parsing error occurs.
      */
     public String getSigAlgOID() {
-        return wrappedCert.getSigAlgOID();
+	return wrappedCert.getSigAlgOID();
     }
 
     /**
      * Gets the DER encoded signature algorithm parameters from this
      * certificate's signature algorithm.
-     *
+     *   
      * @return the DER encoded signature algorithm parameters, or
      *         null if no parameters are present.
      * @exception CertificateException if a parsing error occurs.
-     */
+     */  
     public byte[] getSigAlgParams() {
-        return wrappedCert.getSigAlgParams();
+	return wrappedCert.getSigAlgParams();
     }
 
     private synchronized void writeObject(ObjectOutputStream stream)
         throws IOException {
-        try {
-            stream.write(getEncoded());
-        } catch (CertificateEncodingException e) {
-            throw new IOException("getEncoded failed: " + e.getMessage());
-        }
+	try {
+	    stream.write(getEncoded());
+	} catch (CertificateEncodingException e) {
+	    throw new IOException("getEncoded failed: " + e.getMessage());
+	}
     }
 
     private synchronized void readObject(ObjectInputStream stream)
         throws IOException {
-        try {
-            wrappedCert = (java.security.cert.X509Certificate)
-                getFactory().generateCertificate(stream);
-        } catch (java.security.cert.CertificateException e) {
-            throw new IOException("generateCertificate failed: " + e.getMessage());
-        }
+	try {
+	    wrappedCert = (java.security.cert.X509Certificate)
+		getFactory().generateCertificate(stream);
+	} catch (java.security.cert.CertificateException e) {
+	    throw new IOException("generateCertificate failed: " + e.getMessage());
+	}
     }
 
     public java.security.cert.X509Certificate getX509Certificate() {
-        return wrappedCert;
+	return wrappedCert;
     }
 }

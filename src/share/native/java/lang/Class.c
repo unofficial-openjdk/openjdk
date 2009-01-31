@@ -91,13 +91,13 @@ JNIEXPORT void JNICALL
 Java_java_lang_Class_registerNatives(JNIEnv *env, jclass cls)
 {
     methods[1].fnPtr = (void *)(*env)->GetSuperclass;
-    (*env)->RegisterNatives(env, cls, methods,
-                            sizeof(methods)/sizeof(JNINativeMethod));
+    (*env)->RegisterNatives(env, cls, methods, 
+			    sizeof(methods)/sizeof(JNINativeMethod));
 }
 
 JNIEXPORT jclass JNICALL
 Java_java_lang_Class_forName0(JNIEnv *env, jclass this, jstring classname,
-                              jboolean initialize, jobject loader)
+			      jboolean initialize, jobject loader)
 {
     char *clname;
     jclass cls = 0;
@@ -107,7 +107,7 @@ Java_java_lang_Class_forName0(JNIEnv *env, jclass this, jstring classname,
 
     if (classname == NULL) {
         JNU_ThrowNullPointerException(env, 0);
-        return 0;
+	return 0;
     }
 
     len = (*env)->GetStringUTFLength(env, classname);
@@ -124,23 +124,23 @@ Java_java_lang_Class_forName0(JNIEnv *env, jclass this, jstring classname,
     (*env)->GetStringUTFRegion(env, classname, 0, unicode_len, clname);
 
     if (VerifyFixClassname(clname) == JNI_TRUE) {
-        /* slashes present in clname, use name b4 translation for exception */
-        (*env)->GetStringUTFRegion(env, classname, 0, unicode_len, clname);
-        JNU_ThrowClassNotFoundException(env, clname);
-        goto done;
+	/* slashes present in clname, use name b4 translation for exception */
+	(*env)->GetStringUTFRegion(env, classname, 0, unicode_len, clname);
+	JNU_ThrowClassNotFoundException(env, clname);
+	goto done;
     }
 
     if (!VerifyClassname(clname, JNI_TRUE)) {  /* expects slashed name */
         JNU_ThrowClassNotFoundException(env, clname);
-        goto done;
+	goto done;
     }
 
     cls = JVM_FindClassFromClassLoader(env, clname, initialize,
-                                       loader, JNI_FALSE);
-
+				       loader, JNI_FALSE);
+    
  done:
     if (clname != buf) {
-        free(clname);
+	free(clname);
     }
     return cls;
 }
@@ -158,23 +158,23 @@ JNIEXPORT jboolean JNICALL
 Java_java_lang_Class_isAssignableFrom(JNIEnv *env, jobject cls, jobject cls2)
 {
     if (cls2 == NULL) {
-        JNU_ThrowNullPointerException(env, 0);
-        return JNI_FALSE;
+	JNU_ThrowNullPointerException(env, 0);
+	return JNI_FALSE;
     }
     return (*env)->IsAssignableFrom(env, cls2, cls);
 }
 
 JNIEXPORT jclass JNICALL
 Java_java_lang_Class_getPrimitiveClass(JNIEnv *env,
-                                       jclass cls,
-                                       jstring name)
+				       jclass cls,
+				       jstring name)
 {
     const char *utfName;
     jclass result;
 
     if (name == NULL) {
-        JNU_ThrowNullPointerException(env, 0);
-        return NULL;
+	JNU_ThrowNullPointerException(env, 0);
+	return NULL;
     }
 
     utfName = (*env)->GetStringUTFChars(env, name, 0);

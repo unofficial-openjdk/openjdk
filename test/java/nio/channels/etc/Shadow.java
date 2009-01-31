@@ -53,22 +53,22 @@ public class Shadow {
     private static int problems = 0;
 
     private static void problem(String s) {
-        log.println("FAILURE: " + s);
-        problems++;
+	log.println("FAILURE: " + s);
+	problems++;
     }
 
     private static void check(Socket s) {
-        if (s.getPort() == 0)
-            problem("Socket has no port");
-        if (s.getLocalPort() == 0)
-            problem("Socket has no local port");
-        if (!s.getLocalAddress().equals(s.getInetAddress()))
-            problem("Socket has wrong local address");
+	if (s.getPort() == 0)
+	    problem("Socket has no port");
+	if (s.getLocalPort() == 0)
+	    problem("Socket has no local port");
+	if (!s.getLocalAddress().equals(s.getInetAddress()))
+	    problem("Socket has wrong local address");
     }
 
     public static void main(String[] args) throws Exception {
         boolean useChannels
-            = ((args.length == 0) || Boolean.valueOf(args[0]).booleanValue());
+	    = ((args.length == 0) || Boolean.valueOf(args[0]).booleanValue());
         int port = (args.length > 1 ? Integer.parseInt(args[1]) : PORT);
 
         // open server socket
@@ -77,7 +77,7 @@ public class Shadow {
             ServerSocketChannel serverSocketChannel =
                 ServerSocketChannel.open();
             log.println("opened ServerSocketChannel: " +
-                      serverSocketChannel);
+		      serverSocketChannel);
             serverSocket = serverSocketChannel.socket();
             log.println("associated ServerSocket: " + serverSocket);
         } else {
@@ -108,7 +108,7 @@ public class Shadow {
         // connect client socket to port
         SocketAddress connectAddr =
             new InetSocketAddress("127.0.0.1",
-                                  serverSocket.getLocalPort());
+				  serverSocket.getLocalPort());
         socket.connect(connectAddr);
         log.println("connected Socket: " + socket);
 
@@ -127,16 +127,16 @@ public class Shadow {
 
         log.println("*** client Socket info: ");
         dump(socket);
-        check(socket);
+	check(socket);
         log.println();
 
         log.println("*** accepted Socket info: ");
         dump(acceptedSocket);
-        check(acceptedSocket);
+	check(acceptedSocket);
         log.println();
 
-        if (problems > 0)
-            throw new Exception(problems + " tests failed");
+	if (problems > 0)
+	    throw new Exception(problems + " tests failed");
     }
 
 }

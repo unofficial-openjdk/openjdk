@@ -29,14 +29,14 @@
 #include "Trace.h"
 
 static int j2dTraceLevel = J2D_TRACE_INVALID;
-static FILE *j2dTraceFile = NULL;
+static FILE *j2dTraceFile = NULL; 
 
 JNIEXPORT void JNICALL
 J2dTraceImpl(int level, jboolean cr, const char *string, ...)
 {
     va_list args;
     if (j2dTraceLevel < J2D_TRACE_OFF) {
-        J2dTraceInit();
+	J2dTraceInit();
     }
     if (level <= j2dTraceLevel) {
         if (cr) {
@@ -61,14 +61,14 @@ J2dTraceImpl(int level, jboolean cr, const char *string, ...)
             }
         }
 
-        va_start(args, string);
-        vfprintf(j2dTraceFile, string, args);
-        va_end(args);
+	va_start(args, string);
+	vfprintf(j2dTraceFile, string, args);
+	va_end(args);
 
-        if (cr) {
-            fprintf(j2dTraceFile, "\n");
-        }
-        fflush(j2dTraceFile);
+	if (cr) {
+	    fprintf(j2dTraceFile, "\n");
+	}
+	fflush(j2dTraceFile);
     }
 }
 
@@ -81,21 +81,21 @@ J2dTraceInit()
     if (j2dTraceLevelString) {
         int traceLevelTmp = -1;
         int args = sscanf(j2dTraceLevelString, "%d", &traceLevelTmp);
-        if (args > 0 &&
-            traceLevelTmp > J2D_TRACE_INVALID &&
-            traceLevelTmp < J2D_TRACE_MAX)
-        {
+        if (args > 0 && 
+            traceLevelTmp > J2D_TRACE_INVALID && 
+            traceLevelTmp < J2D_TRACE_MAX) 
+	{
             j2dTraceLevel = traceLevelTmp;
         }
     }
     j2dTraceFileName = getenv("J2D_TRACE_FILE");
     if (j2dTraceFileName) {
-        j2dTraceFile = fopen(j2dTraceFileName, "w");
-        if (!j2dTraceFile) {
-            printf("[E]: Error opening trace file %s\n", j2dTraceFileName);
-        }
+	j2dTraceFile = fopen(j2dTraceFileName, "w");
+	if (!j2dTraceFile) {
+	    printf("[E]: Error opening trace file %s\n", j2dTraceFileName);
+	}
     }
     if (!j2dTraceFile) {
-        j2dTraceFile = stdout;
+	j2dTraceFile = stdout;
     }
 }

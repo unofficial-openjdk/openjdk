@@ -51,34 +51,34 @@ public final class XPathFilter2ParameterSpec implements TransformParameterSpec {
     /**
      * Creates an <code>XPathFilter2ParameterSpec</code>.
      *
-     * @param xPathList a list of one or more {@link XPathType} objects. The
+     * @param xPathList a list of one or more {@link XPathType} objects. The 
      *    list is defensively copied to protect against subsequent modification.
      * @throws ClassCastException if <code>xPathList</code> contains any
      *    entries that are not of type {@link XPathType}
      * @throws IllegalArgumentException if <code>xPathList</code> is empty
-     * @throws NullPointerException if <code>xPathList</code> is
+     * @throws NullPointerException if <code>xPathList</code> is 
      *    <code>null</code>
      */
     public XPathFilter2ParameterSpec(List xPathList) {
-        if (xPathList == null) {
-            throw new NullPointerException("xPathList cannot be null");
-        }
+	if (xPathList == null) {
+	    throw new NullPointerException("xPathList cannot be null");
+	}
         List xPathListCopy = new ArrayList(xPathList);
-        if (xPathListCopy.isEmpty()) {
-            throw new IllegalArgumentException("xPathList cannot be empty");
-        }
-        int size = xPathListCopy.size();
+	if (xPathListCopy.isEmpty()) {
+	    throw new IllegalArgumentException("xPathList cannot be empty");
+	}
+	int size = xPathListCopy.size();
         for (int i = 0; i < size; i++) {
             if (!(xPathListCopy.get(i) instanceof XPathType)) {
                 throw new ClassCastException
                     ("xPathList["+i+"] is not a valid type");
             }
         }
-        this.xPathList = Collections.unmodifiableList(xPathListCopy);
+	this.xPathList = Collections.unmodifiableList(xPathListCopy);
     }
 
     /**
-     * Returns a list of one or more {@link XPathType} objects.
+     * Returns a list of one or more {@link XPathType} objects. 
      * <p>
      * This implementation returns an {@link Collections#unmodifiableList
      * unmodifiable list}.
@@ -87,6 +87,6 @@ public final class XPathFilter2ParameterSpec implements TransformParameterSpec {
      *    (never <code>null</code> or empty)
      */
     public List getXPathList() {
-        return xPathList;
+	return xPathList;
     }
 }

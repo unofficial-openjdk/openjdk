@@ -36,6 +36,7 @@ package java.io;
  * </UL>
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.1
  */
 public class InvalidClassException extends ObjectStreamException {
@@ -55,7 +56,7 @@ public class InvalidClassException extends ObjectStreamException {
      * @param reason  String describing the reason for the exception.
      */
     public InvalidClassException(String reason) {
-        super(reason);
+	super(reason);
     }
 
     /**
@@ -65,17 +66,17 @@ public class InvalidClassException extends ObjectStreamException {
      * @param reason  a String describing the reason for the exception.
      */
     public InvalidClassException(String cname, String reason) {
-        super(reason);
-        classname = cname;
+	super(reason);
+	classname = cname;
     }
 
     /**
      * Produce the message and include the classname, if present.
      */
     public String getMessage() {
-        if (classname == null)
-            return super.getMessage();
-        else
-            return classname + "; " + super.getMessage();
+	if (classname == null)
+	    return super.getMessage();
+	else
+	    return classname + "; " + super.getMessage();
     }
 }

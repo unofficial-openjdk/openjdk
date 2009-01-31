@@ -75,7 +75,7 @@ public class CloseTimeoutChannel {
     /** Reads one byte from in, which must be s.getInputStream.  */
     private static int read(Socket s, InputStream in) throws IOException {
         try {
-            s.setSoTimeout(8000);     //causes a bug!
+	    s.setSoTimeout(8000);     //causes a bug!
             return in.read();
         } finally {
             s.setSoTimeout(0);
@@ -91,34 +91,34 @@ public class CloseTimeoutChannel {
         AcceptorThread(ServerSocketChannel listener) {
             _listener=listener;
         }
-
+    
         public void run() {
             try {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) { }
-
+    
                 System.out.println(INDENT+"Listening on port "+ PORT);
                 ByteBuffer buf=ByteBuffer.allocate(5);
                 Socket client=_listener.accept().socket();;
                 System.out.println(INDENT+"Accepted client");
-
+    
                 OutputStream out=client.getOutputStream();
                 InputStream in=client.getInputStream();
-
+                
                 int n=in.read();
                 System.out.println(INDENT+"Read byte "+n+"\n");
-
+    
                 System.out.println(INDENT+"2. Writing byte 2");
                 out.write((byte)2);
-
+    
                 n=in.read();
                 System.out.println(INDENT+"Read byte "+n+"\n");
-
+    
                 n=in.read();
                 System.out.println(INDENT+"Read byte "
                                    +(n<0 ? "EOF" : Integer.toString(n)));
-
+    
                 System.out.println(INDENT+"Closing");
                 client.close();
             } catch (IOException e) {
@@ -127,3 +127,4 @@ public class CloseTimeoutChannel {
         }
     }
 }
+    

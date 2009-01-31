@@ -32,6 +32,7 @@ import java.util.ArrayList;
  * <code>AttributedCharacterIterator</code> can be retrieved by way of
  * the <code>getIterator</code> method.
  *
+ * @version %I% %G%
  */
 class CharacterIteratorFieldDelegate implements Format.FieldDelegate {
     /**

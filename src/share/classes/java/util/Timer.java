@@ -80,6 +80,7 @@ import java.util.Date;
  * <p>Implementation note: All constructors start a timer thread.
  *
  * @author  Josh Bloch
+ * @version %I%, %G%
  * @see     TimerTask
  * @see     Object#wait(long)
  * @since   1.3
@@ -152,7 +153,7 @@ public class Timer {
      * {@linkplain Thread#setDaemon run as a daemon}.
      *
      * @param name the name of the associated thread
-     * @throws NullPointerException if {@code name} is null
+     * @throws NullPointerException if name is null
      * @since 1.5
      */
     public Timer(String name) {
@@ -167,7 +168,7 @@ public class Timer {
      *
      * @param name the name of the associated thread
      * @param isDaemon true if the associated thread should run as a daemon
-     * @throws NullPointerException if {@code name} is null
+     * @throws NullPointerException if name is null
      * @since 1.5
      */
     public Timer(String name, boolean isDaemon) {
@@ -184,8 +185,7 @@ public class Timer {
      * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
      *         <tt>delay + System.currentTimeMillis()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
-     *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} is null
+     *         cancelled, or timer was cancelled.
      */
     public void schedule(TimerTask task, long delay) {
         if (delay < 0)
@@ -202,7 +202,6 @@ public class Timer {
      * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} or {@code time} is null
      */
     public void schedule(TimerTask task, Date time) {
         sched(task, time.getTime(), 0);
@@ -233,12 +232,10 @@ public class Timer {
      * @param task   task to be scheduled.
      * @param delay  delay in milliseconds before task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if {@code delay < 0}, or
-     *         {@code delay + System.currentTimeMillis() < 0}, or
-     *         {@code period <= 0}
+     * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
+     *         <tt>delay + System.currentTimeMillis()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} is null
      */
     public void schedule(TimerTask task, long delay, long period) {
         if (delay < 0)
@@ -259,9 +256,7 @@ public class Timer {
      * background activity), subsequent executions will be delayed as well.
      * In the long run, the frequency of execution will generally be slightly
      * lower than the reciprocal of the specified period (assuming the system
-     * clock underlying <tt>Object.wait(long)</tt> is accurate).  As a
-     * consequence of the above, if the scheduled first time is in the past,
-     * it is scheduled for immediate execution.
+     * clock underlying <tt>Object.wait(long)</tt> is accurate).
      *
      * <p>Fixed-delay execution is appropriate for recurring activities
      * that require "smoothness."  In other words, it is appropriate for
@@ -275,11 +270,9 @@ public class Timer {
      * @param task   task to be scheduled.
      * @param firstTime First time at which task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if {@code firstTime.getTime() < 0}, or
-     *         {@code period <= 0}
+     * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} or {@code firstTime} is null
      */
     public void schedule(TimerTask task, Date firstTime, long period) {
         if (period <= 0)
@@ -313,12 +306,10 @@ public class Timer {
      * @param task   task to be scheduled.
      * @param delay  delay in milliseconds before task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if {@code delay < 0}, or
-     *         {@code delay + System.currentTimeMillis() < 0}, or
-     *         {@code period <= 0}
+     * @throws IllegalArgumentException if <tt>delay</tt> is negative, or
+     *         <tt>delay + System.currentTimeMillis()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} is null
      */
     public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
         if (delay < 0)
@@ -339,10 +330,7 @@ public class Timer {
      * activity), two or more executions will occur in rapid succession to
      * "catch up."  In the long run, the frequency of execution will be
      * exactly the reciprocal of the specified period (assuming the system
-     * clock underlying <tt>Object.wait(long)</tt> is accurate).  As a
-     * consequence of the above, if the scheduled first time is in the past,
-     * then any "missed" executions will be scheduled for immediate "catch up"
-     * execution.
+     * clock underlying <tt>Object.wait(long)</tt> is accurate).
      *
      * <p>Fixed-rate execution is appropriate for recurring activities that
      * are sensitive to <i>absolute</i> time, such as ringing a chime every
@@ -357,11 +345,9 @@ public class Timer {
      * @param task   task to be scheduled.
      * @param firstTime First time at which task is to be executed.
      * @param period time in milliseconds between successive task executions.
-     * @throws IllegalArgumentException if {@code firstTime.getTime() < 0} or
-     *         {@code period <= 0}
+     * @throws IllegalArgumentException if <tt>time.getTime()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} or {@code firstTime} is null
      */
     public void scheduleAtFixedRate(TimerTask task, Date firstTime,
                                     long period) {
@@ -378,10 +364,9 @@ public class Timer {
      * in Date.getTime() format.  This method checks timer state, task state,
      * and initial execution time, but not period.
      *
-     * @throws IllegalArgumentException if <tt>time</tt> is negative.
+     * @throws IllegalArgumentException if <tt>time()</tt> is negative.
      * @throws IllegalStateException if task was already scheduled or
      *         cancelled, timer was cancelled, or timer thread terminated.
-     * @throws NullPointerException if {@code task} is null
      */
     private void sched(TimerTask task, long time, long period) {
         if (time < 0)
@@ -591,7 +576,7 @@ class TaskQueue {
     void add(TimerTask task) {
         // Grow backing store if necessary
         if (size + 1 == queue.length)
-            queue = Arrays.copyOf(queue, 2*queue.length);
+	    queue = Arrays.copyOf(queue, 2*queue.length);
 
         queue[++size] = task;
         fixUp(size);

@@ -32,6 +32,7 @@ import sun.nio.cs.ext.MacRoman;
  * A table to convert to MacRoman to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacRoman extends ByteToCharSingleByte {

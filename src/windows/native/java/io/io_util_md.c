@@ -57,7 +57,7 @@ initializeWindowsVersion() {
 }
 
 /* If this returns NULL then an exception is pending */
-WCHAR*
+WCHAR* 
 fileToNTPath(JNIEnv *env, jobject file, jfieldID id) {
     jstring path = NULL;
     if (file != NULL) {
@@ -68,11 +68,11 @@ fileToNTPath(JNIEnv *env, jobject file, jfieldID id) {
 
 /* We cache the length of current working dir here to avoid
    calling _wgetcwd() every time we need to resolve a relative
-   path. This piece of code needs to be revisited if chdir
+   path. This piece of code needs to be revisited if chdir 
    makes its way into java runtime.
 */
 
-int
+int 
 currentDirLength(const WCHAR* ps, int pathlen) {
     WCHAR *dir;
     if (pathlen > 2 && ps[1] == L':' && ps[2] != L'\\') {
@@ -93,30 +93,30 @@ currentDirLength(const WCHAR* ps, int pathlen) {
         static int curDirLenCached = -1;
         //relative to both drive and directory
         if (curDirLenCached == -1) {
-            int dirlen = -1;
+            int dirlen = -1; 
             dir = _wgetcwd(NULL, MAX_PATH);
             if (dir != NULL) {
                 curDirLenCached = wcslen(dir);
                 free(dir);
             }
-        }
+        } 
         return curDirLenCached;
     }
 }
 
 /* If this returns NULL then an exception is pending */
-WCHAR*
+WCHAR* 
 pathToNTPath(JNIEnv *env, jstring path, jboolean throwFNFE) {
     int pathlen = 0;
     WCHAR *pathbuf = NULL;
     int max_path = 248;   /* Since CreateDirectoryW() has the limit of
-                             248 instead of the normal MAX_PATH, we
+                             248 instead of the normal MAX_PATH, we 
                              use 248 as the max_path to satisfy both
                            */
     WITH_UNICODE_STRING(env, path, ps) {
         pathlen = wcslen(ps);
         if (pathlen != 0) {
-            if (pathlen > 2 &&
+            if (pathlen > 2 && 
                 (ps[0] == L'\\' && ps[1] == L'\\' ||   //UNC
                  ps[1] == L':' && ps[2] == L'\\')) {   //absolute
                  if (pathlen > max_path - 1) {
@@ -143,13 +143,13 @@ pathToNTPath(JNIEnv *env, jstring path, jboolean throwFNFE) {
                 WCHAR *abpath = NULL;
                 int dirlen = currentDirLength(ps, pathlen);
                 if (dirlen + pathlen + 1 > max_path - 1) {
-                    int abpathlen = dirlen + pathlen + 10;
+                    int abpathlen = dirlen + pathlen + 10; 
                     abpath = (WCHAR*)malloc(abpathlen * sizeof(WCHAR));
                     if (abpath) {
-                        if (_wfullpath(abpath, ps, abpathlen)) {
+                        if (_wfullpath(abpath, ps, abpathlen)) { 
                             pathbuf = getPrefixed(abpath, abpathlen);
                         } else {
-                            /* _wfullpath fails if the pathlength exceeds 32k wchar.
+			    /* _wfullpath fails if the pathlength exceeds 32k wchar.
                                Instead of doing more fancy things we simply copy the
                                ps into the return buffer, the subsequent win32 API will
                                probably fail with FileNotFoundException, which is expected
@@ -191,21 +191,21 @@ jlong
 winFileHandleOpen(JNIEnv *env, jstring path, int flags)
 {
     const DWORD access =
-        (flags & O_RDWR)   ? (GENERIC_WRITE | GENERIC_READ) :
-        (flags & O_WRONLY) ?  GENERIC_WRITE :
-        GENERIC_READ;
+	(flags & O_RDWR)   ? (GENERIC_WRITE | GENERIC_READ) :
+	(flags & O_WRONLY) ?  GENERIC_WRITE :
+	GENERIC_READ;
     const DWORD sharing =
-        FILE_SHARE_READ | FILE_SHARE_WRITE;
+	FILE_SHARE_READ | FILE_SHARE_WRITE;
     const DWORD disposition =
-        /* Note: O_TRUNC overrides O_CREAT */
-        (flags & O_TRUNC) ? CREATE_ALWAYS :
-        (flags & O_CREAT) ? OPEN_ALWAYS   :
-        OPEN_EXISTING;
+	/* Note: O_TRUNC overrides O_CREAT */
+	(flags & O_TRUNC) ? CREATE_ALWAYS :
+	(flags & O_CREAT) ? OPEN_ALWAYS   :
+	OPEN_EXISTING;
     const DWORD  maybeWriteThrough =
-        (flags & (O_SYNC | O_DSYNC)) ?
-        FILE_FLAG_WRITE_THROUGH :
-        FILE_ATTRIBUTE_NORMAL;
-    const DWORD maybeDeleteOnClose =
+	(flags & (O_SYNC | O_DSYNC)) ?
+	FILE_FLAG_WRITE_THROUGH :
+	FILE_ATTRIBUTE_NORMAL;
+    const DWORD maybeDeleteOnClose = 
         (flags & O_TEMPORARY) ?
         FILE_FLAG_DELETE_ON_CLOSE :
         FILE_ATTRIBUTE_NORMAL;
@@ -219,10 +219,10 @@ winFileHandleOpen(JNIEnv *env, jstring path, int flags)
             return -1;
         }
         h = CreateFileW(
-            pathbuf,            /* Wide char path name */
-            access,             /* Read and/or write permission */
-            sharing,            /* File sharing flags */
-            NULL,               /* Security attributes */
+            pathbuf,		/* Wide char path name */
+            access,		/* Read and/or write permission */
+            sharing,		/* File sharing flags */
+            NULL,		/* Security attributes */
             disposition,        /* creation disposition */
             flagsAndAttributes, /* flags and attributes */
             NULL);
@@ -335,11 +335,11 @@ handleNonSeekAvailable(jlong fd, long *pbytes) {
 static int
 handleStdinAvailable(jlong fd, long *pbytes) {
     HANDLE han;
-    DWORD numEventsRead = 0;    /* Number of events read from buffer */
-    DWORD numEvents = 0;        /* Number of events in buffer */
-    DWORD i = 0;                /* Loop index */
-    DWORD curLength = 0;        /* Position marker */
-    DWORD actualLength = 0;     /* Number of bytes readable */
+    DWORD numEventsRead = 0;	/* Number of events read from buffer */
+    DWORD numEvents = 0;	/* Number of events in buffer */
+    DWORD i = 0;		/* Loop index */
+    DWORD curLength = 0;	/* Position marker */
+    DWORD actualLength = 0;	/* Number of bytes readable */
     BOOL error = FALSE;         /* Error holder */
     INPUT_RECORD *lpBuffer;     /* Pointer to records of input events */
     DWORD bufferSize = 0;
@@ -404,10 +404,10 @@ handleSync(jlong fd) {
     /*
      * From the documentation:
      *
-     *     On Windows NT, the function FlushFileBuffers fails if hFile
-     *     is a handle to console output. That is because console
-     *     output is not buffered. The function returns FALSE, and
-     *     GetLastError returns ERROR_INVALID_HANDLE.
+     *	   On Windows NT, the function FlushFileBuffers fails if hFile
+     *	   is a handle to console output. That is because console
+     *	   output is not buffered. The function returns FALSE, and
+     *	   GetLastError returns ERROR_INVALID_HANDLE.
      *
      * On the other hand, on Win95, it returns without error.  I cannot
      * assume that 0, 1, and 2 are console, because if someone closes
@@ -421,7 +421,7 @@ handleSync(jlong fd) {
     HANDLE handle = (HANDLE)fd;
 
     if (!FlushFileBuffers(handle)) {
-        if (GetLastError() != ERROR_ACCESS_DENIED) {    /* from winerror.h */
+        if (GetLastError() != ERROR_ACCESS_DENIED) {	/* from winerror.h */
             return -1;
         }
     }
@@ -462,8 +462,8 @@ handleFileSizeFD(jlong fd, jlong *size)
     return (((jlong)sizeHigh) << 32) | sizeLow;
 }
 
-JNIEXPORT
-size_t
+JNIEXPORT 
+size_t 
 handleRead(jlong fd, void *buf, jint len)
 {
     DWORD read = 0;
@@ -487,8 +487,8 @@ handleRead(jlong fd, void *buf, jint len)
     return read;
 }
 
-JNIEXPORT
-size_t
+JNIEXPORT 
+size_t 
 handleWrite(jlong fd, const void *buf, jint len)
 {
     BOOL result = 0;
@@ -526,13 +526,13 @@ handleClose(JNIEnv *env, jobject this, jfieldID fid)
     SET_FD(this, -1, fid);
 
     if (CloseHandle(h) == 0) { /* Returns zero on failure */
-        SET_FD(this, fd, fid); // restore fd
-        JNU_ThrowIOExceptionWithLastError(env, "close failed");
+	SET_FD(this, fd, fid); // restore fd
+	JNU_ThrowIOExceptionWithLastError(env, "close failed");
     }
     return 0;
 }
 
-jlong
+jlong 
 handleLseek(jlong fd, jlong offset, jint whence)
 {
     DWORD lowPos = 0;

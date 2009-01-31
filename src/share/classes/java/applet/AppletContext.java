@@ -42,7 +42,8 @@ import java.util.Iterator;
  * The methods in this interface can be used by an applet to obtain
  * information about its environment.
  *
- * @author      Arthur van Hoff
+ * @author 	Arthur van Hoff
+ * @version     %I%, %G%
  * @since       JDK1.0
  */
 public interface AppletContext {
@@ -91,10 +92,10 @@ public interface AppletContext {
     Enumeration<Applet> getApplets();
 
     /**
-     * Requests that the browser or applet viewer show the Web page
-     * indicated by the <code>url</code> argument. The browser or
-     * applet viewer determines which window or frame to display the
-     * Web page. This method may be ignored by applet contexts that
+     * Requests that the browser or applet viewer show the Web page 
+     * indicated by the <code>url</code> argument. The browser or 
+     * applet viewer determines which window or frame to display the 
+     * Web page. This method may be ignored by applet contexts that 
      * are not browsers.
      *
      * @param   url   an absolute URL giving the location of the document.
@@ -146,16 +147,16 @@ public interface AppletContext {
 
     /**
      * Associates the specified stream with the specified key in this
-     * applet context. If the applet context previously contained a mapping
-     * for this key, the old value is replaced.
+     * applet context. If the applet context previously contained a mapping 
+     * for this key, the old value is replaced. 
      * <p>
-     * For security reasons, mapping of streams and keys exists for each
-     * codebase. In other words, applet from one codebase cannot access
+     * For security reasons, mapping of streams and keys exists for each 
+     * codebase. In other words, applet from one codebase cannot access 
      * the streams created by an applet from a different codebase
      * <p>
      * @param key key with which the specified value is to be associated.
      * @param stream stream to be associated with the specified key. If this
-     *               parameter is <code>null</code>, the specified key is removed
+     *               parameter is <code>null</code>, the specified key is removed 
      *               in this applet context.
      * @throws <code>IOException</code> if the stream size exceeds a certain
      *         size limit. Size limit is decided by the implementor of this
@@ -165,12 +166,12 @@ public interface AppletContext {
     public void setStream(String key, InputStream stream)throws IOException;
 
     /**
-     * Returns the stream to which specified key is associated within this
-     * applet context. Returns <tt>null</tt> if the applet context contains
-     * no stream for this key.
+     * Returns the stream to which specified key is associated within this 
+     * applet context. Returns <tt>null</tt> if the applet context contains 
+     * no stream for this key.  
      * <p>
-     * For security reasons, mapping of streams and keys exists for each
-     * codebase. In other words, applet from one codebase cannot access
+     * For security reasons, mapping of streams and keys exists for each 
+     * codebase. In other words, applet from one codebase cannot access 
      * the streams created by an applet from a different codebase
      * <p>
      * @return the stream to which this applet context maps the key
@@ -182,11 +183,11 @@ public interface AppletContext {
     /**
      * Finds all the keys of the streams in this applet context.
      * <p>
-     * For security reasons, mapping of streams and keys exists for each
-     * codebase. In other words, applet from one codebase cannot access
+     * For security reasons, mapping of streams and keys exists for each 
+     * codebase. In other words, applet from one codebase cannot access 
      * the streams created by an applet from a different codebase
      * <p>
-     * @return  an Iterator of all the names of the streams in this applet
+     * @return  an Iterator of all the names of the streams in this applet 
      *          context.
      * @since 1.4
      */

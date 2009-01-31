@@ -23,6 +23,7 @@
  * have any questions.
  */
 
+#pragma ident	"@(#)mlib_v_ImageClear.c	1.18	03/01/31 SMI"
 
 /*
  * FUNCTIONS

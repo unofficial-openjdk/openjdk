@@ -45,25 +45,25 @@ class NameAndTypeConstantData extends ConstantPoolData {
      * Constructor
      */
     NameAndTypeConstantData(ConstantPool tab, NameAndTypeData nt) {
-        name = nt.field.getName().toString();
-        type = nt.field.getType().getTypeSignature();
-        tab.put(name);
-        tab.put(type);
+	name = nt.field.getName().toString();
+	type = nt.field.getType().getTypeSignature();
+	tab.put(name);
+	tab.put(type);
     }
 
     /**
      * Write the constant to the output stream
      */
     void write(Environment env, DataOutputStream out, ConstantPool tab) throws IOException {
-        out.writeByte(CONSTANT_NAMEANDTYPE);
-        out.writeShort(tab.index(name));
-        out.writeShort(tab.index(type));
+	out.writeByte(CONSTANT_NAMEANDTYPE);
+	out.writeShort(tab.index(name));
+	out.writeShort(tab.index(type));
     }
 
     /**
      * Return the order of the constant
      */
     int order() {
-        return 3;
+	return 3;
     }
 }

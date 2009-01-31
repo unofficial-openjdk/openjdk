@@ -87,8 +87,8 @@ get_pkey(TraceIndex index)
     HPROF_ASSERT(pkey!=NULL);
     HPROF_ASSERT(key_len>=(int)sizeof(TraceKey));
     HPROF_ASSERT(((TraceKey*)pkey)->n_frames<=1?key_len==(int)sizeof(TraceKey) :
-             key_len==(int)sizeof(TraceKey)+
-                      (int)sizeof(FrameIndex)*(((TraceKey*)pkey)->n_frames-1));
+	     key_len==(int)sizeof(TraceKey)+
+		      (int)sizeof(FrameIndex)*(((TraceKey*)pkey)->n_frames-1));
     return (TraceKey*)pkey;
 }
 
@@ -103,7 +103,7 @@ get_info(TraceIndex index)
 
 static TraceIndex
 find_or_create(SerialNumber thread_serial_num, jint n_frames,
-            FrameIndex *frames, jvmtiPhase phase, TraceKey *trace_key_buffer)
+	    FrameIndex *frames, jvmtiPhase phase, TraceKey *trace_key_buffer)
 {
     TraceInfo * info;
     TraceKey *  pkey;
@@ -111,7 +111,7 @@ find_or_create(SerialNumber thread_serial_num, jint n_frames,
     TraceIndex  index;
     jboolean    new_one;
     static TraceKey empty_key;
-
+    
     HPROF_ASSERT(frames!=NULL);
     HPROF_ASSERT(trace_key_buffer!=NULL);
     key_len = (int)sizeof(TraceKey);
@@ -124,12 +124,12 @@ find_or_create(SerialNumber thread_serial_num, jint n_frames,
     pkey->n_frames = (short)n_frames;
     pkey->phase = phase;
     if ( n_frames > 0 ) {
-        (void)memcpy(pkey->frames, frames, (n_frames*(int)sizeof(FrameIndex)));
+	(void)memcpy(pkey->frames, frames, (n_frames*(int)sizeof(FrameIndex)));
     }
 
     new_one = JNI_FALSE;
-    index = table_find_or_create_entry(gdata->trace_table,
-                                pkey, key_len, &new_one, NULL);
+    index = table_find_or_create_entry(gdata->trace_table, 
+				pkey, key_len, &new_one, NULL);
     if ( new_one ) {
         info = get_info(index);
         info->serial_num = gdata->trace_serial_number_counter++;
@@ -149,17 +149,17 @@ list_item(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *ar
     HPROF_ASSERT(info_ptr!=NULL);
     key = (TraceKey*)key_ptr;
     info = (TraceInfo *)info_ptr;
-
+    
     debug_message( "Trace 0x%08x: SN=%u, threadSN=%u, n_frames=%d, frames=(",
-             index,
-             info->serial_num,
-             key->thread_serial_num,
+             index, 
+	     info->serial_num,
+             key->thread_serial_num, 
              key->n_frames);
     for ( i = 0 ; i < key->n_frames ; i++ ) {
         debug_message( "0x%08x, ", key->frames[i]);
     }
     debug_message( "), traceSN=%u, num_hits=%d, self_cost=(%d,%d), "
-                        "total_cost=(%d,%d), status=0x%08x\n",
+			"total_cost=(%d,%d), status=0x%08x\n",
                         info->serial_num,
                         info->num_hits,
                         jlong_high(info->self_cost),
@@ -185,54 +185,54 @@ clear_cost(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
 
 /* Get the names for a frame in order to dump it. */
 static void
-get_frame_details(JNIEnv *env, FrameIndex frame_index,
-                SerialNumber *frame_serial_num, char **pcsig, ClassIndex *pcnum,
-                char **pmname, char **pmsig, char **psname, jint *plineno)
+get_frame_details(JNIEnv *env, FrameIndex frame_index, 
+		SerialNumber *frame_serial_num, char **pcsig, ClassIndex *pcnum,
+		char **pmname, char **pmsig, char **psname, jint *plineno)
 {
     jmethodID method;
     jlocation location;
     jint      lineno;
-
+ 
     HPROF_ASSERT(frame_index!=0);
     *pmname = NULL;
     *pmsig = NULL;
     *pcsig = NULL;
     if ( psname != NULL ) {
-        *psname = NULL;
+	*psname = NULL;
     }
     if ( plineno != NULL ) {
-        *plineno = -1;
+	*plineno = -1;
     }
     if ( pcnum != NULL ) {
-        *pcnum = 0;
+	*pcnum = 0;
     }
     frame_get_location(frame_index, frame_serial_num, &method, &location, &lineno);
     if ( plineno != NULL ) {
         *plineno = lineno;
     }
     WITH_LOCAL_REFS(env, 1) {
-        jclass klass;
-
-        getMethodClass(method, &klass);
-        getClassSignature(klass, pcsig, NULL);
-        if ( pcnum != NULL ) {
-            LoaderIndex loader_index;
-            jobject     loader;
-
-            loader = getClassLoader(klass);
-            loader_index = loader_find_or_create(env, loader);
+	jclass klass;
+	
+	getMethodClass(method, &klass);
+	getClassSignature(klass, pcsig, NULL);
+	if ( pcnum != NULL ) {
+	    LoaderIndex loader_index;
+	    jobject     loader;
+            
+	    loader = getClassLoader(klass);
+	    loader_index = loader_find_or_create(env, loader);
             *pcnum = class_find_or_create(*pcsig, loader_index);
-             (void)class_new_classref(env, *pcnum, klass);
-        }
-        if ( psname != NULL ) {
+	     (void)class_new_classref(env, *pcnum, klass);
+	}
+	if ( psname != NULL ) {
             getSourceFileName(klass, psname);
-        }
+	}
     } END_WITH_LOCAL_REFS;
     getMethodName(method, pmname, pmsig);
 }
 
 /* Write out a stack trace.  */
-static void
+static void 
 output_trace(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void *arg)
 {
     TraceKey *key;
@@ -244,7 +244,7 @@ output_trace(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void 
     int i;
     char *phase_str;
     struct FrameNames {
-        SerialNumber serial_num;
+	SerialNumber serial_num;
         char * sname;
         char * csig;
         char * mname;
@@ -255,7 +255,7 @@ output_trace(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void 
     if ( info->status != 0 ) {
         return;
     }
-
+    
     env = (JNIEnv*)arg;
 
     key = (TraceKey*)key_ptr;
@@ -263,76 +263,76 @@ output_trace(TableIndex index, void *key_ptr, int key_len, void *info_ptr, void 
     serial_num = info->serial_num;
     info->status = 1;
     finfo = NULL;
-
+   
     n_frames = (jint)key->n_frames;
     if ( n_frames > 0 ) {
-        finfo = (struct FrameNames *)HPROF_MALLOC(n_frames*(int)sizeof(struct FrameNames));
-
-        /* Write frames, but save information for trace later */
-        for (i = 0; i < n_frames; i++) {
-            FrameIndex frame_index;
-            char *msig;
-            ClassIndex cnum;
-
-            frame_index = key->frames[i];
-            get_frame_details(env, frame_index, &finfo[i].serial_num,
-                        &finfo[i].csig, &cnum,
-                        &finfo[i].mname, &msig, &finfo[i].sname, &finfo[i].lineno);
-
-            if (frame_get_status(frame_index) == 0) {
-                io_write_frame(frame_index, finfo[i].serial_num,
-                               finfo[i].mname, msig,
-                               finfo[i].sname, class_get_serial_number(cnum),
-                               finfo[i].lineno);
-                frame_set_status(frame_index, 1);
-            }
-            jvmtiDeallocate(msig);
-        }
+	finfo = (struct FrameNames *)HPROF_MALLOC(n_frames*(int)sizeof(struct FrameNames));
+       
+	/* Write frames, but save information for trace later */
+	for (i = 0; i < n_frames; i++) {
+	    FrameIndex frame_index;
+	    char *msig;
+	    ClassIndex cnum;
+	    
+	    frame_index = key->frames[i];
+	    get_frame_details(env, frame_index, &finfo[i].serial_num,
+			&finfo[i].csig, &cnum,
+			&finfo[i].mname, &msig, &finfo[i].sname, &finfo[i].lineno);
+	    
+	    if (frame_get_status(frame_index) == 0) {
+		io_write_frame(frame_index, finfo[i].serial_num,
+			       finfo[i].mname, msig, 
+			       finfo[i].sname, class_get_serial_number(cnum), 
+			       finfo[i].lineno);
+		frame_set_status(frame_index, 1);
+	    }
+	    jvmtiDeallocate(msig);
+	}       
     }
 
     /* Find phase string */
     if ( key->phase == JVMTI_PHASE_LIVE ) {
-        phase_str = NULL; /* Normal trace, no phase annotation */
+	phase_str = NULL; /* Normal trace, no phase annotation */
     } else {
         phase_str =  phaseString(key->phase);
     }
 
     io_write_trace_header(serial_num, thread_serial_num, n_frames, phase_str);
-
+    
     for (i = 0; i < n_frames; i++) {
-        io_write_trace_elem(serial_num, key->frames[i], finfo[i].serial_num,
-                            finfo[i].csig,
+	io_write_trace_elem(serial_num, key->frames[i], finfo[i].serial_num,
+			    finfo[i].csig, 
                             finfo[i].mname, finfo[i].sname, finfo[i].lineno);
         jvmtiDeallocate(finfo[i].csig);
         jvmtiDeallocate(finfo[i].mname);
-        jvmtiDeallocate(finfo[i].sname);
+	jvmtiDeallocate(finfo[i].sname);
     }
 
     io_write_trace_footer(serial_num, thread_serial_num, n_frames);
-
+   
     if ( finfo != NULL ) {
-        HPROF_FREE(finfo);
+	HPROF_FREE(finfo);
     }
 }
 
 /* Output a specific list of traces. */
-static void
+static void 
 output_list(JNIEnv *env, TraceIndex *list, jint count)
 {
     rawMonitorEnter(gdata->data_access_lock); {
-        int i;
+	int i;
 
-        for ( i = 0; i < count ; i++ ) {
-            TraceIndex index;
-            TraceInfo  *info;
-            void *      pkey;
-            int         key_len;
-
-            index = list[i];
+	for ( i = 0; i < count ; i++ ) {
+	    TraceIndex index;
+	    TraceInfo  *info;
+	    void *      pkey;
+	    int         key_len;
+	    
+	    index = list[i];
             table_get_key(gdata->trace_table, index, &pkey, &key_len);
-            info = get_info(index);
+	    info = get_info(index);
             output_trace(index, pkey, key_len, info, (void*)env);
-        }
+	}
     } rawMonitorExit(gdata->data_access_lock);
 }
 
@@ -352,14 +352,14 @@ collect_iterator(TableIndex index, void *key_ptr, int key_len, void *info_ptr, v
     iterate->grand_total_cost += info->self_cost;
 }
 
-static int
+static int 
 qsort_compare_cost(const void *p_trace1, const void *p_trace2)
 {
     TraceIndex          trace1;
     TraceIndex          trace2;
     TraceInfo * info1;
     TraceInfo * info2;
-
+    
     HPROF_ASSERT(p_trace1!=NULL);
     HPROF_ASSERT(p_trace2!=NULL);
     trace1 = *(TraceIndex *)p_trace1;
@@ -370,14 +370,14 @@ qsort_compare_cost(const void *p_trace1, const void *p_trace2)
     return (int)(info2->self_cost - info1->self_cost);
 }
 
-static int
+static int 
 qsort_compare_num_hits(const void *p_trace1, const void *p_trace2)
 {
     TraceIndex          trace1;
     TraceIndex          trace2;
     TraceInfo * info1;
     TraceInfo * info2;
-
+    
     HPROF_ASSERT(p_trace1!=NULL);
     HPROF_ASSERT(p_trace2!=NULL);
     trace1 = *(TraceIndex *)p_trace1;
@@ -399,7 +399,7 @@ trace_init(void)
 void
 trace_list(void)
 {
-    debug_message(
+    debug_message( 
         "--------------------- Trace Table ------------------------\n");
     table_walk_items(gdata->trace_table, &list_item, NULL);
     debug_message(
@@ -419,7 +419,7 @@ trace_get_serial_number(TraceIndex index)
     TraceInfo *info;
 
     if ( index == 0 ) {
-        return 0;
+	return 0;
     }
     info = get_info(index);
     return info->serial_num;
@@ -431,10 +431,10 @@ trace_increment_cost(TraceIndex index, jint num_hits, jlong self_cost, jlong tot
     TraceInfo *info;
 
     table_lock_enter(gdata->trace_table); {
-        info              = get_info(index);
-        info->num_hits   += num_hits;
-        info->self_cost  += self_cost;
-        info->total_cost += total_cost;
+	info              = get_info(index);
+	info->num_hits   += num_hits;
+	info->self_cost  += self_cost;
+	info->total_cost += total_cost;
     } table_lock_exit(gdata->trace_table);
 }
 
@@ -442,7 +442,7 @@ TraceIndex
 trace_find_or_create(SerialNumber thread_serial_num, jint n_frames, FrameIndex *frames, jvmtiFrameInfo *jframes_buffer)
 {
     return find_or_create(thread_serial_num, n_frames, frames, getPhase(),
-                                (TraceKey*)jframes_buffer);
+				(TraceKey*)jframes_buffer);
 }
 
 /* We may need to ask for more frames than the user asked for */
@@ -450,58 +450,58 @@ static int
 get_real_depth(int depth, jboolean skip_init)
 {
     int extra_frames;
-
+    
     extra_frames = 0;
     /* This is only needed if we are doing BCI */
     if ( gdata->bci && depth > 0 ) {
-        /* Account for Java and native Tracker methods */
+	/* Account for Java and native Tracker methods */
         extra_frames = 2;
-        if ( skip_init ) {
-            /* Also allow for ignoring the java.lang.Object.<init> method */
-            extra_frames += 1;
-        }
+	if ( skip_init ) {
+	    /* Also allow for ignoring the java.lang.Object.<init> method */
+	    extra_frames += 1;
+	}
     }
     return depth + extra_frames;
 }
 
 /* Fill in FrameIndex array from jvmtiFrameInfo array, return n_frames */
 static int
-fill_frame_buffer(int depth, int real_depth,
-                 int frame_count, jboolean skip_init,
-                 jvmtiFrameInfo *jframes_buffer, FrameIndex *frames_buffer)
+fill_frame_buffer(int depth, int real_depth, 
+		 int frame_count, jboolean skip_init,
+		 jvmtiFrameInfo *jframes_buffer, FrameIndex *frames_buffer)
 {
     int  n_frames;
     jint topframe;
 
     /* If real_depth is 0, just return 0 */
     if ( real_depth == 0 ) {
-        return 0;
+	return 0;
     }
-
+    
     /* Assume top frame index is 0 for now */
     topframe = 0;
-
+    
     /* Possible top frames belong to the hprof Tracker class, remove them */
     if ( gdata->bci ) {
-        while ( ( ( frame_count - topframe ) > 0 ) &&
-                ( topframe < (real_depth-depth) ) &&
-                ( tracker_method(jframes_buffer[topframe].method) ||
-                  ( skip_init
-                    && jframes_buffer[topframe].method==gdata->object_init_method ) )
-             ) {
-            topframe++;
-        }
+	while ( ( ( frame_count - topframe ) > 0 ) &&
+		( topframe < (real_depth-depth) ) &&
+		( tracker_method(jframes_buffer[topframe].method) || 
+		  ( skip_init
+		    && jframes_buffer[topframe].method==gdata->object_init_method ) )
+	     ) {
+	    topframe++;
+	}
     }
-
+    
     /* Adjust count to match depth request */
     if ( ( frame_count - topframe ) > depth ) {
-        frame_count =  depth + topframe;
+	frame_count =  depth + topframe;
     }
 
     /* The actual frame count we will process */
     n_frames = frame_count - topframe;
     if ( n_frames > 0 ) {
-        int i;
+	int i;
 
         for (i = 0; i < n_frames; i++) {
             jmethodID method;
@@ -539,22 +539,22 @@ trace_get_current(jthread thread, SerialNumber thread_serial_num,
     if ( real_depth > 0 ) {
         getStackTrace(thread, jframes_buffer, real_depth, &frame_count);
     }
-
+    
     /* Create FrameIndex's */
     n_frames = fill_frame_buffer(depth, real_depth, frame_count, skip_init,
-                                 jframes_buffer, frames_buffer);
+				 jframes_buffer, frames_buffer);
 
     /* Lookup or create new TraceIndex */
-    index = find_or_create(thread_serial_num, n_frames, frames_buffer,
-                getPhase(), (TraceKey*)jframes_buffer);
+    index = find_or_create(thread_serial_num, n_frames, frames_buffer, 
+		getPhase(), (TraceKey*)jframes_buffer);
     return index;
 }
 
 /* Get traces for all threads in list (traces[i]==0 if thread not running) */
 void
-trace_get_all_current(jint thread_count, jthread *threads,
-                      SerialNumber *thread_serial_nums,
-                      int depth, jboolean skip_init,
+trace_get_all_current(jint thread_count, jthread *threads, 
+		      SerialNumber *thread_serial_nums, 
+		      int depth, jboolean skip_init,
                       TraceIndex *traces, jboolean always_care)
 {
     jvmtiStackInfo *stack_info;
@@ -575,7 +575,7 @@ trace_get_all_current(jint thread_count, jthread *threads,
 
     /* We may need to ask for more frames than the user asked for */
     real_depth = get_real_depth(depth, skip_init);
-
+    
     /* Get the stack traces for all the threads */
     getThreadListStackTraces(thread_count, threads, real_depth, &stack_info);
 
@@ -587,29 +587,29 @@ trace_get_all_current(jint thread_count, jthread *threads,
 
     /* Loop over the stack traces we have for these 'thread_count' threads */
     for ( i = 0 ; i < thread_count ; i++ ) {
-        int n_frames;
+	int n_frames;
 
-        /* Assume 0 at first (no trace) */
-        traces[i] = 0;
+	/* Assume 0 at first (no trace) */
+	traces[i] = 0;
 
-        /* If thread has frames, is runnable, and isn't suspended, we care */
-        if ( always_care ||
-             ( stack_info[i].frame_count > 0
-               && (stack_info[i].state & JVMTI_THREAD_STATE_RUNNABLE)!=0
-               && (stack_info[i].state & JVMTI_THREAD_STATE_SUSPENDED)==0
-               && (stack_info[i].state & JVMTI_THREAD_STATE_INTERRUPTED)==0 )
-            ) {
-
-            /* Create FrameIndex's */
-            n_frames = fill_frame_buffer(depth, real_depth,
-                                         stack_info[i].frame_count,
-                                         skip_init,
-                                         stack_info[i].frame_buffer,
-                                         frames_buffer);
-
-            /* Lookup or create new TraceIndex */
-            traces[i] = find_or_create(thread_serial_nums[i],
-                           n_frames, frames_buffer, phase, trace_key_buffer);
+	/* If thread has frames, is runnable, and isn't suspended, we care */
+	if ( always_care || 
+	     ( stack_info[i].frame_count > 0
+	       && (stack_info[i].state & JVMTI_THREAD_STATE_RUNNABLE)!=0
+	       && (stack_info[i].state & JVMTI_THREAD_STATE_SUSPENDED)==0
+	       && (stack_info[i].state & JVMTI_THREAD_STATE_INTERRUPTED)==0 )
+	    ) {
+	    
+	    /* Create FrameIndex's */
+	    n_frames = fill_frame_buffer(depth, real_depth,
+					 stack_info[i].frame_count, 
+					 skip_init,
+					 stack_info[i].frame_buffer,
+					 frames_buffer);
+	    
+	    /* Lookup or create new TraceIndex */
+	    traces[i] = find_or_create(thread_serial_nums[i], 
+			   n_frames, frames_buffer, phase, trace_key_buffer);
         }
     }
 
@@ -621,9 +621,9 @@ trace_get_all_current(jint thread_count, jthread *threads,
 
 /* Increment the trace costs for all the threads (for cpu=samples) */
 void
-trace_increment_all_sample_costs(jint thread_count, jthread *threads,
-                      SerialNumber *thread_serial_nums,
-                      int depth, jboolean skip_init)
+trace_increment_all_sample_costs(jint thread_count, jthread *threads, 
+		      SerialNumber *thread_serial_nums, 
+		      int depth, jboolean skip_init)
 {
     TraceIndex *traces;
     int         nbytes;
@@ -632,41 +632,41 @@ trace_increment_all_sample_costs(jint thread_count, jthread *threads,
     HPROF_ASSERT(thread_serial_nums!=NULL);
     HPROF_ASSERT(thread_count > 0);
     HPROF_ASSERT(depth >= 0);
-
+    
     if ( depth == 0 ) {
-        return;
+	return;
     }
-
+   
     /* Allocate a traces array */
     nbytes = (int)sizeof(TraceIndex)*thread_count;
     traces = (TraceIndex*)HPROF_MALLOC(nbytes);
 
     /* Get all the current traces for these threads */
-    trace_get_all_current(thread_count, threads, thread_serial_nums,
-                      depth, skip_init, traces, JNI_FALSE);
-
+    trace_get_all_current(thread_count, threads, thread_serial_nums, 
+		      depth, skip_init, traces, JNI_FALSE);
+  
     /* Increment the cpu=samples cost on these traces */
     table_lock_enter(gdata->trace_table); {
-        int i;
+	int i;
 
-        for ( i = 0 ; i < thread_count ; i++ ) {
-            /* Each trace gets a hit and an increment of it's total cost */
-            if ( traces[i] != 0 ) {
-                TraceInfo *info;
-
-                info              = get_info(traces[i]);
-                info->num_hits   += 1;
-                info->self_cost  += (jlong)1;
-                info->total_cost += (jlong)1;
-            }
-        }
+	for ( i = 0 ; i < thread_count ; i++ ) {
+	    /* Each trace gets a hit and an increment of it's total cost */
+	    if ( traces[i] != 0 ) {
+		TraceInfo *info;
+		
+		info              = get_info(traces[i]);
+		info->num_hits   += 1;
+	        info->self_cost  += (jlong)1;
+		info->total_cost += (jlong)1;
+	    }
+	}
     } table_lock_exit(gdata->trace_table);
 
     /* Free up the memory allocated */
     HPROF_FREE(traces);
 }
 
-void
+void 
 trace_output_unmarked(JNIEnv *env)
 {
     rawMonitorEnter(gdata->data_access_lock); {
@@ -694,18 +694,18 @@ trace_output_cost(JNIEnv *env, double cutoff)
         trace_table_size = iterate.count;
 
         /* sort all the traces according to the cost */
-        qsort(iterate.traces, trace_table_size, sizeof(TraceIndex),
+        qsort(iterate.traces, trace_table_size, sizeof(TraceIndex), 
                     &qsort_compare_cost);
-
+        
         n_items = 0;
         for (i = 0; i < trace_table_size; i++) {
             TraceInfo *info;
             TraceIndex trace_index;
             double percent;
-
+            
             trace_index = iterate.traces[i];
             info = get_info(trace_index);
-            /* As soon as a trace with zero hits is seen, we need no others */
+	    /* As soon as a trace with zero hits is seen, we need no others */
             if (info->num_hits == 0 ) {
                 break;
             }
@@ -715,50 +715,50 @@ trace_output_cost(JNIEnv *env, double cutoff)
             }
             n_items++;
         }
-
+        
         /* Now write all trace we might refer to. */
         output_list(env, iterate.traces, n_items);
 
         io_write_cpu_samples_header(iterate.grand_total_cost, n_items);
-
+        
         accum = 0;
-
+                
         for (i = 0; i < n_items; i++) {
             SerialNumber frame_serial_num;
-            TraceInfo *info;
+	    TraceInfo *info;
             TraceKey *key;
             TraceIndex trace_index;
             double percent;
             char *csig;
             char *mname;
             char *msig;
-
+            
             trace_index = iterate.traces[i];
             info = get_info(trace_index);
             key = get_pkey(trace_index);
             percent = ((double)info->self_cost / (double)iterate.grand_total_cost) * 100.0;
             accum += percent;
-
+            
             csig = NULL;
             mname = NULL;
             msig  = NULL;
-
+            
             if (key->n_frames > 0) {
-                get_frame_details(env, key->frames[0], &frame_serial_num,
-                        &csig, NULL, &mname, &msig, NULL, NULL);
+                get_frame_details(env, key->frames[0], &frame_serial_num, 
+			&csig, NULL, &mname, &msig, NULL, NULL);
             }
-
+            
             io_write_cpu_samples_elem(i+1, percent, accum, info->num_hits,
-                        (jint)info->self_cost, info->serial_num,
+			(jint)info->self_cost, info->serial_num,
                         key->n_frames, csig, mname);
-
-            jvmtiDeallocate(csig);
-            jvmtiDeallocate(mname);
-            jvmtiDeallocate(msig);
+            
+	    jvmtiDeallocate(csig);
+	    jvmtiDeallocate(mname);
+	    jvmtiDeallocate(msig);
         }
-
+        
         io_write_cpu_samples_footer();
-
+        
         HPROF_FREE(iterate.traces);
 
     } rawMonitorExit(gdata->data_access_lock);
@@ -766,8 +766,8 @@ trace_output_cost(JNIEnv *env, double cutoff)
 }
 
 /* output the trace cost in old prof format */
-void
-trace_output_cost_in_prof_format(JNIEnv *env)
+void 
+trace_output_cost_in_prof_format(JNIEnv *env) 
 {
     IterateInfo iterate;
     int i, trace_table_size;
@@ -776,15 +776,15 @@ trace_output_cost_in_prof_format(JNIEnv *env)
     rawMonitorEnter(gdata->data_access_lock); {
 
         n_entries = table_element_count(gdata->trace_table);
-        iterate.traces = HPROF_MALLOC(n_entries*(int)sizeof(TraceIndex)+1);
+	iterate.traces = HPROF_MALLOC(n_entries*(int)sizeof(TraceIndex)+1);
         iterate.count = 0;
         iterate.grand_total_cost = 0;
         table_walk_items(gdata->trace_table, &collect_iterator, &iterate);
-
+        
         trace_table_size = iterate.count;
-
+        
         /* sort all the traces according to the number of hits */
-        qsort(iterate.traces, trace_table_size, sizeof(TraceIndex),
+        qsort(iterate.traces, trace_table_size, sizeof(TraceIndex), 
                     &qsort_compare_num_hits);
 
         io_write_oldprof_header();
@@ -807,54 +807,55 @@ trace_output_cost_in_prof_format(JNIEnv *env)
             key = get_pkey(trace_index);
             info = get_info(trace_index);
             num_hits = info->num_hits;
-
+            
             if (num_hits == 0) {
                 break;
             }
-
+            
             csig_callee  = NULL;
             mname_callee = NULL;
             msig_callee  = NULL;
             csig_caller  = NULL;
             mname_caller = NULL;
             msig_caller  = NULL;
-
+            
             num_frames = (int)key->n_frames;
-
+            
             if (num_frames >= 1) {
-                get_frame_details(env, key->frames[0], &frame_serial_num,
-                        &csig_callee, NULL,
-                        &mname_callee, &msig_callee, NULL, NULL);
+                get_frame_details(env, key->frames[0], &frame_serial_num, 
+			&csig_callee, NULL,
+			&mname_callee, &msig_callee, NULL, NULL);
             }
-
+            
             if (num_frames > 1) {
-                get_frame_details(env, key->frames[1], &frame_serial_num,
-                        &csig_caller, NULL,
-                        &mname_caller, &msig_caller, NULL, NULL);
+                get_frame_details(env, key->frames[1], &frame_serial_num, 
+			&csig_caller, NULL,
+			&mname_caller, &msig_caller, NULL, NULL);
             }
-
-            io_write_oldprof_elem(info->num_hits, num_frames,
+            
+	    io_write_oldprof_elem(info->num_hits, num_frames,   
                                     csig_callee, mname_callee, msig_callee,
                                     csig_caller, mname_caller, msig_caller,
                                     (int)info->total_cost);
-
-            jvmtiDeallocate(csig_callee);
-            jvmtiDeallocate(mname_callee);
-            jvmtiDeallocate(msig_callee);
-            jvmtiDeallocate(csig_caller);
-            jvmtiDeallocate(mname_caller);
-            jvmtiDeallocate(msig_caller);
+               
+	    jvmtiDeallocate(csig_callee);
+	    jvmtiDeallocate(mname_callee);
+	    jvmtiDeallocate(msig_callee);
+	    jvmtiDeallocate(csig_caller);
+	    jvmtiDeallocate(mname_caller);
+	    jvmtiDeallocate(msig_caller);
         }
-
+        
         io_write_oldprof_footer();
-
+        
         HPROF_FREE(iterate.traces);
 
     } rawMonitorExit(gdata->data_access_lock);
 }
-
-void
+       
+void 
 trace_clear_cost(void)
 {
     table_walk_items(gdata->trace_table, &clear_cost, NULL);
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
-import javax.net.ssl.SSLContext;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 
@@ -102,14 +101,7 @@ public class SSLSocketParametersTest implements Serializable {
             super(ciphers, protocols, need);
         }
 
-        public ServerFactory(SSLContext context,
-                             String[] ciphers,
-                             String[] protocols,
-                             boolean need) {
-            super(context, ciphers, protocols, need);
-        }
-
-        public ServerSocket createServerSocket(int port) throws IOException {
+        public ServerSocket createServerSocket(int port) throws IOException { 
             System.out.println("ServerFactory::Calling createServerSocket(" +
                                port + ")");
             return super.createServerSocket(port);
@@ -169,7 +161,6 @@ public class SSLSocketParametersTest implements Serializable {
                           new ClientFactory(),
                           new ServerFactory(null,
                                             null,
-                                            null,
                                             true));
                 Remote stub = server.runServer();
                 HelloClient client = new HelloClient();
@@ -187,8 +178,7 @@ public class SSLSocketParametersTest implements Serializable {
                 HelloImpl server = new HelloImpl(
                           0,
                           new ClientFactory(),
-                          new ServerFactory(SSLContext.getDefault(),
-                                            new String[] {"dummy_ciphersuite"},
+                          new ServerFactory(new String[] {"dummy_ciphersuite"},
                                             null,
                                             false));
                 Remote stub = server.runServer();

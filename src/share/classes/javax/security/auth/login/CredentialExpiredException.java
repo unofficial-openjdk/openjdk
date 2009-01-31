@@ -27,7 +27,7 @@ package javax.security.auth.login;
 
 /**
  * Signals that a <code>Credential</code> has expired.
- *
+ * 
  * <p> This exception is thrown by LoginModules when they determine
  * that a <code>Credential</code> has expired.
  * For example, a <code>LoginModule</code> authenticating a user
@@ -37,6 +37,7 @@ package javax.security.auth.login;
  * the application.  The application can then take the appropriate
  * steps to assist the user in updating the password.
  *
+ * @version %I%, %G%
  */
 public class CredentialExpiredException extends CredentialException {
 
@@ -47,7 +48,7 @@ public class CredentialExpiredException extends CredentialException {
      * message is a String that describes this particular exception.
      */
     public CredentialExpiredException() {
-        super();
+	super();
     }
 
     /**
@@ -57,9 +58,9 @@ public class CredentialExpiredException extends CredentialException {
      *
      * <p>
      *
-     * @param msg the detail message.
+     * @param msg the detail message.  
      */
     public CredentialExpiredException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

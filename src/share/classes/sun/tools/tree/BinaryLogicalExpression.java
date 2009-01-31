@@ -39,20 +39,20 @@ class BinaryLogicalExpression extends BinaryExpression {
      * constructor
      */
     public BinaryLogicalExpression(int op, long where, Expression left, Expression right) {
-        super(op, where, Type.tBoolean, left, right);
+	super(op, where, Type.tBoolean, left, right);
     }
 
     /**
      * Check a binary expression
      */
-    public Vset checkValue(Environment env, Context ctx,
-                           Vset vset, Hashtable exp) {
-        ConditionVars cvars = new ConditionVars();
-        // evaluate the logical expression, determining which variables are
-        // set if the resulting value is true or false
-        checkCondition(env, ctx, vset, exp, cvars);
-        // return the intersection.
-        return cvars.vsTrue.join(cvars.vsFalse);
+    public Vset checkValue(Environment env, Context ctx, 
+			   Vset vset, Hashtable exp) {
+	ConditionVars cvars = new ConditionVars();
+	// evaluate the logical expression, determining which variables are
+	// set if the resulting value is true or false
+	checkCondition(env, ctx, vset, exp, cvars);
+	// return the intersection.
+	return cvars.vsTrue.join(cvars.vsFalse);
     }
 
     /*
@@ -60,16 +60,16 @@ class BinaryLogicalExpression extends BinaryExpression {
      * of this method.  It cannot inherit the method of Expression.
      */
     abstract
-    public void checkCondition(Environment env, Context ctx, Vset vset,
-                               Hashtable exp, ConditionVars cvars);
+    public void checkCondition(Environment env, Context ctx, Vset vset, 
+			       Hashtable exp, ConditionVars cvars);
 
 
     /**
      * Inline
      */
-    public Expression inline(Environment env, Context ctx) {
-        left = left.inlineValue(env, ctx);
-        right = right.inlineValue(env, ctx);
-        return this;
+    public Expression inline(Environment env, Context ctx) { 
+	left = left.inlineValue(env, ctx);
+	right = right.inlineValue(env, ctx);
+	return this;
     }
 }

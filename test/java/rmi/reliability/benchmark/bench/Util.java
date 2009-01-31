@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -41,6 +41,7 @@ class Util {
         if (i == -1)
             return s;
         int end = i + precision + 1;
-        return (end < s.length()) ? s.substring(0, end) : s;
+	return (end < s.length()) ? s.substring(0, end) : s;
     }
 }
+

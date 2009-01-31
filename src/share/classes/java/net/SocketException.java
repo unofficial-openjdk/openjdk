@@ -31,18 +31,19 @@ import java.io.IOException;
  * Thrown to indicate that there is an error creating or accessing a Socket.
  *
  * @author  Jonathan Payne
+ * @version %I%, %G%
  * @since   JDK1.0
  */
-public
+public 
 class SocketException extends IOException {
     /**
-     * Constructs a new <code>SocketException</code> with the
-     * specified detail message.
+     * Constructs a new <code>SocketException</code> with the 
+     * specified detail message. 
      *
      * @param msg the detail message.
      */
     public SocketException(String msg) {
-        super(msg);
+	super(msg);
     }
 
     /**

@@ -33,111 +33,111 @@ public class AccurateTimeout {
     static final int TOLERANCE = 100;
 
     static boolean skipTest() {
-        String os = System.getProperty("os.name");
-        if (os.equals("Windows 95") ||
-            os.equals("Windows 98") ||
-            os.equals("Windows Me")) {
+	String os = System.getProperty("os.name");
+	if (os.equals("Windows 95") ||
+	    os.equals("Windows 98") ||
+	    os.equals("Windows Me")) {
 
-            System.out.println("Due to an OS bug timeout tolerance cannot be tested on this OS");
-            return true;
-        }
-        return false;
+	    System.out.println("Due to an OS bug timeout tolerance cannot be tested on this OS");
+	    return true;
+	}
+	return false;
     }
 
     public static void main(String args[]) throws Exception {
 
-        if (skipTest()) {
-            return;
-        }
+	if (skipTest()) {
+	    return;
+	}
 
-        int failures = 0;
-        int timeout;
+    	int failures = 0;
+	int timeout;
 
-        System.out.println("");
-        System.out.println("Testing Socket.getInputStream().read() ...");
-        System.out.println("");
+	System.out.println("");
+	System.out.println("Testing Socket.getInputStream().read() ...");
+	System.out.println("");
 
-        ServerSocket ss = new ServerSocket(0);
-        Socket s1 = new Socket(InetAddress.getLocalHost(), ss.getLocalPort());
-        Socket s2 = ss.accept();
+	ServerSocket ss = new ServerSocket(0);
+	Socket s1 = new Socket(InetAddress.getLocalHost(), ss.getLocalPort());
+	Socket s2 = ss.accept();
 
-        InputStream in = s1.getInputStream();
+	InputStream in = s1.getInputStream();
 
-        timeout = 100;
-        while (timeout < 2500) {
-            s1.setSoTimeout(timeout);
+	timeout = 100;		
+	while (timeout < 2500) {
+	    s1.setSoTimeout(timeout);
 
-            long startTime = System.currentTimeMillis();
-            try {
-                in.read();
-            } catch (SocketTimeoutException e) {
-            }
-            long actual = System.currentTimeMillis() - startTime;
+	    long startTime = System.currentTimeMillis();
+	    try {
+		in.read();		
+	    } catch (SocketTimeoutException e) {
+	    }
+	    long actual = System.currentTimeMillis() - startTime;
 
-            System.out.print("excepted: " + timeout + " actual: " + actual);
+	    System.out.print("excepted: " + timeout + " actual: " + actual);
 
-            if (Math.abs(actual-timeout) > TOLERANCE) {
-                System.out.print(" *** FAIL: outside tolerance");
-                failures++;
-            } else {
-                System.out.print(" PASS.");
-            }
+	    if (Math.abs(actual-timeout) > TOLERANCE) {
+		System.out.print(" *** FAIL: outside tolerance");
+		failures++;
+	    } else {
+		System.out.print(" PASS.");
+	    }
 
-            System.out.println("");
-            timeout += 200;
-        }
+	    System.out.println("");
+	    timeout += 200;
+	}
 
-        s1.close();
-        s2.close();
-        ss.close();
-
-
-        // ----------
+	s1.close();
+	s2.close();
+	ss.close();
 
 
-        System.out.println("");
-        System.out.println("Testing DatagramSocket.receive ...");
-        System.out.println("");
+	// ----------
 
-        byte b[] = new byte[8];
-        DatagramPacket p = new DatagramPacket(b, b.length);
 
-        DatagramSocket ds = new DatagramSocket();
+	System.out.println("");
+	System.out.println("Testing DatagramSocket.receive ...");
+	System.out.println("");
+	
+	byte b[] = new byte[8];
+	DatagramPacket p = new DatagramPacket(b, b.length);
 
-        timeout = 100;
-        while (timeout < 2500) {
-            ds.setSoTimeout(timeout);
+	DatagramSocket ds = new DatagramSocket();
 
-            long startTime = System.currentTimeMillis();
-            try {
-                ds.receive(p);
-            } catch (SocketTimeoutException e) {
-            }
-            long actual = System.currentTimeMillis() - startTime;
+	timeout = 100;		
+	while (timeout < 2500) {
+	    ds.setSoTimeout(timeout);
 
-            System.out.print("excepted: " + timeout + " actual: " + actual);
+	    long startTime = System.currentTimeMillis();
+	    try {
+		ds.receive(p);		
+	    } catch (SocketTimeoutException e) {
+	    }
+	    long actual = System.currentTimeMillis() - startTime;
 
-            if (Math.abs(actual-timeout) > TOLERANCE) {
-                System.out.print(" *** FAIL: outside tolerance");
-                failures++;
-            } else {
-                System.out.print(" PASS.");
-            }
+	    System.out.print("excepted: " + timeout + " actual: " + actual);
 
-            System.out.println("");
-            timeout += 200;
-        }
+	    if (Math.abs(actual-timeout) > TOLERANCE) {
+		System.out.print(" *** FAIL: outside tolerance");
+		failures++;
+	    } else {
+		System.out.print(" PASS.");
+	    }
 
-        ds.close();
+	    System.out.println("");
+	    timeout += 200;
+	}
 
-        System.out.println("");
+	ds.close();
 
-        // ---------
+	System.out.println("");
 
-        if (failures > 0) {
-            throw new Exception("Test failed: " + failures +
-                " test(s) outside tolerance");
-        }
+	// ---------
+
+	if (failures > 0) {
+	    throw new Exception("Test failed: " + failures +
+		" test(s) outside tolerance");
+	}
 
     }
 

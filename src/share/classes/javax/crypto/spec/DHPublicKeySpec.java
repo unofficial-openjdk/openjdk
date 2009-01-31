@@ -59,9 +59,9 @@ public class DHPublicKeySpec implements java.security.spec.KeySpec {
      * @param g  base generator g
      */
     public DHPublicKeySpec(BigInteger y, BigInteger p, BigInteger g) {
-        this.y = y;
-        this.p = p;
-        this.g = g;
+	this.y = y;
+	this.p = p;
+	this.g = g;
     }
 
     /**
@@ -70,7 +70,7 @@ public class DHPublicKeySpec implements java.security.spec.KeySpec {
      * @return the public value <code>y</code>
      */
     public BigInteger getY() {
-        return this.y;
+	return this.y;
     }
 
     /**
@@ -79,7 +79,7 @@ public class DHPublicKeySpec implements java.security.spec.KeySpec {
      * @return the prime modulus <code>p</code>
      */
     public BigInteger getP() {
-        return this.p;
+	return this.p;
     }
 
     /**
@@ -88,6 +88,6 @@ public class DHPublicKeySpec implements java.security.spec.KeySpec {
      * @return the base generator <code>g</code>
      */
     public BigInteger getG() {
-        return this.g;
+	return this.g;
     }
 }

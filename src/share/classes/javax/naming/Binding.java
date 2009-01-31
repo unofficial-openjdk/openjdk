@@ -33,7 +33,7 @@ package javax.naming;
   * of a name and an object. The <code>Context.listBindings()</code>
   * method returns an enumeration of Binding.
   *<p>
-  * Use subclassing for naming systems that generate contents of
+  * Use subclassing for naming systems that generate contents of 
   * a binding dynamically.
   *<p>
   * A Binding instance is not synchronized against concurrent access by multiple
@@ -42,6 +42,7 @@ package javax.naming;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   * @since 1.3
   */
 
@@ -57,35 +58,35 @@ public class Binding extends NameClassPair {
     private Object boundObj;
 
     /**
-      * Constructs an instance of a Binding given its name and object.
+      * Constructs an instance of a Binding given its name and object. 
       *<p>
       * <tt>getClassName()</tt> will return
-      * the class name of <tt>obj</tt> (or null if <tt>obj</tt> is null)
+      * the class name of <tt>obj</tt> (or null if <tt>obj</tt> is null) 
       * unless the class name has been explicitly set using <tt>setClassName()</tt>
       *
-      * @param  name    The non-null name of the object. It is relative
+      * @param	name	The non-null name of the object. It is relative
       *             to the <em>target context</em> (which is
       * named by the first parameter of the <code>listBindings()</code> method)
-      * @param  obj     The possibly null object bound to name.
+      * @param	obj	The possibly null object bound to name.
       * @see NameClassPair#setClassName
       */
     public Binding(String name, Object obj) {
-        super(name, null);
-        this.boundObj = obj;
+	super(name, null);
+	this.boundObj = obj;
     }
 
     /**
       * Constructs an instance of a Binding given its name, object, and whether
       * the name is relative.
       *<p>
-      * <tt>getClassName()</tt> will return the class name of <tt>obj</tt>
+      * <tt>getClassName()</tt> will return the class name of <tt>obj</tt> 
       * (or null if <tt>obj</tt> is null) unless the class name has been
       * explicitly set using <tt>setClassName()</tt>
       *
-      * @param  name    The non-null string name of the object.
-      * @param  obj     The possibly null object bound to name.
+      * @param	name	The non-null string name of the object.
+      * @param	obj	The possibly null object bound to name.
       * @param isRelative true if <code>name</code> is a name relative
-      *         to the target context (which is named by
+      *		to the target context (which is named by
       *         the first parameter of the <code>listBindings()</code> method);
       *         false if <code>name</code> is a URL string.
       * @see NameClassPair#isRelative
@@ -93,40 +94,40 @@ public class Binding extends NameClassPair {
       * @see NameClassPair#setClassName
       */
     public Binding(String name, Object obj, boolean isRelative) {
-        super(name, null, isRelative);
-        this.boundObj = obj;
+	super(name, null, isRelative);
+	this.boundObj = obj;
     }
 
     /**
-      * Constructs an instance of a Binding given its name, class name, and object.
+      * Constructs an instance of a Binding given its name, class name, and object. 
       *
-      * @param  name    The non-null name of the object. It is relative
+      * @param	name	The non-null name of the object. It is relative
       *             to the <em>target context</em> (which is
       * named by the first parameter of the <code>listBindings()</code> method)
-      * @param  className       The possibly null class name of the object
-      *         bound to <tt>name</tt>. If null, the class name of <tt>obj</tt> is
-      *         returned by <tt>getClassName()</tt>. If <tt>obj</tt> is also
-      *         null, <tt>getClassName()</tt> will return null.
-      * @param  obj     The possibly null object bound to name.
+      * @param	className	The possibly null class name of the object 
+      * 	bound to <tt>name</tt>. If null, the class name of <tt>obj</tt> is
+      *		returned by <tt>getClassName()</tt>. If <tt>obj</tt> is also
+      *		null, <tt>getClassName()</tt> will return null.
+      * @param	obj	The possibly null object bound to name.
       * @see NameClassPair#setClassName
       */
     public Binding(String name, String className, Object obj) {
-        super(name, className);
-        this.boundObj = obj;
+	super(name, className);
+	this.boundObj = obj;
     }
 
     /**
-      * Constructs an instance of a Binding given its
+      * Constructs an instance of a Binding given its 
       * name, class name, object, and whether the name is relative.
       *
-      * @param  name    The non-null string name of the object.
-      * @param  className       The possibly null class name of the object
-      *         bound to <tt>name</tt>. If null, the class name of <tt>obj</tt> is
-      *         returned by <tt>getClassName()</tt>. If <tt>obj</tt> is also
-      *         null, <tt>getClassName()</tt> will return null.
-      * @param  obj     The possibly null object bound to name.
+      * @param	name	The non-null string name of the object.
+      * @param	className	The possibly null class name of the object 
+      * 	bound to <tt>name</tt>. If null, the class name of <tt>obj</tt> is
+      *		returned by <tt>getClassName()</tt>. If <tt>obj</tt> is also
+      *		null, <tt>getClassName()</tt> will return null.
+      * @param	obj	The possibly null object bound to name.
       * @param isRelative true if <code>name</code> is a name relative
-      *         to the target context (which is named by
+      *		to the target context (which is named by
       *         the first parameter of the <code>listBindings()</code> method);
       *         false if <code>name</code> is a URL string.
       * @see NameClassPair#isRelative
@@ -134,38 +135,38 @@ public class Binding extends NameClassPair {
       * @see NameClassPair#setClassName
       */
     public Binding(String name, String className, Object obj, boolean isRelative) {
-        super(name, className, isRelative);
-        this.boundObj = obj;
+	super(name, className, isRelative);
+	this.boundObj = obj;
     }
 
     /**
       * Retrieves the class name of the object bound to the name of this binding.
       * If the class name has been set explicitly, return it.
-      * Otherwise, if this binding contains a non-null object,
+      * Otherwise, if this binding contains a non-null object, 
       * that object's class name is used. Otherwise, null is returned.
-      *
-      * @return A possibly null string containing class name of object bound.
+      * 
+      * @return	A possibly null string containing class name of object bound.
       */
     public String getClassName() {
-        String cname = super.getClassName();
-        if (cname != null) {
-            return cname;
-        }
-        if (boundObj != null)
-            return boundObj.getClass().getName();
-        else
-            return null;
+	String cname = super.getClassName();
+	if (cname != null) {
+	    return cname;
+	}
+	if (boundObj != null)
+	    return boundObj.getClass().getName();
+	else
+	    return null;
     }
 
     /**
       * Retrieves the object bound to the name of this binding.
       *
-      * @return The object bound; null if this binding does not contain an object.
+      * @return	The object bound; null if this binding does not contain an object.
       * @see #setObject
       */
 
     public Object getObject() {
-        return boundObj;
+	return boundObj;
     }
 
     /**
@@ -174,7 +175,7 @@ public class Binding extends NameClassPair {
      * @see #getObject
      */
     public void setObject(Object obj) {
-        boundObj = obj;
+	boundObj = obj;
     }
 
     /**
@@ -189,7 +190,7 @@ public class Binding extends NameClassPair {
       */
 
     public String toString() {
-        return super.toString() + ":" + getObject();
+	return super.toString() + ":" + getObject();
     }
 
     /**
@@ -197,3 +198,4 @@ public class Binding extends NameClassPair {
      */
     private static final long serialVersionUID = 8839217842691845890L;
 };
+

@@ -43,7 +43,7 @@ DECLARE_JAVA_CLASS(dataTransfererClazz, "sun/awt/datatransfer/DataTransferer");
 jobject
 AwtDataTransferer::GetDataTransferer(JNIEnv* env) {
     DECLARE_STATIC_OBJECT_JAVA_METHOD(getInstanceMethodID, dataTransfererClazz,
-                                      "getInstance",
+                                      "getInstance", 
                                       "()Lsun/awt/datatransfer/DataTransferer;");
     return env->CallStaticObjectMethod(clazz, getInstanceMethodID);
 }
@@ -55,7 +55,7 @@ AwtDataTransferer::ConvertData(JNIEnv* env, jobject source, jobject contents,
 
     if (!JNU_IsNull(env, transferer)) {
         jbyteArray ret = NULL;
-        DECLARE_OBJECT_JAVA_METHOD(convertDataMethodID, dataTransfererClazz,
+        DECLARE_OBJECT_JAVA_METHOD(convertDataMethodID, dataTransfererClazz, 
                                    "convertData",
                                    "(Ljava/lang/Object;Ljava/awt/datatransfer/Transferable;JLjava/util/Map;Z)[B");
 
@@ -82,7 +82,7 @@ AwtDataTransferer::ConcatData(JNIEnv* env, jobject obj1, jobject obj2) {
 
     if (!JNU_IsNull(env, transferer)) {
         jobject ret = NULL;
-        DECLARE_OBJECT_JAVA_METHOD(concatDataMethodID, dataTransfererClazz,
+        DECLARE_OBJECT_JAVA_METHOD(concatDataMethodID, dataTransfererClazz, 
                                    "concatData",
                                    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
@@ -102,28 +102,28 @@ AwtDataTransferer::ConcatData(JNIEnv* env, jobject obj1, jobject obj2) {
 }
 
 /**
- * This routine retrieves palette entries from enhanced metafile or
- * a logical color palette, builds appropriate LOGPALETTE structure,
- * writes it into a created Java byte array and returns a local
+ * This routine retrieves palette entries from enhanced metafile or 
+ * a logical color palette, builds appropriate LOGPALETTE structure, 
+ * writes it into a created Java byte array and returns a local 
  * reference to the array.
  * This routine is used for image data transfer.
- *
+ * 
  * @param hGdiObj - a handle to the GDI object to retrieve palette entries from,
- *        it can be a handle to either a logical color palette (OBJ_PAL type)
- *        or an enhanced metafile (OBJ_ENHMETAFILE). If it is neither of these
+ *        it can be a handle to either a logical color palette (OBJ_PAL type) 
+ *        or an enhanced metafile (OBJ_ENHMETAFILE). If it is neither of these 
  *        types the routine fails(see bFailSafe).
  * @param dwGdiObjType - a type of the passed GDI object. It should be specified
  *        if the type of the passed GDI object is known to the caller. Otherwise
  *        pass 0.
  * @param bFailSafe - if FALSE, the routine will return NULL in case of failure,
- *        otherwise it will return an array with empty LOGPALETTE structure
+ *        otherwise it will return an array with empty LOGPALETTE structure 
  *        in case of failure.
  * @return a local reference to Java byte array which contains LOGPALETTE
- *        structure which defines a logical color palette or a palette of
+ *        structure which defines a logical color palette or a palette of 
  *        an enhanced metafile.
  */
 jbyteArray
-AwtDataTransferer::GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType,
+AwtDataTransferer::GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType, 
                                    BOOL bFailSafe) {
 
     if (hGdiObj == NULL) {
@@ -141,12 +141,12 @@ AwtDataTransferer::GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType,
     UINT nEntries = 0;
 
     switch (dwGdiObjType) {
-    case OBJ_PAL:
-        nEntries =
-            ::GetPaletteEntries((HPALETTE)hGdiObj, 0, 0, NULL);
+    case OBJ_PAL: 
+        nEntries = 
+            ::GetPaletteEntries((HPALETTE)hGdiObj, 0, 0, NULL); 
         break;
     case OBJ_ENHMETAFILE:
-        nEntries =
+        nEntries = 
             ::GetEnhMetaFilePaletteEntries((HENHMETAFILE)hGdiObj, 0, NULL);
         break;
     }
@@ -163,20 +163,20 @@ AwtDataTransferer::GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType,
         throw std::bad_alloc();
     }
 
-    LOGPALETTE* pLogPalette =
+    LOGPALETTE* pLogPalette = 
         (LOGPALETTE*)env->GetPrimitiveArrayCritical(paletteBytes, NULL);
-    PALETTEENTRY* pPalEntries = (PALETTEENTRY*)pLogPalette->palPalEntry;
+    PALETTEENTRY* pPalEntries = (PALETTEENTRY*)pLogPalette->palPalEntry; 
 
     pLogPalette->palVersion = 0x300;
     pLogPalette->palNumEntries = nEntries;
 
     switch (dwGdiObjType) {
-    case OBJ_PAL:
-        VERIFY(::GetPaletteEntries((HPALETTE)hGdiObj, 0, nEntries,
+    case OBJ_PAL: 
+        VERIFY(::GetPaletteEntries((HPALETTE)hGdiObj, 0, nEntries, 
                                    pPalEntries) == nEntries);
         break;
     case OBJ_ENHMETAFILE:
-        VERIFY(::GetEnhMetaFilePaletteEntries((HENHMETAFILE)hGdiObj, nEntries,
+        VERIFY(::GetEnhMetaFilePaletteEntries((HENHMETAFILE)hGdiObj, nEntries, 
                                               pPalEntries) == nEntries);
         break;
     }
@@ -188,12 +188,12 @@ AwtDataTransferer::GetPaletteBytes(HGDIOBJ hGdiObj, DWORD dwGdiObjType,
 
 jbyteArray
 AwtDataTransferer::LCIDToTextEncoding(JNIEnv *env, LCID lcid) {
-    LANGID langID = LANGIDFROMLCID(lcid);
+    LANGID langID = LANGIDFROMLCID(lcid); 
     const char *encoding = getEncodingFromLangID(langID);
 
-    // Warning C4244.
-    // Cast SIZE_T (__int64 on 64-bit/unsigned int on 32-bit)
-    // to jsize (long).
+    // Warning C4244. 
+    // Cast SIZE_T (__int64 on 64-bit/unsigned int on 32-bit) 
+    // to jsize (long). 
     // We assume that the encoding name length cannot exceed INT_MAX.
     jsize length = (jsize)strlen(encoding);
 
@@ -219,10 +219,10 @@ IdleFunc() {
     ::GetQueueStatus(QS_ALLINPUT);
 }
 
-static BOOL CALLBACK
+static BOOL CALLBACK 
 PeekMessageFunc(MSG& msg) {
     return ::PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE) ||
-           ::PeekMessage(&msg, NULL, WM_AWT_INVOKE_METHOD, WM_AWT_INVOKE_METHOD, PM_REMOVE) ||
+           ::PeekMessage(&msg, NULL, WM_AWT_INVOKE_METHOD, WM_AWT_INVOKE_METHOD, PM_REMOVE) || 
            ::PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, PM_REMOVE);
 }
 
@@ -230,7 +230,7 @@ void
 AwtDataTransferer::SecondaryMessageLoop() {
     DASSERT(AwtToolkit::MainThread() == ::GetCurrentThreadId());
 
-    AwtToolkit::GetInstance().MessageLoop(IdleFunc,
+    AwtToolkit::GetInstance().MessageLoop(IdleFunc, 
                                           PeekMessageFunc);
 }
 
@@ -263,7 +263,7 @@ Java_sun_awt_windows_WDataTransferer_dragQueryFile
     if (hglobal == NULL) {
         throw std::bad_alloc();
     }
-
+    
     try {
 
         bBytes = (jbyte*)::GlobalLock(hglobal);
@@ -273,39 +273,39 @@ Java_sun_awt_windows_WDataTransferer_dragQueryFile
 
         load_shell_procs();
 
-        UINT nFilenames = (*do_drag_query_file)(hdrop, 0xFFFFFFFF, NULL, 0);
+	UINT nFilenames = (*do_drag_query_file)(hdrop, 0xFFFFFFFF, NULL, 0);
 
-        jclass str_clazz = env->FindClass("java/lang/String");
-        DASSERT(str_clazz != NULL);
-        jobjectArray filenames = env->NewObjectArray(nFilenames, str_clazz,
-                                                     NULL);
-        if (filenames == NULL) {
-            throw std::bad_alloc();
-        }
+	jclass str_clazz = env->FindClass("java/lang/String");
+	DASSERT(str_clazz != NULL);
+	jobjectArray filenames = env->NewObjectArray(nFilenames, str_clazz,
+						     NULL);
+	if (filenames == NULL) {
+	    throw std::bad_alloc();
+	}
 
-        UINT bufsize = 512; // in characters, not in bytes
-        buffer = (LPTSTR)safe_Malloc(bufsize*sizeof(TCHAR));
+	UINT bufsize = 512; // in characters, not in bytes
+	buffer = (LPTSTR)safe_Malloc(bufsize*sizeof(TCHAR));
+    
+	for (UINT i = 0; i < nFilenames; i++) {
+	    UINT size = (*do_drag_query_file)(hdrop, i, NULL, 0);
+	    if (size > bufsize) {
+	        bufsize = size;
+		buffer = (LPTSTR)safe_Realloc(buffer, bufsize*sizeof(TCHAR));
+	    }
+	    (*do_drag_query_file)(hdrop, i, buffer, bufsize);
 
-        for (UINT i = 0; i < nFilenames; i++) {
-            UINT size = (*do_drag_query_file)(hdrop, i, NULL, 0);
-            if (size > bufsize) {
-                bufsize = size;
-                buffer = (LPTSTR)safe_Realloc(buffer, bufsize*sizeof(TCHAR));
-            }
-            (*do_drag_query_file)(hdrop, i, buffer, bufsize);
+	    jstring name = JNU_NewStringPlatform(env, buffer);
+	    if (name == NULL) {
+	        throw std::bad_alloc();
+	    }
 
-            jstring name = JNU_NewStringPlatform(env, buffer);
-            if (name == NULL) {
-                throw std::bad_alloc();
-            }
+	    env->SetObjectArrayElement(filenames, i, name);
+	}
 
-            env->SetObjectArrayElement(filenames, i, name);
-        }
-
-        free(buffer);
+	free(buffer);
         ::GlobalUnlock(hglobal);
         ::GlobalFree(hglobal);
-        return filenames;
+	return filenames;
 
     } catch (std::bad_alloc&) {
         free(buffer);
@@ -365,14 +365,14 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
     jbyte* bBytes = (jbyte*)safe_Malloc(size * sizeof(jbyte));
 
     try {
-
+        
         env->GetByteArrayRegion(bytes, 0, size, bBytes);
 
         pLogPalette = (LOGPALETTE*)bBytes;
         uPaletteEntries = pLogPalette->palNumEntries;
         uOffset = sizeof(LOGPALETTE) + uPaletteEntries * sizeof(PALETTEENTRY);
         DASSERT(uOffset < (SIZE_T)size);
-
+        
         if (uPaletteEntries == 0) {
             pLogPalette = NULL;
         }
@@ -382,48 +382,48 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
             free(bBytes);
             return NULL;
         }
-
+        
         switch (format) {
         case CF_DIB:
 
             pSrcBmi = (BITMAPINFO*)((LPSTR)bBytes + uOffset);
             pSrcBmih = &pSrcBmi->bmiHeader;
-
+            
             width = pSrcBmih->biWidth;
             height = abs(pSrcBmih->biHeight);
 
             {
                 DWORD nColorEntries = 0;
-
+                
                 switch (pSrcBmih->biBitCount) {
                 case  0: nColorEntries = 0; break;
                 case  1: nColorEntries = 2; break;
-                case  4:
-                case  8:
-                    nColorEntries = (pSrcBmih->biClrUsed != 0) ?
+                case  4: 
+                case  8: 
+                    nColorEntries = (pSrcBmih->biClrUsed != 0) ? 
                         pSrcBmih->biClrUsed : 1 << (pSrcBmih->biBitCount - 1);
-                    break;
-                case 16:
-                case 24:
+                    break;            
+                case 16: 
+                case 24: 
                 case 32:
                     nColorEntries = pSrcBmih->biClrUsed;
-                    // If biBitCount is 16 or 32 and biCompression is
+                    // If biBitCount is 16 or 32 and biCompression is 
                     // BI_BITFIELDS the color table will be prefixed with
                     // three DWORD color masks.
-                    if (pSrcBmih->biCompression == BI_BITFIELDS &&
+                    if (pSrcBmih->biCompression == BI_BITFIELDS && 
                         (pSrcBmih->biBitCount == 16 ||
                          pSrcBmih->biBitCount == 32)) {
                         nColorEntries += 3;
                     }
                     break;
                 default:
-                    // The header is probably corrupted.
+                    // The header is probably corrupted. 
                     // Fail immediatelly to avoid memory access violation.
                     free(bBytes);
                     ::DeleteDC(hdc);
                     return NULL;
                 }
-
+                
                 pSrcBits = (LPSTR)pSrcBmi + pSrcBmih->biSize
                     + nColorEntries * sizeof(RGBQUAD);
             }
@@ -433,17 +433,17 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
             lpEnhMetaFileBits = (BYTE*)bBytes + uOffset;
             // Warning C4244. size is jsize, uOffset is SIZE_T.
             // We assert that size > uOffset, so it is safe to cast to jsize.
-            hEnhMetaFile = ::SetEnhMetaFileBits(size - (jsize)uOffset,
+            hEnhMetaFile = ::SetEnhMetaFileBits(size - (jsize)uOffset, 
                                                 lpEnhMetaFileBits);
             DASSERT(hEnhMetaFile != NULL);
-
+            
             {
-                UINT uHeaderSize =
+                UINT uHeaderSize = 
                     ::GetEnhMetaFileHeader(hEnhMetaFile, 0, NULL);
                 DASSERT(uHeaderSize != 0);
                 ENHMETAHEADER* lpemh = (ENHMETAHEADER*)safe_Malloc(uHeaderSize);
-                VERIFY(::GetEnhMetaFileHeader(hEnhMetaFile, uHeaderSize,
-                                              lpemh) == uHeaderSize);
+                VERIFY(::GetEnhMetaFileHeader(hEnhMetaFile, uHeaderSize, 
+                                              lpemh) == uHeaderSize); 
                 LPRECTL lpFrame = &lpemh->rclFrame;
                 POINT p = { abs(lpFrame->right - lpFrame->left),
                             abs(lpFrame->bottom - lpFrame->top) };
@@ -453,7 +453,7 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
                 VERIFY(::RestoreDC(hdc, -1));
                 width = p.x;
                 height = -p.y;
-
+                
                 // Win9X supports only 16-bit signed coordinates.
                 if (IS_WIN95) {
                     if (width > 0x7FFF) { width = 0x7FFF; }
@@ -473,29 +473,29 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
         // We report conversion failure in this case.
         if (width * height > INT_MAX) {
             free(bBytes);
-            ::DeleteDC(hdc);
+            ::DeleteDC(hdc); 
             return NULL;
         }
 
         numPixels = width * height;
-
+        
         if (pLogPalette != NULL) {
             hPalette = ::CreatePalette(pLogPalette);
             if (hPalette == NULL) {
                 free(bBytes);
-                ::DeleteDC(hdc);
+                ::DeleteDC(hdc); 
                 return NULL;
             }
             hOldPalette = ::SelectPalette(hdc, hPalette, FALSE);
             ::RealizePalette(hdc);
         }
-
+        
         // allocate memory for BITMAPINFO
         pDstBmi = (BITMAPINFO *)safe_Calloc(1, sizeof(BITMAPINFO));
         pDstBmih = &pDstBmi->bmiHeader;
-
+        
         static const int BITS_PER_PIXEL = 32;
-
+        
         // prepare BITMAPINFO for a 32-bit RGB bitmap
         pDstBmih->biSize = sizeof(BITMAPINFOHEADER);
         pDstBmih->biWidth = width;
@@ -507,11 +507,11 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
         // but this causes CreateDIBSection to allocate zero-size memory block
         // for DIB data. It works okay when biSizeImage is explicitly specified.
         pDstBmih->biSizeImage = width * height * (BITS_PER_PIXEL >> 3);
-
+            
         hDibSection = ::CreateDIBSection(hdc, (BITMAPINFO*)pDstBmi,
                                          DIB_RGB_COLORS, &pDstBits,
-                                         NULL, 0);
-
+                                         NULL, 0); 
+        
         if (hDibSection == NULL) {
             free(pDstBmi); pDstBmi = NULL;
             if (hPalette != NULL) {
@@ -531,16 +531,16 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
 
         switch (format) {
         case CF_DIB:
-            VERIFY(::StretchDIBits(hdc,
-                                   0, 0, width, height,
-                                   0, 0, width, height,
-                                   pSrcBits, pSrcBmi,
+            VERIFY(::StretchDIBits(hdc, 
+                                   0, 0, width, height, 
+                                   0, 0, width, height, 
+                                   pSrcBits, pSrcBmi, 
                                    DIB_RGB_COLORS, SRCCOPY) != GDI_ERROR);
             break;
         case CF_ENHMETAFILE:
         case CF_METAFILEPICT: {
             RECT rect = { 0, 0, width, height };
-
+            
             VERIFY(::PlayEnhMetaFile(hdc, hEnhMetaFile, &rect));
             VERIFY(::DeleteEnhMetaFile(hEnhMetaFile)); hEnhMetaFile = NULL;
             break;
@@ -555,8 +555,8 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
         DASSERT(sizeof(jint) == sizeof(RGBQUAD));
         RGBQUAD* prgbq = (RGBQUAD*)pDstBits;
         for(int nPixel = 0; nPixel < numPixels; nPixel++, prgbq++) {
-            jint jpixel = WIN_TO_JAVA_PIXEL(prgbq->rgbRed,
-                                            prgbq->rgbGreen,
+            jint jpixel = WIN_TO_JAVA_PIXEL(prgbq->rgbRed, 
+                                            prgbq->rgbGreen, 
                                             prgbq->rgbBlue);
             // stuff the 32-bit pixel back into the 32-bit RGBQUAD
             *prgbq = *((RGBQUAD*)(&jpixel));
@@ -624,9 +624,9 @@ Java_sun_awt_windows_WDataTransferer_platformImageBytesToImageData(
  * Signature: ([BIII)[B
  */
 JNIEXPORT jbyteArray JNICALL
-Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
+Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env, 
                                                jobject self, jbyteArray imageData,
-                                               jint width, jint height,
+                                               jint width, jint height, 
                                                jlong format) {
 
     TRY;
@@ -641,7 +641,7 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
     }
 
     // In the passed imageData array all lines are padded with zeroes except for
-    // the last one, so we have to add one pad size here.
+    // the last one, so we have to add one pad size here. 
     int mod = (width * 3) % 4;
     int pad = mod > 0 ? 4 - mod : 0;
     int nBytes = sizeof(BITMAPINFO) + size + pad;
@@ -657,17 +657,17 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
     pinfo->bmiHeader.biBitCount = BITS_PER_PIXEL;
     pinfo->bmiHeader.biCompression = BI_RGB;
     // NOTE: MSDN says that biSizeImage may be set to 0 for BI_RGB bitmaps,
-    // but some programs (e.g. Imaging for Windows NT by Wang Laboratories)
+    // but some programs (e.g. Imaging for Windows NT by Wang Laboratories) 
     // don't handle such DIBs correctly, so we specify the size explicitly.
-    pinfo->bmiHeader.biSizeImage = size + pad;
+    pinfo->bmiHeader.biSizeImage = size + pad; 
 
     jbyte *array = (jbyte*)((LPSTR)pinfo + sizeof(BITMAPINFOHEADER));
     env->GetByteArrayRegion(imageData, 0, size, array);
-    HRESULT hr = S_OK;
+    HRESULT hr = S_OK;    
 
     jbyteArray bytes = NULL;
     switch (format) {
-    case CF_DIB:
+    case CF_DIB: 
         bytes = env->NewByteArray(nBytes);
         if( NULL == bytes ) {
             hr = E_OUTOFMEMORY;
@@ -675,22 +675,22 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
             env->SetByteArrayRegion(bytes, 0, nBytes, (jbyte*)pinfo);
         }
         break;
-    case CF_ENHMETAFILE:
+    case CF_ENHMETAFILE: 
     {
         HDC hdc = ::GetDC(NULL);
         if( NULL == hdc) {
             hr = HRESULT_FROM_WIN32(::GetLastError());
         } else {
             POINT p = { width, height };
-            //We are trying to support context-independent metafile.
-            //To implement it we have to select correct MM_HIMETRIC map mode.
+            //We are trying to support context-independent metafile. 
+            //To implement it we have to select correct MM_HIMETRIC map mode. 
             VERIFY(::SetMapMode(hdc, MM_HIMETRIC));
             VERIFY(::DPtoLP(hdc, &p, 1));
-            //In accordance with CreateEnhMetaFile documentation the rectangle have to
+            //In accordance with CreateEnhMetaFile documentation the rectangle have to 
             //be normal (left <= right, top <= bottom)
             RECT r = { min(0, p.x), min(0, p.y), max(0, p.x), max(0, p.y) };
-            //Due to inversed row order in source bitmap the destination
-            //height have to be negative.
+            //Due to inversed row order in source bitmap the destination 
+            //height have to be negative. 
             HDC hemfdc = ::CreateEnhMetaFile(NULL, NULL, &r, NULL);
             if( NULL == hemfdc) {
                 hr = HRESULT_FROM_WIN32(::GetLastError());
@@ -698,11 +698,11 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
                 int iMFHeight = r.bottom - r.top;
                 int iMFWidth = r.right - r.left;
                 VERIFY(::SetMapMode(hemfdc, MM_HIMETRIC));
-                if( GDI_ERROR == ::StretchDIBits(hemfdc,
+                if( GDI_ERROR == ::StretchDIBits(hemfdc, 
                     0, iMFHeight, iMFWidth, -iMFHeight,
                     0, 0, width, height,
-                    (LPVOID)array, pinfo,
-                    DIB_RGB_COLORS, SRCCOPY))
+                    (LPVOID)array, pinfo, 
+                    DIB_RGB_COLORS, SRCCOPY)) 
                 {
                     hr = HRESULT_FROM_WIN32(::GetLastError());
                 }
@@ -718,7 +718,7 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
                             LPBYTE lpbEmfBuffer = NULL;
                             try {
                                 lpbEmfBuffer = (LPBYTE)safe_Malloc(uEmfSize);
-                                VERIFY(::GetEnhMetaFileBits(hemf, uEmfSize,
+                                VERIFY(::GetEnhMetaFileBits(hemf, uEmfSize, 
                                                             lpbEmfBuffer) == uEmfSize);
                                 bytes = env->NewByteArray(uEmfSize);
                                 if(NULL == bytes) {
@@ -730,7 +730,7 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
                                 hr = E_OUTOFMEMORY;
                             }
                             free(lpbEmfBuffer);
-                        }
+                        } 
                     }
                     VERIFY(::DeleteEnhMetaFile(hemf));
                 }
@@ -756,14 +756,14 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
                 VERIFY(::SetMapMode(hmfdc, MM_HIMETRIC));
                 int iMFHeight = r.bottom - r.top;
                 int iMFWidth = r.right - r.left;
-                //The destination Y coordinate (3d parameter in StretchDIBits call) is different for
-                //CF_ENHMETAFILE and CF_METAFILEPICT formats due to applying MM_ANISOTROPIC map mode
-                //at very last moment. MM_ANISOTROPIC map mode changes the Y-axis direction and can be
-                //selected just for metafile header.
-                if( GDI_ERROR == ::StretchDIBits(hmfdc,
+                //The destination Y coordinate (3d parameter in StretchDIBits call) is different for 
+                //CF_ENHMETAFILE and CF_METAFILEPICT formats due to applying MM_ANISOTROPIC map mode 
+                //at very last moment. MM_ANISOTROPIC map mode changes the Y-axis direction and can be 
+                //selected just for metafile header.                 
+                if( GDI_ERROR == ::StretchDIBits(hmfdc, 
                     0, 0, iMFWidth, -iMFHeight,
                     0, 0, width, height,
-                    (LPVOID)array, pinfo,
+                    (LPVOID)array, pinfo, 
                     DIB_RGB_COLORS, SRCCOPY))
                 {
                     hr = HRESULT_FROM_WIN32(::GetLastError());
@@ -782,7 +782,7 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
                                 UINT uMfSizeWithHead = uMfSize + sizeof(METAFILEPICT);
 
                                 lpbMfBuffer = (LPBYTE)safe_Malloc(uMfSizeWithHead);
-                                VERIFY(::GetMetaFileBitsEx(hmf, uMfSize,
+                                VERIFY(::GetMetaFileBitsEx(hmf, uMfSize, 
                                                             lpbMfBuffer + sizeof(METAFILEPICT)) == uMfSize);
                                 bytes = env->NewByteArray(uMfSizeWithHead);
                                 if(NULL == bytes) {
@@ -793,12 +793,12 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
                                     lpMfp->xExt = iMFWidth;
                                     lpMfp->yExt = iMFHeight;
                                     env->SetByteArrayRegion(bytes, 0, uMfSizeWithHead, (jbyte*)lpbMfBuffer);
-                                }
+                                }                                
                             } catch (std::bad_alloc &) {
                                 hr = E_OUTOFMEMORY;
                             }
                             free(lpbMfBuffer);
-                        }
+                        } 
                     }
                     VERIFY(::DeleteMetaFile(hmf));
                 }
@@ -809,7 +809,7 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
     }
     default:
         DASSERT(FALSE); // Other formats are not supported yet.
-        hr = E_NOTIMPL;
+        hr = E_NOTIMPL; 
         break;
     }
     free(pinfo);
@@ -829,8 +829,8 @@ Java_sun_awt_windows_WDataTransferer_imageDataToPlatformImageBytes(JNIEnv *env,
  */
 JNIEXPORT jlong JNICALL
 Java_sun_awt_windows_WDataTransferer_registerClipboardFormat(JNIEnv *env,
-                                                             jclass cls,
-                                                             jstring str)
+							     jclass cls,
+							     jstring str)
 {
     TRY;
 
@@ -850,8 +850,8 @@ Java_sun_awt_windows_WDataTransferer_registerClipboardFormat(JNIEnv *env,
  */
 JNIEXPORT jstring JNICALL
 Java_sun_awt_windows_WDataTransferer_getClipboardFormatName(JNIEnv *env,
-                                                            jclass cls,
-                                                            jlong format)
+							    jclass cls,
+							    jlong format)
 {
     TRY;
 
@@ -860,7 +860,7 @@ Java_sun_awt_windows_WDataTransferer_getClipboardFormatName(JNIEnv *env,
     jstring name = JNU_NewStringPlatform(env, buf);
     delete [] buf;
     if (name == NULL) {
-        throw std::bad_alloc();
+	throw std::bad_alloc();
     }
     return name;
 
@@ -878,7 +878,7 @@ Java_sun_awt_windows_WToolkitThreadBlockedHandler_startSecondaryEventLoop(JNIEnv
     TRY;
 
     AwtDataTransferer::SecondaryMessageLoop();
-
+    
     CATCH_BAD_ALLOC;
 }
 

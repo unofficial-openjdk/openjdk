@@ -53,43 +53,43 @@ class ThreadGroupTarg {
 public class ThreadGroupTest extends TestScaffold {
     ReferenceType targetClass;
     ThreadReference mainThread;
-
+    
     // Helper thread to fetch VirtualMachineManager
     static class Fetcher implements Runnable {
-        public void run() {
+	public void run() {
             Bootstrap.virtualMachineManager();
-        }
+	}
     }
-
+   
     ThreadGroupTest (String args[]) {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        // create a random thread group, and run a thread in that group to
-        // fetch the VirtualMachineManager
-        ThreadGroup tg = new ThreadGroup("Gus");
-        Fetcher fetcher = new Fetcher();
-        Thread thr = new Thread(tg, fetcher);
-        thr.start();
-        try {
-            thr.join();
-        } catch (InterruptedException x) { }
-        // now destroy the thread group
+    public static void main(String[] args)	throws Exception {	    
+	// create a random thread group, and run a thread in that group to
+	// fetch the VirtualMachineManager
+	ThreadGroup tg = new ThreadGroup("Gus");
+	Fetcher fetcher = new Fetcher();
+	Thread thr = new Thread(tg, fetcher);
+	thr.start();
+	try {
+	    thr.join();
+	} catch (InterruptedException x) { }
+	// now destroy the thread group
         tg.destroy();
-
-        // run the test
+	
+	// run the test
         new ThreadGroupTest(args).startTests();
     }
-
+    
     /********** test core **********/
 
-    protected void runTests() throws Exception {
-
-        // run the target until it completes
-        startToMain("ThreadGroupTarg");
+    protected void runTests() throws Exception { 
+	
+	// run the target until it completes
+	startToMain("ThreadGroupTarg");
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -101,3 +101,4 @@ public class ThreadGroupTest extends TestScaffold {
         }
     }
 }
+

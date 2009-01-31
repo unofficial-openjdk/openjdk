@@ -32,14 +32,14 @@ import javax.script.*;
 import java.io.*;
 
 public class Test1  {
-        public static void main(String[] args) throws Exception {
-            System.out.println("\nTest1\n");
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine jsengine = manager.getEngineByName("js");
+	public static void main(String[] args) throws Exception {
+	    System.out.println("\nTest1\n");
+	    ScriptEngineManager manager = new ScriptEngineManager();
+	    ScriptEngine jsengine = manager.getEngineByName("js");
             if (jsengine == null) {
                 throw new RuntimeException("no js engine found");
             }
-            jsengine.eval(new FileReader(
+	    jsengine.eval(new FileReader(
                      new File(System.getProperty("test.src", "."), "Test1.js")));
-        }
+	}
 }

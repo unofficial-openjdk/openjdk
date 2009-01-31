@@ -41,6 +41,7 @@ import javax.swing.plaf.basic.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class MetalSplitPaneUI extends BasicSplitPaneUI
@@ -51,13 +52,13 @@ public class MetalSplitPaneUI extends BasicSplitPaneUI
       * Creates a new MetalSplitPaneUI instance
       */
     public static ComponentUI createUI(JComponent x) {
-        return new MetalSplitPaneUI();
+	return new MetalSplitPaneUI();
     }
 
     /**
       * Creates the default divider.
       */
     public BasicSplitPaneDivider createDefaultDivider() {
-        return new MetalSplitPaneDivider(this);
+	return new MetalSplitPaneDivider(this);
     }
 }

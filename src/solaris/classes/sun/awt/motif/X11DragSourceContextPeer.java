@@ -55,7 +55,7 @@ import sun.awt.dnd.SunDropTargetContextPeer;
  */
 final class X11DragSourceContextPeer extends SunDragSourceContextPeer {
 
-    private static final X11DragSourceContextPeer theInstance =
+    private static final X11DragSourceContextPeer theInstance = 
         new X11DragSourceContextPeer(null);
 
     /**
@@ -63,15 +63,15 @@ final class X11DragSourceContextPeer extends SunDragSourceContextPeer {
      */
 
     private X11DragSourceContextPeer(DragGestureEvent dge) {
-        super(dge);
+    	super(dge);
     }
 
     static X11DragSourceContextPeer createDragSourceContextPeer(DragGestureEvent dge) throws InvalidDnDOperationException {
-        theInstance.setTrigger(dge);
+	theInstance.setTrigger(dge);
         return theInstance;
     }
 
-    protected void startDrag(Transferable transferable,
+    protected void startDrag(Transferable transferable, 
                              long[] formats, Map formatMap) {
         Component component = getTrigger().getComponent();
         Component c = null;
@@ -91,7 +91,7 @@ final class X11DragSourceContextPeer extends SunDragSourceContextPeer {
 
         startDrag(component,
                   wpeer,
-                  transferable,
+                  transferable, 
                   getTrigger().getTriggerEvent(),
                   getCursor(),
                   getCursor() == null ? 0 : getCursor().getType(),
@@ -101,7 +101,7 @@ final class X11DragSourceContextPeer extends SunDragSourceContextPeer {
 
         /* This implementation doesn't use native context */
         setNativeContext(0);
-
+        
         SunDropTargetContextPeer.setCurrentJVMLocalSourceTransferable(transferable);
     }
 
@@ -112,9 +112,9 @@ final class X11DragSourceContextPeer extends SunDragSourceContextPeer {
     private native long startDrag(Component component,
                                   MWindowPeer wpeer,
                                   Transferable transferable,
-                                  InputEvent nativeTrigger,
-                                  Cursor c, int ctype, int actions,
-                                  long[] formats, Map formatMap);
+				  InputEvent nativeTrigger, 
+				  Cursor c, int ctype, int actions, 
+				  long[] formats, Map formatMap);
 
     /**
      * set cursor
@@ -129,3 +129,4 @@ final class X11DragSourceContextPeer extends SunDragSourceContextPeer {
     protected native void setNativeCursor(long nativeCtxt, Cursor c, int cType);
 
 }
+

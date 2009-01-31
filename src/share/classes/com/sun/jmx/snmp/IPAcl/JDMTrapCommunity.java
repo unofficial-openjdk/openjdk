@@ -45,8 +45,8 @@ class JDMTrapCommunity extends SimpleNode {
   public static Node jjtCreate(Parser p, int id) {
       return new JDMTrapCommunity(p, id);
   }
-
+  
   public String getCommunity() {
-        return community;
+	return community;
   }
 }

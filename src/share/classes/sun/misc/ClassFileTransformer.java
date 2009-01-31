@@ -28,21 +28,21 @@ import java.util.ArrayList;
 
 /**
  * This is an abstract base class which is called by java.lang.ClassLoader
- * when ClassFormatError is thrown inside defineClass().
+ * when ClassFormatError is thrown inside defineClass(). 
  *
  * The purpose of this class is to allow applications (e.g. Java Plug-in)
  * to have a chance to transform the byte code from one form to another
- * if necessary.
+ * if necessary. 
  *
  * One application of this class is used by Java Plug-in to transform
  * malformed JDK 1.1 class file into a well-formed Java 2 class file
- * on-the-fly, so JDK 1.1 applets with malformed class file in the
+ * on-the-fly, so JDK 1.1 applets with malformed class file in the 
  * Internet may run in Java 2 after transformation.
  *
- * @author      Stanley Man-Kit Ho
+ * @author	Stanley Man-Kit Ho
  */
 
-public abstract class ClassFileTransformer
+public abstract class ClassFileTransformer 
 {
     // Singleton of ClassFileTransformer
     //
@@ -56,11 +56,11 @@ public abstract class ClassFileTransformer
      */
     public static void add(ClassFileTransformer t)
     {
-        synchronized(transformerList)
-        {
-            transformerList.add(t);
-            transformers = transformerList.toArray();
-        }
+	synchronized(transformerList)
+	{
+	    transformerList.add(t);
+	    transformers = transformerList.toArray();
+	}
     }
 
     /**
@@ -70,11 +70,11 @@ public abstract class ClassFileTransformer
      */
     public static Object[] getTransformers()
     {
-        // transformers is not intended to be changed frequently,
-        // so it is okay to not put synchronized block here
-        // to speed up performance.
-        //
-        return transformers;
+	// transformers is not intended to be changed frequently,
+	// so it is okay to not put synchronized block here
+	// to speed up performance.
+	//
+	return transformers;
     }
 
 
@@ -86,6 +86,6 @@ public abstract class ClassFileTransformer
      * @param len Length of byte array
      * @return Transformed byte array
      */
-    public abstract byte[] transform(byte[] b, int off, int len)
-                           throws ClassFormatError;
+    public abstract byte[] transform(byte[] b, int off, int len) 
+			   throws ClassFormatError;
 }

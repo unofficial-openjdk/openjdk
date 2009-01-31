@@ -42,6 +42,7 @@ import javax.crypto.spec.DHGenParameterSpec;
  *
  * @author Jan Luehe
  *
+ * @version 1.16, 11/19/99
  *
  * @see java.security.AlgorithmParameters
  * @see java.security.spec.AlgorithmParameterSpec
@@ -68,14 +69,14 @@ extends AlgorithmParameterGeneratorSpi {
      * @param random the source of randomness
      */
     protected void engineInit(int keysize, SecureRandom random) {
-        if ((keysize < 512) || (keysize > 1024) || (keysize % 64 != 0)) {
-            throw new InvalidParameterException("Keysize must be multiple "
-                                                + "of 64, and can only range "
-                                                + "from 512 to 1024 "
-                                                + "(inclusive)");
-        }
-        this.primeSize = keysize;
-        this.random = random;
+	if ((keysize < 512) || (keysize > 1024) || (keysize % 64 != 0)) {
+	    throw new InvalidParameterException("Keysize must be multiple "
+						+ "of 64, and can only range "
+						+ "from 512 to 1024 "
+						+ "(inclusive)");
+	}
+	this.primeSize = keysize;
+	this.random = random;
     }
 
     /**
@@ -90,33 +91,33 @@ extends AlgorithmParameterGeneratorSpi {
      * generation values are inappropriate for this parameter generator
      */
     protected void engineInit(AlgorithmParameterSpec genParamSpec,
-                              SecureRandom random)
-        throws InvalidAlgorithmParameterException {
-            if (!(genParamSpec instanceof DHGenParameterSpec)) {
-                throw new InvalidAlgorithmParameterException
-                    ("Inappropriate parameter type");
-            }
+			      SecureRandom random)
+	throws InvalidAlgorithmParameterException {
+	    if (!(genParamSpec instanceof DHGenParameterSpec)) {
+		throw new InvalidAlgorithmParameterException
+		    ("Inappropriate parameter type");
+	    }
 
-            DHGenParameterSpec dhParamSpec = (DHGenParameterSpec)genParamSpec;
+	    DHGenParameterSpec dhParamSpec = (DHGenParameterSpec)genParamSpec;
 
-            primeSize = dhParamSpec.getPrimeSize();
-            if ((primeSize<512) || (primeSize>1024) || (primeSize%64 != 0)) {
-                throw new InvalidAlgorithmParameterException
-                    ("Modulus size must be multiple of 64, and can only range "
-                     + "from 512 to 1024 (inclusive)");
-            }
+	    primeSize = dhParamSpec.getPrimeSize();
+	    if ((primeSize<512) || (primeSize>1024) || (primeSize%64 != 0)) {
+		throw new InvalidAlgorithmParameterException
+		    ("Modulus size must be multiple of 64, and can only range "
+		     + "from 512 to 1024 (inclusive)");
+	    }
 
-            exponentSize = dhParamSpec.getExponentSize();
-            if (exponentSize <= 0) {
-                throw new InvalidAlgorithmParameterException
-                    ("Exponent size must be greater than zero");
-            }
+	    exponentSize = dhParamSpec.getExponentSize();
+	    if (exponentSize <= 0) {
+		throw new InvalidAlgorithmParameterException
+		    ("Exponent size must be greater than zero");
+	    }
 
-            // Require exponentSize < primeSize
-            if (exponentSize >= primeSize) {
-                throw new InvalidAlgorithmParameterException
-                    ("Exponent size must be less than modulus size");
-            }
+	    // Require exponentSize < primeSize
+	    if (exponentSize >= primeSize) {
+		throw new InvalidAlgorithmParameterException
+		    ("Exponent size must be less than modulus size");
+	    }
     }
 
     /**
@@ -125,35 +126,35 @@ extends AlgorithmParameterGeneratorSpi {
      * @return the new AlgorithmParameters object
      */
     protected AlgorithmParameters engineGenerateParameters() {
-        AlgorithmParameters algParams = null;
+	AlgorithmParameters algParams = null;
 
-        if (this.exponentSize == 0) {
-            this.exponentSize = this.primeSize - 1;
-        }
+	if (this.exponentSize == 0) {
+	    this.exponentSize = this.primeSize - 1;
+	}
 
-        if (this.random == null)
-            this.random = SunJCE.RANDOM;
+	if (this.random == null)
+	    this.random = SunJCE.RANDOM;
 
-        try {
-            AlgorithmParameterGenerator paramGen;
-            DSAParameterSpec dsaParamSpec;
+	try {
+	    AlgorithmParameterGenerator paramGen;
+	    DSAParameterSpec dsaParamSpec;
 
-            paramGen = AlgorithmParameterGenerator.getInstance("DSA");
-            paramGen.init(this.primeSize, random);
-            algParams = paramGen.generateParameters();
-            dsaParamSpec = (DSAParameterSpec)
-                algParams.getParameterSpec(DSAParameterSpec.class);
-
-            DHParameterSpec dhParamSpec;
-            if (this.exponentSize > 0) {
-                dhParamSpec = new DHParameterSpec(dsaParamSpec.getP(),
-                                                  dsaParamSpec.getG(),
-                                                  this.exponentSize);
-            } else {
-                dhParamSpec = new DHParameterSpec(dsaParamSpec.getP(),
-                                                  dsaParamSpec.getG());
-            }
-            algParams = AlgorithmParameters.getInstance("DH", "SunJCE");
+	    paramGen = AlgorithmParameterGenerator.getInstance("DSA");
+	    paramGen.init(this.primeSize, random);
+	    algParams = paramGen.generateParameters();
+	    dsaParamSpec = (DSAParameterSpec)
+		algParams.getParameterSpec(DSAParameterSpec.class);
+	
+	    DHParameterSpec dhParamSpec;
+	    if (this.exponentSize > 0) {
+		dhParamSpec = new DHParameterSpec(dsaParamSpec.getP(),
+						  dsaParamSpec.getG(),
+						  this.exponentSize);
+	    } else {
+		dhParamSpec = new DHParameterSpec(dsaParamSpec.getP(),
+						  dsaParamSpec.getG());
+	    }
+	    algParams = AlgorithmParameters.getInstance("DH", "SunJCE");
             algParams.init(dhParamSpec);
         } catch (InvalidParameterSpecException e) {
             // this should never happen
@@ -164,8 +165,8 @@ extends AlgorithmParameterGeneratorSpi {
         } catch (NoSuchProviderException e) {
             // this should never happen, because we provide it
             throw new RuntimeException(e.getMessage());
-        }
+	}
 
-        return algParams;
+	return algParams;
     }
 }

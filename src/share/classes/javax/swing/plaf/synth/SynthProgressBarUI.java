@@ -41,6 +41,7 @@ import sun.swing.SwingUtilities2;
 /**
  * Synth's ProgressBarUI.
  *
+ * @version %I%, %G%
  * @author Joshua Outwater
  */
 class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
@@ -82,7 +83,7 @@ class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
         }
         context.dispose();
     }
-
+    
     protected void uninstallDefaults() {
         SynthContext context = getContext(progressBar, ENABLED);
 
@@ -90,7 +91,7 @@ class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
         context.dispose();
         style = null;
     }
-
+    
     public SynthContext getContext(JComponent c) {
         return getContext(c, getComponentState(c));
     }
@@ -154,7 +155,7 @@ class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
 
     protected void paint(SynthContext context, Graphics g) {
         JProgressBar pBar = (JProgressBar)context.getComponent();
-        int x = 0, y = 0, width = 0, height = 0;
+        int x = 0, y = 0, width = 0, height = 0; 
         if (!pBar.isIndeterminate()) {
             Insets pBarInsets = pBar.getInsets();
             double percentComplete = pBar.getPercentComplete();
@@ -162,26 +163,26 @@ class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
                 if (pBar.getOrientation() == JProgressBar.HORIZONTAL) {
                     x = pBarInsets.left + progressPadding;
                     y = pBarInsets.top + progressPadding;
-                    width = (int)(percentComplete * (pBar.getWidth()
-                            - (pBarInsets.left + progressPadding
+                    width = (int)(percentComplete * (pBar.getWidth() 
+                            - (pBarInsets.left + progressPadding 
                              + pBarInsets.right + progressPadding)));
-                    height = pBar.getHeight()
-                            - (pBarInsets.top + progressPadding
+                    height = pBar.getHeight() 
+                            - (pBarInsets.top + progressPadding 
                              + pBarInsets.bottom + progressPadding);
 
                     if (!SynthLookAndFeel.isLeftToRight(pBar)) {
-                        x = pBar.getWidth() - pBarInsets.right - width
+                        x = pBar.getWidth() - pBarInsets.right - width 
                                 - progressPadding;
                     }
                 } else {  // JProgressBar.VERTICAL
                     x = pBarInsets.left + progressPadding;
-                    width = pBar.getWidth()
-                            - (pBarInsets.left + progressPadding
+                    width = pBar.getWidth() 
+                            - (pBarInsets.left + progressPadding 
                             + pBarInsets.right + progressPadding);
                     height = (int)(percentComplete * (pBar.getHeight()
                             - (pBarInsets.top + progressPadding
                              + pBarInsets.bottom + progressPadding)));
-                    y = pBar.getHeight() - pBarInsets.bottom - height
+                    y = pBar.getHeight() - pBarInsets.bottom - height 
                             - progressPadding;
 
                     // When the progress bar is vertical we always paint
@@ -248,14 +249,14 @@ class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
             updateStyle((JProgressBar)e.getSource());
         }
     }
-
-    public Dimension getPreferredSize(JComponent c) {
-        Dimension       size;
-        Insets          border = progressBar.getInsets();
+    
+    public Dimension getPreferredSize(JComponent c) {       
+        Dimension	size;
+        Insets		border = progressBar.getInsets();
         FontMetrics     fontSizer = progressBar.getFontMetrics(
                                                   progressBar.getFont());
         if (progressBar.getOrientation() == JProgressBar.HORIZONTAL) {
-            size = new Dimension(getPreferredInnerHorizontal());
+            size = new Dimension(getPreferredInnerHorizontal());   
         } else {
             size = new Dimension(getPreferredInnerVertical());
         }
@@ -273,11 +274,11 @@ class SynthProgressBarUI extends BasicProgressBarUI implements SynthUI,
             if (stringWidth > size.width) {
                 size.width = stringWidth;
             }
-        }
+        }       
 
         size.width += border.left + border.right;
         size.height += border.top + border.bottom;
-
-        return size;
+        
+        return size; 
    }
 }

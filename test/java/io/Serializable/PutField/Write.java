@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,14 +22,14 @@
  */
 
 /* @test
- *
+ * 
  * @clean Write Read Foo
  * @compile Write.java
  * @run main Write
  * @clean Write Read Foo
  * @compile Read.java
  * @run main Read
- *
+ * 
  * @summary Verify that the ObjectOutputStream.PutField API works as
  *          advertised.
  */
@@ -39,37 +39,37 @@ import java.io.*;
 class Foo implements Serializable {
     private static final long serialVersionUID = 0L;
     private static final ObjectStreamField[] serialPersistentFields = {
-        new ObjectStreamField("z", boolean.class),
-        new ObjectStreamField("b", byte.class),
-        new ObjectStreamField("c", char.class),
-        new ObjectStreamField("s", short.class),
-        new ObjectStreamField("i", int.class),
-        new ObjectStreamField("j", long.class),
-        new ObjectStreamField("f", float.class),
-        new ObjectStreamField("d", double.class),
-        new ObjectStreamField("str", String.class),
+	new ObjectStreamField("z", boolean.class),
+	new ObjectStreamField("b", byte.class),
+	new ObjectStreamField("c", char.class),
+	new ObjectStreamField("s", short.class),
+	new ObjectStreamField("i", int.class),
+	new ObjectStreamField("j", long.class),
+	new ObjectStreamField("f", float.class),
+	new ObjectStreamField("d", double.class),
+	new ObjectStreamField("str", String.class),
     };
-
+    
     private void writeObject(ObjectOutputStream out) throws IOException {
-        ObjectOutputStream.PutField fields = out.putFields();
-        fields.put("z", true);
-        fields.put("b", (byte) 5);
-        fields.put("c", '5');
-        fields.put("s", (short) 5);
-        fields.put("i", 5);
-        fields.put("j", 5l);
-        fields.put("f", 5.0f);
-        fields.put("d", 5.0);
-        fields.put("str", "5");
-        out.writeFields();
-    }
+	ObjectOutputStream.PutField fields = out.putFields();
+	fields.put("z", true);
+	fields.put("b", (byte) 5);
+	fields.put("c", '5');
+	fields.put("s", (short) 5);
+	fields.put("i", 5);
+	fields.put("j", 5l);
+	fields.put("f", 5.0f);
+	fields.put("d", 5.0);
+	fields.put("str", "5");
+	out.writeFields();
+    }	
 }
 
 public class Write {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("tmp.ser"));
-        oout.writeObject(new Foo());
-        oout.close();
+	ObjectOutputStream oout =
+	    new ObjectOutputStream(new FileOutputStream("tmp.ser"));
+	oout.writeObject(new Foo());
+	oout.close();
     }
 }

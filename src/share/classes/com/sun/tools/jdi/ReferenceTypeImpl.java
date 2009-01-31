@@ -27,7 +27,7 @@ package com.sun.tools.jdi;
 
 import com.sun.jdi.*;
 
-import java.util.*;
+import java.util.*;    
 import java.lang.ref.SoftReference;
 
 public abstract class ReferenceTypeImpl extends TypeImpl
@@ -55,7 +55,7 @@ implements ReferenceType {
     private boolean versionNumberGotten = false;
     private int majorVersion;
     private int minorVersion;
-
+    
     private boolean constantPoolInfoGotten = false;
     private int constanPoolCount;
     private byte[] constantPoolBytes;
@@ -68,7 +68,7 @@ implements ReferenceType {
     static final SDE NO_SDE_INFO_MARK = new SDE();
 
     // bits set when initialization was attempted (succeeded or failed)
-    private static final int INITIALIZED_OR_FAILED =
+    private static final int INITIALIZED_OR_FAILED = 
         JDWP.ClassStatus.INITIALIZED | JDWP.ClassStatus.ERROR;
 
 
@@ -97,7 +97,7 @@ implements ReferenceType {
             return new ObsoleteMethodImpl(vm, this);
         }
         // Fetch all methods for the class, check performance impact
-        // Needs no synchronization now, since methods() returns
+        // Needs no synchronization now, since methods() returns 
         // unmodifiable local data
         Iterator it = methods().iterator();
         while (it.hasNext()) {
@@ -107,11 +107,11 @@ implements ReferenceType {
             }
         }
         throw new IllegalArgumentException("Invalid method id: " + ref);
-    }
+    }         
 
     Field getFieldMirror(long ref) {
         // Fetch all fields for the class, check performance impact
-        // Needs no synchronization now, since fields() returns
+        // Needs no synchronization now, since fields() returns 
         // unmodifiable local data
         Iterator it = fields().iterator();
         while (it.hasNext()) {
@@ -121,12 +121,12 @@ implements ReferenceType {
             }
         }
         throw new IllegalArgumentException("Invalid field id: " + ref);
-    }
+    }         
 
     public boolean equals(Object obj) {
         if ((obj != null) && (obj instanceof ReferenceTypeImpl)) {
             ReferenceTypeImpl other = (ReferenceTypeImpl)obj;
-            return (ref() == other.ref()) &&
+            return (ref() == other.ref()) && 
                 (vm.equals(other.virtualMachine()));
         } else {
             return false;
@@ -139,10 +139,10 @@ implements ReferenceType {
 
     public int compareTo(ReferenceType object) {
         /*
-         * Note that it is critical that compareTo() == 0
+         * Note that it is critical that compareTo() == 0 
          * implies that equals() == true. Otherwise, TreeSet
          * will collapse classes.
-         *
+         * 
          * (Classes of the same name loaded by different class loaders
          * or in different VMs must not return 0).
          */
@@ -154,7 +154,7 @@ implements ReferenceType {
             // optimize for typical case: refs equal and VMs equal
             if (rf1 == rf2) {
                 // sequenceNumbers are always positive
-                comp = vm.sequenceNumber -
+                comp = vm.sequenceNumber - 
                  ((VirtualMachineImpl)(other.virtualMachine())).sequenceNumber;
             } else {
                 comp = (rf1 < rf2)? -1 : 1;
@@ -271,7 +271,7 @@ implements ReferenceType {
         // this status flag is updated through the ClassPrepareEvent,
         // there is no need for the expense of a JDWP query.
         if (status == 0) {
-            updateStatus();
+	    updateStatus();
         }
         return isPrepared;
     }
@@ -285,7 +285,7 @@ implements ReferenceType {
     }
 
     public boolean isInitialized() {
-        // Once initialization succeeds or fails, it never resets,
+        // Once initialization succeeds or fails, it never resets, 
         // so we don't need to update
         if ((status & INITIALIZED_OR_FAILED) == 0) {
             updateStatus();
@@ -294,7 +294,7 @@ implements ReferenceType {
     }
 
     public boolean failedToInitialize() {
-        // Once initialization succeeds or fails, it never resets,
+        // Once initialization succeeds or fails, it never resets, 
         // so we don't need to update
         if ((status & INITIALIZED_OR_FAILED) == 0) {
             updateStatus();
@@ -316,13 +316,13 @@ implements ReferenceType {
                 for (int i=0; i<jdwpFields.length; i++) {
                     JDWP.ReferenceType.FieldsWithGeneric.FieldInfo fi
                         = jdwpFields[i];
-
+            
                     Field field = new FieldImpl(vm, this, fi.fieldID,
-                                                fi.name, fi.signature,
+                                                fi.name, fi.signature, 
                                                 fi.genericSignature,
                                                 fi.modBits);
                     fields.add(field);
-                }
+                }   
             } else {
                 JDWP.ReferenceType.Fields.FieldInfo[] jdwpFields;
                 try {
@@ -336,11 +336,11 @@ implements ReferenceType {
                     JDWP.ReferenceType.Fields.FieldInfo fi = jdwpFields[i];
 
                     Field field = new FieldImpl(vm, this, fi.fieldID,
-                                            fi.name, fi.signature,
+                                            fi.name, fi.signature, 
                                             null,
                                             fi.modBits);
                     fields.add(field);
-                }
+                }   
             }
 
             fields = Collections.unmodifiableList(fields);
@@ -375,7 +375,7 @@ implements ReferenceType {
 
     public List<Field> visibleFields() {
         /*
-         * Maintain two different collections of visible fields. The
+         * Maintain two different collections of visible fields. The 
          * list maintains a reasonable order for return. The
          * hash map provides an efficient way to lookup visible fields
          * by name, important for finding hidden or ambiguous fields.
@@ -397,9 +397,9 @@ implements ReferenceType {
             type.addVisibleFields(visibleList, visibleTable, ambiguousNames);
         }
 
-        /*
+        /* 
          * Insert fields from this type, removing any inherited fields they
-         * hide.
+         * hide. 
          */
         List<Field> retList = new ArrayList<Field>(fields());
         iter = retList.iterator();
@@ -470,12 +470,12 @@ implements ReferenceType {
                 }
                 methods = new ArrayList<Method>(declared.length);
                 for (int i=0; i<declared.length; i++) {
-                    JDWP.ReferenceType.MethodsWithGeneric.MethodInfo
+                    JDWP.ReferenceType.MethodsWithGeneric.MethodInfo 
                         mi = declared[i];
-
-                    Method method = MethodImpl.createMethodImpl(vm, this,
+                    
+                    Method method = MethodImpl.createMethodImpl(vm, this, 
                                                          mi.methodID,
-                                                         mi.name, mi.signature,
+                                                         mi.name, mi.signature, 
                                                          mi.genericSignature,
                                                          mi.modBits);
                     methods.add(method);
@@ -500,9 +500,9 @@ implements ReferenceType {
         for (int i=0; i<declared.length; i++) {
             JDWP.ReferenceType.Methods.MethodInfo mi = declared[i];
 
-            Method method = MethodImpl.createMethodImpl(vm, this,
+            Method method = MethodImpl.createMethodImpl(vm, this, 
                                                         mi.methodID,
-                                                        mi.name, mi.signature,
+                                                        mi.name, mi.signature, 
                                                         null,
                                                         mi.modBits);
             methods.add(method);
@@ -577,12 +577,12 @@ implements ReferenceType {
 
     List<InterfaceType> getInterfaces() {
         InterfaceTypeImpl[] intfs;
-        try {
-            intfs = JDWP.ReferenceType.Interfaces.
+	try {
+	    intfs = JDWP.ReferenceType.Interfaces.
                                          process(vm, this).interfaces;
-        } catch (JDWPException exc) {
-            throw exc.toJDIException();
-        }
+	} catch (JDWPException exc) {
+	    throw exc.toJDIException();
+	}
         return Arrays.asList((InterfaceType[])intfs);
     }
 
@@ -659,13 +659,13 @@ implements ReferenceType {
 
         Map<Field, Value> map = new HashMap<Field, Value>(size);
 
-        ValueImpl[] values;
-        try {
-            values = JDWP.ReferenceType.GetValues.
+	ValueImpl[] values;
+	try {
+	    values = JDWP.ReferenceType.GetValues.
                                      process(vm, this, queryFields).values;
-        } catch (JDWPException exc) {
-            throw exc.toJDIException();
-        }
+	} catch (JDWPException exc) {
+	    throw exc.toJDIException();
+	}
 
         if (size != values.length) {
             throw new InternalException(
@@ -846,7 +846,7 @@ implements ReferenceType {
             getModifiers();
 
         return modifiers;
-    }
+    }        
 
     public List<Location> allLineLocations()
                             throws AbsentInformationException {
@@ -870,7 +870,7 @@ implements ReferenceType {
         }
 
         // If we retrieved no line info, and at least one of the methods
-        // should have had some (as determined by an
+        // should have had some (as determined by an 
         // AbsentInformationException being thrown) then we rethrow
         // the AbsentInformationException.
         if (someAbsent && list.size() == 0) {
@@ -891,9 +891,9 @@ implements ReferenceType {
                                 int lineNumber)
                            throws AbsentInformationException {
         // A method that should have info, didn't
-        boolean someAbsent = false;
+        boolean someAbsent = false; 
         // A method that should have info, did
-        boolean somePresent = false;
+        boolean somePresent = false; 
         List<Method> methods = methods();
         SDE.Stratum stratum = stratum(stratumID);
 
@@ -902,9 +902,9 @@ implements ReferenceType {
         Iterator iter = methods.iterator();
         while(iter.hasNext()) {
             MethodImpl method = (MethodImpl)iter.next();
-            // eliminate native and abstract to eliminate
+            // eliminate native and abstract to eliminate 
             // false positives
-            if (!method.isAbstract() &&
+            if (!method.isAbstract() && 
                 !method.isNative()) {
                 try {
                     list.addAll(
@@ -930,7 +930,7 @@ implements ReferenceType {
         }
 
         if (maxInstances < 0) {
-            throw new IllegalArgumentException("maxInstances is less than zero: "
+            throw new IllegalArgumentException("maxInstances is less than zero: " 
                                               + maxInstances);
         }
         int intMax = (maxInstances > Integer.MAX_VALUE)?
@@ -939,8 +939,8 @@ implements ReferenceType {
 
         try {
             return Arrays.asList(
-                (ObjectReference[])JDWP.ReferenceType.Instances.
-                        process(vm, this, intMax).instances);
+		(ObjectReference[])JDWP.ReferenceType.Instances.
+                	process(vm, this, intMax).instances);
         } catch (JDWPException exc) {
             throw exc.toJDIException();
         }
@@ -971,7 +971,7 @@ implements ReferenceType {
             versionNumberGotten = true;
         }
     }
-
+    
     public int majorVersion() {
         try {
             getClassFileVersion();
@@ -980,7 +980,7 @@ implements ReferenceType {
         }
         return majorVersion;
     }
-
+    
     public int minorVersion() {
         try {
             getClassFileVersion();
@@ -1017,7 +1017,7 @@ implements ReferenceType {
             constantPoolInfoGotten = true;
         }
     }
-
+    
     public int constantPoolCount() {
         try {
             getConstantPoolInfo();
@@ -1026,7 +1026,7 @@ implements ReferenceType {
         }
         return constanPoolCount;
     }
-
+    
     public byte[] constantPool() {
         try {
             getConstantPoolInfo();
@@ -1037,7 +1037,7 @@ implements ReferenceType {
             byte[] cpbytes = (byte[])constantPoolBytesRef.get();
             /*
              * Arrays are always modifiable, so it is a little unsafe
-             * to return the cached bytecodes directly; instead, we
+             * to return the cached bytecodes directly; instead, we 
              * make a clone at the cost of using more memory.
              */
             return (byte[])cpbytes.clone();
@@ -1045,7 +1045,7 @@ implements ReferenceType {
             return null;
         }
     }
-
+    
     // Does not need synchronization, since worst-case
     // static info is fetched twice
     void getModifiers() {
@@ -1105,7 +1105,7 @@ implements ReferenceType {
     }
 
     boolean isAssignableFrom(ObjectReference object) {
-        return object == null ||
+        return object == null || 
                isAssignableFrom(object.referenceType());
     }
 
@@ -1114,7 +1114,7 @@ implements ReferenceType {
     }
 
     void setSignature(String signature) {
-        this.signature = signature;
+        this.signature = signature;        
     }
 
     void setGenericSignature(String signature) {
@@ -1122,7 +1122,7 @@ implements ReferenceType {
             this.genericSignature = null;
         } else{
             this.genericSignature = signature;
-        }
+        }      
         this.genericSignatureGotten = true;
     }
 
@@ -1156,7 +1156,7 @@ implements ReferenceType {
             }
         } else {
             // Must be a reference type.
-            ClassLoaderReferenceImpl loader =
+            ClassLoaderReferenceImpl loader = 
                        (ClassLoaderReferenceImpl)classLoader();
             if ((loader == null) ||
                 (isPrimitiveArray(signature)) //Work around 4450091

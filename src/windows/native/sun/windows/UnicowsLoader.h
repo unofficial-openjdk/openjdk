@@ -44,7 +44,7 @@ public:
     // member functions that implements functions that MSLU does not support
     static BOOL __stdcall GetPrinterWImpl(HANDLE, DWORD, LPBYTE, DWORD, LPDWORD);
     static BOOL __stdcall EnumPrintersWImpl(DWORD, LPWSTR, DWORD, LPBYTE,
-                        DWORD, LPDWORD, LPDWORD);
+			DWORD, LPDWORD, LPDWORD);
 
     // member functions that implements functions that VC6 CRT does not support
     // on Win9x
@@ -57,10 +57,10 @@ private:
     // utility member functions
     static void DevModeA2DevModeW(const DEVMODEA *, DEVMODEW *);
     static void PrinterInfo1A2W(const LPPRINTER_INFO_1A, LPPRINTER_INFO_1W, const DWORD);
-    static void PrinterInfo2A2W(const LPPRINTER_INFO_2A, LPPRINTER_INFO_2W, const DWORD);
+    static void PrinterInfo2A2W(const LPPRINTER_INFO_2A, LPPRINTER_INFO_2W, const DWORD); 
     static void PrinterInfo5A2W(const LPPRINTER_INFO_5A, LPPRINTER_INFO_5W, const DWORD);
-    static void PrinterInfoA2W(const PVOID, PVOID, DWORD, DWORD);
-    static void StringA2W(LPCSTR, LPWSTR *, LPWSTR *);
+    static void PrinterInfoA2W(const PVOID, PVOID, DWORD, DWORD); 
+    static void StringA2W(LPCSTR, LPWSTR *, LPWSTR *); 
 };
 
 #ifndef AWT_H
@@ -79,120 +79,120 @@ private:
 #define JNU_GetStringPlatformChars(env, x, y) (LPWSTR)env->GetStringChars(x, y)
 #define JNU_ReleaseStringPlatformChars(env, x, y) env->ReleaseStringChars(x, y)
 
-// The following Windows W-APIs are not supported by the MSLU.
+// The following Windows W-APIs are not supported by the MSLU. 
 // You need to implement a stub to use these APIs. Or, if it is
-// apparent that the API is used only on WindowsNT/2K/XP, wrap
+// apparent that the API is used only on WindowsNT/2K/XP, wrap 
 // the call site with #undef - #define, e.g:
 //
 // #undef SomeFunctionW
 // call SomeFunctionW
 // #define SomeFunctionW NotSupportedByMSLU
 
-#define AcquireCredentialsHandleW               NotSupportedByMSLU
-#define CreateNamedPipeW                        NotSupportedByMSLU
-#define CryptAcquireContextW                    NotSupportedByMSLU
-#define CryptEnumProvidersW                     NotSupportedByMSLU
-#define CryptEnumProviderTypesW                 NotSupportedByMSLU
-#define CryptGetDefaultProviderW                NotSupportedByMSLU
-#define CryptSetProviderW                       NotSupportedByMSLU
-#define CryptSetProviderExW                     NotSupportedByMSLU
-#define CryptSignHashW                          NotSupportedByMSLU
-#define CryptVerifySignatureW                   NotSupportedByMSLU
-#define EnumerateSecurityPackagesW              NotSupportedByMSLU
-#define EnumMonitorsW                           NotSupportedByMSLU
-#define EnumPortsW                              NotSupportedByMSLU
-#define EnumPrinterDriversW                     NotSupportedByMSLU
-//#define EnumPrintersW                         NotSupportedByMSLU
-#define EnumPrintProcessorDatatypesW            NotSupportedByMSLU
-#define EnumPrintProcessorsW                    NotSupportedByMSLU
-#define FreeContextBufferW                      NotSupportedByMSLU
-#define GetCharABCWidthsFloatW                  NotSupportedByMSLU
-#define GetJobW                                 NotSupportedByMSLU
-#define GetOpenFileNamePreviewW                 NotSupportedByMSLU
-//#define GetPrinterW                           NotSupportedByMSLU
-#define GetPrinterDataW                         NotSupportedByMSLU
-#define GetPrinterDriverW                       NotSupportedByMSLU
-#define GetSaveFileNamePreviewW                 NotSupportedByMSLU
-#define InitializeSecurityContextW              NotSupportedByMSLU
-#define mciSendCommandW                         NotSupportedByMSLU
-#define mixerGetControlDetailsW                 NotSupportedByMSLU
-#define mixerGetLineControlsW                   NotSupportedByMSLU
-#define mixerGetLineInfoW                       NotSupportedByMSLU
-#define mmioInstallIOProcW                      NotSupportedByMSLU
-#define OleUIChangeSourceW                      NotSupportedByMSLU
-#define OleUIConvertW                           NotSupportedByMSLU
-#define OleUIEditLinksW                         NotSupportedByMSLU
-#define OleUIInsertObjectW                      NotSupportedByMSLU
-#define OleUIObjectPropertiesW                  NotSupportedByMSLU
-#define OleUIPasteSpecialW                      NotSupportedByMSLU
-#define OleUIPromptUserW                        NotSupportedByMSLU
-#define OleUIUpdateLinksW                       NotSupportedByMSLU
-#define PolyTextOutW                            NotSupportedByMSLU
-#define QueryContextAttributesW                 NotSupportedByMSLU
-#define QueryCredentialsAttributesW             NotSupportedByMSLU
-#define QuerySecurityPackageInfoW               NotSupportedByMSLU
-#define RasDeleteSubEntryW                      NotSupportedByMSLU
-#define RasSetSubEntryPropertiesW               NotSupportedByMSLU
-#define ResetPrinterW                           NotSupportedByMSLU
+#define AcquireCredentialsHandleW		NotSupportedByMSLU
+#define CreateNamedPipeW			NotSupportedByMSLU
+#define CryptAcquireContextW			NotSupportedByMSLU
+#define CryptEnumProvidersW			NotSupportedByMSLU
+#define CryptEnumProviderTypesW			NotSupportedByMSLU
+#define CryptGetDefaultProviderW		NotSupportedByMSLU
+#define CryptSetProviderW			NotSupportedByMSLU
+#define CryptSetProviderExW			NotSupportedByMSLU
+#define CryptSignHashW				NotSupportedByMSLU
+#define CryptVerifySignatureW			NotSupportedByMSLU
+#define EnumerateSecurityPackagesW		NotSupportedByMSLU
+#define EnumMonitorsW				NotSupportedByMSLU
+#define EnumPortsW				NotSupportedByMSLU
+#define EnumPrinterDriversW			NotSupportedByMSLU
+//#define EnumPrintersW				NotSupportedByMSLU
+#define EnumPrintProcessorDatatypesW		NotSupportedByMSLU
+#define EnumPrintProcessorsW			NotSupportedByMSLU
+#define FreeContextBufferW			NotSupportedByMSLU
+#define GetCharABCWidthsFloatW			NotSupportedByMSLU
+#define GetJobW					NotSupportedByMSLU
+#define GetOpenFileNamePreviewW			NotSupportedByMSLU
+//#define GetPrinterW				NotSupportedByMSLU
+#define GetPrinterDataW				NotSupportedByMSLU
+#define GetPrinterDriverW			NotSupportedByMSLU
+#define GetSaveFileNamePreviewW			NotSupportedByMSLU
+#define InitializeSecurityContextW		NotSupportedByMSLU
+#define mciSendCommandW				NotSupportedByMSLU
+#define mixerGetControlDetailsW			NotSupportedByMSLU
+#define mixerGetLineControlsW			NotSupportedByMSLU
+#define mixerGetLineInfoW			NotSupportedByMSLU
+#define mmioInstallIOProcW			NotSupportedByMSLU
+#define OleUIChangeSourceW			NotSupportedByMSLU
+#define OleUIConvertW				NotSupportedByMSLU
+#define OleUIEditLinksW				NotSupportedByMSLU
+#define OleUIInsertObjectW			NotSupportedByMSLU
+#define OleUIObjectPropertiesW			NotSupportedByMSLU
+#define OleUIPasteSpecialW			NotSupportedByMSLU
+#define OleUIPromptUserW			NotSupportedByMSLU
+#define OleUIUpdateLinksW			NotSupportedByMSLU
+#define PolyTextOutW				NotSupportedByMSLU
+#define QueryContextAttributesW			NotSupportedByMSLU
+#define QueryCredentialsAttributesW		NotSupportedByMSLU
+#define QuerySecurityPackageInfoW		NotSupportedByMSLU
+#define RasDeleteSubEntryW			NotSupportedByMSLU
+#define RasSetSubEntryPropertiesW		NotSupportedByMSLU
+#define ResetPrinterW				NotSupportedByMSLU
 
-// The following Shell COM interfaces are not supported by the MSLU.
+// The following Shell COM interfaces are not supported by the MSLU. 
 // See ShellFolder2.cpp
-#define IID_IFileViewerW                        NotSupportedByMSLU
-#define IID_IShellLinkW                         NotSupportedByMSLU
-#define IID_IExtractIconW                       NotSupportedByMSLU
-#define IID_IShellCopyHookW                     NotSupportedByMSLU
-#define IID_IShellExecuteHookW                  NotSupportedByMSLU
-#define IID_INewShortcutHookW                   NotSupportedByMSLU
+#define IID_IFileViewerW			NotSupportedByMSLU
+#define IID_IShellLinkW				NotSupportedByMSLU
+#define IID_IExtractIconW			NotSupportedByMSLU
+#define IID_IShellCopyHookW			NotSupportedByMSLU
+#define IID_IShellExecuteHookW			NotSupportedByMSLU
+#define IID_INewShortcutHookW			NotSupportedByMSLU
 
-// The following CRT functions should fail on compiling, as it does not work on
+// The following CRT functions should fail on compiling, as it does not work on 
 // Win9x/ME platform.  If you need these CRTs, write a wrapper for ANSI version
 // equivalents, in which it converts to/from Unicode using WideCharToMultiByte.
 //
-// Or, if it is apparent that the function is used only on WindowsNT/2K/XP, wrap
+// Or, if it is apparent that the function is used only on WindowsNT/2K/XP, wrap 
 // the call site with #undef - #define, e.g:
 //
 // #undef _wsomefunc
 // call _wsomefunc
 // #define _wsomefunc NotSupportedOnWin9X
 
-#define _waccess        NotSupportedOnWin9X
-#define _wchmod         NotSupportedOnWin9X
-#define _wfullpath      UnicowsLoader::_wfullpathImpl
-#define _wremove        NotSupportedOnWin9X
-#define _wrename        NotSupportedOnWin9X
-#define _wstat          NotSupportedOnWin9X
-#define _wstati64       NotSupportedOnWin9X
-#define _wstat64        NotSupportedOnWin9X
-#define _wunlink        NotSupportedOnWin9X
-#define _wfopen         NotSupportedOnWin9X
-#define _wfreopen       NotSupportedOnWin9X
-#define _wfsopen        NotSupportedOnWin9X
-#define _wcreat         NotSupportedOnWin9X
-#define _wopen          NotSupportedOnWin9X
-#define _wsopen         NotSupportedOnWin9X
-#define _wfindfirst     NotSupportedOnWin9X
-#define _wfindfirst64   NotSupportedOnWin9X
-#define _wfindnext      NotSupportedOnWin9X
-#define _wfindnext64    NotSupportedOnWin9X
-#define _wsystem        NotSupportedOnWin9X
-#define _wexcel         NotSupportedOnWin9X
-#define _wexcele        NotSupportedOnWin9X
-#define _wexelp         NotSupportedOnWin9X
-#define _wexelpe        NotSupportedOnWin9X
-#define _wexecv         NotSupportedOnWin9X
-#define _wexecve        NotSupportedOnWin9X
-#define _wexecvp        NotSupportedOnWin9X
-#define _wexecvpe       NotSupportedOnWin9X
-#define _wpopen         NotSupportedOnWin9X
-#define _wputenv        NotSupportedOnWin9X
-#define _wspawnl        NotSupportedOnWin9X
-#define _wspawnle       NotSupportedOnWin9X
-#define _wspawnlp       NotSupportedOnWin9X
-#define _wspawnlpe      NotSupportedOnWin9X
-#define _wspawnv        NotSupportedOnWin9X
-#define _wspawnve       NotSupportedOnWin9X
-#define _wspawnvp       NotSupportedOnWin9X
-#define _wspawnvpe      NotSupportedOnWin9X
+#define _waccess	NotSupportedOnWin9X
+#define _wchmod		NotSupportedOnWin9X
+#define _wfullpath	UnicowsLoader::_wfullpathImpl
+#define _wremove	NotSupportedOnWin9X
+#define _wrename	NotSupportedOnWin9X
+#define _wstat		NotSupportedOnWin9X
+#define _wstati64	NotSupportedOnWin9X
+#define _wstat64	NotSupportedOnWin9X
+#define _wunlink	NotSupportedOnWin9X
+#define _wfopen		NotSupportedOnWin9X
+#define _wfreopen	NotSupportedOnWin9X
+#define _wfsopen	NotSupportedOnWin9X
+#define _wcreat		NotSupportedOnWin9X
+#define _wopen		NotSupportedOnWin9X
+#define _wsopen		NotSupportedOnWin9X
+#define _wfindfirst	NotSupportedOnWin9X
+#define _wfindfirst64	NotSupportedOnWin9X
+#define _wfindnext	NotSupportedOnWin9X
+#define _wfindnext64	NotSupportedOnWin9X
+#define _wsystem	NotSupportedOnWin9X
+#define _wexcel		NotSupportedOnWin9X
+#define _wexcele	NotSupportedOnWin9X
+#define _wexelp		NotSupportedOnWin9X
+#define _wexelpe	NotSupportedOnWin9X
+#define _wexecv		NotSupportedOnWin9X
+#define _wexecve	NotSupportedOnWin9X
+#define _wexecvp	NotSupportedOnWin9X
+#define _wexecvpe	NotSupportedOnWin9X
+#define _wpopen		NotSupportedOnWin9X
+#define _wputenv	NotSupportedOnWin9X
+#define _wspawnl	NotSupportedOnWin9X
+#define _wspawnle	NotSupportedOnWin9X
+#define _wspawnlp	NotSupportedOnWin9X
+#define _wspawnlpe	NotSupportedOnWin9X
+#define _wspawnv	NotSupportedOnWin9X
+#define _wspawnve	NotSupportedOnWin9X
+#define _wspawnvp	NotSupportedOnWin9X
+#define _wspawnvpe	NotSupportedOnWin9X
 
 
 #endif // UNICOWSLOADER_H

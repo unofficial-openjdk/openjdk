@@ -40,7 +40,7 @@ import java.security.Security;
  * A static class for creating SASL clients and servers.
  *<p>
  * This class defines the policy of how to locate, load, and instantiate
- * SASL clients and servers.
+ * SASL clients and servers. 
  *<p>
  * For example, an application or library gets a SASL client by doing
  * something like:
@@ -55,7 +55,7 @@ import java.security.Security;
  * SaslServer ss = Sasl.createSaslServer(mechanism,
  *     protocol, serverName, props, callbackHandler);
  *</pre></blockquote>
- *
+ * 
  * @since 1.5
  *
  * @author Rosanna Lee
@@ -63,7 +63,7 @@ import java.security.Security;
  */
 public class Sasl {
     // Cannot create one of these
-    private Sasl() {
+    private Sasl() { 
     }
 
     /**
@@ -100,7 +100,7 @@ public class Sasl {
      * Extension (JCE) with JCE-aware mechanisms to control the selection of
      * cipher suites that match the strength values.
      * <BR>
-     * If this property is absent, the default strength is
+     * If this property is absent, the default strength is 
      * <tt>"high,medium,low"</tt>.
      * The value of this constant is <tt>"javax.security.sasl.strength"</tt>.
      */
@@ -108,14 +108,14 @@ public class Sasl {
 
     /**
      * The name of a property that specifies whether the
-     * server must authenticate to the client. The property contains
+     * server must authenticate to the client. The property contains 
      * <tt>"true"</tt> if the server must
      * authenticate the to client; <tt>"false"</tt> otherwise.
      * The default is <tt>"false"</tt>.
      * <br>The value of this constant is
      * <tt>"javax.security.sasl.server.authentication"</tt>.
      */
-    public static final String SERVER_AUTH =
+    public static final String SERVER_AUTH = 
     "javax.security.sasl.server.authentication";
 
     /**
@@ -157,7 +157,7 @@ public class Sasl {
      * SASL client/server instance must be provided regardless of whether
      * this property has been supplied. That is, you cannot supply any less
      * information in anticipation of reuse.
-     *
+     * 
      * Mechanism implementations that support reuse might allow customization
      * of its implementation, for factors such as cache size, timeouts, and
      * criteria for reuseability. Such customizations are
@@ -172,7 +172,7 @@ public class Sasl {
      * contains <tt>"true"</tt> if such mechanisms are not permitted;
      * <tt>"false"</tt> if such mechanisms are permitted.
      * The default is <tt>"false"</tt>.
-     * <br>The value of this constant is
+     * <br>The value of this constant is 
      * <tt>"javax.security.sasl.policy.noplaintext"</tt>.
      */
     public static final String POLICY_NOPLAINTEXT =
@@ -182,11 +182,11 @@ public class Sasl {
      * The name of a property that specifies whether
      * mechanisms susceptible to active (non-dictionary) attacks
      * are not permitted.
-     * The property contains <tt>"true"</tt>
+     * The property contains <tt>"true"</tt> 
      * if mechanisms susceptible to active attacks
      * are not permitted; <tt>"false"</tt> if such mechanisms are permitted.
      * The default is <tt>"false"</tt>.
-     * <br>The value of this constant is
+     * <br>The value of this constant is 
      * <tt>"javax.security.sasl.policy.noactive"</tt>.
      */
     public static final String POLICY_NOACTIVE =
@@ -200,7 +200,7 @@ public class Sasl {
      * <tt>"false"</tt> if such mechanisms are permitted.
      * The default is <tt>"false"</tt>.
      *<br>
-     * The value of this constant is
+     * The value of this constant is 
      * <tt>"javax.security.sasl.policy.nodictionary"</tt>.
      */
     public static final String POLICY_NODICTIONARY =
@@ -208,28 +208,28 @@ public class Sasl {
 
     /**
      * The name of a property that specifies whether mechanisms that accept
-     * anonymous login are not permitted. The property contains <tt>"true"</tt>
-     * if mechanisms that accept anonymous login are not permitted;
+     * anonymous login are not permitted. The property contains <tt>"true"</tt> 
+     * if mechanisms that accept anonymous login are not permitted; 
      * <tt>"false"</tt>
      * if such mechanisms are permitted. The default is <tt>"false"</tt>.
      *<br>
-     * The value of this constant is
+     * The value of this constant is 
      * <tt>"javax.security.sasl.policy.noanonymous"</tt>.
      */
     public static final String POLICY_NOANONYMOUS =
     "javax.security.sasl.policy.noanonymous";
 
-     /**
+     /** 
       * The name of a property that specifies whether mechanisms that implement
       * forward secrecy between sessions are required. Forward secrecy
       * means that breaking into one session will not automatically
-      * provide information for breaking into future sessions.
+      * provide information for breaking into future sessions. 
       * The property
-      * contains <tt>"true"</tt> if mechanisms that implement forward secrecy
-      * between sessions are required; <tt>"false"</tt> if such mechanisms
+      * contains <tt>"true"</tt> if mechanisms that implement forward secrecy 
+      * between sessions are required; <tt>"false"</tt> if such mechanisms 
       * are not required. The default is <tt>"false"</tt>.
       *<br>
-      * The value of this constant is
+      * The value of this constant is 
       * <tt>"javax.security.sasl.policy.forward"</tt>.
       */
     public static final String POLICY_FORWARD_SECRECY =
@@ -242,7 +242,7 @@ public class Sasl {
      * client credentials are required; <tt>"false"</tt>
      * if such mechanisms are not required. The default is <tt>"false"</tt>.
      *<br>
-     * The value of this constant is
+     * The value of this constant is 
      * <tt>"javax.security.sasl.policy.credentials"</tt>.
      */
     public static final String POLICY_PASS_CREDENTIALS =
@@ -251,12 +251,12 @@ public class Sasl {
     /**
      * The name of a property that specifies the credentials to use.
      * The property contains a mechanism-specific Java credential object.
-     * Mechanism implementations may examine the value of this property
+     * Mechanism implementations may examine the value of this property 
      * to determine whether it is a class that they support.
      * The property may be used to supply credentials to a mechanism that
      * supports delegated authentication.
      *<br>
-     * The value of this constant is
+     * The value of this constant is 
      * <tt>"javax.security.sasl.credentials"</tt>.
      */
     public static final String CREDENTIALS = "javax.security.sasl.credentials";
@@ -264,12 +264,12 @@ public class Sasl {
     /**
      * Creates a <tt>SaslClient</tt> using the parameters supplied.
      *
-     * This method uses the
-<a href="{@docRoot}/../technotes/guides/security/crypto/CryptoSpec.html#Provider">JCA Security Provider Framework</a>, described in the
+     * This method uses the 
+<a href="{@docRoot}/../technotes/guides/security/crypto/CryptoSpec.html#Provider">JCA Security Provider Framework</a>, described in the 
      * "Java Cryptography Architecture API Specification & Reference", for
      * locating and selecting a <tt>SaslClient</tt> implementation.
      *
-     * First, it
+     * First, it 
      * obtains an ordered list of <tt>SaslClientFactory</tt> instances from
      * the registered security providers for the "SaslClientFactory" service
      * and the specified SASL mechanism(s). It then invokes
@@ -282,7 +282,7 @@ public class Sasl {
      * JCA Security Provider Framework keys of the form <br>
      * <tt>SaslClientFactory.<em>mechanism_name</em></tt>
      * <br>
-     * and values that are class names of implementations of
+     * and values that are class names of implementations of 
      * <tt>javax.security.sasl.SaslClientFactory</tt>.
      *
      * For example, a provider that contains a factory class,
@@ -291,18 +291,18 @@ public class Sasl {
      * <tt>SaslClientFactory.DIGEST-MD5 com.wiz.sasl.digest.ClientFactory</tt>
      *<p>
      * See the
-     * "Java Cryptography Architecture API Specification & Reference"
+     * "Java Cryptography Architecture API Specification & Reference" 
      * for information about how to install and configure security service
      *  providers.
      *
      * @param mechanisms The non-null list of mechanism names to try. Each is the
      * IANA-registered name of a SASL mechanism. (e.g. "GSSAPI", "CRAM-MD5").
-     * @param authorizationId The possibly null protocol-dependent
+     * @param authorizationId The possibly null protocol-dependent 
      * identification to be used for authorization.
-     * If null or empty, the server derives an authorization
+     * If null or empty, the server derives an authorization 
      * ID from the client's authentication credentials.
-     * When the SASL authentication completes successfully,
-     * the specified entity is granted access.
+     * When the SASL authentication completes successfully, 
+     * the specified entity is granted access. 
      *
      * @param protocol The non-null string name of the protocol for which
      * the authentication is being performed (e.g., "ldap").
@@ -313,12 +313,12 @@ public class Sasl {
      * @param props The possibly null set of properties used to
      * select the SASL mechanism and to configure the authentication
      * exchange of the selected mechanism.
-     * For example, if <tt>props</tt> contains the
-     * <code>Sasl.POLICY_NOPLAINTEXT</code> property with the value
+     * For example, if <tt>props</tt> contains the 
+     * <code>Sasl.POLICY_NOPLAINTEXT</code> property with the value 
      * <tt>"true"</tt>, then the selected
      * SASL mechanism must not be susceptible to simple plain passive attacks.
-     * In addition to the standard properties declared in this class,
-     * other, possibly mechanism-specific, properties can be included.
+     * In addition to the standard properties declared in this class, 
+     * other, possibly mechanism-specific, properties can be included. 
      * Properties not relevant to the selected mechanism are ignored,
      * including any map entries with non-String keys.
      *
@@ -330,7 +330,7 @@ public class Sasl {
      * The password is requested by using a <tt>PasswordCallback</tt>.
      * The realm is requested by using a <tt>RealmChoiceCallback</tt> if there is a list
      * of realms to choose from, and by using a <tt>RealmCallback</tt> if
-     * the realm must be entered.
+     * the realm must be entered. 
      *
      *@return A possibly null <tt>SaslClient</tt> created using the parameters
      * supplied. If null, cannot find a <tt>SaslClientFactory</tt>
@@ -339,87 +339,87 @@ public class Sasl {
      * of an error.
      */
     public static SaslClient createSaslClient(
-        String[] mechanisms,
-        String authorizationId,
-        String protocol,
-        String serverName,
-        Map<String,?> props,
-        CallbackHandler cbh) throws SaslException {
-
+	String[] mechanisms,
+	String authorizationId,
+	String protocol,
+	String serverName,
+	Map<String,?> props,
+	CallbackHandler cbh) throws SaslException {
+        
         SaslClient mech = null;
-        SaslClientFactory fac;
-        String className;
-        String mechName;
+	SaslClientFactory fac;
+	String className;
+	String mechName;
 
-        for (int i = 0; i < mechanisms.length; i++) {
-            if ((mechName=mechanisms[i]) == null) {
-                throw new NullPointerException(
-                    "Mechanism name cannot be null");
-            } else if (mechName.length() == 0) {
-                continue;
-            }
-            String mechFilter = "SaslClientFactory." + mechName;
-            Provider[] provs = Security.getProviders(mechFilter);
-            for (int j = 0; provs != null && j < provs.length; j++) {
-                className = provs[j].getProperty(mechFilter);
-                if (className == null) {
-                    // Case is ignored
-                    continue;
-                }
+	for (int i = 0; i < mechanisms.length; i++) {
+	    if ((mechName=mechanisms[i]) == null) {
+		throw new NullPointerException(
+		    "Mechanism name cannot be null");
+	    } else if (mechName.length() == 0) {
+		continue;
+	    }
+	    String mechFilter = "SaslClientFactory." + mechName;
+	    Provider[] provs = Security.getProviders(mechFilter);
+	    for (int j = 0; provs != null && j < provs.length; j++) {
+		className = provs[j].getProperty(mechFilter);
+		if (className == null) {
+		    // Case is ignored
+		    continue;
+		}
 
-                fac = (SaslClientFactory) loadFactory(provs[j], className);
-                if (fac != null) {
-                    mech = fac.createSaslClient(
-                        new String[]{mechanisms[i]}, authorizationId,
-                        protocol, serverName, props, cbh);
-                    if (mech != null) {
-                        return mech;
-                    }
-                }
-            }
-        }
+		fac = (SaslClientFactory) loadFactory(provs[j], className);
+		if (fac != null) {
+		    mech = fac.createSaslClient(
+			new String[]{mechanisms[i]}, authorizationId, 
+			protocol, serverName, props, cbh);
+		    if (mech != null) {
+			return mech;
+		    }
+		}
+	    }
+	}
 
-        return null;
+	return null;
     }
 
-    private static Object loadFactory(Provider p, String className)
-        throws SaslException {
-        try {
-            /*
-             * Load the implementation class with the same class loader
-             * that was used to load the provider.
-             * In order to get the class loader of a class, the
-             * caller's class loader must be the same as or an ancestor of
-             * the class loader being returned. Otherwise, the caller must
-             * have "getClassLoader" permission, or a SecurityException
-             * will be thrown.
-             */
-            ClassLoader cl = p.getClass().getClassLoader();
-            Class implClass;
-            implClass = Class.forName(className, true, cl);
-            return implClass.newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new SaslException("Cannot load class " + className, e);
-        } catch (InstantiationException e) {
-            throw new SaslException("Cannot instantiate class " + className, e);
-        } catch (IllegalAccessException e) {
-            throw new SaslException("Cannot access class " + className, e);
-        } catch (SecurityException e) {
-            throw new SaslException("Cannot access class " + className, e);
-        }
+    private static Object loadFactory(Provider p, String className) 
+	throws SaslException {
+	try {
+	    /*  
+	     * Load the implementation class with the same class loader
+	     * that was used to load the provider.
+	     * In order to get the class loader of a class, the
+	     * caller's class loader must be the same as or an ancestor of
+	     * the class loader being returned. Otherwise, the caller must
+	     * have "getClassLoader" permission, or a SecurityException
+	     * will be thrown.
+	     */
+	    ClassLoader cl = p.getClass().getClassLoader();
+	    Class implClass;
+	    implClass = Class.forName(className, true, cl);
+	    return implClass.newInstance();
+	} catch (ClassNotFoundException e) {
+	    throw new SaslException("Cannot load class " + className, e);
+	} catch (InstantiationException e) {
+	    throw new SaslException("Cannot instantiate class " + className, e);
+	} catch (IllegalAccessException e) {
+	    throw new SaslException("Cannot access class " + className, e);
+	} catch (SecurityException e) {
+	    throw new SaslException("Cannot access class " + className, e);
+	}
     }
 
-
+    
     /**
-     * Creates a <tt>SaslServer</tt> for the specified mechanism.
+     * Creates a <tt>SaslServer</tt> for the specified mechanism. 
      *
-     * This method uses the
-<a href="{@docRoot}/../technotes/guides/security/crypto/CryptoSpec.html#Provider">JCA Security Provider Framework</a>,
-     * described in the
+     * This method uses the 
+<a href="{@docRoot}/../technotes/guides/security/crypto/CryptoSpec.html#Provider">JCA Security Provider Framework</a>, 
+     * described in the 
      * "Java Cryptography Architecture API Specification & Reference", for
      * locating and selecting a <tt>SaslServer</tt> implementation.
      *
-     * First, it
+     * First, it 
      * obtains an ordered list of <tt>SaslServerFactory</tt> instances from
      * the registered security providers for the "SaslServerFactory" service
      * and the specified mechanism. It then invokes
@@ -432,7 +432,7 @@ public class Sasl {
      * JCA Security Provider Framework keys of the form <br>
      * <tt>SaslServerFactory.<em>mechanism_name</em></tt>
      * <br>
-     * and values that are class names of implementations of
+     * and values that are class names of implementations of 
      * <tt>javax.security.sasl.SaslServerFactory</tt>.
      *
      * For example, a provider that contains a factory class,
@@ -441,8 +441,8 @@ public class Sasl {
      * <tt>SaslServerFactory.DIGEST-MD5  com.wiz.sasl.digest.ServerFactory</tt>
      *<p>
      * See the
-     * "Java Cryptography Architecture API Specification & Reference"
-     * for information about how to install and configure security
+     * "Java Cryptography Architecture API Specification & Reference" 
+     * for information about how to install and configure security 
      * service providers.
      *
      * @param mechanism The non-null mechanism name. It must be an
@@ -453,12 +453,12 @@ public class Sasl {
      * @param props The possibly null set of properties used to
      * select the SASL mechanism and to configure the authentication
      * exchange of the selected mechanism.
-     * For example, if <tt>props</tt> contains the
-     * <code>Sasl.POLICY_NOPLAINTEXT</code> property with the value
+     * For example, if <tt>props</tt> contains the 
+     * <code>Sasl.POLICY_NOPLAINTEXT</code> property with the value 
      * <tt>"true"</tt>, then the selected
      * SASL mechanism must not be susceptible to simple plain passive attacks.
-     * In addition to the standard properties declared in this class,
-     * other, possibly mechanism-specific, properties can be included.
+     * In addition to the standard properties declared in this class, 
+     * other, possibly mechanism-specific, properties can be included. 
      * Properties not relevant to the selected mechanism are ignored,
      * including any map entries with non-String keys.
      *
@@ -470,7 +470,7 @@ public class Sasl {
      * The password is requested by using a <tt>PasswordCallback</tt>.
      * The realm is requested by using a <tt>RealmChoiceCallback</tt> if there is a list
      * of realms to choose from, and by using a <tt>RealmCallback</tt> if
-     * the realm must be entered.
+     * the realm must be entered. 
      *
      *@return A possibly null <tt>SaslServer</tt> created using the parameters
      * supplied. If null, cannot find a <tt>SaslServerFactory</tt>
@@ -479,42 +479,42 @@ public class Sasl {
      * of an error.
      **/
     public static SaslServer
-        createSaslServer(String mechanism,
+	createSaslServer(String mechanism,
                     String protocol,
                     String serverName,
                     Map<String,?> props,
                     javax.security.auth.callback.CallbackHandler cbh)
-        throws SaslException {
+	throws SaslException {
 
         SaslServer mech = null;
-        SaslServerFactory fac;
-        String className;
+	SaslServerFactory fac;
+	String className;
 
-        if (mechanism == null) {
-            throw new NullPointerException("Mechanism name cannot be null");
-        } else if (mechanism.length() == 0) {
-            return null;
-        }
+	if (mechanism == null) {
+	    throw new NullPointerException("Mechanism name cannot be null");
+	} else if (mechanism.length() == 0) {
+	    return null;
+	}
 
-        String mechFilter = "SaslServerFactory." + mechanism;
-        Provider[] provs = Security.getProviders(mechFilter);
-        for (int j = 0; provs != null && j < provs.length; j++) {
-            className = provs[j].getProperty(mechFilter);
-            if (className == null) {
-                throw new SaslException("Provider does not support " +
-                    mechFilter);
-            }
-            fac = (SaslServerFactory) loadFactory(provs[j], className);
-            if (fac != null) {
-                mech = fac.createSaslServer(
-                    mechanism, protocol, serverName, props, cbh);
-                if (mech != null) {
-                    return mech;
-                }
-            }
-        }
+	String mechFilter = "SaslServerFactory." + mechanism;
+	Provider[] provs = Security.getProviders(mechFilter);
+	for (int j = 0; provs != null && j < provs.length; j++) {
+	    className = provs[j].getProperty(mechFilter);
+	    if (className == null) {
+		throw new SaslException("Provider does not support " +
+		    mechFilter);
+	    }
+	    fac = (SaslServerFactory) loadFactory(provs[j], className);
+	    if (fac != null) {
+		mech = fac.createSaslServer(
+		    mechanism, protocol, serverName, props, cbh);
+		if (mech != null) {
+		    return mech;
+		}
+	    }
+	}
 
-        return null;
+	return null;
     }
 
     /**
@@ -526,16 +526,16 @@ public class Sasl {
      * @see #createSaslClient
      */
     public static Enumeration<SaslClientFactory> getSaslClientFactories() {
-        Set<Object> facs = getFactories("SaslClientFactory");
-        final Iterator<Object> iter = facs.iterator();
-        return new Enumeration<SaslClientFactory>() {
-            public boolean hasMoreElements() {
-                return iter.hasNext();
-            }
-            public SaslClientFactory nextElement() {
-                return (SaslClientFactory)iter.next();
-            }
-        };
+	Set<Object> facs = getFactories("SaslClientFactory");
+	final Iterator<Object> iter = facs.iterator();
+	return new Enumeration<SaslClientFactory>() {
+	    public boolean hasMoreElements() {
+		return iter.hasNext();
+	    }
+	    public SaslClientFactory nextElement() {
+		return (SaslClientFactory)iter.next();
+	    }
+	};
     }
 
     /**
@@ -547,60 +547,60 @@ public class Sasl {
      * @see #createSaslServer
      */
     public static Enumeration<SaslServerFactory> getSaslServerFactories() {
-        Set<Object> facs = getFactories("SaslServerFactory");
-        final Iterator<Object> iter = facs.iterator();
-        return new Enumeration<SaslServerFactory>() {
-            public boolean hasMoreElements() {
-                return iter.hasNext();
-            }
-            public SaslServerFactory nextElement() {
-                return (SaslServerFactory)iter.next();
-            }
-        };
+	Set<Object> facs = getFactories("SaslServerFactory");
+	final Iterator<Object> iter = facs.iterator();
+	return new Enumeration<SaslServerFactory>() {
+	    public boolean hasMoreElements() {
+		return iter.hasNext();
+	    }
+	    public SaslServerFactory nextElement() {
+		return (SaslServerFactory)iter.next();
+	    }
+	};
     }
 
     private static Set<Object> getFactories(String serviceName) {
-        HashSet<Object> result = new HashSet<Object>();
+	HashSet<Object> result = new HashSet<Object>();
 
-        if ((serviceName == null) || (serviceName.length() == 0) ||
-            (serviceName.endsWith("."))) {
-            return result;
-        }
+	if ((serviceName == null) || (serviceName.length() == 0) ||
+	    (serviceName.endsWith("."))) {
+	    return result;
+	}
 
 
-        Provider[] providers = Security.getProviders();
-        HashSet<String> classes = new HashSet<String>();
-        Object fac;
+	Provider[] providers = Security.getProviders();
+	HashSet<String> classes = new HashSet<String>();
+	Object fac;
 
-        for (int i = 0; i < providers.length; i++) {
-            classes.clear();
+	for (int i = 0; i < providers.length; i++) {
+	    classes.clear();
 
-            // Check the keys for each provider.
-            for (Enumeration e = providers[i].keys(); e.hasMoreElements(); ) {
-                String currentKey = (String)e.nextElement();
-                if (currentKey.startsWith(serviceName)) {
-                    // We should skip the currentKey if it contains a
-                    // whitespace. The reason is: such an entry in the
-                    // provider property contains attributes for the
-                    // implementation of an algorithm. We are only interested
-                    // in entries which lead to the implementation
-                    // classes.
-                    if (currentKey.indexOf(" ") < 0) {
-                        String className = providers[i].getProperty(currentKey);
-                        if (!classes.contains(className)) {
-                            classes.add(className);
-                            try {
-                                fac = loadFactory(providers[i], className);
-                                if (fac != null) {
-                                    result.add(fac);
-                                }
-                            }catch (Exception ignore) {
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return Collections.unmodifiableSet(result);
+	    // Check the keys for each provider.
+	    for (Enumeration e = providers[i].keys(); e.hasMoreElements(); ) {
+		String currentKey = (String)e.nextElement();
+		if (currentKey.startsWith(serviceName)) {
+		    // We should skip the currentKey if it contains a 
+		    // whitespace. The reason is: such an entry in the
+		    // provider property contains attributes for the
+		    // implementation of an algorithm. We are only interested
+		    // in entries which lead to the implementation
+		    // classes.
+		    if (currentKey.indexOf(" ") < 0) {
+			String className = providers[i].getProperty(currentKey);
+			if (!classes.contains(className)) {
+			    classes.add(className);
+			    try {
+				fac = loadFactory(providers[i], className);
+				if (fac != null) {
+				    result.add(fac);
+				} 
+			    }catch (Exception ignore) {
+			    }
+			}
+		    }
+		}
+	    }
+	}
+	return Collections.unmodifiableSet(result);
     }
 }

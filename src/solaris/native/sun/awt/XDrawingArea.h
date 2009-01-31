@@ -24,14 +24,15 @@
  */
 
 /*
+ * %W% %E%
  */
 
 #ifndef _XDrawingArea_h_
 #define _XDrawingArea_h_
 
-extern WidgetClass xDrawingAreaClass;
+extern WidgetClass xDrawingAreaClass; 
 
-typedef struct _XDrawingAreaClassRec    *XDrawingAreaWidgetClass;
-typedef struct _XDrawingAreaRec         *XDrawingAreaWidget;
+typedef struct _XDrawingAreaClassRec 	*XDrawingAreaWidgetClass;
+typedef struct _XDrawingAreaRec		*XDrawingAreaWidget;
 
 #endif /* !_VDrawingArea_h_ */

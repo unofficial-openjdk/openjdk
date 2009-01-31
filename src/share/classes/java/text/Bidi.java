@@ -44,7 +44,7 @@ import sun.text.CodePointIterator;
  * This class implements the Unicode Bidirectional Algorithm.
  * <p>
  * A Bidi object provides information on the bidirectional reordering of the text
- * used to create it.  This is required, for example, to properly display Arabic
+ * used to create it.  This is required, for example, to properly display Arabic 
  * or Hebrew text.  These languages are inherently mixed directional, as they order
  * numbers from left-to-right while ordering most other text from right-to-left.
  * <p>
@@ -78,7 +78,7 @@ public final class Bidi {
     /** Constant indicating base direction is right-to-left. */
     public static final int DIRECTION_RIGHT_TO_LEFT = 1;
 
-    /**
+    /** 
      * Constant indicating that the base direction depends on the first strong
      * directional character in the text according to the Unicode
      * Bidirectional Algorithm.  If no strong directional character is present,
@@ -86,7 +86,7 @@ public final class Bidi {
      */
     public static final int DIRECTION_DEFAULT_LEFT_TO_RIGHT = -2;
 
-    /**
+    /** 
      * Constant indicating that the base direction depends on the first strong
      * directional character in the text according to the Unicode
      * Bidirectional Algorithm.  If no strong directional character is present,
@@ -168,14 +168,14 @@ public final class Bidi {
         catch (ClassCastException e) {
         }
 
-        try {
-            NumericShaper shaper = (NumericShaper)paragraph.getAttribute(TextAttribute.NUMERIC_SHAPING);
-            if (shaper != null) {
-                shaper.shape(text, 0, text.length);
-            }
-        }
-        catch (ClassCastException e) {
-        }
+	try {
+	    NumericShaper shaper = (NumericShaper)paragraph.getAttribute(TextAttribute.NUMERIC_SHAPING);
+	    if (shaper != null) {
+		shaper.shape(text, 0, text.length);
+	    }
+	}
+	catch (ClassCastException e) {
+	}
 
         int pos = start;
         do {
@@ -196,15 +196,15 @@ public final class Bidi {
                         }
                     }
                 }
-                catch (ClassCastException e) {
-                }
+		catch (ClassCastException e) {
+		}
             }
             pos = newpos;
         } while (pos < limit);
 
         nativeBidiChars(this, text, 0, embeddings, 0, text.length, flags);
     }
-
+        
     /**
      * Create Bidi from the given text, embedding, and direction information.
      * The embeddings array may be null.  If present, the values represent embedding level
@@ -230,36 +230,36 @@ public final class Bidi {
             throw new IllegalArgumentException("bad length: " + paragraphLength);
         }
         if (textStart < 0 || paragraphLength > text.length - textStart) {
-            throw new IllegalArgumentException("bad range: " + textStart +
-                                               " length: " + paragraphLength +
+            throw new IllegalArgumentException("bad range: " + textStart + 
+                                               " length: " + paragraphLength + 
                                                " for text of length: " + text.length);
         }
         if (embeddings != null && (embStart < 0 || paragraphLength > embeddings.length - embStart)) {
-            throw new IllegalArgumentException("bad range: " + embStart +
-                                               " length: " + paragraphLength +
+            throw new IllegalArgumentException("bad range: " + embStart + 
+                                               " length: " + paragraphLength + 
                                                " for embeddings of length: " + text.length);
         }
 
-        if (embeddings != null) {
-            // native uses high bit to indicate override, not negative value, sigh
+	if (embeddings != null) {
+	    // native uses high bit to indicate override, not negative value, sigh
 
-            for (int i = embStart, embLimit = embStart + paragraphLength; i < embLimit; ++i) {
-                if (embeddings[i] < 0) {
-                    byte[] temp = new byte[paragraphLength];
-                    System.arraycopy(embeddings, embStart, temp, 0, paragraphLength);
+	    for (int i = embStart, embLimit = embStart + paragraphLength; i < embLimit; ++i) {
+		if (embeddings[i] < 0) {
+		    byte[] temp = new byte[paragraphLength];
+		    System.arraycopy(embeddings, embStart, temp, 0, paragraphLength);
 
-                    for (i -= embStart; i < paragraphLength; ++i) {
-                        if (temp[i] < 0) {
-                            temp[i] = (byte)(-temp[i] | 0x80);
-                        }
-                    }
+		    for (i -= embStart; i < paragraphLength; ++i) {
+			if (temp[i] < 0) {
+			    temp[i] = (byte)(-temp[i] | 0x80);
+			}
+		    }
 
-                    embeddings = temp;
-                    embStart = 0;
-                    break;
-                }
-            }
-        }
+		    embeddings = temp;
+		    embStart = 0;
+		    break;
+		}
+	    }
+	}
 
         nativeBidiChars(this, text, textStart, embeddings, embStart, paragraphLength, flags);
     }
@@ -290,16 +290,16 @@ public final class Bidi {
      * @param lineLimit the offset from the start of the paragraph to the limit of the line.
      */
     public Bidi createLineBidi(int lineStart, int lineLimit) {
-        if (lineStart == 0 && lineLimit == length) {
-            return this;
-        }
+	if (lineStart == 0 && lineLimit == length) {
+	    return this;
+	}
 
-        int lineLength = lineLimit - lineStart;
+	int lineLength = lineLimit - lineStart;
         if (lineStart < 0 ||
             lineLimit < lineStart ||
             lineLimit > length) {
-            throw new IllegalArgumentException("range " + lineStart +
-                                               " to " + lineLimit +
+            throw new IllegalArgumentException("range " + lineStart + 
+                                               " to " + lineLimit + 
                                                " is invalid for paragraph of length " + length);
         }
 
@@ -323,10 +323,10 @@ public final class Bidi {
                             --cwsl;
                             --ll;
                         }
-
-                        if (cwspos == lineStart) { // entire line is cws, so ignore
-                            return new Bidi(dir, baselevel, lineLength, null, null);
-                        }
+                        
+			if (cwspos == lineStart) { // entire line is cws, so ignore
+			    return new Bidi(dir, baselevel, lineLength, null, null);
+			}
 
                         int ncwslen = cwsl - cwss;
                         if (ncwslen > 0) {
@@ -383,7 +383,7 @@ public final class Bidi {
     }
 
     /**
-     * Return true if the line is not left-to-right or right-to-left.  This means it either has mixed runs of left-to-right
+     * Return true if the line is not left-to-right or right-to-left.  This means it either has mixed runs of left-to-right 
      * and right-to-left text, or the base direction differs from the direction of the only run of text.
      * @return true if the line is not left-to-right or right-to-left.
      */
@@ -423,7 +423,7 @@ public final class Bidi {
         return (baselevel & 0x1) == 0;
     }
 
-    /**
+    /** 
      * Return the base level (0 if left-to-right, 1 if right-to-left).
      * @return the base level
      */
@@ -435,7 +435,7 @@ public final class Bidi {
      * Return the resolved level of the character at offset.  If offset is <0 or >=
      * the length of the line, return the base direction level.
      * @param offset the index of the character for which to return the level
-     * @return the resolved level of the character at offset
+     * @return the resolved level of the character at offset 
      */
     public int getLevelAt(int offset) {
         if (runs == null || offset < 0 || offset >= length) {
@@ -469,7 +469,7 @@ public final class Bidi {
     }
 
     /**
-     * Return the index of the character at the start of the nth logical run in this line, as
+     * Return the index of the character at the start of the nth logical run in this line, as 
      * an offset from the start of the line.
      * @param run the index of the run, between 0 and <code>getRunCount()</code>
      * @return the start of the run
@@ -479,7 +479,7 @@ public final class Bidi {
     }
 
     /**
-     * Return the index of the character past the end of the nth logical run in this line, as
+     * Return the index of the character past the end of the nth logical run in this line, as 
      * an offset from the start of the line.  For example, this will return the length
      * of the line for the last run on the line.
      * @param run the index of the run, between 0 and <code>getRunCount()</code>
@@ -501,16 +501,16 @@ public final class Bidi {
      * @return true if the range of characters requires bidi analysis
      */
     public static boolean requiresBidi(char[] text, int start, int limit) {
-        CodePointIterator cpi = CodePointIterator.create(text, start, limit);
-        for (int cp = cpi.next(); cp != CodePointIterator.DONE; cp = cpi.next()) {
-            if (cp > 0x0590) {
-                int dc = nativeGetDirectionCode(cp);
-                if ((RMASK & (1 << dc)) != 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
+	CodePointIterator cpi = CodePointIterator.create(text, start, limit);
+	for (int cp = cpi.next(); cp != CodePointIterator.DONE; cp = cpi.next()) {
+	    if (cp > 0x0590) {
+		int dc = nativeGetDirectionCode(cp);
+		if ((RMASK & (1 << dc)) != 0) {
+		    return true;
+		}
+	    }
+	}
+	return false;
     }
 
     /**
@@ -518,9 +518,9 @@ public final class Bidi {
      * This is a utility function to use when you have a collection of objects
      * representing runs of text in logical order, each run containing text
      * at a single level.  The elements at <code>index</code> from
-     * <code>objectStart</code> up to <code>objectStart + count</code>
+     * <code>objectStart</code> up to <code>objectStart + count</code> 
      * in the objects array will be reordered into visual order assuming
-     * each run of text has the level indicated by the corresponding element
+     * each run of text has the level indicated by the corresponding element 
      * in the levels array (at <code>index - objectStart + levelStart</code>).
      *
      * @param levels an array representing the bidi level of each object
@@ -531,24 +531,24 @@ public final class Bidi {
      */
     public static void reorderVisually(byte[] levels, int levelStart, Object[] objects, int objectStart, int count) {
 
-        if (count < 0) {
-            throw new IllegalArgumentException("count " + count + " must be >= 0");
-        }
-        if (levelStart < 0 || levelStart + count > levels.length) {
-            throw new IllegalArgumentException("levelStart " + levelStart + " and count " + count +
-                                               " out of range [0, " + levels.length + "]");
-        }
-        if (objectStart < 0 || objectStart + count > objects.length) {
-            throw new IllegalArgumentException("objectStart " + objectStart + " and count " + count +
-                                               " out of range [0, " + objects.length + "]");
-        }
-
+	if (count < 0) {
+	    throw new IllegalArgumentException("count " + count + " must be >= 0");
+	}
+	if (levelStart < 0 || levelStart + count > levels.length) {
+	    throw new IllegalArgumentException("levelStart " + levelStart + " and count " + count +
+					       " out of range [0, " + levels.length + "]");
+	}
+	if (objectStart < 0 || objectStart + count > objects.length) {
+	    throw new IllegalArgumentException("objectStart " + objectStart + " and count " + count +
+					       " out of range [0, " + objects.length + "]");
+	}
+	
         byte lowestOddLevel = (byte)(NUMLEVELS + 1);
         byte highestLevel = 0;
 
         // initialize mapping and levels
 
-        int levelLimit = levelStart + count;
+	int levelLimit = levelStart + count;
         for (int i = levelStart; i < levelLimit; i++) {
             byte level = levels[i];
             if (level > highestLevel) {
@@ -560,7 +560,7 @@ public final class Bidi {
             }
         }
 
-        int delta = objectStart - levelStart;
+	int delta = objectStart - levelStart;
 
         while (highestLevel >= lowestOddLevel) {
             int i = levelStart;
@@ -580,8 +580,8 @@ public final class Bidi {
                 }
                 int end = i - 1;
 
-                begin += delta;
-                end += delta;
+		begin += delta;
+		end += delta;
                 while (begin < end) {
                     Object temp = objects[begin];
                     objects[begin] = objects[end];
@@ -597,12 +597,12 @@ public final class Bidi {
 
     private static final char NUMLEVELS = 62;
 
-    private static final int RMASK =
-        (1 << 1 /* U_RIGHT_TO_LEFT */) |
-        (1 << 5 /* U_ARABIC_NUMBER */) |
-        (1 << 13 /* U_RIGHT_TO_LEFT_ARABIC */) |
-        (1 << 14 /* U_RIGHT_TO_LEFT_EMBEDDING */) |
-        (1 << 15 /* U_RIGHT_TO_LEFT_OVERRIDE */);
+    private static final int RMASK = 
+	(1 << 1 /* U_RIGHT_TO_LEFT */) |
+	(1 << 5 /* U_ARABIC_NUMBER */) |
+	(1 << 13 /* U_RIGHT_TO_LEFT_ARABIC */) |
+	(1 << 14 /* U_RIGHT_TO_LEFT_EMBEDDING */) |
+	(1 << 15 /* U_RIGHT_TO_LEFT_OVERRIDE */);
 
     /** Access native bidi implementation. */
     private static native int nativeGetDirectionCode(int cp);
@@ -616,38 +616,39 @@ public final class Bidi {
      * Display the bidi internal state, used in debugging.
      */
     public String toString() {
-        StringBuffer buf = new StringBuffer(super.toString());
-        buf.append("[dir: " + dir);
-        buf.append(" baselevel: " + baselevel);
-        buf.append(" length: " + length);
-        if (runs == null) {
-            buf.append(" runs: null");
-        } else {
-            buf.append(" runs: [");
-            for (int i = 0; i < runs.length; i += 2) {
-                if (i != 0) {
-                    buf.append(' ');
-                }
-                buf.append(runs[i]); // limit
-                buf.append('/');
-                buf.append(runs[i+1]); // level
-            }
-            buf.append(']');
-        }
-        if (cws == null) {
-            buf.append(" cws: null");
-        } else {
-            buf.append(" cws: [");
-            for (int i = 0; i < cws.length; ++i) {
-                if (i != 0) {
-                    buf.append(' ');
-                }
-                buf.append(Integer.toHexString(cws[i]));
-            }
-            buf.append(']');
-        }
-        buf.append(']');
+	StringBuffer buf = new StringBuffer(super.toString());
+	buf.append("[dir: " + dir);
+	buf.append(" baselevel: " + baselevel);
+	buf.append(" length: " + length);
+	if (runs == null) {
+	    buf.append(" runs: null");
+	} else {
+	    buf.append(" runs: [");
+	    for (int i = 0; i < runs.length; i += 2) {
+		if (i != 0) {
+		    buf.append(' ');
+		}
+		buf.append(runs[i]); // limit
+		buf.append('/');
+		buf.append(runs[i+1]); // level
+	    }
+	    buf.append(']');
+	}
+	if (cws == null) {
+	    buf.append(" cws: null");
+	} else {
+	    buf.append(" cws: [");
+	    for (int i = 0; i < cws.length; ++i) {
+		if (i != 0) {
+		    buf.append(' ');
+		}
+		buf.append(Integer.toHexString(cws[i]));
+	    }
+	    buf.append(']');
+	}
+	buf.append(']');
 
-        return buf.toString();
+	return buf.toString();
     }
 }
+

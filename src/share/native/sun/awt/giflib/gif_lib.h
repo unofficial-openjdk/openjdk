@@ -1,42 +1,42 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
 
 /******************************************************************************
- * In order to make life a little bit easier when using the GIF file format,
- * this library was written, and which does all the dirty work...
- *
- *                                        Written by Gershon Elber,  Jun. 1989
- *                                        Hacks by Eric S. Raymond,  Sep. 1992
+ * In order to make life a little bit easier when using the GIF file format,   
+ * this library was written, and which does all the dirty work...              
+ *                                                                             
+ *                                        Written by Gershon Elber,  Jun. 1989 
+ *                                        Hacks by Eric S. Raymond,  Sep. 1992 
  ******************************************************************************
- * History:
- * 14 Jun 89 - Version 1.0 by Gershon Elber.
- *  3 Sep 90 - Version 1.1 by Gershon Elber (Support for Gif89, Unique names)
- * 15 Sep 90 - Version 2.0 by Eric S. Raymond (Changes to suoport GIF slurp)
+ * History:                                                                    
+ * 14 Jun 89 - Version 1.0 by Gershon Elber.                                   
+ *  3 Sep 90 - Version 1.1 by Gershon Elber (Support for Gif89, Unique names)  
+ * 15 Sep 90 - Version 2.0 by Eric S. Raymond (Changes to suoport GIF slurp)   
  * 26 Jun 96 - Version 3.0 by Eric S. Raymond (Full GIF89 support)
- * 17 Dec 98 - Version 4.0 by Toshio Kuratomi (Fix extension writing code)
+ * 17 Dec 98 - Version 4.0 by Toshio Kuratomi (Fix extension writing code)     
  *****************************************************************************/
-
+ 
 /* all encoding functionality stripped */
 
 #ifndef _GIF_LIB_H_
@@ -139,7 +139,7 @@ typedef int (*InputFunc) (GifFileType *, GifByteType *, int);
 typedef int (*OutputFunc) (GifFileType *, const GifByteType *, int);
 
 /******************************************************************************
- *  GIF89 extension function codes
+ *  GIF89 extension function codes                                             
 ******************************************************************************/
 
 #define COMMENT_EXT_FUNC_CODE     0xfe    /* comment */
@@ -148,8 +148,8 @@ typedef int (*OutputFunc) (GifFileType *, const GifByteType *, int);
 #define APPLICATION_EXT_FUNC_CODE 0xff    /* application block */
 
 /******************************************************************************
- * O.K., here are the routines one can access in order to decode GIF file:
- * (GIF_LIB file DGIF_LIB.C).
+ * O.K., here are the routines one can access in order to decode GIF file:     
+ * (GIF_LIB file DGIF_LIB.C).                              
  *****************************************************************************/
 
 GifFileType *DGifOpenFileName(const char *GifFileName);
@@ -188,13 +188,13 @@ int DGifCloseFile(GifFileType * GifFile);
 
 
 /******************************************************************************
- * O.K., here are the routines from GIF_LIB file GIF_ERR.C.
+ * O.K., here are the routines from GIF_LIB file GIF_ERR.C.              
 ******************************************************************************/
 extern void PrintGifError(void);
 extern int GifLastError(void);
 
 /******************************************************************************
- * O.K., here are the routines from GIF_LIB file DEV2GIF.C.
+ * O.K., here are the routines from GIF_LIB file DEV2GIF.C.              
 ******************************************************************************/
 extern int DumpScreen2Gif(const char *FileName,
                           int ReqGraphDriver,
@@ -210,7 +210,7 @@ extern int DumpScreen2Gif(const char *FileName,
  *****************************************************************************/
 
 /******************************************************************************
- * Color Map handling from ALLOCGIF.C
+ * Color Map handling from ALLOCGIF.C                          
  *****************************************************************************/
 
 extern ColorMapObject *MakeMapObject(int ColorCount,
@@ -219,7 +219,7 @@ extern void FreeMapObject(ColorMapObject * Object);
 extern int BitSize(int n);
 
 /******************************************************************************
- * Support for the in-core structures allocation (slurp mode).
+ * Support for the in-core structures allocation (slurp mode).              
  *****************************************************************************/
 
 /* This is the in-core version of an extension record */

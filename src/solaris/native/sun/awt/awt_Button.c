@@ -139,7 +139,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MButtonPeer_create
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.pData, cdata);
 
     adata = copyGraphicsConfigToPeer(env, this);
-
+    
     XtVaGetValues (wdata->widget, XmNbackground, &bg, NULL);
 
     label =
@@ -174,10 +174,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MButtonPeer_create
              XmNscreen, ScreenOfDisplay(awt_display,
                                         adata->awt_visInfo.screen),
              NULL);
-        if (mfstr != NULL) {
-            XmStringFree(mfstr);
-            mfstr = NULL;
-        }
+	if (mfstr != NULL) {
+	    XmStringFree(mfstr);
+	    mfstr = NULL;
+	}
 
     } else {
         if (JNU_IsNull (env, label)) {
@@ -274,3 +274,5 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MButtonPeer_setLabel
     XmStringFree (xim);
     AWT_FLUSH_UNLOCK ();
 }
+
+

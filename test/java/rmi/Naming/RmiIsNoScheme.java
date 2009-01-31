@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -46,21 +46,21 @@ public class RmiIsNoScheme implements Remote, Serializable {
 
     public static void main(String[] args) {
 
-        System.err.println("\nRegression test for bug 4626311\n");
+	System.err.println("\nRegression test for bug 4626311\n");
 
-        try {
-            LocateRegistry.createRegistry(REGISTRY_PORT);
-            Naming.rebind("//:" + REGISTRY_PORT + "/RmiIsNoScheme",
-                          new RmiIsNoScheme());
-            String name = Naming.list("//:" + REGISTRY_PORT)[0];
-            System.err.println("name = " + name);
-            if (name.startsWith("rmi:", 0) == false) {
-                System.err.println("TEST PASSED: rmi scheme not present");
-            } else {
-                throw new RuntimeException("TEST FAILED: rmi scheme present!");
-            }
-        } catch (Exception e) {
-            TestLibrary.bomb(e);
-        }
+	try {
+	    LocateRegistry.createRegistry(REGISTRY_PORT);
+	    Naming.rebind("//:" + REGISTRY_PORT + "/RmiIsNoScheme",
+			  new RmiIsNoScheme());
+	    String name = Naming.list("//:" + REGISTRY_PORT)[0];
+	    System.err.println("name = " + name);
+	    if (name.startsWith("rmi:", 0) == false) {
+		System.err.println("TEST PASSED: rmi scheme not present");
+	    } else {
+		throw new RuntimeException("TEST FAILED: rmi scheme present!");
+	    }
+	} catch (Exception e) {
+	    TestLibrary.bomb(e);
+	}
     }
 }

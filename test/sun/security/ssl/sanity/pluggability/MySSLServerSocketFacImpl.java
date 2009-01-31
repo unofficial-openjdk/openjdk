@@ -30,32 +30,32 @@ import javax.net.*;
 import javax.net.ssl.*;
 
 public class MySSLServerSocketFacImpl extends SSLServerSocketFactory {
-
+	
     // default to custom ones
     private static String[] supportedCS = CipherSuites.CUSTOM;
 
     public static void useStandardCipherSuites() {
-        supportedCS = CipherSuites.STANDARD;
+	supportedCS = CipherSuites.STANDARD;
     }
     public static void useCustomCipherSuites() {
         supportedCS = CipherSuites.CUSTOM;
     }
 
     public MySSLServerSocketFacImpl() {
-        super();
+	super();
     }
     public String[] getDefaultCipherSuites() {
-        return (String[]) supportedCS.clone();
+	return (String[]) supportedCS.clone();
     }
     public String[] getSupportedCipherSuites() {
-        return getDefaultCipherSuites();
+	return getDefaultCipherSuites();
     }
     public ServerSocket createServerSocket(int port) { return null; }
-    public ServerSocket createServerSocket(int port, int backlog) {
-        return null;
+    public ServerSocket createServerSocket(int port, int backlog) { 
+	return null; 
     }
-    public ServerSocket createServerSocket(int port, int backlog,
-                                           InetAddress ifAddress) {
-        return null;
+    public ServerSocket createServerSocket(int port, int backlog, 
+					   InetAddress ifAddress) { 
+	return null; 
     }
 }

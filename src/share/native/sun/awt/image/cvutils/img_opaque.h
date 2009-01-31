@@ -41,18 +41,18 @@
  * to conditionally compile code that is only needed if alpha values
  * are going to be used.
  */
-#define IfAlpha(statements)     /* Omit alpha handling code */
+#define IfAlpha(statements)	/* Omit alpha handling code */
 
 #define DeclareAlphaVars
 
-#define InitAlpha(cvdata, dstY, dstX1, dstX2)                   \
+#define InitAlpha(cvdata, dstY, dstX1, dstX2)			\
     do {} while (0)
 
-#define StartAlphaRow(cvdata, DSTX1, DSTY)                      \
+#define StartAlphaRow(cvdata, DSTX1, DSTY)			\
     do {} while (0)
 
-#define ApplyAlpha(cvdata, dstX, dstY, alpha)                   \
+#define ApplyAlpha(cvdata, dstX, dstY, alpha)			\
     do {} while (0)
 
-#define EndMaskLine()                                           \
+#define EndMaskLine()						\
     do {} while (0)

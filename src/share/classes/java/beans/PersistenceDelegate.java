@@ -82,6 +82,7 @@ package java.beans;
  *
  * @since 1.4
  *
+ * @version %I% %G%
  * @author Philip Milne
  */
 
@@ -198,8 +199,8 @@ public abstract class PersistenceDelegate {
      * @param out The stream to which any initialization statements should be written.
      */
     protected void initialize(Class<?> type,
-                              Object oldInstance, Object newInstance,
-                              Encoder out)
+			      Object oldInstance, Object newInstance,
+			      Encoder out)
     {
         Class superType = type.getSuperclass();
         PersistenceDelegate info = out.getPersistenceDelegate(superType);

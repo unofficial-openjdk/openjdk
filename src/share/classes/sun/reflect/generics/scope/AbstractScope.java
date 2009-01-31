@@ -38,7 +38,7 @@ import java.lang.reflect.TypeVariable;
  * <p> To subclass this, all one needs to do is implement
  * <tt>computeEnclosingScope</tt> and the subclass' constructor.
  */
-public abstract class AbstractScope<D extends GenericDeclaration>
+public abstract class AbstractScope<D extends GenericDeclaration> 
     implements Scope {
 
     private D recvr; // the declaration whose scope this instance represents
@@ -71,8 +71,8 @@ public abstract class AbstractScope<D extends GenericDeclaration>
      * @return the enclosing scope
      */
     protected Scope getEnclosingScope(){
-        if (enclosingScope == null) {enclosingScope = computeEnclosingScope();}
-        return enclosingScope;
+	if (enclosingScope == null) {enclosingScope = computeEnclosingScope();}
+	return enclosingScope;
     }
 
     /**
@@ -83,10 +83,10 @@ public abstract class AbstractScope<D extends GenericDeclaration>
      * @return the requested type variable, if found
      */
     public TypeVariable<?> lookup(String name) {
-        TypeVariable[] tas = getRecvr().getTypeParameters();
-        for (TypeVariable/*<?>*/ tv : tas) {
-            if (tv.getName().equals(name)) {return tv;}
-        }
-        return getEnclosingScope().lookup(name);
+	TypeVariable[] tas = getRecvr().getTypeParameters();	
+	for (TypeVariable/*<?>*/ tv : tas) {
+	    if (tv.getName().equals(name)) {return tv;}
+	}
+	return getEnclosingScope().lookup(name);
     }
 }

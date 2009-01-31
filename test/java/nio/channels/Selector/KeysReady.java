@@ -40,12 +40,12 @@ public class KeysReady {
     static final String DAYTIME_HOST = TestUtil.HOST;
 
     static void test() throws Exception {
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-                                    DAYTIME_PORT);
-        SocketChannel sc = SocketChannel.open();
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+				    DAYTIME_PORT);
+	SocketChannel sc = SocketChannel.open();
         sc.configureBlocking(false);
-        sc.connect(isa);
+	sc.connect(isa);
 
         // Prepare a selector
         Selector selector = SelectorProvider.provider().openSelector();
@@ -56,11 +56,11 @@ public class KeysReady {
             if (keysAdded > 0)
                 throw new Exception("Same key reported added twice");
         }
-        sc.close();
+	sc.close();
     }
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
 }

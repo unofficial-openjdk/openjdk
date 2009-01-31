@@ -28,22 +28,22 @@ public class Applet1PrintServiceLookup extends PrintServiceLookup {
     PrintService defaultPrintService = null;
 
     public synchronized PrintService[] getPrintServices() {
-        PrintService []printServices = new PrintService[1];
-        printServices[0] = getDefaultPrintService();
-        return printServices;
+	PrintService []printServices = new PrintService[1];
+	printServices[0] = getDefaultPrintService();
+	return printServices;
     }
 
     public PrintService[] getPrintServices(DocFlavor flavor,
-                                           AttributeSet attributes) {
+					   AttributeSet attributes) {
 
         return getPrintServices();
     }
 
-    public MultiDocPrintService[]
-        getMultiDocPrintServices(DocFlavor[] flavors,
-                                 AttributeSet attributes) {
-
-        return new MultiDocPrintService[0];
+    public MultiDocPrintService[] 
+	getMultiDocPrintServices(DocFlavor[] flavors,
+				 AttributeSet attributes) {
+  
+	return new MultiDocPrintService[0];
     }
 
 

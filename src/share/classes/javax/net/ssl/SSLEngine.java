@@ -37,20 +37,20 @@ import java.nio.ReadOnlyBufferException;
  * <P>
  * The secure communications modes include: <UL>
  *
- *      <LI> <em>Integrity Protection</em>.  SSL/TLS protects against
- *      modification of messages by an active wiretapper.
+ *	<LI> <em>Integrity Protection</em>.  SSL/TLS protects against
+ *	modification of messages by an active wiretapper.
  *
- *      <LI> <em>Authentication</em>.  In most modes, SSL/TLS provides
- *      peer authentication.  Servers are usually authenticated, and
- *      clients may be authenticated as requested by servers.
+ *	<LI> <em>Authentication</em>.  In most modes, SSL/TLS provides
+ *	peer authentication.  Servers are usually authenticated, and
+ *	clients may be authenticated as requested by servers.
  *
- *      <LI> <em>Confidentiality (Privacy Protection)</em>.  In most
- *      modes, SSL/TLS encrypts data being sent between client and
- *      server.  This protects the confidentiality of data, so that
- *      passive wiretappers won't see sensitive data such as financial
- *      information or personal information of many kinds.
+ *	<LI> <em>Confidentiality (Privacy Protection)</em>.  In most
+ *	modes, SSL/TLS encrypts data being sent between client and
+ *	server.  This protects the confidentiality of data, so that
+ *	passive wiretappers won't see sensitive data such as financial
+ *	information or personal information of many kinds.
  *
- *      </UL>
+ *	</UL>
  *
  * These kinds of protection are specified by a "cipher suite", which
  * is a combination of cryptographic algorithms used by a given SSL
@@ -296,17 +296,17 @@ import java.nio.ReadOnlyBufferException;
  * about when managing cipher suites:
  *
  * <UL>
- *      <LI> <em>Supported</em> cipher suites:  all the suites which are
- *      supported by the SSL implementation.  This list is reported
- *      using {@link #getSupportedCipherSuites()}.
+ *	<LI> <em>Supported</em> cipher suites:  all the suites which are
+ *	supported by the SSL implementation.  This list is reported
+ *	using {@link #getSupportedCipherSuites()}.
  *
- *      <LI> <em>Enabled</em> cipher suites, which may be fewer than
- *      the full set of supported suites.  This group is set using the
- *      {@link #setEnabledCipherSuites(String [])} method, and
- *      queried using the {@link #getEnabledCipherSuites()} method.
- *      Initially, a default set of cipher suites will be enabled on a
- *      new engine that represents the minimum suggested
- *      configuration.
+ *	<LI> <em>Enabled</em> cipher suites, which may be fewer than
+ *	the full set of supported suites.  This group is set using the
+ *	{@link #setEnabledCipherSuites(String [])} method, and
+ *	queried using the {@link #getEnabledCipherSuites()} method.
+ *	Initially, a default set of cipher suites will be enabled on a
+ *	new engine that represents the minimum suggested
+ *	configuration.
  * </UL>
  *
  * Implementation defaults require that only cipher suites which
@@ -336,26 +336,26 @@ import java.nio.ReadOnlyBufferException;
  * There are two concurrency issues to be aware of:
  *
  * <OL>
- *      <li>The <code>wrap()</code> and <code>unwrap()</code> methods
- *      may execute concurrently of each other.
+ *	<li>The <code>wrap()</code> and <code>unwrap()</code> methods
+ *	may execute concurrently of each other.
  *
- *      <li> The SSL/TLS protocols employ ordered packets.
- *      Applications must take care to ensure that generated packets
- *      are delivered in sequence.  If packets arrive
- *      out-of-order, unexpected or fatal results may occur.
+ *	<li> The SSL/TLS protocols employ ordered packets.
+ *	Applications must take care to ensure that generated packets
+ *	are delivered in sequence.  If packets arrive
+ *	out-of-order, unexpected or fatal results may occur.
  * <P>
  *      For example:
  * <P>
- *      <pre>
- *              synchronized (outboundLock) {
- *                  sslEngine.wrap(src, dst);
- *                  outboundQueue.put(dst);
- *              }
- *      </pre>
+ *	<pre>
+ *		synchronized (outboundLock) {
+ *		    sslEngine.wrap(src, dst);
+ *		    outboundQueue.put(dst);
+ *		}
+ *	</pre>
  *
- *      As a corollary, two threads must not attempt to call the same method
- *      (either <code>wrap()</code> or <code>unwrap()</code>) concurrently,
- *      because there is no way to guarantee the eventual packet ordering.
+ *	As a corollary, two threads must not attempt to call the same method
+ *	(either <code>wrap()</code> or <code>unwrap()</code>) concurrently,
+ *	because there is no way to guarantee the eventual packet ordering.
  * </OL>
  *
  * @see SSLContext
@@ -365,6 +365,7 @@ import java.nio.ReadOnlyBufferException;
  * @see java.net.Socket
  *
  * @since 1.5
+ * @version %I%
  * @author Brad R. Wetmore
  */
 
@@ -377,8 +378,8 @@ public abstract class SSLEngine {
      * Constructor for an <code>SSLEngine</code> providing no hints
      * for an internal session reuse strategy.
      *
-     * @see     SSLContext#createSSLEngine()
-     * @see     SSLSessionContext
+     * @see	SSLContext#createSSLEngine()
+     * @see	SSLSessionContext
      */
     protected SSLEngine() {
     }
@@ -397,14 +398,14 @@ public abstract class SSLEngine {
      * The parameters are not authenticated by the
      * <code>SSLEngine</code>.
      *
-     * @param   peerHost the name of the peer host
-     * @param   peerPort the port number of the peer
-     * @see     SSLContext#createSSLEngine(String, int)
-     * @see     SSLSessionContext
+     * @param	peerHost the name of the peer host
+     * @param	peerPort the port number of the peer
+     * @see	SSLContext#createSSLEngine(String, int)
+     * @see	SSLSessionContext
      */
     protected SSLEngine(String peerHost, int peerPort) {
-        this.peerHost = peerHost;
-        this.peerPort = peerPort;
+	this.peerHost = peerHost;
+	this.peerPort = peerPort;
     }
 
     /**
@@ -413,11 +414,11 @@ public abstract class SSLEngine {
      * Note that the value is not authenticated, and should not be
      * relied upon.
      *
-     * @return  the host name of the peer, or null if nothing is
-     *          available.
+     * @return	the host name of the peer, or null if nothing is
+     *		available.
      */
     public String getPeerHost() {
-        return peerHost;
+	return peerHost;
     }
 
     /**
@@ -426,11 +427,11 @@ public abstract class SSLEngine {
      * Note that the value is not authenticated, and should not be
      * relied upon.
      *
-     * @return  the port number of the peer, or -1 if nothing is
-     *          available.
+     * @return	the port number of the peer, or -1 if nothing is
+     *		available.
      */
     public int getPeerPort() {
-        return peerPort;
+	return peerPort;
     }
 
     /**
@@ -445,28 +446,28 @@ public abstract class SSLEngine {
      * </pre</blockquote>
      *
      * @param   src
-     *          a <code>ByteBuffer</code> containing outbound application data
+     *		a <code>ByteBuffer</code> containing outbound application data
      * @param   dst
-     *          a <code>ByteBuffer</code> to hold outbound network data
+     *		a <code>ByteBuffer</code> to hold outbound network data
      * @return  an <code>SSLEngineResult</code> describing the result
-     *          of this operation.
+     *		of this operation.
      * @throws  SSLException
-     *          A problem was encountered while processing the
-     *          data that caused the <code>SSLEngine</code> to abort.
-     *          See the class description for more information on
-     *          engine closure.
-     * @throws  ReadOnlyBufferException
-     *          if the <code>dst</code> buffer is read-only.
-     * @throws  IllegalArgumentException
-     *          if either <code>src</code> or <code>dst</code>
-     *          is null.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     #wrap(ByteBuffer [], int, int, ByteBuffer)
+     *		A problem was encountered while processing the
+     *		data that caused the <code>SSLEngine</code> to abort.
+     *		See the class description for more information on
+     *		engine closure.
+     * @throws	ReadOnlyBufferException
+     *		if the <code>dst</code> buffer is read-only.
+     * @throws	IllegalArgumentException
+     *		if either <code>src</code> or <code>dst</code>
+     *		is null.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	#wrap(ByteBuffer [], int, int, ByteBuffer)
      */
     public SSLEngineResult wrap(ByteBuffer src,
-            ByteBuffer dst) throws SSLException {
-        return wrap(new ByteBuffer [] { src }, 0, 1, dst);
+	    ByteBuffer dst) throws SSLException {
+	return wrap(new ByteBuffer [] { src }, 0, 1, dst);
     }
 
     /**
@@ -481,32 +482,32 @@ public abstract class SSLEngine {
      * </pre</blockquote>
      *
      * @param   srcs
-     *          an array of <code>ByteBuffers</code> containing the
-     *          outbound application data
+     *		an array of <code>ByteBuffers</code> containing the
+     *		outbound application data
      * @param   dst
-     *          a <code>ByteBuffer</code> to hold outbound network data
+     *		a <code>ByteBuffer</code> to hold outbound network data
      * @return  an <code>SSLEngineResult</code> describing the result
-     *          of this operation.
+     *		of this operation.
      * @throws  SSLException
-     *          A problem was encountered while processing the
-     *          data that caused the <code>SSLEngine</code> to abort.
-     *          See the class description for more information on
-     *          engine closure.
-     * @throws  ReadOnlyBufferException
-     *          if the <code>dst</code> buffer is read-only.
-     * @throws  IllegalArgumentException
-     *          if either <code>srcs</code> or <code>dst</code>
-     *          is null, or if any element in <code>srcs</code> is null.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     #wrap(ByteBuffer [], int, int, ByteBuffer)
+     *		A problem was encountered while processing the
+     *		data that caused the <code>SSLEngine</code> to abort.
+     *		See the class description for more information on
+     *		engine closure.
+     * @throws	ReadOnlyBufferException
+     *		if the <code>dst</code> buffer is read-only.
+     * @throws	IllegalArgumentException
+     *		if either <code>srcs</code> or <code>dst</code>
+     *		is null, or if any element in <code>srcs</code> is null.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	#wrap(ByteBuffer [], int, int, ByteBuffer)
      */
     public SSLEngineResult wrap(ByteBuffer [] srcs,
-            ByteBuffer dst) throws SSLException {
-        if (srcs == null) {
-            throw new IllegalArgumentException("src == null");
-        }
-        return wrap(srcs, 0, srcs.length, dst);
+	    ByteBuffer dst) throws SSLException {
+	if (srcs == null) {
+	    throw new IllegalArgumentException("src == null");
+	}
+	return wrap(srcs, 0, srcs.length, dst);
     }
 
 
@@ -551,42 +552,42 @@ public abstract class SSLEngine {
      * See the class description for more information on engine closure.
      *
      * @param   srcs
-     *          an array of <code>ByteBuffers</code> containing the
-     *          outbound application data
-     * @param   offset
-     *          The offset within the buffer array of the first buffer from
-     *          which bytes are to be retrieved; it must be non-negative
-     *          and no larger than <code>srcs.length</code>
-     * @param   length
-     *          The maximum number of buffers to be accessed; it must be
-     *          non-negative and no larger than
-     *          <code>srcs.length</code>&nbsp;-&nbsp;<code>offset</code>
+     *		an array of <code>ByteBuffers</code> containing the
+     *		outbound application data
+     * @param	offset
+     *		The offset within the buffer array of the first buffer from
+     *		which bytes are to be retrieved; it must be non-negative
+     *		and no larger than <code>srcs.length</code>
+     * @param	length
+     *		The maximum number of buffers to be accessed; it must be
+     *		non-negative and no larger than
+     *		<code>srcs.length</code>&nbsp;-&nbsp;<code>offset</code>
      * @param   dst
-     *          a <code>ByteBuffer</code> to hold outbound network data
+     *		a <code>ByteBuffer</code> to hold outbound network data
      * @return  an <code>SSLEngineResult</code> describing the result
-     *          of this operation.
+     *		of this operation.
      * @throws  SSLException
-     *          A problem was encountered while processing the
-     *          data that caused the <code>SSLEngine</code> to abort.
-     *          See the class description for more information on
-     *          engine closure.
-     * @throws  IndexOutOfBoundsException
-     *          if the preconditions on the <code>offset</code> and
-     *          <code>length</code> parameters do not hold.
-     * @throws  ReadOnlyBufferException
-     *          if the <code>dst</code> buffer is read-only.
-     * @throws  IllegalArgumentException
-     *          if either <code>srcs</code> or <code>dst</code>
-     *          is null, or if any element in the <code>srcs</code>
-     *          subsequence specified is null.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     java.nio.channels.GatheringByteChannel
-     * @see     java.nio.channels.GatheringByteChannel#write(
-     *              ByteBuffer[], int, int)
+     *		A problem was encountered while processing the
+     *		data that caused the <code>SSLEngine</code> to abort.
+     *		See the class description for more information on
+     *		engine closure.
+     * @throws	IndexOutOfBoundsException
+     *		if the preconditions on the <code>offset</code> and
+     *		<code>length</code> parameters do not hold.
+     * @throws	ReadOnlyBufferException
+     *		if the <code>dst</code> buffer is read-only.
+     * @throws	IllegalArgumentException
+     *		if either <code>srcs</code> or <code>dst</code>
+     *		is null, or if any element in the <code>srcs</code>
+     *		subsequence specified is null.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	java.nio.channels.GatheringByteChannel
+     * @see	java.nio.channels.GatheringByteChannel#write(
+     *		    ByteBuffer[], int, int)
      */
     public abstract SSLEngineResult wrap(ByteBuffer [] srcs, int offset,
-            int length, ByteBuffer dst) throws SSLException;
+	    int length, ByteBuffer dst) throws SSLException;
 
     /**
      * Attempts to decode SSL/TLS network data into a plaintext
@@ -600,28 +601,28 @@ public abstract class SSLEngine {
      * </pre</blockquote>
      *
      * @param   src
-     *          a <code>ByteBuffer</code> containing inbound network data.
+     *		a <code>ByteBuffer</code> containing inbound network data.
      * @param   dst
-     *          a <code>ByteBuffer</code> to hold inbound application data.
+     *		a <code>ByteBuffer</code> to hold inbound application data.
      * @return  an <code>SSLEngineResult</code> describing the result
-     *          of this operation.
+     *		of this operation.
      * @throws  SSLException
-     *          A problem was encountered while processing the
-     *          data that caused the <code>SSLEngine</code> to abort.
-     *          See the class description for more information on
-     *          engine closure.
-     * @throws  ReadOnlyBufferException
-     *          if the <code>dst</code> buffer is read-only.
-     * @throws  IllegalArgumentException
-     *          if either <code>src</code> or <code>dst</code>
-     *          is null.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     #unwrap(ByteBuffer, ByteBuffer [], int, int)
+     *		A problem was encountered while processing the
+     *		data that caused the <code>SSLEngine</code> to abort.
+     *		See the class description for more information on
+     *		engine closure.
+     * @throws	ReadOnlyBufferException
+     *		if the <code>dst</code> buffer is read-only.
+     * @throws	IllegalArgumentException
+     *		if either <code>src</code> or <code>dst</code>
+     *		is null.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	#unwrap(ByteBuffer, ByteBuffer [], int, int)
      */
     public SSLEngineResult unwrap(ByteBuffer src,
-            ByteBuffer dst) throws SSLException {
-        return unwrap(src, new ByteBuffer [] { dst }, 0, 1);
+	    ByteBuffer dst) throws SSLException {
+	return unwrap(src, new ByteBuffer [] { dst }, 0, 1);
     }
 
     /**
@@ -636,32 +637,32 @@ public abstract class SSLEngine {
      * </pre</blockquote>
      *
      * @param   src
-     *          a <code>ByteBuffer</code> containing inbound network data.
+     *		a <code>ByteBuffer</code> containing inbound network data.
      * @param   dsts
-     *          an array of <code>ByteBuffer</code>s to hold inbound
-     *          application data.
+     *		an array of <code>ByteBuffer</code>s to hold inbound
+     *		application data.
      * @return  an <code>SSLEngineResult</code> describing the result
-     *          of this operation.
+     *		of this operation.
      * @throws  SSLException
-     *          A problem was encountered while processing the
-     *          data that caused the <code>SSLEngine</code> to abort.
-     *          See the class description for more information on
-     *          engine closure.
-     * @throws  ReadOnlyBufferException
-     *          if any of the <code>dst</code> buffers are read-only.
-     * @throws  IllegalArgumentException
-     *          if either <code>src</code> or <code>dsts</code>
-     *          is null, or if any element in <code>dsts</code> is null.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     #unwrap(ByteBuffer, ByteBuffer [], int, int)
+     *		A problem was encountered while processing the
+     *		data that caused the <code>SSLEngine</code> to abort.
+     *		See the class description for more information on
+     *		engine closure.
+     * @throws	ReadOnlyBufferException
+     *		if any of the <code>dst</code> buffers are read-only.
+     * @throws	IllegalArgumentException
+     *		if either <code>src</code> or <code>dsts</code>
+     *		is null, or if any element in <code>dsts</code> is null.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	#unwrap(ByteBuffer, ByteBuffer [], int, int)
      */
     public SSLEngineResult unwrap(ByteBuffer src,
-            ByteBuffer [] dsts) throws SSLException {
-        if (dsts == null) {
-            throw new IllegalArgumentException("dsts == null");
-        }
-        return unwrap(src, dsts, 0, dsts.length);
+	    ByteBuffer [] dsts) throws SSLException {
+	if (dsts == null) {
+	    throw new IllegalArgumentException("dsts == null");
+	}
+	return unwrap(src, dsts, 0, dsts.length);
     }
 
     /**
@@ -710,42 +711,42 @@ public abstract class SSLEngine {
      * See the class description for more information on engine closure.
      *
      * @param   src
-     *          a <code>ByteBuffer</code> containing inbound network data.
+     *		a <code>ByteBuffer</code> containing inbound network data.
      * @param   dsts
-     *          an array of <code>ByteBuffer</code>s to hold inbound
-     *          application data.
-     * @param   offset
-     *          The offset within the buffer array of the first buffer from
-     *          which bytes are to be transferred; it must be non-negative
-     *          and no larger than <code>dsts.length</code>.
-     * @param   length
-     *          The maximum number of buffers to be accessed; it must be
-     *          non-negative and no larger than
-     *          <code>dsts.length</code>&nbsp;-&nbsp;<code>offset</code>.
+     *		an array of <code>ByteBuffer</code>s to hold inbound
+     *		application data.
+     * @param	offset
+     *		The offset within the buffer array of the first buffer from
+     *		which bytes are to be transferred; it must be non-negative
+     *		and no larger than <code>dsts.length</code>.
+     * @param	length
+     *		The maximum number of buffers to be accessed; it must be
+     *		non-negative and no larger than
+     *		<code>dsts.length</code>&nbsp;-&nbsp;<code>offset</code>.
      * @return  an <code>SSLEngineResult</code> describing the result
-     *          of this operation.
+     *		of this operation.
      * @throws  SSLException
-     *          A problem was encountered while processing the
-     *          data that caused the <code>SSLEngine</code> to abort.
-     *          See the class description for more information on
-     *          engine closure.
+     *		A problem was encountered while processing the
+     *		data that caused the <code>SSLEngine</code> to abort.
+     *		See the class description for more information on
+     *		engine closure.
      * @throws  IndexOutOfBoundsException
-     *          If the preconditions on the <code>offset</code> and
-     *          <code>length</code> parameters do not hold.
-     * @throws  ReadOnlyBufferException
-     *          if any of the <code>dst</code> buffers are read-only.
-     * @throws  IllegalArgumentException
-     *          if either <code>src</code> or <code>dsts</code>
-     *          is null, or if any element in the <code>dsts</code>
-     *          subsequence specified is null.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     java.nio.channels.ScatteringByteChannel
-     * @see     java.nio.channels.ScatteringByteChannel#read(
-     *              ByteBuffer[], int, int)
+     *		If the preconditions on the <code>offset</code> and
+     *		<code>length</code> parameters do not hold.
+     * @throws	ReadOnlyBufferException
+     *		if any of the <code>dst</code> buffers are read-only.
+     * @throws	IllegalArgumentException
+     *		if either <code>src</code> or <code>dsts</code>
+     *		is null, or if any element in the <code>dsts</code>
+     *		subsequence specified is null.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	java.nio.channels.ScatteringByteChannel
+     * @see	java.nio.channels.ScatteringByteChannel#read(
+     *		    ByteBuffer[], int, int)
      */
     public abstract SSLEngineResult unwrap(ByteBuffer src,
-            ByteBuffer [] dsts, int offset, int length) throws SSLException;
+	    ByteBuffer [] dsts, int offset, int length) throws SSLException;
 
 
     /**
@@ -769,8 +770,8 @@ public abstract class SSLEngine {
      * <P>
      * Multiple delegated tasks can be run in parallel.
      *
-     * @return  a delegated <code>Runnable</code> task, or null
-     *          if none are available.
+     * @return	a delegated <code>Runnable</code> task, or null
+     *		if none are available.
      */
     public abstract Runnable getDelegatedTask();
 
@@ -800,12 +801,12 @@ public abstract class SSLEngine {
      * {@link #wrap(ByteBuffer, ByteBuffer) wrap()} should be
      * called to flush any remaining handshake data.
      *
-     * @throws  SSLException
-     *          if this engine has not received the proper SSL/TLS close
-     *          notification message from the peer.
+     * @throws	SSLException
+     *		if this engine has not received the proper SSL/TLS close
+     *		notification message from the peer.
      *
-     * @see     #isInboundDone()
-     * @see     #isOutboundDone()
+     * @see	#isInboundDone()
+     * @see	#isOutboundDone()
      */
     public abstract void closeInbound() throws SSLException;
 
@@ -815,9 +816,9 @@ public abstract class SSLEngine {
      * accept any more inbound data messages.
      *
      * @return  true if the <code>SSLEngine</code> will not
-     *          consume anymore network data (and by implication,
-     *          will not produce any more application data.)
-     * @see     #closeInbound()
+     *		consume anymore network data (and by implication,
+     *		will not produce any more application data.)
+     * @see	#closeInbound()
      */
     public abstract boolean isInboundDone();
 
@@ -832,7 +833,7 @@ public abstract class SSLEngine {
      * {@link #wrap(ByteBuffer, ByteBuffer)} should be
      * called to flush any remaining handshake data.
      *
-     * @see     #isOutboundDone()
+     * @see	#isOutboundDone()
      */
     public abstract void closeOutbound();
 
@@ -847,10 +848,10 @@ public abstract class SSLEngine {
      * this method returns true, no more outbound data will be created.
      *
      * @return  true if the <code>SSLEngine</code> will not produce
-     *          any more network data
+     *		any more network data
      *
-     * @see     #closeOutbound()
-     * @see     #closeInbound()
+     * @see	#closeOutbound()
+     * @see	#closeInbound()
      */
     public abstract boolean isOutboundDone();
 
@@ -862,9 +863,9 @@ public abstract class SSLEngine {
      * do not meet quality of service requirements for those defaults.  Such
      * cipher suites might be useful in specialized applications.
      *
-     * @return  an array of cipher suite names
-     * @see     #getEnabledCipherSuites()
-     * @see     #setEnabledCipherSuites(String [])
+     * @return	an array of cipher suite names
+     * @see	#getEnabledCipherSuites()
+     * @see	#setEnabledCipherSuites(String [])
      */
     public abstract String [] getSupportedCipherSuites();
 
@@ -880,9 +881,9 @@ public abstract class SSLEngine {
      * certificates/private keys for the suite are not available, or an
      * anonymous suite is enabled but authentication is required.)
      *
-     * @return  an array of cipher suite names
-     * @see     #getSupportedCipherSuites()
-     * @see     #setEnabledCipherSuites(String [])
+     * @return	an array of cipher suite names
+     * @see	#getSupportedCipherSuites()
+     * @see	#setEnabledCipherSuites(String [])
      */
     public abstract String [] getEnabledCipherSuites();
 
@@ -898,12 +899,12 @@ public abstract class SSLEngine {
      * See {@link #getEnabledCipherSuites()} for more information
      * on why a specific cipher suite may never be used on a engine.
      *
-     * @param   suites Names of all the cipher suites to enable
-     * @throws  IllegalArgumentException when one or more of the ciphers
-     *          named by the parameter is not supported, or when the
-     *          parameter is null.
-     * @see     #getSupportedCipherSuites()
-     * @see     #getEnabledCipherSuites()
+     * @param	suites Names of all the cipher suites to enable
+     * @throws	IllegalArgumentException when one or more of the ciphers
+     *		named by the parameter is not supported, or when the
+     *		parameter is null.
+     * @see	#getSupportedCipherSuites()
+     * @see	#getEnabledCipherSuites()
      */
     public abstract void setEnabledCipherSuites(String suites []);
 
@@ -912,7 +913,7 @@ public abstract class SSLEngine {
      * Returns the names of the protocols which could be enabled for use
      * with this <code>SSLEngine</code>.
      *
-     * @return  an array of protocols supported
+     * @return	an array of protocols supported
      */
     public abstract String [] getSupportedProtocols();
 
@@ -921,8 +922,8 @@ public abstract class SSLEngine {
      * Returns the names of the protocol versions which are currently
      * enabled for use with this <code>SSLEngine</code>.
      *
-     * @return  an array of protocols
-     * @see     #setEnabledProtocols(String [])
+     * @return	an array of protocols
+     * @see	#setEnabledProtocols(String [])
      */
     public abstract String [] getEnabledProtocols();
 
@@ -935,11 +936,11 @@ public abstract class SSLEngine {
      * only protocols listed in the <code>protocols</code> parameter
      * are enabled for use.
      *
-     * @param   protocols Names of all the protocols to enable.
-     * @throws  IllegalArgumentException when one or more of
-     *          the protocols named by the parameter is not supported or
-     *          when the protocols parameter is null.
-     * @see     #getEnabledProtocols()
+     * @param	protocols Names of all the protocols to enable.
+     * @throws	IllegalArgumentException when one or more of
+     *		the protocols named by the parameter is not supported or
+     *		when the protocols parameter is null.
+     * @see	#getEnabledProtocols()
      */
     public abstract void setEnabledProtocols(String protocols[]);
 
@@ -961,8 +962,8 @@ public abstract class SSLEngine {
      * a session object which reports an invalid cipher suite of
      * "SSL_NULL_WITH_NULL_NULL".
      *
-     * @return  the <code>SSLSession</code> for this <code>SSLEngine</code>
-     * @see     SSLSession
+     * @return	the <code>SSLSession</code> for this <code>SSLEngine</code>
+     * @see	SSLSession
      */
     public abstract SSLSession getSession();
 
@@ -988,14 +989,14 @@ public abstract class SSLEngine {
      * Some protocols may not support multiple handshakes on an existing
      * engine and may throw an <code>SSLException</code>.
      *
-     * @throws  SSLException
-     *          if a problem was encountered while signaling the
-     *          <code>SSLEngine</code> to begin a new handshake.
-     *          See the class description for more information on
-     *          engine closure.
-     * @throws  IllegalStateException if the client/server mode
-     *          has not yet been set.
-     * @see     SSLSession#invalidate()
+     * @throws	SSLException
+     *		if a problem was encountered while signaling the
+     *		<code>SSLEngine</code> to begin a new handshake.
+     *		See the class description for more information on
+     *		engine closure.
+     * @throws	IllegalStateException if the client/server mode
+     *		has not yet been set.
+     * @see	SSLSession#invalidate()
      */
     public abstract void beginHandshake() throws SSLException;
 
@@ -1003,7 +1004,7 @@ public abstract class SSLEngine {
     /**
      * Returns the current handshake status for this <code>SSLEngine</code>.
      *
-     * @return  the current <code>SSLEngineResult.HandshakeStatus</code>.
+     * @return	the current <code>SSLEngineResult.HandshakeStatus</code>.
      */
     public abstract SSLEngineResult.HandshakeStatus getHandshakeStatus();
 
@@ -1019,11 +1020,11 @@ public abstract class SSLEngine {
      * Servers normally authenticate themselves, and clients
      * are not required to do so.
      *
-     * @param   mode true if the engine should start its handshaking
-     *          in "client" mode
-     * @throws  IllegalArgumentException if a mode change is attempted
-     *          after the initial handshake has begun.
-     * @see     #getUseClientMode()
+     * @param	mode true if the engine should start its handshaking
+     *		in "client" mode
+     * @throws	IllegalArgumentException if a mode change is attempted
+     *		after the initial handshake has begun.
+     * @see	#getUseClientMode()
      */
     public abstract void setUseClientMode(boolean mode);
 
@@ -1032,9 +1033,9 @@ public abstract class SSLEngine {
      * Returns true if the engine is set to use client mode when
      * handshaking.
      *
-     * @return  true if the engine should do handshaking
-     *          in "client" mode
-     * @see     #setUseClientMode(boolean)
+     * @return	true if the engine should do handshaking
+     *		in "client" mode
+     * @see	#setUseClientMode(boolean)
      */
     public abstract boolean getUseClientMode();
 
@@ -1058,12 +1059,12 @@ public abstract class SSLEngine {
      * Calling this method overrides any previous setting made by
      * this method or {@link #setWantClientAuth(boolean)}.
      *
-     * @param   need set to true if client authentication is required,
-     *          or false if no client authentication is desired.
-     * @see     #getNeedClientAuth()
-     * @see     #setWantClientAuth(boolean)
-     * @see     #getWantClientAuth()
-     * @see     #setUseClientMode(boolean)
+     * @param	need set to true if client authentication is required,
+     *		or false if no client authentication is desired.
+     * @see	#getNeedClientAuth()
+     * @see	#setWantClientAuth(boolean)
+     * @see	#getWantClientAuth()
+     * @see	#setUseClientMode(boolean)
      */
     public abstract void setNeedClientAuth(boolean need);
 
@@ -1072,18 +1073,18 @@ public abstract class SSLEngine {
      * Returns true if the engine will <i>require</i> client authentication.
      * This option is only useful to engines in the server mode.
      *
-     * @return  true if client authentication is required,
-     *          or false if no client authentication is desired.
-     * @see     #setNeedClientAuth(boolean)
-     * @see     #setWantClientAuth(boolean)
-     * @see     #getWantClientAuth()
-     * @see     #setUseClientMode(boolean)
+     * @return	true if client authentication is required,
+     *		or false if no client authentication is desired.
+     * @see	#setNeedClientAuth(boolean)
+     * @see	#setWantClientAuth(boolean)
+     * @see	#getWantClientAuth()
+     * @see	#setUseClientMode(boolean)
      */
     public abstract boolean getNeedClientAuth();
 
 
     /**
-     * Configures the engine to <i>request</i> client authentication.
+     * Configures the engine to <i>request</i> client authentication. 
      * This option is only useful for engines in the server mode.
      * <P>
      * An engine's client authentication setting is one of the following:
@@ -1100,12 +1101,12 @@ public abstract class SSLEngine {
      * Calling this method overrides any previous setting made by
      * this method or {@link #setNeedClientAuth(boolean)}.
      *
-     * @param   want set to true if client authentication is requested,
-     *          or false if no client authentication is desired.
-     * @see     #getWantClientAuth()
-     * @see     #setNeedClientAuth(boolean)
-     * @see     #getNeedClientAuth()
-     * @see     #setUseClientMode(boolean)
+     * @param	want set to true if client authentication is requested,
+     *		or false if no client authentication is desired.
+     * @see	#getWantClientAuth()
+     * @see	#setNeedClientAuth(boolean)
+     * @see	#getNeedClientAuth()
+     * @see	#setUseClientMode(boolean)
      */
     public abstract void setWantClientAuth(boolean want);
 
@@ -1114,12 +1115,12 @@ public abstract class SSLEngine {
      * Returns true if the engine will <i>request</i> client authentication.
      * This option is only useful for engines in the server mode.
      *
-     * @return  true if client authentication is requested,
-     *          or false if no client authentication is desired.
-     * @see     #setNeedClientAuth(boolean)
-     * @see     #getNeedClientAuth()
-     * @see     #setWantClientAuth(boolean)
-     * @see     #setUseClientMode(boolean)
+     * @return	true if client authentication is requested,
+     *		or false if no client authentication is desired.
+     * @see	#setNeedClientAuth(boolean)
+     * @see	#getNeedClientAuth()
+     * @see	#setWantClientAuth(boolean)
+     * @see	#setUseClientMode(boolean)
      */
     public abstract boolean getWantClientAuth();
 
@@ -1130,10 +1131,10 @@ public abstract class SSLEngine {
      * existing sessions to resume, there will be no successful
      * handshaking.
      *
-     * @param   flag true indicates that sessions may be created; this
-     *          is the default.  false indicates that an existing session
-     *          must be resumed
-     * @see     #getEnableSessionCreation()
+     * @param	flag true indicates that sessions may be created; this
+     *		is the default.  false indicates that an existing session
+     *		must be resumed
+     * @see	#getEnableSessionCreation()
      */
     public abstract void setEnableSessionCreation(boolean flag);
 
@@ -1141,10 +1142,10 @@ public abstract class SSLEngine {
     /**
      * Returns true if new SSL sessions may be established by this engine.
      *
-     * @return  true indicates that sessions may be created; this
-     *          is the default.  false indicates that an existing session
-     *          must be resumed
-     * @see     #setEnableSessionCreation(boolean)
+     * @return	true indicates that sessions may be created; this
+     *		is the default.  false indicates that an existing session
+     *		must be resumed
+     * @see	#setEnableSessionCreation(boolean)
      */
     public abstract boolean getEnableSessionCreation();
 
@@ -1157,15 +1158,15 @@ public abstract class SSLEngine {
      * @since 1.6
      */
     public SSLParameters getSSLParameters() {
-        SSLParameters params = new SSLParameters();
-        params.setCipherSuites(getEnabledCipherSuites());
-        params.setProtocols(getEnabledProtocols());
-        if (getNeedClientAuth()) {
-            params.setNeedClientAuth(true);
-        } else if (getWantClientAuth()) {
-            params.setWantClientAuth(true);
-        }
-        return params;
+	SSLParameters params = new SSLParameters();
+	params.setCipherSuites(getEnabledCipherSuites());
+	params.setProtocols(getEnabledProtocols());
+	if (getNeedClientAuth()) {
+	    params.setNeedClientAuth(true);
+	} else if (getWantClientAuth()) {
+	    params.setWantClientAuth(true);
+	}
+	return params;
     }
 
     /**
@@ -1190,22 +1191,22 @@ public abstract class SSLEngine {
      * @since 1.6
      */
     public void setSSLParameters(SSLParameters params) {
-        String[] s;
-        s = params.getCipherSuites();
-        if (s != null) {
-            setEnabledCipherSuites(s);
-        }
-        s = params.getProtocols();
-        if (s != null) {
-            setEnabledProtocols(s);
-        }
-        if (params.getNeedClientAuth()) {
-            setNeedClientAuth(true);
-        } else if (params.getWantClientAuth()) {
-            setWantClientAuth(true);
-        } else {
-            setWantClientAuth(false);
-        }
+	String[] s;
+	s = params.getCipherSuites();
+	if (s != null) {
+	    setEnabledCipherSuites(s);
+	}
+	s = params.getProtocols();
+	if (s != null) {
+	    setEnabledProtocols(s);
+	}
+	if (params.getNeedClientAuth()) {
+	    setNeedClientAuth(true);
+	} else if (params.getWantClientAuth()) {
+	    setWantClientAuth(true);
+	} else {
+	    setWantClientAuth(false);
+	}
     }
 
 }

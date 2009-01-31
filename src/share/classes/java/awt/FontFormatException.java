@@ -26,10 +26,11 @@
 package java.awt;
 
 /**
- * Thrown by method createFont in the <code>Font</code> class to indicate
- * that the specified font is bad.
+ * Thrown by method createFont in the <code>Font</code> class to indicate 
+ * that the specified font is bad. 
  *
  * @author  Parry Kejriwal
+ * @version %I%, %G%
  * @see     java.awt.Font
  * @since   1.3
  */

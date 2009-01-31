@@ -22,12 +22,16 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef MLIB_STATUS_H
 #define MLIB_STATUS_H
 
-#ifdef  __cplusplus
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_status.h	1.11	98/06/26 SMI"
+#endif /* __SUNPRO_C */
+
+#ifdef	__cplusplus
 extern "C" {
 #endif
 
@@ -38,8 +42,8 @@ typedef enum {
   MLIB_OUTOFRANGE  = 3
 } mlib_status;
 
-#ifdef  __cplusplus
+#ifdef	__cplusplus
 }
 #endif
 
-#endif  /* MLIB_STATUS_H */
+#endif	/* MLIB_STATUS_H */

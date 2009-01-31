@@ -37,9 +37,9 @@ import sun.awt.AppContext;
  * graphics device has one or more {@link GraphicsConfiguration} objects
  * associated with it.  These objects specify the different configurations
  * in which the <code>GraphicsDevice</code> can be used.
- * <p>
+ * <p>  
  * In a multi-screen environment, the <code>GraphicsConfiguration</code>
- * objects can be used to render components on multiple screens.  The
+ * objects can be used to render components on multiple screens.  The 
  * following code sample demonstrates how to create a <code>JFrame</code>
  * object for each <code>GraphicsConfiguration</code> on each screen
  * device in the <code>GraphicsEnvironment</code>:
@@ -47,19 +47,19 @@ import sun.awt.AppContext;
  *   GraphicsEnvironment ge = GraphicsEnvironment.
  *   getLocalGraphicsEnvironment();
  *   GraphicsDevice[] gs = ge.getScreenDevices();
- *   for (int j = 0; j < gs.length; j++) {
+ *   for (int j = 0; j < gs.length; j++) { 
  *      GraphicsDevice gd = gs[j];
  *      GraphicsConfiguration[] gc =
- *      gd.getConfigurations();
+ * 	gd.getConfigurations();
  *      for (int i=0; i < gc.length; i++) {
  *         JFrame f = new
  *         JFrame(gs[j].getDefaultConfiguration());
- *         Canvas c = new Canvas(gc[i]);
+ *         Canvas c = new Canvas(gc[i]); 
  *         Rectangle gcBounds = gc[i].getBounds();
  *         int xoffs = gcBounds.x;
  *         int yoffs = gcBounds.y;
- *         f.getContentPane().add(c);
- *         f.setLocation((i*50)+xoffs, (i*60)+yoffs);
+ *	   f.getContentPane().add(c);
+ *	   f.setLocation((i*50)+xoffs, (i*60)+yoffs);
  *         f.show();
  *      }
  *   }
@@ -71,18 +71,19 @@ import sun.awt.AppContext;
  *
  * @see GraphicsEnvironment
  * @see GraphicsConfiguration
+ * @version %I%, %G%
  */
 public abstract class GraphicsDevice {
 
     private Window fullScreenWindow;
     private AppContext fullScreenAppContext; // tracks which AppContext
-                                             // created the FS window
-    // this lock is used for making synchronous changes to the AppContext's
+					     // created the FS window
+    // this lock is used for making synchronous changes to the AppContext's 
     // current full screen window
     private final Object fsAppContextLock = new Object();
-
+    
     private Rectangle windowedModeBounds;
-
+    
     /**
      * This is an abstract class that cannot be instantiated directly.
      * Instances must be obtained from a suitable factory or query method.
@@ -96,19 +97,19 @@ public abstract class GraphicsDevice {
     /**
      * Device is a raster screen.
      */
-    public final static int TYPE_RASTER_SCREEN          = 0;
+    public final static int TYPE_RASTER_SCREEN		= 0;
 
     /**
      * Device is a printer.
      */
-    public final static int TYPE_PRINTER                = 1;
+    public final static int TYPE_PRINTER		= 1;
 
     /**
      * Device is an image buffer.  This buffer can reside in device
      * or system memory but it is not physically viewable by the user.
      */
     public final static int TYPE_IMAGE_BUFFER           = 2;
-
+    
     /**
      * Returns the type of this <code>GraphicsDevice</code>.
      * @return the type of this <code>GraphicsDevice</code>, which can
@@ -120,33 +121,33 @@ public abstract class GraphicsDevice {
     public abstract int getType();
 
     /**
-     * Returns the identification string associated with this
+     * Returns the identification string associated with this 
      * <code>GraphicsDevice</code>.
      * <p>
-     * A particular program might use more than one
+     * A particular program might use more than one 
      * <code>GraphicsDevice</code> in a <code>GraphicsEnvironment</code>.
      * This method returns a <code>String</code> identifying a
      * particular <code>GraphicsDevice</code> in the local
      * <code>GraphicsEnvironment</code>.  Although there is
      * no public method to set this <code>String</code>, a programmer can
-     * use the <code>String</code> for debugging purposes.  Vendors of
+     * use the <code>String</code> for debugging purposes.  Vendors of 
      * the Java<sup><font size=-2>TM</font></sup> Runtime Environment can
-     * format the return value of the <code>String</code>.  To determine
+     * format the return value of the <code>String</code>.  To determine 
      * how to interpret the value of the <code>String</code>, contact the
      * vendor of your Java Runtime.  To find out who the vendor is, from
-     * your program, call the
+     * your program, call the 
      * {@link System#getProperty(String) getProperty} method of the
      * System class with "java.vendor".
      * @return a <code>String</code> that is the identification
      * of this <code>GraphicsDevice</code>.
      */
     public abstract String getIDstring();
-
+    
     /**
      * Returns all of the <code>GraphicsConfiguration</code>
      * objects associated with this <code>GraphicsDevice</code>.
      * @return an array of <code>GraphicsConfiguration</code>
-     * objects that are associated with this
+     * objects that are associated with this 
      * <code>GraphicsDevice</code>.
      */
     public abstract GraphicsConfiguration[] getConfigurations();
@@ -174,11 +175,11 @@ public abstract class GraphicsDevice {
         GraphicsConfiguration[] configs = getConfigurations();
         return gct.getBestConfiguration(configs);
     }
-
+ 
     /**
      * Returns <code>true</code> if this <code>GraphicsDevice</code>
      * supports full-screen exclusive mode.
-     * If a SecurityManager is installed, its
+     * If a SecurityManager is installed, its 
      * <code>checkPermission</code> method will be called
      * with <code>AWTPermission("fullScreenExclusive")</code>.
      * <code>isFullScreenSupported</code> returns true only if
@@ -191,11 +192,11 @@ public abstract class GraphicsDevice {
     public boolean isFullScreenSupported() {
         return false;
     }
-
+    
     /**
      * Enter full-screen mode, or return to windowed mode.  The entered
      * full-screen mode may be either exclusive or simulated.  Exclusive
-     * mode is only available if <code>isFullScreenSupported</code>
+     * mode is only available if <code>isFullScreenSupported</code> 
      * returns <code>true</code>.
      * <p>
      * Exclusive mode implies:
@@ -203,9 +204,9 @@ public abstract class GraphicsDevice {
      * <li>Windows cannot overlap the full-screen window.  All other application
      * windows will always appear beneath the full-screen window in the Z-order.
      * <li>There can be only one full-screen window on a device at any time,
-     * so calling this method while there is an existing full-screen Window
+     * so calling this method while there is an existing full-screen Window 
      * will cause the existing full-screen window to
-     * return to windowed mode.
+     * return to windowed mode. 
      * <li>Input method windows are disabled.  It is advisable to call
      * <code>Component.enableInputMethods(false)</code> to make a component
      * a non-client of the input method framework.
@@ -214,9 +215,9 @@ public abstract class GraphicsDevice {
      * Simulated full-screen mode resizes
      * the window to the size of the screen and positions it at (0,0).
      * <p>
-     * When entering full-screen mode, if the window to be used as the
-     * full-screen window is not visible, this method will make it visible.
-     * It will remain visible when returning to windowed mode.
+     * When entering full-screen mode, if the window to be used as the 
+     * full-screen window is not visible, this method will make it visible. 
+     * It will remain visible when returning to windowed mode.  
      * <p>
      * When returning to windowed mode from an exclusive full-screen window, any
      * display changes made by calling <code>setDisplayMode</code> are
@@ -226,7 +227,7 @@ public abstract class GraphicsDevice {
      * if returning to windowed mode.  Some platforms expect the
      * fullscreen window to be a top-level component (i.e., a Frame);
      * therefore it is preferable to use a Frame here rather than a
-     * Window.
+     * Window. 
      * @see #isFullScreenSupported
      * @see #getFullScreenWindow
      * @see #setDisplayMode
@@ -237,55 +238,55 @@ public abstract class GraphicsDevice {
     public void setFullScreenWindow(Window w) {
         if (fullScreenWindow != null && windowedModeBounds != null) {
             fullScreenWindow.setBounds(windowedModeBounds);
-        }
+	}
         // Set the full screen window
         synchronized (fsAppContextLock) {
-            // Associate fullscreen window with current AppContext
-            if (w == null) {
-                fullScreenAppContext = null;
-            } else {
-                fullScreenAppContext = AppContext.getAppContext();
-            }
-            fullScreenWindow = w;
-        }
+	    // Associate fullscreen window with current AppContext
+	    if (w == null) {
+		fullScreenAppContext = null;
+	    } else {
+		fullScreenAppContext = AppContext.getAppContext();
+	    }
+	    fullScreenWindow = w;
+	}
         if (fullScreenWindow != null) {
             windowedModeBounds = fullScreenWindow.getBounds();
             // Note that we use the graphics configuration of the device,
             // not the window's, because we're setting the fs window for
             // this device.
             Rectangle screenBounds = getDefaultConfiguration().getBounds();
-            fullScreenWindow.setBounds(screenBounds.x, screenBounds.y,
+            fullScreenWindow.setBounds(screenBounds.x, screenBounds.y, 
                                        screenBounds.width, screenBounds.height);
             fullScreenWindow.setVisible(true);
             fullScreenWindow.toFront();
         }
     }
-
+    
     /**
-     * Returns the <code>Window</code> object representing the
+     * Returns the <code>Window</code> object representing the 
      * full-screen window if the device is in full-screen mode.
-     *
+     * 
      * @return the full-screen window, or <code>null</code> if the device is
      * not in full-screen mode.
      * @see #setFullScreenWindow(Window)
      * @since 1.4
      */
     public Window getFullScreenWindow() {
-        Window returnWindow = null;
+	Window returnWindow = null;
         synchronized (fsAppContextLock) {
-            // Only return a handle to the current fs window if we are in the
-            // same AppContext that set the fs window
-            if (fullScreenAppContext == AppContext.getAppContext()) {
-                returnWindow = fullScreenWindow;
-            }
-        }
+	    // Only return a handle to the current fs window if we are in the
+	    // same AppContext that set the fs window
+	    if (fullScreenAppContext == AppContext.getAppContext()) {
+		returnWindow = fullScreenWindow;
+	    }
+	}
         return returnWindow;
     }
-
+    
     /**
      * Returns <code>true</code> if this <code>GraphicsDevice</code>
      * supports low-level display changes.
-     * On some platforms low-level display changes may only be allowed in
+     * On some platforms low-level display changes may only be allowed in 
      * full-screen exclusive mode (i.e., if {@link #isFullScreenSupported()}
      * returns {@code true} and the application has already entered
      * full-screen mode using {@link #setFullScreenWindow}).
@@ -299,21 +300,21 @@ public abstract class GraphicsDevice {
     public boolean isDisplayChangeSupported() {
         return false;
     }
-
+    
     /**
      * Sets the display mode of this graphics device. This is only allowed
      * if {@link #isDisplayChangeSupported()} returns {@code true} and may
      * require first entering full-screen exclusive mode using
      * {@link #setFullScreenWindow} providing that full-screen exclusive mode is
-     * supported (i.e., {@link #isFullScreenSupported()} returns
+     * supported (i.e., {@link #isFullScreenSupported()} returns 
      * {@code true}).
      * <p>
      *
-     * The display mode must be one of the display modes returned by
+     * The display mode must be one of the display modes returned by 
      * {@link #getDisplayModes()}, with one exception: passing a display mode
      * with {@link DisplayMode#REFRESH_RATE_UNKNOWN} refresh rate will result in
-     * selecting a display mode from the list of available display modes with
-     * matching width, height and bit depth.
+     * selecting a display mode from the list of available display modes with 
+     * matching width, height and bit depth. 
      * However, passing a display mode with {@link DisplayMode#BIT_DEPTH_MULTI}
      * for bit depth is only allowed if such mode exists in the list returned by
      * {@link #getDisplayModes()}.
@@ -354,9 +355,9 @@ public abstract class GraphicsDevice {
     public void setDisplayMode(DisplayMode dm) {
         throw new UnsupportedOperationException("Cannot change display mode");
     }
-
+    
     /**
-     * Returns the current display mode of this
+     * Returns the current display mode of this 
      * <code>GraphicsDevice</code>.
      * The returned display mode is allowed to have a refresh rate
      * {@link DisplayMode#REFRESH_RATE_UNKNOWN} if it is indeterminate.
@@ -373,9 +374,9 @@ public abstract class GraphicsDevice {
         ColorModel cm = gc.getColorModel();
         return new DisplayMode(r.width, r.height, cm.getPixelSize(), 0);
     }
-
+    
     /**
-     * Returns all display modes available for this
+     * Returns all display modes available for this      
      * <code>GraphicsDevice</code>.
      * The returned display modes are allowed to have a refresh rate
      * {@link DisplayMode#REFRESH_RATE_UNKNOWN} if it is indeterminate.
@@ -418,6 +419,6 @@ public abstract class GraphicsDevice {
      * @since 1.4
      */
     public int getAvailableAcceleratedMemory() {
-        return -1;
+	return -1;
     }
 }

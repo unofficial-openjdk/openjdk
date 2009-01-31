@@ -66,7 +66,7 @@ class UnsafeXDisposerRecord implements sun.java2d.DisposerRecord {
                         log.log(Level.WARNING, name + " object was not disposed before finalization!");
                     }
                 }
-
+                
                 if (unsafe_ptrs != null) {
                     for (long l : unsafe_ptrs) {
                         if (l != 0) {
@@ -75,7 +75,7 @@ class UnsafeXDisposerRecord implements sun.java2d.DisposerRecord {
                     }
                 }
                 if (x_ptrs != null) {
-                    for (long l : x_ptrs) {
+                    for (long l : x_ptrs) {                    
                         if (l != 0) {
                             if (Native.getLong(l) != 0) {
                                 XlibWrapper.XFree(Native.getLong(l));

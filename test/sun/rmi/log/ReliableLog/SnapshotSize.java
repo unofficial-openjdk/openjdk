@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /* @test
  * @bug 4319866
  * @summary Verify that ReliableLog.snapshotSize() returns correct snapshot
- *          file size even if LogHandler doesn't flush.
+ * 	    file size even if LogHandler doesn't flush.
  */
 
 import java.io.ByteArrayOutputStream;
@@ -35,41 +35,41 @@ import sun.rmi.log.LogHandler;
 import sun.rmi.log.ReliableLog;
 
 public class SnapshotSize extends LogHandler {
-
+    
     int lastSnapshotSize = -1;
 
     public static void main(String[] args) throws Exception {
-        SnapshotSize handler = new SnapshotSize();
-        ReliableLog log = new ReliableLog(".", handler);
-        if (log.snapshotSize() != handler.lastSnapshotSize) {
-            throw new Error();
-        }
-
-        String[] snapshots = { "some", "sample", "objects", "to", "snapshot" };
-        for (int i = 0; i < snapshots.length; i++) {
-            log.snapshot(snapshots[i]);
-            if (log.snapshotSize() != handler.lastSnapshotSize) {
-                throw new Error();
-            }
-        }
+	SnapshotSize handler = new SnapshotSize();
+	ReliableLog log = new ReliableLog(".", handler);
+	if (log.snapshotSize() != handler.lastSnapshotSize) {
+	    throw new Error();
+	}
+	
+	String[] snapshots = { "some", "sample", "objects", "to", "snapshot" };
+	for (int i = 0; i < snapshots.length; i++) {
+	    log.snapshot(snapshots[i]);
+	    if (log.snapshotSize() != handler.lastSnapshotSize) {
+		throw new Error();
+	    }
+	}
     }
-
+    
     public Object initialSnapshot() {
-        return "initial snapshot";
+	return "initial snapshot";
     }
-
+    
     public void snapshot(OutputStream out, Object value) throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        oout.writeObject(value);
-        oout.close();
-
-        byte[] buf = bout.toByteArray();
-        out.write(buf);         // leave unflushed
-        lastSnapshotSize = buf.length;
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	oout.writeObject(value);
+	oout.close();
+	
+	byte[] buf = bout.toByteArray();
+	out.write(buf);		// leave unflushed
+	lastSnapshotSize = buf.length;
     }
-
+    
     public Object applyUpdate(Object update, Object state) {
-        return state;
+	return state;
     }
 }

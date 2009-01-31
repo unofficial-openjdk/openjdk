@@ -35,15 +35,15 @@ public final class ReflectUtil {
     }
 
     public static Class forName(String name)
-        throws ClassNotFoundException {
-        checkPackageAccess(name);
-        return Class.forName(name);
+	throws ClassNotFoundException {
+	checkPackageAccess(name);
+	return Class.forName(name);
     }
 
     public static Object newInstance(Class cls)
-        throws InstantiationException, IllegalAccessException {
-        checkPackageAccess(cls);
-        return cls.newInstance();
+	throws InstantiationException, IllegalAccessException {
+	checkPackageAccess(cls);
+	return cls.newInstance();
     }
 
     /*
@@ -56,50 +56,50 @@ public final class ReflectUtil {
                                           int modifiers)
         throws IllegalAccessException
     {
-        if (target == null && Modifier.isProtected(modifiers)) {
-            int mods = modifiers;
-            mods = mods & (~Modifier.PROTECTED);
-            mods = mods | Modifier.PUBLIC;
+	if (target == null && Modifier.isProtected(modifiers)) {
+	    int mods = modifiers;
+	    mods = mods & (~Modifier.PROTECTED);
+	    mods = mods | Modifier.PUBLIC;
 
-            /*
-             * See if we fail because of class modifiers
-             */
-            Reflection.ensureMemberAccess(currentClass,
-                                          memberClass,
-                                          target,
-                                          mods);
-            try {
-                /*
-                 * We're still here so class access was ok.
-                 * Now try with default field access.
-                 */
-                mods = mods & (~Modifier.PUBLIC);
-                Reflection.ensureMemberAccess(currentClass,
-                                              memberClass,
-                                              target,
-                                              mods);
-                /*
-                 * We're still here so access is ok without
-                 * checking for protected.
-                 */
-                return;
-            } catch (IllegalAccessException e) {
-                /*
-                 * Access failed but we're 'protected' so
-                 * if the test below succeeds then we're ok.
-                 */
-                if (isSubclassOf(currentClass, memberClass)) {
-                    return;
-                } else {
-                    throw e;
-                }
-            }
-        } else {
-            Reflection.ensureMemberAccess(currentClass,
-                                          memberClass,
-                                          target,
-                                          modifiers);
-        }
+	    /*
+	     * See if we fail because of class modifiers
+	     */
+	    Reflection.ensureMemberAccess(currentClass,
+					  memberClass,
+					  target,
+					  mods);
+	    try {
+		/*
+		 * We're still here so class access was ok.
+		 * Now try with default field access.
+		 */
+	        mods = mods & (~Modifier.PUBLIC);
+	        Reflection.ensureMemberAccess(currentClass,
+					      memberClass,
+					      target,
+					      mods);
+		/*
+		 * We're still here so access is ok without
+		 * checking for protected.
+		 */
+		return;
+	    } catch (IllegalAccessException e) {
+		/*
+		 * Access failed but we're 'protected' so
+		 * if the test below succeeds then we're ok.
+		 */
+	        if (isSubclassOf(currentClass, memberClass)) {
+		    return;
+		} else {
+		    throw e;
+		}
+	    }
+	} else {
+	    Reflection.ensureMemberAccess(currentClass,
+				          memberClass,
+				          target,
+				          modifiers);
+	}
     }
 
     private static boolean isSubclassOf(Class queryClass,
@@ -116,32 +116,32 @@ public final class ReflectUtil {
 
 
     public static void checkPackageAccess(Class clazz) {
-        checkPackageAccess(clazz.getName());
+	checkPackageAccess(clazz.getName());
     }
 
     public static void checkPackageAccess(String name) {
-        SecurityManager s = System.getSecurityManager();
-        if (s != null) {
-            String cname = name.replace('/', '.');
-            if (cname.startsWith("[")) {
-                int b = cname.lastIndexOf('[') + 2;
-                if (b > 1 && b < cname.length()) {
-                    cname = cname.substring(b);
-                }
-            }
-            int i = cname.lastIndexOf('.');
-            if (i != -1) {
-                s.checkPackageAccess(cname.substring(0, i));
-            }
-        }
+	SecurityManager s = System.getSecurityManager();
+	if (s != null) {
+	    String cname = name.replace('/', '.');
+	    if (cname.startsWith("[")) {
+		int b = cname.lastIndexOf('[') + 2;
+		if (b > 1 && b < cname.length()) {
+		    cname = cname.substring(b);
+		}
+	    }
+	    int i = cname.lastIndexOf('.');
+	    if (i != -1) {
+		s.checkPackageAccess(cname.substring(0, i));
+	    }
+	}
     }
 
     public static boolean isPackageAccessible(Class clazz) {
-        try {
-            checkPackageAccess(clazz);
-        } catch (SecurityException e) {
-            return false;
-        }
-        return true;
+	try {
+	    checkPackageAccess(clazz);
+	} catch (SecurityException e) {
+	    return false;
+	}
+	return true;
     }
 }

@@ -39,9 +39,9 @@ public class EnableTest {
 
     private static void checkThreadContentionMonitoring(boolean expectedValue)
         throws Exception {
-        boolean value = tm.isThreadContentionMonitoringEnabled();
+        boolean value = tm.isThreadContentionMonitoringEnabled(); 
         if (value != expectedValue) {
-             throw new RuntimeException("TEST FAILED: " +
+             throw new RuntimeException("TEST FAILED: " + 
                  "isThreadContentionMonitoringEnabled() returns " + value +
                  " but expected to be " + expectedValue);
         }
@@ -51,7 +51,7 @@ public class EnableTest {
     private static void testThreadContentionMonitoring()
         throws Exception {
         if (!tm.isThreadContentionMonitoringSupported()) return;
-
+          
         // Test setThreadContentionMonitoringEnabled()
         checkThreadContentionMonitoring(false);
 
@@ -78,9 +78,9 @@ public class EnableTest {
 
     private static void checkThreadCpuTime(boolean expectedValue)
         throws Exception {
-        boolean value = tm.isThreadCpuTimeEnabled();
+        boolean value = tm.isThreadCpuTimeEnabled(); 
         if (value != expectedValue) {
-             throw new RuntimeException("TEST FAILED: " +
+             throw new RuntimeException("TEST FAILED: " + 
                  "isThreadCpuTimeEnabled() returns " + value +
                  " but expected to be " + expectedValue);
         }
@@ -125,3 +125,4 @@ public class EnableTest {
         System.out.println("Test passed.");
     }
 }
+

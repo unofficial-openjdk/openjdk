@@ -28,8 +28,8 @@ package com.sun.jdi;
 import java.util.List;
 
 /**
- * Provides access to the class of an array and the type of
- * its components in the target VM.
+ * Provides access to the class of an array and the type of 
+ * its components in the target VM. 
  *
  * @see ArrayReference
  *
@@ -42,7 +42,7 @@ public interface ArrayType extends ReferenceType {
 
     /**
      * Creates a new instance of this array class in the target VM.
-     * The array is created with the given length and each component
+     * The array is created with the given length and each component 
      * is initialized to is standard default value.
      *
      * @param length the number of components in the new array
@@ -55,7 +55,7 @@ public interface ArrayType extends ReferenceType {
 
     /**
      * Gets the JNI signature of the components of this
-     * array class. The signature
+     * array class. The signature 
      * describes the declared type of the components. If the components
      * are objects, their actual type in a particular run-time context
      * may be a subclass of the declared class.
@@ -82,7 +82,7 @@ public interface ArrayType extends ReferenceType {
      * Machine Specification</a>, section
      * <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/ConstantPool.doc.html#79473">5.3.3
      * Creating Array Classes</a>.
-     * However, although the component type will be loaded it may
+     * However, although the component type will be loaded it may 
      * not yet be prepared, in which case the type will be returned
      * but attempts to perform some operations on the returned type
      * (e.g. {@link ReferenceType#fields() fields()}) will throw
@@ -96,3 +96,4 @@ public interface ArrayType extends ReferenceType {
      */
     Type componentType() throws ClassNotLoadedException;
 }
+

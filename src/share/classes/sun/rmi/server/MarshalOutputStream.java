@@ -52,24 +52,24 @@ public class MarshalOutputStream extends ObjectOutputStream
      * Creates a marshal output stream with protocol version 1.
      */
     public MarshalOutputStream(OutputStream out) throws IOException {
-        this(out, ObjectStreamConstants.PROTOCOL_VERSION_1);
+	this(out, ObjectStreamConstants.PROTOCOL_VERSION_1);
     }
 
     /**
      * Creates a marshal output stream with the given protocol version.
      */
     public MarshalOutputStream(OutputStream out, int protocolVersion)
-        throws IOException
+	throws IOException
     {
-        super(out);
-        this.useProtocolVersion(protocolVersion);
-        java.security.AccessController.doPrivileged(
-                                    new java.security.PrivilegedAction() {
-            public Object run() {
-                enableReplaceObject(true);
-                return null;
-            }
-        });
+	super(out);
+	this.useProtocolVersion(protocolVersion);
+	java.security.AccessController.doPrivileged(
+				    new java.security.PrivilegedAction() {
+	    public Object run() {
+		enableReplaceObject(true);
+		return null;
+	    }
+	});
     }
 
     /**
@@ -77,27 +77,27 @@ public class MarshalOutputStream extends ObjectOutputStream
      * that need to be serialized as proxy objects.
      */
     protected final Object replaceObject(Object obj) throws IOException {
-        if ((obj instanceof Remote) && !(obj instanceof RemoteStub)) {
-            Target target = ObjectTable.getTarget((Remote) obj);
-            if (target != null) {
-                return target.getStub();
-            }
-        }
-        return obj;
+	if ((obj instanceof Remote) && !(obj instanceof RemoteStub)) {
+	    Target target = ObjectTable.getTarget((Remote) obj);
+	    if (target != null) {
+		return target.getStub();
+	    }
+	}
+	return obj;
     }
 
     /**
      * Serializes a location from which to load the the specified class.
      */
     protected void annotateClass(Class<?> cl) throws IOException {
-        writeLocation(java.rmi.server.RMIClassLoader.getClassAnnotation(cl));
+	writeLocation(java.rmi.server.RMIClassLoader.getClassAnnotation(cl));
     }
 
     /**
      * Serializes a location from which to load the specified class.
      */
     protected void annotateProxyClass(Class<?> cl) throws IOException {
-        annotateClass(cl);
+	annotateClass(cl);
     }
 
     /**
@@ -106,6 +106,6 @@ public class MarshalOutputStream extends ObjectOutputStream
      * else than as the next object in the stream, as is done by this class.
      */
     protected void writeLocation(String location) throws IOException {
-        writeObject(location);
+	writeObject(location);
     }
 }

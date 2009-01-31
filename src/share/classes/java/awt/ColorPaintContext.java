@@ -44,7 +44,7 @@ class ColorPaintContext implements PaintContext {
     public void dispose() {
     }
 
-    /*
+    /* 
      * Returns the RGB value representing the color in the default sRGB
      * {@link ColorModel}.
      * (Bits 24-31 are alpha, 16-23 are red, 8-15 are green, 0-7 are
@@ -61,21 +61,21 @@ class ColorPaintContext implements PaintContext {
     }
 
     public ColorModel getColorModel() {
-        return ColorModel.getRGBdefault();
+	return ColorModel.getRGBdefault();
     }
 
     public synchronized Raster getRaster(int x, int y, int w, int h) {
-        WritableRaster t = savedTile;
+	WritableRaster t = savedTile;
 
         if (t == null || w > t.getWidth() || h > t.getHeight()) {
             t = getColorModel().createCompatibleWritableRaster(w, h);
-            IntegerComponentRaster icr = (IntegerComponentRaster) t;
-            Arrays.fill(icr.getDataStorage(), color);
+	    IntegerComponentRaster icr = (IntegerComponentRaster) t;
+	    Arrays.fill(icr.getDataStorage(), color);
             // Note - markDirty is probably unnecessary since icr is brand new
             icr.markDirty();
             if (w <= 64 && h <= 64) {
-                savedTile = t;
-            }
+		savedTile = t;
+	    }
         }
 
         return t;

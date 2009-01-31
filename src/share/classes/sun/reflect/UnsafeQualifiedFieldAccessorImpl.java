@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import sun.misc.Unsafe;
 
-/**
+/** 
  * Base class for sun.misc.Unsafe-based FieldAccessors for fields with
  * final or volatile qualifiers. These differ from unqualified
  * versions in that (1) they check for read-only status (2) they use

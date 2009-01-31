@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
@@ -49,21 +49,22 @@ import com.sun.tools.hat.internal.parser.ReadBuffer;
 /**
  * Represents Java instance
  *
+ * @version     %W% %E% %U%
  * @author      Bill Foote
  */
 public class JavaObject extends JavaLazyReadObject {
 
-    private Object clazz;       // Number before resolve
+    private Object clazz;	// Number before resolve 
                                 // JavaClass after resolve
     /**
-     * Construct a new JavaObject.
+     * Construct a new JavaObject.  
      *
      * @param classID id of the class object
-     * @param offset The offset of field data
+     * @param offset The offset of field data 
      */
     public JavaObject(long classID, long offset) {
-        super(offset);
-        this.clazz = makeId(classID);
+	super(offset);
+	this.clazz = makeId(classID);
     }
 
     public void resolve(Snapshot snapshot) {
@@ -78,8 +79,8 @@ public class JavaObject extends JavaLazyReadObject {
                      "adding fake class!");
                 int length;
                 ReadBuffer buf = snapshot.getReadBuffer();
-                int idSize = snapshot.getIdentifierSize();
-                long lenOffset = getOffset() + 2*idSize + 4;
+		int idSize = snapshot.getIdentifierSize();
+		long lenOffset = getOffset() + 2*idSize + 4;
                 try {
                     length = buf.getInt(lenOffset);
                 } catch (IOException exp) {
@@ -91,16 +92,16 @@ public class JavaObject extends JavaLazyReadObject {
             throw new InternalError("should not reach here");
         }
 
-        JavaClass cl = (JavaClass) clazz;
-        cl.resolve(snapshot);
+	JavaClass cl = (JavaClass) clazz;
+	cl.resolve(snapshot);
 
         // while resolving, parse fields in verbose mode.
         // but, getFields calls parseFields in non-verbose mode
         // to avoid printing warnings repeatedly.
         parseFields(getValue(), true);
 
-        cl.addInstance(this);
-        super.resolve(snapshot);
+	cl.addInstance(this);
+	super.resolve(snapshot);
     }
 
     /**
@@ -108,18 +109,18 @@ public class JavaObject extends JavaLazyReadObject {
      * same type as other's.
      */
     public boolean isSameTypeAs(JavaThing other) {
-        if (!(other instanceof JavaObject)) {
-            return false;
-        }
-        JavaObject oo = (JavaObject) other;
-        return getClazz().equals(oo.getClazz());
+	if (!(other instanceof JavaObject)) {
+	    return false;
+	}
+	JavaObject oo = (JavaObject) other;
+	return getClazz().equals(oo.getClazz());
     }
 
     /**
      * Return our JavaClass object.  This may only be called after resolve.
      */
     public JavaClass getClazz() {
-        return (JavaClass) clazz;
+	return (JavaClass) clazz;
     }
 
     public JavaThing[] getFields() {
@@ -141,47 +142,47 @@ public class JavaObject extends JavaLazyReadObject {
     }
 
     public int compareTo(JavaThing other) {
-        if (other instanceof JavaObject) {
-            JavaObject oo = (JavaObject) other;
-            return getClazz().getName().compareTo(oo.getClazz().getName());
-        }
-        return super.compareTo(other);
+	if (other instanceof JavaObject) {
+	    JavaObject oo = (JavaObject) other;
+	    return getClazz().getName().compareTo(oo.getClazz().getName());
+	}
+	return super.compareTo(other);
     }
 
     public void visitReferencedObjects(JavaHeapObjectVisitor v) {
-        super.visitReferencedObjects(v);
+	super.visitReferencedObjects(v);
         JavaThing[] flds = getFields();
-        for (int i = 0; i < flds.length; i++) {
-            if (flds[i] != null) {
-                if (v.mightExclude()
-                    && v.exclude(getClazz().getClassForField(i),
-                                 getClazz().getFieldForInstance(i)))
-                {
-                    // skip it
-                } else if (flds[i] instanceof JavaHeapObject) {
-                    v.visit((JavaHeapObject) flds[i]);
-                }
-            }
-        }
+	for (int i = 0; i < flds.length; i++) {
+	    if (flds[i] != null) {
+		if (v.mightExclude()
+		    && v.exclude(getClazz().getClassForField(i), 
+				 getClazz().getFieldForInstance(i)))
+		{
+		    // skip it
+		} else if (flds[i] instanceof JavaHeapObject) {
+		    v.visit((JavaHeapObject) flds[i]);
+		}
+	    }
+	}
     }
 
     public boolean refersOnlyWeaklyTo(Snapshot ss, JavaThing other) {
-        if (ss.getWeakReferenceClass() != null) {
+	if (ss.getWeakReferenceClass() != null) {
             final int referentFieldIndex = ss.getReferentFieldIndex();
-            if (ss.getWeakReferenceClass().isAssignableFrom(getClazz())) {
-                //
-                // REMIND:  This introduces a dependency on the JDK
-                //      implementation that is undesirable.
+	    if (ss.getWeakReferenceClass().isAssignableFrom(getClazz())) {
+		//
+		// REMIND:  This introduces a dependency on the JDK 
+		// 	implementation that is undesirable.
                 JavaThing[] flds = getFields();
-                for (int i = 0; i < flds.length; i++) {
-                    if (i != referentFieldIndex && flds[i] == other) {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
+		for (int i = 0; i < flds.length; i++) {
+		    if (i != referentFieldIndex && flds[i] == other) {
+			return false;
+		    }
+		}
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**
@@ -190,26 +191,26 @@ public class JavaObject extends JavaLazyReadObject {
      */
     public String describeReferenceTo(JavaThing target, Snapshot ss) {
         JavaThing[] flds = getFields();
-        for (int i = 0; i < flds.length; i++) {
-            if (flds[i] == target) {
-                JavaField f = getClazz().getFieldForInstance(i);
-                return "field " + f.getName();
-            }
-        }
-        return super.describeReferenceTo(target, ss);
+	for (int i = 0; i < flds.length; i++) {
+	    if (flds[i] == target) {
+		JavaField f = getClazz().getFieldForInstance(i);
+		return "field " + f.getName();
+	    }
+	}
+	return super.describeReferenceTo(target, ss);
     }
 
     public String toString() {
-        if (getClazz().isString()) {
-            JavaThing value = getField("value");
-            if (value instanceof JavaValueArray) {
-                return ((JavaValueArray)value).valueString();
-            } else {
-                return "null";
-            }
-        } else {
-            return super.toString();
-        }
+	if (getClazz().isString()) {
+	    JavaThing value = getField("value");
+	    if (value instanceof JavaValueArray) {
+	        return ((JavaValueArray)value).valueString();
+	    } else {
+	        return "null";
+	    }
+	} else {
+	    return super.toString();
+	}
     }
 
     // Internals only below this point
@@ -260,8 +261,8 @@ public class JavaObject extends JavaLazyReadObject {
         // fields of most super class are stored first.
 
         // target variable is used to compensate for the fact that
-        // the dump file starts field values from the leaf working
-        // upwards in the inheritance hierarchy, whereas JavaObject
+        // the dump file starts field values from the leaf working 
+        // upwards in the inheritance hierarchy, whereas JavaObject 
         // starts with the top of the inheritance hierarchy and works down.
         target -= fields.length;
         JavaClass currClass = cl;
@@ -281,12 +282,12 @@ public class JavaObject extends JavaLazyReadObject {
                     long id = objectIdAt(index, data);
                     index += idSize;
                     JavaObjectRef ref = new JavaObjectRef(id);
-                    fieldValues[target+fieldNo] = ref.dereference(snapshot, f, verbose);
+	            fieldValues[target+fieldNo] = ref.dereference(snapshot, f, verbose);
                     break;
                 }
                 case 'Z': {
                     byte value = byteAt(index, data);
-                    index++;
+                    index++; 
                     fieldValues[target+fieldNo] = new JavaBoolean(value != 0);
                     break;
                 }

@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __MLIB_IMAGEFILTERS_H
 #define __MLIB_IMAGEFILTERS_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_ImageFilters.h	1.17	02/05/08 SMI"
+#endif /* __SUNPRO_C */
 
 #include "mlib_image.h"
 

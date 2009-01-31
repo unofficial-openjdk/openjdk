@@ -69,56 +69,56 @@ public class DHGenSharedSecret {
     };
 
     public static void main(String[] args) throws Exception {
-        SunJCE jce = new SunJCE();
-        Security.addProvider(jce);
-        DHGenSharedSecret test = new DHGenSharedSecret();
-        test.run();
+	SunJCE jce = new SunJCE();
+	Security.addProvider(jce);
+	DHGenSharedSecret test = new DHGenSharedSecret();
+	test.run();
     }
 
     public void run() throws Exception {
-        long start, end;
+	long start, end;
 
-        BigInteger p = new BigInteger(1, DHPrime);
-        BigInteger g = new BigInteger(1, DHBase);
-        int l = 512;
+	BigInteger p = new BigInteger(1, DHPrime);
+	BigInteger g = new BigInteger(1, DHBase);
+	int l = 512;
 
-        DHParameterSpec spec =
-            new DHParameterSpec(p, g, l);
+	DHParameterSpec spec =
+	    new DHParameterSpec(p, g, l);
 
-        // generate keyPairs using parameters
-        KeyPairGenerator keyGen =
-            KeyPairGenerator.getInstance("DH", "SunJCE");
-        keyGen.initialize(spec);
+	// generate keyPairs using parameters
+	KeyPairGenerator keyGen =
+	    KeyPairGenerator.getInstance("DH", "SunJCE");
+	keyGen.initialize(spec);
 
-        // Alice generates her key pairs
-        KeyPair keyA = keyGen.generateKeyPair();
+	// Alice generates her key pairs
+	KeyPair keyA = keyGen.generateKeyPair();
 
-        // Bob generates his key pairs
-        KeyPair keyB = keyGen.generateKeyPair();
+	// Bob generates his key pairs
+	KeyPair keyB = keyGen.generateKeyPair();
 
-        // Alice encodes her public key in x509 format
-        // , and sends it over to Bob.
-        byte[] alicePubKeyEnc = keyA.getPublic().getEncoded();
+	// Alice encodes her public key in x509 format
+	// , and sends it over to Bob.
+	byte[] alicePubKeyEnc = keyA.getPublic().getEncoded();
 
-        // bob encodes his publicKey in x509 format and
-        // sends it over to Alice
-        byte[] bobPubKeyEnc = keyB.getPublic().getEncoded();
+	// bob encodes his publicKey in x509 format and
+	// sends it over to Alice
+	byte[] bobPubKeyEnc = keyB.getPublic().getEncoded();
 
-        // bob uses it to generate Secret
-        X509EncodedKeySpec x509Spec =
-            new X509EncodedKeySpec(alicePubKeyEnc);
-        KeyFactory bobKeyFac = KeyFactory.getInstance("DH", "SunJCE");
-        PublicKey alicePubKey = bobKeyFac.generatePublic(x509Spec);
+	// bob uses it to generate Secret
+	X509EncodedKeySpec x509Spec =
+	    new X509EncodedKeySpec(alicePubKeyEnc);
+	KeyFactory bobKeyFac = KeyFactory.getInstance("DH", "SunJCE");
+	PublicKey alicePubKey = bobKeyFac.generatePublic(x509Spec);
 
 
-        KeyAgreement bobAlice = KeyAgreement.getInstance("DH", "SunJCE");
-        start = System.currentTimeMillis();
-        bobAlice.init(keyB.getPrivate());
-        bobAlice.doPhase(alicePubKey, true);
-        byte[] bobSecret = bobAlice.generateSecret();
-        end = System.currentTimeMillis();
+	KeyAgreement bobAlice = KeyAgreement.getInstance("DH", "SunJCE");
+	start = System.currentTimeMillis();
+	bobAlice.init(keyB.getPrivate());
+	bobAlice.doPhase(alicePubKey, true);
+	byte[] bobSecret = bobAlice.generateSecret();
+	end = System.currentTimeMillis();
 
-        System.out.println("Time elapsed: " + (end - start));
-        System.out.println("Test Passed!");
+	System.out.println("Time elapsed: " + (end - start));
+	System.out.println("Test Passed!");
     }
 }

@@ -46,7 +46,7 @@ import java.util.Map;
  * 2-dimensional shapes, text and images on the  Java(tm) platform.
  * <p>
  * <h2>Coordinate Spaces</h2>
- * All coordinates passed to a <code>Graphics2D</code> object are specified
+ * All coordinates passed to a <code>Graphics2D</code> object are specified 
  * in a device-independent coordinate system called User Space, which is
  * used by applications.  The <code>Graphics2D</code> object contains
  * an {@link AffineTransform} object as part of its rendering state
@@ -55,7 +55,7 @@ import java.util.Map;
  * <p>
  * Coordinates in device space usually refer to individual device pixels
  * and are aligned on the infinitely thin gaps between these pixels.
- * Some <code>Graphics2D</code> objects can be used to capture rendering
+ * Some <code>Graphics2D</code> objects can be used to capture rendering 
  * operations for storage into a graphics metafile for playback on a
  * concrete device of unknown physical resolution at a later time.  Since
  * the resolution might not be known when the rendering operations are
@@ -66,7 +66,7 @@ import java.util.Map;
  * estimate is incorrect.
  * <p>
  * Some of the operations performed by the rendering attribute objects
- * occur in the device space, but all <code>Graphics2D</code> methods take
+ * occur in the device space, but all <code>Graphics2D</code> methods take 
  * user space coordinates.
  * <p>
  * Every <code>Graphics2D</code> object is associated with a target that
@@ -74,26 +74,26 @@ import java.util.Map;
  * {@link GraphicsConfiguration} object defines the characteristics
  * of the rendering target, such as pixel format and resolution.
  * The same rendering target is used throughout the life of a
- * <code>Graphics2D</code> object.
+ * <code>Graphics2D</code> object. 
  * <p>
- * When creating a <code>Graphics2D</code> object,  the
- * <code>GraphicsConfiguration</code>
+ * When creating a <code>Graphics2D</code> object,  the 
+ * <code>GraphicsConfiguration</code> 
  * specifies the <a name="#deftransform">default transform</a> for
- * the target of the <code>Graphics2D</code> (a
+ * the target of the <code>Graphics2D</code> (a 
  * {@link Component} or {@link Image}).  This default transform maps the
  * user space coordinate system to screen and printer device coordinates
  * such that the origin maps to the upper left hand corner of the
  * target region of the device with increasing X coordinates extending
  * to the right and increasing Y coordinates extending downward.
- * The scaling of the default transform is set to identity for those devices
+ * The scaling of the default transform is set to identity for those devices 
  * that are close to 72 dpi, such as screen devices.
- * The scaling of the default transform is set to approximately 72 user
+ * The scaling of the default transform is set to approximately 72 user 
  * space coordinates per square inch for high resolution devices, such as
  * printers.  For image buffers, the default transform is the
  * <code>Identity</code> transform.
  *
  * <h2>Rendering Process</h2>
- * The Rendering Process can be broken down into four phases that are
+ * The Rendering Process can be broken down into four phases that are 
  * controlled by the <code>Graphics2D</code> rendering attributes.
  * The renderer can optimize many of these steps, either by caching the
  * results for future calls, by collapsing multiple virtual steps into
@@ -104,7 +104,7 @@ import java.util.Map;
  * The steps in the rendering process are:
  * <ol>
  * <li>
- * Determine what to render.
+ * Determine what to render.  
  * <li>
  * Constrain the rendering operation to the current <code>Clip</code>.
  * The <code>Clip</code> is specified by a {@link Shape} in user
@@ -117,7 +117,7 @@ import java.util.Map;
  * device extents.  The combination of the user clip and device clip
  * defines the <i>composite clip</i>, which determines the final clipping
  * region.  The user clip is not modified by the rendering
- * system to reflect the resulting composite clip.
+ * system to reflect the resulting composite clip. 
  * <li>
  * Determine what colors to render.
  * <li>
@@ -125,7 +125,7 @@ import java.util.Map;
  * {@link Composite} attribute in the <code>Graphics2D</code> context.
  * </ol>
  * <br>
- * The three types of rendering operations, along with details of each
+ * The three types of rendering operations, along with details of each 
  * of their particular rendering processes are:
  * <ol>
  * <li>
@@ -133,25 +133,25 @@ import java.util.Map;
  * <ol>
  * <li>
  * If the operation is a <code>draw(Shape)</code> operation, then
- * the  {@link Stroke#createStrokedShape(Shape) createStrokedShape}
+ * the  {@link Stroke#createStrokedShape(Shape) createStrokedShape} 
  * method on the current {@link Stroke} attribute in the
  * <code>Graphics2D</code> context is used to construct a new
  * <code>Shape</code> object that contains the outline of the specified
  * <code>Shape</code>.
  * <li>
  * The <code>Shape</code> is transformed from user space to device space
- * using the current <code>Transform</code>
+ * using the current <code>Transform</code> 
  * in the <code>Graphics2D</code> context.
  * <li>
- * The outline of the <code>Shape</code> is extracted using the
+ * The outline of the <code>Shape</code> is extracted using the 
  * {@link Shape#getPathIterator(AffineTransform) getPathIterator} method of
  * <code>Shape</code>, which returns a
  * {@link java.awt.geom.PathIterator PathIterator}
  * object that iterates along the boundary of the <code>Shape</code>.
  * <li>
  * If the <code>Graphics2D</code> object cannot handle the curved segments
- * that the <code>PathIterator</code> object returns then it can call the
- * alternate
+ * that the <code>PathIterator</code> object returns then it can call the 
+ * alternate 
  * {@link Shape#getPathIterator(AffineTransform, double) getPathIterator}
  * method of <code>Shape</code>, which flattens the <code>Shape</code>.
  * <li>
@@ -168,8 +168,8 @@ import java.util.Map;
  * <ol>
  * <li>
  * If the argument is a <code>String</code>, then the current
- * <code>Font</code> in the <code>Graphics2D</code> context is asked to
- * convert the Unicode characters in the <code>String</code> into a set of
+ * <code>Font</code> in the <code>Graphics2D</code> context is asked to 
+ * convert the Unicode characters in the <code>String</code> into a set of 
  * glyphs for presentation with whatever basic layout and shaping
  * algorithms the font implements.
  * <li>
@@ -189,8 +189,8 @@ import java.util.Map;
  * each glyph.
  * </ol>
  * <li>
- * The current <code>Font</code> is queried to obtain outlines for the
- * indicated glyphs.  These outlines are treated as shapes in user space
+ * The current <code>Font</code> is queried to obtain outlines for the 
+ * indicated glyphs.  These outlines are treated as shapes in user space 
  * relative to the position of each glyph that was determined in step 1.
  * <li>
  * The character outlines are filled as indicated above
@@ -204,15 +204,15 @@ import java.util.Map;
  * <b><a name= renderingimage><code>Image</code> Operations</a></b>
  * <ol>
  * <li>
- * The region of interest is defined by the bounding box of the source
+ * The region of interest is defined by the bounding box of the source 
  * <code>Image</code>.
- * This bounding box is specified in Image Space, which is the
- * <code>Image</code> object's local coordinate system.
+ * This bounding box is specified in Image Space, which is the 
+ * <code>Image</code> object's local coordinate system. 
  * <li>
- * If an <code>AffineTransform</code> is passed to
- * {@link #drawImage(java.awt.Image, java.awt.geom.AffineTransform, java.awt.image.ImageObserver) drawImage(Image, AffineTransform, ImageObserver)},
+ * If an <code>AffineTransform</code> is passed to 
+ * {@link #drawImage(java.awt.Image, java.awt.geom.AffineTransform, java.awt.image.ImageObserver) drawImage(Image, AffineTransform, ImageObserver)}, 
  * the <code>AffineTransform</code> is used to transform the bounding
- * box from image space to user space. If no <code>AffineTransform</code>
+ * box from image space to user space. If no <code>AffineTransform</code> 
  * is supplied, the bounding box is treated as if it is already in user space.
  * <li>
  * The bounding box of the source <code>Image</code> is transformed from user
@@ -220,7 +220,7 @@ import java.util.Map;
  * Note that the result of transforming the bounding box does not
  * necessarily result in a rectangular region in device space.
  * <li>
- * The <code>Image</code> object determines what colors to render,
+ * The <code>Image</code> object determines what colors to render, 
  * sampled according to the source to destination
  * coordinate mapping specified by the current <code>Transform</code> and the
  * optional image transform.
@@ -238,8 +238,8 @@ import java.util.Map;
  * <dd>A square pen with a linewidth of 1, no dashing, miter segment joins
  * and square end caps.
  * <dt><i><code>Transform</code></i>
- * <dd>The
- * {@link GraphicsConfiguration#getDefaultTransform() getDefaultTransform}
+ * <dd>The 
+ * {@link GraphicsConfiguration#getDefaultTransform() getDefaultTransform} 
  * for the <code>GraphicsConfiguration</code> of the <code>Component</code>.
  * <dt><i><code>Composite</code></i>
  * <dd>The {@link AlphaComposite#SRC_OVER} rule.
@@ -249,37 +249,37 @@ import java.util.Map;
  * </dl>
  *
  * <h2>Rendering Compatibility Issues</h2>
- * The JDK(tm) 1.1 rendering model is based on a pixelization model
+ * The JDK(tm) 1.1 rendering model is based on a pixelization model 
  * that specifies that coordinates
- * are infinitely thin, lying between the pixels.  Drawing operations are
- * performed using a one-pixel wide pen that fills the
- * pixel below and to the right of the anchor point on the path.
- * The JDK 1.1 rendering model is consistent with the
- * capabilities of most of the existing class of platform
- * renderers that need  to resolve integer coordinates to a
- * discrete pen that must fall completely on a specified number of pixels.
+ * are infinitely thin, lying between the pixels.  Drawing operations are 
+ * performed using a one-pixel wide pen that fills the 
+ * pixel below and to the right of the anchor point on the path.  
+ * The JDK 1.1 rendering model is consistent with the 
+ * capabilities of most of the existing class of platform 
+ * renderers that need  to resolve integer coordinates to a 
+ * discrete pen that must fall completely on a specified number of pixels.  
  * <p>
- * The Java 2D(tm) (Java(tm) 2 platform) API supports antialiasing renderers.
- * A pen with a width of one pixel does not need to fall
- * completely on pixel N as opposed to pixel N+1.  The pen can fall
- * partially on both pixels. It is not necessary to choose a bias
- * direction for a wide pen since the blending that occurs along the
- * pen traversal edges makes the sub-pixel position of the pen
- * visible to the user.  On the other hand, when antialiasing is
+ * The Java 2D(tm) (Java(tm) 2 platform) API supports antialiasing renderers. 
+ * A pen with a width of one pixel does not need to fall 
+ * completely on pixel N as opposed to pixel N+1.  The pen can fall 
+ * partially on both pixels. It is not necessary to choose a bias 
+ * direction for a wide pen since the blending that occurs along the 
+ * pen traversal edges makes the sub-pixel position of the pen 
+ * visible to the user.  On the other hand, when antialiasing is 
  * turned off by setting the
  * {@link RenderingHints#KEY_ANTIALIASING KEY_ANTIALIASING} hint key
  * to the
- * {@link RenderingHints#VALUE_ANTIALIAS_OFF VALUE_ANTIALIAS_OFF}
- * hint value, the renderer might need
- * to apply a bias to determine which pixel to modify when the pen
+ * {@link RenderingHints#VALUE_ANTIALIAS_OFF VALUE_ANTIALIAS_OFF} 
+ * hint value, the renderer might need 
+ * to apply a bias to determine which pixel to modify when the pen 
  * is straddling a pixel boundary, such as when it is drawn
  * along an integer coordinate in device space.  While the capabilities
  * of an antialiasing renderer make it no longer necessary for the
  * rendering model to specify a bias for the pen, it is desirable for the
  * antialiasing and non-antialiasing renderers to perform similarly for
- * the common cases of drawing one-pixel wide horizontal and vertical
- * lines on the screen.  To ensure that turning on antialiasing by
- * setting the
+ * the common cases of drawing one-pixel wide horizontal and vertical 
+ * lines on the screen.  To ensure that turning on antialiasing by 
+ * setting the 
  * {@link RenderingHints#KEY_ANTIALIASING KEY_ANTIALIASING} hint
  * key to
  * {@link RenderingHints#VALUE_ANTIALIAS_ON VALUE_ANTIALIAS_ON}
@@ -288,18 +288,18 @@ import java.util.Map;
  * lines so that they completely cover a particular set of pixels to help
  * increase their crispness.
  * <p>
- * Java 2D API maintains compatibility with JDK 1.1 rendering
+ * Java 2D API maintains compatibility with JDK 1.1 rendering 
  * behavior, such that legacy operations and existing renderer
  * behavior is unchanged under Java 2D API.  Legacy
- * methods that map onto general <code>draw</code> and
- * <code>fill</code> methods are defined, which clearly indicates
- * how <code>Graphics2D</code> extends <code>Graphics</code> based
+ * methods that map onto general <code>draw</code> and 
+ * <code>fill</code> methods are defined, which clearly indicates 
+ * how <code>Graphics2D</code> extends <code>Graphics</code> based 
  * on settings of <code>Stroke</code> and <code>Transform</code>
- * attributes and rendering hints.  The definition
- * performs identically under default attribute settings.
- * For example, the default <code>Stroke</code> is a
+ * attributes and rendering hints.  The definition 
+ * performs identically under default attribute settings.  
+ * For example, the default <code>Stroke</code> is a 
  * <code>BasicStroke</code> with a width of 1 and no dashing and the
- * default Transform for screen drawing is an Identity transform.
+ * default Transform for screen drawing is an Identity transform.  
  * <p>
  * The following two rules provide predictable rendering behavior whether
  * aliasing or antialiasing is being used.
@@ -309,17 +309,17 @@ import java.util.Map;
  * rendering.  If coordinates were defined to be at a pixel's center, some
  * of the pixels covered by a shape, such as a rectangle, would only be
  * half covered.
- * With aliased rendering, the half covered pixels would either be
+ * With aliased rendering, the half covered pixels would either be 
  * rendered inside the shape or outside the shape.  With anti-aliased
  * rendering, the pixels on the entire edge of the shape would be half
  * covered.  On the other hand, since coordinates are defined to be
  * between pixels, a shape like a rectangle would have no half covered
- * pixels, whether or not it is rendered using antialiasing.
+ * pixels, whether or not it is rendered using antialiasing. 
  * <li> Lines and paths stroked using the <code>BasicStroke</code>
  * object may be "normalized" to provide consistent rendering of the
  * outlines when positioned at various points on the drawable and
  * whether drawn with aliased or antialiased rendering.  This
- * normalization process is controlled by the
+ * normalization process is controlled by the 
  * {@link RenderingHints#KEY_STROKE_CONTROL KEY_STROKE_CONTROL} hint.
  * The exact normalization algorithm is not specified, but the goals
  * of this normalization are to ensure that lines are rendered with
@@ -336,14 +336,14 @@ import java.util.Map;
  * results.
  * </ul>
  * <p>
- * The following definitions of general legacy methods
- * perform identically to previously specified behavior under default
+ * The following definitions of general legacy methods 
+ * perform identically to previously specified behavior under default 
  * attribute settings:
  * <ul>
  * <li>
- * For <code>fill</code> operations, including <code>fillRect</code>,
+ * For <code>fill</code> operations, including <code>fillRect</code>, 
  * <code>fillRoundRect</code>, <code>fillOval</code>,
- * <code>fillArc</code>, <code>fillPolygon</code>, and
+ * <code>fillArc</code>, <code>fillPolygon</code>, and 
  * <code>clearRect</code>, {@link #fill(Shape) fill} can now be called
  * with the desired <code>Shape</code>.  For example, when filling a
  * rectangle:
@@ -353,7 +353,7 @@ import java.util.Map;
  * is called.
  * <p>
  * <li>
- * Similarly, for draw operations, including <code>drawLine</code>,
+ * Similarly, for draw operations, including <code>drawLine</code>, 
  * <code>drawRect</code>, <code>drawRoundRect</code>,
  * <code>drawOval</code>, <code>drawArc</code>, <code>drawPolyline</code>,
  * and <code>drawPolygon</code>, {@link #draw(Shape) draw} can now be
@@ -366,7 +366,7 @@ import java.util.Map;
  * <p>
  * <li>
  * The <code>draw3DRect</code> and <code>fill3DRect</code> methods were
- * implemented in terms of the <code>drawLine</code> and
+ * implemented in terms of the <code>drawLine</code> and 
  * <code>fillRect</code> methods in the <code>Graphics</code> class which
  * would predicate their behavior upon the current <code>Stroke</code>
  * and <code>Paint</code> objects in a <code>Graphics2D</code> context.
@@ -378,10 +378,10 @@ import java.util.Map;
  * </ul>
  * The <code>Graphics</code> class defines only the <code>setColor</code>
  * method to control the color to be painted.  Since the Java 2D API extends
- * the <code>Color</code> object to implement the new <code>Paint</code>
+ * the <code>Color</code> object to implement the new <code>Paint</code> 
  * interface, the existing
- * <code>setColor</code> method is now a convenience method for setting the
- * current <code>Paint</code> attribute to a <code>Color</code> object.
+ * <code>setColor</code> method is now a convenience method for setting the 
+ * current <code>Paint</code> attribute to a <code>Color</code> object.  
  * <code>setColor(c)</code> is equivalent to <code>setPaint(c)</code>.
  * <p>
  * The <code>Graphics</code> class defines two methods for controlling
@@ -401,18 +401,19 @@ import java.util.Map;
  * </pre>
  * </ol>
  *
+ * @version 	%I%, %G%
  * @author Jim Graham
  * @see java.awt.RenderingHints
  */
 public abstract class Graphics2D extends Graphics {
 
     /**
-     * Constructs a new <code>Graphics2D</code> object.  Since
+     * Constructs a new <code>Graphics2D</code> object.  Since 
      * <code>Graphics2D</code> is an abstract class, and since it must be
      * customized by subclasses for different output devices,
      * <code>Graphics2D</code> objects cannot be created directly.
-     * Instead, <code>Graphics2D</code> objects must be obtained from another
-     * <code>Graphics2D</code> object, created by a
+     * Instead, <code>Graphics2D</code> objects must be obtained from another 
+     * <code>Graphics2D</code> object, created by a 
      * <code>Component</code>, or obtained from images such as
      * {@link BufferedImage} objects.
      * @see java.awt.Component#getGraphics
@@ -426,9 +427,9 @@ public abstract class Graphics2D extends Graphics {
      * The edges of the rectangle are highlighted so that they
      * appear to be beveled and lit from the upper left corner.
      * <p>
-     * The colors used for the highlighting effect are determined
+     * The colors used for the highlighting effect are determined 
      * based on the current color.
-     * The resulting rectangle covers an area that is
+     * The resulting rectangle covers an area that is 
      * <code>width&nbsp;+&nbsp;1</code> pixels wide
      * by <code>height&nbsp;+&nbsp;1</code> pixels tall.  This method
      * uses the current <code>Color</code> exclusively and ignores
@@ -438,29 +439,29 @@ public abstract class Graphics2D extends Graphics {
      * @param width the width of the rectangle to be drawn.
      * @param height the height of the rectangle to be drawn.
      * @param raised a boolean that determines whether the rectangle
-     *                      appears to be raised above the surface
+     *                      appears to be raised above the surface 
      *                      or sunk into the surface.
      * @see         java.awt.Graphics#fill3DRect
      */
     public void draw3DRect(int x, int y, int width, int height,
-                           boolean raised) {
-        Paint p = getPaint();
-        Color c = getColor();
-        Color brighter = c.brighter();
-        Color darker = c.darker();
+			   boolean raised) {
+	Paint p = getPaint();
+	Color c = getColor();
+	Color brighter = c.brighter();
+	Color darker = c.darker();
 
-        setColor(raised ? brighter : darker);
-        //drawLine(x, y, x, y + height);
-        fillRect(x, y, 1, height + 1);
-        //drawLine(x + 1, y, x + width - 1, y);
-        fillRect(x + 1, y, width - 1, 1);
-        setColor(raised ? darker : brighter);
-        //drawLine(x + 1, y + height, x + width, y + height);
-        fillRect(x + 1, y + height, width, 1);
-        //drawLine(x + width, y, x + width, y + height - 1);
-        fillRect(x + width, y, 1, height);
-        setPaint(p);
-    }
+	setColor(raised ? brighter : darker);
+	//drawLine(x, y, x, y + height);
+	fillRect(x, y, 1, height + 1);
+	//drawLine(x + 1, y, x + width - 1, y);
+	fillRect(x + 1, y, width - 1, 1);
+	setColor(raised ? darker : brighter);
+	//drawLine(x + 1, y + height, x + width, y + height);
+	fillRect(x + 1, y + height, width, 1);
+	//drawLine(x + width, y, x + width, y + height - 1);
+	fillRect(x + width, y, 1, height);
+	setPaint(p);
+    }    
 
     /**
      * Paints a 3-D highlighted rectangle filled with the current color.
@@ -468,58 +469,58 @@ public abstract class Graphics2D extends Graphics {
      * as if the edges were beveled and lit from the upper left corner.
      * The colors used for the highlighting effect and for filling are
      * determined from the current <code>Color</code>.  This method uses
-     * the current <code>Color</code> exclusively and ignores the current
+     * the current <code>Color</code> exclusively and ignores the current 
      * <code>Paint</code>.
      * @param x the x coordinate of the rectangle to be filled.
      * @param y the y coordinate of the rectangle to be filled.
      * @param       width the width of the rectangle to be filled.
      * @param       height the height of the rectangle to be filled.
-     * @param       raised a boolean value that determines whether the
-     *                      rectangle appears to be raised above the surface
+     * @param       raised a boolean value that determines whether the 
+     *                      rectangle appears to be raised above the surface 
      *                      or etched into the surface.
      * @see         java.awt.Graphics#draw3DRect
      */
     public void fill3DRect(int x, int y, int width, int height,
-                           boolean raised) {
-        Paint p = getPaint();
-        Color c = getColor();
-        Color brighter = c.brighter();
-        Color darker = c.darker();
+			   boolean raised) {
+	Paint p = getPaint();
+	Color c = getColor();
+	Color brighter = c.brighter();
+	Color darker = c.darker();
 
-        if (!raised) {
-            setColor(darker);
-        } else if (p != c) {
-            setColor(c);
-        }
-        fillRect(x+1, y+1, width-2, height-2);
-        setColor(raised ? brighter : darker);
-        //drawLine(x, y, x, y + height - 1);
-        fillRect(x, y, 1, height);
-        //drawLine(x + 1, y, x + width - 2, y);
-        fillRect(x + 1, y, width - 2, 1);
-        setColor(raised ? darker : brighter);
-        //drawLine(x + 1, y + height - 1, x + width - 1, y + height - 1);
-        fillRect(x + 1, y + height - 1, width - 1, 1);
-        //drawLine(x + width - 1, y, x + width - 1, y + height - 2);
-        fillRect(x + width - 1, y, 1, height - 1);
-        setPaint(p);
-    }
+	if (!raised) {
+	    setColor(darker);
+	} else if (p != c) {
+	    setColor(c);
+	}
+	fillRect(x+1, y+1, width-2, height-2);
+	setColor(raised ? brighter : darker);
+	//drawLine(x, y, x, y + height - 1);
+	fillRect(x, y, 1, height);
+	//drawLine(x + 1, y, x + width - 2, y);
+	fillRect(x + 1, y, width - 2, 1);
+	setColor(raised ? darker : brighter);
+	//drawLine(x + 1, y + height - 1, x + width - 1, y + height - 1);
+	fillRect(x + 1, y + height - 1, width - 1, 1);
+	//drawLine(x + width - 1, y, x + width - 1, y + height - 2);
+	fillRect(x + width - 1, y, 1, height - 1);
+	setPaint(p);
+    }    
 
     /**
-     * Strokes the outline of a <code>Shape</code> using the settings of the
+     * Strokes the outline of a <code>Shape</code> using the settings of the 
      * current <code>Graphics2D</code> context.  The rendering attributes
      * applied include the <code>Clip</code>, <code>Transform</code>,
-     * <code>Paint</code>, <code>Composite</code> and
+     * <code>Paint</code>, <code>Composite</code> and 
      * <code>Stroke</code> attributes.
      * @param s the <code>Shape</code> to be rendered
      * @see #setStroke
      * @see #setPaint
      * @see java.awt.Graphics#setColor
      * @see #transform
-     * @see #setTransform
+     * @see #setTransform     
      * @see #clip
      * @see #setClip
-     * @see #setComposite
+     * @see #setComposite    
      */
     public abstract void draw(Shape s);
 
@@ -531,16 +532,16 @@ public abstract class Graphics2D extends Graphics {
      * The specified transformation is applied to the image before the
      * transform attribute in the <code>Graphics2D</code> context is applied.
      * The rendering attributes applied include the <code>Clip</code>,
-     * <code>Transform</code>, and <code>Composite</code> attributes.
-     * Note that no rendering is done if the specified transform is
+     * <code>Transform</code>, and <code>Composite</code> attributes. 
+     * Note that no rendering is done if the specified transform is 
      * noninvertible.
-     * @param img the specified image to be rendered.
+     * @param img the specified image to be rendered. 
      *            This method does nothing if <code>img</code> is null.
      * @param xform the transformation from image space into user space
      * @param obs the {@link ImageObserver}
      * to be notified as more of the <code>Image</code>
      * is converted
-     * @return <code>true</code> if the <code>Image</code> is
+     * @return <code>true</code> if the <code>Image</code> is 
      * fully loaded and completely rendered, or if it's null;
      * <code>false</code> if the <code>Image</code> is still being loaded.
      * @see #transform
@@ -555,7 +556,7 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Renders a <code>BufferedImage</code> that is
-     * filtered with a
+     * filtered with a 
      * {@link BufferedImageOp}.
      * The rendering attributes applied include the <code>Clip</code>,
      * <code>Transform</code>
@@ -565,7 +566,7 @@ public abstract class Graphics2D extends Graphics {
      * drawImage(img1, new AffineTransform(1f,0f,0f,1f,x,y), null);
      * </pre>
      * @param op the filter to be applied to the image before rendering
-     * @param img the specified <code>BufferedImage</code> to be rendered.
+     * @param img the specified <code>BufferedImage</code> to be rendered. 
      *            This method does nothing if <code>img</code> is null.
      * @param x the x coordinate of the location in user space where
      * the upper left corner of the image is rendered
@@ -579,13 +580,13 @@ public abstract class Graphics2D extends Graphics {
      * @see #setClip
      */
     public abstract void drawImage(BufferedImage img,
-                                   BufferedImageOp op,
-                                   int x,
-                                   int y);
+				   BufferedImageOp op,
+				   int x,
+				   int y);
 
     /**
      * Renders a {@link RenderedImage},
-     * applying a transform from image
+     * applying a transform from image 
      * space into user space before drawing.
      * The transformation from user space into device space is done with
      * the current <code>Transform</code> in the <code>Graphics2D</code>.
@@ -608,7 +609,7 @@ public abstract class Graphics2D extends Graphics {
                                            AffineTransform xform);
 
     /**
-     * Renders a
+     * Renders a 
      * {@link RenderableImage},
      * applying a transform from image space into user space before drawing.
      * The transformation from user space into device space is done with
@@ -619,14 +620,14 @@ public abstract class Graphics2D extends Graphics {
      * <code>Transform</code>, and <code>Composite</code> attributes. Note
      * that no rendering is done if the specified transform is
      * noninvertible.
-     *<p>
+     *<p> 
      * Rendering hints set on the <code>Graphics2D</code> object might
-     * be used in rendering the <code>RenderableImage</code>.
-     * If explicit control is required over specific hints recognized by a
-     * specific <code>RenderableImage</code>, or if knowledge of which hints
-     * are used is required, then a <code>RenderedImage</code> should be
+     * be used in rendering the <code>RenderableImage</code>.  
+     * If explicit control is required over specific hints recognized by a 
+     * specific <code>RenderableImage</code>, or if knowledge of which hints 
+     * are used is required, then a <code>RenderedImage</code> should be   
      * obtained directly from the <code>RenderableImage</code>
-     * and rendered using
+     * and rendered using 
      *{@link #drawRenderedImage(RenderedImage, AffineTransform) drawRenderedImage}.
      * @param img the image to be rendered. This method does
      *            nothing if <code>img</code> is null.
@@ -641,15 +642,15 @@ public abstract class Graphics2D extends Graphics {
     public abstract void drawRenderableImage(RenderableImage img,
                                              AffineTransform xform);
 
-    /**
-     * Renders the text of the specified <code>String</code>, using the
-     * current text attribute state in the <code>Graphics2D</code> context.
-     * The baseline of the
-     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in
-     * the User Space.
+    /** 
+     * Renders the text of the specified <code>String</code>, using the 
+     * current text attribute state in the <code>Graphics2D</code> context. 
+     * The baseline of the 
+     * first character is at position (<i>x</i>,&nbsp;<i>y</i>) in 
+     * the User Space. 
      * The rendering attributes applied include the <code>Clip</code>,
      * <code>Transform</code>, <code>Paint</code>, <code>Font</code> and
-     * <code>Composite</code> attributes.  For characters in script
+     * <code>Composite</code> attributes.  For characters in script 
      * systems such as Hebrew and Arabic, the glyphs can be rendered from
      * right to left, in which case the coordinate supplied is the
      * location of the leftmost character on the baseline.
@@ -658,7 +659,7 @@ public abstract class Graphics2D extends Graphics {
      * <code>String</code> should be rendered
      * @param y the y coordinate of the location where the
      * <code>String</code> should be rendered
-     * @throws NullPointerException if <code>str</code> is
+     * @throws NullPointerException if <code>str</code> is 
      *         <code>null</code>
      * @see         java.awt.Graphics#drawBytes
      * @see         java.awt.Graphics#drawChars
@@ -667,13 +668,13 @@ public abstract class Graphics2D extends Graphics {
     public abstract void drawString(String str, int x, int y);
 
     /**
-     * Renders the text specified by the specified <code>String</code>,
-     * using the current text attribute state in the <code>Graphics2D</code> context.
-     * The baseline of the first character is at position
+     * Renders the text specified by the specified <code>String</code>, 
+     * using the current text attribute state in the <code>Graphics2D</code> context. 
+     * The baseline of the first character is at position 
      * (<i>x</i>,&nbsp;<i>y</i>) in the User Space.
      * The rendering attributes applied include the <code>Clip</code>,
      * <code>Transform</code>, <code>Paint</code>, <code>Font</code> and
-     * <code>Composite</code> attributes. For characters in script systems
+     * <code>Composite</code> attributes. For characters in script systems 
      * such as Hebrew and Arabic, the glyphs can be rendered from right to
      * left, in which case the coordinate supplied is the location of the
      * leftmost character on the baseline.
@@ -700,7 +701,7 @@ public abstract class Graphics2D extends Graphics {
      * The baseline of the first character is at position
      * (<i>x</i>,&nbsp;<i>y</i>) in User Space.
      * For characters in script systems such as Hebrew and Arabic,
-     * the glyphs can be rendered from right to left, in which case the
+     * the glyphs can be rendered from right to left, in which case the 
      * coordinate supplied is the location of the leftmost character
      * on the baseline.
      * @param iterator the iterator whose text is to be rendered
@@ -726,7 +727,7 @@ public abstract class Graphics2D extends Graphics {
      * The baseline of the first character is at position
      * (<i>x</i>,&nbsp;<i>y</i>) in User Space.
      * For characters in script systems such as Hebrew and Arabic,
-     * the glyphs can be rendered from right to left, in which case the
+     * the glyphs can be rendered from right to left, in which case the 
      * coordinate supplied is the location of the leftmost character
      * on the baseline.
      * @param iterator the iterator whose text is to be rendered
@@ -746,14 +747,14 @@ public abstract class Graphics2D extends Graphics {
                                     float x, float y);
 
     /**
-     * Renders the text of the specified
+     * Renders the text of the specified 
      * {@link GlyphVector} using
      * the <code>Graphics2D</code> context's rendering attributes.
      * The rendering attributes applied include the <code>Clip</code>,
      * <code>Transform</code>, <code>Paint</code>, and
      * <code>Composite</code> attributes.  The <code>GlyphVector</code>
      * specifies individual glyphs from a {@link Font}.
-     * The <code>GlyphVector</code> can also contain the glyph positions.
+     * The <code>GlyphVector</code> can also contain the glyph positions.  
      * This is the fastest way to render a set of characters to the
      * screen.
      * @param g the <code>GlyphVector</code> to be rendered
@@ -774,8 +775,8 @@ public abstract class Graphics2D extends Graphics {
     public abstract void drawGlyphVector(GlyphVector g, float x, float y);
 
     /**
-     * Fills the interior of a <code>Shape</code> using the settings of the
-     * <code>Graphics2D</code> context. The rendering attributes applied
+     * Fills the interior of a <code>Shape</code> using the settings of the   
+     * <code>Graphics2D</code> context. The rendering attributes applied 
      * include the <code>Clip</code>, <code>Transform</code>,
      * <code>Paint</code>, and <code>Composite</code>.
      * @param s the <code>Shape</code> to be filled
@@ -790,25 +791,25 @@ public abstract class Graphics2D extends Graphics {
     public abstract void fill(Shape s);
 
     /**
-     * Checks whether or not the specified <code>Shape</code> intersects
+     * Checks whether or not the specified <code>Shape</code> intersects 
      * the specified {@link Rectangle}, which is in device
      * space. If <code>onStroke</code> is false, this method checks
      * whether or not the interior of the specified <code>Shape</code>
-     * intersects the specified <code>Rectangle</code>.  If
+     * intersects the specified <code>Rectangle</code>.  If 
      * <code>onStroke</code> is <code>true</code>, this method checks
-     * whether or not the <code>Stroke</code> of the specified
+     * whether or not the <code>Stroke</code> of the specified 
      * <code>Shape</code> outline intersects the specified
      * <code>Rectangle</code>.
      * The rendering attributes taken into account include the
-     * <code>Clip</code>, <code>Transform</code>, and <code>Stroke</code>
+     * <code>Clip</code>, <code>Transform</code>, and <code>Stroke</code> 
      * attributes.
      * @param rect the area in device space to check for a hit
      * @param s the <code>Shape</code> to check for a hit
-     * @param onStroke flag used to choose between testing the
-     * stroked or the filled shape.  If the flag is <code>true</code>, the
-     * <code>Stroke</code> oultine is tested.  If the flag is
+     * @param onStroke flag used to choose between testing the 
+     * stroked or the filled shape.  If the flag is <code>true</code>, the 
+     * <code>Stroke</code> oultine is tested.  If the flag is 
      * <code>false</code>, the filled <code>Shape</code> is tested.
-     * @return <code>true</code> if there is a hit; <code>false</code>
+     * @return <code>true</code> if there is a hit; <code>false</code> 
      * otherwise.
      * @see #setStroke
      * @see #fill
@@ -819,11 +820,11 @@ public abstract class Graphics2D extends Graphics {
      * @see #setClip
      */
     public abstract boolean hit(Rectangle rect,
-                                Shape s,
-                                boolean onStroke);
+				Shape s,
+				boolean onStroke);
 
     /**
-     * Returns the device configuration associated with this
+     * Returns the device configuration associated with this 
      * <code>Graphics2D</code>.
      * @return the device configuration of this <code>Graphics2D</code>.
      */
@@ -831,10 +832,10 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Sets the <code>Composite</code> for the <code>Graphics2D</code> context.
-     * The <code>Composite</code> is used in all drawing methods such as
+     * The <code>Composite</code> is used in all drawing methods such as 
      * <code>drawImage</code>, <code>drawString</code>, <code>draw</code>,
-     * and <code>fill</code>.  It specifies how new pixels are to be combined
-     * with the existing pixels on the graphics device during the rendering
+     * and <code>fill</code>.  It specifies how new pixels are to be combined 
+     * with the existing pixels on the graphics device during the rendering 
      * process.
      * <p>If this <code>Graphics2D</code> context is drawing to a
      * <code>Component</code> on the display screen and the
@@ -859,12 +860,12 @@ public abstract class Graphics2D extends Graphics {
     public abstract void setComposite(Composite comp);
 
     /**
-     * Sets the <code>Paint</code> attribute for the
+     * Sets the <code>Paint</code> attribute for the 
      * <code>Graphics2D</code> context.  Calling this method
-     * with a <code>null</code> <code>Paint</code> object does
+     * with a <code>null</code> <code>Paint</code> object does 
      * not have any effect on the current <code>Paint</code> attribute
-     * of this <code>Graphics2D</code>.
-     * @param paint the <code>Paint</code> object to be used to generate
+     * of this <code>Graphics2D</code>.  
+     * @param paint the <code>Paint</code> object to be used to generate 
      * color during the rendering process, or <code>null</code>
      * @see java.awt.Graphics#setColor
      * @see #getPaint
@@ -875,7 +876,7 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Sets the <code>Stroke</code> for the <code>Graphics2D</code> context.
-     * @param s the <code>Stroke</code> object to be used to stroke a
+     * @param s the <code>Stroke</code> object to be used to stroke a 
      * <code>Shape</code> during the rendering process
      * @see BasicStroke
      * @see #getStroke
@@ -884,7 +885,7 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Sets the value of a single preference for the rendering algorithms.
-     * Hint categories include controls for rendering quality and overall
+     * Hint categories include controls for rendering quality and overall 
      * time/quality trade-off in the rendering process.  Refer to the
      * <code>RenderingHints</code> class for definitions of some common
      * keys and values.
@@ -898,11 +899,11 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Returns the value of a single preference for the rendering algorithms.
-     * Hint categories include controls for rendering quality and overall
+     * Hint categories include controls for rendering quality and overall 
      * time/quality trade-off in the rendering process.  Refer to the
      * <code>RenderingHints</code> class for definitions of some common
      * keys and values.
-     * @param hintKey the key corresponding to the hint to get.
+     * @param hintKey the key corresponding to the hint to get. 
      * @return an object representing the value for the specified hint key.
      * Some of the keys and their associated values are defined in the
      * <code>RenderingHints</code> class.
@@ -932,7 +933,7 @@ public abstract class Graphics2D extends Graphics {
      * rendering algorithms.
      * Only values for the rendering hints that are present in the
      * specified <code>Map</code> object are modified.
-     * All other preferences not present in the specified
+     * All other preferences not present in the specified 
      * object are left unmodified.
      * Hint categories include controls for rendering quality and
      * overall time/quality trade-off in the rendering process.
@@ -947,7 +948,7 @@ public abstract class Graphics2D extends Graphics {
      * Gets the preferences for the rendering algorithms.  Hint categories
      * include controls for rendering quality and overall time/quality
      * trade-off in the rendering process.
-     * Returns all of the hint key/value pairs that were ever specified in
+     * Returns all of the hint key/value pairs that were ever specified in 
      * one operation.  Refer to the
      * <code>RenderingHints</code> class for definitions of some common
      * keys and values.
@@ -959,12 +960,12 @@ public abstract class Graphics2D extends Graphics {
     public abstract RenderingHints getRenderingHints();
 
     /**
-     * Translates the origin of the <code>Graphics2D</code> context to the
-     * point (<i>x</i>,&nbsp;<i>y</i>) in the current coordinate system.
-     * Modifies the <code>Graphics2D</code> context so that its new origin
-     * corresponds to the point (<i>x</i>,&nbsp;<i>y</i>) in the
-     * <code>Graphics2D</code> context's former coordinate system.  All
-     * coordinates used in subsequent rendering operations on this graphics
+     * Translates the origin of the <code>Graphics2D</code> context to the 
+     * point (<i>x</i>,&nbsp;<i>y</i>) in the current coordinate system. 
+     * Modifies the <code>Graphics2D</code> context so that its new origin 
+     * corresponds to the point (<i>x</i>,&nbsp;<i>y</i>) in the 
+     * <code>Graphics2D</code> context's former coordinate system.  All 
+     * coordinates used in subsequent rendering operations on this graphics 
      * context are relative to this new origin.
      * @param  x the specified x coordinate
      * @param  y the specified y coordinate
@@ -974,16 +975,16 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Concatenates the current
-     * <code>Graphics2D</code> <code>Transform</code>
-     * with a translation transform.
+     * <code>Graphics2D</code> <code>Transform</code> 
+     * with a translation transform. 
      * Subsequent rendering is translated by the specified
      * distance relative to the previous position.
      * This is equivalent to calling transform(T), where T is an
      * <code>AffineTransform</code> represented by the following matrix:
      * <pre>
-     *          [   1    0    tx  ]
-     *          [   0    1    ty  ]
-     *          [   0    0    1   ]
+     *		[   1    0    tx  ]
+     *		[   0    1    ty  ]
+     *		[   0    0    1   ]
      * </pre>
      * @param tx the distance to translate along the x-axis
      * @param ty the distance to translate along the y-axis
@@ -992,15 +993,15 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Concatenates the current <code>Graphics2D</code>
-     * <code>Transform</code> with a rotation transform.
+     * <code>Transform</code> with a rotation transform. 
      * Subsequent rendering is rotated by the specified radians relative
      * to the previous origin.
      * This is equivalent to calling <code>transform(R)</code>, where R is an
      * <code>AffineTransform</code> represented by the following matrix:
      * <pre>
-     *          [   cos(theta)    -sin(theta)    0   ]
-     *          [   sin(theta)     cos(theta)    0   ]
-     *          [       0              0         1   ]
+     *		[   cos(theta)    -sin(theta)    0   ]
+     *		[   sin(theta)     cos(theta)    0   ]
+     *		[       0              0         1   ]
      * </pre>
      * Rotating with a positive angle theta rotates points on the positive
      * x axis toward the positive y axis.
@@ -1009,17 +1010,17 @@ public abstract class Graphics2D extends Graphics {
     public abstract void rotate(double theta);
 
     /**
-     * Concatenates the current <code>Graphics2D</code>
-     * <code>Transform</code> with a translated rotation
+     * Concatenates the current <code>Graphics2D</code> 
+     * <code>Transform</code> with a translated rotation 
      * transform.  Subsequent rendering is transformed by a transform
-     * which is constructed by translating to the specified location,
+     * which is constructed by translating to the specified location, 
      * rotating by the specified radians, and translating back by the same
      * amount as the original translation.  This is equivalent to the
      * following sequence of calls:
      * <pre>
-     *          translate(x, y);
-     *          rotate(theta);
-     *          translate(-x, -y);
+     *		translate(x, y);
+     *		rotate(theta);
+     *		translate(-x, -y);
      * </pre>
      * Rotating with a positive angle theta rotates points on the positive
      * x axis toward the positive y axis.
@@ -1031,39 +1032,39 @@ public abstract class Graphics2D extends Graphics {
 
     /**
      * Concatenates the current <code>Graphics2D</code>
-     * <code>Transform</code> with a scaling transformation
+     * <code>Transform</code> with a scaling transformation 
      * Subsequent rendering is resized according to the specified scaling
      * factors relative to the previous scaling.
      * This is equivalent to calling <code>transform(S)</code>, where S is an
      * <code>AffineTransform</code> represented by the following matrix:
      * <pre>
-     *          [   sx   0    0   ]
-     *          [   0    sy   0   ]
-     *          [   0    0    1   ]
+     *		[   sx   0    0   ]
+     *		[   0    sy   0   ]
+     *		[   0    0    1   ]
      * </pre>
      * @param sx the amount by which X coordinates in subsequent
      * rendering operations are multiplied relative to previous
      * rendering operations.
-     * @param sy the amount by which Y coordinates in subsequent
-     * rendering operations are multiplied relative to previous
+     * @param sy the amount by which Y coordinates in subsequent 
+     * rendering operations are multiplied relative to previous 
      * rendering operations.
      */
     public abstract void scale(double sx, double sy);
 
     /**
      * Concatenates the current <code>Graphics2D</code>
-     * <code>Transform</code> with a shearing transform.
+     * <code>Transform</code> with a shearing transform. 
      * Subsequent renderings are sheared by the specified
      * multiplier relative to the previous position.
      * This is equivalent to calling <code>transform(SH)</code>, where SH
      * is an <code>AffineTransform</code> represented by the following
      * matrix:
      * <pre>
-     *          [   1   shx   0   ]
-     *          [  shy   1    0   ]
-     *          [   0    0    1   ]
+     *		[   1   shx   0   ]
+     *		[  shy   1    0   ]
+     *		[   0    0    1   ]
      * </pre>
-     * @param shx the multiplier by which coordinates are shifted in
+     * @param shx the multiplier by which coordinates are shifted in 
      * the positive X axis direction as a function of their Y coordinate
      * @param shy the multiplier by which coordinates are shifted in
      * the positive Y axis direction as a function of their X coordinate
@@ -1071,8 +1072,8 @@ public abstract class Graphics2D extends Graphics {
     public abstract void shear(double shx, double shy);
 
     /**
-     * Composes an <code>AffineTransform</code> object with the
-     * <code>Transform</code> in this <code>Graphics2D</code> according
+     * Composes an <code>AffineTransform</code> object with the 
+     * <code>Transform</code> in this <code>Graphics2D</code> according 
      * to the rule last-specified-first-applied.  If the current
      * <code>Transform</code> is Cx, the result of composition
      * with Tx is a new <code>Transform</code> Cx'.  Cx' becomes the
@@ -1082,7 +1083,7 @@ public abstract class Graphics2D extends Graphics {
      * the result by the original <code>Transform</code> Cx.  In other
      * words, Cx'(p) = Cx(Tx(p)).  A copy of the Tx is made, if necessary,
      * so further modifications to Tx do not affect rendering.
-     * @param Tx the <code>AffineTransform</code> object to be composed with
+     * @param Tx the <code>AffineTransform</code> object to be composed with 
      * the current <code>Transform</code>
      * @see #setTransform
      * @see AffineTransform
@@ -1092,15 +1093,15 @@ public abstract class Graphics2D extends Graphics {
     /**
      * Overwrites the Transform in the <code>Graphics2D</code> context.
      * WARNING: This method should <b>never</b> be used to apply a new
-     * coordinate transform on top of an existing transform because the
+     * coordinate transform on top of an existing transform because the 
      * <code>Graphics2D</code> might already have a transform that is
-     * needed for other purposes, such as rendering Swing
+     * needed for other purposes, such as rendering Swing 
      * components or applying a scaling transformation to adjust for the
-     * resolution of a printer.
-     * <p>To add a coordinate transform, use the
+     * resolution of a printer.  
+     * <p>To add a coordinate transform, use the 
      * <code>transform</code>, <code>rotate</code>, <code>scale</code>,
-     * or <code>shear</code> methods.  The <code>setTransform</code>
-     * method is intended only for restoring the original
+     * or <code>shear</code> methods.  The <code>setTransform</code> 
+     * method is intended only for restoring the original 
      * <code>Graphics2D</code> transform after rendering, as shown in this
      * example:
      * <pre><blockquote>
@@ -1123,9 +1124,9 @@ public abstract class Graphics2D extends Graphics {
     public abstract void setTransform(AffineTransform Tx);
 
     /**
-     * Returns a copy of the current <code>Transform</code> in the
+     * Returns a copy of the current <code>Transform</code> in the 
      * <code>Graphics2D</code> context.
-     * @return the current <code>AffineTransform</code> in the
+     * @return the current <code>AffineTransform</code> in the 
      *             <code>Graphics2D</code> context.
      * @see #transform
      * @see #setTransform
@@ -1133,7 +1134,7 @@ public abstract class Graphics2D extends Graphics {
     public abstract AffineTransform getTransform();
 
     /**
-     * Returns the current <code>Paint</code> of the
+     * Returns the current <code>Paint</code> of the 
      * <code>Graphics2D</code> context.
      * @return the current <code>Graphics2D</code> <code>Paint</code>,
      * which defines a color or pattern.
@@ -1152,15 +1153,15 @@ public abstract class Graphics2D extends Graphics {
     public abstract Composite getComposite();
 
     /**
-     * Sets the background color for the <code>Graphics2D</code> context.
+     * Sets the background color for the <code>Graphics2D</code> context. 
      * The background color is used for clearing a region.
      * When a <code>Graphics2D</code> is constructed for a
      * <code>Component</code>, the background color is
-     * inherited from the <code>Component</code>. Setting the background color
-     * in the <code>Graphics2D</code> context only affects the subsequent
-     * <code>clearRect</code> calls and not the background color of the
+     * inherited from the <code>Component</code>. Setting the background color 
+     * in the <code>Graphics2D</code> context only affects the subsequent      
+     * <code>clearRect</code> calls and not the background color of the  
      * <code>Component</code>.  To change the background
-     * of the <code>Component</code>, use appropriate methods of
+     * of the <code>Component</code>, use appropriate methods of 
      * the <code>Component</code>.
      * @param color the background color that isused in
      * subsequent calls to <code>clearRect</code>
@@ -1191,15 +1192,15 @@ public abstract class Graphics2D extends Graphics {
      * specified <code>Shape</code> and sets the <code>Clip</code> to the
      * resulting intersection.  The specified <code>Shape</code> is
      * transformed with the current <code>Graphics2D</code>
-     * <code>Transform</code> before being intersected with the current
+     * <code>Transform</code> before being intersected with the current 
      * <code>Clip</code>.  This method is used to make the current
      * <code>Clip</code> smaller.
      * To make the <code>Clip</code> larger, use <code>setClip</code>.
      * The <i>user clip</i> modified by this method is independent of the
-     * clipping associated with device bounds and visibility.  If no clip has
-     * previously been set, or if the clip has been cleared using
+     * clipping associated with device bounds and visibility.  If no clip has 
+     * previously been set, or if the clip has been cleared using 
      * {@link Graphics#setClip(Shape) setClip} with a <code>null</code>
-     * argument, the specified <code>Shape</code> becomes the new
+     * argument, the specified <code>Shape</code> becomes the new 
      * user clip.
      * @param s the <code>Shape</code> to be intersected with the current
      *          <code>Clip</code>.  If <code>s</code> is <code>null</code>,
@@ -1208,10 +1209,10 @@ public abstract class Graphics2D extends Graphics {
      public abstract void clip(Shape s);
 
      /**
-     * Get the rendering context of the <code>Font</code> within this
+     * Get the rendering context of the <code>Font</code> within this 
      * <code>Graphics2D</code> context.
      * The {@link FontRenderContext}
-     * encapsulates application hints such as anti-aliasing and
+     * encapsulates application hints such as anti-aliasing and 
      * fractional metrics, as well as target device specific information
      * such as dots-per-inch.  This information should be provided by the
      * application when using objects that perform typographical

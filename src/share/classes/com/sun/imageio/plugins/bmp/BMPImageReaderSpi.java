@@ -92,3 +92,4 @@ public class BMPImageReaderSpi extends ImageReaderSpi {
         return new BMPImageReader(this);
     }
 }
+

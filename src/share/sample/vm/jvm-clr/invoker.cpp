@@ -39,7 +39,7 @@
 #include "invokerExp.h"
 #include "invoker.h"
 
-#import  <mscorlib.tlb> raw_interfaces_only
+#import  <mscorlib.tlb> raw_interfaces_only 
 
 using namespace mscorlib;
 
@@ -48,7 +48,7 @@ using namespace mscorlib;
 int __stdcall invokeCLR( WCHAR* wszApplication){
 
     //Initializes the COM library
-
+    
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     ICorRuntimeHost* pHost           = NULL;
@@ -57,13 +57,13 @@ int __stdcall invokeCLR( WCHAR* wszApplication){
     long             lReturn         = 0;
 
     // Load CLR into the process
-
+    
     HRESULT hr = CorBindToRuntimeEx(NULL,NULL,0,CLSID_CorRuntimeHost,IID_ICorRuntimeHost,(VOID**)&pHost);
 
     if(!FAILED(hr)) {
 
         // Start the CLR
-
+        
         hr = pHost->Start();
         if(!FAILED(hr)) {
 
@@ -76,10 +76,10 @@ int __stdcall invokeCLR( WCHAR* wszApplication){
                 if(!FAILED(hr)) {
 
                     // Execute assembly
-
+                    
                     hr = pAppDomain->ExecuteAssembly_2(_bstr_t(wszApplication), &lReturn);
                     if (FAILED(hr)) {
-
+                        
                         printf("_AppDomain::ExecuteAssembly_2 failed with hr=0x%x.\n", hr);
                         lReturn = -1;
                     }
@@ -102,15 +102,15 @@ int __stdcall invokeCLR( WCHAR* wszApplication){
         printf("CorBindToRuntimeHost failed with hr=0x%x.\n", hr);
         lReturn = -5;
     }
-
+    
     // print the error message description if needed
-
+    
     if(FAILED(hr)){
         LPVOID lpMsgBuf = NULL;
 
-        FormatMessage(
-                FORMAT_MESSAGE_ALLOCATE_BUFFER |
-                FORMAT_MESSAGE_FROM_SYSTEM |
+        FormatMessage( 
+                FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+                FORMAT_MESSAGE_FROM_SYSTEM | 
                 FORMAT_MESSAGE_IGNORE_INSERTS,
                 NULL,
                 hr,
@@ -125,7 +125,7 @@ int __stdcall invokeCLR( WCHAR* wszApplication){
     }
 
     // close COM library
-
+    
     CoUninitialize();
 
     return lReturn;
@@ -136,11 +136,11 @@ int __stdcall invokeCLR( WCHAR* wszApplication){
 int __stdcall invokeCLR( const char* szApplication){
 
     int    nLength = strlen(szApplication)+1;
-
+    
     WCHAR* wszApplication = new WCHAR[nLength];
 
     mbstowcs(wszApplication, szApplication, nLength);
-
+  
     int nReturn = invokeCLR( wszApplication);
 
     delete wszApplication;
@@ -153,7 +153,7 @@ int __stdcall invokeCLR( const char* szApplication){
 JNIEXPORT jint JNICALL Java_invoker_invokeCLR( JNIEnv* pEnv,
                                                jclass  pClass,
                                                jstring jsApplication) {
-
+	
     const char* szApplication = pEnv->GetStringUTFChars(jsApplication, NULL);
 
     int nResult = invokeCLR( szApplication);

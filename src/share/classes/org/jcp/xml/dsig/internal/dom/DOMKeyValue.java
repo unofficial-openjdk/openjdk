@@ -65,25 +65,25 @@ public final class DOMKeyValue extends DOMStructure implements KeyValue {
     private DOMCryptoBinary modulus, exponent;
 
     public DOMKeyValue(PublicKey key)  throws KeyException {
-        if (key == null) {
-            throw new NullPointerException("key cannot be null");
-        }
-        this.publicKey = key;
-        if (key instanceof DSAPublicKey) {
-            DSAPublicKey dkey = (DSAPublicKey) key;
-            DSAParams params = dkey.getParams();
-            p = new DOMCryptoBinary(params.getP());
-            q = new DOMCryptoBinary(params.getQ());
-            g = new DOMCryptoBinary(params.getG());
-            y = new DOMCryptoBinary(dkey.getY());
-        } else if (key instanceof RSAPublicKey) {
-            RSAPublicKey rkey = (RSAPublicKey) key;
-            exponent = new DOMCryptoBinary(rkey.getPublicExponent());
-            modulus = new DOMCryptoBinary(rkey.getModulus());
-        } else {
-            throw new KeyException("unsupported key algorithm: " +
-                key.getAlgorithm());
-        }
+	if (key == null) {
+	    throw new NullPointerException("key cannot be null");
+	}
+	this.publicKey = key;
+	if (key instanceof DSAPublicKey) {
+	    DSAPublicKey dkey = (DSAPublicKey) key;
+	    DSAParams params = dkey.getParams();
+	    p = new DOMCryptoBinary(params.getP());
+	    q = new DOMCryptoBinary(params.getQ());
+	    g = new DOMCryptoBinary(params.getG());
+	    y = new DOMCryptoBinary(dkey.getY());
+	} else if (key instanceof RSAPublicKey) {
+	    RSAPublicKey rkey = (RSAPublicKey) key;
+	    exponent = new DOMCryptoBinary(rkey.getPublicExponent());
+	    modulus = new DOMCryptoBinary(rkey.getModulus());
+	} else {
+	    throw new KeyException("unsupported key algorithm: " +
+		key.getAlgorithm());
+	}
     }
 
     /**
@@ -92,39 +92,39 @@ public final class DOMKeyValue extends DOMStructure implements KeyValue {
      * @param kvElem a KeyValue element
      */
     public DOMKeyValue(Element kvElem) throws MarshalException {
-        Element kvtElem = DOMUtils.getFirstChildElement(kvElem);
+	Element kvtElem = DOMUtils.getFirstChildElement(kvElem);
         if (kvtElem.getLocalName().equals("DSAKeyValue")) {
             publicKey = unmarshalDSAKeyValue(kvtElem);
         } else if (kvtElem.getLocalName().equals("RSAKeyValue")) {
             publicKey = unmarshalRSAKeyValue(kvtElem);
         } else {
-            publicKey = null;
-            externalPublicKey = new javax.xml.crypto.dom.DOMStructure(kvtElem);
-        }
+	    publicKey = null;
+	    externalPublicKey = new javax.xml.crypto.dom.DOMStructure(kvtElem);
+	}
     }
 
     public PublicKey getPublicKey() throws KeyException {
-        if (publicKey == null) {
-            throw new KeyException("can't convert KeyValue to PublicKey");
-        } else {
+	if (publicKey == null) {
+	    throw new KeyException("can't convert KeyValue to PublicKey");
+	} else {
             return publicKey;
-        }
+	}
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-        throws MarshalException {
+	throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         // create KeyValue element
         Element kvElem = DOMUtils.createElement
-            (ownerDoc, "KeyValue", XMLSignature.XMLNS, dsPrefix);
+	    (ownerDoc, "KeyValue", XMLSignature.XMLNS, dsPrefix);
         marshalPublicKey(kvElem, ownerDoc, dsPrefix, context);
 
         parent.appendChild(kvElem);
     }
 
     private void marshalPublicKey(Node parent, Document doc, String dsPrefix,
-        DOMCryptoContext context) throws MarshalException {
+	DOMCryptoContext context) throws MarshalException {
         if (publicKey != null) {
             if (publicKey instanceof DSAPublicKey) {
                 // create and append DSAKeyValue element
@@ -137,23 +137,23 @@ public final class DOMKeyValue extends DOMStructure implements KeyValue {
                     " public key algorithm not supported");
             }
         } else {
-            parent.appendChild(externalPublicKey.getNode());
+	    parent.appendChild(externalPublicKey.getNode());
         }
     }
 
-    private void marshalDSAPublicKey(Node parent, Document doc,
-        String dsPrefix, DOMCryptoContext context) throws MarshalException {
+    private void marshalDSAPublicKey(Node parent, Document doc, 
+	String dsPrefix, DOMCryptoContext context) throws MarshalException {
         Element dsaElem = DOMUtils.createElement
-            (doc, "DSAKeyValue", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "DSAKeyValue", XMLSignature.XMLNS, dsPrefix);
         // parameters J, Seed & PgenCounter are not included
         Element pElem = DOMUtils.createElement
-            (doc, "P", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "P", XMLSignature.XMLNS, dsPrefix);
         Element qElem = DOMUtils.createElement
-            (doc, "Q", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "Q", XMLSignature.XMLNS, dsPrefix);
         Element gElem = DOMUtils.createElement
-            (doc, "G", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "G", XMLSignature.XMLNS, dsPrefix);
         Element yElem = DOMUtils.createElement
-            (doc, "Y", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "Y", XMLSignature.XMLNS, dsPrefix);
         p.marshal(pElem, dsPrefix, context);
         q.marshal(qElem, dsPrefix, context);
         g.marshal(gElem, dsPrefix, context);
@@ -165,76 +165,76 @@ public final class DOMKeyValue extends DOMStructure implements KeyValue {
         parent.appendChild(dsaElem);
     }
 
-    private void marshalRSAPublicKey(Node parent, Document doc,
-        String dsPrefix, DOMCryptoContext context) throws MarshalException {
+    private void marshalRSAPublicKey(Node parent, Document doc, 
+	String dsPrefix, DOMCryptoContext context) throws MarshalException {
         Element rsaElem = DOMUtils.createElement
-            (doc, "RSAKeyValue", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "RSAKeyValue", XMLSignature.XMLNS, dsPrefix);
         Element modulusElem = DOMUtils.createElement
-            (doc, "Modulus", XMLSignature.XMLNS, dsPrefix);
+	    (doc, "Modulus", XMLSignature.XMLNS, dsPrefix);
         Element exponentElem = DOMUtils.createElement
-            (doc, "Exponent", XMLSignature.XMLNS, dsPrefix);
-        modulus.marshal(modulusElem, dsPrefix, context);
-        exponent.marshal(exponentElem, dsPrefix, context);
+	    (doc, "Exponent", XMLSignature.XMLNS, dsPrefix);
+	modulus.marshal(modulusElem, dsPrefix, context);
+	exponent.marshal(exponentElem, dsPrefix, context);
         rsaElem.appendChild(modulusElem);
         rsaElem.appendChild(exponentElem);
         parent.appendChild(rsaElem);
     }
 
-    private DSAPublicKey unmarshalDSAKeyValue(Element kvtElem)
-        throws MarshalException {
-        if (dsakf == null) {
-            try {
-                dsakf = KeyFactory.getInstance("DSA");
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("unable to create DSA KeyFactory: " +
-                    e.getMessage());
-            }
-        }
-        Element curElem = DOMUtils.getFirstChildElement(kvtElem);
-        // check for P and Q
-        if (curElem.getLocalName().equals("P")) {
-            p = new DOMCryptoBinary(curElem.getFirstChild());
-            curElem = DOMUtils.getNextSiblingElement(curElem);
-            q = new DOMCryptoBinary(curElem.getFirstChild());
-            curElem = DOMUtils.getNextSiblingElement(curElem);
-        }
+    private DSAPublicKey unmarshalDSAKeyValue(Element kvtElem) 
+	throws MarshalException {
+	if (dsakf == null) {
+	    try {
+	        dsakf = KeyFactory.getInstance("DSA");
+	    } catch (NoSuchAlgorithmException e) {
+	        throw new RuntimeException("unable to create DSA KeyFactory: " +
+		    e.getMessage());
+	    }
+	}
+	Element curElem = DOMUtils.getFirstChildElement(kvtElem);
+	// check for P and Q
+	if (curElem.getLocalName().equals("P")) {
+	    p = new DOMCryptoBinary(curElem.getFirstChild());
+	    curElem = DOMUtils.getNextSiblingElement(curElem);
+	    q = new DOMCryptoBinary(curElem.getFirstChild());
+	    curElem = DOMUtils.getNextSiblingElement(curElem);
+	} 
         if (curElem.getLocalName().equals("G")) {
             g = new DOMCryptoBinary(curElem.getFirstChild());
-            curElem = DOMUtils.getNextSiblingElement(curElem);
-        }
+	    curElem = DOMUtils.getNextSiblingElement(curElem);
+	}
         y = new DOMCryptoBinary(curElem.getFirstChild());
         curElem = DOMUtils.getNextSiblingElement(curElem);
         if (curElem != null && curElem.getLocalName().equals("J")) {
-            j = new DOMCryptoBinary(curElem.getFirstChild());
-            curElem = DOMUtils.getNextSiblingElement(curElem);
-        }
-        if (curElem != null) {
-            seed = new DOMCryptoBinary(curElem.getFirstChild());
-            curElem = DOMUtils.getNextSiblingElement(curElem);
-            pgen = new DOMCryptoBinary(curElem.getFirstChild());
-        }
-        //@@@ do we care about j, pgenCounter or seed?
-        DSAPublicKeySpec spec = new DSAPublicKeySpec
-            (y.getBigNum(), p.getBigNum(), q.getBigNum(), g.getBigNum());
+	    j = new DOMCryptoBinary(curElem.getFirstChild());
+	    curElem = DOMUtils.getNextSiblingElement(curElem);
+	}
+	if (curElem != null) {
+	    seed = new DOMCryptoBinary(curElem.getFirstChild());
+	    curElem = DOMUtils.getNextSiblingElement(curElem);
+	    pgen = new DOMCryptoBinary(curElem.getFirstChild());
+	}
+	//@@@ do we care about j, pgenCounter or seed?
+	DSAPublicKeySpec spec = new DSAPublicKeySpec
+	    (y.getBigNum(), p.getBigNum(), q.getBigNum(), g.getBigNum());
         return (DSAPublicKey) generatePublicKey(dsakf, spec);
     }
 
-    private RSAPublicKey unmarshalRSAKeyValue(Element kvtElem)
-        throws MarshalException {
-        if (rsakf == null) {
-            try {
-                rsakf = KeyFactory.getInstance("RSA");
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException("unable to create RSA KeyFactory: " +
-                    e.getMessage());
-            }
-        }
-        Element modulusElem = DOMUtils.getFirstChildElement(kvtElem);
+    private RSAPublicKey unmarshalRSAKeyValue(Element kvtElem) 
+	throws MarshalException {
+	if (rsakf == null) {
+	    try {
+	        rsakf = KeyFactory.getInstance("RSA");
+	    } catch (NoSuchAlgorithmException e) {
+	        throw new RuntimeException("unable to create RSA KeyFactory: " +
+		    e.getMessage());
+	    }
+	}
+	Element modulusElem = DOMUtils.getFirstChildElement(kvtElem);
         modulus = new DOMCryptoBinary(modulusElem.getFirstChild());
-        Element exponentElem = DOMUtils.getNextSiblingElement(modulusElem);
+	Element exponentElem = DOMUtils.getNextSiblingElement(modulusElem);
         exponent = new DOMCryptoBinary(exponentElem.getFirstChild());
         RSAPublicKeySpec spec = new RSAPublicKeySpec
-            (modulus.getBigNum(), exponent.getBigNum());
+	    (modulus.getBigNum(), exponent.getBigNum());
         return (RSAPublicKey) generatePublicKey(rsakf, spec);
     }
 
@@ -242,19 +242,19 @@ public final class DOMKeyValue extends DOMStructure implements KeyValue {
         try {
             return kf.generatePublic(keyspec);
         } catch (InvalidKeySpecException e) {
-            //@@@ should dump exception to log
-            return null;
+	    //@@@ should dump exception to log
+	    return null;
         }
     }
-
+    
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
+	if (this == obj) {
+	    return true;
+	}
         if (!(obj instanceof KeyValue)) {
             return false;
         }
-        try {
+	try {
             KeyValue kv = (KeyValue) obj;
             if (publicKey == null ) {
                 if (kv.getPublicKey() != null) {
@@ -263,11 +263,11 @@ public final class DOMKeyValue extends DOMStructure implements KeyValue {
             } else if (!publicKey.equals(kv.getPublicKey())) {
                 return false;
             }
-        } catch (KeyException ke) {
-            // no practical way to determine if the keys are equal
-            return false;
-        }
-
+	} catch (KeyException ke) {
+	    // no practical way to determine if the keys are equal
+	    return false;
+	}
+        
         return true;
     }
 }

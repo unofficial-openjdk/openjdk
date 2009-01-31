@@ -38,7 +38,7 @@ import java.rmi.activation.ActivationGroup;
  * group. After spawning the VM, the activator passes some
  * information to the bootstrap code via its stdin: <p>
  * <ul>
- * <li> the activation group's id,
+ * <li> the activation group's id, 
  * <li> the activation group's descriptor (an instance of the class
  *    java.rmi.activation.ActivationGroupDesc) for the group, adn
  * <li> the group's incarnation number.
@@ -48,38 +48,39 @@ import java.rmi.activation.ActivationGroup;
  * descriptor from its stdin so that it can create the activation
  * group for the VM.
  *
+ * @version	%I%, %G%
  * @author Ann Wollrath
  */
-public abstract class ActivationGroupInit
+public abstract class ActivationGroupInit 
 {
     /**
      * Main program to start a VM for an activation group.
      */
     public static void main(String args[])
     {
-        try {
-            if (System.getSecurityManager() == null) {
-                System.setSecurityManager(new SecurityManager());
-            }
-            // read group id, descriptor, and incarnation number from stdin
-            MarshalInputStream in = new MarshalInputStream(System.in);
-            ActivationGroupID id  = (ActivationGroupID)in.readObject();
-            ActivationGroupDesc desc = (ActivationGroupDesc)in.readObject();
-            long incarnation = in.readLong();
-
-            // create and set group for the VM
-            ActivationGroup.createGroup(id, desc, incarnation);
-        } catch (Exception e) {
-            System.err.println("Exception in starting ActivationGroupInit:");
-            e.printStackTrace();
-        } finally {
-            try {
-                System.in.close();
-                // note: system out/err shouldn't be closed
-                // since the parent may want to read them.
-            } catch (Exception ex) {
-                // ignore exceptions
-            }
-        }
+	try {
+	    if (System.getSecurityManager() == null) {
+		System.setSecurityManager(new SecurityManager());
+	    }
+	    // read group id, descriptor, and incarnation number from stdin
+	    MarshalInputStream in = new MarshalInputStream(System.in);
+	    ActivationGroupID id  = (ActivationGroupID)in.readObject();
+	    ActivationGroupDesc desc = (ActivationGroupDesc)in.readObject();
+	    long incarnation = in.readLong();
+	    
+	    // create and set group for the VM
+	    ActivationGroup.createGroup(id, desc, incarnation);
+	} catch (Exception e) {
+	    System.err.println("Exception in starting ActivationGroupInit:");
+	    e.printStackTrace();
+	} finally {
+	    try {
+		System.in.close();
+		// note: system out/err shouldn't be closed
+		// since the parent may want to read them.
+	    } catch (Exception ex) {
+		// ignore exceptions
+	    }
+	}
     }
 }

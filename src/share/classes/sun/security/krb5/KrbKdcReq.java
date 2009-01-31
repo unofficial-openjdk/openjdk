@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -50,14 +51,14 @@ public abstract class KrbKdcReq {
      */
     private static final int DEFAULT_KDC_PORT = Krb5.KDC_INET_DEFAULT_PORT;
 
-    // Currently there is no option to specify retries
+    // Currently there is no option to specify retries  
     // in the kerberos configuration file
 
     private static final int DEFAULT_KDC_RETRY_LIMIT = Krb5.KDC_RETRY_LIMIT;
 
     /**
      * Default timeout period when requesting a ticket from a KDC.
-     * If not specified in the configuration file,
+     * If not specified in the configuration file, 
      * a value of 30 seconds is used.
      */
     public static final int DEFAULT_KDC_TIMEOUT; // milliseconds
@@ -71,7 +72,7 @@ public abstract class KrbKdcReq {
         /*
          * Get default timeout.
          */
-
+       
         int timeout = -1;
         try {
             Config cfg = Config.getInstance();
@@ -80,12 +81,12 @@ public abstract class KrbKdcReq {
             temp = cfg.getDefault("udp_preference_limit", "libdefaults");
             udpPrefLimit = parsePositiveIntString(temp);
         } catch (Exception exc) {
-           // ignore any exceptions; use the default time out values
-           if (DEBUG) {
-                System.out.println ("Exception in getting kdc_timeout value, " +
-                                    "using default value " +
-                                    exc.getMessage());
-           }
+	   // ignore any exceptions; use the default time out values
+	   if (DEBUG) {
+		System.out.println ("Exception in getting kdc_timeout value, " +
+				    "using default value " +
+				    exc.getMessage());
+	   }
         }
 
         if (timeout > 0)
@@ -108,198 +109,198 @@ public abstract class KrbKdcReq {
      */
 
     public String send(String realm)
-        throws IOException, KrbException {
-        boolean useTCP = (udpPrefLimit > 0 &&
-             (obuf != null && obuf.length > udpPrefLimit));
+	throws IOException, KrbException {
+	boolean useTCP = (udpPrefLimit > 0 &&
+	     (obuf != null && obuf.length > udpPrefLimit));
 
-        return (send(realm, useTCP));
+	return (send(realm, useTCP));
     }
-
-    public String send(String realm, boolean useTCP)
+ 
+    public String send(String realm, boolean useTCP) 
         throws IOException, KrbException {
 
         if (obuf == null)
             return null;
-        Exception savedException = null;
+	Exception savedException = null;
         Config cfg = Config.getInstance();
-
-        if (realm == null) {
+        
+	if (realm == null) {
             realm = cfg.getDefaultRealm();
             if (realm == null) {
                 throw new KrbException(Krb5.KRB_ERR_GENERIC,
                                        "Cannot find default realm");
-            }
+	    }
         }
 
         /*
          * Get timeout.
          */
 
-        int timeout = getKdcTimeout(realm);
+	int timeout = getKdcTimeout(realm);
 
-        String kdcList = cfg.getKDCList(realm);
-        if (kdcList == null) {
-            throw new KrbException("Cannot get kdc for realm " + realm);
-        }
-        String tempKdc = null; // may include the port number also
-        StringTokenizer st = new StringTokenizer(kdcList);
-        while (st.hasMoreTokens()) {
-            tempKdc = st.nextToken();
-            try {
-                send(realm,tempKdc,useTCP);
-                break;
-            } catch (Exception e) {
-                savedException = e;
-            }
-        }
-        if (ibuf == null && savedException != null) {
-            if (savedException instanceof IOException) {
-                throw (IOException) savedException;
-            } else {
-                throw (KrbException) savedException;
-            }
-        }
-        return tempKdc;
+	String kdcList = cfg.getKDCList(realm);
+	if (kdcList == null) {
+	    throw new KrbException("Cannot get kdc for realm " + realm);
+	}
+	String tempKdc = null; // may include the port number also
+	StringTokenizer st = new StringTokenizer(kdcList);
+	while (st.hasMoreTokens()) {
+	    tempKdc = st.nextToken();
+	    try {
+	        send(realm,tempKdc,useTCP);
+		break;
+	    } catch (Exception e) {
+		savedException = e; 
+	    }
+	}
+	if (ibuf == null && savedException != null) {
+	    if (savedException instanceof IOException) {
+		throw (IOException) savedException;
+	    } else {
+		throw (KrbException) savedException;
+	    }
+	}
+	return tempKdc;
     }
 
     // send the AS Request to the specified KDC
 
-    public void send(String realm, String tempKdc, boolean useTCP)
-        throws IOException, KrbException {
-
-        if (obuf == null)
-            return;
-        PrivilegedActionException savedException = null;
-        int port = Krb5.KDC_INET_DEFAULT_PORT;
-
-        /*
-         * Get timeout.
-         */
-        int timeout = getKdcTimeout(realm);
-        /*
-         * Get port number for this KDC.
-         */
-        StringTokenizer strTok = new StringTokenizer(tempKdc, ":");
-        String kdc = strTok.nextToken();
-        if (strTok.hasMoreTokens()) {
-            String portStr = strTok.nextToken();
-            int tempPort = parsePositiveIntString(portStr);
-            if (tempPort > 0)
-                port = tempPort;
-        }
-
-        if (DEBUG) {
-            System.out.println(">>> KrbKdcReq send: kdc=" + kdc
-                               + (useTCP ? " TCP:":" UDP:")
-                               +  port +  ", timeout="
-                               + timeout
-                               + ", number of retries ="
-                               + DEFAULT_KDC_RETRY_LIMIT
-                               + ", #bytes=" + obuf.length);
-        }
-
-        KdcCommunication kdcCommunication =
-            new KdcCommunication(kdc, port, useTCP, timeout, obuf);
-        try {
-            ibuf = AccessController.doPrivileged(kdcCommunication);
-            if (DEBUG) {
-                System.out.println(">>> KrbKdcReq send: #bytes read="
-                        + (ibuf != null ? ibuf.length : 0));
+    public void send(String realm, String tempKdc, boolean useTCP) 
+	throws IOException, KrbException {
+       
+	if (obuf == null)
+	    return;
+	PrivilegedActionException savedException = null;
+	int port = Krb5.KDC_INET_DEFAULT_PORT;
+	
+	/*
+	 * Get timeout.
+	 */
+	int timeout = getKdcTimeout(realm);
+	/*
+	 * Get port number for this KDC.
+	 */
+	StringTokenizer strTok = new StringTokenizer(tempKdc, ":");
+	String kdc = strTok.nextToken();
+	if (strTok.hasMoreTokens()) {
+	    String portStr = strTok.nextToken();
+	    int tempPort = parsePositiveIntString(portStr);
+	    if (tempPort > 0)
+		port = tempPort;
+	}
+	
+	if (DEBUG) {
+	    System.out.println(">>> KrbKdcReq send: kdc=" + kdc 
+			       + (useTCP ? " TCP:":" UDP:")
+			       +  port +  ", timeout="
+			       + timeout
+			       + ", number of retries =" 
+			       + DEFAULT_KDC_RETRY_LIMIT
+			       + ", #bytes=" + obuf.length);
+	}
+	
+	KdcCommunication kdcCommunication =
+	    new KdcCommunication(kdc, port, useTCP, timeout, obuf);
+	try {
+	    ibuf = AccessController.doPrivileged(kdcCommunication);
+	    if (DEBUG) {
+                System.out.println(">>> KrbKdcReq send: #bytes read=" 
+			+ (ibuf != null ? ibuf.length : 0));
             }
-        } catch (PrivilegedActionException e) {
-            Exception wrappedException = e.getException();
-            if (wrappedException instanceof IOException) {
-                throw (IOException) wrappedException;
-            } else {
-                throw (KrbException) wrappedException;
-            }
-        }
-        if (DEBUG) {
-            System.out.println(">>> KrbKdcReq send: #bytes read="
-                               + (ibuf != null ? ibuf.length : 0));
-        }
+	} catch (PrivilegedActionException e) {
+	    Exception wrappedException = e.getException();
+	    if (wrappedException instanceof IOException) {
+		throw (IOException) wrappedException;
+	    } else {
+		throw (KrbException) wrappedException;
+	    }
+	}
+	if (DEBUG) {
+	    System.out.println(">>> KrbKdcReq send: #bytes read=" 
+			       + (ibuf != null ? ibuf.length : 0));
+	}
     }
+    
+    private static class KdcCommunication 
+	implements PrivilegedExceptionAction<byte[]> {
 
-    private static class KdcCommunication
-        implements PrivilegedExceptionAction<byte[]> {
+	private String kdc;
+	private int port;
+	private boolean useTCP;
+	private int timeout;
+	private byte[] obuf;
 
-        private String kdc;
-        private int port;
-        private boolean useTCP;
-        private int timeout;
-        private byte[] obuf;
+	public KdcCommunication(String kdc, int port, boolean useTCP, 
+				int timeout, byte[] obuf) {
+	    this.kdc = kdc;
+	    this.port = port;
+	    this.useTCP = useTCP;
+	    this.timeout = timeout;
+	    this.obuf = obuf;
+	}
 
-        public KdcCommunication(String kdc, int port, boolean useTCP,
-                                int timeout, byte[] obuf) {
-            this.kdc = kdc;
-            this.port = port;
-            this.useTCP = useTCP;
-            this.timeout = timeout;
-            this.obuf = obuf;
-        }
+	// The caller only casts IOException and KrbException so don't
+	// add any new ones!
 
-        // The caller only casts IOException and KrbException so don't
-        // add any new ones!
+	public byte[] run() throws IOException, KrbException {
+	    
+	    byte[] ibuf = null;
+	    
+	    if (useTCP) {
+		TCPClient kdcClient = new TCPClient(kdc, port);
+		try {
+		    /*
+		     * Send the data to the kdc.
+		     */
+		    kdcClient.send(obuf);
+		    /*
+		     * And get a response.
+		     */
+		    ibuf = kdcClient.receive();
+		} finally {
+		    kdcClient.close();
+		}
 
-        public byte[] run() throws IOException, KrbException {
-
-            byte[] ibuf = null;
-
-            if (useTCP) {
-                TCPClient kdcClient = new TCPClient(kdc, port);
-                try {
-                    /*
-                     * Send the data to the kdc.
-                     */
-                    kdcClient.send(obuf);
-                    /*
-                     * And get a response.
-                     */
-                    ibuf = kdcClient.receive();
-                } finally {
-                    kdcClient.close();
-                }
-
-            } else {
-                // For each KDC we try DEFAULT_KDC_RETRY_LIMIT (3) times to
-                // get the response
-                for (int i=1; i <= DEFAULT_KDC_RETRY_LIMIT; i++) {
-                    UDPClient kdcClient = new UDPClient(kdc, port, timeout);
-
-                    if (DEBUG) {
-                        System.out.println(">>> KDCCommunication: kdc=" + kdc
-                               + (useTCP ? " TCP:":" UDP:")
-                               +  port +  ", timeout="
-                               + timeout
-                               + ",Attempt =" + i
-                               + ", #bytes=" + obuf.length);
-                    }
-                    /*
-                     * Send the data to the kdc.
-                     */
-
-                    kdcClient.send(obuf);
-
-                    /*
-                     * And get a response.
-                     */
-                    try {
-                        ibuf = kdcClient.receive();
-                        break;
-                    } catch (SocketTimeoutException se) {
-                        if (DEBUG) {
-                            System.out.println ("SocketTimeOutException with " +
-                                                "attempt: " + i);
-                        }
-                        if (i == DEFAULT_KDC_RETRY_LIMIT) {
-                            ibuf = null;
-                            throw se;
-                        }
-                    }
-                }
-            }
-            return ibuf;
-        }
+	    } else {
+		// For each KDC we try DEFAULT_KDC_RETRY_LIMIT (3) times to
+		// get the response
+		for (int i=1; i <= DEFAULT_KDC_RETRY_LIMIT; i++) {
+		    UDPClient kdcClient = new UDPClient(kdc, port, timeout);
+		    
+		    if (DEBUG) {
+	    		System.out.println(">>> KDCCommunication: kdc=" + kdc 
+			       + (useTCP ? " TCP:":" UDP:")
+			       +  port +  ", timeout="
+			       + timeout
+			       + ",Attempt =" + i 
+			       + ", #bytes=" + obuf.length);
+		    }
+		    /*
+		     * Send the data to the kdc.
+		     */
+		    
+		    kdcClient.send(obuf);
+		    
+		    /*
+		     * And get a response.
+		     */
+		    try {
+			ibuf = kdcClient.receive();
+			break;
+		    } catch (SocketTimeoutException se) {
+			if (DEBUG) {
+			    System.out.println ("SocketTimeOutException with " +
+						"attempt: " + i);
+			}
+			if (i == DEFAULT_KDC_RETRY_LIMIT) {
+			    ibuf = null;
+			    throw se;  
+			}
+		    }
+		}
+	    }
+	    return ibuf;
+	}
     }
 
     /**
@@ -320,7 +321,7 @@ public abstract class KrbKdcReq {
 
         int tempTimeout = -1;
         try {
-            String temp =
+            String temp = 
                Config.getInstance().getDefault("kdc_timeout", realm);
             tempTimeout = parsePositiveIntString(temp);
         } catch (Exception exc) {
@@ -350,4 +351,4 @@ public abstract class KrbKdcReq {
 
         return -1;
     }
-}
+}    

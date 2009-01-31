@@ -22,8 +22,9 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+  
 
-
+#pragma ident	"@(#)mlib_v_ImageAffine_BC_U16.c	1.5	02/05/08 SMI"
 
 /*
  *      The functions step along the lines from xLeft to xRight and apply

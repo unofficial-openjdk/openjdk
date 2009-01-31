@@ -67,12 +67,12 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     final static int NON_STANDARD_XEMBED_GTK_GRAB_KEY = 108;
     final static int NON_STANDARD_XEMBED_GTK_UNGRAB_KEY = 109;
-
-//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:
+    
+//     A detail code is required for XEMBED_FOCUS_IN. The following values are valid:    
 /* Details for  XEMBED_FOCUS_IN: */
     final static int XEMBED_FOCUS_CURRENT       =       0;
     final static int XEMBED_FOCUS_FIRST         =       1;
-    final static int XEMBED_FOCUS_LAST  =       2;
+    final static int XEMBED_FOCUS_LAST  =       2;    
 
 // Modifiers bits
     final static int XEMBED_MODIFIER_SHIFT   = (1 << 0);
@@ -80,7 +80,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
     final static int XEMBED_MODIFIER_ALT     = (1 << 2);
     final static int XEMBED_MODIFIER_SUPER   = (1 << 3);
     final static int XEMBED_MODIFIER_HYPER   = (1 << 4);
-
+    
     boolean applicationActive; // Whether the application is active(has focus)
     Map<Long, AWTKeyStroke> accelerators = new HashMap<Long, AWTKeyStroke>(); // Maps accelerator ID into AWTKeyStroke
     Map<AWTKeyStroke, Long> accel_lookup = new HashMap<AWTKeyStroke, Long>(); // Maps AWTKeyStroke into accelerator ID
@@ -91,12 +91,12 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
     MEmbedCanvasPeer() {}
 
     MEmbedCanvasPeer(Component target) {
-        super(target);
+        super(target);        
     }
 
     void initialize() {
         super.initialize();
-
+                
         installActivateListener();
         installAcceleratorListener();
         installModalityListener();
@@ -114,12 +114,12 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     void deinstallModalityListener() {
         ((SunToolkit)Toolkit.getDefaultToolkit()).removeModalityListener(this);
-    }
+    }        
 
     void installAcceleratorListener() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventPostProcessor(this);
     }
-
+    
     void deinstallAcceleratorListener() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().removeKeyEventPostProcessor(this);
     }
@@ -128,16 +128,16 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
         // FIXME: should watch for hierarchy changes
         Window toplevel = getTopLevel(target);
         if (toplevel != null) {
-            toplevel.addWindowFocusListener(this);
+            toplevel.addWindowFocusListener(this); 
             applicationActive = toplevel.isFocused();
         }
     }
-
+    
     void deinstallActivateListener() {
         Window toplevel = getTopLevel(target);
         if (toplevel != null) {
             toplevel.removeWindowFocusListener(this);
-        }
+        }        
     }
 
     native boolean isXEmbedActive();
@@ -158,7 +158,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
         super.handleEvent(e);
         if (isXEmbedActive()) {
             switch (e.getID()) {
-              case FocusEvent.FOCUS_GAINED:
+              case FocusEvent.FOCUS_GAINED:                  
                   canvasFocusGained((FocusEvent)e);
                   break;
               case FocusEvent.FOCUS_LOST:
@@ -200,7 +200,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
         }
     }
     native Dimension getEmbedMinimumSize();
-    protected void disposeImpl() {
+    protected void disposeImpl() { 
         if (isXEmbedActive()) {
             detachChild();
         }
@@ -225,13 +225,13 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     native Rectangle getClientBounds();
 
-    void childResized() {
+    void childResized() {        
         if (xembedLog.isLoggable(Level.FINER)) {
             Rectangle bounds = getClientBounds();
             xembedLog.finer("Child resized: " + bounds);
             // It is not required to update embedder's size when client size changes
             // However, since there is no any means to get client size it seems to be the
-            // only way to provide it. However, it contradicts with Java layout concept -
+            // only way to provide it. However, it contradicts with Java layout concept - 
             // so it is disabled for now.
 //             Rectangle my_bounds = getBounds();
 //             setBounds(my_bounds.x, my_bounds.y, bounds.width, bounds.height, SET_BOUNDS);
@@ -239,7 +239,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
         postEvent(new ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED));
     }
 
-    void focusNext() {
+    void focusNext() { 
         if (isXEmbedActive()) {
             xembedLog.fine("Requesting focus for the next component after embedder");
             postEvent(new InvocationEvent(target, new Runnable() {
@@ -252,7 +252,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
         }
     }
 
-    void focusPrev() {
+    void focusPrev() { 
         if (isXEmbedActive()) {
             xembedLog.fine("Requesting focus for the next component after embedder");
             postEvent(new InvocationEvent(target, new Runnable() {
@@ -331,7 +331,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     void grabKey(final long keysym, final long modifiers) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {
+                public void run() {        
                     GrabbedKey grab = new GrabbedKey(keysym, modifiers);
                     if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("Grabbing key: " + grab);
                     synchronized(GRAB_LOCK) {
@@ -343,7 +343,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     void ungrabKey(final long keysym, final long modifiers) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {
+                public void run() {        
                     GrabbedKey grab = new GrabbedKey(keysym, modifiers);
                     if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("UnGrabbing key: " + grab);
                     synchronized(GRAB_LOCK) {
@@ -355,7 +355,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     void registerAccelerator(final long accel_id, final long keysym, final long modifiers) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {
+                public void run() {        
                     AWTKeyStroke stroke = getKeyStrokeForKeySym(keysym, modifiers);
                     if (stroke != null) {
                         if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("Registering accelerator " + accel_id + " for " + stroke);
@@ -372,7 +372,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     void unregisterAccelerator(final long accel_id) {
         postEvent(new InvocationEvent(target, new Runnable() {
-                public void run() {
+                public void run() {        
                     AWTKeyStroke stroke = null;
                     synchronized(ACCEL_LOCK) {
                         stroke = accelerators.get(accel_id);
@@ -407,7 +407,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
             embedded.unregisterAccelerator(stroke);
         }
     }
-
+    
     public boolean postProcessKeyEvent(KeyEvent e) {
         // Processing events only if we are in the focused window.
         MWindowPeer parent = getParentWindow();
@@ -456,7 +456,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
 
     public void modalityPopped(ModalityEvent ev) {
         sendMessage(XEMBED_MODALITY_OFF);
-    }
+    }    
 
     int getModifiers(int state) {
         int mods = 0;
@@ -481,7 +481,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
     }
 
     // Shouldn't be called on Toolkit thread.
-    AWTKeyStroke getKeyStrokeForKeySym(long keysym, long state) {
+    AWTKeyStroke getKeyStrokeForKeySym(long keysym, long state) {        
 
         int keycode = getAWTKeyCodeForKeySym((int)keysym);
         int modifiers = getModifiers((int)state);
@@ -501,7 +501,7 @@ public class MEmbedCanvasPeer extends MCanvasPeer implements WindowFocusListener
     }
 
     private static class XEmbedDropTarget extends DropTarget {
-        public void addDropTargetListener(DropTargetListener dtl)
+        public void addDropTargetListener(DropTargetListener dtl) 
           throws TooManyListenersException {
             // Drop target listeners registered with this target will never be
             // notified, since all drag notifications are routed to the XEmbed
@@ -564,8 +564,8 @@ class GrabbedKey {
 
     private void init(KeyEvent e) {
         initKeySymAndModifiers(e);
-    }
-
+    }            
+        
     public int hashCode() {
         return (int)keysym & 0xFFFFFFFF;
     }

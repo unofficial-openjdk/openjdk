@@ -43,10 +43,10 @@ public class NonConcreteMethodImpl extends MethodImpl {
 
     private Location location = null;
 
-    NonConcreteMethodImpl(VirtualMachine vm,
-                          ReferenceTypeImpl declaringType,
+    NonConcreteMethodImpl(VirtualMachine vm, 
+                          ReferenceTypeImpl declaringType, 
                           long ref,
-                          String name, String signature,
+                          String name, String signature, 
                           String genericSignature, int modifiers) {
 
         // The generic signature is set when this is created
@@ -101,7 +101,7 @@ public class NonConcreteMethodImpl extends MethodImpl {
     public List<LocalVariable> arguments() throws AbsentInformationException {
         throw new AbsentInformationException();
     }
-
+    
     public byte[] bytecodes() {
         return new byte[0];
     }

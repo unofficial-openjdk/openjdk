@@ -46,7 +46,7 @@ import org.w3c.dom.Node;
 public class X509Data extends SignatureElementProxy implements KeyInfoContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(X509Data.class.getName());
 
    /**
@@ -72,12 +72,12 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
            throws XMLSecurityException {
 
       super(element, BaseURI);
-
+      
       boolean noElements=true;
       Node sibling=this._constructionElement.getFirstChild();
       while (sibling!=null) {
-         if (sibling.getNodeType()!=Node.ELEMENT_NODE) {
-                sibling=sibling.getNextSibling();
+      	 if (sibling.getNodeType()!=Node.ELEMENT_NODE) {
+      	 	sibling=sibling.getNextSibling();
             continue;
          }
         noElements=false;
@@ -362,10 +362,10 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
     * @return the number of UnknownElement elements in this X509Data
     */
    public int lengthUnknownElement() {
-
+      
       int result = 0;
       Node n=this._constructionElement.getFirstChild();
-      while (n!=null){
+      while (n!=null){         
 
          if ((n.getNodeType() == Node.ELEMENT_NODE)
                  &&!n.getNamespaceURI().equals(Constants.SignatureSpecNS)) {
@@ -373,7 +373,7 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
          }
          n=n.getNextSibling();
       }
-
+      
       return result;
    }
 
@@ -393,7 +393,7 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
 
       if (e != null) {
          return new XMLX509IssuerSerial(e, this._baseURI);
-      }
+      } 
       return null;
    }
 
@@ -430,7 +430,7 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
 
       if (e != null) {
          return new XMLX509SubjectName(e, this._baseURI);
-      }
+      } 
        return null;
    }
 
@@ -449,7 +449,7 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
 
       if (e != null) {
          return new XMLX509Certificate(e, this._baseURI);
-      }
+      } 
        return null;
    }
 
@@ -467,7 +467,7 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
 
       if (e != null) {
          return new XMLX509CRL(e, this._baseURI);
-      }
+      } 
        return null;
    }
 
@@ -479,7 +479,7 @@ public class X509Data extends SignatureElementProxy implements KeyInfoContent {
     * TODO implement
     **/
    public Element itemUnknownElement(int i) {
-          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "itemUnknownElement not implemented:"+i);
+	  if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "itemUnknownElement not implemented:"+i);
       return null;
    }
 

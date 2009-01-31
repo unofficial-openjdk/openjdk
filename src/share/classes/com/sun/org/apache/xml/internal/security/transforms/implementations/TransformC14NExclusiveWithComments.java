@@ -50,7 +50,7 @@ public class TransformC14NExclusiveWithComments extends TransformSpi {
 
    /**
     * Method engineGetURI
-    *@inheritDoc
+    *@inheritDoc 
     *
     */
    protected String engineGetURI() {
@@ -58,11 +58,11 @@ public class TransformC14NExclusiveWithComments extends TransformSpi {
    }
 
    /**
-    * @inheritDoc
+    * @inheritDoc 
     */
    protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input)
            throws CanonicalizationException {
-            return enginePerformTransform(input,null);
+   	    return enginePerformTransform(input,null);
    }
     protected XMLSignatureInput enginePerformTransform(XMLSignatureInput input,OutputStream os)
     throws CanonicalizationException {
@@ -84,18 +84,18 @@ public class TransformC14NExclusiveWithComments extends TransformSpi {
         }
 
         Canonicalizer20010315ExclWithComments c14n =
-            new Canonicalizer20010315ExclWithComments();
+            new Canonicalizer20010315ExclWithComments();        
         if (os!=null) {
            c14n.setWriter( os);
         }
         input.setNeedsToBeExpanded(true);
-        byte []result;
+        byte []result;  
         result =c14n.engineCanonicalize(input, inclusiveNamespaces);
         XMLSignatureInput output=new XMLSignatureInput(result);
-
+        
         return output;
      } catch (XMLSecurityException ex) {
         throw new CanonicalizationException("empty", ex);
-     }
+     } 
    }
 }

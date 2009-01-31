@@ -29,6 +29,7 @@ package javax.swing.text;
  * is intended to capture the spirit of an SGML element.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public interface Element {
 
@@ -86,7 +87,7 @@ public interface Element {
      * <code>AbstractDocument</code> models an implied break at the end of
      * the document. As a result of this, it is possible for this to
      * return a value greater than the length of the document.
-     *
+     * 
      * @return the ending offset > getStartOffset() and
      *     <= getDocument().getLength() + 1
      * @see Document
@@ -137,3 +138,4 @@ public interface Element {
 
 
 }
+

@@ -36,10 +36,11 @@ package com.sun.security.auth;
  * on how to achieve this.  Authorization decisions can then be based upon
  * the Principals associated with a <code>Subject</code>.
  *
+ * @version %I%, %G%
  * @see java.security.Principal
  * @see javax.security.auth.Subject
  */
-public class NTSidPrimaryGroupPrincipal extends NTSid {
+public class NTSidPrimaryGroupPrincipal extends NTSid {  
 
     private static final long serialVersionUID = 8011978367305190527L;
 
@@ -52,12 +53,12 @@ public class NTSidPrimaryGroupPrincipal extends NTSid {
      * @param name the primary Windows NT group SID for this user. <p>
      *
      * @exception NullPointerException if the <code>name</code>
-     *            is <code>null</code>.
+     *		  is <code>null</code>.
      */
     public NTSidPrimaryGroupPrincipal(String name) {
-        super(name);
+	super(name);
     }
-
+    
     /**
      * Return a string representation of this
      * <code>NTSidPrimaryGroupPrincipal</code>.
@@ -65,17 +66,17 @@ public class NTSidPrimaryGroupPrincipal extends NTSid {
      * <p>
      *
      * @return a string representation of this
-     *          <code>NTSidPrimaryGroupPrincipal</code>.
+     *		<code>NTSidPrimaryGroupPrincipal</code>.
      */
     public String toString() {
-        java.text.MessageFormat form = new java.text.MessageFormat
-                (sun.security.util.ResourcesMgr.getString
-                        ("NTSidPrimaryGroupPrincipal: name",
-                        "sun.security.util.AuthResources"));
-        Object[] source = {getName()};
-        return form.format(source);
+	java.text.MessageFormat form = new java.text.MessageFormat
+		(sun.security.util.ResourcesMgr.getString
+			("NTSidPrimaryGroupPrincipal: name",
+			"sun.security.util.AuthResources"));
+	Object[] source = {getName()};
+	return form.format(source);
     }
-
+    
     /**
      * Compares the specified Object with this
      * <code>NTSidPrimaryGroupPrincipal</code>
@@ -86,22 +87,22 @@ public class NTSidPrimaryGroupPrincipal extends NTSid {
      * <p>
      *
      * @param o Object to be compared for equality with this
-     *          <code>NTSidPrimaryGroupPrincipal</code>.
+     *		<code>NTSidPrimaryGroupPrincipal</code>.
      *
      * @return true if the specified Object is equal equal to this
-     *          <code>NTSidPrimaryGroupPrincipal</code>.
+     *		<code>NTSidPrimaryGroupPrincipal</code>.
      */
     public boolean equals(Object o) {
-            if (o == null)
-                return false;
+	    if (o == null)
+	        return false;
 
         if (this == o)
             return true;
-
+ 
         if (!(o instanceof NTSidPrimaryGroupPrincipal))
             return false;
-
+        
         return super.equals(o);
     }
-
+ 
 }

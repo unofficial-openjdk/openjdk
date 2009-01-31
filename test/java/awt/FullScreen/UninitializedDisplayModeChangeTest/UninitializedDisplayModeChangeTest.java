@@ -25,7 +25,7 @@
  * @test
  * @bug 6358034
  * @bug 6568560
- * @summary Tests that no exception is thrown when display mode is changed
+ * @summary Tests that no exception is thrown when display mode is changed 
  *          externally
  * @compile UninitializedDisplayModeChangeTest.java DisplayModeChanger.java
  * @run main/othervm UninitializedDisplayModeChangeTest
@@ -50,8 +50,8 @@ public class UninitializedDisplayModeChangeTest {
                 public void run() {
                     Thread.currentThread().setDefaultUncaughtExceptionHandler(
                         new Thread.UncaughtExceptionHandler() {
-                            public void uncaughtException(Thread t,
-                                                          Throwable e)
+                            public void uncaughtException(Thread t, 
+                                                          Throwable e) 
                             {
                                 System.err.println("Exception Detected:");
                                 e.printStackTrace();
@@ -66,7 +66,7 @@ public class UninitializedDisplayModeChangeTest {
         } catch (InvocationTargetException ex) {
             ex.printStackTrace();
         }
-
+        
         Process childProc;
         String classPath = System.getProperty("java.class.path" , ".");
         String cmd = new String(System.getProperty("java.home") +
@@ -86,19 +86,19 @@ public class UninitializedDisplayModeChangeTest {
                 new StreamProcessor("stdout", childProc.getInputStream());
             err.start();
             out.start();
-
+            
             childProc.waitFor();
         } catch (Exception e) {
             failed = true;
             e.printStackTrace();
         }
-
+        
         if (failed) {
             throw new RuntimeException("Test Failed: exception detected");
         }
         System.out.println("Test Passed.");
     }
-
+    
     static class StreamProcessor extends Thread {
         InputStream is;
         String inputType;

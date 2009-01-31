@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -40,91 +41,91 @@ public class KrbException extends Exception {
 
     private int returnCode;
     private KRBError error;
-
+    
     public KrbException(String s) {
-        super(s);
+	super(s);
     }
-
+    
     public KrbException(int i) {
-        returnCode = i;
+	returnCode = i;
     }
-
+    
     public KrbException(int i, String s) {
-        this(s);
-        returnCode = i;
+	this(s);
+	returnCode = i;
     }
-
+    
     public KrbException(KRBError e) {
-        returnCode = e.getErrorCode();
-        error = e;
+	returnCode = e.getErrorCode();
+	error = e;
     }
 
     public KrbException(KRBError e, String s) {
-        this(s);
-        returnCode = e.getErrorCode();
-        error = e;
+	this(s);
+	returnCode = e.getErrorCode();
+	error = e;
     }
-
+    
     public KRBError getError() {
-        return error;
+	return error;
     }
-
-
+    
+    
     public int returnCode() {
-        return returnCode;
+	return returnCode;
     }
-
+    
     public String returnCodeSymbol() {
-        return returnCodeSymbol(returnCode);
+	return returnCodeSymbol(returnCode);
     }
-
+    
     public static String returnCodeSymbol(int i) {
-        return "not yet implemented";
+	return "not yet implemented";  
     }
-
+    
     public String returnCodeMessage() {
-        return Krb5.getErrorMessage(returnCode);
+	return Krb5.getErrorMessage(returnCode);
     }
-
+    
     public static String errorMessage(int i) {
-        return Krb5.getErrorMessage(i);
+	return Krb5.getErrorMessage(i);
     }
-
+   
 
     public String krbErrorMessage() {
-        StringBuffer strbuf = new StringBuffer("krb_error " + returnCode);
-        String msg =  getMessage();
-        if (msg != null) {
-            strbuf.append(" ");
-            strbuf.append(msg);
-        }
-        return strbuf.toString();
+	StringBuffer strbuf = new StringBuffer("krb_error " + returnCode);
+	String msg =  getMessage();
+	if (msg != null) {
+	    strbuf.append(" ");
+	    strbuf.append(msg);
+	}
+	return strbuf.toString(); 
     }
 
     /**
-     * Returns messages like:
+     * Returns messages like: 
      * "Integrity check on decrypted field failed (31) - \
      *                         Could not decrypt service ticket"
      * If the error code is 0 then the first half is skipped.
      */
     public String getMessage() {
-        StringBuffer message = new StringBuffer();
-        int returnCode = returnCode();
-        if (returnCode != 0) {
-            message.append(returnCodeMessage());
-            message.append(" (").append(returnCode()).append(')');
-        }
-        String consMessage = super.getMessage();
-        if (consMessage != null && consMessage.length() != 0) {
-            if (returnCode != 0)
-                message.append(" - ");
-            message.append(consMessage);
-        }
-        return message.toString();
+	StringBuffer message = new StringBuffer();
+	int returnCode = returnCode();
+	if (returnCode != 0) {
+	    message.append(returnCodeMessage());
+	    message.append(" (").append(returnCode()).append(')');
+	}
+	String consMessage = super.getMessage();
+	if (consMessage != null && consMessage.length() != 0) {
+	    if (returnCode != 0)
+		message.append(" - ");
+	    message.append(consMessage);
+	}
+	return message.toString();
     }
 
     public String toString() {
-        return ("KrbException: " + getMessage());
+	return ("KrbException: " + getMessage());
     }
 
     @Override public int hashCode() {
@@ -135,7 +136,7 @@ public class KrbException extends Exception {
         }
         return result;
     }
-
+    
     @Override public boolean equals(Object obj) {
         if (this == obj) {
             return true;

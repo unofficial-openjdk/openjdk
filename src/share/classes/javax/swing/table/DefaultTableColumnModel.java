@@ -30,7 +30,7 @@ import javax.swing.event.*;
 import java.awt.*;
 import java.util.Vector;
 import java.util.Enumeration;
-import java.util.EventListener;
+import java.util.EventListener; 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 import java.io.Serializable;
@@ -48,12 +48,13 @@ import sun.swing.SwingUtilities2;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Alan Chung
  * @author Philip Milne
  * @see JTable
  */
 public class DefaultTableColumnModel implements TableColumnModel,
-                        PropertyChangeListener, ListSelectionListener, Serializable
+			PropertyChangeListener, ListSelectionListener, Serializable
 {
 //
 // Instance Variables
@@ -87,14 +88,14 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * Creates a default table column model.
      */
     public DefaultTableColumnModel() {
-        super();
+	super();
 
-        // Initialize local ivars to default
-        tableColumns = new Vector<TableColumn>();
-        setSelectionModel(createSelectionModel());
-        setColumnMargin(1);
-        invalidateWidthCache();
-        setColumnSelectionAllowed(false);
+	// Initialize local ivars to default
+	tableColumns = new Vector<TableColumn>();
+	setSelectionModel(createSelectionModel()); 
+	setColumnMargin(1); 
+	invalidateWidthCache(); 
+	setColumnSelectionAllowed(false);
     }
 
 //
@@ -107,23 +108,23 @@ public class DefaultTableColumnModel implements TableColumnModel,
      *  This method also posts the <code>columnAdded</code>
      *  event to its listeners.
      *
-     * @param   aColumn         the <code>TableColumn</code> to be added
-     * @exception IllegalArgumentException      if <code>aColumn</code> is
-     *                          <code>null</code>
-     * @see     #removeColumn
+     * @param	aColumn		the <code>TableColumn</code> to be added
+     * @exception IllegalArgumentException	if <code>aColumn</code> is
+     *				<code>null</code>
+     * @see	#removeColumn
      */
     public void addColumn(TableColumn aColumn) {
-        if (aColumn == null) {
-            throw new IllegalArgumentException("Object is null");
-        }
+	if (aColumn == null) {
+	    throw new IllegalArgumentException("Object is null");
+	}
 
-        tableColumns.addElement(aColumn);
-        aColumn.addPropertyChangeListener(this);
-        invalidateWidthCache();
+	tableColumns.addElement(aColumn);
+	aColumn.addPropertyChangeListener(this);
+	invalidateWidthCache();
 
-        // Post columnAdded event notification
-        fireColumnAdded(new TableColumnModelEvent(this, 0,
-                                                  getColumnCount() - 1));
+	// Post columnAdded event notification
+	fireColumnAdded(new TableColumnModelEvent(this, 0,
+						  getColumnCount() - 1));
     }
 
     /**
@@ -135,27 +136,27 @@ public class DefaultTableColumnModel implements TableColumnModel,
      *  This method also posts a <code>columnRemoved</code>
      *  event to its listeners.
      *
-     * @param   column          the <code>TableColumn</code> to be removed
-     * @see     #addColumn
+     * @param	column		the <code>TableColumn</code> to be removed
+     * @see	#addColumn
      */
     public void removeColumn(TableColumn column) {
-        int columnIndex = tableColumns.indexOf(column);
+	int columnIndex = tableColumns.indexOf(column);
 
-        if (columnIndex != -1) {
-            // Adjust for the selection
-            if (selectionModel != null) {
-                selectionModel.removeIndexInterval(columnIndex,columnIndex);
-            }
+	if (columnIndex != -1) {
+	    // Adjust for the selection
+	    if (selectionModel != null) {
+		selectionModel.removeIndexInterval(columnIndex,columnIndex);
+	    }
 
-            column.removePropertyChangeListener(this);
-            tableColumns.removeElementAt(columnIndex);
-            invalidateWidthCache();
+	    column.removePropertyChangeListener(this);
+	    tableColumns.removeElementAt(columnIndex);
+	    invalidateWidthCache();
 
-            // Post columnAdded event notification.  (JTable and JTableHeader
-            // listens so they can adjust size and redraw)
-            fireColumnRemoved(new TableColumnModelEvent(this,
-                                           columnIndex, 0));
-        }
+	    // Post columnAdded event notification.  (JTable and JTableHeader
+	    // listens so they can adjust size and redraw)
+	    fireColumnRemoved(new TableColumnModelEvent(this,
+					   columnIndex, 0));
+	}
     }
 
     /**
@@ -167,46 +168,46 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * <code>columnIndex</code> equals <code>newIndex</code>.  This method
      * also posts a <code>columnMoved</code> event to its listeners.
      *
-     * @param   columnIndex                     the index of column to be moved
-     * @param   newIndex                        new index to move the column
-     * @exception IllegalArgumentException      if <code>column</code> or
-     *                                          <code>newIndex</code>
-     *                                          are not in the valid range
+     * @param	columnIndex			the index of column to be moved
+     * @param	newIndex			new index to move the column
+     * @exception IllegalArgumentException	if <code>column</code> or
+     * 						<code>newIndex</code>
+     *						are not in the valid range
      */
     public void moveColumn(int columnIndex, int newIndex) {
-        if ((columnIndex < 0) || (columnIndex >= getColumnCount()) ||
-            (newIndex < 0) || (newIndex >= getColumnCount()))
-            throw new IllegalArgumentException("moveColumn() - Index out of range");
+	if ((columnIndex < 0) || (columnIndex >= getColumnCount()) ||
+	    (newIndex < 0) || (newIndex >= getColumnCount()))
+	    throw new IllegalArgumentException("moveColumn() - Index out of range");
 
-        TableColumn aColumn;
+	TableColumn aColumn;
 
-        // If the column has not yet moved far enough to change positions
-        // post the event anyway, the "draggedDistance" property of the
-        // tableHeader will say how far the column has been dragged.
-        // Here we are really trying to get the best out of an
-        // API that could do with some rethinking. We preserve backward
-        // compatibility by slightly bending the meaning of these methods.
-        if (columnIndex == newIndex) {
-            fireColumnMoved(new TableColumnModelEvent(this, columnIndex, newIndex));
-            return;
-        }
-        aColumn = (TableColumn)tableColumns.elementAt(columnIndex);
+	// If the column has not yet moved far enough to change positions 
+	// post the event anyway, the "draggedDistance" property of the 
+	// tableHeader will say how far the column has been dragged. 
+	// Here we are really trying to get the best out of an 
+	// API that could do with some rethinking. We preserve backward 
+	// compatibility by slightly bending the meaning of these methods. 
+	if (columnIndex == newIndex) { 
+	    fireColumnMoved(new TableColumnModelEvent(this, columnIndex, newIndex));	    
+	    return;
+	}
+	aColumn = (TableColumn)tableColumns.elementAt(columnIndex);
 
-        tableColumns.removeElementAt(columnIndex);
-        boolean selected = selectionModel.isSelectedIndex(columnIndex);
-        selectionModel.removeIndexInterval(columnIndex,columnIndex);
+	tableColumns.removeElementAt(columnIndex);
+	boolean selected = selectionModel.isSelectedIndex(columnIndex); 
+	selectionModel.removeIndexInterval(columnIndex,columnIndex);
 
-        tableColumns.insertElementAt(aColumn, newIndex);
-        selectionModel.insertIndexInterval(newIndex, 1, true);
-        if (selected) {
-            selectionModel.addSelectionInterval(newIndex, newIndex);
-        }
-        else {
-            selectionModel.removeSelectionInterval(newIndex, newIndex);
-        }
+	tableColumns.insertElementAt(aColumn, newIndex);
+	selectionModel.insertIndexInterval(newIndex, 1, true); 
+	if (selected) { 
+	    selectionModel.addSelectionInterval(newIndex, newIndex); 
+	} 
+	else { 
+	    selectionModel.removeSelectionInterval(newIndex, newIndex); 
+	}
 
-        fireColumnMoved(new TableColumnModelEvent(this, columnIndex,
-                                                               newIndex));
+	fireColumnMoved(new TableColumnModelEvent(this, columnIndex,
+							       newIndex));
     }
 
     /**
@@ -214,16 +215,16 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * also posts a <code>columnMarginChanged</code> event to its
      * listeners.
      *
-     * @param   newMargin               the new margin width, in pixels
-     * @see     #getColumnMargin
-     * @see     #getTotalColumnWidth
+     * @param	newMargin		the new margin width, in pixels
+     * @see	#getColumnMargin
+     * @see	#getTotalColumnWidth
      */
     public void setColumnMargin(int newMargin) {
-        if (newMargin != columnMargin) {
-            columnMargin = newMargin;
-            // Post columnMarginChanged event notification.
-            fireColumnMarginChanged();
-        }
+	if (newMargin != columnMargin) {
+	    columnMargin = newMargin;
+	    // Post columnMarginChanged event notification.
+	    fireColumnMarginChanged();
+	}
     }
 
 //
@@ -233,11 +234,11 @@ public class DefaultTableColumnModel implements TableColumnModel,
     /**
      * Returns the number of columns in the <code>tableColumns</code> array.
      *
-     * @return  the number of columns in the <code>tableColumns</code> array
-     * @see     #getColumns
+     * @return	the number of columns in the <code>tableColumns</code> array
+     * @see	#getColumns
      */
     public int getColumnCount() {
-        return tableColumns.size();
+	return tableColumns.size();
     }
 
     /**
@@ -245,7 +246,7 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @return an <code>Enumeration</code> of the columns in the model
      */
     public Enumeration<TableColumn> getColumns() {
-        return tableColumns.elements();
+	return tableColumns.elements();
     }
 
     /**
@@ -253,56 +254,56 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * array whose identifier is equal to <code>identifier</code>,
      * when compared using <code>equals</code>.
      *
-     * @param           identifier              the identifier object
-     * @return          the index of the first column in the
-     *                  <code>tableColumns</code> array whose identifier
-     *                  is equal to <code>identifier</code>
+     * @param		identifier		the identifier object
+     * @return		the index of the first column in the 
+     *			<code>tableColumns</code> array whose identifier
+     *			is equal to <code>identifier</code>
      * @exception       IllegalArgumentException  if <code>identifier</code>
-     *                          is <code>null</code>, or if no
-     *                          <code>TableColumn</code> has this
-     *                          <code>identifier</code>
-     * @see             #getColumn
+     *				is <code>null</code>, or if no
+     *				<code>TableColumn</code> has this
+     *				<code>identifier</code>
+     * @see		#getColumn
      */
     public int getColumnIndex(Object identifier) {
-        if (identifier == null) {
-            throw new IllegalArgumentException("Identifier is null");
-        }
+	if (identifier == null) {
+	    throw new IllegalArgumentException("Identifier is null");
+	}
 
-        Enumeration enumeration = getColumns();
-        TableColumn aColumn;
-        int index = 0;
+	Enumeration enumeration = getColumns();
+	TableColumn aColumn;
+	int index = 0;
 
-        while (enumeration.hasMoreElements()) {
-            aColumn = (TableColumn)enumeration.nextElement();
-            // Compare them this way in case the column's identifier is null.
-            if (identifier.equals(aColumn.getIdentifier()))
-                return index;
-            index++;
-        }
-        throw new IllegalArgumentException("Identifier not found");
+	while (enumeration.hasMoreElements()) {
+	    aColumn = (TableColumn)enumeration.nextElement();
+	    // Compare them this way in case the column's identifier is null.
+	    if (identifier.equals(aColumn.getIdentifier()))
+		return index;
+	    index++;
+	}
+	throw new IllegalArgumentException("Identifier not found");
     }
 
     /**
      * Returns the <code>TableColumn</code> object for the column
      * at <code>columnIndex</code>.
      *
-     * @param   columnIndex     the index of the column desired
-     * @return  the <code>TableColumn</code> object for the column
-     *                          at <code>columnIndex</code>
+     * @param	columnIndex	the index of the column desired
+     * @return	the <code>TableColumn</code> object for the column
+     *				at <code>columnIndex</code>
      */
     public TableColumn getColumn(int columnIndex) {
-        return (TableColumn)tableColumns.elementAt(columnIndex);
+	return (TableColumn)tableColumns.elementAt(columnIndex);
     }
 
     /**
      * Returns the width margin for <code>TableColumn</code>.
      * The default <code>columnMargin</code> is 1.
      *
-     * @return  the maximum width for the <code>TableColumn</code>
-     * @see     #setColumnMargin
+     * @return	the maximum width for the <code>TableColumn</code>
+     * @see	#setColumnMargin
      */
     public int getColumnMargin() {
-        return columnMargin;
+	return columnMargin;
     }
 
     /**
@@ -324,32 +325,32 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * required, <code>JTable.columnAtPoint</code> can be used instead.
      *
      * @param  x  the horizontal location of interest
-     * @return  the index of the column or -1 if no column is found
+     * @return	the index of the column or -1 if no column is found
      * @see javax.swing.JTable#columnAtPoint
      */
     public int getColumnIndexAtX(int x) {
-        if (x < 0) {
-            return -1;
-        }
-        int cc = getColumnCount();
-        for(int column = 0; column < cc; column++) {
-            x = x - getColumn(column).getWidth();
-            if (x < 0) {
-                return column;
-            }
-        }
-        return -1;
+	if (x < 0) { 
+	    return -1; 
+	}
+	int cc = getColumnCount(); 
+	for(int column = 0; column < cc; column++) { 
+	    x = x - getColumn(column).getWidth(); 
+	    if (x < 0) { 
+		return column; 
+	    }
+	}
+	return -1; 
     }
 
     /**
      * Returns the total combined width of all columns.
      * @return the <code>totalColumnWidth</code> property
      */
-    public int getTotalColumnWidth() {
-        if (totalColumnWidth == -1) {
-            recalcWidthCache();
-        }
-        return totalColumnWidth;
+    public int getTotalColumnWidth() { 
+	if (totalColumnWidth == -1) { 
+	    recalcWidthCache(); 
+	}
+	return totalColumnWidth;
     }
 
 //
@@ -363,38 +364,38 @@ public class DefaultTableColumnModel implements TableColumnModel,
      *  model.  If <code>newModel</code> is <code>null</code>,
      *  an exception is thrown.
      *
-     * @param   newModel        the new selection model
+     * @param	newModel	the new selection model
      * @exception IllegalArgumentException      if <code>newModel</code>
-     *                                          is <code>null</code>
-     * @see     #getSelectionModel
+     *						is <code>null</code>
+     * @see	#getSelectionModel
      */
     public void setSelectionModel(ListSelectionModel newModel) {
         if (newModel == null) {
             throw new IllegalArgumentException("Cannot set a null SelectionModel");
         }
 
-        ListSelectionModel oldModel = selectionModel;
+	ListSelectionModel oldModel = selectionModel;
 
-        if (newModel != oldModel) {
-            if (oldModel != null) {
-                oldModel.removeListSelectionListener(this);
-            }
+	if (newModel != oldModel) {
+	    if (oldModel != null) {
+		oldModel.removeListSelectionListener(this);
+	    }
 
-            selectionModel= newModel;
+	    selectionModel= newModel;
             newModel.addListSelectionListener(this);
-        }
+	}
     }
 
     /**
      * Returns the <code>ListSelectionModel</code> that is used to
      * maintain column selection state.
      *
-     * @return  the object that provides column selection state.  Or
-     *          <code>null</code> if row selection is not allowed.
-     * @see     #setSelectionModel
+     * @return	the object that provides column selection state.  Or
+     *		<code>null</code> if row selection is not allowed.
+     * @see	#setSelectionModel
      */
     public ListSelectionModel getSelectionModel() {
-        return selectionModel;
+	return selectionModel;
     }
 
     // implements javax.swing.table.TableColumnModel
@@ -403,7 +404,7 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @param  flag true if column selection will be allowed, false otherwise
      */
     public void setColumnSelectionAllowed(boolean flag) {
-        columnSelectionAllowed = flag;
+	columnSelectionAllowed = flag;
     }
 
     // implements javax.swing.table.TableColumnModel
@@ -413,7 +414,7 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @return the <code>columnSelectionAllowed</code> property
      */
     public boolean getColumnSelectionAllowed() {
-        return columnSelectionAllowed;
+	return columnSelectionAllowed;
     }
 
     // implements javax.swing.table.TableColumnModel
@@ -421,30 +422,30 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * Returns an array of selected columns.  If <code>selectionModel</code>
      * is <code>null</code>, returns an empty array.
      * @return an array of selected columns or an empty array if nothing
-     *                  is selected or the <code>selectionModel</code> is
-     *                  <code>null</code>
+     *			is selected or the <code>selectionModel</code> is
+     *			<code>null</code>
      */
     public int[] getSelectedColumns() {
-        if (selectionModel != null) {
-            int iMin = selectionModel.getMinSelectionIndex();
-            int iMax = selectionModel.getMaxSelectionIndex();
+	if (selectionModel != null) {
+	    int iMin = selectionModel.getMinSelectionIndex();
+	    int iMax = selectionModel.getMaxSelectionIndex();
 
-            if ((iMin == -1) || (iMax == -1)) {
-                return new int[0];
-            }
+	    if ((iMin == -1) || (iMax == -1)) {
+		return new int[0];
+	    }
 
-            int[] rvTmp = new int[1+ (iMax - iMin)];
-            int n = 0;
-            for(int i = iMin; i <= iMax; i++) {
-                if (selectionModel.isSelectedIndex(i)) {
-                    rvTmp[n++] = i;
-                }
-            }
-            int[] rv = new int[n];
-            System.arraycopy(rvTmp, 0, rv, 0, n);
-            return rv;
-        }
-        return  new int[0];
+	    int[] rvTmp = new int[1+ (iMax - iMin)];
+	    int n = 0;
+	    for(int i = iMin; i <= iMax; i++) {
+		if (selectionModel.isSelectedIndex(i)) {
+		    rvTmp[n++] = i;
+		}
+	    }
+	    int[] rv = new int[n];
+	    System.arraycopy(rvTmp, 0, rv, 0, n);
+	    return rv;
+	}
+	return  new int[0];
     }
 
     // implements javax.swing.table.TableColumnModel
@@ -453,19 +454,19 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @return the number of columns selected
      */
     public int getSelectedColumnCount() {
-        if (selectionModel != null) {
-            int iMin = selectionModel.getMinSelectionIndex();
-            int iMax = selectionModel.getMaxSelectionIndex();
-            int count = 0;
+	if (selectionModel != null) {
+	    int iMin = selectionModel.getMinSelectionIndex();
+	    int iMax = selectionModel.getMaxSelectionIndex();
+	    int count = 0;
 
-            for(int i = iMin; i <= iMax; i++) {
-                if (selectionModel.isSelectedIndex(i)) {
-                    count++;
-                }
-            }
-            return count;
-        }
-        return 0;
+	    for(int i = iMin; i <= iMax; i++) {
+		if (selectionModel.isSelectedIndex(i)) {
+		    count++;
+		}
+	    }
+	    return count;
+	}
+	return 0;
     }
 
 //
@@ -478,7 +479,7 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @param x  a <code>TableColumnModelListener</code> object
      */
     public void addColumnModelListener(TableColumnModelListener x) {
-        listenerList.add(TableColumnModelListener.class, x);
+	listenerList.add(TableColumnModelListener.class, x);
     }
 
     // implements javax.swing.table.TableColumnModel
@@ -487,14 +488,14 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @param x  a <code>TableColumnModelListener</code> object
      */
     public void removeColumnModelListener(TableColumnModelListener x) {
-        listenerList.remove(TableColumnModelListener.class, x);
+	listenerList.remove(TableColumnModelListener.class, x);
     }
 
     /**
      * Returns an array of all the column model listeners
      * registered on this model.
      *
-     * @return all of this default table column model's <code>ColumnModelListener</code>s
+     * @return all of this default table column model's <code>ColumnModelListener</code>s 
      *         or an empty
      *         array if no column model listeners are currently registered
      *
@@ -521,19 +522,19 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @see EventListenerList
      */
     protected void fireColumnAdded(TableColumnModelEvent e) {
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==TableColumnModelListener.class) {
-                // Lazily create the event:
-                // if (e == null)
-                //  e = new ChangeEvent(this);
-                ((TableColumnModelListener)listeners[i+1]).
-                    columnAdded(e);
-            }
-        }
+	// Guaranteed to return a non-null array
+	Object[] listeners = listenerList.getListenerList();
+	// Process the listeners last to first, notifying
+	// those that are interested in this event
+	for (int i = listeners.length-2; i>=0; i-=2) {
+	    if (listeners[i]==TableColumnModelListener.class) {
+		// Lazily create the event:
+		// if (e == null)
+		//  e = new ChangeEvent(this);
+		((TableColumnModelListener)listeners[i+1]).
+		    columnAdded(e);
+	    }
+	}
     }
 
     /**
@@ -545,19 +546,19 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @see EventListenerList
      */
     protected void fireColumnRemoved(TableColumnModelEvent e) {
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==TableColumnModelListener.class) {
-                // Lazily create the event:
-                // if (e == null)
-                //  e = new ChangeEvent(this);
-                ((TableColumnModelListener)listeners[i+1]).
-                    columnRemoved(e);
-            }
-        }
+	// Guaranteed to return a non-null array
+	Object[] listeners = listenerList.getListenerList();
+	// Process the listeners last to first, notifying
+	// those that are interested in this event
+	for (int i = listeners.length-2; i>=0; i-=2) {
+	    if (listeners[i]==TableColumnModelListener.class) {
+		// Lazily create the event:
+		// if (e == null)
+		//  e = new ChangeEvent(this);
+		((TableColumnModelListener)listeners[i+1]).
+		    columnRemoved(e);
+	    }
+	}
     }
 
     /**
@@ -569,19 +570,19 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @see EventListenerList
      */
     protected void fireColumnMoved(TableColumnModelEvent e) {
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==TableColumnModelListener.class) {
-                // Lazily create the event:
-                // if (e == null)
-                //  e = new ChangeEvent(this);
-                ((TableColumnModelListener)listeners[i+1]).
-                    columnMoved(e);
-            }
-        }
+	// Guaranteed to return a non-null array
+	Object[] listeners = listenerList.getListenerList();
+	// Process the listeners last to first, notifying
+	// those that are interested in this event
+	for (int i = listeners.length-2; i>=0; i-=2) {
+	    if (listeners[i]==TableColumnModelListener.class) {
+		// Lazily create the event:
+		// if (e == null)
+		//  e = new ChangeEvent(this);
+		((TableColumnModelListener)listeners[i+1]).
+		    columnMoved(e);
+	    }
+	}
     }
 
     /**
@@ -593,19 +594,19 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @see EventListenerList
      */
     protected void fireColumnSelectionChanged(ListSelectionEvent e) {
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==TableColumnModelListener.class) {
-                // Lazily create the event:
-                // if (e == null)
-                //  e = new ChangeEvent(this);
-                ((TableColumnModelListener)listeners[i+1]).
-                    columnSelectionChanged(e);
-            }
-        }
+	// Guaranteed to return a non-null array
+	Object[] listeners = listenerList.getListenerList();
+	// Process the listeners last to first, notifying
+	// those that are interested in this event
+	for (int i = listeners.length-2; i>=0; i-=2) {
+	    if (listeners[i]==TableColumnModelListener.class) {
+		// Lazily create the event:
+		// if (e == null)
+		//  e = new ChangeEvent(this);
+		((TableColumnModelListener)listeners[i+1]).
+		    columnSelectionChanged(e);
+	    }
+	}
     }
 
     /**
@@ -616,19 +617,19 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @see EventListenerList
      */
     protected void fireColumnMarginChanged() {
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==TableColumnModelListener.class) {
-                // Lazily create the event:
-                if (changeEvent == null)
-                    changeEvent = new ChangeEvent(this);
-                ((TableColumnModelListener)listeners[i+1]).
-                    columnMarginChanged(changeEvent);
-            }
-        }
+	// Guaranteed to return a non-null array
+	Object[] listeners = listenerList.getListenerList();
+	// Process the listeners last to first, notifying
+	// those that are interested in this event
+	for (int i = listeners.length-2; i>=0; i-=2) {
+	    if (listeners[i]==TableColumnModelListener.class) {
+		// Lazily create the event:
+		if (changeEvent == null)
+		    changeEvent = new ChangeEvent(this);
+		((TableColumnModelListener)listeners[i+1]).
+		    columnMarginChanged(changeEvent);
+	    }
+	}
     }
 
     /**
@@ -662,12 +663,12 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @exception ClassCastException if <code>listenerType</code>
      *          doesn't specify a class or interface that implements
      *          <code>java.util.EventListener</code>
-     *
+     * 
      * @see #getColumnModelListeners
      * @since 1.3
      */
-    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        return listenerList.getListeners(listenerType);
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) { 
+	return listenerList.getListeners(listenerType); 
     }
 
 //
@@ -683,14 +684,14 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @param  evt  <code>PropertyChangeEvent</code>
      */
     public void propertyChange(PropertyChangeEvent evt) {
-        String name = evt.getPropertyName();
+	String name = evt.getPropertyName();
 
-        if (name == "width" || name == "preferredWidth") {
-            invalidateWidthCache();
-            // This is a misnomer, we're using this method
-            // simply to cause a relayout.
-            fireColumnMarginChanged();
-        }
+	if (name == "width" || name == "preferredWidth") {
+	    invalidateWidthCache(); 
+	    // This is a misnomer, we're using this method 
+	    // simply to cause a relayout. 
+	    fireColumnMarginChanged(); 
+	}
 
     }
 
@@ -707,7 +708,7 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * @param e  the change event
      */
     public void valueChanged(ListSelectionEvent e) {
-        fireColumnSelectionChanged(e);
+	fireColumnSelectionChanged(e);
     }
 
 //
@@ -726,15 +727,16 @@ public class DefaultTableColumnModel implements TableColumnModel,
      * <code>totalColumnWidth</code> property.
      */
     protected void recalcWidthCache() {
-        Enumeration enumeration = getColumns();
-        totalColumnWidth = 0;
-        while (enumeration.hasMoreElements()) {
-            totalColumnWidth += ((TableColumn)enumeration.nextElement()).getWidth();
-        }
-    }
+	Enumeration enumeration = getColumns();
+	totalColumnWidth = 0;
+	while (enumeration.hasMoreElements()) {
+	    totalColumnWidth += ((TableColumn)enumeration.nextElement()).getWidth();
+	}
+    } 
 
-    private void invalidateWidthCache() {
-        totalColumnWidth = -1;
+    private void invalidateWidthCache() { 
+	totalColumnWidth = -1; 
     }
 
 } // End of class DefaultTableColumnModel
+

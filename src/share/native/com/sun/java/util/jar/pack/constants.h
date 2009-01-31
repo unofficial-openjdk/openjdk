@@ -57,10 +57,10 @@
 enum {
     CONSTANT_None,
     CONSTANT_Utf8,
-    CONSTANT_unused2,           /* unused, was Unicode */
+    CONSTANT_unused2,		/* unused, was Unicode */
     CONSTANT_Integer,
     CONSTANT_Float,
-    CONSTANT_Long,
+    CONSTANT_Long,      
     CONSTANT_Double,
     CONSTANT_Class,
     CONSTANT_String,
@@ -106,45 +106,45 @@ enum {
     X_ATTR_LIMIT_FLAGS_HI = 63,
 
 #define O_ATTR_DO(F) \
-        F(X_ATTR_OVERFLOW,01) \
-          /*(end)*/
+	F(X_ATTR_OVERFLOW,01) \
+	  /*(end)*/
 #define X_ATTR_DO(F) \
-        O_ATTR_DO(F) \
-        F(X_ATTR_Signature,Signature) \
-        F(X_ATTR_Deprecated,Deprecated) \
-        F(X_ATTR_RuntimeVisibleAnnotations,RuntimeVisibleAnnotations) \
-        F(X_ATTR_RuntimeInvisibleAnnotations,RuntimeInvisibleAnnotations) \
-        /*F(X_ATTR_Synthetic,Synthetic)*/ \
-          /*(end)*/
+	O_ATTR_DO(F) \
+	F(X_ATTR_Signature,Signature) \
+	F(X_ATTR_Deprecated,Deprecated) \
+	F(X_ATTR_RuntimeVisibleAnnotations,RuntimeVisibleAnnotations) \
+	F(X_ATTR_RuntimeInvisibleAnnotations,RuntimeInvisibleAnnotations) \
+	/*F(X_ATTR_Synthetic,Synthetic)*/ \
+	  /*(end)*/
 #define CLASS_ATTR_DO(F) \
-        F(CLASS_ATTR_SourceFile,SourceFile) \
-        F(CLASS_ATTR_InnerClasses,InnerClasses) \
-        F(CLASS_ATTR_EnclosingMethod,EnclosingMethod) \
-        F(CLASS_ATTR_ClassFile_version,02) \
-          /*(end)*/
+	F(CLASS_ATTR_SourceFile,SourceFile) \
+	F(CLASS_ATTR_InnerClasses,InnerClasses) \
+	F(CLASS_ATTR_EnclosingMethod,EnclosingMethod) \
+	F(CLASS_ATTR_ClassFile_version,02) \
+	  /*(end)*/
 #define FIELD_ATTR_DO(F) \
-        F(FIELD_ATTR_ConstantValue,ConstantValue) \
-          /*(end)*/
+	F(FIELD_ATTR_ConstantValue,ConstantValue) \
+	  /*(end)*/
 #define METHOD_ATTR_DO(F) \
-        F(METHOD_ATTR_Code,Code) \
-        F(METHOD_ATTR_Exceptions,Exceptions) \
-        F(METHOD_ATTR_RuntimeVisibleParameterAnnotations,RuntimeVisibleParameterAnnotations) \
-        F(METHOD_ATTR_RuntimeInvisibleParameterAnnotations,RuntimeInvisibleParameterAnnotations) \
-        F(METHOD_ATTR_AnnotationDefault,AnnotationDefault) \
-          /*(end)*/
+	F(METHOD_ATTR_Code,Code) \
+	F(METHOD_ATTR_Exceptions,Exceptions) \
+	F(METHOD_ATTR_RuntimeVisibleParameterAnnotations,RuntimeVisibleParameterAnnotations) \
+	F(METHOD_ATTR_RuntimeInvisibleParameterAnnotations,RuntimeInvisibleParameterAnnotations) \
+	F(METHOD_ATTR_AnnotationDefault,AnnotationDefault) \
+	  /*(end)*/
 #define CODE_ATTR_DO(F) \
-        F(CODE_ATTR_StackMapTable,StackMapTable) \
-        F(CODE_ATTR_LineNumberTable,LineNumberTable) \
-        F(CODE_ATTR_LocalVariableTable,LocalVariableTable) \
-        F(CODE_ATTR_LocalVariableTypeTable,LocalVariableTypeTable) \
-          /*(end)*/
+	F(CODE_ATTR_StackMapTable,StackMapTable) \
+	F(CODE_ATTR_LineNumberTable,LineNumberTable) \
+	F(CODE_ATTR_LocalVariableTable,LocalVariableTable) \
+	F(CODE_ATTR_LocalVariableTypeTable,LocalVariableTypeTable) \
+	  /*(end)*/
 #define ALL_ATTR_DO(F) \
-        X_ATTR_DO(F) \
-        CLASS_ATTR_DO(F) \
-        FIELD_ATTR_DO(F) \
-        METHOD_ATTR_DO(F) \
-        CODE_ATTR_DO(F) \
-          /*(end)*/
+	X_ATTR_DO(F) \
+	CLASS_ATTR_DO(F) \
+	FIELD_ATTR_DO(F) \
+	METHOD_ATTR_DO(F) \
+	CODE_ATTR_DO(F) \
+	  /*(end)*/
 
     // attribute "context types"
     ATTR_CONTEXT_CLASS  = 0,
@@ -186,31 +186,31 @@ enum {
     AO_HAVE_METHOD_FLAGS_HI   = 1<<11,
     AO_HAVE_CODE_FLAGS_HI     = 1<<12,
 #define ARCHIVE_BIT_DO(F) \
-         F(AO_HAVE_SPECIAL_FORMATS) \
-         F(AO_HAVE_CP_NUMBERS) \
-         F(AO_HAVE_ALL_CODE_FLAGS) \
-         /*F(AO_3_UNUSED_MBZ)*/ \
-         F(AO_HAVE_FILE_HEADERS) \
-         F(AO_DEFLATE_HINT) \
-         F(AO_HAVE_FILE_MODTIME) \
-         F(AO_HAVE_FILE_OPTIONS) \
-         F(AO_HAVE_FILE_SIZE_HI) \
-         F(AO_HAVE_CLASS_FLAGS_HI) \
-         F(AO_HAVE_FIELD_FLAGS_HI) \
-         F(AO_HAVE_METHOD_FLAGS_HI) \
-         F(AO_HAVE_CODE_FLAGS_HI) \
-          /*(end)*/
+	 F(AO_HAVE_SPECIAL_FORMATS) \
+	 F(AO_HAVE_CP_NUMBERS) \
+	 F(AO_HAVE_ALL_CODE_FLAGS) \
+	 /*F(AO_3_UNUSED_MBZ)*/ \
+	 F(AO_HAVE_FILE_HEADERS) \
+	 F(AO_DEFLATE_HINT) \
+	 F(AO_HAVE_FILE_MODTIME) \
+	 F(AO_HAVE_FILE_OPTIONS) \
+	 F(AO_HAVE_FILE_SIZE_HI) \
+	 F(AO_HAVE_CLASS_FLAGS_HI) \
+	 F(AO_HAVE_FIELD_FLAGS_HI) \
+	 F(AO_HAVE_METHOD_FLAGS_HI) \
+	 F(AO_HAVE_CODE_FLAGS_HI) \
+	  /*(end)*/
 
     // Constants for decoding attribute definition header bytes.
     ADH_CONTEXT_MASK   = 0x3,  // (hdr & ADH_CONTEXT_MASK)
     ADH_BIT_SHIFT      = 0x2,  // (hdr >> ADH_BIT_SHIFT)
     ADH_BIT_IS_LSB     = 1,    // (hdr >> ADH_BIT_SHIFT) - ADH_BIT_IS_LSB
 #define ADH_BYTE(context, index) \
-        ((((index) + ADH_BIT_IS_LSB)<<ADH_BIT_SHIFT) + (context))
+	((((index) + ADH_BIT_IS_LSB)<<ADH_BIT_SHIFT) + (context))
 #define ADH_BYTE_CONTEXT(adhb) \
-        ((adhb) & ADH_CONTEXT_MASK)
+	((adhb) & ADH_CONTEXT_MASK)
 #define ADH_BYTE_INDEX(adhb) \
-        (((adhb) >> ADH_BIT_SHIFT) - ADH_BIT_IS_LSB)
+	(((adhb) >> ADH_BIT_SHIFT) - ADH_BIT_IS_LSB)
 
     NO_MODTIME = 0,  // null modtime value
 
@@ -469,3 +469,8 @@ enum {
 
   _xxx_3_end
 };
+
+
+
+
+

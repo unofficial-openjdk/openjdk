@@ -43,14 +43,15 @@ import java.text.AttributedString;
  * composition area handler if it supports passive clients or below-the-spot
  * input, but all handlers share a single composition area.
  *
+ * @version %I% %G%
  * @author JavaSoft International
  */
 
 class CompositionAreaHandler implements InputMethodListener,
-                                                 InputMethodRequests {
+						 InputMethodRequests {
 
     private static CompositionArea compositionArea;
-    private static Object compositionAreaLock = new Object();
+    private static Object compositionAreaLock = new Object();    
     private static CompositionAreaHandler compositionAreaOwner; // synchronized through compositionArea
 
     private AttributedCharacterIterator composedText;
@@ -71,11 +72,11 @@ class CompositionAreaHandler implements InputMethodListener,
     private void createCompositionArea() {
         synchronized(compositionAreaLock) {
             compositionArea = new CompositionArea();
-            if (compositionAreaOwner != null) {
-                compositionArea.setHandlerInfo(compositionAreaOwner, inputMethodContext);
-            }
-            // If the client component is an active client using below-the-spot style, then
-            // make the composition window undecorated without a title bar.
+            if (compositionAreaOwner != null) { 
+ 	        compositionArea.setHandlerInfo(compositionAreaOwner, inputMethodContext);
+ 	    }
+            // If the client component is an active client using below-the-spot style, then 
+            // make the composition window undecorated without a title bar. 
             if(clientComponent!=null){
                 InputMethodRequests req = clientComponent.getInputMethodRequests();
                 if (req != null && inputMethodContext.useBelowTheSpotInput()) {
@@ -84,7 +85,7 @@ class CompositionAreaHandler implements InputMethodListener,
             }
         }
     }
-
+    	
     void setClientComponent(Component clientComponent) {
         this.clientComponent = clientComponent;
     }
@@ -99,20 +100,20 @@ class CompositionAreaHandler implements InputMethodListener,
 
     void grabCompositionArea(boolean doUpdate) {
         synchronized (compositionAreaLock) {
-            if (compositionAreaOwner != this) {
+  	    if (compositionAreaOwner != this) {
                 compositionAreaOwner = this;
                 if (compositionArea != null) {
                     compositionArea.setHandlerInfo(this, inputMethodContext);
-                }
+ 		}
                 if (doUpdate) {
-                    // Create the composition area if necessary
+ 	            // Create the composition area if necessary
                     if ((composedText != null) && (compositionArea == null)) {
-                        createCompositionArea();
-                    }
-                    if (compositionArea != null) {
+ 		        createCompositionArea();
+ 	            }
+ 		    if (compositionArea != null) {
                         compositionArea.setText(composedText, caret);
-                    }
-                }
+  		    }
+  		}
             }
         }
     }
@@ -128,7 +129,7 @@ class CompositionAreaHandler implements InputMethodListener,
                 if (compositionArea != null) {
                     compositionArea.setHandlerInfo(null, null);
                     compositionArea.setText(null, null);
-                }
+  		}
             }
         }
     }
@@ -152,20 +153,20 @@ class CompositionAreaHandler implements InputMethodListener,
      */
     boolean isCompositionAreaVisible() {
         if (compositionArea != null) {
-            return compositionArea.isCompositionAreaVisible();
-        }
+	    return compositionArea.isCompositionAreaVisible();
+	}
 
-        return false;
+	return false;
     }
 
-
+    
     /**
      * Shows or hides the composition Area
      */
     void setCompositionAreaVisible(boolean visible) {
-        if (compositionArea != null) {
-            compositionArea.setCompositionAreaVisible(visible);
-        }
+	if (compositionArea != null) {
+	    compositionArea.setCompositionAreaVisible(visible);
+	}
     }
 
     void processInputMethodEvent(InputMethodEvent event) {
@@ -181,8 +182,8 @@ class CompositionAreaHandler implements InputMethodListener,
      */
     void setCompositionAreaUndecorated(boolean undecorated) {
         if (compositionArea != null) {
-            compositionArea.setCompositionAreaUndecorated(undecorated);
-        }
+	    compositionArea.setCompositionAreaUndecorated(undecorated);
+	}
     }
 
     //
@@ -202,11 +203,11 @@ class CompositionAreaHandler implements InputMethodListener,
         if (text != null
                 && committedCharacterCount < text.getEndIndex() - text.getBeginIndex()) {
 
-            // Create the composition area if necessary
-            if (compositionArea == null) {
+ 	    // Create the composition area if necessary
+ 	    if (compositionArea == null) {
                  createCompositionArea();
-            }
-
+ 	    }
+ 	              
             // copy the composed text
             AttributedString composedTextString;
             composedTextString = new AttributedString(text,
@@ -214,33 +215,33 @@ class CompositionAreaHandler implements InputMethodListener,
                     text.getEndIndex(), IM_ATTRIBUTES);
             composedTextString.addAttribute(TextAttribute.FONT, compositionArea.getFont());
             composedText = composedTextString.getIterator();
-            caret = event.getCaret();
-        }
-
-        if (compositionArea != null) {
-            compositionArea.setText(composedText, caret);
-        }
+	    caret = event.getCaret();
+	}
+	
+ 	if (compositionArea != null) {
+  	    compositionArea.setText(composedText, caret);
+ 	}	
 
         // send any committed text to the text component
         if (committedCharacterCount > 0) {
             inputMethodContext.dispatchCommittedText(((Component) event.getSource()),
-                                                     text, committedCharacterCount);
+						     text, committedCharacterCount);
 
-            // this may have changed the text location, so reposition the window
-            if (isCompositionAreaVisible()) {
-                compositionArea.updateWindowLocation();
-            }
+	    // this may have changed the text location, so reposition the window
+	    if (isCompositionAreaVisible()) {
+	        compositionArea.updateWindowLocation();
+	    }
         }
-
+        
         // event has been handled, so consume it
         event.consume();
     }
 
     public void caretPositionChanged(InputMethodEvent event) {
         if (compositionArea != null) {
-            compositionArea.setCaret(event.getCaret());
-        }
-
+  	    compositionArea.setCaret(event.getCaret());
+ 	}
+        
         // event has been handled, so consume it
         event.consume();
     }
@@ -257,16 +258,16 @@ class CompositionAreaHandler implements InputMethodListener,
      */
     InputMethodRequests getClientInputMethodRequests() {
         if (clientComponent != null) {
-            return (InputMethodRequests) clientComponent.getInputMethodRequests();
-        }
-
-        return null;
+	    return (InputMethodRequests) clientComponent.getInputMethodRequests();
+	}
+	
+	return null;
     }
 
     public Rectangle getTextLocation(TextHitInfo offset) {
         synchronized (compositionAreaLock) {
-            if (compositionAreaOwner == this && isCompositionAreaVisible()) {
-                return compositionArea.getTextLocation(offset);
+	    if (compositionAreaOwner == this && isCompositionAreaVisible()) {
+		return compositionArea.getTextLocation(offset);
             } else if (composedText != null) {
                 // there's composed text, but it's not displayed, so fake a rectangle
                 return new Rectangle(0, 0, 0, 10);
@@ -296,43 +297,43 @@ class CompositionAreaHandler implements InputMethodListener,
         InputMethodRequests req = getClientInputMethodRequests();
         if (req != null) {
             return req.getInsertPositionOffset();
-        }
+	}
 
         // we don't have access to the client component's text.
-        return 0;
+	return 0;
     }
 
     private static final AttributedCharacterIterator EMPTY_TEXT =
             (new AttributedString("")).getIterator();
 
     public AttributedCharacterIterator getCommittedText(int beginIndex,
-                                                       int endIndex,
-                                                       Attribute[] attributes) {
+						       int endIndex,
+						       Attribute[] attributes) {
         InputMethodRequests req = getClientInputMethodRequests();
         if(req != null) {
             return req.getCommittedText(beginIndex, endIndex, attributes);
-        }
+	}
 
         // we don't have access to the client component's text.
-        return EMPTY_TEXT;
+	return EMPTY_TEXT;
     }
 
     public int getCommittedTextLength() {
         InputMethodRequests req = getClientInputMethodRequests();
         if(req != null) {
             return req.getCommittedTextLength();
-        }
+	}
 
         // we don't have access to the client component's text.
-        return 0;
+	return 0;
     }
 
 
     public AttributedCharacterIterator cancelLatestCommittedText(Attribute[] attributes) {
         InputMethodRequests req = getClientInputMethodRequests();
         if(req != null) {
-            return req.cancelLatestCommittedText(attributes);
-        }
+            return req.cancelLatestCommittedText(attributes);        
+	}
 
         // we don't have access to the client component's text.
         return null;
@@ -342,7 +343,7 @@ class CompositionAreaHandler implements InputMethodListener,
         InputMethodRequests req = getClientInputMethodRequests();
         if(req != null) {
             return req.getSelectedText(attributes);
-        }
+	}
 
         // we don't have access to the client component's text.
         return EMPTY_TEXT;

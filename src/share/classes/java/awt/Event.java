@@ -28,8 +28,8 @@ import java.awt.event.*;
 import java.io.*;
 
 /**
- * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
- * available only for backwards compatilibility.  It has been replaced
+ * <b>NOTE:</b> The <code>Event</code> class is obsolete and is 
+ * available only for backwards compatilibility.  It has been replaced 
  * by the <code>AWTEvent</code> class and its subclasses.
  * <p>
  * <code>Event</code> is a platform-independent class that
@@ -56,6 +56,7 @@ import java.io.*;
  * <code>Event</code> class (<code>PGUP</code>,
  * <code>PGDN</code>, <code>F1</code>, <code>F2</code>, etc).
  *
+ * @version %I% %G%
  * @author     Sami Shaio
  * @since      JDK1.0
  */
@@ -68,228 +69,228 @@ public class Event implements java.io.Serializable {
      * This flag indicates that the Shift key was down when the event
      * occurred.
      */
-    public static final int SHIFT_MASK          = 1 << 0;
+    public static final int SHIFT_MASK		= 1 << 0;
 
     /**
      * This flag indicates that the Control key was down when the event
      * occurred.
      */
-    public static final int CTRL_MASK           = 1 << 1;
+    public static final int CTRL_MASK		= 1 << 1;
 
     /**
      * This flag indicates that the Meta key was down when the event
      * occurred. For mouse events, this flag indicates that the right
      * button was pressed or released.
      */
-    public static final int META_MASK           = 1 << 2;
+    public static final int META_MASK		= 1 << 2;
 
     /**
      * This flag indicates that the Alt key was down when
      * the event occurred. For mouse events, this flag indicates that the
      * middle mouse button was pressed or released.
      */
-    public static final int ALT_MASK            = 1 << 3;
+    public static final int ALT_MASK		= 1 << 3;
 
     /* Action keys */
 
     /**
      * The Home key, a non-ASCII action key.
      */
-    public static final int HOME                = 1000;
+    public static final int HOME		= 1000;
 
     /**
      * The End key, a non-ASCII action key.
      */
-    public static final int END                 = 1001;
+    public static final int END			= 1001;
 
     /**
      * The Page Up key, a non-ASCII action key.
      */
-    public static final int PGUP                = 1002;
+    public static final int PGUP		= 1002;
 
     /**
      * The Page Down key, a non-ASCII action key.
      */
-    public static final int PGDN                = 1003;
+    public static final int PGDN		= 1003;
 
     /**
      * The Up Arrow key, a non-ASCII action key.
      */
-    public static final int UP                  = 1004;
+    public static final int UP			= 1004;
 
     /**
      * The Down Arrow key, a non-ASCII action key.
      */
-    public static final int DOWN                = 1005;
+    public static final int DOWN		= 1005;
 
     /**
      * The Left Arrow key, a non-ASCII action key.
      */
-    public static final int LEFT                = 1006;
+    public static final int LEFT		= 1006;
 
     /**
      * The Right Arrow key, a non-ASCII action key.
      */
-    public static final int RIGHT               = 1007;
+    public static final int RIGHT		= 1007;
 
     /**
      * The F1 function key, a non-ASCII action key.
      */
-    public static final int F1                  = 1008;
+    public static final int F1			= 1008;
 
     /**
      * The F2 function key, a non-ASCII action key.
      */
-    public static final int F2                  = 1009;
+    public static final int F2			= 1009;
 
     /**
      * The F3 function key, a non-ASCII action key.
      */
-    public static final int F3                  = 1010;
+    public static final int F3			= 1010;
 
     /**
      * The F4 function key, a non-ASCII action key.
      */
-    public static final int F4                  = 1011;
+    public static final int F4			= 1011;
 
     /**
      * The F5 function key, a non-ASCII action key.
      */
-    public static final int F5                  = 1012;
+    public static final int F5			= 1012;
 
     /**
      * The F6 function key, a non-ASCII action key.
      */
-    public static final int F6                  = 1013;
+    public static final int F6			= 1013;
 
     /**
      * The F7 function key, a non-ASCII action key.
      */
-    public static final int F7                  = 1014;
+    public static final int F7			= 1014;
 
     /**
      * The F8 function key, a non-ASCII action key.
      */
-    public static final int F8                  = 1015;
+    public static final int F8			= 1015;
 
     /**
      * The F9 function key, a non-ASCII action key.
      */
-    public static final int F9                  = 1016;
+    public static final int F9			= 1016;
 
     /**
      * The F10 function key, a non-ASCII action key.
      */
-    public static final int F10                 = 1017;
+    public static final int F10			= 1017;
 
     /**
      * The F11 function key, a non-ASCII action key.
      */
-    public static final int F11                 = 1018;
+    public static final int F11			= 1018;
 
     /**
      * The F12 function key, a non-ASCII action key.
      */
-    public static final int F12                 = 1019;
+    public static final int F12			= 1019;
 
     /**
      * The Print Screen key, a non-ASCII action key.
      */
-    public static final int PRINT_SCREEN        = 1020;
+    public static final int PRINT_SCREEN	= 1020;
 
     /**
      * The Scroll Lock key, a non-ASCII action key.
      */
-    public static final int SCROLL_LOCK         = 1021;
+    public static final int SCROLL_LOCK		= 1021;
 
     /**
      * The Caps Lock key, a non-ASCII action key.
      */
-    public static final int CAPS_LOCK           = 1022;
+    public static final int CAPS_LOCK		= 1022;
 
     /**
      * The Num Lock key, a non-ASCII action key.
      */
-    public static final int NUM_LOCK            = 1023;
+    public static final int NUM_LOCK		= 1023;
 
     /**
      * The Pause key, a non-ASCII action key.
      */
-    public static final int PAUSE               = 1024;
+    public static final int PAUSE		= 1024;
 
     /**
      * The Insert key, a non-ASCII action key.
      */
-    public static final int INSERT              = 1025;
+    public static final int INSERT		= 1025;
 
     /* Non-action keys */
 
     /**
      * The Enter key.
      */
-    public static final int ENTER               = '\n';
+    public static final int ENTER		= '\n';
 
     /**
      * The BackSpace key.
      */
-    public static final int BACK_SPACE          = '\b';
+    public static final int BACK_SPACE		= '\b';
 
     /**
      * The Tab key.
      */
-    public static final int TAB                 = '\t';
+    public static final int TAB			= '\t';
 
     /**
      * The Escape key.
      */
-    public static final int ESCAPE              = 27;
+    public static final int ESCAPE		= 27;
 
     /**
      * The Delete key.
      */
-    public static final int DELETE              = 127;
+    public static final int DELETE		= 127;
 
 
     /* Base for all window events. */
-    private static final int WINDOW_EVENT       = 200;
+    private static final int WINDOW_EVENT 	= 200;
 
     /**
      * The user has asked the window manager to kill the window.
      */
-    public static final int WINDOW_DESTROY      = 1 + WINDOW_EVENT;
+    public static final int WINDOW_DESTROY 	= 1 + WINDOW_EVENT;
 
     /**
      * The user has asked the window manager to expose the window.
      */
-    public static final int WINDOW_EXPOSE       = 2 + WINDOW_EVENT;
+    public static final int WINDOW_EXPOSE 	= 2 + WINDOW_EVENT;
 
     /**
      * The user has asked the window manager to iconify the window.
      */
-    public static final int WINDOW_ICONIFY      = 3 + WINDOW_EVENT;
+    public static final int WINDOW_ICONIFY	= 3 + WINDOW_EVENT;
 
     /**
      * The user has asked the window manager to de-iconify the window.
      */
-    public static final int WINDOW_DEICONIFY    = 4 + WINDOW_EVENT;
+    public static final int WINDOW_DEICONIFY	= 4 + WINDOW_EVENT;
 
     /**
      * The user has asked the window manager to move the window.
      */
-    public static final int WINDOW_MOVED        = 5 + WINDOW_EVENT;
+    public static final int WINDOW_MOVED	= 5 + WINDOW_EVENT;
 
     /* Base for all keyboard events. */
-    private static final int KEY_EVENT          = 400;
+    private static final int KEY_EVENT 		= 400;
 
     /**
      * The user has pressed a normal key.
      */
-    public static final int KEY_PRESS           = 1 + KEY_EVENT;
+    public static final int KEY_PRESS 		= 1 + KEY_EVENT;
 
     /**
      * The user has released a normal key.
      */
-    public static final int KEY_RELEASE         = 2 + KEY_EVENT;
+    public static final int KEY_RELEASE 	= 2 + KEY_EVENT;
 
     /**
      * The user has pressed a non-ASCII <em>action</em> key.
@@ -299,7 +300,7 @@ public class Event implements java.io.Serializable {
      * Page Up, Page Down, Home, End, Print Screen, Scroll Lock,
      * Caps Lock, Num Lock, Pause, and Insert.
      */
-    public static final int KEY_ACTION          = 3 + KEY_EVENT;
+    public static final int KEY_ACTION 		= 3 + KEY_EVENT;
 
     /**
      * The user has released a non-ASCII <em>action</em> key.
@@ -309,10 +310,10 @@ public class Event implements java.io.Serializable {
      * Page Up, Page Down, Home, End, Print Screen, Scroll Lock,
      * Caps Lock, Num Lock, Pause, and Insert.
      */
-    public static final int KEY_ACTION_RELEASE  = 4 + KEY_EVENT;
+    public static final int KEY_ACTION_RELEASE	= 4 + KEY_EVENT;
 
     /* Base for all mouse events. */
-    private static final int MOUSE_EVENT        = 500;
+    private static final int MOUSE_EVENT 	= 500;
 
     /**
      * The user has pressed the mouse button. The <code>ALT_MASK</code>
@@ -322,7 +323,7 @@ public class Event implements java.io.Serializable {
      * @see     java.awt.Event#ALT_MASK
      * @see     java.awt.Event#META_MASK
      */
-    public static final int MOUSE_DOWN          = 1 + MOUSE_EVENT;
+    public static final int MOUSE_DOWN 		= 1 + MOUSE_EVENT;
 
     /**
      * The user has released the mouse button. The <code>ALT_MASK</code>
@@ -332,22 +333,22 @@ public class Event implements java.io.Serializable {
      * @see     java.awt.Event#ALT_MASK
      * @see     java.awt.Event#META_MASK
      */
-    public static final int MOUSE_UP            = 2 + MOUSE_EVENT;
+    public static final int MOUSE_UP 		= 2 + MOUSE_EVENT;
 
     /**
      * The mouse has moved with no button pressed.
      */
-    public static final int MOUSE_MOVE          = 3 + MOUSE_EVENT;
+    public static final int MOUSE_MOVE	 	= 3 + MOUSE_EVENT;
 
     /**
      * The mouse has entered a component.
      */
-    public static final int MOUSE_ENTER         = 4 + MOUSE_EVENT;
+    public static final int MOUSE_ENTER 	= 4 + MOUSE_EVENT;
 
     /**
      * The mouse has exited a component.
      */
-    public static final int MOUSE_EXIT          = 5 + MOUSE_EVENT;
+    public static final int MOUSE_EXIT 		= 5 + MOUSE_EVENT;
 
     /**
      * The user has moved the mouse with a button pressed. The
@@ -357,93 +358,93 @@ public class Event implements java.io.Serializable {
      * @see     java.awt.Event#ALT_MASK
      * @see     java.awt.Event#META_MASK
      */
-    public static final int MOUSE_DRAG          = 6 + MOUSE_EVENT;
+    public static final int MOUSE_DRAG 		= 6 + MOUSE_EVENT;
 
 
     /* Scrolling events */
-    private static final int SCROLL_EVENT       = 600;
+    private static final int SCROLL_EVENT 	= 600;
 
     /**
      * The user has activated the <em>line up</em>
      * area of a scroll bar.
      */
-    public static final int SCROLL_LINE_UP      = 1 + SCROLL_EVENT;
+    public static final int SCROLL_LINE_UP	= 1 + SCROLL_EVENT;
 
     /**
      * The user has activated the <em>line down</em>
      * area of a scroll bar.
      */
-    public static final int SCROLL_LINE_DOWN    = 2 + SCROLL_EVENT;
+    public static final int SCROLL_LINE_DOWN	= 2 + SCROLL_EVENT;
 
     /**
      * The user has activated the <em>page up</em>
      * area of a scroll bar.
      */
-    public static final int SCROLL_PAGE_UP      = 3 + SCROLL_EVENT;
+    public static final int SCROLL_PAGE_UP	= 3 + SCROLL_EVENT;
 
     /**
      * The user has activated the <em>page down</em>
      * area of a scroll bar.
      */
-    public static final int SCROLL_PAGE_DOWN    = 4 + SCROLL_EVENT;
+    public static final int SCROLL_PAGE_DOWN	= 4 + SCROLL_EVENT;
 
     /**
      * The user has moved the bubble (thumb) in a scroll bar,
      * moving to an "absolute" position, rather than to
      * an offset from the last postion.
      */
-    public static final int SCROLL_ABSOLUTE     = 5 + SCROLL_EVENT;
+    public static final int SCROLL_ABSOLUTE	= 5 + SCROLL_EVENT;
 
     /**
      * The scroll begin event.
      */
-    public static final int SCROLL_BEGIN        = 6 + SCROLL_EVENT;
+    public static final int SCROLL_BEGIN	= 6 + SCROLL_EVENT;
 
     /**
      * The scroll end event.
      */
-    public static final int SCROLL_END          = 7 + SCROLL_EVENT;
+    public static final int SCROLL_END	        = 7 + SCROLL_EVENT;
 
     /* List Events */
-    private static final int LIST_EVENT         = 700;
+    private static final int LIST_EVENT		= 700;
 
     /**
      * An item in a list has been selected.
      */
-    public static final int LIST_SELECT         = 1 + LIST_EVENT;
+    public static final int LIST_SELECT		= 1 + LIST_EVENT;
 
     /**
      * An item in a list has been deselected.
      */
-    public static final int LIST_DESELECT       = 2 + LIST_EVENT;
+    public static final int LIST_DESELECT	= 2 + LIST_EVENT;
 
     /* Misc Event */
-    private static final int MISC_EVENT         = 1000;
+    private static final int MISC_EVENT		= 1000;
 
     /**
      * This event indicates that the user wants some action to occur.
      */
-    public static final int ACTION_EVENT        = 1 + MISC_EVENT;
+    public static final int ACTION_EVENT	= 1 + MISC_EVENT;
 
     /**
      * A file loading event.
      */
-    public static final int LOAD_FILE           = 2 + MISC_EVENT;
+    public static final int LOAD_FILE		= 2 + MISC_EVENT;
 
     /**
      * A file saving event.
      */
-    public static final int SAVE_FILE           = 3 + MISC_EVENT;
+    public static final int SAVE_FILE		= 3 + MISC_EVENT;
 
     /**
      * A component gained the focus.
      */
-    public static final int GOT_FOCUS           = 4 + MISC_EVENT;
+    public static final int GOT_FOCUS		= 4 + MISC_EVENT;
 
     /**
      * A component lost the focus.
      */
-    public static final int LOST_FOCUS          = 5 + MISC_EVENT;
+    public static final int LOST_FOCUS		= 5 + MISC_EVENT;
 
     /**
      * The target component. This indicates the component over which the
@@ -595,7 +596,7 @@ public class Event implements java.io.Serializable {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-        Toolkit.loadLibraries();
+	Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -609,7 +610,7 @@ public class Event implements java.io.Serializable {
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Creates an instance of <code>Event</code> with the specified target
@@ -626,17 +627,17 @@ public class Event implements java.io.Serializable {
      * @param     arg        the specified argument.
      */
     public Event(Object target, long when, int id, int x, int y, int key,
-                 int modifiers, Object arg) {
-        this.target = target;
-        this.when = when;
-        this.id = id;
-        this.x = x;
-        this.y = y;
-        this.key = key;
-        this.modifiers = modifiers;
-        this.arg = arg;
-        this.data = 0;
-        this.clickCount = 0;
+		 int modifiers, Object arg) {
+	this.target = target;
+	this.when = when;
+	this.id = id;
+	this.x = x;
+	this.y = y;
+	this.key = key;
+	this.modifiers = modifiers;
+	this.arg = arg;
+	this.data = 0;
+	this.clickCount = 0;
         switch(id) {
           case ACTION_EVENT:
           case WINDOW_DESTROY:
@@ -660,7 +661,7 @@ public class Event implements java.io.Serializable {
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Creates an instance of <code>Event</code>, with the specified target
@@ -676,12 +677,12 @@ public class Event implements java.io.Serializable {
      * @param     modifiers  the state of the modifier keys.
      */
     public Event(Object target, long when, int id, int x, int y, int key, int modifiers) {
-        this(target, when, id, x, y, key, modifiers, null);
+	this(target, when, id, x, y, key, modifiers, null);
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Creates an instance of <code>Event</code> with the specified
@@ -691,12 +692,12 @@ public class Event implements java.io.Serializable {
      * @param     arg        the specified argument.
      */
     public Event(Object target, int id, Object arg) {
-        this(target, 0, id, 0, 0, 0, 0, arg);
+	this(target, 0, id, 0, 0, 0, 0, arg);
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Translates this event so that its <i>x</i> and <i>y</i>
@@ -711,13 +712,13 @@ public class Event implements java.io.Serializable {
      * @param     dy     the distance to translate the <i>y</i> coordinate.
      */
     public void translate(int dx, int dy) {
-        this.x += dx;
-        this.y += dy;
+	this.x += dx;
+	this.y += dy;
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Checks if the Shift key is down.
@@ -728,12 +729,12 @@ public class Event implements java.io.Serializable {
      * @see       java.awt.Event#metaDown
      */
     public boolean shiftDown() {
-        return (modifiers & SHIFT_MASK) != 0;
+	return (modifiers & SHIFT_MASK) != 0;
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Checks if the Control key is down.
@@ -744,12 +745,12 @@ public class Event implements java.io.Serializable {
      * @see       java.awt.Event#metaDown
      */
     public boolean controlDown() {
-        return (modifiers & CTRL_MASK) != 0;
+	return (modifiers & CTRL_MASK) != 0;
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Checks if the Meta key is down.
@@ -761,12 +762,12 @@ public class Event implements java.io.Serializable {
      * @see       java.awt.Event#controlDown
      */
     public boolean metaDown() {
-        return (modifiers & META_MASK) != 0;
+	return (modifiers & META_MASK) != 0;
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      */
     void consume() {
@@ -784,7 +785,7 @@ public class Event implements java.io.Serializable {
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      */
     boolean isConsumed() {
@@ -793,7 +794,7 @@ public class Event implements java.io.Serializable {
 
     /*
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Returns the integer key-code associated with the key in this event,
@@ -811,7 +812,7 @@ public class Event implements java.io.Serializable {
 
     /*
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Returns a new KeyEvent char which corresponds to the int key
@@ -828,43 +829,43 @@ public class Event implements java.io.Serializable {
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Returns a string representing the state of this <code>Event</code>.
-     * This method is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not be
+     * This method is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between 
+     * implementations. The returned string may be empty but may not be 
      * <code>null</code>.
      *
      * @return    the parameter string of this event
      */
     protected String paramString() {
-        String str = "id=" + id + ",x=" + x + ",y=" + y;
-        if (key != 0) {
-            str += ",key=" + key;
-        }
-        if (shiftDown()) {
-            str += ",shift";
-        }
-        if (controlDown()) {
-            str += ",control";
-        }
-        if (metaDown()) {
-            str += ",meta";
-        }
-        if (target != null) {
-            str += ",target=" + target;
-        }
-        if (arg != null) {
-            str += ",arg=" + arg;
-        }
-        return str;
+	String str = "id=" + id + ",x=" + x + ",y=" + y;
+	if (key != 0) {
+	    str += ",key=" + key;
+	}
+	if (shiftDown()) {
+	    str += ",shift";
+	}
+	if (controlDown()) {
+	    str += ",control";
+	}
+	if (metaDown()) {
+	    str += ",meta";
+	}
+	if (target != null) {
+	    str += ",target=" + target;
+	}
+	if (arg != null) {
+	    str += ",arg=" + arg;
+	}
+	return str;
     }
 
     /**
      * <b>NOTE:</b> The <code>Event</code> class is obsolete and is
-     * available only for backwards compatilibility.  It has been replaced
+     * available only for backwards compatilibility.  It has been replaced 
      * by the <code>AWTEvent</code> class and its subclasses.
      * <p>
      * Returns a representation of this event's values as a string.
@@ -874,6 +875,6 @@ public class Event implements java.io.Serializable {
      * @since     JDK1.1
      */
     public String toString() {
-        return getClass().getName() + "[" + paramString() + "]";
+	return getClass().getName() + "[" + paramString() + "]";
     }
 }

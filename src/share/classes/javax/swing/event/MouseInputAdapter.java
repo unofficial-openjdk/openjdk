@@ -34,6 +34,7 @@ import java.awt.event.MouseAdapter;
  * empty implementation of the {@code MouseWheelListener} interface, through
  * its extension from AWT's {@code MouseAdapter}.
  *
+ * @version %I% %G%
  * @author Philip Milne
  * @author Shannon Hickey
  */

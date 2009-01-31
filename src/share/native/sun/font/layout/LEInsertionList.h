@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)LEInsertionList.h	1.3 06/12/13
  *
  **********************************************************************
  *   Copyright (C) 1998-2004, International Business Machines
@@ -175,3 +176,4 @@ private:
 };
 
 #endif
+

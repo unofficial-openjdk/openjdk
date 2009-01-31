@@ -95,7 +95,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo(">>> CREATE a new CounterMonitor MBean");
             ObjectName counterMonitorName = new ObjectName(
                             domain + ":type=" + CounterMonitor.class.getName());
-            counterMonitor = new CounterMonitor();
+	    counterMonitor = new CounterMonitor();
             server.registerMBean(counterMonitor, counterMonitorName);
 
             echo(">>> ADD a listener to the CounterMonitor");
@@ -108,7 +108,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo(">>> CREATE a new ObservedObject MBean");
 
             ObjectName obsObjName =
-                ObjectName.getInstance(domain + ":type=ObservedObject");
+		ObjectName.getInstance(domain + ":type=ObservedObject");
             ObservedObject obsObj = new ObservedObject();
             server.registerMBean(obsObj, obsObjName);
 
@@ -123,11 +123,11 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             counterMonitor.setNotify(true);
             echo("\tATTRIBUTE \"NotifyFlag\"        = true");
 
-            Integer threshold = 2;
+	    Integer threshold = 2;
             counterMonitor.setInitThreshold(threshold);
             echo("\tATTRIBUTE \"Threshold\"         = " + threshold);
 
-            int granularityperiod = 500;
+	    int granularityperiod = 500;
             counterMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -138,20 +138,20 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             //
             Thread.sleep(granularityperiod * 2);
 
-            // Check if notification was received
-            //
-            if (messageReceived) {
-                echo("\tOK: CounterMonitor notification received");
-            } else {
-                echo("\tKO: CounterMonitor notification missed or not emitted");
-                return 1;
-            }
+	    // Check if notification was received
+	    //
+	    if (messageReceived) {
+		echo("\tOK: CounterMonitor notification received");
+	    } else {
+		echo("\tKO: CounterMonitor notification missed or not emitted");
+		return 1;
+	    }
         } finally {
-            if (counterMonitor != null)
-                counterMonitor.stop();
+	    if (counterMonitor != null)
+		counterMonitor.stop();
         }
 
-        return 0;
+	return 0;
     }
 
     /**
@@ -170,7 +170,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo(">>> CREATE a new GaugeMonitor MBean");
             ObjectName gaugeMonitorName = new ObjectName(
                             domain + ":type=" + GaugeMonitor.class.getName());
-            gaugeMonitor = new GaugeMonitor();
+	    gaugeMonitor = new GaugeMonitor();
             server.registerMBean(gaugeMonitor, gaugeMonitorName);
 
             echo(">>> ADD a listener to the GaugeMonitor");
@@ -183,7 +183,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo(">>> CREATE a new ObservedObject MBean");
 
             ObjectName obsObjName =
-                ObjectName.getInstance(domain + ":type=ObservedObject");
+		ObjectName.getInstance(domain + ":type=ObservedObject");
             ObservedObject obsObj = new ObservedObject();
             server.registerMBean(obsObj, obsObjName);
 
@@ -200,12 +200,12 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo("\tATTRIBUTE \"Notify Low  Flag\"  = false");
             echo("\tATTRIBUTE \"Notify High Flag\"  = true");
 
-            Double highThreshold = 3.0, lowThreshold = 2.5;
+	    Double highThreshold = 3.0, lowThreshold = 2.5;
             gaugeMonitor.setThresholds(highThreshold, lowThreshold);
             echo("\tATTRIBUTE \"Low  Threshold\"    = " + lowThreshold);
             echo("\tATTRIBUTE \"High Threshold\"    = " + highThreshold);
 
-            int granularityperiod = 500;
+	    int granularityperiod = 500;
             gaugeMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -216,20 +216,20 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             //
             Thread.sleep(granularityperiod * 2);
 
-            // Check if notification was received
-            //
-            if (messageReceived) {
-                echo("\tOK: GaugeMonitor notification received");
-            } else {
-                echo("\tKO: GaugeMonitor notification missed or not emitted");
-                return 1;
-            }
+	    // Check if notification was received
+	    //
+	    if (messageReceived) {
+		echo("\tOK: GaugeMonitor notification received");
+	    } else {
+		echo("\tKO: GaugeMonitor notification missed or not emitted");
+		return 1;
+	    }
         } finally {
-            if (gaugeMonitor != null)
-                gaugeMonitor.stop();
+	    if (gaugeMonitor != null)
+		gaugeMonitor.stop();
         }
 
-        return 0;
+	return 0;
     }
 
     /**
@@ -248,7 +248,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo(">>> CREATE a new StringMonitor MBean");
             ObjectName stringMonitorName = new ObjectName(
                             domain + ":type=" + StringMonitor.class.getName());
-            stringMonitor = new StringMonitor();
+	    stringMonitor = new StringMonitor();
             server.registerMBean(stringMonitor, stringMonitorName);
 
             echo(">>> ADD a listener to the StringMonitor");
@@ -261,7 +261,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             echo(">>> CREATE a new ObservedObject MBean");
 
             ObjectName obsObjName =
-                ObjectName.getInstance(domain + ":type=ObservedObject");
+		ObjectName.getInstance(domain + ":type=ObservedObject");
             ObservedObject obsObj = new ObservedObject();
             server.registerMBean(obsObj, obsObjName);
 
@@ -282,7 +282,7 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             stringMonitor.setStringToCompare("do_match_now");
             echo("\tATTRIBUTE \"StringToCompare\"   = \"do_match_now\"");
 
-            int granularityperiod = 500;
+	    int granularityperiod = 500;
             stringMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -293,37 +293,37 @@ public class NonComparableAttributeValueTest implements NotificationListener {
             //
             Thread.sleep(granularityperiod * 2);
 
-            // Check if notification was received
-            //
-            if (messageReceived) {
-                echo("\tOK: StringMonitor notification received");
-            } else {
-                echo("\tKO: StringMonitor notification missed or not emitted");
-                return 1;
-            }
+	    // Check if notification was received
+	    //
+	    if (messageReceived) {
+		echo("\tOK: StringMonitor notification received");
+	    } else {
+		echo("\tKO: StringMonitor notification missed or not emitted");
+		return 1;
+	    }
         } finally {
-            if (stringMonitor != null)
-                stringMonitor.stop();
+	    if (stringMonitor != null)
+		stringMonitor.stop();
         }
 
-        return 0;
+	return 0;
     }
 
     /**
      * Test the monitor notifications.
      */
     public int monitorNotifications() throws Exception {
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         messageReceived = false;
         int error = counterMonitorNotification();
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         messageReceived = false;
         error += gaugeMonitorNotification();
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         messageReceived = false;
         error += stringMonitorNotification();
-        echo(">>> ----------------------------------------");
-        return error;
+	echo(">>> ----------------------------------------");
+	return error;
     }
 
     /*
@@ -341,13 +341,13 @@ public class NonComparableAttributeValueTest implements NotificationListener {
     public static void main (String args[]) throws Exception {
         NonComparableAttributeValueTest test = new NonComparableAttributeValueTest();
         int error = test.monitorNotifications();
-        if (error > 0) {
-            echo(">>> Unhappy Bye, Bye!");
-            throw new IllegalStateException("Test FAILED: Didn't get all " +
-                                            "the notifications that were " +
-                                            "expected by the test!");
-        } else {
-            echo(">>> Happy Bye, Bye!");
-        }
+	if (error > 0) {
+	    echo(">>> Unhappy Bye, Bye!");
+	    throw new IllegalStateException("Test FAILED: Didn't get all " +
+					    "the notifications that were " +
+					    "expected by the test!");
+	} else {
+	    echo(">>> Happy Bye, Bye!");
+	}
     }
 }

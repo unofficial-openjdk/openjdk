@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,13 +38,13 @@ class A implements Serializable {
 
 public class Read {
     public static void main(String[] args) throws Exception {
-        ObjectInputStream oin =
-            new ObjectInputStream(new FileInputStream("tmp.ser"));
-        oin.readObject();
-        try {
-            oin.readObject();
-            throw new Error("back reference read succeeded");
-        } catch (ClassNotFoundException ex) {
-        }
+	ObjectInputStream oin = 
+	    new ObjectInputStream(new FileInputStream("tmp.ser"));
+	oin.readObject();
+	try {
+	    oin.readObject();
+	    throw new Error("back reference read succeeded");
+	} catch (ClassNotFoundException ex) {
+	}
     }
 }

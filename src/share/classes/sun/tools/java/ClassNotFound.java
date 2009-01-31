@@ -44,7 +44,7 @@ class ClassNotFound extends Exception {
      * Create a ClassNotFound exception
      */
     public ClassNotFound(Identifier nm) {
-        super(nm.toString());
-        name = nm;
+	super(nm.toString());
+	name = nm;
     }
 }

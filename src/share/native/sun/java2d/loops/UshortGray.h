@@ -33,11 +33,11 @@
  * LoopMacros.h to manipulate a surface of type "UshortGray".
  */
 
-typedef jushort UshortGrayPixelType;
-typedef jushort UshortGrayDataType;
+typedef jushort	UshortGrayPixelType;
+typedef jushort	UshortGrayDataType;
 
-#define UshortGrayPixelStride           2
-#define UshortGrayBitsPerPixel         16
+#define UshortGrayPixelStride		2
+#define UshortGrayBitsPerPixel	       16
 
 #define DeclareUshortGrayLoadVars(PREFIX)
 #define DeclareUshortGrayStoreVars(PREFIX)
@@ -51,9 +51,9 @@ typedef jushort UshortGrayDataType;
 #define DeclareUshortGrayPixelData(PREFIX)
 #define ExtractUshortGrayPixelData(PIXEL, PREFIX)
 
-#define UshortGrayXparLutEntry                  -1
-#define UshortGrayIsXparLutEntry(pix)           (pix < 0)
-#define StoreUshortGrayNonXparFromArgb          StoreUshortGrayFrom1IntArgb
+#define UshortGrayXparLutEntry			-1
+#define UshortGrayIsXparLutEntry(pix)		(pix < 0)
+#define StoreUshortGrayNonXparFromArgb		StoreUshortGrayFrom1IntArgb
 
 
 /*
@@ -79,8 +79,8 @@ typedef jushort UshortGrayDataType;
 
 #define UshortGrayPixelFromArgb(pixel, rgb, pRasInfo) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
         (pixel) = ComposeUshortGrayFrom3ByteRgb(r, g, b); \
     } while (0)
 
@@ -93,14 +93,14 @@ typedef jushort UshortGrayDataType;
 
 #define LoadUshortGrayTo1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        int gray = (pRas)[x] >> 8; \
-        (rgb) = (((gray << 8) | gray) << 8) | gray; \
+	int gray = (pRas)[x] >> 8; \
+	(rgb) = (((gray << 8) | gray) << 8) | gray; \
     } while (0)
-
+    
 #define LoadUshortGrayTo1IntArgb(pRas, PREFIX, x, argb) \
     do { \
-        int gray = (pRas)[x] >> 8; \
-        (argb) = (((((0xff << 8) | gray) << 8) | gray) << 8) | gray; \
+	int gray = (pRas)[x] >> 8; \
+	(argb) = (((((0xff << 8) | gray) << 8) | gray) << 8) | gray; \
     } while (0)
 
 #define LoadUshortGrayTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
@@ -108,8 +108,8 @@ typedef jushort UshortGrayDataType;
 
 #define LoadUshortGrayTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-        LoadUshortGrayTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-        (a) = 0xff; \
+	LoadUshortGrayTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	(a) = 0xff; \
     } while (0)
 
 #define LoadUshortGrayTo1ByteGray(pRas, PREFIX, x, gray) \
@@ -120,9 +120,9 @@ typedef jushort UshortGrayDataType;
 
 #define StoreUshortGrayFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
-        StoreUshortGrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	StoreUshortGrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
     } while (0)
 
 #define StoreUshortGrayFrom1IntArgb(pRas, PREFIX, x, argb) \
@@ -151,7 +151,7 @@ typedef jushort UshortGrayDataType;
     COMP_PREFIX ## G = (pRas)[0]
 
 
-#define UshortGrayIsPremultiplied       0
+#define UshortGrayIsPremultiplied	0
 
 #define DeclareUshortGrayBlendFillVars(PREFIX) \
     jushort PREFIX;

@@ -36,7 +36,7 @@
  *
  * HPI function      Solaris   "malloc"    Win32
  * --------------------------------------------------------------------
- * sysMapMem()       mmap()     malloc()   VirtualAlloc(...MEM_RESERVE...)
+ * sysMapMem()	     mmap()     malloc()   VirtualAlloc(...MEM_RESERVE...)
  * sysUnMapMem()     munmap()   free()     VirtualFree(...MEM_RESERVE...)
  * sysCommitMem()    no-op      no-op      VirtualAlloc(...MEM_COMMIT...)
  * sysDecommitMem()  no-op      no-op      VirtualFree(...MEM_COMMIT...)
@@ -48,7 +48,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <stdio.h>      /* For perror() */
+#include <stdio.h>	/* For perror() */
 #include <string.h>
 #include <malloc.h>
 
@@ -72,9 +72,9 @@ static int devZeroFD;
 #ifndef MAP_FAILED
 #define MAP_FAILED ((caddr_t)-1)
 #endif
-static size_t memGrainSize;     /* A page for Linux */
+static size_t memGrainSize;	/* A page for Linux */
 #else
-static unsigned int memGrainSize;       /* A page for Solaris */
+static unsigned int memGrainSize;	/* A page for Solaris */
 #endif
 
 /*
@@ -102,35 +102,35 @@ InitializeMem(void)
     static int init = 0;
 
     if (init) {
-        return;         /* Subsequent calls are no-ops */
+	return;		/* Subsequent calls are no-ops */
     }
 
     /*
      * Set system-specific variables used by mem allocator
      */
     if (memGrainSize == 0) {
-        memGrainSize = (int) sysconf(_SC_PAGESIZE);
+	memGrainSize = (int) sysconf(_SC_PAGESIZE);
     }
 
 #ifdef __linux__
 #if !defined(USE_MALLOC) && !defined(MAP_ANONYMOUS)
     devZeroFD = open("/dev/zero", O_RDWR);
     if (devZeroFD == -1) {
-        perror("devzero");
-        exit(1);
+	perror("devzero");
+	exit(1);
     }
 #endif /* !USE_MALLOC MAP_ANONYMOUS*/
 #else
 #ifndef USE_MALLOC
     devZeroFD = open("/dev/zero", O_RDWR);
     if (devZeroFD == -1) {
-        perror("devzero");
-        exit(1);
+	perror("devzero");
+	exit(1);
     }
 #endif /* !USE_MALLOC */
 #endif
 
-    init = 1;           /* We're initialized now */
+    init = 1;		/* We're initialized now */
 }
 
 
@@ -160,7 +160,7 @@ mapChunk(long length)
                          -1, (off_t) 0);
 #else
     ret = (char *) mmap(0, length, PROT_ALL, MAP_NORESERVE|MAP_PRIVATE,
-                   devZeroFD, (off_t) 0);
+		   devZeroFD, (off_t) 0);
 #endif
     return (ret == MAP_FAILED ? 0 : ret);
 }
@@ -206,7 +206,7 @@ mapChunkNoreserve(char *addr, long length)
                          -1, (off_t) 0);
 #else
     ret = (char *) mmap(addr, length, PROT_ALL,
-                        MAP_FIXED|MAP_PRIVATE|MAP_NORESERVE,
+			MAP_FIXED|MAP_PRIVATE|MAP_NORESERVE,
                         devZeroFD, (off_t) 0);
 #endif
     return (ret == MAP_FAILED ? 0 : ret);
@@ -249,13 +249,13 @@ sysMapMem(size_t requestedSize, size_t *mappedSize)
      }
 #endif
 #else
-    mappedAddr = mapChunk(*mappedSize);           /* Returns 0 on failure */
+    mappedAddr = mapChunk(*mappedSize);		  /* Returns 0 on failure */
 #endif /* USE_MALLOC */
     if (mappedAddr) {
-        Log3(2, "sysMapMem: 0x%x bytes at 0x%x (request: 0x%x bytes)\n",
-             *mappedSize, mappedAddr, requestedSize);
+	Log3(2, "sysMapMem: 0x%x bytes at 0x%x (request: 0x%x bytes)\n",
+	     *mappedSize, mappedAddr, requestedSize);
     } else {
-        Log1(2, "sysMapMem failed: (request: 0x%x bytes)\n", requestedSize);
+	Log1(2, "sysMapMem failed: (request: 0x%x bytes)\n", requestedSize);
     }
     return mappedAddr;
 }
@@ -280,14 +280,14 @@ sysUnmapMem(void *requestedAddr, size_t requestedSize, size_t *unmappedSize)
     ret = unmapChunk(requestedAddr, *unmappedSize);
 #endif /* USE_MALLOC */
     if (ret) {
-        unmappedAddr = requestedAddr;
+	unmappedAddr = requestedAddr;
         Log4(2,
-             "sysUnmapMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-             *unmappedSize, unmappedAddr, requestedSize, requestedAddr);
+	     "sysUnmapMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
+	     *unmappedSize, unmappedAddr, requestedSize, requestedAddr);
     } else {
-        unmappedAddr = 0;
-        Log2(2, "sysUnmapMem failed: (request: 0x%x bytes at 0x%x)\n",
-             requestedSize, requestedAddr);
+	unmappedAddr = 0;
+	Log2(2, "sysUnmapMem failed: (request: 0x%x bytes at 0x%x)\n",
+	     requestedSize, requestedAddr);
     }
     return unmappedAddr;
 }
@@ -340,14 +340,14 @@ sysCommitMem(void *requestedAddr, size_t requestedSize, size_t *committedSize)
     ret = mapChunkReserve(committedAddr, *committedSize);
 #endif
     if (ret) {
-        committedAddr = ret;
-        Log4(2,
+	committedAddr = ret;
+	Log4(2,
     "sysCommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-             *committedSize, committedAddr, requestedSize, requestedAddr);
+	     *committedSize, committedAddr, requestedSize, requestedAddr);
     } else {
-        committedAddr = 0;
-        Log2(2, "sysCommitMem failed: (request: 0x%x bytes at 0x%x)\n",
-             requestedSize, requestedAddr);
+	committedAddr = 0;
+	Log2(2, "sysCommitMem failed: (request: 0x%x bytes at 0x%x)\n",
+	     requestedSize, requestedAddr);
     }
 
     return committedAddr;
@@ -359,7 +359,7 @@ sysCommitMem(void *requestedAddr, size_t requestedSize, size_t *committedSize)
  */
 void *
 sysDecommitMem(void *requestedAddr, size_t requestedSize,
-               size_t *decommittedSize)
+	       size_t *decommittedSize)
 {
     void *decommittedAddr;
     char *ret;
@@ -372,8 +372,8 @@ sysDecommitMem(void *requestedAddr, size_t requestedSize,
     ret = mapChunkNoreserve(decommittedAddr, *decommittedSize);
 #endif
     Log4(2,
-         "sysDecommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-         *decommittedSize, decommittedAddr, requestedSize, requestedAddr);
+	 "sysDecommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
+	 *decommittedSize, decommittedAddr, requestedSize, requestedAddr);
 
     return ret;
 }
@@ -411,7 +411,7 @@ sysFreeBlock(void *allocHead)
 void * sysMalloc(size_t s)
 {
     if (s == 0)
-        return malloc(1);
+	return malloc(1);
     return malloc(s);
 }
 
@@ -423,13 +423,13 @@ void * sysRealloc(void *p, size_t s)
 void sysFree(void *p)
 {
     if (p != NULL)
-        free(p);
+	free(p);
 }
 
 void * sysCalloc(size_t s1, size_t s2)
 {
     if (s1 == 0 || s2 == 0)
-        return calloc(1, 1);
+	return calloc(1, 1);
     return calloc(s1, s2);
 }
 

@@ -32,7 +32,7 @@ import java.net.UnknownHostException;
 /**
  * Represents an SNMP string.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -82,12 +82,12 @@ public class SnmpString extends SnmpValue {
      * @since 1.5
      */
     public SnmpString(InetAddress address) {
-        value = address.getAddress();
+	value = address.getAddress();
     }
 
     // PUBLIC METHODS
     //---------------
-
+    
     /**
      * Converts the string value to its <CODE> InetAddress </CODE> form.
      * @return an {@link InetAddress} defined by the string value.
@@ -96,20 +96,20 @@ public class SnmpString extends SnmpValue {
      * @since 1.5
      */
     public InetAddress inetAddressValue() throws UnknownHostException {
-        return InetAddress.getByAddress(value);
+	return InetAddress.getByAddress(value);
     }
-
+    
     /**
      * Converts the specified binary string into a character string.
      * @param bin The binary string value to convert.
      * @return The character string representation.
      */
     public static String BinToChar(String bin) {
-        char value[] = new char[bin.length()/8];
+        char value[] = new char[bin.length()/8]; 
         int binLength = value.length;
-        for (int i = 0; i < binLength; i++)
-            value[i] = (char)Integer.parseInt(bin.substring(8*i, 8*i+8), 2);
-        return new String(value);
+        for (int i = 0; i < binLength; i++) 
+            value[i] = (char)Integer.parseInt(bin.substring(8*i, 8*i+8), 2); 
+        return new String(value); 
     }
 
     /**
@@ -118,13 +118,13 @@ public class SnmpString extends SnmpValue {
      * @return The character string representation.
      */
     public static String HexToChar(String hex) {
-        char value[] = new char[hex.length()/2];
+        char value[] = new char[hex.length()/2]; 
         int hexLength = value.length;
-        for (int i = 0; i < hexLength; i++)
-            value[i] = (char)Integer.parseInt(hex.substring(2*i, 2*i+2), 16);
-        return new String(value);
+        for (int i = 0; i < hexLength; i++) 
+            value[i] = (char)Integer.parseInt(hex.substring(2*i, 2*i+2), 16); 
+        return new String(value); 
     }
-
+    
     /**
      * Returns the bytes array of this <CODE>SnmpString</CODE>.
      * @return The value.
@@ -132,7 +132,7 @@ public class SnmpString extends SnmpValue {
     public byte[] byteValue() {
         return value ;
     }
-
+  
     /**
      * Converts the string value to its array of <CODE>Bytes</CODE> form.
      * @return The array of <CODE>Bytes</CODE> representation of the value.
@@ -144,7 +144,7 @@ public class SnmpString extends SnmpValue {
         }
         return result ;
     }
-
+  
     /**
      * Converts the string value to its <CODE>String</CODE> form.
      * @return The <CODE>String</CODE> representation of the value.
@@ -164,7 +164,7 @@ public class SnmpString extends SnmpValue {
         }
         return new SnmpOid(ids) ;
     }
-
+ 
     /**
      * Extracts the string from an index OID and returns its
      * value converted as an <CODE>SnmpOid</CODE>.
@@ -218,7 +218,7 @@ public class SnmpString extends SnmpValue {
             throw new SnmpStatusException(SnmpStatusException.noSuchName) ;
         }
     }
-
+  
     /**
      * Appends an <CODE>SnmpOid</CODE> representing an <CODE>SnmpString</CODE> to another OID.
      * @param source An OID representing an <CODE>SnmpString</CODE> value.

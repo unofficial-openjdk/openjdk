@@ -39,9 +39,9 @@ public class PeerEvent extends InvocationEvent {
     }
 
     public PeerEvent(Object source, Runnable runnable, Object notifier,
-                      boolean catchExceptions, long flags) {
+		      boolean catchExceptions, long flags) {
         super(source, runnable, notifier, catchExceptions);
-        this.flags = flags;
+	this.flags = flags;
     }
 
     public long getFlags() {
@@ -49,6 +49,6 @@ public class PeerEvent extends InvocationEvent {
     }
 
     public PeerEvent coalesceEvents(PeerEvent newEvent) {
-        return null;
+	return null;
     }
 }

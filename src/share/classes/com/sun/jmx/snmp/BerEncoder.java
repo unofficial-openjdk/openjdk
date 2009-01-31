@@ -28,7 +28,7 @@ package com.sun.jmx.snmp;
 
 
 /**
- * The <CODE>BerEncoder</CODE> class is used for encoding data using BER.
+ * The <CODE>BerEncoder</CODE> class is used for encoding data using BER. 
  *
  * A <CODE>BerEncoder</CODE> needs to be set up with a byte buffer. The encoded
  * data are stored in this byte buffer.
@@ -37,7 +37,7 @@ package com.sun.jmx.snmp;
  * needs to encode its data in the reverse order.
  *
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  *
  * @since 1.5
@@ -47,7 +47,7 @@ public class BerEncoder {
 
   /**
   * Constructs a new encoder and attaches it to the specified byte string.
-  *
+  * 
   * @param b The byte string containing the encoded data.
   */
 
@@ -63,9 +63,9 @@ public class BerEncoder {
   *
   * The encoder does backward encoding : so the bytes buffer is
   * filled from end to start. The encoded data must be shift before
-  * the buffer can be used. This is the purpose of the <CODE>trim</CODE> method.
+  * the buffer can be used. This is the purpose of the <CODE>trim</CODE> method. 
   *
-  * After a call to the <CODE>trim</CODE> method, the encoder is reinitialized and <CODE>putXXX</CODE>
+  * After a call to the <CODE>trim</CODE> method, the encoder is reinitialized and <CODE>putXXX</CODE> 
   * overwrite any existing encoded data.
   *
   * @return The length of the encoded data.
@@ -77,15 +77,15 @@ public class BerEncoder {
     // for (int i = start ; i < bytes.length ; i++) {
     //  bytes[i-start] = bytes[i] ;
     // }
-    if (result > 0)
-        java.lang.System.arraycopy(bytes,start,bytes,0,result);
+    if (result > 0)  
+	java.lang.System.arraycopy(bytes,start,bytes,0,result);
 
     start = bytes.length ;
     stackTop = 0 ;
-
+    
     return result ;
   }
-
+  
   /**
   * Put an integer.
   *
@@ -99,7 +99,7 @@ public class BerEncoder {
 
   /**
   * Put an integer with the specified tag.
-  *
+  * 
   * @param v The integer to encode.
   * @param tag The tag to encode.
   */
@@ -124,7 +124,7 @@ public class BerEncoder {
 
   /**
   * Put an integer expressed as a long with the specified tag.
-  *
+  * 
   * @param v The long to encode
   * @param tag The tag to encode.
   */
@@ -138,18 +138,18 @@ public class BerEncoder {
 
   /**
   * Put an octet string.
-  *
+  * 
   * @param s The bytes to encode
   */
 
   public void putOctetString(byte[] s) {
     putOctetString(s, OctetStringTag) ;
   }
-
+  
 
   /**
   * Put an octet string with a specified tag.
-  *
+  * 
   * @param s The bytes to encode
   * @param tag The tag to encode.
   */
@@ -169,11 +169,11 @@ public class BerEncoder {
   public void putOid(long[] s) {
     putOid(s, OidTag) ;
   }
-
+  
 
   /**
   * Put an object identifier with a specified tag.
-  *
+  * 
   * @param s The integer to encode.
   * @param tag The tag to encode.
   */
@@ -195,7 +195,7 @@ public class BerEncoder {
 
   /**
   * Put a <CODE>NULL</CODE> value with a specified tag.
-  *
+  * 
   * @param tag The tag to encode.
   */
 
@@ -203,24 +203,24 @@ public class BerEncoder {
     putLength(0) ;
     putTag(tag) ;
   }
-
-
+  
+  
 
   /**
   * Put an <CODE>ANY</CODE> value. In fact, this method does not encode anything.
   * It simply copies the specified bytes into the encoding.
-  *
+  * 
   * @param s The encoding of the <CODE>ANY</CODE> value.
   */
 
   public void putAny(byte[] s) {
-        putAny(s, s.length) ;
+  	putAny(s, s.length) ;
   }
 
 
   /**
   * Put an <CODE>ANY</CODE> value. Only the first <CODE>byteCount</CODE> are considered.
-  *
+  * 
   * @param s The encoding of the <CODE>ANY</CODE> value.
   * @param byteCount The number of bytes of the encoding.
   */
@@ -252,8 +252,8 @@ public class BerEncoder {
   public void closeSequence() {
     closeSequence(SequenceTag) ;
   }
-
-
+  
+  
   /**
   * Close a sequence with the specified tag.
   */
@@ -303,7 +303,7 @@ public class BerEncoder {
 
   /**
   * Put a length and move the current position backward.
-  *
+  * 
   * @param length The length to encode.
   */
 
@@ -337,11 +337,11 @@ public class BerEncoder {
       bytes[--start] = (byte)0x84 ;
     }
   }
-
+  
 
   /**
   * Put an integer value and move the current position backward.
-  *
+  * 
   * @param v The integer to encode.
   */
 
@@ -367,11 +367,11 @@ public class BerEncoder {
     }
     putLength(end - start) ;
   }
-
-
+  
+  
   /**
   * Put an integer value expressed as a long.
-  *
+  * 
   * @param v The integer to encode.
   */
 
@@ -397,11 +397,11 @@ public class BerEncoder {
     }
     putLength(end - start) ;
   }
-
-
+  
+  
   /**
   * Put a byte string and move the current position backward.
-  *
+  * 
   * @param s The byte string to encode.
   */
 
@@ -419,7 +419,7 @@ public class BerEncoder {
 
   /**
   * Put an oid and move the current position backward.
-  *
+  * 
   * @param s The oid to encode.
   */
 
@@ -429,42 +429,42 @@ public class BerEncoder {
 
       // bugId 4641746: 0, 1, and 2 are legal values.
       if ((slength < 2) || (s[0] > 2) || (s[1] >= 40)) {
-          throw new IllegalArgumentException() ;
+	  throw new IllegalArgumentException() ;
       }
       for (int i = slength - 1 ; i >= 2 ; i--) {
-          long c = s[i] ;
-          if (c < 0) {
-              throw new IllegalArgumentException() ;
-          }
-          else if (c < 128) {
-              bytes[--start] = (byte)c ;
-          }
-          else {
-              bytes[--start] = (byte)(c & 127) ;
-              c = c >> 7 ;
-              while (c != 0) {
-                  bytes[--start] = (byte)(c | 128) ;
-                  c = c >> 7 ;
-              }
-          }
+	  long c = s[i] ;
+	  if (c < 0) {
+	      throw new IllegalArgumentException() ;
+	  }
+	  else if (c < 128) {
+	      bytes[--start] = (byte)c ;
+	  }
+	  else {
+	      bytes[--start] = (byte)(c & 127) ;
+	      c = c >> 7 ;
+	      while (c != 0) {
+		  bytes[--start] = (byte)(c | 128) ;
+		  c = c >> 7 ;
+	      }
+	  }
       }
       bytes[--start] = (byte)(s[0] * 40 + s[1]) ;
       putLength(end - start) ;
   }
-
+  
 
   //
   // This is the byte array containing the encoding.
   //
   protected final byte bytes[];
-
+  
   //
   // This is the index of the first byte of the encoding.
   // It is initialized to <CODE>bytes.length</CODE> and decrease each time
   // an value is put in the encoder.
   //
   protected int start = -1 ;
-
+  
   //
   // This is the stack where end of sequences are kept.
   // A value is computed and pushed in it each time the <CODE>openSequence</CODE> method
@@ -473,5 +473,7 @@ public class BerEncoder {
   //
   protected final int stackBuf[] = new int[200] ;
   protected int stackTop = 0 ;
-
+  
 }
+
+

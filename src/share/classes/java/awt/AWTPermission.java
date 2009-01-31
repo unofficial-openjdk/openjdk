@@ -111,8 +111,8 @@ import java.security.BasicPermission;
  * <tr>
  *   <td>readDisplayPixels</td>
  *   <td>Readback of pixels from the display screen</td>
- *   <td>Interfaces such as the java.awt.Composite interface or the
- * java.awt.Robot class allow arbitrary code to examine pixels on the
+ *   <td>Interfaces such as the java.awt.Composite interface or the 
+ * java.awt.Robot class allow arbitrary code to examine pixels on the 
  * display enable malicious code to snoop on the activities of the user.</td>
  * </tr>
  *
@@ -137,7 +137,7 @@ import java.security.BasicPermission;
  *   <td>setWindowAlwaysOnTop</td>
  *   <td>Setting always-on-top property of the window: {@link Window#setAlwaysOnTop}</td>
  *   <td>The malicious window might make itself look and behave like a real full desktop, so that
- * information entered by the unsuspecting user is captured and subsequently misused </td>
+ * information entered by the unsuspecting user is captured and subsequently misused </td> 
  * </tr>
  *
  * <tr>
@@ -176,13 +176,14 @@ import java.security.BasicPermission;
  * is being typed.</td>
  * </tr>
  * </table>
- *
+ * 
  * @see java.security.BasicPermission
  * @see java.security.Permission
  * @see java.security.Permissions
  * @see java.security.PermissionCollection
  * @see java.lang.SecurityManager
  *
+ * @version 	%I%, %G%
  *
  * @author Marianne Mueller
  * @author Roland Schemers
@@ -207,7 +208,7 @@ public final class AWTPermission extends BasicPermission {
 
     public AWTPermission(String name)
     {
-        super(name);
+	super(name);
     }
 
     /**
@@ -224,6 +225,6 @@ public final class AWTPermission extends BasicPermission {
 
     public AWTPermission(String name, String actions)
     {
-        super(name, actions);
+	super(name, actions);
     }
 }

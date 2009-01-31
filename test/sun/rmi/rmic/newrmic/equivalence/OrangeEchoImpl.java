@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,7 +40,7 @@ public class OrangeEchoImpl
     String name;
 
     public OrangeEchoImpl(String name) throws RemoteException {
-        this.name = name;
+	this.name = name;
     }
 
     /**
@@ -48,26 +48,26 @@ public class OrangeEchoImpl
      * with the same message data and a decremented recursion level.
      */
     public int[] recurse(Orange orange, int[] message, int level)
-        throws RemoteException
+	throws RemoteException
     {
-        String threadName = Thread.currentThread().getName();
+	String threadName = Thread.currentThread().getName();
 
-        logger.log(Level.FINEST,
-            threadName + ": " + toString() +
-            ".recurse(message[" + message.length + "], " +
-            level + "): BEGIN");
+	logger.log(Level.FINEST,
+	    threadName + ": " + toString() +
+	    ".recurse(message[" + message.length + "], " +
+	    level + "): BEGIN");
 
-        int[] response = orange.recurse(this, message, level - 1);
+	int[] response = orange.recurse(this, message, level - 1);
 
-        logger.log(Level.FINEST,
-            threadName + ": " + toString() +
-            ".recurse(message[" + message.length + "], " +
-            level + "): END");
+	logger.log(Level.FINEST,
+	    threadName + ": " + toString() +
+	    ".recurse(message[" + message.length + "], " +
+	    level + "): END");
 
-        return response;
+	return response;
     }
 
     public String toString() {
-        return name;
+	return name;
     }
 }

@@ -61,7 +61,7 @@ NewHandler::init() {
 
     // use new handler for operator new and malloc
     _set_new_mode(1);
-
+    
     // set the function which will be called when operator new or
     // malloc runs out of memory
     _set_new_handler((_PNH)NewHandler::handler);
@@ -137,9 +137,9 @@ void
 entry_point(void) {
     if (jvm != NULL) {
         JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        if (env != NULL) {
-            env->ExceptionClear();
-        }
+	if (env != NULL) {
+	    env->ExceptionClear();
+	}
     }
 }
 
@@ -149,9 +149,9 @@ void
 handle_bad_alloc(void) {
     if (jvm != NULL) {
         JNIEnv* env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        if (env != NULL) {
-            JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-        }
+	if (env != NULL) {
+	    JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+	}
     }
 }
 
@@ -166,19 +166,19 @@ safe_ExceptionOccurred(JNIEnv *env) throw (std::bad_alloc) {
         env->ExceptionClear(); // if we don't do this, FindClass will fail
 
         jclass outofmem = env->FindClass("java/lang/OutOfMemoryError");
-        DASSERT(outofmem != NULL);
-        jboolean isOutofmem = env->IsInstanceOf(xcp, outofmem);
+	DASSERT(outofmem != NULL);
+	jboolean isOutofmem = env->IsInstanceOf(xcp, outofmem);
 
-        env->DeleteLocalRef(outofmem);
+	env->DeleteLocalRef(outofmem);
 
-        if (isOutofmem) {
-            env->DeleteLocalRef(xcp);
-            throw std::bad_alloc();
-        } else {
-            // rethrow exception
-            env->Throw(xcp);
-            return xcp;
-        }
+	if (isOutofmem) {
+	    env->DeleteLocalRef(xcp);
+	    throw std::bad_alloc();
+	} else {
+	    // rethrow exception
+	    env->Throw(xcp);
+	    return xcp;
+	}
     }
 
     return NULL;
@@ -193,7 +193,7 @@ static void
 rand_alloc_fail(const char *file, int line) throw (std::bad_alloc)
 {
     if (alloc_lock == NULL) { // Not yet initialized
-        return;
+	return;
     }
 
     CriticalSection::Lock l(*alloc_lock);
@@ -207,9 +207,9 @@ rand_alloc_fail(const char *file, int line) throw (std::bad_alloc)
     if (rand() > (int)(RAND_MAX * .999)) { // .1% chance of alloc failure
         fprintf(stderr, "failing allocation at %s, %d\n", file, line);
         fprintf(logfile, "%s, %d\n", file, line);
-        fflush(logfile);
+	fflush(logfile);
 
-        VERIFY(malloc(INT_MAX) == 0); // should fail
+	VERIFY(malloc(INT_MAX) == 0); // should fail
 
         throw std::bad_alloc();
     }
@@ -230,7 +230,7 @@ void *safe_Calloc_outofmem(size_t num, size_t size, const char *file, int line)
 }
 
 void *safe_Realloc_outofmem(void *memblock, size_t size, const char *file,
-                            int line)
+			    int line)
     throw (std::bad_alloc)
 {
     rand_alloc_fail(file, line);

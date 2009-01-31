@@ -48,6 +48,7 @@ import java.beans.ConstructorProperties;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author David Kloba
  */
 public class LineBorder extends AbstractBorder
@@ -77,8 +78,8 @@ public class LineBorder extends AbstractBorder
         return grayLine;
     }
 
-    /**
-     * Creates a line border with the specified color and a
+    /** 
+     * Creates a line border with the specified color and a 
      * thickness = 1.
      * @param color the color for the border
      */
@@ -107,11 +108,11 @@ public class LineBorder extends AbstractBorder
     public LineBorder(Color color, int thickness, boolean roundedCorners)  {
         lineColor = color;
         this.thickness = thickness;
-        this.roundedCorners = roundedCorners;
+	this.roundedCorners = roundedCorners;
     }
 
     /**
-     * Paints the border for the specified component with the
+     * Paints the border for the specified component with the 
      * specified position and size.
      * @param c the component for which this border is being painted
      * @param g the paint graphics
@@ -150,12 +151,20 @@ public class LineBorder extends AbstractBorder
     }
 
     /**
-     * Reinitialize the insets parameter with this Border's current Insets.
+     * Returns the insets of the border.
+     * @param c the component for which this border insets value applies
+     */
+    public Insets getBorderInsets(Component c)       {
+        return new Insets(thickness, thickness, thickness, thickness);
+    }
+
+    /** 
+     * Reinitialize the insets parameter with this Border's current Insets. 
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      */
     public Insets getBorderInsets(Component c, Insets insets) {
-        insets.set(thickness, thickness, thickness, thickness);
+        insets.left = insets.top = insets.right = insets.bottom = thickness;
         return insets;
     }
 
@@ -184,8 +193,8 @@ public class LineBorder extends AbstractBorder
     /**
      * Returns whether or not the border is opaque.
      */
-    public boolean isBorderOpaque() {
-        return !roundedCorners;
+    public boolean isBorderOpaque() { 
+        return !roundedCorners; 
     }
 
 }

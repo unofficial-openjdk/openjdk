@@ -96,14 +96,14 @@ endif
 JAVADOCTITLE  = 'Java$(TRADEMARK) Platform, Standard Edition $(JDK_MINOR_VERSION)<br>API Specification'
 JAVADOCWINDOWTITLE  = 'Java Platform SE $(JDK_MINOR_VERSION)'
 JAVADOCHEADER = '<b>Java$(TRADEMARK)&nbsp;Platform<br>Standard&nbsp;Ed.&nbsp;$(JDK_MINOR_VERSION)</b>'
-JAVADOCBOTTOM = '<font size="-1"><a href="http://bugs.sun.com/services/bugreport/index.jsp">Submit a bug or feature</a><br>For further API reference and developer documentation, see <a href="{@docroot}/../../webnotes/devdocs-vs-specs.html">Java SE Developer Documentation</a>. That documentation contains more detailed, developer-targeted descriptions, with conceptual overviews, definitions of terms, workarounds, and working code examples. <p>Copyright $(THIS_YEAR) Sun Microsystems, Inc. All Rights Reserved. Use is subject to <a href="{@docroot}/../legal/license.html">license terms</a>. Also see the <a href="http://java.sun.com/docs/redist.html">documentation redistribution policy</a>.</font>'
+JAVADOCBOTTOM = '<font size="-1"><a href="http://bugs.sun.com/services/bugreport/index.jsp">Submit a bug or feature</a><br>For further API reference and developer documentation, see <a href="{@docroot}/../../webnotes/devdocs-vs-specs.html">Java SE Developer Documentation</a>. That documentation contains more detailed, developer-targeted descriptions, with conceptual overviews, definitions of terms, workarounds, and working code examples. <p>Copyright $(THIS_YEAR) Sun Microsystems, Inc. All rights reserved. Use is subject to <a href="{@docroot}/../legal/license.html">license terms</a>. Also see the <a href="http://java.sun.com/docs/redist.html">documentation redistribution policy</a>.</font>'
 JAVADOCOVERVIEW = $(SHARE_SRC)/classes/overview-core.html
 
 #
 # Early access top and bottom text (for snapshots, beta and rc)
 #
 JAVADOCTOP_EARLYACCESS = '<div style="background-color: \#EEEEEE"> <div style="padding: 6px; margin-top: 2px; margin-bottom: 6px; margin-left: 6px; margin-right: 6px; text-align: justify; font-size: 80%; font-family: Helvetica, Arial, sans-serif; font-weight: normal;"> Please note that this documentation is not final and is subject to change. </div> </div>'
-JAVADOCBOTTOM_EARLYACCESS = '<font size="-1"><a href="http://bugs.sun.com/services/bugreport/index.jsp">Submit a bug or feature</a> <p>Copyright $(THIS_YEAR) Sun Microsystems, Inc. All Rights Reserved. Use is subject to <a href="{@docroot}/../legal/license.html">license terms</a>.</font>'
+JAVADOCBOTTOM_EARLYACCESS = '<font size="-1"><a href="http://bugs.sun.com/services/bugreport/index.jsp">Submit a bug or feature</a> <p>Copyright $(THIS_YEAR) Sun Microsystems, Inc. All rights reserved. Use is subject to the terms of the <a href="http://www.gnu.org/copyleft/gpl.html">GNU General Public License</a>.</font>'
 JAVADOCTITLE_EARLYACCESS = $(subst Specification,Documentation,$(JAVADOCTITLE))
 
 #

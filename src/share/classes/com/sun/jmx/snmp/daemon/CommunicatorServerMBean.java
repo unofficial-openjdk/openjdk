@@ -29,9 +29,9 @@ package com.sun.jmx.snmp.daemon;
 
 
 /**
- * Defines generic behaviour for the server
+ * Defines generic behaviour for the server 
  * part of a connector or an adaptor. Most connectors or adaptors extend <CODE>CommunicatorServer</CODE>
- * and inherit this behaviour. Connectors or adaptors that do not fit into this model do not extend
+ * and inherit this behaviour. Connectors or adaptors that do not fit into this model do not extend 
  * <CODE>CommunicatorServer</CODE>.
  * <p>
  * An <CODE>CommunicatorServer</CODE> is an active object, it listens for client requests
@@ -39,11 +39,11 @@ package com.sun.jmx.snmp.daemon;
  * creates other threads to process multiple requests concurrently.
  * <p>
  * A <CODE>CommunicatorServer</CODE> object can be stopped by calling the <CODE>stop</CODE>
- * method. When it is stopped, the <CODE>CommunicatorServer</CODE> no longer listens to client
+ * method. When it is stopped, the <CODE>CommunicatorServer</CODE> no longer listens to client 
  * requests and no longer holds any thread or communication resources.
  * It can be started again by calling the <CODE>start</CODE> method.
  * <p>
- * A <CODE>CommunicatorServer</CODE> has a <CODE>state</CODE> property which reflects its
+ * A <CODE>CommunicatorServer</CODE> has a <CODE>state</CODE> property which reflects its 
  * activity.
  * <p>
  * <TABLE>
@@ -58,18 +58,18 @@ package com.sun.jmx.snmp.daemon;
  * <CODE>ONLINE</CODE>.
  * <p>
  * The <CODE>STOPPING</CODE> state marks the transition from <CODE>ONLINE</CODE> to
- * <CODE>OFFLINE</CODE>. This occurs when the <CODE>CommunicatorServer</CODE> is
+ * <CODE>OFFLINE</CODE>. This occurs when the <CODE>CommunicatorServer</CODE> is 
  * finishing or interrupting active requests.
  * <p>
- * A <CODE>CommunicatorServer</CODE> may serve several clients concurrently. The
- * number of concurrent clients can be limited using the property
+ * A <CODE>CommunicatorServer</CODE> may serve several clients concurrently. The 
+ * number of concurrent clients can be limited using the property 
  * <CODE>maxActiveClientCount</CODE>. The default value of this property is
  * defined by the subclasses.
  * <p>
  * When a <CODE>CommunicatorServer</CODE> is unregistered from the MBeanServer,
  * it is stopped automatically.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -78,15 +78,15 @@ public interface CommunicatorServerMBean {
     /**
      * Starts this <CODE>CommunicatorServer</CODE>.
      * <p>
-     * Has no effect if this <CODE>CommunicatorServer</CODE> is <CODE>ONLINE</CODE> or
+     * Has no effect if this <CODE>CommunicatorServer</CODE> is <CODE>ONLINE</CODE> or 
      * <CODE>STOPPING</CODE>.
      */
     public void start() ;
 
     /**
      * Stops this <CODE>CommunicatorServer</CODE>.
-     * <p>
-     * Has no effect if this <CODE>CommunicatorServer</CODE> is <CODE>OFFLINE</CODE> or
+     * <p> 
+     * Has no effect if this <CODE>CommunicatorServer</CODE> is <CODE>OFFLINE</CODE> or 
      * <CODE>STOPPING</CODE>.
      */
     public void stop() ;
@@ -99,28 +99,28 @@ public interface CommunicatorServerMBean {
     public boolean isActive() ;
 
     /**
-     * Waits untill either the State attribute of this MBean equals the specified <VAR>state</VAR> parameter,
+     * Waits untill either the State attribute of this MBean equals the specified <VAR>state</VAR> parameter, 
      * or the specified  <VAR>timeOut</VAR> has elapsed. The method <CODE>waitState</CODE> returns with a boolean value indicating whether
      * the specified <VAR>state</VAR> parameter equals the value of this MBean's State attribute at the time the method terminates.
      *
      * Two special cases for the <VAR>timeOut</VAR> parameter value are:
      * <UL><LI> if <VAR>timeOut</VAR> is negative then <CODE>waitState</CODE> returns immediately (i.e. does not wait at all),</LI>
-     * <LI> if <VAR>timeOut</VAR> equals zero then <CODE>waitState</CODE> waits untill the value of this MBean's State attribute
+     * <LI> if <VAR>timeOut</VAR> equals zero then <CODE>waitState</CODE> waits untill the value of this MBean's State attribute 
      * is the same as the <VAR>state</VAR> parameter (i.e. will wait indefinitely if this condition is never met).</LI></UL>
-     *
-     * @param state The value of this MBean's State attribute
+     * 
+     * @param state The value of this MBean's State attribute 
      *        to wait for. <VAR>state</VAR> can be one of:
      * <ul>
-     * <li><CODE>CommunicatorServer.OFFLINE</CODE>,</li>
+     * <li><CODE>CommunicatorServer.OFFLINE</CODE>,</li> 
      * <li><CODE>CommunicatorServer.ONLINE</CODE>,</li>
-     * <li><CODE>CommunicatorServer.STARTING</CODE>,</li>
+     * <li><CODE>CommunicatorServer.STARTING</CODE>,</li> 
      * <li><CODE>CommunicatorServer.STOPPING</CODE>.</li>
      * </ul>
      * @param timeOut The maximum time to wait for, in
-     *        milliseconds, if positive.
+     *        milliseconds, if positive. 
      * Infinite time out if 0, or no waiting at all if negative.
      *
-     * @return true if the value of this MBean's State attribute is the
+     * @return true if the value of this MBean's State attribute is the 
      *  same as the <VAR>state</VAR> parameter; false otherwise.
      */
     public boolean waitState(int state , long timeOut) ;

@@ -27,7 +27,7 @@
  *  @summary UnpreparedClasses verifies that all the classes in the
  *  loaded class list are prepared classes.
  *  @author Robert Field
- *
+ *  
  *  @library scaffold
  *  @run build JDIScaffold VMConnection
  *  @run compile -g InnerTarg.java

@@ -42,29 +42,29 @@ public class SerialDSAPubKey {
 
     public static void main(String[] args) throws Exception {
 
-        // This test generates sun.security.DSAPublicKey
-        // (not sun.security.DSAPublicKeyImpl, as Serial.java does)
+	// This test generates sun.security.DSAPublicKey
+	// (not sun.security.DSAPublicKeyImpl, as Serial.java does)
 
-        // generate DSA key pair
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA", SUN);
-        kpg.initialize(512);
-        KeyPair dsaKp = kpg.genKeyPair();
+	// generate DSA key pair
+	KeyPairGenerator kpg = KeyPairGenerator.getInstance("DSA", SUN);
+	kpg.initialize(512);
+	KeyPair dsaKp = kpg.genKeyPair();
 
-        // serialize DSA key pair
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(dsaKp);
-        oos.close();
+	// serialize DSA key pair
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	ObjectOutputStream oos = new ObjectOutputStream(baos);
+	oos.writeObject(dsaKp);
+	oos.close();
 
-        // deserialize DSA key pair
-        ObjectInputStream ois = new ObjectInputStream
-                        (new ByteArrayInputStream(baos.toByteArray()));
-        KeyPair dsaKp2 = (KeyPair)ois.readObject();
-        ois.close();
+	// deserialize DSA key pair
+	ObjectInputStream ois = new ObjectInputStream
+			(new ByteArrayInputStream(baos.toByteArray()));
+	KeyPair dsaKp2 = (KeyPair)ois.readObject();
+	ois.close();
 
-        if (!dsaKp2.getPublic().equals(dsaKp.getPublic()) ||
-            !dsaKp2.getPrivate().equals(dsaKp.getPrivate())) {
-            throw new SecurityException("DSA test failed");
-        }
+	if (!dsaKp2.getPublic().equals(dsaKp.getPublic()) ||
+	    !dsaKp2.getPrivate().equals(dsaKp.getPrivate())) {
+	    throw new SecurityException("DSA test failed");
+	}
     }
 }

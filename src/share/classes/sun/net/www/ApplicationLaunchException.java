@@ -29,11 +29,12 @@ package sun.net.www;
  * An exception thrown by the MimeLauncher when it is unable to launch
  * an external content viewer.
  *
+ * @version     %I%, %G%
  * @author      Sunita Mani
  */
 
 public class ApplicationLaunchException extends Exception {
     public ApplicationLaunchException(String reason) {
-        super(reason);
+	super(reason);
     }
 }

@@ -41,7 +41,7 @@ import sun.security.action.GetPropertyAction;
  * <ul>
  * <li>obtain a TerminalFactory by calling
  * one of the static factory methods in this class
- * ({@linkplain #getDefault} or {@linkplain #getInstance getInstance()}).
+ * ({@linkplain #getDefault} or {@linkplain #getInstance getInstance()}). 
  * <li>use this TerminalFactory object to access the CardTerminals by
  * calling the {@linkplain #terminals} method.
  * </ul>
@@ -54,9 +54,9 @@ import sun.security.action.GetPropertyAction;
  * <P>The following standard type names have been defined:
  * <dl>
  * <dt><code>PC/SC</code>
- * <dd>an implementation that calls into the PC/SC Smart Card stack
+ * <dd>an implementation that calls into the PC/SC Smart Card stack 
  * of the host platform.
- * Implementations do not require parameters and accept "null" as argument
+ * Implementations do not require parameters and accept "null" as argument 
  * in the getInstance() calls.
  * <dt><code>None</code>
  * <dd>an implementation that does not supply any CardTerminals. On platforms
@@ -74,112 +74,113 @@ import sun.security.action.GetPropertyAction;
  * encouraged to use a {@linkplain java.util.Properties} object as the
  * representation for String name-value pair based parameters whenever
  * possible. This allows applications to more easily interoperate with
- * multiple providers than if each provider used different provider
+ * multiple providers than if each provider used different provider 
  * specific class as parameters.
  *
  * <P>TerminalFactory utilizes an extensible service provider framework.
  * Service providers that wish to add a new implementation should see the
- * {@linkplain TerminalFactorySpi} class for more information.
+ * {@linkplain TerminalFactorySpi} class for more information. 
  *
  * @see CardTerminals
  * @see Provider
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
  */
 public final class TerminalFactory {
-
+    
     private final static String PROP_NAME =
-                        "javax.smartcardio.TerminalFactory.DefaultType";
-
+			"javax.smartcardio.TerminalFactory.DefaultType";
+    
     private final static String defaultType;
-
+    
     private final static TerminalFactory defaultFactory;
-
+    
     static {
-        // lookup up the user specified type, default to PC/SC
-        String type = AccessController.doPrivileged
-                            (new GetPropertyAction(PROP_NAME, "PC/SC")).trim();
-        TerminalFactory factory = null;
-        try {
-            factory = TerminalFactory.getInstance(type, null);
-        } catch (Exception e) {
-            // ignore
-        }
-        if (factory == null) {
-            // if that did not work, try the Sun PC/SC factory
-            try {
-                type = "PC/SC";
-                Provider sun = Security.getProvider("SunPCSC");
-                if (sun == null) {
-                    Class clazz = Class.forName("sun.security.smartcardio.SunPCSC");
-                    sun = (Provider)clazz.newInstance();
-                }
-                factory = TerminalFactory.getInstance(type, null, sun);
-            } catch (Exception e) {
-                // ignore
-            }
-        }
-        if (factory == null) {
-            type = "None";
-            factory = new TerminalFactory
-                        (NoneFactorySpi.INSTANCE, NoneProvider.INSTANCE, "None");
-        }
-        defaultType = type;
-        defaultFactory = factory;
+	// lookup up the user specified type, default to PC/SC
+	String type = AccessController.doPrivileged
+			    (new GetPropertyAction(PROP_NAME, "PC/SC")).trim();
+	TerminalFactory factory = null;
+	try {
+	    factory = TerminalFactory.getInstance(type, null);
+	} catch (Exception e) {
+	    // ignore
+	}
+	if (factory == null) {
+	    // if that did not work, try the Sun PC/SC factory
+	    try {
+		type = "PC/SC";
+		Provider sun = Security.getProvider("SunPCSC");
+		if (sun == null) {
+		    Class clazz = Class.forName("sun.security.smartcardio.SunPCSC");
+		    sun = (Provider)clazz.newInstance();
+		}
+		factory = TerminalFactory.getInstance(type, null, sun);
+	    } catch (Exception e) {
+		// ignore
+	    }
+	}
+	if (factory == null) {
+	    type = "None";
+	    factory = new TerminalFactory
+			(NoneFactorySpi.INSTANCE, NoneProvider.INSTANCE, "None");
+	}
+	defaultType = type;
+	defaultFactory = factory;
     }
 
     private static final class NoneProvider extends Provider {
-        final static Provider INSTANCE = new NoneProvider();
-        private NoneProvider() {
-            super("None", 1.0d, "none");
-        }
+	final static Provider INSTANCE = new NoneProvider();
+	private NoneProvider() {
+	    super("None", 1.0d, "none");
+	}
     }
 
     private static final class NoneFactorySpi extends TerminalFactorySpi {
-        final static TerminalFactorySpi INSTANCE = new NoneFactorySpi();
-        private NoneFactorySpi() {
-            // empty
-        }
-        protected CardTerminals engineTerminals() {
-            return NoneCardTerminals.INSTANCE;
-        }
+	final static TerminalFactorySpi INSTANCE = new NoneFactorySpi();
+	private NoneFactorySpi() {
+	    // empty
+	}
+	protected CardTerminals engineTerminals() {
+	    return NoneCardTerminals.INSTANCE;
+	}
     }
-
+    
     private static final class NoneCardTerminals extends CardTerminals {
-        final static CardTerminals INSTANCE = new NoneCardTerminals();
-        private NoneCardTerminals() {
-            // empty
-        }
-        public List<CardTerminal> list(State state) throws CardException {
-            if (state == null) {
-                throw new NullPointerException();
-            }
-            return Collections.emptyList();
-        }
-        public boolean waitForChange(long timeout) throws CardException {
-            throw new IllegalStateException("no terminals");
-        }
+	final static CardTerminals INSTANCE = new NoneCardTerminals();
+	private NoneCardTerminals() {
+	    // empty
+	}
+	public List<CardTerminal> list(State state) throws CardException {
+	    if (state == null) {
+		throw new NullPointerException();
+	    }
+	    return Collections.emptyList();
+	}
+	public boolean waitForChange(long timeout) throws CardException {
+	    throw new IllegalStateException("no terminals");
+	}
     }
 
     private final TerminalFactorySpi spi;
-
+    
     private final Provider provider;
-
+    
     private final String type;
 
     private TerminalFactory(TerminalFactorySpi spi, Provider provider, String type) {
-        this.spi = spi;
-        this.provider = provider;
-        this.type = type;
+	this.spi = spi;
+	this.provider = provider;
+	this.type = type;
     }
-
+    
     /**
      * Get the default TerminalFactory type.
      *
      * <p>It is determined as follows:
-     *
+     * 
      * when this class is initialized, the system property
      * <code>javax.smartcardio.TerminalFactory.DefaultType</code>
      * is examined. If it is set, a TerminalFactory of this type is
@@ -196,11 +197,11 @@ public final class TerminalFactory {
      * @return the default TerminalFactory type
      */
     public static String getDefaultType() {
-        return defaultType;
+	return defaultType;
     }
 
     /**
-     * Returns the default TerminalFactory instance. See
+     * Returns the default TerminalFactory instance. See 
      * {@linkplain #getDefaultType} for more information.
      *
      * <p>A default TerminalFactory is always available. However, depending
@@ -209,7 +210,7 @@ public final class TerminalFactory {
      * @return the default TerminalFactory
      */
     public static TerminalFactory getDefault() {
-        return defaultFactory;
+	return defaultFactory;
     }
 
     /**
@@ -225,8 +226,8 @@ public final class TerminalFactory {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@linkplain Security#getProviders() Security.getProviders()} method.
      *
-     * <p>The <code>TerminalFactory</code> is initialized with the
-     * specified parameters Object. The type of parameters
+     * <p>The <code>TerminalFactory</code> is initialized with the 
+     * specified parameters Object. The type of parameters 
      * needed may vary between different types of <code>TerminalFactory</code>s.
      *
      * @param type the type of the requested TerminalFactory
@@ -239,11 +240,11 @@ public final class TerminalFactory {
      *   TerminalFactorySpi of the specified type
      */
     public static TerminalFactory getInstance(String type, Object params)
-            throws NoSuchAlgorithmException {
-        Instance instance = GetInstance.getInstance("TerminalFactory",
-            TerminalFactorySpi.class, type, params);
-        return new TerminalFactory((TerminalFactorySpi)instance.impl,
-            instance.provider, type);
+	    throws NoSuchAlgorithmException {
+	Instance instance = GetInstance.getInstance("TerminalFactory",
+	    TerminalFactorySpi.class, type, params);
+	return new TerminalFactory((TerminalFactorySpi)instance.impl, 
+	    instance.provider, type);
     }
 
     /**
@@ -258,8 +259,8 @@ public final class TerminalFactory {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@linkplain Security#getProviders() Security.getProviders()} method.
      *
-     * <p>The <code>TerminalFactory</code> is initialized with the
-     * specified parameters Object. The type of parameters
+     * <p>The <code>TerminalFactory</code> is initialized with the 
+     * specified parameters Object. The type of parameters 
      * needed may vary between different types of <code>TerminalFactory</code>s.
      *
      * @param type the type of the requested TerminalFactory
@@ -278,11 +279,11 @@ public final class TerminalFactory {
      *   be found
      */
     public static TerminalFactory getInstance(String type, Object params,
-            String provider) throws NoSuchAlgorithmException, NoSuchProviderException {
-        Instance instance = GetInstance.getInstance("TerminalFactory",
-            TerminalFactorySpi.class, type, params, provider);
-        return new TerminalFactory((TerminalFactorySpi)instance.impl,
-            instance.provider, type);
+	    String provider) throws NoSuchAlgorithmException, NoSuchProviderException {
+	Instance instance = GetInstance.getInstance("TerminalFactory",
+	    TerminalFactorySpi.class, type, params, provider);
+	return new TerminalFactory((TerminalFactorySpi)instance.impl, 
+	    instance.provider, type);
     }
 
     /**
@@ -291,11 +292,11 @@ public final class TerminalFactory {
      *
      * <p> A new TerminalFactory object encapsulating the
      * TerminalFactorySpi implementation from the specified provider object
-     * is returned. Note that the specified provider object does not have to be
+     * is returned. Note that the specified provider object does not have to be 
      * registered in the provider list.
      *
-     * <p>The <code>TerminalFactory</code> is initialized with the
-     * specified parameters Object. The type of parameters
+     * <p>The <code>TerminalFactory</code> is initialized with the 
+     * specified parameters Object. The type of parameters 
      * needed may vary between different types of <code>TerminalFactory</code>s.
      *
      * @param type the type of the requested TerminalFactory
@@ -310,20 +311,20 @@ public final class TerminalFactory {
      *   of the specified type is not available from the specified Provider
      */
     public static TerminalFactory getInstance(String type, Object params,
-            Provider provider) throws NoSuchAlgorithmException {
-        Instance instance = GetInstance.getInstance("TerminalFactory",
-            TerminalFactorySpi.class, type, params, provider);
-        return new TerminalFactory((TerminalFactorySpi)instance.impl,
-            instance.provider, type);
+	    Provider provider) throws NoSuchAlgorithmException {
+	Instance instance = GetInstance.getInstance("TerminalFactory",
+	    TerminalFactorySpi.class, type, params, provider);
+	return new TerminalFactory((TerminalFactorySpi)instance.impl, 
+	    instance.provider, type);
     }
-
+    
     /**
      * Returns the provider of this TerminalFactory.
      *
      * @return the provider of this TerminalFactory.
      */
     public Provider getProvider() {
-        return provider;
+	return provider;
     }
 
     /**
@@ -333,7 +334,7 @@ public final class TerminalFactory {
      * @return the type of this TerminalFactory
      */
     public String getType() {
-        return type;
+	return type;
     }
 
     /**
@@ -346,7 +347,7 @@ public final class TerminalFactory {
      * supported by this factory.
      */
     public CardTerminals terminals() {
-        return spi.engineTerminals();
+	return spi.engineTerminals();
     }
 
     /**
@@ -355,8 +356,8 @@ public final class TerminalFactory {
      * @return a string representation of this TerminalFactory.
      */
     public String toString() {
-        return "TerminalFactory for type " + type + " from provider "
-            + provider.getName();
+	return "TerminalFactory for type " + type + " from provider "
+	    + provider.getName();
     }
-
+    
 }

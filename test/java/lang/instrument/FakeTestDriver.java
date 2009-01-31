@@ -30,9 +30,9 @@
  *  Cheesy class to run all of our test cases in a hard-coded fashion.
  *  Will be replaced by Sun's iterator that uses the source decorations to figure out what to do.
  */
-
-import  java.lang.reflect.*;
-
+ 
+import  java.lang.reflect.*; 
+ 
 public class FakeTestDriver  {
 
     private String[] fTestList = {
@@ -57,15 +57,15 @@ public class FakeTestDriver  {
     main(String[] args) {
         (new FakeTestDriver()).runSuppliedTests(args);
     }
-
+    
     private
     FakeTestDriver() {
     }
-
+    
     private void
     runAllTests() {
         runSuppliedTests(fTestList);
-    }
+    }    
 
     private void
     runSuppliedTests(String[] classnames) {
@@ -77,9 +77,9 @@ public class FakeTestDriver  {
     private void
     loadAndRunOneTest(String classname) {
         log("trying to run: " + classname);
-
+       
         Class testclass = loadOneTest(classname);
-
+        
         if ( testclass != null ) {
             boolean result = runOneTest(testclass);
             if ( result ) {
@@ -97,7 +97,7 @@ public class FakeTestDriver  {
     private Class
     loadOneTest(String classname) {
         Class result = null;
-
+        
         try {
             result = Class.forName(classname);
         }
@@ -107,15 +107,15 @@ public class FakeTestDriver  {
         }
         return result;
     }
-
+    
     private boolean
     runOneTest(Class testclass) {
         Method mainMethod = null;
-
+        
         try {
             String[]    forType = new String[0];
             mainMethod = testclass.getMethod("main",
-                                                    new Class[] {
+                                                    new Class[] { 
                                                         forType.getClass()
                                                      });
         }
@@ -124,7 +124,7 @@ public class FakeTestDriver  {
             t.printStackTrace();
             return false;
         }
-
+        
         try {
             mainMethod.invoke(null, new Object[] {new String[] {testclass.getName()}});
             return true;
@@ -134,7 +134,7 @@ public class FakeTestDriver  {
             return false;
         }
     }
-
+    
     private void
     log(String m) {
         System.out.println(m);

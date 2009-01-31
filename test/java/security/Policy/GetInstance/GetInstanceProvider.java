@@ -26,15 +26,15 @@ import java.security.*;
 public class GetInstanceProvider extends Provider {
 
     public GetInstanceProvider() {
-        super("GetInstanceProvider",
-                1,
-                "GetInstanceProvider: Policy.GetInstancePolicySpi");
+	super("GetInstanceProvider",
+		1,
+		"GetInstanceProvider: Policy.GetInstancePolicySpi");
 
-        AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
-                put("Policy.GetInstancePolicySpi", "GetInstancePolicySpi");
-                return null;
-            }
-        });
+	AccessController.doPrivileged(new PrivilegedAction() {
+	    public Object run() {
+		put("Policy.GetInstancePolicySpi", "GetInstancePolicySpi");
+		return null;
+	    }
+	});
     }
 }

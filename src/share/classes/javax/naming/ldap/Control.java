@@ -26,25 +26,26 @@
 package javax.naming.ldap;
 
 /**
-  * This interface represents an LDAPv3 control as defined in
+  * This interface represents an LDAPv3 control as defined in 
   * <A HREF="ftp://ftp.isi.edu/in-notes/rfc2251.txt">RFC 2251</A>.
   *<p>
   * The LDAPv3 protocol uses controls to send and receive additional data
-  * to affect the behavior of predefined operations.
+  * to affect the behavior of predefined operations. 
   * Controls can be sent along with any LDAP operation to the server.
   * These are referred to as <em>request controls</em>. For example, a
   * "sort" control can be sent with an LDAP search operation to
   * request that the results be returned in a particular order.
   * Solicited and unsolicited controls can also be returned with
   * responses from the server. Such controls are referred to as
-  * <em>response controls</em>. For example, an LDAP server might
+  * <em>response controls</em>. For example, an LDAP server might 
   * define a special control to return change notifications.
   *<p>
   * This interface is used to represent both request and response controls.
-  *
+  * 
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author Vincent Ryan
+  * @version %I% %E%
   *
   * @see ControlFactory
   * @since 1.3

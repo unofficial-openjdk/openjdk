@@ -58,6 +58,7 @@ import java.io.ByteArrayInputStream;
  *
  * @see DigestOutputStream
  *
+ * @version %I% %E%
  * @author Benjamin Renaud
  */
 
@@ -82,8 +83,8 @@ public class DigestInputStream extends FilterInputStream {
      * @param digest the message digest to associate with this stream.
      */
     public DigestInputStream(InputStream stream, MessageDigest digest) {
-        super(stream);
-        setMessageDigest(digest);
+	super(stream);
+	setMessageDigest(digest);
     }
 
     /**
@@ -93,7 +94,7 @@ public class DigestInputStream extends FilterInputStream {
      * @see #setMessageDigest(java.security.MessageDigest)
      */
     public MessageDigest getMessageDigest() {
-        return digest;
+	return digest;
     }
 
     /**
@@ -103,7 +104,7 @@ public class DigestInputStream extends FilterInputStream {
      * @see #getMessageDigest()
      */
     public void setMessageDigest(MessageDigest digest) {
-        this.digest = digest;
+	this.digest = digest;
     }
 
     /**
@@ -121,11 +122,11 @@ public class DigestInputStream extends FilterInputStream {
      * @see MessageDigest#update(byte)
      */
     public int read() throws IOException {
-        int ch = in.read();
-        if (on && ch != -1) {
-            digest.update((byte)ch);
-        }
-        return ch;
+	int ch = in.read();
+	if (on && ch != -1) {
+	    digest.update((byte)ch);
+	}
+	return ch;
     }
 
     /**
@@ -139,7 +140,7 @@ public class DigestInputStream extends FilterInputStream {
      * on the message digest associated with this stream, passing it
      * the data.
      *
-     * @param b the array into which the data is read.
+     * @param b	the array into which the data is read.
      *
      * @param off the starting offset into <code>b</code> of where the
      * data should be placed.
@@ -158,11 +159,11 @@ public class DigestInputStream extends FilterInputStream {
      * @see MessageDigest#update(byte[], int, int)
      */
     public int read(byte[] b, int off, int len) throws IOException {
-        int result = in.read(b, off, len);
-        if (on && result != -1) {
-            digest.update(b, off, result);
-        }
-        return result;
+	int result = in.read(b, off, len);
+	if (on && result != -1) {
+	    digest.update(b, off, result);
+	}
+	return result;
     }
 
     /**
@@ -175,7 +176,7 @@ public class DigestInputStream extends FilterInputStream {
      * it off.
      */
     public void on(boolean on) {
-        this.on = on;
+	this.on = on;
     }
 
     /**
@@ -183,6 +184,10 @@ public class DigestInputStream extends FilterInputStream {
      * its associated message digest object.
      */
      public String toString() {
-         return "[Digest Input Stream] " + digest.toString();
+	 return "[Digest Input Stream] " + digest.toString();
      }
 }
+
+
+
+

@@ -1,28 +1,28 @@
-/*
+/* 
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
 /**
  * @test
- * @bug 4052404 4052440 4084688 4092475 4101316 4105828 4107014 4107953 4110613
+ * @bug 4052404 4052440 4084688 4092475 4101316 4105828 4107014 4107953 4110613 
  * 4118587 4118595 4122371 4126371 4126880 4135316 4135752 4139504 4139940 4143951
  * 4147315 4147317 4147552 4335196 4778440 5010672 6475525 6544471
  * @summary test Locales
@@ -624,14 +624,14 @@ test commented out pending API-change approval
         Locale indonesianOld = new Locale("in", "", "");
         Locale indonesianNew = new Locale("id", "", "");
 
-        if (!hebrewNew.getLanguage().equals("iw"))
-            errln("Got back wrong language code for Hebrew: expected \"iw\", got \"" +
+        if (!hebrewNew.getLanguage().equals("iw")) 
+            errln("Got back wrong language code for Hebrew: expected \"iw\", got \"" + 
                             hebrewNew.getLanguage() + "\"");
-        if (!yiddishNew.getLanguage().equals("ji"))
-            errln("Got back wrong language code for Yiddish: expected \"ji\", got \"" +
+        if (!yiddishNew.getLanguage().equals("ji")) 
+            errln("Got back wrong language code for Yiddish: expected \"ji\", got \"" + 
                             yiddishNew.getLanguage() + "\"");
-        if (!indonesianNew.getLanguage().equals("in"))
-            errln("Got back wrong language code for Indonesian: expected \"in\", got \"" +
+        if (!indonesianNew.getLanguage().equals("in")) 
+            errln("Got back wrong language code for Indonesian: expected \"in\", got \"" + 
                             indonesianNew.getLanguage() + "\"");
     }
 
@@ -691,9 +691,9 @@ test commented out pending API-change approval
                                          "B\u00E9lgica" };
 
 
-        // save the default locale and set to the new default to en_US
-        Locale defaultLocale = Locale.getDefault();
-        Locale.setDefault(Locale.US);
+	// save the default locale and set to the new default to en_US
+	Locale defaultLocale = Locale.getDefault();
+	Locale.setDefault(Locale.US);
 
         for (int i = 0; i < localesToTest.length; i++) {
             String name = localesToTest[i].getDisplayName(Locale.US);
@@ -719,8 +719,8 @@ test commented out pending API-change approval
                             + "\", got \"" + name + "\"");
         }
 
-        // restore the default locale for other tests
-        Locale.setDefault(defaultLocale);
+	// restore the default locale for other tests
+	Locale.setDefault(defaultLocale);
     }
 
     /**
@@ -916,13 +916,13 @@ test commented out pending API-change approval
      * @bug 4147552 4778440
      */
     public void Test4147552() {
-        Locale[] locales = { new Locale("no", "NO"), new Locale("no", "NO", "B"),
-                             new Locale("no", "NO", "NY") };
+        Locale[] locales = { new Locale("no", "NO"), new Locale("no", "NO", "B"), 
+                             new Locale("no", "NO", "NY") }; 
         String[] englishDisplayNames = { "Norwegian (Norway)",
                      "Norwegian (Norway,Bokm\u00e5l)",
-                     "Norwegian (Norway,Nynorsk)" };
+                     "Norwegian (Norway,Nynorsk)" }; 
         String[] norwegianDisplayNames = { "norsk (Norge)",
-                     "norsk (Norge,bokm\u00e5l)", "norsk (Norge,nynorsk)" };
+                     "norsk (Norge,bokm\u00e5l)", "norsk (Norge,nynorsk)" }; 
 
         for (int i = 0; i < locales.length; i++) {
             Locale loc = locales[i];

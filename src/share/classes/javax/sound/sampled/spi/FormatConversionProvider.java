@@ -46,6 +46,7 @@ import javax.sound.sampled.AudioInputStream;
  * the stream returned by one of the <code>getAudioInputStream</code> methods.
  *
  * @author Kara Kytle
+ * @version %I%, %E%
  * @since 1.3
  */
 public abstract class FormatConversionProvider {
@@ -81,14 +82,14 @@ public abstract class FormatConversionProvider {
      */
     public boolean isSourceEncodingSupported(AudioFormat.Encoding sourceEncoding){
 
-        AudioFormat.Encoding sourceEncodings[] = getSourceEncodings();
+	AudioFormat.Encoding sourceEncodings[] = getSourceEncodings();
 
-        for(int i=0; i<sourceEncodings.length; i++) {
-            if( sourceEncoding.equals( sourceEncodings[i]) ) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i<sourceEncodings.length; i++) {
+	    if( sourceEncoding.equals( sourceEncodings[i]) ) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -100,14 +101,14 @@ public abstract class FormatConversionProvider {
      */
     public boolean isTargetEncodingSupported(AudioFormat.Encoding targetEncoding){
 
-        AudioFormat.Encoding targetEncodings[] = getTargetEncodings();
+	AudioFormat.Encoding targetEncodings[] = getTargetEncodings();
 
-        for(int i=0; i<targetEncodings.length; i++) {
-            if( targetEncoding.equals( targetEncodings[i]) ) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i<targetEncodings.length; i++) {
+	    if( targetEncoding.equals( targetEncodings[i]) ) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -130,14 +131,14 @@ public abstract class FormatConversionProvider {
      */
     public boolean isConversionSupported(AudioFormat.Encoding targetEncoding, AudioFormat sourceFormat){
 
-        AudioFormat.Encoding targetEncodings[] = getTargetEncodings(sourceFormat);
+	AudioFormat.Encoding targetEncodings[] = getTargetEncodings(sourceFormat);
 
-        for(int i=0; i<targetEncodings.length; i++) {
-            if( targetEncoding.equals( targetEncodings[i]) ) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i<targetEncodings.length; i++) {
+	    if( targetEncoding.equals( targetEncodings[i]) ) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -160,14 +161,14 @@ public abstract class FormatConversionProvider {
      */
     public boolean isConversionSupported(AudioFormat targetFormat, AudioFormat sourceFormat){
 
-        AudioFormat targetFormats[] = getTargetFormats( targetFormat.getEncoding(), sourceFormat );
+	AudioFormat targetFormats[] = getTargetFormats( targetFormat.getEncoding(), sourceFormat );
 
-        for(int i=0; i<targetFormats.length; i++) {
-            if( targetFormat.matches( targetFormats[i] ) ) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i<targetFormats.length; i++) {
+	    if( targetFormat.matches( targetFormats[i] ) ) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 

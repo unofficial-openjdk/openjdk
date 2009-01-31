@@ -67,6 +67,7 @@ sanity-base: pre-sanity \
     sane-odbcdir \
     sane-msdevtools_path \
     sane-dxsdk \
+    sane-mslu \
     sane-compiler \
     sane-cacerts \
     sane-ant_version \
@@ -99,6 +100,22 @@ ifdef OPENJDK
 sanity-all:: sane-freetype 
 endif
 
+# always check motif path on solaris
+ifeq ($(PLATFORM), solaris)
+sanity-all:: \
+    sane-motif
+endif
+
+# on Linux, only check motif path if we are not building it from scratch.
+#   (Which only happens with a full control build. The control makefiles are
+#    the files that set BUILD_MOTIF).
+#   We cannot sanity check something that has not been built yet. 
+ifeq ($(PLATFORM), linux)
+  ifneq ($(BUILD_MOTIF), true)
+sanity-all:: \
+    sane-motif
+  endif
+endif
 
 # Always check cups header paths on solaris & linux
 ifneq ($(PLATFORM), windows)

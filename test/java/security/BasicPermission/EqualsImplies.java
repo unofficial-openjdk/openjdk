@@ -47,12 +47,12 @@ public class EqualsImplies {
       Permission p2 = new B("foo");
 
       if (p1.implies(p2) || p2.implies(p1) || p1.equals(p2)) {
-          throw new Exception("Test failed");
+	  throw new Exception("Test failed");
       }
 
       // make sure permissions imply and equal themselves
       if (! (p1.implies(p1) && p1.equals(p1))) {
-          throw new Exception("Test failed");
+	  throw new Exception("Test failed");
       }
 
     }

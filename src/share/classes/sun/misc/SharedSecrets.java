@@ -84,7 +84,7 @@ public class SharedSecrets {
     public static JavaIOAccess getJavaIOAccess() {
         if (javaIOAccess == null) {
             unsafe.ensureClassInitialized(Console.class);
-        }
+	}
         return javaIOAccess;
     }
 
@@ -94,20 +94,20 @@ public class SharedSecrets {
 
     public static JavaIODeleteOnExitAccess getJavaIODeleteOnExitAccess() {
         if (javaIODeleteOnExitAccess == null) {
-            unsafe.ensureClassInitialized(File.class);
+	    unsafe.ensureClassInitialized(File.class);
         }
         return javaIODeleteOnExitAccess;
     }
 
     public static void setJavaIOFileDescriptorAccess(JavaIOFileDescriptorAccess jiofda) {
-        javaIOFileDescriptorAccess = jiofda;
+	javaIOFileDescriptorAccess = jiofda;
     }
 
     public static JavaIOFileDescriptorAccess getJavaIOFileDescriptorAccess() {
-        if (javaIOFileDescriptorAccess == null)
-            unsafe.ensureClassInitialized(FileDescriptor.class);
+	if (javaIOFileDescriptorAccess == null)
+	    unsafe.ensureClassInitialized(FileDescriptor.class);
 
-        return javaIOFileDescriptorAccess;
+	return javaIOFileDescriptorAccess;
     }
 
 }

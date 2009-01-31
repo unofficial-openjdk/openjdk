@@ -52,39 +52,39 @@ public class CommandLine {
      * the sequence '@@'.
      */
     public static String[] parse(String[] args)
-        throws IOException
+	throws IOException
     {
-        ArrayList newArgs = new ArrayList(args.length);
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
-            if (arg.length() > 1 && arg.charAt(0) == '@') {
-                arg = arg.substring(1);
-                if (arg.charAt(0) == '@') {
-                    newArgs.add(arg);
-                } else {
-                    loadCmdFile(arg, newArgs);
-                }
-            } else {
-                newArgs.add(arg);
-            }
-        }
-        return (String[])newArgs.toArray(new String[newArgs.size()]);
+	ArrayList newArgs = new ArrayList(args.length);
+	for (int i = 0; i < args.length; i++) {
+	    String arg = args[i];
+	    if (arg.length() > 1 && arg.charAt(0) == '@') {
+		arg = arg.substring(1);
+		if (arg.charAt(0) == '@') {
+		    newArgs.add(arg);
+		} else {
+		    loadCmdFile(arg, newArgs);
+		}
+	    } else {
+		newArgs.add(arg);
+	    }
+	}
+	return (String[])newArgs.toArray(new String[newArgs.size()]);
     }
 
     private static void loadCmdFile(String name, List args)
-        throws IOException
+	throws IOException
     {
-        Reader r = new BufferedReader(new FileReader(name));
-        StreamTokenizer st = new StreamTokenizer(r);
-        st.resetSyntax();
-        st.wordChars(' ', 255);
-        st.whitespaceChars(0, ' ');
-        st.commentChar('#');
-        st.quoteChar('"');
-        st.quoteChar('\'');
-        while (st.nextToken() != st.TT_EOF) {
-            args.add(st.sval);
-        }
-        r.close();
+	Reader r = new BufferedReader(new FileReader(name));
+	StreamTokenizer st = new StreamTokenizer(r);
+	st.resetSyntax();
+	st.wordChars(' ', 255);
+	st.whitespaceChars(0, ' ');
+	st.commentChar('#');
+	st.quoteChar('"');
+	st.quoteChar('\'');
+	while (st.nextToken() != st.TT_EOF) {
+	    args.add(st.sval);
+	}
+	r.close();
     }
 }

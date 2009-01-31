@@ -32,7 +32,7 @@ import java.security.BasicPermission;
 public class ExitVMEquals {
     public static void main(String[] args) throws Exception {
         BasicPermission bp1 = new BP("exitVM");
-        BasicPermission bp2 = new BP("exitVM.*");
+	BasicPermission bp2 = new BP("exitVM.*");
 
         StringBuffer sb = new StringBuffer();
 
@@ -76,3 +76,4 @@ class BP extends BasicPermission {
         super(name);
     }
 }
+

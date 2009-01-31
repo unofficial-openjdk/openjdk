@@ -177,9 +177,9 @@ public class ScheduledThreadPoolExecutor
          */
         private final long period;
 
-        /** The actual task to be re-enqueued by reExecutePeriodic */
-        RunnableScheduledFuture<V> outerTask = this;
-
+	/** The actual task to be re-enqueued by reExecutePeriodic */
+	RunnableScheduledFuture<V> outerTask = this;
+	
         /**
          * Creates a one-shot action with given nanoTime-based trigger time.
          */
@@ -303,8 +303,8 @@ public class ScheduledThreadPoolExecutor
                 !canRunInCurrentRunState(task.isPeriodic()) &&
                 remove(task))
                 task.cancel(false);
-            else
-                prestartCoreThread();
+	    else
+		prestartCoreThread();
         }
     }
 
@@ -319,8 +319,8 @@ public class ScheduledThreadPoolExecutor
             super.getQueue().add(task);
             if (!canRunInCurrentRunState(true) && remove(task))
                 task.cancel(false);
-            else
-                prestartCoreThread();
+	    else
+		prestartCoreThread();
         }
     }
 
@@ -350,7 +350,7 @@ public class ScheduledThreadPoolExecutor
                 }
             }
         }
-        tryTerminate();
+	tryTerminate();
     }
 
     /**
@@ -453,10 +453,6 @@ public class ScheduledThreadPoolExecutor
               new DelayedWorkQueue(), threadFactory, handler);
     }
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     */
     public ScheduledFuture<?> schedule(Runnable command,
                                        long delay,
                                        TimeUnit unit) {
@@ -470,10 +466,6 @@ public class ScheduledThreadPoolExecutor
         return t;
     }
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     */
     public <V> ScheduledFuture<V> schedule(Callable<V> callable,
                                            long delay,
                                            TimeUnit unit) {
@@ -487,11 +479,6 @@ public class ScheduledThreadPoolExecutor
         return t;
     }
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     * @throws IllegalArgumentException   {@inheritDoc}
-     */
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command,
                                                   long initialDelay,
                                                   long period,
@@ -502,22 +489,17 @@ public class ScheduledThreadPoolExecutor
             throw new IllegalArgumentException();
         if (initialDelay < 0) initialDelay = 0;
         long triggerTime = now() + unit.toNanos(initialDelay);
-        ScheduledFutureTask<Void> sft =
-            new ScheduledFutureTask<Void>(command,
-                                          null,
-                                          triggerTime,
-                                          unit.toNanos(period));
+	ScheduledFutureTask<Void> sft =
+	    new ScheduledFutureTask<Void>(command,
+					  null,
+					  triggerTime,
+					  unit.toNanos(period));
         RunnableScheduledFuture<Void> t = decorateTask(command, sft);
-        sft.outerTask = t;
+	sft.outerTask = t;
         delayedExecute(t);
         return t;
     }
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     * @throws IllegalArgumentException   {@inheritDoc}
-     */
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
                                                      long initialDelay,
                                                      long delay,
@@ -528,13 +510,13 @@ public class ScheduledThreadPoolExecutor
             throw new IllegalArgumentException();
         if (initialDelay < 0) initialDelay = 0;
         long triggerTime = now() + unit.toNanos(initialDelay);
-        ScheduledFutureTask<Void> sft =
-            new ScheduledFutureTask<Void>(command,
-                                          null,
-                                          triggerTime,
-                                          unit.toNanos(-delay));
+	ScheduledFutureTask<Void> sft =
+	    new ScheduledFutureTask<Void>(command,
+					  null,
+					  triggerTime,
+					  unit.toNanos(-delay));
         RunnableScheduledFuture<Void> t = decorateTask(command, sft);
-        sft.outerTask = t;
+	sft.outerTask = t;
         delayedExecute(t);
         return t;
     }
@@ -565,27 +547,15 @@ public class ScheduledThreadPoolExecutor
 
     // Override AbstractExecutorService methods
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     */
     public Future<?> submit(Runnable task) {
         return schedule(task, 0, TimeUnit.NANOSECONDS);
     }
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     */
     public <T> Future<T> submit(Runnable task, T result) {
         return schedule(Executors.callable(task, result),
                         0, TimeUnit.NANOSECONDS);
     }
 
-    /**
-     * @throws RejectedExecutionException {@inheritDoc}
-     * @throws NullPointerException       {@inheritDoc}
-     */
     public <T> Future<T> submit(Callable<T> task) {
         return schedule(task, 0, TimeUnit.NANOSECONDS);
     }
@@ -663,8 +633,6 @@ public class ScheduledThreadPoolExecutor
      * {@code ContinueExistingPeriodicTasksAfterShutdownPolicy} has
      * been set {@code true}, future executions of existing periodic
      * tasks will be cancelled.
-     *
-     * @throws SecurityException {@inheritDoc}
      */
     public void shutdown() {
         super.shutdown();
@@ -723,11 +691,11 @@ public class ScheduledThreadPoolExecutor
         }
 
         public boolean add(Runnable x) {
-            return dq.add((RunnableScheduledFuture)x);
-        }
+	    return dq.add((RunnableScheduledFuture)x);
+	}
         public boolean offer(Runnable x) {
-            return dq.offer((RunnableScheduledFuture)x);
-        }
+	    return dq.offer((RunnableScheduledFuture)x);
+	}
         public void put(Runnable x) {
             dq.put((RunnableScheduledFuture)x);
         }

@@ -33,14 +33,15 @@ import sun.awt.motif.MInputMethod;
  * keep track of existence of any TextArea or TextField and to manage
  * input method status area.
  *
- * @auther      JavaSoft International
+ * @version	%I% %G%
+ * @auther	JavaSoft International
  */
 interface MInputMethodControl {
 
     /**
      * Informs Frame or Dialog that a text component has been added to
      * the hierarchy.
-     * @param   textComponentPeer       peer of the text component
+     * @param	textComponentPeer	peer of the text component
      */
     void addTextComponent(MComponentPeer textComponentPeer);
 
@@ -52,7 +53,7 @@ interface MInputMethodControl {
     void removeTextComponent(MComponentPeer textComponentPeer);
 
     /**
-     * Returns a text component peer in the containment hierarchy
+     * Returns a text component peer in the containment hierarchy 
      * to obtain the Motif status area information
      */
     MComponentPeer getTextComponent();
@@ -61,13 +62,13 @@ interface MInputMethodControl {
      * Inform Frame or Dialog that an MInputMethod has been
      * constructed so that Frame and Dialog can invoke the method in
      * MInputMethod to reconfigure XICs.
-     * @param   inputMethod     an MInputMethod instance
+     * @param	inputMethod	an MInputMethod instance
      */
     void addInputMethod(MInputMethod inputMethod);
 
     /**
      * Inform Frame or Dialog that an X11InputMethod is being destroyed.
-     * @param   inputMethod     an X11InputMethod instance
+     * @param	inputMethod	an X11InputMethod instance
      */
     void removeInputMethod(MInputMethod inputMethod);
 }

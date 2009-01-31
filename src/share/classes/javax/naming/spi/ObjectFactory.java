@@ -38,13 +38,13 @@ import javax.naming.*;
   * if the print service binds printer names to References, the printer
   * Reference could be used to create a printer object, so that
   * the caller of lookup can directly operate on the printer object
-  * after the lookup.
+  * after the lookup.  
   * <p>An <tt>ObjectFactory</tt> is responsible
   * for creating objects of a specific type.  In the above example,
   * you may have a PrinterObjectFactory for creating Printer objects.
   *<p>
   * An object factory must implement the <tt>ObjectFactory</tt> interface.
-  * In addition, the factory class must be public and must have a
+  * In addition, the factory class must be public and must have a 
   * public constructor that accepts no parameters.
   *<p>
   * The <tt>getObjectInstance()</tt> method of an object factory may
@@ -59,6 +59,7 @@ import javax.naming.*;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   *
   * @see NamingManager#getObjectInstance
   * @see NamingManager#getURLContext
@@ -70,12 +71,12 @@ import javax.naming.*;
 public interface ObjectFactory {
 /**
  * Creates an object using the location or reference information
- * specified.
+ * specified.  
  * <p>
  * Special requirements of this object are supplied
  * using <code>environment</code>.
  * An example of such an environment property is user identity
- * information.
+ * information. 
  *<p>
  * <tt>NamingManager.getObjectInstance()</tt>
  * successively loads in object factories and invokes this method
@@ -88,7 +89,7 @@ public interface ObjectFactory {
  * it is the only intended factory and that no other object factories
  * should be tried.
  * If this factory cannot create an object using the arguments supplied,
- * it should return null.
+ * it should return null. 
  *<p>
  * A <em>URL context factory</em> is a special ObjectFactory that
  * creates contexts for resolving URLs or objects whose locations
@@ -151,15 +152,15 @@ public interface ObjectFactory {
  * guaranteed to be thread-safe.
  * <p>
  *
- * @param obj The possibly null object containing location or reference
- *              information that can be used in creating an object.
+ * @param obj The possibly null object containing location or reference 
+ * 		information that can be used in creating an object.
  * @param name The name of this object relative to <code>nameCtx</code>,
- *              or null if no name is specified.
+ *		or null if no name is specified.
  * @param nameCtx The context relative to which the <code>name</code>
- *              parameter is specified, or null if <code>name</code> is
- *              relative to the default initial context.
+ *		parameter is specified, or null if <code>name</code> is
+ *		relative to the default initial context.
  * @param environment The possibly null environment that is used in
- *              creating the object.
+ * 		creating the object.
  * @return The object created; null if an object cannot be created.
  * @exception Exception if this object factory encountered an exception
  * while attempting to create an object, and no other object factories are
@@ -169,6 +170,6 @@ public interface ObjectFactory {
  * @see NamingManager#getURLContext
  */
     public Object getObjectInstance(Object obj, Name name, Context nameCtx,
-                                    Hashtable<?,?> environment)
-        throws Exception;
+				    Hashtable<?,?> environment)
+	throws Exception;
 }

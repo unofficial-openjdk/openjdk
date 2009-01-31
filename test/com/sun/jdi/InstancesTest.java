@@ -39,12 +39,12 @@
  *  where <cmd line options> are the options to be used to
  *  launch the debuggee, with the classname prefixed with @@.
  *  For example, this would run java2d demo as the debuggee:
- *     runregress -no InstancesTest -classpath
+ *     runregress -no InstancesTest -classpath 
  *                                    $jdkDir/demo/jfc/Java2D/Java2Demo.jar \
  *                                    -client @@java2d.Java2Demo
  *
- * In this mode, the specified debuggee is launched in debug mode,
- * the debugger waits 20 secs, and then connects to the debuggee, suspends
+ * In this mode, the specified debuggee is launched in debug mode, 
+ * the debugger waits 20 secs, and then connects to the debuggee, suspends 
  * it, and 'debugs' it.
  *
  * If <cmd line options> is not specified, then the InstancesTarg class below
@@ -72,10 +72,10 @@ class InstancesTarg {
     static int TARG_COUNT = 1000;
     static InstancesTarg theInstancesTarg;
     static InstancesTarg[] allInstancesTargs;
-
+    
     // Each instance will point to the theInstancesTarg
     InstancesTarg oneInstancesTarg;
-
+    
     public static void bkpt() {
     }
 
@@ -84,7 +84,7 @@ class InstancesTarg {
         for (int ii = 0; ii < InstancesFiller.lotsAndLots.length; ii++) {
             InstancesFiller.lotsAndLots[ii] = new InstancesFiller(ii);
         }
-
+        
         theInstancesTarg = new InstancesTarg();
         allInstancesTargs = new InstancesTarg[InstancesTarg.TARG_COUNT];
         for (int ii = 0; ii < InstancesTarg.TARG_COUNT; ii++) {
@@ -92,7 +92,7 @@ class InstancesTarg {
             allInstancesTargs[ii].oneInstancesTarg = theInstancesTarg;
         }
         bkpt();
-
+        
         System.out.println("Goodbye from InstancesTarg!");
     }
 }
@@ -144,7 +144,7 @@ public class InstancesTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         int CUT_OFF = 1000;
@@ -152,7 +152,7 @@ public class InstancesTest extends TestScaffold {
         bpe = startToMain(targetName);
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
-
+                
         if (targetName.equals("InstancesTarg")) {
             resumeTo("InstancesTarg", "bkpt", "()V");
         } else {
@@ -162,7 +162,7 @@ public class InstancesTest extends TestScaffold {
                 System.err.println("Press <enter> to continue");
                 System.in.read();
                 System.err.println("running...");
-
+                
             } catch(Exception e) {
             }
             vm().suspend();
@@ -172,8 +172,8 @@ public class InstancesTest extends TestScaffold {
         long start = System.currentTimeMillis();
         List<ReferenceType> allClasses = vm().allClasses();
         long end = System.currentTimeMillis();
-        System.out.println( allClasses.size() +
-                            " classes from vm.allClasses() took " +
+        System.out.println( allClasses.size() + 
+                            " classes from vm.allClasses() took " + 
                             (end - start) + " ms");
 
         long[] counts;
@@ -196,9 +196,9 @@ public class InstancesTest extends TestScaffold {
             List<ReferenceType>someClasses = new ArrayList(2);
             counts = vm().instanceCounts(someClasses);
             if (counts.length != 0) {
-                failure("failure: instanceCounts with a zero length array fails: " +
+                failure("failure: instanceCounts with a zero length array fails: " + 
                         counts.length);
-            }
+            }                
         }
 
         // Test various values of maxInstances
@@ -228,22 +228,22 @@ public class InstancesTest extends TestScaffold {
         end = System.currentTimeMillis();
 
         if (counts.length == 0) {
-            System.out.println("failure: No instances found");
-            throw new Exception("InstancesTest: failed");
+            System.out.println("failure: No instances found"); 
+            throw new Exception("InstancesTest: failed");           
         }
 
         // Create a list of ReferenceTypes sorted by instance count
         int size = 0;
         List<ToSort> sorted = new ArrayList(allClasses.size());
         for (int ii = 0; ii < allClasses.size(); ii++) {
-            System.out.println(counts[ii] + "   " + allClasses.get(ii));
+            System.out.println(counts[ii] + "	" + allClasses.get(ii));
             size += counts[ii];
             ToSort tos = new ToSort(counts[ii], allClasses.get(ii));
             sorted.add(tos);
         }
 
-        System.out.println("instance counts for " + counts.length +
-                           " classes got " + size + " instances and took " +
+        System.out.println("instance counts for " + counts.length + 
+                           " classes got " + size + " instances and took " + 
                             (end - start) + " ms");
 
 
@@ -295,13 +295,13 @@ public class InstancesTest extends TestScaffold {
                 size += oneInstances.size();
                 count++;
                 System.out.println("Expected " + xxx.count + " instances, got " +
-                                   oneInstances.size() +
+                                   oneInstances.size() + 
                                    " instances for " + sorted.get(ii).rt +
                                    " in " + (end - start) + " ms");
 
                 if (xxx.rt.name().equals("InstancesFiller") &&
                     oneInstances.size() != InstancesFiller.FILLER_COUNT) {
-                    failure("failure: Expected " + InstancesFiller.FILLER_COUNT +
+                    failure("failure: Expected " + InstancesFiller.FILLER_COUNT + 
                             " instances of InstancesFiller");
                 }
                 if (xxx.rt.name().equals("InstancesTarg") &&
@@ -311,13 +311,13 @@ public class InstancesTest extends TestScaffold {
                 }
 
             }
-
+            
             end = System.currentTimeMillis();
-
+            
             System.out.println(size + " instances via making one vm.instances" +
-                               " call for each of " + count +
+                               " call for each of " + count + 
                                " classes took " + (end - start1) + " ms");
-            System.out.println("Per class = " +
+            System.out.println("Per class = " + 
                                (end - start) / allClasses.size() + " ms");
         }
 

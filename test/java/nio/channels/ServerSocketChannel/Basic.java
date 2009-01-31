@@ -37,108 +37,108 @@ public class Basic {
     static PrintStream log = System.err;
 
     static class Server
-        extends TestThread
+	extends TestThread
     {
-        ServerSocketChannel ssc;
-        boolean block;
+	ServerSocketChannel ssc;
+	boolean block;
 
-        Server(ServerSocketChannel ssc, boolean block) {
-            super("Server", Basic.log);
-            this.ssc = ssc;
-            this.block = block;
-        }
+	Server(ServerSocketChannel ssc, boolean block) {
+	    super("Server", Basic.log);
+	    this.ssc = ssc;
+	    this.block = block;
+	}
 
-        void go() throws Exception {
-            log.println("Server: Listening "
-                        + (block ? "(blocking)" : "(non-blocking)"));
-            if (!block)
-                ssc.configureBlocking(false);
-            log.println("  " + ssc);
-            //log.println("  " + ssc.options());
-            SocketChannel sc = null;
-            for (;;) {
-                sc = ssc.accept();
-                if (sc != null) {
-                    break;
-                }
-                log.println("Server: Sleeping...");
-                Thread.sleep(50);
-            }
-            log.println("Server: Accepted " + sc);
-            ByteBuffer bb = ByteBuffer.allocateDirect(100);
-            if (sc.read(bb) != 1)
-                throw new Exception("Read failed");
-            bb.flip();
-            byte b = bb.get();
-            log.println("Server: Read " + b + ", writing " + (b + 1));
-            bb.clear();
-            bb.put((byte)43);
-            bb.flip();
-            if (sc.write(bb) != 1)
-                throw new Exception("Write failed");
-            sc.close();
-            ssc.close();
-            log.println("Server: Finished");
-        }
+	void go() throws Exception {
+	    log.println("Server: Listening "
+			+ (block ? "(blocking)" : "(non-blocking)"));
+	    if (!block)
+		ssc.configureBlocking(false);
+	    log.println("  " + ssc);
+	    //log.println("  " + ssc.options());
+	    SocketChannel sc = null;
+	    for (;;) {
+		sc = ssc.accept();
+		if (sc != null) {
+		    break;
+		}
+		log.println("Server: Sleeping...");
+		Thread.sleep(50);
+	    }
+	    log.println("Server: Accepted " + sc);
+	    ByteBuffer bb = ByteBuffer.allocateDirect(100);
+	    if (sc.read(bb) != 1)
+		throw new Exception("Read failed");
+	    bb.flip();
+	    byte b = bb.get();
+	    log.println("Server: Read " + b + ", writing " + (b + 1));
+	    bb.clear();
+	    bb.put((byte)43);
+	    bb.flip();
+	    if (sc.write(bb) != 1)
+		throw new Exception("Write failed");
+	    sc.close();
+	    ssc.close();
+	    log.println("Server: Finished");
+	}
 
     }
 
     static class Client
-        extends TestThread
+	extends TestThread
     {
-        int port;
-        boolean dally;
+	int port;
+	boolean dally;
 
-        Client(int port, boolean block) {
-            super("Client", Basic.log);
-            this.port = port;
-            this.dally = !block;
-        }
+	Client(int port, boolean block) {
+	    super("Client", Basic.log);
+	    this.port = port;
+	    this.dally = !block;
+	}
 
-        public void go() throws Exception {
-            if (dally)
-                Thread.sleep(200);
-            InetSocketAddress isa
-                = new InetSocketAddress(InetAddress.getLocalHost(), port);
-            log.println("Client: Connecting to " + isa);
-            SocketChannel sc = SocketChannel.open();
-            sc.connect(isa);
-            log.println("Client: Connected");
-            ByteBuffer bb = ByteBuffer.allocateDirect(512);
-            bb.put((byte)42).flip();
-            log.println("Client: Writing " + bb.get(0));
-            if (sc.write(bb) != 1)
-                throw new Exception("Write failed");
-            bb.clear();
-            if (sc.read(bb) != 1)
-                throw new Exception("Read failed");
-            bb.flip();
-            if (bb.get() != 43)
-                throw new Exception("Read " + bb.get(bb.position() - 1));
-            log.println("Client: Read " + bb.get(0));
-            sc.close();
-            log.println("Client: Finished");
-        }
+	public void go() throws Exception {
+	    if (dally)
+		Thread.sleep(200);
+	    InetSocketAddress isa
+		= new InetSocketAddress(InetAddress.getLocalHost(), port);
+	    log.println("Client: Connecting to " + isa);
+	    SocketChannel sc = SocketChannel.open();
+	    sc.connect(isa);
+	    log.println("Client: Connected");
+	    ByteBuffer bb = ByteBuffer.allocateDirect(512);
+	    bb.put((byte)42).flip();
+	    log.println("Client: Writing " + bb.get(0));
+	    if (sc.write(bb) != 1)
+		throw new Exception("Write failed");
+	    bb.clear();
+	    if (sc.read(bb) != 1)
+		throw new Exception("Read failed");
+	    bb.flip();
+	    if (bb.get() != 43)
+		throw new Exception("Read " + bb.get(bb.position() - 1));
+	    log.println("Client: Read " + bb.get(0));
+	    sc.close();
+	    log.println("Client: Finished");
+	}
 
     }
 
     static void test(boolean block) throws Exception {
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        ssc.socket().setReuseAddress(true);
-        int port = TestUtil.bind(ssc);
-        Server server = new Server(ssc, block);
-        Client client = new Client(port, block);
-        server.start();
-        client.start();
-        if ((server.finish(2000) & client.finish(100)) == 0)
-            throw new Exception("Failure");
-        log.println();
+	ServerSocketChannel ssc = ServerSocketChannel.open();
+	ssc.socket().setReuseAddress(true);
+	int port = TestUtil.bind(ssc);
+	Server server = new Server(ssc, block);
+	Client client = new Client(port, block);
+	server.start();
+	client.start();
+	if ((server.finish(2000) & client.finish(100)) == 0)
+	    throw new Exception("Failure");
+	log.println();
     }
 
     public static void main(String[] args) throws Exception {
-        log.println();
-        test(true);
-        test(false);
+	log.println();
+	test(true);
+	test(false);
     }
 
 }

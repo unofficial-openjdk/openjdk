@@ -40,6 +40,7 @@ import sun.awt.AppContext;
  * releases and even patch releases. You should not rely on this class even
  * existing.
  *
+ * @version %I% %G%
  * @author Scott Violet
  */
 public class DefaultLookup {

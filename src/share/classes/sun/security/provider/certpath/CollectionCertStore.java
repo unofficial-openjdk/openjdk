@@ -46,8 +46,8 @@ import java.security.cert.CertStoreSpi;
  * <p>
  * Before calling the {@link #engineGetCertificates engineGetCertificates} or
  * {@link #engineGetCRLs engineGetCRLs} methods, the
- * {@link #CollectionCertStore(CertStoreParameters)
- * CollectionCertStore(CertStoreParameters)} constructor is called to
+ * {@link #CollectionCertStore(CertStoreParameters) 
+ * CollectionCertStore(CertStoreParameters)} constructor is called to 
  * create the <code>CertStore</code> and establish the
  * <code>Collection</code> from which <code>Certificate</code>s and
  * <code>CRL</code>s will be retrieved. If the specified
@@ -64,7 +64,7 @@ import java.security.cert.CertStoreSpi;
  * object (or more than one) with no ill effects.
  * <p>
  * This is achieved by requiring that the <code>Collection</code> passed to
- * the {@link #CollectionCertStore(CertStoreParameters)
+ * the {@link #CollectionCertStore(CertStoreParameters) 
  * CollectionCertStore(CertStoreParameters)} constructor (via the
  * <code>CollectionCertStoreParameters</code> object) must have fail-fast
  * iterators. Simultaneous modifications to the <code>Collection</code> can thus be
@@ -74,8 +74,9 @@ import java.security.cert.CertStoreSpi;
  *
  * @see java.security.cert.CertStore
  *
- * @since       1.4
- * @author      Steve Hanna
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Steve Hanna
  */
 public class CollectionCertStore extends CertStoreSpi {
 
@@ -92,13 +93,13 @@ public class CollectionCertStore extends CertStoreSpi {
      * @exception InvalidAlgorithmParameterException if params is not an
      *   instance of <code>CollectionCertStoreParameters</code>
      */
-    public CollectionCertStore(CertStoreParameters params)
-        throws InvalidAlgorithmParameterException
+    public CollectionCertStore(CertStoreParameters params) 
+        throws InvalidAlgorithmParameterException 
     {
-        super(params);
+	super(params);
         if (!(params instanceof CollectionCertStoreParameters))
             throw new InvalidAlgorithmParameterException(
-                "parameters must be CollectionCertStoreParameters");
+	        "parameters must be CollectionCertStoreParameters");
         coll = ((CollectionCertStoreParameters) params).getCollection();
     }
 
@@ -112,39 +113,39 @@ public class CollectionCertStore extends CertStoreSpi {
      *  to return all <code>Certificate</code>s.
      * @return a <code>Collection</code> of <code>Certificate</code>s that
      *         match the specified selector
-     * @throws CertStoreException if an exception occurs
+     * @throws CertStoreException if an exception occurs 
      */
     public Collection<Certificate> engineGetCertificates
-            (CertSelector selector) throws CertStoreException {
+	    (CertSelector selector) throws CertStoreException {
         if (coll == null) {
             throw new CertStoreException("Collection is null");
-        }
+	}
         // Tolerate a few ConcurrentModificationExceptions
         for (int c = 0; c < 10; c++) {
             try {
-                HashSet<Certificate> result = new HashSet<Certificate>();
-                Iterator<?> i = coll.iterator();
-                if (selector != null) {
-                    while (i.hasNext()) {
-                        Object o = i.next();
-                        if ((o instanceof Certificate) &&
-                            selector.match((Certificate) o))
-                            result.add((Certificate)o);
-                    }
-                } else {
-                    while (i.hasNext()) {
-                        Object o = i.next();
-                        if (o instanceof Certificate)
-                            result.add((Certificate)o);
-                    }
-                }
-                return(result);
+	        HashSet<Certificate> result = new HashSet<Certificate>();
+	        Iterator<?> i = coll.iterator();
+	        if (selector != null) {
+	            while (i.hasNext()) {
+	                Object o = i.next();
+	                if ((o instanceof Certificate) && 
+			    selector.match((Certificate) o))
+	                    result.add((Certificate)o);
+	            }
+	        } else {
+	            while (i.hasNext()) {
+	                Object o = i.next();
+	                if (o instanceof Certificate)
+	                    result.add((Certificate)o);
+	            }
+	        }
+	        return(result);
             } catch (ConcurrentModificationException e) { }
         }
         throw new ConcurrentModificationException("Too many "
-            + "ConcurrentModificationExceptions");
+  	    + "ConcurrentModificationExceptions");
     }
-
+   
     /**
      * Returns a <code>Collection</code> of <code>CRL</code>s that
      * match the specified selector. If no <code>CRL</code>s
@@ -155,10 +156,10 @@ public class CollectionCertStore extends CertStoreSpi {
      *  to return all <code>CRL</code>s.
      * @return a <code>Collection</code> of <code>CRL</code>s that
      *         match the specified selector
-     * @throws CertStoreException if an exception occurs
+     * @throws CertStoreException if an exception occurs 
      */
     public Collection<CRL> engineGetCRLs(CRLSelector selector)
-        throws CertStoreException
+        throws CertStoreException 
     {
         if (coll == null)
             throw new CertStoreException("Collection is null");
@@ -166,25 +167,25 @@ public class CollectionCertStore extends CertStoreSpi {
         // Tolerate a few ConcurrentModificationExceptions
         for (int c = 0; c < 10; c++) {
             try {
-                HashSet<CRL> result = new HashSet<CRL>();
-                Iterator<?> i = coll.iterator();
-                if (selector != null) {
-                    while (i.hasNext()) {
-                        Object o = i.next();
-                        if ((o instanceof CRL) && selector.match((CRL) o))
-                            result.add((CRL)o);
-                    }
-                } else {
-                    while (i.hasNext()) {
-                        Object o = i.next();
-                        if (o instanceof CRL)
-                            result.add((CRL)o);
-                    }
-                }
-                return(result);
+	        HashSet<CRL> result = new HashSet<CRL>();
+	        Iterator<?> i = coll.iterator();
+	        if (selector != null) {
+	            while (i.hasNext()) {
+	                Object o = i.next();
+	                if ((o instanceof CRL) && selector.match((CRL) o))
+	                    result.add((CRL)o);
+	            }
+	        } else {
+	            while (i.hasNext()) {
+	                Object o = i.next();
+	                if (o instanceof CRL)
+	                    result.add((CRL)o);
+	            }
+	        }
+	        return(result);
             } catch (ConcurrentModificationException e) { }
         }
         throw new ConcurrentModificationException("Too many "
-            + "ConcurrentModificationExceptions");
+  	    + "ConcurrentModificationExceptions");
     }
 }

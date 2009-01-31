@@ -145,7 +145,7 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      * @see #negotiate
      */
     public void setEnabledCipherSuites(String[] suites) {
-        this.suites = suites;
+	this.suites = suites;
     }
 
     /**
@@ -160,7 +160,7 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      * @see #negotiate
      */
     public void setHostnameVerifier(HostnameVerifier verifier) {
-        this.verifier = verifier;
+	this.verifier = verifier;
     }
 
     /**
@@ -176,7 +176,7 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      */
     public SSLSession negotiate() throws IOException {
 
-        return negotiate(null);
+	return negotiate(null);
     }
 
     /**
@@ -211,50 +211,50 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      */
     public SSLSession negotiate(SSLSocketFactory factory) throws IOException {
 
-        if (isClosed && sslSocket != null) {
-            throw new IOException("TLS connection is closed.");
-        }
+	if (isClosed && sslSocket != null) {
+	    throw new IOException("TLS connection is closed.");
+	}
 
-        if (factory == null) {
-            factory = getDefaultFactory();
-        }
+	if (factory == null) {
+	    factory = getDefaultFactory();
+	}
 
-        if (debug) {
-            System.out.println("StartTLS: About to start handshake");
-        }
+	if (debug) {
+	    System.out.println("StartTLS: About to start handshake");
+	}
 
-        SSLSession sslSession = startHandshake(factory).getSession();
+	SSLSession sslSession = startHandshake(factory).getSession();
 
-        if (debug) {
-            System.out.println("StartTLS: Completed handshake");
-        }
+	if (debug) {
+	    System.out.println("StartTLS: Completed handshake");
+	}
 
-        SSLPeerUnverifiedException verifExcep = null;
-        try {
-            if (verify(hostname, sslSession)) {
-                isClosed = false;
-                return sslSession;
-            }
-        } catch (SSLPeerUnverifiedException e) {
-            // Save to return the cause
-            verifExcep = e;
-        }
-        if ((verifier != null) &&
-                verifier.verify(hostname, sslSession)) {
-            isClosed = false;
-            return sslSession;
-        }
+	SSLPeerUnverifiedException verifExcep = null;
+	try {
+	    if (verify(hostname, sslSession)) {
+		isClosed = false;
+		return sslSession;
+	    }
+	} catch (SSLPeerUnverifiedException e) {
+	    // Save to return the cause
+	    verifExcep = e;
+	}
+	if ((verifier != null) &&
+		verifier.verify(hostname, sslSession)) {
+	    isClosed = false;
+	    return sslSession;
+	}
 
-        // Verification failed
-        close();
-        sslSession.invalidate();
-        if (verifExcep == null) {
-            verifExcep = new SSLPeerUnverifiedException(
-                        "hostname of the server '" + hostname +
-                        "' does not match the hostname in the " +
-                        "server's certificate.");
-        }
-        throw verifExcep;
+	// Verification failed
+	close();
+	sslSession.invalidate();
+	if (verifExcep == null) {
+	    verifExcep = new SSLPeerUnverifiedException(
+			"hostname of the server '" + hostname +
+			"' does not match the hostname in the " +
+			"server's certificate.");
+	}
+	throw verifExcep;
     }
 
     /**
@@ -266,25 +266,25 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      */
     public void close() throws IOException {
 
-        if (isClosed) {
-            return;
-        }
+	if (isClosed) {
+	    return;
+	}
 
-        if (debug) {
-            System.out.println("StartTLS: replacing SSL " +
-                                "streams with originals");
-        }
+	if (debug) {
+	    System.out.println("StartTLS: replacing SSL " +
+				"streams with originals");
+	}
 
-        // Replace SSL streams with the original streams
-        ldapConnection.replaceStreams(
-                        originalInputStream, originalOutputStream);
+	// Replace SSL streams with the original streams
+	ldapConnection.replaceStreams(
+			originalInputStream, originalOutputStream);
 
-        if (debug) {
-            System.out.println("StartTLS: closing SSL Socket");
-        }
-        sslSocket.close();
+	if (debug) {
+	    System.out.println("StartTLS: closing SSL Socket");
+	}
+	sslSocket.close();
 
-        isClosed = true;
+	isClosed = true;
     }
 
     /**
@@ -293,11 +293,11 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      *
      * @param ldapConnection The non-null connection to use.
      * @param hostname The server's hostname. If null, the hostname used to
-     * open the connection will be used instead.
+     * open the connection will be used instead. 
      */
     public void setConnection(Connection ldapConnection, String hostname) {
-        this.ldapConnection = ldapConnection;
-        this.hostname = (hostname != null) ? hostname : ldapConnection.host;
+	this.ldapConnection = ldapConnection;
+	this.hostname = (hostname != null) ? hostname : ldapConnection.host;
         originalInputStream = ldapConnection.inStream;
         originalOutputStream = ldapConnection.outStream;
     }
@@ -310,12 +310,12 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      */
     private SSLSocketFactory getDefaultFactory() throws IOException {
 
-        if (defaultFactory != null) {
-            return defaultFactory;
-        }
+	if (defaultFactory != null) {
+	    return defaultFactory;
+	}
 
-        return (defaultFactory =
-            (SSLSocketFactory) SSLSocketFactory.getDefault());
+	return (defaultFactory =
+	    (SSLSocketFactory) SSLSocketFactory.getDefault());
     }
 
     /*
@@ -327,68 +327,68 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      * TLS handshake.
      */
     private SSLSocket startHandshake(SSLSocketFactory factory)
-        throws IOException {
+	throws IOException {
 
-        if (ldapConnection == null) {
-            throw new IllegalStateException("LDAP connection has not been set."
-                + " TLS requires an existing LDAP connection.");
-        }
+	if (ldapConnection == null) {
+	    throw new IllegalStateException("LDAP connection has not been set."
+		+ " TLS requires an existing LDAP connection.");
+	}
 
-        if (factory != currentFactory) {
-            // Create SSL socket layered over the existing connection
-            sslSocket = (SSLSocket) factory.createSocket(ldapConnection.sock,
-                ldapConnection.host, ldapConnection.port, false);
-            currentFactory = factory;
+	if (factory != currentFactory) {
+	    // Create SSL socket layered over the existing connection
+	    sslSocket = (SSLSocket) factory.createSocket(ldapConnection.sock,
+		ldapConnection.host, ldapConnection.port, false);
+	    currentFactory = factory;
 
-            if (debug) {
-                System.out.println("StartTLS: Created socket : " + sslSocket);
-            }
-        }
+	    if (debug) {
+		System.out.println("StartTLS: Created socket : " + sslSocket);
+	    }
+	}
 
-        if (suites != null) {
-            sslSocket.setEnabledCipherSuites(suites);
-            if (debug) {
-                System.out.println("StartTLS: Enabled cipher suites");
-            }
-        }
+	if (suites != null) {
+	    sslSocket.setEnabledCipherSuites(suites);
+	    if (debug) {
+		System.out.println("StartTLS: Enabled cipher suites");
+	    }
+	}
 
-        // Connection must be quite for handshake to proceed
+	// Connection must be quite for handshake to proceed
 
-        try {
-            if (debug) {
-                System.out.println(
-                        "StartTLS: Calling sslSocket.startHandshake");
-            }
-            sslSocket.startHandshake();
-            if (debug) {
-                System.out.println(
-                        "StartTLS: + Finished sslSocket.startHandshake");
-            }
+	try {
+	    if (debug) {
+		System.out.println(
+			"StartTLS: Calling sslSocket.startHandshake");
+	    }
+	    sslSocket.startHandshake();
+	    if (debug) {
+		System.out.println(
+			"StartTLS: + Finished sslSocket.startHandshake");
+	    }
 
-            // Replace original streams with the new SSL streams
-            ldapConnection.replaceStreams(sslSocket.getInputStream(),
-                sslSocket.getOutputStream());
-            if (debug) {
-                System.out.println("StartTLS: Replaced IO Streams");
-            }
+	    // Replace original streams with the new SSL streams
+	    ldapConnection.replaceStreams(sslSocket.getInputStream(),
+		sslSocket.getOutputStream());
+	    if (debug) {
+		System.out.println("StartTLS: Replaced IO Streams");
+	    }
 
-        } catch (IOException e) {
-            if (debug) {
-                System.out.println("StartTLS: Got IO error during handshake");
-                e.printStackTrace();
-            }
+	} catch (IOException e) {
+	    if (debug) {
+		System.out.println("StartTLS: Got IO error during handshake");
+		e.printStackTrace();
+	    }
 
-            sslSocket.close();
-            isClosed = true;
-            throw e;   // pass up exception
-        }
+	    sslSocket.close();
+	    isClosed = true;
+	    throw e;   // pass up exception
+	}
 
-        return sslSocket;
+	return sslSocket;
     }
 
     /*
      * Verifies that the hostname in the server's certificate matches the
-     * hostname of the server.
+     * hostname of the server. 
      * The server's first certificate is examined. If it has a subjectAltName
      * that contains a dNSName then that is used as the server's hostname.
      * The server's hostname may contain a wildcard for its left-most name part.
@@ -401,78 +401,78 @@ final public class StartTlsResponseImpl extends StartTlsResponse {
      */
 
     private boolean verify(String hostname, SSLSession session)
-        throws SSLPeerUnverifiedException {
+	throws SSLPeerUnverifiedException {
 
-        java.security.cert.Certificate[] certs = null;
+	java.security.cert.Certificate[] certs = null;
 
         // if IPv6 strip off the "[]"
         if (hostname != null && hostname.startsWith("[") &&
-                hostname.endsWith("]")) {
+		hostname.endsWith("]")) {
             hostname = hostname.substring(1, hostname.length() - 1);
         }
         try {
-            HostnameChecker checker = HostnameChecker.getInstance(
-                                                HostnameChecker.TYPE_LDAP);
-            Principal principal = getPeerPrincipal(session);
-            if (principal instanceof KerberosPrincipal) {
+	    HostnameChecker checker = HostnameChecker.getInstance(
+						HostnameChecker.TYPE_LDAP);
+	    Principal principal = getPeerPrincipal(session);
+	    if (principal instanceof KerberosPrincipal) {
                 if (!checker.match(hostname, (KerberosPrincipal) principal)) {
-                    throw new SSLPeerUnverifiedException(
-                        "hostname of the kerberos principal:" + principal +
-                        " does not match the hostname:" + hostname);
+		    throw new SSLPeerUnverifiedException(
+			"hostname of the kerberos principal:" + principal +
+			" does not match the hostname:" + hostname);
                 }
             } else {
 
                 // get the subject's certificate
                 certs = session.getPeerCertificates();
-                X509Certificate peerCert;
+		X509Certificate peerCert;
                 if (certs[0] instanceof java.security.cert.X509Certificate) {
                     peerCert = (java.security.cert.X509Certificate) certs[0];
-                } else {
-                    throw new SSLPeerUnverifiedException(
-                            "Received a non X509Certificate from the server");
-                }
+	        } else {
+		    throw new SSLPeerUnverifiedException(
+			    "Received a non X509Certificate from the server");
+		}
                 checker.match(hostname, peerCert);
-            }
+	    }
 
-            // no exception means verification passed
-            return true;
+	    // no exception means verification passed
+	    return true;
         } catch (SSLPeerUnverifiedException e) {
 
             /*
              * The application may enable an anonymous SSL cipher suite, and
              * hostname verification is not done for anonymous ciphers
              */
-            String cipher = session.getCipherSuite();
-            if (cipher != null && (cipher.indexOf("_anon_") != -1)) {
-                return true;
-            }
-            throw e;
-        } catch (CertificateException e) {
+	    String cipher = session.getCipherSuite();
+	    if (cipher != null && (cipher.indexOf("_anon_") != -1)) {
+		return true;
+	    }
+	    throw e;
+	} catch (CertificateException e) {
 
-            /*
-             * Pass up the cause of the failure
-             */
-            throw(SSLPeerUnverifiedException)
-                new SSLPeerUnverifiedException("hostname of the server '" +
-                                hostname +
-                                "' does not match the hostname in the " +
-                                "server's certificate.").initCause(e);
+	    /*
+	     * Pass up the cause of the failure
+	     */
+	    throw(SSLPeerUnverifiedException)
+		new SSLPeerUnverifiedException("hostname of the server '" +
+				hostname +
+				"' does not match the hostname in the " +
+				"server's certificate.").initCause(e);
         }
     }
 
     /*
      * Get the peer principal from the session
-     */
+     */ 
     private static Principal getPeerPrincipal(SSLSession session)
-            throws SSLPeerUnverifiedException {
-        Principal principal;
-        try {
-            principal = session.getPeerPrincipal();
-        } catch (AbstractMethodError e) {
-            // if the JSSE provider does not support it, return null, since
-            // we need it only for Kerberos.
-            principal = null;
-        }
-        return principal;
+	    throws SSLPeerUnverifiedException {
+	Principal principal;
+	try {
+	    principal = session.getPeerPrincipal();
+	} catch (AbstractMethodError e) {
+	    // if the JSSE provider does not support it, return null, since
+	    // we need it only for Kerberos.
+	    principal = null;
+	}
+	return principal;
     }
 }

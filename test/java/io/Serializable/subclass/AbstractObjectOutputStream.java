@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,7 +23,7 @@
 
 /*
  *
- *
+ * 
  */
 
 import java.io.*;
@@ -46,12 +46,12 @@ import java.io.ObjectOutputStream;
  * access private, protected and package accessible Serializable fields,
  * only trusted classes are allowed to subclass AbstractObjectInputStream.
  * Subclasses of AbstractObjectOututStream must have SerializablePermission
- * "enableAbstractSubclass" or this constructor will throw a
- * SecurityException.Implementations of this class should protect themselves
- * from being subclassed in a way that will provide access to object
+ * "enableAbstractSubclass" or this constructor will throw a 
+ * SecurityException.Implementations of this class should protect themselves 
+ * from being subclassed in a way that will provide access to object 
  * references and other sensitive info. Specifically, writeObjectOverride()
  * should be made final.
- *
+ * 
  * A subclass of AbstractObjectOutputStream writes primitive data types
  * and graphs of Java objects to an ObjectOutputStream.  The objects can be read
  * (reconstituted) using he complimentary subclass of AbstractObjectInputStream.<p>
@@ -85,7 +85,7 @@ import java.io.ObjectOutputStream;
  *
  * <PRE>
  * private void readObject(java.io.ObjectInputStream stream)
- *     throws IOException, ClassNotFoundException;
+ *     throws IOException, ClassNotFoundException; 
  * private void writeObject(java.io.ObjectOutputStream stream)
  *     throws IOException
  * </PRE><p>
@@ -135,25 +135,25 @@ import java.io.ObjectOutputStream;
  * @since       JDK1.2
  */
 abstract public class AbstractObjectOutputStream extends ObjectOutputStream
-{
+{ 
     protected OutputStream out;
     /* Stream Management Methods. */
 
-    /**
+    /** 
      * Creates an ObjectOutputStream that writes to the specified OutputStream.
      *
      * Add the following line to the security policy file to enable
      * subclassing.
      *
      * <PRE>
-     *     permission SerializablePermission "enableAbstractSubclass" ;
+     * 	   permission SerializablePermission "enableAbstractSubclass" ;
      * </PRE><p>
      *
      * @exception IOException Any exception thrown by the underlying OutputStream.
      * @see java.io.ObjectOutputStream#writeStreamHeader()
      */
     public AbstractObjectOutputStream(OutputStream out) throws IOException {
-        this.out = out;
+	this.out = out;
     }
 
     abstract public void reset() throws IOException;
@@ -163,7 +163,7 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
     /*******************************************************************/
 
     /* Write Objects to Stream */
-
+    
     /**
      * Write the specified object to a subclass of AbstractObjectOutputStream.<p>
      *
@@ -171,8 +171,8 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
      *
      * Default serialization for a class can be
      * overridden by defining writeObject and the readObject methods
-     * for the Serializable class. Objects referenced by this object are
-     * written transitively so that a complete equivalent graph of objects
+     * for the Serializable class. Objects referenced by this object are 
+     * written transitively so that a complete equivalent graph of objects 
      * can be reconstructed by an ObjectInputStream.  <p>
      *
      * This method must implement the substitution semantics on the
@@ -180,8 +180,8 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
      * override of writeExternal, and it must call annotateClass when
      * writing an ObjectStreamClass to the stream.
      *
-     * Exceptions can be thrown for problems with the OutputStream and
-     * for classes that should not be serialized.
+     * Exceptions can be thrown for problems with the OutputStream and 
+     * for classes that should not be serialized.  
      *
      * For security's sake, any overrides of this method should be final.
      * Serialization typically needs to disable java access rules
@@ -189,9 +189,9 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
      * fields. This method gets called for ALL Serializable objects.
      *
      * @exception InvalidClassException Something is wrong with a class used by
-     *     serialization.
+     *	   serialization.
      * @exception NotSerializableException Some object to be serialized does not
-     *    implement the java.io.Serializable interface.
+     *	  implement the java.io.Serializable interface.
      * @exception IOException Any exception thrown by the underlying OutputStream.
      * @see java.io.Externalizable
      * @see java.io.ObjectOutputStream#replaceObject(Object)
@@ -199,15 +199,15 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
      * @see java.io.ObjectOutputStream#annotateClass(Class)
      */
     protected void writeObjectOverride(Object obj)
-        throws IOException
+	throws IOException 
     {
     }
 
     /**
      * Write the Serializable fields of the current object to this stream.<p>
-     *
-     * Note: The object being serialized is not passed to this method.
-     *       For security purposes, the initial implementation maintained
+     * 
+     * Note: The object being serialized is not passed to this method. 
+     *       For security purposes, the initial implementation maintained 
      *       the state of the last object to be passed to writeObject and
      *       only allowed this method to be invoked for this object.<p>
      *
@@ -224,9 +224,9 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
     abstract public ObjectOutputStream.PutField putFields() throws IOException;
 
     /**
-     * Note: The PutField being serialized is not passed to this method.
-     *       For security purposes, the initial implementation maintained
-     *       the state of the last putFields call and
+     * Note: The PutField being serialized is not passed to this method. 
+     *       For security purposes, the initial implementation maintained 
+     *       the state of the last putFields call and 
      *       only allowed this method to be invoked for that PutFields object.
      */
     abstract public void writeFields() throws IOException;
@@ -235,7 +235,7 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
 
     /*******************************************************************/
     /* Write Primitive Data to stream.  DataOutput methods. */
-
+    
     abstract public void write(int data) throws IOException;
     abstract public void write(byte b[]) throws IOException;
     abstract public void write(byte b[], int off, int len) throws IOException;
@@ -251,3 +251,4 @@ abstract public class AbstractObjectOutputStream extends ObjectOutputStream
     abstract public void writeChars(String data) throws IOException;
     abstract public void writeUTF(String data) throws IOException;
 };
+

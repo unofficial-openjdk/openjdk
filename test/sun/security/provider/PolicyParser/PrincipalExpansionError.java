@@ -25,56 +25,56 @@
  * @test
  * @bug 4373996
  * @summary parser incorrectly ignores a principal if the principal name
- *      expands to nothing.  this test is a bit complicated.
+ *	expands to nothing.  this test is a bit complicated.
  *
- *      1) PrincipalExpansionError.java
- *              the test itself.  this test creates a Subject with a
- *              SolarisPrincipal("TestPrincipal") and calls doAs
- *              with a PrincipalExpansionErrorAction.
+ *	1) PrincipalExpansionError.java
+ *		the test itself.  this test creates a Subject with a
+ *		SolarisPrincipal("TestPrincipal") and calls doAs
+ *		with a PrincipalExpansionErrorAction.
  *
- *      2) PrincipalExpansionErrorAction
- *              this action tries to read the file, /testfile
+ *	2) PrincipalExpansionErrorAction
+ *		this action tries to read the file, /testfile
  *
- *      3) to run the test:
- *              a) jtreg -verbose:all -testjdk:<your_jdk>/build/sparc
- *                      PrincipalExpansionError.java
- *              b) PrincipalExpansionError is compiled and put into
- *                      the "test.classes" directory
- *              c) PrincipalExpansionErrorAction is compiled and put into
- *                      the "test.classes"/apackage directory
- *                      (since it belongs to the 'apackage' package
- *              d) the PrincipalExpansionError shell script moves
- *                      test.classes/apackage to test.src/apackage.
- *                      this guarantees that the test will run
- *                      with codebase test.classes, and the action
- *                      will run with codebase test.src.
- *              e) the test is executed.  permissions to read the file,
- *                      /testfile, were granted to the PrincipalExpansionError.
- *                      the policy entry for PrincipalExpansionErrorAction
- *                      running as SolarisPrincipal("TestPrincipal")
- *                      was also granted the file permission,
- *                      but it has a bogus second SolarisPrincipal with
- *                      a name that can't be property-expanded.
+ *	3) to run the test:
+ *		a) jtreg -verbose:all -testjdk:<your_jdk>/build/sparc
+ *			PrincipalExpansionError.java
+ *		b) PrincipalExpansionError is compiled and put into
+ *			the "test.classes" directory
+ *		c) PrincipalExpansionErrorAction is compiled and put into
+ *			the "test.classes"/apackage directory
+ *			(since it belongs to the 'apackage' package
+ *		d) the PrincipalExpansionError shell script moves
+ *			test.classes/apackage to test.src/apackage.
+ *			this guarantees that the test will run
+ *			with codebase test.classes, and the action
+ *			will run with codebase test.src.
+ *		e) the test is executed.  permissions to read the file,
+ *			/testfile, were granted to the PrincipalExpansionError.
+ *			the policy entry for PrincipalExpansionErrorAction
+ *			running as SolarisPrincipal("TestPrincipal")
+ *			was also granted the file permission,
+ *			but it has a bogus second SolarisPrincipal with
+ *			a name that can't be property-expanded.
  *
- *                      the old behavior of the code would ignore the
- *                      bogus entry and incorrectly grants the file permission
- *                      to SolarisPrincipal("TestPrincipal").
- *                      the new behavior correctly ignores the entire
- *                      policy entry.
- *                      Please note that the jtreg needs to be granted
- *                      allpermissions for this test to succeed. If the codebase
- *                      for jtreg changes, the PrincipalExpansionError.policy
- *                      needs to be updated.
+ *			the old behavior of the code would ignore the
+ *			bogus entry and incorrectly grants the file permission
+ *			to SolarisPrincipal("TestPrincipal").
+ *			the new behavior correctly ignores the entire
+ *			policy entry.
+ *			Please note that the jtreg needs to be granted
+ * 			allpermissions for this test to succeed. If the codebase 
+ *			for jtreg changes, the PrincipalExpansionError.policy
+ *			needs to be updated.
  *
- *              f) original @ tags:
- *                      compile PrincipalExpansionErrorAction.java
- *                      run shell PrincipalExpansionError.sh
- *                      run main/othervm/policy=PrincipalExpansionError.policy
- *                              -Djava.security.debug=access,domain,failure
- *                              PrincipalExpansionError
+ *		f) original @ tags:
+ *			compile PrincipalExpansionErrorAction.java
+ *			run shell PrincipalExpansionError.sh
+ *			run main/othervm/policy=PrincipalExpansionError.policy
+ *				-Djava.security.debug=access,domain,failure
+ *				PrincipalExpansionError
  *
  * @ignore unable to rely on location or javatest.jar
- *              (so we can grant it AllPermission)
+ *		(so we can grant it AllPermission)
  */
 
 import javax.security.auth.*;
@@ -86,43 +86,43 @@ public class PrincipalExpansionError {
 
     public static void main(String[] args) {
 
-        Subject s = new Subject();
+	Subject s = new Subject();
+	
+	try {
+	    Set principals = s.getPrincipals();
+	    principals.add(new SolarisPrincipal("TestPrincipal"));
+	} catch (SecurityException se) {
+	    // test incorrectly set up
+	    throw new SecurityException
+		("PrincipalExpansionError test incorrectly set up:" + se);
+	}
 
-        try {
-            Set principals = s.getPrincipals();
-            principals.add(new SolarisPrincipal("TestPrincipal"));
-        } catch (SecurityException se) {
-            // test incorrectly set up
-            throw new SecurityException
-                ("PrincipalExpansionError test incorrectly set up:" + se);
-        }
+	try {
+	    Subject.doAs(s, new PrincipalExpansionErrorAction());
 
-        try {
-            Subject.doAs(s, new PrincipalExpansionErrorAction());
+	    // test failed
+	    System.out.println("PrincipalExpansionError test failed");
+	    throw new SecurityException("PrincipalExpansionError test failed");
+	    
+	} catch (java.security.PrivilegedActionException pae) {
+	    Exception e = pae.getException();
 
-            // test failed
-            System.out.println("PrincipalExpansionError test failed");
-            throw new SecurityException("PrincipalExpansionError test failed");
-
-        } catch (java.security.PrivilegedActionException pae) {
-            Exception e = pae.getException();
-
-            if (e instanceof java.io.FileNotFoundException) {
-                System.out.println
-                    ("PrincipalExpansionError test failed (file not found)");
-                java.io.FileNotFoundException fnfe =
-                        (java.io.FileNotFoundException)e;
-                throw new SecurityException("PrincipalExpansionError" +
-                        "test failed (file not found)");
-            } else {
-                // i don't know???
-                System.out.println("what happened?");
-                pae.printStackTrace();
-            }
-        } catch (SecurityException se) {
-                // good!  test succeeded
-                System.out.println("PrincipalExpansionError test succeeded");
-                se.printStackTrace();
-        }
+	    if (e instanceof java.io.FileNotFoundException) {
+		System.out.println
+		    ("PrincipalExpansionError test failed (file not found)");
+		java.io.FileNotFoundException fnfe =
+			(java.io.FileNotFoundException)e;
+		throw new SecurityException("PrincipalExpansionError" +
+			"test failed (file not found)");
+	    } else {
+		// i don't know???
+		System.out.println("what happened?");
+		pae.printStackTrace();
+	    }
+	} catch (SecurityException se) {
+		// good!  test succeeded
+	 	System.out.println("PrincipalExpansionError test succeeded");
+		se.printStackTrace();
+	}
     }
 }

@@ -30,6 +30,7 @@ import java.util.*;
  * A concrete subclass of AbstractUndoableEdit, used to assemble little
  * UndoableEdits into great big ones.
  *
+ * @version %I% %G%
  * @author Ray Ryan
  */
 public class CompoundEdit extends AbstractUndoableEdit {
@@ -41,13 +42,13 @@ public class CompoundEdit extends AbstractUndoableEdit {
     /**
      * The collection of <code>UndoableEdit</code>s
      * undone/redone en masse by this <code>CompoundEdit</code>.
-     */
+     */ 
     protected Vector<UndoableEdit> edits;
 
     public CompoundEdit() {
-        super();
-        inProgress = true;
-        edits = new Vector<UndoableEdit>();
+	super();
+	inProgress = true;
+	edits = new Vector<UndoableEdit>();
     }
 
     /**
@@ -56,12 +57,12 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * the order in which they were added.
      */
     public void undo() throws CannotUndoException {
-        super.undo();
-        int i = edits.size();
-        while (i-- > 0) {
-            UndoableEdit e = (UndoableEdit)edits.elementAt(i);
-            e.undo();
-        }
+	super.undo();
+	int i = edits.size();
+	while (i-- > 0) {
+	    UndoableEdit e = (UndoableEdit)edits.elementAt(i);
+	    e.undo();
+	}
     }
 
     /**
@@ -70,24 +71,24 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * which they were added.
      */
     public void redo() throws CannotRedoException {
-        super.redo();
-        Enumeration cursor = edits.elements();
-        while (cursor.hasMoreElements()) {
-            ((UndoableEdit)cursor.nextElement()).redo();
-        }
+	super.redo();
+	Enumeration cursor = edits.elements();
+	while (cursor.hasMoreElements()) {
+	    ((UndoableEdit)cursor.nextElement()).redo();
+	}
     }
 
     /**
-     * Returns the last <code>UndoableEdit</code> in
+     * Returns the last <code>UndoableEdit</code> in 
      * <code>edits</code>, or <code>null</code>
      * if <code>edits</code> is empty.
      */
     protected UndoableEdit lastEdit() {
-        int count = edits.size();
-        if (count > 0)
-            return (UndoableEdit)edits.elementAt(count-1);
-        else
-            return null;
+	int count = edits.size();
+	if (count > 0)
+	    return (UndoableEdit)edits.elementAt(count-1);
+	else
+	    return null;
     }
 
     /**
@@ -95,21 +96,21 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * in the reverse of the order that they were added.
      */
     public void die() {
-        int size = edits.size();
-        for (int i = size-1; i >= 0; i--)
-        {
-            UndoableEdit e = (UndoableEdit)edits.elementAt(i);
-//          System.out.println("CompoundEdit(" + i + "): Discarding " +
-//                             e.getUndoPresentationName());
-            e.die();
-        }
-        super.die();
-    }
+	int size = edits.size();
+	for (int i = size-1; i >= 0; i--)
+	{
+	    UndoableEdit e = (UndoableEdit)edits.elementAt(i);
+// 	    System.out.println("CompoundEdit(" + i + "): Discarding " +
+// 			       e.getUndoPresentationName());
+	    e.die();
+	}
+	super.die();
+    }	
 
     /**
      * If this edit is <code>inProgress</code>,
      * accepts <code>anEdit</code> and returns true.
-     *
+     * 
      * <p>The last edit added to this <code>CompoundEdit</code>
      * is given a chance to <code>addEdit(anEdit)</code>.
      * If it refuses (returns false), <code>anEdit</code> is
@@ -119,61 +120,61 @@ public class CompoundEdit extends AbstractUndoableEdit {
      *
      * @param anEdit the edit to be added
      * @return true if the edit is <code>inProgress</code>;
-     *  otherwise returns false
-     */
+     *	otherwise returns false
+     */ 
     public boolean addEdit(UndoableEdit anEdit) {
-        if (!inProgress) {
-            return false;
-        } else {
-            UndoableEdit last = lastEdit();
+	if (!inProgress) {
+	    return false;
+	} else {
+	    UndoableEdit last = lastEdit();
 
-            // If this is the first subedit received, just add it.
-            // Otherwise, give the last one a chance to absorb the new
-            // one.  If it won't, give the new one a chance to absorb
-            // the last one.
+	    // If this is the first subedit received, just add it.
+	    // Otherwise, give the last one a chance to absorb the new
+	    // one.  If it won't, give the new one a chance to absorb
+	    // the last one.
 
-            if (last == null) {
-                edits.addElement(anEdit);
-            }
-            else if (!last.addEdit(anEdit)) {
-                if (anEdit.replaceEdit(last)) {
-                    edits.removeElementAt(edits.size()-1);
-                }
-                edits.addElement(anEdit);
-            }
+	    if (last == null) {
+		edits.addElement(anEdit);
+	    }
+	    else if (!last.addEdit(anEdit)) {
+		if (anEdit.replaceEdit(last)) {
+		    edits.removeElementAt(edits.size()-1);
+		}
+		edits.addElement(anEdit);
+	    }
 
-            return true;
-        }
+	    return true;
+	}
     }
 
     /**
      * Sets <code>inProgress</code> to false.
-     *
+     * 
      * @see #canUndo
      * @see #canRedo
      */
     public void end() {
-        inProgress = false;
+	inProgress = false;
     }
 
     /**
      * Returns false if <code>isInProgress</code> or if super
      * returns false.
-     *
-     * @see     #isInProgress
+     * 
+     * @see	#isInProgress
      */
     public boolean canUndo() {
-        return !isInProgress() && super.canUndo();
+	return !isInProgress() && super.canUndo();
     }
 
     /**
-     * Returns false if <code>isInProgress</code> or if super
+     * Returns false if <code>isInProgress</code> or if super 
      * returns false.
-     *
-     * @see     #isInProgress
+     * 
+     * @see	#isInProgress
      */
     public boolean canRedo() {
-        return !isInProgress() && super.canRedo();
+	return !isInProgress() && super.canRedo();
     }
 
     /**
@@ -181,10 +182,10 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * received end. This generally means that edits are still being
      * added to it.
      *
-     * @see     #end
+     * @see	#end
      */
     public boolean isInProgress() {
-        return inProgress;
+	return inProgress;
     }
 
     /**
@@ -193,13 +194,13 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * Returns false if they all return false.
      */
     public boolean  isSignificant() {
-        Enumeration cursor = edits.elements();
-        while (cursor.hasMoreElements()) {
-            if (((UndoableEdit)cursor.nextElement()).isSignificant()) {
-                return true;
-            }
-        }
-        return false;
+	Enumeration cursor = edits.elements();
+	while (cursor.hasMoreElements()) {
+	    if (((UndoableEdit)cursor.nextElement()).isSignificant()) {
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**
@@ -209,14 +210,14 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * calls super.
      */
     public String getPresentationName() {
-        UndoableEdit last = lastEdit();
-        if (last != null) {
-            return last.getPresentationName();
-        } else {
-            return super.getPresentationName();
-        }
+	UndoableEdit last = lastEdit();
+	if (last != null) {
+	    return last.getPresentationName();
+	} else {
+	    return super.getPresentationName();
+	}
     }
-
+        
     /**
      * Returns <code>getUndoPresentationName</code>
      * from the last <code>UndoableEdit</code>
@@ -224,14 +225,14 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * If <code>edits</code> is empty, calls super.
      */
     public String getUndoPresentationName() {
-        UndoableEdit last = lastEdit();
-        if (last != null) {
-            return last.getUndoPresentationName();
-        } else {
-            return super.getUndoPresentationName();
-        }
+	UndoableEdit last = lastEdit();
+	if (last != null) {
+	    return last.getUndoPresentationName();
+	} else {
+	    return super.getUndoPresentationName();
+	}
     }
-
+        
     /**
      * Returns <code>getRedoPresentationName</code>
      * from the last <code>UndoableEdit</code>
@@ -239,14 +240,14 @@ public class CompoundEdit extends AbstractUndoableEdit {
      * If <code>edits</code> is empty, calls super.
      */
     public String getRedoPresentationName() {
-        UndoableEdit last = lastEdit();
-        if (last != null) {
-            return last.getRedoPresentationName();
-        } else {
-            return super.getRedoPresentationName();
-        }
+	UndoableEdit last = lastEdit();
+	if (last != null) {
+	    return last.getRedoPresentationName();
+	} else {
+	    return super.getRedoPresentationName();
+	}
     }
-
+        
     /**
      * Returns a string that displays and identifies this
      * object's properties.
@@ -255,8 +256,8 @@ public class CompoundEdit extends AbstractUndoableEdit {
      */
     public String toString()
     {
-        return super.toString()
-            + " inProgress: " + inProgress
-            + " edits: " + edits;
+	return super.toString()
+	    + " inProgress: " + inProgress
+	    + " edits: " + edits;
     }
 }

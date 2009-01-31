@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 #ifndef _TOPLEVEL_H_
 #define _TOPLEVEL_H_
@@ -39,3 +40,4 @@ extern Widget getShellWidget(Widget child);
 extern Boolean isFocusableComponentTopLevelByWidget(JNIEnv * env, Widget child);
 #endif /* !HEADLESS */
 #endif           /* _TOPLEVEL_H_ */
+

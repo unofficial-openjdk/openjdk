@@ -58,17 +58,17 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
     private WindowListener windowListener = null;
     private HierarchyListener hierarchyListener = null;
     private Window window = null;
-
+    
     public static ComponentUI createUI(JComponent x) {
-        return new WindowsMenuBarUI();
+	return new WindowsMenuBarUI();
     }
-
+    
     @Override
     protected void uninstallListeners() {
         uninstallWindowListener();
         if (hierarchyListener != null) {
             menuBar.removeHierarchyListener(hierarchyListener);
-            hierarchyListener = null;
+            hierarchyListener = null;   
         }
         super.uninstallListeners();
     }
@@ -102,10 +102,10 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
     protected void installListeners() {
         if (WindowsLookAndFeel.isOnVista()) {
             installWindowListener();
-            hierarchyListener =
+            hierarchyListener = 
                 new HierarchyListener() {
                     public void hierarchyChanged(HierarchyEvent e) {
-                        if ((e.getChangeFlags()
+                        if ((e.getChangeFlags() 
                                 & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
                             if (menuBar.isDisplayable()) {
                                 installWindowListener();
@@ -119,26 +119,26 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
         }
         super.installListeners();
     }
-
+    
     protected void installKeyboardActions() {
         super.installKeyboardActions();
-        ActionMap map = SwingUtilities.getUIActionMap(menuBar);
+	ActionMap map = SwingUtilities.getUIActionMap(menuBar);
         if (map == null) {
             map = new ActionMapUIResource();
             SwingUtilities.replaceUIActionMap(menuBar, map);
         }
         map.put("takeFocus", new TakeFocus());
-    }
+    } 
 
     /**
      * Action that activates the menu (e.g. when F10 is pressed).
      * Unlike BasicMenuBarUI.TakeFocus, this Action will not show menu popup.
      */
     private static class TakeFocus extends AbstractAction {
-        public void actionPerformed(ActionEvent e) {
-            JMenuBar menuBar = (JMenuBar)e.getSource();
-            JMenu menu = menuBar.getMenu(0);
-            if (menu != null) {
+	public void actionPerformed(ActionEvent e) {
+	    JMenuBar menuBar = (JMenuBar)e.getSource();
+	    JMenu menu = menuBar.getMenu(0);
+	    if (menu != null) {
                 MenuSelectionManager msm =
                     MenuSelectionManager.defaultManager();
                 MenuElement path[] = new MenuElement[2];
@@ -149,8 +149,8 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
                 // show mnemonics
                 WindowsLookAndFeel.setMnemonicHidden(false);
                 WindowsLookAndFeel.repaintRootPane(menuBar);
-            }
-        }
+	    }
+	}
     }
 
     @Override
@@ -167,7 +167,7 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
             super.paint(g, c);
         }
     }
-
+    
     /**
      * Checks if component belongs to an active window.
      * @param c component to check
@@ -184,3 +184,4 @@ public class WindowsMenuBarUI extends BasicMenuBarUI
         return true;
     }
 }
+

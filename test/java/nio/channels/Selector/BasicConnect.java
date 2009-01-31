@@ -44,14 +44,14 @@ import java.util.*;
 
 public class BasicConnect {
 
-    static final int PORT = 7;          // echo
+    static final int PORT = 7;		// echo
     static final String HOST = TestUtil.HOST;
 
     public static void main(String[] args) throws Exception {
         Selector connectSelector =
             SelectorProvider.provider().openSelector();
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(HOST), PORT);
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(HOST), PORT);
         SocketChannel sc = SocketChannel.open();
         sc.configureBlocking(false);
         boolean result = sc.connect(isa);
@@ -67,26 +67,26 @@ public class BasicConnect {
                     i.remove();
                     SocketChannel nextReady = (SocketChannel)sk.channel();
                     result = nextReady.finishConnect();
-                    if (result)
-                        sk.cancel();
+		    if (result)
+			sk.cancel();
                 }
-            }
+            }  
         }
 
-        byte[] bs = new byte[] { (byte)0xca, (byte)0xfe,
-                                 (byte)0xba, (byte)0xbe };
-        ByteBuffer bb = ByteBuffer.wrap(bs);
-        sc.configureBlocking(true);
-        sc.write(bb);
-        bb.rewind();
+	byte[] bs = new byte[] { (byte)0xca, (byte)0xfe,
+				 (byte)0xba, (byte)0xbe };
+	ByteBuffer bb = ByteBuffer.wrap(bs);
+	sc.configureBlocking(true);
+	sc.write(bb);
+	bb.rewind();
 
-        ByteBuffer bb2 = ByteBuffer.allocateDirect(100);
-        int n = sc.read(bb2);
-        bb2.flip();
-        if (!bb.equals(bb2))
-            throw new Exception("Echoed bytes incorrect: Sent "
-                                + bb + ", got " + bb2);
+	ByteBuffer bb2 = ByteBuffer.allocateDirect(100);
+	int n = sc.read(bb2);
+	bb2.flip();
+	if (!bb.equals(bb2))
+	    throw new Exception("Echoed bytes incorrect: Sent "
+				+ bb + ", got " + bb2);
         sc.close();
-    }
+    } 
 
 }

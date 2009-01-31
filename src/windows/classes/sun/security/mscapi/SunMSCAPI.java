@@ -48,91 +48,91 @@ public final class SunMSCAPI extends Provider {
     private static final String INFO = "Sun's Microsoft Crypto API provider";
 
     static {
-        AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
-                System.loadLibrary("sunmscapi");
-                return null;
-            }
-        });
+	AccessController.doPrivileged(new PrivilegedAction() {
+	    public Object run() {
+		System.loadLibrary("sunmscapi");
+		return null;
+	    }
+	});
     }
 
     public SunMSCAPI() {
-        super("SunMSCAPI", 1.7d, INFO);
+	super("SunMSCAPI", 1.7d, INFO);
 
-        // if there is no security manager installed, put directly into
-        // the provider. Otherwise, create a temporary map and use a
-        // doPrivileged() call at the end to transfer the contents
-        final Map map = (System.getSecurityManager() == null)
-                        ? (Map)this : new HashMap();
+	// if there is no security manager installed, put directly into
+	// the provider. Otherwise, create a temporary map and use a
+	// doPrivileged() call at the end to transfer the contents
+	final Map map = (System.getSecurityManager() == null)
+			? (Map)this : new HashMap();
 
-        /*
-         * Secure random
-         */
-        map.put("SecureRandom.Windows-PRNG", "sun.security.mscapi.PRNG");
+	/*
+	 * Secure random
+	 */
+	map.put("SecureRandom.Windows-PRNG", "sun.security.mscapi.PRNG");
 
         /*
          * Key store
          */
-        map.put("KeyStore.Windows-MY", "sun.security.mscapi.KeyStore$MY");
-        map.put("KeyStore.Windows-ROOT", "sun.security.mscapi.KeyStore$ROOT");
+	map.put("KeyStore.Windows-MY", "sun.security.mscapi.KeyStore$MY");
+	map.put("KeyStore.Windows-ROOT", "sun.security.mscapi.KeyStore$ROOT");
 
-        /*
-         * Signature engines
-         */
-        map.put("Signature.SHA1withRSA",
-            "sun.security.mscapi.RSASignature$SHA1");
-        map.put("Signature.MD5withRSA",
-            "sun.security.mscapi.RSASignature$MD5");
-        map.put("Signature.MD2withRSA",
-            "sun.security.mscapi.RSASignature$MD2");
+	/*
+	 * Signature engines
+	 */
+	map.put("Signature.SHA1withRSA", 
+	    "sun.security.mscapi.RSASignature$SHA1");
+	map.put("Signature.MD5withRSA", 
+	    "sun.security.mscapi.RSASignature$MD5");
+	map.put("Signature.MD2withRSA", 
+	    "sun.security.mscapi.RSASignature$MD2");
 
-        // supported key classes
-        map.put("Signature.SHA1withRSA SupportedKeyClasses",
-            "sun.security.mscapi.Key");
-        map.put("Signature.MD5withRSA SupportedKeyClasses",
-            "sun.security.mscapi.Key");
-        map.put("Signature.MD2withRSA SupportedKeyClasses",
-            "sun.security.mscapi.Key");
-        map.put("Signature.NONEwithRSA SupportedKeyClasses",
-            "sun.security.mscapi.Key");
+	// supported key classes
+	map.put("Signature.SHA1withRSA SupportedKeyClasses",
+	    "sun.security.mscapi.Key");
+	map.put("Signature.MD5withRSA SupportedKeyClasses",
+	    "sun.security.mscapi.Key");
+	map.put("Signature.MD2withRSA SupportedKeyClasses",
+	    "sun.security.mscapi.Key");
+	map.put("Signature.NONEwithRSA SupportedKeyClasses",
+	    "sun.security.mscapi.Key");
 
-        /*
-         * Key Pair Generator engines
-         */
-        map.put("KeyPairGenerator.RSA",
-            "sun.security.mscapi.RSAKeyPairGenerator");
-        map.put("KeyPairGenerator.RSA KeySize", "1024");
+	/*
+	 * Key Pair Generator engines
+	 */
+	map.put("KeyPairGenerator.RSA", 
+	    "sun.security.mscapi.RSAKeyPairGenerator");
+	map.put("KeyPairGenerator.RSA KeySize", "1024");
 
-        /*
-         * Cipher engines
-         */
-        map.put("Cipher.RSA", "sun.security.mscapi.RSACipher");
-        map.put("Cipher.RSA/ECB/PKCS1Padding",
-            "sun.security.mscapi.RSACipher");
-        map.put("Cipher.RSA SupportedModes", "ECB");
-        map.put("Cipher.RSA SupportedPaddings", "PKCS1PADDING");
-        map.put("Cipher.RSA SupportedKeyClasses", "sun.security.mscapi.Key");
+	/*
+	 * Cipher engines
+	 */
+	map.put("Cipher.RSA", "sun.security.mscapi.RSACipher");
+	map.put("Cipher.RSA/ECB/PKCS1Padding",
+	    "sun.security.mscapi.RSACipher");
+	map.put("Cipher.RSA SupportedModes", "ECB");
+	map.put("Cipher.RSA SupportedPaddings", "PKCS1PADDING");
+	map.put("Cipher.RSA SupportedKeyClasses", "sun.security.mscapi.Key");
 
-        if (map != this) {
-            AccessController.doPrivileged(new PutAllAction(this, map));
-        }
+	if (map != this) {
+	    AccessController.doPrivileged(new PutAllAction(this, map));
+	}
     }
 
     // set to true once self verification is complete
     private static volatile boolean integrityVerified;
 
     static void verifySelfIntegrity(Class c) {
-        if (integrityVerified) {
-            return;
-        }
-        doVerifySelfIntegrity(c);
+	if (integrityVerified) {
+	    return;
+	}
+	doVerifySelfIntegrity(c);
     }
 
     private static synchronized void doVerifySelfIntegrity(Class c) {
-        integrityVerified = JarVerifier.verify(c);
-        if (integrityVerified == false) {
-            throw new ProviderException
-                ("The SunMSCAPI provider may have been tampered with.");
-        }
+	integrityVerified = JarVerifier.verify(c);
+	if (integrityVerified == false) {
+	    throw new ProviderException
+	    	("The SunMSCAPI provider may have been tampered with.");
+	}
     }
 }

@@ -34,34 +34,34 @@ public class EqualsHashCodeContract
 {
     public static void main(String args[]) throws Exception {
 
-        Identity i1=new MyIdentity("identity",
-                                   new MyIdentityScope("IdentityScope"));
-        Identity i2=new MyIdentity("identity",
-                                   new MyIdentityScope("IdentityScope"));
-        Identity i3=new MyIdentity("identity",
-                                   new MyIdentityScope(""));
+	Identity i1=new MyIdentity("identity",
+				   new MyIdentityScope("IdentityScope"));
+	Identity i2=new MyIdentity("identity",
+				   new MyIdentityScope("IdentityScope"));
+	Identity i3=new MyIdentity("identity",
+				   new MyIdentityScope(""));
 
-        PublicKey pk1=new MyPublicKey();
-        PublicKey pk2=new MyPublicKey();
+	PublicKey pk1=new MyPublicKey();
+	PublicKey pk2=new MyPublicKey();
 
-        if ( !(i1.equals(i2)) == (i1.hashCode()==i2.hashCode()) ) {
-            System.err.println("FAILED");
-            Exception up = new
-                Exception("Contract violated -- same name and same scope");
-            throw up;
-        }
-        System.out.println("Test same name, same scope........... PASSED");
+	if ( !(i1.equals(i2)) == (i1.hashCode()==i2.hashCode()) ) {
+	    System.err.println("FAILED");
+	    Exception up = new
+		Exception("Contract violated -- same name and same scope");
+	    throw up;
+	}
+	System.out.println("Test same name, same scope........... PASSED");
 
-        i1.setPublicKey(pk1);
-        i3.setPublicKey(pk1);
-        if ( !((i1.equals(i3)) && (i1.hashCode()==i3.hashCode()))) {
-            System.err.println("FAILED");
-            Exception up = new Exception("Contract violated -- PublicKeys do not differ");
-            throw up;
-        }
-        System.out.println("Test same name, same PublicKeys ..... PASSED");
+	i1.setPublicKey(pk1);
+	i3.setPublicKey(pk1);
+	if ( !((i1.equals(i3)) && (i1.hashCode()==i3.hashCode()))) {
+	    System.err.println("FAILED");
+	    Exception up = new Exception("Contract violated -- PublicKeys do not differ");
+	    throw up;
+	}
+	System.out.println("Test same name, same PublicKeys ..... PASSED");
 
-        System.out.println("TEST PASSED");
+	System.out.println("TEST PASSED");
 
     }
 }
@@ -82,18 +82,18 @@ class MyPublicKey implements PublicKey, Certificate {
     }
 
     public byte[] getEncoded() {
-        if (e == null) {
-            ByteArrayOutputStream bs = new ByteArrayOutputStream();
-            DataOutputStream ds = new DataOutputStream(bs);
-            try {
-                ds.writeLong(System.currentTimeMillis());
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            }
-            e = bs.toByteArray();
-        }
+	if (e == null) {
+	    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+	    DataOutputStream ds = new DataOutputStream(bs);
+	    try {
+		ds.writeLong(System.currentTimeMillis());
+	    } catch (IOException ioe) {
+		ioe.printStackTrace();
+	    }
+	    e = bs.toByteArray();
+	}
 
-        return e;
+	return e;
     }
 
     public void decode(InputStream stream) {
@@ -101,23 +101,23 @@ class MyPublicKey implements PublicKey, Certificate {
     public void encode(OutputStream stream) {
     }
     public Principal getGuarantor() {
-        return null;
+	return null;
     }
     public Principal getPrincipal() {
-        return null;
+	return null;
     }
     public PublicKey getPublicKey() {
-        return this;
+	return this;
     }
     public String toString(boolean detailed) {
-        return null;
+	return null;
     }
 }
 
 
 class MyIdentityScope extends IdentityScope {
     public MyIdentityScope(String name) {
-        super(name);
+	super(name);
     }
 
     public int size() {

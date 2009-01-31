@@ -31,8 +31,8 @@ import java.net.URL;
 
 
 /**
- * A serialized mapping in the Java programming language of an SQL
- * <code>DATALINK</code> value. A <code>DATALINK</code> value
+ * A serialized mapping in the Java programming language of an SQL 
+ * <code>DATALINK</code> value. A <code>DATALINK</code> value 
  * references a file outside of the underlying data source that the
  * data source manages.
  * <P>
@@ -52,7 +52,7 @@ public class SerialDatalink implements Serializable, Cloneable {
     private URL url;
 
     /**
-     * The SQL type of the elements in this <code>SerialDatalink</code>
+     * The SQL type of the elements in this <code>SerialDatalink</code> 
      * object.  The type is expressed as one of the contants from the
      * class <code>java.sql.Types</code>.
      * @serial
@@ -60,7 +60,7 @@ public class SerialDatalink implements Serializable, Cloneable {
     private int baseType;
 
     /**
-     * The type name used by the DBMS for the elements in the SQL
+     * The type name used by the DBMS for the elements in the SQL 
      * <code>DATALINK</code> value that this SerialDatalink object
      * represents.
      * @serial
@@ -74,15 +74,15 @@ public class SerialDatalink implements Serializable, Cloneable {
       * @throws SerialException if url parameter is a null
       */
     public SerialDatalink(URL url) throws SerialException {
-        if (url == null) {
-            throw new SerialException("Cannot serialize empty URL instance");
-        }
-        this.url = url;
+	if (url == null) {
+	    throw new SerialException("Cannot serialize empty URL instance");
+	}
+	this.url = url;
     }
 
     /**
-     * Returns a new URL that is a copy of this <code>SerialDatalink</code>
-     * object.
+     * Returns a new URL that is a copy of this <code>SerialDatalink</code> 
+     * object. 
      *
      * @return a copy of this <code>SerialDatalink</code> object as a
      * <code>URL</code> object in the Java programming language.
@@ -90,19 +90,19 @@ public class SerialDatalink implements Serializable, Cloneable {
      */
     public URL getDatalink() throws SerialException {
 
-        URL aURL = null;
+	URL aURL = null;
 
-        try {
-            aURL = new URL((this.url).toString());
-        } catch (java.net.MalformedURLException e) {
-            throw new SerialException("MalformedURLException: " + e.getMessage());
-        }
-        return aURL;
+	try {
+	    aURL = new URL((this.url).toString());
+	} catch (java.net.MalformedURLException e) {
+	    throw new SerialException("MalformedURLException: " + e.getMessage());
+	}
+	return aURL;
     }
-
+    
 
     /**
-         * The identifier that assists in the serialization of this <code>SerialDatalink</code>
+	 * The identifier that assists in the serialization of this <code>SerialDatalink</code>
      * object.
      */
     static final long serialVersionUID = 2826907821828733626L;

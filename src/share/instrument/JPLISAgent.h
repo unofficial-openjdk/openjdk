@@ -54,7 +54,7 @@ typedef struct _JPLISAgent        JPLISAgent;
 typedef struct _JPLISEnvironment  JPLISEnvironment;
 
 
-/* constants for class names and methods names and such
+/* constants for class names and methods names and such 
     these all must stay in sync with Java code & interfaces
 */
 #define JPLIS_INSTRUMENTIMPL_CLASSNAME                      "sun/instrument/InstrumentationImpl"
@@ -90,7 +90,7 @@ typedef enum {
 struct _JPLISEnvironment {
     jvmtiEnv *              mJVMTIEnv;              /* the JVM TI environment */
     JPLISAgent *            mAgent;                 /* corresponding agent */
-    jboolean                mIsRetransformer;       /* indicates if special environment */
+    jboolean		    mIsRetransformer;       /* indicates if special environment */
 };
 
 struct _JPLISAgent {
@@ -99,37 +99,37 @@ struct _JPLISAgent {
     JPLISEnvironment        mRetransformEnvironment;/* for retransform stuff only */
     jobject                 mInstrumentationImpl;   /* handle to the Instrumentation instance */
     jmethodID               mPremainCaller;         /* method on the InstrumentationImpl that does the premain stuff (cached to save lots of lookups) */
-    jmethodID               mAgentmainCaller;       /* method on the InstrumentationImpl for agents loaded via attach mechanism */
+    jmethodID               mAgentmainCaller;	    /* method on the InstrumentationImpl for agents loaded via attach mechanism */
     jmethodID               mTransform;             /* method on the InstrumentationImpl that does the class file transform */
     jboolean                mRedefineAvailable;     /* cached answer to "does this agent support redefine" */
-    jboolean                mRedefineAdded;         /* indicates if can_redefine_classes capability has been added */
+    jboolean		    mRedefineAdded;	    /* indicates if can_redefine_classes capability has been added */
     jboolean                mNativeMethodPrefixAvailable; /* cached answer to "does this agent support prefixing" */
-    jboolean                mNativeMethodPrefixAdded;     /* indicates if can_set_native_method_prefix capability has been added */
+    jboolean		    mNativeMethodPrefixAdded;     /* indicates if can_set_native_method_prefix capability has been added */
     char const *            mAgentClassName;        /* agent class name */
-    char const *            mOptionsString;         /* -javaagent options string */
+    char const * 	    mOptionsString;	    /* -javaagent options string */
 };
 
 /*
  * JVMTI event handlers
  */
-
-/* VMInit event handler. Installed during OnLoad, then removed during VMInit. */
+ 
+/* VMInit event handler. Installed during OnLoad, then removed during VMInit. */ 
 extern void JNICALL
 eventHandlerVMInit( jvmtiEnv *      jvmtienv,
                     JNIEnv *        jnienv,
                     jthread         thread);
 
-/* ClassFileLoadHook event handler. Installed during VMInit, then left in place forever. */
+/* ClassFileLoadHook event handler. Installed during VMInit, then left in place forever. */ 
 extern void JNICALL
 eventHandlerClassFileLoadHook(  jvmtiEnv *              jvmtienv,
                                 JNIEnv *                jnienv,
                                 jclass                  class_being_redefined,
-                                jobject                 loader,
-                                const char*             name,
+                                jobject                 loader, 
+                                const char*             name, 
                                 jobject                 protectionDomain,
-                                jint                    class_data_len,
-                                const unsigned char*    class_data,
-                                jint*                   new_class_data_len,
+                                jint                    class_data_len, 
+                                const unsigned char*    class_data, 
+                                jint*                   new_class_data_len, 
                                 unsigned char**         new_class_data);
 
 /*
@@ -155,12 +155,12 @@ addRedefineClassesCapability(JPLISAgent * agent);
 /* Add the can_set_native_method_prefix capability */
 extern void
 addNativeMethodPrefixCapability(JPLISAgent * agent);
-
+                                                                                            
 /* Add the can_maintain_original_method_order capability (for testing) */
 extern void
 addOriginalMethodOrderCapability(JPLISAgent * agent);
-
-
+                                                                                                            
+                                                                                                            
 /* Our JPLIS agent is paralleled by a Java InstrumentationImpl instance.
  * This routine uses JNI to create and initialized the Java instance.
  * Returns true if it succeeds, false otherwise.
@@ -211,13 +211,13 @@ processJavaStart(   JPLISAgent *    agent,
 extern void
 transformClassFile(             JPLISAgent *            agent,
                                 JNIEnv *                jnienv,
-                                jobject                 loader,
-                                const char*             name,
+                                jobject                 loader, 
+                                const char*             name, 
                                 jclass                  classBeingRedefined,
                                 jobject                 protectionDomain,
-                                jint                    class_data_len,
-                                const unsigned char*    class_data,
-                                jint*                   new_class_data_len,
+                                jint                    class_data_len, 
+                                const unsigned char*    class_data, 
+                                jint*                   new_class_data_len, 
                                 unsigned char**         new_class_data,
                                 jboolean                is_retransformer);
 

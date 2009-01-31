@@ -34,9 +34,9 @@ public class OSEnvironment {
      * for the class libraries.
      * <p>
      * At this time only the process-wide error mode needs to be set.
-     */
-    public static void initialize() {
-        Win32ErrorMode.initialize();
+     */    
+    public static void initialize() {                        
+        Win32ErrorMode.initialize();                                       
     }
-
-}
+    
+}    

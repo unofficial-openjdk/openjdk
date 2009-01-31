@@ -31,7 +31,7 @@ import  java.security.*;
 public class BufferClassLoader extends SecureClassLoader
 {
     private final NamedBuffer[] fBuffers;
-
+    
     public
     BufferClassLoader(  ClassLoader     parent,
                         NamedBuffer[]   buffers)
@@ -39,8 +39,8 @@ public class BufferClassLoader extends SecureClassLoader
         super(parent);
         fBuffers = buffers;     // maybe should copy
         }
-
-
+    
+    
     protected Class
     findClass(String name)
         throws ClassNotFoundException
@@ -57,9 +57,9 @@ public class BufferClassLoader extends SecureClassLoader
                                     (CodeSource) null);
                 }
             }
-
+        
         throw new ClassNotFoundException(name);
         }
-
-
+    
+    
 }

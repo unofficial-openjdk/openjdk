@@ -40,20 +40,20 @@ import sun.util.resources.LocaleData;
 import sun.util.resources.OpenListResourceBundle;
 
 /**
- * Utility class that deals with the localized time zone names
+ * Utility class that deals with the localized time zone names 
  */
 public final class TimeZoneNameUtility {
 
     /**
      * cache to hold time zone resource bundles. Keyed by Locale
      */
-    private static ConcurrentHashMap<Locale, SoftReference<OpenListResourceBundle>> cachedBundles =
+    private static ConcurrentHashMap<Locale, SoftReference<OpenListResourceBundle>> cachedBundles = 
         new ConcurrentHashMap<Locale, SoftReference<OpenListResourceBundle>>();
 
     /**
      * cache to hold time zone localized strings. Keyed by Locale
      */
-    private static ConcurrentHashMap<Locale, SoftReference<String[][]>> cachedZoneData =
+    private static ConcurrentHashMap<Locale, SoftReference<String[][]>> cachedZoneData = 
         new ConcurrentHashMap<Locale, SoftReference<String[][]>>();
 
     /**
@@ -87,7 +87,7 @@ public final class TimeZoneNameUtility {
             }
         }
 
-        String[][] zonesArray = new String[zones.size()][];
+	String[][] zonesArray = new String[zones.size()][];
         return zones.toArray(zonesArray);
     }
 
@@ -105,7 +105,7 @@ public final class TimeZoneNameUtility {
             LocaleServiceProviderPool.getPool(TimeZoneNameProvider.class);
         String[] names = null;
 
-        // Check whether a provider can provide an implementation that's closer
+        // Check whether a provider can provide an implementation that's closer 
         // to the requested locale than what the Java runtime itself can provide.
         if (pool.hasProviders()) {
             names = pool.getLocalizedObject(
@@ -141,14 +141,14 @@ public final class TimeZoneNameUtility {
      * Obtains a localized time zone strings from a TimeZoneNameProvider
      * implementation.
      */
-    private static class TimeZoneNameGetter
+    private static class TimeZoneNameGetter 
         implements LocaleServiceProviderPool.LocalizedObjectGetter<TimeZoneNameProvider,
                                                                    String[]>{
-        private static final TimeZoneNameGetter INSTANCE =
+        private static final TimeZoneNameGetter INSTANCE = 
             new TimeZoneNameGetter();
 
-        public String[] getObject(TimeZoneNameProvider timeZoneNameProvider,
-                                Locale locale,
+        public String[] getObject(TimeZoneNameProvider timeZoneNameProvider, 
+                                Locale locale, 
                                 String requestID,
                                 Object... params) {
             assert params.length == 0;
@@ -172,7 +172,7 @@ public final class TimeZoneNameUtility {
                     }
 
                     names = buildZoneStrings(timeZoneNameProvider, locale, queryID);
-
+            
                     if (names == null) {
                         // There may be a case that a standard id has become an
                         // alias.  so, check the aliases backward.
@@ -189,8 +189,8 @@ public final class TimeZoneNameUtility {
             return names;
         }
 
-        private static String[] examineAliases(TimeZoneNameProvider tznp, Locale locale,
-                                               String id,
+        private static String[] examineAliases(TimeZoneNameProvider tznp, Locale locale, 
+                                               String id, 
                                                Map<String, String> aliases,
                                                Set<Map.Entry<String, String>> aliasesSet) {
             if (aliases.containsValue(id)) {
@@ -213,22 +213,22 @@ public final class TimeZoneNameUtility {
             return null;
         }
 
-        private static String[] buildZoneStrings(TimeZoneNameProvider tznp,
+        private static String[] buildZoneStrings(TimeZoneNameProvider tznp, 
                                     Locale locale, String id) {
             String[] names = new String[5];
-
+     
             for (int i = 1; i <= 4; i ++) {
                 names[i] = tznp.getDisplayName(id, i>=3, i%2, locale);
                 if (i >= 3 && names[i] == null) {
                     names[i] = names[i-2];
                 }
             }
-
+     
             if (names[1] == null) {
                 // this id seems not localized by this provider
                 names = null;
             }
-
+     
             return names;
         }
     }

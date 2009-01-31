@@ -47,12 +47,11 @@ OTHER_CFLAGS += -D__MEDIALIB_OLD_NAMES -D__USE_J2D_NAMES
 #
 
 #
-# Include all Java source files in sun/awt and sun/java2d, except for:
-# sun/awt/resources       handled by java/awt/Makefile
-# sun/java2d/pisces       handled by sun/pisces/Makefile
+# Include all Java source files in sun/awt and sun/java2d, except for the
+# sun/awt/resources directory, which is handled by java/awt/Makefile.
 #
 AUTO_FILES_JAVA_DIRS = sun/awt sun/java2d
-AUTO_JAVA_PRUNE = resources pisces
+AUTO_JAVA_PRUNE = resources
 
 ifeq ($(PLATFORM), windows)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv WINDOWS
@@ -125,6 +124,7 @@ ifeq  ($(PLATFORM), linux)
 FILES_c = $(FILES_2D_c)
 FILES_c += awt_LoadLibrary.c
 OTHER_CFLAGS += -DMLIB_NO_LIBSUNMATH
+OTHER_CFLAGS += -DMOTIF_VERSION=2
 OTHER_LDLIBS = $(JVMLIB) $(LIBM) -ldl
 endif
 
@@ -206,7 +206,7 @@ endif
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ SOLARIS/LINUX
 endif # PLATFORM
 
-clobber clean:: java2d.clean fontconfigs.clean
+clobber clean:: java2d.clean motif.clean fontconfigs.clean
 
 ifndef OPENJDK
 clobber clean:: dgalib.clean 
@@ -251,9 +251,21 @@ endif # PLATFORM
 
 ifeq ($(PLATFORM), windows)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv WINDOWS
+ifeq ($(ARCH_DATA_MODEL), 64)
 OTHER_LDLIBS = kernel32.lib user32.lib gdi32.lib winspool.lib \
                imm32.lib ole32.lib uuid.lib $(JVMLIB) \
                shell32.lib
+else
+OTHER_LDLIBS = /nod:kernel32.lib /nod:advapi32.lib /nod:user32.lib \
+               /nod:gdi32.lib /nod:shell32.lib /nod:comdlg32.lib \
+               /nod:version.lib /nod:mpr.lib /nod:rasapi32.lib \
+               /nod:winmm.lib /nod:winspool.lib /nod:vfw32.lib \
+               /nod:secur32.lib /nod:oleacc.lib /nod:oledlg.lib \
+               /nod:sensapi.lib $(UNICOWS_LIB_PATH)/unicows.lib \
+               kernel32.lib user32.lib gdi32.lib winspool.lib \
+               imm32.lib ole32.lib uuid.lib $(JVMLIB) \
+               shell32.lib
+endif
 
 clean:: awt.clean
 
@@ -268,6 +280,12 @@ endif # PLATFORM
 ifneq ($(PLATFORM), windows)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv SOLARIS/LINUX
 
+ifeq ($(STATIC_MOTIF),true)
+  LIBXM = $(MOTIF_LIB)/libXm.a -lXp
+else # STATIC_MOTIF
+  LIBXM = -lXm
+endif # STATIC_MOTIF
+
 LIBXTST = -lXtst
 
 # Use -lXmu for EditRes support
@@ -278,7 +296,20 @@ LIBXMU	        = $(LIBXMU_$(VARIANT))
 #
 # Extra C flags.
 #
+INIT += motif
 
+motif: $(OBJDIR)/.library.dirs.$(ARCH) $(OBJDIR)/.library.motif.$(ARCH)
+
+$(OBJDIR)/.library.motif.$(ARCH): $(MOTIF_LIB)/libXm.so.3
+	$(CP) $(MOTIF_LIB)/libXm.so.3 $(LIBDIR)/$(LIBARCH)/$(TSOBJDIR)
+	$(CD) $(LIBDIR)/$(LIBARCH)/$(TSOBJDIR); $(RM) libXm.so; \
+		$(LN) -s libXm.so.3 libXm.so
+	@-$(TOUCH) $(OBJDIR)/.library.motif.$(ARCH)
+
+clean:: motif.clean
+
+motif.clean :
+	$(RM) $(LIBDIR)/$(LIBARCH)/$(TSOBJDIR)/libXm.*
 
 ifndef OPENJDK
 
@@ -477,7 +508,8 @@ ifneq ($(PLATFORM), windows)
 #
 
 ifeq ($(PLATFORM), linux)
-CPPFLAGS += -I$(OPENWIN_HOME)/include \
+CPPFLAGS += -I$(MOTIF_DIR)/include \
+            -I$(OPENWIN_HOME)/include \
             -I$(OPENWIN_HOME)/include/X11/extensions \
             -I$(PLATFORM_SRC)/native/$(PKGDIR)/font 
 endif
@@ -503,7 +535,7 @@ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/debug \
 	    $(EVENT_MODEL)
 
 ifeq ($(PLATFORM), linux)
-LDFLAGS += -L$(OPENWIN_LIB)
+LDFLAGS += -L$(MOTIF_LIB) -L$(OPENWIN_LIB)
 endif
 
 LDFLAGS += -L$(LIBDIR)/$(LIBARCH)/$(TSOBJDIR) \

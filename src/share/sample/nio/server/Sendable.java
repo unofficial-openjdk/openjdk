@@ -37,6 +37,7 @@ import java.io.*;
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
+ * @version %I%, %E%
  */
 interface Sendable {
 

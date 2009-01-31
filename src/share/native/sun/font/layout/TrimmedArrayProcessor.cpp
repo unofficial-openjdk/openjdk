@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)TrimmedArrayProcessor.cpp	1.10 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -71,4 +72,4 @@ void TrimmedArrayProcessor::process(LEGlyphStorage &glyphStorage)
             glyphStorage[glyph] = LE_SET_GLYPH(thisGlyph, newGlyph);
         }
     }
-}
+} 

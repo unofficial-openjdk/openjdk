@@ -23,9 +23,9 @@
 
 /*
  * @test
- * @bug 4298133
- * @summary Due to a bug in Vector's removeAllElements(),
- *          the modification counter  would not get incremented.
+ * @bug 4298133 
+ * @summary Due to a bug in Vector's removeAllElements(), 
+ *          the modification counter  would not get incremented. 
  * @author Konstantin Kladko
  */
 
@@ -34,15 +34,15 @@ import java.util.*;
 public class ComodifiedRemoveAllElements {
     public static void main(String[] args) {
         Vector v = new Vector();
-        v.addElement(null);
+        v.addElement(null); 
         Iterator it = v.iterator();
         v.removeAllElements();
         try{
-            it.next();
-        } catch (ConcurrentModificationException cme) {
-            return;
-        }
+	    it.next();
+	} catch (ConcurrentModificationException cme) {
+	    return;
+	} 
         throw new RuntimeException(
-                  "Vector.RemoveAllElements() modCount increment failed.");
+	          "Vector.RemoveAllElements() modCount increment failed.");
     }
 }

@@ -33,18 +33,18 @@ import java.util.Collection;
  * for the {@link CertStore CertStore} class. All <code>CertStore</code>
  * implementations must include a class (the SPI class) that extends
  * this class (<code>CertStoreSpi</code>), provides a constructor with
- * a single argument of type <code>CertStoreParameters</code>, and implements
+ * a single argument of type <code>CertStoreParameters</code>, and implements 
  * all of its methods. In general, instances of this class should only be
- * accessed through the <code>CertStore</code> class.
+ * accessed through the <code>CertStore</code> class. 
  * For details, see the Java Cryptography Architecture.
  * <p>
  * <b>Concurrent Access</b>
  * <p>
- * The public methods of all <code>CertStoreSpi</code> objects must be
- * thread-safe. That is, multiple threads may concurrently invoke these
- * methods on a single <code>CertStoreSpi</code> object (or more than one)
- * with no ill effects. This allows a <code>CertPathBuilder</code> to search
- * for a CRL while simultaneously searching for further certificates, for
+ * The public methods of all <code>CertStoreSpi</code> objects must be 
+ * thread-safe. That is, multiple threads may concurrently invoke these 
+ * methods on a single <code>CertStoreSpi</code> object (or more than one) 
+ * with no ill effects. This allows a <code>CertPathBuilder</code> to search 
+ * for a CRL while simultaneously searching for further certificates, for 
  * instance.
  * <p>
  * Simple <code>CertStoreSpi</code> implementations will probably ensure
@@ -52,8 +52,9 @@ import java.util.Collection;
  * <code>engineGetCertificates</code> and <code>engineGetCRLs</code> methods.
  * More sophisticated ones may allow truly concurrent access.
  *
- * @since       1.4
- * @author      Steve Hanna
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Steve Hanna
  */
 public abstract class CertStoreSpi {
 
@@ -64,7 +65,7 @@ public abstract class CertStoreSpi {
      * @throws InvalidAlgorithmParameterException if the initialization
      * parameters are inappropriate for this <code>CertStoreSpi</code>
      */
-    public CertStoreSpi(CertStoreParameters params)
+    public CertStoreSpi(CertStoreParameters params) 
     throws InvalidAlgorithmParameterException { }
 
     /**
@@ -77,7 +78,7 @@ public abstract class CertStoreSpi {
      * <code>Certificate</code>s that match the selector. For instance,
      * an LDAP <code>CertStore</code> may not search all entries in the
      * directory. Instead, it may just search entries that are likely to
-     * contain the <code>Certificate</code>s it is looking for.
+     * contain the <code>Certificate</code>s it is looking for. 
      * <p>
      * Some <code>CertStore</code> implementations (especially LDAP
      * <code>CertStore</code>s) may throw a <code>CertStoreException</code>
@@ -90,11 +91,11 @@ public abstract class CertStoreSpi {
      *  to return all <code>Certificate</code>s (if supported).
      * @return A <code>Collection</code> of <code>Certificate</code>s that
      *         match the specified selector (never <code>null</code>)
-     * @throws CertStoreException if an exception occurs
+     * @throws CertStoreException if an exception occurs 
      */
     public abstract Collection<? extends Certificate> engineGetCertificates
-            (CertSelector selector) throws CertStoreException;
-
+	    (CertSelector selector) throws CertStoreException;
+     
     /**
      * Returns a <code>Collection</code> of <code>CRL</code>s that
      * match the specified selector. If no <code>CRL</code>s
@@ -105,12 +106,12 @@ public abstract class CertStoreSpi {
      * <code>CRL</code>s that match the selector. For instance,
      * an LDAP <code>CertStore</code> may not search all entries in the
      * directory. Instead, it may just search entries that are likely to
-     * contain the <code>CRL</code>s it is looking for.
+     * contain the <code>CRL</code>s it is looking for. 
      * <p>
-     * Some <code>CertStore</code> implementations (especially LDAP
-     * <code>CertStore</code>s) may throw a <code>CertStoreException</code>
-     * unless a non-null <code>CRLSelector</code> is provided that includes
-     * specific criteria that can be used to find the CRLs. Issuer names
+     * Some <code>CertStore</code> implementations (especially LDAP 
+     * <code>CertStore</code>s) may throw a <code>CertStoreException</code> 
+     * unless a non-null <code>CRLSelector</code> is provided that includes 
+     * specific criteria that can be used to find the CRLs. Issuer names 
      * and/or the certificate to be checked are especially useful.
      *
      * @param selector A <code>CRLSelector</code> used to select which
@@ -118,8 +119,8 @@ public abstract class CertStoreSpi {
      *  to return all <code>CRL</code>s (if supported).
      * @return A <code>Collection</code> of <code>CRL</code>s that
      *         match the specified selector (never <code>null</code>)
-     * @throws CertStoreException if an exception occurs
+     * @throws CertStoreException if an exception occurs 
      */
     public abstract Collection<? extends CRL> engineGetCRLs
-            (CRLSelector selector) throws CertStoreException;
+	    (CRLSelector selector) throws CertStoreException;
 }

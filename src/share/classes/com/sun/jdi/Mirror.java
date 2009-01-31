@@ -27,21 +27,21 @@ package com.sun.jdi;
 
 /**
  * A proxy used by a debugger to examine or manipulate some entity
- * in another virtual machine. Mirror is the root of the
+ * in another virtual machine. Mirror is the root of the 
  * interface hierarchy for this package. Mirrors can be proxies for objects
  * in the target VM ({@link ObjectReference}), primitive values
  * (for example, {@link IntegerValue}), types (for example,
- * {@link ReferenceType}), dynamic application state (for example,
+ * {@link ReferenceType}), dynamic application state (for example, 
  * {@link StackFrame}), and even debugger-specific constructs (for example,
- * {@link com.sun.jdi.request.BreakpointRequest}).
- * The {@link VirtualMachine} itself is also
- * considered a mirror, representing the composite state of the
+ * {@link com.sun.jdi.request.BreakpointRequest}). 
+ * The {@link VirtualMachine} itself is also 
+ * considered a mirror, representing the composite state of the 
  * target VM.
  * <P>
  * There is no guarantee that a particular entity in the target VM will map
  * to a single instance of Mirror. Implementors are free to decide
- * whether a single mirror will be used for some or all mirrors. Clients
- * of this interface should always use <code>equals</code> to compare
+ * whether a single mirror will be used for some or all mirrors. Clients 
+ * of this interface should always use <code>equals</code> to compare 
  * two mirrors for equality.
  * <p>
  * Any method on a {@link com.sun.jdi.Mirror} that takes a <code>Mirror</code> as an
@@ -69,8 +69,9 @@ public interface Mirror {
 
     /**
      * Returns a String describing this mirror
-     *
+     * 
      * @return a string describing this mirror.
      */
     String toString();
 }
+

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,28 +31,28 @@ import java.io.*;
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        String base = System.getProperty("test.src", ".");
+	String base = System.getProperty("test.src", ".");
 
-        /*
-         * Files negativeHandle.ser and tooHighHandle.ser each contain a
-         * serialized String object followed by an illegal handle
-         */
-        File f = new File(base, "negativeHandle.ser");
-        ObjectInputStream oin = new ObjectInputStream(new FileInputStream(f));
-        oin.readObject();
-        try {
-            oin.readObject();
-            throw new Error("negative handle read should not succeed");
-        } catch (StreamCorruptedException ex) {
-        }
-
-        f = new File(base, "tooHighHandle.ser");
-        oin = new ObjectInputStream(new FileInputStream(f));
-        oin.readObject();
-        try {
-            oin.readObject();
-            throw new Error("too-high handle read should not succeed");
-        } catch (StreamCorruptedException ex) {
-        }
+	/*
+	 * Files negativeHandle.ser and tooHighHandle.ser each contain a
+	 * serialized String object followed by an illegal handle
+	 */
+	File f = new File(base, "negativeHandle.ser");
+	ObjectInputStream oin = new ObjectInputStream(new FileInputStream(f));
+	oin.readObject();
+	try {
+	    oin.readObject();
+	    throw new Error("negative handle read should not succeed");
+	} catch (StreamCorruptedException ex) {
+	}
+	
+	f = new File(base, "tooHighHandle.ser");
+	oin = new ObjectInputStream(new FileInputStream(f));
+	oin.readObject();
+	try {
+	    oin.readObject();
+	    throw new Error("too-high handle read should not succeed");
+	} catch (StreamCorruptedException ex) {
+	}
     }
 }

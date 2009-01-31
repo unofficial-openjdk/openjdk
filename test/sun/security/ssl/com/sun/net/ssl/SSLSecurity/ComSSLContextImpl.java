@@ -27,21 +27,21 @@ import com.sun.net.ssl.*;
 public class ComSSLContextImpl extends SSLContextSpi {
 
     public ComSSLContextImpl() {
-        System.out.println("ComSSLContextImpl initialized");
+	System.out.println("ComSSLContextImpl initialized");
     }
 
     protected void engineInit(KeyManager[] km,
-           TrustManager[] tm, SecureRandom sr) throws KeyManagementException {
-        System.out.println("ComSSLContextImpl init'd");
+	   TrustManager[] tm, SecureRandom sr) throws KeyManagementException {
+	System.out.println("ComSSLContextImpl init'd");
     }
 
     protected javax.net.ssl.SSLSocketFactory engineGetSocketFactory() {
-        return null;
+	return null;
     }
 
     protected javax.net.ssl.SSLServerSocketFactory
-            engineGetServerSocketFactory() {
-        return null;
+	    engineGetServerSocketFactory() {
+	return null;
     }
 
 }

@@ -86,7 +86,7 @@ class XDecoratedPeer extends XWindowPeer {
         params.put(BOUNDS, dimensions.getClientRect());
         insLog.log(Level.FINE, "Initial dimensions {0}", new Object[] { dimensions });
 
-        // Deny default processing of these events on the shell - proxy will take care of
+        // Deny default processing of these events on the shell - proxy will take care of 
         // them instead
         Long eventMask = (Long)params.get(EVENT_MASK);
         params.add(EVENT_MASK, Long.valueOf(eventMask.longValue() & ~(FocusChangeMask | KeyPressMask | KeyReleaseMask)));
@@ -104,7 +104,7 @@ class XDecoratedPeer extends XWindowPeer {
             warningWindow.toFront();
         }
         focusProxy = createFocusProxy();
-    }
+    }    
 
     void setIconHints(java.util.List<XIconInfo> icons) {
         if (!XWM.getWM().setNetWMIcon(this, icons)) {
@@ -112,7 +112,7 @@ class XDecoratedPeer extends XWindowPeer {
                 if (iconWindow == null) {
                     iconWindow = new XIconWindow(this);
                 }
-                iconWindow.setIconImages(icons);
+                iconWindow.setIconImages(icons);                
             }
         }
     }
@@ -132,7 +132,7 @@ class XDecoratedPeer extends XWindowPeer {
                 int minHeight = minimumSize.height - insets.top - insets.bottom;
                 if (minWidth < 0) minWidth = 0;
                 if (minHeight < 0) minHeight = 0;
-                setSizeHints(XlibWrapper.PMinSize | (isLocationByPlatform()?0:(XlibWrapper.PPosition | XlibWrapper.USPosition)),
+                setSizeHints(XlibWrapper.PMinSize | (isLocationByPlatform()?0:(XlibWrapper.PPosition | XlibWrapper.USPosition)), 
                              getX(), getY(), minWidth, minHeight);
                 if (isVisible()) {
                     Rectangle bounds = getShellBounds();
@@ -220,7 +220,7 @@ class XDecoratedPeer extends XWindowPeer {
             netIconNameAtom.setPropertyUTF8(getWindow(), name);
         } finally {
             XToolkit.awtUnlock();
-        }
+        }        
     }
 
     // NOTE: This method may be called by privileged threads.
@@ -252,7 +252,7 @@ class XDecoratedPeer extends XWindowPeer {
     protected boolean isInitialReshape() {
         return false;
     }
-
+    
     Insets difference(Insets i1, Insets i2) {
         return new Insets(i1.top-i2.top, i1.left - i2.left, i1.bottom-i2.bottom, i1.right-i2.right);
     }
@@ -349,7 +349,7 @@ class XDecoratedPeer extends XWindowPeer {
              * Ok, now see if we need adjust window size because
              * initial insets were wrong (most likely they were).
              */
-            Insets correction = difference(correctWM, currentInsets);
+            Insets correction = difference(correctWM, currentInsets); 
             insLog.log(Level.FINEST, "Corrention {0}", new Object[] {correction});
             if (!isNull(correction)) {
                 /*
@@ -359,12 +359,12 @@ class XDecoratedPeer extends XWindowPeer {
                 add(currentInsets, correction);
                 applyGuessedInsets();
 
-                //Fix for 6318109: PIT: Min Size is not honored properly when a
+                //Fix for 6318109: PIT: Min Size is not honored properly when a 
                 //smaller size is specified in setSize(), XToolkit
-                //update minimum size hints
+                //update minimum size hints 
                 updateMinSizeHints();
-
-                /*
+                
+                /* 
                  * If this window has been sized by a pack() we need
                  * to keep the interior geometry intact.  Since pack()
                  * computed width and height with wrong insets, we
@@ -372,14 +372,14 @@ class XDecoratedPeer extends XWindowPeer {
                  */
             }
             if (insLog.isLoggable(Level.FINER)) insLog.finer("Dimensions before reparent: " + dimensions);
-
+            
             dimensions.setInsets(getRealInsets());
             insets_corrected = true;
-
+            
             if (isMaximized()) {
                 return;
             }
-
+            
             if ((getHints().get_flags() & (USPosition | PPosition)) != 0) {
                 reshape(dimensions, SET_BOUNDS, false);
             } else {
@@ -419,7 +419,7 @@ class XDecoratedPeer extends XWindowPeer {
         Insets guessed = guessInsets();
         currentInsets = copy(guessed);
         insets = copy(currentInsets);
-    }
+    }   
 
     public void revalidate() {
         XToolkit.executeOnEventHandlerThread(target, new Runnable() {
@@ -436,18 +436,18 @@ class XDecoratedPeer extends XWindowPeer {
         }
         return insets;
     }
-
-    public Insets getInsets() {
+    
+    public Insets getInsets() {  
         Insets in = copy(getRealInsets());
         in.top += getMenuBarHeight() + getWarningWindowHeight();
         if (insLog.isLoggable(Level.FINEST)) insLog.log(Level.FINEST, "Get insets returns {0}", new Object[] {in});
         return in;
     }
 
-    boolean gravityBug() {
+    boolean gravityBug() { 
         return XWM.configureGravityBuggy();
     }
-
+    
     // The height of area used to display current active input method
     int getInputMethodHeight() {
         return 0;
@@ -478,7 +478,7 @@ class XDecoratedPeer extends XWindowPeer {
                            new Object[] {Boolean.valueOf(isReparented()), Boolean.valueOf(visible)});
 
                 // Fix for 6323293.
-                // This actually is needed to preserve compatibility with previous releases -
+                // This actually is needed to preserve compatibility with previous releases - 
                 // some of licensees are expecting componentMoved event on invisible one while
                 // its location changes.
                 Point oldLocation = getLocation();
@@ -495,8 +495,8 @@ class XDecoratedPeer extends XWindowPeer {
                 Rectangle client = dimensions.getClientRect();
                 checkShellRect(client);
                 setShellBounds(client);
-                if (content != null &&
-                    !content.getSize().equals(newDimensions.getSize()))
+                if (content != null && 
+                    !content.getSize().equals(newDimensions.getSize())) 
                 {
                     reconfigureContentWindow(newDimensions);
                 }
@@ -585,7 +585,7 @@ class XDecoratedPeer extends XWindowPeer {
 
         reshape(dims, operation, userReshape);
     }
-
+    
     /**
      * @see java.awt.peer.ComponentPeer#setBounds
      */
@@ -610,7 +610,7 @@ class XDecoratedPeer extends XWindowPeer {
         XConfigureEvent xe = xev.get_xconfigure();
         insLog.log(Level.FINE, "Configure notify {0}", new Object[] {xe});
 
-        // XXX: should really only consider synthetic events, but
+        // XXX: should really only consider synthetic events, but 
         if (isReparented()) {
             configure_seen = true;
         }
@@ -674,15 +674,15 @@ class XDecoratedPeer extends XWindowPeer {
                 insets_corrected = true;
             }
         }
-
+        
         updateChildrenSizes();
-
+        
         // Bounds of the window
         Rectangle targetBounds = new Rectangle(ComponentAccessor.getX((Component)target),
                 ComponentAccessor.getY((Component)target),
                 ComponentAccessor.getWidth((Component)target),
                 ComponentAccessor.getHeight((Component)target));
-
+        
         Point newLocation = targetBounds.getLocation();
         if (xe.get_send_event() || runningWM == XWM.NO_WM || XWM.isNonReparentingWM()) {
             // Location, Client size + insets
@@ -710,18 +710,18 @@ class XDecoratedPeer extends XWindowPeer {
                     break;
             }
         }
-
+        
         WindowDimensions newDimensions =
                 new WindowDimensions(newLocation,
                 new Dimension(xe.get_width(), xe.get_height()),
                 copy(currentInsets),
                 true);
-
+        
         insLog.log(Level.FINER, "Insets are {0}, new dimensions {1}",
                 new Object[] {currentInsets, newDimensions});
-
+        
         checkIfOnNewScreen(newDimensions.getBounds());
-
+        
         Point oldLocation = getLocation();
         dimensions = newDimensions;
         if (!newLocation.equals(oldLocation)) {
@@ -755,7 +755,7 @@ class XDecoratedPeer extends XWindowPeer {
     }
 
     public void setShellBounds(Rectangle rec) {
-        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting shell bounds on " +
+        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting shell bounds on " + 
                                                        this + " to " + rec);
         XToolkit.awtLock();
         try {
@@ -768,7 +768,7 @@ class XDecoratedPeer extends XWindowPeer {
         }
     }
     public void setShellSize(Rectangle rec) {
-        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting shell size on " +
+        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting shell size on " + 
                                                        this + " to " + rec);
         XToolkit.awtLock();
         try {
@@ -780,7 +780,7 @@ class XDecoratedPeer extends XWindowPeer {
         }
     }
     public void setShellPosition(Rectangle rec) {
-        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting shell position on " +
+        if (insLog.isLoggable(Level.FINE)) insLog.fine("Setting shell position on " + 
                                                        this + " to " + rec);
         XToolkit.awtLock();
         try {
@@ -797,7 +797,7 @@ class XDecoratedPeer extends XWindowPeer {
     }
     public void setResizable(boolean resizable) {
         int fs = winAttr.functions;
-        if (!isResizable() && resizable) {
+        if (!isResizable() && resizable) {            
             insets = currentInsets = new Insets(0, 0, 0, 0);
             resetWMSetInsets();
             if (!isEmbedded()) {
@@ -851,7 +851,7 @@ class XDecoratedPeer extends XWindowPeer {
     public Point getLocation() {
         return dimensions.getLocation();
     }
-
+    
     public int getAbsoluteX() {
         // NOTE: returning this peer's location which is shell location
         return dimensions.getScreenBounds().x;
@@ -891,7 +891,7 @@ class XDecoratedPeer extends XWindowPeer {
         }
     }
 
-
+    
 /***************************************************************************************
  *              END            OF             I N S E T S   C O D E
  **************************************************************************************/
@@ -903,12 +903,12 @@ class XDecoratedPeer extends XWindowPeer {
               return true;
           case EnterNotify:
           case LeaveNotify:
-              // Disable crossing event on outer borders of Frame so
+              // Disable crossing event on outer borders of Frame so 
               // we receive only one set of cross notifications(first set is from content window)
               return true;
           default:
               return super.isEventDisabled(e);
-        }
+        }        
     }
 
     int getDecorations() {
@@ -944,17 +944,17 @@ class XDecoratedPeer extends XWindowPeer {
         }
         wm_protocols.setAtomListProperty(this, protocols);
     }
-
+    
     public void dispose() {
         if (content != null) {
             content.destroy();
         }
         focusProxy.destroy();
-
+         
         if (iconWindow != null) {
             iconWindow.destroy();
         }
-
+   
         super.dispose();
     }
 
@@ -1014,9 +1014,9 @@ class XDecoratedPeer extends XWindowPeer {
     final void dumpTarget() {
         int getWidth = ComponentAccessor.getWidth((Component)target);
         int getHeight = ComponentAccessor.getHeight((Component)target);
-        int getTargetX = ComponentAccessor.getX((Component)target);
-        int getTargetY = ComponentAccessor.getY((Component)target);
-        System.err.println(">>> Target: " + getTargetX + ", " + getTargetY + ", " + getWidth + ", " + getHeight);
+        int getTargetX = ComponentAccessor.getX((Component)target); 
+        int getTargetY = ComponentAccessor.getY((Component)target); 
+        System.err.println(">>> Target: " + getTargetX + ", " + getTargetY + ", " + getWidth + ", " + getHeight);        
     }
 
     final void dumpShell() {
@@ -1076,12 +1076,12 @@ class XDecoratedPeer extends XWindowPeer {
     public boolean requestWindowFocus(long time, boolean timeProvided) {
         focusLog.fine("Request for decorated window focus");
         // If this is Frame or Dialog we can't assure focus request success - but we still can try
-        // If this is Window and its owner Frame is active we can be sure request succedded.
+        // If this is Window and its owner Frame is active we can be sure request succedded.        
         Window win = (Window)target;
         Window focusedWindow = XKeyboardFocusManagerPeer.getCurrentNativeFocusedWindow();
         Window activeWindow = XWindowPeer.getDecoratedOwner(focusedWindow);
 
-        focusLog.log(Level.FINER, "Current window is: active={0}, focused={1}",
+        focusLog.log(Level.FINER, "Current window is: active={0}, focused={1}", 
                      new Object[]{ Boolean.valueOf(win == activeWindow),
                                    Boolean.valueOf(win == focusedWindow)});
 
@@ -1182,7 +1182,7 @@ class XDecoratedPeer extends XWindowPeer {
                 setActualFocusedWindow((XWindowPeer) ComponentAccessor.getPeer(actualFocusedWindow));
             }
         }
-        super.handleWindowFocusOut(oppositeWindow, serial);
+        super.handleWindowFocusOut(oppositeWindow, serial);        
     }
 
     private Point queryXLocation()

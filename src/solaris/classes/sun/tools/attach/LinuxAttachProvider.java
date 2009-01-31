@@ -40,35 +40,35 @@ public class LinuxAttachProvider extends HotSpotAttachProvider {
     // perf counter for the JVM version
     private static final String JVM_VERSION = "java.property.java.vm.version";
 
-    public LinuxAttachProvider() {
+    public LinuxAttachProvider() { 
     }
 
     public String name() {
-        return "sun";
+  	return "sun";
     }
 
     public String type() {
-        return "socket";
+	return "socket";
     }
 
-    public VirtualMachine attachVirtualMachine(String vmid)
-        throws AttachNotSupportedException, IOException
+    public VirtualMachine attachVirtualMachine(String vmid) 
+	throws AttachNotSupportedException, IOException 
     {
-        checkAttachPermission();
+	checkAttachPermission();
 
-        // AttachNotSupportedException will be thrown if the target VM can be determined
-        // to be not attachable.
-        testAttachable(vmid);
+	// AttachNotSupportedException will be thrown if the target VM can be determined
+        // to be not attachable. 
+	testAttachable(vmid);
 
         return new LinuxVirtualMachine(this, vmid);
-    }
+    }	
 
-    public VirtualMachine attachVirtualMachine(VirtualMachineDescriptor vmd)
+    public VirtualMachine attachVirtualMachine(VirtualMachineDescriptor vmd) 
         throws AttachNotSupportedException, IOException
     {
-        if (vmd.provider() != this) {
-            throw new AttachNotSupportedException("provider mismatch");
-        }
+	if (vmd.provider() != this) {
+	    throw new AttachNotSupportedException("provider mismatch");
+	}
         // To avoid re-checking if the VM if attachable, we check if the descriptor
         // is for a hotspot VM - these descriptors are created by the listVirtualMachines
         // implementation which only returns a list of attachable VMs.
@@ -80,5 +80,5 @@ public class LinuxAttachProvider extends HotSpotAttachProvider {
             return attachVirtualMachine(vmd.id());
         }
     }
-
+    
 }

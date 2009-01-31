@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -35,7 +35,7 @@ public class Validate {
     public static void main(String[] args) throws Exception {
         try {
             // Write class out
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutput out = new ObjectOutputStream(baos);
 
             Class1 c1 = new Class1(11, 22);
@@ -49,8 +49,8 @@ public class Validate {
             out.close();
 
             // Read it back
-            ByteArrayInputStream bais =
-                new ByteArrayInputStream(baos.toByteArray());
+	    ByteArrayInputStream bais = 
+		new ByteArrayInputStream(baos.toByteArray());
             ObjectInputStream in = new ObjectInputStream(bais);
             Class1 cc1 = (Class1) in.readObject();
             Class1 cc2 = (Class1) in.readObject();
@@ -64,10 +64,10 @@ public class Validate {
             System.out.println(cc2.a + " " + cc2.b);
         } catch (IOException e) {
             e.printStackTrace();
-            throw e;
+	    throw e;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            throw e;
+	    throw e;
         }
     }
 }
@@ -75,22 +75,22 @@ public class Validate {
 class Class1 implements Serializable, ObjectInputValidation {
     int a, b;
     transient int validates;
-
+    
     public Class1(int aa, int bb) {
         a = aa;
         b = bb;
     }
     public void validateObject() throws InvalidObjectException {
-        if (validates > 0)
-            throw new Error("Implementation error: Re-validating object " + this.toString());
-        validates++;
-
-        System.out.println("Validating " + this.toString());
+	if (validates > 0)
+	    throw new Error("Implementation error: Re-validating object " + this.toString());
+	validates++;
+	
+	System.out.println("Validating " + this.toString());
         if (a > b) {
             throw new InvalidObjectException("Fields cannot be negative");
         }
     }
-    private void readObject(ObjectInputStream in)
+    private void readObject(ObjectInputStream in) 
         throws IOException, ClassNotFoundException {
             in.registerValidation(this, 1);
             in.defaultReadObject();

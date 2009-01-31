@@ -142,6 +142,7 @@ import  java.io.*;
  * @author  unascribed
  * @author  Josh Bloch (Added exception chaining and programmatic access to
  *          stack trace in 1.4.)
+ * @version %I%, %G%
  * @since JDK1.0
  */
 public class Throwable implements Serializable {

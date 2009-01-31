@@ -45,7 +45,7 @@ Java_sun_management_ThreadImpl_setThreadCpuTimeEnabled0
 
 JNIEXPORT void JNICALL
 Java_sun_management_ThreadImpl_getThreadInfo0
-  (JNIEnv *env, jclass cls, jlongArray ids, jint maxDepth,
+  (JNIEnv *env, jclass cls, jlongArray ids, jint maxDepth, 
    jobjectArray infoArray)
 {
     jmm_interface->GetThreadInfo(env, ids, maxDepth, infoArray);

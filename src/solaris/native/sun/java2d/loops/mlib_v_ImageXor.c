@@ -23,6 +23,7 @@
  * have any questions.
  */
 
+#pragma ident	"@(#)mlib_v_ImageXor.c	1.1	03/04/29 SMI"
 
 /*
  * FUNCTION

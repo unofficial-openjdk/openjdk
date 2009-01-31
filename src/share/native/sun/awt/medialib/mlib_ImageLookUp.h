@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __MLIB_IMAGE_LOOKUP_FUNC_INTENAL_H
 #define __MLIB_IMAGE_LOOKUP_FUNC_INTENAL_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_ImageLookUp.h	1.4	02/10/18 SMI"
+#endif /* __SUNPRO_C */
 
 #include "mlib_ImageCopy.h"
 
@@ -34,11 +38,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #ifdef _MSC_VER
-/* Microsoft VC 6.0 compiler assumes that pointer fit into long
+/* Microsoft VC 6.0 compiler assumes that pointer fit into long 
    and therefore array's index may not exceed MAX_INT/sizeof(data_type).
-
+  
    TABLE_SHIFT_32 is used as index in arrays of types up to mlib_d64
-   (see mlib_ImageLookUp_S32_D64 for instance) and therefore must not
+   (see mlib_ImageLookUp_S32_D64 for instance) and therefore must not 
    exceed ((2^33/sizeof(mlib_d64)) - 1) */
 #define TABLE_SHIFT_S32         (mlib_u32) 536870911
 #else
@@ -166,3 +170,4 @@ mlib_status mlib_ImageLookUp_Bit_U8_4(const mlib_u8 *src,
 }
 #endif /* __cplusplus */
 #endif /* __MLIB_IMAGE_LOOKUP_FUNC_INTENAL_H */
+

@@ -34,7 +34,7 @@
 
 #include "sun_java2d_loops_FillPath.h"
 
-static void drawScanline(DrawHandler* hnd, jint x0, jint x1, jint y0) {
+static void drawScanline(DrawHandler* hnd, jint x0, jint x1, jint y0) { 
     DHND(hnd)->pPrim->funcs.drawline(
         DHND(hnd)->pRasInfo, x0, y0, DHND(hnd)->pixel, x1 - x0 + 1, 0,
         BUMP_POS_PIXEL, 0, BUMP_NOOP, 0,
@@ -49,7 +49,7 @@ static void drawScanline(DrawHandler* hnd, jint x0, jint x1, jint y0) {
 JNIEXPORT void JNICALL Java_sun_java2d_loops_FillPath_FillPath
     (JNIEnv *env, jobject self,
      jobject sg2d, jobject sData,
-     jint transX, jint transY, jobject p2df)
+     jint transX, jint transY, jobject p2df) 
 {
     jarray typesArray;
     jarray coordsArray;
@@ -116,13 +116,13 @@ JNIEXPORT void JNICALL Java_sun_java2d_loops_FillPath_FillPath
             if (rasInfo.bounds.x2 > rasInfo.bounds.x1 &&
                 rasInfo.bounds.y2 > rasInfo.bounds.y1)
             {
-                DrawHandlerData dHData;
-                DrawHandler drawHandler = {
+                DrawHandlerData dHData; 
+                DrawHandler drawHandler = { 
                     NULL,
                     NULL,
                     &drawScanline,
-                    0, 0, 0, 0,
-                    0, 0, 0, 0,
+                    0, 0, 0, 0, 
+                    0, 0, 0, 0, 
                     NULL
                 };
 
@@ -136,7 +136,7 @@ JNIEXPORT void JNICALL Java_sun_java2d_loops_FillPath_FillPath
                  *  with C90 standard instead of C99)
                  */
                 dHData.pRasInfo = &rasInfo;
-                dHData.pixel = pixel;
+                dHData.pixel = pixel; 
                 dHData.pPrim = pPrim;
                 dHData.pCompInfo = &compInfo;
 
@@ -146,14 +146,14 @@ JNIEXPORT void JNICALL Java_sun_java2d_loops_FillPath_FillPath
                 drawHandler.yMax = rasInfo.bounds.y2;
                 drawHandler.pData = &dHData;
 
-                if (!doFillPath(&drawHandler,
+                if (!doFillPath(&drawHandler, 
                                 transX, transY, coords,
-                                maxCoords, types, numTypes,
+                                maxCoords, types, numTypes, 
                                 (stroke == sunHints_INTVAL_STROKE_PURE)?
                                      PH_STROKE_PURE : PH_STROKE_DEFAULT,
-                                fillRule))
+                                fillRule)) 
                 {
-                    JNU_ThrowArrayIndexOutOfBoundsException(env,
+                    JNU_ThrowArrayIndexOutOfBoundsException(env, 
                                                             "coords array");
                 }
 

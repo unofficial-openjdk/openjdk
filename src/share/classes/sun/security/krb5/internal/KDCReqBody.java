@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -40,24 +41,24 @@ import java.math.BigInteger;
  * Implements the ASN.1 KDC-REQ-BODY type.
  *
  * <xmp>
- * KDC-REQ-BODY ::= SEQUENCE {
- *      kdc-options             [0] KDCOptions,
- *      cname                   [1] PrincipalName OPTIONAL
+ * KDC-REQ-BODY	::= SEQUENCE {
+ *	kdc-options		[0] KDCOptions,
+ *	cname			[1] PrincipalName OPTIONAL
  *                                    -- Used only in AS-REQ --,
- *      realm                   [2] Realm
+ *	realm			[2] Realm
  *                                    -- Server's realm
  *                                    -- Also client's in AS-REQ --,
- *      sname                   [3] PrincipalName OPTIONAL,
- *      from                    [4] KerberosTime OPTIONAL,
- *      till                    [5] KerberosTime,
- *      rtime                   [6] KerberosTime OPTIONAL,
- *      nonce                   [7] UInt32,
- *      etype                   [8] SEQUENCE OF Int32 -- EncryptionType
+ *	sname			[3] PrincipalName OPTIONAL,
+ *	from			[4] KerberosTime OPTIONAL,
+ *	till			[5] KerberosTime,
+ *	rtime			[6] KerberosTime OPTIONAL,
+ *	nonce			[7] UInt32,
+ *	etype			[8] SEQUENCE OF Int32 -- EncryptionType
  *                                    -- in preference order --,
- *      addresses               [9] HostAddresses OPTIONAL,
- *      enc-authorization-data  [10] EncryptedData OPTIONAL
+ *	addresses		[9] HostAddresses OPTIONAL,
+ *	enc-authorization-data	[10] EncryptedData OPTIONAL
  *                                    -- AuthorizationData --,
- *      additional-tickets      [11] SEQUENCE OF Ticket OPTIONAL
+ *	additional-tickets	[11] SEQUENCE OF Ticket OPTIONAL
  *                                       -- NOTE: not empty
  * }
  * </xmp>
@@ -78,12 +79,12 @@ public class KDCReqBody {
     public KerberosTime till;
     public KerberosTime rtime; //optional
     public HostAddresses addresses; //optional
-
+    
     private int nonce;
     private int[] eType = null; //a sequence; not optional
     private EncryptedData encAuthorizationData; //optional
     private Ticket[] additionalTickets; //optional
-
+    
     public KDCReqBody(
             KDCOptions new_kdcOptions,
             PrincipalName new_cname, //optional in ASReq only
@@ -122,7 +123,7 @@ public class KDCReqBody {
             }
         }
     }
-
+    
     /**
      * Constructs a KDCReqBody object.
      * @param encoding a DER-encoded data.
@@ -161,7 +162,7 @@ public class KDCReqBody {
         Vector<Integer> v = new Vector<Integer> ();
         if ((der.getTag() & (byte)0x1F) == (byte)0x08) {
             subDer = der.getData().getDerValue();
-
+            
             if (subDer.getTag() == DerValue.tag_SequenceOf) {
                 while(subDer.getData().available() > 0) {
                     v.addElement(subDer.getData().getBigInteger().intValue());
@@ -206,7 +207,7 @@ public class KDCReqBody {
             throw new Asn1Exception(Krb5.ASN1_BAD_ID);
         }
     }
-
+    
     /**
      * Encodes this object to an OutputStream.
      *
@@ -266,7 +267,7 @@ public class KDCReqBody {
         temp.putSequence(der);
         return temp.toByteArray();
     }
-
+    
     public int getNonce() {
         return nonce;
     }

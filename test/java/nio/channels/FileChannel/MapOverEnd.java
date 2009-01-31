@@ -33,7 +33,7 @@ import java.io.*;
 public class MapOverEnd {
     public static void main (String [] args) throws Exception {
         File blah = File.createTempFile("blah", null);
-        blah.deleteOnExit();
+	blah.deleteOnExit();
         RandomAccessFile raf = new RandomAccessFile (blah, "rw");
         FileChannel fc = raf.getChannel();
         MappedByteBuffer map = fc.map(FileChannel.MapMode.READ_WRITE, 0, 2048);

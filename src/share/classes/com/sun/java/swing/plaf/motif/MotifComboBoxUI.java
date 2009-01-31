@@ -42,6 +42,7 @@ import java.beans.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version %I%, %G%
  * @author Arnaud Weber
  */
 public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
@@ -50,7 +51,7 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
 
     public static ComponentUI createUI(JComponent c) {
         return new MotifComboBoxUI();
-    }
+    }  
 
     public void installUI(JComponent c) {
         super.installUI(c);
@@ -66,7 +67,7 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
             }
         };
 
-        SwingUtilities.invokeLater( initCode );
+        SwingUtilities.invokeLater( initCode ); 
     }
 
     public Dimension getMinimumSize( JComponent c ) {
@@ -80,7 +81,7 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         int buttonSize = iconAreaWidth();
         size.width +=  insets.left + insets.right + buttonSize;
 
-        cachedMinimumSize.setSize( size.width, size.height );
+        cachedMinimumSize.setSize( size.width, size.height ); 
         isMinimumSizeDirty = false;
 
         return size;
@@ -105,16 +106,16 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         public MouseMotionListener createListMouseMotionListener() {
            return new MouseMotionAdapter() {};
         }
-
+	
         public KeyListener createKeyListener() {
             return super.createKeyListener();
         }
 
         protected class InvocationKeyHandler extends BasicComboPopup.InvocationKeyHandler {
-            protected InvocationKeyHandler() {
-                MotifComboPopup.this.super();
-            }
-        }
+	    protected InvocationKeyHandler() {
+		MotifComboPopup.this.super();
+	    }
+	}
     }
 
     protected void installComponents() {
@@ -134,11 +135,11 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         boolean hasFocus = comboBox.hasFocus();
         Rectangle r;
 
-        if (comboBox.isEnabled()) {
-            g.setColor(comboBox.getBackground());
-        } else {
-            g.setColor(UIManager.getColor("ComboBox.disabledBackground"));
-        }
+	if (comboBox.isEnabled()) {
+	    g.setColor(comboBox.getBackground());
+	} else {
+	    g.setColor(UIManager.getColor("ComboBox.disabledBackground"));
+	}	    
         g.fillRect(0,0,c.getWidth(),c.getHeight());
 
         if ( !comboBox.isEditable() ) {
@@ -157,12 +158,12 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
                 in = new Insets( 0, 0, 0, 0 );
             }
             // Draw the separation
-            if(MotifGraphicsUtils.isLeftToRight(comboBox)) {
-                r.x -= (HORIZ_MARGIN + 2);
-            }
-            else {
-                r.x += r.width + HORIZ_MARGIN + 1;
-            }
+	    if(MotifGraphicsUtils.isLeftToRight(comboBox)) {
+	        r.x -= (HORIZ_MARGIN + 2);
+	    }
+	    else {
+	        r.x += r.width + HORIZ_MARGIN + 1;
+	    }
             r.y = in.top;
             r.width = 1;
             r.height = comboBox.getBounds().height - in.bottom - in.top;
@@ -180,14 +181,14 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         Dimension d;
         c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
         c.setFont(comboBox.getFont());
-        if ( comboBox.isEnabled() ) {
+	if ( comboBox.isEnabled() ) {
             c.setForeground(comboBox.getForeground());
             c.setBackground(comboBox.getBackground());
-        }
+	}
         else {
             c.setForeground(UIManager.getColor("ComboBox.disabledForeground"));
             c.setBackground(UIManager.getColor("ComboBox.disabledBackground"));
-        }
+	}
         d  = c.getPreferredSize();
         currentValuePane.paintComponent(g,c,comboBox,bounds.x,bounds.y,
                                         bounds.width,d.height);
@@ -208,12 +209,12 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         b.width -= (in.left + in.right);
         b.height -= (in.top + in.bottom);
 
-        if(MotifGraphicsUtils.isLeftToRight(comboBox)) {
-            b.x = b.x + b.width - HORIZ_MARGIN - arrowIcon.getIconWidth();
-        }
-        else {
-            b.x += HORIZ_MARGIN;
-        }
+	if(MotifGraphicsUtils.isLeftToRight(comboBox)) {
+	    b.x = b.x + b.width - HORIZ_MARGIN - arrowIcon.getIconWidth();
+	}
+	else {
+	    b.x += HORIZ_MARGIN;
+	}
         b.y = b.y + (b.height - arrowIcon.getIconHeight()) / 2;
         b.width = arrowIcon.getIconWidth();
         b.height = arrowIcon.getIconHeight();
@@ -224,18 +225,18 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         int width = comboBox.getWidth();
         int height = comboBox.getHeight();
         Insets insets = getInsets();
-        if(MotifGraphicsUtils.isLeftToRight(comboBox)) {
-            return new Rectangle(insets.left, insets.top,
-                                 (width - (insets.left + insets.right)) -
-                                                        iconAreaWidth(),
-                                 height - (insets.top + insets.bottom));
-        }
-        else {
-            return new Rectangle(insets.left + iconAreaWidth(), insets.top,
-                                 (width - (insets.left + insets.right)) -
-                                                        iconAreaWidth(),
-                                 height - (insets.top + insets.bottom));
-        }
+	if(MotifGraphicsUtils.isLeftToRight(comboBox)) {
+	    return new Rectangle(insets.left, insets.top,
+				 (width - (insets.left + insets.right)) - 
+				                        iconAreaWidth(),
+				 height - (insets.top + insets.bottom));
+	}
+	else {
+	    return new Rectangle(insets.left + iconAreaWidth(), insets.top,
+				 (width - (insets.left + insets.right)) - 
+				                        iconAreaWidth(),
+				 height - (insets.top + insets.bottom));
+	}
     }
 
     public int iconAreaWidth() {
@@ -262,11 +263,11 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
      * This inner class is marked &quot;public&quot; due to a compiler bug.
      * This class should be treated as a &quot;protected&quot; inner class.
      * Instantiate it only within subclasses of <FooUI>.
-     */
+     */    	     
     public class ComboBoxLayoutManager extends BasicComboBoxUI.ComboBoxLayoutManager {
-        public ComboBoxLayoutManager() {
-            MotifComboBoxUI.this.super();
-        }
+	public ComboBoxLayoutManager() {
+	    MotifComboBoxUI.this.super();
+	}
         public void layoutContainer(Container parent) {
             if ( motifGetEditor() != null ) {
                 Rectangle cvb = rectangleForCurrentValue();
@@ -276,7 +277,7 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
                 cvb.height -= 2;
                 motifGetEditor().setBounds(cvb);
             }
-        }
+        }    
     }
 
     static class MotifComboBoxArrowIcon implements Icon, Serializable {
@@ -318,7 +319,7 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
             }
 
             g.setColor(darkShadow);
-            g.drawLine(xo+(w/2), yo+h-1, xo+(w/2), yo+h-1);
+            g.drawLine(xo+(w/2), yo+h-1, xo+(w/2), yo+h-1); 
 
         }
 
@@ -359,3 +360,4 @@ public class MotifComboBoxUI extends BasicComboBoxUI implements Serializable {
         }
     }
 }
+

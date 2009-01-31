@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,18 +29,18 @@ public class FooReceiverImpl implements DownloadParameterClass.FooReceiver {
     private ActivationID id;
 
     public FooReceiverImpl(ActivationID id, MarshalledObject mobj)
-        throws ActivationException, RemoteException
+	throws ActivationException, RemoteException
     {
-        this.id = id;
-        Activatable.exportObject(this, id, 0);
+	this.id = id;
+	Activatable.exportObject(this, id, 0);
     }
 
     public void receiveFoo(Object obj) {
-        /*
-         * Cast argument to the type "Foo" as resolved from this activatble
-         * object's class; a ClassCastException will be thrown if the argument
-         * implements a type "Foo" loaded from a different class loader.
-         */
-        Foo foo = (Foo) obj;
+	/*
+	 * Cast argument to the type "Foo" as resolved from this activatble
+	 * object's class; a ClassCastException will be thrown if the argument
+	 * implements a type "Foo" loaded from a different class loader.
+	 */
+	Foo foo = (Foo) obj;
     }
 }

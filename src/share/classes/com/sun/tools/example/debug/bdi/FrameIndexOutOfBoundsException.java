@@ -26,3 +26,4 @@
 package com.sun.tools.example.debug.bdi;
 
 public class FrameIndexOutOfBoundsException extends IndexOutOfBoundsException {}
+

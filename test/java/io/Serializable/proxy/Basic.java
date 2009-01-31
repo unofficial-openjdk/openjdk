@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -38,32 +38,32 @@ class Handler implements InvocationHandler, Serializable {
 
     static Method fooMethod, barMethod;
     static {
-        try {
-            fooMethod = Foo.class.getDeclaredMethod("foo", new Class[0]);
-            barMethod = Bar.class.getDeclaredMethod("bar", new Class[0]);
-        } catch (NoSuchMethodException ex) {
-            throw new Error();
-        }
+	try {
+	    fooMethod = Foo.class.getDeclaredMethod("foo", new Class[0]);
+	    barMethod = Bar.class.getDeclaredMethod("bar", new Class[0]);
+	} catch (NoSuchMethodException ex) {
+	    throw new Error();
+	}
     }
 
     int foo;
     float bar;
 
     Handler(int foo, float bar) {
-        this.foo = foo;
-        this.bar = bar;
+	this.foo = foo;
+	this.bar = bar;
     }
-
+    
     public Object invoke(Object proxy, Method method, Object[] args)
-        throws Throwable
+	throws Throwable
     {
-        if (method.equals(fooMethod)) {
-            return new Integer(foo);
-        } else if (method.equals(barMethod)) {
-            return new Float(bar);
-        } else {
-            throw new UnsupportedOperationException();
-        }
+	if (method.equals(fooMethod)) {
+	    return new Integer(foo);
+	} else if (method.equals(barMethod)) {
+	    return new Float(bar);
+	} else {
+	    throw new UnsupportedOperationException();
+	}
     }
 }
 
@@ -71,49 +71,49 @@ class Handler implements InvocationHandler, Serializable {
 class ProxyBlindInputStream extends ObjectInputStream {
 
     ProxyBlindInputStream(InputStream in) throws IOException { super(in); }
-
+    
     protected Class resolveProxyClass(String[] interfaces)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        throw new ClassNotFoundException();
+	throw new ClassNotFoundException();
     }
 }
 
 public class Basic {
     public static void main(String[] args) throws Exception {
-        ClassLoader loader = ClassLoader.getSystemClassLoader();
-        Class[] interfaces = new Class[] { Foo.class, Bar.class };
-        Random rand = new Random();
-        int foo = rand.nextInt();
-        float bar = rand.nextFloat();
-        ObjectOutputStream oout;
-        ObjectInputStream oin;
-        ByteArrayOutputStream bout;
-        Object proxy;
+	ClassLoader loader = ClassLoader.getSystemClassLoader();
+	Class[] interfaces = new Class[] { Foo.class, Bar.class };
+	Random rand = new Random();
+	int foo = rand.nextInt();
+	float bar = rand.nextFloat();
+	ObjectOutputStream oout;
+	ObjectInputStream oin;
+	ByteArrayOutputStream bout;
+	Object proxy;
 
+	
+	// test simple proxy write + read
+	bout = new ByteArrayOutputStream();
+	oout = new ObjectOutputStream(bout);
+	oout.writeObject(Proxy.newProxyInstance(
+	    loader, interfaces, new Handler(foo, bar)));
+	oout.close();
 
-        // test simple proxy write + read
-        bout = new ByteArrayOutputStream();
-        oout = new ObjectOutputStream(bout);
-        oout.writeObject(Proxy.newProxyInstance(
-            loader, interfaces, new Handler(foo, bar)));
-        oout.close();
-
-        oin = new ObjectInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        proxy = oin.readObject();
-        if ((((Foo) proxy).foo() != foo) || (((Bar) proxy).bar() != bar)) {
-            throw new Error();
-        }
-
-
-        // test missing proxy class ClassNotFoundException
-        oin = new ProxyBlindInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        try {
-            oin.readObject();
-            throw new Error();
-        } catch (ClassNotFoundException ex) {
-        }
+	oin = new ObjectInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	proxy = oin.readObject();
+	if ((((Foo) proxy).foo() != foo) || (((Bar) proxy).bar() != bar)) {
+	    throw new Error();
+	}
+	
+	
+	// test missing proxy class ClassNotFoundException
+	oin = new ProxyBlindInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	try {
+	    oin.readObject();
+	    throw new Error();
+	} catch (ClassNotFoundException ex) {
+	}
     }
 }

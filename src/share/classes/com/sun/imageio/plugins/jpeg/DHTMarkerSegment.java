@@ -108,7 +108,7 @@ class DHTMarkerSegment extends MarkerSegment {
             Htable table = (Htable) tables.get(i);
             node.appendChild(table.getNativeNode());
         }
-        return node;
+        return node;           
     }
 
     /**
@@ -121,14 +121,14 @@ class DHTMarkerSegment extends MarkerSegment {
 
     void print() {
         printTag("DHT");
-        System.out.println("Num tables: "
+        System.out.println("Num tables: " 
                            + Integer.toString(tables.size()));
         for (int i= 0; i<tables.size(); i++) {
             Htable table = (Htable) tables.get(i);
             table.print();
         }
         System.out.println();
-
+            
     }
 
     Htable getHtableFromNode(Node node) throws IIOInvalidTreeException {
@@ -186,7 +186,7 @@ class DHTMarkerSegment extends MarkerSegment {
                 tableID = getAttributeValue(node, attrs, "htableId", 0, 3, true);
                 if (node instanceof IIOMetadataNode) {
                     IIOMetadataNode ourNode = (IIOMetadataNode) node;
-                    JPEGHuffmanTable table =
+                    JPEGHuffmanTable table = 
                         (JPEGHuffmanTable) ourNode.getUserObject();
                     if (table == null) {
                         throw new IIOInvalidTreeException
@@ -202,7 +202,7 @@ class DHTMarkerSegment extends MarkerSegment {
                 throw new IIOInvalidTreeException
                     ("Invalid node, expected dqtable", node);
             }
-
+            
         }
 
         protected Object clone() {
@@ -217,7 +217,7 @@ class DHTMarkerSegment extends MarkerSegment {
                 newGuy.values = (short []) values.clone();
             }
             return newGuy;
-        }
+        }        
 
         IIOMetadataNode getNativeNode() {
             IIOMetadataNode node = new IIOMetadataNode("dhtable");
@@ -232,7 +232,7 @@ class DHTMarkerSegment extends MarkerSegment {
 
         void print() {
             System.out.println("Huffman Table");
-            System.out.println("table class: "
+            System.out.println("table class: " 
                                + ((tableClass == 0) ? "DC":"AC"));
             System.out.println("table id: " + Integer.toString(tableID));
 

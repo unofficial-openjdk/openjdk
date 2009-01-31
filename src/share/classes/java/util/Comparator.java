@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,13 +80,9 @@ package java.util;
  * equals</i>, we mean that the quotient for the ordering is the equivalence
  * relation defined by the objects' {@link Object#equals(Object)
  * equals(Object)} method(s):<pre>
- *     {(x, y) such that x.equals(y)}. </pre>
+ *     {(x, y) such that x.equals(y)}. </pre><p>
  *
- * <p>Unlike {@code Comparable}, a comparator may optionally permit
- * comparison of null arguments, while maintaining the requirements for
- * an equivalence relation.
- *
- * <p>This interface is a member of the
+ * This interface is a member of the
  * <a href="{@docRoot}/../technotes/guides/collections/index.html">
  * Java Collections Framework</a>.
  *
@@ -94,6 +90,7 @@ package java.util;
  *
  * @author  Josh Bloch
  * @author  Neal Gafter
+ * @version %I%, %G%
  * @see Comparable
  * @see java.io.Serializable
  * @since 1.2
@@ -133,12 +130,10 @@ public interface Comparator<T> {
      * @param o1 the first object to be compared.
      * @param o2 the second object to be compared.
      * @return a negative integer, zero, or a positive integer as the
-     *         first argument is less than, equal to, or greater than the
-     *         second.
-     * @throws NullPointerException if an argument is null and this
-     *         comparator does not permit null arguments
+     * 	       first argument is less than, equal to, or greater than the
+     *	       second.
      * @throws ClassCastException if the arguments' types prevent them from
-     *         being compared by this comparator.
+     * 	       being compared by this comparator.
      */
     int compare(T o1, T o2);
 
@@ -159,8 +154,8 @@ public interface Comparator<T> {
      *
      * @param   obj   the reference object with which to compare.
      * @return  <code>true</code> only if the specified object is also
-     *          a comparator and it imposes the same ordering as this
-     *          comparator.
+     *		a comparator and it imposes the same ordering as this
+     *		comparator.
      * @see Object#equals(Object)
      * @see Object#hashCode()
      */

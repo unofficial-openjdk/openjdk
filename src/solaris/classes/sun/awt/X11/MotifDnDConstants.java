@@ -55,7 +55,7 @@ class MotifDnDConstants {
         XAtom.get("XmTRANSFER_SUCCESS");
     static final XAtom XA_XmTRANSFER_FAILURE =
         XAtom.get("XmTRANSFER_FAILURE");
-    static final XSelection MotifDnDSelection =
+    static final XSelection MotifDnDSelection = 
         new XSelection(XA_MOTIF_ATOM_0, null);
 
     public static final byte MOTIF_DND_PROTOCOL_VERSION = 0;
@@ -108,26 +108,26 @@ class MotifDnDConstants {
 
     private static long readMotifWindow() throws XException {
         long defaultScreenNumber = XlibWrapper.DefaultScreen(XToolkit.getDisplay());
-        long defaultRootWindow =
+        long defaultRootWindow = 
             XlibWrapper.RootWindow(XToolkit.getDisplay(), defaultScreenNumber);
 
         long motifWindow = 0;
 
-        WindowPropertyGetter wpg = new WindowPropertyGetter(defaultRootWindow,
-                                                            XA_MOTIF_DRAG_WINDOW,
+        WindowPropertyGetter wpg = new WindowPropertyGetter(defaultRootWindow, 
+                                                            XA_MOTIF_DRAG_WINDOW, 
                                                             0, 1,
-                                                            false,
+                                                            false, 
                                                             XlibWrapper.AnyPropertyType);
         try {
             int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
 
-            if (status == XlibWrapper.Success &&
-                wpg.getData() != 0 &&
+            if (status == XlibWrapper.Success && 
+                wpg.getData() != 0 && 
                 wpg.getActualType() == XAtom.XA_WINDOW &&
-                wpg.getActualFormat() == 32 &&
+                wpg.getActualFormat() == 32 && 
                 wpg.getNumberOfItems() == 1) {
                 long data = wpg.getData();
-                // XID is CARD32.
+                // XID is CARD32. 
                 motifWindow = Native.getLong(data);
             }
 
@@ -142,13 +142,13 @@ class MotifDnDConstants {
 
         long defaultScreenNumber =
             XlibWrapper.DefaultScreen(XToolkit.getDisplay());
-        long defaultRootWindow =
+        long defaultRootWindow = 
             XlibWrapper.RootWindow(XToolkit.getDisplay(), defaultScreenNumber);
 
         long motifWindow = 0;
 
         long displayString = XlibWrapper.XDisplayString(XToolkit.getDisplay());
-
+        
         if (displayString == 0) {
             throw new XException("XDisplayString returns NULL");
         }
@@ -158,9 +158,9 @@ class MotifDnDConstants {
         if (newDisplay == 0) {
             throw new XException("XOpenDisplay returns NULL");
         }
-
+        
         XlibWrapper.XGrabServer(newDisplay);
-
+        
         try {
             XlibWrapper.XSetCloseDownMode(newDisplay, (int)XlibWrapper.RetainPermanent);
 
@@ -170,36 +170,36 @@ class MotifDnDConstants {
                 xwa.set_override_redirect(true);
                 xwa.set_event_mask(XlibWrapper.PropertyChangeMask);
 
-                motifWindow = XlibWrapper.XCreateWindow(newDisplay, defaultRootWindow,
-                                                        -10, -10, 1, 1, 0, 0,
+                motifWindow = XlibWrapper.XCreateWindow(newDisplay, defaultRootWindow, 
+                                                        -10, -10, 1, 1, 0, 0, 
                                                         XlibWrapper.InputOnly,
                                                         XlibWrapper.CopyFromParent,
-                                                        (XlibWrapper.CWOverrideRedirect |
+                                                        (XlibWrapper.CWOverrideRedirect | 
                                                          XlibWrapper.CWEventMask),
                                                         xwa.pData);
-
+                
                 if (motifWindow == 0) {
                     throw new XException("XCreateWindow returns NULL");
                 }
-
+                
                 XlibWrapper.XMapWindow(newDisplay, motifWindow);
-
+                
                 long data = Native.allocateLongArray(1);
-
+                
                 try {
                     Native.putLong(data, motifWindow);
-
+                    
                     XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
                     XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
                                                 defaultRootWindow,
-                                                XA_MOTIF_DRAG_WINDOW.getAtom(),
-                                                XAtom.XA_WINDOW, 32,
+                                                XA_MOTIF_DRAG_WINDOW.getAtom(), 
+                                                XAtom.XA_WINDOW, 32, 
                                                 XlibWrapper.PropModeReplace,
                                                 data, 1);
-
+                    
                     XToolkit.RESTORE_XERROR_HANDLER();
-
-                    if (XToolkit.saved_error != null &&
+                    
+                    if (XToolkit.saved_error != null && 
                         XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                         throw new XException("Cannot write motif drag window handle.");
                     }
@@ -221,7 +221,7 @@ class MotifDnDConstants {
         /*
          * Note: it is unsafe to cache the motif drag window handle, as another
          * client can change the _MOTIF_DRAG_WINDOW property on the root, the handle
-         * becomes out-of-sync and all subsequent drag operations will fail.
+         * becomes out-of-sync and all subsequent drag operations will fail. 
          */
         long motifWindow = readMotifWindow();
         if (motifWindow == 0) {
@@ -235,7 +235,7 @@ class MotifDnDConstants {
             return (short)(((s & 0xFF00) >>> 8) | ((s & 0xFF) << 8));
         }
         public static int swap(int i) {
-            return ((i & 0xFF000000) >>> 24) | ((i & 0x00FF0000) >>> 8) |
+            return ((i & 0xFF000000) >>> 24) | ((i & 0x00FF0000) >>> 8) | 
                 ((i & 0x0000FF00) << 8) | ((i & 0x000000FF) << 24);
         }
 
@@ -267,26 +267,26 @@ class MotifDnDConstants {
      *    CARD32        heap_offset B32;
      * } xmMotifTargetsPropertyRec;
      */
-    private static long[][] getTargetListTable(long motifWindow)
+    private static long[][] getTargetListTable(long motifWindow) 
       throws XException {
 
-        WindowPropertyGetter wpg = new WindowPropertyGetter(motifWindow,
-                                                            XA_MOTIF_DRAG_TARGETS,
+        WindowPropertyGetter wpg = new WindowPropertyGetter(motifWindow, 
+                                                            XA_MOTIF_DRAG_TARGETS, 
                                                             0, 100000L,
                                                             false,
                                                             XA_MOTIF_DRAG_TARGETS.getAtom());
         try {
             int status = wpg.execute(XToolkit.IgnoreBadWindowHandler);
 
-            if (status != XlibWrapper.Success
-                || wpg.getActualType() != XA_MOTIF_DRAG_TARGETS.getAtom()
+            if (status != XlibWrapper.Success 
+                || wpg.getActualType() != XA_MOTIF_DRAG_TARGETS.getAtom() 
                 || wpg.getData() == 0) {
 
                 return null;
             }
 
             long data = wpg.getData();
-
+         
             if (unsafe.getByte(data + 1) != MOTIF_DND_PROTOCOL_VERSION) {
                 return null;
             }
@@ -304,7 +304,7 @@ class MotifDnDConstants {
             if (swapNeeded) {
                 byteOrder = (byteOrder == ByteOrder.LITTLE_ENDIAN) ?
                     ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
-            }
+            }                            
 
             long bufptr = data + 8;
             for (short i = 0; i < numTargetLists; i++) {
@@ -313,7 +313,7 @@ class MotifDnDConstants {
                 if (swapNeeded) {
                     numTargets = Swapper.swap(numTargets);
                 }
-
+                
                 table[i] = new long[numTargets];
 
                 for (short j = 0; j < numTargets; j++) {
@@ -322,7 +322,7 @@ class MotifDnDConstants {
                     int target = 0;
                     if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
                         for (int idx = 0; idx < 4; idx++) {
-                            target |= (unsafe.getByte(bufptr + idx) << 8*idx)
+                            target |= (unsafe.getByte(bufptr + idx) << 8*idx) 
                                 & (0xFF << 8*idx);
                         }
                     } else {
@@ -343,7 +343,7 @@ class MotifDnDConstants {
         }
     }
 
-    private static void putTargetListTable(long motifWindow, long[][] table)
+    private static void putTargetListTable(long motifWindow, long[][] table) 
       throws XException {
         assert XToolkit.isAWTLockHeldByCurrentThread();
 
@@ -370,7 +370,7 @@ class MotifDnDConstants {
             for (int i = 0; i < table.length; i++) {
                 unsafe.putShort(bufptr, (short)table[i].length);
                 bufptr += 2;
-
+                
                 for (int j = 0; j < table[i].length; j++) {
                     int target = (int)table[i][j];
                     // NOTE: cannot use Unsafe.putInt(), since it crashes on
@@ -393,14 +393,14 @@ class MotifDnDConstants {
             XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
             XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
                                         motifWindow,
-                                        XA_MOTIF_DRAG_TARGETS.getAtom(),
-                                        XA_MOTIF_DRAG_TARGETS.getAtom(), 8,
+                                        XA_MOTIF_DRAG_TARGETS.getAtom(), 
+                                        XA_MOTIF_DRAG_TARGETS.getAtom(), 8, 
                                         XlibWrapper.PropModeReplace,
                                         data, tableSize);
-
+                    
             XToolkit.RESTORE_XERROR_HANDLER();
-
-            if (XToolkit.saved_error != null &&
+                    
+            if (XToolkit.saved_error != null && 
                 XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
 
                 // Create a new motif window and retry.
@@ -409,14 +409,14 @@ class MotifDnDConstants {
                 XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
                 XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
                                             motifWindow,
-                                            XA_MOTIF_DRAG_TARGETS.getAtom(),
-                                            XA_MOTIF_DRAG_TARGETS.getAtom(), 8,
+                                            XA_MOTIF_DRAG_TARGETS.getAtom(), 
+                                            XA_MOTIF_DRAG_TARGETS.getAtom(), 8, 
                                             XlibWrapper.PropModeReplace,
                                             data, tableSize);
-
+                    
                 XToolkit.RESTORE_XERROR_HANDLER();
-
-                if (XToolkit.saved_error != null &&
+                
+                if (XToolkit.saved_error != null && 
                     XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                     throw new XException("Cannot write motif drag targets property.");
                 }
@@ -489,7 +489,7 @@ class MotifDnDConstants {
 
             /* Fill in the new entry */
             new_table[new_table.length - 1] = formats;
-
+            
             putTargetListTable(motifWindow, new_table);
 
             return new_table.length - 1;
@@ -501,7 +501,7 @@ class MotifDnDConstants {
     static long[] getTargetListForIndex(int index) {
         long motifWindow = getMotifWindow();
         long[][] table = getTargetListTable(motifWindow);
-
+        
         if (index < 0 || index >= table.length) {
             return new long[0];
         } else {
@@ -511,7 +511,7 @@ class MotifDnDConstants {
 
     static byte getByteOrderByte() {
         // 'l' - for little endian, 'B' - for big endian.
-        return ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ?
+        return ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN ? 
             (byte)0x6C : (byte)0x42;
     }
 
@@ -521,24 +521,24 @@ class MotifDnDConstants {
         long structData = unsafe.allocateMemory(MOTIF_INITIATOR_INFO_SIZE);
 
         try {
-            // BYTE byte_order
-            unsafe.putByte(structData, getByteOrderByte());
+            // BYTE byte_order 
+            unsafe.putByte(structData, getByteOrderByte());         
             // BYTE protocol_version
-            unsafe.putByte(structData + 1, MOTIF_DND_PROTOCOL_VERSION);
+            unsafe.putByte(structData + 1, MOTIF_DND_PROTOCOL_VERSION); 
             // CARD16 protocol_version
-            unsafe.putShort(structData + 2, (short)index);
+            unsafe.putShort(structData + 2, (short)index);          
             // CARD32 icc_handle
-            unsafe.putInt(structData + 4, (int)XA_MOTIF_ATOM_0.getAtom());
+            unsafe.putInt(structData + 4, (int)XA_MOTIF_ATOM_0.getAtom());    
 
             XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
             XlibWrapper.XChangeProperty(XToolkit.getDisplay(), window,
-                                        XA_MOTIF_ATOM_0.getAtom(),
-                                        XA_MOTIF_DRAG_INITIATOR_INFO.getAtom(),
+                                        XA_MOTIF_ATOM_0.getAtom(), 
+                                        XA_MOTIF_DRAG_INITIATOR_INFO.getAtom(), 
                                         8, XlibWrapper.PropModeReplace,
                                         structData, MOTIF_INITIATOR_INFO_SIZE);
             XToolkit.RESTORE_XERROR_HANDLER();
-
-            if (XToolkit.saved_error != null &&
+            
+            if (XToolkit.saved_error != null && 
                 XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                 throw new XException("Cannot write drag initiator info");
             }
@@ -565,13 +565,13 @@ class MotifDnDConstants {
 
             XToolkit.WITH_XERROR_HANDLER(XWM.VerifyChangePropertyHandler);
             XlibWrapper.XChangeProperty(XToolkit.getDisplay(), window,
-                                        XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
-                                        XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(),
+                                        XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(), 
+                                        XA_MOTIF_DRAG_RECEIVER_INFO.getAtom(), 
                                         8, XlibWrapper.PropModeReplace,
                                         data, dataSize);
             XToolkit.RESTORE_XERROR_HANDLER();
-
-            if (XToolkit.saved_error != null &&
+            
+            if (XToolkit.saved_error != null && 
                 XToolkit.saved_error.get_error_code() != XlibWrapper.Success) {
                 throw new XException("Cannot write Motif receiver info property");
             }
@@ -582,7 +582,7 @@ class MotifDnDConstants {
 
     public static int getMotifActionsForJavaActions(int javaActions) {
         int motifActions = MOTIF_DND_NOOP;
-
+        
         if ((javaActions & DnDConstants.ACTION_MOVE) != 0) {
             motifActions |= MOTIF_DND_MOVE;
         }

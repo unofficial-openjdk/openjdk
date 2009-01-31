@@ -28,7 +28,7 @@
 #include "sun_misc_GC.h"
 
 
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_sun_misc_GC_maxObjectInspectionAge(JNIEnv *env, jclass cls)
 {
     return JVM_MaxObjectInspectionAge();

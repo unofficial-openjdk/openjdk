@@ -23,6 +23,7 @@
  * have any questions.
  */
 /*
+ * @(#)StandardTextSource.java	1.8 00/03/15
  *
  * (C) Copyright IBM Corp. 1998-2003 - All Rights Reserved
  */
@@ -57,18 +58,18 @@ public class StandardTextSource extends TextSource {
    * Level is the bidi level (0-63 for the entire context. Flags is
    * the layout flags. Font is the font, frc is the render context,
    * and lm is the line metrics for the entire source text, but not
-   * necessarily the context.
+   * necessarily the context.  
    */
   public StandardTextSource(char[] chars,
-                            int start,
-                            int len,
-                            int cstart,
-                            int clen,
-                            int level,
-                            int flags,
-                            Font font,
-                            FontRenderContext frc,
-                            CoreMetrics cm) {
+			    int start,
+			    int len,
+			    int cstart,
+			    int clen,
+			    int level,
+			    int flags,
+			    Font font,
+			    FontRenderContext frc,
+			    CoreMetrics cm) {
     if (chars == null) {
       throw new IllegalArgumentException("bad chars: null");
     }
@@ -117,31 +118,31 @@ public class StandardTextSource extends TextSource {
 
   /** Create a StandardTextSource whose context is coextensive with the source. */
   public StandardTextSource(char[] chars,
-                            int start,
-                            int len,
-                            int level,
-                            int flags,
-                            Font font,
-                            FontRenderContext frc,
-                            CoreMetrics cm) {
+			    int start,
+			    int len,
+			    int level,
+			    int flags,
+			    Font font,
+			    FontRenderContext frc,
+			    CoreMetrics cm) {
     this(chars, start, len, start, len, level, flags, font, frc, cm);
   }
 
   /** Create a StandardTextSource whose context and source are coextensive with the entire char array. */
   public StandardTextSource(char[] chars,
-                            int level,
-                            int flags,
-                            Font font,
-                            FontRenderContext frc) {
+			    int level,
+			    int flags,
+			    Font font,
+			    FontRenderContext frc) {
     this(chars, 0, chars.length, 0, chars.length, level, flags, font, frc, null);
   }
 
   /** Create a StandardTextSource whose context and source are all the text in the String. */
   public StandardTextSource(String str,
-                            int level,
-                            int flags,
-                            Font font,
-                            FontRenderContext frc) {
+			    int level,
+			    int flags,
+			    Font font,
+			    FontRenderContext frc) {
     this(str.toCharArray(), 0, str.length(), 0, str.length(), level, flags, font, frc, null);
   }
 
@@ -231,7 +232,7 @@ public class StandardTextSource extends TextSource {
     }
     for (int i = chStart; i < chLimit; ++i) {
       if (i > chStart) {
-        buf.append(" ");
+	buf.append(" ");
       }
       buf.append(Integer.toHexString(chars[i]));
     }

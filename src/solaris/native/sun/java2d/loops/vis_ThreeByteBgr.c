@@ -73,65 +73,65 @@ void ADD_SUFF(ThreeByteBgrToIntArgbConvert)(BLIT_PARAMS)
     mlib_s32 i, i0, j;
 
     if (width < 16) {
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = srcBase;
-            mlib_s32 *dst = dstBase;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = srcBase;
+	    mlib_s32 *dst = dstBase;
 
-            for (i = 0; i < width; i++) {
-                dst[i] = GBR_PIXEL(i);
-            }
+	    for (i = 0; i < width; i++) {
+		dst[i] = GBR_PIXEL(i);
+	    }
 
-            PTR_ADD(dstBase, dstScan);
-            PTR_ADD(srcBase, srcScan);
-        }
-        return;
+	    PTR_ADD(dstBase, dstScan);
+	    PTR_ADD(srcBase, srcScan);
+	}
+	return;    
     }
 
     if (srcScan == 3*width && dstScan == 4*width) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     s_0 = vis_fone();
 
     for (j = 0; j < height; j++) {
-        mlib_u8  *src = srcBase;
-        mlib_f32 *dst = dstBase;
+	mlib_u8  *src = srcBase;
+	mlib_f32 *dst = dstBase;
 
-        i = i0 = 0;
+	i = i0 = 0;
 
-        if ((mlib_s32)dst & 7) {
-            ((mlib_s32*)dst)[i] = GBR_PIXEL(i);
-            i0 = 1;
-        }
+	if ((mlib_s32)dst & 7) {
+	    ((mlib_s32*)dst)[i] = GBR_PIXEL(i);
+	    i0 = 1;
+	}
 
-        sp = vis_alignaddr(src, 3*i0);
-        s3 = *sp++;
+	sp = vis_alignaddr(src, 3*i0);
+	s3 = *sp++;
 
 #pragma pipeloop(0)
-        for (i = i0; i <= (mlib_s32)width - 8; i += 8) {
-            s0 = s3;
-            s1 = *sp++;
-            s2 = *sp++;
-            s3 = *sp++;
-            sd0 = vis_faligndata(s0, s1);
-            sd1 = vis_faligndata(s1, s2);
-            sd2 = vis_faligndata(s2, s3);
+	for (i = i0; i <= (mlib_s32)width - 8; i += 8) {
+	    s0 = s3;
+	    s1 = *sp++;
+	    s2 = *sp++;
+	    s3 = *sp++;
+	    sd0 = vis_faligndata(s0, s1);
+	    sd1 = vis_faligndata(s1, s2);
+	    sd2 = vis_faligndata(s2, s3);
 
-            BGR_TO_ARGB
+	    BGR_TO_ARGB
 
-            *(mlib_d64*)(dst + i    ) = dd0;
-            *(mlib_d64*)(dst + i + 2) = dd1;
-            *(mlib_d64*)(dst + i + 4) = dd2;
-            *(mlib_d64*)(dst + i + 6) = dd3;
-        }
+	    *(mlib_d64*)(dst + i    ) = dd0;
+	    *(mlib_d64*)(dst + i + 2) = dd1;
+	    *(mlib_d64*)(dst + i + 4) = dd2;
+	    *(mlib_d64*)(dst + i + 6) = dd3;
+	}
 
-        for (; i < width; i++) {
-            ((mlib_s32*)dst)[i] = GBR_PIXEL(i);
-        }
+	for (; i < width; i++) {
+	    ((mlib_s32*)dst)[i] = GBR_PIXEL(i);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -145,24 +145,24 @@ void ADD_SUFF(ThreeByteBgrToIntArgbScaleConvert)(SCALE_PARAMS)
     mlib_s32 i, i0, i1, j;
 
     if (width < 16) {
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = srcBase;
-            mlib_s32 *dst = dstBase;
-            mlib_s32 *dst_end = dst + width;
-            mlib_s32 tmpsxloc = sxloc;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = srcBase;
+	    mlib_s32 *dst = dstBase;
+	    mlib_s32 *dst_end = dst + width;
+	    mlib_s32 tmpsxloc = sxloc;
 
-            PTR_ADD(src, (syloc >> shift) * srcScan);
+	    PTR_ADD(src, (syloc >> shift) * srcScan);
 
-            for (; dst < dst_end; dst++) {
-                i = tmpsxloc >> shift;
-                tmpsxloc += sxinc;
-                *(mlib_s32*)dst = GBR_PIXEL(i);
-            }
+	    for (; dst < dst_end; dst++) {
+		i = tmpsxloc >> shift;
+		tmpsxloc += sxinc;
+		*(mlib_s32*)dst = GBR_PIXEL(i);
+	    }
 
-            PTR_ADD(dstBase, dstScan);
-            syloc += syinc;
-        }
-        return;
+	    PTR_ADD(dstBase, dstScan);
+	    syloc += syinc;
+	}
+	return;    
     }
 
     maskFF = vis_fone();
@@ -170,46 +170,46 @@ void ADD_SUFF(ThreeByteBgrToIntArgbScaleConvert)(SCALE_PARAMS)
     vis_alignaddr(NULL, 7);
 
     for (j = 0; j < height; j++) {
-        mlib_u8  *src = srcBase;
-        mlib_f32 *dst = dstBase;
-        mlib_f32 *dst_end = dst + width;
-        mlib_s32 tmpsxloc = sxloc;
+	mlib_u8  *src = srcBase;
+	mlib_f32 *dst = dstBase;
+	mlib_f32 *dst_end = dst + width;
+	mlib_s32 tmpsxloc = sxloc;
 
-        PTR_ADD(src, (syloc >> shift) * srcScan);
+	PTR_ADD(src, (syloc >> shift) * srcScan);
 
-        if ((mlib_s32)dst & 7) {
-            i = tmpsxloc >> shift;
-            tmpsxloc += sxinc;
-            *(mlib_s32*)dst = GBR_PIXEL(i);
-            dst++;
-        }
+	if ((mlib_s32)dst & 7) {
+	    i = tmpsxloc >> shift;
+	    tmpsxloc += sxinc;
+	    *(mlib_s32*)dst = GBR_PIXEL(i);
+	    dst++;
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= dst_end - 2; dst += 2) {
-            i0 = tmpsxloc >> shift;
-            i1 = (tmpsxloc + sxinc) >> shift;
-            tmpsxloc += 2*sxinc;
+	for (; dst <= dst_end - 2; dst += 2) {
+	    i0 = tmpsxloc >> shift;
+	    i1 = (tmpsxloc + sxinc) >> shift;
+	    tmpsxloc += 2*sxinc;
 
-            dd = vis_faligndata(vis_ld_u8(src + 3*i1    ), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 1), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 2), dd);
-            dd = vis_faligndata(maskFF, dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i0    ), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 1), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 2), dd);
-            dd = vis_faligndata(maskFF, dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i1    ), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 1), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 2), dd);
+	    dd = vis_faligndata(maskFF, dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i0    ), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 1), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 2), dd);
+	    dd = vis_faligndata(maskFF, dd);
 
-            *(mlib_d64*)dst = dd;
-        }
+	    *(mlib_d64*)dst = dd;
+	}
 
-        for (; dst < dst_end; dst++) {
-            i = tmpsxloc >> shift;
-            tmpsxloc += sxinc;
-            *(mlib_s32*)dst = GBR_PIXEL(i);
-        }
+	for (; dst < dst_end; dst++) {
+	    i = tmpsxloc >> shift;
+	    tmpsxloc += sxinc;
+	    *(mlib_s32*)dst = GBR_PIXEL(i);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        syloc += syinc;
+	PTR_ADD(dstBase, dstScan);
+	syloc += syinc;
     }
 }
 

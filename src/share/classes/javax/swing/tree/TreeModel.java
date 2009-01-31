@@ -52,9 +52,10 @@ import javax.swing.event.*;
  * see <a
  href="http://java.sun.com/docs/books/tutorial/uiswing/components/tree.html">How to Use Trees</a>
  * in <em>The Java Tutorial.</em>
- *
+ * 
  * @see TreePath
- *
+ * 
+ * @version %I% %G%
  * @author Rob Davis
  * @author Ray Ryan
  */
@@ -112,7 +113,7 @@ public interface TreeModel
 
     /**
       * Messaged when the user has altered the value for the item identified
-      * by <code>path</code> to <code>newValue</code>.
+      * by <code>path</code> to <code>newValue</code>. 
       * If <code>newValue</code> signifies a truly new value
       * the model should post a <code>treeNodesChanged</code> event.
       *
@@ -154,7 +155,7 @@ public interface TreeModel
      *
      * @see     #addTreeModelListener
      * @param   l       the listener to remove
-     */
+     */  
     void removeTreeModelListener(TreeModelListener l);
 
 }

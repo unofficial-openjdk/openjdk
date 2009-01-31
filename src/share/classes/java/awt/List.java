@@ -99,7 +99,8 @@ import javax.accessibility.*;
  * For multiple-selection scrolling lists, it is considered a better
  * user interface to use an external gesture (such as clicking on a
  * button) to trigger the action.
- * @author      Sami Shaio
+ * @version 	%I%, %G%
+ * @author 	Sami Shaio
  * @see         java.awt.event.ItemEvent
  * @see         java.awt.event.ItemListener
  * @see         java.awt.event.ActionEvent
@@ -115,8 +116,8 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see #addItem(String)
      * @see #getItem(int)
      */
-    Vector      items = new Vector();
-
+    Vector	items = new Vector();
+    
     /**
      * This field will represent the number of visible rows in the
      * <code>List</code> Component.  It is specified only once, and
@@ -126,7 +127,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @serial
      * @see #getRows()
      */
-    int         rows = 0;
+    int		rows = 0;
 
     /**
      * <code>multipleMode</code> is a variable that will
@@ -142,7 +143,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see #isMultipleMode()
      * @see #setMultipleMode(boolean)
      */
-    boolean     multipleMode = false;
+    boolean	multipleMode = false;
 
     /**
      * <code>selected</code> is an array that will contain
@@ -152,7 +153,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see #getSelectedIndexes()
      * @see #getSelectedIndex()
      */
-    int         selected[] = new int[0];
+    int		selected[] = new int[0];
 
     /**
      * This variable contains the value that will be used
@@ -161,7 +162,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @serial
      * @see #makeVisible(int)
      */
-    int         visibleIndex = -1;
+    int		visibleIndex = -1;
 
     transient ActionListener actionListener;
     transient ItemListener itemListener;
@@ -185,7 +186,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public List() throws HeadlessException {
-        this(0, false);
+	this(0, false);
     }
 
     /**
@@ -202,14 +203,14 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since       JDK1.1
      */
     public List(int rows) throws HeadlessException {
-        this(rows, false);
+    	this(rows, false);
     }
 
     /**
      * The default number of visible rows is 4.  A list with
      * zero rows is unusable and unsightly.
      */
-    final static int    DEFAULT_VISIBLE_ROWS = 4;
+    final static int 	DEFAULT_VISIBLE_ROWS = 4;
 
     /**
      * Creates a new scrolling list initialized to display the specified
@@ -231,8 +232,8 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     public List(int rows, boolean multipleMode) throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
-        this.rows = (rows != 0) ? rows : DEFAULT_VISIBLE_ROWS;
-        this.multipleMode = multipleMode;
+	this.rows = (rows != 0) ? rows : DEFAULT_VISIBLE_ROWS;
+	this.multipleMode = multipleMode;
     }
 
     /**
@@ -251,10 +252,10 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
-            if (peer == null)
-                peer = getToolkit().createList(this);
-            super.addNotify();
-        }
+	    if (peer == null)
+	        peer = getToolkit().createList(this);
+	    super.addNotify();
+	}
     }
 
     /**
@@ -262,13 +263,13 @@ public class List extends Component implements ItemSelectable, Accessible {
      * list's appearance without changing its functionality.
      */
     public void removeNotify() {
-        synchronized (getTreeLock()) {
-            ListPeer peer = (ListPeer)this.peer;
-            if (peer != null) {
-                selected = peer.getSelectedIndexes();
-            }
-            super.removeNotify();
-        }
+    	synchronized (getTreeLock()) {
+	    ListPeer peer = (ListPeer)this.peer;
+	    if (peer != null) {
+		selected = peer.getSelectedIndexes();
+	    }
+	    super.removeNotify();
+	}
     }
 
     /**
@@ -278,7 +279,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since      JDK1.1
      */
     public int getItemCount() {
-        return countItems();
+	return countItems();
     }
 
     /**
@@ -287,7 +288,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public int countItems() {
-        return items.size();
+	return items.size();
     }
 
     /**
@@ -298,15 +299,15 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see          #getItemCount
      */
     public String getItem(int index) {
-        return getItemImpl(index);
+	return getItemImpl(index);
     }
 
     // NOTE: This method may be called by privileged threads.
-    //       We implement this functionality in a package-private method
-    //       to insure that it cannot be overridden by client subclasses.
+    //       We implement this functionality in a package-private method 
+    //       to insure that it cannot be overridden by client subclasses. 
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
     final String getItemImpl(int index) {
-        return (String)items.elementAt(index);
+	return (String)items.elementAt(index);
     }
 
     /**
@@ -318,9 +319,9 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since        JDK1.1
      */
     public synchronized String[] getItems() {
-        String itemCopies[] = new String[items.size()];
-        items.copyInto(itemCopies);
-        return itemCopies;
+	String itemCopies[] = new String[items.size()];
+    	items.copyInto(itemCopies);
+	return itemCopies;
     }
 
     /**
@@ -329,7 +330,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since JDK1.1
      */
     public void add(String item) {
-        addItem(item);
+	addItem(item);
     }
 
     /**
@@ -337,15 +338,15 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public void addItem(String item) {
-        addItem(item, -1);
+	addItem(item, -1);
     }
 
     /**
      * Adds the specified item to the the scrolling list
-     * at the position indicated by the index.  The index is
-     * zero-based.  If the value of the index is less than zero,
-     * or if the value of the index is greater than or equal to
-     * the number of items in the list, then the item is added
+     * at the position indicated by the index.  The index is 
+     * zero-based.  If the value of the index is less than zero, 
+     * or if the value of the index is greater than or equal to 
+     * the number of items in the list, then the item is added 
      * to the end of the list.
      * @param       item   the item to be added;
      *              if this parameter is <code>null</code> then the item is
@@ -354,7 +355,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since       JDK1.1
      */
     public void add(String item, int index) {
-        addItem(item, index);
+	addItem(item, index);
     }
 
     /**
@@ -362,24 +363,24 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public synchronized void addItem(String item, int index) {
-        if (index < -1 || index >= items.size()) {
-            index = -1;
-        }
+	if (index < -1 || index >= items.size()) {
+	    index = -1;
+	}
 
         if (item == null) {
             item = "";
         }
 
-        if (index == -1) {
-            items.addElement(item);
-        } else {
-            items.insertElementAt(item, index);
-        }
+	if (index == -1) {
+	    items.addElement(item);
+	} else {
+	    items.insertElementAt(item, index);
+	}
 
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
-            peer.addItem(item, index);
-        }
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
+	    peer.addItem(item, index);
+	}
     }
 
     /**
@@ -388,11 +389,11 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @param       newValue   a new string to replace an existing item
      * @param       index      the position of the item to replace
      * @exception ArrayIndexOutOfBoundsException if <code>index</code>
-     *          is out of range
+     *		is out of range
      */
     public synchronized void replaceItem(String newValue, int index) {
-        remove(index);
-        add(newValue, index);
+	remove(index);
+	add(newValue, index);
     }
 
     /**
@@ -402,7 +403,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since JDK1.1
      */
     public void removeAll() {
-        clear();
+	clear();
     }
 
     /**
@@ -411,17 +412,17 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public synchronized void clear() {
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
-            peer.clear();
-        }
-        items = new Vector();
-        selected = new int[0];
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
+	    peer.clear();
+	}
+	items = new Vector();
+	selected = new int[0];
     }
 
     /**
      * Removes the first occurrence of an item from the list.
-     * If the specified item is selected, and is the only selected
+     * If the specified item is selected, and is the only selected 
      * item in the list, the list is set to have no selection.
      * @param        item  the item to remove from the list
      * @exception    IllegalArgumentException
@@ -429,19 +430,19 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since        JDK1.1
      */
     public synchronized void remove(String item) {
-        int index = items.indexOf(item);
-        if (index < 0) {
-            throw new IllegalArgumentException("item " + item +
-                                               " not found in list");
-        } else {
-            remove(index);
-        }
+    	int index = items.indexOf(item);
+    	if (index < 0) {
+	    throw new IllegalArgumentException("item " + item +
+					       " not found in list");
+	} else {
+	    remove(index);
+	}
     }
 
     /**
      * Removes the item at the specified position
      * from this scrolling list.
-     * If the item with the specified position is selected, and is the
+     * If the item with the specified position is selected, and is the 
      * only selected item in the list, the list is set to have no selection.
      * @param      position   the index of the item to delete
      * @see        #add(String, int)
@@ -451,7 +452,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      *               greater than <code>getItemCount()-1</code>
      */
     public void remove(int position) {
-        delItem(position);
+	delItem(position);
     }
 
     /**
@@ -460,77 +461,77 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public void delItem(int position) {
-        delItems(position, position);
+	delItems(position, position);
     }
 
     /**
      * Gets the index of the selected item on the list,
-     *
-     * @return        the index of the selected item;
-     *                if no item is selected, or if multiple items are
-     *                selected, <code>-1</code> is returned.
+     * 
+     * @return        the index of the selected item; 
+     *                if no item is selected, or if multiple items are 
+     *                selected, <code>-1</code> is returned.  
      * @see           #select
      * @see           #deselect
      * @see           #isIndexSelected
      */
     public synchronized int getSelectedIndex() {
-        int sel[] = getSelectedIndexes();
-        return (sel.length == 1) ? sel[0] : -1;
+	int sel[] = getSelectedIndexes();
+	return (sel.length == 1) ? sel[0] : -1;
     }
 
     /**
      * Gets the selected indexes on the list.
-     *
-     * @return        an array of the selected indexes on this scrolling list;
-     *                if no item is selected, a zero-length array is returned.
+     * 
+     * @return        an array of the selected indexes on this scrolling list; 
+     *                if no item is selected, a zero-length array is returned. 
      * @see           #select
      * @see           #deselect
      * @see           #isIndexSelected
      */
     public synchronized int[] getSelectedIndexes() {
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
-            selected = ((ListPeer)peer).getSelectedIndexes();
-        }
-        return (int[])selected.clone();
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
+	    selected = ((ListPeer)peer).getSelectedIndexes();
+	}
+	return (int[])selected.clone();
     }
 
     /**
      * Gets the selected item on this scrolling list.
-     *
-     * @return        the selected item on the list;
-     *                if no item is selected, or if multiple items are
-     *                selected, <code>null</code> is returned.
+     * 
+     * @return        the selected item on the list; 
+     *                if no item is selected, or if multiple items are 
+     *                selected, <code>null</code> is returned.  
      * @see           #select
      * @see           #deselect
      * @see           #isIndexSelected
      */
     public synchronized String getSelectedItem() {
-        int index = getSelectedIndex();
-        return (index < 0) ? null : getItem(index);
+	int index = getSelectedIndex();
+	return (index < 0) ? null : getItem(index);
     }
 
     /**
      * Gets the selected items on this scrolling list.
-     *
+     * 
      * @return        an array of the selected items on this scrolling list;
-     *                if no item is selected, a zero-length array is returned.
+     *                if no item is selected, a zero-length array is returned. 
      * @see           #select
      * @see           #deselect
      * @see           #isIndexSelected
      */
     public synchronized String[] getSelectedItems() {
-        int sel[] = getSelectedIndexes();
-        String str[] = new String[sel.length];
-        for (int i = 0 ; i < sel.length ; i++) {
-            str[i] = getItem(sel[i]);
-        }
-        return str;
+	int sel[] = getSelectedIndexes();
+	String str[] = new String[sel.length];
+	for (int i = 0 ; i < sel.length ; i++) {
+	    str[i] = getItem(sel[i]);
+	}
+	return str;
     }
 
     /**
      * Gets the selected items on this scrolling list in an array of Objects.
-     * @return        an array of <code>Object</code>s representing the
+     * @return        an array of <code>Object</code>s representing the 
      *                selected items on this scrolling list;
      *                if no item is selected, a zero-length array is returned.
      * @see #getSelectedItems
@@ -543,11 +544,11 @@ public class List extends Component implements ItemSelectable, Accessible {
     /**
      * Selects the item at the specified index in the scrolling list.
      *<p>
-     * Note that passing out of range parameters is invalid,
-     * and will result in unspecified behavior.
+     * Note that passing out of range parameters is invalid, 
+     * and will result in unspecified behavior.  
      *
      * <p>Note that this method should be primarily used to
-     * initially select an item in this component.
+     * initially select an item in this component.  
      * Programmatically calling this method will <i>not</i> trigger
      * an <code>ItemEvent</code>.  The only way to trigger an
      * <code>ItemEvent</code> is by user interaction.
@@ -558,52 +559,52 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see          #isIndexSelected
      */
     public void select(int index) {
-        // Bug #4059614: select can't be synchronized while calling the peer,
-        // because it is called from the Window Thread.  It is sufficient to
-        // synchronize the code that manipulates 'selected' except for the
-        // case where the peer changes.  To handle this case, we simply
-        // repeat the selection process.
-
-        ListPeer peer;
-        do {
-            peer = (ListPeer)this.peer;
-            if (peer != null) {
-                peer.select(index);
-                return;
-            }
-
-            synchronized(this)
-            {
-                boolean alreadySelected = false;
-
-                for (int i = 0 ; i < selected.length ; i++) {
-                    if (selected[i] == index) {
-                        alreadySelected = true;
-                        break;
-                    }
-                }
-
-                if (!alreadySelected) {
-                    if (!multipleMode) {
-                        selected = new int[1];
-                        selected[0] = index;
-                    } else {
-                        int newsel[] = new int[selected.length + 1];
-                        System.arraycopy(selected, 0, newsel, 0,
-                                         selected.length);
-                        newsel[selected.length] = index;
-                        selected = newsel;
-                    }
-                }
-            }
-        } while (peer != this.peer);
+        // Bug #4059614: select can't be synchronized while calling the peer, 
+        // because it is called from the Window Thread.  It is sufficient to 
+        // synchronize the code that manipulates 'selected' except for the 
+        // case where the peer changes.  To handle this case, we simply 
+        // repeat the selection process. 
+         
+        ListPeer peer; 
+        do { 
+            peer = (ListPeer)this.peer; 
+            if (peer != null) { 
+                peer.select(index); 
+                return; 
+            } 
+             
+            synchronized(this) 
+            { 
+                boolean alreadySelected = false; 
+ 
+                for (int i = 0 ; i < selected.length ; i++) { 
+                    if (selected[i] == index) { 
+                        alreadySelected = true; 
+                        break; 
+                    } 
+                } 
+ 
+                if (!alreadySelected) { 
+                    if (!multipleMode) { 
+                        selected = new int[1]; 
+                        selected[0] = index; 
+                    } else { 
+                        int newsel[] = new int[selected.length + 1]; 
+                        System.arraycopy(selected, 0, newsel, 0, 
+                                         selected.length); 
+                        newsel[selected.length] = index; 
+                        selected = newsel; 
+                    } 
+                } 
+            } 
+        } while (peer != this.peer); 
     }
 
     /**
      * Deselects the item at the specified index.
      * <p>
-     * Note that passing out of range parameters is invalid,
-     * and will result in unspecified behavior.
+     * Note that passing out of range parameters is invalid, 
+     * and will result in unspecified behavior.  
      * <p>
      * If the item at the specified index is not selected,
      * then the operation is ignored.
@@ -613,22 +614,22 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see          #isIndexSelected
      */
     public synchronized void deselect(int index) {
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
             if (isMultipleMode() || (getSelectedIndex() == index)) {
                 peer.deselect(index);
             }
-        }
+	}
 
-        for (int i = 0 ; i < selected.length ; i++) {
-            if (selected[i] == index) {
-                int newsel[] = new int[selected.length - 1];
-                System.arraycopy(selected, 0, newsel, 0, i);
-                System.arraycopy(selected, i+1, newsel, i, selected.length - (i+1));
-                selected = newsel;
-                return;
-            }
-        }
+	for (int i = 0 ; i < selected.length ; i++) {
+	    if (selected[i] == index) {
+		int newsel[] = new int[selected.length - 1];
+		System.arraycopy(selected, 0, newsel, 0, i);
+		System.arraycopy(selected, i+1, newsel, i, selected.length - (i+1));
+		selected = newsel;
+		return;
+	    }
+	}
     }
 
     /**
@@ -642,7 +643,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since      JDK1.1
      */
     public boolean isIndexSelected(int index) {
-        return isSelected(index);
+	return isSelected(index);
     }
 
     /**
@@ -651,13 +652,13 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public boolean isSelected(int index) {
-        int sel[] = getSelectedIndexes();
-        for (int i = 0 ; i < sel.length ; i++) {
-            if (sel[i] == index) {
-                return true;
-            }
-        }
-        return false;
+	int sel[] = getSelectedIndexes();
+	for (int i = 0 ; i < sel.length ; i++) {
+	    if (sel[i] == index) {
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**
@@ -667,7 +668,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @return     the number of visible lines in this scrolling list
      */
     public int getRows() {
-        return rows;
+	return rows;
     }
 
     /**
@@ -678,7 +679,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since      JDK1.1
      */
     public boolean isMultipleMode() {
-        return allowsMultipleSelections();
+	return allowsMultipleSelections();
     }
 
     /**
@@ -687,7 +688,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public boolean allowsMultipleSelections() {
-        return multipleMode;
+	return multipleMode;
     }
 
     /**
@@ -695,9 +696,9 @@ public class List extends Component implements ItemSelectable, Accessible {
      * allows multiple selections.
      * When the selection mode is changed from multiple-selection to
      * single-selection, the selected items change as follows:
-     * If a selected item has the location cursor, only that
-     * item will remain selected.  If no selected item has the
-     * location cursor, all items will be deselected.
+     * If a selected item has the location cursor, only that 
+     * item will remain selected.  If no selected item has the 
+     * location cursor, all items will be deselected.  
      * @param       b   if <code>true</code> then multiple selections
      *                      are allowed; otherwise, only one item from
      *                      the list can be selected at once
@@ -705,7 +706,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since       JDK1.1
      */
     public void setMultipleMode(boolean b) {
-        setMultipleSelections(b);
+    	setMultipleSelections(b);
     }
 
     /**
@@ -714,13 +715,13 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public synchronized void setMultipleSelections(boolean b) {
-        if (b != multipleMode) {
-            multipleMode = b;
-            ListPeer peer = (ListPeer)this.peer;
-            if (peer != null) {
-                peer.setMultipleSelections(b);
-            }
-        }
+	if (b != multipleMode) {
+	    multipleMode = b;
+	    ListPeer peer = (ListPeer)this.peer;
+	    if (peer != null) {
+		peer.setMultipleSelections(b);
+	    }
+	}
     }
 
     /**
@@ -730,7 +731,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see         #makeVisible
      */
     public int getVisibleIndex() {
-        return visibleIndex;
+	return visibleIndex;
     }
 
     /**
@@ -739,11 +740,11 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see         #getVisibleIndex
      */
     public synchronized void makeVisible(int index) {
-        visibleIndex = index;
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
-            peer.makeVisible(index);
-        }
+	visibleIndex = index;
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
+	    peer.makeVisible(index);
+	}
     }
 
     /**
@@ -756,7 +757,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since      JDK1.1
      */
     public Dimension getPreferredSize(int rows) {
-        return preferredSize(rows);
+	return preferredSize(rows);
     }
 
     /**
@@ -766,10 +767,10 @@ public class List extends Component implements ItemSelectable, Accessible {
     @Deprecated
     public Dimension preferredSize(int rows) {
         synchronized (getTreeLock()) {
-            ListPeer peer = (ListPeer)this.peer;
-            return (peer != null) ?
-                       peer.preferredSize(rows) :
-                       super.preferredSize();
+	    ListPeer peer = (ListPeer)this.peer;
+	    return (peer != null) ?
+		       peer.preferredSize(rows) :
+		       super.preferredSize();
         }
     }
 
@@ -780,7 +781,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since      JDK1.1
      */
     public Dimension getPreferredSize() {
-        return preferredSize();
+	return preferredSize();
     }
 
     /**
@@ -790,9 +791,9 @@ public class List extends Component implements ItemSelectable, Accessible {
     @Deprecated
     public Dimension preferredSize() {
         synchronized (getTreeLock()) {
-            return (rows > 0) ?
-                       preferredSize(rows) :
-                       super.preferredSize();
+	    return (rows > 0) ?
+		       preferredSize(rows) :
+		       super.preferredSize();
         }
     }
 
@@ -806,7 +807,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since      JDK1.1
      */
     public Dimension getMinimumSize(int rows) {
-        return minimumSize(rows);
+	return minimumSize(rows);
     }
 
     /**
@@ -816,10 +817,10 @@ public class List extends Component implements ItemSelectable, Accessible {
     @Deprecated
     public Dimension minimumSize(int rows) {
         synchronized (getTreeLock()) {
-            ListPeer peer = (ListPeer)this.peer;
-            return (peer != null) ?
-                       peer.minimumSize(rows) :
-                       super.minimumSize();
+	    ListPeer peer = (ListPeer)this.peer;
+	    return (peer != null) ?
+		       peer.minimumSize(rows) :
+		       super.minimumSize();
         }
     }
 
@@ -831,7 +832,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since        JDK1.1
      */
     public Dimension getMinimumSize() {
-        return minimumSize();
+	return minimumSize();
     }
 
     /**
@@ -841,7 +842,7 @@ public class List extends Component implements ItemSelectable, Accessible {
     @Deprecated
     public Dimension minimumSize() {
         synchronized (getTreeLock()) {
-            return (rows > 0) ? minimumSize(rows) : super.minimumSize();
+	    return (rows > 0) ? minimumSize(rows) : super.minimumSize();
         }
     }
 
@@ -864,9 +865,9 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since         JDK1.1
      */
     public synchronized void addItemListener(ItemListener l) {
-        if (l == null) {
-            return;
-        }
+	if (l == null) {
+	    return;
+	}
         itemListener = AWTEventMulticaster.add(itemListener, l);
         newEventsOnly = true;
     }
@@ -879,17 +880,17 @@ public class List extends Component implements ItemSelectable, Accessible {
      * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
      * >AWT Threading Issues</a> for details on AWT's threading model.
      *
-     * @param           l the item listener
-     * @see             #addItemListener
-     * @see             #getItemListeners
-     * @see             java.awt.event.ItemEvent
-     * @see             java.awt.event.ItemListener
-     * @since           JDK1.1
+     * @param         	l the item listener
+     * @see           	#addItemListener
+     * @see           	#getItemListeners
+     * @see           	java.awt.event.ItemEvent
+     * @see           	java.awt.event.ItemListener
+     * @since         	JDK1.1
      */
     public synchronized void removeItemListener(ItemListener l) {
-        if (l == null) {
-            return;
-        }
+	if (l == null) {
+	    return;
+	}
         itemListener = AWTEventMulticaster.remove(itemListener, l);
     }
 
@@ -901,14 +902,14 @@ public class List extends Component implements ItemSelectable, Accessible {
      *         or an empty array if no item
      *         listeners are currently registered
      *
-     * @see             #addItemListener
-     * @see             #removeItemListener
-     * @see             java.awt.event.ItemEvent
-     * @see             java.awt.event.ItemListener
+     * @see           	#addItemListener
+     * @see           	#removeItemListener
+     * @see           	java.awt.event.ItemEvent
+     * @see           	java.awt.event.ItemListener
      * @since 1.4
      */
     public synchronized ItemListener[] getItemListeners() {
-        return (ItemListener[])(getListeners(ItemListener.class));
+        return (ItemListener[])(getListeners(ItemListener.class)); 
     }
 
     /**
@@ -930,10 +931,10 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @since         JDK1.1
      */
     public synchronized void addActionListener(ActionListener l) {
-        if (l == null) {
-            return;
-        }
-        actionListener = AWTEventMulticaster.add(actionListener, l);
+	if (l == null) {
+	    return;
+	}
+	actionListener = AWTEventMulticaster.add(actionListener, l);
         newEventsOnly = true;
     }
 
@@ -946,18 +947,18 @@ public class List extends Component implements ItemSelectable, Accessible {
      * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
      * >AWT Threading Issues</a> for details on AWT's threading model.
      *
-     * @param           l     the action listener
-     * @see             #addActionListener
-     * @see             #getActionListeners
-     * @see             java.awt.event.ActionEvent
-     * @see             java.awt.event.ActionListener
-     * @since           JDK1.1
+     * @param         	l     the action listener
+     * @see           	#addActionListener
+     * @see           	#getActionListeners
+     * @see           	java.awt.event.ActionEvent
+     * @see           	java.awt.event.ActionListener
+     * @since         	JDK1.1
      */
     public synchronized void removeActionListener(ActionListener l) {
-        if (l == null) {
-            return;
-        }
-        actionListener = AWTEventMulticaster.remove(actionListener, l);
+	if (l == null) {
+	    return;
+	}
+	actionListener = AWTEventMulticaster.remove(actionListener, l);
     }
 
     /**
@@ -968,10 +969,10 @@ public class List extends Component implements ItemSelectable, Accessible {
      *         or an empty array if no action
      *         listeners are currently registered
      *
-     * @see             #addActionListener
-     * @see             #removeActionListener
-     * @see             java.awt.event.ActionEvent
-     * @see             java.awt.event.ActionListener
+     * @see           	#addActionListener
+     * @see           	#removeActionListener
+     * @see           	java.awt.event.ActionEvent
+     * @see           	java.awt.event.ActionListener
      * @since 1.4
      */
     public synchronized ActionListener[] getActionListeners() {
@@ -1011,16 +1012,16 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @see #getItemListeners
      * @since 1.3
      */
-    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        EventListener l = null;
-        if  (listenerType == ActionListener.class) {
-            l = actionListener;
-        } else if  (listenerType == ItemListener.class) {
-            l = itemListener;
-        } else {
-            return super.getListeners(listenerType);
-        }
-        return AWTEventMulticaster.getListeners(l, listenerType);
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) { 
+	EventListener l = null; 
+	if  (listenerType == ActionListener.class) { 
+	    l = actionListener;
+	} else if  (listenerType == ItemListener.class) { 
+	    l = itemListener;
+	} else {
+	    return super.getListeners(listenerType);
+	}
+	return AWTEventMulticaster.getListeners(l, listenerType);
     }
 
     // REMIND: remove when filtering is done at lower level
@@ -1071,7 +1072,7 @@ public class List extends Component implements ItemSelectable, Accessible {
             processActionEvent((ActionEvent)e);
             return;
         }
-        super.processEvent(e);
+	super.processEvent(e);
     }
 
     /**
@@ -1142,7 +1143,7 @@ public class List extends Component implements ItemSelectable, Accessible {
      * @return    the parameter string of this scrolling list
      */
     protected String paramString() {
-        return super.paramString() + ",selected=" + getSelectedItem();
+	return super.paramString() + ",selected=" + getSelectedItem();
     }
 
     /**
@@ -1153,13 +1154,13 @@ public class List extends Component implements ItemSelectable, Accessible {
      */
     @Deprecated
     public synchronized void delItems(int start, int end) {
-        for (int i = end; i >= start; i--) {
-            items.removeElementAt(i);
-        }
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
-            peer.delItems(start, end);
-        }
+	for (int i = end; i >= start; i--) {
+	    items.removeElementAt(i);
+	}
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
+	    peer.delItems(start, end);
+	}
     }
 
     /*
@@ -1203,10 +1204,10 @@ public class List extends Component implements ItemSelectable, Accessible {
       throws IOException
     {
       synchronized (this) {
-        ListPeer peer = (ListPeer)this.peer;
-        if (peer != null) {
-          selected = peer.getSelectedIndexes();
-        }
+	ListPeer peer = (ListPeer)this.peer;
+	if (peer != null) {
+	  selected = peer.getSelectedIndexes();
+	}
       }
       s.defaultWriteObject();
 
@@ -1240,16 +1241,16 @@ public class List extends Component implements ItemSelectable, Accessible {
 
       Object keyOrNull;
       while(null != (keyOrNull = s.readObject())) {
-        String key = ((String)keyOrNull).intern();
+	String key = ((String)keyOrNull).intern();
 
-        if (itemListenerK == key)
-          addItemListener((ItemListener)(s.readObject()));
+	if (itemListenerK == key)
+	  addItemListener((ItemListener)(s.readObject()));
 
-        else if (actionListenerK == key)
-          addActionListener((ActionListener)(s.readObject()));
+	else if (actionListenerK == key)
+	  addActionListener((ActionListener)(s.readObject()));
 
-        else // skip value for unrecognized key
-          s.readObject();
+	else // skip value for unrecognized key
+	  s.readObject();
       }
     }
 
@@ -1260,12 +1261,12 @@ public class List extends Component implements ItemSelectable, Accessible {
 
 
     /**
-     * Gets the <code>AccessibleContext</code> associated with this
+     * Gets the <code>AccessibleContext</code> associated with this 
      * <code>List</code>. For lists, the <code>AccessibleContext</code>
-     * takes the form of an <code>AccessibleAWTList</code>.
+     * takes the form of an <code>AccessibleAWTList</code>. 
      * A new <code>AccessibleAWTList</code> instance is created, if necessary.
      *
-     * @return an <code>AccessibleAWTList</code> that serves as the
+     * @return an <code>AccessibleAWTList</code> that serves as the 
      *         <code>AccessibleContext</code> of this <code>List</code>
      * @since 1.3
      */
@@ -1277,8 +1278,8 @@ public class List extends Component implements ItemSelectable, Accessible {
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>List</code> class.  It provides an implementation of the
+     * This class implements accessibility support for the 
+     * <code>List</code> class.  It provides an implementation of the 
      * Java Accessibility API appropriate to list user-interface elements.
      * @since 1.3
      */
@@ -1290,11 +1291,11 @@ public class List extends Component implements ItemSelectable, Accessible {
          */
         private static final long serialVersionUID = 7924617370136012829L;
 
-        public AccessibleAWTList() {
-            super();
+	public AccessibleAWTList() {
+	    super();
             List.this.addActionListener(this);
             List.this.addItemListener(this);
-        }
+	}
 
         public void actionPerformed(ActionEvent event)  {
         }
@@ -1320,8 +1321,8 @@ public class List extends Component implements ItemSelectable, Accessible {
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the
-         * object
+         * @return an instance of AccessibleRole describing the role of the 
+	 * object
          * @see AccessibleRole
          */
         public AccessibleRole getAccessibleRole() {
@@ -1367,11 +1368,11 @@ public class List extends Component implements ItemSelectable, Accessible {
 
         /**
          * Get the AccessibleSelection associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * return this object, which is responsible for implementing the
          * AccessibleSelection interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object
          */
         public AccessibleSelection getAccessibleSelection() {
             return this;
@@ -1472,473 +1473,473 @@ public class List extends Component implements ItemSelectable, Accessible {
          }
 
        /**
-        * This class implements accessibility support for
-        * List children.  It provides an implementation of the
-        * Java Accessibility API appropriate to list children
-        * user-interface elements.
-        * @since 1.3
+        * This class implements accessibility support for 
+        * List children.  It provides an implementation of the 
+        * Java Accessibility API appropriate to list children 
+	* user-interface elements.
+	* @since 1.3
         */
         protected class AccessibleAWTListChild extends AccessibleAWTComponent
             implements Accessible
-        {
+        {  
             /*
              * JDK 1.3 serialVersionUID
              */
             private static final long serialVersionUID = 4412022926028300317L;
-
-        // [[[FIXME]]] need to finish implementing this!!!
+	
+	// [[[FIXME]]] need to finish implementing this!!!
 
             private List parent;
             private int  indexInParent;
 
             public AccessibleAWTListChild(List parent, int indexInParent)  {
                 this.parent = parent;
-                this.setAccessibleParent(parent);
+		this.setAccessibleParent(parent);
                 this.indexInParent = indexInParent;
             }
 
-            //
-            // required Accessible methods
-            //
-          /**
-           * Gets the AccessibleContext for this object.  In the
-           * implementation of the Java Accessibility API for this class,
-           * return this object, which acts as its own AccessibleContext.
-           *
-           * @return this object
-           */
-            public AccessibleContext getAccessibleContext() {
-                return this;
-            }
+	    //
+	    // required Accessible methods
+	    //
+	  /**
+	   * Gets the AccessibleContext for this object.  In the
+           * implementation of the Java Accessibility API for this class, 
+	   * return this object, which acts as its own AccessibleContext.
+	   * 
+	   * @return this object
+	   */
+	    public AccessibleContext getAccessibleContext() {
+		return this;
+	    }
 
-            //
-            // required AccessibleContext methods
-            //
+	    //
+	    // required AccessibleContext methods
+	    //
 
-            /**
-             * Get the role of this object.
-             *
-             * @return an instance of AccessibleRole describing the role of
-             * the object
-             * @see AccessibleRole
-             */
-            public AccessibleRole getAccessibleRole() {
-                return AccessibleRole.LIST_ITEM;
-            }
+	    /**
+	     * Get the role of this object.  
+	     *
+	     * @return an instance of AccessibleRole describing the role of 
+	     * the object
+	     * @see AccessibleRole
+	     */
+	    public AccessibleRole getAccessibleRole() {
+		return AccessibleRole.LIST_ITEM;
+	    }
 
-            /**
-             * Get the state set of this object.  The AccessibleStateSet of an
-             * object is composed of a set of unique AccessibleState's.  A
-             * change in the AccessibleStateSet of an object will cause a
-             * PropertyChangeEvent to be fired for the
-             * ACCESSIBLE_STATE_PROPERTY property.
-             *
-             * @return an instance of AccessibleStateSet containing the
-             * current state set of the object
-             * @see AccessibleStateSet
-             * @see AccessibleState
-             * @see #addPropertyChangeListener
-             */
-            public AccessibleStateSet getAccessibleStateSet() {
-                AccessibleStateSet states = super.getAccessibleStateSet();
-                if (parent.isIndexSelected(indexInParent)) {
-                    states.add(AccessibleState.SELECTED);
-                }
-                return states;
-            }
+	    /**
+	     * Get the state set of this object.  The AccessibleStateSet of an 
+	     * object is composed of a set of unique AccessibleState's.  A 
+	     * change in the AccessibleStateSet of an object will cause a 
+	     * PropertyChangeEvent to be fired for the 
+	     * ACCESSIBLE_STATE_PROPERTY property.
+	     *
+	     * @return an instance of AccessibleStateSet containing the
+	     * current state set of the object
+	     * @see AccessibleStateSet
+	     * @see AccessibleState
+	     * @see #addPropertyChangeListener
+	     */
+	    public AccessibleStateSet getAccessibleStateSet() {
+		AccessibleStateSet states = super.getAccessibleStateSet();
+		if (parent.isIndexSelected(indexInParent)) {
+		    states.add(AccessibleState.SELECTED);
+		}
+		return states;
+	    }
 
-            /**
-             * Gets the locale of the component. If the component does not
-             * have a locale, then the locale of its parent is returned.
-             *
-             * @return This component's locale.  If this component does not have
-             * a locale, the locale of its parent is returned.
-             *
-             * @exception IllegalComponentStateException
-             * If the Component does not have its own locale and has not yet
-             * been added to a containment hierarchy such that the locale can
-             * be determined from the containing parent.
-             */
-            public Locale getLocale() {
-                return parent.getLocale();
-            }
+	    /**
+	     * Gets the locale of the component. If the component does not 
+	     * have a locale, then the locale of its parent is returned.
+	     *
+	     * @return This component's locale.  If this component does not have
+	     * a locale, the locale of its parent is returned.
+	     *
+	     * @exception IllegalComponentStateException
+	     * If the Component does not have its own locale and has not yet 
+	     * been added to a containment hierarchy such that the locale can
+	     * be determined from the containing parent.
+	     */
+	    public Locale getLocale() {
+		return parent.getLocale();
+	    }
 
-            /**
-             * Get the 0-based index of this object in its accessible parent.
-             *
-             * @return the 0-based index of this object in its parent; -1 if
-             * this object does not have an accessible parent.
-             *
-             * @see #getAccessibleParent
-             * @see #getAccessibleChildrenCount
-             * @see #getAccessibleChild
-             */
-            public int getAccessibleIndexInParent() {
-                return indexInParent;
-            }
+	    /**
+	     * Get the 0-based index of this object in its accessible parent.
+	     *
+	     * @return the 0-based index of this object in its parent; -1 if 
+	     * this object does not have an accessible parent.
+	     *
+	     * @see #getAccessibleParent
+	     * @see #getAccessibleChildrenCount
+	     * @see #getAccessibleChild
+	     */
+	    public int getAccessibleIndexInParent() {
+		return indexInParent;
+	    }
 
-            /**
-             * Returns the number of accessible children of the object.
-             *
-             * @return the number of accessible children of the object.
-             */
-            public int getAccessibleChildrenCount() {
-                return 0;       // list elements can't have children
-            }
+	    /**
+	     * Returns the number of accessible children of the object.
+	     *
+	     * @return the number of accessible children of the object.
+	     */
+	    public int getAccessibleChildrenCount() {
+		return 0;	// list elements can't have children
+	    }
 
-            /**
-             * Return the specified Accessible child of the object.  The
-             * Accessible children of an Accessible object are zero-based,
-             * so the first child of an Accessible child is at index 0, the
-             * second child is at index 1, and so on.
-             *
-             * @param i zero-based index of child
-             * @return the Accessible child of the object
-             * @see #getAccessibleChildrenCount
-             */
-            public Accessible getAccessibleChild(int i) {
-                return null;    // list elements can't have children
-            }
+	    /**
+	     * Return the specified Accessible child of the object.  The 
+	     * Accessible children of an Accessible object are zero-based, 
+	     * so the first child of an Accessible child is at index 0, the 
+	     * second child is at index 1, and so on.
+	     *
+	     * @param i zero-based index of child
+	     * @return the Accessible child of the object
+	     * @see #getAccessibleChildrenCount
+	     */
+	    public Accessible getAccessibleChild(int i) {
+		return null;	// list elements can't have children
+	    }
 
 
-            //
-            // AccessibleComponent delegatation to parent List
-            //
+	    //
+	    // AccessibleComponent delegatation to parent List
+	    //
+	    
+	    /**
+	     * Get the background color of this object.
+	     *
+	     * @return the background color, if supported, of the object; 
+	     * otherwise, null
+	     * @see #setBackground
+	     */
+	    public Color getBackground() {
+		return parent.getBackground();
+	    }
 
-            /**
-             * Get the background color of this object.
-             *
-             * @return the background color, if supported, of the object;
-             * otherwise, null
-             * @see #setBackground
-             */
-            public Color getBackground() {
-                return parent.getBackground();
-            }
+	    /**
+	     * Set the background color of this object.
+	     *
+	     * @param c the new Color for the background
+	     * @see #setBackground
+	     */
+	    public void setBackground(Color c) {
+		parent.setBackground(c);
+	    }
 
-            /**
-             * Set the background color of this object.
-             *
-             * @param c the new Color for the background
-             * @see #setBackground
-             */
-            public void setBackground(Color c) {
-                parent.setBackground(c);
-            }
+	    /**
+	     * Get the foreground color of this object.
+	     *
+	     * @return the foreground color, if supported, of the object; 
+	     * otherwise, null
+	     * @see #setForeground
+	     */
+	    public Color getForeground() {
+		return parent.getForeground();
+	    }
 
-            /**
-             * Get the foreground color of this object.
-             *
-             * @return the foreground color, if supported, of the object;
-             * otherwise, null
-             * @see #setForeground
-             */
-            public Color getForeground() {
-                return parent.getForeground();
-            }
+	    /**
+	     * Set the foreground color of this object.
+	     *
+	     * @param c the new Color for the foreground
+	     * @see #getForeground
+	     */
+	    public void setForeground(Color c) {
+		parent.setForeground(c);
+	    }
 
-            /**
-             * Set the foreground color of this object.
-             *
-             * @param c the new Color for the foreground
-             * @see #getForeground
-             */
-            public void setForeground(Color c) {
-                parent.setForeground(c);
-            }
+	    /**
+	     * Get the Cursor of this object.
+	     *
+	     * @return the Cursor, if supported, of the object; otherwise, null
+	     * @see #setCursor
+	     */
+	    public Cursor getCursor() {
+		return parent.getCursor();
+	    }
 
-            /**
-             * Get the Cursor of this object.
-             *
-             * @return the Cursor, if supported, of the object; otherwise, null
-             * @see #setCursor
-             */
-            public Cursor getCursor() {
-                return parent.getCursor();
-            }
-
-            /**
-             * Set the Cursor of this object.
+	    /**
+	     * Set the Cursor of this object.
              * <p>
              * The method may have no visual effect if the Java platform
              * implementation and/or the native system do not support
              * changing the mouse cursor shape.
-             * @param cursor the new Cursor for the object
-             * @see #getCursor
-             */
-            public void setCursor(Cursor cursor) {
-                parent.setCursor(cursor);
-            }
+	     * @param cursor the new Cursor for the object
+	     * @see #getCursor
+	     */
+	    public void setCursor(Cursor cursor) {
+		parent.setCursor(cursor);
+	    }
 
-            /**
-             * Get the Font of this object.
-             *
-             * @return the Font,if supported, for the object; otherwise, null
-             * @see #setFont
-             */
-            public Font getFont() {
-                return parent.getFont();
-            }
+	    /**
+	     * Get the Font of this object.
+	     *
+	     * @return the Font,if supported, for the object; otherwise, null
+	     * @see #setFont
+	     */
+	    public Font getFont() {
+		return parent.getFont();
+	    }
 
-            /**
-             * Set the Font of this object.
-             *
-             * @param f the new Font for the object
-             * @see #getFont
-             */
-            public void setFont(Font f) {
-                parent.setFont(f);
-            }
+	    /**
+	     * Set the Font of this object.
+	     *
+	     * @param f the new Font for the object
+	     * @see #getFont
+	     */
+	    public void setFont(Font f) {
+		parent.setFont(f);
+	    }
 
-            /**
-             * Get the FontMetrics of this object.
-             *
-             * @param f the Font
-             * @return the FontMetrics, if supported, the object; otherwise, null
-             * @see #getFont
-             */
-            public FontMetrics getFontMetrics(Font f) {
-                return parent.getFontMetrics(f);
-            }
+	    /**
+	     * Get the FontMetrics of this object.
+	     *
+	     * @param f the Font
+	     * @return the FontMetrics, if supported, the object; otherwise, null
+	     * @see #getFont
+	     */
+	    public FontMetrics getFontMetrics(Font f) {
+		return parent.getFontMetrics(f);
+	    }
 
-            /**
-             * Determine if the object is enabled.  Objects that are enabled
-             * will also have the AccessibleState.ENABLED state set in their
-             * AccessibleStateSet.
-             *
-             * @return true if object is enabled; otherwise, false
-             * @see #setEnabled
-             * @see AccessibleContext#getAccessibleStateSet
-             * @see AccessibleState#ENABLED
-             * @see AccessibleStateSet
-             */
-            public boolean isEnabled() {
-                return parent.isEnabled();
-            }
+	    /**
+	     * Determine if the object is enabled.  Objects that are enabled
+	     * will also have the AccessibleState.ENABLED state set in their
+	     * AccessibleStateSet.
+	     *
+	     * @return true if object is enabled; otherwise, false
+	     * @see #setEnabled
+	     * @see AccessibleContext#getAccessibleStateSet
+	     * @see AccessibleState#ENABLED
+	     * @see AccessibleStateSet
+	     */
+	    public boolean isEnabled() {
+		return parent.isEnabled();
+	    }
 
-            /**
-             * Set the enabled state of the object.
-             *
-             * @param b if true, enables this object; otherwise, disables it
-             * @see #isEnabled
-             */
-            public void setEnabled(boolean b) {
-                parent.setEnabled(b);
-            }
+	    /**
+	     * Set the enabled state of the object.
+	     *
+	     * @param b if true, enables this object; otherwise, disables it 
+	     * @see #isEnabled
+	     */
+	    public void setEnabled(boolean b) {
+		parent.setEnabled(b);
+	    }
 
-            /**
-             * Determine if the object is visible.  Note: this means that the
-             * object intends to be visible; however, it may not be
-             * showing on the screen because one of the objects that this object
-             * is contained by is currently not visible.  To determine if an
-             * object is showing on the screen, use isShowing().
-             * <p>Objects that are visible will also have the
-             * AccessibleState.VISIBLE state set in their AccessibleStateSet.
-             *
-             * @return true if object is visible; otherwise, false
-             * @see #setVisible
-             * @see AccessibleContext#getAccessibleStateSet
-             * @see AccessibleState#VISIBLE
-             * @see AccessibleStateSet
-             */
-            public boolean isVisible() {
-                // [[[FIXME]]] needs to work like isShowing() below
-                return false;
-                // return parent.isVisible();
-            }
+	    /**
+	     * Determine if the object is visible.  Note: this means that the
+	     * object intends to be visible; however, it may not be
+	     * showing on the screen because one of the objects that this object
+	     * is contained by is currently not visible.  To determine if an 
+	     * object is showing on the screen, use isShowing().
+	     * <p>Objects that are visible will also have the 
+	     * AccessibleState.VISIBLE state set in their AccessibleStateSet.
+	     *
+	     * @return true if object is visible; otherwise, false
+	     * @see #setVisible
+	     * @see AccessibleContext#getAccessibleStateSet
+	     * @see AccessibleState#VISIBLE
+	     * @see AccessibleStateSet
+	     */
+	    public boolean isVisible() {
+		// [[[FIXME]]] needs to work like isShowing() below
+		return false;
+		// return parent.isVisible();
+	    }
 
-            /**
-             * Set the visible state of the object.
-             *
-             * @param b if true, shows this object; otherwise, hides it
-             * @see #isVisible
-             */
-            public void setVisible(boolean b) {
-                // [[[FIXME]]] should scroll to item to make it show!
-                parent.setVisible(b);
-            }
+	    /**
+	     * Set the visible state of the object.
+	     *
+	     * @param b if true, shows this object; otherwise, hides it 
+	     * @see #isVisible
+	     */
+	    public void setVisible(boolean b) {
+		// [[[FIXME]]] should scroll to item to make it show!
+		parent.setVisible(b);
+	    }
 
-            /**
-             * Determine if the object is showing.  This is determined by
-             * checking the visibility of the object and visibility of the
-             * object ancestors.
-             * Note: this will return true even if the object is obscured
-             * by another (for example, it to object is underneath a menu
-             * that was pulled down).
-             *
-             * @return true if object is showing; otherwise, false
-             */
-            public boolean isShowing() {
-                // [[[FIXME]]] only if it's showing!!!
-                return false;
-                // return parent.isShowing();
-            }
+	    /**
+	     * Determine if the object is showing.  This is determined by 
+	     * checking the visibility of the object and visibility of the 
+	     * object ancestors.
+	     * Note: this will return true even if the object is obscured 
+	     * by another (for example, it to object is underneath a menu 
+	     * that was pulled down).
+	     *
+	     * @return true if object is showing; otherwise, false
+	     */
+	    public boolean isShowing() {
+		// [[[FIXME]]] only if it's showing!!!
+		return false;
+		// return parent.isShowing();
+	    }
 
-            /**
-             * Checks whether the specified point is within this object's
-             * bounds, where the point's x and y coordinates are defined to
-             * be relative to the coordinate system of the object.
-             *
-             * @param p the Point relative to the coordinate system of the
-             * object
-             * @return true if object contains Point; otherwise false
-             * @see #getBounds
-             */
-            public boolean contains(Point p) {
-                // [[[FIXME]]] - only if p is within the list element!!!
-                return false;
-                // return parent.contains(p);
-            }
+	    /** 
+	     * Checks whether the specified point is within this object's 
+	     * bounds, where the point's x and y coordinates are defined to 
+	     * be relative to the coordinate system of the object. 
+	     *
+	     * @param p the Point relative to the coordinate system of the 
+	     * object
+	     * @return true if object contains Point; otherwise false
+	     * @see #getBounds
+	     */
+	    public boolean contains(Point p) {
+		// [[[FIXME]]] - only if p is within the list element!!!
+		return false;
+		// return parent.contains(p);
+	    }
 
-            /**
-             * Returns the location of the object on the screen.
-             *
-             * @return location of object on screen; null if this object
-             * is not on the screen
-             * @see #getBounds
-             * @see #getLocation
-             */
-            public Point getLocationOnScreen() {
-                // [[[FIXME]]] sigh
-                return null;
-            }
+	    /** 
+	     * Returns the location of the object on the screen.
+	     *
+	     * @return location of object on screen; null if this object
+	     * is not on the screen
+	     * @see #getBounds
+	     * @see #getLocation
+	     */
+	    public Point getLocationOnScreen() {
+		// [[[FIXME]]] sigh
+		return null;
+	    }
 
-            /**
-             * Gets the location of the object relative to the parent in the
-             * form of a point specifying the object's top-left corner in the
-             * screen's coordinate space.
-             *
-             * @return An instance of Point representing the top-left corner of
-             * the objects's bounds in the coordinate space of the screen; null
-             * if this object or its parent are not on the screen
-             * @see #getBounds
-             * @see #getLocationOnScreen
-             */
-            public Point getLocation() {
-                // [[[FIXME]]]
-                return null;
-            }
+	    /** 
+	     * Gets the location of the object relative to the parent in the 
+	     * form of a point specifying the object's top-left corner in the 
+	     * screen's coordinate space.
+	     *
+	     * @return An instance of Point representing the top-left corner of
+	     * the objects's bounds in the coordinate space of the screen; null
+	     * if this object or its parent are not on the screen
+	     * @see #getBounds
+	     * @see #getLocationOnScreen
+	     */
+	    public Point getLocation() {
+		// [[[FIXME]]]
+		return null;
+	    }
 
-            /**
-             * Sets the location of the object relative to the parent.
-             * @param p the new position for the top-left corner
-             * @see #getLocation
-             */
-            public void setLocation(Point p) {
-                // [[[FIXME]]] maybe - can simply return as no-op
-            }
+	    /** 
+	     * Sets the location of the object relative to the parent.
+	     * @param p the new position for the top-left corner
+	     * @see #getLocation
+	     */
+	    public void setLocation(Point p) {
+		// [[[FIXME]]] maybe - can simply return as no-op
+	    }
 
-            /**
-             * Gets the bounds of this object in the form of a Rectangle object.
-             * The bounds specify this object's width, height, and location
-             * relative to its parent.
-             *
-             * @return A rectangle indicating this component's bounds; null if
-             * this object is not on the screen.
-             * @see #contains
-             */
-            public Rectangle getBounds() {
-                // [[[FIXME]]]
-                return null;
-            }
+	    /** 
+	     * Gets the bounds of this object in the form of a Rectangle object. 
+	     * The bounds specify this object's width, height, and location
+	     * relative to its parent. 
+	     *
+	     * @return A rectangle indicating this component's bounds; null if 
+	     * this object is not on the screen.
+	     * @see #contains
+	     */
+	    public Rectangle getBounds() {
+		// [[[FIXME]]]
+		return null;
+	    }
 
-            /**
-             * Sets the bounds of this object in the form of a Rectangle
-             * object.  The bounds specify this object's width, height, and
-             * location relative to its parent.
-             *
-             * @param r rectangle indicating this component's bounds
-             * @see #getBounds
-             */
-            public void setBounds(Rectangle r) {
-                // no-op; not supported
-            }
+	    /** 
+	     * Sets the bounds of this object in the form of a Rectangle 
+	     * object.  The bounds specify this object's width, height, and 
+	     * location relative to its parent.
+	     *	
+	     * @param r rectangle indicating this component's bounds
+	     * @see #getBounds
+	     */
+	    public void setBounds(Rectangle r) {
+		// no-op; not supported
+	    }
 
-            /**
-             * Returns the size of this object in the form of a Dimension
-             * object.  The height field of the Dimension object contains this
-             * objects's height, and the width field of the Dimension object
-             * contains this object's width.
-             *
-             * @return A Dimension object that indicates the size of this
-             * component; null if this object is not on the screen
-             * @see #setSize
-             */
-            public Dimension getSize() {
-                // [[[FIXME]]]
-                return null;
-            }
+	    /** 
+	     * Returns the size of this object in the form of a Dimension 
+	     * object.  The height field of the Dimension object contains this 
+	     * objects's height, and the width field of the Dimension object 
+	     * contains this object's width. 
+	     *
+	     * @return A Dimension object that indicates the size of this 
+	     * component; null if this object is not on the screen
+	     * @see #setSize
+	     */
+	    public Dimension getSize() {
+		// [[[FIXME]]]
+		return null;
+	    }
 
-            /**
-             * Resizes this object so that it has width and height.
-             *
-             * @param d - The dimension specifying the new size of the object.
-             * @see #getSize
-             */
-            public void setSize(Dimension d) {
-                // not supported; no-op
-            }
+	    /** 
+	     * Resizes this object so that it has width and height. 
+	     *	
+	     * @param d - The dimension specifying the new size of the object. 
+	     * @see #getSize
+	     */
+	    public void setSize(Dimension d) {
+		// not supported; no-op
+	    }
 
-            /**
-             * Returns the <code>Accessible</code> child, if one exists,
+	    /**
+	     * Returns the <code>Accessible</code> child, if one exists,
              * contained at the local coordinate <code>Point</code>.
-             *
-             * @param p the point relative to the coordinate system of this
-             *     object
-             * @return the <code>Accessible</code>, if it exists,
+	     *
+	     * @param p the point relative to the coordinate system of this 
+	     *     object
+	     * @return the <code>Accessible</code>, if it exists,
              *     at the specified location; otherwise <code>null</code>
-             */
-            public Accessible getAccessibleAt(Point p) {
-                return null;    // object cannot have children!
-            }
+	     */
+	    public Accessible getAccessibleAt(Point p) {
+		return null;	// object cannot have children!
+	    }
 
-            /**
-             * Returns whether this object can accept focus or not.   Objects
-             * that can accept focus will also have the
-             * <code>AccessibleState.FOCUSABLE</code> state set in their
+	    /**
+	     * Returns whether this object can accept focus or not.   Objects 
+	     * that can accept focus will also have the 
+	     * <code>AccessibleState.FOCUSABLE</code> state set in their 
              * <code>AccessibleStateSet</code>.
-             *
-             * @return true if object can accept focus; otherwise false
-             * @see AccessibleContext#getAccessibleStateSet
-             * @see AccessibleState#FOCUSABLE
-             * @see AccessibleState#FOCUSED
-             * @see AccessibleStateSet
-             */
-            public boolean isFocusTraversable() {
-                return false;   // list element cannot receive focus!
-            }
+	     *
+	     * @return true if object can accept focus; otherwise false
+	     * @see AccessibleContext#getAccessibleStateSet
+	     * @see AccessibleState#FOCUSABLE
+	     * @see AccessibleState#FOCUSED
+	     * @see AccessibleStateSet
+	     */
+	    public boolean isFocusTraversable() {
+		return false;	// list element cannot receive focus!
+	    }
 
-            /**
-             * Requests focus for this object.  If this object cannot accept
-             * focus, nothing will happen.  Otherwise, the object will attempt
-             * to take focus.
-             * @see #isFocusTraversable
-             */
-            public void requestFocus() {
-                // nothing to do; a no-op
-            }
+	    /**
+	     * Requests focus for this object.  If this object cannot accept 
+	     * focus, nothing will happen.  Otherwise, the object will attempt 
+	     * to take focus.
+	     * @see #isFocusTraversable
+	     */
+	    public void requestFocus() {
+		// nothing to do; a no-op
+	    }
 
-            /**
-             * Adds the specified focus listener to receive focus events from
-             * this component.
-             *
-             * @param l the focus listener
-             * @see #removeFocusListener
-             */
-            public void addFocusListener(FocusListener l) {
-                // nothing to do; a no-op
-            }
+	    /**
+	     * Adds the specified focus listener to receive focus events from 
+	     * this component. 
+	     *
+	     * @param l the focus listener
+	     * @see #removeFocusListener
+	     */
+	    public void addFocusListener(FocusListener l) {
+		// nothing to do; a no-op
+	    }
 
-            /**
-             * Removes the specified focus listener so it no longer receives
-             * focus events from this component.
-             *
-             * @param l the focus listener
-             * @see #addFocusListener
-             */
-            public void removeFocusListener(FocusListener l) {
-                // nothing to do; a no-op
-            }
+	    /**
+	     * Removes the specified focus listener so it no longer receives 
+	     * focus events from this component.
+	     *
+	     * @param l the focus listener
+	     * @see #addFocusListener
+	     */
+	    public void removeFocusListener(FocusListener l) {
+		// nothing to do; a no-op
+	    }
 
 
 

@@ -40,6 +40,7 @@ import sun.net.ConnectionResetException;
  * Note this class should <b>NOT</b> be public.
  *
  * @author  Steven B. Byrne
+ * @version %I%, %G%
  */
 abstract class AbstractPlainSocketImpl extends SocketImpl
 {
@@ -50,7 +51,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
 
     private boolean shut_rd = false;
     private boolean shut_wr = false;
-
+    
     private SocketInputStream socketInputStream = null;
 
     /* number of threads using the FileDescriptor */
@@ -73,8 +74,8 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * Load net library into runtime.
      */
     static {
-        java.security.AccessController.doPrivileged(
-                  new sun.security.action.LoadLibraryAction("net"));
+	java.security.AccessController.doPrivileged(
+		  new sun.security.action.LoadLibraryAction("net"));
     }
 
     /**
@@ -82,12 +83,12 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * is a stream socket (true) or an unconnected UDP socket (false).
      */
     protected synchronized void create(boolean stream) throws IOException {
-        fd = new FileDescriptor();
-        socketCreate(stream);
-        if (socket != null)
-            socket.setCreated();
-        if (serverSocket != null)
-            serverSocket.setCreated();
+	fd = new FileDescriptor();
+	socketCreate(stream);
+	if (socket != null)
+	    socket.setCreated();
+	if (serverSocket != null)
+	    serverSocket.setCreated();
     }
 
     /**
@@ -99,25 +100,25 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     protected void connect(String host, int port)
         throws UnknownHostException, IOException
     {
-        IOException pending = null;
-        try {
-            InetAddress address = InetAddress.getByName(host);
-            this.port = port;
-            this.address = address;
+	IOException pending = null;
+	try {
+	    InetAddress address = InetAddress.getByName(host);
+	    this.port = port;
+	    this.address = address;
 
-            try {
-                connectToAddress(address, port, timeout);
-                return;
-            } catch (IOException e) {
-                pending = e;
-            }
-        } catch (UnknownHostException e) {
-            pending = e;
-        }
+	    try {
+		connectToAddress(address, port, timeout);
+		return;
+	    } catch (IOException e) {
+		pending = e;
+	    }
+	} catch (UnknownHostException e) {
+	    pending = e;
+	}
 
-        // everything failed
-        close();
-        throw pending;
+	// everything failed
+	close();
+	throw pending;
     }
 
     /**
@@ -127,17 +128,17 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * @param port the specified port
      */
     protected void connect(InetAddress address, int port) throws IOException {
-        this.port = port;
-        this.address = address;
+	this.port = port;
+	this.address = address;
 
-        try {
-            connectToAddress(address, port, timeout);
-            return;
-        } catch (IOException e) {
-            // everything failed
-            close();
-            throw e;
-        }
+	try {
+	    connectToAddress(address, port, timeout);
+	    return;
+	} catch (IOException e) {
+	    // everything failed
+	    close();
+	    throw e;
+	}
     }
 
     /**
@@ -151,150 +152,150 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * @since 1.4
      */
     protected void connect(SocketAddress address, int timeout) throws IOException {
-        if (address == null || !(address instanceof InetSocketAddress))
-            throw new IllegalArgumentException("unsupported address type");
-        InetSocketAddress addr = (InetSocketAddress) address;
-        if (addr.isUnresolved())
-            throw new UnknownHostException(addr.getHostName());
-        this.port = addr.getPort();
-        this.address = addr.getAddress();
+	if (address == null || !(address instanceof InetSocketAddress))
+	    throw new IllegalArgumentException("unsupported address type");
+	InetSocketAddress addr = (InetSocketAddress) address;
+	if (addr.isUnresolved())
+	    throw new UnknownHostException(addr.getHostName());
+	this.port = addr.getPort();
+	this.address = addr.getAddress();
 
-        try {
-            connectToAddress(this.address, port, timeout);
-            return;
-        } catch (IOException e) {
-            // everything failed
-            close();
-            throw e;
-        }
+	try {
+	    connectToAddress(this.address, port, timeout);
+	    return;
+	} catch (IOException e) {
+	    // everything failed
+	    close();
+	    throw e;
+	}
     }
 
     private void connectToAddress(InetAddress address, int port, int timeout) throws IOException {
-        if (address.isAnyLocalAddress()) {
-            doConnect(InetAddress.getLocalHost(), port, timeout);
-        } else {
-            doConnect(address, port, timeout);
-        }
+	if (address.isAnyLocalAddress()) {
+	    doConnect(InetAddress.getLocalHost(), port, timeout);
+	} else {
+	    doConnect(address, port, timeout);
+	}
     }
 
     public void setOption(int opt, Object val) throws SocketException {
-        if (isClosedOrPending()) {
-            throw new SocketException("Socket Closed");
-        }
-        boolean on = true;
-        switch (opt) {
-            /* check type safety b4 going native.  These should never
-             * fail, since only java.Socket* has access to
-             * PlainSocketImpl.setOption().
-             */
-        case SO_LINGER:
-            if (val == null || (!(val instanceof Integer) && !(val instanceof Boolean)))
-                throw new SocketException("Bad parameter for option");
-            if (val instanceof Boolean) {
-                /* true only if disabling - enabling should be Integer */
-                on = false;
-            }
-            break;
-        case SO_TIMEOUT:
-            if (val == null || (!(val instanceof Integer)))
-                throw new SocketException("Bad parameter for SO_TIMEOUT");
-            int tmp = ((Integer) val).intValue();
-            if (tmp < 0)
-                throw new IllegalArgumentException("timeout < 0");
-            timeout = tmp;
-            break;
-        case IP_TOS:
-             if (val == null || !(val instanceof Integer)) {
-                 throw new SocketException("bad argument for IP_TOS");
-             }
-             trafficClass = ((Integer)val).intValue();
-             break;
-        case SO_BINDADDR:
-            throw new SocketException("Cannot re-bind socket");
-        case TCP_NODELAY:
-            if (val == null || !(val instanceof Boolean))
-                throw new SocketException("bad parameter for TCP_NODELAY");
-            on = ((Boolean)val).booleanValue();
-            break;
-        case SO_SNDBUF:
-        case SO_RCVBUF:
-            if (val == null || !(val instanceof Integer) ||
-                !(((Integer)val).intValue() > 0)) {
-                throw new SocketException("bad parameter for SO_SNDBUF " +
-                                          "or SO_RCVBUF");
-            }
-            break;
-        case SO_KEEPALIVE:
-            if (val == null || !(val instanceof Boolean))
-                throw new SocketException("bad parameter for SO_KEEPALIVE");
-            on = ((Boolean)val).booleanValue();
-            break;
-        case SO_OOBINLINE:
-            if (val == null || !(val instanceof Boolean))
-                throw new SocketException("bad parameter for SO_OOBINLINE");
-            on = ((Boolean)val).booleanValue();
-            break;
-        case SO_REUSEADDR:
-            if (val == null || !(val instanceof Boolean))
-                throw new SocketException("bad parameter for SO_REUSEADDR");
-            on = ((Boolean)val).booleanValue();
-            break;
-        default:
-            throw new SocketException("unrecognized TCP option: " + opt);
-        }
-        socketSetOption(opt, on, val);
+	if (isClosedOrPending()) {
+	    throw new SocketException("Socket Closed");
+	}
+	boolean on = true;
+	switch (opt) {
+	    /* check type safety b4 going native.  These should never
+	     * fail, since only java.Socket* has access to
+	     * PlainSocketImpl.setOption().
+	     */
+	case SO_LINGER:
+	    if (val == null || (!(val instanceof Integer) && !(val instanceof Boolean)))
+		throw new SocketException("Bad parameter for option");
+	    if (val instanceof Boolean) {
+		/* true only if disabling - enabling should be Integer */
+		on = false;
+	    }
+	    break;
+	case SO_TIMEOUT:
+	    if (val == null || (!(val instanceof Integer)))
+		throw new SocketException("Bad parameter for SO_TIMEOUT");
+	    int tmp = ((Integer) val).intValue();
+	    if (tmp < 0)
+		throw new IllegalArgumentException("timeout < 0");
+	    timeout = tmp;
+	    break;
+	case IP_TOS:
+	     if (val == null || !(val instanceof Integer)) {
+		 throw new SocketException("bad argument for IP_TOS");
+	     }
+	     trafficClass = ((Integer)val).intValue();
+	     break;
+	case SO_BINDADDR:
+	    throw new SocketException("Cannot re-bind socket");
+	case TCP_NODELAY:
+	    if (val == null || !(val instanceof Boolean))
+		throw new SocketException("bad parameter for TCP_NODELAY");
+	    on = ((Boolean)val).booleanValue();
+	    break;
+	case SO_SNDBUF:
+	case SO_RCVBUF:
+	    if (val == null || !(val instanceof Integer) ||
+		!(((Integer)val).intValue() > 0)) {
+		throw new SocketException("bad parameter for SO_SNDBUF " +
+					  "or SO_RCVBUF");
+	    }
+	    break;
+	case SO_KEEPALIVE:
+	    if (val == null || !(val instanceof Boolean))
+		throw new SocketException("bad parameter for SO_KEEPALIVE");
+	    on = ((Boolean)val).booleanValue();
+	    break;
+	case SO_OOBINLINE:
+	    if (val == null || !(val instanceof Boolean))
+		throw new SocketException("bad parameter for SO_OOBINLINE");
+	    on = ((Boolean)val).booleanValue();
+	    break;
+	case SO_REUSEADDR:
+	    if (val == null || !(val instanceof Boolean)) 
+	        throw new SocketException("bad parameter for SO_REUSEADDR");
+	    on = ((Boolean)val).booleanValue();
+	    break;
+	default:
+	    throw new SocketException("unrecognized TCP option: " + opt);
+	}
+	socketSetOption(opt, on, val);
     }
     public Object getOption(int opt) throws SocketException {
-        if (isClosedOrPending()) {
-            throw new SocketException("Socket Closed");
-        }
-        if (opt == SO_TIMEOUT) {
-            return new Integer(timeout);
-        }
-        int ret = 0;
-        /*
-         * The native socketGetOption() knows about 3 options.
-         * The 32 bit value it returns will be interpreted according
-         * to what we're asking.  A return of -1 means it understands
-         * the option but its turned off.  It will raise a SocketException
-         * if "opt" isn't one it understands.
-         */
+	if (isClosedOrPending()) {
+	    throw new SocketException("Socket Closed");
+	}
+	if (opt == SO_TIMEOUT) {
+	    return new Integer(timeout);
+	}
+	int ret = 0;
+	/*
+	 * The native socketGetOption() knows about 3 options.
+	 * The 32 bit value it returns will be interpreted according
+	 * to what we're asking.  A return of -1 means it understands
+	 * the option but its turned off.  It will raise a SocketException
+	 * if "opt" isn't one it understands.
+	 */
 
-        switch (opt) {
-        case TCP_NODELAY:
-            ret = socketGetOption(opt, null);
-            return Boolean.valueOf(ret != -1);
-        case SO_OOBINLINE:
-            ret = socketGetOption(opt, null);
-            return Boolean.valueOf(ret != -1);
-        case SO_LINGER:
-            ret = socketGetOption(opt, null);
-            return (ret == -1) ? Boolean.FALSE: (Object)(new Integer(ret));
-        case SO_REUSEADDR:
-            ret = socketGetOption(opt, null);
-            return Boolean.valueOf(ret != -1);
-        case SO_BINDADDR:
-            InetAddressContainer in = new InetAddressContainer();
-            ret = socketGetOption(opt, in);
-            return in.addr;
-        case SO_SNDBUF:
+	switch (opt) {
+	case TCP_NODELAY:
+	    ret = socketGetOption(opt, null);
+	    return Boolean.valueOf(ret != -1);
+	case SO_OOBINLINE:
+	    ret = socketGetOption(opt, null);
+	    return Boolean.valueOf(ret != -1);
+	case SO_LINGER:
+	    ret = socketGetOption(opt, null);
+	    return (ret == -1) ? Boolean.FALSE: (Object)(new Integer(ret));
+	case SO_REUSEADDR:
+	    ret = socketGetOption(opt, null);
+	    return Boolean.valueOf(ret != -1);
+	case SO_BINDADDR:
+	    InetAddressContainer in = new InetAddressContainer();
+	    ret = socketGetOption(opt, in); 
+	    return in.addr;
+	case SO_SNDBUF:
         case SO_RCVBUF:
-            ret = socketGetOption(opt, null);
-            return new Integer(ret);
-        case IP_TOS:
-            ret = socketGetOption(opt, null);
-            if (ret == -1) { // ipv6 tos
-                return new Integer(trafficClass);
-            } else {
-                return new Integer(ret);
-            }
-        case SO_KEEPALIVE:
-            ret = socketGetOption(opt, null);
-            return Boolean.valueOf(ret != -1);
-        // should never get here
-        default:
-            return null;
-        }
+	    ret = socketGetOption(opt, null);
+	    return new Integer(ret);
+	case IP_TOS:
+	    ret = socketGetOption(opt, null);
+	    if (ret == -1) { // ipv6 tos
+		return new Integer(trafficClass);
+	    } else {
+		return new Integer(ret);
+	    }
+	case SO_KEEPALIVE:
+	    ret = socketGetOption(opt, null);
+  	    return Boolean.valueOf(ret != -1);
+	// should never get here
+	default:
+	    return null;
+	}
     }
 
     /**
@@ -305,24 +306,24 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
 
     synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
         try {
-            FileDescriptor fd = acquireFD();
-            try {
-                socketConnect(address, port, timeout);
-                // If we have a ref. to the Socket, then sets the flags
-                // created, bound & connected to true.
-                // This is normally done in Socket.connect() but some
-                // subclasses of Socket may call impl.connect() directly!
-                if (socket != null) {
-                    socket.setBound();
-                    socket.setConnected();
-                }
-            } finally {
-                releaseFD();
-            }
-        } catch (IOException e) {
-            close();
-            throw e;
-        }
+	    FileDescriptor fd = acquireFD();
+	    try {
+	        socketConnect(address, port, timeout);
+		// If we have a ref. to the Socket, then sets the flags
+		// created, bound & connected to true.
+		// This is normally done in Socket.connect() but some
+		// subclasses of Socket may call impl.connect() directly!
+		if (socket != null) {
+		    socket.setBound();
+		    socket.setConnected();
+		}
+	    } finally {
+		releaseFD();
+	    }
+	} catch (IOException e) {	
+	    close();
+	    throw e;
+	}
     }
 
     /**
@@ -331,13 +332,13 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * @param port the port
      */
     protected synchronized void bind(InetAddress address, int lport)
-        throws IOException
+	throws IOException
     {
-        socketBind(address, lport);
-        if (socket != null)
-            socket.setBound();
-        if (serverSocket != null)
-            serverSocket.setBound();
+	socketBind(address, lport);
+	if (socket != null)
+	    socket.setBound();
+	if (serverSocket != null)
+	    serverSocket.setBound();
     }
 
     /**
@@ -345,7 +346,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * @param count the amount of time to listen for connections
      */
     protected synchronized void listen(int count) throws IOException {
-        socketListen(count);
+	socketListen(count);
     }
 
     /**
@@ -353,148 +354,148 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * @param s the connection
      */
     protected void accept(SocketImpl s) throws IOException {
-        FileDescriptor fd = acquireFD();
-        try {
-            socketAccept(s);
-        } finally {
-            releaseFD();
-        }
+	FileDescriptor fd = acquireFD();
+	try {
+	    socketAccept(s);
+	} finally {
+	    releaseFD();
+	}
     }
 
     /**
      * Gets an InputStream for this socket.
      */
     protected synchronized InputStream getInputStream() throws IOException {
-        if (isClosedOrPending()) {
-            throw new IOException("Socket Closed");
-        }
-        if (shut_rd) {
-            throw new IOException("Socket input is shutdown");
-        }
-        if (socketInputStream == null) {
-            socketInputStream = new SocketInputStream(this);
-        }
-        return socketInputStream;
+	if (isClosedOrPending()) {
+	    throw new IOException("Socket Closed");
+	}
+	if (shut_rd) {
+	    throw new IOException("Socket input is shutdown");
+	}
+	if (socketInputStream == null) {
+	    socketInputStream = new SocketInputStream(this);
+	}
+	return socketInputStream;
     }
 
     void setInputStream(SocketInputStream in) {
-        socketInputStream = in;
+	socketInputStream = in;
     }
 
     /**
      * Gets an OutputStream for this socket.
      */
     protected synchronized OutputStream getOutputStream() throws IOException {
-        if (isClosedOrPending()) {
-            throw new IOException("Socket Closed");
-        }
+	if (isClosedOrPending()) {
+	    throw new IOException("Socket Closed");
+	}
         if (shut_wr) {
-            throw new IOException("Socket output is shutdown");
-        }
-        return new SocketOutputStream(this);
+	    throw new IOException("Socket output is shutdown");
+	}
+	return new SocketOutputStream(this);
     }
 
     void setFileDescriptor(FileDescriptor fd) {
-        this.fd = fd;
+	this.fd = fd;
     }
 
     void setAddress(InetAddress address) {
-        this.address = address;
+	this.address = address;
     }
 
     void setPort(int port) {
-        this.port = port;
+	this.port = port;
     }
 
     void setLocalPort(int localport) {
-        this.localport = localport;
+	this.localport = localport;
     }
 
     /**
      * Returns the number of bytes that can be read without blocking.
      */
     protected synchronized int available() throws IOException {
-        if (isClosedOrPending()) {
+	if (isClosedOrPending()) {
             throw new IOException("Stream closed.");
-        }
+	}
 
-        /*
-         * If connection has been reset then return 0 to indicate
-         * there are no buffered bytes.
-         */
-        if (isConnectionReset()) {
-            return 0;
-        }
+	/*
+	 * If connection has been reset then return 0 to indicate
+	 * there are no buffered bytes.
+	 */
+	if (isConnectionReset()) {
+	    return 0;
+	}
 
-        /*
-         * If no bytes available and we were previously notified
-         * of a connection reset then we move to the reset state.
-         *
-         * If are notified of a connection reset then check
-         * again if there are bytes buffered on the socket.
-         */
-        int n = 0;
-        try {
-            n = socketAvailable();
-            if (n == 0 && isConnectionResetPending()) {
-                setConnectionReset();
-            }
-        } catch (ConnectionResetException exc1) {
-            setConnectionResetPending();
-            try {
-                n = socketAvailable();
-                if (n == 0) {
-                    setConnectionReset();
-                }
-            } catch (ConnectionResetException exc2) {
-            }
-        }
-        return n;
+	/*
+	 * If no bytes available and we were previously notified
+	 * of a connection reset then we move to the reset state.
+	 *
+	 * If are notified of a connection reset then check
+	 * again if there are bytes buffered on the socket. 
+	 */
+	int n = 0;
+	try { 
+	    n = socketAvailable();
+	    if (n == 0 && isConnectionResetPending()) {
+	        setConnectionReset();
+	    }
+	} catch (ConnectionResetException exc1) {
+	    setConnectionResetPending();
+	    try {
+	        n = socketAvailable();
+		if (n == 0) {
+		    setConnectionReset();
+		}
+	    } catch (ConnectionResetException exc2) {
+	    }
+	}
+	return n;
     }
 
     /**
      * Closes the socket.
      */
     protected void close() throws IOException {
-        synchronized(fdLock) {
-            if (fd != null) {
-                if (fdUseCount == 0) {
-                    if (closePending) {
-                        return;
-                    }
-                    closePending = true;
-                    /*
-                     * We close the FileDescriptor in two-steps - first the
-                     * "pre-close" which closes the socket but doesn't
-                     * release the underlying file descriptor. This operation
-                     * may be lengthy due to untransmitted data and a long
-                     * linger interval. Once the pre-close is done we do the
-                     * actual socket to release the fd.
-                     */
-                    try {
-                        socketPreClose();
-                    } finally {
-                        socketClose();
-                    }
-                    fd = null;
-                    return;
-                } else {
-                    /*
-                     * If a thread has acquired the fd and a close
-                     * isn't pending then use a deferred close.
-                     * Also decrement fdUseCount to signal the last
-                     * thread that releases the fd to close it.
-                     */
-                    if (!closePending) {
-                        closePending = true;
-                        fdUseCount--;
-                        socketPreClose();
-                    }
-                }
-            }
-        }
+	synchronized(fdLock) {
+	    if (fd != null) {
+		if (fdUseCount == 0) {
+		    if (closePending) {
+			return;
+		    }
+		    closePending = true;
+		    /*
+		     * We close the FileDescriptor in two-steps - first the
+ 		     * "pre-close" which closes the socket but doesn't
+		     * release the underlying file descriptor. This operation
+		     * may be lengthy due to untransmitted data and a long
+		     * linger interval. Once the pre-close is done we do the
+		     * actual socket to release the fd.
+		     */
+		    try {
+		        socketPreClose();
+		    } finally {
+		        socketClose();
+		    }
+		    fd = null;
+		    return;
+		} else {
+		    /*
+		     * If a thread has acquired the fd and a close
+		     * isn't pending then use a deferred close.
+		     * Also decrement fdUseCount to signal the last
+		     * thread that releases the fd to close it.
+		     */
+		    if (!closePending) {
+			closePending = true;
+		        fdUseCount--;
+			socketPreClose();
+		    }
+		}
+	    }
+	}
     }
-
+    
     void reset() throws IOException {
         if (fd != null) {
             socketClose();
@@ -509,23 +510,23 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      */
     protected void shutdownInput() throws IOException {
       if (fd != null) {
-          socketShutdown(SHUT_RD);
-          if (socketInputStream != null) {
-              socketInputStream.setEOF(true);
-          }
-          shut_rd = true;
+	  socketShutdown(SHUT_RD);
+	  if (socketInputStream != null) {
+	      socketInputStream.setEOF(true);
+	  }
+	  shut_rd = true;
       }
-    }
+    } 
 
     /**
      * Shutdown write-half of the socket connection;
      */
     protected void shutdownOutput() throws IOException {
       if (fd != null) {
-          socketShutdown(SHUT_WR);
-          shut_wr = true;
+	  socketShutdown(SHUT_WR);
+	  shut_wr = true;
       }
-    }
+    } 
 
     protected boolean supportsUrgentData () {
         return true;
@@ -542,7 +543,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * Cleans up if the user forgets to close it.
      */
     protected void finalize() throws IOException {
-        close();
+	close();
     }
 
 
@@ -553,53 +554,53 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * FileDescriptor.
      */
     FileDescriptor acquireFD() {
-        synchronized (fdLock) {
-            fdUseCount++;
-            return fd;
-        }
+	synchronized (fdLock) {
+	    fdUseCount++;
+	    return fd;
+	}
     }
 
     /*
-     * "Release" the FileDescriptor for this impl.
+     * "Release" the FileDescriptor for this impl. 
      *
      * If the use count goes to -1 then the socket is closed.
      */
     void releaseFD() {
-        synchronized (fdLock) {
-            fdUseCount--;
-            if (fdUseCount == -1) {
-                if (fd != null) {
-                    try {
-                        socketClose();
-                    } catch (IOException e) {
-                    } finally {
-                        fd = null;
-                    }
-                }
-            }
-        }
+	synchronized (fdLock) {
+	    fdUseCount--;
+	    if (fdUseCount == -1) {
+		if (fd != null) {
+	            try {
+			socketClose();
+	            } catch (IOException e) { 
+		    } finally {
+		        fd = null;
+		    }
+		}
+	    }
+	}
     }
 
     public boolean isConnectionReset() {
-        synchronized (resetLock) {
-            return (resetState == CONNECTION_RESET);
-        }
+	synchronized (resetLock) {
+	    return (resetState == CONNECTION_RESET);
+	}
     }
 
     public boolean isConnectionResetPending() {
-        synchronized (resetLock) {
+	synchronized (resetLock) {
             return (resetState == CONNECTION_RESET_PENDING);
         }
     }
 
     public void setConnectionReset() {
-        synchronized (resetLock) {
+	synchronized (resetLock) {
             resetState = CONNECTION_RESET;
         }
     }
 
     public void setConnectionResetPending() {
-        synchronized (resetLock) {
+	synchronized (resetLock) {
             if (resetState == CONNECTION_NOT_RESET) {
                 resetState = CONNECTION_RESET_PENDING;
             }
@@ -611,24 +612,24 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * Return true if already closed or close is pending
      */
     public boolean isClosedOrPending() {
-        /*
-         * Lock on fdLock to ensure that we wait if a
-         * close is in progress.
-         */
-        synchronized (fdLock) {
-            if (closePending || (fd == null)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
+	/*
+	 * Lock on fdLock to ensure that we wait if a
+	 * close is in progress.
+	 */
+	synchronized (fdLock) {
+	    if (closePending || (fd == null)) {
+		return true;
+	    } else {
+		return false;
+	    }
+	}
     }
 
     /*
      * Return the current value of SO_TIMEOUT
      */
     public int getTimeout() {
-        return timeout;
+	return timeout;
     }
 
     /*
@@ -636,33 +637,33 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
      * the socket to be closed without releasing the file descriptor.
      */
     private void socketPreClose() throws IOException {
-        socketClose0(true);
+	socketClose0(true);
     }
 
     /*
      * Close the socket (and release the file descriptor).
      */
     protected void socketClose() throws IOException {
-        socketClose0(false);
+	socketClose0(false);
     }
 
     abstract void socketCreate(boolean isServer) throws IOException;
     abstract void socketConnect(InetAddress address, int port, int timeout)
-        throws IOException;
+	throws IOException;
     abstract void socketBind(InetAddress address, int port)
-        throws IOException;
+	throws IOException;
     abstract void socketListen(int count)
-        throws IOException;
+	throws IOException;
     abstract void socketAccept(SocketImpl s)
-        throws IOException;
+	throws IOException;
     abstract int socketAvailable()
-        throws IOException;
+	throws IOException;
     abstract void socketClose0(boolean useDeferredClose)
-        throws IOException;
+	throws IOException;
     abstract void socketShutdown(int howto)
-        throws IOException;
+	throws IOException;
     abstract void socketSetOption(int cmd, boolean on, Object value)
-        throws SocketException;
+	throws SocketException;
     abstract int socketGetOption(int opt, Object iaContainerObj) throws SocketException;
     abstract int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd) throws SocketException;
     abstract void socketSendUrgentData(int data)

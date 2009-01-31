@@ -31,7 +31,7 @@ package com.sun.jmx.snmp;
 /**
  * Represents an SNMP counter.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -44,40 +44,40 @@ public class SnmpCounter extends SnmpUnsignedInt {
      * Constructs a new <CODE>SnmpCounter</CODE> from the specified integer value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpCounter(int v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     /**
      * Constructs a new <CODE>SnmpCounter</CODE> from the specified <CODE>Integer</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpCounter(Integer v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     /**
      * Constructs a new <CODE>SnmpCounter</CODE> from the specified long value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpCounter(long v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     /**
      * Constructs a new <CODE>SnmpCounter</CODE> from the specified <CODE>Long</CODE> value.
      * @param v The initialization value.
      * @exception IllegalArgumentException The specified value is negative
-     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}.
+     * or larger than {@link SnmpUnsignedInt#MAX_VALUE SnmpUnsignedInt.MAX_VALUE}. 
      */
     public SnmpCounter(Long v) throws IllegalArgumentException {
-        super(v) ;
+	super(v) ;
     }
 
     // PUBLIC METHODS
@@ -87,7 +87,7 @@ public class SnmpCounter extends SnmpUnsignedInt {
      * @return ASN.1 textual description.
      */
     final public String getTypeName() {
-        return name ;
+	return name ;
     }
 
     // VARIABLES

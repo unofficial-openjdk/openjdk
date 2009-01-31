@@ -23,10 +23,10 @@
  * have any questions.
  */
 package javax.accessibility;
-
+ 
 import javax.swing.text.AttributeSet;
-
-
+ 
+ 
 /**
  * <P>The AccessibleAttributeSequence provides information about
  * a contiguous sequence of text attributes
@@ -37,9 +37,10 @@ import javax.swing.text.AttributeSet;
  * @see AccessibleContext#getAccessibleText
  * @see AccessibleTextSequence
  *
+ * @version      %I% %G%
  * @author       Lynn Monsanto
  */
-
+ 
 /**
  * This class collects together the span of text that share the same
  * contiguous set of attributes, along with that set of attributes.  It
@@ -76,3 +77,4 @@ public class AccessibleAttributeSequence {
     }
 
 };
+

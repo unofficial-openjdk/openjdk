@@ -67,7 +67,7 @@ typedef struct {
             state.activeEntries++;                                  \
         }                                                           \
 } while (0);
-
+    
 
 #define ACTIVATE(code, mask, delta, state, index) do {              \
     if (((rgb & mask) + delta) <= mask) {                           \

@@ -45,25 +45,25 @@
  */
 void
 make_uns_ordered_dither_array(uns_ordered_dither_array oda,
-                              int quantum)
+			      int quantum)
 {
     int i, j, k;
 
     oda[0][0] = 0;
     for (k = 1; k < 8; k *= 2) {
-        for (i = 0; i < k; i++) {
-            for (j = 0; j < k; j++) {
-                oda[ i ][ j ] = oda[i][j] * 4;
-                oda[i+k][j+k] = oda[i][j] + 1;
-                oda[ i ][j+k] = oda[i][j] + 2;
-                oda[i+k][ j ] = oda[i][j] + 3;
-            }
-        }
+	for (i = 0; i < k; i++) {
+	    for (j = 0; j < k; j++) {
+		oda[ i ][ j ] = oda[i][j] * 4;
+		oda[i+k][j+k] = oda[i][j] + 1;
+		oda[ i ][j+k] = oda[i][j] + 2;
+		oda[i+k][ j ] = oda[i][j] + 3;
+	    }
+	}
     }
     for (i = 0; i < 8; i++) {
-        for (j = 0; j < 8; j++) {
-            oda[i][j] = oda[i][j] * quantum / 64;
-        }
+	for (j = 0; j < 8; j++) {
+	    oda[i][j] = oda[i][j] * quantum / 64;
+	}
     }
 }
 
@@ -83,21 +83,21 @@ make_sgn_ordered_dither_array(char* oda, int minerr, int maxerr)
 
     oda[0] = 0;
     for (k = 1; k < 8; k *= 2) {
-        for (i = 0; i < k; i++) {
-            for (j = 0; j < k; j++) {
-                oda[(i<<3) + j] = oda[(i<<3)+j] * 4;
-                oda[((i+k)<<3) + j+k] = oda[(i<<3)+j] + 1;
-                oda[(i<<3) + j+k] = oda[(i<<3)+j] + 2;
-                oda[((i+k)<<3) + j] = oda[(i<<3)+j] + 3;
-            }
-        }
+	for (i = 0; i < k; i++) {
+	    for (j = 0; j < k; j++) {
+		oda[(i<<3) + j] = oda[(i<<3)+j] * 4;
+		oda[((i+k)<<3) + j+k] = oda[(i<<3)+j] + 1;
+		oda[(i<<3) + j+k] = oda[(i<<3)+j] + 2;
+		oda[((i+k)<<3) + j] = oda[(i<<3)+j] + 3;
+	    }
+	}
     }
     k = 0;
     for (i = 0; i < 8; i++) {
-        for (j = 0; j < 8; j++) {
-            oda[k] = oda[k] * (maxerr - minerr) / 64 + minerr;
+	for (j = 0; j < 8; j++) {
+	    oda[k] = oda[k] * (maxerr - minerr) / 64 + minerr;
             k++;
-        }
+	}
     }
 }
 
@@ -113,20 +113,20 @@ main(int argc, char **argv)
     uns_ordered_dither_array oda;
 
     if (argc > 1) {
-        quantum = atoi(argv[1]);
+	quantum = atoi(argv[1]);
     } else {
-        quantum = 64;
+	quantum = 64;
     }
     make_uns_ordered_dither_array(oda, quantum);
     for (i = 0; i < 8; i++) {
-        for (j = 0; j < 8; j++) {
-            val = oda[i][j];
-            printf("%4d", val);
-            if (max < val) {
-                max = val;
-            }
-        }
-        printf("\n");
+	for (j = 0; j < 8; j++) {
+	    val = oda[i][j];
+	    printf("%4d", val);
+	    if (max < val) {
+		max = val;
+	    }
+	}
+	printf("\n");
     }
     printf("\nmax = %d\n", max);
 }

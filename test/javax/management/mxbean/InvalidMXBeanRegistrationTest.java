@@ -50,8 +50,8 @@ public class InvalidMXBeanRegistrationTest {
     public static class Compliant implements Compliant1, Compliant2MXBean {}
 
     public static void main(String[] args) throws Exception {
-        MBeanServer mbs = MBeanServerFactory.newMBeanServer();
-        ObjectName on = new ObjectName("a:b=c");
+	MBeanServer mbs = MBeanServerFactory.newMBeanServer();
+	ObjectName on = new ObjectName("a:b=c");
         Compliant mxbean = new Compliant();
         boolean ok;
         try {
@@ -67,8 +67,8 @@ public class InvalidMXBeanRegistrationTest {
         }
         if (ok)
             System.out.println("Test PASSED");
-        else {
+	else {
             System.out.println("Test FAILED");
-        }
+	}
     }
 }

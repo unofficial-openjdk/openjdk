@@ -25,7 +25,7 @@
  * @test
  * @bug 4041231
  * @summary Test UUEncoder.java for proper masking in encodeAtom
- *
+ * 
  */
 
 import sun.misc.*;
@@ -33,7 +33,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
 public class Encode {
-
+  
     public static void main(String[] args) throws Exception {
         UUEncoder encoder = new UUEncoder("encode.buf");
         byte[] buffer = new byte[3];
@@ -50,6 +50,6 @@ public class Encode {
 
         if (result[22] == 31)
             throw new RuntimeException("UUEncoder generates incorrect byte sequences in encodeAtom.");
-
+        
     }
 }

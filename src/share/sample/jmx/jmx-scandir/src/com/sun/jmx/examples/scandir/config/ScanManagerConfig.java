@@ -43,59 +43,59 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * The <code>ScanManagerConfig</code> Java Bean is used to model
- * the configuration of the {@link
+ * the configuration of the {@link 
  * com.sun.jmx.examples.scandir.ScanManagerMXBean ScanManagerMXBean}.
- *
- * The {@link
- * com.sun.jmx.examples.scandir.ScanManagerMXBean ScanManagerMXBean} will
- * use this configuration to initialize the {@link
- * com.sun.jmx.examples.scandir.ResultLogManagerMXBean ResultLogManagerMXBean}
- * and create the {@link
+ *  
+ * The {@link 
+ * com.sun.jmx.examples.scandir.ScanManagerMXBean ScanManagerMXBean} will 
+ * use this configuration to initialize the {@link 
+ * com.sun.jmx.examples.scandir.ResultLogManagerMXBean ResultLogManagerMXBean} 
+ * and create the {@link 
  * com.sun.jmx.examples.scandir.DirectoryScannerMXBean DirectoryScannerMXBeans}
  * <p>
  * This class is annotated for XML binding.
- * </p>
- *
+ * </p> 
+ * 
  * @author Sun Microsystems, 2006 - All rights reserved.
  **/
 @XmlRootElement(name="ScanManager",
         namespace="jmx:com.sun.jmx.examples.scandir.config")
 public class ScanManagerConfig {
-
+    
     // A logger for this class
     //
     // private static final Logger LOG =
     //        Logger.getLogger(ScanManagerConfig.class.getName());
-
+    
     /**
      * A set of DirectoryScannerConfig objects indexed by their names.
      **/
     private final Map<String, DirectoryScannerConfig> directoryScanners;
-
+    
     /**
      * The initial Result Log configuration.
      */
     private ResultLogConfig initialResultLogConfig;
 
     /**
-     * Holds value of property name. The name of the configuration
+     * Holds value of property name. The name of the configuration 
      *       usually corresponds to
      *       the value of the {@code name=} key of the {@code ObjectName}
-     *       of the {@link
-     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean
+     *       of the {@link 
+     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean 
      *       ScanDirConfigMXBean} which owns this configuration.
      **/
     private String name;
 
     /**
-     * Creates a new instance of ScanManagerConfig.
-     * <p>You should not use this constructor directly, but use
+     * Creates a new instance of ScanManagerConfig. 
+     * <p>You should not use this constructor directly, but use 
      *    {@link #ScanManagerConfig(String)} instead.
      * </p>
-     * <p>This constructor is tagged deprecated so that the compiler
+     * <p>This constructor is tagged deprecated so that the compiler 
      *    will generate a warning if it is used by mistake.
      * </p>
-     * @deprecated Use {@link #ScanManagerConfig(String)} instead. This
+     * @deprecated Use {@link #ScanManagerConfig(String)} instead. This 
      *             constructor is used through reflection by the XML
      *             binding framework.
      */
@@ -104,17 +104,17 @@ public class ScanManagerConfig {
     }
 
     /**
-     * Creates a new instance of ScanManagerConfig.
+     * Creates a new instance of ScanManagerConfig. 
      * @param name The name of the configuration which usually corresponds to
      *       the value of the {@code name=} key of the {@code ObjectName}
-     *       of the {@link
-     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean
+     *       of the {@link 
+     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean 
      *       ScanDirConfigMXBean} which owns this configuration.
      **/
     public ScanManagerConfig(String name) {
         this(name,false);
     }
-
+    
     // Our private constructor...
     private ScanManagerConfig(String name, boolean allowsNull) {
         if (name == null && allowsNull==false)
@@ -122,9 +122,9 @@ public class ScanManagerConfig {
         this.name = name;
         directoryScanners = new LinkedHashMap<String,DirectoryScannerConfig>();
         this.initialResultLogConfig = new ResultLogConfig();
-        this.initialResultLogConfig.setMemoryMaxRecords(1024);
+        this.initialResultLogConfig.setMemoryMaxRecords(1024);        
     }
-
+    
     // Creates an array for deep equality.
     private Object[] toArray() {
         final Object[] thisconfig = {
@@ -132,18 +132,18 @@ public class ScanManagerConfig {
         };
         return thisconfig;
     }
-
+    
     // equals
     @Override
     public boolean equals(Object o) {
         if (o == this) return true;
         if (!(o instanceof ScanManagerConfig)) return false;
         final ScanManagerConfig other = (ScanManagerConfig)o;
-        if (this.directoryScanners.size() != other.directoryScanners.size())
+        if (this.directoryScanners.size() != other.directoryScanners.size()) 
             return false;
         return Arrays.deepEquals(toArray(),other.toArray());
     }
-
+    
     @Override
     public int hashCode() {
         final String key = name;
@@ -152,11 +152,11 @@ public class ScanManagerConfig {
     }
 
     /**
-     * Gets the name of this configuration. The name of the configuration
+     * Gets the name of this configuration. The name of the configuration 
      *       usually corresponds to
      *       the value of the {@code name=} key of the {@code ObjectName}
-     *       of the {@link
-     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean
+     *       of the {@link 
+     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean 
      *       ScanDirConfigMXBean} which owns this configuration.
      * @return The name of this configuration.
      */
@@ -166,11 +166,11 @@ public class ScanManagerConfig {
     }
 
     /**
-     * Sets the name of this configuration. The name of the configuration
+     * Sets the name of this configuration. The name of the configuration 
      *       usually corresponds to
      *       the value of the {@code name=} key of the {@code ObjectName}
-     *       of the {@link
-     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean
+     *       of the {@link 
+     *       com.sun.jmx.examples.scandir.ScanDirConfigMXBean 
      *       ScanDirConfigMXBean} which owns this configuration.
      *       <p>Once set this value cannot change.</p>
      * @param name The name of this configuration.
@@ -185,14 +185,14 @@ public class ScanManagerConfig {
     }
 
    /**
-    * Gets the list of Directory Scanner configured by this
-    * configuration. From each element in this list, the
+    * Gets the list of Directory Scanner configured by this 
+    * configuration. From each element in this list, the 
     * {@link com.sun.jmx.examples.scandir.ScanManagerMXBean ScanManagerMXBean}
-    * will create, initialize, and register a {@link
+    * will create, initialize, and register a {@link 
     * com.sun.jmx.examples.scandir.DirectoryScannerMXBean}.
     * @return The list of Directory Scanner configured by this configuration.
     */
-    @XmlElementWrapper(name="DirectoryScannerList",
+    @XmlElementWrapper(name="DirectoryScannerList", 
             namespace=XmlConfigUtils.NAMESPACE)
     @XmlElementRef
     public DirectoryScannerConfig[] getScanList() {
@@ -200,10 +200,10 @@ public class ScanManagerConfig {
     }
 
    /**
-    * Sets the list of Directory Scanner configured by this
-    * configuration. From each element in this list, the
+    * Sets the list of Directory Scanner configured by this 
+    * configuration. From each element in this list, the 
     * {@link com.sun.jmx.examples.scandir.ScanManagerMXBean ScanManagerMXBean}
-    * will create, initialize, and register a {@link
+    * will create, initialize, and register a {@link 
     * com.sun.jmx.examples.scandir.DirectoryScannerMXBean}.
     * @param scans The list of Directory Scanner configured by this configuration.
     */
@@ -215,9 +215,9 @@ public class ScanManagerConfig {
 
     /**
      * Get a directory scanner by its name.
-     *
+     * 
      * @param name The name of the directory scanner. This is the
-     *             value returned by {@link
+     *             value returned by {@link 
      *             DirectoryScannerConfig#getName()}.
      * @return The named {@code DirectoryScannerConfig}
      */
@@ -226,20 +226,20 @@ public class ScanManagerConfig {
     }
 
     /**
-     * Adds a directory scanner to the list.
+     * Adds a directory scanner to the list. 
      * <p>If a directory scanner
      * configuration by that name already exists in the list, it will
      * be replaced by the given <var>scan</var>.
      * </p>
      * @param scan The {@code DirectoryScannerConfig} to add to the list.
      * @return The replaced {@code DirectoryScannerConfig}, or {@code null}
-     *         if there was no {@code DirectoryScannerConfig} by that name
+     *         if there was no {@code DirectoryScannerConfig} by that name 
      *         in the list.
      */
     public DirectoryScannerConfig putScan(DirectoryScannerConfig scan) {
         return this.directoryScanners.put(scan.getName(),scan);
     }
-
+    
     // XML value of  this object.
     public String toString() {
         return XmlConfigUtils.toString(this);
@@ -247,9 +247,9 @@ public class ScanManagerConfig {
 
     /**
      * Removes the named directory scanner from the list.
-     *
+     * 
      * @param name The name of the directory scanner. This is the
-     *             value returned by {@link
+     *             value returned by {@link 
      *             DirectoryScannerConfig#getName()}.
      * @return The removed {@code DirectoryScannerConfig}, or {@code null}
      *         if there was no directory scanner by that name in the list.
@@ -283,10 +283,10 @@ public class ScanManagerConfig {
     public ScanManagerConfig copy(String newname) {
         return copy(newname,this);
     }
-
+    
     // Copy by XML cloning, then change the name.
     //
-    private static ScanManagerConfig
+    private static ScanManagerConfig 
             copy(String newname, ScanManagerConfig other) {
         ScanManagerConfig newbean = XmlConfigUtils.xmlClone(other);
         newbean.name = newname;

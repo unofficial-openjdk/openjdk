@@ -57,7 +57,7 @@ int CreatePixmapAndGC (int width, int height)
     /* REMIND: use the actual screen, not the default screen */
     Window awt_defaultRoot =
         RootWindow(awt_display, DefaultScreen(awt_display));
-
+    
     if (width < 100) {
       width = 100;
     }
@@ -72,7 +72,7 @@ int CreatePixmapAndGC (int width, int height)
     if (pixmapGC != NULL) {
       XFreeGC (awt_display, pixmapGC);
     }
-    pixmap = XCreatePixmap (awt_display, awt_defaultRoot, pixmapWidth,
+    pixmap = XCreatePixmap (awt_display, awt_defaultRoot, pixmapWidth, 
                           pixmapHeight, 1);
     if (pixmap == 0) {
       return BadAlloc;
@@ -81,7 +81,7 @@ int CreatePixmapAndGC (int width, int height)
     if (pixmapGC == NULL) {
       return BadAlloc;
     }
-    XFillRectangle (awt_display, pixmap, pixmapGC, 0, 0, pixmapWidth,
+    XFillRectangle (awt_display, pixmap, pixmapGC, 0, 0, pixmapWidth, 
                   pixmapHeight);
     XSetForeground (awt_display, pixmapGC, 1);
     return Success;
@@ -131,7 +131,7 @@ JNIEXPORT void JNICALL AWTLoadFont(char* name, AWTFont *pReturn) {
     *pReturn = NULL;
 #ifndef HEADLESS
     FONT_AWT_LOCK();
-    *pReturn = (AWTFont)XLoadQueryFont(awt_display, name);
+    *pReturn = (AWTFont)XLoadQueryFont(awt_display, name); 
     AWT_UNLOCK();
 #endif /* !HEADLESS */
 }
@@ -225,8 +225,8 @@ JNIEXPORT int JNICALL AWTFontDescent(AWTFont font) {
 }
 
 JNIEXPORT void JNICALL AWTFontTextExtents16(AWTFont font,
-                                            AWTChar2b* xChar,
-                                            AWTChar* overall) {
+					    AWTChar2b* xChar,
+					    AWTChar* overall) {
 #ifndef HEADLESS
     JNIEnv *env;
     int ascent, descent, direction;
@@ -246,7 +246,7 @@ JNIEXPORT void JNICALL AWTFontTextExtents16(AWTFont font,
      */
     FONT_AWT_LOCK();
     XQueryTextExtents16(awt_display,xFont->fid, xChar, 1,
-                        &direction, &ascent, &descent, newChar);
+			&direction, &ascent, &descent, newChar);
 /* XTextExtents16(xFont, xChar, 1, &direction, &ascent, &descent, newChar);  */
     AWT_UNLOCK();
 #endif /* !HEADLESS */
@@ -276,7 +276,7 @@ JNIEXPORT jlong JNICALL AWTFontGenerateImage(AWTFont pFont, AWTChar2b* xChar) {
     FONT_AWT_LOCK();
 /*     XTextExtents16(xFont, xChar, 1, &direction, &ascent, &descent, &xcs); */
     XQueryTextExtents16(awt_display,xFont->fid, xChar, 1,
-                        &direction, &ascent, &descent, &xcs);
+			&direction, &ascent, &descent, &xcs);
     width = xcs.rbearing - xcs.lbearing;
     height = xcs.ascent+xcs.descent;
     imageSize = width*height;
@@ -289,36 +289,36 @@ JNIEXPORT jlong JNICALL AWTFontGenerateImage(AWTFont pFont, AWTChar2b* xChar) {
     glyphInfo->topLeftY = -xcs.ascent;
     glyphInfo->advanceX = xcs.width;
     glyphInfo->advanceY = 0;
-
+    
     if (imageSize == 0) {
-        glyphInfo->image = NULL;
-        AWT_UNLOCK();
+	glyphInfo->image = NULL;
+	AWT_UNLOCK();
         return (jlong)(uintptr_t)glyphInfo;
     } else {
-        glyphInfo->image = (unsigned char*)glyphInfo+sizeof(GlyphInfo);
+	glyphInfo->image = (unsigned char*)glyphInfo+sizeof(GlyphInfo);
     }
 
     if ((pixmap == 0) || (width > pixmapWidth) || (height > pixmapHeight)) {
-        if (CreatePixmapAndGC(width, height) != Success) {
-            glyphInfo->image = NULL;
-            AWT_UNLOCK();
-            return (jlong)(uintptr_t)glyphInfo;
-        }
+	if (CreatePixmapAndGC(width, height) != Success) {
+	    glyphInfo->image = NULL;
+	    AWT_UNLOCK();
+	    return (jlong)(uintptr_t)glyphInfo;
+	}
     }
 
     XSetFont(awt_display, pixmapGC, xFont->fid);
     XSetForeground(awt_display, pixmapGC, 0);
-    XFillRectangle(awt_display, pixmap, pixmapGC, 0, 0,
-                   pixmapWidth, pixmapHeight);
+    XFillRectangle(awt_display, pixmap, pixmapGC, 0, 0, 
+		   pixmapWidth, pixmapHeight);
     XSetForeground(awt_display, pixmapGC, 1);
     XDrawString16(awt_display, pixmap, pixmapGC,
-                  -xcs.lbearing, xcs.ascent, xChar, 1);
+		  -xcs.lbearing, xcs.ascent, xChar, 1);
     ximage = XGetImage(awt_display, pixmap, 0, 0, width, height,
-                       AllPlanes, XYPixmap);
+		       AllPlanes, XYPixmap);
 
     if (ximage == NULL) {
-        glyphInfo->image = NULL;
-        AWT_UNLOCK();
+	glyphInfo->image = NULL;
+	AWT_UNLOCK();
         return (jlong)(uintptr_t)glyphInfo;
     }
 
@@ -335,7 +335,7 @@ JNIEXPORT jlong JNICALL AWTFontGenerateImage(AWTFont pFont, AWTChar2b* xChar) {
     for (h=0; h<height; h++) {
         const UInt8* src8 = srcRow;
         UInt8 *dstByte = dstRow;
-        UInt32 srcValue;
+	UInt32 srcValue;
 
         srcRow += nbytes;
         dstRow += width;
@@ -343,25 +343,25 @@ JNIEXPORT jlong JNICALL AWTFontGenerateImage(AWTFont pFont, AWTChar2b* xChar) {
         for (i = 0; i < wholeByteCount; i++) {
             srcValue = *src8++;
             for (j = 0; j < 8; j++) {
-                if (ximage->bitmap_bit_order == LSBFirst) {
+		if (ximage->bitmap_bit_order == LSBFirst) {
                     *dstByte++ = (srcValue & 0x01) ? 0xFF : 0;
                     srcValue >>= 1;
-                } else {                /* MSBFirst */
+		} else {		/* MSBFirst */
                     *dstByte++ = (srcValue & 0x80) ? 0xFF : 0;
                     srcValue <<= 1;
-                }
+		}
             }
         }
         if (remainingBitsCount) {
             srcValue = *src8;
             for (j = 0; j < remainingBitsCount; j++) {
-                if (ximage->bitmap_bit_order == LSBFirst) {
+		if (ximage->bitmap_bit_order == LSBFirst) {
                     *dstByte++ = (srcValue & 0x01) ? 0xFF : 0;
                     srcValue >>= 1;
-                } else {                /* MSBFirst */
+		} else {		/* MSBFirst */
                     *dstByte++ = (srcValue & 0x80) ? 0xFF : 0;
                     srcValue <<= 1;
-                }
+		}
             }
         }
     }
@@ -413,3 +413,5 @@ JNIEXPORT short JNICALL AWTCharDescent(AWTChar xChar) {
     return ((XCharStruct *)xChar)->descent;
 #endif /* !HEADLESS */
 }
+
+

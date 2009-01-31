@@ -36,23 +36,24 @@ import javax.naming.NamingException;
   *<blockquote><pre>
   *   NamingEnumeration elts = ectx.search((Name)name, filter, sctls);
   *   while (elts.hasMore()) {
-  *     Object entry = elts.next();
+  *	Object entry = elts.next();
   *
-  *     // Get search result
-  *     SearchResult res = (SearchResult)entry;
-  *     // do something with it
+  *	// Get search result 
+  *	SearchResult res = (SearchResult)entry;
+  *	// do something with it 
   *
-  *     // Get entry controls
-  *     if (entry instanceof HasControls) {
-  *         Control[] entryCtls = ((HasControls)entry).getControls();
-  *         // do something with controls
-  *     }
+  *	// Get entry controls
+  *  	if (entry instanceof HasControls) {
+  *	    Control[] entryCtls = ((HasControls)entry).getControls();
+  *	    // do something with controls
+  *	}
   *   }
   *</pre></blockquote>
-  *
+  * 
   * @author Rosanna Lee
   * @author Scott Seligman
   * @author Vincent Ryan
+  * @version %I% %E%
   * @since 1.3
   *
   */

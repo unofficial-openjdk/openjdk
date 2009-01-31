@@ -44,25 +44,25 @@ final class XDragAndDropProtocols {
 
     static {
         // Singleton listener for all drag source protocols.
-        XDragSourceProtocolListener dragSourceProtocolListener =
+        XDragSourceProtocolListener dragSourceProtocolListener = 
             XDragSourceContextPeer.getXDragSourceProtocolListener();
         // Singleton listener for all drop target protocols.
-        XDropTargetProtocolListener dropTargetProtocolListener =
+        XDropTargetProtocolListener dropTargetProtocolListener = 
             XDropTargetContextPeer.getXDropTargetProtocolListener();
 
         List tDragSourceProtocols = new ArrayList();
-        XDragSourceProtocol xdndDragSourceProtocol =
+        XDragSourceProtocol xdndDragSourceProtocol = 
             XDnDDragSourceProtocol.createInstance(dragSourceProtocolListener);
         tDragSourceProtocols.add(xdndDragSourceProtocol);
-        XDragSourceProtocol motifdndDragSourceProtocol =
+        XDragSourceProtocol motifdndDragSourceProtocol = 
             MotifDnDDragSourceProtocol.createInstance(dragSourceProtocolListener);
         tDragSourceProtocols.add(motifdndDragSourceProtocol);
 
-        List tDropTargetProtocols = new ArrayList();
-        XDropTargetProtocol xdndDropTargetProtocol =
+        List tDropTargetProtocols = new ArrayList();    
+        XDropTargetProtocol xdndDropTargetProtocol = 
             XDnDDropTargetProtocol.createInstance(dropTargetProtocolListener);
         tDropTargetProtocols.add(xdndDropTargetProtocol);
-        XDropTargetProtocol motifdndDropTargetProtocol =
+        XDropTargetProtocol motifdndDropTargetProtocol = 
             MotifDnDDropTargetProtocol.createInstance(dropTargetProtocolListener);
         tDropTargetProtocols.add(motifdndDropTargetProtocol);
 
@@ -96,7 +96,7 @@ final class XDragAndDropProtocols {
                 return dragProtocol;
             }
         }
-
+        
         return null;
     }
 
@@ -118,7 +118,7 @@ final class XDragAndDropProtocols {
                 return dropProtocol;
             }
         }
-
+        
         return null;
     }
 }

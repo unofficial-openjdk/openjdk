@@ -54,7 +54,7 @@ class ArrayRangeTarg {
     /********** test program **********/
 
 public class ArrayRangeTest extends TestScaffold {
-    ReferenceType targetClass;
+    ReferenceType targetClass; 
 
     class Sample {
         Sample(String name, ArrayReference arrRef, int[] expected) {
@@ -66,15 +66,15 @@ public class ArrayRangeTest extends TestScaffold {
         ArrayReference arrRef;
         int[] expected;
     }
-
+    
     ArrayRangeTest (String args[]) {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new ArrayRangeTest(args).startTests();
     }
-
+    
     /********** test assist **********/
 
     String arr(int a[]) {
@@ -90,34 +90,34 @@ public class ArrayRangeTest extends TestScaffold {
         buf.append(']');
         return buf.toString();
     }
-
+    
     void getValueGood(Sample samp, int index) {
         try {
             Value val = samp.arrRef.getValue(index);
             int ival = ((IntegerValue)val).value();
             if (ival != samp.expected[index]) {
-                failure("FAIL - " + samp.name +
+                failure("FAIL - " + samp.name + 
                         ".getValue(" + index + ") - wrong value=" + ival);
             } else {
-                println("pass - " + samp.name +
+                println("pass - " + samp.name + 
                         ".getValue(" + index + ") - value=" + ival);
             }
         } catch (Throwable exc) {
-            failure("FAIL - " + samp.name +
+            failure("FAIL - " + samp.name + 
                     ".getValue(" + index + ") - unexpected: " + exc);
         }
     }
-
+    
     void getValueBad(Sample samp, int index) {
         try {
             Value val = samp.arrRef.getValue(index);
-            failure("FAIL - " + samp.name +
+            failure("FAIL - " + samp.name + 
                     ".getValue(" + index + ") - no expected exception");
         } catch (IndexOutOfBoundsException exc) {
-            println("pass - " + samp.name +
+            println("pass - " + samp.name + 
                     ".getValue(" + index + ") - got expected: " + exc);
         } catch (Throwable exc) {
-            failure("FAIL - " + samp.name +
+            failure("FAIL - " + samp.name + 
                     ".getValue(" + index + ") - unexpected: " + exc);
         }
     }
@@ -127,7 +127,7 @@ public class ArrayRangeTest extends TestScaffold {
         try {
             List vals = samp.arrRef.getValues();
             if (vals.size() != samp.expected.length) {
-                failure("FAIL - " + desc +
+                failure("FAIL - " + desc + 
                         " - wrong size=" + vals.size() +
                         " , expected: " + samp.expected.length);
             }
@@ -149,10 +149,10 @@ public class ArrayRangeTest extends TestScaffold {
     void getValuesGood(Sample samp, int index, int length) {
         try {
             List vals = samp.arrRef.getValues(index, length);
-            if (vals.size() !=
+            if (vals.size() != 
                  ((length==-1)? (samp.expected.length - index) : length)) {
                 failure("FAIL - " + samp.name + ".getValues(" +
-                        index + ", " + length + ") - wrong size=" +
+                        index + ", " + length + ") - wrong size=" + 
                         vals.size());
             }
             for (int i = 0; i < vals.size(); ++i) {
@@ -185,35 +185,35 @@ public class ArrayRangeTest extends TestScaffold {
                     index + ", " + length + ") - unexpected: " + exc);
         }
     }
-
+    
     void setValueGood(Sample samp, int index, int ival) {
         try {
             Value val = vm().mirrorOf(ival);
             samp.arrRef.setValue(index, val);
-            println("pass - " + samp.name +
+            println("pass - " + samp.name + 
                     ".setValue(" + index + ", ..)");
         } catch (Throwable exc) {
-            failure("FAIL - " + samp.name +
+            failure("FAIL - " + samp.name + 
                     ".setValue(" + index + ",...) - unexpected: " + exc);
         }
     }
-
+    
     void setValueBad(Sample samp, int index, int ival) {
         try {
             Value val = vm().mirrorOf(ival);
             samp.arrRef.setValue(index, val);
-            failure("FAIL - " + samp.name +
+            failure("FAIL - " + samp.name + 
                     ".setValue(" + index + ", ..) - no expected exception");
         } catch (IndexOutOfBoundsException exc) {
-            println("pass - " + samp.name +
+            println("pass - " + samp.name + 
                     ".setValue(" + index + ",...) - got expected: " + exc);
         } catch (Throwable exc) {
-            failure("FAIL - " + samp.name +
+            failure("FAIL - " + samp.name + 
                     ".setValue(" + index + ",...) - unexpected: " + exc);
         }
     }
 
-    void setValuesGood(Sample samp, int[] valArray) {
+    void setValuesGood(Sample samp, int[] valArray) { 
         String desc = samp.name + ".setValues(" + arr(valArray) + ")";
         try {
             List values = new ArrayList();
@@ -227,9 +227,9 @@ public class ArrayRangeTest extends TestScaffold {
             failure("FAIL - " + desc + " - unexpected: " + exc);
         }
     }
-
+  
     void setValuesGood(Sample samp, int index, int[] valArray,
-                       int srcInx, int length) {
+                       int srcInx, int length) { 
         String desc = samp.name + ".setValues(" + index + ", " +
             arr(valArray) + ", " + srcInx + ", " + length + ")";
         try {
@@ -244,9 +244,9 @@ public class ArrayRangeTest extends TestScaffold {
             failure("FAIL - " + desc + " - unexpected: " + exc);
         }
     }
-
+  
     void setValuesBad(Sample samp, int index, int[] valArray,
-                       int srcInx, int length) {
+                       int srcInx, int length) { 
         String desc = samp.name + ".setValues(" + index + ", " +
             arr(valArray) + ", " + srcInx + ", " + length + ")";
         try {
@@ -262,15 +262,15 @@ public class ArrayRangeTest extends TestScaffold {
         } catch (Throwable exc) {
             failure("FAIL - " + desc + " - unexpected: " + exc);
         }
-    }
+    }  
 
     void check(Sample samp, int[] expectArray) {
         String desc = samp.name + " - check - " + arr(expectArray);
-
+            
         try {
             List vals = samp.arrRef.getValues();
             if (vals.size() != expectArray.length) {
-                failure("FAIL - " + desc +
+                failure("FAIL - " + desc + 
                         " - wrong size=" + vals.size() +
                         " , expected: " + expectArray.length);
             }
@@ -317,7 +317,7 @@ public class ArrayRangeTest extends TestScaffold {
         getValueBad(full, 5);
         getValueBad(empty, 0);
         getValueBad(empty, 5);
-
+        
         getValuesGood(full);
         getValuesGood(empty);
 
@@ -370,7 +370,7 @@ public class ArrayRangeTest extends TestScaffold {
         // index > length()
         setValueBad(full, 5, 77);
         setValueBad(full, 6, 77);
-
+        
         check(full, new int[] {55, 100, 200, 300, 66});
 
         // index < 0
@@ -380,7 +380,7 @@ public class ArrayRangeTest extends TestScaffold {
         // index > length()
         setValueBad(empty, 0, 77);
         setValueBad(empty, 1, 77);
-
+        
         setValuesGood(full, new int[] {40, 41, 42});
         setValuesGood(full, new int[] {});
 
@@ -388,7 +388,7 @@ public class ArrayRangeTest extends TestScaffold {
 
         setValuesGood(full, new int[] {99, 51, 52, 53, 54, 55});
         setValuesGood(full, new int[] {50});
-
+       
         check(full, new int[] {50, 51, 52, 53, 54});
 
         setValuesGood(empty, new int[] {});
@@ -396,17 +396,17 @@ public class ArrayRangeTest extends TestScaffold {
 
         setValuesGood(full, 2, new int[] {30, 31, 32, 33, 34, 35}, 0, 3);
         setValuesGood(full, 0, new int[] {80}, 0, 1);
-
+       
         check(full, new int[] {80, 51, 30, 31, 32});
 
         setValuesGood(full, 0, new int[] {90, 91, 92, 93, 94, 95}, 3, 3);
         setValuesGood(full, 4, new int[] {81}, 0, 1);
-
+       
         check(full, new int[] {93, 94, 95, 31, 81});
 
         setValuesGood(full, 3, new int[] {60, 61, 62, 63}, 0, -1);
         setValuesGood(full, 0, new int[] {82}, 0, -1);
-
+       
         check(full, new int[] {82, 94, 95, 60, 61});
 
         setValuesGood(full, 3, new int[] {20, 21, 22, 23}, 1, -1);
@@ -415,28 +415,28 @@ public class ArrayRangeTest extends TestScaffold {
         setValuesGood(full, 2, new int[] {}, 0, 0);
         setValuesGood(full, 3, new int[] {99}, 0, 0);
         setValuesGood(full, 4, new int[] {99, 98}, 1, 0);
-
+       
         check(full, new int[] {82, 84, 95, 21, 22});
 
         setValuesGood(empty, 0, new int[] {}, 0, -1);
         setValuesGood(empty, 0, new int[] {}, 0, 0);
         setValuesGood(empty, 0, new int[] {99}, 0, 0);
         setValuesGood(empty, 0, new int[] {99, 98}, 1, 0);
-
+       
         // index < 0
         setValuesBad(full, -1, new int[] {30, 31, 32, 33, 34, 35}, 0, 0);
         setValuesBad(full, -1, new int[] {30, 31, 32, 33, 34, 35}, 0, -1);
         setValuesBad(full, -2, new int[] {30, 31, 32, 33, 34, 35}, 0, -1);
         setValuesBad(empty, -1, new int[] {}, 0, 0);
         setValuesBad(empty, -2, new int[] {}, 0, 0);
-
+     
         // index > length()
         setValuesBad(full, 6, new int[] {30, 31, 32, 33, 34, 35}, 0, 1);
         setValuesBad(full, 6, new int[] {30, 31, 32, 33, 34, 35}, 0, -1);
         setValuesBad(empty, 1, new int[] {4}, 0, 0);
         setValuesBad(empty, 1, new int[] {}, 0, 0);
         setValuesBad(empty, 1, new int[] {}, 0, -1);
-
+        
         // srcIndex < 0
         setValuesBad(full, 0, new int[] {90, 91, 92, 93, 94, 95}, -1, 3);
         setValuesBad(full, 0, new int[] {90, 91, 92, 93, 94, 95}, -1, 0);
@@ -455,7 +455,7 @@ public class ArrayRangeTest extends TestScaffold {
         setValuesBad(full, 2, new int[] {}, 1, 0);
         setValuesBad(empty, 0, new int[] {}, 1, 0);
         setValuesBad(empty, 0, new int[] {5}, 2, 0);
-
+       
         // length < 0 (length != -1)
         setValuesBad(full, 3, new int[] {60, 61, 62, 63}, 0, -2);
         setValuesBad(full, 3, new int[] {}, 0, -2);
@@ -491,7 +491,7 @@ public class ArrayRangeTest extends TestScaffold {
          * resume the target until end
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -503,3 +503,4 @@ public class ArrayRangeTest extends TestScaffold {
         }
     }
 }
+

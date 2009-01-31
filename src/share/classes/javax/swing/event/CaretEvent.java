@@ -28,7 +28,7 @@ import java.util.EventObject;
 
 
 /**
- * CaretEvent is used to notify interested parties that
+ * CaretEvent is used to notify interested parties that 
  * the text caret has changed in the event source.
  * <p>
  * <strong>Warning:</strong>
@@ -40,6 +40,7 @@ import java.util.EventObject;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author  Timothy Prinzing
  */
 public abstract class CaretEvent extends EventObject {
@@ -69,3 +70,4 @@ public abstract class CaretEvent extends EventObject {
      */
     public abstract int getMark();
 }
+

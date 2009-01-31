@@ -32,6 +32,7 @@ package java.lang;
  * operation.
  *
  * @author  Jonni Kanerva
+ * @version %I%, %G%
  * @since   JDK1.1
  */
 public
@@ -41,7 +42,7 @@ class IllegalStateException extends RuntimeException {
      * A detail message is a String that describes this particular exception.
      */
     public IllegalStateException() {
-        super();
+	super();
     }
 
     /**
@@ -52,7 +53,7 @@ class IllegalStateException extends RuntimeException {
      * @param s the String that contains a detailed message
      */
     public IllegalStateException(String s) {
-        super(s);
+	super(s);
     }
 
     /**
@@ -74,7 +75,7 @@ class IllegalStateException extends RuntimeException {
     public IllegalStateException(String message, Throwable cause) {
         super(message, cause);
     }
-
+ 
     /**
      * Constructs a new exception with the specified cause and a detail
      * message of <tt>(cause==null ? null : cause.toString())</tt> (which

@@ -324,10 +324,10 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "get" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void get(SnmpMibSubRequest req, int depth)
@@ -337,10 +337,10 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "set" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void set(SnmpMibSubRequest req, int depth)
@@ -350,10 +350,10 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "check" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void check(SnmpMibSubRequest req, int depth)
@@ -411,10 +411,10 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "skipVariable" method defined in "SnmpMibGroup".
     // See the "SnmpMibGroup" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public boolean  skipVariable(long var, Object data, int pduVersion) {
@@ -569,18 +569,18 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmMemMgrPoolRelTable" table metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param tableName Name of the table object ("JvmMemMgrPoolRelTable")
      * @param groupName Name of the group to which this table belong ("JvmMemory")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmMemMgrPoolRelTable" table (JvmMemMgrPoolRelTableMeta)
-     *
+     * 
      **/
     protected JvmMemMgrPoolRelTableMeta createJvmMemMgrPoolRelTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmMemMgrPoolRelTableMeta(mib, objectserver);
@@ -589,18 +589,18 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmMemPoolTable" table metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param tableName Name of the table object ("JvmMemPoolTable")
      * @param groupName Name of the group to which this table belong ("JvmMemory")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmMemPoolTable" table (JvmMemPoolTableMeta)
-     *
+     * 
      **/
     protected JvmMemPoolTableMeta createJvmMemPoolTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmMemPoolTableMeta(mib, objectserver);
@@ -609,18 +609,18 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmMemGCTable" table metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param tableName Name of the table object ("JvmMemGCTable")
      * @param groupName Name of the group to which this table belong ("JvmMemory")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmMemGCTable" table (JvmMemGCTableMeta)
-     *
+     * 
      **/
     protected JvmMemGCTableMeta createJvmMemGCTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmMemGCTableMeta(mib, objectserver);
@@ -629,18 +629,18 @@ public class JvmMemoryMeta extends SnmpMibGroup
 
     /**
      * Factory method for "JvmMemManagerTable" table metadata class.
-     *
+     * 
      * You can redefine this method if you need to replace the default
      * generated metadata class with your own customized class.
-     *
+     * 
      * @param tableName Name of the table object ("JvmMemManagerTable")
      * @param groupName Name of the group to which this table belong ("JvmMemory")
      * @param mib The SnmpMib object in which this table is registered
      * @param server MBeanServer for this table entries (may be null)
-     *
+     * 
      * @return An instance of the metadata class generated for the
      *         "JvmMemManagerTable" table (JvmMemManagerTableMeta)
-     *
+     * 
      **/
     protected JvmMemManagerTableMeta createJvmMemManagerTableMetaNode(String tableName, String groupName, SnmpMib mib, MBeanServer server)  {
         return new JvmMemManagerTableMeta(mib, objectserver);

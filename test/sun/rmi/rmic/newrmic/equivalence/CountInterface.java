@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -53,11 +53,11 @@ public interface CountInterface extends Remote {
     public ActivationGroupID getCurrentGroupID() throws RemoteException;
 
     public void inactive()
-        throws RemoteException, UnknownObjectException, ActivationException;
+	throws RemoteException, UnknownObjectException, ActivationException;
 
     public void register()
-        throws RemoteException, UnknownObjectException, ActivationException;
+	throws RemoteException, UnknownObjectException, ActivationException;
 
     public void unregister()
-        throws RemoteException, UnknownObjectException, ActivationException;
+	throws RemoteException, UnknownObjectException, ActivationException;
 }

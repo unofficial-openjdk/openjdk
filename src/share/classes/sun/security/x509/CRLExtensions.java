@@ -59,6 +59,7 @@ import sun.misc.HexDumpEncoder;
  * </pre>
  *
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class CRLExtensions {
 
@@ -118,12 +119,12 @@ public class CRLExtensions {
                 return;
             }
             Constructor cons = ((Class<?>)extClass).getConstructor(PARAMS);
-            Object[] passed = new Object[] {Boolean.valueOf(ext.isCritical()),
+	    Object[] passed = new Object[] {Boolean.valueOf(ext.isCritical()),
                                             ext.getExtensionValue()};
             CertAttrSet crlExt = (CertAttrSet)cons.newInstance(passed);
-            if (map.put(crlExt.getName(), (Extension)crlExt) != null) {
+	    if (map.put(crlExt.getName(), (Extension)crlExt) != null) {
                 throw new CRLException("Duplicate extensions not allowed");
-            }
+	    }
         } catch (InvocationTargetException invk) {
             throw new CRLException(invk.getTargetException().getMessage());
         } catch (Exception e) {
@@ -250,7 +251,7 @@ public class CRLExtensions {
         if (!(other instanceof CRLExtensions))
             return false;
         Collection<Extension> otherC =
-                        ((CRLExtensions)other).getAllExtensions();
+			((CRLExtensions)other).getAllExtensions();
         Object[] objs = otherC.toArray();
 
         int len = objs.length;

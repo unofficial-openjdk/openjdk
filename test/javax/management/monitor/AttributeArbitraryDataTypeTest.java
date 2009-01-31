@@ -186,21 +186,21 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
         String type = n.getType();
         try {
             if (type.equals(MonitorNotification.
-                            THRESHOLD_VALUE_EXCEEDED)) {
+			    THRESHOLD_VALUE_EXCEEDED)) {
                 echo("\t\t" + n.getObservedAttribute() +
                      " has reached or exceeded the threshold");
                 echo("\t\tDerived Gauge = " + n.getDerivedGauge());
                 echo("\t\tTrigger = " + n.getTrigger());
                 counterMessageReceived = true;
             } else if (type.equals(MonitorNotification.
-                                   THRESHOLD_HIGH_VALUE_EXCEEDED)) {
+				   THRESHOLD_HIGH_VALUE_EXCEEDED)) {
                 echo("\t\t" + n.getObservedAttribute() +
                      " has reached or exceeded the high threshold");
                 echo("\t\tDerived Gauge = " + n.getDerivedGauge());
                 echo("\t\tTrigger = " + n.getTrigger());
                 gaugeMessageReceived = true;
             } else if (type.equals(MonitorNotification.
-                                   STRING_TO_COMPARE_VALUE_MATCHED)) {
+				   STRING_TO_COMPARE_VALUE_MATCHED)) {
                 echo("\t\t" + n.getObservedAttribute() +
                      " matches the string-to-compare value");
                 echo("\t\tDerived Gauge = " + n.getDerivedGauge());
@@ -233,7 +233,7 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             echo(">>> CREATE a new CounterMonitor MBean");
             ObjectName counterMonitorName = new ObjectName(
                             domain + ":type=" + CounterMonitor.class.getName());
-            counterMonitor = new CounterMonitor();
+	    counterMonitor = new CounterMonitor();
             server.registerMBean(counterMonitor, counterMonitorName);
 
             echo(">>> ADD a listener to the CounterMonitor");
@@ -246,7 +246,7 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             echo(">>> CREATE a new ObservedObject MBean");
 
             ObjectName obsObjName =
-                ObjectName.getInstance(domain + ":type=ObservedObject");
+		ObjectName.getInstance(domain + ":type=ObservedObject");
             ObservedObject obsObj = new ObservedObject();
             ComplexAttribute ca = new ComplexAttribute();
             switch (testCase) {
@@ -293,11 +293,11 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             counterMonitor.setNotify(true);
             echo("\tATTRIBUTE \"NotifyFlag\"        = true");
 
-            Integer threshold = 2;
+	    Integer threshold = 2;
             counterMonitor.setInitThreshold(threshold);
             echo("\tATTRIBUTE \"Threshold\"         = " + threshold);
 
-            int granularityperiod = 500;
+	    int granularityperiod = 500;
             counterMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -352,20 +352,20 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
                     break;
             }
 
-            // Check if notification was received
-            //
-            if (counterMessageReceived) {
-                echo("\tOK: CounterMonitor notification received");
-            } else {
-                echo("\tKO: CounterMonitor notification missed or not emitted");
-                return 1;
-            }
+	    // Check if notification was received
+	    //
+	    if (counterMessageReceived) {
+		echo("\tOK: CounterMonitor notification received");
+	    } else {
+		echo("\tKO: CounterMonitor notification missed or not emitted");
+		return 1;
+	    }
         } finally {
-            if (counterMonitor != null)
-                counterMonitor.stop();
+	    if (counterMonitor != null)
+		counterMonitor.stop();
         }
 
-        return 0;
+	return 0;
     }
 
     /**
@@ -386,7 +386,7 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             echo(">>> CREATE a new GaugeMonitor MBean");
             ObjectName gaugeMonitorName = new ObjectName(
                             domain + ":type=" + GaugeMonitor.class.getName());
-            gaugeMonitor = new GaugeMonitor();
+	    gaugeMonitor = new GaugeMonitor();
             server.registerMBean(gaugeMonitor, gaugeMonitorName);
 
             echo(">>> ADD a listener to the GaugeMonitor");
@@ -399,9 +399,9 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             echo(">>> CREATE a new ObservedObject MBean");
 
             ObjectName obsObjName =
-                ObjectName.getInstance(domain + ":type=ObservedObject");
+		ObjectName.getInstance(domain + ":type=ObservedObject");
             ObservedObject obsObj = new ObservedObject();
-            ComplexAttribute ca = new ComplexAttribute();
+	    ComplexAttribute ca = new ComplexAttribute();
             switch (testCase) {
                 case 1:
                     obsObj.da = 0.0;
@@ -464,7 +464,7 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
                     break;
             }
 
-            int granularityperiod = 500;
+	    int granularityperiod = 500;
             gaugeMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -519,20 +519,20 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
                     break;
             }
 
-            // Check if notification was received
-            //
+	    // Check if notification was received
+	    //
             if (gaugeMessageReceived) {
-                echo("\tOK: GaugeMonitor notification received");
-            } else {
-                echo("\tKO: GaugeMonitor notification missed or not emitted");
-                return 1;
-            }
+		echo("\tOK: GaugeMonitor notification received");
+	    } else {
+		echo("\tKO: GaugeMonitor notification missed or not emitted");
+		return 1;
+	    }
         } finally {
-            if (gaugeMonitor != null)
-                gaugeMonitor.stop();
+	    if (gaugeMonitor != null)
+		gaugeMonitor.stop();
         }
 
-        return 0;
+	return 0;
     }
 
     /**
@@ -553,7 +553,7 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             echo(">>> CREATE a new StringMonitor MBean");
             ObjectName stringMonitorName = new ObjectName(
                             domain + ":type=" + StringMonitor.class.getName());
-            stringMonitor = new StringMonitor();
+	    stringMonitor = new StringMonitor();
             server.registerMBean(stringMonitor, stringMonitorName);
 
             echo(">>> ADD a listener to the StringMonitor");
@@ -566,9 +566,9 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             echo(">>> CREATE a new ObservedObject MBean");
 
             ObjectName obsObjName =
-                ObjectName.getInstance(domain + ":type=ObservedObject");
+		ObjectName.getInstance(domain + ":type=ObservedObject");
             ObservedObject obsObj = new ObservedObject();
-            ComplexAttribute ca = new ComplexAttribute();
+	    ComplexAttribute ca = new ComplexAttribute();
             switch (testCase) {
                 case 1:
                     obsObj.sa = "do_not_match_0";
@@ -619,7 +619,7 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
             stringMonitor.setStringToCompare("do_match_now");
             echo("\tATTRIBUTE \"StringToCompare\"   = \"do_match_now\"");
 
-            int granularityperiod = 500;
+	    int granularityperiod = 500;
             stringMonitor.setGranularityPeriod(granularityperiod);
             echo("\tATTRIBUTE \"GranularityPeriod\" = " + granularityperiod);
 
@@ -674,45 +674,45 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
                     break;
             }
 
-            // Check if notification was received
-            //
-            if (stringMessageReceived) {
-                echo("\tOK: StringMonitor notification received");
-            } else {
-                echo("\tKO: StringMonitor notification missed or not emitted");
-                return 1;
-            }
+	    // Check if notification was received
+	    //
+	    if (stringMessageReceived) {
+		echo("\tOK: StringMonitor notification received");
+	    } else {
+		echo("\tKO: StringMonitor notification missed or not emitted");
+		return 1;
+	    }
         } finally {
-            if (stringMonitor != null)
-                stringMonitor.stop();
+	    if (stringMonitor != null)
+		stringMonitor.stop();
         }
 
-        return 0;
+	return 0;
     }
 
     /**
      * Test the monitor notifications.
      */
     public int monitorNotifications() throws Exception {
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         int error = counterMonitorNotification(1);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += counterMonitorNotification(2);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += counterMonitorNotification(3);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += gaugeMonitorNotification(1);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += gaugeMonitorNotification(2);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += gaugeMonitorNotification(3);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += stringMonitorNotification(1);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += stringMonitorNotification(2);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         error += stringMonitorNotification(3);
-        echo(">>> ----------------------------------------");
+	echo(">>> ----------------------------------------");
         return error;
     }
 
@@ -730,15 +730,15 @@ public class AttributeArbitraryDataTypeTest implements NotificationListener {
      */
     public static void main (String args[]) throws Exception {
         AttributeArbitraryDataTypeTest test =
-            new AttributeArbitraryDataTypeTest();
+	    new AttributeArbitraryDataTypeTest();
         int error = test.monitorNotifications();
-        if (error > 0) {
-            echo(">>> Unhappy Bye, Bye!");
-            throw new IllegalStateException("Test FAILED: Didn't get all " +
-                                            "the notifications that were " +
-                                            "expected by the test!");
-        } else {
-            echo(">>> Happy Bye, Bye!");
-        }
+	if (error > 0) {
+	    echo(">>> Unhappy Bye, Bye!");
+	    throw new IllegalStateException("Test FAILED: Didn't get all " +
+					    "the notifications that were " +
+					    "expected by the test!");
+	} else {
+	    echo(">>> Happy Bye, Bye!");
+	}
     }
 }

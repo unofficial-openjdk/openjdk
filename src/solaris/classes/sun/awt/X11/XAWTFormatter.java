@@ -64,7 +64,7 @@ public class XAWTFormatter extends java.util.logging.Formatter {
      * @param record the log record to be formatted.
      * @return a formatted log record
      */
-    public synchronized String format(LogRecord record) {
+    public synchronized String format(LogRecord record) {        
         StringBuffer sb = new StringBuffer();
         if (useANSI) {
             Level lev = record.getLevel();
@@ -73,7 +73,7 @@ public class XAWTFormatter extends java.util.logging.Formatter {
             } else if (Level.FINER.equals(lev)) {
                 sb.append("[32m");
             } else if (Level.FINE.equals(lev)) {
-                sb.append("[34m");
+                sb.append("[34m"); 
             }
         }
         if (displayFullRecord) {
@@ -92,23 +92,23 @@ public class XAWTFormatter extends java.util.logging.Formatter {
                 sb.append("    ");
             }
             if (swapMethodClass) {
-                if (record.getSourceMethodName() != null) {
+                if (record.getSourceMethodName() != null) {     
                     sb.append(" [35m");
                     sb.append(record.getSourceMethodName());
                     sb.append("[30m ");
                 }
-                if (record.getSourceClassName() != null) {
+                if (record.getSourceClassName() != null) {      
                     sb.append(record.getSourceClassName());
                 } else {
                     sb.append(record.getLoggerName());
                 }
             } else {
-                if (record.getSourceClassName() != null) {
+                if (record.getSourceClassName() != null) {      
                     sb.append(record.getSourceClassName());
                 } else {
                     sb.append(record.getLoggerName());
                 }
-                if (record.getSourceMethodName() != null) {
+                if (record.getSourceMethodName() != null) {     
                     sb.append(" [35m");
                     sb.append(record.getSourceMethodName());
                     sb.append("[30m");
@@ -123,7 +123,7 @@ public class XAWTFormatter extends java.util.logging.Formatter {
             } else if (Level.FINER.equals(lev)) {
                 sb.append("[32m");
             } else if (Level.FINE.equals(lev)) {
-                sb.append("[34m");
+                sb.append("[34m"); 
             }
         }
         if (showLevel) {
@@ -147,5 +147,5 @@ public class XAWTFormatter extends java.util.logging.Formatter {
             sb.append("[30m");
         }
         return sb.toString();
-    }
+    }    
 }

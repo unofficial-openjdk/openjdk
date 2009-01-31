@@ -34,8 +34,9 @@ import java.io.IOException;
  * written. The checksum can then be used to verify the integrity of
  * the output data.
  *
- * @see         Checksum
- * @author      David Connelly
+ * @see		Checksum
+ * @version 	%I%, %G%
+ * @author 	David Connelly
  */
 public
 class CheckedOutputStream extends FilterOutputStream {
@@ -47,8 +48,8 @@ class CheckedOutputStream extends FilterOutputStream {
      * @param cksum the checksum
      */
     public CheckedOutputStream(OutputStream out, Checksum cksum) {
-        super(out);
-        this.cksum = cksum;
+	super(out);
+	this.cksum = cksum;
     }
 
     /**
@@ -57,8 +58,8 @@ class CheckedOutputStream extends FilterOutputStream {
      * @exception IOException if an I/O error has occurred
      */
     public void write(int b) throws IOException {
-        out.write(b);
-        cksum.update(b);
+	out.write(b);
+	cksum.update(b);
     }
 
     /**
@@ -70,8 +71,8 @@ class CheckedOutputStream extends FilterOutputStream {
      * @exception IOException if an I/O error has occurred
      */
     public void write(byte[] b, int off, int len) throws IOException {
-        out.write(b, off, len);
-        cksum.update(b, off, len);
+	out.write(b, off, len);
+	cksum.update(b, off, len);
     }
 
     /**
@@ -79,6 +80,6 @@ class CheckedOutputStream extends FilterOutputStream {
      * @return the Checksum
      */
     public Checksum getChecksum() {
-        return cksum;
+	return cksum;
     }
 }

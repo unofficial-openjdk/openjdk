@@ -35,9 +35,10 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class SerialNumber {
-    private BigInteger  serialNum;
+    private BigInteger	serialNum;
 
     // Construct the class from the DerValue
     private void construct(DerValue derVal) throws IOException {

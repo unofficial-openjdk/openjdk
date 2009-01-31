@@ -38,12 +38,12 @@ import java.math.BigInteger;
  */
 public interface DHPublicKey extends DHKey, java.security.PublicKey {
 
-    /**
+    /** 
      * The class fingerprint that is set to indicate serialization
-     * compatibility since J2SE 1.4.
+     * compatibility since J2SE 1.4. 
      */
     static final long serialVersionUID = -6628103563352519193L;
-
+    
     /**
      * Returns the public value, <code>y</code>.
      *

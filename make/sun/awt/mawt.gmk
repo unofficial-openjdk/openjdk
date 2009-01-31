@@ -57,6 +57,9 @@ else
   ifeq ($(MOTIF_VERSION), 2)
     FILES_c += awt_motif21.c
     FILES_c += awt_Choice21.c
+    ifeq  ($(PLATFORM), linux)
+        FILES_c += Xinerama.c
+    endif
   endif
 
 endif

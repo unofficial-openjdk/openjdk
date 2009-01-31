@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -36,6 +36,6 @@
  */
 public class Foo implements java.io.Serializable {
     Foo() {
-        Class cl = Integer.class;
+	Class cl = Integer.class;
     }
 }

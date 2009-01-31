@@ -48,18 +48,18 @@ GetObjectSizeTest
     }
 
     public static void
-    main (String[] args)
+    main (String[] args) 
         throws Throwable {
         ATestCaseScaffold   test = new GetObjectSizeTest(args[0]);
         test.runTest();
     }
 
     protected final void
-    doRunTest()
+    doRunTest()     
         throws Throwable {
         testGetObjectSize();
     }
-
+    
     /*
      *  Lame test just to show we can do the roundtrip
      */
@@ -81,5 +81,5 @@ GetObjectSizeTest
             assertTrue(size > 0);
         }
     }
-
+    
 }

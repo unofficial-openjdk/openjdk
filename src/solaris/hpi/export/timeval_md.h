@@ -27,8 +27,8 @@
 #define _JAVASOFT_SOLARIS_TIMEVAL_H_
 
 typedef struct {
-        long tv_sec;            /* seconds */
-        long tv_usec;           /* microseconds (NOT milliseconds) */
+	long tv_sec;		/* seconds */
+	long tv_usec;		/* microseconds (NOT milliseconds) */
 } timeval_t;
 
 #endif /* !_JAVASOFT_SOLARIS_TIMEVAL_H_ */

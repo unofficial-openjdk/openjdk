@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)LEGlyphStorage.h	1.4 06/12/13
  *
  **********************************************************************
  *   Copyright (C) 1998-2005, International Business Machines
@@ -66,7 +67,7 @@ private:
      * @internal
      */
     LEGlyphID *fGlyphs;
-
+ 
     /**
      * The char indices array.
      *
@@ -127,7 +128,7 @@ protected:
      *
      * @draft ICU 3.0
      */
-    virtual le_bool applyInsertion(le_int32 atPosition, le_int32 count,
+    virtual le_bool applyInsertion(le_int32 atPosition, le_int32 count, 
         LEGlyphID newGlyphs[]);
 
 public:
@@ -177,7 +178,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void getGlyphs(le_uint32 glyphs[], le_uint32 extraBits,
+    void getGlyphs(le_uint32 glyphs[], le_uint32 extraBits, 
         LEErrorCode &success) const;
 
     /**
@@ -203,7 +204,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void getCharIndices(le_int32 charIndices[], le_int32 indexBase,
+    void getCharIndices(le_int32 charIndices[], le_int32 indexBase, 
         LEErrorCode &success) const;
 
     /**
@@ -233,7 +234,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void getGlyphPosition(le_int32 glyphIndex, float &x, float &y,
+    void getGlyphPosition(le_int32 glyphIndex, float &x, float &y, 
         LEErrorCode &success) const;
 
     /**
@@ -250,7 +251,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void allocateGlyphArray(le_int32 initialGlyphCount, le_bool rightToLeft,
+    void allocateGlyphArray(le_int32 initialGlyphCount, le_bool rightToLeft, 
         LEErrorCode &success);
 
     /**
@@ -386,7 +387,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void setGlyphID(le_int32 glyphIndex, LEGlyphID glyphID,
+    void setGlyphID(le_int32 glyphIndex, LEGlyphID glyphID, 
         LEErrorCode &success);
 
     /**
@@ -399,7 +400,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void setCharIndex(le_int32 glyphIndex, le_int32 charIndex,
+    void setCharIndex(le_int32 glyphIndex, le_int32 charIndex, 
         LEErrorCode &success);
 
     /**
@@ -413,7 +414,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void setPosition(le_int32 glyphIndex, float x, float y,
+    void setPosition(le_int32 glyphIndex, float x, float y, 
         LEErrorCode &success);
 
     /**
@@ -427,7 +428,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    void adjustPosition(le_int32 glyphIndex, float xAdjust, float yAdjust,
+    void adjustPosition(le_int32 glyphIndex, float xAdjust, float yAdjust, 
         LEErrorCode &success);
 
     /**

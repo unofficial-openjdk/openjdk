@@ -28,7 +28,7 @@
  */
 import java.util.BitSet;
 
-public final class And {
+public final class And {	
     public static void main(String[] args) throws Exception {
         BitSet a = new BitSet();
         BitSet b = new BitSet();

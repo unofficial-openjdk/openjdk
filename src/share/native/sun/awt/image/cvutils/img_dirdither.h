@@ -39,32 +39,32 @@
  * 8-bits of color information per component.
  */
 
-#define DeclareDitherVars                                               \
-    int red_dither_shift, green_dither_shift, blue_dither_shift;        \
+#define DeclareDitherVars						\
+    int red_dither_shift, green_dither_shift, blue_dither_shift;	\
     int red_dither_scale, green_dither_scale, blue_dither_scale;
 
-#define InitDither(cvdata, clrdata, dstTW)                      \
-    do {                                                        \
-        red_dither_shift = clrdata->rOff;                       \
-        green_dither_shift = clrdata->gOff;                     \
-        blue_dither_shift = clrdata->bOff;                      \
-        red_dither_scale = clrdata->rScale;                     \
-        green_dither_scale = clrdata->gScale;                   \
-        blue_dither_scale = clrdata->bScale;                    \
+#define InitDither(cvdata, clrdata, dstTW)			\
+    do {							\
+	red_dither_shift = clrdata->rOff;			\
+	green_dither_shift = clrdata->gOff;			\
+	blue_dither_shift = clrdata->bOff;			\
+	red_dither_scale = clrdata->rScale;			\
+	green_dither_scale = clrdata->gScale;			\
+	blue_dither_scale = clrdata->bScale;			\
     } while (0)
 
-#define StartDitherLine(cvdata, dstX1, dstY)                    \
+#define StartDitherLine(cvdata, dstX1, dstY)			\
     do {} while (0)
 
-#define DitherPixel(dstX, dstY, pixel, red, green, blue)        \
-    do {                                                        \
-        pixel = (((red >> red_dither_scale)                     \
-                  << red_dither_shift) |                        \
-                 ((green >> green_dither_scale)                 \
-                  << green_dither_shift) |                      \
-                 ((blue >> blue_dither_scale)                   \
-                  << blue_dither_shift));                       \
+#define DitherPixel(dstX, dstY, pixel, red, green, blue) 	\
+    do {							\
+	pixel = (((red >> red_dither_scale)			\
+		  << red_dither_shift) |			\
+		 ((green >> green_dither_scale)			\
+		  << green_dither_shift) |			\
+		 ((blue >> blue_dither_scale)			\
+		  << blue_dither_shift));			\
     } while (0)
 
-#define DitherBufComplete(cvdata, dstX1)                        \
+#define DitherBufComplete(cvdata, dstX1)			\
     do {} while (0)

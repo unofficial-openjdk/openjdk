@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)jvmtiLib.xsl	1.38 06/08/02 23:22:31 JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -45,21 +48,21 @@ enum {
     JVMTI_VERSION = 0x30000000 + (1 * 0x10000) + (1 * 0x100) + 102  /* version: 1.1.102 */
 };
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Agent_OnLoad(JavaVM *vm, char *options, void *reserved);
 
 JNIEXPORT jint JNICALL
 Agent_OnAttach(JavaVM* vm, char* options, void* reserved);
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Agent_OnUnload(JavaVM *vm);
 
     /* Forward declaration of the environment */
-
+        
 struct _jvmtiEnv;
 
 struct jvmtiInterface_1_;
-
+  
 #ifdef __cplusplus
 typedef _jvmtiEnv jvmtiEnv;
 #else
@@ -78,7 +81,7 @@ typedef struct JNINativeInterface_ jniNativeInterface;
     /* Constants */
 
 
-    /* Thread State Flags */
+    /* Thread State Flags */ 
 
 enum {
     JVMTI_THREAD_STATE_ALIVE = 0x0001,
@@ -99,7 +102,7 @@ enum {
     JVMTI_THREAD_STATE_VENDOR_3 = 0x40000000
 };
 
-    /* java.lang.Thread.State Conversion Masks */
+    /* java.lang.Thread.State Conversion Masks */ 
 
 enum {
     JVMTI_JAVA_LANG_THREAD_STATE_MASK = JVMTI_THREAD_STATE_TERMINATED | JVMTI_THREAD_STATE_ALIVE | JVMTI_THREAD_STATE_RUNNABLE | JVMTI_THREAD_STATE_BLOCKED_ON_MONITOR_ENTER | JVMTI_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_WAITING_INDEFINITELY | JVMTI_THREAD_STATE_WAITING_WITH_TIMEOUT,
@@ -111,7 +114,7 @@ enum {
     JVMTI_JAVA_LANG_THREAD_STATE_TIMED_WAITING = JVMTI_THREAD_STATE_ALIVE | JVMTI_THREAD_STATE_WAITING | JVMTI_THREAD_STATE_WAITING_WITH_TIMEOUT
 };
 
-    /* Thread Priority Constants */
+    /* Thread Priority Constants */ 
 
 enum {
     JVMTI_THREAD_MIN_PRIORITY = 1,
@@ -119,7 +122,7 @@ enum {
     JVMTI_THREAD_MAX_PRIORITY = 10
 };
 
-    /* Heap Filter Flags */
+    /* Heap Filter Flags */ 
 
 enum {
     JVMTI_HEAP_FILTER_TAGGED = 0x4,
@@ -128,14 +131,14 @@ enum {
     JVMTI_HEAP_FILTER_CLASS_UNTAGGED = 0x20
 };
 
-    /* Heap Visit Control Flags */
+    /* Heap Visit Control Flags */ 
 
 enum {
     JVMTI_VISIT_OBJECTS = 0x100,
     JVMTI_VISIT_ABORT = 0x8000
 };
 
-    /* Heap Reference Enumeration */
+    /* Heap Reference Enumeration */ 
 
 typedef enum {
     JVMTI_HEAP_REFERENCE_CLASS = 1,
@@ -157,7 +160,7 @@ typedef enum {
     JVMTI_HEAP_REFERENCE_OTHER = 27
 } jvmtiHeapReferenceKind;
 
-    /* Primitive Type Enumeration */
+    /* Primitive Type Enumeration */ 
 
 typedef enum {
     JVMTI_PRIMITIVE_TYPE_BOOLEAN = 90,
@@ -170,7 +173,7 @@ typedef enum {
     JVMTI_PRIMITIVE_TYPE_DOUBLE = 68
 } jvmtiPrimitiveType;
 
-    /* Heap Object Filter Enumeration */
+    /* Heap Object Filter Enumeration */ 
 
 typedef enum {
     JVMTI_HEAP_OBJECT_TAGGED = 1,
@@ -178,7 +181,7 @@ typedef enum {
     JVMTI_HEAP_OBJECT_EITHER = 3
 } jvmtiHeapObjectFilter;
 
-    /* Heap Root Kind Enumeration */
+    /* Heap Root Kind Enumeration */ 
 
 typedef enum {
     JVMTI_HEAP_ROOT_JNI_GLOBAL = 1,
@@ -190,7 +193,7 @@ typedef enum {
     JVMTI_HEAP_ROOT_OTHER = 7
 } jvmtiHeapRootKind;
 
-    /* Object Reference Enumeration */
+    /* Object Reference Enumeration */ 
 
 typedef enum {
     JVMTI_REFERENCE_CLASS = 1,
@@ -204,7 +207,7 @@ typedef enum {
     JVMTI_REFERENCE_CONSTANT_POOL = 9
 } jvmtiObjectReferenceKind;
 
-    /* Iteration Control Enumeration */
+    /* Iteration Control Enumeration */ 
 
 typedef enum {
     JVMTI_ITERATION_CONTINUE = 1,
@@ -212,7 +215,7 @@ typedef enum {
     JVMTI_ITERATION_ABORT = 0
 } jvmtiIterationControl;
 
-    /* Class Status Flags */
+    /* Class Status Flags */ 
 
 enum {
     JVMTI_CLASS_STATUS_VERIFIED = 1,
@@ -223,14 +226,14 @@ enum {
     JVMTI_CLASS_STATUS_PRIMITIVE = 32
 };
 
-    /* Event Enable/Disable */
+    /* Event Enable/Disable */ 
 
 typedef enum {
     JVMTI_ENABLE = 1,
     JVMTI_DISABLE = 0
 } jvmtiEventMode;
 
-    /* Extension Function/Event Parameter Types */
+    /* Extension Function/Event Parameter Types */ 
 
 typedef enum {
     JVMTI_TYPE_JBYTE = 101,
@@ -252,7 +255,7 @@ typedef enum {
     JVMTI_TYPE_JNIENV = 117
 } jvmtiParamTypes;
 
-    /* Extension Function/Event Parameter Kinds */
+    /* Extension Function/Event Parameter Kinds */ 
 
 typedef enum {
     JVMTI_KIND_IN = 91,
@@ -264,7 +267,7 @@ typedef enum {
     JVMTI_KIND_OUT_BUF = 97
 } jvmtiParamKind;
 
-    /* Timer Kinds */
+    /* Timer Kinds */ 
 
 typedef enum {
     JVMTI_TIMER_USER_CPU = 30,
@@ -272,7 +275,7 @@ typedef enum {
     JVMTI_TIMER_ELAPSED = 32
 } jvmtiTimerKind;
 
-    /* Phases of execution */
+    /* Phases of execution */ 
 
 typedef enum {
     JVMTI_PHASE_ONLOAD = 1,
@@ -282,14 +285,14 @@ typedef enum {
     JVMTI_PHASE_DEAD = 8
 } jvmtiPhase;
 
-    /* Version Interface Types */
+    /* Version Interface Types */ 
 
 enum {
     JVMTI_VERSION_INTERFACE_JNI = 0x00000000,
     JVMTI_VERSION_INTERFACE_JVMTI = 0x30000000
 };
 
-    /* Version Masks */
+    /* Version Masks */ 
 
 enum {
     JVMTI_VERSION_MASK_INTERFACE_TYPE = 0x70000000,
@@ -298,7 +301,7 @@ enum {
     JVMTI_VERSION_MASK_MICRO = 0x000000FF
 };
 
-    /* Version Shifts */
+    /* Version Shifts */ 
 
 enum {
     JVMTI_VERSION_SHIFT_MAJOR = 16,
@@ -306,7 +309,7 @@ enum {
     JVMTI_VERSION_SHIFT_MICRO = 0
 };
 
-    /* Verbose Flag Enumeration */
+    /* Verbose Flag Enumeration */ 
 
 typedef enum {
     JVMTI_VERBOSE_OTHER = 0,
@@ -315,7 +318,7 @@ typedef enum {
     JVMTI_VERBOSE_JNI = 4
 } jvmtiVerboseFlag;
 
-    /* JLocation Format Enumeration */
+    /* JLocation Format Enumeration */ 
 
 typedef enum {
     JVMTI_JLOCATION_JVMBCI = 1,
@@ -323,7 +326,7 @@ typedef enum {
     JVMTI_JLOCATION_OTHER = 0
 } jvmtiJlocationFormat;
 
-    /* Resource Exhaustion Flags */
+    /* Resource Exhaustion Flags */ 
 
 enum {
     JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR = 0x0001,
@@ -717,104 +720,104 @@ typedef void (JNICALL *jvmtiEventReserved)(void);
 
 
 typedef void (JNICALL *jvmtiEventBreakpoint)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
      jlocation location);
 
 typedef void (JNICALL *jvmtiEventClassFileLoadHook)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jclass class_being_redefined,
-     jobject loader,
-     const char* name,
-     jobject protection_domain,
-     jint class_data_len,
-     const unsigned char* class_data,
-     jint* new_class_data_len,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jclass class_being_redefined, 
+     jobject loader, 
+     const char* name, 
+     jobject protection_domain, 
+     jint class_data_len, 
+     const unsigned char* class_data, 
+     jint* new_class_data_len, 
      unsigned char** new_class_data);
 
 typedef void (JNICALL *jvmtiEventClassLoad)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
      jclass klass);
 
 typedef void (JNICALL *jvmtiEventClassPrepare)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
      jclass klass);
 
 typedef void (JNICALL *jvmtiEventCompiledMethodLoad)
-    (jvmtiEnv *jvmti_env,
-     jmethodID method,
-     jint code_size,
-     const void* code_addr,
-     jint map_length,
-     const jvmtiAddrLocationMap* map,
+    (jvmtiEnv *jvmti_env, 
+     jmethodID method, 
+     jint code_size, 
+     const void* code_addr, 
+     jint map_length, 
+     const jvmtiAddrLocationMap* map, 
      const void* compile_info);
 
 typedef void (JNICALL *jvmtiEventCompiledMethodUnload)
-    (jvmtiEnv *jvmti_env,
-     jmethodID method,
+    (jvmtiEnv *jvmti_env, 
+     jmethodID method, 
      const void* code_addr);
 
 typedef void (JNICALL *jvmtiEventDataDumpRequest)
     (jvmtiEnv *jvmti_env);
 
 typedef void (JNICALL *jvmtiEventDynamicCodeGenerated)
-    (jvmtiEnv *jvmti_env,
-     const char* name,
-     const void* address,
+    (jvmtiEnv *jvmti_env, 
+     const char* name, 
+     const void* address, 
      jint length);
 
 typedef void (JNICALL *jvmtiEventException)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
-     jlocation location,
-     jobject exception,
-     jmethodID catch_method,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
+     jlocation location, 
+     jobject exception, 
+     jmethodID catch_method, 
      jlocation catch_location);
 
 typedef void (JNICALL *jvmtiEventExceptionCatch)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
-     jlocation location,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
+     jlocation location, 
      jobject exception);
 
 typedef void (JNICALL *jvmtiEventFieldAccess)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
-     jlocation location,
-     jclass field_klass,
-     jobject object,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
+     jlocation location, 
+     jclass field_klass, 
+     jobject object, 
      jfieldID field);
 
 typedef void (JNICALL *jvmtiEventFieldModification)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
-     jlocation location,
-     jclass field_klass,
-     jobject object,
-     jfieldID field,
-     char signature_type,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
+     jlocation location, 
+     jclass field_klass, 
+     jobject object, 
+     jfieldID field, 
+     char signature_type, 
      jvalue new_value);
 
 typedef void (JNICALL *jvmtiEventFramePop)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
      jboolean was_popped_by_exception);
 
 typedef void (JNICALL *jvmtiEventGarbageCollectionFinish)
@@ -824,100 +827,100 @@ typedef void (JNICALL *jvmtiEventGarbageCollectionStart)
     (jvmtiEnv *jvmti_env);
 
 typedef void (JNICALL *jvmtiEventMethodEntry)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
      jmethodID method);
 
 typedef void (JNICALL *jvmtiEventMethodExit)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
-     jboolean was_popped_by_exception,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
+     jboolean was_popped_by_exception, 
      jvalue return_value);
 
 typedef void (JNICALL *jvmtiEventMonitorContendedEnter)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
      jobject object);
 
 typedef void (JNICALL *jvmtiEventMonitorContendedEntered)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
      jobject object);
 
 typedef void (JNICALL *jvmtiEventMonitorWait)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jobject object,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jobject object, 
      jlong timeout);
 
 typedef void (JNICALL *jvmtiEventMonitorWaited)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jobject object,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jobject object, 
      jboolean timed_out);
 
 typedef void (JNICALL *jvmtiEventNativeMethodBind)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
-     void* address,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
+     void* address, 
      void** new_address_ptr);
 
 typedef void (JNICALL *jvmtiEventObjectFree)
-    (jvmtiEnv *jvmti_env,
+    (jvmtiEnv *jvmti_env, 
      jlong tag);
 
 typedef void (JNICALL *jvmtiEventResourceExhausted)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jint flags,
-     const void* reserved,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jint flags, 
+     const void* reserved, 
      const char* description);
 
 typedef void (JNICALL *jvmtiEventSingleStep)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jmethodID method,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jmethodID method, 
      jlocation location);
 
 typedef void (JNICALL *jvmtiEventThreadEnd)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
      jthread thread);
 
 typedef void (JNICALL *jvmtiEventThreadStart)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
      jthread thread);
 
 typedef void (JNICALL *jvmtiEventVMDeath)
-    (jvmtiEnv *jvmti_env,
+    (jvmtiEnv *jvmti_env, 
      JNIEnv* jni_env);
 
 typedef void (JNICALL *jvmtiEventVMInit)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
      jthread thread);
 
 typedef void (JNICALL *jvmtiEventVMObjectAlloc)
-    (jvmtiEnv *jvmti_env,
-     JNIEnv* jni_env,
-     jthread thread,
-     jobject object,
-     jclass object_klass,
+    (jvmtiEnv *jvmti_env, 
+     JNIEnv* jni_env, 
+     jthread thread, 
+     jobject object, 
+     jclass object_klass, 
      jlong size);
 
 typedef void (JNICALL *jvmtiEventVMStart)
-    (jvmtiEnv *jvmti_env,
+    (jvmtiEnv *jvmti_env, 
      JNIEnv* jni_env);
 
     /* Event Callback Structure */
@@ -997,498 +1000,498 @@ typedef struct {
 
 
     /* Function Interface */
-
+    
 typedef struct jvmtiInterface_1_ {
 
   /*   1 :  RESERVED */
   void *reserved1;
 
   /*   2 : Set Event Notification Mode */
-  jvmtiError (JNICALL *SetEventNotificationMode) (jvmtiEnv* env,
-    jvmtiEventMode mode,
-    jvmtiEvent event_type,
-    jthread event_thread,
+  jvmtiError (JNICALL *SetEventNotificationMode) (jvmtiEnv* env, 
+    jvmtiEventMode mode, 
+    jvmtiEvent event_type, 
+    jthread event_thread, 
      ...);
 
   /*   3 :  RESERVED */
   void *reserved3;
 
   /*   4 : Get All Threads */
-  jvmtiError (JNICALL *GetAllThreads) (jvmtiEnv* env,
-    jint* threads_count_ptr,
+  jvmtiError (JNICALL *GetAllThreads) (jvmtiEnv* env, 
+    jint* threads_count_ptr, 
     jthread** threads_ptr);
 
   /*   5 : Suspend Thread */
-  jvmtiError (JNICALL *SuspendThread) (jvmtiEnv* env,
+  jvmtiError (JNICALL *SuspendThread) (jvmtiEnv* env, 
     jthread thread);
 
   /*   6 : Resume Thread */
-  jvmtiError (JNICALL *ResumeThread) (jvmtiEnv* env,
+  jvmtiError (JNICALL *ResumeThread) (jvmtiEnv* env, 
     jthread thread);
 
   /*   7 : Stop Thread */
-  jvmtiError (JNICALL *StopThread) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *StopThread) (jvmtiEnv* env, 
+    jthread thread, 
     jobject exception);
 
   /*   8 : Interrupt Thread */
-  jvmtiError (JNICALL *InterruptThread) (jvmtiEnv* env,
+  jvmtiError (JNICALL *InterruptThread) (jvmtiEnv* env, 
     jthread thread);
 
   /*   9 : Get Thread Info */
-  jvmtiError (JNICALL *GetThreadInfo) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *GetThreadInfo) (jvmtiEnv* env, 
+    jthread thread, 
     jvmtiThreadInfo* info_ptr);
 
   /*   10 : Get Owned Monitor Info */
-  jvmtiError (JNICALL *GetOwnedMonitorInfo) (jvmtiEnv* env,
-    jthread thread,
-    jint* owned_monitor_count_ptr,
+  jvmtiError (JNICALL *GetOwnedMonitorInfo) (jvmtiEnv* env, 
+    jthread thread, 
+    jint* owned_monitor_count_ptr, 
     jobject** owned_monitors_ptr);
 
   /*   11 : Get Current Contended Monitor */
-  jvmtiError (JNICALL *GetCurrentContendedMonitor) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *GetCurrentContendedMonitor) (jvmtiEnv* env, 
+    jthread thread, 
     jobject* monitor_ptr);
 
   /*   12 : Run Agent Thread */
-  jvmtiError (JNICALL *RunAgentThread) (jvmtiEnv* env,
-    jthread thread,
-    jvmtiStartFunction proc,
-    const void* arg,
+  jvmtiError (JNICALL *RunAgentThread) (jvmtiEnv* env, 
+    jthread thread, 
+    jvmtiStartFunction proc, 
+    const void* arg, 
     jint priority);
 
   /*   13 : Get Top Thread Groups */
-  jvmtiError (JNICALL *GetTopThreadGroups) (jvmtiEnv* env,
-    jint* group_count_ptr,
+  jvmtiError (JNICALL *GetTopThreadGroups) (jvmtiEnv* env, 
+    jint* group_count_ptr, 
     jthreadGroup** groups_ptr);
 
   /*   14 : Get Thread Group Info */
-  jvmtiError (JNICALL *GetThreadGroupInfo) (jvmtiEnv* env,
-    jthreadGroup group,
+  jvmtiError (JNICALL *GetThreadGroupInfo) (jvmtiEnv* env, 
+    jthreadGroup group, 
     jvmtiThreadGroupInfo* info_ptr);
 
   /*   15 : Get Thread Group Children */
-  jvmtiError (JNICALL *GetThreadGroupChildren) (jvmtiEnv* env,
-    jthreadGroup group,
-    jint* thread_count_ptr,
-    jthread** threads_ptr,
-    jint* group_count_ptr,
+  jvmtiError (JNICALL *GetThreadGroupChildren) (jvmtiEnv* env, 
+    jthreadGroup group, 
+    jint* thread_count_ptr, 
+    jthread** threads_ptr, 
+    jint* group_count_ptr, 
     jthreadGroup** groups_ptr);
 
   /*   16 : Get Frame Count */
-  jvmtiError (JNICALL *GetFrameCount) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *GetFrameCount) (jvmtiEnv* env, 
+    jthread thread, 
     jint* count_ptr);
 
   /*   17 : Get Thread State */
-  jvmtiError (JNICALL *GetThreadState) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *GetThreadState) (jvmtiEnv* env, 
+    jthread thread, 
     jint* thread_state_ptr);
 
   /*   18 : Get Current Thread */
-  jvmtiError (JNICALL *GetCurrentThread) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetCurrentThread) (jvmtiEnv* env, 
     jthread* thread_ptr);
 
   /*   19 : Get Frame Location */
-  jvmtiError (JNICALL *GetFrameLocation) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jmethodID* method_ptr,
+  jvmtiError (JNICALL *GetFrameLocation) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jmethodID* method_ptr, 
     jlocation* location_ptr);
 
   /*   20 : Notify Frame Pop */
-  jvmtiError (JNICALL *NotifyFramePop) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *NotifyFramePop) (jvmtiEnv* env, 
+    jthread thread, 
     jint depth);
 
   /*   21 : Get Local Variable - Object */
-  jvmtiError (JNICALL *GetLocalObject) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *GetLocalObject) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jobject* value_ptr);
 
   /*   22 : Get Local Variable - Int */
-  jvmtiError (JNICALL *GetLocalInt) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *GetLocalInt) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jint* value_ptr);
 
   /*   23 : Get Local Variable - Long */
-  jvmtiError (JNICALL *GetLocalLong) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *GetLocalLong) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jlong* value_ptr);
 
   /*   24 : Get Local Variable - Float */
-  jvmtiError (JNICALL *GetLocalFloat) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *GetLocalFloat) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jfloat* value_ptr);
 
   /*   25 : Get Local Variable - Double */
-  jvmtiError (JNICALL *GetLocalDouble) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *GetLocalDouble) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jdouble* value_ptr);
 
   /*   26 : Set Local Variable - Object */
-  jvmtiError (JNICALL *SetLocalObject) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *SetLocalObject) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jobject value);
 
   /*   27 : Set Local Variable - Int */
-  jvmtiError (JNICALL *SetLocalInt) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *SetLocalInt) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jint value);
 
   /*   28 : Set Local Variable - Long */
-  jvmtiError (JNICALL *SetLocalLong) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *SetLocalLong) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jlong value);
 
   /*   29 : Set Local Variable - Float */
-  jvmtiError (JNICALL *SetLocalFloat) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *SetLocalFloat) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jfloat value);
 
   /*   30 : Set Local Variable - Double */
-  jvmtiError (JNICALL *SetLocalDouble) (jvmtiEnv* env,
-    jthread thread,
-    jint depth,
-    jint slot,
+  jvmtiError (JNICALL *SetLocalDouble) (jvmtiEnv* env, 
+    jthread thread, 
+    jint depth, 
+    jint slot, 
     jdouble value);
 
   /*   31 : Create Raw Monitor */
-  jvmtiError (JNICALL *CreateRawMonitor) (jvmtiEnv* env,
-    const char* name,
+  jvmtiError (JNICALL *CreateRawMonitor) (jvmtiEnv* env, 
+    const char* name, 
     jrawMonitorID* monitor_ptr);
 
   /*   32 : Destroy Raw Monitor */
-  jvmtiError (JNICALL *DestroyRawMonitor) (jvmtiEnv* env,
+  jvmtiError (JNICALL *DestroyRawMonitor) (jvmtiEnv* env, 
     jrawMonitorID monitor);
 
   /*   33 : Raw Monitor Enter */
-  jvmtiError (JNICALL *RawMonitorEnter) (jvmtiEnv* env,
+  jvmtiError (JNICALL *RawMonitorEnter) (jvmtiEnv* env, 
     jrawMonitorID monitor);
 
   /*   34 : Raw Monitor Exit */
-  jvmtiError (JNICALL *RawMonitorExit) (jvmtiEnv* env,
+  jvmtiError (JNICALL *RawMonitorExit) (jvmtiEnv* env, 
     jrawMonitorID monitor);
 
   /*   35 : Raw Monitor Wait */
-  jvmtiError (JNICALL *RawMonitorWait) (jvmtiEnv* env,
-    jrawMonitorID monitor,
+  jvmtiError (JNICALL *RawMonitorWait) (jvmtiEnv* env, 
+    jrawMonitorID monitor, 
     jlong millis);
 
   /*   36 : Raw Monitor Notify */
-  jvmtiError (JNICALL *RawMonitorNotify) (jvmtiEnv* env,
+  jvmtiError (JNICALL *RawMonitorNotify) (jvmtiEnv* env, 
     jrawMonitorID monitor);
 
   /*   37 : Raw Monitor Notify All */
-  jvmtiError (JNICALL *RawMonitorNotifyAll) (jvmtiEnv* env,
+  jvmtiError (JNICALL *RawMonitorNotifyAll) (jvmtiEnv* env, 
     jrawMonitorID monitor);
 
   /*   38 : Set Breakpoint */
-  jvmtiError (JNICALL *SetBreakpoint) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *SetBreakpoint) (jvmtiEnv* env, 
+    jmethodID method, 
     jlocation location);
 
   /*   39 : Clear Breakpoint */
-  jvmtiError (JNICALL *ClearBreakpoint) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *ClearBreakpoint) (jvmtiEnv* env, 
+    jmethodID method, 
     jlocation location);
 
   /*   40 :  RESERVED */
   void *reserved40;
 
   /*   41 : Set Field Access Watch */
-  jvmtiError (JNICALL *SetFieldAccessWatch) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *SetFieldAccessWatch) (jvmtiEnv* env, 
+    jclass klass, 
     jfieldID field);
 
   /*   42 : Clear Field Access Watch */
-  jvmtiError (JNICALL *ClearFieldAccessWatch) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *ClearFieldAccessWatch) (jvmtiEnv* env, 
+    jclass klass, 
     jfieldID field);
 
   /*   43 : Set Field Modification Watch */
-  jvmtiError (JNICALL *SetFieldModificationWatch) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *SetFieldModificationWatch) (jvmtiEnv* env, 
+    jclass klass, 
     jfieldID field);
 
   /*   44 : Clear Field Modification Watch */
-  jvmtiError (JNICALL *ClearFieldModificationWatch) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *ClearFieldModificationWatch) (jvmtiEnv* env, 
+    jclass klass, 
     jfieldID field);
 
   /*   45 : Is Modifiable Class */
-  jvmtiError (JNICALL *IsModifiableClass) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *IsModifiableClass) (jvmtiEnv* env, 
+    jclass klass, 
     jboolean* is_modifiable_class_ptr);
 
   /*   46 : Allocate */
-  jvmtiError (JNICALL *Allocate) (jvmtiEnv* env,
-    jlong size,
+  jvmtiError (JNICALL *Allocate) (jvmtiEnv* env, 
+    jlong size, 
     unsigned char** mem_ptr);
 
   /*   47 : Deallocate */
-  jvmtiError (JNICALL *Deallocate) (jvmtiEnv* env,
+  jvmtiError (JNICALL *Deallocate) (jvmtiEnv* env, 
     unsigned char* mem);
 
   /*   48 : Get Class Signature */
-  jvmtiError (JNICALL *GetClassSignature) (jvmtiEnv* env,
-    jclass klass,
-    char** signature_ptr,
+  jvmtiError (JNICALL *GetClassSignature) (jvmtiEnv* env, 
+    jclass klass, 
+    char** signature_ptr, 
     char** generic_ptr);
 
   /*   49 : Get Class Status */
-  jvmtiError (JNICALL *GetClassStatus) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *GetClassStatus) (jvmtiEnv* env, 
+    jclass klass, 
     jint* status_ptr);
 
   /*   50 : Get Source File Name */
-  jvmtiError (JNICALL *GetSourceFileName) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *GetSourceFileName) (jvmtiEnv* env, 
+    jclass klass, 
     char** source_name_ptr);
 
   /*   51 : Get Class Modifiers */
-  jvmtiError (JNICALL *GetClassModifiers) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *GetClassModifiers) (jvmtiEnv* env, 
+    jclass klass, 
     jint* modifiers_ptr);
 
   /*   52 : Get Class Methods */
-  jvmtiError (JNICALL *GetClassMethods) (jvmtiEnv* env,
-    jclass klass,
-    jint* method_count_ptr,
+  jvmtiError (JNICALL *GetClassMethods) (jvmtiEnv* env, 
+    jclass klass, 
+    jint* method_count_ptr, 
     jmethodID** methods_ptr);
 
   /*   53 : Get Class Fields */
-  jvmtiError (JNICALL *GetClassFields) (jvmtiEnv* env,
-    jclass klass,
-    jint* field_count_ptr,
+  jvmtiError (JNICALL *GetClassFields) (jvmtiEnv* env, 
+    jclass klass, 
+    jint* field_count_ptr, 
     jfieldID** fields_ptr);
 
   /*   54 : Get Implemented Interfaces */
-  jvmtiError (JNICALL *GetImplementedInterfaces) (jvmtiEnv* env,
-    jclass klass,
-    jint* interface_count_ptr,
+  jvmtiError (JNICALL *GetImplementedInterfaces) (jvmtiEnv* env, 
+    jclass klass, 
+    jint* interface_count_ptr, 
     jclass** interfaces_ptr);
 
   /*   55 : Is Interface */
-  jvmtiError (JNICALL *IsInterface) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *IsInterface) (jvmtiEnv* env, 
+    jclass klass, 
     jboolean* is_interface_ptr);
 
   /*   56 : Is Array Class */
-  jvmtiError (JNICALL *IsArrayClass) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *IsArrayClass) (jvmtiEnv* env, 
+    jclass klass, 
     jboolean* is_array_class_ptr);
 
   /*   57 : Get Class Loader */
-  jvmtiError (JNICALL *GetClassLoader) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *GetClassLoader) (jvmtiEnv* env, 
+    jclass klass, 
     jobject* classloader_ptr);
 
   /*   58 : Get Object Hash Code */
-  jvmtiError (JNICALL *GetObjectHashCode) (jvmtiEnv* env,
-    jobject object,
+  jvmtiError (JNICALL *GetObjectHashCode) (jvmtiEnv* env, 
+    jobject object, 
     jint* hash_code_ptr);
 
   /*   59 : Get Object Monitor Usage */
-  jvmtiError (JNICALL *GetObjectMonitorUsage) (jvmtiEnv* env,
-    jobject object,
+  jvmtiError (JNICALL *GetObjectMonitorUsage) (jvmtiEnv* env, 
+    jobject object, 
     jvmtiMonitorUsage* info_ptr);
 
   /*   60 : Get Field Name (and Signature) */
-  jvmtiError (JNICALL *GetFieldName) (jvmtiEnv* env,
-    jclass klass,
-    jfieldID field,
-    char** name_ptr,
-    char** signature_ptr,
+  jvmtiError (JNICALL *GetFieldName) (jvmtiEnv* env, 
+    jclass klass, 
+    jfieldID field, 
+    char** name_ptr, 
+    char** signature_ptr, 
     char** generic_ptr);
 
   /*   61 : Get Field Declaring Class */
-  jvmtiError (JNICALL *GetFieldDeclaringClass) (jvmtiEnv* env,
-    jclass klass,
-    jfieldID field,
+  jvmtiError (JNICALL *GetFieldDeclaringClass) (jvmtiEnv* env, 
+    jclass klass, 
+    jfieldID field, 
     jclass* declaring_class_ptr);
 
   /*   62 : Get Field Modifiers */
-  jvmtiError (JNICALL *GetFieldModifiers) (jvmtiEnv* env,
-    jclass klass,
-    jfieldID field,
+  jvmtiError (JNICALL *GetFieldModifiers) (jvmtiEnv* env, 
+    jclass klass, 
+    jfieldID field, 
     jint* modifiers_ptr);
 
   /*   63 : Is Field Synthetic */
-  jvmtiError (JNICALL *IsFieldSynthetic) (jvmtiEnv* env,
-    jclass klass,
-    jfieldID field,
+  jvmtiError (JNICALL *IsFieldSynthetic) (jvmtiEnv* env, 
+    jclass klass, 
+    jfieldID field, 
     jboolean* is_synthetic_ptr);
 
   /*   64 : Get Method Name (and Signature) */
-  jvmtiError (JNICALL *GetMethodName) (jvmtiEnv* env,
-    jmethodID method,
-    char** name_ptr,
-    char** signature_ptr,
+  jvmtiError (JNICALL *GetMethodName) (jvmtiEnv* env, 
+    jmethodID method, 
+    char** name_ptr, 
+    char** signature_ptr, 
     char** generic_ptr);
 
   /*   65 : Get Method Declaring Class */
-  jvmtiError (JNICALL *GetMethodDeclaringClass) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *GetMethodDeclaringClass) (jvmtiEnv* env, 
+    jmethodID method, 
     jclass* declaring_class_ptr);
 
   /*   66 : Get Method Modifiers */
-  jvmtiError (JNICALL *GetMethodModifiers) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *GetMethodModifiers) (jvmtiEnv* env, 
+    jmethodID method, 
     jint* modifiers_ptr);
 
   /*   67 :  RESERVED */
   void *reserved67;
 
   /*   68 : Get Max Locals */
-  jvmtiError (JNICALL *GetMaxLocals) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *GetMaxLocals) (jvmtiEnv* env, 
+    jmethodID method, 
     jint* max_ptr);
 
   /*   69 : Get Arguments Size */
-  jvmtiError (JNICALL *GetArgumentsSize) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *GetArgumentsSize) (jvmtiEnv* env, 
+    jmethodID method, 
     jint* size_ptr);
 
   /*   70 : Get Line Number Table */
-  jvmtiError (JNICALL *GetLineNumberTable) (jvmtiEnv* env,
-    jmethodID method,
-    jint* entry_count_ptr,
+  jvmtiError (JNICALL *GetLineNumberTable) (jvmtiEnv* env, 
+    jmethodID method, 
+    jint* entry_count_ptr, 
     jvmtiLineNumberEntry** table_ptr);
 
   /*   71 : Get Method Location */
-  jvmtiError (JNICALL *GetMethodLocation) (jvmtiEnv* env,
-    jmethodID method,
-    jlocation* start_location_ptr,
+  jvmtiError (JNICALL *GetMethodLocation) (jvmtiEnv* env, 
+    jmethodID method, 
+    jlocation* start_location_ptr, 
     jlocation* end_location_ptr);
 
   /*   72 : Get Local Variable Table */
-  jvmtiError (JNICALL *GetLocalVariableTable) (jvmtiEnv* env,
-    jmethodID method,
-    jint* entry_count_ptr,
+  jvmtiError (JNICALL *GetLocalVariableTable) (jvmtiEnv* env, 
+    jmethodID method, 
+    jint* entry_count_ptr, 
     jvmtiLocalVariableEntry** table_ptr);
 
   /*   73 : Set Native Method Prefix */
-  jvmtiError (JNICALL *SetNativeMethodPrefix) (jvmtiEnv* env,
+  jvmtiError (JNICALL *SetNativeMethodPrefix) (jvmtiEnv* env, 
     const char* prefix);
 
   /*   74 : Set Native Method Prefixes */
-  jvmtiError (JNICALL *SetNativeMethodPrefixes) (jvmtiEnv* env,
-    jint prefix_count,
+  jvmtiError (JNICALL *SetNativeMethodPrefixes) (jvmtiEnv* env, 
+    jint prefix_count, 
     char** prefixes);
 
   /*   75 : Get Bytecodes */
-  jvmtiError (JNICALL *GetBytecodes) (jvmtiEnv* env,
-    jmethodID method,
-    jint* bytecode_count_ptr,
+  jvmtiError (JNICALL *GetBytecodes) (jvmtiEnv* env, 
+    jmethodID method, 
+    jint* bytecode_count_ptr, 
     unsigned char** bytecodes_ptr);
 
   /*   76 : Is Method Native */
-  jvmtiError (JNICALL *IsMethodNative) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *IsMethodNative) (jvmtiEnv* env, 
+    jmethodID method, 
     jboolean* is_native_ptr);
 
   /*   77 : Is Method Synthetic */
-  jvmtiError (JNICALL *IsMethodSynthetic) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *IsMethodSynthetic) (jvmtiEnv* env, 
+    jmethodID method, 
     jboolean* is_synthetic_ptr);
 
   /*   78 : Get Loaded Classes */
-  jvmtiError (JNICALL *GetLoadedClasses) (jvmtiEnv* env,
-    jint* class_count_ptr,
+  jvmtiError (JNICALL *GetLoadedClasses) (jvmtiEnv* env, 
+    jint* class_count_ptr, 
     jclass** classes_ptr);
 
   /*   79 : Get Classloader Classes */
-  jvmtiError (JNICALL *GetClassLoaderClasses) (jvmtiEnv* env,
-    jobject initiating_loader,
-    jint* class_count_ptr,
+  jvmtiError (JNICALL *GetClassLoaderClasses) (jvmtiEnv* env, 
+    jobject initiating_loader, 
+    jint* class_count_ptr, 
     jclass** classes_ptr);
 
   /*   80 : Pop Frame */
-  jvmtiError (JNICALL *PopFrame) (jvmtiEnv* env,
+  jvmtiError (JNICALL *PopFrame) (jvmtiEnv* env, 
     jthread thread);
 
   /*   81 : Force Early Return - Object */
-  jvmtiError (JNICALL *ForceEarlyReturnObject) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *ForceEarlyReturnObject) (jvmtiEnv* env, 
+    jthread thread, 
     jobject value);
 
   /*   82 : Force Early Return - Int */
-  jvmtiError (JNICALL *ForceEarlyReturnInt) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *ForceEarlyReturnInt) (jvmtiEnv* env, 
+    jthread thread, 
     jint value);
 
   /*   83 : Force Early Return - Long */
-  jvmtiError (JNICALL *ForceEarlyReturnLong) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *ForceEarlyReturnLong) (jvmtiEnv* env, 
+    jthread thread, 
     jlong value);
 
   /*   84 : Force Early Return - Float */
-  jvmtiError (JNICALL *ForceEarlyReturnFloat) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *ForceEarlyReturnFloat) (jvmtiEnv* env, 
+    jthread thread, 
     jfloat value);
 
   /*   85 : Force Early Return - Double */
-  jvmtiError (JNICALL *ForceEarlyReturnDouble) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *ForceEarlyReturnDouble) (jvmtiEnv* env, 
+    jthread thread, 
     jdouble value);
 
   /*   86 : Force Early Return - Void */
-  jvmtiError (JNICALL *ForceEarlyReturnVoid) (jvmtiEnv* env,
+  jvmtiError (JNICALL *ForceEarlyReturnVoid) (jvmtiEnv* env, 
     jthread thread);
 
   /*   87 : Redefine Classes */
-  jvmtiError (JNICALL *RedefineClasses) (jvmtiEnv* env,
-    jint class_count,
+  jvmtiError (JNICALL *RedefineClasses) (jvmtiEnv* env, 
+    jint class_count, 
     const jvmtiClassDefinition* class_definitions);
 
   /*   88 : Get Version Number */
-  jvmtiError (JNICALL *GetVersionNumber) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetVersionNumber) (jvmtiEnv* env, 
     jint* version_ptr);
 
   /*   89 : Get Capabilities */
-  jvmtiError (JNICALL *GetCapabilities) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetCapabilities) (jvmtiEnv* env, 
     jvmtiCapabilities* capabilities_ptr);
 
   /*   90 : Get Source Debug Extension */
-  jvmtiError (JNICALL *GetSourceDebugExtension) (jvmtiEnv* env,
-    jclass klass,
+  jvmtiError (JNICALL *GetSourceDebugExtension) (jvmtiEnv* env, 
+    jclass klass, 
     char** source_debug_extension_ptr);
 
   /*   91 : Is Method Obsolete */
-  jvmtiError (JNICALL *IsMethodObsolete) (jvmtiEnv* env,
-    jmethodID method,
+  jvmtiError (JNICALL *IsMethodObsolete) (jvmtiEnv* env, 
+    jmethodID method, 
     jboolean* is_obsolete_ptr);
 
   /*   92 : Suspend Thread List */
-  jvmtiError (JNICALL *SuspendThreadList) (jvmtiEnv* env,
-    jint request_count,
-    const jthread* request_list,
+  jvmtiError (JNICALL *SuspendThreadList) (jvmtiEnv* env, 
+    jint request_count, 
+    const jthread* request_list, 
     jvmtiError* results);
 
   /*   93 : Resume Thread List */
-  jvmtiError (JNICALL *ResumeThreadList) (jvmtiEnv* env,
-    jint request_count,
-    const jthread* request_list,
+  jvmtiError (JNICALL *ResumeThreadList) (jvmtiEnv* env, 
+    jint request_count, 
+    const jthread* request_list, 
     jvmtiError* results);
 
   /*   94 :  RESERVED */
@@ -1510,102 +1513,102 @@ typedef struct jvmtiInterface_1_ {
   void *reserved99;
 
   /*   100 : Get All Stack Traces */
-  jvmtiError (JNICALL *GetAllStackTraces) (jvmtiEnv* env,
-    jint max_frame_count,
-    jvmtiStackInfo** stack_info_ptr,
+  jvmtiError (JNICALL *GetAllStackTraces) (jvmtiEnv* env, 
+    jint max_frame_count, 
+    jvmtiStackInfo** stack_info_ptr, 
     jint* thread_count_ptr);
 
   /*   101 : Get Thread List Stack Traces */
-  jvmtiError (JNICALL *GetThreadListStackTraces) (jvmtiEnv* env,
-    jint thread_count,
-    const jthread* thread_list,
-    jint max_frame_count,
+  jvmtiError (JNICALL *GetThreadListStackTraces) (jvmtiEnv* env, 
+    jint thread_count, 
+    const jthread* thread_list, 
+    jint max_frame_count, 
     jvmtiStackInfo** stack_info_ptr);
 
   /*   102 : Get Thread Local Storage */
-  jvmtiError (JNICALL *GetThreadLocalStorage) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *GetThreadLocalStorage) (jvmtiEnv* env, 
+    jthread thread, 
     void** data_ptr);
 
   /*   103 : Set Thread Local Storage */
-  jvmtiError (JNICALL *SetThreadLocalStorage) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *SetThreadLocalStorage) (jvmtiEnv* env, 
+    jthread thread, 
     const void* data);
 
   /*   104 : Get Stack Trace */
-  jvmtiError (JNICALL *GetStackTrace) (jvmtiEnv* env,
-    jthread thread,
-    jint start_depth,
-    jint max_frame_count,
-    jvmtiFrameInfo* frame_buffer,
+  jvmtiError (JNICALL *GetStackTrace) (jvmtiEnv* env, 
+    jthread thread, 
+    jint start_depth, 
+    jint max_frame_count, 
+    jvmtiFrameInfo* frame_buffer, 
     jint* count_ptr);
 
   /*   105 :  RESERVED */
   void *reserved105;
 
   /*   106 : Get Tag */
-  jvmtiError (JNICALL *GetTag) (jvmtiEnv* env,
-    jobject object,
+  jvmtiError (JNICALL *GetTag) (jvmtiEnv* env, 
+    jobject object, 
     jlong* tag_ptr);
 
   /*   107 : Set Tag */
-  jvmtiError (JNICALL *SetTag) (jvmtiEnv* env,
-    jobject object,
+  jvmtiError (JNICALL *SetTag) (jvmtiEnv* env, 
+    jobject object, 
     jlong tag);
 
   /*   108 : Force Garbage Collection */
   jvmtiError (JNICALL *ForceGarbageCollection) (jvmtiEnv* env);
 
   /*   109 : Iterate Over Objects Reachable From Object */
-  jvmtiError (JNICALL *IterateOverObjectsReachableFromObject) (jvmtiEnv* env,
-    jobject object,
-    jvmtiObjectReferenceCallback object_reference_callback,
+  jvmtiError (JNICALL *IterateOverObjectsReachableFromObject) (jvmtiEnv* env, 
+    jobject object, 
+    jvmtiObjectReferenceCallback object_reference_callback, 
     const void* user_data);
 
   /*   110 : Iterate Over Reachable Objects */
-  jvmtiError (JNICALL *IterateOverReachableObjects) (jvmtiEnv* env,
-    jvmtiHeapRootCallback heap_root_callback,
-    jvmtiStackReferenceCallback stack_ref_callback,
-    jvmtiObjectReferenceCallback object_ref_callback,
+  jvmtiError (JNICALL *IterateOverReachableObjects) (jvmtiEnv* env, 
+    jvmtiHeapRootCallback heap_root_callback, 
+    jvmtiStackReferenceCallback stack_ref_callback, 
+    jvmtiObjectReferenceCallback object_ref_callback, 
     const void* user_data);
 
   /*   111 : Iterate Over Heap */
-  jvmtiError (JNICALL *IterateOverHeap) (jvmtiEnv* env,
-    jvmtiHeapObjectFilter object_filter,
-    jvmtiHeapObjectCallback heap_object_callback,
+  jvmtiError (JNICALL *IterateOverHeap) (jvmtiEnv* env, 
+    jvmtiHeapObjectFilter object_filter, 
+    jvmtiHeapObjectCallback heap_object_callback, 
     const void* user_data);
 
   /*   112 : Iterate Over Instances Of Class */
-  jvmtiError (JNICALL *IterateOverInstancesOfClass) (jvmtiEnv* env,
-    jclass klass,
-    jvmtiHeapObjectFilter object_filter,
-    jvmtiHeapObjectCallback heap_object_callback,
+  jvmtiError (JNICALL *IterateOverInstancesOfClass) (jvmtiEnv* env, 
+    jclass klass, 
+    jvmtiHeapObjectFilter object_filter, 
+    jvmtiHeapObjectCallback heap_object_callback, 
     const void* user_data);
 
   /*   113 :  RESERVED */
   void *reserved113;
 
   /*   114 : Get Objects With Tags */
-  jvmtiError (JNICALL *GetObjectsWithTags) (jvmtiEnv* env,
-    jint tag_count,
-    const jlong* tags,
-    jint* count_ptr,
-    jobject** object_result_ptr,
+  jvmtiError (JNICALL *GetObjectsWithTags) (jvmtiEnv* env, 
+    jint tag_count, 
+    const jlong* tags, 
+    jint* count_ptr, 
+    jobject** object_result_ptr, 
     jlong** tag_result_ptr);
 
   /*   115 : Follow References */
-  jvmtiError (JNICALL *FollowReferences) (jvmtiEnv* env,
-    jint heap_filter,
-    jclass klass,
-    jobject initial_object,
-    const jvmtiHeapCallbacks* callbacks,
+  jvmtiError (JNICALL *FollowReferences) (jvmtiEnv* env, 
+    jint heap_filter, 
+    jclass klass, 
+    jobject initial_object, 
+    const jvmtiHeapCallbacks* callbacks, 
     const void* user_data);
 
   /*   116 : Iterate Through Heap */
-  jvmtiError (JNICALL *IterateThroughHeap) (jvmtiEnv* env,
-    jint heap_filter,
-    jclass klass,
-    const jvmtiHeapCallbacks* callbacks,
+  jvmtiError (JNICALL *IterateThroughHeap) (jvmtiEnv* env, 
+    jint heap_filter, 
+    jclass klass, 
+    const jvmtiHeapCallbacks* callbacks, 
     const void* user_data);
 
   /*   117 :  RESERVED */
@@ -1618,160 +1621,160 @@ typedef struct jvmtiInterface_1_ {
   void *reserved119;
 
   /*   120 : Set JNI Function Table */
-  jvmtiError (JNICALL *SetJNIFunctionTable) (jvmtiEnv* env,
+  jvmtiError (JNICALL *SetJNIFunctionTable) (jvmtiEnv* env, 
     const jniNativeInterface* function_table);
 
   /*   121 : Get JNI Function Table */
-  jvmtiError (JNICALL *GetJNIFunctionTable) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetJNIFunctionTable) (jvmtiEnv* env, 
     jniNativeInterface** function_table);
 
   /*   122 : Set Event Callbacks */
-  jvmtiError (JNICALL *SetEventCallbacks) (jvmtiEnv* env,
-    const jvmtiEventCallbacks* callbacks,
+  jvmtiError (JNICALL *SetEventCallbacks) (jvmtiEnv* env, 
+    const jvmtiEventCallbacks* callbacks, 
     jint size_of_callbacks);
 
   /*   123 : Generate Events */
-  jvmtiError (JNICALL *GenerateEvents) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GenerateEvents) (jvmtiEnv* env, 
     jvmtiEvent event_type);
 
   /*   124 : Get Extension Functions */
-  jvmtiError (JNICALL *GetExtensionFunctions) (jvmtiEnv* env,
-    jint* extension_count_ptr,
+  jvmtiError (JNICALL *GetExtensionFunctions) (jvmtiEnv* env, 
+    jint* extension_count_ptr, 
     jvmtiExtensionFunctionInfo** extensions);
 
   /*   125 : Get Extension Events */
-  jvmtiError (JNICALL *GetExtensionEvents) (jvmtiEnv* env,
-    jint* extension_count_ptr,
+  jvmtiError (JNICALL *GetExtensionEvents) (jvmtiEnv* env, 
+    jint* extension_count_ptr, 
     jvmtiExtensionEventInfo** extensions);
 
   /*   126 : Set Extension Event Callback */
-  jvmtiError (JNICALL *SetExtensionEventCallback) (jvmtiEnv* env,
-    jint extension_event_index,
+  jvmtiError (JNICALL *SetExtensionEventCallback) (jvmtiEnv* env, 
+    jint extension_event_index, 
     jvmtiExtensionEvent callback);
 
   /*   127 : Dispose Environment */
   jvmtiError (JNICALL *DisposeEnvironment) (jvmtiEnv* env);
 
   /*   128 : Get Error Name */
-  jvmtiError (JNICALL *GetErrorName) (jvmtiEnv* env,
-    jvmtiError error,
+  jvmtiError (JNICALL *GetErrorName) (jvmtiEnv* env, 
+    jvmtiError error, 
     char** name_ptr);
 
   /*   129 : Get JLocation Format */
-  jvmtiError (JNICALL *GetJLocationFormat) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetJLocationFormat) (jvmtiEnv* env, 
     jvmtiJlocationFormat* format_ptr);
 
   /*   130 : Get System Properties */
-  jvmtiError (JNICALL *GetSystemProperties) (jvmtiEnv* env,
-    jint* count_ptr,
+  jvmtiError (JNICALL *GetSystemProperties) (jvmtiEnv* env, 
+    jint* count_ptr, 
     char*** property_ptr);
 
   /*   131 : Get System Property */
-  jvmtiError (JNICALL *GetSystemProperty) (jvmtiEnv* env,
-    const char* property,
+  jvmtiError (JNICALL *GetSystemProperty) (jvmtiEnv* env, 
+    const char* property, 
     char** value_ptr);
 
   /*   132 : Set System Property */
-  jvmtiError (JNICALL *SetSystemProperty) (jvmtiEnv* env,
-    const char* property,
+  jvmtiError (JNICALL *SetSystemProperty) (jvmtiEnv* env, 
+    const char* property, 
     const char* value);
 
   /*   133 : Get Phase */
-  jvmtiError (JNICALL *GetPhase) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetPhase) (jvmtiEnv* env, 
     jvmtiPhase* phase_ptr);
 
   /*   134 : Get Current Thread CPU Timer Information */
-  jvmtiError (JNICALL *GetCurrentThreadCpuTimerInfo) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetCurrentThreadCpuTimerInfo) (jvmtiEnv* env, 
     jvmtiTimerInfo* info_ptr);
 
   /*   135 : Get Current Thread CPU Time */
-  jvmtiError (JNICALL *GetCurrentThreadCpuTime) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetCurrentThreadCpuTime) (jvmtiEnv* env, 
     jlong* nanos_ptr);
 
   /*   136 : Get Thread CPU Timer Information */
-  jvmtiError (JNICALL *GetThreadCpuTimerInfo) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetThreadCpuTimerInfo) (jvmtiEnv* env, 
     jvmtiTimerInfo* info_ptr);
 
   /*   137 : Get Thread CPU Time */
-  jvmtiError (JNICALL *GetThreadCpuTime) (jvmtiEnv* env,
-    jthread thread,
+  jvmtiError (JNICALL *GetThreadCpuTime) (jvmtiEnv* env, 
+    jthread thread, 
     jlong* nanos_ptr);
 
   /*   138 : Get Timer Information */
-  jvmtiError (JNICALL *GetTimerInfo) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetTimerInfo) (jvmtiEnv* env, 
     jvmtiTimerInfo* info_ptr);
 
   /*   139 : Get Time */
-  jvmtiError (JNICALL *GetTime) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetTime) (jvmtiEnv* env, 
     jlong* nanos_ptr);
 
   /*   140 : Get Potential Capabilities */
-  jvmtiError (JNICALL *GetPotentialCapabilities) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetPotentialCapabilities) (jvmtiEnv* env, 
     jvmtiCapabilities* capabilities_ptr);
 
   /*   141 :  RESERVED */
   void *reserved141;
 
   /*   142 : Add Capabilities */
-  jvmtiError (JNICALL *AddCapabilities) (jvmtiEnv* env,
+  jvmtiError (JNICALL *AddCapabilities) (jvmtiEnv* env, 
     const jvmtiCapabilities* capabilities_ptr);
 
   /*   143 : Relinquish Capabilities */
-  jvmtiError (JNICALL *RelinquishCapabilities) (jvmtiEnv* env,
+  jvmtiError (JNICALL *RelinquishCapabilities) (jvmtiEnv* env, 
     const jvmtiCapabilities* capabilities_ptr);
 
   /*   144 : Get Available Processors */
-  jvmtiError (JNICALL *GetAvailableProcessors) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetAvailableProcessors) (jvmtiEnv* env, 
     jint* processor_count_ptr);
 
   /*   145 : Get Class Version Numbers */
-  jvmtiError (JNICALL *GetClassVersionNumbers) (jvmtiEnv* env,
-    jclass klass,
-    jint* minor_version_ptr,
+  jvmtiError (JNICALL *GetClassVersionNumbers) (jvmtiEnv* env, 
+    jclass klass, 
+    jint* minor_version_ptr, 
     jint* major_version_ptr);
 
   /*   146 : Get Constant Pool */
-  jvmtiError (JNICALL *GetConstantPool) (jvmtiEnv* env,
-    jclass klass,
-    jint* constant_pool_count_ptr,
-    jint* constant_pool_byte_count_ptr,
+  jvmtiError (JNICALL *GetConstantPool) (jvmtiEnv* env, 
+    jclass klass, 
+    jint* constant_pool_count_ptr, 
+    jint* constant_pool_byte_count_ptr, 
     unsigned char** constant_pool_bytes_ptr);
 
   /*   147 : Get Environment Local Storage */
-  jvmtiError (JNICALL *GetEnvironmentLocalStorage) (jvmtiEnv* env,
+  jvmtiError (JNICALL *GetEnvironmentLocalStorage) (jvmtiEnv* env, 
     void** data_ptr);
 
   /*   148 : Set Environment Local Storage */
-  jvmtiError (JNICALL *SetEnvironmentLocalStorage) (jvmtiEnv* env,
+  jvmtiError (JNICALL *SetEnvironmentLocalStorage) (jvmtiEnv* env, 
     const void* data);
 
   /*   149 : Add To Bootstrap Class Loader Search */
-  jvmtiError (JNICALL *AddToBootstrapClassLoaderSearch) (jvmtiEnv* env,
+  jvmtiError (JNICALL *AddToBootstrapClassLoaderSearch) (jvmtiEnv* env, 
     const char* segment);
 
   /*   150 : Set Verbose Flag */
-  jvmtiError (JNICALL *SetVerboseFlag) (jvmtiEnv* env,
-    jvmtiVerboseFlag flag,
+  jvmtiError (JNICALL *SetVerboseFlag) (jvmtiEnv* env, 
+    jvmtiVerboseFlag flag, 
     jboolean value);
 
   /*   151 : Add To System Class Loader Search */
-  jvmtiError (JNICALL *AddToSystemClassLoaderSearch) (jvmtiEnv* env,
+  jvmtiError (JNICALL *AddToSystemClassLoaderSearch) (jvmtiEnv* env, 
     const char* segment);
 
   /*   152 : Retransform Classes */
-  jvmtiError (JNICALL *RetransformClasses) (jvmtiEnv* env,
-    jint class_count,
+  jvmtiError (JNICALL *RetransformClasses) (jvmtiEnv* env, 
+    jint class_count, 
     const jclass* classes);
 
   /*   153 : Get Owned Monitor Stack Depth Info */
-  jvmtiError (JNICALL *GetOwnedMonitorStackDepthInfo) (jvmtiEnv* env,
-    jthread thread,
-    jint* monitor_info_count_ptr,
+  jvmtiError (JNICALL *GetOwnedMonitorStackDepthInfo) (jvmtiEnv* env, 
+    jthread thread, 
+    jint* monitor_info_count_ptr, 
     jvmtiMonitorStackDepthInfo** monitor_info_ptr);
 
   /*   154 : Get Object Size */
-  jvmtiError (JNICALL *GetObjectSize) (jvmtiEnv* env,
-    jobject object,
+  jvmtiError (JNICALL *GetObjectSize) (jvmtiEnv* env, 
+    jobject object, 
     jlong* size_ptr);
 
 } jvmtiInterface_1;
@@ -2518,3 +2521,4 @@ struct _jvmtiEnv {
 #endif /* __cplusplus */
 
 #endif /* !_JAVA_JVMTI_H_ */
+

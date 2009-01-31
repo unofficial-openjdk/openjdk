@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 
@@ -42,6 +43,7 @@ import java.awt.*;
 /**
  * This class describes a theme using "green" colors.
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class BigContrastMetalTheme extends ContrastMetalTheme {
@@ -72,11 +74,11 @@ public class BigContrastMetalTheme extends ContrastMetalTheme {
          table.put("InternalFrame.minimizeIcon", MetalIconFactory.getInternalFrameAltMaximizeIcon(internalFrameIconSize));
 
 
-        Border blackLineBorder = new BorderUIResource( new MatteBorder( 2,2,2,2, Color.black) );
-        Border textBorder = blackLineBorder;
+	Border blackLineBorder = new BorderUIResource( new MatteBorder( 2,2,2,2, Color.black) );
+	Border textBorder = blackLineBorder;
 
         table.put( "ToolTip.border", blackLineBorder);
-        table.put( "TitledBorder.border", blackLineBorder);
+	table.put( "TitledBorder.border", blackLineBorder);
 
 
         table.put( "TextField.border", textBorder);

@@ -37,6 +37,7 @@ import javax.security.auth.callback.CallbackHandler;
  * if it determines that a login must be performed
  * prior to certain operations.
  *
+ * @version %I%, %G%
  * @since 1.5
  */
 public abstract class AuthProvider extends Provider {
@@ -50,7 +51,7 @@ public abstract class AuthProvider extends Provider {
      * @param info a description of the provider and its services.
      */
     protected AuthProvider(String name, double version, String info) {
-        super(name, version, info);
+	super(name, version, info);
     }
 
     /**
@@ -69,33 +70,33 @@ public abstract class AuthProvider extends Provider {
      * for obtaining authentication information.
      *
      * @param subject the <code>Subject</code> which may contain
-     *          principals/credentials used for authentication,
-     *          or may be populated with additional principals/credentials
-     *          after successful authentication has completed.
-     *          This parameter may be <code>null</code>.
+     *		principals/credentials used for authentication,
+     *		or may be populated with additional principals/credentials
+     *		after successful authentication has completed.
+     *		This parameter may be <code>null</code>.
      * @param handler the <code>CallbackHandler</code> used by
-     *          this provider to obtain authentication information
-     *          from the caller, which may be <code>null</code>
+     *		this provider to obtain authentication information
+     *		from the caller, which may be <code>null</code>
      *
      * @exception LoginException if the login operation fails
      * @exception SecurityException if the caller does not pass a
-     *  security check for
-     *  <code>SecurityPermission("authProvider.<i>name</i>")</code>,
-     *  where <i>name</i> is the value returned by
-     *  this provider's <code>getName</code> method
+     *	security check for
+     *	<code>SecurityPermission("authProvider.<i>name</i>")</code>,
+     *	where <i>name</i> is the value returned by
+     *	this provider's <code>getName</code> method
      */
     public abstract void login(Subject subject, CallbackHandler handler)
-        throws LoginException;
+	throws LoginException;
 
     /**
      * Log out from this provider.
      *
      * @exception LoginException if the logout operation fails
      * @exception SecurityException if the caller does not pass a
-     *  security check for
-     *  <code>SecurityPermission("authProvider.<i>name</i>")</code>,
-     *  where <i>name</i> is the value returned by
-     *  this provider's <code>getName</code> method
+     *	security check for
+     *	<code>SecurityPermission("authProvider.<i>name</i>")</code>,
+     *	where <i>name</i> is the value returned by
+     *	this provider's <code>getName</code> method
      */
     public abstract void logout() throws LoginException;
 
@@ -114,13 +115,13 @@ public abstract class AuthProvider extends Provider {
      * for obtaining authentication information.
      *
      * @param handler a <code>CallbackHandler</code> for obtaining
-     *          authentication information, which may be <code>null</code>
+     *		authentication information, which may be <code>null</code>
      *
      * @exception SecurityException if the caller does not pass a
-     *  security check for
-     *  <code>SecurityPermission("authProvider.<i>name</i>")</code>,
-     *  where <i>name</i> is the value returned by
-     *  this provider's <code>getName</code> method
+     *	security check for
+     *	<code>SecurityPermission("authProvider.<i>name</i>")</code>,
+     *	where <i>name</i> is the value returned by
+     *	this provider's <code>getName</code> method
      */
     public abstract void setCallbackHandler(CallbackHandler handler);
 }

@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package com.sun.security.sasl;
+package com.sun.security.sasl; 
 
 import javax.security.sasl.SaslException;
 import javax.security.sasl.Sasl;
@@ -46,7 +46,7 @@ abstract class CramMD5Base {
     protected byte[] pw;
 
     protected CramMD5Base() {
-        initLogger();
+	initLogger();
     }
 
     /**
@@ -55,7 +55,7 @@ abstract class CramMD5Base {
      * @return  The string "CRAM-MD5".
      */
     public String getMechanismName() {
-        return "CRAM-MD5";
+	return "CRAM-MD5";
     }
 
     /**
@@ -65,7 +65,7 @@ abstract class CramMD5Base {
      * @return true if has completed; false otherwise;
      */
     public boolean isComplete() {
-        return completed;
+	return completed;
     }
 
     /**
@@ -74,14 +74,14 @@ abstract class CramMD5Base {
       * @throws SaslException If attempt to use this method.
       */
     public byte[] unwrap(byte[] incoming, int offset, int len)
-        throws SaslException {
-        if (completed) {
-            throw new IllegalStateException(
-                "CRAM-MD5 supports neither integrity nor privacy");
-        } else {
-            throw new IllegalStateException(
-                "CRAM-MD5 authentication not completed");
-        }
+	throws SaslException {
+	if (completed) {
+	    throw new IllegalStateException(
+		"CRAM-MD5 supports neither integrity nor privacy");
+	} else {
+	    throw new IllegalStateException(
+		"CRAM-MD5 authentication not completed");
+	}
     }
 
     /**
@@ -90,13 +90,13 @@ abstract class CramMD5Base {
       * @throws SaslException If attempt to use this method.
       */
     public byte[] wrap(byte[] outgoing, int offset, int len) throws SaslException {
-        if (completed) {
-            throw new IllegalStateException(
-                "CRAM-MD5 supports neither integrity nor privacy");
-        } else {
-            throw new IllegalStateException(
-                "CRAM-MD5 authentication not completed");
-        }
+	if (completed) {
+	    throw new IllegalStateException(
+		"CRAM-MD5 supports neither integrity nor privacy");
+	} else {
+	    throw new IllegalStateException(
+		"CRAM-MD5 authentication not completed");
+	}
     }
 
     /**
@@ -104,39 +104,39 @@ abstract class CramMD5Base {
      * This method can be called only after the authentication exchange has
      * completed (i.e., when <tt>isComplete()</tt> returns true); otherwise, a
      * <tt>SaslException</tt> is thrown.
-     *
+     * 
      * @return value of property; only QOP is applicable to CRAM-MD5.
      * @exception IllegalStateException if this authentication exchange has not completed
      */
     public Object getNegotiatedProperty(String propName) {
-        if (completed) {
-            if (propName.equals(Sasl.QOP)) {
-                return "auth";
-            } else {
-                return null;
-            }
-        } else {
-            throw new IllegalStateException(
-                "CRAM-MD5 authentication not completed");
-        }
+	if (completed) {
+	    if (propName.equals(Sasl.QOP)) {
+		return "auth";
+	    } else {
+		return null;
+	    }
+	} else {
+	    throw new IllegalStateException(
+		"CRAM-MD5 authentication not completed");
+	}
     }
 
     public void dispose() throws SaslException {
-        clearPassword();
+	clearPassword();
     }
 
     protected void clearPassword() {
-        if (pw != null) {
-            // zero out password
-            for (int i = 0; i < pw.length; i++) {
-                pw[i] = (byte)0;
-            }
-            pw = null;
-        }
+	if (pw != null) {
+	    // zero out password
+	    for (int i = 0; i < pw.length; i++) {
+		pw[i] = (byte)0;
+	    }
+	    pw = null;
+	}
     }
 
     protected void finalize() {
-        clearPassword();
+	clearPassword();
     }
 
     static private final int MD5_BLOCKSIZE = 64;
@@ -146,68 +146,68 @@ abstract class CramMD5Base {
      *
      * HMAC-MD5 function is described as follows:
      *
-     *       MD5(key XOR opad, MD5(key XOR ipad, text))
+     *	     MD5(key XOR opad, MD5(key XOR ipad, text))
      *
      * where key  is an n byte key
      *       ipad is the byte 0x36 repeated 64 times
      *       opad is the byte 0x5c repeated 64 times
      *       text is the data to be protected
      */
-    final static String HMAC_MD5(byte[] key, byte[] text)
-        throws NoSuchAlgorithmException {
+    final static String HMAC_MD5(byte[] key, byte[] text) 
+	throws NoSuchAlgorithmException {
 
-        MessageDigest md5 = MessageDigest.getInstance("MD5");
+	MessageDigest md5 = MessageDigest.getInstance("MD5");
 
-        /* digest the key if longer than 64 bytes */
-        if (key.length > 64) {
-            key = md5.digest(key);
-        }
+	/* digest the key if longer than 64 bytes */
+	if (key.length > 64) {
+	    key = md5.digest(key);
+	}
 
-        byte[] ipad = new byte[MD5_BLOCKSIZE];  /* inner padding */
-        byte[] opad = new byte[MD5_BLOCKSIZE];  /* outer padding */
-        byte[] digest;
-        int i;
+	byte[] ipad = new byte[MD5_BLOCKSIZE];	/* inner padding */
+	byte[] opad = new byte[MD5_BLOCKSIZE];	/* outer padding */
+	byte[] digest;
+	int i;
 
-        /* store key in pads */
-        for (i = 0; i < MD5_BLOCKSIZE; i++) {
-            for ( ; i < key.length; i++) {
-                ipad[i] = key[i];
-                opad[i] = key[i];
-            }
-            ipad[i] = 0x00;
-            opad[i] = 0x00;
-        }
+	/* store key in pads */
+	for (i = 0; i < MD5_BLOCKSIZE; i++) {
+	    for ( ; i < key.length; i++) {
+		ipad[i] = key[i];
+		opad[i] = key[i];
+	    }
+	    ipad[i] = 0x00;
+	    opad[i] = 0x00;
+	}
 
-        /* XOR key with pads */
-        for (i = 0; i < MD5_BLOCKSIZE; i++) {
-            ipad[i] ^= 0x36;
-            opad[i] ^= 0x5c;
-        }
+	/* XOR key with pads */
+	for (i = 0; i < MD5_BLOCKSIZE; i++) {
+	    ipad[i] ^= 0x36;
+	    opad[i] ^= 0x5c;
+	}
 
-        /* inner MD5 */
-        md5.update(ipad);
-        md5.update(text);
-        digest = md5.digest();
+	/* inner MD5 */
+	md5.update(ipad);
+	md5.update(text);
+	digest = md5.digest();
 
-        /* outer MD5 */
-        md5.update(opad);
-        md5.update(digest);
-        digest = md5.digest();
+	/* outer MD5 */
+	md5.update(opad);
+	md5.update(digest);
+	digest = md5.digest();
 
-        // Get character representation of digest
-        StringBuffer digestString = new StringBuffer();
+	// Get character representation of digest
+	StringBuffer digestString = new StringBuffer();
 
-        for (i = 0; i < digest.length; i++) {
-            if ((digest[i] & 0x000000ff) < 0x10) {
-                digestString.append("0" +
-                    Integer.toHexString(digest[i] & 0x000000ff));
-            } else {
-                digestString.append(
-                    Integer.toHexString(digest[i] & 0x000000ff));
-            }
-        }
+	for (i = 0; i < digest.length; i++) {
+	    if ((digest[i] & 0x000000ff) < 0x10) {
+		digestString.append("0" +
+		    Integer.toHexString(digest[i] & 0x000000ff));
+	    } else {
+		digestString.append(
+		    Integer.toHexString(digest[i] & 0x000000ff));
+	    }
+	}
 
-        return (digestString.toString());
+	return (digestString.toString());
     }
 
     /**
@@ -216,10 +216,10 @@ abstract class CramMD5Base {
     private static synchronized void initLogger() {
         if (logger == null) {
             logger = Logger.getLogger(SASL_LOGGER_NAME);
-        }
+	}
     }
-    /**
-     * Logger for debug messages
+    /** 
+     * Logger for debug messages 
      */
     private static final String SASL_LOGGER_NAME = "javax.security.sasl";
     protected static Logger logger;  // set in initLogger(); lazily loads logger

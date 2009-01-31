@@ -41,12 +41,12 @@ public abstract class PhysicalFont extends Font2D {
     protected Object nativeNames;
 
     public boolean equals(Object o) {
-        return (o != null && o.getClass() == this.getClass() &&
-                ((Font2D)o).fullName.equals(this.fullName));
+	return (o != null && o.getClass() == this.getClass() &&
+		((Font2D)o).fullName.equals(this.fullName));
     }
-
+	
     public int hashCode() {
-        return fullName.hashCode();
+	return fullName.hashCode();
     }
 
     /**
@@ -56,15 +56,15 @@ public abstract class PhysicalFont extends Font2D {
      * or fails verification,  or there's no usable cmap
      */
     PhysicalFont(String platname, Object nativeNames)
-        throws FontFormatException {
+	throws FontFormatException {
 
-        handle = new Font2DHandle(this);
-        this.platName = platname;
-        this.nativeNames = nativeNames;
+	handle = new Font2DHandle(this);
+	this.platName = platname;
+	this.nativeNames = nativeNames;
     }
 
     protected PhysicalFont() {
-        handle = new Font2DHandle(this);
+	handle = new Font2DHandle(this);
     }
 
     /* The following methods are delegated to the font by the strike
@@ -75,8 +75,8 @@ public abstract class PhysicalFont extends Font2D {
      */
 
     Point2D.Float getGlyphPoint(long pScalerContext,
-                             int glyphCode, int ptNumber) {
-        return new Point2D.Float();
+			     int glyphCode, int ptNumber) {
+	return new Point2D.Float();
     }
 
     /* These 3 metrics methods should be implemented to return
@@ -87,7 +87,7 @@ public abstract class PhysicalFont extends Font2D {
     abstract float getGlyphAdvance(long pScalerContext, int glyphCode);
 
     abstract void getGlyphMetrics(long pScalerContext, int glyphCode,
-                                  Point2D.Float metrics);
+				  Point2D.Float metrics);
 
     abstract long getGlyphImage(long pScalerContext, int glyphCode);
 
@@ -96,12 +96,12 @@ public abstract class PhysicalFont extends Font2D {
      * as typically Java client code will need to have them in user space.
      */
     abstract Rectangle2D.Float getGlyphOutlineBounds(long pScalerContext,
-                                                     int glyphCode);
+						     int glyphCode);
 
     abstract GeneralPath getGlyphOutline(long pScalerContext, int glyphCode,
-                                         float x, float y);
+					 float x, float y);
 
     abstract GeneralPath getGlyphVectorOutline(long pScalerContext,
-                                               int[] glyphs, int numGlyphs,
-                                               float x, float y);
+					       int[] glyphs, int numGlyphs,
+					       float x, float y);
 }

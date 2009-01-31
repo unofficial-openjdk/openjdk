@@ -26,7 +26,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 
 public abstract class ColConvTest implements Runnable {
-
+    
     /* Parameters of the testing subimage */
     static final int SI_X = 10;
     static final int SI_Y = 10;
@@ -34,7 +34,7 @@ public abstract class ColConvTest implements Runnable {
     static final int SI_H = 100;
 
     private boolean passed = false;
-
+    
     static String getCSName(int cs) {
         switch(cs) {
             case ColorSpace.CS_GRAY:
@@ -50,7 +50,7 @@ public abstract class ColConvTest implements Runnable {
         }
         return "UNKNOWN";
     }
-
+    
     static String getDTName(int dType) {
         switch(dType) {
             case DataBuffer.TYPE_BYTE:
@@ -70,7 +70,7 @@ public abstract class ColConvTest implements Runnable {
         }
         return "UNKNOWN";
     }
-
+    
     static String getImageTypeName(int type) {
         switch(type) {
             case BufferedImage.TYPE_INT_ARGB:
@@ -104,7 +104,7 @@ public abstract class ColConvTest implements Runnable {
     }
 
     /* Actual tests should override this method and put initialization logic
-     * into it
+     * into it 
      */
     public abstract void init();
 
@@ -117,7 +117,7 @@ public abstract class ColConvTest implements Runnable {
             passed = true;
         } catch (Throwable ex) {
             ex.printStackTrace();
-            passed = false;
+            passed = false;   
             throw new RuntimeException(ex);
         }
     }
@@ -127,3 +127,4 @@ public abstract class ColConvTest implements Runnable {
         return passed;
     }
 }
+

@@ -31,6 +31,7 @@ import sun.nio.cs.ext.MacHebrew;
  * Tables and data to convert Unicode to MacHebrew
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteMacHebrew extends CharToByteSingleByte {

@@ -37,6 +37,7 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class CertificatePolicySet {
 
@@ -60,7 +61,7 @@ public class CertificatePolicySet {
     public CertificatePolicySet(DerInputStream in) throws IOException {
         ids = new Vector<CertificatePolicyId>();
         DerValue[] seq = in.getSequence(5);
-
+ 
         for (int i = 0; i < seq.length; i++) {
             CertificatePolicyId id = new CertificatePolicyId(seq[i]);
             ids.addElement(id);
@@ -96,9 +97,10 @@ public class CertificatePolicySet {
      * Return the sequence of CertificatePolicyIds.
      *
      * @return A List containing the CertificatePolicyId objects.
-     *
+     *	
      */
     public List<CertificatePolicyId> getCertPolicyIds() {
         return Collections.unmodifiableList(ids);
-    }
+    } 
 }
+

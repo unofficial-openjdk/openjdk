@@ -35,7 +35,7 @@ import javax.swing.plaf.*;
 import javax.swing.plaf.basic.BasicSeparatorUI;
 
 /**
- * A Motif L&F implementation of SeparatorUI.  This implementation
+ * A Motif L&F implementation of SeparatorUI.  This implementation 
  * is a "combined" view/controller.
  * <p>
  * <strong>Warning:</strong>
@@ -45,6 +45,7 @@ import javax.swing.plaf.basic.BasicSeparatorUI;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version %I% %G%
  * @author Georges Saab
  * @author Jeff Shapiro
  */
@@ -57,3 +58,7 @@ public class MotifSeparatorUI extends BasicSeparatorUI
     }
 
 }
+
+
+
+

@@ -29,7 +29,7 @@
  * This was hackish, but to make sure that there were no problems
  * with permissions.
  *
- * Create a client, server, and interested party thread.  The
+ * Create a client, server, and interested party thread.  The 
  * client and interested threads should receive the same
  * session notification.
  */
@@ -47,7 +47,7 @@ public class NotifyHandshakeTest implements HandshakeCompletedListener {
     static String keyStoreFile = "keystore";
     static String trustStoreFile = "truststore";
     static String passwd = "passphrase";
-    volatile static int serverPort = 0;
+    volatile static int serverPort = 0; 
 
     public boolean set;
     SSLSession sess;
@@ -55,137 +55,138 @@ public class NotifyHandshakeTest implements HandshakeCompletedListener {
     static public int triggerState = 0;
 
     static public void trigger() {
-        triggerState++;
+	triggerState++;
     }
 
     public void handshakeCompleted(HandshakeCompletedEvent event) {
-        set = true;
-        sess = event.getSession();
-        trigger();
+	set = true;
+	sess = event.getSession();
+	trigger();
     }
 
     public static void main(String[] args) throws Exception {
+	
+	String keyFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+	    "/" + keyStoreFile;
+	String trustFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+	    "/" + trustStoreFile;
 
-        String keyFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-            "/" + keyStoreFile;
-        String trustFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-            "/" + trustStoreFile;
-
-        System.setProperty("javax.net.ssl.keyStore", keyFilename);
-        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-        System.setProperty("javax.net.ssl.trustStore", trustFilename);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+	System.setProperty("javax.net.ssl.keyStore", keyFilename);
+	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+	System.setProperty("javax.net.ssl.trustStore", trustFilename);
+	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
         SSLSocketFactory sslsf =
                 (SSLSocketFactory)SSLSocketFactory.getDefault();
         SSLServerSocketFactory sslssf =
                 (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+	
+	/*
+	 * Start off the Server, give time to initialize.
+	 */
+	SSLServerSocket sslss =
+	    (SSLServerSocket)sslssf.createServerSocket(serverPort);
+	serverPort = sslss.getLocalPort();
+	Server server = new Server(sslss);
+	server.start();
 
-        /*
-         * Start off the Server, give time to initialize.
-         */
-        SSLServerSocket sslss =
-            (SSLServerSocket)sslssf.createServerSocket(serverPort);
-        serverPort = sslss.getLocalPort();
-        Server server = new Server(sslss);
-        server.start();
+	System.out.println("Server started...");
 
-        System.out.println("Server started...");
+	/*
+	 * Create the socket.
+	 */
+	SSLSocket socket =
+	    (SSLSocket)sslsf.createSocket("localhost", serverPort);
+	
+	/*
+	 * Create a second thread also interested in this socket
+	 */
+	edu.NotifyHandshakeTestHeyYou heyYou =
+	    new edu.NotifyHandshakeTestHeyYou(socket);
+	heyYou.start();
+	while (triggerState < 1) {
+	    Thread.sleep(500);
+	}
+	System.out.println("HeyYou thread ready...");
 
-        /*
-         * Create the socket.
-         */
-        SSLSocket socket =
-            (SSLSocket)sslsf.createSocket("localhost", serverPort);
+	NotifyHandshakeTest listener = new NotifyHandshakeTest();
+	socket.addHandshakeCompletedListener(listener);
 
-        /*
-         * Create a second thread also interested in this socket
-         */
-        edu.NotifyHandshakeTestHeyYou heyYou =
-            new edu.NotifyHandshakeTestHeyYou(socket);
-        heyYou.start();
-        while (triggerState < 1) {
-            Thread.sleep(500);
-        }
-        System.out.println("HeyYou thread ready...");
+	System.out.println("Client starting handshake...");
+	socket.startHandshake();
+	System.out.println("Client done handshaking...");
 
-        NotifyHandshakeTest listener = new NotifyHandshakeTest();
-        socket.addHandshakeCompletedListener(listener);
+	InputStream is = socket.getInputStream();
+	if ((byte)is.read() != (byte)0x77) {
+	    throw new Exception("problem reading byte");
+	}
 
-        System.out.println("Client starting handshake...");
-        socket.startHandshake();
-        System.out.println("Client done handshaking...");
+	/*
+	 * Wait for HeyYou and the client to get a slice, so
+	 * they can receive their SSLSessions.
+	 */
+	while (triggerState < 3) {
+	    Thread.sleep(500);
+	}
 
-        InputStream is = socket.getInputStream();
-        if ((byte)is.read() != (byte)0x77) {
-            throw new Exception("problem reading byte");
-        }
+	/*
+	 * Grab the variables before reaping the thread.
+	 */
+	boolean heyYouSet = heyYou.set;
+	AccessControlContext heyYouACC = heyYou.acc;
+	SSLSession  heyYouSess = heyYou.ssls;
 
-        /*
-         * Wait for HeyYou and the client to get a slice, so
-         * they can receive their SSLSessions.
-         */
-        while (triggerState < 3) {
-            Thread.sleep(500);
-        }
+	heyYou.interrupt();
+	heyYou.join();
+	server.join();
+	
+	socket.close();
 
-        /*
-         * Grab the variables before reaping the thread.
-         */
-        boolean heyYouSet = heyYou.set;
-        AccessControlContext heyYouACC = heyYou.acc;
-        SSLSession  heyYouSess = heyYou.ssls;
-
-        heyYou.interrupt();
-        heyYou.join();
-        server.join();
-
-        socket.close();
-
-        if (!heyYouSet) {
-            throw new Exception("HeyYou's wasn't set");
-        }
+	if (!heyYouSet) {
+	    throw new Exception("HeyYou's wasn't set");
+	}
         if (!listener.set) {
-            throw new Exception("This' wasn't set");
-        }
+	    throw new Exception("This' wasn't set");
+	}
 
-        if (heyYouACC.equals(AccessController.getContext())) {
-            throw new Exception("Access Control Contexts were the same");
-        }
+	if (heyYouACC.equals(AccessController.getContext())) {
+	    throw new Exception("Access Control Contexts were the same");
+	}
 
-        if (!heyYouSess.equals(listener.sess)) {
-            throw new Exception("SSLSessions were not equal");
-        }
+	if (!heyYouSess.equals(listener.sess)) {
+	    throw new Exception("SSLSessions were not equal");
+	}
 
-        System.out.println("Everything Passed");
+	System.out.println("Everything Passed");
     }
 
     static class Server extends Thread {
 
-        SSLServerSocket ss;
+	SSLServerSocket ss;
 
-        Server(SSLServerSocket ss) {
-            this.ss = ss;
-        }
+	Server(SSLServerSocket ss) {
+	    this.ss = ss;
+	}
 
-        public void run() {
-            try {
-                System.out.println("Server accepting socket...");
-                SSLSocket s = (SSLSocket) ss.accept();
-                System.out.println(
-                    "Server accepted socket...starting handshake");
-                s.startHandshake();
-                System.out.println("Server done handshaking");
-                OutputStream os = s.getOutputStream();
-                os.write(0x77);
-                os.flush();
-                System.out.println("Server returning");
-            } catch (Exception e) {
-                System.out.println("Server died");
-                e.printStackTrace();
-            }
-        }
+	public void run() {
+	    try {
+		System.out.println("Server accepting socket...");
+	        SSLSocket s = (SSLSocket) ss.accept();
+		System.out.println(
+		    "Server accepted socket...starting handshake");
+	        s.startHandshake();
+		System.out.println("Server done handshaking");
+	        OutputStream os = s.getOutputStream();
+	        os.write(0x77);
+	        os.flush();
+		System.out.println("Server returning");
+	    } catch (Exception e) {
+		System.out.println("Server died");
+		e.printStackTrace();
+	    }
+	}
     }
 }
+

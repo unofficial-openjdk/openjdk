@@ -28,7 +28,7 @@ package javax.naming;
 /**
  * This exception is used to describe problems encounter while resolving links.
  * Addition information is added to the base NamingException for pinpointing
- * the problem with the link.
+ * the problem with the link. 
  *<p>
  * Analogous to how NamingException captures name resolution information,
  * LinkException captures "link"-name resolution information pinpointing
@@ -42,12 +42,13 @@ package javax.naming;
  *</ul>
  *
   *<p>
-  * A LinkException instance is not synchronized against concurrent
+  * A LinkException instance is not synchronized against concurrent 
   * multithreaded access. Multiple threads trying to access and modify
   * a single LinkException instance should lock the object.
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version 1.8 03/12/19
   *
   * @see Context#lookupLink
   * @see LinkRef
@@ -89,7 +90,7 @@ public class LinkException extends NamingException {
 
     /**
      * Contains the remaining link name that has not been resolved yet.
-     * It is a composite name and can be null.
+     * It is a composite name and can be null. 
      * This field is initialized by the constructors.
      * You should access and manipulate this field
      * through its get and set methods.
@@ -113,16 +114,16 @@ public class LinkException extends NamingException {
     /**
       * Constructs a new instance of LinkException with an explanation
       * All the other fields are initialized to null.
-      * @param  explanation     A possibly null string containing additional
-      *                         detail about this exception.
+      * @param	explanation	A possibly null string containing additional
+      *				detail about this exception.
       * @see java.lang.Throwable#getMessage
       */
     public LinkException(String explanation) {
-        super(explanation);
-        linkResolvedName = null;
-        linkResolvedObj = null;
-        linkRemainingName = null;
-        linkExplanation = null;
+	super(explanation);
+	linkResolvedName = null;
+	linkResolvedObj = null;
+	linkRemainingName = null;
+	linkExplanation = null;
     }
 
     /**
@@ -130,11 +131,11 @@ public class LinkException extends NamingException {
       * All the non-link-related and link-related fields are initialized to null.
       */
     public LinkException() {
-        super();
-        linkResolvedName = null;
-        linkResolvedObj = null;
-        linkRemainingName = null;
-        linkExplanation = null;
+	super();
+	linkResolvedName = null;
+	linkResolvedObj = null;
+	linkRemainingName = null;
+	linkExplanation = null;
     }
 
     /**
@@ -142,24 +143,24 @@ public class LinkException extends NamingException {
      * successfully.
      *
      * @return The part of the link name that was resolved successfully.
-     *          It is a composite name. It can be null, which means
-     *          the link resolved name field has not been set.
+     * 		It is a composite name. It can be null, which means
+     *		the link resolved name field has not been set.
      * @see #getLinkResolvedObj
      * @see #setLinkResolvedName
      */
     public Name getLinkResolvedName() {
-        return this.linkResolvedName;
+	return this.linkResolvedName;
     }
 
     /**
      * Retrieves the remaining unresolved portion of the link name.
      * @return The part of the link name that has not been resolved.
-     *          It is a composite name. It can be null, which means
-     *          the link remaining name field has not been set.
+     * 		It is a composite name. It can be null, which means
+     *		the link remaining name field has not been set.
      * @see #setLinkRemainingName
      */
     public Name getLinkRemainingName() {
-        return this.linkRemainingName;
+	return this.linkRemainingName;
     }
 
     /**
@@ -172,40 +173,40 @@ public class LinkException extends NamingException {
      * @see #setLinkResolvedObj
      */
     public Object getLinkResolvedObj() {
-        return this.linkResolvedObj;
+	return this.linkResolvedObj;
     }
 
     /**
       * Retrieves the explanation associated with the problem encounter
       * when resolving a link.
-      *
+      * 
       * @return The possibly null detail string explaining more about the problem
       * with resolving a link.
-      *         If null, it means there is no
-      *         link detail message for this exception.
+      * 	If null, it means there is no
+      *		link detail message for this exception.
       * @see #setLinkExplanation
       */
     public String getLinkExplanation() {
-        return this.linkExplanation;
+	return this.linkExplanation;
     }
 
     /**
       * Sets the explanation associated with the problem encounter
       * when resolving a link.
-      *
+      * 
       * @param msg The possibly null detail string explaining more about the problem
       * with resolving a link. If null, it means no detail will be recorded.
       * @see #getLinkExplanation
       */
     public void setLinkExplanation(String msg) {
-        this.linkExplanation = msg;
+	this.linkExplanation = msg;
     }
 
     /**
      * Sets the resolved link name field of this exception.
      *<p>
      * <tt>name</tt> is a composite name. If the intent is to set
-     * this field using a compound name or string, you must
+     * this field using a compound name or string, you must 
      * "stringify" the compound name, and create a composite
      * name with a single component using the string. You can then
      * invoke this method using the resulting composite name.
@@ -216,22 +217,22 @@ public class LinkException extends NamingException {
      *
      *
      * @param name The name to set resolved link name to. This can be null.
-     *          If null, it sets the link resolved name field to null.
+     *		If null, it sets the link resolved name field to null.
      * @see #getLinkResolvedName
      */
     public void setLinkResolvedName(Name name) {
-        if (name != null) {
-            this.linkResolvedName = (Name)(name.clone());
-        } else {
-            this.linkResolvedName = null;
-        }
+	if (name != null) {
+	    this.linkResolvedName = (Name)(name.clone());
+	} else {
+	    this.linkResolvedName = null;
+	}
     }
 
     /**
      * Sets the remaining link name field of this exception.
      *<p>
      * <tt>name</tt> is a composite name. If the intent is to set
-     * this field using a compound name or string, you must
+     * this field using a compound name or string, you must 
      * "stringify" the compound name, and create a composite
      * name with a single component using the string. You can then
      * invoke this method using the resulting composite name.
@@ -245,21 +246,21 @@ public class LinkException extends NamingException {
      * @see #getLinkRemainingName
      */
     public void setLinkRemainingName(Name name) {
-        if (name != null)
-            this.linkRemainingName = (Name)(name.clone());
-        else
-            this.linkRemainingName = null;
+	if (name != null)
+	    this.linkRemainingName = (Name)(name.clone());
+	else
+	    this.linkRemainingName = null;
     }
 
     /**
      * Sets the link resolved object field of this exception.
      * This indicates the last successfully resolved object of link name.
      * @param obj The object to set link resolved object to. This can be null.
-     *            If null, the link resolved object field is set to null.
+     *		  If null, the link resolved object field is set to null.
      * @see #getLinkResolvedObj
      */
     public void setLinkResolvedObj(Object obj) {
-        this.linkResolvedObj = obj;
+	this.linkResolvedObj = obj;
     }
 
     /**
@@ -271,8 +272,8 @@ public class LinkException extends NamingException {
      * @return The non-null string representation of this link exception.
      */
     public String toString() {
-        return super.toString() + "; Link Remaining Name: '" +
-            this.linkRemainingName + "'";
+	return super.toString() + "; Link Remaining Name: '" +
+	    this.linkRemainingName + "'";
     }
 
     /**
@@ -285,16 +286,16 @@ public class LinkException extends NamingException {
      * This string is used for debugging and not meant to be interpreted
      * programmatically.
      *
-     * @param   detail  If true, add information about the link resolved
-     *                  object.
+     * @param	detail	If true, add information about the link resolved
+     *			object.
      * @return The non-null string representation of this link exception.
      */
     public String toString(boolean detail) {
-        if (!detail || this.linkResolvedObj == null)
-            return this.toString();
+	if (!detail || this.linkResolvedObj == null)
+	    return this.toString();
 
-        return this.toString() + "; Link Resolved Object: " +
-            this.linkResolvedObj;
+	return this.toString() + "; Link Resolved Object: " +
+	    this.linkResolvedObj;
     }
 
     /**

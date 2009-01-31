@@ -32,7 +32,7 @@
 #include <jlong.h>
 #include "sun_misc_Signal.h"
 
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_misc_Signal_findSignal(JNIEnv *env, jclass cls, jstring name)
 {
     jint res;
@@ -46,13 +46,13 @@ Java_sun_misc_Signal_findSignal(JNIEnv *env, jclass cls, jstring name)
     return res;
 }
 
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_sun_misc_Signal_handle0(JNIEnv *env, jclass cls, jint sig, jlong handler)
 {
     return ptr_to_jlong(JVM_RegisterSignal(sig, jlong_to_ptr(handler)));
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_misc_Signal_raise0(JNIEnv *env, jclass cls, jint sig)
 {
     JVM_RaiseSignal(sig);

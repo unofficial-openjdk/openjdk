@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import javax.management.*;
@@ -52,7 +53,7 @@ public class FullThreadDump {
         String urlPath = "/jndi/rmi://" + hostname + ":" + port + "/jmxrmi";
         connect(urlPath);
    }
-
+   
    public void dump() {
         try {
             ThreadMonitor monitor = new ThreadMonitor(server);
@@ -67,7 +68,7 @@ public class FullThreadDump {
     }
 
     /**
-     * Connect to a JMX agent of a given URL.
+     * Connect to a JMX agent of a given URL. 
      */
     private void connect(String urlPath) {
         try {
@@ -101,7 +102,7 @@ public class FullThreadDump {
         if (port < 0) {
             usage();
         }
-
+ 
         // get full thread dump and perform deadlock detection
         FullThreadDump ftd = new FullThreadDump(hostname, port);
         ftd.dump();

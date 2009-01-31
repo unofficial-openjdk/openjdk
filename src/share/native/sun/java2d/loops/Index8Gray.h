@@ -34,11 +34,11 @@
  * LoopMacros.h to manipulate a surface of type "Index8Gray".
  */
 
-typedef jubyte  Index8GrayPixelType;
-typedef jubyte  Index8GrayDataType;
+typedef jubyte	Index8GrayPixelType;
+typedef jubyte	Index8GrayDataType;
 
-#define Index8GrayPixelStride           1
-#define Index8GrayBitsPerPixel          8
+#define Index8GrayPixelStride		1
+#define Index8GrayBitsPerPixel		8
 
 #define DeclareIndex8GrayLoadVars(PREFIX) \
     jint *PREFIX ## Lut;
@@ -58,9 +58,9 @@ typedef jubyte  Index8GrayDataType;
 #define NextIndex8GrayStoreVarsX(PREFIX)
 #define NextIndex8GrayStoreVarsY(PREFIX)
 
-#define Index8GrayXparLutEntry                  -1
-#define Index8GrayIsXparLutEntry(pix)           (pix < 0)
-#define StoreIndex8GrayNonXparFromArgb          StoreIndex8GrayFrom1IntArgb
+#define Index8GrayXparLutEntry			-1
+#define Index8GrayIsXparLutEntry(pix)		(pix < 0)
+#define StoreIndex8GrayNonXparFromArgb 	        StoreIndex8GrayFrom1IntArgb
 
 #define StoreIndex8GrayPixel(pRas, x, pixel) \
     ((pRas)[x] = (jubyte) (pixel))
@@ -100,9 +100,9 @@ typedef jubyte  Index8GrayDataType;
 
 #define StoreIndex8GrayFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
-        StoreIndex8GrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	StoreIndex8GrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
     } while (0)
 
 #define StoreIndex8GrayFrom1IntArgb(pRas, PREFIX, x, argb) \
@@ -139,6 +139,6 @@ typedef jubyte  Index8GrayDataType;
 #define StoreIndex8GrayFrom1ByteGrayComps(pRas, PREFIX, x, COMP_PREFIX) \
     StoreIndex8GrayFrom1ByteGray(pRas, PREFIX, x, COMP_PREFIX ## G)
 
-#define Index8GrayIsPremultiplied       0
+#define Index8GrayIsPremultiplied	0
 
 #endif /* Index8Gray_h_Included */

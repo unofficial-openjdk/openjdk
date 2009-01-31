@@ -34,24 +34,25 @@
 public class FailsWhenJvmtiVersionDiffers {
 
     public static void main(String args[]) throws Exception {
-        DemoRun demo;
+	DemoRun demo;
 
-        /* Run demo that uses JVMTI versionCheck agent (no options) */
-        demo = new DemoRun("versionCheck", "" /* options to versionCheck */ );
-        demo.runit(args[0]);
+	/* Run demo that uses JVMTI versionCheck agent (no options) */
+	demo = new DemoRun("versionCheck", "" /* options to versionCheck */ );
+	demo.runit(args[0]);
 
-        /* Make sure patterns in output look ok */
-        if (demo.output_contains("ERROR")) {
-            System.out.println(
-             "NOTE: The jmvti.h file doesn't match the JVMTI in the VM.\n"
-            +"      This may or may not be a serious issue.\n"
-            +"      Check the jtr file for details.\n"
-            +"      Call your local serviceability representative for help."
-            );
-            throw new RuntimeException("Test failed - ERROR seen in output");
-        }
+	/* Make sure patterns in output look ok */
+	if (demo.output_contains("ERROR")) {
+	    System.out.println(
+	     "NOTE: The jmvti.h file doesn't match the JVMTI in the VM.\n"
+	    +"      This may or may not be a serious issue.\n"
+	    +"      Check the jtr file for details.\n"
+	    +"      Call your local serviceability representative for help."
+	    );
+	    throw new RuntimeException("Test failed - ERROR seen in output");
+	}
 
-        /* Must be a pass. */
-        System.out.println("Test passed - cleanly terminated");
+	/* Must be a pass. */
+	System.out.println("Test passed - cleanly terminated");
     }
 }
+

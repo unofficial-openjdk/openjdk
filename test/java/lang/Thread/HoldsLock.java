@@ -35,7 +35,7 @@ public class HoldsLock {
         if (Thread.holdsLock(target) != value)
             throw new RuntimeException("Should be " + value);
     }
-
+    
     static class LockThread extends Thread {
         public void run() {
             checkLock(false);

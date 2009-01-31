@@ -67,3 +67,4 @@ JNIEXPORT void JNICALL Java_java_text_Bidi_nativeBidiChars
 }
 #endif
 #endif
+

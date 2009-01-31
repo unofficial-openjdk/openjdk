@@ -44,15 +44,15 @@ class WCheckboxMenuItemPeer extends WMenuItemPeer implements CheckboxMenuItemPee
     // native callbacks
 
     public void handleAction(final boolean state) {
-        final CheckboxMenuItem target = (CheckboxMenuItem)this.target;
-        WToolkit.executeOnEventHandlerThread(target, new Runnable() {
-            public void run() {
-                target.setState(state);
-                postEvent(new ItemEvent(target, ItemEvent.ITEM_STATE_CHANGED,
+	final CheckboxMenuItem target = (CheckboxMenuItem)this.target;
+	WToolkit.executeOnEventHandlerThread(target, new Runnable() {
+	    public void run() {
+		target.setState(state);
+		postEvent(new ItemEvent(target, ItemEvent.ITEM_STATE_CHANGED,
                                         target.getLabel(), (state)
                                           ? ItemEvent.SELECTED
                                           : ItemEvent.DESELECTED));
-            }
+	    }
         });
     }
 }

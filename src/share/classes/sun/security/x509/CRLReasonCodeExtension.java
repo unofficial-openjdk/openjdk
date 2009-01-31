@@ -27,7 +27,6 @@ package sun.security.x509;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.cert.CRLReason;
 import java.util.Enumeration;
 
 import sun.security.util.*;
@@ -57,11 +56,12 @@ import sun.security.util.*;
  *    aACompromise           (10) }
  * </pre>
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
 public class CRLReasonCodeExtension extends Extension
-        implements CertAttrSet<String> {
+	implements CertAttrSet<String> {
 
     /**
      * Attribute name and Reason codes
@@ -80,8 +80,6 @@ public class CRLReasonCodeExtension extends Extension
     public static final int REMOVE_FROM_CRL = 8;
     public static final int PRIVILEGE_WITHDRAWN = 9;
     public static final int AA_COMPROMISE = 10;
-
-    private static CRLReason[] values = CRLReason.values();
 
     private int reasonCode = 0;
 
@@ -102,7 +100,7 @@ public class CRLReasonCodeExtension extends Extension
      * @param reason the enumerated value for the reason code.
      */
     public CRLReasonCodeExtension(int reason) throws IOException {
-        this(false, reason);
+	this(false, reason);
     }
 
     /**
@@ -141,14 +139,14 @@ public class CRLReasonCodeExtension extends Extension
      */
     public void set(String name, Object obj) throws IOException {
         if (!(obj instanceof Integer)) {
-            throw new IOException("Attribute must be of type Integer.");
-        }
-        if (name.equalsIgnoreCase(REASON)) {
+	    throw new IOException("Attribute must be of type Integer.");
+	}
+	if (name.equalsIgnoreCase(REASON)) {
             reasonCode = ((Integer)obj).intValue();
-        } else {
-            throw new IOException
-                ("Name not supported by CRLReasonCodeExtension");
-        }
+	} else {
+	    throw new IOException
+		("Name not supported by CRLReasonCodeExtension");
+	}
         encodeThis();
     }
 
@@ -156,24 +154,24 @@ public class CRLReasonCodeExtension extends Extension
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(REASON)) {
-            return new Integer(reasonCode);
-        } else {
-            throw new IOException
-                ("Name not supported by CRLReasonCodeExtension");
-        }
+	if (name.equalsIgnoreCase(REASON)) {
+	    return new Integer(reasonCode);
+	} else {
+	    throw new IOException
+		("Name not supported by CRLReasonCodeExtension");
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(REASON)) {
-            reasonCode = 0;
-        } else {
-            throw new IOException
-                ("Name not supported by CRLReasonCodeExtension");
-        }
+	if (name.equalsIgnoreCase(REASON)) {
+	    reasonCode = 0;
+	} else {
+	    throw new IOException
+		("Name not supported by CRLReasonCodeExtension");
+	}
         encodeThis();
     }
 
@@ -181,7 +179,22 @@ public class CRLReasonCodeExtension extends Extension
      * Returns a printable representation of the Reason code.
      */
     public String toString() {
-        return super.toString() + "    Reason Code: " + values[reasonCode];
+        String s = super.toString() + "    Reason Code: ";
+ 
+        switch (reasonCode) {
+        case UNSPECIFIED: s += "Unspecified"; break;
+        case KEY_COMPROMISE: s += "Key Compromise"; break;
+        case CA_COMPROMISE: s += "CA Compromise"; break;
+        case AFFLIATION_CHANGED: s += "Affiliation Changed"; break;
+        case SUPERSEDED: s += "Superseded"; break;
+        case CESSATION_OF_OPERATION: s += "Cessation Of Operation"; break;
+        case CERTIFICATE_HOLD: s += "Certificate Hold"; break;
+        case REMOVE_FROM_CRL: s += "Remove from CRL"; break;
+        case PRIVILEGE_WITHDRAWN: s += "Privilege Withdrawn"; break;
+        case AA_COMPROMISE: s += "AA Compromise"; break;
+        default: s += "Unrecognized reason code (" + reasonCode + ")";
+        }
+        return (s);
     }
 
     /**
@@ -191,15 +204,15 @@ public class CRLReasonCodeExtension extends Extension
      * @exception IOException on encoding errors.
      */
     public void encode(OutputStream out) throws IOException {
-        DerOutputStream  tmp = new DerOutputStream();
+	DerOutputStream  tmp = new DerOutputStream();
 
-        if (this.extensionValue == null) {
-            this.extensionId = PKIXExtensions.ReasonCode_Id;
-            this.critical = false;
-            encodeThis();
-        }
-        super.encode(tmp);
-        out.write(tmp.toByteArray());
+	if (this.extensionValue == null) {
+	    this.extensionId = PKIXExtensions.ReasonCode_Id;
+	    this.critical = false;
+	    encodeThis();
+	}
+	super.encode(tmp);
+	out.write(tmp.toByteArray());
     }
 
     /**
@@ -210,7 +223,7 @@ public class CRLReasonCodeExtension extends Extension
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(REASON);
 
-        return elements.elements();
+	return elements.elements();
     }
 
     /**
@@ -218,17 +231,5 @@ public class CRLReasonCodeExtension extends Extension
      */
     public String getName() {
         return NAME;
-    }
-
-    /**
-     * Return the reason as a CRLReason enum.
-     */
-    public CRLReason getReasonCode() {
-        // if out-of-range, return UNSPECIFIED
-        if (reasonCode > 0 && reasonCode < values.length) {
-            return values[reasonCode];
-        } else {
-            return CRLReason.UNSPECIFIED;
-        }
     }
 }

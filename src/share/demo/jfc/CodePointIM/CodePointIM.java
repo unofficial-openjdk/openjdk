@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 import java.util.Locale;
 import java.util.MissingResourceException;

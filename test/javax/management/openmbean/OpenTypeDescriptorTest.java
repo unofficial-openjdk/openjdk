@@ -84,7 +84,7 @@ public class OpenTypeDescriptorTest {
                                                       SimpleType.INTEGER),
                                               ACTION, constraints),
         };
-
+        
         for (DescriptorRead x : testObjects) {
             OpenType descriptorType = (OpenType)
                     x.getDescriptor().getFieldValue("openType");
@@ -102,14 +102,14 @@ public class OpenTypeDescriptorTest {
                         descriptorType + " for " + x);
             }
         }
-
+        
         // Serial compatibility test:
-        //
+        // 
         System.out.println("Testing serial compatibility with Java "+
                 MBeanFeatureInfoSerialStore.SERIALIZER_VM_VERSION+
                 " "+
                 MBeanFeatureInfoSerialStore.SERIALIZER_VM_VENDOR);
-
+        
         for (String key : MBeanFeatureInfoSerialStore.keySet() ) {
             MBeanFeatureInfo f = MBeanFeatureInfoSerialStore.get(key);
             DescriptorRead x = (DescriptorRead)f;
@@ -126,13 +126,13 @@ public class OpenTypeDescriptorTest {
             if (openType.equals(descriptorType))
                 System.out.println("OK "+key+": " + x);
             else {
-                failure("OpenType for "+key+" is " + openType +
+                failure("OpenType for "+key+" is " + openType + 
                         ", descriptor says " +
                         descriptorType + " for " + x);
             }
-
+            
         }
-
+        
         // Test that we get an exception if "openType" in Descriptor
         // doesn't agree with OpenType parameter
         Descriptor d =
@@ -168,9 +168,9 @@ public class OpenTypeDescriptorTest {
             throw new Exception(failed);
         System.out.println("Test passed");
     }
-
+    
     private static enum Type {ATTR, PARAM, OPER}
-
+    
     private static void failure(String what) {
         System.out.println("FAILED: what");
         failed = what;

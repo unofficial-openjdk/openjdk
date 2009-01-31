@@ -39,17 +39,17 @@
  * code.
  */
 
-static LockFunc                 BufImg_Lock;
-static GetRasInfoFunc           BufImg_GetRasInfo;
-static ReleaseFunc              BufImg_Release;
-static DisposeFunc              BufImg_Dispose;
+static LockFunc			BufImg_Lock;
+static GetRasInfoFunc		BufImg_GetRasInfo;
+static ReleaseFunc		BufImg_Release;
+static DisposeFunc		BufImg_Dispose;
 
 static ColorData *BufImg_SetupICM(JNIEnv *env, BufImgSDOps *bisdo);
 
-static jfieldID         rgbID;
-static jfieldID         mapSizeID;
-static jfieldID         CMpDataID;
-static jfieldID         allGrayID;
+static jfieldID		rgbID;
+static jfieldID		mapSizeID;
+static jfieldID		CMpDataID;
+static jfieldID		allGrayID;
 
 /*
  * Class:     sun_awt_image_BufImgSurfaceData
@@ -61,8 +61,8 @@ Java_sun_awt_image_BufImgSurfaceData_initIDs
     (JNIEnv *env, jclass bisd, jclass icm)
 {
     if (sizeof(BufImgRIPrivate) > SD_RASINFO_PRIVATE_SIZE) {
-        JNU_ThrowInternalError(env, "Private RasInfo structure too large!");
-        return;
+	JNU_ThrowInternalError(env, "Private RasInfo structure too large!");
+	return;
     }
 
     rgbID = (*env)->GetFieldID(env, icm, "rgb", "[I");
@@ -70,7 +70,7 @@ Java_sun_awt_image_BufImgSurfaceData_initIDs
     mapSizeID = (*env)->GetFieldID(env, icm, "map_size", "I");
     CMpDataID = (*env)->GetFieldID(env, icm, "pData", "J");
     if (allGrayID == 0 || rgbID == 0 || mapSizeID == 0 || CMpDataID == 0) {
-        JNU_ThrowInternalError(env, "Could not get field IDs");
+	JNU_ThrowInternalError(env, "Could not get field IDs");
     }
 }
 
@@ -103,14 +103,14 @@ Java_sun_awt_image_BufImgSurfaceData_freeNativeICMData
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_image_BufImgSurfaceData_initRaster(JNIEnv *env, jobject bisd,
-                                                jobject array,
+						jobject array,
                                                 jint offset, jint bitoffset,
-                                                jint width, jint height,
-                                                jint pixStr, jint scanStr,
-                                                jobject icm)
+						jint width, jint height,
+						jint pixStr, jint scanStr,
+						jobject icm)
 {
-    BufImgSDOps *bisdo =
-        (BufImgSDOps*)SurfaceData_InitOps(env, bisd, sizeof(BufImgSDOps));
+    BufImgSDOps *bisdo = 
+	(BufImgSDOps*)SurfaceData_InitOps(env, bisd, sizeof(BufImgSDOps));
     bisdo->sdOps.Lock = BufImg_Lock;
     bisdo->sdOps.GetRasInfo = BufImg_GetRasInfo;
     bisdo->sdOps.Release = BufImg_Release;
@@ -122,14 +122,14 @@ Java_sun_awt_image_BufImgSurfaceData_initRaster(JNIEnv *env, jobject bisd,
     bisdo->scanStr = scanStr;
     bisdo->pixStr = pixStr;
     if (JNU_IsNull(env, icm)) {
-        bisdo->lutarray = NULL;
-        bisdo->lutsize = 0;
-        bisdo->icm = NULL;
+	bisdo->lutarray = NULL;
+	bisdo->lutsize = 0;
+	bisdo->icm = NULL;
     } else {
-        jobject lutarray = (*env)->GetObjectField(env, icm, rgbID);
-        bisdo->lutarray = (*env)->NewWeakGlobalRef(env, lutarray);
-        bisdo->lutsize = (*env)->GetIntField(env, icm, mapSizeID);
-        bisdo->icm = (*env)->NewWeakGlobalRef(env, icm);
+	jobject lutarray = (*env)->GetObjectField(env, icm, rgbID);
+	bisdo->lutarray = (*env)->NewWeakGlobalRef(env, lutarray);
+	bisdo->lutsize = (*env)->GetIntField(env, icm, mapSizeID);
+	bisdo->icm = (*env)->NewWeakGlobalRef(env, icm);
     }
     bisdo->rasbounds.x1 = 0;
     bisdo->rasbounds.y1 = 0;
@@ -146,37 +146,37 @@ static void BufImg_Dispose(JNIEnv *env, SurfaceDataOps *ops)
     BufImgSDOps *bisdo = (BufImgSDOps *)ops;
     (*env)->DeleteWeakGlobalRef(env, bisdo->array);
     if (bisdo->lutarray != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, bisdo->lutarray);
+	(*env)->DeleteWeakGlobalRef(env, bisdo->lutarray);
     }
     if (bisdo->icm != NULL) {
-        (*env)->DeleteWeakGlobalRef(env, bisdo->icm);
+	(*env)->DeleteWeakGlobalRef(env, bisdo->icm);
     }
 }
 
 static jint BufImg_Lock(JNIEnv *env,
-                        SurfaceDataOps *ops,
-                        SurfaceDataRasInfo *pRasInfo,
-                        jint lockflags)
+			SurfaceDataOps *ops,
+			SurfaceDataRasInfo *pRasInfo,
+			jint lockflags)
 {
     BufImgSDOps *bisdo = (BufImgSDOps *)ops;
     BufImgRIPrivate *bipriv = (BufImgRIPrivate *) &(pRasInfo->priv);
 
     if ((lockflags & (SD_LOCK_LUT)) != 0 && JNU_IsNull(env, bisdo->lutarray)) {
-        /* REMIND: Should this be an InvalidPipe exception? */
-        JNU_ThrowNullPointerException(env, "Attempt to lock missing colormap");
-        return SD_FAILURE;
+	/* REMIND: Should this be an InvalidPipe exception? */
+	JNU_ThrowNullPointerException(env, "Attempt to lock missing colormap");
+	return SD_FAILURE;
     }
     if ((lockflags & SD_LOCK_INVCOLOR) != 0 ||
-        (lockflags & SD_LOCK_INVGRAY) != 0)
+	(lockflags & SD_LOCK_INVGRAY) != 0) 
     {
-        bipriv->cData = BufImg_SetupICM(env, bisdo);
-        if (bipriv->cData == NULL) {
-            JNU_ThrowNullPointerException(env, "Could not initialize "
-                                          "inverse tables");
-            return SD_FAILURE;
-        }
+	bipriv->cData = BufImg_SetupICM(env, bisdo);
+	if (bipriv->cData == NULL) {
+	    JNU_ThrowNullPointerException(env, "Could not initialize "
+					  "inverse tables");
+	    return SD_FAILURE;
+	}
     } else {
-        bipriv->cData = NULL;
+	bipriv->cData = NULL;
     }
 
     bipriv->lockFlags = lockflags;
@@ -189,104 +189,104 @@ static jint BufImg_Lock(JNIEnv *env,
 }
 
 static void BufImg_GetRasInfo(JNIEnv *env,
-                              SurfaceDataOps *ops,
-                              SurfaceDataRasInfo *pRasInfo)
+			      SurfaceDataOps *ops,
+			      SurfaceDataRasInfo *pRasInfo)
 {
     BufImgSDOps *bisdo = (BufImgSDOps *)ops;
     BufImgRIPrivate *bipriv = (BufImgRIPrivate *) &(pRasInfo->priv);
 
     if ((bipriv->lockFlags & (SD_LOCK_RD_WR)) != 0) {
-        bipriv->base =
-            (*env)->GetPrimitiveArrayCritical(env, bisdo->array, NULL);
+	bipriv->base =
+	    (*env)->GetPrimitiveArrayCritical(env, bisdo->array, NULL);
     }
     if ((bipriv->lockFlags & (SD_LOCK_LUT)) != 0) {
-        bipriv->lutbase =
-            (*env)->GetPrimitiveArrayCritical(env, bisdo->lutarray, NULL);
+	bipriv->lutbase =
+	    (*env)->GetPrimitiveArrayCritical(env, bisdo->lutarray, NULL);
     }
 
     if (bipriv->base == NULL) {
-        pRasInfo->rasBase = NULL;
-        pRasInfo->pixelStride = 0;
+	pRasInfo->rasBase = NULL;
+	pRasInfo->pixelStride = 0;
         pRasInfo->pixelBitOffset = 0;
-        pRasInfo->scanStride = 0;
+	pRasInfo->scanStride = 0;
     } else {
-        pRasInfo->rasBase = (void *)
+	pRasInfo->rasBase = (void *)
             (((uintptr_t) bipriv->base) + bisdo->offset);
-        pRasInfo->pixelStride = bisdo->pixStr;
+	pRasInfo->pixelStride = bisdo->pixStr;
         pRasInfo->pixelBitOffset = bisdo->bitoffset;
-        pRasInfo->scanStride = bisdo->scanStr;
+	pRasInfo->scanStride = bisdo->scanStr;
     }
     if (bipriv->lutbase == NULL) {
-        pRasInfo->lutBase = NULL;
-        pRasInfo->lutSize = 0;
+	pRasInfo->lutBase = NULL;
+	pRasInfo->lutSize = 0;
     } else {
-        pRasInfo->lutBase = bipriv->lutbase;
-        pRasInfo->lutSize = bisdo->lutsize;
+	pRasInfo->lutBase = bipriv->lutbase;
+	pRasInfo->lutSize = bisdo->lutsize;
     }
     if (bipriv->cData == NULL) {
-        pRasInfo->invColorTable = NULL;
-        pRasInfo->redErrTable = NULL;
-        pRasInfo->grnErrTable = NULL;
-        pRasInfo->bluErrTable = NULL;
+	pRasInfo->invColorTable = NULL;
+	pRasInfo->redErrTable = NULL;
+	pRasInfo->grnErrTable = NULL;
+	pRasInfo->bluErrTable = NULL;
     } else {
-        pRasInfo->invColorTable = bipriv->cData->img_clr_tbl;
-        pRasInfo->redErrTable = bipriv->cData->img_oda_red;
-        pRasInfo->grnErrTable = bipriv->cData->img_oda_green;
-        pRasInfo->bluErrTable = bipriv->cData->img_oda_blue;
-        pRasInfo->invGrayTable = bipriv->cData->pGrayInverseLutData;
+	pRasInfo->invColorTable = bipriv->cData->img_clr_tbl;
+	pRasInfo->redErrTable = bipriv->cData->img_oda_red;
+	pRasInfo->grnErrTable = bipriv->cData->img_oda_green;
+	pRasInfo->bluErrTable = bipriv->cData->img_oda_blue;
+	pRasInfo->invGrayTable = bipriv->cData->pGrayInverseLutData;
     }
 }
 
 static void BufImg_Release(JNIEnv *env,
-                           SurfaceDataOps *ops,
-                           SurfaceDataRasInfo *pRasInfo)
+			   SurfaceDataOps *ops,
+			   SurfaceDataRasInfo *pRasInfo)
 {
     BufImgSDOps *bisdo = (BufImgSDOps *)ops;
     BufImgRIPrivate *bipriv = (BufImgRIPrivate *) &(pRasInfo->priv);
 
     if (bipriv->base != NULL) {
-        jint mode = (((bipriv->lockFlags & (SD_LOCK_WRITE)) != 0)
-                     ? 0 : JNI_ABORT);
-        (*env)->ReleasePrimitiveArrayCritical(env, bisdo->array,
-                                              bipriv->base, mode);
+	jint mode = (((bipriv->lockFlags & (SD_LOCK_WRITE)) != 0)
+		     ? 0 : JNI_ABORT);
+	(*env)->ReleasePrimitiveArrayCritical(env, bisdo->array,
+					      bipriv->base, mode);
     }
     if (bipriv->lutbase != NULL) {
-        (*env)->ReleasePrimitiveArrayCritical(env, bisdo->lutarray,
-                                              bipriv->lutbase, JNI_ABORT);
+	(*env)->ReleasePrimitiveArrayCritical(env, bisdo->lutarray,
+					      bipriv->lutbase, JNI_ABORT);
     }
 }
 
 static ColorData *BufImg_SetupICM(JNIEnv *env,
-                                  BufImgSDOps *bisdo)
+				  BufImgSDOps *bisdo)
 {
     ColorData *cData;
 
     if (JNU_IsNull(env, bisdo->icm)) {
-        return (ColorData *) NULL;
+	return (ColorData *) NULL;
     }
 
     cData = (ColorData *) JNU_GetLongFieldAsPtr(env, bisdo->icm, CMpDataID);
 
     if (cData == NULL) {
-        cData = (ColorData*)calloc(1, sizeof(ColorData));
+	cData = (ColorData*)calloc(1, sizeof(ColorData));
 
-        if (cData != NULL) {
-            jboolean allGray
-                = (*env)->GetBooleanField(env, bisdo->icm, allGrayID);
-            int *pRgb = (int *)
-                ((*env)->GetPrimitiveArrayCritical(env, bisdo->lutarray, NULL));
-            cData->img_clr_tbl = initCubemap(pRgb, bisdo->lutsize, 32);
-            if (allGray == JNI_TRUE) {
-                initInverseGrayLut(pRgb, bisdo->lutsize, cData);
-            }
-            (*env)->ReleasePrimitiveArrayCritical(env, bisdo->lutarray, pRgb,
-                                                  JNI_ABORT);
+	if (cData != NULL) {
+	    jboolean allGray 
+		= (*env)->GetBooleanField(env, bisdo->icm, allGrayID);
+	    int *pRgb = (int *)
+		((*env)->GetPrimitiveArrayCritical(env, bisdo->lutarray, NULL));
+	    cData->img_clr_tbl = initCubemap(pRgb, bisdo->lutsize, 32);
+	    if (allGray == JNI_TRUE) {
+		initInverseGrayLut(pRgb, bisdo->lutsize, cData);
+	    }
+	    (*env)->ReleasePrimitiveArrayCritical(env, bisdo->lutarray, pRgb,
+						  JNI_ABORT);
 
-            initDitherTables(cData);
+	    initDitherTables(cData);
 
-            JNU_SetLongFieldFromPtr(env, bisdo->icm, CMpDataID, cData);
-        }
+	    JNU_SetLongFieldFromPtr(env, bisdo->icm, CMpDataID, cData);
+	}
     }
-
+        
     return cData;
 }

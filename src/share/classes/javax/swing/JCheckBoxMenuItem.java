@@ -45,7 +45,7 @@ import javax.accessibility.*;
  * menu item, a check box menu item can have either text or a graphic
  * icon associated with it, or both.
  * <p>
- * Either <code>isSelected</code>/<code>setSelected</code> or
+ * Either <code>isSelected</code>/<code>setSelected</code> or 
  * <code>getState</code>/<code>setState</code> can be used
  * to determine/specify the menu item's selection state. The
  * preferred methods are <code>isSelected</code> and
@@ -53,7 +53,7 @@ import javax.accessibility.*;
  * The <code>getState</code> and <code>setState</code> methods exist for
  * compatibility with other component sets.
  * <p>
- * Menu items can be configured, and to some degree controlled, by
+ * Menu items can be configured, and to some degree controlled, by 
  * <code><a href="Action.html">Action</a></code>s.  Using an
  * <code>Action</code> with a menu item has many benefits beyond directly
  * configuring a menu item.  Refer to <a href="Action.html#buttonActions">
@@ -85,11 +85,12 @@ import javax.accessibility.*;
  *   attribute: isContainer false
  * description: A menu item which can be selected or deselected.
  *
+ * @version %I% %G%
  * @author Georges Saab
  * @author David Karlton
  */
 public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
-        Accessible
+        Accessible 
 {
     /**
      * @see #getUIClassID
@@ -121,16 +122,16 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
     public JCheckBoxMenuItem(String text) {
         this(text, null, false);
     }
-
+    
     /**
-     * Creates a menu item whose properties are taken from the
+     * Creates a menu item whose properties are taken from the 
      * Action supplied.
      *
      * @since 1.3
      */
     public JCheckBoxMenuItem(Action a) {
         this();
-        setAction(a);
+	setAction(a);
     }
 
     /**
@@ -140,7 +141,7 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
      * @param icon the icon of the CheckBoxMenuItem
      */
     public JCheckBoxMenuItem(String text, Icon icon) {
-        this(text, icon, false);
+	this(text, icon, false);
     }
 
     /**
@@ -161,10 +162,10 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
      * @param b the selected state of the check box menu item
      */
     public JCheckBoxMenuItem(String text, Icon icon, boolean b) {
-        super(text, icon);
+	super(text, icon);
         setModel(new JToggleButton.ToggleButtonModel());
         setSelected(b);
-        setFocusable(false);
+	setFocusable(false);
     }
 
     /**
@@ -178,7 +179,7 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
     public String getUIClassID() {
         return uiClassID;
     }
-
+            
      /**
       * Returns the selected-state of the item. This method
       * exists for AWT compatibility only.  New code should
@@ -189,7 +190,7 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
     public boolean getState() {
         return isSelected();
     }
-
+            
     /**
      * Sets the selected-state of the item. This method
      * exists for AWT compatibility only.  New code should
@@ -204,14 +205,14 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
     public synchronized void setState(boolean b) {
         setSelected(b);
     }
-
-
+            
+            
     /**
-     * Returns an array (length 1) containing the check box menu item
+     * Returns an array (length 1) containing the check box menu item 
      * label or null if the check box is not selected.
      *
      * @return an array containing one Object -- the text of the menu item
-     *         -- if the item is selected; otherwise null
+     *         -- if the item is selected; otherwise null 
      */
     public Object[] getSelectedObjects() {
         if (isSelected() == false)
@@ -221,8 +222,8 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
         return selectedObjects;
     }
 
-    /**
-     * See readObject() and writeObject() in JComponent for more
+    /** 
+     * See readObject() and writeObject() in JComponent for more 
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -238,16 +239,16 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
 
 
     /**
-     * Returns a string representation of this JCheckBoxMenuItem. This method
-     * is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * Returns a string representation of this JCheckBoxMenuItem. This method 
+     * is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between      
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
-     *
+     * 
      * @return  a string representation of this JCheckBoxMenuItem.
      */
     protected String paramString() {
-        return super.paramString();
+	return super.paramString();
     }
 
     /**
@@ -263,12 +264,12 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JCheckBoxMenuItem.
-     * For JCheckBoxMenuItems, the AccessibleContext takes the form of an
-     * AccessibleJCheckBoxMenuItem.
+     * Gets the AccessibleContext associated with this JCheckBoxMenuItem. 
+     * For JCheckBoxMenuItems, the AccessibleContext takes the form of an 
+     * AccessibleJCheckBoxMenuItem. 
      * A new AccessibleJCheckBoxMenuItem instance is created if necessary.
      *
-     * @return an AccessibleJCheckBoxMenuItem that serves as the
+     * @return an AccessibleJCheckBoxMenuItem that serves as the 
      *         AccessibleContext of this AccessibleJCheckBoxMenuItem
      */
     public AccessibleContext getAccessibleContext() {
@@ -279,9 +280,9 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>JCheckBoxMenuItem</code> class.  It provides an implementation
-     * of the Java Accessibility API appropriate to checkbox menu item
+     * This class implements accessibility support for the 
+     * <code>JCheckBoxMenuItem</code> class.  It provides an implementation 
+     * of the Java Accessibility API appropriate to checkbox menu item 
      * user-interface elements.
      * <p>
      * <strong>Warning:</strong>
@@ -297,7 +298,7 @@ public class JCheckBoxMenuItem extends JMenuItem implements SwingConstants,
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of the
+         * @return an instance of AccessibleRole describing the role of the 
          * object
          */
         public AccessibleRole getAccessibleRole() {

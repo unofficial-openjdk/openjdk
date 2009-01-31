@@ -28,7 +28,7 @@
  *
  *  @author jjh
  *
- *  @library ..
+ *  @library .. 
  *  @run build  TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g DeleteAllBkptsTest.java
  *  @run main DeleteAllBkptsTest
@@ -61,16 +61,16 @@ public class DeleteAllBkptsTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new DeleteAllBkptsTest(args).startTests();
     }
 
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("DeleteAllBkptsTarg");
@@ -101,7 +101,7 @@ public class DeleteAllBkptsTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -113,3 +113,4 @@ public class DeleteAllBkptsTest extends TestScaffold {
         }
     }
 }
+

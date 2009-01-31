@@ -28,32 +28,33 @@ package java.awt;
 import java.awt.geom.Dimension2D;
 
 /**
- * The <code>Dimension</code> class encapsulates the width and
- * height of a component (in integer precision) in a single object.
- * The class is
- * associated with certain properties of components. Several methods
- * defined by the <code>Component</code> class and the
- * <code>LayoutManager</code> interface return a
- * <code>Dimension</code> object.
+ * The <code>Dimension</code> class encapsulates the width and 
+ * height of a component (in integer precision) in a single object. 
+ * The class is 
+ * associated with certain properties of components. Several methods 
+ * defined by the <code>Component</code> class and the 
+ * <code>LayoutManager</code> interface return a 
+ * <code>Dimension</code> object. 
  * <p>
- * Normally the values of <code>width</code>
- * and <code>height</code> are non-negative integers.
- * The constructors that allow you to create a dimension do
- * not prevent you from setting a negative value for these properties.
- * If the value of <code>width</code> or <code>height</code> is
- * negative, the behavior of some methods defined by other objects is
- * undefined.
- *
- * @author      Sami Shaio
- * @author      Arthur van Hoff
+ * Normally the values of <code>width</code> 
+ * and <code>height</code> are non-negative integers. 
+ * The constructors that allow you to create a dimension do 
+ * not prevent you from setting a negative value for these properties. 
+ * If the value of <code>width</code> or <code>height</code> is 
+ * negative, the behavior of some methods defined by other objects is 
+ * undefined. 
+ * 
+ * @version 	%I%, %G%
+ * @author 	Sami Shaio
+ * @author 	Arthur van Hoff
  * @see         java.awt.Component
  * @see         java.awt.LayoutManager
  * @since       1.0
  */
 public class Dimension extends Dimension2D implements java.io.Serializable {
-
+    
     /**
-     * The width dimension; negative values can be used.
+     * The width dimension; negative values can be used. 
      *
      * @serial
      * @see #getSize
@@ -63,7 +64,7 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
     public int width;
 
     /**
-     * The height dimension; negative values can be used.
+     * The height dimension; negative values can be used. 
      *
      * @serial
      * @see #getSize
@@ -73,7 +74,7 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
     public int height;
 
     /*
-     * JDK 1.1 serialVersionUID
+     * JDK 1.1 serialVersionUID 
      */
      private static final long serialVersionUID = 4723952579491349524L;
 
@@ -84,42 +85,42 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-        Toolkit.loadLibraries();
+	Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
     }
 
-    /**
-     * Creates an instance of <code>Dimension</code> with a width
-     * of zero and a height of zero.
+    /** 
+     * Creates an instance of <code>Dimension</code> with a width 
+     * of zero and a height of zero. 
      */
     public Dimension() {
-        this(0, 0);
+	this(0, 0);
     }
 
-    /**
-     * Creates an instance of <code>Dimension</code> whose width
-     * and height are the same as for the specified dimension.
+    /** 
+     * Creates an instance of <code>Dimension</code> whose width  
+     * and height are the same as for the specified dimension. 
      *
-     * @param    d   the specified dimension for the
-     *               <code>width</code> and
+     * @param    d   the specified dimension for the 
+     *               <code>width</code> and 
      *               <code>height</code> values
      */
     public Dimension(Dimension d) {
-        this(d.width, d.height);
+	this(d.width, d.height);
     }
 
-    /**
+    /** 
      * Constructs a <code>Dimension</code> and initializes
      * it to the specified width and specified height.
      *
-     * @param width the specified width
+     * @param width the specified width 
      * @param height the specified height
      */
     public Dimension(int width, int height) {
-        this.width = width;
-        this.height = height;
+	this.width = width;
+	this.height = height;
     }
 
     /**
@@ -127,7 +128,7 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
      * @since 1.2
      */
     public double getWidth() {
-        return width;
+	return width;
     }
 
     /**
@@ -135,7 +136,7 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
      * @since 1.2
      */
     public double getHeight() {
-        return height;
+	return height;
     }
 
     /**
@@ -150,8 +151,8 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
      * @since 1.2
      */
     public void setSize(double width, double height) {
-        this.width = (int) Math.ceil(width);
-        this.height = (int) Math.ceil(height);
+	this.width = (int) Math.ceil(width);
+	this.height = (int) Math.ceil(height);
     }
 
     /**
@@ -159,15 +160,15 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
      * This method is included for completeness, to parallel the
      * <code>getSize</code> method defined by <code>Component</code>.
      *
-     * @return   the size of this dimension, a new instance of
+     * @return   the size of this dimension, a new instance of 
      *           <code>Dimension</code> with the same width and height
      * @see      java.awt.Dimension#setSize
      * @see      java.awt.Component#getSize
      * @since    1.1
      */
     public Dimension getSize() {
-        return new Dimension(width, height);
-    }
+	return new Dimension(width, height);
+    }	
 
     /**
      * Sets the size of this <code>Dimension</code> object to the specified size.
@@ -179,11 +180,11 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
      * @since    1.1
      */
     public void setSize(Dimension d) {
-        setSize(d.width, d.height);
-    }
+	setSize(d.width, d.height);
+    }	
 
     /**
-     * Sets the size of this <code>Dimension</code> object
+     * Sets the size of this <code>Dimension</code> object 
      * to the specified width and height.
      * This method is included for completeness, to parallel the
      * <code>setSize</code> method defined by <code>Component</code>.
@@ -195,19 +196,19 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
      * @since    1.1
      */
     public void setSize(int width, int height) {
-        this.width = width;
-        this.height = height;
-    }
+    	this.width = width;
+    	this.height = height;
+    }	
 
     /**
      * Checks whether two dimension objects have equal values.
      */
     public boolean equals(Object obj) {
-        if (obj instanceof Dimension) {
-            Dimension d = (Dimension)obj;
-            return (width == d.width) && (height == d.height);
-        }
-        return false;
+	if (obj instanceof Dimension) {
+	    Dimension d = (Dimension)obj;
+	    return (width == d.width) && (height == d.height);
+	}
+	return false;
     }
 
     /**
@@ -221,17 +222,17 @@ public class Dimension extends Dimension2D implements java.io.Serializable {
     }
 
     /**
-     * Returns a string representation of the values of this
-     * <code>Dimension</code> object's <code>height</code> and
-     * <code>width</code> fields. This method is intended to be used only
-     * for debugging purposes, and the content and format of the returned
-     * string may vary between implementations. The returned string may be
+     * Returns a string representation of the values of this 
+     * <code>Dimension</code> object's <code>height</code> and 
+     * <code>width</code> fields. This method is intended to be used only 
+     * for debugging purposes, and the content and format of the returned 
+     * string may vary between implementations. The returned string may be 
      * empty but may not be <code>null</code>.
-     *
-     * @return  a string representation of this <code>Dimension</code>
+     * 
+     * @return  a string representation of this <code>Dimension</code> 
      *          object
      */
     public String toString() {
-        return getClass().getName() + "[width=" + width + ",height=" + height + "]";
+	return getClass().getName() + "[width=" + width + ",height=" + height + "]";
     }
 }

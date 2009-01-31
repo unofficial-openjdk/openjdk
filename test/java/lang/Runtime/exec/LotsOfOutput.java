@@ -23,8 +23,8 @@
 
 /**
  * @test
- * @bug 4369826
- * @summary Process with lots of output should not crash VM
+ * @bug 4369826 
+ * @summary Process with lots of output should not crash VM 
  * @author kladko
  */
 
@@ -35,7 +35,7 @@ public class LotsOfOutput {
 
     public static void main(String[] args) throws Exception{
         if (File.separatorChar == '\\' ||                // Windows
-                                !new File(CAT).exists()) // no cat
+                                !new File(CAT).exists()) // no cat 
             return;
         Process p = Runtime.getRuntime().exec(CAT + " /dev/zero");
         long initMemory = Runtime.getRuntime().totalMemory();
@@ -44,6 +44,7 @@ public class LotsOfOutput {
             if (Runtime.getRuntime().totalMemory() > initMemory + 1000000)
                 throw new Exception("Process consumes memory.");
         }
-
+           
     }
 }
+

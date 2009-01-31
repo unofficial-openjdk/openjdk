@@ -29,6 +29,7 @@ package sun.io;
  * A table to convert Cp1145 to Unicode.  This converter differs from
  * Cp284 is one code point, 0x9F, which changes from \u00A4 to \u20AC.
  * @author  Alan Liu
+ * @version >= JDK1.2
  */
 public class ByteToCharCp1145 extends ByteToCharCp284 {
     public ByteToCharCp1145() {}

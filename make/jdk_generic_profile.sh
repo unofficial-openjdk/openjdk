@@ -86,6 +86,8 @@
 #      ALT_DXSDK_PATH
 #      ALT_MSVCRT_DLL_PATH
 #      ALT_MSVCR71_DLL_PATH
+#      ALT_UNICOWS_LIB_PATH
+#      ALT_UNICOWS_DLL_PATH
 #
 #############################################################################
 #

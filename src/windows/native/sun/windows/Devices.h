@@ -42,7 +42,7 @@ static BOOL                     UpdateInstance(JNIEnv *env);
        AwtWin32GraphicsDevice*  GetDevice(int index, BOOL adjust = TRUE);
        int                      Release();
        AwtWin32GraphicsDevice** GetRawArray();
-
+       
        class InstanceAccess {
        public:
            INLINE   InstanceAccess() { devices = Devices::GetInstance(); }
@@ -60,7 +60,7 @@ private:
                                 Devices(int numElements);
        void                     AddReference();
 static Devices*                 GetInstance();
-
+                                
        AwtWin32GraphicsDevice** devices;
        int                      refCount;
        int                      numDevices;
@@ -71,3 +71,4 @@ static CriticalSection          arrayLock;
 };
 
 #endif _DEVICES_H_
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 4932837 6582235
+ * @bug 4932837
  * @summary Test SslRMI[Client|Server]SocketFactory equals() and hashCode().
  * @author Daniel Fuchs
  * @run clean SocketFactoryTest
@@ -40,7 +40,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.HashMap;
-import javax.net.ssl.SSLContext;
+
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import javax.rmi.ssl.SslRMIServerSocketFactory;
 
@@ -65,12 +65,6 @@ public class SocketFactoryTest {
                                            String[] protocols,
                                            boolean need) {
             super(ciphers, protocols, need);
-        }
-        public MySslRMIServerSocketFactory(SSLContext context,
-                                           String[] ciphers,
-                                           String[] protocols,
-                                           boolean need) {
-            super(context, ciphers, protocols, need);
         }
     }
 
@@ -105,9 +99,6 @@ public class SocketFactoryTest {
         try {
             System.out.println("SocketFactoryTest START.");
 
-            final SSLContext context = SSLContext.getInstance("SSL");
-            context.init(null, null, null);
-
             final SslRMIClientSocketFactory client1 =
                 new SslRMIClientSocketFactory();
             final SslRMIClientSocketFactory client2 =
@@ -120,44 +111,19 @@ public class SocketFactoryTest {
                 new SslRMIServerSocketFactory();
             final SslRMIServerSocketFactory server2 =
                 new SslRMIServerSocketFactory(null,
-                                              null,
+					      null,
                                               false);
             final SslRMIServerSocketFactory server3 =
                 new SslRMIServerSocketFactory(ciphersuite,
-                                              null,
+					      null,
                                               false);
             final SslRMIServerSocketFactory server4 =
                 new SslRMIServerSocketFactory(null,
-                                              protocol,
+					      protocol,
                                               false);
             final SslRMIServerSocketFactory server5 =
                 new SslRMIServerSocketFactory(null,
-                                              null,
-                                              true);
-            final SslRMIServerSocketFactory server6 =
-                new SslRMIServerSocketFactory(null,
-                                              null,
-                                              null,
-                                              false);
-            final SslRMIServerSocketFactory server7 =
-                new SslRMIServerSocketFactory(SSLContext.getDefault(),
-                                              null,
-                                              null,
-                                              false);
-            final SslRMIServerSocketFactory server8 =
-                new SslRMIServerSocketFactory(null,
-                                              null,
-                                              null,
-                                              true);
-            final SslRMIServerSocketFactory server9 =
-                new SslRMIServerSocketFactory(SSLContext.getDefault(),
-                                              null,
-                                              null,
-                                              true);
-            final SslRMIServerSocketFactory server10 =
-                new SslRMIServerSocketFactory(context,
-                                              null,
-                                              null,
+					      null,
                                               true);
             final MySslRMIClientSocketFactory subclient1 =
                 new MySslRMIClientSocketFactory();
@@ -167,34 +133,19 @@ public class SocketFactoryTest {
                 new MySslRMIServerSocketFactory();
             final MySslRMIServerSocketFactory subserver2 =
                 new MySslRMIServerSocketFactory(null,
-                                                null,
+						null,
                                                 false);
             final MySslRMIServerSocketFactory subserver3 =
                 new MySslRMIServerSocketFactory(ciphersuite,
-                                                null,
+						null,
                                                 false);
             final MySslRMIServerSocketFactory subserver4 =
                 new MySslRMIServerSocketFactory(null,
-                                                protocol,
+						protocol,
                                                 false);
             final MySslRMIServerSocketFactory subserver5 =
                 new MySslRMIServerSocketFactory(null,
-                                                null,
-                                                true);
-            final MySslRMIServerSocketFactory subserver6 =
-                new MySslRMIServerSocketFactory(null,
-                                                ciphersuite,
-                                                null,
-                                                false);
-            final MySslRMIServerSocketFactory subserver7 =
-                new MySslRMIServerSocketFactory(SSLContext.getDefault(),
-                                                ciphersuite,
-                                                null,
-                                                false);
-            final MySslRMIServerSocketFactory subserver8 =
-                new MySslRMIServerSocketFactory(context,
-                                                null,
-                                                null,
+						null,
                                                 true);
 
             // clients
@@ -238,20 +189,6 @@ public class SocketFactoryTest {
             testEquals(server3,server4,false);
             System.out.println("testEquals(server4,server5,false)");
             testEquals(server4,server5,false);
-            System.out.println("testEquals(server6,server7,false)");
-            testEquals(server6,server7,false);
-            System.out.println("testEquals(server8,server9,false)");
-            testEquals(server8,server9,false);
-            System.out.println("testEquals(server9,server10,false)");
-            testEquals(server9,server10,false);
-            System.out.println("testEquals(server2,server6,true)");
-            testEquals(server2,server6,true);
-            System.out.println("testEquals(server2,server7,false)");
-            testEquals(server2,server7,false);
-            System.out.println("testEquals(server5,server8,true)");
-            testEquals(server5,server8,true);
-            System.out.println("testEquals(server5,server9,false)");
-            testEquals(server5,server9,false);
             System.out.println("testEquals(server1,null,false)");
             testEquals(server1,null,false);
             System.out.println("testEquals(server2,null,false)");
@@ -306,10 +243,6 @@ public class SocketFactoryTest {
             testEquals(subserver3,subserver4,false);
             System.out.println("testEquals(subserver4,subserver5,false)");
             testEquals(subserver4,subserver5,false);
-            System.out.println("testEquals(subserver3,subserver6,true)");
-            testEquals(subserver3,subserver6,true);
-            System.out.println("testEquals(subserver3,subserver7,false)");
-            testEquals(subserver3,subserver7,false);
             System.out.println("testEquals(subserver1,server1,false)");
             testEquals(subserver1,server1,false);
             System.out.println("testEquals(server1,subserver1,false)");
@@ -330,10 +263,6 @@ public class SocketFactoryTest {
             testEquals(subserver5,server5,false);
             System.out.println("testEquals(server5,subserver5,false)");
             testEquals(server5,subserver5,false);
-            System.out.println("testEquals(server10,subserver8,false)");
-            testEquals(server10,subserver8,false);
-            System.out.println("testEquals(subserver8,server10,false)");
-            testEquals(subserver8,server10,false);
             System.out.println("testEquals(subserver1,null,false)");
             testEquals(subserver1,null,false);
             System.out.println("testEquals(subserver1,client2,false)");

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,9 +24,9 @@
 /* @test
  * @bug 4461299
  * @summary Verify that serialization functions properly if
- *          ObjectInputStream.readClassDescriptor() returns a local class
- *          descriptor for which the serialVersionUID has not yet been
- *          calculated.
+ * 	    ObjectInputStream.readClassDescriptor() returns a local class
+ * 	    descriptor for which the serialVersionUID has not yet been
+ * 	    calculated.
  */
 
 import java.io.*;
@@ -35,55 +35,55 @@ import java.util.*;
 class LoopbackOutputStream extends ObjectOutputStream {
     LinkedList descs;
 
-    LoopbackOutputStream(OutputStream out, LinkedList descs)
-        throws IOException
+    LoopbackOutputStream(OutputStream out, LinkedList descs) 
+	throws IOException 
     {
-        super(out);
-        this.descs = descs;
+	super(out);
+	this.descs = descs;
     }
 
     protected void writeClassDescriptor(ObjectStreamClass desc)
-        throws IOException
+        throws IOException 
     {
-        descs.add(desc);
+	descs.add(desc);
     }
 }
 
 class LoopbackInputStream extends ObjectInputStream {
     LinkedList descs;
-
+    
     LoopbackInputStream(InputStream in, LinkedList descs) throws IOException {
-        super(in);
-        this.descs = descs;
+	super(in);
+	this.descs = descs;
     }
-
+    
     protected ObjectStreamClass readClassDescriptor()
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        return (ObjectStreamClass) descs.removeFirst();
+	return (ObjectStreamClass) descs.removeFirst();
     }
 }
 
 public class Loopback implements Serializable {
     String str;
-
+    
     Loopback(String str) {
-        this.str = str;
+	this.str = str;
     }
 
     public static void main(String[] args) throws Exception {
-        Loopback lb = new Loopback("foo");
-        LinkedList descs = new LinkedList();
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        LoopbackOutputStream lout = new LoopbackOutputStream(bout, descs);
-        lout.writeObject(lb);
-        lout.close();
-
-        LoopbackInputStream lin = new LoopbackInputStream(
-            new ByteArrayInputStream(bout.toByteArray()), descs);
-        Loopback lbcopy = (Loopback) lin.readObject();
-        if (!lb.str.equals(lbcopy.str)) {
-            throw new Error();
-        }
+	Loopback lb = new Loopback("foo");
+	LinkedList descs = new LinkedList();
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	LoopbackOutputStream lout = new LoopbackOutputStream(bout, descs);
+	lout.writeObject(lb);
+	lout.close();
+	
+	LoopbackInputStream lin = new LoopbackInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()), descs);
+	Loopback lbcopy = (Loopback) lin.readObject();
+	if (!lb.str.equals(lbcopy.str)) {
+	    throw new Error();
+	}
     }
 }

@@ -61,7 +61,7 @@ import sun.rmi.transport.Target;
  * @see java.rmi.registry.LocateRegistry
  */
 public class RegistryImpl extends java.rmi.server.RemoteServer
-        implements Registry
+	implements Registry
 {
 
     /* indicate compatibility with JDK 1.1.x version of class */
@@ -75,39 +75,39 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
 
     /**
      * Construct a new RegistryImpl on the specified port with the
-     * given custom socket factory pair.
+     * given custom socket factory pair.  
      */
     public RegistryImpl(int port,
-                        RMIClientSocketFactory csf,
-                        RMIServerSocketFactory ssf)
-        throws RemoteException
+			RMIClientSocketFactory csf, 
+			RMIServerSocketFactory ssf)
+	throws RemoteException
     {
-        LiveRef lref = new LiveRef(id, port, csf, ssf);
-        setup(new UnicastServerRef2(lref));
+	LiveRef lref = new LiveRef(id, port, csf, ssf);
+	setup(new UnicastServerRef2(lref));
     }
-
+    
     /**
      * Construct a new RegistryImpl on the specified port.
      */
     public RegistryImpl(int port)
-        throws RemoteException
+	throws RemoteException
     {
-        LiveRef lref = new LiveRef(id, port);
-        setup(new UnicastServerRef(lref));
+	LiveRef lref = new LiveRef(id, port);
+	setup(new UnicastServerRef(lref));
     }
-
+    
     /*
      * Create the export the object using the parameter
-     * <code>uref</code>
+     * <code>uref</code> 
      */
     private void setup(UnicastServerRef uref)
-        throws RemoteException
+	throws RemoteException
     {
-        /* Server ref must be created and assigned before remote
-         * object 'this' can be exported.
-         */
-        ref = uref;
-        uref.exportObject(this, null, true);
+	/* Server ref must be created and assigned before remote
+	 * object 'this' can be exported.  
+	 */
+	ref = uref;
+	uref.exportObject(this, null, true);
     }
 
     /**
@@ -116,14 +116,14 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
      * @exception NotBound If name is not currently bound.
      */
     public Remote lookup(String name)
-        throws RemoteException, NotBoundException
+	throws RemoteException, NotBoundException
     {
-        synchronized (bindings) {
-            Remote obj = (Remote)bindings.get(name);
-            if (obj == null)
-                throw new NotBoundException(name);
-            return obj;
-        }
+	synchronized (bindings) {
+	    Remote obj = (Remote)bindings.get(name);
+	    if (obj == null)
+		throw new NotBoundException(name);
+	    return obj;
+	}
     }
 
     /**
@@ -132,15 +132,15 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
      * @exception AlreadyBoundException If name is already bound.
      */
     public void bind(String name, Remote obj)
-        throws RemoteException, AlreadyBoundException, AccessException
+	throws RemoteException, AlreadyBoundException, AccessException
     {
-        checkAccess("Registry.bind");
-        synchronized (bindings) {
-            Remote curr = (Remote)bindings.get(name);
-            if (curr != null)
-                throw new AlreadyBoundException(name);
-            bindings.put(name, obj);
-        }
+	checkAccess("Registry.bind");
+	synchronized (bindings) {
+	    Remote curr = (Remote)bindings.get(name);
+	    if (curr != null)
+		throw new AlreadyBoundException(name);
+	    bindings.put(name, obj);
+	}
     }
 
     /**
@@ -149,26 +149,26 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
      * @exception NotBound If name is not currently bound.
      */
     public void unbind(String name)
-        throws RemoteException, NotBoundException, AccessException
+	throws RemoteException, NotBoundException, AccessException
     {
-        checkAccess("Registry.unbind");
-        synchronized (bindings) {
-            Remote obj = (Remote)bindings.get(name);
-            if (obj == null)
-                throw new NotBoundException(name);
-            bindings.remove(name);
-        }
+	checkAccess("Registry.unbind");
+	synchronized (bindings) {
+	    Remote obj = (Remote)bindings.get(name);
+	    if (obj == null)
+		throw new NotBoundException(name);
+	    bindings.remove(name);
+	}
     }
-
-    /**
+    
+    /** 
      * Rebind the name to a new object, replaces any existing binding.
      * @exception RemoteException If remote operation failed.
      */
     public void rebind(String name, Remote obj)
-        throws RemoteException, AccessException
+	throws RemoteException, AccessException
     {
-        checkAccess("Registry.rebind");
-        bindings.put(name, obj);
+	checkAccess("Registry.rebind");
+	bindings.put(name, obj);
     }
 
     /**
@@ -176,119 +176,119 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
      * @exception RemoteException If remote operation failed.
      */
     public String[] list()
-        throws RemoteException
+	throws RemoteException
     {
-        String[] names;
-        synchronized (bindings) {
-            int i = bindings.size();
-            names = new String[i];
-            Enumeration enum_ = bindings.keys();
-            while ((--i) >= 0)
-                names[i] = (String)enum_.nextElement();
-        }
-        return names;
+	String[] names;
+	synchronized (bindings) {
+	    int i = bindings.size();
+	    names = new String[i];
+	    Enumeration enum_ = bindings.keys();
+	    while ((--i) >= 0)
+		names[i] = (String)enum_.nextElement();
+	}
+	return names;
     }
 
     /**
      * Check that the caller has access to perform indicated operation.
      * The client must be on same the same host as this server.
      */
-    public static void checkAccess(String op) throws AccessException {
+    public static void checkAccess(String op) throws AccessException {   
 
-        try {
-            /*
-             * Get client host that this registry operation was made from.
-             */
-            final String clientHostName = getClientHost();
-            InetAddress clientHost;
+	try {
+	    /*
+	     * Get client host that this registry operation was made from.
+	     */
+	    final String clientHostName = getClientHost();
+	    InetAddress clientHost;
 
-            try {
-                clientHost = (InetAddress)
-                    java.security.AccessController.doPrivileged(
-                        new java.security.PrivilegedExceptionAction() {
-                        public Object run()
-                            throws java.net.UnknownHostException
-                        {
-                            return InetAddress.getByName(clientHostName);
-                        }
-                    });
-            } catch (PrivilegedActionException pae) {
-                throw (java.net.UnknownHostException) pae.getException();
-            }
+	    try {
+		clientHost = (InetAddress)
+		    java.security.AccessController.doPrivileged(
+			new java.security.PrivilegedExceptionAction() {
+			public Object run()
+			    throws java.net.UnknownHostException
+			{
+			    return InetAddress.getByName(clientHostName);
+			}
+		    });
+	    } catch (PrivilegedActionException pae) {
+		throw (java.net.UnknownHostException) pae.getException();
+	    }
 
-            // if client not yet seen, make sure client allowed access
-            if (allowedAccessCache.get(clientHost) == null) {
+	    // if client not yet seen, make sure client allowed access
+	    if (allowedAccessCache.get(clientHost) == null) {
 
-                if (clientHost.isAnyLocalAddress()) {
-                    throw new AccessException(
-                        "Registry." + op + " disallowed; origin unknown");
-                }
+		if (clientHost.isAnyLocalAddress()) {
+		    throw new AccessException(
+			"Registry." + op + " disallowed; origin unknown");
+		}
 
-                try {
-                    final InetAddress finalClientHost = clientHost;
+		try {
+		    final InetAddress finalClientHost = clientHost;
 
-                    java.security.AccessController.doPrivileged(
-                        new java.security.PrivilegedExceptionAction() {
-                            public Object run() throws java.io.IOException {
-                                /*
-                                 * if a ServerSocket can be bound to the client's
-                                 * address then that address must be local
-                                 */
-                                (new ServerSocket(0, 10, finalClientHost)).close();
-                                allowedAccessCache.put(finalClientHost,
-                                                       finalClientHost);
-                                return null;
-                            }
-                    });
-                } catch (PrivilegedActionException pae) {
-                    // must have been an IOException
+		    java.security.AccessController.doPrivileged(
+		        new java.security.PrivilegedExceptionAction() {
+			    public Object run() throws java.io.IOException {
+				/*
+				 * if a ServerSocket can be bound to the client's
+				 * address then that address must be local
+				 */
+				(new ServerSocket(0, 10, finalClientHost)).close();
+				allowedAccessCache.put(finalClientHost, 
+						       finalClientHost);
+				return null;
+			    }
+		    });
+		} catch (PrivilegedActionException pae) {
+		    // must have been an IOException 
 
-                    throw new AccessException(
-                        "Registry." + op + " disallowed; origin " +
-                        clientHost + " is non-local host");
-                }
-            }
-        } catch (ServerNotActiveException ex) {
-            /*
-             * Local call from this VM: allow access.
-             */
-        } catch (java.net.UnknownHostException ex) {
-            throw new AccessException("Registry." + op +
-                                      " disallowed; origin is unknown host");
-        }
+		    throw new AccessException(
+			"Registry." + op + " disallowed; origin " +
+		        clientHost + " is non-local host");
+		}
+	    }
+	} catch (ServerNotActiveException ex) {
+	    /*
+	     * Local call from this VM: allow access.
+	     */
+	} catch (java.net.UnknownHostException ex) {
+	    throw new AccessException("Registry." + op +
+				      " disallowed; origin is unknown host");
+	}
     }
 
     public static ObjID getID() {
-        return id;
+	return id;
     }
-
+    
     /**
      * Retrieves text resources from the locale-specific properties file.
      */
     private static String getTextResource(String key) {
-        if (resources == null) {
-            try {
-                resources = ResourceBundle.getBundle(
-                    "sun.rmi.registry.resources.rmiregistry");
-            } catch (MissingResourceException mre) {
-            }
-            if (resources == null) {
-                // throwing an Error is a bit extreme, methinks
-                return ("[missing resource file: " + key + "]");
-            }
-        }
+	if (resources == null) {
+	    try {
+		resources = ResourceBundle.getBundle(
+		    "sun.rmi.registry.resources.rmiregistry");
+	    } catch (MissingResourceException mre) {
+	    }
+	    if (resources == null) {
+		// throwing an Error is a bit extreme, methinks
+		return ("[missing resource file: " + key + "]");
+	    }
+	}
 
-        String val = null;
-        try {
-            val = resources.getString(key);
-        } catch (MissingResourceException mre) {
-        }
-
-        if (val == null) {
-            return ("[missing resource: " + key + "]");
-        } else {
-            return (val);
-        }
+	String val = null;
+	try {
+	    val = resources.getString(key);
+	} catch (MissingResourceException mre) {
+	}
+	
+	if (val == null) {
+	    return ("[missing resource: " + key + "]");
+	} else {
+	    return (val);
+	}
     }
 
     /**
@@ -297,64 +297,64 @@ public class RegistryImpl extends java.rmi.server.RemoteServer
      */
     public static void main(String args[])
     {
-        // Create and install the security manager if one is not installed
-        // already.
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new RMISecurityManager());
-        }
+	// Create and install the security manager if one is not installed
+	// already.
+	if (System.getSecurityManager() == null) {
+	    System.setSecurityManager(new RMISecurityManager());
+	}
 
-        try {
-            /*
-             * Fix bugid 4147561: When JDK tools are executed, the value of
-             * the CLASSPATH environment variable for the shell in which they
-             * were invoked is no longer incorporated into the application
-             * class path; CLASSPATH's only effect is to be the value of the
-             * system property "env.class.path".  To preserve the previous
-             * (JDK1.1 and JDK1.2beta3) behavior of this tool, however, its
-             * CLASSPATH should still be considered when resolving classes
-             * being unmarshalled.  To effect this old behavior, a class
-             * loader that loads from the file path specified in the
-             * "env.class.path" property is created and set to be the context
-             * class loader before the remote object is exported.
-             */
-            String envcp = System.getProperty("env.class.path");
-            if (envcp == null) {
-                envcp = ".";            // preserve old default behavior
-            }
-            URL[] urls = sun.misc.URLClassPath.pathToURLs(envcp);
-            ClassLoader cl = new URLClassLoader(urls);
+	try {
+	    /*
+	     * Fix bugid 4147561: When JDK tools are executed, the value of
+	     * the CLASSPATH environment variable for the shell in which they
+	     * were invoked is no longer incorporated into the application
+	     * class path; CLASSPATH's only effect is to be the value of the
+	     * system property "env.class.path".  To preserve the previous
+	     * (JDK1.1 and JDK1.2beta3) behavior of this tool, however, its
+	     * CLASSPATH should still be considered when resolving classes
+	     * being unmarshalled.  To effect this old behavior, a class
+	     * loader that loads from the file path specified in the
+	     * "env.class.path" property is created and set to be the context
+	     * class loader before the remote object is exported.
+	     */
+	    String envcp = System.getProperty("env.class.path");
+	    if (envcp == null) {
+		envcp = ".";		// preserve old default behavior
+	    }
+	    URL[] urls = sun.misc.URLClassPath.pathToURLs(envcp);
+	    ClassLoader cl = new URLClassLoader(urls);
 
-            /*
-             * Fix bugid 4242317: Classes defined by this class loader should
-             * be annotated with the value of the "java.rmi.server.codebase"
-             * property, not the "file:" URLs for the CLASSPATH elements.
-             */
-            sun.rmi.server.LoaderHandler.registerCodebaseLoader(cl);
+	    /*
+	     * Fix bugid 4242317: Classes defined by this class loader should
+	     * be annotated with the value of the "java.rmi.server.codebase"
+	     * property, not the "file:" URLs for the CLASSPATH elements.
+	     */
+	    sun.rmi.server.LoaderHandler.registerCodebaseLoader(cl);
 
-            Thread.currentThread().setContextClassLoader(cl);
+	    Thread.currentThread().setContextClassLoader(cl);
 
-            int regPort = Registry.REGISTRY_PORT;
-            if (args.length >= 1) {
-                regPort = Integer.parseInt(args[0]);
-            }
-            registry = new RegistryImpl(regPort);
-            // prevent registry from exiting
-            while (true) {
-                try {
-                    Thread.sleep(Long.MAX_VALUE);
-                } catch (InterruptedException e) {
-                }
-            }
-        } catch (NumberFormatException e) {
-            System.err.println(MessageFormat.format(
-                getTextResource("rmiregistry.port.badnumber"),
-                args[0] ));
-            System.err.println(MessageFormat.format(
-                getTextResource("rmiregistry.usage"),
-                "rmiregistry" ));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.exit(1);
+	    int regPort = Registry.REGISTRY_PORT;
+	    if (args.length >= 1) {
+		regPort = Integer.parseInt(args[0]);
+	    }
+	    registry = new RegistryImpl(regPort);
+	    // prevent registry from exiting
+	    while (true) {
+		try {
+		    Thread.sleep(Long.MAX_VALUE);
+		} catch (InterruptedException e) {
+		}
+	    }
+	} catch (NumberFormatException e) {
+	    System.err.println(MessageFormat.format(
+	        getTextResource("rmiregistry.port.badnumber"), 
+		args[0] ));
+	    System.err.println(MessageFormat.format(
+	        getTextResource("rmiregistry.usage"), 
+		"rmiregistry" ));
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
+	System.exit(1);
     }
 }

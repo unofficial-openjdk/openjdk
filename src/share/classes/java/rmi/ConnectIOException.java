@@ -29,7 +29,8 @@ package java.rmi;
  * A <code>ConnectIOException</code> is thrown if an
  * <code>IOException</code> occurs while making a connection
  * to the remote host for a remote method call.
- *
+ * 
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @since   JDK1.1
  */
@@ -46,7 +47,7 @@ public class ConnectIOException extends RemoteException {
      * @since JDK1.1
      */
     public ConnectIOException(String s) {
-        super(s);
+	super(s);
     }
 
 
@@ -59,6 +60,6 @@ public class ConnectIOException extends RemoteException {
      * @since JDK1.1
      */
     public ConnectIOException(String s, Exception ex) {
-        super(s, ex);
+	super(s, ex);
     }
 }

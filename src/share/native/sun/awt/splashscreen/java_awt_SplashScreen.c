@@ -41,9 +41,9 @@ JNI_OnLoad(JavaVM * vm, void *reserved)
 * Signature: (J[IIIIII)V
 */
 JNIEXPORT void JNICALL
-Java_java_awt_SplashScreen__1update(JNIEnv * env, jclass thisClass,
-                                    jlong jsplash, jintArray data,
-                                    jint x, jint y, jint width, jint height,
+Java_java_awt_SplashScreen__1update(JNIEnv * env, jclass thisClass, 
+                                    jlong jsplash, jintArray data, 
+                                    jint x, jint y, jint width, jint height, 
                                     jint stride)
 {
     Splash *splash = (Splash *) jlong_to_ptr(jsplash);
@@ -60,11 +60,11 @@ Java_java_awt_SplashScreen__1update(JNIEnv * env, jclass thisClass,
     splash->overlayData = malloc(dataSize * sizeof(rgbquad_t));
     if (splash->overlayData) {
         /* we need a copy anyway, so we'll be using GetIntArrayRegion */
-        (*env)->GetIntArrayRegion(env, data, 0, dataSize,
+        (*env)->GetIntArrayRegion(env, data, 0, dataSize, 
             (jint *) splash->overlayData);
         initFormat(&splash->overlayFormat, 0xFF0000, 0xFF00, 0xFF, 0xFF000000);
-        initRect(&splash->overlayRect, x, y, width, height, 1,
-            stride * sizeof(rgbquad_t), splash->overlayData,
+        initRect(&splash->overlayRect, x, y, width, height, 1, 
+            stride * sizeof(rgbquad_t), splash->overlayData, 
             &splash->overlayFormat);
         SplashUpdate(splash);
     }
@@ -77,8 +77,8 @@ Java_java_awt_SplashScreen__1update(JNIEnv * env, jclass thisClass,
 * Method:    _isVisible
 * Signature: (J)Z
 */
-JNIEXPORT jboolean JNICALL
-Java_java_awt_SplashScreen__1isVisible(JNIEnv * env, jclass thisClass,
+JNIEXPORT jboolean JNICALL 
+Java_java_awt_SplashScreen__1isVisible(JNIEnv * env, jclass thisClass, 
                                        jlong jsplash)
 {
     Splash *splash = (Splash *) jlong_to_ptr(jsplash);
@@ -94,8 +94,8 @@ Java_java_awt_SplashScreen__1isVisible(JNIEnv * env, jclass thisClass,
 * Method:    _getBounds
 * Signature: (J)Ljava/awt/Rectangle;
 */
-JNIEXPORT jobject JNICALL
-Java_java_awt_SplashScreen__1getBounds(JNIEnv * env, jclass thisClass,
+JNIEXPORT jobject JNICALL 
+Java_java_awt_SplashScreen__1getBounds(JNIEnv * env, jclass thisClass, 
                                        jlong jsplash)
 {
     Splash *splash = (Splash *) jlong_to_ptr(jsplash);
@@ -117,7 +117,7 @@ Java_java_awt_SplashScreen__1getBounds(JNIEnv * env, jclass thisClass,
         mid = (*env)->GetMethodID(env, clazz, "<init>", "(IIII)V");
     }
     if (clazz && mid) {
-        bounds = (*env)->NewObject(env, clazz, mid, splash->x, splash->y,
+        bounds = (*env)->NewObject(env, clazz, mid, splash->x, splash->y, 
             splash->width, splash->height);
         if ((*env)->ExceptionOccurred(env)) {
             bounds = NULL;
@@ -134,7 +134,7 @@ Java_java_awt_SplashScreen__1getBounds(JNIEnv * env, jclass thisClass,
 * Method:    _getInstance
 * Signature: ()J
 */
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_java_awt_SplashScreen__1getInstance(JNIEnv * env, jclass thisClass)
 {
     return ptr_to_jlong(SplashGetInstance());
@@ -145,8 +145,8 @@ Java_java_awt_SplashScreen__1getInstance(JNIEnv * env, jclass thisClass)
 * Method:    _close
 * Signature: (J)V
 */
-JNIEXPORT void JNICALL
-Java_java_awt_SplashScreen__1close(JNIEnv * env, jclass thisClass,
+JNIEXPORT void JNICALL 
+Java_java_awt_SplashScreen__1close(JNIEnv * env, jclass thisClass, 
                                    jlong jsplash)
 {
     Splash *splash = (Splash *) jlong_to_ptr(jsplash);
@@ -165,7 +165,7 @@ Java_java_awt_SplashScreen__1close(JNIEnv * env, jclass thisClass,
  * Signature: (J)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_java_awt_SplashScreen__1getImageFileName
-    (JNIEnv * env, jclass thisClass, jlong jsplash)
+    (JNIEnv * env, jclass thisClass, jlong jsplash) 
 {
     Splash *splash = (Splash *) jlong_to_ptr(jsplash);
 
@@ -174,7 +174,7 @@ JNIEXPORT jstring JNICALL Java_java_awt_SplashScreen__1getImageFileName
         return NULL;
     }
     /* splash->fileName is of type char*, but in fact it contains jchars */
-    return (*env)->NewString(env, (const jchar*)splash->fileName,
+    return (*env)->NewString(env, (const jchar*)splash->fileName, 
                              splash->fileNameLen);
 }
 
@@ -192,7 +192,7 @@ JNIEXPORT jstring JNICALL Java_java_awt_SplashScreen__1getImageJarName
         return NULL;
     }
     /* splash->jarName is of type char*, but in fact it contains jchars */
-    return (*env)->NewString(env, (const jchar*)splash->jarName,
+    return (*env)->NewString(env, (const jchar*)splash->jarName, 
                              splash->jarNameLen);
 }
 
@@ -217,3 +217,4 @@ JNIEXPORT jboolean JNICALL Java_java_awt_SplashScreen__1setImageData
     (*env)->ReleaseByteArrayElements(env, data, pBytes, JNI_ABORT);
     return rc ? JNI_TRUE : JNI_FALSE;
 }
+

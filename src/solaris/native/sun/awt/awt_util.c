@@ -49,10 +49,8 @@
 #include "awt_xembed.h"
 
 
-#ifndef XAWT
 #if MOTIF_VERSION!=1
     #include <Xm/GrabShell.h>
-#endif
 #endif
 
 #include "java_awt_event_MouseWheelEvent.h"
@@ -91,9 +89,9 @@ static Atom decor_list[9];
  * The following three funtions are to work around menu problems
  */
 
-/*
- * test if there is a menu that has the current focus
- * called from awt_Dialog.c and awt_Component.c
+/* 
+ * test if there is a menu that has the current focus 
+ * called from awt_Dialog.c and awt_Component.c 
  */
 Boolean
 awt_util_focusIsOnMenu(Display *display)
@@ -117,7 +115,7 @@ awt_util_focusIsOnMenu(Display *display)
   }
 
   #if MOTIF_VERSION!=1
-  /* Motif 2.1 uses XmGrabShell on XmComboBox instead
+  /* Motif 2.1 uses XmGrabShell on XmComboBox instead 
      of XmMenuShell
   */
   if (XtIsSubclass(widget, xmGrabShellWidgetClass)) {
@@ -125,12 +123,12 @@ awt_util_focusIsOnMenu(Display *display)
   }
   /* Fix 4800638 check the ancestor of focus widget is
      GrabSell
-   */
-  if (XtIsSubclass(widget, xmListWidgetClass))
+   */ 
+  if (XtIsSubclass(widget, xmListWidgetClass)) 
   {
       Widget shell = getShellWidget(widget);
-      if (shell && XtIsSubclass(shell,
-          xmGrabShellWidgetClass))
+      if (shell && XtIsSubclass(shell, 
+          xmGrabShellWidgetClass)) 
       {
           return True;
       }
@@ -141,20 +139,20 @@ awt_util_focusIsOnMenu(Display *display)
       unsigned char type;
       XtVaGetValues(widget, XmNrowColumnType, &type, NULL);
       if (type == XmMENU_BAR) {
-          return True;
+	  return True;
       }
-  }
+  } 
   return False;
 }
 
-static
+static 
 void fillButtonEvent(XButtonEvent *ev, int32_t type, Display *display, Window window) {
     ev->type = type;
     ev->display = display;
     ev->window = window;
     ev->send_event = True;
 
-    /* REMIND: multi-screen */
+    /* REMIND: multi-screen */ 
     ev->root = RootWindow(display, DefaultScreen(display));
     ev->subwindow = (Window)None;
     ev->time = CurrentTime;
@@ -167,8 +165,8 @@ void fillButtonEvent(XButtonEvent *ev, int32_t type, Display *display, Window wi
     ev->state = Button1Mask;
 }
 
-/*
- * generates a mouse press event and a release event
+/* 
+ * generates a mouse press event and a release event 
  * called from awt_Dialog.c
  */
 int32_t
@@ -183,7 +181,7 @@ awt_util_sendButtonClick(Display *display, Window window)
   if (status != 0) {
       fillButtonEvent(&ev, ButtonRelease, display, window);
       status = XSendEvent(display, window, False, ButtonReleaseMask,
-                          (XEvent *)&ev);
+			  (XEvent *)&ev);
   }
   return status;
 }
@@ -215,7 +213,7 @@ awt_util_createWarningWindow(Widget parent, char *warning)
         }
     }
     adata = getDefaultConfig(screen);
-
+    
     gray = adata->AwtColorMatch(192, 192, 192, adata);
     black = adata->AwtColorMatch(0, 0, 0, adata);
 
@@ -230,19 +228,19 @@ awt_util_createWarningWindow(Widget parent, char *warning)
 
     XtManageChild(warningWindow);
     label = XtVaCreateManagedWidget(warning,
-                                    xmLabelWidgetClass, warningWindow,
-                                    XmNhighlightThickness, 0,
-                                    XmNbackground, gray,
-                                    XmNforeground, black,
-                                    XmNalignment, XmALIGNMENT_CENTER,
-                                    XmNrecomputeSize, False,
-                                    NULL);
+				    xmLabelWidgetClass, warningWindow,
+				    XmNhighlightThickness, 0,
+				    XmNbackground, gray,
+				    XmNforeground, black,
+				    XmNalignment, XmALIGNMENT_CENTER,
+				    XmNrecomputeSize, False,
+				    NULL);
     XtVaSetValues(label,
-                  XmNbottomAttachment, XmATTACH_FORM,
-                  XmNtopAttachment, XmATTACH_FORM,
-                  XmNleftAttachment, XmATTACH_FORM,
-                  XmNrightAttachment, XmATTACH_FORM,
-                  NULL);
+		  XmNbottomAttachment, XmATTACH_FORM,
+		  XmNtopAttachment, XmATTACH_FORM,
+		  XmNleftAttachment, XmATTACH_FORM,
+		  XmNrightAttachment, XmATTACH_FORM,
+		  NULL);
 #endif
     return warningWindow;
 }
@@ -254,11 +252,11 @@ awt_setWidgetGravity(Widget w, int32_t gravity)
     Window  win = XtWindow(w);
 
     if (win != None) {
-        xattr.bit_gravity = StaticGravity;
-        xattr.win_gravity = StaticGravity;
-        XChangeWindowAttributes(XtDisplay(w), win,
-                                CWBitGravity|CWWinGravity,
-                                &xattr);
+	xattr.bit_gravity = StaticGravity;
+	xattr.win_gravity = StaticGravity;
+	XChangeWindowAttributes(XtDisplay(w), win,
+				CWBitGravity|CWWinGravity,
+				&xattr);
     }
 }
 
@@ -270,11 +268,11 @@ Widget get_shell_focused_widget(Widget w) {
         return XmGetFocusWidget(w);
     } else {
         return NULL;
-    }
+    }        
 }
 
 void
-awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht)
+awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht) 
 {
     Widget parent;
     Dimension ww, wh;
@@ -284,29 +282,29 @@ awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht)
     Boolean mapped_when_managed = False;
     Boolean need_to_unmanage = True;
     Widget saved_focus_widget = NULL;
-
+    
     if (w == NULL) {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
         JNU_ThrowNullPointerException(env,"NullPointerException");
-        return;
+	return;
     }
     parent = XtParent(w);
 
     /* Aim: hack to prevent direct children of scrollpane from
      * being unmanaged during a reshape operation (which results
-     * in too many expose events).
+     * in too many expose events).  
      */
     if (parent != NULL && XtParent(parent) != NULL &&
         XtIsSubclass(XtParent(parent), xmScrolledWindowWidgetClass)) {
         need_to_unmanage = False;
-    }
+    } 
 
-    XtVaGetValues(w,
-                  XmNwidth, &ww,
-                  XmNheight, &wh,
-                  XmNx, &wx,
-                  XmNy, &wy,
-                  NULL);
+    XtVaGetValues(w, 
+		  XmNwidth, &ww, 
+		  XmNheight, &wh, 
+		  XmNx, &wx, 
+		  XmNy, &wy, 
+		  NULL);   
 
     if (x != wx || y != wy) {
         move = True;
@@ -318,16 +316,16 @@ awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht)
         return;
     }
 
-    if (need_to_unmanage) {
+    if (need_to_unmanage) {    
         if (!resize) {
             mapped_when_managed = w->core.mapped_when_managed;
             w->core.mapped_when_managed = False;
-        }
+        } 
         saved_focus_widget = get_shell_focused_widget(w);
         XtUnmanageChild(w);
     }
-
-    /* GES: AVH's hack:
+       
+    /* GES: AVH's hack: 
      * Motif ignores attempts to move a toplevel window to 0,0.
      * Instead we set the position to 1,1. The expected value is
      * returned by Frame.getBounds() since it uses the internally
@@ -339,30 +337,30 @@ awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht)
     if ((x == 0) && (y == 0) &&
         (XtIsSubclass(w, wmShellWidgetClass)) &&
         (XmIsMotifWMRunning(w))) {
-        XtVaSetValues(w, XmNx, 1, XmNy, 1, NULL);
+	XtVaSetValues(w, XmNx, 1, XmNy, 1, NULL);
     }
 
     if (move && !resize) {
         XtVaSetValues(w, XmNx, x, XmNy, y, NULL);
-
+    
     } else if (resize && !move) {
-        XtVaSetValues(w,
-                      XmNwidth, (wd > 0) ? wd : 1,
-                      XmNheight, (ht > 0) ? ht : 1,
-                      NULL);
+        XtVaSetValues(w, 
+		      XmNwidth, (wd > 0) ? wd : 1,
+		      XmNheight, (ht > 0) ? ht : 1,
+		      NULL);
 
     } else  {
         XtVaSetValues(w,
-                  XmNx, x,
-                  XmNy, y,
-                  XmNwidth, (wd > 0) ? wd : 1,
-                  XmNheight, (ht > 0) ? ht : 1,
-                  NULL);
+		  XmNx, x,
+		  XmNy, y,
+		  XmNwidth, (wd > 0) ? wd : 1,
+		  XmNheight, (ht > 0) ? ht : 1,
+		  NULL);
     }
 
-    if (need_to_unmanage) {
+    if (need_to_unmanage) {    
         XtManageChild(w);
-        if (!resize) {
+        if (!resize) {   
             w->core.mapped_when_managed = mapped_when_managed;
         }
         if (saved_focus_widget != NULL) {
@@ -374,24 +372,24 @@ awt_util_reshape(Widget w, jint x, jint y, jint wd, jint ht)
                     shell = XtParent(shell);
                 }
                 XtSetKeyboardFocus(shell, saved_focus_widget);
-            }
-        }
-    }
+            }        
+        }            
+    }   
 }
 
 void
-awt_util_hide(Widget w)
+awt_util_hide(Widget w) 
 {
     if (w == NULL) {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
         JNU_ThrowNullPointerException(env,"NullPointerException");
-        return;
+	return;
     }
     XtSetMappedWhenManaged(w, False);
 }
 
 void
-awt_util_show(Widget w)
+awt_util_show(Widget w) 
 {
 /*
     extern Boolean  scrollBugWorkAround;
@@ -399,85 +397,85 @@ awt_util_show(Widget w)
     if (w == NULL) {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
         JNU_ThrowNullPointerException(env,"NullPointerException");
-        return;
+	return;
     }
     XtSetMappedWhenManaged(w, True);
 /*
   XXX: causes problems on 2.5
     if (!scrollBugWorkAround) {
-        awt_setWidgetGravity(w, StaticGravity);
+	awt_setWidgetGravity(w, StaticGravity);
     }
 */
 }
 
 void
-awt_util_enable(Widget w)
+awt_util_enable(Widget w) 
 {
     XtSetSensitive(w, True);
 }
 
 void
-awt_util_disable(Widget w)
+awt_util_disable(Widget w) 
 {
     XtSetSensitive(w, False);
 }
 
 void
 awt_util_mapChildren(Widget w, void (*func)(Widget,void *),
-                     int32_t applyToCurrent, void *data) {
-    WidgetList                  wlist;
-    Cardinal                    wlen = 0;
-    Cardinal                    i;
+		     int32_t applyToCurrent, void *data) {
+    WidgetList			wlist;
+    Cardinal			wlen = 0;
+    Cardinal			i;
 
     /* The widget may have been destroyed by another thread. */
     if ((w == NULL) || (!XtIsObject(w)) || (w->core.being_destroyed))
         return;
 
     if (applyToCurrent != 0) {
-        (*func)(w, data);
+	(*func)(w, data);
     }
     if (!XtIsComposite(w)) {
-        return;
+	return;
     }
 
     XtVaGetValues(w,
-                  XmNchildren, &wlist,
-                  XmNnumChildren, &wlen,
-                  NULL);
+		  XmNchildren, &wlist,
+		  XmNnumChildren, &wlen,
+		  NULL);
     if (wlen > 0) {
-        for (i=0; i < wlen; i++) {
-            awt_util_mapChildren(wlist[i], func, 1, data);
-        }
+	for (i=0; i < wlen; i++) {
+	    awt_util_mapChildren(wlist[i], func, 1, data);
+	}
     }
 }
 
 void
 awt_changeAttributes(Display *dpy, Widget w, unsigned long mask,
-                     XSetWindowAttributes *xattr)
+		     XSetWindowAttributes *xattr)
 {
-    WidgetList          wlist;
-    Cardinal            wlen = 0;
-    Cardinal            i;
+    WidgetList		wlist;
+    Cardinal		wlen = 0;
+    Cardinal		i;
 
     if (XtWindow(w) && XtIsRealized(w)) {
-        XChangeWindowAttributes(dpy,
-                                XtWindow(w),
-                                mask,
-                                xattr);
+	XChangeWindowAttributes(dpy,
+				XtWindow(w),
+				mask,
+				xattr);
     } else {
-        return;
+	return;
     }
     XtVaGetValues(w,
-                  XmNchildren, &wlist,
-                  XmNnumChildren, &wlen,
-                  NULL);
+		  XmNchildren, &wlist,
+		  XmNnumChildren, &wlen,
+		  NULL);
     for (i = 0; i < wlen; i++) {
-        if (XtWindow(wlist[i]) && XtIsRealized(wlist[i])) {
-            XChangeWindowAttributes(dpy,
-                                    XtWindow(wlist[i]),
-                                    mask,
-                                    xattr);
-        }
+	if (XtWindow(wlist[i]) && XtIsRealized(wlist[i])) {
+	    XChangeWindowAttributes(dpy,
+				    XtWindow(wlist[i]),
+				    mask,
+				    xattr);
+	}
     }
 }
 
@@ -486,7 +484,7 @@ static Widget prevWgt = NULL;
 static void
 DestroyCB(Widget w, XtPointer client_data, XtPointer call_data) {
     if (prevWgt == w) {
-        prevWgt = NULL;
+	prevWgt = NULL;
     }
 }
 
@@ -495,37 +493,37 @@ awt_util_setCursor(Widget w, Cursor c) {
     static Cursor prevCur = None;
 
     if (XtIsRealized(w)) {
-        unsigned long valuemask = 0;
-        XSetWindowAttributes    attributes;
+	unsigned long valuemask = 0;
+	XSetWindowAttributes	attributes;
 
-        valuemask = CWCursor;
-        if (prevWgt != NULL) {
-            attributes.cursor = None;
-            XChangeWindowAttributes(awt_display,
+	valuemask = CWCursor;
+	if (prevWgt != NULL) {
+	    attributes.cursor = None;
+	    XChangeWindowAttributes(awt_display,
                         XtWindow(prevWgt),
                         valuemask,
                         &attributes);
-        }
+	}
 
-        if (c == None) {
-            c = prevCur;
+	if (c == None) {
+	    c = prevCur;
             if (w != NULL) {
                 XtAddCallback(w, XmNdestroyCallback, DestroyCB, NULL);
             }
-            prevWgt = w;
-        } else {
-            prevCur = c;
-            prevWgt = NULL;
-        }
-        attributes.cursor = c;
-        XChangeWindowAttributes(awt_display,
-                                XtWindow(w),
-                                valuemask,
-                                &attributes);
-        XFlush(awt_display);
-        return 1;
+	    prevWgt = w; 
+	} else {
+	    prevCur = c;
+	    prevWgt = NULL;  
+	}
+	attributes.cursor = c;
+	XChangeWindowAttributes(awt_display,
+				XtWindow(w),
+				valuemask,
+				&attributes);				
+	XFlush(awt_display);
+	return 1;
     } else
-        return 0;
+        return 0;    
 }
 
 void
@@ -540,7 +538,7 @@ awt_util_convertEventTimeAndModifiers(XEvent *event,
     case ButtonPress:
     case ButtonRelease:
         output->when = awt_util_nowMillisUTC_offset(event->xbutton.time);
-        output->modifiers = getModifiers(event->xbutton.state,
+        output->modifiers = getModifiers(event->xbutton.state, 
             getButton(event->xbutton.button), 0);
         break;
     default:
@@ -549,7 +547,7 @@ awt_util_convertEventTimeAndModifiers(XEvent *event,
         break;
     }
 }
-
+  
 
 /*
   Part fix for bug id 4017222. Return the widget at the given screen coords
@@ -562,7 +560,7 @@ awt_util_convertEventTimeAndModifiers(XEvent *event,
   nil as its XmNuserData.  This lead to a crash when the nil XmNuserData was
   extracted and used as a reference to a peer.  Ooops.
   Now the GadgetButton is not returned and the function goes on to find a widget
-  which contains the correct peer reference in XmNuserData.
+  which contains the correct peer reference in XmNuserData. 
 */
 Widget
 awt_WidgetAtXY(Widget root, Position pointerx, Position pointery) {
@@ -574,7 +572,7 @@ awt_WidgetAtXY(Widget root, Position pointerx, Position pointery) {
     int32_t i=0;
     WidgetList wl=NULL;
     Cardinal wlen=0;
-
+ 
     XtVaGetValues(root, XmNchildren, &wl, XmNnumChildren, &wlen, NULL);
 
     if(wlen>0) {
@@ -589,17 +587,17 @@ awt_WidgetAtXY(Widget root, Position pointerx, Position pointery) {
     Dimension width=0, height=0;
     int32_t lastx=0, lasty=0;
     XtPointer widgetUserData=NULL;
-
+  
     XtVaGetValues(root, XmNwidth, &width, XmNheight, &height,
-                  XmNuserData, &widgetUserData,
-                  NULL);
+		  XmNuserData, &widgetUserData,
+		  NULL);
 
     XtTranslateCoords(root, 0, 0, &wx, &wy);
     lastx = wx + width;
     lasty = wy + height;
 
     if(pointerx>=wx && pointerx<=lastx && pointery>=wy && pointery<=lasty &&
-           widgetUserData)
+	   widgetUserData)
         answer = root;
   }
 
@@ -671,7 +669,7 @@ Widget
 awt_util_getXICStatusAreaWindow(Widget w)
 {
     while (!XtIsShell(w)){
-        w = XtParent(w);
+	w = XtParent(w);
     }
     return w;
 }
@@ -765,24 +763,24 @@ extract_fontset(XmFontList fl)
     char *font_tag;
 
     if (!XmFontListInitFontContext(&context, fl))
-        return NULL;
+	return NULL;
 
     do {
-        next_entry = XmFontListNextEntry(context);
-        if (next_entry) {
-            tmp_font = XmFontListEntryGetFont(next_entry, &type_return);
-            if (type_return == XmFONT_IS_FONTSET) {
-                font_tag = XmFontListEntryGetTag(next_entry);
-                if (!strcmp(font_tag, XmFONTLIST_DEFAULT_TAG)) {
-                    XmFontListFreeFontContext(context);
-                    XtFree(font_tag);
-                    return (XFontSet) tmp_font;
-                }
-                XtFree(font_tag);
-                if (first_fs == NULL)
-                    first_fs = (XFontSet) tmp_font;
-            }
-        }
+	next_entry = XmFontListNextEntry(context);
+	if (next_entry) {
+	    tmp_font = XmFontListEntryGetFont(next_entry, &type_return);
+	    if (type_return == XmFONT_IS_FONTSET) {
+		font_tag = XmFontListEntryGetTag(next_entry);
+		if (!strcmp(font_tag, XmFONTLIST_DEFAULT_TAG)) {
+		    XmFontListFreeFontContext(context);
+		    XtFree(font_tag);
+		    return (XFontSet) tmp_font;
+		}
+		XtFree(font_tag);
+		if (first_fs == NULL)
+		    first_fs = (XFontSet) tmp_font;
+	    }
+	}
     } while (next_entry);
 
     XmFontListFreeFontContext(context);
@@ -791,7 +789,7 @@ extract_fontset(XmFontList fl)
 #endif
 
 /*the caller does have the responsibility to free the memory return
-  from this function...*/
+  from this function...*/ 
 char* awt_util_makeWMMenuItem(char *target, Atom protocol){
     char        *buf = NULL;
     int32_t         buflen = 0;
@@ -800,30 +798,30 @@ char* awt_util_makeWMMenuItem(char *target, Atom protocol){
     buflen = strlen(target) * 3;
     buf = (char*)malloc(buflen + 20);
     if (buf == NULL){
-        JNU_ThrowOutOfMemoryError((JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2), NULL);
+	JNU_ThrowOutOfMemoryError((JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2), NULL);
     }
     else{
       int32_t   off = 0;
       char  *ptr = target;
       while ((off < (buflen - 20)) && (*ptr != '\0')){
-        if (*ptr == ' '){
-          *(buf + off++) = 0x5c;
-        }
-        *(buf + off++) = *ptr++;
+	if (*ptr == ' '){
+	  *(buf + off++) = 0x5c;
+	}
+	*(buf + off++) = *ptr++;
       }
       sprintf(buf + off, " f.send_msg %ld", protocol);
     }
     return buf;
 }
 
-/*
+/* 
  * This callback proc is installed via setting the XmNinsertPosition
  * resource on a widget. It ensures that components added
  * to a widget are inserted in the correct z-order position
  * to match up with their peer/target ordering in Container.java
  */
-Cardinal
-awt_util_insertCallback(Widget w)
+Cardinal 
+awt_util_insertCallback(Widget w) 
 {
     jobject peer;
     WidgetList children;
@@ -846,13 +844,13 @@ awt_util_insertCallback(Widget w)
     if (userdata != NULL) {
         peer = (jobject) userdata;
 
-        // SECURITY: We are running on the privileged toolkit thread.
-        //           The peer must *NOT* call into user code
+	// SECURITY: We are running on the privileged toolkit thread.
+	//           The peer must *NOT* call into user code
         pos = (int32_t) JNU_CallMethodByName(env
-                                          ,NULL
-                                          ,(jobject) peer
-                                          ,"getZOrderPosition_NoClientCode"
-                                          ,"()I").i;
+					  ,NULL
+					  ,(jobject) peer
+					  ,"getZOrderPosition_NoClientCode"
+					  ,"()I").i;
         if ((*env)->ExceptionOccurred(env)) {
             (*env)->ExceptionDescribe(env);
             (*env)->ExceptionClear(env);
@@ -887,34 +885,34 @@ awtJNI_GetCurrentThread(JNIEnv *env) {
 
     jobject currentThread = NULL;
 
-    /* Initialize our java identifiers once. Checking before locking
+    /* Initialize our java identifiers once. Checking before locking 
      * is a huge performance win.
      */
     if (threadClass == NULL) {
-        // should enter a monitor here...
-        Boolean err = FALSE;
-        if (threadClass == NULL) {
-            jclass tc = (*env)->FindClass(env, "java/lang/Thread");
-            threadClass = (*env)->NewGlobalRef(env, tc);
-            if (threadClass != NULL) {
-                currentThreadMethodID = (*env)->GetStaticMethodID(env,
-                                              threadClass,
-                                              "currentThread",
-                                              "()Ljava/lang/Thread;"
-                                                );
-            }
-        }
-        if (currentThreadMethodID == NULL) {
-            threadClass = NULL;
-            err = TRUE;
-        }
-        if (err) {
-            return NULL;
-        }
+	// should enter a monitor here...
+	Boolean err = FALSE;
+	if (threadClass == NULL) {
+	    jclass tc = (*env)->FindClass(env, "java/lang/Thread");
+	    threadClass = (*env)->NewGlobalRef(env, tc);
+	    if (threadClass != NULL) {
+	        currentThreadMethodID = (*env)->GetStaticMethodID(env,
+					      threadClass,
+					      "currentThread",
+					      "()Ljava/lang/Thread;"
+		    				);
+	    }
+	}
+	if (currentThreadMethodID == NULL) {
+	    threadClass = NULL;
+	    err = TRUE;
+	}
+	if (err) {
+	    return NULL;
+	}
     } /* threadClass == NULL*/
 
     currentThread = (*env)->CallStaticObjectMethod(
-                        env, threadClass, currentThreadMethodID);
+			env, threadClass, currentThreadMethodID);
     DASSERT(!((*env)->ExceptionOccurred(env)));
     /*JNU_PrintString(env, "getCurrentThread() -> ", JNU_ToString(env,currentThread));*/
     return currentThread;
@@ -926,31 +924,31 @@ awtJNI_ThreadYield(JNIEnv *env) {
     static jclass threadClass = NULL;
     static jmethodID yieldMethodID = NULL;
 
-    /* Initialize our java identifiers once. Checking before locking
+    /* Initialize our java identifiers once. Checking before locking 
      * is a huge performance win.
      */
     if (threadClass == NULL) {
-        // should enter a monitor here...
-        Boolean err = FALSE;
-        if (threadClass == NULL) {
-            jclass tc = (*env)->FindClass(env, "java/lang/Thread");
-            threadClass = (*env)->NewGlobalRef(env, tc);
-            (*env)->DeleteLocalRef(env, tc);
-            if (threadClass != NULL) {
-                yieldMethodID = (*env)->GetStaticMethodID(env,
-                                              threadClass,
-                                              "yield",
-                                              "()V"
-                                                );
-            }
-        }
-        if (yieldMethodID == NULL) {
-            threadClass = NULL;
-            err = TRUE;
-        }
-        if (err) {
-            return;
-        }
+	// should enter a monitor here...
+	Boolean err = FALSE;
+	if (threadClass == NULL) {
+	    jclass tc = (*env)->FindClass(env, "java/lang/Thread");
+	    threadClass = (*env)->NewGlobalRef(env, tc);
+	    (*env)->DeleteLocalRef(env, tc);
+	    if (threadClass != NULL) {
+	        yieldMethodID = (*env)->GetStaticMethodID(env,
+					      threadClass,
+					      "yield",
+					      "()V"
+		    				);
+	    }
+	}
+	if (yieldMethodID == NULL) {
+	    threadClass = NULL;
+	    err = TRUE;
+	}
+	if (err) {
+	    return;
+	}
     } /* threadClass == NULL*/
 
     (*env)->CallStaticVoidMethod(env, threadClass, yieldMethodID);
@@ -976,22 +974,22 @@ isTimeStampUpdated(void* p) {
 }
 
 static void
-propertyChangeEventHandler(Widget w, XtPointer client_data,
-                           XEvent* event, Boolean* continue_to_dispatch) {
+propertyChangeEventHandler(Widget w, XtPointer client_data, 
+			   XEvent* event, Boolean* continue_to_dispatch) {
     timeStampUpdated = True;
 }
 
 /*
  * If the application doesn't receive events with timestamp for a long time
- * XtLastTimestampProcessed() will return out-of-date value. This may cause
+ * XtLastTimestampProcessed() will return out-of-date value. This may cause 
  * selection handling routines to fail (see BugTraq ID 4085183).
- * This routine is to resolve this problem. It queries the current X server
- * time by appending a zero-length data to a property as prescribed by
+ * This routine is to resolve this problem. It queries the current X server 
+ * time by appending a zero-length data to a property as prescribed by 
  * X11 Reference Manual.
- * Note that this is a round-trip request, so it can be slow. If you know
+ * Note that this is a round-trip request, so it can be slow. If you know 
  * that the Xt timestamp is up-to-date use XtLastTimestampProcessed().
  */
-Time
+Time 
 awt_util_getCurrentServerTime() {
 
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -1007,7 +1005,7 @@ awt_util_getCurrentServerTime() {
     }
 
     timeStampUpdated = False;
-    XChangeProperty(awt_display, XtWindow(awt_root_shell),
+    XChangeProperty(awt_display, XtWindow(awt_root_shell), 
                     _XA_JAVA_TIME_PROPERTY_ATOM, XA_ATOM, 32, PropModeAppend,
                     (unsigned char *)"", 0);
     XFlush(awt_display);
@@ -1026,9 +1024,9 @@ awt_util_getCurrentServerTime() {
     return server_time;
 }
 
-/*
- * This function is stolen from /src/solaris/hpi/src/system_md.c
- * It is used in setting the time in Java-level InputEvents
+/* 
+ * This function is stolen from /src/solaris/hpi/src/system_md.c 
+ * It is used in setting the time in Java-level InputEvents 
  */
 jlong
 awt_util_nowMillisUTC()
@@ -1062,7 +1060,7 @@ awt_util_nowMillisUTC_offset(Time server_offset)
         reset_time_utc = awt_util_nowMillisUTC() -
             awt_util_getCurrentServerTime();
     }
-
+    
     return reset_time_utc + server_offset;
 }
 
@@ -1182,7 +1180,7 @@ Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev)
     Boolean eventProcessed = False;
     switch (ev->type) {
     case FocusIn:
-    case FocusOut:
+    case FocusOut: 
         ef = theEmbeddedFrameList;
         while (ef != NULL) {
             if (ef->frameContainer == ev->xfocus.window) {
@@ -1191,7 +1189,7 @@ Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev)
                     return True;
                 }
                 // pretend that the embedded frame gets a focus event
-                // the event's window field is not the same as
+                // the event's window field is not the same as 
                 // the embeddedFrame's widget, but luckily the shellEH
                 // doesnt seem to care about this.
                 shellEH(ef->embeddedFrame, ef->javaRef, ev, &dummy);
@@ -1202,7 +1200,7 @@ Boolean awt_util_processEventForEmbeddedFrame(XEvent *ev)
     case ConfigureNotify:
         for (ef = theEmbeddedFrameList; ef != NULL; ef = ef->next) {
             awt_util_updateXtCoordinatesForEmbeddedFrame(ef->embeddedFrame);
-        }
+        }  
         return True;
     }
     return False;
@@ -1245,12 +1243,12 @@ void awt_util_addEmbeddedFrame(Widget embeddedFrame, jobject javaRef)
             return;
         }
         win = parent;
-        /*
+        /* 
          * Add StructureNotifyMask through hierarchy upto toplevel
-         */
+         */ 
         XGetWindowAttributes(awt_display, win, &win_attributes);
-        XSelectInput(awt_display, win, win_attributes.your_event_mask |
-                StructureNotifyMask);
+        XSelectInput(awt_display, win, win_attributes.your_event_mask | 
+		StructureNotifyMask);
 
         if (XGetWindowProperty(awt_display, win, WM_STATE,
                 0, 0, False, AnyPropertyType,
@@ -1361,15 +1359,15 @@ void awt_util_delEmbeddedFrame(Widget embeddedFrame)
         DTRACE_PRINTLN("remove event from frame");
         XGetWindowAttributes(awt_display, frameContainer, &win_attributes);
         XSelectInput(awt_display, frameContainer,
-            win_attributes.your_event_mask &
-                (~FocusChangeMask));
+            win_attributes.your_event_mask & 
+		(~FocusChangeMask));
     }
 }
 
 #endif /* XAWT */
 
 void awt_util_debug_init() {
-#if defined(DEBUG)
+#if defined(DEBUG)    
     DTrace_Initialize();
 #endif
 }
@@ -1379,3 +1377,8 @@ static void awt_util_debug_fini() {
     DTrace_Shutdown();
 #endif
 }
+
+
+
+
+

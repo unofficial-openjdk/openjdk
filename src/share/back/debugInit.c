@@ -57,11 +57,11 @@
 static jboolean vmInitialized;
 static jrawMonitorID initMonitor;
 static jboolean initComplete;
-static jbyte currentSessionID;
+static jbyte currentSessionID; 
 
 /*
  * Options set through the OnLoad options string. All of these values
- * are set once at VM startup and never reset.
+ * are set once at VM startup and never reset. 
  */
 static jboolean isServer = JNI_FALSE;     /* Listens for connecting debuggers? */
 static jboolean isStrict = JNI_FALSE;     /* Unused */
@@ -95,7 +95,7 @@ typedef struct TransportSpec {
  */
 static void JNICALL cbEarlyVMInit(jvmtiEnv*, JNIEnv *, jthread);
 static void JNICALL cbEarlyVMDeath(jvmtiEnv*, JNIEnv *);
-static void JNICALL cbEarlyException(jvmtiEnv*, JNIEnv *,
+static void JNICALL cbEarlyException(jvmtiEnv*, JNIEnv *, 
             jthread, jmethodID, jlocation, jobject, jmethodID, jlocation);
 
 static void initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei);
@@ -105,9 +105,9 @@ static jboolean parseOptions(char *str);
  * Phase 1: Initial load.
  *
  * OnLoad is called by the VM immediately after the back-end
- * library is loaded. We can do very little in this function since
+ * library is loaded. We can do very little in this function since 
  * the VM has not completed initialization. So, we parse the JDWP
- * options and set up a simple initial event callbacks for JVMTI events.
+ * options and set up a simple initial event callbacks for JVMTI events. 
  * When a triggering event occurs, that callback will begin debugger initialization.
  */
 
@@ -123,7 +123,7 @@ get_gdata(void)
 static jvmtiError
 set_event_notification(jvmtiEventMode mode, EventIndex ei)
 {
-    jvmtiError error;
+    jvmtiError error; 
     error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventNotificationMode)
                 (gdata->jvmti, mode, eventIndex2jvmti(ei), NULL);
     if (error != JVMTI_ERROR_NONE) {
@@ -157,10 +157,10 @@ compatible_versions(jint major_runtime,     jint minor_runtime,
 }
 
 /* OnLoad startup:
- *   Returning JNI_ERR will cause the java_g VM to core dump, be careful.
+ *   Returning JNI_ERR will cause the java_g VM to core dump, be careful. 
  */
-JNIEXPORT jint JNICALL
-Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
+JNIEXPORT jint JNICALL 
+Agent_OnLoad(JavaVM *vm, char *options, void *reserved) 
 {
     jvmtiError error;
     jvmtiCapabilities needed_capabilities;
@@ -180,7 +180,7 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
         ERROR_MESSAGE(("JDWP unable to load, VM died"));
         return JNI_ERR;
     }
-
+    
     /* Get global data area */
     gdata = get_gdata();
     if (gdata == NULL) {
@@ -209,10 +209,10 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     /* Get the JVMTI Env, IMPORTANT: Do this first! For jvmtiAllocate(). */
     error = JVM_FUNC_PTR(vm,GetEnv)
                 (vm, (void **)&(gdata->jvmti), JVMTI_VERSION_1);
-    if (error != JNI_OK) {
-        ERROR_MESSAGE(("JDWP unable to access JVMTI Version 1 (0x%x),"
+    if (error != JNI_OK) {   
+        ERROR_MESSAGE(("JDWP unable to access JVMTI Version 1 (0x%x)," 
                          " is your J2SE a 1.5 or newer version?"
-                         " JNIEnv's GetEnv() returned %d",
+                         " JNIEnv's GetEnv() returned %d", 
                          JVMTI_VERSION_1, error));
         forceExit(1); /* Kill entire process, no core dump */
     }
@@ -226,20 +226,20 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
                                         >> JVMTI_VERSION_SHIFT_MINOR;
     jvmtiCompileTimeMicroVersion  = ( JVMTI_VERSION & JVMTI_VERSION_MASK_MICRO )
                                         >> JVMTI_VERSION_SHIFT_MICRO;
-
+    
     /* Check for compatibility */
     if ( !compatible_versions(jvmtiMajorVersion(), jvmtiMinorVersion(),
                 jvmtiCompileTimeMajorVersion, jvmtiCompileTimeMinorVersion) ) {
-
+        
         ERROR_MESSAGE(("This jdwp native library will not work with this VM's "
                        "version of JVMTI (%d.%d.%d), it needs JVMTI %d.%d[.%d].",
-                       jvmtiMajorVersion(),
-                       jvmtiMinorVersion(),
+                       jvmtiMajorVersion(), 
+                       jvmtiMinorVersion(), 
                        jvmtiMicroVersion(),
-                       jvmtiCompileTimeMajorVersion,
+                       jvmtiCompileTimeMajorVersion, 
                        jvmtiCompileTimeMinorVersion,
                        jvmtiCompileTimeMicroVersion));
-
+        
         /* Do not let VM get a fatal error, we don't want a core dump here. */
         forceExit(1); /* Kill entire process, no core dump wanted */
     }
@@ -262,7 +262,7 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
                         jvmtiErrorText(error), error));
         return JNI_ERR;
     }
-
+    
     /* Fill in ones that we must have */
     (void)memset(&needed_capabilities,0,sizeof(needed_capabilities));
     needed_capabilities.can_access_local_variables              = 1;
@@ -277,31 +277,31 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     needed_capabilities.can_maintain_original_method_order      = 1;
     needed_capabilities.can_generate_monitor_events             = 1;
     needed_capabilities.can_tag_objects                         = 1;
-
-    /* And what potential ones that would be nice to have */
+   
+    /* And what potential ones that would be nice to have */ 
     needed_capabilities.can_force_early_return
                 = potential_capabilities.can_force_early_return;
-    needed_capabilities.can_generate_field_modification_events
+    needed_capabilities.can_generate_field_modification_events  
                 = potential_capabilities.can_generate_field_modification_events;
-    needed_capabilities.can_generate_field_access_events
+    needed_capabilities.can_generate_field_access_events        
                 = potential_capabilities.can_generate_field_access_events;
-    needed_capabilities.can_get_bytecodes
+    needed_capabilities.can_get_bytecodes                       
                 = potential_capabilities.can_get_bytecodes;
-    needed_capabilities.can_get_synthetic_attribute
+    needed_capabilities.can_get_synthetic_attribute             
                 = potential_capabilities.can_get_synthetic_attribute;
-    needed_capabilities.can_get_owned_monitor_info
+    needed_capabilities.can_get_owned_monitor_info              
                 = potential_capabilities.can_get_owned_monitor_info;
-    needed_capabilities.can_get_current_contended_monitor
+    needed_capabilities.can_get_current_contended_monitor       
                 = potential_capabilities.can_get_current_contended_monitor;
-    needed_capabilities.can_get_monitor_info
+    needed_capabilities.can_get_monitor_info                    
                 = potential_capabilities.can_get_monitor_info;
-    needed_capabilities.can_pop_frame
+    needed_capabilities.can_pop_frame                           
                 = potential_capabilities.can_pop_frame;
-    needed_capabilities.can_redefine_classes
+    needed_capabilities.can_redefine_classes                    
                 = potential_capabilities.can_redefine_classes;
-    needed_capabilities.can_redefine_any_class
+    needed_capabilities.can_redefine_any_class                  
                 = potential_capabilities.can_redefine_any_class;
-    needed_capabilities.can_get_owned_monitor_stack_depth_info
+    needed_capabilities.can_get_owned_monitor_stack_depth_info                  
         = potential_capabilities.can_get_owned_monitor_stack_depth_info;
     needed_capabilities.can_get_constant_pool
                 = potential_capabilities.can_get_constant_pool;
@@ -309,7 +309,7 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
         needed_capabilities.can_get_source_debug_extension      = 1;
         needed_capabilities.can_get_source_file_name            = 1;
         needed_capabilities.can_get_line_numbers                = 1;
-        needed_capabilities.can_signal_thread
+        needed_capabilities.can_signal_thread                   
                 = potential_capabilities.can_signal_thread;
     }
 
@@ -352,22 +352,22 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
                         jvmtiErrorText(error), error));
         return JNI_ERR;
     }
-
+    
     LOG_MISC(("OnLoad: DONE"));
     return JNI_OK;
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Agent_OnUnload(JavaVM *vm)
 {
-
+    
     gdata->isLoaded = JNI_FALSE;
 
     /* Cleanup, but make sure VM is alive before using JNI, and
      *   make sure JVMTI environment is ok before deallocating
      *   memory allocated through JVMTI, which all of it is.
      */
-
+    
     /*
      * Close transport before exit
      */
@@ -377,36 +377,36 @@ Agent_OnUnload(JavaVM *vm)
 }
 
 /*
- * Phase 2: Initial events. Phase 2 consists of waiting for the
- * event that triggers full initialization. Under normal circumstances
- * (initOnStartup == TRUE) this is the JVMTI_EVENT_VM_INIT event.
- * Otherwise, we delay initialization until the app throws a
- * particular exception. The triggering event invokes
- * the bulk of the initialization, including creation of threads and
+ * Phase 2: Initial events. Phase 2 consists of waiting for the 
+ * event that triggers full initialization. Under normal circumstances 
+ * (initOnStartup == TRUE) this is the JVMTI_EVENT_VM_INIT event. 
+ * Otherwise, we delay initialization until the app throws a 
+ * particular exception. The triggering event invokes 
+ * the bulk of the initialization, including creation of threads and 
  * monitors, transport setup, and installation of a new event callback which
  * handles the complete set of events.
  *
- * Since the triggering event comes in on an application thread, some of the
+ * Since the triggering event comes in on an application thread, some of the 
  * initialization is difficult to do here. Specifically, this thread along
  * with all other app threads may need to be suspended until a debugger
- * connects. These kinds of tasks are left to the third phase which is
+ * connects. These kinds of tasks are left to the third phase which is 
  * invoked by one of the spawned debugger threads, the event handler.
  */
 
 /*
- * Wait for a triggering event; then kick off debugger
- * initialization. A different event callback will be installed by
+ * Wait for a triggering event; then kick off debugger 
+ * initialization. A different event callback will be installed by 
  * debugger initialization, and this function will not be called
  * again.
  */
-
+    
     /*
-     * TO DO: Decide whether we need to protect this code with
+     * TO DO: Decide whether we need to protect this code with 
      * a lock. It might be too early to create a monitor safely (?).
      */
 
 static void JNICALL
-cbEarlyVMInit(jvmtiEnv *jvmti_env, JNIEnv *env, jthread thread)
+cbEarlyVMInit(jvmtiEnv *jvmti_env, JNIEnv *env, jthread thread) 
 {
     LOG_CB(("cbEarlyVMInit"));
     if ( gdata->vmDead ) {
@@ -422,9 +422,9 @@ static void
 disposeEnvironment(jvmtiEnv *jvmti_env)
 {
     jvmtiError error;
-
+    
     error = JVMTI_FUNC_PTR(jvmti_env,DisposeEnvironment)(jvmti_env);
-    if ( error == JVMTI_ERROR_MUST_POSSESS_CAPABILITY )
+    if ( error == JVMTI_ERROR_MUST_POSSESS_CAPABILITY ) 
         error = JVMTI_ERROR_NONE;  /* Hack!  FIXUP when JVMTI has disposeEnv */
     /* What should error return say? */
     if (error != JVMTI_ERROR_NONE) {
@@ -435,7 +435,7 @@ disposeEnvironment(jvmtiEnv *jvmti_env)
 }
 
 static void JNICALL
-cbEarlyVMDeath(jvmtiEnv *jvmti_env, JNIEnv *env)
+cbEarlyVMDeath(jvmtiEnv *jvmti_env, JNIEnv *env) 
 {
     LOG_CB(("cbEarlyVMDeath"));
     if ( gdata->vmDead ) {
@@ -449,16 +449,16 @@ cbEarlyVMDeath(jvmtiEnv *jvmti_env, JNIEnv *env)
 }
 
 static void JNICALL
-cbEarlyException(jvmtiEnv *jvmti_env, JNIEnv *env,
-        jthread thread, jmethodID method, jlocation location,
-        jobject exception,
+cbEarlyException(jvmtiEnv *jvmti_env, JNIEnv *env, 
+        jthread thread, jmethodID method, jlocation location, 
+        jobject exception, 
         jmethodID catch_method, jlocation catch_location)
 {
     jvmtiError error;
     jthrowable currentException;
 
     LOG_CB(("cbEarlyException: thread=%p", thread));
-
+    
     if ( gdata->vmDead ) {
         EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM dead at initial Exception event");
     }
@@ -471,22 +471,22 @@ cbEarlyException(jvmtiEnv *jvmti_env, JNIEnv *env,
      * We want to preserve any current exception that might get wiped
      * out during event handling (e.g. JNI calls). We have to rely on
      * space for the local reference on the current frame because
-     * doing a PushLocalFrame here might itself generate an exception.
+     * doing a PushLocalFrame here might itself generate an exception. 
      */
-
+    
     currentException = JNI_FUNC_PTR(env,ExceptionOccurred)(env);
     JNI_FUNC_PTR(env,ExceptionClear)(env);
 
     if (initOnUncaught && catch_method == NULL) {
-
+        
         LOG_MISC(("Initializing on uncaught exception"));
         initialize(env, thread, EI_EXCEPTION);
-
+    
     } else if (initOnException != NULL) {
-
+        
         jclass clazz;
-
-        /* Get class of exception thrown */
+ 
+        /* Get class of exception thrown */     
         clazz = JNI_FUNC_PTR(env,GetObjectClass)(env, exception);
         if ( clazz != NULL ) {
             char *signature = NULL;
@@ -494,20 +494,20 @@ cbEarlyException(jvmtiEnv *jvmti_env, JNIEnv *env,
             error = classSignature(clazz, &signature, NULL);
             LOG_MISC(("Checking specific exception: looking for %s, got %s",
                         initOnException, signature));
-            if ( (error==JVMTI_ERROR_NONE) &&
+            if ( (error==JVMTI_ERROR_NONE) && 
                 (strcmp(signature, initOnException) == 0)) {
                 LOG_MISC(("Initializing on specific exception"));
                 initialize(env, thread, EI_EXCEPTION);
             } else {
                 error = AGENT_ERROR_INTERNAL; /* Just to cause restore */
             }
-            if ( signature != NULL ) {
+	    if ( signature != NULL ) {
                 jvmtiDeallocate(signature);
-            }
+	    }
         } else {
             error = AGENT_ERROR_INTERNAL; /* Just to cause restore */
         }
-
+        
         /* If initialize didn't happen, we need to restore things */
         if ( error != JVMTI_ERROR_NONE ) {
             /*
@@ -520,9 +520,9 @@ cbEarlyException(jvmtiEnv *jvmti_env, JNIEnv *env,
                 JNI_FUNC_PTR(env,ExceptionClear)(env);
             }
         }
-
+    
     }
-
+    
     LOG_MISC(("END cbEarlyException"));
 
 }
@@ -534,7 +534,7 @@ typedef struct EnumerateArg {
 } EnumerateArg;
 
 static jboolean
-startTransport(void *item, void *arg)
+startTransport(void *item, void *arg) 
 {
     TransportSpec *transport = item;
     EnumerateArg *enumArg = arg;
@@ -554,7 +554,7 @@ startTransport(void *item, void *arg)
     }
 
     LOG_MISC(("End startTransport"));
-
+    
     return JNI_TRUE;   /* Always continue, even if there was an error */
 }
 
@@ -574,8 +574,8 @@ signalInitComplete(void)
 /*
  * Determine if  initialization is complete.
  */
-jboolean
-debugInit_isInitComplete(void)
+jboolean 
+debugInit_isInitComplete(void) 
 {
     return initComplete;
 }
@@ -583,8 +583,8 @@ debugInit_isInitComplete(void)
 /*
  * Wait for all initialization to complete.
  */
-void
-debugInit_waitInitComplete(void)
+void 
+debugInit_waitInitComplete(void) 
 {
     debugMonitorEnter(initMonitor);
     while (!initComplete) {
@@ -608,7 +608,7 @@ jniFatalError(JNIEnv *env, const char *msg, jvmtiError error, int exit_code)
 {
     JavaVM *vm;
     char buf[512];
-
+    
     gdata->vmDead = JNI_TRUE;
     if ( msg==NULL )
         msg = "UNKNOWN REASON";
@@ -637,9 +637,9 @@ jniFatalError(JNIEnv *env, const char *msg, jvmtiError error, int exit_code)
 
 /*
  * Initialize debugger back end modules
- */
-static void
-initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
+ */              
+static void 
+initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei) 
 {
     jvmtiError error;
     EnumerateArg arg;
@@ -652,7 +652,7 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
     if ( gdata->vmDead ) {
         EXIT_ERROR(AGENT_ERROR_INTERNAL,"VM dead at initialize() time");
     }
-
+    
     /* Turn off the initial JVMTI event notifications */
     error = set_event_notification(JVMTI_DISABLE, EI_EXCEPTION);
     if (error != JVMTI_ERROR_NONE) {
@@ -666,7 +666,7 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
     if (error != JVMTI_ERROR_NONE) {
         EXIT_ERROR(error, "unable to disable JVMTI event notification");
     }
-
+    
     /* Remove initial event callbacks */
     (void)memset(&(gdata->callbacks),0,sizeof(gdata->callbacks));
     error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventCallbacks)
@@ -698,12 +698,12 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
     (void)bagEnumerateOver(transports, startTransport, &arg);
 
     /*
-     * Exit with an error only if
+     * Exit with an error only if 
      * 1) none of the transports was successfully started, and
      * 2) the application has not yet started running
      */
-    if ((arg.error != JDWP_ERROR(NONE)) &&
-        (arg.startCount == 0) &&
+    if ((arg.error != JDWP_ERROR(NONE)) && 
+        (arg.startCount == 0) && 
         initOnStartup) {
         EXIT_ERROR(map2jvmtiError(arg.error), "No transports initialized");
     }
@@ -713,18 +713,18 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
     signalInitComplete();
 
     transport_waitForConnection();
-
-    suspendPolicy = suspendOnInit ? JDWP_SUSPEND_POLICY(ALL)
+    
+    suspendPolicy = suspendOnInit ? JDWP_SUSPEND_POLICY(ALL) 
                                   : JDWP_SUSPEND_POLICY(NONE);
     if (triggering_ei == EI_VM_INIT) {
         LOG_MISC(("triggering_ei == EI_VM_INIT"));
         eventHelper_reportVMInit(env, currentSessionID, thread, suspendPolicy);
     } else {
         /*
-         * TO DO: Kludgy way of getting the triggering event to the
-         * just-attached debugger. It would be nice to make this a little
-         * cleaner. There is also a race condition where other events
-         * can get in the queue (from other not-yet-suspended threads)
+         * TO DO: Kludgy way of getting the triggering event to the 
+         * just-attached debugger. It would be nice to make this a little 
+         * cleaner. There is also a race condition where other events 
+         * can get in the queue (from other not-yet-suspended threads) 
          * before this one does. (Also need to handle allocation error below?)
          */
         EventInfo info;
@@ -748,13 +748,13 @@ initialize(JNIEnv *env, jthread thread, EventIndex triggering_ei)
  * Restore all static data to the initialized state so that another
  * debugger can connect properly later.
  */
-void
+void 
 debugInit_reset(JNIEnv *env)
 {
     EnumerateArg arg;
 
     LOG_MISC(("debugInit_reset() beginning"));
-
+    
     currentSessionID++;
     initComplete = JNI_FALSE;
 
@@ -770,7 +770,7 @@ debugInit_reset(JNIEnv *env)
 
     /*
      * If this is a server, we are now ready to accept another connection.
-     * If it's a client, then we've cleaned up some (more should be added
+     * If it's a client, then we've cleaned up some (more should be added 
      * later) and we're done.
      */
     if (isServer) {
@@ -778,9 +778,9 @@ debugInit_reset(JNIEnv *env)
         arg.error = JDWP_ERROR(NONE);
         arg.startCount = 0;
         (void)bagEnumerateOver(transports, startTransport, &arg);
-
+        
         signalInitComplete();
-
+        
         transport_waitForConnection();
     } else {
         signalInitComplete(); /* Why? */
@@ -806,7 +806,7 @@ debugInit_suspendOnInit(void)
  * code below is shamelessly swiped from hprof.
  */
 
-static int
+static int 
 get_tok(char **src, char *buf, int buflen, char sep)
 {
     int i;
@@ -826,14 +826,14 @@ get_tok(char **src, char *buf, int buflen, char sep)
     return 0;
 }
 
-static void
+static void 
 printUsage(void)
 {
      TTY_MESSAGE((
  "               Java Debugger JDWP Agent Library\n"
  "               --------------------------------\n"
  "\n"
- "  (see http://java.sun.com/products/jpda for more information)\n"
+ "  (see http://java.sun.com/products/jpda for more information)\n" 
  "\n"
  "jdwp usage: java " AGENTLIB "=[help]|[<option>=<value>, ...]\n"
  "\n"
@@ -874,7 +874,7 @@ printUsage(void)
     ));
 
 #ifdef DEBUG
-
+     
      TTY_MESSAGE((
  "\n"
  "Debugging Options            Description                       Default\n"
@@ -906,7 +906,7 @@ printUsage(void)
     ));
 
 #endif
-
+ 
 
 
 }
@@ -916,7 +916,7 @@ static jboolean checkAddress(void *bagItem, void *arg)
     TransportSpec *spec = (TransportSpec *)bagItem;
     if (spec->address == NULL) {
         ERROR_MESSAGE(("JDWP Non-server transport %s must have a connection "
-                "address specified through the 'address=' option",
+                "address specified through the 'address=' option", 
                 spec->name));
         return JNI_FALSE;
     } else {
@@ -974,7 +974,7 @@ atexit_finish_logging(void)
     finish_logging(0);  /* Only first call matters */
 }
 
-static jboolean
+static jboolean 
 parseOptions(char *options)
 {
     TransportSpec *currentTransport = NULL;
@@ -988,7 +988,7 @@ parseOptions(char *options)
     gdata->assertOn     = DEFAULT_ASSERT_ON;
     gdata->assertFatal  = DEFAULT_ASSERT_FATAL;
     logfile             = DEFAULT_LOGFILE;
-
+   
     /* Options being NULL will end up being an error. */
     if (options == NULL) {
         options = "";
@@ -1003,7 +1003,7 @@ parseOptions(char *options)
     /* These buffers are never freed */
     {
         char *envOptions;
-
+    
         /*
          * Add environmentally specified options.
          */
@@ -1021,21 +1021,21 @@ parseOptions(char *options)
          * Also keep a copy of the options in gdata->options.
          */
         length = (int)strlen(options);
-        gdata->options = jvmtiAllocate(length + 1);
+        gdata->options = jvmtiAllocate(length + 1); 
         if (gdata->options == NULL) {
             EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"options");
         }
         (void)strcpy(gdata->options, options);
-        names = jvmtiAllocate(length + 1);
+        names = jvmtiAllocate(length + 1); 
         if (names == NULL) {
             EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"options");
         }
-
+    
         transports = bagCreateBag(sizeof(TransportSpec), 3);
         if (transports == NULL) {
             EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"transports");
         }
-
+    
     }
 
     current = names;
@@ -1173,7 +1173,7 @@ parseOptions(char *options)
             if ( !get_boolean(&str, &isStrict) ) {
                 goto syntax_error;
             }
-        } else if ( strcmp(buf, "quiet")==0 ) {
+        } else if ( strcmp(buf, "quiet")==0 ) { 
             if ( !get_boolean(&str, &(gdata->quiet)) ) {
                 goto syntax_error;
             }
@@ -1199,7 +1199,7 @@ parseOptions(char *options)
         setup_logging(logfile, logflags);
         (void)atexit(&atexit_finish_logging);
     }
-
+    
     if (bagSize(transports) == 0) {
         errmsg = "no transport specified";
         goto bad_option_with_errmsg;
@@ -1245,11 +1245,11 @@ parseOptions(char *options)
 syntax_error:
     ERROR_MESSAGE(("JDWP option syntax error: %s=%s", AGENTLIB, options));
     return JNI_FALSE;
-
+   
 bad_option_with_errmsg:
     ERROR_MESSAGE(("JDWP %s: %s=%s", errmsg, AGENTLIB, options));
     return JNI_FALSE;
-
+    
 bad_option_no_msg:
     ERROR_MESSAGE(("JDWP %s: %s=%s", "invalid option", AGENTLIB, options));
     return JNI_FALSE;
@@ -1276,7 +1276,7 @@ debugInit_exit(jvmtiError error, const char *msg)
     LOG_MISC(("Exiting with error %s(%d): %s", jvmtiErrorText(error), error, msg));
 
     gdata->vmDead = JNI_TRUE;
-
+    
     /* Let's try and cleanup the JVMTI, if we even have one */
     if ( gdata->jvmti != NULL ) {
         /* Dispose of jvmti (gdata->jvmti becomes NULL) */
@@ -1285,7 +1285,7 @@ debugInit_exit(jvmtiError error, const char *msg)
 
     /* Finish up logging. We reach here if JDWP is doing the exiting. */
     finish_logging(exit_code);  /* Only first call matters */
-
+    
     /* Let's give the JNI a FatalError if non-exit 0, which is historic way */
     if ( exit_code != 0 ) {
         JNIEnv *env = NULL;

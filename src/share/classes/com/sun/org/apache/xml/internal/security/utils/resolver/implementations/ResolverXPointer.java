@@ -49,7 +49,7 @@ import org.w3c.dom.Node;
 public class ResolverXPointer extends ResourceResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                             ResolverXPointer.class.getName());
 
@@ -62,10 +62,10 @@ public class ResolverXPointer extends ResourceResolverSpi {
       Node resultNode = null;
       Document doc = uri.getOwnerElement().getOwnerDocument();
 
-        String uriStr=uri.getNodeValue();
+      	String uriStr=uri.getNodeValue();
          if (isXPointerSlash(uriStr)) {
             resultNode = doc;
-
+               
          } else if (isXPointerId(uriStr)) {
             String id = getXPointerId(uriStr);
             resultNode =IdResolver.getElementById(doc, id);
@@ -84,15 +84,15 @@ public class ResolverXPointer extends ResourceResolverSpi {
                   .selectNodeList(selectedElem, Canonicalizer
                      .XPATH_C14N_WITH_COMMENTS_SINGLE_NODE);*/
          }
-
+      
 
       XMLSignatureInput result = new XMLSignatureInput(resultNode);
 
       result.setMIMEType("text/xml");
       if (BaseURI != null && BaseURI.length() > 0) {
-          result.setSourceURI(BaseURI.concat(uri.getNodeValue()));
+	  result.setSourceURI(BaseURI.concat(uri.getNodeValue()));      
       } else {
-          result.setSourceURI(uri.getNodeValue());
+	  result.setSourceURI(uri.getNodeValue());      
       }
 
       return result;
@@ -106,7 +106,7 @@ public class ResolverXPointer extends ResourceResolverSpi {
       if (uri == null) {
          return false;
       }
-          String uriStr =uri.getNodeValue();
+	  String uriStr =uri.getNodeValue();
       if (isXPointerSlash(uriStr) || isXPointerId(uriStr)) {
          return true;
       }
@@ -129,7 +129,7 @@ public class ResolverXPointer extends ResourceResolverSpi {
       return false;
    }
 
-
+   
    private static final String XP="#xpointer(id(";
    private static final int XP_LENGTH=XP.length();
    /**
@@ -140,7 +140,7 @@ public class ResolverXPointer extends ResourceResolverSpi {
     *
     */
    private static boolean isXPointerId(String uri) {
-
+      
 
       if (uri.startsWith(XP)
               && uri.endsWith("))")) {
@@ -149,13 +149,13 @@ public class ResolverXPointer extends ResourceResolverSpi {
                                                      - 2);
 
          // if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "idPlusDelim=" + idPlusDelim);
-                 int idLen=idPlusDelim.length() -1;
+		 int idLen=idPlusDelim.length() -1;
          if (((idPlusDelim.charAt(0) == '"') && (idPlusDelim
                  .charAt(idLen) == '"')) || ((idPlusDelim
                  .charAt(0) == '\'') && (idPlusDelim
                  .charAt(idLen) == '\''))) {
             if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Id="
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Id="
                       + idPlusDelim.substring(1, idLen));
 
             return true;
@@ -178,7 +178,7 @@ public class ResolverXPointer extends ResourceResolverSpi {
               && uri.endsWith("))")) {
          String idPlusDelim = uri.substring(XP_LENGTH,uri.length()
                                                      - 2);
-                 int idLen=idPlusDelim.length() -1;
+		 int idLen=idPlusDelim.length() -1;
          if (((idPlusDelim.charAt(0) == '"') && (idPlusDelim
                  .charAt(idLen) == '"')) || ((idPlusDelim
                  .charAt(0) == '\'') && (idPlusDelim

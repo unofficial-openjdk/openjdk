@@ -32,7 +32,7 @@ import java.awt.geom.Rectangle2D;
 /**
  * A class to perform rendering of the glyphs.
  * This can be implemented to be stateless, or
- * to hold some information as a cache to
+ * to hold some information as a cache to 
  * facilitate faster rendering and model/view
  * translation.  At a minimum, the GlyphPainter
  * allows a View implementation to perform its
@@ -41,24 +41,25 @@ import java.awt.geom.Rectangle2D;
  * shaping for i18n, etc).
  * <p>
  * This implementation is intended for operation
- * under the JDK.  It uses the
+ * under the JDK.  It uses the 
  * java.awt.font.TextLayout class to do i18n capable
  * rendering.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  * @see GlyphView
  */
 class GlyphPainter2 extends GlyphView.GlyphPainter {
 
     public GlyphPainter2(TextLayout layout) {
-        this.layout = layout;
+	this.layout = layout;
     }
 
     /**
-     * Create a painter to use for the given GlyphView.
+     * Create a painter to use for the given GlyphView.  
      */
     public GlyphView.GlyphPainter getPainter(GlyphView v, int p0, int p1) {
-        return null;
+	return null;
     }
 
     /**
@@ -67,27 +68,27 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
      * has no tabs (i.e. TextLayout doesn't deal with tab
      * expansion).
      */
-    public float getSpan(GlyphView v, int p0, int p1,
-                         TabExpander e, float x) {
+    public float getSpan(GlyphView v, int p0, int p1, 
+			 TabExpander e, float x) {
 
-        if ((p0 == v.getStartOffset()) && (p1 == v.getEndOffset())) {
-            return layout.getAdvance();
-        }
-        int p = v.getStartOffset();
-        int index0 = p0 - p;
-        int index1 = p1 - p;
+	if ((p0 == v.getStartOffset()) && (p1 == v.getEndOffset())) {
+	    return layout.getAdvance();
+	}
+	int p = v.getStartOffset();
+	int index0 = p0 - p;
+	int index1 = p1 - p;
 
-        TextHitInfo hit0 = TextHitInfo.afterOffset(index0);
-        TextHitInfo hit1 = TextHitInfo.beforeOffset(index1);
-        float[] locs = layout.getCaretInfo(hit0);
-        float x0 = locs[0];
-        locs = layout.getCaretInfo(hit1);
-        float x1 = locs[0];
-        return (x1 > x0) ? x1 - x0 : x0 - x1;
+	TextHitInfo hit0 = TextHitInfo.afterOffset(index0);
+	TextHitInfo hit1 = TextHitInfo.beforeOffset(index1);
+	float[] locs = layout.getCaretInfo(hit0);
+	float x0 = locs[0];
+	locs = layout.getCaretInfo(hit1);
+	float x1 = locs[0];
+	return (x1 > x0) ? x1 - x0 : x0 - x1;
     }
 
     public float getHeight(GlyphView v) {
-        return layout.getAscent() + layout.getDescent() + layout.getLeading();
+	return layout.getAscent() + layout.getDescent() + layout.getLeading();
     }
 
     /**
@@ -95,7 +96,7 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
      * corresponding to the given range in the model.
      */
     public float getAscent(GlyphView v) {
-        return layout.getAscent();
+	return layout.getAscent();
     }
 
     /**
@@ -103,7 +104,7 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
      * corresponding to the given range in the model.
      */
     public float getDescent(GlyphView v) {
-        return layout.getDescent();
+	return layout.getDescent();
     }
 
     /**
@@ -113,11 +114,11 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
      * running on the JDK).
      */
     public void paint(GlyphView v, Graphics g, Shape a, int p0, int p1) {
-        if (g instanceof Graphics2D) {
-            Rectangle2D alloc = a.getBounds2D();
-            Graphics2D g2d = (Graphics2D)g;
-            float y = (float) alloc.getY() + layout.getAscent() + layout.getLeading();
-            float x = (float) alloc.getX();
+	if (g instanceof Graphics2D) {
+	    Rectangle2D alloc = a.getBounds2D();
+	    Graphics2D g2d = (Graphics2D)g;
+	    float y = (float) alloc.getY() + layout.getAscent() + layout.getLeading();
+	    float x = (float) alloc.getX();
             if( p0 > v.getStartOffset() || p1 < v.getEndOffset() ) {
                 try {
                     //TextLayout can't render only part of it's range, so if a
@@ -132,21 +133,21 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
             } else {
                 layout.draw(g2d, x, y);
             }
-        }
+	}
     }
 
     public Shape modelToView(GlyphView v, int pos, Position.Bias bias,
-                             Shape a) throws BadLocationException {
-        int offs = pos - v.getStartOffset();
-        Rectangle2D alloc = a.getBounds2D();
-        TextHitInfo hit = (bias == Position.Bias.Forward) ?
-            TextHitInfo.afterOffset(offs) : TextHitInfo.beforeOffset(offs);
-        float[] locs = layout.getCaretInfo(hit);
+			     Shape a) throws BadLocationException {
+	int offs = pos - v.getStartOffset();
+	Rectangle2D alloc = a.getBounds2D();
+	TextHitInfo hit = (bias == Position.Bias.Forward) ? 
+	    TextHitInfo.afterOffset(offs) : TextHitInfo.beforeOffset(offs);
+	float[] locs = layout.getCaretInfo(hit);
 
-        // vertical at the baseline, should use slope and check if glyphs
-        // are being rendered vertically.
-        alloc.setRect(alloc.getX() + locs[0], alloc.getY(), 1, alloc.getHeight());
-        return alloc;
+	// vertical at the baseline, should use slope and check if glyphs
+	// are being rendered vertically.
+	alloc.setRect(alloc.getX() + locs[0], alloc.getY(), 1, alloc.getHeight());
+	return alloc;
     }
 
     /**
@@ -164,22 +165,22 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
      *  given point of view
      * @see View#viewToModel
      */
-    public int viewToModel(GlyphView v, float x, float y, Shape a,
-                           Position.Bias[] biasReturn) {
+    public int viewToModel(GlyphView v, float x, float y, Shape a, 
+			   Position.Bias[] biasReturn) {
 
-        Rectangle2D alloc = (a instanceof Rectangle2D) ? (Rectangle2D)a : a.getBounds2D();
+	Rectangle2D alloc = (a instanceof Rectangle2D) ? (Rectangle2D)a : a.getBounds2D();
         //Move the y co-ord of the hit onto the baseline.  This is because TextLayout supports
         //italic carets and we do not.
-        TextHitInfo hit = layout.hitTestChar(x - (float)alloc.getX(), 0);
-        int pos = hit.getInsertionIndex();
-        biasReturn[0] = hit.isLeadingEdge() ? Position.Bias.Forward : Position.Bias.Backward;
-        return pos + v.getStartOffset();
+	TextHitInfo hit = layout.hitTestChar(x - (float)alloc.getX(), 0);
+	int pos = hit.getInsertionIndex();
+	biasReturn[0] = hit.isLeadingEdge() ? Position.Bias.Forward : Position.Bias.Backward;
+	return pos + v.getStartOffset();
     }
 
     /**
      * Determines the model location that represents the
      * maximum advance that fits within the given span.
-     * This could be used to break the given view.  The result
+     * This could be used to break the given view.  The result 
      * should be a location just shy of the given advance.  This
      * differs from viewToModel which returns the closest
      * position which might be proud of the maximum advance.
@@ -191,7 +192,7 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
      *  broken view would occupy >= 0.  This may be useful for
      *  things like tab calculations.
      * @param len specifies the distance into the view
-     *  where a potential break is desired >= 0.
+     *  where a potential break is desired >= 0.  
      * @return the maximum model location possible for a break.
      * @see View#breakView
      */
@@ -208,58 +209,58 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
         }
         return v.getStartOffset() + hit.getCharIndex();
     }
-
+    
     /**
-         * Provides a way to determine the next visually represented model
-         * location that one might place a caret.  Some views may not be
-         * visible, they might not be in the same order found in the model, or
-         * they just might not allow access to some of the locations in the
-         * model.
-         *
-         * @param v the view to use
-         * @param pos the position to convert >= 0
-         * @param a the allocated region to render into
-         * @param direction the direction from the current position that can
-         *  be thought of as the arrow keys typically found on a keyboard.
-         *  This may be SwingConstants.WEST, SwingConstants.EAST,
-         *  SwingConstants.NORTH, or SwingConstants.SOUTH.
-         * @return the location within the model that best represents the next
-         *  location visual position.
-         * @exception BadLocationException
-         * @exception IllegalArgumentException for an invalid direction
-         */
-        public int getNextVisualPositionFrom(GlyphView v, int pos,
-                                             Position.Bias b, Shape a,
-                                             int direction,
-                                             Position.Bias[] biasRet)
-            throws BadLocationException {
+	 * Provides a way to determine the next visually represented model
+	 * location that one might place a caret.  Some views may not be
+	 * visible, they might not be in the same order found in the model, or
+	 * they just might not allow access to some of the locations in the
+	 * model.
+	 *
+	 * @param v the view to use
+	 * @param pos the position to convert >= 0
+	 * @param a the allocated region to render into
+	 * @param direction the direction from the current position that can
+	 *  be thought of as the arrow keys typically found on a keyboard.
+	 *  This may be SwingConstants.WEST, SwingConstants.EAST, 
+	 *  SwingConstants.NORTH, or SwingConstants.SOUTH.  
+	 * @return the location within the model that best represents the next
+	 *  location visual position.
+	 * @exception BadLocationException
+	 * @exception IllegalArgumentException for an invalid direction
+	 */
+        public int getNextVisualPositionFrom(GlyphView v, int pos, 
+                                             Position.Bias b, Shape a, 
+					     int direction,
+					     Position.Bias[] biasRet) 
+	    throws BadLocationException {
 
-            int startOffset = v.getStartOffset();
-            int endOffset = v.getEndOffset();
-            Segment text;
+	    int startOffset = v.getStartOffset();
+	    int endOffset = v.getEndOffset();
+	    Segment text;
             AbstractDocument doc;
             boolean viewIsLeftToRight;
             TextHitInfo currentHit, nextHit;
-
-            switch (direction) {
-            case View.NORTH:
-                break;
-            case View.SOUTH:
-                break;
-            case View.EAST:
+	    
+	    switch (direction) {
+	    case View.NORTH:
+		break;
+	    case View.SOUTH:
+		break;
+	    case View.EAST:
                 doc = (AbstractDocument)v.getDocument();
                 viewIsLeftToRight = doc.isLeftToRight(startOffset, endOffset);
-
-                if(startOffset == doc.getLength()) {
-                    if(pos == -1) {
-                        biasRet[0] = Position.Bias.Forward;
-                        return startOffset;
-                    }
-                    // End case for bidi text where newline is at beginning
-                    // of line.
-                    return -1;
-                }
-                if(pos == -1) {
+                
+		if(startOffset == doc.getLength()) {
+		    if(pos == -1) {
+			biasRet[0] = Position.Bias.Forward;
+			return startOffset;
+		    }
+		    // End case for bidi text where newline is at beginning
+		    // of line.
+		    return -1;
+		}
+		if(pos == -1) {
                     // Entering view from the left.
                     if( viewIsLeftToRight ) {
                         biasRet[0] = Position.Bias.Forward;
@@ -275,7 +276,7 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
                         biasRet[0] = Position.Bias.Backward;
                         return endOffset;
                     }
-                }
+		}
                 if( b==Position.Bias.Forward )
                     currentHit = TextHitInfo.afterOffset(pos-startOffset);
                 else
@@ -287,40 +288,40 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
                 if( viewIsLeftToRight != layout.isLeftToRight() ) {
                     // If the layout's base direction is different from
                     // this view's run direction, we need to use the weak
-                    // carrat.
+                    // carrat. 
                     nextHit = layout.getVisualOtherHit(nextHit);
                 }
                 pos = nextHit.getInsertionIndex() + startOffset;
-
-                if(pos == endOffset) {
+                
+		if(pos == endOffset) {
                     // A move to the right from an internal position will
                     // only take us to the endOffset in a left to right run.
-                    text = v.getText(endOffset - 1, endOffset);
+		    text = v.getText(endOffset - 1, endOffset);
                     char c = text.array[text.offset];
                     SegmentCache.releaseSharedSegment(text);
-                    if(c == '\n') {
-                        return -1;
-                    }
-                    biasRet[0] = Position.Bias.Backward;
-                }
-                else {
-                    biasRet[0] = Position.Bias.Forward;
-                }
-                return pos;
-            case View.WEST:
+		    if(c == '\n') {
+			return -1;
+		    }
+		    biasRet[0] = Position.Bias.Backward;
+		}
+		else {
+		    biasRet[0] = Position.Bias.Forward;
+		}
+		return pos;
+	    case View.WEST:
                 doc = (AbstractDocument)v.getDocument();
                 viewIsLeftToRight = doc.isLeftToRight(startOffset, endOffset);
-
-                if(startOffset == doc.getLength()) {
-                    if(pos == -1) {
-                        biasRet[0] = Position.Bias.Forward;
-                        return startOffset;
-                    }
-                    // End case for bidi text where newline is at beginning
-                    // of line.
-                    return -1;
-                }
-                if(pos == -1) {
+                
+		if(startOffset == doc.getLength()) {
+		    if(pos == -1) {
+			biasRet[0] = Position.Bias.Forward;
+			return startOffset;
+		    }
+		    // End case for bidi text where newline is at beginning
+		    // of line.
+		    return -1;
+		}
+		if(pos == -1) {
                     // Entering view from the right
                     if( viewIsLeftToRight ) {
                         text = v.getText(endOffset - 1, endOffset);
@@ -336,7 +337,7 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
                         biasRet[0] = Position.Bias.Forward;
                         return startOffset;
                    }
-                }
+		}
                 if( b==Position.Bias.Forward )
                     currentHit = TextHitInfo.afterOffset(pos-startOffset);
                 else
@@ -348,32 +349,32 @@ class GlyphPainter2 extends GlyphView.GlyphPainter {
                 if( viewIsLeftToRight != layout.isLeftToRight() ) {
                     // If the layout's base direction is different from
                     // this view's run direction, we need to use the weak
-                    // carrat.
+                    // carrat. 
                     nextHit = layout.getVisualOtherHit(nextHit);
                 }
                 pos = nextHit.getInsertionIndex() + startOffset;
 
-                if(pos == endOffset) {
+		if(pos == endOffset) {
                     // A move to the left from an internal position will
                     // only take us to the endOffset in a right to left run.
-                    text = v.getText(endOffset - 1, endOffset);
+		    text = v.getText(endOffset - 1, endOffset);
                     char c = text.array[text.offset];
                     SegmentCache.releaseSharedSegment(text);
-                    if(c == '\n') {
-                        return -1;
-                    }
-                    biasRet[0] = Position.Bias.Backward;
-                }
-                else {
-                    biasRet[0] = Position.Bias.Forward;
-                }
-                return pos;
-            default:
-                throw new IllegalArgumentException("Bad direction: " + direction);
-            }
-            return pos;
+		    if(c == '\n') {
+			return -1;
+		    }
+		    biasRet[0] = Position.Bias.Backward;
+		}
+		else {
+		    biasRet[0] = Position.Bias.Forward;
+		}
+		return pos;
+	    default:
+		throw new IllegalArgumentException("Bad direction: " + direction);
+	    }
+	    return pos;
 
-        }
+	}
     // --- variables ---------------------------------------------
 
     TextLayout layout;

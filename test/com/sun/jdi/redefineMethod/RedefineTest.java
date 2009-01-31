@@ -58,10 +58,10 @@ class RedefineTarg {
 public class RedefineTest extends TestScaffold {
     static int redefineRepeat = 1;
     int bpCnt = 0;
-
+   
     // isObsolete, linenumber, lv name, lv value, lv isArg
     String[] before = {
-    "+ 3",
+    "+ 3", 
     "+ 6 eights 888 T",
     "+ 11 rot 4 F",
     "+ 15",
@@ -70,7 +70,7 @@ public class RedefineTest extends TestScaffold {
     "+ 28",
     "+ 33" };
     String[] after = {
-    "+ 5",
+    "+ 5", 
     "O",
     "O",
     "+ 16",
@@ -79,14 +79,14 @@ public class RedefineTest extends TestScaffold {
     "O",
     "+ 34" };
     String[] shorter = {
-    "+ 5",
+    "+ 5", 
     "+ 9 eights 88 T",
     "+ 13",
     "+ 16",
     "+ 21 whoseArg 56 T parawham 12 F",
     "+ 25" };
     String[] refresh = {
-    "+ 5",
+    "+ 5", 
     "+ 9 eights 88 T",
     "+ 13",
     "+ 16",
@@ -95,7 +95,7 @@ public class RedefineTest extends TestScaffold {
     "+ 29",
     "+ 34" };
     int[] bps = {7, 12, 16, 21, 25, 30, 34};
-    String[][] bpPlaces = {
+    String[][] bpPlaces = { 
         {"+ 16"},
         {"+ 21 myArg 56 T paramy 12 F"},
         {"+ 25"},
@@ -116,8 +116,8 @@ public class RedefineTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        new RedefineTest(processArgs(args)).startTests();
+    public static void main(String[] args)	throws Exception {
+	new RedefineTest(processArgs(args)).startTests();
     }
 
 
@@ -197,13 +197,13 @@ public class RedefineTest extends TestScaffold {
                 List locals = frame.visibleVariables();
                 if (locals.size() != lvCnt) {
                         failure("FAIL: expected '" + lvCnt +
-                                "' locals were '" + locals.size() +
+                                "' locals were '" + locals.size() + 
                                 "' -- " + errInfo + "' -- " + locals);
                 }
-            }
+            }        
         }
     }
-
+                
 
     void doRedefine(String fileName) throws Exception {
         File phyl = new File(fileName);
@@ -231,8 +231,8 @@ public class RedefineTest extends TestScaffold {
 
     void setBP(int line) {
         try {
-            Location loc = findLocation(findReferenceType("RedefineSubTarg"), line);
-            final BreakpointRequest request =
+            Location loc = findLocation(findReferenceType("RedefineSubTarg"), line); 
+            final BreakpointRequest request = 
                 eventRequestManager().createBreakpointRequest(loc);
             request.enable();
         } catch (Exception exc) {
@@ -281,7 +281,7 @@ public class RedefineTest extends TestScaffold {
         if (bpCnt != bpPlaces.length) {
             failure("FAIL: Wrong number of breakpoints encountered: " + bpCnt);
         }
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

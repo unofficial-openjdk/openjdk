@@ -46,6 +46,7 @@ import java.security.NoSuchAlgorithmException;
  * object should be seeded, using
  * <a href="#engineSetSeed(byte[])">engineSetSeed</a>.
  *
+ * @version %I%, %G%
  * @author Benjamin Renaud
  * @author Josh Bloch
  * @author Gadi Guy
@@ -81,7 +82,7 @@ implements java.io.Serializable {
      * seed bits.
      */
     public SecureRandom() {
-        init(null);
+	init(null);
     }
 
     /**
@@ -91,7 +92,7 @@ implements java.io.Serializable {
      * @param seed the seed.
      */
     private SecureRandom(byte seed[]) {
-        init(seed);
+	init(seed);
     }
 
     /**
@@ -99,15 +100,15 @@ implements java.io.Serializable {
      * and sets the seed, if given.
      */
     private void init(byte[] seed) {
-        try {
-            digest = MessageDigest.getInstance ("SHA");
-        } catch (NoSuchAlgorithmException e) {
-            throw new InternalError("internal error: SHA-1 not available.");
-        }
+	try {
+    	    digest = MessageDigest.getInstance ("SHA");
+    	} catch (NoSuchAlgorithmException e) {
+    	    throw new InternalError("internal error: SHA-1 not available.");
+	}
 
-        if (seed != null) {
-           engineSetSeed(seed);
-        }
+	if (seed != null) {
+	   engineSetSeed(seed);
+	}
     }
 
     /**
@@ -127,9 +128,9 @@ implements java.io.Serializable {
      * @return the seed bytes.
      */
     public byte[] engineGenerateSeed(int numBytes) {
-        byte[] b = new byte[numBytes];
-        SeedGenerator.generateSeed(b);
-        return b;
+	byte[] b = new byte[numBytes];
+	SeedGenerator.generateSeed(b);
+	return b;
     }
 
     /**
@@ -140,36 +141,36 @@ implements java.io.Serializable {
      * @param seed the seed.
      */
     synchronized public void engineSetSeed(byte[] seed) {
-        if (state != null) {
-            digest.update(state);
-            for (int i = 0; i < state.length; i++)
-                state[i] = 0;
-        }
-        state = digest.digest(seed);
+    	if (state != null) {
+    	    digest.update(state);
+	    for (int i = 0; i < state.length; i++)
+		state[i] = 0;
+    	}
+    	state = digest.digest(seed);
     }
 
     private static void updateState(byte[] state, byte[] output) {
-        int last = 1;
-        int v = 0;
-        byte t = 0;
-        boolean zf = false;
+	int last = 1;
+	int v = 0;
+	byte t = 0;
+	boolean zf = false;
 
-        // state(n + 1) = (state(n) + output(n) + 1) % 2^160;
-        for (int i = 0; i < state.length; i++) {
-            // Add two bytes
-            v = (int)state[i] + (int)output[i] + last;
-            // Result is lower 8 bits
-            t = (byte)v;
-            // Store result. Check for state collision.
-            zf = zf | (state[i] != t);
-            state[i] = t;
-            // High 8 bits are carry. Store for next iteration.
-            last = v >> 8;
-        }
+	// state(n + 1) = (state(n) + output(n) + 1) % 2^160;
+	for (int i = 0; i < state.length; i++) {
+	    // Add two bytes
+	    v = (int)state[i] + (int)output[i] + last;
+	    // Result is lower 8 bits
+	    t = (byte)v;
+	    // Store result. Check for state collision.
+	    zf = zf | (state[i] != t);
+	    state[i] = t;
+	    // High 8 bits are carry. Store for next iteration.
+	    last = v >> 8;
+	}
 
-        // Make sure at least one bit changes!
-        if (!zf)
-           state[0]++;
+	// Make sure at least one bit changes!
+	if (!zf)
+	   state[0]++;
     }
 
     /**
@@ -178,57 +179,57 @@ implements java.io.Serializable {
      * @param bytes the array to be filled in with random bytes.
      */
     public synchronized void engineNextBytes(byte[] result) {
-        int index = 0;
-        int todo;
-        byte[] output = remainder;
+	int index = 0;
+	int todo;
+	byte[] output = remainder;
 
-        if (state == null) {
-            if (seeder == null) {
-                seeder = new SecureRandom(SeedGenerator.getSystemEntropy());
-                seeder.engineSetSeed(engineGenerateSeed(DIGEST_SIZE));
-            }
+	if (state == null) {
+	    if (seeder == null) {
+		seeder = new SecureRandom(SeedGenerator.getSystemEntropy());
+		seeder.engineSetSeed(engineGenerateSeed(DIGEST_SIZE));
+	    }
 
-            byte[] seed = new byte[DIGEST_SIZE];
-            seeder.engineNextBytes(seed);
-            state = digest.digest(seed);
-        }
+	    byte[] seed = new byte[DIGEST_SIZE];
+	    seeder.engineNextBytes(seed);
+	    state = digest.digest(seed);
+	}
 
-        // Use remainder from last time
-        int r = remCount;
-        if (r > 0) {
-            // How many bytes?
-            todo = (result.length - index) < (DIGEST_SIZE - r) ?
-                        (result.length - index) : (DIGEST_SIZE - r);
-            // Copy the bytes, zero the buffer
-            for (int i = 0; i < todo; i++) {
-                result[i] = output[r];
-                output[r++] = 0;
-            }
-            remCount += todo;
-            index += todo;
-        }
+	// Use remainder from last time
+	int r = remCount;
+	if (r > 0) {
+	    // How many bytes?
+	    todo = (result.length - index) < (DIGEST_SIZE - r) ?
+			(result.length - index) : (DIGEST_SIZE - r);
+	    // Copy the bytes, zero the buffer
+	    for (int i = 0; i < todo; i++) {
+		result[i] = output[r];
+		output[r++] = 0;
+	    }
+	    remCount += todo;
+	    index += todo;
+	}
 
-        // If we need more bytes, make them.
-        while (index < result.length) {
-            // Step the state
-            digest.update(state);
-            output = digest.digest();
-            updateState(state, output);
+	// If we need more bytes, make them.
+	while (index < result.length) {
+	    // Step the state
+	    digest.update(state);
+	    output = digest.digest();
+	    updateState(state, output);
 
-            // How many bytes?
-            todo = (result.length - index) > DIGEST_SIZE ?
-                DIGEST_SIZE : result.length - index;
-            // Copy the bytes, zero the buffer
-            for (int i = 0; i < todo; i++) {
-                result[index++] = output[i];
-                output[i] = 0;
-            }
-            remCount += todo;
-        }
+	    // How many bytes?
+	    todo = (result.length - index) > DIGEST_SIZE ?
+		DIGEST_SIZE : result.length - index;
+	    // Copy the bytes, zero the buffer
+	    for (int i = 0; i < todo; i++) {
+		result[index++] = output[i];
+		output[i] = 0;
+	    }
+	    remCount += todo;
+	}
 
-        // Store remainder for next time
-        remainder = output;
-        remCount %= DIGEST_SIZE;
+	// Store remainder for next time
+	remainder = output;
+	remCount %= DIGEST_SIZE;
     }
 
     /*
@@ -242,14 +243,14 @@ implements java.io.Serializable {
      * random object, using engineSetSeed().
      */
     private void readObject(java.io.ObjectInputStream s)
-        throws IOException, ClassNotFoundException {
+	throws IOException, ClassNotFoundException {
 
-        s.defaultReadObject ();
+	s.defaultReadObject ();
 
-        try {
-            digest = MessageDigest.getInstance ("SHA");
-        } catch (NoSuchAlgorithmException e) {
-            throw new InternalError("internal error: SHA-1 not available.");
-        }
+	try {
+    	    digest = MessageDigest.getInstance ("SHA");
+    	} catch (NoSuchAlgorithmException e) {
+    	    throw new InternalError("internal error: SHA-1 not available.");
+	}
     }
 }

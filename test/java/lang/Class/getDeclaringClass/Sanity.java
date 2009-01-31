@@ -38,8 +38,8 @@ public class Sanity {
          * method was unimplemented. But write the test to keep
          * regression from happening in the current code.
          */
-        class BlockLocal {
-        };
+	class BlockLocal {
+	};
 
         if (BlockLocal.class.getDeclaringClass() != null)
             throw new Exception("Finding declaring class for block local");

@@ -32,11 +32,11 @@ import javax.sql.RowSetWriter;
 import javax.sql.rowset.*;
 
 /**
- * A specialized interface that facilitates an extension of the
- * <code>SyncProvider</code> abstract class for XML orientated
+ * A specialized interface that facilitates an extension of the 
+ * <code>SyncProvider</code> abstract class for XML orientated 
  * synchronization providers.
  * <p>
- * <code>SyncProvider</code>  implementations that supply XML data writer
+ * <code>SyncProvider</code>  implementations that supply XML data writer 
  * capabilities such as output XML stream capabilities can implement this
  * interface to provider standard <code>XmlWriter</code> objects to
  * <code>WebRowSet</code> implementations.
@@ -56,7 +56,7 @@ public interface XmlWriter extends RowSetWriter {
    * The <code>caller</code> parameter must be a <code>WebRowSet</code>
    * object whose <code>XmlWriter</code> field contains a reference to
    * this <code>XmlWriter</code> object.
-   *
+   * 
    * @param caller the <code>WebRowSet</code> instance to be written,
    *        for which this <code>XmlWriter</code> object is the writer
    * @param writer the <code>java.io.Writer</code> object that serves
@@ -66,9 +66,9 @@ public interface XmlWriter extends RowSetWriter {
    *            this <code>XmlWriter</code> object is not the writer
    *            for the given <code>WebRowSet</code> object
    */
-  public void writeXML(WebRowSet caller, java.io.Writer writer)
+  public void writeXML(WebRowSet caller, java.io.Writer writer) 
     throws SQLException;
 
 
-
+  
 }

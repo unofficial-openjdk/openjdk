@@ -29,7 +29,7 @@ import java.io.*;
 import java.util.StringTokenizer;
 
 public class MimeEntry implements Cloneable {
-    private String typeName;    // of the form: "type/subtype"
+    private String typeName;	// of the form: "type/subtype"
     private String tempFileNameTemplate;
 
     private int action;
@@ -41,25 +41,25 @@ public class MimeEntry implements Cloneable {
     boolean starred;
 
     // Actions
-    public static final int             UNKNOWN                 = 0;
-    public static final int             LOAD_INTO_BROWSER       = 1;
-    public static final int             SAVE_TO_FILE            = 2;
-    public static final int             LAUNCH_APPLICATION      = 3;
+    public static final int		UNKNOWN			= 0;
+    public static final int		LOAD_INTO_BROWSER	= 1;
+    public static final int		SAVE_TO_FILE		= 2;
+    public static final int		LAUNCH_APPLICATION	= 3;
 
     static final String[] actionKeywords = {
-        "unknown",
-        "browser",
-        "save",
-        "application",
+	"unknown",
+	"browser",
+	"save",
+	"application",
     };
 
     /**
      * Construct an empty entry of the given type and subtype.
      */
     public MimeEntry(String type) {
-        // Default action is UNKNOWN so clients can decide what the default
-        // should be, typically save to file or ask user.
-        this(type, UNKNOWN, null, null, null);
+	// Default action is UNKNOWN so clients can decide what the default
+	// should be, typically save to file or ask user.
+	this(type, UNKNOWN, null, null, null);
     }
 
     //
@@ -70,75 +70,75 @@ public class MimeEntry implements Cloneable {
     // and the mailcap formats are supported).
     //
     MimeEntry(String type, String imageFileName, String extensionString) {
-        typeName = type.toLowerCase();
-        action = UNKNOWN;
-        command = null;
-        this.imageFileName = imageFileName;
-        setExtensions(extensionString);
-        starred = isStarred(typeName);
+	typeName = type.toLowerCase();
+	action = UNKNOWN;
+	command = null;
+	this.imageFileName = imageFileName;
+	setExtensions(extensionString);
+	starred = isStarred(typeName);
     }
 
     // For use with MimeTable::parseMailCap
     MimeEntry(String typeName, int action, String command,
-              String tempFileNameTemplate) {
-        this.typeName = typeName.toLowerCase();
-        this.action = action;
-        this.command = command;
-        this.imageFileName = null;
-        this.fileExtensions = null;
+	      String tempFileNameTemplate) {
+	this.typeName = typeName.toLowerCase();
+	this.action = action;
+	this.command = command;
+	this.imageFileName = null;
+	this.fileExtensions = null;
 
-        this.tempFileNameTemplate = tempFileNameTemplate;
+	this.tempFileNameTemplate = tempFileNameTemplate;
     }
 
     // This is the one called by the public constructor.
     MimeEntry(String typeName, int action, String command,
-              String imageFileName, String fileExtensions[]) {
+	      String imageFileName, String fileExtensions[]) {
 
-        this.typeName = typeName.toLowerCase();
-        this.action = action;
-        this.command = command;
-        this.imageFileName = imageFileName;
-        this.fileExtensions = fileExtensions;
+	this.typeName = typeName.toLowerCase();
+	this.action = action;
+	this.command = command;
+	this.imageFileName = imageFileName;
+	this.fileExtensions = fileExtensions;
 
-        starred = isStarred(typeName);
+	starred = isStarred(typeName);
 
     }
 
     public synchronized String getType() {
-        return typeName;
+	return typeName;
     }
 
     public synchronized void setType(String type) {
-        typeName = type.toLowerCase();
+	typeName = type.toLowerCase();
     }
 
     public synchronized int getAction() {
-        return action;
+	return action;
     }
 
     public synchronized void setAction(int action, String command) {
-        this.action = action;
-        this.command = command;
+	this.action = action;
+	this.command = command;
     }
 
     public synchronized void setAction(int action) {
-        this.action = action;
+	this.action = action;
     }
 
     public synchronized String getLaunchString() {
-        return command;
+	return command;
     }
 
     public synchronized void setCommand(String command) {
-        this.command = command;
+	this.command = command;
     }
 
     public synchronized String getDescription() {
-        return (description != null ? description : typeName);
+	return (description != null ? description : typeName);
     }
 
     public synchronized void setDescription(String description) {
-        this.description = description;
+	this.description = description;
     }
 
     // ??? what to return for the image -- the file name or should this return
@@ -146,63 +146,63 @@ public class MimeEntry implements Cloneable {
     // returning the name has the least policy associated with it.
     // pro tempore, we'll use the name
     public String getImageFileName() {
-        return imageFileName;
+	return imageFileName;
     }
 
     public synchronized void setImageFileName(String filename) {
-        File file = new File(filename);
-        if (file.getParent() == null) {
-            imageFileName = System.getProperty(
+	File file = new File(filename);
+	if (file.getParent() == null) {
+	    imageFileName = System.getProperty(
                                      "java.net.ftp.imagepath."+filename);
-        }
-        else {
-            imageFileName = filename;
-        }
+	}
+	else {
+	    imageFileName = filename;
+	}
 
-        if (filename.lastIndexOf('.') < 0) {
-            imageFileName = imageFileName + ".gif";
-        }
+	if (filename.lastIndexOf('.') < 0) {
+	    imageFileName = imageFileName + ".gif";
+	}
     }
 
     public String getTempFileTemplate() {
-        return tempFileNameTemplate;
+	return tempFileNameTemplate;
     }
 
     public synchronized String[] getExtensions() {
-        return fileExtensions;
+	return fileExtensions;
     }
 
     public synchronized String getExtensionsAsList() {
-        String extensionsAsString = "";
-        if (fileExtensions != null) {
-            for (int i = 0; i < fileExtensions.length; i++) {
-                extensionsAsString += fileExtensions[i];
-                if (i < (fileExtensions.length - 1)) {
-                    extensionsAsString += ",";
-                }
-            }
-        }
+	String extensionsAsString = "";
+	if (fileExtensions != null) {
+	    for (int i = 0; i < fileExtensions.length; i++) {
+		extensionsAsString += fileExtensions[i];
+		if (i < (fileExtensions.length - 1)) {
+		    extensionsAsString += ",";
+		}
+	    }
+	}
 
-        return extensionsAsString;
+	return extensionsAsString;
     }
 
     public synchronized void setExtensions(String extensionString) {
-        StringTokenizer extTokens = new StringTokenizer(extensionString, ",");
-        int numExts = extTokens.countTokens();
-        String extensionStrings[] = new String[numExts];
+	StringTokenizer extTokens = new StringTokenizer(extensionString, ",");
+	int numExts = extTokens.countTokens();
+	String extensionStrings[] = new String[numExts];
 
-        for (int i = 0; i < numExts; i++) {
-            String ext = (String)extTokens.nextElement();
-            extensionStrings[i] = ext.trim();
-        }
+	for (int i = 0; i < numExts; i++) {
+	    String ext = (String)extTokens.nextElement();
+	    extensionStrings[i] = ext.trim();
+	}
 
-        fileExtensions = extensionStrings;
+	fileExtensions = extensionStrings;
     }
 
     private boolean isStarred(String typeName) {
-        return (typeName != null)
-            && (typeName.length() > 0)
-            && (typeName.endsWith("/*"));
+	return (typeName != null)
+	    && (typeName.length() > 0)
+	    && (typeName.endsWith("/*"));
     }
 
     /**
@@ -217,124 +217,124 @@ public class MimeEntry implements Cloneable {
      * </ol>
      */
     public Object launch(java.net.URLConnection urlc, InputStream is, MimeTable mt) throws ApplicationLaunchException {
-        switch (action) {
-        case SAVE_TO_FILE:
-            // REMIND: is this really the right thing to do?
-            try {
-                return is;
-            } catch(Exception e) {
-                // I18N
-                return "Load to file failed:\n" + e;
-            }
+	switch (action) {
+	case SAVE_TO_FILE:
+	    // REMIND: is this really the right thing to do?
+	    try {
+		return is;
+	    } catch(Exception e) {
+		// I18N
+		return "Load to file failed:\n" + e;
+	    }
 
-        case LOAD_INTO_BROWSER:
-            // REMIND: invoke the content handler?
-            // may be the right thing to do, may not be -- short term
-            // where docs are not loaded asynch, loading and returning
-            // the content is the right thing to do.
-            try {
-                return urlc.getContent();
-            } catch (Exception e) {
-                return null;
-            }
+	case LOAD_INTO_BROWSER:
+	    // REMIND: invoke the content handler?
+	    // may be the right thing to do, may not be -- short term
+	    // where docs are not loaded asynch, loading and returning
+	    // the content is the right thing to do.
+	    try {
+		return urlc.getContent();
+	    } catch (Exception e) {
+		return null;
+	    }
 
-        case LAUNCH_APPLICATION:
-            {
-                String threadName = command;
-                int fst = threadName.indexOf(' ');
-                if (fst > 0) {
-                    threadName = threadName.substring(0, fst);
-                }
+	case LAUNCH_APPLICATION:
+	    {
+		String threadName = command;
+		int fst = threadName.indexOf(' ');
+		if (fst > 0) {
+		    threadName = threadName.substring(0, fst);
+		}
 
-                return new MimeLauncher(this, urlc, is,
-                                        mt.getTempFileTemplate(), threadName);
-            }
+		return new MimeLauncher(this, urlc, is,
+					mt.getTempFileTemplate(), threadName);
+	    }
 
-        case UNKNOWN:
-            // REMIND: What do do here?
-            return null;
-        }
+	case UNKNOWN:
+	    // REMIND: What do do here?
+	    return null;
+	}
 
-        return null;
+	return null;
     }
 
     public boolean matches(String type) {
-        if (starred) {
-          // REMIND: is this the right thing or not?
-          return type.startsWith(typeName);
-        } else {
-            return type.equals(typeName);
-        }
+	if (starred) {
+	  // REMIND: is this the right thing or not?
+	  return type.startsWith(typeName);
+	} else {
+	    return type.equals(typeName);
+	}
     }
 
     public Object clone() {
-        // return a shallow copy of this.
-        MimeEntry theClone = new MimeEntry(typeName);
-        theClone.action = action;
-        theClone.command = command;
-        theClone.description = description;
-        theClone.imageFileName = imageFileName;
-        theClone.tempFileNameTemplate = tempFileNameTemplate;
-        theClone.fileExtensions = fileExtensions;
+	// return a shallow copy of this.
+	MimeEntry theClone = new MimeEntry(typeName);
+	theClone.action = action;
+	theClone.command = command;
+	theClone.description = description;
+	theClone.imageFileName = imageFileName;
+	theClone.tempFileNameTemplate = tempFileNameTemplate;
+	theClone.fileExtensions = fileExtensions;
 
-        return theClone;
+	return theClone;
     }
 
     public synchronized String toProperty() {
-        StringBuffer buf = new StringBuffer();
+	StringBuffer buf = new StringBuffer();
 
-        String separator = "; ";
-        boolean needSeparator = false;
+	String separator = "; ";
+	boolean needSeparator = false;
 
-        int action = getAction();
-        if (action != MimeEntry.UNKNOWN) {
-            buf.append("action=" + actionKeywords[action]);
-            needSeparator = true;
-        }
+	int action = getAction();
+	if (action != MimeEntry.UNKNOWN) {
+	    buf.append("action=" + actionKeywords[action]);
+	    needSeparator = true;
+	}
 
-        String command = getLaunchString();
-        if (command != null && command.length() > 0) {
-            if (needSeparator) {
-                buf.append(separator);
-            }
-            buf.append("application=" + command);
-            needSeparator = true;
-        }
+	String command = getLaunchString();
+	if (command != null && command.length() > 0) {
+	    if (needSeparator) {
+		buf.append(separator);
+	    }
+	    buf.append("application=" + command);
+	    needSeparator = true;
+	}
 
-        if (getImageFileName() != null) {
-            if (needSeparator) {
-                buf.append(separator);
-            }
-            buf.append("icon=" + getImageFileName());
-            needSeparator = true;
-        }
+	if (getImageFileName() != null) {
+	    if (needSeparator) {
+		buf.append(separator);
+	    }
+	    buf.append("icon=" + getImageFileName());
+	    needSeparator = true;
+	}
 
-        String extensions = getExtensionsAsList();
-        if (extensions.length() > 0) {
-            if (needSeparator) {
-                buf.append(separator);
-            }
-            buf.append("file_extensions=" + extensions);
-            needSeparator = true;
-        }
+	String extensions = getExtensionsAsList();
+	if (extensions.length() > 0) {
+	    if (needSeparator) {
+		buf.append(separator);
+	    }
+	    buf.append("file_extensions=" + extensions);
+	    needSeparator = true;
+	}
 
-        String description = getDescription();
-        if (description != null && !description.equals(getType())) {
-            if (needSeparator) {
-                buf.append(separator);
-            }
-            buf.append("description=" + description);
-        }
+	String description = getDescription();
+	if (description != null && !description.equals(getType())) {
+	    if (needSeparator) {
+		buf.append(separator);
+	    }
+	    buf.append("description=" + description);
+	}
 
-        return buf.toString();
+	return buf.toString();
     }
 
     public String toString() {
-        return "MimeEntry[contentType=" + typeName
-            + ", image=" + imageFileName
-            + ", action=" + action
-            + ", command=" + command
-            + ", extensions=" + getExtensionsAsList()
-            + "]";
+	return "MimeEntry[contentType=" + typeName
+	    + ", image=" + imageFileName
+	    + ", action=" + action
+	    + ", command=" + command
+	    + ", extensions=" + getExtensionsAsList()
+	    + "]";
     }
 }

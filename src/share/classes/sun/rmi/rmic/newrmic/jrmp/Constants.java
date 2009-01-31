@@ -32,6 +32,7 @@ package sun.rmi.rmic.newrmic.jrmp;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
+ * @version %I%, %E%
  * @author Peter Jones
  **/
 final class Constants {
@@ -47,7 +48,7 @@ final class Constants {
     static final String OPERATION = "java.rmi.server.Operation";
     static final String SKELETON = "java.rmi.server.Skeleton";
     static final String SKELETON_MISMATCH_EXCEPTION =
-        "java.rmi.server.SkeletonMismatchException";
+	"java.rmi.server.SkeletonMismatchException";
     static final String REMOTE_CALL = "java.rmi.server.RemoteCall";
     static final String MARSHAL_EXCEPTION = "java.rmi.MarshalException";
     static final String UNMARSHAL_EXCEPTION = "java.rmi.UnmarshalException";

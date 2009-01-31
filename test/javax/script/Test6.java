@@ -32,19 +32,20 @@ import java.io.*;
 import javax.script.*;
 
 public class Test6 {
-        public static void main(String[] args) throws Exception {
-            System.out.println("\nTest6\n");
+	public static void main(String[] args) throws Exception {
+       	    System.out.println("\nTest6\n");
             ScriptEngineManager m = new ScriptEngineManager();
-            ScriptEngine engine = m.getEngineByName("js");
+	    ScriptEngine engine = m.getEngineByName("js");
             Reader reader = new FileReader(
                 new File(System.getProperty("test.src", "."), "Test6.js"));
             engine.eval(reader);
             Object res = engine.get("res");
-            CompiledScript scr = ((Compilable)engine).compile(reader);
-            scr.eval();
+	    CompiledScript scr = ((Compilable)engine).compile(reader);
+	    scr.eval();
             Object res1 = engine.get("res");
             if (! res.equals(res1)) {
                 throw new RuntimeException("values not equal");
             }
-        }
+	}
 }
+				

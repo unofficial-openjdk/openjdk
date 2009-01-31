@@ -34,11 +34,11 @@
  * LoopMacros.h to manipulate a surface of type "Index12Gray".
  */
 
-typedef jushort Index12GrayPixelType;
-typedef jushort Index12GrayDataType;
+typedef jushort	Index12GrayPixelType;
+typedef jushort	Index12GrayDataType;
 
-#define Index12GrayPixelStride          2
-#define Index12GrayBitsPerPixel        12
+#define Index12GrayPixelStride		2
+#define Index12GrayBitsPerPixel	       12
 
 #define DeclareIndex12GrayLoadVars(PREFIX) \
     jint *PREFIX ## Lut;
@@ -58,9 +58,9 @@ typedef jushort Index12GrayDataType;
 #define NextIndex12GrayStoreVarsX(PREFIX)
 #define NextIndex12GrayStoreVarsY(PREFIX)
 
-#define Index12GrayXparLutEntry                 -1
-#define Index12GrayIsXparLutEntry(pix)          (pix < 0)
-#define StoreIndex12GrayNonXparFromArgb         StoreIndex12GrayFrom1IntArgb
+#define Index12GrayXparLutEntry			-1
+#define Index12GrayIsXparLutEntry(pix)		(pix < 0)
+#define StoreIndex12GrayNonXparFromArgb	        StoreIndex12GrayFrom1IntArgb
 
 #define StoreIndex12GrayPixel(pRas, x, pixel) \
     ((pRas)[x] = (jushort) (pixel))
@@ -100,9 +100,9 @@ typedef jushort Index12GrayDataType;
 
 #define StoreIndex12GrayFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
-        StoreIndex12GrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	StoreIndex12GrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
     } while (0)
 
 #define StoreIndex12GrayFrom1IntArgb(pRas, PREFIX, x, argb) \
@@ -139,6 +139,6 @@ typedef jushort Index12GrayDataType;
 #define StoreIndex12GrayFrom1ByteGrayComps(pRas, PREFIX, x, COMP_PREFIX) \
     StoreIndex12GrayFrom1ByteGray(pRas, PREFIX, x, COMP_PREFIX ## G)
 
-#define Index12GrayIsPremultiplied      0
+#define Index12GrayIsPremultiplied	0
 
 #endif /* Index12Gray_h_Included */

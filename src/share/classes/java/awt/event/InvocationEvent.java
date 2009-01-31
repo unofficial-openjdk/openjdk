@@ -40,15 +40,16 @@ import java.awt.AWTEvent;
  * </code> and <code>invokeAndWait</code> without writing special-case code
  * in any <code>AWTEventListener</code> objects.
  *
- * @author      Fred Ecks
- * @author      David Mendenhall
+ * @author	Fred Ecks
+ * @author	David Mendenhall
+ * @version	%I%, %G%
  *
- * @see         java.awt.ActiveEvent
- * @see         java.awt.EventQueue#invokeLater
- * @see         java.awt.EventQueue#invokeAndWait
- * @see         AWTEventListener
+ * @see		java.awt.ActiveEvent
+ * @see		java.awt.EventQueue#invokeLater
+ * @see		java.awt.EventQueue#invokeAndWait
+ * @see		AWTEventListener
  *
- * @since       1.2
+ * @since 	1.2
  */
 public class InvocationEvent extends AWTEvent implements ActiveEvent {
 
@@ -123,8 +124,8 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      * <p> This method throws an <code>IllegalArgumentException</code>
      * if <code>source</code> is <code>null</code>.
      *
-     * @param source    the <code>Object</code> that originated the event
-     * @param runnable  the <code>Runnable</code> whose <code>run</code>
+     * @param source	the <code>Object</code> that originated the event
+     * @param runnable	the <code>Runnable</code> whose <code>run</code>
      *                  method will be executed
      * @throws IllegalArgumentException if <code>source</code> is null
      *
@@ -147,15 +148,15 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      * <p>This method throws an <code>IllegalArgumentException</code>
      * if <code>source</code> is <code>null</code>.
      *
-     * @param source            the <code>Object</code> that originated
+     * @param source		the <code>Object</code> that originated
      *                          the event
-     * @param runnable          the <code>Runnable</code> whose
+     * @param runnable		the <code>Runnable</code> whose
      *                          <code>run</code> method will be
      *                          executed
-     * @param notifier          the Object whose <code>notifyAll</code>
+     * @param notifier		the Object whose <code>notifyAll</code>
      *                          method will be called after
      *                          <code>Runnable.run</code> has returned
-     * @param catchThrowables   specifies whether <code>dispatch</code>
+     * @param catchThrowables	specifies whether <code>dispatch</code>
      *                          should catch Throwable when executing
      *                          the <code>Runnable</code>'s <code>run</code>
      *                          method, or should instead propagate those
@@ -167,29 +168,29 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      */
     public InvocationEvent(Object source, Runnable runnable, Object notifier,
                            boolean catchThrowables) {
-        this(source, INVOCATION_DEFAULT, runnable, notifier, catchThrowables);
+	this(source, INVOCATION_DEFAULT, runnable, notifier, catchThrowables);
     }
 
     /**
      * Constructs an <code>InvocationEvent</code> with the specified
      * source and ID which will execute the runnable's <code>run</code>
      * method when dispatched.  If notifier is non-<code>null</code>,
-     * <code>notifyAll</code> will be called on it
+     * <code>notifyAll</code> will be called on it 
      * immediately after <code>run</code> returns.
      * <p>Note that passing in an invalid <code>id</code> results in
      * unspecified behavior. This method throws an
      * <code>IllegalArgumentException</code> if <code>source</code>
      * is <code>null</code>.
      *
-     * @param source            the <code>Object</code> that originated
+     * @param source		the <code>Object</code> that originated
      *                          the event
-     * @param id                the ID for the event
-     * @param runnable          the <code>Runnable</code> whose
+     * @param id		the ID for the event
+     * @param runnable		the <code>Runnable</code> whose
      *                          <code>run</code> method will be executed
-     * @param notifier          the <code>Object</code> whose <code>notifyAll</code>
+     * @param notifier		the <code>Object</code> whose <code>notifyAll</code>
      *                          method will be called after
      *                          <code>Runnable.run</code> has returned
-     * @param catchThrowables   specifies whether <code>dispatch</code>
+     * @param catchThrowables	specifies whether <code>dispatch</code>
      *                          should catch Throwable when executing the
      *                          <code>Runnable</code>'s <code>run</code>
      *                          method, or should instead propagate those
@@ -197,12 +198,12 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      *                          dispatch loop
      * @throws IllegalArgumentException if <code>source</code> is null
      */
-    protected InvocationEvent(Object source, int id, Runnable runnable,
+    protected InvocationEvent(Object source, int id, Runnable runnable, 
                               Object notifier, boolean catchThrowables) {
         super(source, id);
-        this.runnable = runnable;
-        this.notifier = notifier;
-        this.catchExceptions = catchThrowables;
+	this.runnable = runnable;
+	this.notifier = notifier;
+	this.catchExceptions = catchThrowables;
         this.when = System.currentTimeMillis();
     }
 
@@ -211,51 +212,51 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      * notifier (if any) when <code>run()</code> returns.
      */
     public void dispatch() {
-        if (catchExceptions) {
-            try {
-                runnable.run();
-            }
-            catch (Throwable t) {
+	if (catchExceptions) {
+	    try {
+		runnable.run();
+	    } 
+	    catch (Throwable t) {
                 if (t instanceof Exception) {
                     exception = (Exception) t;
                 }
                 throwable = t;
-            }
-        }
-        else {
-            runnable.run();
-        }
+	    }
+	}
+	else {
+	    runnable.run();
+	}
 
-        if (notifier != null) {
-            synchronized (notifier) {
-                notifier.notifyAll();
-            }
-        }
+	if (notifier != null) {
+	    synchronized (notifier) {
+		notifier.notifyAll();
+	    }
+	}
     }
 
     /**
      * Returns any Exception caught while executing the Runnable's <code>run()
      * </code> method.
      *
-     * @return  A reference to the Exception if one was thrown; null if no
-     *          Exception was thrown or if this InvocationEvent does not
-     *          catch exceptions
+     * @return	A reference to the Exception if one was thrown; null if no
+     *		Exception was thrown or if this InvocationEvent does not
+     *		catch exceptions
      */
     public Exception getException() {
-        return (catchExceptions) ? exception : null;
+	return (catchExceptions) ? exception : null;
     }
 
     /**
      * Returns any Throwable caught while executing the Runnable's <code>run()
      * </code> method.
      *
-     * @return  A reference to the Throwable if one was thrown; null if no
-     *          Throwable was thrown or if this InvocationEvent does not
-     *          catch Throwables
+     * @return	A reference to the Throwable if one was thrown; null if no
+     *		Throwable was thrown or if this InvocationEvent does not
+     *		catch Throwables
      * @since 1.5
      */
     public Throwable getThrowable() {
-        return (catchExceptions) ? throwable : null;
+	return (catchExceptions) ? throwable : null;
     }
 
     /**
@@ -276,14 +277,14 @@ public class InvocationEvent extends AWTEvent implements ActiveEvent {
      */
     public String paramString() {
         String typeStr;
-        switch(id) {
+	switch(id) {
             case INVOCATION_DEFAULT:
-                typeStr = "INVOCATION_DEFAULT";
-                break;
+	        typeStr = "INVOCATION_DEFAULT";
+		break;
             default:
-                typeStr = "unknown type";
-        }
-        return typeStr + ",runnable=" + runnable + ",notifier=" + notifier +
-            ",catchExceptions=" + catchExceptions + ",when=" + when;
+	        typeStr = "unknown type";
+	}
+	return typeStr + ",runnable=" + runnable + ",notifier=" + notifier +
+	    ",catchExceptions=" + catchExceptions + ",when=" + when;
     }
 }

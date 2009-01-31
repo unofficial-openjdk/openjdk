@@ -46,36 +46,36 @@
  * files.
  */
 #ifndef DecodeDeclared
-#define DeclareDecodeVars       DeclareDCM8Vars
-#define InitPixelDecode(CM)     InitPixelDCM8(unhand(CM))
-#define PixelDecode             PixelDCM8Decode
+#define DeclareDecodeVars	DeclareDCM8Vars
+#define InitPixelDecode(CM)	InitPixelDCM8(unhand(CM))
+#define PixelDecode		PixelDCM8Decode
 #define DecodeDeclared
 #endif
 
 #include "java_awt_image_DirectColorModel.h"
 
-#define DeclareDCM8Vars                                         \
-    IfAlpha(unsigned int alpha_off;)                            \
+#define DeclareDCM8Vars						\
+    IfAlpha(unsigned int alpha_off;)				\
     unsigned int red_off, green_off, blue_off;
 
-#define InitPixelDCM8(CM)                                               \
-    do {                                                                \
-        Classjava_awt_image_DirectColorModel *dcm =                     \
-            (Classjava_awt_image_DirectColorModel *) CM;                \
-        red_off = dcm->red_offset;                                      \
-        green_off = dcm->green_offset;                                  \
-        blue_off = dcm->blue_offset;                                    \
-        IfAlpha(alpha_off = (dcm->alpha_mask == 0                       \
-                             ? -1                                       \
-                             : dcm->alpha_offset);)                     \
+#define InitPixelDCM8(CM)						\
+    do {								\
+	Classjava_awt_image_DirectColorModel *dcm =			\
+	    (Classjava_awt_image_DirectColorModel *) CM;		\
+	red_off = dcm->red_offset;					\
+	green_off = dcm->green_offset;					\
+	blue_off = dcm->blue_offset;					\
+	IfAlpha(alpha_off = (dcm->alpha_mask == 0			\
+			     ? -1					\
+			     : dcm->alpha_offset);)			\
     } while (0)
 
-#define PixelDCM8Decode(CM, pixel, red, green, blue, alpha)             \
-    do {                                                                \
-        IfAlpha(alpha = ((alpha_off < 0)                                \
-                         ? 255                                          \
-                         : (pixel >> alpha_off) & 0xff);)               \
-        red = (pixel >> red_off) & 0xff;                                \
-        green = (pixel >> green_off) & 0xff;                            \
-        blue = (pixel >> blue_off) & 0xff;                              \
+#define PixelDCM8Decode(CM, pixel, red, green, blue, alpha)		\
+    do {								\
+	IfAlpha(alpha = ((alpha_off < 0)				\
+			 ? 255						\
+			 : (pixel >> alpha_off) & 0xff);)		\
+	red = (pixel >> red_off) & 0xff;				\
+	green = (pixel >> green_off) & 0xff;				\
+	blue = (pixel >> blue_off) & 0xff;				\
     } while (0)

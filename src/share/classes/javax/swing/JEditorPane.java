@@ -78,9 +78,9 @@ import javax.accessibility.*;
  * <code>EditorKit</code> will be used, and the content type will be
  * expected to be of this type.
  * <li>
- * The {@link #read read} method can be used to initialize the
+ * The {@link #read read} method can be used to initialize the 
  * component from a <code>Reader</code>.  Note that if the content type is HTML,
- * relative references (e.g. for things like images) can't be resolved
+ * relative references (e.g. for things like images) can't be resolved 
  * unless the &lt;base&gt; tag is used or the <em>Base</em> property
  * on <code>HTMLDocument</code> is set.
  * In this case the current <code>EditorKit</code> will be used,
@@ -94,11 +94,11 @@ import javax.accessibility.*;
  * <p>
  * Some kinds of content may provide hyperlink support by generating
  * hyperlink events.  The HTML <code>EditorKit</code> will generate
- * hyperlink events if the <code>JEditorPane</code> is <em>not editable</em>
+ * hyperlink events if the <code>JEditorPane</code> is <em>not editable</em> 
  * (<code>JEditorPane.setEditable(false);</code> has been called).
  * If HTML frames are embedded in the document, the typical response would be
  * to change a portion of the current document.  The following code
- * fragment is a possible hyperlink listener implementation, that treats
+ * fragment is a possible hyperlink listener implementation, that treats 
  * HTML frame events specially, and simply displays any other activated
  * hyperlinks.
  * <code><pre>
@@ -106,21 +106,21 @@ import javax.accessibility.*;
 &nbsp;    class Hyperactive implements HyperlinkListener {
 &nbsp;
 &nbsp;        public void hyperlinkUpdate(HyperlinkEvent e) {
-&nbsp;            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-&nbsp;                JEditorPane pane = (JEditorPane) e.getSource();
-&nbsp;                if (e instanceof HTMLFrameHyperlinkEvent) {
-&nbsp;                    HTMLFrameHyperlinkEvent  evt = (HTMLFrameHyperlinkEvent)e;
-&nbsp;                    HTMLDocument doc = (HTMLDocument)pane.getDocument();
-&nbsp;                    doc.processHTMLFrameHyperlinkEvent(evt);
-&nbsp;                } else {
-&nbsp;                    try {
-&nbsp;                        pane.setPage(e.getURL());
-&nbsp;                    } catch (Throwable t) {
-&nbsp;                        t.printStackTrace();
-&nbsp;                    }
-&nbsp;                }
-&nbsp;            }
-&nbsp;        }
+&nbsp;	          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+&nbsp;		      JEditorPane pane = (JEditorPane) e.getSource();
+&nbsp;		      if (e instanceof HTMLFrameHyperlinkEvent) {
+&nbsp;		          HTMLFrameHyperlinkEvent  evt = (HTMLFrameHyperlinkEvent)e;
+&nbsp;		          HTMLDocument doc = (HTMLDocument)pane.getDocument();
+&nbsp;		          doc.processHTMLFrameHyperlinkEvent(evt);
+&nbsp;		      } else {
+&nbsp;		          try {
+&nbsp;			      pane.setPage(e.getURL());
+&nbsp;		          } catch (Throwable t) {
+&nbsp;			      t.printStackTrace();
+&nbsp;		          }
+&nbsp;		      }
+&nbsp;	          }
+&nbsp;	      }
 &nbsp;    }
 
  * </pre></code>
@@ -133,16 +133,16 @@ import javax.accessibility.*;
  * unambiguous mapping of the members of a character set (letters, ideographs,
  * digits, symbols, or control functions) to specific numeric code values. It
  * represents the way the file is stored. Example character encodings are
- * ISO-8859-1, ISO-8859-5, Shift-jis, Euc-jp, and UTF-8. When the file is
+ * ISO-8859-1, ISO-8859-5, Shift-jis, Euc-jp, and UTF-8. When the file is 
  * passed to an user agent (<code>JEditorPane</code>) it is converted to
  * the document character set (ISO-10646 aka Unicode).
  * <p>
- * There are multiple ways to get a character set mapping to happen
- * with <code>JEditorPane</code>.
+ * There are multiple ways to get a character set mapping to happen 
+ * with <code>JEditorPane</code>.  
  * <ol>
  * <li>
- * One way is to specify the character set as a parameter of the MIME
- * type.  This will be established by a call to the
+ * One way is to specify the character set as a parameter of the MIME 
+ * type.  This will be established by a call to the 
  * <a href="#setContentType">setContentType</a> method.  If the content
  * is loaded by the <a href="#setPage">setPage</a> method the content
  * type will have been set according to the specification of the URL.
@@ -151,7 +151,7 @@ import javax.accessibility.*;
  * <li>
  * Another way the character set can be specified is in the document itself.
  * This requires reading the document prior to determining the character set
- * that is desired.  To handle this, it is expected that the
+ * that is desired.  To handle this, it is expected that the 
  * <code>EditorKit</code>.read operation throw a
  * <code>ChangedCharSetException</code> which will
  * be caught.  The read is then restarted with a new Reader that uses
@@ -186,6 +186,7 @@ import javax.accessibility.*;
  * description: A text component to edit various types of content.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class JEditorPane extends JTextComponent {
 
@@ -195,57 +196,57 @@ public class JEditorPane extends JTextComponent {
      */
     public JEditorPane() {
         super();
-        setFocusCycleRoot(true);
-        setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
-                public Component getComponentAfter(Container focusCycleRoot,
-                                                   Component aComponent) {
-                    if (focusCycleRoot != JEditorPane.this ||
-                        (!isEditable() && getComponentCount() > 0)) {
-                        return super.getComponentAfter(focusCycleRoot,
-                                                       aComponent);
-                    } else {
-                        Container rootAncestor = getFocusCycleRootAncestor();
-                        return (rootAncestor != null)
-                            ? rootAncestor.getFocusTraversalPolicy().
-                                  getComponentAfter(rootAncestor,
-                                                    JEditorPane.this)
-                            : null;
-                    }
-                }
-                public Component getComponentBefore(Container focusCycleRoot,
-                                                    Component aComponent) {
-                    if (focusCycleRoot != JEditorPane.this ||
-                        (!isEditable() && getComponentCount() > 0)) {
-                        return super.getComponentBefore(focusCycleRoot,
-                                                        aComponent);
-                    } else {
-                        Container rootAncestor = getFocusCycleRootAncestor();
-                        return (rootAncestor != null)
-                            ? rootAncestor.getFocusTraversalPolicy().
-                                  getComponentBefore(rootAncestor,
-                                                     JEditorPane.this)
-                            : null;
-                    }
-                }
-                public Component getDefaultComponent(Container focusCycleRoot)
-                {
-                    return (focusCycleRoot != JEditorPane.this ||
-                            (!isEditable() && getComponentCount() > 0))
-                        ? super.getDefaultComponent(focusCycleRoot)
-                        : null;
-                }
-                protected boolean accept(Component aComponent) {
-                    return (aComponent != JEditorPane.this)
-                        ? super.accept(aComponent)
-                        : false;
-                }
-            });
+	setFocusCycleRoot(true);
+	setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
+		public Component getComponentAfter(Container focusCycleRoot,
+						   Component aComponent) {
+		    if (focusCycleRoot != JEditorPane.this ||
+			(!isEditable() && getComponentCount() > 0)) {
+			return super.getComponentAfter(focusCycleRoot,
+						       aComponent);
+		    } else {
+			Container rootAncestor = getFocusCycleRootAncestor();
+			return (rootAncestor != null)
+			    ? rootAncestor.getFocusTraversalPolicy().
+			          getComponentAfter(rootAncestor,
+						    JEditorPane.this)
+			    : null;
+		    }
+		}
+		public Component getComponentBefore(Container focusCycleRoot,
+						    Component aComponent) {
+		    if (focusCycleRoot != JEditorPane.this ||
+			(!isEditable() && getComponentCount() > 0)) {
+			return super.getComponentBefore(focusCycleRoot,
+							aComponent);
+		    } else {
+			Container rootAncestor = getFocusCycleRootAncestor();
+			return (rootAncestor != null)
+			    ? rootAncestor.getFocusTraversalPolicy().
+			          getComponentBefore(rootAncestor,
+						     JEditorPane.this)
+			    : null;
+		    }
+		}
+		public Component getDefaultComponent(Container focusCycleRoot)
+		{
+		    return (focusCycleRoot != JEditorPane.this ||
+			    (!isEditable() && getComponentCount() > 0))
+			? super.getDefaultComponent(focusCycleRoot)
+			: null;
+		}
+		protected boolean accept(Component aComponent) {
+		    return (aComponent != JEditorPane.this)
+			? super.accept(aComponent)
+			: false;
+		}
+	    });		
         LookAndFeel.installProperty(this,
-                                    "focusTraversalKeysForward",
+                                    "focusTraversalKeysForward", 
                                     JComponent.
                                     getManagingFocusForwardTraversalKeys());
         LookAndFeel.installProperty(this,
-                                    "focusTraversalKeysBackward",
+                                    "focusTraversalKeysBackward", 
                                     JComponent.
                                     getManagingFocusBackwardTraversalKeys());
     }
@@ -255,7 +256,7 @@ public class JEditorPane extends JTextComponent {
      *
      * @param initialPage the URL
      * @exception IOException if the URL is <code>null</code>
-     *          or cannot be accessed
+     *		or cannot be accessed
      */
     public JEditorPane(URL initialPage) throws IOException {
         this();
@@ -268,7 +269,7 @@ public class JEditorPane extends JTextComponent {
      *
      * @param url the URL
      * @exception IOException if the URL is <code>null</code> or
-     *          cannot be accessed
+     *		cannot be accessed
      */
     public JEditorPane(String url) throws IOException {
         this();
@@ -283,12 +284,12 @@ public class JEditorPane extends JTextComponent {
      * @param type mime type of the given text
      * @param text the text to initialize with; may be <code>null</code>
      * @exception NullPointerException if the <code>type</code> parameter
-     *          is <code>null</code>
+     *		is <code>null</code>
      */
     public JEditorPane(String type, String text) {
-        this();
-        setContentType(type);
-        setText(text);
+	this();
+	setContentType(type);
+	setText(text);
     }
 
     /**
@@ -321,7 +322,7 @@ public class JEditorPane extends JTextComponent {
     public synchronized HyperlinkListener[] getHyperlinkListeners() {
         return (HyperlinkListener[])listenerList.getListeners(
                 HyperlinkListener.class);
-    }
+    } 
 
     /**
      * Notifies all listeners that have registered interest for
@@ -342,7 +343,7 @@ public class JEditorPane extends JTextComponent {
         for (int i = listeners.length-2; i>=0; i-=2) {
             if (listeners[i]==HyperlinkListener.class) {
                 ((HyperlinkListener)listeners[i+1]).hyperlinkUpdate(e);
-            }
+            }          
         }
     }
 
@@ -353,17 +354,17 @@ public class JEditorPane extends JTextComponent {
      * non-<code>null</code>, then
      * a new default document is created and the URL is read into it.
      * If the URL contains and reference location, the location will
-     * be scrolled to by calling the <code>scrollToReference</code>
-     * method. If the desired URL is the one currently being displayed,
+     * be scrolled to by calling the <code>scrollToReference</code> 
+     * method. If the desired URL is the one currently being displayed, 
      * the document will not be reloaded. To force a document
-     * reload it is necessary to clear the stream description property
+     * reload it is necessary to clear the stream description property 
      * of the document. The following code shows how this can be done:
      *
      * <pre>
      *   Document doc = jEditorPane.getDocument();
      *   doc.putProperty(Document.StreamDescriptionProperty, null);
      * </pre>
-     *
+     * 
      * If the desired URL is not the one currently being
      * displayed, the <code>getStream</code> method is called to
      * give subclasses control over the stream provided.
@@ -371,7 +372,7 @@ public class JEditorPane extends JTextComponent {
      * This may load either synchronously or asynchronously
      * depending upon the document returned by the <code>EditorKit</code>.
      * If the <code>Document</code> is of type
-     * <code>AbstractDocument</code> and has a value returned by
+     * <code>AbstractDocument</code> and has a value returned by 
      * <code>AbstractDocument.getAsynchronousLoadPriority</code>
      * that is greater than or equal to zero, the page will be
      * loaded on a separate thread using that priority.
@@ -383,29 +384,29 @@ public class JEditorPane extends JTextComponent {
      * <code>IOException</code> is thrown the partially loaded
      * document will
      * be discarded and neither the document or page property
-     * change events will be fired.  If the document is
+     * change events will be fired.  If the document is 
      * successfully loaded and installed, a view will be
-     * built for it by the UI which will then be scrolled if
+     * built for it by the UI which will then be scrolled if 
      * necessary, and then the page property change event
      * will be fired.
      * <p>
      * If the document is loaded asynchronously, the document
      * will be installed into the editor immediately using a
-     * call to <code>setDocument</code> which will fire a
+     * call to <code>setDocument</code> which will fire a 
      * document property change event, then a thread will be
-     * created which will begin doing the actual loading.
-     * In this case, the page property change event will not be
-     * fired by the call to this method directly, but rather will be
+     * created which will begin doing the actual loading.  
+     * In this case, the page property change event will not be 
+     * fired by the call to this method directly, but rather will be 
      * fired when the thread doing the loading has finished.
      * It will also be fired on the event-dispatch thread.
      * Since the calling thread can not throw an <code>IOException</code>
-     * in the event of failure on the other thread, the page
-     * property change event will be fired when the other
+     * in the event of failure on the other thread, the page 
+     * property change event will be fired when the other 
      * thread is done whether the load was successful or not.
-     *
+     * 
      * @param page the URL of the page
      * @exception IOException for a <code>null</code> or invalid
-     *          page specification, or exception from the stream being read
+     *		page specification, or exception from the stream being read
      * @see #getPage
      * @beaninfo
      *  description: the URL used to set content
@@ -416,14 +417,14 @@ public class JEditorPane extends JTextComponent {
         if (page == null) {
             throw new IOException("invalid url");
         }
-        URL loaded = getPage();
+	URL loaded = getPage();
 
 
-        // reset scrollbar
-        if (!page.equals(loaded) && page.getRef() == null) {
-            scrollRectToVisible(new Rectangle(0,0,1,1));
-        }
-        boolean reloaded = false;
+	// reset scrollbar
+	if (!page.equals(loaded) && page.getRef() == null) {
+	    scrollRectToVisible(new Rectangle(0,0,1,1));
+	}
+	boolean reloaded = false;
         Object postData = getPostData();
         if ((loaded == null) || !loaded.sameFile(page) || (postData != null)) {
             // different url or POST method, load the new content
@@ -435,7 +436,7 @@ public class JEditorPane extends JTextComponent {
                 InputStream in = getStream(page);
                 if (kit != null) {
                     Document doc = initializeModel(kit, page);
-
+                    
                     // At this point, one could either load up the model with no
                     // view notifications slowing it down (i.e. best synchronous
                     // behavior) or set the model and start to feed it on a separate
@@ -471,22 +472,22 @@ public class JEditorPane extends JTextComponent {
                 pl.start();
                 return;
             }
-        }
-        final String reference = page.getRef();
-        if (reference != null) {
-            if (!reloaded) {
-                scrollToReference(reference);
-            }
-            else {
-                // Have to scroll after painted.
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        scrollToReference(reference);
-                    }
-                });
-            }
-            getDocument().putProperty(Document.StreamDescriptionProperty, page);
-        }
+	}
+	final String reference = page.getRef();
+	if (reference != null) {
+	    if (!reloaded) {
+		scrollToReference(reference);
+	    }
+	    else {
+		// Have to scroll after painted.
+		SwingUtilities.invokeLater(new Runnable() {
+		    public void run() {
+			scrollToReference(reference);
+		    }
+		});
+	    }
+	    getDocument().putProperty(Document.StreamDescriptionProperty, page);
+	}
         firePropertyChange("page", loaded, page);
     }
 
@@ -509,7 +510,7 @@ public class JEditorPane extends JTextComponent {
         }
         return doc;
     }
-
+    
     /**
      * Return load priority for the document or -1 if priority not supported.
      */
@@ -529,23 +530,23 @@ public class JEditorPane extends JTextComponent {
      * @param in the stream from which to read
      * @param desc an object describing the stream
      * @exception IOException as thrown by the stream being
-     *          used to initialize
+     * 		used to initialize
      * @see JTextComponent#read
      * @see #setDocument
      */
     public void read(InputStream in, Object desc) throws IOException {
 
-        if (desc instanceof HTMLDocument &&
-            kit instanceof HTMLEditorKit) {
-            HTMLDocument hdoc = (HTMLDocument) desc;
-            setDocument(hdoc);
-            read(in, hdoc);
-        } else {
-            String charset = (String) getClientProperty("charset");
-            Reader r = (charset != null) ? new InputStreamReader(in, charset) :
-                new InputStreamReader(in);
-            super.read(r, desc);
-        }
+	if (desc instanceof HTMLDocument && 
+	    kit instanceof HTMLEditorKit) {
+	    HTMLDocument hdoc = (HTMLDocument) desc;
+	    setDocument(hdoc);
+	    read(in, hdoc);
+	} else {
+	    String charset = (String) getClientProperty("charset");
+	    Reader r = (charset != null) ? new InputStreamReader(in, charset) :
+		new InputStreamReader(in);
+	    super.read(r, desc);
+	}
     }
 
 
@@ -566,20 +567,20 @@ public class JEditorPane extends JTextComponent {
             in = new BufferedInputStream(in, READ_LIMIT);
             in.mark(READ_LIMIT);
         }
-        try {
-            String charset = (String) getClientProperty("charset");
-            Reader r = (charset != null) ? new InputStreamReader(in, charset) :
-                new InputStreamReader(in);
-            kit.read(r, doc, 0);
-        } catch (BadLocationException e) {
-            throw new IOException(e.getMessage());
-        } catch (ChangedCharSetException changedCharSetException) {
-            String charSetSpec = changedCharSetException.getCharSetSpec();
-            if (changedCharSetException.keyEqualsCharSet()) {
-                putClientProperty("charset", charSetSpec);
-            } else {
-                setCharsetFromContentTypeParameters(charSetSpec);
-            }
+	try {
+	    String charset = (String) getClientProperty("charset");
+	    Reader r = (charset != null) ? new InputStreamReader(in, charset) :
+		new InputStreamReader(in);
+	    kit.read(r, doc, 0);
+	} catch (BadLocationException e) {
+	    throw new IOException(e.getMessage());
+	} catch (ChangedCharSetException changedCharSetException) {
+	    String charSetSpec = changedCharSetException.getCharSetSpec();
+	    if (changedCharSetException.keyEqualsCharSet()) {
+		putClientProperty("charset", charSetSpec);
+	    } else {
+		setCharsetFromContentTypeParameters(charSetSpec);
+	    }
             try {
                 in.reset();
             } catch (IOException exception) {
@@ -594,12 +595,12 @@ public class JEditorPane extends JTextComponent {
                     throw changedCharSetException;
                 }
             }
-            try {
-                doc.remove(0, doc.getLength());
-            } catch (BadLocationException e) {}
-            doc.putProperty("IgnoreCharsetDirective", Boolean.valueOf(true));
-            read(in, doc);
-        }
+	    try {
+		doc.remove(0, doc.getLength());
+	    } catch (BadLocationException e) {}
+	    doc.putProperty("IgnoreCharsetDirective", Boolean.valueOf(true));
+	    read(in, doc);
+	}
     }
 
 
@@ -608,27 +609,27 @@ public class JEditorPane extends JTextComponent {
      */
     class PageLoader extends Thread {
 
-        /**
-         * Construct an asynchronous page loader.
-         */
-        PageLoader(Document doc, InputStream in, int priority, URL old,
-                   URL page) {
-            setPriority(priority);
-            this.in = in;
-            this.old = old;
-            this.page = page;
-            this.doc = doc;
-        }
+	/**
+	 * Construct an asynchronous page loader.
+	 */
+	PageLoader(Document doc, InputStream in, int priority, URL old,
+		   URL page) {
+	    setPriority(priority);
+	    this.in = in;
+	    this.old = old;
+	    this.page = page;
+	    this.doc = doc;
+	}
 
         boolean pageLoaded = false;
 
-        /**
-         * Try to load the document, then scroll the view
-         * to the reference (if specified).  When done, fire
-         * a page property change event.
-         */
+	/**
+	 * Try to load the document, then scroll the view
+	 * to the reference (if specified).  When done, fire
+	 * a page property change event.
+	 */
         public void run() {
-            try {
+	    try {
                 if (in == null) {
                     in = getStream(page);
                     if (kit == null) {
@@ -660,28 +661,28 @@ public class JEditorPane extends JTextComponent {
                         return;
                     }
                 }
-
-                read(in, doc);
-                URL page = (URL) doc.getProperty(Document.StreamDescriptionProperty);
-                String reference = page.getRef();
-                if (reference != null) {
-                    // scroll the page if necessary, but do it on the
-                    // event thread... that is the only guarantee that
-                    // modelToView can be safely called.
-                    Runnable callScrollToReference = new Runnable() {
+                
+		read(in, doc);
+		URL page = (URL) doc.getProperty(Document.StreamDescriptionProperty);
+		String reference = page.getRef();
+		if (reference != null) {
+		    // scroll the page if necessary, but do it on the
+		    // event thread... that is the only guarantee that 
+		    // modelToView can be safely called.
+		    Runnable callScrollToReference = new Runnable() {
                         public void run() {
-                            URL u = (URL) getDocument().getProperty
-                                (Document.StreamDescriptionProperty);
-                            String ref = u.getRef();
-                            scrollToReference(ref);
-                        }
-                    };
-                    SwingUtilities.invokeLater(callScrollToReference);
-                }
+			    URL u = (URL) getDocument().getProperty
+				(Document.StreamDescriptionProperty);
+			    String ref = u.getRef();
+			    scrollToReference(ref);
+			}
+		    };
+		    SwingUtilities.invokeLater(callScrollToReference);
+		}
                 pageLoaded = true;
-            } catch (IOException ioe) {
-                UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
-            } finally {
+	    } catch (IOException ioe) {
+		UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
+	    } finally {
                 synchronized(JEditorPane.this) {
                     loading = null;
                 }
@@ -692,79 +693,79 @@ public class JEditorPane extends JTextComponent {
                         }
                     }
                 });
-            }
-        }
+	    }
+	}
 
-        /**
-         * The stream to load the document with
-         */
-        InputStream in;
+	/**
+	 * The stream to load the document with
+	 */
+	InputStream in;
+	
+	/**
+	 * URL of the old page that was replaced (for the property change event)
+	 */
+	URL old;
 
-        /**
-         * URL of the old page that was replaced (for the property change event)
-         */
-        URL old;
+	/**
+	 * URL of the page being loaded (for the property change event)
+	 */
+	URL page;
 
-        /**
-         * URL of the page being loaded (for the property change event)
-         */
-        URL page;
-
-        /**
-         * The Document instance to load into. This is cached in case a
-         * new Document is created between the time the thread this is created
-         * and run.
-         */
-        Document doc;
+	/**
+	 * The Document instance to load into. This is cached in case a
+	 * new Document is created between the time the thread this is created
+	 * and run.
+	 */
+	Document doc;
     }
 
     static class PageStream extends FilterInputStream {
 
-        boolean canceled;
+	boolean canceled;
+	
+	public PageStream(InputStream i) {
+	    super(i);
+	    canceled = false;
+	}
 
-        public PageStream(InputStream i) {
-            super(i);
-            canceled = false;
-        }
-
-        /**
-         * Cancel the loading of the stream by throwing
-         * an IOException on the next request.
-         */
+	/**
+	 * Cancel the loading of the stream by throwing
+	 * an IOException on the next request.
+	 */
         public synchronized void cancel() {
-            canceled = true;
-        }
+	    canceled = true;
+	}
 
         protected synchronized void checkCanceled() throws IOException {
-            if (canceled) {
-                throw new IOException("page canceled");
-            }
-        }
+	    if (canceled) {
+		throw new IOException("page canceled");
+	    }
+	}
 
         public int read() throws IOException {
-            checkCanceled();
-            return super.read();
-        }
+	    checkCanceled();
+	    return super.read();
+	}
 
         public long skip(long n) throws IOException {
-            checkCanceled();
-            return super.skip(n);
-        }
+	    checkCanceled();
+	    return super.skip(n);
+	}
 
         public int available() throws IOException {
-            checkCanceled();
-            return super.available();
-        }
+	    checkCanceled();
+	    return super.available();
+	}
 
         public void reset() throws IOException {
-            checkCanceled();
-            super.reset();
-        }
+	    checkCanceled();
+	    super.reset();
+	}
 
     }
 
     /**
-     * Fetches a stream for the given URL, which is about to
+     * Fetches a stream for the given URL, which is about to 
      * be loaded by the <code>setPage</code> method.  By
      * default, this simply opens the URL and returns the
      * stream.  This can be reimplemented to do useful things
@@ -784,30 +785,30 @@ public class JEditorPane extends JTextComponent {
      */
     protected InputStream getStream(URL page) throws IOException {
         final URLConnection conn = page.openConnection();
-        if (conn instanceof HttpURLConnection) {
-            HttpURLConnection hconn = (HttpURLConnection) conn;
-            hconn.setInstanceFollowRedirects(false);
+	if (conn instanceof HttpURLConnection) {
+	    HttpURLConnection hconn = (HttpURLConnection) conn;
+	    hconn.setInstanceFollowRedirects(false);
             Object postData = getPostData();
             if (postData != null) {
                 handlePostData(hconn, postData);
             }
-            int response = hconn.getResponseCode();
-            boolean redirect = (response >= 300 && response <= 399);
+	    int response = hconn.getResponseCode();
+	    boolean redirect = (response >= 300 && response <= 399);
 
-            /*
-             * In the case of a redirect, we want to actually change the URL
-             * that was input to the new, redirected URL
-             */
-            if (redirect) {
-                String loc = conn.getHeaderField("Location");
-                if (loc.startsWith("http", 0)) {
-                    page = new URL(loc);
-                } else {
-                    page = new URL(page, loc);
-                }
-                return getStream(page);
-            }
-        }
+	    /*
+	     * In the case of a redirect, we want to actually change the URL
+	     * that was input to the new, redirected URL
+	     */
+	    if (redirect) {
+		String loc = conn.getHeaderField("Location");
+		if (loc.startsWith("http", 0)) {
+		    page = new URL(loc);
+		} else {
+		    page = new URL(page, loc);
+		}
+		return getStream(page);
+	    }
+	}
 
         // Connection properties handler should be forced to run on EDT,
         // as it instantiates the EditorKit.
@@ -828,30 +829,30 @@ public class JEditorPane extends JTextComponent {
         }
         return conn.getInputStream();
     }
-
+    
     /**
      * Handle URL connection properties (most notably, content type).
      */
     private void handleConnectionProperties(URLConnection conn) {
-        if (pageProperties == null) {
-            pageProperties = new Hashtable();
-        }
-        String type = conn.getContentType();
-        if (type != null) {
-            setContentType(type);
-            pageProperties.put("content-type", type);
-        }
+	if (pageProperties == null) {
+	    pageProperties = new Hashtable();
+	}
+	String type = conn.getContentType();
+	if (type != null) {
+	    setContentType(type);
+	    pageProperties.put("content-type", type);
+	}
         pageProperties.put(Document.StreamDescriptionProperty, conn.getURL());
-        String enc = conn.getContentEncoding();
-        if (enc != null) {
-            pageProperties.put("content-encoding", enc);
-        }
+	String enc = conn.getContentEncoding();
+	if (enc != null) {
+	    pageProperties.put("content-encoding", enc);
+	}
     }
 
     private Object getPostData() {
         return getDocument().getProperty(PostDataProperty);
     }
-
+    
     private void handlePostData(HttpURLConnection conn, Object postData)
                                                             throws IOException {
         conn.setDoOutput(true);
@@ -867,8 +868,8 @@ public class JEditorPane extends JTextComponent {
             }
         }
     }
-
-
+    
+    
     /**
      * Scrolls the view to the given reference location
      * (that is, the value returned by the <code>UL.getRef</code>
@@ -881,43 +882,43 @@ public class JEditorPane extends JTextComponent {
      * than HTML, this method should be reimplemented.
      * This method will have no effect if the component
      * is not visible.
-     *
+     * 
      * @param reference the named location to scroll to
      */
     public void scrollToReference(String reference) {
-        Document d = getDocument();
-        if (d instanceof HTMLDocument) {
-            HTMLDocument doc = (HTMLDocument) d;
-            HTMLDocument.Iterator iter = doc.getIterator(HTML.Tag.A);
-            for (; iter.isValid(); iter.next()) {
-                AttributeSet a = iter.getAttributes();
-                String nm = (String) a.getAttribute(HTML.Attribute.NAME);
-                if ((nm != null) && nm.equals(reference)) {
-                    // found a matching reference in the document.
-                    try {
+	Document d = getDocument();
+	if (d instanceof HTMLDocument) {
+	    HTMLDocument doc = (HTMLDocument) d;
+	    HTMLDocument.Iterator iter = doc.getIterator(HTML.Tag.A);
+	    for (; iter.isValid(); iter.next()) {
+		AttributeSet a = iter.getAttributes();
+		String nm = (String) a.getAttribute(HTML.Attribute.NAME);
+		if ((nm != null) && nm.equals(reference)) {
+		    // found a matching reference in the document.
+		    try {
                         int pos = iter.getStartOffset();
                         Rectangle r = modelToView(pos);
-                        if (r != null) {
-                            // the view is visible, scroll it to the
-                            // center of the current visible area.
-                            Rectangle vis = getVisibleRect();
-                            //r.y -= (vis.height / 2);
-                            r.height = vis.height;
-                            scrollRectToVisible(r);
+			if (r != null) {
+			    // the view is visible, scroll it to the 
+			    // center of the current visible area.
+			    Rectangle vis = getVisibleRect();
+			    //r.y -= (vis.height / 2);
+			    r.height = vis.height;
+			    scrollRectToVisible(r);
                             setCaretPosition(pos);
-                        }
-                    } catch (BadLocationException ble) {
-                        UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
-                    }
-                }
-            }
-        }
+			}
+		    } catch (BadLocationException ble) {
+		        UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
+		    }
+		}
+	    }
+	}
     }
 
     /**
-     * Gets the current URL being displayed.  If a URL was
+     * Gets the current URL being displayed.  If a URL was 
      * not specified in the creation of the document, this
-     * will return <code>null</code>, and relative URL's will not be
+     * will return <code>null</code>, and relative URL's will not be 
      * resolved.
      *
      * @return the URL, or <code>null</code> if none
@@ -931,7 +932,7 @@ public class JEditorPane extends JTextComponent {
      *
      * @param url the URL for display
      * @exception IOException for a <code>null</code> or invalid URL
-     *          specification
+     *		specification
      */
     public void setPage(String url) throws IOException {
         if (url == null) {
@@ -978,8 +979,8 @@ public class JEditorPane extends JTextComponent {
     }
 
     /**
-     * Gets the type of content that this editor
-     * is currently set to deal with.  This is
+     * Gets the type of content that this editor 
+     * is currently set to deal with.  This is 
      * defined to be the type associated with the
      * currently installed <code>EditorKit</code>.
      *
@@ -994,13 +995,13 @@ public class JEditorPane extends JTextComponent {
      * handles.  This calls <code>getEditorKitForContentType</code>,
      * and then <code>setEditorKit</code> if an editor kit can
      * be successfully located.  This is mostly convenience method
-     * that can be used as an alternative to calling
+     * that can be used as an alternative to calling 
      * <code>setEditorKit</code> directly.
      * <p>
      * If there is a charset definition specified as a parameter
      * of the content type specification, it will be used when
      * loading input streams using the associated <code>EditorKit</code>.
-     * For example if the type is specified as
+     * For example if the type is specified as 
      * <code>text/html; charset=EUC-JP</code> the content
      * will be loaded using the <code>EditorKit</code> registered for
      * <code>text/html</code> and the Reader provided to
@@ -1009,33 +1010,33 @@ public class JEditorPane extends JTextComponent {
      * to unicode.  If the type is not recognized, the content
      * will be loaded using the <code>EditorKit</code> registered
      * for plain text, <code>text/plain</code>.
-     *
+     * 
      * @param type the non-<code>null</code> mime type for the content editing
      *   support
      * @see #getContentType
      * @beaninfo
      *  description: the type of content
      * @throws NullPointerException if the <code>type</code> parameter
-     *          is <code>null</code>
+     *		is <code>null</code>
      */
     public final void setContentType(String type) {
-        // The type could have optional info is part of it,
-        // for example some charset info.  We need to strip that
-        // of and save it.
-        int parm = type.indexOf(";");
-        if (parm > -1) {
-            // Save the paramList.
-            String paramList = type.substring(parm);
-            // update the content type string.
-            type = type.substring(0, parm).trim();
-            if (type.toLowerCase().startsWith("text/")) {
-                setCharsetFromContentTypeParameters(paramList);
-            }
-        }
+	// The type could have optional info is part of it,
+	// for example some charset info.  We need to strip that
+	// of and save it.
+	int parm = type.indexOf(";");
+	if (parm > -1) {
+	    // Save the paramList.
+	    String paramList = type.substring(parm);
+	    // update the content type string.
+	    type = type.substring(0, parm).trim();
+	    if (type.toLowerCase().startsWith("text/")) {
+		setCharsetFromContentTypeParameters(paramList);
+	    }
+	}
         if ((kit == null) || (! type.equals(kit.getContentType()))
-                || !isUserSetEditorKit) {
+                || !isUserSetEditorKit) { 
             EditorKit k = getEditorKitForContentType(type);
-            if (k != null && k != kit) {
+            if (k != null && k != kit) { 
                 setEditorKit(k);
                 isUserSetEditorKit = false;
             }
@@ -1048,35 +1049,35 @@ public class JEditorPane extends JTextComponent {
      * of the content type in the http header information.
      */
     private void setCharsetFromContentTypeParameters(String paramlist) {
-        String charset = null;
-        try {
-            // paramlist is handed to us with a leading ';', strip it.
-            int semi = paramlist.indexOf(';');
-            if (semi > -1 && semi < paramlist.length()-1) {
-                paramlist = paramlist.substring(semi + 1);
-            }
+	String charset = null;
+	try {
+	    // paramlist is handed to us with a leading ';', strip it.
+	    int semi = paramlist.indexOf(';');
+	    if (semi > -1 && semi < paramlist.length()-1) {
+		paramlist = paramlist.substring(semi + 1);
+	    }
 
-            if (paramlist.length() > 0) {
-                // parse the paramlist into attr-value pairs & get the
-                // charset pair's value
-                HeaderParser hdrParser = new HeaderParser(paramlist);
-                charset = hdrParser.findValue("charset");
-                if (charset != null) {
-                    putClientProperty("charset", charset);
-                }
-            }
-        }
-        catch (IndexOutOfBoundsException e) {
-            // malformed parameter list, use charset we have
-        }
-        catch (NullPointerException e) {
-            // malformed parameter list, use charset we have
-        }
-        catch (Exception e) {
-            // malformed parameter list, use charset we have; but complain
-            System.err.println("JEditorPane.getCharsetFromContentTypeParameters failed on: " + paramlist);
-            e.printStackTrace();
-        }
+	    if (paramlist.length() > 0) {
+		// parse the paramlist into attr-value pairs & get the
+		// charset pair's value
+		HeaderParser hdrParser = new HeaderParser(paramlist);
+		charset = hdrParser.findValue("charset");
+		if (charset != null) {
+		    putClientProperty("charset", charset);
+		}
+	    }
+	}
+	catch (IndexOutOfBoundsException e) {
+	    // malformed parameter list, use charset we have
+	}
+	catch (NullPointerException e) {
+	    // malformed parameter list, use charset we have
+	}
+	catch (Exception e) {
+	    // malformed parameter list, use charset we have; but complain
+	    System.err.println("JEditorPane.getCharsetFromContentTypeParameters failed on: " + paramlist);
+	    e.printStackTrace();
+	}
     }
 
 
@@ -1096,7 +1097,7 @@ public class JEditorPane extends JTextComponent {
      * of content is modeled.  This method will cause <code>setDocument</code>
      * to be called on behalf of the caller to ensure integrity
      * of the internal state.</em>
-     *
+     * 
      * @param kit the desired editor behavior
      * @see #getEditorKit
      * @beaninfo
@@ -1123,7 +1124,7 @@ public class JEditorPane extends JTextComponent {
      * of content.  This is called when a type is requested
      * that doesn't match the currently installed type.
      * If the component doesn't have an <code>EditorKit</code> registered
-     * for the given type, it will try to create an
+     * for the given type, it will try to create an 
      * <code>EditorKit</code> from the default <code>EditorKit</code> registry.
      * If that fails, a <code>PlainEditorKit</code> is used on the
      * assumption that all text documents can be represented
@@ -1136,7 +1137,7 @@ public class JEditorPane extends JTextComponent {
      *
      * @param type the non-<code>null</code> content type
      * @return the editor kit
-     */
+     */  
     public EditorKit getEditorKitForContentType(String type) {
         if (typeHandlers == null) {
             typeHandlers = new Hashtable(3);
@@ -1155,7 +1156,7 @@ public class JEditorPane extends JTextComponent {
     }
 
     /**
-     * Directly sets the editor kit to use for the given type.  A
+     * Directly sets the editor kit to use for the given type.  A 
      * look-and-feel implementation might use this in conjunction
      * with <code>createEditorKitForContentType</code> to install handlers for
      * content types with a look-and-feel bias.
@@ -1178,30 +1179,30 @@ public class JEditorPane extends JTextComponent {
      * or <code>null</code>) this amounts to a removal of the
      * current selection.  The replacement text will have the
      * attributes currently defined for input.  If the component is not
-     * editable, beep and return.
+     * editable, beep and return.  
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param content  the content to replace the selection with.  This
      *   value can be <code>null</code>
      */
     public void replaceSelection(String content) {
         if (! isEditable()) {
-            UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
+	    UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
             return;
         }
         EditorKit kit = getEditorKit();
-        if(kit instanceof StyledEditorKit) {
+	if(kit instanceof StyledEditorKit) {
             try {
-                Document doc = getDocument();
+		Document doc = getDocument();
                 Caret caret = getCaret();
                 int p0 = Math.min(caret.getDot(), caret.getMark());
                 int p1 = Math.max(caret.getDot(), caret.getMark());
                 if (doc instanceof AbstractDocument) {
-                    ((AbstractDocument)doc).replace(p0, p1 - p0, content,
+                    ((AbstractDocument)doc).replace(p0, p1 - p0, content, 
                               ((StyledEditorKit)kit).getInputAttributes());
                 }
                 else {
@@ -1214,12 +1215,12 @@ public class JEditorPane extends JTextComponent {
                     }
                 }
             } catch (BadLocationException e) {
-                UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
+	        UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
             }
         }
         else {
-            super.replaceSelection(content);
-        }
+	    super.replaceSelection(content);
+	}
     }
 
     /**
@@ -1233,7 +1234,7 @@ public class JEditorPane extends JTextComponent {
      * <code>Class.forName</code> will be used to load the prototype.
      * <p>
      * Once a prototype <code>EditorKit</code> instance is successfully
-     * located, it is cloned and the clone is returned.
+     * located, it is cloned and the clone is returned.  
      *
      * @param type the content type
      * @return the editor kit, or <code>null</code> if there is nothing
@@ -1242,21 +1243,21 @@ public class JEditorPane extends JTextComponent {
     public static EditorKit createEditorKitForContentType(String type) {
         EditorKit k = null;
         Hashtable kitRegistry = getKitRegisty();
-        k = (EditorKit) kitRegistry.get(type);
+	k = (EditorKit) kitRegistry.get(type);
         if (k == null) {
-            // try to dynamically load the support
+            // try to dynamically load the support 
             String classname = (String) getKitTypeRegistry().get(type);
-            ClassLoader loader = (ClassLoader) getKitLoaderRegistry().get(type);
+	    ClassLoader loader = (ClassLoader) getKitLoaderRegistry().get(type);
             try {
-                Class c;
-                if (loader != null) {
-                    c = loader.loadClass(classname);
-                } else {
-                    // Will only happen if developer has invoked
+		Class c;
+		if (loader != null) {
+		    c = loader.loadClass(classname);
+		} else {
+                    // Will only happen if developer has invoked 
                     // registerEditorKitForContentType(type, class, null).
-                    c = Class.forName(classname, true, Thread.currentThread().
+		    c = Class.forName(classname, true, Thread.currentThread().
                                       getContextClassLoader());
-                }
+		}
                 k = (EditorKit) c.newInstance();
                 kitRegistry.put(type, k);
             } catch (Throwable e) {
@@ -1274,10 +1275,10 @@ public class JEditorPane extends JTextComponent {
 
     /**
      * Establishes the default bindings of <code>type</code> to
-     * <code>classname</code>.
+     * <code>classname</code>.  
      * The class will be dynamically loaded later when actually
      * needed, and can be safely changed before attempted uses
-     * to avoid loading unwanted classes.  The prototype
+     * to avoid loading unwanted classes.  The prototype 
      * <code>EditorKit</code> will be loaded with <code>Class.forName</code>
      * when registered with this method.
      *
@@ -1291,10 +1292,10 @@ public class JEditorPane extends JTextComponent {
 
     /**
      * Establishes the default bindings of <code>type</code> to
-     * <code>classname</code>.
+     * <code>classname</code>.  
      * The class will be dynamically loaded later when actually
      * needed using the given <code>ClassLoader</code>,
-     * and can be safely changed
+     * and can be safely changed 
      * before attempted uses to avoid loading unwanted classes.
      *
      * @param type the non-<code>null</code> content type
@@ -1303,8 +1304,8 @@ public class JEditorPane extends JTextComponent {
      */
     public static void registerEditorKitForContentType(String type, String classname, ClassLoader loader) {
         getKitTypeRegistry().put(type, classname);
-        getKitLoaderRegistry().put(type, loader);
-        getKitRegisty().remove(type);
+	getKitLoaderRegistry().put(type, loader);
+	getKitRegisty().remove(type);
     }
 
     /**
@@ -1316,26 +1317,26 @@ public class JEditorPane extends JTextComponent {
      * @since 1.3
      */
     public static String getEditorKitClassNameForContentType(String type) {
-        return (String)getKitTypeRegistry().get(type);
+	return (String)getKitTypeRegistry().get(type);
     }
 
     private static Hashtable getKitTypeRegistry() {
-        loadDefaultKitsIfNecessary();
-        return (Hashtable)SwingUtilities.appContextGet(kitTypeRegistryKey);
+	loadDefaultKitsIfNecessary();
+	return (Hashtable)SwingUtilities.appContextGet(kitTypeRegistryKey);
     }
 
     private static Hashtable getKitLoaderRegistry() {
-        loadDefaultKitsIfNecessary();
-        return (Hashtable)SwingUtilities.appContextGet(kitLoaderRegistryKey);
+	loadDefaultKitsIfNecessary();
+	return (Hashtable)SwingUtilities.appContextGet(kitLoaderRegistryKey);
     }
 
     private static Hashtable getKitRegisty() {
-        Hashtable ht = (Hashtable)SwingUtilities.appContextGet(kitRegistryKey);
-        if (ht == null) {
-            ht = new Hashtable(3);
-            SwingUtilities.appContextPut(kitRegistryKey, ht);
-        }
-        return ht;
+	Hashtable ht = (Hashtable)SwingUtilities.appContextGet(kitRegistryKey);
+	if (ht == null) {
+	    ht = new Hashtable(3);
+	    SwingUtilities.appContextPut(kitRegistryKey, ht);
+	}
+	return ht;
     }
 
     /**
@@ -1345,7 +1346,7 @@ public class JEditorPane extends JTextComponent {
      * appearing in the first applet.
      */
     private static void loadDefaultKitsIfNecessary() {
-        if (SwingUtilities.appContextGet(kitTypeRegistryKey) == null) {
+	if (SwingUtilities.appContextGet(kitTypeRegistryKey) == null) {
             synchronized(defaultEditorKitMap) {
                 if (defaultEditorKitMap.size() == 0) {
                     defaultEditorKitMap.put("text/plain",
@@ -1355,18 +1356,18 @@ public class JEditorPane extends JTextComponent {
                     defaultEditorKitMap.put("text/rtf",
                                             "javax.swing.text.rtf.RTFEditorKit");
                     defaultEditorKitMap.put("application/rtf",
-                                            "javax.swing.text.rtf.RTFEditorKit");
+                                            "javax.swing.text.rtf.RTFEditorKit");                    
                 }
             }
-            Hashtable ht = new Hashtable();
-            SwingUtilities.appContextPut(kitTypeRegistryKey, ht);
-            ht = new Hashtable();
-            SwingUtilities.appContextPut(kitLoaderRegistryKey, ht);
+	    Hashtable ht = new Hashtable();
+	    SwingUtilities.appContextPut(kitTypeRegistryKey, ht);
+	    ht = new Hashtable();
+	    SwingUtilities.appContextPut(kitLoaderRegistryKey, ht);
             for (String key : defaultEditorKitMap.keySet()) {
                 registerEditorKitForContentType(key,defaultEditorKitMap.get(key));
             }
-
-        }
+            
+	}
     }
 
     // --- java.awt.Component methods --------------------------
@@ -1388,33 +1389,33 @@ public class JEditorPane extends JTextComponent {
      * @return a <code>Dimension</code> containing the preferred size
      */
     public Dimension getPreferredSize() {
-        Dimension d = super.getPreferredSize();
-        if (getParent() instanceof JViewport) {
-            JViewport port = (JViewport)getParent();
-            TextUI ui = getUI();
+	Dimension d = super.getPreferredSize();
+	if (getParent() instanceof JViewport) {
+	    JViewport port = (JViewport)getParent();
+	    TextUI ui = getUI();
             int prefWidth = d.width;
             int prefHeight = d.height;
-            if (! getScrollableTracksViewportWidth()) {
-                int w = port.getWidth();
-                Dimension min = ui.getMinimumSize(this);
-                if (w != 0 && w < min.width) {
+	    if (! getScrollableTracksViewportWidth()) {
+		int w = port.getWidth();
+		Dimension min = ui.getMinimumSize(this);
+		if (w != 0 && w < min.width) {
                     // Only adjust to min if we have a valid size
-                    prefWidth = min.width;
-                }
-            }
-            if (! getScrollableTracksViewportHeight()) {
-                int h = port.getHeight();
-                Dimension min = ui.getMinimumSize(this);
-                if (h != 0 && h < min.height) {
+		    prefWidth = min.width;
+		}
+	    }
+	    if (! getScrollableTracksViewportHeight()) {
+		int h = port.getHeight();
+		Dimension min = ui.getMinimumSize(this);
+		if (h != 0 && h < min.height) {
                     // Only adjust to min if we have a valid size
-                    prefHeight = min.height;
-                }
-            }
+		    prefHeight = min.height;
+		}
+	    }
             if (prefWidth != d.width || prefHeight != d.height) {
                 d = new Dimension(prefWidth, prefHeight);
             }
-        }
-        return d;
+	}
+	return d;
     }
 
     // --- JTextComponent methods -----------------------------
@@ -1424,7 +1425,7 @@ public class JEditorPane extends JTextComponent {
      * content,
      * which is expected to be in the format of the content type of
      * this editor.  For example, if the type is set to <code>text/html</code>
-     * the string should be specified in terms of HTML.
+     * the string should be specified in terms of HTML.  
      * <p>
      * This is implemented to remove the contents of the current document,
      * and replace them by parsing the given string using the current
@@ -1456,9 +1457,9 @@ public class JEditorPane extends JTextComponent {
      * string.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param t the new text to be set; if <code>null</code> the old
      *    text will be deleted
@@ -1468,19 +1469,19 @@ public class JEditorPane extends JTextComponent {
      */
     public void setText(String t) {
         try {
-            Document doc = getDocument();
-            doc.remove(0, doc.getLength());
-            if (t == null || t.equals("")) {
-                return;
-            }
-            Reader r = new StringReader(t);
-            EditorKit kit = getEditorKit();
+	    Document doc = getDocument();
+	    doc.remove(0, doc.getLength());
+	    if (t == null || t.equals("")) {
+		return;
+	    }
+	    Reader r = new StringReader(t);
+	    EditorKit kit = getEditorKit();
             kit.read(r, doc, 0);
         } catch (IOException ioe) {
-            UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
+	    UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
         } catch (BadLocationException ble) {
-            UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
-        }
+	    UIManager.getLookAndFeel().provideErrorFeedback(JEditorPane.this);
+	}
     }
 
     /**
@@ -1495,11 +1496,11 @@ public class JEditorPane extends JTextComponent {
      * @see #setText
      */
     public String getText() {
-        String txt;
-        try {
-            StringWriter buf = new StringWriter();
-            write(buf);
-            txt = buf.toString();
+	String txt;
+	try {
+	    StringWriter buf = new StringWriter();
+	    write(buf);
+	    txt = buf.toString();
         } catch (IOException ioe) {
             txt = null;
         }
@@ -1509,55 +1510,55 @@ public class JEditorPane extends JTextComponent {
     // --- Scrollable  ----------------------------------------
 
     /**
-     * Returns true if a viewport should always force the width of this
-     * <code>Scrollable</code> to match the width of the viewport.
-     *
+     * Returns true if a viewport should always force the width of this 
+     * <code>Scrollable</code> to match the width of the viewport.  
+     * 
      * @return true if a viewport should force the Scrollables width to
      * match its own, false otherwise
      */
     public boolean getScrollableTracksViewportWidth() {
-        if (getParent() instanceof JViewport) {
-            JViewport port = (JViewport)getParent();
-            TextUI ui = getUI();
-            int w = port.getWidth();
-            Dimension min = ui.getMinimumSize(this);
-            Dimension max = ui.getMaximumSize(this);
-            if ((w >= min.width) && (w <= max.width)) {
-                return true;
-            }
-        }
-        return false;
+	if (getParent() instanceof JViewport) {
+	    JViewport port = (JViewport)getParent();
+	    TextUI ui = getUI();
+	    int w = port.getWidth();
+	    Dimension min = ui.getMinimumSize(this);
+	    Dimension max = ui.getMaximumSize(this);
+	    if ((w >= min.width) && (w <= max.width)) {
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**
-     * Returns true if a viewport should always force the height of this
-     * <code>Scrollable</code> to match the height of the viewport.
-     *
+     * Returns true if a viewport should always force the height of this 
+     * <code>Scrollable</code> to match the height of the viewport.  
+     * 
      * @return true if a viewport should force the
-     *          <code>Scrollable</code>'s height to match its own,
-     *          false otherwise
+     *		<code>Scrollable</code>'s height to match its own,
+     *		false otherwise
      */
     public boolean getScrollableTracksViewportHeight() {
-        if (getParent() instanceof JViewport) {
-            JViewport port = (JViewport)getParent();
-            TextUI ui = getUI();
-            int h = port.getHeight();
-            Dimension min = ui.getMinimumSize(this);
-            if (h >= min.height) {
-                Dimension max = ui.getMaximumSize(this);
-                if (h <= max.height) {
-                    return true;
-                }
-            }
-        }
-        return false;
+	if (getParent() instanceof JViewport) {
+	    JViewport port = (JViewport)getParent();
+	    TextUI ui = getUI();
+	    int h = port.getHeight();
+	    Dimension min = ui.getMinimumSize(this);
+	    if (h >= min.height) {
+		Dimension max = ui.getMaximumSize(this);
+		if (h <= max.height) {
+		    return true;
+		}
+	    }
+	}
+	return false;
     }
 
     // --- Serialization ------------------------------------
 
-    /**
+    /** 
      * See <code>readObject</code> and <code>writeObject</code> in
-     * <code>JComponent</code> for more
+     * <code>JComponent</code> for more 
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -1586,7 +1587,7 @@ public class JEditorPane extends JTextComponent {
     private boolean isUserSetEditorKit;
 
     private Hashtable pageProperties;
-
+    
     /** Should be kept in sync with javax.swing.text.html.FormView counterpart. */
     final static String PostDataProperty = "javax.swing.JEditorPane.postdata";
 
@@ -1598,11 +1599,11 @@ public class JEditorPane extends JTextComponent {
     /*
      * Private AppContext keys for this class's static variables.
      */
-    private static final Object kitRegistryKey =
+    private static final Object kitRegistryKey = 
         new StringBuffer("JEditorPane.kitRegistry");
-    private static final Object kitTypeRegistryKey =
+    private static final Object kitTypeRegistryKey = 
         new StringBuffer("JEditorPane.kitTypeRegistry");
-    private static final Object kitLoaderRegistryKey =
+    private static final Object kitLoaderRegistryKey = 
         new StringBuffer("JEditorPane.kitLoaderRegistry");
 
     /**
@@ -1626,10 +1627,10 @@ public class JEditorPane extends JTextComponent {
     public static final String W3C_LENGTH_UNITS = "JEditorPane.w3cLengthUnits";
 
     /**
-     * Key for a client property used to indicate whether
+     * Key for a client property used to indicate whether 
      * the default font and foreground color from the component are
      * used if a font or foreground color is not specified in the styled
-     * text.
+     * text. 
      * <p>
      * The default varies based on the look and feel;
      * to enable it set the client {@link #putClientProperty property} with
@@ -1643,38 +1644,38 @@ public class JEditorPane extends JTextComponent {
 
     /**
      * Returns a string representation of this <code>JEditorPane</code>.
-     * This method
-     * is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * This method 
+     * is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between      
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
-     *
+     * 
      * @return  a string representation of this <code>JEditorPane</code>
      */
     protected String paramString() {
         String kitString = (kit != null ?
-                            kit.toString() : "");
+			    kit.toString() : "");
         String typeHandlersString = (typeHandlers != null ?
-                                     typeHandlers.toString() : "");
+				     typeHandlers.toString() : "");
 
         return super.paramString() +
         ",kit=" + kitString +
         ",typeHandlers=" + typeHandlersString;
     }
 
-
+    
 /////////////////
 // Accessibility support
 ////////////////
 
 
     /**
-     * Gets the AccessibleContext associated with this JEditorPane.
-     * For editor panes, the AccessibleContext takes the form of an
-     * AccessibleJEditorPane.
+     * Gets the AccessibleContext associated with this JEditorPane. 
+     * For editor panes, the AccessibleContext takes the form of an 
+     * AccessibleJEditorPane. 
      * A new AccessibleJEditorPane instance is created if necessary.
      *
-     * @return an AccessibleJEditorPane that serves as the
+     * @return an AccessibleJEditorPane that serves as the 
      *         AccessibleContext of this JEditorPane
      */
     public AccessibleContext getAccessibleContext() {
@@ -1686,14 +1687,14 @@ public class JEditorPane extends JTextComponent {
         } else if (accessibleContext == null || accessibleContext.getClass() !=
                        AccessibleJEditorPane.class) {
             accessibleContext = new AccessibleJEditorPane();
-        }
+        } 
         return accessibleContext;
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>JEditorPane</code> class.  It provides an implementation of the
-     * Java Accessibility API appropriate to editor pane user-interface
+     * This class implements accessibility support for the 
+     * <code>JEditorPane</code> class.  It provides an implementation of the 
+     * Java Accessibility API appropriate to editor pane user-interface 
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -1713,7 +1714,7 @@ public class JEditorPane extends JTextComponent {
          * <code>JEditorPane</code> instead (e.g. "plain/text", "html/text").
          *
          * @return the localized description of the object; <code>null</code>
-         *      if this object does not have a description
+         * 	if this object does not have a description
          *
          * @see #setAccessibleName
          */
@@ -1761,73 +1762,73 @@ public class JEditorPane extends JTextComponent {
      */
     protected class AccessibleJEditorPaneHTML extends AccessibleJEditorPane {
 
-        private AccessibleContext accessibleContext;
+	private AccessibleContext accessibleContext;
 
-        public AccessibleText getAccessibleText() {
-            return new JEditorPaneAccessibleHypertextSupport();
-        }
+	public AccessibleText getAccessibleText() {
+	    return new JEditorPaneAccessibleHypertextSupport();
+	}
 
-        protected AccessibleJEditorPaneHTML () {
-            HTMLEditorKit kit = (HTMLEditorKit)JEditorPane.this.getEditorKit();
-            accessibleContext = kit.getAccessibleContext();
-        }
+	protected AccessibleJEditorPaneHTML () {
+	    HTMLEditorKit kit = (HTMLEditorKit)JEditorPane.this.getEditorKit();
+	    accessibleContext = kit.getAccessibleContext();
+	}
 
-        /**
-         * Returns the number of accessible children of the object.
-         *
-         * @return the number of accessible children of the object.
-         */
-        public int getAccessibleChildrenCount() {
-            if (accessibleContext != null) {
-                return accessibleContext.getAccessibleChildrenCount();
-            } else {
-                return 0;
-            }
-        }
-
-        /**
-         * Returns the specified Accessible child of the object.  The Accessible
-         * children of an Accessible object are zero-based, so the first child
-         * of an Accessible child is at index 0, the second child is at index 1,
-         * and so on.
-         *
-         * @param i zero-based index of child
-         * @return the Accessible child of the object
-         * @see #getAccessibleChildrenCount
-         */
-        public Accessible getAccessibleChild(int i) {
-            if (accessibleContext != null) {
-                return accessibleContext.getAccessibleChild(i);
-            } else {
-                return null;
-            }
-        }
-
-        /**
-         * Returns the Accessible child, if one exists, contained at the local
-         * coordinate Point.
-         *
-         * @param p The point relative to the coordinate system of this object.
-         * @return the Accessible, if it exists, at the specified location;
-         * otherwise null
-         */
-        public Accessible getAccessibleAt(Point p) {
-            if (accessibleContext != null && p != null) {
-                try {
-                    AccessibleComponent acomp =
-                        accessibleContext.getAccessibleComponent();
-                    if (acomp != null) {
-                        return acomp.getAccessibleAt(p);
-                    } else {
-                        return null;
-                    }
-                } catch (IllegalComponentStateException e) {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
+	/**
+	 * Returns the number of accessible children of the object.
+	 *
+	 * @return the number of accessible children of the object.
+	 */
+	public int getAccessibleChildrenCount() {
+	    if (accessibleContext != null) {
+		return accessibleContext.getAccessibleChildrenCount();
+	    } else {
+		return 0;
+	    }
+	}
+	
+	/**
+	 * Returns the specified Accessible child of the object.  The Accessible
+	 * children of an Accessible object are zero-based, so the first child 
+	 * of an Accessible child is at index 0, the second child is at index 1,
+	 * and so on.
+	 *
+	 * @param i zero-based index of child
+	 * @return the Accessible child of the object
+	 * @see #getAccessibleChildrenCount
+	 */
+	public Accessible getAccessibleChild(int i) {
+	    if (accessibleContext != null) {
+		return accessibleContext.getAccessibleChild(i);
+	    } else {
+		return null;
+	    }
+	}
+	
+	/**
+	 * Returns the Accessible child, if one exists, contained at the local 
+	 * coordinate Point.
+	 *
+	 * @param p The point relative to the coordinate system of this object.
+	 * @return the Accessible, if it exists, at the specified location; 
+	 * otherwise null
+	 */
+	public Accessible getAccessibleAt(Point p) {
+	    if (accessibleContext != null && p != null) {
+		try {
+		    AccessibleComponent acomp = 
+			accessibleContext.getAccessibleComponent();
+		    if (acomp != null) {
+			return acomp.getAccessibleAt(p);
+		    } else {
+			return null;
+		    }
+		} catch (IllegalComponentStateException e) {
+		    return null;
+		}
+	    } else {
+		return null;
+	    }
+	}
     }
 
     /**
@@ -1837,326 +1838,326 @@ public class JEditorPane extends JTextComponent {
      * Provides support for <code>AccessibleHypertext</code> in case
      * there is an HTML document being displayed in this
      * <code>JEditorPane</code>.
-     *
+     * 
      */
     protected class JEditorPaneAccessibleHypertextSupport
     extends AccessibleJEditorPane implements AccessibleHypertext {
 
-        public class HTMLLink extends AccessibleHyperlink {
-            Element element;
+	public class HTMLLink extends AccessibleHyperlink {
+	    Element element;
 
-            public HTMLLink(Element e) {
-                element = e;
-            }
+	    public HTMLLink(Element e) {
+		element = e;
+	    }
 
-            /**
-             * Since the document a link is associated with may have
-             * changed, this method returns whether this Link is valid
-             * anymore (with respect to the document it references).
-             *
-             * @return a flag indicating whether this link is still valid with
-             *         respect to the AccessibleHypertext it belongs to
-             */
-            public boolean isValid() {
-                return JEditorPaneAccessibleHypertextSupport.this.linksValid;
-            }
+	    /**
+	     * Since the document a link is associated with may have
+	     * changed, this method returns whether this Link is valid
+	     * anymore (with respect to the document it references).
+	     *
+	     * @return a flag indicating whether this link is still valid with
+	     *         respect to the AccessibleHypertext it belongs to
+	     */
+	    public boolean isValid() {
+		return JEditorPaneAccessibleHypertextSupport.this.linksValid;
+	    }
 
-            /**
-             * Returns the number of accessible actions available in this Link
-             * If there are more than one, the first one is NOT considered the
-             * "default" action of this LINK object (e.g. in an HTML imagemap).
-             * In general, links will have only one AccessibleAction in them.
-             *
-             * @return the zero-based number of Actions in this object
-             */
-            public int getAccessibleActionCount() {
-                return 1;
-            }
+	    /**
+	     * Returns the number of accessible actions available in this Link
+	     * If there are more than one, the first one is NOT considered the
+	     * "default" action of this LINK object (e.g. in an HTML imagemap).
+	     * In general, links will have only one AccessibleAction in them.
+	     *
+	     * @return the zero-based number of Actions in this object
+	     */
+	    public int getAccessibleActionCount() {
+		return 1;
+	    }
 
-            /**
-             * Perform the specified Action on the object
-             *
-             * @param i zero-based index of actions
-             * @return true if the the action was performed; else false.
-             * @see #getAccessibleActionCount
-             */
-            public boolean doAccessibleAction(int i) {
-                if (i == 0 && isValid() == true) {
-                    URL u = (URL) getAccessibleActionObject(i);
-                    if (u != null) {
-                        HyperlinkEvent linkEvent =
-                            new HyperlinkEvent(JEditorPane.this, HyperlinkEvent.EventType.ACTIVATED, u);
-                        JEditorPane.this.fireHyperlinkUpdate(linkEvent);
-                        return true;
-                    }
-                }
-                return false;  // link invalid or i != 0
-            }
+	    /**
+	     * Perform the specified Action on the object
+	     *
+	     * @param i zero-based index of actions
+	     * @return true if the the action was performed; else false.
+	     * @see #getAccessibleActionCount
+	     */
+	    public boolean doAccessibleAction(int i) {
+		if (i == 0 && isValid() == true) {
+		    URL u = (URL) getAccessibleActionObject(i);
+		    if (u != null) {
+			HyperlinkEvent linkEvent =
+			    new HyperlinkEvent(JEditorPane.this, HyperlinkEvent.EventType.ACTIVATED, u);
+			JEditorPane.this.fireHyperlinkUpdate(linkEvent);
+			return true;
+		    }
+		}
+		return false;  // link invalid or i != 0
+	    }
 
-            /**
-             * Return a String description of this particular
-             * link action.  The string returned is the text
-             * within the document associated with the element
-             * which contains this link.
-             *
-             * @param i zero-based index of the actions
-             * @return a String description of the action
-             * @see #getAccessibleActionCount
-             */
-            public String getAccessibleActionDescription(int i) {
-                if (i == 0 && isValid() == true) {
-                    Document d = JEditorPane.this.getDocument();
-                    if (d != null) {
-                        try {
-                            return d.getText(getStartIndex(),
-                                             getEndIndex() - getStartIndex());
-                        } catch (BadLocationException exception) {
-                            return null;
-                        }
-                    }
-                }
-                return null;
-            }
+	    /**
+	     * Return a String description of this particular
+	     * link action.  The string returned is the text
+	     * within the document associated with the element
+	     * which contains this link.
+	     *
+	     * @param i zero-based index of the actions
+	     * @return a String description of the action
+	     * @see #getAccessibleActionCount
+	     */
+	    public String getAccessibleActionDescription(int i) {
+		if (i == 0 && isValid() == true) {
+		    Document d = JEditorPane.this.getDocument();
+		    if (d != null) {
+			try {
+			    return d.getText(getStartIndex(),
+					     getEndIndex() - getStartIndex());
+			} catch (BadLocationException exception) {
+			    return null;
+			}
+		    }
+		}
+		return null;
+	    }
 
-            /**
-             * Returns a URL object that represents the link.
-             *
-             * @param i zero-based index of the actions
-             * @return an URL representing the HTML link itself
-             * @see #getAccessibleActionCount
-             */
-            public Object getAccessibleActionObject(int i) {
-                if (i == 0 && isValid() == true) {
-                    AttributeSet as = element.getAttributes();
-                    AttributeSet anchor =
-                        (AttributeSet) as.getAttribute(HTML.Tag.A);
-                    String href = (anchor != null) ?
-                        (String) anchor.getAttribute(HTML.Attribute.HREF) : null;
-                    if (href != null) {
-                        URL u;
-                        try {
-                            u = new URL(JEditorPane.this.getPage(), href);
-                        } catch (MalformedURLException m) {
-                            u = null;
-                        }
-                        return u;
-                    }
-                }
-                return null;  // link invalid or i != 0
-            }
+	    /**
+	     * Returns a URL object that represents the link.
+	     *
+	     * @param i zero-based index of the actions
+	     * @return an URL representing the HTML link itself
+	     * @see #getAccessibleActionCount
+	     */
+	    public Object getAccessibleActionObject(int i) {
+		if (i == 0 && isValid() == true) {
+		    AttributeSet as = element.getAttributes();
+		    AttributeSet anchor = 
+			(AttributeSet) as.getAttribute(HTML.Tag.A);
+		    String href = (anchor != null) ?
+			(String) anchor.getAttribute(HTML.Attribute.HREF) : null;
+		    if (href != null) {
+			URL u;
+			try {
+			    u = new URL(JEditorPane.this.getPage(), href);
+			} catch (MalformedURLException m) {
+			    u = null;
+			}
+			return u;
+		    }
+		}
+		return null;  // link invalid or i != 0
+	    }
 
-            /**
-             * Return an object that represents the link anchor,
-             * as appropriate for that link.  E.g. from HTML:
-             *   <a href="http://www.sun.com/access">Accessibility</a>
-             * this method would return a String containing the text:
-             * 'Accessibility'.
-             *
-             * Similarly, from this HTML:
-             *   &lt;a HREF="#top"&gt;&lt;img src="top-hat.gif" alt="top hat"&gt;&lt;/a&gt;
-             * this might return the object ImageIcon("top-hat.gif", "top hat");
-             *
-             * @param i zero-based index of the actions
-             * @return an Object representing the hypertext anchor
-             * @see #getAccessibleActionCount
-             */
-            public Object getAccessibleActionAnchor(int i) {
-                return getAccessibleActionDescription(i);
-            }
+	    /**
+	     * Return an object that represents the link anchor,
+	     * as appropriate for that link.  E.g. from HTML:
+	     *   <a href="http://www.sun.com/access">Accessibility</a>
+	     * this method would return a String containing the text:
+	     * 'Accessibility'.
+	     *
+	     * Similarly, from this HTML:
+	     *   &lt;a HREF="#top"&gt;&lt;img src="top-hat.gif" alt="top hat"&gt;&lt;/a&gt;
+	     * this might return the object ImageIcon("top-hat.gif", "top hat");
+	     *
+	     * @param i zero-based index of the actions
+	     * @return an Object representing the hypertext anchor
+	     * @see #getAccessibleActionCount
+	     */
+	    public Object getAccessibleActionAnchor(int i) {
+		return getAccessibleActionDescription(i);
+	    }
 
 
-            /**
-             * Get the index with the hypertext document at which this
-             * link begins
-             *
-             * @return index of start of link
-             */
-            public int getStartIndex() {
-                return element.getStartOffset();
-            }
+	    /**
+	     * Get the index with the hypertext document at which this
+	     * link begins
+	     *
+	     * @return index of start of link
+	     */
+	    public int getStartIndex() {
+		return element.getStartOffset();
+	    }
 
-            /**
-             * Get the index with the hypertext document at which this
-             * link ends
-             *
-             * @return index of end of link
-             */
-            public int getEndIndex() {
-                return element.getEndOffset();
-            }
-        }
+	    /**
+	     * Get the index with the hypertext document at which this
+	     * link ends
+	     *
+	     * @return index of end of link
+	     */
+	    public int getEndIndex() {
+		return element.getEndOffset();
+	    }
+	}
 
-        private class LinkVector extends Vector {
-            public int baseElementIndex(Element e) {
-                HTMLLink l;
-                for (int i = 0; i < elementCount; i++) {
-                    l = (HTMLLink) elementAt(i);
-                    if (l.element == e) {
-                        return i;
-                    }
-                }
-                return -1;
-            }
-        }
+	private class LinkVector extends Vector {
+	    public int baseElementIndex(Element e) {
+		HTMLLink l;
+		for (int i = 0; i < elementCount; i++) {
+		    l = (HTMLLink) elementAt(i);
+		    if (l.element == e) {
+			return i;
+		    }
+		}
+		return -1;
+	    }
+	}
 
         LinkVector hyperlinks;
-        boolean linksValid = false;
+	boolean linksValid = false;
 
-        /**
-         * Build the private table mapping links to locations in the text
-         */
-        private void buildLinkTable() {
-            hyperlinks.removeAllElements();
-            Document d = JEditorPane.this.getDocument();
-            if (d != null) {
-                ElementIterator ei = new ElementIterator(d);
-                Element e;
-                AttributeSet as;
-                AttributeSet anchor;
-                String href;
-                while ((e = ei.next()) != null) {
-                    if (e.isLeaf()) {
-                        as = e.getAttributes();
-                    anchor = (AttributeSet) as.getAttribute(HTML.Tag.A);
-                    href = (anchor != null) ?
-                        (String) anchor.getAttribute(HTML.Attribute.HREF) : null;
-                        if (href != null) {
-                            hyperlinks.addElement(new HTMLLink(e));
-                        }
-                    }
-                }
-            }
-            linksValid = true;
-        }
+	/**
+	 * Build the private table mapping links to locations in the text
+	 */
+	private void buildLinkTable() {
+	    hyperlinks.removeAllElements();
+	    Document d = JEditorPane.this.getDocument();
+	    if (d != null) {
+		ElementIterator ei = new ElementIterator(d);
+		Element e;
+		AttributeSet as;
+		AttributeSet anchor;
+		String href;
+		while ((e = ei.next()) != null) {
+		    if (e.isLeaf()) {
+			as = e.getAttributes();
+		    anchor = (AttributeSet) as.getAttribute(HTML.Tag.A);
+		    href = (anchor != null) ?
+			(String) anchor.getAttribute(HTML.Attribute.HREF) : null;
+			if (href != null) {
+			    hyperlinks.addElement(new HTMLLink(e));
+			}
+		    }
+		}
+	    }
+	    linksValid = true;
+	}
 
-        /**
-         * Make one of these puppies
-         */
-        public JEditorPaneAccessibleHypertextSupport() {
-            hyperlinks = new LinkVector();
-            Document d = JEditorPane.this.getDocument();
-            if (d != null) {
-                d.addDocumentListener(new DocumentListener() {
-                    public void changedUpdate(DocumentEvent theEvent) {
-                        linksValid = false;
-                    }
-                    public void insertUpdate(DocumentEvent theEvent) {
-                        linksValid = false;
-                    }
-                    public void removeUpdate(DocumentEvent theEvent) {
-                        linksValid = false;
-                    }
-                });
-            }
-        }
+	/**
+	 * Make one of these puppies
+	 */
+	public JEditorPaneAccessibleHypertextSupport() {
+	    hyperlinks = new LinkVector();
+	    Document d = JEditorPane.this.getDocument();
+	    if (d != null) {
+		d.addDocumentListener(new DocumentListener() {
+		    public void changedUpdate(DocumentEvent theEvent) {
+			linksValid = false;
+		    }
+		    public void insertUpdate(DocumentEvent theEvent) {
+			linksValid = false;
+		    }
+		    public void removeUpdate(DocumentEvent theEvent) {
+			linksValid = false;
+		    }
+		});
+	    }
+	}
 
-        /**
-         * Returns the number of links within this hypertext doc.
-         *
-         * @return number of links in this hypertext doc.
-         */
-        public int getLinkCount() {
-            if (linksValid == false) {
-                buildLinkTable();
-            }
-            return hyperlinks.size();
-        }
+	/**
+	 * Returns the number of links within this hypertext doc.
+	 *
+	 * @return number of links in this hypertext doc.
+	 */
+	public int getLinkCount() {
+	    if (linksValid == false) {
+		buildLinkTable();
+	    }
+	    return hyperlinks.size();
+	}
 
-        /**
-         * Returns the index into an array of hyperlinks that
-         * is associated with this character index, or -1 if there
-         * is no hyperlink associated with this index.
-         *
-         * @param  charIndex index within the text
-         * @return index into the set of hyperlinks for this hypertext doc.
-         */
-        public int getLinkIndex(int charIndex) {
-            if (linksValid == false) {
-                buildLinkTable();
-            }
+	/**
+	 * Returns the index into an array of hyperlinks that
+	 * is associated with this character index, or -1 if there
+	 * is no hyperlink associated with this index.
+	 *
+	 * @param  charIndex index within the text
+	 * @return index into the set of hyperlinks for this hypertext doc.
+	 */
+	public int getLinkIndex(int charIndex) {
+	    if (linksValid == false) {
+		buildLinkTable();
+	    }
             Element e = null;
-            Document doc = JEditorPane.this.getDocument();
-            if (doc != null) {
-                for (e = doc.getDefaultRootElement(); ! e.isLeaf(); ) {
-                    int index = e.getElementIndex(charIndex);
-                    e = e.getElement(index);
-                }
-            }
+	    Document doc = JEditorPane.this.getDocument();
+	    if (doc != null) {
+		for (e = doc.getDefaultRootElement(); ! e.isLeaf(); ) {
+		    int index = e.getElementIndex(charIndex);
+		    e = e.getElement(index);
+		}
+	    }
 
-            // don't need to verify that it's an HREF element; if
-            // not, then it won't be in the hyperlinks Vector, and
-            // so indexOf will return -1 in any case
-            return hyperlinks.baseElementIndex(e);
-        }
+	    // don't need to verify that it's an HREF element; if
+	    // not, then it won't be in the hyperlinks Vector, and
+	    // so indexOf will return -1 in any case
+	    return hyperlinks.baseElementIndex(e);
+	}
 
-        /**
-         * Returns the index into an array of hyperlinks that
-         * index.  If there is no hyperlink at this index, it returns
-         * null.
-         *
-         * @param linkIndex into the set of hyperlinks for this hypertext doc.
-         * @return string representation of the hyperlink
-         */
-        public AccessibleHyperlink getLink(int linkIndex) {
-            if (linksValid == false) {
-                buildLinkTable();
-            }
-            if (linkIndex >= 0 && linkIndex < hyperlinks.size()) {
-                return (AccessibleHyperlink) hyperlinks.elementAt(linkIndex);
-            } else {
-                return null;
-            }
-        }
+	/**
+	 * Returns the index into an array of hyperlinks that
+	 * index.  If there is no hyperlink at this index, it returns
+	 * null.
+	 *
+	 * @param linkIndex into the set of hyperlinks for this hypertext doc.
+	 * @return string representation of the hyperlink
+	 */
+	public AccessibleHyperlink getLink(int linkIndex) {
+	    if (linksValid == false) {
+		buildLinkTable();
+	    }
+	    if (linkIndex >= 0 && linkIndex < hyperlinks.size()) {
+	        return (AccessibleHyperlink) hyperlinks.elementAt(linkIndex);
+	    } else {
+		return null;
+	    }
+	}
 
-        /**
-         * Returns the contiguous text within the document that
-         * is associated with this hyperlink.
-         *
-         * @param linkIndex into the set of hyperlinks for this hypertext doc.
-         * @return the contiguous text sharing the link at this index
-         */
-        public String getLinkText(int linkIndex) {
-            if (linksValid == false) {
-                buildLinkTable();
-            }
-            Element e = (Element) hyperlinks.elementAt(linkIndex);
-            if (e != null) {
-                Document d = JEditorPane.this.getDocument();
-                if (d != null) {
-                    try {
-                        return d.getText(e.getStartOffset(),
-                                         e.getEndOffset() - e.getStartOffset());
-                    } catch (BadLocationException exception) {
-                        return null;
-                    }
-                }
-            }
-            return null;
-        }
+	/**
+	 * Returns the contiguous text within the document that
+	 * is associated with this hyperlink.
+	 *
+	 * @param linkIndex into the set of hyperlinks for this hypertext doc.
+	 * @return the contiguous text sharing the link at this index
+	 */
+	public String getLinkText(int linkIndex) {
+	    if (linksValid == false) {
+		buildLinkTable();
+	    }
+	    Element e = (Element) hyperlinks.elementAt(linkIndex);
+	    if (e != null) {
+		Document d = JEditorPane.this.getDocument();
+		if (d != null) {
+		    try {
+			return d.getText(e.getStartOffset(), 
+					 e.getEndOffset() - e.getStartOffset());
+		    } catch (BadLocationException exception) {
+			return null;
+		    }
+		}
+	    }
+	    return null;
+	}
     }
 
     static class PlainEditorKit extends DefaultEditorKit implements ViewFactory {
 
-        /**
-         * Fetches a factory that is suitable for producing
-         * views of any models that are produced by this
-         * kit.  The default is to have the UI produce the
-         * factory, so this method has no implementation.
-         *
-         * @return the view factory
-         */
+	/**
+	 * Fetches a factory that is suitable for producing 
+	 * views of any models that are produced by this
+	 * kit.  The default is to have the UI produce the
+	 * factory, so this method has no implementation.
+	 *
+	 * @return the view factory
+	 */
         public ViewFactory getViewFactory() {
-            return this;
-        }
+	    return this;
+	}
 
-        /**
-         * Creates a view from the given structural element of a
-         * document.
-         *
-         * @param elem  the piece of the document to build a view of
-         * @return the view
-         * @see View
-         */
+	/**
+	 * Creates a view from the given structural element of a
+	 * document.
+	 *
+	 * @param elem  the piece of the document to build a view of
+	 * @return the view
+	 * @see View
+	 */
         public View create(Element elem) {
             Document doc = elem.getDocument();
             Object i18nFlag
@@ -2195,7 +2196,7 @@ public class JEditorPane extends JTextComponent {
 
             protected void setPropertiesFromAttributes() {
                 Component c = getContainer();
-                if ((c != null)
+                if ((c != null) 
                     && (! c.getComponentOrientation().isLeftToRight()))
                 {
                     setJustification(StyleConstants.ALIGN_RIGHT);
@@ -2223,7 +2224,7 @@ public class JEditorPane extends JTextComponent {
             protected SizeRequirements calculateMinorAxisRequirements(int axis,
                                                             SizeRequirements r)
             {
-                SizeRequirements req
+                SizeRequirements req 
                     = super.calculateMinorAxisRequirements(axis, r);
                 Component c = getContainer();
                 if (c instanceof JTextArea) {
@@ -2237,14 +2238,14 @@ public class JEditorPane extends JTextComponent {
             }
 
             /**
-             * This class can be used to represent a logical view for
+             * This class can be used to represent a logical view for 
              * a flow.  It keeps the children updated to reflect the state
              * of the model, gives the logical child views access to the
              * view hierarchy, and calculates a preferred span.  It doesn't
              * do any rendering, layout, or model/view translation.
              */
             static class LogicalView extends CompositeView {
-
+	    
                 LogicalView(Element elem) {
                     super(elem);
                 }
@@ -2257,8 +2258,8 @@ public class JEditorPane extends JTextComponent {
                     return 0;
                 }
 
-                protected boolean
-                updateChildren(DocumentEvent.ElementChange ec,
+                protected boolean 
+                updateChildren(DocumentEvent.ElementChange ec, 
                                DocumentEvent e, ViewFactory f)
                 {
                     return false;
@@ -2277,7 +2278,7 @@ public class JEditorPane extends JTextComponent {
                 public float getPreferredSpan(int axis) {
                     if( getViewCount() != 1 )
                         throw new Error("One child view is assumed.");
-
+                
                     View v = getView(0);
                     //((GlyphView)v).setGlyphPainter(null);
                     return v.getPreferredSpan(axis);
@@ -2287,18 +2288,18 @@ public class JEditorPane extends JTextComponent {
                  * Forward the DocumentEvent to the given child view.  This
                  * is implemented to reparent the child to the logical view
                  * (the children may have been parented by a row in the flow
-                 * if they fit without breaking) and then execute the
+                 * if they fit without breaking) and then execute the 
                  * superclass behavior.
                  *
                  * @param v the child view to forward the event to.
                  * @param e the change information from the associated document
                  * @param a the current allocation of the view
-                 * @param f the factory to use to rebuild if the view has
+                 * @param f the factory to use to rebuild if the view has 
                  *          children
                  * @see #forwardUpdate
                  * @since 1.3
                  */
-                protected void forwardUpdateToView(View v, DocumentEvent e,
+                protected void forwardUpdateToView(View v, DocumentEvent e, 
                                                    Shape a, ViewFactory f) {
                     v.setParent(this);
                     super.forwardUpdateToView(v, e, a, f);
@@ -2344,7 +2345,7 @@ public class JEditorPane extends JTextComponent {
  * keys are converted to lower case, vals are left as is....
  *
  * author Dave Brown
- */
+ */ 
 
 
 static class HeaderParser {
@@ -2352,124 +2353,125 @@ static class HeaderParser {
     /* table of key/val pairs - maxes out at 10!!!!*/
     String raw;
     String[][] tab;
-
+    
     public HeaderParser(String raw) {
-        this.raw = raw;
-        tab = new String[10][2];
-        parse();
+	this.raw = raw;
+	tab = new String[10][2];
+	parse();
     }
 
     private void parse() {
-
-        if (raw != null) {
-            raw = raw.trim();
-            char[] ca = raw.toCharArray();
-            int beg = 0, end = 0, i = 0;
-            boolean inKey = true;
-            boolean inQuote = false;
-            int len = ca.length;
-            while (end < len) {
-                char c = ca[end];
-                if (c == '=') { // end of a key
-                    tab[i][0] = new String(ca, beg, end-beg).toLowerCase();
-                    inKey = false;
-                    end++;
-                    beg = end;
-                } else if (c == '\"') {
-                    if (inQuote) {
-                        tab[i++][1]= new String(ca, beg, end-beg);
-                        inQuote=false;
-                        do {
-                            end++;
-                        } while (end < len && (ca[end] == ' ' || ca[end] == ','));
-                        inKey=true;
-                        beg=end;
-                    } else {
-                        inQuote=true;
-                        end++;
-                        beg=end;
-                    }
-                } else if (c == ' ' || c == ',') { // end key/val, of whatever we're in
-                    if (inQuote) {
-                        end++;
-                        continue;
-                    } else if (inKey) {
-                        tab[i++][0] = (new String(ca, beg, end-beg)).toLowerCase();
-                    } else {
-                        tab[i++][1] = (new String(ca, beg, end-beg));
-                    }
-                    while (end < len && (ca[end] == ' ' || ca[end] == ',')) {
-                        end++;
-                    }
-                    inKey = true;
-                    beg = end;
-                } else {
-                    end++;
-                }
-            }
-            // get last key/val, if any
-            if (--end > beg) {
-                if (!inKey) {
-                    if (ca[end] == '\"') {
-                        tab[i++][1] = (new String(ca, beg, end-beg));
-                    } else {
-                        tab[i++][1] = (new String(ca, beg, end-beg+1));
-                    }
-                } else {
-                    tab[i][0] = (new String(ca, beg, end-beg+1)).toLowerCase();
-                }
-            } else if (end == beg) {
-                if (!inKey) {
-                    if (ca[end] == '\"') {
-                        tab[i++][1] = String.valueOf(ca[end-1]);
-                    } else {
-                        tab[i++][1] = String.valueOf(ca[end]);
-                    }
-                } else {
-                    tab[i][0] = String.valueOf(ca[end]).toLowerCase();
-                }
-            }
-        }
-
+	
+	if (raw != null) {
+	    raw = raw.trim();
+	    char[] ca = raw.toCharArray();
+	    int beg = 0, end = 0, i = 0;
+	    boolean inKey = true;
+	    boolean inQuote = false;
+	    int len = ca.length;
+	    while (end < len) {
+		char c = ca[end];
+		if (c == '=') { // end of a key
+		    tab[i][0] = new String(ca, beg, end-beg).toLowerCase();
+		    inKey = false;
+		    end++;
+		    beg = end;
+		} else if (c == '\"') {
+		    if (inQuote) {
+			tab[i++][1]= new String(ca, beg, end-beg);
+			inQuote=false;
+			do {
+			    end++;
+			} while (end < len && (ca[end] == ' ' || ca[end] == ','));
+			inKey=true;
+			beg=end;
+		    } else {
+			inQuote=true;
+			end++;
+			beg=end;
+		    }
+		} else if (c == ' ' || c == ',') { // end key/val, of whatever we're in
+		    if (inQuote) {
+			end++;
+			continue;
+		    } else if (inKey) {
+			tab[i++][0] = (new String(ca, beg, end-beg)).toLowerCase();
+		    } else {
+			tab[i++][1] = (new String(ca, beg, end-beg));
+		    }
+		    while (end < len && (ca[end] == ' ' || ca[end] == ',')) {
+			end++;
+		    }
+		    inKey = true;
+		    beg = end;
+		} else {
+		    end++;
+		}
+	    } 
+	    // get last key/val, if any
+	    if (--end > beg) {
+		if (!inKey) {
+		    if (ca[end] == '\"') {
+			tab[i++][1] = (new String(ca, beg, end-beg));
+		    } else {
+			tab[i++][1] = (new String(ca, beg, end-beg+1));
+		    }
+		} else {
+		    tab[i][0] = (new String(ca, beg, end-beg+1)).toLowerCase();
+		}
+	    } else if (end == beg) {
+		if (!inKey) {
+		    if (ca[end] == '\"') {
+			tab[i++][1] = String.valueOf(ca[end-1]);
+		    } else {
+			tab[i++][1] = String.valueOf(ca[end]);
+		    }
+		} else {
+		    tab[i][0] = String.valueOf(ca[end]).toLowerCase();
+		}
+	    } 
+	}
+	
     }
 
     public String findKey(int i) {
-        if (i < 0 || i > 10)
-            return null;
-        return tab[i][0];
+	if (i < 0 || i > 10)
+	    return null;
+	return tab[i][0];
     }
 
     public String findValue(int i) {
-        if (i < 0 || i > 10)
-            return null;
-        return tab[i][1];
+	if (i < 0 || i > 10)
+	    return null;
+	return tab[i][1];
     }
 
     public String findValue(String key) {
-        return findValue(key, null);
+	return findValue(key, null);
     }
 
     public String findValue(String k, String Default) {
-        if (k == null)
-            return Default;
-        k = k.toLowerCase();
-        for (int i = 0; i < 10; ++i) {
-            if (tab[i][0] == null) {
-                return Default;
-            } else if (k.equals(tab[i][0])) {
-                return tab[i][1];
-            }
-        }
-        return Default;
+	if (k == null)
+	    return Default;
+	k = k.toLowerCase();
+	for (int i = 0; i < 10; ++i) {
+	    if (tab[i][0] == null) {
+		return Default;
+	    } else if (k.equals(tab[i][0])) {
+		return tab[i][1];
+	    }
+	}
+	return Default;
     }
 
     public int findInt(String k, int Default) {
-        try {
-            return Integer.parseInt(findValue(k, String.valueOf(Default)));
-        } catch (Throwable t) {
-            return Default;
-        }
+	try {
+	    return Integer.parseInt(findValue(k, String.valueOf(Default)));
+	} catch (Throwable t) {
+	    return Default;
+	}
     }
  }
 
 }
+

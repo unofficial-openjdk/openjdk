@@ -40,7 +40,7 @@ static jfieldID hiyID;
 do { \
     var = (*env)->GetFieldID(env, jcl, name, type); \
     if (var == NULL) { \
-        return; \
+	return; \
     } \
 } while (0)
 
@@ -65,19 +65,19 @@ JNIEXPORT jint JNICALL
 Region_GetInfo(JNIEnv *env, jobject region, RegionData *pRgnInfo)
 {
     if (JNU_IsNull(env, region)) {
-        pRgnInfo->bounds.x1 = pRgnInfo->bounds.y1 = 0x80000000;
-        pRgnInfo->bounds.x2 = pRgnInfo->bounds.y2 = 0x7fffffff;
-        pRgnInfo->endIndex = 0;
+	pRgnInfo->bounds.x1 = pRgnInfo->bounds.y1 = 0x80000000;
+	pRgnInfo->bounds.x2 = pRgnInfo->bounds.y2 = 0x7fffffff;
+	pRgnInfo->endIndex = 0;
     } else {
-        pRgnInfo->bounds.x1 = (*env)->GetIntField(env, region, loxID);
-        pRgnInfo->bounds.y1 = (*env)->GetIntField(env, region, loyID);
-        pRgnInfo->bounds.x2 = (*env)->GetIntField(env, region, hixID);
-        pRgnInfo->bounds.y2 = (*env)->GetIntField(env, region, hiyID);
-        pRgnInfo->endIndex = (*env)->GetIntField(env, region, endIndexID);
+	pRgnInfo->bounds.x1 = (*env)->GetIntField(env, region, loxID);
+	pRgnInfo->bounds.y1 = (*env)->GetIntField(env, region, loyID);
+	pRgnInfo->bounds.x2 = (*env)->GetIntField(env, region, hixID);
+	pRgnInfo->bounds.y2 = (*env)->GetIntField(env, region, hiyID);
+	pRgnInfo->endIndex = (*env)->GetIntField(env, region, endIndexID);
     }
     pRgnInfo->bands = (Region_IsRectangular(pRgnInfo)
-                       ? NULL
-                       : (*env)->GetObjectField(env, region, bandsID));
+		       ? NULL
+		       : (*env)->GetObjectField(env, region, bandsID));
     return 0;
 }
 
@@ -85,8 +85,8 @@ JNIEXPORT void JNICALL
 Region_GetBounds(JNIEnv *env, jobject region, SurfaceDataBounds *b)
 {
     if (JNU_IsNull(env, region)) {
-        b->x1 = b->y1 = 0x80000000;
-        b->x2 = b->y2 = 0x7fffffff;
+	b->x1 = b->y1 = 0x80000000;
+	b->x2 = b->y2 = 0x7fffffff;
     } else {
         b->x1 = (*env)->GetIntField(env, region, loxID);
         b->y1 = (*env)->GetIntField(env, region, loyID);
@@ -99,9 +99,9 @@ JNIEXPORT void JNICALL
 Region_StartIteration(JNIEnv *env, RegionData *pRgnInfo)
 {
     pRgnInfo->pBands =
-        (Region_IsRectangular(pRgnInfo)
-         ? NULL
-         : (*env)->GetPrimitiveArrayCritical(env, pRgnInfo->bands, 0));
+	(Region_IsRectangular(pRgnInfo)
+	 ? NULL
+	 : (*env)->GetPrimitiveArrayCritical(env, pRgnInfo->bands, 0));
     pRgnInfo->index = 0;
     pRgnInfo->numrects = 0;
 }
@@ -111,35 +111,35 @@ Region_CountIterationRects(RegionData *pRgnInfo)
 {
     jint totalrects;
     if (Region_IsEmpty(pRgnInfo)) {
-        totalrects = 0;
+	totalrects = 0;
     } else if (Region_IsRectangular(pRgnInfo)) {
-        totalrects = 1;
+	totalrects = 1;
     } else {
-        jint *pBands = pRgnInfo->pBands;
-        int index = 0;
-        totalrects = 0;
-        while (index < pRgnInfo->endIndex) {
-            jint xy1 = pBands[index++];
-            jint xy2 = pBands[index++];
-            jint numrects = pBands[index++];
-            if (xy1 >= pRgnInfo->bounds.y2) {
-                break;
-            }
-            if (xy2 > pRgnInfo->bounds.y1) {
-                while (numrects > 0) {
-                    xy1 = pBands[index++];
-                    xy2 = pBands[index++];
-                    numrects--;
-                    if (xy1 >= pRgnInfo->bounds.x2) {
-                        break;
-                    }
-                    if (xy2 > pRgnInfo->bounds.x1) {
-                        totalrects++;
-                    }
-                }
-            }
-            index += numrects * 2;
-        }
+	jint *pBands = pRgnInfo->pBands;
+	int index = 0;
+	totalrects = 0;
+	while (index < pRgnInfo->endIndex) {
+	    jint xy1 = pBands[index++];
+	    jint xy2 = pBands[index++];
+	    jint numrects = pBands[index++];
+	    if (xy1 >= pRgnInfo->bounds.y2) {
+		break;
+	    }
+	    if (xy2 > pRgnInfo->bounds.y1) {
+		while (numrects > 0) {
+		    xy1 = pBands[index++];
+		    xy2 = pBands[index++];
+		    numrects--;
+		    if (xy1 >= pRgnInfo->bounds.x2) {
+			break;
+		    }
+		    if (xy2 > pRgnInfo->bounds.x1) {
+			totalrects++;
+		    }
+		}
+	    }
+	    index += numrects * 2;
+	}
     }
     return totalrects;
 }
@@ -149,64 +149,64 @@ Region_NextIteration(RegionData *pRgnInfo, SurfaceDataBounds *pSpan)
 {
     jint index = pRgnInfo->index;
     if (Region_IsRectangular(pRgnInfo)) {
-        if (index > 0 || Region_IsEmpty(pRgnInfo)) {
-            return 0;
-        }
-        pSpan->x1 = pRgnInfo->bounds.x1;
-        pSpan->x2 = pRgnInfo->bounds.x2;
-        pSpan->y1 = pRgnInfo->bounds.y1;
-        pSpan->y2 = pRgnInfo->bounds.y2;
-        index = 1;
+	if (index > 0 || Region_IsEmpty(pRgnInfo)) {
+	    return 0;
+	}
+	pSpan->x1 = pRgnInfo->bounds.x1;
+	pSpan->x2 = pRgnInfo->bounds.x2;
+	pSpan->y1 = pRgnInfo->bounds.y1;
+	pSpan->y2 = pRgnInfo->bounds.y2;
+	index = 1;
     } else {
-        jint *pBands = pRgnInfo->pBands;
-        jint xy1, xy2;
-        jint numrects = pRgnInfo->numrects;
-        while (JNI_TRUE) {
-            if (numrects <= 0) {
-                if (index >= pRgnInfo->endIndex) {
-                    return 0;
-                }
-                xy1 = pBands[index++];
-                if (xy1 >= pRgnInfo->bounds.y2) {
-                    return 0;
-                }
-                if (xy1 < pRgnInfo->bounds.y1) {
-                    xy1 = pRgnInfo->bounds.y1;
-                }
-                xy2 = pBands[index++];
-                numrects = pBands[index++];
-                if (xy2 > pRgnInfo->bounds.y2) {
-                    xy2 = pRgnInfo->bounds.y2;
-                }
-                if (xy2 <= xy1) {
-                    index += numrects * 2;
-                    numrects = 0;
-                    continue;
-                }
-                pSpan->y1 = xy1;
-                pSpan->y2 = xy2;
-            }
-            xy1 = pBands[index++];
-            xy2 = pBands[index++];
-            numrects--;
-            if (xy1 >= pRgnInfo->bounds.x2) {
-                index += numrects * 2;
-                numrects = 0;
-                continue;
-            }
-            if (xy1 < pRgnInfo->bounds.x1) {
-                xy1 = pRgnInfo->bounds.x1;
-            }
-            if (xy2 > pRgnInfo->bounds.x2) {
-                xy2 = pRgnInfo->bounds.x2;
-            }
-            if (xy2 > xy1) {
-                pSpan->x1 = xy1;
-                pSpan->x2 = xy2;
-                break;
-            }
-        }
-        pRgnInfo->numrects = numrects;
+	jint *pBands = pRgnInfo->pBands;
+	jint xy1, xy2;
+	jint numrects = pRgnInfo->numrects;
+	while (JNI_TRUE) {
+	    if (numrects <= 0) {
+		if (index >= pRgnInfo->endIndex) {
+		    return 0;
+		}
+		xy1 = pBands[index++];
+		if (xy1 >= pRgnInfo->bounds.y2) {
+		    return 0;
+		}
+		if (xy1 < pRgnInfo->bounds.y1) {
+		    xy1 = pRgnInfo->bounds.y1;
+		}
+		xy2 = pBands[index++];
+		numrects = pBands[index++];
+		if (xy2 > pRgnInfo->bounds.y2) {
+		    xy2 = pRgnInfo->bounds.y2;
+		}
+		if (xy2 <= xy1) {
+		    index += numrects * 2;
+		    numrects = 0;
+		    continue;
+		}
+		pSpan->y1 = xy1;
+		pSpan->y2 = xy2;
+	    }
+	    xy1 = pBands[index++];
+	    xy2 = pBands[index++];
+	    numrects--;
+	    if (xy1 >= pRgnInfo->bounds.x2) {
+		index += numrects * 2;
+		numrects = 0;
+		continue;
+	    }
+	    if (xy1 < pRgnInfo->bounds.x1) {
+		xy1 = pRgnInfo->bounds.x1;
+	    }
+	    if (xy2 > pRgnInfo->bounds.x2) {
+		xy2 = pRgnInfo->bounds.x2;
+	    }
+	    if (xy2 > xy1) {
+		pSpan->x1 = xy1;
+		pSpan->x2 = xy2;
+		break;
+	    }
+	}
+	pRgnInfo->numrects = numrects;
     }
     pRgnInfo->index = index;
     return 1;
@@ -216,13 +216,13 @@ JNIEXPORT void JNICALL
 Region_EndIteration(JNIEnv *env, RegionData *pRgnInfo)
 {
     if (pRgnInfo->endIndex != 0) {
-        (*env)->ReleasePrimitiveArrayCritical(env, pRgnInfo->bands,
-                                              pRgnInfo->pBands, JNI_ABORT);
+	(*env)->ReleasePrimitiveArrayCritical(env, pRgnInfo->bands,
+					      pRgnInfo->pBands, JNI_ABORT);
     }
 }
 
 /*
- * The code was extracted from
+ * The code was extracted from 
  * src/solaris/native/sun/java2d/x11/X11SurfaceData.c
  * XSetClip() method.
  *
@@ -233,13 +233,13 @@ Region_EndIteration(JNIEnv *env, RegionData *pRgnInfo)
  * rectangles. If there're more than initialBufferSize
  * rectangles in the region, the buffer is reallocated
  * and its pointer is being stored at the *pRect. Using
- * this practice we may use a small local (on the stack)
- * buffer and avoid allocating/freeing a memory if we
+ * this practice we may use a small local (on the stack) 
+ * buffer and avoid allocating/freeing a memory if we 
  * operate simple regions.
  */
 JNIEXPORT int JNICALL
-RegionToYXBandedRectangles(JNIEnv *env,
-        jint x1, jint y1, jint x2, jint y2, jobject region,
+RegionToYXBandedRectangles(JNIEnv *env, 
+        jint x1, jint y1, jint x2, jint y2, jobject region, 
         RECT_T ** pRect, unsigned int initialBufferSize)
 {
     RegionData clipInfo;
@@ -264,7 +264,7 @@ RegionToYXBandedRectangles(JNIEnv *env,
             *pRect = (RECT_T *) malloc(numrects * sizeof(RECT_T));
             if (*pRect == NULL) {
                 Region_EndIteration(env, &clipInfo);
-                JNU_ThrowOutOfMemoryError(env,
+                JNU_ThrowOutOfMemoryError(env, 
                                           "Can't allocate shape region memory");
                 return 0;
             }
@@ -277,3 +277,4 @@ RegionToYXBandedRectangles(JNIEnv *env,
 
     return numrects;
 }
+

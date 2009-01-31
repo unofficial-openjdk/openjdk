@@ -86,69 +86,69 @@ AwtList* AwtList::Create(jobject peer, jobject parent)
 
     try {
         if (env->EnsureLocalCapacity(1) < 0) {
-            return NULL;
-        }
+	    return NULL;
+	}
 
-        PDATA pData;
-        AwtCanvas* awtParent;
-        JNI_CHECK_PEER_GOTO(parent, done);
+	PDATA pData;
+	AwtCanvas* awtParent;
+	JNI_CHECK_PEER_GOTO(parent, done);
 
-        awtParent = (AwtCanvas*)pData;
-        JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
+	awtParent = (AwtCanvas*)pData;
+	JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
 
-        /* target is Hjava_awt_List * */
-        target = env->GetObjectField(peer, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "null target", done);
+	/* target is Hjava_awt_List * */
+	target = env->GetObjectField(peer, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "null target", done);
 
-        c = new AwtList();
+	c = new AwtList();
+	
+	{
 
-        {
-
-            /*
-             * NOTE: WS_CLIPCHILDREN is excluded so that repaint requests
-             * from Java will pass through the wrap to the native listbox.
-             */
-            DWORD wrapStyle = WS_CHILD | WS_CLIPSIBLINGS;
-            DWORD wrapExStyle = 0;
+	    /*
+	     * NOTE: WS_CLIPCHILDREN is excluded so that repaint requests 
+	     * from Java will pass through the wrap to the native listbox. 
+	     */
+	    DWORD wrapStyle = WS_CHILD | WS_CLIPSIBLINGS; 
+	    DWORD wrapExStyle = 0;
 
             DWORD style = WS_CHILD | WS_CLIPSIBLINGS | WS_VSCROLL | WS_HSCROLL |
                 LBS_NOINTEGRALHEIGHT | LBS_NOTIFY | LBS_OWNERDRAWFIXED |
                 (IS_WIN4X ? 0 : WS_BORDER);
-            DWORD exStyle = IS_WIN4X ? WS_EX_CLIENTEDGE : 0;
+	    DWORD exStyle = IS_WIN4X ? WS_EX_CLIENTEDGE : 0;
 
-            /*
-             * NOTE: WS_VISIBLE is always set for the listbox. Listbox
-             * visibility is controlled by toggling the wrap's WS_VISIBLE bit.
-             */
-            style |= WS_VISIBLE;
+	    /*
+	     * NOTE: WS_VISIBLE is always set for the listbox. Listbox 
+	     * visibility is controlled by toggling the wrap's WS_VISIBLE bit. 
+	     */
+	    style |= WS_VISIBLE;
 
-            if (GetRTL()) {
-                exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
-                if (GetRTLReadingOrder())
-                    exStyle |= WS_EX_RTLREADING;
-            }
+	    if (GetRTL()) {
+	        exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
+		if (GetRTLReadingOrder())
+		    exStyle |= WS_EX_RTLREADING;
+	    }
 
-            jint x = env->GetIntField(target, AwtComponent::xID);
-            jint y = env->GetIntField(target, AwtComponent::yID);
-            jint width = env->GetIntField(target, AwtComponent::widthID);
-            jint height = env->GetIntField(target, AwtComponent::heightID);
+	    jint x = env->GetIntField(target, AwtComponent::xID);
+	    jint y = env->GetIntField(target, AwtComponent::yID);
+	    jint width = env->GetIntField(target, AwtComponent::widthID);
+	    jint height = env->GetIntField(target, AwtComponent::heightID);
 
-            c->CreateHWnd(env, L"", style, exStyle,
-                          x, y, width, height,
-                          awtParent->GetHWnd(),
-                          NULL,
-                          ::GetSysColor(COLOR_WINDOWTEXT),
-                          ::GetSysColor(COLOR_WINDOW),
-                          peer
-                          );
+	    c->CreateHWnd(env, L"", style, exStyle,
+			  x, y, width, height,
+			  awtParent->GetHWnd(),
+			  NULL,
+			  ::GetSysColor(COLOR_WINDOWTEXT),
+			  ::GetSysColor(COLOR_WINDOW),
+			  peer
+			  );
 
-            /* suppress inheriting awtParent's color. */
-            c->m_backgroundColorSet = TRUE;
+	    /* suppress inheriting awtParent's color. */
+	    c->m_backgroundColorSet = TRUE;
             c->UpdateBackground(env, target);
-        }
+	}
     } catch (...) {
         env->DeleteLocalRef(target);
-        throw;
+	throw;
     }
 
 done:
@@ -160,7 +160,7 @@ BOOL AwtList::ActMouseMessage(MSG * pMsg) {
     if (!IsFocusingMessage(pMsg->message)) {
         return FALSE;
     }
-
+    
     if (pMsg->message == WM_LBUTTONDOWN) {
         LONG item = static_cast<LONG>(SendListMessage(LB_ITEMFROMPOINT, 0, pMsg->lParam));
         if (item != LB_ERR) {
@@ -200,7 +200,7 @@ void AwtList::Reshape(int x, int y, int w, int h)
 /*
     HWND hList = GetListHandle();
     if (hList != NULL) {
-        long flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOCOPYBITS;
+        long flags = SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOCOPYBITS;	
         /*
          * Fix for bug 4046446.
          * /
@@ -210,7 +210,7 @@ void AwtList::Reshape(int x, int y, int w, int h)
 }
 
 //Netscape : Override the AwtComponent method so we can set the item height
-//for each item in the list.  Modified by echawkes to avoid race condition.
+//for each item in the list.  Modified by echawkes to avoid race condition.  
 
 void AwtList::SetFont(AwtFont* font)
 {
@@ -223,7 +223,7 @@ void AwtList::SetFont(AwtFont* font)
     SendListMessage(WM_SETFONT, (WPARAM)hFont, MAKELPARAM(FALSE, 0));
 
     HDC hDC = ::GetDC(GetHWnd());
-
+    
     TEXTMETRIC tm;
     VERIFY(::SelectObject(hDC, hFont) != NULL);
     VERIFY(::GetTextMetrics(hDC, &tm));
@@ -231,7 +231,7 @@ void AwtList::SetFont(AwtFont* font)
     ::ReleaseDC(GetHWnd(), hDC);
 
     long h = tm.tmHeight + tm.tmExternalLeading;
-    // Listbox is LBS_OWNERDRAWFIXED so the items have the same height
+    // Listbox is LBS_OWNERDRAWFIXED so the items have the same height 
     VERIFY(SendListMessage(LB_SETITEMHEIGHT, 0, MAKELPARAM(h, 0)) != LB_ERR);
     VERIFY(::RedrawWindow(GetHWnd(), NULL, NULL, RDW_INVALIDATE |RDW_FRAME |RDW_ERASE));
 }
@@ -247,27 +247,27 @@ void AwtList::SetMultiSelect(BOOL ms) {
     int nCount = GetCount();
     LPTSTR * strings = new LPTSTR[nCount];
     int i;
-
+ 
     for(i = 0; i < nCount; i++) {
         LRESULT len = SendListMessage(LB_GETTEXTLEN, i);
-        LPTSTR text = NULL;
-        try {
-            text = new TCHAR[len + 1];
-        } catch (std::bad_alloc&) {
-            // free char * already allocated
-            for (int j = 0; j < i; j++) {
-                delete [] strings[j];
-            }
-            delete [] strings;
-            throw;
-        }
+	LPTSTR text = NULL;
+	try {
+	    text = new TCHAR[len + 1];
+	} catch (std::bad_alloc&) {
+	    // free char * already allocated
+	    for (int j = 0; j < i; j++) {
+	        delete [] strings[j];
+	    }
+	    delete [] strings;
+	    throw;
+	}
 
         VERIFY(SendListMessage(LB_GETTEXT, i, (LPARAM)text) != LB_ERR);
         strings[i] = text;
     }
 
     // index for selected item after multi-select mode change
-    int toSelect = SendListMessage(LB_GETCURSEL);
+    int toSelect = SendListMessage(LB_GETCURSEL); 
     if (!isMultiSelect)
     {
         // MSDN: for single-select lists LB_GETCURSEL returns
@@ -305,9 +305,9 @@ void AwtList::SetMultiSelect(BOOL ms) {
     DWORD style = ::GetWindowLong(GetListHandle(), GWL_STYLE) | WS_VSCROLL | WS_HSCROLL;
     if (isMultiSelect) {
         style |= LBS_MULTIPLESEL;
-    } else {
+    } else {    
         style &= ~LBS_MULTIPLESEL;
-    }
+    } 
     DWORD exStyle = ::GetWindowLong(GetListHandle(), GWL_EXSTYLE);
 
     jobject peer = GetPeer(env);
@@ -324,7 +324,7 @@ void AwtList::SetMultiSelect(BOOL ms) {
 
     SendListMessage(WM_SETFONT, (WPARAM)font, (LPARAM)FALSE);
     SendListMessage(LB_SETITEMHEIGHT, 0, MAKELPARAM(itemHeight, 0));
-    SendListMessage(LB_RESETCONTENT);
+    SendListMessage(LB_RESETCONTENT);  
     for (i = 0; i < nCount; i++) {
         InsertString(i, strings[i]);
         delete [] strings[i];
@@ -345,13 +345,13 @@ void AwtList::SetMultiSelect(BOOL ms) {
 jobject AwtList::PreferredItemSize(JNIEnv *env)
 {
     jobject peer = GetPeer(env);
-    jobject dimension = JNU_CallMethodByName(env, NULL, peer, "preferredSize",
-                                             "(I)Ljava/awt/Dimension;",
-                                             1).l;
-
+    jobject dimension = JNU_CallMethodByName(env, NULL, peer, "preferredSize", 
+					     "(I)Ljava/awt/Dimension;",
+					     1).l;
+					      
     DASSERT(!safe_ExceptionOccurred(env));
     if (dimension == NULL) {
-        return NULL;
+	return NULL;
     }
     /* This size is too big for each item height. */
     (env)->SetIntField(dimension, AwtDimension::heightID, GetFontHeight(env));
@@ -359,9 +359,9 @@ jobject AwtList::PreferredItemSize(JNIEnv *env)
     return dimension;
 }
 
-// Every time something gets added to the list, we increase the max width
-// of items that have ever been added.  If it surpasses the width of the
-// listbox, we show the scrollbar.  When things get deleted, we shrink
+// Every time something gets added to the list, we increase the max width 
+// of items that have ever been added.  If it surpasses the width of the 
+// listbox, we show the scrollbar.  When things get deleted, we shrink 
 // the scroll region back down and hide the scrollbar, if needed.
 void AwtList::AdjustHorizontalScrollbar()
 {
@@ -378,7 +378,7 @@ void AwtList::AdjustHorizontalScrollbar()
     }
 }
 
-// This function goes through all strings in the list to find the width,
+// This function goes through all strings in the list to find the width, 
 // in pixels, of the longest string in the list.
 void AwtList::UpdateMaxItemWidth()
 {
@@ -430,7 +430,7 @@ AwtList::OwnerDrawItem(UINT /*ctrlId*/, DRAWITEMSTRUCT& drawInfo)
     return mrConsume;
 }
 
-MsgRouting
+MsgRouting 
 AwtList::OwnerMeasureItem(UINT /*ctrlId*/, MEASUREITEMSTRUCT& measureInfo)
 {
     AwtComponent::MeasureListItem((JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2), measureInfo);
@@ -447,7 +447,7 @@ AwtList::WmNcHitTest(UINT x, UINT y, LRESULT& retVal)
     return AwtComponent::WmNcHitTest(x, y, retVal);
 }
 
-MsgRouting
+MsgRouting 
 AwtList::WmMouseUp(UINT flags, int x, int y, int button)
 {
     MsgRouting result = mrDoDefault;
@@ -464,7 +464,7 @@ AwtList::WmMouseUp(UINT flags, int x, int y, int button)
     return (result == mrConsume) ? result : compResult;
 }
 
-MsgRouting
+MsgRouting 
 AwtList::WmMouseDown(UINT flags, int x, int y, int button)
 {
     MsgRouting mrResult = AwtComponent::WmMouseDown(flags, x, y, button);
@@ -491,7 +491,7 @@ AwtList::WmMouseDown(UINT flags, int x, int y, int button)
     return mrResult;
 }
 
-MsgRouting
+MsgRouting 
 AwtList::WmCtlColor(HDC hDC, HWND hCtrl, UINT ctlColor, HBRUSH& retBrush)
 {
     DASSERT(ctlColor == CTLCOLOR_LISTBOX);
@@ -533,9 +533,9 @@ MsgRouting AwtList::WmKillFocus(HWND hWndGotFocus) {
         if (sm_focusOwner != NULL) {
             if (hWndGotFocus != NULL &&
                 AwtComponent::GetComponent(hWndGotFocus) != NULL)
-                {
-                    sm_realFocusOpposite = sm_focusOwner;
-                }
+		{
+		    sm_realFocusOpposite = sm_focusOwner;
+		}
             ::SendMessage(sm_focusOwner, WM_KILLFOCUS, (WPARAM)hWndGotFocus,
                           0);
         }
@@ -571,8 +571,8 @@ MsgRouting AwtList::HandleEvent(MSG *msg, BOOL synthetic)
 // operate WM_PRINT to be compatible with the "smooth scrolling" feature.
 MsgRouting AwtList::WmPrint(HDC hDC, LPARAM flags)
 {
-    if (!isWrapperPrint && IS_WIN4X
-            && (flags & PRF_CLIENT)
+    if (!isWrapperPrint && IS_WIN4X 
+            && (flags & PRF_CLIENT) 
             && (GetStyleEx() & WS_EX_CLIENTEDGE)) {
 
         int nOriginalDC = ::SaveDC(hDC);
@@ -681,7 +681,7 @@ void AwtList::_AddItems(void *param)
     if (::IsWindow(l->GetHWnd()))
     {
         int itemCount = env->GetArrayLength(items);
-        if (itemCount > 0)
+        if (itemCount > 0) 
         {
             AwtList* l = (AwtList*)pData;
             l->SendListMessage(WM_SETREDRAW, (WPARAM)FALSE, 0);
@@ -738,7 +738,7 @@ void AwtList::_DelItems(void *param)
     {
         int count = l->GetCount();
 
-        if (start == 0 && end == count)
+        if (start == 0 && end == count) 
         {
             l->SendListMessage(LB_RESETCONTENT);
         }
@@ -881,7 +881,7 @@ ret:
  * WListPeer native methods
  *
  * This class seems to have numerous bugs in it, but they are all bugs
- * which were present before conversion to JNI. -br.
+ * which were present before conversion to JNI. -br.  
  */
 
 extern "C" {
@@ -932,7 +932,7 @@ Java_sun_awt_windows_WListPeer_updateMaxItemWidth(JNIEnv *env, jobject self)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WListPeer_addItems(JNIEnv *env, jobject self,
-                                        jobjectArray items, jint index, jint width)
+				        jobjectArray items, jint index, jint width)
 {
     TRY;
 
@@ -955,7 +955,7 @@ Java_sun_awt_windows_WListPeer_addItems(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WListPeer_delItems(JNIEnv *env, jobject self,
-                                        jint start, jint end)
+					jint start, jint end)
 {
     TRY;
 
@@ -977,7 +977,7 @@ Java_sun_awt_windows_WListPeer_delItems(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WListPeer_select(JNIEnv *env, jobject self,
-                                      jint pos)
+				      jint pos)
 {
     TRY;
 
@@ -987,7 +987,7 @@ Java_sun_awt_windows_WListPeer_select(JNIEnv *env, jobject self,
 
     AwtToolkit::GetInstance().SyncCall(AwtList::_Select, ses);
     // global ref and ses are deleted in _Select
-
+    
     CATCH_BAD_ALLOC;
 }
 
@@ -998,7 +998,7 @@ Java_sun_awt_windows_WListPeer_select(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WListPeer_deselect(JNIEnv *env, jobject self,
-                                        jint pos)
+					jint pos)
 {
     TRY;
 
@@ -1020,9 +1020,9 @@ Java_sun_awt_windows_WListPeer_deselect(JNIEnv *env, jobject self,
  * Method:    makeVisible
  * Signature: (I)V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WListPeer_makeVisible(JNIEnv *env, jobject self,
-                                           jint pos)
+					   jint pos)
 {
     TRY;
 
@@ -1041,9 +1041,9 @@ Java_sun_awt_windows_WListPeer_makeVisible(JNIEnv *env, jobject self,
  * Method:    setMultipleSelections
  * Signature: (Z)V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WListPeer_setMultipleSelections(JNIEnv *env, jobject self,
-                                                     jboolean on)
+						     jboolean on)
 {
     TRY;
 
@@ -1064,14 +1064,14 @@ Java_sun_awt_windows_WListPeer_setMultipleSelections(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WListPeer_create(JNIEnv *env, jobject self,
-                                      jobject parent)
+				      jobject parent)
 {
     TRY;
 
     PDATA pData;
     JNI_CHECK_PEER_RETURN(parent);
-    AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)AwtList::Create);
+    AwtToolkit::CreateComponent(self, parent, 
+				(AwtToolkit::ComponentFactory)AwtList::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;
@@ -1084,7 +1084,7 @@ Java_sun_awt_windows_WListPeer_create(JNIEnv *env, jobject self,
  */
 JNIEXPORT jboolean JNICALL
 Java_sun_awt_windows_WListPeer_isSelected(JNIEnv *env, jobject self,
-                                          jint index)
+					  jint index)
 {
     TRY;
 
@@ -1095,7 +1095,7 @@ Java_sun_awt_windows_WListPeer_isSelected(JNIEnv *env, jobject self,
     return (jboolean)AwtToolkit::GetInstance().SyncCall(
         (void *(*)(void *))AwtList::_IsSelected, ses);
     // global ref and ses are deleted in _IsSelected
-
+    
     CATCH_BAD_ALLOC_RET(FALSE);
 }
 

@@ -43,22 +43,23 @@ package java.security.cert;
  * @see CertStore
  * @see CertStore#getCertificates
  *
- * @author      Steve Hanna
- * @since       1.4
+ * @version 	%I% %G%
+ * @author	Steve Hanna
+ * @since	1.4
  */
 public interface CertSelector extends Cloneable {
 
     /**
      * Decides whether a <code>Certificate</code> should be selected.
      *
-     * @param   cert    the <code>Certificate</code> to be checked
-     * @return  <code>true</code> if the <code>Certificate</code>
+     * @param	cert	the <code>Certificate</code> to be checked
+     * @return	<code>true</code> if the <code>Certificate</code> 
      * should be selected, <code>false</code> otherwise
      */
     boolean match(Certificate cert);
 
     /**
-     * Makes a copy of this <code>CertSelector</code>. Changes to the
+     * Makes a copy of this <code>CertSelector</code>. Changes to the 
      * copy will not affect the original and vice versa.
      *
      * @return a copy of this <code>CertSelector</code>

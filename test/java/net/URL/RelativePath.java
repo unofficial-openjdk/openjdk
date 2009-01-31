@@ -31,19 +31,19 @@ import java.net.URI;
 import java.net.URL;
 public class RelativePath {
     public static void main(String[] args) throws Exception {
-        String uri1 = "http://h/../d1/";
-        String uri2 = "../d/i.htm";
-        String expected = "http://h/../d/i.htm";
+	String uri1 = "http://h/../d1/";
+	String uri2 = "../d/i.htm";
+	String expected = "http://h/../d/i.htm";
 
-        URI uri = new URI(uri1);
-        String s1 = uri.resolve(uri2).toString();
+	URI uri = new URI(uri1);
+	String s1 = uri.resolve(uri2).toString();
         URL url = new URL(uri1);
-        URL url2 = new URL(url, uri2);
-        String s2 = url2.toString();
-        if (!(expected.equalsIgnoreCase(s1)))
-            throw new RuntimeException("URI.resolve didn't return expected result [" + s1 + " versus " + expected + "]");
-        if (!(expected.equalsIgnoreCase(s2)))
-            throw new RuntimeException("URL(url, String) didn't return expected result [" + s2 + " versus " + expected + "]");
-
+	URL url2 = new URL(url, uri2);
+	String s2 = url2.toString();
+	if (!(expected.equalsIgnoreCase(s1)))
+	    throw new RuntimeException("URI.resolve didn't return expected result [" + s1 + " versus " + expected + "]");
+	if (!(expected.equalsIgnoreCase(s2)))
+	    throw new RuntimeException("URL(url, String) didn't return expected result [" + s2 + " versus " + expected + "]");
+	    
     }
 }

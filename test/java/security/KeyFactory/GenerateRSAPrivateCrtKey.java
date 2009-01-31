@@ -23,8 +23,8 @@
 
 /*
  * @test
- * @bug 4413634
- * @summary Make sure that RSA Private CRT Key factory generation using
+ * @bug 4413634 
+ * @summary Make sure that RSA Private CRT Key factory generation using 
  * java.security.spec.RSAPrivateCrtKeySpec passes
  */
 
@@ -38,55 +38,55 @@ import java.util.Arrays;
 public class GenerateRSAPrivateCrtKey {
 
     public static void main(String[] args) throws Exception {
-
+	
         // Create an RSA Private Key from the CRT information
-        RSAPrivateCrtKeySpec rsaCrtSpec =
-            new RSAPrivateCrtKeySpec(new BigInteger(1, modulus),
-                                     new BigInteger(1, pubExpo),
-                                     new BigInteger(1, priExpo),
-                                     new BigInteger(1, primeP),
+        RSAPrivateCrtKeySpec rsaCrtSpec = 
+	    new RSAPrivateCrtKeySpec(new BigInteger(1, modulus),
+				     new BigInteger(1, pubExpo),
+				     new BigInteger(1, priExpo),
+				     new BigInteger(1, primeP),
                                      new BigInteger(1, primeQ),
-                                     new BigInteger(1, expoP),
-                                     new BigInteger(1, expoQ),
-                                     new BigInteger(1, coeff));
+				     new BigInteger(1, expoP),
+				     new BigInteger(1, expoQ),
+				     new BigInteger(1, coeff));
 
-        // Create an RSA private key from the CRT specification
+	// Create an RSA private key from the CRT specification
         KeyFactory kf = KeyFactory.getInstance("RSA", "SunRsaSign");
-        RSAPrivateCrtKey rsaPriKey =
-            (RSAPrivateCrtKey) kf.generatePrivate(rsaCrtSpec);
+	RSAPrivateCrtKey rsaPriKey = 
+	    (RSAPrivateCrtKey) kf.generatePrivate(rsaCrtSpec);
 
-        // test resulting key against original specification
-        if (!rsaPriKey.getCrtCoefficient().equals(rsaCrtSpec.getCrtCoefficient()))
-            throw new Exception("coefficients not equal");
-        if (!rsaPriKey.getPrimeExponentP().equals(rsaCrtSpec.getPrimeExponentP()))
-            throw new Exception("primeExponentPs not equal");
-        if (!rsaPriKey.getPrimeExponentQ().equals(rsaCrtSpec.getPrimeExponentQ()))
-            throw new Exception("primeExponentQs not equal");
-        if (!rsaPriKey.getPrimeP().equals(rsaCrtSpec.getPrimeP()))
-            throw new Exception("primePs not equal");
-        if (!rsaPriKey.getPrimeQ().equals(rsaCrtSpec.getPrimeQ()))
-            throw new Exception("primeQs not equal");
-        if (!rsaPriKey.getPublicExponent().equals(rsaCrtSpec.getPublicExponent()))
-            throw new Exception("public exponents not equal");
-        if (!rsaPriKey.getPrivateExponent().equals(rsaCrtSpec.getPrivateExponent()))
-            throw new Exception("private exponents not equal");
-        if (!rsaPriKey.getModulus().equals(rsaCrtSpec.getModulus()))
-            throw new Exception("modulus not equal");
-        if (!rsaPriKey.getFormat().equals("PKCS#8") &&
-            !rsaPriKey.getFormat().equals("PKCS8"))
-            throw new Exception("format not PKCS#8");
-        if (!rsaPriKey.getAlgorithm().equals("RSA"))
-            throw new Exception("algorithm not RSA");
-        if (rsaPriKey.getEncoded() == null)
-            throw new Exception("encoded key is null");
+	// test resulting key against original specification
+	if (!rsaPriKey.getCrtCoefficient().equals(rsaCrtSpec.getCrtCoefficient()))
+	    throw new Exception("coefficients not equal");
+	if (!rsaPriKey.getPrimeExponentP().equals(rsaCrtSpec.getPrimeExponentP()))
+	    throw new Exception("primeExponentPs not equal");
+	if (!rsaPriKey.getPrimeExponentQ().equals(rsaCrtSpec.getPrimeExponentQ()))
+	    throw new Exception("primeExponentQs not equal");
+	if (!rsaPriKey.getPrimeP().equals(rsaCrtSpec.getPrimeP()))
+	    throw new Exception("primePs not equal");
+	if (!rsaPriKey.getPrimeQ().equals(rsaCrtSpec.getPrimeQ()))
+	    throw new Exception("primeQs not equal");
+	if (!rsaPriKey.getPublicExponent().equals(rsaCrtSpec.getPublicExponent()))
+	    throw new Exception("public exponents not equal");
+	if (!rsaPriKey.getPrivateExponent().equals(rsaCrtSpec.getPrivateExponent()))
+	    throw new Exception("private exponents not equal");
+	if (!rsaPriKey.getModulus().equals(rsaCrtSpec.getModulus()))
+	    throw new Exception("modulus not equal");
+	if (!rsaPriKey.getFormat().equals("PKCS#8") &&
+	    !rsaPriKey.getFormat().equals("PKCS8"))
+	    throw new Exception("format not PKCS#8");
+	if (!rsaPriKey.getAlgorithm().equals("RSA"))
+	    throw new Exception("algorithm not RSA");
+	if (rsaPriKey.getEncoded() == null)
+	    throw new Exception("encoded key is null");
 
-        PKCS8EncodedKeySpec pkcs8Key =
-            new PKCS8EncodedKeySpec(rsaPriKey.getEncoded());
-
-        RSAPrivateCrtKey rsaPriKey2
-            = (RSAPrivateCrtKey) kf.generatePrivate(pkcs8Key);
-        if (!Arrays.equals(rsaPriKey.getEncoded(), rsaPriKey2.getEncoded()))
-            throw new Exception("encoded keys not equal");
+	PKCS8EncodedKeySpec pkcs8Key = 
+	    new PKCS8EncodedKeySpec(rsaPriKey.getEncoded());
+                
+        RSAPrivateCrtKey rsaPriKey2 
+	    = (RSAPrivateCrtKey) kf.generatePrivate(pkcs8Key);
+	if (!Arrays.equals(rsaPriKey.getEncoded(), rsaPriKey2.getEncoded()))
+	    throw new Exception("encoded keys not equal");
     }
 
     static byte[] modulus = {

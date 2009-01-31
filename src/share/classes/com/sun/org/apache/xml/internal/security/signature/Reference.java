@@ -103,7 +103,7 @@ import org.w3c.dom.Text;
 public class Reference extends SignatureElementProxy {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(Reference.class.getName());
 
    /** Field OBJECT_URI */
@@ -181,7 +181,7 @@ public class Reference extends SignatureElementProxy {
    protected Reference(Element element, String BaseURI, Manifest manifest)
            throws XMLSecurityException {
 
-      super(element, BaseURI);
+      super(element, BaseURI);      
 
       this._manifest = manifest;
    }
@@ -207,9 +207,9 @@ public class Reference extends SignatureElementProxy {
       String uri = digestMethodElem.getAttributeNS(null,
          Constants._ATT_ALGORITHM);
 
-          if (uri == null) {
-                  return null;
-          }
+	  if (uri == null) {
+		  return null;
+	  }
 
       return MessageDigestAlgorithm.getInstance(this._doc, uri);
    }
@@ -389,7 +389,7 @@ public class Reference extends SignatureElementProxy {
          resolver.addProperties(this._manifest._resolverProperties);
 
          XMLSignatureInput input = resolver.resolve(URIAttr, this._baseURI);
-
+                  
 
          return input;
       }  catch (ResourceResolverException ex) {
@@ -407,20 +407,20 @@ public class Reference extends SignatureElementProxy {
     *
     * @deprecated use getContentsBeforeTransformation
     */
-   public XMLSignatureInput getTransformsInput() throws ReferenceNotInitializedException
-        {
-                XMLSignatureInput input=getContentsBeforeTransformation();
-                XMLSignatureInput result;
-                try {
-                        result = new XMLSignatureInput(input.getBytes());
-                } catch (CanonicalizationException ex) {
-                         throw new ReferenceNotInitializedException("empty", ex);
-                } catch (IOException ex) {
-                         throw new ReferenceNotInitializedException("empty", ex);
-                }
-                result.setSourceURI(input.getSourceURI());
-                return result;
-
+   public XMLSignatureInput getTransformsInput() throws ReferenceNotInitializedException   
+	{  
+   		XMLSignatureInput input=getContentsBeforeTransformation();
+   		XMLSignatureInput result;
+		try {
+			result = new XMLSignatureInput(input.getBytes());
+		} catch (CanonicalizationException ex) {
+			 throw new ReferenceNotInitializedException("empty", ex);
+		} catch (IOException ex) {
+			 throw new ReferenceNotInitializedException("empty", ex);
+		}
+		result.setSourceURI(input.getSourceURI());   
+		return result;
+	
    }
 
    private XMLSignatureInput getContentsAfterTransformation(XMLSignatureInput input, OutputStream os)
@@ -560,7 +560,7 @@ public class Reference extends SignatureElementProxy {
                   InclusiveNamespaces in = new InclusiveNamespaces(
                         XMLUtils.selectNode(
                         c14nTransform.getElement().getFirstChild(),
-                                                InclusiveNamespaces.ExclusiveCanonicalizationNamespace,
+						InclusiveNamespaces.ExclusiveCanonicalizationNamespace, 
                         InclusiveNamespaces._TAG_EC_INCLUSIVENAMESPACES,0), this.getBaseURI());
 
                   inclusiveNamespaces = InclusiveNamespaces.prefixStr2Set(
@@ -638,13 +638,13 @@ public class Reference extends SignatureElementProxy {
                                                 this._baseURI);
 
          return transforms;
-      }
-       return null;
+      } 
+       return null;      
    }
 
    /**
     * Method getReferencedBytes
-    *
+    * 
     * @return the bytes that will be used to generated digest.
     * @throws ReferenceNotInitializedException
     * @throws XMLSignatureException
@@ -661,7 +661,7 @@ public class Reference extends SignatureElementProxy {
         throw new ReferenceNotInitializedException("empty", ex);
      } catch (CanonicalizationException ex) {
         throw new ReferenceNotInitializedException("empty", ex);
-     }
+     } 
 
    }
 
@@ -677,13 +677,13 @@ public class Reference extends SignatureElementProxy {
            throws ReferenceNotInitializedException, XMLSignatureException {
 
       try {
-
+         
          MessageDigestAlgorithm mda = this.getMessageDigestAlgorithm();
 
          mda.reset();
          DigesterOutputStream diOs=new DigesterOutputStream(mda);
          OutputStream os=new UnsyncBufferedOutputStream(diOs);
-         XMLSignatureInput output=this.dereferenceURIandPerformTransforms(os);
+         XMLSignatureInput output=this.dereferenceURIandPerformTransforms(os);         
          output.updateOutputStream(os);
          os.flush();
          //this.getReferencedBytes(diOs);
@@ -693,8 +693,8 @@ public class Reference extends SignatureElementProxy {
       } catch (XMLSecurityException ex) {
          throw new ReferenceNotInitializedException("empty", ex);
       } catch (IOException ex) {
-         throw new ReferenceNotInitializedException("empty", ex);
-        }
+      	 throw new ReferenceNotInitializedException("empty", ex);
+	}
    }
 
    /**
@@ -702,19 +702,19 @@ public class Reference extends SignatureElementProxy {
     *
     * @return the digest value.
     * @throws Base64DecodingException if Reference contains no proper base64 encoded data.
-        * @throws XMLSecurityException if the Reference does not contain a DigestValue element
+	* @throws XMLSecurityException if the Reference does not contain a DigestValue element
     */
    public byte[] getDigestValue() throws Base64DecodingException, XMLSecurityException {
       Element digestValueElem = XMLUtils.selectDsNode(this._constructionElement.getFirstChild()
             ,Constants._TAG_DIGESTVALUE,0);
-          if (digestValueElem == null) {
-                  // The required element is not in the XML!
-                  Object[] exArgs ={ Constants._TAG_DIGESTVALUE,
-                                                         Constants.SignatureSpecNS };
-                  throw new XMLSecurityException(
-                                        "signature.Verification.NoSignatureElement",
-                                        exArgs);
-          }
+	  if (digestValueElem == null) {
+		  // The required element is not in the XML!
+		  Object[] exArgs ={ Constants._TAG_DIGESTVALUE, 
+							 Constants.SignatureSpecNS };
+		  throw new XMLSecurityException(
+					"signature.Verification.NoSignatureElement", 
+					exArgs);
+	  }
       byte[] elemDig = Base64.decode(digestValueElem);
       return elemDig;
    }

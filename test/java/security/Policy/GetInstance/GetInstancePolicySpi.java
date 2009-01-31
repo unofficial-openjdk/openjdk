@@ -31,34 +31,34 @@ public class GetInstancePolicySpi extends PolicySpi {
     private Policy p;
 
     public GetInstancePolicySpi(final Policy.Parameters params) {
-        p = AccessController.doPrivileged
-            (new PrivilegedAction<Policy>() {
-            public Policy run() {
-                if (params instanceof URIParameter) {
-                    URIParameter uriParam = (URIParameter)params;
-                    try {
-                        URL url = uriParam.getURI().toURL();
-                        return new PolicyFile(url);
-                    } catch (MalformedURLException mue) {
-                        throw new IllegalArgumentException(mue);
-                    }
-                }
-                return new PolicyFile();
-            }
-        });
+	p = AccessController.doPrivileged
+	    (new PrivilegedAction<Policy>() {
+	    public Policy run() {
+		if (params instanceof URIParameter) {
+		    URIParameter uriParam = (URIParameter)params;
+		    try {
+		        URL url = uriParam.getURI().toURL();
+			return new PolicyFile(url);
+		    } catch (MalformedURLException mue) {
+			throw new IllegalArgumentException(mue);
+		    }
+		}
+		return new PolicyFile();
+	    }
+	});
     }
 
     public boolean engineImplies(ProtectionDomain domain, Permission perm) {
 
-        /**
-         * Note there is no need to capture own protection domain and
-         * return immediately if we are performing a check against ourself
-         * (a task normally needed for custom policy implementations).
-         *
-         * We simply call PolicyFile.implies - any doPrivileged
-         * that PolicyFile performs will truncate us from the current ACC.
-         */
+	/**
+	 * Note there is no need to capture own protection domain and
+	 * return immediately if we are performing a check against ourself
+	 * (a task normally needed for custom policy implementations).
+	 *
+	 * We simply call PolicyFile.implies - any doPrivileged
+	 * that PolicyFile performs will truncate us from the current ACC.
+	 */
 
-        return p.implies(domain, perm);
+	return p.implies(domain, perm);
     }
 }

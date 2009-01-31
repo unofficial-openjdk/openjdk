@@ -40,6 +40,7 @@ import sun.jvmstat.monitor.event.HostListener;
  * for event notification.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  *
  * @see HostIdentifier
@@ -48,8 +49,8 @@ import sun.jvmstat.monitor.event.HostListener;
  * @see HostListener
  */
 public abstract class MonitoredHost {
-    private static Map<HostIdentifier, MonitoredHost> monitoredHosts =
-                new HashMap<HostIdentifier, MonitoredHost>();
+    private static Map<HostIdentifier, MonitoredHost> monitoredHosts = 
+		new HashMap<HostIdentifier, MonitoredHost>();
 
     /*
      * The monitoring implementation override mechanism. The value of
@@ -233,7 +234,7 @@ public abstract class MonitoredHost {
                 + e.getMessage(), e);
         } catch (InstantiationException e) {
             throw new IllegalArgumentException(classname + "is abstract: "
-                                               + e.getMessage(), e);
+                                     	       + e.getMessage(), e);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof MonitorException) {

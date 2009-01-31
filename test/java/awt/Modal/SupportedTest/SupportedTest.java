@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 6520635
   @summary Test that modality and modal exclusion types are handled

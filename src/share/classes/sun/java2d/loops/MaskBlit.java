@@ -48,80 +48,80 @@ import sun.java2d.pipe.Region;
 
 public class MaskBlit extends GraphicsPrimitive
 {
-    public static final String methodSignature = "MaskBlit(...)".toString();
-
-    public static final int primTypeID = makePrimTypeID();
+    public static final String methodSignature = "MaskBlit(...)".toString(); 
+    
+    public static final int primTypeID = makePrimTypeID(); 
 
     private static RenderCache blitcache = new RenderCache(20);
 
     public static MaskBlit locate(SurfaceType srctype,
-                                  CompositeType comptype,
-                                  SurfaceType dsttype)
+				  CompositeType comptype,
+				  SurfaceType dsttype)
     {
-        return (MaskBlit)
-            GraphicsPrimitiveMgr.locate(primTypeID,
-                                        srctype, comptype, dsttype);
+	return (MaskBlit)
+	    GraphicsPrimitiveMgr.locate(primTypeID,
+					srctype, comptype, dsttype);
     }
 
     public static MaskBlit getFromCache(SurfaceType src,
-                                        CompositeType comp,
-                                        SurfaceType dst)
+					CompositeType comp,
+					SurfaceType dst)
     {
-        Object o = blitcache.get(src, comp, dst);
-        if (o != null) {
-            return (MaskBlit) o;
-        }
-        MaskBlit blit = locate(src, comp, dst);
-        if (blit == null) {
-            System.out.println("mask blit loop not found for:");
-            System.out.println("src:  "+src);
-            System.out.println("comp: "+comp);
-            System.out.println("dst:  "+dst);
-        } else {
-            blitcache.put(src, comp, dst, blit);
-        }
-        return blit;
+	Object o = blitcache.get(src, comp, dst);
+	if (o != null) {
+	    return (MaskBlit) o;
+	}
+	MaskBlit blit = locate(src, comp, dst);
+	if (blit == null) {
+	    System.out.println("mask blit loop not found for:");
+	    System.out.println("src:  "+src);
+	    System.out.println("comp: "+comp);
+	    System.out.println("dst:  "+dst);
+	} else {
+	    blitcache.put(src, comp, dst, blit);
+	}
+	return blit;
     }
 
     protected MaskBlit(SurfaceType srctype,
-                       CompositeType comptype,
-                       SurfaceType dsttype)
+		       CompositeType comptype,
+		       SurfaceType dsttype)
     {
-        super(methodSignature, primTypeID, srctype, comptype, dsttype);
+	super(methodSignature, primTypeID, srctype, comptype, dsttype);
     }
 
     public MaskBlit(long pNativePrim,
-                    SurfaceType srctype,
-                    CompositeType comptype,
-                    SurfaceType dsttype)
+		    SurfaceType srctype,
+		    CompositeType comptype,
+		    SurfaceType dsttype)
     {
-        super(pNativePrim, methodSignature, primTypeID, srctype, comptype, dsttype);
+	super(pNativePrim, methodSignature, primTypeID, srctype, comptype, dsttype);
     }
 
     /**
      * All MaskBlit implementors must have this invoker method
      */
     public native void MaskBlit(SurfaceData src, SurfaceData dst,
-                                Composite comp, Region clip,
-                                int srcx, int srcy,
-                                int dstx, int dsty,
-                                int width, int height,
-                                byte[] mask, int maskoff, int maskscan);
+				Composite comp, Region clip,
+				int srcx, int srcy,
+				int dstx, int dsty,
+				int width, int height,
+				byte[] mask, int maskoff, int maskscan);
 
     static {
-        GraphicsPrimitiveMgr.registerGeneral(new MaskBlit(null, null, null));
+	GraphicsPrimitiveMgr.registerGeneral(new MaskBlit(null, null, null));
     }
 
     public GraphicsPrimitive makePrimitive(SurfaceType srctype,
-                                           CompositeType comptype,
-                                           SurfaceType dsttype)
+					   CompositeType comptype,
+					   SurfaceType dsttype)
     {
         /*
-        new Throwable().printStackTrace();
-        System.out.println("Constructing general maskblit for:");
-        System.out.println("src:  "+srctype);
-        System.out.println("comp: "+comptype);
-        System.out.println("dst:  "+dsttype);
+	new Throwable().printStackTrace();
+	System.out.println("Constructing general maskblit for:");
+	System.out.println("src:  "+srctype);
+	System.out.println("comp: "+comptype);
+	System.out.println("dst:  "+dsttype);
         */
 
         if (CompositeType.Xor.equals(comptype)) {
@@ -129,136 +129,136 @@ public class MaskBlit extends GraphicsPrimitive
                                     "XOR mode");
         }
 
-        General ob = new General(srctype, comptype, dsttype);
-        setupGeneralBinaryOp(ob);
-        return ob;
+	General ob = new General(srctype, comptype, dsttype);
+	setupGeneralBinaryOp(ob);
+	return ob;
     }
 
     private static class General
-        extends MaskBlit
-        implements GeneralBinaryOp
+	extends MaskBlit
+	implements GeneralBinaryOp
     {
-        Blit convertsrc;
-        Blit convertdst;
-        MaskBlit performop;
-        Blit convertresult;
+	Blit convertsrc;
+	Blit convertdst;
+	MaskBlit performop;
+	Blit convertresult;
 
-        WeakReference srcTmp;
-        WeakReference dstTmp;
+	WeakReference srcTmp;
+	WeakReference dstTmp;
 
-        public General(SurfaceType srctype,
-                       CompositeType comptype,
-                       SurfaceType dsttype)
-        {
-            super(srctype, comptype, dsttype);
-        }
+	public General(SurfaceType srctype,
+		       CompositeType comptype,
+		       SurfaceType dsttype)
+	{
+	    super(srctype, comptype, dsttype);
+	}
 
-        public void setPrimitives(Blit srcconverter,
-                                  Blit dstconverter,
-                                  GraphicsPrimitive genericop,
-                                  Blit resconverter)
-        {
-            this.convertsrc = srcconverter;
-            this.convertdst = dstconverter;
-            this.performop = (MaskBlit) genericop;
-            this.convertresult = resconverter;
-        }
+	public void setPrimitives(Blit srcconverter,
+				  Blit dstconverter,
+				  GraphicsPrimitive genericop,
+				  Blit resconverter)
+	{
+	    this.convertsrc = srcconverter;
+	    this.convertdst = dstconverter;
+	    this.performop = (MaskBlit) genericop;
+	    this.convertresult = resconverter;
+	}
 
-        public synchronized void MaskBlit(SurfaceData srcData,
-                                          SurfaceData dstData,
-                                          Composite comp,
-                                          Region clip,
-                                          int srcx, int srcy,
-                                          int dstx, int dsty,
-                                          int width, int height,
-                                          byte mask[], int offset, int scan)
-        {
-            SurfaceData src, dst;
-            Region opclip;
-            int sx, sy, dx, dy;
+	public synchronized void MaskBlit(SurfaceData srcData,
+					  SurfaceData dstData,
+					  Composite comp,
+					  Region clip,
+					  int srcx, int srcy,
+					  int dstx, int dsty,
+					  int width, int height,
+					  byte mask[], int offset, int scan)
+	{
+	    SurfaceData src, dst;
+	    Region opclip;
+	    int sx, sy, dx, dy;
 
-            if (convertsrc == null) {
-                src = srcData;
-                sx = srcx;
-                sy = srcy;
-            } else {
-                SurfaceData cachedSrc = null;
-                if (srcTmp != null) {
-                    cachedSrc = (SurfaceData) srcTmp.get();
-                }
-                src = convertFrom(convertsrc, srcData, srcx, srcy,
-                                  width, height, cachedSrc);
-                sx = 0;
-                sy = 0;
-                if (src != cachedSrc) {
-                    srcTmp = new WeakReference(src);
-                }
-            }
+	    if (convertsrc == null) {
+		src = srcData;
+		sx = srcx;
+		sy = srcy;
+	    } else {
+		SurfaceData cachedSrc = null;
+		if (srcTmp != null) {
+		    cachedSrc = (SurfaceData) srcTmp.get();
+		}
+		src = convertFrom(convertsrc, srcData, srcx, srcy,
+				  width, height, cachedSrc);
+		sx = 0;
+		sy = 0;
+		if (src != cachedSrc) {
+		    srcTmp = new WeakReference(src);
+		}
+	    }
 
-            if (convertdst == null) {
-                dst = dstData;
-                dx = dstx;
-                dy = dsty;
-                opclip = clip;
-            } else {
-                // assert: convertresult != null
-                SurfaceData cachedDst = null;
-                if (dstTmp != null) {
-                    cachedDst = (SurfaceData) dstTmp.get();
-                }
-                dst = convertFrom(convertdst, dstData, dstx, dsty,
-                                  width, height, cachedDst);
-                dx = 0;
-                dy = 0;
-                opclip = null;
-                if (dst != cachedDst) {
-                    dstTmp = new WeakReference(dst);
-                }
-            }
+	    if (convertdst == null) {
+		dst = dstData;
+		dx = dstx;
+		dy = dsty;
+		opclip = clip;
+	    } else {
+		// assert: convertresult != null
+		SurfaceData cachedDst = null;
+		if (dstTmp != null) {
+		    cachedDst = (SurfaceData) dstTmp.get();
+		}
+		dst = convertFrom(convertdst, dstData, dstx, dsty,
+				  width, height, cachedDst);
+		dx = 0;
+		dy = 0;
+		opclip = null;
+		if (dst != cachedDst) {
+		    dstTmp = new WeakReference(dst);
+		}
+	    }
 
-            performop.MaskBlit(src, dst, comp, opclip,
-                               sx, sy, dx, dy, width, height,
-                               mask, offset, scan);
+	    performop.MaskBlit(src, dst, comp, opclip,
+			       sx, sy, dx, dy, width, height,
+			       mask, offset, scan);
 
-            if (convertresult != null) {
-                // assert: convertdst != null
-                convertTo(convertresult, dst, dstData, clip,
-                          dstx, dsty, width, height);
-            }
-        }
+	    if (convertresult != null) {
+		// assert: convertdst != null
+		convertTo(convertresult, dst, dstData, clip,
+			  dstx, dsty, width, height);
+	    }
+	}
     }
 
     public GraphicsPrimitive traceWrap() {
-        return new TraceMaskBlit(this);
+	return new TraceMaskBlit(this);
     }
 
     private static class TraceMaskBlit extends MaskBlit {
-        MaskBlit target;
+	MaskBlit target;
 
-        public TraceMaskBlit(MaskBlit target) {
-            // We need to have the same NativePrim as our
-            // target in case we are used with a TransformHelper
-            super(target.getNativePrim(),
-                  target.getSourceType(),
-                  target.getCompositeType(),
-                  target.getDestType());
-            this.target = target;
-        }
+	public TraceMaskBlit(MaskBlit target) {
+	    // We need to have the same NativePrim as our
+	    // target in case we are used with a TransformHelper
+	    super(target.getNativePrim(),
+		  target.getSourceType(),
+		  target.getCompositeType(),
+		  target.getDestType());
+	    this.target = target;
+	}
 
-        public GraphicsPrimitive traceWrap() {
-            return this;
-        }
+	public GraphicsPrimitive traceWrap() {
+	    return this;
+	}
 
-        public void MaskBlit(SurfaceData src, SurfaceData dst,
-                             Composite comp, Region clip,
-                             int srcx, int srcy, int dstx, int dsty,
-                             int width, int height,
-                             byte[] mask, int maskoff, int maskscan)
-        {
-            tracePrimitive(target);
-            target.MaskBlit(src, dst, comp, clip,
-                            srcx, srcy, dstx, dsty, width, height,
-                            mask, maskoff, maskscan);
-        }
+	public void MaskBlit(SurfaceData src, SurfaceData dst,
+			     Composite comp, Region clip,
+			     int srcx, int srcy, int dstx, int dsty,
+			     int width, int height,
+			     byte[] mask, int maskoff, int maskscan)
+	{
+	    tracePrimitive(target);
+	    target.MaskBlit(src, dst, comp, clip,
+			    srcx, srcy, dstx, dsty, width, height,
+			    mask, maskoff, maskscan);
+	}
     }
 }

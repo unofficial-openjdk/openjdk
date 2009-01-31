@@ -32,18 +32,18 @@ import java.io.*;
 import java.util.*;
 
 public class Test3 {
-        public static void main(String[] args) throws Exception {
-            System.out.println("\nTest3\n");
-            final Reader reader = new FileReader(
+	public static void main(String[] args) throws Exception {
+	    System.out.println("\nTest3\n");
+	    final Reader reader = new FileReader(
                 new File(System.getProperty("test.src", "."), "Test3.js"));
             ScriptEngineManager m = new ScriptEngineManager();
-            final ScriptEngine engine = m.getEngineByName("js");
-            Bindings en = new SimpleBindings();
-            engine.setBindings(en, ScriptContext.ENGINE_SCOPE);
-            en.put("key", "engine value");
-            Bindings gn = new SimpleBindings();
-            engine.setBindings(gn, ScriptContext.GLOBAL_SCOPE);
-            gn.put("key", "global value");
+	    final ScriptEngine engine = m.getEngineByName("js");
+	    Bindings en = new SimpleBindings();
+	    engine.setBindings(en, ScriptContext.ENGINE_SCOPE);
+	    en.put("key", "engine value");
+   	    Bindings gn = new SimpleBindings();
+	    engine.setBindings(gn, ScriptContext.GLOBAL_SCOPE);
+	    gn.put("key", "global value");
             engine.eval(reader);
-        }
+	}
 }

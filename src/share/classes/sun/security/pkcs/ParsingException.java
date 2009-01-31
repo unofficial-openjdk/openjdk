@@ -24,9 +24,10 @@
  */
 
 /**
- * Generic PKCS Parsing exception.
- *
- * @author Benjamin Renaud
+ * Generic PKCS Parsing exception. 
+ * 
+ * @version %I%	%G%
+ * @author Benjamin Renaud 
  */
 
 package sun.security.pkcs;
@@ -38,10 +39,10 @@ public class ParsingException extends IOException {
     private static final long serialVersionUID = -6316569918966181883L;
 
     public ParsingException() {
-        super();
+	super();
     }
 
     public ParsingException(String s) {
-        super(s);
+	super(s);
     }
 }

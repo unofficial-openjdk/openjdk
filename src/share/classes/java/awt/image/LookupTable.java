@@ -38,17 +38,18 @@ package java.awt.image;
  * constrained input.  If there is only one array in the lookup
  * table, it will be applied to all bands.  All arrays must be the
  * same size.
- *
+ * 
  * @see ByteLookupTable
  * @see ShortLookupTable
  * @see LookupOp
+ * @version 10 Feb 1997
  */
 public abstract class LookupTable extends Object{
 
     /**
      * Constants
-     */
-
+     */  
+ 
     int  numComponents;
     int  offset;
     int  numEntries;
@@ -73,7 +74,7 @@ public abstract class LookupTable extends Object{
                                                " be at least 1");
         }
         this.numComponents = numComponents;
-        this.offset = offset;
+	this.offset = offset;
     }
 
     /**
@@ -85,7 +86,7 @@ public abstract class LookupTable extends Object{
     }
 
     /**
-     * Returns the offset.
+     * Returns the offset.  
      * @return the offset of this <code>LookupTable</code>.
      */
     public int getOffset() {
@@ -93,17 +94,17 @@ public abstract class LookupTable extends Object{
     }
 
     /**
-     * Returns an <code>int</code> array of components for
-     * one pixel.  The <code>dest</code> array contains the
-     * result of the lookup and is returned.  If dest is
-     * <code>null</code>, a new array is allocated.  The
-     * source and destination can be equal.
+     * Returns an <code>int</code> array of components for 
+     * one pixel.  The <code>dest</code> array contains the 
+     * result of the lookup and is returned.  If dest is 
+     * <code>null</code>, a new array is allocated.  The 
+     * source and destination can be equal. 
      * @param src the source array of components of one pixel
      * @param dest the destination array of components for one pixel,
      *        translated with this <code>LookupTable</code>
-     * @return an <code>int</code> array of components for one
+     * @return an <code>int</code> array of components for one 
      *         pixel.
      */
     public abstract int[] lookupPixel(int[] src, int[] dest);
-
+    
 }

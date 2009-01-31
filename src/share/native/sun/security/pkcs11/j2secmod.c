@@ -38,10 +38,10 @@ JNIEXPORT jboolean JNICALL Java_sun_security_pkcs11_Secmod_nssVersionCheck
     const char *requiredVersion = (*env)->GetStringUTFChars(env, jVersion, NULL);
     int res;
     FPTR_VersionCheck versionCheck =
-        (FPTR_VersionCheck)findFunction(env, jHandle, "NSS_VersionCheck");
+	(FPTR_VersionCheck)findFunction(env, jHandle, "NSS_VersionCheck");
 
     if (versionCheck == NULL) {
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
 
     res = versionCheck(requiredVersion);
@@ -61,12 +61,12 @@ JNIEXPORT jboolean JNICALL Java_sun_security_pkcs11_Secmod_nssInit
 
     (*env)->ReleaseStringUTFChars(env, jFunctionName, functionName);
     if (init == NULL) {
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
 
     res = init(configDir);
     if (configDir != NULL) {
-        (*env)->ReleaseStringUTFChars(env, jConfigDir, configDir);
+	(*env)->ReleaseStringUTFChars(env, jConfigDir, configDir);
     }
     dprintf1("-res: %d\n", res);
 
@@ -77,7 +77,7 @@ JNIEXPORT jobject JNICALL Java_sun_security_pkcs11_Secmod_nssGetModuleList
   (JNIEnv *env, jclass thisClass, jlong jHandle)
 {
     FPTR_GetDBModuleList getModuleList =
-        (FPTR_GetDBModuleList)findFunction(env, jHandle, "SECMOD_GetDefaultModuleList");
+	(FPTR_GetDBModuleList)findFunction(env, jHandle, "SECMOD_GetDefaultModuleList");
 
     SECMODModuleList *list;
     SECMODModule *module;
@@ -89,13 +89,13 @@ JNIEXPORT jobject JNICALL Java_sun_security_pkcs11_Secmod_nssGetModuleList
     jint i;
 
     if (getModuleList == NULL) {
-        dprintf("-getmodulelist function not found\n");
-        return NULL;
+	dprintf("-getmodulelist function not found\n");
+	return NULL;
     }
     list = getModuleList();
     if (list == NULL) {
-        dprintf("-module list is null\n");
-        return NULL;
+	dprintf("-module list is null\n");
+	return NULL;
     }
 
     jListClass = (*env)->FindClass(env, "java/util/ArrayList");
@@ -105,29 +105,29 @@ JNIEXPORT jobject JNICALL Java_sun_security_pkcs11_Secmod_nssGetModuleList
 
     jModuleClass = (*env)->FindClass(env, "sun/security/pkcs11/Secmod$Module");
     jModuleConstructor = (*env)->GetMethodID
-        (env, jModuleClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;ZI)V");
+	(env, jModuleClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;ZI)V");
 
     while (list != NULL) {
-        module = list->module;
-        // assert module != null
-        dprintf1("-commonname: %s\n", module->commonName);
-        dprintf1("-dllname: %s\n", (module->dllName != NULL) ? module->dllName : "NULL");
-        dprintf1("-slots: %d\n", module->slotCount);
-        dprintf1("-loaded: %d\n", module->loaded);
-        dprintf1("-internal: %d\n", module->internal);
-        dprintf1("-fips: %d\n", module->isFIPS);
-        jCommonName = (*env)->NewStringUTF(env, module->commonName);
-        if (module->dllName == NULL) {
-            jDllName = NULL;
-        } else {
-            jDllName = (*env)->NewStringUTF(env, module->dllName);
-        }
-        jFIPS = module->isFIPS;
-        for (i = 0; i < module->slotCount; i++ ) {
-            jModule = (*env)->NewObject(env, jModuleClass, jModuleConstructor, jDllName, jCommonName, jFIPS, i);
-            (*env)->CallVoidMethod(env, jList, jAdd, jModule);
-        }
-        list = list->next;
+	module = list->module;
+	// assert module != null
+	dprintf1("-commonname: %s\n", module->commonName);
+	dprintf1("-dllname: %s\n", (module->dllName != NULL) ? module->dllName : "NULL");
+	dprintf1("-slots: %d\n", module->slotCount);
+	dprintf1("-loaded: %d\n", module->loaded);
+	dprintf1("-internal: %d\n", module->internal);
+	dprintf1("-fips: %d\n", module->isFIPS);
+	jCommonName = (*env)->NewStringUTF(env, module->commonName);
+	if (module->dllName == NULL) {
+	    jDllName = NULL;
+	} else {
+	    jDllName = (*env)->NewStringUTF(env, module->dllName);
+	}
+	jFIPS = module->isFIPS; 
+	for (i = 0; i < module->slotCount; i++ ) {
+	    jModule = (*env)->NewObject(env, jModuleClass, jModuleConstructor, jDllName, jCommonName, jFIPS, i);
+	    (*env)->CallVoidMethod(env, jList, jAdd, jModule);
+	}
+	list = list->next;
     }
     dprintf("-ok\n");
 

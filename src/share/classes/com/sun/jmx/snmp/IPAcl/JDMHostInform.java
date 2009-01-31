@@ -29,7 +29,7 @@ package com.sun.jmx.snmp.IPAcl;
 
 class JDMHostInform extends SimpleNode {
     protected String name= "";
-
+    
     JDMHostInform(int id) {
         super(id);
     }
@@ -37,7 +37,7 @@ class JDMHostInform extends SimpleNode {
     JDMHostInform(Parser p, int id) {
         super(p, id);
     }
-
+    
     public static Node jjtCreate(int id) {
         return new JDMHostInform(id);
     }

@@ -47,44 +47,44 @@ public class BasicTest {
     // check that the given class is loaded by the given loader
     static void checkLoadedByLoader(String name, ClassLoader loader) {
         try {
-            Class cl = Class.forName(name);
-            ClassLoader actual = cl.getClassLoader();
-            String loaderName = (actual == null) ? "boot class loader" : actual.toString();
-            if (actual != loader) {
-                System.out.println("FAIL: " + name + " incorrectly loaded by: " + loaderName);
-                failures++;
-            } else {
-                System.out.println("PASS: " + name + " loaded by: " + loaderName);
-            }
-        } catch (Exception x) {
-            System.out.println("FAIL: Unable to load " + name + ":" + x);
-            failures++;
-        }
+	    Class cl = Class.forName(name);
+	    ClassLoader actual = cl.getClassLoader();
+	    String loaderName = (actual == null) ? "boot class loader" : actual.toString();
+	    if (actual != loader) {
+		System.out.println("FAIL: " + name + " incorrectly loaded by: " + loaderName);
+		failures++;
+	    } else {
+		System.out.println("PASS: " + name + " loaded by: " + loaderName);
+	    }
+	} catch (Exception x) {
+	    System.out.println("FAIL: Unable to load " + name + ":" + x);
+	    failures++;
+	}
     }
 
     public static void main(String args[]) throws IOException {
-        JarFile bootclasses = new JarFile("BootSupport.jar");
-        JarFile agentclasses = new JarFile("AgentSupport.jar");
+	JarFile bootclasses = new JarFile("BootSupport.jar");
+	JarFile agentclasses = new JarFile("AgentSupport.jar");
 
-        Instrumentation ins = Agent.getInstrumentation();
+	Instrumentation ins = Agent.getInstrumentation();
 
-        // Test 1: Add BootSupport.jar to boot class path and check that
-        // BootSupport is loaded by the bootstrap class loader
-        ins.appendToBootstrapClassLoaderSearch(bootclasses);
-        checkLoadedByLoader("BootSupport", null);
+	// Test 1: Add BootSupport.jar to boot class path and check that
+	// BootSupport is loaded by the bootstrap class loader
+	ins.appendToBootstrapClassLoaderSearch(bootclasses);
+	checkLoadedByLoader("BootSupport", null);
 
         // Test 2: Add AgentSupport.jar to the system class path and check that
         // AgentSupport is loaded by the system class loader.
-        try {
-            ins.appendToSystemClassLoaderSearch(agentclasses);
-            checkLoadedByLoader("AgentSupport", ClassLoader.getSystemClassLoader());
-        } catch (UnsupportedOperationException x) {
-            System.out.println("System class loader does not support adding to class path");
-        }
+	try {	
+	    ins.appendToSystemClassLoaderSearch(agentclasses);
+	    checkLoadedByLoader("AgentSupport", ClassLoader.getSystemClassLoader());
+	} catch (UnsupportedOperationException x) {
+	    System.out.println("System class loader does not support adding to class path");
+	}
 
-        // throw exception if a test failed
-        if (failures > 0) {
-            throw new RuntimeException(failures + " test(s) failed.");
-        }
+	// throw exception if a test failed
+	if (failures > 0) {
+	    throw new RuntimeException(failures + " test(s) failed.");
+	}
     }
 }

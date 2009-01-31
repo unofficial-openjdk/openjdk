@@ -159,12 +159,12 @@ public final class GlyphList {
       /* Note len must not be -ve! only setFromChars should be capable
        * of passing down a -ve len, and this guards against it.
        */
-        if (len < 0) {
-          len = 0;
+        if (len < 0) { 
+	  len = 0;
         }
         if (usePositions && len > maxPosLen) {
             positions = new float[len * 2 + 2];
-            maxPosLen = len;
+	    maxPosLen = len;
         }
 
         if (maxLen == 0 || len > maxLen) {
@@ -184,25 +184,25 @@ public final class GlyphList {
 //     }
 
     public static GlyphList getInstance() {
-        /* The following heuristic is that if the reusable instance is
-         * in use, it probably still will be in a micro-second, so avoid
-         * synchronising on the class and just allocate a new instance.
-         * The cost is one extra boolean test for the normal case, and some
-         * small number of cases where we allocate an extra object when
-         * in fact the reusable one would be freed very soon.
-         */
-        if (inUse) {
-            return new GlyphList();
-        } else {
-            synchronized(GlyphList.class) {
-                if (inUse) {
-                    return new GlyphList();
-                } else {
-                    inUse = true;
-                    return reusableGL;
-                }
-            }
-        }
+	/* The following heuristic is that if the reusable instance is
+	 * in use, it probably still will be in a micro-second, so avoid
+	 * synchronising on the class and just allocate a new instance.
+	 * The cost is one extra boolean test for the normal case, and some
+	 * small number of cases where we allocate an extra object when
+	 * in fact the reusable one would be freed very soon.
+	 */
+	if (inUse) {
+	    return new GlyphList();
+	} else {
+	    synchronized(GlyphList.class) {
+		if (inUse) {
+		    return new GlyphList();
+		} else {
+		    inUse = true;
+		    return reusableGL;
+		}
+	    }
+	}
     }
 
     /* In some cases the caller may be able to estimate the size of
@@ -212,18 +212,18 @@ public final class GlyphList {
      * will be discarded so the re-allocation overhead is high.
      */
 //     public static GlyphList getInstance(int sz) {
-//      if (inUse) {
-//          return new GlyphList(sz);
-//      } else {
-//          synchronized(GlyphList.class) {
-//              if (inUse) {
-//                  return new GlyphList();
-//              } else {
-//                  inUse = true;
-//                  return reusableGL;
-//              }
-//          }
-//      }
+// 	if (inUse) {
+// 	    return new GlyphList(sz);
+// 	} else {
+// 	    synchronized(GlyphList.class) {
+// 		if (inUse) {
+// 		    return new GlyphList();
+// 		} else {
+// 		    inUse = true;
+// 		    return reusableGL;
+// 		}
+// 	    }
+// 	}
 //     }
 
     /* GlyphList is in an invalid state until setFrom* method is called.
@@ -233,86 +233,86 @@ public final class GlyphList {
      */
 
     public boolean setFromString(FontInfo info, String str, float x, float y) {
-        this.x = x;
-        this.y = y;
+	this.x = x;
+	this.y = y;
         this.strikelist = info.fontStrike;
-        this.lcdRGBOrder = info.lcdRGBOrder;
-        this.lcdSubPixPos = info.lcdSubPixPos;
-        len = str.length();
+	this.lcdRGBOrder = info.lcdRGBOrder;
+	this.lcdSubPixPos = info.lcdSubPixPos;
+	len = str.length();
         ensureCapacity(len);
-        str.getChars(0, len, chData, 0);
-        return mapChars(info, len);
+	str.getChars(0, len, chData, 0);
+	return mapChars(info, len);
     }
 
     public boolean setFromChars(FontInfo info, char[] chars, int off, int alen,
-                                float x, float y) {
-        this.x = x;
-        this.y = y;
+				float x, float y) {
+	this.x = x;
+	this.y = y;
         this.strikelist = info.fontStrike;
-        this.lcdRGBOrder = info.lcdRGBOrder;
-        this.lcdSubPixPos = info.lcdSubPixPos;
-        len = alen;
-        if (alen < 0) {
-            len = 0;
-        } else {
-            len = alen;
-        }
+	this.lcdRGBOrder = info.lcdRGBOrder;
+	this.lcdSubPixPos = info.lcdSubPixPos;
+	len = alen;
+	if (alen < 0) {
+	    len = 0;
+	} else {
+	    len = alen;
+	}
         ensureCapacity(len);
-        System.arraycopy(chars, off, chData, 0, len);
-        return mapChars(info, len);
+	System.arraycopy(chars, off, chData, 0, len);
+	return mapChars(info, len);
     }
 
     private final boolean mapChars(FontInfo info, int len) {
-        /* REMIND.Is it worthwhile for the iteration to convert
-         * chars to glyph ids to directly map to images?
-         */
-        if (info.font2D.getMapper().charsToGlyphsNS(len, chData, glyphData)) {
-            return false;
-        }
-        info.fontStrike.getGlyphImagePtrs(glyphData, images, len);
-        glyphindex = -1;
-        return true;
+	/* REMIND.Is it worthwhile for the iteration to convert 
+	 * chars to glyph ids to directly map to images?  
+	 */
+ 	if (info.font2D.getMapper().charsToGlyphsNS(len, chData, glyphData)) {
+	    return false;
+	}
+	info.fontStrike.getGlyphImagePtrs(glyphData, images, len);
+	glyphindex = -1;
+	return true;
     }
 
 
     public void setFromGlyphVector(FontInfo info, GlyphVector gv,
-                                   float x, float y) {
+				   float x, float y) {
         this.x = x;
         this.y = y;
-        this.lcdRGBOrder = info.lcdRGBOrder;
-        this.lcdSubPixPos = info.lcdSubPixPos;
-        /* A GV may be rendered in different Graphics. It is possible it is
-         * used for one case where LCD text is available, and another where
-         * it is not. Pass in the "info". to ensure get a suitable one.
-         */
+	this.lcdRGBOrder = info.lcdRGBOrder;
+	this.lcdSubPixPos = info.lcdSubPixPos;
+	/* A GV may be rendered in different Graphics. It is possible it is
+	 * used for one case where LCD text is available, and another where
+	 * it is not. Pass in the "info". to ensure get a suitable one.
+	 */
         StandardGlyphVector sgv = StandardGlyphVector.getStandardGV(gv, info);
-        // call before ensureCapacity :-
+	// call before ensureCapacity :-
         usePositions = sgv.needsPositions(info.devTx);
         len = sgv.getNumGlyphs();
         ensureCapacity(len);
         strikelist = sgv.setupGlyphImages(images,
-                                          usePositions ? positions : null,
-                                          info.devTx);
+					  usePositions ? positions : null,
+					  info.devTx);
         glyphindex = -1;
     }
 
     public int[] getBounds() {
-        /* We co-opt the 5 element array that holds per glyph metrics in order
-         * to return the bounds. So a caller must copy the data out of the
-         * array before calling any other methods on this GlyphList
-         */
-        if (glyphindex >= 0) {
-            throw new InternalError("calling getBounds after setGlyphIndex");
-        }
-        if (metrics == null) {
-            metrics = new int[5];
-        }
-        /* gposx and gposy are used to accumulate the advance.
-         * Add 0.5f for consistent rounding to pixel position. */
-        gposx = x + 0.5f;
-        gposy = y + 0.5f;
-        fillBounds(metrics);
-        return metrics;
+	/* We co-opt the 5 element array that holds per glyph metrics in order
+	 * to return the bounds. So a caller must copy the data out of the
+	 * array before calling any other methods on this GlyphList
+	 */
+	if (glyphindex >= 0) {
+	    throw new InternalError("calling getBounds after setGlyphIndex");
+	}
+	if (metrics == null) {
+	    metrics = new int[5];
+	}
+	/* gposx and gposy are used to accumulate the advance.
+	 * Add 0.5f for consistent rounding to pixel position. */
+	gposx = x + 0.5f;
+	gposy = y + 0.5f;
+	fillBounds(metrics);
+	return metrics;
     }
 
     /* This method now assumes "state", so must be called 0->len
@@ -322,68 +322,68 @@ public final class GlyphList {
      * doesn't have this stricture..
      */
     public void setGlyphIndex(int i) {
-        glyphindex = i;
-        float gx =
-            StrikeCache.unsafe.getFloat(images[i]+StrikeCache.topLeftXOffset);
-        float gy =
-            StrikeCache.unsafe.getFloat(images[i]+StrikeCache.topLeftYOffset);
+	glyphindex = i;
+	float gx =
+	    StrikeCache.unsafe.getFloat(images[i]+StrikeCache.topLeftXOffset);
+	float gy =
+	    StrikeCache.unsafe.getFloat(images[i]+StrikeCache.topLeftYOffset);
 
-        if (usePositions) {
-            metrics[0] = (int)Math.floor(positions[(i<<1)]   + gposx + gx);
-            metrics[1] = (int)Math.floor(positions[(i<<1)+1] + gposy + gy);
-        } else {
-            metrics[0] = (int)Math.floor(gposx + gx);
-            metrics[1] = (int)Math.floor(gposy + gy);
-            /* gposx and gposy are used to accumulate the advance */
-            gposx += StrikeCache.unsafe.getFloat
-                (images[i]+StrikeCache.xAdvanceOffset);
-            gposy += StrikeCache.unsafe.getFloat
-                (images[i]+StrikeCache.yAdvanceOffset);
-        }
-        metrics[2] =
-            StrikeCache.unsafe.getChar(images[i]+StrikeCache.widthOffset);
-        metrics[3] =
-            StrikeCache.unsafe.getChar(images[i]+StrikeCache.heightOffset);
-        metrics[4] =
+      	if (usePositions) {
+	    metrics[0] = (int)Math.floor(positions[(i<<1)]   + gposx + gx);
+	    metrics[1] = (int)Math.floor(positions[(i<<1)+1] + gposy + gy);
+	} else {
+	    metrics[0] = (int)Math.floor(gposx + gx);
+	    metrics[1] = (int)Math.floor(gposy + gy);
+	    /* gposx and gposy are used to accumulate the advance */
+	    gposx += StrikeCache.unsafe.getFloat
+		(images[i]+StrikeCache.xAdvanceOffset);
+	    gposy += StrikeCache.unsafe.getFloat
+		(images[i]+StrikeCache.yAdvanceOffset);
+	}
+	metrics[2] =
+	    StrikeCache.unsafe.getChar(images[i]+StrikeCache.widthOffset);
+	metrics[3] =
+	    StrikeCache.unsafe.getChar(images[i]+StrikeCache.heightOffset);
+	metrics[4] =
             StrikeCache.unsafe.getChar(images[i]+StrikeCache.rowBytesOffset);
     }
 
     public int[] getMetrics() {
-        return metrics;
+	return metrics;
     }
 
     public byte[] getGrayBits() {
-        int len = metrics[4] * metrics[3];
-        if (graybits == null) {
-            graybits = new byte[Math.max(len, MINGRAYLENGTH)];
-        } else {
-            if (len > graybits.length) {
-                graybits = new byte[len];
-            }
-        }
-        long pixelDataAddress;
-        if (StrikeCache.nativeAddressSize == 4) {
-            pixelDataAddress = 0xffffffff &
-                StrikeCache.unsafe.getInt(images[glyphindex] +
-                                          StrikeCache.pixelDataOffset);
-        } else {
-            pixelDataAddress =
-            StrikeCache.unsafe.getLong(images[glyphindex] +
-                                       StrikeCache.pixelDataOffset);
-        }
-        if (pixelDataAddress == 0L) {
-            return graybits;
-        }
-        /* unsafe is supposed to be fast, but I doubt if this loop can beat
-         * a native call which does a getPrimitiveArrayCritical and a
-         * memcpy for the typical amount of image data (30-150 bytes)
-         * Consider a native method if there is a performance problem (which
-         * I haven't seen so far).
-         */
-        for (int i=0; i<len; i++) {
-            graybits[i] = StrikeCache.unsafe.getByte(pixelDataAddress+i);
-        }
-        return graybits;
+	int len = metrics[4] * metrics[3];
+	if (graybits == null) {
+	    graybits = new byte[Math.max(len, MINGRAYLENGTH)];
+	} else {
+	    if (len > graybits.length) {
+		graybits = new byte[len];
+	    }
+	}
+	long pixelDataAddress;
+	if (StrikeCache.nativeAddressSize == 4) {
+	    pixelDataAddress = 0xffffffff &
+		StrikeCache.unsafe.getInt(images[glyphindex] +
+					  StrikeCache.pixelDataOffset);
+	} else {
+	    pixelDataAddress =
+	    StrikeCache.unsafe.getLong(images[glyphindex] +
+				       StrikeCache.pixelDataOffset);
+	}
+	if (pixelDataAddress == 0L) {
+	    return graybits;
+	}
+	/* unsafe is supposed to be fast, but I doubt if this loop can beat
+	 * a native call which does a getPrimitiveArrayCritical and a
+	 * memcpy for the typical amount of image data (30-150 bytes)
+	 * Consider a native method if there is a performance problem (which
+	 * I haven't seen so far).
+	 */
+	for (int i=0; i<len; i++) {
+	    graybits[i] = StrikeCache.unsafe.getByte(pixelDataAddress+i);
+	}
+	return graybits;
     }
 
     public long[] getImages() {
@@ -423,14 +423,14 @@ public final class GlyphList {
      * helps MP throughput.
      */
     public void dispose() {
-        if (this == reusableGL) {
-            if (graybits != null && graybits.length > MAXGRAYLENGTH) {
-                graybits = null;
-            }
-            usePositions = false;
-            strikelist = null; // remove reference to the strike list
-            inUse = false;
-        }
+	if (this == reusableGL) {
+	    if (graybits != null && graybits.length > MAXGRAYLENGTH) {
+		graybits = null;
+	    }
+	    usePositions = false;
+	    strikelist = null; // remove reference to the strike list
+	    inUse = false;
+	}
     }
 
     /* The value here is for use by the rendering engine as it reflects
@@ -445,62 +445,62 @@ public final class GlyphList {
      * know nothing about.
      */
     public int getNumGlyphs() {
-        return len;
+	return len;
     }
 
     /* We re-do all this work as we iterate through the glyphs
      * but it seems unavoidable without re-working the Java TextRenderers.
      */
     private void fillBounds(int[] bounds) {
-        /* Faster to access local variables in the for loop? */
-        int xOffset = StrikeCache.topLeftXOffset;
-        int yOffset = StrikeCache.topLeftYOffset;
-        int wOffset = StrikeCache.widthOffset;
-        int hOffset = StrikeCache.heightOffset;
-        int xAdvOffset = StrikeCache.xAdvanceOffset;
-        int yAdvOffset = StrikeCache.yAdvanceOffset;
+	/* Faster to access local variables in the for loop? */
+	int xOffset = StrikeCache.topLeftXOffset;
+	int yOffset = StrikeCache.topLeftYOffset;
+	int wOffset = StrikeCache.widthOffset;
+	int hOffset = StrikeCache.heightOffset;
+	int xAdvOffset = StrikeCache.xAdvanceOffset;
+	int yAdvOffset = StrikeCache.yAdvanceOffset;
 
-        if (len == 0) {
-            bounds[0] = bounds[1] = bounds[2] = bounds[3] = 0;
-            return;
-        }
-        float bx0, by0, bx1, by1;
-        bx0 = by0 = Float.POSITIVE_INFINITY;
-        bx1 = by1 = Float.NEGATIVE_INFINITY;
+	if (len == 0) {
+	    bounds[0] = bounds[1] = bounds[2] = bounds[3] = 0;
+	    return;
+	}
+	float bx0, by0, bx1, by1;
+	bx0 = by0 = Float.POSITIVE_INFINITY;
+	bx1 = by1 = Float.NEGATIVE_INFINITY;
 
-        int posIndex = 0;
-        float glx = x + 0.5f;
-        float gly = y + 0.5f;
-        char gw, gh;
-        float gx, gy, gx0, gy0, gx1, gy1;
-        for (int i=0; i<len; i++) {
-            gx = StrikeCache.unsafe.getFloat(images[i]+xOffset);
-            gy = StrikeCache.unsafe.getFloat(images[i]+yOffset);
-            gw = StrikeCache.unsafe.getChar(images[i]+wOffset);
-            gh = StrikeCache.unsafe.getChar(images[i]+hOffset);
+	int posIndex = 0;
+	float glx = x + 0.5f;
+	float gly = y + 0.5f;
+	char gw, gh;
+	float gx, gy, gx0, gy0, gx1, gy1;
+	for (int i=0; i<len; i++) {
+	    gx = StrikeCache.unsafe.getFloat(images[i]+xOffset);
+	    gy = StrikeCache.unsafe.getFloat(images[i]+yOffset);
+	    gw = StrikeCache.unsafe.getChar(images[i]+wOffset);
+	    gh = StrikeCache.unsafe.getChar(images[i]+hOffset);
 
-            if (usePositions) {
-                gx0 = positions[posIndex++] + gx + glx;
-                gy0 = positions[posIndex++] + gy + gly;
-            } else {
-                gx0 = glx + gx;
-                gy0 = gly + gy;
-                glx += StrikeCache.unsafe.getFloat(images[i]+xAdvOffset);
-                gly += StrikeCache.unsafe.getFloat(images[i]+yAdvOffset);
-            }
-            gx1 = gx0 + gw;
-            gy1 = gy0 + gh;
-            if (bx0 > gx0) bx0 = gx0;
-            if (by0 > gy0) by0 = gy0;
-            if (bx1 < gx1) bx1 = gx1;
-            if (by1 < gy1) by1 = gy1;
-        }
-        /* floor is safe and correct because all glyph widths, heights
-         * and offsets are integers
-         */
-        bounds[0] = (int)Math.floor(bx0);
-        bounds[1] = (int)Math.floor(by0);
-        bounds[2] = (int)Math.floor(bx1);
-        bounds[3] = (int)Math.floor(by1);
+	    if (usePositions) {
+		gx0 = positions[posIndex++] + gx + glx;
+		gy0 = positions[posIndex++] + gy + gly;
+	    } else {
+		gx0 = glx + gx;
+		gy0 = gly + gy;
+		glx += StrikeCache.unsafe.getFloat(images[i]+xAdvOffset);
+		gly += StrikeCache.unsafe.getFloat(images[i]+yAdvOffset);
+	    }
+	    gx1 = gx0 + gw;
+	    gy1 = gy0 + gh;
+	    if (bx0 > gx0) bx0 = gx0;
+	    if (by0 > gy0) by0 = gy0;
+	    if (bx1 < gx1) bx1 = gx1;
+	    if (by1 < gy1) by1 = gy1;	
+	}
+	/* floor is safe and correct because all glyph widths, heights
+	 * and offsets are integers
+	 */
+	bounds[0] = (int)Math.floor(bx0);
+	bounds[1] = (int)Math.floor(by0);
+	bounds[2] = (int)Math.floor(bx1);
+	bounds[3] = (int)Math.floor(by1);
     }
 }

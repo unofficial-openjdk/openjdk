@@ -59,7 +59,7 @@ stream_fill_input_buffer(j_decompress_ptr cinfo)
     stream_src_ptr src = (stream_src_ptr) cinfo->src;
     size_t nbytes;
 
-
+    
     nbytes = src->stream->read(src->stream, src->buffer, INPUT_BUF_SIZE);
 
     if (nbytes <= 0) {
@@ -106,11 +106,11 @@ set_stream_src(j_decompress_ptr cinfo, SplashStream * stream)
 
     if (cinfo->src == NULL) {   /* first time for this JPEG object? */
         cinfo->src = (struct jpeg_source_mgr *)
-            (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo,
+            (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, 
             JPOOL_PERMANENT, SIZEOF(stream_source_mgr));
         src = (stream_src_ptr) cinfo->src;
         src->buffer = (JOCTET *)
-            (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo,
+            (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, 
             JPOOL_PERMANENT, INPUT_BUF_SIZE * SIZEOF(JOCTET));
     }
 
@@ -152,7 +152,7 @@ SplashDecodeJpeg(Splash * splash, struct jpeg_decompress_struct *cinfo)
 
     rowStride = cinfo->output_width * cinfo->output_components;
 
-    buffer = (*cinfo->mem->alloc_sarray)
+    buffer = (*cinfo->mem->alloc_sarray) 
         ((j_common_ptr) cinfo, JPOOL_IMAGE, rowStride, 1);
 
     initFormat(&srcFormat, 0x00FF0000, 0x0000FF00, 0x000000FF, 0x00000000);
@@ -163,14 +163,14 @@ SplashDecodeJpeg(Splash * splash, struct jpeg_decompress_struct *cinfo)
     splash->maskRequired = 0;   // reset maskRequired as JPEG can't be transparent
 
     while (cinfo->output_scanline < cinfo->output_height) {
-        rgbquad_t *out =
-            (rgbquad_t *) ((byte_t *) splash->frames[0].bitmapBits +
+        rgbquad_t *out = 
+            (rgbquad_t *) ((byte_t *) splash->frames[0].bitmapBits + 
                 cinfo->output_scanline * stride);
 
         jpeg_read_scanlines(cinfo, buffer, 1);
-        convertLine(buffer[0], sizeof(JSAMPLE) * 3, out,
-            splash->imageFormat.depthBytes, cinfo->output_width, &srcFormat,
-            &splash->imageFormat, CVT_COPY, NULL, 0, NULL,
+        convertLine(buffer[0], sizeof(JSAMPLE) * 3, out, 
+            splash->imageFormat.depthBytes, cinfo->output_width, &srcFormat, 
+            &splash->imageFormat, CVT_COPY, NULL, 0, NULL, 
             cinfo->output_scanline, 0);
     }
     jpeg_finish_decompress(cinfo);

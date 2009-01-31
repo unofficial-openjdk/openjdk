@@ -69,10 +69,10 @@ public class NewInstanceTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new NewInstanceTest(args).startTests();
     }
-
+    
     /********** test assist **********/
 
     void makeArray(String fieldName) throws Exception {
@@ -83,17 +83,17 @@ public class NewInstanceTest extends TestScaffold {
         ArrayReference arrayReference = arrayType.newInstance(20);
         println("Passed subtest: " + fieldName);
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass
          */
         BreakpointEvent bpe = startToMain("NewInstanceTarg");
         targetClass = bpe.location().declaringType();
-
+        
         makeArray("objArray");
         makeArray("clsArray");
         makeArray("ifc0Array");
@@ -103,7 +103,7 @@ public class NewInstanceTest extends TestScaffold {
          * resume the target until end
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -115,3 +115,4 @@ public class NewInstanceTest extends TestScaffold {
         }
     }
 }
+

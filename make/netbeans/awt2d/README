@@ -38,9 +38,9 @@ Here are the steps:
       to make the the build work in NetBeans, you can do something like this 
       (on Windows):
         #>env | grep ALT
-        ALT_JDK_IMPORT_PATH=c:/devtools/java/jdk1.7.0
+        ALT_JDK_IMPORT_PATH=c:/devtools/java/jdk1.6.0
         ALT_DXSDK_PATH=c:/devtools/DirectX/DXSDK_Dec06
-        ALT_BOOTDIR=c:/DevTools/java/jdk1.6.0
+        ALT_BOOTDIR=c:/DevTools/java/jdk1.5.0
 
       If your build is a FASTDEBUG build, don't forget
       to set FASTDEBUG=true in the property file as well so that what you 
@@ -49,9 +49,9 @@ Here are the steps:
       Set "make.options" in your build.properties
       accordingly:
         make.options=\
-            ALT_JDK_IMPORT_PATH=c:/devtools/java/jdk1.7.0 \
+            ALT_JDK_IMPORT_PATH=c:/devtools/java/jdk1.6.0 \
             ALT_DXSDK_PATH=c:/devtools/DirectX/DXSDK_Dec06 \
-            ALT_BOOTDIR=c:/DevTools/java/jdk1.6.0 \
+            ALT_BOOTDIR=c:/DevTools/java/jdk1.5.0 \
             FASTDEBUG=true
         make=c:/devtools/cygwin/bin/make
 
@@ -197,7 +197,7 @@ Notes on using CND (C/C++ pack) with this project and NetBeans.
   x86 with debugging enabled, the defines would be something like this:
     D3D_OVERLOADS; UNICODE; _UNICODE; WIN32; IAL; _LITTLE_ENDIAN; WIN32; _X86_; 
     x86; WIN32_LEAN_AND_MEAN; INTERNAL_BUILD; JDK_MAJOR_VERSION='"1"'; 
-    JDK_MINOR_VERSION='"7"'; RELEASE=1.7.0-internal; DEBUG="true"
+    JDK_MINOR_VERSION='"6"'; RELEASE=1.6.0-internal; DEBUG="true"
 
   (again, format it into a single line with '; ' delimiter - note the 
   space after ';' - and paste into the corresponding text field)

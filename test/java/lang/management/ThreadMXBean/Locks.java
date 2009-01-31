@@ -50,43 +50,43 @@ public class Locks {
     }
 
     private static void checkBlockedObject(Thread t, Object lock, Thread owner,
-                                           Thread.State expectedState) {
+					   Thread.State expectedState) {
         ThreadInfo info = tm.getThreadInfo(t.getId());
         String result = info.getLockName();
         String expectedLock = (lock != null ? getLockName(lock) : null);
         String expectedOwner = (owner != null ? owner.getName() : null);
 
-        if (lock != null) {
+	if (lock != null) {
             if (expectedState ==Thread.State.BLOCKED) {
-                int retryCount=0;
-                while(info.getThreadState() != Thread.State.BLOCKED) {
-                    if (retryCount++ > 500) {
-                        throw new RuntimeException("Thread " + t.getName() +
-                                  " is expected to block on " + expectedLock +
-                                  " but got " + result +
+	        int retryCount=0;
+	        while(info.getThreadState() != Thread.State.BLOCKED) {
+		    if (retryCount++ > 500) {
+                        throw new RuntimeException("Thread " + t.getName() + 
+                                  " is expected to block on " + expectedLock + 
+                                  " but got " + result + 
                                   " Thread.State = " + info.getThreadState());
-                    }
-                    goSleep(100);
-                }
+		    }
+		    goSleep(100);
+		}
             }
-            if (expectedState == Thread.State.WAITING &&
-                info.getThreadState() != Thread.State.WAITING) {
-                throw new RuntimeException("Thread " + t.getName() +
-                    " is expected to wait on " + expectedLock +
-                    " but got " + result +
+            if (expectedState == Thread.State.WAITING && 
+	        info.getThreadState() != Thread.State.WAITING) {
+                throw new RuntimeException("Thread " + t.getName() + 
+                    " is expected to wait on " + expectedLock + 
+                    " but got " + result + 
                     " Thread.State = " + info.getThreadState());
             }
         }
 
-        if ((result != null && !result.equals(expectedLock)) ||
+        if ((result != null && !result.equals(expectedLock)) || 
             (result == null && expectedLock != null)) {
-            throw new RuntimeException("Thread " + t.getName() + " is blocked on " +
+            throw new RuntimeException("Thread " + t.getName() + " is blocked on " + 
                 expectedLock + " but got " + result);
         }
         result = info.getLockOwnerName();
         if ((result != null && !result.equals(expectedOwner)) ||
             (result == null && expectedOwner != null)) {
-            throw new RuntimeException("Owner of " + lock + " should be " +
+            throw new RuntimeException("Owner of " + lock + " should be " + 
                 expectedOwner + " but got " + result);
         }
     }
@@ -116,8 +116,8 @@ public class Locks {
                synchronized(objB) {};
             }
             System.out.println("LockAThread about to exit");
-            // The state could be anything. The expected state value
-            // passed with this method is not verified.
+	    // The state could be anything. The expected state value
+	    // passed with this method is not verified. 
             checkBlockedObject(this, null, null, Thread.State.TERMINATED);
         }
     }
@@ -128,26 +128,26 @@ public class Locks {
         }
         public void run() {
             synchronized(objB) {
-               // signal waiting LockAThread.
+               // signal waiting LockAThread. 
                thrsync.signal();
 
                System.out.println("LockBThread about to block on objC");
-               // Signal main thread about to block on objC
-               thrsync1.signal();
+	       // Signal main thread about to block on objC 
+	       thrsync1.signal();
                synchronized(objC) {};
             }
             System.out.println("LockBThread about to exit");
-            // The state could be anything. The expected state value
-            // passed with this method is not verified.
+	    // The state could be anything. The expected state value
+	    // passed with this method is not verified. 
             checkBlockedObject(this, null, null, Thread.State.TERMINATED);
         }
 
-        public void aboutToLockC() {
-            // Stop here till LockBThread about to blocked
-            // for lock objC.
-            thrsync1.waitForSignal();
+	public void aboutToLockC() {
+	    // Stop here till LockBThread about to blocked 
+	    // for lock objC.
+	    thrsync1.waitForSignal();
             goSleep(500);
-        }
+	}
     }
 
     private static WaitingThread waiter;
@@ -161,8 +161,8 @@ public class Locks {
             synchronized(objC) {
                System.out.println("WaitingThread about to wait on objC");
                try {
-                   // Signal checker thread, about to wait on objC.
-                   thrsync.signal();
+		   // Signal checker thread, about to wait on objC.
+ 		   thrsync.signal();
                    objC.wait();
                } catch (InterruptedException e) {
                    e.printStackTrace();
@@ -171,21 +171,21 @@ public class Locks {
 
                // block until CheckerThread finishes checking
                System.out.println("WaitingThread about to block on ready");
-               // signal checker thread that it is about acquire
-               // object ready.
+	       // signal checker thread that it is about acquire
+	       // object ready. 
                thrsync.signal();
                synchronized(ready) {};
             }
-            synchronized(objC) {
-                try {
-                    // signal checker thread, about to wait on objC
+	    synchronized(objC) {
+		try {
+	            // signal checker thread, about to wait on objC
                     thrsync.signal();
-                    objC.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    testFailed = true;
-                }
-            }
+		    objC.wait();
+		} catch (InterruptedException e) {
+		    e.printStackTrace();
+		    testFailed = true;
+		}
+	    }
             System.out.println("WaitingThread about to exit waiting on objC 2");
         }
     }
@@ -197,30 +197,30 @@ public class Locks {
             synchronized (ready) {
                 // wait until WaitingThread about to wait for objC
                 thrsync.waitForSignal();
-                // give chance to enter wait.
-                goSleep(100);
+	        // give chance to enter wait.
+	        goSleep(100);
                 checkBlockedObject(waiter, objC, null, Thread.State.WAITING);
 
                 synchronized (objC) {
                     objC.notify();
                 }
-
-                // wait for waiter thread to about to enter
+    
+	        // wait for waiter thread to about to enter 
                 // synchronized object ready.
                 thrsync.waitForSignal();
-                // give chance for waiter thread to get blocked on
-                // object ready.
+                // give chance for waiter thread to get blocked on 
+	        // object ready. 
                 goSleep(50);
                 checkBlockedObject(waiter, ready, this, Thread.State.BLOCKED);
             }
 
-            // wait for signal from waiting thread that it is about
-            // wait for objC.
+	    // wait for signal from waiting thread that it is about
+	    // wait for objC.
             thrsync.waitForSignal();
-            synchronized(objC) {
+	    synchronized(objC) {
                 checkBlockedObject(waiter, objC, Thread.currentThread(), Thread.State.WAITING);
-                objC.notify();
-            }
+		objC.notify();
+	    }
 
         }
     }
@@ -233,20 +233,20 @@ public class Locks {
         LockBThread t2;
 
         synchronized(objC) {
-            // The state could be anything. The expected state value
-            // passed with this method is not verified.
+	    // The state could be anything. The expected state value
+	    // passed with this method is not verified. 
             checkBlockedObject(mainThread, null, null, Thread.State.RUNNABLE);
 
             // Test deadlock case
             // t1 holds lockA and attempts to lock B
             // t2 holds lockB and attempts to lock C
             t1 = new LockAThread();
-            t1.start();
+            t1.start(); 
 
             t2 = new LockBThread();
-            t2.start();
+            t2.start(); 
 
-            t2.aboutToLockC();
+	    t2.aboutToLockC();
 
             checkBlockedObject(t1, objB, t2, Thread.State.BLOCKED);
             checkBlockedObject(t2, objC, mainThread, Thread.State.BLOCKED);
@@ -254,17 +254,17 @@ public class Locks {
             long[] expectedThreads = new long[3];
             expectedThreads[0] = t1.getId(); // blocked on lockB
             expectedThreads[1] = t2.getId(); // owner of lockB blocking on lockC
-            expectedThreads[2] = mainThread.getId(); // owner of lockC
+            expectedThreads[2] = mainThread.getId(); // owner of lockC 
             findThreadsBlockedOn(objB, expectedThreads);
         }
         goSleep(100);
 
         // Test Object.wait() case
         waiter = new WaitingThread();
-        waiter.start();
+        waiter.start(); 
 
         checker = new CheckerThread();
-        checker.start();
+        checker.start(); 
 
         try {
             waiter.join();
@@ -273,7 +273,7 @@ public class Locks {
             e.printStackTrace();
             testFailed = true;
         }
-
+ 
         if (testFailed) {
             throw new RuntimeException("TEST FAILED.");
         }
@@ -297,26 +297,26 @@ public class Locks {
                         break;
                     }
                 }
-            }
-        }
+            } 
+        } 
         return ownerInfo;
     }
-    private static void findThreadsBlockedOn(Object o, long[] expectedThreads)
+    private static void findThreadsBlockedOn(Object o, long[] expectedThreads) 
         throws Exception {
         String lock = getLockName(o);
         // Check with ThreadInfo with no stack trace (i.e. no safepoint)
         ThreadInfo[] infos = tm.getThreadInfo(tm.getAllThreadIds());
         doCheck(infos, lock, expectedThreads);
 
-        // Check with ThreadInfo with stack trace
+        // Check with ThreadInfo with stack trace 
         infos = tm.getThreadInfo(tm.getAllThreadIds(), 1);
         doCheck(infos, lock, expectedThreads);
     }
 
-    private static void doCheck(ThreadInfo[] infos, String lock, long[] expectedThreads)
+    private static void doCheck(ThreadInfo[] infos, String lock, long[] expectedThreads) 
         throws Exception {
         ThreadInfo ownerInfo = null;
-        // Find the thread who is blocking on lock
+        // Find the thread who is blocking on lock 
         for (int i = 0; i < infos.length;  i++) {
             String blockedLock = infos[i].getLockName();
             if (lock.equals(blockedLock)) {
@@ -332,7 +332,7 @@ public class Locks {
         while (ownerInfo != null && ownerInfo.getThreadState() == Thread.State.BLOCKED) {
             ownerInfo = findOwnerInfo(infos, lock);
             threads[count++] = ownerInfo.getThreadId();
-            System.out.println(" Owner = " + ownerInfo.getThreadName() +
+            System.out.println(" Owner = " + ownerInfo.getThreadName() + 
                 " id = " + ownerInfo.getThreadId());
             lock = ownerInfo.getLockName();
             System.out.print(ownerInfo.getThreadName() + " Id = " +

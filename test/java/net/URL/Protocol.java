@@ -26,7 +26,7 @@ import java.io.*;
  * @test
  * @bug 4073525
  * @summary Test URL parsing of protocols
- *
+ * 
  */
 import java.net.*;
 
@@ -35,5 +35,5 @@ public class Protocol {
     public static void main(String args[]) throws Exception {
         URL url = new URL("file://bogus/index.html");
         URL url2 = new URL(url, "here.pl?notaspec:atall");
-    }
+    }    
 }

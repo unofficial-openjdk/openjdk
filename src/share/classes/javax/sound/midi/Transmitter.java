@@ -23,16 +23,17 @@
  * have any questions.
  */
 
-package javax.sound.midi;
+package javax.sound.midi;		  	 
 
 
 /**
- * A <code>Transmitter</code> sends <code>{@link MidiEvent}</code> objects to one or more
+ * A <code>Transmitter</code> sends <code>{@link MidiEvent}</code> objects to one or more 
  * <code>{@link Receiver Receivers}</code>. Common MIDI transmitters include sequencers
  * and MIDI input ports.
  *
  * @see Receiver
  *
+ * @version %I%, %E%
  * @author Kara Kytle
  */
 public interface Transmitter {
@@ -47,13 +48,13 @@ public interface Transmitter {
 
 
     /**
-     * Obtains the current receiver to which this transmitter will deliver MIDI messages.
-     * @return the current receiver.  If no receiver is currently set,
+     * Obtains the current receiver to which this transmitter will deliver MIDI messages. 
+     * @return the current receiver.  If no receiver is currently set, 
      * returns <code>null</code>
      */
     public Receiver getReceiver();
 
-
+	
     /**
      * Indicates that the application has finished using the transmitter, and
      * that limited resources it requires may be released or made available.

@@ -67,6 +67,7 @@ public class KeyStoreResolver extends StorageResolverSpi {
     * Class KeyStoreIterator
     *
     * @author $Author: raul $
+    * @version $Revision: 1.7 $
     */
    class KeyStoreIterator implements Iterator {
 

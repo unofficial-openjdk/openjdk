@@ -34,33 +34,33 @@ import java.util.*;
 
 public class ADatagramSocket {
     public static void main(String[] args) throws IOException {
-        // testing out setDatagramSocketImplFactory
+	// testing out setDatagramSocketImplFactory
         System.err.println("setting DatagramSocketImplFactory...");
-        try {
-          DatagramSocket.setDatagramSocketImplFactory(new java.net.MyDatagramSocketImplFactory());
-        } catch (Exception ex) {
-          throw new RuntimeException("Setting DatagramSocketImplFactory failed!");
-        }
+	try {
+	  DatagramSocket.setDatagramSocketImplFactory(new java.net.MyDatagramSocketImplFactory());
+	} catch (Exception ex) {
+	  throw new RuntimeException("Setting DatagramSocketImplFactory failed!");
+	}
         new QuoteServerThread().start();
-
-        // get a datagram socket
+	
+	// get a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
-        // send request
-        byte[] buf = new byte[256];
-        InetAddress address = InetAddress.getLocalHost();
-        DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
-        socket.send(packet);
+	// send request
+	byte[] buf = new byte[256];
+	InetAddress address = InetAddress.getLocalHost();
+	DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
+	socket.send(packet);
 
-        // get response
-        packet = new DatagramPacket(buf, buf.length);
-        socket.receive(packet);
+	// get response
+	packet = new DatagramPacket(buf, buf.length);
+	socket.receive(packet);
 
-        // display response
-        String received = new String(packet.getData(), 0);
-        System.err.println("Success!! Server current time is: " + received);
+	// display response
+	String received = new String(packet.getData(), 0);
+	System.err.println("Success!! Server current time is: " + received);
 
-        socket.close();
+	socket.close();
     }
 }
 
@@ -69,34 +69,34 @@ class QuoteServerThread extends Thread {
     protected DatagramSocket socket = null;
 
     public QuoteServerThread() throws IOException {
-        this("QuoteServerThread");
+	this("QuoteServerThread");
     }
 
     public QuoteServerThread(String name) throws IOException {
         super(name);
-        socket = new DatagramSocket(4445);
+	socket = new DatagramSocket(4445);
     }
 
     public void run() {
       try {
-        byte[] buf = new byte[256];
-
-        // receive request
-        DatagramPacket packet = new DatagramPacket(buf, buf.length);
-        socket.receive(packet);
-
-        // figure out response
-        String dString = null;
-        dString = new Date().toString();
-        buf = dString.getBytes();
-
-        // send the response to the client at "address" and "port"
-        InetAddress address = packet.getAddress();
-        int port = packet.getPort();
-        packet = new DatagramPacket(buf, buf.length, address, port);
-        socket.send(packet);
+	byte[] buf = new byte[256];
+	
+	// receive request
+	DatagramPacket packet = new DatagramPacket(buf, buf.length);
+	socket.receive(packet);
+	
+	// figure out response
+	String dString = null;
+	dString = new Date().toString();
+	buf = dString.getBytes();
+	
+	// send the response to the client at "address" and "port"
+	InetAddress address = packet.getAddress();
+	int port = packet.getPort();
+	packet = new DatagramPacket(buf, buf.length, address, port);
+	socket.send(packet);
       } catch (IOException e) {
-        e.printStackTrace();
+	e.printStackTrace();
       }
       socket.close();
     }

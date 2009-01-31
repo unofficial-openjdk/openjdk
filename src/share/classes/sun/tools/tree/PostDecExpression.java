@@ -39,16 +39,16 @@ class PostDecExpression extends IncDecExpression {
      * Constructor
      */
     public PostDecExpression(long where, Expression right) {
-        super(POSTDEC, where, right);
+	super(POSTDEC, where, right);
     }
 
     /**
      * Code
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-        codeIncDec(env, ctx, asm, false, false, true);
+	codeIncDec(env, ctx, asm, false, false, true);
     }
     public void code(Environment env, Context ctx, Assembler asm) {
-        codeIncDec(env, ctx, asm, false, false, false);
+	codeIncDec(env, ctx, asm, false, false, false);
     }
 }

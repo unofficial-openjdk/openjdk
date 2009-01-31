@@ -77,7 +77,7 @@ AwtCommDialog::load_comdlg_procs()
     static int initialized = 0;
     HMODULE lib = NULL;
     if (initialized) {
-        return;
+	return;
     }
     lib = LoadLibrary(TEXT("COMDLG32.DLL"));
     HMODULE libUnicows = UnicowsLoader::GetModuleHandle();
@@ -95,7 +95,7 @@ DragQueryFileType do_drag_query_file;
 GetPathFromIDListType get_path_from_idlist;
 
 /*
- * Load the SHELL32.dll and get pointers to various procedures.
+ * Load the SHELL32.dll and get pointers to various procedures. 
  */
 
 void
@@ -104,18 +104,18 @@ load_shell_procs()
     static int initialized = 0;
     HMODULE lib = NULL;
     if (initialized) {
-        return;
+	return;
     }
 
     if (IS_WIN95) {
         lib = UnicowsLoader::GetModuleHandle();
     } else {
-        lib = LoadLibrary(TEXT("SHELL32.DLL"));
+	lib = LoadLibrary(TEXT("SHELL32.DLL"));
     }
 
     do_drag_query_file = (DragQueryFileType)GetProcAddress(lib, "DragQueryFileW");
     get_path_from_idlist = (GetPathFromIDListType)GetProcAddress(lib,
-                "SHGetPathFromIDListW");
+		"SHGetPathFromIDListW");
     initialized = 1;
 }
 
@@ -125,7 +125,7 @@ AnimateWindowType fn_animate_window;
 ChangeDisplaySettingsExType fn_change_display_settings_ex;
 
 /*
- * Load the USER32.dll and get pointers to various procedures.
+ * Load the USER32.dll and get pointers to various procedures. 
  */
 
 void
@@ -134,7 +134,7 @@ load_user_procs()
     static int initialized = 0;
     HMODULE lib = NULL;
     if (initialized) {
-        return;
+	return;
     }
     lib = LoadLibrary(TEXT("USER32.DLL"));
     HMODULE libUnicows = UnicowsLoader::GetModuleHandle();
@@ -151,7 +151,7 @@ GetFileVersionInfoType get_file_version_info;
 VerQueryValueType do_ver_query_value;
 
 /*
- * Load the VERSION.dll and get pointers to various procedures.
+ * Load the VERSION.dll and get pointers to various procedures. 
  */
 
 void
@@ -166,14 +166,14 @@ load_version_procs()
     if (IS_WIN95) {
         lib = UnicowsLoader::GetModuleHandle();
     } else {
-        lib = LoadLibrary(TEXT("VERSION.DLL"));
+	lib = LoadLibrary(TEXT("VERSION.DLL"));
     }
 
-    get_file_version_info_size =
+    get_file_version_info_size = 
         (GetFileVersionInfoSizeType)GetProcAddress(lib, "GetFileVersionInfoSizeW");
-    get_file_version_info =
+    get_file_version_info = 
         (GetFileVersionInfoType)GetProcAddress(lib, "GetFileVersionInfoW");
-    do_ver_query_value =
+    do_ver_query_value = 
         (VerQueryValueType)GetProcAddress(lib, "VerQueryValueW");
     initialized = 1;
 }
@@ -208,11 +208,11 @@ GetFreeSystemResourcesType get_free_system_resources = NULL;
 
 /*
  * Load the RSRC32.dll, check that it is a known version
- * and get the pointer to the undocumented procedure.
+ * and get the pointer to the undocumented procedure. 
  */
 
 void
-load_rsrc32_procs()
+load_rsrc32_procs() 
 {
     static int initialized = 0;
     if (initialized) {
@@ -225,7 +225,7 @@ load_rsrc32_procs()
         // includes C:\WINDOWS\SYSTEM, or the equivalent, a really
         // ugly and annoying warning dialog will appear.
         initialized = 1;
-        return;
+	return;
     }
     HMODULE lib = LoadLibrary(TEXT("RSRC32.DLL"));
     if (lib != NULL) {
@@ -238,24 +238,24 @@ load_rsrc32_procs()
 
         /*
          * We use undocumented procedure exported by RSRC32.DLL, so the
-         * safest will be to check the library's version and only attempt
+         * safest will be to check the library's version and only attempt 
          * to get the procedure address if it's a known version.
          */
         if (::GetModuleFileName(lib, szFullPath, sizeof(szFullPath))) {
             load_version_procs();
             dwVersionInfoSize = (*get_file_version_info_size)(szFullPath, &dwVerHnd);
-            if (dwVersionInfoSize) {
+            if (dwVersionInfoSize) { 
                 lpVersionInfo = new BYTE[dwVersionInfoSize];
-                (*get_file_version_info)(szFullPath, dwVerHnd,
+                (*get_file_version_info)(szFullPath, dwVerHnd, 
                                          dwVersionInfoSize, lpVersionInfo);
                 if ((*do_ver_query_value)(lpVersionInfo, TEXT("\\"), &lpBuffer, &uLength)) {
-                    VS_FIXEDFILEINFO *lpvsFixedFileInfo = (VS_FIXEDFILEINFO *)lpBuffer;
-                    DWORD dwFileVersionMS = lpvsFixedFileInfo->dwFileVersionMS;
+                    VS_FIXEDFILEINFO *lpvsFixedFileInfo = (VS_FIXEDFILEINFO *)lpBuffer; 
+                    DWORD dwFileVersionMS = lpvsFixedFileInfo->dwFileVersionMS; 
                     DWORD dwFileVersionLS = lpvsFixedFileInfo->dwFileVersionLS;
                     for (int i = 0; i < MAX_KNOWN_VERSION; i++) {
                         if ((known_versions[i][0] == dwFileVersionMS) &&
                             (known_versions[i][1] == dwFileVersionLS)) {
-                            get_free_system_resources =
+                            get_free_system_resources = 
                                 (GetFreeSystemResourcesType)
                                 ::GetProcAddress(lib, "_MyGetFreeSystemResources32@4");
                             break;
@@ -306,13 +306,13 @@ load_rich_edit_library() {
                 if (dwVersionInfoSize) {
                     lpVersionInfo = new BYTE[dwVersionInfoSize];
                     try {
-                        if ((*get_file_version_info)(szFullPath,
-                                                     dwVerHnd,
-                                                     dwVersionInfoSize,
+                        if ((*get_file_version_info)(szFullPath, 
+                                                     dwVerHnd, 
+                                                     dwVersionInfoSize, 
                                                      lpVersionInfo)
-                            && (*do_ver_query_value)(lpVersionInfo,
-                                                     TEXT("\\VarFileInfo\\Translation"),
-                                                     (LPVOID*)&lpTranslate,
+                            && (*do_ver_query_value)(lpVersionInfo, 
+                                                     TEXT("\\VarFileInfo\\Translation"), 
+                                                     (LPVOID*)&lpTranslate, 
                                                      &uLength)) {
 
                             if (::GetSystemMetrics(SM_DBCSENABLED)
@@ -348,7 +348,7 @@ on java.sun.com.");
                                             "getLogger",
                                             "(Ljava/lang/String;)Ljava/util/logging/Logger;",
                                             pkgstr).l;
-
+                                
                                     jstring msgstr = (retstr) ? retstr : defstr;
                                     if (!exception) {
                                         JNU_CallMethodByName(
@@ -407,7 +407,7 @@ void AwtWinMM::load_winmm_procs() {
     if (IS_WIN95) {
         dll = UnicowsLoader::GetModuleHandle();
     } else {
-        dll = ::LoadLibrary(TEXT("winmm.dll"));
+	dll = ::LoadLibrary(TEXT("winmm.dll"));
     }
 
     if (dll == NULL) {

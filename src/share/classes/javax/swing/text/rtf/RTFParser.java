@@ -53,7 +53,7 @@ abstract class RTFParser extends AbstractFilter
   ByteArrayOutputStream binaryBuf;
   private boolean[] savedSpecials;
 
-  /** A stream to which to write warnings and debugging information
+  /** A stream to which to write warnings and debugging information 
    *  while parsing. This is set to <code>System.out</code> to log
    *  any anomalous information to stdout. */
   protected PrintStream warnings;
@@ -70,7 +70,7 @@ abstract class RTFParser extends AbstractFilter
   private final int S_inblob = 6;        // in a \bin blob
 
   /** Implemented by subclasses to interpret a parameter-less RTF keyword.
-   *  The keyword is passed without the leading '/' or any delimiting
+   *  The keyword is passed without the leading '/' or any delimiting 
    *  whitespace. */
   public abstract boolean handleKeyword(String keyword);
   /** Implemented by subclasses to interpret a keyword with a parameter.
@@ -79,7 +79,7 @@ abstract class RTFParser extends AbstractFilter
   public abstract boolean handleKeyword(String keyword, int parameter);
   /** Implemented by subclasses to interpret text from the RTF stream. */
   public abstract void handleText(String text);
-  public void handleText(char ch)
+  public void handleText(char ch) 
   { handleText(String.valueOf(ch)); }
   /** Implemented by subclasses to handle the contents of the \bin keyword. */
   public abstract void handleBinaryBlob(byte[] data);
@@ -120,9 +120,9 @@ abstract class RTFParser extends AbstractFilter
   }
 
     protected void warning(String s) {
-        if (warnings != null) {
-            warnings.println(s);
-        }
+	if (warnings != null) {
+	    warnings.println(s);
+	}
     }
 
   public void write(String s)
@@ -132,12 +132,12 @@ abstract class RTFParser extends AbstractFilter
       int index = 0;
       int length = s.length();
       while(index < length && state != S_text) {
-        write(s.charAt(index));
-        index ++;
+	write(s.charAt(index));
+	index ++;
       }
-
+      
       if(index >= length)
-        return;
+	return;
 
       s = s.substring(index);
     }
@@ -148,7 +148,7 @@ abstract class RTFParser extends AbstractFilter
       handleText(s);
   }
 
-  public void write(char ch)
+  public void write(char ch) 
     throws IOException
   {
     boolean ok;
@@ -157,141 +157,141 @@ abstract class RTFParser extends AbstractFilter
     {
       case S_text:
         if (ch == '\n' || ch == '\r') {
-          break;  // unadorned newlines are ignored
-        } else if (ch == '{') {
-          if (currentCharacters.length() > 0) {
-            handleText(currentCharacters.toString());
-            currentCharacters = new StringBuffer();
-          }
-          level ++;
-          begingroup();
-        } else if(ch == '}') {
-          if (currentCharacters.length() > 0) {
-            handleText(currentCharacters.toString());
-            currentCharacters = new StringBuffer();
-          }
-          if (level == 0)
-            throw new IOException("Too many close-groups in RTF text");
+	  break;  // unadorned newlines are ignored
+	} else if (ch == '{') {
+	  if (currentCharacters.length() > 0) {
+	    handleText(currentCharacters.toString());
+	    currentCharacters = new StringBuffer();
+	  }
+	  level ++;
+	  begingroup();
+	} else if(ch == '}') {
+	  if (currentCharacters.length() > 0) {
+	    handleText(currentCharacters.toString());
+	    currentCharacters = new StringBuffer();
+	  }
+	  if (level == 0)
+	    throw new IOException("Too many close-groups in RTF text");
           endgroup();
-          level --;
-        } else if(ch == '\\') {
-          if (currentCharacters.length() > 0) {
-            handleText(currentCharacters.toString());
-            currentCharacters = new StringBuffer();
-          }
-          state = S_backslashed;
-        } else {
-          currentCharacters.append(ch);
-        }
-        break;
+	  level --;
+	} else if(ch == '\\') {
+	  if (currentCharacters.length() > 0) {
+	    handleText(currentCharacters.toString());
+	    currentCharacters = new StringBuffer();
+	  }
+	  state = S_backslashed;
+	} else {
+	  currentCharacters.append(ch);
+	}
+	break;
       case S_backslashed:
-        if (ch == '\'') {
-          state = S_aftertick;
-          break;
-        }
-        if (!Character.isLetter(ch)) {
-          char newstring[] = new char[1];
-          newstring[0] = ch;
-          if (!handleKeyword(new String(newstring))) {
-            warning("Unknown keyword: " + newstring + " (" + (byte)ch + ")");
-          }
-          state = S_text;
-          pendingKeyword = null;
-          /* currentCharacters is already an empty stringBuffer */
-          break;
-        }
-
-        state = S_token;
-        /* FALL THROUGH */
+	if (ch == '\'') {
+	  state = S_aftertick;
+	  break;
+	}
+	if (!Character.isLetter(ch)) {
+	  char newstring[] = new char[1];
+	  newstring[0] = ch;
+	  if (!handleKeyword(new String(newstring))) {
+	    warning("Unknown keyword: " + newstring + " (" + (byte)ch + ")");
+	  }
+	  state = S_text;
+	  pendingKeyword = null;
+	  /* currentCharacters is already an empty stringBuffer */
+	  break;
+	}
+	
+	state = S_token;
+	/* FALL THROUGH */
       case S_token:
-        if (Character.isLetter(ch)) {
-          currentCharacters.append(ch);
-        } else {
-          pendingKeyword = currentCharacters.toString();
-          currentCharacters = new StringBuffer();
+	if (Character.isLetter(ch)) {
+	  currentCharacters.append(ch);
+	} else {
+	  pendingKeyword = currentCharacters.toString();
+	  currentCharacters = new StringBuffer();
+	  
+	  // Parameter following?
+	  if (Character.isDigit(ch) || (ch == '-')) {
+	    state = S_parameter;
+	    currentCharacters.append(ch);
+	  } else {
+	    ok = handleKeyword(pendingKeyword);
+	    if (!ok)
+	      warning("Unknown keyword: " + pendingKeyword);
+	    pendingKeyword = null;
+	    state = S_text;
 
-          // Parameter following?
-          if (Character.isDigit(ch) || (ch == '-')) {
-            state = S_parameter;
-            currentCharacters.append(ch);
-          } else {
-            ok = handleKeyword(pendingKeyword);
-            if (!ok)
-              warning("Unknown keyword: " + pendingKeyword);
-            pendingKeyword = null;
-            state = S_text;
-
-            // Non-space delimiters get included in the text
-            if (!Character.isWhitespace(ch))
-              write(ch);
-          }
-        }
-        break;
+	    // Non-space delimiters get included in the text
+	    if (!Character.isWhitespace(ch))
+	      write(ch);
+	  }
+	}
+	break;
       case S_parameter:
-        if (Character.isDigit(ch)) {
-          currentCharacters.append(ch);
-        } else {
-          /* TODO: Test correct behavior of \bin keyword */
-          if (pendingKeyword.equals("bin")) {  /* magic layer-breaking kwd */
-            long parameter = Long.parseLong(currentCharacters.toString());
-            pendingKeyword = null;
-            state = S_inblob;
-            binaryBytesLeft = parameter;
-            if (binaryBytesLeft > Integer.MAX_VALUE)
-                binaryBuf = new ByteArrayOutputStream(Integer.MAX_VALUE);
-            else
-                binaryBuf = new ByteArrayOutputStream((int)binaryBytesLeft);
-            savedSpecials = specialsTable;
-            specialsTable = allSpecialsTable;
-            break;
-          }
+	if (Character.isDigit(ch)) {
+	  currentCharacters.append(ch);
+	} else {
+	  /* TODO: Test correct behavior of \bin keyword */
+	  if (pendingKeyword.equals("bin")) {  /* magic layer-breaking kwd */
+	    long parameter = Long.parseLong(currentCharacters.toString());
+	    pendingKeyword = null;
+	    state = S_inblob;
+	    binaryBytesLeft = parameter;
+	    if (binaryBytesLeft > Integer.MAX_VALUE)
+		binaryBuf = new ByteArrayOutputStream(Integer.MAX_VALUE);
+	    else
+		binaryBuf = new ByteArrayOutputStream((int)binaryBytesLeft);
+	    savedSpecials = specialsTable;
+	    specialsTable = allSpecialsTable;
+	    break;
+	  }
+	      
+	  int parameter = Integer.parseInt(currentCharacters.toString());
+	  ok = handleKeyword(pendingKeyword, parameter);
+	  if (!ok)
+	    warning("Unknown keyword: " + pendingKeyword +
+		    " (param " + currentCharacters + ")");
+	  pendingKeyword = null;
+	  currentCharacters = new StringBuffer();
+	  state = S_text;
 
-          int parameter = Integer.parseInt(currentCharacters.toString());
-          ok = handleKeyword(pendingKeyword, parameter);
-          if (!ok)
-            warning("Unknown keyword: " + pendingKeyword +
-                    " (param " + currentCharacters + ")");
-          pendingKeyword = null;
-          currentCharacters = new StringBuffer();
-          state = S_text;
-
-          // Delimiters here are interpreted as text too
-          if (!Character.isWhitespace(ch))
-            write(ch);
-        }
-        break;
+	  // Delimiters here are interpreted as text too
+	  if (!Character.isWhitespace(ch))
+	    write(ch);
+	}
+	break;
       case S_aftertick:
-        if (Character.digit(ch, 16) == -1)
-          state = S_text;
-        else {
-          pendingCharacter = Character.digit(ch, 16);
-          state = S_aftertickc;
-        }
-        break;
+	if (Character.digit(ch, 16) == -1)
+	  state = S_text;
+	else {
+	  pendingCharacter = Character.digit(ch, 16);
+	  state = S_aftertickc;
+	}
+	break;
       case S_aftertickc:
-        state = S_text;
-        if (Character.digit(ch, 16) != -1)
-        {
-          pendingCharacter = pendingCharacter * 16 + Character.digit(ch, 16);
-          ch = translationTable[pendingCharacter];
-          if (ch != 0)
-              handleText(ch);
-        }
-        break;
+	state = S_text;
+	if (Character.digit(ch, 16) != -1)
+	{
+	  pendingCharacter = pendingCharacter * 16 + Character.digit(ch, 16);
+	  ch = translationTable[pendingCharacter];
+	  if (ch != 0)
+	      handleText(ch);
+	}
+	break;
       case S_inblob:
-        binaryBuf.write(ch);
-        binaryBytesLeft --;
-        if (binaryBytesLeft == 0) {
-            state = S_text;
-            specialsTable = savedSpecials;
-            savedSpecials = null;
-            handleBinaryBlob(binaryBuf.toByteArray());
-            binaryBuf = null;
-        }
+	binaryBuf.write(ch);
+	binaryBytesLeft --;
+	if (binaryBytesLeft == 0) {
+	    state = S_text;
+	    specialsTable = savedSpecials;
+	    savedSpecials = null;
+	    handleBinaryBlob(binaryBuf.toByteArray());
+	    binaryBuf = null;
+	}
       }
   }
 
-  /** Flushes any buffered but not yet written characters.
+  /** Flushes any buffered but not yet written characters. 
    *  Subclasses which override this method should call this
    *  method <em>before</em> flushing
    *  any of their own buffers. */
@@ -315,15 +315,15 @@ abstract class RTFParser extends AbstractFilter
 
     if (state != S_text || level > 0) {
       warning("Truncated RTF file.");
-
+      
       /* TODO: any sane way to handle termination in a non-S_text state? */
       /* probably not */
 
       /* this will cause subclasses to behave more reasonably
-         some of the time */
+	 some of the time */
       while (level > 0) {
-          endgroup();
-          level --;
+	  endgroup();
+	  level --;
       }
     }
 
@@ -331,3 +331,4 @@ abstract class RTFParser extends AbstractFilter
   }
 
 }
+

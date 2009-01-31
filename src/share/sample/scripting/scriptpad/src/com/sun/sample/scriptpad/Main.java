@@ -35,9 +35,9 @@ import javax.script.*;
 import java.io.*;
 
 /**
- * This is the entry point of "Scriptpad" sample. This class creates
- * ScriptEngine and evaluates few JavaScript "files" -- which are stored
- * as resources (please refer to src/resources/*.js). Actual code for the
+ * This is the entry point of "Scriptpad" sample. This class creates 
+ * ScriptEngine and evaluates few JavaScript "files" -- which are stored 
+ * as resources (please refer to src/resources/*.js). Actual code for the 
  * scriptpad's main functionality lives in these JavaScript files.
  */
 public class Main {
@@ -64,7 +64,7 @@ public class Main {
          * This class is compiled into a jar file. The jar file
          * contains few scripts under /resources URL.
          */
-        InputStream is = Main.class.getResourceAsStream("/resources/" + name);
+        InputStream is = Main.class.getResourceAsStream("/resources/" + name);     
         // current script file name for better error messages
         engine.put(ScriptEngine.NAME, name);
         // evaluate the script in the InputStream

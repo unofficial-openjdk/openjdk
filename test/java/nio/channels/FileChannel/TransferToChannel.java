@@ -126,9 +126,9 @@ public class TransferToChannel {
         byte[] randomBytes = new byte[1024];
         Random rand = new Random(0);
         for (int i = 0; i < 1000; i++) {
-            rand.nextBytes(randomBytes);
-            out.write(randomBytes);
-        }
+	    rand.nextBytes(randomBytes);
+	    out.write(randomBytes);
+	}
         out.flush();
         out.close();
     }

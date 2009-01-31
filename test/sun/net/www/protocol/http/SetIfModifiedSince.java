@@ -29,71 +29,71 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import java.text.*;
-
+  
 public class SetIfModifiedSince implements Runnable {
 
   ServerSocket serverSock;
 
   public void run() {
       try {
-          Socket s = serverSock.accept();
-          InputStream in = s.getInputStream();
-          byte b[] = new byte[4096];
+	  Socket s = serverSock.accept();
+	  InputStream in = s.getInputStream();
+	  byte b[] = new byte[4096];
 
-          // assume we read the entire http request
-          // (bad assumption but okay for test case)
-          int nread = in.read(b);
+	  // assume we read the entire http request
+  	  // (bad assumption but okay for test case)
+	  int nread = in.read(b);
 
-          // check the date format by the position of the comma
-          String request = new String(b, 0, nread);
-          int pos = request.indexOf("If-Modified-Since:");
-          int respCode = 200;
-          if (pos != -1) {
-              pos += "If-Modified-Since:".length() + 4;
-              if (pos < nread) {
-                  if (request.charAt(pos) == (char)',') {
-                      respCode = 304;
-                  }
-              }
-          }
+	  // check the date format by the position of the comma
+	  String request = new String(b, 0, nread);
+	  int pos = request.indexOf("If-Modified-Since:");
+	  int respCode = 200;
+	  if (pos != -1) {
+	      pos += "If-Modified-Since:".length() + 4;
+	      if (pos < nread) {
+		  if (request.charAt(pos) == (char)',') {
+		      respCode = 304;
+	  	  }
+	      }
+	  }
 
-          OutputStream o = s.getOutputStream();
-          if (respCode == 304) {
-              o.write( "HTTP/1.1 304 Not Modified".getBytes() );
-          } else  {
-              o.write( "HTTP/1.1 200 OK".getBytes() );
-          }
-          o.write( (byte)'\r' );
-          o.write( (byte)'\n' );
-          o.write( (byte)'\r' );
-          o.write( (byte)'\n' );
-          o.flush();
+	  OutputStream o = s.getOutputStream();
+	  if (respCode == 304) {
+	      o.write( "HTTP/1.1 304 Not Modified".getBytes() ); 
+	  } else  {
+	      o.write( "HTTP/1.1 200 OK".getBytes() );
+	  }
+	  o.write( (byte)'\r' );
+	  o.write( (byte)'\n' );
+	  o.write( (byte)'\r' );
+	  o.write( (byte)'\n' );
+	  o.flush();
 
       } catch (Exception e) { }
   }
+  
 
-
-  public SetIfModifiedSince() throws Exception {
+  public SetIfModifiedSince() throws Exception {  
 
      serverSock = new ServerSocket(0);
      int port = serverSock.getLocalPort();
-
+   
      Thread thr = new Thread(this);
      thr.start();
 
      Date date = new Date(new Date().getTime()-1440000); // this time yesterday
      URL url;
      HttpURLConnection con;
-
+    
      //url = new URL(args[0]);
-     url = new URL("http://localhost:" + String.valueOf(port) +
-                   "/anything");
+     url = new URL("http://localhost:" + String.valueOf(port) + 
+		   "/anything");
      con = (HttpURLConnection)url.openConnection();
 
-     con.setIfModifiedSince(date.getTime());
+     con.setIfModifiedSince(date.getTime());   
      con.connect();
      int ret = con.getResponseCode();
-
+     
      if (ret == 304) {
        System.out.println("Success!");
      } else {

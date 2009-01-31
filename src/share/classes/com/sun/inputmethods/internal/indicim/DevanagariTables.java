@@ -168,7 +168,7 @@ class DevanagariTables {
     /* 7E */ '\u0912',   // '~'
     /* 7F */ '\u007F'    //
 };
-
+    
     // the character substitutions for the meta characters.
     static final char[] RA_SUB = {'\u094D', '\u0930'};
     static final char[] RA_SUP = {'\u0930', '\u094D'};
@@ -234,7 +234,7 @@ class DevanagariTables {
         VOWEL_SIGN_VOCALIC_R,
         DANDA
     };
-
+    
     static final char[] nuktaForm = {
         SIGN_OM,
         LETTER_VOCALIC_L,
@@ -253,3 +253,4 @@ class DevanagariTables {
         SIGN_AVAGRAHA
     };
 }
+

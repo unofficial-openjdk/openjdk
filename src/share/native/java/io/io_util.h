@@ -40,10 +40,10 @@ extern jfieldID IO_handle_fdID;
 
 int readSingle(JNIEnv *env, jobject this, jfieldID fid);
 int readBytes(JNIEnv *env, jobject this, jbyteArray bytes, jint off,
-              jint len, jfieldID fid);
+	      jint len, jfieldID fid);
 void writeSingle(JNIEnv *env, jobject this, jint byte, jfieldID fid);
 void writeBytes(JNIEnv *env, jobject this, jbyteArray bytes, jint off,
-                jint len, jfieldID fid);
+		jint len, jfieldID fid);
 void fileOpen(JNIEnv *env, jobject this, jstring path, jfieldID fid, int flags);
 void throwFileNotFoundException(JNIEnv *env, jstring path);
 
@@ -80,20 +80,20 @@ void throwFileNotFoundException(JNIEnv *env, jstring path);
 #define WITH_PLATFORM_STRING(env, strexp, var)                                \
     if (1) {                                                                  \
         const char *var;                                                      \
-        jstring _##var##str = (strexp);                                       \
-        if (_##var##str == NULL) {                                            \
-            JNU_ThrowNullPointerException((env), NULL);                       \
+        jstring _##var##str = (strexp);					      \
+        if (_##var##str == NULL) {					      \
+            JNU_ThrowNullPointerException((env), NULL);			      \
             goto _##var##end;                                                 \
         }                                                                     \
-        var = JNU_GetStringPlatformChars((env), _##var##str, NULL);           \
+        var = JNU_GetStringPlatformChars((env), _##var##str, NULL);	      \
         if (var == NULL) goto _##var##end;
 
 #define WITH_FIELD_PLATFORM_STRING(env, object, id, var)                      \
-    WITH_PLATFORM_STRING(env,                                                 \
-                         ((object == NULL)                                    \
-                          ? NULL                                              \
-                          : (*(env))->GetObjectField((env), (object), (id))), \
-                         var)
+    WITH_PLATFORM_STRING(env,						      \
+			 ((object == NULL)				      \
+			  ? NULL					      \
+			  : (*(env))->GetObjectField((env), (object), (id))), \
+			 var)
 
 #define END_PLATFORM_STRING(env, var)                                         \
         JNU_ReleaseStringPlatformChars(env, _##var##str, var);                \

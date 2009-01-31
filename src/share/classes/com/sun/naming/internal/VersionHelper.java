@@ -41,23 +41,24 @@ import javax.naming.NamingEnumeration;
  * since JNDI's inclusion in the platform, this class currently
  * serves as a set of utilities for performing system-level things,
  * such as class-loading and reading system properties.
- *
+ * 
  * @author Rosanna Lee
  * @author Scott Seligman
+ * @version %I% %E%
  */
 
 public abstract class VersionHelper {
     private static VersionHelper helper = null;
 
     final static String[] PROPS = new String[] {
-        javax.naming.Context.INITIAL_CONTEXT_FACTORY,
-        javax.naming.Context.OBJECT_FACTORIES,
-        javax.naming.Context.URL_PKG_PREFIXES,
-        javax.naming.Context.STATE_FACTORIES,
-        javax.naming.Context.PROVIDER_URL,
-        javax.naming.Context.DNS_URL,
-        // The following shouldn't create a runtime dependence on ldap package.
-        javax.naming.ldap.LdapContext.CONTROL_FACTORIES
+	javax.naming.Context.INITIAL_CONTEXT_FACTORY,
+	javax.naming.Context.OBJECT_FACTORIES,
+	javax.naming.Context.URL_PKG_PREFIXES,
+	javax.naming.Context.STATE_FACTORIES,
+	javax.naming.Context.PROVIDER_URL,
+	javax.naming.Context.DNS_URL,
+	// The following shouldn't create a runtime dependence on ldap package.
+	javax.naming.ldap.LdapContext.CONTROL_FACTORIES
     };
 
     public final static int INITIAL_CONTEXT_FACTORY = 0;
@@ -71,21 +72,21 @@ public abstract class VersionHelper {
     VersionHelper() {} // Disallow anyone from creating one of these.
 
     static {
-        helper = new VersionHelper12();
+	helper = new VersionHelper12();
     }
 
     public static VersionHelper getVersionHelper() {
-        return helper;
+	return helper;
     }
 
-    public abstract Class loadClass(String className)
-        throws ClassNotFoundException;
+    public abstract Class loadClass(String className) 
+	throws ClassNotFoundException;
 
     abstract Class loadClass(String className, ClassLoader cl)
-        throws ClassNotFoundException;
+	throws ClassNotFoundException;
 
-    public abstract Class loadClass(String className, String codebase)
-        throws ClassNotFoundException, MalformedURLException;
+    public abstract Class loadClass(String className, String codebase) 
+	throws ClassNotFoundException, MalformedURLException;
 
     /*
      * Returns a JNDI property from the system properties.  Returns
@@ -112,7 +113,7 @@ public abstract class VersionHelper {
      * Returns an input stream for a file in <java.home>/lib,
      * or null if it cannot be located or opened.
      *
-     * @param filename  The file name, sans directory.
+     * @param filename	The file name, sans directory.
      */
     abstract InputStream getJavaHomeLibStream(String filename);
 
@@ -123,7 +124,7 @@ public abstract class VersionHelper {
      * Java implementations.
      */
     abstract NamingEnumeration getResources(ClassLoader cl, String name)
-        throws IOException;
+	throws IOException;
 
     /*
      * Returns the context class loader associated with the current thread.
@@ -133,23 +134,23 @@ public abstract class VersionHelper {
      */
     abstract ClassLoader getContextClassLoader();
 
-    static protected URL[] getUrlArray(String codebase)
-        throws MalformedURLException {
-        // Parse codebase into separate URLs
-        StringTokenizer parser = new StringTokenizer(codebase);
-        Vector vec = new Vector(10);
-        while (parser.hasMoreTokens()) {
-            vec.addElement(parser.nextToken());
-        }
-        String[] url = new String[vec.size()];
-        for (int i = 0; i < url.length; i++) {
-            url[i] = (String)vec.elementAt(i);
-        }
-
-        URL[] urlArray = new URL[url.length];
-        for (int i = 0; i < urlArray.length; i++) {
-            urlArray[i] = new URL(url[i]);
-        }
-        return urlArray;
+    static protected URL[] getUrlArray(String codebase) 
+	throws MalformedURLException {
+	// Parse codebase into separate URLs
+	StringTokenizer parser = new StringTokenizer(codebase);
+	Vector vec = new Vector(10);
+	while (parser.hasMoreTokens()) {
+	    vec.addElement(parser.nextToken());
+	}
+	String[] url = new String[vec.size()];
+	for (int i = 0; i < url.length; i++) {
+	    url[i] = (String)vec.elementAt(i);
+	}
+	
+	URL[] urlArray = new URL[url.length];
+	for (int i = 0; i < urlArray.length; i++) {
+	    urlArray[i] = new URL(url[i]);
+	}
+	return urlArray;
     }
 }

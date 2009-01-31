@@ -43,7 +43,7 @@ public class NullSurfaceData extends SurfaceData {
     public static final SurfaceData theInstance = new NullSurfaceData();
 
     private NullSurfaceData() {
-        super(State.IMMUTABLE, SurfaceType.Any, ColorModel.getRGBdefault());
+	super(State.IMMUTABLE, SurfaceType.Any, ColorModel.getRGBdefault());
     }
 
     /**
@@ -60,21 +60,21 @@ public class NullSurfaceData extends SurfaceData {
      * This method is typically called when the SurfaceData is invalidated.
      */
     public SurfaceData getReplacement() {
-        return this;
+	return this;
     }
 
     private final static NullPipe nullpipe = new NullPipe();
 
     public void validatePipe(SunGraphics2D sg2d) {
-        sg2d.drawpipe = nullpipe;
-        sg2d.fillpipe = nullpipe;
-        sg2d.shapepipe = nullpipe;
-        sg2d.textpipe = nullpipe;
-        sg2d.imagepipe = nullpipe;
+	sg2d.drawpipe = nullpipe;
+	sg2d.fillpipe = nullpipe;
+	sg2d.shapepipe = nullpipe;
+	sg2d.textpipe = nullpipe;
+	sg2d.imagepipe = nullpipe;
     }
 
     public GraphicsConfiguration getDeviceConfiguration() {
-        return null;
+	return null;
     }
 
     /**
@@ -104,7 +104,7 @@ public class NullSurfaceData extends SurfaceData {
      * @see getRaster
      */
     public boolean useTightBBoxes() {
-        return false;
+	return false;
     }
 
     /**
@@ -112,7 +112,7 @@ public class NullSurfaceData extends SurfaceData {
      * into an integer for easy storage and conveyance.
      */
     public int pixelFor(int rgb) {
-        return rgb;
+	return rgb;
     }
 
     /**
@@ -127,7 +127,7 @@ public class NullSurfaceData extends SurfaceData {
      * Returns the bounds of the destination surface.
      */
     public Rectangle getBounds() {
-        return new Rectangle();
+	return new Rectangle();
     }
 
     /**
@@ -136,7 +136,7 @@ public class NullSurfaceData extends SurfaceData {
      * of this surface.
      */
     protected void checkCustomComposite() {
-        return;
+	return;
     }
 
     /**
@@ -145,15 +145,15 @@ public class NullSurfaceData extends SurfaceData {
      * given the current settings of the SunGraphics2D.
      */
     public boolean copyArea(SunGraphics2D sg2d,
-                            int x, int y, int w, int h, int dx, int dy)
+			    int x, int y, int w, int h, int dx, int dy)
     {
-        return true;
+	return true;
     }
 
     /**
      * Returns destination Image associated with this SurfaceData (null)
      */
     public Object getDestination() {
-        return null;
+	return null;
     }
 }

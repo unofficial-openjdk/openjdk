@@ -23,7 +23,7 @@
 
 /**
  *  @test
- *  @bug 4728816
+ *  @bug 4728816 
  *  @summary JPDA: Add support for enums
  *
  *  @author jjh
@@ -68,20 +68,20 @@ public class EnumTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new EnumTest(args).startTests();
     }
 
     void fail(String reason) throws Exception {
         failure(reason);
     }
-
+    
     /********** test core **********/
 
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass
          */
         BreakpointEvent bpe = startToMain("EnumTarg");
@@ -142,3 +142,4 @@ public class EnumTest extends TestScaffold {
         }
     }
 }
+

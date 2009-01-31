@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,8 +33,8 @@ import java.io.*;
 
 public class NotAvailable {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream baos;
-        ObjectOutput out;
+	ByteArrayOutputStream baos;
+	ObjectOutput out;
         try {
             // Write class out
             baos = new ByteArrayOutputStream();
@@ -44,34 +44,34 @@ public class NotAvailable {
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
-            throw e;
-        }
+	    throw e;
+	}
 
-        ObjectInputStream in = null;
-        try {
+	ObjectInputStream in = null;
+	try {
             // Read it back
-            ByteArrayInputStream bois =
-                new ByteArrayInputStream(baos.toByteArray()) {
-                  /* simulate available() not being implemented. */
-                public int available() {
-                      throw new Error("available() is not implemented");
-                  }
-                };
+            ByteArrayInputStream bois = 
+		new ByteArrayInputStream(baos.toByteArray()) {
+		  /* simulate available() not being implemented. */
+		public int available() {
+		      throw new Error("available() is not implemented");
+  		  }
+	        };
             in = new ObjectInputStream(bois);
             Class1 cc1 = (Class1) in.readObject();
             Class1 cc2 = (Class1) in.readObject();
         } catch (IOException e) {
             e.printStackTrace();
-            throw e;
+	    throw e;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-            throw e;
+	    throw e;
         } finally {
-            if (in != null)
-                in.close();
-            if (out != null)
-                out.close();
-        }
+	    if (in != null)
+		in.close();
+	    if (out != null)
+		out.close();
+	}
     }
 }
 
@@ -83,3 +83,5 @@ class Class1 implements Serializable {
         b = bb;
     }
 }
+
+

@@ -42,7 +42,7 @@ import java.awt.geom.AffineTransform;
 *   One such piece of information is a transform that scales
 *   typographical points to pixels. (A point is defined to be exactly 1/72
 *   of an inch, which is slightly different than
-*   the traditional mechanical measurement of a point.)  A character that
+*   the traditional mechanical measurement of a point.)  A character that 
 *   is rendered at 12pt on a 600dpi device might have a different size
 *   than the same character rendered at 12pt on a 72dpi device because of
 *   such factors as rounding to pixel boundaries and hints that the font
@@ -76,8 +76,8 @@ public class FontRenderContext {
      *
      */
     protected FontRenderContext() {
-        aaHintValue = VALUE_TEXT_ANTIALIAS_DEFAULT;
-        fmHintValue = VALUE_FRACTIONALMETRICS_DEFAULT;
+	aaHintValue = VALUE_TEXT_ANTIALIAS_DEFAULT;
+	fmHintValue = VALUE_FRACTIONALMETRICS_DEFAULT;
         defaulting = true;
     }
 
@@ -107,16 +107,16 @@ public class FontRenderContext {
         if (tx != null && !tx.isIdentity()) {
             this.tx = new AffineTransform(tx);
         }
-        if (isAntiAliased) {
-            aaHintValue = VALUE_TEXT_ANTIALIAS_ON;
-        } else {
-            aaHintValue = VALUE_TEXT_ANTIALIAS_OFF;
-        }
-        if (usesFractionalMetrics) {
-            fmHintValue = VALUE_FRACTIONALMETRICS_ON;
-        } else {
-            fmHintValue = VALUE_FRACTIONALMETRICS_OFF;
-        }
+	if (isAntiAliased) {
+	    aaHintValue = VALUE_TEXT_ANTIALIAS_ON;
+	} else {
+	    aaHintValue = VALUE_TEXT_ANTIALIAS_OFF;
+	}
+	if (usesFractionalMetrics) {
+	    fmHintValue = VALUE_FRACTIONALMETRICS_ON;
+	} else {
+	    fmHintValue = VALUE_FRACTIONALMETRICS_OFF;
+	}
     }
 
     /**
@@ -147,24 +147,24 @@ public class FontRenderContext {
         if (tx != null && !tx.isIdentity()) {
             this.tx = new AffineTransform(tx);
         }
-        try {
-            if (KEY_TEXT_ANTIALIASING.isCompatibleValue(aaHint)) {
-                aaHintValue = aaHint;
-            } else {
-                throw new IllegalArgumentException("AA hint:" + aaHint);
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException("AA hint:" +aaHint);
-        }
-        try {
-            if (KEY_FRACTIONALMETRICS.isCompatibleValue(fmHint)) {
-                fmHintValue = fmHint;
-            } else {
-                throw new IllegalArgumentException("FM hint:" + fmHint);
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException("FM hint:" +fmHint);
-        }
+	try {
+	    if (KEY_TEXT_ANTIALIASING.isCompatibleValue(aaHint)) {
+		aaHintValue = aaHint;
+	    } else {
+		throw new IllegalArgumentException("AA hint:" + aaHint);
+	    }
+	} catch (Exception e) {
+	    throw new IllegalArgumentException("AA hint:" +aaHint);
+	}	
+	try {
+	    if (KEY_FRACTIONALMETRICS.isCompatibleValue(fmHint)) {
+		fmHintValue = fmHint;
+	    } else {
+		throw new IllegalArgumentException("FM hint:" + fmHint);
+	    }
+	} catch (Exception e) {
+	    throw new IllegalArgumentException("FM hint:" +fmHint);
+	}
     }
 
     /**
@@ -197,7 +197,7 @@ public class FontRenderContext {
             if (tx == null) {
                 return AffineTransform.TYPE_IDENTITY;
             } else {
-                return tx.getType();
+                return tx.getType(); 
             }
         } else {
             return getTransform().getType();
@@ -228,7 +228,7 @@ public class FontRenderContext {
     */
     public boolean isAntiAliased() {
         return !(aaHintValue == VALUE_TEXT_ANTIALIAS_OFF ||
-                 aaHintValue == VALUE_TEXT_ANTIALIAS_DEFAULT);
+		 aaHintValue == VALUE_TEXT_ANTIALIAS_DEFAULT);
     }
 
     /**
@@ -245,15 +245,15 @@ public class FontRenderContext {
     */
     public boolean usesFractionalMetrics() {
         return !(fmHintValue == VALUE_FRACTIONALMETRICS_OFF ||
-                 fmHintValue == VALUE_FRACTIONALMETRICS_DEFAULT);
+		 fmHintValue == VALUE_FRACTIONALMETRICS_DEFAULT);
     }
 
     /**
-     * Return the text anti-aliasing rendering mode hint used in this
+     * Return the text anti-aliasing rendering mode hint used in this 
      * <code>FontRenderContext</code>.
      * This will be one of the text antialiasing rendering hint values
      * defined in {@link java.awt.RenderingHints java.awt.RenderingHints}.
-     * @return  text anti-aliasing rendering mode hint used in this
+     * @return  text anti-aliasing rendering mode hint used in this 
      * <code>FontRenderContext</code>.
      * @since 1.6
      */
@@ -261,19 +261,19 @@ public class FontRenderContext {
         if (defaulting) {
             if (isAntiAliased()) {
                  return VALUE_TEXT_ANTIALIAS_ON;
-            } else {
-                return VALUE_TEXT_ANTIALIAS_OFF;
-            }
+	    } else {
+		return VALUE_TEXT_ANTIALIAS_OFF;
+	    }
         }
-        return aaHintValue;
+	return aaHintValue;
     }
 
     /**
-     * Return the text fractional metrics rendering mode hint used in this
+     * Return the text fractional metrics rendering mode hint used in this 
      * <code>FontRenderContext</code>.
      * This will be one of the text fractional metrics rendering hint values
      * defined in {@link java.awt.RenderingHints java.awt.RenderingHints}.
-     * @return the text fractional metrics rendering mode hint used in this
+     * @return the text fractional metrics rendering mode hint used in this 
      * <code>FontRenderContext</code>.
      * @since 1.6
      */
@@ -281,11 +281,11 @@ public class FontRenderContext {
         if (defaulting) {
             if (usesFractionalMetrics()) {
                  return VALUE_FRACTIONALMETRICS_ON;
-            } else {
-                return VALUE_FRACTIONALMETRICS_OFF;
-            }
+	    } else {
+		return VALUE_FRACTIONALMETRICS_OFF;
+	    }
         }
-        return fmHintValue;
+	return fmHintValue;
     }
 
     /**
@@ -297,16 +297,16 @@ public class FontRenderContext {
      *         otherwise.
      */
     public boolean equals(Object obj) {
-        try {
-            return equals((FontRenderContext)obj);
-        }
-        catch (ClassCastException e) {
-            return false;
-        }
+	try {
+	    return equals((FontRenderContext)obj);
+	}
+	catch (ClassCastException e) {
+	    return false;
+	}
     }
 
     /**
-     * Return true if rhs has the same transform, antialiasing,
+     * Return true if rhs has the same transform, antialiasing, 
      * and fractional metrics values as this.
      * @param rhs the <code>FontRenderContext</code> to test for equality
      * @return <code>true</code> if <code>rhs</code> is equal to
@@ -315,44 +315,44 @@ public class FontRenderContext {
      * @since 1.4
      */
     public boolean equals(FontRenderContext rhs) {
-        if (this == rhs) {
-            return true;
-        }
-        if (rhs == null) {
-            return false;
-        }
+	if (this == rhs) {
+	    return true;
+	}
+	if (rhs == null) {
+	    return false;
+	}
 
-        /* if neither instance is a subclass, reference values directly. */
-        if (!rhs.defaulting && !defaulting) {
-            if (rhs.aaHintValue == aaHintValue &&
-                rhs.fmHintValue == fmHintValue) {
+	/* if neither instance is a subclass, reference values directly. */
+	if (!rhs.defaulting && !defaulting) {
+	    if (rhs.aaHintValue == aaHintValue &&
+		rhs.fmHintValue == fmHintValue) {
 
-                return tx == null ? rhs.tx == null : tx.equals(rhs.tx);
-            }
-            return false;
-        } else {
-            return
-                rhs.getAntiAliasingHint() == getAntiAliasingHint() &&
-                rhs.getFractionalMetricsHint() == getFractionalMetricsHint() &&
-                rhs.getTransform().equals(getTransform());
-        }
+		return tx == null ? rhs.tx == null : tx.equals(rhs.tx);
+	    }
+	    return false;
+	} else {
+	    return
+		rhs.getAntiAliasingHint() == getAntiAliasingHint() &&
+		rhs.getFractionalMetricsHint() == getFractionalMetricsHint() &&
+		rhs.getTransform().equals(getTransform());
+	}
     }
 
     /**
      * Return a hashcode for this FontRenderContext.
      */
     public int hashCode() {
-        int hash = tx == null ? 0 : tx.hashCode();
-        /* SunHints value objects have identity hashcode, so we can rely on
-         * this to ensure that two equal FRC's have the same hashcode.
-         */
-        if (defaulting) {
-            hash += getAntiAliasingHint().hashCode();
-            hash += getFractionalMetricsHint().hashCode();
-        } else {
-            hash += aaHintValue.hashCode();
-            hash += fmHintValue.hashCode();
-        }
-        return hash;
+	int hash = tx == null ? 0 : tx.hashCode();
+	/* SunHints value objects have identity hashcode, so we can rely on
+	 * this to ensure that two equal FRC's have the same hashcode.
+	 */
+	if (defaulting) {
+	    hash += getAntiAliasingHint().hashCode();
+	    hash += getFractionalMetricsHint().hashCode();
+	} else {
+	    hash += aaHintValue.hashCode();
+	    hash += fmHintValue.hashCode();
+	}
+	return hash;
     }
 }

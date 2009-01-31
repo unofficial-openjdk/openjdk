@@ -167,7 +167,7 @@ abstract class InputStreamTests extends InputTests {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+	}
     }
 
     private static class IISRead extends InputStreamTests {
@@ -205,7 +205,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadByteArray extends InputStreamTests {
@@ -245,7 +245,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadFullyByteArray extends InputStreamTests {
@@ -285,7 +285,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadBit extends InputStreamTests {
@@ -323,7 +323,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadByte extends InputStreamTests {
@@ -361,7 +361,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadUnsignedByte extends InputStreamTests {
@@ -399,7 +399,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadShort extends InputStreamTests {
@@ -437,7 +437,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadUnsignedShort extends InputStreamTests {
@@ -475,7 +475,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadInt extends InputStreamTests {
@@ -513,7 +513,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadUnsignedInt extends InputStreamTests {
@@ -551,7 +551,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadFloat extends InputStreamTests {
@@ -589,7 +589,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadLong extends InputStreamTests {
@@ -627,7 +627,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISReadDouble extends InputStreamTests {
@@ -665,7 +665,7 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 
     private static class IISSkipBytes extends InputStreamTests {
@@ -704,6 +704,6 @@ abstract class InputStreamTests extends InputTests {
             } finally {
                 try { iis.reset(); } catch (IOException e) {}
             }
-        }
+	}
     }
 }

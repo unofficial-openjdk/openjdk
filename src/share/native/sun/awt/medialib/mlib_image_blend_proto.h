@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __ORIG_MLIB_IMAGE_BLEND_PROTO_H
 #define __ORIG_MLIB_IMAGE_BLEND_PROTO_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_image_blend_proto.h	1.18	02/03/07 SMI"
+#endif /* __SUNPRO_C */
 
 #include <mlib_types.h>
 #include <mlib_status.h>
@@ -1446,3 +1450,4 @@ mlib_status  __mlib_ImageComposite_Inp(mlib_image *src1dst,
 }
 #endif /* __cplusplus */
 #endif /* __ORIG_MLIB_IMAGE_BLEND_PROTO_H */
+

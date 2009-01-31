@@ -21,7 +21,7 @@
 # have any questions.
 #
 
-# @test
+# @test @(#)ChangeUI.sh
 # @bug  6296772 6293981 6290216
 # @summary FilePermission and DelegationPermission, and cancel button
 #

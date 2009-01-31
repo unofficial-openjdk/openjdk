@@ -53,7 +53,7 @@ public class ResourceBundleEnumeration implements Enumeration<String> {
     }
 
     String next = null;
-
+            
     public boolean hasMoreElements() {
         if (next == null) {
             if (iterator.hasNext()) {

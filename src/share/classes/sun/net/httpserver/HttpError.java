@@ -30,6 +30,6 @@ package sun.net.httpserver;
  */
 class HttpError extends RuntimeException {
     public HttpError (String msg) {
-        super (msg);
+	super (msg);
     }
 }

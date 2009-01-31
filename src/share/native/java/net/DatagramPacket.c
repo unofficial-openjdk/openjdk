@@ -45,7 +45,7 @@ jfieldID dp_bufLengthID;
 JNIEXPORT void JNICALL
 Java_java_net_DatagramPacket_init (JNIEnv *env, jclass cls) {
     dp_addressID = (*env)->GetFieldID(env, cls, "address",
-                                      "Ljava/net/InetAddress;");
+				      "Ljava/net/InetAddress;");
     CHECK_NULL(dp_addressID);
     dp_portID = (*env)->GetFieldID(env, cls, "port", "I");
     CHECK_NULL(dp_portID);

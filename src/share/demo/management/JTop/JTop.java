@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  *
  * Example of using the java.lang.management API to sort threads
  * by CPU usage.
@@ -38,7 +39,7 @@
  * It first establishs a connection to a target VM specified
  * by the given hostname and port number where the JMX agent
  * to be connected.  It then polls for the thread information
- * and the CPU consumption of each thread to display every 2
+ * and the CPU consumption of each thread to display every 2 
  * seconds.
  *
  * It is also used by JTopPlugin which is a JConsolePlugin
@@ -86,7 +87,7 @@ public class JTop extends JPanel {
     public JTop() {
         super(new GridLayout(1,0));
 
-        tmodel = new MyTableModel();
+        tmodel = new MyTableModel(); 
         JTable table = new JTable(tmodel);
         table.setPreferredScrollableViewportSize(new Dimension(500, 300));
 
@@ -127,7 +128,7 @@ public class JTop extends JPanel {
                                         "State"};
         // List of all threads. The key of each entry is the CPU time
         // and its value is the ThreadInfo object with no stack trace.
-        private List<Map.Entry<Long, ThreadInfo>> threadList =
+        private List<Map.Entry<Long, ThreadInfo>> threadList = 
             Collections.EMPTY_LIST;
 
         public MyTableModel() {
@@ -148,18 +149,18 @@ public class JTop extends JPanel {
         public Object getValueAt(int row, int col) {
             Map.Entry<Long, ThreadInfo> me = threadList.get(row);
             switch (col) {
-                case 0 :
+                case 0 : 
                     // Column 0 shows the thread name
                     return me.getValue().getThreadName();
-                case 1 :
+                case 1 : 
                     // Column 1 shows the CPU usage
                     long ns = me.getKey().longValue();
                     double sec = ns / 1000000000;
                     return new Double(sec);
-                case 2 :
+                case 2 : 
                     // Column 2 shows the thread state
                     return me.getValue().getThreadState();
-                default:
+                default: 
                     return null;
             }
         }
@@ -178,14 +179,14 @@ public class JTop extends JPanel {
      * for each thread sorted by the CPU time.
      */
     private List<Map.Entry<Long, ThreadInfo>> getThreadList() {
-        // Get all threads and their ThreadInfo objects
+        // Get all threads and their ThreadInfo objects 
         // with no stack trace
         long[] tids = tmbean.getAllThreadIds();
         ThreadInfo[] tinfos = tmbean.getThreadInfo(tids);
 
         // build a map with key = CPU time and value = ThreadInfo
         SortedMap<Long, ThreadInfo> map = new TreeMap<Long, ThreadInfo>();
-        for (int i = 0; i < tids.length; i++) {
+        for (int i = 0; i < tids.length; i++) { 
             long cpuTime = tmbean.getThreadCpuTime(tids[i]);
             // filter out threads that have been terminated
             if (cpuTime != -1 && tinfos[i] != null) {
@@ -196,7 +197,7 @@ public class JTop extends JPanel {
         // build the thread list and sort it with CPU time
         // in decreasing order
         Set<Map.Entry<Long, ThreadInfo>> set = map.entrySet();
-        List<Map.Entry<Long, ThreadInfo>> list =
+        List<Map.Entry<Long, ThreadInfo>> list = 
             new ArrayList<Map.Entry<Long, ThreadInfo>>(set);
         Collections.reverse(list);
         return list;
@@ -205,14 +206,14 @@ public class JTop extends JPanel {
 
     /**
      * Format Double with 4 fraction digits
-     */
+     */ 
     class DoubleRenderer extends DefaultTableCellRenderer {
         NumberFormat formatter;
-        public DoubleRenderer() {
+        public DoubleRenderer() { 
             super();
             setHorizontalAlignment(JLabel.RIGHT);
         }
-
+    
         public void setValue(Object value) {
             if (formatter==null) {
                 formatter = NumberFormat.getInstance();
@@ -223,8 +224,8 @@ public class JTop extends JPanel {
     }
 
     // SwingWorker responsible for updating the GUI
-    //
-    // It first gets the thread and CPU usage information as a
+    // 
+    // It first gets the thread and CPU usage information as a 
     // background task done by a worker thread so that
     // it will not block the event dispatcher thread.
     //
@@ -241,14 +242,14 @@ public class JTop extends JPanel {
         public List<Map.Entry<Long, ThreadInfo>> doInBackground() {
             return getThreadList();
         }
-
+                                                                                
         // fire table data changed to trigger GUI update
         // when doInBackground() is finished
         protected void done() {
             try {
-                // Set table model with the new thread list
+                // Set table model with the new thread list 
                 tmodel.setThreadList(get());
-                // refresh the table model
+                // refresh the table model 
                 tmodel.fireTableDataChanged();
             } catch (InterruptedException e) {
             } catch (ExecutionException e) {
@@ -289,12 +290,12 @@ public class JTop extends JPanel {
         jtop.setMBeanServerConnection(server);
 
         // A timer task to update GUI per each interval
-        TimerTask timerTask = new TimerTask() {
+	TimerTask timerTask = new TimerTask() {
             public void run() {
                 // Schedule the SwingWorker to update the GUI
-                jtop.newSwingWorker().execute();
+		jtop.newSwingWorker().execute();
             }
-        };
+	};
 
         // Create the standalone window with JTop panel
         // by the event dispatcher thread
@@ -305,8 +306,8 @@ public class JTop extends JPanel {
         });
 
         // refresh every 2 seconds
-        Timer timer = new Timer("JTop Sampling thread");
-        timer.schedule(timerTask, 0, 2000);
+	Timer timer = new Timer("JTop Sampling thread");
+	timer.schedule(timerTask, 0, 2000);
 
     }
 
@@ -314,14 +315,14 @@ public class JTop extends JPanel {
     //
     // You can modify the urlPath to the address of the JMX agent
     // of your application if it has a different URL.
-    //
-    // You can also modify the following code to take
+    // 
+    // You can also modify the following code to take 
     // username and password for client authentication.
     private static MBeanServerConnection connect(String hostname, int port) {
         // Create an RMI connector client and connect it to
         // the RMI connector server
         String urlPath = "/jndi/rmi://" + hostname + ":" + port + "/jmxrmi";
-        MBeanServerConnection server = null;
+        MBeanServerConnection server = null;        
         try {
             JMXServiceURL url = new JMXServiceURL("rmi", "", 0, urlPath);
             JMXConnector jmxc = JMXConnectorFactory.connect(url);

@@ -43,7 +43,7 @@ public class JarEntryTime {
         }
         return rc & dir.delete();
     }
-
+	
     static void extractJar(File jarFile, boolean useExtractionTime) throws Throwable {
         String javahome = System.getProperty("java.home");
         if (javahome.endsWith("jre")) {
@@ -66,7 +66,7 @@ public class JarEntryTime {
         Process p = Runtime.getRuntime().exec(args);
         check(p != null && (p.waitFor() == 0));
     }
-
+    
     public static void realMain(String[] args) throws Throwable {
         final long now = System.currentTimeMillis();
         final long earlier = now - (60L * 60L * 6L * 1000L);

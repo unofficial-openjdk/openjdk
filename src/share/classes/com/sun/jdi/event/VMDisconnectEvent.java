@@ -54,3 +54,4 @@ import com.sun.jdi.*;
  */
 public interface VMDisconnectEvent extends Event {
 }
+

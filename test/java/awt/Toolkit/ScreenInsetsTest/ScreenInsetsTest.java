@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 4737732
   @summary Tests that Toolkit.getScreenInsets() returns correct insets
@@ -38,7 +38,7 @@ import test.java.awt.regtesthelpers.Util;
 
 public class ScreenInsetsTest
 {
-    public static void main(String[] args)
+    public static void main(String[] args) 
     {
         if (!Toolkit.getDefaultToolkit().isFrameStateSupported(Frame.MAXIMIZED_BOTH))
         {

@@ -109,9 +109,9 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
      * to which methods will be forwarded.
      */
     public MBeanServerInvocationHandler(MBeanServerConnection connection,
-                                        ObjectName objectName) {
+					ObjectName objectName) {
 
-        this(connection, objectName, false);
+	this(connection, objectName, false);
     }
 
     /**
@@ -136,16 +136,16 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
      * @since 1.6
      */
     public MBeanServerInvocationHandler(MBeanServerConnection connection,
-                                        ObjectName objectName,
-                                        boolean isMXBean) {
-        if (connection == null) {
-            throw new IllegalArgumentException("Null connection");
-        }
-        if (objectName == null) {
-            throw new IllegalArgumentException("Null object name");
-        }
-        this.connection = connection;
-        this.objectName = objectName;
+					ObjectName objectName,
+					boolean isMXBean) {
+	if (connection == null) {
+	    throw new IllegalArgumentException("Null connection");
+	}
+	if (objectName == null) {
+	    throw new IllegalArgumentException("Null object name");
+	}
+	this.connection = connection;
+	this.objectName = objectName;
         this.isMXBean = isMXBean;
     }
 
@@ -228,23 +228,23 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
      * @see JMX#newMBeanProxy(MBeanServerConnection, ObjectName, Class)
      */
     public static <T> T newProxyInstance(MBeanServerConnection connection,
-                                         ObjectName objectName,
-                                         Class<T> interfaceClass,
-                                         boolean notificationBroadcaster) {
-        final InvocationHandler handler =
-            new MBeanServerInvocationHandler(connection, objectName);
-        final Class[] interfaces;
-        if (notificationBroadcaster) {
-            interfaces =
-                new Class[] {interfaceClass, NotificationEmitter.class};
-        } else
-            interfaces = new Class[] {interfaceClass};
+					 ObjectName objectName,
+					 Class<T> interfaceClass,
+					 boolean notificationBroadcaster) {
+	final InvocationHandler handler =
+	    new MBeanServerInvocationHandler(connection, objectName);
+	final Class[] interfaces;
+	if (notificationBroadcaster) {
+	    interfaces =
+		new Class[] {interfaceClass, NotificationEmitter.class};
+	} else
+	    interfaces = new Class[] {interfaceClass};
 
-        Object proxy =
-            Proxy.newProxyInstance(interfaceClass.getClassLoader(),
-                                   interfaces,
-                                   handler);
-        return interfaceClass.cast(proxy);
+	Object proxy =
+	    Proxy.newProxyInstance(interfaceClass.getClassLoader(),
+				   interfaces,
+				   handler);
+	return interfaceClass.cast(proxy);
     }
 
     public Object invoke(Object proxy, Method method, Object[] args)
@@ -256,7 +256,7 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
             return invokeBroadcasterMethod(proxy, method, args);
 
         // local or not: equals, toString, hashCode
-        if (shouldDoLocally(proxy, method))
+	if (shouldDoLocally(proxy, method))
             return doLocally(proxy, method, args);
 
         try {
@@ -412,17 +412,17 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
     }
 
     private boolean shouldDoLocally(Object proxy, Method method) {
-        final String methodName = method.getName();
-        if ((methodName.equals("hashCode") || methodName.equals("toString"))
-            && method.getParameterTypes().length == 0
-            && isLocal(proxy, method))
-            return true;
-        if (methodName.equals("equals")
-            && Arrays.equals(method.getParameterTypes(),
-                             new Class[] {Object.class})
-            && isLocal(proxy, method))
-            return true;
-        return false;
+	final String methodName = method.getName();
+	if ((methodName.equals("hashCode") || methodName.equals("toString"))
+	    && method.getParameterTypes().length == 0
+	    && isLocal(proxy, method))
+	    return true;
+	if (methodName.equals("equals")
+	    && Arrays.equals(method.getParameterTypes(),
+			     new Class[] {Object.class})
+	    && isLocal(proxy, method))
+	    return true;
+	return false;
     }
 
     private Object doLocally(Object proxy, Method method, Object[] args) {
@@ -454,12 +454,12 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
                 proxy.getClass().equals(args[0].getClass());
         } else if (methodName.equals("toString")) {
             return (isMXBean ? "MX" : "M") + "BeanProxy(" +
-                connection + "[" + objectName + "])";
+		connection + "[" + objectName + "])";
         } else if (methodName.equals("hashCode")) {
             return objectName.hashCode()+connection.hashCode();
         }
 
-        throw new RuntimeException("Unexpected method name: " + methodName);
+	throw new RuntimeException("Unexpected method name: " + methodName);
     }
 
     private static boolean isLocal(Object proxy, Method method) {
@@ -468,9 +468,9 @@ public class MBeanServerInvocationHandler implements InvocationHandler {
             return true;
         }
 
-        final String methodName = method.getName();
-        final Class<?>[] params = method.getParameterTypes();
-        for (Class<?> intf : interfaces) {
+	final String methodName = method.getName();
+	final Class<?>[] params = method.getParameterTypes();
+	for (Class<?> intf : interfaces) {
             try {
                 intf.getMethod(methodName, params);
                 return false; // found method in one of our interfaces

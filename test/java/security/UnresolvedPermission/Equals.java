@@ -29,24 +29,24 @@
 
 import java.security.*;
 import java.util.*;
-
+  
 public class Equals {
     public static void main(String[] args) {
-        if (System.getProperty("test.src") == null) {
-            System.setProperty("test.src", ".");
-        }
-        System.setProperty("java.security.policy",
-                "file:${test.src}/Equals.policy");
-        PermissionCollection pc = Policy.getPolicy().getPermissions
-                        (Equals.class.getProtectionDomain());
-        ArrayList l = new ArrayList();
-        for (Enumeration e = pc.elements(); e.hasMoreElements();) {
-            Object p = e.nextElement();
-            if (p instanceof UnresolvedPermission) {
-                l.add(p);
-            }
-        }
-        System.out.println(l.get(0) + "\n" + l.get(1));
-        System.out.println(l.get(0).equals(l.get(1)));
+	if (System.getProperty("test.src") == null) {
+	    System.setProperty("test.src", ".");
+	}
+	System.setProperty("java.security.policy",
+		"file:${test.src}/Equals.policy");
+	PermissionCollection pc = Policy.getPolicy().getPermissions
+			(Equals.class.getProtectionDomain());
+	ArrayList l = new ArrayList();
+	for (Enumeration e = pc.elements(); e.hasMoreElements();) {
+	    Object p = e.nextElement();
+	    if (p instanceof UnresolvedPermission) {
+		l.add(p);
+	    }
+	}
+	System.out.println(l.get(0) + "\n" + l.get(1));
+	System.out.println(l.get(0).equals(l.get(1)));
     }
 }

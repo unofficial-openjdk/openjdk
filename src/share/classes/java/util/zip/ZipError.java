@@ -29,6 +29,7 @@ package java.util.zip;
  * Signals that an unrecoverable error has occurred.
  *
  * @author  Dave Bristor
+ * @version %I%, %G%
  * @since   1.6
  */
 public class ZipError extends InternalError {

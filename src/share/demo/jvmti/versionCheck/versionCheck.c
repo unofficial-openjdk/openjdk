@@ -51,27 +51,27 @@ version_check(jint cver, jint rver)
     rmajor = (rver & JVMTI_VERSION_MASK_MAJOR) >> JVMTI_VERSION_SHIFT_MAJOR;
     rminor = (rver & JVMTI_VERSION_MASK_MINOR) >> JVMTI_VERSION_SHIFT_MINOR;
     rmicro = (rver & JVMTI_VERSION_MASK_MICRO) >> JVMTI_VERSION_SHIFT_MICRO;
-    stdout_message("Compile Time JVMTI Version: %d.%d.%d (0x%08x)\n",
-                        cmajor, cminor, cmicro, cver);
-    stdout_message("Run Time JVMTI Version: %d.%d.%d (0x%08x)\n",
-                        rmajor, rminor, rmicro, rver);
+    stdout_message("Compile Time JVMTI Version: %d.%d.%d (0x%08x)\n", 
+			cmajor, cminor, cmicro, cver);
+    stdout_message("Run Time JVMTI Version: %d.%d.%d (0x%08x)\n", 
+			rmajor, rminor, rmicro, rver);
     if ( (cmajor > rmajor) || (cmajor == rmajor && cminor > rminor) ) {
-        fatal_error(
-            "ERROR: Compile Time JVMTI and Run Time JVMTI are incompatible\n");
+	fatal_error( 
+	    "ERROR: Compile Time JVMTI and Run Time JVMTI are incompatible\n");
     }
 }
 
 /* Callback for JVMTI_EVENT_VM_INIT */
-static void JNICALL
+static void JNICALL 
 vm_init(jvmtiEnv *jvmti, JNIEnv *env, jthread thread)
 {
     jvmtiError err;
     jint       runtime_version;
-
+   
     /* The exact JVMTI version doesn't have to match, however this
-     *  code demonstrates how you can check that the JVMTI version seen
+     *  code demonstrates how you can check that the JVMTI version seen 
      *  in the jvmti.h include file matches that being supplied at runtime
-     *  by the VM.
+     *  by the VM. 
      */
     err = (*jvmti)->GetVersionNumber(jvmti, &runtime_version);
     check_jvmti_error(jvmti, err, "get version number");
@@ -86,12 +86,12 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     jvmtiError          err;
     jvmtiEventCallbacks callbacks;
     jvmtiEnv           *jvmti;
-
+    
     /* Get JVMTI environment */
     rc = (*vm)->GetEnv(vm, (void **)&jvmti, JVMTI_VERSION);
     if (rc != JNI_OK) {
-        fatal_error("ERROR: Unable to create jvmtiEnv, GetEnv failed, error=%d\n", rc);
-        return -1;
+	fatal_error("ERROR: Unable to create jvmtiEnv, GetEnv failed, error=%d\n", rc);
+	return -1;
     }
 
     /* Set callbacks and enable event notifications */
@@ -99,8 +99,8 @@ Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     callbacks.VMInit                  = &vm_init;
     err = (*jvmti)->SetEventCallbacks(jvmti, &callbacks, sizeof(callbacks));
     check_jvmti_error(jvmti, err, "set event callbacks");
-    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE,
-                        JVMTI_EVENT_VM_INIT, NULL);
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, 
+			JVMTI_EVENT_VM_INIT, NULL);
     check_jvmti_error(jvmti, err, "set event notify");
     return 0;
 }
@@ -110,3 +110,4 @@ JNIEXPORT void JNICALL
 Agent_OnUnload(JavaVM *vm)
 {
 }
+

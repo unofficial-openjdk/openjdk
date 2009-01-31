@@ -37,17 +37,18 @@ package sun.security.action;
  *
  * <pre>
  * boolean b = java.security.AccessController.doPrivileged
- *              (new GetBooleanAction("prop")).booleanValue();
+ *		(new GetBooleanAction("prop")).booleanValue();
  * </pre>
  *
  * @author Roland Schemers
+ * @version %I%, %G%
  * @see java.security.PrivilegedAction
  * @see java.security.AccessController
  * @since 1.2
  */
 
 public class GetBooleanAction
-        implements java.security.PrivilegedAction<Boolean> {
+	implements java.security.PrivilegedAction<Boolean> {
     private String theProp;
 
     /**
@@ -57,7 +58,7 @@ public class GetBooleanAction
      * @param theProp the name of the system property.
      */
     public GetBooleanAction(String theProp) {
-        this.theProp = theProp;
+	this.theProp = theProp;
     }
 
     /**
@@ -67,6 +68,6 @@ public class GetBooleanAction
      * @return the <code>Boolean</code> value of the system property.
      */
     public Boolean run() {
-        return Boolean.getBoolean(theProp);
+	return Boolean.getBoolean(theProp);
     }
 }

@@ -66,7 +66,7 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new ExpiredRequestDeletionTest(args).startTests();
     }
 
@@ -101,19 +101,19 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
             failure("Deleting StepRequest threw - " + exc);
         }
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("ExpiredRequestDeletionTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
         erm = vm().eventRequestManager();
-
+        
         List meths = targetClass.methodsByName("bar");
         if (meths.size() != 1) {
             throw new Exception("test error: should be one bar()");
@@ -123,13 +123,13 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
         /*
          * Set event requests
          */
-        StepRequest sr = erm.createStepRequest(mainThread,
+        StepRequest sr = erm.createStepRequest(mainThread, 
                                                     StepRequest.STEP_LINE,
                                                     StepRequest.STEP_OVER);
         sr.addCountFilter(1);
         sr.enable();
 
-        BreakpointRequest bpr =
+        BreakpointRequest bpr = 
             erm.createBreakpointRequest(barMethod.location());
         bpr.addCountFilter(1);
         bpr.enable();
@@ -138,7 +138,7 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -150,3 +150,4 @@ public class ExpiredRequestDeletionTest extends TestScaffold {
         }
     }
 }
+

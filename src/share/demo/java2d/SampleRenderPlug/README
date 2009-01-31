@@ -1,0 +1,65 @@
+#
+# Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Sun designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Sun in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
+# CA 95054 USA or visit www.sun.com if you need additional information or
+# have any questions.
+#
+
+This demo directory contains a simple quick and dirty implementation
+of the sun.java2d.pipe.RenderingEngine interface.  This example is not
+meant to be a viable replacement for the closed source Ductus code
+in the OpenJDK, but simply serves as an example of how to build and
+use an alternate RenderingEngine implementation.
+
+The sources for this sample are in the src/sun/java2d/demo subdirectory.
+A quick perusal of the sources there should uncover that this sample
+RenderingEngine is not completely standalone (yet?) in that it relies
+on delegation to an instance of DuctusRenderingEngine to satisfy the
+requirements for 2 of the 3 methods in the RenderingEngine interface.
+Some more work would be needed to create quick and dirty replacements
+for those other 2 methods, but this sample is only used to demonstrate
+building and runtime practices.  Hopefully a more fully featured and
+faster open source alternative will be built using this guide.
+
+To build the sample RenderingEngine, the JDK should be built in the
+normal manner and then the supplied Makefile in this directory can
+build this sample RenderingEngine for use with that JDK:
+
+    % cd <toplevel>/make
+    % gnumake
+    # entire JDK builds
+    % cd <toplevel>/src/share/demo/java2d/SampleRenderPlug
+    % gnumake
+    # builds RegionRE.jar
+
+Once the RenderingEngine jar file is built, it can be used with the
+following Java command line:
+
+    % java -Xbootclasspath/a:RegionRE.jar \
+        -Dsun.java2d.renderer=sun.java2d.demo.RegionRenderingEngine \
+        <mainclassname> [<optional arguments>]
+
+To run with tracing enabled, use the following Java command line:
+
+    % java -Xbootclasspath/a:RegionRE.jar \
+        -Dsun.java2d.renderer=sun.java2d.demo.RegionRenderingEngine \
+        -Dsun.java2d.renderer.trace=t \
+        <mainclassname> [<optional arguments>]

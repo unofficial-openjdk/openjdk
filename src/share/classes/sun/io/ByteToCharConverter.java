@@ -47,7 +47,7 @@ public abstract class ByteToCharConverter {
     protected boolean subMode = true;
 
     /*
-     * Characters to use for automatic substitution.
+     * Characters to use for automatic substitution.  
      */
     protected char[] subChars = { '\uFFFD' };
 
@@ -70,9 +70,9 @@ public abstract class ByteToCharConverter {
      * Create an instance of the default ByteToCharConverter subclass.
      */
     public static ByteToCharConverter getDefault() {
-        Object cvt;
-        cvt = Converters.newDefaultConverter(Converters.BYTE_TO_CHAR);
-        return (ByteToCharConverter)cvt;
+	Object cvt;
+	cvt = Converters.newDefaultConverter(Converters.BYTE_TO_CHAR);
+	return (ByteToCharConverter)cvt;
     }
 
     /**
@@ -80,11 +80,11 @@ public abstract class ByteToCharConverter {
      * @param string represents encoding
      */
     public static ByteToCharConverter getConverter(String encoding)
-        throws UnsupportedEncodingException
+	throws UnsupportedEncodingException
     {
-        Object cvt;
-        cvt = Converters.newConverter(Converters.BYTE_TO_CHAR, encoding);
-        return (ByteToCharConverter)cvt;
+	Object cvt;
+	cvt = Converters.newConverter(Converters.BYTE_TO_CHAR, encoding);
+	return (ByteToCharConverter)cvt;
     }
 
     /**
@@ -112,13 +112,13 @@ public abstract class ByteToCharConverter {
      * @exception MalformedInputException if the input buffer contains any
      * sequence of bytes that is illegal for the input character set.
      * @exception UnknownCharacterException for any character that
-     * that cannot be converted to Unicode. Thrown only when converter
+     * that cannot be converted to Unicode. Thrown only when converter 
      * is not in substitution mode.
      * @exception ConversionBufferFullException if output array is filled prior
      * to converting all the input.
      */
     public abstract int convert(byte[] input, int inStart, int inEnd,
-                                char[] output, int outStart, int outEnd)
+				char[] output, int outStart, int outEnd)
             throws MalformedInputException,
                    UnknownCharacterException,
                    ConversionBufferFullException;
@@ -158,14 +158,14 @@ public abstract class ByteToCharConverter {
         reset();
         boolean savedSubMode = subMode;
         subMode = true;
-
+        
         char[] output = new char[ getMaxCharsPerByte() * input.length ];
 
         try {
             int outputLength = convert( input, 0, input.length,
                                         output, 0, output.length );
             outputLength += flush( output, outputLength, output.length );
-
+            
             char [] returnedOutput = new char[ outputLength ];
             System.arraycopy( output, 0, returnedOutput, 0, outputLength );
             return returnedOutput;
@@ -183,10 +183,10 @@ public abstract class ByteToCharConverter {
             subMode = savedSubMode;
         }
     }
-
+    
     /**
      * Writes any remaining output to the output buffer and resets the
-     * converter to its initial state.
+     * converter to its initial state.  
      *
      * @param output char array to receive flushed output.
      * @param outStart start writing to output array at this offset.
@@ -195,7 +195,7 @@ public abstract class ByteToCharConverter {
      * a partial or invalid multibyte character sequence.  flush will
      * write what it can to the output buffer and reset the converter before
      * throwing this exception.  An additional call to flush is not required.
-     * @exception ConversionBufferFullException if output array is filled
+     * @exception ConversionBufferFullException if output array is filled 
      * before all the output can be flushed. flush will write what it can
      * to the output buffer and remember its state.  An additional call to
      * flush with a new output buffer will conclude the operation.
@@ -215,7 +215,7 @@ public abstract class ByteToCharConverter {
      */
     public int getMaxCharsPerByte() {
         // Until UTF-16, this will do for every encoding
-        return 1;
+        return 1;   
     }
 
     /**
@@ -274,7 +274,7 @@ public abstract class ByteToCharConverter {
      * sets the substitution character to use
      * @param c the substitution character
      */
-    public void setSubstitutionChars(char[] c)
+    public void setSubstitutionChars(char[] c) 
         throws IllegalArgumentException
     {
         if( c.length > getMaxCharsPerByte() ) {

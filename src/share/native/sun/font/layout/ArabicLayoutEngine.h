@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)ArabicLayoutEngine.h	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -71,7 +72,7 @@ public:
      *
      * @internal
      */
-    ArabicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode,
+    ArabicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, 
         le_int32 languageCode, le_int32 typoFlags, const GlyphSubstitutionTableHeader *gsubTable);
 
     /**
@@ -87,7 +88,7 @@ public:
      *
      * @internal
      */
-    ArabicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode,
+    ArabicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, le_int32 scriptCode, 
         le_int32 languageCode, le_int32 typoFlags);
 
     /**
@@ -108,7 +109,7 @@ protected:
      * @param offset - the index of the first character to process
      * @param count - the number of characters to process
      * @param max - the number of characters in the input context
-     * @param rightToLeft - <code>TRUE</code> if the characters are in a
+     * @param rightToLeft - <code>TRUE</code> if the characters are in a 
      *     right to left directional run
      *
      * Output parameters:
@@ -121,7 +122,7 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 characterProcessing(const LEUnicode chars[], le_int32 offset,
+    virtual le_int32 characterProcessing(const LEUnicode chars[], le_int32 offset, 
         le_int32 count, le_int32 max, le_bool rightToLeft,
         LEUnicode *&outChars, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
@@ -142,10 +143,10 @@ protected:
      *
      * @internal
      */
-    virtual void adjustGlyphPositions(const LEUnicode chars[], le_int32 offset,
+    virtual void adjustGlyphPositions(const LEUnicode chars[], le_int32 offset, 
         le_int32 count, le_bool reverse, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
-    // static void adjustMarkGlyphs(const LEUnicode chars[], le_int32 offset, le_int32 count,
+    // static void adjustMarkGlyphs(const LEUnicode chars[], le_int32 offset, le_int32 count, 
     // le_bool rightToLeft, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
 };
@@ -178,7 +179,7 @@ public:
      *
      * @internal
      */
-    UnicodeArabicOpenTypeLayoutEngine(const LEFontInstance *fontInstance,
+    UnicodeArabicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
         le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags);
 
     /**
@@ -208,7 +209,7 @@ protected:
      *
      * @internal
      */
-    virtual le_int32 glyphPostProcessing(LEGlyphStorage &tempGlyphStorage,
+    virtual le_int32 glyphPostProcessing(LEGlyphStorage &tempGlyphStorage, 
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
     /**
@@ -227,7 +228,7 @@ protected:
      *
      * @internal
      */
-    virtual void mapCharsToGlyphs(const LEUnicode chars[], le_int32 offset,
+    virtual void mapCharsToGlyphs(const LEUnicode chars[], le_int32 offset, 
         le_int32 count, le_bool reverse, le_bool mirror,
         LEGlyphStorage &glyphStorage, LEErrorCode &success);
 
@@ -245,8 +246,9 @@ protected:
      *
      * @internal
      */
-    virtual void adjustGlyphPositions(const LEUnicode chars[], le_int32 offset,
+    virtual void adjustGlyphPositions(const LEUnicode chars[], le_int32 offset, 
         le_int32 count, le_bool reverse, LEGlyphStorage &glyphStorage, LEErrorCode &success);
 };
 
 #endif
+

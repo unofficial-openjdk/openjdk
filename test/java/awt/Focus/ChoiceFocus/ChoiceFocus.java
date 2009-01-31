@@ -24,7 +24,7 @@
 /*
   @test
   @bug 4053856
-  @summary Choice components don't honour key focus
+  @summary Choice components don't honour key focus 
   @library ../../regtesthelpers
   @build Util
   @author Andrei Dmitriev : area=awt.choice
@@ -58,7 +58,7 @@ public class ChoiceFocus {
     volatile static boolean keyPressed = false;
     volatile static boolean keyReleased = false;
     volatile static boolean keyTyped = false;
-
+ 
     public static void main(String[] args) {
         Frame f = new Frame("Test Frame");
         f.setLayout(new GridLayout());
@@ -84,7 +84,7 @@ public class ChoiceFocus {
                     keyTyped = true;
                 }
             });
-
+        
         f.add(c1);
         f.add(c2);
 
@@ -94,7 +94,7 @@ public class ChoiceFocus {
         robot = Util.createRobot();
         robot.setAutoWaitForIdle(true);
         robot.setAutoDelay(50);
-
+        
         //transfer focus to Choice
         Util.waitForIdle(robot);
         Util.clickOnComp(c1, robot);
@@ -102,7 +102,7 @@ public class ChoiceFocus {
 
         //close choice
         Util.clickOnComp(c1, robot);
-
+        
         //position a mouse over a different component
         Point pt = c2.getLocationOnScreen();
         robot.mouseMove(pt.x + c2.getWidth()/2, pt.y + c2.getHeight()/2);

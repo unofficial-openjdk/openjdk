@@ -26,7 +26,7 @@
  * @test
  * @bug 6322678
  * @summary Test for making sure that fd is closed during
- *          finalization of a stream, when an associated
+ *	    finalization of a stream, when an associated
  *          file channel is not available
  */
 
@@ -43,22 +43,22 @@ public class FileChannelFDTest {
     static File outFile;
 
     private static void writeToInFile() throws IOException {
-        FileOutputStream out = new FileOutputStream(inFile);
-        out.write(data);
-        out.close();
+	FileOutputStream out = new FileOutputStream(inFile);
+	out.write(data);
+	out.close();
     }
 
-    public static void main(String[] args)
-                throws Exception {
-
+    public static void main(String[] args) 
+		throws Exception {
+	       
         inFile= new File(System.getProperty("test.dir", "."),
-                        inFileName);
+			inFileName); 
         inFile.createNewFile();
         inFile.deleteOnExit();
-        writeToInFile();
+	writeToInFile();
 
-        outFile  = new File(System.getProperty("test.dir", "."),
-                        outFileName);
+	outFile  = new File(System.getProperty("test.dir", "."),
+			outFileName); 
         outFile.createNewFile();
         outFile.deleteOnExit();
 
@@ -68,25 +68,25 @@ public class FileChannelFDTest {
      private static void doFileChannel() throws Exception {
 
         FileInputStream fis = new FileInputStream(inFile);
-        FileDescriptor fd = fis.getFD();
-        FileChannel fc = fis.getChannel();
-        System.out.println("Created fis:" + fis);
+	FileDescriptor fd = fis.getFD();
+	FileChannel fc = fis.getChannel();
+	System.out.println("Created fis:" + fis);
 
         /**
          * Encourage the GC
          */
         fis = null;
-        fc = null;
+	fc = null;
         System.gc();
         Thread.sleep(500);
 
-        if (fd.valid()) {
-            throw new Exception("Finalizer either didn't run --" +
-                "try increasing the Thread's sleep time after System.gc();" +
-                "or the finalizer didn't close the file");
+	if (fd.valid()) {
+	    throw new Exception("Finalizer either didn't run --" +
+		"try increasing the Thread's sleep time after System.gc();" +
+		"or the finalizer didn't close the file"); 
         }
-
-        System.out.println("File Closed successfully");
-        System.out.println();
+        
+	System.out.println("File Closed successfully");
+	System.out.println();
   }
 }

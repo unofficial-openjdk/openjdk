@@ -33,20 +33,20 @@ import java.io.*;
 import com.sun.net.httpserver.*;
 
 /*
- * Calling HttpURLConnection.getOutputStream multiple times when streaming
+ * Calling HttpURLConnection.getOutputStream multiple times when streaming 
  * should not create a new OutputStream each time.
  */
 
-public class StreamingOutputStream
+public class StreamingOutputStream 
 {
     com.sun.net.httpserver.HttpServer httpServer;
 
     public static void main(String[] args) {
-        new StreamingOutputStream();
+	new StreamingOutputStream();
     }
 
     public StreamingOutputStream() {
-         try {
+	 try {
             startHttpServer();
             doClient();
         } catch (IOException ioe) {
@@ -61,25 +61,25 @@ public class StreamingOutputStream
             URL url = new URL("http://" + address.getHostName() + ":" + address.getPort() + "/test/");
             HttpURLConnection uc = (HttpURLConnection)url.openConnection();
 
-            uc.setDoOutput(true);
-            uc.setFixedLengthStreamingMode(1);
-            OutputStream os1 = uc.getOutputStream();
-            OutputStream os2 = uc.getOutputStream();
+	    uc.setDoOutput(true);
+	    uc.setFixedLengthStreamingMode(1);
+	    OutputStream os1 = uc.getOutputStream();
+	    OutputStream os2 = uc.getOutputStream();
 
-            if (os1 != os2)
+	    if (os1 != os2)
                 throw new RuntimeException("Failed: OutputStreams should reference the same object");
 
-            os2.write('b');
-            os2.close();
-
-            int resp = uc.getResponseCode();
+	    os2.write('b');
+	    os2.close();
+	    
+	    int resp = uc.getResponseCode();
             if (resp != 200)
                 throw new RuntimeException("Failed: Server should return 200 OK");
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            httpServer.stop(1);
+  	    httpServer.stop(1);
         }
     }
     /**
@@ -93,9 +93,9 @@ public class StreamingOutputStream
 
     class MyHandler implements HttpHandler {
         public void handle(HttpExchange t) throws IOException {
-            InputStream is = t.getRequestBody();
-            while(is.read() != -1);
-            is.close();
+	    InputStream is = t.getRequestBody();
+	    while(is.read() != -1);
+	    is.close();
 
             t.sendResponseHeaders(200, -1);
             t.close();

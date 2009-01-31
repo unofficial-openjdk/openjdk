@@ -38,25 +38,26 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see CertAttrSet
  */
 public class CertificateVersion implements CertAttrSet<String> {
     /**
      * X509Certificate Version 1
      */
-    public static final int     V1 = 0;
+    public static final int 	V1 = 0;
     /**
      * X509Certificate Version 2
      */
-    public static final int     V2 = 1;
+    public static final int 	V2 = 1;
     /**
      * X509Certificate Version 3
      */
-    public static final int     V3 = 2;
+    public static final int 	V3 = 2;
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */
+     */  
     public static final String IDENT = "x509.info.version";
     /**
      * Sub attributes name for this CertAttrSet.
@@ -68,7 +69,7 @@ public class CertificateVersion implements CertAttrSet<String> {
     int version = V1;
 
     // Returns the version number.
-    private int getVersion() {
+    private int getVersion() { 
         return(version);
     }
 
@@ -78,7 +79,7 @@ public class CertificateVersion implements CertAttrSet<String> {
             derVal = derVal.data.getDerValue();
             version = derVal.getInteger();
             if (derVal.data.available() != 0) {
-                throw new IOException("X.509 version, bad format");
+	        throw new IOException("X.509 version, bad format");
             }
         }
     }
@@ -142,7 +143,7 @@ public class CertificateVersion implements CertAttrSet<String> {
      */
     public CertificateVersion(DerValue val) throws IOException {
         version = V1;
-
+ 
         construct(val);
     }
 

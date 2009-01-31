@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package com.sun.inputmethods.internal.codepointim;

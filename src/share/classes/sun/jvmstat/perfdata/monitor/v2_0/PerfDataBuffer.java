@@ -59,6 +59,7 @@ import java.nio.*;
  * </pre>
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  * @see AbstractPerfDataBuffer
  */
@@ -258,11 +259,11 @@ public class PerfDataBuffer extends PerfDataBufferImpl {
      * its shared memory is safe to access.
      */
     protected void synchWithTarget() throws MonitorException {
-        /*
+	/*
          * synch must happen with syncWaitMs from now. Default is 5 seconds,
-         * which is reasonabally generous and should provide for extreme
-         * situations like startup delays due to allocation of large ISM heaps.
-         */
+	 * which is reasonabally generous and should provide for extreme
+	 * situations like startup delays due to allocation of large ISM heaps.
+	 */
         long timeLimit = System.currentTimeMillis() + syncWaitMs;
 
         // loop waiting for the accessible indicater to be non-zero

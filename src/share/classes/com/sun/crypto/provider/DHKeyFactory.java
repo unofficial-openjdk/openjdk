@@ -50,15 +50,15 @@ public final class DHKeyFactory extends KeyFactorySpi {
 
     /**
      * Verify the SunJCE provider in the constructor.
-     *
+     * 
      * @exception SecurityException if fails to verify
      * its own integrity
      */
     public DHKeyFactory() {
         if (!SunJCE.verifySelfIntegrity(this.getClass())) {
-            throw new SecurityException("The SunJCE provider may have " +
-                                        "been tampered.");
-        }
+	    throw new SecurityException("The SunJCE provider may have " +
+					"been tampered.");
+	}
     }
 
     /**
@@ -73,27 +73,27 @@ public final class DHKeyFactory extends KeyFactorySpi {
      * is inappropriate for this key factory to produce a public key.
      */
     protected PublicKey engineGeneratePublic(KeySpec keySpec)
-        throws InvalidKeySpecException
+	throws InvalidKeySpecException
     {
-        try {
-            if (keySpec instanceof DHPublicKeySpec) {
-                DHPublicKeySpec dhPubKeySpec = (DHPublicKeySpec)keySpec;
-                return new DHPublicKey(dhPubKeySpec.getY(),
-                                       dhPubKeySpec.getP(),
-                                       dhPubKeySpec.getG());
+	try {
+	    if (keySpec instanceof DHPublicKeySpec) {
+		DHPublicKeySpec dhPubKeySpec = (DHPublicKeySpec)keySpec;
+		return new DHPublicKey(dhPubKeySpec.getY(),
+				       dhPubKeySpec.getP(),
+				       dhPubKeySpec.getG());
 
-            } else if (keySpec instanceof X509EncodedKeySpec) {
-                return new DHPublicKey
-                    (((X509EncodedKeySpec)keySpec).getEncoded());
+	    } else if (keySpec instanceof X509EncodedKeySpec) {
+		return new DHPublicKey
+		    (((X509EncodedKeySpec)keySpec).getEncoded());
 
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-        } catch (InvalidKeyException e) {
-            throw new InvalidKeySpecException
-                ("Inappropriate key specification");
-        }
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	} catch (InvalidKeyException e) {
+	    throw new InvalidKeySpecException
+		("Inappropriate key specification");
+	}
     }
 
     /**
@@ -108,34 +108,34 @@ public final class DHKeyFactory extends KeyFactorySpi {
      * is inappropriate for this key factory to produce a private key.
      */
     protected PrivateKey engineGeneratePrivate(KeySpec keySpec)
-        throws InvalidKeySpecException
+	throws InvalidKeySpecException
     {
-        try {
-            if (keySpec instanceof DHPrivateKeySpec) {
-                DHPrivateKeySpec dhPrivKeySpec = (DHPrivateKeySpec)keySpec;
-                return new DHPrivateKey(dhPrivKeySpec.getX(),
-                                        dhPrivKeySpec.getP(),
-                                        dhPrivKeySpec.getG());
+	try {
+	    if (keySpec instanceof DHPrivateKeySpec) {
+		DHPrivateKeySpec dhPrivKeySpec = (DHPrivateKeySpec)keySpec;
+		return new DHPrivateKey(dhPrivKeySpec.getX(),
+					dhPrivKeySpec.getP(),
+					dhPrivKeySpec.getG());
 
-            } else if (keySpec instanceof PKCS8EncodedKeySpec) {
-                return new DHPrivateKey
-                    (((PKCS8EncodedKeySpec)keySpec).getEncoded());
+	    } else if (keySpec instanceof PKCS8EncodedKeySpec) {
+		return new DHPrivateKey
+		    (((PKCS8EncodedKeySpec)keySpec).getEncoded());
 
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-        } catch (InvalidKeyException e) {
-            throw new InvalidKeySpecException
-                ("Inappropriate key specification");
-        }
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	} catch (InvalidKeyException e) {
+	    throw new InvalidKeySpecException
+		("Inappropriate key specification");
+	}
     }
 
     /**
      * Returns a specification (key material) of the given key object
      * in the requested format.
      *
-     * @param key the key
+     * @param key the key 
      *
      * @param keySpec the requested format in which the key material shall be
      * returned
@@ -148,48 +148,48 @@ public final class DHKeyFactory extends KeyFactorySpi {
      * (e.g., the given key has an unrecognized algorithm or format).
      */
     protected KeySpec engineGetKeySpec(Key key, Class keySpec)
-        throws InvalidKeySpecException {
-        DHParameterSpec params;
+	throws InvalidKeySpecException {
+	DHParameterSpec params;
 
-        if (key instanceof javax.crypto.interfaces.DHPublicKey) {
-
-            if (DHPublicKeySpec.class.isAssignableFrom(keySpec)) {
-                javax.crypto.interfaces.DHPublicKey dhPubKey
-                    = (javax.crypto.interfaces.DHPublicKey) key;
-                params = dhPubKey.getParams();
-                return new DHPublicKeySpec(dhPubKey.getY(),
-                                           params.getP(),
-                                           params.getG());
-
-            } else if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                return new X509EncodedKeySpec(key.getEncoded());
-
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-
-        } else if (key instanceof javax.crypto.interfaces.DHPrivateKey) {
-
-            if (DHPrivateKeySpec.class.isAssignableFrom(keySpec)) {
-                javax.crypto.interfaces.DHPrivateKey dhPrivKey
-                    = (javax.crypto.interfaces.DHPrivateKey)key;
-                params = dhPrivKey.getParams();
-                return new DHPrivateKeySpec(dhPrivKey.getX(),
-                                            params.getP(),
-                                            params.getG());
-
-            } else if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
-                return new PKCS8EncodedKeySpec(key.getEncoded());
-
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-
-        } else {
-            throw new InvalidKeySpecException("Inappropriate key type");
-        }
+	if (key instanceof javax.crypto.interfaces.DHPublicKey) {
+	    
+	    if (DHPublicKeySpec.class.isAssignableFrom(keySpec)) {
+		javax.crypto.interfaces.DHPublicKey dhPubKey
+		    = (javax.crypto.interfaces.DHPublicKey) key;
+		params = dhPubKey.getParams();
+		return new DHPublicKeySpec(dhPubKey.getY(),
+					   params.getP(),
+					   params.getG());
+		
+	    } else if (X509EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+		return new X509EncodedKeySpec(key.getEncoded());
+		
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	    
+	} else if (key instanceof javax.crypto.interfaces.DHPrivateKey) {
+	    
+	    if (DHPrivateKeySpec.class.isAssignableFrom(keySpec)) {
+		javax.crypto.interfaces.DHPrivateKey dhPrivKey
+		    = (javax.crypto.interfaces.DHPrivateKey)key;
+		params = dhPrivKey.getParams();
+		return new DHPrivateKeySpec(dhPrivKey.getX(),
+					    params.getP(),
+					    params.getG());
+		
+	    } else if (PKCS8EncodedKeySpec.class.isAssignableFrom(keySpec)) {
+		return new PKCS8EncodedKeySpec(key.getEncoded());
+		
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	    
+	} else {
+	    throw new InvalidKeySpecException("Inappropriate key type");
+	}
     }
 
     /**
@@ -204,40 +204,42 @@ public final class DHKeyFactory extends KeyFactorySpi {
      * this key factory.
      */
     protected Key engineTranslateKey(Key key)
-        throws InvalidKeyException
+	throws InvalidKeyException
     {
-        try {
+	try {
 
-            if (key instanceof javax.crypto.interfaces.DHPublicKey) {
-                // Check if key originates from this factory
-                if (key instanceof com.sun.crypto.provider.DHPublicKey) {
-                    return key;
-                }
-                // Convert key to spec
-                DHPublicKeySpec dhPubKeySpec
-                    = (DHPublicKeySpec)engineGetKeySpec
-                    (key, DHPublicKeySpec.class);
-                // Create key from spec, and return it
-                return engineGeneratePublic(dhPubKeySpec);
+	    if (key instanceof javax.crypto.interfaces.DHPublicKey) {
+		// Check if key originates from this factory
+		if (key instanceof com.sun.crypto.provider.DHPublicKey) {
+		    return key;
+		}
+		// Convert key to spec
+		DHPublicKeySpec dhPubKeySpec
+		    = (DHPublicKeySpec)engineGetKeySpec
+		    (key, DHPublicKeySpec.class);
+		// Create key from spec, and return it
+		return engineGeneratePublic(dhPubKeySpec);
 
-            } else if (key instanceof javax.crypto.interfaces.DHPrivateKey) {
-                // Check if key originates from this factory
-                if (key instanceof com.sun.crypto.provider.DHPrivateKey) {
-                    return key;
-                }
-                // Convert key to spec
-                DHPrivateKeySpec dhPrivKeySpec
-                    = (DHPrivateKeySpec)engineGetKeySpec
-                    (key, DHPrivateKeySpec.class);
-                // Create key from spec, and return it
-                return engineGeneratePrivate(dhPrivKeySpec);
+	    } else if (key instanceof javax.crypto.interfaces.DHPrivateKey) {
+		// Check if key originates from this factory
+		if (key instanceof com.sun.crypto.provider.DHPrivateKey) {
+		    return key;
+		}
+		// Convert key to spec
+		DHPrivateKeySpec dhPrivKeySpec
+		    = (DHPrivateKeySpec)engineGetKeySpec
+		    (key, DHPrivateKeySpec.class);
+		// Create key from spec, and return it
+		return engineGeneratePrivate(dhPrivKeySpec);
 
-            } else {
-                throw new InvalidKeyException("Wrong algorithm type");
-            }
+	    } else {
+		throw new InvalidKeyException("Wrong algorithm type");
+	    }
 
-        } catch (InvalidKeySpecException e) {
-            throw new InvalidKeyException("Cannot translate key");
-        }
+	} catch (InvalidKeySpecException e) {
+	    throw new InvalidKeyException("Cannot translate key");
+	}
     }
 }
+
+

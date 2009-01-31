@@ -37,10 +37,10 @@ import sun.reflect.ReflectionFactory;
  * representing the modifiers are taken from <a
  * href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/VMSpecTOC.doc.html"><i>The
  * Java</i><sup><small>TM</small></sup> <i>Virtual Machine Specification, Second
- * edition</i></a> tables
+ * edition</i></a> tables 
  * <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html#75734">4.1</a>,
  * <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html#88358">4.4</a>,
- * <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html#75568">4.5</a>, and
+ * <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html#75568">4.5</a>, and 
  * <a href="http://java.sun.com/docs/books/vmspec/2nd-edition/html/ClassFile.doc.html#88478">4.7</a>.
  *
  * @see Class#getModifiers()
@@ -52,9 +52,9 @@ import sun.reflect.ReflectionFactory;
 public
 class Modifier {
 
-    /*
+    /* 
      * Bootstrapping protocol between java.lang and java.lang.reflect
-     *  packages
+     *  packages 
      */
     static {
         sun.reflect.ReflectionFactory factory =
@@ -68,144 +68,144 @@ class Modifier {
      * Return {@code true} if the integer argument includes the
      * {@code public} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code public} modifier; {@code false} otherwise.
      */
     public static boolean isPublic(int mod) {
-        return (mod & PUBLIC) != 0;
+	return (mod & PUBLIC) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code private} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code private} modifier; {@code false} otherwise.
      */
     public static boolean isPrivate(int mod) {
-        return (mod & PRIVATE) != 0;
+	return (mod & PRIVATE) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code protected} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code protected} modifier; {@code false} otherwise.
      */
     public static boolean isProtected(int mod) {
-        return (mod & PROTECTED) != 0;
+	return (mod & PROTECTED) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code static} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code static} modifier; {@code false} otherwise.
      */
     public static boolean isStatic(int mod) {
-        return (mod & STATIC) != 0;
+	return (mod & STATIC) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code final} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code final} modifier; {@code false} otherwise.
      */
     public static boolean isFinal(int mod) {
-        return (mod & FINAL) != 0;
+	return (mod & FINAL) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code synchronized} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code synchronized} modifier; {@code false} otherwise.
      */
     public static boolean isSynchronized(int mod) {
-        return (mod & SYNCHRONIZED) != 0;
+	return (mod & SYNCHRONIZED) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code volatile} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code volatile} modifier; {@code false} otherwise.
      */
     public static boolean isVolatile(int mod) {
-        return (mod & VOLATILE) != 0;
+	return (mod & VOLATILE) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code transient} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code transient} modifier; {@code false} otherwise.
      */
     public static boolean isTransient(int mod) {
-        return (mod & TRANSIENT) != 0;
+	return (mod & TRANSIENT) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code native} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code native} modifier; {@code false} otherwise.
      */
     public static boolean isNative(int mod) {
-        return (mod & NATIVE) != 0;
+	return (mod & NATIVE) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code interface} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code interface} modifier; {@code false} otherwise.
      */
     public static boolean isInterface(int mod) {
-        return (mod & INTERFACE) != 0;
+	return (mod & INTERFACE) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code abstract} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code abstract} modifier; {@code false} otherwise.
      */
     public static boolean isAbstract(int mod) {
-        return (mod & ABSTRACT) != 0;
+	return (mod & ABSTRACT) != 0;
     }
 
     /**
      * Return {@code true} if the integer argument includes the
      * {@code strictfp} modifier, {@code false} otherwise.
      *
-     * @param   mod a set of modifiers
+     * @param 	mod a set of modifiers
      * @return {@code true} if {@code mod} includes the
      * {@code strictfp} modifier; {@code false} otherwise.
      */
     public static boolean isStrict(int mod) {
-        return (mod & STRICT) != 0;
+	return (mod & STRICT) != 0;
     }
 
     /**
@@ -218,16 +218,16 @@ class Modifier {
      * suggested modifier orderings given in <a
      * href="http://java.sun.com/docs/books/jls/second_edition/html/j.title.doc.html"><em>The
      * Java Language Specification, Second Edition</em></a> sections
-     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#21613">&sect;8.1.1</a>,
-     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#78091">&sect;8.3.1</a>,
-     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#78188">&sect;8.4.3</a>,
+     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#21613">&sect;8.1.1</a>, 
+     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#78091">&sect;8.3.1</a>, 
+     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#78188">&sect;8.4.3</a>, 
      * <a href="http://java.sun.com/docs/books/jls/second_edition/html/classes.doc.html#42018">&sect;8.8.3</a>, and
-     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/interfaces.doc.html#235947">&sect;9.1.1</a>.
+     * <a href="http://java.sun.com/docs/books/jls/second_edition/html/interfaces.doc.html#235947">&sect;9.1.1</a>.  
      * The full modifier ordering used by this method is:
-     * <blockquote> {@code
+     * <blockquote> {@code  
      * public protected private abstract static final transient
      * volatile synchronized native strictfp
-     * interface } </blockquote>
+     * interface } </blockquote> 
      * The {@code interface} modifier discussed in this class is
      * not a true modifier in the Java language and it appears after
      * all other modifiers listed by this method.  This method may
@@ -236,32 +236,32 @@ class Modifier {
      * possible validity of the combination of modifiers represented
      * by the input.
      *
-     * @param   mod a set of modifiers
-     * @return  a string representation of the set of modifiers
+     * @param	mod a set of modifiers
+     * @return	a string representation of the set of modifiers
      * represented by {@code mod}
      */
     public static String toString(int mod) {
-        StringBuffer sb = new StringBuffer();
-        int len;
+	StringBuffer sb = new StringBuffer();
+	int len;
 
-        if ((mod & PUBLIC) != 0)        sb.append("public ");
-        if ((mod & PROTECTED) != 0)     sb.append("protected ");
-        if ((mod & PRIVATE) != 0)       sb.append("private ");
+	if ((mod & PUBLIC) != 0)	sb.append("public ");
+	if ((mod & PROTECTED) != 0)	sb.append("protected ");
+	if ((mod & PRIVATE) != 0)	sb.append("private ");
 
-        /* Canonical order */
-        if ((mod & ABSTRACT) != 0)      sb.append("abstract ");
-        if ((mod & STATIC) != 0)        sb.append("static ");
-        if ((mod & FINAL) != 0)         sb.append("final ");
-        if ((mod & TRANSIENT) != 0)     sb.append("transient ");
-        if ((mod & VOLATILE) != 0)      sb.append("volatile ");
-        if ((mod & SYNCHRONIZED) != 0)  sb.append("synchronized ");
-        if ((mod & NATIVE) != 0)        sb.append("native ");
-        if ((mod & STRICT) != 0)        sb.append("strictfp ");
-        if ((mod & INTERFACE) != 0)     sb.append("interface ");
+	/* Canonical order */
+	if ((mod & ABSTRACT) != 0)	sb.append("abstract ");
+	if ((mod & STATIC) != 0)	sb.append("static ");
+	if ((mod & FINAL) != 0)		sb.append("final ");
+	if ((mod & TRANSIENT) != 0)	sb.append("transient ");
+	if ((mod & VOLATILE) != 0)	sb.append("volatile ");
+	if ((mod & SYNCHRONIZED) != 0)	sb.append("synchronized ");
+	if ((mod & NATIVE) != 0)	sb.append("native ");
+	if ((mod & STRICT) != 0)	sb.append("strictfp ");
+	if ((mod & INTERFACE) != 0)	sb.append("interface ");
 
-        if ((len = sb.length()) > 0)    /* trim trailing space */
-            return sb.toString().substring(0, len-1);
-        return "";
+	if ((len = sb.length()) > 0)	/* trim trailing space */
+	    return sb.toString().substring(0, len-1);
+	return "";
     }
 
     /*
@@ -271,75 +271,75 @@ class Modifier {
      */
 
     /**
-     * The {@code int} value representing the {@code public}
+     * The {@code int} value representing the {@code public} 
      * modifier.
-     */
+     */    
     public static final int PUBLIC           = 0x00000001;
 
     /**
-     * The {@code int} value representing the {@code private}
+     * The {@code int} value representing the {@code private} 
      * modifier.
-     */
+     */    
     public static final int PRIVATE          = 0x00000002;
 
     /**
-     * The {@code int} value representing the {@code protected}
+     * The {@code int} value representing the {@code protected} 
      * modifier.
-     */
+     */    
     public static final int PROTECTED        = 0x00000004;
 
     /**
-     * The {@code int} value representing the {@code static}
+     * The {@code int} value representing the {@code static} 
      * modifier.
-     */
+     */    
     public static final int STATIC           = 0x00000008;
 
     /**
-     * The {@code int} value representing the {@code final}
+     * The {@code int} value representing the {@code final} 
      * modifier.
-     */
+     */    
     public static final int FINAL            = 0x00000010;
 
     /**
-     * The {@code int} value representing the {@code synchronized}
+     * The {@code int} value representing the {@code synchronized} 
      * modifier.
-     */
+     */    
     public static final int SYNCHRONIZED     = 0x00000020;
 
     /**
-     * The {@code int} value representing the {@code volatile}
+     * The {@code int} value representing the {@code volatile} 
      * modifier.
-     */
+     */    
     public static final int VOLATILE         = 0x00000040;
 
     /**
-     * The {@code int} value representing the {@code transient}
+     * The {@code int} value representing the {@code transient} 
      * modifier.
-     */
+     */    
     public static final int TRANSIENT        = 0x00000080;
 
     /**
-     * The {@code int} value representing the {@code native}
+     * The {@code int} value representing the {@code native} 
      * modifier.
-     */
+     */    
     public static final int NATIVE           = 0x00000100;
 
     /**
-     * The {@code int} value representing the {@code interface}
+     * The {@code int} value representing the {@code interface} 
      * modifier.
-     */
+     */    
     public static final int INTERFACE        = 0x00000200;
 
     /**
-     * The {@code int} value representing the {@code abstract}
+     * The {@code int} value representing the {@code abstract} 
      * modifier.
-     */
+     */    
     public static final int ABSTRACT         = 0x00000400;
 
     /**
-     * The {@code int} value representing the {@code strictfp}
+     * The {@code int} value representing the {@code strictfp} 
      * modifier.
-     */
+     */    
     public static final int STRICT           = 0x00000800;
 
     // Bits not (yet) exposed in the public API either because they

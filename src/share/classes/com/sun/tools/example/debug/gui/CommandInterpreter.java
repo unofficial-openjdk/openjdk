@@ -48,16 +48,16 @@ public class CommandInterpreter {
     private String lastCommand = "help";
 
     public CommandInterpreter(Environment env) {
-        this(env, true);
+	this(env, true);
     }
 
     public CommandInterpreter(Environment env, boolean echo) {
-        this.env = env;
-        this.echo = echo;
-        this.runtime = env.getExecutionManager();
-        this.context = env.getContextManager();
-        this.classManager = env.getClassManager();
-        this.sourceManager = env.getSourceManager();
+	this.env = env;
+	this.echo = echo;
+	this.runtime = env.getExecutionManager();
+	this.context = env.getContextManager();
+	this.classManager = env.getClassManager();
+	this.sourceManager = env.getSourceManager();
     }
 
     private ThreadReference[] threads = null;
@@ -83,26 +83,26 @@ public class CommandInterpreter {
     }
 
     private ThreadReference findThread(String idToken) throws NoSessionException {
-        String id;
+	String id;
         ThreadReference thread = null;
         if (idToken.startsWith("t@")) {
             id = idToken.substring(2);
         } else {
-            id = idToken;
-        }
+	    id = idToken;
+	}
         try {
-            ThreadReference[] threads = threads();
+	    ThreadReference[] threads = threads();
             long threadID = Long.parseLong(id, 16);
-            for (int i = 0; i < threads.length; i++) {
-                if (threads[i].uniqueID() == threadID) {
-                    thread = threads[i];
-                    break;
-                }
-            }
-            if (thread == null) {
-                //env.failure("No thread for id \"" + idToken + "\"");
-                env.failure("\"" + idToken + "\" is not a valid thread id.");
-            }
+	    for (int i = 0; i < threads.length; i++) {
+		if (threads[i].uniqueID() == threadID) {
+		    thread = threads[i];
+		    break;
+		}
+	    }
+	    if (thread == null) {
+		//env.failure("No thread for id \"" + idToken + "\"");
+		env.failure("\"" + idToken + "\" is not a valid thread id.");
+	    }
         } catch (NumberFormatException e) {
             env.error("Thread id \"" + idToken + "\" is ill-formed.");
             thread = null;
@@ -111,32 +111,32 @@ public class CommandInterpreter {
     }
 
     private ThreadIterator allThreads() throws NoSessionException {
-        threads = null;
-        //### Why not use runtime.allThreads().iterator() ?
+	threads = null;
+	//### Why not use runtime.allThreads().iterator() ?
         return new ThreadIterator(runtime.topLevelThreadGroups());
     }
 
     private ThreadIterator currentThreadGroupThreads() throws NoSessionException {
-        threads = null;
+	threads = null;
         return new ThreadIterator(getDefaultThreadGroup());
     }
 
     private ThreadGroupIterator allThreadGroups() throws NoSessionException {
-        threads = null;
+	threads = null;
         return new ThreadGroupIterator(runtime.topLevelThreadGroups());
     }
 
     private ThreadGroupReference defaultThreadGroup;
 
     private ThreadGroupReference getDefaultThreadGroup() throws NoSessionException {
-        if (defaultThreadGroup == null) {
-            defaultThreadGroup = runtime.systemThreadGroup();
-        }
-        return defaultThreadGroup;
+	if (defaultThreadGroup == null) {
+	    defaultThreadGroup = runtime.systemThreadGroup();
+	}
+	return defaultThreadGroup;
     }
 
     private void setDefaultThreadGroup(ThreadGroupReference tg) {
-        defaultThreadGroup = tg;
+	defaultThreadGroup = tg;
     }
 
     /*
@@ -147,13 +147,13 @@ public class CommandInterpreter {
 
     private void commandClasses() throws NoSessionException {
         List list = runtime.allClasses();
-        OutputSink out = env.getOutputSink();
+	OutputSink out = env.getOutputSink();
         //out.println("** classes list **");
         for (int i = 0 ; i < list.size() ; i++) {
             ReferenceType refType = (ReferenceType)list.get(i);
             out.println(refType.name());
         }
-        out.show();
+	out.show();
     }
 
 
@@ -165,10 +165,10 @@ public class CommandInterpreter {
             return;
         }
         String idClass = t.nextToken();
-        ReferenceType cls = findClass(idClass);
-        if (cls != null) {
+	ReferenceType cls = findClass(idClass);
+	if (cls != null) {
             List methods = cls.allMethods();
-            OutputSink out = env.getOutputSink();
+	    OutputSink out = env.getOutputSink();
             for (int i = 0; i < methods.size(); i++) {
                 Method method = (Method)methods.get(i);
                 out.print(method.declaringType().name() + " " +
@@ -185,29 +185,29 @@ public class CommandInterpreter {
                 }
                 out.println(")");
             }
-            out.show();
-        } else {
-            //### Should validate class name syntax.
+	    out.show();
+	} else {
+	    //### Should validate class name syntax.
             env.failure("\"" + idClass + "\" is not a valid id or class name.");
-        }
+	}
     }
 
     private ReferenceType findClass(String pattern) throws NoSessionException {
-        List results = runtime.findClassesMatchingPattern(pattern);
-        if (results.size() > 0) {
-            //### Should handle multiple results sensibly.
-            return (ReferenceType)results.get(0);
-        }
-        return null;
+	List results = runtime.findClassesMatchingPattern(pattern);
+	if (results.size() > 0) {
+	    //### Should handle multiple results sensibly.
+	    return (ReferenceType)results.get(0);
+	}
+	return null;
     }
 
     // Command: threads
 
     private void commandThreads(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
-            OutputSink out = env.getOutputSink();
+	    OutputSink out = env.getOutputSink();
             printThreadGroup(out, getDefaultThreadGroup(), 0);
-            out.show();
+	    out.show();
             return;
         }
         String name = t.nextToken();
@@ -215,14 +215,14 @@ public class CommandInterpreter {
         if (tg == null) {
             env.failure(name + " is not a valid threadgroup name.");
         } else {
-            OutputSink out = env.getOutputSink();
+	    OutputSink out = env.getOutputSink();
             printThreadGroup(out, tg, 0);
-            out.show();
+	    out.show();
         }
     }
 
     private ThreadGroupReference findThreadGroup(String name) throws NoSessionException {
-        //### Issue: Uniqueness of thread group names is not enforced.
+	//### Issue: Uniqueness of thread group names is not enforced.
         ThreadGroupIterator tgi = allThreadGroups();
         while (tgi.hasNext()) {
             ThreadGroupReference tg = tgi.nextThreadGroup();
@@ -296,19 +296,19 @@ public class CommandInterpreter {
     // Command: threadgroups
 
     private void commandThreadGroups() throws NoSessionException {
-        ThreadGroupIterator it = allThreadGroups();
+	ThreadGroupIterator it = allThreadGroups();
         int cnt = 0;
-        OutputSink out = env.getOutputSink();
+	OutputSink out = env.getOutputSink();
         while (it.hasNext()) {
             ThreadGroupReference tg = it.nextThreadGroup();
             ++cnt;
             out.println("" + cnt + ". " + Utils.description(tg) + " " + tg.name());
-        }
-        out.show();
+	}
+	out.show();
     }
 
     // Command: thread
-
+    
     private void commandThread(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
             env.error("Thread number not specified.");
@@ -316,13 +316,13 @@ public class CommandInterpreter {
         }
         ThreadReference thread = findThread(t.nextToken());
         if (thread != null) {
-            //### Should notify user.
-            context.setCurrentThread(thread);
+	    //### Should notify user.
+	    context.setCurrentThread(thread);
         }
     }
 
     // Command: threadgroup
-
+    
     private void commandThreadGroup(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
             env.error("Threadgroup name not specified.");
@@ -333,71 +333,71 @@ public class CommandInterpreter {
         if (tg == null) {
             env.failure(name + " is not a valid threadgroup name.");
         } else {
-            //### Should notify user.
+	    //### Should notify user.
             setDefaultThreadGroup(tg);
         }
     }
 
     // Command: run
-
+    
     private void commandRun(StringTokenizer t) throws NoSessionException {
-        if (doLoad(false, t)) {
-            env.notice("Running ...");
-        }
+	if (doLoad(false, t)) {
+	    env.notice("Running ...");
+	}
     }
 
     // Command: load
 
     private void commandLoad(StringTokenizer t) throws NoSessionException {
-        if (doLoad(true, t)) {}
+	if (doLoad(true, t)) {}
     }
-
+    
     private boolean doLoad(boolean suspended,
-                           StringTokenizer t) throws NoSessionException {
+			   StringTokenizer t) throws NoSessionException {
 
         String clname;
-
+	
         if (!t.hasMoreTokens()) {
-            clname = context.getMainClassName();
-            if (!clname.equals("")) {
-                // Run from prevously-set class name.
-                try {
-                    String vmArgs = context.getVmArguments();
-                    runtime.run(suspended,
-                                vmArgs,
-                                clname,
-                                context.getProgramArguments());
-                    return true;
-                } catch (VMLaunchFailureException e) {
-                    env.failure("Attempt to launch main class \"" + clname + "\" failed.");
-                }
-            } else {
-                env.failure("No main class specifed and no current default defined.");
-            }
+	    clname = context.getMainClassName();
+	    if (!clname.equals("")) {
+		// Run from prevously-set class name.
+		try {
+		    String vmArgs = context.getVmArguments();
+		    runtime.run(suspended,
+				vmArgs,
+				clname,
+				context.getProgramArguments());
+		    return true;
+		} catch (VMLaunchFailureException e) {
+		    env.failure("Attempt to launch main class \"" + clname + "\" failed.");
+		}
+	    } else {
+		env.failure("No main class specifed and no current default defined.");
+	    }
         } else {
-            clname = t.nextToken();
-            StringBuffer sbuf = new StringBuffer();
-            // Allow VM arguments to be specified here?
-            while (t.hasMoreTokens()) {
-                String tok = t.nextToken();
-                sbuf.append(tok);
-                if (t.hasMoreTokens()) {
-                    sbuf.append(' ');
-                }
-            }
-            String args = sbuf.toString();
-            try {
-                String vmArgs = context.getVmArguments();
-                runtime.run(suspended, vmArgs, clname, args);
-                context.setMainClassName(clname);
-                //context.setVmArguments(vmArgs);
-                context.setProgramArguments(args);
-                return true;
-            } catch (VMLaunchFailureException e) {
+	    clname = t.nextToken();
+	    StringBuffer sbuf = new StringBuffer();
+	    // Allow VM arguments to be specified here?
+	    while (t.hasMoreTokens()) {
+		String tok = t.nextToken();
+		sbuf.append(tok);
+		if (t.hasMoreTokens()) {
+		    sbuf.append(' ');
+		}
+	    }
+	    String args = sbuf.toString();
+	    try {
+		String vmArgs = context.getVmArguments();
+		runtime.run(suspended, vmArgs, clname, args);
+		context.setMainClassName(clname);
+		//context.setVmArguments(vmArgs);
+		context.setProgramArguments(args);
+		return true;
+	    } catch (VMLaunchFailureException e) {
                 env.failure("Attempt to launch main class \"" + clname + "\" failed.");
             }
-        }
-        return false;
+	}
+	return false;
     }
 
     // Command: connect
@@ -413,48 +413,48 @@ public class CommandInterpreter {
     // Command: attach
 
     private void commandAttach(StringTokenizer t) {
-        String portName;
-        if (!t.hasMoreTokens()) {
-            portName = context.getRemotePort();
-            if (!portName.equals("")) {
-                try {
-                    runtime.attach(portName);
-                } catch (VMLaunchFailureException e) {
-                    env.failure("Attempt to attach to port \"" + portName + "\" failed.");
-                }
-            } else {
-                env.failure("No port specifed and no current default defined.");
-            }
-        } else {
-            portName = t.nextToken();
-            try {
-                runtime.attach(portName);
-            } catch (VMLaunchFailureException e) {
-                env.failure("Attempt to attach to port \"" + portName + "\" failed.");
-            }
-            context.setRemotePort(portName);
-        }
+	String portName;
+	if (!t.hasMoreTokens()) {
+	    portName = context.getRemotePort();
+	    if (!portName.equals("")) {
+		try {
+		    runtime.attach(portName);
+		} catch (VMLaunchFailureException e) {
+		    env.failure("Attempt to attach to port \"" + portName + "\" failed.");
+		}
+	    } else {
+		env.failure("No port specifed and no current default defined.");
+	    }
+	} else {
+	    portName = t.nextToken();
+	    try {
+		runtime.attach(portName);
+	    } catch (VMLaunchFailureException e) {
+		env.failure("Attempt to attach to port \"" + portName + "\" failed.");
+	    }
+	    context.setRemotePort(portName);
+	}
     }
 
     // Command: detach
 
     private void commandDetach(StringTokenizer t) throws NoSessionException {
-        runtime.detach();
+	runtime.detach();
     }
 
     // Command: interrupt
 
     private void commandInterrupt(StringTokenizer t) throws NoSessionException {
-        runtime.interrupt();
+	runtime.interrupt();
     }
 
     // Command: suspend
 
     private void commandSuspend(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
-            // Suspend all threads in the current thread group.
-            //### Issue: help message says default is all threads.
-            //### Behavior here agrees with 'jdb', however.
+	    // Suspend all threads in the current thread group.
+	    //### Issue: help message says default is all threads.
+	    //### Behavior here agrees with 'jdb', however.
             ThreadIterator ti = currentThreadGroupThreads();
             while (ti.hasNext()) {
                 // TODO - don't suspend debugger threads
@@ -466,8 +466,8 @@ public class CommandInterpreter {
                 ThreadReference thread = findThread(t.nextToken());
                 if (thread != null) {
                     //thread.suspend();
-                    runtime.suspendThread(thread);
-                }
+		    runtime.suspendThread(thread);
+                }                
             }
         }
     }
@@ -476,63 +476,63 @@ public class CommandInterpreter {
 
     private void commandResume(StringTokenizer t) throws NoSessionException {
          if (!t.hasMoreTokens()) {
-            // Suspend all threads in the current thread group.
-            //### Issue: help message says default is all threads.
-            //### Behavior here agrees with 'jdb', however.
+	    // Suspend all threads in the current thread group.
+	    //### Issue: help message says default is all threads.
+	    //### Behavior here agrees with 'jdb', however.
             ThreadIterator ti = currentThreadGroupThreads();
             while (ti.hasNext()) {
                 // TODO - don't suspend debugger threads
                 ti.nextThread().resume();
             }
-            env.notice("All threads resumed.");
+	    env.notice("All threads resumed.");
          } else {
              while (t.hasMoreTokens()) {
                 ThreadReference thread = findThread(t.nextToken());
                 if (thread != null) {
                     //thread.resume();
-                    runtime.resumeThread(thread);
-                }
-             }
-         }
+		    runtime.resumeThread(thread);
+		}
+	     }
+	 }
     }
 
     // Command: cont
 
     private void commandCont() throws NoSessionException {
-        try {
-            runtime.go();
-        } catch (VMNotInterruptedException e) {
-            //### failure?
-            env.notice("Target VM is already running.");
-        }
+	try {
+	    runtime.go();
+	} catch (VMNotInterruptedException e) {
+	    //### failure?
+	    env.notice("Target VM is already running.");
+	}
     }
 
     // Command: step
 
     private void commandStep(StringTokenizer t) throws NoSessionException{
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No current thread.");
             return;
         }
         try {
             if (t.hasMoreTokens() &&
-                t.nextToken().toLowerCase().equals("up")) {
-                runtime.stepOut(current);
+		t.nextToken().toLowerCase().equals("up")) {
+		runtime.stepOut(current);
             } else {
                 runtime.stepIntoLine(current);
             }
         } catch (AbsentInformationException e) {
             env.failure("No linenumber information available -- " +
-                            "Try \"stepi\" to step by instructions.");
+			    "Try \"stepi\" to step by instructions.");
         }
     }
 
     // Command: stepi
 
     private void commandStepi() throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
-        if (current == null) {
+	ThreadReference current = context.getCurrentThread();
+	if (current == null) {
             env.failure("No current thread.");
             return;
         }
@@ -542,15 +542,15 @@ public class CommandInterpreter {
     // Command: next
 
     private void commandNext() throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No current thread.");
             return;
         }
         try {
-            runtime.stepOverLine(current);
+	    runtime.stepOverLine(current);
         } catch (AbsentInformationException e) {
-            env.failure("No linenumber information available -- " +
+            env.failure("No linenumber information available -- " + 
                             "Try \"nexti\" to step by instructions.");
         }
     }
@@ -558,19 +558,19 @@ public class CommandInterpreter {
     // Command: nexti  (NEW)
 
     private void commandNexti() throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No current thread.");
             return;
         }
-        runtime.stepOverInstruction(current);
+	runtime.stepOverInstruction(current);
     }
 
     // Command: kill
 
     private void commandKill(StringTokenizer t) throws NoSessionException {
-        //### Should change the way in which thread ids and threadgroup names
-        //### are distinguished.
+	//### Should change the way in which thread ids and threadgroup names
+	//### are distinguished.
          if (!t.hasMoreTokens()) {
             env.error("Usage: kill <threadgroup name> or <thread id>");
             return;
@@ -579,27 +579,27 @@ public class CommandInterpreter {
             String idToken = t.nextToken();
             ThreadReference thread = findThread(idToken);
             if (thread != null) {
-                runtime.stopThread(thread);
+		runtime.stopThread(thread);
                 env.notice("Thread " + thread.name() + " killed.");
                 return;
             } else {
                 /* Check for threadgroup name, NOT skipping "system". */
-                //### Should skip "system"?  Classic 'jdb' does this.
-                //### Should deal with possible non-uniqueness of threadgroup names.
-                ThreadGroupIterator itg = allThreadGroups();
+		//### Should skip "system"?  Classic 'jdb' does this.
+		//### Should deal with possible non-uniqueness of threadgroup names.
+		ThreadGroupIterator itg = allThreadGroups();
                 while (itg.hasNext()) {
                     ThreadGroupReference tg = itg.nextThreadGroup();
                     if (tg.name().equals(idToken)) {
                         ThreadIterator it = new ThreadIterator(tg);
                         while (it.hasNext()) {
                             runtime.stopThread(it.nextThread());
-                        }
-                        env.notice("Threadgroup " + tg.name() + "killed.");
+			}
+			env.notice("Threadgroup " + tg.name() + "killed.");
                         return;
                     }
                 }
                 env.failure("\"" + idToken +
-                            "\" is not a valid threadgroup or id.");
+			    "\" is not a valid threadgroup or id.");
             }
         }
     }
@@ -615,7 +615,7 @@ public class CommandInterpreter {
     // Command: up
 
     //### Print current frame after command?
-
+    
     int readCount(StringTokenizer t) {
         int cnt = 1;
         if (t.hasMoreTokens()) {
@@ -629,9 +629,9 @@ public class CommandInterpreter {
         }
         return cnt;
     }
-
+    
     void commandUp(StringTokenizer t) throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No current thread.");
             return;
@@ -640,21 +640,21 @@ public class CommandInterpreter {
         if (nLevels <= 0) {
             env.error("usage: up [n frames]");
             return;
-        }
-        try {
-            int delta = context.moveCurrentFrameIndex(current, -nLevels);
-            if (delta == 0) {
-                env.notice("Already at top of stack.");
-            } else if (-delta < nLevels) {
-                env.notice("Moved up " + delta + " frames to top of stack.");
-            }
-        } catch (VMNotInterruptedException e) {
-            env.failure("Target VM must be in interrupted state.");
-        }
+        }            
+	try {
+	    int delta = context.moveCurrentFrameIndex(current, -nLevels);
+	    if (delta == 0) {
+		env.notice("Already at top of stack.");
+	    } else if (-delta < nLevels) {
+		env.notice("Moved up " + delta + " frames to top of stack.");
+	    }
+	} catch (VMNotInterruptedException e) {
+	    env.failure("Target VM must be in interrupted state.");
+	}
     }
-
+    
     private void commandDown(StringTokenizer t) throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No current thread.");
             return;
@@ -663,23 +663,23 @@ public class CommandInterpreter {
         if (nLevels <= 0) {
             env.error("usage: down [n frames]");
             return;
-        }
-        try {
-            int delta = context.moveCurrentFrameIndex(current, nLevels);
-            if (delta == 0) {
-                env.notice("Already at bottom of stack.");
-            } else if (delta < nLevels) {
-                env.notice("Moved down " + delta + " frames to bottom of stack.");
-            }
-        } catch (VMNotInterruptedException e) {
-            env.failure("Target VM must be in interrupted state.");
-        }
+        }            
+	try {
+	    int delta = context.moveCurrentFrameIndex(current, nLevels);
+	    if (delta == 0) {
+		env.notice("Already at bottom of stack.");
+	    } else if (delta < nLevels) {
+		env.notice("Moved down " + delta + " frames to bottom of stack.");
+	    }
+	} catch (VMNotInterruptedException e) {
+	    env.failure("Target VM must be in interrupted state.");
+	}
     }
-
+    
     // Command: frame
-
+    
     private void commandFrame(StringTokenizer t) throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No current thread.");
             return;
@@ -687,7 +687,7 @@ public class CommandInterpreter {
         if (!t.hasMoreTokens()) {
             env.error("usage: frame <frame-index>");
             return;
-        }
+        }            
         String idToken = t.nextToken();
         int n;
         try {
@@ -699,18 +699,18 @@ public class CommandInterpreter {
             env.error("use positive frame index");
             return;
         }
-        try {
-            int delta = context.setCurrentFrameIndex(current, n);
-            if (delta == 0) {
-                env.notice("Frame unchanged.");
-            } else if (delta < 0) {
-                env.notice("Moved up " + -delta + " frames.");
-            } else {
-                env.notice("Moved down " + delta + " frames.");
-            }
-        } catch (VMNotInterruptedException e) {
-            env.failure("Target VM must be in interrupted state.");
-        }
+	try {
+	    int delta = context.setCurrentFrameIndex(current, n);
+	    if (delta == 0) {
+		env.notice("Frame unchanged.");
+	    } else if (delta < 0) {
+		env.notice("Moved up " + -delta + " frames.");
+	    } else {
+		env.notice("Moved down " + delta + " frames.");
+	    }
+	} catch (VMNotInterruptedException e) {
+	    env.failure("Target VM must be in interrupted state.");
+	}
     }
 
     // Command: where
@@ -720,8 +720,8 @@ public class CommandInterpreter {
     //### and 'up' and 'down' in this respect.
 
     private void commandWhere(StringTokenizer t, boolean showPC)
-                                                throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+						throws NoSessionException {
+	ThreadReference current = context.getCurrentThread();
         if (!t.hasMoreTokens()) {
             if (current == null) {
                 env.error("No thread specified.");
@@ -731,18 +731,18 @@ public class CommandInterpreter {
         } else {
             String token = t.nextToken();
             if (token.toLowerCase().equals("all")) {
-                ThreadIterator it = allThreads();
-                while (it.hasNext()) {
-                    ThreadReference thread = (ThreadReference)it.next();
+		ThreadIterator it = allThreads();
+		while (it.hasNext()) {
+		    ThreadReference thread = (ThreadReference)it.next();
                     out.println(thread.name() + ": ");
                     dumpStack(thread, showPC);
                 }
             } else {
                 ThreadReference thread = findThread(t.nextToken());
-                //### Do we want to set current thread here?
-                //### Should notify user of change.
+		//### Do we want to set current thread here?
+		//### Should notify user of change.
                 if (thread != null) {
-                    context.setCurrentThread(thread);
+		    context.setCurrentThread(thread);
                 }
                 dumpStack(thread, showPC);
             }
@@ -750,26 +750,26 @@ public class CommandInterpreter {
     }
 
     private void dumpStack(ThreadReference thread, boolean showPC) {
-        //### Check for these.
-        //env.failure("Thread no longer exists.");
-        //env.failure("Target VM must be in interrupted state.");
-        //env.failure("Current thread isn't suspended.");
-        //### Should handle extremely long stack traces sensibly for user.
-        List stack = null;
-        try {
-            stack = thread.frames();
-        } catch (IncompatibleThreadStateException e) {
+	//### Check for these.
+	//env.failure("Thread no longer exists.");
+	//env.failure("Target VM must be in interrupted state.");
+	//env.failure("Current thread isn't suspended.");
+	//### Should handle extremely long stack traces sensibly for user.
+	List stack = null;
+	try {
+	    stack = thread.frames();
+	} catch (IncompatibleThreadStateException e) {
             env.failure("Thread is not suspended.");
-        }
-        //### Fix this!
-        //### Previously mishandled cases where thread was not current.
-        //### Now, prints all of the stack regardless of current frame.
-        int frameIndex = 0;
-        //int frameIndex = context.getCurrentFrameIndex();
+	}
+	//### Fix this!
+	//### Previously mishandled cases where thread was not current.
+	//### Now, prints all of the stack regardless of current frame.
+	int frameIndex = 0;
+	//int frameIndex = context.getCurrentFrameIndex();
         if (stack == null) {
             env.failure("Thread is not running (no stack).");
         } else {
-            OutputSink out = env.getOutputSink();
+	    OutputSink out = env.getOutputSink();
             int nFrames = stack.size();
             for (int i = frameIndex; i < nFrames; i++) {
                 StackFrame frame = (StackFrame)stack.get(i);
@@ -800,28 +800,28 @@ public class CommandInterpreter {
                 }
                 out.println();
             }
-            out.show();
+	    out.show();
         }
     }
-
+    
     private void listEventRequests() throws NoSessionException {
         // Print set breakpoints
         Iterator iter = runtime.eventRequestSpecs().iterator();
         if (!iter.hasNext()) {
             env.notice("No breakpoints/watchpoints/exceptions set.");
-        } else {
-            OutputSink out = env.getOutputSink();
+	} else { 
+	    OutputSink out = env.getOutputSink();
             out.println("Current breakpoints/watchpoints/exceptions set:");
-            while (iter.hasNext()) {
-                EventRequestSpec  bp = (EventRequestSpec)iter.next();
-                out.println("\t" + bp);
-            }
-            out.show();
-        }
+	    while (iter.hasNext()) {
+		EventRequestSpec  bp = (EventRequestSpec)iter.next();
+		out.println("\t" + bp);
+	    }
+	    out.show();
+	}
     }
 
     private BreakpointSpec parseBreakpointSpec(String bptSpec) {
-        StringTokenizer t = new StringTokenizer(bptSpec);
+	StringTokenizer t = new StringTokenizer(bptSpec);
         BreakpointSpec bpSpec = null;
 //        try {
             String token = t.nextToken("@:( \t\n\r");
@@ -833,7 +833,7 @@ public class CommandInterpreter {
             } catch (NoSuchElementException e) {
                 rest = null;
             }
-            if ((rest != null) && rest.startsWith("@")) {
+	    if ((rest != null) && rest.startsWith("@")) {
                 t = new StringTokenizer(rest.substring(1));
                 String sourceName = token;
                 String lineToken = t.nextToken();
@@ -841,7 +841,7 @@ public class CommandInterpreter {
                 if (t.hasMoreTokens()) {
                     return null;
                 }
-                bpSpec = runtime.createSourceLineBreakpoint(sourceName,
+                bpSpec = runtime.createSourceLineBreakpoint(sourceName, 
                                                             lineNumber);
             } else if ((rest != null) && rest.startsWith(":")) {
                 t = new StringTokenizer(rest.substring(1));
@@ -864,13 +864,13 @@ public class CommandInterpreter {
                 List<String> argumentList = null;
                 if (rest != null) {
                     if (!rest.startsWith("(") || !rest.endsWith(")")) {
-                        //### Should throw exception with error message
+			//### Should throw exception with error message
                         //out.println("Invalid method specification: "
                         //            + methodName + rest);
                         return null;
                     }
                     // Trim the parens
-                    //### What about spaces in arglist?
+		    //### What about spaces in arglist?
                     rest = rest.substring(1, rest.length() - 1);
                     argumentList = new ArrayList<String>();
                     t = new StringTokenizer(rest, ",");
@@ -879,7 +879,7 @@ public class CommandInterpreter {
                     }
                 }
                 bpSpec = runtime.createMethodBreakpoint(classId,
-                                                       methodName,
+                                                       methodName, 
                                                        argumentList);
             }
 //        } catch (Exception e) {
@@ -895,26 +895,26 @@ public class CommandInterpreter {
 
         if (!t.hasMoreTokens()) {
             listEventRequests();
-        } else {
-            token = t.nextToken();
-            // Ignore optional "at" or "in" token.
-            // Allowed for backward compatibility.
+	} else {
+	    token = t.nextToken();
+	    // Ignore optional "at" or "in" token.
+	    // Allowed for backward compatibility.
             if (token.equals("at") || token.equals("in")) {
-                if (t.hasMoreTokens()) {
-                    token = t.nextToken();
-                } else {
-                    env.error("Missing breakpoint specification.");
-                    return;
-                }
-            }
+		if (t.hasMoreTokens()) {
+		    token = t.nextToken();
+		} else {
+		    env.error("Missing breakpoint specification.");
+		    return;
+		}
+	    }
             BreakpointSpec bpSpec = parseBreakpointSpec(token);
-            if (bpSpec != null) {
-                //### Add sanity-checks for deferred breakpoint.
-                runtime.install(bpSpec);
-            } else {
-                env.error("Ill-formed breakpoint specification.");
-            }
-        }
+	    if (bpSpec != null) {
+		//### Add sanity-checks for deferred breakpoint.
+		runtime.install(bpSpec);
+	    } else {
+		env.error("Ill-formed breakpoint specification.");
+	    }
+	}
     }
 
     private void commandClear(StringTokenizer t) throws NoSessionException {
@@ -923,13 +923,13 @@ public class CommandInterpreter {
             listEventRequests();
             return;
         }
-        //### need 'clear all'
+	//### need 'clear all'
         BreakpointSpec bpSpec = parseBreakpointSpec(t.nextToken());
         if (bpSpec != null) {
             Iterator iter = runtime.eventRequestSpecs().iterator();
             if (!iter.hasNext()) {
                 env.notice("No breakpoints set.");
-            } else {
+            } else { 
                 List<BreakpointSpec> toDelete = new ArrayList<BreakpointSpec>();
                 while (iter.hasNext()) {
                     BreakpointSpec spec = (BreakpointSpec)iter.next();
@@ -941,44 +941,44 @@ public class CommandInterpreter {
                 if (toDelete.size() <= 1) {
                     env.notice("No matching breakpoint set.");
                 }
-                for (BreakpointSpec spec : toDelete) {
+		for (BreakpointSpec spec : toDelete) {
                     runtime.delete(spec);
-                }
+                }                    
             }
         } else {
-            env.error("Ill-formed breakpoint specification.");
-        }
+	    env.error("Ill-formed breakpoint specification.");
+	}
     }
 
     // Command: list
 
     private void commandList(StringTokenizer t) throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.error("No thread specified.");
             return;
         }
-        Location loc;
-        try {
-            StackFrame frame = context.getCurrentFrame(current);
-            if (frame == null) {
-                env.failure("Thread has not yet begun execution.");
-                return;
-            }
-            loc = frame.location();
-        } catch (VMNotInterruptedException e) {
-            env.failure("Target VM must be in interrupted state.");
-            return;
-        }
-        SourceModel source = sourceManager.sourceForLocation(loc);
-        if (source == null) {
-            if (loc.method().isNative()) {
-                env.failure("Current method is native.");
-                return;
-            }
-            env.failure("No source available for " + Utils.locationString(loc) + ".");
-            return;
-        }
+	Location loc;
+	try {
+	    StackFrame frame = context.getCurrentFrame(current);
+	    if (frame == null) {
+		env.failure("Thread has not yet begun execution.");
+		return;
+	    }
+	    loc = frame.location();
+	} catch (VMNotInterruptedException e) {
+	    env.failure("Target VM must be in interrupted state.");
+	    return;
+	}
+	SourceModel source = sourceManager.sourceForLocation(loc);
+	if (source == null) {
+	    if (loc.method().isNative()) {
+		env.failure("Current method is native.");
+		return;
+	    }
+	    env.failure("No source available for " + Utils.locationString(loc) + ".");
+	    return;
+	}
         ReferenceType refType = loc.declaringType();
         int lineno = loc.lineNumber();
         if (t.hasMoreTokens()) {
@@ -988,49 +988,49 @@ public class CommandInterpreter {
                 lineno = Integer.valueOf(id).intValue();
             } catch (NumberFormatException nfe) {
                 // It isn't -- see if it's a method name.
-                List meths = refType.methodsByName(id);
-                if (meths == null || meths.size() == 0) {
-                    env.failure(id +
-                                " is not a valid line number or " +
-                                "method name for class " +
-                                refType.name());
-                    return;
-                } else if (meths.size() > 1) {
-                    env.failure(id +
-                                " is an ambiguous method name in" +
-                                refType.name());
-                    return;
-                }
-                loc = ((Method)meths.get(0)).location();
-                lineno = loc.lineNumber();
+		List meths = refType.methodsByName(id);
+		if (meths == null || meths.size() == 0) {
+		    env.failure(id + 
+				" is not a valid line number or " +
+				"method name for class " + 
+				refType.name());
+		    return;
+		} else if (meths.size() > 1) {
+		    env.failure(id + 
+				" is an ambiguous method name in" + 
+				refType.name());
+		    return;
+		}
+		loc = ((Method)meths.get(0)).location();
+		lineno = loc.lineNumber();
             }
         }
-        int startLine = (lineno > 4) ? lineno - 4 : 1;
-        int endLine = startLine + 9;
-        String sourceLine = source.sourceLine(lineno);
-        if (sourceLine == null) {
-            env.failure("" +
-                        lineno +
-                        " is an invalid line number for " +
-                        refType.name());
-        } else {
-            OutputSink out = env.getOutputSink();
-            for (int i = startLine; i <= endLine; i++) {
+	int startLine = (lineno > 4) ? lineno - 4 : 1;
+	int endLine = startLine + 9;
+	String sourceLine = source.sourceLine(lineno);
+	if (sourceLine == null) {
+	    env.failure("" +
+			lineno +
+			" is an invalid line number for " +
+			refType.name());
+	} else {
+	    OutputSink out = env.getOutputSink();
+	    for (int i = startLine; i <= endLine; i++) {
                 sourceLine = source.sourceLine(i);
-                if (sourceLine == null) {
-                    break;
-                }
-                out.print(i);
-                out.print("\t");
-                if (i == lineno) {
-                    out.print("=> ");
-                } else {
-                    out.print("   ");
-                }
-                out.println(sourceLine);
-            }
-            out.show();
-        }
+		if (sourceLine == null) {
+		    break;
+		}
+		out.print(i);
+		out.print("\t");
+		if (i == lineno) {
+		    out.print("=> ");
+		} else {
+		    out.print("   ");
+		}
+		out.println(sourceLine);
+	    }
+	    out.show();
+	}
     }
 
     // Command: use
@@ -1040,8 +1040,8 @@ public class CommandInterpreter {
         if (!t.hasMoreTokens()) {
             out.println(sourceManager.getSourcePath().asString());
         } else {
-            //### Should throw exception for invalid path.
-            //### E.g., vetoable property change.
+	    //### Should throw exception for invalid path.
+	    //### E.g., vetoable property change.
             sourceManager.setSourcePath(new SearchPath(t.nextToken()));
         }
     }
@@ -1053,8 +1053,8 @@ public class CommandInterpreter {
         if (!t.hasMoreTokens()) {
             out.println(sourceManager.getSourcePath().asString());
         } else {
-            //### Should throw exception for invalid path.
-            //### E.g., vetoable property change.
+	    //### Should throw exception for invalid path.
+	    //### E.g., vetoable property change.
             sourceManager.setSourcePath(new SearchPath(t.nextToken()));
         }
     }
@@ -1066,8 +1066,8 @@ public class CommandInterpreter {
         if (!t.hasMoreTokens()) {
             out.println(classManager.getClassPath().asString());
         } else {
-            //### Should throw exception for invalid path.
-            //### E.g., vetoable property change.
+	    //### Should throw exception for invalid path.
+	    //### E.g., vetoable property change.
             classManager.setClassPath(new SearchPath(t.nextToken()));
         }
     }
@@ -1077,49 +1077,49 @@ public class CommandInterpreter {
 
     private void commandView(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
-            env.error("Argument required");
+	    env.error("Argument required");
         } else {
-            String name = t.nextToken();
-            if (name.endsWith(".java") ||
-                name.indexOf(File.separatorChar) >= 0) {
-                env.viewSource(name);
-            } else {
-                //### JDI crashes taking line number for class.
-                /*****
-                ReferenceType cls = findClass(name);
-                if (cls != null) {
-                    env.viewLocation(cls.location());
-                } else {
-                    env.failure("No such class");
-                }
-                *****/
-                String fileName = name.replace('.', File.separatorChar) + ".java";
-                env.viewSource(fileName);
-            }
-        }
+	    String name = t.nextToken();
+	    if (name.endsWith(".java") ||
+		name.indexOf(File.separatorChar) >= 0) {
+		env.viewSource(name);
+	    } else {
+		//### JDI crashes taking line number for class.
+		/*****
+		ReferenceType cls = findClass(name);
+		if (cls != null) {
+		    env.viewLocation(cls.location());
+		} else {
+		    env.failure("No such class");
+		}
+		*****/
+		String fileName = name.replace('.', File.separatorChar) + ".java";
+		env.viewSource(fileName);
+	    }
+	}
     }
 
     // Command: locals
     // Print all local variables in current stack frame.
 
     private void commandLocals() throws NoSessionException {
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No default thread specified: " +
-                        "use the \"thread\" command first.");
+			"use the \"thread\" command first.");
             return;
         }
-        StackFrame frame;
-        try {
-            frame = context.getCurrentFrame(current);
-            if (frame == null) {
-                env.failure("Thread has not yet created any stack frames.");
-                return;
-            }
-        } catch (VMNotInterruptedException e) {
-            env.failure("Target VM must be in interrupted state.");
-            return;
-        }
+	StackFrame frame;
+	try {
+	    frame = context.getCurrentFrame(current);
+	    if (frame == null) {
+		env.failure("Thread has not yet created any stack frames.");
+		return;
+	    }
+	} catch (VMNotInterruptedException e) {
+	    env.failure("Target VM must be in interrupted state.");
+	    return;
+	}
 
         List vars;
         try {
@@ -1134,7 +1134,7 @@ public class CommandInterpreter {
             return;
         }
 
-        OutputSink out = env.getOutputSink();
+	OutputSink out = env.getOutputSink();
         out.println("Method arguments:");
         for (Iterator it = vars.iterator(); it.hasNext(); ) {
             LocalVariable var = (LocalVariable)it.next();
@@ -1149,31 +1149,31 @@ public class CommandInterpreter {
                 printVar(out, var, frame);
             }
         }
-        out.show();
+	out.show();
         return;
     }
 
-    /**
+    /** 
      * Command: monitor
      * Monitor an expression
      */
     private void commandMonitor(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
-            env.error("Argument required");
+	    env.error("Argument required");
         } else {
-            env.getMonitorListModel().add(t.nextToken(""));
+	    env.getMonitorListModel().add(t.nextToken(""));
         }
     }
 
-    /**
+    /** 
      * Command: unmonitor
      * Unmonitor an expression
      */
     private void commandUnmonitor(StringTokenizer t) throws NoSessionException {
         if (!t.hasMoreTokens()) {
-            env.error("Argument required");
+	    env.error("Argument required");
         } else {
-            env.getMonitorListModel().remove(t.nextToken(""));
+	    env.getMonitorListModel().remove(t.nextToken(""));
         }
     }
 
@@ -1194,40 +1194,40 @@ public class CommandInterpreter {
 
     private void commandPrint(StringTokenizer t, boolean dumpObject) throws NoSessionException {
         if (!t.hasMoreTokens()) {
-            //### Probably confused if expresion contains whitespace.
-            env.error("No expression specified.");
+	    //### Probably confused if expresion contains whitespace.
+	    env.error("No expression specified.");
             return;
         }
-        ThreadReference current = context.getCurrentThread();
+	ThreadReference current = context.getCurrentThread();
         if (current == null) {
             env.failure("No default thread specified: " +
-                        "use the \"thread\" command first.");
+			"use the \"thread\" command first.");
             return;
         }
-        StackFrame frame;
-        try {
-            frame = context.getCurrentFrame(current);
-            if (frame == null) {
-                env.failure("Thread has not yet created any stack frames.");
-                return;
-            }
-        } catch (VMNotInterruptedException e) {
-            env.failure("Target VM must be in interrupted state.");
-            return;
-        }
+	StackFrame frame;
+	try {
+	    frame = context.getCurrentFrame(current);
+	    if (frame == null) {
+		env.failure("Thread has not yet created any stack frames.");
+		return;
+	    }
+	} catch (VMNotInterruptedException e) {
+	    env.failure("Target VM must be in interrupted state.");
+	    return;
+	}
         while (t.hasMoreTokens()) {
             String expr = t.nextToken("");
-            Value val = null;
-            try {
-                val = runtime.evaluate(frame, expr);
-            } catch(Exception e) {
+	    Value val = null;
+	    try {
+		val = runtime.evaluate(frame, expr);
+	    } catch(Exception e) {
                 env.error("Exception: " + e);
-                //### Fix this!
-            }
+		//### Fix this!
+	    }
             if (val == null) {
                 return;  // Error message already printed
             }
-            OutputSink out = env.getOutputSink();
+	    OutputSink out = env.getOutputSink();
             if (dumpObject && (val instanceof ObjectReference) &&
                                  !(val instanceof StringReference)) {
                 ObjectReference obj = (ObjectReference)val;
@@ -1238,12 +1238,12 @@ public class CommandInterpreter {
             } else {
                 out.println(expr + " = " + val.toString());
             }
-            out.show();
+	    out.show();
         }
     }
 
-    private void dump(OutputSink out,
-                      ObjectReference obj, ReferenceType refType,
+    private void dump(OutputSink out, 
+		      ObjectReference obj, ReferenceType refType,
                       ReferenceType refTypeBase) {
         for (Iterator it = refType.fields().iterator(); it.hasNext(); ) {
             Field field = (Field)it.next();
@@ -1271,23 +1271,23 @@ public class CommandInterpreter {
     /*
      * Display help message.
      */
-
+    
     private void help() {
-        out.println("** command list **");
-        out.println("threads [threadgroup]     -- list threads");
-        out.println("thread <thread id>        -- set default thread");
-        out.println("suspend [thread id(s)]    -- suspend threads (default: all)");
+	out.println("** command list **");
+	out.println("threads [threadgroup]     -- list threads");
+	out.println("thread <thread id>        -- set default thread");
+	out.println("suspend [thread id(s)]    -- suspend threads (default: all)");
         out.println("resume [thread id(s)]     -- resume threads (default: all)");
         out.println("where [thread id] | all   -- dump a thread's stack");
         out.println("wherei [thread id] | all  -- dump a thread's stack, with pc info");
         out.println("threadgroups              -- list threadgroups");
         out.println("threadgroup <name>        -- set current threadgroup\n");
-//      out.println("print <expression>        -- print value of expression");
-        out.println("dump <expression>         -- print all object information\n");
-//      out.println("eval <expression>         -- evaluate expression (same as print)");
+//	out.println("print <expression>        -- print value of expression");
+	out.println("dump <expression>         -- print all object information\n");
+//	out.println("eval <expression>         -- evaluate expression (same as print)");
         out.println("locals                    -- print all local variables in current stack frame\n");
         out.println("classes                   -- list currently known classes");
-        out.println("methods <class id>        -- list a class's methods\n");
+	out.println("methods <class id>        -- list a class's methods\n");
         out.println("stop [in] <class id>.<method>[(argument_type,...)] -- set a breakpoint in a method");
         out.println("stop [at] <class id>:<line> -- set a breakpoint at a line");
         out.println("up [n frames]             -- move up a thread's stack");
@@ -1302,20 +1302,20 @@ public class CommandInterpreter {
         out.println("next                      -- step one line (step OVER calls)");
         out.println("nexti                     -- step one instruction (step OVER calls)");
         out.println("cont                      -- continue execution from breakpoint\n");
-//      out.println("catch <class id>          -- break for the specified exception");
-//      out.println("ignore <class id>         -- ignore when the specified exception\n");
+//	out.println("catch <class id>          -- break for the specified exception");
+//	out.println("ignore <class id>         -- ignore when the specified exception\n");
         out.println("view classname|filename   -- display source file");
         out.println("list [line number|method] -- print source code context at line or method");
         out.println("use <source file path>    -- display or change the source path\n");
 //### new
-        out.println("sourcepath <source file path>    -- display or change the source path\n");
+	out.println("sourcepath <source file path>    -- display or change the source path\n");
 //### new
-        out.println("classpath <class file path>    -- display or change the class path\n");
-        out.println("monitor <expression>      -- evaluate an expression each time the program stops\n");
-        out.println("unmonitor <monitor#>      -- delete a monitor\n");
+	out.println("classpath <class file path>    -- display or change the class path\n");
+	out.println("monitor <expression>      -- evaluate an expression each time the program stops\n");
+	out.println("unmonitor <monitor#>      -- delete a monitor\n");
         out.println("read <filename>           -- read and execute a command file\n");
-//      out.println("memory                    -- report memory usage");
-//      out.println("gc                        -- free unused objects\n");
+//	out.println("memory                    -- report memory usage");
+//	out.println("gc                        -- free unused objects\n");
         out.println("run <class> [args]        -- start execution of a Java class");
         out.println("run                       -- re-execute last class run");
         out.println("load <class> [args]       -- start execution of a Java class, initially suspended");
@@ -1327,123 +1327,123 @@ public class CommandInterpreter {
         out.println("help (or ?)               -- list commands");
         out.println("exit (or quit)            -- exit debugger");
     }
-
+    
     /*
      * Execute a command.
      */
-
+    
     public void executeCommand(String command) {
-        //### Treatment of 'out' here is dirty...
-        out = env.getOutputSink();
-        if (echo) {
-            out.println(">>> " + command);
-        }
-        StringTokenizer t = new StringTokenizer(command);
-        try {
-            String cmd;
+	//### Treatment of 'out' here is dirty...
+	out = env.getOutputSink();
+	if (echo) {
+	    out.println(">>> " + command);
+	}
+	StringTokenizer t = new StringTokenizer(command);
+	try {
+	    String cmd;
             if (t.hasMoreTokens()) {
                 cmd = t.nextToken().toLowerCase();
                 lastCommand = cmd;
             } else {
                 cmd = lastCommand;
-            }
-            if (cmd.equals("print")) {
-                commandPrint(t, false);
-            } else if (cmd.equals("eval")) {
-                commandPrint(t, false);
-            } else if (cmd.equals("dump")) {
-                commandPrint(t, true);
-            } else if (cmd.equals("locals")) {
-                commandLocals();
-            } else if (cmd.equals("classes")) {
-                commandClasses();
-            } else if (cmd.equals("methods")) {
-                commandMethods(t);
-            } else if (cmd.equals("threads")) {
-                commandThreads(t);
-            } else if (cmd.equals("thread")) {
-                commandThread(t);
-            } else if (cmd.equals("suspend")) {
-                commandSuspend(t);
-            } else if (cmd.equals("resume")) {
-                commandResume(t);
-            } else if (cmd.equals("cont")) {
-                commandCont();
-            } else if (cmd.equals("threadgroups")) {
-                commandThreadGroups();
-            } else if (cmd.equals("threadgroup")) {
-                commandThreadGroup(t);
-            } else if (cmd.equals("run")) {
-                commandRun(t);
-            } else if (cmd.equals("load")) {
-                commandLoad(t);
-            } else if (cmd.equals("connect")) {
-                commandConnect(t);
-            } else if (cmd.equals("attach")) {
-                commandAttach(t);
-            } else if (cmd.equals("detach")) {
-                commandDetach(t);
-            } else if (cmd.equals("interrupt")) {
-                commandInterrupt(t);
+            }                
+	    if (cmd.equals("print")) {
+		commandPrint(t, false);
+	    } else if (cmd.equals("eval")) {
+		commandPrint(t, false);
+	    } else if (cmd.equals("dump")) {
+		commandPrint(t, true);
+	    } else if (cmd.equals("locals")) {
+		commandLocals();
+	    } else if (cmd.equals("classes")) {
+		commandClasses();
+	    } else if (cmd.equals("methods")) {
+		commandMethods(t);
+	    } else if (cmd.equals("threads")) {
+		commandThreads(t);
+	    } else if (cmd.equals("thread")) {
+		commandThread(t);
+	    } else if (cmd.equals("suspend")) {
+		commandSuspend(t);
+	    } else if (cmd.equals("resume")) {
+		commandResume(t);
+	    } else if (cmd.equals("cont")) {
+		commandCont();
+	    } else if (cmd.equals("threadgroups")) {
+		commandThreadGroups();
+	    } else if (cmd.equals("threadgroup")) {
+		commandThreadGroup(t);
+	    } else if (cmd.equals("run")) {
+		commandRun(t);
+	    } else if (cmd.equals("load")) {
+		commandLoad(t);
+	    } else if (cmd.equals("connect")) {
+		commandConnect(t);
+	    } else if (cmd.equals("attach")) {
+		commandAttach(t);
+	    } else if (cmd.equals("detach")) {
+		commandDetach(t);
+	    } else if (cmd.equals("interrupt")) {
+		commandInterrupt(t);
 //### Not implemented.
-//          } else if (cmd.equals("catch")) {
-//              commandCatchException(t);
+//	    } else if (cmd.equals("catch")) {
+//		commandCatchException(t);
 //### Not implemented.
-//          } else if (cmd.equals("ignore")) {
-//              commandIgnoreException(t);
-            } else if (cmd.equals("step")) {
-                commandStep(t);
-            } else if (cmd.equals("stepi")) {
-                commandStepi();
-            } else if (cmd.equals("next")) {
-                commandNext();
-            } else if (cmd.equals("nexti")) {
-                commandNexti();
+//	    } else if (cmd.equals("ignore")) {
+//		commandIgnoreException(t);
+	    } else if (cmd.equals("step")) {
+		commandStep(t);
+	    } else if (cmd.equals("stepi")) {
+		commandStepi();
+	    } else if (cmd.equals("next")) {
+		commandNext();
+	    } else if (cmd.equals("nexti")) {
+		commandNexti();
             } else if (cmd.equals("kill")) {
                 commandKill(t);
-            } else if (cmd.equals("where")) {
-                commandWhere(t, false);
-            } else if (cmd.equals("wherei")) {
-                commandWhere(t, true);
-            } else if (cmd.equals("up")) {
-                commandUp(t);
-            } else if (cmd.equals("down")) {
-                commandDown(t);
-            } else if (cmd.equals("frame")) {
-                commandFrame(t);
-            } else if (cmd.equals("stop")) {
-                commandStop(t);
-            } else if (cmd.equals("clear")) {
-                commandClear(t);
-            } else if (cmd.equals("list")) {
-                commandList(t);
-            } else if (cmd.equals("use")) {
-                commandUse(t);
-            } else if (cmd.equals("sourcepath")) {
-                commandSourcepath(t);
-            } else if (cmd.equals("classpath")) {
-                commandClasspath(t);
-            } else if (cmd.equals("monitor")) {
-                commandMonitor(t);
-            } else if (cmd.equals("unmonitor")) {
-                commandUnmonitor(t);
-            } else if (cmd.equals("view")) {
-                commandView(t);
-//          } else if (cmd.equals("read")) {
-//              readCommand(t);
-            } else if (cmd.equals("help") || cmd.equals("?")) {
-                help();
-            } else if (cmd.equals("quit") || cmd.equals("exit")) {
-                try {
-                    runtime.detach();
-                } catch (NoSessionException e) {
-                    // ignore
-                }
-                env.terminate();
-            } else {
-                //### Dubious repeat-count feature inherited from 'jdb'
+	    } else if (cmd.equals("where")) {
+		commandWhere(t, false);
+	    } else if (cmd.equals("wherei")) {
+		commandWhere(t, true);
+	    } else if (cmd.equals("up")) {
+		commandUp(t);
+	    } else if (cmd.equals("down")) {
+		commandDown(t);
+	    } else if (cmd.equals("frame")) {
+		commandFrame(t);
+	    } else if (cmd.equals("stop")) {
+		commandStop(t);
+	    } else if (cmd.equals("clear")) {
+		commandClear(t);
+	    } else if (cmd.equals("list")) {
+		commandList(t);
+	    } else if (cmd.equals("use")) {
+		commandUse(t);
+	    } else if (cmd.equals("sourcepath")) {
+		commandSourcepath(t);
+	    } else if (cmd.equals("classpath")) {
+		commandClasspath(t);
+	    } else if (cmd.equals("monitor")) {
+		commandMonitor(t);
+	    } else if (cmd.equals("unmonitor")) {
+		commandUnmonitor(t);
+	    } else if (cmd.equals("view")) {
+		commandView(t);
+//	    } else if (cmd.equals("read")) {
+//		readCommand(t);
+	    } else if (cmd.equals("help") || cmd.equals("?")) {
+		help();
+	    } else if (cmd.equals("quit") || cmd.equals("exit")) {
+		try {
+		    runtime.detach();
+		} catch (NoSessionException e) {
+		    // ignore
+		}
+		env.terminate();
+	    } else {
+		//### Dubious repeat-count feature inherited from 'jdb'
                 if (t.hasMoreTokens()) {
-                    try {
+                    try {            
                         int repeat = Integer.parseInt(cmd);
                         String subcom = t.nextToken("");
                         while (repeat-- > 0) {
@@ -1453,18 +1453,25 @@ public class CommandInterpreter {
                     } catch (NumberFormatException exc) {
                     }
                 }
-                out.println("huh? Try help...");
-                out.flush();
-            }
-        } catch (NoSessionException e) {
-            out.println("There is no currently attached VM session.");
-            out.flush();
-        } catch (Exception e) {
-            out.println("Internal exception: " + e.toString());
-            out.flush();
-            System.out.println("JDB internal exception: " + e.toString());
-            e.printStackTrace();
-        }
-        out.show();
+		out.println("huh? Try help...");
+		out.flush();
+	    }
+	} catch (NoSessionException e) {
+	    out.println("There is no currently attached VM session.");
+	    out.flush();
+	} catch (Exception e) {
+	    out.println("Internal exception: " + e.toString());
+	    out.flush();
+	    System.out.println("JDB internal exception: " + e.toString());
+	    e.printStackTrace();
+	}
+	out.show();
     }
 }
+
+
+
+
+
+
+

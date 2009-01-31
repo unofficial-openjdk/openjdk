@@ -547,7 +547,7 @@ class ClassFileAssembler implements ClassFileConstants {
         emitByte(opc_return);
         setStack(0);
     }
-
+  
     //////////////////////
     // Field operations //
     //////////////////////
@@ -626,7 +626,7 @@ class ClassFileAssembler implements ClassFileConstants {
         emitByte((byte) 0);
         setStack(getStack() - numArgs - 1 + numReturnValues);
     }
-
+  
     //////////////////
     // Array length //
     //////////////////

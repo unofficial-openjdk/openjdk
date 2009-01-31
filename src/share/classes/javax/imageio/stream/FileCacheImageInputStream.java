@@ -39,6 +39,7 @@ import sun.java2d.DisposerRecord;
  * input from a regular <code>InputStream</code>.  A file is used to
  * cache previously read data.
  *
+ * @version 0.5
  */
 public class FileCacheImageInputStream extends ImageInputStreamImpl {
 
@@ -74,7 +75,7 @@ public class FileCacheImageInputStream extends ImageInputStreamImpl {
      * <code>File.createTempFile</code> for details).
      *
      * @param stream an <code>InputStream</code> to read from.
-     * @param cacheDir a <code>File</code> indicating where the
+     * @param cacheDir a <code>File</code> indicating where the 
      * cache file should be created, or <code>null</code> to use the
      * system directory.
      *

@@ -62,6 +62,7 @@ import java.lang.reflect.Method;
  * @see javax.imageio.IIOImage
  * @see javax.imageio.ImageTranscoder
  *
+ * @version 0.5
  */
 public abstract class IIOMetadata {
 
@@ -83,7 +84,7 @@ public abstract class IIOMetadata {
      * <code>null</code> and set via the constructor.
      */
     protected String nativeMetadataFormatClassName = null;
-
+    
     /**
      * An array of names of formats, other than the standard and
      * native formats, that are supported by this plug-in,
@@ -118,7 +119,7 @@ public abstract class IIOMetadata {
      * The <code>IIOMetadataController</code> that will be
      * used to provide settings for this <code>IIOMetadata</code>
      * object when the <code>activateController</code> method
-     * is called.  This value overrides any default controller,
+     * is called.  This value overrides any default controller, 
      * even when <code>null</code>.
      *
      * @see IIOMetadataController
@@ -152,7 +153,7 @@ public abstract class IIOMetadata {
      * @param nativeMetadataFormatName the name of the native metadata
      * format, as a <code>String</code>, or <code>null</code> if there
      * is no native format.
-     * @param nativeMetadataFormatClassName the name of the class of
+     * @param nativeMetadataFormatClassName the name of the class of 
      * the native metadata format, or <code>null</code> if there is
      * no native format.
      * @param extraMetadataFormatNames an array of <code>String</code>s
@@ -186,12 +187,12 @@ public abstract class IIOMetadata {
                 throw new IllegalArgumentException
                     ("extraMetadataFormatNames != null && extraMetadataFormatClassNames == null!");
             }
-            if (extraMetadataFormatClassNames.length !=
+            if (extraMetadataFormatClassNames.length != 
                 extraMetadataFormatNames.length) {
                 throw new IllegalArgumentException
                     ("extraMetadataFormatClassNames.length != extraMetadataFormatNames.length!");
             }
-            this.extraMetadataFormatNames =
+            this.extraMetadataFormatNames = 
                 (String[]) extraMetadataFormatNames.clone();
             this.extraMetadataFormatClassNames =
                 (String[]) extraMetadataFormatClassNames.clone();
@@ -227,7 +228,7 @@ public abstract class IIOMetadata {
     /**
      * Returns <code>true</code> if this object does not support the
      * <code>mergeTree</code>, <code>setFromTree</code>, and
-     * <code>reset</code> methods.
+     * <code>reset</code> methods.  
      *
      * @return true if this <code>IIOMetadata</code> object cannot be
      * modified.
@@ -239,7 +240,7 @@ public abstract class IIOMetadata {
      * plug-in, which typically allows for lossless encoding and
      * transmission of the metadata stored in the format handled by
      * this plug-in.  If no such format is supported,
-     * <code>null</code>will be returned.
+     * <code>null</code>will be returned.  
      *
      * <p> The structure and contents of the "native" metadata format
      * are defined by the plug-in that created this
@@ -310,7 +311,7 @@ public abstract class IIOMetadata {
     public String[] getMetadataFormatNames() {
         String nativeName = getNativeMetadataFormatName();
         String standardName = isStandardMetadataFormatSupported() ?
-            IIOMetadataFormatImpl.standardMetadataFormatName : null;
+            IIOMetadataFormatImpl.standardMetadataFormatName : null; 
         String[] extraNames = getExtraMetadataFormatNames();
 
         int numFormats = 0;
@@ -384,7 +385,7 @@ public abstract class IIOMetadata {
         }
         String formatClassName = null;
         if (formatName.equals(nativeMetadataFormatName)) {
-            formatClassName = nativeMetadataFormatClassName;
+            formatClassName = nativeMetadataFormatClassName; 
         } else if (extraMetadataFormatNames != null) {
             for (int i = 0; i < extraMetadataFormatNames.length; i++) {
                 if (formatName.equals(extraMetadataFormatNames[i])) {
@@ -398,9 +399,9 @@ public abstract class IIOMetadata {
         }
         try {
             Class cls = null;
-            final Object o = this;
+            final Object o = this; 
 
-            // firstly we try to use classloader used for loading
+            // firstly we try to use classloader used for loading 
             // the IIOMetadata implemantation for this plugin.
             ClassLoader loader = (ClassLoader)
                 java.security.AccessController.doPrivileged(
@@ -409,12 +410,12 @@ public abstract class IIOMetadata {
                                 return o.getClass().getClassLoader();
                             }
                         });
-
+            
             try {
                 cls = Class.forName(formatClassName, true,
                                     loader);
             } catch (ClassNotFoundException e) {
-                // we failed to load IIOMetadataFormat class by
+                // we failed to load IIOMetadataFormat class by 
                 // using IIOMetadata classloader.Next try is to
                 // use thread context classloader.
                 loader = (ClassLoader)
@@ -423,7 +424,7 @@ public abstract class IIOMetadata {
                                 public Object run() {
                                     return Thread.currentThread().getContextClassLoader();
                                 }
-                        });
+                        });                
                 try {
                     cls = Class.forName(formatClassName, true,
                                         loader);
@@ -435,16 +436,16 @@ public abstract class IIOMetadata {
                                         ClassLoader.getSystemClassLoader());
                 }
             }
-
+            
             Method meth = cls.getMethod("getInstance");
             return (IIOMetadataFormat) meth.invoke(null);
         } catch (Exception e) {
-            RuntimeException ex =
+            RuntimeException ex = 
                 new IllegalStateException ("Can't obtain format");
             ex.initCause(e);
             throw ex;
         }
-
+        
     }
 
     /**
@@ -464,7 +465,7 @@ public abstract class IIOMetadata {
      * @exception IllegalArgumentException if <code>formatName</code>
      * is <code>null</code> or is not one of the names returned by
      * <code>getMetadataFormatNames</code>.
-     *
+     * 
      * @see #getMetadataFormatNames
      * @see #setFromTree
      * @see #mergeTree
@@ -787,7 +788,7 @@ public abstract class IIOMetadata {
      * <p> The default implementation sets the <code>controller</code>
      * instance variable to the supplied value.
      *
-     * @param controller An appropriate
+     * @param controller An appropriate 
      * <code>IIOMetadataController</code>, or <code>null</code>.
      *
      * @see IIOMetadataController
@@ -802,7 +803,7 @@ public abstract class IIOMetadata {
 
     /**
      * Returns whatever <code>IIOMetadataController</code> is currently
-     * installed.  This could be the default if there is one,
+     * installed.  This could be the default if there is one, 
      * <code>null</code>, or the argument of the most recent call
      * to <code>setController</code>.
      *

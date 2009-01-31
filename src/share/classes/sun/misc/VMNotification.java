@@ -35,5 +35,5 @@ public interface VMNotification {
     // oldState and newState may be the same if we are just releasing
     // suspended threads.
     void newAllocState(int oldState, int newState,
-                       boolean threadsSuspended);
+		       boolean threadsSuspended);
 }

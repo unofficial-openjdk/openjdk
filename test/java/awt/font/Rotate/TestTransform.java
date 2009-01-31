@@ -37,7 +37,7 @@ import java.awt.image.BufferedImage;
 
 public class TestTransform {
     public static void testTransformedFont(AffineTransform a, Object textHint) {
-        BufferedImage bi = new BufferedImage(200, 200,
+        BufferedImage bi = new BufferedImage(200, 200, 
                                    BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = (Graphics2D) bi.getGraphics();
         g2.setFont(g2.getFont().deriveFont(12.0f));
@@ -74,3 +74,4 @@ public class TestTransform {
         }
     }
 }
+

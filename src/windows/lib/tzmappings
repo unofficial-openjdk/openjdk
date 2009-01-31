@@ -1,4 +1,5 @@
 #
+# %W% %E%
 # 
 # This file describes mapping information between Windows and Java
 # time zones.
@@ -131,7 +132,7 @@ Alaskan:30,31::America/Anchorage:
 Alaskan Standard Time:30,31::America/Anchorage:
 Pacific:32,33::America/Los_Angeles:
 Pacific Standard Time:32,33::America/Los_Angeles:
-Mexico Standard Time 2:34,35:MX:America/Chihuahua:
+Mexico Standard Time 2:34,35::America/Chihuahua:
 Mountain:34,35::America/Denver:
 Mountain Standard Time:34,35::America/Denver:
 Central:36,37::America/Chicago:
@@ -160,20 +161,18 @@ New Zealand Standard Time:78,79::Pacific/Auckland:
 Tonga Standard Time:78,79::Pacific/Tongatapu:
 Arabian:8,9::Asia/Muscat:
 Arabian Standard Time:8,9::Asia/Muscat:
-Caucasus:8,9::GMT+0400:
-Caucasus Standard Time:8,9::GMT+0400:
+Caucasus:8,9::Asia/Yerevan:
+Caucasus Standard Time:8,9::Asia/Yerevan:
 GMT Standard Time:88,89::GMT:
 Greenwich:88,89::GMT:
 Greenwich Standard Time:88,89::GMT:
-Central Brazilian Standard Time:900,900:BR:America/Manaus:
-Central Standard Time (Mexico):901,901::America/Mexico_City:
-Georgian Standard Time:902,902:GE:Asia/Tbilisi:
-Mountain Standard Time (Mexico):903,903:MX:America/Chihuahua:
-Namibia Standard Time:904,904:NA:Africa/Windhoek:
-Pacific Standard Time (Mexico):905,905:MX:America/Tijuana:
-Western Brazilian Standard Time:906,906:BR:America/Rio_Branco:
-Azerbaijan Standard Time:907,907:AZ:Asia/Baku:
-Jordan Standard Time:908,908:JO:Asia/Amman:
-Middle East Standard Time:909,909:LB:Asia/Beirut:
-Armenian Standard Time:910,910:AM:Asia/Yerevan:
-Montevideo Standard Time:911,911:UY:America/Montevideo:
+Central Brazilian Standard Time:900;900:BR:America/Manaus:
+Central Standard Time (Mexico):901;901::America/Mexico_City:
+Georgian Standard Time:902;902:GE:Asia/Tbilisi:
+Mountain Standard Time (Mexico):903;903::America/Chihuahua:
+Namibia Standard Time:904;904:NA:Africa/Windhoek:
+Pacific Standard Time (Mexico):905;905:MX:America/Tijuana:
+Western Brazilian Standard Time:906;906::America/Rio_Branco:
+Azerbaijan Standard Time:907;907:AZ:Asia/Baku:
+Jordan Standard Time:908;908:JO:Asia/Amman:
+Middle East Standard Time:909;909:LB:Asia/Beirut:

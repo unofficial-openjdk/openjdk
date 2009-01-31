@@ -76,19 +76,19 @@ class ReflectAccess implements sun.reflect.LangReflectAccess {
     }
 
     public <T> Constructor<T> newConstructor(Class<T> declaringClass,
-                                             Class[] parameterTypes,
-                                             Class[] checkedExceptions,
-                                             int modifiers,
-                                             int slot,
+					     Class[] parameterTypes,
+					     Class[] checkedExceptions,
+					     int modifiers,
+					     int slot,
                                              String signature,
                                              byte[] annotations,
                                              byte[] parameterAnnotations)
     {
         return new Constructor<T>(declaringClass,
-                                  parameterTypes,
-                                  checkedExceptions,
-                                  modifiers,
-                                  slot,
+				  parameterTypes,
+				  checkedExceptions,
+				  modifiers,
+				  slot,
                                   signature,
                                   annotations,
                                   parameterAnnotations);

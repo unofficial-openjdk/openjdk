@@ -32,9 +32,9 @@ import com.sun.net.httpserver.spi.*;
 
 class ChunkedInputStream extends LeftOverInputStream {
     ChunkedInputStream (ExchangeImpl t, InputStream src) {
-        super (t, src);
+	super (t, src);
     }
-
+  
     private int remaining;
 
     /* true when a chunk header needs to be read */
@@ -45,113 +45,113 @@ class ChunkedInputStream extends LeftOverInputStream {
     static char LF = '\n';
 
     private int numeric (char[] arr, int nchars) throws IOException {
-        assert arr.length >= nchars;
-        int len = 0;
-        for (int i=0; i<nchars; i++) {
-            char c = arr[i];
-            int val=0;
-            if (c>='0' && c <='9') {
-                val = c - '0';
-            } else if (c>='a' && c<= 'f') {
-                val = c - 'a' + 10;
-            } else if (c>='A' && c<= 'F') {
-                val = c - 'A' + 10;
-            } else {
-                throw new IOException ("invalid chunk length");
-            }
-            len = len * 16 + val;
-        }
-        return len;
+	assert arr.length >= nchars;
+	int len = 0;
+	for (int i=0; i<nchars; i++) {
+	    char c = arr[i];
+	    int val=0;
+	    if (c>='0' && c <='9') {
+		val = c - '0';
+	    } else if (c>='a' && c<= 'f') {
+		val = c - 'a' + 10;
+	    } else if (c>='A' && c<= 'F') {
+		val = c - 'A' + 10;
+	    } else {
+		throw new IOException ("invalid chunk length");
+	    }
+	    len = len * 16 + val;
+	}
+	return len;
     }
 
     /* read the chunk header line and return the chunk length
      * any chunk extensions are ignored
      */
     private int readChunkHeader () throws IOException {
-        boolean gotCR = false;
-        char c;
-        char[] len_arr = new char [16];
-        int len_size = 0;
-        boolean end_of_len = false;
+	boolean gotCR = false;
+	char c;
+	char[] len_arr = new char [16];
+	int len_size = 0;
+	boolean end_of_len = false;
 
-        while ((c=(char)in.read())!= -1) {
-            if (len_size == len_arr.length -1) {
-                throw new IOException ("invalid chunk header");
-            }
-            if (gotCR) {
-                if (c == LF) {
-                    int l = numeric (len_arr, len_size);
-                    return l;
-                } else {
-                    gotCR = false;
-                }
-                if (!end_of_len) {
-                    len_arr[len_size++] = c;
-                }
-            } else {
-                if (c == CR) {
-                    gotCR = true;
-                } else if (c == ';') {
-                    end_of_len = true;
-                } else if (!end_of_len) {
-                    len_arr[len_size++] = c;
-                }
-            }
-        }
-        throw new IOException ("end of stream reading chunk header");
+	while ((c=(char)in.read())!= -1) {
+	    if (len_size == len_arr.length -1) {
+		throw new IOException ("invalid chunk header");	
+	    }
+	    if (gotCR) {
+		if (c == LF) {
+		    int l = numeric (len_arr, len_size);
+		    return l;
+		} else {
+		    gotCR = false;
+		}
+		if (!end_of_len) {
+		    len_arr[len_size++] = c;
+		}
+	    } else {
+	    	if (c == CR) {
+		    gotCR = true;
+		} else if (c == ';') {
+		    end_of_len = true;
+		} else if (!end_of_len) {
+		    len_arr[len_size++] = c;
+		}
+	    }
+	}
+    	throw new IOException ("end of stream reading chunk header");
     }
-
+		
     protected int readImpl (byte[]b, int off, int len) throws IOException {
-        if (eof) {
-            return -1;
-        }
-        if (needToReadHeader) {
-            remaining = readChunkHeader();
-            if (remaining == 0) {
-                eof = true;
-                consumeCRLF();
-                return -1;
-            }
-            needToReadHeader = false;
-        }
-        if (len > remaining) {
-            len = remaining;
-        }
-        int n = in.read(b, off, len);
-        if (n > -1) {
-            remaining -= n;
-        }
-        if (remaining == 0) {
-            needToReadHeader = true;
-            consumeCRLF();
-        }
-        return n;
+	if (eof) {
+	    return -1;
+	}
+	if (needToReadHeader) {
+	    remaining = readChunkHeader();
+	    if (remaining == 0) {
+		eof = true;
+		consumeCRLF();
+		return -1;
+	    }
+	    needToReadHeader = false;
+	}
+	if (len > remaining) {
+	    len = remaining;
+	}
+	int n = in.read(b, off, len);
+	if (n > -1) {
+	    remaining -= n;
+	}
+	if (remaining == 0) {
+	    needToReadHeader = true;
+	    consumeCRLF();
+	}
+	return n;
     }
 
     private void consumeCRLF () throws IOException {
         char c;
         c = (char)in.read(); /* CR */
         if (c != CR) {
-            throw new IOException ("invalid chunk end");
+	    throw new IOException ("invalid chunk end");
         }
         c = (char)in.read(); /* LF */
         if (c != LF) {
-            throw new IOException ("invalid chunk end");
+	    throw new IOException ("invalid chunk end");
         }
     }
 
     /**
      * returns the number of bytes available to read in the current chunk
      * which may be less than the real amount, but we'll live with that
-     * limitation for the moment. It only affects potential efficiency
+     * limitation for the moment. It only affects potential efficiency 
      * rather than correctness.
      */
     public int available () throws IOException {
-        if (eof || closed) {
-            return 0;
-        }
-        int n = in.available();
-        return n > remaining? remaining: n;
+	if (eof || closed) {
+	    return 0;
+	}
+	int n = in.available();
+	return n > remaining? remaining: n;
     }
 
     /* called after the stream is closed to see if bytes
@@ -159,16 +159,16 @@ class ChunkedInputStream extends LeftOverInputStream {
      * and buffered internally
      */
     public boolean isDataBuffered () throws IOException {
-        assert eof;
-        return in.available() > 0;
+	assert eof;
+	return in.available() > 0;
     }
-
+	
     public boolean markSupported () {return false;}
 
     public void mark (int l) {
-    }
+    }	
 
     public void reset () throws IOException {
-        throw new IOException ("mark/reset not supported");
-    }
+	throw new IOException ("mark/reset not supported");
+    }	
 }

@@ -40,13 +40,13 @@ public class D3DContext {
     public static final int NO_CONTEXT_FLAGS = 0;
     /**
      * Used in D3DBlitLoops: if the source surface is opaque
-     * alpha blending can be turned off on the native level
+     * alpha blending can be turned off on the native level 
      * (if there's no ea), thus improving performance.
      */
     public static final int SRC_IS_OPAQUE    = 1;
 
     /**
-     * This is a list of capabilities supported by the device this
+     * This is a list of capabilities supported by the device this 
      * context is associated with.
      * @see getDeviceCaps
      */
@@ -104,15 +104,15 @@ public class D3DContext {
      */
     public static final int J2D_D3D_SET_TRANSFORM_OK       = (1 <<12);
     /**
-     * The device is not from a list of known bad devices
+     * The device is not from a list of known bad devices 
      * (see D3DRuntimeTest.cpp)
      */
-    public static final int J2D_D3D_HW_OK                  = (1 <<13);
+    public static final int J2D_D3D_HW_OK 	           = (1 <<13);
     /**
      * Direct3D pipeline is enabled on this device
      */
-    public static final int J2D_D3D_ENABLED_OK             = (1 <<14);
-
+    public static final int J2D_D3D_ENABLED_OK 	           = (1 <<14);
+    
     /**
      * The lock object used to synchronize access to the native windowing
      * system layer.  Note that rendering methods should always synchronize on
@@ -125,7 +125,7 @@ public class D3DContext {
 
     private Win32GraphicsDevice  gd;
     private boolean         valid;
-
+    
     protected long          nativeContext;
     private SurfaceData     validatedDstData;
     private Region          validatedClip;
@@ -153,7 +153,7 @@ public class D3DContext {
     private native void setColor(long pCtx, int pixel, int flags);
     private native long initNativeContext(int screen);
     private native int getNativeDeviceCaps(long pCtx);
-
+    
     static {
         if (!GraphicsEnvironment.isHeadless()) {
             LOCK = D3DContext.class;
@@ -164,7 +164,7 @@ public class D3DContext {
         this.gd = gd;
         reinitNativeContext();
     }
-
+    
     /**
      * Reinitializes the context by retrieving a pointer to the native
      * D3DContext object, and resetting the device caps.
@@ -176,36 +176,36 @@ public class D3DContext {
         valid = ((deviceCaps & J2D_D3D_ENABLED_OK) != 0);
         if (WindowsFlags.isD3DVerbose()) {
             if (valid) {
-                System.out.println("Direct3D pipeline enabled on screen " +
+                System.out.println("Direct3D pipeline enabled on screen " + 
                                    gd.getScreen());
             } else {
                 System.out.println("Could not enable Direct3D pipeline on " +
-                                   "screen " + gd.getScreen() +
+                                   "screen " + gd.getScreen() + 
                                    ". Device Caps: " +
                                    Integer.toHexString(deviceCaps));
             }
         }
     }
-
+    
     /**
      * Invalidates this context by resetting its status: the validated
      * destination surface, and a pointer to the native context.
-     * This method is called in the following cases:
+     * This method is called in the following cases: 
      *  - if a surface loss situation is detected at the native level
-     *    during any of the validation methods (setClip, setRenderTarget etc)
+     *    during any of the validation methods (setClip, setRenderTarget etc) 
      *    and an InvalidPipeException is thrown.
      *    This situation happens when there was a surface loss, but
      *    there were no display change event (like in case of command prompt
      *    going fullscreen).
      *  - as part of surface restoration when a surface is the current
      *    target surface for this context. Since surface restoration
-     *    resets the depth buffer contents, we need to make sure the clip
+     *    resets the depth buffer contents, we need to make sure the clip 
      *    is reset, and since the target surface is reset, we'll set a new
      *    clip the next time we attempt to render to the target surface.
      *  - when a display change occurs, the native D3DContext object is
-     *    released and recreated as part of primary surface recreation.
-     *    At the time of the release, the java D3DContext object need to be
-     *    invalidated because a new D3D device is created and the target
+     *    released and recreated as part of primary surface recreation. 
+     *    At the time of the release, the java D3DContext object need to be 
+     *    invalidated because a new D3D device is created and the target 
      *    surface will need to be reset.
      *
      *  Invalidation of the context causes its revalidation the next time
@@ -223,7 +223,7 @@ public class D3DContext {
         // we'll never get a chance to continue using d3d after a single
         // invalidation event (for example, a display change).
     }
-
+    
     /**
      * Fetches the D3DContext associated with the current
      * thread/GraphicsConfig pair, validates the context using the given
@@ -240,7 +240,7 @@ public class D3DContext {
         if (dstData instanceof D3DSurfaceData == false) {
             throw new InvalidPipeException("Incorrect destination surface");
         }
-
+        
         D3DContext d3dc = ((D3DSurfaceData)dstData).getContext();
         try {
             d3dc.validate(srcData, dstData, clip, comp, xform, pixel, flags);
@@ -252,14 +252,14 @@ public class D3DContext {
             // happens when VolatileImage is validated. At this point
             // the native D3DContext will be reinitialized, and the next
             // time around validation of the context will succeed.
-            // Throwing the exception here will do no good, since the
+            // Throwing the exception here will do no good, since the 
             // destination surface (which is associated with a VolatileImage
             // or a BufferStrategy) will not be restored until VI.validate()
             // is called by the rendering thread.
         }
         return d3dc.getNativeContext();
     }
-
+    
     public int getDeviceCaps() {
         return deviceCaps;
     }
@@ -291,7 +291,7 @@ public class D3DContext {
         boolean updateClip = false;
 
         if ((srcData != null && !srcData.isValid()) || !dstData.isValid() ||
-            dstData.getNativeOps() == 0L || dstData.isSurfaceLost())
+            dstData.getNativeOps() == 0L || dstData.isSurfaceLost()) 
         {
             throw new InvalidPipeException("Invalid surface");
         }
@@ -307,12 +307,12 @@ public class D3DContext {
             // invalidate pixel and clip (so they will be updated below)
             validatedPixel = ~pixel;
             updateClip = true;
-
+            
             // update the viewport
             long pDst = dstData.getNativeOps();
             setRenderTarget(nativeContext, pDst);
 
-            // keep the reference to the old data until we set the
+            // keep the reference to the old data until we set the 
             // new one on the native level, preventing it from being disposed
             SurfaceData tmpData = dstData;
             validatedDstData = dstData;
@@ -343,7 +343,7 @@ public class D3DContext {
                       clip.getHiX() != validatedClip.getHiX() ||
                       clip.getHiY() != validatedClip.getHiY())))
                 {
-                    setClip(nativeContext, pDest,
+                    setClip(nativeContext, pDest, 
                             clip, clip.isRectangular(),
                             clip.getLoX(), clip.getLoY(),
                             clip.getHiX(), clip.getHiY());
@@ -353,7 +353,7 @@ public class D3DContext {
             }
             validatedClip = clip;
         }
-
+        
         if ((comp != validatedComp) || (flags != validatedFlags)) {
             // invalidate pixel
             validatedPixel = ~pixel;
@@ -382,14 +382,14 @@ public class D3DContext {
             double nShearY = xform.getShearY();
             double nTransX = xform.getTranslateX();
             double nTransY = xform.getTranslateY();
-
-            if (nTransX != vTransX || nTransY != vTransY ||
+            
+            if (nTransX != vTransX || nTransY != vTransY || 
                 nScaleX != vScaleX || nScaleY != vScaleY ||
-                nShearX != vShearX || nShearY != vShearY)
+                nShearX != vShearX || nShearY != vShearY) 
             {
-                setTransform(nativeContext, pDest,
+                setTransform(nativeContext, pDest, 
                              xform,
-                             nScaleX, nShearY, nShearX, nScaleY,
+                             nScaleX, nShearY, nShearX, nScaleY, 
                              nTransX, nTransY);
                 vScaleX = nScaleX;
                 vScaleY = nScaleY;

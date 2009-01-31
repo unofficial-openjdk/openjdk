@@ -33,14 +33,14 @@ public class Serialize {
 
     public static void main(String args[]) throws IOException {
 
-        FileOutputStream fos = new FileOutputStream("t.tmp");
-        ObjectOutputStream oos = new ObjectOutputStream(fos);
-
-        SecureRandom secRandom = new SecureRandom();
-
-        // serialize and write out
-        oos.writeObject(secRandom);
-        oos.flush();
-        oos.close();
+	FileOutputStream fos = new FileOutputStream("t.tmp");
+	ObjectOutputStream oos = new ObjectOutputStream(fos);
+	
+	SecureRandom secRandom = new SecureRandom();
+	
+	// serialize and write out
+	oos.writeObject(secRandom);
+	oos.flush();
+	oos.close();
     }
 }

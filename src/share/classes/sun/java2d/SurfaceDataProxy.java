@@ -79,20 +79,20 @@ public abstract class SurfaceDataProxy
         }
 
         defaultThreshold = 1;
-        String num = (String)AccessController.doPrivileged(
+	String num = (String)AccessController.doPrivileged(
             new GetPropertyAction("sun.java2d.accthreshold"));
-        if (num != null) {
-            try {
-                int parsed = Integer.parseInt(num);
-                if (parsed >= 0) {
-                    defaultThreshold = parsed;
-                    System.out.println("New Default Acceleration Threshold: " +
+	if (num != null) {
+	    try {
+		int parsed = Integer.parseInt(num);
+		if (parsed >= 0) {
+		    defaultThreshold = parsed;
+		    System.out.println("New Default Acceleration Threshold: " +
                                        defaultThreshold);
-                }
-            } catch (NumberFormatException e) {
-                System.err.println("Error setting new threshold:" + e);
-            }
-        }
+		}
+	    } catch (NumberFormatException e) {
+		System.err.println("Error setting new threshold:" + e);
+	    }
+	}
     }
 
     public static boolean isCachingAllowed() {
@@ -324,7 +324,7 @@ public abstract class SurfaceDataProxy
      * properties of the display.
      */
     protected void activateDisplayListener() {
-        GraphicsEnvironment ge =
+        GraphicsEnvironment ge = 
             GraphicsEnvironment.getLocalGraphicsEnvironment();
         // We could have a HeadlessGE at this point, so double-check before
         // assuming anything.

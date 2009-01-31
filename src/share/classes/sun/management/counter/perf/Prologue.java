@@ -32,7 +32,7 @@ class Prologue {
     // these constants should match their #define counterparts in vmdata.hpp
     private final static byte PERFDATA_BIG_ENDIAN    = 0;
     private final static byte PERFDATA_LITTLE_ENDIAN = 1;
-    private final static int  PERFDATA_MAGIC         = 0xcafec0c0;
+    private final static int  PERFDATA_MAGIC         = 0xcafec0c0; 
 
     private class PrologueFieldOffset {
         private final static int SIZEOF_BYTE = 1;
@@ -78,7 +78,7 @@ class Prologue {
         header.order(ByteOrder.BIG_ENDIAN);
         header.position(PrologueFieldOffset.MAGIC);
         magic = header.getInt();
-
+        
         // the magic number is always stored in big-endian format
         if (magic != PERFDATA_MAGIC) {
             throw new InstrumentationException("Bad Magic: " +
@@ -93,14 +93,14 @@ class Prologue {
         // Check version
         int major = getMajorVersion();
         int minor = getMinorVersion();
-
+        
         if (major < 2) {
             throw new InstrumentationException("Unsupported version: " +
                                                major + "." + minor);
         }
 
         // Currently, only support 2.0 version.
-        header.limit(PrologueFieldOffset.PROLOGUE_2_0_SIZE);
+        header.limit(PrologueFieldOffset.PROLOGUE_2_0_SIZE); 
     }
 
     public int getMagic() {
@@ -116,7 +116,7 @@ class Prologue {
         header.position(PrologueFieldOffset.MINOR_VERSION);
         return (int)header.get();
     }
-
+    
     public ByteOrder getByteOrder() {
         header.position(PrologueFieldOffset.BYTE_ORDER);
 
@@ -140,7 +140,7 @@ class Prologue {
         header.position(PrologueFieldOffset.USED);
         return header.getInt();
     }
-
+    
     public int getOverflow() {
         header.position(PrologueFieldOffset.OVERFLOW);
         return header.getInt();
@@ -159,6 +159,6 @@ class Prologue {
     public boolean isAccessible() {
         header.position(PrologueFieldOffset.ACCESSIBLE);
         byte b = header.get();
-        return (b == 0 ? false : true);
+        return (b == 0 ? false : true); 
     }
 }

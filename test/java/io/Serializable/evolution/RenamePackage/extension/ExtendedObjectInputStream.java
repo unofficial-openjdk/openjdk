@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -30,48 +30,48 @@ public class ExtendedObjectInputStream extends ObjectInputStream {
 
     static private Hashtable renamedClassMap;
 
-    public ExtendedObjectInputStream(InputStream si)
-        throws IOException, StreamCorruptedException
+    public ExtendedObjectInputStream(InputStream si) 
+	throws IOException, StreamCorruptedException 
     {
-        super(si);
+	super(si);
     }
 
-    protected Class resolveClass(ObjectStreamClass v)
-        throws IOException, ClassNotFoundException
+    protected Class resolveClass(ObjectStreamClass v) 
+	throws IOException, ClassNotFoundException
     {
-        if (renamedClassMap != null) {
-            //      System.out.println("resolveClass(" + v.getName() + ")");
-            Class newClass = (Class)renamedClassMap.get(v.getName());
-            if (newClass != null) {
-                v = ObjectStreamClass.lookup(newClass);
-            }
-        }
+	if (renamedClassMap != null) {
+	    //	    System.out.println("resolveClass(" + v.getName() + ")");
+	    Class newClass = (Class)renamedClassMap.get(v.getName());
+	    if (newClass != null) {
+		v = ObjectStreamClass.lookup(newClass);
+	    }
+	}
         return super.resolveClass(v);
     }
 
     static public void addRenamedClassName(String oldName, String newName)
-        throws ClassNotFoundException
+	throws ClassNotFoundException
     {
-        Class cl = null;
+	Class cl = null;
 
-        if (renamedClassMap == null)
-            renamedClassMap = new Hashtable(10);
-        if (newName.startsWith("[L")) {
-            //      System.out.println("Array processing");
-            Class componentType =
-                Class.forName(newName.substring(2));
-            //System.out.println("ComponentType=" + componentType.getName());
-            Object dummy =
-                java.lang.reflect.Array.newInstance(componentType, 3);
-
-            cl = dummy.getClass();
-            //      System.out.println("Class=" + cl.getName());
-        }
-        else
-            cl = Class.forName(newName);
-        //System.out.println("oldName=" + oldName +
-        //                   " newName=" + cl.getName());
-        renamedClassMap.put(oldName, cl);
+	if (renamedClassMap == null)
+	    renamedClassMap = new Hashtable(10);
+	if (newName.startsWith("[L")) {
+	    //	    System.out.println("Array processing");
+	    Class componentType =
+		Class.forName(newName.substring(2));
+	    //System.out.println("ComponentType=" + componentType.getName());
+	    Object dummy =
+		java.lang.reflect.Array.newInstance(componentType, 3);
+	    
+	    cl = dummy.getClass();
+	    //	    System.out.println("Class=" + cl.getName());
+	}
+	else 
+	    cl = Class.forName(newName);
+	//System.out.println("oldName=" + oldName +
+	//                   " newName=" + cl.getName());
+	renamedClassMap.put(oldName, cl);
     }
 
 }

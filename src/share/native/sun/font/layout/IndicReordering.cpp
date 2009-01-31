@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)IndicReordering.cpp	1.15 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -97,15 +98,15 @@ private:
     le_int32    fViramaIndex;
 
     FeatureMask fMatraFeatures;
-
+    
     le_int32    fMPreOutIndex;
     MPreFixups *fMPreFixups;
-
+    
     LEUnicode   fVMabove;
     LEUnicode   fVMpost;
     le_int32    fVMIndex;
     FeatureMask fVMFeatures;
-
+    
     LEUnicode   fSMabove;
     LEUnicode   fSMbelow;
     le_int32    fSMIndex;
@@ -126,22 +127,22 @@ private:
                 fMpre = matra;
                 fMpreIndex = matraIndex;
                 break;
-
+               
             case CF_POS_BELOW:
                 fMbelow = matra;
                 fMbelowIndex = matraIndex;
                 break;
-
+               
             case CF_POS_ABOVE:
                 fMabove = matra;
                 fMaboveIndex = matraIndex;
                 break;
-
+               
             case CF_POS_AFTER:
                 fMpost = matra;
                 fMpostIndex = matraIndex;
                 break;
-
+               
             default:
                 // can't get here...
                 break;
@@ -170,7 +171,7 @@ public:
     {
         fMpre = fMbelow = fMabove = fMpost = fLengthMark = fVirama = 0;
         fMPreOutIndex = -1;
-
+        
         fVMabove = fVMpost  = 0;
         fSMabove = fSMbelow = 0;
     }
@@ -187,7 +188,7 @@ public:
         fOutIndex += 1;
     }
 
-    le_bool noteMatra(const IndicClassTable *classTable, LEUnicode matra, le_uint32 matraIndex,
+    le_bool noteMatra(const IndicClassTable *classTable, LEUnicode matra, le_uint32 matraIndex, 
         FeatureMask matraFeatures, le_bool wordStart)
     {
         IndicClassTable::CharClass matraClass = classTable->getCharClass(matra);
@@ -218,50 +219,50 @@ public:
 
         return FALSE;
     }
-
-    void noteVowelModifier(const IndicClassTable *classTable, LEUnicode vowelModifier,
+    
+    void noteVowelModifier(const IndicClassTable *classTable, LEUnicode vowelModifier, 
         le_uint32 vowelModifierIndex, FeatureMask vowelModifierFeatures)
     {
         IndicClassTable::CharClass vmClass = classTable->getCharClass(vowelModifier);
-
+        
         fVMIndex = vowelModifierIndex;
         fVMFeatures = vowelModifierFeatures;
-
+        
         if (IndicClassTable::isVowelModifier(vmClass)) {
            switch (vmClass & CF_POS_MASK) {
            case CF_POS_ABOVE:
                fVMabove = vowelModifier;
                break;
-
+            
            case CF_POS_AFTER:
                fVMpost = vowelModifier;
                break;
-
+           
            default:
                // FIXME: this is an error...
                break;
            }
         }
     }
-
-    void noteStressMark(const IndicClassTable *classTable, LEUnicode stressMark,
+    
+    void noteStressMark(const IndicClassTable *classTable, LEUnicode stressMark, 
         le_uint32 stressMarkIndex, FeatureMask stressMarkFeatures)
     {
        IndicClassTable::CharClass smClass = classTable->getCharClass(stressMark);
-
+        
         fSMIndex = stressMarkIndex;
         fSMFeatures = stressMarkFeatures;
-
+        
         if (IndicClassTable::isStressMark(smClass)) {
             switch (smClass & CF_POS_MASK) {
             case CF_POS_ABOVE:
                 fSMabove = stressMark;
                 break;
-
+            
             case CF_POS_BELOW:
                 fSMbelow = stressMark;
                 break;
-
+           
             default:
                 // FIXME: this is an error...
                 break;
@@ -319,35 +320,35 @@ public:
             writeChar(fLengthMark, fLengthMarkIndex, fMatraFeatures);
         }
     }
-
+    
     void writeVMabove()
     {
         if (fVMabove != 0) {
             writeChar(fVMabove, fVMIndex, fVMFeatures);
         }
     }
-
+        
     void writeVMpost()
     {
         if (fVMpost != 0) {
             writeChar(fVMpost, fVMIndex, fVMFeatures);
         }
     }
-
+    
     void writeSMabove()
     {
         if (fSMabove != 0) {
             writeChar(fSMabove, fSMIndex, fSMFeatures);
         }
     }
-
+    
     void writeSMbelow()
     {
         if (fSMbelow != 0) {
             writeChar(fSMbelow, fSMIndex, fSMFeatures);
         }
     }
-
+    
     le_int32 getOutputIndex()
     {
         return fOutIndex;
@@ -415,7 +416,7 @@ const FeatureMap *IndicReordering::getFeatureMap(le_int32 &count)
     return featureMap;
 }
 
-le_int32 IndicReordering::findSyllable(const IndicClassTable *classTable,
+le_int32 IndicReordering::findSyllable(const IndicClassTable *classTable, 
     const LEUnicode *chars, le_int32 prev, le_int32 charCount)
 {
     le_int32 cursor = prev;
@@ -456,12 +457,12 @@ le_int32 IndicReordering::reorder(const LEUnicode *chars, le_int32 charCount, le
         le_int32 matra, markStart = syllable;
 
         output.reset();
-
+        
         if (classTable->isStressMark(chars[markStart - 1])) {
             markStart -= 1;
             output.noteStressMark(classTable, chars[markStart], markStart, tagArray1);
         }
-
+        
         if (classTable->isVowelModifier(chars[markStart - 1])) {
             markStart -= 1;
             output.noteVowelModifier(classTable, chars[markStart], markStart, tagArray1);
@@ -748,7 +749,8 @@ void IndicReordering::adjustMPres(MPreFixups *mpreFixups, LEGlyphStorage &glyphS
 {
     if (mpreFixups != NULL) {
         mpreFixups->apply(glyphStorage);
-
+        
         delete mpreFixups;
     }
 }
+

@@ -57,9 +57,10 @@ import sun.applet.AppletPanel;
  *   handle should be of the appropriate native type for a specific
  *   platform, as stored in the pData field of the ComponentPeer.
  *
- * @author      Thomas Ball
+ * @version 	1.15, 04/07/00
+ * @author 	Thomas Ball
  */
-public abstract class EmbeddedFrame extends Frame
+public abstract class EmbeddedFrame extends Frame 
                           implements KeyEventDispatcher, PropertyChangeListener {
 
     private boolean isCursorAllowed = true;
@@ -77,12 +78,12 @@ public abstract class EmbeddedFrame extends Frame
     public boolean supportsXEmbed() {
         return supportsXEmbed && SunToolkit.needsXEmbed();
     }
-
+    
     protected EmbeddedFrame(boolean supportsXEmbed) {
         this((long)0, supportsXEmbed);
     }
-
-
+    
+    
     protected EmbeddedFrame() {
         this((long)0);
     }
@@ -101,7 +102,7 @@ public abstract class EmbeddedFrame extends Frame
 
     protected EmbeddedFrame(long handle, boolean supportsXEmbed) {
         this.supportsXEmbed = supportsXEmbed;
-        registerListeners();
+	registerListeners();
     }
 
     /**
@@ -127,10 +128,10 @@ public abstract class EmbeddedFrame extends Frame
             return;
         }
 
-        // should be the same as appletKFM
-        removeTraversingOutListeners((KeyboardFocusManager)evt.getSource());
+	// should be the same as appletKFM
+        removeTraversingOutListeners((KeyboardFocusManager)evt.getSource()); 
 
-        appletKFM = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+	appletKFM = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         if (isVisible()) {
             addTraversingOutListeners(appletKFM);
         }
@@ -158,7 +159,7 @@ public abstract class EmbeddedFrame extends Frame
      * the correct KeyboardFocusManager to attach to as KeyEventDispatcher.
      * Those who want to use the functionality of traversing out of the EmbeddedFrame
      * must call this method on the Applet's AppContext. After that, all the changes
-     * can be handled automatically, including possible replacement of
+     * can be handled automatically, including possible replacement of 
      * KeyboardFocusManager.
      */
     public void registerListeners() {
@@ -210,7 +211,7 @@ public abstract class EmbeddedFrame extends Frame
         // root. Instead, we access KFM's private field directly.
         if (currentCycleRoot == null) {
             currentCycleRoot = (Field)AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
+	        public Object run() {
                     try {
                         Field unaccessibleRoot = KeyboardFocusManager.class.
                                                      getDeclaredField("currentFocusCycleRoot");
@@ -259,11 +260,11 @@ public abstract class EmbeddedFrame extends Frame
 
         Component last = getFocusTraversalPolicy().getLastComponent(this);
         toTest = getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS);
-        if (toTest.contains(stroke) && (currentFocused == last || last == null)) {
+        if (toTest.contains(stroke) && (currentFocused == last || last == null)) { 
             if (traverseOut(FORWARD)) {
                 e.consume();
                 return true;
-            }
+            } 
         }
 
         Component first = getFocusTraversalPolicy().getFirstComponent(this);
@@ -283,15 +284,15 @@ public abstract class EmbeddedFrame extends Frame
      *    about to transfer the focus backward.
      * 2. The focus in on the last Component of this EmbeddedFrame and we are
      *    about to transfer the focus forward.
-     * This is needed to give the opportuity for keyboard focus to leave the
+     * This is needed to give the opportuity for keyboard focus to leave the 
      * EmbeddedFrame. Override this method, initiate focus transfer in it and
      * return true if you want the focus to leave EmbeddedFrame's cycle.
-     * The direction parameter specifies which of the two mentioned cases is
+     * The direction parameter specifies which of the two mentioned cases is 
      * happening. Use FORWARD and BACKWARD constants defined in EmbeddedFrame
      * to avoid confusing boolean values.
      *
      * @param direction FORWARD or BACKWARD
-     * @return true, if EmbeddedFrame wants the focus to leave it,
+     * @return true, if EmbeddedFrame wants the focus to leave it, 
      *         false otherwise.
      */
     protected boolean traverseOut(boolean direction) {
@@ -310,30 +311,30 @@ public abstract class EmbeddedFrame extends Frame
     public void remove(MenuComponent m) {}
 
     public boolean isResizable() {
-        return true;
+	return true;
     }
 
     public void addNotify() {
         synchronized (getTreeLock()) {
-            if (getPeer() == null) {
-                setPeer(new NullEmbeddedFramePeer());
-            }
-            super.addNotify();
-        }
+	    if (getPeer() == null) {
+	        setPeer(new NullEmbeddedFramePeer());
+	    }
+	    super.addNotify();
+	}
     }
 
     // These three functions consitute RFE 4100710. Do not remove.
     public void setCursorAllowed(boolean isCursorAllowed) {
         this.isCursorAllowed = isCursorAllowed;
-        getPeer().updateCursorImmediately();
+	getPeer().updateCursorImmediately();
     }
     public boolean isCursorAllowed() {
         return isCursorAllowed;
     }
     public Cursor getCursor() {
         return (isCursorAllowed)
-            ? super.getCursor()
-            : Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+	    ? super.getCursor()
+	    : Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
     }
 
     protected  void setPeer(final ComponentPeer p){
@@ -342,7 +343,7 @@ public abstract class EmbeddedFrame extends Frame
                     public Object run() {
                         try {
                             Field lnkPeer = Component.class.getDeclaredField("peer");
-                            if (lnkPeer != null) {
+                            if (lnkPeer != null) {                 
                                 lnkPeer.setAccessible(true);
                             }
                             return lnkPeer;
@@ -437,7 +438,7 @@ public abstract class EmbeddedFrame extends Frame
     /**
      * Moves and resizes this embedded frame. The new location of the top-left
      * corner is specified by <code>x</code> and <code>y</code> parameters
-     * relative to the native parent component. The new size is specified by
+     * relative to the native parent component. The new size is specified by 
      * <code>width</code> and <code>height</code>.
      * <p>
      * setLocation() and setBounds() for EmbeddedFrame really don't move it
@@ -514,7 +515,7 @@ public abstract class EmbeddedFrame extends Frame
      * Checks if the component is in an EmbeddedFrame. If so,
      * returns the applet found in the hierarchy or null if
      * not found.
-     * @return the parent applet or {@ null}
+     * @return the parent applet or {@ null} 
      * @since 1.6
      */
     public static Applet getAppletIfAncestorOf(Component comp) {
@@ -536,7 +537,7 @@ public abstract class EmbeddedFrame extends Frame
      */
     public void notifyModalBlocked(Dialog blocker, boolean blocked) {
     }
-
+    
     private static class NullEmbeddedFramePeer
         extends NullComponentPeer implements FramePeer {
         public void setTitle(String title) {}
@@ -546,14 +547,14 @@ public abstract class EmbeddedFrame extends Frame
         public void setResizable(boolean resizeable) {}
         public void setState(int state) {}
         public int getState() { return Frame.NORMAL; }
-        public void setMaximizedBounds(Rectangle b) {}
+	public void setMaximizedBounds(Rectangle b) {}
         public void toFront() {}
         public void toBack() {}
         public void updateFocusableWindowState() {}
         public void updateAlwaysOnTop() {}
         public void setAlwaysOnTop(boolean alwaysOnTop) {}
         public Component getGlobalHeavyweightFocusOwner() { return null; }
-        public void setBoundsPrivate(int x, int y, int width, int height) {
+        public void setBoundsPrivate(int x, int y, int width, int height) {            
             setBounds(x, y, width, height, SET_BOUNDS);
         }
         public Rectangle getBoundsPrivate() {
@@ -567,14 +568,14 @@ public abstract class EmbeddedFrame extends Frame
         public void restack() {
             throw new UnsupportedOperationException();
         }
-
+        
         /**
          * @see java.awt.peer.ContainerPeer#isRestackSupported
          */
         public boolean isRestackSupported() {
             return false;
         }
-        public boolean requestWindowFocus() {
+        public boolean requestWindowFocus() {            
             return false;
         }
         public void updateMinimumSize() {

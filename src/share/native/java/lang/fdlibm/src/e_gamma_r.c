@@ -1,4 +1,5 @@
 
+ /* %W% %E%           */
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -34,11 +35,11 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-        double __ieee754_gamma_r(double x, int *signgamp)
+	double __ieee754_gamma_r(double x, int *signgamp)
 #else
-        double __ieee754_gamma_r(x,signgamp)
-        double x; int *signgamp;
+	double __ieee754_gamma_r(x,signgamp)
+	double x; int *signgamp;
 #endif
 {
-        return __ieee754_lgamma_r(x,signgamp);
+	return __ieee754_lgamma_r(x,signgamp);
 }

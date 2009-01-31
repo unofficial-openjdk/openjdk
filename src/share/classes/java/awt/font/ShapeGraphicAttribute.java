@@ -51,20 +51,20 @@ import java.awt.geom.Rectangle2D;
 /**
  * The <code>ShapeGraphicAttribute</code> class is an implementation of
  * {@link GraphicAttribute} that draws shapes in a {@link TextLayout}.
- * @see GraphicAttribute
+ * @see GraphicAttribute 
  */
 public final class ShapeGraphicAttribute extends GraphicAttribute {
 
     private Shape fShape;
     private boolean fStroke;
 
-    /**
-     * A key indicating the shape should be stroked with a 1-pixel wide stroke.
+    /** 
+     * A key indicating the shape should be stroked with a 1-pixel wide stroke. 
      */
     public static final boolean STROKE = true;
 
-    /**
-     * A key indicating the shape should be filled.
+    /** 
+     * A key indicating the shape should be filled. 
      */
     public static final boolean FILL = false;
 
@@ -74,7 +74,7 @@ public final class ShapeGraphicAttribute extends GraphicAttribute {
     /**
      * Constructs a <code>ShapeGraphicAttribute</code> for the specified
      * {@link Shape}.
-     * @param shape the <code>Shape</code> to render.  The
+     * @param shape the <code>Shape</code> to render.  The 
      * <code>Shape</code> is rendered with its origin at the origin of
      * this <code>ShapeGraphicAttribute</code> in the
      * host <code>TextLayout</code>.  This object maintains a reference to

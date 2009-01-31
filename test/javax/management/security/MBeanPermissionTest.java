@@ -35,29 +35,29 @@ import javax.management.MBeanPermission;
 
 public class MBeanPermissionTest {
     public static void main(String[] args) {
-        int error = 0;
+	int error = 0;
         System.out.println(">>> MBeanPermissionTest");
         try {
             System.out.println("Create MBeanPermission(null,\"\")");
             MBeanPermission mbp = new MBeanPermission(null, "");
             System.out.println("Didn't get expected IllegalArgumentException");
-            error++;
+	    error++;
         } catch (IllegalArgumentException e) {
             System.out.println("Got expected exception = " + e);
         } catch (Exception e) {
             System.out.println("Got unexpected exception = " + e);
-            error++;
+	    error++;
         }
         try {
             System.out.println("Create MBeanPermission(\"\", null)");
             MBeanPermission mbp = new MBeanPermission("", null);
             System.out.println("Didn't get expected IllegalArgumentException");
-            error++;
+	    error++;
         } catch (IllegalArgumentException e) {
             System.out.println("Got expected exception = " + e);
         } catch (Exception e) {
             System.out.println("Got unexpected exception = " + e);
-            error++;
+	    error++;
         }
         if (error > 0) {
             final String msg = "Test FAILED! Got " + error + " error(s)";

@@ -34,7 +34,7 @@
 #include <jni_util.h>
 
 class AwtPanel {
-public:
+public:    
     static void* Restack(void * param);
 
     /* java.awt.Panel field ids */
@@ -43,3 +43,4 @@ public:
 };
 
 #endif // AWT_PANEL_H
+

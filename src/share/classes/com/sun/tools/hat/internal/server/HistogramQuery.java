@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.server;
@@ -50,6 +50,7 @@ import java.util.Comparator;
 /**
  * Prints histogram sortable by class name, count and size.
  *
+ * @author A. Sundararajan [jhat %W% %E%]
  */
 public class HistogramQuery extends QueryHandler {
     public void run() {
@@ -66,7 +67,7 @@ public class HistogramQuery extends QueryHandler {
         } else if (query.equals("class")) {
             comparator = new Comparator<JavaClass>() {
                 public int compare(JavaClass first, JavaClass second) {
-                    return first.getName().compareTo(second.getName());
+                    return first.getName().compareTo(second.getName()); 
                 }
             };
         } else {
@@ -78,7 +79,7 @@ public class HistogramQuery extends QueryHandler {
                     return (diff == 0)? 0: ((diff < 0)? -1 : + 1);
                 }
             };
-        }
+        } 
         Arrays.sort(classes, comparator);
 
         startHtml("Heap Histogram");
@@ -108,3 +109,4 @@ public class HistogramQuery extends QueryHandler {
         endHtml();
     }
 }
+

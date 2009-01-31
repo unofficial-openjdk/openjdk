@@ -34,28 +34,28 @@ import java.io.IOException;
 
 public class Constructor {
     private static void Unreached (Object o)
-        throws Exception
+	throws Exception
     {
-        // Should never get here
-        throw new Exception ("Expected exception was not thrown");
+	// Should never get here
+	throw new Exception ("Expected exception was not thrown");
     }
 
     public static void main(String[] args)
-        throws Exception
+	throws Exception
     {
-        try { Unreached (new ZipFile ((File) null, ZipFile.OPEN_READ)); }
-        catch (NullPointerException e) {}
+	try { Unreached (new ZipFile ((File) null, ZipFile.OPEN_READ)); }
+	catch (NullPointerException e) {}
 
-        try { Unreached (new ZipFile ((File) null)); }
-        catch (NullPointerException e) {}
+	try { Unreached (new ZipFile ((File) null)); }
+	catch (NullPointerException e) {}
 
-        try { Unreached (new ZipFile ((String) null)); }
-        catch (NullPointerException e) {}
+	try { Unreached (new ZipFile ((String) null)); }
+	catch (NullPointerException e) {}
 
-        try { Unreached (new ZipFile ("NoSuchZip.zip")); }
-        catch (IOException e) {}
+	try { Unreached (new ZipFile ("NoSuchZip.zip")); }
+	catch (IOException e) {}
 
-        try { Unreached (new ZipFile (new File ("NoSuchZip.zip"))); }
-        catch (IOException e) {}
+	try { Unreached (new ZipFile (new File ("NoSuchZip.zip"))); }
+	catch (IOException e) {}
     }
 }

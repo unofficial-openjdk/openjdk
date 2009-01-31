@@ -34,6 +34,7 @@ import java.awt.event.*;
  * that receive the events to do the actual scrolling in response to the
  * mouse dragged events.
  *
+ * @version %I% %G%
  * @author Dave Moore
  * @author Scott Violet
  */
@@ -144,9 +145,9 @@ class Autoscroller implements ActionListener {
         }
         if (stop) {
             _stop(component);
-        } else {
+	} else {
             start(component, e);
-        }
+	}
     }
 
     //

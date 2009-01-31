@@ -76,12 +76,12 @@ class FieldUpdater implements Constants {
      */
 
     public FieldUpdater(long where, MemberDefinition field,
-                        Expression base, MemberDefinition getter, MemberDefinition setter) {
-        this.where = where;
-        this.field = field;
-        this.base = base;
-        this.getter = getter;
-        this.setter = setter;
+			Expression base, MemberDefinition getter, MemberDefinition setter) {
+	this.where = where;
+	this.field = field;
+	this.base = base;
+	this.getter = getter;
+	this.setter = setter;
     }
 
 
@@ -92,29 +92,29 @@ class FieldUpdater implements Constants {
      */
 
     public FieldUpdater inline(Environment env, Context ctx) {
-        if (base != null) {
-            if (field.isStatic()) {
-                base = base.inline(env, ctx);
-            } else {
-                base = base.inlineValue(env, ctx);
-            }
-        }
-        return this;
+	if (base != null) {
+	    if (field.isStatic()) {
+		base = base.inline(env, ctx);
+	    } else {
+		base = base.inlineValue(env, ctx);
+	    }
+	}
+	return this;
     }
 
     public FieldUpdater copyInline(Context ctx) {
-        return new FieldUpdater(where, field, base.copyInline(ctx), getter, setter);
+	return new FieldUpdater(where, field, base.copyInline(ctx), getter, setter);
     }
 
     public int costInline(int thresh, Environment env, Context ctx, boolean needGet) {
-        // Size of 'invokestatic' call for access method is 3 bytes.
-        int cost = needGet ? 7 : 3;  // getter needs extra invokestatic + dup
-        // Size of expression to compute 'this' arg if needed.
-        if (!field.isStatic() && base != null) {
-            cost += base.costInline(thresh, env, ctx);
-        }
-        // We ignore the cost of duplicating value in value-needed context.
-        return cost;
+	// Size of 'invokestatic' call for access method is 3 bytes.
+	int cost = needGet ? 7 : 3;  // getter needs extra invokestatic + dup
+	// Size of expression to compute 'this' arg if needed.
+	if (!field.isStatic() && base != null) {
+	    cost += base.costInline(thresh, env, ctx);
+	}
+	// We ignore the cost of duplicating value in value-needed context.
+	return cost;
     }
 
     /**
@@ -126,39 +126,39 @@ class FieldUpdater implements Constants {
     // because we do not inherit from class 'Expression'.
 
     private void codeDup(Assembler asm, int items, int depth) {
-        switch (items) {
-          case 0:
-            return;
-          case 1:
-            switch (depth) {
-              case 0:
-                asm.add(where, opc_dup);
-                return;
-              case 1:
-                asm.add(where, opc_dup_x1);
-                return;
-              case 2:
-                asm.add(where, opc_dup_x2);
-                return;
+	switch (items) {
+	  case 0:
+	    return;
+	  case 1:
+	    switch (depth) {
+	      case 0:
+		asm.add(where, opc_dup);
+		return;
+	      case 1:
+		asm.add(where, opc_dup_x1);
+		return;
+	      case 2:
+		asm.add(where, opc_dup_x2);
+		return;
 
-            }
-            break;
-          case 2:
-            switch (depth) {
-              case 0:
-                asm.add(where, opc_dup2);
-                return;
-              case 1:
-                asm.add(where, opc_dup2_x1);
-                return;
-              case 2:
-                asm.add(where, opc_dup2_x2);
-                return;
+	    }
+	    break;
+	  case 2:
+	    switch (depth) {
+	      case 0:
+		asm.add(where, opc_dup2);
+		return;
+	      case 1:
+		asm.add(where, opc_dup2_x1);
+		return;
+	      case 2:
+		asm.add(where, opc_dup2_x2);
+		return;
 
-            }
-            break;
-        }
-        throw new CompilerError("can't dup: " + items + ", " + depth);
+	    }
+	    break;
+	}
+ 	throw new CompilerError("can't dup: " + items + ", " + depth);
     }
 
     /**
@@ -169,26 +169,26 @@ class FieldUpdater implements Constants {
      */
 
     public void startUpdate(Environment env, Context ctx, Assembler asm, boolean valNeeded) {
-        if (!(getter.isStatic() && setter.isStatic())) {
-            throw new CompilerError("startUpdate isStatic");
-        }
-        if (!field.isStatic()) {
-            // Provide explicit 'this' argument.
-            base.codeValue(env, ctx, asm);
-            depth = 1;
-        } else {
-            // May need to evaluate 'base' for effect.
-            // If 'base' was a type expression, it should have previously been inlined away.
-            if (base != null) {
-                base.code(env, ctx, asm);
-            }
-            depth = 0;
-        }
-        codeDup(asm, depth, 0);
-        asm.add(where, opc_invokestatic, getter);
-        if (valNeeded) {
-            codeDup(asm, field.getType().stackSize(), depth);
-        }
+	if (!(getter.isStatic() && setter.isStatic())) {
+	    throw new CompilerError("startUpdate isStatic");
+	}
+	if (!field.isStatic()) {
+	    // Provide explicit 'this' argument.
+	    base.codeValue(env, ctx, asm);
+	    depth = 1;
+	} else {
+	    // May need to evaluate 'base' for effect.
+	    // If 'base' was a type expression, it should have previously been inlined away.
+	    if (base != null) {
+		base.code(env, ctx, asm);
+	    }
+	    depth = 0;
+	}
+	codeDup(asm, depth, 0);
+	asm.add(where, opc_invokestatic, getter);
+	if (valNeeded) {
+	    codeDup(asm, field.getType().stackSize(), depth);
+	}
     }
 
     /**
@@ -201,10 +201,10 @@ class FieldUpdater implements Constants {
      */
 
     public void finishUpdate(Environment env, Context ctx, Assembler asm, boolean valNeeded) {
-        if (valNeeded) {
-            codeDup(asm, field.getType().stackSize(), depth);
-        }
-        asm.add(where, opc_invokestatic, setter);
+	if (valNeeded) {
+	    codeDup(asm, field.getType().stackSize(), depth);
+	}
+	asm.add(where, opc_invokestatic, setter);
     }
 
     /**
@@ -215,28 +215,28 @@ class FieldUpdater implements Constants {
      */
 
     public void startAssign(Environment env, Context ctx, Assembler asm) {
-        if (!setter.isStatic()) {
-            throw new CompilerError("startAssign isStatic");
-        }
-        if (!field.isStatic()) {
-            // Provide explicit 'this' argument.
-            base.codeValue(env, ctx, asm);
-            depth = 1;
-        } else {
-            // May need to evaluate 'base' for effect.
-            // If 'base' was a type expression, it should have previously been inlined away.
-            if (base != null) {
-                base.code(env, ctx, asm);
-            }
-            depth = 0;
-        }
+	if (!setter.isStatic()) {
+	    throw new CompilerError("startAssign isStatic");
+	}
+	if (!field.isStatic()) {
+	    // Provide explicit 'this' argument.
+	    base.codeValue(env, ctx, asm);
+	    depth = 1;
+	} else {
+	    // May need to evaluate 'base' for effect.
+	    // If 'base' was a type expression, it should have previously been inlined away.
+	    if (base != null) {
+		base.code(env, ctx, asm);
+	    }
+	    depth = 0;
+	}
     }
 
     public void finishAssign(Environment env, Context ctx, Assembler asm, boolean valNeeded) {
-        if (valNeeded) {
-            codeDup(asm, field.getType().stackSize(), depth);
-        }
-        asm.add(where, opc_invokestatic, setter);
+	if (valNeeded) {
+	    codeDup(asm, field.getType().stackSize(), depth);
+	}
+	asm.add(where, opc_invokestatic, setter);
     }
 
 }

@@ -109,15 +109,15 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Chart:", "\u56fe\u8868\uff1a"},
         {"Chart:.mnemonic", 'C'},
         {"Class path","\u7c7b\u8def\u5f84"},
-        {"Class","\u7c7b"},
-        {"ClassName","\u7c7b\u540d\u79f0"},
+	{"Class","\u7c7b"},
+	{"ClassName","\u7c7b\u540d\u79f0"},
         {"ClassTab.infoLabelFormat", "<html>\u5df2\u52a0\u8f7d: {0}    \u672a\u52a0\u8f7d: {1}    \u603b\u8ba1: {2}</html>"},
         {"ClassTab.loadedClassesPlotter.accessibleName", "\u5df2\u88c5\u5165\u7c7b\u7684\u56fe\u8868\u3002"},
         {"Classes","\u7c7b"},
         {"Clear","\u6e05\u9664"},
         {"Close","\u5173\u95ed"},
         {"Column.Name", "\u540d\u79f0"},
-        {"Column.PID", "PID"},
+	{"Column.PID", "PID"},
         {"Committed memory","\u5206\u914d\u7684\u5185\u5b58"},
         {"Committed virtual memory","\u5206\u914d\u7684\u865a\u62df\u5185\u5b58"},
         {"Committed", "\u5206\u914d"},
@@ -144,7 +144,7 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Current classes loaded", "\u5f53\u524d\u7c7b\u5df2\u88c5\u5165"},
         {"Current heap size","\u5f53\u524d\u5806\u5927\u5c0f"},
         {"Current value","\u5f53\u524d\u503c\uff1a {0}"},
-        {"Create", "\u521b\u5efa"},
+	{"Create", "\u521b\u5efa"},
         {"Daemon threads","\u5b88\u62a4\u7ebf\u7a0b"},
         {"Disconnected. Click to connect.","\u5df2\u65ad\u5f00\u8fde\u63a5\u3002\u8bf7\u5355\u51fb\u4ee5\u8fde\u63a5\u3002"},
         {"Double click to expand/collapse","\u53cc\u51fb\u4ee5\u5c55\u5f00/\u6298\u53e0"},
@@ -170,8 +170,8 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Empty array", "\u7a7a\u6570\u7ec4"},
         {"Empty opentype viewer", "\u7a7a OpenType \u67e5\u770b\u5668"},
         {"Error","\u9519\u8bef"},
-        {"Error: MBeans already exist","\u9519\u8bef\uff1aMBean \u5df2\u5b58\u5728"},
-        {"Error: MBeans do not exist","\u9519\u8bef\uff1aMBean \u4e0d\u5b58\u5728"},
+	{"Error: MBeans already exist","\u9519\u8bef\uff1aMBean \u5df2\u5b58\u5728"},
+	{"Error: MBeans do not exist","\u9519\u8bef\uff1aMBean \u4e0d\u5b58\u5728"},
         {"Error:","\u9519\u8bef\uff1a"},
         {"Event","\u4e8b\u4ef6"},
         {"Exit", "\u9000\u51fa"},
@@ -216,8 +216,8 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Impact","\u5f71\u54cd"},
         {"Info","\u4fe1\u606f"},
         {"INFO","INFO"},
-        {"Invalid plugin path", "\u8b66\u544a: \u65e0\u6548\u7684\u63d2\u4ef6\u8def\u5f84: {0}"},
-        {"Invalid URL", "\u65e0\u6548\u7684 URL: {0}"},
+	{"Invalid plugin path", "\u8b66\u544a: \u65e0\u6548\u7684\u63d2\u4ef6\u8def\u5f84: {0}"},
+	{"Invalid URL", "\u65e0\u6548\u7684 URL: {0}"},
         {"Is","\u4e3a"},
         {"Java Monitoring & Management Console", "Java \u76d1\u89c6\u548c\u7ba1\u7406\u63a7\u5236\u53f0"},
         {"JConsole: ","JConsole: {0}"},
@@ -228,10 +228,10 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Java","Java"},
         {"Library path","\u5e93\u8def\u5f84"},
         {"Listeners","\u4fa6\u542c\u5668"},
-        {"Live Threads","\u6d3b\u52a8\u7ebf\u7a0b"},
-        {"Loaded", "\u5df2\u88c5\u5165"},
-        {"Local Process:", "\u672c\u5730\u8fdb\u7a0b:"},
-        {"Local Process:.mnemonic", 'L'},
+	{"Live Threads","\u6d3b\u52a8\u7ebf\u7a0b"},
+	{"Loaded", "\u5df2\u88c5\u5165"},
+	{"Local Process:", "\u672c\u5730\u8fdb\u7a0b:"},
+	{"Local Process:.mnemonic", 'L'},
         {"Look and Feel","\u5916\u89c2"},
         {"Masthead.font", "Dialog-PLAIN-25"},
         {"Management Not Enabled","<b>\u6ce8\u610f</b>\uff1a\u5728\u6b64\u8fdb\u7a0b\u4e2d\u672a\u542f\u7528\u7ba1\u7406\u4ee3\u7406\u3002"},
@@ -291,7 +291,7 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Notification buffer","\u901a\u77e5\u7f13\u51b2\u533a"},
         {"Notifications","\u901a\u77e5"},
         {"NotifTypes", "NotifTypes"},
-        {"Number of Threads","\u7ebf\u7a0b\u7684\u6570\u76ee"},
+	{"Number of Threads","\u7ebf\u7a0b\u7684\u6570\u76ee"},
         {"Number of Loaded Classes","\u5df2\u88c5\u5165\u7c7b\u7684\u6570\u76ee"},
         {"Number of processors","\u5904\u7406\u5668\u7684\u6570\u76ee"},
         {"ObjectName","ObjectName"},
@@ -327,15 +327,15 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"Readable","\u53ef\u8bfb"},
         {"Received","\u5df2\u6536\u5230"},
         {"Reconnect","\u91cd\u65b0\u8fde\u63a5"},
-        {"Remote Process:", "\u8fdc\u7a0b\u8fdb\u7a0b:"},
-        {"Remote Process:.mnemonic", 'R'},
-        {"Remote Process.textField.accessibleName", "\u8fdc\u7a0b\u8fdb\u7a0b"},
+	{"Remote Process:", "\u8fdc\u7a0b\u8fdb\u7a0b:"},
+	{"Remote Process:.mnemonic", 'R'},
+	{"Remote Process.textField.accessibleName", "\u8fdc\u7a0b\u8fdb\u7a0b"},
         {"Remove","\u5220\u9664"},
         {"Restore All", "\u5168\u90e8\u6062\u590d"},
         {"Restore All.mnemonic", 'R'},
         {"Return value", "\u8fd4\u56de\u503c"},
         {"ReturnType", "ReturnType"},
-        {"SeqNum","\u5e8f\u5217\u53f7"},
+	{"SeqNum","\u5e8f\u5217\u53f7"},
         {"Size Bytes", "{0,number,integer} \u5b57\u8282"},
         {"Size Gb","{0} Gb"},
         {"Size Kb","{0} Kb"},
@@ -345,13 +345,13 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
              cr + "\u5806\u6808\u8ffd\u8e2a\uff1a " + cr},
         {"Subscribe","\u8ba2\u9605"},
         {"Success:","\u6210\u529f\uff1a"},
-        // Note: SummaryTab.headerDateTimeFormat can be one the following:
-        // 1. A combination of two styles for date and time, using the
-        //    constants from class DateFormat: SHORT, MEDIUM, LONG, FULL.
-        //    Example: "MEDIUM,MEDIUM" or "FULL,SHORT"
-        // 2. An explicit string pattern used for creating an instance
-        //    of the class SimpleDateFormat.
-        //    Example: "yyyy-MM-dd HH:mm:ss" or "M/d/yyyy h:mm:ss a"
+	// Note: SummaryTab.headerDateTimeFormat can be one the following:
+	// 1. A combination of two styles for date and time, using the
+	//    constants from class DateFormat: SHORT, MEDIUM, LONG, FULL.
+	//    Example: "MEDIUM,MEDIUM" or "FULL,SHORT"
+	// 2. An explicit string pattern used for creating an instance
+	//    of the class SimpleDateFormat.
+	//    Example: "yyyy-MM-dd HH:mm:ss" or "M/d/yyyy h:mm:ss a"
         {"SummaryTab.headerDateTimeFormat", "FULL,FULL"},
         {"SummaryTab.pendingFinalization.label", "\u6682\u6302\u7ed3\u675f\u64cd\u4f5c"},
         {"SummaryTab.pendingFinalization.value", "{0} \u4e2a\u5bf9\u8c61"},
@@ -363,14 +363,14 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"ThreadTab.infoLabelFormat", "<html>\u6d3b\u52a8: {0}    \u5cf0\u503c: {1}    \u603b\u8ba1: {2}</html>"},
         {"ThreadTab.threadInfo.accessibleName", "\u7ebf\u7a0b\u4fe1\u606f"},
         {"ThreadTab.threadPlotter.accessibleName", "\u7ebf\u7a0b\u6570\u76ee\u56fe\u8868\u3002"},
-        {"Threshold","\u9608\u503c"},
+	{"Threshold","\u9608\u503c"},
         {"Tile", "\u5e73\u94fa"},
         {"Tile.mnemonic", 'T'},
         {"Time Range:", "\u65f6\u95f4\u8303\u56f4\uff1a"},
         {"Time Range:.mnemonic", 'T'},
         {"Time", "\u65f6\u95f4"},
         {"TimeStamp","\u65f6\u95f4\u6233"},
-        {"Total Loaded", "\u5df2\u88c5\u5165\u7684\u603b\u6570"},
+	{"Total Loaded", "\u5df2\u88c5\u5165\u7684\u603b\u6570"},
         {"Total classes loaded","\u5df2\u88c5\u5165\u7c7b\u7684\u603b\u6570"},
         {"Total classes unloaded","\u5df2\u5378\u8f7d\u7c7b\u7684\u603b\u6570"},
         {"Total compile time","\u7f16\u8bd1\u603b\u65f6\u95f4"},
@@ -382,7 +382,7 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
         {"UNKNOWN","\u672a\u77e5"},
         {"Unknown Host","\u672a\u77e5\u4e3b\u673a: {0}"},
         {"Unsubscribe","\u672a\u8ba2\u9605"},
-        {"Unregister", "\u672a\u6ce8\u518c"},
+	{"Unregister", "\u672a\u6ce8\u518c"},
         {"Uptime","\u6b63\u5e38\u8fd0\u884c\u65f6\u95f4"},
         {"Uptime: ","\u6b63\u5e38\u8fd0\u884c\u65f6\u95f4\uff1a "},
         {"Usage Threshold","\u4f7f\u7528\u9608\u503c"},
@@ -434,7 +434,7 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
              "  -pluginpath \u6307\u5b9a jconsole \u7528\u4e8e\u67e5\u627e\u63d2\u4ef6\u7684\u8def\u5f84" + cr +
              "  -version    \u8f93\u51fa\u7a0b\u5e8f\u7248\u672c" + cr +
              cr +
-             "  connection = pid || host:port || JMX URL (service:jmx:<protocol>://...)" + cr +
+	     "  connection = pid || host:port || JMX URL (service:jmx:<protocol>://...)" + cr +
              "  pid       \u76ee\u6807\u8fdb\u7a0b\u7684\u8fdb\u7a0b ID"+ cr +
              "  host      \u8fdc\u7a0b\u4e3b\u673a\u540d\u6216 IP \u5730\u5740" + cr +
              "  port      \u7528\u4e8e\u8fdc\u7a0b\u8fde\u63a5\u7684\u7aef\u53e3\u53f7" + cr +
@@ -446,6 +446,6 @@ public class JConsoleResources_zh_CN extends JConsoleResources {
     }
 
     public synchronized Object[][] getContents() {
-        return getContents0();
+	return getContents0();
     }
 }

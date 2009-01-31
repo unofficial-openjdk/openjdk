@@ -33,7 +33,7 @@ import java.io.*;
  * MIME format.
  * <p>
  * The conversion process is the reverse of that used by the URLEncoder class. It is assumed
- * that all characters in the encoded string are one of the following:
+ * that all characters in the encoded string are one of the following: 
  * &quot;<code>a</code>&quot; through &quot;<code>z</code>&quot;,
  * &quot;<code>A</code>&quot; through &quot;<code>Z</code>&quot;,
  * &quot;<code>0</code>&quot; through &quot;<code>9</code>&quot;, and
@@ -47,11 +47,11 @@ import java.io.*;
  * <ul>
  * <li>The alphanumeric characters &quot;<code>a</code>&quot; through
  *     &quot;<code>z</code>&quot;, &quot;<code>A</code>&quot; through
- *     &quot;<code>Z</code>&quot; and &quot;<code>0</code>&quot;
+ *     &quot;<code>Z</code>&quot; and &quot;<code>0</code>&quot; 
  *     through &quot;<code>9</code>&quot; remain the same.
  * <li>The special characters &quot;<code>.</code>&quot;,
  *     &quot;<code>-</code>&quot;, &quot;<code>*</code>&quot;, and
- *     &quot;<code>_</code>&quot; remain the same.
+ *     &quot;<code>_</code>&quot; remain the same. 
  * <li>The plus sign &quot;<code>+</code>&quot; is converted into a
  *     space character &quot;<code>&nbsp;</code>&quot; .
  * <li>A sequence of the form "<code>%<i>xy</i></code>" will be
@@ -59,8 +59,8 @@ import java.io.*;
  *     hexadecimal representation of the 8 bits. Then, all substrings
  *     that contain one or more of these byte sequences consecutively
  *     will be replaced by the character(s) whose encoding would result
- *     in those consecutive bytes.
- *     The encoding scheme used to decode these characters may be specified,
+ *     in those consecutive bytes. 
+ *     The encoding scheme used to decode these characters may be specified, 
  *     or if unspecified, the default encoding of the platform will be used.
  * </ul>
  * <p>
@@ -72,6 +72,7 @@ import java.io.*;
  *
  * @author  Mark Chamness
  * @author  Michael McCloskey
+ * @version %I%, %G%
  * @since   1.2
  */
 
@@ -82,8 +83,8 @@ public class URLDecoder {
 
     /**
      * Decodes a <code>x-www-form-urlencoded</code> string.
-     * The platform's default encoding is used to determine what characters
-     * are represented by any consecutive sequences of the form
+     * The platform's default encoding is used to determine what characters 
+     * are represented by any consecutive sequences of the form 
      * "<code>%<i>xy</i></code>".
      * @param s the <code>String</code> to decode
      * @deprecated The resulting string may vary depending on the platform's
@@ -94,19 +95,19 @@ public class URLDecoder {
     @Deprecated
     public static String decode(String s) {
 
-        String str = null;
+	String str = null;
 
-        try {
-            str = decode(s, dfltEncName);
-        } catch (UnsupportedEncodingException e) {
-            // The system should always have the platform default
-        }
+	try {
+	    str = decode(s, dfltEncName);
+	} catch (UnsupportedEncodingException e) {
+	    // The system should always have the platform default
+	}
 
-        return str;
+	return str;
     }
 
     /**
-     * Decodes a <code>application/x-www-form-urlencoded</code> string using a specific
+     * Decodes a <code>application/x-www-form-urlencoded</code> string using a specific 
      * encoding scheme.
      * The supplied encoding is used to determine
      * what characters are represented by any consecutive sequences of the
@@ -119,9 +120,9 @@ public class URLDecoder {
      * incompatibilites.</em>
      *
      * @param s the <code>String</code> to decode
-     * @param enc   The name of a supported
+     * @param enc   The name of a supported 
      *    <a href="../lang/package-summary.html#charenc">character
-     *    encoding</a>.
+     *    encoding</a>. 
      * @return the newly decoded <code>String</code>
      * @exception  UnsupportedEncodingException
      *             If character encoding needs to be consulted, but
@@ -129,76 +130,76 @@ public class URLDecoder {
      * @see URLEncoder#encode(java.lang.String, java.lang.String)
      * @since 1.4
      */
-    public static String decode(String s, String enc)
-        throws UnsupportedEncodingException{
+    public static String decode(String s, String enc) 
+	throws UnsupportedEncodingException{
+	
+	boolean needToChange = false;
+	int numChars = s.length();
+	StringBuffer sb = new StringBuffer(numChars > 500 ? numChars / 2 : numChars);
+	int i = 0;
 
-        boolean needToChange = false;
-        int numChars = s.length();
-        StringBuffer sb = new StringBuffer(numChars > 500 ? numChars / 2 : numChars);
-        int i = 0;
+	if (enc.length() == 0) {
+	    throw new UnsupportedEncodingException ("URLDecoder: empty string enc parameter");
+	}
 
-        if (enc.length() == 0) {
-            throw new UnsupportedEncodingException ("URLDecoder: empty string enc parameter");
-        }
-
-        char c;
-        byte[] bytes = null;
-        while (i < numChars) {
+	char c;
+	byte[] bytes = null;
+	while (i < numChars) {
             c = s.charAt(i);
             switch (c) {
-            case '+':
-                sb.append(' ');
-                i++;
-                needToChange = true;
-                break;
-            case '%':
-                /*
-                 * Starting with this instance of %, process all
-                 * consecutive substrings of the form %xy. Each
-                 * substring %xy will yield a byte. Convert all
-                 * consecutive  bytes obtained this way to whatever
-                 * character(s) they represent in the provided
-                 * encoding.
-                 */
+	    case '+':
+		sb.append(' ');
+		i++;
+		needToChange = true;
+		break;
+	    case '%':
+		/*
+		 * Starting with this instance of %, process all
+		 * consecutive substrings of the form %xy. Each
+		 * substring %xy will yield a byte. Convert all
+		 * consecutive  bytes obtained this way to whatever
+		 * character(s) they represent in the provided
+		 * encoding.
+		 */
 
-                try {
+		try {
 
-                    // (numChars-i)/3 is an upper bound for the number
-                    // of remaining bytes
-                    if (bytes == null)
-                        bytes = new byte[(numChars-i)/3];
-                    int pos = 0;
+		    // (numChars-i)/3 is an upper bound for the number
+		    // of remaining bytes
+		    if (bytes == null)
+			bytes = new byte[(numChars-i)/3];
+		    int pos = 0;
+		    
+		    while ( ((i+2) < numChars) && 
+			    (c=='%')) {
+			int v = Integer.parseInt(s.substring(i+1,i+3),16);
+			if (v < 0)
+			    throw new IllegalArgumentException("URLDecoder: Illegal hex characters in escape (%) pattern - negative value");
+			bytes[pos++] = (byte) v;
+			i+= 3;
+			if (i < numChars)
+			    c = s.charAt(i);
+		    }
 
-                    while ( ((i+2) < numChars) &&
-                            (c=='%')) {
-                        int v = Integer.parseInt(s.substring(i+1,i+3),16);
-                        if (v < 0)
-                            throw new IllegalArgumentException("URLDecoder: Illegal hex characters in escape (%) pattern - negative value");
-                        bytes[pos++] = (byte) v;
-                        i+= 3;
-                        if (i < numChars)
-                            c = s.charAt(i);
-                    }
+		    // A trailing, incomplete byte encoding such as
+		    // "%x" will cause an exception to be thrown
 
-                    // A trailing, incomplete byte encoding such as
-                    // "%x" will cause an exception to be thrown
-
-                    if ((i < numChars) && (c=='%'))
-                        throw new IllegalArgumentException(
-                         "URLDecoder: Incomplete trailing escape (%) pattern");
-
-                    sb.append(new String(bytes, 0, pos, enc));
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException(
-                    "URLDecoder: Illegal hex characters in escape (%) pattern - "
-                    + e.getMessage());
-                }
-                needToChange = true;
-                break;
-            default:
-                sb.append(c);
-                i++;
-                break;
+		    if ((i < numChars) && (c=='%'))
+			throw new IllegalArgumentException(
+		         "URLDecoder: Incomplete trailing escape (%) pattern");
+		    
+		    sb.append(new String(bytes, 0, pos, enc));
+		} catch (NumberFormatException e) {
+		    throw new IllegalArgumentException(
+                    "URLDecoder: Illegal hex characters in escape (%) pattern - " 
+		    + e.getMessage());
+		}
+		needToChange = true;
+		break;
+	    default: 
+		sb.append(c); 
+		i++;
+		break; 
             }
         }
 

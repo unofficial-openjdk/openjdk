@@ -23,6 +23,7 @@
  * have any questions.
  */
 /*
+ * %W% %E%
  *
  * (C) Copyright IBM Corp. 1998-2003 - All Rights Reserved
  */
@@ -53,9 +54,9 @@ import java.util.Map;
 // {jbr} I made this class package-private to keep the
 // Decoration.Label API package-private.
 
-/* public */
+/* public */ 
 class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.Label {
-
+  
   TextSource source;
   private Decoration decorator;
 
@@ -91,7 +92,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
     this.decorator = oldLabel.decorator;
     finishInit();
   }
-
+                          
   private void finishInit() {
     font = source.getFont();
 
@@ -106,19 +107,19 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
       }
       font = font.deriveFont(charTX);
 
-      LineMetrics lm = font.getLineMetrics(source.getChars(), source.getStart(),
+      LineMetrics lm = font.getLineMetrics(source.getChars(), source.getStart(), 
           source.getStart() + source.getLength(), source.getFRC());
       cm = CoreMetrics.get(lm);
     }
   }
-
+    
 
   // TextLabel API
 
   public Rectangle2D getLogicalBounds() {
     return getLogicalBounds(0, 0);
   }
-
+  
   public Rectangle2D getLogicalBounds(float x, float y) {
     if (lb == null) {
       lb = createLogicalBounds();
@@ -184,7 +185,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
   public Shape handleGetOutline(float x, float y) {
     return getGV().getOutline(x, y);
   }
-
+  
   public Shape getOutline(float x, float y) {
     return decorator.getOutline(this, x, y);
   }
@@ -192,7 +193,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
   public void handleDraw(Graphics2D g, float x, float y) {
     g.drawGlyphVector(getGV(), x, y);
   }
-
+  
   public void draw(Graphics2D g, float x, float y) {
     decorator.drawTextAndDecorations(this, g, x, y);
   }
@@ -288,7 +289,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
 
   public Rectangle2D createItalicBounds() {
     float ia = cm.italicAngle;
-
+    
     Rectangle2D lb = getLogicalBounds();
     float l = (float)lb.getMinX();
     float t = -cm.ascent;
@@ -373,9 +374,9 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
                                  charinfo[index + visw],
                                  charinfo[index + vish]);
   }
-
-  public Rectangle2D getCharVisualBounds(int index, float x, float y) {
-
+  
+  public Rectangle2D getCharVisualBounds(int index, float x, float y) { 
+    
     Rectangle2D bounds = decorator.getCharVisualBounds(this, index);
     if (x != 0 || y != 0) {
         bounds.setRect(bounds.getX()+x,
@@ -385,7 +386,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
     }
     return bounds;
   }
-
+  
   private void validate(int index) {
     if (index < 0) {
       throw new IllegalArgumentException("index " + index + " < 0");
@@ -548,7 +549,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
 *    b) subsequent elements are consumed if:
 *       i) their advance is zero
 *       ii) their character index <= the character index of any character seen in this cluster
-*       iii) the minimum character index seen in this cluster isn't adjacent to the previous cluster
+*       iii) the minimum character index seen in this cluster isn't adjacent to the previous cluster 
 *    c) character data is written as follows for horizontal lines (x/y and w/h are exchanged on vertical lines)
 *       i) the x position is the position of the leftmost glyph whose advance is not zero
 *       ii)the y position is the baseline
@@ -670,7 +671,7 @@ class ExtendedTextSourceLabel extends ExtendedTextLabel implements Decoration.La
         while (gx != gxlimit && (glyphinfo[gp + advx] == 0 ||
                            minIndex != nextMin || indices[gx] <= maxIndex)) {
   */
-        while (gx != gxlimit &&
+        while (gx != gxlimit && 
                ((glyphinfo[gp + advx] == 0) ||
                (minIndex != nextMin) ||
                (indices[gx] <= maxIndex) ||

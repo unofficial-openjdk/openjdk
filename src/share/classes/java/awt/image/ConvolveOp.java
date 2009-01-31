@@ -61,6 +61,7 @@ import sun.awt.image.ImagingLib;
  * conversion is required.
  *<p>
  * Note that the Source and the Destination may not be the same object.
+ * @version 10 Feb 1997
  * @see Kernel
  * @see java.awt.RenderingHints#KEY_COLOR_RENDERING
  * @see java.awt.RenderingHints#KEY_DITHERING
@@ -144,7 +145,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
      * The IllegalArgumentException may be thrown if the source is the
      * same as the destination.
      * @param src the source <code>BufferedImage</code> to filter
-     * @param dst the destination <code>BufferedImage</code> for the
+     * @param dst the destination <code>BufferedImage</code> for the 
      *        filtered <code>src</code>
      * @return the filtered <code>BufferedImage</code>
      * @throws NullPointerException if <code>src</code> is <code>null</code>
@@ -172,7 +173,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
             src = icm.convertToIntDiscrete(src.getRaster(), false);
             srcCM = src.getColorModel();
         }
-
+        
         if (dst == null) {
             dst = createCompatibleDestImage(src, null);
             dstCM = srcCM;
@@ -203,11 +204,11 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
         }
         else if (origDst != dst) {
             java.awt.Graphics2D g = origDst.createGraphics();
-            try {
+	    try {
                 g.drawImage(dst, 0, 0, null);
-            } finally {
-                g.dispose();
-            }
+	    } finally {
+	        g.dispose();
+	    }
         }
 
         return origDst;
@@ -221,14 +222,14 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
      * The IllegalArgumentException may be thrown if the source is
      * the same as the destination.
      * @param src the source <code>Raster</code> to filter
-     * @param dst the destination <code>WritableRaster</code> for the
+     * @param dst the destination <code>WritableRaster</code> for the 
      *        filtered <code>src</code>
      * @return the filtered <code>WritableRaster</code>
      * @throws NullPointerException if <code>src</code> is <code>null</code>
      * @throws ImagingOpException if <code>src</code> and <code>dst</code>
      *         do not have the same number of bands
      * @throws ImagingOpException if <code>src</code> cannot be filtered
-     * @throws IllegalArgumentException if <code>src</code> equals
+     * @throws IllegalArgumentException if <code>src</code> equals 
      *         <code>dst</code>
      */
     public final WritableRaster filter (Raster src, WritableRaster dst) {
@@ -243,7 +244,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
             throw new ImagingOpException("Different number of bands in src "+
                                          " and dst Rasters");
         }
-
+        
         if (ImagingLib.filter(this, src, dst) == null) {
             throw new ImagingOpException ("Unable to convolve src image");
         }
@@ -252,7 +253,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
     }
 
     /**
-     * Creates a zeroed destination image with the correct size and number
+     * Creates a zeroed destination image with the correct size and number 
      * of bands.  If destCM is null, an appropriate ColorModel will be used.
      * @param src       Source image for the filter operation.
      * @param destCM    ColorModel of the destination.  Can be null.
@@ -298,7 +299,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
     }
 
     /**
-     * Creates a zeroed destination Raster with the correct size and number
+     * Creates a zeroed destination Raster with the correct size and number 
      * of bands, given this source.
      */
     public WritableRaster createCompatibleDestRaster(Raster src) {
@@ -311,7 +312,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
      * change.
      */
     public final Rectangle2D getBounds2D(BufferedImage src) {
-        return getBounds2D(src.getRaster());
+	return getBounds2D(src.getRaster());
     }
 
     /**
@@ -320,7 +321,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
      * change.
      */
     public final Rectangle2D getBounds2D(Raster src) {
-        return src.getBounds();
+	return src.getBounds();
     }
 
     /**
@@ -333,7 +334,7 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
         if (dstPt == null) {
             dstPt = new Point2D.Float();
         }
-        dstPt.setLocation(srcPt.getX(), srcPt.getY());
+	dstPt.setLocation(srcPt.getX(), srcPt.getY());
 
         return dstPt;
     }
@@ -345,3 +346,5 @@ public class ConvolveOp implements BufferedImageOp, RasterOp {
         return hints;
     }
 }
+
+

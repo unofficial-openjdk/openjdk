@@ -44,40 +44,41 @@ import sun.swing.*;
 /**
  * This class is used to handle the transfer of a <code>Transferable</code>
  * to and from Swing components.  The <code>Transferable</code> is used to
- * represent data that is exchanged via a cut, copy, or paste
+ * represent data that is exchanged via a cut, copy, or paste 
  * to/from a clipboard.  It is also used in drag-and-drop operations
  * to represent a drag from a component, and a drop to a component.
  * Swing provides functionality that automatically supports cut, copy,
  * and paste keyboard bindings that use the functionality provided by
  * an implementation of this class.  Swing also provides functionality
  * that automatically supports drag and drop that uses the functionality
- * provided by an implementation of this class.  The Swing developer can
+ * provided by an implementation of this class.  The Swing developer can 
  * concentrate on specifying the semantics of a transfer primarily by setting
  * the <code>transferHandler</code> property on a Swing component.
  * <p>
  * This class is implemented to provide a default behavior of transferring
- * a component property simply by specifying the name of the property in
+ * a component property simply by specifying the name of the property in 
  * the constructor.  For example, to transfer the foreground color from
  * one component to another either via the clipboard or a drag and drop operation
  * a <code>TransferHandler</code> can be constructed with the string "foreground".  The
  * built in support will use the color returned by <code>getForeground</code> as the source
- * of the transfer, and <code>setForeground</code> for the target of a transfer.
+ * of the transfer, and <code>setForeground</code> for the target of a transfer.  
  * <p>
  * Please see
  * <a href="http://java.sun.com/docs/books/tutorial/uiswing/misc/dnd.html">
  * How to Use Drag and Drop and Data Transfer</a>,
  * a section in <em>The Java Tutorial</em>, for more information.
- *
+ * 
  *
  * @author Timothy Prinzing
  * @author Shannon Hickey
+ * @version %I% %G%
  * @since 1.4
  */
 @SuppressWarnings("serial")
 public class TransferHandler implements Serializable {
 
     /**
-     * An <code>int</code> representing no transfer action.
+     * An <code>int</code> representing no transfer action. 
      */
     public static final int NONE = DnDConstants.ACTION_NONE;
 
@@ -100,7 +101,7 @@ public class TransferHandler implements Serializable {
      * &quot;copy&quot; or &quot;move&quot;.
      */
     public static final int COPY_OR_MOVE = DnDConstants.ACTION_COPY_OR_MOVE;
-
+    
     /**
      * An <code>int</code> representing a &quot;link&quot; transfer action.
      * This value is used to specify that data should be linked in a drag
@@ -615,7 +616,7 @@ public class TransferHandler implements Serializable {
         return pasteAction;
     }
 
-
+    
     /**
      * Constructs a transfer handler that can transfer a Java Bean property
      * from one component to another via the clipboard or a drag and drop
@@ -626,22 +627,22 @@ public class TransferHandler implements Serializable {
      *  handler (a subclass that performs some other kind of transfer, for example)
      */
     public TransferHandler(String property) {
-        propertyName = property;
+	propertyName = property;
     }
 
     /**
      * Convenience constructor for subclasses.
      */
     protected TransferHandler() {
-        this(null);
+	this(null);
     }
 
     /**
-     * Causes the Swing drag support to be initiated.  This is called by
+     * Causes the Swing drag support to be initiated.  This is called by 
      * the various UI implementations in the <code>javax.swing.plaf.basic</code>
-     * package if the dragEnabled property is set on the component.
-     * This can be called by custom UI
-     * implementations to use the Swing drag support.  This method can also be called
+     * package if the dragEnabled property is set on the component. 
+     * This can be called by custom UI 
+     * implementations to use the Swing drag support.  This method can also be called 
      * by a Swing extension written as a subclass of <code>JComponent</code>
      * to take advantage of the Swing drag support.
      * <p>
@@ -664,7 +665,7 @@ public class TransferHandler implements Serializable {
         int srcActions = getSourceActions(comp);
 
         // only mouse events supported for drag operations
-        if (!(e instanceof MouseEvent)
+	if (!(e instanceof MouseEvent)
                 // only support known actions
                 || !(action == COPY || action == MOVE || action == LINK)
                 // only support valid source actions
@@ -674,11 +675,11 @@ public class TransferHandler implements Serializable {
         }
 
         if (action != NONE && !GraphicsEnvironment.isHeadless()) {
-            if (recognizer == null) {
-                recognizer = new SwingDragGestureRecognizer(new DragHandler());
-            }
+	    if (recognizer == null) {
+		recognizer = new SwingDragGestureRecognizer(new DragHandler());
+	    }
             recognizer.gestured(comp, (MouseEvent)e, srcActions, action);
-        } else {
+	} else {
             exportDone(comp, null, NONE);
         }
     }
@@ -686,7 +687,7 @@ public class TransferHandler implements Serializable {
     /**
      * Causes a transfer from the given component to the
      * given clipboard.  This method is called by the default cut and
-     * copy actions registered in a component's action map.
+     * copy actions registered in a component's action map.  
      * <p>
      * The transfer will take place using the <code>java.awt.datatransfer</code>
      * mechanism, requiring no further effort from the developer. Any data
@@ -695,13 +696,13 @@ public class TransferHandler implements Serializable {
      * returns. Should the clipboard be unavailable when attempting to place
      * data on it, the <code>IllegalStateException</code> thrown by
      * {@link Clipboard#setContents(Transferable, ClipboardOwner)} will
-     * be propogated through this method. However,
+     * be propogated through this method. However, 
      * <code>exportDone</code> will first be called with an action
      * of <code>NONE</code> for consistency.
      *
      * @param comp  the component holding the data to be transferred;
      *              provided to enable sharing of <code>TransferHandler</code>s
-     * @param clip  the clipboard to transfer the data into
+     * @param clip  the clipboard to transfer the data into  
      * @param action the transfer action requested; this should
      *  be a value of either <code>COPY</code> or <code>MOVE</code>;
      *  the operation performed is the intersection  of the transfer
@@ -765,7 +766,7 @@ public class TransferHandler implements Serializable {
     }
 
     /**
-     * Causes a transfer to a component from a clipboard or a
+     * Causes a transfer to a component from a clipboard or a 
      * DND drop operation.  The <code>Transferable</code> represents
      * the data to be imported into the component.
      * <p>
@@ -865,7 +866,7 @@ public class TransferHandler implements Serializable {
 
     /**
      * Indicates whether a component will accept an import of the given
-     * set of data flavors prior to actually attempting to import it.
+     * set of data flavors prior to actually attempting to import it. 
      * <p>
      * Note: Swing now calls the newer version of <code>canImport</code>
      * that takes a <code>TransferSupport</code>, which in turn calls this
@@ -882,24 +883,24 @@ public class TransferHandler implements Serializable {
      * @see #canImport(TransferHandler.TransferSupport)
      */
     public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
-        PropertyDescriptor prop = getPropertyDescriptor(comp);
-        if (prop != null) {
-            Method writer = prop.getWriteMethod();
-            if (writer == null) {
-                // read-only property. ignore
-                return false;
-            }
-            Class<?>[] params = writer.getParameterTypes();
-            if (params.length != 1) {
-                // zero or more than one argument, ignore
-                return false;
-            }
-            DataFlavor flavor = getPropertyDataFlavor(params[0], transferFlavors);
-            if (flavor != null) {
-                return true;
-            }
-        }
-        return false;
+	PropertyDescriptor prop = getPropertyDescriptor(comp);
+	if (prop != null) {
+	    Method writer = prop.getWriteMethod();
+	    if (writer == null) {
+		// read-only property. ignore
+		return false;
+	    }
+	    Class<?>[] params = writer.getParameterTypes();
+	    if (params.length != 1) {
+		// zero or more than one argument, ignore
+		return false;
+	    }
+	    DataFlavor flavor = getPropertyDataFlavor(params[0], transferFlavors);
+	    if (flavor != null) {
+		return true;
+	    }
+	}
+	return false;
     }
 
     /**
@@ -910,43 +911,43 @@ public class TransferHandler implements Serializable {
      * Some models are not mutable, so a transfer operation of {@code MOVE}
      * should not be advertised in that case. Returning {@code NONE}
      * disables transfers from the component.
-     *
+     * 
      * @param c  the component holding the data to be transferred;
      *           provided to enable sharing of <code>TransferHandler</code>s
      * @return {@code COPY} if the transfer property can be found,
      *          otherwise returns <code>NONE</code>
      */
     public int getSourceActions(JComponent c) {
-        PropertyDescriptor prop = getPropertyDescriptor(c);
-        if (prop != null) {
-            return COPY;
-        }
-        return NONE;
+	PropertyDescriptor prop = getPropertyDescriptor(c);
+	if (prop != null) {
+	    return COPY;
+	}
+	return NONE;
     }
 
     /**
      * Returns an object that establishes the look of a transfer.  This is
-     * useful for both providing feedback while performing a drag operation and for
-     * representing the transfer in a clipboard implementation that has a visual
+     * useful for both providing feedback while performing a drag operation and for 
+     * representing the transfer in a clipboard implementation that has a visual 
      * appearance.  The implementation of the <code>Icon</code> interface should
-     * not alter the graphics clip or alpha level.
+     * not alter the graphics clip or alpha level. 
      * The icon implementation need not be rectangular or paint all of the
      * bounding rectangle and logic that calls the icons paint method should
-     * not assume the all bits are painted. <code>null</code> is a valid return value
+     * not assume the all bits are painted. <code>null</code> is a valid return value 
      * for this method and indicates there is no visual representation provided.
      * In that case, the calling logic is free to represent the
-     * transferable however it wants.
+     * transferable however it wants.  
      * <p>
      * The default Swing logic will not do an alpha blended drag animation if
      * the return is <code>null</code>.
      *
-     * @param t  the data to be transferred; this value is expected to have been
+     * @param t  the data to be transferred; this value is expected to have been 
      *  created by the <code>createTransferable</code> method
      * @return  <code>null</code>, indicating
      *    there is no default visual representation
      */
     public Icon getVisualRepresentation(Transferable t) {
-        return null;
+	return null;
     }
 
     /**
@@ -959,19 +960,19 @@ public class TransferHandler implements Serializable {
      *              provided to enable sharing of <code>TransferHandler</code>s
      * @return  the representation of the data to be transferred, or
      *  <code>null</code> if the property associated with <code>c</code>
-     *  is <code>null</code>
-     *
+     *  is <code>null</code> 
+     *  
      */
     protected Transferable createTransferable(JComponent c) {
-        PropertyDescriptor property = getPropertyDescriptor(c);
-        if (property != null) {
-            return new PropertyTransferable(property, c);
-        }
-        return null;
+	PropertyDescriptor property = getPropertyDescriptor(c);
+	if (property != null) {
+	    return new PropertyTransferable(property, c);
+	}
+	return null;
     }
 
     /**
-     * Invoked after data has been exported.  This method should remove
+     * Invoked after data has been exported.  This method should remove 
      * the data that was transferred if the action was <code>MOVE</code>.
      * <p>
      * This method is implemented to do nothing since <code>MOVE</code>
@@ -981,31 +982,31 @@ public class TransferHandler implements Serializable {
      * @param source the component that was the source of the data
      * @param data   The data that was transferred or possibly null
      *               if the action is <code>NONE</code>.
-     * @param action the actual action that was performed
+     * @param action the actual action that was performed  
      */
     protected void exportDone(JComponent source, Transferable data, int action) {
     }
 
     /**
      * Fetches the property descriptor for the property assigned to this transfer
-     * handler on the given component (transfer handler may be shared).  This
+     * handler on the given component (transfer handler may be shared).  This 
      * returns <code>null</code> if the property descriptor can't be found
      * or there is an error attempting to fetch the property descriptor.
      */
     private PropertyDescriptor getPropertyDescriptor(JComponent comp) {
-        if (propertyName == null) {
-            return null;
-        }
-        Class<?> k = comp.getClass();
-        BeanInfo bi;
-        try {
-            bi = Introspector.getBeanInfo(k);
-        } catch (IntrospectionException ex) {
-            return null;
-        }
-        PropertyDescriptor props[] = bi.getPropertyDescriptors();
-        for (int i=0; i < props.length; i++) {
-            if (propertyName.equals(props[i].getName())) {
+	if (propertyName == null) {
+	    return null;
+	}
+	Class<?> k = comp.getClass();
+	BeanInfo bi;
+	try {
+	    bi = Introspector.getBeanInfo(k);
+	} catch (IntrospectionException ex) {
+	    return null;
+	}
+	PropertyDescriptor props[] = bi.getPropertyDescriptors();
+	for (int i=0; i < props.length; i++) {
+	    if (propertyName.equals(props[i].getName())) {
                 Method reader = props[i].getReadMethod();
 
                 if (reader != null) {
@@ -1016,9 +1017,9 @@ public class TransferHandler implements Serializable {
                         return props[i];
                     }
                 }
-            }
-        }
-        return null;
+	    }
+	}
+	return null;
     }
 
     /**
@@ -1027,16 +1028,16 @@ public class TransferHandler implements Serializable {
      * returned if there is no match.
      */
     private DataFlavor getPropertyDataFlavor(Class<?> k, DataFlavor[] flavors) {
-        for(int i = 0; i < flavors.length; i++) {
-            DataFlavor flavor = flavors[i];
-            if ("application".equals(flavor.getPrimaryType()) &&
-                "x-java-jvm-local-objectref".equals(flavor.getSubType()) &&
-                k.isAssignableFrom(flavor.getRepresentationClass())) {
+	for(int i = 0; i < flavors.length; i++) {
+	    DataFlavor flavor = flavors[i];
+	    if ("application".equals(flavor.getPrimaryType()) &&
+		"x-java-jvm-local-objectref".equals(flavor.getSubType()) &&
+		k.isAssignableFrom(flavor.getRepresentationClass())) {
 
-                return flavor;
-            }
-        }
-        return null;
+		return flavor;
+	    }
+	}
+	return null;
     }
 
 
@@ -1059,76 +1060,76 @@ public class TransferHandler implements Serializable {
 
     static class PropertyTransferable implements Transferable {
 
-        PropertyTransferable(PropertyDescriptor p, JComponent c) {
-            property = p;
-            component = c;
-        }
+	PropertyTransferable(PropertyDescriptor p, JComponent c) {
+	    property = p;
+	    component = c;
+	}
 
-        // --- Transferable methods ----------------------------------------------
+	// --- Transferable methods ----------------------------------------------
 
-        /**
-         * Returns an array of <code>DataFlavor</code> objects indicating the flavors the data
-         * can be provided in.  The array should be ordered according to preference
-         * for providing the data (from most richly descriptive to least descriptive).
-         * @return an array of data flavors in which this data can be transferred
-         */
+	/**
+	 * Returns an array of <code>DataFlavor</code> objects indicating the flavors the data 
+	 * can be provided in.  The array should be ordered according to preference
+	 * for providing the data (from most richly descriptive to least descriptive).
+	 * @return an array of data flavors in which this data can be transferred
+	 */
         public DataFlavor[] getTransferDataFlavors() {
-            DataFlavor[] flavors = new DataFlavor[1];
-            Class<?> propertyType = property.getPropertyType();
-            String mimeType = DataFlavor.javaJVMLocalObjectMimeType + ";class=" + propertyType.getName();
-            try {
-                flavors[0] = new DataFlavor(mimeType);
-            } catch (ClassNotFoundException cnfe) {
-                flavors = new DataFlavor[0];
-            }
-            return flavors;
-        }
+	    DataFlavor[] flavors = new DataFlavor[1];
+	    Class<?> propertyType = property.getPropertyType();
+	    String mimeType = DataFlavor.javaJVMLocalObjectMimeType + ";class=" + propertyType.getName();
+	    try {
+		flavors[0] = new DataFlavor(mimeType);
+	    } catch (ClassNotFoundException cnfe) {
+		flavors = new DataFlavor[0];
+	    }
+	    return flavors;
+	}
 
-        /**
-         * Returns whether the specified data flavor is supported for
-         * this object.
-         * @param flavor the requested flavor for the data
-         * @return true if this <code>DataFlavor</code> is supported,
+	/**
+	 * Returns whether the specified data flavor is supported for
+	 * this object.
+	 * @param flavor the requested flavor for the data
+	 * @return true if this <code>DataFlavor</code> is supported,
          *   otherwise false
-         */
+	 */
         public boolean isDataFlavorSupported(DataFlavor flavor) {
-            Class<?> propertyType = property.getPropertyType();
-            if ("application".equals(flavor.getPrimaryType()) &&
-                "x-java-jvm-local-objectref".equals(flavor.getSubType()) &&
-                flavor.getRepresentationClass().isAssignableFrom(propertyType)) {
+	    Class<?> propertyType = property.getPropertyType();
+	    if ("application".equals(flavor.getPrimaryType()) &&
+		"x-java-jvm-local-objectref".equals(flavor.getSubType()) &&
+		flavor.getRepresentationClass().isAssignableFrom(propertyType)) {
 
-                return true;
-            }
-            return false;
-        }
+		return true;
+	    }
+	    return false;
+	}
 
-        /**
-         * Returns an object which represents the data to be transferred.  The class
-         * of the object returned is defined by the representation class of the flavor.
-         *
-         * @param flavor the requested flavor for the data
-         * @see DataFlavor#getRepresentationClass
-         * @exception IOException                if the data is no longer available
-         *              in the requested flavor.
-         * @exception UnsupportedFlavorException if the requested data flavor is
-         *              not supported.
-         */
+	/**
+	 * Returns an object which represents the data to be transferred.  The class 
+	 * of the object returned is defined by the representation class of the flavor.
+	 *
+	 * @param flavor the requested flavor for the data
+	 * @see DataFlavor#getRepresentationClass
+	 * @exception IOException                if the data is no longer available
+	 *              in the requested flavor.
+	 * @exception UnsupportedFlavorException if the requested data flavor is
+	 *              not supported.
+	 */
         public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-            if (! isDataFlavorSupported(flavor)) {
-                throw new UnsupportedFlavorException(flavor);
-            }
-            Method reader = property.getReadMethod();
-            Object value = null;
-            try {
-                value = MethodUtil.invoke(reader, component, (Object[])null);
-            } catch (Exception ex) {
-                throw new IOException("Property read failed: " + property.getName());
-            }
-            return value;
-        }
+	    if (! isDataFlavorSupported(flavor)) {
+		throw new UnsupportedFlavorException(flavor);
+	    }
+	    Method reader = property.getReadMethod();
+	    Object value = null;
+	    try {
+		value = MethodUtil.invoke(reader, component, (Object[])null);
+	    } catch (Exception ex) {
+		throw new IOException("Property read failed: " + property.getName());
+	    }
+	    return value;
+	}
 
-        JComponent component;
-        PropertyDescriptor property;
+	JComponent component;
+	PropertyDescriptor property;
     }
 
     /**
@@ -1143,14 +1144,14 @@ public class TransferHandler implements Serializable {
      */
     static class SwingDropTarget extends DropTarget implements UIResource {
 
-        SwingDropTarget(Component c) {
+	SwingDropTarget(Component c) {
             super(c, COPY_OR_MOVE | LINK, null);
             try {
                 // addDropTargetListener is overridden
                 // we specifically need to add to the superclass
                 super.addDropTargetListener(getDropTargetListener());
             } catch (TooManyListenersException tmle) {}
-        }
+	}
 
         public void addDropTargetListener(DropTargetListener dtl) throws TooManyListenersException {
             // Since the super class only supports one DropTargetListener,
@@ -1160,75 +1161,75 @@ public class TransferHandler implements Serializable {
                 listenerList = new EventListenerList();
             }
             listenerList.add(DropTargetListener.class, dtl);
-        }
+	}
 
         public void removeDropTargetListener(DropTargetListener dtl) {
             if (listenerList != null) {
                 listenerList.remove(DropTargetListener.class, dtl);
             }
-        }
+	}
 
-        // --- DropTargetListener methods (multicast) --------------------------
+	// --- DropTargetListener methods (multicast) --------------------------
 
         public void dragEnter(DropTargetDragEvent e) {
-            super.dragEnter(e);
-            if (listenerList != null) {
-                Object[] listeners = listenerList.getListenerList();
-                for (int i = listeners.length-2; i>=0; i-=2) {
-                    if (listeners[i]==DropTargetListener.class) {
-                        ((DropTargetListener)listeners[i+1]).dragEnter(e);
-                    }
-                }
-            }
-        }
+	    super.dragEnter(e);
+	    if (listenerList != null) {
+		Object[] listeners = listenerList.getListenerList();
+		for (int i = listeners.length-2; i>=0; i-=2) {
+		    if (listeners[i]==DropTargetListener.class) {
+			((DropTargetListener)listeners[i+1]).dragEnter(e);
+		    }	       
+		}
+	    }
+	}
 
         public void dragOver(DropTargetDragEvent e) {
-            super.dragOver(e);
-            if (listenerList != null) {
-                Object[] listeners = listenerList.getListenerList();
-                for (int i = listeners.length-2; i>=0; i-=2) {
-                    if (listeners[i]==DropTargetListener.class) {
-                        ((DropTargetListener)listeners[i+1]).dragOver(e);
-                    }
-                }
-            }
-        }
+	    super.dragOver(e);
+	    if (listenerList != null) {
+		Object[] listeners = listenerList.getListenerList();
+		for (int i = listeners.length-2; i>=0; i-=2) {
+		    if (listeners[i]==DropTargetListener.class) {
+			((DropTargetListener)listeners[i+1]).dragOver(e);
+		    }	       
+		}
+	    }
+	}
 
         public void dragExit(DropTargetEvent e) {
-            super.dragExit(e);
-            if (listenerList != null) {
-                Object[] listeners = listenerList.getListenerList();
-                for (int i = listeners.length-2; i>=0; i-=2) {
-                    if (listeners[i]==DropTargetListener.class) {
-                        ((DropTargetListener)listeners[i+1]).dragExit(e);
-                    }
-                }
-            }
-        }
+	    super.dragExit(e);
+	    if (listenerList != null) {
+		Object[] listeners = listenerList.getListenerList();
+		for (int i = listeners.length-2; i>=0; i-=2) {
+		    if (listeners[i]==DropTargetListener.class) {
+			((DropTargetListener)listeners[i+1]).dragExit(e);
+		    }	       
+		}
+	    }
+	}
 
         public void drop(DropTargetDropEvent e) {
-            super.drop(e);
-            if (listenerList != null) {
-                Object[] listeners = listenerList.getListenerList();
-                for (int i = listeners.length-2; i>=0; i-=2) {
-                    if (listeners[i]==DropTargetListener.class) {
-                        ((DropTargetListener)listeners[i+1]).drop(e);
-                    }
-                }
-            }
-        }
+	    super.drop(e);
+	    if (listenerList != null) {
+		Object[] listeners = listenerList.getListenerList();
+		for (int i = listeners.length-2; i>=0; i-=2) {
+		    if (listeners[i]==DropTargetListener.class) {
+			((DropTargetListener)listeners[i+1]).drop(e);
+		    }	       
+		}
+	    }
+	}
 
         public void dropActionChanged(DropTargetDragEvent e) {
-            super.dropActionChanged(e);
-            if (listenerList != null) {
-                Object[] listeners = listenerList.getListenerList();
-                for (int i = listeners.length-2; i>=0; i-=2) {
-                    if (listeners[i]==DropTargetListener.class) {
-                        ((DropTargetListener)listeners[i+1]).dropActionChanged(e);
-                    }
-                }
-            }
-        }
+	    super.dropActionChanged(e);
+	    if (listenerList != null) {
+		Object[] listeners = listenerList.getListenerList();
+		for (int i = listeners.length-2; i>=0; i-=2) {
+		    if (listeners[i]==DropTargetListener.class) {
+			((DropTargetListener)listeners[i+1]).dropActionChanged(e);
+		    }	       
+		}
+	    }
+	}
 
         private EventListenerList listenerList;
     }
@@ -1257,7 +1258,7 @@ public class TransferHandler implements Serializable {
          * timer.  The region that causes the timer countdown is the area
          * between the two rectangles.
          * <p>
-         * This is implemented to use the visible area of the component
+         * This is implemented to use the visible area of the component 
          * as the outer rectangle, and the insets are fixed at 10. Should
          * the component be smaller than a total of 20 in any direction,
          * autoscroll will not occur in that direction.
@@ -1282,7 +1283,7 @@ public class TransferHandler implements Serializable {
             }
 
             // set the inner from the insets
-            inner.setBounds(visible.x + i.left,
+            inner.setBounds(visible.x + i.left, 
                           visible.y + i.top,
                           visible.width - (i.left + i.right),
                           visible.height - (i.top  + i.bottom));
@@ -1290,7 +1291,7 @@ public class TransferHandler implements Serializable {
 
         /**
          * Perform an autoscroll operation.  This is implemented to scroll by the
-         * unit increment of the Scrollable using scrollRectToVisible.  If the
+         * unit increment of the Scrollable using scrollRectToVisible.  If the 
          * cursor is in a corner of the autoscroll region, more than one axis will
          * scroll.
          */
@@ -1364,7 +1365,7 @@ public class TransferHandler implements Serializable {
             }
         }
 
-        // --- DropTargetListener methods -----------------------------------
+	// --- DropTargetListener methods -----------------------------------
 
         private void setComponentDropLocation(TransferSupport support,
                                               boolean forDrop) {
@@ -1422,7 +1423,7 @@ public class TransferHandler implements Serializable {
 
         public void dragEnter(DropTargetDragEvent e) {
             state = null;
-            component = e.getDropTargetContext().getComponent();
+	    component = e.getDropTargetContext().getComponent();
 
             handleDrag(e);
 
@@ -1431,7 +1432,7 @@ public class TransferHandler implements Serializable {
                 updateAutoscrollRegion((JComponent)component);
                 initPropertiesIfNecessary();
             }
-        }
+	}
 
         public void dragOver(DropTargetDragEvent e) {
             handleDrag(e);
@@ -1444,18 +1445,18 @@ public class TransferHandler implements Serializable {
 
             if (Math.abs(p.x - lastPosition.x) > hysteresis
                     || Math.abs(p.y - lastPosition.y) > hysteresis) {
-                // no autoscroll
+                // no autoscroll 
                 if (timer.isRunning()) timer.stop();
             } else {
                 if (!timer.isRunning()) timer.start();
             }
 
             lastPosition = p;
-        }
+	}
 
         public void dragExit(DropTargetEvent e) {
             cleanup(false);
-        }
+	}
 
         public void drop(DropTargetDropEvent e) {
             TransferHandler importer =
@@ -1493,7 +1494,7 @@ public class TransferHandler implements Serializable {
                 e.rejectDrop();
                 cleanup(false);
             }
-        }
+	}
 
         public void dropActionChanged(DropTargetDragEvent e) {
             /*
@@ -1505,8 +1506,8 @@ public class TransferHandler implements Serializable {
             }
 
             handleDrag(e);
-        }
-
+	}
+        
         private void cleanup(boolean forDrop) {
             setComponentDropLocation(null, forDrop);
             if (component instanceof JComponent) {
@@ -1524,23 +1525,23 @@ public class TransferHandler implements Serializable {
     }
 
     /**
-     * This is the default drag handler for drag and drop operations that
+     * This is the default drag handler for drag and drop operations that 
      * use the <code>TransferHandler</code>.
      */
     private static class DragHandler implements DragGestureListener, DragSourceListener {
-
+        
         private boolean scrolls;
 
-        // --- DragGestureListener methods -----------------------------------
+	// --- DragGestureListener methods -----------------------------------
 
-        /**
-         * a Drag gesture has been recognized
-         */
+	/**
+	 * a Drag gesture has been recognized
+	 */
         public void dragGestureRecognized(DragGestureEvent dge) {
-            JComponent c = (JComponent) dge.getComponent();
-            TransferHandler th = c.getTransferHandler();
-            Transferable t = th.createTransferable(c);
-            if (t != null) {
+	    JComponent c = (JComponent) dge.getComponent();
+	    TransferHandler th = c.getTransferHandler();
+	    Transferable t = th.createTransferable(c);
+	    if (t != null) {
                 scrolls = c.getAutoscrolls();
                 c.setAutoscrolls(false);
                 try {
@@ -1549,87 +1550,87 @@ public class TransferHandler implements Serializable {
                 } catch (RuntimeException re) {
                     c.setAutoscrolls(scrolls);
                 }
-            }
-
+	    }
+            
             th.exportDone(c, t, NONE);
-        }
+	}
 
-        // --- DragSourceListener methods -----------------------------------
+	// --- DragSourceListener methods -----------------------------------
 
-        /**
-         * as the hotspot enters a platform dependent drop site
-         */
+	/**
+	 * as the hotspot enters a platform dependent drop site
+	 */
         public void dragEnter(DragSourceDragEvent dsde) {
-        }
-
-        /**
-         * as the hotspot moves over a platform dependent drop site
-         */
+	}
+  
+	/**
+	 * as the hotspot moves over a platform dependent drop site
+	 */
         public void dragOver(DragSourceDragEvent dsde) {
-        }
-
-        /**
-         * as the hotspot exits a platform dependent drop site
-         */
+	}
+  
+	/**
+	 * as the hotspot exits a platform dependent drop site
+	 */
         public void dragExit(DragSourceEvent dsde) {
-        }
-
-        /**
-         * as the operation completes
-         */
+	}
+  
+	/**
+	 * as the operation completes
+	 */
         public void dragDropEnd(DragSourceDropEvent dsde) {
             DragSourceContext dsc = dsde.getDragSourceContext();
             JComponent c = (JComponent)dsc.getComponent();
-            if (dsde.getDropSuccess()) {
+	    if (dsde.getDropSuccess()) {
                 c.getTransferHandler().exportDone(c, dsc.getTransferable(), dsde.getDropAction());
-            } else {
+	    } else {
                 c.getTransferHandler().exportDone(c, dsc.getTransferable(), NONE);
             }
             c.setAutoscrolls(scrolls);
-        }
-
+	}
+  
         public void dropActionChanged(DragSourceDragEvent dsde) {
-        }
+	}
     }
 
     private static class SwingDragGestureRecognizer extends DragGestureRecognizer {
 
-        SwingDragGestureRecognizer(DragGestureListener dgl) {
-            super(DragSource.getDefaultDragSource(), null, NONE, dgl);
-        }
+	SwingDragGestureRecognizer(DragGestureListener dgl) {
+	    super(DragSource.getDefaultDragSource(), null, NONE, dgl);
+	}
 
-        void gestured(JComponent c, MouseEvent e, int srcActions, int action) {
-            setComponent(c);
+	void gestured(JComponent c, MouseEvent e, int srcActions, int action) {
+	    setComponent(c);
             setSourceActions(srcActions);
-            appendEvent(e);
-            fireDragGestureRecognized(action, e.getPoint());
-        }
+	    appendEvent(e);
+	    fireDragGestureRecognized(action, e.getPoint());
+	}
 
-        /**
-         * register this DragGestureRecognizer's Listeners with the Component
-         */
+	/**
+	 * register this DragGestureRecognizer's Listeners with the Component
+	 */
         protected void registerListeners() {
-        }
+	}
 
-        /**
-         * unregister this DragGestureRecognizer's Listeners with the Component
-         *
-         * subclasses must override this method
-         */
+	/**
+	 * unregister this DragGestureRecognizer's Listeners with the Component
+	 *
+	 * subclasses must override this method
+	 */
         protected void unregisterListeners() {
-        }
+	}
 
     }
 
     static final Action cutAction = new TransferAction("cut");
     static final Action copyAction = new TransferAction("copy");
     static final Action pasteAction = new TransferAction("paste");
-
+    
     static class TransferAction extends UIAction implements UIResource {
 
-        TransferAction(String name) {
-            super(name);
-        }
+	TransferAction(String name) {
+	    super(name);
+	}
 
         public boolean isEnabled(Object sender) {
             if (sender instanceof JComponent
@@ -1641,12 +1642,12 @@ public class TransferHandler implements Serializable {
         }
 
         public void actionPerformed(ActionEvent e) {
-            Object src = e.getSource();
-            if (src instanceof JComponent) {
-                JComponent c = (JComponent) src;
-                TransferHandler th = c.getTransferHandler();
-                Clipboard clipboard = getClipboard(c);
-                String name = (String) getValue(Action.NAME);
+	    Object src = e.getSource();
+	    if (src instanceof JComponent) {
+		JComponent c = (JComponent) src;
+		TransferHandler th = c.getTransferHandler();
+		Clipboard clipboard = getClipboard(c);
+		String name = (String) getValue(Action.NAME);
 
                 Transferable trans = null;
 
@@ -1671,32 +1672,35 @@ public class TransferHandler implements Serializable {
                 if (trans != null) {
                     th.importData(new TransferSupport(c, trans));
                 }
-            }
-        }
+	    }
+	}
 
-        /**
-         * Returns the clipboard to use for cut/copy/paste.
-         */
+	/**
+	 * Returns the clipboard to use for cut/copy/paste.
+	 */
         private Clipboard getClipboard(JComponent c) {
-            if (SwingUtilities2.canAccessSystemClipboard()) {
-                return c.getToolkit().getSystemClipboard();
-            }
-            Clipboard clipboard = (Clipboard)sun.awt.AppContext.getAppContext().
-                get(SandboxClipboardKey);
-            if (clipboard == null) {
-                clipboard = new Clipboard("Sandboxed Component Clipboard");
-                sun.awt.AppContext.getAppContext().put(SandboxClipboardKey,
-                                                       clipboard);
-            }
-            return clipboard;
-        }
+	    if (SwingUtilities2.canAccessSystemClipboard()) {
+		return c.getToolkit().getSystemClipboard();
+	    }
+	    Clipboard clipboard = (Clipboard)sun.awt.AppContext.getAppContext().
+		get(SandboxClipboardKey);
+	    if (clipboard == null) {
+		clipboard = new Clipboard("Sandboxed Component Clipboard");
+		sun.awt.AppContext.getAppContext().put(SandboxClipboardKey,
+						       clipboard);
+	    }
+	    return clipboard;
+	}
 
-        /**
-         * Key used in app context to lookup Clipboard to use if access to
-         * System clipboard is denied.
-         */
+	/**
+	 * Key used in app context to lookup Clipboard to use if access to
+	 * System clipboard is denied.
+	 */
         private static Object SandboxClipboardKey = new Object();
 
     }
 
 }
+
+
+

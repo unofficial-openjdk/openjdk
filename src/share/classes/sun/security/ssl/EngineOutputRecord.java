@@ -42,6 +42,7 @@ import sun.misc.HexDumpEncoder;
  * and alerts will continue to use the internal buffers, but application
  * data will use external buffers.
  *
+ * @version %I%, %G%
  * @author Brad Wetmore
  */
 final class EngineOutputRecord extends OutputRecord {
@@ -61,8 +62,8 @@ final class EngineOutputRecord extends OutputRecord {
      * @param type the content type for the record
      */
     EngineOutputRecord(byte type, SSLEngineImpl engine) {
-        super(type, recordSize(type));
-        writer = engine.writer;
+	super(type, recordSize(type));
+	writer = engine.writer;
     }
 
     /**
@@ -73,32 +74,32 @@ final class EngineOutputRecord extends OutputRecord {
      * and will not use the internal byte caching.
      */
     private static int recordSize(byte type) {
-        switch (type) {
+	switch (type) {
 
-        case ct_change_cipher_spec:
-        case ct_alert:
-            return maxAlertRecordSize;
+	case ct_change_cipher_spec:
+	case ct_alert:
+	    return maxAlertRecordSize;
 
-        case ct_handshake:
-            return maxRecordSize;
+	case ct_handshake:
+	    return maxRecordSize;
 
-        case ct_application_data:
-            return 0;
-        }
+	case ct_application_data:
+	    return 0;
+	}
 
-        throw new RuntimeException("Unknown record type: " + type);
+	throw new RuntimeException("Unknown record type: " + type);
     }
 
     void setFinishedMsg() {
-        finishedMsg = true;
+	finishedMsg = true;
     }
 
     public void flush() throws IOException {
-        finishedMsg = false;
+	finishedMsg = false;
     }
 
     boolean isFinishedMsg() {
-        return finishedMsg;
+	return finishedMsg;
     }
 
 
@@ -115,21 +116,21 @@ final class EngineOutputRecord extends OutputRecord {
      * free spot.
      */
     private void addMAC(MAC signer, ByteBuffer bb)
-            throws IOException {
+	    throws IOException {
 
-        if (signer.MAClen() != 0) {
-            byte[] hash = signer.compute(contentType(), bb);
+	if (signer.MAClen() != 0) {
+	    byte[] hash = signer.compute(contentType(), bb);
 
-            /*
-             * position was advanced to limit in compute above.
-             *
-             * Mark next area as writable (above layers should have
-             * established that we have plenty of room), then write
-             * out the hash.
-             */
-            bb.limit(bb.limit() + hash.length);
-            bb.put(hash);
-        }
+	    /*
+	     * position was advanced to limit in compute above.
+	     *
+	     * Mark next area as writable (above layers should have
+	     * established that we have plenty of room), then write
+	     * out the hash.
+	     */
+	    bb.limit(bb.limit() + hash.length);
+	    bb.put(hash);
+	}
     }
 
     /*
@@ -143,7 +144,7 @@ final class EngineOutputRecord extends OutputRecord {
      * next free spot.
      */
     void encrypt(CipherBox box, ByteBuffer bb) {
-        box.encrypt(bb);
+	box.encrypt(bb);
     }
 
     /*
@@ -154,13 +155,13 @@ final class EngineOutputRecord extends OutputRecord {
      * generated.
      */
     void writeBuffer(OutputStream s, byte [] buf, int off, int len)
-            throws IOException {
-        /*
-         * Copy data out of buffer, it's ready to go.
-         */
-        ByteBuffer netBB = (ByteBuffer)
-            ByteBuffer.allocate(len).put(buf, 0, len).flip();
-        writer.putOutboundData(netBB);
+	    throws IOException {
+	/*
+	 * Copy data out of buffer, it's ready to go.
+	 */
+	ByteBuffer netBB = (ByteBuffer)
+	    ByteBuffer.allocate(len).put(buf, 0, len).flip();
+	writer.putOutboundData(netBB);
     }
 
     /*
@@ -168,131 +169,131 @@ final class EngineOutputRecord extends OutputRecord {
      * We MAC/encrypt, then send down for processing.
      */
     void write(MAC writeMAC, CipherBox writeCipher) throws IOException {
-        /*
-         * Sanity check.
-         */
-        switch (contentType()) {
-        case ct_change_cipher_spec:
-        case ct_alert:
-        case ct_handshake:
-            break;
-        default:
-            throw new RuntimeException("unexpected byte buffers");
-        }
+	/*
+	 * Sanity check.
+	 */
+	switch (contentType()) {
+	case ct_change_cipher_spec:
+	case ct_alert:
+	case ct_handshake:
+	    break;
+	default:
+	    throw new RuntimeException("unexpected byte buffers");
+	}
 
-        /*
-         * Don't bother to really write empty records.  We went this
-         * far to drive the handshake machinery, for correctness; not
-         * writing empty records improves performance by cutting CPU
-         * time and network resource usage.  Also, some protocol
-         * implementations are fragile and don't like to see empty
-         * records, so this increases robustness.
-         *
-         * (Even change cipher spec messages have a byte of data!)
-         */
-        if (!isEmpty()) {
-            // compress();              // eventually
-            addMAC(writeMAC);
-            encrypt(writeCipher);
-            write((OutputStream)null);  // send down for processing
-        }
-        return;
+	/*
+	 * Don't bother to really write empty records.  We went this
+	 * far to drive the handshake machinery, for correctness; not
+	 * writing empty records improves performance by cutting CPU
+	 * time and network resource usage.  Also, some protocol
+	 * implementations are fragile and don't like to see empty
+	 * records, so this increases robustness.
+	 *
+	 * (Even change cipher spec messages have a byte of data!)
+	 */
+	if (!isEmpty()) {
+	    // compress();		// eventually
+	    addMAC(writeMAC);
+	    encrypt(writeCipher);
+	    write((OutputStream)null);  // send down for processing
+	}
+	return;
     }
 
     /**
      * Main wrap/write driver.
      */
     void write(EngineArgs ea, MAC writeMAC, CipherBox writeCipher)
-            throws IOException {
-        /*
-         * sanity check to make sure someone didn't inadvertantly
-         * send us an impossible combination we don't know how
-         * to process.
-         */
-        assert(contentType() == ct_application_data);
+	    throws IOException {
+	/*
+	 * sanity check to make sure someone didn't inadvertantly
+	 * send us an impossible combination we don't know how
+	 * to process.
+	 */
+	assert(contentType() == ct_application_data);
 
-        /*
-         * Have we set the MAC's yet?  If not, we're not ready
-         * to process application data yet.
-         */
-        if (writeMAC == MAC.NULL) {
-            return;
-        }
+	/*
+	 * Have we set the MAC's yet?  If not, we're not ready
+	 * to process application data yet.
+	 */
+	if (writeMAC == MAC.NULL) {
+	    return;
+	}
 
-        /*
-         * Don't bother to really write empty records.  We went this
-         * far to drive the handshake machinery, for correctness; not
-         * writing empty records improves performance by cutting CPU
-         * time and network resource usage.  Also, some protocol
-         * implementations are fragile and don't like to see empty
-         * records, so this increases robustness.
-         */
-        int length = Math.min(ea.getAppRemaining(), maxDataSize);
-        if (length == 0) {
-            return;
-        }
+	/*
+	 * Don't bother to really write empty records.  We went this
+	 * far to drive the handshake machinery, for correctness; not
+	 * writing empty records improves performance by cutting CPU
+	 * time and network resource usage.  Also, some protocol
+	 * implementations are fragile and don't like to see empty
+	 * records, so this increases robustness.
+	 */
+	int length = Math.min(ea.getAppRemaining(), maxDataSize);
+	if (length == 0) {
+	    return;
+	}
 
-        /*
-         * Copy out existing buffer values.
-         */
-        ByteBuffer dstBB = ea.netData;
-        int dstPos = dstBB.position();
-        int dstLim = dstBB.limit();
+	/*
+	 * Copy out existing buffer values.
+	 */
+	ByteBuffer dstBB = ea.netData;
+	int dstPos = dstBB.position();
+	int dstLim = dstBB.limit();
 
-        /*
-         * Where to put the data.  Jump over the header.
-         *
-         * Don't need to worry about SSLv2 rewrites, if we're here,
-         * that's long since done.
-         */
-        int dstData = dstPos + headerSize;
-        dstBB.position(dstData);
+	/*
+	 * Where to put the data.  Jump over the header.
+	 *
+	 * Don't need to worry about SSLv2 rewrites, if we're here,
+	 * that's long since done.
+	 */
+	int dstData = dstPos + headerSize;
+	dstBB.position(dstData);
 
-        ea.gather(length);
+	ea.gather(length);
 
-        /*
-         * "flip" but skip over header again, add MAC & encrypt
-         * addMAC will expand the limit to reflect the new
-         * data.
-         */
-        dstBB.limit(dstBB.position());
-        dstBB.position(dstData);
-        addMAC(writeMAC, dstBB);
+	/*
+	 * "flip" but skip over header again, add MAC & encrypt
+	 * addMAC will expand the limit to reflect the new
+	 * data.
+	 */
+	dstBB.limit(dstBB.position());
+	dstBB.position(dstData);
+	addMAC(writeMAC, dstBB);
 
-        /*
-         * Encrypt may pad, so again the limit may have changed.
-         */
-        dstBB.limit(dstBB.position());
-        dstBB.position(dstData);
-        encrypt(writeCipher, dstBB);
+	/*
+	 * Encrypt may pad, so again the limit may have changed.
+	 */
+	dstBB.limit(dstBB.position());
+	dstBB.position(dstData);
+	encrypt(writeCipher, dstBB);
 
-        if (debug != null
-                && (Debug.isOn("record") || Debug.isOn("handshake"))) {
-            if ((debug != null && Debug.isOn("record"))
-                    || contentType() == ct_change_cipher_spec)
-                System.out.println(Thread.currentThread().getName()
-                    // v3.0/v3.1 ...
-                    + ", WRITE: " + protocolVersion
-                    + " " + InputRecord.contentName(contentType())
-                    + ", length = " + length);
-        }
+	if (debug != null
+		&& (Debug.isOn("record") || Debug.isOn("handshake"))) {
+	    if ((debug != null && Debug.isOn("record"))
+		    || contentType() == ct_change_cipher_spec)
+		System.out.println(Thread.currentThread().getName()
+		    // v3.0/v3.1 ...
+		    + ", WRITE: " + protocolVersion
+		    + " " + InputRecord.contentName(contentType())
+		    + ", length = " + length);
+	}
 
-        int packetLength = dstBB.limit() - dstData;
+	int packetLength = dstBB.limit() - dstData;
 
-        /*
-         * Finish out the record header.
-         */
-        dstBB.put(dstPos, contentType());
-        dstBB.put(dstPos + 1, protocolVersion.major);
-        dstBB.put(dstPos + 2, protocolVersion.minor);
-        dstBB.put(dstPos + 3, (byte)(packetLength >> 8));
-        dstBB.put(dstPos + 4, (byte)packetLength);
+	/*
+	 * Finish out the record header.
+	 */
+	dstBB.put(dstPos, contentType());
+	dstBB.put(dstPos + 1, protocolVersion.major);
+	dstBB.put(dstPos + 2, protocolVersion.minor);
+	dstBB.put(dstPos + 3, (byte)(packetLength >> 8));
+	dstBB.put(dstPos + 4, (byte)packetLength);
 
-        /*
-         * Position was already set by encrypt() above.
-         */
-        dstBB.limit(dstLim);
+	/*
+	 * Position was already set by encrypt() above.
+	 */
+	dstBB.limit(dstLim);
 
-        return;
+	return;
     }
 }

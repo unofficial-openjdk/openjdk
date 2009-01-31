@@ -27,7 +27,7 @@ package javax.management;
 
 
 /**
- * Exception which occurs when trying to register an  object in the MBean server that is not a JMX compliant MBean.
+ * Exception which occurs when trying to register an  object in the MBean server that is not a JMX compliant MBean. 
  *
  * @since 1.5
  */
@@ -40,17 +40,17 @@ public class NotCompliantMBeanException  extends OperationsException {
     /**
      * Default constructor.
      */
-    public NotCompliantMBeanException()  {
-        super();
-    }
+    public NotCompliantMBeanException()  {      
+	super();
+    } 
 
     /**
      * Constructor that allows a specific error message to be specified.
      *
      * @param message the detail message.
      */
-    public NotCompliantMBeanException(String message)  {
-        super(message);
-    }
-
+    public NotCompliantMBeanException(String message)  {      
+	super(message);
+    } 
+    
  }

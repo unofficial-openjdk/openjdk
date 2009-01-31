@@ -65,7 +65,7 @@ public class FindSubList {
             if (Collections.indexOfSubList(s,Collections.nCopies(2*s.size(),
                                                                  "0")) != -1)
                throw new Exception(s.getClass()+" indexOfSubList: big target");
-
+                
         }
 
         Collections.reverse(source);

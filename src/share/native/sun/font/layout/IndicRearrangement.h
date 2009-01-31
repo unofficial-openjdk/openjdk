@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)IndicRearrangement.h	1.6 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -57,7 +58,7 @@ enum IndicRearrangementVerb
     irvxA       = 0x0001,               /*    Ax => xA    */
     irvDx       = 0x0002,               /*    xD => Dx    */
     irvDxA      = 0x0003,               /*   AxD => DxA   */
-
+        
     irvxAB      = 0x0004,               /*   ABx => xAB   */
     irvxBA      = 0x0005,               /*   ABx => xBA   */
     irvCDx      = 0x0006,               /*   xCD => CDx   */
@@ -79,3 +80,4 @@ struct IndicRearrangementStateEntry : StateEntry
 };
 
 #endif
+

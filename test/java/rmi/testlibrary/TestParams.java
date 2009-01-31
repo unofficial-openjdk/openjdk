@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,7 +27,7 @@
 import java.io.File;
 
 /**
- * Setup static variables to represent properties in test environment.
+ * Setup static variables to represent properties in test environment.  
  */
 public class TestParams {
 
@@ -43,44 +43,44 @@ public class TestParams {
 
     /** name of default security policy for activation groups */
     public static String defaultGroupPolicy = null;
-
+    
     /** name of default security manager */
-    public static String defaultSecurityManager =
-        "java.rmi.RMISecurityManager";
+    public static String defaultSecurityManager = 
+	"java.rmi.RMISecurityManager";
 
 
     /* Initalize commonly used strings */
     static {
-        try {
-            testSrc = TestLibrary.
-                getProperty("test.src", ".");
-            testClasses = TestLibrary.
-                getProperty("test.classes", ".");
+	try {
+	    testSrc = TestLibrary.
+		getProperty("test.src", ".");
+	    testClasses = TestLibrary.
+		getProperty("test.classes", ".");
 
-            // if policy file already set use it
-            defaultPolicy = TestLibrary.
-                getProperty("java.security.policy",
-                            defaultPolicy);
-            if (defaultPolicy == null) {
-                defaultPolicy = testSrc + File.separatorChar +
-                    "security.policy";
-            }
+	    // if policy file already set use it
+	    defaultPolicy = TestLibrary.
+		getProperty("java.security.policy", 
+			    defaultPolicy);
+	    if (defaultPolicy == null) {
+		defaultPolicy = testSrc + File.separatorChar + 
+		    "security.policy";
+	    }
 
-            // if manager prop set use it
-            defaultSecurityManager = TestLibrary.
-                getProperty("java.security.manager",
-                            defaultSecurityManager);
+	    // if manager prop set use it
+	    defaultSecurityManager = TestLibrary.
+		getProperty("java.security.manager", 
+			    defaultSecurityManager);
 
-            defaultRmidPolicy =
-                testSrc + File.separatorChar + "rmid.security.policy";
+	    defaultRmidPolicy =
+		testSrc + File.separatorChar + "rmid.security.policy";
+	    
+	    defaultGroupPolicy = testSrc + 
+		File.separatorChar + "group.security.policy";
 
-            defaultGroupPolicy = testSrc +
-                File.separatorChar + "group.security.policy";
-
-        } catch (SecurityException se) {
-            TestLibrary.bomb("Security exception received" +
-                             " during test initialization:",
-                             se);
-        }
+	} catch (SecurityException se) {
+	    TestLibrary.bomb("Security exception received" + 
+			     " during test initialization:",
+			     se);
+	}
     }
 }

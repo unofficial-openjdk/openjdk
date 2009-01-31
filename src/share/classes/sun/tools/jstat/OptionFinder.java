@@ -33,6 +33,7 @@ import java.io.*;
  * A class for finding a specific special option in the jstat_options file.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class OptionFinder {

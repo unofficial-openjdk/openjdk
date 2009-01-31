@@ -68,7 +68,8 @@ import javax.accessibility.*;
  * forces any other check box in the same group that is on
  * into the "off" state.
  *
- * @author      Sami Shaio
+ * @version	%I% %G%
+ * @author 	Sami Shaio
  * @see         java.awt.GridLayout
  * @see         java.awt.CheckboxGroup
  * @since       JDK1.0
@@ -77,7 +78,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-        Toolkit.loadLibraries();
+	Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
@@ -102,9 +103,9 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
     /**
      * The check box group.
-         * This field can be null indicating that the checkbox
-         * is not a group checkbox.
-         * @serial
+	 * This field can be null indicating that the checkbox
+	 * is not a group checkbox.  
+	 * @serial
      * @see #getCheckboxGroup()
      * @see #setCheckboxGroup(CheckboxGroup)
      */
@@ -125,17 +126,17 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * Should remain package-private.
      */
     void setStateInternal(boolean state) {
-        this.state = state;
-        CheckboxPeer peer = (CheckboxPeer)this.peer;
-        if (peer != null) {
-            peer.setState(state);
-        }
+	this.state = state;
+	CheckboxPeer peer = (CheckboxPeer)this.peer;
+	if (peer != null) {
+	    peer.setState(state);
+	}
     }
 
     /**
-     * Creates a check box with an empty string for its label.
-     * The state of this check box is set to "off," and it is not
-     * part of any check box group.
+     * Creates a check box with an empty string for its label. 
+     * The state of this check box is set to "off," and it is not 
+     * part of any check box group. 
      * @exception HeadlessException if GraphicsEnvironment.isHeadless()
      * returns true
      * @see java.awt.GraphicsEnvironment#isHeadless
@@ -157,7 +158,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public Checkbox(String label) throws HeadlessException {
-        this(label, false, null);
+	this(label, false, null);
     }
 
     /**
@@ -180,7 +181,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
     /**
      * Constructs a Checkbox with the specified label, set to the
      * specified state, and in the specified check box group.
-     *
+     * 
      * @param     label   a string label for this check box,
      *                        or <code>null</code> for no label.
      * @param     state   the initial state of this check box.
@@ -195,12 +196,12 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
     public Checkbox(String label, boolean state, CheckboxGroup group)
         throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
-        this.label = label;
-        this.state = state;
-        this.group = group;
-        if (state && (group != null)) {
-            group.setSelectedCheckbox(this);
-        }
+	this.label = label;
+	this.state = state;
+	this.group = group;
+	if (state && (group != null)) {
+	    group.setSelectedCheckbox(this);
+	}
     }
 
     /**
@@ -220,7 +221,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      */
     public Checkbox(String label, CheckboxGroup group, boolean state)
         throws HeadlessException {
-        this(label, state, group);
+    	this(label, state, group);
     }
 
     /**
@@ -244,10 +245,10 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
-            if (peer == null)
-                peer = getToolkit().createCheckbox(this);
-            super.addNotify();
-        }
+	    if (peer == null) 
+	        peer = getToolkit().createCheckbox(this);
+	    super.addNotify();
+	}
     }
 
     /**
@@ -258,7 +259,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see      #setLabel(String)
      */
     public String getLabel() {
-        return label;
+	return label;
     }
 
     /**
@@ -271,22 +272,22 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
     public void setLabel(String label) {
         boolean testvalid = false;
 
-        synchronized (this) {
-            if (label != this.label && (this.label == null ||
-                                        !this.label.equals(label))) {
-                this.label = label;
-                CheckboxPeer peer = (CheckboxPeer)this.peer;
-                if (peer != null) {
-                    peer.setLabel(label);
-                }
-                testvalid = true;
-            }
-        }
-
-        // This could change the preferred size of the Component.
-        if (testvalid && valid) {
-            invalidate();
-        }
+	synchronized (this) {
+	    if (label != this.label && (this.label == null ||
+					!this.label.equals(label))) {
+	        this.label = label;
+		CheckboxPeer peer = (CheckboxPeer)this.peer;
+		if (peer != null) {
+		    peer.setLabel(label);
+		}
+		testvalid = true;
+	    }
+	}
+	    
+	// This could change the preferred size of the Component.
+	if (testvalid && valid) {
+	    invalidate();
+	}
     }
 
     /**
@@ -298,7 +299,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see       #setState
      */
     public boolean getState() {
-        return state;
+	return state;
     }
 
     /**
@@ -316,16 +317,16 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see       #getState
      */
     public void setState(boolean state) {
-        /* Cannot hold check box lock when calling group.setSelectedCheckbox. */
-        CheckboxGroup group = this.group;
-        if (group != null) {
-            if (state) {
-                group.setSelectedCheckbox(this);
-            } else if (group.getSelectedCheckbox() == this) {
-                state = true;
-            }
-        }
-        setStateInternal(state);
+	/* Cannot hold check box lock when calling group.setSelectedCheckbox. */
+    	CheckboxGroup group = this.group;
+	if (group != null) {
+	    if (state) {
+		group.setSelectedCheckbox(this);
+	    } else if (group.getSelectedCheckbox() == this) {
+		state = true;
+	    }
+	}
+	setStateInternal(state);
     }
 
     /**
@@ -349,7 +350,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @see        #setCheckboxGroup(CheckboxGroup)
      */
     public CheckboxGroup getCheckboxGroup() {
-        return group;
+	return group;
     }
 
     /**
@@ -379,23 +380,23 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
             return;
         }
 
-        synchronized (this) {
+	synchronized (this) {
             oldGroup = this.group;
             oldState = getState();
 
-            this.group = g;
-            CheckboxPeer peer = (CheckboxPeer)this.peer;
-            if (peer != null) {
-                peer.setCheckboxGroup(g);
-            }
-            if (this.group != null && getState()) {
-                if (this.group.getSelectedCheckbox() != null) {
-                    setState(false);
-                } else {
-                    this.group.setSelectedCheckbox(this);
-                }
-            }
-        }
+	    this.group = g;
+	    CheckboxPeer peer = (CheckboxPeer)this.peer;
+	    if (peer != null) {
+		peer.setCheckboxGroup(g);
+	    }
+	    if (this.group != null && getState()) {
+	        if (this.group.getSelectedCheckbox() != null) {
+	            setState(false);
+	        } else {
+	            this.group.setSelectedCheckbox(this);
+	        }
+	    }
+	}
 
         /* Locking check box below could cause deadlock with
          * CheckboxGroup's setSelectedCheckbox method.
@@ -427,9 +428,9 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @since         JDK1.1
      */
     public synchronized void addItemListener(ItemListener l) {
-        if (l == null) {
-            return;
-        }
+	if (l == null) {
+	    return;
+	}
         itemListener = AWTEventMulticaster.add(itemListener, l);
         newEventsOnly = true;
     }
@@ -449,9 +450,9 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @since         JDK1.1
      */
     public synchronized void removeItemListener(ItemListener l) {
-        if (l == null) {
-            return;
-        }
+	if (l == null) {
+	    return;
+	}
         itemListener = AWTEventMulticaster.remove(itemListener, l);
     }
 
@@ -460,7 +461,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * registered on this checkbox.
      *
      * @return all of this checkbox's <code>ItemListener</code>s
-     *         or an empty array if no item
+     *         or an empty array if no item 
      *         listeners are currently registered
      *
      * @see           #addItemListener
@@ -507,13 +508,13 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * @since 1.3
      */
     public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        EventListener l = null;
-        if  (listenerType == ItemListener.class) {
-            l = itemListener;
-        } else {
-            return super.getListeners(listenerType);
-        }
-        return AWTEventMulticaster.getListeners(l, listenerType);
+	EventListener l = null; 
+	if  (listenerType == ItemListener.class) { 
+	    l = itemListener;
+	} else {
+	    return super.getListeners(listenerType);
+	}
+	return AWTEventMulticaster.getListeners(l, listenerType);
     }
 
     // REMIND: remove when filtering is done at lower level
@@ -547,7 +548,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
             processItemEvent((ItemEvent)e);
             return;
         }
-        super.processEvent(e);
+	super.processEvent(e);
     }
 
     /**
@@ -583,26 +584,26 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
     /**
      * Returns a string representing the state of this <code>Checkbox</code>.
-     * This method is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not be
+     * This method is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between 
+     * implementations. The returned string may be empty but may not be 
      * <code>null</code>.
      *
      * @return    the parameter string of this check box
      */
     protected String paramString() {
-        String str = super.paramString();
-        String label = this.label;
-        if (label != null) {
-            str += ",label=" + label;
-        }
-        return str + ",state=" + state;
+	String str = super.paramString();
+	String label = this.label;
+	if (label != null) {
+	    str += ",label=" + label;
+	}
+	return str + ",state=" + state;
     }
 
 
     /* Serialization support.
      */
-
+	
     /*
      * Serialized data version
      * @serial
@@ -617,7 +618,7 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
      * no attempt is made to serialize them.
      *
      * @param s the <code>ObjectOutputStream</code> to write
-     * @serialData <code>null</code> terminated sequence of 0
+     * @serialData <code>null</code> terminated sequence of 0 
      *   or more pairs; the pair consists of a <code>String</code>
      *   and an <code>Object</code>; the <code>String</code> indicates
      *   the type of object and is one of the following:
@@ -661,13 +662,13 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
       Object keyOrNull;
       while(null != (keyOrNull = s.readObject())) {
-        String key = ((String)keyOrNull).intern();
+	String key = ((String)keyOrNull).intern();
 
-        if (itemListenerK == key)
-          addItemListener((ItemListener)(s.readObject()));
+	if (itemListenerK == key)
+	  addItemListener((ItemListener)(s.readObject()));
 
-        else // skip value for unrecognized key
-          s.readObject();
+	else // skip value for unrecognized key
+	  s.readObject();
       }
     }
 
@@ -683,12 +684,12 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
 
     /**
-     * Gets the AccessibleContext associated with this Checkbox.
-     * For checkboxes, the AccessibleContext takes the form of an
-     * AccessibleAWTCheckbox.
+     * Gets the AccessibleContext associated with this Checkbox. 
+     * For checkboxes, the AccessibleContext takes the form of an 
+     * AccessibleAWTCheckbox. 
      * A new AccessibleAWTCheckbox is created if necessary.
      *
-     * @return an AccessibleAWTCheckbox that serves as the
+     * @return an AccessibleAWTCheckbox that serves as the 
      *         AccessibleContext of this Checkbox
      * @since 1.3
      */
@@ -700,8 +701,8 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>Checkbox</code> class.  It provides an implementation of the
+     * This class implements accessibility support for the 
+     * <code>Checkbox</code> class.  It provides an implementation of the 
      * Java Accessibility API appropriate to checkbox user-interface elements.
      * @since 1.3
      */
@@ -713,15 +714,15 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
          */
         private static final long serialVersionUID = 7881579233144754107L;
 
-        public AccessibleAWTCheckbox() {
-            super();
-            Checkbox.this.addItemListener(this);
-        }
+	public AccessibleAWTCheckbox() {
+	    super();
+	    Checkbox.this.addItemListener(this);
+	}
 
-        /**
-         * Fire accessible property change events when the state of the
-         * toggle button changes.
-         */
+	/**
+	 * Fire accessible property change events when the state of the
+	 * toggle button changes.
+	 */
         public void itemStateChanged(ItemEvent e) {
             Checkbox cb = (Checkbox) e.getSource();
             if (Checkbox.this.accessibleContext != null) {
@@ -739,11 +740,11 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
         /**
          * Get the AccessibleAction associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * return this object, which is responsible for implementing the
          * AccessibleAction interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object
          */
         public AccessibleAction getAccessibleAction() {
             return this;
@@ -751,11 +752,11 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
 
         /**
          * Get the AccessibleValue associated with this object.  In the
-         * implementation of the Java Accessibility API for this class,
-         * return this object, which is responsible for implementing the
+         * implementation of the Java Accessibility API for this class, 
+	 * return this object, which is responsible for implementing the
          * AccessibleValue interface on behalf of itself.
-         *
-         * @return this object
+	 * 
+	 * @return this object
          */
         public AccessibleValue getAccessibleValue() {
             return this;
@@ -791,54 +792,54 @@ public class Checkbox extends Component implements ItemSelectable, Accessible {
             return false;    //  To be fully implemented in a future release
         }
 
-        /**
-         * Get the value of this object as a Number.  If the value has not been
-         * set, the return value will be null.
-         *
-         * @return value of the object
-         * @see #setCurrentAccessibleValue
-         */
-        public Number getCurrentAccessibleValue() {
-            return null;  //  To be fully implemented in a future release
-        }
+	/**
+	 * Get the value of this object as a Number.  If the value has not been
+	 * set, the return value will be null.
+	 *
+	 * @return value of the object
+	 * @see #setCurrentAccessibleValue
+	 */
+	public Number getCurrentAccessibleValue() {
+	    return null;  //  To be fully implemented in a future release
+	}
 
-        /**
-         * Set the value of this object as a Number.
-         *
-         * @return True if the value was set; else False
-         * @see #getCurrentAccessibleValue
-         */
-        public boolean setCurrentAccessibleValue(Number n) {
-            return false;  //  To be fully implemented in a future release
-        }
+	/**
+	 * Set the value of this object as a Number.
+	 *
+	 * @return True if the value was set; else False
+	 * @see #getCurrentAccessibleValue
+	 */
+	public boolean setCurrentAccessibleValue(Number n) {
+	    return false;  //  To be fully implemented in a future release
+	}
 
-        /**
-         * Get the minimum value of this object as a Number.
-         *
-         * @return Minimum value of the object; null if this object does not
-         * have a minimum value
-         * @see #getMaximumAccessibleValue
-         */
-        public Number getMinimumAccessibleValue() {
-            return null;  //  To be fully implemented in a future release
-        }
+	/**
+	 * Get the minimum value of this object as a Number.
+	 *
+	 * @return Minimum value of the object; null if this object does not
+	 * have a minimum value
+	 * @see #getMaximumAccessibleValue
+	 */
+	public Number getMinimumAccessibleValue() {
+	    return null;  //  To be fully implemented in a future release
+	}
 
-        /**
-         * Get the maximum value of this object as a Number.
-         *
-         * @return Maximum value of the object; null if this object does not
-         * have a maximum value
-         * @see #getMinimumAccessibleValue
-         */
-        public Number getMaximumAccessibleValue() {
-            return null;  //  To be fully implemented in a future release
-        }
+	/**
+	 * Get the maximum value of this object as a Number.
+	 *
+	 * @return Maximum value of the object; null if this object does not
+	 * have a maximum value
+	 * @see #getMinimumAccessibleValue
+	 */
+	public Number getMaximumAccessibleValue() {
+	    return null;  //  To be fully implemented in a future release
+	}
 
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of
-         * the object
+         * @return an instance of AccessibleRole describing the role of 
+	 * the object
          * @see AccessibleRole
          */
         public AccessibleRole getAccessibleRole() {

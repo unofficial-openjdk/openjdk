@@ -41,7 +41,7 @@ import java.security.NoSuchProviderException;
  * of a certificate factory for a particular certificate type, e.g., X.509.
  *
  * <p>Certificate factories are used to generate certificate, certification path
- * (<code>CertPath</code>) and certificate revocation list (CRL) objects from
+ * (<code>CertPath</code>) and certificate revocation list (CRL) objects from 
  * their encodings.
  *
  * <p>A certificate factory for X.509 must return certificates that are an
@@ -52,6 +52,7 @@ import java.security.NoSuchProviderException;
  * @author Jan Luehe
  * @author Sean Mullan
  *
+ * @version %I%, %G%
  *
  * @see CertificateFactory
  * @see Certificate
@@ -173,16 +174,16 @@ public abstract class CertificateFactorySpi {
      * @since 1.4
      */
     public CertPath
-        engineGenerateCertPath(List<? extends Certificate> certificates)
+	engineGenerateCertPath(List<? extends Certificate> certificates)
         throws CertificateException
     {
         throw new UnsupportedOperationException();
     }
 
     /**
-     * Returns an iteration of the <code>CertPath</code> encodings supported
-     * by this certificate factory, with the default encoding first. See
-     * Appendix A in the
+     * Returns an iteration of the <code>CertPath</code> encodings supported 
+     * by this certificate factory, with the default encoding first. See 
+     * Appendix A in the 
      * <a href="../../../../technotes/guides/security/certpath/CertPathProgGuide.html#AppA">
      * Java Certification Path API Programmer's Guide</a>
      * for information about standard encoding names.
@@ -218,8 +219,8 @@ public abstract class CertificateFactorySpi {
      *
      * <p>In the case of a certificate factory for X.509 certificates,
      * <code>inStream</code> may contain a single DER-encoded certificate
-     * in the formats described for
-     * {@link CertificateFactory#generateCertificate(java.io.InputStream)
+     * in the formats described for 
+     * {@link CertificateFactory#generateCertificate(java.io.InputStream) 
      * generateCertificate}.
      * In addition, <code>inStream</code> may contain a PKCS#7 certificate
      * chain. This is a PKCS#7 <i>SignedData</i> object, with the only
@@ -241,9 +242,9 @@ public abstract class CertificateFactorySpi {
      *
      * @exception CertificateException on parsing errors.
      */
-    public abstract Collection<? extends Certificate>
-            engineGenerateCertificates(InputStream inStream)
-            throws CertificateException;
+    public abstract Collection<? extends Certificate> 
+	    engineGenerateCertificates(InputStream inStream)
+	    throws CertificateException;
 
     /**
      * Generates a certificate revocation list (CRL) object and initializes it
@@ -311,5 +312,5 @@ public abstract class CertificateFactorySpi {
      * @exception CRLException on parsing errors.
      */
     public abstract Collection<? extends CRL> engineGenerateCRLs
-            (InputStream inStream) throws CRLException;
+	    (InputStream inStream) throws CRLException;
 }

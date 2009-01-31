@@ -22,8 +22,9 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+  
 
-
+#pragma ident	"@(#)mlib_v_ImageConvVersion.c	1.2	02/04/19 SMI"
 
 /*
  * FUNCTION

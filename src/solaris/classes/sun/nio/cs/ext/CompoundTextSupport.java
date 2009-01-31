@@ -55,11 +55,11 @@ final class CompoundTextSupport {
             int length = escSequence.length;
 
             for (int i = 0; i < escSequence.length; i++) {
-                hash += (((int)escSequence[i]) & 0xff) << (i % 4);
+                hash += (((int)escSequence[i]) & 0xff) << (i % 4); 
             }
             if (encoding != null) {
                 for (int i = 0; i < encoding.length; i++) {
-                    hash += (((int)encoding[i]) & 0xff) << (i % 4);
+                    hash += (((int)encoding[i]) & 0xff) << (i % 4); 
                 }
                 length += 2 /* M L */ + encoding.length + 1 /* 0x02 */;
             }
@@ -283,7 +283,7 @@ final class CompoundTextSupport {
             tHighBitsMap.put(glRight, Boolean.TRUE);
             tHighBitsMap.put(grLeft, Boolean.FALSE);
             tHighBitsMap.put(grRight, Boolean.TRUE);
-
+            
             ControlSequence fullSet = glLeft.concatenate(grRight);
             tEncodingToSequenceMap.put("JIS_X0201", fullSet);
             tEncodings.add("JIS_X0201");
@@ -297,7 +297,7 @@ final class CompoundTextSupport {
             tSequenceToEncodingMap.put(rightHalf, "X11GB2312");
             tHighBitsMap.put(leftHalf, Boolean.FALSE);
             tHighBitsMap.put(rightHalf, Boolean.FALSE);
-
+            
             tEncodingToSequenceMap.put("X11GB2312", leftHalf);
             tEncodings.add("X11GB2312");
         }
@@ -323,7 +323,7 @@ final class CompoundTextSupport {
             tSequenceToEncodingMap.put(rightHalf, "X11KSC5601");
             tHighBitsMap.put(leftHalf, Boolean.FALSE);
             tHighBitsMap.put(rightHalf, Boolean.FALSE);
-
+                
             tEncodingToSequenceMap.put("X11KSC5601", leftHalf);
             tEncodings.add("X11KSC5601");
         }
@@ -361,7 +361,7 @@ final class CompoundTextSupport {
             tSequenceToEncodingMap.put(rightHalf, "JIS_X0212-1990");
             tHighBitsMap.put(leftHalf, Boolean.FALSE);
             tHighBitsMap.put(rightHalf, Boolean.FALSE);
-
+            
             tEncodingToSequenceMap.put("JIS_X0212-1990", leftHalf);
             tEncodings.add("JIS_X0212-1990");
         }
@@ -374,7 +374,7 @@ final class CompoundTextSupport {
             tSequenceToEncodingMap.put(rightHalf, "X11CNS11643P1");
             tHighBitsMap.put(leftHalf, Boolean.FALSE);
             tHighBitsMap.put(rightHalf, Boolean.FALSE);
-
+            
             tEncodingToSequenceMap.put("X11CNS11643P1", leftHalf);
             tEncodings.add("X11CNS11643P1");
         }
@@ -387,7 +387,7 @@ final class CompoundTextSupport {
             tSequenceToEncodingMap.put(rightHalf, "X11CNS11643P2");
             tHighBitsMap.put(leftHalf, Boolean.FALSE);
             tHighBitsMap.put(rightHalf, Boolean.FALSE);
-
+            
             tEncodingToSequenceMap.put("X11CNS11643P2", leftHalf);
             tEncodings.add("X11CNS11643P2");
         }
@@ -400,7 +400,7 @@ final class CompoundTextSupport {
             tSequenceToEncodingMap.put(rightHalf, "X11CNS11643P3");
             tHighBitsMap.put(leftHalf, Boolean.FALSE);
             tHighBitsMap.put(rightHalf, Boolean.FALSE);
-
+            
             tEncodingToSequenceMap.put("X11CNS11643P3", leftHalf);
             tEncodings.add("X11CNS11643P3");
         }
@@ -443,13 +443,13 @@ final class CompoundTextSupport {
     }
 
     private static boolean isEncodingSupported(String encoding) {
-        try {
+        try { 
             if (Charset.isSupported(encoding))
-                return true;
-        } catch (IllegalArgumentException x) { }
+		return true;
+	} catch (IllegalArgumentException x) { }
         return (getDecoder(encoding) != null &&
                 getEncoder(encoding) != null);
-    }
+    }        
 
 
     // For Decoder
@@ -472,25 +472,25 @@ final class CompoundTextSupport {
         }
         Charset cs = null;
         try {
-            cs = Charset.forName(enc);
-        } catch (IllegalArgumentException e) {
+	    cs = Charset.forName(enc);
+	} catch (IllegalArgumentException e) {
             Class cls;
-            try {
-                cls = Class.forName("sun.awt.motif." + enc);
-            } catch (ClassNotFoundException ee) {
-                return null;
-            }
-            try {
-                cs = (Charset)cls.newInstance();
-            } catch (InstantiationException ee) {
-                return null;
-            } catch (IllegalAccessException ee) {
-                return null;
-            }
-        }
+	    try {
+		cls = Class.forName("sun.awt.motif." + enc);
+	    } catch (ClassNotFoundException ee) {
+		return null;
+	    }
+	    try {
+		cs = (Charset)cls.newInstance();
+	    } catch (InstantiationException ee) {
+		return null;
+	    } catch (IllegalAccessException ee) {
+		return null;
+	    }
+	}
         try {
             return cs.newDecoder();
-        } catch (UnsupportedOperationException e) {}
+	} catch (UnsupportedOperationException e) {}
         return null;
     }
 
@@ -521,25 +521,25 @@ final class CompoundTextSupport {
         }
         Charset cs = null;
         try {
-            cs = Charset.forName(enc);
-        } catch (IllegalArgumentException e) {
+	    cs = Charset.forName(enc);
+	} catch (IllegalArgumentException e) {
             Class cls;
-            try {
-                cls = Class.forName("sun.awt.motif." + enc);
-            } catch (ClassNotFoundException ee) {
-                return null;
-            }
-            try {
-                cs = (Charset)cls.newInstance();
-            } catch (InstantiationException ee) {
-                return null;
-            } catch (IllegalAccessException ee) {
-                return null;
-            }
-        }
+	    try {
+		cls = Class.forName("sun.awt.motif." + enc);
+	    } catch (ClassNotFoundException ee) {
+		return null;
+	    }
+	    try {
+		cs = (Charset)cls.newInstance();
+	    } catch (InstantiationException ee) {
+		return null;
+	    } catch (IllegalAccessException ee) {
+		return null;
+	    }
+	}
         try {
             return cs.newEncoder();
-        } catch (Throwable e) {}
+	} catch (Throwable e) {}
         return null;
     }
 

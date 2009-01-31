@@ -40,7 +40,7 @@ public class RelationTypeNotFoundException extends RelationException {
      * Default constructor, no message put in exception.
      */
     public RelationTypeNotFoundException() {
-        super();
+	super();
     }
 
     /**
@@ -49,6 +49,6 @@ public class RelationTypeNotFoundException extends RelationException {
      * @param message the detail message.
      */
     public RelationTypeNotFoundException(String message) {
-        super(message);
+	super(message);
     }
 }

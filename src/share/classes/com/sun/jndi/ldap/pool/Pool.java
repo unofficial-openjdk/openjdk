@@ -85,7 +85,7 @@ final public class Pool {
      */
     private static final ReferenceQueue queue = new ReferenceQueue();
     private static final Collection weakRefs =
-                Collections.synchronizedList(new LinkedList());
+		Collections.synchronizedList(new LinkedList());
 
     final private int maxSize;    // max num of identical conn per pool
     final private int prefSize;   // preferred num of identical conn per pool
@@ -93,10 +93,10 @@ final public class Pool {
     final private Map map;
 
     public Pool(int initSize, int prefSize, int maxSize) {
-        map = new WeakHashMap();
-        this.prefSize = prefSize;
-        this.maxSize = maxSize;
-        this.initSize = initSize;
+	map = new WeakHashMap();
+	this.prefSize = prefSize;
+	this.maxSize = maxSize;
+	this.initSize = initSize;
     }
 
     /**
@@ -109,47 +109,47 @@ final public class Pool {
      * @param id identity of the connection to get
      * @param timeout the number of milliseconds to wait before giving up
      * @param factory the factory to use for creating the connection if
-     *          creation is necessary
+     * 		creation is necessary
      * @return a pooled connection
      * @throws NamingException the connection could not be created due to
-     *                          an error.
+     * 				an error.
      */
     public PooledConnection getPooledConnection(Object id, long timeout,
-        PooledConnectionFactory factory) throws NamingException {
+	PooledConnectionFactory factory) throws NamingException {
 
-        d("get(): ", id);
-        d("size: ", map.size());
+	d("get(): ", id);
+	d("size: ", map.size());
 
-        expungeStaleConnections();
+	expungeStaleConnections();
 
-        Connections conns;
-        synchronized (map) {
-            conns = getConnections(id);
-            if (conns == null) {
-                d("get(): creating new connections list for ", id);
+	Connections conns;
+	synchronized (map) {
+	    conns = getConnections(id);
+	    if (conns == null) {
+		d("get(): creating new connections list for ", id);
 
-                // No connections for this id so create a new list
-                conns = new Connections(id, initSize, prefSize, maxSize,
-                    factory);
-                ConnectionsRef connsRef = new ConnectionsRef(conns);
-                map.put(id, connsRef);
+		// No connections for this id so create a new list
+		conns = new Connections(id, initSize, prefSize, maxSize,
+		    factory);
+		ConnectionsRef connsRef = new ConnectionsRef(conns);
+		map.put(id, connsRef);
 
-                // Create a weak reference to ConnectionsRef
-                Reference weakRef = new ConnectionsWeakRef(connsRef, queue);
+		// Create a weak reference to ConnectionsRef
+		Reference weakRef = new ConnectionsWeakRef(connsRef, queue);
 
-                // Keep the weak reference through the element of a linked list
-                weakRefs.add(weakRef);
-            }
-        }
+		// Keep the weak reference through the element of a linked list
+		weakRefs.add(weakRef);
+	    }
+	}
 
-        d("get(): size after: ", map.size());
+	d("get(): size after: ", map.size());
 
-        return conns.get(timeout, factory); // get one connection from list
+	return conns.get(timeout, factory); // get one connection from list
     }
 
     private Connections getConnections(Object id) {
-        ConnectionsRef ref = (ConnectionsRef) map.get(id);
-        return (ref != null) ? ref.getConnections() : null;
+	ConnectionsRef ref = (ConnectionsRef) map.get(id);
+	return (ref != null) ? ref.getConnections() : null;
     }
 
     /**
@@ -159,22 +159,22 @@ final public class Pool {
      * be called, and the list of pools itself removed if it becomes empty).
      *
      * @param threshold connections idle before 'threshold' should be closed
-     *          and removed.
+     * 		and removed.
      */
     public void expire(long threshold) {
-        synchronized (map) {
-            Collection coll = map.values();
-            Iterator iter = coll.iterator();
-            Connections conns;
-            while (iter.hasNext()) {
-                conns = ((ConnectionsRef) (iter.next())).getConnections();
-                if (conns.expire(threshold)) {
-                    d("expire(): removing ", conns);
-                    iter.remove();
-                }
-            }
-        }
-        expungeStaleConnections();
+	synchronized (map) {
+	    Collection coll = map.values();
+	    Iterator iter = coll.iterator();
+	    Connections conns;
+	    while (iter.hasNext()) {
+		conns = ((ConnectionsRef) (iter.next())).getConnections();
+		if (conns.expire(threshold)) {
+		    d("expire(): removing ", conns);
+		    iter.remove();
+		}
+	    }
+	}
+	expungeStaleConnections();
     }
 
     /*
@@ -183,61 +183,61 @@ final public class Pool {
      * and expire() methods of this class.
      */
     private static void expungeStaleConnections() {
-        ConnectionsWeakRef releaseRef = null;
-        while ((releaseRef = (ConnectionsWeakRef) queue.poll())
-                                        != null) {
-            Connections conns = releaseRef.getConnections();
+	ConnectionsWeakRef releaseRef = null;
+	while ((releaseRef = (ConnectionsWeakRef) queue.poll())
+					!= null) {
+	    Connections conns = releaseRef.getConnections();
 
-            if (debug) {
-                System.err.println(
-                        "weak reference cleanup: Closing Connections:" + conns);
-            }
+	    if (debug) {
+		System.err.println(
+			"weak reference cleanup: Closing Connections:" + conns);
+	    }
 
-            // cleanup
-            conns.close();
-            weakRefs.remove(releaseRef);
-            releaseRef.clear();
+	    // cleanup
+	    conns.close();
+	    weakRefs.remove(releaseRef);
+	    releaseRef.clear();
          }
     }
 
 
     public void showStats(PrintStream out) {
-        Map.Entry entry;
-        Object id;
-        Connections conns;
+	Map.Entry entry;
+	Object id;
+	Connections conns;
 
-        out.println("===== Pool start ======================");
-        out.println("maximum pool size: " + maxSize);
-        out.println("preferred pool size: " + prefSize);
-        out.println("initial pool size: " + initSize);
-        out.println("current pool size: " + map.size());
+	out.println("===== Pool start ======================");
+	out.println("maximum pool size: " + maxSize);
+	out.println("preferred pool size: " + prefSize);
+	out.println("initial pool size: " + initSize);
+	out.println("current pool size: " + map.size());
 
-        Set entries = map.entrySet();
-        Iterator iter = entries.iterator();
+	Set entries = map.entrySet();
+	Iterator iter = entries.iterator();
 
-        while (iter.hasNext()) {
-            entry = (Map.Entry) iter.next();
-            id = entry.getKey();
-            conns = ((ConnectionsRef) entry.getValue()).getConnections();
-            out.println("   " + id + ":" + conns.getStats());
-        }
+	while (iter.hasNext()) {
+	    entry = (Map.Entry) iter.next();
+	    id = entry.getKey();
+	    conns = ((ConnectionsRef) entry.getValue()).getConnections();
+	    out.println("   " + id + ":" + conns.getStats());
+	}
 
-        out.println("====== Pool end =====================");
+	out.println("====== Pool end =====================");
     }
 
     public String toString() {
-        return super.toString() + " " + map.toString();
+	return super.toString() + " " + map.toString();
     }
 
     private void d(String msg, int i) {
-        if (debug) {
-            System.err.println(this + "." + msg + i);
-        }
+	if (debug) {
+	    System.err.println(this + "." + msg + i);
+	}
     }
 
     private void d(String msg, Object obj) {
-        if (debug) {
-            System.err.println(this + "." + msg + obj);
-        }
+	if (debug) {
+	    System.err.println(this + "." + msg + obj);
+	}
     }
 }

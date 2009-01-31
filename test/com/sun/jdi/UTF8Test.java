@@ -36,8 +36,8 @@
 /*
   There is UTF-8 and there is modified UTF-8, which I will call M-UTF-8.
   The two differ in the representation of binary 0, and
-  in some other more esoteric representations.
-  See
+  in some other more esoteric representations.  
+  See 
       http://java.sun.com/developer/technicalArticles/Intl/Supplementary/#Modified_UTF-8
       http://java.sun.com/javase/6/docs/technotes/guides/jni/spec/types.html#wp16542
 
@@ -53,14 +53,14 @@
 
  Here is how these our handled in our BE, JDWP, and FE:
 
- - Strings in .class files are M-UTF-8.
+ - Strings in .class files are M-UTF-8.  
 
  - To get the value of a string object from the VM, our BE calls
       char * utf = JNI_FUNC_PTR(env,GetStringUTFChars)(env, string, NULL);
    which returns M-UTF-8.
 
 - To create a string object in the VM, our BE VirtualMachine.createString() calls
-      string = JNI_FUNC_PTR(env,NewStringUTF)(env, cstring);
+      string = JNI_FUNC_PTR(env,NewStringUTF)(env, cstring); 
       This function expects the string to be M-UTF-8
       BUG:  If the string came from JDWP, then it is actually UTF-8
 
@@ -74,9 +74,9 @@
 
 - BE function outStream_writeString uses strlen meaning
   it expects no 0 bytes, meaning that it expects M-UTF-8
-  This function writes the byte length and then calls
+  This function writes the byte length and then calls 
   outStream.c::writeBytes which just writes the bytes to JDWP as is.
-
+  
   BUG: If such a string came from the VM via JNI, it is actually
        M-UTF-8
   FIX:  - scan string to see if contains an M-UTF-8 char.
@@ -89,7 +89,7 @@
                on the String to get real UTF-8
 
 
-- The JDWP StringReference.value command does reads a string
+- The JDWP StringReference.value command does reads a string 
   from the BE out of the JDWP stream and does this to
   createe a Java String for it (see PacketStream.readString):
          String readString() {
@@ -157,7 +157,7 @@ and the readString method does this:
         }
 Thus, this won't notice the modified UTF-8 coming in from JDWP .
 
-
+ 
 */
 
 import com.sun.jdi.*;
@@ -199,8 +199,8 @@ public class UTF8Test extends TestScaffold {
     UTF8Test (String args[]) {
         super(args);
     }
-
-    public static void main(String[] args)      throws Exception {
+    
+    public static void main(String[] args)	throws Exception {
         new UTF8Test(args).startTests();
     }
 
@@ -208,7 +208,7 @@ public class UTF8Test extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("UTF8Targ");
@@ -216,15 +216,15 @@ public class UTF8Test extends TestScaffold {
         targetField = targetClass.fieldByName("aField");
 
         ArrayReference targetVals = (ArrayReference)targetClass.getValue(targetClass.fieldByName("vals"));
-
-        /* For each string in the debuggee's 'val' array, verify that we can
+            
+        /* For each string in the debuggee's 'val' array, verify that we can 
          * read that value via JDI.
          */
-
+        
         for (int ii = 0; ii < UTF8Targ.vals.length; ii++) {
             StringReference val = (StringReference)targetVals.getValue(ii);
             String valStr = val.value();
-
+            
             /*
              * Verify that we can read a value correctly.
              * We read it via JDI, and access it directly from the static
@@ -234,13 +234,13 @@ public class UTF8Test extends TestScaffold {
                 valStr.length() != UTF8Targ.vals[ii].length()) {
                 failure("     FAILED: Expected /" + printIt(UTF8Targ.vals[ii]) +
                         "/, but got /" + printIt(valStr) + "/, length = " + valStr.length());
-            }
+            } 
         }
 
         /* Test 'all' unicode chars - send them to the debuggee via JDI
          * and then read them back.
          */
-        doFancyVersion();
+	doFancyVersion();
 
         resumeTo("UTF8Targ", "gus", "()V");
         try {
@@ -252,9 +252,9 @@ public class UTF8Test extends TestScaffold {
         /*
          * resume the target listening for events
          */
-
+        
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -273,7 +273,7 @@ public class UTF8Test extends TestScaffold {
      */
     void doFancyVersion() throws Exception {
         // This does 4 chars at a time just to save time.
-        for (int ii = Character.MIN_CODE_POINT;
+        for (int ii = Character.MIN_CODE_POINT; 
              ii < Character.MIN_SUPPLEMENTARY_CODE_POINT;
              ii += 4) {
             // Skip the surrogates
@@ -297,10 +297,10 @@ public class UTF8Test extends TestScaffold {
     void doFancyTest(int ... args) throws Exception {
         String ss = new String(args, 0, 4);
         targetClass.setValue(targetField, vm().mirrorOf(ss));
-
+        
         StringReference returnedVal = (StringReference)targetClass.getValue(targetField);
         String returnedStr = returnedVal.value();
-
+        
         if (!ss.equals(returnedStr)) {
             failure("Set: FAILED: Expected /" + printIt(ss) +
                     "/, but got /" + printIt(returnedStr) + "/, length = " + returnedStr.length());
@@ -335,3 +335,5 @@ public class UTF8Test extends TestScaffold {
     }
 
 }
+
+

@@ -41,16 +41,16 @@ public interface HotspotThreadMBean {
 
     /**
      * Returns a <tt>Map</tt> of the name of all VM internal threads
-     * to the thread CPU time in nanoseconds.  The returned value is
+     * to the thread CPU time in nanoseconds.  The returned value is 
      * of nanoseconds precision but not necessarily nanoseconds accuracy.
      * <p>
      *
      * @return a <tt>Map</tt> object of the name of all VM internal threads
-     * to the thread CPU time in nanoseconds.
+     * to the thread CPU time in nanoseconds.  
      *
      * @throws java.lang.UnsupportedOperationException if the Java virtual
      * machine does not support CPU time measurement.
-     *
+     * 
      * @see java.lang.management.ThreadMBean#isThreadCpuTimeSupported
      */
     public java.util.Map<String,Long> getInternalThreadCpuTimes();

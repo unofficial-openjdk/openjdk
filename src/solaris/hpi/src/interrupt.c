@@ -65,30 +65,30 @@ intrRegister(int interrupt, intr_handler_t handler, void *handlerArg)
     intrLock();
 
     if (handler == (intr_handler_t)SYS_SIG_IGN ||
-        handler == (intr_handler_t)SYS_SIG_DFL) {
+	handler == (intr_handler_t)SYS_SIG_DFL) {
         /* If we get IGN or DFL, register that as the process signal handler,
-         * and clear the handlerList entry.
-         */
+	 * and clear the handlerList entry.
+	 */
         sigAct.sa_handler = (void (*)(int))handler;
-        sigAct.sa_flags = 0;
-        sigaction(interrupt, &sigAct, &sigActOld);
-        handlerList[interrupt].handler = NULL;
+	sigAct.sa_flags = 0;
+	sigaction(interrupt, &sigAct, &sigActOld);
+	handlerList[interrupt].handler = NULL;
     } else {
         /* Otherwise, we register intrDispatchMD as the common signal handler,
-         * and set the real handler in handlerList[interrupt].handler.
-         */
+	 * and set the real handler in handlerList[interrupt].handler.
+	 */
 #ifdef SA_SIGINFO
-        sigAct.sa_handler = 0;
-        sigAct.sa_sigaction = intrDispatchMD;
-        sigAct.sa_flags = SA_SIGINFO | SA_RESTART;
+	sigAct.sa_handler = 0;
+	sigAct.sa_sigaction = intrDispatchMD;
+	sigAct.sa_flags = SA_SIGINFO | SA_RESTART;
 #else
-        sigAct.sa_handler = intrDispatchMD;
-        sigAct.sa_flags = SA_RESTART;
+	sigAct.sa_handler = intrDispatchMD;
+	sigAct.sa_flags = SA_RESTART;
 #endif
-        sigfillset(&sigAct.sa_mask);
-        sigaction(interrupt, &sigAct, &sigActOld);
-        handlerList[interrupt].handler = handler;
-        handlerList[interrupt].handlerArg = handlerArg;
+	sigfillset(&sigAct.sa_mask);
+	sigaction(interrupt, &sigAct, &sigActOld);
+	handlerList[interrupt].handler = handler;
+	handlerList[interrupt].handlerArg = handlerArg;
     }
 
     intrUnlock();
@@ -106,25 +106,25 @@ intrRegister(int interrupt, intr_handler_t handler, void *handlerArg)
 /*
  * intrDispatch -- Dispatch an interrupt.
  *
- *                 This routine is called from the low-level handlers
- *                 at interrupt time.
+ * 		   This routine is called from the low-level handlers
+ * 		   at interrupt time.
  */
 void
 intrDispatch(int interrupt, void *siginfo, void *context)
 {
     /*
      * Assumptions:
-     *  - Each interrupt only has one priority level associated with
-     *    it.
-     *  - Each handler will do enough work so that when it returns
-     *    the source of the interrupt is masked.
+     *	- Each interrupt only has one priority level associated with
+     *	  it.
+     *	- Each handler will do enough work so that when it returns
+     *	  the source of the interrupt is masked.
      */
     handler_entry_t *entry = &handlerList[interrupt];
     intr_handler_t handler = entry->handler;
 
     if (handler) {
         (*handler)(interrupt, siginfo, context, entry->handlerArg);
-        return;
+	return;
     }
 
     /* No handler for this interrupt, log the error */

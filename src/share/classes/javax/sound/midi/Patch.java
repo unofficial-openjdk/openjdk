@@ -23,29 +23,29 @@
  * have any questions.
  */
 
-package javax.sound.midi;
+package javax.sound.midi;	
 
 
 /**
- * A <code>Patch</code> object represents a location, on a MIDI
- * synthesizer, into which a single instrument is stored (loaded).
+ * A <code>Patch</code> object represents a location, on a MIDI 
+ * synthesizer, into which a single instrument is stored (loaded).  
  * Every <code>Instrument</code> object has its own <code>Patch</code>
  * object that specifies the memory location
- * into which that instrument should be loaded. The
+ * into which that instrument should be loaded. The 
  * location is specified abstractly by a bank index and a program number (not by
  * any scheme that directly refers to a specific address or offset in RAM).
  * This is a hierarchical indexing scheme: MIDI provides for up to 16384 banks,
  * each of which contains up to 128 program locations.  For example, a
- * minimal sort of synthesizer might have only one bank of instruments, and
- * only 32 instruments (programs) in that bank.
+ * minimal sort of synthesizer might have only one bank of instruments, and 
+ * only 32 instruments (programs) in that bank.  
  * <p>
  * To select what instrument should play the notes on a particular MIDI
  * channel, two kinds of MIDI message are used that specify a patch location:
  * a bank-select command, and a program-change channel command.  The Java Sound
- * equivalent is the
+ * equivalent is the 
  * {@link MidiChannel#programChange(int, int) programChange(int, int)}
  * method of <code>MidiChannel</code>.
- *
+ * 
  * @see Instrument
  * @see Instrument#getPatch()
  * @see MidiChannel#programChange(int, int)
@@ -70,7 +70,7 @@ public class Patch {
      */
     private final int program;
 
-
+	
     /**
      * Constructs a new patch object from the specified bank and program
      * numbers.
@@ -79,8 +79,8 @@ public class Patch {
      */
     public Patch(int bank, int program) {
 
-        this.bank = bank;
-        this.program = program;
+	this.bank = bank; 
+	this.program = program;
     }
 
 
@@ -92,7 +92,7 @@ public class Patch {
      */
     public int getBank() {
 
-        return bank;
+	return bank;
     }
 
 
@@ -107,6 +107,7 @@ public class Patch {
      */
     public int getProgram() {
 
-        return program;
+	return program;
     }
 }
+

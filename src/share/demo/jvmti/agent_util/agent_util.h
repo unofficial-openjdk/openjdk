@@ -48,8 +48,8 @@ extern "C" {
 void  stdout_message(const char * format, ...);
 void  fatal_error(const char * format, ...);
 char *get_token(char *str, char *seps, char *buf, int max);
-int   interested(char *cname, char *mname,
-                    char *include_list, char *exclude_list);
+int   interested(char *cname, char *mname, 
+		    char *include_list, char *exclude_list);
 
 void  check_jvmti_error(jvmtiEnv *jvmti, jvmtiError errnum, const char *str);
 void  deallocate(jvmtiEnv *jvmti, void *ptr);
@@ -61,3 +61,4 @@ void  add_demo_jar_to_bootclasspath(jvmtiEnv *jvmti, char *demo_name);
 #endif /* __cplusplus */
 
 #endif
+

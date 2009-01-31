@@ -41,10 +41,11 @@ import java.util.EventListener;
  *
  * @see MidiChannel#controlChange(int, int)
  *
+ * @version %I%, %E%
  * @author Kara Kytle
  */
 public interface ControllerEventListener extends EventListener {
-
+    
     /**
      * Invoked when a <code>Sequencer</code> has encountered and processed
      * a control-change event of interest to this listener.  The event passed

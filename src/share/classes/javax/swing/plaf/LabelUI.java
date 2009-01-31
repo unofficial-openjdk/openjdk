@@ -28,6 +28,7 @@ package javax.swing.plaf;
 /**
  * Pluggable look and feel interface for JLabel.
  *
+ * @version %I% %G%
  * @author Hans Muller
  */
 public abstract class LabelUI extends ComponentUI {

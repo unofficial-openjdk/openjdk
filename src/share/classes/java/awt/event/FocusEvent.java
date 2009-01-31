@@ -50,26 +50,27 @@ import sun.awt.SunToolkit;
  * reactivated. Both permanent and temporary focus events are delivered using
  * the FOCUS_GAINED and FOCUS_LOST event ids; the level may be distinguished in
  * the event using the isTemporary() method.
- *
+ *  
  * @see FocusAdapter
  * @see FocusListener
  * @see <a href="http://java.sun.com/docs/books/tutorial/post1.0/ui/focuslistener.html">Tutorial: Writing a Focus Listener</a>
  *
  * @author Carl Quinn
  * @author Amy Fowler
+ * @version %I% %G%
  * @since 1.1
  */
 public class FocusEvent extends ComponentEvent {
 
     /**
      * The first number in the range of ids used for focus events.
-     */
-    public static final int FOCUS_FIRST         = 1004;
+     */    
+    public static final int FOCUS_FIRST		= 1004;
 
     /**
      * The last number in the range of ids used for focus events.
      */
-    public static final int FOCUS_LAST          = 1005;
+    public static final int FOCUS_LAST		= 1005;
 
     /**
      * This event indicates that the Component is now the focus owner.
@@ -103,9 +104,9 @@ public class FocusEvent extends ComponentEvent {
      * @since 1.4
      */
     transient Component opposite;
-
+  
     /*
-     * JDK 1.1 serialVersionUID
+     * JDK 1.1 serialVersionUID 
      */
     private static final long serialVersionUID = 523753786457416396L;
 
@@ -125,7 +126,7 @@ public class FocusEvent extends ComponentEvent {
      * unspecified behavior. This method throws an
      * <code>IllegalArgumentException</code> if <code>source</code>
      * is <code>null</code>.
-     *
+     * 
      * @param source     the <code>Component</code> that originated the event
      * @param id         <code>FOCUS_GAINED</code> or <code>FOCUS_LOST</code>
      * @param temporary  <code>true</code> if the focus change is temporary;
@@ -138,8 +139,8 @@ public class FocusEvent extends ComponentEvent {
     public FocusEvent(Component source, int id, boolean temporary,
                       Component opposite) {
         super(source, id);
-        this.temporary = temporary;
-        this.opposite = opposite;
+	this.temporary = temporary;
+	this.opposite = opposite;
     }
 
     /**
@@ -199,13 +200,13 @@ public class FocusEvent extends ComponentEvent {
      */
     public Component getOppositeComponent() {
         if (opposite == null) {
-            return null;
-        }
+	    return null;
+	}
 
         return (SunToolkit.targetToAppContext(opposite) ==
-                AppContext.getAppContext())
-            ? opposite
-            : null;
+		AppContext.getAppContext())
+	    ? opposite
+	    : null;
     }
 
     /**
@@ -226,8 +227,8 @@ public class FocusEvent extends ComponentEvent {
           default:
               typeStr = "unknown type";
         }
-        return typeStr + (temporary ? ",temporary" : ",permanent") +
-            ",opposite=" + getOppositeComponent();
+	return typeStr + (temporary ? ",temporary" : ",permanent") +
+	    ",opposite=" + getOppositeComponent();
     }
 
 }

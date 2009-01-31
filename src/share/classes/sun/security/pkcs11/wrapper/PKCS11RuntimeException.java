@@ -54,6 +54,7 @@ package sun.security.pkcs11.wrapper;
  * part of the wrapper occurs.
  *
  * @author <a href="mailto:Karl.Scheibelhofer@iaik.at"> Karl Scheibelhofer </a>
+ * @version 1.0
  * @invariants
  */
 public class PKCS11RuntimeException extends RuntimeException {
@@ -65,7 +66,7 @@ public class PKCS11RuntimeException extends RuntimeException {
      * @postconditions
      */
     public PKCS11RuntimeException() {
-        super();
+	super();
     }
 
     /**
@@ -77,7 +78,7 @@ public class PKCS11RuntimeException extends RuntimeException {
      * @postconditions
      */
     public PKCS11RuntimeException(String message) {
-        super(message);
+	super(message);
     }
 
     /**
@@ -88,7 +89,7 @@ public class PKCS11RuntimeException extends RuntimeException {
      * @postconditions
      */
     public PKCS11RuntimeException(Exception encapsulatedException) {
-        super(encapsulatedException);
+	super(encapsulatedException);
     }
 
     /**
@@ -102,7 +103,7 @@ public class PKCS11RuntimeException extends RuntimeException {
      * @postconditions
      */
     public PKCS11RuntimeException(String message, Exception encapsulatedException) {
-        super(message, encapsulatedException);
+	super(message, encapsulatedException);
     }
 
 }

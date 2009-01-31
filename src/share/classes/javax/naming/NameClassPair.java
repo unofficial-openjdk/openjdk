@@ -45,6 +45,7 @@ package javax.naming;
  *
  * @author Rosanna Lee
  * @author Scott Seligman
+ * @version %I% %E%
  *
  * @see Context#list
  * @since 1.3
@@ -105,32 +106,32 @@ public class NameClassPair implements java.io.Serializable {
      * Constructs an instance of a NameClassPair given its
      * name and class name.
      *
-     * @param   name    The non-null name of the object. It is relative
-     *                  to the <em>target context</em> (which is
+     * @param	name	The non-null name of the object. It is relative
+     *			to the <em>target context</em> (which is
      * named by the first parameter of the <code>list()</code> method)
-     * @param   className       The possibly null class name of the object
-     *          bound to name. It is null if the object bound is null.
+     * @param	className	The possibly null class name of the object
+     *		bound to name. It is null if the object bound is null.
      * @see #getClassName
      * @see #setClassName
      * @see #getName
      * @see #setName
      */
     public NameClassPair(String name, String className) {
-        this.name = name;
-        this.className = className;
+	this.name = name;
+	this.className = className;
     }
 
     /**
      * Constructs an instance of a NameClassPair given its
      * name, class name, and whether it is relative to the listing context.
      *
-     * @param   name    The non-null name of the object.
-     * @param   className       The possibly null class name of the object
-     *  bound to name.  It is null if the object bound is null.
+     * @param	name	The non-null name of the object.
+     * @param	className	The possibly null class name of the object
+     * 	bound to name.  It is null if the object bound is null.
      * @param isRelative true if <code>name</code> is a name relative
-     *          to the target context (which is named by the first parameter
-     *          of the <code>list()</code> method); false if <code>name</code>
-     *          is a URL string.
+     *		to the target context (which is named by the first parameter
+     *		of the <code>list()</code> method); false if <code>name</code>
+     *		is a URL string.
      * @see #getClassName
      * @see #setClassName
      * @see #getName
@@ -139,9 +140,9 @@ public class NameClassPair implements java.io.Serializable {
      * @see #setRelative
      */
     public NameClassPair(String name, String className, boolean isRelative) {
-        this.name = name;
-        this.className = className;
-        this.isRel = isRelative;
+	this.name = name;
+	this.className = className;
+	this.isRel = isRelative;
     }
 
     /**
@@ -150,14 +151,14 @@ public class NameClassPair implements java.io.Serializable {
      * retrieves the class name of the eventual object that
      * will be returned by <tt>Binding.getObject()</tt>.
      *
-     * @return  The possibly null class name of object bound.
-     *          It is null if the object bound is null.
+     * @return	The possibly null class name of object bound.
+     * 		It is null if the object bound is null.
      * @see Binding#getObject
      * @see Binding#getClassName
      * @see #setClassName
      */
     public String getClassName() {
-        return className;
+	return className;
     }
 
     /**
@@ -167,29 +168,29 @@ public class NameClassPair implements java.io.Serializable {
      * <tt>list()</tt>).
      * If <tt>isRelative()</tt> is false, this name is a URL string.
      *
-     * @return  The non-null name of this binding.
+     * @return	The non-null name of this binding.
      * @see #isRelative
      * @see #setName
      */
     public String getName() {
-        return name;
+	return name;
     }
 
     /**
      * Sets the name of this binding.
      *
-     * @param   name the non-null string to use as the name.
+     * @param	name the non-null string to use as the name.
      * @see #getName
      * @see #setRelative
      */
     public void setName(String name) {
-        this.name = name;
+	this.name = name;
     }
 
     /**
      * Sets the class name of this binding.
      *
-     * @param   name the possibly null string to use as the class name.
+     * @param	name the possibly null string to use as the class name.
      * If null, <tt>Binding.getClassName()</tt> will return
      * the actual class name of the object in the binding.
      * The class name will be null if the object bound is null.
@@ -197,7 +198,7 @@ public class NameClassPair implements java.io.Serializable {
      * @see Binding#getClassName
      */
     public void setClassName(String name) {
-        this.className = name;
+	this.className = name;
     }
 
     /**
@@ -206,13 +207,13 @@ public class NameClassPair implements java.io.Serializable {
      * the first parameter of the <code>list()</code> method).
      *
      * @return true if the name of this binding is relative to the
-     *          target context;
-     *          false if the name of this binding is a URL string.
+     *		target context;
+     *		false if the name of this binding is a URL string.
      * @see #setRelative
      * @see #getName
      */
     public boolean isRelative() {
-        return isRel;
+	return isRel;
     }
 
     /**
@@ -221,12 +222,12 @@ public class NameClassPair implements java.io.Serializable {
      * method).
      *
      * @param r If true, the name of binding is relative to the target context;
-     *          if false, the name of binding is a URL string.
+     *		if false, the name of binding is a URL string.
      * @see #isRelative
      * @see #setName
      */
     public void setRelative(boolean r) {
-        isRel = r;
+	isRel = r;
     }
 
     /**
@@ -246,15 +247,15 @@ public class NameClassPair implements java.io.Serializable {
      *
      * @return The full name of this binding.
      * @throws UnsupportedOperationException if the notion of full name
-     *         does not apply to this binding in the naming system.
+     * 	       does not apply to this binding in the naming system.
      * @since 1.5
      * @see #setNameInNamespace
      * @see #getName
      */
     public String getNameInNamespace() {
-        if (fullName == null) {
-            throw new UnsupportedOperationException();
-        }
+	if (fullName == null) {
+	    throw new UnsupportedOperationException();
+	}
         return fullName;
     }
 
@@ -286,8 +287,8 @@ public class NameClassPair implements java.io.Serializable {
      * @return The string representation of this name/class pair.
      */
     public String toString() {
-        return (isRelative() ? "" : "(not relative)") + getName() + ": " +
-                getClassName();
+	return (isRelative() ? "" : "(not relative)") + getName() + ": " +
+		getClassName();
     }
 
 

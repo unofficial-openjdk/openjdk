@@ -34,9 +34,10 @@ import java.security.Provider;
  * credential elements from different mechanisms.
  *
  * @author Mayank Upadhyay
+ * @version %I%, %G%
  */
 public interface GSSCredentialSpi {
-
+    
     public Provider getProvider();
 
     /**
@@ -47,7 +48,7 @@ public interface GSSCredentialSpi {
      * @exception GSSException with major codes NO_CRED and FAILURE
      */
     public void dispose() throws GSSException;
-
+    
     /**
      * Returns the principal name for this credential. The name
      * is in mechanism specific format.
@@ -56,7 +57,7 @@ public interface GSSCredentialSpi {
      * @exception GSSException may be thrown
      */
     public GSSNameSpi getName() throws GSSException;
-
+    
     /**
      * Returns the init lifetime remaining.
      *
@@ -64,8 +65,8 @@ public interface GSSCredentialSpi {
      * @exception GSSException may be thrown
      */
     public int getInitLifetime() throws GSSException;
-
-
+    
+	
     /**
      * Returns the accept lifetime remaining.
      *
@@ -73,21 +74,21 @@ public interface GSSCredentialSpi {
      * @exception GSSException may be thrown
      */
     public int getAcceptLifetime() throws GSSException;
-
+    
     /**
      * Determines if this credential element can be used by a context
      * initiator.
      * @return true if it can be used for initiating contexts
      */
     public boolean isInitiatorCredential() throws GSSException;
-
+    
     /**
      * Determines if this credential element can be used by a context
      * acceptor.
      * @return true if it can be used for accepting contexts
      */
     public boolean isAcceptorCredential() throws GSSException;
-
+    
     /**
      * Returns the oid representing the underlying credential
      * mechanism oid.

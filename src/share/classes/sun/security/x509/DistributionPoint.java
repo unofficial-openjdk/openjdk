@@ -59,7 +59,7 @@ import sun.security.util.DerValue;
  *      aACompromise            (8) }
  *
  * GeneralNames ::= SEQUENCE SIZE (1..MAX) OF GeneralName
- *
+ * 
  * GeneralName ::= CHOICE {
  *         otherName                   [0] INSTANCE OF OTHER-NAME,
  *         rfc822Name                  [1] IA5String,
@@ -84,17 +84,18 @@ import sun.security.util.DerValue;
  * </pre>
  * <p>
  * Instances of this class are designed to be immutable. However, since this
- * is an internal API we do not use defensive cloning for values for
+ * is an internal API we do not use defensive cloning for values for 
  * performance reasons. It is the responsibility of the consumer to ensure
  * that no mutable elements are modified.
  *
  * @author Anne Anderson
  * @author Andreas Sterbenz
+ * @version %I%, %G%
  * @since 1.4.2
  * @see CRLDistributionPointsExtension
  */
 public class DistributionPoint {
-
+    
     // reason flag bits
     // NOTE that these are NOT quite the same as the CRL reason code extension
     public final static int KEY_COMPROMISE         = 1;
@@ -105,17 +106,17 @@ public class DistributionPoint {
     public final static int CERTIFICATE_HOLD       = 6;
     public final static int PRIVILEGE_WITHDRAWN    = 7;
     public final static int AA_COMPROMISE          = 8;
-
+    
     private static final String[] REASON_STRINGS = {
-        null,
-        "key compromise",
-        "CA compromise",
-        "affiliation changed",
-        "superseded",
-        "cessation of operation",
-        "certificate hold",
-        "privilege withdrawn",
-        "AA compromise",
+	null,
+	"key compromise",
+	"CA compromise",
+	"affiliation changed",
+	"superseded",
+	"cessation of operation",
+	"certificate hold",
+	"privilege withdrawn",
+	"AA compromise",
     };
 
     // context specific tag values
@@ -132,53 +133,53 @@ public class DistributionPoint {
 
     // reasonFlags or null
     private boolean[] reasonFlags;
-
+    
     // crlIssuer or null
     private GeneralNames crlIssuer;
-
+    
     // cached hashCode value
     private volatile int hashCode;
-
+    
     /**
      * Constructor for the class using GeneralNames for DistributionPointName
      *
      * @param fullName the GeneralNames of the distribution point; may be null
      * @param reasons the CRL reasons included in the CRL at this distribution
      *        point; may be null
-     * @param issuer the name(s) of the CRL issuer for the CRL at this
+     * @param issuer the name(s) of the CRL issuer for the CRL at this 
      *        distribution point; may be null
      */
     public DistributionPoint(GeneralNames fullName, boolean[] reasonFlags,
-            GeneralNames crlIssuer) {
-        if ((fullName == null) && (crlIssuer == null)) {
-            throw new IllegalArgumentException
-                        ("fullName and crlIssuer may not both be null");
-        }
-        this.fullName = fullName;
-        this.reasonFlags = reasonFlags;
-        this.crlIssuer = crlIssuer;
+	    GeneralNames crlIssuer) {
+	if ((fullName == null) && (crlIssuer == null)) {
+	    throw new IllegalArgumentException
+	    		("fullName and crlIssuer may not both be null");
+	}
+	this.fullName = fullName;
+	this.reasonFlags = reasonFlags;
+	this.crlIssuer = crlIssuer;
     }
 
     /**
-     * Constructor for the class using RelativeDistinguishedName for
+     * Constructor for the class using RelativeDistinguishedName for 
      * DistributionPointName
      *
-     * @param relativeName the RelativeDistinguishedName of the distribution
+     * @param relativeName the RelativeDistinguishedName of the distribution 
      *        point; may not be null
-     * @param reasons the CRL reasons included in the CRL at this distribution
+     * @param reasons the CRL reasons included in the CRL at this distribution 
      *        point; may be null
-     * @param issuer the name(s) of the CRL issuer for the CRL at this
+     * @param issuer the name(s) of the CRL issuer for the CRL at this 
      *        distribution point; may not be null or empty.
      */
     public DistributionPoint(RDN relativeName, boolean[] reasonFlags,
-            GeneralNames crlIssuer) {
-        if ((relativeName == null) && (crlIssuer == null)) {
-            throw new IllegalArgumentException
-                        ("relativeName and crlIssuer may not both be null");
-        }
-        this.relativeName = relativeName;
-        this.reasonFlags = reasonFlags;
-        this.crlIssuer = crlIssuer;
+	    GeneralNames crlIssuer) {
+	if ((relativeName == null) && (crlIssuer == null)) {
+	    throw new IllegalArgumentException
+	    		("relativeName and crlIssuer may not both be null");
+	}
+	this.relativeName = relativeName;
+	this.reasonFlags = reasonFlags;
+	this.crlIssuer = crlIssuer;
     }
 
     /**
@@ -188,13 +189,13 @@ public class DistributionPoint {
      * @throws IOException on error
      */
     public DistributionPoint(DerValue val) throws IOException {
-        if (val.tag != DerValue.tag_Sequence) {
-            throw new IOException("Invalid encoding of DistributionPoint.");
-        }
+	if (val.tag != DerValue.tag_Sequence) {
+	    throw new IOException("Invalid encoding of DistributionPoint.");
+	}
 
-        // Note that all the fields in DistributionPoint are defined as
-        // being OPTIONAL, i.e., there could be an empty SEQUENCE, resulting
-        // in val.data being null.
+	// Note that all the fields in DistributionPoint are defined as
+	// being OPTIONAL, i.e., there could be an empty SEQUENCE, resulting
+	// in val.data being null.
         while ((val.data != null) && (val.data.available() != 0)) {
             DerValue opt = val.data.getDerValue();
 
@@ -202,75 +203,75 @@ public class DistributionPoint {
                 if ((fullName != null) || (relativeName != null)) {
                     throw new IOException("Duplicate DistributionPointName in "
                                           + "DistributionPoint.");
-                }
-                DerValue distPnt = opt.data.getDerValue();
-                if (distPnt.isContextSpecific(TAG_FULL_NAME)
-                        && distPnt.isConstructed()) {
-                    distPnt.resetTag(DerValue.tag_Sequence);
-                    fullName = new GeneralNames(distPnt);
-                } else if (distPnt.isContextSpecific(TAG_REL_NAME)
-                        && distPnt.isConstructed()) {
-                    distPnt.resetTag(DerValue.tag_Set);
-                    relativeName = new RDN(distPnt);
-                } else {
-                    throw new IOException("Invalid DistributionPointName in "
-                                          + "DistributionPoint");
-                }
+		}
+		DerValue distPnt = opt.data.getDerValue();
+		if (distPnt.isContextSpecific(TAG_FULL_NAME)
+			&& distPnt.isConstructed()) {
+		    distPnt.resetTag(DerValue.tag_Sequence);
+		    fullName = new GeneralNames(distPnt);
+		} else if (distPnt.isContextSpecific(TAG_REL_NAME) 
+			&& distPnt.isConstructed()) {
+		    distPnt.resetTag(DerValue.tag_Set);
+		    relativeName = new RDN(distPnt);
+		} else {
+		    throw new IOException("Invalid DistributionPointName in "
+					  + "DistributionPoint");
+		}
             } else if (opt.isContextSpecific(TAG_REASONS)
-                                                && !opt.isConstructed()) {
+	    					&& !opt.isConstructed()) {
                 if (reasonFlags != null) {
                     throw new IOException("Duplicate Reasons in " +
                                           "DistributionPoint.");
-                }
-                opt.resetTag(DerValue.tag_BitString);
-                reasonFlags = (opt.getUnalignedBitString()).toBooleanArray();
+		}
+		opt.resetTag(DerValue.tag_BitString);
+		reasonFlags = (opt.getUnalignedBitString()).toBooleanArray();
             } else if (opt.isContextSpecific(TAG_ISSUER)
-                                                && opt.isConstructed()) {
+	    					&& opt.isConstructed()) {
                 if (crlIssuer != null) {
                     throw new IOException("Duplicate CRLIssuer in " +
                                           "DistributionPoint.");
-                }
-                opt.resetTag(DerValue.tag_Sequence);
-                crlIssuer = new GeneralNames(opt);
+		}
+		opt.resetTag(DerValue.tag_Sequence);
+		crlIssuer = new GeneralNames(opt);
             } else {
                 throw new IOException("Invalid encoding of " +
-                                      "DistributionPoint.");
-            }
+				      "DistributionPoint.");
+	    }
         }
-        if ((crlIssuer == null) && (fullName == null) && (relativeName == null)) {
-            throw new IOException("One of fullName, relativeName, "
-                + " and crlIssuer has to be set");
-        }
+	if ((crlIssuer == null) && (fullName == null) && (relativeName == null)) {
+	    throw new IOException("One of fullName, relativeName, "
+	    	+ " and crlIssuer has to be set");
+	}
     }
-
+    
     /**
      * Return the full distribution point name or null if not set.
      */
     public GeneralNames getFullName() {
-        return fullName;
+	return fullName;
     }
-
+    
     /**
      * Return the relative distribution point name or null if not set.
      */
     public RDN getRelativeName() {
-        return relativeName;
+	return relativeName;
     }
-
+    
     /**
      * Return the reason flags or null if not set.
      */
     public boolean[] getReasonFlags() {
-        return reasonFlags;
+	return reasonFlags;
     }
-
+    
     /**
      * Return the CRL issuer name or null if not set.
      */
     public GeneralNames getCRLIssuer() {
-        return crlIssuer;
+	return crlIssuer;
     }
-
+    
     /**
      * Write the DistributionPoint value to the DerOutputStream.
      *
@@ -278,43 +279,43 @@ public class DistributionPoint {
      * @exception IOException on error.
      */
     public void encode(DerOutputStream out) throws IOException {
-        DerOutputStream tagged = new DerOutputStream();
+	DerOutputStream tagged = new DerOutputStream();
 
-        // NOTE: only one of pointNames and pointRDN can be set
-        if ((fullName != null) || (relativeName != null)) {
-            DerOutputStream distributionPoint = new DerOutputStream();
-            if (fullName != null) {
-                DerOutputStream derOut = new DerOutputStream();
-                fullName.encode(derOut);
-                distributionPoint.writeImplicit(
-                    DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_FULL_NAME),
-                    derOut);
-            } else if (relativeName != null) {
-                DerOutputStream derOut = new DerOutputStream();
-                relativeName.encode(derOut);
-                distributionPoint.writeImplicit(
-                    DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_REL_NAME),
-                    derOut);
-            }
-            tagged.write(
-                DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_DIST_PT),
-                distributionPoint);
-        }
+	// NOTE: only one of pointNames and pointRDN can be set
+	if ((fullName != null) || (relativeName != null)) {
+	    DerOutputStream distributionPoint = new DerOutputStream();
+	    if (fullName != null) {
+		DerOutputStream derOut = new DerOutputStream();
+		fullName.encode(derOut);
+		distributionPoint.writeImplicit(
+		    DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_FULL_NAME),
+		    derOut);
+	    } else if (relativeName != null) {
+		DerOutputStream derOut = new DerOutputStream();
+		relativeName.encode(derOut);
+		distributionPoint.writeImplicit(
+		    DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_REL_NAME),
+		    derOut);
+	    }
+	    tagged.write(
+	        DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_DIST_PT),
+	        distributionPoint);
+	}
         if (reasonFlags != null) {
-            DerOutputStream reasons = new DerOutputStream();
-            BitArray rf = new BitArray(reasonFlags);
+	    DerOutputStream reasons = new DerOutputStream();
+	    BitArray rf = new BitArray(reasonFlags);
             reasons.putTruncatedUnalignedBitString(rf);
-            tagged.writeImplicit(
-                DerValue.createTag(DerValue.TAG_CONTEXT, false, TAG_REASONS),
-                reasons);
-        }
+	    tagged.writeImplicit(
+	    	DerValue.createTag(DerValue.TAG_CONTEXT, false, TAG_REASONS), 
+		reasons);
+	}
         if (crlIssuer != null) {
-            DerOutputStream issuer = new DerOutputStream();
+	    DerOutputStream issuer = new DerOutputStream();
             crlIssuer.encode(issuer);
-            tagged.writeImplicit(
-                DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_ISSUER),
-                issuer);
-        }
+	    tagged.writeImplicit(
+	    	DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_ISSUER),
+		issuer);
+	}
         out.write(DerValue.tag_Sequence, tagged);
     }
 
@@ -322,9 +323,9 @@ public class DistributionPoint {
      * Utility function for a.equals(b) where both a and b may be null.
      */
     private static boolean equals(Object a, Object b) {
-        return (a == null) ? (b == null) : a.equals(b);
+	return (a == null) ? (b == null) : a.equals(b);
     }
-
+    
     /**
      * Compare an object to this DistributionPoint for equality.
      *
@@ -332,80 +333,80 @@ public class DistributionPoint {
      * @return true if objects match; false otherwise
      */
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj instanceof DistributionPoint == false) {
-            return false;
-        }
-        DistributionPoint other = (DistributionPoint)obj;
-
-        boolean equal = equals(this.fullName, other.fullName)
-                     && equals(this.relativeName, other.relativeName)
-                     && equals(this.crlIssuer, other.crlIssuer)
-                     && Arrays.equals(this.reasonFlags, other.reasonFlags);
-        return equal;
+	if (this == obj) {
+	    return true;
+	}
+	if (obj instanceof DistributionPoint == false) {
+	    return false;
+	}
+	DistributionPoint other = (DistributionPoint)obj;
+	
+	boolean equal = equals(this.fullName, other.fullName)
+		     && equals(this.relativeName, other.relativeName)
+		     && equals(this.crlIssuer, other.crlIssuer)
+		     && Arrays.equals(this.reasonFlags, other.reasonFlags);
+	return equal;
     }
-
+    
     public int hashCode() {
-        int hash = hashCode;
-        if (hash == 0) {
-            hash = 1;
-            if (fullName != null) {
-                hash += fullName.hashCode();
-            }
-            if (relativeName != null) {
-                hash += relativeName.hashCode();
-            }
-            if (crlIssuer != null) {
-                hash += crlIssuer.hashCode();
-            }
-            if (reasonFlags != null) {
-                for (int i = 0; i < reasonFlags.length; i++) {
-                    if (reasonFlags[i]) {
-                        hash += i;
-                    }
-                }
-            }
-            hashCode = hash;
-        }
-        return hash;
+	int hash = hashCode;
+	if (hash == 0) {
+	    hash = 1;
+	    if (fullName != null) {
+		hash += fullName.hashCode();
+	    }
+	    if (relativeName != null) {
+		hash += relativeName.hashCode();
+	    }
+	    if (crlIssuer != null) {
+		hash += crlIssuer.hashCode();
+	    }
+	    if (reasonFlags != null) {
+		for (int i = 0; i < reasonFlags.length; i++) {
+		    if (reasonFlags[i]) {
+			hash += i;
+		    }
+		}
+	    }
+	    hashCode = hash;
+	}
+	return hash;
     }
-
+    
     /**
      * Return a string representation for reasonFlag bit 'reason'.
      */
     private static String reasonToString(int reason) {
-        if ((reason > 0) && (reason < REASON_STRINGS.length)) {
-            return REASON_STRINGS[reason];
-        }
-        return "Unknown reason " + reason;
+	if ((reason > 0) && (reason < REASON_STRINGS.length)) {
+	    return REASON_STRINGS[reason];
+	}
+	return "Unknown reason " + reason;
     }
-
+    
     /**
      * Return a printable string of the Distribution Point.
      */
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+	StringBuilder sb = new StringBuilder();
         if (fullName != null) {
-            sb.append("DistributionPoint:\n     " + fullName + "\n");
-        }
+	    sb.append("DistributionPoint:\n     " + fullName + "\n");
+	}
         if (relativeName != null) {
             sb.append("DistributionPoint:\n     " + relativeName + "\n");
-        }
+	}
 
-        if (reasonFlags != null) {
-            sb.append("   ReasonFlags:\n");
-            for (int i = 0; i < reasonFlags.length; i++) {
-                if (reasonFlags[i]) {
-                    sb.append("    " + reasonToString(i) + "\n");
-                }
-            }
-        }
-        if (crlIssuer != null) {
-            sb.append("   CRLIssuer:" + crlIssuer + "\n");
-        }
-        return sb.toString();
+	if (reasonFlags != null) {
+	    sb.append("   ReasonFlags:\n");
+	    for (int i = 0; i < reasonFlags.length; i++) {
+		if (reasonFlags[i]) {
+		    sb.append("    " + reasonToString(i) + "\n");
+		}
+	    }
+	}
+	if (crlIssuer != null) {
+	    sb.append("   CRLIssuer:" + crlIssuer + "\n");
+	}
+	return sb.toString();
     }
-
+    
 }

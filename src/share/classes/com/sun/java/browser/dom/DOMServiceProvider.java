@@ -28,12 +28,12 @@ package com.sun.java.browser.dom;
 public abstract class DOMServiceProvider
 {
     /**
-     * An empty constructor is provided. Implementations should
+     * An empty constructor is provided. Implementations should 
      * provide a public constructor so that the DOMService
-     * can instantiate instances of the implementation class.
+     * can instantiate instances of the implementation class. 
      * Application programmers should not be able to directly
      * construct implementation subclasses of this abstract subclass.
-     * The only way an application should be able to obtain a
+     * The only way an application should be able to obtain a 
      * reference to a DOMServiceProvider implementation
      * instance is by using the appropriate methods of the
      * DOMService.
@@ -57,4 +57,4 @@ public abstract class DOMServiceProvider
      * Returns the DOMImplemenation object of the DOM.
      */
     public abstract org.w3c.dom.DOMImplementation getDOMImplementation();
-}
+}            

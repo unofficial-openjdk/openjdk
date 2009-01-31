@@ -84,7 +84,7 @@ get_pkey(SiteIndex index)
 }
 
 ClassIndex
-site_get_class_index(SiteIndex index)
+site_get_class_index(SiteIndex index) 
 {
     SiteKey *pkey;
 
@@ -93,7 +93,7 @@ site_get_class_index(SiteIndex index)
 }
 
 TraceIndex
-site_get_trace_index(SiteIndex index)
+site_get_trace_index(SiteIndex index) 
 {
     SiteKey *pkey;
 
@@ -122,10 +122,10 @@ list_item(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
     HPROF_ASSERT(key_ptr!=NULL);
     HPROF_ASSERT(key_len==sizeof(SiteKey));
     pkey = (SiteKey*)key_ptr;
-
+    
     if ( info_ptr != NULL ) {
         SiteInfo *info;
-
+    
         info = (SiteInfo *)info_ptr;
         n_alloced_instances    = info->n_alloced_instances;
         n_alloced_bytes        = info->n_alloced_bytes;
@@ -137,12 +137,12 @@ list_item(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void *arg)
         n_live_instances       = 0;
         n_live_bytes           = 0;
     }
-
+    
     debug_message( "Site 0x%08x: class=0x%08x, trace=0x%08x, "
                           "Ninst=(%d,%d), Nbytes=(%d,%d), "
                           "Nlive=(%d,%d), NliveBytes=(%d,%d)\n",
-             i,
-             pkey->cnum,
+             i, 
+             pkey->cnum, 
              pkey->trace_index,
              jlong_high(n_alloced_instances), jlong_low(n_alloced_instances),
              jlong_high(n_alloced_bytes),     jlong_low(n_alloced_bytes),
@@ -162,7 +162,7 @@ collect_iterator(TableIndex i, void *key_ptr, int key_len, void *info_ptr, void 
 
     if ( iterate->changed_only ) {
         SiteInfo *info;
-
+        
         info = (SiteInfo *)info_ptr;
         if ( info==NULL || !info->changed ) {
             return;
@@ -178,21 +178,21 @@ mark_unchanged_iterator(TableIndex i, void *key_ptr, int key_len, void *info_ptr
 
     HPROF_ASSERT(key_ptr!=NULL);
     HPROF_ASSERT(key_len==sizeof(SiteKey));
-
+    
     info = (SiteInfo *)info_ptr;
     if ( info != NULL ) {
         info->changed = 0;
     }
 }
 
-static int
+static int 
 qsort_compare_allocated_bytes(const void *p_site1, const void *p_site2)
 {
     SiteIndex  site1;
     SiteIndex  site2;
     SiteInfo  *info1;
     SiteInfo  *info2;
-
+    
     HPROF_ASSERT(p_site1!=NULL);
     HPROF_ASSERT(p_site2!=NULL);
     site1 = *(SiteIndex *)p_site1;
@@ -202,14 +202,14 @@ qsort_compare_allocated_bytes(const void *p_site1, const void *p_site2)
     return info2->n_alloced_bytes - info1->n_alloced_bytes;
 }
 
-static int
+static int 
 qsort_compare_live_bytes(const void *p_site1, const void *p_site2)
 {
     SiteIndex  site1;
     SiteIndex  site2;
     SiteInfo  *info1;
     SiteInfo  *info2;
-
+    
     HPROF_ASSERT(p_site1!=NULL);
     HPROF_ASSERT(p_site2!=NULL);
     site1 = *(SiteIndex *)p_site1;
@@ -246,7 +246,7 @@ make_new_tag(jlong class_tag, jlong size, TraceIndex trace_index,
 
     HPROF_ASSERT(class_tag!=(jlong)0);
     object_site_index = site_find_or_create(find_cnum(class_tag), trace_index);
-    object_index      = object_new(object_site_index, (jint)size,
+    object_index      = object_new(object_site_index, (jint)size, 
                                    OBJECT_SYSTEM, thread_serial_num);
     if ( pindex != NULL ) {
         *pindex = object_index;
@@ -286,13 +286,13 @@ site_find_or_create(ClassIndex cnum, TraceIndex trace_index)
     SiteIndex index;
     static SiteKey  empty_key;
     SiteKey   key;
-
+    
     key = empty_key;
     HPROF_ASSERT(cnum!=0);
     HPROF_ASSERT(trace_index!=0);
     key.cnum        = cnum;
     key.trace_index = trace_index;
-    index = table_find_or_create_entry(gdata->site_table,
+    index = table_find_or_create_entry(gdata->site_table, 
                             &key, (int)sizeof(key), NULL, NULL);
     return index;
 }
@@ -308,7 +308,7 @@ site_init(void)
 void
 site_list(void)
 {
-    debug_message(
+    debug_message( 
         "--------------------- Site Table ------------------------\n");
     table_walk_items(gdata->site_table, &list_item, NULL);
     debug_message(
@@ -326,23 +326,23 @@ void
 site_update_stats(SiteIndex index, jint size, jint hits)
 {
     SiteInfo *info;
-
+    
     table_lock_enter(gdata->site_table); {
         info = get_info(index);
-
+        
         info->n_live_instances          += hits;
         info->n_live_bytes              += size;
         info->changed                   = 1;
-
+        
         gdata->total_live_bytes         += size;
         gdata->total_live_instances     += hits;
-
+         
         if ( size > 0 ) {
             info->n_alloced_instances   += hits;
             info->n_alloced_bytes       += size;
-            gdata->total_alloced_bytes =
+            gdata->total_alloced_bytes = 
                 jlong_add(gdata->total_alloced_bytes, jint_to_jlong(size));
-            gdata->total_alloced_instances =
+            gdata->total_alloced_instances = 
                 jlong_add(gdata->total_alloced_instances, jint_to_jlong(hits));
         }
     } table_lock_exit(gdata->site_table);
@@ -357,12 +357,12 @@ site_update_stats(SiteIndex index, jint size, jint hits)
  *      SITE_FORCE_GC         force a GC before the site dump.
  */
 
-void
+void 
 site_write(JNIEnv *env, int flags, double cutoff)
 {
     HPROF_ASSERT(gdata->site_table!=NULL);
     LOG3("site_write", "flags", flags);
-
+    
     if (flags & SITE_FORCE_GC) {
         runGC();
     }
@@ -370,7 +370,7 @@ site_write(JNIEnv *env, int flags, double cutoff)
     HPROF_ASSERT(gdata->total_live_bytes!=0);
 
     rawMonitorEnter(gdata->data_access_lock); {
-
+        
         IterateInfo     iterate;
         int             site_table_size;
         double          accum_percent;
@@ -381,7 +381,7 @@ site_write(JNIEnv *env, int flags, double cutoff)
 
         accum_percent = 0;
         site_table_size = table_element_count(gdata->site_table);
-
+        
         (void)memset(&iterate, 0, sizeof(iterate));
         nbytes            = site_table_size * (int)sizeof(SiteIndex);
         if ( nbytes > 0 ) {
@@ -393,25 +393,25 @@ site_write(JNIEnv *env, int flags, double cutoff)
         table_walk_items(gdata->site_table, &collect_iterator, &iterate);
 
         site_table_size = iterate.count;
-
+        
         if (flags & SITE_SORT_BY_ALLOC) {
             comment_str = "allocated bytes";
-            qsort(iterate.site_nums, site_table_size, sizeof(SiteIndex),
+            qsort(iterate.site_nums, site_table_size, sizeof(SiteIndex), 
                     &qsort_compare_allocated_bytes);
         } else {
             comment_str = "live bytes";
-            qsort(iterate.site_nums, site_table_size, sizeof(SiteIndex),
-                    &qsort_compare_live_bytes);
+            qsort(iterate.site_nums, site_table_size, sizeof(SiteIndex), 
+                    &qsort_compare_live_bytes); 
         }
 
         trace_output_unmarked(env);
-
+        
         cutoff_count = 0;
         for (i = 0; i < site_table_size; i++) {
             SiteInfo   *info;
             SiteIndex   index;
             double      ratio;
-
+            
             index= iterate.site_nums[i];
             HPROF_ASSERT(index!=0);
             info        = get_info(index);
@@ -421,7 +421,7 @@ site_write(JNIEnv *env, int flags, double cutoff)
             }
             cutoff_count++;
         }
-
+        
         io_write_sites_header(  comment_str,
                                 flags,
                                 cutoff,
@@ -430,23 +430,23 @@ site_write(JNIEnv *env, int flags, double cutoff)
                                 gdata->total_alloced_bytes,
                                 gdata->total_alloced_instances,
                                 cutoff_count);
-
+        
         for (i = 0; i < cutoff_count; i++) {
             SiteInfo     *info;
             SiteKey      *pkey;
             SiteIndex     index;
             char         *class_signature;
             double        ratio;
-
+            
             index = iterate.site_nums[i];
             pkey         = get_pkey(index);
             info         = get_info(index);
-
+            
             ratio       = (double)info->n_live_bytes / (double)gdata->total_live_bytes;
             accum_percent += ratio;
-
+            
             class_signature  = string_get(class_get_signature(pkey->cnum));
-
+            
             io_write_sites_elem(i + 1,
                                 ratio,
                                 accum_percent,
@@ -458,7 +458,7 @@ site_write(JNIEnv *env, int flags, double cutoff)
                                 info->n_alloced_bytes,
                                 info->n_alloced_instances);
         }
-
+        
         io_write_sites_footer();
 
         table_walk_items(gdata->site_table, &mark_unchanged_iterator, NULL);
@@ -471,9 +471,9 @@ site_write(JNIEnv *env, int flags, double cutoff)
 }
 
 /* Primitive array data callback for FollowReferences */
-static jint JNICALL
-cbPrimArrayData(jlong class_tag, jlong size, jlong* tag_ptr,
-         jint element_count, jvmtiPrimitiveType element_type,
+static jint JNICALL 
+cbPrimArrayData(jlong class_tag, jlong size, jlong* tag_ptr, 
+         jint element_count, jvmtiPrimitiveType element_type, 
          const void* elements, void* user_data)
 {
     ObjectIndex   object_index;
@@ -487,7 +487,7 @@ cbPrimArrayData(jlong class_tag, jlong size, jlong* tag_ptr,
         /* We can't do anything with a class_tag==0, just skip it */
         return JVMTI_VISIT_OBJECTS;
     }
-
+   
     /* Assume object has been tagged, get object index */
     object_index = tag_extract((*tag_ptr));
 
@@ -501,10 +501,10 @@ cbPrimArrayData(jlong class_tag, jlong size, jlong* tag_ptr,
 }
 
 /* Primitive field data callback for FollowReferences */
-static jint JNICALL
-cbPrimFieldData(jvmtiHeapReferenceKind reference_kind,
-         const jvmtiHeapReferenceInfo* reference_info, jlong class_tag,
-         jlong* tag_ptr, jvalue value, jvmtiPrimitiveType value_type,
+static jint JNICALL 
+cbPrimFieldData(jvmtiHeapReferenceKind reference_kind, 
+         const jvmtiHeapReferenceInfo* reference_info, jlong class_tag, 
+         jlong* tag_ptr, jvalue value, jvmtiPrimitiveType value_type, 
          void* user_data)
 {
     ObjectIndex   object_index;
@@ -527,10 +527,10 @@ cbPrimFieldData(jvmtiHeapReferenceKind reference_kind,
 
     /* Get field index */
     field_index = reference_info->field.index;
-
+   
     /* We assume the object was tagged */
     object_index = tag_extract((*tag_ptr));
-
+    
     /* Save primitive field data */
     prev_ref_index = object_get_references(object_index);
     ref_index = reference_prim_field(prev_ref_index, reference_kind,
@@ -544,7 +544,7 @@ static SerialNumber
 checkThreadSerialNumber(SerialNumber thread_serial_num)
 {
     TlsIndex tls_index;
-
+    
     if ( thread_serial_num == gdata->unknown_thread_serial_num ) {
         return thread_serial_num;
     }
@@ -557,7 +557,7 @@ checkThreadSerialNumber(SerialNumber thread_serial_num)
 
 /* Get the object index and thread serial number for this local object */
 static void
-localReference(jlong *tag_ptr, jlong class_tag, jlong thread_tag,
+localReference(jlong *tag_ptr, jlong class_tag, jlong thread_tag, 
      jlong size, ObjectIndex *pobject_index, SerialNumber *pthread_serial_num)
 {
     ObjectIndex  object_index;
@@ -567,7 +567,7 @@ localReference(jlong *tag_ptr, jlong class_tag, jlong thread_tag,
     HPROF_ASSERT(pthread_serial_num!=NULL);
     HPROF_ASSERT(tag_ptr!=NULL);
     HPROF_ASSERT(class_tag!=(jlong)0);
-
+    
     if ( (*tag_ptr) != (jlong)0 ) {
         object_index = tag_extract(*tag_ptr);
         thread_serial_num = object_get_thread_serial_number(object_index);
@@ -577,7 +577,7 @@ localReference(jlong *tag_ptr, jlong class_tag, jlong thread_tag,
             ObjectIndex thread_object_index;
 
             thread_object_index = tag_extract(thread_tag);
-            thread_serial_num =
+            thread_serial_num = 
                    object_get_thread_serial_number(thread_object_index);
             thread_serial_num = checkThreadSerialNumber(thread_serial_num);
         } else {
@@ -596,9 +596,9 @@ localReference(jlong *tag_ptr, jlong class_tag, jlong thread_tag,
 
 /* Store away plain object reference information */
 static jint
-objectReference(jvmtiHeapReferenceKind reference_kind,
-                  const jvmtiHeapReferenceInfo* reference_info,
-                  jlong class_tag, jlong size, jlong* tag_ptr,
+objectReference(jvmtiHeapReferenceKind reference_kind, 
+                  const jvmtiHeapReferenceInfo* reference_info, 
+                  jlong class_tag, jlong size, jlong* tag_ptr, 
                   jlong* referrer_tag_ptr, jint length)
 {
     ObjectIndex   object_index;
@@ -616,7 +616,7 @@ objectReference(jvmtiHeapReferenceKind reference_kind,
         /* We can't do anything with a class_tag==0, just skip it */
         return JVMTI_VISIT_OBJECTS;
     }
-
+   
     switch ( reference_kind ) {
         case JVMTI_HEAP_REFERENCE_CLASS_LOADER:
         case JVMTI_HEAP_REFERENCE_INTERFACE:
@@ -638,10 +638,10 @@ objectReference(jvmtiHeapReferenceKind reference_kind,
             reference_index = 0;
             break;
     }
-
+   
     /* We assume the referrer is tagged */
     referrer_object_index = tag_extract((*referrer_tag_ptr));
-
+   
     /* Now check the referree */
     object_tag = *tag_ptr;
     if ( object_tag != (jlong)0 ) {
@@ -649,7 +649,7 @@ objectReference(jvmtiHeapReferenceKind reference_kind,
     } else {
         /* Create and set the tag. */
         object_tag = make_new_tag(class_tag, size, gdata->system_trace_index,
-                                  gdata->unknown_thread_serial_num,
+                                  gdata->unknown_thread_serial_num, 
                                   &object_index, NULL);
         *tag_ptr   = object_tag;
     }
@@ -665,11 +665,11 @@ objectReference(jvmtiHeapReferenceKind reference_kind,
 }
 
 /* FollowReferences heap_reference_callback */
-static jint JNICALL
-cbReference(jvmtiHeapReferenceKind reference_kind,
-                  const jvmtiHeapReferenceInfo* reference_info,
+static jint JNICALL 
+cbReference(jvmtiHeapReferenceKind reference_kind, 
+                  const jvmtiHeapReferenceInfo* reference_info, 
                   jlong class_tag, jlong referrer_class_tag,
-                  jlong size, jlong* tag_ptr,
+                  jlong size, jlong* tag_ptr, 
                   jlong* referrer_tag_ptr, jint length, void* user_data)
 {
     ObjectIndex   object_index;
@@ -684,9 +684,9 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
         /* We can't do anything with a class_tag==0, just skip it */
         return JVMTI_VISIT_OBJECTS;
     }
-
+   
     switch ( reference_kind ) {
-
+        
         case JVMTI_HEAP_REFERENCE_FIELD:
         case JVMTI_HEAP_REFERENCE_ARRAY_ELEMENT:
         case JVMTI_HEAP_REFERENCE_CLASS_LOADER:
@@ -697,19 +697,19 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
         case JVMTI_HEAP_REFERENCE_CONSTANT_POOL:
             return objectReference(reference_kind, reference_info,
                    class_tag, size, tag_ptr, referrer_tag_ptr, length);
-
+            
         case JVMTI_HEAP_REFERENCE_JNI_GLOBAL: {
                 SerialNumber trace_serial_num;
                 SerialNumber gref_serial_num;
                 TraceIndex   trace_index;
                 SiteIndex    object_site_index;
-
+                
                 setup_tag_on_root(tag_ptr, class_tag, size,
                                   gdata->unknown_thread_serial_num,
                                   &object_index, &object_site_index);
                 if ( object_site_index != 0 ) {
                     SiteKey     *pkey;
-
+                    
                     pkey = get_pkey(object_site_index);
                     trace_index = pkey->trace_index;
                 } else {
@@ -717,16 +717,16 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
                 }
                 trace_serial_num = trace_get_serial_number(trace_index);
                 gref_serial_num  = gdata->gref_serial_number_counter++;
-                io_heap_root_jni_global(object_index, gref_serial_num,
+                io_heap_root_jni_global(object_index, gref_serial_num, 
                                         trace_serial_num);
             }
             break;
-
+            
         case JVMTI_HEAP_REFERENCE_SYSTEM_CLASS: {
                 char        *sig;
                 SerialNumber class_serial_num;
                 SiteIndex    object_site_index;
-
+    
                 setup_tag_on_root(tag_ptr, class_tag, size,
                                   gdata->unknown_thread_serial_num,
                                   &object_index, &object_site_index);
@@ -734,7 +734,7 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
                 class_serial_num = 0;
                 if ( object_site_index != 0 ) {
                     SiteKey *pkey;
-
+                    
                     pkey = get_pkey(object_site_index);
                     sig = string_get(class_get_signature(pkey->cnum));
                     class_serial_num = class_get_serial_number(pkey->cnum);
@@ -742,14 +742,14 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
                 io_heap_root_system_class(object_index, sig, class_serial_num);
             }
             break;
-
+            
         case JVMTI_HEAP_REFERENCE_MONITOR:
-            setup_tag_on_root(tag_ptr, class_tag, size,
+            setup_tag_on_root(tag_ptr, class_tag, size, 
                               gdata->unknown_thread_serial_num,
                               &object_index, NULL);
             io_heap_root_monitor(object_index);
             break;
-
+            
         case JVMTI_HEAP_REFERENCE_STACK_LOCAL:  {
                 SerialNumber thread_serial_num;
                 jlong        thread_tag;
@@ -757,7 +757,7 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
                 thread_tag = reference_info->stack_local.thread_tag;
                 localReference(tag_ptr, class_tag, thread_tag, size,
                              &object_index, &thread_serial_num);
-                io_heap_root_java_frame(object_index, thread_serial_num,
+                io_heap_root_java_frame(object_index, thread_serial_num, 
                              reference_info->stack_local.depth);
             }
             break;
@@ -769,19 +769,19 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
                 thread_tag = reference_info->jni_local.thread_tag;
                 localReference(tag_ptr, class_tag, thread_tag, size,
                              &object_index, &thread_serial_num);
-                io_heap_root_jni_local(object_index, thread_serial_num,
+                io_heap_root_jni_local(object_index, thread_serial_num, 
                              reference_info->jni_local.depth);
             }
             break;
-
+            
         case JVMTI_HEAP_REFERENCE_THREAD: {
                 SerialNumber thread_serial_num;
                 SerialNumber trace_serial_num;
                 TraceIndex   trace_index;
                 SiteIndex    object_site_index;
                 TlsIndex     tls_index;
-
-                /* It is assumed that tag_ptr is referring to a
+        
+                /* It is assumed that tag_ptr is referring to a 
                  *      java.lang.Thread object here.
                  */
                 if ( (*tag_ptr) != (jlong)0 ) {
@@ -818,46 +818,46 @@ cbReference(jvmtiHeapReferenceKind reference_kind,
                 io_heap_root_thread(object_index, thread_serial_num);
             }
             break;
-
+            
         case JVMTI_HEAP_REFERENCE_OTHER:
             setup_tag_on_root(tag_ptr, class_tag, size,
                               gdata->unknown_thread_serial_num,
                               &object_index, NULL);
             io_heap_root_unknown(object_index);
             break;
-
+       
        default:
             /* Ignore anything else */
             break;
 
     }
-
+    
     return JVMTI_VISIT_OBJECTS;
 }
 
 void
 site_heapdump(JNIEnv *env)
 {
-
+   
     rawMonitorEnter(gdata->data_access_lock); {
 
         jvmtiHeapCallbacks heapCallbacks;
-
+        
         /* Remove class dumped status, all classes must be dumped */
         class_all_status_remove(CLASS_DUMPED);
 
         /* Clear in_heap_dump flag */
         tls_clear_in_heap_dump();
-
+        
         /* Dump the last thread traces and get the lists back we need */
         tls_dump_traces(env);
-
+       
         /* Write header for heap dump */
         io_heap_header(gdata->total_live_instances, gdata->total_live_bytes);
 
         /* Setup a clean reference table */
         reference_init();
-
+        
         /* Walk over all reachable objects and dump out roots */
         gdata->gref_serial_number_counter = gdata->gref_serial_number_start;
 
@@ -865,7 +865,7 @@ site_heapdump(JNIEnv *env)
          *   just in case someone refers to it. Real threads are handled
          *   during iterate over reachable objects.
          */
-        io_heap_root_thread_object(0, gdata->unknown_thread_serial_num,
+        io_heap_root_thread_object(0, gdata->unknown_thread_serial_num, 
                         trace_get_serial_number(gdata->system_trace_index));
 
         /* Iterate over heap and get the real stuff */
@@ -891,6 +891,7 @@ site_heapdump(JNIEnv *env)
 
         /* Write out footer for heap dump */
         io_heap_footer();
-
+        
     } rawMonitorExit(gdata->data_access_lock);
 }
+

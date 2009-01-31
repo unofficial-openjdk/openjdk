@@ -37,7 +37,7 @@ import com.sun.org.apache.xml.internal.security.exceptions.XMLSecurityException;
 public class Constants {
 
    /** {@link java.util.logging} logging facility */
-   static java.util.logging.Logger log =
+   static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(Constants.class.getName());
 
    /** Field configurationFile */

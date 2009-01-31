@@ -48,16 +48,17 @@ import sun.rmi.server.ActivatableServerRef;
  * <p>An attempt to serialize explicitly an instance of this class will
  * fail.
  *
- * @author      Ann Wollrath
- * @since       1.2
- * @serial      exclude
+ * @author	Ann Wollrath
+ * @version	%I%, %E%
+ * @since	1.2
+ * @serial	exclude
  */
 public abstract class Activatable extends RemoteServer {
 
     private ActivationID id;
     /** indicate compatibility with the Java 2 SDK v1.2 version of class */
     private static final long serialVersionUID = -3120617863591563455L;
-
+    
     /**
      * Constructs an activatable remote object by registering
      * an activation descriptor (with the specified location, data, and
@@ -96,15 +97,15 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      **/
     protected Activatable(String location,
-                          MarshalledObject<?> data,
-                          boolean restart,
-                          int port)
-        throws ActivationException, RemoteException
+			  MarshalledObject<?> data,
+			  boolean restart,
+			  int port)
+	throws ActivationException, RemoteException
     {
-        super();
-        id = exportObject(this, location, data, restart, port);
+	super();
+	id = exportObject(this, location, data, restart, port);
     }
-
+    
     /**
      * Constructs an activatable remote object by registering
      * an activation descriptor (with the specified location, data, and
@@ -146,15 +147,15 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      **/
     protected Activatable(String location,
-                          MarshalledObject<?> data,
-                          boolean restart,
-                          int port,
-                          RMIClientSocketFactory csf,
-                          RMIServerSocketFactory ssf)
-        throws ActivationException, RemoteException
+			  MarshalledObject<?> data,
+			  boolean restart,
+			  int port,
+			  RMIClientSocketFactory csf,
+			  RMIServerSocketFactory ssf)
+	throws ActivationException, RemoteException
     {
-        super();
-        id = exportObject(this, location, data, restart, port, csf, ssf);
+	super();
+	id = exportObject(this, location, data, restart, port, csf, ssf);
     }
 
     /**
@@ -178,11 +179,11 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     protected Activatable(ActivationID id, int port)
-        throws RemoteException
+	throws RemoteException 
     {
-        super();
-        this.id = id;
-        exportObject(this, id, port);
+	super();
+	this.id = id;
+	exportObject(this, id, port);
     }
 
     /**
@@ -209,15 +210,15 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     protected Activatable(ActivationID id, int port,
-                          RMIClientSocketFactory csf,
-                          RMIServerSocketFactory ssf)
-        throws RemoteException
+			  RMIClientSocketFactory csf,
+			  RMIServerSocketFactory ssf)
+	throws RemoteException 
     {
-        super();
-        this.id = id;
-        exportObject(this, id, port, csf, ssf);
+	super();
+	this.id = id;
+	exportObject(this, id, port, csf, ssf);
     }
-
+    
     /**
      * Returns the object's activation identifier.  The method is
      * protected so that only subclasses can obtain an object's
@@ -226,10 +227,10 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     protected ActivationID getID() {
-        return id;
+	return id;
     }
 
-    /**
+    /** 
      * Register an object descriptor for an activatable remote
      * object so that is can be activated on demand.
      *
@@ -242,14 +243,14 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     public static Remote register(ActivationDesc desc)
-        throws UnknownGroupException, ActivationException, RemoteException
+	throws UnknownGroupException, ActivationException, RemoteException
     {
-        // register object with activator.
-        ActivationID id =
-            ActivationGroup.getSystem().registerObject(desc);
-        return sun.rmi.server.ActivatableRef.getStub(desc, id);
+	// register object with activator.
+	ActivationID id =
+	    ActivationGroup.getSystem().registerObject(desc);
+	return sun.rmi.server.ActivatableRef.getStub(desc, id);
     }
-
+    
     /**
      * Informs the system that the object with the corresponding activation
      * <code>id</code> is currently inactive. If the object is currently
@@ -276,9 +277,9 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     public static boolean inactive(ActivationID id)
-        throws UnknownObjectException, ActivationException, RemoteException
+	throws UnknownObjectException, ActivationException, RemoteException
     {
-        return ActivationGroup.currentGroup().inactiveObject(id);
+	return ActivationGroup.currentGroup().inactiveObject(id);
     }
 
     /**
@@ -293,16 +294,16 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     public static void unregister(ActivationID id)
-        throws UnknownObjectException, ActivationException, RemoteException
+	throws UnknownObjectException, ActivationException, RemoteException
     {
-        ActivationGroup.getSystem().unregisterObject(id);
+	ActivationGroup.getSystem().unregisterObject(id);
     }
 
     /**
      * Registers an activation descriptor (with the specified location,
      * data, and restart mode) for the specified object, and exports that
      * object with the specified port.
-     *
+     * 
      * <p><strong>Note:</strong> Using this method (as well as the
      * <code>Activatable</code> constructors that both register and export
      * an activatable remote object) is strongly discouraged because the
@@ -317,7 +318,7 @@ public abstract class Activatable extends RemoteServer {
      * restart mode, and port, and <code>null</code> for both client and
      * server socket factories, and then returns the resulting activation
      * identifier.
-     *
+     * 
      * @param obj the object being exported
      * @param location the object's code location
      * @param data the object's bootstrapping data
@@ -337,13 +338,13 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      **/
     public static ActivationID exportObject(Remote obj,
-                                            String location,
-                                            MarshalledObject<?> data,
-                                            boolean restart,
-                                            int port)
-        throws ActivationException, RemoteException
+					    String location,
+					    MarshalledObject<?> data,
+					    boolean restart,
+					    int port)
+	throws ActivationException, RemoteException
     {
-        return exportObject(obj, location, data, restart, port, null, null);
+	return exportObject(obj, location, data, restart, port, null, null);
     }
 
     /**
@@ -359,7 +360,7 @@ public abstract class Activatable extends RemoteServer {
      * <i>not</i> guaranteed to be atomic.  Instead, an application should
      * register an activation descriptor and export a remote object
      * separately, so that exceptions can be handled properly.
-     *
+     *      
      * <p>This method first registers an activation descriptor for the
      * specified object as follows. It obtains the activation system by
      * invoking the method {@link ActivationGroup#getSystem
@@ -410,53 +411,53 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      **/
     public static ActivationID exportObject(Remote obj,
-                                            String location,
-                                            MarshalledObject<?> data,
-                                            boolean restart,
-                                            int port,
-                                            RMIClientSocketFactory csf,
-                                            RMIServerSocketFactory ssf)
-        throws ActivationException, RemoteException
+					    String location,
+					    MarshalledObject<?> data,
+					    boolean restart,
+					    int port,
+					    RMIClientSocketFactory csf,
+					    RMIServerSocketFactory ssf)
+	throws ActivationException, RemoteException
     {
-        ActivationDesc desc = new ActivationDesc(obj.getClass().getName(),
-                                                 location, data, restart);
-        /*
-         * Register descriptor.
-         */
-        ActivationSystem system =  ActivationGroup.getSystem();
-        ActivationID id = system.registerObject(desc);
+	ActivationDesc desc = new ActivationDesc(obj.getClass().getName(),
+						 location, data, restart);
+	/*
+	 * Register descriptor.
+	 */
+	ActivationSystem system =  ActivationGroup.getSystem();
+	ActivationID id = system.registerObject(desc);
 
-        /*
-         * Export object.
-         */
-        try {
-            exportObject(obj, id, port, csf, ssf);
-        } catch (RemoteException e) {
-            /*
-             * Attempt to unregister activation descriptor because export
-             * failed and register/export should be atomic (see 4323621).
-             */
-            try {
-                system.unregisterObject(id);
-            } catch (Exception ex) {
-            }
-            /*
-             * Report original exception.
-             */
-            throw e;
-        }
+	/*
+	 * Export object.
+	 */
+	try {
+	    exportObject(obj, id, port, csf, ssf);
+	} catch (RemoteException e) {
+	    /*
+	     * Attempt to unregister activation descriptor because export
+	     * failed and register/export should be atomic (see 4323621).
+	     */
+	    try {
+		system.unregisterObject(id);
+	    } catch (Exception ex) {
+	    }
+	    /*
+	     * Report original exception.
+	     */
+	    throw e;
+	}
 
-        /*
-         * This call can't fail (it is a local call, and the only possible
-         * exception, thrown if the group is inactive, will not be thrown
-         * because the group is not inactive).
-         */
-        ActivationGroup.currentGroup().activeObject(id, obj);
-
-        return id;
+	/*
+	 * This call can't fail (it is a local call, and the only possible
+	 * exception, thrown if the group is inactive, will not be thrown
+	 * because the group is not inactive).
+	 */
+	ActivationGroup.currentGroup().activeObject(id, obj);
+	
+	return id;
     }
 
-    /**
+    /** 
      * Export the activatable remote object to the RMI runtime to make
      * the object available to receive incoming calls. The object is
      * exported on an anonymous port, if <code>port</code> is zero. <p>
@@ -466,7 +467,7 @@ public abstract class Activatable extends RemoteServer {
      * extend the <code>Activatable</code> class. There is no need for objects
      * that do extend the <code>Activatable</code> class to invoke this
      * method directly because the object is exported during construction.
-     *
+     * 
      * @return the stub for the activatable remote object
      * @param obj the remote object implementation
      * @param id the object's  activation identifier
@@ -476,14 +477,14 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     public static Remote exportObject(Remote obj,
-                                      ActivationID id,
-                                      int port)
-        throws RemoteException
+				      ActivationID id,
+				      int port)
+	throws RemoteException
     {
-        return exportObject(obj, new ActivatableServerRef(id, port));
+	return exportObject(obj, new ActivatableServerRef(id, port));
     }
 
-    /**
+    /** 
      * Export the activatable remote object to the RMI runtime to make
      * the object available to receive incoming calls. The object is
      * exported on an anonymous port, if <code>port</code> is zero. <p>
@@ -493,7 +494,7 @@ public abstract class Activatable extends RemoteServer {
      * extend the <code>Activatable</code> class. There is no need for objects
      * that do extend the <code>Activatable</code> class to invoke this
      * method directly because the object is exported during construction.
-     *
+     * 
      * @return the stub for the activatable remote object
      * @param obj the remote object implementation
      * @param id the object's  activation identifier
@@ -506,15 +507,15 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     public static Remote exportObject(Remote obj,
-                                      ActivationID id,
-                                      int port,
-                                      RMIClientSocketFactory csf,
-                                      RMIServerSocketFactory ssf)
-        throws RemoteException
+				      ActivationID id,
+				      int port,
+				      RMIClientSocketFactory csf,
+				      RMIServerSocketFactory ssf)
+	throws RemoteException
     {
-        return exportObject(obj, new ActivatableServerRef(id, port, csf, ssf));
+	return exportObject(obj, new ActivatableServerRef(id, port, csf, ssf));
     }
-
+    
     /**
      * Remove the remote object, obj, from the RMI runtime. If
      * successful, the object can no longer accept incoming RMI calls.
@@ -534,22 +535,22 @@ public abstract class Activatable extends RemoteServer {
      * @since 1.2
      */
     public static boolean unexportObject(Remote obj, boolean force)
-        throws NoSuchObjectException
+	throws NoSuchObjectException
     {
-        return sun.rmi.transport.ObjectTable.unexportObject(obj, force);
+	return sun.rmi.transport.ObjectTable.unexportObject(obj, force);
     }
 
     /**
      * Exports the specified object using the specified server ref.
      */
     private static Remote exportObject(Remote obj, ActivatableServerRef sref)
-        throws RemoteException
+	throws RemoteException
     {
-        // if obj extends Activatable, set its ref.
-        if (obj instanceof Activatable) {
-            ((Activatable) obj).ref = sref;
+	// if obj extends Activatable, set its ref.
+	if (obj instanceof Activatable) {
+	    ((Activatable) obj).ref = sref;
 
-        }
-        return sref.exportObject(obj, null, false);
+	}
+	return sref.exportObject(obj, null, false);
     }
 }

@@ -28,7 +28,7 @@
  * @bug 6559064
  *
  * @summary Verify DOM L3 Node APIs behave as per Image I/O spec.
- *
+ * 
  * @run main DOML3Node
  */
 
@@ -78,7 +78,7 @@ public class DOML3Node {
             throw new RuntimeException("No expected DOM exception");
         } catch (DOMException e) {
         }
-
+        
         try {
             node.getFeature("feature", "version");
             throw new RuntimeException("No expected DOM exception");

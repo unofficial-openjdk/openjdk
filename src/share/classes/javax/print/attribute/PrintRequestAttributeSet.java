@@ -29,9 +29,9 @@ package javax.print.attribute;
 /**
  * Interface PrintRequestAttributeSet specifies the interface for a set of
  * print request attributes, i.e. printing attributes that implement interface
- * {@link PrintRequestAttribute PrintRequestAttribute}.
- * The client uses a PrintRequestAttributeSet to specify the settings to be
- * applied to a whole print job and to all the docs in the print job.
+ * {@link PrintRequestAttribute PrintRequestAttribute}. 
+ * The client uses a PrintRequestAttributeSet to specify the settings to be 
+ * applied to a whole print job and to all the docs in the print job. 
  * <P>
  * PrintRequestAttributeSet is just an {@link AttributeSet AttributeSet} whose
  * constructors and mutating operations guarantee an additional invariant,
@@ -39,73 +39,73 @@ package javax.print.attribute;
  * instances of interface {@link PrintRequestAttribute PrintRequestAttribute}.
  * The {@link #add(Attribute) <CODE>add(Attribute)</CODE>}, and
  * {@link #addAll(AttributeSet) <CODE>addAll(AttributeSet)</CODE>} operations
- * are respecified below to guarantee this additional invariant.
+ * are respecified below to guarantee this additional invariant. 
  * <P>
  *
  * @author  Alan Kaminsky
  */
 public interface PrintRequestAttributeSet extends AttributeSet {
-
+    
     /**
-     * Adds the specified attribute value to this attribute set if it is not
-     * already present, first removing any existing value in the same
+     * Adds the specified attribute value to this attribute set if it is not 
+     * already present, first removing any existing value in the same  
      * attribute category as the specified attribute value (optional
      * operation).
      *
      * @param  attribute  Attribute value to be added to this attribute set.
      *
      * @return  <tt>true</tt> if this attribute set changed as a result of
-     *          the call, i.e., the given attribute value was not already a
-     *          member of this attribute set.
-     *
+     *          the call, i.e., the given attribute value was not already a 
+     *          member of this attribute set. 
+     * 
      * @throws  UnmodifiableSetException
-     *     (unchecked exception) Thrown if this attribute set does not
+     *     (unchecked exception) Thrown if this attribute set does not 
      *     support the <CODE>add()</CODE> operation.
      * @throws  ClassCastException
-     *     (unchecked exception) Thrown if the <CODE>attribute</CODE> is
+     *     (unchecked exception) Thrown if the <CODE>attribute</CODE> is  
      *     not an instance of interface
-     *     {@link PrintRequestAttribute PrintRequestAttribute}.
+     *     {@link PrintRequestAttribute PrintRequestAttribute}. 
      * @throws  NullPointerException
-     *     (unchecked exception) Thrown if the <CODE>attribute</CODE> is null.
+     *     (unchecked exception) Thrown if the <CODE>attribute</CODE> is null. 
      */
-    public boolean add(Attribute attribute);
+    public boolean add(Attribute attribute); 
 
     /**
      * Adds all of the elements in the specified set to this attribute.
      * The outcome is  the same as if the
-     * {@link #add(Attribute) <CODE>add(Attribute)</CODE>}
+     * {@link #add(Attribute) <CODE>add(Attribute)</CODE>} 
      * operation had been applied to this attribute set successively with
      * each element from the specified set. If none of the categories in the
-     * specified set  are the same as any categories in this attribute set,
+     * specified set  are the same as any categories in this attribute set, 
      * the <tt>addAll()</tt> operation effectively modifies this attribute
-     * set so that its value is the <i>union</i> of the two sets.
+     * set so that its value is the <i>union</i> of the two sets. 
      * <P>
-     * The behavior of the <CODE>addAll()</CODE> operation is unspecified if
+     * The behavior of the <CODE>addAll()</CODE> operation is unspecified if  
      * the specified set is modified while the operation is in progress.
      * <P>
      * If the <CODE>addAll()</CODE> operation throws an exception, the effect
-     * on this attribute set's state is implementation dependent; elements
-     * from the specified set before the point of the exception may or
-     * may not have been added to this attribute set.
+     * on this attribute set's state is implementation dependent; elements  
+     * from the specified set before the point of the exception may or 
+     * may not have been added to this attribute set. 
      *
-     * @param  attributes  whose elements are to be added to this attribute
+     * @param  attributes  whose elements are to be added to this attribute 
      *            set.
      *
      * @return  <tt>true</tt> if this attribute set changed as a result of
      *          the call.
-     *
+     * 
      * @throws  UnmodifiableSetException
      *     (Unchecked exception) Thrown if this attribute set does not
-     *     support the <tt>addAll()</tt> method.
+     *     support the <tt>addAll()</tt> method. 
      * @throws  ClassCastException
-     *     (Unchecked exception) Thrown if some element in the specified
-     *     set is not an instance of interface {@link PrintRequestAttribute
+     *     (Unchecked exception) Thrown if some element in the specified 
+     *     set is not an instance of interface {@link PrintRequestAttribute 
      *     PrintRequestAttribute}.
      * @throws  NullPointerException
-     *     (Unchecked exception) Thrown if the specified  set is null.
+     *     (Unchecked exception) Thrown if the specified  set is null. 
      *
      * @see #add(Attribute)
      */
     public boolean addAll(AttributeSet attributes);
-
+   
 }

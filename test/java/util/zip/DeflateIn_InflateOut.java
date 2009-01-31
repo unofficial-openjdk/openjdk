@@ -49,7 +49,7 @@ public class DeflateIn_InflateOut {
         baos = new ByteArrayOutputStream();
         ios = new InflaterOutputStream(baos);
     }
-
+    
     /** Check byte arrays read/write. */
     private static void ArrayReadWrite() throws Throwable {
         byte[] buf = new byte[512];

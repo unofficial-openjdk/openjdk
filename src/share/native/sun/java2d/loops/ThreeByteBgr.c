@@ -79,17 +79,17 @@ NativePrimitive ThreeByteBgrPrimitives[] = {
     REGISTER_CONVERT_BLIT(ThreeByteBgr, IntArgb),
     REGISTER_CONVERT_BLIT(IntArgb, ThreeByteBgr),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, ThreeByteBgr,
-                                NAME_CONVERT_BLIT(IntArgb, ThreeByteBgr)),
+				NAME_CONVERT_BLIT(IntArgb, ThreeByteBgr)),
     REGISTER_CONVERT_BLIT_EQUIV(IntArgbBm, ThreeByteBgr,
-                                NAME_CONVERT_BLIT(IntArgb, ThreeByteBgr)),
+				NAME_CONVERT_BLIT(IntArgb, ThreeByteBgr)),
     REGISTER_CONVERT_BLIT(ByteGray, ThreeByteBgr),
     REGISTER_CONVERT_BLIT(ByteIndexed, ThreeByteBgr),
     REGISTER_SCALE_BLIT(ThreeByteBgr, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, ThreeByteBgr),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, ThreeByteBgr,
-                              NAME_SCALE_BLIT(IntArgb, ThreeByteBgr)),
+			      NAME_SCALE_BLIT(IntArgb, ThreeByteBgr)),
     REGISTER_SCALE_BLIT_EQUIV(IntArgbBm, ThreeByteBgr,
-                              NAME_SCALE_BLIT(IntArgb, ThreeByteBgr)),
+			      NAME_SCALE_BLIT(IntArgb, ThreeByteBgr)),
     REGISTER_SCALE_BLIT(ByteGray, ThreeByteBgr),
     REGISTER_SCALE_BLIT(ByteIndexed, ThreeByteBgr),
     REGISTER_XPAR_CONVERT_BLIT(ByteIndexedBm, ThreeByteBgr),
@@ -98,7 +98,7 @@ NativePrimitive ThreeByteBgrPrimitives[] = {
     REGISTER_XPAR_BLITBG(ByteIndexedBm, ThreeByteBgr),
     REGISTER_XPAR_CONVERT_BLIT(IntArgbBm, ThreeByteBgr),
     REGISTER_XPAR_BLITBG(IntArgbBm, ThreeByteBgr),
-
+    
     REGISTER_XOR_BLIT(IntArgb, ThreeByteBgr),
     REGISTER_SRC_MASKFILL(ThreeByteBgr),
     REGISTER_SRCOVER_MASKFILL(ThreeByteBgr),
@@ -117,7 +117,7 @@ NativePrimitive ThreeByteBgrPrimitives[] = {
 jboolean RegisterThreeByteBgr(JNIEnv *env)
 {
     return RegisterPrimitives(env, ThreeByteBgrPrimitives,
-                              ArraySize(ThreeByteBgrPrimitives));
+			      ArraySize(ThreeByteBgrPrimitives));
 }
 
 DEFINE_CONVERT_BLIT(ThreeByteBgr, IntArgb, 1IntArgb)

@@ -71,7 +71,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         mapped = XEmbedHelper.XEMBED_MAPPED;
         this.serverBounds = serverBounds;
         if (serverBounds.length < 5) {
-            throw new IllegalArgumentException("There must be at least five areas: server-activation, server-deactivation, server-focus, " +
+            throw new IllegalArgumentException("There must be at least five areas: server-activation, server-deactivation, server-focus, " + 
                                                "server-modal show, modal-close");
         }
         try {
@@ -111,7 +111,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         int res = embedCompletely();
         waitWindowActivated(res);
         requestFocus();
-        checkFocusGained(XEmbedHelper.XEMBED_FOCUS_CURRENT);
+        checkFocusGained(XEmbedHelper.XEMBED_FOCUS_CURRENT);        
     }
 
     public void test1_3() {
@@ -120,7 +120,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         requestFocusNoWait();
         checkNotFocused();
     }
-
+    
     public void test1_4() {
         embedCompletely();
         deactivateServer();
@@ -140,7 +140,7 @@ public class XEmbedServerTester implements XEventDispatcher {
 
     public void test1_6() {
         int res = embedCompletely();
-        waitWindowActivated(res);
+        waitWindowActivated(res);        
         requestFocus();
         res = deactivateServer();
         checkFocused();
@@ -156,7 +156,7 @@ public class XEmbedServerTester implements XEventDispatcher {
 
     public void test2_5() {
         int res = embedCompletely();
-        waitWindowActivated(res);
+        waitWindowActivated(res);        
         requestFocus();
         focusServerNext();
         checkFocusedServerNext();
@@ -165,7 +165,7 @@ public class XEmbedServerTester implements XEventDispatcher {
 
     public void test2_6() {
         int res = embedCompletely();
-        waitWindowActivated(res);
+        waitWindowActivated(res);        
         requestFocus();
         focusServerPrev();
         checkFocusedServerPrev();
@@ -196,7 +196,7 @@ public class XEmbedServerTester implements XEventDispatcher {
             throw new RuntimeException("Version " + server_version + " is not minimal");
         }
     }
-
+    
     public void test3_5() {
         embedCompletely();
 
@@ -204,7 +204,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         // TODO: how can we detect that XEmbed ended?  So far we are
         // just checking that XEmbed server won't end up with an
         // exception, which should end up testing, hopefully.
-
+        
         // Sleep before exiting the tester application
         sleep(1000);
     }
@@ -220,9 +220,9 @@ public class XEmbedServerTester implements XEventDispatcher {
         } finally {
             XToolkit.awtUnlock();
         }
-
+        
         int res = getEventPos();
-
+        
         activateServerNoWait(res);
 
         sleep(1000);
@@ -234,7 +234,7 @@ public class XEmbedServerTester implements XEventDispatcher {
     public void test4_1() {
         mapped = XEmbedHelper.XEMBED_MAPPED;
         int res = getEventPos();
-        embedCompletely();
+        embedCompletely();        
         sleep(1000);
         checkMapped();
     }
@@ -243,7 +243,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         mapped = 0;
         embedCompletely();
         sleep(1000);
-
+        
         int res = getEventPos();
         mapped = XEmbedHelper.XEMBED_MAPPED;
         updateEmbedInfo();
@@ -255,7 +255,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         int res = getEventPos();
         mapped = XEmbedHelper.XEMBED_MAPPED;
         embedCompletely();
-
+        
         res = getEventPos();
         mapped = 0;
         updateEmbedInfo();
@@ -277,7 +277,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         registerAccelerator();
         focusServer();
         int res = pressAccelKey();
-        waitForEvent(res, XEmbedHelper.XEMBED_ACTIVATE_ACCELERATOR);
+        waitForEvent(res, XEmbedHelper.XEMBED_ACTIVATE_ACCELERATOR);        
     }
 
     public void test6_1_2() {
@@ -314,7 +314,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         if (checkEventList(res, XEmbedHelper.XEMBED_ACTIVATE_ACCELERATOR) != -1) {
             throw new RuntimeException("Accelerator has been activated in focused client");
         }
-    }
+    }  
     public void test6_2_1() {
         embedCompletely();
         grabKey();
@@ -364,13 +364,13 @@ public class XEmbedServerTester implements XEventDispatcher {
     }
 
     public void test7_1() {
-        embedCompletely();
+        embedCompletely();        
         int res = showModalDialog();
         waitForEvent(res, XEmbedHelper.XEMBED_MODALITY_ON);
     }
 
     public void test7_2() {
-        embedCompletely();
+        embedCompletely();        
         int res = showModalDialog();
         waitForEvent(res, XEmbedHelper.XEMBED_MODALITY_ON);
         res = hideModalDialog();
@@ -388,18 +388,18 @@ public class XEmbedServerTester implements XEventDispatcher {
         int res = getEventPos();
         XToolkit.awtLock();
         try {
-            XCreateWindowParams params =
+            XCreateWindowParams params = 
                 new XCreateWindowParams(new Object[] {
                     XBaseWindow.PARENT_WINDOW, new Long(reparent?XToolkit.getDefaultRootWindow():parent),
                     XBaseWindow.BOUNDS, initialBounds,
                     XBaseWindow.EMBEDDED, Boolean.TRUE,
                     XBaseWindow.VISIBLE, Boolean.valueOf(mapped == XEmbedHelper.XEMBED_MAPPED),
-                    XBaseWindow.EVENT_MASK, new Long(VisibilityChangeMask | StructureNotifyMask |
+                    XBaseWindow.EVENT_MASK, new Long(VisibilityChangeMask | StructureNotifyMask | 
                                                      SubstructureNotifyMask | KeyPressMask)});
             window = new XBaseWindow(params);
 
             xembedLog.finer("Created tester window: " + window);
-
+             
             XToolkit.addEventDispatcher(window.getWindow(), this);
             updateEmbedInfo();
             if (reparent) {
@@ -414,7 +414,7 @@ public class XEmbedServerTester implements XEventDispatcher {
 
     private void updateEmbedInfo() {
         long[] info = new long[] { my_version, mapped };
-        long data = Native.card32ToData(info);
+        long data = Native.card32ToData(info);        
         try {
             XEmbedHelper.XEmbedInfo.setAtomData(window.getWindow(), data, info.length);
         } finally {
@@ -491,7 +491,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         robot.mouseMove(loc.x, loc.y);
         robot.mousePress(InputEvent.BUTTON1_MASK);
         robot.delay(50);
-        robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        robot.mouseRelease(InputEvent.BUTTON1_MASK);        
         if (weFocused) {
             waitFocusLost(res);
         }
@@ -511,7 +511,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         waitFocusLost(res);
         return res;
     }
-
+   
     private void waitEmbeddedNotify(int pos) {
         waitForEvent(pos, XEmbedHelper.XEMBED_EMBEDDED_NOTIFY);
     }
@@ -542,7 +542,7 @@ public class XEmbedServerTester implements XEventDispatcher {
 
             if (eventReceived == event) {
                 // Already received
-                xembedLog.finer("Already received " + XEmbedHelper.msgidToString(event));
+                xembedLog.finer("Already received " + XEmbedHelper.msgidToString(event)); 
                 return;
             }
             eventReceived = -1;
@@ -606,14 +606,14 @@ public class XEmbedServerTester implements XEventDispatcher {
         if (!focused) {
             throw new RuntimeException("Not Focused");
         }
-    }
+    }        
 
     private void checkFocusLost() {
         checkNotFocused();
         if (focusedKind != XEmbedHelper.XEMBED_FOCUS_OUT) {
             throw new RuntimeException("Didn't receive FOCUS_LOST");
         }
-    }
+    }    
     private void checkWindowActivated() {
         if (!windowActive) {
             throw new RuntimeException("Window is not active");
@@ -632,7 +632,7 @@ public class XEmbedServerTester implements XEventDispatcher {
 
     private void sendMessage(int message) {
         xembed.sendMessage(parent, message);
-    }
+    }        
     private void sendMessage(int message, int detail, long data1, long data2) {
         xembed.sendMessage(parent, message, detail, data1, data2);
     }
@@ -666,7 +666,7 @@ public class XEmbedServerTester implements XEventDispatcher {
                 synchronized(EVENT_LOCK) {
                     events.add((int)msg.get_data(1));
 
-                    xembedLog.finer("Tester is waiting for " +  XEmbedHelper.msgidToString(eventWaited));
+                    xembedLog.finer("Tester is waiting for " +  XEmbedHelper.msgidToString(eventWaited));                    
                     if ((int)msg.get_data(1) == eventWaited) {
                         eventReceived = (int)msg.get_data(1);
                         xembedLog.finer("Notifying waiting object for event " + System.identityHashCode(EVENT_LOCK));
@@ -678,14 +678,14 @@ public class XEmbedServerTester implements XEventDispatcher {
             synchronized(EVENT_LOCK) {
                 int eventID = (int)ev.get_type() | SYSTEM_EVENT_MASK;
                 events.add(eventID);
-
+                
                 xembedLog.finer("Tester is waiting for " + XEmbedHelper.msgidToString(eventWaited) + ", but we received " + ev + "(" + XEmbedHelper.msgidToString(eventID) + ")");
                 if (eventID == eventWaited) {
                     eventReceived = eventID;
                     xembedLog.finer("Notifying waiting object" + System.identityHashCode(EVENT_LOCK));
                     EVENT_LOCK.notifyAll();
                 }
-            }
+            }            
         }
     }
 
@@ -732,7 +732,7 @@ public class XEmbedServerTester implements XEventDispatcher {
         robot.mouseMove(loc.x, loc.y);
         robot.mousePress(InputEvent.BUTTON1_MASK);
         robot.delay(50);
-        robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        robot.mouseRelease(InputEvent.BUTTON1_MASK);        
         return res;
     }
     private int hideModalDialog() {
@@ -744,10 +744,10 @@ public class XEmbedServerTester implements XEventDispatcher {
 //         robot.mouseMove(loc.x, loc.y);
 //         robot.mousePress(InputEvent.BUTTON1_MASK);
 //         robot.delay(50);
-//         robot.mouseRelease(InputEvent.BUTTON1_MASK);
+//         robot.mouseRelease(InputEvent.BUTTON1_MASK);        
         robot.keyPress(KeyEvent.VK_SPACE);
         robot.keyRelease(KeyEvent.VK_SPACE);
         return res;
     }
-
+    
 }

@@ -45,6 +45,7 @@ package java.lang;
  * a map. </p>
  *
  * @author Mike McCloskey
+ * @version %I% %E%
  * @since 1.4
  * @spec JSR-51
  */
@@ -86,7 +87,7 @@ public interface CharSequence {
      * (in <code>char</code>s) of the
      * returned sequence is <tt>end - start</tt>, so if <tt>start == end</tt>
      * then an empty sequence is returned. </p>
-     *
+     * 
      * @param   start   the start index, inclusive
      * @param   end     the end index, exclusive
      *

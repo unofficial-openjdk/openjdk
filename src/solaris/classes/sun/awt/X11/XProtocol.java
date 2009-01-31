@@ -112,5 +112,5 @@ class XProtocol {
     public long checkAnchor(XAtom anchorProp, XAtom anchorType) {
         return checkAnchor(anchorProp, anchorType.getAtom());
     }
-
+    
 }

@@ -41,7 +41,7 @@ public class OSMBeanFactory {
 
     private static OperatingSystem osMBean = null;
 
-    public static synchronized OperatingSystemMXBean
+    public static synchronized OperatingSystemMXBean 
         getOperatingSystemMXBean(VMManagement jvm) {
 
         if (osMBean == null) {

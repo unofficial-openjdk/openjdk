@@ -64,9 +64,10 @@ import java.security.SecureRandom;
  * constructed by pairing a <code>UID</code> instance with a unique host
  * identifier, such as an IP address.
  *
- * @author      Ann Wollrath
- * @author      Peter Jones
- * @since       JDK1.1
+ * @author	Ann Wollrath
+ * @author	Peter Jones
+ * @version	%I%, %E%
+ * @since	JDK1.1
  */
 public final class UID implements Serializable {
 
@@ -106,38 +107,38 @@ public final class UID implements Serializable {
      * respect to the host that it was generated on.
      */
     public UID() {
-
-        synchronized (lock) {
-            if (!hostUniqueSet) {
-                hostUnique = (new SecureRandom()).nextInt();
-                hostUniqueSet = true;
-            }
-            unique = hostUnique;
-            if (lastCount == Short.MAX_VALUE) {
-                boolean interrupted = Thread.interrupted();
-                boolean done = false;
-                while (!done) {
-                    long now = System.currentTimeMillis();
-                    if (now <= lastTime) {
-                        // wait for time to change
-                        try {
-                            Thread.currentThread().sleep(1);
-                        } catch (InterruptedException e) {
-                            interrupted = true;
-                        }
-                    } else {
-                        lastTime = now;
-                        lastCount = Short.MIN_VALUE;
-                        done = true;
-                    }
-                }
-                if (interrupted) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-            time = lastTime;
-            count = lastCount++;
-        }
+	
+	synchronized (lock) {
+	    if (!hostUniqueSet) {
+		hostUnique = (new SecureRandom()).nextInt();
+		hostUniqueSet = true;
+	    }
+	    unique = hostUnique;
+	    if (lastCount == Short.MAX_VALUE) {
+		boolean interrupted = Thread.interrupted();
+		boolean done = false;
+		while (!done) {
+		    long now = System.currentTimeMillis();
+		    if (now <= lastTime) {
+			// wait for time to change
+			try {
+			    Thread.currentThread().sleep(1);
+			} catch (InterruptedException e) {
+			    interrupted = true;
+			}
+		    } else {
+			lastTime = now;
+			lastCount = Short.MIN_VALUE;
+			done = true;
+		    }
+		}
+		if (interrupted) {
+		    Thread.currentThread().interrupt();
+		}
+	    }
+	    time = lastTime;
+	    count = lastCount++;
+	}
     }
 
     /**
@@ -149,30 +150,30 @@ public final class UID implements Serializable {
      * clash with any <code>UID</code>s generated via the no-arg
      * constructor.
      *
-     * @param   num number for well-known <code>UID</code>
+     * @param	num number for well-known <code>UID</code>
      */
     public UID(short num) {
-        unique = 0;
-        time = 0;
-        count = num;
+	unique = 0;
+	time = 0;
+	count = num;
     }
 
     /**
      * Constructs a <code>UID</code> given data read from a stream.
      */
     private UID(int unique, long time, short count) {
-        this.unique = unique;
-        this.time = time;
-        this.count = count;
+	this.unique = unique;
+	this.time = time;
+	this.count = count;
     }
 
     /**
      * Returns the hash code value for this <code>UID</code>.
      *
-     * @return  the hash code value for this <code>UID</code>
+     * @return	the hash code value for this <code>UID</code>
      */
     public int hashCode() {
-        return (int) time + (int) count;
+	return (int) time + (int) count;
     }
 
     /**
@@ -184,31 +185,31 @@ public final class UID implements Serializable {
      * <code>unique</code>, <code>time</code>, and <code>count</code>
      * values as this one.
      *
-     * @param   obj the object to compare this <code>UID</code> to
+     * @param	obj the object to compare this <code>UID</code> to
      *
-     * @return  <code>true</code> if the given object is equivalent to
+     * @return	<code>true</code> if the given object is equivalent to
      * this one, and <code>false</code> otherwise
      */
     public boolean equals(Object obj) {
-        if (obj instanceof UID) {
-            UID uid = (UID) obj;
-            return (unique == uid.unique &&
-                    count == uid.count &&
-                    time == uid.time);
-        } else {
-            return false;
-        }
+	if (obj instanceof UID) {
+	    UID uid = (UID) obj;
+	    return (unique == uid.unique &&
+		    count == uid.count &&
+		    time == uid.time);
+	} else {
+	    return false;
+	}
     }
 
     /**
      * Returns a string representation of this <code>UID</code>.
      *
-     * @return  a string representation of this <code>UID</code>
+     * @return	a string representation of this <code>UID</code>
      */
     public String toString() {
-        return Integer.toString(unique,16) + ":" +
-            Long.toString(time,16) + ":" +
-            Integer.toString(count,16);
+	return Integer.toString(unique,16) + ":" +
+	    Long.toString(time,16) + ":" +
+	    Integer.toString(count,16);
     }
 
     /**
@@ -223,16 +224,16 @@ public final class UID implements Serializable {
      * {@link DataOutput#writeShort(int)} method with this <code>UID</code>'s
      * <code>count</code> value.
      *
-     * @param   out the <code>DataOutput</code> instance to write
+     * @param	out the <code>DataOutput</code> instance to write
      * this <code>UID</code> to
      *
-     * @throws  IOException if an I/O error occurs while performing
+     * @throws	IOException if an I/O error occurs while performing
      * this operation
      */
     public void write(DataOutput out) throws IOException {
-        out.writeInt(unique);
-        out.writeLong(time);
-        out.writeShort(count);
+	out.writeInt(unique);
+	out.writeLong(time);
+	out.writeShort(count);
     }
 
     /**
@@ -250,18 +251,18 @@ public final class UID implements Serializable {
      * that contains the <code>unique</code>, <code>time</code>, and
      * <code>count</code> values that were read from the stream.
      *
-     * @param   in the <code>DataInput</code> instance to read
+     * @param	in the <code>DataInput</code> instance to read
      * <code>UID</code> from
      *
-     * @return  unmarshalled <code>UID</code> instance
+     * @return	unmarshalled <code>UID</code> instance
      *
-     * @throws  IOException if an I/O error occurs while performing
+     * @throws	IOException if an I/O error occurs while performing
      * this operation
      */
     public static UID read(DataInput in) throws IOException {
-        int unique = in.readInt();
-        long time = in.readLong();
-        short count = in.readShort();
-        return new UID(unique, time, count);
+	int unique = in.readInt();
+	long time = in.readLong();
+	short count = in.readShort();
+	return new UID(unique, time, count);
     }
 }

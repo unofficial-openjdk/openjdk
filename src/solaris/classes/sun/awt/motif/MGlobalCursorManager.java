@@ -38,7 +38,7 @@ public final class MGlobalCursorManager extends GlobalCursorManager {
     private native static void cacheInit();
 
     // cached nativeContainer
-    private Component nativeContainer;
+    private Component nativeContainer;  
 
 
     /**
@@ -65,27 +65,27 @@ public final class MGlobalCursorManager extends GlobalCursorManager {
 
     protected void setCursor(Component comp, Cursor cursor, boolean useCache) {
         if (comp == null) {
-            return;
-        }
+	    return;
+	}
 
-        Cursor cur = useCache ? cursor : getCapableCursor(comp);
+	Cursor cur = useCache ? cursor : getCapableCursor(comp); 
 
-        Component nc = useCache ? nativeContainer : getNativeContainer(comp);
+	Component nc = useCache ? nativeContainer : getNativeContainer(comp);
 
-        // System.out.println(" set cursor="+cursor+"  on "+comp+"  new curs="+cur);
-        if (nc != null && nc.isDisplayable()) {
-            nativeContainer = nc;
-            ((MComponentPeer)nc.getPeer()).pSetCursor(cur);
-        }
+	// System.out.println(" set cursor="+cursor+"  on "+comp+"  new curs="+cur);
+	if (nc != null && nc.isDisplayable()) {
+	    nativeContainer = nc;
+	    ((MComponentPeer)nc.getPeer()).pSetCursor(cur);
+	}
     }
-
+    
     private Component getNativeContainer(Component comp) {
-        while (comp != null && comp.isLightweight()) {
-            comp = comp.getParent();
-        }
-        return comp;
+	while (comp != null && comp.isLightweight()) {
+	    comp = comp.getParent();
+	}
+	return comp;
     }
-
+    
     protected native void getCursorPos(Point p);
     protected native Component findHeavyweightUnderCursor();
 
@@ -95,24 +95,24 @@ public final class MGlobalCursorManager extends GlobalCursorManager {
      */
     protected native Component findComponentAt(Container con, int x, int y);
     protected native Point getLocationOnScreen(Component com);
-
-    protected Component findHeavyweightUnderCursor(boolean useCache) {
-        return findHeavyweightUnderCursor();
+ 
+    protected Component findHeavyweightUnderCursor(boolean useCache) {	
+	return findHeavyweightUnderCursor();
     }
 
     private Cursor getCapableCursor(Component comp) {
-        Component c = comp;
-        while ((c != null) && !(c instanceof Window) &&
-               c.isEnabled() && c.isVisible() && c.isDisplayable()) {
-            c = c.getParent();
-        }
-        if (c instanceof Window) {
-            return (c.isEnabled() && c.isVisible() && c.isDisplayable() && comp.isEnabled()) ?
-                    comp.getCursor() :
-                    Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-        } else if (c == null) {
-            return null;
-        }
-        return getCapableCursor(c.getParent());
+	Component c = comp;	
+	while ((c != null) && !(c instanceof Window) && 
+	       c.isEnabled() && c.isVisible() && c.isDisplayable()) {
+	    c = c.getParent();
+	} 
+	if (c instanceof Window) {
+	    return (c.isEnabled() && c.isVisible() && c.isDisplayable() && comp.isEnabled()) ? 
+		    comp.getCursor() : 
+		    Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+	} else if (c == null) {
+	    return null;
+	}
+	return getCapableCursor(c.getParent());
     }
 }

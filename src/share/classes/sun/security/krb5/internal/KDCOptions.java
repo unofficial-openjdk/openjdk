@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -41,33 +42,33 @@ import java.io.IOException;
  * Implements the ASN.1 KDCOptions type.
  *
  * <xmp>
- * KDCOptions   ::= KerberosFlags
- *      -- reserved(0),
- *      -- forwardable(1),
- *      -- forwarded(2),
- *      -- proxiable(3),
- *      -- proxy(4),
- *      -- allow-postdate(5),
- *      -- postdated(6),
- *      -- unused7(7),
- *      -- renewable(8),
- *      -- unused9(9),
- *      -- unused10(10),
- *      -- opt-hardware-auth(11),
- *      -- unused12(12),
- *      -- unused13(13),
+ * KDCOptions	::= KerberosFlags
+ *	-- reserved(0),
+ *	-- forwardable(1),
+ *	-- forwarded(2),
+ *	-- proxiable(3),
+ *	-- proxy(4),
+ *	-- allow-postdate(5),
+ *	-- postdated(6),
+ *	-- unused7(7),
+ *	-- renewable(8),
+ *	-- unused9(9),
+ *	-- unused10(10),
+ *	-- opt-hardware-auth(11),
+ *	-- unused12(12),
+ *	-- unused13(13),
  * -- 15 is reserved for canonicalize
- *      -- unused15(15),
+ *	-- unused15(15),
  * -- 26 was unused in 1510
- *      -- disable-transited-check(26),
- *      -- renewable-ok(27),
- *      -- enc-tkt-in-skey(28),
- *      -- renew(30),
- *      -- validate(31)
+ *	-- disable-transited-check(26),
+ *	-- renewable-ok(27),
+ *	-- enc-tkt-in-skey(28),
+ *	-- renew(30),
+ *	-- validate(31)
  *
  * KerberosFlags   ::= BIT STRING (SIZE (32..MAX))
- *                      -- minimum number of bits shall be sent,
- *                      -- but no fewer than 32
+ *			-- minimum number of bits shall be sent,
+ *			-- but no fewer than 32
  *
  * </xmp>
  *
@@ -119,14 +120,14 @@ import java.io.IOException;
  */
 
 public class KDCOptions extends KerberosFlags {
-
+    
     public final int KDC_OPT_PROXIABLE = 0x10000000;
     public final int KDC_OPT_RENEWABLE_OK = 0x00000010;
     public final int KDC_OPT_FORWARDABLE = 0x40000000;
-
-
+    
+    
     // KDC Options
-
+    
     public static final int RESERVED        = 0;
     public static final int FORWARDABLE     = 1;
     public static final int FORWARDED       = 2;
@@ -143,20 +144,20 @@ public class KDCOptions extends KerberosFlags {
     public static final int ENC_TKT_IN_SKEY = 28;
     public static final int RENEW           = 30;
     public static final int VALIDATE        = 31;
-
+    
     private boolean DEBUG = Krb5.DEBUG;
-
+    
     public KDCOptions() {
         super(Krb5.KDC_OPTS_MAX + 1);
         setDefault();
     }
-
+    
     public KDCOptions(int size, byte[] data) throws Asn1Exception {
         super(size, data);
         if ((size > data.length * BITS_PER_UNIT) || (size > Krb5.KDC_OPTS_MAX + 1))
             throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
     }
-
+    
     /**
      * Constructs a KDCOptions from the specified bit settings.
      *
@@ -171,11 +172,11 @@ public class KDCOptions extends KerberosFlags {
             throw new Asn1Exception(Krb5.BITSTRING_BAD_LENGTH);
         }
     }
-
+    
     public KDCOptions(DerValue encoding) throws Asn1Exception, IOException {
         this(encoding.getUnalignedBitString(true).toBooleanArray());
     }
-
+    
     /**
      * Constructs a KDCOptions from the passed bit settings.
      *
@@ -185,7 +186,7 @@ public class KDCOptions extends KerberosFlags {
     public KDCOptions(byte[] options) {
         super(options.length * BITS_PER_UNIT, options);
     }
-
+    
     /**
      * Parse (unmarshal) a KDCOptions from a DER input stream.  This form
      * parsing might be used when expanding a value which is part of
@@ -200,7 +201,7 @@ public class KDCOptions extends KerberosFlags {
      * @exception IOException if an I/O error occurs while reading encoded data.
      *
      */
-
+    
     public static KDCOptions parse(DerInputStream data, byte explicitTag, boolean optional) throws Asn1Exception, IOException {
         if ((optional) && (((byte)data.peekByte() & (byte)0x1F) != explicitTag))
             return null;
@@ -212,7 +213,7 @@ public class KDCOptions extends KerberosFlags {
             return new KDCOptions(subDer);
         }
     }
-
+    
     /**
      * Sets the value(true/false) for one of the <code>KDCOptions</code>.
      *
@@ -224,7 +225,7 @@ public class KDCOptions extends KerberosFlags {
     public void set(int option, boolean value) throws ArrayIndexOutOfBoundsException {
         super.set(option, value);
     }
-
+    
     /**
      * Gets the value(true/false) for one of the <code>KDCOptions</code>.
      *
@@ -233,25 +234,25 @@ public class KDCOptions extends KerberosFlags {
      * @exception ArrayIndexOutOfBoundsException if array index out of bound occurs.
      * @see sun.security.krb5.internal.Krb5
      */
-
+    
     public boolean get(int option) throws ArrayIndexOutOfBoundsException {
         return super.get(option);
     }
-
-
+    
+    
     private void setDefault() {
         try {
-
+            
             Config config = Config.getInstance();
-
+            
             /*
              * First see if the IBM hex format is being used.
              * If not, try the Sun's string (boolean) format.
              */
-
+            
             int options =config.getDefaultIntValue("kdc_default_options",
                     "libdefaults");
-
+            
             if ((options & RENEWABLE_OK) == RENEWABLE_OK) {
                 set(RENEWABLE_OK, true);
             } else {
@@ -266,7 +267,7 @@ public class KDCOptions extends KerberosFlags {
                     set(PROXIABLE, true);
                 }
             }
-
+            
             if ((options & FORWARDABLE) == FORWARDABLE) {
                 set(FORWARDABLE, true);
             } else {
@@ -279,7 +280,7 @@ public class KDCOptions extends KerberosFlags {
                 System.out.println("Exception in getting default values for " +
                         "KDC Options from the configuration ");
                 e.printStackTrace();
-
+                
             }
         }
     }

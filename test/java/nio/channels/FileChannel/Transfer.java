@@ -39,7 +39,7 @@ public class Transfer {
 
     private static Random generator = new Random();
 
-    private static int[] testSizes = {
+    private static int[] testSizes = { 
         0, 10, 1023, 1024, 1025, 2047, 2048, 2049 };
 
     public static void main(String[] args) throws Exception {
@@ -57,9 +57,9 @@ public class Transfer {
 
     private static void testFileChannel() throws Exception {
         File source = File.createTempFile("source", null);
-        source.deleteOnExit();
+	source.deleteOnExit();
         File sink = File.createTempFile("sink", null);
-        sink.deleteOnExit();
+	sink.deleteOnExit();
 
         FileOutputStream fos = new FileOutputStream(source);
         FileChannel sourceChannel = fos.getChannel();
@@ -89,7 +89,7 @@ public class Transfer {
             throw new RuntimeException("Unexpected sink size");
 
         bytesWritten = sinkChannel.transferFrom(sourceChannel, 1000, 10);
-
+        
         if (bytesWritten > 0)
             throw new RuntimeException("Wrote past file size");
 
@@ -119,7 +119,7 @@ public class Transfer {
         }
 
         File f = File.createTempFile("blah"+size, null);
-        f.deleteOnExit();
+	f.deleteOnExit();
         RandomAccessFile raf = new RandomAccessFile(f, "rw");
         FileChannel fc = raf.getChannel();
         long oldPosition = fc.position();
@@ -141,13 +141,13 @@ public class Transfer {
     }
 
     public static void xferTest02() throws Exception {
-        byte[] srcData = new byte[5000];
+	byte[] srcData = new byte[5000];
         for (int i=0; i<5000; i++)
             srcData[i] = (byte)generator.nextInt();
 
         // get filechannel for the source file.
         File source = File.createTempFile("source", null);
-        source.deleteOnExit();
+	source.deleteOnExit();
         RandomAccessFile raf1 = new RandomAccessFile(source, "rw");
         FileChannel fc1 = raf1.getChannel();
 
@@ -159,7 +159,7 @@ public class Transfer {
 
         // get filechannel for the dst file.
         File dest = File.createTempFile("dest", null);
-        dest.deleteOnExit();
+	dest.deleteOnExit();
         RandomAccessFile raf2 = new RandomAccessFile(dest, "rw");
         FileChannel fc2 = raf2.getChannel();
 
@@ -179,7 +179,7 @@ public class Transfer {
 
         // get filechannel for the source file.
         File source = File.createTempFile("source", null);
-        source.deleteOnExit();
+	source.deleteOnExit();
         RandomAccessFile raf1 = new RandomAccessFile(source, "rw");
         FileChannel fc1 = raf1.getChannel();
         fc1.truncate(0);
@@ -192,7 +192,7 @@ public class Transfer {
 
         // get filechannel for the dst file.
         File dest = File.createTempFile("dest", null);
-        dest.deleteOnExit();
+	dest.deleteOnExit();
         RandomAccessFile raf2 = new RandomAccessFile(dest, "rw");
         FileChannel fc2 = raf2.getChannel();
         fc2.truncate(0);
@@ -234,7 +234,7 @@ public class Transfer {
 
         raf = new RandomAccessFile(sink, "rw");
         FileChannel sinkChannel = raf.getChannel();
-
+        
         long bytesWritten = sourceChannel.transferTo(testSize -40, 10,
                                                      sinkChannel);
         if (bytesWritten != 10) {
@@ -295,124 +295,124 @@ public class Transfer {
     }
 
     static void checkFileData(File file, String expected) throws Exception {
-        FileInputStream fis = new FileInputStream(file);
-        Reader r = new BufferedReader(new InputStreamReader(fis, "ASCII"));
-        StringBuilder sb = new StringBuilder();
-        int c;
-        while ((c = r.read()) != -1)
-            sb.append((char)c);
-        String contents = sb.toString();
-        if (! contents.equals(expected))
-            throw new Exception("expected: " + expected
-                                + ", got: " + contents);
-        r.close();
+	FileInputStream fis = new FileInputStream(file);
+	Reader r = new BufferedReader(new InputStreamReader(fis, "ASCII"));
+	StringBuilder sb = new StringBuilder();
+	int c;
+	while ((c = r.read()) != -1)
+	    sb.append((char)c);
+	String contents = sb.toString();
+	if (! contents.equals(expected))
+	    throw new Exception("expected: " + expected
+				+ ", got: " + contents);
+	r.close();
     }
-
+    
     // Test transferFrom asking for more bytes than remain in source
     public static void xferTest06() throws Exception {
-        String data = "Use the source, Luke!";
+	String data = "Use the source, Luke!";
 
-        File source = File.createTempFile("source", null);
-        source.deleteOnExit();
-        File sink = File.createTempFile("sink", null);
-        sink.deleteOnExit();
+	File source = File.createTempFile("source", null);
+	source.deleteOnExit();
+	File sink = File.createTempFile("sink", null);
+	sink.deleteOnExit();
 
-        FileOutputStream fos = new FileOutputStream(source);
-        fos.write(data.getBytes("ASCII"));
-        fos.close();
+	FileOutputStream fos = new FileOutputStream(source);
+	fos.write(data.getBytes("ASCII"));
+	fos.close();
 
-        FileChannel sourceChannel =
-            new RandomAccessFile(source, "rw").getChannel();
-        sourceChannel.position(7);
-        long remaining = sourceChannel.size() - sourceChannel.position();
-        FileChannel sinkChannel =
-            new RandomAccessFile(sink, "rw").getChannel();
-        long n = sinkChannel.transferFrom(sourceChannel, 0L,
-                                          sourceChannel.size()); // overflow
-        if (n != remaining)
-            throw new Exception("n == " + n + ", remaining == " + remaining);
+	FileChannel sourceChannel =
+	    new RandomAccessFile(source, "rw").getChannel();
+	sourceChannel.position(7);
+	long remaining = sourceChannel.size() - sourceChannel.position();
+	FileChannel sinkChannel =
+	    new RandomAccessFile(sink, "rw").getChannel();
+	long n = sinkChannel.transferFrom(sourceChannel, 0L,
+					  sourceChannel.size()); // overflow
+	if (n != remaining)
+	    throw new Exception("n == " + n + ", remaining == " + remaining);
 
-        sinkChannel.close();
-        sourceChannel.close();
+	sinkChannel.close();
+	sourceChannel.close();
 
-        checkFileData(source, data);
-        checkFileData(sink, data.substring(7,data.length()));
+	checkFileData(source, data);
+	checkFileData(sink, data.substring(7,data.length()));
     }
 
     // Test transferTo to non-blocking socket channel
     public static void xferTest07() throws Exception {
-        File source = File.createTempFile("source", null);
-        source.deleteOnExit();
+	File source = File.createTempFile("source", null);
+	source.deleteOnExit();
 
-        FileChannel sourceChannel = new RandomAccessFile(source, "rw")
+	FileChannel sourceChannel = new RandomAccessFile(source, "rw")
             .getChannel();
-        sourceChannel.position(32000L)
+	sourceChannel.position(32000L)
             .write(ByteBuffer.wrap("The End".getBytes()));
 
-        // The sink is a non-blocking socket channel
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        ssc.socket().bind(new InetSocketAddress(0));
-        InetSocketAddress sa = new InetSocketAddress(
-            InetAddress.getLocalHost(), ssc.socket().getLocalPort());
-        SocketChannel sink = SocketChannel.open(sa);
-        sink.configureBlocking(false);
-        SocketChannel other = ssc.accept();
+	// The sink is a non-blocking socket channel
+	ServerSocketChannel ssc = ServerSocketChannel.open();
+	ssc.socket().bind(new InetSocketAddress(0));
+	InetSocketAddress sa = new InetSocketAddress(
+	    InetAddress.getLocalHost(), ssc.socket().getLocalPort());
+	SocketChannel sink = SocketChannel.open(sa);
+	sink.configureBlocking(false);
+	SocketChannel other = ssc.accept();
 
-        long size = sourceChannel.size();
+	long size = sourceChannel.size();
 
-        // keep sending until congested
-        long n;
-        do {
-            n = sourceChannel.transferTo(0, size, sink);
-        } while (n > 0);
+	// keep sending until congested
+	long n;
+	do {
+	    n = sourceChannel.transferTo(0, size, sink);
+	} while (n > 0);
 
-        sourceChannel.close();
-        sink.close();
-        other.close();
-        ssc.close();
+	sourceChannel.close();
+	sink.close();
+	other.close();
+	ssc.close();
     }
-
-
+    
+    
     // Test transferTo with file positions larger than 2 and 4GB
     public static void xferTest08() throws Exception {
-        // Creating a sparse 6GB file on Windows takes too long
+        // Creating a sparse 6GB file on Windows takes too long 
         String osName = System.getProperty("os.name");
         if (osName.startsWith("Windows"))
-            return;
-
+            return;        
+                
         final long G = 1024L * 1024L * 1024L;
-
+        
         // Create 6GB file
-
+        
         File file = File.createTempFile("source", null);
-        file.deleteOnExit();
+	file.deleteOnExit();
+        
+	RandomAccessFile raf = new RandomAccessFile(file, "rw");
+	FileChannel fc = raf.getChannel();
 
-        RandomAccessFile raf = new RandomAccessFile(file, "rw");
-        FileChannel fc = raf.getChannel();
-
-        try {
+        try {            
             fc.write(ByteBuffer.wrap("0123456789012345".getBytes("UTF-8")), 6*G);
         } catch (IOException x) {
-            System.err.println("Unable to create test file:" + x);
-            fc.close();
+	    System.err.println("Unable to create test file:" + x);
+	    fc.close();
             return;
-        }
+	}
+        
+	// Setup looback connection and echo server
 
-        // Setup looback connection and echo server
+	ServerSocketChannel ssc = ServerSocketChannel.open();
+	ssc.socket().bind(new InetSocketAddress(0));
 
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        ssc.socket().bind(new InetSocketAddress(0));
-
-        InetAddress lh = InetAddress.getLocalHost();
-        InetSocketAddress isa = new InetSocketAddress(lh, ssc.socket().getLocalPort());
-        SocketChannel source = SocketChannel.open(isa);
-        SocketChannel sink = ssc.accept();
-
+	InetAddress lh = InetAddress.getLocalHost();
+	InetSocketAddress isa = new InetSocketAddress(lh, ssc.socket().getLocalPort());
+	SocketChannel source = SocketChannel.open(isa);
+	SocketChannel sink = ssc.accept();
+        
         Thread thr = new Thread(new EchoServer(sink));
-        thr.start();
-
+	thr.start();
+                        
         // Test data is array of positions and counts
-
+        
         long testdata[][] = {
             { 2*G-1,    1 },
             { 2*G-1,    10 },       // across 2GB boundary
@@ -423,57 +423,57 @@ public class Transfer {
             { 4*G-1,    10 },       // across 4GB boundary
             { 4*G,      1 },
             { 4*G,      10 },
-            { 4*G+1,    1 },
+            { 4*G+1,    1 },            
             { 5*G-1,    1 },
             { 5*G-1,    10 },
             { 5*G,      1 },
             { 5*G,      10 },
-            { 5*G+1,    1 },
+            { 5*G+1,    1 },    
             { 6*G,      1 },
-        };
-
+        };        
+        
         ByteBuffer sendbuf = ByteBuffer.allocateDirect(100);
         ByteBuffer readbuf = ByteBuffer.allocateDirect(100);
-
-        try {
-            byte value = 0;
-            for (int i=0; i<testdata.length; i++) {
+        
+        try {       
+            byte value = 0;                    
+            for (int i=0; i<testdata.length; i++) {                
                 long position = testdata[(int)i][0];
                 long count = testdata[(int)i][1];
-
+                
                 // generate bytes
                 for (long j=0; j<count; j++) {
                     sendbuf.put(++value);
-                }
+                }                
                 sendbuf.flip();
-
-                // write to file and transfer to echo server
+                
+                // write to file and transfer to echo server                   
                 fc.write(sendbuf, position);
                 fc.transferTo(position, count, source);
 
                 // read from echo server
                 long nread = 0;
                 while (nread < count) {
-                    int n = source.read(readbuf);
+                    int n = source.read(readbuf);                   
                     if (n < 0)
-                        throw new RuntimeException("Premature EOF!");
+                        throw new RuntimeException("Premature EOF!");                    
                     nread += n;
                 }
-
+                
                 // check reply from echo server
                 readbuf.flip();
                 sendbuf.flip();
-                if (!readbuf.equals(sendbuf))
-                    throw new RuntimeException("Echo'ed bytes do not match!");
+                if (!readbuf.equals(sendbuf))                
+                    throw new RuntimeException("Echo'ed bytes do not match!");                            
                 readbuf.clear();
                 sendbuf.clear();
-            }
+            }                        
         } finally {
             source.close();
             ssc.close();
             fc.close();
         }
-    }
+    }        
 
     /**
      * Creates file blah of specified size in bytes.
@@ -483,7 +483,7 @@ public class Transfer {
             blah.delete();
         FileOutputStream fos = new FileOutputStream(blah);
         BufferedWriter awriter
-            = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
+	    = new BufferedWriter(new OutputStreamWriter(fos, "8859_1"));
 
         for(int i=0; i<size; i++) {
             awriter.write("e");
@@ -491,39 +491,39 @@ public class Transfer {
         awriter.flush();
         awriter.close();
     }
-
+    
     /**
      * Simple in-process server to echo bytes read by a given socket channel
      */
     static class EchoServer implements Runnable {
-        private SocketChannel sc;
+	private SocketChannel sc;
 
-        public EchoServer(SocketChannel sc) {
-            this.sc = sc;
-        }
+	public EchoServer(SocketChannel sc) {
+	    this.sc = sc;
+	}
 
-        public void run() {
-            ByteBuffer bb = ByteBuffer.allocateDirect(1024);
-            try {
-                for (;;) {
-                    int n = sc.read(bb);
-                    if (n < 0)
-                        break;
-
+	public void run() {
+	    ByteBuffer bb = ByteBuffer.allocateDirect(1024);
+	    try {
+		for (;;) {
+		    int n = sc.read(bb);
+		    if (n < 0) 
+			break;
+  
                     bb.flip();
                     while (bb.remaining() > 0) {
-                        sc.write(bb);
+                        sc.write(bb);                    
                     }
-                    bb.clear();
-                }
+		    bb.clear();		
+		}
             } catch (IOException x) {
-                x.printStackTrace();
-            } finally {
-                try {
-                    sc.close();
-                } catch (IOException ignore) { }
-            }
-        }
-    }
+		x.printStackTrace();
+	    } finally {
+		try {
+		    sc.close();
+		} catch (IOException ignore) { }
+	    }
+	}
+    }    
 
 }

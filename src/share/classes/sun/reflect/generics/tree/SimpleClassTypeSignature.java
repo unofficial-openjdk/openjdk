@@ -34,14 +34,14 @@ public class SimpleClassTypeSignature implements FieldTypeSignature {
 
     private SimpleClassTypeSignature(String n, boolean dollar, TypeArgument[] tas) {
         name = n;
-        this.dollar = dollar;
-        typeArgs = tas;
+	this.dollar = dollar;
+	typeArgs = tas;
     }
 
-    public static SimpleClassTypeSignature make(String n,
-                                                boolean dollar,
-                                                TypeArgument[] tas){
-        return new SimpleClassTypeSignature(n, dollar, tas);
+    public static SimpleClassTypeSignature make(String n, 
+						boolean dollar,
+						TypeArgument[] tas){
+	return new SimpleClassTypeSignature(n, dollar, tas);
     }
 
     /*
@@ -55,6 +55,6 @@ public class SimpleClassTypeSignature implements FieldTypeSignature {
     public TypeArgument[] getTypeArguments(){return typeArgs;}
 
     public void accept(TypeTreeVisitor<?> v){
-        v.visitSimpleClassTypeSignature(this);
+	v.visitSimpleClassTypeSignature(this);
     }
 }

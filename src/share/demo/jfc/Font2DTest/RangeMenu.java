@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.awt.BorderLayout;
@@ -44,8 +45,9 @@ import javax.swing.*;
 /**
  * RangeMenu.java
  *
+ * @version @(#)RangeMenu.java	1.1 00/08/22
  * @author Shinsuke Fukuda
- * @author Ankit Patel [Conversion to Swing - 01/07/30]
+ * @author Ankit Patel [Conversion to Swing - 01/07/30]  
  */
 
 /// Custom made choice menu that holds data for unicode range
@@ -376,7 +378,7 @@ public final class RangeMenu extends JComboBox implements ActionListener {
                 }
                 else if ( !startText.equals(empty) && endText.equals(empty) ) {
                     startIndex = Integer.parseInt( startText, 16 );
-                    endIndex = startIndex + 7*25;
+                    endIndex = startIndex + 7*25;                    
                 }
                 else {
                     startIndex = Integer.parseInt( customRangeStart.getText(), 16 );
@@ -421,23 +423,23 @@ public final class RangeMenu extends JComboBox implements ActionListener {
     /// itemStateChanged() method. Part of change to Swing.
     public void actionPerformed( ActionEvent e ) {
         Object source = e.getSource();
-
+        
         if ( source instanceof JComboBox ) {
-                String rangeName = (String)((JComboBox)source).getSelectedItem();
+	        String rangeName = (String)((JComboBox)source).getSelectedItem();
 
-                if ( rangeName.equals("Custom...") ) {
-                    useCustomRange = true;
+	        if ( rangeName.equals("Custom...") ) {
+            	    useCustomRange = true;
                     customRangeDialog.setLocationRelativeTo(parent);
-                    customRangeDialog.show();
-                }
-                else {
-                  useCustomRange = false;
-                }
-                parent.fireRangeChanged();
-        }
-        else if ( source instanceof JButton ) {
-                /// Since it is only "OK" button that sends any action here...
-                customRangeDialog.hide();
+        	    customRangeDialog.show();
+	        }
+        	else {
+	          useCustomRange = false;
+        	}
+	        parent.fireRangeChanged();
+	}
+	else if ( source instanceof JButton ) {
+	        /// Since it is only "OK" button that sends any action here...
+        	customRangeDialog.hide();
         }
     }
 }

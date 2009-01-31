@@ -37,17 +37,17 @@ import javax.crypto.spec.*;
  * "XML Encryption Syntax and Processing" section 5.6.3 "AES Key Wrap".
  * Note: only <code>ECB</code> mode and <code>NoPadding</code> padding
  * can be used for this algorithm.
- *
+ *  
  * @author Valerie Peng
  *
  *
  * @see AESCipher
  */
 public final class AESWrapCipher extends CipherSpi {
-
+    
     private static final byte[] IV = {
-        (byte) 0xA6, (byte) 0xA6, (byte) 0xA6, (byte) 0xA6,
-        (byte) 0xA6, (byte) 0xA6, (byte) 0xA6, (byte) 0xA6
+	(byte) 0xA6, (byte) 0xA6, (byte) 0xA6, (byte) 0xA6,
+	(byte) 0xA6, (byte) 0xA6, (byte) 0xA6, (byte) 0xA6
     };
 
     private static final int blksize = AESConstants.AES_BLOCK_SIZE;
@@ -61,17 +61,17 @@ public final class AESWrapCipher extends CipherSpi {
      * are we encrypting or decrypting?
      */
     private boolean decrypting = false;
-
+   
     /**
-     * Creates an instance of AES KeyWrap cipher with default
+     * Creates an instance of AES KeyWrap cipher with default 
      * mode, i.e. "ECB" and padding scheme, i.e. "NoPadding".
      *
      * @exception SecurityException if this constructor fails to verify
      * its own integrity
      */
     public AESWrapCipher() {
-        SunJCE.ensureIntegrity(getClass());
-        cipher = new AESCrypt();
+	SunJCE.ensureIntegrity(getClass());
+	cipher = new AESCrypt();
     }
 
     /**
@@ -80,14 +80,14 @@ public final class AESWrapCipher extends CipherSpi {
      *
      * @param mode the cipher mode
      *
-     * @exception NoSuchAlgorithmException if the requested cipher mode
+     * @exception NoSuchAlgorithmException if the requested cipher mode 
      * is not "ECB".
      */
     protected void engineSetMode(String mode)
-        throws NoSuchAlgorithmException {
-        if (!mode.equalsIgnoreCase("ECB")) {
-            throw new NoSuchAlgorithmException(mode + " cannot be used");
-        }
+	throws NoSuchAlgorithmException {
+	if (!mode.equalsIgnoreCase("ECB")) {
+	    throw new NoSuchAlgorithmException(mode + " cannot be used");
+	}
     }
 
     /**
@@ -99,11 +99,11 @@ public final class AESWrapCipher extends CipherSpi {
      * @exception NoSuchPaddingException if the requested padding mechanism
      * is not "NoPadding".
      */
-    protected void engineSetPadding(String padding)
-        throws NoSuchPaddingException {
-        if (!padding.equalsIgnoreCase("NoPadding")) {
-            throw new NoSuchPaddingException(padding + " cannot be used");
-        }
+    protected void engineSetPadding(String padding) 
+	throws NoSuchPaddingException {
+	if (!padding.equalsIgnoreCase("NoPadding")) {
+	    throw new NoSuchPaddingException(padding + " cannot be used");
+	}
     }
 
     /**
@@ -112,7 +112,7 @@ public final class AESWrapCipher extends CipherSpi {
      * @return the block size (in bytes), i.e. 16 bytes.
      */
     protected int engineGetBlockSize() {
-        return blksize;
+	return blksize;
     }
 
     /**
@@ -128,28 +128,28 @@ public final class AESWrapCipher extends CipherSpi {
      * @return the required output buffer size (in bytes)
      */
     protected int engineGetOutputSize(int inputLen) {
-        // can only return an upper-limit if not initialized yet.
-        int result = 0;
-        if (decrypting) {
-            result = inputLen - 8;
-        } else {
-            result = inputLen + 8;
-        }
-        return (result < 0? 0:result);
+	// can only return an upper-limit if not initialized yet.
+	int result = 0;
+	if (decrypting) {
+	    result = inputLen - 8;
+	} else {
+	    result = inputLen + 8;
+	}
+	return (result < 0? 0:result);
     }
-
+    
     /**
      * Returns the initialization vector (IV) which is null for this cipher.
      *
      * @return null for this cipher.
      */
     protected byte[] engineGetIV() {
-        return null;
+	return null;
     }
 
     /**
      * Initializes this cipher with a key and a source of randomness.
-     *
+     * 
      * <p>The cipher only supports the following two operation modes:<b>
      * Cipher.WRAP_MODE, and <b>
      * Cipher.UNWRAP_MODE.
@@ -165,22 +165,22 @@ public final class AESWrapCipher extends CipherSpi {
      * initializing this cipher.
      */
     protected void engineInit(int opmode, Key key, SecureRandom random)
-        throws InvalidKeyException {
-        if (opmode == Cipher.WRAP_MODE) {
-            decrypting = false;
-        } else if (opmode == Cipher.UNWRAP_MODE) {
-            decrypting = true;
-        } else {
-            throw new UnsupportedOperationException("This cipher can " +
-                "only be used for key wrapping and unwrapping");
-        }
-        cipher.init(decrypting, key.getAlgorithm(), key.getEncoded());
+	throws InvalidKeyException {
+	if (opmode == Cipher.WRAP_MODE) {
+	    decrypting = false;
+	} else if (opmode == Cipher.UNWRAP_MODE) {
+	    decrypting = true;
+	} else {
+	    throw new UnsupportedOperationException("This cipher can " +
+		"only be used for key wrapping and unwrapping");
+	}
+	cipher.init(decrypting, key.getAlgorithm(), key.getEncoded());
     }
 
     /**
-     * Initializes this cipher with a key, a set of algorithm parameters,
+     * Initializes this cipher with a key, a set of algorithm parameters, 
      * and a source of randomness.
-     *
+     * 
      * <p>The cipher only supports the following two operation modes:<b>
      * Cipher.WRAP_MODE, and <b>
      * Cipher.UNWRAP_MODE.
@@ -199,20 +199,20 @@ public final class AESWrapCipher extends CipherSpi {
      * parameters is not null.
      */
     protected void engineInit(int opmode, Key key,
-                              AlgorithmParameterSpec params,
-                              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        if (params != null) {
-            throw new InvalidAlgorithmParameterException("This cipher " +
-                "does not accept any parameters");
-        }
-        engineInit(opmode, key, random);
+			      AlgorithmParameterSpec params,
+			      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	if (params != null) {
+	    throw new InvalidAlgorithmParameterException("This cipher " +
+	        "does not accept any parameters");
+	}
+	engineInit(opmode, key, random);
     }
 
     /**
-     * Initializes this cipher with a key, a set of algorithm parameters,
+     * Initializes this cipher with a key, a set of algorithm parameters, 
      * and a source of randomness.
-     *
+     * 
      * <p>The cipher only supports the following two operation modes:<b>
      * Cipher.WRAP_MODE, and <b>
      * Cipher.UNWRAP_MODE.
@@ -230,20 +230,20 @@ public final class AESWrapCipher extends CipherSpi {
      * parameters is not null.
      */
     protected void engineInit(int opmode, Key key,
-                              AlgorithmParameters params,
-                              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        if (params != null) {
-            throw new InvalidAlgorithmParameterException("This cipher " +
-                "does not accept any parameters");
-        }
-        engineInit(opmode, key, random);
+			      AlgorithmParameters params,
+			      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	if (params != null) {
+	    throw new InvalidAlgorithmParameterException("This cipher " +
+		"does not accept any parameters");
+	}
+	engineInit(opmode, key, random);
     }
 
     /**
-     * This operation is not supported by this cipher.
-     * Since it's impossible to initialize this cipher given the
-     * current Cipher.engineInit(...) implementation,
+     * This operation is not supported by this cipher. 
+     * Since it's impossible to initialize this cipher given the 
+     * current Cipher.engineInit(...) implementation, 
      * IllegalStateException will always be thrown upon invocation.
      *
      * @param in the input buffer.
@@ -256,13 +256,13 @@ public final class AESWrapCipher extends CipherSpi {
      * @exception IllegalStateException upon invocation of this method.
      */
     protected byte[] engineUpdate(byte[] in, int inOffset, int inLen) {
-        throw new IllegalStateException("Cipher has not been initialized");
+	throw new IllegalStateException("Cipher has not been initialized");
     }
 
     /**
-     * This operation is not supported by this cipher.
-     * Since it's impossible to initialize this cipher given the
-     * current Cipher.engineInit(...) implementation,
+     * This operation is not supported by this cipher. 
+     * Since it's impossible to initialize this cipher given the 
+     * current Cipher.engineInit(...) implementation, 
      * IllegalStateException will always be thrown upon invocation.
      *
      * @param in the input buffer.
@@ -278,15 +278,15 @@ public final class AESWrapCipher extends CipherSpi {
      * @exception IllegalStateException upon invocation of this method.
      */
     protected int engineUpdate(byte[] in, int inOffset, int inLen,
-                               byte[] out, int outOffset)
-        throws ShortBufferException {
-        throw new IllegalStateException("Cipher has not been initialized");
+			       byte[] out, int outOffset)
+	throws ShortBufferException {
+	throw new IllegalStateException("Cipher has not been initialized");
     }
 
     /**
-     * This operation is not supported by this cipher.
-     * Since it's impossible to initialize this cipher given the
-     * current Cipher.engineInit(...) implementation,
+     * This operation is not supported by this cipher. 
+     * Since it's impossible to initialize this cipher given the 
+     * current Cipher.engineInit(...) implementation, 
      * IllegalStateException will always be thrown upon invocation.
      *
      * @param in the input buffer
@@ -298,16 +298,16 @@ public final class AESWrapCipher extends CipherSpi {
      *
      * @exception IllegalStateException upon invocation of this method.
      */
-    protected byte[] engineDoFinal(byte[] input, int inputOffset,
-                                   int inputLen)
-        throws IllegalBlockSizeException, BadPaddingException {
-        throw new IllegalStateException("Cipher has not been initialized");
+    protected byte[] engineDoFinal(byte[] input, int inputOffset, 
+				   int inputLen)
+	throws IllegalBlockSizeException, BadPaddingException {
+	throw new IllegalStateException("Cipher has not been initialized");
     }
 
     /**
-     * This operation is not supported by this cipher.
-     * Since it's impossible to initialize this cipher given the
-     * current Cipher.engineInit(...) implementation,
+     * This operation is not supported by this cipher. 
+     * Since it's impossible to initialize this cipher given the 
+     * current Cipher.engineInit(...) implementation, 
      * IllegalStateException will always be thrown upon invocation.
      *
      * @param in the input buffer.
@@ -323,10 +323,10 @@ public final class AESWrapCipher extends CipherSpi {
      * @exception IllegalStateException upon invocation of this method.
      */
     protected int engineDoFinal(byte[] in, int inOffset, int inLen,
-                                byte[] out, int outOffset)
-        throws IllegalBlockSizeException, ShortBufferException,
-               BadPaddingException {
-        throw new IllegalStateException("Cipher has not been initialized");
+				byte[] out, int outOffset)
+	throws IllegalBlockSizeException, ShortBufferException, 
+	       BadPaddingException {
+	throw new IllegalStateException("Cipher has not been initialized");
     }
 
     /**
@@ -336,14 +336,14 @@ public final class AESWrapCipher extends CipherSpi {
      * @return null since this cipher does not use any parameters.
      */
     protected AlgorithmParameters engineGetParameters() {
-        return null;
+	return null;
     }
 
     /**
      * Returns the key size of the given key object in number of bits.
      *
      * @param key the key object.
-     *
+     * 
      * @return the "effective" key size of the given key object.
      *
      * @exception InvalidKeyException if <code>key</code> is invalid.
@@ -363,9 +363,9 @@ public final class AESWrapCipher extends CipherSpi {
      * @param key the key to be wrapped.
      *
      * @return the wrapped key.
-     *
-     * @exception IllegalBlockSizeException if this cipher is a block
-     * cipher, no padding has been requested, and the length of the
+     * 
+     * @exception IllegalBlockSizeException if this cipher is a block 
+     * cipher, no padding has been requested, and the length of the 
      * encoding of the key to be wrapped is not a
      * multiple of the block size.
      *
@@ -374,48 +374,48 @@ public final class AESWrapCipher extends CipherSpi {
      * being passed to a software only cipher).
      */
     protected byte[] engineWrap(Key key)
-        throws IllegalBlockSizeException, InvalidKeyException {
-        byte[] keyVal = key.getEncoded();
-        if ((keyVal == null) || (keyVal.length == 0)) {
-            throw new InvalidKeyException("Cannot get an encoding of " +
-                                          "the key to be wrapped");
-        }
-        byte[] out = new byte[keyVal.length + 8];
+	throws IllegalBlockSizeException, InvalidKeyException {
+	byte[] keyVal = key.getEncoded();
+	if ((keyVal == null) || (keyVal.length == 0)) {
+	    throw new InvalidKeyException("Cannot get an encoding of " +
+					  "the key to be wrapped");
+	}
+	byte[] out = new byte[keyVal.length + 8];
 
-        if (keyVal.length == 8) {
-            System.arraycopy(IV, 0, out, 0, IV.length);
-            System.arraycopy(keyVal, 0, out, IV.length, 8);
-            cipher.encryptBlock(out, 0, out, 0);
-        } else {
-            if (keyVal.length % 8 != 0) {
-                throw new IllegalBlockSizeException("length of the " +
-                    "to be wrapped key should be multiples of 8 bytes");
-            }
-            System.arraycopy(IV, 0, out, 0, IV.length);
-            System.arraycopy(keyVal, 0, out, IV.length, keyVal.length);
-            int N = keyVal.length/8;
-            byte[] buffer = new byte[blksize];
-            for (int j = 0; j < 6; j++) {
-                for (int i = 1; i <= N; i++) {
-                    int T = i + j*N;
-                    System.arraycopy(out, 0, buffer, 0, IV.length);
-                    System.arraycopy(out, i*8, buffer, IV.length, 8);
-                    cipher.encryptBlock(buffer, 0, buffer, 0);
-                    for (int k = 1; T != 0; k++) {
-                        byte v = (byte) T;
-                        buffer[IV.length - k] ^= v;
-                        T >>>= 8;
-                    }
-                    System.arraycopy(buffer, 0, out, 0, IV.length);
-                    System.arraycopy(buffer, 8, out, 8*i, 8);
-                }
-            }
-        }
-        return out;
+	if (keyVal.length == 8) {
+	    System.arraycopy(IV, 0, out, 0, IV.length);
+	    System.arraycopy(keyVal, 0, out, IV.length, 8);
+	    cipher.encryptBlock(out, 0, out, 0);
+	} else {
+	    if (keyVal.length % 8 != 0) {
+		throw new IllegalBlockSizeException("length of the " +
+		    "to be wrapped key should be multiples of 8 bytes");
+	    }
+	    System.arraycopy(IV, 0, out, 0, IV.length);
+	    System.arraycopy(keyVal, 0, out, IV.length, keyVal.length);
+	    int N = keyVal.length/8;
+	    byte[] buffer = new byte[blksize];
+	    for (int j = 0; j < 6; j++) {
+		for (int i = 1; i <= N; i++) {
+		    int T = i + j*N;
+		    System.arraycopy(out, 0, buffer, 0, IV.length);
+		    System.arraycopy(out, i*8, buffer, IV.length, 8);
+		    cipher.encryptBlock(buffer, 0, buffer, 0);
+		    for (int k = 1; T != 0; k++) {
+			byte v = (byte) T;
+			buffer[IV.length - k] ^= v;
+			T >>>= 8;
+		    }
+		    System.arraycopy(buffer, 0, out, 0, IV.length);
+		    System.arraycopy(buffer, 8, out, 8*i, 8);
+		}
+	    }
+	}
+	return out;
     }
 
     /**
-     * Unwrap a previously wrapped key.
+     * Unwrap a previously wrapped key. 
      *
      * @param wrappedKey the key to be unwrapped.
      *
@@ -426,7 +426,7 @@ public final class AESWrapCipher extends CipherSpi {
      * <code>Cipher.PRIVATE_KEY</code>, or <code>Cipher.PUBLIC_KEY</code>.
      *
      * @return the unwrapped key.
-     *
+     * 
      * @exception NoSuchAlgorithmException if no installed providers
      * can create keys of type <code>wrappedKeyType</code> for the
      * <code>wrappedKeyAlgorithm</code>.
@@ -436,52 +436,53 @@ public final class AESWrapCipher extends CipherSpi {
      * the <code>wrappedKeyAlgorithm</code>.
      */
     protected Key engineUnwrap(byte[] wrappedKey,
-                               String wrappedKeyAlgorithm,
-                               int wrappedKeyType)
-        throws InvalidKeyException, NoSuchAlgorithmException {
-        int wrappedKeyLen = wrappedKey.length;
-        // ensure the wrappedKey length is multiples of 8 bytes and non-zero
-        if (wrappedKeyLen == 0) {
-            throw new InvalidKeyException("The wrapped key is empty");
-        }
-        if (wrappedKeyLen % 8 != 0) {
-            throw new InvalidKeyException
-                ("The wrapped key has invalid key length");
-        }
-        byte[] out = new byte[wrappedKeyLen - 8];
-        byte[] buffer = new byte[blksize];
-        if (wrappedKeyLen == 16) {
-            cipher.decryptBlock(wrappedKey, 0, buffer, 0);
-            for (int i = 0; i < IV.length; i++) {
-                if (IV[i] != buffer[i]) {
-                    throw new InvalidKeyException("Integrity check failed");
-                }
-            }
-            System.arraycopy(buffer, IV.length, out, 0, out.length);
-        } else {
-            System.arraycopy(wrappedKey, 0, buffer, 0, IV.length);
-            System.arraycopy(wrappedKey, IV.length, out, 0, out.length);
-            int N = out.length/8;
-            for (int j = 5; j >= 0; j--) {
-                for (int i = N; i > 0; i--) {
-                    int T = i + j*N;
-                    System.arraycopy(out, 8*(i-1), buffer, IV.length, 8);
-                    for (int k = 1; T != 0; k++) {
-                        byte v = (byte) T;
-                        buffer[IV.length - k] ^= v;
-                        T >>>= 8;
-                    }
-                    cipher.decryptBlock(buffer, 0, buffer, 0);
-                    System.arraycopy(buffer, IV.length, out, 8*(i-1), 8);
-                }
-            }
-            for (int i = 0; i < IV.length; i++) {
-                if (IV[i] != buffer[i]) {
-                    throw new InvalidKeyException("Integrity check failed");
-                }
-            }
-        }
-        return ConstructKeys.constructKey(out, wrappedKeyAlgorithm,
+			       String wrappedKeyAlgorithm,
+			       int wrappedKeyType)
+	throws InvalidKeyException, NoSuchAlgorithmException {
+	int wrappedKeyLen = wrappedKey.length;
+	// ensure the wrappedKey length is multiples of 8 bytes and non-zero
+	if (wrappedKeyLen == 0) {
+	    throw new InvalidKeyException("The wrapped key is empty");
+	}
+	if (wrappedKeyLen % 8 != 0) {
+	    throw new InvalidKeyException
+		("The wrapped key has invalid key length");
+	}
+	byte[] out = new byte[wrappedKeyLen - 8];
+	byte[] buffer = new byte[blksize];
+	if (wrappedKeyLen == 16) {
+	    cipher.decryptBlock(wrappedKey, 0, buffer, 0);
+	    for (int i = 0; i < IV.length; i++) {
+		if (IV[i] != buffer[i]) {
+		    throw new InvalidKeyException("Integrity check failed");
+		}
+	    }
+	    System.arraycopy(buffer, IV.length, out, 0, out.length);
+	} else {
+	    System.arraycopy(wrappedKey, 0, buffer, 0, IV.length);
+	    System.arraycopy(wrappedKey, IV.length, out, 0, out.length);
+	    int N = out.length/8;
+	    for (int j = 5; j >= 0; j--) {
+		for (int i = N; i > 0; i--) {
+		    int T = i + j*N;
+		    System.arraycopy(out, 8*(i-1), buffer, IV.length, 8);
+		    for (int k = 1; T != 0; k++) {
+			byte v = (byte) T;
+			buffer[IV.length - k] ^= v;
+			T >>>= 8;
+		    }
+		    cipher.decryptBlock(buffer, 0, buffer, 0);
+		    System.arraycopy(buffer, IV.length, out, 8*(i-1), 8);
+		}
+	    }
+	    for (int i = 0; i < IV.length; i++) {
+		if (IV[i] != buffer[i]) {
+		    throw new InvalidKeyException("Integrity check failed");
+		}
+	    }
+	}
+	return ConstructKeys.constructKey(out, wrappedKeyAlgorithm,
                                           wrappedKeyType);
     }
 }
+

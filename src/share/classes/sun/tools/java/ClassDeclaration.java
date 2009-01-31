@@ -36,16 +36,16 @@ package sun.tools.java;
  *
  * CS_UNDEFINED - the definition is not yet loaded
  * CS_UNDECIDED - a binary definition is loaded, but it is
- *                still unclear if the source definition need to
- *                be loaded
+ *	          still unclear if the source definition need to
+ *		  be loaded
  * CS_BINARY    - the binary class is loaded
- * CS_PARSED    - the class is loaded from the source file, the
- *                type information is available, but the class has
- *                not yet been compiled.
+ * CS_PARSED	- the class is loaded from the source file, the
+ *		  type information is available, but the class has
+ *		  not yet been compiled.
  * CS_CHECKED   - the class is loaded from the source file and has
- *                been type-checked.
+ *		  been type-checked.
  * CS_COMPILED  - the class has been type checked, compiled,
- *                and written out.
+ *		  and written out.
  * CS_NOTFOUND  - no class definition could be found
  *
  * WARNING: The contents of this source file are not part of any
@@ -63,14 +63,14 @@ class ClassDeclaration implements Constants {
      * Constructor
      */
     public ClassDeclaration(Identifier name) {
-        this.type = Type.tClass(name);
+	this.type = Type.tClass(name);
     }
 
     /**
      * Get the status of the class
      */
     public int getStatus() {
-        return status;
+	return status;
     }
 
     /**
@@ -84,21 +84,21 @@ class ClassDeclaration implements Constants {
      * Get the type of the class
      */
     public Type getType() {
-        return type;
+	return type;
     }
 
     /**
      * Check if the class is defined
      */
     public boolean isDefined() {
-        switch (status) {
-          case CS_BINARY:
-          case CS_PARSED:
-          case CS_CHECKED:
-          case CS_COMPILED:
-            return true;
-        }
-        return false;
+	switch (status) {
+	  case CS_BINARY:
+	  case CS_PARSED:
+	  case CS_CHECKED:
+	  case CS_COMPILED:
+	    return true;
+	}
+	return false;
     }
 
     /**
@@ -106,7 +106,7 @@ class ClassDeclaration implements Constants {
      * the class is not yet defined.
      */
     public ClassDefinition getClassDefinition() {
-        return definition;
+	return definition;
     }
 
     /**
@@ -123,47 +123,47 @@ class ClassDeclaration implements Constants {
      */
     public ClassDefinition getClassDefinition(Environment env)
     throws ClassNotFound {
-        if (tracing) env.dtEvent("getClassDefinition: " +
-                                 getName() + ", status " + getStatus());
+	if (tracing) env.dtEvent("getClassDefinition: " +
+				 getName() + ", status " + getStatus());
 
-        // The majority of calls to getClassDefinition() are duplicates.
-        // This check makes them fast.  It also allows us to avoid
-        // duplicate, useless calls to basicCheck().  In the future it
-        // would be good to add an additional status value, CS_BASICCHECKED.
-        if (found) {
-            return definition;
-        }
+	// The majority of calls to getClassDefinition() are duplicates.
+	// This check makes them fast.  It also allows us to avoid
+	// duplicate, useless calls to basicCheck().  In the future it
+	// would be good to add an additional status value, CS_BASICCHECKED.
+	if (found) {
+	    return definition;
+	}
 
-        for(;;) {
-            switch (status) {
-                case CS_UNDEFINED:
-                case CS_UNDECIDED:
-                case CS_SOURCE:
-                    env.loadDefinition(this);
-                    break;
+	for(;;) {
+	    switch (status) {
+	        case CS_UNDEFINED:
+	        case CS_UNDECIDED:
+	        case CS_SOURCE:
+		    env.loadDefinition(this);
+		    break;
 
-                case CS_BINARY:
-                case CS_PARSED:
-                    //+FIX FOR BUGID 4056065
-                    //definition.basicCheck(env);
-                    if (!definition.isInsideLocal()) {
-                        // Classes inside a block, including anonymous classes,
-                        // are checked when their surrounding member is checked.
-                        definition.basicCheck(env);
-                    }
-                    //-FIX FOR BUGID 4056065
-                    found = true;
-                    return definition;
+	        case CS_BINARY:
+	        case CS_PARSED:
+		    //+FIX FOR BUGID 4056065
+		    //definition.basicCheck(env);
+		    if (!definition.isInsideLocal()) {
+			// Classes inside a block, including anonymous classes,
+			// are checked when their surrounding member is checked.
+			definition.basicCheck(env);
+		    }
+		    //-FIX FOR BUGID 4056065
+		    found = true;
+		    return definition;
 
-                case CS_CHECKED:
-                case CS_COMPILED:
-                    found = true;
-                    return definition;
+	        case CS_CHECKED:
+	        case CS_COMPILED:
+		    found = true;
+		    return definition;
 
-                default:
-                    throw new ClassNotFound(getName());
-                }
-        }
+	        default:
+		    throw new ClassNotFound(getName());
+		}
+	}
     }
 
     /**
@@ -173,26 +173,26 @@ class ClassDeclaration implements Constants {
      * class.
      */
     public ClassDefinition getClassDefinitionNoCheck(Environment env) throws ClassNotFound {
-        if (tracing) env.dtEvent("getClassDefinition: " +
-                                 getName() + ", status " + getStatus());
-        for(;;) {
-            switch (status) {
-                case CS_UNDEFINED:
-                case CS_UNDECIDED:
-                case CS_SOURCE:
-                    env.loadDefinition(this);
-                    break;
+	if (tracing) env.dtEvent("getClassDefinition: " +
+				 getName() + ", status " + getStatus());
+	for(;;) {
+	    switch (status) {
+	        case CS_UNDEFINED:
+	        case CS_UNDECIDED:
+	        case CS_SOURCE:
+		    env.loadDefinition(this);
+		    break;
 
-                case CS_BINARY:
-                case CS_PARSED:
-                case CS_CHECKED:
-                case CS_COMPILED:
-                    return definition;
+	        case CS_BINARY:
+	        case CS_PARSED:
+	        case CS_CHECKED:
+	        case CS_COMPILED:
+		    return definition;
 
-                default:
-                    throw new ClassNotFound(getName());
-                }
-        }
+	        default:
+		    throw new ClassNotFound(getName());
+		}
+	}
     }
 
    /**
@@ -200,66 +200,66 @@ class ClassDeclaration implements Constants {
      */
     public void setDefinition(ClassDefinition definition, int status) {
 
-        // Sanity checks.
+	// Sanity checks.
 
-        // The name of the definition should match that of the declaration.
-        if ((definition != null) && !getName().equals(definition.getName())) {
-            throw new CompilerError("setDefinition: name mismatch: " +
-                                    this + ", " + definition);
-        }
+	// The name of the definition should match that of the declaration.
+	if ((definition != null) && !getName().equals(definition.getName())) {
+	    throw new CompilerError("setDefinition: name mismatch: " +
+				    this + ", " + definition);
+	}
 
-        // The status states can be considered ordered in the same
-        // manner as their numerical values. We expect classes to
-        // progress through a sequence of monotonically increasing
-        // states. NOTE: There are currently exceptions to this rule
-        // which are believed to be legitimate.  In particular, a
-        // class may be checked more than once, though we believe that
-        // this is unnecessary and may be avoided.
-        /*-----------------*
-        if (status <= this.status) {
-            System.out.println("STATUS REGRESSION: " +
-                               this + " FROM " + this.status + " TO " + status);
-        }
-        *------------------*/
+	// The status states can be considered ordered in the same
+	// manner as their numerical values. We expect classes to
+	// progress through a sequence of monotonically increasing
+	// states. NOTE: There are currently exceptions to this rule
+	// which are believed to be legitimate.  In particular, a
+	// class may be checked more than once, though we believe that
+	// this is unnecessary and may be avoided.
+	/*-----------------*
+	if (status <= this.status) {
+	    System.out.println("STATUS REGRESSION: " +
+			       this + " FROM " + this.status + " TO " + status);
+	}
+	*------------------*/
 
-        this.definition = definition;
-        this.status = status;
+	this.definition = definition;
+	this.status = status;
     }
 
     /**
      * Equality
      */
     public boolean equals(Object obj) {
-        if ((obj != null) && (obj instanceof ClassDeclaration)) {
-            return type.equals(((ClassDeclaration)obj).type);
-        }
-        return false;
+	if ((obj != null) && (obj instanceof ClassDeclaration)) {
+	    return type.equals(((ClassDeclaration)obj).type);
+	}
+	return false;
     }
 
     /**
      * toString
      */
     public String toString() {
-        String name = getName().toString();
-        String type = "type ";
-        String nested = getName().isInner() ? "nested " : "";
-        if (getClassDefinition() != null) {
-            if (getClassDefinition().isInterface()) {
-                type = "interface ";
-            } else {
-                type = "class ";
-            }
-            if (!getClassDefinition().isTopLevel()) {
-                nested = "inner ";
-                if (getClassDefinition().isLocal()) {
-                    nested = "local ";
-                    if (!getClassDefinition().isAnonymous()) {
-                        name = getClassDefinition().getLocalName() +
-                            " (" + name + ")";
-                    }
-                }
-            }
-        }
-        return nested + type + name;
+	String name = getName().toString();
+	String type = "type ";
+	String nested = getName().isInner() ? "nested " : "";
+	if (getClassDefinition() != null) {
+	    if (getClassDefinition().isInterface()) {
+		type = "interface ";
+	    } else {
+		type = "class ";
+	    }
+	    if (!getClassDefinition().isTopLevel()) {
+		nested = "inner ";
+		if (getClassDefinition().isLocal()) {
+		    nested = "local ";
+		    if (!getClassDefinition().isAnonymous()) {
+			name = getClassDefinition().getLocalName() +
+			    " (" + name + ")";
+		    }
+		}
+	    }
+	}
+	return nested + type + name;
     }
 }

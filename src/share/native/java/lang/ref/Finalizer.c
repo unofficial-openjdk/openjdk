@@ -29,7 +29,7 @@
 
 JNIEXPORT void JNICALL
 Java_java_lang_ref_Finalizer_invokeFinalizeMethod(JNIEnv *env, jclass clazz,
-                                                  jobject ob)
+						  jobject ob)
 {
     jclass cls;
     jmethodID mid;

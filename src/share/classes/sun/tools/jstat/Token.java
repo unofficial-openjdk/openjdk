@@ -32,6 +32,7 @@ import java.io.StreamTokenizer;
  * for output formatting purposes.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Token {

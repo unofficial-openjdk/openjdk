@@ -168,7 +168,7 @@ public final class Locale implements Cloneable, Serializable {
 
     // cache to store singleton Locales
     private final static ConcurrentHashMap<String, Locale> cache =
-        new ConcurrentHashMap<String, Locale>(32);
+	new ConcurrentHashMap<String, Locale>(32);
 
     /** Useful constant for language.
      */
@@ -257,7 +257,7 @@ public final class Locale implements Cloneable, Serializable {
     /**
      * Useful constant for the root locale.  The root locale is the locale whose
      * language, country, and variant are empty ("") strings.  This is regarded
-     * as the base locale of all locales, and is used as the language/country
+     * as the base locale of all locales, and is used as the language/country 
      * neutral locale for the locale sensitive operations.
      *
      * @since 1.6
@@ -279,8 +279,8 @@ public final class Locale implements Cloneable, Serializable {
      * Construct a locale from language, country, variant.
      * NOTE:  ISO 639 is not a stable standard; some of the language codes it defines
      * (specifically iw, ji, and in) have changed.  This constructor accepts both the
-     * old codes (iw, ji, and in) and the new codes (he, yi, and id), but all other
-     * API on Locale will return only the OLD codes.
+     * old codes (iw, ji, and in) and the new codes (he, yi, and id), but all other 
+     * API on Locale will return only the OLD codes. 
      * @param language lowercase two-letter ISO-639 code.
      * @param country uppercase two-letter ISO-3166 code.
      * @param variant vendor and browser specific code. See class description.
@@ -296,8 +296,8 @@ public final class Locale implements Cloneable, Serializable {
      * Construct a locale from language, country.
      * NOTE:  ISO 639 is not a stable standard; some of the language codes it defines
      * (specifically iw, ji, and in) have changed.  This constructor accepts both the
-     * old codes (iw, ji, and in) and the new codes (he, yi, and id), but all other
-     * API on Locale will return only the OLD codes.
+     * old codes (iw, ji, and in) and the new codes (he, yi, and id), but all other 
+     * API on Locale will return only the OLD codes. 
      * @param language lowercase two-letter ISO-639 code.
      * @param country uppercase two-letter ISO-3166 code.
      * @exception NullPointerException thrown if either argument is null.
@@ -310,8 +310,8 @@ public final class Locale implements Cloneable, Serializable {
      * Construct a locale from a language code.
      * NOTE:  ISO 639 is not a stable standard; some of the language codes it defines
      * (specifically iw, ji, and in) have changed.  This constructor accepts both the
-     * old codes (iw, ji, and in) and the new codes (he, yi, and id), but all other
-     * API on Locale will return only the OLD codes.
+     * old codes (iw, ji, and in) and the new codes (he, yi, and id), but all other 
+     * API on Locale will return only the OLD codes. 
      * @param language lowercase two-letter ISO-639 code.
      * @exception NullPointerException thrown if argument is null.
      * @since 1.4
@@ -328,9 +328,9 @@ public final class Locale implements Cloneable, Serializable {
      * avoiding the conflict with the public constructors.
      */
     private Locale(String language, String country, boolean flag) {
-        this.language = language;
-        this.country = country;
-        this.variant = "";
+	this.language = language;
+	this.country = country;
+	this.variant = "";
     }
 
     /**
@@ -341,9 +341,9 @@ public final class Locale implements Cloneable, Serializable {
      * constants.
      */
     private static Locale createSingleton(String key, String language, String country) {
-        Locale locale = new Locale(language, country, false);
-        cache.put(key, locale);
-        return locale;
+	Locale locale = new Locale(language, country, false);
+	cache.put(key, locale);
+	return locale;
     }
 
     /**
@@ -365,18 +365,18 @@ public final class Locale implements Cloneable, Serializable {
             throw new NullPointerException();
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(language).append('_').append(country).append('_').append(variant);
-        String key = sb.toString();
-        Locale locale = cache.get(key);
-        if (locale == null) {
-            locale = new Locale(language, country, variant);
-            Locale l = cache.putIfAbsent(key, locale);
-            if (l != null) {
-                locale = l;
-            }
-        }
-        return locale;
+	StringBuilder sb = new StringBuilder();
+	sb.append(language).append('_').append(country).append('_').append(variant);
+	String key = sb.toString();
+	Locale locale = cache.get(key);
+	if (locale == null) {
+	    locale = new Locale(language, country, variant);
+	    Locale l = cache.putIfAbsent(key, locale);
+	    if (l != null) {
+		locale = l;
+	    }
+	}
+	return locale;
     }
 
     /**
@@ -397,10 +397,10 @@ public final class Locale implements Cloneable, Serializable {
         if (defaultLocale == null) {
             String language, region, country, variant;
             language = AccessController.doPrivileged(
-                new GetPropertyAction("user.language", "en"));
+		new GetPropertyAction("user.language", "en"));
             // for compatibility, check for old user.region property
             region = AccessController.doPrivileged(
-                new GetPropertyAction("user.region"));
+		new GetPropertyAction("user.region"));
             if (region != null) {
                 // region can be of form country, country_variant, or _variant
                 int i = region.indexOf('_');
@@ -413,9 +413,9 @@ public final class Locale implements Cloneable, Serializable {
                 }
             } else {
                 country = AccessController.doPrivileged(
-                    new GetPropertyAction("user.country", ""));
+		    new GetPropertyAction("user.country", ""));
                 variant = AccessController.doPrivileged(
-                    new GetPropertyAction("user.variant", ""));
+		    new GetPropertyAction("user.variant", ""));
             }
             defaultLocale = getInstance(language, country, variant);
         }
@@ -459,8 +459,8 @@ public final class Locale implements Cloneable, Serializable {
 
     /**
      * Returns an array of all installed locales.
-     * The returned array represents the union of locales supported
-     * by the Java runtime environment and by installed
+     * The returned array represents the union of locales supported 
+     * by the Java runtime environment and by installed 
      * {@link java.util.spi.LocaleServiceProvider LocaleServiceProvider}
      * implementations.  It must contain at least a <code>Locale</code>
      * instance equal to {@link java.util.Locale#US Locale.US}.
@@ -501,12 +501,12 @@ public final class Locale implements Cloneable, Serializable {
     }
 
     private static final String[] getISO2Table(String table) {
-        int len = table.length() / 5;
-        String[] isoTable = new String[len];
-        for (int i = 0, j = 0; i < len; i++, j += 5) {
-            isoTable[i] = table.substring(j, j + 2);
-        }
-        return isoTable;
+	int len = table.length() / 5;
+	String[] isoTable = new String[len];
+	for (int i = 0, j = 0; i < len; i++, j += 5) {
+	    isoTable[i] = table.substring(j, j + 2);
+	}
+	return isoTable;
     }
 
     /**
@@ -514,12 +514,12 @@ public final class Locale implements Cloneable, Serializable {
      * or a lowercase ISO 639 code.
      * <p>NOTE:  ISO 639 is not a stable standard-- some languages' codes have changed.
      * Locale's constructor recognizes both the new and the old codes for the languages
-     * whose codes have changed, but this function always returns the old code.  If you
-     * want to check for a specific language whose code has changed, don't do <pre>
-     * if (locale.getLanguage().equals("he"))
-     *    ...
-     * </pre>Instead, do<pre>
-     * if (locale.getLanguage().equals(new Locale("he", "", "").getLanguage()))
+     * whose codes have changed, but this function always returns the old code.  If you 
+     * want to check for a specific language whose code has changed, don't do <pre> 
+     * if (locale.getLanguage().equals("he")) 
+     *    ... 
+     * </pre>Instead, do<pre> 
+     * if (locale.getLanguage().equals(new Locale("he", "", "").getLanguage())) 
      *    ...</pre>
      * @see #getDisplayLanguage
      */
@@ -581,7 +581,7 @@ public final class Locale implements Cloneable, Serializable {
      * three-letter language abbreviation is not available for this locale.
      */
     public String getISO3Language() throws MissingResourceException {
-        String language3 = getISO3Code(language, LocaleISOData.isoLanguageTable);
+	String language3 = getISO3Code(language, LocaleISOData.isoLanguageTable);
         if (language3 == null) {
             throw new MissingResourceException("Couldn't find 3-letter language code for "
                     + language, "FormatData_" + toString(), "ShortLanguage");
@@ -600,32 +600,32 @@ public final class Locale implements Cloneable, Serializable {
      * three-letter country abbreviation is not available for this locale.
      */
     public String getISO3Country() throws MissingResourceException {
-        String country3 = getISO3Code(country, LocaleISOData.isoCountryTable);
+	String country3 = getISO3Code(country, LocaleISOData.isoCountryTable);
         if (country3 == null) {
             throw new MissingResourceException("Couldn't find 3-letter country code for "
                     + country, "FormatData_" + toString(), "ShortCountry");
         }
-        return country3;
+	return country3;
     }
 
     private static final String getISO3Code(String iso2Code, String table) {
-        int codeLength = iso2Code.length();
+	int codeLength = iso2Code.length();
         if (codeLength == 0) {
             return "";
         }
 
-        int tableLength = table.length();
+	int tableLength = table.length();
         int index = tableLength;
-        if (codeLength == 2) {
-            char c1 = iso2Code.charAt(0);
-            char c2 = iso2Code.charAt(1);
-            for (index = 0; index < tableLength; index += 5) {
-                if (table.charAt(index) == c1
-                    && table.charAt(index + 1) == c2) {
-                    break;
-                }
-            }
-        }
+	if (codeLength == 2) {
+	    char c1 = iso2Code.charAt(0);
+	    char c2 = iso2Code.charAt(1);
+	    for (index = 0; index < tableLength; index += 5) {
+		if (table.charAt(index) == c1
+		    && table.charAt(index + 1) == c2) {
+		    break;
+		}
+	    }
+	}
         return index < tableLength ? table.substring(index + 2, index + 5) : null;
     }
 
@@ -698,7 +698,7 @@ public final class Locale implements Cloneable, Serializable {
     public String getDisplayCountry(Locale inLocale) {
         return getDisplayString(country, inLocale, DISPLAY_COUNTRY);
     }
-
+    
     private String getDisplayString(String code, Locale inLocale, int type) {
         if (code.length() == 0) {
             return "";
@@ -713,7 +713,7 @@ public final class Locale implements Cloneable, Serializable {
             String key = (type == DISPLAY_VARIANT ? "%%"+code : code);
             String result = null;
 
-            // Check whether a provider can provide an implementation that's closer
+            // Check whether a provider can provide an implementation that's closer 
             // to the requested locale than what the Java runtime itself can provide.
             LocaleServiceProviderPool pool =
                 LocaleServiceProviderPool.getPool(LocaleNameProvider.class);
@@ -908,7 +908,7 @@ public final class Locale implements Cloneable, Serializable {
     public int hashCode() {
         int hc = hashCodeValue;
         if (hc == 0) {
-            hc = (language.hashCode() << 8) ^ country.hashCode() ^ (variant.hashCode() << 4);
+	    hc = (language.hashCode() << 8) ^ country.hashCode() ^ (variant.hashCode() << 4);
             hashCodeValue = hc;
         }
         return hc;
@@ -930,7 +930,7 @@ public final class Locale implements Cloneable, Serializable {
         if (!(obj instanceof Locale))
             return false;
         Locale other = (Locale) obj;
-        return language == other.language
+	return language == other.language
             && country == other.country
             && variant == other.variant;
     }
@@ -984,8 +984,8 @@ public final class Locale implements Cloneable, Serializable {
         // For each variant token, lookup the display name.  If
         // not found, use the variant name itself.
         for (int i=0; i<names.length; ++i) {
-            names[i] = getDisplayString(tokenizer.nextToken(),
-                                inLocale, DISPLAY_VARIANT);
+            names[i] = getDisplayString(tokenizer.nextToken(), 
+                                inLocale, DISPLAY_VARIANT); 
         }
 
         return names;
@@ -1057,9 +1057,9 @@ public final class Locale implements Cloneable, Serializable {
 
     /**
      * Replace the deserialized Locale object with a newly
-     * created object. Newer language codes are replaced with older ISO
-     * codes. The country and variant codes are replaced with internalized
-     * String copies.
+     * created object. Newer language codes are replaced with older ISO 
+     * codes. The country and variant codes are replaced with internalized 
+     * String copies. 
      */
     private Object readResolve() throws java.io.ObjectStreamException {
         return getInstance(language, country, variant);
@@ -1075,9 +1075,9 @@ public final class Locale implements Cloneable, Serializable {
      * The most straightforward algorithm is used. Look at optimizations later.
      */
     private String toLowerCase(String str) {
-        char[] buf = new char[str.length()];
+	char[] buf = new char[str.length()];
         for (int i = 0; i < buf.length; i++) {
-            buf[i] = Character.toLowerCase(str.charAt(i));
+	    buf[i] = Character.toLowerCase(str.charAt(i));
         }
         return new String( buf );
     }
@@ -1088,25 +1088,25 @@ public final class Locale implements Cloneable, Serializable {
      * The most straightforward algorithm is used. Look at optimizations later.
      */
     private String toUpperCase(String str) {
-        char[] buf = new char[str.length()];
+	char[] buf = new char[str.length()];
         for (int i = 0; i < buf.length; i++) {
-            buf[i] = Character.toUpperCase(str.charAt(i));
+	    buf[i] = Character.toUpperCase(str.charAt(i));
         }
         return new String( buf );
     }
 
-    private String convertOldISOCodes(String language) {
-        // we accept both the old and the new ISO codes for the languages whose ISO
-        // codes have changed, but we always store the OLD code, for backward compatibility
-        language = toLowerCase(language).intern();
-        if (language == "he") {
-            return "iw";
-        } else if (language == "yi") {
-            return "ji";
-        } else if (language == "id") {
-            return "in";
-        } else {
-            return language;
+    private String convertOldISOCodes(String language) { 
+        // we accept both the old and the new ISO codes for the languages whose ISO 
+        // codes have changed, but we always store the OLD code, for backward compatibility 
+        language = toLowerCase(language).intern(); 
+        if (language == "he") { 
+            return "iw"; 
+        } else if (language == "yi") { 
+            return "ji"; 
+        } else if (language == "id") { 
+            return "in"; 
+        } else { 
+            return language; 
         }
     }
 
@@ -1114,12 +1114,12 @@ public final class Locale implements Cloneable, Serializable {
      * Obtains a localized locale names from a LocaleNameProvider
      * implementation.
      */
-    private static class LocaleNameGetter
+    private static class LocaleNameGetter 
         implements LocaleServiceProviderPool.LocalizedObjectGetter<LocaleNameProvider, String> {
         private static final LocaleNameGetter INSTANCE = new LocaleNameGetter();
 
         public String getObject(LocaleNameProvider localeNameProvider,
-                                Locale locale,
+                                Locale locale, 
                                 String key,
                                 Object... params) {
             assert params.length == 2;
@@ -1128,11 +1128,11 @@ public final class Locale implements Cloneable, Serializable {
 
             switch(type) {
             case DISPLAY_LANGUAGE:
-                return localeNameProvider.getDisplayLanguage(code, locale);
+		return localeNameProvider.getDisplayLanguage(code, locale);
             case DISPLAY_COUNTRY:
-                return localeNameProvider.getDisplayCountry(code, locale);
+		return localeNameProvider.getDisplayCountry(code, locale);
             case DISPLAY_VARIANT:
-                return localeNameProvider.getDisplayVariant(code, locale);
+		return localeNameProvider.getDisplayVariant(code, locale);
             default:
                 assert false; // shouldn't happen
             }

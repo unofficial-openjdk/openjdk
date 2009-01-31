@@ -38,15 +38,15 @@ class Thread {
     unsigned contends;
     unsigned waits;
     unsigned timeouts;
-
+    
   public:
     Thread(jvmtiEnv *jvmti, JNIEnv *env, jthread thread);
     ~Thread();
-    void monitor_contended_enter(jvmtiEnv* jvmti, JNIEnv *env,
-                   jthread thread, jobject object);
-    void monitor_wait(jvmtiEnv* jvmti, JNIEnv *env,
-                   jthread thread, jobject object, jlong timeout);
+    void monitor_contended_enter(jvmtiEnv* jvmti, JNIEnv *env, 
+		   jthread thread, jobject object);
+    void monitor_wait(jvmtiEnv* jvmti, JNIEnv *env, 
+		   jthread thread, jobject object, jlong timeout);
     void monitor_waited(jvmtiEnv* jvmti, JNIEnv *env,
-                   jthread thread, jobject object, jboolean timed_out);
+		   jthread thread, jobject object, jboolean timed_out);
 
 };

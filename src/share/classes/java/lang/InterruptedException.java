@@ -38,6 +38,7 @@ package java.lang;
  * </pre>
  *
  * @author  Frank Yellin
+ * @version %I%, %G%
  * @see     java.lang.Object#wait()
  * @see     java.lang.Object#wait(long)
  * @see     java.lang.Object#wait(long, int)
@@ -49,19 +50,19 @@ package java.lang;
 public
 class InterruptedException extends Exception {
     /**
-     * Constructs an <code>InterruptedException</code> with no detail  message.
+     * Constructs an <code>InterruptedException</code> with no detail  message. 
      */
     public InterruptedException() {
-        super();
+	super();
     }
 
     /**
-     * Constructs an <code>InterruptedException</code> with the
-     * specified detail message.
+     * Constructs an <code>InterruptedException</code> with the 
+     * specified detail message. 
      *
      * @param   s   the detail message.
      */
     public InterruptedException(String s) {
-        super(s);
+	super(s);
     }
 }

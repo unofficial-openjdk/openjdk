@@ -31,8 +31,8 @@
  * @run shell MakeJAR.sh redefineAgent
  * @run main/othervm -javaagent:redefineAgent.jar NullTransformerRemoveTest NullTransformerRemoveTest
  */
-public class
-NullTransformerRemoveTest
+public class 
+NullTransformerRemoveTest 
     extends ATransformerManagementTestCase
 {
 
@@ -54,16 +54,16 @@ NullTransformerRemoveTest
     doRunTest() {
         testNullTransformerRemove();
     }
-
-
+        
+    
     /**
-     * Remove null transformers from the the manager and check
+     * Remove null transformers from the the manager and check 
      * that it throws NullPointerException
      */
     public void
     testNullTransformerRemove() {
         boolean caught = false;
-
+        
         try {
             fInst.removeTransformer(null);
         } catch (NullPointerException npe) {
@@ -71,5 +71,5 @@ NullTransformerRemoveTest
         }
         assertTrue(caught);
     }
-
+    
 }

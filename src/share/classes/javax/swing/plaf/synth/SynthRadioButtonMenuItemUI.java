@@ -34,6 +34,7 @@ import javax.swing.border.*;
 /**
  * Synth's RadioButtonMenuItemUI.
  *
+ * @version %I%, %G%
  * @author Georges Saab
  * @author David Karlton
  */
@@ -43,9 +44,9 @@ class SynthRadioButtonMenuItemUI extends SynthMenuItemUI {
     }
 
     protected String getPropertyPrefix() {
-        return "RadioButtonMenuItem";
+	return "RadioButtonMenuItem";
     }
-
+    
     public void processMouseEvent(JMenuItem item,MouseEvent e,MenuElement path[],MenuSelectionManager manager) {
         Point p = e.getPoint();
         if(p.x >= 0 && p.x < item.getWidth() &&

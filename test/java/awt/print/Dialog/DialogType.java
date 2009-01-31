@@ -55,7 +55,7 @@ public class DialogType {
       if (job.getPrintService() == null) {
          return;
       }
-
+    
       PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
       aset.add(DialogTypeSelection.NATIVE);
       job.printDialog(aset);

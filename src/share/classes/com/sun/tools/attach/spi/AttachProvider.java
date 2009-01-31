@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package com.sun.tools.attach.spi;
 
 import java.io.IOException;
@@ -46,29 +46,29 @@ import java.util.ServiceLoader;
  * <p> An attach provider implementation is typically tied to a Java virtual
  * machine implementation, version, or even mode of operation. That is, a specific
  * provider implementation will typically only be capable of attaching to
- * a specific Java virtual machine implementation or version. For example, Sun's
+ * a specific Java virtual machine implementation or version. For example, Sun's 
  * JDK implementation ships with provider implementations that can only attach to
- * Sun's <i>HotSpot</i> virtual machine. In general, if an environment
- * consists of Java virtual machines of different versions and from different
+ * Sun's <i>HotSpot</i> virtual machine. In general, if an environment 
+ * consists of Java virtual machines of different versions and from different 
  * vendors then there will be an attach provider implementation for each
  * <i>family</i> of implementations or versions. </p>
- *
+ * 
  * <p> An attach provider is identified by its {@link #name <i>name</i>} and
  * {@link #type <i>type</i>}. The <i>name</i> is typically, but not required to
- * be, a name that corresponds to the VM vendor. The Sun JDK implementation,
+ * be, a name that corresponds to the VM vendor. The Sun JDK implementation, 
  * for example, ships with attach providers that use the name <i>"sun"</i>. The
- * <i>type</i> typically corresponds to the attach mechanism. For example, an
- * implementation that uses the Doors inter-process communication mechanism
- * might use the type <i>"doors"</i>. The purpose of the name and type is to
+ * <i>type</i> typically corresponds to the attach mechanism. For example, an 
+ * implementation that uses the Doors inter-process communication mechanism 
+ * might use the type <i>"doors"</i>. The purpose of the name and type is to 
  * identify providers in environments where there are multiple providers
  * installed. </p>
- *
+ * 
  * <p> AttachProvider implementations are loaded and instantiated at the first
- * invocation of the {@link #providers() providers} method. This method
+ * invocation of the {@link #providers() providers} method. This method 
  * attempts to load all provider implementations that are installed on the
  * platform. </p>
  *
- * <p> All of the methods in this class are safe for use by multiple
+ * <p> All of the methods in this class are safe for use by multiple 
  * concurrent threads. </p>
  *
  * @since 1.6
@@ -86,24 +86,24 @@ public abstract class AttachProvider {
      *          If a security manager has been installed and it denies
      *          {@link com.sun.tools.attach.AttachPermission AttachPermission}
      *          <tt>("createAttachProvider")</tt>
-     */
+     */    
     protected AttachProvider() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null)
-            sm.checkPermission(new AttachPermission("createAttachProvider"));
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null)
+	    sm.checkPermission(new AttachPermission("createAttachProvider"));
     }
 
     /**
      * Return this provider's name. </p>
      *
-     * @return  The name of this provider
+     * @return	The name of this provider
      */
     public abstract String name();
 
-    /**
+    /**                                
      * Return this provider's type. </p>
      *
-     * @return  The type of this provider
+     * @return	The type of this provider
      */
     public abstract String type();
 
@@ -116,50 +116,50 @@ public abstract class AttachProvider {
      *
      * <p> This method parses the identifier and maps the identifier to a Java
      * virtual machine (in an implementation dependent manner). If the identifier
-     * cannot be parsed by the provider then an {@link
+     * cannot be parsed by the provider then an {@link 
      * com.sun.tools.attach.AttachNotSupportedException AttachNotSupportedException}
      * is thrown. Once parsed this method attempts to attach to the Java virtual machine.
-     * If the provider detects that the identifier corresponds to a Java virtual machine
-     * that does not exist, or it corresponds to a Java virtual machine that does not support
-     * the attach mechanism implemented by this provider, or it detects that the
+     * If the provider detects that the identifier corresponds to a Java virtual machine 
+     * that does not exist, or it corresponds to a Java virtual machine that does not support 
+     * the attach mechanism implemented by this provider, or it detects that the 
      * Java virtual machine is a version to which this provider cannot attach, then
      * an <code>AttachNotSupportedException</code> is thrown. </p>
      *
      * @param  id
-     *         The abstract identifier that identifies the Java virtual machine.
-     *
+     *         The abstract identifier that identifies the Java virtual machine. 
+     * 
      * @return  VirtualMachine representing the target virtual machine.
      *
      * @throws  SecurityException
      *          If a security manager has been installed and it denies
      *          {@link com.sun.tools.attach.AttachPermission AttachPermission}
      *          <tt>("attachVirtualMachine")</tt>, or other permission
-     *          required by the implementation.
+     *		required by the implementation.
      *
      * @throws  AttachNotSupportedException
-     *          If the identifier cannot be parsed, or it corresponds to
-     *          to a Java virtual machine that does not exist, or it
-     *          corresponds to a Java virtual machine which this
+     *		If the identifier cannot be parsed, or it corresponds to
+     *	        to a Java virtual machine that does not exist, or it
+     *		corresponds to a Java virtual machine which this 
      *          provider cannot attach.
      *
      * @throws  IOException
      *          If some other I/O error occurs
      *
-     * @throws  NullPointerException
-     *          If <code>id</code> is <code>null</code>
+     * @throws	NullPointerException
+     *		If <code>id</code> is <code>null</code>
      */
-    public abstract VirtualMachine attachVirtualMachine(String id)
-        throws AttachNotSupportedException, IOException;
+    public abstract VirtualMachine attachVirtualMachine(String id) 
+	throws AttachNotSupportedException, IOException;
 
     /**
      * Attaches to a Java virtual machine.
      *
      * <p> A Java virtual machine can be described using a {@link
      * com.sun.tools.attach.VirtualMachineDescriptor VirtualMachineDescriptor}.
-     * This method invokes the descriptor's {@link
-     * com.sun.tools.attach.VirtualMachineDescriptor#provider() provider()} method
+     * This method invokes the descriptor's {@link 
+     * com.sun.tools.attach.VirtualMachineDescriptor#provider() provider()} method 
      * to check that it is equal to this provider. It then attempts to attach to the
-     * Java virtual machine.
+     * Java virtual machine. 
      *
      * @param  vmd
      *         The virtual machine descriptor
@@ -173,21 +173,21 @@ public abstract class AttachProvider {
      *          required by the implementation.
      *
      * @throws  AttachNotSupportedException
-     *          If the descriptor's {@link
+     *		If the descriptor's {@link 
      *          com.sun.tools.attach.VirtualMachineDescriptor#provider() provider()} method
-     *          returns a provider that is not this provider, or it does not correspond
+     *          returns a provider that is not this provider, or it does not correspond 
      *          to a Java virtual machine to which this provider can attach.
      *
      * @throws  IOException
      *          If some other I/O error occurs
      *
-     * @throws  NullPointerException
-     *          If <code>vmd</code> is <code>null</code>
+     * @throws	NullPointerException
+     *		If <code>vmd</code> is <code>null</code>
      */
     public VirtualMachine attachVirtualMachine(VirtualMachineDescriptor vmd)
-        throws AttachNotSupportedException, IOException
+	throws AttachNotSupportedException, IOException 
     {
-        if (vmd.provider() != this) {
+	if (vmd.provider() != this) {
             throw new AttachNotSupportedException("provider mismatch");
         }
         return attachVirtualMachine(vmd.id());
@@ -196,15 +196,15 @@ public abstract class AttachProvider {
     /**
      * Lists the Java virtual machines known to this provider.
      *
-     * <p> This method returns a list of {@link
+     * <p> This method returns a list of {@link 
      * com.sun.tools.attach.VirtualMachineDescriptor} elements. Each
      * <code>VirtualMachineDescriptor</code> describes a Java virtual machine
      * to which this provider can <i>potentially</i> attach.  There isn't any
      * guarantee that invoking {@link #attachVirtualMachine(VirtualMachineDescriptor)
      * attachVirtualMachine} on each descriptor in the list will succeed.
      *
-     * @return  The list of virtual machine descriptors which describe the
-     *          Java virtual machines known to this provider (may be empty).
+     * @return	The list of virtual machine descriptors which describe the
+     *		Java virtual machines known to this provider (may be empty).
      */
     public abstract List<VirtualMachineDescriptor> listVirtualMachines();
 
@@ -235,39 +235,39 @@ public abstract class AttachProvider {
      * the first comment character are ignored. The file must be encoded in
      * UTF-8. </p>
      *
-     * <p> AttachProvider implementations are loaded and instantiated
+     * <p> AttachProvider implementations are loaded and instantiated 
      * (using the zero-arg constructor) at the first invocation of this method.
      * The list returned by the first invocation of this method is the list
      * of providers. Subsequent invocations of this method return a list of the same
      * providers. The list is unmodifable.</p>
      *
-     * @return  A list of the installed attach providers.
+     * @return	A list of the installed attach providers.
      */
     public static List<AttachProvider> providers() {
-        synchronized (lock) {
-            if (providers == null) {
-                providers = new ArrayList<AttachProvider>();
+	synchronized (lock) {
+	    if (providers == null) {
+		providers = new ArrayList<AttachProvider>();
 
-                ServiceLoader<AttachProvider> providerLoader =
+		ServiceLoader<AttachProvider> providerLoader = 
                     ServiceLoader.load(AttachProvider.class,
                                        AttachProvider.class.getClassLoader());
+                
+		Iterator<AttachProvider> i = providerLoader.iterator();
 
-                Iterator<AttachProvider> i = providerLoader.iterator();
-
-                while (i.hasNext()) {
-                    try {
+		while (i.hasNext()) {
+		    try {
                         providers.add(i.next());
-                    } catch (Throwable t) {
-                        if (t instanceof ThreadDeath) {
-                            ThreadDeath td = (ThreadDeath)t;
-                            throw td;
-                        }
-                        // Ignore errors and exceptions
-                        System.err.println(t);
-                    }
+		    } catch (Throwable t) {
+			if (t instanceof ThreadDeath) {
+			    ThreadDeath td = (ThreadDeath)t;
+			    throw td;
+			}
+                	// Ignore errors and exceptions
+			System.err.println(t);
+		    }
                 }
-            }
-            return Collections.unmodifiableList(providers);
-        }
+	    }
+	    return Collections.unmodifiableList(providers);
+	}
     }
 }

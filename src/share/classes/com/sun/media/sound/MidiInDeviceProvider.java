@@ -32,6 +32,7 @@ import javax.sound.midi.spi.MidiDeviceProvider;
 /**
  * MIDI input device provider.
  *
+ * @version %I%, %E%
  * @author Kara Kytle
  * @author Florian Bomers
  */
@@ -48,9 +49,9 @@ public class MidiInDeviceProvider extends AbstractMidiDeviceProvider {
     // STATIC
 
     static {
-        // initialize
-        Platform.initialize();
-        enabled = Platform.isMidiIOEnabled();
+	// initialize
+	Platform.initialize();
+	enabled = Platform.isMidiIOEnabled();
     }
 
     // CONSTRUCTOR
@@ -59,35 +60,35 @@ public class MidiInDeviceProvider extends AbstractMidiDeviceProvider {
      * Required public no-arg constructor.
      */
     public MidiInDeviceProvider() {
-        if (Printer.trace) Printer.trace("MidiInDeviceProvider: constructor");
+	if (Printer.trace) Printer.trace("MidiInDeviceProvider: constructor");
     }
 
     // implementation of abstract methods in AbstractMidiDeviceProvider
 
     AbstractMidiDeviceProvider.Info createInfo(int index) {
-        if (!enabled) {
-            return null;
-        }
-        return new MidiInDeviceInfo(index, MidiInDeviceProvider.class);
+	if (!enabled) {
+	    return null;
+	}
+	return new MidiInDeviceInfo(index, MidiInDeviceProvider.class);
     }
 
     MidiDevice createDevice(AbstractMidiDeviceProvider.Info info) {
-        if (enabled && (info instanceof MidiInDeviceInfo)) {
-            return new MidiInDevice(info);
-        }
-        return null;
+	if (enabled && (info instanceof MidiInDeviceInfo)) {
+	    return new MidiInDevice(info);
+	}
+	return null;
     }
 
-    int getNumDevices() {
-        if (!enabled) {
-            if (Printer.debug)Printer.debug("MidiInDevice not enabled, returning 0 devices");
-            return 0;
-        }
-        int numDevices = nGetNumDevices();
-        if (Printer.debug)Printer.debug("MidiInDeviceProvider.getNumDevices(): devices: " + numDevices);
-        return numDevices;
+    int getNumDevices() { 
+	if (!enabled) {
+	    if (Printer.debug)Printer.debug("MidiInDevice not enabled, returning 0 devices");
+	    return 0;
+	}
+	int numDevices = nGetNumDevices(); 
+	if (Printer.debug)Printer.debug("MidiInDeviceProvider.getNumDevices(): devices: " + numDevices);
+	return numDevices; 
     }
-
+    
     MidiDevice[] getDeviceCache() { return devices; }
     void setDeviceCache(MidiDevice[] devices) { this.devices = devices; }
     Info[] getInfoCache() { return infos; }
@@ -107,12 +108,12 @@ public class MidiInDeviceProvider extends AbstractMidiDeviceProvider {
      * the new instance will not reflect that state...
      */
     static class MidiInDeviceInfo extends AbstractMidiDeviceProvider.Info {
-        private Class providerClass;
+	private Class providerClass;
 
-        private MidiInDeviceInfo(int index, Class providerClass) {
-            super(nGetName(index), nGetVendor(index), nGetDescription(index), nGetVersion(index), index);
-            this.providerClass = providerClass;
-        }
+	private MidiInDeviceInfo(int index, Class providerClass) {
+	    super(nGetName(index), nGetVendor(index), nGetDescription(index), nGetVersion(index), index);
+	    this.providerClass = providerClass;
+	}
 
     } // class MidiInDeviceInfo
 

@@ -31,7 +31,7 @@
 
 /* Simple stack storage mechanism (or simple List). */
 
-/*
+/* 
  * Stack is any depth (grows as it needs to), elements are arbitrary
  *   length but known at stack init time.
  *
@@ -63,7 +63,7 @@ resize(Stack *stack)
     old_size     = stack->size;
     old_elements = stack->elements;
     if ( (stack->resizes % 10) && stack->incr_size < (old_size >> 2) ) {
-        stack->incr_size = old_size >> 2; /* 1/4 the old_size */
+	stack->incr_size = old_size >> 2; /* 1/4 the old_size */
     }
     new_size = old_size + stack->incr_size;
     new_elements = HPROF_MALLOC(new_size*stack->elem_size);
@@ -112,7 +112,7 @@ stack_top(Stack *stack)
     HPROF_ASSERT(stack!=NULL);
     element = NULL;
     if ( stack->count > 0 ) {
-        element = stack_element(stack, (stack->count-1));
+	element = stack_element(stack, (stack->count-1));
     }
     return element;
 }
@@ -131,19 +131,19 @@ stack_pop(Stack *stack)
 
     element = stack_top(stack);
     if ( element != NULL ) {
-        stack->count--;
+	stack->count--;
     }
     return element;
 }
 
-void
+void   
 stack_push(Stack *stack, void *element)
 {
     void *top_element;
-
+    
     HPROF_ASSERT(stack!=NULL);
     if ( stack->count >= stack->size ) {
-        resize(stack);
+	resize(stack);
     }
     stack->count++;
     top_element = stack_top(stack);
@@ -155,7 +155,8 @@ stack_term(Stack *stack)
 {
     HPROF_ASSERT(stack!=NULL);
     if ( stack->elements != NULL ) {
-        HPROF_FREE(stack->elements);
+	HPROF_FREE(stack->elements);
     }
     HPROF_FREE(stack);
 }
+

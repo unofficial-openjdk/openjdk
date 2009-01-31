@@ -39,13 +39,13 @@ class CharExpression extends IntegerExpression {
      * Constructor
      */
     public CharExpression(long where, char value) {
-        super(CHARVAL, where, Type.tChar, value);
+	super(CHARVAL, where, Type.tChar, value);
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-        out.print(value + "c");
+	out.print(value + "c");
     }
 }

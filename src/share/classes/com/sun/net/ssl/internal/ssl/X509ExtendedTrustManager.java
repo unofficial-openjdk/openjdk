@@ -53,6 +53,7 @@ import java.security.cert.CertificateException;
  * @see HostnameVerifier
  *
  * @since 1.6
+ * @version %I%
  * @author Xuelei Fan
  */
 public abstract class X509ExtendedTrustManager implements X509TrustManager {
@@ -84,12 +85,12 @@ public abstract class X509ExtendedTrustManager implements X509TrustManager {
      * @throws IllegalArgumentException if null or zero-length chain
      *         is passed in for the chain parameter or if null or zero-length
      *         string is passed in for the  authType parameter
-     * @throws CertificateException if the certificate chain is not trusted
+     * @throws CertificateException if the certificate chain is not trusted 
      *         by this TrustManager.
      */
     public abstract void checkClientTrusted(X509Certificate[] chain,
-        String authType, String hostname, String algorithm)
-        throws CertificateException;
+	String authType, String hostname, String algorithm)
+	throws CertificateException;
 
     /**
      * Given the partial or complete certificate chain provided by the
@@ -113,10 +114,10 @@ public abstract class X509ExtendedTrustManager implements X509TrustManager {
      * @throws IllegalArgumentException if null or zero-length chain
      *         is passed in for the chain parameter or if null or zero-length
      *         string is passed in for the  authType parameter
-     * @throws CertificateException if the certificate chain is not trusted
+     * @throws CertificateException if the certificate chain is not trusted 
      *         by this TrustManager.
      */
     public abstract void checkServerTrusted(X509Certificate[] chain,
-        String authType, String hostname, String algorithm)
-        throws CertificateException;
+	String authType, String hostname, String algorithm)
+	throws CertificateException;
 }

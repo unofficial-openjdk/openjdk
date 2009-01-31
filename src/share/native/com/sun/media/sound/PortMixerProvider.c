@@ -70,25 +70,26 @@ JNIEXPORT jobject JNICALL Java_com_sun_media_sound_PortMixerProvider_nNewPortMix
     // retrieve class and constructor of PortMixerProvider.PortMixerInfo
     portMixerInfoClass = (*env)->FindClass(env, IMPLEMENTATION_PACKAGE_NAME"/PortMixerProvider$PortMixerInfo");
     if (portMixerInfoClass == NULL) {
-        ERROR0("Java_com_sun_media_sound_PortMixerProvider_nNewPortMixerInfo: portMixerInfoClass is NULL\n");
-        return NULL;
+	ERROR0("Java_com_sun_media_sound_PortMixerProvider_nNewPortMixerInfo: portMixerInfoClass is NULL\n");
+	return NULL;
     }
     portMixerInfoConstructor = (*env)->GetMethodID(env, portMixerInfoClass, "<init>",
                   "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     if (portMixerInfoConstructor == NULL) {
-        ERROR0("Java_com_sun_media_sound_PortMixerProvider_nNewPortMixerInfo: portMixerInfoConstructor is NULL\n");
-        return NULL;
+	ERROR0("Java_com_sun_media_sound_PortMixerProvider_nNewPortMixerInfo: portMixerInfoConstructor is NULL\n");
+	return NULL;
     }
 
     if (getPortMixerDescription(mixerIndex, &desc)) {
-        // create a new PortMixerInfo object and return it
-        info = (*env)->NewObject(env, portMixerInfoClass, portMixerInfoConstructor, mixerIndex,
-                                 (*env)->NewStringUTF(env, desc.name),
-                                 (*env)->NewStringUTF(env, desc.vendor),
-                                 (*env)->NewStringUTF(env, desc.description),
-                                 (*env)->NewStringUTF(env, desc.version));
+	// create a new PortMixerInfo object and return it
+	info = (*env)->NewObject(env, portMixerInfoClass, portMixerInfoConstructor, mixerIndex,
+	                         (*env)->NewStringUTF(env, desc.name),
+	                         (*env)->NewStringUTF(env, desc.vendor),
+	                         (*env)->NewStringUTF(env, desc.description),
+	                         (*env)->NewStringUTF(env, desc.version));
     }
 
     TRACE0("Java_com_sun_media_sound_PortMixerProvider_nNewPortMixerInfo succeeded.\n");
     return info;
 }
+

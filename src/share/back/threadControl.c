@@ -48,16 +48,16 @@ typedef struct CoLocatedEventInfo_ {
 } CoLocatedEventInfo;
 
 /**
- * The main data structure in threadControl is the ThreadNode.
- * This is a per-thread structure that is allocated on the
- * first event that occurs in a thread. It is freed after the
- * thread's thread end event has completed processing. The
- * structure contains state information on its thread including
- * suspend counts. It also acts as a repository for other
- * per-thread state such as the current method invocation or
- * current step.
+ * The main data structure in threadControl is the ThreadNode. 
+ * This is a per-thread structure that is allocated on the 
+ * first event that occurs in a thread. It is freed after the 
+ * thread's thread end event has completed processing. The 
+ * structure contains state information on its thread including 
+ * suspend counts. It also acts as a repository for other 
+ * per-thread state such as the current method invocation or 
+ * current step. 
  *
- * suspendCount is the number of outstanding suspends
+ * suspendCount is the number of outstanding suspends 
  * from the debugger. suspends from the app itself are
  * not included in this count.
  */
@@ -93,7 +93,7 @@ typedef struct ThreadList {
 } ThreadList;
 
 /*
- * popFrameEventLock is used to notify that the event has been received
+ * popFrameEventLock is used to notify that the event has been received 
  */
 static jrawMonitorID popFrameEventLock = NULL;
 
@@ -142,7 +142,7 @@ getStackDepth(jthread thread)
 {
     jint count = 0;
     jvmtiError error;
-
+    
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameCount)
                         (gdata->jvmti, thread, &count);
     if (error != JVMTI_ERROR_NONE) {
@@ -152,7 +152,7 @@ getStackDepth(jthread thread)
 }
 
 /* Get the state of the thread direct from JVMTI */
-static jvmtiError
+static jvmtiError 
 threadState(jthread thread, jint *pstate)
 {
     *pstate = 0;
@@ -161,11 +161,11 @@ threadState(jthread thread, jint *pstate)
 }
 
 /* Set TLS on a specific jthread to the ThreadNode* */
-static void
+static void 
 setThreadLocalStorage(jthread thread, ThreadNode *node)
 {
     jvmtiError  error;
-
+    
     error = JVMTI_FUNC_PTR(gdata->jvmti,SetThreadLocalStorage)
             (gdata->jvmti, thread, (void*)node);
     if ( error == JVMTI_ERROR_THREAD_NOT_ALIVE ) {
@@ -197,7 +197,7 @@ getThreadLocalStorage(jthread thread)
     return node;
 }
 
-/* Search list for nodes that don't have TLS set and match this thread.
+/* Search list for nodes that don't have TLS set and match this thread. 
  *   It assumed that this logic is never dealing with terminated threads,
  *   since the ThreadEnd events always delete the ThreadNode while the
  *   jthread is still alive.  So we can only look at the ThreadNode's that
@@ -208,7 +208,7 @@ static ThreadNode *
 nonTlsSearch(JNIEnv *env, ThreadList *list, jthread thread)
 {
     ThreadNode *node;
-
+    
     for (node = list->first; node != NULL; node = node->next) {
         if (isSameObject(env, node->thread, thread)) {
             break;
@@ -218,15 +218,15 @@ nonTlsSearch(JNIEnv *env, ThreadList *list, jthread thread)
 }
 
 /*
- * These functions maintain the linked list of currently running threads.
+ * These functions maintain the linked list of currently running threads. 
  * All assume that the threadLock is held before calling.
  * If list==NULL, search both lists.
  */
 static ThreadNode *
-findThread(ThreadList *list, jthread thread)
+findThread(ThreadList *list, jthread thread) 
 {
     ThreadNode *node;
-
+    
     /* Get thread local storage for quick thread -> node access */
     node = getThreadLocalStorage(thread);
 
@@ -235,7 +235,7 @@ findThread(ThreadList *list, jthread thread)
      */
     if ( node == NULL ) {
         JNIEnv *env;
-
+        
         env = getEnv();
         if ( list != NULL ) {
             node = nonTlsSearch(env, list, thread);
@@ -264,7 +264,7 @@ removeNode(ThreadList *list, ThreadNode *node)
 {
     ThreadNode *prev;
     ThreadNode *next;
-
+    
     prev = node->prev;
     next = node->next;
     if ( prev != NULL ) {
@@ -299,7 +299,7 @@ addNode(ThreadList *list, ThreadNode *node)
 }
 
 static ThreadNode *
-insertThread(JNIEnv *env, ThreadList *list, jthread thread)
+insertThread(JNIEnv *env, ThreadList *list, jthread thread) 
 {
     ThreadNode *node;
     struct bag *eventBag;
@@ -320,7 +320,7 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
         }
 
         /*
-         * Init all flags false, all refs NULL, all counts 0
+         * Init all flags false, all refs NULL, all counts 0 
          */
 
         saveGlobalRef(env, thread, &(node->thread));
@@ -359,7 +359,7 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
     return node;
 }
 
-static void
+static void 
 clearThread(JNIEnv *env, ThreadNode *node)
 {
     if (node->pendingStop != NULL) {
@@ -376,11 +376,11 @@ clearThread(JNIEnv *env, ThreadNode *node)
     jvmtiDeallocate(node);
 }
 
-static void
-removeThread(JNIEnv *env, ThreadList *list, jthread thread)
+static void 
+removeThread(JNIEnv *env, ThreadList *list, jthread thread) 
 {
     ThreadNode *node;
-
+    
     node = findThread(list, thread);
     if (node != NULL) {
         removeNode(list, node);
@@ -392,8 +392,8 @@ static void
 removeResumed(JNIEnv *env, ThreadList *list)
 {
     ThreadNode *node;
-
-    node = list->first;
+    
+    node = list->first;  
     while (node != NULL) {
         ThreadNode *temp = node->next;
         if (node->suspendCount == 0) {
@@ -403,8 +403,8 @@ removeResumed(JNIEnv *env, ThreadList *list)
     }
 }
 
-static void
-moveNode(ThreadList *source, ThreadList *dest, ThreadNode *node)
+static void 
+moveNode(ThreadList *source, ThreadList *dest, ThreadNode *node) 
 {
     removeNode(source, node);
     JDI_ASSERT(findThread(dest, node->thread) == NULL);
@@ -414,12 +414,12 @@ moveNode(ThreadList *source, ThreadList *dest, ThreadNode *node)
 typedef jvmtiError (*ThreadEnumerateFunction)(JNIEnv *, ThreadNode *, void *);
 
 static jvmtiError
-enumerateOverThreadList(JNIEnv *env, ThreadList *list,
+enumerateOverThreadList(JNIEnv *env, ThreadList *list, 
                         ThreadEnumerateFunction function, void *arg)
 {
     ThreadNode *node;
     jvmtiError error = JVMTI_ERROR_NONE;
-
+    
     for (node = list->first; node != NULL; node = node->next) {
         error = (*function)(env, node, arg);
         if ( error != JVMTI_ERROR_NONE ) {
@@ -457,7 +457,7 @@ static jvmtiError
 addDeferredEventMode(JNIEnv *env, jvmtiEventMode mode, EventIndex ei, jthread thread)
 {
     DeferredEventMode *eventMode;
-
+    
     /*LINTED*/
     eventMode = jvmtiAllocate((jint)sizeof(DeferredEventMode));
     if (eventMode == NULL) {
@@ -489,11 +489,11 @@ freeDeferredEventModes(JNIEnv *env)
 }
 
 static jvmtiError
-threadSetEventNotificationMode(ThreadNode *node,
+threadSetEventNotificationMode(ThreadNode *node, 
         jvmtiEventMode mode, EventIndex ei, jthread thread)
 {
     jvmtiError error;
-
+    
     /* record single step mode */
     if (ei == EI_SINGLE_STEP) {
         node->instructionStepMode = mode;
@@ -515,7 +515,7 @@ processDeferredEventModes(JNIEnv *env, jthread thread, ThreadNode *node)
     while (eventMode != NULL) {
         DeferredEventMode *next = eventMode->next;
         if (isSameObject(env, thread, eventMode->thread)) {
-            error = threadSetEventNotificationMode(node,
+            error = threadSetEventNotificationMode(node, 
                     eventMode->mode, eventMode->ei, eventMode->thread);
             if (error != JVMTI_ERROR_NONE) {
                 EXIT_ERROR(error, "cannot process deferred thread event notifications at thread start");
@@ -530,14 +530,14 @@ processDeferredEventModes(JNIEnv *env, jthread thread, ThreadNode *node)
     }
 }
 
-static void
+static void 
 getLocks(void)
 {
     /*
-     * Anything which might be locked as part of the handling of
+     * Anything which might be locked as part of the handling of 
      * a JVMTI event (which means: might be locked by an application
      * thread) needs to be grabbed here. This allows thread control
-     * code to safely suspend and resume the application threads
+     * code to safely suspend and resume the application threads  
      * while ensuring they don't hold a critical lock.
      */
 
@@ -550,7 +550,7 @@ getLocks(void)
 
 }
 
-static void
+static void 
 releaseLocks(void)
 {
     debugMonitorExit(threadLock);
@@ -561,7 +561,7 @@ releaseLocks(void)
     eventHandler_unlock();
 }
 
-void
+void 
 threadControl_initialize(void)
 {
     jlocation unused;
@@ -603,13 +603,13 @@ getResumee(jthread resumingThread)
 
 
 static jboolean
-pendingAppResume(jboolean includeSuspended)
+pendingAppResume(jboolean includeSuspended) 
 {
     ThreadList *list;
     ThreadNode *node;
-
+    
     list = &runningThreads;
-    node = list->first;
+    node = list->first;  
     while (node != NULL) {
         if (node->resumeFrameDepth > 0) {
             if (includeSuspended) {
@@ -617,7 +617,7 @@ pendingAppResume(jboolean includeSuspended)
             } else {
                 jvmtiError error;
                 jint       state;
-
+                
                 error = threadState(node->thread, &state);
                 if (error != JVMTI_ERROR_NONE) {
                     EXIT_ERROR(error, "getting thread state");
@@ -648,14 +648,14 @@ notifyAppResumeComplete(void)
     }
 }
 
-static void
-handleAppResumeCompletion(JNIEnv *env, EventInfo *evinfo,
+static void 
+handleAppResumeCompletion(JNIEnv *env, EventInfo *evinfo, 
                           HandlerNode *handlerNode,
                           struct bag *eventBag)
 {
     ThreadNode *node;
     jthread     thread;
-
+    
     thread = evinfo->thread;
 
     debugMonitorEnter(threadLock);
@@ -666,7 +666,7 @@ handleAppResumeCompletion(JNIEnv *env, EventInfo *evinfo,
             jint compareDepth = getStackDepth(thread);
             if (evinfo->ei == EI_FRAME_POP) {
                 compareDepth--;
-            }
+            } 
             if (compareDepth < node->resumeFrameDepth) {
                 node->resumeFrameDepth = 0;
                 notifyAppResumeComplete();
@@ -681,7 +681,7 @@ static void
 blockOnDebuggerSuspend(jthread thread)
 {
     ThreadNode *node;
-
+    
     node = findThread(NULL, thread);
     if (node != NULL) {
         while (node && node->suspendCount > 0) {
@@ -697,7 +697,7 @@ trackAppResume(jthread thread)
     jvmtiError  error;
     FrameNumber fnum;
     ThreadNode *node;
-
+    
     fnum = 0;
     node = findThread(&runningThreads, thread);
     if (node != NULL) {
@@ -708,14 +708,14 @@ trackAppResume(jthread thread)
             jint frameDepth = getStackDepth(thread);
             if ((frameDepth > 0) && (framePopHandlerNode == NULL)) {
                 framePopHandlerNode = eventHandler_createInternalThreadOnly(
-                                           EI_FRAME_POP,
+                                           EI_FRAME_POP, 
                                            handleAppResumeCompletion,
                                            thread);
                 catchHandlerNode = eventHandler_createInternalThreadOnly(
                                            EI_EXCEPTION_CATCH,
                                            handleAppResumeCompletion,
                                            thread);
-                if ((framePopHandlerNode == NULL) ||
+                if ((framePopHandlerNode == NULL) || 
                     (catchHandlerNode == NULL)) {
                     (void)eventHandler_free(framePopHandlerNode);
                     framePopHandlerNode = NULL;
@@ -723,7 +723,7 @@ trackAppResume(jthread thread)
                     catchHandlerNode = NULL;
                 }
             }
-            if ((framePopHandlerNode != NULL) &&
+            if ((framePopHandlerNode != NULL) && 
                 (catchHandlerNode != NULL) &&
                 (frameDepth > 0)) {
                 node->resumeFrameDepth = frameDepth;
@@ -732,8 +732,8 @@ trackAppResume(jthread thread)
     }
 }
 
-static void
-handleAppResumeBreakpoint(JNIEnv *env, EventInfo *evinfo,
+static void 
+handleAppResumeBreakpoint(JNIEnv *env, EventInfo *evinfo, 
                           HandlerNode *handlerNode,
                           struct bag *eventBag)
 {
@@ -743,7 +743,7 @@ handleAppResumeBreakpoint(JNIEnv *env, EventInfo *evinfo,
     debugMonitorEnter(threadLock);
     if (resumee != NULL) {
         /*
-         * Hold up any attempt to resume as long as the debugger
+         * Hold up any attempt to resume as long as the debugger 
          * has suspended the resumee.
          */
         blockOnDebuggerSuspend(resumee);
@@ -752,11 +752,11 @@ handleAppResumeBreakpoint(JNIEnv *env, EventInfo *evinfo,
     if (resumer != NULL) {
         /*
          * Track the resuming thread by marking it as being within
-         * a resume and by setting up for notification on
+         * a resume and by setting up for notification on 
          * a frame pop or exception. We won't allow the debugger
-         * to suspend threads while any thread is within a
+         * to suspend threads while any thread is within a 
          * call to resume. This (along with the block above)
-         * ensures that when the debugger
+         * ensures that when the debugger 
          * suspends a thread it will remain suspended.
          */
         trackAppResume(resumer);
@@ -790,48 +790,48 @@ threadControl_onDisconnect(void)
     }
 }
 
-void
+void 
 threadControl_onHook(void)
 {
     /*
-     * As soon as the event hook is in place, we need to initialize
+     * As soon as the event hook is in place, we need to initialize 
      * the thread list with already-existing threads. The threadLock
      * has been held since initialize, so we don't need to worry about
      * insertions or deletions from the event handlers while we do this
      */
     JNIEnv *env;
-
+     
     env = getEnv();
 
     /*
      * Prevent any event processing until OnHook has been called
      */
     debugMonitorEnter(threadLock);
-
+    
     WITH_LOCAL_REFS(env, 1) {
 
         jint threadCount;
         jthread *threads;
-
+        
         threads = allThreads(&threadCount);
         if (threads == NULL) {
             EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"thread table");
         } else {
-
+            
             int i;
-
+            
             for (i = 0; i < threadCount; i++) {
                 ThreadNode *node;
                 jthread thread = threads[i];
                 node = insertThread(env, &runningThreads, thread);
 
                 /*
-                 * This is a tiny bit risky. We have to assume that the
+                 * This is a tiny bit risky. We have to assume that the 
                  * pre-existing threads have been started because we
                  * can't rely on a thread start event for them. The chances
                  * of a problem related to this are pretty slim though, and
                  * there's really no choice because without setting this flag
-                 * there is no way to enable stepping and other events on
+                 * there is no way to enable stepping and other events on 
                  * the threads that already exist (e.g. the finalizer thread).
                  */
                 node->isStarted = JNI_TRUE;
@@ -839,7 +839,7 @@ threadControl_onHook(void)
         }
 
     } END_WITH_LOCAL_REFS(env)
-
+    
     debugMonitorExit(threadLock);
 }
 
@@ -847,7 +847,7 @@ static jvmtiError
 commonSuspendByNode(ThreadNode *node)
 {
     jvmtiError error;
-
+    
     LOG_MISC(("thread=%p suspended", node->thread));
     error = JVMTI_FUNC_PTR(gdata->jvmti,SuspendThread)
                 (gdata->jvmti, node->thread);
@@ -860,7 +860,7 @@ commonSuspendByNode(ThreadNode *node)
     }
 
     /*
-     * If the thread was suspended by another app thread,
+     * If the thread was suspended by another app thread, 
      * do nothing and report no error (we won't resume it later).
      */
      if (error == JVMTI_ERROR_THREAD_SUSPENDED) {
@@ -913,18 +913,18 @@ deferredSuspendThreadByNode(ThreadNode *node)
     return error;
 }
 
-static jvmtiError
-suspendThreadByNode(ThreadNode *node)
+static jvmtiError 
+suspendThreadByNode(ThreadNode *node) 
 {
     jvmtiError error = JVMTI_ERROR_NONE;
     if (node->isDebugThread) {
         /* Ignore requests for suspending debugger threads */
         return JVMTI_ERROR_NONE;
-    }
+    } 
 
     /*
      * Just increment the suspend count if we are waiting
-     * for a deferred suspend.
+     * for a deferred suspend. 
      */
     if (node->suspendOnStart) {
         node->suspendCount++;
@@ -937,7 +937,7 @@ suspendThreadByNode(ThreadNode *node)
         if (error == JVMTI_ERROR_THREAD_NOT_ALIVE) {
             /*
              * This error means that the thread is either a zombie or not yet
-             * started. In either case, we ignore the error. If the thread
+             * started. In either case, we ignore the error. If the thread 
              * is a zombie, suspend/resume are no-ops. If the thread is not
              * started, it will be suspended for real during the processing
              * of its thread start event.
@@ -945,7 +945,7 @@ suspendThreadByNode(ThreadNode *node)
             node->suspendOnStart = JNI_TRUE;
             error = JVMTI_ERROR_NONE;
         }
-    }
+    } 
 
     if (error == JVMTI_ERROR_NONE) {
         node->suspendCount++;
@@ -956,8 +956,8 @@ suspendThreadByNode(ThreadNode *node)
     return error;
 }
 
-static jvmtiError
-resumeThreadByNode(ThreadNode *node)
+static jvmtiError 
+resumeThreadByNode(ThreadNode *node) 
 {
     jvmtiError error = JVMTI_ERROR_NONE;
 
@@ -968,7 +968,7 @@ resumeThreadByNode(ThreadNode *node)
     if (node->suspendCount > 0) {
         node->suspendCount--;
         debugMonitorNotifyAll(threadLock);
-        if ((node->suspendCount == 0) && node->toBeResumed &&
+        if ((node->suspendCount == 0) && node->toBeResumed && 
             !node->suspendOnStart) {
             LOG_MISC(("thread=%p resumed", node->thread));
             error = JVMTI_FUNC_PTR(gdata->jvmti,ResumeThread)
@@ -991,38 +991,38 @@ resumeThreadByNode(ThreadNode *node)
 }
 
 /*
- * Functions which respond to user requests to suspend/resume
- * threads.
- * Suspends and resumes add and subtract from a count respectively.
- * The thread is only suspended when the count goes from 0 to 1 and
+ * Functions which respond to user requests to suspend/resume 
+ * threads. 
+ * Suspends and resumes add and subtract from a count respectively. 
+ * The thread is only suspended when the count goes from 0 to 1 and 
  * resumed only when the count goes from 1 to 0.
  *
- * These functions suspend and resume application threads
- * without changing the
- * state of threads that were already suspended beforehand.
- * They must not be called from an application thread because
+ * These functions suspend and resume application threads 
+ * without changing the 
+ * state of threads that were already suspended beforehand. 
+ * They must not be called from an application thread because 
  * that thread may be suspended somewhere in the  middle of things.
  */
-static void
+static void 
 preSuspend(void)
 {
     getLocks();                     /* Avoid debugger deadlocks */
 
     /*
-     * Delay any suspend while a call to java.lang.Thread.resume is in
-     * progress (not including those in suspended threads). The wait is
-     * timed because the threads suspended through
-     * java.lang.Thread.suspend won't result in a notify even though
+     * Delay any suspend while a call to java.lang.Thread.resume is in 
+     * progress (not including those in suspended threads). The wait is 
+     * timed because the threads suspended through 
+     * java.lang.Thread.suspend won't result in a notify even though 
      * it may change the result of pendingAppResume()
      */
     while (pendingAppResume(JNI_FALSE)) {
         /*
          * This is ugly but we need to release the locks from getLocks
-         * or else the notify will never happen. The locks must be
+         * or else the notify will never happen. The locks must be 
          * released and reacquired in the right order. else deadlocks
-         * can happen. It is possible that, during this dance, the
+         * can happen. It is possible that, during this dance, the 
          * notify will be missed, but since the wait needs to be timed
-         * anyway, it won't be a disaster. Note that this code will
+         * anyway, it won't be a disaster. Note that this code will 
          * execute only on very rare occasions anyway.
          */
         releaseLocks();
@@ -1044,21 +1044,21 @@ postSuspend(void)
 /*
  * This function must be called after preSuspend and before postSuspend.
  */
-static jvmtiError
-commonSuspend(JNIEnv *env, jthread thread, jboolean deferred)
+static jvmtiError 
+commonSuspend(JNIEnv *env, jthread thread, jboolean deferred) 
 {
     ThreadNode *node;
-
+    
     /*
      * If the thread is not between its start and end events, we should
      * still suspend it. To keep track of things, add the thread
-     * to a separate list of threads so that we'll resume it later.
+     * to a separate list of threads so that we'll resume it later. 
      */
     node = findThread(&runningThreads, thread);
     if (node == NULL) {
         node = insertThread(env, &otherThreads, thread);
     }
-
+    
     if ( deferred ) {
         return deferredSuspendThreadByNode(node);
     } else {
@@ -1184,7 +1184,7 @@ deleteArray(void *ptr)
  * toBeResumed) and would not be able to distinguish between a thread
  * that needs a hard resume versus a thread that is already running.
  */
-static jvmtiError
+static jvmtiError 
 commonResumeList(JNIEnv *env)
 {
     jvmtiError   error;
@@ -1195,7 +1195,7 @@ commonResumeList(JNIEnv *env)
     jvmtiError  *results;
 
     reqCnt = 0;
-
+    
     /* count number of threads to hard resume */
     (void) enumerateOverThreadList(env, &runningThreads, resumeCountHelper,
                                    &reqCnt);
@@ -1226,7 +1226,7 @@ commonResumeList(JNIEnv *env)
                 (gdata->jvmti, reqCnt, reqList, results);
     for (i = 0; i < reqCnt; i++) {
         ThreadNode *node;
-
+        
         node = findThread(&runningThreads, reqList[i]);
         if (node == NULL) {
             EXIT_ERROR(AGENT_ERROR_INVALID_THREAD,"missing entry in running thread table");
@@ -1254,8 +1254,8 @@ commonResumeList(JNIEnv *env)
 /*
  * This function must be called after preSuspend and before postSuspend.
  */
-static jvmtiError
-commonSuspendList(JNIEnv *env, jint initCount, jthread *initList)
+static jvmtiError 
+commonSuspendList(JNIEnv *env, jint initCount, jthread *initList) 
 {
     jvmtiError  error;
     jint        i;
@@ -1274,11 +1274,11 @@ commonSuspendList(JNIEnv *env, jint initCount, jthread *initList)
      */
     for (i = 0; i < initCount; i++) {
         ThreadNode *node;
-
+        
         /*
          * If the thread is not between its start and end events, we should
          * still suspend it. To keep track of things, add the thread
-         * to a separate list of threads so that we'll resume it later.
+         * to a separate list of threads so that we'll resume it later. 
          */
         node = findThread(&runningThreads, initList[i]);
         if (node == NULL) {
@@ -1288,7 +1288,7 @@ commonSuspendList(JNIEnv *env, jint initCount, jthread *initList)
         if (node->isDebugThread) {
             /* Ignore requests for suspending debugger threads */
             continue;
-        }
+        } 
 
         /*
          * Just increment the suspend count if we are waiting
@@ -1319,7 +1319,7 @@ commonSuspendList(JNIEnv *env, jint initCount, jthread *initList)
                         (gdata->jvmti, reqCnt, reqList, results);
         for (i = 0; i < reqCnt; i++) {
             ThreadNode *node;
-
+            
             node = findThread(NULL, reqList[i]);
             if (node == NULL) {
                 EXIT_ERROR(AGENT_ERROR_INVALID_THREAD,"missing entry in thread tables");
@@ -1354,7 +1354,7 @@ commonSuspendList(JNIEnv *env, jint initCount, jthread *initList)
             }
         }
         deleteArray(results);
-    }
+    } 
     deleteArray(reqList);
 
     debugMonitorNotifyAll(threadLock);
@@ -1363,12 +1363,12 @@ commonSuspendList(JNIEnv *env, jint initCount, jthread *initList)
 }
 
 
-static jvmtiError
-commonResume(jthread thread)
+static jvmtiError 
+commonResume(jthread thread) 
 {
     jvmtiError  error;
     ThreadNode *node;
-
+    
     /*
      * The thread is normally between its start and end events, but if
      * not, check the auxiliary list used by threadControl_suspendThread.
@@ -1377,7 +1377,7 @@ commonResume(jthread thread)
 
     /*
      * If the node is in neither list, the debugger never suspended
-     * this thread, so do nothing.
+     * this thread, so do nothing. 
      */
     error = JVMTI_ERROR_NONE;
     if (node != NULL) {
@@ -1387,16 +1387,16 @@ commonResume(jthread thread)
 }
 
 
-jvmtiError
-threadControl_suspendThread(jthread thread, jboolean deferred)
+jvmtiError 
+threadControl_suspendThread(jthread thread, jboolean deferred) 
 {
     jvmtiError error;
     JNIEnv    *env;
-
+    
     env = getEnv();
 
     log_debugee_location("threadControl_suspendThread()", thread, NULL, 0);
-
+    
     preSuspend();
     error = commonSuspend(env, thread, deferred);
     postSuspend();
@@ -1404,16 +1404,16 @@ threadControl_suspendThread(jthread thread, jboolean deferred)
     return error;
 }
 
-jvmtiError
-threadControl_resumeThread(jthread thread, jboolean do_unblock)
+jvmtiError 
+threadControl_resumeThread(jthread thread, jboolean do_unblock) 
 {
     jvmtiError error;
     JNIEnv    *env;
-
+    
     env = getEnv();
 
     log_debugee_location("threadControl_resumeThread()", thread, NULL, 0);
-
+    
     eventHandler_lock(); /* for proper lock order */
     debugMonitorEnter(threadLock);
     error = commonResume(thread);
@@ -1429,7 +1429,7 @@ threadControl_resumeThread(jthread thread, jboolean do_unblock)
     return error;
 }
 
-jvmtiError
+jvmtiError 
 threadControl_suspendCount(jthread thread, jint *count)
 {
     jvmtiError  error;
@@ -1448,7 +1448,7 @@ threadControl_suspendCount(jthread thread, jint *count)
     } else {
         /*
          * If the node is in neither list, the debugger never suspended
-         * this thread, so the suspend count is 0.
+         * this thread, so the suspend count is 0. 
          */
         *count = 0;
     }
@@ -1459,10 +1459,10 @@ threadControl_suspendCount(jthread thread, jint *count)
 }
 
 static jboolean
-contains(JNIEnv *env, jthread *list, jint count, jthread item)
+contains(JNIEnv *env, jthread *list, jint count, jthread item) 
 {
     int i;
-
+    
     for (i = 0; i < count; i++) {
         if (isSameObject(env, list[i], item)) {
             return JNI_TRUE;
@@ -1490,26 +1490,26 @@ suspendAllHelper(JNIEnv *env, ThreadNode *node, void *arg)
     return error;
 }
 
-jvmtiError
+jvmtiError 
 threadControl_suspendAll(void)
 {
     jvmtiError error;
     JNIEnv    *env;
 
     env = getEnv();
-
+    
     log_debugee_location("threadControl_suspendAll()", NULL, NULL, 0);
-
+    
     preSuspend();
 
     /*
      * Get a list of all threads and suspend them.
      */
     WITH_LOCAL_REFS(env, 1) {
-
+        
         jthread *threads;
         jint count;
-
+        
         threads = allThreads(&count);
         if (threads == NULL) {
             error = AGENT_ERROR_OUT_OF_MEMORY;
@@ -1521,12 +1521,12 @@ threadControl_suspendAll(void)
                 goto err;
             }
         } else {
-
+            
             int i;
-
+            
             for (i = 0; i < count; i++) {
                 error = commonSuspend(env, threads[i], JNI_FALSE);
-
+        
                 if (error != JVMTI_ERROR_NONE) {
                     goto err;
                 }
@@ -1535,13 +1535,13 @@ threadControl_suspendAll(void)
 
         /*
          * Update the suspend count of any threads not yet (or no longer)
-         * in the thread list above.
+         * in the thread list above.  
          */
         {
             SuspendAllArg arg;
             arg.list = threads;
             arg.count = count;
-            error = enumerateOverThreadList(env, &otherThreads,
+            error = enumerateOverThreadList(env, &otherThreads, 
                                             suspendAllHelper, &arg);
         }
 
@@ -1552,7 +1552,7 @@ threadControl_suspendAll(void)
     err: ;
 
     } END_WITH_LOCAL_REFS(env)
-
+    
     postSuspend();
 
     return error;
@@ -1569,7 +1569,7 @@ resumeHelper(JNIEnv *env, ThreadNode *node, void *ignored)
     return resumeThreadByNode(node);
 }
 
-jvmtiError
+jvmtiError 
 threadControl_resumeAll(void)
 {
     jvmtiError error;
@@ -1578,24 +1578,24 @@ threadControl_resumeAll(void)
     env = getEnv();
 
     log_debugee_location("threadControl_resumeAll()", NULL, NULL, 0);
-
+    
     eventHandler_lock(); /* for proper lock order */
     debugMonitorEnter(threadLock);
 
     /*
-     * Resume only those threads that the debugger has suspended. All
+     * Resume only those threads that the debugger has suspended. All 
      * such threads must have a node in one of the thread lists, so there's
-     * no need to get the whole thread list from JVMTI (unlike
+     * no need to get the whole thread list from JVMTI (unlike 
      * suspendAll).
      */
     if (canSuspendResumeThreadLists()) {
         error = commonResumeList(env);
     } else {
-        error = enumerateOverThreadList(env, &runningThreads,
+        error = enumerateOverThreadList(env, &runningThreads, 
                                         resumeHelper, NULL);
     }
     if ((error == JVMTI_ERROR_NONE) && (otherThreads.first != NULL)) {
-        error = enumerateOverThreadList(env, &otherThreads,
+        error = enumerateOverThreadList(env, &otherThreads, 
                                         resumeHelper, NULL);
         removeResumed(env, &otherThreads);
     }
@@ -1612,15 +1612,15 @@ threadControl_resumeAll(void)
     return error;
 }
 
-
+ 
 StepRequest *
-threadControl_getStepRequest(jthread thread)
-{
+threadControl_getStepRequest(jthread thread) 
+{ 
     ThreadNode  *node;
     StepRequest *step;
 
     step = NULL;
-
+    
     debugMonitorEnter(threadLock);
 
     node = findThread(&runningThreads, thread);
@@ -1634,11 +1634,11 @@ threadControl_getStepRequest(jthread thread)
 }
 
 InvokeRequest *
-threadControl_getInvokeRequest(jthread thread)
-{
+threadControl_getInvokeRequest(jthread thread) 
+{ 
     ThreadNode    *node;
     InvokeRequest *request;
-
+    
     request = NULL;
 
     debugMonitorEnter(threadLock);
@@ -1653,8 +1653,8 @@ threadControl_getInvokeRequest(jthread thread)
     return request;
 }
 
-jvmtiError
-threadControl_addDebugThread(jthread thread)
+jvmtiError 
+threadControl_addDebugThread(jthread thread) 
 {
     jvmtiError error;
 
@@ -1678,7 +1678,7 @@ threadControl_addDebugThread(jthread thread)
     return error;
 }
 
-static jvmtiError
+static jvmtiError 
 threadControl_removeDebugThread(jthread thread)
 {
     jvmtiError error;
@@ -1692,7 +1692,7 @@ threadControl_removeDebugThread(jthread thread)
     for (i = 0; i< debugThreadCount; i++) {
         if (isSameObject(env, thread, debugThreads[i])) {
             int j;
-
+            
             tossGlobalRef(env, &(debugThreads[i]));
             for (j = i+1; j < debugThreadCount; j++) {
                 debugThreads[j-1] = debugThreads[j];
@@ -1706,8 +1706,8 @@ threadControl_removeDebugThread(jthread thread)
     return error;
 }
 
-jboolean
-threadControl_isDebugThread(jthread thread)
+jboolean 
+threadControl_isDebugThread(jthread thread) 
 {
     int      i;
     jboolean rc;
@@ -1736,15 +1736,15 @@ initLocks(void)
     }
 }
 
-static jboolean
+static jboolean 
 getPopFrameThread(jthread thread)
 {
     jboolean popFrameThread;
-
+    
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
         if (node == NULL) {
             popFrameThread = JNI_FALSE;
@@ -1753,7 +1753,7 @@ getPopFrameThread(jthread thread)
         }
     }
     debugMonitorExit(threadLock);
-
+    
     return popFrameThread;
 }
 
@@ -1763,7 +1763,7 @@ setPopFrameThread(jthread thread, jboolean value)
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
         if (node == NULL) {
             EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"entry in thread table");
@@ -1774,15 +1774,15 @@ setPopFrameThread(jthread thread, jboolean value)
     debugMonitorExit(threadLock);
 }
 
-static jboolean
+static jboolean 
 getPopFrameEvent(jthread thread)
 {
     jboolean popFrameEvent;
-
+    
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
         if (node == NULL) {
             popFrameEvent = JNI_FALSE;
@@ -1792,7 +1792,7 @@ getPopFrameEvent(jthread thread)
         }
     }
     debugMonitorExit(threadLock);
-
+    
     return popFrameEvent;
 }
 
@@ -1802,7 +1802,7 @@ setPopFrameEvent(jthread thread, jboolean value)
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
         if (node == NULL) {
             EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"entry in thread table");
@@ -1814,15 +1814,15 @@ setPopFrameEvent(jthread thread, jboolean value)
     debugMonitorExit(threadLock);
 }
 
-static jboolean
+static jboolean 
 getPopFrameProceed(jthread thread)
 {
     jboolean popFrameProceed;
-
+    
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
         if (node == NULL) {
             popFrameProceed = JNI_FALSE;
@@ -1832,7 +1832,7 @@ getPopFrameProceed(jthread thread)
         }
     }
     debugMonitorExit(threadLock);
-
+    
     return popFrameProceed;
 }
 
@@ -1842,7 +1842,7 @@ setPopFrameProceed(jthread thread, jboolean value)
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
         if (node == NULL) {
             EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"entry in thread table");
@@ -1892,7 +1892,7 @@ popOneFrame(jthread thread)
     if (error != JVMTI_ERROR_NONE) {
         return error;
     }
-
+    
     /* resume the popped thread so that the pop occurs and so we */
     /* will get the event (step or method entry) after the pop */
     LOG_MISC(("thread=%p resumed in popOneFrame", thread));
@@ -1936,7 +1936,7 @@ threadControl_popFrames(jthread thread, FrameNumber fnum)
     jboolean prevInvokeRequestMode;
 
     log_debugee_location("threadControl_popFrames()", thread, NULL, 0);
-
+    
     initLocks();
 
     /* compute the number of frames to pop */
@@ -1955,7 +1955,7 @@ threadControl_popFrames(jthread thread, FrameNumber fnum)
      */
     prevInvokeRequestMode = invoker_isEnabled(thread);
 
-    error = threadControl_setEventMode(JVMTI_ENABLE,
+    error = threadControl_setEventMode(JVMTI_ENABLE, 
                                        EI_SINGLE_STEP, thread);
     if (error != JVMTI_ERROR_NONE) {
         return error;
@@ -1975,7 +1975,7 @@ threadControl_popFrames(jthread thread, FrameNumber fnum)
         setPopFrameThread(thread, JNI_FALSE);
     }
     debugMonitorExit(popFrameEventLock);
-
+    
     /*  Reset StepRequest info (fromLine and stackDepth) after popframes
      *  only if stepping is enabled.
      */
@@ -1988,7 +1988,7 @@ threadControl_popFrames(jthread thread, FrameNumber fnum)
     }
 
     /* restore state */
-    (void)threadControl_setEventMode(prevStepMode,
+    (void)threadControl_setEventMode(prevStepMode, 
                                EI_SINGLE_STEP, thread);
 
     return error;
@@ -2031,7 +2031,7 @@ checkForPopFrameEvents(JNIEnv *env, EventIndex ei, jthread thread)
 }
 
 struct bag *
-threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread, jobject currentException)
+threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread, jobject currentException) 
 {
     ThreadNode *node;
     JNIEnv     *env;
@@ -2041,9 +2041,9 @@ threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread
 
     env             = getEnv();
     threadToSuspend = NULL;
-
+    
     log_debugee_location("threadControl_onEventHandlerEntry()", thread, NULL, 0);
-
+    
     /* Events during pop commands may need to be ignored here. */
     consumed = checkForPopFrameEvents(env, ei, thread);
     if ( consumed ) {
@@ -2059,10 +2059,10 @@ threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread
     debugMonitorEnter(threadLock);
 
     /*
-     * Check the list of unknown threads maintained by suspend
-     * and resume. If this thread is currently present in the
-     * list, it should be
-     * moved to the runningThreads list, since it is a
+     * Check the list of unknown threads maintained by suspend 
+     * and resume. If this thread is currently present in the 
+     * list, it should be 
+     * moved to the runningThreads list, since it is a 
      * well-known thread now.
      */
     node = findThread(&otherThreads, thread);
@@ -2071,11 +2071,11 @@ threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread
     } else {
         /*
          * Get a thread node for the reporting thread. For thread start
-         * events, or if this event precedes a thread start event,
-         * the thread node may need to be created.
-         *
-         * It is possible for certain events (notably method entry/exit)
-         * to precede thread start for some VM implementations.
+         * events, or if this event precedes a thread start event, 
+         * the thread node may need to be created. 
+         * 
+         * It is possible for certain events (notably method entry/exit) 
+         * to precede thread start for some VM implementations. 
          */
         node = insertThread(env, &runningThreads, thread);
     }
@@ -2105,10 +2105,10 @@ threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread
 }
 
 static void
-doPendingTasks(JNIEnv *env, ThreadNode *node)
+doPendingTasks(JNIEnv *env, ThreadNode *node) 
 {
     /*
-     * Take care of any pending interrupts/stops, and clear out
+     * Take care of any pending interrupts/stops, and clear out 
      * info on pending interrupts/stops.
      */
     if (node->pendingInterrupt) {
@@ -2131,13 +2131,13 @@ doPendingTasks(JNIEnv *env, ThreadNode *node)
 }
 
 void
-threadControl_onEventHandlerExit(EventIndex ei, jthread thread,
-                                 struct bag *eventBag)
+threadControl_onEventHandlerExit(EventIndex ei, jthread thread, 
+                                 struct bag *eventBag) 
 {
     ThreadNode *node;
 
     log_debugee_location("threadControl_onEventHandlerExit()", thread, NULL, 0);
-
+    
     if (ei == EI_THREAD_END) {
         eventHandler_lock(); /* for proper lock order */
     }
@@ -2148,7 +2148,7 @@ threadControl_onEventHandlerExit(EventIndex ei, jthread thread,
         EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"thread list corrupted");
     } else {
         JNIEnv *env;
-
+        
         env = getEnv();
         if (ei == EI_THREAD_END) {
             jboolean inResume = (node->resumeFrameDepth > 0);
@@ -2156,7 +2156,7 @@ threadControl_onEventHandlerExit(EventIndex ei, jthread thread,
             node = NULL;   /* has been freed */
 
             /*
-             * Clean up mechanism used to detect end of
+             * Clean up mechanism used to detect end of 
              * resume.
              */
             if (inResume) {
@@ -2178,27 +2178,27 @@ threadControl_onEventHandlerExit(EventIndex ei, jthread thread,
 
 /* Returns JDWP flavored status and status flags. */
 jvmtiError
-threadControl_applicationThreadStatus(jthread thread,
-                        jdwpThreadStatus *pstatus, jint *statusFlags)
+threadControl_applicationThreadStatus(jthread thread, 
+                        jdwpThreadStatus *pstatus, jint *statusFlags) 
 {
     ThreadNode *node;
     jvmtiError  error;
     jint        state;
 
     log_debugee_location("threadControl_applicationThreadStatus()", thread, NULL, 0);
-
+    
     debugMonitorEnter(threadLock);
 
     error = threadState(thread, &state);
     *pstatus = map2jdwpThreadStatus(state);
     *statusFlags = map2jdwpSuspendStatus(state);
-
+    
     if (error == JVMTI_ERROR_NONE) {
         node = findThread(&runningThreads, thread);
         if ((node != NULL) && HANDLING_EVENT(node)) {
             /*
              * While processing an event, an application thread is always
-             * considered to be running even if its handler happens to be
+             * considered to be running even if its handler happens to be 
              * cond waiting on an internal debugger monitor, etc.
              *
              * Leave suspend status untouched since it is not possible
@@ -2213,16 +2213,16 @@ threadControl_applicationThreadStatus(jthread thread,
     return error;
 }
 
-jvmtiError
+jvmtiError 
 threadControl_interrupt(jthread thread)
 {
     ThreadNode *node;
     jvmtiError  error;
-
+    
     error = JVMTI_ERROR_NONE;
 
     log_debugee_location("threadControl_interrupt()", thread, NULL, 0);
-
+    
     debugMonitorEnter(threadLock);
 
     node = findThread(&runningThreads, thread);
@@ -2265,7 +2265,7 @@ threadControl_cmpCLEInfo(JNIEnv *env, jthread thread, jclass clazz,
 {
     ThreadNode *node;
     jboolean    result;
-
+    
     result = JNI_FALSE;
 
     debugMonitorEnter(threadLock);
@@ -2306,7 +2306,7 @@ threadControl_saveCLEInfo(JNIEnv *env, jthread thread, EventIndex ei,
 }
 
 void
-threadControl_setPendingInterrupt(jthread thread)
+threadControl_setPendingInterrupt(jthread thread) 
 {
     ThreadNode *node;
 
@@ -2320,16 +2320,16 @@ threadControl_setPendingInterrupt(jthread thread)
     debugMonitorExit(threadLock);
 }
 
-jvmtiError
+jvmtiError 
 threadControl_stop(jthread thread, jobject throwable)
 {
     ThreadNode *node;
     jvmtiError  error;
-
+    
     error = JVMTI_ERROR_NONE;
 
     log_debugee_location("threadControl_stop()", thread, NULL, 0);
-
+    
     debugMonitorEnter(threadLock);
 
     node = findThread(&runningThreads, thread);
@@ -2338,7 +2338,7 @@ threadControl_stop(jthread thread, jobject throwable)
                         (gdata->jvmti, thread, throwable);
     } else {
         JNIEnv *env;
-
+        
         /*
          * Hold any stops until after the event is processed.
          */
@@ -2362,7 +2362,7 @@ void
 threadControl_detachInvokes(void)
 {
     JNIEnv *env;
-
+    
     env = getEnv();
     invoker_lock(); /* for proper lock order */
     debugMonitorEnter(threadLock);
@@ -2387,11 +2387,11 @@ resetHelper(JNIEnv *env, ThreadNode *node, void *arg)
     return JVMTI_ERROR_NONE;
 }
 
-void
+void 
 threadControl_reset(void)
 {
     JNIEnv *env;
-
+    
     env = getEnv();
     eventHandler_lock(); /* for proper lock order */
     debugMonitorEnter(threadLock);
@@ -2411,14 +2411,14 @@ threadControl_reset(void)
     eventHandler_unlock();
 }
 
-jvmtiEventMode
-threadControl_getInstructionStepMode(jthread thread)
+jvmtiEventMode 
+threadControl_getInstructionStepMode(jthread thread) 
 {
     ThreadNode    *node;
     jvmtiEventMode mode;
-
+    
     mode = JVMTI_DISABLE;
-
+    
     debugMonitorEnter(threadLock);
     node = findThread(&runningThreads, thread);
     if (node != NULL) {
@@ -2428,11 +2428,11 @@ threadControl_getInstructionStepMode(jthread thread)
     return mode;
 }
 
-jvmtiError
-threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread)
+jvmtiError 
+threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread) 
 {
     jvmtiError error;
-
+    
     /* Global event */
     if ( thread == NULL ) {
         error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventNotificationMode)
@@ -2446,16 +2446,16 @@ threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread)
             node = findThread(&runningThreads, thread);
             if ((node == NULL) || (!node->isStarted)) {
                 JNIEnv *env;
-
+                
                 env = getEnv();
                 error = addDeferredEventMode(env, mode, ei, thread);
             } else {
-                error = threadSetEventNotificationMode(node,
+                error = threadSetEventNotificationMode(node, 
                         mode, ei, thread);
             }
         }
         debugMonitorExit(threadLock);
-
+    
     }
     return error;
 }
@@ -2464,31 +2464,31 @@ threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread)
  * Returns the current thread, if the thread has generated at least
  * one event, and has not generated a thread end event.
  */
-jthread threadControl_currentThread(void)
+jthread threadControl_currentThread(void) 
 {
     jthread thread;
 
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(&runningThreads, NULL);
         thread = (node == NULL) ? NULL : node->thread;
     }
     debugMonitorExit(threadLock);
-
+    
     return thread;
 }
 
-jlong
+jlong 
 threadControl_getFrameGeneration(jthread thread)
 {
     jlong frameGeneration = -1;
-
+    
     debugMonitorEnter(threadLock);
     {
         ThreadNode *node;
-
+        
         node = findThread(NULL, thread);
 
         if (node != NULL) {
@@ -2496,6 +2496,7 @@ threadControl_getFrameGeneration(jthread thread)
         }
     }
     debugMonitorExit(threadLock);
-
+    
     return frameGeneration;
 }
+

@@ -47,42 +47,42 @@ import java.util.WeakHashMap;
 public abstract class WeakClassHashMap<V> {
 
     private Map<Class<?>,ValueCell<V>> internalMap =
-        new WeakHashMap<Class<?>,ValueCell<V>>();
+	new WeakHashMap<Class<?>,ValueCell<V>>();
 
     protected WeakClassHashMap() { }
 
     public V get(Class<?> remoteClass) {
-        /*
-         * Use a mutable cell (a one-element list) to hold the soft
-         * reference to a value, to allow the lazy value computation
-         * to be synchronized with entry-level granularity instead of
-         * by locking the whole table.
-         */
-        ValueCell<V> valueCell;
-        synchronized (internalMap) {
-            valueCell = internalMap.get(remoteClass);
-            if (valueCell == null) {
-                valueCell = new ValueCell<V>();
-                internalMap.put(remoteClass, valueCell);
-            }
-        }
-        synchronized (valueCell) {
-            V value = null;
-            if (valueCell.ref != null) {
-                value = (V) valueCell.ref.get();
-            }
-            if (value == null) {
-                value = computeValue(remoteClass);
-                valueCell.ref = new SoftReference<V>(value);
-            }
-            return value;
-        }
+	/*
+	 * Use a mutable cell (a one-element list) to hold the soft
+	 * reference to a value, to allow the lazy value computation
+	 * to be synchronized with entry-level granularity instead of
+	 * by locking the whole table.
+	 */
+	ValueCell<V> valueCell;
+	synchronized (internalMap) {
+	    valueCell = internalMap.get(remoteClass);
+	    if (valueCell == null) {
+		valueCell = new ValueCell<V>();
+		internalMap.put(remoteClass, valueCell);
+	    }
+	}
+	synchronized (valueCell) {
+	    V value = null;
+	    if (valueCell.ref != null) {
+		value = (V) valueCell.ref.get();
+	    }
+	    if (value == null) {
+		value = computeValue(remoteClass);
+		valueCell.ref = new SoftReference<V>(value);
+	    }
+	    return value;
+	}
     }
 
     protected abstract V computeValue(Class<?> remoteClass);
 
     private static class ValueCell<T> {
-        Reference<T> ref = null;
-        ValueCell() { }
+	Reference<T> ref = null;
+	ValueCell() { }
     }
 }

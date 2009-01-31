@@ -41,6 +41,7 @@ import javax.swing.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Dave Moore
  */
 public class AncestorEvent extends AWTEvent {
@@ -66,7 +67,7 @@ public class AncestorEvent extends AWTEvent {
      *
      * @param source          the JComponent that originated the event
      *                        (typically <code>this</code>)
-     * @param id              an int specifying {@link #ANCESTOR_ADDED},
+     * @param id              an int specifying {@link #ANCESTOR_ADDED}, 
      *                        {@link #ANCESTOR_REMOVED} or {@link #ANCESTOR_MOVED}
      * @param ancestor        a Container object specifying the ancestor-component
      *                        whose display-status changed

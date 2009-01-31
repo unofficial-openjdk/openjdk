@@ -70,11 +70,11 @@ public class ManifestEntryVerifier {
      */
     public ManifestEntryVerifier(Manifest man)
     {
-        createdDigests = new HashMap<String, MessageDigest>(11);
-        digests = new ArrayList<MessageDigest>();
-        manifestHashes = new ArrayList<byte[]>();
-        decoder = new BASE64Decoder();
-        this.man = man;
+	createdDigests = new HashMap<String, MessageDigest>(11);
+	digests = new ArrayList<MessageDigest>();
+	manifestHashes = new ArrayList<byte[]>();
+	decoder = new BASE64Decoder();
+	this.man = man;
     }
 
     /**
@@ -84,87 +84,87 @@ public class ManifestEntryVerifier {
      * null it signifies that update/verify should ignore this entry.
      */
     public void setEntry(String name, JarEntry entry)
-        throws IOException
+	throws IOException
     {
-        digests.clear();
-        manifestHashes.clear();
-        this.name = name;
-        this.entry = entry;
+	digests.clear();
+	manifestHashes.clear();
+	this.name = name;
+	this.entry = entry;
 
-        skip = true;
-        signers = null;
+	skip = true;
+	signers = null;
 
-        if (man == null || name == null) {
-            return;
-        }
+	if (man == null || name == null) {
+	    return;
+	}
 
-        /* get the headers from the manifest for this entry */
-        /* if there aren't any, we can't verify any digests for this entry */
+	/* get the headers from the manifest for this entry */
+	/* if there aren't any, we can't verify any digests for this entry */
 
-        Attributes attr = man.getAttributes(name);
-        if (attr == null) {
-            // ugh. we should be able to remove this at some point.
-            // there are broken jars floating around with ./name and /name
-            // in the manifest, and "name" in the zip/jar file.
-            attr = man.getAttributes("./"+name);
-            if (attr == null) {
-                attr = man.getAttributes("/"+name);
-                if (attr == null)
-                    return;
-            }
-        }
+	Attributes attr = man.getAttributes(name);
+	if (attr == null) {
+	    // ugh. we should be able to remove this at some point.
+	    // there are broken jars floating around with ./name and /name
+	    // in the manifest, and "name" in the zip/jar file.
+	    attr = man.getAttributes("./"+name);
+	    if (attr == null) {
+		attr = man.getAttributes("/"+name);
+		if (attr == null)
+		    return;
+	    }
+	}
 
-        for (Map.Entry<Object,Object> se : attr.entrySet()) {
-            String key = se.getKey().toString();
+	for (Map.Entry<Object,Object> se : attr.entrySet()) {
+	    String key = se.getKey().toString();
 
-            if (key.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST")) {
-                // 7 is length of "-Digest"
-                String algorithm = key.substring(0, key.length()-7);
+	    if (key.toUpperCase(Locale.ENGLISH).endsWith("-DIGEST")) {
+		// 7 is length of "-Digest"
+		String algorithm = key.substring(0, key.length()-7);
 
-                MessageDigest digest = createdDigests.get(algorithm);
+		MessageDigest digest = createdDigests.get(algorithm);
 
-                if (digest == null) {
-                    try {
+		if (digest == null) {
+		    try {
 
-                        digest = MessageDigest.getInstance
-                                        (algorithm, digestProvider);
-                        createdDigests.put(algorithm, digest);
-                    } catch (NoSuchAlgorithmException nsae) {
-                        // ignore
-                    }
-                }
+			digest = MessageDigest.getInstance
+					(algorithm, digestProvider);
+			createdDigests.put(algorithm, digest);
+		    } catch (NoSuchAlgorithmException nsae) {
+			// ignore
+		    }
+		}
 
-                if (digest != null) {
-                    skip = false;
-                    digest.reset();
-                    digests.add(digest);
-                    manifestHashes.add(
-                                decoder.decodeBuffer((String)se.getValue()));
-                }
-            }
-        }
+		if (digest != null) {
+		    skip = false;
+		    digest.reset();
+		    digests.add(digest);
+		    manifestHashes.add(
+				decoder.decodeBuffer((String)se.getValue()));
+		}
+	    }
+	}
     }
 
     /**
      * update the digests for the digests we are interested in
      */
     public void update(byte buffer) {
-        if (skip) return;
+	if (skip) return;
 
-        for (int i=0; i < digests.size(); i++) {
-            digests.get(i).update(buffer);
-        }
+	for (int i=0; i < digests.size(); i++) {
+	    digests.get(i).update(buffer);
+	}
     }
 
     /**
      * update the digests for the digests we are interested in
      */
     public void update(byte buffer[], int off, int len) {
-        if (skip) return;
+	if (skip) return;
 
-        for (int i=0; i < digests.size(); i++) {
-            digests.get(i).update(buffer, off, len);
-        }
+	for (int i=0; i < digests.size(); i++) {
+	    digests.get(i).update(buffer, off, len);
+	}
     }
 
     /**
@@ -172,7 +172,7 @@ public class ManifestEntryVerifier {
      */
     public JarEntry getEntry()
     {
-        return entry;
+	return entry;
     }
 
     /**
@@ -184,39 +184,39 @@ public class ManifestEntryVerifier {
      *
      */
     public CodeSigner[] verify(Hashtable<String, CodeSigner[]> verifiedSigners,
-                Hashtable<String, CodeSigner[]> sigFileSigners)
-        throws JarException
+		Hashtable<String, CodeSigner[]> sigFileSigners)
+	throws JarException
     {
-        if (skip) return null;
+ 	if (skip) return null;
 
-        if (signers != null)
-            return signers;
+	if (signers != null)
+	    return signers;
 
-        for (int i=0; i < digests.size(); i++) {
+	for (int i=0; i < digests.size(); i++) {
 
-            MessageDigest digest  = digests.get(i);
-            byte [] manHash = manifestHashes.get(i);
-            byte [] theHash = digest.digest();
+	    MessageDigest digest  = digests.get(i);
+	    byte [] manHash = manifestHashes.get(i);
+	    byte [] theHash = digest.digest();
 
-            if (debug != null) {
-                debug.println("Manifest Entry: " +
-                                   name + " digest=" + digest.getAlgorithm());
-                debug.println("  manifest " + toHex(manHash));
-                debug.println("  computed " + toHex(theHash));
-                debug.println();
-            }
+	    if (debug != null) {
+		debug.println("Manifest Entry: " +
+				   name + " digest=" + digest.getAlgorithm());
+		debug.println("  manifest " + toHex(manHash));
+		debug.println("  computed " + toHex(theHash));
+		debug.println();
+	    }
 
-            if (!MessageDigest.isEqual(theHash, manHash))
-                throw new SecurityException(digest.getAlgorithm()+
-                                            " digest error for "+name);
-        }
+	    if (!MessageDigest.isEqual(theHash, manHash))
+		throw new SecurityException(digest.getAlgorithm()+
+					    " digest error for "+name);
+	}
 
-        // take it out of sigFileSigners and put it in verifiedSigners...
-        signers = sigFileSigners.remove(name);
-        if (signers != null) {
-            verifiedSigners.put(name, signers);
-        }
-        return signers;
+	// take it out of sigFileSigners and put it in verifiedSigners...
+	signers = sigFileSigners.remove(name);
+	if (signers != null) {
+	    verifiedSigners.put(name, signers);
+	}
+	return signers;
     }
 
     // for the toHex function
@@ -230,13 +230,13 @@ public class ManifestEntryVerifier {
 
     static String toHex(byte[] data) {
 
-        StringBuffer sb = new StringBuffer(data.length*2);
+	StringBuffer sb = new StringBuffer(data.length*2);
 
-        for (int i=0; i<data.length; i++) {
-            sb.append(hexc[(data[i] >>4) & 0x0f]);
-            sb.append(hexc[data[i] & 0x0f]);
-        }
-        return sb.toString();
+	for (int i=0; i<data.length; i++) {
+	    sb.append(hexc[(data[i] >>4) & 0x0f]);
+	    sb.append(hexc[data[i] & 0x0f]);
+	}
+	return sb.toString();
     }
 
 }

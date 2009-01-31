@@ -45,10 +45,11 @@ import javax.naming.event.NamingListener;
  * (These arguments might be applicable to the listener if it implements
  * other listener interfaces).
  *</ol>
- *
+ * 
  * @author Rosanna Lee
  * @author Scott Seligman
  * @author Vincent Ryan
+ * @version %I% %E%
  *
  * @see UnsolicitedNotificationEvent
  * @see UnsolicitedNotification

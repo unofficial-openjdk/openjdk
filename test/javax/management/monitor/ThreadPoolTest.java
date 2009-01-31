@@ -76,12 +76,12 @@ public class ThreadPoolTest {
             return "";
         }
         private void inform(String prop) {
-            synchronized(waiter) {
-                if (!called) {
-                    called = true;
-                    waiter.count();
-                }
-            }
+	    synchronized(waiter) {
+		if (!called) {
+		    called = true;
+		    waiter.count();
+		}
+	    }
 
             echo(">>> TASK "+prop+" is called.");
         }
@@ -99,7 +99,7 @@ public class ThreadPoolTest {
      */
     public int runTest(int monitorType) throws Exception {
 
-
+        
         ObjectName[] mbeanNames = new ObjectName[nTasks];
         ObservedObject[] monitored = new ObservedObject[nTasks];
         ObjectName[] monitorNames = new ObjectName[nTasks];
@@ -146,9 +146,9 @@ public class ThreadPoolTest {
                 monitor[i].start();
             }
 
-            if (!waiter.waiting(MAX_WAITING_TIME)) {
+	    if (!waiter.waiting(MAX_WAITING_TIME)) {
                 echo("Error, not all "+nTasks+" monitor tasks are called after "
-                     +MAX_WAITING_TIME);
+		     +MAX_WAITING_TIME);
                 return 1;
             }
         } finally {
@@ -157,8 +157,8 @@ public class ThreadPoolTest {
                     monitor[i].stop();
         }
 
-        echo("All "+nTasks+" monitors are called.");
-        return 0;
+	echo("All "+nTasks+" monitors are called.");
+	return 0;
     }
 
     /*
@@ -183,56 +183,56 @@ public class ThreadPoolTest {
             echo(">>> MAXIMUM POOL SIZE = " + maxPoolSize);
         }
 
-        nTasks = maxPoolSize + 2;
-        waiter = new Waiter(nTasks);
+	nTasks = maxPoolSize + 2;
+	waiter = new Waiter(nTasks);
         ThreadPoolTest test = new ThreadPoolTest();
 
         int error = test.runTest(Integer.parseInt(args[0]));
-        if (error > 0) {
-            echo(">>> Unhappy Bye, Bye!");
-            throw new IllegalStateException(
+	if (error > 0) {
+	    echo(">>> Unhappy Bye, Bye!");
+	    throw new IllegalStateException(
                 "Test FAILED: Unexpected Maximum Pool Size Overflow!");
-        } else {
-            echo(">>> Happy Bye, Bye!");
-        }
+	} else {
+	    echo(">>> Happy Bye, Bye!");
+	}
     }
 
     private static class Waiter {
-        public Waiter(int waitedNB) {
-            this.waitedNB = waitedNB;
-        }
+	public Waiter(int waitedNB) {
+	    this.waitedNB = waitedNB;
+	}
 
-        public void count() {
-            synchronized(this) {
-                counted++;
+	public void count() {
+	    synchronized(this) {
+		counted++;
 
-                if (counted == waitedNB) {
-                    this.notifyAll();
-                }
-            }
-        }
+		if (counted == waitedNB) {
+		    this.notifyAll();
+		}
+	    }
+	}
 
-        public boolean waiting(long timeout) {
-            final long startTime = System.currentTimeMillis();
-            long toWait = timeout;
+	public boolean waiting(long timeout) {
+	    final long startTime = System.currentTimeMillis();
+	    long toWait = timeout;
 
-            synchronized(this) {
-                while(counted < waitedNB && toWait > 0) {
-                    try {
-                        this.wait(toWait);
-                    } catch (InterruptedException ire) {
-                        break;
-                    }
+	    synchronized(this) {
+		while(counted < waitedNB && toWait > 0) {
+		    try {
+			this.wait(toWait);
+		    } catch (InterruptedException ire) {
+			break;
+		    }
 
-                    toWait = timeout -
-                        (System.currentTimeMillis() - startTime);
-                }
-            }
+		    toWait = timeout - 
+			(System.currentTimeMillis() - startTime);
+		}
+	    }
 
-            return counted == waitedNB;
-        }
+	    return counted == waitedNB;
+	}
 
-        private int waitedNB;
-        private int counted = 0;
+	private int waitedNB;
+	private int counted = 0;
     }
 }

@@ -44,14 +44,14 @@ class SOFMarkerSegment extends MarkerSegment {
     int numLines;
     int samplesPerLine;
     ComponentSpec [] componentSpecs;  // Array size is num components
-
+        
     SOFMarkerSegment(boolean wantProg,
                      boolean wantExtended,
                      boolean willSubsample,
                      byte[] componentIDs,
                      int numComponents) {
-        super(wantProg ? JPEG.SOF2
-              : wantExtended ? JPEG.SOF1
+        super(wantProg ? JPEG.SOF2 
+              : wantExtended ? JPEG.SOF1 
               : JPEG.SOF0);
         samplePrecision = 8;
         numLines = 0;
@@ -100,7 +100,7 @@ class SOFMarkerSegment extends MarkerSegment {
         if (componentSpecs != null) {
             newGuy.componentSpecs = (ComponentSpec []) componentSpecs.clone();
             for (int i = 0; i < componentSpecs.length; i++) {
-                newGuy.componentSpecs[i] =
+                newGuy.componentSpecs[i] = 
                     (ComponentSpec) componentSpecs[i].clone();
             }
         }
@@ -110,13 +110,13 @@ class SOFMarkerSegment extends MarkerSegment {
     IIOMetadataNode getNativeNode() {
         IIOMetadataNode node = new IIOMetadataNode("sof");
         node.setAttribute("process", Integer.toString(tag-JPEG.SOF0));
-        node.setAttribute("samplePrecision",
+        node.setAttribute("samplePrecision", 
                           Integer.toString(samplePrecision));
-        node.setAttribute("numLines",
+        node.setAttribute("numLines", 
                           Integer.toString(numLines));
-        node.setAttribute("samplesPerLine",
+        node.setAttribute("samplesPerLine", 
                           Integer.toString(samplesPerLine));
-        node.setAttribute("numFrameComponents",
+        node.setAttribute("numFrameComponents", 
                           Integer.toString(componentSpecs.length));
         for (int i = 0; i < componentSpecs.length; i++) {
             node.appendChild(componentSpecs[i].getNativeNode());
@@ -125,7 +125,7 @@ class SOFMarkerSegment extends MarkerSegment {
         return node;
     }
 
-    void updateFromNativeNode(Node node, boolean fromScratch)
+    void updateFromNativeNode(Node node, boolean fromScratch) 
         throws IIOInvalidTreeException {
         NamedNodeMap attrs = node.getAttributes();
         int value = getAttributeValue(node, attrs, "process", 0, 2, false);
@@ -241,11 +241,11 @@ class SOFMarkerSegment extends MarkerSegment {
         ComponentSpec(Node node) throws IIOInvalidTreeException {
             NamedNodeMap attrs = node.getAttributes();
             componentId = getAttributeValue(node, attrs, "componentId", 0, 255, true);
-            HsamplingFactor = getAttributeValue(node, attrs, "HsamplingFactor",
+            HsamplingFactor = getAttributeValue(node, attrs, "HsamplingFactor", 
                                                 1, 255, true);
-            VsamplingFactor = getAttributeValue(node, attrs, "VsamplingFactor",
+            VsamplingFactor = getAttributeValue(node, attrs, "VsamplingFactor", 
                                                 1, 255, true);
-            QtableSelector = getAttributeValue(node, attrs, "QtableSelector",
+            QtableSelector = getAttributeValue(node, attrs, "QtableSelector", 
                                                0, 3, true);
         }
 
@@ -258,13 +258,13 @@ class SOFMarkerSegment extends MarkerSegment {
 
         IIOMetadataNode getNativeNode() {
             IIOMetadataNode node = new IIOMetadataNode("componentSpec");
-            node.setAttribute("componentId",
+            node.setAttribute("componentId", 
                               Integer.toString(componentId));
-            node.setAttribute("HsamplingFactor",
+            node.setAttribute("HsamplingFactor", 
                               Integer.toString(HsamplingFactor));
-            node.setAttribute("VsamplingFactor",
+            node.setAttribute("VsamplingFactor", 
                               Integer.toString(VsamplingFactor));
-            node.setAttribute("QtableSelector",
+            node.setAttribute("QtableSelector", 
                               Integer.toString(QtableSelector));
             return node;
         }

@@ -34,28 +34,28 @@ import javax.security.auth.callback.*;
 
 public class Default {
    public static void main(String args[]) throws Exception {
-        DialogCallbackHandler h = new DialogCallbackHandler();
-        TextOutputCallback toc = new TextOutputCallback
-                        (TextOutputCallback.INFORMATION,
-                        "hello");
-        TextOutputCallback toc2 = new TextOutputCallback
-                        (TextOutputCallback.INFORMATION,
-                        "world");
-        ConfirmationCallback cc = new ConfirmationCallback
-                        ("Correct?",
-                        ConfirmationCallback.INFORMATION,
-                        ConfirmationCallback.YES_NO_OPTION,
-                        ConfirmationCallback.NO);
+	DialogCallbackHandler h = new DialogCallbackHandler();
+	TextOutputCallback toc = new TextOutputCallback
+			(TextOutputCallback.INFORMATION,
+			"hello");
+	TextOutputCallback toc2 = new TextOutputCallback
+			(TextOutputCallback.INFORMATION,
+			"world");
+	ConfirmationCallback cc = new ConfirmationCallback
+			("Correct?", 
+			ConfirmationCallback.INFORMATION,
+			ConfirmationCallback.YES_NO_OPTION,
+			ConfirmationCallback.NO);
 
-        Callback[] callbacks = { toc, toc2, cc };
-        h.handle(callbacks);
+	Callback[] callbacks = { toc, toc2, cc };
+	h.handle(callbacks);
 
-        if (cc.getSelectedIndex() == ConfirmationCallback.YES) {
-            System.out.println("yes");
-        } else {
-            System.out.println("no");
-        }
+	if (cc.getSelectedIndex() == ConfirmationCallback.YES) {
+	    System.out.println("yes");
+	} else {
+	    System.out.println("no");
+	}
 
-        System.exit(0);
+	System.exit(0);
    }
 }

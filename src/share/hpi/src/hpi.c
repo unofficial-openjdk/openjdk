@@ -188,27 +188,27 @@ GetInterface(void **intfP, const char *name, jint version)
     }
     if (strcmp(name, "Memory") == 0) {
         *intfP = &hpi_memory_interface;
-        return 0;
+	return 0;
     }
     if (strcmp(name, "Library") == 0) {
         *intfP = &hpi_library_interface;
-        return 0;
+	return 0;
     }
     if (strcmp(name, "System") == 0) {
         *intfP = &hpi_system_interface;
-        return 0;
+	return 0;
     }
     if (strcmp(name, "Thread") == 0) {
         *intfP = &hpi_thread_interface;
-        return 0;
+	return 0;
     }
     if (strcmp(name, "File") == 0) {
         *intfP = &hpi_file_interface;
-        return 0;
+	return 0;
     }
     if (strcmp(name, "Socket") == 0) {
         *intfP = &hpi_socket_interface;
-        return 0;
+	return 0;
     }
     return -2;
 }

@@ -65,6 +65,7 @@ import java.net.URL;
  * @see Instrument
  * @see SoundbankResource
  *
+ * @version %I%, %E%
  * @author David Rivas
  * @author Kara Kytle
  */

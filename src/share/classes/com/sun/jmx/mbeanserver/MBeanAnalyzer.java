@@ -53,7 +53,7 @@ import javax.management.NotCompliantMBeanException;
  * @since 1.6
  */
 class MBeanAnalyzer<M> {
-
+    
     static interface MBeanVisitor<M> {
         public void visitAttribute(String attributeName,
                 M getter,
@@ -61,7 +61,7 @@ class MBeanAnalyzer<M> {
         public void visitOperation(String operationName,
                 M operation);
     }
-
+    
     void visit(MBeanVisitor<M> visitor) {
         // visit attributes
         for (Map.Entry<String, AttrMethods<M>> entry : attrMap.entrySet()) {
@@ -69,24 +69,24 @@ class MBeanAnalyzer<M> {
             AttrMethods<M> am = entry.getValue();
             visitor.visitAttribute(name, am.getter, am.setter);
         }
-
+        
         // visit operations
         for (Map.Entry<String, List<M>> entry : opMap.entrySet()) {
             for (M m : entry.getValue())
                 visitor.visitOperation(entry.getKey(), m);
         }
     }
-
+    
     /* Map op name to method */
     private Map<String, List<M>> opMap = newInsertionOrderMap();
     /* Map attr name to getter and/or setter */
     private Map<String, AttrMethods<M>> attrMap = newInsertionOrderMap();
-
+    
     private static class AttrMethods<M> {
         M getter;
         M setter;
     }
-
+    
     /**
      * <p>Return an MBeanAnalyzer for the given MBean interface and
      * MBeanIntrospector.  Calling this method twice with the same
@@ -103,7 +103,7 @@ class MBeanAnalyzer<M> {
             throws NotCompliantMBeanException {
         return new MBeanAnalyzer<M>(mbeanInterface, introspector);
     }
-
+    
     private MBeanAnalyzer(Class<?> mbeanInterface,
             MBeanIntrospector<M> introspector)
             throws NotCompliantMBeanException {
@@ -111,36 +111,36 @@ class MBeanAnalyzer<M> {
             throw new NotCompliantMBeanException("Not an interface: " +
                     mbeanInterface.getName());
         }
-
+   
         try {
             initMaps(mbeanInterface, introspector);
         } catch (Exception x) {
             throw Introspector.throwException(mbeanInterface,x);
         }
     }
-
+    
     // Introspect the mbeanInterface and initialize this object's maps.
     //
     private void initMaps(Class<?> mbeanInterface,
             MBeanIntrospector<M> introspector) throws Exception {
         final Method[] methodArray = mbeanInterface.getMethods();
-
+        
         final List<Method> methods = eliminateCovariantMethods(methodArray);
-
+        
         /* Run through the methods to detect inconsistencies and to enable
            us to give getter and setter together to visitAttribute. */
         for (Method m : methods) {
             String name = m.getName();
-
+            
             final M cm = introspector.mFrom(m);
-
+            
             String attrName = "";
             if (name.startsWith("get"))
                 attrName = name.substring(3);
             else if (name.startsWith("is")
             && m.getReturnType() == boolean.class)
                 attrName = name.substring(2);
-
+            
             if (attrName.length() != 0 && m.getParameterTypes().length == 0
                     && m.getReturnType() != void.class) {
                 // It's a getter
@@ -191,13 +191,13 @@ class MBeanAnalyzer<M> {
             }
         }
     }
-
+    
     /**
-     * A comparator that defines a total order so that methods have the
+     * A comparator that defines a total order so that methods have the 
      * same name and identical signatures appear next to each others.
-     * The methods are sorted in such a way that methods which
-     * override each other will sit next to each other, with the
-     * overridden method first - e.g. Object getFoo() is placed before
+     * The methods are sorted in such a way that methods which 
+     * override each other will sit next to each other, with the 
+     * overridden method first - e.g. Object getFoo() is placed before 
      * Integer getFoo(). This makes it possible to determine whether
      * a method overrides another one simply by looking at the method(s)
      * that precedes it in the list. (see eliminateCovariantMethods).
@@ -217,13 +217,13 @@ class MBeanAnalyzer<M> {
             final Class<?> aret = a.getReturnType();
             final Class<?> bret = b.getReturnType();
             if (aret == bret) return 0;
-
+            
             // Super type comes first: Object, Number, Integer
             if (aret.isAssignableFrom(bret))
                 return -1;
             return +1;      // could assert bret.isAssignableFrom(aret)
         }
-        public final static MethodOrder instance = new MethodOrder();
+        public final static MethodOrder instance = new MethodOrder(); 
     }
 
 
@@ -246,10 +246,10 @@ class MBeanAnalyzer<M> {
         for (int i=1;i<len;i++) {
             final Method m0 = sorted[i-1];
             final Method m1 = sorted[i];
-
+            
             // Methods that don't have the same name can't override each others
             if (!m0.getName().equals(m1.getName())) continue;
-
+            
             // Methods that have the same name and same signature override
             // each other. In that case, the second method overrides the first,
             // due to the way we have sorted them in MethodOrder.
@@ -258,11 +258,11 @@ class MBeanAnalyzer<M> {
                 overridden.add(m0);
             }
         }
-
+        
         final List<Method> methods = newList(Arrays.asList(methodArray));
         methods.removeAll(overridden);
         return methods;
     }
-
-
+    
+    
 }

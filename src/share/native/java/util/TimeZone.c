@@ -37,7 +37,7 @@
  * Gets the platform defined TimeZone ID
  */
 JNIEXPORT jstring JNICALL
-Java_java_util_TimeZone_getSystemTimeZoneID(JNIEnv *env, jclass ign,
+Java_java_util_TimeZone_getSystemTimeZoneID(JNIEnv *env, jclass ign, 
                                             jstring java_home, jstring country)
 {
     const char *cname;
@@ -45,17 +45,17 @@ Java_java_util_TimeZone_getSystemTimeZoneID(JNIEnv *env, jclass ign,
     char *javaTZ;
 
     if (java_home == NULL)
-        return NULL;
+	return NULL;
 
     java_home_dir = JNU_GetStringPlatformChars(env, java_home, 0);
     if (java_home_dir == NULL)
         return NULL;
 
     if (country != NULL) {
-        cname = JNU_GetStringPlatformChars(env, country, 0);
-        /* ignore error cases for cname */
+	cname = JNU_GetStringPlatformChars(env, country, 0);
+	/* ignore error cases for cname */
     } else {
-        cname = NULL;
+	cname = NULL;
     }
 
     /*
@@ -65,12 +65,12 @@ Java_java_util_TimeZone_getSystemTimeZoneID(JNIEnv *env, jclass ign,
 
     free((void *)java_home_dir);
     if (cname != NULL) {
-        free((void *)cname);
+	free((void *)cname);
     }
 
     if (javaTZ != NULL) {
-        jstring jstrJavaTZ = JNU_NewStringPlatform(env, javaTZ);
-        free((void *)javaTZ);
+	jstring jstrJavaTZ = JNU_NewStringPlatform(env, javaTZ);
+	free((void *)javaTZ);
         return jstrJavaTZ;
     }
     return NULL;
@@ -86,8 +86,8 @@ Java_java_util_TimeZone_getSystemGMTOffsetID(JNIEnv *env, jclass ign)
     jstring jstrID = NULL;
 
     if (id != NULL) {
-        jstrID = JNU_NewStringPlatform(env, id);
-        free((void *)id);
+	jstrID = JNU_NewStringPlatform(env, id);
+	free((void *)id);
     }
     return jstrID;
 }

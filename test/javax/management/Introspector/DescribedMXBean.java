@@ -30,13 +30,13 @@ public interface DescribedMXBean {
 
     @SqeDescriptorKey("ATTRIBUTE StringProp")
     public String getStringProp();
-
+    
     @SqeDescriptorKey("ATTRIBUTE StringProp")
     public void setStringProp(String name);
-
+    
     @SqeDescriptorKey("OPERATION doNothing")
     public void doNothing();
-
+    
     @SqeDescriptorKey("OPERATION doNothingParam")
     public void doNothingParam(@SqeDescriptorKey("OPERATION PARAMETER name")String name);
 }

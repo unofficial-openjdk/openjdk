@@ -33,7 +33,7 @@ import java.util.*;
 import java.lang.reflect.Method;
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -48,49 +48,49 @@ public interface MessageStruct {
  * Represents ...
  * </p>
  */
-    public static final int NORMAL_RESPONSE = 0;
+    public static final int NORMAL_RESPONSE = 0; 
 
 /**
  * <p>
  * Represents ...
  * </p>
  */
-    public static final int CHECKED_EXCEPTION_RESPONSE = 1;
+    public static final int CHECKED_EXCEPTION_RESPONSE = 1; 
 
 /**
  * <p>
  * Represents ...
  * </p>
  */
-    public static final int UNCHECKED_EXCEPTION_RESPONSE = 2;
+    public static final int UNCHECKED_EXCEPTION_RESPONSE = 2; 
 
 /**
  * <p>
  * Represents ...
  * </p>
  */
-    public static final int REQUEST_RESPONSE_MEP = 1;
+    public static final int REQUEST_RESPONSE_MEP = 1; 
 
 /**
  * <p>
  * Represents ...
  * </p>
  */
-    public static final int ONE_WAY_MEP = 2;
+    public static final int ONE_WAY_MEP = 2; 
 
 /**
  * <p>
  * Represents ...
  * </p>
  */
-    public static final int ASYNC_POLL_MEP = 3;
+    public static final int ASYNC_POLL_MEP = 3; 
 
 /**
  * <p>
  * Represents ...
  * </p>
  */
-    public static final int ASYNC_CALLBACK_MEP = 4;
+    public static final int ASYNC_CALLBACK_MEP = 4; 
 
   ///////////////////////////////////////
   // operations
@@ -99,10 +99,10 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @param data ...
  * </p><p>
- *
+ * 
  * </p>
  */
     public void setData(Object[] data);
@@ -110,7 +110,7 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Object[] with ...
  * </p>
  */
@@ -119,9 +119,9 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param name ...
  * </p><p>
  * @param value ...
@@ -132,7 +132,7 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Object with ...
  * </p><p>
  * @param name ...
@@ -143,9 +143,9 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param messageExchangePattern ...
  * </p>
  */
@@ -154,7 +154,7 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a int with ...
  * </p>
  */
@@ -163,7 +163,7 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a int with ...
  * </p>
  */
@@ -172,9 +172,9 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param responseType ...
  * </p>
  */
@@ -183,7 +183,7 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Object with ...
  * </p>
  */
@@ -192,9 +192,9 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param response ...
  * </p>
  */
@@ -203,9 +203,9 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param method ...
  * </p>
  */
@@ -214,10 +214,17 @@ public interface MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Method with ...
  * </p>
  */
     public Method getMethod();
 
 } // end MessageStruct
+
+
+
+
+
+
+

@@ -50,6 +50,7 @@ import sun.awt.dnd.SunDragSourceContextPeer;
  * </p>
  *
  * @author Laurence P. G. Cable
+ * @version %R%.%L%
  *
  * @see java.awt.dnd.DragGestureListener
  * @see java.awt.dnd.DragGestureEvent
@@ -68,8 +69,8 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
     protected static int motionThreshold;
 
     protected static final int ButtonMask = InputEvent.BUTTON1_DOWN_MASK |
-                                            InputEvent.BUTTON2_DOWN_MASK |
-                                            InputEvent.BUTTON3_DOWN_MASK;
+                                            InputEvent.BUTTON2_DOWN_MASK | 
+                                            InputEvent.BUTTON3_DOWN_MASK; 
 
     /**
      * construct a new WMouseDragGestureRecognizer
@@ -82,7 +83,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected WMouseDragGestureRecognizer(DragSource ds, Component c, int act, DragGestureListener dgl) {
-        super(ds, c, act, dgl);
+	super(ds, c, act, dgl);
     }
 
     /**
@@ -94,7 +95,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected WMouseDragGestureRecognizer(DragSource ds, Component c, int act) {
-        this(ds, c, act, null);
+	this(ds, c, act, null);
     }
 
     /**
@@ -105,7 +106,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected WMouseDragGestureRecognizer(DragSource ds, Component c) {
-        this(ds, c, DnDConstants.ACTION_NONE);
+	this(ds, c, DnDConstants.ACTION_NONE);
     }
 
     /**
@@ -115,7 +116,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     protected WMouseDragGestureRecognizer(DragSource ds) {
-        this(ds, null);
+	this(ds, null);
     }
 
     /**
@@ -133,9 +134,9 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
             return DnDConstants.ACTION_NONE;
         }
 
-        return
+        return 
             SunDragSourceContextPeer.convertModifiersToDropAction(mods,
-                                                                  getSourceActions());
+                                                                  getSourceActions()); 
     }
 
     /**
@@ -143,7 +144,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseClicked(MouseEvent e) {
-        // do nothing
+	// do nothing
     }
 
     /**
@@ -151,16 +152,16 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mousePressed(MouseEvent e) {
-        events.clear();
+	events.clear();
 
-        if (mapDragOperationFromModifiers(e) != DnDConstants.ACTION_NONE) {
+	if (mapDragOperationFromModifiers(e) != DnDConstants.ACTION_NONE) {
             try {
                 motionThreshold = DragSource.getDragThreshold();
             } catch (Exception exc) {
                 motionThreshold = 5;
             }
-            appendEvent(e);
-        }
+	    appendEvent(e);
+	}
     }
 
     /**
@@ -168,7 +169,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseReleased(MouseEvent e) {
-        events.clear();
+	events.clear();
     }
 
     /**
@@ -176,7 +177,7 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseEntered(MouseEvent e) {
-        events.clear();
+	events.clear();
     }
 
     /**
@@ -185,13 +186,13 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
 
     public void mouseExited(MouseEvent e) {
 
-        if (!events.isEmpty()) { // gesture pending
-            int dragAction = mapDragOperationFromModifiers(e);
+	if (!events.isEmpty()) { // gesture pending
+	    int dragAction = mapDragOperationFromModifiers(e);
 
             if (dragAction == DnDConstants.ACTION_NONE) {
-                events.clear();
+		events.clear();
             }
-        }
+	}
     }
 
     /**
@@ -199,27 +200,27 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseDragged(MouseEvent e) {
-        if (!events.isEmpty()) { // gesture pending
-            int dop = mapDragOperationFromModifiers(e);
+	if (!events.isEmpty()) { // gesture pending
+	    int dop = mapDragOperationFromModifiers(e);
 
-            if (dop == DnDConstants.ACTION_NONE) {
-                return;
-            }
+	    if (dop == DnDConstants.ACTION_NONE) {
+		return;
+	    }
 
-            MouseEvent trigger = (MouseEvent)events.get(0);
+	    MouseEvent trigger = (MouseEvent)events.get(0);
 
 
-            Point      origin  = trigger.getPoint();
-            Point      current = e.getPoint();
+	    Point      origin  = trigger.getPoint();
+	    Point      current = e.getPoint();
 
-            int        dx      = Math.abs(origin.x - current.x);
-            int        dy      = Math.abs(origin.y - current.y);
+	    int        dx      = Math.abs(origin.x - current.x);
+	    int        dy      = Math.abs(origin.y - current.y);
 
-            if (dx > motionThreshold || dy > motionThreshold) {
-                fireDragGestureRecognized(dop, ((MouseEvent)getTriggerEvent()).getPoint());
-            } else
-                appendEvent(e);
-        }
+	    if (dx > motionThreshold || dy > motionThreshold) {
+	        fireDragGestureRecognized(dop, ((MouseEvent)getTriggerEvent()).getPoint());
+	    } else
+		appendEvent(e);
+	}
     }
 
     /**
@@ -228,6 +229,6 @@ class WMouseDragGestureRecognizer extends MouseDragGestureRecognizer {
      */
 
     public void mouseMoved(MouseEvent e) {
-        // do nothing
+	// do nothing
     }
 }

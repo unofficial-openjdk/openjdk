@@ -42,7 +42,7 @@
 
 class AwtScrollbar : public AwtComponent {
 public:
-
+  
     /* java.awt.Scrollbar fields */
     static jfieldID lineIncrementID;
     static jfieldID pageIncrementID;
@@ -54,7 +54,7 @@ public:
     virtual void Dispose();
 
     virtual LPCTSTR GetClassName();
-
+    
     static AwtScrollbar* Create(jobject self, jobject parent);
 
     void SetValue(int value);
@@ -109,10 +109,11 @@ private:
     static int ms_instanceCounter;
     static HHOOK ms_hMouseFilter;
     static BOOL ms_isInsideMouseFilter;
-    static LRESULT CALLBACK MouseFilter(int nCode, WPARAM wParam,
+    static LRESULT CALLBACK MouseFilter(int nCode, WPARAM wParam, 
                                         LPARAM lParam);
 
-    void DoScrollCallbackCoalesce(const char* methodName, int newPos);
+    void DoScrollCallbackCoalesce(const char* methodName, int newPos);    
 };
 
 #endif /* AWT_SCROLLBAR_H */
+

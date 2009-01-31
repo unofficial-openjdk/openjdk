@@ -57,7 +57,7 @@ public class PeekMetrics {
      * is not an instance of <code>Color</code>
      */
     public boolean hasNonSolidColors() {
-        return mHasNonSolidColors;
+	return mHasNonSolidColors;
     }
 
     /**
@@ -66,7 +66,7 @@ public class PeekMetrics {
      * than 1.0.
      */
     public boolean hasCompositing() {
-        return mHasCompositing;
+	return mHasCompositing;
     }
 
     /**
@@ -74,7 +74,7 @@ public class PeekMetrics {
      * drawn any text.
      */
     public boolean hasText() {
-        return mHasText;
+	return mHasText;
     }
 
     /**
@@ -82,7 +82,7 @@ public class PeekMetrics {
      * drawn any images.
      */
     public boolean hasImages() {
-        return mHasImages;
+	return mHasImages;
     }
 
     /**
@@ -90,7 +90,7 @@ public class PeekMetrics {
      * so record the needed information.
      */
     public void fill(Graphics2D g) {
-        checkDrawingMode(g);
+	checkDrawingMode(g);
     }
 
     /**
@@ -98,7 +98,7 @@ public class PeekMetrics {
      * so record the needed information.
      */
     public void draw(Graphics2D g) {
-        checkDrawingMode(g);
+	checkDrawingMode(g);	
     }
 
     /**
@@ -106,15 +106,15 @@ public class PeekMetrics {
      * so record the needed information.
      */
     public void clear(Graphics2D g) {
-        checkPaint(g.getBackground());
+	checkPaint(g.getBackground());
     }
     /**
      * The application is drawing text
      * so record the needed information.
      */
     public void drawText(Graphics2D g) {
-        mHasText = true;
-        checkDrawingMode(g);
+	mHasText = true;
+	checkDrawingMode(g);
     }
 
     /**
@@ -123,8 +123,8 @@ public class PeekMetrics {
      * so record the needed information.
      */
     public void drawText(Graphics2D g, TextLayout textLayout) {
-        mHasText = true;
-        checkDrawingMode(g);
+	mHasText = true;
+	checkDrawingMode(g);
     }
 
     /**
@@ -132,7 +132,7 @@ public class PeekMetrics {
      * in image.
      */
     public void drawImage(Graphics2D g, Image image) {
-        mHasImages = true;
+	mHasImages = true;
     }
 
     /**
@@ -140,7 +140,7 @@ public class PeekMetrics {
      * in image.
      */
     public void drawImage(Graphics2D g, RenderedImage image) {
-        mHasImages = true;
+	mHasImages = true;
     }
 
     /**
@@ -148,7 +148,7 @@ public class PeekMetrics {
      * in image.
      */
     public void drawImage(Graphics2D g, RenderableImage image) {
-        mHasImages = true;
+	mHasImages = true;
     }
 
     /**
@@ -157,8 +157,8 @@ public class PeekMetrics {
      */
     private void checkDrawingMode(Graphics2D g) {
 
-        checkPaint(g.getPaint());
-        checkAlpha(g.getComposite());
+	checkPaint(g.getPaint());
+	checkAlpha(g.getComposite());
 
     }
 
@@ -168,13 +168,13 @@ public class PeekMetrics {
      */
     private void checkPaint(Paint paint) {
 
-        if (paint instanceof Color) {
+	if (paint instanceof Color) {
             if (((Color)paint).getAlpha() < 255) {
                 mHasNonSolidColors = true;
             }
         } else {
-            mHasNonSolidColors = true;
-        }
+	    mHasNonSolidColors = true;
+	}
     }
 
     /**
@@ -182,22 +182,22 @@ public class PeekMetrics {
      * with the supplied <code>Composite</code>.
      */
     private void checkAlpha(Composite composite) {
+	
+	if (composite instanceof AlphaComposite) {
+	    AlphaComposite alphaComposite = (AlphaComposite) composite;
+	    float alpha = alphaComposite.getAlpha();
+	    int rule = alphaComposite.getRule();
 
-        if (composite instanceof AlphaComposite) {
-            AlphaComposite alphaComposite = (AlphaComposite) composite;
-            float alpha = alphaComposite.getAlpha();
-            int rule = alphaComposite.getRule();
+	    if (alpha != 1.0 
+		    || (rule != AlphaComposite.SRC
+			&& rule != AlphaComposite.SRC_OVER)) {
 
-            if (alpha != 1.0
-                    || (rule != AlphaComposite.SRC
-                        && rule != AlphaComposite.SRC_OVER)) {
+		mHasCompositing = true;
+	    }
 
-                mHasCompositing = true;
-            }
-
-        } else {
-            mHasCompositing = true;
-        }
+	} else {
+	    mHasCompositing = true;
+	}
 
     }
 

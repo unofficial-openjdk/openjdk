@@ -35,6 +35,7 @@ import javax.swing.tree.ExpandVetoException;
   * <a href="http://java.sun.com/docs/books/tutorial/uiswing/events/treewillexpandlistener.html">How to Write a Tree-Will-Expand Listener</a>,
   * a section in <em>The Java Tutorial.</em>
   *
+  * @version %I% %G%
   * @author Scott Violet
   */
 

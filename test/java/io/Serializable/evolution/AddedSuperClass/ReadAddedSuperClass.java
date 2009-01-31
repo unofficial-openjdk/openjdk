@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,16 +20,16 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 /*
  *  @bug 4070080
- *
+ * 
  *  @build WriteAddedSuperClass ReadAddedSuperClass
  *  @run main ReadAddedSuperClass
  *  @summary Test reading an evolved class serialization into the original class
  *           version. Class evolved by adding a superclass.
- *           This is a compatible class evolution.
- *
+ *	     This is a compatible class evolution.
+ * 
  *  Part a of test serializes an instance of an evolved class to a serialization stream.
  *  Part b of test deserializes the serialization stream into an instance of
  *  the original class.
@@ -52,10 +52,10 @@ class A implements Serializable {
 
 public class ReadAddedSuperClass {
     public static void main(String args[]) throws IOException, ClassNotFoundException {
-        File f = new File("tmp.ser");
-        ObjectInput in =
-            new ObjectInputStream(new FileInputStream(f));
-        A a = (A)in.readObject();
-        in.close();
+	File f = new File("tmp.ser");
+	ObjectInput in =
+	    new ObjectInputStream(new FileInputStream(f));
+	A a = (A)in.readObject();
+	in.close();
     }
 }

@@ -37,7 +37,7 @@ import sun.management.snmp.jvmmib.JvmMemMgrPoolRelEntryMBean;
 /**
  * The class is used for implementing the "JvmMemMgrPoolRelEntry" group.
  */
-public class JvmMemMgrPoolRelEntryImpl
+public class JvmMemMgrPoolRelEntryImpl 
     implements JvmMemMgrPoolRelEntryMBean {
 
     /**
@@ -64,14 +64,14 @@ public class JvmMemMgrPoolRelEntryImpl
     /**
      * Constructor for the "JvmMemMgrPoolRelEntry" group.
      */
-    public JvmMemMgrPoolRelEntryImpl(String mmmName,
-                                     String mpmName,
-                                     int mmarc, int mparc) {
-        JvmMemManagerIndex = mmarc;
-        JvmMemPoolIndex    = mparc;
+    public JvmMemMgrPoolRelEntryImpl(String mmmName, 
+				     String mpmName, 
+				     int mmarc, int mparc) {
+	JvmMemManagerIndex = mmarc;
+	JvmMemPoolIndex    = mparc;
 
-        this.mmmName = mmmName;
-        this.mpmName = mpmName;
+	this.mmmName = mmmName;
+	this.mpmName = mpmName;
     }
 
     /**

@@ -36,58 +36,58 @@ public class RecursionDebug {
 
     // non bootclasspath SecurityManager
     public static class RecursionSM extends SecurityManager {
-        public void checkPermission(Permission p) {
-            super.checkPermission(p);
-        }
+	public void checkPermission(Permission p) {
+	    super.checkPermission(p);
+	}
     }
 
     public static void main(String[] args) throws Exception {
 
-        // trigger security check to make sure policy is set
-        try {
-            System.getProperty("foo.bar");
-        } catch (Exception e) {
-            // fall thru
-        }
+	// trigger security check to make sure policy is set
+	try {
+	    System.getProperty("foo.bar");
+	} catch (Exception e) {
+	    // fall thru
+	}
 
-        // static perms
-        Permissions staticPerms = new Permissions();
-        staticPerms.add(new java.util.PropertyPermission("static.foo", "read"));
+	// static perms
+	Permissions staticPerms = new Permissions();
+	staticPerms.add(new java.util.PropertyPermission("static.foo", "read"));
 
-        ProtectionDomain pd = new ProtectionDomain
-                        (new CodeSource
-                                (new URL("http://foo"),
-                                (java.security.cert.Certificate[])null),
-                        staticPerms,
-                        null,
-                        null);
+	ProtectionDomain pd = new ProtectionDomain
+			(new CodeSource
+				(new URL("http://foo"),
+				(java.security.cert.Certificate[])null),
+			staticPerms,
+			null,
+			null);
 
-        // test with SecurityManager on the bootclasspath, debug turned on
-        //
-        // merging should have occured - check for policy merged.foo permission
+	// test with SecurityManager on the bootclasspath, debug turned on
+	//
+	// merging should have occured - check for policy merged.foo permission
 
-        if (pd.toString().indexOf("merged.foo") < 0) {
-            throw new Exception("Test with bootclass SecurityManager failed");
-        }
+	if (pd.toString().indexOf("merged.foo") < 0) {
+	    throw new Exception("Test with bootclass SecurityManager failed");
+	}
 
-        // test with SecurityManager not on bootclasspath, debug turned on
-        //
-        // merging should not have occured, and there should be no recursion
+	// test with SecurityManager not on bootclasspath, debug turned on
+	//
+	// merging should not have occured, and there should be no recursion
 
-        ProtectionDomain pd2 = new ProtectionDomain
-                        (new CodeSource
-                                (new URL("http://bar"),
-                                (java.security.cert.Certificate[])null),
-                        staticPerms,
-                        null,
-                        null);
+	ProtectionDomain pd2 = new ProtectionDomain
+			(new CodeSource
+				(new URL("http://bar"),
+				(java.security.cert.Certificate[])null),
+			staticPerms,
+			null,
+			null);
 
-        System.setSecurityManager(new RecursionDebug.RecursionSM());
-        if (pd2.toString().indexOf("merged.foo") >= 0) {
-            throw new Exception
-                ("Test with custom non-bootclass SecurityManager failed");
-        }
+	System.setSecurityManager(new RecursionDebug.RecursionSM());
+	if (pd2.toString().indexOf("merged.foo") >= 0) {
+	    throw new Exception
+		("Test with custom non-bootclass SecurityManager failed");
+	}
 
-        System.setSecurityManager(null);
+	System.setSecurityManager(null);
     }
 }

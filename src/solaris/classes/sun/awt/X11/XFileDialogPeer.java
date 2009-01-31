@@ -69,7 +69,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
     String      savedDir;
     // Holds value of the system property 'user.dir'
     // in order to init current directory
-    String      userDir;
+    String      userDir; 
 
     Dialog      fileDialog;
 
@@ -82,7 +82,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
     TextField   filterField;
 
     // This variable holds the current text of the file which user select through the navigation
-    // It's important that updating of this variable must be correct
+    // It's important that updating of this variable must be correct 
     // since this value is used at the time of the file dialog closing
     // Namely, we invoke target.setFile() and then user can get this value
     // We update this field in cases:
@@ -114,7 +114,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
     String saveButtonText= null;
     String actionButtonText= null;
 
-
+    
     void installStrings() {
         Locale l = target.getLocale();
         UIDefaults uid = XToolkit.getUIDefaults();
@@ -132,18 +132,18 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
     XFileDialogPeer(FileDialog target) {
         super((Dialog)target);
         this.target = target;
-    }
+    } 
 
     private void init(FileDialog target) {
         fileDialog = target; //new Dialog(target, target.getTitle(), false);
         this.title = target.getTitle();
         this.mode = target.getMode();
         this.target = target;
-        this.filter = target.getFilenameFilter();
+        this.filter = target.getFilenameFilter();    
 
         savedFile = target.getFile();
         savedDir = target.getDirectory();
-        // Shouldn't save 'user.dir' to 'savedDir'
+        // Shouldn't save 'user.dir' to 'savedDir' 
         // since getDirectory() will be incorrect after handleCancel
         userDir = (String)AccessController.doPrivileged(
             new PrivilegedAction() {
@@ -161,9 +161,9 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
         // create components
         buttons = new Panel();
         buttons.setLayout(gblButtons);
-        actionButtonText = (target.getMode() == FileDialog.SAVE) ? saveButtonText : openButtonText;
+        actionButtonText = (target.getMode() == FileDialog.SAVE) ? saveButtonText : openButtonText;  
         openButton = new Button(actionButtonText);
-
+        
         filterButton = new Button(filterLabelText);
         cancelButton = new Button(cancelButtonText);
         directoryList = new List();
@@ -184,16 +184,16 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
 
         Font f = new Font(Font.DIALOG, Font.PLAIN, 12);
 
-        Label label = new Label(pathLabelText);
+        Label label = new Label(pathLabelText); 
         label.setFont(f);
         addComponent(label, gbl, gbc, 0, 0, 1,
                      GridBagConstraints.WEST, (Container)fileDialog,
                      1, 0, GridBagConstraints.NONE, labelInset);
 
         // Fixed 6260650: FileDialog.getDirectory() does not return null when file dialog is cancelled
-        // After showing we should display 'user.dir' as current directory
+        // After showing we should display 'user.dir' as current directory 
         // if user didn't set directory programatically
-        pathField = new TextField(savedDir != null ? savedDir : userDir);
+        pathField = new TextField(savedDir != null ? savedDir : userDir); 
 
         pathChoice = new Choice() {
                 public Dimension getPreferredSize() {
@@ -202,7 +202,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
             };
         pathPanel = new Panel();
         pathPanel.setLayout(new BorderLayout());
-
+        
         pathPanel.add(pathField,BorderLayout.CENTER);
         pathPanel.add(pathChoice,BorderLayout.EAST);
         //addComponent(pathField, gbl, gbc, 0, 1, 2,
@@ -214,9 +214,9 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
         addComponent(pathPanel, gbl, gbc, 0, 1, 2,
                     GridBagConstraints.WEST, (Container)fileDialog,
                    1, 0, GridBagConstraints.HORIZONTAL, textFieldInset);
+        
 
-
-
+       
         label = new Label(filterLabelText);
 
         label.setFont(f);
@@ -247,7 +247,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
                      GridBagConstraints.WEST, (Container)fileDialog,
                      1, 1, GridBagConstraints.BOTH, rightListInset);
 
-        label = new Label(enterFileNameLabelText);
+        label = new Label(enterFileNameLabelText); 
 
         label.setFont(f);
         addComponent(label, gbl, gbc, 0, 6, 1,
@@ -282,7 +282,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
         XChoicePeer choicePeer = (XChoicePeer)pathChoice.getPeer();
         choicePeer.setDrawSelectedItem(false);
         choicePeer.setAlignUnder(pathField);
-
+        
         filterField.addActionListener(this);
         selectionField.addActionListener(this);
         directoryList.addActionListener(this);
@@ -412,7 +412,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
     /**
      * handle the quit event
      */
-    void handleQuitButton() {
+    void handleQuitButton() {        
         dir = null;
         file = null;
         target.hide();
@@ -469,7 +469,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
             }
             this.dir = d;
 
-            pathField.setText(dir);
+            pathField.setText(dir);           
 
             // Some code was removed
             // Now we do updating of the pathChoice at the time of the choice opening
@@ -530,7 +530,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
 
         if (source == pathChoice) {
             /*
-             * Update the selection ('folder name' text field) after
+             * Update the selection ('folder name' text field) after 
              * the current item changing in the unfurled choice by the arrow keys.
              * See 6259434, 6240074 for more information
              */
@@ -601,7 +601,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
                 handleFilter(filterField.getText());
             } else if (pathField == ((TextField)source)) {
                 target.setDirectory(pathField.getText());
-            }
+            } 
         } else if (source instanceof List) {
             if (directoryList == ((List)source)) {
                 //handleFilter( actionCommand + getFileName( filterField.getText() ) );
@@ -614,7 +614,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
             }
         }
     }
-
+ 
     public boolean dispatchKeyEvent(KeyEvent keyEvent) {
         int id = keyEvent.getID();
         int keyCode = keyEvent.getKeyCode();
@@ -642,8 +642,8 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
 
         return false;
     }
-
-
+    
+    
     /**
      * set the file
      */
@@ -711,7 +711,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
         try {
             dir = this.dir = fe.getCanonicalPath();
         } catch (java.io.IOException ie) {
-            dir = this.dir = fe.getAbsolutePath();
+            dir = this.dir = fe.getAbsolutePath();            
         }
         pathField.setText(this.dir);
 
@@ -733,7 +733,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
 
     /**
      * set filenameFilter
-     *
+     * 
      */
     public void setFilenameFilter(FilenameFilter filter) {
         this.filter = filter;
@@ -753,9 +753,11 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
             // Seems we shouldn't restore Motif behaviour in this case
             setFile(savedFile);
         }
-
         super.show();
-        selectionField.requestFocusInWindow();
+
+        // At first we should set focus to the selection text field according to Motif behaviour
+        // But we don't do it since when will be more complex logic of the processing of the
+        // arrow keys events in order to change focus correctly (like Motif)
     }
 
     public void dispose() {
@@ -790,7 +792,7 @@ class XFileDialogPeer extends XDialogPeer implements FileDialogPeer, ActionListe
      */
     public void addItemsToPathChoice(String text){
         String dirList[] = getDirList(text);
-        for (int i = 0; i < dirList.length; i++) pathChoice.addItem(dirList[i]);
+        for (int i = 0; i < dirList.length; i++) pathChoice.addItem(dirList[i]);        
     }
 
     /*
@@ -903,7 +905,7 @@ class FileDialogFilter implements FilenameFilter {
         String regex = convert(filter);
         return input.matches(regex);
     }
-
+    
     /*
      * Converts the filter into the form which is acceptable by Java's regexps
      */
@@ -915,3 +917,6 @@ class FileDialogFilter implements FilenameFilter {
         return regex;
     }
 }
+
+
+

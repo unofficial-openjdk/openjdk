@@ -32,6 +32,7 @@ import sun.nio.cs.ext.MacRomania;
  * A table to convert to MacRomania to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharMacRomania extends ByteToCharSingleByte {

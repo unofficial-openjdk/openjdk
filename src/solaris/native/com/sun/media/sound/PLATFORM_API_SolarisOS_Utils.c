@@ -47,7 +47,7 @@ long getTimeInSeconds() {
 
 int getAudioDeviceCount() {
     int count = MAX_AUDIO_DEVICES;
-
+    
     getAudioDevices(globalADPaths, &count);
     return count;
 }
@@ -62,24 +62,24 @@ int addAudioDevice(char* path, AudioDevicePath* adPath, int* count) {
 
     // get stats on the file
     if (stat(path, &statBuf) == 0) {
-        // file exists.
-        fileExists = 1;
-        // If it is not yet in the adPath array, add it to the array
-        for (i = 0; i < *count; i++) {
-            if (adPath[i].st_ino == statBuf.st_ino
-                && adPath[i].st_dev == statBuf.st_dev) {
-                found = 1;
-                break;
-            }
-        }
-        if (!found) {
-            adPath[*count].st_ino = statBuf.st_ino;
-            adPath[*count].st_dev = statBuf.st_dev;
-            strncpy(adPath[*count].path, path, MAX_NAME_LENGTH);
-            adPath[*count].path[MAX_NAME_LENGTH] = 0;
-            (*count)++;
-            TRACE1("Added audio device %s\n", path);
-        }
+	// file exists.
+	fileExists = 1;
+	// If it is not yet in the adPath array, add it to the array
+	for (i = 0; i < *count; i++) {
+	    if (adPath[i].st_ino == statBuf.st_ino 
+		&& adPath[i].st_dev == statBuf.st_dev) {
+		found = 1;
+		break;
+	    }
+	}
+	if (!found) {
+	    adPath[*count].st_ino = statBuf.st_ino;
+	    adPath[*count].st_dev = statBuf.st_dev;
+	    strncpy(adPath[*count].path, path, MAX_NAME_LENGTH);
+	    adPath[*count].path[MAX_NAME_LENGTH] = 0;
+	    (*count)++;
+	    TRACE1("Added audio device %s\n", path);
+	}
     }
     return fileExists;
 }
@@ -92,33 +92,33 @@ void getAudioDevices(AudioDevicePath* adPath, int* count) {
     int i;
     long timeInSeconds = getTimeInSeconds();
 
-    if (globalADCount < 0
-        || (getTimeInSeconds() - globalADCacheTime) > AD_CACHE_TIME
-        || (adPath != globalADPaths)) {
-        *count = 0;
-        // first device, if set, is AUDIODEV variable
-        audiodev = getenv("AUDIODEV");
-        if (audiodev != NULL && audiodev[0] != 0) {
-            addAudioDevice(audiodev, adPath, count);
-        }
-        // then try /dev/audio
-        addAudioDevice("/dev/audio", adPath, count);
-        // then go through all of the /dev/sound/? devices
-        for (i = 0; i < 100; i++) {
-            sprintf(devsound, "/dev/sound/%d", i);
-            if (!addAudioDevice(devsound, adPath, count)) {
-                break;
-            }
-        }
-        if (adPath == globalADPaths) {
-            /* commit cache */
-            globalADCount = *count;
-            /* set cache time */
-            globalADCacheTime = timeInSeconds;
-        }
+    if (globalADCount < 0 
+	|| (getTimeInSeconds() - globalADCacheTime) > AD_CACHE_TIME
+	|| (adPath != globalADPaths)) {
+	*count = 0;
+	// first device, if set, is AUDIODEV variable
+	audiodev = getenv("AUDIODEV");
+	if (audiodev != NULL && audiodev[0] != 0) {
+	    addAudioDevice(audiodev, adPath, count);
+	}
+	// then try /dev/audio
+	addAudioDevice("/dev/audio", adPath, count);
+	// then go through all of the /dev/sound/? devices
+	for (i = 0; i < 100; i++) {
+	    sprintf(devsound, "/dev/sound/%d", i);
+	    if (!addAudioDevice(devsound, adPath, count)) {
+		break;
+	    }
+	}
+	if (adPath == globalADPaths) {
+	    /* commit cache */
+	    globalADCount = *count;
+	    /* set cache time */
+	    globalADCacheTime = timeInSeconds;
+	}
     } else {
-        /* return cache */
-        *count = globalADCount;
+	/* return cache */
+	*count = globalADCount;
     }
     // that's it
 }
@@ -126,10 +126,10 @@ void getAudioDevices(AudioDevicePath* adPath, int* count) {
 int getAudioDeviceDescriptionByIndex(int index, AudioDeviceDescription* adDesc, int getNames) {
     int count = MAX_AUDIO_DEVICES;
     int ret = 0;
-
+    
     getAudioDevices(globalADPaths, &count);
     if (index>=0 && index < count) {
-        ret = getAudioDeviceDescription(globalADPaths[index].path, adDesc, getNames);
+	ret = getAudioDeviceDescription(globalADPaths[index].path, adDesc, getNames);
     }
     return ret;
 }
@@ -150,44 +150,45 @@ int getAudioDeviceDescription(char* path, AudioDeviceDescription* adDesc, int ge
     adDesc->version[0] = 0;
     adDesc->description[0] = 0;
     adDesc->maxSimulLines = 1;
-
+    
     // try to open the pseudo device and get more information
     fd = open(adDesc->pathctl, O_WRONLY | O_NONBLOCK);
     if (fd >= 0) {
-        close(fd);
-        if (getNames) {
-            fd = open(adDesc->pathctl, O_RDONLY);
-            if (fd >= 0) {
-                if (ioctl(fd, AUDIO_GETDEV, &deviceInfo) >= 0) {
-                    strncpy(adDesc->vendor, deviceInfo.name, MAX_AUDIO_DEV_LEN);
-                    adDesc->vendor[MAX_AUDIO_DEV_LEN] = 0;
-                    strncpy(adDesc->version, deviceInfo.version, MAX_AUDIO_DEV_LEN);
-                    adDesc->version[MAX_AUDIO_DEV_LEN] = 0;
-                    /* add config string to the dev name
-                     * creates a string like "/dev/audio (onboard1)"
-                     */
-                    len = strlen(adDesc->name) + 1;
-                    if (MAX_NAME_LENGTH - len > 3) {
-                        strcat(adDesc->name, " (");
-                        strncat(adDesc->name, deviceInfo.config, MAX_NAME_LENGTH - len);
-                        strcat(adDesc->name, ")");
-                    }
-                    adDesc->name[MAX_NAME_LENGTH-1] = 0;
-                }
-                if (ioctl(fd, AUDIO_MIXERCTL_GET_MODE, &mixerMode) >= 0) {
-                    if (mixerMode == AM_MIXER_MODE) {
-                        TRACE1(" getAudioDeviceDescription: %s is in mixer mode\n", adDesc->path);
-                        adDesc->maxSimulLines = -1;
-                    }
-                } else {
-                    ERROR1("ioctl AUDIO_MIXERCTL_GET_MODE failed on %s!\n", adDesc->path);
-                }
-                close(fd);
-            } else {
-                ERROR1("could not open %s!\n", adDesc->pathctl);
-            }
-        }
-        return 1;
+	close(fd);
+	if (getNames) {
+	    fd = open(adDesc->pathctl, O_RDONLY);
+	    if (fd >= 0) {
+		if (ioctl(fd, AUDIO_GETDEV, &deviceInfo) >= 0) {
+		    strncpy(adDesc->vendor, deviceInfo.name, MAX_AUDIO_DEV_LEN);
+		    adDesc->vendor[MAX_AUDIO_DEV_LEN] = 0;
+		    strncpy(adDesc->version, deviceInfo.version, MAX_AUDIO_DEV_LEN);
+		    adDesc->version[MAX_AUDIO_DEV_LEN] = 0;
+		    /* add config string to the dev name
+		     * creates a string like "/dev/audio (onboard1)" 
+		     */
+		    len = strlen(adDesc->name) + 1;
+		    if (MAX_NAME_LENGTH - len > 3) {
+			strcat(adDesc->name, " (");
+			strncat(adDesc->name, deviceInfo.config, MAX_NAME_LENGTH - len);
+			strcat(adDesc->name, ")");
+		    }			
+		    adDesc->name[MAX_NAME_LENGTH-1] = 0;
+		}
+		if (ioctl(fd, AUDIO_MIXERCTL_GET_MODE, &mixerMode) >= 0) {
+		    if (mixerMode == AM_MIXER_MODE) {
+			TRACE1(" getAudioDeviceDescription: %s is in mixer mode\n", adDesc->path);
+			adDesc->maxSimulLines = -1;
+		    }
+		} else {
+		    ERROR1("ioctl AUDIO_MIXERCTL_GET_MODE failed on %s!\n", adDesc->path);
+		}
+		close(fd);
+	    } else {
+		ERROR1("could not open %s!\n", adDesc->pathctl);
+	    }
+	}
+	return 1;
     }
     return 0;
 }
+

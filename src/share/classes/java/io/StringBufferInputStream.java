@@ -35,6 +35,7 @@ package java.io;
  * this class.
  *
  * @author     Arthur van Hoff
+ * @version    %I%, %G%
  * @see        java.io.ByteArrayInputStream
  * @see        java.io.StringReader
  * @since      JDK1.0
@@ -70,8 +71,8 @@ class StringBufferInputStream extends InputStream {
      * @param      s   the underlying input buffer.
      */
     public StringBufferInputStream(String s) {
-        this.buffer = s;
-        count = s.length();
+	this.buffer = s;
+	count = s.length();
     }
 
     /**
@@ -89,7 +90,7 @@ class StringBufferInputStream extends InputStream {
      *             stream is reached.
      */
     public synchronized int read() {
-        return (pos < count) ? (buffer.charAt(pos++) & 0xFF) : -1;
+	return (pos < count) ? (buffer.charAt(pos++) & 0xFF) : -1;
     }
 
     /**
@@ -109,28 +110,28 @@ class StringBufferInputStream extends InputStream {
      *             the stream has been reached.
      */
     public synchronized int read(byte b[], int off, int len) {
-        if (b == null) {
-            throw new NullPointerException();
-        } else if ((off < 0) || (off > b.length) || (len < 0) ||
-                   ((off + len) > b.length) || ((off + len) < 0)) {
-            throw new IndexOutOfBoundsException();
-        }
-        if (pos >= count) {
-            return -1;
-        }
-        if (pos + len > count) {
-            len = count - pos;
-        }
-        if (len <= 0) {
-            return 0;
-        }
-        String  s = buffer;
-        int cnt = len;
-        while (--cnt >= 0) {
-            b[off++] = (byte)s.charAt(pos++);
-        }
+	if (b == null) {
+	    throw new NullPointerException();
+	} else if ((off < 0) || (off > b.length) || (len < 0) ||
+		   ((off + len) > b.length) || ((off + len) < 0)) {
+	    throw new IndexOutOfBoundsException();
+	}
+	if (pos >= count) {
+	    return -1;
+	}
+	if (pos + len > count) {
+	    len = count - pos;
+	}
+	if (len <= 0) {
+	    return 0;
+	}
+	String	s = buffer;
+	int cnt = len;
+	while (--cnt >= 0) {
+	    b[off++] = (byte)s.charAt(pos++);
+	}
 
-        return len;
+	return len;
     }
 
     /**
@@ -141,14 +142,14 @@ class StringBufferInputStream extends InputStream {
      * @return     the actual number of bytes skipped.
      */
     public synchronized long skip(long n) {
-        if (n < 0) {
-            return 0;
-        }
-        if (n > count - pos) {
-            n = count - pos;
-        }
-        pos += n;
-        return n;
+	if (n < 0) {
+	    return 0;
+	}
+	if (n > count - pos) {
+	    n = count - pos;
+	}
+	pos += n;
+	return n;
     }
 
     /**
@@ -159,7 +160,7 @@ class StringBufferInputStream extends InputStream {
      *             number of bytes remaining to be read from the input buffer.
      */
     public synchronized int available() {
-        return count - pos;
+	return count - pos;
     }
 
     /**
@@ -167,6 +168,6 @@ class StringBufferInputStream extends InputStream {
      * of this input stream's underlying buffer.
      */
     public synchronized void reset() {
-        pos = 0;
+	pos = 0;
     }
 }

@@ -91,7 +91,7 @@ void adjustStatusWindow(Widget shell);
 #endif
 /* For the moment only InputMethodWindow is taking advantage of
 ** the posibility for different decor styles
-** values could be passed are the MWM_DECOR defines
+** values could be passed are the MWM_DECOR defines 
 ** for the moment we are full on or full off.
 */
 #define AWT_NO_DECOR    0x0
@@ -145,7 +145,7 @@ static struct FrameDataList* allTopLevel = NULL;
 
 extern void checkNewXineramaScreen(JNIEnv* env, jobject peer,
                                    struct FrameData* wdata,
-                                   int32_t newX, int32_t newY,
+                                   int32_t newX, int32_t newY, 
                                    int32_t newWidth, int32_t newHeight);
 
 // Returns false if this Window is non-focusable
@@ -169,7 +169,7 @@ Boolean isFocusableWindowByPeer(JNIEnv * env, jobject peer) {
     } else {
         jobject parentPeer = (*env)->GetObjectField(env, decoratedParent, componentIDs.peer);
         DASSERT(parentPeer != NULL);
-        focusable = wdata->isFocusableWindow && isFocusableWindowByPeer(env, parentPeer);
+        focusable = wdata->isFocusableWindow && isFocusableWindowByPeer(env, parentPeer);     
 
         (*env)->DeleteLocalRef(env, decoratedParent);
         (*env)->DeleteLocalRef(env, parentPeer);
@@ -182,7 +182,7 @@ Boolean isFocusableWindowByPeer(JNIEnv * env, jobject peer) {
 // Returns true otherwise or if any of parameters is NULL
 Boolean isFocusableWindowByShell(JNIEnv* env, Widget shell) {
     Widget toplevel;
-    jobject peer;
+    jobject peer;   
     Boolean focusable;
 
     DASSERT(shell != NULL && XtIsShell(shell));
@@ -192,14 +192,14 @@ Boolean isFocusableWindowByShell(JNIEnv* env, Widget shell) {
     toplevel = findTopLevelByShell(shell);
     if (toplevel == NULL) {
         return True;
-    }
+    }    
     peer = findPeer(&toplevel);
     DASSERT(peer != NULL);
-
+    
     if (env == NULL) {
         env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     }
-    return isFocusableWindowByPeer(env, peer);
+    return isFocusableWindowByPeer(env, peer);  
 }
 
 
@@ -212,10 +212,10 @@ Widget getShellWidget(Widget child) {
     return child;
 }
 
-// Returns false if the parent shell of this widget is non-focusable Java Window.
+// Returns false if the parent shell of this widget is non-focusable Java Window. 
 // Returns false otherwise.
 // Doesn't accept NULL parameters.
-Boolean isFocusableComponentTopLevelByWidget(JNIEnv * env, Widget child) {
+Boolean isFocusableComponentTopLevelByWidget(JNIEnv * env, Widget child) {    
     Widget shell = NULL;
     shell = getShellWidget(child);
     DASSERT(shell);
@@ -275,7 +275,7 @@ Widget awt_GetWidgetAtPointer() {
         }
         ptr = ptr->next;
     }
-    return NULL;
+    return NULL;    
 }
 
 Widget findFocusProxy(Widget widget) {
@@ -286,7 +286,7 @@ Widget findFocusProxy(Widget widget) {
     }
   }
   return NULL;
-}
+}  
 
 Widget findTopLevelByShell(Widget widget) {
   struct FrameDataList* ptr;
@@ -307,7 +307,7 @@ awt_Frame_guessInsets(struct FrameData *wdata)
         wdata->bottom = wdata->bottomGuess = 0;
         wdata->right  = wdata->rightGuess  = 0;
         return;
-    }
+    }   
 
     if (globalTopGuess == 0) {
         char *insets_env;
@@ -537,9 +537,9 @@ Java_sun_awt_motif_MWindowPeer_initIDs
     mWindowPeerIDs.insets =
         (*env)->GetFieldID(env, cls, "insets", "Ljava/awt/Insets;");
     mWindowPeerIDs.winAttr =
-        (*env)->GetFieldID( env,
-                            cls,
-                            "winAttr",
+        (*env)->GetFieldID( env, 
+                            cls, 
+                            "winAttr", 
                             "Lsun/awt/motif/MWindowAttributes;"
                           );
     mWindowPeerIDs.iconWidth =
@@ -551,22 +551,22 @@ Java_sun_awt_motif_MWindowPeer_initIDs
                             cls,
                             "handleWindowFocusOut",
                             "(Ljava/awt/Window;)V");
-    mWindowPeerIDs.handleWindowFocusIn =
+    mWindowPeerIDs.handleWindowFocusIn = 
         (*env)->GetMethodID(env,
                             cls,
                             "handleWindowFocusIn",
                             "()V");
-    mWindowPeerIDs.handleIconify =
+    mWindowPeerIDs.handleIconify = 
         (*env)->GetMethodID(env,
                             cls,
                             "handleIconify",
                             "()V");
-    mWindowPeerIDs.handleDeiconify =
+    mWindowPeerIDs.handleDeiconify = 
         (*env)->GetMethodID(env,
                             cls,
                             "handleDeiconify",
                             "()V");
-    mWindowPeerIDs.handleStateChange =
+    mWindowPeerIDs.handleStateChange = 
         (*env)->GetMethodID(env,
                             cls,
                             "handleStateChange",
@@ -618,7 +618,7 @@ Java_sun_awt_motif_MWindowPeer_findOpposite
     }
 
     return findTopLevelOpposite(env, eventType);
-#endif
+#endif    
 }
 
 /* changeInsets() sets target's insets equal to X/Motif values. */
@@ -641,7 +641,7 @@ awtJNI_ChangeInsets(JNIEnv * env, jobject this, struct FrameData *wdata)
     (*env)->SetIntField(env, insets, insetsIDs.left, wdata->left);
     (*env)->SetIntField(env, insets, insetsIDs.bottom, wdata->bottom);
     (*env)->SetIntField(env, insets, insetsIDs.right, wdata->right);
-
+    
     /* Fix for 4106068: don't do it, rely on the window */
     /*   manager maximizing policy instead              */
 #if 0
@@ -698,7 +698,7 @@ awtJNI_setMbAndWwHeightAndOffsets(JNIEnv * env,
 
     WidgetList  menuBarChildrenWL; /* menubar children widgets  */
     Cardinal    numberChildren; /* number of menubar children   */
-
+    
 #ifdef _pauly_debug
     fprintf(stdout," ++ setMenuBar\n");
     fflush(stdout);
@@ -794,19 +794,19 @@ fflush(stdout);
             }
         }
 
-        if  (wdata->mbHeight < menuBarHeight) {
+        if  (wdata->mbHeight < menuBarHeight) { 
             /* Adjust the (partially) added menu bar height, top offset.*/
 #ifdef _pauly_debug
             fprintf(stdout, "    setMenuBar.... added menuBar height: %d\n", menuBarHeight);
             fflush(stdout);
 #endif /* _pauly_debug */
-            wdata->top += (menuBarHeight - wdata->mbHeight);
+            wdata->top += (menuBarHeight - wdata->mbHeight); 
             awtJNI_ChangeInsets(env, this, wdata);
             wdata->mbHeight = menuBarHeight;
         }
     } else if  ((wdata->menuBar == NULL) && (wdata->mbHeight > 0)) {
         /* A menu bar has been removed; subtract height from top offset.*/
-        wdata->top -= wdata->mbHeight;
+        wdata->top -= wdata->mbHeight; 
 #ifdef _pauly_debug
         fprintf(stdout, "    setMenuBar.... removed menuBar height: %d\n", wdata->mbHeight);
         fflush(stdout);
@@ -821,7 +821,7 @@ fflush(stdout);
    It reads width, height of Motif widget, sets java target accordingly,
    and then calls handleResize() to affect any changes.
    This call is only done for a shell resize or inner/parent resize;
-   i.e., it may not be done for a ...pReshape() to avoid doing a loop.
+   i.e., it may not be done for a ...pReshape() to avoid doing a loop.  
 
    client_data is MWindowPeer instance
 */
@@ -892,11 +892,11 @@ outerCanvasResizeCB(Widget wd, XtPointer client_data, XtPointer call_data)
     oldWidth = (*env)->GetIntField(env, target, componentIDs.width);
     oldHeight = (*env)->GetIntField(env, target, componentIDs.height);
 
-    if (oldWidth != width || oldHeight != height || wdata->need_reshape)
+    if (oldWidth != width || oldHeight != height || wdata->need_reshape) 
     {
         wdata->need_reshape = False;
         (*env)->SetIntField(env, target, componentIDs.width, (jint)width);
-        (*env)->SetIntField(env, target, componentIDs.height,
+        (*env)->SetIntField(env, target, componentIDs.height, 
                 (jint)height);
 
         /* only do this for Windows, not Canvases, btw */
@@ -931,12 +931,12 @@ static void reconfigureOuterCanvas ( JNIEnv *env, jobject target,
                 targetHeight;   /* java target's object height  */
     Dimension   width;          /* width of the canvas, target  */
     Dimension   height;         /* height of the canvas, target */
-
-
+ 
+ 
     Position    innerX,         /* x loc. of inner Motif canvas */
                 innerY,         /* y loc. of inner Motif canvas */
                 x, y;
-
+ 
     /* canvasW is (visible) inner/parent drawing area (canvas) widget   */
     XtVaGetValues(XtParent(wdata->winData.comp.widget),
                   XmNwidth, &innerDAWidth,
@@ -944,14 +944,14 @@ static void reconfigureOuterCanvas ( JNIEnv *env, jobject target,
                   XmNx, &innerX,
                   XmNy, &innerY,
                   NULL);
-
+ 
     /* This resize may be due to the insertion or removal of a menu bar.
        If so, we appropriately adjust the top offset in wdata, insets.  */
     awtJNI_setMbAndWwHeightAndOffsets(env, this, wdata);
-
+ 
     outerDAWidth = innerDAWidth + wdata->left + wdata->right;
     outerDAHeight = innerDAHeight + wdata->top + wdata->bottom;
-
+ 
     /* If it's a menu bar reset, do not do resize of outer/child canvas.
        (Another thread problem; we arrest this now before damage done.) */
     if  (wdata->menuBarReset)
@@ -963,16 +963,16 @@ static void reconfigureOuterCanvas ( JNIEnv *env, jobject target,
             return;
         }
     }
-
+ 
     wdata->canvasResized = True;
-
+ 
     /* The outer/child drawing area (canvas) needs to be configured too.
        If its size changes, its resize callback will thereby be invoked.*/
     x = -wdata->left;
     y = -wdata->top;
     width = innerDAWidth + wdata->left + wdata->right;
     height = innerDAHeight + wdata->top + wdata->bottom;
-
+ 
     XtConfigureWidget(wdata->winData.comp.widget, x, y, width, height, 0 );
 }
 
@@ -1088,7 +1088,7 @@ int isTopLevelPartWidget(Widget w) {
                     }
                 }
             }
-
+            
         }
     }
     return FALSE;
@@ -1117,12 +1117,12 @@ shellFocusEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatc
     if (wdata == NULL) {
         return;
     }
-
+    
     switch (event->xany.type) {
       case FocusOut:
           // Will be handled by proxy automaticall since he is focus owner
-        break;
-      case FocusIn:
+        break;      
+      case FocusIn: 
         // Forward focus event to the proxy
         XSetInputFocus(awt_display, XtWindow(wdata->focusProxy), RevertToParent, CurrentTime);
         break;
@@ -1140,7 +1140,7 @@ Boolean focusOnMapNotify = False;
 
 /* shellEH() is event handler for the Motif shell widget. It handles
    focus change, map notify, configure notify events for the shell.
-   Please see internal comments pertaining to these specific events.
+   Please see internal comments pertaining to these specific events.    
 
    data is MWindowPeer instance pointer
 */
@@ -1179,7 +1179,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
     if (wdata == NULL) {
         return;
     }
-
+    
     switch (event->xany.type) {
 
     case FocusOut: {
@@ -1191,8 +1191,8 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
         Widget oppositeShell = NULL;
         XEvent inEvent;
         Widget shell = NULL;
-#ifdef DEBUG_FOCUS
-        fprintf(stderr, "Focusout on proxy; window = %x, mode %d, detail %d\n",
+#ifdef DEBUG_FOCUS 
+        fprintf(stderr, "Focusout on proxy; window = %x, mode %d, detail %d\n", 
                 event->xfocus.window, event->xfocus.mode, event->xfocus.detail);
 #endif
         shell = wdata->winData.shell;
@@ -1215,10 +1215,10 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
             }
         } else if (event->xfocus.mode != NotifyNormal) break;
 
-        /**
+        /** 
          * Fix for Alt-Tab problem.
          * skipNextFocusIn is set in Choice code to avoid processing of
-         * next focus-in or focus-out generated by Choice as it is a fake
+         * next focus-in or focus-out generated by Choice as it is a fake 
          * event.
          */
         if (skipNextFocusIn && event->xfocus.detail == NotifyPointer) {
@@ -1230,7 +1230,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
         if (focusOwner != None) {
             Widget inWidget = NULL;
             jobject wpeer = NULL;
-            inWidget = XtWindowToWidget(awt_display, focusOwner);
+            inWidget = XtWindowToWidget(awt_display, focusOwner);                    
             if (inWidget != NULL && inWidget != shell) {
                 oppositeShell = getShellWidget(inWidget);
                 wpeer = findPeer(&inWidget);
@@ -1294,7 +1294,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
             // So we need to process focus list like we received FocusOut
             // for the desired component - shell's current focus widget
             defChild = XmGetFocusWidget(shell);
-            if (defChild != NULL) {
+            if (defChild != NULL) { 
                 jobject peer = findPeer(&defChild);
                 if (peer == NULL) {
                     defChild = findTopLevelByShell(defChild);
@@ -1330,10 +1330,10 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
 #ifndef NOMODALFIX
         if (!awt_isModal() || awt_isWidgetModal(shell)) {
 #endif //NOMODALFIX
-            if ( oppositeShell != NULL
+            if ( oppositeShell != NULL 
                  && isFocusableWindowByShell(env, oppositeShell)
-                 && isFocusableWindowByShell(env, shell)
-                 || (oppositeShell == NULL))
+                 && isFocusableWindowByShell(env, shell) 
+                 || (oppositeShell == NULL)) 
             {
                 /*
                  * Fix for 5095117.
@@ -1341,8 +1341,8 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                  * Sometimes it is not - we must not however clean reference to
                  * actual native focused window.
                  */
-                jobject currentFocusedWindow = awt_canvas_getFocusedWindowPeer();
-                if ((*env)->IsSameObject(env, this, currentFocusedWindow)) {
+                jobject currentFocusedWindow = awt_canvas_getFocusedWindowPeer();                
+                if ((*env)->IsSameObject(env, this, currentFocusedWindow)) {                
                     awt_canvas_setFocusedWindowPeer(NULL);
                 }
                 (*env)->DeleteLocalRef(env, currentFocusedWindow);
@@ -1360,7 +1360,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
         if (oppositeWindow != NULL) {
             (*env)->DeleteLocalRef(env, oppositeWindow);
         }
-
+        
         break;
     } /* FocusOut */
 
@@ -1388,7 +1388,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                 if (skipNextNotifyWhileGrabbed || event->xfocus.detail == NotifyInferior) {
                     skipNextNotifyWhileGrabbed = False;
                     break;
-                }
+                }                    
             } else if (event->xfocus.mode != NotifyNormal)  {
                 break;
             }
@@ -1401,7 +1401,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
             if (skipNextFocusIn == True) {
                 /**
                  * There could be the set of fake events, the last one
-                 * will have detail == NotifyPointer
+                 * will have detail == NotifyPointer 
                  */
                 if (event->xfocus.detail != NotifyPointer) {
                     skipNextFocusIn = False;
@@ -1409,17 +1409,17 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                 break;
             }
 #ifndef NOMODALFIX
-            if (!awt_isModal() || awt_isWidgetModal(shell)) {
+	    if (!awt_isModal() || awt_isWidgetModal(shell)) {
 #endif //NOMODALFIX
-                if (isFocusableWindowByShell(env, shell)) {
+                if (isFocusableWindowByShell(env, shell)) {                    
                     jobject currentFocusedWindow = awt_canvas_getFocusedWindowPeer();
-                    // Check if focus variables already point to this window. If so,
+                    // Check if focus variables already point to this window. If so,    
                     // it means there were transfer to non-focusable window and now we
                     // are back to origianl focusable window. No need to generate Java events
                     // in this case.
                     if (!(*env)->IsSameObject(env, this, currentFocusedWindow)) {
                         awt_canvas_setFocusedWindowPeer(this);
-                        awt_canvas_setFocusOwnerPeer(this);
+                        awt_canvas_setFocusOwnerPeer(this);                
 
                         /*
                          * Fix for 6465038.
@@ -1502,7 +1502,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
             awt_put_back_event(env, &ev);
         }
         focusOnMapNotify = False;
-
+ 
         break;
     }
 
@@ -1526,11 +1526,11 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
         }
         break;
     }
-
+ 
     case PropertyNotify: {
         jint state, old_state, changed;
 
-        /*
+        /* 
          * Let's see if this is a window state protocol message, and
          * if it is - decode a new state in terms of java constants.
          */
@@ -1714,10 +1714,10 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
             /* Dummies for XQueryTree */
             Window              ignore_Window, *ignore_WindowPtr;
             uint32_t            ignore_uint;
-
+            
             Boolean             setXY = True;
             XSizeHints*         hints = XAllocSizeHints();
-
+            
             wdata->reparented = True;
 
             if (hints != NULL) {
@@ -1736,18 +1736,18 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
              * window, so we check if we can get away with just
              * peeking at it.  [Future versions of wm-spec might add a
              * standardized hint for this].
-             *
+             * 
              * Otherwise we do some special casing.  Actually the
              * fallback code ("default" case) seems to cover most of
              * the existing WMs (modulo Reparent/Configure order
              * perhaps?).
-             *
+             * 
              * Fallback code tries to account for the two most common cases:
-             *
+             * 
              * . single reparenting
              *       parent window is the WM frame
              *       [twm, olwm, sawfish]
-             *
+             * 
              * . double reparenting
              *       parent is a lining exactly the size of the client
              *       grandpa is the WM frame
@@ -1821,18 +1821,18 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                 if ((screenX != x + wdata->leftGuess)
                     || (screenY != y + wdata->topGuess))
                 {
-                    /*
-                     * looks like the window manager has placed us somewhere
+                    /* 
+                     * looks like the window manager has placed us somewhere 
                      * other than where we asked for, lets respect the window
                      * and go where he put us, not where we tried to put us
                      */
                     x = screenX - correctWMLeft;
                     y = screenY - correctWMTop;
-                }
+                } 
                 break;
             }
 
-            case SAWFISH_WM:
+            case SAWFISH_WM: 
             case OPENLOOK_WM: {
                 /* single reparenting */
                 syncTopLevelPos(XtDisplay(wdata->winData.shell),
@@ -1864,12 +1864,12 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
 
                 /*
                  * Check for double-reparenting WM.
-                 *
+                 * 
                  * If the parent is exactly the same size as the
                  * top-level assume taht it's the "lining" window and
                  * that the grandparent is the actual frame (NB: we
                  * have already handled undecorated windows).
-                 *
+                 * 
                  * XXX: what about timing issues that syncTopLevelPos
                  * is supposed to work around?
                  */
@@ -1879,7 +1879,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                 {
                     Window ignore_root, grandparent, *children;
                     unsigned int ignore_nchildren;
-
+                    
                     DTRACE_PRINTLN("TL:   double reparenting WM detected");
                     XQueryTree(dpy, parent,
                                &ignore_root,
@@ -1901,7 +1901,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                                     wattr.width, wattr.height,
                                     wattr.border_width);
                     DTRACE_PRINTLN5("TL:   parent attr +%d+%d+%dx%d (%d)",
-                                    pattr.x, pattr.y,
+                                    pattr.x, pattr.y, 
                                     pattr.width, pattr.height,
                                     pattr.border_width);
                 }
@@ -1918,7 +1918,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                 correctWMBottom = pattr.height
                     - (wattr.y + wattr.height + 2*wattr.border_width);
                 correctWMRight = pattr.width
-                    - (wattr.x + wattr.width + 2*wattr.border_width);
+                    - (wattr.x + wattr.width + 2*wattr.border_width); 
                 DTRACE_PRINTLN4("TL: insets = top %d, left %d, bottom %d, right %d",
                                 correctWMTop, correctWMLeft,
                                 correctWMBottom, correctWMRight);
@@ -1952,7 +1952,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
                 jboolean isPacked;
 
                 DTRACE_PRINTLN("TL: insets need correction");
-                wdata->need_reshape = True;
+                wdata->need_reshape = True; 
 
                 globalTopGuess    = correctWMTop;
                 globalLeftGuess   = correctWMLeft;
@@ -1976,13 +1976,13 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
 
                 awtJNI_ChangeInsets(env, this, wdata);
 
-                /*
+                /* 
                  * If this window has been sized by a pack() we need
                  * to keep the interior geometry intact.  Since pack()
                  * computed width and height with wrong insets, we
                  * must adjust the target dimensions appropriately.
                  */
-                isPacked = (*env)->GetBooleanField(env, target,
+                isPacked = (*env)->GetBooleanField(env, target, 
                                                    componentIDs.isPacked);
                 if (isPacked) {
                     int32_t correctTargetW;
@@ -2016,7 +2016,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
             }
 /* NEW for dialog */ /* XXX: what this comment is supposed to mean? */
             else {
-                wdata->need_reshape = False;
+                wdata->need_reshape = False; 
                 /* fix for 4976337 - son@sparc.spb.su */
                 /* we should find better fix later if needed */
                 if (wdata->isResizable || !wdata->isFixedSizeSet) {
@@ -2040,7 +2040,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
          * it!!!! or we wind up in a bogus location.
          */
         runningWM = awt_wm_getRunningWM();
-        if (!wdata->reparented && wdata->isShowing &&
+        if (!wdata->reparented && wdata->isShowing && 
             runningWM != NO_WM && wdata->decor != AWT_NO_DECOR) {
             break;
         }
@@ -2066,7 +2066,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
          * resizes the x,y values are misleadingly set to 0,0 and so
          * just checking for an x,y delta won't work).
          */
-
+        
         getTargetX = (*env)->GetIntField(env, target, componentIDs.x);
         getTargetY = (*env)->GetIntField(env, target, componentIDs.y);
 
@@ -2096,7 +2096,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
 #endif /* NETSCAPE */
         topAdjust = wdata->mbHeight + wwHeight;
 
-        /*
+        /* 
          * Coordinates in Component.setLocation() are treated as the
          * upper-left corner of the outer shell.  The x and y in the
          * ConfigureNotify event, however, are the upper-left corner
@@ -2110,7 +2110,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
          * Neat X/CDE/Native bug:
          * If an attempt is made to move the shell in the y direction
          * by an amount equal to the top inset, the Window isn't
-         * moved.  This can be seen here by examining event->xconfigure.y
+         * moved.  This can be seen here by examining event->xconfigure.y 
          * before and after such a request is made: the value remains
          * unchanged.  This wrecks a little havoc here, as the x and y
          * in the Component have already been set to the new location
@@ -2173,7 +2173,7 @@ shellEH(Widget w, XtPointer data, XEvent *event, Boolean *continueToDispatch)
 #endif
         break;
     } /* ConfigureNotify */
-
+        
     default:
         break;
     }
@@ -2186,7 +2186,7 @@ Frame_quit(Widget w,
            XtPointer call_data)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-
+    
     JNU_CallMethodByName(env, NULL, (jobject) client_data, "handleQuit", "()V");
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
@@ -2211,7 +2211,7 @@ setDeleteCallback(jobject this, struct FrameData *wdata)
                                     "WM_TAKE_FOCUS", False);
     xa_WM_PROTOCOLS = XmInternAtom(XtDisplay(wdata->winData.shell),
                                    "WM_PROTOCOLS", False);
-
+    
     XmAddProtocolCallback(wdata->winData.shell,
                           xa_WM_PROTOCOLS,
                           xa_WM_DELETE_WINDOW,
@@ -2228,8 +2228,8 @@ getGraphicsConfigFromComponentPeer(JNIEnv *env, jobject this);
 // Returns true if this shell has some transient shell chidlren
 // which are either Dialogs or Windows.
 // Returns false otherwise.
-Boolean hasTransientChildren(Widget shell) {
-    int childIndex;
+Boolean hasTransientChildren(Widget shell) {    
+    int childIndex;    
 
     // Enumerate through the popups
     for (childIndex = 0; childIndex < shell->core.num_popups; childIndex++) {
@@ -2241,7 +2241,7 @@ Boolean hasTransientChildren(Widget shell) {
                 // It is Dialog or Window - return true.
                 return True;
             }
-        }
+        }            
     }
     return False;
 }
@@ -2253,14 +2253,14 @@ extern Widget grabbed_widget;
 static
 void disposeTopLevel(JNIEnv * env, jobject this) {
 
-    struct FrameData *wdata;
+    struct FrameData *wdata;    
     Widget parentShell;
 
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
 
-    if (wdata == NULL || wdata->mainWindow == NULL
-        || wdata->winData.shell == NULL)
+    if (wdata == NULL || wdata->mainWindow == NULL 
+        || wdata->winData.shell == NULL) 
     {
         /* do nothing */
         return;
@@ -2286,7 +2286,7 @@ void disposeTopLevel(JNIEnv * env, jobject this) {
     awt_util_consumeAllXEvents(wdata->winData.comp.widget);
     awt_util_cleanupBeforeDestroyWidget(wdata->winData.comp.widget);
     XtDestroyWidget(wdata->winData.comp.widget);
-
+    
     XtUnmanageChild(wdata->mainWindow);
     awt_util_consumeAllXEvents(wdata->mainWindow);
     awt_util_consumeAllXEvents(wdata->winData.shell);
@@ -2301,18 +2301,18 @@ void disposeTopLevel(JNIEnv * env, jobject this) {
         XUngrabKeyboard(awt_display, CurrentTime);
         grabbed_widget = NULL;
     }
-
+    
     free((void *) wdata);
-
+    
     (*env)->SetLongField(env, this, mComponentPeerIDs.pData, 0);
-    awtJNI_DeleteGlobalRef(env, this);
+    awtJNI_DeleteGlobalRef(env, this);    
 
     // Check if parent shell was scheduled for disposal.
     // If it doesn't have window then we have to dispose it
     // by ourselves right now.
     // We can dispose shell only if it doesn't have "transient" children.
     {
-        struct FrameData *pdata;
+        struct FrameData *pdata;    
         struct WidgetInfo* winfo;
         Widget toplevel = findTopLevelByShell(parentShell);
         if (toplevel == NULL) {
@@ -2333,9 +2333,9 @@ void disposeTopLevel(JNIEnv * env, jobject this) {
             return;
         }
         // 1) scheduled 2) no children 3) no window
-        if (pdata->isDisposeScheduled
-            && !hasTransientChildren(parentShell)
-            && XtWindow(parentShell) == None)
+        if (pdata->isDisposeScheduled 
+            && !hasTransientChildren(parentShell) 
+            && XtWindow(parentShell) == None) 
         {
             disposeTopLevel(env, winfo->peer);
         }
@@ -2348,14 +2348,14 @@ void disposeTopLevel(JNIEnv * env, jobject this) {
  * disposes the top-level when this property has been changed.
  */
 static void
-shellDisposeNotifyHandler(Widget w, XtPointer client_data,
+shellDisposeNotifyHandler(Widget w, XtPointer client_data, 
                            XEvent* event, Boolean* continue_to_dispatch) {
     struct FrameData *wdata;
 
-    *continue_to_dispatch = True;
+    *continue_to_dispatch = True;    
 
-    if (event->type == PropertyNotify &&
-        event->xproperty.atom == _XA_JAVA_DISPOSE_PROPERTY_ATOM)
+    if (event->type == PropertyNotify && 
+        event->xproperty.atom == _XA_JAVA_DISPOSE_PROPERTY_ATOM) 
     {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
@@ -2377,9 +2377,9 @@ shellDisposeNotifyHandler(Widget w, XtPointer client_data,
  */
 static
 void scheduleDispose(JNIEnv * env, jobject peer) {
-
+    
     struct FrameData *wdata;
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, peer, mComponentPeerIDs.pData);
 
@@ -2389,19 +2389,19 @@ void scheduleDispose(JNIEnv * env, jobject peer) {
 
     wdata->isDisposeScheduled = True;
     if (XtWindow(wdata->winData.shell) != None) {
-        XChangeProperty(awt_display, XtWindow(wdata->winData.shell),
+        XChangeProperty(awt_display, XtWindow(wdata->winData.shell), 
                         _XA_JAVA_DISPOSE_PROPERTY_ATOM, XA_ATOM, 32, PropModeAppend,
                         (unsigned char *)"", 0);
         XFlush(awt_display);
         XSync(awt_display, False);
     } else {
-        // If this top-level has children which are still visible then
+        // If this top-level has children which are still visible then 
         // their disposal could have been scheduled. We shouldn't allow this widget
 // to destroy its children top-levels. For this purpose we postpone the disposal
         // of this toplevel until after all its children are disposed.
         if (!hasTransientChildren(wdata->winData.shell)) {
             disposeTopLevel(env, peer);
-        }
+        }        
     }
 }
 
@@ -2438,10 +2438,10 @@ Widget createFocusProxy(jobject globalRef, Widget parent) {
     argc++;
     XtSetArg(args[argc], XmNresizePolicy, XmRESIZE_NONE);
     argc++;
-
+        
     DASSERT(!(argc > MAX_ARGC));
     proxy = XmCreateDrawingArea(parent, focusProxyName, args, argc);
-    XtAddEventHandler(proxy,
+    XtAddEventHandler(proxy, 
                       FocusChangeMask,
                       False, shellEH, globalRef);
     XtManageChild(proxy);
@@ -2476,7 +2476,7 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
     jint                state;
     jclass              clazz;
     jobject             globalRef = awtJNI_CreateAndSetGlobalRef(env, this);
-
+    
     uint32_t            runningWM;      /* the running Window Manager   */
     Widget              innerCanvasW;   /* form's child, parent of the
                                            outer canvas (drawing area)  */
@@ -2492,13 +2492,13 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
     AWT_LOCK();
 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+    
     if (JNU_IsNull(env, target)) {
         JNU_ThrowNullPointerException(env, "null target");
         AWT_UNLOCK();
         return;
     }
-
+    
     wdata = ZALLOC(FrameData);
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.pData, wdata);
     if (wdata == NULL) {
@@ -2510,17 +2510,17 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
     adata = copyGraphicsConfigToPeer(env, this);
     defConfig = getDefaultConfig(adata->awt_visInfo.screen);
 
-
+    
     /* Retrieve the specified characteristics for this window */
     winAttr = (*env)->GetObjectField(env, this, mWindowPeerIDs.winAttr);
-    resizable = (*env)->GetBooleanField( env,
-                                         winAttr,
-                                         mWindowAttributeIDs.isResizable);
-    state = (*env)->GetIntField( env,
+    resizable = (*env)->GetBooleanField( env, 
+                                         winAttr, 
+                                         mWindowAttributeIDs.isResizable); 
+    state = (*env)->GetIntField( env, 
                                  winAttr,
                                  mWindowAttributeIDs.initialState);
-    initialFocus = (*env)->GetBooleanField( env,
-                                            winAttr,
+    initialFocus = (*env)->GetBooleanField( env, 
+                                            winAttr, 
                                             mWindowAttributeIDs.initialFocus);
 
     /* As of today decor is either on or off... except the InputMethodWindow */
@@ -2545,7 +2545,7 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
     x = (*env)->GetIntField(env, target, componentIDs.x) + wdata->left;
     y = (*env)->GetIntField(env, target, componentIDs.y) + wdata->top;
 
-    w = (*env)->GetIntField(env, target, componentIDs.width)
+    w = (*env)->GetIntField(env, target, componentIDs.width) 
         - (wdata->left + wdata->right);
     h = (*env)->GetIntField(env, target, componentIDs.height)
         - (wdata->top + wdata->bottom);
@@ -2623,7 +2623,7 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
         }
 #endif
     }
-
+    
     /* 4334958: Widget name is set to the Java class name */
     shell_name =
         (char *)JNU_GetStringPlatformChars(env, target_class_name, NULL);
@@ -2662,10 +2662,10 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
         if (!JNU_IsNull(env, jname)) {
           cname = (char *)JNU_GetStringPlatformChars(env, jname, NULL);
         }
-        if ( (cname != NULL && strcmp(cname, "###overrideRedirect###") == 0)
-            || (!isFrameOrDialog(target, env)
+        if ( (cname != NULL && strcmp(cname, "###overrideRedirect###") == 0) 
+            || (!isFrameOrDialog(target, env) 
                 && !isFocusableWindowByPeer(env, this)
-                )
+                ) 
             )
         {    /* mbron */
             XtSetArg(args[argc], XmNoverrideRedirect, True);
@@ -2696,20 +2696,20 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
        sun_awt_motif_MWindowPeer_pReshape() after insets have been fixed.
        This is because correction of the insets may affect shell size.
        (See comments in shellEH() concerning correction of the insets.  */
-    /*
+    /* 
      * Fix for BugTraq ID 4313607.
-     * Initial resizability will be set later in MWindowPeer_setResizable()
-     * called from init().
+     * Initial resizability will be set later in MWindowPeer_setResizable() 
+     * called from init(). 
      */
     wdata->isResizable = True;
     wdata->isFixedSizeSet = False;
-
-    XtAddEventHandler(wdata->winData.shell,
+    
+    XtAddEventHandler(wdata->winData.shell, 
                       (StructureNotifyMask | PropertyChangeMask
                        | VisibilityChangeMask),
                       False, shellEH, globalRef);
 
-    XtAddEventHandler(wdata->winData.shell,
+    XtAddEventHandler(wdata->winData.shell, 
                       FocusChangeMask,
                       False, shellFocusEH, globalRef);
 
@@ -2736,11 +2736,11 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
     XtSetArg(args[argc], XmNhorizontalSpacing, 0); argc++;
     XtSetArg(args[argc], XmNverticalSpacing, 0); argc++;
     XtSetArg(args[argc], XmNresizePolicy, XmRESIZE_NONE); argc++;
-
+    
     XtSetArg(args[argc], XmNbuttonFontList, getMotifFontList()); argc++;
     XtSetArg(args[argc], XmNlabelFontList, getMotifFontList()); argc++;
     XtSetArg(args[argc], XmNtextFontList, getMotifFontList()); argc++;
-
+ 
     DASSERT(!(argc > MAX_ARGC));
     wdata->mainWindow = XmCreateForm(wdata->winData.shell, "main", args, argc);
 
@@ -2752,7 +2752,7 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
        and warning windows present, and also window manager stuff.
        The top, bottom, left, and right fields in wdata maintain
        the respective offsets between these two drawing areas.  */
-
+    
     wdata->winData.comp.widget = awt_canvas_create((XtPointer)globalRef,
                                                    wdata->mainWindow,
                                                    "frame_",
@@ -2770,17 +2770,17 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
                   XmNleftAttachment, XmATTACH_FORM,
                   XmNrightAttachment, XmATTACH_FORM,
                   NULL);
-
+    
     XtAddEventHandler(innerCanvasW, StructureNotifyMask, FALSE,
                       innerCanvasEH, globalRef);
-
-    wdata->focusProxy = createFocusProxy((XtPointer)globalRef,
+    
+    wdata->focusProxy = createFocusProxy((XtPointer)globalRef, 
                                          wdata->mainWindow);
-
+        
     /* No menu bar initially */
     wdata->menuBar = NULL;
     wdata->mbHeight = 0;
-
+    
     /* If a warning window (string) is needed, establish it now.*/
     warningString =
         (*env)->GetObjectField(env, target, windowIDs.warningString);
@@ -2791,13 +2791,13 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
         wString = (char *) JNU_GetStringPlatformChars(env, warningString, NULL);
         wdata->warningWindow = awt_util_createWarningWindow(wdata->mainWindow, wString);
         JNU_ReleaseStringPlatformChars(env, warningString, (const char *) wString);
-
+        
         wdata->wwHeight = 0;
         XtVaSetValues(wdata->warningWindow,
                       XmNleftAttachment, XmATTACH_FORM,
                       XmNrightAttachment, XmATTACH_FORM,
                       NULL);
-
+        
 #ifdef NETSCAPE
         /* For NETSCAPE, warning window is at bottom of the form*/
         XtVaSetValues(innerCanvasW,
@@ -2819,7 +2819,7 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
                       XmNbottomAttachment, XmATTACH_FORM,
                       NULL);
 #endif /* NETSCAPE */
-
+        
     } else {
         /* No warning window present */
         XtVaSetValues(innerCanvasW,
@@ -2831,7 +2831,7 @@ Java_sun_awt_motif_MWindowPeer_pCreate(JNIEnv *env, jobject this,
     }
 
     awt_util_show(wdata->winData.comp.widget);
-
+    
     AWT_FLUSH_UNLOCK();
 
     addTopLevel(wdata);
@@ -2866,10 +2866,10 @@ Java_sun_awt_motif_MWindowPeer_pSetTitle(JNIEnv *env, jobject this,
     int32_t conv_result;
 
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL || wdata->winData.shell == NULL) {
         JNU_ThrowNullPointerException(env, "null wdata or shell");
         AWT_UNLOCK();
@@ -2885,7 +2885,7 @@ Java_sun_awt_motif_MWindowPeer_pSetTitle(JNIEnv *env, jobject this,
         ctitle = empty_string;
 
     c[0] = ctitle;
-
+    
     /* need to convert ctitle to CompoundText */
     conv_result = XmbTextListToTextProperty(awt_display, c, 1,
                                             XStdICCTextStyle,
@@ -2945,7 +2945,7 @@ Java_sun_awt_motif_MWindowPeer_pToFront(JNIEnv *env, jobject this)
     AWT_LOCK();
 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+   
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (wdata == NULL
@@ -3008,7 +3008,7 @@ Java_sun_awt_motif_MWindowPeer_pShowModal(JNIEnv *env, jobject this,
     AWT_LOCK();
 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (wdata == NULL
@@ -3022,7 +3022,7 @@ Java_sun_awt_motif_MWindowPeer_pShowModal(JNIEnv *env, jobject this,
         AWT_UNLOCK();
         return;
     }
-
+    
     DTRACE_PRINTLN2("TL: pShowModal(modal = %s) state = 0x%X",
                     isModal ? "true" : "false",
                     wdata->state);
@@ -3090,17 +3090,17 @@ Java_sun_awt_motif_MWindowPeer_pShowModal(JNIEnv *env, jobject this,
         if (wdata->isModal) {
             removePopupMenus();
 #ifndef NOMODALFIX
-            /*
-             * Fix for 4078176 Modal dialogs don't act modal
+            /* 
+             * Fix for 4078176 Modal dialogs don't act modal 
              * if addNotify() is called before setModal(true).
              * Moved from Java_sun_awt_motif_MDialogPeer_create.
              */
             if (!wdata->callbacksAdded) {
-                XtAddCallback(wdata->winData.shell,
-                              XtNpopupCallback, awt_shellPoppedUp,
+                XtAddCallback(wdata->winData.shell, 
+                              XtNpopupCallback, awt_shellPoppedUp, 
                               NULL);
-                XtAddCallback(wdata->winData.shell,
-                              XtNpopdownCallback, awt_shellPoppedDown,
+                XtAddCallback(wdata->winData.shell, 
+                              XtNpopdownCallback, awt_shellPoppedDown, 
                               NULL);
                 wdata->callbacksAdded = True;
             }
@@ -3136,7 +3136,7 @@ Java_sun_awt_motif_MWindowPeer_pShowModal(JNIEnv *env, jobject this,
         }
     }
 
-    /*
+    /* 
      * 4261047: always pop up with XtGrabNone.  Motif notices the
      * modal input mode and perform the grab for us, doing its
      * internal book-keeping as well.
@@ -3152,7 +3152,7 @@ Java_sun_awt_motif_MWindowPeer_pShowModal(JNIEnv *env, jobject this,
         } else {
             XtVaSetValues(wdata->winData.shell, XmNinput, False, NULL);
         }
-    }
+    }  
 
     (*env)->DeleteLocalRef(env, target);
 
@@ -3229,7 +3229,7 @@ Java_sun_awt_motif_MWindowPeer_setState(JNIEnv *env, jobject this,
         return;
     }
 
-    /*
+    /* 
      * Request the state transition from WM here and do java upcalls
      * in shell event handler when WM actually changes our state.
      */
@@ -3283,7 +3283,7 @@ Java_sun_awt_motif_MWindowPeer_pHide(JNIEnv *env, jobject this)
         AWT_UNLOCK();
         return;
     }
-
+    
     /**
      * Disable proxy mechanism when Window's shell is being hidden
      */
@@ -3331,12 +3331,12 @@ Java_sun_awt_motif_MWindowPeer_pReshape(JNIEnv *env, jobject this,
     jint x, jint y, jint w, jint h)
 {
     struct FrameData    *wdata;
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget == NULL ||
         wdata->winData.shell == NULL) {
@@ -3354,7 +3354,7 @@ Java_sun_awt_motif_MWindowPeer_pReshape(JNIEnv *env, jobject this,
      * Fix for 4652685.
      * Avoid setting position for embedded frames, since this conflicts with the
      * fix for 4419207. We assume that the embedded frame never changes its
-     * position relative to the parent.
+     * position relative to the parent.  
      */
     if (wdata->winData.flags & W_IS_EMBEDDED) {
         x = 0;
@@ -3362,7 +3362,7 @@ Java_sun_awt_motif_MWindowPeer_pReshape(JNIEnv *env, jobject this,
     }
 
     reshape(env, this, wdata, x, y, w, h, True);
-
+    
     AWT_FLUSH_UNLOCK();
 }
 
@@ -3376,12 +3376,12 @@ Java_sun_awt_motif_MEmbeddedFramePeer_pReshapePrivate(JNIEnv *env, jobject this,
     jint x, jint y, jint w, jint h)
 {
     struct FrameData    *wdata;
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget == NULL ||
         wdata->winData.shell == NULL) {
@@ -3391,7 +3391,7 @@ Java_sun_awt_motif_MEmbeddedFramePeer_pReshapePrivate(JNIEnv *env, jobject this,
     }
 
     reshape(env, this, wdata, x, y, w, h, True);
-
+    
     AWT_FLUSH_UNLOCK();
 }
 
@@ -3402,7 +3402,7 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
     int32_t     topAdjust,      /* top adjustment of offset     */
                 bottomAdjust;   /* bottom adjustment of offset  */
     int32_t     width,          /* of X/Motif shell and form    */
-                height;         /* of X/Motif shell and form    */
+                height;         /* of X/Motif shell and form    */      
     int32_t     w1, h1;
     enum wmgr_t wm;             /* window manager */
     XWindowAttributes winAttr;
@@ -3417,18 +3417,18 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
 
     /* Make adjustments in case of a dynamically added/removed menu bar */
     awtJNI_setMbAndWwHeightAndOffsets(env, this, wdata);
-
+    
 #ifdef _pauly_debug
     fprintf(stdout,"    reshape. offsets - top: %d, bottom: %d, left: %d, right: %d\n",
             wdata->top, wdata->bottom, wdata->left, wdata->right);
     fflush(stdout);
 #endif /* _pauly_debug */
-
+    
     /* The abstract java (target) position coordinates (x,y)
        are for the bordered window.  Eventually(!), the Motif
        (shell) coordinates (XmNx, XmNy) will exclude borders.
        (This is true only AFTER shell is massaged by the WM.)   */
-
+    
     /* The abstract java (target) width and height includes any WM
        borders. But the Motif width and height excludes WM borders.
        The wdata top and bottom fields may include space for menu bar,
@@ -3454,10 +3454,10 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
     fprintf(stdout,"    reshape. adjustments - top: %d, bottom: %d\n", topAdjust, bottomAdjust);
     fflush(stdout);
 #endif /* _pauly_debug */
-
+    
     width  = w - (wdata->left + wdata->right);
     height = h - (wdata->top + wdata->bottom) + (topAdjust + bottomAdjust);
-
+    
     /*
      * Shell size.
      * 4033151.  If nonpositive size specified (e.g., if no size
@@ -3470,7 +3470,7 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
     if (awt_wm_configureGravityBuggy() /* WM ignores window gravity */
         && wdata->reparented && wdata->isShowing)
     {
-        /*
+        /* 
          * Buggy WM places client window at (x,y) ignoring the window
          * gravity.  All our windows are NorthWestGravity, so adjust
          * (x,y) by insets appropriately.
@@ -3488,13 +3488,13 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
                       NULL);
         wdata->imRemove = False;
     }
-
+    
 #if 0 /* XXX: this screws insets calculation under KDE2 in the case of
          negative x, y */
-    /*
+    /* 
      * Without these checks, kwm places windows slightly off the screen,
      * when there is a window underneath at (0,0) and empty space below,
-     * but not to the right.
+     * but not to the right. 
      */
     if (x < 0) x = 0;
     if (y < 0) y = 0;
@@ -3546,7 +3546,7 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
                           NULL);
         }
         else {
-            /*
+            /* 
              * Fix for BugTraq ID 4313607 - call awt_wm_setShellNotResizable
              * regardless of wdata->isFixedSizeSet and wdata->reparented values.
              */
@@ -3556,7 +3556,7 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
                 wdata->isFixedSizeSet = True;
             }
         }
-        if (setXY)
+        if (setXY) 
             XtVaSetValues(wdata->winData.shell,
                           XmNx, x,
                           XmNy, y,
@@ -3587,7 +3587,7 @@ reshape(JNIEnv *env, jobject this, struct FrameData *wdata,
 
     /* DTRACE_PRINTLN("TL: reshape -> returning"); */
     return;
-}
+} 
 
 /*
  * Class:     sun_awt_motif_MEmbeddedFramePeer
@@ -3641,7 +3641,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pDispose
 (JNIEnv *env, jobject this)
 {
     struct FrameData *wdata;
-
+    
     AWT_LOCK();
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
@@ -3655,7 +3655,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pDispose
         deinstall_xembed(wdata);
     }
     scheduleDispose(env, this);
-
+    
     AWT_FLUSH_UNLOCK();
 }
 
@@ -3681,8 +3681,8 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MFramePeer_pGetIconSize
     int32_t closestHeight;
     int32_t newDist;
     int32_t found = 0;
-    AwtGraphicsConfigDataPtr adata;
-
+    AwtGraphicsConfigDataPtr adata;    
+    
     AWT_LOCK();
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
@@ -3698,9 +3698,9 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MFramePeer_pGetIconSize
         int32_t count;
         int32_t i;
         XIconSize *sizeList;
-
+        
         adata = getGraphicsConfigFromComponentPeer(env, this);
-
+        
         if (!XGetIconSizes(awt_display,
                            RootWindow(awt_display, adata->awt_visInfo.screen),
                            &sizeList, &count)) {
@@ -3748,7 +3748,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MFramePeer_pGetIconSize
                 }
             }
         }
-
+        
         if (!found) {
 #if 1
             /* [sbb] this code should work better than the original Solaris
@@ -3837,14 +3837,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
     int32_t len = 0;
     int32_t bpp, slp, bpsl;
     AwtGraphicsConfigDataPtr adata;
-
+            
     if (JNU_IsNull(env, jbyteData)) {
         if (JNU_IsNull(env, jintData)) {
             if (JNU_IsNull(env, jushortData)) {
-                /* [jk] Don't throw an exception here, it breaks
-                 * programs that run correctly on Windows
-                 * JNU_ThrowNullPointerException(env, "NullPointerException");
-                 */
+                /* [jk] Don't throw an exception here, it breaks 
+                 * programs that run correctly on Windows 
+                 * JNU_ThrowNullPointerException(env, "NullPointerException"); 
+                 */ 
                 return;
             } else {
                 jbuf = jushortData;
@@ -3860,25 +3860,25 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     /* REMIND: Need to figure out how to display image on a pixmap */
-
+    
     if (wdata == NULL || wdata->winData.shell == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
         return;
     }
-
+    
     adata = getGraphicsConfigFromComponentPeer(env, this);
-
+    
     /* [jk] we need a new pixmap everytime:
      * Test case: src/share/test/awt/FrameTest.html Look at the icon,
      * select Operations/Change IconImage, you should see a different
-     * icon now.
+     * icon now. 
      */
     if (wdata->iconPixmap) {
         XFreePixmap(awt_display, wdata->iconPixmap);
         wdata->iconPixmap = None;
     }
-
+    
     if (wdata->iconPixmap == None) {
         if ((wdata->iconPixmap =
              XCreatePixmap(awt_display,
@@ -3892,7 +3892,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
         wdata->iconWidth = iconWidth;
         wdata->iconHeight = iconHeight;
     }
-
+    
     buf = (void *) (*env)->GetPrimitiveArrayCritical(env, jbuf, NULL);
     if (jbyteData != NULL) {
         int32_t i;
@@ -3904,7 +3904,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
                         : adata->color_data->awt_icmLUT2Colors[ubuf[i]];
         }
     }
-
+    
     bpp = adata->awtImage->wsImageFormat.bits_per_pixel;
     slp = adata->awtImage->wsImageFormat.scanline_pad;
     bpsl = paddedwidth(iconWidth * bpp, slp) >> 3;
@@ -3922,21 +3922,21 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
         AWT_UNLOCK();
         return;
     }
-
+    
     if ((gc = XCreateGC(awt_display, wdata->iconPixmap, 0, 0)) == NULL) {
         XDestroyImage (dst);
         (*env)->ReleasePrimitiveArrayCritical(env, jbuf, buf, JNI_ABORT);
         AWT_UNLOCK();
         return;
     }
-
+    
     XPutImage(awt_display, wdata->iconPixmap, gc, dst,
               0, 0, 0, 0, iconWidth, iconHeight);
     (*env)->ReleasePrimitiveArrayCritical(env, jbuf, buf, JNI_ABORT);
     dst->data=NULL;
     XDestroyImage(dst);
     XFreeGC(awt_display, gc);
-
+    
     XtVaGetValues(wdata->winData.shell,
                   XmNiconWindow, &win,
                   NULL);
@@ -3949,7 +3949,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
                                   RootWindow(awt_display,
                                              adata->awt_visInfo.screen),
                                   0, 0, iconWidth, iconHeight,
-                                  (uint32_t) 0,
+                                  (uint32_t) 0, 
                                   adata->awtImage->Depth,
                                   InputOutput,
                                   adata->awt_visInfo.visual,
@@ -3962,12 +3962,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MFramePeer_pSetIconImage___3B_3I_3SII
             return;
         }
     }
-
+    
     XtVaSetValues(wdata->winData.shell,
                   XmNiconPixmap, wdata->iconPixmap,
                   XmNiconWindow, win,
                   NULL);
-
+    
     XSetWindowBackgroundPixmap(awt_display, win, wdata->iconPixmap);
     XClearWindow(awt_display, win);
     AWT_FLUSH_UNLOCK();
@@ -3990,18 +3990,18 @@ Java_sun_awt_motif_MWindowPeer_setResizable(JNIEnv *env, jobject this,
     int32_t             width,          /* fixed width if not resizable */
                         height;         /* fixed height if not resizable*/
     int32_t             verticalAdjust; /* menubar, warning window, etc.*/
-
+    
     if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
         return;
     }
-
+    
     AWT_LOCK();
-
+    
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL
         || wdata->winData.comp.widget == NULL
         || wdata->winData.shell == NULL
@@ -4078,23 +4078,23 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
 #ifdef _pauly_debug
     Dimension                   mbHeight;       /* Motif menubar height */
 #endif /* _pauly_debug */
-
+    
 #ifdef _pauly_debug
     fprintf(stdout," ++ ...pSetMenuBar.\n");
     fflush(stdout);
 #endif /* _pauly_debug */
-
-
+    
+    
     if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
         return;
     }
     AWT_LOCK();
-
+    
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (JNU_IsNull(env, target) || wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         if  (!JNU_IsNull(env, target)) {
@@ -4103,7 +4103,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
         AWT_UNLOCK();
         return;
     }
-
+    
     if (mb == NULL) {
 #ifdef _pauly_debug
         fprintf(stdout,"    ...pSetMenuBar. mb is null.\n");
@@ -4112,7 +4112,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
         if  (wdata->menuBar != NULL) {
             /* Redo attachments of other form widgets appropriately now */
             innerCanvasW = XtParent(wdata->winData.comp.widget);
-
+            
             if  (wdata->warningWindow == NULL) {
                 /* no warning window: canvas is now attached to form    */
                 XtVaSetValues(innerCanvasW,
@@ -4133,7 +4133,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
                               NULL);
 #endif /* NETSCAPE */
             }
-
+            
             wdata->menuBarReset = True;
         }
         wdata->menuBar = NULL;
@@ -4146,7 +4146,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
 #endif /* _pauly_debug */
         return;
     }
-
+    
     mdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env, mb, mMenuBarPeerIDs.pData);
     if (mdata == NULL) {
@@ -4155,28 +4155,28 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
         AWT_UNLOCK();
         return;
     }
-
+    
     /* OK - insert the new menu bar into the form (at the top).
        Redo the attachments of other form widgets appropriately.*/
-
+    
     if  (wdata->menuBar == NULL)
         wdata->menuBarReset = True;
     wdata->menuBar = mdata->widget;
-
+    
 #ifdef _pauly_debug
     XtVaGetValues(mdata->widget, XmNheight, &mbHeight, NULL);
     fprintf(stdout,"    ...pSetMenuBar. new menu bar (widget %x, parent: %x) - menu bar height: %d\n", wdata->menuBar, XtParent(wdata->menuBar), mbHeight);
     fflush(stdout);
 #endif /* _pauly_debug */
-
+    
     XtVaSetValues(mdata->widget,
                   XmNtopAttachment, XmATTACH_FORM,
                   XmNleftAttachment, XmATTACH_FORM,
                   XmNrightAttachment, XmATTACH_FORM,
                   NULL);
-
+    
     innerCanvasW = XtParent(wdata->winData.comp.widget);
-
+    
     if  (wdata->warningWindow == NULL) {
         /* no warning window: menu bar at top, canvas attached to it    */
         XtVaSetValues(innerCanvasW,
@@ -4200,22 +4200,22 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetMenuBar
                       NULL);
 #endif /* NETSCAPE */
     }
-
+    
     XtManageChild(mdata->widget);
     XtMapWidget(mdata->widget);
     XSync(awt_display, False);
     awtJNI_setMbAndWwHeightAndOffsets(env, this, wdata);
-
+    
 #ifdef _pauly_debug
     XtVaGetValues(mdata->widget, XmNheight, &mbHeight, NULL);
     fprintf(stdout,"    ...pSetMenuBar. with menu bar: menu bar height: %d, top offset: %d, bottom offset: %d\n", mbHeight, wdata->top, wdata->bottom);
     fflush(stdout);
 #endif /* _pauly_debug */
-
+    
     (*env)->DeleteLocalRef(env, target);
-
+    
     AWT_FLUSH_UNLOCK();
-
+    
 #ifdef _pauly_debug
     fprintf(stdout,"    ...pSetMenuBar. Done\n");
     fflush(stdout);
@@ -4231,12 +4231,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_toBack
 (JNIEnv *env, jobject this)
 {
     struct FrameData *wdata;
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL || wdata->winData.shell == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -4269,17 +4269,17 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_addTextComponentNative
 {
     struct FrameData            *wdata;
     jobject                     target;
-
+    
     if (JNU_IsNull(env, this)) {
         return;
     }
-
+    
     AWT_LOCK();
-
+    
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget==NULL ||
         wdata->winData.shell==NULL ||
@@ -4299,7 +4299,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_addTextComponentNative
                 (*env)->GetIntField(env, target, componentIDs.width),
                 (*env)->GetIntField(env, target, componentIDs.height),
                 True);
-    }
+    } 
     AWT_UNLOCK();
 }
 
@@ -4308,17 +4308,17 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_removeTextComponentNative
 {
     struct FrameData            *wdata;
     jobject                     target;
-
+    
     if (JNU_IsNull(env, this)) {
         return;
     }
-
+    
     AWT_LOCK();
-
+    
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget== NULL ||
         wdata->winData.shell== NULL ||
@@ -4331,7 +4331,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_removeTextComponentNative
         AWT_UNLOCK();
         return;
     }
-
+    
     wdata->bottom -= wdata->imHeight;
     awtJNI_ChangeInsets(env, this, wdata);
     wdata->imRemove = True;
@@ -4341,10 +4341,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_removeTextComponentNative
             (*env)->GetIntField(env, target, componentIDs.width),
             (*env)->GetIntField(env, target, componentIDs.height),
             True);
-
+    
     wdata->hasTextComponentNative = False;
     wdata->imHeight = 0;
-
+    
     AWT_UNLOCK();
 } /* ...removeTextComponentPeer() */
 
@@ -4368,9 +4368,9 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetIMMOption
     char        *menuItem;
     jobject     globalRef;
     struct FrameData *wdata;
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (wdata == NULL || wdata->winData.shell == NULL) {
@@ -4378,7 +4378,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetIMMOption
         AWT_UNLOCK();
         return;
     }
-
+    
     globalRef = (jobject)JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef);
     coption = (JNU_IsNull(env, option)) ? empty : (char *) JNU_GetStringPlatformChars(env, option, NULL);
     if (java_protocol == None || motif_wm_msgs == None) {
@@ -4387,13 +4387,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MWindowPeer_pSetIMMOption
     }
     XmAddProtocols (wdata->winData.shell, motif_wm_msgs, &java_protocol, 1);
     XmAddProtocolCallback(wdata->winData.shell, motif_wm_msgs, java_protocol, im_callback, (XtPointer)globalRef);
-
+    
     if ((menuItem = awt_util_makeWMMenuItem(coption, java_protocol))) {
-        XtVaSetValues(wdata->winData.shell,
-                      XmNmwmMenu,
+        XtVaSetValues(wdata->winData.shell, 
+                      XmNmwmMenu, 
                       menuItem,
-                      NULL);
-        free(menuItem);
+                      NULL); 
+        free(menuItem); 
     }
     if (coption != empty)
         JNU_ReleaseStringPlatformChars(env, option, (const char *) coption);
@@ -4407,12 +4407,12 @@ Java_sun_awt_motif_MEmbeddedFramePeer_synthesizeFocusInOut(JNIEnv *env, jobject 
 {
     EmbeddedFrame *ef;
     Boolean dummy;
-
+    
     AWT_LOCK();
     ef = theEmbeddedFrameList;
     while (ef != NULL) {
         if ((*env)->IsSameObject(env, ef->javaRef, this)) {
-            XFocusChangeEvent xev;
+            XFocusChangeEvent xev; 
             xev.display = awt_display;
             xev.serial = 0;
             xev.type = b ? FocusIn : FocusOut;
@@ -4432,16 +4432,16 @@ JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbeddedFramePeer_traverseOut(JNIEnv *env, jobject this, jboolean direction)
 {
     struct FrameData            *wdata;
-
+    
     if (JNU_IsNull(env, this)) {
         return;
     }
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget== NULL ||
         wdata->winData.shell== NULL)
@@ -4460,7 +4460,7 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
                                                 jobject parent, jlong handle)
 {
 #undef MAX_ARGC
-#define MAX_ARGC 40
+#define MAX_ARGC 40    
     Arg      args[MAX_ARGC];
     int32_t  argc;
     struct   FrameData *wdata;
@@ -4472,17 +4472,17 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
                                drawing area */
     AwtGraphicsConfigDataPtr adata;
     AwtGraphicsConfigDataPtr defConfig;
-
+    
     AWT_LOCK();
 
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
-
+    
     if (JNU_IsNull(env, target)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
         return;
     }
-
+    
     wdata = ZALLOC(FrameData);
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.pData, wdata);
     if (wdata == NULL) {
@@ -4499,39 +4499,39 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
      * Motif child window
      */
     wdata->winData.flags |= W_IS_EMBEDDED;
-
+        
     wdata->top = 0;
     wdata->left = 0;
     wdata->bottom = 0;
     wdata->right = 0;
     awtJNI_ChangeInsets(env, this, wdata);
-
-
+        
+    
     wdata->isModal = 0;
     wdata->isShowing = False;
     wdata->shellResized = False;
     wdata->canvasResized = False;
     wdata->menuBarReset = False;
-
+    
     resizable = (*env)->GetBooleanField(env, target, frameIDs.resizable);
-
+    
     wdata->winData.shell = (Widget)handle;
     awt_util_addEmbeddedFrame(wdata->winData.shell, globalRef);
-
+    
     install_xembed((Widget)handle, wdata);
-
+    
     setDeleteCallback(globalRef, wdata);
     /* Establish resizability.  For the case of not resizable, do not
        yet set a fixed size here; we must wait until in the routine
        sun_awt_motif_MWindowPeer_pReshape() after insets have been fixed.
        This is because correction of the insets may affect shell size.
        (See comments in shellEH() concerning correction of the insets.  */
-    /*
+    /* 
      * Fix for BugTraq ID 4313607.
-     * Initial resizability will be set later in MWindowPeer_setResizable()
-     * called from init(). But the real changes will be made only if the new
-     * and old resizability values are different at that point, so we
-     * initialize isResizable with inverse value here to get the job done.
+     * Initial resizability will be set later in MWindowPeer_setResizable() 
+     * called from init(). But the real changes will be made only if the new 
+     * and old resizability values are different at that point, so we 
+     * initialize isResizable with inverse value here to get the job done.  
      */
     wdata->isResizable = !resizable;
     wdata->isFixedSizeSet = False;
@@ -4540,11 +4540,11 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
         awt_wm_setShellResizable(wdata);
     }
 #endif
-
+    
     XtAddEventHandler(wdata->winData.shell, StructureNotifyMask | FocusChangeMask,
                       FALSE, (XtEventHandler)shellEH, globalRef);
-
-
+    
+    
     argc = 0;
     XtSetArg(args[argc], XmNvisual, defConfig->awt_visInfo.visual); argc++;
     XtSetArg(args[argc], XmNcolormap, defConfig->awt_cmap); argc++;
@@ -4555,13 +4555,13 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
     XtSetArg(args[argc], XmNverticalSpacing, 0); argc++;
     XtSetArg(args[argc], XmNscreen,
              ScreenOfDisplay(awt_display, defConfig->awt_visInfo.screen)); argc++;
-
-
+    
+    
     XtSetArg(args[argc], XmNresizePolicy, XmRESIZE_NONE); argc++;
-
+    
     DASSERT(!(argc > MAX_ARGC));
     wdata->mainWindow = XmCreateForm(wdata->winData.shell, "main", args, argc);
-
+    
     /* The widget returned by awt_canvas_create is a drawing area
        (i.e., canvas) which is the child of another drawing area
        parent widget.  The parent is the drawing area within the
@@ -4570,7 +4570,7 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
        and warning windows present, and also window manager stuff.
        The top, bottom, left, and right fields in wdata maintain
        the respective offsets between these two drawing areas.  */
-
+    
     wdata->winData.comp.widget = awt_canvas_create((XtPointer)globalRef,
                                                    wdata->mainWindow,
                                                    "frame_",
@@ -4579,31 +4579,31 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
                                                    True,
                                                    wdata,
                                                    defConfig);
-
+    
     XtAddCallback(wdata->winData.comp.widget,
                   XmNresizeCallback,
                   outerCanvasResizeCB,
                   globalRef);
-
-
+    
+    
     innerCanvasW = XtParent(wdata->winData.comp.widget);
     XtVaSetValues(innerCanvasW,
                   XmNleftAttachment, XmATTACH_FORM,
                   XmNrightAttachment, XmATTACH_FORM,
                   NULL);
-
-
+    
+    
     XtAddEventHandler(innerCanvasW, StructureNotifyMask, FALSE,
                       (XtEventHandler)innerCanvasEH, globalRef);
-
+    
     /* No menu bar initially */
     wdata->menuBar = NULL;
     wdata->mbHeight = 0;
-
+    
     /* If a warning window (string) is needed, establish it now.*/
     warningString =
         (*env)->GetObjectField(env, target, windowIDs.warningString);
-
+    
     /* No warning window present */
     XtVaSetValues(innerCanvasW,
                   XmNtopAttachment, XmATTACH_FORM,
@@ -4611,11 +4611,11 @@ Java_sun_awt_motif_MEmbeddedFramePeer_NEFcreate(JNIEnv *env, jobject this,
                   NULL);
     wdata->warningWindow = NULL;
     wdata->wwHeight = 0;
-
-
+    
+    
     awt_util_show(wdata->winData.comp.widget);
-
-    AWT_FLUSH_UNLOCK();
+    
+    AWT_FLUSH_UNLOCK();    
 }  /* MEmbeddedFramePeer_NEFcreate() */
 
 
@@ -4623,13 +4623,13 @@ JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbeddedFramePeer_pShowImpl(JNIEnv *env, jobject this)
 {
     struct FrameData *wdata;
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-    if (wdata == NULL ||
-        wdata->winData.comp.widget == NULL ||
+    if (wdata == NULL || 
+        wdata->winData.comp.widget == NULL || 
         wdata->winData.shell == NULL ||
         wdata->mainWindow == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -4639,11 +4639,11 @@ Java_sun_awt_motif_MEmbeddedFramePeer_pShowImpl(JNIEnv *env, jobject this)
     XtVaSetValues(wdata->winData.comp.widget,
                   XmNx, -(wdata->left),
                   XmNy, -(wdata->top), NULL);
-
+    
     if (wdata->menuBar != 0) {
         awt_util_show(wdata->menuBar);
     }
-
+    
     XtManageChild(wdata->mainWindow);
     if (XtWindow(wdata->winData.shell) == None) {
         XtRealizeWidget(wdata->winData.shell);
@@ -4652,7 +4652,7 @@ Java_sun_awt_motif_MEmbeddedFramePeer_pShowImpl(JNIEnv *env, jobject this)
     XtSetMappedWhenManaged(wdata->winData.shell, True);
     XtPopup(wdata->winData.shell, XtGrabNone);
     wdata->isShowing = True;
-
+    
     AWT_FLUSH_UNLOCK();
 }
 
@@ -4711,7 +4711,7 @@ Java_sun_awt_motif_MEmbeddedFrame_getWidget(
     /* The shell widget starts out as a top level widget.
      * Without intervention, it will be managed by the window
      * manager and will be its own widow. So, until it is reparented,
-     *  we don't map it.
+     *  we don't map it. 
      */
     XtSetArg(args[argc], XtNmappedWhenManaged, False); argc++;
 
@@ -4729,7 +4729,7 @@ Java_sun_awt_motif_MEmbeddedFrame_getWidget(
     child = XtWindow(w);
     XReparentWindow(awt_display, child, parent, 0, 0);
     XFlush(awt_display);
-    XSync(awt_display, False);
+    XSync(awt_display, False); 
     XtVaSetValues(w, XtNx, 0, XtNy, 0, NULL);
     XFlush(awt_display);
     XSync(awt_display, False);
@@ -4745,7 +4745,7 @@ Java_sun_awt_motif_MEmbeddedFrame_getWidget(
  * This isn't necessary on JDK 1.1.5 but is needed on JDK 1.1.4
  */
 JNIEXPORT jint JNICALL
-Java_sun_awt_motif_MEmbeddedFrame_mapWidget(JNIEnv *env, jclass clz, jlong widget)
+Java_sun_awt_motif_MEmbeddedFrame_mapWidget(JNIEnv *env, jclass clz, jlong widget) 
 {
     Widget w = (Widget)widget;
     /*
@@ -4766,11 +4766,11 @@ Java_sun_awt_motif_MEmbeddedFramePeer_isXEmbedActive(JNIEnv *env, jobject this)
     Boolean res;
 
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-    if (wdata == NULL ||
-        wdata->winData.comp.widget == NULL ||
+    if (wdata == NULL || 
+        wdata->winData.comp.widget == NULL || 
         wdata->winData.shell == NULL ||
         wdata->mainWindow == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -4781,7 +4781,7 @@ Java_sun_awt_motif_MEmbeddedFramePeer_isXEmbedActive(JNIEnv *env, jobject this)
     res = isXEmbedActive(wdata);
     AWT_UNLOCK();
     return res;
-
+    
 }
 
 JNIEXPORT jboolean JNICALL
@@ -4791,11 +4791,11 @@ Java_sun_awt_motif_MEmbeddedFramePeer_isXEmbedApplicationActive(JNIEnv *env, job
     Boolean res;
 
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-    if (wdata == NULL ||
-        wdata->winData.comp.widget == NULL ||
+    if (wdata == NULL || 
+        wdata->winData.comp.widget == NULL || 
         wdata->winData.shell == NULL ||
         wdata->mainWindow == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -4806,20 +4806,20 @@ Java_sun_awt_motif_MEmbeddedFramePeer_isXEmbedApplicationActive(JNIEnv *env, job
     res = isXEmbedApplicationActive(wdata);
     AWT_UNLOCK();
     return res;
-
+    
 }
 
 JNIEXPORT void JNICALL
 Java_sun_awt_motif_MEmbeddedFramePeer_requestXEmbedFocus(JNIEnv *env, jobject this)
 {
     struct FrameData *wdata;
-
+    
     AWT_LOCK();
-
+    
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
-    if (wdata == NULL ||
-        wdata->winData.comp.widget == NULL ||
+    if (wdata == NULL || 
+        wdata->winData.comp.widget == NULL || 
         wdata->winData.shell == NULL ||
         wdata->mainWindow == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -4828,7 +4828,7 @@ Java_sun_awt_motif_MEmbeddedFramePeer_requestXEmbedFocus(JNIEnv *env, jobject th
     }
 
     requestXEmbedFocus(wdata);
-    AWT_UNLOCK();
+    AWT_UNLOCK();    
 }
 
 /*
@@ -5058,9 +5058,9 @@ Java_sun_awt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jargv)
                 "XmbTextListToTextProperty: unknown error");
         }
     } else {
-        /*
+        /* 
          * status == Success (i.e. 0) or
-         * status > 0 - a number of unconvertible characters
+         * status > 0 - a number of unconvertible characters 
          *              (cannot happen for XStdICCTextStyle).
          */
         XSetTextProperty(awt_display, XtWindow(awt_root_shell),

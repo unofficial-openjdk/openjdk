@@ -41,14 +41,14 @@ import java.util.zip.*;
 public class FlaterTest extends Thread {
     private static final int DATA_LEN = 1024 * 128;
     private static byte[] data;
-
+    
     // If true, print extra info.
     private static final boolean debug = false;
 
     // Set of Flater threads running.
     private static Set flaters =
         Collections.synchronizedSet(new HashSet());
-
+    
     /** Fill in {@code data} with random values. */
     static void createData() {
         ByteBuffer bb = ByteBuffer.allocate(8);
@@ -93,7 +93,7 @@ public class FlaterTest extends Thread {
 
     synchronized private void go(int numThreads) throws Throwable {
         int deflatedLength = getDeflatedLength();
-
+        
         long time = System.currentTimeMillis();
         for (int i = 0; i < numThreads; i++) {
             Flater f = new Flater(deflatedLength);
@@ -112,10 +112,10 @@ public class FlaterTest extends Thread {
                            + " threads to deflate/inflate: " + time + " ms.");
     }
 
-    /** Deflates and inflates data. */
+    /** Deflates and inflates data. */       
     static class Flater extends Thread {
         private final int deflatedLength;
-
+        
         private Flater(int length) {
             this.deflatedLength = length;
         }

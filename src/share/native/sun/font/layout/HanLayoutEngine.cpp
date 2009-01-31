@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)HanLayoutEngine.cpp	1.6 06/12/13
  *
  * HanLayoutEngine.cpp: OpenType processing for Han fonts.
  *
@@ -60,7 +61,7 @@ static const le_int32 featureMapCount = LE_ARRAY_SIZE(featureMap);
 
 #define features (loclFeatureMask)
 
-HanOpenTypeLayoutEngine::HanOpenTypeLayoutEngine(const LEFontInstance *fontInstance,
+HanOpenTypeLayoutEngine::HanOpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
     le_int32 scriptCode,  le_int32 languageCode, le_int32 typoFlags,
     const GlyphSubstitutionTableHeader *gsubTable)
     : OpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags, gsubTable)
@@ -74,7 +75,7 @@ HanOpenTypeLayoutEngine::~HanOpenTypeLayoutEngine()
     // nothing to do
 }
 
-le_int32 HanOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
+le_int32 HanOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_int32 max, le_bool /*rightToLeft*/,
     LEUnicode *&/*outChars*/, LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
@@ -104,3 +105,4 @@ le_int32 HanOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
 
     return count;
 }
+

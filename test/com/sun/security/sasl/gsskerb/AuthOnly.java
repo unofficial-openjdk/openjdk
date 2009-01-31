@@ -47,125 +47,127 @@ public class AuthOnly {
     private static final byte[] EMPTY = new byte[0];
     private static boolean auto;
     private static boolean verbose = false;
-
+    
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            namesfile = null;
-            auto = true;
-        } else {
-            int i = 0;
-            if (args[i].equals("-m")) {
-                i++;
-                auto = false;
-            }
-            if (args.length > i) {
-                namesfile = args[i++];
-                if (args.length > i) {
-                    proxyfile = args[i];
-                }
-            } else {
-                namesfile = null;
-            }
-        }
+	if (args.length == 0) {
+	    namesfile = null;
+	    auto = true;
+	} else {
+	    int i = 0;
+	    if (args[i].equals("-m")) {
+		i++;
+		auto = false;
+	    }
+	    if (args.length > i) {
+		namesfile = args[i++];
+		if (args.length > i) {
+		    proxyfile = args[i];
+		}
+	    } else {
+		namesfile = null;
+	    }
+	}
 
-        CallbackHandler clntCbh = null;
-        final CallbackHandler srvCbh = new PropertiesFileCallbackHandler(
-            null, namesfile, proxyfile);
+	CallbackHandler clntCbh = null;
+	final CallbackHandler srvCbh = new PropertiesFileCallbackHandler(
+	    null, namesfile, proxyfile);
 
-        Subject clntSubj = doLogin("client");
-        Subject srvSubj = doLogin("server");
-        final HashMap clntprops = new HashMap();
-        final HashMap srvprops = new HashMap();
+	Subject clntSubj = doLogin("client");
+	Subject srvSubj = doLogin("server");
+	final HashMap clntprops = new HashMap();
+	final HashMap srvprops = new HashMap();
 
-        clntprops.put(Sasl.QOP, "auth");
-        srvprops.put(Sasl.QOP, "auth,auth-int,auth-conf");
+	clntprops.put(Sasl.QOP, "auth");
+	srvprops.put(Sasl.QOP, "auth,auth-int,auth-conf");
 
-        final SaslClient clnt = (SaslClient)
-            Subject.doAs(clntSubj, new PrivilegedExceptionAction() {
-                public Object run() throws Exception {
-                    return Sasl.createSaslClient(
-                        new String[]{MECH}, null, PROTOCOL, SERVER_FQDN,
-                        clntprops, null);
-                }
-            });
+	final SaslClient clnt = (SaslClient) 
+	    Subject.doAs(clntSubj, new PrivilegedExceptionAction() {
+		public Object run() throws Exception {
+		    return Sasl.createSaslClient(
+			new String[]{MECH}, null, PROTOCOL, SERVER_FQDN, 
+			clntprops, null);
+		}
+	    });
+	
+	if (verbose) {
+	    System.out.println(clntSubj);
+	    System.out.println(srvSubj);
+	}
+	final SaslServer srv = (SaslServer)
+	    Subject.doAs(srvSubj, new PrivilegedExceptionAction() {
+		public Object run() throws Exception {
+		    return Sasl.createSaslServer(MECH, PROTOCOL, SERVER_FQDN, 
+			srvprops, srvCbh);
+		}
+	    });
 
-        if (verbose) {
-            System.out.println(clntSubj);
-            System.out.println(srvSubj);
-        }
-        final SaslServer srv = (SaslServer)
-            Subject.doAs(srvSubj, new PrivilegedExceptionAction() {
-                public Object run() throws Exception {
-                    return Sasl.createSaslServer(MECH, PROTOCOL, SERVER_FQDN,
-                        srvprops, srvCbh);
-                }
-            });
 
+	if (clnt == null) {
+	    throw new IllegalStateException(
+		"Unable to find client impl for " + MECH);
+	}
+	if (srv == null) {
+	    throw new IllegalStateException(
+		"Unable to find server impl for " + MECH);
+	}
 
-        if (clnt == null) {
-            throw new IllegalStateException(
-                "Unable to find client impl for " + MECH);
-        }
-        if (srv == null) {
-            throw new IllegalStateException(
-                "Unable to find server impl for " + MECH);
-        }
+	byte[] response;
+	byte[] challenge;
 
-        byte[] response;
-        byte[] challenge;
+	response = (byte[]) Subject.doAs(clntSubj, 
+	    new PrivilegedExceptionAction() {
+	    public Object run() throws Exception {
+		return (clnt.hasInitialResponse()? clnt.evaluateChallenge(EMPTY) : EMPTY);
+	    }});
 
-        response = (byte[]) Subject.doAs(clntSubj,
-            new PrivilegedExceptionAction() {
-            public Object run() throws Exception {
-                return (clnt.hasInitialResponse()? clnt.evaluateChallenge(EMPTY) : EMPTY);
-            }});
+	while (!clnt.isComplete() || !srv.isComplete()) {
+	    final byte[] responseCopy = response;
+	    challenge = (byte[]) Subject.doAs(srvSubj,
+		new PrivilegedExceptionAction() {
+		public Object run() throws Exception {
+		    return srv.evaluateResponse(responseCopy);
+		}});
 
-        while (!clnt.isComplete() || !srv.isComplete()) {
-            final byte[] responseCopy = response;
-            challenge = (byte[]) Subject.doAs(srvSubj,
-                new PrivilegedExceptionAction() {
-                public Object run() throws Exception {
-                    return srv.evaluateResponse(responseCopy);
-                }});
+	    if (challenge != null) {
+		final byte[] challengeCopy = challenge;
+		response = (byte[]) Subject.doAs(clntSubj,
+		    new PrivilegedExceptionAction() {
+		    public Object run() throws Exception {
+			return clnt.evaluateChallenge(challengeCopy);
+		    }});
+	    }
+	}
 
-            if (challenge != null) {
-                final byte[] challengeCopy = challenge;
-                response = (byte[]) Subject.doAs(clntSubj,
-                    new PrivilegedExceptionAction() {
-                    public Object run() throws Exception {
-                        return clnt.evaluateChallenge(challengeCopy);
-                    }});
-            }
-        }
-
-        if (clnt.isComplete() && srv.isComplete()) {
-            if (verbose) {
-                System.out.println("SUCCESS");
-                System.out.println("authzid is " + srv.getAuthorizationID());
-            }
-        } else {
-            throw new IllegalStateException("FAILURE: mismatched state:" +
-                " client complete? " + clnt.isComplete() +
-                " server complete? " + srv.isComplete());
-        }
+	if (clnt.isComplete() && srv.isComplete()) {
+	    if (verbose) {
+		System.out.println("SUCCESS");
+		System.out.println("authzid is " + srv.getAuthorizationID());
+	    }
+	} else {
+	    throw new IllegalStateException("FAILURE: mismatched state:" +
+		" client complete? " + clnt.isComplete() +
+		" server complete? " + srv.isComplete());
+	}
     }
 
     private static Subject doLogin(String msg) throws LoginException {
-        LoginContext lc = null;
-        if (verbose) {
-            System.out.println(msg);
-        }
-        try {
-            lc = new LoginContext(msg, new TextCallbackHandler());
+	LoginContext lc = null;
+	if (verbose) {
+	    System.out.println(msg);
+	}
+	try {
+	    lc = new LoginContext(msg, new TextCallbackHandler());
 
-            // Attempt authentication
-            // You might want to do this in a "for" loop to give
-            // user more than one chance to enter correct username/password
-            lc.login();
+	    // Attempt authentication
+	    // You might want to do this in a "for" loop to give
+	    // user more than one chance to enter correct username/password
+	    lc.login();
 
-        } catch (LoginException le) {
-            throw le;
-        }
-        return lc.getSubject();
+	} catch (LoginException le) {
+	    throw le;
+	}
+	return lc.getSubject();
     }
 }
+	    
+	

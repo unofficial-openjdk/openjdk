@@ -86,9 +86,9 @@ public class CipherOutputStream extends FilterOutputStream {
      * @param c   an initialized Cipher object
      */
     public CipherOutputStream(OutputStream os, Cipher c) {
-        super(os);
-        output = os;
-        cipher = c;
+	super(os);
+	output = os;
+	cipher = c;
     };
 
     /**
@@ -101,9 +101,9 @@ public class CipherOutputStream extends FilterOutputStream {
      * @param os  the OutputStream object
      */
     protected CipherOutputStream(OutputStream os) {
-        super(os);
-        output = os;
-        cipher = new NullCipher();
+	super(os);
+	output = os;
+	cipher = new NullCipher();
     }
 
     /**
@@ -114,12 +114,12 @@ public class CipherOutputStream extends FilterOutputStream {
      * @since      JCE1.2
      */
     public void write(int b) throws IOException {
-        ibuffer[0] = (byte) b;
-        obuffer = cipher.update(ibuffer, 0, 1);
-        if (obuffer != null) {
-            output.write(obuffer);
-            obuffer = null;
-        }
+	ibuffer[0] = (byte) b;
+	obuffer = cipher.update(ibuffer, 0, 1);
+	if (obuffer != null) {
+	    output.write(obuffer);
+	    obuffer = null;
+	}
     };
 
     /**
@@ -138,7 +138,7 @@ public class CipherOutputStream extends FilterOutputStream {
      * @since JCE1.2
      */
     public void write(byte b[]) throws IOException {
-        write(b, 0, b.length);
+	write(b, 0, b.length);
     }
 
     /**
@@ -152,11 +152,11 @@ public class CipherOutputStream extends FilterOutputStream {
      * @since      JCE1.2
      */
     public void write(byte b[], int off, int len) throws IOException {
-        obuffer = cipher.update(b, off, len);
-        if (obuffer != null) {
-            output.write(obuffer);
-            obuffer = null;
-        }
+	obuffer = cipher.update(b, off, len);
+	if (obuffer != null) {
+	    output.write(obuffer);
+	    obuffer = null;
+	}
     }
 
     /**
@@ -174,11 +174,11 @@ public class CipherOutputStream extends FilterOutputStream {
      * @since      JCE1.2
      */
     public void flush() throws IOException {
-        if (obuffer != null) {
-            output.write(obuffer);
-            obuffer = null;
-        }
-        output.flush();
+	if (obuffer != null) {
+	    output.write(obuffer);
+	    obuffer = null;
+	}
+	output.flush();
     }
 
     /**
@@ -198,16 +198,16 @@ public class CipherOutputStream extends FilterOutputStream {
      * @since      JCE1.2
      */
     public void close() throws IOException {
-        try {
-            obuffer = cipher.doFinal();
-        } catch (IllegalBlockSizeException e) {
-            obuffer = null;
-        } catch (BadPaddingException e) {
-            obuffer = null;
-        }
-        try {
-            flush();
-        } catch (IOException ignored) {}
-        out.close();
+	try {
+	    obuffer = cipher.doFinal();
+	} catch (IllegalBlockSizeException e) {
+	    obuffer = null;
+	} catch (BadPaddingException e) {
+	    obuffer = null;
+	}
+	try {
+	    flush();
+	} catch (IOException ignored) {}
+	out.close();
     }
 }

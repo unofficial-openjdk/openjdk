@@ -43,8 +43,8 @@ import java.io.Serializable;
  * @since 1.5
  */
 public interface QueryExp extends Serializable {
-
-
+     
+    
      /**
       * Applies the QueryExp on an MBean.
       *
@@ -54,11 +54,11 @@ public interface QueryExp extends Serializable {
       *
       * @exception BadStringOperationException
       * @exception BadBinaryOpValueExpException
-      * @exception BadAttributeValueExpException
+      * @exception BadAttributeValueExpException 
       * @exception InvalidApplicationException
       */
      public boolean apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
-         BadAttributeValueExpException, InvalidApplicationException ;
+	 BadAttributeValueExpException, InvalidApplicationException ;
 
      /**
       * Sets the MBean server on which the query is to be performed.

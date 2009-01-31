@@ -35,7 +35,7 @@ import com.sun.jdi.event.EventSet;
  */
 class Session {
 
-    final VirtualMachine vm;
+    final VirtualMachine vm;    
     final ExecutionManager runtime;
     final OutputListener diagnostics;
 
@@ -47,20 +47,20 @@ class Session {
     private boolean dead = false;
 
     public Session(VirtualMachine vm, ExecutionManager runtime,
-                   OutputListener diagnostics) {
-        this.vm = vm;
-        this.runtime = runtime;
-        this.diagnostics = diagnostics;
-        this.traceFlags = VirtualMachine.TRACE_NONE;
+		   OutputListener diagnostics) {
+	this.vm = vm;
+	this.runtime = runtime;
+	this.diagnostics = diagnostics;
+	this.traceFlags = VirtualMachine.TRACE_NONE;
     }
 
     /**
      * Determine if VM is interrupted, i.e, present and not running.
      */
     public boolean isInterrupted() {
-        return interrupted;
+	return interrupted;
     }
-
+    
     public void setTraceMode(int traceFlags) {
         this.traceFlags = traceFlags;
         if (!dead) {
@@ -71,27 +71,27 @@ class Session {
     public boolean attach() {
         vm.setDebugTraceMode(traceFlags);
         diagnostics.putString("Connected to VM");
-        eventSourceThread = new JDIEventSource(this);
-        eventSourceThread.start();
+	eventSourceThread = new JDIEventSource(this);
+	eventSourceThread.start();
         return true;
     }
-
+    
     public void detach() {
         if (!dead) {
-            eventSourceThread.interrupt();
-            eventSourceThread = null;
-            //### The VM may already be disconnected
-            //### if the debuggee did a System.exit().
-            //### Exception handler here is a kludge,
-            //### Rather, there are many other places
-            //### where we need to handle this exception,
-            //### and initiate a detach due to an error
-            //### condition, e.g., connection failure.
-            try {
-                vm.dispose();
-            } catch (VMDisconnectedException ee) {}
+	    eventSourceThread.interrupt();
+	    eventSourceThread = null;
+	    //### The VM may already be disconnected
+	    //### if the debuggee did a System.exit().
+	    //### Exception handler here is a kludge,
+	    //### Rather, there are many other places
+	    //### where we need to handle this exception,
+	    //### and initiate a detach due to an error
+	    //### condition, e.g., connection failure.
+	    try {
+		vm.dispose();
+	    } catch (VMDisconnectedException ee) {}
             dead = true;
-            diagnostics.putString("Disconnected from VM");
+	    diagnostics.putString("Disconnected from VM");
         }
     }
 }

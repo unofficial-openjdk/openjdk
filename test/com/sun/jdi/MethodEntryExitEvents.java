@@ -52,14 +52,14 @@ class t2 {
         sayHello5(i, j);
     }
     public static void sayHello5(int i, int j) {
-        if (i < 2) {
-            sayHello1(++i, j);
-        } else {
-            System.out.print  ("MethodEntryExitEventsDebugee: ");
-            System.out.print  ("    -->> Hello.  j is: ");
-            System.out.print  (j);
-            System.out.println(" <<--");
-        }
+	if (i < 2) {
+	    sayHello1(++i, j);
+	} else {
+	    System.out.print  ("MethodEntryExitEventsDebugee: ");
+	    System.out.print  ("    -->> Hello.  j is: ");
+	    System.out.print  (j);
+	    System.out.println(" <<--");
+	}
     }
 }
 
@@ -81,10 +81,10 @@ class MethodEntryExitEventsDebugee {
     }
     public static void main(String[] args) {
         t2 test = new t2();
-        for (int j = 0; j < 3; j++) {
-            test.sayHello1(0, j);
-        }
-        loopComplete();
+	for (int j = 0; j < 3; j++) {
+	    test.sayHello1(0, j);
+	}
+	loopComplete();
     }
 }
 
@@ -107,57 +107,57 @@ public class MethodEntryExitEvents extends TestScaffold {
      */
     final int expectedExitCount = 1 + (15 * 3);
     int methodExitCount = 0;
-
+    
     /*
      * Class patterns for which we don't want events (copied
      * from the "Trace.java" example):
      *     http://java.sun.com/javase/technologies/core/toolsapis/jpda/
      */
-    private String[] excludes = {"java.*", "javax.*", "sun.*",
-                                 "com.sun.*"};
+    private String[] excludes = {"java.*", "javax.*", "sun.*", 
+				 "com.sun.*"};
 
     MethodEntryExitEvents (String args[]) {
-        super(args);
+	super(args);
     }
 
     private void usage(String[] args) throws Exception {
-        StringBuffer sb = new StringBuffer("Usage: ");
-        sb.append(System.getProperty("line.separator"));
-        sb.append("  java ");
-        sb.append(getClass().getName());
-        sb.append(" [SUSPEND_NONE | SUSPEND_EVENT_THREAD | SUSPEND_ALL]");
-        sb.append(" [MethodEntryExitEventsDebugee | -connect <connector options...>] ");
-        throw new Exception (sb.toString());
+	StringBuffer sb = new StringBuffer("Usage: ");
+	sb.append(System.getProperty("line.separator"));
+	sb.append("  java ");
+	sb.append(getClass().getName());
+	sb.append(" [SUSPEND_NONE | SUSPEND_EVENT_THREAD | SUSPEND_ALL]");
+	sb.append(" [MethodEntryExitEventsDebugee | -connect <connector options...>] ");
+	throw new Exception (sb.toString());
     }
 
-    public static void main(String[] args)      throws Exception {
-        MethodEntryExitEvents meee = new MethodEntryExitEvents (args);
-        meee.startTests();
+    public static void main(String[] args)	throws Exception {
+	MethodEntryExitEvents meee = new MethodEntryExitEvents (args);
+	meee.startTests();
     }
 
     public void exceptionThrown(ExceptionEvent event) {
-        System.out.println("Exception: " + event.exception());
-        System.out.println(" at catch location: " + event.catchLocation());
+	System.out.println("Exception: " + event.exception());
+	System.out.println(" at catch location: " + event.catchLocation());
 
-        // Step to the catch
-        if (stepReq == null) {
-            stepReq =
-                eventRequestManager().createStepRequest(event.thread(),
-                                                        StepRequest.STEP_MIN,
-                                                        StepRequest.STEP_INTO);
-            stepReq.addCountFilter(1);  // next step only
-            stepReq.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-        }
-        stepReq.enable();
-    }
+	// Step to the catch
+	if (stepReq == null) {
+	    stepReq =
+		eventRequestManager().createStepRequest(event.thread(),
+							StepRequest.STEP_MIN,
+							StepRequest.STEP_INTO);
+	    stepReq.addCountFilter(1);  // next step only
+	    stepReq.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+	}
+	stepReq.enable();
+    }  
     public void stepCompleted(StepEvent event) {
-        System.out.println("stepCompleted: line#=" +
-                           event.location().lineNumber() +
-                           " event=" + event);
-        // disable the step and then run to completion
-        //eventRequestManager().deleteEventRequest(event.request());
-        StepRequest str= (StepRequest)event.request();
-        str.disable();
+	System.out.println("stepCompleted: line#=" +
+			   event.location().lineNumber() +
+			   " event=" + event);
+	// disable the step and then run to completion
+	//eventRequestManager().deleteEventRequest(event.request());
+	StepRequest str= (StepRequest)event.request();
+	str.disable();
     }
     public void methodEntered(MethodEntryEvent event) {
         if (! finishedCounting) {
@@ -167,7 +167,7 @@ public class MethodEntryExitEvents extends TestScaffold {
             System.out.print  (" Method entry number: ");
             System.out.print  (methodEntryCount);
             System.out.print  ("  :  ");
-            System.out.println(event);
+            System.out.println(event); 
             if ("loopComplete".equals(event.method().name())) {
                 finishedCounting = true;
             }
@@ -185,106 +185,106 @@ public class MethodEntryExitEvents extends TestScaffold {
     }
 
     protected void runTests() throws Exception {
-        if (args.length < 1) {
-            usage(args);
-        }
-        //Pick up the SUSPEND_xxx in first argument
-        if ("SUSPEND_NONE".equals(args[0])) {
-            sessionSuspendPolicy = EventRequest.SUSPEND_NONE;
-        } else if ("SUSPEND_EVENT_THREAD".equals(args[0])) {
-            sessionSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
-        } else if ("SUSPEND_ALL".equals(args[0])) {
-            sessionSuspendPolicy = EventRequest.SUSPEND_ALL;
-        } else {
-            usage(args);
-        }
-        System.out.print("Suspend policy is: ");
-        System.out.println(args[0]);
+	if (args.length < 1) {
+	    usage(args);
+	}
+	//Pick up the SUSPEND_xxx in first argument
+	if ("SUSPEND_NONE".equals(args[0])) {
+	    sessionSuspendPolicy = EventRequest.SUSPEND_NONE;
+	} else if ("SUSPEND_EVENT_THREAD".equals(args[0])) {
+	    sessionSuspendPolicy = EventRequest.SUSPEND_EVENT_THREAD;
+	} else if ("SUSPEND_ALL".equals(args[0])) {
+	    sessionSuspendPolicy = EventRequest.SUSPEND_ALL;
+	} else {
+	    usage(args);
+	}
+	System.out.print("Suspend policy is: ");
+	System.out.println(args[0]);
 
-        // Skip the test arg
+	// Skip the test arg
         String[] args2 = new String[args.length - 1];
         System.arraycopy(args, 1, args2, 0, args.length - 1);
 
-        if (args2.length < 1) {
-            usage(args2);
-        }
-        List argList = new ArrayList(Arrays.asList(args2));
-        System.out.println("run args: " + argList);
-        connect((String[]) argList.toArray(args2));
-        waitForVMStart();
+	if (args2.length < 1) {
+	    usage(args2);
+	}
+	List argList = new ArrayList(Arrays.asList(args2));
+	System.out.println("run args: " + argList);
+	connect((String[]) argList.toArray(args2));
+	waitForVMStart();
 
-        try {
+	try {
 
-            /*
-             * Ask for Exception events
-             */
-            ExceptionRequest exceptionRequest =
-                eventRequestManager().createExceptionRequest(null, // refType (null == all instances)
-                                                             true, // notifyCaught
-                                                             true);// notifyUncaught
-            exceptionRequest.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-            exceptionRequest.enable();
+	    /*
+	     * Ask for Exception events
+	     */
+	    ExceptionRequest exceptionRequest =
+		eventRequestManager().createExceptionRequest(null, // refType (null == all instances)
+							     true, // notifyCaught
+							     true);// notifyUncaught
+	    exceptionRequest.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+	    exceptionRequest.enable();
 
-            /*
-             * Ask for method entry events
-             */
-            MethodEntryRequest entryRequest =
-               eventRequestManager().createMethodEntryRequest();
-            for (int i=0; i<excludes.length; ++i) {
-                entryRequest.addClassExclusionFilter(excludes[i]);
-            }
-            entryRequest.setSuspendPolicy(sessionSuspendPolicy);
-            entryRequest.enable();
+	    /*
+	     * Ask for method entry events
+	     */
+	    MethodEntryRequest entryRequest =
+	       eventRequestManager().createMethodEntryRequest();
+	    for (int i=0; i<excludes.length; ++i) {
+		entryRequest.addClassExclusionFilter(excludes[i]);
+	    }
+	    entryRequest.setSuspendPolicy(sessionSuspendPolicy);
+	    entryRequest.enable();
 
-            /*
-             * Ask for method exit events
-             */
-            MethodExitRequest exitRequest =
-                eventRequestManager().createMethodExitRequest();
+	    /*
+	     * Ask for method exit events
+	     */
+	    MethodExitRequest exitRequest =
+		eventRequestManager().createMethodExitRequest();
 
-            for (int i=0; i<excludes.length; ++i) {
-                exitRequest.addClassExclusionFilter(excludes[i]);
-            }
-            exitRequest.setSuspendPolicy(sessionSuspendPolicy);
-            exitRequest.enable();
+	    for (int i=0; i<excludes.length; ++i) {
+		exitRequest.addClassExclusionFilter(excludes[i]);
+	    }
+	    exitRequest.setSuspendPolicy(sessionSuspendPolicy);
+	    exitRequest.enable();
 
-            /*
-             * We are now set up to receive the notifications we want.
-             * Here we go.  This adds 'this' as a listener so
+	    /*
+	     * We are now set up to receive the notifications we want.
+	     * Here we go.  This adds 'this' as a listener so
              * that our handlers above will be called.
-             */
+	     */
+            
+	    listenUntilVMDisconnect();
+	    System.out.println("All done...");
 
-            listenUntilVMDisconnect();
-            System.out.println("All done...");
+	} catch (Exception ex){
+	    ex.printStackTrace();
+	    testFailed = true;
+	} 
 
-        } catch (Exception ex){
-            ex.printStackTrace();
-            testFailed = true;
-        }
-
-        if ((methodEntryCount != expectedEntryCount) ||
-            (methodExitCount != expectedExitCount)) {
-            testFailed = true;
-        }
-        if (!testFailed) {
+	if ((methodEntryCount != expectedEntryCount) ||
+	    (methodExitCount != expectedExitCount)) {
+	    testFailed = true;
+	}
+	if (!testFailed) { 
             System.out.println();
             System.out.println("MethodEntryExitEvents: passed");
-            System.out.print  ("    Method entry count: ");
-            System.out.println(methodEntryCount);
-            System.out.print  ("    Method exit  count: ");
-            System.out.println(methodExitCount);
+	    System.out.print  ("    Method entry count: ");
+	    System.out.println(methodEntryCount);
+	    System.out.print  ("    Method exit  count: ");
+	    System.out.println(methodExitCount);
         } else {
             System.out.println();
             System.out.println("MethodEntryExitEvents: failed");
-            System.out.print  ("    expected method entry count: ");
-            System.out.println(expectedEntryCount);
-            System.out.print  ("    observed method entry count: ");
-            System.out.println(methodEntryCount);
-            System.out.print  ("    expected method exit  count: ");
-            System.out.println(expectedExitCount);
-            System.out.print  ("    observed method exit  count: ");
-            System.out.println(methodExitCount);
+	    System.out.print  ("    expected method entry count: ");
+	    System.out.println(expectedEntryCount);
+	    System.out.print  ("    observed method entry count: ");
+	    System.out.println(methodEntryCount);
+	    System.out.print  ("    expected method exit  count: ");
+	    System.out.println(expectedExitCount);
+	    System.out.print  ("    observed method exit  count: ");
+	    System.out.println(methodExitCount);
             throw new Exception("MethodEntryExitEvents: failed");
-        }
+	}
     }
 }

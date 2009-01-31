@@ -30,7 +30,7 @@ import java.awt.image.ImageConsumer;
 import java.awt.image.ImageFilter;
 
 /**
- * The <code>BufferedImageFilter</code> class subclasses an
+ * The <code>BufferedImageFilter</code> class subclasses an 
  * <code>ImageFilter</code> to provide a simple means of
  * using a single-source/single-destination image operator
  * ({@link BufferedImageOp}) to filter a <code>BufferedImage</code>
@@ -41,6 +41,7 @@ import java.awt.image.ImageFilter;
  * @see ImageFilter
  * @see BufferedImage
  * @see BufferedImageOp
+ * @version 10 Feb 1997
  */
 
 public class BufferedImageFilter extends ImageFilter implements Cloneable {
@@ -75,11 +76,11 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
     }
 
     /**
-     * Filters the information provided in the
+     * Filters the information provided in the 
      * {@link ImageConsumer#setDimensions(int, int) setDimensions } method
      * of the {@link ImageConsumer} interface.
      * <p>
-     * Note: This method is intended to be called by the
+     * Note: This method is intended to be called by the 
      * {@link ImageProducer} of the <code>Image</code> whose pixels are
      * being filtered. Developers using this class to retrieve pixels from
      * an image should avoid calling this method directly since that
@@ -102,7 +103,7 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
     }
 
     /**
-     * Filters the information provided in the
+     * Filters the information provided in the 
      * {@link ImageConsumer#setColorModel(ColorModel) setColorModel} method
      * of the <code>ImageConsumer</code> interface.
      * <p>
@@ -110,14 +111,14 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
      * method clears the current <code>ColorModel</code> of this
      * <code>BufferedImageFilter</code>.
      * <p>
-     * Note: This method is intended to be called by the
-     * <code>ImageProducer</code> of the <code>Image</code>
-     * whose pixels are being filtered.  Developers using this
+     * Note: This method is intended to be called by the 
+     * <code>ImageProducer</code> of the <code>Image</code> 
+     * whose pixels are being filtered.  Developers using this 
      * class to retrieve pixels from an image
-     * should avoid calling this method directly since that
-     * operation could result in problems with retrieving the
+     * should avoid calling this method directly since that 
+     * operation could result in problems with retrieving the 
      * requested pixels.
-     * @param model the {@link ColorModel} to which to set the
+     * @param model the {@link ColorModel} to which to set the 
      *        <code>ColorModel</code> of this <code>BufferedImageFilter</code>
      * @see ImageConsumer#setColorModel
      */
@@ -126,20 +127,20 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
     }
 
     private void convertToRGB() {
-        int size = width * height;
-        int newpixels[] = new int[size];
-        if (bytePixels != null) {
-            for (int i = 0; i < size; i++) {
-                newpixels[i] = this.model.getRGB(bytePixels[i] & 0xff);
-            }
-        } else if (intPixels != null) {
-            for (int i = 0; i < size; i++) {
-                newpixels[i] = this.model.getRGB(intPixels[i]);
-            }
-        }
-        bytePixels = null;
-        intPixels = newpixels;
-        this.model = ColorModel.getRGBdefault();
+	int size = width * height;
+	int newpixels[] = new int[size];
+	if (bytePixels != null) {
+	    for (int i = 0; i < size; i++) {
+		newpixels[i] = this.model.getRGB(bytePixels[i] & 0xff);
+	    }
+	} else if (intPixels != null) {
+	    for (int i = 0; i < size; i++) {
+		newpixels[i] = this.model.getRGB(intPixels[i]);
+	    }
+	}
+	bytePixels = null;
+	intPixels = newpixels;
+	this.model = ColorModel.getRGBdefault();
     }
 
     /**
@@ -147,107 +148,107 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
      * method of the <code>ImageConsumer</code> interface which takes
      * an array of bytes.
      * <p>
-     * Note: This method is intended to be called by the
-     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * Note: This method is intended to be called by the 
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels 
      * are being filtered.  Developers using
      * this class to retrieve pixels from an image should avoid calling
      * this method directly since that operation could result in problems
      * with retrieving the requested pixels.
-     * @throws IllegalArgumentException if width or height are less than
+     * @throws IllegalArgumentException if width or height are less than 
      * zero.
      * @see ImageConsumer#setPixels(int, int, int, int, ColorModel, byte[],
                                     int, int)
      */
     public void setPixels(int x, int y, int w, int h,
-                          ColorModel model, byte pixels[], int off,
-                          int scansize) {
+			  ColorModel model, byte pixels[], int off,
+			  int scansize) {
         // Fix 4184230
         if (w < 0 || h < 0) {
             throw new IllegalArgumentException("Width ("+w+
                                                 ") and height ("+h+
                                                 ") must be > 0");
-        }
+        }            
         // Nothing to do
         if (w == 0 || h == 0) {
             return;
         }
-        if (y < 0) {
-            int diff = -y;
-            if (diff >= h) {
-                return;
-            }
-            off += scansize * diff;
-            y += diff;
-            h -= diff;
-        }
-        if (y + h > height) {
-            h = height - y;
-            if (h <= 0) {
-                return;
-            }
-        }
-        if (x < 0) {
-            int diff = -x;
-            if (diff >= w) {
-                return;
-            }
-            off += diff;
-            x += diff;
-            w -= diff;
-        }
-        if (x + w > width) {
-            w = width - x;
-            if (w <= 0) {
-                return;
-            }
-        }
-        int dstPtr = y*width + x;
-        if (intPixels == null) {
-            if (bytePixels == null) {
-                bytePixels = new byte[width*height];
-                this.model = model;
-            } else if (this.model != model) {
-                convertToRGB();
-            }
-            if (bytePixels != null) {
-                for (int sh = h; sh > 0; sh--) {
-                    System.arraycopy(pixels, off, bytePixels, dstPtr, w);
-                    off += scansize;
-                    dstPtr += width;
-                }
-            }
-        }
-        if (intPixels != null) {
-            int dstRem = width - w;
-            int srcRem = scansize - w;
-            for (int sh = h; sh > 0; sh--) {
-                for (int sw = w; sw > 0; sw--) {
-                    intPixels[dstPtr++] = model.getRGB(pixels[off++]&0xff);
-                }
-                off    += srcRem;
-                dstPtr += dstRem;
-            }
-        }
+	if (y < 0) {
+	    int diff = -y;
+	    if (diff >= h) {
+		return;
+	    }
+	    off += scansize * diff;
+	    y += diff;
+	    h -= diff;
+	}
+	if (y + h > height) {
+	    h = height - y;
+	    if (h <= 0) {
+		return;
+	    }
+	}
+	if (x < 0) {
+	    int diff = -x;
+	    if (diff >= w) {
+		return;
+	    }
+	    off += diff;
+	    x += diff;
+	    w -= diff;
+	}
+	if (x + w > width) {
+	    w = width - x;
+	    if (w <= 0) {
+		return;
+	    }
+	}
+	int dstPtr = y*width + x;
+	if (intPixels == null) {
+	    if (bytePixels == null) {
+		bytePixels = new byte[width*height];
+		this.model = model;
+	    } else if (this.model != model) {
+		convertToRGB();
+	    }
+	    if (bytePixels != null) {
+		for (int sh = h; sh > 0; sh--) {
+		    System.arraycopy(pixels, off, bytePixels, dstPtr, w);
+		    off += scansize;
+		    dstPtr += width;
+		}
+	    }
+	}
+	if (intPixels != null) {
+	    int dstRem = width - w;
+	    int srcRem = scansize - w;
+	    for (int sh = h; sh > 0; sh--) {
+		for (int sw = w; sw > 0; sw--) {
+		    intPixels[dstPtr++] = model.getRGB(pixels[off++]&0xff);
+		}
+		off    += srcRem;
+		dstPtr += dstRem;
+	    }
+	}
     }
     /**
-     * Filters the information provided in the <code>setPixels</code>
+     * Filters the information provided in the <code>setPixels</code> 
      * method of the <code>ImageConsumer</code> interface which takes
      * an array of integers.
      * <p>
-     * Note: This method is intended to be called by the
-     * <code>ImageProducer</code> of the <code>Image</code> whose
-     * pixels are being filtered.  Developers using this class to
-     * retrieve pixels from an image should avoid calling this method
+     * Note: This method is intended to be called by the 
+     * <code>ImageProducer</code> of the <code>Image</code> whose 
+     * pixels are being filtered.  Developers using this class to 
+     * retrieve pixels from an image should avoid calling this method 
      * directly since that operation could result in problems
      * with retrieving the requested pixels.
-     * @throws IllegalArgumentException if width or height are less than
+     * @throws IllegalArgumentException if width or height are less than 
      * zero.
      * @see ImageConsumer#setPixels(int, int, int, int, ColorModel, int[],
                                     int, int)
      */
     public void setPixels(int x, int y, int w, int h,
-                          ColorModel model, int pixels[], int off,
-                          int scansize) {
+			  ColorModel model, int pixels[], int off,
+			  int scansize) {
         // Fix 4184230
         if (w < 0 || h < 0) {
             throw new IllegalArgumentException("Width ("+w+
@@ -258,81 +259,81 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
         if (w == 0 || h == 0) {
             return;
         }
-        if (y < 0) {
-            int diff = -y;
-            if (diff >= h) {
-                return;
-            }
-            off += scansize * diff;
-            y += diff;
-            h -= diff;
-        }
-        if (y + h > height) {
-            h = height - y;
-            if (h <= 0) {
-                return;
-            }
-        }
-        if (x < 0) {
-            int diff = -x;
-            if (diff >= w) {
-                return;
-            }
-            off += diff;
-            x += diff;
-            w -= diff;
-        }
-        if (x + w > width) {
-            w = width - x;
-            if (w <= 0) {
-                return;
-            }
-        }
+	if (y < 0) {
+	    int diff = -y;
+	    if (diff >= h) {
+		return;
+	    }
+	    off += scansize * diff;
+	    y += diff;
+	    h -= diff;
+	}
+	if (y + h > height) {
+	    h = height - y;
+	    if (h <= 0) {
+		return;
+	    }
+	}
+	if (x < 0) {
+	    int diff = -x;
+	    if (diff >= w) {
+		return;
+	    }
+	    off += diff;
+	    x += diff;
+	    w -= diff;
+	}
+	if (x + w > width) {
+	    w = width - x;
+	    if (w <= 0) {
+		return;
+	    }
+	}
 
-        if (intPixels == null) {
-            if (bytePixels == null) {
-                intPixels = new int[width * height];
-                this.model = model;
-            } else {
-                convertToRGB();
-            }
-        }
-        int dstPtr = y*width + x;
-        if (this.model == model) {
-            for (int sh = h; sh > 0; sh--) {
-                System.arraycopy(pixels, off, intPixels, dstPtr, w);
-                off += scansize;
-                dstPtr += width;
-            }
-        } else {
-            if (this.model != ColorModel.getRGBdefault()) {
-                convertToRGB();
-            }
-            int dstRem = width - w;
-            int srcRem = scansize - w;
-            for (int sh = h; sh > 0; sh--) {
-                for (int sw = w; sw > 0; sw--) {
-                    intPixels[dstPtr++] = model.getRGB(pixels[off++]);
-                }
-                off += srcRem;
-                dstPtr += dstRem;
-            }
-        }
+	if (intPixels == null) {
+	    if (bytePixels == null) {
+		intPixels = new int[width * height];
+		this.model = model;
+	    } else {
+		convertToRGB();
+	    }
+	}
+	int dstPtr = y*width + x;
+	if (this.model == model) {
+	    for (int sh = h; sh > 0; sh--) {
+		System.arraycopy(pixels, off, intPixels, dstPtr, w);
+		off += scansize;
+		dstPtr += width;
+	    }
+	} else {
+	    if (this.model != ColorModel.getRGBdefault()) {
+		convertToRGB();
+	    }
+	    int dstRem = width - w;
+	    int srcRem = scansize - w;
+	    for (int sh = h; sh > 0; sh--) {
+		for (int sw = w; sw > 0; sw--) {
+		    intPixels[dstPtr++] = model.getRGB(pixels[off++]);
+		}
+		off += srcRem;
+		dstPtr += dstRem;
+	    }
+	}
     }
 
     /**
      * Filters the information provided in the <code>imageComplete</code>
      * method of the <code>ImageConsumer</code> interface.
      * <p>
-     * Note: This method is intended to be called by the
-     * <code>ImageProducer</code> of the <code>Image</code> whose pixels
+     * Note: This method is intended to be called by the 
+     * <code>ImageProducer</code> of the <code>Image</code> whose pixels 
      * are being filtered.  Developers using
      * this class to retrieve pixels from an image should avoid calling
      * this method directly since that operation could result in problems
      * with retrieving the requested pixels.
      * @param status the status of image loading
      * @throws ImagingOpException if there was a problem calling the filter
-     * method of the <code>BufferedImageOp</code> associated with this
+     * method of the <code>BufferedImageOp</code> associated with this 
      * instance.
      * @see ImageConsumer#imageComplete
      */
@@ -394,7 +395,7 @@ public class BufferedImageFilter extends ImageFilter implements Cloneable {
             }
             break;
         }
-        consumer.imageComplete(status);
+	consumer.imageComplete(status);
     }
 
     private final WritableRaster createDCMraster() {

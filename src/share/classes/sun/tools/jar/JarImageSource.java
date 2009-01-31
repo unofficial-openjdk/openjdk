@@ -40,19 +40,19 @@ public class JarImageSource extends URLImageSource {
     String mimeType;
     String entryName = null;
     URL url;
-
+    
     /**
      * Create an image source from a Jar entry URL with the specified
      * mime type.
      */
     public JarImageSource(URL u, String type) {
-        super(u);
+	super(u);
         url = u;
-        mimeType = type;
+	mimeType = type;
     }
 
     /**
-     * Create an image source from a Jar file/entry URL
+     * Create an image source from a Jar file/entry URL 
      * with the specified entry name and mime type.
      */
     public JarImageSource(URL u, String name, String type) {
@@ -66,23 +66,23 @@ public class JarImageSource extends URLImageSource {
             JarURLConnection c = (JarURLConnection)url.openConnection();
             JarFile f = c.getJarFile();
             JarEntry e = c.getJarEntry();
-
+        
             if (entryName != null && e == null) {
                 e = f.getJarEntry(entryName);
-            }
-            if (e == null || (e != null && entryName != null
+            } 
+            if (e == null || (e != null && entryName != null 
                               && (!(entryName.equals(e.getName()))))) {
                 return null;
             }
             is = f.getInputStream(e);
         } catch (IOException e) {
-            return null;
+	    return null;
         }
-
-        ImageDecoder id = decoderForType(is, mimeType);
-        if (id == null) {
-            id = getDecoder(is);
-        }
-        return id;
+        
+	ImageDecoder id = decoderForType(is, mimeType);
+	if (id == null) {
+	    id = getDecoder(is);
+	}
+	return id;
     }
 }

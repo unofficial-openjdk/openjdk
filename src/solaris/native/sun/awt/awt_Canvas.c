@@ -69,7 +69,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCanvasPeer_create
     }
 
     cdata = (struct CanvasData *)
-        JNU_GetLongFieldAsPtr(env, parent, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, parent, mComponentPeerIDs.pData);
     if (cdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -85,10 +85,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCanvasPeer_create
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.pData, wdata);
 
     awtData = copyGraphicsConfigToPeer(env, this);
-
+    
     wdata->comp.widget = awt_canvas_create((XtPointer) globalRef,
                                            cdata->comp.widget,
-                                           "",
+					   "",
                                            1, 1, False, NULL, awtData);
     XtVaSetValues(wdata->comp.widget,
                   XmNinsertPosition, awt_util_insertCallback,

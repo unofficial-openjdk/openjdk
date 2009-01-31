@@ -49,6 +49,7 @@ import sun.security.action.GetPropertyAction;
  *
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @since 1.2
  */
@@ -61,21 +62,21 @@ public class DSAKeyFactory extends KeyFactorySpi {
 
     static {
 
-        /**
-         * Check to see if we need to maintain interoperability for serialized
-         * keys between JDK 5.0 -> JDK 1.4.  In other words, determine whether
-         * a key object serialized in JDK 5.0 must be deserializable in
-         * JDK 1.4.
-         *
-         * If true, then we generate sun.security.provider.DSAPublicKey.
-         * If false, then we generate sun.security.provider.DSAPublicKeyImpl.
-         *
-         * By default this is false.
-         * This incompatibility was introduced by 4532506.
-         */
-        String prop = AccessController.doPrivileged
-                (new GetPropertyAction(SERIAL_PROP, null));
-        SERIAL_INTEROP = "true".equalsIgnoreCase(prop);
+	/**
+	 * Check to see if we need to maintain interoperability for serialized
+	 * keys between JDK 5.0 -> JDK 1.4.  In other words, determine whether
+	 * a key object serialized in JDK 5.0 must be deserializable in
+	 * JDK 1.4.
+	 *
+	 * If true, then we generate sun.security.provider.DSAPublicKey.
+	 * If false, then we generate sun.security.provider.DSAPublicKeyImpl.
+	 *
+	 * By default this is false.
+	 * This incompatibility was introduced by 4532506.
+	 */
+	String prop = AccessController.doPrivileged
+		(new GetPropertyAction(SERIAL_PROP, null));
+	SERIAL_INTEROP = "true".equalsIgnoreCase(prop);
     }
 
     /**
@@ -91,36 +92,36 @@ public class DSAKeyFactory extends KeyFactorySpi {
      */
     protected PublicKey engineGeneratePublic(KeySpec keySpec)
     throws InvalidKeySpecException {
-        try {
-            if (keySpec instanceof DSAPublicKeySpec) {
-                DSAPublicKeySpec dsaPubKeySpec = (DSAPublicKeySpec)keySpec;
-                if (SERIAL_INTEROP) {
-                    return new DSAPublicKey(dsaPubKeySpec.getY(),
-                                        dsaPubKeySpec.getP(),
-                                        dsaPubKeySpec.getQ(),
-                                        dsaPubKeySpec.getG());
-                } else {
-                    return new DSAPublicKeyImpl(dsaPubKeySpec.getY(),
-                                        dsaPubKeySpec.getP(),
-                                        dsaPubKeySpec.getQ(),
-                                        dsaPubKeySpec.getG());
-                }
-            } else if (keySpec instanceof X509EncodedKeySpec) {
-                if (SERIAL_INTEROP) {
-                    return new DSAPublicKey
-                        (((X509EncodedKeySpec)keySpec).getEncoded());
-                } else {
-                    return new DSAPublicKeyImpl
-                        (((X509EncodedKeySpec)keySpec).getEncoded());
-                }
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-        } catch (InvalidKeyException e) {
-            throw new InvalidKeySpecException
-                ("Inappropriate key specification: " + e.getMessage());
-        }
+	try {
+	    if (keySpec instanceof DSAPublicKeySpec) {
+		DSAPublicKeySpec dsaPubKeySpec = (DSAPublicKeySpec)keySpec;
+		if (SERIAL_INTEROP) {
+		    return new DSAPublicKey(dsaPubKeySpec.getY(),
+					dsaPubKeySpec.getP(),
+					dsaPubKeySpec.getQ(),
+					dsaPubKeySpec.getG());
+		} else {
+		    return new DSAPublicKeyImpl(dsaPubKeySpec.getY(),
+					dsaPubKeySpec.getP(),
+					dsaPubKeySpec.getQ(),
+					dsaPubKeySpec.getG());
+		}
+	    } else if (keySpec instanceof X509EncodedKeySpec) {
+		if (SERIAL_INTEROP) {
+		    return new DSAPublicKey
+			(((X509EncodedKeySpec)keySpec).getEncoded());
+		} else {
+		    return new DSAPublicKeyImpl
+			(((X509EncodedKeySpec)keySpec).getEncoded());
+		}
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	} catch (InvalidKeyException e) {
+	    throw new InvalidKeySpecException
+		("Inappropriate key specification: " + e.getMessage());
+	}
     }
 
     /**
@@ -136,33 +137,33 @@ public class DSAKeyFactory extends KeyFactorySpi {
      */
     protected PrivateKey engineGeneratePrivate(KeySpec keySpec)
     throws InvalidKeySpecException {
-        try {
-            if (keySpec instanceof DSAPrivateKeySpec) {
-                DSAPrivateKeySpec dsaPrivKeySpec = (DSAPrivateKeySpec)keySpec;
-                return new DSAPrivateKey(dsaPrivKeySpec.getX(),
-                                         dsaPrivKeySpec.getP(),
-                                         dsaPrivKeySpec.getQ(),
-                                         dsaPrivKeySpec.getG());
+	try {
+	    if (keySpec instanceof DSAPrivateKeySpec) {
+		DSAPrivateKeySpec dsaPrivKeySpec = (DSAPrivateKeySpec)keySpec;
+		return new DSAPrivateKey(dsaPrivKeySpec.getX(),
+					 dsaPrivKeySpec.getP(),
+					 dsaPrivKeySpec.getQ(),
+					 dsaPrivKeySpec.getG());
 
-            } else if (keySpec instanceof PKCS8EncodedKeySpec) {
-                return new DSAPrivateKey
-                    (((PKCS8EncodedKeySpec)keySpec).getEncoded());
+	    } else if (keySpec instanceof PKCS8EncodedKeySpec) {
+		return new DSAPrivateKey
+		    (((PKCS8EncodedKeySpec)keySpec).getEncoded());
 
-            } else {
-                throw new InvalidKeySpecException
-                    ("Inappropriate key specification");
-            }
-        } catch (InvalidKeyException e) {
-            throw new InvalidKeySpecException
-                ("Inappropriate key specification: " + e.getMessage());
-        }
+	    } else {
+		throw new InvalidKeySpecException
+		    ("Inappropriate key specification");
+	    }
+	} catch (InvalidKeyException e) {
+	    throw new InvalidKeySpecException
+		("Inappropriate key specification: " + e.getMessage());
+	}
     }
 
     /**
      * Returns a specification (key material) of the given key object
      * in the requested format.
      *
-     * @param key the key
+     * @param key the key 
      *
      * @param keySpec the requested format in which the key material shall be
      * returned
@@ -175,71 +176,71 @@ public class DSAKeyFactory extends KeyFactorySpi {
      * (e.g., the given key has an unrecognized algorithm or format).
      */
     protected <T extends KeySpec>
-        T engineGetKeySpec(Key key, Class<T> keySpec)
+	T engineGetKeySpec(Key key, Class<T> keySpec)
     throws InvalidKeySpecException {
+	
+	DSAParams params;
 
-        DSAParams params;
+	try {
 
-        try {
+	    if (key instanceof java.security.interfaces.DSAPublicKey) {
+		
+		// Determine valid key specs
+		Class<?> dsaPubKeySpec = Class.forName
+		    ("java.security.spec.DSAPublicKeySpec");
+		Class<?> x509KeySpec = Class.forName
+		    ("java.security.spec.X509EncodedKeySpec");
 
-            if (key instanceof java.security.interfaces.DSAPublicKey) {
+		if (dsaPubKeySpec.isAssignableFrom(keySpec)) {
+		    java.security.interfaces.DSAPublicKey dsaPubKey
+			= (java.security.interfaces.DSAPublicKey)key;
+		    params = dsaPubKey.getParams();
+		    return (T) new DSAPublicKeySpec(dsaPubKey.getY(),
+						    params.getP(),
+						    params.getQ(),
+						    params.getG());
 
-                // Determine valid key specs
-                Class<?> dsaPubKeySpec = Class.forName
-                    ("java.security.spec.DSAPublicKeySpec");
-                Class<?> x509KeySpec = Class.forName
-                    ("java.security.spec.X509EncodedKeySpec");
+		} else if (x509KeySpec.isAssignableFrom(keySpec)) {
+		    return (T) new X509EncodedKeySpec(key.getEncoded());
 
-                if (dsaPubKeySpec.isAssignableFrom(keySpec)) {
-                    java.security.interfaces.DSAPublicKey dsaPubKey
-                        = (java.security.interfaces.DSAPublicKey)key;
-                    params = dsaPubKey.getParams();
-                    return (T) new DSAPublicKeySpec(dsaPubKey.getY(),
-                                                    params.getP(),
-                                                    params.getQ(),
-                                                    params.getG());
+		} else {
+		    throw new InvalidKeySpecException
+			("Inappropriate key specification");
+		}
+		 
+	    } else if (key instanceof java.security.interfaces.DSAPrivateKey) {
 
-                } else if (x509KeySpec.isAssignableFrom(keySpec)) {
-                    return (T) new X509EncodedKeySpec(key.getEncoded());
+		// Determine valid key specs
+		Class<?> dsaPrivKeySpec = Class.forName
+		    ("java.security.spec.DSAPrivateKeySpec");
+		Class<?> pkcs8KeySpec = Class.forName
+		    ("java.security.spec.PKCS8EncodedKeySpec");
 
-                } else {
-                    throw new InvalidKeySpecException
-                        ("Inappropriate key specification");
-                }
+		if (dsaPrivKeySpec.isAssignableFrom(keySpec)) {
+		    java.security.interfaces.DSAPrivateKey dsaPrivKey
+			= (java.security.interfaces.DSAPrivateKey)key;
+		    params = dsaPrivKey.getParams();
+		    return (T) new DSAPrivateKeySpec(dsaPrivKey.getX(),
+						     params.getP(),
+						     params.getQ(),
+						     params.getG());
 
-            } else if (key instanceof java.security.interfaces.DSAPrivateKey) {
+		} else if (pkcs8KeySpec.isAssignableFrom(keySpec)) {
+		    return (T) new PKCS8EncodedKeySpec(key.getEncoded());
 
-                // Determine valid key specs
-                Class<?> dsaPrivKeySpec = Class.forName
-                    ("java.security.spec.DSAPrivateKeySpec");
-                Class<?> pkcs8KeySpec = Class.forName
-                    ("java.security.spec.PKCS8EncodedKeySpec");
+		} else {
+		    throw new InvalidKeySpecException
+			("Inappropriate key specification");
+		}
 
-                if (dsaPrivKeySpec.isAssignableFrom(keySpec)) {
-                    java.security.interfaces.DSAPrivateKey dsaPrivKey
-                        = (java.security.interfaces.DSAPrivateKey)key;
-                    params = dsaPrivKey.getParams();
-                    return (T) new DSAPrivateKeySpec(dsaPrivKey.getX(),
-                                                     params.getP(),
-                                                     params.getQ(),
-                                                     params.getG());
+	    } else {
+		throw new InvalidKeySpecException("Inappropriate key type");
+	    }
 
-                } else if (pkcs8KeySpec.isAssignableFrom(keySpec)) {
-                    return (T) new PKCS8EncodedKeySpec(key.getEncoded());
-
-                } else {
-                    throw new InvalidKeySpecException
-                        ("Inappropriate key specification");
-                }
-
-            } else {
-                throw new InvalidKeySpecException("Inappropriate key type");
-            }
-
-        } catch (ClassNotFoundException e) {
-            throw new InvalidKeySpecException
-                ("Unsupported key specification: " + e.getMessage());
-        }
+	} catch (ClassNotFoundException e) {
+	    throw new InvalidKeySpecException
+		("Unsupported key specification: " + e.getMessage());
+	}
     }
 
     /**
@@ -255,37 +256,37 @@ public class DSAKeyFactory extends KeyFactorySpi {
      */
     protected Key engineTranslateKey(Key key) throws InvalidKeyException {
 
-        try {
+	try {
 
-            if (key instanceof java.security.interfaces.DSAPublicKey) {
-                // Check if key originates from this factory
-                if (key instanceof sun.security.provider.DSAPublicKey) {
-                    return key;
-                }
-                // Convert key to spec
-                DSAPublicKeySpec dsaPubKeySpec
-                    = engineGetKeySpec(key, DSAPublicKeySpec.class);
-                // Create key from spec, and return it
-                return engineGeneratePublic(dsaPubKeySpec);
+	    if (key instanceof java.security.interfaces.DSAPublicKey) {
+		// Check if key originates from this factory
+		if (key instanceof sun.security.provider.DSAPublicKey) {
+		    return key;
+		}
+		// Convert key to spec
+		DSAPublicKeySpec dsaPubKeySpec
+		    = engineGetKeySpec(key, DSAPublicKeySpec.class);
+		// Create key from spec, and return it
+		return engineGeneratePublic(dsaPubKeySpec);
 
-            } else if (key instanceof java.security.interfaces.DSAPrivateKey) {
-                // Check if key originates from this factory
-                if (key instanceof sun.security.provider.DSAPrivateKey) {
-                    return key;
-                }
-                // Convert key to spec
-                DSAPrivateKeySpec dsaPrivKeySpec
-                    = engineGetKeySpec(key, DSAPrivateKeySpec.class);
-                // Create key from spec, and return it
-                return engineGeneratePrivate(dsaPrivKeySpec);
+	    } else if (key instanceof java.security.interfaces.DSAPrivateKey) {
+		// Check if key originates from this factory
+		if (key instanceof sun.security.provider.DSAPrivateKey) {
+		    return key;
+		}
+		// Convert key to spec
+		DSAPrivateKeySpec dsaPrivKeySpec
+		    = engineGetKeySpec(key, DSAPrivateKeySpec.class);
+		// Create key from spec, and return it
+		return engineGeneratePrivate(dsaPrivKeySpec);
 
-            } else {
-                throw new InvalidKeyException("Wrong algorithm type");
-            }
+	    } else {
+		throw new InvalidKeyException("Wrong algorithm type");
+	    }
 
-        } catch (InvalidKeySpecException e) {
-            throw new InvalidKeyException("Cannot translate key: "
+	} catch (InvalidKeySpecException e) {
+	    throw new InvalidKeyException("Cannot translate key: "
                                           + e.getMessage());
-        }
+	}
     }
 }

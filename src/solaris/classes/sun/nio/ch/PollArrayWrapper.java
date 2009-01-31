@@ -38,6 +38,7 @@ import sun.misc.*;
  * } pollfd_t;
  *
  * @author Mike McCloskey
+ * @version %I%, %E%
  * @since 1.4
  */
 

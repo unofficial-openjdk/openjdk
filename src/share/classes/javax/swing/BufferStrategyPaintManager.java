@@ -41,6 +41,7 @@ import sun.security.action.GetPropertyAction;
  * A PaintManager implementation that uses a BufferStrategy for
  * rendering.
  *
+ * @version %I%, %G%
  * @author Scott Violet
  */
 class BufferStrategyPaintManager extends RepaintManager.PaintManager {
@@ -104,9 +105,9 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
     // Region that we need to flush.  When beginPaint is called these are
     // reset and any subsequent calls to paint/copyArea then update these
     // fields accordingly.  When endPaint is called we then try and show
-    // the accumulated region.
+    // the accumulated region. 
     // These fields are in the coordinate system of the root.
-    //
+    // 
     private int accumulatedX;
     private int accumulatedY;
     private int accumulatedMaxX;
@@ -259,7 +260,7 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
             BufferStrategy bufferStrategy;
             if (info != null && !info.usingFlip && info.isInSync() &&
                 (bufferStrategy = info.getBufferStrategy(false)) != null) {
-                SubRegionShowable bsSubRegion =
+                SubRegionShowable bsSubRegion = 
                         (SubRegionShowable)bufferStrategy;
                 boolean paintAllOnExpose = info.getPaintAllOnExpose();
                 info.setPaintAllOnExpose(false);
@@ -320,9 +321,9 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
 
     public void copyArea(JComponent c, Graphics g, int x, int y, int w, int h,
                          int deltaX, int deltaY, boolean clip) {
-        // Note: this method is only called internally and we know that
-        // g is from a heavyweight Component, so no check is necessary as
-        // it is in paint() above.
+	// Note: this method is only called internally and we know that
+	// g is from a heavyweight Component, so no check is necessary as
+	// it is in paint() above.
         //
         // If the buffer isn't in sync there is no point in doing a copyArea,
         // it has garbage.
@@ -396,7 +397,7 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
                 }
             }
         }
-
+    
         BufferInfo toDispose = null;
         synchronized(this) {
             painting = false;
@@ -422,7 +423,7 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
             SubRegionShowable bsSubRegion = (SubRegionShowable)bufferStrategy;
             boolean contentsLost = bufferStrategy.contentsLost();
             if (!contentsLost) {
-                bsSubRegion.show(accumulatedX, accumulatedY,
+                bsSubRegion.show(accumulatedX, accumulatedY, 
                                  accumulatedMaxX, accumulatedMaxY);
                 contentsLost = bufferStrategy.contentsLost();
             }
@@ -814,7 +815,7 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
          * blit.
          */
         private BufferStrategy createBufferStrategy() {
-            BufferCapabilities caps;
+	    BufferCapabilities caps;
             Container root = getRoot();
             if (root == null) {
                 return null;
@@ -849,7 +850,7 @@ class BufferStrategyPaintManager extends RepaintManager.PaintManager {
         private BufferStrategy createBufferStrategy(Container root,
                                      BufferCapabilities.FlipContents type) {
             BufferCapabilities caps = new BufferCapabilities(
-                    new ImageCapabilities(true),
+		    new ImageCapabilities(true),
                     new ImageCapabilities(true),
                     type);
             BufferStrategy bs = null;

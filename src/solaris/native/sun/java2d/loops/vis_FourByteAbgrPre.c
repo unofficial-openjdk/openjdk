@@ -41,20 +41,20 @@ void ADD_SUFF(TYPE##ToFourByteAbgrPre##OPER)(BLIT_PARAMS)                    \
     if (width > BUFF_SIZE) pbuff = mlib_malloc(width*sizeof(mlib_s32));      \
                                                                              \
     for (j = 0; j < height; j++) {                                           \
-        ADD_SUFF(TYPE##ToIntArgbPre##OPER)(srcBase, pbuff, width, 1,         \
-                                           pSrcInfo, pDstInfo,               \
-                                           pPrim, pCompInfo);                \
+	ADD_SUFF(TYPE##ToIntArgbPre##OPER)(srcBase, pbuff, width, 1,         \
+					   pSrcInfo, pDstInfo,               \
+					   pPrim, pCompInfo);                \
                                                                              \
-        ADD_SUFF(IntArgbToFourByteAbgrConvert)(pbuff, dstBase, width, 1,     \
-                                               pSrcInfo, pDstInfo,           \
-                                               pPrim, pCompInfo);            \
+	ADD_SUFF(IntArgbToFourByteAbgrConvert)(pbuff, dstBase, width, 1,     \
+					       pSrcInfo, pDstInfo,           \
+					       pPrim, pCompInfo);            \
                                                                              \
-        PTR_ADD(dstBase, dstScan);                                           \
-        PTR_ADD(srcBase, srcScan);                                           \
+	PTR_ADD(dstBase, dstScan);                                           \
+	PTR_ADD(srcBase, srcScan);                                           \
     }                                                                        \
                                                                              \
     if (pbuff != buff) {                                                     \
-        mlib_free(pbuff);                                                    \
+	mlib_free(pbuff);                                                    \
     }                                                                        \
 }
 
@@ -71,22 +71,22 @@ void ADD_SUFF(TYPE##ToFourByteAbgrPre##OPER)(SCALE_PARAMS)                   \
     if (width > BUFF_SIZE) pbuff = mlib_malloc(width*sizeof(mlib_s32));      \
                                                                              \
     for (j = 0; j < height; j++) {                                           \
-        ADD_SUFF(TYPE##ToIntArgbPre##OPER)(srcBase, pbuff, width, 1,         \
-                                           sxloc, syloc,                     \
-                                           sxinc, syinc, shift,              \
-                                           pSrcInfo, pDstInfo,               \
-                                           pPrim, pCompInfo);                \
+	ADD_SUFF(TYPE##ToIntArgbPre##OPER)(srcBase, pbuff, width, 1,         \
+					   sxloc, syloc,                     \
+					   sxinc, syinc, shift,              \
+					   pSrcInfo, pDstInfo,               \
+					   pPrim, pCompInfo);                \
                                                                              \
-        ADD_SUFF(IntArgbToFourByteAbgrConvert)(pbuff, dstBase, width, 1,     \
-                                               pSrcInfo, pDstInfo,           \
-                                               pPrim, pCompInfo);            \
+	ADD_SUFF(IntArgbToFourByteAbgrConvert)(pbuff, dstBase, width, 1,     \
+					       pSrcInfo, pDstInfo,           \
+					       pPrim, pCompInfo);            \
                                                                              \
-        PTR_ADD(dstBase, dstScan);                                           \
-        syloc += syinc;                                                      \
+	PTR_ADD(dstBase, dstScan);                                           \
+	syloc += syinc;                                                      \
     }                                                                        \
                                                                              \
     if (pbuff != buff) {                                                     \
-        mlib_free(pbuff);                                                    \
+	mlib_free(pbuff);                                                    \
     }                                                                        \
 }
 
@@ -100,8 +100,8 @@ void ADD_SUFF(TYPE##ToFourByteAbgrPre##OPER)(PARAMS)                   \
     mlib_s32 buff[256];                                                \
                                                                        \
     ADD_SUFF(IntArgbToIntArgbPreConvert)(pixLut, buff, 256, 1,         \
-                                         pSrcInfo, pDstInfo,           \
-                                         pPrim, pCompInfo);            \
+					 pSrcInfo, pDstInfo,           \
+					 pPrim, pCompInfo);            \
                                                                        \
     new_src->lutBase = buff;                                           \
     new_src->scanStride = pSrcInfo->scanStride;                        \
@@ -151,13 +151,13 @@ FUNC_INDEXED(ByteIndexed,   ScaleConvert,  SCALE_PARAMS, SCALE_CALL_PARAMS)
 /***************************************************************/
 
 void ADD_SUFF(FourByteAbgrPreDrawGlyphListAA)(SurfaceDataRasInfo * pRasInfo,
-                                              ImageRef *glyphs,
-                                              jint totalGlyphs,
-                                              jint fgpixel, jint argbcolor,
-                                              jint clipLeft, jint clipTop,
-                                              jint clipRight, jint clipBottom,
-                                              NativePrimitive * pPrim,
-                                              CompositeInfo * pCompInfo)
+					      ImageRef *glyphs,
+					      jint totalGlyphs,
+					      jint fgpixel, jint argbcolor,
+					      jint clipLeft, jint clipTop,
+					      jint clipRight, jint clipBottom,
+					      NativePrimitive * pPrim,
+					      CompositeInfo * pCompInfo)
 {
     mlib_d64 buff[BUFF_SIZE/2];
     void     *pbuff = buff;
@@ -183,130 +183,130 @@ void ADD_SUFF(FourByteAbgrPreDrawGlyphListAA)(SurfaceDataRasInfo * pRasInfo,
     srcG_f = vis_to_float(argbcolor);
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        const jubyte *pixels;
-        unsigned int rowBytes;
-        int left, top;
-        int width, height;
-        int right, bottom;
+	const jubyte *pixels;
+	unsigned int rowBytes;
+	int left, top;
+	int width, height;
+	int right, bottom;
 
-        pixels = (const jubyte *) glyphs[glyphCounter].pixels;
+	pixels = (const jubyte *) glyphs[glyphCounter].pixels;
 
-        if (!pixels) continue;
+	if (!pixels) continue;
 
-        left = glyphs[glyphCounter].x;
-        top = glyphs[glyphCounter].y;
-        width = glyphs[glyphCounter].width;
-        height = glyphs[glyphCounter].height;
-        rowBytes = width;
-        right = left + width;
-        bottom = top + height;
-        if (left < clipLeft) {
-            pixels += clipLeft - left;
-            left = clipLeft;
-        }
-        if (top < clipTop) {
-            pixels += (clipTop - top) * rowBytes;
-            top = clipTop;
-        }
-        if (right > clipRight) {
-            right = clipRight;
-        }
-        if (bottom > clipBottom) {
-            bottom = clipBottom;
-        }
-        if (right <= left || bottom <= top) {
-            continue;
-        }
-        width = right - left;
-        height = bottom - top;
+	left = glyphs[glyphCounter].x;
+	top = glyphs[glyphCounter].y;
+	width = glyphs[glyphCounter].width;
+	height = glyphs[glyphCounter].height;
+	rowBytes = width;
+	right = left + width;
+	bottom = top + height;
+	if (left < clipLeft) {
+	    pixels += clipLeft - left;
+	    left = clipLeft;
+	}
+	if (top < clipTop) {
+	    pixels += (clipTop - top) * rowBytes;
+	    top = clipTop;
+	}
+	if (right > clipRight) {
+	    right = clipRight;
+	}
+	if (bottom > clipBottom) {
+	    bottom = clipBottom;
+	}
+	if (right <= left || bottom <= top) {
+	    continue;
+	}
+	width = right - left;
+	height = bottom - top;
 
-        dstBase = pRasInfo->rasBase;
-        PTR_ADD(dstBase, top*scan + 4*left);
+	dstBase = pRasInfo->rasBase;
+	PTR_ADD(dstBase, top*scan + 4*left);
 
-        if (((mlib_s32)dstBase | scan) & 3) {
-            if (width > max_width) {
-                if (pbuff != buff) {
-                    mlib_free(pbuff);
-                }
-                pbuff = mlib_malloc(width*sizeof(mlib_s32));
-                if (pbuff == NULL) return;
-                max_width = width;
-            }
-        }
+	if (((mlib_s32)dstBase | scan) & 3) {
+	    if (width > max_width) {
+		if (pbuff != buff) {
+		    mlib_free(pbuff);
+		}
+		pbuff = mlib_malloc(width*sizeof(mlib_s32));
+		if (pbuff == NULL) return;
+		max_width = width;
+	    }
+	}
 
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = (void*)pixels;
-            mlib_s32 *dst, *dst_end;
-            mlib_u8  *dst8;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = (void*)pixels;
+	    mlib_s32 *dst, *dst_end;
+	    mlib_u8  *dst8;
 
-            ADD_SUFF(FourByteAbgrPreToIntArgbConvert)(dstBase, pbuff, width, 1,
-                                                      pRasInfo, pRasInfo,
-                                                      pPrim, pCompInfo);
+	    ADD_SUFF(FourByteAbgrPreToIntArgbConvert)(dstBase, pbuff, width, 1,
+						      pRasInfo, pRasInfo,
+						      pPrim, pCompInfo);
 
-            vis_write_gsr(0 << 3);
+	    vis_write_gsr(0 << 3);
 
-            dst = pbuff;
-            dst_end = dst + width;
+	    dst = pbuff;
+	    dst_end = dst + width;
 
-            if ((mlib_s32)dst & 7) {
-                pix = *src++;
-                dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
-                dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
-                *(mlib_f32*)dst = vis_fpack16(dd);
-                dst++;
-            }
-
-#pragma pipeloop(0)
-            for (; dst <= (dst_end - 2); dst += 2) {
-                dmix0 = vis_freg_pair(((mlib_f32 *)vis_mul8s_tbl)[src[0]],
-                                      ((mlib_f32 *)vis_mul8s_tbl)[src[1]]);
-                dmix1 = vis_fpsub16(done, dmix0);
-                src += 2;
-
-                dd = *(mlib_d64*)dst;
-                d0 = vis_fmul8x16al(srcG_f, vis_read_hi(dmix0));
-                d1 = vis_fmul8x16al(srcG_f, vis_read_lo(dmix0));
-                e0 = vis_fmul8x16al(vis_read_hi(dd), vis_read_hi(dmix1));
-                e1 = vis_fmul8x16al(vis_read_lo(dd), vis_read_lo(dmix1));
-                d0 = vis_fpadd16(vis_fpadd16(d0, d_half), e0);
-                d1 = vis_fpadd16(vis_fpadd16(d1, d_half), e1);
-                dd = vis_fpack16_pair(d0, d1);
-
-                *(mlib_d64*)dst = dd;
-            }
-
-            while (dst < dst_end) {
-                pix = *src++;
-                dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
-                dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
-                *(mlib_f32*)dst = vis_fpack16(dd);
-                dst++;
-            }
-
-            ADD_SUFF(IntArgbToFourByteAbgrPreConvert)(pbuff, dstBase, width, 1,
-                                                      pRasInfo, pRasInfo,
-                                                      pPrim, pCompInfo);
-
-            src = (void*)pixels;
-            dst8 = (void*)dstBase;
+	    if ((mlib_s32)dst & 7) {
+		pix = *src++;
+		dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+		dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
+		*(mlib_f32*)dst = vis_fpack16(dd);
+		dst++;
+	    }
 
 #pragma pipeloop(0)
-            for (i = 0; i < width; i++) {
-                if (src[i] == 255) {
-                    dst8[4*i    ] = solidpix0;
-                    dst8[4*i + 1] = solidpix1;
-                    dst8[4*i + 2] = solidpix2;
-                    dst8[4*i + 3] = solidpix3;
-                }
-            }
+	    for (; dst <= (dst_end - 2); dst += 2) {
+		dmix0 = vis_freg_pair(((mlib_f32 *)vis_mul8s_tbl)[src[0]],
+				      ((mlib_f32 *)vis_mul8s_tbl)[src[1]]);
+		dmix1 = vis_fpsub16(done, dmix0);
+		src += 2;
 
-            PTR_ADD(dstBase, scan);
-            pixels += rowBytes;
-        }
+		dd = *(mlib_d64*)dst;
+		d0 = vis_fmul8x16al(srcG_f, vis_read_hi(dmix0));
+		d1 = vis_fmul8x16al(srcG_f, vis_read_lo(dmix0));
+		e0 = vis_fmul8x16al(vis_read_hi(dd), vis_read_hi(dmix1));
+		e1 = vis_fmul8x16al(vis_read_lo(dd), vis_read_lo(dmix1));
+		d0 = vis_fpadd16(vis_fpadd16(d0, d_half), e0);
+		d1 = vis_fpadd16(vis_fpadd16(d1, d_half), e1);
+		dd = vis_fpack16_pair(d0, d1);
+
+		*(mlib_d64*)dst = dd;
+	    }
+
+	    while (dst < dst_end) {
+		pix = *src++;
+		dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+		dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
+		*(mlib_f32*)dst = vis_fpack16(dd);
+		dst++;
+	    }
+
+	    ADD_SUFF(IntArgbToFourByteAbgrPreConvert)(pbuff, dstBase, width, 1,
+						      pRasInfo, pRasInfo,
+						      pPrim, pCompInfo);
+
+	    src = (void*)pixels;
+	    dst8 = (void*)dstBase;
+
+#pragma pipeloop(0)
+	    for (i = 0; i < width; i++) {
+		if (src[i] == 255) {
+		    dst8[4*i    ] = solidpix0;
+		    dst8[4*i + 1] = solidpix1;
+		    dst8[4*i + 2] = solidpix2;
+		    dst8[4*i + 3] = solidpix3;
+		}
+	    }
+
+	    PTR_ADD(dstBase, scan);
+	    pixels += rowBytes;
+	}
     }
 
     if (pbuff != buff) {
-        mlib_free(pbuff);
+	mlib_free(pbuff);
     }
 }
 

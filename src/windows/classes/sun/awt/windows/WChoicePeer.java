@@ -33,16 +33,16 @@ class WChoicePeer extends WComponentPeer implements ChoicePeer {
     // WComponentPeer overrides
 
     public Dimension getMinimumSize() {
-        FontMetrics fm = getFontMetrics(((Choice)target).getFont());
-        Choice c = (Choice)target;
-        int w = 0;
-        for (int i = c.getItemCount() ; i-- > 0 ;) {
-            w = Math.max(fm.stringWidth(c.getItem(i)), w);
-        }
-        return new Dimension(28 + w, Math.max(fm.getHeight() + 6, 15));
+	FontMetrics fm = getFontMetrics(((Choice)target).getFont());
+	Choice c = (Choice)target;
+	int w = 0;
+	for (int i = c.getItemCount() ; i-- > 0 ;) {
+	    w = Math.max(fm.stringWidth(c.getItem(i)), w);
+	}
+	return new Dimension(28 + w, Math.max(fm.getHeight() + 6, 15));
     }
     public boolean isFocusable() {
-        return true;
+	return true;
     }
 
     // ChoicePeer implementation
@@ -50,13 +50,13 @@ class WChoicePeer extends WComponentPeer implements ChoicePeer {
     public native void select(int index);
 
     public void add(String item, int index) {
-        addItem(item, index);
+      	addItem(item, index);
     }
 
     public boolean shouldClearRectBeforePaint() {
         return false;
     }
-
+    
     public native void removeAll();
     public native void remove(int index);
 
@@ -73,14 +73,14 @@ class WChoicePeer extends WComponentPeer implements ChoicePeer {
     // Toolkit & peer internals
 
     WChoicePeer(Choice target) {
-        super(target);
+	super(target);
     }
 
     native void create(WComponentPeer parent);
 
     void initialize() {
-        Choice opt = (Choice)target;
-        int itemCount = opt.getItemCount();
+	Choice opt = (Choice)target;
+	int itemCount = opt.getItemCount();
         if (itemCount > 0) {
             String[] items = new String[itemCount];
             for (int i=0; i < itemCount; i++) {
@@ -91,34 +91,34 @@ class WChoicePeer extends WComponentPeer implements ChoicePeer {
                 select(opt.getSelectedIndex());
             }
         }
-        super.initialize();
+	super.initialize();
     }
 
     // native callbacks
 
     void handleAction(final int index) {
-        final Choice c = (Choice)target;
-        WToolkit.executeOnEventHandlerThread(c, new Runnable() {
-            public void run() {
-                c.select(index);
-                postEvent(new ItemEvent(c, ItemEvent.ITEM_STATE_CHANGED,
+	final Choice c = (Choice)target;
+	WToolkit.executeOnEventHandlerThread(c, new Runnable() {
+	    public void run() {
+		c.select(index);
+		postEvent(new ItemEvent(c, ItemEvent.ITEM_STATE_CHANGED,
                                 c.getItem(index), ItemEvent.SELECTED));
-            }
-        });
+	    }
+	});
     }
 
     int getDropDownHeight() {
-        Choice c = (Choice)target;
-        FontMetrics fm = getFontMetrics(c.getFont());
+	Choice c = (Choice)target;
+	FontMetrics fm = getFontMetrics(c.getFont());
         int maxItems = Math.min(c.getItemCount(), 8);
-        return fm.getHeight() * maxItems;
+	return fm.getHeight() * maxItems;
     }
 
     /**
      * DEPRECATED
      */
     public Dimension minimumSize() {
-            return getMinimumSize();
+	    return getMinimumSize();
     }
 
 }

@@ -35,66 +35,66 @@ import java.util.concurrent.locks.*;
 // I am the Cownt, and I lahve to cownt.
 public class Count {
     private static void realMain(String[] args) throws Throwable {
-        final ReentrantLock rl = new ReentrantLock();
-        final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
-        final int depth = 10;
-        check(! rl.isLocked());
-        check(! rwl.isWriteLocked());
-        check(! rl.isHeldByCurrentThread());
-        check(! rwl.isWriteLockedByCurrentThread());
-        check(! rwl.writeLock().isHeldByCurrentThread());
+	final ReentrantLock rl = new ReentrantLock();
+	final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+	final int depth = 10;
+	check(! rl.isLocked());
+	check(! rwl.isWriteLocked());
+	check(! rl.isHeldByCurrentThread());
+	check(! rwl.isWriteLockedByCurrentThread());
+	check(! rwl.writeLock().isHeldByCurrentThread());
 
-        for (int i = 0; i < depth; i++) {
-            equal(rl.getHoldCount(), i);
-            equal(rwl.getReadLockCount(), i);
-            equal(rwl.getReadHoldCount(), i);
-            equal(rwl.getWriteHoldCount(), i);
-            equal(rwl.writeLock().getHoldCount(), i);
-            switch (i%4) {
-            case 0:
-                rl.lock();
-                rwl.writeLock().lock();
-                rwl.readLock().lock();
-                break;
-            case 1:
-                rl.lockInterruptibly();
-                rwl.writeLock().lockInterruptibly();
-                rwl.readLock().lockInterruptibly();
-                break;
-            case 2:
-                check(rl.tryLock());
-                check(rwl.writeLock().tryLock());
-                check(rwl.readLock().tryLock());
-                break;
-            case 3:
-                check(rl.tryLock(454, TimeUnit.MILLISECONDS));
-                check(rwl.writeLock().tryLock(454, TimeUnit.NANOSECONDS));
-                check(rwl.readLock().tryLock(454, TimeUnit.HOURS));
-                break;
-            }
-        }
+	for (int i = 0; i < depth; i++) {
+	    equal(rl.getHoldCount(), i);
+	    equal(rwl.getReadLockCount(), i);
+	    equal(rwl.getReadHoldCount(), i);
+	    equal(rwl.getWriteHoldCount(), i);
+	    equal(rwl.writeLock().getHoldCount(), i);
+	    switch (i%4) {
+	    case 0:
+		rl.lock();
+		rwl.writeLock().lock();
+		rwl.readLock().lock();
+		break;
+	    case 1:
+		rl.lockInterruptibly();
+		rwl.writeLock().lockInterruptibly();
+		rwl.readLock().lockInterruptibly();
+		break;
+	    case 2:
+		check(rl.tryLock());
+		check(rwl.writeLock().tryLock());
+		check(rwl.readLock().tryLock());
+		break;
+	    case 3:
+		check(rl.tryLock(454, TimeUnit.MILLISECONDS));
+		check(rwl.writeLock().tryLock(454, TimeUnit.NANOSECONDS));
+		check(rwl.readLock().tryLock(454, TimeUnit.HOURS));
+		break;
+	    }
+	}
 
-        for (int i = depth; i > 0; i--) {
-            check(! rl.hasQueuedThreads());
-            check(! rwl.hasQueuedThreads());
-            check(! rl.hasQueuedThread(Thread.currentThread()));
-            check(! rwl.hasQueuedThread(Thread.currentThread()));
-            check(rl.isLocked());
-            check(rwl.isWriteLocked());
-            check(rl.isHeldByCurrentThread());
-            check(rwl.isWriteLockedByCurrentThread());
-            check(rwl.writeLock().isHeldByCurrentThread());
-            equal(rl.getQueueLength(), 0);
-            equal(rwl.getQueueLength(), 0);
-            equal(rwl.getReadLockCount(), i);
-            equal(rl.getHoldCount(), i);
-            equal(rwl.getReadHoldCount(), i);
-            equal(rwl.getWriteHoldCount(), i);
-            equal(rwl.writeLock().getHoldCount(), i);
-            rwl.readLock().unlock();
-            rwl.writeLock().unlock();
-            rl.unlock();
-        }
+	for (int i = depth; i > 0; i--) {
+	    check(! rl.hasQueuedThreads());
+	    check(! rwl.hasQueuedThreads());
+	    check(! rl.hasQueuedThread(Thread.currentThread()));
+	    check(! rwl.hasQueuedThread(Thread.currentThread()));
+	    check(rl.isLocked());
+	    check(rwl.isWriteLocked());
+	    check(rl.isHeldByCurrentThread());
+	    check(rwl.isWriteLockedByCurrentThread());
+	    check(rwl.writeLock().isHeldByCurrentThread());
+	    equal(rl.getQueueLength(), 0);
+	    equal(rwl.getQueueLength(), 0);
+	    equal(rwl.getReadLockCount(), i);
+	    equal(rl.getHoldCount(), i);
+	    equal(rwl.getReadHoldCount(), i);
+	    equal(rwl.getWriteHoldCount(), i);
+	    equal(rwl.writeLock().getHoldCount(), i);
+	    rwl.readLock().unlock();
+	    rwl.writeLock().unlock();
+	    rl.unlock();
+	}
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -105,10 +105,10 @@ public class Count {
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void check(boolean cond) {if (cond) pass(); else fail();}
     static void equal(Object x, Object y) {
-        if (x == null ? y == null : x.equals(y)) pass();
-        else fail(x + " not equal to " + y);}
+	if (x == null ? y == null : x.equals(y)) pass();
+	else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-        try {realMain(args);} catch (Throwable t) {unexpected(t);}
-        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-        if (failed > 0) throw new AssertionError("Some tests failed");}
+	try {realMain(args);} catch (Throwable t) {unexpected(t);}
+	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+	if (failed > 0) throw new AssertionError("Some tests failed");}
 }

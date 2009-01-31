@@ -71,194 +71,194 @@ import sun.management.snmp.util.JvmContextFactory;
 public class JvmRTInputArgsTableMetaImpl extends JvmRTInputArgsTableMeta {
 
     private SnmpTableCache cache;
-
+    
      /**
      * A concrete implementation of {@link SnmpTableCache}, for the
      * JvmRTInputArgsTable.
      **/
     private static class JvmRTInputArgsTableCache extends SnmpTableCache {
-        private JvmRTInputArgsTableMetaImpl meta;
+	private JvmRTInputArgsTableMetaImpl meta;
+	
+	JvmRTInputArgsTableCache(JvmRTInputArgsTableMetaImpl meta,
+				 long validity) {
+	    this.meta = meta;
+	    this.validity = validity;
+	}
+	
+	/**
+	 * Call <code>getTableDatas(JvmContextFactory.getUserData())</code>.
+	 **/
+	public SnmpTableHandler getTableHandler() {
+	    final Map userData = JvmContextFactory.getUserData();
+	    return getTableDatas(userData);
+	}
+	
 
-        JvmRTInputArgsTableCache(JvmRTInputArgsTableMetaImpl meta,
-                                 long validity) {
-            this.meta = meta;
-            this.validity = validity;
-        }
-
-        /**
-         * Call <code>getTableDatas(JvmContextFactory.getUserData())</code>.
-         **/
-        public SnmpTableHandler getTableHandler() {
-            final Map userData = JvmContextFactory.getUserData();
-            return getTableDatas(userData);
-        }
+	/**
+	 * Return a table handler containing the Thread indexes.
+	 * Indexes are computed from the ThreadId.
+	 **/
+	protected SnmpCachedData updateCachedDatas(Object userData) {
 
 
-        /**
-         * Return a table handler containing the Thread indexes.
-         * Indexes are computed from the ThreadId.
-         **/
-        protected SnmpCachedData updateCachedDatas(Object userData) {
-
-
-            // We are getting all the input args
-            final String[] args = JvmRuntimeImpl.getInputArguments(userData);
-
-            // Time stamp for the cache
-            final long time = System.currentTimeMillis();
-            SnmpOid indexes[] = new SnmpOid[args.length];
-
-            for(int i = 0; i < args.length; i++) {
-                indexes[i] = new SnmpOid(i + 1);
-            }
-
-            return new SnmpCachedData(time, indexes, args);
-        }
+	    // We are getting all the input args
+	    final String[] args = JvmRuntimeImpl.getInputArguments(userData);
+	    
+	    // Time stamp for the cache
+	    final long time = System.currentTimeMillis();
+	    SnmpOid indexes[] = new SnmpOid[args.length];
+	    
+	    for(int i = 0; i < args.length; i++) {
+		indexes[i] = new SnmpOid(i + 1);
+	    }
+	    
+	    return new SnmpCachedData(time, indexes, args);
+	}
     }
-
+    
     /**
-     * Constructor for the table. Initialize metadata for
+     * Constructor for the table. Initialize metadata for 
      * "JvmRTInputArgsTableMeta".
-     * The reference on the MBean server is updated so the entries
-     * created through an SNMP SET will be AUTOMATICALLY REGISTERED
+     * The reference on the MBean server is updated so the entries 
+     * created through an SNMP SET will be AUTOMATICALLY REGISTERED 
      * in Java DMK.
      */
-    public JvmRTInputArgsTableMetaImpl(SnmpMib myMib,
-                                       SnmpStandardObjectServer objserv) {
+    public JvmRTInputArgsTableMetaImpl(SnmpMib myMib, 
+				       SnmpStandardObjectServer objserv) {
         super(myMib, objserv);
-        cache = new JvmRTInputArgsTableCache(this, -1);
+	cache = new JvmRTInputArgsTableCache(this, -1);
     }
-
+    
     // See com.sun.jmx.snmp.agent.SnmpMibTable
-    protected SnmpOid getNextOid(Object userData)
-        throws SnmpStatusException {
-        // null means get the first OID.
-        return getNextOid(null,userData);
+    protected SnmpOid getNextOid(Object userData) 
+	throws SnmpStatusException {
+	// null means get the first OID.
+	return getNextOid(null,userData);
     }
-
+    
     // See com.sun.jmx.snmp.agent.SnmpMibTable
     protected SnmpOid getNextOid(SnmpOid oid, Object userData)
-        throws SnmpStatusException {
-        final boolean dbg = log.isDebugOn();
-        if (dbg) log.debug("getNextOid", "previous=" + oid);
+	throws SnmpStatusException {
+	final boolean dbg = log.isDebugOn();
+	if (dbg) log.debug("getNextOid", "previous=" + oid);
+	
 
+	// Get the data handler.
+	//
+	SnmpTableHandler handler = getHandler(userData);
+	if (handler == null) {
+	    // This should never happen.
+	    // If we get here it's a bug.
+	    //
+	    if (dbg) log.debug("getNextOid", "handler is null!");
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	}
+	
+	// Get the next oid
+	//
+	final SnmpOid next = handler.getNext(oid);
+	if (dbg) log.debug("*** **** **** **** getNextOid", "next=" + next);
 
-        // Get the data handler.
-        //
-        SnmpTableHandler handler = getHandler(userData);
-        if (handler == null) {
-            // This should never happen.
-            // If we get here it's a bug.
-            //
-            if (dbg) log.debug("getNextOid", "handler is null!");
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-        }
-
-        // Get the next oid
-        //
-        final SnmpOid next = handler.getNext(oid);
-        if (dbg) log.debug("*** **** **** **** getNextOid", "next=" + next);
-
-        // if next is null: we reached the end of the table.
-        //
-        if (next == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-
-        return next;
+	// if next is null: we reached the end of the table.
+	//
+	if (next == null) 
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	
+	return next;
     }
-
+    
 
     // See com.sun.jmx.snmp.agent.SnmpMibTable
     protected boolean contains(SnmpOid oid, Object userData) {
 
-        // Get the handler.
-        //
-        SnmpTableHandler handler = getHandler(userData);
+	// Get the handler.
+	//
+	SnmpTableHandler handler = getHandler(userData);
 
-        // handler should never be null.
-        //
-        if (handler == null)
-            return false;
+	// handler should never be null.
+	//
+	if (handler == null) 
+	    return false;
 
-        return handler.contains(oid);
+	return handler.contains(oid);
     }
 
     // See com.sun.jmx.snmp.agent.SnmpMibTable
-    public Object getEntry(SnmpOid oid)
-        throws SnmpStatusException {
-        final boolean dbg = log.isDebugOn();
-        if (dbg) log.debug("getEntry", "oid [" + oid + "]");
-        if (oid == null || oid.getLength() != 1) {
-            if (dbg) log.debug("getEntry", "Invalid oid [" + oid + "]");
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-        }
+    public Object getEntry(SnmpOid oid) 
+	throws SnmpStatusException {
+	final boolean dbg = log.isDebugOn();
+	if (dbg) log.debug("getEntry", "oid [" + oid + "]");
+	if (oid == null || oid.getLength() != 1) {
+	    if (dbg) log.debug("getEntry", "Invalid oid [" + oid + "]");
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
+	}
+	
+	// Get the request contextual cache (userData).
+	//
+	final Map<Object, Object> m = JvmContextFactory.getUserData();
 
-        // Get the request contextual cache (userData).
-        //
-        final Map<Object, Object> m = JvmContextFactory.getUserData();
+	// We're going to use this name to store/retrieve the entry in
+	// the request contextual cache.
+	//
+	// Revisit: Probably better programming to put all these strings
+	//          in some interface.
+	//
+	final String entryTag = ((m==null)?null:
+				 ("JvmRTInputArgsTable.entry." + 
+				  oid.toString()));
+	
+	// If the entry is in the cache, simply return it.
+	//
+	if (m != null) {
+	    final Object entry = m.get(entryTag);
+	    if (entry != null) { 
+		if (dbg) 
+		    log.debug("getEntry", "Entry is already in the cache");
+		return entry;
+	    } else if (dbg) log.debug("getEntry", "Entry is not in the cache");
+	}
 
-        // We're going to use this name to store/retrieve the entry in
-        // the request contextual cache.
-        //
-        // Revisit: Probably better programming to put all these strings
-        //          in some interface.
-        //
-        final String entryTag = ((m==null)?null:
-                                 ("JvmRTInputArgsTable.entry." +
-                                  oid.toString()));
+	// The entry was not in the cache, make a new one.
+	//
+	// Get the data hanler.
+	//
+	SnmpTableHandler handler = getHandler(m);
+	
+	// handler should never be null.
+	//
+	if (handler == null) 
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
-        // If the entry is in the cache, simply return it.
-        //
-        if (m != null) {
-            final Object entry = m.get(entryTag);
-            if (entry != null) {
-                if (dbg)
-                    log.debug("getEntry", "Entry is already in the cache");
-                return entry;
-            } else if (dbg) log.debug("getEntry", "Entry is not in the cache");
-        }
+	// Get the data associated with our entry.
+	//
+	final Object data = handler.getData(oid);
 
-        // The entry was not in the cache, make a new one.
-        //
-        // Get the data hanler.
-        //
-        SnmpTableHandler handler = getHandler(m);
+	// data may be null if the OID we were given is not valid.
+	// 
+	if (data == null) 
+	    throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
 
-        // handler should never be null.
-        //
-        if (handler == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-
-        // Get the data associated with our entry.
-        //
-        final Object data = handler.getData(oid);
-
-        // data may be null if the OID we were given is not valid.
-        //
-        if (data == null)
-            throw new SnmpStatusException(SnmpStatusException.noSuchInstance);
-
-        // make the new entry (transient object that will be kept only
-        // for the duration of the request.
-        //
-        if (dbg) log.debug("getEntry","data is a: " +
-                           data.getClass().getName());
-        final Object entry =
-            new JvmRTInputArgsEntryImpl((String) data, (int) oid.getOidArc(0));
-
-        // Put the entry in the cache in case we need it later while processing
-        // the request.
-        //
-        if (m != null && entry != null) {
-            m.put(entryTag,entry);
-        }
-
-        return entry;
+	// make the new entry (transient object that will be kept only
+	// for the duration of the request.
+	//
+	if (dbg) log.debug("getEntry","data is a: " + 
+			   data.getClass().getName()); 
+	final Object entry = 
+	    new JvmRTInputArgsEntryImpl((String) data, (int) oid.getOidArc(0));
+	
+	// Put the entry in the cache in case we need it later while processing
+	// the request.
+	//
+	if (m != null && entry != null) {
+	    m.put(entryTag,entry);
+	}
+	
+	return entry;
     }
 
     /**
      * Get the SnmpTableHandler that holds the jvmThreadInstanceTable data.
-     * First look it up in the request contextual cache, and if it is
+     * First look it up in the request contextual cache, and if it is 
      * not found, obtain it from the weak cache.
      * <br>The request contextual cache will be released at the end of the
      * current requests, and is used only to process this request.
@@ -269,26 +269,26 @@ public class JvmRTInputArgsTableMetaImpl extends JvmRTInputArgsTableMeta {
      *     coherency.
      **/
     protected SnmpTableHandler getHandler(Object userData) {
-        final Map<Object, Object> m;
-        if (userData instanceof Map) m=Util.cast(userData);
-        else m=null;
+	final Map<Object, Object> m;
+	if (userData instanceof Map) m=Util.cast(userData);
+	else m=null;
 
-        // Look in the contextual cache.
-        if (m != null) {
-            final SnmpTableHandler handler =
-                (SnmpTableHandler)m.get("JvmRTInputArgsTable.handler");
-            if (handler != null) return handler;
-        }
+	// Look in the contextual cache.
+	if (m != null) {
+	    final SnmpTableHandler handler = 
+		(SnmpTableHandler)m.get("JvmRTInputArgsTable.handler");
+	    if (handler != null) return handler;
+	}
 
-        // No handler in contextual cache, make a new one.
-        final SnmpTableHandler handler = cache.getTableHandler();
+	// No handler in contextual cache, make a new one.
+	final SnmpTableHandler handler = cache.getTableHandler();
+	
+	if (m != null && handler != null ) 
+	    m.put("JvmRTInputArgsTable.handler",handler);
 
-        if (m != null && handler != null )
-            m.put("JvmRTInputArgsTable.handler",handler);
-
-        return handler;
+	return handler;
     }
 
-    static final MibLogger log =
-        new MibLogger(JvmRTInputArgsTableMetaImpl.class);
+    static final MibLogger log = 
+	new MibLogger(JvmRTInputArgsTableMetaImpl.class); 
 }

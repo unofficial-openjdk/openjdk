@@ -43,130 +43,130 @@ public class ScheduledTickleService {
     public final static CountDownLatch done = new CountDownLatch(concurrency);
 
     public static void realMain(String... args) throws InterruptedException {
-        // our tickle service
-        ScheduledExecutorService tickleService =
-            new ScheduledThreadPoolExecutor(concurrency) {
-                // We override decorateTask() to return a custom
-                // RunnableScheduledFuture which explicitly removes
-                // itself from the queue after cancellation.
-                protected <V> RunnableScheduledFuture<V>
-                    decorateTask(Runnable runnable,
-                                 RunnableScheduledFuture<V> task) {
-                    final ScheduledThreadPoolExecutor exec = this;
-                    return new CustomRunnableScheduledFuture<V>(task) {
-                        // delegate to wrapped task, except for:
-                        public boolean cancel(boolean b) {
-                            // cancel wrapped task & remove myself from the queue
-                            return (task().cancel(b)
-                                    && exec.remove(this));}};}};
+	// our tickle service
+	ScheduledExecutorService tickleService =
+	    new ScheduledThreadPoolExecutor(concurrency) {
+		// We override decorateTask() to return a custom
+		// RunnableScheduledFuture which explicitly removes
+		// itself from the queue after cancellation.
+		protected <V> RunnableScheduledFuture<V>
+		    decorateTask(Runnable runnable,
+				 RunnableScheduledFuture<V> task) {
+		    final ScheduledThreadPoolExecutor exec = this;
+		    return new CustomRunnableScheduledFuture<V>(task) {
+			// delegate to wrapped task, except for:
+			public boolean cancel(boolean b) {
+			    // cancel wrapped task & remove myself from the queue
+			    return (task().cancel(b)
+				    && exec.remove(this));}};}};
 
-        for (int i = 0; i < concurrency; i++)
-            new ScheduledTickle(i, tickleService)
-                .setUpdateInterval(25, MILLISECONDS);
+	for (int i = 0; i < concurrency; i++)
+	    new ScheduledTickle(i, tickleService)
+		.setUpdateInterval(25, MILLISECONDS);
 
-        done.await();
-        tickleService.shutdown();
-        pass();
+	done.await();
+	tickleService.shutdown();
+	pass();
     }
 
     // our Runnable
     static class ScheduledTickle implements Runnable {
-        public volatile int failures = 0;
+	public volatile int failures = 0;
 
-        // my tickle service
-        private final ScheduledExecutorService service;
+	// my tickle service
+	private final ScheduledExecutorService service;
 
-        // remember my own scheduled ticket
-        private ScheduledFuture ticket = null;
+	// remember my own scheduled ticket
+	private ScheduledFuture ticket = null;
 
-        // remember the number of times I've been tickled
-        private int numTickled = 0;
+	// remember the number of times I've been tickled
+	private int numTickled = 0;
 
-        // my private name
-        private final String name;
+	// my private name
+	private final String name;
 
-        public ScheduledTickle(int i, ScheduledExecutorService service) {
-            super();
-            this.name = "Tickler-"+i;
-            this.service = service;
-        }
+	public ScheduledTickle(int i, ScheduledExecutorService service) {
+	    super();
+	    this.name = "Tickler-"+i;
+	    this.service = service;
+	}
 
-        // set my tickle interval; 0 to disable further tickling.
-        public synchronized void setUpdateInterval(long interval,
-                                                   TimeUnit unit) {
-            // cancel & remove previously created ticket
-            if (ticket != null) {
-                ticket.cancel(false);
-                ticket = null;
-            }
+	// set my tickle interval; 0 to disable further tickling.
+	public synchronized void setUpdateInterval(long interval,
+						   TimeUnit unit) {
+	    // cancel & remove previously created ticket
+	    if (ticket != null) {
+		ticket.cancel(false);
+		ticket = null;
+	    }
 
-            if (interval > 0 && ! service.isShutdown()) {
-                // requeue with new interval
-                ticket = service.scheduleAtFixedRate(this, interval,
-                                                     interval, unit);
-            }
-        }
+	    if (interval > 0 && ! service.isShutdown()) {
+		// requeue with new interval
+		ticket = service.scheduleAtFixedRate(this, interval,
+						     interval, unit);
+	    }
+	}
 
-        public synchronized void run() {
-            try {
-                check(numTickled < 6);
-                numTickled++;
-                System.out.println(name + ": Run " + numTickled);
+	public synchronized void run() {
+	    try {
+		check(numTickled < 6);
+		numTickled++;
+		System.out.println(name + ": Run " + numTickled);
 
-                // tickle 3 times and then slow down
-                if (numTickled == 3) {
-                    System.out.println(name + ": slower please!");
-                    this.setUpdateInterval(100, MILLISECONDS);
-                }
-                // ..but only 5 times max.
-                else if (numTickled == 5) {
-                    System.out.println(name + ": OK that's enough.");
-                    this.setUpdateInterval(0, MILLISECONDS);
-                    ScheduledTickleService.done.countDown();
-                }
-            } catch (Throwable t) { unexpected(t); }
-        }
+		// tickle 3 times and then slow down
+		if (numTickled == 3) {
+		    System.out.println(name + ": slower please!");
+		    this.setUpdateInterval(100, MILLISECONDS);
+		}
+		// ..but only 5 times max.
+		else if (numTickled == 5) {
+		    System.out.println(name + ": OK that's enough.");
+		    this.setUpdateInterval(0, MILLISECONDS);
+		    ScheduledTickleService.done.countDown();
+		}
+	    } catch (Throwable t) { unexpected(t); }
+	}
     }
 
     // This is just a generic wrapper to make up for the private ScheduledFutureTask
     static class CustomRunnableScheduledFuture<V>
-        implements RunnableScheduledFuture<V> {
-        // the wrapped future
-        private RunnableScheduledFuture<V> task;
+	implements RunnableScheduledFuture<V> {
+	// the wrapped future
+	private RunnableScheduledFuture<V> task;
 
-        public CustomRunnableScheduledFuture(RunnableScheduledFuture<V> task) {
-            super();
-            this.task = task;
-        }
+	public CustomRunnableScheduledFuture(RunnableScheduledFuture<V> task) {
+	    super();
+	    this.task = task;
+	}
 
-        public RunnableScheduledFuture<V> task() { return task; }
+	public RunnableScheduledFuture<V> task() { return task; }
 
-        // Forwarding methods
-        public boolean isPeriodic()         { return task.isPeriodic(); }
-        public boolean isCancelled()        { return task.isCancelled(); }
-        public boolean isDone()             { return task.isDone(); }
-        public boolean cancel(boolean b)    { return task.cancel(b); }
-        public long getDelay(TimeUnit unit) { return task.getDelay(unit); }
-        public void run()                   {        task.run(); }
+	// Forwarding methods
+	public boolean isPeriodic()         { return task.isPeriodic(); }
+	public boolean isCancelled()        { return task.isCancelled(); }
+	public boolean isDone()             { return task.isDone(); }
+	public boolean cancel(boolean b)    { return task.cancel(b); }
+	public long getDelay(TimeUnit unit) { return task.getDelay(unit); }
+	public void run()                   {        task.run(); }
 
-        public V get()
-            throws InterruptedException, ExecutionException {
-            return task.get();
-        }
+	public V get()
+	    throws InterruptedException, ExecutionException {
+	    return task.get();
+	}
 
-        public V get(long timeout, TimeUnit unit)
-            throws InterruptedException, ExecutionException, TimeoutException {
-            return task.get(timeout, unit);
-        }
+	public V get(long timeout, TimeUnit unit)
+	    throws InterruptedException, ExecutionException, TimeoutException {
+	    return task.get(timeout, unit);
+	}
 
-        public int compareTo(Delayed other) {
-            if (this == other)
-                return 0;
-            else if (other instanceof CustomRunnableScheduledFuture)
-                return task.compareTo(((CustomRunnableScheduledFuture)other).task());
-            else
-                return task.compareTo(other);
-        }
+	public int compareTo(Delayed other) {
+	    if (this == other)
+		return 0;
+	    else if (other instanceof CustomRunnableScheduledFuture)
+		return task.compareTo(((CustomRunnableScheduledFuture)other).task());
+	    else
+		return task.compareTo(other);
+	}
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -177,10 +177,10 @@ public class ScheduledTickleService {
     static void unexpected(Throwable t) {failed++; t.printStackTrace();}
     static void check(boolean cond) {if (cond) pass(); else fail();}
     static void equal(Object x, Object y) {
-        if (x == null ? y == null : x.equals(y)) pass();
-        else fail(x + " not equal to " + y);}
+	if (x == null ? y == null : x.equals(y)) pass();
+	else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-        try {realMain(args);} catch (Throwable t) {unexpected(t);}
-        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-        if (failed > 0) throw new AssertionError("Some tests failed");}
+	try {realMain(args);} catch (Throwable t) {unexpected(t);}
+	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+	if (failed > 0) throw new AssertionError("Some tests failed");}
 }

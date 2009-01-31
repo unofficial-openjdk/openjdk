@@ -76,7 +76,7 @@ class MDialogPeer extends MWindowPeer implements DialogPeer, MInputMethodControl
     public void show() {
         pShowModal( ((Dialog)target).isModal() );
         updateAlwaysOnTop(alwaysOnTop);
-    }
+    }       
 
 
     // NOTE: This method may be called by privileged threads.

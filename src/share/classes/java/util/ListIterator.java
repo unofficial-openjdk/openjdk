@@ -50,6 +50,7 @@ package java.util;
  * Java Collections Framework</a>.
  *
  * @author  Josh Bloch
+ * @version %I%, %G%
  * @see Collection
  * @see List
  * @see Iterator
@@ -67,7 +68,7 @@ public interface ListIterator<E> extends Iterator<E> {
      * than throwing an exception.)
      *
      * @return {@code true} if the list iterator has more elements when
-     *         traversing the list in the forward direction
+     *	       traversing the list in the forward direction
      */
     boolean hasNext();
 
@@ -90,7 +91,7 @@ public interface ListIterator<E> extends Iterator<E> {
      * rather than throwing an exception.)
      *
      * @return {@code true} if the list iterator has more elements when
-     *         traversing the list in the reverse direction
+     *	       traversing the list in the reverse direction
      */
     boolean hasPrevious();
 
@@ -115,7 +116,7 @@ public interface ListIterator<E> extends Iterator<E> {
      *
      * @return the index of the element that would be returned by a
      *         subsequent call to {@code next}, or list size if the list
-     *         iterator is at the end of the list
+     * 	       iterator is at the end of the list
      */
     int nextIndex();
 
@@ -159,15 +160,15 @@ public interface ListIterator<E> extends Iterator<E> {
      * @param e the element with which to replace the last element returned by
      *          {@code next} or {@code previous}
      * @throws UnsupportedOperationException if the {@code set} operation
-     *         is not supported by this list iterator
+     * 	       is not supported by this list iterator
      * @throws ClassCastException if the class of the specified element
-     *         prevents it from being added to this list
+     * 	       prevents it from being added to this list
      * @throws IllegalArgumentException if some aspect of the specified
-     *         element prevents it from being added to this list
+     *	       element prevents it from being added to this list
      * @throws IllegalStateException if neither {@code next} nor
-     *         {@code previous} have been called, or {@code remove} or
-     *         {@code add} have been called after the last call to
-     *         {@code next} or {@code previous}
+     *	       {@code previous} have been called, or {@code remove} or
+     *	       {@code add} have been called after the last call to
+     * 	       {@code next} or {@code previous}
      */
     void set(E e);
 
@@ -185,9 +186,9 @@ public interface ListIterator<E> extends Iterator<E> {
      *
      * @param e the element to insert
      * @throws UnsupportedOperationException if the {@code add} method is
-     *         not supported by this list iterator
+     * 	       not supported by this list iterator
      * @throws ClassCastException if the class of the specified element
-     *         prevents it from being added to this list
+     * 	       prevents it from being added to this list
      * @throws IllegalArgumentException if some aspect of this element
      *         prevents it from being added to this list
      */

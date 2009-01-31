@@ -37,20 +37,20 @@ public class DefaultDisposerRecord implements DisposerRecord {
         this.disposerMethodPointer = disposerMethodPointer;
         this.dataPointer = dataPointer;
     }
-
+    
     public void dispose() {
-        invokeNativeDispose(disposerMethodPointer,
-                            dataPointer);
+	invokeNativeDispose(disposerMethodPointer, 
+			    dataPointer);
     }
 
     public long getDataPointer() {
-        return dataPointer;
+	return dataPointer;
     }
 
     public long getDisposerMethodPointer() {
-        return disposerMethodPointer;
+	return disposerMethodPointer;
     }
 
-    public static native void invokeNativeDispose(long disposerMethodPointer,
-                                                  long dataPointer);
+    public static native void invokeNativeDispose(long disposerMethodPointer, 
+						  long dataPointer);
 }

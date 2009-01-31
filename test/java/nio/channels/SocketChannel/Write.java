@@ -38,38 +38,38 @@ import sun.misc.*;
 public class Write {
 
     static int port = 40170;
-
+    
     static Random generator = new Random();
 
     static int testSize = 15;
 
     public static void main(String[] args) throws Exception {
-        WriteServer sv = new WriteServer();
-        sv.start();
-        do {
-            try {
-                Thread.currentThread().sleep(200);
-            } catch (InterruptedException x) {
-                if (sv.finish(8000) == 0)
-                    throw new Exception("Failed: Error in server thread");
-            }
-        } while (!sv.ready);
+	WriteServer sv = new WriteServer();
+	sv.start();
+	do {
+	    try {
+		Thread.currentThread().sleep(200);
+	    } catch (InterruptedException x) {
+		if (sv.finish(8000) == 0)
+		    throw new Exception("Failed: Error in server thread");
+	    }
+	} while (!sv.ready);
         bufferTest();
-        if (sv.finish(8000) == 0)
-            throw new Exception("Failed" );
+	if (sv.finish(8000) == 0)
+	    throw new Exception("Failed" );
     }
-
+    
     static void bufferTest() throws Exception {
         ByteBuffer[] bufs = new ByteBuffer[testSize];
         for(int i=0; i<testSize; i++) {
-            String source =
+            String source = 
                 "a muchmuchmuchmuchmuchmuchmuchmuch larger buffer numbered " +
                 i;
             bufs[i] = ByteBuffer.allocateDirect(source.length());
         }
 
         // Get a connection to the server
-        InetAddress lh = InetAddress.getLocalHost();
+	InetAddress lh = InetAddress.getLocalHost();
         InetSocketAddress isa = new InetSocketAddress(lh, port);
         SocketChannel sc = SocketChannel.open();
         sc.connect(isa);
@@ -84,7 +84,7 @@ public class Write {
             for(int j=0; j<testSize; j++)
                 bufs[j].rewind();
         }
-
+        
         // Clean up
         sc.close();
     }
@@ -101,7 +101,7 @@ class WriteServer extends TestThread {
     volatile boolean ready = false;
 
     WriteServer() {
-        super("WriteServer");
+	super("WriteServer");
     }
 
     void go() throws Exception {
@@ -115,29 +115,29 @@ class WriteServer extends TestThread {
         ServerSocketChannel ssc = ServerSocketChannel.open();
         SocketChannel sc = null;
 
-        try {
-            ssc.configureBlocking(false);
-            InetAddress lh = InetAddress.getLocalHost();
-            InetSocketAddress isa = new InetSocketAddress(lh, port);
-            ssc.socket().bind(isa);
-            ready = true;
+	try {
+	    ssc.configureBlocking(false);
+	    InetAddress lh = InetAddress.getLocalHost();
+	    InetSocketAddress isa = new InetSocketAddress(lh, port);
+	    ssc.socket().bind(isa);
+	    ready = true;
 
-            for (;;) {
-                sc = ssc.accept();
-                if (sc != null)
-                    break;
-                Thread.sleep(50);
-            }
+	    for (;;) {
+		sc = ssc.accept();
+		if (sc != null)
+		    break;
+		Thread.sleep(50);
+	    }
 
             // I'm a slow reader...
             Thread.sleep(3000);
 
-        } finally {
-            // Clean up
-            ssc.close();
-            if (sc != null)
-                sc.close();
-        }
+	} finally {
+	    // Clean up
+	    ssc.close();
+	    if (sc != null)
+		sc.close();
+	}
 
     }
 

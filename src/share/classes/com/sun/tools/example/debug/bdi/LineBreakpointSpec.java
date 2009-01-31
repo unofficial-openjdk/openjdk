@@ -35,7 +35,7 @@ import java.util.Iterator;
 public class LineBreakpointSpec extends BreakpointSpec {
     int lineNumber;
 
-    LineBreakpointSpec(EventRequestSpecList specs,
+    LineBreakpointSpec(EventRequestSpecList specs, 
                        ReferenceTypeSpec refSpec, int lineNumber) {
         super(specs, refSpec);
         this.lineNumber = lineNumber;
@@ -54,7 +54,7 @@ public class LineBreakpointSpec extends BreakpointSpec {
                    .createBreakpointRequest(location));
     }
 
-    private Location location(ClassType clazz) throws
+    private Location location(ClassType clazz) throws 
                                             LineNotFoundException {
         Location location = null;
         try {
@@ -66,11 +66,11 @@ public class LineBreakpointSpec extends BreakpointSpec {
             location = (Location)locs.get(0);
             if (location.method() == null) {
                 throw new LineNotFoundException();
-            }
+            } 
         } catch (AbsentInformationException e) {
             /*
              * TO DO: throw something more specific, or allow
-             * AbsentInfo exception to pass through.
+             * AbsentInfo exception to pass through. 
              */
             throw new LineNotFoundException();
         }
@@ -96,25 +96,25 @@ public class LineBreakpointSpec extends BreakpointSpec {
         }
     }
 
-    public String errorMessageFor(Exception e) {
+    public String errorMessageFor(Exception e) { 
         if (e instanceof LineNotFoundException) {
             return ("No code at line " + lineNumber() + " in " + refSpec);
         } else if (e instanceof InvalidTypeException) {
-            return ("Breakpoints can be located only in classes. " +
+            return ("Breakpoints can be located only in classes. " + 
                         refSpec + " is an interface or array");
         } else {
             return super.errorMessageFor( e);
-        }
+        } 
     }
 
     public String toString() {
         StringBuffer buffer = new StringBuffer("breakpoint ");
         buffer.append(refSpec.toString());
         buffer.append(':');
-        buffer.append(lineNumber);
+        buffer.append(lineNumber);  
         buffer.append(" (");
         buffer.append(getStatusString());
         buffer.append(')');
-        return buffer.toString();
+        return buffer.toString();   
     }
 }

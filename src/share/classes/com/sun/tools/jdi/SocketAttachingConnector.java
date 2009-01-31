@@ -44,7 +44,7 @@ public class SocketAttachingConnector extends GenericAttachingConnector {
     public SocketAttachingConnector() {
         super(new SocketTransportService());
 
-        String defaultHostName;
+	String defaultHostName;
         try {
             defaultHostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
@@ -66,12 +66,12 @@ public class SocketAttachingConnector extends GenericAttachingConnector {
             true,
             0, Integer.MAX_VALUE);
 
-        transport = new Transport() {
+	transport = new Transport() {
             public String name() {
-                return "dt_socket";     // for compatability reasons
+                return "dt_socket";	// for compatability reasons
             }
         };
-
+	    
     }
 
     /*
@@ -79,15 +79,15 @@ public class SocketAttachingConnector extends GenericAttachingConnector {
      * arguments and attach to the target VM.
      */
     public VirtualMachine
-        attach(Map<String,? extends Connector.Argument> arguments)
-        throws IOException, IllegalConnectorArgumentsException
+	attach(Map<String,? extends Connector.Argument> arguments)
+	throws IOException, IllegalConnectorArgumentsException
     {
         String host = argument(ARG_HOST, arguments).value();
-        if (host.length() > 0) {
-            host = host + ":";
-        }
-        String address = host + argument(ARG_PORT, arguments).value();
-        return super.attach(address, arguments);
+	if (host.length() > 0) {
+	    host = host + ":";
+	}
+	String address = host + argument(ARG_PORT, arguments).value();
+	return super.attach(address, arguments);
     }
 
     public String name() {
@@ -98,3 +98,4 @@ public class SocketAttachingConnector extends GenericAttachingConnector {
        return getString("socket_attaching.description");
     }
 }
+

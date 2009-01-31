@@ -1,23 +1,23 @@
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -50,19 +50,19 @@
 typedef struct {
     /* Important note:
          JNI forbids sharing same env between different threads.
-         We are safe, because pointer is overwritten every time we get into
-         JNI call (see setupFTContext).
-
-         Pointer is used by font data reading callbacks
+         We are safe, because pointer is overwritten every time we get into 
+         JNI call (see setupFTContext). 
+         
+         Pointer is used by font data reading callbacks 
          such as ReadTTFontFileFunc.
 
-         NB: We may consider switching to JNI_GetEnv. */
+         NB: We may consider switching to JNI_GetEnv. */         
     JNIEnv* env;
     FT_Library library;
     FT_Face face;
     jobject font2D;
     jobject directBuffer;
-
+    
     unsigned char* fontData;
     unsigned fontDataOffset;
     unsigned fontDataLength;
@@ -83,8 +83,8 @@ typedef struct FTScalerContext {
 } FTScalerContext;
 
 #ifdef DEBUG
-/* These are referenced in the freetype sources if DEBUG macro is defined.
-   To simplify work with debuging version of freetype we define
+/* These are referenced in the freetype sources if DEBUG macro is defined. 
+   To simplify work with debuging version of freetype we define 
    them here. */
 int z_verbose;
 void z_error(char *s) {}
@@ -103,15 +103,15 @@ Java_sun_font_FreetypeFontScaler_initIDs(
 
 static void freeNativeResources(JNIEnv *env, FTScalerInfo* scalerInfo) {
     if (scalerInfo == NULL)
-        return;
-
+    	return;
+    
     FT_Done_Face(scalerInfo->face);
     FT_Done_FreeType(scalerInfo->library);
 
     if (scalerInfo->directBuffer != NULL) {
         (*env)->DeleteGlobalRef(env, scalerInfo->directBuffer);
     }
-
+    
     if (scalerInfo->fontData != NULL) {
         free(scalerInfo->fontData);
     }
@@ -120,11 +120,11 @@ static void freeNativeResources(JNIEnv *env, FTScalerInfo* scalerInfo) {
 }
 
 /* invalidates state of java scaler object */
-static void invalidateJavaScaler(JNIEnv *env,
-                                 jobject scaler,
+static void invalidateJavaScaler(JNIEnv *env, 
+                                 jobject scaler, 
                                  FTScalerInfo* scalerInfo) {
     freeNativeResources(env, scalerInfo);
-    (*env)->CallVoidMethod(env, scaler, invalidateScalerMID);
+    (*env)->CallVoidMethod(env, scaler, invalidateScalerMID); 
 }
 
 /******************* I/O handlers ***************************/
@@ -138,7 +138,7 @@ static void CloseTTFontFileFunc(FT_Stream stream) {
     jclass tmpClass = (*env)->FindClass(env, "sun/font/TrueTypeFont");
     jfieldID platNameField =
          (*env)->GetFieldID(env, tmpClass, "platName", "Ljava/lang/String;");
-    jstring platName = (*env)->GetObjectField(env,
+    jstring platName = (*env)->GetObjectField(env, 
                                               scalerInfo->font2D,
                                               platNameField);
     const char *name = JNU_GetStringPlatformChars(env, platName, NULL);
@@ -148,13 +148,13 @@ static void CloseTTFontFileFunc(FT_Stream stream) {
 static unsigned long ReadTTFontFileFunc(FT_Stream stream,
                                         unsigned long offset,
                                         unsigned char* destBuffer,
-                                        unsigned long numBytes)
-{
+                                        unsigned long numBytes) 
+{    
     FTScalerInfo *scalerInfo = (FTScalerInfo *) stream->pathname.pointer;
     JNIEnv* env = scalerInfo->env;
     jobject bBuffer;
     int bread = 0;
-
+    
     if (numBytes == 0) return 0;
 
     /* Large reads will bypass the cache and data copying */
@@ -168,7 +168,7 @@ static unsigned long ReadTTFontFileFunc(FT_Stream stream,
              * Just returning without reading the data will cause a crash.
              */
             while (bread == 0) {
-                bread = (*env)->CallIntMethod(env,
+                bread = (*env)->CallIntMethod(env, 
                                               scalerInfo->font2D,
                                               sunFontIDs.ttReadBlockMID,
                                               bBuffer, offset, numBytes);
@@ -194,11 +194,11 @@ static unsigned long ReadTTFontFileFunc(FT_Stream stream,
         }
     } /* Do we have a cache hit? */
       else if (scalerInfo->fontDataOffset <= offset &&
-        scalerInfo->fontDataOffset + scalerInfo->fontDataLength >=
+        scalerInfo->fontDataOffset + scalerInfo->fontDataLength >= 
                                                          offset + numBytes)
     {
         unsigned cacheOffset = offset - scalerInfo->fontDataOffset;
-
+        
         memcpy(destBuffer, scalerInfo->fontData+(size_t)cacheOffset, numBytes);
         return numBytes;
     } else {
@@ -220,7 +220,7 @@ static unsigned long ReadTTFontFileFunc(FT_Stream stream,
                                           bBuffer, offset,
                                           scalerInfo->fontDataLength);
         }
-
+        
         memcpy(destBuffer, scalerInfo->fontData, numBytes);
         return numBytes;
     }
@@ -241,32 +241,32 @@ Java_sun_font_FreetypeFontScaler_initNativeScaler(
     int error;
     jobject bBuffer;
     scalerInfo = (FTScalerInfo*) calloc(1, sizeof(FTScalerInfo));
-
+    
     if (scalerInfo == NULL)
         return 0;
-
+    
     scalerInfo->env = env;
     scalerInfo->font2D = font2D;
     scalerInfo->fontDataOffset = 0;
     scalerInfo->fontDataLength = 0;
     scalerInfo->fileSize = filesize;
-
+    
     /*
-       We can consider sharing freetype library between different
+       We can consider sharing freetype library between different 
        scalers. However, Freetype docs suggest to use different libraries
        for different threads. Also, our architecture implies that single
-       FontScaler object is shared for for different sizes/transforms/styles
+       FontScaler object is shared for for different sizes/transforms/styles 
        of the same font.
-
-       On other hand these methods can not be concurrently executed
+       
+       On other hand these methods can not be concurrently executed 
        becaused they are "synchronized" in java.
     */
     error = FT_Init_FreeType(&scalerInfo->library);
     if (error) {
         free(scalerInfo);
         return 0;
-    }
-
+    }   
+    
 #define TYPE1_FROM_JAVA        2
 
     error = 1; /* triggers memory freeing unless we clear it */
@@ -275,18 +275,18 @@ Java_sun_font_FreetypeFontScaler_initNativeScaler(
         scalerInfo->directBuffer = NULL;
         scalerInfo->layoutTables = NULL;
         scalerInfo->fontDataLength = filesize;
-
+        
         if (scalerInfo->fontData != NULL) {
-            bBuffer = (*env)->NewDirectByteBuffer(env,
+            bBuffer = (*env)->NewDirectByteBuffer(env, 
                                               scalerInfo->fontData,
                                               scalerInfo->fontDataLength);
             if (bBuffer != NULL) {
-                (*env)->CallObjectMethod(env, font2D,
+                (*env)->CallObjectMethod(env, font2D, 
                                    sunFontIDs.readFileMID, bBuffer);
-
+        
                 error = FT_New_Memory_Face(scalerInfo->library,
                                    scalerInfo->fontData,
-                                   scalerInfo->fontDataLength,
+                                   scalerInfo->fontDataLength, 
                                    indexInCollection,
                                    &scalerInfo->face);
             }
@@ -294,13 +294,13 @@ Java_sun_font_FreetypeFontScaler_initNativeScaler(
     } else { /* Truetype */
         scalerInfo->fontData = (unsigned char*) malloc(FILEDATACACHESIZE);
         ftstream = (FT_Stream) calloc(1, sizeof(FT_StreamRec));
-
+        
         if (ftstream != NULL && scalerInfo->fontData != NULL) {
             scalerInfo->directBuffer = (*env)->NewDirectByteBuffer(env,
-                                        scalerInfo->fontData,
+                                        scalerInfo->fontData, 
                                         FILEDATACACHESIZE);
             if (scalerInfo->directBuffer != NULL) {
-                scalerInfo->directBuffer = (*env)->NewGlobalRef(env,
+                scalerInfo->directBuffer = (*env)->NewGlobalRef(env, 
                                             scalerInfo->directBuffer);
                 ftstream->base = NULL;
                 ftstream->size = filesize;
@@ -308,11 +308,11 @@ Java_sun_font_FreetypeFontScaler_initNativeScaler(
                 ftstream->read = (FT_Stream_IoFunc) ReadTTFontFileFunc;
                 ftstream->close = (FT_Stream_CloseFunc) CloseTTFontFileFunc;
                 ftstream->pathname.pointer = (void *) scalerInfo;
-
+        
                 memset(&ft_open_args, 0, sizeof(FT_Open_Args));
                 ft_open_args.flags = FT_OPEN_STREAM;
                 ft_open_args.stream = ftstream;
-
+        
                 error = FT_Open_Face(scalerInfo->library,
                                      &ft_open_args,
                                      indexInCollection,
@@ -321,20 +321,20 @@ Java_sun_font_FreetypeFontScaler_initNativeScaler(
            if (error || scalerInfo->directBuffer == NULL) {
                free(ftstream);
            }
-        }
+        } 
     }
-
+    
     if (error) {
         FT_Done_FreeType(scalerInfo->library);
         if (scalerInfo->directBuffer != NULL) {
             (*env)->DeleteGlobalRef(env, scalerInfo->directBuffer);
         }
-        if (scalerInfo->fontData != NULL)
+        if (scalerInfo->fontData != NULL) 
             free(scalerInfo->fontData);
         free(scalerInfo);
         return 0;
     }
-
+    
     return ptr_to_jlong(scalerInfo);
 }
 
@@ -351,7 +351,7 @@ static double euclidianDistance(double a, double b) {
 JNIEXPORT jlong JNICALL
 Java_sun_font_FreetypeFontScaler_createScalerContextNative(
         JNIEnv *env, jobject scaler, jlong pScaler, jdoubleArray matrix,
-        jboolean ttFont, jint aa, jint fm, jfloat boldness, jfloat italic) {
+        jboolean ttFont, jint aa, jint fm, jfloat boldness, jfloat italic) {  
     double dmat[4], ptsz;
     FTScalerContext *context =
             (FTScalerContext*) calloc(1, sizeof(FTScalerContext));
@@ -375,38 +375,38 @@ Java_sun_font_FreetypeFontScaler_createScalerContextNative(
     context->transform.yy =  FloatToFTFixed((float)dmat[3]/ptsz);
     context->aaType = aa;
     context->fmType = fm;
-
+    
     /* If using algorithmic styling, the base values are
      * boldness = 1.0, italic = 0.0.
      */
     context->doBold = (boldness != 1.0);
     context->doItalize = (italic != 0);
-
+   
     return ptr_to_jlong(context);
 }
 
-static int setupFTContext(JNIEnv *env,
-                          jobject font2D,
-                          FTScalerInfo *scalerInfo,
+static int setupFTContext(JNIEnv *env, 
+                          jobject font2D, 
+                          FTScalerInfo *scalerInfo, 
                           FTScalerContext *context) {
     int errCode = 0;
-
+    
     scalerInfo->env = env;
     scalerInfo->font2D = font2D;
-
+    
     FT_Set_Transform(scalerInfo->face, &context->transform, NULL);
-
+    
     errCode = FT_Set_Char_Size(scalerInfo->face, 0, context->ptsz, 72, 72);
-
+    
     if (errCode == 0) {
         errCode = FT_Activate_Size(scalerInfo->face->size);
     }
-
+    
     return errCode;
 }
 
 /* ftsynth.c uses (0x10000, 0x06000, 0x0, 0x10000) matrix to get oblique
-   outline.  Therefore x coordinate will change by 0x06000*y.
+   outline.  Therefore x coordinate will change by 0x06000*y.  
    Note that y coordinate does not change. */
 #define OBLIQUE_MODIFIER(y)  (context->doItalize ? ((y)*6/16) : 0)
 
@@ -415,48 +415,48 @@ static int setupFTContext(JNIEnv *env,
  * Method:    getFontMetricsNative
  * Signature: (Lsun/font/Font2D;J)Lsun/font/StrikeMetrics;
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_sun_font_FreetypeFontScaler_getFontMetricsNative(
-        JNIEnv *env, jobject scaler, jobject font2D,
+        JNIEnv *env, jobject scaler, jobject font2D, 
         jlong pScalerContext, jlong pScaler) {
 
     jobject metrics;
     jfloat ax, ay, dx, dy, bx, by, lx, ly, mx, my;
     jfloat f0 = 0.0;
     FT_Pos bmodifier = 0;
-    FTScalerContext *context =
+    FTScalerContext *context = 
         (FTScalerContext*) jlong_to_ptr(pScalerContext);
     FTScalerInfo *scalerInfo =
              (FTScalerInfo*) jlong_to_ptr(pScaler);
-
+    
     int errCode;
-
+    
     if (isNullScalerContext(context) || scalerInfo == NULL) {
-        return (*env)->NewObject(env,
+        return (*env)->NewObject(env, 
                                  sunFontIDs.strikeMetricsClass,
                                  sunFontIDs.strikeMetricsCtr,
                                  f0, f0, f0, f0, f0, f0, f0, f0, f0, f0);
     }
-
+    
     errCode = setupFTContext(env, font2D, scalerInfo, context);
-
+    
     if (errCode) {
-        metrics = (*env)->NewObject(env,
+        metrics = (*env)->NewObject(env, 
                                  sunFontIDs.strikeMetricsClass,
                                  sunFontIDs.strikeMetricsCtr,
                                  f0, f0, f0, f0, f0, f0, f0, f0, f0, f0);
         invalidateJavaScaler(env, scaler, scalerInfo);
         return metrics;
     }
-
+    
     /* This is ugly and has to be reworked.
        Freetype provide means to add style to glyph but
        it seems there is no way to adjust metrics accordingly.
-
-       So, we have to do adust them explicitly and stay consistent with what
+    
+       So, we have to do adust them explicitly and stay consistent with what 
        freetype does to outlines. */
-
-    /* For bolding glyphs are not just widened. Height is also changed
+    
+    /* For bolding glyphs are not just widened. Height is also changed 
        (see ftsynth.c).
 
        TODO: In vertical direction we could do better job and adjust metrics
@@ -466,19 +466,19 @@ Java_sun_font_FreetypeFontScaler_getFontMetricsNative(
                        scalerInfo->face->units_per_EM,
                        scalerInfo->face->size->metrics.y_scale)/24;
     }
-
+    
 
     /**** Note: only some metrics are affected by styling ***/
 
     /* ascent */
     ax = 0;
     ay = -(jfloat) FT26Dot6ToFloat(
-                       scalerInfo->face->size->metrics.ascender +
+                       scalerInfo->face->size->metrics.ascender + 
                        bmodifier/2);
     /* descent */
     dx = 0;
     dy = -(jfloat) FT26Dot6ToFloat(
-                       scalerInfo->face->size->metrics.descender +
+                       scalerInfo->face->size->metrics.descender + 
                        bmodifier/2);
     /* baseline */
     bx = by = 0;
@@ -486,7 +486,7 @@ Java_sun_font_FreetypeFontScaler_getFontMetricsNative(
     /* leading */
     lx = 0;
     ly = (jfloat) FT26Dot6ToFloat(
-                      scalerInfo->face->size->metrics.height +
+                      scalerInfo->face->size->metrics.height + 
                       bmodifier) + ay - dy;
     /* max advance */
     mx = (jfloat) FT26Dot6ToFloat(
@@ -494,12 +494,12 @@ Java_sun_font_FreetypeFontScaler_getFontMetricsNative(
                      2*bmodifier +
                      OBLIQUE_MODIFIER(scalerInfo->face->size->metrics.height));
     my = 0;
-
-    metrics = (*env)->NewObject(env,
+    
+    metrics = (*env)->NewObject(env, 
                                 sunFontIDs.strikeMetricsClass,
                                 sunFontIDs.strikeMetricsCtr,
                                 ax, ay, dx, dy, bx, by, lx, ly, mx, my);
-
+    
     return metrics;
 }
 
@@ -508,32 +508,32 @@ Java_sun_font_FreetypeFontScaler_getFontMetricsNative(
  * Method:    getGlyphAdvanceNative
  * Signature: (Lsun/font/Font2D;JI)F
  */
-JNIEXPORT jfloat JNICALL
+JNIEXPORT jfloat JNICALL 
 Java_sun_font_FreetypeFontScaler_getGlyphAdvanceNative(
-        JNIEnv *env, jobject scaler, jobject font2D,
+        JNIEnv *env, jobject scaler, jobject font2D, 
         jlong pScalerContext, jlong pScaler, jint glyphCode) {
-
+        
    /* This method is rarely used because requests for metrics are usually
       coupled with request for bitmap and to large extend work can be reused
       (to find out metrics we need to hint glyph).
       So, we typically go through getGlyphImage code path.
-
+ 
       For initial freetype implementation we delegate
       all work to getGlyphImage but drop result image.
       This is waste of work related to scan conversion and conversion from
       freetype format to our format but for now this seems to be ok.
-
+   
       NB: investigate performance benefits of refactoring code
       to avoid unnecesary work with bitmaps. */
-
+    
     GlyphInfo *info;
     jfloat advance;
     jlong image;
-
+    
     image = Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
                  env, scaler, font2D, pScalerContext, pScaler, glyphCode);
     info = (GlyphInfo*) jlong_to_ptr(image);
-
+    
     advance = info->advanceX;
 
     free(info);
@@ -553,17 +553,17 @@ Java_sun_font_FreetypeFontScaler_getGlyphMetricsNative(
 
      /* As initial implementation we delegate all work to getGlyphImage
         but drop result image. This is clearly waste of resorces.
-
+    
         TODO: investigate performance benefits of refactoring code
               by avoiding bitmap generation and conversion from FT
               bitmap format. */
      GlyphInfo *info;
-
+    
      jlong image = Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
-                                 env, scaler, font2D,
+                                 env, scaler, font2D, 
                                  pScalerContext, pScaler, glyphCode);
      info = (GlyphInfo*) jlong_to_ptr(image);
-
+     
      (*env)->SetFloatField(env, metrics, sunFontIDs.xFID, info->advanceX);
      (*env)->SetFloatField(env, metrics, sunFontIDs.yFID, info->advanceY);
 
@@ -584,15 +584,15 @@ static void CopyBW2Grey8(const void* srcImage, int srcRowBytes,
     int wholeByteCount = width >> 3;
     int remainingBitsCount = width & 7;
     int i, j;
-
+    
     while (height--) {
         const UInt8* src8 = srcRow;
         UInt8* dstByte = dstRow;
         unsigned srcValue;
-
+        
         srcRow += srcRowBytes;
         dstRow += dstRowBytes;
-
+        
         for (i = 0; i < wholeByteCount; i++) {
             srcValue = *src8++;
             for (j = 0; j < 8; j++) {
@@ -617,15 +617,15 @@ static void CopyGrey4ToGrey8(const void* srcImage, int srcRowBytes,
      const UInt8* srcRow = (UInt8*) srcImage;
      UInt8* dstRow = (UInt8*) dstImage;
      int i;
-
+     
      while (height--) {
          const UInt8* src8 = srcRow;
          UInt8* dstByte = dstRow;
          unsigned srcValue;
-
+         
          srcRow += srcRowBytes;
          dstRow += dstRowBytes;
-
+         
          for (i = 0; i < width; i++) {
              srcValue = *src8++;
              *dstByte++ = Grey4ToAlpha255(srcValue & 0x0f);
@@ -641,7 +641,7 @@ static void CopyFTSubpixelToSubpixel(const void* srcImage, int srcRowBytes,
                                      int width, int height) {
     unsigned char *srcRow = (unsigned char *) srcImage;
     unsigned char *dstRow = (unsigned char *) dstImage;
-
+    
     while (height--) {
         memcpy(dstRow, srcRow, width);
         srcRow += srcRowBytes;
@@ -657,7 +657,7 @@ static void CopyFTSubpixelVToSubpixel(const void* srcImage, int srcRowBytes,
     unsigned char *srcRow = (unsigned char *) srcImage, *srcByte;
     unsigned char *dstRow = (unsigned char *) dstImage, *dstByte;
     int i;
-
+    
     while (height > 0) {
         srcByte = srcRow;
         dstByte = dstRow;
@@ -681,7 +681,7 @@ static void CopyFTSubpixelVToSubpixel(const void* srcImage, int srcRowBytes,
  */
 JNIEXPORT jlong JNICALL
 Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
-        JNIEnv *env, jobject scaler, jobject font2D,
+        JNIEnv *env, jobject scaler, jobject font2D, 
         jlong pScalerContext, jlong pScaler, jint glyphCode) {
 
     int error, imageSize;
@@ -690,56 +690,56 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     int glyph_index;
     int renderFlags = FT_LOAD_RENDER, target;
     FT_GlyphSlot ftglyph;
-
-    FTScalerContext* context =
+    
+    FTScalerContext* context = 
         (FTScalerContext*) jlong_to_ptr(pScalerContext);
     FTScalerInfo *scalerInfo =
              (FTScalerInfo*) jlong_to_ptr(pScaler);
-
+    
     if (isNullScalerContext(context) || scalerInfo == NULL) {
-        return ptr_to_jlong(getNullGlyphImage());
+    	return ptr_to_jlong(getNullGlyphImage());
     }
-
+    
     error = setupFTContext(env, font2D, scalerInfo, context);
     if (error) {
         invalidateJavaScaler(env, scaler, scalerInfo);
         return ptr_to_jlong(getNullGlyphImage());
     }
-
+    
     /* if algorithmic styling is required then we do not request bitmap */
     if (context->doBold || context->doItalize) {
         renderFlags =  FT_LOAD_DEFAULT;
     }
-
+    
     /* NB: in case of non identity transform
      we might also prefer to disable transform before hinting,
      and apply it explicitly after hinting is performed.
      Or we can disable hinting. */
-
+    
     /* select appropriate hinting mode */
     if (context->aaType == TEXT_AA_OFF) {
         target = FT_LOAD_TARGET_MONO;
     } else if (context->aaType == TEXT_AA_ON) {
         target = FT_LOAD_TARGET_NORMAL;
-    } else if (context->aaType == TEXT_AA_LCD_HRGB ||
+    } else if (context->aaType == TEXT_AA_LCD_HRGB || 
                context->aaType == TEXT_AA_LCD_HBGR) {
         target = FT_LOAD_TARGET_LCD;
     } else {
         target = FT_LOAD_TARGET_LCD_V;
     }
     renderFlags |= target;
-
+    
     glyph_index = FT_Get_Char_Index(scalerInfo->face, glyphCode);
-
+    
     error = FT_Load_Glyph(scalerInfo->face, glyphCode, renderFlags);
     if (error) {
-        //do not destroy scaler yet.
+        //do not destroy scaler yet. 
         //this can be problem of particular context (e.g. with bad transform)
         return ptr_to_jlong(getNullGlyphImage());
     }
-
+    
     ftglyph = scalerInfo->face->glyph;
-
+    
     /* apply styles */
     if (context->doBold) { /* if bold style */
         FT_GlyphSlot_Embolden(ftglyph);
@@ -747,16 +747,16 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     if (context->doItalize) { /* if oblique */
         FT_GlyphSlot_Oblique(ftglyph);
     }
-
+    
     /* generate bitmap if it is not done yet
      e.g. if algorithmic styling is performed and style was added to outline */
     if (ftglyph->format == FT_GLYPH_FORMAT_OUTLINE) {
         FT_Render_Glyph(ftglyph, FT_LOAD_TARGET_MODE(target));
     }
-
+    
     width  = (UInt16) ftglyph->bitmap.width;
     height = (UInt16) ftglyph->bitmap.rows;
-
+    
     imageSize = width*height;
     glyphInfo = (GlyphInfo*) malloc(sizeof(GlyphInfo) + imageSize);
     if (glyphInfo == NULL) {
@@ -769,7 +769,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     glyphInfo->height    = height;
     glyphInfo->topLeftX  = (float)  ftglyph->bitmap_left;
     glyphInfo->topLeftY  = (float) -ftglyph->bitmap_top;
-
+    
     if (context->aaType == TEXT_AA_LCD_HRGB ||
         context->aaType == TEXT_AA_LCD_HBGR) {
         glyphInfo->width = width/3;
@@ -777,17 +777,17 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
                context->aaType == TEXT_AA_LCD_VBGR) {
         glyphInfo->height = glyphInfo->height/3;
     }
-
+    
     if (context->fmType == TEXT_FM_ON) {
         glyphInfo->advanceX = FT26Dot6ToFloat(ftglyph->advance.x);
         glyphInfo->advanceY = FT26Dot6ToFloat(-ftglyph->advance.y);
     } else {
-        glyphInfo->advanceX =
+        glyphInfo->advanceX = 
            (float) ROUND(FT26Dot6ToFloat(ftglyph->advance.x));
-        glyphInfo->advanceY =
+        glyphInfo->advanceY = 
            (float) ROUND(FT26Dot6ToFloat(-ftglyph->advance.y));
     }
-
+    
     if (imageSize == 0) {
         glyphInfo->image = NULL;
     } else {
@@ -797,38 +797,38 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
         // or 1 byte per pixel for AA and B&W
         if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_MONO) {
             /* convert from 8 pixels per byte to 1 byte per pixel */
-            CopyBW2Grey8(ftglyph->bitmap.buffer,
+            CopyBW2Grey8(ftglyph->bitmap.buffer, 
                          ftglyph->bitmap.pitch,
-                         (void *) glyphInfo->image,
-                         width,
-                         width,
+                         (void *) glyphInfo->image, 
+                         width, 
+                         width, 
                          height);
         } else if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_GRAY) {
             /* byte per pixel to byte per pixel => just copy */
             memcpy(glyphInfo->image, ftglyph->bitmap.buffer, imageSize);
         } else if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_GRAY4) {
             /* 4 bits per pixel to byte per pixel */
-            CopyGrey4ToGrey8(ftglyph->bitmap.buffer,
+            CopyGrey4ToGrey8(ftglyph->bitmap.buffer, 
                              ftglyph->bitmap.pitch,
-                             (void *) glyphInfo->image,
-                             width,
-                             width,
+                             (void *) glyphInfo->image, 
+                             width, 
+                             width, 
                              height);
         } else if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_LCD) {
             /* 3 bytes per pixel to 3 bytes per pixel */
-            CopyFTSubpixelToSubpixel(ftglyph->bitmap.buffer,
+            CopyFTSubpixelToSubpixel(ftglyph->bitmap.buffer, 
                                      ftglyph->bitmap.pitch,
-                                     (void *) glyphInfo->image,
-                                     width,
-                                     width,
+                                     (void *) glyphInfo->image, 
+                                     width, 
+                                     width, 
                                      height);
         } else if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_LCD_V) {
             /* 3 bytes per pixel to 3 bytes per pixel */
-            CopyFTSubpixelVToSubpixel(ftglyph->bitmap.buffer,
+            CopyFTSubpixelVToSubpixel(ftglyph->bitmap.buffer, 
                                       ftglyph->bitmap.pitch,
-                                      (void *) glyphInfo->image,
-                                      width*3,
-                                      width,
+                                      (void *) glyphInfo->image, 
+                                      width*3, 
+                                      width, 
                                       height);
             glyphInfo->rowBytes *=3;
         } else {
@@ -836,7 +836,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
             glyphInfo = getNullGlyphImage();
         }
     }
-
+    
     return ptr_to_jlong(glyphInfo);
 }
 
@@ -850,19 +850,19 @@ JNIEXPORT jlong JNICALL
 Java_sun_font_FreetypeFontScaler_getLayoutTableCacheNative(
         JNIEnv *env, jobject scaler, jlong pScaler) {
     FTScalerInfo *scalerInfo = (FTScalerInfo*) jlong_to_ptr(pScaler);
-
+    
     if (scalerInfo == NULL) {
         invalidateJavaScaler(env, scaler, scalerInfo);
         return 0L;
     }
-
+    
     // init layout table cache in font
     // we're assuming the font is a file font and moreover it is Truetype font
     // otherwise we shouldn't be able to get here...
     if (scalerInfo->layoutTables == NULL) {
         scalerInfo->layoutTables = newLayoutTableCache();
     }
-
+    
     return ptr_to_jlong(scalerInfo->layoutTables);
 }
 
@@ -875,8 +875,8 @@ JNIEXPORT void JNICALL
 Java_sun_font_FreetypeFontScaler_disposeNativeScaler(
         JNIEnv *env, jobject scaler, jlong pScaler) {
     FTScalerInfo* scalerInfo = (FTScalerInfo *) jlong_to_ptr(pScaler);
-
-    freeNativeResources(env, scalerInfo);
+    
+    freeNativeResources(env, scalerInfo);    
 }
 
 /*
@@ -928,7 +928,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphCodeNative(
         invalidateJavaScaler(env, scaler, scalerInfo);
         return 0;
     }
-
+    
     return FT_Get_Char_Index(scalerInfo->face, charCode);
 }
 
@@ -936,34 +936,34 @@ Java_sun_font_FreetypeFontScaler_getGlyphCodeNative(
 #define FloatToF26Dot6(x) ((unsigned int) ((x)*64))
 
 static FT_Outline* getFTOutline(JNIEnv* env, jobject font2D,
-        FTScalerContext *context, FTScalerInfo* scalerInfo,
+        FTScalerContext *context, FTScalerInfo* scalerInfo, 
         jint glyphCode, jfloat xpos, jfloat ypos) {
     int renderFlags;
     int glyph_index;
     FT_Error error;
     FT_GlyphSlot ftglyph;
-
-    if (glyphCode >= INVISIBLE_GLYPHS ||
+    
+    if (glyphCode >= INVISIBLE_GLYPHS || 
             isNullScalerContext(context) || scalerInfo == NULL) {
         return NULL;
     }
-
+     
     error = setupFTContext(env, font2D, scalerInfo, context);
     if (error) {
         return NULL;
     }
-
+     
     renderFlags = FT_LOAD_NO_HINTING | FT_LOAD_NO_BITMAP;
-
+     
     glyph_index = FT_Get_Char_Index(scalerInfo->face, glyphCode);
-
+     
     error = FT_Load_Glyph(scalerInfo->face, glyphCode, renderFlags);
     if (error) {
         return NULL;
     }
-
+     
     ftglyph = scalerInfo->face->glyph;
-
+     
     /* apply styles */
     if (context->doBold) { /* if bold style */
         FT_GlyphSlot_Embolden(ftglyph);
@@ -971,17 +971,17 @@ static FT_Outline* getFTOutline(JNIEnv* env, jobject font2D,
     if (context->doItalize) { /* if oblique */
         FT_GlyphSlot_Oblique(ftglyph);
     }
-
-    FT_Outline_Translate(&ftglyph->outline,
-                         FloatToF26Dot6(xpos),
+     
+    FT_Outline_Translate(&ftglyph->outline, 
+                         FloatToF26Dot6(xpos), 
                          FloatToF26Dot6(ypos));
-
+     
     return &ftglyph->outline;
 }
 
 #define F26Dot6ToFloat(n) (((float)(n))/((float) 64))
 
-/* Types of GeneralPath segments.
+/* Types of GeneralPath segments. 
    TODO: pull constants from other place? */
 
 #define SEG_UNKNOWN -1
@@ -1008,38 +1008,38 @@ typedef struct {
 /* returns 0 on failure */
 static int allocateSpaceForGP(GPData* gpdata, int npoints, int ncontours) {
     int maxTypes, maxCoords;
-
+    
     /* we may have up to N intermediate points per contour
        (and for each point can actually cause new curve to be generated)
-       In addition we can also have 2 extra point per outline.
+       In addition we can also have 2 extra point per outline. 
      */
     maxTypes  = 2*npoints  + 2*ncontours;
     maxCoords = 4*(npoints + 2*ncontours); //we may need to insert
-                                           //up to n-1 intermediate points
-
+                                           //up to n-1 intermediate points 
+    
     /* first usage - allocate space and intialize all fields */
     if (gpdata->pointTypes == NULL || gpdata->pointCoords == NULL) {
         gpdata->lenTypes  = maxTypes;
         gpdata->lenCoords = maxCoords;
-        gpdata->pointTypes  = (jbyte*)
+        gpdata->pointTypes  = (jbyte*) 
              malloc(gpdata->lenTypes*sizeof(jbyte));
-        gpdata->pointCoords = (jfloat*)
+        gpdata->pointCoords = (jfloat*) 
              malloc(gpdata->lenCoords*sizeof(jfloat));
         gpdata->numTypes = 0;
         gpdata->numCoords = 0;
-        gpdata->wr = WIND_NON_ZERO; /* By default, outlines are filled
+        gpdata->wr = WIND_NON_ZERO; /* By default, outlines are filled 
                                        using the non-zero winding rule. */
     } else {
         /* do we have enough space? */
         if (gpdata->lenTypes - gpdata->numTypes < maxTypes) {
             gpdata->lenTypes  += maxTypes;
-            gpdata->pointTypes  = (jbyte*)
+            gpdata->pointTypes  = (jbyte*) 
               realloc(gpdata->pointTypes, gpdata->lenTypes*sizeof(jbyte));
         }
-
+    
         if (gpdata->lenCoords - gpdata->numCoords < maxCoords) {
             gpdata->lenCoords += maxCoords;
-            gpdata->pointCoords = (jfloat*)
+            gpdata->pointCoords = (jfloat*) 
               realloc(gpdata->pointCoords, gpdata->lenCoords*sizeof(jfloat));
         }
     }
@@ -1048,14 +1048,14 @@ static int allocateSpaceForGP(GPData* gpdata, int npoints, int ncontours) {
     if (gpdata->pointTypes == NULL ||  gpdata->pointCoords == NULL)
         return 0;
     else
-        return 1;
+        return 1;    
 }
 
 static void addToGP(GPData* gpdata, FT_Outline*outline) {
     jbyte current_type=SEG_UNKNOWN;
     int i, j;
     jfloat x, y;
-
+    
     j = 0;
     for(i=0; i<outline->n_points; i++) {
         x =  F26Dot6ToFloat(outline->points[i].x);
@@ -1064,7 +1064,7 @@ static void addToGP(GPData* gpdata, FT_Outline*outline) {
         if (FT_CURVE_TAG(outline->tags[i]) == FT_CURVE_TAG_ON) {
             /* If bit 0 is unset, the point is "off" the curve,
              i.e., a Bezier control point, while it is "on" when set. */
-            if (current_type == SEG_UNKNOWN) { /* special case:
+            if (current_type == SEG_UNKNOWN) { /* special case: 
                                                   very first point */
                 /* add segment */
                 gpdata->pointTypes[gpdata->numTypes++] = SEG_MOVETO;
@@ -1074,7 +1074,7 @@ static void addToGP(GPData* gpdata, FT_Outline*outline) {
                 current_type = SEG_LINETO;
             }
         } else {
-            if (current_type == SEG_UNKNOWN) { /* special case:
+            if (current_type == SEG_UNKNOWN) { /* special case: 
                                                    very first point */
                 if (FT_CURVE_TAG(outline->tags[i+1]) == FT_CURVE_TAG_ON) {
                     /* just skip first point. Adhoc heuristic? */
@@ -1099,10 +1099,10 @@ static void addToGP(GPData* gpdata, FT_Outline*outline) {
                    outlines are described in the TrueType specification. */
                 if (current_type == SEG_QUADTO) {
                     gpdata->pointCoords[gpdata->numCoords++] =
-                        F26Dot6ToFloat(outline->points[i].x +
+                        F26Dot6ToFloat(outline->points[i].x + 
                         outline->points[i-1].x)/2;
                     gpdata->pointCoords[gpdata->numCoords++] =
-                        - F26Dot6ToFloat(outline->points[i].y +
+                        - F26Dot6ToFloat(outline->points[i].y + 
                         outline->points[i-1].y)/2;
                     gpdata->pointTypes[gpdata->numTypes++] = SEG_QUADTO;
                 }
@@ -1116,14 +1116,14 @@ static void addToGP(GPData* gpdata, FT_Outline*outline) {
             gpdata->pointTypes[gpdata->numTypes++] = current_type;
             if (current_type == SEG_QUADTO &&
             FT_CURVE_TAG(outline->tags[start]) != FT_CURVE_TAG_ON) {
-                gpdata->pointCoords[gpdata->numCoords++] =
+                gpdata->pointCoords[gpdata->numCoords++] = 
                             (F26Dot6ToFloat(outline->points[start].x) + x)/2;
-                gpdata->pointCoords[gpdata->numCoords++] =
+                gpdata->pointCoords[gpdata->numCoords++] = 
                             (-F26Dot6ToFloat(outline->points[start].y) + y)/2;
             } else {
-                gpdata->pointCoords[gpdata->numCoords++] =
+                gpdata->pointCoords[gpdata->numCoords++] = 
                             F26Dot6ToFloat(outline->points[start].x);
-                gpdata->pointCoords[gpdata->numCoords++] =
+                gpdata->pointCoords[gpdata->numCoords++] = 
                             -F26Dot6ToFloat(outline->points[start].y);
             }
             gpdata->pointTypes[gpdata->numTypes++] = SEG_CLOSE;
@@ -1131,7 +1131,7 @@ static void addToGP(GPData* gpdata, FT_Outline*outline) {
             j++;
         }
     }
-
+    
     /* If set to 1, the outline will be filled using the even-odd fill rule */
     if (outline->flags & FT_OUTLINE_EVEN_ODD_FILL) {
         gpdata->wr = WIND_EVEN_ODD;
@@ -1154,52 +1154,52 @@ static void freeGP(GPData* gpdata) {
 }
 
 static jobject getGlyphGeneralPath(JNIEnv* env, jobject font2D,
-        FTScalerContext *context, FTScalerInfo *scalerInfo,
+        FTScalerContext *context, FTScalerInfo *scalerInfo, 
         jint glyphCode, jfloat xpos, jfloat ypos) {
-
+        
     FT_Outline* outline;
     jobject gp = NULL;
     jbyteArray types;
     jfloatArray coords;
     GPData gpdata;
-
-    outline = getFTOutline(env, font2D, context, scalerInfo,
+    
+    outline = getFTOutline(env, font2D, context, scalerInfo, 
                            glyphCode, xpos, ypos);
-
+    
     if (outline == NULL || outline->n_points == 0) {
         return gp;
     }
-
+    
     gpdata.pointTypes  = NULL;
     gpdata.pointCoords = NULL;
     if (!allocateSpaceForGP(&gpdata, outline->n_points, outline->n_contours)) {
         return gp;
     }
-
-    addToGP(&gpdata, outline);
-
+    
+    addToGP(&gpdata, outline);    
+    
     types  = (*env)->NewByteArray(env, gpdata.numTypes);
     coords = (*env)->NewFloatArray(env, gpdata.numCoords);
-
+    
     if (types && coords) {
-        (*env)->SetByteArrayRegion(env, types, 0,
-                                   gpdata.numTypes,
+        (*env)->SetByteArrayRegion(env, types, 0, 
+                                   gpdata.numTypes, 
                                    gpdata.pointTypes);
-        (*env)->SetFloatArrayRegion(env, coords, 0,
-                                    gpdata.numCoords,
+        (*env)->SetFloatArrayRegion(env, coords, 0, 
+                                    gpdata.numCoords, 
                                     gpdata.pointCoords);
-        gp = (*env)->NewObject(env,
-                               sunFontIDs.gpClass,
+        gp = (*env)->NewObject(env, 
+                               sunFontIDs.gpClass, 
                                sunFontIDs.gpCtr,
-                               gpdata.wr,
-                               types,
-                               gpdata.numTypes,
-                               coords,
+                               gpdata.wr, 
+                               types, 
+                               gpdata.numTypes, 
+                               coords, 
                                gpdata.numCoords);
     }
-
-    freeGP(&gpdata);
-
+   
+    freeGP(&gpdata); 
+    
     return gp;
 }
 
@@ -1213,20 +1213,20 @@ Java_sun_font_FreetypeFontScaler_getGlyphOutlineNative(
       JNIEnv *env, jobject scaler, jobject font2D, jlong pScalerContext,
       jlong pScaler, jint glyphCode, jfloat xpos, jfloat ypos) {
 
-    FTScalerContext *context =
-         (FTScalerContext*) jlong_to_ptr(pScalerContext);
+    FTScalerContext *context = 
+         (FTScalerContext*) jlong_to_ptr(pScalerContext);         
     FTScalerInfo* scalerInfo = (FTScalerInfo *) jlong_to_ptr(pScaler);
-
-    jobject gp = getGlyphGeneralPath(env,
-                               font2D,
+         
+    jobject gp = getGlyphGeneralPath(env, 
+                               font2D, 
                                context,
-                               scalerInfo,
-                               glyphCode,
-                               xpos,
+                               scalerInfo, 
+                               glyphCode, 
+                               xpos, 
                                ypos);
     if (gp == NULL) { /* can be legal */
-        gp = (*env)->NewObject(env,
-                               sunFontIDs.gpClass,
+        gp = (*env)->NewObject(env, 
+                               sunFontIDs.gpClass, 
                                sunFontIDs.gpCtrEmpty);
     }
     return gp;
@@ -1239,7 +1239,7 @@ Java_sun_font_FreetypeFontScaler_getGlyphOutlineNative(
  */
 JNIEXPORT jobject JNICALL
 Java_sun_font_FreetypeFontScaler_getGlyphOutlineBoundsNative(
-        JNIEnv *env, jobject scaler, jobject font2D,
+        JNIEnv *env, jobject scaler, jobject font2D, 
         jlong pScalerContext, jlong pScaler, jint glyphCode) {
 
     FT_Outline *outline;
@@ -1247,36 +1247,36 @@ Java_sun_font_FreetypeFontScaler_getGlyphOutlineBoundsNative(
     int error;
     jobject bounds;
 
-    FTScalerContext *context =
-         (FTScalerContext*) jlong_to_ptr(pScalerContext);
+    FTScalerContext *context = 
+         (FTScalerContext*) jlong_to_ptr(pScalerContext);         
     FTScalerInfo* scalerInfo = (FTScalerInfo *) jlong_to_ptr(pScaler);
 
     outline = getFTOutline(env, font2D, context, scalerInfo, glyphCode, 0, 0);
     if (outline == NULL || outline->n_points == 0) {
         /* it is legal case, e.g. invisible glyph */
-        bounds = (*env)->NewObject(env,
-                                 sunFontIDs.rect2DFloatClass,
+        bounds = (*env)->NewObject(env, 
+                                 sunFontIDs.rect2DFloatClass, 
                                  sunFontIDs.rect2DFloatCtr);
         return bounds;
     }
-
+    
     error = FT_Outline_Get_BBox(outline, &bbox);
 
     //convert bbox
     if (error || bbox.xMin >= bbox.xMax || bbox.yMin >= bbox.yMax) {
-        bounds = (*env)->NewObject(env,
-                                   sunFontIDs.rect2DFloatClass,
+        bounds = (*env)->NewObject(env, 
+                                   sunFontIDs.rect2DFloatClass, 
                                    sunFontIDs.rect2DFloatCtr);
     } else {
-        bounds = (*env)->NewObject(env,
+        bounds = (*env)->NewObject(env, 
                                    sunFontIDs.rect2DFloatClass,
                                    sunFontIDs.rect2DFloatCtr4,
-                                   F26Dot6ToFloat(bbox.xMin),
+                                   F26Dot6ToFloat(bbox.xMin), 
                                    F26Dot6ToFloat(bbox.yMax),
-                                   F26Dot6ToFloat(bbox.xMax-bbox.xMin),
+                                   F26Dot6ToFloat(bbox.xMax-bbox.xMin), 
                                    F26Dot6ToFloat(bbox.yMax-bbox.yMin));
     }
-
+    
     return bounds;
 }
 
@@ -1285,11 +1285,11 @@ Java_sun_font_FreetypeFontScaler_getGlyphOutlineBoundsNative(
  * Method:    getGlyphVectorOutlineNative
  * Signature: (Lsun/font/Font2D;J[IIFF)Ljava/awt/geom/GeneralPath;
  */
-JNIEXPORT jobject
+JNIEXPORT jobject 
 JNICALL
 Java_sun_font_FreetypeFontScaler_getGlyphVectorOutlineNative(
-        JNIEnv *env, jobject scaler, jobject font2D,
-        jlong pScalerContext, jlong pScaler,
+        JNIEnv *env, jobject scaler, jobject font2D, 
+        jlong pScalerContext, jlong pScaler, 
         jintArray glyphArray, jint numGlyphs, jfloat xpos, jfloat ypos) {
 
     FT_Outline* outline;
@@ -1300,11 +1300,11 @@ Java_sun_font_FreetypeFontScaler_getGlyphVectorOutlineNative(
     int i;
     jint *glyphs;
 
-    FTScalerContext *context =
-         (FTScalerContext*) jlong_to_ptr(pScalerContext);
+    FTScalerContext *context = 
+         (FTScalerContext*) jlong_to_ptr(pScalerContext);         
     FTScalerInfo *scalerInfo =
              (FTScalerInfo*) jlong_to_ptr(pScaler);
-
+    
     glyphs = (jint*) malloc(numGlyphs*sizeof(jint));
     if (glyphs == NULL) {
         gp = (*env)->NewObject(env, sunFontIDs.gpClass, sunFontIDs.gpCtrEmpty);
@@ -1313,52 +1313,52 @@ Java_sun_font_FreetypeFontScaler_getGlyphVectorOutlineNative(
         }
         return gp;
     }
-
+    
     (*env)->GetIntArrayRegion(env, glyphArray, 0, numGlyphs, glyphs);
-
+    
     for (i=0; i<numGlyphs;i++) {
         if (glyphs[i] >= INVISIBLE_GLYPHS) {
             continue;
         }
-        outline = getFTOutline(env,
-                               font2D,
+        outline = getFTOutline(env, 
+                               font2D, 
                                context,
                                scalerInfo,
-                               glyphs[i],
+                               glyphs[i], 
                                xpos, ypos);
-
+        
         if (outline == NULL || outline->n_points == 0) {
             continue;
         }
-
+        
         gpdata.pointTypes  = NULL;
         gpdata.pointCoords = NULL;
-        if (!allocateSpaceForGP(&gpdata, outline->n_points,
+        if (!allocateSpaceForGP(&gpdata, outline->n_points, 
                                 outline->n_contours)) {
             break;
         }
-
+        
         addToGP(&gpdata, outline);
     }
     free(glyphs);
-
+       
     if (gpdata.numCoords != 0) {
       types = (*env)->NewByteArray(env, gpdata.numTypes);
       coords = (*env)->NewFloatArray(env, gpdata.numCoords);
-
+    
       if (types && coords) {
-        (*env)->SetByteArrayRegion(env, types, 0,
+        (*env)->SetByteArrayRegion(env, types, 0, 
                                    gpdata.numTypes, gpdata.pointTypes);
-        (*env)->SetFloatArrayRegion(env, coords, 0,
+        (*env)->SetFloatArrayRegion(env, coords, 0, 
                                     gpdata.numCoords, gpdata.pointCoords);
-
-        gp=(*env)->NewObject(env,
-                             sunFontIDs.gpClass,
+        
+        gp=(*env)->NewObject(env, 
+                             sunFontIDs.gpClass, 
                              sunFontIDs.gpCtr,
-                             gpdata.wr,
-                             types,
-                             gpdata.numTypes,
-                             coords,
+                             gpdata.wr, 
+                             types, 
+                             gpdata.numTypes, 
+                             coords, 
                              gpdata.numCoords);
         return gp;
       }
@@ -1371,13 +1371,13 @@ Java_sun_font_FreetypeFontScaler_getUnitsPerEMNative(
         JNIEnv *env, jobject scaler, jlong pScaler) {
 
     FTScalerInfo *s = (FTScalerInfo* ) jlong_to_ptr(pScaler);
-
+    
     /* Freetype doc says:
      The number of font units per EM square for this face.
      This is typically 2048 for TrueType fonts, and 1000 for Type 1 fonts.
      Only relevant for scalable formats.
      However, layout engine might be not tested with anything but 2048.
-
+    
      NB: test it! */
     if (s != NULL) {
         return s->face->units_per_EM;
@@ -1394,10 +1394,10 @@ Java_sun_font_FreetypeFontScaler_getGlyphPointNative(
     FT_Outline* outline;
     jobject point = NULL;
     jfloat x=0, y=0;
-    FTScalerContext *context =
-         (FTScalerContext*) jlong_to_ptr(pScalerContext);
-    FTScalerInfo *scalerInfo = (FTScalerInfo*) jlong_to_ptr(pScaler);
-
+    FTScalerContext *context = 
+         (FTScalerContext*) jlong_to_ptr(pScalerContext);         
+    FTScalerInfo *scalerInfo = (FTScalerInfo*) jlong_to_ptr(pScaler);         
+    
     outline = getFTOutline(env, font2D, context, scalerInfo, glyphCode, 0, 0);
 
     if (outline != NULL && outline->n_points > pointNumber) {

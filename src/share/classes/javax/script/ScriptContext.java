@@ -36,24 +36,25 @@ import java.io.Reader;
  * that can be used by the ScriptEngines for input and output.
  *
  * @author Mike Grogan
+ * @version 1.0
  * @since 1.6
  */
 public interface ScriptContext {
-
-
+    
+    
     /**
      * EngineScope attributes are visible during the lifetime of a single
      * <code>ScriptEngine</code> and a set of attributes is maintained for each
      * engine.
      */
     public static final int ENGINE_SCOPE = 100;
-
+    
     /**
      * GlobalScope attributes are visible to all engines created by same ScriptEngineFactory.
      */
     public static final int GLOBAL_SCOPE = 200;
-
-
+    
+    
     /**
      * Associates a <code>Bindings</code> instance with a particular scope in this
      * <code>ScriptContext</code>.  Calls to the <code>getAttribute</code> and
@@ -70,7 +71,7 @@ public interface ScriptContext {
      *
      */
     public void setBindings(Bindings bindings, int scope);
-
+    
     /**
      * Gets the <code>Bindings</code>  associated with the given scope in this
      * <code>ScriptContext</code>.
@@ -82,7 +83,7 @@ public interface ScriptContext {
      * specified scope value in <code>ScriptContext</code> of this type.
      */
     public Bindings getBindings(int scope);
-
+    
     /**
      * Sets the value of an attribute in a given scope.
      *
@@ -90,12 +91,12 @@ public interface ScriptContext {
      * @param value The value of the attribute
      * @param scope The scope in which to set the attribute
      *
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException 
      *         if the name is empty or if the scope is invalid.
      * @throws NullPointerException if the name is null.
      */
     public void setAttribute(String name, Object value, int scope);
-
+    
     /**
      * Gets the value of an attribute in a given scope.
      *
@@ -109,7 +110,7 @@ public interface ScriptContext {
      * @throws NullPointerException if the name is null.
      */
     public Object getAttribute(String name, int scope);
-
+    
     /**
      * Remove an attribute in a given scope.
      *
@@ -122,7 +123,7 @@ public interface ScriptContext {
      * @throws NullPointerException if the name is null.
      */
     public Object removeAttribute(String name, int scope);
-
+    
     /**
      * Retrieves the value of the attribute with the given name in
      * the scope occurring earliest in the search order.  The order
@@ -137,8 +138,8 @@ public interface ScriptContext {
      * @throws IllegalArgumentException if the name is empty.
      */
     public Object getAttribute(String name);
-
-
+    
+    
     /**
      * Get the lowest scope in which an attribute is defined.
      * @param name Name of the attribute
@@ -149,37 +150,37 @@ public interface ScriptContext {
      * @throws IllegalArgumentException if name is empty.
      */
     public int getAttributesScope(String name);
-
+    
     /**
      * Returns the <code>Writer</code> for scripts to use when displaying output.
      *
      * @return The <code>Writer</code>.
      */
     public Writer getWriter();
-
-
+    
+    
     /**
      * Returns the <code>Writer</code> used to display error output.
      *
      * @return The <code>Writer</code>
      */
     public Writer getErrorWriter();
-
+    
     /**
      * Sets the <code>Writer</code> for scripts to use when displaying output.
      *
      * @param writer The new <code>Writer</code>.
      */
     public void setWriter(Writer writer);
-
-
+    
+    
     /**
      * Sets the <code>Writer</code> used to display error output.
      *
      * @param writer The <code>Writer</code>.
      */
     public void setErrorWriter(Writer writer);
-
+    
     /**
      * Returns a <code>Reader</code> to be used by the script to read
      * input.
@@ -187,15 +188,15 @@ public interface ScriptContext {
      * @return The <code>Reader</code>.
      */
     public Reader getReader();
-
-
+    
+    
     /**
      * Sets the <code>Reader</code> for scripts to read input
      * .
      * @param reader The new <code>Reader</code>.
      */
     public void setReader(Reader reader);
-
+    
     /**
      * Returns immutable <code>List</code> of all the valid values for
      * scope in the ScriptContext.

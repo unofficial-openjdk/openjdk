@@ -92,14 +92,14 @@ public abstract class OpenListResourceBundle extends ResourceBundle {
 
         return lookup.keySet();
     }
-
+    
     /**
      * Returns the parent bundle
      */
     public OpenListResourceBundle getParent() {
         return (OpenListResourceBundle)parent;
     }
-
+    
     /**
      * See ListResourceBundle class description.
      */
@@ -113,7 +113,7 @@ public abstract class OpenListResourceBundle extends ResourceBundle {
             loadLookup();
         }
     }
-
+    
     /**
      * We lazily load the lookup hashtable.  This function does the
      * loading.
@@ -135,7 +135,7 @@ public abstract class OpenListResourceBundle extends ResourceBundle {
         }
         lookup = temp;
     }
-
+    
     /**
      * Lets subclasses provide specialized Map implementations.
      * Default uses HashMap.

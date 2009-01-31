@@ -100,6 +100,7 @@ import javax.naming.*;
  * concurrent access by multiple threads.
  *
  * @author Scott Seligman
+ * @version %I% %E%
  */
 
 
@@ -128,12 +129,12 @@ public final class DnsName implements Name {
     /**
      * Constructs a <tt>DnsName</tt> representing a given domain name.
      *
-     * @param   name    the domain name to parse
+     * @param	name	the domain name to parse
      * @throws InvalidNameException if <tt>name</tt> does not conform
-     *          to DNS syntax.
+     *		to DNS syntax.
      */
     public DnsName(String name) throws InvalidNameException {
-        parse(name);
+	parse(name);
     }
 
     /*
@@ -142,239 +143,239 @@ public final class DnsName implements Name {
      * for the Name interface, with 0 being the most significant.
      */
     private DnsName(DnsName n, int beg, int end) {
-        // Compute indexes into "labels", which has least-significant label
-        // at index 0 (opposite to the convention used for "beg" and "end").
-        int b = n.size() - end;
-        int e = n.size() - beg;
-        labels.addAll(n.labels.subList(b, e));
+	// Compute indexes into "labels", which has least-significant label
+	// at index 0 (opposite to the convention used for "beg" and "end").
+	int b = n.size() - end;
+	int e = n.size() - beg;
+	labels.addAll(n.labels.subList(b, e));
 
-        if (size() == n.size()) {
-            domain = n.domain;
-            octets = n.octets;
-        } else {
-            Iterator iter = labels.iterator();
-            while (iter.hasNext()) {
-                String label = (String) iter.next();
-                if (label.length() > 0) {
-                    octets += (short) (label.length() + 1);
-                }
-            }
-        }
+	if (size() == n.size()) {
+	    domain = n.domain;
+	    octets = n.octets;
+	} else {
+	    Iterator iter = labels.iterator();
+	    while (iter.hasNext()) {
+		String label = (String) iter.next();
+		if (label.length() > 0) {
+		    octets += (short) (label.length() + 1);
+		}
+	    }
+	}
     }
 
 
     public String toString() {
-        if (domain == null) {
-            StringBuffer buf = new StringBuffer();
-            Iterator iter = labels.iterator();
-            while (iter.hasNext()) {
-                String label = (String) iter.next();
-                if (buf.length() > 0 || label.length() == 0) {
-                    buf.append('.');
-                }
-                escape(buf, label);
-            }
-            domain = buf.toString();
-        }
-        return domain;
+	if (domain == null) {
+	    StringBuffer buf = new StringBuffer();
+	    Iterator iter = labels.iterator();
+	    while (iter.hasNext()) {
+		String label = (String) iter.next();
+		if (buf.length() > 0 || label.length() == 0) {
+		    buf.append('.');
+		}
+		escape(buf, label);
+	    }
+	    domain = buf.toString();
+	}
+	return domain;
     }
 
     /**
      * Does this domain name follow <em>host name</em> syntax?
      */
     public boolean isHostName() {
-        Iterator iter = labels.iterator();
-        while (iter.hasNext()) {
-            if (!isHostNameLabel((String) iter.next())) {
-                return false;
-            }
-        }
-        return true;
+	Iterator iter = labels.iterator();
+	while (iter.hasNext()) {
+	    if (!isHostNameLabel((String) iter.next())) {
+		return false;
+	    }
+	}
+	return true;
     }
 
     public short getOctets() {
-        return octets;
+	return octets;
     }
 
     public int size() {
-        return labels.size();
+	return labels.size();
     }
 
     public boolean isEmpty() {
-        return (size() == 0);
+	return (size() == 0);
     }
 
     public int hashCode() {
-        int h = 0;
-        for (int i = 0; i < size(); i++) {
-            h = 31 * h + getKey(i).hashCode();
-        }
-        return h;
+	int h = 0;
+	for (int i = 0; i < size(); i++) {
+	    h = 31 * h + getKey(i).hashCode();
+	}
+	return h;
     }
 
     public boolean equals(Object obj) {
-        if (!(obj instanceof Name) || (obj instanceof CompositeName)) {
-            return false;
-        }
-        Name n = (Name) obj;
-        return ((size() == n.size()) &&         // shortcut:  do sizes differ?
-                (compareTo(obj) == 0));
+	if (!(obj instanceof Name) || (obj instanceof CompositeName)) {
+	    return false;
+	}
+	Name n = (Name) obj;
+	return ((size() == n.size()) &&		// shortcut:  do sizes differ?
+		(compareTo(obj) == 0));
     }
 
     public int compareTo(Object obj) {
-        Name n = (Name) obj;
-        return compareRange(0, size(), n);      // never 0 if sizes differ
+	Name n = (Name) obj;
+	return compareRange(0, size(), n);	// never 0 if sizes differ
     }
 
     public boolean startsWith(Name n) {
-        return ((size() >= n.size()) &&
-                (compareRange(0, n.size(), n) == 0));
+	return ((size() >= n.size()) &&
+		(compareRange(0, n.size(), n) == 0));
     }
 
     public boolean endsWith(Name n) {
-        return ((size() >= n.size()) &&
-                (compareRange(size() - n.size(), size(), n) == 0));
+	return ((size() >= n.size()) &&
+		(compareRange(size() - n.size(), size(), n) == 0));
     }
 
     public String get(int pos) {
-        if (pos < 0 || pos >= size()) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        int i = size() - pos - 1;       // index of "pos" component in "labels"
-        return (String) labels.get(i);
+	if (pos < 0 || pos >= size()) {
+	    throw new ArrayIndexOutOfBoundsException();
+	}
+	int i = size() - pos - 1;	// index of "pos" component in "labels"
+	return (String) labels.get(i);
     }
 
     public Enumeration getAll() {
-        return new Enumeration() {
-            int pos = 0;
-            public boolean hasMoreElements() {
-                return (pos < size());
-            }
-            public Object nextElement() {
-                if (pos < size()) {
-                    return get(pos++);
-                }
-                throw new java.util.NoSuchElementException();
-            }
-        };
+	return new Enumeration() {
+	    int pos = 0;
+	    public boolean hasMoreElements() {
+		return (pos < size());
+	    }
+	    public Object nextElement() {
+		if (pos < size()) {
+		    return get(pos++);
+		}
+		throw new java.util.NoSuchElementException();
+	    }
+	};
     }
 
     public Name getPrefix(int pos) {
-        return new DnsName(this, 0, pos);
+	return new DnsName(this, 0, pos);
     }
 
     public Name getSuffix(int pos) {
-        return new DnsName(this, pos, size());
+	return new DnsName(this, pos, size());
     }
 
     public Object clone() {
-        return new DnsName(this, 0, size());
+	return new DnsName(this, 0, size());
     }
 
     public Object remove(int pos) {
-        if (pos < 0 || pos >= size()) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        int i = size() - pos - 1;     // index of element to remove in "labels"
-        String label = (String) labels.remove(i);
-        int len = label.length();
-        if (len > 0) {
-            octets -= (short) (len + 1);
-        }
-        domain = null;          // invalidate "domain"
-        return label;
+	if (pos < 0 || pos >= size()) {
+	    throw new ArrayIndexOutOfBoundsException();
+	}
+	int i = size() - pos - 1;     // index of element to remove in "labels"
+	String label = (String) labels.remove(i);
+	int len = label.length();
+	if (len > 0) {
+	    octets -= (short) (len + 1);
+	}
+	domain = null;		// invalidate "domain"
+	return label;
     }
 
     public Name add(String comp) throws InvalidNameException {
-        return add(size(), comp);
+	return add(size(), comp);
     }
 
     public Name add(int pos, String comp) throws InvalidNameException {
-        if (pos < 0 || pos > size()) {
-            throw new ArrayIndexOutOfBoundsException();
-        }
-        // Check for empty labels:  may have only one, and only at end.
-        int len = comp.length();
-        if ((pos > 0 && len == 0) ||
-            (pos == 0 && hasRootLabel())) {
-                throw new InvalidNameException(
-                        "Empty label must be the last label in a domain name");
-        }
-        // Check total name length.
-        if (len > 0) {
-            if (octets + len + 1 >= 256) {
-                throw new InvalidNameException("Name too long");
-            }
-            octets += (short) (len + 1);
-        }
+	if (pos < 0 || pos > size()) {
+	    throw new ArrayIndexOutOfBoundsException();
+	}
+	// Check for empty labels:  may have only one, and only at end.
+	int len = comp.length();
+	if ((pos > 0 && len == 0) ||
+	    (pos == 0 && hasRootLabel())) {
+		throw new InvalidNameException(
+			"Empty label must be the last label in a domain name");
+	}
+	// Check total name length.
+	if (len > 0) {
+	    if (octets + len + 1 >= 256) {
+		throw new InvalidNameException("Name too long");
+	    }
+	    octets += (short) (len + 1);
+	}
 
-        int i = size() - pos;   // index for insertion into "labels"
-        verifyLabel(comp);
-        labels.add(i, comp);
+	int i = size() - pos;	// index for insertion into "labels"
+	verifyLabel(comp);
+	labels.add(i, comp);
 
-        domain = null;          // invalidate "domain"
-        return this;
+	domain = null;		// invalidate "domain"
+	return this;
     }
 
     public Name addAll(Name suffix) throws InvalidNameException {
-        return addAll(size(), suffix);
+	return addAll(size(), suffix);
     }
 
     public Name addAll(int pos, Name n) throws InvalidNameException {
-        if (n instanceof DnsName) {
-            // "n" is a DnsName so we can insert it as a whole, rather than
-            // verifying and inserting it component-by-component.
-            // More code, but less work.
-            DnsName dn = (DnsName) n;
+	if (n instanceof DnsName) {
+	    // "n" is a DnsName so we can insert it as a whole, rather than
+	    // verifying and inserting it component-by-component.
+	    // More code, but less work.
+	    DnsName dn = (DnsName) n;
 
-            if (dn.isEmpty()) {
-                return this;
-            }
-            // Check for empty labels:  may have only one, and only at end.
-            if ((pos > 0 && dn.hasRootLabel()) ||
-                (pos == 0 && hasRootLabel())) {
-                    throw new InvalidNameException(
-                        "Empty label must be the last label in a domain name");
-            }
+	    if (dn.isEmpty()) {
+		return this;
+	    }
+	    // Check for empty labels:  may have only one, and only at end.
+	    if ((pos > 0 && dn.hasRootLabel()) ||
+		(pos == 0 && hasRootLabel())) {
+		    throw new InvalidNameException(
+			"Empty label must be the last label in a domain name");
+	    }
 
-            short newOctets = (short) (octets + dn.octets - 1);
-            if (newOctets > 255) {
-                throw new InvalidNameException("Name too long");
-            }
-            octets = newOctets;
-            int i = size() - pos;       // index for insertion into "labels"
-            labels.addAll(i, dn.labels);
+	    short newOctets = (short) (octets + dn.octets - 1);
+	    if (newOctets > 255) {
+		throw new InvalidNameException("Name too long");
+	    }
+	    octets = newOctets;
+	    int i = size() - pos;	// index for insertion into "labels"
+	    labels.addAll(i, dn.labels);
 
-            // Preserve "domain" if we're appending or prepending,
-            // otherwise invalidate it.
-            if (isEmpty()) {
-                domain = dn.domain;
-            } else if (domain == null || dn.domain == null) {
-                domain = null;
-            } else if (pos == 0) {
-                domain += (dn.domain.equals(".") ? "" : ".") + dn.domain;
-            } else if (pos == size()) {
-                domain = dn.domain + (domain.equals(".") ? "" : ".") + domain;
-            } else {
-                domain = null;
-            }
+	    // Preserve "domain" if we're appending or prepending,
+	    // otherwise invalidate it.
+	    if (isEmpty()) {
+		domain = dn.domain;
+	    } else if (domain == null || dn.domain == null) {
+		domain = null;
+	    } else if (pos == 0) {
+		domain += (dn.domain.equals(".") ? "" : ".") + dn.domain;
+	    } else if (pos == size()) {
+		domain = dn.domain + (domain.equals(".") ? "" : ".") + domain;
+	    } else {
+		domain = null;
+	    }
 
-        } else if (n instanceof CompositeName) {
-            n = (DnsName) n;            // force ClassCastException
+	} else if (n instanceof CompositeName) {
+	    n = (DnsName) n;		// force ClassCastException
 
-        } else {                // "n" is a compound name, but not a DnsName.
-            // Add labels least-significant first:  sometimes more efficient.
-            for (int i = n.size() - 1; i >= 0; i--) {
-                add(pos, n.get(i));
-            }
-        }
-        return this;
+	} else {		// "n" is a compound name, but not a DnsName.
+	    // Add labels least-significant first:  sometimes more efficient.
+	    for (int i = n.size() - 1; i >= 0; i--) {
+		add(pos, n.get(i));
+	    }
+	}
+	return this;
     }
 
 
     boolean hasRootLabel() {
-        return (!isEmpty() &&
-                get(0).equals(""));
+	return (!isEmpty() &&
+		get(0).equals(""));
     }
 
     /*
@@ -386,24 +387,24 @@ public final class DnsName implements Name {
      * greater than those of "n".
      */
     private int compareRange(int beg, int end, Name n) {
-        if (n instanceof CompositeName) {
-            n = (DnsName) n;                    // force ClassCastException
-        }
-        // Loop through labels, starting with most significant.
-        int minSize = Math.min(end - beg, n.size());
-        for (int i = 0; i < minSize; i++) {
-            String label1 = get(i + beg);
-            String label2 = n.get(i);
+	if (n instanceof CompositeName) {
+	    n = (DnsName) n;			// force ClassCastException
+	}
+	// Loop through labels, starting with most significant.
+	int minSize = Math.min(end - beg, n.size());
+	for (int i = 0; i < minSize; i++) {
+	    String label1 = get(i + beg);
+	    String label2 = n.get(i);
 
-            int j = size() - (i + beg) - 1;     // index of label1 in "labels"
-            // assert (label1 == labels.get(j));
+	    int j = size() - (i + beg) - 1;	// index of label1 in "labels"
+	    // assert (label1 == labels.get(j));
 
-            int c = compareLabels(label1, label2);
-            if (c != 0) {
-                return c;
-            }
-        }
-        return ((end - beg) - n.size());        // longer range wins
+	    int c = compareLabels(label1, label2);
+	    if (c != 0) {
+		return c;
+	    }
+	}
+	return ((end - beg) - n.size());	// longer range wins
     }
 
     /*
@@ -412,7 +413,7 @@ public final class DnsName implements Name {
      * significant.
      */
     String getKey(int i) {
-        return keyForLabel(get(i));
+	return keyForLabel(get(i));
     }
 
 
@@ -421,38 +422,38 @@ public final class DnsName implements Name {
      */
     private void parse(String name) throws InvalidNameException {
 
-        StringBuffer label = new StringBuffer();        // label being parsed
+	StringBuffer label = new StringBuffer();	// label being parsed
 
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
+	for (int i = 0; i < name.length(); i++) {
+	    char c = name.charAt(i);
 
-            if (c == '\\') {                    // found an escape sequence
-                c = getEscapedOctet(name, i++);
-                if (isDigit(name.charAt(i))) {  // sequence is \DDD
-                    i += 2;                     // consume remaining digits
-                }
-                label.append(c);
+	    if (c == '\\') {			// found an escape sequence
+		c = getEscapedOctet(name, i++);
+		if (isDigit(name.charAt(i))) {	// sequence is \DDD
+		    i += 2;			// consume remaining digits
+		}
+		label.append(c);
 
-            } else if (c != '.') {              // an unescaped octet
-                label.append(c);
+	    } else if (c != '.') {		// an unescaped octet
+		label.append(c);
 
-            } else {                            // found '.' separator
-                add(0, label.toString());       // check syntax, then add label
-                                                //   to end of name
-                label.delete(0, i);             // clear buffer for next label
-            }
-        }
+	    } else {				// found '.' separator
+		add(0, label.toString());	// check syntax, then add label
+						//   to end of name
+		label.delete(0, i);		// clear buffer for next label
+	    }
+	}
 
-        // If name is neither "." nor "", the octets (zero or more)
-        // from the rightmost dot onward are now added as the final
-        // label of the name.  Those two are special cases in that for
-        // all other domain names, the number of labels is one greater
-        // than the number of dot separators.
-        if (!name.equals("") && !name.equals(".")) {
-            add(0, label.toString());
-        }
+	// If name is neither "." nor "", the octets (zero or more)
+	// from the rightmost dot onward are now added as the final
+	// label of the name.  Those two are special cases in that for
+	// all other domain names, the number of labels is one greater
+	// than the number of dot separators.
+	if (!name.equals("") && !name.equals(".")) {
+	    add(0, label.toString());
+	}
 
-        domain = name;          // do this last, since add() sets it to null
+	domain = name;		// do this last, since add() sets it to null
     }
 
     /*
@@ -461,27 +462,27 @@ public final class DnsName implements Name {
      * @throws InvalidNameException if a valid escape sequence is not found.
      */
     private static char getEscapedOctet(String name, int pos)
-                                                throws InvalidNameException {
-        try {
-            // assert (name.charAt(pos) == '\\');
-            char c1 = name.charAt(++pos);
-            if (isDigit(c1)) {          // sequence is `\DDD'
-                char c2 = name.charAt(++pos);
-                char c3 = name.charAt(++pos);
-                if (isDigit(c2) && isDigit(c3)) {
-                    return (char)
-                        ((c1 - '0') * 100 + (c2 - '0') * 10 + (c3 - '0'));
-                } else {
-                    throw new InvalidNameException(
-                            "Invalid escape sequence in " + name);
-                }
-            } else {                    // sequence is `\C'
-                return c1;
-            }
-        } catch (IndexOutOfBoundsException e) {
-            throw new InvalidNameException(
-                    "Invalid escape sequence in " + name);
-        }
+						throws InvalidNameException {
+	try {
+	    // assert (name.charAt(pos) == '\\');
+	    char c1 = name.charAt(++pos);
+	    if (isDigit(c1)) {		// sequence is `\DDD'
+		char c2 = name.charAt(++pos);
+		char c3 = name.charAt(++pos);
+		if (isDigit(c2) && isDigit(c3)) {
+		    return (char)
+			((c1 - '0') * 100 + (c2 - '0') * 10 + (c3 - '0'));
+		} else {
+		    throw new InvalidNameException(
+			    "Invalid escape sequence in " + name);
+		}
+	    } else {			// sequence is `\C'
+		return c1;
+	    }
+	} catch (IndexOutOfBoundsException e) {
+	    throw new InvalidNameException(
+		    "Invalid escape sequence in " + name);
+	}
     }
 
     /*
@@ -489,55 +490,55 @@ public final class DnsName implements Name {
      * @throws InvalidNameException if label is not valid.
      */
     private static void verifyLabel(String label) throws InvalidNameException {
-        if (label.length() > 63) {
-            throw new InvalidNameException(
-                    "Label exceeds 63 octets: " + label);
-        }
-        // Check for two-byte characters.
-        for (int i = 0; i < label.length(); i++) {
-            char c = label.charAt(i);
-            if ((c & 0xFF00) != 0) {
-                throw new InvalidNameException(
-                        "Label has two-byte char: " + label);
-            }
-        }
+	if (label.length() > 63) {
+	    throw new InvalidNameException(
+		    "Label exceeds 63 octets: " + label);
+	}
+	// Check for two-byte characters.
+	for (int i = 0; i < label.length(); i++) {
+	    char c = label.charAt(i);
+	    if ((c & 0xFF00) != 0) {
+		throw new InvalidNameException(
+			"Label has two-byte char: " + label);
+	    }
+	}
     }
 
     /*
      * Does this label conform to host name syntax?
      */
     private static boolean isHostNameLabel(String label) {
-        for (int i = 0; i < label.length(); i++) {
-            char c = label.charAt(i);
-            if (!isHostNameChar(c)) {
-                return false;
-            }
-        }
-        return !(label.startsWith("-") || label.endsWith("-"));
+	for (int i = 0; i < label.length(); i++) {
+	    char c = label.charAt(i);
+	    if (!isHostNameChar(c)) {
+		return false;
+	    }
+	}
+	return !(label.startsWith("-") || label.endsWith("-"));
     }
 
     private static boolean isHostNameChar(char c) {
-        return (c == '-' ||
-                c >= 'a' && c <= 'z' ||
-                c >= 'A' && c <= 'Z' ||
-                c >= '0' && c <= '9');
+	return (c == '-' ||
+		c >= 'a' && c <= 'z' ||
+		c >= 'A' && c <= 'Z' ||
+		c >= '0' && c <= '9');
     }
 
     private static boolean isDigit(char c) {
-        return (c >= '0' && c <= '9');
+	return (c >= '0' && c <= '9');
     }
 
     /*
      * Append a label to buf, escaping as needed.
      */
     private static void escape(StringBuffer buf, String label) {
-        for (int i = 0; i < label.length(); i++) {
-            char c = label.charAt(i);
-            if (c == '.' || c == '\\') {
-                buf.append('\\');
-            }
-            buf.append(c);
-        }
+	for (int i = 0; i < label.length(); i++) {
+	    char c = label.charAt(i);
+	    if (c == '.' || c == '\\') {
+		buf.append('\\');
+	    }
+	    buf.append(c);
+	}
     }
 
     /*
@@ -547,21 +548,21 @@ public final class DnsName implements Name {
      * See keyForLabel().
      */
     private static int compareLabels(String label1, String label2) {
-        int min = Math.min(label1.length(), label2.length());
-        for (int i = 0; i < min; i++) {
-            char c1 = label1.charAt(i);
-            char c2 = label2.charAt(i);
-            if (c1 >= 'A' && c1 <= 'Z') {
-                c1 += 'a' - 'A';                        // to lower case
-            }
-            if (c2 >= 'A' && c2 <= 'Z') {
-                c2 += 'a' - 'A';                        // to lower case
-            }
-            if (c1 != c2) {
-                return (c1 - c2);
-            }
-        }
-        return (label1.length() - label2.length());     // the longer one wins
+	int min = Math.min(label1.length(), label2.length());
+	for (int i = 0; i < min; i++) {
+	    char c1 = label1.charAt(i);
+	    char c2 = label2.charAt(i);
+	    if (c1 >= 'A' && c1 <= 'Z') {
+		c1 += 'a' - 'A';			// to lower case
+	    }
+	    if (c2 >= 'A' && c2 <= 'Z') {
+		c2 += 'a' - 'A';			// to lower case
+	    }
+	    if (c1 != c2) {
+		return (c1 - c2);
+	    }
+	}
+	return (label1.length() - label2.length());	// the longer one wins
     }
 
     /*
@@ -570,15 +571,15 @@ public final class DnsName implements Name {
      * into account.  See compareLabels().
      */
     private static String keyForLabel(String label) {
-        StringBuffer buf = new StringBuffer(label.length());
-        for (int i = 0; i < label.length(); i++) {
-            char c = label.charAt(i);
-            if (c >= 'A' && c <= 'Z') {
-                c += 'a' - 'A';                         // to lower case
-            }
-            buf.append(c);
-        }
-        return buf.toString();
+	StringBuffer buf = new StringBuffer(label.length());
+	for (int i = 0; i < label.length(); i++) {
+	    char c = label.charAt(i);
+	    if (c >= 'A' && c <= 'Z') {
+		c += 'a' - 'A';				// to lower case
+	    }
+	    buf.append(c);
+	}
+	return buf.toString();
     }
 
 
@@ -586,22 +587,22 @@ public final class DnsName implements Name {
      * Serializes only the domain name string, for compactness and to avoid
      * any implementation dependency.
      *
-     * @serialdata      The domain name string.
+     * @serialdata	The domain name string.
      */
     private void writeObject(java.io.ObjectOutputStream s)
-            throws java.io.IOException {
-        s.writeObject(toString());
+	    throws java.io.IOException {
+	s.writeObject(toString());
     }
 
     private void readObject(java.io.ObjectInputStream s)
-            throws java.io.IOException, ClassNotFoundException {
-        try {
-            parse((String) s.readObject());
-        } catch (InvalidNameException e) {
-            // shouldn't happen
-            throw new java.io.StreamCorruptedException(
-                    "Invalid name: " + domain);
-        }
+	    throws java.io.IOException, ClassNotFoundException {
+	try {
+	    parse((String) s.readObject());
+	} catch (InvalidNameException e) {
+	    // shouldn't happen
+	    throw new java.io.StreamCorruptedException(
+		    "Invalid name: " + domain);
+	}
     }
 
     private static final long serialVersionUID = 7040187611324710271L;

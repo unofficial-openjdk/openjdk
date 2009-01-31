@@ -44,3 +44,4 @@ typedef XRectangle RECT_T;
 #define RECT_INC_HEIGHT(r)      (r).height++
 
 #endif // _AWT_RECT_H
+

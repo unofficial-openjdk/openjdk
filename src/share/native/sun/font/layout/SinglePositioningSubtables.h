@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)SinglePositioningSubtables.h	1.10 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -62,3 +63,5 @@ struct SinglePositioningFormat2Subtable : SinglePositioningSubtable
 };
 
 #endif
+
+

@@ -38,6 +38,7 @@ import sun.security.pkcs.ParsingException;
 /**
  * A MacData type, as defined in PKCS#12.
  *
+ * @version %I%, %G%
  * @author Sharon Liu
  */
 
@@ -56,34 +57,34 @@ class MacData {
      * Parses a PKCS#12 MAC data.
      */
     MacData(DerInputStream derin)
-        throws IOException, ParsingException
+	throws IOException, ParsingException
     {
-        DerValue[] macData = derin.getSequence(2);
+	DerValue[] macData = derin.getSequence(2);
 
-        // Parse the digest info
-        DerInputStream digestIn = new DerInputStream(macData[0].toByteArray());
-        DerValue[] digestInfo = digestIn.getSequence(2);
+	// Parse the digest info
+	DerInputStream digestIn = new DerInputStream(macData[0].toByteArray());
+	DerValue[] digestInfo = digestIn.getSequence(2);
+	
+	// Parse the DigestAlgorithmIdentifier.
+	AlgorithmId digestAlgorithmId = AlgorithmId.parse(digestInfo[0]);
+	this.digestAlgorithmName = digestAlgorithmId.getName();
+	this.digestAlgorithmParams = digestAlgorithmId.getParameters();
+	// Get the digest.
+	this.digest = digestInfo[1].getOctetString();
 
-        // Parse the DigestAlgorithmIdentifier.
-        AlgorithmId digestAlgorithmId = AlgorithmId.parse(digestInfo[0]);
-        this.digestAlgorithmName = digestAlgorithmId.getName();
-        this.digestAlgorithmParams = digestAlgorithmId.getParameters();
-        // Get the digest.
-        this.digest = digestInfo[1].getOctetString();
+	// Get the salt.
+	this.macSalt = macData[1].getOctetString();
 
-        // Get the salt.
-        this.macSalt = macData[1].getOctetString();
-
-        // Iterations is optional. The default value is 1.
-        if (macData.length > 2) {
-            this.iterations = macData[2].getInteger();
-        } else {
-            this.iterations = 1;
-        }
+	// Iterations is optional. The default value is 1.
+	if (macData.length > 2) {
+	    this.iterations = macData[2].getInteger();
+	} else {
+	    this.iterations = 1;
+	}
     }
 
-    MacData(String algName, byte[] digest, byte[] salt, int iterations)
-        throws NoSuchAlgorithmException
+    MacData(String algName, byte[] digest, byte[] salt, int iterations) 
+        throws NoSuchAlgorithmException 
     {
         if (algName == null)
            throw new NullPointerException("the algName parameter " +
@@ -112,8 +113,8 @@ class MacData {
 
     }
 
-    MacData(AlgorithmParameters algParams, byte[] digest,
-        byte[] salt, int iterations) throws NoSuchAlgorithmException
+    MacData(AlgorithmParameters algParams, byte[] digest, 
+	byte[] salt, int iterations) throws NoSuchAlgorithmException 
     {
         if (algParams == null)
            throw new NullPointerException("the algParams parameter " +
@@ -143,19 +144,19 @@ class MacData {
     }
 
     String getDigestAlgName() {
-        return digestAlgorithmName;
+	return digestAlgorithmName;
     }
 
     byte[] getSalt() {
-        return macSalt;
+	return macSalt;
     }
 
     int getIterations() {
-        return iterations;
+	return iterations;
     }
 
     byte[] getDigest() {
-        return digest;
+	return digest;
     }
 
     /**
@@ -166,7 +167,7 @@ class MacData {
      */
     public byte[] getEncoded() throws NoSuchAlgorithmException, IOException
     {
-        if (this.encoded != null)
+        if (this.encoded != null) 
             return this.encoded.clone();
 
         DerOutputStream out = new DerOutputStream();
@@ -179,7 +180,7 @@ class MacData {
 
         // encode digest data
         tmp2.putOctetString(digest);
-
+       
         tmp.write(DerValue.tag_Sequence, tmp2);
 
         // encode salt

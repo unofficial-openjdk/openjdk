@@ -26,11 +26,12 @@
 package java.lang;
 
 /**
- * The class <code>Exception</code> and its subclasses are a form of
- * <code>Throwable</code> that indicates conditions that a reasonable
+ * The class <code>Exception</code> and its subclasses are a form of 
+ * <code>Throwable</code> that indicates conditions that a reasonable 
  * application might want to catch.
  *
  * @author  Frank Yellin
+ * @version %I%, %G%
  * @see     java.lang.Error
  * @since   JDK1.0
  */
@@ -43,7 +44,7 @@ public class Exception extends Throwable {
      * call to {@link #initCause}.
      */
     public Exception() {
-        super();
+	super();
     }
 
     /**
@@ -51,11 +52,11 @@ public class Exception extends Throwable {
      * cause is not initialized, and may subsequently be initialized by
      * a call to {@link #initCause}.
      *
-     * @param   message   the detail message. The detail message is saved for
+     * @param   message   the detail message. The detail message is saved for 
      *          later retrieval by the {@link #getMessage()} method.
      */
     public Exception(String message) {
-        super(message);
+	super(message);
     }
 
     /**

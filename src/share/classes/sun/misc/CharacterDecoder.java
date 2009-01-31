@@ -44,9 +44,9 @@ import java.nio.ByteBuffer;
  * text that has the form:
  *
  * <pre>
- *      [Buffer Prefix]
- *      [Line Prefix][encoded data atoms][Line Suffix]
- *      [Buffer Suffix]
+ *	[Buffer Prefix]
+ *	[Line Prefix][encoded data atoms][Line Suffix]
+ *	[Buffer Suffix]
  * </pre>
  *
  * Of course in the simplest encoding schemes, the buffer has no
@@ -71,18 +71,19 @@ import java.nio.ByteBuffer;
  * In general, the character decoders return error in the form of a
  * CEFormatException. The syntax of the detail string is
  * <pre>
- *      DecoderClassName: Error message.
+ *	DecoderClassName: Error message.
  * </pre>
  *
  * Several useful decoders have already been written and are
  * referenced in the See Also list below.
  *
- * @author      Chuck McManis
- * @see         CEFormatException
- * @see         CharacterEncoder
- * @see         UCDecoder
- * @see         UUDecoder
- * @see         BASE64Decoder
+ * @version	%G%, %I%
+ * @author	Chuck McManis
+ * @see		CEFormatException
+ * @see		CharacterEncoder
+ * @see		UCDecoder
+ * @see		UUDecoder
+ * @see		BASE64Decoder
  */
 
 public abstract class CharacterDecoder {
@@ -106,7 +107,7 @@ public abstract class CharacterDecoder {
      * could have been encoded on the line.
      */
     protected int decodeLinePrefix(PushbackInputStream aStream, OutputStream bStream) throws IOException {
-        return (bytesPerLine());
+	return (bytesPerLine());
     }
 
     /**
@@ -123,7 +124,7 @@ public abstract class CharacterDecoder {
      * method how many bytes are required. This is always <= bytesPerAtom().
      */
     protected void decodeAtom(PushbackInputStream aStream, OutputStream bStream, int l) throws IOException {
-        throw new CEStreamExhausted();
+	throw new CEStreamExhausted();
     }
 
     /**
@@ -131,14 +132,14 @@ public abstract class CharacterDecoder {
      * read method.
      */
     protected int readFully(InputStream in, byte buffer[], int offset, int len)
-        throws java.io.IOException {
-        for (int i = 0; i < len; i++) {
-            int q = in.read();
-            if (q == -1)
-                return ((i == 0) ? -1 : i);
-            buffer[i+offset] = (byte)q;
-        }
-        return len;
+	throws java.io.IOException {
+	for (int i = 0; i < len; i++) {
+	    int q = in.read();
+	    if (q == -1)
+		return ((i == 0) ? -1 : i);
+	    buffer[i+offset] = (byte)q;
+	}
+	return len;
     }
 
     /**
@@ -149,33 +150,33 @@ public abstract class CharacterDecoder {
      * @exception CEStreamExhausted The input stream is unexpectedly out of data
      */
     public void decodeBuffer(InputStream aStream, OutputStream bStream) throws IOException {
-        int     i;
-        int     totalBytes = 0;
+	int	i;
+	int	totalBytes = 0;
 
-        PushbackInputStream ps = new PushbackInputStream (aStream);
-        decodeBufferPrefix(ps, bStream);
-        while (true) {
-            int length;
+	PushbackInputStream ps = new PushbackInputStream (aStream);
+	decodeBufferPrefix(ps, bStream);
+	while (true) {
+	    int length;
 
-            try {
-                length = decodeLinePrefix(ps, bStream);
-                for (i = 0; (i+bytesPerAtom()) < length; i += bytesPerAtom()) {
-                    decodeAtom(ps, bStream, bytesPerAtom());
-                    totalBytes += bytesPerAtom();
-                }
-                if ((i + bytesPerAtom()) == length) {
-                    decodeAtom(ps, bStream, bytesPerAtom());
-                    totalBytes += bytesPerAtom();
-                } else {
-                    decodeAtom(ps, bStream, length - i);
-                    totalBytes += (length - i);
-                }
-                decodeLineSuffix(ps, bStream);
-            } catch (CEStreamExhausted e) {
-                break;
-            }
-        }
-        decodeBufferSuffix(ps, bStream);
+	    try {
+		length = decodeLinePrefix(ps, bStream);
+		for (i = 0; (i+bytesPerAtom()) < length; i += bytesPerAtom()) {
+		    decodeAtom(ps, bStream, bytesPerAtom());
+		    totalBytes += bytesPerAtom();
+		}
+		if ((i + bytesPerAtom()) == length) {
+		    decodeAtom(ps, bStream, bytesPerAtom());
+		    totalBytes += bytesPerAtom();
+		} else {
+		    decodeAtom(ps, bStream, length - i);
+		    totalBytes += (length - i);
+		}
+		decodeLineSuffix(ps, bStream);
+	    } catch (CEStreamExhausted e) {
+		break;
+	    }
+	}
+	decodeBufferSuffix(ps, bStream);
     }
 
     /**
@@ -184,39 +185,39 @@ public abstract class CharacterDecoder {
      * @exception CEFormatException An error has occured while decoding
      */
     public byte decodeBuffer(String inputString)[] throws IOException {
-        byte    inputBuffer[] = new byte[inputString.length()];
-        ByteArrayInputStream inStream;
-        ByteArrayOutputStream outStream;
+	byte	inputBuffer[] = new byte[inputString.length()];
+	ByteArrayInputStream inStream;
+	ByteArrayOutputStream outStream;
 
-        inputString.getBytes(0, inputString.length(), inputBuffer, 0);
-        inStream = new ByteArrayInputStream(inputBuffer);
-        outStream = new ByteArrayOutputStream();
-        decodeBuffer(inStream, outStream);
-        return (outStream.toByteArray());
+	inputString.getBytes(0, inputString.length(), inputBuffer, 0);
+	inStream = new ByteArrayInputStream(inputBuffer);
+	outStream = new ByteArrayOutputStream();
+	decodeBuffer(inStream, outStream);
+	return (outStream.toByteArray());
     }
 
     /**
      * Decode the contents of the inputstream into a buffer.
      */
     public byte decodeBuffer(InputStream in)[] throws IOException {
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        decodeBuffer(in, outStream);
-        return (outStream.toByteArray());
+	ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+	decodeBuffer(in, outStream);
+	return (outStream.toByteArray());
     }
 
     /**
      * Decode the contents of the String into a ByteBuffer.
      */
     public ByteBuffer decodeBufferToByteBuffer(String inputString)
-        throws IOException {
-        return ByteBuffer.wrap(decodeBuffer(inputString));
+	throws IOException {
+	return ByteBuffer.wrap(decodeBuffer(inputString));
     }
 
     /**
      * Decode the contents of the inputStream into a ByteBuffer.
      */
     public ByteBuffer decodeBufferToByteBuffer(InputStream in)
-        throws IOException {
-        return ByteBuffer.wrap(decodeBuffer(in));
+	throws IOException {
+	return ByteBuffer.wrap(decodeBuffer(in));
     }
 }

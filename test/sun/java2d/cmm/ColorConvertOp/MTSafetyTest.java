@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 6476665
- * @summary Verifies MT safety of color conversions
+ * @summary Verifies MT safety of color conversions 
  * @run main MTSafetyTest
  */
 
@@ -33,16 +33,16 @@ import java.awt.*;
 import java.awt.color.*;
 import java.awt.image.*;
 
-public class MTSafetyTest {
-
+public class MTSafetyTest {   
+    
     static boolean failed = false;
 
     static int[] colorSpaceType = {
-        ColorSpace.CS_CIEXYZ,
-        ColorSpace.CS_GRAY,
-        ColorSpace.CS_LINEAR_RGB,
-        ColorSpace.CS_PYCC,
-        ColorSpace.CS_sRGB
+        ColorSpace.CS_CIEXYZ, 
+        ColorSpace.CS_GRAY, 
+        ColorSpace.CS_LINEAR_RGB, 
+        ColorSpace.CS_PYCC, 
+        ColorSpace.CS_sRGB 
     };
 
     static private final int[] imageTypes = new int[] {
@@ -61,26 +61,26 @@ public class MTSafetyTest {
         BufferedImage.TYPE_BYTE_INDEXED
     };
 
-
-    public static void main(String[] args) {
+    
+    public static void main(String[] args) { 
         int nImgTypes = imageTypes.length;
         int nCSTypes = colorSpaceType.length;
-        Vector<Thread> threads =
+        Vector<Thread> threads = 
             new Vector<Thread>(nImgTypes*nCSTypes*nCSTypes);
 
         for (int i = 0; i < nImgTypes; i++) {
-            BufferedImage origImage =
+            BufferedImage origImage = 
                 new BufferedImage(300, 300, imageTypes[i]);
-
+ 
             for (int j = 0; j < nCSTypes; j++) {
                 for (int k = 0; k < nCSTypes; k++) {
-
+                    
                     Graphics2D g2 = (Graphics2D) origImage.getGraphics();
                     g2.fillRect(0, 0, 300, 150);
-
+ 
                     ColorConvertOp colorOp = getColorConvertOp(j,k);
                     ColorConvert cc = new ColorConvert(origImage, colorOp);
-
+                    
                     Thread colorThread = new Thread(cc);
                     threads.add(colorThread);
                     colorThread.start();
@@ -100,9 +100,9 @@ public class MTSafetyTest {
             throw new RuntimeException("Unexpected exception");
         }
     }
-
-    private static ColorConvertOp getColorConvertOp(int srcIndex,
-                                                    int destIndex)
+    
+    private static ColorConvertOp getColorConvertOp(int srcIndex, 
+                                                    int destIndex) 
     {
         ColorSpace srcColorSpace = ColorSpace.getInstance(
             colorSpaceType[srcIndex]);
@@ -110,23 +110,23 @@ public class MTSafetyTest {
             colorSpaceType[destIndex]);
         return new ColorConvertOp(srcColorSpace, destColorSpace, null);
     }
-
-
+    
+    
     static class ColorConvert implements Runnable {
-
+        
         BufferedImage original = null;
         ColorConvertOp colorOp = null;
-
+        
         public ColorConvert(BufferedImage orig, ColorConvertOp ccOp) {
             original = orig;
             colorOp = ccOp;
         }
-
+        
         public void run() {
             try {
                 colorOp.filter(original, null);
             } catch (OutOfMemoryError e) {
-            /* Skipping OOM exception. We cannot just enlarge stack and heap
+            /* Skipping OOM exception. We cannot just enlarge stack and heap 
              * because it causes problem to disappear
              */
 
@@ -139,3 +139,4 @@ public class MTSafetyTest {
         }
     }
 }
+        

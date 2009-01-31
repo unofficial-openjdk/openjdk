@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package javax.management;
+package javax.management; 
 
 
 /**
@@ -34,9 +34,9 @@ package javax.management;
  *
  * @since 1.5
  */
-public class MBeanException extends JMException   {
-
-
+public class MBeanException extends JMException   { 
+    
+    
     /* Serial version */
     private static final long serialVersionUID = 4066342430588744142L;
 
@@ -44,17 +44,17 @@ public class MBeanException extends JMException   {
      * @serial Encapsulated {@link Exception}
      */
     private java.lang.Exception exception ;
-
+   
 
     /**
      * Creates an <CODE>MBeanException</CODE> that wraps the actual <CODE>java.lang.Exception</CODE>.
      *
      * @param e the wrapped exception.
      */
-    public MBeanException(java.lang.Exception e) {
-        super() ;
-        exception = e ;
-    }
+    public MBeanException(java.lang.Exception e) { 
+	super() ;
+	exception = e ;
+    } 
 
     /**
      * Creates an <CODE>MBeanException</CODE> that wraps the actual <CODE>java.lang.Exception</CODE> with
@@ -63,20 +63,20 @@ public class MBeanException extends JMException   {
      * @param e the wrapped exception.
      * @param message the detail message.
      */
-    public MBeanException(java.lang.Exception e, String message) {
-        super(message) ;
-        exception = e ;
-    }
-
+    public MBeanException(java.lang.Exception e, String message) { 
+	super(message) ;
+	exception = e ;
+    } 
+    
 
     /**
      * Return the actual {@link Exception} thrown.
      *
      * @return the wrapped exception.
      */
-    public Exception getTargetException()  {
-        return exception;
-    }
+    public Exception getTargetException()  { 
+	return exception;
+    } 
 
     /**
      * Return the actual {@link Exception} thrown.
@@ -84,6 +84,6 @@ public class MBeanException extends JMException   {
      * @return the wrapped exception.
      */
     public Throwable getCause() {
-        return exception;
+	return exception;
     }
 }

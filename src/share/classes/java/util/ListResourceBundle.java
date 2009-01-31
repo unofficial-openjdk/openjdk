@@ -69,7 +69,7 @@ import sun.util.ResourceBundleEnumeration;
  * Keys are case-sensitive.
  * <blockquote>
  * <pre>
- *
+ * 
  * public class MyResources extends ListResourceBundle {
  *     protected Object[][] getContents() {
  *         return new Object[][] = {
@@ -142,7 +142,7 @@ public abstract class ListResourceBundle extends ResourceBundle {
         if (lookup == null) {
             loadLookup();
         }
-
+        
         ResourceBundle parent = this.parent;
         return new ResourceBundleEnumeration(lookup.keySet(),
                 (parent != null) ? parent.getKeys() : null);
@@ -158,10 +158,10 @@ public abstract class ListResourceBundle extends ResourceBundle {
      * @see #keySet()
      */
     protected Set<String> handleKeySet() {
-        if (lookup == null) {
-            loadLookup();
-        }
-        return lookup.keySet();
+	if (lookup == null) {
+	    loadLookup();
+	}
+	return lookup.keySet();
     }
 
     /**

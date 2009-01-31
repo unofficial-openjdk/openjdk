@@ -46,7 +46,7 @@
 /* [RGV] I don't think this is referenced in the linux code */
 #define N_TRACED_REGS 32
 #else
-// TODO: delete this file - threads_md.[ch] is obsolete. struct sys_thread is
+// TODO: delete this file - threads_md.[ch] is obsolete. struct sys_thread is 
 // never used. Define a value just to keep compiler happy.
 #define N_TRACED_REGS 32
 #endif
@@ -96,9 +96,9 @@ typedef enum {
 } new_thr_state_t;
 
 typedef struct {
-    pthread_mutex_t     m;
-    pthread_cond_t      c;
-    new_thr_state_t     state;
+    pthread_mutex_t	m;
+    pthread_cond_t	c;
+    new_thr_state_t	state;
 } new_thr_cond_t;
 #endif /* USE_PTHREADS */
 
@@ -112,9 +112,9 @@ struct sys_thread {
      * model on any given thread implementation.
      */
     mutex_t mutex;              /* per thread lock to protect thread fields */
-    thread_t sys_thread;                /* The native thread id */
-    struct sys_thread *next;            /* Pointer to next thread in the */
-                                        /* queue of all threads. */
+    thread_t sys_thread;		/* The native thread id */
+    struct sys_thread *next;		/* Pointer to next thread in the */
+					/* queue of all threads. */
     thread_state_t state;
 
     /* Thread status flags */
@@ -135,7 +135,7 @@ struct sys_thread {
 #ifdef __linux__
     void *sp;
 #else
-    unsigned long  sp;   /* sp at time of last (native) thread switch */
+    unsigned long  sp;	 /* sp at time of last (native) thread switch */
 #endif
     void * stack_bottom; /* The real bottom (high address) of stack */
     void * stack_top;    /* should be equal to stack_bottom - stack_size */
@@ -156,10 +156,10 @@ struct sys_thread {
        saved in monitor_entry_count.  That is restored into the
        monitor when this waiting thread is notified. */
 
-    long monitor_entry_count;           /* For recursive monitor entry */
-    struct sys_mon *mon_wait;           /* CONDVAR_WAIT'ing */
+    long monitor_entry_count;		/* For recursive monitor entry */
+    struct sys_mon *mon_wait;		/* CONDVAR_WAIT'ing */
 
-    struct sys_mon *mon_enter;          /* blocked waiting to enter */
+    struct sys_mon *mon_enter;		/* blocked waiting to enter */
 
     void (*start_proc)(void *);
     void *start_parm;
@@ -184,7 +184,7 @@ struct sys_thread {
 #endif /* USE_PTHREADS */
 };
 
-#define SYS_THREAD_NULL         ((sys_thread_t *) 0)
+#define SYS_THREAD_NULL        	((sys_thread_t *) 0)
 
 /*
  * following macro copied from sys/signal.h since inside #ifdef _KERNEL there.
@@ -207,12 +207,12 @@ extern sys_mon_t *_sys_queue_lock;
 #define SYS_QUEUE_UNLOCK(self)  sysMonitorExit(self, _sys_queue_lock)
 #define SYS_QUEUE_NOTIFYALL(self)  sysMonitorNotifyAll(self, _sys_queue_lock)
 #define SYS_QUEUE_WAIT(self) sysMonitorWait(self, _sys_queue_lock, \
-                                        SYS_TIMEOUT_INFINITY)
+					SYS_TIMEOUT_INFINITY)
 
 extern void setFPMode(void);
 
 extern sys_thread_t *ThreadQueue;
 
-extern int ActiveThreadCount;           /* All threads */
+extern int ActiveThreadCount;		/* All threads */
 
 #endif /* !_JAVASOFT_SOLARIS_THREADS_MD_H_ */

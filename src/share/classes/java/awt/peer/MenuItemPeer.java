@@ -45,3 +45,4 @@ public interface MenuItemPeer extends MenuComponentPeer {
      */
     void disable();
 }
+

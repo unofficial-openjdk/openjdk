@@ -24,7 +24,7 @@
  */
 
 /*-
- *      FTP stream opener
+ *	FTP stream opener
  */
 
 package sun.net.www.protocol.ftp;
@@ -45,19 +45,27 @@ public class Handler extends java.net.URLStreamHandler {
     }
 
     protected boolean equals(URL u1, URL u2) {
-        String userInfo1 = u1.getUserInfo();
-        String userInfo2 = u2.getUserInfo();
-        return super.equals(u1, u2) &&
-            (userInfo1 == null? userInfo2 == null: userInfo1.equals(userInfo2));
+	String userInfo1 = u1.getUserInfo();
+	String userInfo2 = u2.getUserInfo();
+	return super.equals(u1, u2) && 
+	    (userInfo1 == null? userInfo2 == null: userInfo1.equals(userInfo2));
     }
 
-    protected java.net.URLConnection openConnection(URL u)
-        throws IOException {
-        return openConnection(u, null);
+    protected java.net.URLConnection openConnection(URL u) 
+	throws IOException {
+	return openConnection(u, null);
     }
-
+    
     protected java.net.URLConnection openConnection(URL u, Proxy p)
-        throws IOException {
-        return new FtpURLConnection(u, p);
+	throws IOException {
+	return new FtpURLConnection(u, p);
     }
 }
+
+
+
+
+
+
+
+

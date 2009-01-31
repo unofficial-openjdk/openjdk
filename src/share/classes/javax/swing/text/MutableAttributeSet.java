@@ -33,6 +33,7 @@ import java.util.Enumeration;
  * form:<tt>
  * public XXXAttributeSet(ConstAttributeSet source);</tt>
  *
+ * @version %I% %G%
  */
 public interface MutableAttributeSet extends AttributeSet {
 
@@ -85,3 +86,14 @@ public interface MutableAttributeSet extends AttributeSet {
     public void setResolveParent(AttributeSet parent);
 
 }
+
+
+
+
+
+
+
+
+
+
+

@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.applet.Applet;
@@ -66,14 +67,14 @@ public class DitherTest extends Applet implements Runnable {
         String xspec = null, yspec = null;
         int xvals[] = new int[2];
         int yvals[] = new int[2];
-
+        
         try {
             xspec = getParameter("xaxis");
             yspec = getParameter("yaxis");
         } catch (NullPointerException npe) {
             //only occurs if run as application
         }
-
+        
         if (xspec == null) {
             xspec = "red";
         }
@@ -140,7 +141,7 @@ public class DitherTest extends Applet implements Runnable {
         } else if (begval > 255) {
             begval = 255;
         }
-
+        
         if (endval < 0) {
             endval = 0;
         } else if (endval > 255) {
@@ -158,7 +159,7 @@ public class DitherTest extends Applet implements Runnable {
      */
     private Image calculateImage() {
         Thread me = Thread.currentThread();
-
+        
         int width = canvas.getSize().width;
         int height = canvas.getSize().height;
         int xvals[] = new int[2];
@@ -194,7 +195,7 @@ public class DitherTest extends Applet implements Runnable {
                             ColorModel.getRGBdefault(), pixels, 0, width));
     }
 
-    private void applymethod(int c[], int method, int step,
+    private void applymethod(int c[], int method, int step, 
                              int total, int vals[]) {
         if (method == NOOP) {
             return;
@@ -262,7 +263,7 @@ public class DitherTest extends Applet implements Runnable {
         String[][] info = {
             {"xaxis", "{RED, GREEN, BLUE, ALPHA, SATURATION}",
              "The color of the Y axis.  Default is RED."},
-            {"yaxis", "{RED, GREEN, BLUE, ALPHA, SATURATION}",
+            {"yaxis", "{RED, GREEN, BLUE, ALPHA, SATURATION}", 
              "The color of the X axis.  Default is BLUE."}
         };
         return info;
@@ -357,7 +358,7 @@ class DitherControls extends Panel implements ActionListener {
         }
         return choice.getSelectedIndex();
     }
-
+    
     /* fits the number between 0 and 255 inclusive */
     private int scale(int number) {
         if (number < 0) {
@@ -380,16 +381,16 @@ class CardinalTextField extends TextField {
 
     String oldText = null;
 
-    public CardinalTextField(String text, int columns) {
+    public CardinalTextField(String text, int columns) { 
         super(text, columns);
         enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.TEXT_EVENT_MASK);
         oldText = getText();
     }
 
     // Consume non-digit KeyTyped events
-    // Note that processTextEvent kind of eliminates the need for this
-    // function, but this is neater, since ideally, it would prevent
-    // the text from appearing at all.  Sigh.  See bugid 4100317/4114565.
+    // Note that processTextEvent kind of eliminates the need for this 
+    // function, but this is neater, since ideally, it would prevent 
+    // the text from appearing at all.  Sigh.  See bugid 4100317/4114565. 
     //
     protected void processEvent(AWTEvent evt) {
         int id = evt.getID();
@@ -401,7 +402,7 @@ class CardinalTextField extends TextField {
         KeyEvent kevt = (KeyEvent) evt;
         char c = kevt.getKeyChar();
 
-        // Digits, backspace, and delete are okay
+        // Digits, backspace, and delete are okay 
         // Note that the minus sign is not allowed (neither is decimal)
         if (Character.isDigit(c) || (c == '\b') || (c == '\u007f')) {
             super.processEvent(evt);
@@ -414,14 +415,14 @@ class CardinalTextField extends TextField {
 
     // Should consume TextEvents for non-integer Strings
     // Store away the text in the tf for every TextEvent
-    // so we can revert to it on a TextEvent (paste, or
+    // so we can revert to it on a TextEvent (paste, or 
     // legal key in the wrong location) with bad text
     //
-    // Note: it would be easy to extend this to an eight-bit
-    // TextField (range 0-255), but I'll leave it as-is.
+    // Note: it would be easy to extend this to an eight-bit 
+    // TextField (range 0-255), but I'll leave it as-is.  
     //
-    protected void processTextEvent(TextEvent te) {
-        // The empty string is okay, too
+    protected void processTextEvent(TextEvent te) { 
+        // The empty string is okay, too 
         String newText = getText();
         if (newText.equals("") || textIsCardinal(newText)) {
             oldText = newText;
@@ -438,11 +439,12 @@ class CardinalTextField extends TextField {
     private boolean textIsCardinal(String textToCheck) {
         int value = -1;
 
-        try {
-            value = Integer.parseInt(textToCheck, 10);
+        try { 
+            value = Integer.parseInt(textToCheck, 10); 
             return (value >= 0);
-        } catch (NumberFormatException nfe) {
-            return false;
+        } catch (NumberFormatException nfe) { 
+            return false; 
         }
     }
 }
+

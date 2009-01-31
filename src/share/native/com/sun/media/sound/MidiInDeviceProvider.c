@@ -43,7 +43,7 @@ JNIEXPORT jint JNICALL
 Java_com_sun_media_sound_MidiInDeviceProvider_nGetNumDevices(JNIEnv* e, jobject thisObj) {
 
     INT32 numDevices = 0;
-
+	
     TRACE0("Java_com_sun_media_sound_MidiInDeviceProvider_nGetNumDevices.\n");
 
 #if USE_PLATFORM_MIDI_IN == TRUE
@@ -69,7 +69,7 @@ Java_com_sun_media_sound_MidiInDeviceProvider_nGetName(JNIEnv* e, jobject thisOb
 #endif
 
     if (name[0] == 0) {
-        strcpy(name, "Unknown name");
+	strcpy(name, "Unknown name");
     }
     jString = (*e)->NewStringUTF(e, name);
     TRACE0("Java_com_sun_media_sound_MidiInDeviceProvider_nGetName completed.\n");
@@ -91,7 +91,7 @@ Java_com_sun_media_sound_MidiInDeviceProvider_nGetVendor(JNIEnv* e, jobject this
 #endif
 
     if (name[0] == 0) {
-        strcpy(name, "Unknown vendor");
+	strcpy(name, "Unknown vendor");
     }
     jString = (*e)->NewStringUTF(e, name);
     TRACE0("Java_com_sun_media_sound_MidiInDeviceProvider_nGetVendor completed.\n");
@@ -107,13 +107,13 @@ Java_com_sun_media_sound_MidiInDeviceProvider_nGetDescription(JNIEnv* e, jobject
 
     TRACE0("Java_com_sun_media_sound_MidiInDeviceProvider_nGetDescription.\n");
     name[0] = 0;
-
+ 
 #if USE_PLATFORM_MIDI_IN == TRUE
     MIDI_IN_GetDeviceDescription((INT32)index, name, (UINT32)MAX_STRING_LENGTH);
 #endif
 
     if (name[0] == 0) {
-        strcpy(name, "No details available");
+	strcpy(name, "No details available");
     }
     jString = (*e)->NewStringUTF(e, name);
     TRACE0("Java_com_sun_media_sound_MidiInDeviceProvider_nGetDescription completed.\n");
@@ -135,7 +135,7 @@ Java_com_sun_media_sound_MidiInDeviceProvider_nGetVersion(JNIEnv* e, jobject thi
 #endif
 
     if (name[0] == 0) {
-        strcpy(name, "Unknown version");
+	strcpy(name, "Unknown version");
     }
     jString = (*e)->NewStringUTF(e, name);
     TRACE0("Java_com_sun_media_sound_MidiInDeviceProvider_nGetVersion completed.\n");

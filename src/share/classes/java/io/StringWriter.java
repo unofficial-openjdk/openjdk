@@ -34,8 +34,9 @@ package java.io;
  * can be called after the stream has been closed without generating an
  * <tt>IOException</tt>.
  *
- * @author      Mark Reinhold
- * @since       JDK1.1
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
+ * @since	JDK1.1
  */
 
 public class StringWriter extends Writer {
@@ -47,8 +48,8 @@ public class StringWriter extends Writer {
      * size.
      */
     public StringWriter() {
-        buf = new StringBuffer();
-        lock = buf;
+	buf = new StringBuffer();
+	lock = buf;
     }
 
     /**
@@ -63,18 +64,18 @@ public class StringWriter extends Writer {
      *         If <tt>initialSize</tt> is negative
      */
     public StringWriter(int initialSize) {
-        if (initialSize < 0) {
-            throw new IllegalArgumentException("Negative buffer size");
-        }
-        buf = new StringBuffer(initialSize);
-        lock = buf;
+	if (initialSize < 0) {
+	    throw new IllegalArgumentException("Negative buffer size");
+	}
+	buf = new StringBuffer(initialSize);
+	lock = buf;
     }
 
     /**
      * Write a single character.
      */
     public void write(int c) {
-        buf.append((char) c);
+	buf.append((char) c);
     }
 
     /**
@@ -98,7 +99,7 @@ public class StringWriter extends Writer {
      * Write a string.
      */
     public void write(String str) {
-        buf.append(str);
+	buf.append(str);
     }
 
     /**
@@ -109,7 +110,7 @@ public class StringWriter extends Writer {
      * @param  len  Number of characters to write
      */
     public void write(String str, int off, int len)  {
-        buf.append(str.substring(off, off + len));
+	buf.append(str.substring(off, off + len));
     }
 
     /**
@@ -137,11 +138,11 @@ public class StringWriter extends Writer {
      * @since  1.5
      */
     public StringWriter append(CharSequence csq) {
-        if (csq == null)
-            write("null");
-        else
-            write(csq.toString());
-        return this;
+	if (csq == null)
+	    write("null");
+	else
+	    write(csq.toString());
+    	return this;
     }
 
     /**
@@ -177,13 +178,13 @@ public class StringWriter extends Writer {
      * @since  1.5
      */
     public StringWriter append(CharSequence csq, int start, int end) {
-        CharSequence cs = (csq == null ? "null" : csq);
-        write(cs.subSequence(start, end).toString());
-        return this;
+	CharSequence cs = (csq == null ? "null" : csq);
+	write(cs.subSequence(start, end).toString());
+    	return this;
     }
 
     /**
-     * Appends the specified character to this writer.
+     * Appends the specified character to this writer. 
      *
      * <p> An invocation of this method of the form <tt>out.append(c)</tt>
      * behaves in exactly the same way as the invocation
@@ -199,15 +200,15 @@ public class StringWriter extends Writer {
      * @since 1.5
      */
     public StringWriter append(char c) {
-        write(c);
-        return this;
+	write(c);
+	return this;
     }
 
     /**
      * Return the buffer's current value as a string.
      */
     public String toString() {
-        return buf.toString();
+	return buf.toString();
     }
 
     /**
@@ -216,13 +217,13 @@ public class StringWriter extends Writer {
      * @return StringBuffer holding the current buffer value.
      */
     public StringBuffer getBuffer() {
-        return buf;
+	return buf;
     }
 
     /**
      * Flush the stream.
      */
-    public void flush() {
+    public void flush() { 
     }
 
     /**

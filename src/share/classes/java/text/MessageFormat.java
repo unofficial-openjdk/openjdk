@@ -344,6 +344,7 @@ import java.util.Locale;
  * @see          NumberFormat
  * @see          DecimalFormat
  * @see          ChoiceFormat
+ * @version      %I%, %G%
  * @author       Mark Davis
  */
 
@@ -422,7 +423,7 @@ public class MessageFormat extends Format {
      * for the format elements contained in it.
      * Patterns and their interpretation are specified in the
      * <a href="#patterns">class description</a>.
-     *
+     * 
      * @param pattern the pattern for this message format
      * @exception IllegalArgumentException if the pattern is invalid
      */
@@ -499,7 +500,7 @@ public class MessageFormat extends Format {
     /**
      * Returns a pattern representing the current state of the message format.
      * The string is constructed from internal information and therefore
-     * does not necessarily equal the previously applied pattern.
+     * does not necessarily equal the previously applied pattern. 
      *
      * @return a pattern representing the current state of the message format
      */

@@ -47,26 +47,26 @@ import java.util.ListResourceBundle;
 public class FormatData_es_US extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
-            { "AmPmMarkers",
+            { "AmPmMarkers", 
                 new String[] {
                     "a.m.",
                     "p.m.",
                 }
             },
-            { "Eras",
+            { "Eras", 
                 new String[] {
                     "a.C.",
                     "d.C.",
                 }
             },
-            { "NumberPatterns",
+            { "NumberPatterns", 
                 new String[] {
                     "#,##0.###",
                     "\u00a4#,##0.00;(\u00a4#,##0.00)",
                     "#,##0%",
                 }
             },
-            { "NumberElements",
+            { "NumberElements", 
                 new String[] {
                     ".",
                     ",",
@@ -81,7 +81,7 @@ public class FormatData_es_US extends ListResourceBundle {
                     "NaN",
                 }
             },
-            { "DateTimePatterns",
+            { "DateTimePatterns", 
                 new String[] {
                     "h:mm:ss a z",
                     "h:mm:ss a z",

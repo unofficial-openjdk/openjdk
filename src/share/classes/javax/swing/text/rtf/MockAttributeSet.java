@@ -41,7 +41,7 @@ class MockAttributeSet
     {
          return backing.isEmpty();
     }
-
+    
     public int getAttributeCount()
     {
          return backing.size();
@@ -61,7 +61,7 @@ class MockAttributeSet
     {
          throw new InternalError("MockAttributeSet: charade revealed!");
     }
-
+    
     public Object getAttribute(Object name)
     {
         return backing.get(name);
@@ -71,14 +71,14 @@ class MockAttributeSet
     {
         backing.put(name, value);
     }
-
+    
     public void addAttributes(AttributeSet attr)
     {
         Enumeration as = attr.getAttributeNames();
-        while(as.hasMoreElements()) {
-            Object el = as.nextElement();
-            backing.put(el, attr.getAttribute(el));
-        }
+	while(as.hasMoreElements()) {
+	    Object el = as.nextElement();
+	    backing.put(el, attr.getAttribute(el));
+	}
     }
 
     public void removeAttribute(Object name)
@@ -101,12 +101,12 @@ class MockAttributeSet
          throw new InternalError("MockAttributeSet: charade revealed!");
     }
 
-
+    
     public Enumeration getAttributeNames()
     {
          return backing.keys();
     }
-
+    
     public boolean containsAttribute(Object name, Object value)
     {
          throw new InternalError("MockAttributeSet: charade revealed!");
@@ -122,3 +122,5 @@ class MockAttributeSet
          throw new InternalError("MockAttributeSet: charade revealed!");
     }
 }
+    
+    

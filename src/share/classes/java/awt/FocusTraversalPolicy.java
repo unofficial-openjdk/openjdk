@@ -56,6 +56,7 @@ package java.awt;
  * for more information.
  *
  * @author David Mendenhall
+ * @version %I%, %G%
  *
  * @see Container#setFocusTraversalPolicy
  * @see Container#getFocusTraversalPolicy
@@ -81,7 +82,7 @@ public abstract class FocusTraversalPolicy {
      * @return the Component that should receive the focus after aComponent, or
      *         null if no suitable Component can be found
      * @throws IllegalArgumentException if aContainer is not a focus cycle
-     *         root of aComponent or a focus traversal policy provider, or if
+     *         root of aComponent or a focus traversal policy provider, or if 
      *         either aContainer or aComponent is null
      */
     public abstract Component getComponentAfter(Container aContainer,
@@ -99,7 +100,7 @@ public abstract class FocusTraversalPolicy {
      * @return the Component that should receive the focus before aComponent,
      *         or null if no suitable Component can be found
      * @throws IllegalArgumentException if aContainer is not a focus cycle
-     *         root of aComponent or a focus traversal policy provider, or if
+     *         root of aComponent or a focus traversal policy provider, or if 
      *         either aContainer or aComponent is null
      */
     public abstract Component getComponentBefore(Container aContainer,
@@ -138,7 +139,7 @@ public abstract class FocusTraversalPolicy {
      *
      * @param aContainer the focus cycle root or focus traversal policy
      *        provider whose default Component is to be returned
-     * @return the default Component in the traversal cycle of aContainer,
+     * @return the default Component in the traversal cycle of aContainer, 
      *         or null if no suitable Component can be found
      * @throws IllegalArgumentException if aContainer is null
      */

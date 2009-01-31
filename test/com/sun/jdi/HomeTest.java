@@ -58,7 +58,7 @@ public class HomeTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new HomeTest(args).startTests();
     }
 
@@ -69,14 +69,14 @@ public class HomeTest extends TestScaffold {
     }
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("HomeTarg");
         targetClass = bpe.location().declaringType();
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
-
+        
         VirtualMachineManager vmm = Bootstrap.virtualMachineManager();
         Connector defaultConnector = vmm.defaultConnector();
         Map arguments = defaultConnector.defaultArguments();
@@ -91,7 +91,7 @@ public class HomeTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true

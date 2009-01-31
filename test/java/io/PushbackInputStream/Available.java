@@ -33,37 +33,37 @@ import java.io.*;
 
 public class Available{
 
-    private static void dotest(PushbackInputStream in , int expected)
-        throws Exception
+    private static void dotest(PushbackInputStream in , int expected) 
+	throws Exception 
     {
-
+    
         int got = in.available();
-        System.err.println("available must be " + expected + " , got : " + got);
-        if (got != expected) {
-            throw new
-                RuntimeException("Unexpected number of bytes available in the PushBackInputStream");
-        }
+	System.err.println("available must be " + expected + " , got : " + got);
+	if (got != expected) {
+	    throw new 
+		RuntimeException("Unexpected number of bytes available in the PushBackInputStream");
+	}
 
     }
-
-
+      
+    
 
     public static void main(String args[]) throws Exception{
 
-        PushbackInputStream in = new
-            PushbackInputStream(new ByteArrayInputStream(new byte[10]),5);
+        PushbackInputStream in = new 
+	    PushbackInputStream(new ByteArrayInputStream(new byte[10]),5);
+    
+	dotest(in , 10);
+      
+	in.read();
+	dotest(in , 9);
 
-        dotest(in , 10);
-
-        in.read();
-        dotest(in , 9);
-
-        in.unread(20);
-        dotest(in , 10);
-
-        in.unread(20);
-        dotest(in , 11);
-
+	in.unread(20);
+	dotest(in , 10);
+      
+	in.unread(20);
+	dotest(in , 11);
+     
     }
 
 }

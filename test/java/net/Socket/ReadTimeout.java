@@ -35,16 +35,16 @@ public class ReadTimeout  {
     public static void main(String args[]) throws Exception {
     InetAddress  sin = null;
     Socket       soc = null,soc1 = null;
-    InputStream  is = null;
+    InputStream	 is = null;
     OutputStream os = null;
     ServerSocket srv = null;
     int          port = 0;
     int          tout = 1000;
 
-    sin = InetAddress.getLocalHost();
+    sin = InetAddress.getLocalHost(); 
     srv = new ServerSocket(port);
     port = srv.getLocalPort();
-    soc = new Socket(sin, port, true);
+    soc = new Socket(sin, port, true); 
     soc1 = srv.accept();
     soc.setSoTimeout(tout);
 

@@ -64,16 +64,16 @@ public class UnserializableTargetObjectTest {
         public void operation() {
             operationCount++;
         }
-
+        
         public int getCount() {
             return count;
         }
-
+        
         public void setCount(int count) {
             this.count = count;
         }
     }
-
+    
     public static void main(String[] args) throws Exception {
         MBeanServer mbs = MBeanServerFactory.newMBeanServer();
         ObjectName name = new ObjectName("a:b=c");

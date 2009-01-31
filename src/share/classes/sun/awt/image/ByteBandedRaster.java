@@ -47,6 +47,7 @@ import java.awt.Point;
  * is always equal to one.  This type of raster can be used with a
  * ComponentColorModel. This class requires a BandedSampleModel.
  *
+ * @version 10 Feb 1997
  */
 public class ByteBandedRaster extends SunWritableRaster {
 
@@ -75,7 +76,7 @@ public class ByteBandedRaster extends SunWritableRaster {
      *  @param origin          The Point that specifies the origin.
      */
     public ByteBandedRaster(SampleModel sampleModel,
-                               Point origin) {
+			       Point origin) {
         this(sampleModel,
              sampleModel.createDataBuffer(),
              new Rectangle(origin.x,
@@ -97,13 +98,13 @@ public class ByteBandedRaster extends SunWritableRaster {
      *  @param origin          The Point that specifies the origin.
      */
     public ByteBandedRaster(SampleModel sampleModel,
-                               DataBuffer dataBuffer,
-                               Point origin) {
+			       DataBuffer dataBuffer,
+			       Point origin) {
         this(sampleModel, dataBuffer,
-             new Rectangle(origin.x , origin.y,
-                           sampleModel.getWidth(),
-                           sampleModel.getHeight()),
-             origin, null);
+	     new Rectangle(origin.x , origin.y,
+			   sampleModel.getWidth(),
+			   sampleModel.getHeight()),
+	     origin, null);
     }
 
     /**
@@ -215,7 +216,7 @@ public class ByteBandedRaster extends SunWritableRaster {
 
     /**
      * Returns the data elements for all bands at the specified
-     * location.
+     * location.  
      * An ArrayIndexOutOfBounds exception will be thrown at runtime
      * if the pixel coordinate is out of bounds.
      * A ClassCastException will be thrown if the input object is non null
@@ -789,3 +790,5 @@ public class ByteBandedRaster extends SunWritableRaster {
     }
 
 }
+
+

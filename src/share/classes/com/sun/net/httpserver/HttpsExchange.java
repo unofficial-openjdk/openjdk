@@ -33,7 +33,7 @@ import javax.net.ssl.*;
 import java.util.*;
 
 /**
- * This class encapsulates a HTTPS request received and a
+ * This class encapsulates a HTTPS request received and a 
  * response to be generated in one exchange and defines
  * the extensions to HttpExchange that are specific to the HTTPS protocol.
  * @since 1.6

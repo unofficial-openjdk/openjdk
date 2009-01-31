@@ -21,9 +21,9 @@
  * have any questions.
  */
 
-/*
+/* 
   test
-  @bug 4664415
+  @bug 4664415  
   @summary REGRESSION: double click jframe titlebar generating mouse events in panel
   @author Andrei Dmitriev: area=awt.mouse
   @run applet TitleBarDoubleClick.html
@@ -43,7 +43,7 @@ public class TitleBarDoubleClick extends Applet implements MouseListener,
     Frame frame;
     Robot robot;
 
-    public void init()
+    public void init() 
     {
         this.setLayout (new BorderLayout ());
 
@@ -85,7 +85,7 @@ public class TitleBarDoubleClick extends Applet implements MouseListener,
         System.out.println("doing test");
             robot.mouseMove(BOUNDS.x + (BOUNDS.width / 2),
                             BOUNDS.y + TITLE_BAR_OFFSET);
-            robot.delay(50);
+            robot.delay(50); 
             // Util.waitForIdle(robot) seem always hangs here.
             // Need to use it instead robot.delay() when the bug become fixed.
             System.out.println("1st press:   currentTimeMillis: " + System.currentTimeMillis());

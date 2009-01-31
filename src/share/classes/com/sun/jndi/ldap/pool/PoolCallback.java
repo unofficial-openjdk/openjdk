@@ -26,7 +26,7 @@
 package com.sun.jndi.ldap.pool;
 
 /**
- * Represents a callback used to release or remove a PooledConnection back
+ * Represents a callback used to release or remove a PooledConnection back 
  * into the pool.
  *
  * A pooled connection typically has a close method that its clients

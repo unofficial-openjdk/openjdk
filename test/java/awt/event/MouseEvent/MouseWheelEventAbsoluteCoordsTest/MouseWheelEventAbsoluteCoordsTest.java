@@ -21,11 +21,11 @@
  * have any questions.
  */
 
-/*
+/* 
   test
   @bug 4992908
   @summary Need way to get location of MouseEvent in screen coordinates
-  @author Andrei.Dmitriev area=event
+  @author Andrei.Dmitriev area=event 
   @run applet MouseWheelEventAbsoluteCoordsTest.html
 */
 
@@ -47,9 +47,9 @@ public class MouseWheelEventAbsoluteCoordsTest extends Applet implements MouseWh
 
     Point mousePositionOnScreen = new Point(200, 200);
     Point mousePosition = new Point(100, 100);
-    public void init()
+    public void init() 
     {
-
+      
         this.setLayout (new BorderLayout ());
 
         frame.addMouseWheelListener(this);
@@ -118,7 +118,7 @@ public class MouseWheelEventAbsoluteCoordsTest extends Applet implements MouseWh
                                                  );
         frame.dispatchEvent( ( AWTEvent )meOld );
     }
-
+    
     public void checkEventAbsolutePosition(MouseEvent evt, String message){
         //        if (newCtorUsed){
             if (evt.getXOnScreen() != mousePositionOnScreen.x ||
@@ -134,4 +134,8 @@ public class MouseWheelEventAbsoluteCoordsTest extends Applet implements MouseWh
             }
         System.out.println(message);
     }
-}// class
+}// class 
+
+
+
+

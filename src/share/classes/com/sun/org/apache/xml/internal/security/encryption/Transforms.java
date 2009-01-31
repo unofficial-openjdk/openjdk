@@ -59,17 +59,17 @@ public interface Transforms {
      *
      * @param transform.
      */
-        /*    void removeTransform(Transform transform); */
+	/*    void removeTransform(Transform transform); */
 
-        /**
-         * Temporary method to turn the XMLEncryption Transforms class
-         * into a DS class.  The main logic is currently implemented in the
-         * DS class, so we need to get to get the base class.
-         * <p>
-         * <b>Note</b> This will be removed in future versions
+	/**
+	 * Temporary method to turn the XMLEncryption Transforms class
+	 * into a DS class.  The main logic is currently implemented in the
+	 * DS class, so we need to get to get the base class.
+	 * <p>
+	 * <b>Note</b> This will be removed in future versions
      * @return
-         */
+	 */
 
-        com.sun.org.apache.xml.internal.security.transforms.Transforms getDSTransforms();
+	com.sun.org.apache.xml.internal.security.transforms.Transforms getDSTransforms();
 
 }

@@ -39,6 +39,7 @@ package sun.security.action;
  * </pre>
  *
  * @author Roland Schemers
+ * @version %I%, %G%
  * @see java.security.PrivilegedAction
  * @see java.security.AccessController
  * @since 1.2
@@ -57,14 +58,14 @@ public class LoadLibraryAction implements java.security.PrivilegedAction<Void> {
      * @param theLib the name of the library.
      */
     public LoadLibraryAction(String theLib) {
-        this.theLib = theLib;
+	this.theLib = theLib;
     }
 
     /**
      * Loads the system library whose name was specified in the constructor.
      */
     public Void run() {
-        System.loadLibrary(theLib);
-        return null;
+	System.loadLibrary(theLib);
+	return null;
     }
 }

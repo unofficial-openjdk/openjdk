@@ -22,19 +22,19 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package javax.accessibility;
-
-
+ 
+ 
 import java.util.*;
 import java.awt.*;
 import javax.swing.text.*;
-
-
+ 
+ 
 /**
  * <P>The AccessibleExtendedText interface contains additional methods
  * not provided by the AccessibleText interface
- *
+ *  
  * Applications can determine if an object supports the AccessibleExtendedText
  * interface by first obtaining its AccessibleContext (see {@link Accessible})
  * and then calling the {@link AccessibleContext#getAccessibleText} method of
@@ -47,12 +47,13 @@ import javax.swing.text.*;
  * @see AccessibleContext#getAccessibleText
  * @see AccessibleText.AccessibleTextChunk
  *
+ * @version      %I% %G%
  * @author       Peter Korn
  * @author       Lynn Monsanto
  * @since 1.5
  */
 public interface AccessibleExtendedText {
-
+ 
     /**
      * Constant used to indicate that the part of the text that should be
      * retrieved is a line of text.
@@ -62,7 +63,7 @@ public interface AccessibleExtendedText {
      * @see AccessibleText#getBeforeIndex
      */
     public static final int LINE = 4; // BugID: 4849720
-
+ 
     /**
      * Constant used to indicate that the part of the text that should be
      * retrieved is contiguous text with the same text attributes.
@@ -72,7 +73,7 @@ public interface AccessibleExtendedText {
      * @see AccessibleText#getBeforeIndex
      */
     public static final int ATTRIBUTE_RUN = 5; // BugID: 4849720
-
+ 
     /**
      * Returns the text between two indices
      *
@@ -82,15 +83,15 @@ public interface AccessibleExtendedText {
      * Otherwise, null is returned.
      */
     public String getTextRange(int startIndex, int endIndex);
-
+ 
     /**
      * Returns the <code>AccessibleTextSequence</code> at a given index.
      *
-     * @param part the <code>CHARACTER</code>, <code>WORD</code>,
-     * <code>SENTENCE</code>, <code>LINE</code> or <code>ATTRIBUTE_RUN</code>
+     * @param part the <code>CHARACTER</code>, <code>WORD</code>, 
+     * <code>SENTENCE</code>, <code>LINE</code> or <code>ATTRIBUTE_RUN</code> 
      * to retrieve
      * @param index an index within the text
-     * @return an <code>AccessibleTextSequence</code> specifying the text
+     * @return an <code>AccessibleTextSequence</code> specifying the text 
      * if part and index are valid.  Otherwise, null is returned.
      *
      * @see AccessibleText#CHARACTER
@@ -98,15 +99,15 @@ public interface AccessibleExtendedText {
      * @see AccessibleText#SENTENCE
      */
     public AccessibleTextSequence getTextSequenceAt(int part, int index);
-
+ 
     /**
      * Returns the <code>AccessibleTextSequence</code> after a given index.
      *
-     * @param part the <code>CHARACTER</code>, <code>WORD</code>,
-     * <code>SENTENCE</code>, <code>LINE</code> or <code>ATTRIBUTE_RUN</code>
+     * @param part the <code>CHARACTER</code>, <code>WORD</code>, 
+     * <code>SENTENCE</code>, <code>LINE</code> or <code>ATTRIBUTE_RUN</code> 
      * to retrieve
      * @param index an index within the text
-     * @return an <code>AccessibleTextSequence</code> specifying the text
+     * @return an <code>AccessibleTextSequence</code> specifying the text 
      * if part and index are valid.  Otherwise, null is returned.
      *
      * @see AccessibleText#CHARACTER
@@ -114,15 +115,15 @@ public interface AccessibleExtendedText {
      * @see AccessibleText#SENTENCE
      */
     public AccessibleTextSequence getTextSequenceAfter(int part, int index);
-
+ 
     /**
      * Returns the <code>AccessibleTextSequence</code> before a given index.
      *
-     * @param part the <code>CHARACTER</code>, <code>WORD</code>,
-     * <code>SENTENCE</code>, <code>LINE</code> or <code>ATTRIBUTE_RUN</code>
+     * @param part the <code>CHARACTER</code>, <code>WORD</code>, 
+     * <code>SENTENCE</code>, <code>LINE</code> or <code>ATTRIBUTE_RUN</code> 
      * to retrieve
      * @param index an index within the text
-     * @return an <code>AccessibleTextSequence</code> specifying the text
+     * @return an <code>AccessibleTextSequence</code> specifying the text 
      * if part and index are valid.  Otherwise, null is returned.
      *
      * @see AccessibleText#CHARACTER
@@ -130,7 +131,7 @@ public interface AccessibleExtendedText {
      * @see AccessibleText#SENTENCE
      */
     public AccessibleTextSequence getTextSequenceBefore(int part, int index);
-
+ 
     /**
      * Returns the bounding rectangle of the text between two indices.
      *
@@ -141,3 +142,4 @@ public interface AccessibleExtendedText {
      */
     public Rectangle getTextBounds(int startIndex, int endIndex);
 }
+ 

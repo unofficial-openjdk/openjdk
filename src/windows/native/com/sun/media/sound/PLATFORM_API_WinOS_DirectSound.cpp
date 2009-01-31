@@ -99,14 +99,14 @@ static GUID CLSID_DAUDIO_Zero = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 BOOL isEqualGUID(LPGUID lpGuid1, LPGUID lpGuid2) {
     if (lpGuid1 == NULL || lpGuid2 == NULL) {
-        if (lpGuid1 == lpGuid2) {
-            return TRUE;
-        }
-        if (lpGuid1 == NULL) {
-            lpGuid1 = (LPGUID) (&CLSID_DAUDIO_Zero);
-        } else {
-            lpGuid2 = (LPGUID) (&CLSID_DAUDIO_Zero);
-        }
+	if (lpGuid1 == lpGuid2) {
+	    return TRUE;
+	}
+	if (lpGuid1 == NULL) {
+	    lpGuid1 = (LPGUID) (&CLSID_DAUDIO_Zero);
+	} else {
+	    lpGuid2 = (LPGUID) (&CLSID_DAUDIO_Zero);
+	}
     }
     return memcmp(lpGuid1, lpGuid2, sizeof(GUID)) == 0;
 }
@@ -114,10 +114,10 @@ BOOL isEqualGUID(LPGUID lpGuid1, LPGUID lpGuid2) {
 INT32 findCacheItemByGUID(LPGUID lpGuid, BOOL isSource) {
     int i;
     for (i = 0; i < g_cacheCount; i++) {
-        if (isSource == g_audioDeviceCache[i].isSource
-            && isEqualGUID(lpGuid, &(g_audioDeviceCache[i].guid))) {
-            return i;
-        }
+	if (isSource == g_audioDeviceCache[i].isSource
+	    && isEqualGUID(lpGuid, &(g_audioDeviceCache[i].guid))) {
+	    return i;
+	}
     }
     return -1;
 }
@@ -125,9 +125,9 @@ INT32 findCacheItemByGUID(LPGUID lpGuid, BOOL isSource) {
 INT32 findCacheItemByMixerIndex(INT32 mixerIndex) {
     int i;
     for (i = 0; i < g_cacheCount; i++) {
-        if (g_audioDeviceCache[i].mixerIndex == mixerIndex) {
-            return i;
-        }
+	if (g_audioDeviceCache[i].mixerIndex == mixerIndex) {
+	    return i;
+	}
     }
     return -1;
 }
@@ -145,26 +145,26 @@ BOOL CALLBACK DS_RefreshCacheEnum(LPGUID lpGuid,
     INT32 cacheIndex = findCacheItemByGUID(lpGuid, rs->isSource);
     /*TRACE3("Enumerating %d: %s (%s)\n", cacheIndex, lpstrDescription, lpstrModule);*/
     if (cacheIndex == -1) {
-        /* add this device */
-        if (g_cacheCount < MAX_DS_DEVICES-1) {
-            g_audioDeviceCache[g_cacheCount].mixerIndex = rs->currMixerIndex;
-            g_audioDeviceCache[g_cacheCount].isSource = rs->isSource;
-            g_audioDeviceCache[g_cacheCount].dev = NULL;
-            g_audioDeviceCache[g_cacheCount].refCount = 0;
-            if (lpGuid == NULL) {
-                memset(&(g_audioDeviceCache[g_cacheCount].guid), 0, sizeof(GUID));
-            } else {
-                memcpy(&(g_audioDeviceCache[g_cacheCount].guid), lpGuid, sizeof(GUID));
-            }
-            g_cacheCount++;
-            rs->currMixerIndex++;
-        } else {
-            /* failure case: more than MAX_DS_DEVICES available... */
-        }
+	/* add this device */
+	if (g_cacheCount < MAX_DS_DEVICES-1) {
+	    g_audioDeviceCache[g_cacheCount].mixerIndex = rs->currMixerIndex;
+	    g_audioDeviceCache[g_cacheCount].isSource = rs->isSource;
+	    g_audioDeviceCache[g_cacheCount].dev = NULL;
+	    g_audioDeviceCache[g_cacheCount].refCount = 0;
+	    if (lpGuid == NULL) {
+		memset(&(g_audioDeviceCache[g_cacheCount].guid), 0, sizeof(GUID));
+	    } else {
+		memcpy(&(g_audioDeviceCache[g_cacheCount].guid), lpGuid, sizeof(GUID));
+	    }
+	    g_cacheCount++;
+	    rs->currMixerIndex++;
+	} else {
+	    /* failure case: more than MAX_DS_DEVICES available... */
+	}
     } else {
-        /* device already exists in cache... update mixer number */
-        g_audioDeviceCache[cacheIndex].mixerIndex = rs->currMixerIndex;
-        rs->currMixerIndex++;
+	/* device already exists in cache... update mixer number */
+	g_audioDeviceCache[cacheIndex].mixerIndex = rs->currMixerIndex;
+	rs->currMixerIndex++;
     }
     /* continue enumeration */
     return TRUE;
@@ -178,48 +178,48 @@ INT32 DAUDIO_GetDirectAudioDeviceCount() {
     INT32 cacheIndex;
 
     if (!DS_lockCache()) {
-        return 0;
+	return 0;
     }
 
     if (g_lastCacheRefreshTime == 0
         || (UINT64) timeGetTime() > (UINT64) (g_lastCacheRefreshTime + WAIT_BETWEEN_CACHE_REFRESH_MILLIS)) {
-        /* first, initialize any old cache items */
-        for (cacheIndex = 0; cacheIndex < g_cacheCount; cacheIndex++) {
-            g_audioDeviceCache[cacheIndex].mixerIndex = -1;
-        }
+	/* first, initialize any old cache items */
+	for (cacheIndex = 0; cacheIndex < g_cacheCount; cacheIndex++) {
+	    g_audioDeviceCache[cacheIndex].mixerIndex = -1;
+	}
 
-        /* enumerate all devices and either add them to the device cache,
-         * or refresh the mixer number
-         */
-        rs.currMixerIndex = 0;
-        rs.isSource = TRUE;
-        DirectSoundEnumerate((LPDSENUMCALLBACK) DS_RefreshCacheEnum, &rs);
-        /* if we only got the Primary Sound Driver (GUID=NULL),
-         * then there aren't any playback devices installed */
-        if (rs.currMixerIndex == 1) {
-            cacheIndex = findCacheItemByGUID(NULL, TRUE);
-            if (cacheIndex == 0) {
-                rs.currMixerIndex = 0;
-                g_audioDeviceCache[0].mixerIndex = -1;
-                TRACE0("Removing stale Primary Sound Driver from list.\n");
-            }
-        }
-        oldCount = rs.currMixerIndex;
-        rs.isSource = FALSE;
-        DirectSoundCaptureEnumerate((LPDSENUMCALLBACK) DS_RefreshCacheEnum, &rs);
-        /* if we only got the Primary Sound Capture Driver (GUID=NULL),
-         * then there aren't any capture devices installed */
-        if ((rs.currMixerIndex - oldCount) == 1) {
-            cacheIndex = findCacheItemByGUID(NULL, FALSE);
-            if (cacheIndex != -1) {
-                rs.currMixerIndex = oldCount;
-                g_audioDeviceCache[cacheIndex].mixerIndex = -1;
-                TRACE0("Removing stale Primary Sound Capture Driver from list.\n");
-            }
-        }
-        g_mixerCount = rs.currMixerIndex;
+	/* enumerate all devices and either add them to the device cache,
+	 * or refresh the mixer number
+	 */
+	rs.currMixerIndex = 0;
+	rs.isSource = TRUE;
+	DirectSoundEnumerate((LPDSENUMCALLBACK) DS_RefreshCacheEnum, &rs);
+	/* if we only got the Primary Sound Driver (GUID=NULL),
+	 * then there aren't any playback devices installed */
+	if (rs.currMixerIndex == 1) {
+	    cacheIndex = findCacheItemByGUID(NULL, TRUE);
+	    if (cacheIndex == 0) {
+		rs.currMixerIndex = 0;
+		g_audioDeviceCache[0].mixerIndex = -1;
+		TRACE0("Removing stale Primary Sound Driver from list.\n");
+	    }
+	}
+	oldCount = rs.currMixerIndex;
+	rs.isSource = FALSE;
+	DirectSoundCaptureEnumerate((LPDSENUMCALLBACK) DS_RefreshCacheEnum, &rs);
+	/* if we only got the Primary Sound Capture Driver (GUID=NULL),
+	 * then there aren't any capture devices installed */
+	if ((rs.currMixerIndex - oldCount) == 1) {
+	    cacheIndex = findCacheItemByGUID(NULL, FALSE);
+	    if (cacheIndex != -1) {
+		rs.currMixerIndex = oldCount;
+		g_audioDeviceCache[cacheIndex].mixerIndex = -1;
+		TRACE0("Removing stale Primary Sound Capture Driver from list.\n");
+	    }
+	}
+	g_mixerCount = rs.currMixerIndex;
 
-        g_lastCacheRefreshTime = (UINT64) timeGetTime();
+	g_lastCacheRefreshTime = (UINT64) timeGetTime();
     }
     DS_unlockCache();
     /*TRACE1("DirectSound: %d installed devices\n", g_mixerCount);*/
@@ -233,11 +233,11 @@ BOOL CALLBACK DS_GetDescEnum(LPGUID lpGuid,
 
     INT32 cacheIndex = findCacheItemByGUID(lpGuid, g_audioDeviceCache[desc->deviceID].isSource);
     if (cacheIndex == desc->deviceID) {
-        strncpy(desc->name, lpstrDescription, DAUDIO_STRING_LENGTH);
-        //strncpy(desc->description, lpstrModule, DAUDIO_STRING_LENGTH);
-        desc->maxSimulLines = -1;
-        /* do not continue enumeration */
-        return FALSE;
+	strncpy(desc->name, lpstrDescription, DAUDIO_STRING_LENGTH);
+	//strncpy(desc->description, lpstrModule, DAUDIO_STRING_LENGTH);
+	desc->maxSimulLines = -1;
+	/* do not continue enumeration */
+	return FALSE;
     }
     return TRUE;
 }
@@ -246,22 +246,22 @@ BOOL CALLBACK DS_GetDescEnum(LPGUID lpGuid,
 INT32 DAUDIO_GetDirectAudioDeviceDescription(INT32 mixerIndex, DirectAudioDeviceDescription* desc) {
 
     if (!DS_lockCache()) {
-        return FALSE;
+	return FALSE;
     }
 
     /* set the deviceID field to the cache index */
     desc->deviceID = findCacheItemByMixerIndex(mixerIndex);
     if (desc->deviceID < 0) {
-        DS_unlockCache();
-        return FALSE;
+    	DS_unlockCache();
+	return FALSE;
     }
     desc->maxSimulLines = 0;
     if (g_audioDeviceCache[desc->deviceID].isSource) {
-        DirectSoundEnumerate((LPDSENUMCALLBACK) DS_GetDescEnum, desc);
-        strncpy(desc->description, "DirectSound Playback", DAUDIO_STRING_LENGTH);
+	DirectSoundEnumerate((LPDSENUMCALLBACK) DS_GetDescEnum, desc);
+	strncpy(desc->description, "DirectSound Playback", DAUDIO_STRING_LENGTH);
     } else {
-        DirectSoundCaptureEnumerate((LPDSENUMCALLBACK) DS_GetDescEnum, desc);
-        strncpy(desc->description, "DirectSound Capture", DAUDIO_STRING_LENGTH);
+	DirectSoundCaptureEnumerate((LPDSENUMCALLBACK) DS_GetDescEnum, desc);
+	strncpy(desc->description, "DirectSound Capture", DAUDIO_STRING_LENGTH);
     }
 
     /*desc->vendor;
@@ -290,32 +290,32 @@ void DAUDIO_GetFormats(INT32 mixerIndex, INT32 deviceID, int isSource, void* cre
 
     /* sanity */
     if (deviceID >= g_cacheCount) {
-        return;
+	return;
     }
     if ((g_audioDeviceCache[deviceID].isSource && !isSource)
         || (!g_audioDeviceCache[deviceID].isSource && isSource)) {
-        /* only support Playback or Capture */
-        return;
+	/* only support Playback or Capture */
+	return;
     }
 
     for (rateIndex = 0; rateIndex < SAMPLERATE_COUNT; rateIndex++) {
-        for (channelIndex = 0; channelIndex < CHANNELS_COUNT; channelIndex++) {
-            for (bitIndex = 0; bitIndex < BITS_COUNT; bitIndex++) {
-                DAUDIO_AddAudioFormat(creator, bitsArray[bitIndex],
-                                      ((bitsArray[bitIndex] + 7) / 8) * channelsArray[channelIndex],
-                                      channelsArray[channelIndex],
-                                      (float) sampleRateArray[rateIndex],
-                                      DAUDIO_PCM,
-                                      (bitsArray[bitIndex]==8)?FALSE:TRUE,  /* signed */
-                                      (bitsArray[bitIndex]==8)?FALSE:
+	for (channelIndex = 0; channelIndex < CHANNELS_COUNT; channelIndex++) {
+	    for (bitIndex = 0; bitIndex < BITS_COUNT; bitIndex++) {
+		DAUDIO_AddAudioFormat(creator, bitsArray[bitIndex],
+			              ((bitsArray[bitIndex] + 7) / 8) * channelsArray[channelIndex],
+			              channelsArray[channelIndex],
+			              (float) sampleRateArray[rateIndex],
+			              DAUDIO_PCM,
+			              (bitsArray[bitIndex]==8)?FALSE:TRUE,  /* signed */
+			              (bitsArray[bitIndex]==8)?FALSE:
 #ifndef _LITTLE_ENDIAN
-                                      TRUE /* big endian */
+			              TRUE /* big endian */
 #else
-                                      FALSE /* little endian */
+			              FALSE /* little endian */
 #endif
-                                      );
-            }
-        }
+			              );
+	    }
+	}
     }
 }
 
@@ -356,54 +356,54 @@ typedef struct {
 
 LPSTR TranslateDSError(HRESULT hr) {
     switch(hr) {
-        case DSERR_ALLOCATED:
-            return "DSERR_ALLOCATED";
+	case DSERR_ALLOCATED:
+	    return "DSERR_ALLOCATED";
 
-        case DSERR_CONTROLUNAVAIL:
-            return "DSERR_CONTROLUNAVAIL";
+	case DSERR_CONTROLUNAVAIL:
+	    return "DSERR_CONTROLUNAVAIL";
 
-        case DSERR_INVALIDPARAM:
-            return "DSERR_INVALIDPARAM";
+	case DSERR_INVALIDPARAM:
+	    return "DSERR_INVALIDPARAM";
 
-        case DSERR_INVALIDCALL:
-            return "DSERR_INVALIDCALL";
+	case DSERR_INVALIDCALL:
+	    return "DSERR_INVALIDCALL";
 
-        case DSERR_GENERIC:
-            return "DSERR_GENERIC";
+	case DSERR_GENERIC:
+	    return "DSERR_GENERIC";
 
-        case DSERR_PRIOLEVELNEEDED:
-            return "DSERR_PRIOLEVELNEEDED";
+	case DSERR_PRIOLEVELNEEDED:
+	    return "DSERR_PRIOLEVELNEEDED";
 
-        case DSERR_OUTOFMEMORY:
-            return "DSERR_OUTOFMEMORY";
+	case DSERR_OUTOFMEMORY:
+	    return "DSERR_OUTOFMEMORY";
 
-        case DSERR_BADFORMAT:
-            return "DSERR_BADFORMAT";
+	case DSERR_BADFORMAT:
+	    return "DSERR_BADFORMAT";
 
-        case DSERR_UNSUPPORTED:
-            return "DSERR_UNSUPPORTED";
+	case DSERR_UNSUPPORTED:
+	    return "DSERR_UNSUPPORTED";
 
-        case DSERR_NODRIVER:
-            return "DSERR_NODRIVER";
+	case DSERR_NODRIVER:
+	    return "DSERR_NODRIVER";
 
-        case DSERR_ALREADYINITIALIZED:
-            return "DSERR_ALREADYINITIALIZED";
+	case DSERR_ALREADYINITIALIZED:
+	    return "DSERR_ALREADYINITIALIZED";
 
-        case DSERR_NOAGGREGATION:
-            return "DSERR_NOAGGREGATION";
+	case DSERR_NOAGGREGATION:
+	    return "DSERR_NOAGGREGATION";
 
-        case DSERR_BUFFERLOST:
-            return "DSERR_BUFFERLOST";
+	case DSERR_BUFFERLOST:
+	    return "DSERR_BUFFERLOST";
 
-        case DSERR_OTHERAPPHASPRIO:
-            return "DSERR_OTHERAPPHASPRIO";
+	case DSERR_OTHERAPPHASPRIO:
+	    return "DSERR_OTHERAPPHASPRIO";
 
-        case DSERR_UNINITIALIZED:
-            return "DSERR_UNINITIALIZED";
+	case DSERR_UNINITIALIZED:
+	    return "DSERR_UNINITIALIZED";
 
-        default:
-            return "Unknown HRESULT";
-        }
+	default:
+	    return "Unknown HRESULT";
+	}
 }
 
 /*
@@ -428,7 +428,7 @@ public:
     static inline BOOL isInitialized() { return data.threadHandle != NULL; }
 protected:
     DS_StartBufferHelper() {}  // no need to create an instance
-
+    
     /* data class */
     class Data {
     public:
@@ -540,37 +540,37 @@ BOOL DS_addDeviceRef(INT32 deviceID) {
 
 
     if (g_audioDeviceCache[deviceID].dev == NULL) {
-        /* Create DirectSound */
-        TRACE1("Creating DirectSound object for device %d\n", deviceID);
-        lpGuid = &(g_audioDeviceCache[deviceID].guid);
-        if (isEqualGUID(lpGuid, NULL)) {
-            lpGuid = NULL;
-        }
-        if (g_audioDeviceCache[deviceID].isSource) {
-            res = DirectSoundCreate(lpGuid, &devPlay, NULL);
-            g_audioDeviceCache[deviceID].dev = (void*) devPlay;
-        } else {
-            res = DirectSoundCaptureCreate(lpGuid, &devCapture, NULL);
-            g_audioDeviceCache[deviceID].dev = (void*) devCapture;
-        }
-        g_audioDeviceCache[deviceID].refCount = 0;
-        if (FAILED(res)) {
-            ERROR1("DAUDIO_Open: ERROR: Failed to create DirectSound: %s", TranslateDSError(res));
-            g_audioDeviceCache[deviceID].dev = NULL;
-            return FALSE;
-        }
-        if (g_audioDeviceCache[deviceID].isSource) {
-            ownerWindow = GetForegroundWindow();
-            if (ownerWindow == NULL) {
-                ownerWindow = GetDesktopWindow();
-            }
-            TRACE0("DAUDIO_Open: Setting cooperative level\n");
-            res = devPlay->SetCooperativeLevel(ownerWindow, DSSCL_NORMAL);
-            if (FAILED(res)) {
-                ERROR1("DAUDIO_Open: ERROR: Failed to set cooperative level: %s", TranslateDSError(res));
-                return FALSE;
-            }
-        }
+	/* Create DirectSound */
+	TRACE1("Creating DirectSound object for device %d\n", deviceID);
+	lpGuid = &(g_audioDeviceCache[deviceID].guid);
+	if (isEqualGUID(lpGuid, NULL)) {
+	    lpGuid = NULL;
+	}
+	if (g_audioDeviceCache[deviceID].isSource) {
+	    res = DirectSoundCreate(lpGuid, &devPlay, NULL);
+	    g_audioDeviceCache[deviceID].dev = (void*) devPlay;
+	} else {
+	    res = DirectSoundCaptureCreate(lpGuid, &devCapture, NULL);
+	    g_audioDeviceCache[deviceID].dev = (void*) devCapture;
+	}
+	g_audioDeviceCache[deviceID].refCount = 0;
+	if (FAILED(res)) {
+	    ERROR1("DAUDIO_Open: ERROR: Failed to create DirectSound: %s", TranslateDSError(res));
+	    g_audioDeviceCache[deviceID].dev = NULL;
+	    return FALSE;
+	}
+	if (g_audioDeviceCache[deviceID].isSource) {
+	    ownerWindow = GetForegroundWindow();
+	    if (ownerWindow == NULL) {
+		ownerWindow = GetDesktopWindow();
+	    }
+	    TRACE0("DAUDIO_Open: Setting cooperative level\n");
+	    res = devPlay->SetCooperativeLevel(ownerWindow, DSSCL_NORMAL);
+	    if (FAILED(res)) {
+		ERROR1("DAUDIO_Open: ERROR: Failed to set cooperative level: %s", TranslateDSError(res));
+		return FALSE;
+	    }
+	}
     }
     g_audioDeviceCache[deviceID].refCount++;
     return TRUE;
@@ -582,17 +582,17 @@ BOOL DS_addDeviceRef(INT32 deviceID) {
 void DS_removeDeviceRef(INT32 deviceID) {
 
     if (g_audioDeviceCache[deviceID].refCount) {
-        g_audioDeviceCache[deviceID].refCount--;
+	g_audioDeviceCache[deviceID].refCount--;
     }
     if (g_audioDeviceCache[deviceID].refCount == 0) {
-        if (g_audioDeviceCache[deviceID].dev != NULL) {
-            if (g_audioDeviceCache[deviceID].isSource) {
-                DEV_PLAY(deviceID)->Release();
-            } else {
-                DEV_CAPTURE(deviceID)->Release();
-            }
-            g_audioDeviceCache[deviceID].dev = NULL;
-        }
+	if (g_audioDeviceCache[deviceID].dev != NULL) {
+	    if (g_audioDeviceCache[deviceID].isSource) {
+		DEV_PLAY(deviceID)->Release();
+	    } else {
+		DEV_CAPTURE(deviceID)->Release();
+	    }
+	    g_audioDeviceCache[deviceID].dev = NULL;
+	}
     }
 }
 
@@ -636,15 +636,15 @@ void createWaveFormat(WAVEFORMATEXTENSIBLE* format,
     format->Format.wBitsPerSample = (WORD) ((bits + 7) & 0xFFF8);
 
     if (channels <= 2 && bits <= 16) {
-        format->Format.wFormatTag = WAVE_FORMAT_PCM;
-        format->Format.cbSize = 0;
+	format->Format.wFormatTag = WAVE_FORMAT_PCM;
+	format->Format.cbSize = 0;
     } else {
-        format->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-        format->Format.cbSize = 22;
-        format->Samples.wValidBitsPerSample = bits;
-        /* no way to specify speaker locations */
-        format->dwChannelMask = 0xFFFFFFFF;
-        format->SubFormat = subtypePCM;
+	format->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+	format->Format.cbSize = 22;
+	format->Samples.wValidBitsPerSample = bits;
+	/* no way to specify speaker locations */
+	format->dwChannelMask = 0xFFFFFFFF;
+	format->SubFormat = subtypePCM;
     }
     format->Format.nBlockAlign = (WORD)((format->Format.wBitsPerSample * format->Format.nChannels) / 8);
     format->Format.nAvgBytesPerSec = format->Format.nSamplesPerSec * format->Format.nBlockAlign;
@@ -659,24 +659,24 @@ void DS_clearBuffer(DS_Info* info, BOOL fromWritePos) {
     int start, count;
     TRACE1("> DS_clearBuffer for device %d\n", info->deviceID);
     if (info->isSource)  {
-        if (fromWritePos) {
-                DWORD playCursor, writeCursor;
-                int end;
-                if (FAILED(info->playBuffer->GetCurrentPosition(&playCursor, &writeCursor))) {
-                    ERROR0("  DS_clearBuffer: ERROR: Failed to get current position.");
-                    TRACE0("< DS_clearbuffer\n");
-                    return;
-                }
-                DEBUG_SILENCING2("  DS_clearBuffer: DS playPos=%d  myWritePos=%d", (int) playCursor, (int) info->writePos);
-                if (info->writePos >= 0) {
-                    start = info->writePos + info->silencedBytes;
-                } else {
-                    start = writeCursor + info->silencedBytes;
-                    //flags |= DSBLOCK_FROMWRITECURSOR;
-                }
-                while (start >= info->dsBufferSizeInBytes) {
-                    start -= info->dsBufferSizeInBytes;
-                }
+	if (fromWritePos) {
+		DWORD playCursor, writeCursor;
+		int end;
+		if (FAILED(info->playBuffer->GetCurrentPosition(&playCursor, &writeCursor))) {
+		    ERROR0("  DS_clearBuffer: ERROR: Failed to get current position.");
+		    TRACE0("< DS_clearbuffer\n");
+		    return;
+		}
+		DEBUG_SILENCING2("  DS_clearBuffer: DS playPos=%d  myWritePos=%d", (int) playCursor, (int) info->writePos);
+		if (info->writePos >= 0) {
+		    start = info->writePos + info->silencedBytes;
+		} else {
+		    start = writeCursor + info->silencedBytes;
+		    //flags |= DSBLOCK_FROMWRITECURSOR;
+		}
+		while (start >= info->dsBufferSizeInBytes) {
+		    start -= info->dsBufferSizeInBytes;
+		}
 
                 // fix for bug 6251460 (REGRESSION: short sounds do not play)
                 // for unknown reason with hardware DS buffer playCursor sometimes
@@ -691,87 +691,87 @@ void DS_clearBuffer(DS_Info* info, BOOL fromWritePos) {
                     return;
                 }
 
-                count = info->dsBufferSizeInBytes - info->silencedBytes;
-                // why / 4?
-                //if (count > info->dsBufferSizeInBytes / 4) {
-                //    count = info->dsBufferSizeInBytes / 4;
-                //}
-                end = start + count;
-                if ((int) playCursor < start) {
-                    playCursor += (DWORD) info->dsBufferSizeInBytes;
-                }
-                if (start <= (int) playCursor && end > (int) playCursor) {
-                    /* at maximum, silence until play cursor */
-                    count = (int) playCursor - start;
+		count = info->dsBufferSizeInBytes - info->silencedBytes;
+		// why / 4?
+		//if (count > info->dsBufferSizeInBytes / 4) {
+		//    count = info->dsBufferSizeInBytes / 4;
+		//}
+		end = start + count;
+		if ((int) playCursor < start) {
+		    playCursor += (DWORD) info->dsBufferSizeInBytes;
+		}
+		if (start <= (int) playCursor && end > (int) playCursor) {
+		    /* at maximum, silence until play cursor */
+		    count = (int) playCursor - start;
 #ifdef USE_TRACE
-                    if ((int) playCursor >= info->dsBufferSizeInBytes) playCursor -= (DWORD) info->dsBufferSizeInBytes;
-                    TRACE3("\n  DS_clearBuffer: Start Writing from %d, "
-                           "would overwrite playCursor=%d, so reduce count to %d\n",
-                           start, playCursor, count);
+		    if ((int) playCursor >= info->dsBufferSizeInBytes) playCursor -= (DWORD) info->dsBufferSizeInBytes;
+		    TRACE3("\n  DS_clearBuffer: Start Writing from %d, "
+		           "would overwrite playCursor=%d, so reduce count to %d\n",
+		           start, playCursor, count);
 #endif
-                }
-                DEBUG_SILENCING2("  clearing buffer from %d, count=%d. ", (int)start, (int) count);
-                if (count <= 0) {
-                    DEBUG_SILENCING0("\n");
-                    TRACE1("< DS_clearBuffer: no need to clear, silencedBytes=%d\n", info->silencedBytes);
-                    return;
-                }
-        } else {
-                start = 0;
-                count = info->dsBufferSizeInBytes;
-                flags |= DSBLOCK_ENTIREBUFFER;
-        }
-        if (FAILED(info->playBuffer->Lock(start,
-                                          count,
-                                          (LPVOID*) &pb1, &cb1,
-                                          (LPVOID*) &pb2, &cb2, flags))) {
-            ERROR0("\n  DS_clearBuffer: ERROR: Failed to lock sound buffer.\n");
-            TRACE0("< DS_clearbuffer\n");
-            return;
-        }
+		}
+		DEBUG_SILENCING2("  clearing buffer from %d, count=%d. ", (int)start, (int) count);
+		if (count <= 0) {
+		    DEBUG_SILENCING0("\n");
+		    TRACE1("< DS_clearBuffer: no need to clear, silencedBytes=%d\n", info->silencedBytes);
+		    return;
+		}
+	} else {
+		start = 0;
+		count = info->dsBufferSizeInBytes;
+		flags |= DSBLOCK_ENTIREBUFFER;
+	}
+	if (FAILED(info->playBuffer->Lock(start,
+	                                  count,
+	                                  (LPVOID*) &pb1, &cb1,
+	                                  (LPVOID*) &pb2, &cb2, flags))) {
+	    ERROR0("\n  DS_clearBuffer: ERROR: Failed to lock sound buffer.\n");
+	    TRACE0("< DS_clearbuffer\n");
+	    return;
+	}
     } else {
-        if (FAILED(info->captureBuffer->Lock(0,
-                                             info->dsBufferSizeInBytes,
-                                             (LPVOID*) &pb1, &cb1,
-                                             (LPVOID*) &pb2, &cb2, DSCBLOCK_ENTIREBUFFER))) {
-            ERROR0("  DS_clearBuffer: ERROR: Failed to lock sound buffer.\n");
-            TRACE0("< DS_clearbuffer\n");
-            return;
-        }
+	if (FAILED(info->captureBuffer->Lock(0,
+	                                     info->dsBufferSizeInBytes,
+	                                     (LPVOID*) &pb1, &cb1,
+	                                     (LPVOID*) &pb2, &cb2, DSCBLOCK_ENTIREBUFFER))) {
+	    ERROR0("  DS_clearBuffer: ERROR: Failed to lock sound buffer.\n");
+	    TRACE0("< DS_clearbuffer\n");
+	    return;
+	}
     }
     if (pb1!=NULL) {
-        memset(pb1, (info->bitsPerSample == 8)?128:0, cb1);
+	memset(pb1, (info->bitsPerSample == 8)?128:0, cb1);
     }
     if (pb2!=NULL) {
-        memset(pb2, (info->bitsPerSample == 8)?128:0, cb2);
+	memset(pb2, (info->bitsPerSample == 8)?128:0, cb2);
     }
     if (info->isSource)  {
-        info->playBuffer->Unlock( pb1, cb1, pb2, cb2 );
-        if (!fromWritePos) {
-            /* doesn't matter where to start writing next time */
-            info->writePos = -1;
-            info->silencedBytes = info->dsBufferSizeInBytes;
-        } else {
-            info->silencedBytes += (cb1+cb2);
-            if (info->silencedBytes > info->dsBufferSizeInBytes) {
-                ERROR1("  DS_clearbuffer: ERROR: silencedBytes=%d exceeds buffer size!\n",
-                       info->silencedBytes);
-                info->silencedBytes = info->dsBufferSizeInBytes;
-            }
-        }
-        DEBUG_SILENCING2("  silencedBytes=%d, my writePos=%d\n", (int)info->silencedBytes, (int)info->writePos);
+	info->playBuffer->Unlock( pb1, cb1, pb2, cb2 );
+	if (!fromWritePos) {
+	    /* doesn't matter where to start writing next time */
+	    info->writePos = -1;
+	    info->silencedBytes = info->dsBufferSizeInBytes;
+	} else {
+	    info->silencedBytes += (cb1+cb2);
+	    if (info->silencedBytes > info->dsBufferSizeInBytes) {
+		ERROR1("  DS_clearbuffer: ERROR: silencedBytes=%d exceeds buffer size!\n",
+		       info->silencedBytes);
+		info->silencedBytes = info->dsBufferSizeInBytes;
+	    }
+	}
+	DEBUG_SILENCING2("  silencedBytes=%d, my writePos=%d\n", (int)info->silencedBytes, (int)info->writePos);
     } else {
-        info->captureBuffer->Unlock( pb1, cb1, pb2, cb2 );
+	info->captureBuffer->Unlock( pb1, cb1, pb2, cb2 );
     }
     TRACE0("< DS_clearbuffer\n");
 }
 
 /* returns pointer to buffer */
 void* DS_createSoundBuffer(DS_Info* info,
-                          float sampleRate,
-                          int sampleSizeInBits,
-                          int channels,
-                          int bufferSizeInBytes) {
+			  float sampleRate,
+			  int sampleSizeInBits,
+			  int channels,
+			  int bufferSizeInBytes) {
     DSBUFFERDESC dsbdesc;
     DSCBUFFERDESC dscbdesc;
     HRESULT res;
@@ -789,53 +789,53 @@ void* DS_createSoundBuffer(DS_Info* info,
     info->dsBufferSizeInBytes = 2 * ((int) sampleRate) * info->frameSize;
 
     if (bufferSizeInBytes > info->dsBufferSizeInBytes / 2) {
-        bufferSizeInBytes = info->dsBufferSizeInBytes / 2;
+    	bufferSizeInBytes = info->dsBufferSizeInBytes / 2;
     }
     bufferSizeInBytes = (bufferSizeInBytes / info->frameSize) * info->frameSize;
     info->bufferSizeInBytes = bufferSizeInBytes;
 
     if (info->isSource) {
-        memset(&dsbdesc, 0, sizeof(DSBUFFERDESC));
-        dsbdesc.dwSize = sizeof(DSBUFFERDESC);
-        dsbdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2
-                    | DSBCAPS_GLOBALFOCUS;
+	memset(&dsbdesc, 0, sizeof(DSBUFFERDESC));
+	dsbdesc.dwSize = sizeof(DSBUFFERDESC);
+	dsbdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2
+	            | DSBCAPS_GLOBALFOCUS;
 
-        dsbdesc.dwBufferBytes = info->dsBufferSizeInBytes;
-        dsbdesc.lpwfxFormat = (WAVEFORMATEX*) &format;
-        res = DEV_PLAY(info->deviceID)->CreateSoundBuffer
-            (&dsbdesc, (LPDIRECTSOUNDBUFFER*) &buffer, NULL);
+	dsbdesc.dwBufferBytes = info->dsBufferSizeInBytes;
+	dsbdesc.lpwfxFormat = (WAVEFORMATEX*) &format;
+	res = DEV_PLAY(info->deviceID)->CreateSoundBuffer
+	    (&dsbdesc, (LPDIRECTSOUNDBUFFER*) &buffer, NULL);
     } else {
-        memset(&dscbdesc, 0, sizeof(DSCBUFFERDESC));
-        dscbdesc.dwSize = sizeof(DSCBUFFERDESC);
-        dscbdesc.dwFlags = 0;
-        dscbdesc.dwBufferBytes = info->dsBufferSizeInBytes;
-        dscbdesc.lpwfxFormat = (WAVEFORMATEX*) &format;
-        res = DEV_CAPTURE(info->deviceID)->CreateCaptureBuffer
-            (&dscbdesc, (LPDIRECTSOUNDCAPTUREBUFFER*) &buffer, NULL);
+	memset(&dscbdesc, 0, sizeof(DSCBUFFERDESC));
+	dscbdesc.dwSize = sizeof(DSCBUFFERDESC);
+	dscbdesc.dwFlags = 0;
+	dscbdesc.dwBufferBytes = info->dsBufferSizeInBytes;
+	dscbdesc.lpwfxFormat = (WAVEFORMATEX*) &format;
+	res = DEV_CAPTURE(info->deviceID)->CreateCaptureBuffer
+	    (&dscbdesc, (LPDIRECTSOUNDCAPTUREBUFFER*) &buffer, NULL);
     }
     if (FAILED(res)) {
-        ERROR1("DS_createSoundBuffer: ERROR: Failed to create sound buffer: %s", TranslateDSError(res));
-        return NULL;
+	ERROR1("DS_createSoundBuffer: ERROR: Failed to create sound buffer: %s", TranslateDSError(res));
+	return NULL;
     }
     return buffer;
 }
 
 void DS_destroySoundBuffer(DS_Info* info) {
     if (info->playBuffer != NULL) {
-        info->playBuffer->Release();
-        info->playBuffer = NULL;
+	info->playBuffer->Release();
+	info->playBuffer = NULL;
     }
     if (info->captureBuffer != NULL) {
-        info->captureBuffer->Release();
-        info->captureBuffer = NULL;
+	info->captureBuffer->Release();
+	info->captureBuffer = NULL;
     }
 }
 
 
 void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
-                  int encoding, float sampleRate, int sampleSizeInBits,
-                  int frameSize, int channels,
-                  int isSigned, int isBigEndian, int bufferSizeInBytes) {
+		  int encoding, float sampleRate, int sampleSizeInBits,
+		  int frameSize, int channels,
+		  int isSigned, int isBigEndian, int bufferSizeInBytes) {
 
     DS_Info* info;
     void* buffer;
@@ -844,42 +844,42 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
 
     /* some sanity checks */
     if (deviceID >= g_cacheCount) {
-        ERROR1("DAUDIO_Open: ERROR: cannot open the device with deviceID=%d!\n", deviceID);
-        return NULL;
+	ERROR1("DAUDIO_Open: ERROR: cannot open the device with deviceID=%d!\n", deviceID);
+	return NULL;
     }
     if ((g_audioDeviceCache[deviceID].isSource && !isSource)
         || (!g_audioDeviceCache[deviceID].isSource && isSource)) {
-        /* only support Playback or Capture */
-        ERROR0("DAUDIO_Open: ERROR: Cache is corrupt: cannot open the device in specified isSource mode!\n");
-        return NULL;
+	/* only support Playback or Capture */
+	ERROR0("DAUDIO_Open: ERROR: Cache is corrupt: cannot open the device in specified isSource mode!\n");
+	return NULL;
     }
     if (encoding != DAUDIO_PCM) {
-        ERROR1("DAUDIO_Open: ERROR: cannot open the device with encoding=%d!\n", encoding);
-        return NULL;
+	ERROR1("DAUDIO_Open: ERROR: cannot open the device with encoding=%d!\n", encoding);
+	return NULL;
     }
     if (sampleSizeInBits > 8 &&
 #ifdef _LITTLE_ENDIAN
-        isBigEndian
+	isBigEndian
 #else
-        !isBigEndian
+	!isBigEndian
 #endif
-        ) {
-        ERROR1("DAUDIO_Open: ERROR: wrong endianness: isBigEndian==%d!\n", isBigEndian);
-        return NULL;
+	) {
+	ERROR1("DAUDIO_Open: ERROR: wrong endianness: isBigEndian==%d!\n", isBigEndian);
+	return NULL;
     }
     if (sampleSizeInBits == 8 && isSigned) {
-        ERROR0("DAUDIO_Open: ERROR: wrong signed'ness: with 8 bits, data must be unsigned!\n");
-        return NULL;
+	ERROR0("DAUDIO_Open: ERROR: wrong signed'ness: with 8 bits, data must be unsigned!\n");
+	return NULL;
     }
     if (!DS_StartBufferHelper::isInitialized()) {
-        ERROR0("DAUDIO_Open: ERROR: StartBufferHelper initialization was failed!\n");
-        return NULL;
+	ERROR0("DAUDIO_Open: ERROR: StartBufferHelper initialization was failed!\n");
+	return NULL;
     }
 
     info = (DS_Info*) malloc(sizeof(DS_Info));
     if (!info) {
-        ERROR0("DAUDIO_Open: ERROR: Out of memory\n");
-        return NULL;
+	ERROR0("DAUDIO_Open: ERROR: Out of memory\n");
+	return NULL;
     }
     memset(info, 0, sizeof(DS_Info));
 
@@ -892,34 +892,34 @@ void* DAUDIO_Open(INT32 mixerIndex, INT32 deviceID, int isSource,
     info->underrun = FALSE;
 
     if (!DS_addDeviceRef(deviceID)) {
-        DS_removeDeviceRef(deviceID);
-        free(info);
-        return NULL;
+	DS_removeDeviceRef(deviceID);
+	free(info);
+	return NULL;
     }
 
     buffer = DS_createSoundBuffer(info,
                                   sampleRate,
                                   sampleSizeInBits,
-                                  channels,
-                                  bufferSizeInBytes);
+			          channels,
+			          bufferSizeInBytes);
     if (!buffer) {
-        DS_removeDeviceRef(deviceID);
-        free(info);
-        return NULL;
+	DS_removeDeviceRef(deviceID);
+	free(info);
+	return NULL;
     }
 
     if (info->isSource) {
-        info->playBuffer = (LPDIRECTSOUNDBUFFER) buffer;
+	info->playBuffer = (LPDIRECTSOUNDBUFFER) buffer;
     } else {
-        info->captureBuffer = (LPDIRECTSOUNDCAPTUREBUFFER) buffer;
+	info->captureBuffer = (LPDIRECTSOUNDCAPTUREBUFFER) buffer;
     }
     DS_clearBuffer(info, FALSE /* entire buffer */);
 
     /* use writepos of device */
     if (info->isSource) {
-        info->writePos = -1;
+	info->writePos = -1;
     } else {
-        info->writePos = 0;
+	info->writePos = 0;
     }
 
     TRACE0("< DAUDIO_Open: Opened device successfully.\n");
@@ -934,41 +934,41 @@ int DAUDIO_Start(void* id, int isSource) {
     TRACE0("> DAUDIO_Start\n");
 
     if (info->isSource)  {
-        res = info->playBuffer->GetStatus(&status);
-        if (res == DS_OK) {
-            if (status & DSBSTATUS_LOOPING) {
-                ERROR0("DAUDIO_Start: ERROR: Already started!");
-                return TRUE;
-            }
+    	res = info->playBuffer->GetStatus(&status);
+    	if (res == DS_OK) {
+	    if (status & DSBSTATUS_LOOPING) {
+		ERROR0("DAUDIO_Start: ERROR: Already started!");
+		return TRUE;
+	    }
 
-            /* only start buffer if already something written to it */
-            if (info->writePos >= 0) {
-                res = DS_StartBufferHelper::StartBuffer(info);
-                if (res == DSERR_BUFFERLOST) {
-                    res = info->playBuffer->Restore();
-                    if (res == DS_OK) {
-                        DS_clearBuffer(info, FALSE /* entire buffer */);
-                        /* write() will trigger actual device start */
-                    }
-                } else {
-                    /* make sure that we will have silence after
-                       the currently valid audio data */
-                    DS_clearBuffer(info, TRUE /* from write position */);
-                }
-            }
-        }
+	    /* only start buffer if already something written to it */
+	    if (info->writePos >= 0) {
+		res = DS_StartBufferHelper::StartBuffer(info);
+		if (res == DSERR_BUFFERLOST) {
+	    	    res = info->playBuffer->Restore();
+		    if (res == DS_OK) {
+			DS_clearBuffer(info, FALSE /* entire buffer */);
+			/* write() will trigger actual device start */
+		    }
+		} else {
+		    /* make sure that we will have silence after
+		       the currently valid audio data */
+		    DS_clearBuffer(info, TRUE /* from write position */);
+		}
+	    }
+	}
     } else {
-        if (info->captureBuffer->GetStatus(&status) == DS_OK) {
-            if (status & DSCBSTATUS_LOOPING) {
-                ERROR0("DAUDIO_Start: ERROR: Already started!");
-                return TRUE;
-            }
-        }
-        res = DS_StartBufferHelper::StartBuffer(info);
+    	if (info->captureBuffer->GetStatus(&status) == DS_OK) {
+	    if (status & DSCBSTATUS_LOOPING) {
+		ERROR0("DAUDIO_Start: ERROR: Already started!");
+		return TRUE;
+	    }
+	}
+	res = DS_StartBufferHelper::StartBuffer(info);
     }
     if (FAILED(res)) {
-        ERROR1("DAUDIO_Start: ERROR: Failed to start: %s", TranslateDSError(res));
-        return FALSE;
+	ERROR1("DAUDIO_Start: ERROR: Failed to start: %s", TranslateDSError(res));
+	return FALSE;
     }
     info->started = TRUE;
     return TRUE;
@@ -981,9 +981,9 @@ int DAUDIO_Stop(void* id, int isSource) {
 
     info->started = FALSE;
     if (info->isSource)  {
-        info->playBuffer->Stop();
+	info->playBuffer->Stop();
     } else {
-        info->captureBuffer->Stop();
+	info->captureBuffer->Stop();
     }
 
     TRACE0("< DAUDIO_Stop\n");
@@ -997,9 +997,9 @@ void DAUDIO_Close(void* id, int isSource) {
     TRACE0("DAUDIO_Close\n");
 
     if (info != NULL) {
-        DS_destroySoundBuffer(info);
-        DS_removeDeviceRef(info->deviceID);
-        free(info);
+	DS_destroySoundBuffer(info);
+	DS_removeDeviceRef(info->deviceID);
+	free(info);
     }
 }
 
@@ -1052,37 +1052,37 @@ int DS_GetAvailable(DS_Info* info,
 
     TRACE2("DS_GetAvailable: fromPlayCursor=%d,  deviceID=%d\n", fromPlayCursor, info->deviceID);
     if (!info->playBuffer && !info->captureBuffer) {
-        ERROR0("DS_GetAvailable: ERROR: buffer not yet created");
-        return 0;
+	ERROR0("DS_GetAvailable: ERROR: buffer not yet created");
+	return 0;
     }
 
     if (info->isSource)  {
-        if (FAILED(info->playBuffer->GetCurrentPosition(playCursor, writeCursor))) {
-            ERROR0("DS_GetAvailable: ERROR: Failed to get current position.\n");
-            return 0;
-        }
+	if (FAILED(info->playBuffer->GetCurrentPosition(playCursor, writeCursor))) {
+	    ERROR0("DS_GetAvailable: ERROR: Failed to get current position.\n");
+	    return 0;
+	}
         int processing = DS_getDistance(info, (int)*playCursor, (int)*writeCursor);
         // workaround: sometimes DirectSound report writeCursor is less (for several bytes) then playCursor
         if (processing > info->dsBufferSizeInBytes / 2) {
             *writeCursor = *playCursor;
             processing = 0;
         }
-        TRACE3("   playCursor=%d, writeCursor=%d, info->writePos=%d\n",
-               *playCursor, *writeCursor, info->writePos);
-        *bufferSize = info->bufferSizeInBytes;
-        if (fromPlayCursor) {
+	TRACE3("   playCursor=%d, writeCursor=%d, info->writePos=%d\n",
+	       *playCursor, *writeCursor, info->writePos);
+	*bufferSize = info->bufferSizeInBytes;
+	if (fromPlayCursor) {
             *bufferSize += processing;
-        }
-        DS_CheckUnderrun(info, *playCursor, *writeCursor);
-        if (info->writePos == -1 || (info->underrun && !fromPlayCursor)) {
-                /* always full buffer if at beginning */
-                available = *bufferSize;
-        } else {
+	}
+	DS_CheckUnderrun(info, *playCursor, *writeCursor);
+	if (info->writePos == -1 || (info->underrun && !fromPlayCursor)) {
+		/* always full buffer if at beginning */
+		available = *bufferSize;
+	} else {
             int currWriteAhead = DS_getDistance(info, fromPlayCursor ? (int)*playCursor : (int)*writeCursor, info->writePos);
-            if (currWriteAhead > *bufferSize) {
+	    if (currWriteAhead > *bufferSize) {
                 if (info->underrun) {
-                    // playCursor surpassed writePos - no valid data, whole buffer available
-                    available = *bufferSize;
+	            // playCursor surpassed writePos - no valid data, whole buffer available
+	            available = *bufferSize;
                 } else {
                     // the case may occur after stop(), when writeCursor jumps back to playCursor
                     // so "actual" buffer size has grown
@@ -1092,45 +1092,45 @@ int DS_GetAvailable(DS_Info* info,
             } else {
                 available = *bufferSize - currWriteAhead;
             }
-        }
+	}
     } else {
-        if (FAILED(info->captureBuffer->GetCurrentPosition(playCursor, writeCursor))) {
-            ERROR0("DS_GetAvailable: ERROR: Failed to get current position.\n");
-            return 0;
-        }
-        *bufferSize = info->bufferSizeInBytes;
-        if (fromPlayCursor) {
+	if (FAILED(info->captureBuffer->GetCurrentPosition(playCursor, writeCursor))) {
+	    ERROR0("DS_GetAvailable: ERROR: Failed to get current position.\n");
+	    return 0;
+	}
+	*bufferSize = info->bufferSizeInBytes;
+	if (fromPlayCursor) {
             *bufferSize += DS_getDistance(info, (int)*playCursor, (int)*writeCursor);
-        }
-        TRACE4("   captureCursor=%d, readCursor=%d, info->readPos=%d  refBufferSize=%d\n",
-               *playCursor, *writeCursor, info->writePos, *bufferSize);
-        if (info->writePos == -1) {
-            /* always empty buffer if at beginning */
-            info->writePos = (int) (*writeCursor);
-        }
-        if (fromPlayCursor) {
-            available = ((int) (*playCursor) - info->writePos);
-        } else {
-            available = ((int) (*writeCursor) - info->writePos);
-        }
-        if (available < 0) {
-            available += info->dsBufferSizeInBytes;
-        }
-        if (!fromPlayCursor && available > info->bufferSizeInBytes) {
-            /* overflow */
-            ERROR2("DS_GetAvailable: ERROR: overflow detected: "
-                   "DirectSoundBufferSize=%d, bufferSize=%d, ",
-                   info->dsBufferSizeInBytes, info->bufferSizeInBytes);
-            ERROR3("captureCursor=%d, readCursor=%d, info->readPos=%d\n",
-                   *playCursor, *writeCursor, info->writePos);
-            /* advance read position, to allow exactly one buffer worth of data */
-            newReadPos = (int) (*writeCursor) - info->bufferSizeInBytes;
-            if (newReadPos < 0) {
-                newReadPos += info->dsBufferSizeInBytes;
-            }
-            info->writePos = newReadPos;
-            available = info->bufferSizeInBytes;
-        }
+	}
+	TRACE4("   captureCursor=%d, readCursor=%d, info->readPos=%d  refBufferSize=%d\n",
+	       *playCursor, *writeCursor, info->writePos, *bufferSize);
+	if (info->writePos == -1) {
+	    /* always empty buffer if at beginning */
+	    info->writePos = (int) (*writeCursor);
+	}
+	if (fromPlayCursor) {
+	    available = ((int) (*playCursor) - info->writePos);
+	} else {
+	    available = ((int) (*writeCursor) - info->writePos);
+	}
+	if (available < 0) {
+	    available += info->dsBufferSizeInBytes;
+	}
+	if (!fromPlayCursor && available > info->bufferSizeInBytes) {
+	    /* overflow */
+	    ERROR2("DS_GetAvailable: ERROR: overflow detected: "
+	           "DirectSoundBufferSize=%d, bufferSize=%d, ",
+	           info->dsBufferSizeInBytes, info->bufferSizeInBytes);
+	    ERROR3("captureCursor=%d, readCursor=%d, info->readPos=%d\n",
+	           *playCursor, *writeCursor, info->writePos);
+	    /* advance read position, to allow exactly one buffer worth of data */
+	    newReadPos = (int) (*writeCursor) - info->bufferSizeInBytes;
+	    if (newReadPos < 0) {
+		newReadPos += info->dsBufferSizeInBytes;
+	    }
+	    info->writePos = newReadPos;
+	    available = info->bufferSizeInBytes;
+	}
     }
     available = (available / info->frameSize) * info->frameSize;
 
@@ -1154,76 +1154,76 @@ int DAUDIO_Write(void* id, char* data, int byteSize) {
     TRACE1("> DAUDIO_Write %d bytes\n", byteSize);
 
     while (--bufferLostTrials > 0) {
-        available = DS_GetAvailable(info, &playCursor, &writeCursor, &bufferSize, FALSE /* fromPlayCursor */);
-        if (byteSize > available) byteSize = available;
-        if (byteSize == 0) break;
-        thisWritePos = info->writePos;
-        if (thisWritePos == -1 || info->underrun) {
-            // play from current write cursor after flush, etc.
-            needRestart = TRUE;
-            thisWritePos = writeCursor;
-            info->underrun = FALSE;
-        }
-        DEBUG_SILENCING2("DAUDIO_Write: writing from %d, count=%d\n", (int) thisWritePos, (int) byteSize);
-        res = info->playBuffer->Lock(thisWritePos, byteSize,
+	available = DS_GetAvailable(info, &playCursor, &writeCursor, &bufferSize, FALSE /* fromPlayCursor */);
+	if (byteSize > available) byteSize = available;
+	if (byteSize == 0) break;
+	thisWritePos = info->writePos;
+	if (thisWritePos == -1 || info->underrun) {
+	    // play from current write cursor after flush, etc.
+	    needRestart = TRUE;
+	    thisWritePos = writeCursor;
+	    info->underrun = FALSE;
+	}
+	DEBUG_SILENCING2("DAUDIO_Write: writing from %d, count=%d\n", (int) thisWritePos, (int) byteSize);
+	res = info->playBuffer->Lock(thisWritePos, byteSize,
                                      (LPVOID *) &buffer1, &buffer1len,
                                      (LPVOID *) &buffer2, &buffer2len,
                                      0);
-        if (res != DS_OK) {
-            /* some DS failure */
-            if (res == DSERR_BUFFERLOST) {
-                ERROR0("DAUDIO_write: ERROR: Restoring lost Buffer.");
-                if (info->playBuffer->Restore() == DS_OK) {
-                    DS_clearBuffer(info, FALSE /* entire buffer */);
-                    info->writePos = -1;
-                    /* try again */
-                    continue;
-                }
-            }
-            /* can't recover from error */
-            byteSize = 0;
-            break;
-        }
-        /* buffer could be locked successfully */
-        /* first fill first buffer */
-        if (buffer1) {
-            memcpy(buffer1, data, buffer1len);
-            data = (char*) (((UINT_PTR) data) + buffer1len);
-        } else buffer1len = 0;
-        if (buffer2) {
-            memcpy(buffer2, data, buffer2len);
-        } else buffer2len = 0;
-        byteSize = buffer1len + buffer2len;
+	if (res != DS_OK) {
+	    /* some DS failure */
+	    if (res == DSERR_BUFFERLOST) {
+		ERROR0("DAUDIO_write: ERROR: Restoring lost Buffer.");
+		if (info->playBuffer->Restore() == DS_OK) {
+		    DS_clearBuffer(info, FALSE /* entire buffer */);
+		    info->writePos = -1;
+		    /* try again */
+		    continue;
+		}
+	    }
+	    /* can't recover from error */
+	    byteSize = 0;
+	    break;
+	}
+	/* buffer could be locked successfully */
+	/* first fill first buffer */
+	if (buffer1) {
+	    memcpy(buffer1, data, buffer1len);
+	    data = (char*) (((UINT_PTR) data) + buffer1len);
+	} else buffer1len = 0;
+	if (buffer2) {
+	    memcpy(buffer2, data, buffer2len);
+	} else buffer2len = 0;
+	byteSize = buffer1len + buffer2len;
 
-        /* update next write pos */
-        thisWritePos += byteSize;
-        while (thisWritePos >= info->dsBufferSizeInBytes) {
-            thisWritePos -= info->dsBufferSizeInBytes;
-        }
-        /* commit data to directsound */
-        info->playBuffer->Unlock(buffer1, buffer1len, buffer2, buffer2len);
+	/* update next write pos */
+	thisWritePos += byteSize;
+	while (thisWritePos >= info->dsBufferSizeInBytes) {
+	    thisWritePos -= info->dsBufferSizeInBytes;
+	}
+	/* commit data to directsound */
+	info->playBuffer->Unlock(buffer1, buffer1len, buffer2, buffer2len);
 
-        info->writePos = thisWritePos;
+	info->writePos = thisWritePos;
 
-        /* update position
-         * must be AFTER updating writePos,
-         * so that getSvailable doesn't return too little,
-         * so that getFramePos doesn't jump
-         */
-        info->framePos += (byteSize / info->frameSize);
+	/* update position
+	 * must be AFTER updating writePos,
+	 * so that getSvailable doesn't return too little,
+	 * so that getFramePos doesn't jump
+	 */
+	info->framePos += (byteSize / info->frameSize);
 
-        /* decrease silenced bytes */
-        if (info->silencedBytes > byteSize) {
-            info->silencedBytes -= byteSize;
-        } else {
-            info->silencedBytes = 0;
-        }
-        break;
+	/* decrease silenced bytes */
+	if (info->silencedBytes > byteSize) {
+	    info->silencedBytes -= byteSize;
+	} else {
+	    info->silencedBytes = 0;
+	}
+	break;
     } /* while */
 
     /* start the device, if necessary */
     if (info->started && needRestart && (info->writePos >= 0)) {
-        DS_StartBufferHelper::StartBuffer(info);
+	DS_StartBufferHelper::StartBuffer(info);
     }
 
     TRACE1("< DAUDIO_Write: returning %d bytes.\n", byteSize);
@@ -1246,44 +1246,44 @@ int DAUDIO_Read(void* id, char* data, int byteSize) {
     available = DS_GetAvailable(info, &captureCursor, &readCursor, &bufferSize, FALSE /* fromCaptureCursor? */);
     if (byteSize > available) byteSize = available;
     if (byteSize > 0) {
-        thisReadPos = info->writePos;
-        if (thisReadPos == -1) {
-            /* from beginning */
-            thisReadPos = 0;
-        }
-        res = info->captureBuffer->Lock(thisReadPos, byteSize,
+	thisReadPos = info->writePos;
+	if (thisReadPos == -1) {
+	    /* from beginning */
+	    thisReadPos = 0;
+	}
+	res = info->captureBuffer->Lock(thisReadPos, byteSize,
                                         (LPVOID *) &buffer1, &buffer1len,
                                         (LPVOID *) &buffer2, &buffer2len,
                                         0);
-        if (res != DS_OK) {
-            /* can't recover from error */
-            byteSize = 0;
-        } else {
-            /* buffer could be locked successfully */
-            /* first fill first buffer */
-            if (buffer1) {
-                memcpy(data, buffer1, buffer1len);
-                data = (char*) (((UINT_PTR) data) + buffer1len);
-            } else buffer1len = 0;
-            if (buffer2) {
-                memcpy(data, buffer2, buffer2len);
-            } else buffer2len = 0;
-            byteSize = buffer1len + buffer2len;
+	if (res != DS_OK) {
+	    /* can't recover from error */
+	    byteSize = 0;
+	} else {
+	    /* buffer could be locked successfully */
+	    /* first fill first buffer */
+	    if (buffer1) {
+		memcpy(data, buffer1, buffer1len);
+		data = (char*) (((UINT_PTR) data) + buffer1len);
+	    } else buffer1len = 0;
+	    if (buffer2) {
+		memcpy(data, buffer2, buffer2len);
+	    } else buffer2len = 0;
+	    byteSize = buffer1len + buffer2len;
 
-            /* update next read pos */
-            thisReadPos = DS_addPos(info, thisReadPos, byteSize);
-            /* commit data to directsound */
-            info->captureBuffer->Unlock(buffer1, buffer1len, buffer2, buffer2len);
+	    /* update next read pos */
+	    thisReadPos = DS_addPos(info, thisReadPos, byteSize);
+	    /* commit data to directsound */
+	    info->captureBuffer->Unlock(buffer1, buffer1len, buffer2, buffer2len);
 
-            /* update position
-             * must be BEFORE updating readPos,
-             * so that getAvailable doesn't return too much,
-             * so that getFramePos doesn't jump
-             */
-            info->framePos += (byteSize / info->frameSize);
+	    /* update position
+	     * must be BEFORE updating readPos,
+	     * so that getAvailable doesn't return too much,
+	     * so that getFramePos doesn't jump
+	     */
+	    info->framePos += (byteSize / info->frameSize);
 
-            info->writePos = thisReadPos;
-        }
+	    info->writePos = thisReadPos;
+	}
     }
 
     TRACE1("< DAUDIO_Read: returning %d bytes.\n", byteSize);
@@ -1318,21 +1318,21 @@ int DAUDIO_Flush(void* id, int isSource) {
     TRACE0("DAUDIO_Flush\n");
 
     if (info->isSource)  {
-        info->playBuffer->Stop();
-        DS_clearBuffer(info, FALSE /* entire buffer */);
+	info->playBuffer->Stop();
+	DS_clearBuffer(info, FALSE /* entire buffer */);
     } else {
-        DWORD captureCursor, readCursor;
-        /* set the read pointer to the current read position */
-        if (FAILED(info->captureBuffer->GetCurrentPosition(&captureCursor, &readCursor))) {
-            ERROR0("DAUDIO_Flush: ERROR: Failed to get current position.");
-            return FALSE;
-        }
-        DS_clearBuffer(info, FALSE /* entire buffer */);
-        /* SHOULD set to *captureCursor*,
-         * but that would be detected as overflow
-         * in a subsequent GetAvailable() call.
-         */
-        info->writePos = (int) readCursor;
+	DWORD captureCursor, readCursor;
+	/* set the read pointer to the current read position */
+	if (FAILED(info->captureBuffer->GetCurrentPosition(&captureCursor, &readCursor))) {
+	    ERROR0("DAUDIO_Flush: ERROR: Failed to get current position.");
+	    return FALSE;
+	}
+	DS_clearBuffer(info, FALSE /* entire buffer */);
+	/* SHOULD set to *captureCursor*,
+	 * but that would be detected as overflow
+	 * in a subsequent GetAvailable() call.
+	 */
+	info->writePos = (int) readCursor;
     }
     return TRUE;
 }
@@ -1356,12 +1356,12 @@ INT64 estimatePositionFromAvail(DS_Info* info, INT64 javaBytePos, int bufferSize
     // Advantage is that it is indeed based on the samples that go through
     // the system (rather than time-based methods)
     if (info->isSource) {
-        // javaBytePos is the position that is reached when the current
-        // buffer is played completely
-        return (INT64) (javaBytePos - bufferSize + availInBytes);
+	// javaBytePos is the position that is reached when the current
+	// buffer is played completely
+	return (INT64) (javaBytePos - bufferSize + availInBytes);
     } else {
-        // javaBytePos is the position that was when the current buffer was empty
-        return (INT64) (javaBytePos + availInBytes);
+	// javaBytePos is the position that was when the current buffer was empty
+	return (INT64) (javaBytePos + availInBytes);
     }
 }
 
@@ -1391,20 +1391,20 @@ int DAUDIO_RequiresServicing(void* id, int isSource) {
 void DAUDIO_Service(void* id, int isSource) {
     DS_Info* info = (DS_Info*) id;
     if (isSource) {
-        if (info->silencedBytes < info->dsBufferSizeInBytes) {
-            // clear buffer
-            TRACE0("DAUDIO_Service\n");
-            DS_clearBuffer(info, TRUE /* from write position */);
-        }
-        if (info->writePos >= 0
-            && info->started
-            && !info->underrun
-            && info->silencedBytes >= info->dsBufferSizeInBytes) {
-            // if we're currently playing, and the entire buffer is silenced...
-            // then we are underrunning!
-            info->underrun = TRUE;
-            ERROR0("DAUDIO_Service: ERROR: DirectSound: underrun detected!\n");
-        }
+	if (info->silencedBytes < info->dsBufferSizeInBytes) {
+	    // clear buffer
+	    TRACE0("DAUDIO_Service\n");
+	    DS_clearBuffer(info, TRUE /* from write position */);
+	}
+	if (info->writePos >= 0
+	    && info->started
+	    && !info->underrun
+	    && info->silencedBytes >= info->dsBufferSizeInBytes) {
+	    // if we're currently playing, and the entire buffer is silenced...
+	    // then we are underrunning!
+	    info->underrun = TRUE;
+	    ERROR0("DAUDIO_Service: ERROR: DirectSound: underrun detected!\n");
+	}
     }
 }
 

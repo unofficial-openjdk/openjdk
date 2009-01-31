@@ -32,5 +32,5 @@ public class IHashCode {
        int test = System.identityHashCode(null);
        if (test != 0)
            throw new RuntimeException("identityHashCode(null) is "+test);
-  }
+  }  
 }

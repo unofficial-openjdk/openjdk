@@ -109,7 +109,7 @@ abstract public class EventRequestSpec {
         specs.notifyDeferred(this);
     }
 
-    public EventRequest getEventRequest() {
+    public EventRequest getEventRequest() {  
         return request;
     }
 
@@ -136,11 +136,11 @@ abstract public class EventRequestSpec {
 
     public String getStatusString() {
         switch (status) {
-            case STATUS_RESOLVED:
+            case STATUS_RESOLVED: 
                 return "resolved";
-            case STATUS_UNRESOLVED:
+            case STATUS_UNRESOLVED: 
                 return "deferred";
-            case STATUS_ERROR:
+            case STATUS_ERROR: 
                 return "erroneous";
         }
         return "unknown";
@@ -150,7 +150,7 @@ abstract public class EventRequestSpec {
         return Utils.isJavaIdentifier(s);
     }
 
-    public String errorMessageFor(Exception e) {
+    public String errorMessageFor(Exception e) { 
         if (e instanceof IllegalArgumentException) {
             return ("Invalid command syntax");
         } else if (e instanceof RuntimeException) {
@@ -158,6 +158,8 @@ abstract public class EventRequestSpec {
             throw (RuntimeException)e;
         } else {
             return ("Internal error; unable to set" + this);
-        }
+        } 
     }
 }
+
+

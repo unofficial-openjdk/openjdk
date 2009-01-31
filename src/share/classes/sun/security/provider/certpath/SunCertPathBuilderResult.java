@@ -35,20 +35,21 @@ import java.security.cert.TrustAnchor;
 /**
  * This class represents the result of a SunCertPathBuilder build.
  * Since all paths returned by the SunCertPathProvider are PKIX validated
- * the result contains the valid policy tree and subject public key returned
- * by the algorithm. It also contains the trust anchor and debug information
+ * the result contains the valid policy tree and subject public key returned 
+ * by the algorithm. It also contains the trust anchor and debug information 
  * represented in the form of an adjacency list.
  *
  * @see PKIXCertPathBuilderResult
  *
- * @since       1.4
- * @author      Sean Mullan
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Sean Mullan
  */
 //@@@ Note: this class is not in public API and access to adjacency list is
 //@@@ intended for debugging/replay of Sun PKIX CertPathBuilder implementation.
 
 public class SunCertPathBuilderResult extends PKIXCertPathBuilderResult {
-
+ 
     private static final Debug debug = Debug.getInstance("certpath");
 
     private AdjacencyList adjList;
@@ -64,12 +65,12 @@ public class SunCertPathBuilderResult extends PKIXCertPathBuilderResult {
      * @param subjectPublicKey the public key of the subject
      * @param adjList an Adjacency list containing debug information
      */
-    SunCertPathBuilderResult(CertPath certPath,
-        TrustAnchor trustAnchor, PolicyNode policyTree,
-        PublicKey subjectPublicKey, AdjacencyList adjList)
+    SunCertPathBuilderResult(CertPath certPath, 
+	TrustAnchor trustAnchor, PolicyNode policyTree, 
+	PublicKey subjectPublicKey, AdjacencyList adjList)
     {
-        super(certPath, trustAnchor, policyTree, subjectPublicKey);
-        this.adjList = adjList;
+	super(certPath, trustAnchor, policyTree, subjectPublicKey);
+	this.adjList = adjList;
     }
 
     /**
@@ -78,6 +79,6 @@ public class SunCertPathBuilderResult extends PKIXCertPathBuilderResult {
      * @return The adjacency list containing information about the build.
      */
     public AdjacencyList getAdjacencyList() {
-        return adjList;
+	return adjList;
     }
 }

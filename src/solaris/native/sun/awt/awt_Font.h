@@ -46,3 +46,4 @@ struct PlatformFontIDs {
     jmethodID makeConvertedMultiFontString;
     jmethodID makeConvertedMultiFontChars;
 };
+

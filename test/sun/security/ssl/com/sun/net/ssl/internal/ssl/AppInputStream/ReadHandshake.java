@@ -45,13 +45,13 @@ public class ReadHandshake {
      * as to which side should be the main thread.
      */
     static boolean separateServerThread = true;
-
+    
     // Note: we use anonymous ciphersuites only, no keys/ trusted certs needed
-
+    
     private final static String[] CLIENT_SUITES = new String[] {
         "SSL_DH_anon_WITH_3DES_EDE_CBC_SHA",
     };
-
+    
     private final static String[] SERVER_SUITES = new String[] {
         "SSL_DH_anon_WITH_RC4_128_MD5",
     };
@@ -85,71 +85,71 @@ public class ReadHandshake {
         SSLSocket sslSocket = null;
         SSLServerSocket sslServerSocket = null;
         try {
-            SSLServerSocketFactory sslssf =
-                (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-            sslServerSocket =
-                (SSLServerSocket) sslssf.createServerSocket(serverPort);
-            serverPort = sslServerSocket.getLocalPort();
+	    SSLServerSocketFactory sslssf =
+	        (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
+	    sslServerSocket =
+	        (SSLServerSocket) sslssf.createServerSocket(serverPort);
+	    serverPort = sslServerSocket.getLocalPort();
 
-            sslServerSocket.setEnabledCipherSuites(SERVER_SUITES);
+	    sslServerSocket.setEnabledCipherSuites(SERVER_SUITES);
 
-            /*
-             * Signal Client, we're ready for his connect.
-             */
-            serverReady = true;
+	    /*
+	     * Signal Client, we're ready for his connect.
+	     */
+	    serverReady = true;
+	    
+	    System.out.println("Server waiting for connection");
 
-            System.out.println("Server waiting for connection");
+	    sslSocket = (SSLSocket) sslServerSocket.accept();
+	    InputStream sslIS = sslSocket.getInputStream();
+	    OutputStream sslOS = sslSocket.getOutputStream();
 
-            sslSocket = (SSLSocket) sslServerSocket.accept();
-            InputStream sslIS = sslSocket.getInputStream();
-            OutputStream sslOS = sslSocket.getOutputStream();
-
-            System.out.println("Server starting handshake...");
-
-
-            try {
-                sslIS.read();
-                throw new Exception("No handshake exception on server side");
-            } catch (IOException e) {
-                System.out.println("Handshake failed on server side, OK");
-            }
-
-            for (int i = 0; i < 3; i++) {
-                try {
-                    int ch;
-                    if ((ch = sslIS.read()) != -1) {
-                        throw new Exception("Read succeeded server side: "
-                            + ch);
-                    }
-                } catch (IOException e) {
-                    System.out.println("Exception for read() on server, OK");
-                }
-            }
+	    System.out.println("Server starting handshake...");
+	    
+	
+	    try {
+	        sslIS.read();
+	        throw new Exception("No handshake exception on server side");
+	    } catch (IOException e) {
+	        System.out.println("Handshake failed on server side, OK");
+	    }
+	    
+	    for (int i = 0; i < 3; i++) {
+	    	try {
+	            int ch;
+		    if ((ch = sslIS.read()) != -1) {
+	                throw new Exception("Read succeeded server side: "
+			    + ch);
+		    }
+	    	} catch (IOException e) {
+	            System.out.println("Exception for read() on server, OK");
+		}
+	    }
 
         } finally {
-            closeSocket(sslSocket);
-            closeSocket(sslServerSocket);
-        }
+	    closeSocket(sslSocket);
+	    closeSocket(sslServerSocket);
+	}
     }
-
+    
     private static void closeSocket(Socket s) {
         try {
-            if (s != null) {
-                s.close();
-            }
-        } catch (Exception e) {
-            // ignore
-        }
+	    if (s != null) {
+	        s.close();
+	    }
+	} catch (Exception e) {
+	    // ignore
+	}
     }
 
     private static void closeSocket(ServerSocket s) {
         try {
-            if (s != null) {
-                s.close();
-            }
-        } catch (Exception e) {
-            // ignore
-        }
+	    if (s != null) {
+	        s.close();
+	    }
+	} catch (Exception e) {
+	    // ignore
+	}
     }
 
     /*
@@ -160,48 +160,48 @@ public class ReadHandshake {
      */
     void doClientSide() throws Exception {
 
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(80);
-        }
+	/*
+	 * Wait for server to get started.
+	 */
+	while (!serverReady) {
+	    Thread.sleep(80);
+	}
+	
+	SSLSocket sslSocket = null;
+	try {
 
-        SSLSocket sslSocket = null;
-        try {
+	    SSLSocketFactory sslsf =
+		(SSLSocketFactory) SSLSocketFactory.getDefault();
+	    sslSocket = (SSLSocket)
+		sslsf.createSocket("localhost", serverPort);
+	    sslSocket.setEnabledCipherSuites(CLIENT_SUITES);
 
-            SSLSocketFactory sslsf =
-                (SSLSocketFactory) SSLSocketFactory.getDefault();
-            sslSocket = (SSLSocket)
-                sslsf.createSocket("localhost", serverPort);
-            sslSocket.setEnabledCipherSuites(CLIENT_SUITES);
+	    InputStream sslIS = sslSocket.getInputStream();
+	    OutputStream sslOS = sslSocket.getOutputStream();
+	    
+	    System.out.println("Client starting handshake...");
 
-            InputStream sslIS = sslSocket.getInputStream();
-            OutputStream sslOS = sslSocket.getOutputStream();
-
-            System.out.println("Client starting handshake...");
-
-            try {
-                sslIS.read();
-                throw new Exception("No handshake exception on client side");
-            } catch (IOException e) {
-                System.out.println("Handshake failed on client side, OK");
-            }
-
-            for (int i = 0; i < 3; i++) {
-                try {
-                    int ch;
-                    if ((ch = sslIS.read()) != -1) {
-                        throw new Exception("Read succeeded on client side: "
-                            + ch);
-                    }
-                } catch (IOException e) {
-                    System.out.println("Exception for read() on client, OK");
-                }
-            }
-        } finally {
-            sslSocket.close();
-        }
+	    try {
+		sslIS.read();
+	        throw new Exception("No handshake exception on client side");
+	    } catch (IOException e) {
+	        System.out.println("Handshake failed on client side, OK");
+	    }
+	    
+	    for (int i = 0; i < 3; i++) {
+	    	try {
+	            int ch;
+		    if ((ch = sslIS.read()) != -1) {
+	                throw new Exception("Read succeeded on client side: "
+			    + ch);
+		    }
+	    	} catch (IOException e) {
+	            System.out.println("Exception for read() on client, OK");
+		}
+	    }
+	} finally {
+	    sslSocket.close();
+	}
     }
 
     /*
@@ -216,12 +216,12 @@ public class ReadHandshake {
 
     public static void main(String[] args) throws Exception {
 
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
+	if (debug)
+	    System.setProperty("javax.net.debug", "all");
 
-        /*
-         * Start the tests.
-         */
+	/*
+	 * Start the tests.
+	 */
         new ReadHandshake();
     }
 
@@ -234,73 +234,73 @@ public class ReadHandshake {
      * Fork off the other side, then do your work.
      */
     ReadHandshake() throws Exception {
-        startServer(true);
-        startClient(true);
+	startServer(true);
+	startClient(true);
 
-        serverThread.join();
-        clientThread.join();
+	serverThread.join();
+	clientThread.join();
 
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null) {
-            if (clientException != null) {
-                System.out.println("Client exception:");
-                clientException.printStackTrace(System.out);
-            }
-            throw serverException;
-        }
-        if (clientException != null) {
-            throw clientException;
-        }
+	/*
+	 * When we get here, the test is pretty much over.
+	 *
+	 * If the main thread excepted, that propagates back
+	 * immediately.  If the other thread threw an exception, we
+	 * should report back.
+	 */
+	if (serverException != null) {
+	    if (clientException != null) {
+	        System.out.println("Client exception:");
+		clientException.printStackTrace(System.out);
+	    }
+	    throw serverException;
+	}
+	if (clientException != null) {
+	    throw clientException;
+	}
     }
 
     void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.err.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide();
-        }
+	if (newThread) {
+	    serverThread = new Thread() {
+		public void run() {
+		    try {
+			doServerSide();
+		    } catch (Exception e) {
+			/*
+			 * Our server thread just died.
+			 *
+			 * Release the client, if not active already...
+			 */
+			System.err.println("Server died...");
+			serverReady = true;
+			serverException = e;
+		    }
+		}
+	    };
+	    serverThread.start();
+	} else {
+	    doServerSide();
+	}
     }
 
     void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+	if (newThread) {
+	    clientThread = new Thread() {
+		public void run() {
+		    try {
+			doClientSide();
+		    } catch (Exception e) {
+			/*
+			 * Our client thread just died.
+			 */
+			System.err.println("Client died...");
+			clientException = e;
+		    }
+		}
+	    };
+	    clientThread.start();
+	} else {
+	    doClientSide();
+	}
     }
 }

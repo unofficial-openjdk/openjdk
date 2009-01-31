@@ -22,6 +22,8 @@
 # have any questions.
 #
 
+# @(#)solar88	8.1
+
 # Apparent noon times below are for Riyadh; they're a bit off for other places.
 # Times were computed using formulas in the U.S. Naval Observatory's
 # Almanac for Computers 1988; the formulas "will give EqT to an accuracy of

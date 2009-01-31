@@ -34,6 +34,7 @@ import java.util.Arrays;
  * A simple whitespace-based BreakIterator implementation.
  *
  * @author Sergey Groznyh
+ * @version %I% %G%
  */
 class WhitespaceBasedBreakIterator extends BreakIterator {
     private char[] text = new char[0];
@@ -115,5 +116,5 @@ class WhitespaceBasedBreakIterator extends BreakIterator {
         int hit = Arrays.binarySearch(breaks, n);
         int offset = (hit < 0 ? (bias < 0 ? -1 : -2) : 0);
         return checkhit(Math.abs(hit) + bias + offset);
-    }
+    }    
 }

@@ -31,6 +31,7 @@ import sun.nio.cs.ext.EUC_CN;
  * Tables and data to convert EUC_CN to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharEUC_CN extends ByteToCharDoubleByte {

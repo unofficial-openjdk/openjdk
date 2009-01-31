@@ -31,14 +31,14 @@
 #include "outStream.h"
 #include "FrameID.h"
 
-static jboolean
-name(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+name(PacketInputStream *in, PacketOutputStream *out) 
 {
     JNIEnv *env;
     jthread thread;
 
     env = getEnv();
-
+    
     thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -50,35 +50,35 @@ name(PacketInputStream *in, PacketOutputStream *out)
     }
 
     WITH_LOCAL_REFS(env, 1) {
-
+        
         jvmtiThreadInfo info;
         jvmtiError error;
-
+        
         (void)memset(&info, 0, sizeof(info));
 
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
                                 (gdata->jvmti, thread, &info);
-
+        
         if (error != JVMTI_ERROR_NONE) {
             outStream_setError(out, map2jdwpError(error));
         } else {
             (void)outStream_writeString(out, info.name);
         }
-
+        
         if ( info.name != NULL )
             jvmtiDeallocate(info.name);
-
+    
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
-suspend(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+suspend(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     jthread thread;
-
+    
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -95,12 +95,12 @@ suspend(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
-resume(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+resume(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     jthread thread;
-
+    
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -119,14 +119,14 @@ resume(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
-status(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+status(PacketInputStream *in, PacketOutputStream *out) 
 {
     jdwpThreadStatus threadStatus;
     jint statusFlags;
     jvmtiError error;
     jthread thread;
-
+    
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -137,7 +137,7 @@ status(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    error = threadControl_applicationThreadStatus(thread, &threadStatus,
+    error = threadControl_applicationThreadStatus(thread, &threadStatus, 
                                                           &statusFlags);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
@@ -148,14 +148,14 @@ status(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
-threadGroup(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+threadGroup(PacketInputStream *in, PacketOutputStream *out) 
 {
     JNIEnv *env;
     jthread thread;
-
+    
     env = getEnv();
-
+    
     thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -170,32 +170,32 @@ threadGroup(PacketInputStream *in, PacketOutputStream *out)
 
         jvmtiThreadInfo info;
         jvmtiError error;
-
+    
         (void)memset(&info, 0, sizeof(info));
-
+        
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
                                 (gdata->jvmti, thread, &info);
-
+        
         if (error != JVMTI_ERROR_NONE) {
             outStream_setError(out, map2jdwpError(error));
         } else {
             (void)outStream_writeObjectRef(env, out, info.thread_group);
-        }
-
+        } 
+        
         if ( info.name!=NULL )
             jvmtiDeallocate(info.name);
-
+    
     } END_WITH_LOCAL_REFS(env);
 
     return JNI_TRUE;
 }
 
-static jboolean
+static jboolean 
 validateSuspendedThread(PacketOutputStream *out, jthread thread)
 {
     jvmtiError error;
     jint count;
-
+    
     error = threadControl_suspendCount(thread, &count);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
@@ -210,8 +210,8 @@ validateSuspendedThread(PacketOutputStream *out, jthread thread)
     return JNI_TRUE;
 }
 
-static jboolean
-frames(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+frames(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     FrameNumber fnum;
@@ -222,7 +222,7 @@ frames(PacketInputStream *in, PacketOutputStream *out)
     jint length;
 
     env = getEnv();
-
+    
     thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -272,11 +272,11 @@ frames(PacketInputStream *in, PacketOutputStream *out)
     }
 
     (void)outStream_writeInt(out, length);
-
+    
     for(fnum = startIndex ; fnum < startIndex+length ; fnum++ ) {
-
+    
         WITH_LOCAL_REFS(env, 1) {
-
+           
             jclass clazz;
             jmethodID method;
             jlocation location;
@@ -297,12 +297,12 @@ frames(PacketInputStream *in, PacketOutputStream *out)
                     writeCodeLocation(out, clazz, method, location);
                 }
             }
-
+        
         } END_WITH_LOCAL_REFS(env);
-
+        
         if (error != JVMTI_ERROR_NONE)
             break;
-
+        
     }
 
     if (error != JVMTI_ERROR_NONE) {
@@ -311,8 +311,8 @@ frames(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
-getFrameCount(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+getFrameCount(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     jint count;
@@ -343,14 +343,14 @@ getFrameCount(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
+static jboolean 
 ownedMonitors(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
     jthread thread;
-
+    
     env = getEnv();
-
+    
     thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -366,11 +366,11 @@ ownedMonitors(PacketInputStream *in, PacketOutputStream *out)
     }
 
     WITH_LOCAL_REFS(env, 1) {
-
+        
         jvmtiError error;
         jint count = 0;
         jobject *monitors = NULL;
-
+        
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetOwnedMonitorInfo)
                                 (gdata->jvmti, thread, &count, &monitors);
         if (error != JVMTI_ERROR_NONE) {
@@ -388,18 +388,18 @@ ownedMonitors(PacketInputStream *in, PacketOutputStream *out)
             jvmtiDeallocate(monitors);
 
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
+static jboolean 
 currentContendedMonitor(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
     jthread thread;
-
+    
     env = getEnv();
-
+    
     thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -415,33 +415,33 @@ currentContendedMonitor(PacketInputStream *in, PacketOutputStream *out)
     }
 
     WITH_LOCAL_REFS(env, 1) {
-
+        
         jobject monitor;
         jvmtiError error;
-
+        
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetCurrentContendedMonitor)
                                 (gdata->jvmti, thread, &monitor);
-
+        
         if (error != JVMTI_ERROR_NONE) {
             outStream_setError(out, map2jdwpError(error));
         } else {
             (void)outStream_writeByte(out, specificTypeKey(env, monitor));
             (void)outStream_writeObjectRef(env, out, monitor);
         }
-
+    
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
-stop(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+stop(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     jthread thread;
     jobject throwable;
     JNIEnv *env;
-
+    
     env = getEnv();
     thread = inStream_readThreadRef(env, in);
     if (inStream_error(in)) {
@@ -464,12 +464,12 @@ stop(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
-interrupt(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+interrupt(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     jthread thread;
-
+    
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -487,13 +487,13 @@ interrupt(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
-suspendCount(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+suspendCount(PacketInputStream *in, PacketOutputStream *out) 
 {
     jvmtiError error;
     jint count;
     jthread thread;
-
+    
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -514,12 +514,12 @@ suspendCount(PacketInputStream *in, PacketOutputStream *out)
     return JNI_TRUE;
 }
 
-static jboolean
+static jboolean 
 ownedMonitorsWithStackDepth(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
     jthread thread;
-
+    
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -535,14 +535,14 @@ ownedMonitorsWithStackDepth(PacketInputStream *in, PacketOutputStream *out)
     }
 
     env = getEnv();
-
+    
     WITH_LOCAL_REFS(env, 1) {
-
+        
         jvmtiError error = JVMTI_ERROR_NONE;
         jint count = 0;
         jint depth;
         jvmtiMonitorStackDepthInfo *monitors=NULL;
-
+        
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetOwnedMonitorStackDepthInfo)
                                 (gdata->jvmti, thread, &count, &monitors);
 
@@ -563,12 +563,12 @@ ownedMonitorsWithStackDepth(PacketInputStream *in, PacketOutputStream *out)
         }
 
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
-forceEarlyReturn(PacketInputStream *in, PacketOutputStream *out)
+static jboolean 
+forceEarlyReturn(PacketInputStream *in, PacketOutputStream *out) 
 {
     JNIEnv *env;
     jthread thread;
@@ -607,49 +607,49 @@ forceEarlyReturn(PacketInputStream *in, PacketOutputStream *out)
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
                                 (gdata->jvmti, thread, value.b);
                 break;
-
+    
             case JDWP_TAG(CHAR):
                 value.c = inStream_readChar(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
                                 (gdata->jvmti, thread, value.c);
                 break;
-
+    
             case JDWP_TAG(FLOAT):
                 value.f = inStream_readFloat(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnFloat)
                                 (gdata->jvmti, thread, value.f);
                 break;
-
+    
             case JDWP_TAG(DOUBLE):
                 value.d = inStream_readDouble(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnDouble)
                                 (gdata->jvmti, thread, value.d);
                 break;
-
+    
             case JDWP_TAG(INT):
                 value.i = inStream_readInt(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
                                 (gdata->jvmti, thread, value.i);
                 break;
-
+    
             case JDWP_TAG(LONG):
                 value.j = inStream_readLong(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnLong)
                                 (gdata->jvmti, thread, value.j);
                 break;
-
+    
             case JDWP_TAG(SHORT):
                 value.s = inStream_readShort(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
                                 (gdata->jvmti, thread, value.s);
                 break;
-
+    
             case JDWP_TAG(BOOLEAN):
                 value.z = inStream_readBoolean(in);
                 error = JVMTI_FUNC_PTR(gdata->jvmti,ForceEarlyReturnInt)
                                 (gdata->jvmti, thread, value.z);
                 break;
-
+    
             default:
                 error =  AGENT_ERROR_INVALID_TAG;
                 break;

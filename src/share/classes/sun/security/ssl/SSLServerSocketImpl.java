@@ -58,30 +58,31 @@ import javax.net.ssl.SSLServerSocket;
  * @see SSLSocketImpl
  * @see SSLServerSocketFactoryImpl
  *
+ * @version %I%, %G%
  * @author David Brownell
  */
 final
 class SSLServerSocketImpl extends SSLServerSocket
 {
-    private SSLContextImpl      sslContext;
+    private SSLContextImpl	sslContext;
 
     /* Do newly accepted connections require clients to authenticate? */
-    private byte                doClientAuth = SSLEngineImpl.clauth_none;
+    private byte		doClientAuth = SSLEngineImpl.clauth_none;
 
     /* Do new connections created here use the "server" mode of SSL? */
-    private boolean             useServerMode = true;
+    private boolean		useServerMode = true;
 
     /* Can new connections created establish new sessions? */
-    private boolean             enableSessionCreation = true;
+    private boolean		enableSessionCreation = true;
 
     /* what cipher suites to use by default */
-    private CipherSuiteList     enabledCipherSuites = null;
+    private CipherSuiteList	enabledCipherSuites = null;
 
     /* which protocol to use by default */
-    private ProtocolList        enabledProtocols = null;
+    private ProtocolList	enabledProtocols = null;
 
     /* could enabledCipherSuites ever complete handshaking? */
-    private boolean             checkedEnabled = false;
+    private boolean		checkedEnabled = false;
 
     /**
      * Create an SSL server socket on a port, using a non-default
@@ -89,14 +90,14 @@ class SSLServerSocketImpl extends SSLServerSocket
      *
      * @param port the port on which to listen
      * @param backlog how many connections may be pending before
-     *          the system should start rejecting new requests
+     *		the system should start rejecting new requests
      * @param context authentication context for this server
      */
     SSLServerSocketImpl(int port, int backlog, SSLContextImpl context)
     throws IOException, SSLException
     {
-        super(port, backlog);
-        initServer(context);
+	super(port, backlog);
+	initServer(context);
     }
 
 
@@ -110,20 +111,20 @@ class SSLServerSocketImpl extends SSLServerSocket
      *
      * @param port the port on which to listen
      * @param backlog how many connections may be pending before
-     *          the system should start rejecting new requests
+     *		the system should start rejecting new requests
      * @param address the address of the network interface through
-     *          which connections will be accepted
+     *		which connections will be accepted
      * @param context authentication context for this server
      */
     SSLServerSocketImpl(
-        int             port,
-        int             backlog,
-        InetAddress     address,
-        SSLContextImpl  context)
-        throws IOException
+	int		port,
+	int		backlog,
+	InetAddress	address,
+	SSLContextImpl	context)
+	throws IOException
     {
-        super(port, backlog, address);
-        initServer(context);
+	super(port, backlog, address);
+	initServer(context);
     }
 
 
@@ -131,8 +132,8 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Creates an unbound server socket.
      */
     SSLServerSocketImpl(SSLContextImpl context) throws IOException {
-        super();
-        initServer(context);
+	super();
+	initServer(context);
     }
 
 
@@ -140,12 +141,12 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Initializes the server socket.
      */
     private void initServer(SSLContextImpl context) throws SSLException {
-        if (context == null) {
-            throw new SSLException("No Authentication context given");
-        }
-        sslContext = context;
-        enabledCipherSuites = CipherSuiteList.getDefault();
-        enabledProtocols = ProtocolList.getDefault();
+	if (context == null) {
+	    throw new SSLException("No Authentication context given");
+	}
+	sslContext = context;
+	enabledCipherSuites = CipherSuiteList.getDefault();
+	enabledProtocols = ProtocolList.getDefault();
     }
 
     /**
@@ -159,8 +160,8 @@ class SSLServerSocketImpl extends SSLServerSocket
      * @return an array of cipher suite names
      */
     public String[] getSupportedCipherSuites() {
-        CipherSuiteList.clearAvailableCache();
-        return CipherSuiteList.getSupported().toStringArray();
+	CipherSuiteList.clearAvailableCache();
+	return CipherSuiteList.getSupported().toStringArray();
     }
 
     /**
@@ -169,7 +170,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * that the system defaults are in effect.
      */
     synchronized public String[] getEnabledCipherSuites() {
-        return enabledCipherSuites.toStringArray();
+	return enabledCipherSuites.toStringArray();
     }
 
     /**
@@ -177,15 +178,15 @@ class SSLServerSocketImpl extends SSLServerSocket
      * by accepted connections.
      *
      * @param suites Names of all the cipher suites to enable; null
-     *  means to accept system defaults.
+     *	means to accept system defaults.
      */
     synchronized public void setEnabledCipherSuites(String[] suites) {
-        enabledCipherSuites = new CipherSuiteList(suites);
-        checkedEnabled = false;
+	enabledCipherSuites = new CipherSuiteList(suites);
+	checkedEnabled = false;
     }
 
     public String[] getSupportedProtocols() {
-        return ProtocolList.getSupported().toStringArray();
+	return ProtocolList.getSupported().toStringArray();
     }
 
     /**
@@ -195,14 +196,14 @@ class SSLServerSocketImpl extends SSLServerSocket
      *
      * @param protocols protocols to enable.
      * @exception IllegalArgumentException when one of the protocols
-     *  named by the parameter is not supported.
+     *	named by the parameter is not supported.
      */
     synchronized public void setEnabledProtocols(String[] protocols) {
-        enabledProtocols = new ProtocolList(protocols);
+	enabledProtocols = new ProtocolList(protocols);
     }
 
     synchronized public String[] getEnabledProtocols() {
-        return enabledProtocols.toStringArray();
+	return enabledProtocols.toStringArray();
     }
 
     /**
@@ -210,12 +211,12 @@ class SSLServerSocketImpl extends SSLServerSocket
      * client authentication.
      */
     public void setNeedClientAuth(boolean flag) {
-        doClientAuth = (flag ?
-            SSLEngineImpl.clauth_required : SSLEngineImpl.clauth_none);
+	doClientAuth = (flag ?
+	    SSLEngineImpl.clauth_required : SSLEngineImpl.clauth_none);
     }
 
     public boolean getNeedClientAuth() {
-        return (doClientAuth == SSLEngineImpl.clauth_required);
+	return (doClientAuth == SSLEngineImpl.clauth_required);
     }
 
     /**
@@ -223,12 +224,12 @@ class SSLServerSocketImpl extends SSLServerSocket
      * client authentication.
      */
     public void setWantClientAuth(boolean flag) {
-        doClientAuth = (flag ?
-            SSLEngineImpl.clauth_requested : SSLEngineImpl.clauth_none);
+	doClientAuth = (flag ?
+	    SSLEngineImpl.clauth_requested : SSLEngineImpl.clauth_none);
     }
 
     public boolean getWantClientAuth() {
-        return (doClientAuth == SSLEngineImpl.clauth_requested);
+	return (doClientAuth == SSLEngineImpl.clauth_requested);
     }
 
     /**
@@ -238,11 +239,11 @@ class SSLServerSocketImpl extends SSLServerSocket
      * rejoining the already-negotiated SSL connection.
      */
     public void setUseClientMode(boolean flag) {
-        useServerMode = !flag;
+	useServerMode = !flag;
     }
 
     public boolean getUseClientMode() {
-        return !useServerMode;
+	return !useServerMode;
     }
 
 
@@ -251,7 +252,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * sessions.
      */
     public void setEnableSessionCreation(boolean flag) {
-        enableSessionCreation = flag;
+	enableSessionCreation = flag;
     }
 
     /**
@@ -259,7 +260,7 @@ class SSLServerSocketImpl extends SSLServerSocket
      * sessions.
      */
     public boolean getEnableSessionCreation() {
-        return enableSessionCreation;
+	return enableSessionCreation;
     }
 
 
@@ -269,15 +270,15 @@ class SSLServerSocketImpl extends SSLServerSocket
      * presented during construction.
      */
     public Socket accept() throws IOException {
-        checkEnabledSuites();
+	checkEnabledSuites();
 
-        SSLSocketImpl s = new SSLSocketImpl(sslContext, useServerMode,
-            enabledCipherSuites, doClientAuth, enableSessionCreation,
-            enabledProtocols);
+	SSLSocketImpl s = new SSLSocketImpl(sslContext, useServerMode,
+	    enabledCipherSuites, doClientAuth, enableSessionCreation,
+	    enabledProtocols);
 
-        implAccept(s);
-        s.doneConnect();
-        return s;
+	implAccept(s);
+	s.doneConnect();
+	return s;
     }
 
 
@@ -287,41 +288,41 @@ class SSLServerSocketImpl extends SSLServerSocket
      * enabled suites are capable of supporting a successful handshake.
      */
     private void checkEnabledSuites() throws IOException {
-        //
-        // We want to report an error if no cipher suites were actually
-        // enabled, since this is an error users are known to make.  Then
-        // they get vastly confused by having clients report an error!
-        //
-        synchronized (this) {
-            if (checkedEnabled) {
-                return;
-            }
-            if (useServerMode == false) {
-                return;
-            }
+	//
+	// We want to report an error if no cipher suites were actually
+	// enabled, since this is an error users are known to make.  Then
+	// they get vastly confused by having clients report an error!
+	//
+	synchronized (this) {
+	    if (checkedEnabled) {
+		return;
+	    }
+	    if (useServerMode == false) {
+		return;
+	    }
 
-            SSLSocketImpl tmp = new SSLSocketImpl(sslContext, useServerMode,
-                         enabledCipherSuites, doClientAuth,
-                         enableSessionCreation, enabledProtocols);
+	    SSLSocketImpl tmp = new SSLSocketImpl(sslContext, useServerMode,
+			 enabledCipherSuites, doClientAuth,
+			 enableSessionCreation, enabledProtocols);
 
-            ServerHandshaker handshaker = tmp.getServerHandshaker();
+	    ServerHandshaker handshaker = tmp.getServerHandshaker();
 
-            for (Iterator t = enabledCipherSuites.iterator(); t.hasNext(); ) {
-                CipherSuite suite = (CipherSuite)t.next();
-                if (handshaker.trySetCipherSuite(suite)) {
-                    checkedEnabled = true;
-                    return;
-                }
-            }
+	    for (Iterator t = enabledCipherSuites.iterator(); t.hasNext(); ) {
+		CipherSuite suite = (CipherSuite)t.next();
+		if (handshaker.trySetCipherSuite(suite)) {
+		    checkedEnabled = true;
+		    return;
+		}
+	    }
 
-            //
-            // diagnostic text here is currently appropriate
-            // since it's only certificate unavailability that can
-            // cause such problems ... but that might change someday.
-            //
-            throw new SSLException("No available certificate or key corresponds"
-                + " to the SSL cipher suites which are enabled.");
-        }
+	    //
+	    // diagnostic text here is currently appropriate
+	    // since it's only certificate unavailability that can
+	    // cause such problems ... but that might change someday.
+	    //
+	    throw new SSLException("No available certificate or key corresponds"
+		+ " to the SSL cipher suites which are enabled.");
+	}
     }
 
 
@@ -329,6 +330,6 @@ class SSLServerSocketImpl extends SSLServerSocket
      * Provides a brief description of this SSL socket.
      */
     public String toString() {
-        return "[SSL: "+ super.toString() + "]";
+	return "[SSL: "+ super.toString() + "]";
     }
 }

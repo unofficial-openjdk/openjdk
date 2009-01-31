@@ -32,8 +32,8 @@ package java.lang.instrument;
 /**
  * Thrown by an implementation of
  * {@link java.lang.instrument.ClassFileTransformer#transform ClassFileTransformer.transform}
- * when its input parameters are invalid.
- * This may occur either because the initial class file bytes were
+ * when its input parameters are invalid. 
+ * This may occur either because the initial class file bytes were 
  * invalid or a previously applied transform corrupted the bytes.
  *
  * @see     java.lang.instrument.ClassFileTransformer#transform
@@ -41,8 +41,8 @@ package java.lang.instrument;
  */
 public class IllegalClassFormatException extends Exception {
     /**
-     * Constructs an <code>IllegalClassFormatException</code> with no
-     * detail message.
+     * Constructs an <code>IllegalClassFormatException</code> with no 
+     * detail message. 
      */
     public
     IllegalClassFormatException() {
@@ -50,8 +50,8 @@ public class IllegalClassFormatException extends Exception {
     }
 
     /**
-     * Constructs an <code>IllegalClassFormatException</code> with the
-     * specified detail message.
+     * Constructs an <code>IllegalClassFormatException</code> with the 
+     * specified detail message. 
      *
      * @param   s   the detail message.
      */

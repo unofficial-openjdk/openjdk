@@ -32,18 +32,18 @@ import javax.management.openmbean.OpenDataException;
 
 /**
  * A CompositeData for StackTraceElement for the local management support.
- * This class avoids the performance penalty paid to the
+ * This class avoids the performance penalty paid to the 
  * construction of a CompositeData use in the local case.
  */
 public class StackTraceElementCompositeData extends LazyCompositeData {
     private final StackTraceElement ste;
 
     private StackTraceElementCompositeData(StackTraceElement ste) {
-        this.ste = ste;
+	this.ste = ste;
     }
 
     public StackTraceElement getStackTraceElement() {
-        return ste;
+	return ste;
     }
 
     public static StackTraceElement from(CompositeData cd) {
@@ -61,37 +61,37 @@ public class StackTraceElementCompositeData extends LazyCompositeData {
     }
 
     protected CompositeData getCompositeData() {
-        // CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
-        // stackTraceElementItemNames!
-        final Object[] stackTraceElementItemValues = {
-            ste.getClassName(),
-            ste.getMethodName(),
-            ste.getFileName(),
-            new Integer(ste.getLineNumber()),
-            new Boolean(ste.isNativeMethod()),
-        };
-        try {
-            return new CompositeDataSupport(stackTraceElementCompositeType,
-                                            stackTraceElementItemNames,
-                                            stackTraceElementItemValues);
-        } catch (OpenDataException e) {
+	// CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
+	// stackTraceElementItemNames!
+	final Object[] stackTraceElementItemValues = {
+	    ste.getClassName(),
+	    ste.getMethodName(),
+	    ste.getFileName(),
+	    new Integer(ste.getLineNumber()),
+	    new Boolean(ste.isNativeMethod()),
+	};
+	try {
+	    return new CompositeDataSupport(stackTraceElementCompositeType,
+					    stackTraceElementItemNames,
+					    stackTraceElementItemValues);
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
     private static final CompositeType stackTraceElementCompositeType;
     static {
-        try {
-            stackTraceElementCompositeType = (CompositeType)
-                MappedMXBeanType.toOpenType(StackTraceElement.class);
-        } catch (OpenDataException e) {
+	try {
+	    stackTraceElementCompositeType = (CompositeType)
+		MappedMXBeanType.toOpenType(StackTraceElement.class);
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
-    // Attribute names
+    // Attribute names 
     private static final String CLASS_NAME      = "className";
     private static final String METHOD_NAME     = "methodName";
     private static final String FILE_NAME       = "fileName";
@@ -99,14 +99,14 @@ public class StackTraceElementCompositeData extends LazyCompositeData {
     private static final String NATIVE_METHOD   = "nativeMethod";
 
     private static final String[] stackTraceElementItemNames = {
-        CLASS_NAME,
-        METHOD_NAME,
-        FILE_NAME,
-        LINE_NUMBER,
-        NATIVE_METHOD,
+	CLASS_NAME,
+	METHOD_NAME,
+	FILE_NAME,
+	LINE_NUMBER,
+	NATIVE_METHOD,
     };
 
-    /** Validate if the input CompositeData has the expected
+    /** Validate if the input CompositeData has the expected 
      * CompositeType (i.e. contain all attributes with expected
      * names and types).
      */

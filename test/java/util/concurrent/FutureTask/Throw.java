@@ -33,13 +33,13 @@ public class Throw {
 
     @SuppressWarnings("deprecation")
     static void THROW(final Throwable t) {
-        if (t != null)
-            Thread.currentThread().stop(t);
+	if (t != null)
+	    Thread.currentThread().stop(t);
     }
 
     Callable<Void> thrower(final Throwable t) {
-        return new Callable<Void>() { public Void call() {
-            THROW(t); return null; }};
+	return new Callable<Void>() { public Void call() {
+	    THROW(t); return null; }};
     }
 
     @SuppressWarnings("serial")
@@ -49,70 +49,70 @@ public class Throw {
     private static class DoneException extends RuntimeException {}
 
     static class MyFutureTask extends FutureTask<Void> {
-        MyFutureTask(Callable<Void> task) { super(task); }
+	MyFutureTask(Callable<Void> task) { super(task); }
         public boolean runAndReset() { return super.runAndReset(); }
     }
 
     MyFutureTask checkTask(final MyFutureTask task) {
-        check(! task.isCancelled());
-        check(! task.isDone());
-        return task;
+	check(! task.isCancelled());
+	check(! task.isDone());
+	return task;
     }
 
     MyFutureTask taskFor(final Throwable callableThrowable,
-                         final Throwable doneThrowable) {
-        return checkTask(
-            new MyFutureTask(thrower(callableThrowable)) {
-                protected void done() { THROW(doneThrowable); }});
+			 final Throwable doneThrowable) {
+	return checkTask(
+	    new MyFutureTask(thrower(callableThrowable)) {
+		protected void done() { THROW(doneThrowable); }});
     }
 
     void test(String[] args) throws Throwable {
-        final Throwable[] callableThrowables = {
-            null, new Exception(), new Error(), new RuntimeException() };
-        final Throwable[] doneThrowables = {
-            new DoneError(), new DoneException() };
-        for (final Throwable c : callableThrowables) {
-            for (final Throwable d : doneThrowables) {
-                THROWS(d.getClass(),
-                       new F(){void f(){
-                           taskFor(c, d).cancel(false);}},
-                       new F(){void f(){
-                           taskFor(c, d).run();}});
-                if (c != null)
-                    THROWS(d.getClass(),
-                           new F(){void f(){
-                               taskFor(c, d).runAndReset();}});
-            }
+	final Throwable[] callableThrowables = {
+	    null, new Exception(), new Error(), new RuntimeException() };
+	final Throwable[] doneThrowables = {
+	    new DoneError(), new DoneException() };
+	for (final Throwable c : callableThrowables) {
+	    for (final Throwable d : doneThrowables) {
+		THROWS(d.getClass(),
+		       new F(){void f(){
+			   taskFor(c, d).cancel(false);}},
+		       new F(){void f(){
+			   taskFor(c, d).run();}});
+		if (c != null)
+		    THROWS(d.getClass(),
+			   new F(){void f(){
+			       taskFor(c, d).runAndReset();}});
+	    }
 
-            try {
-                final MyFutureTask task = taskFor(c, null);
-                check(task.cancel(false));
-                THROWS(CancellationException.class,
-                       new F(){void f() throws Throwable { task.get(); }});
-            } catch (Throwable t) { unexpected(t); }
+	    try {
+		final MyFutureTask task = taskFor(c, null);
+		check(task.cancel(false));
+		THROWS(CancellationException.class,
+		       new F(){void f() throws Throwable { task.get(); }});
+	    } catch (Throwable t) { unexpected(t); }
 
-            if (c != null) {
-                final MyFutureTask task = taskFor(c, null);
-                task.run();
-                try {
-                    task.get();
-                    fail("Expected ExecutionException");
-                } catch (ExecutionException ee) {
-                    equal(c.getClass(), ee.getCause().getClass());
-                } catch (Throwable t) { unexpected(t); }
-            }
+	    if (c != null) {
+		final MyFutureTask task = taskFor(c, null);
+		task.run();
+		try {
+		    task.get();
+		    fail("Expected ExecutionException");
+		} catch (ExecutionException ee) {
+		    equal(c.getClass(), ee.getCause().getClass());
+		} catch (Throwable t) { unexpected(t); }
+	    }
 
-            if (c != null) {
-                final MyFutureTask task = taskFor(c, null);
-                task.runAndReset();
-                try {
-                    task.get();
-                    fail("Expected ExecutionException");
-                } catch (ExecutionException ee) {
-                    check(c.getClass().isInstance(ee.getCause()));
-                } catch (Throwable t) { unexpected(t); }
-            }
-        }
+	    if (c != null) {
+		final MyFutureTask task = taskFor(c, null);
+		task.runAndReset();
+		try {
+		    task.get();
+		    fail("Expected ExecutionException");
+		} catch (ExecutionException ee) {
+		    check(c.getClass().isInstance(ee.getCause()));
+		} catch (Throwable t) { unexpected(t); }
+	    }
+	}
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -123,19 +123,19 @@ public class Throw {
     void unexpected(Throwable t) {failed++; t.printStackTrace();}
     void check(boolean cond) {if (cond) pass(); else fail();}
     void equal(Object x, Object y) {
-        if (x == null ? y == null : x.equals(y)) pass();
-        else fail(x + " not equal to " + y);}
+	if (x == null ? y == null : x.equals(y)) pass();
+	else fail(x + " not equal to " + y);}
     public static void main(String[] args) throws Throwable {
-        new Throw().instanceMain(args);}
+	new Throw().instanceMain(args);}
     void instanceMain(String[] args) throws Throwable {
-        try {test(args);} catch (Throwable t) {unexpected(t);}
-        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-        if (failed > 0) throw new AssertionError("Some tests failed");}
+	try {test(args);} catch (Throwable t) {unexpected(t);}
+	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+	if (failed > 0) throw new AssertionError("Some tests failed");}
     abstract class F {abstract void f() throws Throwable;}
     void THROWS(Class<? extends Throwable> k, F... fs) {
-        for (F f : fs)
-            try {f.f(); fail("Expected " + k.getName() + " not thrown");}
-            catch (Throwable t) {
-                if (k.isAssignableFrom(t.getClass())) pass();
-                else unexpected(t);}}
+	for (F f : fs)
+	    try {f.f(); fail("Expected " + k.getName() + " not thrown");}
+	    catch (Throwable t) {
+		if (k.isAssignableFrom(t.getClass())) pass();
+		else unexpected(t);}}
 }

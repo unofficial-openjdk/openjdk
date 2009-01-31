@@ -37,6 +37,7 @@ import sun.misc.*;
  * } iovec_t;
  *
  * @author Mike McCloskey
+ * @version %I% %E%
  * @since 1.4
  */
 

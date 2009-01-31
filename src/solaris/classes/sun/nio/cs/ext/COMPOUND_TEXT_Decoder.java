@@ -78,7 +78,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
     private static final String ERR_ENCODING = "Unknown encoding: ";
     private static final String ERR_FLUSH =
         "Escape sequence, control sequence, or ML extension not terminated";
-
+    
     private int state = NORMAL_BYTES ;
     private int ext_count, ext_offset;
     private boolean versionSequenceAllowed = true;
@@ -93,7 +93,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
 
 
     public COMPOUND_TEXT_Decoder(Charset cs) {
-        super(cs, 1.0f, 1.0f);
+	super(cs, 1.0f, 1.0f);
         try {
             // Initial state in ISO 2022 designates Latin-1 charset.
             glDecoder = Charset.forName("ASCII").newDecoder();
@@ -106,28 +106,28 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
     }
 
     protected CoderResult decodeLoop(ByteBuffer src, CharBuffer des) {
-        CoderResult cr = CoderResult.UNDERFLOW;
+	CoderResult cr = CoderResult.UNDERFLOW;
         byte[] input = src.array();
         int inOff = src.arrayOffset() + src.position();
         int inEnd = src.arrayOffset() + src.limit();
 
-        try {
-            while (inOff < inEnd && cr.isUnderflow()) {
-                // Byte parsing is done with shorts instead of bytes because
-                // Java bytes are signed, while COMPOUND_TEXT bytes are not. If
-                // we used the Java byte type, the > and < tests during parsing
-                // would not work correctly.
-                cr = handleByte((short)(input[inOff] & 0xFF), des);
-                inOff++;
-            }
-            return cr;
-        } finally {
-            src.position(inOff - src.arrayOffset());
-        }
+	try {
+	    while (inOff < inEnd && cr.isUnderflow()) {
+		// Byte parsing is done with shorts instead of bytes because
+		// Java bytes are signed, while COMPOUND_TEXT bytes are not. If
+		// we used the Java byte type, the > and < tests during parsing
+		// would not work correctly.
+		cr = handleByte((short)(input[inOff] & 0xFF), des);
+		inOff++;
+	    }
+	    return cr;
+	} finally {
+	    src.position(inOff - src.arrayOffset());
+	}
     }
 
     private CoderResult handleByte(short newByte, CharBuffer cb) {
-        CoderResult cr = CoderResult.UNDERFLOW;
+	CoderResult cr = CoderResult.UNDERFLOW;
         switch (state) {
         case NORMAL_BYTES:
             cr= normalBytes(newByte, cb);
@@ -183,12 +183,12 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         default:
             error(ERR_ILLSTATE);
         }
-        return cr;
+	return cr;
     }
-
+ 
     private CoderResult normalBytes(short newByte, CharBuffer cb) {
         CoderResult cr = CoderResult.UNDERFLOW;
-        if ((newByte >= 0x00 && newByte <= 0x1F) || // C0
+        if ((newByte >= 0x00 && newByte <= 0x1F) || // C0 
             (newByte >= 0x80 && newByte <= 0x9F)) { // C1
             char newChar;
 
@@ -214,9 +214,9 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
                 versionSequenceAllowed = false;
                 return cr;
             }
-            if (!cb.hasRemaining())
-                return CoderResult.OVERFLOW;
-            else
+            if (!cb.hasRemaining()) 
+		return CoderResult.OVERFLOW;
+	    else
                 cb.put(newChar);
         } else {
             CharsetDecoder decoder;
@@ -229,58 +229,58 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
             } else /* if (newByte >= 0xA0 && newByte <= 0xFF) */ {
                 decoder = grDecoder;
                 high = grHigh;
-            }
+            } 
             if (lastDecoder != null && decoder != lastDecoder) {
                 cr = flushDecoder(lastDecoder, cb);
             }
             lastDecoder = decoder;
 
             if (decoder != null) {
-                byte b = (byte)newByte;
+                byte b = (byte)newByte;	
                 if (high) {
                     b |= 0x80;
                 } else {
                     b &= 0x7F;
                 }
-                inBB.put(b);
-                inBB.flip();
-                cr = decoder.decode(inBB, cb, false);
+		inBB.put(b);
+		inBB.flip();
+		cr = decoder.decode(inBB, cb, false);
                 if (!inBB.hasRemaining() || cr.isMalformed()) {
                     inBB.clear();
-                } else {
+		} else {
                   int pos = inBB.limit();
                   inBB.clear();
-                  inBB.position(pos);
-                }
+		  inBB.position(pos);
+		}
             } else if (cb.remaining() < replacement().length()) {
                 cb.put(replacement());
             } else {
-                return CoderResult.OVERFLOW;
+		return CoderResult.OVERFLOW;
             }
         }
-        return cr;
+	return cr;
     }
 
     private CoderResult nonStandardBytes(short newByte, CharBuffer cb)
     {
-        CoderResult cr = CoderResult.UNDERFLOW;
+	CoderResult cr = CoderResult.UNDERFLOW;
         if (nonStandardDecoder != null) {
             //byteBuf[0] = (byte)newByte;
-            inBB.put((byte)newByte);
-            inBB.flip();
-            cr = nonStandardDecoder.decode(inBB, cb, false);
-            if (!inBB.hasRemaining()) {
-                inBB.clear();
-            } else {
-                int pos = inBB.limit();
-                inBB.clear();
-                inBB.position(pos);
-            }
+	    inBB.put((byte)newByte);
+	    inBB.flip();
+	    cr = nonStandardDecoder.decode(inBB, cb, false);
+	    if (!inBB.hasRemaining()) {
+		inBB.clear();
+	    } else {
+		int pos = inBB.limit();
+		inBB.clear();
+		inBB.position(pos);
+	    }
         } else if (cb.remaining() < replacement().length()) {
-            cb.put(replacement());
-        } else {
-            return CoderResult.OVERFLOW;
-        }
+	    cb.put(replacement());
+	} else {
+	    return CoderResult.OVERFLOW;
+	}
 
         ext_offset++;
         if (ext_offset >= ext_count) {
@@ -395,7 +395,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
                 return escapeSequenceOther(newByte);
             }
         }
-        return CoderResult.UNDERFLOW;
+	return CoderResult.UNDERFLOW;
     }
 
     private CoderResult charset94N(short newByte) {
@@ -452,7 +452,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
             // {I}
             state = CHARSET_LIF;
             queue.write(newByte);
-            return CoderResult.UNDERFLOW;
+	    return CoderResult.UNDERFLOW;
         } else if (newByte >= 0x40 && newByte <= 0x7E) {
             // F
             return switchDecoder(newByte, cb);
@@ -467,7 +467,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
             // {I}
             state = CHARSET_RIF;
             queue.write(newByte);
-            return CoderResult.UNDERFLOW;
+	    return CoderResult.UNDERFLOW;
         } else if (newByte >= 0x40 && newByte <= 0x7E) {
             // F
             return switchDecoder(newByte, cb);
@@ -526,7 +526,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         default:
             error(ERR_ILLSTATE);
         }
-        return CoderResult.UNDERFLOW;
+	return CoderResult.UNDERFLOW;
     }
 
     private CoderResult extension(short newByte) {
@@ -552,7 +552,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         default:
             error(ERR_ILLSTATE);
         }
-        return CoderResult.UNDERFLOW;
+	return CoderResult.UNDERFLOW;
     }
 
     /**
@@ -585,13 +585,13 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         }
         if (decoder != null) {
             initDecoder(decoder);
-        } else if (unmappableCharacterAction() == CodingErrorAction.REPORT) {
+        } else if (unmappableCharacterAction() == CodingErrorAction.REPORT) {   
             int badInputLength = 1;
             if (encoding != null) {
                 badInputLength = encoding.length;
             } else if (escSequence.length > 0) {
                 badInputLength = escSequence.length;
-            }
+	    }
             return CoderResult.unmappableForLength(badInputLength);
         }
 
@@ -625,7 +625,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         return cr;
     }
 
-    private ByteBuffer fbb= ByteBuffer.allocate(0);
+    private ByteBuffer fbb= ByteBuffer.allocate(0);    
     private CoderResult flushDecoder(CharsetDecoder dec, CharBuffer cb) {
         dec.decode(fbb, cb, true);
         CoderResult cr = dec.flush(cb);
@@ -636,7 +636,7 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
     private CoderResult malformedInput(String msg) {
         int badInputLength = queue.size() + 1 /* current byte */ ;
         queue.reset();
-        //TBD: nowhere to put the msg in CoderResult
+	//TBD: nowhere to put the msg in CoderResult
         return CoderResult.malformedForLength(badInputLength);
     }
 
@@ -649,18 +649,18 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         CoderResult cr = CoderResult.UNDERFLOW;
         if (lastDecoder != null)
           cr = flushDecoder(lastDecoder, out);
-        if (state != NORMAL_BYTES)
-            //TBD message ERR_FLUSH;
-            cr = CoderResult.malformedForLength(0);
-        reset();
-        return cr;
+	if (state != NORMAL_BYTES) 
+	    //TBD message ERR_FLUSH;
+	    cr = CoderResult.malformedForLength(0);
+	reset();
+	return cr;
     }
 
     /**
      * Resets the decoder.
      * Call this method to reset the decoder to its initial state
      */
-    protected void implReset() {
+    protected void implReset() { 
         state = NORMAL_BYTES;
         ext_count = ext_offset = 0;
         versionSequenceAllowed = true;
@@ -680,35 +680,35 @@ public class COMPOUND_TEXT_Decoder extends CharsetDecoder {
         initDecoder(grDecoder);
     }
 
-    protected void implOnMalformedInput(CodingErrorAction newAction) {
-        if (glDecoder != null)
+    protected void implOnMalformedInput(CodingErrorAction newAction) { 
+        if (glDecoder != null) 
             glDecoder.onMalformedInput(newAction);
-        if (grDecoder != null)
+        if (grDecoder != null) 
             grDecoder.onMalformedInput(newAction);
-        if (nonStandardDecoder != null)
+        if (nonStandardDecoder != null) 
             nonStandardDecoder.onMalformedInput(newAction);
     }
 
     protected void implOnUnmappableCharacter(CodingErrorAction newAction) {
-        if (glDecoder != null)
+        if (glDecoder != null) 
             glDecoder.onUnmappableCharacter(newAction);
-        if (grDecoder != null)
-            grDecoder.onUnmappableCharacter(newAction);
-        if (nonStandardDecoder != null)
-            nonStandardDecoder.onUnmappableCharacter(newAction);
+        if (grDecoder != null) 
+            grDecoder.onUnmappableCharacter(newAction); 
+        if (nonStandardDecoder != null) 
+            nonStandardDecoder.onUnmappableCharacter(newAction); 
     }
 
-    protected void implReplaceWith(String newReplacement) {
-        if (glDecoder != null)
+    protected void implReplaceWith(String newReplacement) { 
+        if (glDecoder != null) 
             glDecoder.replaceWith(newReplacement);
-        if (grDecoder != null)
+        if (grDecoder != null) 
             grDecoder.replaceWith(newReplacement);
-        if (nonStandardDecoder != null)
+        if (nonStandardDecoder != null) 
             nonStandardDecoder.replaceWith(newReplacement);
     }
 
     private void initDecoder(CharsetDecoder dec) {
         dec.onUnmappableCharacter(CodingErrorAction.REPLACE)
-            .replaceWith(replacement());
+	    .replaceWith(replacement());
     }
 }

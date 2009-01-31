@@ -38,6 +38,7 @@ import sun.security.action.GetPropertyAction;
  *
  * @since 1.4
  * @see SSLSocket
+ * @version %I%
  * @author David Brownell
  */
 public abstract class SSLSocketFactory extends SocketFactory
@@ -47,17 +48,17 @@ public abstract class SSLSocketFactory extends SocketFactory
     private static boolean propertyChecked;
 
     static final boolean DEBUG;
-
+    
     static {
-        String s = java.security.AccessController.doPrivileged(
-            new GetPropertyAction("javax.net.debug", "")).toLowerCase();
-        DEBUG = s.contains("all") || s.contains("ssl");
+	String s = java.security.AccessController.doPrivileged(
+	    new GetPropertyAction("javax.net.debug", "")).toLowerCase();
+	DEBUG = s.contains("all") || s.contains("ssl");
     }
-
+    
     private static void log(String msg) {
-        if (DEBUG) {
-            System.out.println(msg);
-        }
+	if (DEBUG) {
+	    System.out.println(msg);
+	}
     }
 
     /**
@@ -65,7 +66,7 @@ public abstract class SSLSocketFactory extends SocketFactory
      */
     public SSLSocketFactory() {
     }
-
+    
     /**
      * Returns the default SSL socket factory.
      *
@@ -83,60 +84,60 @@ public abstract class SSLSocketFactory extends SocketFactory
      * @see SSLContext#getDefault
      */
     public static synchronized SocketFactory getDefault() {
-        if (theFactory != null) {
-            return theFactory;
-        }
+	if (theFactory != null) {
+	    return theFactory;
+	}
+	
+	if (propertyChecked == false) {
+	    propertyChecked = true;
+	    String clsName = getSecurityProperty("ssl.SocketFactory.provider");
+	    if (clsName != null) {
+		log("setting up default SSLSocketFactory");
+		try {
+		    Class cls = null;
+		    try {
+			cls = Class.forName(clsName);
+		    } catch (ClassNotFoundException e) {
+			ClassLoader cl = ClassLoader.getSystemClassLoader();
+			if (cl != null) {
+			    cls = cl.loadClass(clsName);
+			}
+		    }
+		    log("class " + clsName + " is loaded");
+		    SSLSocketFactory fac = (SSLSocketFactory)cls.newInstance();
+		    log("instantiated an instance of class " + clsName);
+		    theFactory = fac;
+		    return fac;
+		} catch (Exception e) {
+		    log("SSLSocketFactory instantiation failed: " + e.toString());
+		    theFactory = new DefaultSSLSocketFactory(e);
+		    return theFactory;
+		}
+	    }
+	}
 
-        if (propertyChecked == false) {
-            propertyChecked = true;
-            String clsName = getSecurityProperty("ssl.SocketFactory.provider");
-            if (clsName != null) {
-                log("setting up default SSLSocketFactory");
-                try {
-                    Class cls = null;
-                    try {
-                        cls = Class.forName(clsName);
-                    } catch (ClassNotFoundException e) {
-                        ClassLoader cl = ClassLoader.getSystemClassLoader();
-                        if (cl != null) {
-                            cls = cl.loadClass(clsName);
-                        }
-                    }
-                    log("class " + clsName + " is loaded");
-                    SSLSocketFactory fac = (SSLSocketFactory)cls.newInstance();
-                    log("instantiated an instance of class " + clsName);
-                    theFactory = fac;
-                    return fac;
-                } catch (Exception e) {
-                    log("SSLSocketFactory instantiation failed: " + e.toString());
-                    theFactory = new DefaultSSLSocketFactory(e);
-                    return theFactory;
-                }
-            }
-        }
-
-        try {
-            return SSLContext.getDefault().getSocketFactory();
-        } catch (NoSuchAlgorithmException e) {
-            return new DefaultSSLSocketFactory(e);
-        }
+	try {
+	    return SSLContext.getDefault().getSocketFactory();
+	} catch (NoSuchAlgorithmException e) {
+	    return new DefaultSSLSocketFactory(e);
+	}
     }
-
+	
     static String getSecurityProperty(final String name) {
-        return AccessController.doPrivileged(new PrivilegedAction<String>() {
-            public String run() {
-                String s = java.security.Security.getProperty(name);
-                if (s != null) {
-                    s = s.trim();
-                    if (s.length() == 0) {
-                        s = null;
-                    }
-                }
-                return s;
-            }
-        });
+	return AccessController.doPrivileged(new PrivilegedAction<String>() {
+	    public String run() {
+		String s = java.security.Security.getProperty(name);
+		if (s != null) {
+		    s = s.trim();
+		    if (s.length() == 0) {
+			s = null;
+		    }
+		}
+		return s;
+	    }
+	});
     }
-
+    
     /**
      * Returns the list of cipher suites which are enabled by default.
      * Unless a different list is enabled, handshaking on an SSL connection
@@ -175,10 +176,10 @@ public abstract class SSLSocketFactory extends SocketFactory
      * @param autoClose close the underlying socket when this socket is closed
      * @return a socket connected to the specified host and port
      * @throws IOException if an I/O error occurs when creating the socket
-     * @throws NullPointerException if the parameter s is null
+     * @throws UnknownHostException if the host is not known
      */
     public abstract Socket createSocket(Socket s, String host,
-                                        int port, boolean autoClose)
+					int port, boolean autoClose)
     throws IOException;
 }
 
@@ -189,58 +190,58 @@ class DefaultSSLSocketFactory extends SSLSocketFactory
     private Exception reason;
 
     DefaultSSLSocketFactory(Exception reason) {
-        this.reason = reason;
+	this.reason = reason;
     }
-
+    
     private Socket throwException() throws SocketException {
-        throw (SocketException)
-            new SocketException(reason.toString()).initCause(reason);
+	throw (SocketException)
+	    new SocketException(reason.toString()).initCause(reason);
     }
 
     public Socket createSocket()
     throws IOException
     {
-        return throwException();
+	return throwException();
     }
 
     public Socket createSocket(String host, int port)
     throws IOException
     {
-        return throwException();
+	return throwException();
     }
 
     public Socket createSocket(Socket s, String host,
-                                int port, boolean autoClose)
+				int port, boolean autoClose)
     throws IOException
     {
-        return throwException();
+	return throwException();
     }
 
     public Socket createSocket(InetAddress address, int port)
     throws IOException
     {
-        return throwException();
+	return throwException();
     }
 
     public Socket createSocket(String host, int port,
-        InetAddress clientAddress, int clientPort)
+	InetAddress clientAddress, int clientPort)
     throws IOException
     {
-        return throwException();
+	return throwException();
     }
 
     public Socket createSocket(InetAddress address, int port,
-        InetAddress clientAddress, int clientPort)
+	InetAddress clientAddress, int clientPort)
     throws IOException
     {
-        return throwException();
+	return throwException();
     }
 
     public String [] getDefaultCipherSuites() {
-        return new String[0];
+	return new String[0];
     }
 
     public String [] getSupportedCipherSuites() {
-        return new String[0];
+	return new String[0];
     }
 }

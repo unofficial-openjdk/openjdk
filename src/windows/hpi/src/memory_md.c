@@ -36,7 +36,7 @@
  *
  * HPI function      Solaris   "malloc"    Win32
  * --------------------------------------------------------------------
- * sysMapMem()       mmap()     malloc()   VirtualAlloc(...MEM_RESERVE...)
+ * sysMapMem()	     mmap()     malloc()   VirtualAlloc(...MEM_RESERVE...)
  * sysUnMapMem()     munmap()   free()     VirtualFree(...MEM_RESERVE...)
  * sysCommitMem()    no-op      no-op      VirtualAlloc(...MEM_COMMIT...)
  * sysDecommitMem()  no-op      no-op      VirtualFree(...MEM_COMMIT...)
@@ -62,9 +62,9 @@ roundDown(size_t n, size_t m)
     return n & ~(m - 1);
 }
 
-#define RESERVE_SIZE 65536      /* Memory is reserved in 64KB chunks */
+#define RESERVE_SIZE 65536	/* Memory is reserved in 64KB chunks */
 
-static size_t pageSize;         /* Machine page size */
+static size_t pageSize;		/* Machine page size */
 
 void
 InitializeMem()
@@ -96,10 +96,10 @@ sysMapMem(size_t requestedSize, size_t *mappedSize)
     mappedAddr = VirtualAlloc(NULL, *mappedSize, MEM_RESERVE, PAGE_READWRITE);
 #endif
     if (mappedAddr != NULL) {
-        Log3(2, "sysMapMem: 0x%x bytes at 0x%x (request: 0x%x bytes)\n",
-             *mappedSize, mappedAddr, requestedSize);
+	Log3(2, "sysMapMem: 0x%x bytes at 0x%x (request: 0x%x bytes)\n",
+	     *mappedSize, mappedAddr, requestedSize);
     } else {
-        Log1(2, "sysMapMem failed: (request: 0x%x bytes)\n", requestedSize);
+	Log1(2, "sysMapMem failed: (request: 0x%x bytes)\n", requestedSize);
     }
     return mappedAddr;
 }
@@ -125,14 +125,14 @@ sysUnmapMem(void *requestedAddr, size_t requestedSize, size_t *unmappedSize)
     ret = VirtualFree(requestedAddr, 0, MEM_RELEASE);
 #endif
     if (ret) {
-        unmappedAddr = requestedAddr;
+	unmappedAddr = requestedAddr;
         Log4(2,
-             "sysUnmapMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-             *unmappedSize, unmappedAddr, requestedSize, requestedAddr);
+	     "sysUnmapMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
+	     *unmappedSize, unmappedAddr, requestedSize, requestedAddr);
     } else {
-        unmappedAddr = NULL;
-        Log2(2, "sysUnmapMem failed: (request: 0x%x bytes at 0x%x)\n",
-             requestedSize, requestedAddr);
+	unmappedAddr = NULL;
+	Log2(2, "sysUnmapMem failed: (request: 0x%x bytes at 0x%x)\n",
+	     requestedSize, requestedAddr);
     }
     return unmappedAddr;
 }
@@ -174,14 +174,14 @@ sysCommitMem(void *requestedAddr, size_t requestedSize, size_t *committedSize)
 
     *committedSize = roundUp(requestedSize, pageSize);
     committedAddr = VirtualAlloc(requestedAddr, *committedSize, MEM_COMMIT,
-                                 PAGE_READWRITE);
+				 PAGE_READWRITE);
     if (committedAddr != NULL) {
-        Log4(2,
-             "sysCommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-             *committedSize, committedAddr, requestedSize, requestedAddr);
+	Log4(2,
+	     "sysCommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
+	     *committedSize, committedAddr, requestedSize, requestedAddr);
     } else {
-        Log2(2, "sysCommitMem failed: (request: 0x%x bytes at 0x%x)\n",
-             requestedSize, requestedAddr);
+	Log2(2, "sysCommitMem failed: (request: 0x%x bytes at 0x%x)\n",
+	     requestedSize, requestedAddr);
     }
     return committedAddr;
 }
@@ -192,7 +192,7 @@ sysCommitMem(void *requestedAddr, size_t requestedSize, size_t *committedSize)
  */
 void *
 sysDecommitMem(void *requestedAddr, size_t requestedSize,
-               size_t *decommittedSize)
+	       size_t *decommittedSize)
 {
     void *decommittedAddr;
 
@@ -212,15 +212,15 @@ sysDecommitMem(void *requestedAddr, size_t requestedSize,
      * may be the beginning of the next mapping.
      */
     if (*decommittedSize != 0 &&
-        VirtualFree(decommittedAddr, *decommittedSize, MEM_DECOMMIT)) {
-        Log4(2,
-             "sysDecommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-             *decommittedSize, decommittedAddr, requestedSize, requestedAddr);
+	VirtualFree(decommittedAddr, *decommittedSize, MEM_DECOMMIT)) {
+	Log4(2,
+	     "sysDecommitMem: 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
+	     *decommittedSize, decommittedAddr, requestedSize, requestedAddr);
     } else {
-        Log4(2,
-             "sysDecommitMem: failed 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
-             *decommittedSize, decommittedAddr, requestedSize, requestedAddr);
-        decommittedAddr = NULL;
+	Log4(2,
+	     "sysDecommitMem: failed 0x%x bytes at 0x%x (request: 0x%x bytes at 0x%x)\n",
+	     *decommittedSize, decommittedAddr, requestedSize, requestedAddr);
+	decommittedAddr = NULL;
     }
     return decommittedAddr;
 }
@@ -268,7 +268,7 @@ sysFreeBlock(void *allocHead)
 void * sysMalloc(size_t s)
 {
     if (s == 0)
-        return malloc(1);
+	return malloc(1);
     return malloc(s);
 }
 
@@ -280,13 +280,13 @@ void * sysRealloc(void *p, size_t s)
 void sysFree(void *p)
 {
     if (p != NULL)
-        free(p);
+	free(p);
 }
 
 void * sysCalloc(size_t s1, size_t s2)
 {
     if (s1 == 0 || s2 == 0)
-        return calloc(1, 1);
+	return calloc(1, 1);
     return calloc(s1, s2);
 }
 

@@ -25,65 +25,65 @@
  *  @test
  *  @bug 5085148
  *  @summary Test if PrintWriter methods check if the stream
- *           has been closed.
+ *  	     has been closed.
  */
 
 import java.io.*;
 
 public enum OpsAfterClose {
 
-        WRITE_BUF { boolean check(PrintWriter w) {
-                    char buf[] = new char[2];
-                    w.write(buf);
-                    return w.checkError();
-            } },
+	WRITE_BUF { boolean check(PrintWriter w) {
+		    char buf[] = new char[2];
+		    w.write(buf);
+		    return w.checkError();
+	    } },
 
-        WRITE_BUF_OFF { boolean check(PrintWriter w) {
-                    char buf[] = new char[2];
-                    int len = 1;
-                    w.write(buf, 0, len);
-                    return w.checkError();
-             } },
-        WRITE_INT { boolean check(PrintWriter w) {
-                    w.write(1);
-                    return w.checkError();
-             } },
-        WRITE_STR { boolean check(PrintWriter w) {
-                    String s = "abc";
-                    w.write(s);
-                    return w.checkError();
-             } },
-        WRITE_STR_OFF { boolean check(PrintWriter w) {
-                    String s = "abc";
-                    w.write(s, 0, s.length());
-                    return w.checkError();
-             } };
+	WRITE_BUF_OFF { boolean check(PrintWriter w) {
+		    char buf[] = new char[2];
+		    int len = 1;
+		    w.write(buf, 0, len);
+		    return w.checkError();
+	     } },
+	WRITE_INT { boolean check(PrintWriter w) {
+		    w.write(1);
+		    return w.checkError();
+	     } },
+	WRITE_STR { boolean check(PrintWriter w) {
+		    String s = "abc";
+		    w.write(s);
+		    return w.checkError();
+	     } },
+	WRITE_STR_OFF { boolean check(PrintWriter w) {
+		    String s = "abc";
+		    w.write(s, 0, s.length());
+		    return w.checkError();
+	     } };
 
     abstract boolean check(PrintWriter w);
 
     public static void main(String args[]) throws Exception {
 
-        System.out.println("Testing PrintWriter");
-        boolean failed = false;
-        boolean result = false;
-        File f = new File(System.getProperty("test.dir", "."),
+	System.out.println("Testing PrintWriter");
+	boolean failed = false;
+	boolean result = false;
+	File f = new File(System.getProperty("test.dir", "."),
                           "print-writer.out");
-        f.deleteOnExit();
+	f.deleteOnExit();
 
-        for (OpsAfterClose op : OpsAfterClose.values()) {
+	for (OpsAfterClose op : OpsAfterClose.values()) {
             PrintWriter pw = new PrintWriter(
-                                new FileWriter(f));
-            pw.close();
-            result = op.check(pw);
-            if (!result) {
-                failed = true;
-            }
-           System.out.println(op + ":" + result);
-        }
-        if (failed) {
-            throw new Exception(
-                "Test failed for the failed operation{s} " +
-                "above for the PrintWriter");
-        }
+				new FileWriter(f));
+	    pw.close();
+	    result = op.check(pw);
+	    if (!result) {
+		failed = true;
+	    }
+	   System.out.println(op + ":" + result);
+	}
+	if (failed) {
+	    throw new Exception(
+	    	"Test failed for the failed operation{s} " +
+		"above for the PrintWriter");
+	}
     }
 }

@@ -45,3 +45,4 @@ typedef RECT RECT_T;
 
 
 #endif // _AWT_RECT_H
+

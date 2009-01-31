@@ -38,6 +38,7 @@ import java.awt.datatransfer.DataFlavor;
  * types supported by the object and a streaming interface for each MIME type to
  * get the data.
  *
+ * @version %I% %G%
  * @author Lynn Monsanto
  * @author Peter Korn
  *
@@ -53,12 +54,12 @@ public interface AccessibleStreamable {
       * this object supports.
       */
      DataFlavor[] getMimeTypes();
-
+ 
     /**
       * Returns an InputStream for a DataFlavor
       *
       * @param flavor the DataFlavor
-      * @return an ImputStream if an ImputStream for this DataFlavor exists.
+      * @return an ImputStream if an ImputStream for this DataFlavor exists.  
       * Otherwise, null is returned.
       */
      InputStream getStream(DataFlavor flavor);

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 // -*- C++ -*-
 struct entry;
 struct cpindex;
@@ -50,7 +50,7 @@ struct band {
 
   // properties for attribute layout elements:
   byte          le_kind;       // EK_XXX
-  byte          le_bci;        // 0,EK_BCI,EK_BCD,EK_BCO
+  byte		le_bci;        // 0,EK_BCI,EK_BCD,EK_BCO
   byte          le_back;       // ==EF_BACK
   byte          le_len;        // 0,1,2,4 (size in classfile), or call addr
   band**        le_body;       // body of repl, union, call (null-terminated)

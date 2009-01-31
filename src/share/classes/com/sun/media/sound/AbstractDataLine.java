@@ -39,6 +39,7 @@ import javax.sound.sampled.Mixer;
 /**
  * AbstractDataLine
  *
+ * @version %I%, %E%
  * @author Kara Kytle
  */
 abstract class AbstractDataLine extends AbstractLine implements DataLine {
@@ -71,7 +72,7 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      * Constructs a new AbstractLine.
      */
     protected AbstractDataLine(DataLine.Info info, AbstractMixer mixer, Control[] controls) {
-        this(info, mixer, controls, null, AudioSystem.NOT_SPECIFIED);
+	this(info, mixer, controls, null, AudioSystem.NOT_SPECIFIED);
     }
 
     /**
@@ -79,81 +80,81 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      */
     protected AbstractDataLine(DataLine.Info info, AbstractMixer mixer, Control[] controls, AudioFormat format, int bufferSize) {
 
-        super(info, mixer, controls);
+	super(info, mixer, controls);
 
-        // record the default values
-        if (format != null) {
-            defaultFormat = format;
-        } else {
-            // default CD-quality
-            defaultFormat = new AudioFormat(44100.0f, 16, 2, true, Platform.isBigEndian());
-        }
-        if (bufferSize > 0) {
-            defaultBufferSize = bufferSize;
-        } else {
-            // 0.5 seconds buffer
-            defaultBufferSize = ((int) (defaultFormat.getFrameRate() / 2)) * defaultFormat.getFrameSize();
-        }
+	// record the default values
+	if (format != null) {
+	    defaultFormat = format;
+	} else {
+	    // default CD-quality
+	    defaultFormat = new AudioFormat(44100.0f, 16, 2, true, Platform.isBigEndian());
+	}
+	if (bufferSize > 0) {
+	    defaultBufferSize = bufferSize;
+	} else {
+	    // 0.5 seconds buffer
+	    defaultBufferSize = ((int) (defaultFormat.getFrameRate() / 2)) * defaultFormat.getFrameSize();
+	}
 
-        // set the initial values to the defaults
-        this.format = defaultFormat;
-        this.bufferSize = defaultBufferSize;
+	// set the initial values to the defaults
+	this.format = defaultFormat;
+	this.bufferSize = defaultBufferSize;
     }
 
 
     // DATA LINE METHODS
 
     public void open(AudioFormat format, int bufferSize) throws LineUnavailableException {
-        //$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
-        synchronized (mixer) {
-            if (Printer.trace) Printer.trace("> AbstractDataLine.open(format, bufferSize) (class: "+getClass().getName());
+	//$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
+	synchronized (mixer) {
+	    if (Printer.trace) Printer.trace("> AbstractDataLine.open(format, bufferSize) (class: "+getClass().getName());
 
-            // if the line is not currently open, try to open it with this format and buffer size
-            if (!isOpen()) {
-                // make sure that the format is specified correctly
-                // $$fb part of fix for 4679187: Clip.open() throws unexpected Exceptions
-                Toolkit.isFullySpecifiedAudioFormat(format);
+	    // if the line is not currently open, try to open it with this format and buffer size
+	    if (!isOpen()) {
+		// make sure that the format is specified correctly
+		// $$fb part of fix for 4679187: Clip.open() throws unexpected Exceptions
+		Toolkit.isFullySpecifiedAudioFormat(format);
 
-                if (Printer.debug) Printer.debug("  need to open the mixer...");
-                // reserve mixer resources for this line
-                //mixer.open(this, format, bufferSize);
-                mixer.open(this);
+		if (Printer.debug) Printer.debug("  need to open the mixer...");
+		// reserve mixer resources for this line
+		//mixer.open(this, format, bufferSize);
+		mixer.open(this);
 
-                try {
-                    // open the data line.  may throw LineUnavailableException.
-                    implOpen(format, bufferSize);
+		try {
+		    // open the data line.  may throw LineUnavailableException.
+		    implOpen(format, bufferSize);
 
-                    // if we succeeded, set the open state to true and send events
-                    setOpen(true);
+		    // if we succeeded, set the open state to true and send events
+		    setOpen(true);
 
-                } catch (LineUnavailableException e) {
-                    // release mixer resources for this line and then throw the exception
-                    mixer.close(this);
-                    throw e;
-                }
-            } else {
-                if (Printer.debug) Printer.debug("  dataline already open");
+		} catch (LineUnavailableException e) {
+		    // release mixer resources for this line and then throw the exception
+		    mixer.close(this);
+		    throw e;
+		}
+	    } else {
+		if (Printer.debug) Printer.debug("  dataline already open");
 
-                // if the line is already open and the requested format differs from the
-                // current settings, throw an IllegalStateException
-                //$$fb 2002-04-02: fix for 4661602: Buffersize is checked when re-opening line
-                if (!format.matches(getFormat())) {
-                    throw new IllegalStateException("Line is already open with format " + getFormat() +
-                                                    " and bufferSize " + getBufferSize());
-                }
-                //$$fb 2002-07-26: allow changing the buffersize of already open lines
-                if (bufferSize > 0) {
-                    setBufferSize(bufferSize);
-                }
-            }
+		// if the line is already open and the requested format differs from the
+		// current settings, throw an IllegalStateException
+		//$$fb 2002-04-02: fix for 4661602: Buffersize is checked when re-opening line
+		if (!format.matches(getFormat())) {
+		    throw new IllegalStateException("Line is already open with format " + getFormat() +
+						    " and bufferSize " + getBufferSize());
+		}
+		//$$fb 2002-07-26: allow changing the buffersize of already open lines
+		if (bufferSize > 0) {
+		    setBufferSize(bufferSize);
+		}
+	    }
 
-            if (Printer.trace) Printer.trace("< AbstractDataLine.open(format, bufferSize) completed");
-        }
+	    if (Printer.trace) Printer.trace("< AbstractDataLine.open(format, bufferSize) completed");
+	}
     }
 
 
     public void open(AudioFormat format) throws LineUnavailableException {
-        open(format, AudioSystem.NOT_SPECIFIED);
+	open(format, AudioSystem.NOT_SPECIFIED);
     }
 
 
@@ -161,7 +162,7 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      * This implementation always returns 0.
      */
     public int available() {
-        return 0;
+	return 0;
     }
 
 
@@ -169,7 +170,7 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      * This implementation does nothing.
      */
     public void drain() {
-        if (Printer.trace) Printer.trace("AbstractDataLine: drain");
+	if (Printer.trace) Printer.trace("AbstractDataLine: drain");
     }
 
 
@@ -177,63 +178,63 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      * This implementation does nothing.
      */
     public void flush() {
-        if (Printer.trace) Printer.trace("AbstractDataLine: flush");
+	if (Printer.trace) Printer.trace("AbstractDataLine: flush");
     }
 
 
     public void start() {
-        //$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
-        synchronized(mixer) {
-            if (Printer.trace) Printer.trace("> "+getClass().getName()+".start() - AbstractDataLine");
+	//$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
+	synchronized(mixer) {
+	    if (Printer.trace) Printer.trace("> "+getClass().getName()+".start() - AbstractDataLine");
 
-            // $$kk: 06.06.99: if not open, this doesn't work....???
-            if (isOpen()) {
+	    // $$kk: 06.06.99: if not open, this doesn't work....???
+	    if (isOpen()) {
 
-                if (!isStartedRunning()) {
-                    mixer.start(this);
-                    implStart();
-                    running = true;
-                }
-            }
-        }
+		if (!isStartedRunning()) {
+		    mixer.start(this);
+		    implStart();
+		    running = true;
+		}
+	    }
+	}
 
-        synchronized(lock) {
-            lock.notifyAll();
-        }
+	synchronized(lock) {
+	    lock.notifyAll();
+	}
 
-        if (Printer.trace) Printer.trace("< "+getClass().getName()+".start() - AbstractDataLine");
+	if (Printer.trace) Printer.trace("< "+getClass().getName()+".start() - AbstractDataLine");
     }
 
 
     public void stop() {
 
-        //$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
-        synchronized(mixer) {
-            if (Printer.trace) Printer.trace("> "+getClass().getName()+".stop() - AbstractDataLine");
+	//$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
+	synchronized(mixer) {
+	    if (Printer.trace) Printer.trace("> "+getClass().getName()+".stop() - AbstractDataLine");
 
-            // $$kk: 06.06.99: if not open, this doesn't work.
-            if (isOpen()) {
+	    // $$kk: 06.06.99: if not open, this doesn't work.
+	    if (isOpen()) {
 
-                if (isStartedRunning()) {
+		if (isStartedRunning()) {
 
-                    implStop();
-                    mixer.stop(this);
+		    implStop();
+		    mixer.stop(this);
 
-                    running = false;
+		    running = false;
 
-                    // $$kk: 11.10.99: this is not exactly correct, but will probably work
-                    if (started && (!isActive())) {
-                        setStarted(false);
-                    }
-                }
-            }
-        }
+		    // $$kk: 11.10.99: this is not exactly correct, but will probably work
+		    if (started && (!isActive())) {
+			setStarted(false);
+		    }
+		}
+	    }
+	}
 
-        synchronized(lock) {
-            lock.notifyAll();
-        }
+	synchronized(lock) {
+	    lock.notifyAll();
+	}
 
-        if (Printer.trace) Printer.trace("< "+getClass().getName()+".stop() - AbstractDataLine");
+	if (Printer.trace) Printer.trace("< "+getClass().getName()+".stop() - AbstractDataLine");
     }
 
     // $$jb: 12.10.99: The official API for this is isRunning().
@@ -250,45 +251,45 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
     // code as possible to change isStarted() back to isRunning().
 
     public boolean isRunning() {
-        return started;
+	return started;
     }
 
     public boolean isActive() {
-        return active;
+	return active;
     }
 
 
     public long getMicrosecondPosition() {
 
-        long microseconds = getLongFramePosition();
-        if (microseconds != AudioSystem.NOT_SPECIFIED) {
-            microseconds = Toolkit.frames2micros(getFormat(), microseconds);
-        }
-        return microseconds;
+	long microseconds = getLongFramePosition();
+	if (microseconds != AudioSystem.NOT_SPECIFIED) {
+	    microseconds = Toolkit.frames2micros(getFormat(), microseconds);
+	}
+	return microseconds;
     }
 
 
     public AudioFormat getFormat() {
-        return format;
+	return format;
     }
 
 
     public int getBufferSize() {
-        return bufferSize;
+	return bufferSize;
     }
 
     /**
      * This implementation does NOT change the buffer size
      */
     public int setBufferSize(int newSize) {
-        return getBufferSize();
+    	return getBufferSize();
     }
 
     /**
      * This implementation returns AudioSystem.NOT_SPECIFIED.
      */
     public float getLevel() {
-        return (float)AudioSystem.NOT_SPECIFIED;
+	return (float)AudioSystem.NOT_SPECIFIED;
     }
 
 
@@ -305,7 +306,7 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
     // change denied in RFE 4297981.
 
     protected boolean isStartedRunning() {
-        return running;
+	return running;
     }
 
     /**
@@ -314,37 +315,37 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      */
     protected void setActive(boolean active) {
 
-        if (Printer.trace) Printer.trace("> AbstractDataLine: setActive(" + active + ")");
+	if (Printer.trace) Printer.trace("> AbstractDataLine: setActive(" + active + ")");
 
-        //boolean sendEvents = false;
-        //long position = getLongFramePosition();
+	//boolean sendEvents = false;
+	//long position = getLongFramePosition();
 
-        synchronized (this) {
+	synchronized (this) {
 
-            //if (Printer.debug) Printer.debug("    AbstractDataLine: setActive: this.active: " + this.active);
-            //if (Printer.debug) Printer.debug("                                 active: " + active);
+	    //if (Printer.debug) Printer.debug("    AbstractDataLine: setActive: this.active: " + this.active);
+	    //if (Printer.debug) Printer.debug("                                 active: " + active);
 
-            if (this.active != active) {
-                this.active = active;
-                //sendEvents = true;
-            }
-        }
+	    if (this.active != active) {
+		this.active = active;
+		//sendEvents = true;
+	    }
+	}
 
-        //if (Printer.debug) Printer.debug("                                 this.active: " + this.active);
-        //if (Printer.debug) Printer.debug("                                 sendEvents: " + sendEvents);
+	//if (Printer.debug) Printer.debug("                                 this.active: " + this.active);
+	//if (Printer.debug) Printer.debug("                                 sendEvents: " + sendEvents);
 
 
-        // $$kk: 11.19.99: take ACTIVE / INACTIVE / EOM events out;
-        // putting them in is technically an API change.
-        // do not generate ACTIVE / INACTIVE events for now
-        // if (sendEvents) {
-        //
-        //      if (active) {
-        //              sendEvents(new LineEvent(this, LineEvent.Type.ACTIVE, position));
-        //      } else {
-        //              sendEvents(new LineEvent(this, LineEvent.Type.INACTIVE, position));
-        //      }
-        //}
+	// $$kk: 11.19.99: take ACTIVE / INACTIVE / EOM events out;
+	// putting them in is technically an API change.
+	// do not generate ACTIVE / INACTIVE events for now
+	// if (sendEvents) {
+	//
+	//	if (active) {
+	//		sendEvents(new LineEvent(this, LineEvent.Type.ACTIVE, position));
+	//	} else {
+	//		sendEvents(new LineEvent(this, LineEvent.Type.INACTIVE, position));
+	//	}
+	//}
     }
 
     /**
@@ -353,34 +354,34 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      */
     protected void setStarted(boolean started) {
 
-        if (Printer.trace) Printer.trace("> AbstractDataLine: setStarted(" + started + ")");
+	if (Printer.trace) Printer.trace("> AbstractDataLine: setStarted(" + started + ")");
 
-        boolean sendEvents = false;
-        long position = getLongFramePosition();
+	boolean sendEvents = false;
+	long position = getLongFramePosition();
 
-        synchronized (this) {
+	synchronized (this) {
 
-            //if (Printer.debug) Printer.debug("    AbstractDataLine: setStarted: this.started: " + this.started);
-            //if (Printer.debug) Printer.debug("                                  started: " + started);
+	    //if (Printer.debug) Printer.debug("    AbstractDataLine: setStarted: this.started: " + this.started);
+	    //if (Printer.debug) Printer.debug("                                  started: " + started);
 
-            if (this.started != started) {
-                this.started = started;
-                sendEvents = true;
-            }
-        }
+	    if (this.started != started) {
+		this.started = started;
+		sendEvents = true;
+	    }
+	}
 
-        //if (Printer.debug) Printer.debug("                                  this.started: " + this.started);
-        //if (Printer.debug) Printer.debug("                                  sendEvents: " + sendEvents);
+	//if (Printer.debug) Printer.debug("                                  this.started: " + this.started);
+	//if (Printer.debug) Printer.debug("                                  sendEvents: " + sendEvents);
 
-        if (sendEvents) {
+	if (sendEvents) {
 
-            if (started) {
-                sendEvents(new LineEvent(this, LineEvent.Type.START, position));
-            } else {
-                sendEvents(new LineEvent(this, LineEvent.Type.STOP, position));
-            }
-        }
-        if (Printer.trace) Printer.trace("< AbstractDataLine: setStarted completed");
+	    if (started) {
+		sendEvents(new LineEvent(this, LineEvent.Type.START, position));
+	    } else {
+		sendEvents(new LineEvent(this, LineEvent.Type.STOP, position));
+	    }
+	}
+	if (Printer.trace) Printer.trace("< AbstractDataLine: setStarted completed");
     }
 
 
@@ -390,11 +391,11 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      */
     protected void setEOM() {
 
-        if (Printer.trace) Printer.trace("> AbstractDataLine: setEOM()");
-        //$$fb 2002-04-21: sometimes, 2 STOP events are generated.
-        // better use setStarted() to send STOP event.
-        setStarted(false);
-        if (Printer.trace) Printer.trace("< AbstractDataLine: setEOM() completed");
+	if (Printer.trace) Printer.trace("> AbstractDataLine: setEOM()");
+	//$$fb 2002-04-21: sometimes, 2 STOP events are generated.
+	// better use setStarted() to send STOP event.
+	setStarted(false);
+	if (Printer.trace) Printer.trace("< AbstractDataLine: setEOM() completed");
     }
 
 
@@ -410,11 +411,11 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      */
     public void open() throws LineUnavailableException {
 
-        if (Printer.trace) Printer.trace("> "+getClass().getName()+".open() - AbstractDataLine");
+	if (Printer.trace) Printer.trace("> "+getClass().getName()+".open() - AbstractDataLine");
 
-        // this may throw a LineUnavailableException.
-        open(format, bufferSize);
-        if (Printer.trace) Printer.trace("< "+getClass().getName()+".open() - AbstractDataLine");
+	// this may throw a LineUnavailableException.
+	open(format, bufferSize);
+	if (Printer.trace) Printer.trace("< "+getClass().getName()+".open() - AbstractDataLine");
     }
 
 
@@ -423,30 +424,30 @@ abstract class AbstractDataLine extends AbstractLine implements DataLine {
      * After we close the line, we reset the format and buffer size to the defaults.
      */
     public void close() {
-        //$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
-        synchronized (mixer) {
-            if (Printer.trace) Printer.trace("> "+getClass().getName()+".close() - in AbstractDataLine.");
+	//$$fb 2001-10-09: Bug #4517739: avoiding deadlock by synchronizing to mixer !
+	synchronized (mixer) {
+	    if (Printer.trace) Printer.trace("> "+getClass().getName()+".close() - in AbstractDataLine.");
 
-            if (isOpen()) {
+	    if (isOpen()) {
 
-                // stop
-                stop();
+		// stop
+		stop();
 
-                // set the open state to false and send events
-                setOpen(false);
+		// set the open state to false and send events
+		setOpen(false);
 
-                // close resources for this line
-                implClose();
+		// close resources for this line
+		implClose();
 
-                // release mixer resources for this line
-                mixer.close(this);
+		// release mixer resources for this line
+		mixer.close(this);
 
-                // reset format and buffer size to the defaults
-                format = defaultFormat;
-                bufferSize = defaultBufferSize;
-            }
-        }
-        if (Printer.trace) Printer.trace("< "+getClass().getName()+".close() - in AbstractDataLine");
+		// reset format and buffer size to the defaults
+		format = defaultFormat;
+		bufferSize = defaultBufferSize;
+	    }
+	}
+	if (Printer.trace) Printer.trace("< "+getClass().getName()+".close() - in AbstractDataLine");
     }
 
 

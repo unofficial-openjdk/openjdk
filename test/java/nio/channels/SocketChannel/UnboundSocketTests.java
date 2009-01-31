@@ -23,8 +23,8 @@
 
 /* @test
  * @bug 6442073
- * @summary Check getXXX methods for local/remote port/address/socketaddress
- *          match socket spec for unbound case
+ * @summary Check getXXX methods for local/remote port/address/socketaddress 
+ *          match socket spec for unbound case            
  */
 import java.net.*;
 import java.nio.channels.*;
@@ -43,7 +43,7 @@ public class UnboundSocketTests {
         }
     }
 
-    static void checkIsAnyLocalAddress(String msg, InetAddress actual) {
+    static void checkIsAnyLocalAddress(String msg, InetAddress actual) {       
         System.out.format("%s actual: %s", msg, actual);
         if (actual.isAnyLocalAddress()) {
             System.out.println(" [PASS]");
@@ -53,12 +53,12 @@ public class UnboundSocketTests {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        System.out.println("\n-- SocketChannel --");
+    public static void main(String[] args) throws Exception {       
+	System.out.println("\n-- SocketChannel --");
 
-        SocketChannel sc = SocketChannel.open();
+	SocketChannel sc = SocketChannel.open();
 
-        check("getLocalPort()", sc.socket().getLocalPort(), -1);
+        check("getLocalPort()", sc.socket().getLocalPort(), -1);     
         checkIsAnyLocalAddress("getLocalAddress()",
             sc.socket().getLocalAddress());
         check("getLocalSocketAddress()", sc.socket().getLocalSocketAddress(), null);
@@ -68,15 +68,15 @@ public class UnboundSocketTests {
         check("getRemoteSocketAddress()", sc.socket().getRemoteSocketAddress(), null);
 
 
-        System.out.println("\n-- ServerSocketChannel --");
+	System.out.println("\n-- ServerSocketChannel --");
 
         ServerSocketChannel ssc = ServerSocketChannel.open();
 
         check("getLocalPort()", ssc.socket().getLocalPort(), -1);
         check("getInetAddress()", ssc.socket().getInetAddress(), null);
-        check("getLocalSocketAddress()", ssc.socket().getLocalSocketAddress(), null);
+        check("getLocalSocketAddress()", ssc.socket().getLocalSocketAddress(), null);       	
 
-        System.out.println("\n-- DatagramChannel --");
+	System.out.println("\n-- DatagramChannel --");
 
         DatagramChannel dc = DatagramChannel.open();
 
@@ -84,7 +84,7 @@ public class UnboundSocketTests {
         check("getLocalPort()", dc.socket().getLocalPort(), 0);
 
         checkIsAnyLocalAddress("getLocalAddress()",
-            dc.socket().getLocalAddress());
+            dc.socket().getLocalAddress());       
         check("getLocalSocketAddress()", dc.socket().getLocalSocketAddress(), null);
 
         check("getPort()", dc.socket().getPort(), -1);
@@ -97,3 +97,4 @@ public class UnboundSocketTests {
 
     }
 }
+

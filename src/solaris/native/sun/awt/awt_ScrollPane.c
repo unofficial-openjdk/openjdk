@@ -89,10 +89,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_initIDs
   (JNIEnv *env, jclass cls)
 {
     mScrollPanePeerIDs.postScrollEventID =
-        (*env)->GetMethodID(env, cls, "postScrollEvent", "(IIIZ)V");
+	(*env)->GetMethodID(env, cls, "postScrollEvent", "(IIIZ)V");
 }
 
-static void
+static void 
 dump_scroll_attrs(Widget scrollbar)
 {
     unsigned char orient;
@@ -117,7 +117,7 @@ dump_scroll_attrs(Widget scrollbar)
 /*
  * client_data is MScrollPanePeer instance
  */
-static void
+static void 
 postScrollEvent(jint jorient, jobject peer, XmScrollBarCallbackStruct *scroll)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -127,29 +127,29 @@ postScrollEvent(jint jorient, jobject peer, XmScrollBarCallbackStruct *scroll)
 
     switch (scroll->reason) {
       case XmCR_DECREMENT:
-          jscrollcode = java_awt_event_AdjustmentEvent_UNIT_DECREMENT;
-          break;
+	  jscrollcode = java_awt_event_AdjustmentEvent_UNIT_DECREMENT;
+	  break;
       case XmCR_INCREMENT:
-          jscrollcode = java_awt_event_AdjustmentEvent_UNIT_INCREMENT;
-          break;
+	  jscrollcode = java_awt_event_AdjustmentEvent_UNIT_INCREMENT;
+	  break;
       case XmCR_PAGE_DECREMENT:
-          jscrollcode = java_awt_event_AdjustmentEvent_BLOCK_DECREMENT;
-          break;
+	  jscrollcode = java_awt_event_AdjustmentEvent_BLOCK_DECREMENT;
+	  break;
       case XmCR_PAGE_INCREMENT:
-          jscrollcode = java_awt_event_AdjustmentEvent_BLOCK_INCREMENT;
-          break;
+	  jscrollcode = java_awt_event_AdjustmentEvent_BLOCK_INCREMENT;
+	  break;
       case XmCR_DRAG:
-          jscrollcode = java_awt_event_AdjustmentEvent_TRACK;
-          jadjusting = JNI_TRUE;
-          break;
-      case XmCR_VALUE_CHANGED:  /* drag finished */
+	  jscrollcode = java_awt_event_AdjustmentEvent_TRACK;
+	  jadjusting = JNI_TRUE;
+	  break;
+      case XmCR_VALUE_CHANGED:	/* drag finished */
       case XmCR_TO_TOP:
       case XmCR_TO_BOTTOM:
-          jscrollcode = java_awt_event_AdjustmentEvent_TRACK;
-          break;
+	  jscrollcode = java_awt_event_AdjustmentEvent_TRACK;
+	  break;
       default:
-          DASSERT(FALSE);
-          return;
+	  DASSERT(FALSE);
+	  return;
     }
 
     (*env)->CallVoidMethod(env, peer,  mScrollPanePeerIDs.postScrollEventID,
@@ -164,24 +164,24 @@ postScrollEvent(jint jorient, jobject peer, XmScrollBarCallbackStruct *scroll)
 /*
  * client_data is MScrollPanePeer instance
  */
-static void
+static void 
 ScrollPane_scrollV(Widget w, XtPointer client_data, XtPointer call_data)
 {
     postScrollEvent(java_awt_Adjustable_VERTICAL, (jobject)client_data,
-                    (XmScrollBarCallbackStruct *)call_data);
+		    (XmScrollBarCallbackStruct *)call_data);
 }
 
 /*
  * client_data is MScrollPanePeer instance
  */
-static void
+static void 
 ScrollPane_scrollH(Widget w, XtPointer client_data, XtPointer call_data)
 {
     postScrollEvent(java_awt_Adjustable_HORIZONTAL, (jobject)client_data,
-                    (XmScrollBarCallbackStruct *)call_data);
+		    (XmScrollBarCallbackStruct *)call_data);
 }
 
-
+        
 typedef XmNavigability (*NavigableCallback) (Widget);
 
 NavigableCallback oldClipNavigable = NULL;
@@ -208,7 +208,7 @@ Boolean managerCallbackInitialized = False;
 XmNavigability MyManagerNavigable(Widget wid) {
     // We've installed this function for Manager
     // with the name ScrollPaneManagerName
-    if (XmIsManager(wid)
+    if (XmIsManager(wid) 
         && ( XtName(wid) != NULL && strcmp(XtName(wid), ScrollPaneManagerName) == 0) )
     {
         // To be able to request focus on Manager by call
@@ -230,7 +230,7 @@ XmNavigability MyManagerNavigable(Widget wid) {
  * Signature: (Lsun/awt/motif/MComponentPeer;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
-  (JNIEnv *env, jobject this, jobject parent)
+  (JNIEnv *env, jobject this, jobject parent) 
 {
     int32_t argc;
 #define MAX_ARGC 40
@@ -271,7 +271,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
         return;
     }
     XtVaGetValues(wdata->widget, XmNbackground, &bg, NULL);
-
+    
     adata = copyGraphicsConfigToPeer(env, this);
 
     argc = 0;
@@ -292,12 +292,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
         {
             // To be able to request focus on Manager by call
             // XmProcessTraversal(, XmTRAVERSE_CURRENT) we need to make
-            // it return XmCONTROL_NAVIGABLE from widgetNavigable callback.
-            // Default implementation returns DESCENDANTS_TAB_NAVIGABLE
+            // it return XmCONTROL_NAVIGABLE from widgetNavigable callback. 
+            // Default implementation returns DESCENDANTS_TAB_NAVIGABLE 
             // which doesn't allow this.
             if (!managerCallbackInitialized) {
                 XmBaseClassExt *er;
-                WidgetClass wc;
+                WidgetClass wc;                
                 managerCallbackInitialized = True;
                 wc = (WidgetClass) &xmManagerClassRec;
                 er = _XmGetBaseClassExtPtr(wc, XmQmotif);
@@ -305,8 +305,8 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
                 (*er)->widgetNavigable = MyManagerNavigable;
             }
         }
-    }
-    else
+    } 
+    else  
     {
         XtSetArg(args[argc], XmNscrollingPolicy, XmAUTOMATIC);
         argc++;
@@ -371,8 +371,8 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
             if (clip != NULL) {
                 // To be able to request focus on Manager by call
                 // XmProcessTraversal(, XmTRAVERSE_CURRENT) we need to make
-                // it return XmCONTROL_NAVIGABLE from widgetNavigable callback.
-                // Default implementation returns DESCENDANTS_TAB_NAVIGABLE
+                // it return XmCONTROL_NAVIGABLE from widgetNavigable callback. 
+                // Default implementation returns DESCENDANTS_TAB_NAVIGABLE 
                 // which doesn't allow this.
                 if (!clipCallbackInitialized) {
                     XmBaseClassExt *er;
@@ -381,18 +381,18 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
                     oldClipNavigable = (*er)->widgetNavigable;
                     (*er)->widgetNavigable = MyClipNavigable;
                 }
-                awt_addWidget(clip, sdata->widget, globalRef, java_awt_AWTEvent_MOUSE_EVENT_MASK |
-                              java_awt_AWTEvent_MOUSE_MOTION_EVENT_MASK | java_awt_AWTEvent_KEY_EVENT_MASK);
+                awt_addWidget(clip, sdata->widget, globalRef, java_awt_AWTEvent_MOUSE_EVENT_MASK | 
+                              java_awt_AWTEvent_MOUSE_MOTION_EVENT_MASK | java_awt_AWTEvent_KEY_EVENT_MASK);            
             }
         }
         {
             /**
              * Fix for 4033837 - ScrollPane with ALWAYS doesn't have scrollbars visible
              * It seems to be the bug in Motif, the workaround is to add empty child.
-             * User child will replace it when needed. This doesn't work if child had been
+             * User child will replace it when needed. This doesn't work if child had been 
              * removed.
              */
-            if (sbDisplay == java_awt_ScrollPane_SCROLLBARS_ALWAYS) {
+            if (sbDisplay == java_awt_ScrollPane_SCROLLBARS_ALWAYS) {                
                 Widget darea = NULL;
                 argc = 0;
                 XtSetArg(args[argc], XmNwidth, 1);
@@ -414,7 +414,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
                 XtManageChild(darea);
             }
         }
-
+        
     }
 
     XtSetMappedWhenManaged(sdata->widget, False);
@@ -429,7 +429,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_create
  * Signature: (Lsun/awt/motif/MComponentPeer;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetScrollChild
-  (JNIEnv *env, jobject this, jobject child)
+  (JNIEnv *env, jobject this, jobject child) 
 {
     struct ComponentData *cdata;
     struct ComponentData *sdata;
@@ -446,9 +446,9 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetScrollChild
         return;
     }
     cdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,child,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,child,mComponentPeerIDs.pData);
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (sdata == NULL || cdata == NULL || sdata->widget == NULL || cdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -457,12 +457,12 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetScrollChild
         return;
     }
     if ((*env)->GetIntField(env, target, scrollPaneIDs.scrollbarDisplayPolicy)
-        == java_awt_ScrollPane_SCROLLBARS_NEVER) {
+	== java_awt_ScrollPane_SCROLLBARS_NEVER) {
         /* Do Nothing */
     } else {
         XmScrolledWindowSetAreas(sdata->widget, NULL, NULL, cdata->widget);
         /*
-          XtInsertEventHandler(cdata->widget, StructureNotifyMask, FALSE,
+          XtInsertEventHandler(cdata->widget, StructureNotifyMask, FALSE, 
           child_event_handler, sdata->widget, XtListHead);
         */
     }
@@ -476,7 +476,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetScrollChild
  * Signature: (III)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetIncrement
-  (JNIEnv *env, jobject this, jint orient, jint incrType, jint incr)
+  (JNIEnv *env, jobject this, jint orient, jint incrType, jint incr) 
 {
     struct ComponentData *sdata;
     Widget scrollbar = NULL;
@@ -484,7 +484,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetIncrement
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
 
     if (sdata == NULL || sdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
@@ -527,7 +527,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_pSetIncrement
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetScrollbarSpace
-  (JNIEnv *env, jobject this, jint orient)
+  (JNIEnv *env, jobject this, jint orient) 
 {
     struct ComponentData *sdata;
     Widget scrollbar;
@@ -538,7 +538,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetScrollbarSpace
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (sdata == NULL || sdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -574,7 +574,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetScrollbarSpace
  * Signature: (I)I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetBlockIncrement
-  (JNIEnv *env, jobject this, jint orient)
+  (JNIEnv *env, jobject this, jint orient) 
 {
     int32_t pageIncr = 0;
     struct ComponentData *sdata;
@@ -583,7 +583,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetBlockIncrement
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (sdata == NULL || sdata->widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -617,15 +617,15 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetBlockIncrement
  * Signature: (IIII)Ljava/awt/Insets;
  */
 JNIEXPORT jobject JNICALL Java_sun_awt_motif_MScrollPanePeer_pInsets
-  (JNIEnv *env, jobject this, jint width, jint height, jint childWidth, jint childHeight)
+  (JNIEnv *env, jobject this, jint width, jint height, jint childWidth, jint childHeight) 
 {
     struct ComponentData *sdata;
     jobject target;
     jobject insets = NULL;
     Widget hsb, vsb;
     Dimension hsbThickness, hsbHighlight, hsbSpace = 0,
-              vsbThickness, vsbHighlight, vsbSpace = 0,
-              space, border, shadow, hMargin, vMargin;
+	      vsbThickness, vsbHighlight, vsbSpace = 0,
+	      space, border, shadow, hMargin, vMargin;
     unsigned char placement;
     Boolean hsbVisible, vsbVisible;
     jint sbDisplay;
@@ -636,7 +636,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MScrollPanePeer_pInsets
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
 
     if (JNU_IsNull(env, target) || sdata == NULL || sdata->widget == NULL)
@@ -684,12 +684,12 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MScrollPanePeer_pInsets
         vsbSpace = vsbThickness + space + vsbHighlight;
 
 /*
-  XtVaGetValues(clip,
+  XtVaGetValues(clip, 
   XmNwidth, &clipw, XmNheight, &cliph,
-  XmNx, &clipx, XmNy, &clipy,
+  XmNx, &clipx, XmNy, &clipy, 
   NULL);
   printf("insets: spacing=%d shadow=%d swMarginH=%d swMarginW=%d border=%d ; \
-  vsb=%d vsbHL=%d ; hsb=%d hsbHL=%d ; %dx%d ->clip=%d,%d %dx%d\n",
+  vsb=%d vsbHL=%d ; hsb=%d hsbHL=%d ; %dx%d ->clip=%d,%d %dx%d\n", 
   space, shadow, vMargin, hMargin, border,
   vsbThickness, vsbHighlight, hsbThickness, hsbHighlight,
   w, h, clipx, clipy, clipw, cliph);
@@ -760,7 +760,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MScrollPanePeer_pInsets
         }
     }
     /* Deadlock prevention:
-     * don't hold the toolkit lock while invoking constructor.
+     * don't hold the toolkit lock while invoking constructor. 
      */
     AWT_UNLOCK();
 
@@ -801,7 +801,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_setScrollPosition
     AWT_LOCK();
 
     sdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
 
     if (JNU_IsNull(env, target) || sdata == NULL || sdata->widget == NULL)
@@ -811,7 +811,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_setScrollPosition
         return;
     }
     if ((*env)->GetIntField(env, target, scrollPaneIDs.scrollbarDisplayPolicy)
-        == java_awt_ScrollPane_SCROLLBARS_NEVER) {
+	== java_awt_ScrollPane_SCROLLBARS_NEVER) {
         WidgetList children;
         Cardinal numChildren;
 
@@ -843,7 +843,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_setScrollPosition
                           XmNmaximum, &sb_max,
                           NULL);
             /* Bug 4208972, 4275934 : Do range checking for scroll bar value. */
-            if (y < sb_min)
+            if (y < sb_min) 
                 y = sb_min;
             if (y > (sb_max - size))
                 y = sb_max - size;
@@ -858,7 +858,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MScrollPanePeer_setScrollPosition
                           XmNmaximum, &sb_max,
                           NULL);
             /* Bug 4208972, 4275934 : Do range checking for scroll bar value. */
-            if (x < sb_min)
+            if (x < sb_min) 
                 x = sb_min;
             if (x > (sb_max - size))
                 x = sb_max - size;
@@ -880,7 +880,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetShadow(
     jobject target;
     Dimension shadow=0 ;
 
-    AWT_LOCK() ;
+    AWT_LOCK() ; 
     sdata = (struct ComponentData *)
     (*env)->GetLongField(env,this,mComponentPeerIDs.pData);
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
@@ -898,7 +898,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetShadow(
         NULL);
 
     AWT_UNLOCK() ;
-
+    
     return((jint)shadow) ;
 }
 
@@ -907,8 +907,8 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MScrollPanePeer_pGetShadow(
  * Method:    setTypedValue
  * Signature: (Ljava/awt/ScrollPaneAdjustable;II)V
  */
-JNIEXPORT void JNICALL
-Java_sun_awt_motif_MScrollPanePeer_setTypedValue(JNIEnv *env, jobject peer, jobject adjustable, jint value, jint type)
+JNIEXPORT void JNICALL 
+Java_sun_awt_motif_MScrollPanePeer_setTypedValue(JNIEnv *env, jobject peer, jobject adjustable, jint value, jint type) 
 {
     static jmethodID setTypedValueMID = 0;
     if (setTypedValueMID == NULL) {
@@ -920,7 +920,7 @@ Java_sun_awt_motif_MScrollPanePeer_setTypedValue(JNIEnv *env, jobject peer, jobj
         }
         setTypedValueMID = (*env)->GetMethodID(env, clazz, "setTypedValue", "(II)V");
         (*env)->DeleteLocalRef(env, clazz);
-
+                                               
         DASSERT(setTypedValueMID != NULL);
     }
     (*env)->CallVoidMethod(env, adjustable, setTypedValueMID, value, type);

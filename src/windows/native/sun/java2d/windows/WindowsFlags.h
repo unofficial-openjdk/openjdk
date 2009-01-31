@@ -29,7 +29,7 @@
 
 extern BOOL      ddVramForced;       // disable punting of ddraw buffers
 extern BOOL      accelReset;         // reset registry 2d acceleration settings
-extern BOOL      useDD;              // ddraw enabled flag
+extern BOOL      useDD;	             // ddraw enabled flag
 extern BOOL      useD3D;             // d3d enabled flag
 extern BOOL      forceD3DUsage;      // force d3d on or off
 extern jboolean  g_offscreenSharing; // JAWT accelerated surface sharing
@@ -43,3 +43,4 @@ void SetD3DEnabledFlag(JNIEnv *env, BOOL d3dEnabled, BOOL d3dSet);
 void SetDDEnabledFlag(JNIEnv *env, BOOL ddEnabled);
 
 #endif WINDOWSFLAGS_H
+

@@ -42,36 +42,36 @@ public class MarkReset {
         LineNumberReader reader = new LineNumberReader
                                       (new StringReader("0\r\n1\r2\n3\r\n\r5\r\r7\n\n9"));
         for (n = 0; n < 7; n++) {
-            skipWhiteSpace(reader);     /* Skip all whitespace */
-            int c = reader.read();      /* Read the non-whitespace character */
-            if (c < 0) {                /* Might be eof */
-                break;                  /* It is. Get out of the loop */
+            skipWhiteSpace(reader);	/* Skip all whitespace */
+            int c = reader.read();	/* Read the non-whitespace character */
+            if (c < 0) {		/* Might be eof */
+                break;		        /* It is. Get out of the loop */
             }
             line = reader.getLineNumber();
             if(line != (c - 48)) {
-                throw new Exception("Failed test : Line number expected "
+                throw new Exception("Failed test : Line number expected " 
                                     + (c - 48)  + " got " + line );
             }
-        }
+	}
     }
 
     /**
      * Skip whitespace in the file. Mark and reset
      */
     private static void skipWhiteSpace(LineNumberReader reader) throws IOException {
-        while (true) {
+	while (true) {
             /* Mark in case the character is not whitespace */
-            reader.mark(10);
+	    reader.mark(10);
             /* Read the character */
-            int c = reader.read();
-            if (Character.isWhitespace((char) c)) {
+	    int c = reader.read();	
+	    if (Character.isWhitespace((char) c)) {
                 /* Loop while in whitespace */
-                continue;
-            }
+		continue;		
+	    }
 
             /* Return to the non-whitespace character */
-            reader.reset();
-            break;
-        }
+	    reader.reset();		
+	    break;
+	}
     }
 }

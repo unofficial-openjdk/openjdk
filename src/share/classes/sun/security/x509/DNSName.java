@@ -46,6 +46,7 @@ import sun.security.util.*;
  * <p>
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class DNSName implements GeneralNameInterface {
     private String name;
@@ -71,33 +72,33 @@ public class DNSName implements GeneralNameInterface {
      * @throws IOException if the name is not a valid DNSName subjectAltName
      */
     public DNSName(String name) throws IOException {
-        if (name == null || name.length() == 0)
-            throw new IOException("DNS name must not be null");
-        if (name.indexOf(' ') != -1)
-            throw new IOException("DNS names or NameConstraints with blank components are not permitted");
-        if (name.charAt(0) == '.' || name.charAt(name.length() -1) == '.')
-            throw new IOException("DNS names or NameConstraints may not begin or end with a .");
-        //Name will consist of label components separated by "."
-        //startIndex is the index of the first character of a component
-        //endIndex is the index of the last character of a component plus 1
-        for (int endIndex,startIndex=0; startIndex < name.length(); startIndex = endIndex+1) {
-            endIndex = name.indexOf('.', startIndex);
-            if (endIndex < 0) {
-                endIndex = name.length();
-            }
-            if ((endIndex-startIndex) < 1)
-                throw new IOException("DNSName SubjectAltNames with empty components are not permitted");
+	if (name == null || name.length() == 0)
+	    throw new IOException("DNS name must not be null");
+	if (name.indexOf(' ') != -1)
+	    throw new IOException("DNS names or NameConstraints with blank components are not permitted");
+	if (name.charAt(0) == '.' || name.charAt(name.length() -1) == '.')
+	    throw new IOException("DNS names or NameConstraints may not begin or end with a .");
+	//Name will consist of label components separated by "."
+	//startIndex is the index of the first character of a component
+	//endIndex is the index of the last character of a component plus 1
+	for (int endIndex,startIndex=0; startIndex < name.length(); startIndex = endIndex+1) {
+	    endIndex = name.indexOf('.', startIndex);
+	    if (endIndex < 0) {
+		endIndex = name.length();
+	    }
+	    if ((endIndex-startIndex) < 1)
+		throw new IOException("DNSName SubjectAltNames with empty components are not permitted");
 
-            //DNSName components must begin with a letter A-Z or a-z
-            if (alpha.indexOf(name.charAt(startIndex)) < 0)
-                throw new IOException("DNSName components must begin with a letter");
-            //nonStartIndex: index for characters in the component beyond the first one
-            for (int nonStartIndex=startIndex+1; nonStartIndex < endIndex; nonStartIndex++) {
-                char x = name.charAt(nonStartIndex);
-                if ((alphaDigitsAndHyphen).indexOf(x) < 0)
-                    throw new IOException("DNSName components must consist of letters, digits, and hyphens");
-            }
-        }
+	    //DNSName components must begin with a letter A-Z or a-z
+	    if (alpha.indexOf(name.charAt(startIndex)) < 0)
+		throw new IOException("DNSName components must begin with a letter");
+	    //nonStartIndex: index for characters in the component beyond the first one
+	    for (int nonStartIndex=startIndex+1; nonStartIndex < endIndex; nonStartIndex++) {
+		char x = name.charAt(nonStartIndex);
+		if ((alphaDigitsAndHyphen).indexOf(x) < 0)
+		    throw new IOException("DNSName components must consist of letters, digits, and hyphens");
+	    }
+	}
         this.name = name;
     }
 
@@ -139,26 +140,26 @@ public class DNSName implements GeneralNameInterface {
      * according to RFC2459.
      */
     public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
+	if (this == obj)
+	    return true;
 
-        if (!(obj instanceof DNSName))
-            return false;
+	if (!(obj instanceof DNSName))
+	    return false;
 
-        DNSName other = (DNSName)obj;
+	DNSName other = (DNSName)obj;
 
-        // RFC2459 mandates that these names are
-        // not case-sensitive
-        return name.equalsIgnoreCase(other.name);
+	// RFC2459 mandates that these names are
+	// not case-sensitive
+	return name.equalsIgnoreCase(other.name);
     }
 
     /**
      * Returns the hash code value for this object.
-     *
+     * 
      * @return a hash code value for this object.
      */
     public int hashCode() {
-        return name.toUpperCase().hashCode();
+	return name.toUpperCase().hashCode();
     }
 
     /**
@@ -192,33 +193,33 @@ public class DNSName implements GeneralNameInterface {
      *          not supported for this name type.
      */
     public int constrains(GeneralNameInterface inputName) throws UnsupportedOperationException {
-        int constraintType;
-        if (inputName == null)
-            constraintType = NAME_DIFF_TYPE;
-        else if (inputName.getType() != NAME_DNS)
-            constraintType = NAME_DIFF_TYPE;
-        else {
-            String inName = (((DNSName)inputName).getName()).toLowerCase();
-            String thisName = name.toLowerCase();
-            if (inName.equals(thisName))
-                constraintType = NAME_MATCH;
-            else if (thisName.endsWith(inName)) {
-                int inNdx = thisName.lastIndexOf(inName);
-                if (thisName.charAt(inNdx-1) == '.' )
-                    constraintType = NAME_WIDENS;
-                else
-                    constraintType = NAME_SAME_TYPE;
-            } else if (inName.endsWith(thisName)) {
-                int ndx = inName.lastIndexOf(thisName);
-                if (inName.charAt(ndx-1) == '.' )
-                    constraintType = NAME_NARROWS;
-                else
-                    constraintType = NAME_SAME_TYPE;
-            } else {
-                constraintType = NAME_SAME_TYPE;
-            }
-        }
-        return constraintType;
+	int constraintType;
+	if (inputName == null)
+	    constraintType = NAME_DIFF_TYPE;
+	else if (inputName.getType() != NAME_DNS)
+	    constraintType = NAME_DIFF_TYPE;
+	else {
+	    String inName = (((DNSName)inputName).getName()).toLowerCase();
+	    String thisName = name.toLowerCase();
+	    if (inName.equals(thisName))
+		constraintType = NAME_MATCH;
+	    else if (thisName.endsWith(inName)) {
+		int inNdx = thisName.lastIndexOf(inName);
+		if (thisName.charAt(inNdx-1) == '.' )
+		    constraintType = NAME_WIDENS;
+		else
+		    constraintType = NAME_SAME_TYPE;
+	    } else if (inName.endsWith(thisName)) {
+		int ndx = inName.lastIndexOf(thisName);
+		if (inName.charAt(ndx-1) == '.' )
+		    constraintType = NAME_NARROWS;
+		else
+		    constraintType = NAME_SAME_TYPE;
+	    } else {
+		constraintType = NAME_SAME_TYPE;
+	    }
+	}
+	return constraintType;
     }
 
     /**
@@ -230,15 +231,15 @@ public class DNSName implements GeneralNameInterface {
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() throws UnsupportedOperationException {
-        String subtree=name;
-        int i=1;
+	String subtree=name;
+	int i=1;
 
-        /* count dots */
-        for (; subtree.lastIndexOf('.') >= 0; i++) {
-            subtree=subtree.substring(0,subtree.lastIndexOf('.'));
-        }
+	/* count dots */
+	for (; subtree.lastIndexOf('.') >= 0; i++) {
+	    subtree=subtree.substring(0,subtree.lastIndexOf('.'));
+	}
 
-        return i;
+	return i;
     }
 
 }

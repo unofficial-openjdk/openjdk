@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/* @test
+/* @test 
  * @summary Test selection of ready pipe
  */
 
@@ -50,7 +50,7 @@ public class SelectPipe {
         sink.configureBlocking(false);
 
         SelectionKey readkey = source.register(selector, SelectionKey.OP_READ);
-        SelectionKey writekey = sink.register(selector, SelectionKey.OP_WRITE);
+	SelectionKey writekey = sink.register(selector, SelectionKey.OP_WRITE);
 
         ByteBuffer outgoingdata = ByteBuffer.allocateDirect(10);
         byte[] someBytes = new byte[10];

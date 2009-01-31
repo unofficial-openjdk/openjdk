@@ -42,10 +42,10 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
-public final class ICUBinary
-{
+public final class ICUBinary 
+{    
     // public inner interface ------------------------------------------------
-
+    
     /**
      * Special interface for data authentication
      */
@@ -53,20 +53,20 @@ public final class ICUBinary
     {
         /**
          * Method used in ICUBinary.readHeader() to provide data format
-         * authentication.
+         * authentication. 
          * @param version version of the current data
          * @return true if dataformat is an acceptable version, false otherwise
          */
         public boolean isDataVersionAcceptable(byte version[]);
     }
-
+    
     // public methods --------------------------------------------------------
-
+    
     /**
-    * <p>ICU data header reader method.
-    * Takes a ICU generated big-endian input stream, parse the ICU standard
+    * <p>ICU data header reader method. 
+    * Takes a ICU generated big-endian input stream, parse the ICU standard 
     * file header and authenticates them.</p>
-    * <p>Header format:
+    * <p>Header format: 
     * <ul>
     *     <li> Header size (char)
     *     <li> Magic number 1 (byte)
@@ -78,10 +78,10 @@ public final class ICUBinary
     *     <li> Size of a char (byte) for c++ and c use
     *     <li> Reserved byte (byte)
     *     <li> Data format identifier (4 bytes), each ICU data has its own
-    *          identifier to distinguish them. [0] major [1] minor
-    *                                          [2] milli [3] micro
+    *          identifier to distinguish them. [0] major [1] minor 
+    *                                          [2] milli [3] micro 
     *     <li> Data version (4 bytes), the change version of the ICU data
-    *                             [0] major [1] minor [2] milli [3] micro
+    *                             [0] major [1] minor [2] milli [3] micro 
     *     <li> Unicode version (4 bytes) this ICU is based on.
     * </ul>
     * </p>
@@ -90,7 +90,7 @@ public final class ICUBinary
     * <pre>
     * try {
     *    FileInputStream input = new FileInputStream(filename);
-    *    If (Utility.readICUDataHeader(input, dataformat, dataversion,
+    *    If (Utility.readICUDataHeader(input, dataformat, dataversion, 
     *                                  unicode) {
     *        System.out.println("Verified file header, this is a ICU data file");
     *    }
@@ -100,19 +100,19 @@ public final class ICUBinary
     * </pre>
     * </p>
     * @param inputStream input stream that contains the ICU data header
-    * @param dataFormatIDExpected Data format expected. An array of 4 bytes
+    * @param dataFormatIDExpected Data format expected. An array of 4 bytes 
     *                     information about the data format.
-    *                     E.g. data format ID 1.2.3.4. will became an array of
+    *                     E.g. data format ID 1.2.3.4. will became an array of 
     *                     {1, 2, 3, 4}
     * @param authenticate user defined extra data authentication. This value
     *                     can be null, if no extra authentication is needed.
-    * @exception IOException thrown if there is a read error or
+    * @exception IOException thrown if there is a read error or 
     *            when header authentication fails.
     * @draft 2.1
     */
     public static final byte[] readHeader(InputStream inputStream,
                                         byte dataFormatIDExpected[],
-                                        Authenticate authenticate)
+                                        Authenticate authenticate) 
                                                           throws IOException
     {
         DataInputStream input = new DataInputStream(inputStream);
@@ -126,7 +126,7 @@ public final class ICUBinary
         if (magic1 != MAGIC1 || magic2 != MAGIC2) {
             throw new IOException(MAGIC_NUMBER_AUTHENTICATION_FAILED_);
         }
-
+        
         input.readChar(); // reading size
         readcount += 2;
         input.readChar(); // reading reserved word
@@ -139,7 +139,7 @@ public final class ICUBinary
         readcount ++;
         input.readByte(); // reading reserved byte
         readcount ++;
-
+                
         byte dataFormatID[] = new byte[4];
         input.readFully(dataFormatID);
         readcount += 4;
@@ -157,32 +157,32 @@ public final class ICUBinary
         if (bigendian != BIG_ENDIAN_ || charset != CHAR_SET_
             || charsize != CHAR_SIZE_
             || !Arrays.equals(dataFormatIDExpected, dataFormatID)
-            || (authenticate != null
+            || (authenticate != null 
                 && !authenticate.isDataVersionAcceptable(dataVersion))) {
             throw new IOException(HEADER_AUTHENTICATION_FAILED_);
         }
         return unicodeVersion;
     }
-
+     
     // private variables -------------------------------------------------
-
+  
     /**
     * Magic numbers to authenticate the data file
     */
     private static final byte MAGIC1 = (byte)0xda;
     private static final byte MAGIC2 = (byte)0x27;
-
+      
     /**
     * File format authentication values
     */
     private static final byte BIG_ENDIAN_ = 1;
     private static final byte CHAR_SET_ = 0;
     private static final byte CHAR_SIZE_ = 2;
-
+                                                    
     /**
     * Error messages
     */
-    private static final String MAGIC_NUMBER_AUTHENTICATION_FAILED_ =
+    private static final String MAGIC_NUMBER_AUTHENTICATION_FAILED_ = 
                        "ICU data file error: Not an ICU data file";
     private static final String HEADER_AUTHENTICATION_FAILED_ =
         "ICU data file error: Header authentication failed, please check if you have a valid ICU data file";

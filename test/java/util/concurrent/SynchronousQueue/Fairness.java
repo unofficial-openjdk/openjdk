@@ -33,28 +33,28 @@ import java.util.concurrent.*;
 
 public class Fairness {
     private static void testFairness(boolean fair,
-                                     final BlockingQueue<Integer> q)
-        throws Exception
+				     final BlockingQueue<Integer> q)
+	throws Exception
     {
-        for (int i = 0; i < 3; i++) {
-            final Integer I = new Integer(i);
-            new Thread() { public void run() {
-                try { q.put(I); } catch (Exception e) {}
-            }}.start();
-            Thread.currentThread().sleep(100);
-        }
-        for (int i = 0; i < 3; i++) {
-            int j = q.take().intValue();
-            System.err.printf("%d%n",j);
-            // Non-fair queues are lifo in our implementation
-            if (fair ? j != i : j != 2-i)
-                throw new Exception("No fair!");
-        }
+	for (int i = 0; i < 3; i++) {
+	    final Integer I = new Integer(i);
+	    new Thread() { public void run() {
+		try { q.put(I); } catch (Exception e) {}
+	    }}.start();
+	    Thread.currentThread().sleep(100);
+	}
+	for (int i = 0; i < 3; i++) {
+	    int j = q.take().intValue();
+	    System.err.printf("%d%n",j);
+	    // Non-fair queues are lifo in our implementation
+	    if (fair ? j != i : j != 2-i)
+		throw new Exception("No fair!");
+	}
     }
 
     public static void main(String[] args) throws Exception {
-        testFairness(false, new SynchronousQueue<Integer>());
-        testFairness(false, new SynchronousQueue<Integer>(false));
-        testFairness(true,  new SynchronousQueue<Integer>(true));
+	testFairness(false, new SynchronousQueue<Integer>());
+	testFairness(false, new SynchronousQueue<Integer>(false));
+	testFairness(true,  new SynchronousQueue<Integer>(true));
     }
 }

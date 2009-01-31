@@ -51,9 +51,10 @@ package java.lang.reflect;
  * Throwable#getCause()} method, as well as the aforementioned "legacy
  * method."
  *
- * @author      Peter Jones
- * @see         InvocationHandler
- * @since       1.3
+ * @author	Peter Jones
+ * @version	%I%, %E%
+ * @see		InvocationHandler
+ * @since	1.3
  */
 public class UndeclaredThrowableException extends RuntimeException {
     static final long serialVersionUID = 330127114055056639L;
@@ -68,11 +69,11 @@ public class UndeclaredThrowableException extends RuntimeException {
      * Constructs an {@code UndeclaredThrowableException} with the
      * specified {@code Throwable}.
      *
-     * @param   undeclaredThrowable the undeclared checked exception
-     *          that was thrown
+     * @param	undeclaredThrowable the undeclared checked exception
+     *		that was thrown
      */
     public UndeclaredThrowableException(Throwable undeclaredThrowable) {
-        super((Throwable) null);  // Disallow initCause
+	super((Throwable) null);  // Disallow initCause
         this.undeclaredThrowable = undeclaredThrowable;
     }
 
@@ -80,14 +81,14 @@ public class UndeclaredThrowableException extends RuntimeException {
      * Constructs an {@code UndeclaredThrowableException} with the
      * specified {@code Throwable} and a detail message.
      *
-     * @param   undeclaredThrowable the undeclared checked exception
-     *          that was thrown
-     * @param   s the detail message
+     * @param	undeclaredThrowable the undeclared checked exception
+     *		that was thrown
+     * @param	s the detail message
      */
     public UndeclaredThrowableException(Throwable undeclaredThrowable,
-                                        String s)
+					String s)
     {
-        super(s, null);  // Disallow initCause
+	super(s, null);  // Disallow initCause
         this.undeclaredThrowable = undeclaredThrowable;
     }
 

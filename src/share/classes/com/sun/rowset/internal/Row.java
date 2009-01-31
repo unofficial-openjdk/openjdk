@@ -96,7 +96,7 @@ public class Row extends BaseRow implements Serializable, Cloneable {
 /**
  * Creates a new <code>Row</code> object with the given number of columns.
  * The newly-created row includes an array of original values,
- * an array for storing its current values, and a <code>BitSet</code>
+ * an array for storing its current values, and a <code>BitSet</code> 
  * object for keeping track of which column values have been changed.
  */
     public Row(int numCols) {
@@ -105,7 +105,7 @@ public class Row extends BaseRow implements Serializable, Cloneable {
         colsChanged = new BitSet(numCols);
         this.numCols = numCols;
     }
-
+    
 /**
  * Creates a new <code>Row</code> object with the given number of columns
  * and with its array of original values initialized to the given array.
@@ -134,7 +134,7 @@ public class Row extends BaseRow implements Serializable, Cloneable {
  * @param val the new value to be set
  */
     public void initColumnObject(int idx, Object val) {
-        origVals[idx - 1] = val;
+	origVals[idx - 1] = val;
     }
 
 
@@ -170,7 +170,7 @@ public class Row extends BaseRow implements Serializable, Cloneable {
             return(origVals[columnIndex - 1]); // maps to array!!
         }
     }
-
+    
 /**
  * Indicates whether the designated column of this <code>Row</code> object
  * has been changed.
@@ -195,7 +195,7 @@ public class Row extends BaseRow implements Serializable, Cloneable {
     public void setDeleted() { // %%% was public
         deleted = true;
     }
-
+    
 
 /**
  * Retrieves the value of this <code>Row</code> object's <code>deleted</code> field,
@@ -285,15 +285,15 @@ public class Row extends BaseRow implements Serializable, Cloneable {
  * <code>BitSet</code> object, indicating that the corresponding column value
  * (column <code>idx</code> + 1) has been changed.
  *
- * @param idx the index into the <code>BitSet</code> object maintained by
+ * @param idx the index into the <code>BitSet</code> object maintained by 
  *            this <code>Row</code> object; the first bit is at index
  *            <code>0</code>
  *
  */
     private void setColUpdated(int idx) {
-        colsChanged.set(idx);
+	colsChanged.set(idx);
     }
-
+    
 /**
  * Sets the <code>updated</code> field for this <code>Row</code> object to
  * <code>false</code>, sets all the column values in this <code>Row</code>
@@ -338,6 +338,6 @@ public class Row extends BaseRow implements Serializable, Cloneable {
     *           implementation objects's cursor is positioned
     */
     public BaseRow getCurrentRow() {
-        return null;
+	return null;
     }
 }

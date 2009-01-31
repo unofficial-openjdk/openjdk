@@ -63,7 +63,7 @@ import javax.accessibility.*;
  * ALIGN=center HSPACE=10 VSPACE=7>
  * <p>
  * The value range represented by the bubble in this example
- * is the <em>visible amount</em>. The horizontal scroll bar
+ * is the <em>visible amount</em>. The horizontal scroll bar 
  * in this example could be created with code like the following:
  * <p>
  * <hr><blockquote><pre>
@@ -153,12 +153,13 @@ import javax.accessibility.*;
  * <b>Note</b>: We recommend using a <code>Scrollbar</code>
  * for value selection only.  If you want to implement
  * a scrollable component inside a container, we recommend you use
- * a {@link ScrollPane ScrollPane}. If you use a
+ * a {@link ScrollPane ScrollPane}. If you use a 
  * <code>Scrollbar</code> for this purpose, you are likely to
- * encounter issues with painting, key handling, sizing and
+ * encounter issues with painting, key handling, sizing and 
  * positioning.
  *
- * @author      Sami Shaio
+ * @version 	%I%, %G%
+ * @author 	Sami Shaio
  * @see         java.awt.event.AdjustmentEvent
  * @see         java.awt.event.AdjustmentListener
  * @since       JDK1.0
@@ -168,24 +169,24 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
     /**
      * A constant that indicates a horizontal scroll bar.
      */
-    public static final int     HORIZONTAL = 0;
+    public static final int	HORIZONTAL = 0;
 
     /**
      * A constant that indicates a vertical scroll bar.
      */
-    public static final int     VERTICAL   = 1;
+    public static final int	VERTICAL   = 1;
 
     /**
      * The value of the <code>Scrollbar</code>.
      * This property must be greater than or equal to <code>minimum</code>
-     * and less than or equal to
+     * and less than or equal to 
      * <code>maximum - visibleAmount</code>
      *
      * @serial
      * @see #getValue
      * @see #setValue
      */
-    int value;
+    int	value;
 
     /**
      * The maximum value of the <code>Scrollbar</code>.
@@ -196,7 +197,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @see #getMaximum
      * @see #setMaximum
      */
-    int maximum;
+    int	maximum;
 
     /**
      * The minimum value of the <code>Scrollbar</code>.
@@ -207,19 +208,19 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @see #getMinimum
      * @see #setMinimum
      */
-    int minimum;
+    int	minimum;
 
     /**
-     * The size of the <code>Scrollbar</code>'s bubble.
+     * The size of the <code>Scrollbar</code>'s bubble.  
      * When a scroll bar is used to select a range of values,
      * the visibleAmount represents the size of this range.
-     * This is visually indicated by the size of the bubble.
+     * This is visually indicated by the size of the bubble. 
      *
      * @serial
      * @see #getVisibleAmount
      * @see #setVisibleAmount
      */
-    int visibleAmount;
+    int	visibleAmount;
 
     /**
      * The <code>Scrollbar</code>'s orientation--being either horizontal
@@ -232,12 +233,12 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @see #getOrientation
      * @see #setOrientation
      */
-    int orientation;
+    int	orientation;
 
     /**
      * The amount by which the scrollbar value will change when going
      * up or down by a line.
-     * This value must be greater than zero.
+     * This value must be greater than zero.  
      *
      * @serial
      * @see #getLineIncrement
@@ -248,7 +249,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
     /**
      * The amount by which the scrollbar value will change when going
      * up or down by a page.
-     * This value must be greater than zero.
+     * This value must be greater than zero. 
      *
      * @serial
      * @see #getPageIncrement
@@ -316,7 +317,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * <tr>
      *   <td>visible amount</td>
      *   <td>visible amount of the scroll bar's range,
-     *   <br>typically represented by the size of the
+     *   <br>typically represented by the size of the 
      *   <br>scroll bar's bubble</td>
      *   <td>10</td>
      * </tr>
@@ -342,7 +343,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      *   <td>block increment</td>
      *   <td>amount the value changes when the
      *   <br>Page Up or Page Down key is pressed,
-     *   <br>or when the scrollbar track is clicked
+     *   <br>or when the scrollbar track is clicked 
      *   <br>on either side of the bubble </td>
      *   <td>10</td>
      * </tr>
@@ -353,7 +354,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
     public Scrollbar() throws HeadlessException {
-        this(VERTICAL, 0, 10, 0, 100);
+	this(VERTICAL, 0, 10, 0, 100);
     }
 
     /**
@@ -363,7 +364,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * values <code>Scrollbar.HORIZONTAL</code>,
      * or <code>Scrollbar.VERTICAL</code>,
      * indicating a horizontal or vertical scroll bar, respectively.
-     *
+     * 
      * @param       orientation   indicates the orientation of the scroll bar
      * @exception   IllegalArgumentException    when an illegal value for
      *                    the <code>orientation</code> argument is supplied
@@ -384,13 +385,13 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * or <code>Scrollbar.VERTICAL</code>,
      * indicating a horizontal or vertical scroll bar, respectively.
      * <p>
-     * The parameters supplied to this constructor are subject to the
-     * constraints described in {@link #setValues(int, int, int, int)}.
-     *
+     * The parameters supplied to this constructor are subject to the 
+     * constraints described in {@link #setValues(int, int, int, int)}. 
+     * 
      * @param     orientation   indicates the orientation of the scroll bar.
      * @param     value     the initial value of the scroll bar
-     * @param     visible   the visible amount of the scroll bar, typically
-     *                      represented by the size of the bubble
+     * @param     visible   the visible amount of the scroll bar, typically 
+     *                      represented by the size of the bubble 
      * @param     minimum   the minimum value of the scroll bar
      * @param     maximum   the maximum value of the scroll bar
      * @exception IllegalArgumentException    when an illegal value for
@@ -403,15 +404,15 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
     public Scrollbar(int orientation, int value, int visible, int minimum,
         int maximum) throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
-        switch (orientation) {
-          case HORIZONTAL:
-          case VERTICAL:
-            this.orientation = orientation;
-            break;
-          default:
-            throw new IllegalArgumentException("illegal scrollbar orientation");
-        }
-        setValues(value, visible, minimum, maximum);
+	switch (orientation) {
+	  case HORIZONTAL:
+	  case VERTICAL:
+	    this.orientation = orientation;
+	    break;
+	  default:
+	    throw new IllegalArgumentException("illegal scrollbar orientation");
+	}
+	setValues(value, visible, minimum, maximum);
     }
 
     /**
@@ -431,27 +432,27 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     public void addNotify() {
         synchronized (getTreeLock()) {
-            if (peer == null)
-                peer = getToolkit().createScrollbar(this);
-            super.addNotify();
-        }
+	    if (peer == null) 
+	        peer = getToolkit().createScrollbar(this);
+	    super.addNotify();
+	}
     }
 
     /**
      * Returns the orientation of this scroll bar.
-     *
+     * 
      * @return    the orientation of this scroll bar, either
      *               <code>Scrollbar.HORIZONTAL</code> or
      *               <code>Scrollbar.VERTICAL</code>
      * @see       java.awt.Scrollbar#setOrientation
      */
     public int getOrientation() {
-        return orientation;
+	return orientation;
     }
 
     /**
      * Sets the orientation for this scroll bar.
-     *
+     * 
      * @param orientation  the orientation of this scroll bar, either
      *               <code>Scrollbar.HORIZONTAL</code> or
      *               <code>Scrollbar.VERTICAL</code>
@@ -463,51 +464,51 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     public void setOrientation(int orientation) {
         synchronized (getTreeLock()) {
-            if (orientation == this.orientation) {
-                return;
-            }
-            switch (orientation) {
-                case HORIZONTAL:
-                case VERTICAL:
-                    this.orientation = orientation;
-                    break;
-                default:
-                    throw new IllegalArgumentException("illegal scrollbar orientation");
-            }
-            /* Create a new peer with the specified orientation. */
-            if (peer != null) {
-                removeNotify();
-                addNotify();
-                invalidate();
-            }
-        }
+	    if (orientation == this.orientation) {
+	        return;
+	    }
+	    switch (orientation) {
+	        case HORIZONTAL:
+	        case VERTICAL:
+		    this.orientation = orientation;
+		    break;
+	        default:
+		    throw new IllegalArgumentException("illegal scrollbar orientation");
+	    }
+	    /* Create a new peer with the specified orientation. */
+	    if (peer != null) {
+		removeNotify();
+		addNotify();
+		invalidate();
+	    }
+	}
         if (accessibleContext != null) {
             accessibleContext.firePropertyChange(
                     AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
                     ((orientation == VERTICAL)
                      ? AccessibleState.HORIZONTAL : AccessibleState.VERTICAL),
-                    ((orientation == VERTICAL)
+                    ((orientation == VERTICAL) 
                      ? AccessibleState.VERTICAL : AccessibleState.HORIZONTAL));
         }
     }
 
     /**
      * Gets the current value of this scroll bar.
-     *
+     * 
      * @return      the current value of this scroll bar
      * @see         java.awt.Scrollbar#getMinimum
      * @see         java.awt.Scrollbar#getMaximum
      */
     public int getValue() {
-        return value;
+	return value;
     }
 
     /**
      * Sets the value of this scroll bar to the specified value.
      * <p>
-     * If the value supplied is less than the current <code>minimum</code>
-     * or greater than the current <code>maximum - visibleAmount</code>,
-     * then either <code>minimum</code> or <code>maximum - visibleAmount</code>
+     * If the value supplied is less than the current <code>minimum</code> 
+     * or greater than the current <code>maximum - visibleAmount</code>, 
+     * then either <code>minimum</code> or <code>maximum - visibleAmount</code> 
      * is substituted, as appropriate.
      * <p>
      * Normally, a program should change a scroll bar's
@@ -519,7 +520,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * <p>
      * Calling this method does not fire an
      * <code>AdjustmentEvent</code>.
-     *
+     * 
      * @param       newValue   the new value of the scroll bar
      * @see         java.awt.Scrollbar#setValues
      * @see         java.awt.Scrollbar#getValue
@@ -534,22 +535,22 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
 
     /**
      * Gets the minimum value of this scroll bar.
-     *
+     * 
      * @return      the minimum value of this scroll bar
      * @see         java.awt.Scrollbar#getValue
      * @see         java.awt.Scrollbar#getMaximum
      */
     public int getMinimum() {
-        return minimum;
+	return minimum;
     }
 
     /**
      * Sets the minimum value of this scroll bar.
      * <p>
-     * When <code>setMinimum</code> is called, the minimum value
-     * is changed, and other values (including the maximum, the
-     * visible amount, and the current scroll bar value)
-     * are changed to be consistent with the new minimum.
+     * When <code>setMinimum</code> is called, the minimum value 
+     * is changed, and other values (including the maximum, the 
+     * visible amount, and the current scroll bar value) 
+     * are changed to be consistent with the new minimum.  
      * <p>
      * Normally, a program should change a scroll bar's minimum
      * value only by calling <code>setValues</code>.
@@ -559,7 +560,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * mutually consistent.
      * <p>
      * Note that setting the minimum value to <code>Integer.MAX_VALUE</code>
-     * will result in the new minimum value being set to
+     * will result in the new minimum value being set to 
      * <code>Integer.MAX_VALUE - 1</code>.
      *
      * @param       newMinimum   the new minimum value for this scroll bar
@@ -568,30 +569,30 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @since       JDK1.1
      */
     public void setMinimum(int newMinimum) {
-        // No checks are necessary in this method since minimum is
-        // the first variable checked in the setValues function.
+        // No checks are necessary in this method since minimum is 
+        // the first variable checked in the setValues function.  
 
-        // Use setValues so that a consistent policy relating
+        // Use setValues so that a consistent policy relating 
         // minimum, maximum, visible amount, and value is enforced.
         setValues(value, visibleAmount, newMinimum, maximum);
     }
 
     /**
      * Gets the maximum value of this scroll bar.
-     *
+     * 
      * @return      the maximum value of this scroll bar
      * @see         java.awt.Scrollbar#getValue
      * @see         java.awt.Scrollbar#getMinimum
      */
     public int getMaximum() {
-        return maximum;
+	return maximum;
     }
 
     /**
      * Sets the maximum value of this scroll bar.
      * <p>
-     * When <code>setMaximum</code> is called, the maximum value
-     * is changed, and other values (including the minimum, the
+     * When <code>setMaximum</code> is called, the maximum value 
+     * is changed, and other values (including the minimum, the 
      * visible amount, and the current scroll bar value)
      * are changed to be consistent with the new maximum.
      * <p>
@@ -603,9 +604,9 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * mutually consistent.
      * <p>
      * Note that setting the maximum value to <code>Integer.MIN_VALUE</code>
-     * will result in the new maximum value being set to
+     * will result in the new maximum value being set to 
      * <code>Integer.MIN_VALUE + 1</code>.
-     *
+     * 
      * @param       newMaximum   the new maximum value
      *                     for this scroll bar
      * @see         java.awt.Scrollbar#setValues
@@ -613,8 +614,8 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @since       JDK1.1
      */
     public void setMaximum(int newMaximum) {
-        // minimum is checked first in setValues, so we need to
-        // enforce minimum and maximum checks here.
+        // minimum is checked first in setValues, so we need to 
+        // enforce minimum and maximum checks here.  
         if (newMaximum == Integer.MIN_VALUE) {
             newMaximum = Integer.MIN_VALUE + 1;
         }
@@ -623,7 +624,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
             minimum = newMaximum - 1;
         }
 
-        // Use setValues so that a consistent policy relating
+        // Use setValues so that a consistent policy relating 
         // minimum, maximum, visible amount, and value is enforced.
         setValues(value, visibleAmount, minimum, newMaximum);
     }
@@ -638,18 +639,18 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * visual representation of the relationship of the visible
      * amount to the range of the scroll bar.
      * <p>
-     * The scroll bar's bubble may not be displayed when it is not
-     * moveable (e.g. when it takes up the entire length of the
-     * scroll bar's track, or when the scroll bar is disabled).
-     * Whether the bubble is displayed or not will not affect
-     * the value returned by <code>getVisibleAmount</code>.
-     *
+     * The scroll bar's bubble may not be displayed when it is not 
+     * moveable (e.g. when it takes up the entire length of the 
+     * scroll bar's track, or when the scroll bar is disabled). 
+     * Whether the bubble is displayed or not will not affect 
+     * the value returned by <code>getVisibleAmount</code>. 
+     * 
      * @return      the visible amount of this scroll bar
      * @see         java.awt.Scrollbar#setVisibleAmount
      * @since       JDK1.1
      */
     public int getVisibleAmount() {
-        return getVisible();
+	return getVisible();
     }
 
     /**
@@ -658,7 +659,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     @Deprecated
     public int getVisible() {
-        return visibleAmount;
+	return visibleAmount;
     }
 
     /**
@@ -671,15 +672,15 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * visual representation of the relationship of the visible
      * amount to the range of the scroll bar.
      * <p>
-     * The scroll bar's bubble may not be displayed when it is not
-     * moveable (e.g. when it takes up the entire length of the
-     * scroll bar's track, or when the scroll bar is disabled).
-     * Whether the bubble is displayed or not will not affect
-     * the value returned by <code>getVisibleAmount</code>.
+     * The scroll bar's bubble may not be displayed when it is not 
+     * moveable (e.g. when it takes up the entire length of the 
+     * scroll bar's track, or when the scroll bar is disabled). 
+     * Whether the bubble is displayed or not will not affect 
+     * the value returned by <code>getVisibleAmount</code>. 
      * <p>
      * If the visible amount supplied is less than <code>one</code>
-     * or greater than the current <code>maximum - minimum</code>,
-     * then either <code>one</code> or <code>maximum - minimum</code>
+     * or greater than the current <code>maximum - minimum</code>, 
+     * then either <code>one</code> or <code>maximum - minimum</code> 
      * is substituted, as appropriate.
      * <p>
      * Normally, a program should change a scroll bar's
@@ -688,7 +689,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * and synchronously sets the minimum, maximum, visible amount,
      * and value properties of a scroll bar, so that they are
      * mutually consistent.
-     *
+     * 
      * @param       newAmount the new visible amount
      * @see         java.awt.Scrollbar#getVisibleAmount
      * @see         java.awt.Scrollbar#setValues
@@ -707,17 +708,17 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * when the user activates the unit increment area of the
      * scroll bar, generally through a mouse or keyboard gesture
      * that the scroll bar receives as an adjustment event.
-     * The unit increment must be greater than zero.
-     * Attepts to set the unit increment to a value lower than 1
-     * will result in a value of 1 being set.
-     *
+     * The unit increment must be greater than zero. 
+     * Attepts to set the unit increment to a value lower than 1 
+     * will result in a value of 1 being set.  
+     * 
      * @param        v  the amount by which to increment or decrement
      *                         the scroll bar's value
      * @see          java.awt.Scrollbar#getUnitIncrement
      * @since        JDK1.1
      */
     public void setUnitIncrement(int v) {
-        setLineIncrement(v);
+	setLineIncrement(v);
     }
 
     /**
@@ -726,12 +727,12 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     @Deprecated
     public synchronized void setLineIncrement(int v) {
-        int tmp = (v < 1) ? 1 : v;
+        int tmp = (v < 1) ? 1 : v; 
 
         if (lineIncrement == tmp) {
-            return;
+            return; 
         }
-        lineIncrement = tmp;
+        lineIncrement = tmp; 
 
         ScrollbarPeer peer = (ScrollbarPeer)this.peer;
         if (peer != null) {
@@ -746,14 +747,14 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * when the user activates the unit increment area of the
      * scroll bar, generally through a mouse or keyboard gesture
      * that the scroll bar receives as an adjustment event.
-     * The unit increment must be greater than zero.
-     *
+     * The unit increment must be greater than zero. 
+     * 
      * @return      the unit increment of this scroll bar
      * @see         java.awt.Scrollbar#setUnitIncrement
      * @since       JDK1.1
      */
     public int getUnitIncrement() {
-        return getLineIncrement();
+	return getLineIncrement();
     }
 
     /**
@@ -762,7 +763,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     @Deprecated
     public int getLineIncrement() {
-        return lineIncrement;
+	return lineIncrement;
     }
 
     /**
@@ -772,17 +773,17 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * when the user activates the block increment area of the
      * scroll bar, generally through a mouse or keyboard gesture
      * that the scroll bar receives as an adjustment event.
-     * The block increment must be greater than zero.
-     * Attepts to set the block increment to a value lower than 1
-     * will result in a value of 1 being set.
-     *
+     * The block increment must be greater than zero. 
+     * Attepts to set the block increment to a value lower than 1 
+     * will result in a value of 1 being set.  
+     * 
      * @param        v  the amount by which to increment or decrement
      *                         the scroll bar's value
      * @see          java.awt.Scrollbar#getBlockIncrement
      * @since        JDK1.1
      */
     public void setBlockIncrement(int v) {
-        setPageIncrement(v);
+	setPageIncrement(v);
     }
 
     /**
@@ -791,12 +792,12 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     @Deprecated
     public synchronized void setPageIncrement(int v) {
-        int tmp = (v < 1) ? 1 : v;
+        int tmp = (v < 1) ? 1 : v; 
 
         if (pageIncrement == tmp) {
-            return;
+            return; 
         }
-        pageIncrement = tmp;
+        pageIncrement = tmp; 
 
         ScrollbarPeer peer = (ScrollbarPeer)this.peer;
         if (peer != null) {
@@ -811,14 +812,14 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * when the user activates the block increment area of the
      * scroll bar, generally through a mouse or keyboard gesture
      * that the scroll bar receives as an adjustment event.
-     * The block increment must be greater than zero.
-     *
+     * The block increment must be greater than zero. 
+     * 
      * @return      the block increment of this scroll bar
      * @see         java.awt.Scrollbar#setBlockIncrement
      * @since       JDK1.1
      */
     public int getBlockIncrement() {
-        return getPageIncrement();
+	return getPageIncrement();
     }
 
     /**
@@ -827,29 +828,29 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      */
     @Deprecated
     public int getPageIncrement() {
-        return pageIncrement;
+	return pageIncrement;
     }
 
     /**
-     * Sets the values of four properties for this scroll bar:
-     * <code>value</code>, <code>visibleAmount</code>,
+     * Sets the values of four properties for this scroll bar: 
+     * <code>value</code>, <code>visibleAmount</code>, 
      * <code>minimum</code>, and <code>maximum</code>.
-     * If the values supplied for these properties are inconsistent
-     * or incorrect, they will be changed to ensure consistency.
+     * If the values supplied for these properties are inconsistent 
+     * or incorrect, they will be changed to ensure consistency.  
      * <p>
      * This method simultaneously and synchronously sets the values
      * of four scroll bar properties, assuring that the values of
      * these properties are mutually consistent. It enforces the
-     * following constraints:
-     * <code>maximum</code> must be greater than <code>minimum</code>,
-     * <code>maximum - minimum</code> must not be greater
-     *     than <code>Integer.MAX_VALUE</code>,
-     * <code>visibleAmount</code> must be greater than zero.
-     * <code>visibleAmount</code> must not be greater than
-     *     <code>maximum - minimum</code>,
-     * <code>value</code> must not be less than <code>minimum</code>,
-     * and <code>value</code> must not be greater than
-     *     <code>maximum - visibleAmount</code>
+     * following constraints:  
+     * <code>maximum</code> must be greater than <code>minimum</code>,  
+     * <code>maximum - minimum</code> must not be greater 
+     *     than <code>Integer.MAX_VALUE</code>,  
+     * <code>visibleAmount</code> must be greater than zero. 
+     * <code>visibleAmount</code> must not be greater than 
+     *     <code>maximum - minimum</code>,  
+     * <code>value</code> must not be less than <code>minimum</code>,  
+     * and <code>value</code> must not be greater than 
+     *     <code>maximum - visibleAmount</code> 
      * <p>
      * Calling this method does not fire an
      * <code>AdjustmentEvent</code>.
@@ -919,31 +920,31 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @see #setValueIsAdjusting
      * @since 1.4
      */
-    public boolean getValueIsAdjusting() {
-        return isAdjusting;
+    public boolean getValueIsAdjusting() { 
+        return isAdjusting; 
     }
 
     /**
      * Sets the <code>valueIsAdjusting</code> property.
-     *
+     * 
      * @param b new adjustment-in-progress status
      * @see #getValueIsAdjusting
      * @since 1.4
      */
     public void setValueIsAdjusting(boolean b) {
-        boolean oldValue;
+	boolean oldValue;
 
-        synchronized (this) {
-            oldValue = isAdjusting;
-            isAdjusting = b;
-        }
+	synchronized (this) {
+	    oldValue = isAdjusting;
+	    isAdjusting = b;
+	}
 
-        if ((oldValue != b) && (accessibleContext != null)) {
+	if ((oldValue != b) && (accessibleContext != null)) {
             accessibleContext.firePropertyChange(
                     AccessibleContext.ACCESSIBLE_STATE_PROPERTY,
                     ((oldValue) ? AccessibleState.BUSY : null),
                     ((b) ? AccessibleState.BUSY : null));
-        }
+	}
     }
 
 
@@ -964,10 +965,10 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @since        JDK1.1
      */
     public synchronized void addAdjustmentListener(AdjustmentListener l) {
-        if (l == null) {
-            return;
-        }
-        adjustmentListener = AWTEventMulticaster.add(adjustmentListener, l);
+	if (l == null) {
+	    return;
+	}
+	adjustmentListener = AWTEventMulticaster.add(adjustmentListener, l);
         newEventsOnly = true;
     }
 
@@ -979,18 +980,18 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * <p>Refer to <a href="doc-files/AWTThreadIssues.html#ListenersThreads"
      * >AWT Threading Issues</a> for details on AWT's threading model.
      *
-     * @param           l    the adjustment listener
-     * @see             #addAdjustmentListener
-     * @see             #getAdjustmentListeners
-     * @see             java.awt.event.AdjustmentEvent
-     * @see             java.awt.event.AdjustmentListener
-     * @since           JDK1.1
+     * @param        	l    the adjustment listener
+     * @see          	#addAdjustmentListener
+     * @see          	#getAdjustmentListeners
+     * @see          	java.awt.event.AdjustmentEvent
+     * @see          	java.awt.event.AdjustmentListener
+     * @since        	JDK1.1
      */
     public synchronized void removeAdjustmentListener(AdjustmentListener l) {
-        if (l == null) {
-            return;
-        }
-        adjustmentListener = AWTEventMulticaster.remove(adjustmentListener, l);
+	if (l == null) {
+	    return;
+	}
+	adjustmentListener = AWTEventMulticaster.remove(adjustmentListener, l);
     }
 
     /**
@@ -998,12 +999,12 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * registered on this scrollbar.
      *
      * @return all of this scrollbar's <code>AdjustmentListener</code>s
-     *         or an empty array if no adjustment
+     *         or an empty array if no adjustment 
      *         listeners are currently registered
-     * @see             #addAdjustmentListener
-     * @see             #removeAdjustmentListener
-     * @see             java.awt.event.AdjustmentEvent
-     * @see             java.awt.event.AdjustmentListener
+     * @see          	#addAdjustmentListener
+     * @see          	#removeAdjustmentListener
+     * @see          	java.awt.event.AdjustmentEvent
+     * @see          	java.awt.event.AdjustmentListener
      * @since 1.4
      */
     public synchronized AdjustmentListener[] getAdjustmentListeners() {
@@ -1041,13 +1042,13 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * @since 1.3
      */
     public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        EventListener l = null;
-        if  (listenerType == AdjustmentListener.class) {
-            l = adjustmentListener;
-        } else {
-            return super.getListeners(listenerType);
-        }
-        return AWTEventMulticaster.getListeners(l, listenerType);
+	EventListener l = null; 
+	if  (listenerType == AdjustmentListener.class) { 
+	    l = adjustmentListener;
+	} else {
+	    return super.getListeners(listenerType);
+	}
+	return AWTEventMulticaster.getListeners(l, listenerType);
     }
 
     // REMIND: remove when filtering is done at lower level
@@ -1082,7 +1083,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
             processAdjustmentEvent((AdjustmentEvent)e);
             return;
         }
-        super.processEvent(e);
+	super.processEvent(e);
     }
 
     /**
@@ -1118,21 +1119,21 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
 
     /**
      * Returns a string representing the state of this <code>Scrollbar</code>.
-     * This method is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not be
+     * This method is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between 
+     * implementations. The returned string may be empty but may not be 
      * <code>null</code>.
      *
      * @return      the parameter string of this scroll bar
      */
     protected String paramString() {
-        return super.paramString() +
-            ",val=" + value +
-            ",vis=" + visibleAmount +
-            ",min=" + minimum +
-            ",max=" + maximum +
-            ((orientation == VERTICAL) ? ",vert" : ",horz") +
-            ",isAdjusting=" + isAdjusting;
+	return super.paramString() +
+	    ",val=" + value +
+	    ",vis=" + visibleAmount +
+	    ",min=" + minimum +
+	    ",max=" + maximum +
+	    ((orientation == VERTICAL) ? ",vert" : ",horz") +
+	    ",isAdjusting=" + isAdjusting;
     }
 
 
@@ -1154,7 +1155,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      *
      * @param s the <code>ObjectOutputStream</code> to write
      * @serialData <code>null</code> terminated sequence of 0
-     *   or more pairs; the pair consists of a <code>String</code>
+     *   or more pairs; the pair consists of a <code>String</code> 
      *   and an <code>Object</code>; the <code>String</code> indicates
      *   the type of object and is one of the following:
      *   <code>adjustmentListenerK</code> indicating an
@@ -1179,7 +1180,7 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
      * receive adjustment events fired by the
      * <code>Scrollbar</code>.
      * Unrecognized keys or values will be ignored.
-     *
+     * 
      * @param s the <code>ObjectInputStream</code> to read
      * @exception HeadlessException if
      *   <code>GraphicsEnvironment.isHeadless</code> returns
@@ -1195,13 +1196,13 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
 
       Object keyOrNull;
       while(null != (keyOrNull = s.readObject())) {
-        String key = ((String)keyOrNull).intern();
+	String key = ((String)keyOrNull).intern();
 
-        if (adjustmentListenerK == key)
-          addAdjustmentListener((AdjustmentListener)(s.readObject()));
+	if (adjustmentListenerK == key)
+	  addAdjustmentListener((AdjustmentListener)(s.readObject()));
 
-        else // skip value for unrecognized key
-          s.readObject();
+	else // skip value for unrecognized key
+	  s.readObject();
       }
     }
 
@@ -1211,13 +1212,13 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
 ////////////////
 
     /**
-     * Gets the <code>AccessibleContext</code> associated with this
+     * Gets the <code>AccessibleContext</code> associated with this 
      * <code>Scrollbar</code>. For scrollbars, the
-     * <code>AccessibleContext</code> takes the form of an
+     * <code>AccessibleContext</code> takes the form of an 
      * <code>AccessibleAWTScrollBar</code>. A new
      * <code>AccessibleAWTScrollBar</code> instance is created if necessary.
      *
-     * @return an <code>AccessibleAWTScrollBar</code> that serves as the
+     * @return an <code>AccessibleAWTScrollBar</code> that serves as the 
      *         <code>AccessibleContext</code> of this <code>ScrollBar</code>
      * @since 1.3
      */
@@ -1252,9 +1253,9 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
          */
         public AccessibleStateSet getAccessibleStateSet() {
             AccessibleStateSet states = super.getAccessibleStateSet();
-            if (getValueIsAdjusting()) {
+	    if (getValueIsAdjusting()) {
                 states.add(AccessibleState.BUSY);
-            }
+	    }
             if (getOrientation() == VERTICAL) {
                 states.add(AccessibleState.VERTICAL);
             } else {
@@ -1274,13 +1275,13 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
         }
 
         /**
-         * Get the <code>AccessibleValue</code> associated with this
-         * object.  In the implementation of the Java Accessibility
-         * API for this class, return this object, which is
-         * responsible for implementing the
-         * <code>AccessibleValue</code> interface on behalf of itself.
-         *
-         * @return this object
+	 * Get the <code>AccessibleValue</code> associated with this
+	 * object.  In the implementation of the Java Accessibility
+	 * API for this class, return this object, which is
+	 * responsible for implementing the
+	 * <code>AccessibleValue</code> interface on behalf of itself.
+	 * 
+	 * @return this object
          */
         public AccessibleValue getAccessibleValue() {
             return this;
@@ -1330,3 +1331,4 @@ public class Scrollbar extends Component implements Adjustable, Accessible {
     } // AccessibleAWTScrollBar
 
 }
+

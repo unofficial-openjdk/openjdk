@@ -38,13 +38,13 @@ import java.io.*;
 class Commands {
 
     abstract class AsyncExecution {
-        abstract void action();
+	abstract void action();
 
-        AsyncExecution() {
+	AsyncExecution() {
             execute();
-        }
+	}
 
-        void execute() {
+	void execute() {
             /*
              * Save current thread and stack frame. (BugId 4296031)
              */
@@ -82,7 +82,7 @@ class Commands {
                     }
                 };
             thread.start();
-        }
+	}
     }
 
     Commands() {
@@ -127,7 +127,7 @@ class Commands {
          try {
               val = ExpressionParser.getMassagedValue();
               valStr = val.toString();
-         } catch (ParseException e) {
+         } catch (ParseException e) { 
               String msg = e.getMessage();
               if (msg == null) {
                   MessageOutput.printException(msg, e);
@@ -138,7 +138,7 @@ class Commands {
                   } catch (MissingResourceException mex) {
                       s = e.toString();
                   }
-                  MessageOutput.printDirectln(s);
+                  MessageOutput.printDirectln(s);    
               }
          }
          return valStr;
@@ -177,8 +177,8 @@ class Commands {
         }
         buf.append(")");
         return buf.toString();
-    }
-
+    }   
+                            
     void commandConnectors(VirtualMachineManager vmm) {
         Iterator iter = vmm.allConnectors().iterator();
         if (iter.hasNext()) {
@@ -198,7 +198,7 @@ class Commands {
                 while (argIter.hasNext()) {
                     Connector.Argument aa = (Connector.Argument)argIter.next();
                     MessageOutput.println();
-
+                    
                     boolean requiredArgument = aa.mustSpecify();
                     if (aa.value() == null || aa.value() == "") {
                         //no current value and no default.
@@ -210,13 +210,13 @@ class Commands {
                                               "Connector required argument default" :
                                               "Connector argument default",
                                               new Object [] {aa.name(), aa.value()});
-                    }
+                    } 
                     MessageOutput.println("Connector description", aa.description());
-
+                    
                 }
             }
         }
-
+        
     }
 
     void commandClasses() {
@@ -265,7 +265,7 @@ class Commands {
                 superclass = showAll ? superclass.superclass() : null;
             }
 
-            List interfaces = showAll ? clazz.allInterfaces()
+            List interfaces = showAll ? clazz.allInterfaces() 
                                       : clazz.interfaces();
             Iterator iter = interfaces.iterator();
             while (iter.hasNext()) {
@@ -396,8 +396,8 @@ class Commands {
         threadIter = new ThreadIterator(tg);
         while (threadIter.hasNext()) {
             ThreadReference thr = (ThreadReference)threadIter.next();
-            if (thr.threadGroup() == null) {
-                continue;
+	    if (thr.threadGroup() == null) {
+                continue; 
             }
             // Note any thread group changes
             if (!thr.threadGroup().equals(tg)) {
@@ -420,7 +420,7 @@ class Commands {
             for (int i = nameBuffer.length(); i < maxNameLength; i++) {
                 nameBuffer.append(" ");
             }
-
+            
             /*
              * Select the output format to use based on thread status
              * and breakpoint.
@@ -504,7 +504,7 @@ class Commands {
                                                   tg.name()});
         }
     }
-
+    
     void commandThread(StringTokenizer t) {
         if (!t.hasMoreTokens()) {
             MessageOutput.println("Thread number not specified.");
@@ -515,7 +515,7 @@ class Commands {
             ThreadInfo.setCurrentThreadInfo(threadInfo);
         }
     }
-
+    
     void commandThreadGroup(StringTokenizer t) {
         if (!t.hasMoreTokens()) {
             MessageOutput.println("Threadgroup name not specified.");
@@ -529,10 +529,10 @@ class Commands {
             ThreadInfo.setThreadGroup(tg);
         }
     }
-
+    
     void commandRun(StringTokenizer t) {
         /*
-         * The 'run' command makes little sense in a
+         * The 'run' command makes little sense in a 
          * that doesn't support restarts or multiple VMs. However,
          * this is an attempt to emulate the behavior of the old
          * JDB as much as possible. For new users and implementations
@@ -547,7 +547,7 @@ class Commands {
                 MessageOutput.println("run <args> command is valid only with launched VMs");
             }
             return;
-        }
+        } 
         if (connection.isOpen()) {
             MessageOutput.println("VM already running. use cont to continue after events.");
             return;
@@ -564,7 +564,7 @@ class Commands {
             if (!argsSet) {
                 MessageOutput.println("Unable to set main class and arguments");
                 return;
-            }
+            } 
         } else {
             args = connection.connectorArg("main");
             if (args.length() == 0) {
@@ -578,7 +578,7 @@ class Commands {
          * Launch the VM.
          */
         connection.open();
-
+        
     }
 
     void commandLoad(StringTokenizer t) {
@@ -605,7 +605,7 @@ class Commands {
                 ThreadInfo threadInfo = doGetThread(t.nextToken());
                 if (threadInfo != null) {
                     threadInfo.getThread().suspend();
-                }
+                }                
             }
         }
     }
@@ -637,8 +637,8 @@ class Commands {
 
     void clearPreviousStep(ThreadReference thread) {
         /*
-         * A previous step may not have completed on this thread;
-         * if so, it gets removed here.
+         * A previous step may not have completed on this thread; 
+         * if so, it gets removed here. 
          */
          EventRequestManager mgr = Env.vm().eventRequestManager();
          List requests = mgr.stepRequests();
@@ -748,7 +748,7 @@ class Commands {
                 void action() {
                     doKill(threadToKill, tokenizer);
                 }
-            };
+            }; 
     }
 
     void commandKill(StringTokenizer t) {
@@ -790,7 +790,7 @@ class Commands {
         boolean notifyUncaught = false;
         EventRequestSpec spec = null;
         String classPattern = null;
-
+        
         if (notification.equals("uncaught")) {
             notifyCaught = false;
             notifyUncaught = true;
@@ -831,7 +831,7 @@ class Commands {
     void commandCatchException(StringTokenizer t) {
         if (!t.hasMoreTokens()) {
             listCaughtExceptions();
-        } else {
+        } else { 
             EventRequestSpec spec = parseExceptionSpec(t);
             if (spec != null) {
                 resolveNow(spec);
@@ -840,11 +840,11 @@ class Commands {
             }
         }
     }
-
+    
     void commandIgnoreException(StringTokenizer t) {
         if (!t.hasMoreTokens()) {
             listCaughtExceptions();
-        } else {
+        } else { 
             EventRequestSpec spec = parseExceptionSpec(t);
             if (Env.specList.delete(spec)) {
                 MessageOutput.println("Removed:", spec.toString());
@@ -856,7 +856,7 @@ class Commands {
             }
         }
     }
-
+    
     void commandUp(StringTokenizer t) {
         ThreadInfo threadInfo = ThreadInfo.getCurrentThreadInfo();
         if (threadInfo == null) {
@@ -935,7 +935,7 @@ class Commands {
             MessageOutput.println("Current thread isnt suspended.");
             return;
         }
-        if (stack == null) {
+        if (stack == null) {  
             MessageOutput.println("Thread is not running (no stack).");
         } else {
             int nFrames = stack.size();
@@ -1073,7 +1073,7 @@ class Commands {
                               new Object [] {atForm, inForm});
     }
 
-    protected BreakpointSpec parseBreakpointSpec(StringTokenizer t,
+    protected BreakpointSpec parseBreakpointSpec(StringTokenizer t, 
                                              String atForm, String inForm) {
         EventRequestSpec breakpoint = null;
         try {
@@ -1102,8 +1102,8 @@ class Commands {
                     printBreakpointCommandUsage(atForm, inForm);
                     return null;
                 }
-                try {
-                    breakpoint = Env.specList.createBreakpoint(classId,
+                try { 
+                    breakpoint = Env.specList.createBreakpoint(classId, 
                                                                lineNumber);
                 } catch (ClassNotFoundException exc) {
                     MessageOutput.println("is not a valid class name", classId);
@@ -1136,8 +1136,8 @@ class Commands {
                     }
                 }
                 try {
-                    breakpoint = Env.specList.createBreakpoint(classId,
-                                                               methodName,
+                    breakpoint = Env.specList.createBreakpoint(classId, 
+                                                               methodName, 
                                                                argumentList);
                 } catch (MalformedMemberNameException exc) {
                     MessageOutput.println("is not a valid method name", methodName);
@@ -1180,8 +1180,8 @@ class Commands {
 
         BreakpointSpec spec = parseBreakpointSpec(t, "stop at", "stop in");
         if (spec != null) {
-            // Enforcement of "at" vs. "in". The distinction is really
-            // unnecessary and we should consider not checking for this
+            // Enforcement of "at" vs. "in". The distinction is really 
+            // unnecessary and we should consider not checking for this 
             // (and making "at" and "in" optional).
             if (atIn.equals("at") && spec.isMethodBreakpoint()) {
                 MessageOutput.println("Use stop at to set a breakpoint at a line number");
@@ -1198,9 +1198,9 @@ class Commands {
             listBreakpoints();
             return;
         }
-
+        
         BreakpointSpec spec = parseBreakpointSpec(t, "clear", "clear");
-        if (spec != null) {
+        if (spec != null) {         
             if (Env.specList.delete(spec)) {
                 MessageOutput.println("Removed:", spec.toString());
             } else {
@@ -1244,13 +1244,13 @@ class Commands {
         try {
             EventRequestSpec spec;
             if (access) {
-                spec = Env.specList.createAccessWatchpoint(className,
+                spec = Env.specList.createAccessWatchpoint(className, 
                                                            fieldName);
                 spec.suspendPolicy = suspendPolicy;
                 list.add(spec);
             }
             if (modification) {
-                spec = Env.specList.createModificationWatchpoint(className,
+                spec = Env.specList.createModificationWatchpoint(className, 
                                                                  fieldName);
                 spec.suspendPolicy = suspendPolicy;
                 list.add(spec);
@@ -1331,10 +1331,10 @@ class Commands {
                     modif = t.nextToken();
                 }
             }
-
+                
             if  (modif.equals("method")) {
                 String traceCmd = null;
-
+        
                 if (t.hasMoreTokens()) {
                     String modif1 = t.nextToken();
                     if (modif1.equals("exits") || modif1.equals("exit")) {
@@ -1350,12 +1350,12 @@ class Commands {
                                 return;
                             }
                             Env.setAtExitMethod(frame.location().method());
-                            traceCmd = MessageOutput.format("trace" +
+                            traceCmd = MessageOutput.format("trace" + 
                                                     goStr + "method exit " +
                                                     "in effect for",
                                                     Env.atExitMethod().toString());
                         } else {
-                            traceCmd = MessageOutput.format("trace" +
+                            traceCmd = MessageOutput.format("trace" + 
                                                    goStr + "method exits " +
                                                    "in effect");
                         }
@@ -1381,7 +1381,7 @@ class Commands {
                      * To keep things simple we want each 'trace' to cancel
                      * previous traces.  However in this case, we don't do that
                      * to preserve backward compatibility with pre JDK 6.0.
-                     * IE, you can currently do
+                     * IE, you can currently do 
                      *   trace   methods 0x21
                      *   trace   methods 0x22
                      * and you will get xxx traced just on those two threads
@@ -1399,12 +1399,12 @@ class Commands {
                 } else {
                     commandUntrace(new StringTokenizer("methods"));
                     entry = erm.createMethodEntryRequest();
-                }
+                }                        
                 Env.addExcludes(entry);
                 entry.setSuspendPolicy(suspendPolicy);
                 entry.enable();
                 turnOnExitTrace(threadInfo, suspendPolicy);
-                methodTraceCommand = MessageOutput.format("trace" + goStr +
+                methodTraceCommand = MessageOutput.format("trace" + goStr + 
                                                           "methods in effect");
 
                 return;
@@ -1412,13 +1412,13 @@ class Commands {
 
             MessageOutput.println("Can only trace");
             return;
-        }
+        } 
 
         // trace all by itself.
         if (methodTraceCommand != null) {
             MessageOutput.printDirectln(methodTraceCommand);
         }
-
+        
         // More trace lines can be added here.
     }
 
@@ -1438,7 +1438,7 @@ class Commands {
             methodTraceCommand = null;
         }
     }
-
+    
     void commandList(StringTokenizer t) {
         StackFrame frame = null;
         ThreadInfo threadInfo = ThreadInfo.getCurrentThreadInfo();
@@ -1457,7 +1457,7 @@ class Commands {
             MessageOutput.println("No frames on the current call stack");
             return;
         }
-
+        
         Location loc = frame.location();
         if (loc.method().isNative()) {
             MessageOutput.println("Current method is native");
@@ -1470,10 +1470,10 @@ class Commands {
 
             ReferenceType refType = loc.declaringType();
             int lineno = loc.lineNumber();
-
+    
             if (t.hasMoreTokens()) {
                 String id = t.nextToken();
-
+    
                 // See if token is a line number.
                 try {
                     NumberFormat nf = NumberFormat.getNumberInstance();
@@ -1527,7 +1527,7 @@ class Commands {
             MessageOutput.println("Source file not found:", sourceFileName);
         } catch(IOException exc) {
             MessageOutput.println("I/O exception occurred:", exc.toString());
-        }
+        } 
     }
 
     void commandLines(StringTokenizer t) { // Undocumented command: useful for testing
@@ -1597,7 +1597,7 @@ class Commands {
     /* Print a stack variable */
     private void printVar(LocalVariable var, Value value) {
         MessageOutput.println("expr is value",
-                              new Object [] {var.name(),
+                              new Object [] {var.name(), 
                                              value == null ? "null" : value.toString()});
     }
 
@@ -1615,7 +1615,7 @@ class Commands {
                 throw new AbsentInformationException();
             }
             List<LocalVariable> vars = frame.visibleVariables();
-
+    
             if (vars.size() == 0) {
                 MessageOutput.println("No local variables");
                 return;
@@ -1685,7 +1685,7 @@ class Commands {
         }
     }
 
-    /* Print a specified reference.
+    /* Print a specified reference. 
      */
     void doPrint(StringTokenizer t, boolean dumpObject) {
         if (!t.hasMoreTokens()) {
@@ -1712,7 +1712,7 @@ class Commands {
                   if (strVal != null) {
                      MessageOutput.println("expr is value", new Object [] {expr.toString(),
                                                                       strVal});
-                   }
+                   } 
             }
         }
     }
@@ -1722,14 +1722,14 @@ class Commands {
                 void action() {
                     doPrint(t, dumpObject);
                 }
-            };
+            }; 
     }
 
     void commandSet(final StringTokenizer t) {
         String all = t.nextToken("");
 
         /*
-         * Bare bones error checking.
+         * Bare bones error checking. 
          */
         if (all.indexOf('=') == -1) {
             MessageOutput.println("Invalid assignment syntax");
@@ -1738,7 +1738,7 @@ class Commands {
         }
 
         /*
-         * The set command is really just syntactic sugar. Pass it on to the
+         * The set command is really just syntactic sugar. Pass it on to the 
          * print command.
          */
         commandPrint(new StringTokenizer(all), false);
@@ -1761,7 +1761,7 @@ class Commands {
                     MessageOutput.println("Monitor information for expr",
                                       new Object [] {expr.trim(),
                                                      strVal});
-                }
+                } 
                 ThreadReference owner = object.owningThread();
                 if (owner == null) {
                     MessageOutput.println("Not owned");
@@ -1793,7 +1793,7 @@ class Commands {
                 void action() {
                     doLock(t);
                 }
-            };
+            }; 
     }
 
     private void printThreadLockInfo(ThreadInfo threadInfo) {
@@ -1861,7 +1861,7 @@ class Commands {
             String strVal = getStringValue();
             if (strVal != null) {
                  MessageOutput.println("GC Disabled for", strVal);
-            }
+            } 
         } else {
             MessageOutput.println("Expression must evaluate to an object");
         }
@@ -1872,7 +1872,7 @@ class Commands {
                 void action() {
                     doDisableGC(t);
                 }
-            };
+            }; 
     }
 
     void doEnableGC(StringTokenizer t) {
@@ -1889,7 +1889,7 @@ class Commands {
             String strVal = getStringValue();
             if (strVal != null) {
                  MessageOutput.println("GC Enabled for", strVal);
-            }
+            } 
         } else {
             MessageOutput.println("Expression must evaluate to an object");
         }
@@ -1900,7 +1900,7 @@ class Commands {
                 void action() {
                     doEnableGC(t);
                 }
-            };
+            }; 
     }
 
     void doSave(StringTokenizer t) {// Undocumented command: useful for testing.
@@ -1922,7 +1922,7 @@ class Commands {
             String strVal = getStringValue();
             if (strVal != null) {
                  MessageOutput.println("saved", strVal);
-            }
+            } 
         } else {
             MessageOutput.println("Expression cannot be void");
         }
@@ -1957,7 +1957,7 @@ class Commands {
                     void action() {
                         doSave(t);
                     }
-                };
+                }; 
         }
 
     }
@@ -1985,15 +1985,15 @@ class Commands {
                 MessageOutput.println("not found", className);
             }
             return;
-        }
-
+        } 
+        
         ReferenceType rt = (ReferenceType)classes.get(0);
         if (!(rt instanceof ClassType)) {
             MessageOutput.println("not a class", className);
             return;
         }
 
-        byte[] bytecodes = null;
+        byte[] bytecodes = null;                                               
         List list = rt.methodsByName(methodName);
         Iterator iter = list.iterator();
         while (iter.hasNext()) {
@@ -2046,7 +2046,7 @@ class Commands {
         if (!t.hasMoreTokens()) {
             MessageOutput.println("Specify classes to redefine");
         } else {
-            String className = t.nextToken();
+            String className = t.nextToken(); 
             List classes = Env.vm().classesByName(className);
             if (classes.size() == 0) {
                 MessageOutput.println("No class named", className);
@@ -2056,13 +2056,13 @@ class Commands {
                 MessageOutput.println("More than one class named", className);
                 return;
             }
-            Env.setSourcePath(Env.getSourcePath());
+	    Env.setSourcePath(Env.getSourcePath());
             ReferenceType refType = (ReferenceType)classes.get(0);
             if (!t.hasMoreTokens()) {
                 MessageOutput.println("Specify file name for class", className);
                 return;
             }
-            String fileName = t.nextToken();
+            String fileName = t.nextToken(); 
             File phyl = new File(fileName);
             byte[] bytes = new byte[(int)phyl.length()];
             try {
@@ -2103,7 +2103,7 @@ class Commands {
                 return;
             }
         }
-
+       
         try {
             StackFrame frame = threadInfo.getCurrentFrame();
             threadInfo.getThread().popFrames(frame);
@@ -2119,7 +2119,7 @@ class Commands {
 
     void commandExtension(StringTokenizer t) {
         if (!t.hasMoreTokens()) {
-            MessageOutput.println("No class specified.");
+            MessageOutput.println("No class specified.");            
             return;
         }
 

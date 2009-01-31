@@ -98,7 +98,7 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
         Adjustable hAdjustable = target.getHAdjustable();
         if (hAdjustable != null){
             unitIncrement = hAdjustable.getUnitIncrement();
-        }
+        }	
         int w = width - vsbSpace;
         hsb.setValues(0, w, 0, w, unitIncrement, Math.max(1, (int)(w * 0.90)));
         hsb.setSize(w, hsbSpace-SCROLLBAR_INSET);
@@ -331,7 +331,7 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
 
     public void paint(Graphics g) {
         paintComponent(g);
-    }
+    } 
 
 
     void paintScrollBars(Graphics g, Color[] colors) {
@@ -345,18 +345,18 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
             // paint the whole scrollbar
         }
     }
-
+   
    void repaintScrollBars() {
-       Graphics g = getGraphics();
+       Graphics g = getGraphics(); 
        Color colors[] = getGUIcolors();
        if (g != null) {
            paintScrollBars(g,colors);
        }
        g.dispose();
    }
-
+    
     public void repaintScrollbarRequest(XScrollbar sb) {
-       Graphics g = getGraphics();
+       Graphics g = getGraphics(); 
        Color colors[] = getGUIcolors();
        if (g != null) {
            if (sb ==  vsb)  {
@@ -486,7 +486,7 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
         int modifiers = mouseEvent.getModifiers();
         int id = mouseEvent.getID();
         int x = mouseEvent.getX();
-        int y = mouseEvent.getY();
+        int y = mouseEvent.getY(); 
 
 
         //        super.handleMouseEvent(mouseEvent);
@@ -564,7 +564,7 @@ class XScrollPanePeer extends XComponentPeer implements ScrollPanePeer, XScrollb
         int w = width - MARGIN - vsbSpace;
         return (x >= MARGIN) && (x < w) && (y >= height - (SCROLLBAR - SPACE)) && (y < height);
     }
-
+    
     private Component getScrollChild() {
         ScrollPane sp = (ScrollPane)target;
         Component child = null;

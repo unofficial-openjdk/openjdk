@@ -29,7 +29,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public class ThreadStartEventSet extends AbstractEventSet {
-
+    
     ThreadStartEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
@@ -37,7 +37,7 @@ public class ThreadStartEventSet extends AbstractEventSet {
     /**
      * Returns the thread which has started.
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in
+     * @return a {@link ThreadReference} which mirrors the event's thread in 
      * the target VM.
      */
     public ThreadReference getThread() {
@@ -48,3 +48,4 @@ public class ThreadStartEventSet extends AbstractEventSet {
         listener.threadStart(this);
     }
 }
+

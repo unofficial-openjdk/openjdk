@@ -38,73 +38,73 @@ public class KeepAliveStreamCloseWithWrongContentLength {
         Socket s;
         InputStream is;
         OutputStream os;
-
+    
         XServer (ServerSocket s) {
-            srv = s;
+	    srv = s;
         }
-
+    
         Socket getSocket () {
-            return (s);
+	    return (s);
         }
-
+    
         public void run() {
-            try {
-                s = srv.accept ();
-                // read HTTP request from client
+	    try {
+	        s = srv.accept ();
+	        // read HTTP request from client
                 InputStream is = s.getInputStream();
-                // read the first ten bytes
-                for (int i=0; i<10; i++) {
-                    is.read();
-                }
-                OutputStreamWriter ow =
-                    new OutputStreamWriter(s.getOutputStream());
+	        // read the first ten bytes
+	        for (int i=0; i<10; i++) {
+	            is.read();
+	        }
+	        OutputStreamWriter ow =
+		    new OutputStreamWriter(s.getOutputStream());
                 ow.write("HTTP/1.0 200 OK\n");
-
+    
                 // Note: The client expects 10 bytes.
                 ow.write("Content-Length: 10\n");
                 ow.write("Content-Type: text/html\n");
-
+    
                 // Note: If this line is missing, everything works fine.
                 ow.write("Connection: Keep-Alive\n");
                 ow.write("\n");
-
+    
                 // Note: The (buggy) server only sends 9 bytes.
                 ow.write("123456789");
                 ow.flush();
                 ow.close();
-            } catch (Exception e) {
-            }
+	    } catch (Exception e) {
+	    }
         }
     }
-
+	
     /*
-     *
+     * 
      */
 
     public static void main (String[] args) {
-        try {
-            ServerSocket serversocket = new ServerSocket (0);
-            int port = serversocket.getLocalPort ();
-            XServer server = new XServer (serversocket);
-            server.start ();
-            URL url = new URL ("http://localhost:"+port);
-            HttpURLConnection urlc = (HttpURLConnection)url.openConnection ();
-            InputStream is = urlc.getInputStream ();
-            int c = 0;
-            while (c != -1) {
-                try {
-                    c=is.read();
-                } catch (IOException ioe) {
-                    is.read ();
-                    break;
-                }
-            }
-            is.close();
-            server.getSocket().close ();
-        } catch (IOException e) {
-            return;
-        } catch (NullPointerException e) {
-            throw new RuntimeException (e);
-        }
+	try {
+	    ServerSocket serversocket = new ServerSocket (0);
+	    int port = serversocket.getLocalPort ();
+	    XServer server = new XServer (serversocket);
+	    server.start ();
+	    URL url = new URL ("http://localhost:"+port);
+	    HttpURLConnection urlc = (HttpURLConnection)url.openConnection ();
+	    InputStream is = urlc.getInputStream ();
+	    int c = 0;
+	    while (c != -1) {
+		try {
+	            c=is.read();
+		} catch (IOException ioe) {
+		    is.read ();
+		    break;
+		}
+	    }
+	    is.close();
+	    server.getSocket().close ();
+	} catch (IOException e) {
+	    return;
+	} catch (NullPointerException e) {
+	    throw new RuntimeException (e);
+	}
     }
 }

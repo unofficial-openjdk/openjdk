@@ -83,6 +83,7 @@ import java.nio.channels.spi.SelectorProvider;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  *
  * @see SelectionKey
@@ -211,7 +212,7 @@ public abstract class SelectableChannel
      *          the given selector
      */
     public abstract SelectionKey register(Selector sel, int ops, Object att)
-        throws ClosedChannelException;
+	throws ClosedChannelException;
     //
     // sync(regLock) {
     //   sync(keySet) { look for selector }
@@ -236,7 +237,7 @@ public abstract class SelectableChannel
      * <blockquote><tt>sc.{@link
      * #register(java.nio.channels.Selector,int,java.lang.Object)
      * register}(sel, ops, null)</tt></blockquote>
-     *
+     * 
      * @param  sel
      *         The selector with which this channel is to be registered
      *
@@ -266,9 +267,9 @@ public abstract class SelectableChannel
      *          the given selector
      */
     public final SelectionKey register(Selector sel, int ops)
-        throws ClosedChannelException
+	throws ClosedChannelException
     {
-        return register(sel, ops, null);
+	return register(sel, ops, null);
     }
 
     /**
@@ -304,7 +305,7 @@ public abstract class SelectableChannel
      *         If an I/O error occurs
      */
     public abstract SelectableChannel configureBlocking(boolean block)
-        throws IOException;
+	throws IOException;
     //
     // sync(regLock) {
     //   sync(keySet) { throw IBME if block && isRegistered; }

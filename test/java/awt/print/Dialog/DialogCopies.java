@@ -50,7 +50,7 @@ public class DialogCopies {
       if (job.getPrintService() == null || !job.printDialog()) {
          return;
       }
-
+    
       System.out.println("Job copies is " + job.getCopies());
 
       if (job.getCopies() == 1) {

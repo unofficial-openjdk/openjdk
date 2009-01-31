@@ -119,12 +119,13 @@ import java.lang.ref.ReferenceQueue;
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  *
+ * @version	%I%, %G%
  * @author      Doug Lea
  * @author      Josh Bloch
- * @author      Mark Reinhold
- * @since       1.2
- * @see         java.util.HashMap
- * @see         java.lang.ref.WeakReference
+ * @author	Mark Reinhold
+ * @since	1.2
+ * @see		java.util.HashMap
+ * @see		java.lang.ref.WeakReference
  */
 public class WeakHashMap<K,V>
     extends AbstractMap<K,V>
@@ -185,7 +186,7 @@ public class WeakHashMap<K,V>
 
     @SuppressWarnings("unchecked")
     private Entry<K,V>[] newTable(int n) {
-        return (Entry<K,V>[]) new Entry[n];
+	return (Entry<K,V>[]) new Entry[n];
     }
 
     /**
@@ -244,7 +245,7 @@ public class WeakHashMap<K,V>
      *
      * @param   m the map whose mappings are to be placed in this map
      * @throws  NullPointerException if the specified map is null
-     * @since   1.3
+     * @since	1.3
      */
     public WeakHashMap(Map<? extends K, ? extends V> m) {
         this(Math.max((int) (m.size() / DEFAULT_LOAD_FACTOR) + 1, 16),
@@ -293,31 +294,31 @@ public class WeakHashMap<K,V>
      */
     private void expungeStaleEntries() {
         for (Object x; (x = queue.poll()) != null; ) {
-            synchronized (queue) {
-                @SuppressWarnings("unchecked")
-                    Entry<K,V> e = (Entry<K,V>) x;
-                int i = indexFor(e.hash, table.length);
+	    synchronized (queue) {
+		@SuppressWarnings("unchecked")
+		    Entry<K,V> e = (Entry<K,V>) x;
+		int i = indexFor(e.hash, table.length);
 
-                Entry<K,V> prev = table[i];
-                Entry<K,V> p = prev;
-                while (p != null) {
-                    Entry<K,V> next = p.next;
-                    if (p == e) {
-                        if (prev == e)
-                            table[i] = next;
-                        else
-                            prev.next = next;
-                        // Must not null out e.next;
-                        // stale entries may be in use by a HashIterator
-                        e.value = null; // Help GC
-                        size--;
-                        break;
-                    }
-                    prev = p;
-                    p = next;
-                }
-            }
-        }
+		Entry<K,V> prev = table[i];
+		Entry<K,V> p = prev;
+		while (p != null) {
+		    Entry<K,V> next = p.next;
+		    if (p == e) {
+			if (prev == e)
+			    table[i] = next;
+			else
+			    prev.next = next;
+			// Must not null out e.next;
+			// stale entries may be in use by a HashIterator
+			e.value = null; // Help GC
+			size--;
+			break;
+		    }
+		    prev = p;
+		    p = next;
+		}
+	    }
+	}
     }
 
     /**
@@ -437,7 +438,7 @@ public class WeakHashMap<K,V>
         }
 
         modCount++;
-        Entry<K,V> e = tab[i];
+	Entry<K,V> e = tab[i];
         tab[i] = new Entry<K,V>(k, value, queue, h, e);
         if (++size >= threshold)
             resize(tab.length * 2);
@@ -630,7 +631,7 @@ public class WeakHashMap<K,V>
             ;
 
         modCount++;
-        Arrays.fill(table, null);
+	Arrays.fill(table, null);
         size = 0;
 
         // Allocation of array may have caused GC, which may have caused
@@ -649,27 +650,27 @@ public class WeakHashMap<K,V>
      *         specified value
      */
     public boolean containsValue(Object value) {
-        if (value==null)
+	if (value==null)
             return containsNullValue();
 
-        Entry<K,V>[] tab = getTable();
+	Entry<K,V>[] tab = getTable();
         for (int i = tab.length; i-- > 0;)
             for (Entry<K,V> e = tab[i]; e != null; e = e.next)
                 if (value.equals(e.value))
                     return true;
-        return false;
+	return false;
     }
 
     /**
      * Special-case code for containsValue with null argument
      */
     private boolean containsNullValue() {
-        Entry<K,V>[] tab = getTable();
+	Entry<K,V>[] tab = getTable();
         for (int i = tab.length; i-- > 0;)
             for (Entry<K,V> e = tab[i]; e != null; e = e.next)
                 if (e.value==null)
                     return true;
-        return false;
+	return false;
     }
 
     /**
@@ -685,7 +686,7 @@ public class WeakHashMap<K,V>
          * Creates new entry.
          */
         Entry(Object key, V value,
-              ReferenceQueue<Object> queue,
+	      ReferenceQueue<Object> queue,
               int hash, Entry<K,V> next) {
             super(key, queue);
             this.value = value;
@@ -694,7 +695,7 @@ public class WeakHashMap<K,V>
         }
 
         @SuppressWarnings("unchecked")
-        public K getKey() {
+	public K getKey() {
             return (K) WeakHashMap.unmaskNull(get());
         }
 
@@ -703,7 +704,7 @@ public class WeakHashMap<K,V>
         }
 
         public V setValue(V newValue) {
-            V oldValue = value;
+	    V oldValue = value;
             value = newValue;
             return oldValue;
         }
@@ -727,7 +728,7 @@ public class WeakHashMap<K,V>
             K k = getKey();
             V v = getValue();
             return ((k==null ? 0 : k.hashCode()) ^
-                    (v==null ? 0 : v.hashCode()));
+		    (v==null ? 0 : v.hashCode()));
         }
 
         public String toString() {
@@ -751,7 +752,7 @@ public class WeakHashMap<K,V>
          * Strong reference needed to avoid disappearance of key
          * between nextEntry() and any use of the entry
          */
-        private Object currentKey = null;
+	private Object currentKey = null;
 
         HashIterator() {
             index = isEmpty() ? 0 : table.length;
@@ -953,13 +954,13 @@ public class WeakHashMap<K,V>
             WeakHashMap.this.clear();
         }
 
-        private List<Map.Entry<K,V>> deepCopy() {
-            List<Map.Entry<K,V>> list =
-                new ArrayList<Map.Entry<K,V>>(size());
-            for (Map.Entry<K,V> e : this)
-                list.add(new AbstractMap.SimpleEntry<K,V>(e));
-            return list;
-        }
+	private List<Map.Entry<K,V>> deepCopy() {
+	    List<Map.Entry<K,V>> list =
+		new ArrayList<Map.Entry<K,V>>(size());
+	    for (Map.Entry<K,V> e : this)
+		list.add(new AbstractMap.SimpleEntry<K,V>(e));
+	    return list;
+	}
 
         public Object[] toArray() {
             return deepCopy().toArray();

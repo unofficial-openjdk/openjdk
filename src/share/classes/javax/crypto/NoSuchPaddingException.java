@@ -46,7 +46,7 @@ public class NoSuchPaddingException extends GeneralSecurityException {
      * particular exception.
      */
     public NoSuchPaddingException() {
-        super();
+	super();
     }
 
     /**
@@ -56,6 +56,6 @@ public class NoSuchPaddingException extends GeneralSecurityException {
      * @param msg the detail message.
      */
     public NoSuchPaddingException(String msg) {
-        super(msg);
+	super(msg);
     }
 }

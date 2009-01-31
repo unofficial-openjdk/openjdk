@@ -1,4 +1,5 @@
 
+ /* %W% %E%           */
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -26,18 +27,18 @@
 
 /*
  * significand(x) computes just
- *      scalb(x, (double) -ilogb(x)),
+ * 	scalb(x, (double) -ilogb(x)),
  * for exercising the fraction-part(F) IEEE 754-1985 test vector.
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-        double significand(double x)
+	double significand(double x)
 #else
-        double significand(x)
-        double x;
+	double significand(x)
+	double x;
 #endif
 {
-        return __ieee754_scalb(x,(double) -ilogb(x));
+	return __ieee754_scalb(x,(double) -ilogb(x));
 }

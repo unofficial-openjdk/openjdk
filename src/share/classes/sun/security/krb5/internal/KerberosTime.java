@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -44,7 +45,7 @@ import java.io.IOException;
  * Implements the ASN.1 KerberosTime type.
  *
  * <xmp>
- * KerberosTime    ::= GeneralizedTime -- with no fractional seconds
+ * KerberosTime	   ::= GeneralizedTime -- with no fractional seconds
  * </xmp>
  *
  * The timestamps used in Kerberos are encoded as GeneralizedTimes. A
@@ -70,22 +71,22 @@ public class KerberosTime implements Cloneable {
 
     //defaults to zero instead of now; use setNow() for current time
     public KerberosTime() {
-        kerberosTime = 0;
+	kerberosTime = 0;
     }
 
     public KerberosTime(long time) {
-        kerberosTime = time;
+	kerberosTime = time;
     }
 
 
     public Object clone() {
-        return new KerberosTime(kerberosTime);
+	return new KerberosTime(kerberosTime);
     }
 
     // This constructor is used in the native code
     // src/windows/native/sun/security/krb5/NativeCreds.c
     public KerberosTime(String time) throws Asn1Exception {
-        kerberosTime = toKerberosTime(time);
+	kerberosTime = toKerberosTime(time);
     }
 
     /**
@@ -94,65 +95,65 @@ public class KerberosTime implements Cloneable {
      * @exception Asn1Exception if an error occurs while decoding an ASN1 encoded data.
      * @exception IOException if an I/O error occurs while reading encoded data.
      */
-    public KerberosTime(DerValue encoding) throws Asn1Exception, IOException {
-        GregorianCalendar calendar = new GregorianCalendar();
-        Date temp = encoding.getGeneralizedTime();
-        kerberosTime = temp.getTime();
+    public KerberosTime(DerValue encoding) throws Asn1Exception, IOException { 
+	GregorianCalendar calendar = new GregorianCalendar();
+	Date temp = encoding.getGeneralizedTime();
+	kerberosTime = temp.getTime();
     }
 
-    private static long toKerberosTime(String time) throws Asn1Exception {
-        // this method only used by KerberosTime class.
+    private static long toKerberosTime(String time) throws Asn1Exception {  
+	// this method only used by KerberosTime class.
 
-        // ASN.1 GeneralizedTime format:
+	// ASN.1 GeneralizedTime format:
 
-        // "19700101000000Z"
-        //  |   | | | | | |
-        //  0   4 6 8 | | |
-        //           10 | |
-        //                         12 |
-        //                           14
+	// "19700101000000Z"
+	//  |   | | | | | |
+	//  0   4 6 8 | | |
+	//           10 | |
+	//			   12 |
+	//			     14
 
-        if (time.length() != 15)
-            throw new Asn1Exception(Krb5.ASN1_BAD_TIMEFORMAT);
-        if (time.charAt(14) != 'Z')
-            throw new Asn1Exception(Krb5.ASN1_BAD_TIMEFORMAT);
-        int year = Integer.parseInt(time.substring(0, 4));
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+	if (time.length() != 15)
+	    throw new Asn1Exception(Krb5.ASN1_BAD_TIMEFORMAT);
+	if (time.charAt(14) != 'Z')
+	    throw new Asn1Exception(Krb5.ASN1_BAD_TIMEFORMAT);
+	int year = Integer.parseInt(time.substring(0, 4));
+	Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         calendar.clear(); // so that millisecond is zero
-        calendar.set(year,
-                     Integer.parseInt(time.substring(4, 6)) - 1,
-                     Integer.parseInt(time.substring(6, 8)),
-                     Integer.parseInt(time.substring(8, 10)),
-                     Integer.parseInt(time.substring(10, 12)),
-                     Integer.parseInt(time.substring(12, 14)));
-
-        //The Date constructor assumes the setting are local relative
-        //and converts the time to UTC before storing it.  Since we
-        //want the internal representation to correspond to local
-        //and not UTC time we subtract the UTC time offset.
-        return (calendar.getTime().getTime());
-
+	calendar.set(year,
+		     Integer.parseInt(time.substring(4, 6)) - 1,
+		     Integer.parseInt(time.substring(6, 8)),
+		     Integer.parseInt(time.substring(8, 10)),
+		     Integer.parseInt(time.substring(10, 12)),
+		     Integer.parseInt(time.substring(12, 14)));
+		
+	//The Date constructor assumes the setting are local relative
+	//and converts the time to UTC before storing it.  Since we
+	//want the internal representation to correspond to local
+	//and not UTC time we subtract the UTC time offset.
+	return (calendar.getTime().getTime());
+	  
     }
 
     // should be moved to sun.security.krb5.util class
     public static String zeroPad(String s, int length) {
-        StringBuffer temp = new StringBuffer(s);
-        while (temp.length() < length)
-            temp.insert(0, '0');
-        return temp.toString();
+	StringBuffer temp = new StringBuffer(s);
+	while (temp.length() < length)
+	    temp.insert(0, '0');
+	return temp.toString();
     }
 
     public KerberosTime(Date time) {
-        kerberosTime = time.getTime(); // (time.getTimezoneOffset() * 60000L);
+	kerberosTime = time.getTime(); // (time.getTimezoneOffset() * 60000L);
     }
 
     public KerberosTime(boolean initToNow) {
-        if (initToNow) {
-            Date temp = new Date();
-            setTime(temp);
-        }
-        else
-            kerberosTime = 0;
+	if (initToNow) {
+	    Date temp = new Date();
+	    setTime(temp);
+	}
+	else
+	    kerberosTime = 0;
     }
 
     /**
@@ -160,17 +161,17 @@ public class KerberosTime implements Cloneable {
      * @return a string representation of this object.
      */
     public String toGeneralizedTimeString() {
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        calendar.clear();
-
-        calendar.setTimeInMillis(kerberosTime);
+	Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")); 
+	calendar.clear();
+		
+	calendar.setTimeInMillis(kerberosTime);
         return zeroPad(Integer.toString(calendar.get(Calendar.YEAR)), 4) +
-            zeroPad(Integer.toString(calendar.get(Calendar.MONTH) + 1), 2) +
-            zeroPad(Integer.toString(calendar.get(Calendar.DAY_OF_MONTH)), 2) +
-            zeroPad(Integer.toString(calendar.get(Calendar.HOUR_OF_DAY)), 2) +
-            zeroPad(Integer.toString(calendar.get(Calendar.MINUTE)), 2) +
-            zeroPad(Integer.toString(calendar.get(Calendar.SECOND)), 2) + 'Z';
-
+	    zeroPad(Integer.toString(calendar.get(Calendar.MONTH) + 1), 2) +
+	    zeroPad(Integer.toString(calendar.get(Calendar.DAY_OF_MONTH)), 2) +
+	    zeroPad(Integer.toString(calendar.get(Calendar.HOUR_OF_DAY)), 2) +
+	    zeroPad(Integer.toString(calendar.get(Calendar.MINUTE)), 2) +
+	    zeroPad(Integer.toString(calendar.get(Calendar.SECOND)), 2) + 'Z';
+		
     }
 
     /**
@@ -180,89 +181,89 @@ public class KerberosTime implements Cloneable {
      * @exception IOException if an I/O error occurs while reading encoded data.
      */
     public byte[] asn1Encode() throws Asn1Exception, IOException {
-        DerOutputStream out = new DerOutputStream();
-        out.putGeneralizedTime(this.toDate());
-        return out.toByteArray();
+	DerOutputStream out = new DerOutputStream();
+	out.putGeneralizedTime(this.toDate());
+	return out.toByteArray();
     }
 
     public long getTime() {
-        return kerberosTime;
+	return kerberosTime;
     }
 
 
     public void setTime(Date time) {
-        kerberosTime = time.getTime(); // (time.getTimezoneOffset() * 60000L);
+	kerberosTime = time.getTime(); // (time.getTimezoneOffset() * 60000L);
     }
 
     public void setTime(long time) {
-        kerberosTime = time;
+	kerberosTime = time;
     }
 
     public Date toDate() {
-        Date temp = new Date(kerberosTime);
+	Date temp = new Date(kerberosTime);
         temp.setTime(temp.getTime());
-        return temp;
+	return temp;
     }
 
     public void setNow() {
-        Date temp = new Date();
+	Date temp = new Date();
         setTime(temp);
     }
 
     public int getMicroSeconds() {
-        Long temp_long = new Long((kerberosTime % 1000L) * 1000L);
-        return temp_long.intValue();
+	Long temp_long = new Long((kerberosTime % 1000L) * 1000L);
+	return temp_long.intValue();
     }
 
     public void setMicroSeconds(int usec) {
-        Integer temp_int = new Integer(usec);
-        long temp_long = temp_int.longValue() / 1000L;
-        kerberosTime = kerberosTime - (kerberosTime % 1000L) + temp_long;
+	Integer temp_int = new Integer(usec);
+	long temp_long = temp_int.longValue() / 1000L;
+	kerberosTime = kerberosTime - (kerberosTime % 1000L) + temp_long;
     }
 
     public void setMicroSeconds(Integer usec) {
-        if (usec != null) {
-            long temp_long = usec.longValue() / 1000L;
-            kerberosTime = kerberosTime - (kerberosTime % 1000L) + temp_long;
-        }
+	if (usec != null) {
+	    long temp_long = usec.longValue() / 1000L;
+	    kerberosTime = kerberosTime - (kerberosTime % 1000L) + temp_long;
+	}
     }
 
     public boolean inClockSkew(int clockSkew) {
-        KerberosTime now = new KerberosTime(KerberosTime.NOW);
+	KerberosTime now = new KerberosTime(KerberosTime.NOW);
 
-        if (java.lang.Math.abs(kerberosTime - now.kerberosTime) >
-            clockSkew * 1000L)
-            return false;
-        return true;
+	if (java.lang.Math.abs(kerberosTime - now.kerberosTime) >
+	    clockSkew * 1000L)    
+	    return false;
+	return true;
     }
 
     public boolean inClockSkew() {
-        return inClockSkew(getDefaultSkew());
+	return inClockSkew(getDefaultSkew());
     }
 
     public boolean inClockSkew(int clockSkew, KerberosTime now) {
-        if (java.lang.Math.abs(kerberosTime - now.kerberosTime) >
-            clockSkew * 1000L)
-            return false;
-        return true;
+	if (java.lang.Math.abs(kerberosTime - now.kerberosTime) >
+	    clockSkew * 1000L)    
+	    return false;
+	return true;
     }
 
     public boolean inClockSkew(KerberosTime time) {
-        return inClockSkew(getDefaultSkew(), time);
+	return inClockSkew(getDefaultSkew(), time);
     }
 
     public boolean greaterThanWRTClockSkew(KerberosTime time, int clockSkew) {
-        if ((kerberosTime - time.kerberosTime) > clockSkew * 1000L)
-            return true;
-        return false;
+	if ((kerberosTime - time.kerberosTime) > clockSkew * 1000L)
+	    return true;
+	return false;
     }
 
     public boolean greaterThanWRTClockSkew(KerberosTime time) {
-        return greaterThanWRTClockSkew(time, getDefaultSkew());
+	return greaterThanWRTClockSkew(time, getDefaultSkew());
     }
 
     public boolean greaterThan(KerberosTime time) {
-        return kerberosTime > time.kerberosTime;
+	return kerberosTime > time.kerberosTime;
     }
 
     public boolean equals(Object obj) {
@@ -274,7 +275,7 @@ public class KerberosTime implements Cloneable {
             return false;
         }
 
-        return kerberosTime == ((KerberosTime)obj).kerberosTime;
+	return kerberosTime == ((KerberosTime)obj).kerberosTime;
     }
 
     public int hashCode() {
@@ -282,17 +283,17 @@ public class KerberosTime implements Cloneable {
     }
 
     public boolean isZero() {
-        return kerberosTime == 0;
+	return kerberosTime == 0;
     }
 
     public int getSeconds() {
-        Long temp_long = new Long(kerberosTime / 1000L);
-        return temp_long.intValue();
+	Long temp_long = new Long(kerberosTime / 1000L);
+	return temp_long.intValue();
     }
 
     public void setSeconds(int sec) {
-        Integer temp_int = new Integer(sec);
-        kerberosTime = temp_int.longValue() * 1000L;
+	Integer temp_int = new Integer(sec);
+	kerberosTime = temp_int.longValue() * 1000L;
     }
 
     /**
@@ -308,38 +309,38 @@ public class KerberosTime implements Cloneable {
      *
      */
     public static KerberosTime parse(DerInputStream data, byte explicitTag, boolean optional) throws Asn1Exception, IOException {
-        if ((optional) && (((byte)data.peekByte() & (byte)0x1F)!= explicitTag))
-            return null;
-        DerValue der = data.getDerValue();
-        if (explicitTag != (der.getTag() & (byte)0x1F))  {
-            throw new Asn1Exception(Krb5.ASN1_BAD_ID);
-        }
-        else {
-            DerValue subDer = der.getData().getDerValue();
-            return new KerberosTime(subDer);
-        }
+	if ((optional) && (((byte)data.peekByte() & (byte)0x1F)!= explicitTag)) 
+	    return null;
+	DerValue der = data.getDerValue();
+	if (explicitTag != (der.getTag() & (byte)0x1F))  {	
+	    throw new Asn1Exception(Krb5.ASN1_BAD_ID);
+	}
+	else {
+	    DerValue subDer = der.getData().getDerValue();
+	    return new KerberosTime(subDer);
+	}
     }
 
     public static int getDefaultSkew() {
         int tdiff = Krb5.DEFAULT_ALLOWABLE_CLOCKSKEW;
         try {
             Config c = Config.getInstance();
-            if ((tdiff = c.getDefaultIntValue("clockskew",
-                                              "libdefaults")) == Integer.MIN_VALUE) {   //value is not defined
+            if ((tdiff = c.getDefaultIntValue("clockskew", 
+					      "libdefaults")) == Integer.MIN_VALUE) {   //value is not defined
                 tdiff = Krb5.DEFAULT_ALLOWABLE_CLOCKSKEW;
             }
         } catch (KrbException e) {
-            if (DEBUG) {
-                System.out.println("Exception in getting clockskew from " +
-                                   "Configuration " +
-                                   "using default value " +
-                                   e.getMessage());
-            }
+	    if (DEBUG) {
+		System.out.println("Exception in getting clockskew from " +
+				   "Configuration " + 
+				   "using default value " + 
+				   e.getMessage());
+	    }
         }
         return tdiff;
     }
 
     public String toString() {
-        return toGeneralizedTimeString();
+	return toGeneralizedTimeString();
     }
 }

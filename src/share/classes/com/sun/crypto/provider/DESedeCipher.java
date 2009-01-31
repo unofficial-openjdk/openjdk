@@ -34,9 +34,9 @@ import javax.crypto.spec.*;
  * This class implements the DESede algorithm (DES-EDE, tripleDES) in its various
  * modes (<code>ECB</code>, <code>CFB</code>, <code>OFB</code>,
  * <code>CBC</code>, <code>PCBC</code>) and padding schemes
- * (<code>PKCS5Padding</code>, <code>NoPadding</code>,
+ * (<code>PKCS5Padding</code>, <code>NoPadding</code>, 
  * <code>ISO10126Padding</code>).
- *
+ *  
  * @author Gigi Ankeny
  *
  *
@@ -49,7 +49,7 @@ public final class DESedeCipher extends CipherSpi {
      * internal CipherCore object which does the real work.
      */
     private CipherCore core = null;
-
+    
     /**
      * Creates an instance of DESede cipher with default ECB mode and
      * PKCS5Padding.
@@ -58,8 +58,8 @@ public final class DESedeCipher extends CipherSpi {
      * its own integrity
      */
     public DESedeCipher() {
-        SunJCE.ensureIntegrity(getClass());
-        core = new CipherCore(new DESedeCrypt(), DESConstants.DES_BLOCK_SIZE);
+	SunJCE.ensureIntegrity(getClass());
+	core = new CipherCore(new DESedeCrypt(), DESConstants.DES_BLOCK_SIZE);
     }
 
     /**
@@ -71,8 +71,8 @@ public final class DESedeCipher extends CipherSpi {
      * not exist
      */
     protected void engineSetMode(String mode)
-        throws NoSuchAlgorithmException {
-        core.setMode(mode);
+	throws NoSuchAlgorithmException {
+	core.setMode(mode);
     }
 
     /**
@@ -83,9 +83,9 @@ public final class DESedeCipher extends CipherSpi {
      * @exception NoSuchPaddingException if the requested padding mechanism
      * does not exist
      */
-    protected void engineSetPadding(String paddingScheme)
-        throws NoSuchPaddingException {
-        core.setPadding(paddingScheme);
+    protected void engineSetPadding(String paddingScheme) 
+	throws NoSuchPaddingException {
+	core.setPadding(paddingScheme);
     }
 
     /**
@@ -95,7 +95,7 @@ public final class DESedeCipher extends CipherSpi {
      * not a block cipher
      */
     protected int engineGetBlockSize() {
-        return DESConstants.DES_BLOCK_SIZE;
+	return DESConstants.DES_BLOCK_SIZE;
     }
 
     /**
@@ -115,29 +115,29 @@ public final class DESedeCipher extends CipherSpi {
      *
      * @return the required output buffer size (in bytes)
      */
-    protected int engineGetOutputSize(int inputLen) {
-        return core.getOutputSize(inputLen);
+    protected int engineGetOutputSize(int inputLen) {	    
+	return core.getOutputSize(inputLen);
     }
-
+    
     /**
      * Returns the initialization vector (IV) in a new buffer.
      *
      * <p>This is useful in the case where a random IV has been created
      * (see <a href = "#init">init</a>),
      * or in the context of password-based encryption or
-     * decryption, where the IV is derived from a user-provided password.
+     * decryption, where the IV is derived from a user-provided password. 
      *
      * @return the initialization vector in a new buffer, or null if the
      * underlying algorithm does not use an IV, or if the IV has not yet
      * been set.
      */
     protected byte[] engineGetIV() {
-        return core.getIV();
+	return core.getIV();
     }
 
     /**
      * Initializes this cipher with a key and a source of randomness.
-     *
+     * 
      * <p>The cipher is initialized for one of the following four operations:
      * encryption, decryption, key wrapping or key unwrapping, depending on
      * the value of <code>opmode</code>.
@@ -166,8 +166,8 @@ public final class DESedeCipher extends CipherSpi {
      * initializing this cipher
      */
     protected void engineInit(int opmode, Key key, SecureRandom random)
-        throws InvalidKeyException {
-        core.init(opmode, key, random);
+	throws InvalidKeyException {
+    	core.init(opmode, key, random);
     }
 
     /**
@@ -195,17 +195,17 @@ public final class DESedeCipher extends CipherSpi {
      * parameters are inappropriate for this cipher
      */
     protected void engineInit(int opmode, Key key,
-                              AlgorithmParameterSpec params,
-                              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        core.init(opmode, key, params, random);
+			      AlgorithmParameterSpec params,
+			      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {    
+	core.init(opmode, key, params, random);
     }
 
     protected void engineInit(int opmode, Key key,
-                              AlgorithmParameters params,
-                              SecureRandom random)
-        throws InvalidKeyException, InvalidAlgorithmParameterException {
-        core.init(opmode, key, params, random);
+			      AlgorithmParameters params,
+			      SecureRandom random)
+	throws InvalidKeyException, InvalidAlgorithmParameterException {
+	core.init(opmode, key, params, random);
     }
 
     /**
@@ -228,8 +228,8 @@ public final class DESedeCipher extends CipherSpi {
      * (e.g., has not been initialized)
      */
     protected byte[] engineUpdate(byte[] input, int inputOffset,
-                                  int inputLen) {
-        return core.update(input, inputOffset, inputLen);
+				  int inputLen) {
+	return core.update(input, inputOffset, inputLen);
     }
 
     /**
@@ -256,10 +256,10 @@ public final class DESedeCipher extends CipherSpi {
      * to hold the result
      */
     protected int engineUpdate(byte[] input, int inputOffset, int inputLen,
-                               byte[] output, int outputOffset)
-        throws ShortBufferException {
-        return core.update(input, inputOffset, inputLen, output,
-                           outputOffset);
+			       byte[] output, int outputOffset)
+	throws ShortBufferException {
+	return core.update(input, inputOffset, inputLen, output, 
+			   outputOffset);
     }
 
     /**
@@ -292,10 +292,10 @@ public final class DESedeCipher extends CipherSpi {
      * and (un)padding has been requested, but the decrypted data is not
      * bounded by the appropriate padding bytes
      */
-    protected byte[] engineDoFinal(byte[] input, int inputOffset,
-                                   int inputLen)
-        throws IllegalBlockSizeException, BadPaddingException {
-        return core.doFinal(input, inputOffset, inputLen);
+    protected byte[] engineDoFinal(byte[] input, int inputOffset, 
+				   int inputLen)
+	throws IllegalBlockSizeException, BadPaddingException {
+	return core.doFinal(input, inputOffset, inputLen);
     }
 
     /**
@@ -335,11 +335,11 @@ public final class DESedeCipher extends CipherSpi {
      * bounded by the appropriate padding bytes
      */
     protected int engineDoFinal(byte[] input, int inputOffset, int inputLen,
-                                byte[] output, int outputOffset)
-        throws IllegalBlockSizeException, ShortBufferException,
-               BadPaddingException {
-        return core.doFinal(input, inputOffset, inputLen, output,
-                            outputOffset);
+				byte[] output, int outputOffset)
+	throws IllegalBlockSizeException, ShortBufferException, 
+	       BadPaddingException {
+	return core.doFinal(input, inputOffset, inputLen, output,
+			    outputOffset);
     }
 
     /**
@@ -348,7 +348,7 @@ public final class DESedeCipher extends CipherSpi {
      * <p>The returned parameters may be the same that were used to initialize
      * this cipher, or may contain the default set of parameters or a set of
      * randomly generated parameters used by the underlying cipher
-     * implementation (provided that the underlying cipher implementation
+     * implementation (provided that the underlying cipher implementation 
      * uses a default set of parameters or creates new parameters if it needs
      * parameters but was not initialized with any).
      *
@@ -356,26 +356,26 @@ public final class DESedeCipher extends CipherSpi {
      * does not use any parameters.
      */
     protected AlgorithmParameters engineGetParameters() {
-        return core.getParameters("DESede");
+	return core.getParameters("DESede");
     }
 
     /**
      *  Returns the key size of the given key object.
      *
      * @param key the key object.
-     *
+     * 
      * @return the "effective" key size of the given key object.
      *
      * @exception InvalidKeyException if <code>key</code> is invalid.
      */
     protected int engineGetKeySize(Key key) throws InvalidKeyException {
-        byte[] encoded = key.getEncoded();
-        if (encoded.length != 24) {
-            throw new InvalidKeyException("Invalid key length: " +
-                encoded.length + " bytes");
-        }
-        // Return the effective key length
-        return 112;
+	byte[] encoded = key.getEncoded();
+	if (encoded.length != 24) {
+	    throw new InvalidKeyException("Invalid key length: " + 
+		encoded.length + " bytes");
+	}
+	// Return the effective key length 
+	return 112;
     }
 
     /**
@@ -384,9 +384,9 @@ public final class DESedeCipher extends CipherSpi {
      * @param key the key to be wrapped.
      *
      * @return the wrapped key.
-     *
-     * @exception IllegalBlockSizeException if this cipher is a block
-     * cipher, no padding has been requested, and the length of the
+     * 
+     * @exception IllegalBlockSizeException if this cipher is a block 
+     * cipher, no padding has been requested, and the length of the 
      * encoding of the key to be wrapped is not a
      * multiple of the block size.
      *
@@ -395,12 +395,12 @@ public final class DESedeCipher extends CipherSpi {
      * being passed to a software only cipher).
      */
     protected byte[] engineWrap(Key key)
-        throws IllegalBlockSizeException, InvalidKeyException {
-        return core.wrap(key);
+	throws IllegalBlockSizeException, InvalidKeyException {
+	return core.wrap(key);
     }
 
     /**
-     * Unwrap a previously wrapped key.
+     * Unwrap a previously wrapped key. 
      *
      * @param wrappedKey the key to be unwrapped.
      *
@@ -411,7 +411,7 @@ public final class DESedeCipher extends CipherSpi {
      * <code>Cipher.PRIVATE_KEY</code>, or <code>Cipher.PUBLIC_KEY</code>.
      *
      * @return the unwrapped key.
-     *
+     * 
      * @exception NoSuchAlgorithmException if no installed providers
      * can create keys of type <code>wrappedKeyType</code> for the
      * <code>wrappedKeyAlgorithm</code>.
@@ -421,10 +421,10 @@ public final class DESedeCipher extends CipherSpi {
      * the <code>wrappedKeyAlgorithm</code>.
      */
     protected Key engineUnwrap(byte[] wrappedKey,
-                                     String wrappedKeyAlgorithm,
-                                     int wrappedKeyType)
-        throws InvalidKeyException, NoSuchAlgorithmException {
-        return core.unwrap(wrappedKey, wrappedKeyAlgorithm,
-                           wrappedKeyType);
+				     String wrappedKeyAlgorithm,
+				     int wrappedKeyType)
+	throws InvalidKeyException, NoSuchAlgorithmException {
+	return core.unwrap(wrappedKey, wrappedKeyAlgorithm, 
+			   wrappedKeyType);
     }
 }

@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package sun.io;
+package	sun.io;
 
 public class ByteToCharBig5_HKSCS extends ByteToCharHKSCS_2001 {
     ByteToCharBig5 bcBig5 = new ByteToCharBig5();
@@ -33,7 +33,7 @@ public class ByteToCharBig5_HKSCS extends ByteToCharHKSCS_2001 {
     }
 
     protected char getUnicode(int byte1, int byte2) {
-        char c = super.getUnicode(byte1, byte2);
-        return (c != REPLACE_CHAR) ? c : bcBig5.getUnicode(byte1, byte2);
+	char c = super.getUnicode(byte1, byte2);
+	return (c != REPLACE_CHAR) ? c : bcBig5.getUnicode(byte1, byte2); 
     }
 }

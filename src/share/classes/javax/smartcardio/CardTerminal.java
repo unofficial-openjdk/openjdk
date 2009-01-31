@@ -33,30 +33,31 @@ import java.util.*;
  * {@linkplain CardTerminals#list}
  * or {@linkplain CardTerminals#getTerminal CardTerminals.getTerminal()}.
  *
- * <p>Note that physical card readers with slots for multiple cards are
+ * <p>Note that physical card readers with slots for multiple cards are 
  * represented by one <code>CardTerminal</code> object per such slot.
  *
  * @see CardTerminals
  * @see TerminalFactory
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
  */
 public abstract class CardTerminal {
-
+    
     /**
      * Constructs a new CardTerminal object.
-     *
-     * <p>This constructor is called by subclasses only. Application should
+     * 
+     * <p>This constructor is called by subclasses only. Application should 
      * call {@linkplain CardTerminals#list list()}
      * or {@linkplain CardTerminals#getTerminal getTerminal()}
      * to obtain a CardTerminal object.
      */
     protected CardTerminal() {
-        // empty
+	// empty
     }
-
+    
     /**
      * Returns the unique name of this terminal.
      *
@@ -109,7 +110,7 @@ public abstract class CardTerminal {
      *   true otherwise.
      *
      * @throws IllegalArgumentException if timeout is negative
-     * @throws CardException if the operation failed
+     * @throws CardException if the operation failed 
      */
     public abstract boolean waitForCardPresent(long timeout) throws CardException;
 
@@ -127,7 +128,7 @@ public abstract class CardTerminal {
      *   true otherwise.
      *
      * @throws IllegalArgumentException if timeout is negative
-     * @throws CardException if the operation failed
+     * @throws CardException if the operation failed 
      */
     public abstract boolean waitForCardAbsent(long timeout) throws CardException;
 

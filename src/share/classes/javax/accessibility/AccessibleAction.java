@@ -26,12 +26,12 @@
 package javax.accessibility;
 
 /**
- * The AccessibleAction interface should be supported by any object
+ * The AccessibleAction interface should be supported by any object 
  * that can perform one or more actions.  This interface
- * provides the standard mechanism for an assistive technology to determine
+ * provides the standard mechanism for an assistive technology to determine 
  * what those actions are as well as tell the object to perform them.
  * Any object that can be manipulated should support this
- * interface.  Applications can determine if an object supports the
+ * interface.  Applications can determine if an object supports the 
  * AccessibleAction interface by first obtaining its AccessibleContext (see
  * {@link Accessible}) and then calling the {@link AccessibleContext#getAccessibleAction}
  * method.  If the return value is not null, the object supports this interface.
@@ -41,7 +41,8 @@ package javax.accessibility;
  * @see AccessibleContext
  * @see AccessibleContext#getAccessibleAction
  *
- * @author      Peter Korn
+ * @version     %I% %G%
+ * @author	Peter Korn
  * @author      Hans Muller
  * @author      Willie Walker
  * @author      Lynn Monsanto
@@ -54,14 +55,14 @@ public interface AccessibleAction {
      * @since 1.5
      */
     public static final String TOGGLE_EXPAND =
-        new String ("toggle expand");
+        new String ("toggle expand"); 
 
     /**
      * An action which increments a value.
      * @since 1.5
      */
     public static final String INCREMENT =
-        new String ("increment");
+        new String ("increment"); 
 
 
     /**
@@ -69,14 +70,14 @@ public interface AccessibleAction {
      * @since 1.5
      */
     public static final String DECREMENT =
-        new String ("decrement");
+        new String ("decrement"); 
 
     /**
      * An action which causes a component to execute its default action.
      * @since 1.6
      */
     public static final String CLICK = new String("click");
-
+ 
     /**
      * An action which causes a popup to become visible if it is hidden and
      * hidden if it is visible.

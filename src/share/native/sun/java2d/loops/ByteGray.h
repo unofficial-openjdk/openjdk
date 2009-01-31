@@ -33,11 +33,11 @@
  * LoopMacros.h to manipulate a surface of type "ByteGray".
  */
 
-typedef jubyte  ByteGrayPixelType;
-typedef jubyte  ByteGrayDataType;
+typedef jubyte	ByteGrayPixelType;
+typedef jubyte	ByteGrayDataType;
 
-#define ByteGrayPixelStride     1
-#define ByteGrayBitsPerPixel    8
+#define ByteGrayPixelStride	1
+#define ByteGrayBitsPerPixel	8
 
 #define DeclareByteGrayLoadVars(PREFIX)
 #define DeclareByteGrayStoreVars(PREFIX)
@@ -51,9 +51,9 @@ typedef jubyte  ByteGrayDataType;
 #define DeclareByteGrayPixelData(PREFIX)
 #define ExtractByteGrayPixelData(PIXEL, PREFIX)
 
-#define ByteGrayXparLutEntry            -1
-#define ByteGrayIsXparLutEntry(pix)     (pix < 0)
-#define StoreByteGrayNonXparFromArgb    StoreByteGrayFrom1IntArgb
+#define ByteGrayXparLutEntry		-1
+#define ByteGrayIsXparLutEntry(pix)	(pix < 0)
+#define StoreByteGrayNonXparFromArgb	StoreByteGrayFrom1IntArgb
 
 
 #define ComposeByteGrayFrom3ByteRgb(r, g, b) \
@@ -76,14 +76,14 @@ typedef jubyte  ByteGrayDataType;
 
 #define LoadByteGrayTo1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        int gray = (pRas)[x]; \
-        (rgb) = (((gray << 8) | gray) << 8) | gray; \
+	int gray = (pRas)[x]; \
+	(rgb) = (((gray << 8) | gray) << 8) | gray; \
     } while (0)
-
+    
 #define LoadByteGrayTo1IntArgb(pRas, PREFIX, x, argb) \
     do { \
-        int gray = (pRas)[x]; \
-        (argb) = (((((0xff << 8) | gray) << 8) | gray) << 8) | gray; \
+	int gray = (pRas)[x]; \
+	(argb) = (((((0xff << 8) | gray) << 8) | gray) << 8) | gray; \
     } while (0)
 
 #define LoadByteGrayTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
@@ -91,8 +91,8 @@ typedef jubyte  ByteGrayDataType;
 
 #define LoadByteGrayTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-        LoadByteGrayTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-        (a) = 0xff; \
+	LoadByteGrayTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	(a) = 0xff; \
     } while (0)
 
 #define LoadByteGrayTo1ByteGray(pRas, PREFIX, x, gray) \
@@ -100,9 +100,9 @@ typedef jubyte  ByteGrayDataType;
 
 #define StoreByteGrayFrom1IntRgb(pRas, PREFIX, x, rgb) \
     do { \
-        int r, g, b; \
-        ExtractIntDcmComponentsX123(rgb, r, g, b); \
-        StoreByteGrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	int r, g, b; \
+	ExtractIntDcmComponentsX123(rgb, r, g, b); \
+	StoreByteGrayFrom3ByteRgb(pRas, PREFIX, x, r, g, b); \
     } while (0)
 
 #define StoreByteGrayFrom1IntArgb(pRas, PREFIX, x, argb) \
@@ -131,7 +131,7 @@ typedef jubyte  ByteGrayDataType;
     COMP_PREFIX ## G = pRas[0]
 
 
-#define ByteGrayIsPremultiplied 0
+#define ByteGrayIsPremultiplied	0
 
 #define DeclareByteGrayBlendFillVars(PREFIX) \
     jubyte PREFIX;

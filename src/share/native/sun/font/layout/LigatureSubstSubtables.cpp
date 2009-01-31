@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)LigatureSubstSubtables.cpp	1.5 06/12/13 
  *
  * (C) Copyright IBM Corp. 1998-2003 - All Rights Reserved
  *

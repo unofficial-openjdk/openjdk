@@ -28,7 +28,7 @@ package java.awt.event;
 import java.util.EventListener;
 
 /**
- * The listener interface for receiving action events.
+ * The listener interface for receiving action events. 
  * The class that is interested in processing an action event
  * implements this interface, and the object created with that
  * class is registered with a component, using the component's
@@ -40,6 +40,7 @@ import java.util.EventListener;
  * @see <a href="http://java.sun.com/docs/books/tutorial/post1.0/ui/eventmodel.html">Tutorial: Java 1.1 Event Model</a>
  *
  * @author Carl Quinn
+ * @version %I% %G%
  * @since 1.1
  */
 public interface ActionListener extends EventListener {

@@ -46,27 +46,28 @@ class RegistryKey {
 public:
     RegistryKey(WCHAR *keyName, REGSAM permissions);
     ~RegistryKey();
-
-    DWORD EnumerateSubKeys(DWORD index, WCHAR *subKeyName,
-                           DWORD *buffSize);
-
+        
+    DWORD EnumerateSubKeys(DWORD index, WCHAR *subKeyName, 
+			   DWORD *buffSize);
+			   
     int  GetIntValue(WCHAR *valueName);
 
     static int  GetIntValue(WCHAR *keyName, WCHAR *valueName);
 
     BOOL SetIntValue(WCHAR *valueName, int regValue, BOOL flush);
 
-    static BOOL SetIntValue(WCHAR *keyName, WCHAR *valueName, int regValue,
-                            BOOL flush);
-
+    static BOOL SetIntValue(WCHAR *keyName, WCHAR *valueName, int regValue, 
+			    BOOL flush);
+    
     static void DeleteKey(WCHAR *keyName);
 
-    static void PrintValue(WCHAR *keyName, WCHAR *valueName,
-                           WCHAR *msg);
-
+    static void PrintValue(WCHAR *keyName, WCHAR *valueName, 
+			   WCHAR *msg);
+    
 private:
     HKEY hKey;
     static void PrintRegistryError(LONG errNum, char *message);
 };
 
 #endif REGISTRYKEY_H
+

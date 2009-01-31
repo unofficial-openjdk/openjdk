@@ -38,6 +38,7 @@ package javax.net.ssl;
  * or by implementing one of the <code>KeyManager</code> subclasses.
  *
  * @since 1.4
+ * @version %I%
  * @see KeyManagerFactory
  */
 public interface KeyManager {

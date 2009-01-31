@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 
@@ -56,6 +57,7 @@ import java.util.*;
  * This class only loads colors from the properties file,
  * but it could easily be extended to load fonts -  or even icons.
  *
+ * @version %I% %G%
  * @author Steve Wilson
  */
 public class PropertiesMetalTheme extends DefaultMetalTheme {
@@ -96,8 +98,8 @@ public class PropertiesMetalTheme extends DefaultMetalTheme {
         secondary2 = super.getSecondary2();
         secondary3 = super.getSecondary3();
 
-        black = super.getBlack();
-        white = super.getWhite();
+	black = super.getBlack();
+	white = super.getWhite();
     }
 
     /**
@@ -105,59 +107,59 @@ public class PropertiesMetalTheme extends DefaultMetalTheme {
       * Items not defined in the properties file are ignored
       */
     private void loadProperties(InputStream stream) {
-        Properties prop = new Properties();
-        try {
-            prop.load(stream);
-        } catch (IOException e) {
-            System.out.println(e);
-        }
+	Properties prop = new Properties();
+	try {
+	    prop.load(stream);
+	} catch (IOException e) {
+	    System.out.println(e);
+	}
 
-        Object tempName = prop.get("name");
-        if (tempName != null) {
-            name = tempName.toString();
-        }
+	Object tempName = prop.get("name");
+	if (tempName != null) {
+	    name = tempName.toString();
+	}
 
-        Object colorString = null;
+	Object colorString = null;
 
-        colorString = prop.get("primary1");
-        if (colorString != null){
-            primary1 = parseColor(colorString.toString());
-        }
+	colorString = prop.get("primary1");
+	if (colorString != null){
+	    primary1 = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("primary2");
-        if (colorString != null) {
-            primary2 = parseColor(colorString.toString());
-        }
+	colorString = prop.get("primary2");
+	if (colorString != null) {
+	    primary2 = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("primary3");
-        if (colorString != null) {
-            primary3 = parseColor(colorString.toString());
-        }
+	colorString = prop.get("primary3");
+	if (colorString != null) {
+	    primary3 = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("secondary1");
-        if (colorString != null) {
-            secondary1 = parseColor(colorString.toString());
-        }
+	colorString = prop.get("secondary1");
+	if (colorString != null) {
+	    secondary1 = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("secondary2");
-        if (colorString != null) {
-            secondary2 = parseColor(colorString.toString());
-        }
+	colorString = prop.get("secondary2");
+	if (colorString != null) {
+	    secondary2 = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("secondary3");
-        if (colorString != null) {
-            secondary3 = parseColor(colorString.toString());
-        }
+	colorString = prop.get("secondary3");
+	if (colorString != null) {
+	    secondary3 = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("black");
-        if (colorString != null) {
-            black = parseColor(colorString.toString());
-        }
+	colorString = prop.get("black");
+	if (colorString != null) {
+	    black = parseColor(colorString.toString());
+	}
 
-        colorString = prop.get("white");
-        if (colorString != null) {
-            white = parseColor(colorString.toString());
-        }
+	colorString = prop.get("white");
+	if (colorString != null) {
+	    white = parseColor(colorString.toString());
+	}
 
     }
 
@@ -179,20 +181,20 @@ public class PropertiesMetalTheme extends DefaultMetalTheme {
       */
     private ColorUIResource parseColor(String s) {
         int red = 0;
-        int green = 0;
-        int blue = 0;
-        try {
-            StringTokenizer st = new StringTokenizer(s, ",");
+	int green = 0;
+	int blue = 0;
+	try {
+	    StringTokenizer st = new StringTokenizer(s, ",");
 
-            red = Integer.parseInt(st.nextToken());
-            green = Integer.parseInt(st.nextToken());
-            blue = Integer.parseInt(st.nextToken());
+	    red = Integer.parseInt(st.nextToken());
+	    green = Integer.parseInt(st.nextToken());
+	    blue = Integer.parseInt(st.nextToken());
 
-        } catch (Exception e) {
-            System.out.println(e);
-            System.out.println("Couldn't parse color :" + s);
-        }
+	} catch (Exception e) {
+	    System.out.println(e);
+	    System.out.println("Couldn't parse color :" + s);
+	}
 
-        return new ColorUIResource(red, green, blue);
+	return new ColorUIResource(red, green, blue);
     }
 }

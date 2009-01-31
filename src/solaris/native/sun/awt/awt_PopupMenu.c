@@ -71,7 +71,7 @@ void removePopupMenus() {
             activePopup = NULL;
     }
 }
-
+ 
 Boolean awtMenuIsActive() {
     return ((activePopup != NULL) || (awt_util_focusIsOnMenu(awt_display)));
 }
@@ -96,7 +96,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_initIDs
 {
     mPopupMenuPeerIDs.destroyNativeWidgetAfterGettingTreeLock =
         (*env)->GetMethodID(env, cls,
-                            "destroyNativeWidgetAfterGettingTreeLock", "()V");
+			    "destroyNativeWidgetAfterGettingTreeLock", "()V");
 }
 
 extern Boolean skipNextNotifyWhileGrabbed;
@@ -126,7 +126,7 @@ Popup_popdownCB(Widget w, XtPointer client_data, XtPointer calldata)
     XtRemoveCallback(w, XtNpopdownCallback,
                      Popup_popdownCB, (XtPointer) client_data);
 
-    (*env)->CallVoidMethod(env, (jobject) client_data,
+    (*env)->CallVoidMethod(env, (jobject) client_data, 
         mPopupMenuPeerIDs.destroyNativeWidgetAfterGettingTreeLock);
 
     if ((*env)->ExceptionOccurred(env)) {
@@ -162,10 +162,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_createMenu
     jboolean tearOff;
     jobject globalRef = (*env)->NewGlobalRef(env, this);
     AwtGraphicsConfigDataPtr adata;
-
+    
     JNU_SetLongFieldFromPtr(env, this,
-                            mMenuItemPeerIDs.jniGlobalRef, globalRef);
-
+			    mMenuItemPeerIDs.jniGlobalRef, globalRef);
+  
 
     AWT_LOCK();
 
@@ -191,14 +191,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_createMenu
         return;
     }
     JNU_SetLongFieldFromPtr(env, this, mMenuItemPeerIDs.pData, mdata);
-
+    
     adata = getGraphicsConfigFromComponentPeer(env, parent);
 
     /*
      * Why are these different?
      */
     font = JNU_CallMethodByName(env, NULL, target, "getFont_NoClientCode",
-                                "()Ljava/awt/Font;").l;
+				"()Ljava/awt/Font;").l;
     targetFont =
       (*env)->GetObjectField(env, target, menuComponentIDs.font);
     if (!JNU_IsNull(env, targetFont) &&
@@ -257,7 +257,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_createMenu
               ScreenOfDisplay(awt_display,
                               adata->awt_visInfo.screen));
     argc++;
-
+    
     if (IsMultiFont) {
         DASSERT(!(argc > MAX_ARGC));
         mdata->itemData.comp.widget = XmCreatePopupMenu(wdata->widget,
@@ -280,11 +280,11 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_createMenu
     XtUngrabButton(wdata->widget, AnyButton, AnyModifier);
     XtUngrabPointer(wdata->widget, CurrentTime);
 
-    /* fix for bug #4169155: Popup menus get a leading separator on Motif
+    /* fix for bug #4169155: Popup menus get a leading separator on Motif 
        system.
        Additional check that title string is not empty*/
-    if (!JNU_IsNull(env, label) &&
-        (*env)->GetStringUTFLength( env, label) != (jsize)0 ) {
+    if (!JNU_IsNull(env, label) && 
+	(*env)->GetStringUTFLength( env, label) != (jsize)0 ) {
         if (IsMultiFont) {
             XtVaCreateManagedWidget("",
                                     xmLabelWidgetClass,
@@ -364,14 +364,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_pShow
     }
 
     wdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env, origin, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, origin, mComponentPeerIDs.pData);
 
     if ( wdata == NULL || wdata->widget == NULL ) { /* 425598 */
         JNU_ThrowNullPointerException(env, "NullPointerException"); /* 425598 */
         AWT_UNLOCK(); /* 425598 */
         return; /* 425598 */
     } /* 425598 */
-
+    
     if (!XtIsRealized(wdata->widget)) {
         JNU_ThrowInternalError(env, "widget not visible on screen");
         AWT_UNLOCK();
@@ -442,7 +442,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MPopupMenuPeer_pShow
     /*
      * Fix for BugTraq ID 4186663 - Pural PopupMenus appear at the same time.
      * Store the pointer to the currently showing popup.
-     */
+     */  
     activePopup = mdata->comp.widget;
 
     if (newEvent) {

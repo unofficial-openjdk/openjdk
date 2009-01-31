@@ -47,6 +47,7 @@ import java.util.Set;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
+ * @version %I%, %E%
  * @author Peter Jones
  **/
 public interface Generator {
@@ -82,6 +83,6 @@ public interface Generator {
      * BatchEnvironment.
      **/
     public void generate(BatchEnvironment env,
-                         ClassDoc inputClass,
-                         File destDir);
+			 ClassDoc inputClass,
+			 File destDir);
 }

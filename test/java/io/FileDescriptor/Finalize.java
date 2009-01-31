@@ -41,173 +41,173 @@ public class Finalize {
     static File inFile;
     static File outFile;
 
-    public static void main(String[] args)
-                throws Exception {
-        Thread.sleep(5000);
-
+    public static void main(String[] args) 
+		throws Exception {
+	Thread.sleep(5000);
+	       
         inFile= new File(System.getProperty("test.dir", "."),
-                        inFileName);
+			inFileName); 
         inFile.createNewFile();
         inFile.deleteOnExit();
-        writeToInFile();
+	writeToInFile();
 
-        doFileInputStream();
+	doFileInputStream();
 
-        outFile  = new File(System.getProperty("test.dir", "."),
-                        outFileName);
+	outFile  = new File(System.getProperty("test.dir", "."),
+			outFileName); 
         outFile.createNewFile();
         outFile.deleteOnExit();
 
-        doFileOutputStream();
+	doFileOutputStream();
         doRandomAccessFile();
         doFileChannel();
     }
 
     private static void doFileInputStream() throws Exception {
 
-        /* Create initial FIS for file */
-        FileInputStream fis1 = new FileInputStream(inFile);
+	/* Create initial FIS for file */
+	FileInputStream fis1 = new FileInputStream(inFile);
 
        /* Get the FileDescriptor from the fis */
        FileDescriptor fd = fis1.getFD();
 
-        /*
-         * Create a new FIS based on the existing FD
-         *    (so the two FIS's share the same native fd)
+	/*
+       	 * Create a new FIS based on the existing FD
+       	 *    (so the two FIS's share the same native fd)
          */
-        FileInputStream fis2 = new FileInputStream(fd);
+	FileInputStream fis2 = new FileInputStream(fd);
 
-        /* allow fis1 to be gc'ed */
+	/* allow fis1 to be gc'ed */
         fis1 = null;
         int ret = 0;
-
+        
         /* encourage gc */
         System.gc();
         Thread.sleep(200);
-
-        while((ret = fis2.read()) != -1 ) {
-            /*
-             * read from fis2 - when fis1 is gc'ed and finalizer is run,
-             * read should not fail
-             */
-            System.out.println("read from fis2:" + ret);
-        }
-        fis2.close();
+        
+	while((ret = fis2.read()) != -1 ) {
+	    /*
+	     * read from fis2 - when fis1 is gc'ed and finalizer is run,
+	     * read should not fail
+	     */
+	    System.out.println("read from fis2:" + ret);
+        }  
+	fis2.close();
   }
 
     private static void writeToInFile() throws IOException {
-        FileOutputStream out = new FileOutputStream(inFile);
-        out.write(data);
-        out.close();
+	FileOutputStream out = new FileOutputStream(inFile);
+	out.write(data);
+	out.close();
     }
 
-    private static void doFileOutputStream()
-                throws Exception {
+    private static void doFileOutputStream() 
+		throws Exception {
 
-        System.out.println("--------FileOutputStream Test Started----------");
+	System.out.println("--------FileOutputStream Test Started----------");
 
        /*Create initial FIS for file */
         FileOutputStream fos1 = new FileOutputStream(outFile);
 
        /* Get the FileDescriptor from the fos */
-        FileDescriptor fd = fos1.getFD();
+	FileDescriptor fd = fos1.getFD();
         FileOutputStream fos2 = new FileOutputStream(fd);
 
-        /* allow fos1 to be gc'ed */
+	/* allow fos1 to be gc'ed */
         fos1 = null;
 
-        /* encourage gc */
-        System.gc();
+	/* encourage gc */
+	System.gc();
         Thread.sleep(200);
-
+        
         /*
-         * write to fos2 - when fos1 is gc'ed and finalizer is run,
-         * write to fos2 should not fail
-         */
-        fos2.write(data);
+	 * write to fos2 - when fos1 is gc'ed and finalizer is run,
+	 * write to fos2 should not fail
+	 */
+	fos2.write(data);
         System.out.println("wrote:" + data.length + " bytes to fos2");
-        fos2.close();
+	fos2.close();
 
-        System.out.println("--------FileOutputStream Test Over----------");
-        System.out.println();
+	System.out.println("--------FileOutputStream Test Over----------");
+	System.out.println();
     }
 
 
-    private static void doRandomAccessFile()
-                throws Exception {
+    private static void doRandomAccessFile() 
+		throws Exception {
 
-        System.out.println("--------RandomAccessFile Read Test Started----------");
+	System.out.println("--------RandomAccessFile Read Test Started----------");
 
-        // Create initial FIS for file
+	// Create initial FIS for file
         RandomAccessFile raf = new RandomAccessFile(inFile, "r");
 
-        /* Get the FileDescriptor from the fis */
-        FileDescriptor fd = raf.getFD();
+	/* Get the FileDescriptor from the fis */
+	FileDescriptor fd = raf.getFD();
 
-        /* Create a new FIS based on the existing FD
-         * (so the two FIS's share the same native fd)
-         */
-        FileInputStream fis = new FileInputStream(fd);
-
+	/* Create a new FIS based on the existing FD
+	 * (so the two FIS's share the same native fd)
+	 */
+	FileInputStream fis = new FileInputStream(fd);
+        
        /* allow fis to be gc'ed */
         fis = null;
         int ret = 0;
-
+       
         /* encourage gc */
-        System.gc();
+	System.gc();
         Thread.sleep(50);
 
         /*
-         * read from raf - when fis is gc'ed and finalizer is run,
-         * read from raf should not fail
-         */
-        while((ret = raf.read()) != -1 ) {
+	 * read from raf - when fis is gc'ed and finalizer is run,
+	 * read from raf should not fail
+	 */
+	while((ret = raf.read()) != -1 ) {
             System.out.println("read from raf:" + ret);
-        }
+        }  
         raf.close();
         Thread.sleep(200);
-
+        
         System.out.println("--------RandomAccessFile Write Test Started----------");
-        System.out.println();
+	System.out.println();
 
-        raf = new RandomAccessFile(outFile, "rw");
-        fd = raf.getFD();
-        FileOutputStream fos = new FileOutputStream(fd);
+	raf = new RandomAccessFile(outFile, "rw");
+	fd = raf.getFD();
+	FileOutputStream fos = new FileOutputStream(fd);
 
         /* allow fos to be gc'ed */
         fos = null;
 
-        /* encourage gc */
-        System.gc();
+	/* encourage gc */
+	System.gc();
         Thread.sleep(200);
-
+        
         /*
-         * write to raf - when fos is gc'ed and finalizer is run,
-         * write to raf should not fail
-         */
-        raf.write(data);
+	 * write to raf - when fos is gc'ed and finalizer is run,
+	 * write to raf should not fail
+	 */
+	raf.write(data);
         System.out.println("wrote:" + data.length + " bytes to raf");
-        raf.close();
+	raf.close();
 
         System.out.println("--------RandomAccessFile Write Test Over----------");
-        System.out.println();
+	System.out.println();
     }
-
+    
      private static void doFileChannel() throws Exception {
 
-        System.out.println("--------FileChannel Read Test Started----------");
-        System.out.println();
+	System.out.println("--------FileChannel Read Test Started----------");
+	System.out.println();
 
         FileInputStream fis1 = new FileInputStream(inFile);
 
-        /* Get the FileDescriptor from the fis */
-        FileDescriptor fd = fis1.getFD();
+	/* Get the FileDescriptor from the fis */
+	FileDescriptor fd = fis1.getFD();
 
-        /* Create a new FIS based on the existing FD
+	/* Create a new FIS based on the existing FD
          * (so the two FIS's share the same native fd)
          */
         FileInputStream fis2 = new FileInputStream(fd);
-        FileChannel fc2 = fis2.getChannel();
+	FileChannel fc2 = fis2.getChannel();
 
         /**
          * Encourage the GC
@@ -215,43 +215,43 @@ public class Finalize {
         fis1 = null;
         System.gc();
         Thread.sleep(200);
-
-        int ret = 1;
-        ByteBuffer bb = ByteBuffer.allocateDirect(1);
+	
+	int ret = 1;
+	ByteBuffer bb = ByteBuffer.allocateDirect(1);
         ret = fc2.read(bb);
         System.out.println("read " + ret + " bytes from fc2:");
-        fc2.close();
+	fc2.close();
 
-        System.out.println("--------FileChannel Read Test Over----------");
-        System.out.println();
+	System.out.println("--------FileChannel Read Test Over----------");
+	System.out.println();
 
-        System.out.println("--------FileChannel Write Test Started----------");
+	System.out.println("--------FileChannel Write Test Started----------");
 
         FileOutputStream fos1 = new FileOutputStream(outFile);
 
        /* Get the FileDescriptor from the fos */
-        fd = fos1.getFD();
+	fd = fos1.getFD();
         FileOutputStream fos2 = new FileOutputStream(fd);
-        fc2 = fos2.getChannel();
-
+	fc2 = fos2.getChannel();
+        
         /**
          * Encourage the GC
          */
         fos1 = null;
         System.gc();
         Thread.sleep(200);
-
+	
         /*
-         * write to fc2 - when fos1 is gc'ed and finalizer is run,
-         * write to fc2 should not fail
-         */
+	 * write to fc2 - when fos1 is gc'ed and finalizer is run,
+	 * write to fc2 should not fail
+	 */
         bb = ByteBuffer.allocateDirect(data.length);
-        bb = bb.put(data);
-        bb = (ByteBuffer) bb.flip();
-        ret = fc2.write(bb);
-        System.out.println("Wrote:" +  ret + " bytes to fc2");
-        fc2.close();
+	bb = bb.put(data);
+	bb = (ByteBuffer) bb.flip();
+	ret = fc2.write(bb);
+	System.out.println("Wrote:" +  ret + " bytes to fc2");
+	fc2.close();
 
-        System.out.println("--------Channel Write Test Over----------");
+	System.out.println("--------Channel Write Test Over----------");
     }
 }

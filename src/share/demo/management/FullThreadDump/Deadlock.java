@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.util.concurrent.CyclicBarrier;
@@ -49,7 +50,7 @@ import java.io.IOException;
 public class Deadlock {
     public static void main(String[] argv) {
         Deadlock dl = new Deadlock();
-
+ 
         // Now find deadlock
         ThreadMonitor monitor = new ThreadMonitor();
         boolean found = false;
@@ -85,7 +86,7 @@ public class Deadlock {
         dThreads[3] = new DeadlockThread("SThread-4", d, e);
         dThreads[4] = new DeadlockThread("SThread-5", e, f);
         dThreads[5] = new DeadlockThread("SThread-6", f, d);
-
+                                                                                
         // make them daemon threads so that the test will exit
         for (int i = 0; i < 6; i++) {
             dThreads[i].setDaemon(true);
@@ -180,7 +181,7 @@ public class Deadlock {
     }
 
     class Monitor {
-        String name;
+        String name; 
         Monitor(String name) {
             this.name = name;
         }

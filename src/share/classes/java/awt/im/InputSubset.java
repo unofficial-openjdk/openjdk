@@ -32,13 +32,14 @@ package java.awt.im;
  * java.lang.Character.UnicodeBlock}</code> class, these constants do not
  * directly correspond to Unicode code blocks.
  *
+ * @version %I%, %G%
  * @since   1.2
  */
 
 public final class InputSubset extends Character.Subset {
 
     private InputSubset(String name) {
-        super(name);
+	super(name);
     }
 
     /**

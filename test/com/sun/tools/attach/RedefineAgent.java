@@ -41,7 +41,7 @@ import java.lang.instrument.Instrumentation;
 import java.lang.instrument.ClassDefinition;
 
 public class RedefineAgent implements ClassFileTransformer {
-
+  
     static byte[] classfilebytes;
     static final String targetName = "java.math.BigInteger";
     static final String targetNameSlashes = "java/math/BigInteger";
@@ -99,17 +99,17 @@ public class RedefineAgent implements ClassFileTransformer {
     }
 
     public static void agentmain(String args, Instrumentation inst) throws Exception {
-        System.out.println("RedefineAgent running...");
-        System.out.println("RedefineAgent redefine supported: " + inst.isRedefineClassesSupported());
-        int port = Integer.parseInt(args);
-        System.out.println("RedefineAgent connecting back to Tool....");
-        Socket s = new Socket();
-        s.connect( new InetSocketAddress(port) );
-        System.out.println("RedefineAgent connected to Tool.");
+	System.out.println("RedefineAgent running...");
+	System.out.println("RedefineAgent redefine supported: " + inst.isRedefineClassesSupported());
+	int port = Integer.parseInt(args);
+	System.out.println("RedefineAgent connecting back to Tool....");
+	Socket s = new Socket();
+	s.connect( new InetSocketAddress(port) );
+	System.out.println("RedefineAgent connected to Tool.");
 
         testRedefine(inst);
 
-        s.close();
+	s.close();
     }
 
 }

@@ -51,9 +51,9 @@ public class ClassLoaderReferenceImpl extends ObjectReferenceImpl
 
     public List<ReferenceType> definedClasses() {
         ArrayList<ReferenceType> definedClasses = new ArrayList<ReferenceType>();
-        for (ReferenceType type :  vm.allClasses()) {
+	for (ReferenceType type :  vm.allClasses()) {
             if (type.isPrepared() &&
-                equals(type.classLoader())) {
+		equals(type.classLoader())) {
                 definedClasses.add(type);
             }
         }
@@ -69,20 +69,20 @@ public class ClassLoaderReferenceImpl extends ObjectReferenceImpl
                 classes = local.visibleClasses;
             }
             if (classes == null) {
-                JDWP.ClassLoaderReference.VisibleClasses.ClassInfo[]
+                JDWP.ClassLoaderReference.VisibleClasses.ClassInfo[] 
                   jdwpClasses = JDWP.ClassLoaderReference.VisibleClasses.
                                             process(vm, this).classes;
                 classes = new ArrayList<ReferenceType>(jdwpClasses.length);
                 for (int i = 0; i < jdwpClasses.length; ++i) {
-                    classes.add(vm.referenceType(jdwpClasses[i].typeID,
+                    classes.add(vm.referenceType(jdwpClasses[i].typeID, 
                                                  jdwpClasses[i].refTypeTag));
                 }
                 classes = Collections.unmodifiableList(classes);
                 if (local != null) {
                     local.visibleClasses = classes;
                     if ((vm.traceFlags & vm.TRACE_OBJREFS) != 0) {
-                        vm.printTrace(description() +
-                           " temporarily caching visible classes (count = " +
+                        vm.printTrace(description() + 
+                           " temporarily caching visible classes (count = " + 
                                       classes.size() + ")");
                     }
                 }
@@ -100,7 +100,7 @@ public class ClassLoaderReferenceImpl extends ObjectReferenceImpl
             ReferenceType type = (ReferenceType)iter.next();
             if (type.signature().equals(signature)) {
                 return type;
-            }
+            } 
         }
         JNITypeParser parser = new JNITypeParser(signature);
         throw new ClassNotLoadedException(parser.typeName(),

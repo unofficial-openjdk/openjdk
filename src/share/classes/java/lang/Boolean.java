@@ -26,32 +26,33 @@
 package java.lang;
 
 /**
- * The Boolean class wraps a value of the primitive type
- * {@code boolean} in an object. An object of type
- * {@code Boolean} contains a single field whose type is
- * {@code boolean}.
+ * The Boolean class wraps a value of the primitive type 
+ * {@code boolean} in an object. An object of type 
+ * {@code Boolean} contains a single field whose type is 
+ * {@code boolean}. 
  * <p>
- * In addition, this class provides many methods for
- * converting a {@code boolean} to a {@code String} and a
- * {@code String} to a {@code boolean}, as well as other
- * constants and methods useful when dealing with a
- * {@code boolean}.
+ * In addition, this class provides many methods for 
+ * converting a {@code boolean} to a {@code String} and a 
+ * {@code String} to a {@code boolean}, as well as other 
+ * constants and methods useful when dealing with a 
+ * {@code boolean}. 
  *
  * @author  Arthur van Hoff
+ * @version %I%, %G%
  * @since   JDK1.0
  */
 public final class Boolean implements java.io.Serializable,
                                       Comparable<Boolean>
 {
-    /**
-     * The {@code Boolean} object corresponding to the primitive
-     * value {@code true}.
+    /** 
+     * The {@code Boolean} object corresponding to the primitive 
+     * value {@code true}. 
      */
     public static final Boolean TRUE = new Boolean(true);
 
-    /**
-     * The {@code Boolean} object corresponding to the primitive
-     * value {@code false}.
+    /** 
+     * The {@code Boolean} object corresponding to the primitive 
+     * value {@code false}. 
      */
     public static final Boolean FALSE = new Boolean(false);
 
@@ -73,41 +74,41 @@ public final class Boolean implements java.io.Serializable,
     private static final long serialVersionUID = -3665804199014368530L;
 
     /**
-     * Allocates a {@code Boolean} object representing the
-     * {@code value} argument.
+     * Allocates a {@code Boolean} object representing the 
+     * {@code value} argument. 
      *
      * <p><b>Note: It is rarely appropriate to use this constructor.
      * Unless a <i>new</i> instance is required, the static factory
      * {@link #valueOf(boolean)} is generally a better choice. It is
      * likely to yield significantly better space and time performance.</b>
-     *
+     * 
      * @param   value   the value of the {@code Boolean}.
      */
     public Boolean(boolean value) {
-        this.value = value;
+	this.value = value;
     }
 
     /**
-     * Allocates a {@code Boolean} object representing the value
-     * {@code true} if the string argument is not {@code null}
-     * and is equal, ignoring case, to the string {@code "true"}.
-     * Otherwise, allocate a {@code Boolean} object representing the
+     * Allocates a {@code Boolean} object representing the value 
+     * {@code true} if the string argument is not {@code null} 
+     * and is equal, ignoring case, to the string {@code "true"}. 
+     * Otherwise, allocate a {@code Boolean} object representing the 
      * value {@code false}. Examples:<p>
-     * {@code new Boolean("True")} produces a {@code Boolean} object
+     * {@code new Boolean("True")} produces a {@code Boolean} object 
      * that represents {@code true}.<br>
-     * {@code new Boolean("yes")} produces a {@code Boolean} object
+     * {@code new Boolean("yes")} produces a {@code Boolean} object 
      * that represents {@code false}.
      *
      * @param   s   the string to be converted to a {@code Boolean}.
      */
     public Boolean(String s) {
-        this(toBoolean(s));
+	this(toBoolean(s));
     }
 
     /**
-     * Parses the string argument as a boolean.  The {@code boolean}
-     * returned represents the value {@code true} if the string argument
-     * is not {@code null} and is equal, ignoring case, to the string
+     * Parses the string argument as a boolean.  The {@code boolean} 
+     * returned represents the value {@code true} if the string argument 
+     * is not {@code null} and is equal, ignoring case, to the string 
      * {@code "true"}. <p>
      * Example: {@code Boolean.parseBoolean("True")} returns {@code true}.<br>
      * Example: {@code Boolean.parseBoolean("yes")} returns {@code false}.
@@ -122,13 +123,13 @@ public final class Boolean implements java.io.Serializable,
     }
 
     /**
-     * Returns the value of this {@code Boolean} object as a boolean
+     * Returns the value of this {@code Boolean} object as a boolean 
      * primitive.
      *
      * @return  the primitive {@code boolean} value of this object.
      */
     public boolean booleanValue() {
-        return value;
+	return value;
     }
 
     /**
@@ -159,7 +160,7 @@ public final class Boolean implements java.io.Serializable,
      * @return  the {@code Boolean} value represented by the string.
      */
     public static Boolean valueOf(String s) {
-        return toBoolean(s) ? TRUE : FALSE;
+	return toBoolean(s) ? TRUE : FALSE;
     }
 
     /**
@@ -168,7 +169,7 @@ public final class Boolean implements java.io.Serializable,
      * the string {@code "true"} will be returned, otherwise the
      * string {@code "false"} will be returned.
      *
-     * @param b the boolean to be converted
+     * @param b	the boolean to be converted
      * @return the string representation of the specified {@code boolean}
      * @since 1.4
      */
@@ -182,46 +183,46 @@ public final class Boolean implements java.io.Serializable,
      * a string equal to {@code "true"} is returned. Otherwise, a
      * string equal to {@code "false"} is returned.
      *
-     * @return  a string representation of this object.
+     * @return  a string representation of this object. 
      */
     public String toString() {
-        return value ? "true" : "false";
+	return value ? "true" : "false";
     }
 
     /**
      * Returns a hash code for this {@code Boolean} object.
      *
-     * @return  the integer {@code 1231} if this object represents
-     * {@code true}; returns the integer {@code 1237} if this
-     * object represents {@code false}.
+     * @return  the integer {@code 1231} if this object represents 
+     * {@code true}; returns the integer {@code 1237} if this 
+     * object represents {@code false}. 
      */
     public int hashCode() {
-        return value ? 1231 : 1237;
+	return value ? 1231 : 1237;
     }
 
     /**
-     * Returns {@code true} if and only if the argument is not
-     * {@code null} and is a {@code Boolean} object that
-     * represents the same {@code boolean} value as this object.
+     * Returns {@code true} if and only if the argument is not 
+     * {@code null} and is a {@code Boolean} object that 
+     * represents the same {@code boolean} value as this object. 
      *
      * @param   obj   the object to compare with.
-     * @return  {@code true} if the Boolean objects represent the
+     * @return  {@code true} if the Boolean objects represent the 
      *          same value; {@code false} otherwise.
      */
     public boolean equals(Object obj) {
-        if (obj instanceof Boolean) {
-            return value == ((Boolean)obj).booleanValue();
-        }
-        return false;
+	if (obj instanceof Boolean) {
+	    return value == ((Boolean)obj).booleanValue();
+	} 
+	return false;
     }
 
     /**
-     * Returns {@code true} if and only if the system property
-     * named by the argument exists and is equal to the string
-     * {@code "true"}. (Beginning with version 1.0.2 of the
-     * Java<small><sup>TM</sup></small> platform, the test of
-     * this string is case insensitive.) A system property is accessible
-     * through {@code getProperty}, a method defined by the
+     * Returns {@code true} if and only if the system property 
+     * named by the argument exists and is equal to the string 
+     * {@code "true"}. (Beginning with version 1.0.2 of the 
+     * Java<small><sup>TM</sup></small> platform, the test of 
+     * this string is case insensitive.) A system property is accessible 
+     * through {@code getProperty}, a method defined by the 
      * {@code System} class.
      * <p>
      * If there is no property with the specified name, or if the specified
@@ -258,7 +259,7 @@ public final class Boolean implements java.io.Serializable,
         return (b.value == value ? 0 : (value ? 1 : -1));
     }
 
-    private static boolean toBoolean(String name) {
-        return ((name != null) && name.equalsIgnoreCase("true"));
+    private static boolean toBoolean(String name) { 
+	return ((name != null) && name.equalsIgnoreCase("true"));
     }
 }

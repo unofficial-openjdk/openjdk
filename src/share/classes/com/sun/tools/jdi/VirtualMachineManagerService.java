@@ -39,7 +39,7 @@ public interface VirtualMachineManagerService extends VirtualMachineManager {
      *
      * @return the default {@link LaunchingConnector}
      * @throws java.lang.IllegalArgumentException if the given
-     * connector is not a member of the list returned by
+     * connector is not a member of the list returned by 
      * {@link #launchingConnectors}
      *
      * @param connector the new default connector
@@ -47,17 +47,18 @@ public interface VirtualMachineManagerService extends VirtualMachineManager {
     void setDefaultConnector(LaunchingConnector connector);
 
     /**
-     * Adds a connector to the list of known connectors.
+     * Adds a connector to the list of known connectors. 
      *
      * @param connector the connector to be added
      */
     void addConnector(Connector connector);
-
+        
     /**
-     * Removes a connector from the list of known connectors.
+     * Removes a connector from the list of known connectors. 
      *
      * @param connector the connector to be removed
      */
     void removeConnector(Connector connector);
 
 }
+

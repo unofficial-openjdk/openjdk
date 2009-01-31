@@ -32,6 +32,7 @@ import sun.nio.cs.ext.IBM921;
  * A table to convert to Cp921 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp921 extends ByteToCharSingleByte {

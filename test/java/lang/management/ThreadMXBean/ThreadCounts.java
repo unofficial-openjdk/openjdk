@@ -103,7 +103,7 @@ public class ThreadCounts {
         // wait until daemon threads terminated.
         barrier.await();
 
-        System.out.println("Daemon threads terminated.");
+        System.out.println("Daemon threads terminated."); 
         // Check mbean now
         if ( (!test.checkCount  (USER_THREADS_1))                  ||
              (!test.checkCreated(DAEMON_THREADS + USER_THREADS_1)) ||
@@ -171,7 +171,7 @@ public class ThreadCounts {
 
         if (testFailed)
             throw new RuntimeException("TEST FAILED.");
-
+ 
         System.out.println("Test passed.");
     }
 

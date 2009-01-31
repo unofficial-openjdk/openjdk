@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __ORIG_MLIB_SYS_PROTO_H
 #define __ORIG_MLIB_SYS_PROTO_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_sys_proto.h	1.10	02/12/26 SMI"
+#endif /* __SUNPRO_C */
 
 #if defined ( __MEDIALIB_OLD_NAMES_ADDED )
 #include <../include/mlib_sys_proto.h>

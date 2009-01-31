@@ -263,25 +263,25 @@ public abstract class $Type$Buffer
     // reduce the number of virtual method invocations needed to access these
     // values, which is especially costly when coding small buffers.
     //
-    final $type$[] hb;                  // Non-null only for heap buffers
+    final $type$[] hb;			// Non-null only for heap buffers
     final int offset;
-    boolean isReadOnly;                 // Valid only for heap buffers
+    boolean isReadOnly;			// Valid only for heap buffers
 
     // Creates a new buffer with the given mark, position, limit, capacity,
     // backing array, and array offset
     //
-    $Type$Buffer(int mark, int pos, int lim, int cap,   // package-private
-                 $type$[] hb, int offset)
+    $Type$Buffer(int mark, int pos, int lim, int cap,	// package-private
+		 $type$[] hb, int offset)
     {
-        super(mark, pos, lim, cap);
-        this.hb = hb;
-        this.offset = offset;
+	super(mark, pos, lim, cap);
+	this.hb = hb;
+	this.offset = offset;
     }
 
     // Creates a new buffer with the given mark, position, limit, and capacity
     //
-    $Type$Buffer(int mark, int pos, int lim, int cap) { // package-private
-        this(mark, pos, lim, cap, null, 0);
+    $Type$Buffer(int mark, int pos, int lim, int cap) {	// package-private
+	this(mark, pos, lim, cap, null, 0);
     }
 
 #if[byte]
@@ -326,9 +326,9 @@ public abstract class $Type$Buffer
      *          If the <tt>capacity</tt> is a negative integer
      */
     public static $Type$Buffer allocate(int capacity) {
-        if (capacity < 0)
-            throw new IllegalArgumentException();
-        return new Heap$Type$Buffer(capacity, capacity);
+	if (capacity < 0)
+	    throw new IllegalArgumentException();
+	return new Heap$Type$Buffer(capacity, capacity);
     }
 
     /**
@@ -363,13 +363,13 @@ public abstract class $Type$Buffer
      *          parameters do not hold
      */
     public static $Type$Buffer wrap($type$[] array,
-                                    int offset, int length)
+				    int offset, int length)
     {
-        try {
-            return new Heap$Type$Buffer(array, offset, length);
-        } catch (IllegalArgumentException x) {
-            throw new IndexOutOfBoundsException();
-        }
+	try {
+	    return new Heap$Type$Buffer(array, offset, length);
+	} catch (IllegalArgumentException x) {
+	    throw new IndexOutOfBoundsException();
+	}
     }
 
     /**
@@ -389,7 +389,7 @@ public abstract class $Type$Buffer
      * @return  The new $fulltype$ buffer
      */
     public static $Type$Buffer wrap($type$[] array) {
-        return wrap(array, 0, array.length);
+	return wrap(array, 0, array.length);
     }
 
 #if[char]
@@ -458,11 +458,11 @@ public abstract class $Type$Buffer
      *          parameters do not hold
      */
     public static CharBuffer wrap(CharSequence csq, int start, int end) {
-        try {
-            return new StringCharBuffer(csq, start, end);
-        } catch (IllegalArgumentException x) {
-            throw new IndexOutOfBoundsException();
-        }
+	try {
+	    return new StringCharBuffer(csq, start, end);
+	} catch (IllegalArgumentException x) {
+	    throw new IndexOutOfBoundsException();
+	}
     }
 
     /**
@@ -480,7 +480,7 @@ public abstract class $Type$Buffer
      * @return  The new character buffer
      */
     public static CharBuffer wrap(CharSequence csq) {
-        return wrap(csq, 0, csq.length());
+	return wrap(csq, 0, csq.length());
     }
 
 #end[char]
@@ -541,7 +541,7 @@ public abstract class $Type$Buffer
      */
     public abstract $Type$Buffer asReadOnlyBuffer();
 
-
+
     // -- Singleton get/put methods --
 
     /**
@@ -612,7 +612,7 @@ public abstract class $Type$Buffer
      */
     public abstract $Type$Buffer put(int index, $type$ $x$);
 
-
+
     // -- Bulk get operations --
 
     /**
@@ -665,13 +665,13 @@ public abstract class $Type$Buffer
      *          parameters do not hold
      */
     public $Type$Buffer get($type$[] dst, int offset, int length) {
-        checkBounds(offset, length, dst.length);
-        if (length > remaining())
-            throw new BufferUnderflowException();
-        int end = offset + length;
-        for (int i = offset; i < end; i++)
-            dst[i] = get();
-        return this;
+	checkBounds(offset, length, dst.length);
+	if (length > remaining())
+	    throw new BufferUnderflowException();
+	int end = offset + length;
+	for (int i = offset; i < end; i++)
+	    dst[i] = get();
+	return this;
     }
 
     /**
@@ -691,10 +691,10 @@ public abstract class $Type$Buffer
      *          remaining in this buffer
      */
     public $Type$Buffer get($type$[] dst) {
-        return get(dst, 0, dst.length);
+	return get(dst, 0, dst.length);
     }
 
-
+
     // -- Bulk put operations --
 
     /**
@@ -739,14 +739,14 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public $Type$Buffer put($Type$Buffer src) {
-        if (src == this)
-            throw new IllegalArgumentException();
-        int n = src.remaining();
-        if (n > remaining())
-            throw new BufferOverflowException();
-        for (int i = 0; i < n; i++)
-            put(src.get());
-        return this;
+	if (src == this)
+	    throw new IllegalArgumentException();
+	int n = src.remaining();
+	if (n > remaining())
+	    throw new BufferOverflowException();
+	for (int i = 0; i < n; i++)
+	    put(src.get());
+	return this;
     }
 
     /**
@@ -800,13 +800,13 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public $Type$Buffer put($type$[] src, int offset, int length) {
-        checkBounds(offset, length, src.length);
-        if (length > remaining())
-            throw new BufferOverflowException();
-        int end = offset + length;
-        for (int i = offset; i < end; i++)
-            this.put(src[i]);
-        return this;
+	checkBounds(offset, length, src.length);
+	if (length > remaining())
+	    throw new BufferOverflowException();
+	int end = offset + length;
+	for (int i = offset; i < end; i++)
+	    this.put(src[i]);
+	return this;
     }
 
     /**
@@ -829,7 +829,7 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public final $Type$Buffer put($type$[] src) {
-        return put(src, 0, src.length);
+	return put(src, 0, src.length);
     }
 
 #if[char]
@@ -887,10 +887,10 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public $Type$Buffer put(String src, int start, int end) {
-        checkBounds(start, end - start, src.length());
-        for (int i = start; i < end; i++)
-            this.put(src.charAt(i));
-        return this;
+	checkBounds(start, end - start, src.length());
+	for (int i = start; i < end; i++)
+	    this.put(src.charAt(i));
+	return this;
     }
 
     /**
@@ -912,12 +912,12 @@ public abstract class $Type$Buffer
      *          If this buffer is read-only
      */
     public final $Type$Buffer put(String src) {
-        return put(src, 0, src.length());
+	return put(src, 0, src.length());
     }
 
 #end[char]
 
-
+
     // -- Other stuff --
 
     /**
@@ -932,7 +932,7 @@ public abstract class $Type$Buffer
      *          is backed by an array and is not read-only
      */
     public final boolean hasArray() {
-        return (hb != null) && !isReadOnly;
+	return (hb != null) && !isReadOnly;
     }
 
     /**
@@ -955,11 +955,11 @@ public abstract class $Type$Buffer
      *          If this buffer is not backed by an accessible array
      */
     public final $type$[] array() {
-        if (hb == null)
-            throw new UnsupportedOperationException();
-        if (isReadOnly)
-            throw new ReadOnlyBufferException();
-        return hb;
+	if (hb == null)
+	    throw new UnsupportedOperationException();
+	if (isReadOnly)
+	    throw new ReadOnlyBufferException();
+	return hb;
     }
 
     /**
@@ -983,11 +983,11 @@ public abstract class $Type$Buffer
      *          If this buffer is not backed by an accessible array
      */
     public final int arrayOffset() {
-        if (hb == null)
-            throw new UnsupportedOperationException();
-        if (isReadOnly)
-            throw new ReadOnlyBufferException();
-        return offset;
+	if (hb == null)
+	    throw new UnsupportedOperationException();
+	if (isReadOnly)
+	    throw new ReadOnlyBufferException();
+	return offset;
     }
 
     /**
@@ -1046,16 +1046,16 @@ public abstract class $Type$Buffer
      * @return  A summary string
      */
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append(getClass().getName());
-        sb.append("[pos=");
-        sb.append(position());
-        sb.append(" lim=");
-        sb.append(limit());
-        sb.append(" cap=");
-        sb.append(capacity());
-        sb.append("]");
-        return sb.toString();
+	StringBuffer sb = new StringBuffer();
+	sb.append(getClass().getName());
+	sb.append("[pos=");
+	sb.append(position());
+	sb.append(" lim=");
+	sb.append(limit());
+	sb.append(" cap=");
+	sb.append(capacity());
+	sb.append("]");
+	return sb.toString();
     }
 
 #end[!char]
@@ -1077,11 +1077,11 @@ public abstract class $Type$Buffer
      * @return  The current hash code of this buffer
      */
     public int hashCode() {
-        int h = 1;
-        int p = position();
-        for (int i = limit() - 1; i >= p; i--)
-            h = 31 * h + (int)get(i);
-        return h;
+	int h = 1;
+	int p = position();
+	for (int i = limit() - 1; i >= p; i--)
+	    h = 31 * h + (int)get(i);
+	return h;
     }
 
     /**
@@ -1110,24 +1110,24 @@ public abstract class $Type$Buffer
      *           given object
      */
     public boolean equals(Object ob) {
-        if (this == ob)
-            return true;
-        if (!(ob instanceof $Type$Buffer))
-            return false;
-        $Type$Buffer that = ($Type$Buffer)ob;
-        if (this.remaining() != that.remaining())
-            return false;
-        int p = this.position();
-        for (int i = this.limit() - 1, j = that.limit() - 1; i >= p; i--, j--) {
-            $type$ v1 = this.get(i);
-            $type$ v2 = that.get(j);
-            if (v1 != v2) {
-                if ((v1 != v1) && (v2 != v2))   // For float and double
-                    continue;
-                return false;
-            }
-        }
-        return true;
+	if (this == ob)
+	    return true;
+	if (!(ob instanceof $Type$Buffer))
+	    return false;
+	$Type$Buffer that = ($Type$Buffer)ob;
+	if (this.remaining() != that.remaining())
+	    return false;
+	int p = this.position();
+	for (int i = this.limit() - 1, j = that.limit() - 1; i >= p; i--, j--) {
+	    $type$ v1 = this.get(i);
+	    $type$ v2 = that.get(j);
+	    if (v1 != v2) {
+		if ((v1 != v1) && (v2 != v2))	// For float and double
+		    continue;
+		return false;
+	    }
+	}
+	return true;
     }
 
     /**
@@ -1140,26 +1140,26 @@ public abstract class $Type$Buffer
      * <p> A $type$ buffer is not comparable to any other type of object.
      *
      * @return  A negative integer, zero, or a positive integer as this buffer
-     *          is less than, equal to, or greater than the given buffer
+     *		is less than, equal to, or greater than the given buffer
      */
     public int compareTo($Type$Buffer that) {
-        int n = this.position() + Math.min(this.remaining(), that.remaining());
-        for (int i = this.position(), j = that.position(); i < n; i++, j++) {
-            $type$ v1 = this.get(i);
-            $type$ v2 = that.get(j);
-            if (v1 == v2)
-                continue;
-            if ((v1 != v1) && (v2 != v2))       // For float and double
-                continue;
-            if (v1 < v2)
-                return -1;
-            return +1;
-        }
-        return this.remaining() - that.remaining();
+	int n = this.position() + Math.min(this.remaining(), that.remaining());
+	for (int i = this.position(), j = that.position(); i < n; i++, j++) {
+	    $type$ v1 = this.get(i);
+	    $type$ v2 = that.get(j);
+	    if (v1 == v2)
+		continue;
+	    if ((v1 != v1) && (v2 != v2)) 	// For float and double
+		continue;
+	    if (v1 < v2)
+		return -1;
+	    return +1;
+	}
+	return this.remaining() - that.remaining();
     }
 
 
-
+
     // -- Other char stuff --
 
 #if[char]
@@ -1175,10 +1175,10 @@ public abstract class $Type$Buffer
      * @return  The specified string
      */
     public String toString() {
-        return toString(position(), limit());
+	return toString(position(), limit());
     }
 
-    abstract String toString(int start, int end);       // package-private
+    abstract String toString(int start, int end);	// package-private
 
 
     // --- Methods to support CharSequence ---
@@ -1194,7 +1194,7 @@ public abstract class $Type$Buffer
      * @return  The length of this character buffer
      */
     public final int length() {
-        return remaining();
+	return remaining();
     }
 
     /**
@@ -1282,10 +1282,10 @@ public abstract class $Type$Buffer
      * @since  1.5
      */
     public $Type$Buffer append(CharSequence csq) {
-        if (csq == null)
-            return put("null");
-        else
-            return put(csq.toString());
+	if (csq == null)
+	    return put("null");
+	else
+	    return put(csq.toString());
     }
 
     /**
@@ -1321,8 +1321,8 @@ public abstract class $Type$Buffer
      * @since  1.5
      */
     public $Type$Buffer append(CharSequence csq, int start, int end) {
-        CharSequence cs = (csq == null ? "null" : csq);
-        return put(cs.subSequence(start, end).toString());
+	CharSequence cs = (csq == null ? "null" : csq);
+	return put(cs.subSequence(start, end).toString());
     }
 
     /**
@@ -1349,12 +1349,12 @@ public abstract class $Type$Buffer
      * @since  1.5
      */
     public $Type$Buffer append($type$ $x$) {
-        return put($x$);
+	return put($x$);
     }
 
 #end[char]
 
-
+
     // -- Other byte stuff: Access to binary data --
 
 #if[!byte]
@@ -1377,10 +1377,10 @@ public abstract class $Type$Buffer
 
 #if[byte]
 
-    boolean bigEndian                                   // package-private
-        = true;
-    boolean nativeByteOrder                             // package-private
-        = (Bits.byteOrder() == ByteOrder.BIG_ENDIAN);
+    boolean bigEndian					// package-private
+	= true;
+    boolean nativeByteOrder				// package-private
+	= (Bits.byteOrder() == ByteOrder.BIG_ENDIAN);
 
     /**
      * Retrieves this buffer's byte order.
@@ -1393,7 +1393,7 @@ public abstract class $Type$Buffer
      * @return  This buffer's byte order
      */
     public final ByteOrder order() {
-        return bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
+	return bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN;
     }
 
     /**
@@ -1407,16 +1407,16 @@ public abstract class $Type$Buffer
      * @return  This buffer
      */
     public final $Type$Buffer order(ByteOrder bo) {
-        bigEndian = (bo == ByteOrder.BIG_ENDIAN);
-        nativeByteOrder =
-            (bigEndian == (Bits.byteOrder() == ByteOrder.BIG_ENDIAN));
-        return this;
+	bigEndian = (bo == ByteOrder.BIG_ENDIAN);
+	nativeByteOrder =
+	    (bigEndian == (Bits.byteOrder() == ByteOrder.BIG_ENDIAN));
+	return this;
     }
 
     // Unchecked accessors, for use by ByteBufferAs-X-Buffer classes
     //
-    abstract byte _get(int i);                          // package-private
-    abstract void _put(int i, byte b);                  // package-private
+    abstract byte _get(int i);				// package-private
+    abstract void _put(int i, byte b);			// package-private
 
     // #BIN
     //

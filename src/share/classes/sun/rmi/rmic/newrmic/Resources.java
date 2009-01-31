@@ -36,6 +36,7 @@ import java.util.ResourceBundle;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
+ * @version %I%, %E%
  * @author Peter Jones
  **/
 public final class Resources {
@@ -43,18 +44,18 @@ public final class Resources {
     private static ResourceBundle resources = null;
     private static ResourceBundle resourcesExt = null;
     static {
-        try {
-            resources =
-                ResourceBundle.getBundle("sun.rmi.rmic.resources.rmic");
-        } catch (MissingResourceException e) {
-            // gracefully handle this later
-        }
-        try {
-            resourcesExt =
-                ResourceBundle.getBundle("sun.rmi.rmic.resources.rmicext");
-        } catch (MissingResourceException e) {
-            // OK if this isn't found
-        }
+	try {
+	    resources =
+		ResourceBundle.getBundle("sun.rmi.rmic.resources.rmic");
+	} catch (MissingResourceException e) {
+	    // gracefully handle this later
+	}
+	try {
+	    resourcesExt =
+		ResourceBundle.getBundle("sun.rmi.rmic.resources.rmicext");
+	} catch (MissingResourceException e) {
+	    // OK if this isn't found
+	}
     }
 
     private Resources() { throw new AssertionError(); }
@@ -64,32 +65,32 @@ public final class Resources {
      * formatted with the specified arguments.
      **/
     public static String getText(String key, String... args) {
-        String format = getString(key);
-        if (format == null) {
-            format = "missing resource key: key = \"" + key + "\", " +
-                "arguments = \"{0}\", \"{1}\", \"{2}\"";
-        }
-        return MessageFormat.format(format, args);
+	String format = getString(key);
+	if (format == null) {
+	    format = "missing resource key: key = \"" + key + "\", " +
+		"arguments = \"{0}\", \"{1}\", \"{2}\"";
+	}
+	return MessageFormat.format(format, args);
     }
 
     /**
      * Returns the rmic resource string for the specified key.
      **/
     private static String getString(String key) {
-        if (resourcesExt != null) {
-            try {
-                return resourcesExt.getString(key);
-            } catch (MissingResourceException e) {
-            }
-        }
-        if (resources != null) {
-            try {
-                return resources.getString(key);
-            } catch (MissingResourceException e) {
-                return null;
-            }
-        }
-        return "missing resource bundle: key = \"" + key + "\", " +
-            "arguments = \"{0}\", \"{1}\", \"{2}\"";
+	if (resourcesExt != null) {
+	    try {
+		return resourcesExt.getString(key);
+	    } catch (MissingResourceException e) {
+	    }
+	}
+	if (resources != null) {
+	    try {
+		return resources.getString(key);
+	    } catch (MissingResourceException e) {
+		return null;
+	    }
+	}
+	return "missing resource bundle: key = \"" + key + "\", " +
+	    "arguments = \"{0}\", \"{1}\", \"{2}\"";
     }
 }

@@ -43,9 +43,9 @@ public class LotsOfChannels {
 
 
         String os = System.getProperty("os.name");
-        if (!(os.equals("Windows NT")
+        if (!(os.equals("Windows NT") 
            || os.equals("Windows 2000")
-           || os.equals("Windows XP")))
+           || os.equals("Windows XP"))) 
             return;
 
         Pipe[] pipes = new Pipe[PIPES_COUNT];
@@ -67,11 +67,14 @@ public class LotsOfChannels {
         }
 
         for (int i = 0 ; i < LOOPS; i++ ) {
-            sink.write(ByteBuffer.allocate(BUF_SIZE));
-            int x = sel.selectNow();
+            sink.write(ByteBuffer.allocate(BUF_SIZE)); 
+            int x = sel.selectNow(); 
             sel.selectedKeys().clear();
             source.read(ByteBuffer.allocate(BUF_SIZE));
         }
         sel.close();
     }
 }
+
+
+

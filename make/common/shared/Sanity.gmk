@@ -152,6 +152,7 @@ include $(JDK_MAKE_SHARED_DIR)/Sanity-Settings.gmk
 	sane-outputdir \
 	sane-alt_bootdir \
 	sane-bootdir \
+	sane-motif \
         sane-cups \
 	sane-devtools_path \
 	sane-compiler_path \
@@ -773,6 +774,40 @@ sane-cacerts:
 	    "" >> $(ERROR_FILE) ; \
 	fi
 
+######################################################
+# Check for existence of Motif in the bootstrap area
+######################################################
+MOTIF_CHECK_FILE=$(MOTIF_INCLUDE)/Xm/AtomMgr.h
+sane-motif:
+ifneq ($(PLATFORM), windows)
+  ifdef MOTIF_REQUIRED
+    ifeq ($(PLATFORM), solaris)
+	@if [ ! -r $(MOTIF_LIB)/libXm.so ]; then \
+	  $(ECHO) "ERROR: You do not have access to a valid Motif 2.1 library. \n" \
+	    "      Please check your access to \n" \
+	    "          $(MOTIF_LIB)/libXm.so \n" \
+	    "      and/or check your value of ALT_MOTIF_DIR. \n" \
+	    "" >> $(ERROR_FILE) ; \
+	fi
+    endif  
+    ifeq ($(PLATFORM), linux)
+	@if [ ! -r $(MOTIF_LIB)/libXm.a ]; then \
+	  $(ECHO) "ERROR: You do not have access to a valid Motif 2.1 library. \n" \
+	    "      Please check your access to \n" \
+	    "          $(MOTIF_LIB)/libXm.a \n" \
+	    "      and/or check your value of ALT_MOTIF_DIR. \n" \
+	    "" >> $(ERROR_FILE) ; \
+	fi
+    endif  
+  endif  
+	@if [ ! -r $(MOTIF_CHECK_FILE) ]; then \
+	  $(ECHO) "ERROR: You do not have access to valid Motif 2.1 header files. \n" \
+	    "      Please check your access to (for example) \n" \
+	    "          $(MOTIF_CHECK_FILE) \n" \
+	    "      and/or check your value of ALT_MOTIF_DIR. \n" \
+	    "" >> $(ERROR_FILE) ; \
+	fi
+endif
 
 ######################################################
 # Check for availability of FreeType (OpenJDK specific)
@@ -1291,6 +1326,29 @@ ifeq ($(PLATFORM), windows)
 	    fi \
 	  fi \
 	fi
+endif
+
+######################################################
+# Check for the Microsoft Layer for Unicode binary files
+######################################################
+sane-mslu:
+ifeq ($(PLATFORM), windows)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+	@if [ ! -r "$(UNICOWS_LIB_PATH)/unicows.lib" ]; then \
+	$(ECHO) "ERROR: You do not have access to the Microsoft Layer for Unicode (MSLU) linktime files.\n" \
+	  "      Please check your access to \n" \
+          "          $(UNICOWS_LIB_PATH)/unicows.lib \n" \
+          "      and/or check your value of ALT_UNICOWS_LIB_PATH \n" \
+	  "" >> $(ERROR_FILE) ; \
+        fi 
+	@if [ ! -r "$(UNICOWS_DLL_PATH)/unicows.dll" ]; then \
+	$(ECHO) "ERROR: You do not have access to the Microsoft Layer for Unicode (MSLU) runtime files.\n" \
+	  "      Please check your access to \n" \
+          "          $(UNICOWS_DLL_PATH)/unicows.dll \n" \
+          "      and/or check your value of ALT_UNICOWS_DLL_PATH \n" \
+	  "" >> $(ERROR_FILE) ; \
+        fi 
+  endif
 endif
 
 ######################################################

@@ -35,7 +35,7 @@ import java.util.*;
  * JavaBeans<sup><font size=-2>TM</font></sup> component model.
  * A rowset, which can be used as a JavaBeans component in
  * a visual Bean development environment, can be created and
- * configured at design time and executed at run time.
+ * configured at design time and executed at run time.  
  * <P>
  * The <code>RowSet</code>
  * interface provides a set of JavaBeans properties that allow a <code>RowSet</code>
@@ -50,13 +50,13 @@ import java.util.*;
  * interface supports JavaBeans events, allowing other components in an
  * application to be notified when an event occurs on a rowset,
  * such as a change in its value.
- *
+ * 
  * <P>The <code>RowSet</code> interface is unique in that it is intended to be
  * implemented using the rest of the JDBC API.  In other words, a
  * <code>RowSet</code> implementation is a layer of software that executes "on top"
  * of a JDBC driver.  Implementations of the <code>RowSet</code> interface can
  * be provided by anyone, including JDBC driver vendors who want to
- * provide a <code>RowSet</code> implementation as part of their JDBC products.
+ * provide a <code>RowSet</code> implementation as part of their JDBC products. 
  * <P>
  * A <code>RowSet</code> object may make a connection with a data source and
  * maintain that connection throughout its life cycle, in which case it is
@@ -80,21 +80,21 @@ import java.util.*;
  * with the JDBC API will have to learn a minimal number of new APIs to
  * use rowsets.  In addition, third-party software tools that work with
  * JDBC <code>ResultSet</code> objects will also easily be made to work with rowsets.
- *
+ * 
  * @since 1.4
  */
 
 public interface RowSet extends ResultSet {
-
+  
   //-----------------------------------------------------------------------
-  // Properties
+  // Properties 
   //-----------------------------------------------------------------------
 
   //-----------------------------------------------------------------------
   // The following properties may be used to create a Connection.
   //-----------------------------------------------------------------------
 
-  /**
+  /** 
    * Retrieves the url property this <code>RowSet</code> object will use to
    * create a connection if it uses the <code>DriverManager</code>
    * instead of a <code>DataSource</code> object to establish the connection.
@@ -116,7 +116,7 @@ public interface RowSet extends ResultSet {
    * internally to create a database connection when reading or writing
    * data.  Either a URL or a data source name is used to create a
    * connection, whichever was set to non null value most recently.
-   *
+   * 
    * @param url a string value; may be <code>null</code>
    * @exception SQLException if a database access error occurs
    * @see #getUrl
@@ -125,7 +125,7 @@ public interface RowSet extends ResultSet {
 
   /**
    * Retrieves the logical name that identifies the data source for this
-   * <code>RowSet</code> object.
+   * <code>RowSet</code> object.  
    *
    * @return a data source name
    * @see #setDataSourceName
@@ -134,7 +134,7 @@ public interface RowSet extends ResultSet {
   String getDataSourceName();
 
   /**
-   * Sets the data source name property for this <code>RowSet</code> object to the
+   * Sets the data source name property for this <code>RowSet</code> object to the 
    * given <code>String</code>.
    * <P>
    * The value of the data source name property can be used to do a lookup of
@@ -149,11 +149,11 @@ public interface RowSet extends ResultSet {
    */
   void setDataSourceName(String name) throws SQLException;
 
-  /**
+  /** 
    * Retrieves the username used to create a database connection for this
-   * <code>RowSet</code> object.
-   * The username property is set at run time before calling the method
-   * <code>execute</code>.  It is
+   * <code>RowSet</code> object.  
+   * The username property is set at run time before calling the method 
+   * <code>execute</code>.  It is 
    * not usually part of the serialized state of a <code>RowSet</code> object.
    *
    * @return the username property
@@ -162,7 +162,7 @@ public interface RowSet extends ResultSet {
   String getUsername();
 
   /**
-   * Sets the username property for this <code>RowSet</code> object to the
+   * Sets the username property for this <code>RowSet</code> object to the 
    * given <code>String</code>.
    *
    * @param name a user name
@@ -171,10 +171,10 @@ public interface RowSet extends ResultSet {
    */
   void setUsername(String name) throws SQLException;
 
-  /**
-   * Retrieves the password used to create a database connection.
+  /** 
+   * Retrieves the password used to create a database connection. 
    * The password property is set at run time before calling the method
-   * <code>execute</code>.  It is not usually part of the serialized state
+   * <code>execute</code>.  It is not usually part of the serialized state 
    * of a <code>RowSet</code> object.
    *
    * @return the password for making a database connection
@@ -192,7 +192,7 @@ public interface RowSet extends ResultSet {
    */
   void setPassword(String password) throws SQLException;
 
-  /**
+  /** 
    * Retrieves the transaction isolation level set for this
    * <code>RowSet</code> object.
    *
@@ -234,7 +234,7 @@ public interface RowSet extends ResultSet {
    java.util.Map<String,Class<?>> getTypeMap() throws SQLException;
 
   /**
-   * Installs the given <code>java.util.Map</code> object as the default
+   * Installs the given <code>java.util.Map</code> object as the default 
    * type map for this <code>RowSet</code> object. This type map will be
    * used unless another type map is supplied as a method parameter.
    *
@@ -244,17 +244,17 @@ public interface RowSet extends ResultSet {
    * @exception SQLException if a database access error occurs
    * @see #getTypeMap
    */
-   void setTypeMap(java.util.Map<String,Class<?>> map) throws SQLException;
+   void setTypeMap(java.util.Map<String,Class<?>> map) throws SQLException; 
 
   //-----------------------------------------------------------------------
   // The following properties may be used to create a Statement.
   //-----------------------------------------------------------------------
 
-  /**
+  /** 
    * Retrieves this <code>RowSet</code> object's command property.
    *
    * The command property contains a command string, which must be an SQL
-   * query, that can be executed to fill the rowset with data.
+   * query, that can be executed to fill the rowset with data.  
    * The default value is <code>null</code>.
    *
    * @return the command string; may be <code>null</code>
@@ -268,7 +268,7 @@ public interface RowSet extends ResultSet {
    *
    * This property is optional
    * when a rowset gets its data from a data source that does not support
-   * commands, such as a spreadsheet.
+   * commands, such as a spreadsheet. 
    *
    * @param cmd the SQL query that will be used to get the data for this
    *        <code>RowSet</code> object; may be <code>null</code>
@@ -277,16 +277,16 @@ public interface RowSet extends ResultSet {
    */
   void setCommand(String cmd) throws SQLException;
 
-  /**
+  /** 
    * Retrieves whether this <code>RowSet</code> object is read-only.
    * If updates are possible, the default is for a rowset to be
    * updatable.
    * <P>
    * Attempts to update a read-only rowset will result in an
-   * <code>SQLException</code> being thrown.
+   * <code>SQLException</code> being thrown. 
    *
    * @return <code>true</code> if this <code>RowSet</code> object is
-   *         read-only; <code>false</code> if it is updatable
+   *         read-only; <code>false</code> if it is updatable 
    * @see #setReadOnly
    */
   boolean isReadOnly();
@@ -295,7 +295,7 @@ public interface RowSet extends ResultSet {
    * Sets whether this <code>RowSet</code> object is read-only to the
    * given <code>boolean</code>.
    *
-   * @param value <code>true</code> if read-only; <code>false</code> if
+   * @param value <code>true</code> if read-only; <code>false</code> if 
    *        updatable
    * @exception SQLException if a database access error occurs
    * @see #isReadOnly
@@ -303,8 +303,8 @@ public interface RowSet extends ResultSet {
   void setReadOnly(boolean value) throws SQLException;
 
   /**
-   * Retrieves the maximum number of bytes that may be returned
-   * for certain column values.
+   * Retrieves the maximum number of bytes that may be returned 
+   * for certain column values. 
    * This limit applies only to <code>BINARY</code>,
    * <code>VARBINARY</code>, <code>LONGVARBINARYBINARY</code>, <code>CHAR</code>,
    * <code>VARCHAR</code>, <code>LONGVARCHAR</code>, <code>NCHAR</code>
@@ -317,7 +317,7 @@ public interface RowSet extends ResultSet {
    * @see #setMaxFieldSize
    */
   int getMaxFieldSize() throws SQLException;
-
+    
   /**
    * Sets the maximum number of bytes that can be returned for a column
    * value to the given number of bytes.
@@ -328,7 +328,7 @@ public interface RowSet extends ResultSet {
    * If the limit is exceeded, the excess data is silently discarded.
    * For maximum portability, use values greater than 256.
    *
-   * @param max the new max column size limit in bytes; zero means unlimited
+   * @param max the new max column size limit in bytes; zero means unlimited 
    * @exception SQLException if a database access error occurs
    * @see #getMaxFieldSize
    */
@@ -351,7 +351,7 @@ public interface RowSet extends ResultSet {
    * object can contain to the specified number.
    * If the limit is exceeded, the excess rows are silently dropped.
    *
-   * @param max the new maximum number of rows; zero means unlimited
+   * @param max the new maximum number of rows; zero means unlimited 
    * @exception SQLException if a database access error occurs
    * @see #getMaxRows
    */
@@ -359,11 +359,11 @@ public interface RowSet extends ResultSet {
 
   /**
    * Retrieves whether escape processing is enabled for this
-   * <code>RowSet</code> object.
+   * <code>RowSet</code> object.  
    * If escape scanning is enabled, which is the default, the driver will do
    * escape substitution before sending an SQL statement to the database.
    *
-   * @return <code>true</code> if escape processing is enabled;
+   * @return <code>true</code> if escape processing is enabled; 
    *         <code>false</code> if it is disabled
    * @exception SQLException if a database access error occurs
    * @see #setEscapeProcessing
@@ -387,8 +387,8 @@ public interface RowSet extends ResultSet {
    * a statement to execute.
    * If this limit is exceeded, an <code>SQLException</code> is thrown.
    *
-   * @return the current query timeout limit in seconds; zero means
-   *          unlimited
+   * @return the current query timeout limit in seconds; zero means 
+   *          unlimited 
    * @exception SQLException if a database access error occurs
    * @see #setQueryTimeout
    */
@@ -399,7 +399,7 @@ public interface RowSet extends ResultSet {
    * a statement to execute to the given number of seconds.
    * If this limit is exceeded, an <code>SQLException</code> is thrown.
    *
-   * @param seconds the new query timeout limit in seconds; zero means
+   * @param seconds the new query timeout limit in seconds; zero means 
    *        that there is no limit
    * @exception SQLException if a database access error occurs
    * @see #getQueryTimeout
@@ -432,12 +432,12 @@ public interface RowSet extends ResultSet {
    * @see ResultSet#getConcurrency
    */
   void setConcurrency(int concurrency) throws SQLException;
-
+  
   //-----------------------------------------------------------------------
   // Parameters
   //-----------------------------------------------------------------------
 
-  /**
+  /** 
    * The <code>RowSet</code> setter methods are used to set any input parameters
    * needed by the <code>RowSet</code> object's command.
    * Parameters are set at run time, as opposed to design time.
@@ -480,10 +480,10 @@ public interface RowSet extends ResultSet {
    * <P><B>Note:</B> To be portable, applications must give the
    * SQL type code and the fully qualified SQL type name when specifying
    * a NULL UDT or <code>REF</code> parameter.  In the case of a UDT,
-   * the name is the type name of the parameter itself.  For a <code>REF</code>
-   * parameter, the name is the type name of the referenced type.  If
-   * a JDBC driver does not need the type code or type name information,
-   * it may ignore it.
+   * the name is the type name of the parameter itself.  For a <code>REF</code> 
+   * parameter, the name is the type name of the referenced type.  If 
+   * a JDBC driver does not need the type code or type name information, 
+   * it may ignore it.     
    *
    * Although it is intended for UDT and <code>REF</code> parameters,
    * this method may be used to set a null parameter of any JDBC type.
@@ -498,7 +498,7 @@ public interface RowSet extends ResultSet {
    *        type; ignored if the parameter is not a UDT or <code>REF</code> type
    * @exception SQLException if a database access error occurs
    */
-  void setNull (int paramIndex, int sqlType, String typeName)
+  void setNull (int paramIndex, int sqlType, String typeName) 
     throws SQLException;
 
   /**
@@ -573,7 +573,7 @@ public interface RowSet extends ResultSet {
    * @exception SQLException if a database access error occurs
    */
   void setByte(int parameterIndex, byte x) throws SQLException;
-
+ 
   /**
      * Sets the designated parameter to the given Java <code>byte</code> value.
      * The driver converts this
@@ -589,7 +589,7 @@ public interface RowSet extends ResultSet {
      * @since 1.4
      */
     void setByte(String parameterName, byte x) throws SQLException;
-
+ 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
    * to the given Java <code>short</code> value. The driver converts this to
@@ -708,7 +708,7 @@ public interface RowSet extends ResultSet {
    * @exception SQLException if a database access error occurs
    */
   void setDouble(int parameterIndex, double x) throws SQLException;
-
+ 
   /**
      * Sets the designated parameter to the given Java <code>double</code> value.
      * The driver converts this
@@ -724,7 +724,7 @@ public interface RowSet extends ResultSet {
      * @since 1.4
      */
     void setDouble(String parameterName, double x) throws SQLException;
-
+ 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
    * to the given <code>java.math.BigDeciaml</code> value.
@@ -756,7 +756,7 @@ public interface RowSet extends ResultSet {
 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * to the given Java <code>String</code> value. Before sending it to the
+   * to the given Java <code>String</code> value. Before sending it to the 
    * database, the driver converts this to an SQL <code>VARCHAR</code> or
    * <code>LONGVARCHAR</code> value, depending on the argument's size relative
    * to the driver's limits on <code>VARCHAR</code> values.
@@ -788,13 +788,13 @@ public interface RowSet extends ResultSet {
 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * to the given Java array of <code>byte</code> values. Before sending it to the
+   * to the given Java array of <code>byte</code> values. Before sending it to the 
    * database, the driver converts this to an SQL <code>VARBINARY</code> or
    * <code>LONGVARBINARY</code> value, depending on the argument's size relative
    * to the driver's limits on <code>VARBINARY</code> values.
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
-   * @param x the parameter value
+   * @param x the parameter value 
    * @exception SQLException if a database access error occurs
    */
   void setBytes(int parameterIndex, byte x[]) throws SQLException;
@@ -848,7 +848,7 @@ public interface RowSet extends ResultSet {
    * default <code>java.util.Calendar</code> to calculate it.
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
-   * @param x the parameter value
+   * @param x the parameter value 
    * @exception SQLException if a database access error occurs
    */
   void setTimestamp(int parameterIndex, java.sql.Timestamp x)
@@ -874,24 +874,24 @@ public interface RowSet extends ResultSet {
 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * to the given <code>java.io.InputStream</code> value.
+   * to the given <code>java.io.InputStream</code> value. 
    * It may be more practical to send a very large ASCII value via a
-   * <code>java.io.InputStream</code> rather than as a <code>LONGVARCHAR</code>
+   * <code>java.io.InputStream</code> rather than as a <code>LONGVARCHAR</code> 
    * parameter. The driver will read the data from the stream
-   * as needed until it reaches end-of-file.
-   *
+   * as needed until it reaches end-of-file.   
+   * 
    * <P><B>Note:</B> This stream object can either be a standard
    * Java stream object or your own subclass that implements the
    * standard interface.
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
    * @param x the Java input stream that contains the ASCII parameter value
-   * @param length the number of bytes in the stream
+   * @param length the number of bytes in the stream 
    * @exception SQLException if a database access error occurs
    */
   void setAsciiStream(int parameterIndex, java.io.InputStream x, int length)
     throws SQLException;
-
+ 
   /**
      * Sets the designated parameter to the given input stream, which will have
      * the specified number of bytes.
@@ -916,26 +916,26 @@ public interface RowSet extends ResultSet {
      */
     void setAsciiStream(String parameterName, java.io.InputStream x, int length)
         throws SQLException;
-
+ 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * to the given <code>java.io.InputStream</code> value.
+   * to the given <code>java.io.InputStream</code> value. 
    * It may be more practical to send a very large binary value via a
-   * <code>java.io.InputStream</code> rather than as a <code>LONGVARBINARY</code>
+   * <code>java.io.InputStream</code> rather than as a <code>LONGVARBINARY</code> 
    * parameter. The driver will read the data from the stream
-   * as needed until it reaches end-of-file.
-   *
+   * as needed until it reaches end-of-file.   
+   * 
    * <P><B>Note:</B> This stream object can either be a standard
    * Java stream object or your own subclass that implements the
    * standard interface.
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
    * @param x the java input stream which contains the binary parameter value
-   * @param length the number of bytes in the stream
+   * @param length the number of bytes in the stream 
    * @exception SQLException if a database access error occurs
    */
-  void setBinaryStream(int parameterIndex, java.io.InputStream x,
-                       int length) throws SQLException;
+  void setBinaryStream(int parameterIndex, java.io.InputStream x, 
+		       int length) throws SQLException;
 
   /**
      * Sets the designated parameter to the given input stream, which will have
@@ -963,12 +963,12 @@ public interface RowSet extends ResultSet {
 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * to the given <code>java.io.Reader</code> value.
+   * to the given <code>java.io.Reader</code> value. 
    * It may be more practical to send a very large UNICODE value via a
-   * <code>java.io.Reader</code> rather than as a <code>LONGVARCHAR</code>
+   * <code>java.io.Reader</code> rather than as a <code>LONGVARCHAR</code> 
    * parameter. The driver will read the data from the stream
-   * as needed until it reaches end-of-file.
-   *
+   * as needed until it reaches end-of-file.   
+   * 
    * <P><B>Note:</B> This stream object can either be a standard
    * Java stream object or your own subclass that implements the
    * standard interface.
@@ -976,13 +976,13 @@ public interface RowSet extends ResultSet {
    * @param parameterIndex the first parameter is 1, the second is 2, ...
    * @param reader the <code>Reader</code> object that contains the UNICODE data
    *        to be set
-   * @param length the number of characters in the stream
+   * @param length the number of characters in the stream 
    * @exception SQLException if a database access error occurs
    */
   void setCharacterStream(int parameterIndex,
-                          Reader reader,
-                          int length) throws SQLException;
-
+       			  Reader reader,
+  			  int length) throws SQLException;
+ 
   /**
      * Sets the designated parameter to the given <code>Reader</code>
      * object, which is the given number of characters long.
@@ -1009,9 +1009,9 @@ public interface RowSet extends ResultSet {
     void setCharacterStream(String parameterName,
                             java.io.Reader reader,
                             int length) throws SQLException;
-
+ 
   /**
-   * Sets the designated parameter in this <code>RowSet</code> object's command
+   * Sets the designated parameter in this <code>RowSet</code> object's command 
    * to the given input stream.
    * When a very large ASCII value is input to a <code>LONGVARCHAR</code>
    * parameter, it may be more practical to send it via a
@@ -1062,7 +1062,7 @@ public interface RowSet extends ResultSet {
             throws SQLException;
 
   /**
-   * Sets the designated parameter in this <code>RowSet</code> object's command
+   * Sets the designated parameter in this <code>RowSet</code> object's command 
    * to the given input stream.
    * When a very large binary value is input to a <code>LONGVARBINARY</code>
    * parameter, it may be more practical to send it via a
@@ -1084,7 +1084,7 @@ public interface RowSet extends ResultSet {
    * @since 1.6
    */
   void setBinaryStream(int parameterIndex, java.io.InputStream x)
-                       throws SQLException;
+                       throws SQLException; 
 
   /**
      * Sets the designated parameter to the given input stream.
@@ -1190,19 +1190,19 @@ public interface RowSet extends ResultSet {
    */
    void setNCharacterStream(int parameterIndex, Reader value) throws SQLException;
 
-
+   
 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * with the given Java <code>Object</code>.  For integral values, the
+   * with the given Java <code>Object</code>.  For integral values, the 
    * <code>java.lang</code> equivalent objects should be used (for example,
    * an instance of the class <code>Integer</code> for an <code>int</code>).
    *
-   * If the second argument is an <code>InputStream</code> then the stream must contain
+   * If the second argument is an <code>InputStream</code> then the stream must contain 
    * the number of bytes specified by scaleOrLength.  If the second argument is a
    * <code>Reader</code> then the reader must contain the number of characters specified    * by scaleOrLength. If these conditions are not true the driver will generate a
    * <code>SQLException</code> when the prepared statement is executed.
-   *
+   * 
    * <p>The given Java object will be converted to the targetSqlType
    * before being sent to the database.
    * <P>
@@ -1217,22 +1217,22 @@ public interface RowSet extends ResultSet {
    * <P>
    *
    * <p>Note that this method may be used to pass datatabase-specific
-   * abstract data types.
+   * abstract data types. 
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
    * @param x the object containing the input parameter value
-   * @param targetSqlType the SQL type (as defined in <code>java.sql.Types</code>)
+   * @param targetSqlType the SQL type (as defined in <code>java.sql.Types</code>) 
    *        to be sent to the database. The scale argument may further qualify this
    *        type.
    * @param scaleOrLength for <code>java.sql.Types.DECIMAL</code>
    *          or <code>java.sql.Types.NUMERIC types</code>,
    *          this is the number of digits after the decimal point. For
-   *          Java Object types <code>InputStream</code> and <code>Reader</code>,
+   *          Java Object types <code>InputStream</code> and <code>Reader</code>, 
    *          this is the length
    *          of the data in the stream or reader.  For all other types,
    *          this value will be ignored.
    * @exception SQLException if a database access error occurs
-   * @see java.sql.Types
+   * @see java.sql.Types 
    */
   void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength)
             throws SQLException;
@@ -1283,24 +1283,24 @@ public interface RowSet extends ResultSet {
 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * with a Java <code>Object</code>.  For integral values, the
+   * with a Java <code>Object</code>.  For integral values, the 
    * <code>java.lang</code> equivalent objects should be used.
    * This method is like <code>setObject</code> above, but the scale used is the scale
    * of the second parameter.  Scalar values have a scale of zero.  Literal
-   * values have the scale present in the literal.
+   * values have the scale present in the literal.  
    * <P>
    * Even though it is supported, it is not recommended that this method
    * be called with floating point input values.
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
    * @param x the object containing the input parameter value
-   * @param targetSqlType the SQL type (as defined in <code>java.sql.Types</code>)
+   * @param targetSqlType the SQL type (as defined in <code>java.sql.Types</code>) 
    *        to be sent to the database
    * @exception SQLException if a database access error occurs
    */
-  void setObject(int parameterIndex, Object x,
-                 int targetSqlType) throws SQLException;
-
+  void setObject(int parameterIndex, Object x, 
+		 int targetSqlType) throws SQLException;
+ 
   /**
      * Sets the value of the designated parameter with the given object.
      * This method is like the method <code>setObject</code>
@@ -1362,14 +1362,14 @@ public interface RowSet extends ResultSet {
      * @since 1.4
      */
     void setObject(String parameterName, Object x) throws SQLException;
-
+ 
   /**
    * Sets the designated parameter in this <code>RowSet</code> object's command
-   * with a Java <code>Object</code>.  For integral values, the
+   * with a Java <code>Object</code>.  For integral values, the 
    * <code>java.lang</code> equivalent objects should be used.
    *
    * <p>The JDBC specification provides a standard mapping from
-   * Java Object types to SQL types.  The driver will convert the
+   * Java Object types to SQL types.  The driver will convert the 
    * given Java object to its standard SQL mapping before sending it
    * to the database.
    *
@@ -1390,7 +1390,7 @@ public interface RowSet extends ResultSet {
    * object is of a class implementing more than one of these interfaces.
    *
    * @param parameterIndex The first parameter is 1, the second is 2, ...
-   * @param x The object containing the input parameter value
+   * @param x The object containing the input parameter value 
    * @exception SQLException if a database access error occurs
    */
   void setObject(int parameterIndex, Object x) throws SQLException;
@@ -1407,7 +1407,7 @@ public interface RowSet extends ResultSet {
    */
   void setRef (int i, Ref x) throws SQLException;
 
-  /**
+  /** 
    * Sets the designated parameter in this <code>RowSet</code> object's command
    * with the given  <code>Blob</code> value.  The driver will convert this
    * to the <code>BLOB</code> value that the <code>Blob</code> object
@@ -1541,7 +1541,7 @@ public interface RowSet extends ResultSet {
      void setBlob(String parameterName, InputStream inputStream)
         throws SQLException;
 
-  /**
+  /** 
    * Sets the designated parameter in this <code>RowSet</code> object's command
    * with the given  <code>Clob</code> value.  The driver will convert this
    * to the <code>CLOB</code> value that the <code>Clob</code> object
@@ -1552,7 +1552,7 @@ public interface RowSet extends ResultSet {
    * @exception SQLException if a database access error occurs
    */
   void setClob (int i, Clob x) throws SQLException;
-
+ 
   /**
      * Sets the designated parameter to a <code>Reader</code> object.  The reader must contain  the number
      * of characters specified by length otherwise a <code>SQLException</code> will be
@@ -1660,8 +1660,8 @@ public interface RowSet extends ResultSet {
      */
      void setClob(String parameterName, Reader reader)
        throws SQLException;
-
-  /**
+ 
+  /** 
    * Sets the designated parameter in this <code>RowSet</code> object's command
    * with the given  <code>Array</code> value.  The driver will convert this
    * to the <code>ARRAY</code> value that the <code>Array</code> object
@@ -1741,7 +1741,7 @@ public interface RowSet extends ResultSet {
    * @param cal the <code>java.util.Calendar</code> object to use for calculating the time
    * @exception SQLException if a database access error occurs
    */
-  void setTime(int parameterIndex, java.sql.Time x, Calendar cal)
+  void setTime(int parameterIndex, java.sql.Time x, Calendar cal) 
     throws SQLException;
 
   /**
@@ -1793,8 +1793,8 @@ public interface RowSet extends ResultSet {
    * database.
    *
    * @param parameterIndex the first parameter is 1, the second is 2, ...
-   * @param x the parameter value
-   * @param cal the <code>java.util.Calendar</code> object to use for calculating the
+   * @param x the parameter value 
+   * @param cal the <code>java.util.Calendar</code> object to use for calculating the 
    *        timestamp
    * @exception SQLException if a database access error occurs
    */
@@ -1842,26 +1842,26 @@ public interface RowSet extends ResultSet {
   //---------------------------------------------------------------------
 
   /**
-   * Fills this <code>RowSet</code> object with data.
+   * Fills this <code>RowSet</code> object with data.  
    * <P>
-   * The <code>execute</code> method may use the following properties
-   * to create a connection for reading data: url, data source name,
+   * The <code>execute</code> method may use the following properties 
+   * to create a connection for reading data: url, data source name, 
    * user name, password, transaction isolation, and type map.
-   *
-   * The <code>execute</code> method  may use the following properties
+   * 
+   * The <code>execute</code> method  may use the following properties 
    * to create a statement to execute a command:
-   * command, read only, maximum field size,
+   * command, read only, maximum field size, 
    * maximum rows, escape processing, and query timeout.
    * <P>
-   * If the required properties have not been set, an exception is
-   * thrown.  If this method is successful, the current contents of the rowset are
-   * discarded and the rowset's metadata is also (re)set.  If there are
-   * outstanding updates, they are ignored.
+   * If the required properties have not been set, an exception is 
+   * thrown.  If this method is successful, the current contents of the rowset are 
+   * discarded and the rowset's metadata is also (re)set.  If there are 
+   * outstanding updates, they are ignored.   
    * <P>
-   * If this <code>RowSet</code> object does not maintain a continuous connection
-   * with its source of data, it may use a reader (a <code>RowSetReader</code>
+   * If this <code>RowSet</code> object does not maintain a continuous connection 
+   * with its source of data, it may use a reader (a <code>RowSetReader</code> 
    * object) to fill itself with data.  In this case, a reader will have been
-   * registered with this <code>RowSet</code> object, and the method
+   * registered with this <code>RowSet</code> object, and the method 
    * <code>execute</code> will call on the reader's <code>readData</code>
    * method as part of its implementation.
    *
@@ -1906,8 +1906,8 @@ public interface RowSet extends ResultSet {
       * the <code>java.xml.transform.Result</code>,
       *  <code>Writer</code> or <code>OutputStream</code> has not been closed
       * for the <code>SQLXML</code> object  or
-      *  if there is an error processing the XML value.  The <code>getCause</code> method
-      *  of the exception may provide a more detailed exception, for example, if the
+      *  if there is an error processing the XML value.  The <code>getCause</code> method 
+      *  of the exception may provide a more detailed exception, for example, if the 
       *  stream does not contain valid XML.
       * @since 1.6
       */
@@ -1923,8 +1923,8 @@ public interface RowSet extends ResultSet {
      * the <code>java.xml.transform.Result</code>,
      *  <code>Writer</code> or <code>OutputStream</code> has not been closed
      * for the <code>SQLXML</code> object  or
-     *  if there is an error processing the XML value.  The <code>getCause</code> method
-     *  of the exception may provide a more detailed exception, for example, if the
+     *  if there is an error processing the XML value.  The <code>getCause</code> method 
+     *  of the exception may provide a more detailed exception, for example, if the 
      *  stream does not contain valid XML.
      * @since 1.6
      */
@@ -2140,7 +2140,7 @@ public interface RowSet extends ResultSet {
      * @since 1.6
      */
      void setNClob(int parameterIndex, NClob value) throws SQLException;
-
+    
     /**
      * Sets the designated parameter to a <code>Reader</code> object.
      * This method differs from the <code>setCharacterStream (int, Reader)</code> method
@@ -2184,3 +2184,12 @@ public interface RowSet extends ResultSet {
 
 
 }
+
+
+
+
+
+
+
+
+

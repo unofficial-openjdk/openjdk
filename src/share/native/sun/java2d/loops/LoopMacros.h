@@ -71,20 +71,20 @@
  * some of the blits below.
  */
 #define BlitLoopHeight(SRCTYPE, SRCPTR, SRCBASE, SRCINFO, \
-                       DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
-                       HEIGHT, BODY) \
+		       DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
+		       HEIGHT, BODY) \
     do { \
-        SRCTYPE ## DataType *SRCPTR = (SRCTYPE ## DataType *) (SRCBASE); \
-        DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
-        jint srcScan = (SRCINFO)->scanStride; \
-        jint dstScan = (DSTINFO)->scanStride; \
-        Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
-        do { \
-            BODY; \
-            SRCPTR = PtrAddBytes(SRCPTR, srcScan); \
-            DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
-            Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
-        } while (--HEIGHT > 0); \
+	SRCTYPE ## DataType *SRCPTR = (SRCTYPE ## DataType *) (SRCBASE); \
+	DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
+	jint srcScan = (SRCINFO)->scanStride; \
+	jint dstScan = (DSTINFO)->scanStride; \
+	Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
+	do { \
+	    BODY; \
+	    SRCPTR = PtrAddBytes(SRCPTR, srcScan); \
+	    DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
+	    Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
+	} while (--HEIGHT > 0); \
     } while (0)
 
 /*
@@ -92,29 +92,29 @@
  * used by most of the basic blits below.
  */
 #define BlitLoopWidthHeight(SRCTYPE, SRCPTR, SRCBASE, SRCINFO, \
-                            DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
-                            WIDTH, HEIGHT, BODY) \
+			    DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
+			    WIDTH, HEIGHT, BODY) \
     do { \
-        SRCTYPE ## DataType *SRCPTR = (SRCTYPE ## DataType *) (SRCBASE); \
-        DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
-        jint srcScan = (SRCINFO)->scanStride; \
-        jint dstScan = (DSTINFO)->scanStride; \
-        Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
-        srcScan -= (WIDTH) * SRCTYPE ## PixelStride; \
-        dstScan -= (WIDTH) * DSTTYPE ## PixelStride; \
-        do { \
-            juint w = WIDTH; \
-            Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
-            do { \
-                BODY; \
-                SRCPTR = PtrAddBytes(SRCPTR, SRCTYPE ## PixelStride); \
-                DSTPTR = PtrAddBytes(DSTPTR, DSTTYPE ## PixelStride); \
-                Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
-            } while (--w > 0); \
-            SRCPTR = PtrAddBytes(SRCPTR, srcScan); \
-            DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
-            Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
-        } while (--HEIGHT > 0); \
+	SRCTYPE ## DataType *SRCPTR = (SRCTYPE ## DataType *) (SRCBASE); \
+	DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
+	jint srcScan = (SRCINFO)->scanStride; \
+	jint dstScan = (DSTINFO)->scanStride; \
+	Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
+	srcScan -= (WIDTH) * SRCTYPE ## PixelStride; \
+	dstScan -= (WIDTH) * DSTTYPE ## PixelStride; \
+	do { \
+	    juint w = WIDTH; \
+	    Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
+	    do { \
+		BODY; \
+		SRCPTR = PtrAddBytes(SRCPTR, SRCTYPE ## PixelStride); \
+		DSTPTR = PtrAddBytes(DSTPTR, DSTTYPE ## PixelStride); \
+		Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
+	    } while (--w > 0); \
+	    SRCPTR = PtrAddBytes(SRCPTR, srcScan); \
+	    DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
+	    Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
+	} while (--HEIGHT > 0); \
     } while (0)
 
 /*
@@ -123,33 +123,33 @@
  * X source variable
  */
 #define BlitLoopScaleWidthHeight(SRCTYPE, SRCPTR, SRCBASE, SRCINFO, \
-                                 DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
-                                 XVAR, WIDTH, HEIGHT, \
-                                 SXLOC, SYLOC, SXINC, SYINC, SHIFT, \
-                                 BODY) \
+				 DSTTYPE, DSTPTR, DSTBASE, DSTINFO, DSTPREFIX, \
+				 XVAR, WIDTH, HEIGHT, \
+				 SXLOC, SYLOC, SXINC, SYINC, SHIFT, \
+				 BODY) \
     do { \
-        SRCTYPE ## DataType *SRCPTR; \
-        DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
-        jint srcScan = (SRCINFO)->scanStride; \
-        jint dstScan = (DSTINFO)->scanStride; \
-        Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
-        dstScan -= (WIDTH) * DSTTYPE ## PixelStride; \
-        do { \
-            juint w = WIDTH; \
-            jint tmpsxloc = SXLOC; \
-            SRCPTR = PtrAddBytes(SRCBASE, ((SYLOC >> SHIFT) * srcScan)); \
-            Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
-            do { \
-                jint XVAR = (tmpsxloc >> SHIFT); \
-                BODY; \
-                DSTPTR = PtrAddBytes(DSTPTR, DSTTYPE ## PixelStride); \
-                Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
-                tmpsxloc += SXINC; \
-            } while (--w > 0); \
-            DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
-            Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
-            SYLOC += SYINC; \
-        } while (--HEIGHT > 0); \
+	SRCTYPE ## DataType *SRCPTR; \
+	DSTTYPE ## DataType *DSTPTR = (DSTTYPE ## DataType *) (DSTBASE); \
+	jint srcScan = (SRCINFO)->scanStride; \
+	jint dstScan = (DSTINFO)->scanStride; \
+	Init ## DSTTYPE ## StoreVarsY(DSTPREFIX, DSTINFO); \
+	dstScan -= (WIDTH) * DSTTYPE ## PixelStride; \
+	do { \
+	    juint w = WIDTH; \
+	    jint tmpsxloc = SXLOC; \
+	    SRCPTR = PtrAddBytes(SRCBASE, ((SYLOC >> SHIFT) * srcScan)); \
+	    Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
+	    do { \
+		jint XVAR = (tmpsxloc >> SHIFT); \
+		BODY; \
+		DSTPTR = PtrAddBytes(DSTPTR, DSTTYPE ## PixelStride); \
+		Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
+		tmpsxloc += SXINC; \
+	    } while (--w > 0); \
+	    DSTPTR = PtrAddBytes(DSTPTR, dstScan); \
+	    Next ## DSTTYPE ## StoreVarsY(DSTPREFIX); \
+	    SYLOC += SYINC; \
+	} while (--HEIGHT > 0); \
     } while (0)
 
 /*
@@ -158,14 +158,14 @@
  * preprocessing loops below.
  */
 #define BlitLoopXRel(DSTTYPE, DSTINFO, DSTPREFIX, \
-                     XVAR, WIDTH, BODY) \
+		     XVAR, WIDTH, BODY) \
     do { \
-        juint XVAR = 0; \
-        Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
-        do { \
-            BODY; \
-            Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
-        } while (++XVAR < WIDTH); \
+	juint XVAR = 0; \
+	Init ## DSTTYPE ## StoreVarsX(DSTPREFIX, DSTINFO); \
+	do { \
+	    BODY; \
+	    Next ## DSTTYPE ## StoreVarsX(DSTPREFIX); \
+	} while (++XVAR < WIDTH); \
     } while (0)
 
 /*
@@ -174,12 +174,12 @@
  * via an intermediate "jint rgb" format.
  */
 #define ConvertVia1IntRgb(SRCPTR, SRCTYPE, SRCPREFIX, \
-                          DSTPTR, DSTTYPE, DSTPREFIX, \
-                          SXVAR, DXVAR) \
+		          DSTPTR, DSTTYPE, DSTPREFIX, \
+		          SXVAR, DXVAR) \
     do { \
-        int rgb; \
-        Load ## SRCTYPE ## To1IntRgb(SRCPTR, SRCPREFIX, SXVAR, rgb); \
-        Store ## DSTTYPE ## From1IntRgb(DSTPTR, DSTPREFIX, DXVAR, rgb); \
+	int rgb; \
+	Load ## SRCTYPE ## To1IntRgb(SRCPTR, SRCPREFIX, SXVAR, rgb); \
+	Store ## DSTTYPE ## From1IntRgb(DSTPTR, DSTPREFIX, DXVAR, rgb); \
     } while (0)
 
 /*
@@ -188,12 +188,12 @@
  * via an intermediate "jint argb" format.
  */
 #define ConvertVia1IntArgb(SRCPTR, SRCTYPE, SRCPREFIX, \
-                           DSTPTR, DSTTYPE, DSTPREFIX, \
-                           SXVAR, DXVAR) \
+		           DSTPTR, DSTTYPE, DSTPREFIX, \
+		           SXVAR, DXVAR) \
     do { \
-        int argb; \
-        Load ## SRCTYPE ## To1IntArgb(SRCPTR, SRCPREFIX, SXVAR, argb); \
-        Store ## DSTTYPE ## From1IntArgb(DSTPTR, DSTPREFIX, DXVAR, argb); \
+	int argb; \
+	Load ## SRCTYPE ## To1IntArgb(SRCPTR, SRCPREFIX, SXVAR, argb); \
+	Store ## DSTTYPE ## From1IntArgb(DSTPTR, DSTPREFIX, DXVAR, argb); \
     } while (0)
 
 /*
@@ -202,12 +202,12 @@
  * via an intermediate set of 3 component variables "jint r, g, b".
  */
 #define ConvertVia3ByteRgb(SRCPTR, SRCTYPE, SRCPREFIX, \
-                           DSTPTR, DSTTYPE, DSTPREFIX, \
-                           SXVAR, DXVAR) \
+			   DSTPTR, DSTTYPE, DSTPREFIX, \
+			   SXVAR, DXVAR) \
     do { \
-        jint r, g, b; \
-        Load ## SRCTYPE ## To3ByteRgb(SRCPTR, SRCPREFIX, SXVAR, r, g, b); \
-        Store ## DSTTYPE ## From3ByteRgb(DSTPTR, DSTPREFIX, DXVAR, r, g, b); \
+	jint r, g, b; \
+	Load ## SRCTYPE ## To3ByteRgb(SRCPTR, SRCPREFIX, SXVAR, r, g, b); \
+	Store ## DSTTYPE ## From3ByteRgb(DSTPTR, DSTPREFIX, DXVAR, r, g, b); \
     } while (0)
 
 /*
@@ -216,13 +216,13 @@
  * via an intermediate set of 4 component variables "jint a, r, g, b".
  */
 #define ConvertVia4ByteArgb(SRCPTR, SRCTYPE, SRCPREFIX, \
-                            DSTPTR, DSTTYPE, DSTPREFIX, \
-                            SXVAR, DXVAR) \
+			    DSTPTR, DSTTYPE, DSTPREFIX, \
+			    SXVAR, DXVAR) \
     do { \
-        jint a, r, g, b; \
-        Load ## SRCTYPE ## To4ByteArgb(SRCPTR, SRCPREFIX, SXVAR, a, r, g, b); \
-        Store ## DSTTYPE ## From4ByteArgb(DSTPTR, DSTPREFIX, DXVAR, \
-                                          a, r, g, b); \
+	jint a, r, g, b; \
+	Load ## SRCTYPE ## To4ByteArgb(SRCPTR, SRCPREFIX, SXVAR, a, r, g, b); \
+	Store ## DSTTYPE ## From4ByteArgb(DSTPTR, DSTPREFIX, DXVAR, \
+					  a, r, g, b); \
     } while (0)
 
 /*
@@ -231,12 +231,12 @@
  * via an intermediate "jint gray" format.
  */
 #define ConvertVia1ByteGray(SRCPTR, SRCTYPE, SRCPREFIX, \
-                            DSTPTR, DSTTYPE, DSTPREFIX, \
-                            SXVAR, DXVAR) \
+			    DSTPTR, DSTTYPE, DSTPREFIX, \
+			    SXVAR, DXVAR) \
     do { \
-        jint gray; \
-        Load ## SRCTYPE ## To1ByteGray(SRCPTR, SRCPREFIX, SXVAR, gray); \
-        Store ## DSTTYPE ## From1ByteGray(DSTPTR, DSTPREFIX, DXVAR, gray); \
+	jint gray; \
+	Load ## SRCTYPE ## To1ByteGray(SRCPTR, SRCPREFIX, SXVAR, gray); \
+	Store ## DSTTYPE ## From1ByteGray(DSTPTR, DSTPREFIX, DXVAR, gray); \
     } while (0)
 
 /*
@@ -245,16 +245,16 @@
  * via the specified intermediate format while testing for transparent pixels.
  */
 #define ConvertXparVia1IntRgb(SRCPTR, SRCTYPE, SRCPREFIX, \
-                              DSTPTR, DSTTYPE, DSTPREFIX, \
-                              SXVAR, DXVAR) \
+			      DSTPTR, DSTTYPE, DSTPREFIX, \
+			      SXVAR, DXVAR) \
     do { \
-        Declare ## SRCTYPE ## Data(XparLoad); \
-        Load ## SRCTYPE ## Data(SRCPTR, SRCPREFIX, SXVAR, XparLoad); \
-        if (! (Is ## SRCTYPE ## DataTransparent(XparLoad))) { \
-            int rgb; \
-            Convert ## SRCTYPE ## DataTo1IntRgb(XparLoad, rgb); \
-            Store ## DSTTYPE ## From1IntRgb(DSTPTR, DSTPREFIX, DXVAR, rgb); \
-        } \
+	Declare ## SRCTYPE ## Data(XparLoad); \
+	Load ## SRCTYPE ## Data(SRCPTR, SRCPREFIX, SXVAR, XparLoad); \
+	if (! (Is ## SRCTYPE ## DataTransparent(XparLoad))) { \
+	    int rgb; \
+	    Convert ## SRCTYPE ## DataTo1IntRgb(XparLoad, rgb); \
+	    Store ## DSTTYPE ## From1IntRgb(DSTPTR, DSTPREFIX, DXVAR, rgb); \
+	} \
     } while (0)
 
 /*
@@ -264,31 +264,31 @@
  * bgcolor for transparent pixels.
  */
 #define BgCopyXparVia1IntRgb(SRCPTR, SRCTYPE, SRCPREFIX, \
-                             DSTPTR, DSTTYPE, DSTPREFIX, \
-                             SXVAR, DXVAR, BGPIXEL, BGPREFIX) \
+			     DSTPTR, DSTTYPE, DSTPREFIX, \
+			     SXVAR, DXVAR, BGPIXEL, BGPREFIX) \
     do { \
-        Declare ## SRCTYPE ## Data(XparLoad); \
-        Load ## SRCTYPE ## Data(SRCPTR, SRCPREFIX, SXVAR, XparLoad); \
-        if (Is ## SRCTYPE ## DataTransparent(XparLoad)) { \
-            Store ## DSTTYPE ## PixelData(DSTPTR, DXVAR, BGPIXEL, BGPREFIX); \
-        } else { \
-            int rgb; \
-            Convert ## SRCTYPE ## DataTo1IntRgb(XparLoad, rgb); \
-            Store ## DSTTYPE ## From1IntRgb(DSTPTR, DSTPREFIX, DXVAR, rgb); \
-        } \
+	Declare ## SRCTYPE ## Data(XparLoad); \
+	Load ## SRCTYPE ## Data(SRCPTR, SRCPREFIX, SXVAR, XparLoad); \
+	if (Is ## SRCTYPE ## DataTransparent(XparLoad)) { \
+	    Store ## DSTTYPE ## PixelData(DSTPTR, DXVAR, BGPIXEL, BGPREFIX); \
+	} else { \
+	    int rgb; \
+	    Convert ## SRCTYPE ## DataTo1IntRgb(XparLoad, rgb); \
+	    Store ## DSTTYPE ## From1IntRgb(DSTPTR, DSTPREFIX, DXVAR, rgb); \
+	} \
     } while (0)
 
-/*
- * This macro determines whether or not the given pixel is considered
+/* 
+ * This macro determines whether or not the given pixel is considered 
  * "transparent" for XOR purposes.  The ARGB pixel is considered
  * "transparent" if the alpha value is < 0.5.
  */
 #define IsArgbTransparent(pixel) \
     (((jint) pixel) >= 0)
 
-/*
+/* 
  * This is a "conversion strategy" for use with the DEFINE_XOR_BLIT macro.  It
- * converts the source pixel to an intermediate ARGB value and then converts
+ * converts the source pixel to an intermediate ARGB value and then converts 
  * the ARGB value to the pixel representation for the destination surface.  It
  * then XORs the srcpixel, xorpixel, and destination pixel together and stores
  * the result in the destination surface.
@@ -354,28 +354,28 @@
 
 #define SetupPreProcessLutLut(SRC, DST, PIXLUT, SRCINFO, DSTINFO) \
     do { \
-        jint *srcLut = (SRCINFO)->lutBase; \
-        juint lutSize = (SRCINFO)->lutSize; \
-        Declare ## DST ## StoreVars(PreLut) \
-        Init ## DST ## StoreVarsY(PreLut, DSTINFO); \
-        if (lutSize >= LutSize(SRC)) { \
-            lutSize = LutSize(SRC); \
-        } else { \
-            DST ## PixelType *pPIXLUT = &PIXLUT[lutSize]; \
-            do { \
-                Store ## DST ## From1IntArgb(pPIXLUT, PreLut, 0, 0); \
-            } while (++pPIXLUT < &PIXLUT[LutSize(SRC)]); \
-        } \
-        BlitLoopXRel(DST, DSTINFO, PreLut, x, lutSize, \
-                     do { \
-                         jint argb = srcLut[x]; \
-                         Store ## DST ## From1IntArgb(PIXLUT, PreLut, x, argb); \
-                     } while (0)); \
+	jint *srcLut = (SRCINFO)->lutBase; \
+	juint lutSize = (SRCINFO)->lutSize; \
+	Declare ## DST ## StoreVars(PreLut) \
+	Init ## DST ## StoreVarsY(PreLut, DSTINFO); \
+	if (lutSize >= LutSize(SRC)) { \
+	    lutSize = LutSize(SRC); \
+	} else { \
+	    DST ## PixelType *pPIXLUT = &PIXLUT[lutSize]; \
+	    do { \
+		Store ## DST ## From1IntArgb(pPIXLUT, PreLut, 0, 0); \
+	    } while (++pPIXLUT < &PIXLUT[LutSize(SRC)]); \
+	} \
+	BlitLoopXRel(DST, DSTINFO, PreLut, x, lutSize, \
+		     do { \
+		         jint argb = srcLut[x]; \
+		         Store ## DST ## From1IntArgb(PIXLUT, PreLut, x, argb); \
+		     } while (0)); \
     } while (0)
 
 #define BodyPreProcessLutLut(SRCPTR, SRCTYPE, PIXLUT, \
-                             DSTPTR, DSTTYPE, DSTPREFIX, \
-                             SXVAR, DXVAR) \
+			     DSTPTR, DSTTYPE, DSTPREFIX, \
+			     SXVAR, DXVAR) \
     DSTPTR[DXVAR] = PIXLUT[SRCPTR[SXVAR]]
 
 /*
@@ -392,8 +392,8 @@
     Init ## SRC ## LoadVars(PIXLUT, SRCINFO)
 
 #define BodyConvertOnTheFlyLut(SRCPTR, SRCTYPE, PIXLUT, \
-                               DSTPTR, DSTTYPE, DSTPREFIX, \
-                               SXVAR, DXVAR) \
+			       DSTPTR, DSTTYPE, DSTPREFIX, \
+			       SXVAR, DXVAR) \
     ConvertVia1IntArgb(SRCPTR, SRCTYPE, PIXLUT, \
                        DSTPTR, DSTTYPE, DSTPREFIX, \
                        SXVAR, DXVAR)
@@ -410,38 +410,38 @@
 
 #define SetupPreProcessLutXparLut(SRC, DST, PIXLUT, SRCINFO, DSTINFO) \
     do { \
-        jint *srcLut = (SRCINFO)->lutBase; \
-        juint lutSize = (SRCINFO)->lutSize; \
-        Declare ## DST ## StoreVars(PreLut) \
-        Init ## DST ## StoreVarsY(PreLut, DSTINFO); \
-        if (lutSize >= LutSize(SRC)) { \
-            lutSize = LutSize(SRC); \
-        } else { \
-            jint *pPIXLUT = &PIXLUT[lutSize]; \
-            do { \
-                pPIXLUT[0] = DST ## XparLutEntry; \
-            } while (++pPIXLUT < &PIXLUT[LutSize(SRC)]); \
-        } \
-        BlitLoopXRel(DST, DSTINFO, PreLut, x, lutSize, \
-                     do { \
-                         jint argb = srcLut[x]; \
-                         if (argb < 0) { \
-                             Store ## DST ## NonXparFromArgb \
-                                 (PIXLUT, PreLut, x, argb); \
-                         } else { \
-                             PIXLUT[x] = DST ## XparLutEntry; \
-                         } \
-                     } while (0)); \
+	jint *srcLut = (SRCINFO)->lutBase; \
+	juint lutSize = (SRCINFO)->lutSize; \
+	Declare ## DST ## StoreVars(PreLut) \
+	Init ## DST ## StoreVarsY(PreLut, DSTINFO); \
+	if (lutSize >= LutSize(SRC)) { \
+	    lutSize = LutSize(SRC); \
+	} else { \
+	    jint *pPIXLUT = &PIXLUT[lutSize]; \
+	    do { \
+		pPIXLUT[0] = DST ## XparLutEntry; \
+	    } while (++pPIXLUT < &PIXLUT[LutSize(SRC)]); \
+	} \
+	BlitLoopXRel(DST, DSTINFO, PreLut, x, lutSize, \
+		     do { \
+			 jint argb = srcLut[x]; \
+			 if (argb < 0) { \
+			     Store ## DST ## NonXparFromArgb \
+				 (PIXLUT, PreLut, x, argb); \
+			 } else { \
+			     PIXLUT[x] = DST ## XparLutEntry; \
+			 } \
+		     } while (0)); \
     } while (0)
 
 #define BodyPreProcessLutXparLut(SRCPTR, SRCTYPE, PIXLUT, \
-                                 DSTPTR, DSTTYPE, DSTPREFIX, \
-                                 SXVAR, DXVAR) \
+				 DSTPTR, DSTTYPE, DSTPREFIX, \
+				 SXVAR, DXVAR) \
     do { \
-        jint pix = PIXLUT[SRCPTR[SXVAR]]; \
-        if (! DSTTYPE ## IsXparLutEntry(pix)) { \
-            DSTPTR[DXVAR] = (DSTTYPE ## PixelType) pix; \
-        } \
+	jint pix = PIXLUT[SRCPTR[SXVAR]]; \
+	if (! DSTTYPE ## IsXparLutEntry(pix)) { \
+	    DSTPTR[DXVAR] = (DSTTYPE ## PixelType) pix; \
+	} \
     } while (0)
 
 /*
@@ -458,14 +458,14 @@
     Init ## SRC ## LoadVars(PIXLUT, SRCINFO)
 
 #define BodyConvertOnTheFlyXparLut(SRCPTR, SRCTYPE, PIXLUT, \
-                                   DSTPTR, DSTTYPE, DSTPREFIX, \
-                                   SXVAR, DXVAR) \
+			           DSTPTR, DSTTYPE, DSTPREFIX, \
+				   SXVAR, DXVAR) \
     do { \
         jint argb; \
         Load ## SRCTYPE ## To1IntArgb(SRCPTR, PIXLUT, SXVAR, argb); \
-        if (argb < 0) { \
-            Store ## DSTTYPE ## From1IntArgb(DSTPTR, DSTPREFIX, DXVAR, argb); \
-        } \
+	if (argb < 0) { \
+	    Store ## DSTTYPE ## From1IntArgb(DSTPTR, DSTPREFIX, DXVAR, argb); \
+	} \
     } while (0)
 
 /*
@@ -480,36 +480,36 @@
 
 #define SetupPreProcessLutBgLut(SRC, DST, PIXLUT, SRCINFO, DSTINFO, BGPIXEL) \
     do { \
-        jint *srcLut = (SRCINFO)->lutBase; \
-        juint lutSize = (SRCINFO)->lutSize; \
-        Declare ## DST ## StoreVars(PreLut) \
-        Init ## DST ## StoreVarsY(PreLut, DSTINFO); \
-        if (lutSize >= LutSize(SRC)) { \
-            lutSize = LutSize(SRC); \
-        } else { \
-            jint *pPIXLUT = &PIXLUT[lutSize]; \
-            do { \
-                pPIXLUT[0] = BGPIXEL; \
-            } while (++pPIXLUT < &PIXLUT[LutSize(SRC)]); \
-        } \
-        BlitLoopXRel(DST, DSTINFO, PreLut, x, lutSize, \
-                     do { \
-                         jint argb = srcLut[x]; \
-                         if (argb < 0) { \
-                             Store ## DST ## From1IntArgb(PIXLUT, PreLut, \
+	jint *srcLut = (SRCINFO)->lutBase; \
+	juint lutSize = (SRCINFO)->lutSize; \
+	Declare ## DST ## StoreVars(PreLut) \
+	Init ## DST ## StoreVarsY(PreLut, DSTINFO); \
+	if (lutSize >= LutSize(SRC)) { \
+	    lutSize = LutSize(SRC); \
+	} else { \
+	    jint *pPIXLUT = &PIXLUT[lutSize]; \
+	    do { \
+		pPIXLUT[0] = BGPIXEL; \
+	    } while (++pPIXLUT < &PIXLUT[LutSize(SRC)]); \
+	} \
+	BlitLoopXRel(DST, DSTINFO, PreLut, x, lutSize, \
+		     do { \
+		         jint argb = srcLut[x]; \
+		         if (argb < 0) { \
+		             Store ## DST ## From1IntArgb(PIXLUT, PreLut, \
                                                           x, argb); \
-                         } else { \
-                             PIXLUT[x] = BGPIXEL; \
-                         } \
-                     } while (0)); \
+		         } else { \
+			     PIXLUT[x] = BGPIXEL; \
+			 } \
+		     } while (0)); \
     } while (0)
 
 #define BodyPreProcessLutBgLut(SRCPTR, SRCTYPE, PIXLUT, \
-                               DSTPTR, DSTTYPE, DSTPREFIX, \
-                               SXVAR, DXVAR, BGPIXEL) \
+			       DSTPTR, DSTTYPE, DSTPREFIX, \
+			       SXVAR, DXVAR, BGPIXEL) \
     do { \
-        jint pix = PIXLUT[SRCPTR[SXVAR]]; \
-        Store ## DSTTYPE ## Pixel(DSTPTR, DXVAR, pix); \
+	jint pix = PIXLUT[SRCPTR[SXVAR]]; \
+	Store ## DSTTYPE ## Pixel(DSTPTR, DXVAR, pix); \
     } while (0)
 
 /*
@@ -526,20 +526,20 @@
 #define SetupConvertOnTheFlyBgLut(SRC, DST, PIXLUT, SRCINFO, DSTINFO, BGPIXEL) \
     do { \
         Init ## SRC ## LoadVars(PIXLUT, SRCINFO); \
-        Extract ## DST ## PixelData(BGPIXEL, bgpix); \
+	Extract ## DST ## PixelData(BGPIXEL, bgpix); \
     } while (0)
 
 #define BodyConvertOnTheFlyBgLut(SRCPTR, SRCTYPE, PIXLUT, \
-                                 DSTPTR, DSTTYPE, DSTPREFIX, \
-                                 SXVAR, DXVAR, BGPIXEL) \
+			         DSTPTR, DSTTYPE, DSTPREFIX, \
+			         SXVAR, DXVAR, BGPIXEL) \
     do { \
         jint argb; \
         Load ## SRCTYPE ## To1IntArgb(SRCPTR, PIXLUT, SXVAR, argb); \
-        if (argb < 0) { \
-            Store ## DSTTYPE ## From1IntArgb(DSTPTR, DSTPREFIX, DXVAR, argb); \
-        } else { \
-            Store ## DSTTYPE ## PixelData(DSTPTR, DXVAR, BGPIXEL, bgpix); \
-        } \
+	if (argb < 0) { \
+	    Store ## DSTTYPE ## From1IntArgb(DSTPTR, DSTPREFIX, DXVAR, argb); \
+	} else { \
+	    Store ## DSTTYPE ## PixelData(DSTPTR, DXVAR, BGPIXEL, bgpix); \
+	} \
     } while (0)
 
 /*
@@ -551,45 +551,45 @@
  * various types of native primitive inner loop functions.
  * The names are mechanically constructed from the SurfaceType names.
  */
-#define NAME_CONVERT_BLIT(SRC, DST)      SRC ## To ## DST ## Convert
+#define NAME_CONVERT_BLIT(SRC, DST)	 SRC ## To ## DST ## Convert
 
-#define NAME_SCALE_BLIT(SRC, DST)        SRC ## To ## DST ## ScaleConvert
+#define NAME_SCALE_BLIT(SRC, DST)	 SRC ## To ## DST ## ScaleConvert
 
 #define NAME_XPAR_CONVERT_BLIT(SRC, DST) SRC ## To ## DST ## XparOver
 
-#define NAME_XPAR_SCALE_BLIT(SRC, DST)   SRC ## To ## DST ## ScaleXparOver
+#define NAME_XPAR_SCALE_BLIT(SRC, DST)	 SRC ## To ## DST ## ScaleXparOver
 
-#define NAME_XPAR_BLITBG(SRC, DST)       SRC ## To ## DST ## XparBgCopy
+#define NAME_XPAR_BLITBG(SRC, DST)	 SRC ## To ## DST ## XparBgCopy
 
 #define NAME_XOR_BLIT(SRC, DST)          SRC ## To ## DST ## XorBlit
 
-#define NAME_ISOCOPY_BLIT(ANYTYPE)       ANYTYPE ## IsomorphicCopy
+#define NAME_ISOCOPY_BLIT(ANYTYPE)	 ANYTYPE ## IsomorphicCopy
 
-#define NAME_ISOSCALE_BLIT(ANYTYPE)      ANYTYPE ## IsomorphicScaleCopy
+#define NAME_ISOSCALE_BLIT(ANYTYPE)	 ANYTYPE ## IsomorphicScaleCopy
 
-#define NAME_ISOXOR_BLIT(ANYTYPE)        ANYTYPE ## IsomorphicXorCopy
+#define NAME_ISOXOR_BLIT(ANYTYPE)	 ANYTYPE ## IsomorphicXorCopy
 
-#define NAME_SOLID_FILLRECT(TYPE)        TYPE ## SetRect
+#define NAME_SOLID_FILLRECT(TYPE)	 TYPE ## SetRect
 
-#define NAME_SOLID_FILLSPANS(TYPE)       TYPE ## SetSpans
+#define NAME_SOLID_FILLSPANS(TYPE)	 TYPE ## SetSpans
 
-#define NAME_SOLID_DRAWLINE(TYPE)        TYPE ## SetLine
+#define NAME_SOLID_DRAWLINE(TYPE)	 TYPE ## SetLine
 
 #define NAME_XOR_FILLRECT(TYPE)          TYPE ## XorRect
 
 #define NAME_XOR_FILLSPANS(TYPE)         TYPE ## XorSpans
 
-#define NAME_XOR_DRAWLINE(TYPE)          TYPE ## XorLine
+#define NAME_XOR_DRAWLINE(TYPE)	         TYPE ## XorLine
 
-#define NAME_SRC_MASKFILL(TYPE)          TYPE ## SrcMaskFill
+#define NAME_SRC_MASKFILL(TYPE)		 TYPE ## SrcMaskFill
 
-#define NAME_SRCOVER_MASKFILL(TYPE)      TYPE ## SrcOverMaskFill
+#define NAME_SRCOVER_MASKFILL(TYPE)	 TYPE ## SrcOverMaskFill
 
-#define NAME_ALPHA_MASKFILL(TYPE)        TYPE ## AlphaMaskFill
+#define NAME_ALPHA_MASKFILL(TYPE)	 TYPE ## AlphaMaskFill
 
-#define NAME_SRCOVER_MASKBLIT(SRC, DST)  SRC ## To ## DST ## SrcOverMaskBlit
+#define NAME_SRCOVER_MASKBLIT(SRC, DST)	 SRC ## To ## DST ## SrcOverMaskBlit
 
-#define NAME_ALPHA_MASKBLIT(SRC, DST)    SRC ## To ## DST ## AlphaMaskBlit
+#define NAME_ALPHA_MASKBLIT(SRC, DST)	 SRC ## To ## DST ## AlphaMaskBlit
 
 #define NAME_SOLID_DRAWGLYPHLIST(TYPE)   TYPE ## DrawGlyphList
 
@@ -699,7 +699,7 @@
 
 #define REGISTER_CONVERT_BLIT_FLAGS(SRC, DST, SFLAGS, DFLAGS) \
     REGISTER_BLIT_FLAGS(SRC, SrcNoEa, DST, NAME_CONVERT_BLIT(SRC, DST), \
-                        SFLAGS, DFLAGS)
+			SFLAGS, DFLAGS)
 
 #define REGISTER_CONVERT_BLIT_EQUIV(SRC, DST, FUNC) \
     REGISTER_BLIT(SRC, SrcNoEa, DST, FUNC)
@@ -709,7 +709,7 @@
 
 #define REGISTER_SCALE_BLIT_FLAGS(SRC, DST, SFLAGS, DFLAGS) \
     REGISTER_SCALEBLIT_FLAGS(SRC, SrcNoEa, DST, NAME_SCALE_BLIT(SRC, DST), \
-                             SFLAGS, DFLAGS)
+			     SFLAGS, DFLAGS)
 
 #define REGISTER_SCALE_BLIT_EQUIV(SRC, DST, FUNC) \
     REGISTER_SCALEBLIT(SRC, SrcNoEa, DST, FUNC)
@@ -752,7 +752,7 @@
 
 #define REGISTER_SOLID_LINE_PRIMITIVES(TYPE) \
     REGISTER_LINE_PRIMITIVES(AnyColor, SrcNoEa, TYPE, \
-                             NAME_SOLID_DRAWLINE(TYPE))
+			     NAME_SOLID_DRAWLINE(TYPE))
 
 #define REGISTER_XOR_FILLRECT(TYPE) \
     REGISTER_FILLRECT(AnyColor, Xor, TYPE, NAME_XOR_FILLRECT(TYPE))
@@ -795,10 +795,10 @@
                            NAME_XOR_DRAWGLYPHLIST(TYPE)), \
     REGISTER_DRAWGLYPHLISTAA(AnyColor, Xor, TYPE, \
                              NAME_XOR_DRAWGLYPHLIST(TYPE))
-
+    
 #define REGISTER_TRANSFORMHELPER_FUNCS(TYPE) \
     REGISTER_PRIMITIVE(TransformHelper, TYPE, SrcNoEa, IntArgbPre, \
-                       (AnyFunc *) &NAME_TRANSFORMHELPER_FUNCS(TYPE))
+		       (AnyFunc *) &NAME_TRANSFORMHELPER_FUNCS(TYPE))
 
 /*
  * This macro defines an entire function to implement a Blit inner loop
@@ -806,17 +806,17 @@
  */
 #define DEFINE_ISOCOPY_BLIT(ANYTYPE) \
 void NAME_ISOCOPY_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
-                                juint width, juint height, \
-                                SurfaceDataRasInfo *pSrcInfo, \
-                                SurfaceDataRasInfo *pDstInfo, \
-                                NativePrimitive *pPrim, \
-                                CompositeInfo *pCompInfo) \
+				juint width, juint height, \
+				SurfaceDataRasInfo *pSrcInfo, \
+				SurfaceDataRasInfo *pDstInfo, \
+				NativePrimitive *pPrim, \
+				CompositeInfo *pCompInfo) \
 { \
     Declare ## ANYTYPE ## StoreVars(DstWrite) \
     BlitLoopHeight(ANYTYPE, pSrc, srcBase, pSrcInfo, \
-                   ANYTYPE, pDst, dstBase, pDstInfo, DstWrite, \
-                   height, \
-                   memcpy(pDst, pSrc, width * ANYTYPE ## PixelStride)); \
+		   ANYTYPE, pDst, dstBase, pDstInfo, DstWrite, \
+		   height, \
+	           memcpy(pDst, pSrc, width * ANYTYPE ## PixelStride)); \
 }
 
 /*
@@ -825,20 +825,20 @@ void NAME_ISOCOPY_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_ISOSCALE_BLIT(ANYTYPE) \
 void NAME_ISOSCALE_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
-                                 juint width, juint height, \
-                                 jint sxloc, jint syloc, \
-                                 jint sxinc, jint syinc, jint shift, \
-                                 SurfaceDataRasInfo *pSrcInfo, \
-                                 SurfaceDataRasInfo *pDstInfo, \
-                                 NativePrimitive *pPrim, \
-                                 CompositeInfo *pCompInfo) \
+				 juint width, juint height, \
+				 jint sxloc, jint syloc, \
+				 jint sxinc, jint syinc, jint shift, \
+				 SurfaceDataRasInfo *pSrcInfo, \
+				 SurfaceDataRasInfo *pDstInfo, \
+				 NativePrimitive *pPrim, \
+				 CompositeInfo *pCompInfo) \
 { \
     Declare ## ANYTYPE ## StoreVars(DstWrite) \
     BlitLoopScaleWidthHeight(ANYTYPE, pSrc, srcBase, pSrcInfo, \
-                             ANYTYPE, pDst, dstBase, pDstInfo, DstWrite, \
-                             x, width, height, \
-                             sxloc, syloc, sxinc, syinc, shift, \
-                             Copy ## ANYTYPE ## PixelData(pSrc, x, pDst, 0)); \
+			     ANYTYPE, pDst, dstBase, pDstInfo, DstWrite, \
+			     x, width, height, \
+			     sxloc, syloc, sxinc, syinc, shift, \
+			     Copy ## ANYTYPE ## PixelData(pSrc, x, pDst, 0)); \
 }
 
 /*
@@ -847,11 +847,11 @@ void NAME_ISOSCALE_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_ISOXOR_BLIT(ANYTYPE) \
 void NAME_ISOXOR_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
-                               juint width, juint height, \
-                               SurfaceDataRasInfo *pSrcInfo, \
-                               SurfaceDataRasInfo *pDstInfo, \
-                               NativePrimitive *pPrim, \
-                               CompositeInfo *pCompInfo) \
+			       juint width, juint height, \
+			       SurfaceDataRasInfo *pSrcInfo, \
+			       SurfaceDataRasInfo *pDstInfo, \
+			       NativePrimitive *pPrim, \
+			       CompositeInfo *pCompInfo) \
 { \
     jint xorpixel = pCompInfo->details.xorPixel; \
     Declare ## ANYTYPE ## PixelData(xor) \
@@ -860,9 +860,9 @@ void NAME_ISOXOR_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
     Extract ## ANYTYPE ## PixelData(xorpixel, xor); \
  \
     BlitLoopWidthHeight(ANYTYPE, pSrc, srcBase, pSrcInfo, \
-                        ANYTYPE, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
-                        XorCopy ## ANYTYPE ## PixelData(pSrc, pDst, 0, \
+		        ANYTYPE, pDst, dstBase, pDstInfo, DstWrite, \
+		        width, height, \
+		        XorCopy ## ANYTYPE ## PixelData(pSrc, pDst, 0, \
                                                         xorpixel, xor)); \
 }
 
@@ -873,20 +873,20 @@ void NAME_ISOXOR_BLIT(ANYTYPE)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_CONVERT_BLIT(SRC, DST, STRATEGY) \
 void NAME_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                                 juint width, juint height, \
-                                 SurfaceDataRasInfo *pSrcInfo, \
-                                 SurfaceDataRasInfo *pDstInfo, \
-                                 NativePrimitive *pPrim, \
-                                 CompositeInfo *pCompInfo) \
+				 juint width, juint height, \
+				 SurfaceDataRasInfo *pSrcInfo, \
+				 SurfaceDataRasInfo *pDstInfo, \
+				 NativePrimitive *pPrim, \
+				 CompositeInfo *pCompInfo) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     Declare ## DST ## StoreVars(DstWrite) \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
-                        ConvertVia ## STRATEGY(pSrc, SRC, SrcRead, \
+		        DST, pDst, dstBase, pDstInfo, DstWrite, \
+		        width, height, \
+		        ConvertVia ## STRATEGY(pSrc, SRC, SrcRead, \
                                                pDst, DST, DstWrite, \
                                                0, 0)); \
 }
@@ -898,11 +898,11 @@ void NAME_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_CONVERT_BLIT_LUT(SRC, DST, LUT_STRATEGY) \
 void NAME_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                                 juint width, juint height, \
-                                 SurfaceDataRasInfo *pSrcInfo, \
-                                 SurfaceDataRasInfo *pDstInfo, \
-                                 NativePrimitive *pPrim, \
-                                 CompositeInfo *pCompInfo) \
+				 juint width, juint height, \
+				 SurfaceDataRasInfo *pSrcInfo, \
+				 SurfaceDataRasInfo *pDstInfo, \
+				 NativePrimitive *pPrim, \
+				 CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## StoreVars(DstWrite) \
     Declare ## LUT_STRATEGY ## Lut(SRC, DST, pixLut) \
@@ -910,12 +910,12 @@ void NAME_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
     Setup ## LUT_STRATEGY ## Lut(SRC, DST, pixLut,\
                                  pSrcInfo, pDstInfo); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
+		        DST, pDst, dstBase, pDstInfo, DstWrite, \
+		        width, height, \
                         Body ## LUT_STRATEGY ## Lut(pSrc, SRC, \
                                                     pixLut, \
-                                                    pDst, DST, \
-                                                    DstWrite, 0, 0));\
+						    pDst, DST, \
+						    DstWrite, 0, 0));\
 }
 #define DEFINE_CONVERT_BLIT_LUT8(SRC, DST, LUT_STRATEGY) \
     DEFINE_CONVERT_BLIT_LUT(SRC, DST, LUT_STRATEGY)
@@ -927,25 +927,25 @@ void NAME_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_SCALE_BLIT(SRC, DST, STRATEGY) \
 void NAME_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                               juint width, juint height, \
-                               jint sxloc, jint syloc, \
-                               jint sxinc, jint syinc, jint shift, \
-                               SurfaceDataRasInfo *pSrcInfo, \
-                               SurfaceDataRasInfo *pDstInfo, \
-                               NativePrimitive *pPrim, \
-                               CompositeInfo *pCompInfo) \
+			       juint width, juint height, \
+			       jint sxloc, jint syloc, \
+			       jint sxinc, jint syinc, jint shift, \
+			       SurfaceDataRasInfo *pSrcInfo, \
+			       SurfaceDataRasInfo *pDstInfo, \
+			       NativePrimitive *pPrim, \
+			       CompositeInfo *pCompInfo) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     Declare ## DST ## StoreVars(DstWrite) \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BlitLoopScaleWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                             DST, pDst, dstBase, pDstInfo, DstWrite, \
-                             x, width, height, \
-                             sxloc, syloc, sxinc, syinc, shift, \
-                             ConvertVia ## STRATEGY(pSrc, SRC, SrcRead, \
-                                                    pDst, DST, DstWrite, \
-                                                    x, 0)); \
+			     DST, pDst, dstBase, pDstInfo, DstWrite, \
+			     x, width, height, \
+			     sxloc, syloc, sxinc, syinc, shift, \
+			     ConvertVia ## STRATEGY(pSrc, SRC, SrcRead, \
+						    pDst, DST, DstWrite, \
+						    x, 0)); \
 }
 
 /*
@@ -956,25 +956,25 @@ void NAME_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_SCALE_BLIT_LUT(SRC, DST, LUT_STRATEGY) \
 void NAME_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                               juint width, juint height, \
-                               jint sxloc, jint syloc, \
-                               jint sxinc, jint syinc, jint shift, \
-                               SurfaceDataRasInfo *pSrcInfo, \
-                               SurfaceDataRasInfo *pDstInfo, \
-                               NativePrimitive *pPrim, \
-                               CompositeInfo *pCompInfo) \
+			       juint width, juint height, \
+			       jint sxloc, jint syloc, \
+			       jint sxinc, jint syinc, jint shift, \
+			       SurfaceDataRasInfo *pSrcInfo, \
+			       SurfaceDataRasInfo *pDstInfo, \
+			       NativePrimitive *pPrim, \
+			       CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## StoreVars(DstWrite) \
     Declare ## LUT_STRATEGY ## Lut(SRC, DST, pixLut) \
  \
     Setup ## LUT_STRATEGY ## Lut(SRC, DST, pixLut, pSrcInfo, pDstInfo); \
     BlitLoopScaleWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                             DST, pDst, dstBase, pDstInfo, DstWrite, \
-                             x, width, height, \
-                             sxloc, syloc, sxinc, syinc, shift, \
+			     DST, pDst, dstBase, pDstInfo, DstWrite, \
+			     x, width, height, \
+			     sxloc, syloc, sxinc, syinc, shift, \
                              Body ## LUT_STRATEGY ## Lut(pSrc, SRC, pixLut, \
-                                                         pDst, DST, \
-                                                         DstWrite, x, 0));\
+							 pDst, DST, \
+							 DstWrite, x, 0));\
 }
 #define DEFINE_SCALE_BLIT_LUT8(SRC, DST, LUT_STRATEGY) \
     DEFINE_SCALE_BLIT_LUT(SRC, DST, LUT_STRATEGY)
@@ -988,22 +988,22 @@ void NAME_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_XPAR_CONVERT_BLIT(SRC, DST, STRATEGY) \
 void NAME_XPAR_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                                      juint width, juint height, \
-                                      SurfaceDataRasInfo *pSrcInfo, \
-                                      SurfaceDataRasInfo *pDstInfo, \
-                                      NativePrimitive *pPrim, \
-                                      CompositeInfo *pCompInfo) \
+				      juint width, juint height, \
+				      SurfaceDataRasInfo *pSrcInfo, \
+				      SurfaceDataRasInfo *pDstInfo, \
+				      NativePrimitive *pPrim, \
+				      CompositeInfo *pCompInfo) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     Declare ## DST ## StoreVars(DstWrite) \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
-                        ConvertXparVia ## STRATEGY(pSrc, SRC, SrcRead, \
-                                                   pDst, DST, DstWrite, \
-                                                   0, 0)); \
+			DST, pDst, dstBase, pDstInfo, DstWrite, \
+			width, height, \
+			ConvertXparVia ## STRATEGY(pSrc, SRC, SrcRead, \
+						   pDst, DST, DstWrite, \
+						   0, 0)); \
 }
 
 /*
@@ -1015,22 +1015,22 @@ void NAME_XPAR_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_XPAR_CONVERT_BLIT_LUT(SRC, DST, LUT_STRATEGY) \
 void NAME_XPAR_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                                      juint width, juint height, \
-                                      SurfaceDataRasInfo *pSrcInfo, \
-                                      SurfaceDataRasInfo *pDstInfo, \
-                                      NativePrimitive *pPrim, \
-                                      CompositeInfo *pCompInfo) \
+				      juint width, juint height, \
+				      SurfaceDataRasInfo *pSrcInfo, \
+				      SurfaceDataRasInfo *pDstInfo, \
+				      NativePrimitive *pPrim, \
+				      CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## StoreVars(DstWrite) \
     Declare ## LUT_STRATEGY ## XparLut(SRC, DST, pixLut) \
  \
     Setup ## LUT_STRATEGY ## XparLut(SRC, DST, pixLut, pSrcInfo, pDstInfo); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
+			DST, pDst, dstBase, pDstInfo, DstWrite, \
+			width, height, \
                         Body ## LUT_STRATEGY ## XparLut(pSrc, SRC, pixLut, \
-                                                        pDst, DST, \
-                                                        DstWrite, 0, 0)); \
+							pDst, DST, \
+							DstWrite, 0, 0)); \
 }
 #define DEFINE_XPAR_CONVERT_BLIT_LUT8(SRC, DST, LUT_STRATEGY) \
     DEFINE_XPAR_CONVERT_BLIT_LUT(SRC, DST, LUT_STRATEGY)
@@ -1045,26 +1045,26 @@ void NAME_XPAR_CONVERT_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_XPAR_SCALE_BLIT_LUT(SRC, DST, LUT_STRATEGY) \
 void NAME_XPAR_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                                    juint width, juint height, \
-                                    jint sxloc, jint syloc, \
-                                    jint sxinc, jint syinc, jint shift, \
-                                    SurfaceDataRasInfo *pSrcInfo, \
-                                    SurfaceDataRasInfo *pDstInfo, \
-                                    NativePrimitive *pPrim, \
-                                    CompositeInfo *pCompInfo) \
+				    juint width, juint height, \
+				    jint sxloc, jint syloc, \
+				    jint sxinc, jint syinc, jint shift, \
+				    SurfaceDataRasInfo *pSrcInfo, \
+				    SurfaceDataRasInfo *pDstInfo, \
+				    NativePrimitive *pPrim, \
+				    CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## StoreVars(DstWrite) \
     Declare ## LUT_STRATEGY ## XparLut(SRC, DST, pixLut) \
  \
     Setup ## LUT_STRATEGY ## XparLut(SRC, DST, pixLut, pSrcInfo, pDstInfo); \
     BlitLoopScaleWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                             DST, pDst, dstBase, pDstInfo, DstWrite, \
-                             x, width, height, \
-                             sxloc, syloc, sxinc, syinc, shift, \
+			     DST, pDst, dstBase, pDstInfo, DstWrite, \
+			     x, width, height, \
+			     sxloc, syloc, sxinc, syinc, shift, \
                              Body ## LUT_STRATEGY ## XparLut(pSrc, SRC, pixLut, \
-                                                             pDst, DST, \
-                                                             DstWrite, \
-                                                             x, 0)); \
+							     pDst, DST, \
+							     DstWrite, \
+							     x, 0)); \
 }
 #define DEFINE_XPAR_SCALE_BLIT_LUT8(SRC, DST, LUT_STRATEGY) \
     DEFINE_XPAR_SCALE_BLIT_LUT(SRC, DST, LUT_STRATEGY)
@@ -1079,25 +1079,25 @@ void NAME_XPAR_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_XPAR_SCALE_BLIT(SRC, DST, STRATEGY) \
 void NAME_XPAR_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
-                               juint width, juint height, \
-                               jint sxloc, jint syloc, \
-                               jint sxinc, jint syinc, jint shift, \
-                               SurfaceDataRasInfo *pSrcInfo, \
-                               SurfaceDataRasInfo *pDstInfo, \
-                               NativePrimitive *pPrim, \
-                               CompositeInfo *pCompInfo) \
+			       juint width, juint height, \
+			       jint sxloc, jint syloc, \
+			       jint sxinc, jint syinc, jint shift, \
+			       SurfaceDataRasInfo *pSrcInfo, \
+			       SurfaceDataRasInfo *pDstInfo, \
+			       NativePrimitive *pPrim, \
+			       CompositeInfo *pCompInfo) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     Declare ## DST ## StoreVars(DstWrite) \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BlitLoopScaleWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                             DST, pDst, dstBase, pDstInfo, DstWrite, \
-                             x, width, height, \
-                             sxloc, syloc, sxinc, syinc, shift, \
-                             ConvertXparVia ## STRATEGY(pSrc, SRC, SrcRead, \
-                                                        pDst, DST, DstWrite, \
-                                                        x, 0)); \
+			     DST, pDst, dstBase, pDstInfo, DstWrite, \
+			     x, width, height, \
+			     sxloc, syloc, sxinc, syinc, shift, \
+			     ConvertXparVia ## STRATEGY(pSrc, SRC, SrcRead, \
+						        pDst, DST, DstWrite, \
+						        x, 0)); \
 }
 
 /*
@@ -1110,12 +1110,12 @@ void NAME_XPAR_SCALE_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_XPAR_BLITBG(SRC, DST, STRATEGY) \
 void NAME_XPAR_BLITBG(SRC, DST)(void *srcBase, void *dstBase, \
-                                juint width, juint height, \
-                                jint bgpixel, \
-                                SurfaceDataRasInfo *pSrcInfo, \
-                                SurfaceDataRasInfo *pDstInfo, \
-                                NativePrimitive *pPrim, \
-                                CompositeInfo *pCompInfo) \
+				juint width, juint height, \
+				jint bgpixel, \
+				SurfaceDataRasInfo *pSrcInfo, \
+				SurfaceDataRasInfo *pDstInfo, \
+				NativePrimitive *pPrim, \
+				CompositeInfo *pCompInfo) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     Declare ## DST ## StoreVars(DstWrite) \
@@ -1123,11 +1123,11 @@ void NAME_XPAR_BLITBG(SRC, DST)(void *srcBase, void *dstBase, \
  \
     Extract ## DST ## PixelData(bgpixel, bgdata); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
-                        BgCopyXparVia ## STRATEGY(pSrc, SRC, SrcRead, \
-                                                  pDst, DST, DstWrite, \
-                                                  0, 0, bgpixel, bgdata)); \
+		        DST, pDst, dstBase, pDstInfo, DstWrite, \
+		        width, height, \
+			BgCopyXparVia ## STRATEGY(pSrc, SRC, SrcRead, \
+						  pDst, DST, DstWrite, \
+						  0, 0, bgpixel, bgdata)); \
 }
 
 /*
@@ -1140,25 +1140,25 @@ void NAME_XPAR_BLITBG(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_XPAR_BLITBG_LUT(SRC, DST, LUT_STRATEGY) \
 void NAME_XPAR_BLITBG(SRC, DST)(void *srcBase, void *dstBase, \
-                                juint width, juint height, \
-                                jint bgpixel, \
-                                SurfaceDataRasInfo *pSrcInfo, \
-                                SurfaceDataRasInfo *pDstInfo, \
-                                NativePrimitive *pPrim, \
-                                CompositeInfo *pCompInfo) \
+				juint width, juint height, \
+				jint bgpixel, \
+				SurfaceDataRasInfo *pSrcInfo, \
+				SurfaceDataRasInfo *pDstInfo, \
+				NativePrimitive *pPrim, \
+				CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## StoreVars(DstWrite) \
     Declare ## LUT_STRATEGY ## BgLut(SRC, DST, pixLut) \
  \
     Setup ## LUT_STRATEGY ## BgLut(SRC, DST, pixLut, pSrcInfo, pDstInfo, \
-                                   bgpixel); \
+				   bgpixel); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
+		        DST, pDst, dstBase, pDstInfo, DstWrite, \
+		        width, height, \
                         Body ## LUT_STRATEGY ## BgLut(pSrc, SRC, pixLut, \
-                                                      pDst, DST, \
-                                                      DstWrite, 0, 0, \
-                                                      bgpixel)); \
+						      pDst, DST, \
+						      DstWrite, 0, 0, \
+						      bgpixel)); \
 }
 #define DEFINE_XPAR_BLITBG_LUT8(SRC, DST, LUT_STRATEGY) \
     DEFINE_XPAR_BLITBG_LUT(SRC, DST, LUT_STRATEGY)
@@ -1167,7 +1167,7 @@ void NAME_XPAR_BLITBG(SRC, DST)(void *srcBase, void *dstBase, \
  * This macro defines an entire function to implement a Blit inner loop
  * for converting pixels from a buffer of one type into a buffer of
  * another type.  Each source pixel is XORed with the current XOR color value.
- * That result is then XORed with the destination pixel and the final
+ * That result is then XORed with the destination pixel and the final 
  * result is stored in the destination surface.
  */
 #define DEFINE_XOR_BLIT(SRC, DST, DSTANYTYPE) \
@@ -1190,11 +1190,11 @@ void NAME_XOR_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     BlitLoopWidthHeight(SRC, pSrc, srcBase, pSrcInfo, \
-                        DST, pDst, dstBase, pDstInfo, DstWrite, \
-                        width, height, \
-                        XorVia1IntArgb(pSrc, SRC, SrcRead, \
-                                       pDst, DST, DSTANYTYPE, \
-                                       0, xorpixel, xor, \
+			DST, pDst, dstBase, pDstInfo, DstWrite, \
+			width, height, \
+			XorVia1IntArgb(pSrc, SRC, SrcRead, \
+			               pDst, DST, DSTANYTYPE, \
+			               0, xorpixel, xor, \
                                        alphamask, mask, pDstInfo)); \
 }
 
@@ -1205,10 +1205,10 @@ void NAME_XOR_BLIT(SRC, DST)(void *srcBase, void *dstBase, \
  */
 #define DEFINE_SOLID_FILLRECT(DST) \
 void NAME_SOLID_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
-                              jint lox, jint loy, \
-                              jint hix, jint hiy, \
-                              jint pixel, \
-                              NativePrimitive *pPrim, \
+			      jint lox, jint loy, \
+			      jint hix, jint hiy, \
+			      jint pixel, \
+			      NativePrimitive *pPrim, \
                               CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## PixelData(pix) \
@@ -1220,11 +1220,11 @@ void NAME_SOLID_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
     pPix = PtrCoord(pRasInfo->rasBase, lox, DST ## PixelStride, loy, scan); \
     Extract ## DST ## PixelData(pixel, pix); \
     do { \
-        juint x = 0; \
-        do { \
-            Store ## DST ## PixelData(pPix, x, pixel, pix); \
-        } while (++x < width); \
-        pPix = PtrAddBytes(pPix, scan); \
+	juint x = 0; \
+	do { \
+	    Store ## DST ## PixelData(pPix, x, pixel, pix); \
+	} while (++x < width); \
+	pPix = PtrAddBytes(pPix, scan); \
     } while (--height > 0); \
 }
 
@@ -1236,8 +1236,8 @@ void NAME_SOLID_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
  */
 #define DEFINE_SOLID_FILLSPANS(DST) \
 void NAME_SOLID_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
-                               SpanIteratorFuncs *pSpanFuncs, void *siData, \
-                               jint pixel, NativePrimitive *pPrim, \
+			       SpanIteratorFuncs *pSpanFuncs, void *siData, \
+			       jint pixel, NativePrimitive *pPrim, \
                                CompositeInfo *pCompInfo) \
 { \
     void *pBase = pRasInfo->rasBase; \
@@ -1247,24 +1247,24 @@ void NAME_SOLID_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
  \
     Extract ## DST ## PixelData(pixel, pix); \
     while ((*pSpanFuncs->nextSpan)(siData, bbox)) { \
-        jint x = bbox[0]; \
-        jint y = bbox[1]; \
-        juint w = bbox[2] - x; \
-        juint h = bbox[3] - y; \
-        DST ## DataType *pPix = PtrCoord(pBase, \
-                                         x, DST ## PixelStride, \
-                                         y, scan); \
-        do { \
-            juint relx; \
-            for (relx = 0; relx < w; relx++) { \
-                Store ## DST ## PixelData(pPix, relx, pixel, pix); \
-            } \
-            pPix = PtrAddBytes(pPix, scan); \
-        } while (--h > 0); \
+	jint x = bbox[0]; \
+	jint y = bbox[1]; \
+	juint w = bbox[2] - x; \
+	juint h = bbox[3] - y; \
+	DST ## DataType *pPix = PtrCoord(pBase, \
+					 x, DST ## PixelStride, \
+					 y, scan); \
+	do { \
+	    juint relx; \
+	    for (relx = 0; relx < w; relx++) { \
+		Store ## DST ## PixelData(pPix, relx, pixel, pix); \
+	    } \
+	    pPix = PtrAddBytes(pPix, scan); \
+	} while (--h > 0); \
     } \
 }
 
-/*
+/* 
  * This macro declares the bumpmajor and bumpminor variables used for the
  * DrawLine functions.
  */
@@ -1277,7 +1277,7 @@ void NAME_SOLID_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
  * and bumpminor masks are laid out in the following format:
  *
  * bumpmajormask:                      bumpminormask:
- * bit0: bumpmajor = pixelStride       bit0: bumpminor = pixelStride
+ * bit0: bumpmajor = pixelStride       bit0: bumpminor = pixelStride 
  * bit1: bumpmajor = -pixelStride      bit1: bumpminor = -pixelStride
  * bit2: bumpmajor = scanStride        bit2: bumpminor = scanStride
  * bit3: bumpmajor = -scanStride       bit3: bumpminor = -scanStride
@@ -1304,39 +1304,39 @@ void NAME_SOLID_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
  */
 #define DEFINE_SOLID_DRAWLINE(DST) \
 void NAME_SOLID_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
-                              jint x1, jint y1, jint pixel, \
-                              jint steps, jint error, \
-                              jint bumpmajormask, jint errmajor, \
-                              jint bumpminormask, jint errminor, \
-                              NativePrimitive *pPrim, \
+			      jint x1, jint y1, jint pixel, \
+			      jint steps, jint error, \
+			      jint bumpmajormask, jint errmajor, \
+			      jint bumpminormask, jint errminor, \
+			      NativePrimitive *pPrim, \
                               CompositeInfo *pCompInfo) \
 { \
     Declare ## DST ## PixelData(pix) \
     jint scan = pRasInfo->scanStride; \
     DST ## DataType *pPix = PtrCoord(pRasInfo->rasBase, \
-                                     x1, DST ## PixelStride, \
-                                     y1, scan); \
+				     x1, DST ## PixelStride, \
+				     y1, scan); \
     DeclareBumps(bumpmajor, bumpminor) \
  \
     InitBumps(bumpmajor, bumpminor, bumpmajormask, bumpminormask, \
               DST ## PixelStride, scan); \
     Extract ## DST ## PixelData(pixel, pix); \
     if (errmajor == 0) { \
-        do { \
-            Store ## DST ## PixelData(pPix, 0, pixel, pix); \
-            pPix = PtrAddBytes(pPix, bumpmajor); \
-        } while (--steps > 0); \
+	do { \
+	    Store ## DST ## PixelData(pPix, 0, pixel, pix); \
+	    pPix = PtrAddBytes(pPix, bumpmajor); \
+	} while (--steps > 0); \
     } else { \
-        do { \
-            Store ## DST ## PixelData(pPix, 0, pixel, pix); \
-            if (error < 0) { \
-                pPix = PtrAddBytes(pPix, bumpmajor); \
-                error += errmajor; \
-            } else { \
-                pPix = PtrAddBytes(pPix, bumpminor); \
-                error -= errminor; \
-            } \
-        } while (--steps > 0); \
+	do { \
+	    Store ## DST ## PixelData(pPix, 0, pixel, pix); \
+	    if (error < 0) { \
+		pPix = PtrAddBytes(pPix, bumpmajor); \
+		error += errmajor; \
+	    } else { \
+		pPix = PtrAddBytes(pPix, bumpminor); \
+		error -= errminor; \
+	    } \
+	} while (--steps > 0); \
     } \
 }
 
@@ -1348,9 +1348,9 @@ void NAME_SOLID_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
  */
 #define DEFINE_XOR_FILLRECT(DST) \
 void NAME_XOR_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
-                            jint lox, jint loy, \
-                            jint hix, jint hiy, \
-                            jint pixel, \
+			    jint lox, jint loy, \
+			    jint hix, jint hiy, \
+			    jint pixel, \
                             NativePrimitive *pPrim, \
                             CompositeInfo *pCompInfo) \
 { \
@@ -1370,24 +1370,24 @@ void NAME_XOR_FILLRECT(DST)(SurfaceDataRasInfo *pRasInfo, \
     Extract ## DST ## PixelData(alphamask, mask); \
  \
     do { \
-        juint x = 0; \
-        do { \
+	juint x = 0; \
+	do { \
             Xor ## DST ## PixelData(pixel, pix, pPix, x, \
                                     xorpixel, xor, alphamask, mask); \
-        } while (++x < width); \
-        pPix = PtrAddBytes(pPix, scan); \
+	} while (++x < width); \
+	pPix = PtrAddBytes(pPix, scan); \
     } while (--height > 0); \
 }
 
 /*
  * This macro defines an entire function to implement a FillSpans inner loop
  * for iterating through a list of spans and setting those regions of pixels
- * to a specific pixel value.  Each destination pixel is XORed with the
+ * to a specific pixel value.  Each destination pixel is XORed with the 
  * current XOR mode color as well as the current fill color.
  */
 #define DEFINE_XOR_FILLSPANS(DST) \
 void NAME_XOR_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
-                             SpanIteratorFuncs *pSpanFuncs, \
+			     SpanIteratorFuncs *pSpanFuncs, \
                              void *siData, jint pixel, \
                              NativePrimitive *pPrim, \
                              CompositeInfo *pCompInfo) \
@@ -1406,37 +1406,37 @@ void NAME_XOR_FILLSPANS(DST)(SurfaceDataRasInfo *pRasInfo, \
     Extract ## DST ## PixelData(alphamask, mask); \
  \
     while ((*pSpanFuncs->nextSpan)(siData, bbox)) { \
-        jint x = bbox[0]; \
-        jint y = bbox[1]; \
-        juint w = bbox[2] - x; \
-        juint h = bbox[3] - y; \
-        DST ## DataType *pPix = PtrCoord(pBase, \
-                                         x, DST ## PixelStride, \
-                                         y, scan); \
-        do { \
-            juint relx; \
-            for (relx = 0; relx < w; relx++) { \
+	jint x = bbox[0]; \
+	jint y = bbox[1]; \
+	juint w = bbox[2] - x; \
+	juint h = bbox[3] - y; \
+	DST ## DataType *pPix = PtrCoord(pBase, \
+					 x, DST ## PixelStride, \
+					 y, scan); \
+	do { \
+	    juint relx; \
+	    for (relx = 0; relx < w; relx++) { \
                 Xor ## DST ## PixelData(pixel, pix, pPix, relx, \
                                         xorpixel, xor, alphamask, mask); \
-            } \
-            pPix = PtrAddBytes(pPix, scan); \
-        } while (--h > 0); \
+	    } \
+	    pPix = PtrAddBytes(pPix, scan); \
+	} while (--h > 0); \
     } \
 }
 
 /*
  * This macro defines an entire function to implement a DrawLine inner loop
  * for iterating along a horizontal or vertical line and setting the pixels
- * on that line to a specific pixel value.  Each destination pixel is XORed
+ * on that line to a specific pixel value.  Each destination pixel is XORed 
  * with the current XOR mode color as well as the current draw color.
  */
 #define DEFINE_XOR_DRAWLINE(DST) \
 void NAME_XOR_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
-                            jint x1, jint y1, jint pixel, \
-                            jint steps, jint error, \
-                            jint bumpmajormask, jint errmajor, \
-                            jint bumpminormask, jint errminor, \
-                            NativePrimitive *pPrim, \
+			    jint x1, jint y1, jint pixel, \
+			    jint steps, jint error, \
+			    jint bumpmajormask, jint errmajor, \
+			    jint bumpminormask, jint errminor, \
+			    NativePrimitive *pPrim, \
                             CompositeInfo *pCompInfo) \
 { \
     jint xorpixel = pCompInfo->details.xorPixel; \
@@ -1446,8 +1446,8 @@ void NAME_XOR_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
     Declare ## DST ## PixelData(mask) \
     jint scan = pRasInfo->scanStride; \
     DST ## DataType *pPix = PtrCoord(pRasInfo->rasBase, \
-                                     x1, DST ## PixelStride, \
-                                     y1, scan); \
+				     x1, DST ## PixelStride, \
+				     y1, scan); \
     DeclareBumps(bumpmajor, bumpminor) \
  \
     InitBumps(bumpmajor, bumpminor, bumpmajormask, bumpminormask, \
@@ -1457,23 +1457,23 @@ void NAME_XOR_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
     Extract ## DST ## PixelData(alphamask, mask); \
  \
     if (errmajor == 0) { \
-        do { \
+	do { \
             Xor ## DST ## PixelData(pixel, pix, pPix, 0, \
                                     xorpixel, xor, alphamask, mask); \
-            pPix = PtrAddBytes(pPix, bumpmajor); \
-        } while (--steps > 0); \
+	    pPix = PtrAddBytes(pPix, bumpmajor); \
+	} while (--steps > 0); \
     } else { \
-        do { \
+	do { \
             Xor ## DST ## PixelData(pixel, pix, pPix, 0, \
                                     xorpixel, xor, alphamask, mask); \
-            if (error < 0) { \
-                pPix = PtrAddBytes(pPix, bumpmajor); \
-                error += errmajor; \
-            } else { \
-                pPix = PtrAddBytes(pPix, bumpminor); \
-                error -= errminor; \
-            } \
-        } while (--steps > 0); \
+	    if (error < 0) { \
+		pPix = PtrAddBytes(pPix, bumpmajor); \
+		error += errmajor; \
+	    } else { \
+		pPix = PtrAddBytes(pPix, bumpminor); \
+		error -= errminor; \
+	    } \
+	} while (--steps > 0); \
     } \
 }
 
@@ -1489,13 +1489,13 @@ void NAME_XOR_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
     int WIDTH, HEIGHT; \
     int RIGHT, BOTTOM;
 
-/*
- * This macro represents the glyph clipping code used in the various
+/* 
+ * This macro represents the glyph clipping code used in the various 
  * DRAWGLYPHLIST macros.  This macro is typically used within a loop.  Note
- * that the body of this macro is NOT wrapped in a do..while block due to
+ * that the body of this macro is NOT wrapped in a do..while block due to 
  * the use of continue statements within the block (those continue statements
  * are intended skip the outer loop, not the do..while loop).  To combat this
- * problem, pass in the code (typically a continue statement) that should be
+ * problem, pass in the code (typically a continue statement) that should be 
  * executed when a null glyph is encountered.
  */
 #define ClipDrawGlyphList(DST, PIXELS, BYTESPERPIXEL, ROWBYTES, WIDTH, HEIGHT,\
@@ -1539,7 +1539,7 @@ void NAME_XOR_DRAWLINE(DST)(SurfaceDataRasInfo *pRasInfo, \
 #define DEFINE_SOLID_DRAWGLYPHLIST(DST) \
 void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
                                    ImageRef *glyphs, \
-                                   jint totalGlyphs, jint fgpixel, \
+			           jint totalGlyphs, jint fgpixel, \
                                    jint argbcolor, \
                                    jint clipLeft, jint clipTop, \
                                    jint clipRight, jint clipBottom, \
@@ -1564,7 +1564,7 @@ void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
         do { \
             int x = 0; \
             do { \
-                if (pixels[x]) { \
+	        if (pixels[x]) { \
                     Store ## DST ## PixelData(pPix, x, fgpixel, pix); \
                 } \
             } while (++x < width); \
@@ -1572,7 +1572,7 @@ void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
             pixels += rowBytes; \
         } while (--height > 0); \
     } \
-}
+} 
 
 #define GlyphListAABlend3ByteRgb(DST, GLYPH_PIXELS, PIXEL_INDEX, DST_PTR, \
                                  FG_PIXEL, PREFIX, SRC_PREFIX) \
@@ -1666,7 +1666,7 @@ void NAME_SOLID_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
 #define DEFINE_SOLID_DRAWGLYPHLISTAA(DST, STRATEGY) \
 void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
                                      ImageRef *glyphs, \
-                                     jint totalGlyphs, jint fgpixel, \
+			             jint totalGlyphs, jint fgpixel, \
                                      jint argbcolor, \
                                      jint clipLeft, jint clipTop, \
                                      jint clipRight, jint clipBottom, \
@@ -1719,7 +1719,7 @@ void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
                                   FG_PIXEL, PREFIX, SRC_PREFIX) \
    do { \
         DeclareCompVarsFor3ByteRgb(dst) \
-        jint mixValSrcG = GLYPH_PIXELS[PIXEL_INDEX*3+1]; \
+	jint mixValSrcG = GLYPH_PIXELS[PIXEL_INDEX*3+1]; \
         jint mixValSrcR, mixValSrcB; \
         if (rgbOrder) { \
             mixValSrcR = GLYPH_PIXELS[PIXEL_INDEX*3]; \
@@ -1728,28 +1728,28 @@ void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
             mixValSrcR = GLYPH_PIXELS[PIXEL_INDEX*3+2]; \
             mixValSrcB = GLYPH_PIXELS[PIXEL_INDEX*3]; \
         } \
-        if ((mixValSrcR | mixValSrcG | mixValSrcB) != 0) { \
+	if ((mixValSrcR | mixValSrcG | mixValSrcB) != 0) { \
             if ((mixValSrcR & mixValSrcG & mixValSrcB) < 255) { \
-                jint mixValDstR = 255 - mixValSrcR; \
-                jint mixValDstG = 255 - mixValSrcG; \
-                jint mixValDstB = 255 - mixValSrcB; \
-                Load ## DST ## To3ByteRgb(DST_PTR, pix, PIXEL_INDEX, \
+		jint mixValDstR = 255 - mixValSrcR; \
+		jint mixValDstG = 255 - mixValSrcG; \
+		jint mixValDstB = 255 - mixValSrcB; \
+		Load ## DST ## To3ByteRgb(DST_PTR, pix, PIXEL_INDEX, \
                                           dstR, dstG, dstB); \
                 dstR = invGammaLut[dstR]; \
                 dstG = invGammaLut[dstG]; \
                 dstB = invGammaLut[dstB]; \
-                MultMultAddAndStoreLCD3ByteRgbComps(dst, mixValDst, dst, \
+		MultMultAddAndStoreLCD3ByteRgbComps(dst, mixValDst, dst, \
                                                     mixValSrc, SRC_PREFIX); \
                 dstR = gammaLut[dstR]; \
                 dstG = gammaLut[dstG]; \
                 dstB = gammaLut[dstB]; \
-                Store ## DST ## From3ByteRgb(DST_PTR, pix, PIXEL_INDEX, \
+		Store ## DST ## From3ByteRgb(DST_PTR, pix, PIXEL_INDEX, \
                                              dstR, dstG, dstB); \
             } else { \
-                Store ## DST ## PixelData(DST_PTR, PIXEL_INDEX, \
+		Store ## DST ## PixelData(DST_PTR, PIXEL_INDEX, \
                                           FG_PIXEL, PREFIX); \
             } \
-        } \
+	} \
     } while (0)
 
 
@@ -1764,7 +1764,7 @@ void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
    do { \
         DeclareAlphaVarFor4ByteArgb(dstA) \
         DeclareCompVarsFor4ByteArgb(dst) \
-        jint mixValSrcG = GLYPH_PIXELS[PIXEL_INDEX*3+1]; \
+	jint mixValSrcG = GLYPH_PIXELS[PIXEL_INDEX*3+1]; \
         jint mixValSrcR, mixValSrcB; \
         if (rgbOrder) { \
             mixValSrcR = GLYPH_PIXELS[PIXEL_INDEX*3]; \
@@ -1775,9 +1775,9 @@ void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
         } \
         if ((mixValSrcR | mixValSrcG | mixValSrcB) != 0) { \
             if ((mixValSrcR & mixValSrcG & mixValSrcB) < 255) { \
-                jint mixValDstR = 255 - mixValSrcR; \
-                jint mixValDstG = 255 - mixValSrcG; \
-                jint mixValDstB = 255 - mixValSrcB; \
+		jint mixValDstR = 255 - mixValSrcR; \
+		jint mixValDstG = 255 - mixValSrcG; \
+		jint mixValDstB = 255 - mixValSrcB; \
                 jint mixValSrcA = ((mixValSrcR + mixValSrcG + mixValSrcB) \
                                     * 21931) >> 16;\
                 jint mixValDstA = 255 - mixValSrcA; \
@@ -1805,13 +1805,13 @@ void NAME_SOLID_DRAWGLYPHLISTAA(DST)(SurfaceDataRasInfo *pRasInfo, \
 #define DEFINE_SOLID_DRAWGLYPHLISTLCD(DST, STRATEGY) \
 void NAME_SOLID_DRAWGLYPHLISTLCD(DST)(SurfaceDataRasInfo *pRasInfo, \
                                      ImageRef *glyphs, \
-                                     jint totalGlyphs, jint fgpixel, \
+			             jint totalGlyphs, jint fgpixel, \
                                      jint argbcolor, \
                                      jint clipLeft, jint clipTop, \
                                      jint clipRight, jint clipBottom, \
                                      jint rgbOrder, \
                                      unsigned char *gammaLut, \
-                                     unsigned char * invGammaLut, \
+				     unsigned char * invGammaLut, \
                                      NativePrimitive *pPrim, \
                                      CompositeInfo *pCompInfo) \
 { \
@@ -1837,7 +1837,7 @@ void NAME_SOLID_DRAWGLYPHLISTLCD(DST)(SurfaceDataRasInfo *pRasInfo, \
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) { \
         DeclareDrawGlyphListClipVars(pixels, rowBytes, width, height, \
                                      left, top, right, bottom) \
-        bpp = \
+	bpp = \
         (glyphs[glyphCounter].rowBytes == glyphs[glyphCounter].width) ? 1 : 3;\
         ClipDrawGlyphList(DST, pixels, bpp, rowBytes, width, height, \
                           left, top, right, bottom, \
@@ -1876,7 +1876,7 @@ void NAME_SOLID_DRAWGLYPHLISTLCD(DST)(SurfaceDataRasInfo *pRasInfo, \
 #define DEFINE_XOR_DRAWGLYPHLIST(DST) \
 void NAME_XOR_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
                                  ImageRef *glyphs, \
-                                 jint totalGlyphs, jint fgpixel, \
+			         jint totalGlyphs, jint fgpixel, \
                                  jint argbcolor, \
                                  jint clipLeft, jint clipTop, \
                                  jint clipRight, jint clipBottom, \
@@ -1907,7 +1907,7 @@ void NAME_XOR_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
         do { \
             int x = 0; \
             do { \
-                if (pixels[x]) { \
+	        if (pixels[x]) { \
                     Xor ## DST ## PixelData(fgpixel, pix, pPix, x, \
                                             xorpixel, xor, alphamask, mask); \
                 } \
@@ -1920,9 +1920,9 @@ void NAME_XOR_DRAWGLYPHLIST(DST)(SurfaceDataRasInfo *pRasInfo, \
 
 #define DEFINE_TRANSFORMHELPER_NN(SRC) \
 void NAME_TRANSFORMHELPER_NN(SRC)(SurfaceDataRasInfo *pSrcInfo, \
-                                  jint *pRGB, jint numpix, \
-                                  jlong xlong, jlong dxlong, \
-                                  jlong ylong, jlong dylong) \
+				  jint *pRGB, jint numpix, \
+				  jlong xlong, jlong dxlong, \
+				  jlong ylong, jlong dylong) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     SRC ## DataType *pBase = pSrcInfo->rasBase; \
@@ -1934,20 +1934,20 @@ void NAME_TRANSFORMHELPER_NN(SRC)(SurfaceDataRasInfo *pSrcInfo, \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     while (pRGB < pEnd) { \
-        SRC ## DataType *pRow = PtrAddBytes(pBase, WholeOfLong(ylong) * scan); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 0, \
-                                    SrcRead, pRow, WholeOfLong(xlong)); \
-        pRGB++; \
-        xlong += dxlong; \
-        ylong += dylong; \
+	SRC ## DataType *pRow = PtrAddBytes(pBase, WholeOfLong(ylong) * scan); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 0, \
+				    SrcRead, pRow, WholeOfLong(xlong)); \
+	pRGB++; \
+	xlong += dxlong; \
+	ylong += dylong; \
     } \
 }
 
 #define DEFINE_TRANSFORMHELPER_BL(SRC) \
 void NAME_TRANSFORMHELPER_BL(SRC)(SurfaceDataRasInfo *pSrcInfo, \
-                                  jint *pRGB, jint numpix, \
-                                  jlong xlong, jlong dxlong, \
-                                  jlong ylong, jlong dylong) \
+				  jint *pRGB, jint numpix, \
+				  jlong xlong, jlong dxlong, \
+				  jlong ylong, jlong dylong) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     jint scan = pSrcInfo->scanStride; \
@@ -1965,41 +1965,41 @@ void NAME_TRANSFORMHELPER_BL(SRC)(SurfaceDataRasInfo *pSrcInfo, \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     while (pRGB < pEnd) { \
-        jint xwhole = WholeOfLong(xlong); \
-        jint ywhole = WholeOfLong(ylong); \
-        jint xdelta, ydelta, isneg; \
-        SRC ## DataType *pRow; \
+	jint xwhole = WholeOfLong(xlong); \
+	jint ywhole = WholeOfLong(ylong); \
+	jint xdelta, ydelta, isneg; \
+	SRC ## DataType *pRow; \
  \
-        xdelta = ((juint) (xwhole + 1 - cw)) >> 31; \
-        isneg = xwhole >> 31; \
-        xwhole -= isneg; \
-        xdelta += isneg; \
+	xdelta = ((juint) (xwhole + 1 - cw)) >> 31; \
+	isneg = xwhole >> 31; \
+	xwhole -= isneg; \
+	xdelta += isneg; \
  \
-        ydelta = ((ywhole + 1 - ch) >> 31); \
-        isneg = ywhole >> 31; \
-        ywhole -= isneg; \
-        ydelta -= isneg; \
-        ydelta &= scan; \
+	ydelta = ((ywhole + 1 - ch) >> 31); \
+	isneg = ywhole >> 31; \
+	ywhole -= isneg; \
+	ydelta -= isneg; \
+	ydelta &= scan; \
  \
-        xwhole += cx; \
-        pRow = PtrAddBytes(pSrcInfo->rasBase, (ywhole + cy) * scan); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 0, SrcRead, pRow, xwhole); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 1, SrcRead, pRow, xwhole+xdelta); \
-        pRow = PtrAddBytes(pRow, ydelta); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 2, SrcRead, pRow, xwhole); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 3, SrcRead, pRow, xwhole+xdelta); \
+	xwhole += cx; \
+	pRow = PtrAddBytes(pSrcInfo->rasBase, (ywhole + cy) * scan); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 0, SrcRead, pRow, xwhole); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 1, SrcRead, pRow, xwhole+xdelta); \
+	pRow = PtrAddBytes(pRow, ydelta); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 2, SrcRead, pRow, xwhole); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 3, SrcRead, pRow, xwhole+xdelta); \
  \
-        pRGB += 4; \
-        xlong += dxlong; \
-        ylong += dylong; \
+	pRGB += 4; \
+	xlong += dxlong; \
+	ylong += dylong; \
     } \
 }
 
 #define DEFINE_TRANSFORMHELPER_BC(SRC) \
 void NAME_TRANSFORMHELPER_BC(SRC)(SurfaceDataRasInfo *pSrcInfo, \
-                                  jint *pRGB, jint numpix, \
-                                  jlong xlong, jlong dxlong, \
-                                  jlong ylong, jlong dylong) \
+				  jint *pRGB, jint numpix, \
+				  jlong xlong, jlong dxlong, \
+				  jlong ylong, jlong dylong) \
 { \
     Declare ## SRC ## LoadVars(SrcRead) \
     jint scan = pSrcInfo->scanStride; \
@@ -2017,62 +2017,62 @@ void NAME_TRANSFORMHELPER_BC(SRC)(SurfaceDataRasInfo *pSrcInfo, \
  \
     Init ## SRC ## LoadVars(SrcRead, pSrcInfo); \
     while (pRGB < pEnd) { \
-        jint xwhole = WholeOfLong(xlong); \
-        jint ywhole = WholeOfLong(ylong); \
-        jint xdelta0, xdelta1, xdelta2; \
-        jint ydelta0, ydelta1, ydelta2; \
-        jint isneg; \
-        SRC ## DataType *pRow; \
+	jint xwhole = WholeOfLong(xlong); \
+	jint ywhole = WholeOfLong(ylong); \
+	jint xdelta0, xdelta1, xdelta2; \
+	jint ydelta0, ydelta1, ydelta2; \
+	jint isneg; \
+	SRC ## DataType *pRow; \
  \
-        xdelta0 = (-xwhole) >> 31; \
-        xdelta1 = ((juint) (xwhole + 1 - cw)) >> 31; \
-        xdelta2 = ((juint) (xwhole + 2 - cw)) >> 31; \
-        isneg = xwhole >> 31; \
-        xwhole -= isneg; \
-        xdelta1 += isneg; \
-        xdelta2 += xdelta1; \
+	xdelta0 = (-xwhole) >> 31; \
+	xdelta1 = ((juint) (xwhole + 1 - cw)) >> 31; \
+	xdelta2 = ((juint) (xwhole + 2 - cw)) >> 31; \
+	isneg = xwhole >> 31; \
+	xwhole -= isneg; \
+	xdelta1 += isneg; \
+	xdelta2 += xdelta1; \
  \
-        ydelta0 = ((-ywhole) >> 31) & (-scan); \
-        ydelta1 = ((ywhole + 1 - ch) >> 31) & scan; \
-        ydelta2 = ((ywhole + 2 - ch) >> 31) & scan; \
-        isneg = ywhole >> 31; \
-        ywhole -= isneg; \
-        ydelta1 += (isneg & -scan); \
+	ydelta0 = ((-ywhole) >> 31) & (-scan); \
+	ydelta1 = ((ywhole + 1 - ch) >> 31) & scan; \
+	ydelta2 = ((ywhole + 2 - ch) >> 31) & scan; \
+	isneg = ywhole >> 31; \
+	ywhole -= isneg; \
+	ydelta1 += (isneg & -scan); \
  \
-        xwhole += cx; \
-        pRow = PtrAddBytes(pSrcInfo->rasBase, (ywhole + cy) * scan); \
-        pRow = PtrAddBytes(pRow, ydelta0); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  0, SrcRead, pRow, xwhole+xdelta0); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  1, SrcRead, pRow, xwhole        ); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  2, SrcRead, pRow, xwhole+xdelta1); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  3, SrcRead, pRow, xwhole+xdelta2); \
-        pRow = PtrAddBytes(pRow, -ydelta0); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  4, SrcRead, pRow, xwhole+xdelta0); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  5, SrcRead, pRow, xwhole        ); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  6, SrcRead, pRow, xwhole+xdelta1); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  7, SrcRead, pRow, xwhole+xdelta2); \
-        pRow = PtrAddBytes(pRow, ydelta1); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  8, SrcRead, pRow, xwhole+xdelta0); \
-        Copy ## SRC ## ToIntArgbPre(pRGB,  9, SrcRead, pRow, xwhole        ); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 10, SrcRead, pRow, xwhole+xdelta1); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 11, SrcRead, pRow, xwhole+xdelta2); \
-        pRow = PtrAddBytes(pRow, ydelta2); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 12, SrcRead, pRow, xwhole+xdelta0); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 13, SrcRead, pRow, xwhole        ); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 14, SrcRead, pRow, xwhole+xdelta1); \
-        Copy ## SRC ## ToIntArgbPre(pRGB, 15, SrcRead, pRow, xwhole+xdelta2); \
+	xwhole += cx; \
+	pRow = PtrAddBytes(pSrcInfo->rasBase, (ywhole + cy) * scan); \
+	pRow = PtrAddBytes(pRow, ydelta0); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  0, SrcRead, pRow, xwhole+xdelta0); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  1, SrcRead, pRow, xwhole        ); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  2, SrcRead, pRow, xwhole+xdelta1); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  3, SrcRead, pRow, xwhole+xdelta2); \
+	pRow = PtrAddBytes(pRow, -ydelta0); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  4, SrcRead, pRow, xwhole+xdelta0); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  5, SrcRead, pRow, xwhole        ); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  6, SrcRead, pRow, xwhole+xdelta1); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  7, SrcRead, pRow, xwhole+xdelta2); \
+	pRow = PtrAddBytes(pRow, ydelta1); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  8, SrcRead, pRow, xwhole+xdelta0); \
+	Copy ## SRC ## ToIntArgbPre(pRGB,  9, SrcRead, pRow, xwhole        ); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 10, SrcRead, pRow, xwhole+xdelta1); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 11, SrcRead, pRow, xwhole+xdelta2); \
+	pRow = PtrAddBytes(pRow, ydelta2); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 12, SrcRead, pRow, xwhole+xdelta0); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 13, SrcRead, pRow, xwhole        ); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 14, SrcRead, pRow, xwhole+xdelta1); \
+	Copy ## SRC ## ToIntArgbPre(pRGB, 15, SrcRead, pRow, xwhole+xdelta2); \
  \
-        pRGB += 16; \
-        xlong += dxlong; \
-        ylong += dylong; \
+	pRGB += 16; \
+	xlong += dxlong; \
+	ylong += dylong; \
     } \
 }
 
 #define DEFINE_TRANSFORMHELPER_FUNCS(SRC) \
     TransformHelperFuncs NAME_TRANSFORMHELPER_FUNCS(SRC) = { \
-        NAME_TRANSFORMHELPER_NN(SRC), \
-        NAME_TRANSFORMHELPER_BL(SRC), \
-        NAME_TRANSFORMHELPER_BC(SRC), \
+	NAME_TRANSFORMHELPER_NN(SRC), \
+	NAME_TRANSFORMHELPER_BL(SRC), \
+	NAME_TRANSFORMHELPER_BC(SRC), \
     };
 
 #define DEFINE_TRANSFORMHELPERS(SRC) \
@@ -2095,7 +2095,7 @@ void NAME_TRANSFORMHELPER_BC(SRC)(SurfaceDataRasInfo *pSrcInfo, \
  * <stype>DataType               A typedef for the type of the pointer
  *                               that is used to access the raster data
  *                               for the given surface type.
- * <stype>PixelStride            Pixel stride for the surface type.
+ * <stype>PixelStride	         Pixel stride for the surface type.
  *
  * Declare<stype>LoadVars        Declare the variables needed to control
  *                               loading color information from an stype

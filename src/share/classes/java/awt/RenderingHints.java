@@ -92,107 +92,107 @@ public class RenderingHints
      * {@code equals()} method.
      */
     public abstract static class Key {
-        private static HashMap identitymap = new HashMap(17);
+	private static HashMap identitymap = new HashMap(17);
 
-        private String getIdentity() {
-            // Note that the identity string is dependent on 3 variables:
-            //     - the name of the subclass of Key
-            //     - the identityHashCode of the subclass of Key
-            //     - the integer key of the Key
-            // It is theoretically possible for 2 distinct keys to collide
-            // along all 3 of those attributes in the context of multiple
-            // class loaders, but that occurence will be extremely rare and
-            // we account for that possibility below in the recordIdentity
-            // method by slightly relaxing our uniqueness guarantees if we
-            // end up in that situation.
-            return getClass().getName()+"@"+
-                Integer.toHexString(System.identityHashCode(getClass()))+":"+
-                Integer.toHexString(privatekey);
-        }
+	private String getIdentity() {
+	    // Note that the identity string is dependent on 3 variables:
+	    //     - the name of the subclass of Key
+	    //     - the identityHashCode of the subclass of Key
+	    //     - the integer key of the Key
+	    // It is theoretically possible for 2 distinct keys to collide
+	    // along all 3 of those attributes in the context of multiple
+	    // class loaders, but that occurence will be extremely rare and
+	    // we account for that possibility below in the recordIdentity
+	    // method by slightly relaxing our uniqueness guarantees if we
+	    // end up in that situation.
+	    return getClass().getName()+"@"+
+		Integer.toHexString(System.identityHashCode(getClass()))+":"+
+		Integer.toHexString(privatekey);
+	}
 
-        private synchronized static void recordIdentity(Key k) {
-            Object identity = k.getIdentity();
-            Object otherref = identitymap.get(identity);
-            if (otherref != null) {
-                Key otherkey = (Key) ((WeakReference) otherref).get();
-                if (otherkey != null && otherkey.getClass() == k.getClass()) {
-                    throw new IllegalArgumentException(identity+
-                                                       " already registered");
-                }
-                // Note that this system can fail in a mostly harmless
-                // way.  If we end up generating the same identity
-                // String for 2 different classes (a very rare case)
-                // then we correctly avoid throwing the exception above,
-                // but we are about to drop through to a statement that
-                // will replace the entry for the old Key subclass with
-                // an entry for the new Key subclass.  At that time the
-                // old subclass will be vulnerable to someone generating
-                // a duplicate Key instance for it.  We could bail out
-                // of the method here and let the old identity keep its
-                // record in the map, but we are more likely to see a
-                // duplicate key go by for the new class than the old
-                // one since the new one is probably still in the
-                // initialization stage.  In either case, the probability
-                // of loading 2 classes in the same VM with the same name
-                // and identityHashCode should be nearly impossible.
-            }
-            // Note: Use a weak reference to avoid holding on to extra
-            // objects and classes after they should be unloaded.
-            identitymap.put(identity, new WeakReference(k));
-        }
+	private synchronized static void recordIdentity(Key k) {
+	    Object identity = k.getIdentity();
+	    Object otherref = identitymap.get(identity);
+	    if (otherref != null) {
+		Key otherkey = (Key) ((WeakReference) otherref).get();
+		if (otherkey != null && otherkey.getClass() == k.getClass()) {
+		    throw new IllegalArgumentException(identity+
+						       " already registered");
+		}
+		// Note that this system can fail in a mostly harmless
+		// way.  If we end up generating the same identity
+		// String for 2 different classes (a very rare case)
+		// then we correctly avoid throwing the exception above,
+		// but we are about to drop through to a statement that
+		// will replace the entry for the old Key subclass with
+		// an entry for the new Key subclass.  At that time the
+		// old subclass will be vulnerable to someone generating
+		// a duplicate Key instance for it.  We could bail out
+		// of the method here and let the old identity keep its
+		// record in the map, but we are more likely to see a
+		// duplicate key go by for the new class than the old
+		// one since the new one is probably still in the
+		// initialization stage.  In either case, the probability
+		// of loading 2 classes in the same VM with the same name
+		// and identityHashCode should be nearly impossible.
+	    }
+	    // Note: Use a weak reference to avoid holding on to extra
+	    // objects and classes after they should be unloaded.
+	    identitymap.put(identity, new WeakReference(k));
+	}
 
-        private int privatekey;
+	private int privatekey;
 
-        /**
-         * Construct a key using the indicated private key.  Each
-         * subclass of Key maintains its own unique domain of integer
-         * keys.  No two objects with the same integer key and of the
-         * same specific subclass can be constructed.  An exception
-         * will be thrown if an attempt is made to construct another
-         * object of a given class with the same integer key as a
-         * pre-existing instance of that subclass of Key.
-         * @param privatekey the specified key
-         */
-        protected Key(int privatekey) {
-            this.privatekey = privatekey;
-            recordIdentity(this);
-        }
+	/**
+	 * Construct a key using the indicated private key.  Each
+	 * subclass of Key maintains its own unique domain of integer
+	 * keys.  No two objects with the same integer key and of the
+	 * same specific subclass can be constructed.  An exception
+	 * will be thrown if an attempt is made to construct another
+	 * object of a given class with the same integer key as a
+	 * pre-existing instance of that subclass of Key.
+	 * @param privatekey the specified key
+	 */
+	protected Key(int privatekey) {
+	    this.privatekey = privatekey;
+	    recordIdentity(this);
+	}
 
-        /**
-         * Returns true if the specified object is a valid value
-         * for this Key.
-         * @param val the <code>Object</code> to test for validity
-         * @return <code>true</code> if <code>val</code> is valid;
-         *         <code>false</code> otherwise.
-         */
-        public abstract boolean isCompatibleValue(Object val);
+	/**
+	 * Returns true if the specified object is a valid value
+	 * for this Key.
+	 * @param val the <code>Object</code> to test for validity
+	 * @return <code>true</code> if <code>val</code> is valid;
+	 *         <code>false</code> otherwise.
+	 */
+	public abstract boolean isCompatibleValue(Object val);
 
-        /**
-         * Returns the private integer key that the subclass
+	/**
+	 * Returns the private integer key that the subclass
+	 * instantiated this Key with.
+	 * @return the private integer key that the subclass
          * instantiated this Key with.
-         * @return the private integer key that the subclass
-         * instantiated this Key with.
-         */
-        protected final int intKey() {
-            return privatekey;
-        }
+	 */
+	protected final int intKey() {
+	    return privatekey;
+	}
 
-        /**
-         * The hash code for all Key objects will be the same as the
-         * system identity code of the object as defined by the
-         * System.identityHashCode() method.
-         */
-        public final int hashCode() {
+	/**
+	 * The hash code for all Key objects will be the same as the
+	 * system identity code of the object as defined by the
+	 * System.identityHashCode() method.
+	 */
+	public final int hashCode() {
             return super.hashCode();
-        }
+	}
 
-        /**
-         * The equals method for all Key objects will return the same
-         * result as the equality operator '=='.
-         */
-        public final boolean equals(Object o) {
-            return this == o;
-        }
+	/**
+	 * The equals method for all Key objects will return the same
+	 * result as the equality operator '=='.
+	 */
+	public final boolean equals(Object o) {
+	    return this == o;
+	}
     }
 
     HashMap hintmap = new HashMap(7);
@@ -217,21 +217,21 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_ANTIALIASING =
-        SunHints.KEY_ANTIALIASING;
+	SunHints.KEY_ANTIALIASING;
 
     /**
      * Antialiasing hint value -- rendering is done with antialiasing.
      * @see #KEY_ANTIALIASING
      */
     public static final Object VALUE_ANTIALIAS_ON =
-        SunHints.VALUE_ANTIALIAS_ON;
+	SunHints.VALUE_ANTIALIAS_ON;
 
     /**
      * Antialiasing hint value -- rendering is done without antialiasing.
      * @see #KEY_ANTIALIASING
      */
     public static final Object VALUE_ANTIALIAS_OFF =
-        SunHints.VALUE_ANTIALIAS_OFF;
+	SunHints.VALUE_ANTIALIAS_OFF;
 
     /**
      * Antialiasing hint value -- rendering is done with a default
@@ -239,7 +239,7 @@ public class RenderingHints
      * @see #KEY_ANTIALIASING
      */
     public static final Object VALUE_ANTIALIAS_DEFAULT =
-         SunHints.VALUE_ANTIALIAS_DEFAULT;
+	 SunHints.VALUE_ANTIALIAS_DEFAULT;
 
     /**
      * Rendering hint key.
@@ -258,7 +258,7 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_RENDERING =
-         SunHints.KEY_RENDERING;
+	 SunHints.KEY_RENDERING;
 
     /**
      * Rendering hint value -- rendering algorithms are chosen
@@ -266,7 +266,7 @@ public class RenderingHints
      * @see #KEY_RENDERING
      */
     public static final Object VALUE_RENDER_SPEED =
-         SunHints.VALUE_RENDER_SPEED;
+	 SunHints.VALUE_RENDER_SPEED;
 
     /**
      * Rendering hint value -- rendering algorithms are chosen
@@ -274,7 +274,7 @@ public class RenderingHints
      * @see #KEY_RENDERING
      */
     public static final Object VALUE_RENDER_QUALITY =
-         SunHints.VALUE_RENDER_QUALITY;
+	 SunHints.VALUE_RENDER_QUALITY;
 
     /**
      * Rendering hint value -- rendering algorithms are chosen
@@ -283,7 +283,7 @@ public class RenderingHints
      * @see #KEY_RENDERING
      */
     public static final Object VALUE_RENDER_DEFAULT =
-         SunHints.VALUE_RENDER_DEFAULT;
+	 SunHints.VALUE_RENDER_DEFAULT;
 
     /**
      * Dithering hint key.
@@ -309,21 +309,21 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_DITHERING =
-         SunHints.KEY_DITHERING;
+	 SunHints.KEY_DITHERING;
 
     /**
      * Dithering hint value -- do not dither when rendering geometry.
      * @see #KEY_DITHERING
      */
     public static final Object VALUE_DITHER_DISABLE =
-         SunHints.VALUE_DITHER_DISABLE;
+	 SunHints.VALUE_DITHER_DISABLE;
 
     /**
      * Dithering hint value -- dither when rendering geometry, if needed.
      * @see #KEY_DITHERING
      */
     public static final Object VALUE_DITHER_ENABLE =
-         SunHints.VALUE_DITHER_ENABLE;
+	 SunHints.VALUE_DITHER_ENABLE;
 
     /**
      * Dithering hint value -- use a default for dithering chosen by
@@ -331,7 +331,7 @@ public class RenderingHints
      * @see #KEY_DITHERING
      */
     public static final Object VALUE_DITHER_DEFAULT =
-         SunHints.VALUE_DITHER_DEFAULT;
+	 SunHints.VALUE_DITHER_DEFAULT;
 
     /**
      * Text antialiasing hint key.
@@ -362,7 +362,7 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_TEXT_ANTIALIASING =
-         SunHints.KEY_TEXT_ANTIALIASING;
+	 SunHints.KEY_TEXT_ANTIALIASING;
 
     /**
      * Text antialiasing hint value -- text rendering is done with
@@ -370,7 +370,7 @@ public class RenderingHints
      * @see #KEY_TEXT_ANTIALIASING
      */
     public static final Object VALUE_TEXT_ANTIALIAS_ON =
-         SunHints.VALUE_TEXT_ANTIALIAS_ON;
+	 SunHints.VALUE_TEXT_ANTIALIAS_ON;
 
     /**
      * Text antialiasing hint value -- text rendering is done without
@@ -378,7 +378,7 @@ public class RenderingHints
      * @see #KEY_TEXT_ANTIALIASING
      */
     public static final Object VALUE_TEXT_ANTIALIAS_OFF =
-         SunHints.VALUE_TEXT_ANTIALIAS_OFF;
+	 SunHints.VALUE_TEXT_ANTIALIAS_OFF;
 
     /**
      * Text antialiasing hint value -- text rendering is done according
@@ -387,7 +387,7 @@ public class RenderingHints
      * @see #KEY_TEXT_ANTIALIASING
      */
     public static final Object VALUE_TEXT_ANTIALIAS_DEFAULT =
-         SunHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
+	 SunHints.VALUE_TEXT_ANTIALIAS_DEFAULT;
 
     /**
      * Text antialiasing hint value -- text rendering is requested to
@@ -414,7 +414,7 @@ public class RenderingHints
      * @since 1.6
      */
     public static final Object VALUE_TEXT_ANTIALIAS_GASP =
-         SunHints.VALUE_TEXT_ANTIALIAS_GASP;
+	 SunHints.VALUE_TEXT_ANTIALIAS_GASP;
 
     /**
      * Text antialiasing hint value -- request that text be displayed
@@ -461,7 +461,7 @@ public class RenderingHints
      * @since 1.6
      */
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_HRGB =
-         SunHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB;
+	 SunHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB;
 
     /**
      * Text antialiasing hint value -- request that text be displayed
@@ -478,7 +478,7 @@ public class RenderingHints
      * @since 1.6
      */
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_HBGR =
-         SunHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR;
+	 SunHints.VALUE_TEXT_ANTIALIAS_LCD_HBGR;
 
     /**
      * Text antialiasing hint value -- request that text be displayed
@@ -496,7 +496,7 @@ public class RenderingHints
      * @since 1.6
      */
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_VRGB =
-         SunHints.VALUE_TEXT_ANTIALIAS_LCD_VRGB;
+	 SunHints.VALUE_TEXT_ANTIALIAS_LCD_VRGB;
 
     /**
      * Text antialiasing hint value -- request that text be displayed
@@ -514,7 +514,7 @@ public class RenderingHints
      * @since 1.6
      */
     public static final Object VALUE_TEXT_ANTIALIAS_LCD_VBGR =
-         SunHints.VALUE_TEXT_ANTIALIAS_LCD_VBGR;
+	 SunHints.VALUE_TEXT_ANTIALIAS_LCD_VBGR;
 
 
     /**
@@ -537,7 +537,7 @@ public class RenderingHints
      * so clients should rarely need to specify a value for this hint unless
      * they have concrete information as to an appropriate value.
      * A higher value does not mean a higher contrast, in fact the opposite
-     * is true.
+     * is true. 
      * The correction is applied in a similar manner to a gamma adjustment
      * for non-linear perceptual luminance response of display systems, but
      * does not indicate a full correction for this.
@@ -546,7 +546,7 @@ public class RenderingHints
      * @since 1.6
      */
     public static final Key KEY_TEXT_LCD_CONTRAST =
-        SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST;
+	SunHints.KEY_TEXT_ANTIALIAS_LCD_CONTRAST;
 
     /**
      * Font fractional metrics hint key.
@@ -634,7 +634,7 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_FRACTIONALMETRICS =
-         SunHints.KEY_FRACTIONALMETRICS;
+	 SunHints.KEY_FRACTIONALMETRICS;
 
     /**
      * Font fractional metrics hint value -- character glyphs are
@@ -642,7 +642,7 @@ public class RenderingHints
      * @see #KEY_FRACTIONALMETRICS
      */
     public static final Object VALUE_FRACTIONALMETRICS_OFF =
-         SunHints.VALUE_FRACTIONALMETRICS_OFF;
+	 SunHints.VALUE_FRACTIONALMETRICS_OFF;
 
     /**
      * Font fractional metrics hint value -- character glyphs are
@@ -650,7 +650,7 @@ public class RenderingHints
      * @see #KEY_FRACTIONALMETRICS
      */
     public static final Object VALUE_FRACTIONALMETRICS_ON =
-         SunHints.VALUE_FRACTIONALMETRICS_ON;
+	 SunHints.VALUE_FRACTIONALMETRICS_ON;
 
     /**
      * Font fractional metrics hint value -- character glyphs are
@@ -658,7 +658,7 @@ public class RenderingHints
      * @see #KEY_FRACTIONALMETRICS
      */
     public static final Object VALUE_FRACTIONALMETRICS_DEFAULT =
-         SunHints.VALUE_FRACTIONALMETRICS_DEFAULT;
+	 SunHints.VALUE_FRACTIONALMETRICS_DEFAULT;
 
     /**
      * Interpolation hint key.
@@ -691,7 +691,7 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_INTERPOLATION =
-         SunHints.KEY_INTERPOLATION;
+	 SunHints.KEY_INTERPOLATION;
 
     /**
      * Interpolation hint value -- the color sample of the nearest
@@ -708,7 +708,7 @@ public class RenderingHints
      * @see #KEY_INTERPOLATION
      */
     public static final Object VALUE_INTERPOLATION_NEAREST_NEIGHBOR =
-         SunHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
+	 SunHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;
 
     /**
      * Interpolation hint value -- the color samples of the 4 nearest
@@ -735,7 +735,7 @@ public class RenderingHints
      * @see #KEY_INTERPOLATION
      */
     public static final Object VALUE_INTERPOLATION_BILINEAR =
-         SunHints.VALUE_INTERPOLATION_BILINEAR;
+	 SunHints.VALUE_INTERPOLATION_BILINEAR;
 
     /**
      * Interpolation hint value -- the color samples of 9 nearby
@@ -758,7 +758,7 @@ public class RenderingHints
      * @see #KEY_INTERPOLATION
      */
     public static final Object VALUE_INTERPOLATION_BICUBIC =
-         SunHints.VALUE_INTERPOLATION_BICUBIC;
+	 SunHints.VALUE_INTERPOLATION_BICUBIC;
 
     /**
      * Alpha interpolation hint key.
@@ -783,7 +783,7 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_ALPHA_INTERPOLATION =
-         SunHints.KEY_ALPHA_INTERPOLATION;
+	 SunHints.KEY_ALPHA_INTERPOLATION;
 
     /**
      * Alpha interpolation hint value -- alpha blending algorithms
@@ -791,7 +791,7 @@ public class RenderingHints
      * @see #KEY_ALPHA_INTERPOLATION
      */
     public static final Object VALUE_ALPHA_INTERPOLATION_SPEED =
-         SunHints.VALUE_ALPHA_INTERPOLATION_SPEED;
+	 SunHints.VALUE_ALPHA_INTERPOLATION_SPEED;
 
     /**
      * Alpha interpolation hint value -- alpha blending algorithms
@@ -799,7 +799,7 @@ public class RenderingHints
      * @see #KEY_ALPHA_INTERPOLATION
      */
     public static final Object VALUE_ALPHA_INTERPOLATION_QUALITY =
-         SunHints.VALUE_ALPHA_INTERPOLATION_QUALITY;
+	 SunHints.VALUE_ALPHA_INTERPOLATION_QUALITY;
 
     /**
      * Alpha interpolation hint value -- alpha blending algorithms
@@ -808,7 +808,7 @@ public class RenderingHints
      * @see #KEY_ALPHA_INTERPOLATION
      */
     public static final Object VALUE_ALPHA_INTERPOLATION_DEFAULT =
-         SunHints.VALUE_ALPHA_INTERPOLATION_DEFAULT;
+	 SunHints.VALUE_ALPHA_INTERPOLATION_DEFAULT;
 
     /**
      * Color rendering hint key.
@@ -859,7 +859,7 @@ public class RenderingHints
      * </ul>
      */
     public static final Key KEY_COLOR_RENDERING =
-         SunHints.KEY_COLOR_RENDERING;
+	 SunHints.KEY_COLOR_RENDERING;
 
     /**
      * Color rendering hint value -- perform the fastest color
@@ -867,7 +867,7 @@ public class RenderingHints
      * @see #KEY_COLOR_RENDERING
      */
     public static final Object VALUE_COLOR_RENDER_SPEED =
-         SunHints.VALUE_COLOR_RENDER_SPEED;
+	 SunHints.VALUE_COLOR_RENDER_SPEED;
 
     /**
      * Color rendering hint value -- perform the color conversion
@@ -875,7 +875,7 @@ public class RenderingHints
      * @see #KEY_COLOR_RENDERING
      */
     public static final Object VALUE_COLOR_RENDER_QUALITY =
-         SunHints.VALUE_COLOR_RENDER_QUALITY;
+	 SunHints.VALUE_COLOR_RENDER_QUALITY;
 
     /**
      * Color rendering hint value -- perform color conversion
@@ -885,7 +885,7 @@ public class RenderingHints
      * @see #KEY_COLOR_RENDERING
      */
     public static final Object VALUE_COLOR_RENDER_DEFAULT =
-         SunHints.VALUE_COLOR_RENDER_DEFAULT;
+	 SunHints.VALUE_COLOR_RENDER_DEFAULT;
 
     /**
      * Stroke normalization control hint key.
@@ -914,7 +914,7 @@ public class RenderingHints
      * @since 1.3
      */
     public static final Key KEY_STROKE_CONTROL =
-        SunHints.KEY_STROKE_CONTROL;
+	SunHints.KEY_STROKE_CONTROL;
 
     /**
      * Stroke normalization control hint value -- geometry may be
@@ -929,7 +929,7 @@ public class RenderingHints
      * @since 1.3
      */
     public static final Object VALUE_STROKE_DEFAULT =
-        SunHints.VALUE_STROKE_DEFAULT;
+	SunHints.VALUE_STROKE_DEFAULT;
 
     /**
      * Stroke normalization control hint value -- geometry should
@@ -942,7 +942,7 @@ public class RenderingHints
      * @since 1.3
      */
     public static final Object VALUE_STROKE_NORMALIZE =
-        SunHints.VALUE_STROKE_NORMALIZE;
+	SunHints.VALUE_STROKE_NORMALIZE;
 
     /**
      * Stroke normalization control hint value -- geometry should
@@ -952,93 +952,93 @@ public class RenderingHints
      * @since 1.3
      */
     public static final Object VALUE_STROKE_PURE =
-        SunHints.VALUE_STROKE_PURE;
+	SunHints.VALUE_STROKE_PURE;
 
     /**
      * Constructs a new object with keys and values initialized
      * from the specified Map object which may be null.
      * @param init a map of key/value pairs to initialize the hints
-     *          or null if the object should be empty
+     *		or null if the object should be empty
      */
     public RenderingHints(Map<Key,?> init) {
-        if (init != null) {
-            hintmap.putAll(init);
-        }
+	if (init != null) {
+	    hintmap.putAll(init);
+	}
     }
 
     /**
      * Constructs a new object with the specified key/value pair.
      * @param key the key of the particular hint property
-     * @param value the value of the hint property specified with
+     * @param value the value of the hint property specified with 
      * <code>key</code>
      */
     public RenderingHints(Key key, Object value) {
-        hintmap.put(key, value);
+	hintmap.put(key, value);
     }
 
     /**
-     * Returns the number of key-value mappings in this
+     * Returns the number of key-value mappings in this 
      * <code>RenderingHints</code>.
      *
-     * @return the number of key-value mappings in this
+     * @return the number of key-value mappings in this 
      * <code>RenderingHints</code>.
      */
     public int size() {
-        return hintmap.size();
+	return hintmap.size();
     }
 
     /**
-     * Returns <code>true</code> if this
+     * Returns <code>true</code> if this 
      * <code>RenderingHints</code> contains no key-value mappings.
      *
-     * @return <code>true</code> if this
+     * @return <code>true</code> if this 
      * <code>RenderingHints</code> contains no key-value mappings.
      */
     public boolean isEmpty() {
-        return hintmap.isEmpty();
+	return hintmap.isEmpty();
     }
 
     /**
      * Returns <code>true</code> if this <code>RenderingHints</code>
      *  contains a mapping for the specified key.
      *
-     * @param key key whose presence in this
+     * @param key key whose presence in this 
      * <code>RenderingHints</code> is to be tested.
-     * @return <code>true</code> if this <code>RenderingHints</code>
-     *          contains a mapping for the specified key.
+     * @return <code>true</code> if this <code>RenderingHints</code> 
+     * 		contains a mapping for the specified key.
      * @exception <code>ClassCastException</code> if the key can not
      *            be cast to <code>RenderingHints.Key</code>
      */
     public boolean containsKey(Object key) {
-        return hintmap.containsKey((Key) key);
+	return hintmap.containsKey((Key) key);
     }
 
     /**
      * Returns true if this RenderingHints maps one or more keys to the
      * specified value.
-     * More formally, returns <code>true</code> if and only
+     * More formally, returns <code>true</code> if and only 
      * if this <code>RenderingHints</code>
      * contains at least one mapping to a value <code>v</code> such that
      * <pre>
      * (value==null ? v==null : value.equals(v))
      * </pre>.
      * This operation will probably require time linear in the
-     * <code>RenderingHints</code> size for most implementations
+     * <code>RenderingHints</code> size for most implementations 
      * of <code>RenderingHints</code>.
      *
-     * @param value value whose presence in this
-     *          <code>RenderingHints</code> is to be tested.
+     * @param value value whose presence in this 
+     *		<code>RenderingHints</code> is to be tested.
      * @return <code>true</code> if this <code>RenderingHints</code>
-     *           maps one or more keys to the specified value.
+     *		 maps one or more keys to the specified value.
      */
     public boolean containsValue(Object value) {
-        return hintmap.containsValue(value);
+	return hintmap.containsValue(value);
     }
 
     /**
      * Returns the value to which the specified key is mapped.
      * @param   key   a rendering hint key
-     * @return  the value to which the key is mapped in this object or
+     * @return  the value to which the key is mapped in this object or 
      *          <code>null</code> if the key is not mapped to any value in
      *          this object.
      * @exception <code>ClassCastException</code> if the key can not
@@ -1046,7 +1046,7 @@ public class RenderingHints
      * @see     #put(Object, Object)
      */
     public Object get(Object key) {
-        return hintmap.get((Key) key);
+	return hintmap.get((Key) key);
     }
 
     /**
@@ -1071,11 +1071,11 @@ public class RenderingHints
      * @see     #get(Object)
      */
     public Object put(Object key, Object value) {
-        if (!((Key) key).isCompatibleValue(value)) {
-            throw new IllegalArgumentException(value+
-                                               " incompatible with "+
-                                               key);
-        }
+	if (!((Key) key).isCompatibleValue(value)) {
+	    throw new IllegalArgumentException(value+
+					       " incompatible with "+
+					       key);
+	}
         return hintmap.put((Key) key, value);
     }
 
@@ -1085,11 +1085,11 @@ public class RenderingHints
      * <code>RenderingHints</code> object. Keys that are present in
      * this <code>RenderingHints</code> object, but not in the specified
      * <code>RenderingHints</code> object are not affected.
-     * @param hints the set of key/value pairs to be added to this
+     * @param hints the set of key/value pairs to be added to this 
      * <code>RenderingHints</code> object
      */
     public void add(RenderingHints hints) {
-        hintmap.putAll(hints.hintmap);
+	hintmap.putAll(hints.hintmap);
     }
 
     /**
@@ -1097,7 +1097,7 @@ public class RenderingHints
      * pairs.
      */
     public void clear() {
-        hintmap.clear();
+	hintmap.clear();
     }
 
     /**
@@ -1107,144 +1107,144 @@ public class RenderingHints
      * @param   key   the rendering hints key that needs to be removed
      * @exception <code>ClassCastException</code> if the key can not
      *            be cast to <code>RenderingHints.Key</code>
-     * @return  the value to which the key had previously been mapped in this
-     *          <code>RenderingHints</code> object, or <code>null</code>
-     *          if the key did not have a mapping.
+     * @return  the value to which the key had previously been mapped in this 
+     *		<code>RenderingHints</code> object, or <code>null</code>
+     * 		if the key did not have a mapping.
      */
     public Object remove(Object key) {
-        return hintmap.remove((Key) key);
+	return hintmap.remove((Key) key);
     }
 
     /**
      * Copies all of the mappings from the specified <code>Map</code>
-     * to this <code>RenderingHints</code>.  These mappings replace
-     * any mappings that this <code>RenderingHints</code> had for any
+     * to this <code>RenderingHints</code>.  These mappings replace 
+     * any mappings that this <code>RenderingHints</code> had for any 
      * of the keys currently in the specified <code>Map</code>.
      * @param m the specified <code>Map</code>
-     * @exception <code>ClassCastException</code> class of a key or value
-     *          in the specified <code>Map</code> prevents it from being
-     *          stored in this <code>RenderingHints</code>.
-     * @exception <code>IllegalArgumentException</code> some aspect
-     *          of a key or value in the specified <code>Map</code>
-     *           prevents it from being stored in
-     *            this <code>RenderingHints</code>.
+     * @exception <code>ClassCastException</code> class of a key or value 
+     *		in the specified <code>Map</code> prevents it from being 
+     *		stored in this <code>RenderingHints</code>.
+     * @exception <code>IllegalArgumentException</code> some aspect 
+     *		of a key or value in the specified <code>Map</code>
+     *		 prevents it from being stored in
+     * 		  this <code>RenderingHints</code>.
      */
     public void putAll(Map<?,?> m) {
-        // ## javac bug?
-        //if (m instanceof RenderingHints) {
-        if (RenderingHints.class.isInstance(m)) {
-            //hintmap.putAll(((RenderingHints) m).hintmap);
-            for (Map.Entry<?,?> entry : m.entrySet())
-                hintmap.put(entry.getKey(), entry.getValue());
-        } else {
-            // Funnel each key/value pair through our protected put method
-            for (Map.Entry<?,?> entry : m.entrySet())
-                put(entry.getKey(), entry.getValue());
-        }
+	// ## javac bug?
+	//if (m instanceof RenderingHints) {
+	if (RenderingHints.class.isInstance(m)) {
+	    //hintmap.putAll(((RenderingHints) m).hintmap);
+	    for (Map.Entry<?,?> entry : m.entrySet())
+		hintmap.put(entry.getKey(), entry.getValue());
+	} else {
+	    // Funnel each key/value pair through our protected put method
+	    for (Map.Entry<?,?> entry : m.entrySet())
+		put(entry.getKey(), entry.getValue());
+	}
     }
 
     /**
-     * Returns a <code>Set</code> view of the Keys contained in this
-     * <code>RenderingHints</code>.  The Set is backed by the
+     * Returns a <code>Set</code> view of the Keys contained in this 
+     * <code>RenderingHints</code>.  The Set is backed by the 
      * <code>RenderingHints</code>, so changes to the
-     * <code>RenderingHints</code> are reflected in the <code>Set</code>,
-     * and vice-versa.  If the <code>RenderingHints</code> is modified
-     * while an iteration over the <code>Set</code> is in progress,
+     * <code>RenderingHints</code> are reflected in the <code>Set</code>, 
+     * and vice-versa.  If the <code>RenderingHints</code> is modified 
+     * while an iteration over the <code>Set</code> is in progress, 
      * the results of the iteration are undefined.  The <code>Set</code>
      * supports element removal, which removes the corresponding
-     * mapping from the <code>RenderingHints</code>, via the
+     * mapping from the <code>RenderingHints</code>, via the 
      * <code>Iterator.remove</code>, <code>Set.remove</code>,
-     * <code>removeAll</code> <code>retainAll</code>, and
+     * <code>removeAll</code> <code>retainAll</code>, and 
      * <code>clear</code> operations.  It does not support
      * the <code>add</code> or <code>addAll</code> operations.
      *
-     * @return a <code>Set</code> view of the keys contained
+     * @return a <code>Set</code> view of the keys contained 
      * in this <code>RenderingHints</code>.
      */
     public Set<Object> keySet() {
-        return hintmap.keySet();
+	return hintmap.keySet();
     }
 
     /**
-     * Returns a <code>Collection</code> view of the values
+     * Returns a <code>Collection</code> view of the values 
      * contained in this <code>RenderinHints</code>.
-     * The <code>Collection</code> is backed by the
+     * The <code>Collection</code> is backed by the 
      * <code>RenderingHints</code>, so changes to
-     * the <code>RenderingHints</code> are reflected in
+     * the <code>RenderingHints</code> are reflected in 
      * the <code>Collection</code>, and vice-versa.
-     * If the <code>RenderingHints</code> is modified while
-     * an iteration over the <code>Collection</code> is
+     * If the <code>RenderingHints</code> is modified while 
+     * an iteration over the <code>Collection</code> is 
      * in progress, the results of the iteration are undefined.
-     * The <code>Collection</code> supports element removal,
-     * which removes the corresponding mapping from the
+     * The <code>Collection</code> supports element removal, 
+     * which removes the corresponding mapping from the 
      * <code>RenderingHints</code>, via the
-     * <code>Iterator.remove</code>,
-     * <code>Collection.remove</code>, <code>removeAll</code>,
-     * <code>retainAll</code> and <code>clear</code> operations.
-     * It does not support the <code>add</code> or
+     * <code>Iterator.remove</code>, 
+     * <code>Collection.remove</code>, <code>removeAll</code>, 
+     * <code>retainAll</code> and <code>clear</code> operations.  
+     * It does not support the <code>add</code> or 
      * <code>addAll</code> operations.
      *
-     * @return a <code>Collection</code> view of the values
-     *          contained in this <code>RenderingHints</code>.
+     * @return a <code>Collection</code> view of the values 
+     *		contained in this <code>RenderingHints</code>.
      */
     public Collection<Object> values() {
-        return hintmap.values();
+	return hintmap.values();
     }
 
     /**
-     * Returns a <code>Set</code> view of the mappings contained
-     * in this <code>RenderingHints</code>.  Each element in the
-     * returned <code>Set</code> is a <code>Map.Entry</code>.
-     * The <code>Set</code> is backed by the <code>RenderingHints</code>,
+     * Returns a <code>Set</code> view of the mappings contained 
+     * in this <code>RenderingHints</code>.  Each element in the 
+     * returned <code>Set</code> is a <code>Map.Entry</code>.  
+     * The <code>Set</code> is backed by the <code>RenderingHints</code>, 
      * so changes to the <code>RenderingHints</code> are reflected
-     * in the <code>Set</code>, and vice-versa.  If the
+     * in the <code>Set</code>, and vice-versa.  If the 
      * <code>RenderingHints</code> is modified while
-     * while an iteration over the <code>Set</code> is in progress,
+     * while an iteration over the <code>Set</code> is in progress, 
      * the results of the iteration are undefined.
      * <p>
-     * The entrySet returned from a <code>RenderingHints</code> object
+     * The entrySet returned from a <code>RenderingHints</code> object 
      * is not modifiable.
      *
-     * @return a <code>Set</code> view of the mappings contained in
+     * @return a <code>Set</code> view of the mappings contained in 
      * this <code>RenderingHints</code>.
      */
     public Set<Map.Entry<Object,Object>> entrySet() {
-        return Collections.unmodifiableMap(hintmap).entrySet();
+	return Collections.unmodifiableMap(hintmap).entrySet();
     }
 
     /**
-     * Compares the specified <code>Object</code> with this
+     * Compares the specified <code>Object</code> with this 
      * <code>RenderingHints</code> for equality.
-     * Returns <code>true</code> if the specified object is also a
-     * <code>Map</code> and the two <code>Map</code> objects represent
-     * the same mappings.  More formally, two <code>Map</code> objects
+     * Returns <code>true</code> if the specified object is also a 
+     * <code>Map</code> and the two <code>Map</code> objects represent 
+     * the same mappings.  More formally, two <code>Map</code> objects 
      * <code>t1</code> and <code>t2</code> represent the same mappings
      * if <code>t1.keySet().equals(t2.keySet())</code> and for every
-     * key <code>k</code> in <code>t1.keySet()</code>,
+     * key <code>k</code> in <code>t1.keySet()</code>, 
      * <pre>
      * (t1.get(k)==null ? t2.get(k)==null : t1.get(k).equals(t2.get(k)))
-     * </pre>.
+     * </pre>.  
      * This ensures that the <code>equals</code> method works properly across
      * different implementations of the <code>Map</code> interface.
      *
-     * @param o <code>Object</code> to be compared for equality with
+     * @param o <code>Object</code> to be compared for equality with 
      * this <code>RenderingHints</code>.
-     * @return <code>true</code> if the specified <code>Object</code>
+     * @return <code>true</code> if the specified <code>Object</code> 
      * is equal to this <code>RenderingHints</code>.
      */
     public boolean equals(Object o) {
-        if (o instanceof RenderingHints) {
-            return hintmap.equals(((RenderingHints) o).hintmap);
-        } else if (o instanceof Map) {
-            return hintmap.equals(o);
-        }
-        return false;
+	if (o instanceof RenderingHints) {
+	    return hintmap.equals(((RenderingHints) o).hintmap);
+	} else if (o instanceof Map) {
+	    return hintmap.equals(o);
+	}
+	return false;
     }
 
     /**
-     * Returns the hash code value for this <code>RenderingHints</code>.
-     * The hash code of a <code>RenderingHints</code> is defined to be
-     * the sum of the hashCodes of each <code>Entry</code> in the
+     * Returns the hash code value for this <code>RenderingHints</code>.  
+     * The hash code of a <code>RenderingHints</code> is defined to be 
+     * the sum of the hashCodes of each <code>Entry</code> in the 
      * <code>RenderingHints</code> object's entrySet view.  This ensures that
      * <code>t1.equals(t2)</code> implies that
      * <code>t1.hashCode()==t2.hashCode()</code> for any two <code>Map</code>
@@ -1258,7 +1258,7 @@ public class RenderingHints
      * @see #equals(Object)
      */
     public int hashCode() {
-        return hintmap.hashCode();
+	return hintmap.hashCode();
     }
 
     /**
@@ -1271,13 +1271,13 @@ public class RenderingHints
         RenderingHints rh;
         try {
             rh = (RenderingHints) super.clone();
-            if (hintmap != null) {
-                rh.hintmap = (HashMap) hintmap.clone();
-            }
+	    if (hintmap != null) {
+		rh.hintmap = (HashMap) hintmap.clone();
+	    }
         } catch (CloneNotSupportedException e) {
-            // this shouldn't happen, since we are Cloneable
-            throw new InternalError();
-        }
+	    // this shouldn't happen, since we are Cloneable
+	    throw new InternalError();
+	}
 
         return rh;
     }

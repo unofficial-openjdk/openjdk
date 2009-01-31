@@ -52,29 +52,29 @@
  */
 #ifndef DitherDeclared
 #define DitherDeclared
-#define DeclareDitherVars       DeclareAllColorDitherVars
-#define InitDither              InitColorDither
-#define StartDitherLine         StartColorDitherLine
-#define DitherPixel             ColorDitherPixel
-#define DitherBufComplete       ColorDitherBufComplete
+#define DeclareDitherVars	DeclareAllColorDitherVars
+#define InitDither		InitColorDither
+#define StartDitherLine		StartColorDitherLine
+#define DitherPixel		ColorDitherPixel
+#define DitherBufComplete	ColorDitherBufComplete
 #endif
 
-#define DeclareAllColorDitherVars                       \
-    DeclareColorDitherVars                              \
+#define DeclareAllColorDitherVars			\
+    DeclareColorDitherVars				\
     int relx, rely;
 
-#define DeclareColorDitherVars                          \
-    extern uns_ordered_dither_array img_oda_red;        \
-    extern uns_ordered_dither_array img_oda_green;      \
+#define DeclareColorDitherVars				\
+    extern uns_ordered_dither_array img_oda_red;	\
+    extern uns_ordered_dither_array img_oda_green;	\
     extern uns_ordered_dither_array img_oda_blue;
 
-#define InitColorDither(cvdata, clrdata, dstTW)                 \
+#define InitColorDither(cvdata, clrdata, dstTW)			\
     do {} while (0)
 
-#define StartColorDitherLine(cvdata, dstX1, dstY)               \
-    do {                                                        \
-        relx = dstX1 & 7;                                       \
-        rely = dstY & 7;                                        \
+#define StartColorDitherLine(cvdata, dstX1, dstY)		\
+    do {							\
+	relx = dstX1 & 7;					\
+	rely = dstY & 7;					\
     } while (0)
 
 /*
@@ -101,29 +101,29 @@
  * less than 256, but a natural 255, or a calculated (>=) 256
  * should be mapped to maximum intensity.
  */
-#define ColorDitherPixel(dstX, dstY, pixel, red, green, blue)   \
-    do {                                                        \
-        if (red == 255) {                                       \
-            red = 256;                                          \
-        } else {                                                \
-            red += img_oda_red[relx][rely];                     \
-            if (red > 255) red = 256;                           \
-        }                                                       \
-        if (green == 255) {                                     \
-            green = 256;                                        \
-        } else {                                                \
-            green += img_oda_green[relx][rely];                 \
-            if (green > 255) green = 256;                       \
-        }                                                       \
-        if (blue == 255) {                                      \
-            blue = 256;                                         \
-        } else {                                                \
-            blue += img_oda_blue[relx][rely];                   \
-            if (blue > 255) blue = 256;                         \
-        }                                                       \
-        pixel = ColorCubeOrdMapUns(red, green, blue);           \
-        relx = (relx + 1) & 7;                                  \
+#define ColorDitherPixel(dstX, dstY, pixel, red, green, blue)	\
+    do {							\
+	if (red == 255) {					\
+	    red = 256;						\
+	} else {						\
+	    red += img_oda_red[relx][rely];			\
+	    if (red > 255) red = 256;				\
+	}							\
+	if (green == 255) {					\
+	    green = 256;					\
+	} else {						\
+	    green += img_oda_green[relx][rely];			\
+	    if (green > 255) green = 256;			\
+	}							\
+	if (blue == 255) {					\
+	    blue = 256;						\
+	} else {						\
+	    blue += img_oda_blue[relx][rely];			\
+	    if (blue > 255) blue = 256;				\
+	}							\
+	pixel = ColorCubeOrdMapUns(red, green, blue);		\
+	relx = (relx + 1) & 7;					\
     } while (0)
 
-#define ColorDitherBufComplete(cvdata, dstX1)                   \
+#define ColorDitherBufComplete(cvdata, dstX1)			\
     do {} while (0)

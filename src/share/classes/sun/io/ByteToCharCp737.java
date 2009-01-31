@@ -32,6 +32,7 @@ import sun.nio.cs.IBM737;
  * A table to convert to Cp737 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp737 extends ByteToCharSingleByte {

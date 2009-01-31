@@ -80,9 +80,9 @@ import org.w3c.dom.Text;
 public final class XMLSignature extends SignatureElementProxy {
 
    /** {@link java.util.logging} logging facility */
-   static java.util.logging.Logger log =
+   static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(XMLSignature.class.getName());
-
+   
    //J-
    /** MAC - Required HMAC-SHA1 */
    public static final String ALGO_ID_MAC_HMAC_SHA1 = Constants.SignatureSpecNS + "hmac-sha1";
@@ -395,7 +395,7 @@ public final class XMLSignature extends SignatureElementProxy {
          Element firstObject=null;
          Node sibling= this._constructionElement.getFirstChild();
          firstObject = XMLUtils.selectDsNode(sibling,Constants._TAG_OBJECT,0);
-
+	   	     
             if (firstObject != null) {
 
                // add it before the object
@@ -408,7 +408,7 @@ public final class XMLSignature extends SignatureElementProxy {
                // add it as the last element to the signature
                this._constructionElement.appendChild(keyInfoElement);
                XMLUtils.addReturnToElement(this._constructionElement);
-            }
+            }         
       }
 
       return this._keyInfo;
@@ -559,11 +559,11 @@ public final class XMLSignature extends SignatureElementProxy {
 
          //check the values with the public key from the cert
          return this.checkSignatureValue(cert.getPublicKey());
-      }
-
+      } 
+      
       Object exArgs[] = { "Didn't get a certificate" };
       throw new XMLSignatureException("empty", exArgs);
-
+      
    }
 
    /**
@@ -602,10 +602,10 @@ public final class XMLSignature extends SignatureElementProxy {
             new SignatureAlgorithm(this.getSignedInfo()
                .getSignatureMethodElement(), this.getBaseURI());
          if (true) {
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "SignatureMethodURI = " + sa.getAlgorithmURI());
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "jceSigAlgorithm    = " + sa.getJCEAlgorithmString());
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "jceSigProvider     = " + sa.getJCEProviderName());
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "PublicKey = " + pk);
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "SignatureMethodURI = " + sa.getAlgorithmURI());
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "jceSigAlgorithm    = " + sa.getJCEAlgorithmString());
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "jceSigProvider     = " + sa.getJCEProviderName());
+         	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "PublicKey = " + pk);
          }
          sa.initVerify(pk);
 
@@ -614,11 +614,11 @@ public final class XMLSignature extends SignatureElementProxy {
          OutputStream bos=new UnsyncBufferedOutputStream(so);
          this._signedInfo.signInOctectStream(bos);
          try {
-                        bos.close();
-                } catch (IOException e) {
-                        //Imposible
-                }
-
+			bos.close();
+		} catch (IOException e) {
+			//Imposible
+		}
+         
          //retrieve the byte[] from the stored signature
          byte sigBytes[] = this.getSignatureValue();
 
@@ -630,7 +630,7 @@ public final class XMLSignature extends SignatureElementProxy {
          return verify;
       } catch (XMLSecurityException ex) {
          throw new XMLSignatureException("empty", ex);
-      }
+      } 
    }
 
    /**

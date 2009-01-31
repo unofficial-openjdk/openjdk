@@ -42,32 +42,32 @@ class NameAndTypeData {
      * Constructor
      */
     NameAndTypeData(MemberDefinition field) {
-        this.field = field;
+	this.field = field;
     }
 
     /**
      * Hashcode
      */
     public int hashCode() {
-        return field.getName().hashCode() * field.getType().hashCode();
+	return field.getName().hashCode() * field.getType().hashCode();
     }
 
     /**
      * Equality
      */
     public boolean equals(Object obj) {
-        if ((obj != null) && (obj instanceof NameAndTypeData)) {
-            NameAndTypeData nt = (NameAndTypeData)obj;
-            return field.getName().equals(nt.field.getName()) &&
-                field.getType().equals(nt.field.getType());
-        }
-        return false;
+	if ((obj != null) && (obj instanceof NameAndTypeData)) {
+	    NameAndTypeData nt = (NameAndTypeData)obj;
+	    return field.getName().equals(nt.field.getName()) &&
+		field.getType().equals(nt.field.getType());
+	}
+	return false;
     }
 
     /**
      * Convert to string
      */
     public String toString() {
-        return "%%" + field.toString() + "%%";
+	return "%%" + field.toString() + "%%";
     }
 }

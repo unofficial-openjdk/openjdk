@@ -50,7 +50,7 @@ extern AwtGraphicsConfigDataPtr
 /*
  * client_data = MListPeer instance
  */
-static void
+static void 
 Slist_callback(Widget w, XtPointer client_data, XtPointer call_data)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -71,9 +71,9 @@ Slist_callback(Widget w, XtPointer client_data, XtPointer call_data)
                  * generated first ).
                  */
                 JNU_CallMethodByName(env, NULL, (jobject) client_data
-                                     ,"handleListChanged"
-                                     ,"(I)V"
-                                     ,(cbs->item_position - 1));
+				     ,"handleListChanged"
+				     ,"(I)V"
+				     ,(cbs->item_position - 1));
                 if ((*env)->ExceptionOccurred(env)) {
                     (*env)->ExceptionDescribe(env);
                     (*env)->ExceptionClear(env);
@@ -81,9 +81,9 @@ Slist_callback(Widget w, XtPointer client_data, XtPointer call_data)
             }
 
             JNU_CallMethodByName(env, NULL, (jobject) client_data
-                                 ,"action"
-                                 ,"(IJI)V"
-                                 ,(cbs->item_position - 1)
+				 ,"action"
+				 ,"(IJI)V"
+				 ,(cbs->item_position - 1)
                                  ,converted.when
                                  ,converted.modifiers);
             if ((*env)->ExceptionOccurred(env)) {
@@ -94,9 +94,9 @@ Slist_callback(Widget w, XtPointer client_data, XtPointer call_data)
         }
         case XmCR_BROWSE_SELECT:
             JNU_CallMethodByName(env, NULL, (jobject) client_data
-                                 ,"handleListChanged"
-                                 ,"(I)V"
-                                 ,(cbs->item_position - 1));
+				 ,"handleListChanged"
+				 ,"(I)V"
+				 ,(cbs->item_position - 1));
             if ((*env)->ExceptionOccurred(env)) {
                 (*env)->ExceptionDescribe(env);
                 (*env)->ExceptionClear(env);
@@ -105,9 +105,9 @@ Slist_callback(Widget w, XtPointer client_data, XtPointer call_data)
 
         case XmCR_MULTIPLE_SELECT:
             JNU_CallMethodByName(env, NULL, (jobject) client_data
-                                 ,"handleListChanged"
-                                 ,"(I)V"
-                                 ,(cbs->item_position - 1));
+				 ,"handleListChanged"
+				 ,"(I)V"
+				 ,(cbs->item_position - 1));
             if ((*env)->ExceptionOccurred(env)) {
                 (*env)->ExceptionDescribe(env);
                 (*env)->ExceptionClear(env);
@@ -125,19 +125,19 @@ Slist_callback(Widget w, XtPointer client_data, XtPointer call_data)
  * Signature: (Lsun/awt/motif/MComponentPeer;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_create
-  (JNIEnv *env, jobject this, jobject parent)
+  (JNIEnv *env, jobject this, jobject parent) 
 {
     Cardinal argc;
-#define MAX_ARGC 40
+#define MAX_ARGC 40    
     Arg args[MAX_ARGC];
     struct ComponentData *wdata;
     struct ListData *sdata;
     Pixel bg;
     jobject globalRef = awtJNI_CreateAndSetGlobalRef(env, this);
     AwtGraphicsConfigDataPtr adata;
-
+    
     AWT_LOCK();
-
+    
     adata = copyGraphicsConfigToPeer(env, this);
 
     if (JNU_IsNull(env, parent)) {
@@ -232,7 +232,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_create
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setMultipleSelections
-  (JNIEnv *env, jobject this, jboolean v)
+  (JNIEnv *env, jobject this, jboolean v) 
 {
     struct ListData *sdata;
     jobject globalRef;
@@ -242,14 +242,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setMultipleSelections
     AWT_LOCK();
 
     sdata = (struct ListData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (sdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
         return;
     }
     globalRef = (jobject)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef);
     if (v == JNI_FALSE) {
         XtVaSetValues(sdata->list,
                       XmNselectionPolicy, XmBROWSE_SELECT,
@@ -265,9 +265,9 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setMultipleSelections
 
         // If we change the selection mode from multiple to single
         // we need to decide what the item should be selected:
-        // If a selected item has the location cursor, only that
-        // item will remain selected.  If no selected item has the
-        // location cursor, all items will be deselected.
+        // If a selected item has the location cursor, only that 
+        // item will remain selected.  If no selected item has the 
+        // location cursor, all items will be deselected.  
         selPos = XmListGetKbdItemPos(sdata->list);
         selected = XmListPosSelected(sdata->list, selPos);
         XmListDeselectAllItems(sdata->list);
@@ -298,7 +298,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setMultipleSelections
  */
 
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setBackground
-  (JNIEnv *env, jobject this, jobject c)
+  (JNIEnv *env, jobject this, jobject c) 
 {
     struct ListData *ldata;
     Pixel color;
@@ -309,7 +309,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setBackground
     }
     AWT_LOCK();
     ldata = (struct ListData *)
-        JNU_GetLongFieldAsPtr(env,this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this, mComponentPeerIDs.pData);
     if (ldata == NULL || ldata->list == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -317,8 +317,8 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setBackground
     }
     color = awtJNI_GetColor(env, c);
     XtVaSetValues(ldata->list,
-                  XmNbackground, color,
-                  NULL);
+		  XmNbackground, color,
+		  NULL);
     AWT_FLUSH_UNLOCK();
 }
 
@@ -328,7 +328,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_setBackground
  * Signature: (I)Z
  */
 JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MListPeer_isSelected
-  (JNIEnv *env, jobject this, jint pos)
+  (JNIEnv *env, jobject this, jint pos) 
 {
     struct ListData *sdata;
 
@@ -356,7 +356,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MListPeer_isSelected
  * Signature: (Ljava/lang/String;I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_addItem
-  (JNIEnv *env, jobject this, jstring item, jint index)
+  (JNIEnv *env, jobject this, jstring item, jint index) 
 {
     XmString im;
     struct ListData *sdata;
@@ -365,14 +365,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_addItem
     /*
      * Note:
      * There used to be code in this function to fix:
-     *  4067355 size of listbox depends on when pack() is called (solaris)
+     *	4067355 size of listbox depends on when pack() is called (solaris)
      * The fix (for jdk1.1.7) involved unmapping the List widget before the add
-     * is done and resizing/remapping it after the add. This causes significant
-     * performance degradation if addItem() is called a lot. A bug was filed
+     * is done and resizing/remapping it after the add. This causes significant 
+     * performance degradation if addItem() is called a lot. A bug was filed 
      * on this performance problem: 4117288
      * The fix was backed out after testing that:
-     *  - the problem reported in 4067355 was no longer reproducible
-     *  - the performance problem is gone
+     *	- the problem reported in 4067355 was no longer reproducible
+     *	- the performance problem is gone
      */
 
     AWT_LOCK();
@@ -417,7 +417,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_addItem
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_delItems
-  (JNIEnv *env, jobject this, jint start, jint end)
+  (JNIEnv *env, jobject this, jint start, jint end) 
 {
     struct ListData *sdata;
     Boolean was_mapped;
@@ -491,7 +491,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_delItems
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_select
-  (JNIEnv *env, jobject this, jint pos)
+  (JNIEnv *env, jobject this, jint pos) 
 {
     struct ListData *sdata;
 
@@ -513,7 +513,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_select
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_deselect
-  (JNIEnv *env, jobject this, jint pos)
+  (JNIEnv *env, jobject this, jint pos) 
 {
     struct ListData *sdata;
 
@@ -598,3 +598,4 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MListPeer_nativeHandleMouseWheel
     awt_util_do_wheel_scroll(scroll, scrollType, scrollAmt, wheelAmt);
     AWT_UNLOCK();
 }
+

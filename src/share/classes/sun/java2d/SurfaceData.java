@@ -109,7 +109,7 @@ public abstract class SurfaceData
     private StateTrackableDelegate stateDelegate;
 
     static {
-        initIDs();
+	initIDs();
     }
 
     protected SurfaceData(SurfaceType surfaceType, ColorModel cm) {
@@ -124,14 +124,14 @@ public abstract class SurfaceData
                           SurfaceType surfaceType, ColorModel cm)
     {
         this.stateDelegate = trackable;
-        this.colorModel = cm;
-        this.surfaceType = surfaceType;
-        valid = true;
+	this.colorModel = cm;
+	this.surfaceType = surfaceType;
+	valid = true;
     }
 
     protected SurfaceData(State state) {
         this.stateDelegate = StateTrackableDelegate.createInstance(state);
-        valid = true;
+	valid = true;
     }
 
     /**
@@ -310,15 +310,15 @@ public abstract class SurfaceData
      * Returns a boolean indicating whether or not this SurfaceData is valid.
      */
     public final boolean isValid() {
-        return valid;
+	return valid;
     }
 
     public Object getDisposerReferent() {
-        return disposerReferent;
+	return disposerReferent;
     }
 
     public long getNativeOps() {
-        return pData;
+	return pData;
     }
 
     /**
@@ -327,7 +327,7 @@ public abstract class SurfaceData
      * and revalidate their pipelines before continuing.
      */
     public void invalidate() {
-        valid = false;
+	valid = false;
         stateDelegate.markDirty();
     }
 
@@ -396,47 +396,47 @@ public abstract class SurfaceData
     protected static final DrawImagePipe imagepipe;
 
     static {
-        colorPrimitives = new LoopPipe();
+	colorPrimitives = new LoopPipe();
 
-        outlineTextRenderer = new OutlineTextRenderer();
-        solidTextRenderer = new SolidTextRenderer();
-        aaTextRenderer = new AATextRenderer();
-        lcdTextRenderer = new LCDTextRenderer();
+	outlineTextRenderer = new OutlineTextRenderer();
+	solidTextRenderer = new SolidTextRenderer();
+	aaTextRenderer = new AATextRenderer();
+	lcdTextRenderer = new LCDTextRenderer();
 
-        colorPipe = new AlphaColorPipe();
-        // colorShape = colorPrimitives;
-        colorViaShape = new PixelToShapeConverter(colorPrimitives);
-        colorText = new TextRenderer(colorPipe);
-        clipColorPipe = new SpanClipRenderer(colorPipe);
-        clipColorText = new TextRenderer(clipColorPipe);
-        AAColorShape = new AAShapePipe(colorPipe);
-        AAColorViaShape = new PixelToShapeConverter(AAColorShape);
-        AAClipColorShape = new AAShapePipe(clipColorPipe);
-        AAClipColorViaShape = new PixelToShapeConverter(AAClipColorShape);
+	colorPipe = new AlphaColorPipe();
+	// colorShape = colorPrimitives;
+	colorViaShape = new PixelToShapeConverter(colorPrimitives);
+	colorText = new TextRenderer(colorPipe);
+	clipColorPipe = new SpanClipRenderer(colorPipe);
+	clipColorText = new TextRenderer(clipColorPipe);
+	AAColorShape = new AAShapePipe(colorPipe);
+	AAColorViaShape = new PixelToShapeConverter(AAColorShape);
+	AAClipColorShape = new AAShapePipe(clipColorPipe);
+	AAClipColorViaShape = new PixelToShapeConverter(AAClipColorShape);
 
-        paintPipe = new AlphaPaintPipe();
-        paintShape = new SpanShapeRenderer.Composite(paintPipe);
-        paintViaShape = new PixelToShapeConverter(paintShape);
-        paintText = new TextRenderer(paintPipe);
-        clipPaintPipe = new SpanClipRenderer(paintPipe);
-        clipPaintText = new TextRenderer(clipPaintPipe);
-        AAPaintShape = new AAShapePipe(paintPipe);
-        AAPaintViaShape = new PixelToShapeConverter(AAPaintShape);
-        AAClipPaintShape = new AAShapePipe(clipPaintPipe);
-        AAClipPaintViaShape = new PixelToShapeConverter(AAClipPaintShape);
+	paintPipe = new AlphaPaintPipe();
+	paintShape = new SpanShapeRenderer.Composite(paintPipe);
+	paintViaShape = new PixelToShapeConverter(paintShape);
+	paintText = new TextRenderer(paintPipe);
+	clipPaintPipe = new SpanClipRenderer(paintPipe);
+	clipPaintText = new TextRenderer(clipPaintPipe);
+	AAPaintShape = new AAShapePipe(paintPipe);
+	AAPaintViaShape = new PixelToShapeConverter(AAPaintShape);
+	AAClipPaintShape = new AAShapePipe(clipPaintPipe);
+	AAClipPaintViaShape = new PixelToShapeConverter(AAClipPaintShape);
 
-        compPipe = new GeneralCompositePipe();
-        compShape = new SpanShapeRenderer.Composite(compPipe);
-        compViaShape = new PixelToShapeConverter(compShape);
-        compText = new TextRenderer(compPipe);
-        clipCompPipe = new SpanClipRenderer(compPipe);
-        clipCompText = new TextRenderer(clipCompPipe);
-        AACompShape = new AAShapePipe(compPipe);
-        AACompViaShape = new PixelToShapeConverter(AACompShape);
-        AAClipCompShape = new AAShapePipe(clipCompPipe);
-        AAClipCompViaShape = new PixelToShapeConverter(AAClipCompShape);
+	compPipe = new GeneralCompositePipe();
+	compShape = new SpanShapeRenderer.Composite(compPipe);
+	compViaShape = new PixelToShapeConverter(compShape);
+	compText = new TextRenderer(compPipe);
+	clipCompPipe = new SpanClipRenderer(compPipe);
+	clipCompText = new TextRenderer(clipCompPipe);
+	AACompShape = new AAShapePipe(compPipe);
+	AACompViaShape = new PixelToShapeConverter(AACompShape);
+	AAClipCompShape = new AAShapePipe(clipCompPipe);
+	AAClipCompViaShape = new PixelToShapeConverter(AAClipCompShape);
 
-        imagepipe = new DrawImage();
+	imagepipe = new DrawImage();
     }
 
     /* Not all surfaces and rendering mode combinations support LCD text. */
@@ -448,14 +448,14 @@ public abstract class SurfaceData
     public boolean canRenderLCDText(SunGraphics2D sg2d) {
         // For now the answer can only be true in the following cases:
         if (sg2d.compositeState <= SunGraphics2D.COMP_ISCOPY &&
-            sg2d.paintState <= SunGraphics2D.PAINT_ALPHACOLOR &&
+	    sg2d.paintState <= SunGraphics2D.PAINT_ALPHACOLOR &&
             sg2d.clipState <= SunGraphics2D.CLIP_RECTANGULAR)
         {
             if (haveLCDLoop == LCDLOOP_UNKNOWN) {
                 DrawGlyphListLCD loop =
-                    DrawGlyphListLCD.locate(SurfaceType.AnyColor,
-                                            CompositeType.SrcNoEa,
-                                            getSurfaceType());
+		    DrawGlyphListLCD.locate(SurfaceType.AnyColor,
+					    CompositeType.SrcNoEa,
+					    getSurfaceType());
                 haveLCDLoop = (loop!= null) ? LCDLOOP_FOUND : LCDLOOP_NOTFOUND;
             }
             return haveLCDLoop == LCDLOOP_FOUND;
@@ -464,74 +464,74 @@ public abstract class SurfaceData
     }
 
     public void validatePipe(SunGraphics2D sg2d) {
-        sg2d.imagepipe = imagepipe;
+	sg2d.imagepipe = imagepipe;
         if (sg2d.compositeState == sg2d.COMP_XOR) {
-            if (sg2d.paintState > sg2d.PAINT_ALPHACOLOR) {
-                sg2d.drawpipe = paintViaShape;
-                sg2d.fillpipe = paintViaShape;
-                sg2d.shapepipe = paintShape;
-                // REMIND: Ideally custom paint mode would use glyph
-                // rendering as opposed to outline rendering but the
-                // glyph paint rendering pipeline uses MaskBlit which
-                // is not defined for XOR.  This means that text drawn
-                // in XOR mode with a Color object is different than
-                // text drawn in XOR mode with a Paint object.
-                sg2d.textpipe = outlineTextRenderer;
-            } else {
-                if (sg2d.clipState == sg2d.CLIP_SHAPE) {
-                    sg2d.drawpipe = colorViaShape;
-                    sg2d.fillpipe = colorViaShape;
-                    // REMIND: We should not be changing text strategies
-                    // between outline and glyph rendering based upon the
-                    // presence of a complex clip as that could cause a
-                    // mismatch when drawing the same text both clipped
-                    // and unclipped on two separate rendering passes.
-                    // Unfortunately, all of the clipped glyph rendering
-                    // pipelines rely on the use of the MaskBlit operation
-                    // which is not defined for XOR.
-                    sg2d.textpipe = outlineTextRenderer;
-                } else {
-                    if (sg2d.transformState >= sg2d.TRANSFORM_TRANSLATESCALE) {
-                        sg2d.drawpipe = colorViaShape;
-                        sg2d.fillpipe = colorViaShape;
-                    } else {
-                        if (sg2d.strokeState != sg2d.STROKE_THIN) {
-                            sg2d.drawpipe = colorViaShape;
-                        } else {
-                            sg2d.drawpipe = colorPrimitives;
-                        }
-                        sg2d.fillpipe = colorPrimitives;
-                    }
-                    sg2d.textpipe = solidTextRenderer;
-                }
-                sg2d.shapepipe = colorPrimitives;
-                sg2d.loops = getRenderLoops(sg2d);
-                // assert(sg2d.surfaceData == this);
-            }
-        } else if (sg2d.compositeState == sg2d.COMP_CUSTOM) {
-            if (sg2d.antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
-                if (sg2d.clipState == sg2d.CLIP_SHAPE) {
-                    sg2d.drawpipe = AAClipCompViaShape;
-                    sg2d.fillpipe = AAClipCompViaShape;
-                    sg2d.shapepipe = AAClipCompShape;
-                    sg2d.textpipe = clipCompText;
-                } else {
-                    sg2d.drawpipe = AACompViaShape;
-                    sg2d.fillpipe = AACompViaShape;
-                    sg2d.shapepipe = AACompShape;
-                    sg2d.textpipe = compText;
-                }
-            } else {
-                sg2d.drawpipe = compViaShape;
-                sg2d.fillpipe = compViaShape;
-                sg2d.shapepipe = compShape;
-                if (sg2d.clipState == sg2d.CLIP_SHAPE) {
-                    sg2d.textpipe = clipCompText;
-                } else {
-                    sg2d.textpipe = compText;
-                }
-            }
-        } else if (sg2d.antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
+	    if (sg2d.paintState > sg2d.PAINT_ALPHACOLOR) {
+		sg2d.drawpipe = paintViaShape;
+		sg2d.fillpipe = paintViaShape;
+		sg2d.shapepipe = paintShape;
+		// REMIND: Ideally custom paint mode would use glyph
+		// rendering as opposed to outline rendering but the
+		// glyph paint rendering pipeline uses MaskBlit which
+		// is not defined for XOR.  This means that text drawn
+		// in XOR mode with a Color object is different than
+		// text drawn in XOR mode with a Paint object.
+		sg2d.textpipe = outlineTextRenderer;
+	    } else {
+		if (sg2d.clipState == sg2d.CLIP_SHAPE) {
+		    sg2d.drawpipe = colorViaShape;
+		    sg2d.fillpipe = colorViaShape;
+		    // REMIND: We should not be changing text strategies
+		    // between outline and glyph rendering based upon the
+		    // presence of a complex clip as that could cause a
+		    // mismatch when drawing the same text both clipped
+		    // and unclipped on two separate rendering passes.
+		    // Unfortunately, all of the clipped glyph rendering
+		    // pipelines rely on the use of the MaskBlit operation
+		    // which is not defined for XOR.
+		    sg2d.textpipe = outlineTextRenderer;
+		} else {
+		    if (sg2d.transformState >= sg2d.TRANSFORM_TRANSLATESCALE) {
+			sg2d.drawpipe = colorViaShape;
+			sg2d.fillpipe = colorViaShape;
+		    } else {
+			if (sg2d.strokeState != sg2d.STROKE_THIN) {
+			    sg2d.drawpipe = colorViaShape;
+			} else {
+			    sg2d.drawpipe = colorPrimitives;
+			}
+			sg2d.fillpipe = colorPrimitives;
+		    }
+		    sg2d.textpipe = solidTextRenderer;
+		}
+		sg2d.shapepipe = colorPrimitives;
+		sg2d.loops = getRenderLoops(sg2d);
+		// assert(sg2d.surfaceData == this);
+	    }
+	} else if (sg2d.compositeState == sg2d.COMP_CUSTOM) {
+	    if (sg2d.antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
+		if (sg2d.clipState == sg2d.CLIP_SHAPE) {
+		    sg2d.drawpipe = AAClipCompViaShape;
+		    sg2d.fillpipe = AAClipCompViaShape;
+		    sg2d.shapepipe = AAClipCompShape;
+		    sg2d.textpipe = clipCompText;
+		} else {
+		    sg2d.drawpipe = AACompViaShape;
+		    sg2d.fillpipe = AACompViaShape;
+		    sg2d.shapepipe = AACompShape;
+		    sg2d.textpipe = compText;
+		}
+	    } else {
+		sg2d.drawpipe = compViaShape;
+		sg2d.fillpipe = compViaShape;
+		sg2d.shapepipe = compShape;
+		if (sg2d.clipState == sg2d.CLIP_SHAPE) {
+		    sg2d.textpipe = clipCompText;
+		} else {
+		    sg2d.textpipe = compText;
+		}
+	    }
+	} else if (sg2d.antialiasHint == SunHints.INTVAL_ANTIALIAS_ON) {
             sg2d.alphafill = getMaskFill(sg2d);
             // assert(sg2d.surfaceData == this);
             if (sg2d.alphafill != null) {
@@ -554,24 +554,24 @@ public abstract class SurfaceData
                 }
             } else {
                 if (sg2d.clipState == sg2d.CLIP_SHAPE) {
-                    sg2d.drawpipe = AAClipPaintViaShape;
-                    sg2d.fillpipe = AAClipPaintViaShape;
-                    sg2d.shapepipe = AAClipPaintShape;
-                    sg2d.textpipe = clipPaintText;
-                } else {
-                    sg2d.drawpipe = AAPaintViaShape;
-                    sg2d.fillpipe = AAPaintViaShape;
-                    sg2d.shapepipe = AAPaintShape;
-                    sg2d.textpipe = paintText;
-                }
-            }
-        } else if (sg2d.paintState > sg2d.PAINT_ALPHACOLOR ||
+		    sg2d.drawpipe = AAClipPaintViaShape;
+		    sg2d.fillpipe = AAClipPaintViaShape;
+		    sg2d.shapepipe = AAClipPaintShape;
+		    sg2d.textpipe = clipPaintText;
+		} else {
+		    sg2d.drawpipe = AAPaintViaShape;
+		    sg2d.fillpipe = AAPaintViaShape;
+		    sg2d.shapepipe = AAPaintShape;
+		    sg2d.textpipe = paintText;
+		}
+	    }
+	} else if (sg2d.paintState > sg2d.PAINT_ALPHACOLOR ||
                    sg2d.compositeState > sg2d.COMP_ISCOPY ||
                    sg2d.clipState == sg2d.CLIP_SHAPE)
-        {
-            sg2d.drawpipe = paintViaShape;
-            sg2d.fillpipe = paintViaShape;
-            sg2d.shapepipe = paintShape;
+	{
+	    sg2d.drawpipe = paintViaShape;
+	    sg2d.fillpipe = paintViaShape;
+	    sg2d.shapepipe = paintShape;
             sg2d.alphafill = getMaskFill(sg2d);
             // assert(sg2d.surfaceData == this);
             if (sg2d.alphafill != null) {
@@ -581,24 +581,24 @@ public abstract class SurfaceData
                     sg2d.textpipe = colorText;
                 }
             } else {
-                if (sg2d.clipState == sg2d.CLIP_SHAPE) {
-                    sg2d.textpipe = clipPaintText;
-                } else {
-                    sg2d.textpipe = paintText;
-                }
-            }
-        } else {
-            if (sg2d.transformState >= sg2d.TRANSFORM_TRANSLATESCALE) {
-                sg2d.drawpipe = colorViaShape;
-                sg2d.fillpipe = colorViaShape;
-            } else {
-                if (sg2d.strokeState != sg2d.STROKE_THIN) {
-                    sg2d.drawpipe = colorViaShape;
-                } else {
-                    sg2d.drawpipe = colorPrimitives;
-                }
-                sg2d.fillpipe = colorPrimitives;
-            }
+		if (sg2d.clipState == sg2d.CLIP_SHAPE) {
+		    sg2d.textpipe = clipPaintText;
+		} else {
+		    sg2d.textpipe = paintText;
+		}
+	    }
+	} else {
+	    if (sg2d.transformState >= sg2d.TRANSFORM_TRANSLATESCALE) {
+		sg2d.drawpipe = colorViaShape;
+		sg2d.fillpipe = colorViaShape;
+	    } else {
+		if (sg2d.strokeState != sg2d.STROKE_THIN) {
+		    sg2d.drawpipe = colorViaShape;
+		} else {
+		    sg2d.drawpipe = colorPrimitives;
+		}
+		sg2d.fillpipe = colorPrimitives;
+	    }
 
             sg2d.textpipe = getTextPipe(sg2d, false /* AA==OFF */);
             sg2d.shapepipe = colorPrimitives;
@@ -718,19 +718,19 @@ public abstract class SurfaceData
      */
     public RenderLoops getRenderLoops(SunGraphics2D sg2d) {
         SurfaceType src = getPaintSurfaceType(sg2d);
-        CompositeType comp = (sg2d.compositeState == sg2d.COMP_ISCOPY
+	CompositeType comp = (sg2d.compositeState == sg2d.COMP_ISCOPY
                               ? CompositeType.SrcNoEa
                               : sg2d.imageComp);
-        SurfaceType dst = sg2d.getSurfaceData().getSurfaceType();
-
-        Object o = loopcache.get(src, comp, dst);
-        if (o != null) {
-            return (RenderLoops) o;
-        }
-
-        RenderLoops loops = makeRenderLoops(src, comp, dst);
-        loopcache.put(src, comp, dst, loops);
-        return loops;
+	SurfaceType dst = sg2d.getSurfaceData().getSurfaceType();
+	
+	Object o = loopcache.get(src, comp, dst);
+	if (o != null) {
+	    return (RenderLoops) o;
+	}
+	
+	RenderLoops loops = makeRenderLoops(src, comp, dst);
+	loopcache.put(src, comp, dst, loops);
+	return loops;
     }
 
     /**
@@ -740,31 +740,31 @@ public abstract class SurfaceData
      * composite types.
      */
     public static RenderLoops makeRenderLoops(SurfaceType src,
-                                              CompositeType comp,
-                                              SurfaceType dst)
+					      CompositeType comp,
+					      SurfaceType dst)
     {
-        RenderLoops loops = new RenderLoops();
-        loops.drawLineLoop = DrawLine.locate(src, comp, dst);
-        loops.fillRectLoop = FillRect.locate(src, comp, dst);
-        loops.drawRectLoop = DrawRect.locate(src, comp, dst);
-        loops.drawPolygonsLoop = DrawPolygons.locate(src, comp, dst);
+	RenderLoops loops = new RenderLoops();
+	loops.drawLineLoop = DrawLine.locate(src, comp, dst);
+	loops.fillRectLoop = FillRect.locate(src, comp, dst);
+	loops.drawRectLoop = DrawRect.locate(src, comp, dst);
+	loops.drawPolygonsLoop = DrawPolygons.locate(src, comp, dst);
         loops.drawPathLoop = DrawPath.locate(src, comp, dst);
         loops.fillPathLoop = FillPath.locate(src, comp, dst);
-        loops.fillSpansLoop = FillSpans.locate(src, comp, dst);
-        loops.drawGlyphListLoop = DrawGlyphList.locate(src, comp, dst);
-        loops.drawGlyphListAALoop = DrawGlyphListAA.locate(src, comp, dst);
-        loops.drawGlyphListLCDLoop = DrawGlyphListLCD.locate(src, comp, dst);
-        /*
-        System.out.println("drawLine: "+loops.drawLineLoop);
-        System.out.println("fillRect: "+loops.fillRectLoop);
-        System.out.println("drawRect: "+loops.drawRectLoop);
-        System.out.println("drawPolygons: "+loops.drawPolygonsLoop);
-        System.out.println("fillSpans: "+loops.fillSpansLoop);
-        System.out.println("drawGlyphList: "+loops.drawGlyphListLoop);
-        System.out.println("drawGlyphListAA: "+loops.drawGlyphListAALoop);
-        System.out.println("drawGlyphListLCD: "+loops.drawGlyphListLCDLoop);
-        */
-        return loops;
+	loops.fillSpansLoop = FillSpans.locate(src, comp, dst);
+	loops.drawGlyphListLoop = DrawGlyphList.locate(src, comp, dst);
+	loops.drawGlyphListAALoop = DrawGlyphListAA.locate(src, comp, dst);
+	loops.drawGlyphListLCDLoop = DrawGlyphListLCD.locate(src, comp, dst);
+	/*
+       	System.out.println("drawLine: "+loops.drawLineLoop);
+	System.out.println("fillRect: "+loops.fillRectLoop);
+	System.out.println("drawRect: "+loops.drawRectLoop);
+	System.out.println("drawPolygons: "+loops.drawPolygonsLoop);
+	System.out.println("fillSpans: "+loops.fillSpansLoop);
+	System.out.println("drawGlyphList: "+loops.drawGlyphListLoop);
+	System.out.println("drawGlyphListAA: "+loops.drawGlyphListAALoop);
+	System.out.println("drawGlyphListLCD: "+loops.drawGlyphListLCDLoop);
+	*/	
+	return loops;
     }
 
     /**
@@ -778,23 +778,23 @@ public abstract class SurfaceData
      * surface.
      */
     public final SurfaceType getSurfaceType() {
-        return surfaceType;
+	return surfaceType;
     }
 
     /**
      * Return the ColorModel for the destination surface.
      */
     public final ColorModel getColorModel() {
-        return colorModel;
+	return colorModel;
     }
 
     /**
      * Returns the type of this <code>Transparency</code>.
      * @return the field type of this <code>Transparency</code>, which is
-     *          either OPAQUE, BITMASK or TRANSLUCENT.
+     *		either OPAQUE, BITMASK or TRANSLUCENT. 
      */
     public int getTransparency() {
-        return getColorModel().getTransparency();
+	return getColorModel().getTransparency();
     }
 
     /**
@@ -822,9 +822,9 @@ public abstract class SurfaceData
      * @see getRaster
      */
     public boolean useTightBBoxes() {
-        // Note: The native equivalent would trigger on VISIBLE_TO_NATIVE
-        // REMIND: This is not used - should be obsoleted maybe
-        return true;
+	// Note: The native equivalent would trigger on VISIBLE_TO_NATIVE
+	// REMIND: This is not used - should be obsoleted maybe
+	return true;
     }
 
     /**
@@ -832,7 +832,7 @@ public abstract class SurfaceData
      * into an integer for easy storage and conveyance.
      */
     public int pixelFor(int rgb) {
-        return surfaceType.pixelFor(rgb, colorModel);
+	return surfaceType.pixelFor(rgb, colorModel);
     }
 
     /**
@@ -850,7 +850,7 @@ public abstract class SurfaceData
      * object.
      */
     public int pixelFor(Color c) {
-        return pixelFor(c.getRGB());
+	return pixelFor(c.getRGB());
     }
 
     /**
@@ -874,14 +874,14 @@ public abstract class SurfaceData
      * of this surface.
      */
     protected void checkCustomComposite() {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            if (compPermission == null) {
-                compPermission =
-                    new java.awt.AWTPermission("readDisplayPixels");
-            }
-            sm.checkPermission(compPermission);
-        }
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    if (compPermission == null) {
+		compPermission =
+		    new java.awt.AWTPermission("readDisplayPixels");
+	    }
+	    sm.checkPermission(compPermission);
+	}
     }
 
     /**
@@ -896,10 +896,10 @@ public abstract class SurfaceData
      * they represent a disposed surface.
      */
     public static boolean isNull(SurfaceData sd) {
-        if (sd == null || sd == NullSurfaceData.theInstance) {
-            return true;
-        }
-        return false;
+	if (sd == null || sd == NullSurfaceData.theInstance) {
+	    return true;
+	}
+	return false;
     }
 
     /**
@@ -908,14 +908,14 @@ public abstract class SurfaceData
      * given the current settings of the SunGraphics2D.
      */
     public boolean copyArea(SunGraphics2D sg2d,
-                            int x, int y, int w, int h, int dx, int dy)
+			    int x, int y, int w, int h, int dx, int dy)
     {
-        return false;
+	return false;
     }
 
-    /**
+    /** 
      * Synchronously releases resources associated with this surface.
-     */
+     */ 
     public void flush() {}
 
     /**

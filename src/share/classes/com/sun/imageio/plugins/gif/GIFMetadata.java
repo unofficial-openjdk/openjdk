@@ -102,7 +102,7 @@ abstract class GIFMetadata extends IIOMetadata {
         if (value == null || "".equals(value)) {
             return defaultValue;
         }
-
+        
         int intValue = defaultValue;
         try {
             intValue = Integer.parseInt(value);

@@ -68,7 +68,7 @@ public class WTrayIconPeer extends WObjectPeer implements TrayIconPeer {
         Image image = ((TrayIcon)target).getImage();
         if (image != null) {
             updateNativeImage(image);
-        }
+        }        
     }
 
     public native void setToolTip(String tooltip);
@@ -134,7 +134,7 @@ public class WTrayIconPeer extends WObjectPeer implements TrayIconPeer {
                 if (firstUpdate) firstUpdate = false;
 
             } finally {
-                gr.dispose();
+                gr.dispose();                
             }
         }
     }

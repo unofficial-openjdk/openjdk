@@ -44,32 +44,33 @@ public class Test4512704 {
     private static final int KEYSIZE = 16; // in bytes
 
     public boolean execute() throws Exception {
-        AlgorithmParameterSpec aps = null;
+	AlgorithmParameterSpec aps = null;
 
-        Cipher ci = Cipher.getInstance(ALGO+"/"+MODE+"/"+PADDING, "SunJCE");
+	Cipher ci = Cipher.getInstance(ALGO+"/"+MODE+"/"+PADDING, "SunJCE");
 
-        KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
-        kg.init(KEYSIZE*8);
-        SecretKey key = kg.generateKey();
-        // TEST FIX 4512704
-        try {
-            ci.init(Cipher.ENCRYPT_MODE, key, aps);
-        } catch(InvalidAlgorithmParameterException ex) {
-            throw new Exception("parameter should be generated when null is specified!");
-        }
+	KeyGenerator kg = KeyGenerator.getInstance(ALGO, "SunJCE");
+	kg.init(KEYSIZE*8);
+	SecretKey key = kg.generateKey();
+	// TEST FIX 4512704
+	try {
+	    ci.init(Cipher.ENCRYPT_MODE, key, aps);
+	} catch(InvalidAlgorithmParameterException ex) {
+	    throw new Exception("parameter should be generated when null is specified!");
+	}
 
-        // passed all tests...hooray!
-        return true;
+	// passed all tests...hooray!
+	return true;
     }
 
     public static void main (String[] args) throws Exception {
-        Security.addProvider(new com.sun.crypto.provider.SunJCE());
+	Security.addProvider(new com.sun.crypto.provider.SunJCE());
 
-        Test4512704 test = new Test4512704();
-        String testName = test.getClass().getName() + "[" + ALGO +
-            "/" + MODE + "/" + PADDING + "]";
-        if (test.execute()) {
-            System.out.println(testName + ": Passed!");
-        }
+	Test4512704 test = new Test4512704();
+	String testName = test.getClass().getName() + "[" + ALGO +
+	    "/" + MODE + "/" + PADDING + "]";
+	if (test.execute()) {
+	    System.out.println(testName + ": Passed!");
+	}
     }
 }
+

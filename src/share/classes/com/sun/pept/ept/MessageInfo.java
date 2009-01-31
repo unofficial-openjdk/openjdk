@@ -38,7 +38,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -51,7 +51,7 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a EPTFactory with ...
  * </p>
  */
@@ -60,7 +60,7 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a MessageDispatcher with ...
  * </p>
  */
@@ -69,7 +69,7 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Encoder with ...
  * </p>
  */
@@ -78,7 +78,7 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Decoder with ...
  * </p>
  */
@@ -87,7 +87,7 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Connection with ...
  * </p>
  */
@@ -96,9 +96,9 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param eptFactory ...
  * </p>
  */
@@ -107,9 +107,9 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param messageDispatcher ...
  * </p>
  */
@@ -118,9 +118,9 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param encoder ...
  * </p>
  */
@@ -129,9 +129,9 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param decoder ...
  * </p>
  */
@@ -140,12 +140,19 @@ public interface MessageInfo extends MessageStruct {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param connection ...
  * </p>
  */
     public void setConnection(Connection connection);
 
 } // end MessageInfo
+
+
+
+
+
+
+

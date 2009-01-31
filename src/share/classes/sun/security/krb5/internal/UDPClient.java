@@ -23,6 +23,7 @@
  */
 
 /*
+ * %W% %E%
  *
  *  (C) Copyright IBM Corp. 1999 All Rights Reserved.
  *  Copyright 1997 The Open Group Research Institute.  All rights reserved.
@@ -41,56 +42,56 @@ public class UDPClient {
     DatagramPacket dgPacketIn;
 
     public UDPClient(InetAddress newIAddr, int port)
-        throws SocketException {
-        iaddr = newIAddr;
-        iport = port;
-        dgSocket = new DatagramSocket();
+	throws SocketException {
+	iaddr = newIAddr;
+	iport = port;
+	dgSocket = new DatagramSocket();
     }
 
     public UDPClient(String hostname, int port)
-        throws UnknownHostException, SocketException {
-        iaddr = InetAddress.getByName(hostname);
-        iport = port;
-        dgSocket = new DatagramSocket();
+	throws UnknownHostException, SocketException {
+	iaddr = InetAddress.getByName(hostname);
+	iport = port;
+	dgSocket = new DatagramSocket();
     }
 
     public UDPClient(String hostname, int port, int timeout)
-        throws UnknownHostException, SocketException {
-        iaddr = InetAddress.getByName(hostname);
-        iport = port;
-        dgSocket = new DatagramSocket();
-        dgSocket.setSoTimeout(timeout);
+	throws UnknownHostException, SocketException {
+	iaddr = InetAddress.getByName(hostname);
+	iport = port;
+	dgSocket = new DatagramSocket();
+	dgSocket.setSoTimeout(timeout);
     }
 
     public void setBufSize(int newBufSize) {
-        bufSize = newBufSize;
+	bufSize = newBufSize;
     }
 
     public InetAddress getInetAddress() {
-        if (dgPacketIn != null)
-            return dgPacketIn.getAddress();
-        return null;
+	if (dgPacketIn != null)
+	    return dgPacketIn.getAddress();
+	return null;
     }
 
     public void send(byte[] data) throws IOException {
-        DatagramPacket dgPacketOut = new DatagramPacket(data, data.length,
-                                                        iaddr, iport);
-        dgSocket.send(dgPacketOut);
+	DatagramPacket dgPacketOut = new DatagramPacket(data, data.length,
+							iaddr, iport);
+	dgSocket.send(dgPacketOut);
     }
 
     public byte[] receive() throws IOException {
-        byte ibuf[] = new byte[bufSize];
-        dgPacketIn = new DatagramPacket(ibuf, ibuf.length);
+	byte ibuf[] = new byte[bufSize];
+	dgPacketIn = new DatagramPacket(ibuf, ibuf.length);
         try {
             dgSocket.receive(dgPacketIn);
         }
         catch (SocketException e) {
             dgSocket.receive(dgPacketIn);
         }
-        byte[] data = new byte[dgPacketIn.getLength()];
-        System.arraycopy(dgPacketIn.getData(), 0, data, 0,
-                         dgPacketIn.getLength());
-        return data;
+	byte[] data = new byte[dgPacketIn.getLength()];
+	System.arraycopy(dgPacketIn.getData(), 0, data, 0,
+			 dgPacketIn.getLength());
+	return data;
     }
 
 }

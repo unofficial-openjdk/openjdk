@@ -30,7 +30,7 @@ import java.awt.event.AdjustmentEvent;
 
 class MScrollbarPeer extends MComponentPeer implements ScrollbarPeer {
     static {
-        initIDs();
+	initIDs();
     }
 
     private boolean inUpCall = false;
@@ -38,7 +38,7 @@ class MScrollbarPeer extends MComponentPeer implements ScrollbarPeer {
     native void create(MComponentPeer parent);
 
     MScrollbarPeer(Scrollbar target) {
-        super(target);
+	super(target);
     }
 
     // Initialize JNI field and method IDs
@@ -61,83 +61,83 @@ class MScrollbarPeer extends MComponentPeer implements ScrollbarPeer {
     }
 
     public Dimension getMinimumSize() {
-        if (((Scrollbar)target).getOrientation() == Scrollbar.VERTICAL) {
-            return new Dimension(getDefaultDimension(), 50);
-        } else {
-            return new Dimension(50, getDefaultDimension());
-        }
+	if (((Scrollbar)target).getOrientation() == Scrollbar.VERTICAL) {
+	    return new Dimension(getDefaultDimension(), 50);
+	} else {
+	    return new Dimension(50, getDefaultDimension());
+	}
     }
 
     // NOTE: Callback methods are called by privileged threads.
-    //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
+    //	     DO NOT INVOKE CLIENT CODE ON THIS THREAD!
 
     private void postAdjustmentEvent(final int type, final int value,
-                                     final boolean isAdjusting)
+				     final boolean isAdjusting)
     {
-        final Scrollbar sb = (Scrollbar)target;
-        MToolkit.executeOnEventHandlerThread(sb, new Runnable() {
-            public void run() {
+	final Scrollbar sb = (Scrollbar)target;
+	MToolkit.executeOnEventHandlerThread(sb, new Runnable() {
+	    public void run() {
                 inUpCall = true;
-                sb.setValueIsAdjusting(isAdjusting);
-                sb.setValue(value);
-                postEvent(new AdjustmentEvent(sb,
-                                AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-                                type, value, isAdjusting));
+		sb.setValueIsAdjusting(isAdjusting);
+		sb.setValue(value);
+		postEvent(new AdjustmentEvent(sb,
+				AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+				type, value, isAdjusting));
                 inUpCall = false;
-            }
-        });
+	    }
+	});
     }
 
     void lineUp(int value) {
-        postAdjustmentEvent(AdjustmentEvent.UNIT_DECREMENT, value, false);
+	postAdjustmentEvent(AdjustmentEvent.UNIT_DECREMENT, value, false);
     }
 
     void lineDown(int value) {
-        postAdjustmentEvent(AdjustmentEvent.UNIT_INCREMENT, value, false);
+	postAdjustmentEvent(AdjustmentEvent.UNIT_INCREMENT, value, false);
     }
 
     void pageUp(int value) {
-        postAdjustmentEvent(AdjustmentEvent.BLOCK_DECREMENT, value, false);
+	postAdjustmentEvent(AdjustmentEvent.BLOCK_DECREMENT, value, false);
     }
 
     void pageDown(int value) {
-        postAdjustmentEvent(AdjustmentEvent.BLOCK_INCREMENT, value, false);
+	postAdjustmentEvent(AdjustmentEvent.BLOCK_INCREMENT, value, false);
     }
 
     // SB_TOP/BOTTOM are mapped to tracking
     void warp(int value) {
-        postAdjustmentEvent(AdjustmentEvent.TRACK, value, false);
+	postAdjustmentEvent(AdjustmentEvent.TRACK, value, false);
     }
 
     private boolean dragInProgress = false;
 
     void drag(final int value) {
-        if (!dragInProgress) {
-            dragInProgress = true;
-        }
-        postAdjustmentEvent(AdjustmentEvent.TRACK, value, true);
+	if (!dragInProgress) {
+	    dragInProgress = true;
+	}
+	postAdjustmentEvent(AdjustmentEvent.TRACK, value, true);
     }
 
     void dragEnd(final int value) {
-        final Scrollbar sb = (Scrollbar)target;
+	final Scrollbar sb = (Scrollbar)target;
 
-        if (!dragInProgress) {
-            return;
-        }
+	if (!dragInProgress) {
+	    return;
+	}
 
-        dragInProgress = false;
-        MToolkit.executeOnEventHandlerThread(sb, new Runnable() {
-            public void run() {
-                // NB: notification only, no sb.setValue()
-                // last TRACK event will have done it already
+	dragInProgress = false;
+	MToolkit.executeOnEventHandlerThread(sb, new Runnable() {
+	    public void run() {
+		// NB: notification only, no sb.setValue()
+		// last TRACK event will have done it already
                 inUpCall = true;
-                sb.setValueIsAdjusting(false);
-                postEvent(new AdjustmentEvent(sb,
-                                AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-                                AdjustmentEvent.TRACK, value, false));
+		sb.setValueIsAdjusting(false);
+		postEvent(new AdjustmentEvent(sb,
+				AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+				AdjustmentEvent.TRACK, value, false));
                 inUpCall = false;
-            }
-        });
+	    }
+	});
     }
 
     /**
@@ -158,18 +158,18 @@ class MScrollbarPeer extends MComponentPeer implements ScrollbarPeer {
 
     public void print(Graphics g) {
         Scrollbar sb = (Scrollbar)target;
-        Dimension d = sb.size();
-        Color bg = sb.getBackground();
+	Dimension d = sb.size();
+	Color bg = sb.getBackground();
 
-        boolean horiz = (sb.getOrientation() == Scrollbar.HORIZONTAL);
+	boolean horiz = (sb.getOrientation() == Scrollbar.HORIZONTAL);
 
-        drawScrollbar(g, bg, horiz? d.height : d.width,
-                          horiz? d.width : d.height,
-                          sb.getMinimum(), sb.getMaximum(),
-                          sb.getValue(), sb.getVisible(),
-                          horiz);
+	drawScrollbar(g, bg, horiz? d.height : d.width,
+		          horiz? d.width : d.height,
+			  sb.getMinimum(), sb.getMaximum(),
+			  sb.getValue(), sb.getVisible(),
+			  horiz);
 
-        target.print(g);
+	target.print(g);
     }
 
 
@@ -177,7 +177,7 @@ class MScrollbarPeer extends MComponentPeer implements ScrollbarPeer {
      * DEPRECATED
      */
     public Dimension minimumSize() {
-            return getMinimumSize();
+	    return getMinimumSize();
     }
 
     protected boolean shouldFocusOnClick() {

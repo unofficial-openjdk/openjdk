@@ -32,27 +32,27 @@ import java.net.*;
 
 public class ReportSocketClosed {
     public static void main(String[] args) throws Exception {
-        DatagramSocket soc;
-        InetAddress sin = null;
-        byte[]  array = {21,22,23};
+	DatagramSocket soc;
+	InetAddress sin = null;
+	byte[]  array = {21,22,23};
 
-        try {
-            soc = new DatagramSocket(4001);
-            sin = InetAddress.getLocalHost();
-            soc.close();
-        } catch (Exception e) {
-            throw new Exception("Got unexpected exception" + e);
-        }
+	try {
+	    soc = new DatagramSocket(4001);
+	    sin = InetAddress.getLocalHost();
+	    soc.close();
+	} catch (Exception e) {
+	    throw new Exception("Got unexpected exception" + e);
+	}
 
-        try {
-            soc.receive(new DatagramPacket(array, array.length));
-        } catch (Exception e2) {
-            // We expect a SocketException here.
-            // If we get any other exceptions, the test fails.
-            if (e2 instanceof SocketException)
-                return;
-            else
-                throw e2;
-        }
+	try {
+	    soc.receive(new DatagramPacket(array, array.length));
+	} catch (Exception e2) {
+	    // We expect a SocketException here.
+	    // If we get any other exceptions, the test fails.
+	    if (e2 instanceof SocketException)
+		return;
+	    else
+		throw e2;
+	} 
     }
 }

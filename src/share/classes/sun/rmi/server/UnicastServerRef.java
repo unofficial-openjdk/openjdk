@@ -63,6 +63,7 @@ import sun.security.action.GetBooleanAction;
  * behavior for remote objects exported with the "UnicastRef" reference
  * type.
  *
+ * @version %I%, %E%
  * @author  Ann Wollrath
  * @author  Roger Riggs
  * @author  Peter Jones
@@ -72,30 +73,30 @@ public class UnicastServerRef extends UnicastRef
 {
     /** value of server call log property */
     public static final boolean logCalls = AccessController.doPrivileged(
-        new GetBooleanAction("java.rmi.server.logCalls"));
+	new GetBooleanAction("java.rmi.server.logCalls"));
 
     /** server call log */
     public static final Log callLog =
-        Log.getLog("sun.rmi.server.call", "RMI", logCalls);
+	Log.getLog("sun.rmi.server.call", "RMI", logCalls);
 
     // use serialVersionUID from JDK 1.2.2 for interoperability
     private static final long serialVersionUID = -7384275867073752268L;
 
     /** flag to enable writing exceptions to System.err */
     private static final boolean wantExceptionLog =
-        AccessController.doPrivileged(
-            new GetBooleanAction("sun.rmi.server.exceptionTrace"));
+	AccessController.doPrivileged(
+	    new GetBooleanAction("sun.rmi.server.exceptionTrace"));
 
     private boolean forceStubUse = false;
-
+    
     /**
      * flag to remove server-side stack traces before marshalling
      * exceptions thrown by remote invocations to this VM
      */
     private static final boolean suppressStackTraces =
-        AccessController.doPrivileged(
-            new GetBooleanAction(
-                "sun.rmi.server.suppressStackTraces"));
+	AccessController.doPrivileged(
+	    new GetBooleanAction(
+		"sun.rmi.server.suppressStackTraces"));
 
     /**
      * skeleton to dispatch remote calls through, for 1.1 stub protocol
@@ -111,11 +112,11 @@ public class UnicastServerRef extends UnicastRef
      * hashes to method objects.
      **/
     private static final WeakClassHashMap<Map<Long,Method>> hashToMethod_Maps =
-        new HashToMethod_Maps();
+	new HashToMethod_Maps();
 
     /** cache of impl classes that have no corresponding skeleton class */
     private static final Map<Class<?>,?> withoutSkeletons =
-        Collections.synchronizedMap(new WeakHashMap<Class<?>,Void>());
+	Collections.synchronizedMap(new WeakHashMap<Class<?>,Void>());
 
     /**
      * Create a new (empty) Unicast server remote reference.
@@ -128,7 +129,7 @@ public class UnicastServerRef extends UnicastRef
      * liveRef.
      */
     public UnicastServerRef(LiveRef ref) {
-        super(ref);
+	super(ref);
     }
 
     /**
@@ -136,7 +137,7 @@ public class UnicastServerRef extends UnicastRef
      * on the specified port.
      */
     public UnicastServerRef(int port) {
-        super(new LiveRef(port));
+	super(new LiveRef(port));
     }
 
     /**
@@ -153,10 +154,10 @@ public class UnicastServerRef extends UnicastRef
      * which is not an instance of RemoteStub).
      **/
     public UnicastServerRef(boolean forceStubUse) {
-        this(0);
-        this.forceStubUse = forceStubUse;
+	this(0);
+	this.forceStubUse = forceStubUse;
     }
-
+    
     /**
      * With the addition of support for dynamic proxies as stubs, this
      * method is obsolete because it returns RemoteStub instead of the more
@@ -172,10 +173,10 @@ public class UnicastServerRef extends UnicastRef
      * Export that target via the Ref.
      **/
     public RemoteStub exportObject(Remote impl, Object data)
-        throws RemoteException
+	throws RemoteException
     {
-        forceStubUse = true;
-        return (RemoteStub) exportObject(impl, data, false);
+	forceStubUse = true;
+	return (RemoteStub) exportObject(impl, data, false);
     }
 
     /**
@@ -184,31 +185,31 @@ public class UnicastServerRef extends UnicastRef
      * initialize it with the appropriate remote reference. Create the
      * target defined by the impl, dispatcher (this) and stub.
      * Export that target via the Ref.
-     */
+     */ 
     public Remote exportObject(Remote impl, Object data,
-                               boolean permanent)
-        throws RemoteException
+			       boolean permanent)
+	throws RemoteException
     {
-        Class implClass = impl.getClass();
-        Remote stub;
-
-        try {
-            stub = Util.createProxy(implClass, getClientRef(), forceStubUse);
-        } catch (IllegalArgumentException e) {
-            throw new ExportException(
-                "remote object implements illegal remote interface", e);
-        }
-        if (stub instanceof RemoteStub) {
-            setSkeleton(impl);
-        }
-
-        Target target =
-            new Target(impl, this, stub, ref.getObjID(), permanent);
-        ref.exportObject(target);
-        hashToMethod_Map = hashToMethod_Maps.get(implClass);
-        return stub;
+	Class implClass = impl.getClass();
+	Remote stub;
+	
+	try {
+	    stub = Util.createProxy(implClass, getClientRef(), forceStubUse);
+	} catch (IllegalArgumentException e) {
+	    throw new ExportException(
+		"remote object implements illegal remote interface", e);
+	}
+	if (stub instanceof RemoteStub) {
+	    setSkeleton(impl);
+	}
+	
+	Target target =
+	    new Target(impl, this, stub, ref.getObjID(), permanent);
+	ref.exportObject(target);
+	hashToMethod_Map = hashToMethod_Maps.get(implClass);
+	return stub;
     }
-
+    
     /**
      * Return the hostname of the current client.  When called from a
      * thread actively handling a remote method invocation the
@@ -217,28 +218,28 @@ public class UnicastServerRef extends UnicastRef
      * a remote method invocation.
      */
     public String getClientHost() throws ServerNotActiveException {
-        return TCPTransport.getClientHost();
+	return TCPTransport.getClientHost();
     }
 
     /**
      * Discovers and sets the appropriate skeleton for the impl.
      */
     public void setSkeleton(Remote impl) throws RemoteException {
-        if (!withoutSkeletons.containsKey(impl.getClass())) {
-            try {
-                skel = Util.createSkeleton(impl);
-            } catch (SkeletonNotFoundException e) {
-                /*
-                 * Ignore exception for skeleton class not found, because a
-                 * skeleton class is not necessary with the 1.2 stub protocol.
-                 * Remember that this impl's class does not have a skeleton
-                 * class so we don't waste time searching for it again.
-                 */
-                withoutSkeletons.put(impl.getClass(), null);
-            }
-        }
+	if (!withoutSkeletons.containsKey(impl.getClass())) {
+	    try {
+		skel = Util.createSkeleton(impl);
+	    } catch (SkeletonNotFoundException e) {
+		/*
+		 * Ignore exception for skeleton class not found, because a
+		 * skeleton class is not necessary with the 1.2 stub protocol.
+		 * Remember that this impl's class does not have a skeleton
+		 * class so we don't waste time searching for it again.
+		 */
+		withoutSkeletons.put(impl.getClass(), null);
+	    }
+	}
     }
-
+    
     /**
      * Call to dispatch to the remote object (on the server side).
      * The up-call to the server and the marshalling of return result
@@ -251,123 +252,123 @@ public class UnicastServerRef extends UnicastRef
      * release input or output streams
      */
     public void dispatch(Remote obj, RemoteCall call) throws IOException {
-        // positive operation number in 1.1 stubs;
-        // negative version number in 1.2 stubs and beyond...
-        int num;
-        long op;
+	// positive operation number in 1.1 stubs;
+	// negative version number in 1.2 stubs and beyond...
+	int num;
+	long op;
 
-        try {
-            // read remote call header
-            ObjectInput in;
-            try {
-                in = call.getInputStream();
-                num = in.readInt();
-                if (num >= 0) {
-                    if (skel != null) {
-                        oldDispatch(obj, call, num);
-                        return;
-                    } else {
-                        throw new UnmarshalException(
-                            "skeleton class not found but required " +
-                            "for client version");
-                    }
-                }
-                op = in.readLong();
-            } catch (Exception readEx) {
-                throw new UnmarshalException("error unmarshalling call header",
-                                             readEx);
-            }
+	try {
+	    // read remote call header
+	    ObjectInput in;
+	    try {
+		in = call.getInputStream();
+		num = in.readInt();
+		if (num >= 0) {
+		    if (skel != null) {
+			oldDispatch(obj, call, num);
+			return;
+		    } else {
+			throw new UnmarshalException(
+			    "skeleton class not found but required " +
+			    "for client version");
+		    }
+		}
+		op = in.readLong();
+	    } catch (Exception readEx) {
+		throw new UnmarshalException("error unmarshalling call header",
+					     readEx);
+	    }
 
-            /*
-             * Since only system classes (with null class loaders) will be on
-             * the execution stack during parameter unmarshalling for the 1.2
-             * stub protocol, tell the MarshalInputStream not to bother trying
-             * to resolve classes using its superclasses's default method of
-             * consulting the first non-null class loader on the stack.
-             */
-            MarshalInputStream marshalStream = (MarshalInputStream) in;
-            marshalStream.skipDefaultResolveClass();
+	    /*
+	     * Since only system classes (with null class loaders) will be on
+	     * the execution stack during parameter unmarshalling for the 1.2
+	     * stub protocol, tell the MarshalInputStream not to bother trying
+	     * to resolve classes using its superclasses's default method of
+	     * consulting the first non-null class loader on the stack.
+	     */
+	    MarshalInputStream marshalStream = (MarshalInputStream) in;
+	    marshalStream.skipDefaultResolveClass();
 
-            Method method = hashToMethod_Map.get(op);
-            if (method == null) {
-                throw new UnmarshalException("unrecognized method hash: " +
-                    "method not supported by remote object");
-            }
+	    Method method = hashToMethod_Map.get(op);
+	    if (method == null) {
+		throw new UnmarshalException("unrecognized method hash: " +
+		    "method not supported by remote object");
+	    }
 
-            // if calls are being logged, write out object id and operation
-            logCall(obj, method);
+	    // if calls are being logged, write out object id and operation
+	    logCall(obj, method);
 
-            // unmarshal parameters
-            Class[] types = method.getParameterTypes();
-            Object[] params = new Object[types.length];
+	    // unmarshal parameters
+	    Class[] types = method.getParameterTypes();
+	    Object[] params = new Object[types.length];
 
-            try {
-                unmarshalCustomCallData(in);
-                for (int i = 0; i < types.length; i++) {
-                    params[i] = unmarshalValue(types[i], in);
-                }
-            } catch (java.io.IOException e) {
-                throw new UnmarshalException(
-                    "error unmarshalling arguments", e);
-            } catch (ClassNotFoundException e) {
-                throw new UnmarshalException(
-                    "error unmarshalling arguments", e);
-            } finally {
-                call.releaseInputStream();
-            }
+	    try {
+		unmarshalCustomCallData(in);
+		for (int i = 0; i < types.length; i++) {
+		    params[i] = unmarshalValue(types[i], in);
+		}
+	    } catch (java.io.IOException e) {
+		throw new UnmarshalException(
+		    "error unmarshalling arguments", e);
+	    } catch (ClassNotFoundException e) {
+		throw new UnmarshalException(
+		    "error unmarshalling arguments", e);
+	    } finally {
+		call.releaseInputStream();
+	    }
 
-            // make upcall on remote object
-            Object result;
-            try {
-                result = method.invoke(obj, params);
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
+	    // make upcall on remote object
+	    Object result;
+	    try {
+		result = method.invoke(obj, params);
+	    } catch (InvocationTargetException e) {
+		throw e.getTargetException();
+	    }
 
-            // marshal return value
-            try {
-                ObjectOutput out = call.getResultStream(true);
-                Class rtype = method.getReturnType();
-                if (rtype != void.class) {
-                    marshalValue(rtype, result, out);
-                }
-            } catch (IOException ex) {
-                throw new MarshalException("error marshalling return", ex);
-                /*
-                 * This throw is problematic because when it is caught below,
-                 * we attempt to marshal it back to the client, but at this
-                 * point, a "normal return" has already been indicated,
-                 * so marshalling an exception will corrupt the stream.
-                 * This was the case with skeletons as well; there is no
-                 * immediately obvious solution without a protocol change.
-                 */
-            }
-        } catch (Throwable e) {
-            logCallException(e);
-
-            ObjectOutput out = call.getResultStream(false);
-            if (e instanceof Error) {
-                e = new ServerError(
-                    "Error occurred in server thread", (Error) e);
-            } else if (e instanceof RemoteException) {
-                e = new ServerException(
-                    "RemoteException occurred in server thread",
-                    (Exception) e);
-            }
-            if (suppressStackTraces) {
-                clearStackTraces(e);
-            }
-            out.writeObject(e);
-        } finally {
-            call.releaseInputStream(); // in case skeleton doesn't
-            call.releaseOutputStream();
-        }
+	    // marshal return value
+	    try {
+		ObjectOutput out = call.getResultStream(true);
+		Class rtype = method.getReturnType();
+		if (rtype != void.class) {
+		    marshalValue(rtype, result, out);
+		}
+	    } catch (IOException ex) {
+		throw new MarshalException("error marshalling return", ex);
+		/*
+		 * This throw is problematic because when it is caught below,
+		 * we attempt to marshal it back to the client, but at this
+		 * point, a "normal return" has already been indicated,
+		 * so marshalling an exception will corrupt the stream.
+		 * This was the case with skeletons as well; there is no
+		 * immediately obvious solution without a protocol change.
+		 */
+	    }
+	} catch (Throwable e) {
+	    logCallException(e);
+	    
+	    ObjectOutput out = call.getResultStream(false);
+	    if (e instanceof Error) {
+		e = new ServerError(
+		    "Error occurred in server thread", (Error) e);
+	    } else if (e instanceof RemoteException) {
+		e = new ServerException(
+		    "RemoteException occurred in server thread",
+		    (Exception) e);
+	    }
+	    if (suppressStackTraces) {
+		clearStackTraces(e);
+	    }
+	    out.writeObject(e);
+	} finally {
+	    call.releaseInputStream(); // in case skeleton doesn't
+	    call.releaseOutputStream();
+	}
     }
 
     protected void unmarshalCustomCallData(ObjectInput in)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {}
-
+    
     /**
      * Handle server-side dispatch using the RMI 1.1 stub/skeleton
      * protocol, given a non-negative operation number that has
@@ -381,48 +382,48 @@ public class UnicastServerRef extends UnicastRef
      * release input or output streams
      */
     public void oldDispatch(Remote obj, RemoteCall call, int op)
-        throws IOException
+	throws IOException
     {
-        long hash;              // hash for matching stub with skeleton
+	long hash;		// hash for matching stub with skeleton
 
-        try {
-            // read remote call header
-            ObjectInput in;
-            try {
-                in = call.getInputStream();
-                hash = in.readLong();
-            } catch (Exception readEx) {
-                throw new UnmarshalException("error unmarshalling call header",
-                                             readEx);
-            }
+	try {
+	    // read remote call header
+	    ObjectInput in;
+	    try {
+		in = call.getInputStream();
+		hash = in.readLong();
+	    } catch (Exception readEx) {
+		throw new UnmarshalException("error unmarshalling call header",
+					     readEx);
+	    }
 
-            // if calls are being logged, write out object id and operation
-            logCall(obj, skel.getOperations()[op]);
-            unmarshalCustomCallData(in);
-            // dispatch to skeleton for remote object
-            skel.dispatch(obj, call, op, hash);
-
-        } catch (Throwable e) {
-            logCallException(e);
-
-            ObjectOutput out = call.getResultStream(false);
-            if (e instanceof Error) {
-                e = new ServerError(
-                    "Error occurred in server thread", (Error) e);
-            } else if (e instanceof RemoteException) {
-                e = new ServerException(
-                    "RemoteException occurred in server thread",
-                    (Exception) e);
-            }
-            if (suppressStackTraces) {
-                clearStackTraces(e);
-            }
-            out.writeObject(e);
-        } finally {
-            call.releaseInputStream(); // in case skeleton doesn't
-            call.releaseOutputStream();
-        }
-    }
+	    // if calls are being logged, write out object id and operation
+	    logCall(obj, skel.getOperations()[op]);
+	    unmarshalCustomCallData(in);
+	    // dispatch to skeleton for remote object
+	    skel.dispatch(obj, call, op, hash);
+	    
+	} catch (Throwable e) {
+	    logCallException(e);
+	    
+	    ObjectOutput out = call.getResultStream(false);
+	    if (e instanceof Error) {
+		e = new ServerError(
+		    "Error occurred in server thread", (Error) e);
+	    } else if (e instanceof RemoteException) {
+		e = new ServerException(
+		    "RemoteException occurred in server thread",
+		    (Exception) e);
+	    }
+	    if (suppressStackTraces) {
+		clearStackTraces(e);
+	    }
+	    out.writeObject(e);
+	} finally {
+	    call.releaseInputStream(); // in case skeleton doesn't
+	    call.releaseOutputStream();
+	}
+    }    
 
     /**
      * Clear the stack trace of the given Throwable by replacing it with
@@ -430,11 +431,11 @@ public class UnicastServerRef extends UnicastRef
      * chained causative exceptions.
      */
     public static void clearStackTraces(Throwable t) {
-        StackTraceElement[] empty = new StackTraceElement[0];
-        while (t != null) {
-            t.setStackTrace(empty);
-            t = t.getCause();
-        }
+	StackTraceElement[] empty = new StackTraceElement[0];
+	while (t != null) {
+	    t.setStackTrace(empty);
+	    t = t.getCause();
+	}
     }
 
     /**
@@ -442,55 +443,55 @@ public class UnicastServerRef extends UnicastRef
      * type java.lang.reflect.Method or java.rmi.server.Operation.
      */
     private void logCall(Remote obj, Object method) {
-        if (callLog.isLoggable(Log.VERBOSE)) {
-            String clientHost;
-            try {
-                clientHost = getClientHost();
-            } catch (ServerNotActiveException snae) {
-                clientHost = "(local)"; // shouldn't happen
-            }
-            callLog.log(Log.VERBOSE, "[" + clientHost + ": " +
-                              obj.getClass().getName() +
-                              ref.getObjID().toString() + ": " +
-                              method + "]");
-        }
+	if (callLog.isLoggable(Log.VERBOSE)) {
+	    String clientHost;
+	    try {
+		clientHost = getClientHost();
+	    } catch (ServerNotActiveException snae) {
+		clientHost = "(local)"; // shouldn't happen
+	    }
+	    callLog.log(Log.VERBOSE, "[" + clientHost + ": " +
+			      obj.getClass().getName() +
+			      ref.getObjID().toString() + ": " +
+			      method + "]");
+	}
     }
 
     /**
      * Log the exception detail of an incoming call.
      */
     private void logCallException(Throwable e) {
-        // if calls are being logged, log them
-        if (callLog.isLoggable(Log.BRIEF)) {
-            String clientHost = "";
-            try {
-                clientHost = "[" + getClientHost() + "] ";
-            } catch (ServerNotActiveException snae) {
-            }
-            callLog.log(Log.BRIEF, clientHost + "exception: ", e);
-        }
+	// if calls are being logged, log them
+	if (callLog.isLoggable(Log.BRIEF)) {
+	    String clientHost = "";
+	    try {
+		clientHost = "[" + getClientHost() + "] ";
+	    } catch (ServerNotActiveException snae) {
+	    }
+	    callLog.log(Log.BRIEF, clientHost + "exception: ", e);
+	}
 
-        // write exceptions (only) to System.err if desired
-        if (wantExceptionLog) {
-            java.io.PrintStream log = System.err;
-            synchronized (log) {
-                log.println();
-                log.println("Exception dispatching call to " +
-                            ref.getObjID() + " in thread \"" +
-                            Thread.currentThread().getName() +
-                            "\" at " + (new Date()) + ":");
-                e.printStackTrace(log);
-            }
-        }
+	// write exceptions (only) to System.err if desired
+	if (wantExceptionLog) {
+	    java.io.PrintStream log = System.err;
+	    synchronized (log) {
+		log.println();
+		log.println("Exception dispatching call to " +
+			    ref.getObjID() + " in thread \"" +
+			    Thread.currentThread().getName() +
+			    "\" at " + (new Date()) + ":");
+		e.printStackTrace(log);
+	    }
+	}
     }
-
+    
     /**
      * Returns the class of the ref type to be serialized.
      */
     public String getRefClass(ObjectOutput out) {
-        return "UnicastServerRef";
+	return "UnicastServerRef";
     }
-
+    
     /**
      * Return the client remote reference for this remoteRef.
      * In the case of a client RemoteRef "this" is the answer.
@@ -498,7 +499,7 @@ public class UnicastServerRef extends UnicastRef
      * found or created.
      */
     protected RemoteRef getClientRef() {
-        return new UnicastRef(ref);
+	return new UnicastRef(ref);
     }
 
     /**
@@ -513,11 +514,11 @@ public class UnicastServerRef extends UnicastRef
      * being restored cannot be found.
      */
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        // object is re-exported elsewhere (e.g., by UnicastRemoteObject)
-        ref = null;
-        skel = null;
+	// object is re-exported elsewhere (e.g., by UnicastRemoteObject)
+	ref = null;
+	skel = null;
     }
 
 
@@ -526,38 +527,38 @@ public class UnicastServerRef extends UnicastRef
      * hashes to method objects.
      **/
     private static class HashToMethod_Maps
-        extends WeakClassHashMap<Map<Long,Method>>
+	extends WeakClassHashMap<Map<Long,Method>>
     {
-        HashToMethod_Maps() {}
+	HashToMethod_Maps() {}
 
-        protected Map<Long,Method> computeValue(Class<?> remoteClass) {
-            Map<Long,Method> map = new HashMap<Long,Method>();
-            for (Class<?> cl = remoteClass;
-                 cl != null;
-                 cl = cl.getSuperclass())
-            {
-                for (Class<?> intf : cl.getInterfaces()) {
-                    if (Remote.class.isAssignableFrom(intf)) {
-                        for (Method method : intf.getMethods()) {
-                            final Method m = method;
-                            /*
-                             * Set this Method object to override language
-                             * access checks so that the dispatcher can invoke
-                             * methods from non-public remote interfaces.
-                             */
-                            AccessController.doPrivileged(
-                                new PrivilegedAction<Void>() {
-                                public Void run() {
-                                    m.setAccessible(true);
-                                    return null;
-                                }
-                            });
-                            map.put(Util.computeMethodHash(m), m);
-                        }
-                    }
-                }
-            }
-            return map;
-        }
+	protected Map<Long,Method> computeValue(Class<?> remoteClass) {
+	    Map<Long,Method> map = new HashMap<Long,Method>();
+	    for (Class<?> cl = remoteClass;
+		 cl != null;
+		 cl = cl.getSuperclass())
+	    {
+		for (Class<?> intf : cl.getInterfaces()) {
+		    if (Remote.class.isAssignableFrom(intf)) {
+			for (Method method : intf.getMethods()) {
+			    final Method m = method;
+			    /*
+			     * Set this Method object to override language
+			     * access checks so that the dispatcher can invoke
+			     * methods from non-public remote interfaces.
+			     */
+			    AccessController.doPrivileged(
+				new PrivilegedAction<Void>() {
+			        public Void run() {
+				    m.setAccessible(true);
+				    return null;
+				}
+			    });
+			    map.put(Util.computeMethodHash(m), m);
+			}
+		    }
+		}
+	    }
+	    return map;
+	}
     }
 }

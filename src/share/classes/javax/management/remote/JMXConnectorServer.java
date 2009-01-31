@@ -63,8 +63,8 @@ import javax.management.ObjectName;
  * @since 1.5
  */
 public abstract class JMXConnectorServer
-        extends NotificationBroadcasterSupport
-        implements JMXConnectorServerMBean, MBeanRegistration, JMXAddressable {
+	extends NotificationBroadcasterSupport
+	implements JMXConnectorServerMBean, MBeanRegistration, JMXAddressable {
 
     /**
      * <p>Name of the attribute that specifies the authenticator for a
@@ -73,7 +73,7 @@ public abstract class JMXConnectorServer
      * JMXAuthenticator}.</p>
      */
     public static final String AUTHENTICATOR =
-        "jmx.remote.authenticator";
+	"jmx.remote.authenticator";
 
     /**
      * <p>Constructs a connector server that will be registered as an
@@ -83,7 +83,7 @@ public abstract class JMXConnectorServer
      * server that makes it available remotely.</p>
      */
     public JMXConnectorServer() {
-        this(null);
+	this(null);
     }
 
     /**
@@ -96,7 +96,7 @@ public abstract class JMXConnectorServer
      * to an MBean server by being registered in it.
      */
     public JMXConnectorServer(MBeanServer mbeanServer) {
-        this.mbeanServer = mbeanServer;
+	this.mbeanServer = mbeanServer;
     }
 
     /**
@@ -107,22 +107,22 @@ public abstract class JMXConnectorServer
      * to, or null if it is not yet attached to an MBean server.
      */
     public synchronized MBeanServer getMBeanServer() {
-        return mbeanServer;
+	return mbeanServer;
     }
 
     public synchronized void setMBeanServerForwarder(MBeanServerForwarder mbsf)
     {
-        if (mbsf == null)
-            throw new IllegalArgumentException("Invalid null argument: mbsf");
+	if (mbsf == null) 
+	    throw new IllegalArgumentException("Invalid null argument: mbsf");
 
         if (mbeanServer !=  null) mbsf.setMBeanServer(mbeanServer);
         mbeanServer = mbsf;
     }
 
     public String[] getConnectionIds() {
-        synchronized (connectionIds) {
-            return connectionIds.toArray(new String[connectionIds.size()]);
-        }
+	synchronized (connectionIds) {
+	    return connectionIds.toArray(new String[connectionIds.size()]);
+	}
     }
 
     /**
@@ -132,7 +132,7 @@ public abstract class JMXConnectorServer
      * one new connection to this connector server.</p>
      *
      * <p>A given connector need not support the generation of client
-     * stubs.  However, the connectors specified by the JMX Remote API do
+     * stubs.  However, the connectors specified by the JMX Remote API do 
      * (JMXMP Connector and RMI Connector).</p>
      *
      * <p>The default implementation of this method uses {@link
@@ -141,7 +141,7 @@ public abstract class JMXConnectorServer
      *
      * <pre>
      * JMXServiceURL addr = {@link #getAddress() getAddress()};
-     * return {@link JMXConnectorFactory#newJMXConnector(JMXServiceURL, Map)
+     * return {@link JMXConnectorFactory#newJMXConnector(JMXServiceURL, Map) 
      *          JMXConnectorFactory.newJMXConnector(addr, env)};
      * </pre>
      *
@@ -168,12 +168,12 @@ public abstract class JMXConnectorServer
      * stub cannot be created.
      **/
     public JMXConnector toJMXConnector(Map<String,?> env)
-        throws IOException
+	throws IOException
     {
-        if (!isActive()) throw new
-            IllegalStateException("Connector is not active");
-        JMXServiceURL addr = getAddress();
-        return JMXConnectorFactory.newJMXConnector(addr, env);
+	if (!isActive()) throw new 
+	    IllegalStateException("Connector is not active");
+	JMXServiceURL addr = getAddress();
+	return JMXConnectorFactory.newJMXConnector(addr, env);
     }
 
     /**
@@ -188,17 +188,17 @@ public abstract class JMXConnectorServer
      * @return the array of possible notifications.
      */
     public MBeanNotificationInfo[] getNotificationInfo() {
-        final String[] types = {
-            JMXConnectionNotification.OPENED,
-            JMXConnectionNotification.CLOSED,
-            JMXConnectionNotification.FAILED,
-        };
-        final String className = JMXConnectionNotification.class.getName();
-        final String description =
-            "A client connection has been opened or closed";
-        return new MBeanNotificationInfo[] {
-            new MBeanNotificationInfo(types, className, description),
-        };
+	final String[] types = {
+	    JMXConnectionNotification.OPENED,
+	    JMXConnectionNotification.CLOSED,
+	    JMXConnectionNotification.FAILED,
+	};
+	final String className = JMXConnectionNotification.class.getName();
+	final String description =
+	    "A client connection has been opened or closed";
+	return new MBeanNotificationInfo[] {
+	    new MBeanNotificationInfo(types, className, description),
+	};
     }
 
     /**
@@ -224,18 +224,18 @@ public abstract class JMXConnectorServer
      * null.
      */
     protected void connectionOpened(String connectionId,
-                                    String message,
-                                    Object userData) {
+				    String message,
+				    Object userData) {
 
-        if (connectionId == null)
-            throw new NullPointerException("Illegal null argument");
+	if (connectionId == null)
+	    throw new NullPointerException("Illegal null argument");
 
-        synchronized (connectionIds) {
-            connectionIds.add(connectionId);
-        }
+	synchronized (connectionIds) {
+	    connectionIds.add(connectionId);
+	}
 
-        sendNotification(JMXConnectionNotification.OPENED, connectionId,
-                         message, userData);
+	sendNotification(JMXConnectionNotification.OPENED, connectionId,
+			 message, userData);
     }
 
     /**
@@ -259,18 +259,18 @@ public abstract class JMXConnectorServer
      * is null.
      */
     protected void connectionClosed(String connectionId,
-                                    String message,
-                                    Object userData) {
+				    String message,
+				    Object userData) {
 
-        if (connectionId == null)
-            throw new NullPointerException("Illegal null argument");
+	if (connectionId == null)
+	    throw new NullPointerException("Illegal null argument");
 
-        synchronized (connectionIds) {
-            connectionIds.remove(connectionId);
-        }
+	synchronized (connectionIds) {
+	    connectionIds.remove(connectionId);
+	}
 
-        sendNotification(JMXConnectionNotification.CLOSED, connectionId,
-                         message, userData);
+	sendNotification(JMXConnectionNotification.CLOSED, connectionId,
+			 message, userData);
     }
 
     /**
@@ -294,43 +294,43 @@ public abstract class JMXConnectorServer
      * null.
      */
     protected void connectionFailed(String connectionId,
-                                    String message,
-                                    Object userData) {
+				    String message,
+				    Object userData) {
 
-        if (connectionId == null)
-            throw new NullPointerException("Illegal null argument");
+	if (connectionId == null)
+	    throw new NullPointerException("Illegal null argument");
 
-        synchronized (connectionIds) {
-            connectionIds.remove(connectionId);
-        }
+	synchronized (connectionIds) {
+	    connectionIds.remove(connectionId);
+	}
 
-        sendNotification(JMXConnectionNotification.FAILED, connectionId,
-                         message, userData);
+	sendNotification(JMXConnectionNotification.FAILED, connectionId,
+			 message, userData);
     }
 
     private void sendNotification(String type, String connectionId,
-                                  String message, Object userData) {
-        Notification notif =
-            new JMXConnectionNotification(type,
-                                          getNotificationSource(),
-                                          connectionId,
-                                          nextSequenceNumber(),
-                                          message,
-                                          userData);
-        sendNotification(notif);
+				  String message, Object userData) {
+	Notification notif =
+	    new JMXConnectionNotification(type,
+					  getNotificationSource(),
+					  connectionId,
+					  nextSequenceNumber(),
+					  message,
+					  userData);
+	sendNotification(notif);
     }
 
     private synchronized Object getNotificationSource() {
-        if (myName != null)
-            return myName;
-        else
-            return this;
+	if (myName != null)
+	    return myName;
+	else
+	    return this;
     }
 
     private static long nextSequenceNumber() {
-        synchronized (sequenceNumberLock) {
-            return sequenceNumber++;
-        }
+	synchronized (sequenceNumberLock) {
+	    return sequenceNumber++;
+	}
     }
 
     // implements MBeanRegistration
@@ -356,18 +356,18 @@ public abstract class JMXConnectorServer
      * <code>name</code> is null.
      */
     public synchronized ObjectName preRegister(MBeanServer mbs,
-                                               ObjectName name) {
-        if (mbs == null || name == null)
-            throw new NullPointerException("Null MBeanServer or ObjectName");
-        if (mbeanServer == null) {
-            mbeanServer = mbs;
-            myName = name;
-        }
-        return name;
+					       ObjectName name) {
+	if (mbs == null || name == null)
+	    throw new NullPointerException("Null MBeanServer or ObjectName");
+	if (mbeanServer == null) {
+	    mbeanServer = mbs;
+	    myName = name;
+	}
+	return name;
     }
 
     public void postRegister(Boolean registrationDone) {
-        // do nothing
+	// do nothing
     }
 
     /**
@@ -384,14 +384,14 @@ public abstract class JMXConnectorServer
      * @exception IOException if thrown by the {@link #stop stop} method.
      */
     public synchronized void preDeregister() throws Exception {
-        if (myName != null && isActive()) {
-            stop();
-            myName = null; // just in case stop is buggy and doesn't stop
-        }
+	if (myName != null && isActive()) {
+	    stop();
+	    myName = null; // just in case stop is buggy and doesn't stop
+	}
     }
 
     public void postDeregister() {
-        myName = null;
+	myName = null;
     }
 
     /**

@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * A mirror that has a {@link Location}.
+ * A mirror that has a {@link Location}. 
  *
  * @author Robert Field
  * @author Gordon Hirsch
@@ -41,9 +41,9 @@ public interface Locatable {
      * language methods and native methods have executable code.
      * Returns null for abstract methods, since abstract methods
      * have no executable code.
-     *
-     * @return the {@link Location} of this mirror, or null if
-     * there is no executable code associated with it.
+     * 
+     * @return the {@link Location} of this mirror, or null if 
+     * there is no executable code associated with it. 
      */
     Location location();
 }

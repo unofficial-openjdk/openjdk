@@ -38,15 +38,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.reflect.InvocationTargetException;
 
 /**
- * The {@code PrintingStatus} provides a dialog that displays progress
+ * The {@code PrintingStatus} provides a dialog that displays progress 
  * of the printing job and provides a way to abort it
  * <p/>
  * Methods of these class are thread safe, although most Swing methods
- * are not. Please see
+ * are not. Please see 
  * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
- * to Use Threads</A> for more information.
+ * to Use Threads</A> for more information.     
  *
  * @author Alexander Potochkin
+ * @version %I% %G%
  * @since 1.6
  */
 
@@ -73,7 +74,7 @@ public class PrintingStatus {
                     UIManager.getString("PrintingDialog.titleAbortingText"));
                 statusLabel.setText(
                     UIManager.getString("PrintingDialog.contentAbortingText"));
-
+                
                 // cancel the PrinterJob
                 job.cancel();
             }
@@ -95,7 +96,7 @@ public class PrintingStatus {
      *               using this <code>PrintingStatus</code> dialog
      * @return a <code>PrintingStatus</code> object
      */
-    public static PrintingStatus
+    public static PrintingStatus 
             createPrintingStatus(Component parent, PrinterJob job) {
         return new PrintingStatus(parent, job);
     }
@@ -159,7 +160,7 @@ public class PrintingStatus {
 
     /**
      * Shows PrintingStatus dialog.
-     * if dialog is modal this method returns only
+     * if dialog is modal this method returns only 
      * after <code>dispose()</code> was called otherwise returns immediately
      *
      * @param isModal <code>true</code> this dialog should be modal;
@@ -190,15 +191,15 @@ public class PrintingStatus {
             }
         }
     }
-
+    
     /**
      * The EDT part of the showModal method.
-     *
-     * This method is to be called on the EDT only.
+     * 
+     * This method is to be called on the EDT only. 
      */
     private void showModalOnEDT(boolean isModal) {
         assert SwingUtilities.isEventDispatchThread();
-        init();
+        init();        
         abortDialog.setModal(isModal);
         abortDialog.setVisible(true);
     }
@@ -222,8 +223,8 @@ public class PrintingStatus {
 
     /**
      * The EDT part of the dispose method.
-     *
-     * This method is to be called on the EDT only.
+     * 
+     * This method is to be called on the EDT only. 
      */
     private void disposeOnEDT() {
         assert SwingUtilities.isEventDispatchThread();
@@ -266,8 +267,8 @@ public class PrintingStatus {
             this.printDelegatee = delegatee;
         }
 
-        public int print(final Graphics graphics,
-                         final PageFormat pageFormat, final int pageIndex)
+        public int print(final Graphics graphics, 
+                         final PageFormat pageFormat, final int pageIndex) 
                 throws PrinterException {
 
             final int retVal =
@@ -285,11 +286,11 @@ public class PrintingStatus {
             }
             return retVal;
         }
-
+        
         /**
          * The EDT part of the print method.
-         *
-         * This method is to be called on the EDT only.
+         * 
+         * This method is to be called on the EDT only. 
          */
         private void updateStatusOnEDT(int pageIndex) {
             assert SwingUtilities.isEventDispatchThread();

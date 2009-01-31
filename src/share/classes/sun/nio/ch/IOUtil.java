@@ -39,7 +39,7 @@ import java.nio.channels.spi.*;
 
 class IOUtil {
 
-    private IOUtil() { }                // No instantiation
+    private IOUtil() { }		// No instantiation
 
     /*
      * Returns the index of first buffer in bufs with remaining,
@@ -72,16 +72,16 @@ class IOUtil {
 
     static int write(FileDescriptor fd, ByteBuffer src, long position,
                      NativeDispatcher nd, Object lock)
-        throws IOException
+	throws IOException
     {
         if (src instanceof DirectBuffer)
             return writeFromNativeBuffer(fd, src, position, nd, lock);
 
         // Substitute a native buffer
-        int pos = src.position();
-        int lim = src.limit();
-        assert (pos <= lim);
-        int rem = (pos <= lim ? lim - pos : 0);
+	int pos = src.position();
+	int lim = src.limit();
+	assert (pos <= lim);
+	int rem = (pos <= lim ? lim - pos : 0);
         ByteBuffer bb = null;
         try {
             bb = Util.getTemporaryDirectBuffer(rem);
@@ -102,32 +102,32 @@ class IOUtil {
     }
 
     private static int writeFromNativeBuffer(FileDescriptor fd, ByteBuffer bb,
-                                           long position, NativeDispatcher nd,
+					   long position, NativeDispatcher nd,
                                              Object lock)
-        throws IOException
+	throws IOException
     {
-        int pos = bb.position();
-        int lim = bb.limit();
-        assert (pos <= lim);
-        int rem = (pos <= lim ? lim - pos : 0);
+	int pos = bb.position();
+	int lim = bb.limit();
+	assert (pos <= lim);
+	int rem = (pos <= lim ? lim - pos : 0);
 
         int written = 0;
-        if (rem == 0)
+	if (rem == 0)
             return 0;
-        if (position != -1) {
+	if (position != -1) {
             written = nd.pwrite(fd,
-                                ((DirectBuffer)bb).address() + pos,
-                                rem, position, lock);
+				((DirectBuffer)bb).address() + pos,
+				rem, position, lock);
         } else {
             written = nd.write(fd, ((DirectBuffer)bb).address() + pos, rem);
         }
         if (written > 0)
-            bb.position(pos + written);
+	    bb.position(pos + written);
         return written;
     }
 
     static long write(FileDescriptor fd, ByteBuffer[] bufs, NativeDispatcher nd)
-        throws IOException
+	throws IOException
     {
         int nextWithRemaining = remaining(bufs);
         // if all bufs are empty we should return immediately
@@ -144,17 +144,17 @@ class IOUtil {
         ByteBuffer[] shadow = new ByteBuffer[numBufs];
         for (int i=0; i<numBufs; i++) {
             if (!(bufs[i] instanceof DirectBuffer)) {
-                int pos = bufs[i].position();
-                int lim = bufs[i].limit();
-                assert (pos <= lim);
-                int rem = (pos <= lim ? lim - pos : 0);
+		int pos = bufs[i].position();
+		int lim = bufs[i].limit();
+		assert (pos <= lim);
+		int rem = (pos <= lim ? lim - pos : 0);
 
                 ByteBuffer bb = ByteBuffer.allocateDirect(rem);
                 shadow[i] = bb;
                 // Leave slow buffer position untouched; it will be updated
                 // after we see how many bytes were really written out
                 bb.put(bufs[i]);
-                bufs[i].position(pos);
+		bufs[i].position(pos);
                 bb.flip();
             } else {
                 shadow[i] = bufs[i];
@@ -189,9 +189,9 @@ class IOUtil {
         for (int i=0; i<numBufs; i++) {
             ByteBuffer nextBuffer = bufs[i];
             int pos = nextBuffer.position();
-            int lim = nextBuffer.limit();
-            assert (pos <= lim);
-            int len = (pos <= lim ? lim - pos : lim);
+	    int lim = nextBuffer.limit();
+	    assert (pos <= lim);
+	    int len = (pos <= lim ? lim - pos : lim);
             if (bytesWritten >= len) {
                 bytesWritten -= len;
                 int newPosition = pos + len;
@@ -210,10 +210,10 @@ class IOUtil {
 
     static int read(FileDescriptor fd, ByteBuffer dst, long position,
                     NativeDispatcher nd, Object lock)
-        throws IOException
+	throws IOException
     {
-        if (dst.isReadOnly())
-            throw new IllegalArgumentException("Read-only buffer");
+	if (dst.isReadOnly())
+	    throw new IllegalArgumentException("Read-only buffer");
         if (dst instanceof DirectBuffer)
             return readIntoNativeBuffer(fd, dst, position, nd, lock);
 
@@ -232,31 +232,31 @@ class IOUtil {
     }
 
     private static int readIntoNativeBuffer(FileDescriptor fd, ByteBuffer bb,
-                                            long position, NativeDispatcher nd,
+					    long position, NativeDispatcher nd,
                                             Object lock)
-        throws IOException
+	throws IOException
     {
-        int pos = bb.position();
-        int lim = bb.limit();
-        assert (pos <= lim);
-        int rem = (pos <= lim ? lim - pos : 0);
+	int pos = bb.position();
+	int lim = bb.limit();
+	assert (pos <= lim);
+	int rem = (pos <= lim ? lim - pos : 0);
 
-        if (rem == 0)
+	if (rem == 0)
             return 0;
         int n = 0;
-        if (position != -1) {
-            n = nd.pread(fd, ((DirectBuffer)bb).address() + pos,
-                         rem, position, lock);
+	if (position != -1) {
+	    n = nd.pread(fd, ((DirectBuffer)bb).address() + pos,
+			 rem, position, lock);
         } else {
-            n = nd.read(fd, ((DirectBuffer)bb).address() + pos, rem);
+	    n = nd.read(fd, ((DirectBuffer)bb).address() + pos, rem);
         }
         if (n > 0)
-            bb.position(pos + n);
+ 	    bb.position(pos + n);
         return n;
     }
 
     static long read(FileDescriptor fd, ByteBuffer[] bufs, NativeDispatcher nd)
-        throws IOException
+	throws IOException
     {
         int nextWithRemaining = remaining(bufs);
         // if all bufs are empty we should return immediately
@@ -271,10 +271,10 @@ class IOUtil {
         // Read into the shadow to ensure DirectByteBuffers are used
         ByteBuffer[] shadow = new ByteBuffer[numBufs];
         for (int i=0; i<numBufs; i++) {
-            if (bufs[i].isReadOnly())
-                throw new IllegalArgumentException("Read-only buffer");
+	    if (bufs[i].isReadOnly())
+		throw new IllegalArgumentException("Read-only buffer");
             if (!(bufs[i] instanceof DirectBuffer)) {
-                shadow[i] = ByteBuffer.allocateDirect(bufs[i].remaining());
+		shadow[i] = ByteBuffer.allocateDirect(bufs[i].remaining());
             } else {
                 shadow[i] = bufs[i];
             }
@@ -335,9 +335,9 @@ class IOUtil {
     }
 
     static FileDescriptor newFD(int i) {
-        FileDescriptor fd = new FileDescriptor();
-        setfdVal(fd, i);
-        return fd;
+	FileDescriptor fd = new FileDescriptor();
+	setfdVal(fd, i);
+	return fd;
     }
 
     static native boolean randomBytes(byte[] someBytes);
@@ -347,7 +347,7 @@ class IOUtil {
     static native boolean drain(int fd) throws IOException;
 
     static native void configureBlocking(FileDescriptor fd, boolean blocking)
-        throws IOException;
+	throws IOException;
 
     static native int fdVal(FileDescriptor fd);
 
@@ -357,7 +357,7 @@ class IOUtil {
 
     static {
         // Note that IOUtil.initIDs is called from within Util.load.
-        Util.load();
+	Util.load();
     }
 
 }

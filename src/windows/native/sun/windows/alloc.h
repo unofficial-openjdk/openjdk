@@ -123,7 +123,7 @@ void handle_bad_alloc(void);
         throw (std::bad_alloc);
     void *safe_Realloc_outofmem(void *memblock, size_t size, const char *, int)
         throw (std::bad_alloc);
-    void * CDECL operator new(size_t size, const char *, int)
+    void * CDECL operator new(size_t size, const char *, int) 
         throw (std::bad_alloc);
 
     #define safe_Malloc(size) \
@@ -138,7 +138,7 @@ void handle_bad_alloc(void);
 #define TRY \
     try { \
         entry_point(); \
-        hang_if_shutdown();
+	hang_if_shutdown();
 // The _NO_HANG version of TRY causes the AWT native code to return to Java
 // immediately if the Toolkit is not active. Normal AWT operations should
 // never use this macro. It should only be used for cleanup routines where:
@@ -148,7 +148,7 @@ void handle_bad_alloc(void);
 #define TRY_NO_HANG \
     try { \
         entry_point(); \
-        throw_if_shutdown();
+	throw_if_shutdown();
 // The _NO_VERIFY version of TRY does not verify that the Toolkit is still
 // active before proceeding. Normal AWT operations should never use this
 // macro. It should only be used for cleanup routines which can safely
@@ -161,19 +161,19 @@ void handle_bad_alloc(void);
 #define CATCH_BAD_ALLOC \
     } catch (std::bad_alloc&) { \
         handle_bad_alloc(); \
-        return; \
+	return; \
     } catch (awt_toolkit_shutdown&) {\
         return; \
     }
 #define CATCH_BAD_ALLOC_RET(x) \
     } catch (std::bad_alloc&) { \
         handle_bad_alloc(); \
-        return (x); \
+	return (x); \
     } catch (awt_toolkit_shutdown&) {\
         return (0); \
     }
 
-// The _NO_JNI versions of TRY and CATCH_BAD_ALLOC simply discard
+// The _NO_JNI versions of TRY and CATCH_BAD_ALLOC simply discard 
 // std::bad_alloc exceptions and thus should be avoided at all costs. They
 // are only useful if the calling function currently holds the JNI lock
 // for the thread. This lock is acquired by calling GetPrimitiveArrayCritical
@@ -182,21 +182,21 @@ void handle_bad_alloc(void);
 
 #define TRY_NO_JNI \
     try { \
-        hang_if_shutdown();
+	hang_if_shutdown();
 #define TRY_NO_HANG_NO_JNI \
     try { \
-        throw_if_shutdown();
+	throw_if_shutdown();
 #define TRY_NO_VERIFY_NO_JNI \
     try {
 #define CATCH_BAD_ALLOC_NO_JNI \
     } catch (std::bad_alloc&) { \
-        return; \
+	return; \
     } catch (awt_toolkit_shutdown&) {\
         return; \
     }
 #define CATCH_BAD_ALLOC_RET_NO_JNI(x) \
     } catch (std::bad_alloc&) { \
-        return (x); \
+	return (x); \
     } catch (awt_toolkit_shutdown&) {\
         return (0); \
     }

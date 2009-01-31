@@ -56,9 +56,9 @@ class PopAndInvokeTarg {
         while (true) {
         }
     }
-
+    
     public static void main(String[] args) {
-        System.out.println("    debuggee: Howdy!");
+        System.out.println("    debuggee: Howdy!"); 
         /*
          * Debugger will bkpt in A, popFrames back to here
          * and then do an invokeMethod on invokeee.
@@ -88,7 +88,7 @@ public class PopAndInvokeTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new PopAndInvokeTest(args).startTests();
     }
 
@@ -109,7 +109,7 @@ public class PopAndInvokeTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         runOnce();
@@ -122,7 +122,7 @@ public class PopAndInvokeTest extends TestScaffold {
         mainThread = bpe.thread();
 
         /*
-         * Verify that an invokeMethod works ok after a popFrames
+         * Verify that an invokeMethod works ok after a popFrames 
          * in a thread suspended by an event.
          */
         mainThread.popFrames(frameFor("A"));
@@ -132,7 +132,7 @@ public class PopAndInvokeTest extends TestScaffold {
 
         Method invokeeeMethod = (Method)targetClass.methodsByName("invokeee").get(0);
         try {
-            targetClass.invokeMethod(mainThread, invokeeeMethod,
+            targetClass.invokeMethod(mainThread, invokeeeMethod, 
                                      new ArrayList(), 0);
         } catch (Exception ex) {
             failure("failure: invoke got unexpected exception: " + ex);
@@ -166,7 +166,7 @@ public class PopAndInvokeTest extends TestScaffold {
             mainThread.popFrames(frameFor("waiter"));
             System.out.println("Debugger: Invoking method");
             try {
-                targetClass.invokeMethod(mainThread, invokeeeMethod,
+                targetClass.invokeMethod(mainThread, invokeeeMethod, 
                                          new ArrayList(), 0);
             } catch (IncompatibleThreadStateException ee) {
                 System.out.println("Debugger: Success: Got expected IncompatibleThreadStateException");
@@ -181,7 +181,8 @@ public class PopAndInvokeTest extends TestScaffold {
         listenUntilVMDisconnect();
         if (testFailed) {
             throw new Exception("PopAndInvokeTest failed");
-        }
+        } 
         System.out.println("Passed:");
     }
 }
+

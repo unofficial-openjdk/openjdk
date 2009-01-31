@@ -31,6 +31,7 @@ import java.util.*;
  * A typesafe enumeration for describing data scaling semantics
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Scale {

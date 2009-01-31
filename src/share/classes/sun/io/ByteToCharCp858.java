@@ -29,6 +29,7 @@ package sun.io;
  * A table to convert Cp858 to Unicode.  This converter differs from
  * Cp850 is one code point, 0xD5, which changes from \u0131 to \u20AC.
  * @author  Alan Liu
+ * @version >= JDK1.2
  */
 public class ByteToCharCp858 extends ByteToCharCp850 {
     public ByteToCharCp858() {}

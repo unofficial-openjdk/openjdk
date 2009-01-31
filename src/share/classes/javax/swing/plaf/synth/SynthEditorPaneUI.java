@@ -38,11 +38,12 @@ import sun.swing.plaf.synth.SynthUI;
  * Synth look and feel.
  *
  * @author  Shannon Hickey
+ * @version %I% %G%
  */
 class SynthEditorPaneUI extends BasicEditorPaneUI implements SynthUI {
     private SynthStyle style;
-    /*
-     * I would prefer to use UIResource instad of this.
+    /* 
+     * I would prefer to use UIResource instad of this. 
      * Unfortunately Boolean is a final class
      */
     private Boolean localTrue = new Boolean(true);
@@ -62,9 +63,9 @@ class SynthEditorPaneUI extends BasicEditorPaneUI implements SynthUI {
         // Installs the text cursor on the component
         super.installDefaults();
         JComponent c = getComponent();
-        Object clientProperty =
+        Object clientProperty = 
             c.getClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES);
-        if (clientProperty == null
+        if (clientProperty == null 
             || clientProperty == localFalse) {
             c.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES,
                                 localTrue);
@@ -81,7 +82,7 @@ class SynthEditorPaneUI extends BasicEditorPaneUI implements SynthUI {
         context.dispose();
         style = null;
 
-        Object clientProperty =
+        Object clientProperty = 
             c.getClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES);
         if (clientProperty == localTrue) {
             getComponent().putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES,

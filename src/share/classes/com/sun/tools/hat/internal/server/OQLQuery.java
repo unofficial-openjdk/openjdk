@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.server;
@@ -75,7 +75,7 @@ class OQLQuery extends QueryHandler {
         out.println("</b></td>");
         out.println("<td><b><a href='/oqlhelp/'>OQL Help</a></b></td></tr>");
         out.println("</table></p>");
-        out.println("<form action='/oql/' method='get'>");
+	out.println("<form action='/oql/' method='get'>");
         out.println("<p align='center'>");
         out.println("<textarea name='query' cols=80 rows=10>");
         if (oql != null) {
@@ -90,7 +90,7 @@ class OQLQuery extends QueryHandler {
         if (oql != null) {
             executeQuery(oql);
         }
-        endHtml();
+	endHtml();
     }
 
     private void executeQuery(String q) {
@@ -100,7 +100,7 @@ class OQLQuery extends QueryHandler {
                      public boolean visit(Object o) {
                          out.println("<tr><td>");
                          try {
-                             out.println(engine.toHtml(o));
+                             out.println(engine.toHtml(o)); 
                          } catch (Exception e) {
                              out.println(e.getMessage());
                              out.println("<pre>");

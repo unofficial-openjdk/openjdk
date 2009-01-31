@@ -51,9 +51,10 @@ import javax.imageio.stream.ImageInputStream;
  * @see IIORegistry
  * @see javax.imageio.stream.ImageInputStream
  *
+ * @version 0.5
  */
 public abstract class ImageInputStreamSpi extends IIOServiceProvider {
-
+    
     /**
      * A <code>Class</code> object indicating the legal object type
      * for use by the <code>createInputStreamInstance</code> method.
@@ -146,14 +147,14 @@ public abstract class ImageInputStreamSpi extends IIOServiceProvider {
      * Returns an instance of the <code>ImageInputStream</code>
      * implementation associated with this service provider.  If the
      * use of a cache file is optional, the <code>useCache</code>
-     * parameter will be consulted.  Where a cache is required, or
+     * parameter will be consulted.  Where a cache is required, or 
      * not applicable, the value of <code>useCache</code> will be ignored.
      *
      * @param input an object of the class type returned by
      * <code>getInputClass</code>.
      * @param useCache a <code>boolean</code> indicating whether a
      * cache file should be used, in cases where it is optional.
-     * @param cacheDir a <code>File</code> indicating where the
+     * @param cacheDir a <code>File</code> indicating where the 
      * cache file should be created, or <code>null</code> to use the
      * system directory.
      *

@@ -103,8 +103,8 @@ Java_sun_nio_ch_InheritedChannel_dup(JNIEnv *env, jclass cla, jint fd)
 {
    int newfd = dup(fd);
    if (newfd < 0) {
-        JNU_ThrowIOExceptionWithLastError(env, "dup failed");
-   }
+	JNU_ThrowIOExceptionWithLastError(env, "dup failed");
+   } 
    return (jint)newfd;
 }
 
@@ -112,7 +112,7 @@ JNIEXPORT void JNICALL
 Java_sun_nio_ch_InheritedChannel_dup2(JNIEnv *env, jclass cla, jint fd, jint fd2)
 {
    if (dup2(fd, fd2) < 0) {
-        JNU_ThrowIOExceptionWithLastError(env, "dup2 failed");
+	JNU_ThrowIOExceptionWithLastError(env, "dup2 failed");
    }
 }
 
@@ -121,33 +121,33 @@ Java_sun_nio_ch_InheritedChannel_open0(JNIEnv *env, jclass cla, jstring path, ji
 {
     const char* str;
     int oflag_actual;
-
+    
     /* convert to OS specific value */
     switch (oflag) {
-        case sun_nio_ch_InheritedChannel_O_RDWR :
-            oflag_actual = O_RDWR;
-            break;
+	case sun_nio_ch_InheritedChannel_O_RDWR :
+	    oflag_actual = O_RDWR;
+	    break;	    
         case sun_nio_ch_InheritedChannel_O_RDONLY :
-            oflag_actual = O_RDONLY;
-            break;
-        case sun_nio_ch_InheritedChannel_O_WRONLY :
-            oflag_actual = O_WRONLY;
-            break;
-        default :
-            JNU_ThrowInternalError(env, "Unrecognized file mode");
-            return -1;
+	    oflag_actual = O_RDONLY;
+	    break;
+	case sun_nio_ch_InheritedChannel_O_WRONLY :
+	    oflag_actual = O_WRONLY;
+	    break;
+	default :
+	    JNU_ThrowInternalError(env, "Unrecognized file mode");
+	    return -1;	    	    
     }
-
+    
     str = JNU_GetStringPlatformChars(env, path, NULL);
     if (str == NULL) {
-        return (jint)-1;
+	return (jint)-1;
     } else {
         int fd = open(str, oflag_actual);
-        if (fd < 0) {
-            JNU_ThrowIOExceptionWithLastError(env, str);
-        }
-        JNU_ReleaseStringPlatformChars(env, path, str);
-        return (jint)fd;
+        if (fd < 0) {	    
+	    JNU_ThrowIOExceptionWithLastError(env, str);
+	}
+	JNU_ReleaseStringPlatformChars(env, path, str);
+        return (jint)fd;  
     }
 }
 
@@ -158,3 +158,6 @@ Java_sun_nio_ch_InheritedChannel_close0(JNIEnv *env, jclass cla, jint fd)
         JNU_ThrowIOExceptionWithLastError(env, "close failed");
     }
 }
+
+
+

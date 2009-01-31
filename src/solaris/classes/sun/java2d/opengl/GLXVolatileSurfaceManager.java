@@ -67,7 +67,7 @@ public class GLXVolatileSurfaceManager extends VolatileSurfaceManager {
     /**
      * Create a pbuffer-based SurfaceData object (or init the backbuffer
      * of an existing window if this is a double buffered GraphicsConfig)
-     */
+     */    
     protected SurfaceData initAcceleratedSurface() {
         SurfaceData sData;
         Component comp = vImg.getComponent();

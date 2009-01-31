@@ -31,6 +31,7 @@ package javax.security.auth.callback;
  * method of a <code>CallbackHandler</code> to display a list of choices
  * and to retrieve the selected choice(s).
  *
+ * @version %I%, %G%
  * @see javax.security.auth.callback.CallbackHandler
  */
 public class ChoiceCallback implements Callback, java.io.Serializable {
@@ -53,14 +54,14 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      */
     private int defaultChoice;
     /**
-     * @serial whether multiple selections are allowed from the list of
-     * choices
+     * @serial whether multiple selections are allowed from the list of 
+     * choices 
      * @since 1.4
      */
     private boolean multipleSelectionsAllowed;
     /**
      * @serial the selected choices, represented as indexes into the
-     *          <code>choices</code> list.
+     *		<code>choices</code> list.
      * @since 1.4
      */
     private int[] selections;
@@ -77,41 +78,41 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * @param choices the list of choices. <p>
      *
      * @param defaultChoice the choice to be used as the default choice
-     *                  when the list of choices are displayed.  This value
-     *                  is represented as an index into the
-     *                  <code>choices</code> array. <p>
+     *			when the list of choices are displayed.  This value
+     *			is represented as an index into the
+     *			<code>choices</code> array. <p>
      *
      * @param multipleSelectionsAllowed boolean specifying whether or
-     *                  not multiple selections can be made from the
-     *                  list of choices.
+     *			not multiple selections can be made from the
+     *			list of choices.
      *
      * @exception IllegalArgumentException if <code>prompt</code> is null,
-     *                  if <code>prompt</code> has a length of 0,
-     *                  if <code>choices</code> is null,
-     *                  if <code>choices</code> has a length of 0,
-     *                  if any element from <code>choices</code> is null,
-     *                  if any element from <code>choices</code>
-     *                  has a length of 0 or if <code>defaultChoice</code>
-     *                  does not fall within the array boundaries of
-     *                  <code>choices</code>.
+     *			if <code>prompt</code> has a length of 0,
+     *			if <code>choices</code> is null,
+     *			if <code>choices</code> has a length of 0,
+     *			if any element from <code>choices</code> is null,
+     *			if any element from <code>choices</code>
+     *			has a length of 0 or if <code>defaultChoice</code>
+     *			does not fall within the array boundaries of
+     *			<code>choices</code>.
      */
     public ChoiceCallback(String prompt, String[] choices,
                 int defaultChoice, boolean multipleSelectionsAllowed) {
 
-        if (prompt == null || prompt.length() == 0 ||
-            choices == null || choices.length == 0 ||
-            defaultChoice < 0 || defaultChoice >= choices.length)
-            throw new IllegalArgumentException();
+	if (prompt == null || prompt.length() == 0 ||
+	    choices == null || choices.length == 0 ||
+	    defaultChoice < 0 || defaultChoice >= choices.length)
+	    throw new IllegalArgumentException();
 
-        for (int i = 0; i < choices.length; i++) {
-            if (choices[i] == null || choices[i].length() == 0)
-                throw new IllegalArgumentException();
-        }
+	for (int i = 0; i < choices.length; i++) {
+	    if (choices[i] == null || choices[i].length() == 0)
+		throw new IllegalArgumentException();
+	}
 
-        this.prompt = prompt;
-        this.choices = choices;
-        this.defaultChoice = defaultChoice;
-        this.multipleSelectionsAllowed = multipleSelectionsAllowed;
+	this.prompt = prompt;
+	this.choices = choices;
+	this.defaultChoice = defaultChoice;
+	this.multipleSelectionsAllowed = multipleSelectionsAllowed;
     }
 
     /**
@@ -122,7 +123,7 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * @return the prompt.
      */
     public String getPrompt() {
-        return prompt;
+	return prompt;
     }
 
     /**
@@ -133,7 +134,7 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * @return the list of choices.
      */
     public String[] getChoices() {
-        return choices;
+	return choices;
     }
 
     /**
@@ -142,10 +143,10 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * <p>
      *
      * @return the defaultChoice, represented as an index into
-     *          the <code>choices</code> list.
+     *		the <code>choices</code> list.
      */
     public int getDefaultChoice() {
-        return defaultChoice;
+	return defaultChoice;
     }
 
     /**
@@ -157,7 +158,7 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * @return whether multiple selections are allowed.
      */
     public boolean allowMultipleSelections() {
-        return multipleSelectionsAllowed;
+	return multipleSelectionsAllowed;
     }
 
     /**
@@ -166,13 +167,13 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * <p>
      *
      * @param selection the selection represented as an index into the
-     *          <code>choices</code> list.
+     *		<code>choices</code> list.
      *
      * @see #getSelectedIndexes
      */
     public void setSelectedIndex(int selection) {
-        this.selections = new int[1];
-        this.selections[0] = selection;
+	this.selections = new int[1];
+	this.selections[0] = selection;
     }
 
     /**
@@ -181,18 +182,18 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * <p>
      *
      * @param selections the selections represented as indexes into the
-     *          <code>choices</code> list.
+     *		<code>choices</code> list.
      *
      * @exception UnsupportedOperationException if multiple selections are
-     *          not allowed, as determined by
-     *          <code>allowMultipleSelections</code>.
+     *		not allowed, as determined by
+     *		<code>allowMultipleSelections</code>.
      *
      * @see #getSelectedIndexes
      */
     public void setSelectedIndexes(int[] selections) {
-        if (!multipleSelectionsAllowed)
-            throw new UnsupportedOperationException();
-        this.selections = selections;
+	if (!multipleSelectionsAllowed)
+	    throw new UnsupportedOperationException();
+	this.selections = selections;
     }
 
     /**
@@ -201,11 +202,11 @@ public class ChoiceCallback implements Callback, java.io.Serializable {
      * <p>
      *
      * @return the selected choices, represented as indexes into the
-     *          <code>choices</code> list.
+     *		<code>choices</code> list.
      *
      * @see #setSelectedIndexes
      */
     public int[] getSelectedIndexes() {
-        return selections;
+	return selections;
     }
 }

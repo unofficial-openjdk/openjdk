@@ -50,7 +50,7 @@ import java.util.logging.Level;
  * The masks are also used to specify to which types of events an
  * AWTEventListener should listen. The masks are bitwise-ORed together
  * and passed to Toolkit.addAWTEventListener.
- *
+ * 
  * @see Component#enableEvents
  * @see Toolkit#addAWTEventListener
  *
@@ -72,6 +72,7 @@ import java.util.logging.Level;
  *
  * @author Carl Quinn
  * @author Amy Fowler
+ * @version %I% %G%
  * @since 1.1
  */
 public abstract class AWTEvent extends EventObject {
@@ -96,10 +97,10 @@ public abstract class AWTEvent extends EventObject {
      * @see #isConsumed
      */
     protected boolean consumed = false;
-
+  
     transient boolean focusManagerIsDispatching = false;
     transient boolean isPosted;
-
+ 
     /**
      * The event mask for selecting component events.
      */
@@ -226,14 +227,14 @@ public abstract class AWTEvent extends EventObject {
 
     static {
         /* ensure that the necessary native libraries are loaded */
-        Toolkit.loadLibraries();
+	Toolkit.loadLibraries();
         if (!GraphicsEnvironment.isHeadless()) {
             initIDs();
         }
     }
 
-    private static synchronized Field get_InputEvent_CanAccessSystemClipboard() {
-        if (inputEvent_CanAccessSystemClipboard_Field == null) {
+    private static synchronized Field get_InputEvent_CanAccessSystemClipboard() { 
+        if (inputEvent_CanAccessSystemClipboard_Field == null) { 
             inputEvent_CanAccessSystemClipboard_Field =
                 (Field)java.security.AccessController.doPrivileged(
                     new java.security.PrivilegedAction() {
@@ -277,13 +278,13 @@ public abstract class AWTEvent extends EventObject {
 
     /**
      * Constructs an AWTEvent object with the specified source object and type.
-     *
+     * 
      * @param source the object where the event originated
      * @param id the event type
      */
     public AWTEvent(Object source, int id) {
         super(source);
-        this.id = id;
+	this.id = id;
         switch(id) {
           case ActionEvent.ACTION_PERFORMED:
           case ItemEvent.ITEM_STATE_CHANGED:
@@ -306,34 +307,34 @@ public abstract class AWTEvent extends EventObject {
      *
      * @param newSource the new Object to which the event should be dispatched
      * @since 1.4
-     */
+     */ 
     public void setSource(Object newSource) {
-        if (source == newSource) {
-            return;
-        }
-
-        Component comp = null;
-        if (newSource instanceof Component) {
-            comp = (Component)newSource;
-            while (comp != null && comp.peer != null &&
-                   (comp.peer instanceof LightweightPeer)) {
-                comp = comp.parent;
-            }
-        }
-
-        synchronized (this) {
-            source = newSource;
-            if (comp != null) {
-                ComponentPeer peer = comp.peer;
-                if (peer != null) {
-                    nativeSetSource(peer);
-                }
-            }
-        }
+	if (source == newSource) {
+	    return;
+	}
+ 
+	Component comp = null;
+	if (newSource instanceof Component) {
+	    comp = (Component)newSource;
+	    while (comp != null && comp.peer != null &&
+		   (comp.peer instanceof LightweightPeer)) {
+		comp = comp.parent;
+	    }
+	}
+ 
+	synchronized (this) {
+	    source = newSource;
+	    if (comp != null) {
+		ComponentPeer peer = comp.peer;
+		if (peer != null) {
+		    nativeSetSource(peer);
+		}
+	    }
+	}
     }
-
+  
     private native void nativeSetSource(ComponentPeer peer);
-
+ 
     /**
      * Returns the event type.
      */
@@ -351,17 +352,17 @@ public abstract class AWTEvent extends EventObject {
         } else if (source instanceof MenuComponent) {
             srcName = ((MenuComponent)source).getName();
         }
-        return getClass().getName() + "[" + paramString() + "] on " +
+	return getClass().getName() + "[" + paramString() + "] on " +
             (srcName != null? srcName : source);
     }
 
     /**
      * Returns a string representing the state of this <code>Event</code>.
-     * This method is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not be
+     * This method is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between 
+     * implementations. The returned string may be empty but may not be 
      * <code>null</code>.
-     *
+     * 
      * @return  a string representation of this event
      */
     public String paramString() {
@@ -509,12 +510,12 @@ public abstract class AWTEvent extends EventObject {
                   newid = Event.SCROLL_PAGE_UP;
                   break;
                 case AdjustmentEvent.TRACK:
-                  if (aje.getValueIsAdjusting()) {
-                      newid = Event.SCROLL_ABSOLUTE;
-                  }
-                  else {
-                      newid = Event.SCROLL_END;
-                  }
+		  if (aje.getValueIsAdjusting()) {
+		      newid = Event.SCROLL_ABSOLUTE;
+		  }
+		  else {
+		      newid = Event.SCROLL_END;
+		  }
                   break;
                 default:
                   return null;
@@ -527,17 +528,17 @@ public abstract class AWTEvent extends EventObject {
     }
 
     /**
-     * Copies all private data from this event into that.
+     * Copies all private data from this event into that. 
      * Space is allocated for the copied data that will be
      * freed when the that is finalized. Upon completion,
      * this event is not changed.
      */
     void copyPrivateDataInto(AWTEvent that) {
-        that.bdata = this.bdata;
+	that.bdata = this.bdata;
         // Copy canAccessSystemClipboard value from this into that.
         if (this instanceof InputEvent && that instanceof InputEvent) {
             Field field = get_InputEvent_CanAccessSystemClipboard();
-            if (field != null) {
+            if (field != null) { 
                 try {
                     boolean b = field.getBoolean(this);
                     field.setBoolean(that, b);
@@ -545,7 +546,7 @@ public abstract class AWTEvent extends EventObject {
                     if (log.isLoggable(Level.FINE)) {
                         log.log(Level.FINE, "AWTEvent.copyPrivateDataInto() got IllegalAccessException ", e);
                     }
-                }
+                } 
             }
         }
     }
@@ -553,15 +554,16 @@ public abstract class AWTEvent extends EventObject {
     void dispatched() {
         if (this instanceof InputEvent) {
             Field field = get_InputEvent_CanAccessSystemClipboard();
-            if (field != null) {
+            if (field != null) { 
                 try {
                     field.setBoolean(this, false);
                 } catch(IllegalAccessException e) {
                     if (log.isLoggable(Level.FINE)) {
                         log.log(Level.FINE, "AWTEvent.dispatched() got IllegalAccessException ", e);
                     }
-                }
+                } 
             }
         }
-    }
+    }            
 } // class AWTEvent
+

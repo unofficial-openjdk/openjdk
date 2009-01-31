@@ -34,7 +34,7 @@ public final class SimpleNameService implements NameService {
     private static LinkedHashMap hosts = new LinkedHashMap();
 
     private static String addrToString(byte addr[]) {
-        return Byte.toString(addr[0]) + "." +
+	return Byte.toString(addr[0]) + "." + 
                Byte.toString(addr[1]) + "." +
                Byte.toString(addr[2]) + "." +
                Byte.toString(addr[3]);
@@ -51,15 +51,15 @@ public final class SimpleNameService implements NameService {
     }
 
     public static void remove(String host) {
-        hosts.remove(host);
+	hosts.remove(host);
     }
 
     public static int entries () {
-        return hosts.size();
+	return hosts.size();
     }
 
     public static int lookupCalls() {
-        return lookupCalls;
+	return lookupCalls;
     }
 
     static int lookupCalls = 0;
@@ -71,9 +71,9 @@ public final class SimpleNameService implements NameService {
 
     public InetAddress[] lookupAllHostAddr(String host) throws UnknownHostException {
 
-        lookupCalls ++;
+	lookupCalls ++;
 
-        String value = (String)hosts.get(host);
+	String value = (String)hosts.get(host);
         if (value == null) {
             throw new UnknownHostException(host);
         }
@@ -88,7 +88,7 @@ public final class SimpleNameService implements NameService {
     }
 
     public String getHostByAddr(byte[] addr) throws UnknownHostException {
-        String addrString = addrToString(addr);
+	String addrString = addrToString(addr);
         Iterator i = hosts.keySet().iterator();
         while (i.hasNext()) {
             String host = (String)i.next();
@@ -100,3 +100,4 @@ public final class SimpleNameService implements NameService {
         throw new UnknownHostException();
     }
 }
+

@@ -42,8 +42,9 @@ import sun.security.jca.JCAUtil;
  *
  * <p> Implementations are free to implement the Cloneable interface.
  *
- * @author Benjamin Renaud
+ * @author Benjamin Renaud 
  *
+ * @version %I%, %G%
  *
  * @see MessageDigest
  */
@@ -58,9 +59,9 @@ public abstract class MessageDigestSpi {
      *
      * <p>This concrete method has been added to this previously-defined
      * abstract class. (For backwards compatibility, it cannot be abstract.)
-     *
+     * 
      * <p>The default behavior is to return 0.
-     *
+     * 
      * <p>This method may be overridden by a provider to return the digest
      * length.
      *
@@ -69,7 +70,7 @@ public abstract class MessageDigestSpi {
      * @since 1.2
      */
     protected int engineGetDigestLength() {
-        return 0;
+	return 0;
     }
 
     /**
@@ -80,14 +81,14 @@ public abstract class MessageDigestSpi {
     protected abstract void engineUpdate(byte input);
 
     /**
-     * Updates the digest using the specified array of bytes,
+     * Updates the digest using the specified array of bytes,    
      * starting at the specified offset.
      *
      * @param input the array of bytes to use for the update.
      *
      * @param offset the offset to start from in the array of bytes.
      *
-     * @param len the number of bytes to use, starting at
+     * @param len the number of bytes to use, starting at 
      * <code>offset</code>.
      */
     protected abstract void engineUpdate(byte[] input, int offset, int len);
@@ -103,48 +104,48 @@ public abstract class MessageDigestSpi {
      * @since 1.5
      */
     protected void engineUpdate(ByteBuffer input) {
-        if (input.hasRemaining() == false) {
-            return;
-        }
-        if (input.hasArray()) {
-            byte[] b = input.array();
-            int ofs = input.arrayOffset();
-            int pos = input.position();
-            int lim = input.limit();
-            engineUpdate(b, ofs + pos, lim - pos);
-            input.position(lim);
-        } else {
-            int len = input.remaining();
-            int n = JCAUtil.getTempArraySize(len);
-            if ((tempArray == null) || (n > tempArray.length)) {
-                tempArray = new byte[n];
-            }
-            while (len > 0) {
-                int chunk = Math.min(len, tempArray.length);
-                input.get(tempArray, 0, chunk);
-                engineUpdate(tempArray, 0, chunk);
-                len -= chunk;
-            }
-        }
+	if (input.hasRemaining() == false) {
+	    return;
+	}
+	if (input.hasArray()) {
+	    byte[] b = input.array();
+	    int ofs = input.arrayOffset();
+	    int pos = input.position();
+	    int lim = input.limit();
+	    engineUpdate(b, ofs + pos, lim - pos);
+	    input.position(lim);
+	} else {
+	    int len = input.remaining();
+	    int n = JCAUtil.getTempArraySize(len);
+	    if ((tempArray == null) || (n > tempArray.length)) {
+		tempArray = new byte[n];
+	    }
+	    while (len > 0) {
+		int chunk = Math.min(len, tempArray.length);
+		input.get(tempArray, 0, chunk);
+		engineUpdate(tempArray, 0, chunk);
+		len -= chunk;
+	    }
+	}
     }
 
     /**
      * Completes the hash computation by performing final
-     * operations such as padding. Once <code>engineDigest</code> has
-     * been called, the engine should be reset (see
-     * {@link #engineReset() engineReset}).
+     * operations such as padding. Once <code>engineDigest</code> has 
+     * been called, the engine should be reset (see 
+     * {@link #engineReset() engineReset}).  
      * Resetting is the responsibility of the
      * engine implementor.
      *
-     * @return the array of bytes for the resulting hash value.
+     * @return the array of bytes for the resulting hash value.  
      */
     protected abstract byte[] engineDigest();
 
     /**
      * Completes the hash computation by performing final
      * operations such as padding. Once <code>engineDigest</code> has
-     * been called, the engine should be reset (see
-     * {@link #engineReset() engineReset}).
+     * been called, the engine should be reset (see 
+     * {@link #engineReset() engineReset}).  
      * Resetting is the responsibility of the
      * engine implementor.
      *
@@ -165,42 +166,42 @@ public abstract class MessageDigestSpi {
      * the actual digest length.
      *
      * @return the length of the digest stored in the output buffer.
-     *
+     * 
      * @exception DigestException if an error occurs.
      *
      * @since 1.2
      */
     protected int engineDigest(byte[] buf, int offset, int len)
-                                                throws DigestException {
+						throws DigestException {
 
-        byte[] digest = engineDigest();
-        if (len < digest.length)
-                throw new DigestException("partial digests not returned");
-        if (buf.length - offset < digest.length)
-                throw new DigestException("insufficient space in the output "
-                                          + "buffer to store the digest");
-        System.arraycopy(digest, 0, buf, offset, digest.length);
-        return digest.length;
+	byte[] digest = engineDigest();
+	if (len < digest.length)
+		throw new DigestException("partial digests not returned");
+	if (buf.length - offset < digest.length)
+		throw new DigestException("insufficient space in the output "
+					  + "buffer to store the digest");
+	System.arraycopy(digest, 0, buf, offset, digest.length);
+	return digest.length;
     }
 
     /**
      * Resets the digest for further use.
      */
-    protected abstract void engineReset();
+    protected abstract void engineReset();    
 
-    /**
-     * Returns a clone if the implementation is cloneable.
-     *
+    /**    
+     * Returns a clone if the implementation is cloneable.    
+     * 
      * @return a clone if the implementation is cloneable.
      *
      * @exception CloneNotSupportedException if this is called on an
      * implementation that does not support <code>Cloneable</code>.
      */
     public Object clone() throws CloneNotSupportedException {
-        if (this instanceof Cloneable) {
-            return super.clone();
-        } else {
-            throw new CloneNotSupportedException();
-        }
+	if (this instanceof Cloneable) {
+	    return super.clone();
+	} else {
+	    throw new CloneNotSupportedException();
+	}
     }
 }

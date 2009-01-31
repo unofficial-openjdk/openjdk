@@ -45,35 +45,35 @@ class ClassConstantData extends ConstantPoolData {
      */
 
     ClassConstantData(ConstantPool tab, ClassDeclaration clazz) {
-        String sig = clazz.getType().getTypeSignature();
-        // sig is like "Lfoo/bar;", name is like "foo/bar".
-        // We assume SIG_CLASS and SIG_ENDCLASS are 1 char each.
-        name = sig.substring(1, sig.length()-1);
-        tab.put(name);
+	String sig = clazz.getType().getTypeSignature();
+	// sig is like "Lfoo/bar;", name is like "foo/bar".
+	// We assume SIG_CLASS and SIG_ENDCLASS are 1 char each.
+	name = sig.substring(1, sig.length()-1);
+	tab.put(name);
     }
 
     // REMIND: this case should eventually go away.
     ClassConstantData(ConstantPool tab, Type t) {
-        name = t.getTypeSignature();
-        tab.put(name);
+	name = t.getTypeSignature();
+	tab.put(name);
     }
 
     /**
      * Write the constant to the output stream
      */
     void write(Environment env, DataOutputStream out, ConstantPool tab) throws IOException {
-        out.writeByte(CONSTANT_CLASS);
-        out.writeShort(tab.index(name));
+	out.writeByte(CONSTANT_CLASS);
+	out.writeShort(tab.index(name));
     }
 
     /**
      * Return the order of the constant
      */
     int order() {
-        return 1;
+	return 1;
     }
 
-    public String toString() {
-        return "ClassConstantData[" + name + "]";
+    public String toString() { 
+	return "ClassConstantData[" + name + "]";
     }
 }

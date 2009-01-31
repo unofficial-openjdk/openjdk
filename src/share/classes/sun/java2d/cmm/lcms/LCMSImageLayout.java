@@ -60,28 +60,28 @@ class LCMSImageLayout {
 
     public static final int DOSWAP      = 1<<10;
 
-    public static final int PT_RGB_8 =
+    public static final int PT_RGB_8 = 
         CHANNELS_SH(3) | BYTES_SH(1);
-
+        
     public static final int PT_GRAY_8 =
         CHANNELS_SH(1) | BYTES_SH(1);
-
+        
     public static final int PT_GRAY_16 =
         CHANNELS_SH(1) | BYTES_SH(2);
-
+       
     public static final int PT_RGBA_8 =
         EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1);
 
     public static final int PT_ARGB_8 =
         EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1) | SWAPFIRST;
-
+        
     public static final int PT_BGR_8 =
         DOSWAP | CHANNELS_SH(3) | BYTES_SH(1);
-
-    public static final int PT_ABGR_8 =
+        
+    public static final int PT_ABGR_8 = 
         DOSWAP | EXTRA_SH(1) | CHANNELS_SH(3) | BYTES_SH(1);
 
-    public static final int PT_BGRA_8 = EXTRA_SH(1) | CHANNELS_SH(3) |
+    public static final int PT_BGRA_8 = EXTRA_SH(1) | CHANNELS_SH(3) | 
         BYTES_SH(1) | DOSWAP | SWAPFIRST;
 
     public static final int DT_BYTE     = 0;
@@ -97,7 +97,7 @@ class LCMSImageLayout {
     int height;
     int nextRowOffset;
     int offset;
-
+    
     Object dataArray;
     private LCMSImageLayout(int np, int pixelType, int pixelSize) {
         this.pixelType = pixelType;
@@ -107,7 +107,7 @@ class LCMSImageLayout {
         offset = 0;
     }
 
-    private LCMSImageLayout(int width, int height, int pixelType,
+    private LCMSImageLayout(int width, int height, int pixelType, 
                             int pixelSize) {
         this.pixelType = pixelType;
         this.width = width;
@@ -115,8 +115,8 @@ class LCMSImageLayout {
         nextRowOffset = width*pixelSize;
         offset = 0;
     }
-
-
+ 
+    
     public LCMSImageLayout(byte[] data, int np, int pixelType, int pixelSize) {
         this(np, pixelType, pixelSize);
         dataType = DT_BYTE;
@@ -141,11 +141,11 @@ class LCMSImageLayout {
         dataType = DT_DOUBLE;
         dataArray = data;
     }
-
+    
     public LCMSImageLayout(BufferedImage image) {
         ShortComponentRaster shortRaster;
         IntegerComponentRaster intRaster;
-        ByteComponentRaster byteRaster;
+        ByteComponentRaster byteRaster; 
         switch (image.getType()) {
             case BufferedImage.TYPE_INT_RGB:
                 pixelType = PT_ARGB_8;
@@ -172,12 +172,12 @@ class LCMSImageLayout {
                 pixelType = PT_GRAY_16;
                 break;
             default:
-            // TODO: Add support for some images having
+            // TODO: Add support for some images having 
             // SinglePixelPackedModel and ComponentSampleModel
                 throw new IllegalArgumentException(
                     "CMMImageLayout - bad image type passed to constructor");
         }
-
+ 
         width = image.getWidth();
         height = image.getHeight();
 
@@ -195,7 +195,7 @@ class LCMSImageLayout {
             case BufferedImage.TYPE_3BYTE_BGR:
             case BufferedImage.TYPE_4BYTE_ABGR:
                 byteRaster = (ByteComponentRaster)image.getRaster();
-                nextRowOffset = byteRaster.getScanlineStride();
+                nextRowOffset = byteRaster.getScanlineStride(); 
                 offset = byteRaster.getDataOffset(0);
                 dataArray = byteRaster.getDataStorage();
                 dataType = DT_BYTE;
@@ -210,7 +210,7 @@ class LCMSImageLayout {
                 break;
 
             case BufferedImage.TYPE_USHORT_GRAY:
-                shortRaster = (ShortComponentRaster)image.getRaster();
+                shortRaster = (ShortComponentRaster)image.getRaster(); 
                 nextRowOffset = shortRaster.getScanlineStride()*2;
                 offset = shortRaster.getDataOffset(0) * 2;
                 dataArray = shortRaster.getDataStorage();

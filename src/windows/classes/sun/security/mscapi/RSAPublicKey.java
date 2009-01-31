@@ -49,9 +49,9 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
      */
     RSAPublicKey(long hCryptProv, long hCryptKey, int keyLength)
     {
-        super(hCryptProv, hCryptKey, keyLength);
+	super(hCryptProv, hCryptKey, keyLength);
     }
-
+    
     /**
      * Returns the standard algorithm name for this key. For
      * example, "RSA" would indicate that this key is a RSA key.
@@ -64,23 +64,23 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
      */
     public String getAlgorithm()
     {
-        return "RSA";
+	return "RSA";
     }
-
+        
     /**
      * Returns a printable description of the key.
      */
     public String toString()
     {
-        StringBuffer sb = new StringBuffer();
+	StringBuffer sb = new StringBuffer();
 
-        sb.append("RSAPublicKey [size=").append(keyLength)
-            .append(" bits, type=").append(getKeyType(hCryptKey))
-            .append(", container=").append(getContainerName(hCryptProv))
-            .append("]\n  modulus: ").append(getModulus())
-            .append("\n  public exponent: ").append(getPublicExponent());
+	sb.append("RSAPublicKey [size=").append(keyLength)
+	    .append(" bits, type=").append(getKeyType(hCryptKey))
+	    .append(", container=").append(getContainerName(hCryptProv))
+	    .append("]\n  modulus: ").append(getModulus())
+	    .append("\n  public exponent: ").append(getPublicExponent());
 
-        return sb.toString();
+	return sb.toString();
     }
 
     /**
@@ -88,13 +88,13 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
      */
     public BigInteger getPublicExponent() {
 
-        if (exponent == null) {
-            publicKeyBlob = getPublicKeyBlob(hCryptKey);
+	if (exponent == null) {
+	    publicKeyBlob = getPublicKeyBlob(hCryptKey);
 
-            exponent = new BigInteger(getExponent(publicKeyBlob));
-        }
+	    exponent = new BigInteger(getExponent(publicKeyBlob));
+	}
 
-        return exponent;
+	return exponent;
     }
 
     /**
@@ -102,12 +102,12 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
      */
     public BigInteger getModulus() {
 
-        if (modulus == null) {
-            publicKeyBlob = getPublicKeyBlob(hCryptKey);
-            modulus = new BigInteger(getModulus(publicKeyBlob));
-        }
+	if (modulus == null) {
+	    publicKeyBlob = getPublicKeyBlob(hCryptKey);
+	    modulus = new BigInteger(getModulus(publicKeyBlob));
+	}
 
-        return modulus;
+	return modulus;
     }
 
     /**
@@ -141,21 +141,21 @@ class RSAPublicKey extends Key implements java.security.interfaces.RSAPublicKey
      */
     public byte[] getEncoded()
     {
-        if (encoding == null) {
+	if (encoding == null) {
 
-            try {
-                encoding = new RSAPublicKeyImpl(getModulus(),
-                    getPublicExponent()).getEncoded();
+	    try {
+		encoding = new RSAPublicKeyImpl(getModulus(), 
+		    getPublicExponent()).getEncoded();
 
-            } catch (InvalidKeyException e) {
-                // ignore
-            }
-        }
+	    } catch (InvalidKeyException e) {
+		// ignore
+	    }
+	}
         return encoding;
     }
 
     protected Object writeReplace() throws java.io.ObjectStreamException {
-        return new KeyRep(KeyRep.Type.PUBLIC,
+	return new KeyRep(KeyRep.Type.PUBLIC,
                         getAlgorithm(),
                         getFormat(),
                         getEncoded());

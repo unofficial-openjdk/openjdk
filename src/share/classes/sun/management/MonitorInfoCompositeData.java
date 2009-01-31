@@ -34,18 +34,18 @@ import java.util.Set;
 
 /**
  * A CompositeData for MonitorInfo for the local management support.
- * This class avoids the performance penalty paid to the
+ * This class avoids the performance penalty paid to the 
  * construction of a CompositeData use in the local case.
  */
 public class MonitorInfoCompositeData extends LazyCompositeData {
     private final MonitorInfo lock;
 
     private MonitorInfoCompositeData(MonitorInfo mi) {
-        this.lock = mi;
+	this.lock = mi;
     }
 
     public MonitorInfo getMonitorInfo() {
-        return lock;
+	return lock;
     }
 
     public static CompositeData toCompositeData(MonitorInfo mi) {
@@ -54,49 +54,49 @@ public class MonitorInfoCompositeData extends LazyCompositeData {
     }
 
     protected CompositeData getCompositeData() {
-        // CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
-        // monitorInfoItemNames!
+	// CONTENTS OF THIS ARRAY MUST BE SYNCHRONIZED WITH
+	// monitorInfoItemNames!
 
         int len = monitorInfoItemNames.length;
-        Object[] values = new Object[len];
+	Object[] values = new Object[len];
         CompositeData li = LockDataConverter.toLockInfoCompositeData(lock);
 
         for (int i = 0; i < len; i++) {
             String item = monitorInfoItemNames[i];
             if (item.equals(LOCKED_STACK_FRAME)) {
                 StackTraceElement ste = lock.getLockedStackFrame();
-                values[i] = (ste != null ? StackTraceElementCompositeData.
+	        values[i] = (ste != null ? StackTraceElementCompositeData.
                                                toCompositeData(ste)
                                          : null);
             } else if (item.equals(LOCKED_STACK_DEPTH)) {
-                values[i] = new Integer(lock.getLockedStackDepth());
+	        values[i] = new Integer(lock.getLockedStackDepth());
             } else {
                 values[i] = li.get(item);
             }
         }
 
-        try {
-            return new CompositeDataSupport(monitorInfoCompositeType,
-                                            monitorInfoItemNames,
-                                            values);
-        } catch (OpenDataException e) {
+	try {
+	    return new CompositeDataSupport(monitorInfoCompositeType,
+	  			    	    monitorInfoItemNames,
+					    values);
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
     private static final CompositeType monitorInfoCompositeType;
-    private static final String[] monitorInfoItemNames;
+    private static final String[] monitorInfoItemNames; 
     static {
-        try {
-            monitorInfoCompositeType = (CompositeType)
-                MappedMXBeanType.toOpenType(MonitorInfo.class);
+	try {
+	    monitorInfoCompositeType = (CompositeType)
+		MappedMXBeanType.toOpenType(MonitorInfo.class);
             Set<String> s = monitorInfoCompositeType.keySet();
             monitorInfoItemNames = (String[]) s.toArray(new String[0]);
-        } catch (OpenDataException e) {
+	} catch (OpenDataException e) {
             // Should never reach here
             throw Util.newInternalError(e);
-        }
+	}
     }
 
     static CompositeType getMonitorInfoCompositeType() {
@@ -132,7 +132,7 @@ public class MonitorInfoCompositeData extends LazyCompositeData {
     /** Validate if the input CompositeData has the expected
      * CompositeType (i.e. contain all attributes with expected
      * names and types).
-     */
+     */ 
     public static void validateCompositeData(CompositeData cd) {
         if (cd == null) {
             throw new NullPointerException("Null CompositeData");

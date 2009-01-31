@@ -62,13 +62,13 @@ JNIEXPORT void JNICALL Java_sun_font_X11TextRenderer_doDrawGlyphList
     Region_GetBounds(env, clip, &bounds);
 
     if ((gbv = setupBlitVector(env, glyphlist)) == NULL) {
-        return;
+	return;
     }
     if (!RefineBounds(gbv, &bounds)) {
         free(gbv);
         return;
     }
     AWTDrawGlyphList(env, xtr, dstData, xgc,
-                     &bounds, gbv->glyphs, gbv->numGlyphs);
+		     &bounds, gbv->glyphs, gbv->numGlyphs);
     free(gbv);
 }

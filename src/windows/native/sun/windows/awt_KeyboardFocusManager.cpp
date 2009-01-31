@@ -44,7 +44,7 @@ static jobject getNativeFocusState(JNIEnv *env, void*(*ftn)()) {
         InvokeFunction(ftn));
     if (gFocusState != NULL) {
         lFocusState = env->NewLocalRef(gFocusState);
-        env->DeleteGlobalRef(gFocusState);
+	env->DeleteGlobalRef(gFocusState);
     }
 
     return lFocusState;
@@ -74,7 +74,7 @@ Java_java_awt_KeyboardFocusManager_initIDs
     AwtKeyboardFocusManager::markClearGlobalFocusOwnerMID =
         env->GetStaticMethodID(cls, "markClearGlobalFocusOwner",
                                "()Ljava/awt/Window;");
-    AwtKeyboardFocusManager::removeLastFocusRequestMID =
+    AwtKeyboardFocusManager::removeLastFocusRequestMID = 
         env->GetStaticMethodID(cls, "removeLastFocusRequest",
                                "(Ljava/awt/Component;)V");
 
@@ -85,7 +85,7 @@ Java_java_awt_KeyboardFocusManager_initIDs
     jclass keyclass = env->FindClass("java/awt/event/KeyEvent");
     DASSERT (keyclass != NULL);
 
-    AwtKeyboardFocusManager::isProxyActive =
+    AwtKeyboardFocusManager::isProxyActive = 
         env->GetFieldID(keyclass, "isProxyActive", "Z");
 
     env->DeleteLocalRef(keyclass);

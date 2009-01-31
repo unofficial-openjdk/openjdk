@@ -139,7 +139,7 @@ static void performPoll(JNIEnv *env,int32_t fdXPipe, int32_t fdAWTPipe);
 #endif
 
 #ifdef NDEBUG
-#undef DEBUG            /* NDEBUG overrides DEBUG */
+#undef DEBUG		/* NDEBUG overrides DEBUG */
 #endif
 
 static struct WidgetInfo *awt_winfo = (struct WidgetInfo *) NULL;
@@ -172,16 +172,16 @@ uint32_t awt_NumLockMask = 0;
 uint32_t awt_ModeSwitchMask = 0;
 Cursor awt_scrollCursor;
 Boolean  awt_ModLockIsShiftLock = False;
-extern Boolean awt_UseType4Patch;
+extern Boolean awt_UseType4Patch; 
 extern Boolean awt_UseXKB;
 
 #define SPECIAL_KEY_EVENT 2
 
 /* implement a "putback queue" -- see comments on awt_put_back_event() */
-#define PUTBACK_QUEUE_MIN_INCREMENT 5   /* min size increase */
-static XEvent *putbackQueue = NULL;     /* the queue -- next event is 0 */
-static int32_t putbackQueueCount = 0;   /* # of events available on queue */
-static int32_t putbackQueueCapacity = 0;        /* total capacity of queue */
+#define PUTBACK_QUEUE_MIN_INCREMENT 5	/* min size increase */
+static XEvent *putbackQueue = NULL;	/* the queue -- next event is 0 */
+static int32_t putbackQueueCount = 0;	/* # of events available on queue */
+static int32_t putbackQueueCapacity = 0;	/* total capacity of queue */
 static XtInputMask awt_events_pending(XtAppContext appContext);
 static int32_t awt_get_next_put_back_event(XEvent *xev_out);
 
@@ -200,12 +200,12 @@ static int32_t awt_get_next_put_back_event(XEvent *xev_out);
 
 typedef XtIntervalId (*XTFUNC)();
 
-static jobject  awt_MainThread = NULL;
+static jobject	awt_MainThread = NULL;
 static char     read_buf[AWT_POLL_BUFSIZE + 1];    /* dummy buf to empty pipe */
 static int32_t      awt_pipe_fds[2];                   /* fds for wkaeup pipe */
-static Boolean  awt_pipe_inited = False;           /* make sure pipe is initialized before write */
+static Boolean	awt_pipe_inited = False;           /* make sure pipe is initialized before write */
 static int32_t      def_poll_timeout = AWT_MAX_POLL_TIMEOUT;   /* default value for timeout */
-static jlong awt_next_flush_time = 0LL; /* 0 == no scheduled flush */
+static jlong awt_next_flush_time = 0LL;	/* 0 == no scheduled flush */
 static void     *xt_lib = NULL;
 static XTFUNC   xt_timeout = NULL;
 
@@ -271,7 +271,7 @@ XmFontList getMotifFontList() {
     return fontlist;
 }
 
-static void
+static void 
 awt_set_poll_timeout (uint32_t newTimeout)
 {
     DTRACE_PRINTLN1("awt_set_poll_timeout(%lu)", newTimeout);
@@ -295,25 +295,25 @@ awt_get_poll_timeout( Boolean timedOut )
     uint32_t timeout = AWT_MAX_POLL_TIMEOUT;
 
     DTRACE_PRINTLN2("awt_get_poll_timeout(%s), awt_next_flush_time:%ld",
-        (remove?"true":"false"),
-        awt_next_flush_time);
+	(remove?"true":"false"), 
+	awt_next_flush_time);
 
     if (timedOut) {
-        /* add 1/16 (plus 1, in case the division truncates to 0) */
-        curPollTimeout += ((curPollTimeout>>4) + 1);
+	/* add 1/16 (plus 1, in case the division truncates to 0) */
+	curPollTimeout += ((curPollTimeout>>4) + 1);
         curPollTimeout = min(AWT_MAX_POLL_TIMEOUT, curPollTimeout);
     }
     if (awt_next_flush_time > 0) {
-        int32_t flushDiff = (int32_t)(awt_next_flush_time - awtJNI_TimeMillis());
-        timeout = min(curPollTimeout, flushDiff);
+	int32_t flushDiff = (int32_t)(awt_next_flush_time - awtJNI_TimeMillis());
+	timeout = min(curPollTimeout, flushDiff);
     } else {
-        timeout = curPollTimeout;
+	timeout = curPollTimeout;
     }
 
     return timeout;
 } /* awt_get_poll_timeout() */
 
-static jlong
+static jlong 
 awtJNI_TimeMillis(void)
 {
     struct timeval t;
@@ -321,10 +321,10 @@ awtJNI_TimeMillis(void)
     gettimeofday(&t, 0);
 
     return jlong_add(jlong_mul(jint_to_jlong(t.tv_sec), jint_to_jlong(1000)),
-                     jint_to_jlong(t.tv_usec / 1000));
+		     jint_to_jlong(t.tv_usec / 1000));
 }
 
-static int32_t
+static int32_t 
 xtError()
 {
 #ifdef DEBUG
@@ -348,7 +348,7 @@ xIOError(Display *dpy)
     AWT_NOFLUSH_UNLOCK();
     JVM_RaiseSignal(JVM_SIGTERM); /* Shut down cleanly */
     if (cl != NULL) {
-        JVM_Sleep(env, cl, 20000);
+	JVM_Sleep(env, cl, 20000);
     }
 
     return 0; /* to keep compiler happy */
@@ -388,10 +388,10 @@ isXKBenabled(Display *display) {
 }
 
 
-/* Assign meaning - alt, meta, etc. - to X modifiers mod1 ... mod5.
+/* Assign meaning - alt, meta, etc. - to X modifiers mod1 ... mod5.  
  * Only consider primary symbols on keycodes attached to modifiers.
  */
-static void
+static void 
 setup_modifier_map(Display *disp)
 {
     KeyCode metaL      = keysym_to_keycode_if_primary(disp, XK_Meta_L);
@@ -402,35 +402,35 @@ setup_modifier_map(Display *disp)
     KeyCode modeSwitch = keysym_to_keycode_if_primary(disp, XK_Mode_switch);
     KeyCode shiftLock  = keysym_to_keycode_if_primary(disp, XK_Shift_Lock);
     KeyCode capsLock   = keysym_to_keycode_if_primary(disp, XK_Caps_Lock);
-
+  
     XModifierKeymap *modmap = NULL;
     int32_t nkeys, modn, i;
     char *ptr = NULL;
-
+  
     DTRACE_PRINTLN("In setup_modifier_map");
 
     modmap = XGetModifierMapping(disp);
     nkeys = modmap->max_keypermod;
 
     for (modn = Mod1MapIndex;
-         (modn <= Mod5MapIndex) &&
+         (modn <= Mod5MapIndex) && 
              (awt_MetaMask == 0 || awt_AltMask == 0 ||
               awt_NumLockMask == 0 || awt_ModeSwitchMask == 0);
          ++modn)
     {
         static const uint32_t modmask[8] = {
             ShiftMask, LockMask, ControlMask,
-            Mod1Mask, Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask
+            Mod1Mask, Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask 
         };
-
-
+ 
+  
         for (i = 0; i < nkeys; ++i) {
             /* for each keycode attached to this modifier */
             KeyCode keycode = modmap->modifiermap[modn * nkeys + i];
             if (keycode == 0) {
                 continue;
             }
-
+  
             if (awt_MetaMask == 0 && (keycode == metaL || keycode == metaR)) {
                 awt_MetaMask = modmask[modn];
                 DTRACE_PRINTLN2("    awt_MetaMask       = %d, modn = %d", awt_MetaMask, modn);
@@ -463,7 +463,7 @@ setup_modifier_map(Display *disp)
             break;
         }
     }
-
+  
     DTRACE_PRINTLN1("    ShiftMask          = %d", ShiftMask);
     DTRACE_PRINTLN1("    ControlMask        = %d", ControlMask);
 
@@ -477,36 +477,36 @@ setup_modifier_map(Display *disp)
         }
     }
     awt_UseXKB = isXKBenabled(disp);
-
+    
 }
 
 
 Boolean scrollBugWorkAround;
 
 
-void
+void 
 awt_output_flush()
 {
     char c = 'p';
 
     if (awt_next_flush_time == 0)
     {
-        Boolean needsWakeup = False;
+	Boolean needsWakeup = False;
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        if (awt_pipe_inited && (awt_get_poll_timeout(False) > (2*AWT_FLUSH_TIMEOUT))){
-            needsWakeup = True;
-        }
-        /* awt_next_flush_time affects awt_get_poll_timeout(), so set
-         * the variable *after* calling the function.
-         */
-        awt_next_flush_time = awtJNI_TimeMillis() + AWT_FLUSH_TIMEOUT;
-        if (needsWakeup)
-        {
-            /* write to the utility pipe to wake up the event
-             * loop, if it's sleeping
-             */
-            write ( AWT_WRITEPIPE, &c, 1 );
-        }
+	if (awt_pipe_inited && (awt_get_poll_timeout(False) > (2*AWT_FLUSH_TIMEOUT))){
+	    needsWakeup = True;
+	}
+	/* awt_next_flush_time affects awt_get_poll_timeout(), so set
+	 * the variable *after* calling the function.
+	 */
+    	awt_next_flush_time = awtJNI_TimeMillis() + AWT_FLUSH_TIMEOUT;
+	if (needsWakeup)
+	{
+	    /* write to the utility pipe to wake up the event
+	     * loop, if it's sleeping
+	     */
+	    write ( AWT_WRITEPIPE, &c, 1 );
+	}
     }
 #ifdef FLUSHDEBUG
 else
@@ -514,7 +514,7 @@ jio_fprintf(stderr, "!");
 #endif
 } /* awt_output_flush() */
 
-void
+void 
 null_event_handler(Widget w, XtPointer client_data,
                    XEvent * event, Boolean * cont)
 {
@@ -527,23 +527,23 @@ findWidgetInfo(Widget widget)
     struct WidgetInfo *cw;
 
     for (cw = awt_winfo; cw != NULL; cw = cw->next) {
-        if (cw->widget == widget || cw->origin == widget) {
+        if (cw->widget == widget || cw->origin == widget) { 
             return cw;
         }
     }
     return NULL;
 }
 
-void
+void 
 awt_addWidget(Widget w, Widget origin, void *peer, jlong event_flags)
 {
-    if (findWidgetInfo(w) != NULL) return;
+    if (findWidgetInfo(w) != NULL) return; 
 
     if (!XtIsSubclass(w, xmFileSelectionBoxWidgetClass)) {
         struct WidgetInfo *nw = (struct WidgetInfo *) malloc(sizeof(struct WidgetInfo));
 
         if (nw) {
-            nw->widget     = w;
+            nw->widget	   = w;
             nw->origin     = origin;
             nw->peer       = peer;
             nw->event_mask = event_flags;
@@ -590,13 +590,13 @@ awt_addWidget(Widget w, Widget origin, void *peer, jlong event_flags)
     }
 }
 
-void
+void 
 awt_delWidget(Widget w)
 {
     struct WidgetInfo *cw;
 
     if (awt_winfo != NULL) {
-        if ((awt_winfo->widget == w) ||
+        if ((awt_winfo->widget == w) || 
             (awt_winfo->origin == w)) {
             cw = awt_winfo;
             awt_winfo = awt_winfo->next;
@@ -622,32 +622,32 @@ awt_delWidget(Widget w)
 void *
 findPeer(Widget * pwidget)
 {
-    struct WidgetInfo   *cw;
+    struct WidgetInfo	*cw;
     Widget widgetParent;
     void * peer;
 
     if ((cw = findWidgetInfo(*pwidget)) != NULL) {
         return cw->peer;
     }
-    /* fix for 4053856, robi.khan@eng
+    /* fix for 4053856, robi.khan@eng 
        couldn't find peer corresponding to widget
        but the widget may be child of one with
        a peer, so recurse up the hierarchy */
     widgetParent = XtParent(*pwidget);
     if (widgetParent != NULL ) {
-        peer = findPeer(&widgetParent);
-        if( peer != NULL ) {
-        /* found peer attached to ancestor of given
-           widget, so set widget return value as well */
-            *pwidget = widgetParent;
-            return peer;
-        }
+	peer = findPeer(&widgetParent);
+	if( peer != NULL ) {
+	/* found peer attached to ancestor of given
+	   widget, so set widget return value as well */
+	    *pwidget = widgetParent;
+	    return peer;
+	}
     }
 
     return NULL;
 }
 
-Boolean
+Boolean 
 awt_isAwtWidget(Widget widget)
 {
     return (findWidgetInfo(widget) != NULL);
@@ -704,7 +704,7 @@ awt_delMenuWidget(Widget wdgt) {
 }
 
 
-static Widget
+static Widget 
 getShellWidgetByPart(Widget part) {
     int i;
     for (i = 0; i < 3; i++) {
@@ -715,7 +715,7 @@ getShellWidgetByPart(Widget part) {
     return NULL;
 }
 
-static Boolean
+static Boolean 
 isTheSameShellWidget(Widget shell, Widget w) {
     Widget s1, s2;
     if (shell == NULL || w == NULL) return False;
@@ -813,9 +813,9 @@ shouldDispatchToWidget(XEvent * xev)
             }
             if (peer != NULL) {
                 widget = focusWidget;
-                win = xev->xkey.window = XtWindow(focusWidget);
+                win = xev->xkey.window = XtWindow(focusWidget);                
             }
-        }
+        } 
     }
 
     if ((winfo = findWidgetInfo(widget)) == NULL) {
@@ -848,7 +848,7 @@ shouldDispatchToWidget(XEvent * xev)
              * of it, dispatch events to the choice - the source of dragging.
              */
 
-            if ((drag_source != NULL) && (widget != drag_source) &&
+            if ((drag_source != NULL) && (widget != drag_source) && 
                 (peer = findPeer(&drag_source))) {
                 awt_canvas_handleEvent(drag_source, peer, xev, winfo, &cont, TRUE);
             }
@@ -947,7 +947,7 @@ void set_toolkit_busy(Boolean busy) {
         DASSERT(awtAutoShutdownClassLocal != NULL);
         if (awtAutoShutdownClassLocal == NULL) {
             return;
-        }
+        }	
 
         awtAutoShutdownClass = (jclass)(*env)->NewGlobalRef(env, awtAutoShutdownClassLocal);
         (*env)->DeleteLocalRef(env, awtAutoShutdownClassLocal);
@@ -990,10 +990,10 @@ static int32_t debugPrintLineCount = 0;   /* limit debug output per line */
 #endif
 
 /*
- * This is the main Xt event loop for the AWT.
+ * This is the main Xt event loop for the AWT. 
  *
- * Because java applications are multithreaded, but X and Xt
- * are thread-dumb, we must make special considerations to
+ * Because java applications are multithreaded, but X and Xt 
+ * are thread-dumb, we must make special considerations to 
  * make ensure that the X/Xt libraries are not entered by
  * multiple threads simultaneously.
  *
@@ -1008,11 +1008,11 @@ static int32_t debugPrintLineCount = 0;   /* limit debug output per line */
 /* #ifdef DEBUG */
     int32_t  numEventsHandled = 0;
 /* #endif */
-static void
+static void 
 awt_MToolkit_loop(JNIEnv *env)
 {
     XtInputMask iMask;
-    int32_t  fdXPipe = -1;              /* pipe where X events arrive */
+    int32_t  fdXPipe = -1;		/* pipe where X events arrive */
 
     /* only privileged thread should be running here */
     DASSERT(awt_currentThreadIsPrivileged(env));
@@ -1041,37 +1041,37 @@ awt_MToolkit_loop(JNIEnv *env)
      */
     while(True) {
 
-        /* process all events in the queue */
-/*      #ifdef DEBUG */
-/*          numEventsHandled = 0; */
-/*      #endif */
+	/* process all events in the queue */
+/* 	#ifdef DEBUG */
+/* 	    numEventsHandled = 0; */
+/* 	#endif */
         while (((iMask = awt_events_pending(awt_appContext)) & XtIMAll) > 0) {
 
-/*          #ifdef DEBUG */
-                ++numEventsHandled;
-/*          #endif */
-            processOneEvent(iMask);
+/* 	    #ifdef DEBUG */
+	        ++numEventsHandled;
+/* 	    #endif */
+	    processOneEvent(iMask);
 
         }  /* end while awt_events_pending() */
-        /* At this point, we have exhausted the event queue */
+	/* At this point, we have exhausted the event queue */
 
-        /* print the number of events handled in parens */
-        DTRACE_PRINT1("(%d events)",(int32_t)numEventsHandled);
+	/* print the number of events handled in parens */
+	DTRACE_PRINT1("(%d events)",(int32_t)numEventsHandled);
 #ifdef DEBUG
-        if (++debugPrintLineCount > 8) {
-            DTRACE_PRINTLN("");
-            debugPrintLineCount = 0;
-        }
+	if (++debugPrintLineCount > 8) {
+	    DTRACE_PRINTLN("");
+	    debugPrintLineCount = 0;
+	}
 #endif
-
-        AWT_NOTIFY_ALL();               /* wake up modalWait() */
+       
+        AWT_NOTIFY_ALL();		/* wake up modalWait() */
 
         set_toolkit_busy(False);
 
-        /* Here, we wait for X events, outside of the X libs. When
-         * it's likely that an event is waiting, we process the queue
-         */
-        waitForEvents(env, fdXPipe, AWT_READPIPE);
+	/* Here, we wait for X events, outside of the X libs. When
+	 * it's likely that an event is waiting, we process the queue
+	 */
+	waitForEvents(env, fdXPipe, AWT_READPIPE);
 
         set_toolkit_busy(True);
 
@@ -1090,29 +1090,29 @@ static void
 awt_pipe_init(void) {
 
     if (awt_pipe_inited) {
-        return;
+	return;
     }
 
     if ( pipe ( awt_pipe_fds ) == 0 )
     {
-        /*
-        ** the write wakes us up from the infinite sleep, which
-        ** then we cause a delay of AWT_FLUSHTIME and then we
-        ** flush.
-        */
-        int32_t flags = 0;
-        awt_set_poll_timeout (def_poll_timeout);
-        /* set the pipe to be non-blocking */
-        flags = fcntl ( AWT_READPIPE, F_GETFL, 0 );
-        fcntl( AWT_READPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK );
-        flags = fcntl ( AWT_WRITEPIPE, F_GETFL, 0 );
-        fcntl( AWT_WRITEPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK );
+	/* 
+	** the write wakes us up from the infinite sleep, which 
+	** then we cause a delay of AWT_FLUSHTIME and then we 
+	** flush.
+	*/
+	int32_t flags = 0;
+	awt_set_poll_timeout (def_poll_timeout);
+	/* set the pipe to be non-blocking */
+	flags = fcntl ( AWT_READPIPE, F_GETFL, 0 );
+	fcntl( AWT_READPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK ); 
+	flags = fcntl ( AWT_WRITEPIPE, F_GETFL, 0 );
+	fcntl( AWT_WRITEPIPE, F_SETFL, flags | O_NDELAY | O_NONBLOCK );
         awt_pipe_inited = True;
     }
     else
     {
-        AWT_READPIPE = -1;
-        AWT_WRITEPIPE = -1;
+	AWT_READPIPE = -1;
+	AWT_WRITEPIPE = -1;
         awt_pipe_inited = False;
     }
 } /* awt_pipe_init() */
@@ -1122,10 +1122,10 @@ proxyTopLevel(Window proxyWindow) {
     Window parent = None, root = None, *children = NULL, retvalue = None;
     uint32_t nchildren = 0;
     Status res = XQueryTree(awt_display, proxyWindow, &root, &parent,
-             &children, &nchildren);
+	     &children, &nchildren);
     if (res != 0) {
         if (nchildren > 0) {
-            retvalue = children[0];
+            retvalue = children[0]; 
         }
         else retvalue = None;
         if (children != NULL) {
@@ -1158,10 +1158,10 @@ initClazzD(JNIEnv *env) {
 
 Boolean
 isFrameOrDialog(jobject target, JNIEnv *env) {
-    if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
+    if ((*env)->EnsureLocalCapacity(env, 1) < 0) { 
         return False;
     }
-
+ 
     if (clazzF == NULL) {
         jclass t_clazzF = (*env)->FindClass(env, "java/awt/Frame");
         if ((*env)->ExceptionOccurred(env)) {
@@ -1176,7 +1176,7 @@ isFrameOrDialog(jobject target, JNIEnv *env) {
         DASSERT(clazzF != NULL);
         (*env)->DeleteLocalRef(env, t_clazzF);
     }
-
+ 
     if (clazzD == NULL && !initClazzD(env)) {
         return False;
     }
@@ -1201,14 +1201,14 @@ getOwningFrameOrDialog(jobject target, JNIEnv *env) {
     jobject _target = (*env)->NewLocalRef(env, target);
     jobject parent = _target;
     Boolean isSelfFrameOrDialog = True;
-
+     
     while (!isFrameOrDialog(parent, env)) {
-        isSelfFrameOrDialog = False;
+        isSelfFrameOrDialog = False;       
         parent = (*env)->CallObjectMethod(env, _target, componentIDs.getParent);
         (*env)->DeleteLocalRef(env, _target);
         _target = parent;
     }
-
+    
     if (isSelfFrameOrDialog) {
         (*env)->DeleteLocalRef(env, parent);
         return NULL;
@@ -1218,16 +1218,16 @@ getOwningFrameOrDialog(jobject target, JNIEnv *env) {
 
 Widget
 findWindowsProxy(jobject window, JNIEnv *env) {
-    struct ComponentData *cdata;
+    struct ComponentData *cdata; 
     jobject tlPeer;
     jobject owner_prev = NULL, owner_new = NULL;
     /* the owner of a Window is in its parent field */
     /* we may have a chain of Windows; go up the chain till we find the
        owning Frame or Dialog */
-    if ((*env)->EnsureLocalCapacity(env, 4) < 0) {
+    if ((*env)->EnsureLocalCapacity(env, 4) < 0) {  
         return NULL;
     }
-
+  
     if (window == NULL) return NULL;
 
     owner_prev = (*env)->NewLocalRef(env, window);
@@ -1242,7 +1242,7 @@ findWindowsProxy(jobject window, JNIEnv *env) {
     tlPeer = (*env)->GetObjectField(env, owner_prev, componentIDs.peer);
     (*env)->DeleteLocalRef(env, owner_prev);
     if (tlPeer == NULL) return NULL;
-
+    
     cdata = (struct ComponentData *)
         JNU_GetLongFieldAsPtr(env, tlPeer, mComponentPeerIDs.pData);
     (*env)->DeleteLocalRef(env, tlPeer);
@@ -1259,7 +1259,7 @@ findTopLevel(jobject peer, JNIEnv *env) {
     if ((*env)->EnsureLocalCapacity(env, 3) < 0) {
         return NULL;
     }
-
+  
     if (clazzW == NULL) {
         jclass t_clazzW = (*env)->FindClass(env, "java/awt/Window");
         if ((*env)->ExceptionOccurred(env)) {
@@ -1279,8 +1279,8 @@ findTopLevel(jobject peer, JNIEnv *env) {
         return NULL;
     }
 
-    while ((target_prev != NULL)
-           && !(*env)->IsInstanceOf(env, target_prev, clazzW) )
+    while ((target_prev != NULL) 
+           && !(*env)->IsInstanceOf(env, target_prev, clazzW) ) 
     {
         /* go up the hierarchy until we find a window */
         jobject target_new = (*env)->CallObjectMethod(env, target_prev, componentIDs.getParent);
@@ -1386,7 +1386,7 @@ void clearFocusPathOnWindow(Window win) {
         }
         XSetInputFocus(awt_display, findShellByProxy(focusProxyWindow), RevertToPointerRoot, CurrentTime);
         trueFocusWindow = None;
-        focusProxyWindow = None;
+        focusProxyWindow = None;                        
     }
 }
 void clearFocusPath(Widget shell) {
@@ -1403,7 +1403,7 @@ void globalClearFocusPath(Widget focusOwnerShell ) {
         Window shellWindow = findShellByProxy(trueFocusWindow);
         if (shellWindow != None) {
             Widget shell = XtWindowToWidget(awt_display, shellWindow);
-            if (shell != NULL && shell != focusOwnerShell) {
+            if (shell != NULL && shell != focusOwnerShell) {                
                 clearFocusPath(shell);
             }
         }
@@ -1412,9 +1412,9 @@ void globalClearFocusPath(Widget focusOwnerShell ) {
 
 static void
 focusEventForProxy(XEvent xev,
-                   JNIEnv *env,
-                   Window *trueFocusWindow,
-                   Window *focusProxyWindow) {
+		   JNIEnv *env,
+		   Window *trueFocusWindow,
+		   Window *focusProxyWindow) {
 
     DASSERT (trueFocusWindow != NULL && focusProxyWindow != NULL);
   if (xev.type == FocusOut) {
@@ -1424,19 +1424,19 @@ focusEventForProxy(XEvent xev,
       focusOutEvent.xfocus.window = *trueFocusWindow;
 #ifdef DEBUG_FOCUS
       printf(" nulling out proxy; putting back event"
-             "\n");
+	     "\n");
 #endif
 
       while (focusOutEvent.xfocus.window != root &&
-             focusOutEvent.xfocus.window != None) {
-        Widget w = XtWindowToWidget(awt_display,
-                                    focusOutEvent.xfocus.window);
-        awt_put_back_event(env, &focusOutEvent);
-        if (w != NULL && XtParent(w) != NULL) {
-          focusOutEvent.xfocus.window = XtWindow(XtParent(w));
-        } else {
-          focusOutEvent.xfocus.window = None;
-        }
+	     focusOutEvent.xfocus.window != None) {
+	Widget w = XtWindowToWidget(awt_display,
+				    focusOutEvent.xfocus.window);
+	awt_put_back_event(env, &focusOutEvent);
+	if (w != NULL && XtParent(w) != NULL) {
+	  focusOutEvent.xfocus.window = XtWindow(XtParent(w));
+	} else {
+	  focusOutEvent.xfocus.window = None;
+	}
       }
       *trueFocusWindow = None;
       *focusProxyWindow = None;
@@ -1513,7 +1513,7 @@ isAncestor(Window ancestor, Window child) {
   while (child != ancestor) {
     Window parent, root;
     Status status;
-
+    
     status = XQueryTree(awt_display, child, &root, &parent,
                         &children, &nchildren);
     if (status == 0) return False; /* should be an error of some sort? */
@@ -1547,7 +1547,7 @@ isFocusableWindow(Window w) {
     while (wid != NULL && !XtIsShell(wid)) {
         wid = XtParent(wid);
     }
-
+    
     // If the window doesn't have shell consider it focusable as all windows
     // are focusable by default
     if (wid == NULL) return True;
@@ -1613,9 +1613,9 @@ static void
 processOneEvent(XtInputMask iMask) {
             XEvent xev;
             Boolean haveEvent = False;
-            if (putbackQueueCount > 0) {
-                // There is a pushed-back event - handle it first
-                if (awt_get_next_put_back_event(&xev) == 0) {
+	    if (putbackQueueCount > 0) {                
+		// There is a pushed-back event - handle it first
+		if (awt_get_next_put_back_event(&xev) == 0) {
                     if (xev.xany.send_event != SPECIAL_KEY_EVENT) {
 #ifdef DEBUG_FOCUS
                         if (xev.type == FocusOut) {
@@ -1623,18 +1623,18 @@ processOneEvent(XtInputMask iMask) {
                                    "detail %d, send_event  %d\n",
                                    xev.xfocus.window, xev.xfocus.mode,
                                    xev.xfocus.detail, xev.xfocus.send_event);
-                        }
+                        }                    
 #endif
                         eventNumber++;
                         XtDispatchEvent(&xev);
-                        return;
+                        return;                    
                     } else {
                         haveEvent = True;
                     }
                 }
             }
-
-            if (haveEvent || XtAppPeekEvent(awt_appContext, &xev)) {
+            
+            if (haveEvent || XtAppPeekEvent(awt_appContext, &xev)) {                
              /*
               * Fix for BugTraq ID 4041235, 4100167:
               * First check that the event still has a widget, because
@@ -1681,34 +1681,34 @@ processOneEvent(XtInputMask iMask) {
                  * Fix for BugTraq ID 4196573:
                  * Call XFilterEvent() to give a chance to X Input
                  * Method to process this event before being
-                 * discarded.
+                 * discarded. 
                  */
                 (void) XFilterEvent(&xev, NULL);
                 return;
               }
 
               /* There is an X event on the queue. */
-              switch (xev.type) {
-              case KeyPress:
-              case KeyRelease:
-              case ButtonPress:
-              case ButtonRelease:
-              case MotionNotify:
-              case EnterNotify:
-              case LeaveNotify:
-                /* Fix for BugTraq ID 4048060. Dispatch scrolling events
-                   immediately to the ScrollBar widget to prevent spurious
-                   continuous scrolling. Otherwise, if the application is busy,
-                   the ButtonRelease event is not dispatched in time to prevent
-                   a ScrollBar timeout from expiring, and restarting the
-                   continuous scrolling timer.
-                   */
-                  if ((xev.type == ButtonPress                          ||
-                       xev.type == ButtonRelease                                ||
-                       (xev.type == MotionNotify                                &&
-                        (xev.xmotion.state == Button1Mask                       ||
-                         xev.xmotion.state == Button2Mask                       ||
-                         xev.xmotion.state == Button3Mask)))            &&
+	      switch (xev.type) {
+	      case KeyPress:
+	      case KeyRelease:
+	      case ButtonPress:
+	      case ButtonRelease:
+	      case MotionNotify:
+	      case EnterNotify:
+	      case LeaveNotify: 
+		/* Fix for BugTraq ID 4048060. Dispatch scrolling events
+		   immediately to the ScrollBar widget to prevent spurious
+		   continuous scrolling. Otherwise, if the application is busy,
+		   the ButtonRelease event is not dispatched in time to prevent
+		   a ScrollBar timeout from expiring, and restarting the
+		   continuous scrolling timer.
+		   */
+                  if ((xev.type == ButtonPress				||
+                       xev.type == ButtonRelease				||
+                       (xev.type == MotionNotify				&&
+                        (xev.xmotion.state == Button1Mask			||
+                         xev.xmotion.state == Button2Mask			||
+                         xev.xmotion.state == Button3Mask)))		&&
                       (XtIsSubclass(widget, xmScrollBarWidgetClass))) {
                       /* Use XNextEvent instead of XtAppNextEvent, because
                          XtAppNextEvent processes timers before getting the next X
@@ -1725,7 +1725,7 @@ processOneEvent(XtInputMask iMask) {
                       // Enter/Leave dispatch as usual, Button should
                       // generate Ungrab after Java mouse event
                       if (xev.type == ButtonPress && grabbed_widget != NULL) {
-                          eventInsideGrabbed(&xev);
+                          eventInsideGrabbed(&xev);                          
                       }
                   }
                   else {
@@ -1750,53 +1750,53 @@ processOneEvent(XtInputMask iMask) {
                           }
                       }
                       if(xev.type == KeyPress) {
-#ifdef DEBUG_FOCUS
+#ifdef DEBUG_FOCUS		      
                           printf("KeyPress on window %d\n", xev.xany.window);
 #endif
                       }
 
-                    /* this could be moved to shouldDispatchToWidget */
-                    /* if there is a proxy in effect, dispatch key events
-                       through the proxy */
-                    if ((xev.type == KeyPress || xev.type == KeyRelease) &&
-                        !keyboardGrabbed && !haveEvent) {
-                        if (focusProxyWindow != None) {
-                            Widget widget;
-                            struct WidgetInfo *winfo;
-                            Boolean cont;
-                            /* Key event should be posted to the top-level
-                               widget of the proxy */
-                            xev.xany.window = proxyTopLevel(focusProxyWindow);
-                            widget = XtWindowToWidget(awt_display,
-                                                      xev.xany.window);
-                            if (widget == NULL) return;
-                            if ((winfo = findWidgetInfo(widget)) == NULL) {
-                                return;
-                            }
-                            awt_canvas_handleEvent(widget, winfo->peer, &xev,
-                                                   winfo, &cont, TRUE);
-                            return;
-                        }
-                    }
-                    if (!shouldDispatchToWidget(&xev)) {
-                        XtDispatchEvent(&xev);
-                    }
+		    /* this could be moved to shouldDispatchToWidget */
+		    /* if there is a proxy in effect, dispatch key events
+		       through the proxy */
+		    if ((xev.type == KeyPress || xev.type == KeyRelease) &&
+			!keyboardGrabbed && !haveEvent) {
+			if (focusProxyWindow != None) {
+			    Widget widget;
+			    struct WidgetInfo *winfo;
+			    Boolean cont;
+			    /* Key event should be posted to the top-level
+			       widget of the proxy */
+			    xev.xany.window = proxyTopLevel(focusProxyWindow);
+			    widget = XtWindowToWidget(awt_display,
+						      xev.xany.window);
+			    if (widget == NULL) return;
+			    if ((winfo = findWidgetInfo(widget)) == NULL) {
+				return;
+			    }
+			    awt_canvas_handleEvent(widget, winfo->peer, &xev,
+						   winfo, &cont, TRUE);
+			    return;
+			}
+		    }
+		    if (!shouldDispatchToWidget(&xev)) {
+			XtDispatchEvent(&xev);
+		    }
 
                     // See comment above - "after time" is here.
                     if (grabbed_widget != NULL && xev.type == ButtonPress) {
                         eventInsideGrabbed(&xev);
                     }
                 }
+	      
 
+	      break;
 
-              break;
+	      case FocusIn:
+	      case FocusOut: {
+		  void *peer;
+		  jobject target;
 
-              case FocusIn:
-              case FocusOut: {
-                  void *peer;
-                  jobject target;
-
-                  JNIEnv *env = (JNIEnv *) JNU_GetEnv(jvm, JNI_VERSION_1_2);
+		  JNIEnv *env = (JNIEnv *) JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
 #ifdef DEBUG_FOCUS
                   if (xev.type == FocusIn) {
@@ -1812,15 +1812,15 @@ processOneEvent(XtInputMask iMask) {
                              xev.xfocus.send_event);
                   }
 #endif
-                  XtAppNextEvent(awt_appContext, &xev);
+		  XtAppNextEvent(awt_appContext, &xev);
 
-                  if (xev.xfocus.detail == NotifyVirtual ||
-                      xev.xfocus.detail == NotifyNonlinearVirtual) {
-#ifdef DEBUG_FOCUS
-                      printf("discarding\n");
-#endif
-                      return;
-                  }
+		  if (xev.xfocus.detail == NotifyVirtual ||
+		      xev.xfocus.detail == NotifyNonlinearVirtual) {
+#ifdef DEBUG_FOCUS              
+		      printf("discarding\n");
+#endif                  
+		      return;
+		  }
 
                   // Check for xembed on this window. If it is active and this is not XEmbed focus
                   // event(send_event = 0) then we should skip it
@@ -1828,40 +1828,40 @@ processOneEvent(XtInputMask iMask) {
                       return;
                   }
 
-                  /* In general, we need to to block out focus events
-                     that are caused by keybaord grabs initiated by
-                     dragging the title bar or the scrollbar. But we
-                     need to let through the ones that are aimed at
-                     choice boxes or menus. So we keep track of when
-                     the keyboard is grabbed by a popup. */
+		  /* In general, we need to to block out focus events
+		     that are caused by keybaord grabs initiated by
+		     dragging the title bar or the scrollbar. But we
+		     need to let through the ones that are aimed at
+		     choice boxes or menus. So we keep track of when
+		     the keyboard is grabbed by a popup. */
 
-                  if (awt_isAwtMenuWidget(widget)) {
-                    if (xev.type == FocusIn &&
-                        xev.xfocus.mode == NotifyGrab) {
+		  if (awt_isAwtMenuWidget(widget)) {
+		    if (xev.type == FocusIn &&
+			xev.xfocus.mode == NotifyGrab) {
                           extern Boolean poppingDown;
                           if (!poppingDown) {
-                      keyboardGrabbed = True;
-                           }
+		      keyboardGrabbed = True;
+                           } 
                       } else /* FocusOut */ {
                           if (xev.type == FocusOut &&
                               xev.xfocus.mode == NotifyUngrab) {
-                        keyboardGrabbed = False;
-                      }
-                    }
-                  }
+			keyboardGrabbed = False;
+		      }
+		    }
+		  }		      
 
-                  if (focusProxyWindow != None) {
+		  if (focusProxyWindow != None) {
 #ifdef DEBUG_FOCUS
-                      printf("non-null proxy; proxy = %d ", focusProxyWindow);
+		      printf("non-null proxy; proxy = %d ", focusProxyWindow);
 #endif
-                      if (trueFocusWindow != None) {
-                        /* trueFocusWindow should never be None here, but if
-                           things ever get skewed, we want to be able to
-                           recover rather than crash */
-                        focusEventForProxy(xev, env, &trueFocusWindow,
-                                           &focusProxyWindow);
-                      return;
-                      } else {
+		      if (trueFocusWindow != None) {
+			/* trueFocusWindow should never be None here, but if
+			   things ever get skewed, we want to be able to
+			   recover rather than crash */
+			focusEventForProxy(xev, env, &trueFocusWindow,
+					   &focusProxyWindow);
+		      return;
+		      } else {
                         /* beartrap -- remove before shipping */
                         /* printf("trueFocusWindow None in processOneEvent;\n"); */
                         /* printf("Please file a bug\n"); */
@@ -1869,62 +1869,62 @@ processOneEvent(XtInputMask iMask) {
                   }
 
                   peer = findPeer(&widget);
-                  if (peer == NULL) {
+		  if (peer == NULL) {
 #ifdef DEBUG_FOCUS
-                      printf("null peer -- shouldn't see in java handler\n");
+		      printf("null peer -- shouldn't see in java handler\n");
 #endif
-                      XtDispatchEvent(&xev);
-                      return;
-                  }
+		      XtDispatchEvent(&xev); 
+		      return;
+		  }
 
-                  /* Find the top-level component */
+		  /* Find the top-level component */
 
-                  if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
-                    return;
-                  }
-                  target = findTopLevel(peer, env);
-                  if (target == NULL) {
-                      JNU_ThrowNullPointerException(env, "component without a "
-                                                    "window");
-                      return;
-                  }
+		  if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
+		    return;
+		  }
+		  target = findTopLevel(peer, env);
+		  if (target == NULL) {
+		      JNU_ThrowNullPointerException(env, "component without a "
+						    "window");
+		      return;
+		  }
 
-                  if (isFrameOrDialog(target, env)) {
+		  if (isFrameOrDialog(target, env)) {
 #ifdef DEBUG_FOCUS
-                      printf("Focus event directed at a frame; frame = %d\n",
-                             xev.xany.window);
+		      printf("Focus event directed at a frame; frame = %d\n",
+			     xev.xany.window);
 #endif
-                      focusEventForFrame(xev, focusProxyWindow);
+		      focusEventForFrame(xev, focusProxyWindow);
                       (*env)->DeleteLocalRef(env, target);
-                      return;
-                  } else {
+		      return;
+		  } else {
 #ifdef DEBUG_FOCUS
-                      printf("Focus event directed at a window; window = %d\n",
-                             xev.xany.window);
+		      printf("Focus event directed at a window; window = %d\n",
+			     xev.xany.window);
 #endif
-                      focusEventForWindow(xev, env, &trueFocusWindow,
-                                          &focusProxyWindow, target);
+		      focusEventForWindow(xev, env, &trueFocusWindow,
+					  &focusProxyWindow, target);
                       (*env)->DeleteLocalRef(env, target);
-                      return;
-                  }
-              }
+		      return;
+		  }
+	      }
 
-              case UnmapNotify:
-#ifdef DEBUG_FOCUS
-                printf("Unmap on window %d\n", xev.xany.window);
-                printf("True focus window is %d\n", trueFocusWindow);
+	      case UnmapNotify:
+#ifdef DEBUG_FOCUS		
+		printf("Unmap on window %d\n", xev.xany.window);
+		printf("True focus window is %d\n", trueFocusWindow);
 #endif
                 clearFocusPathOnWindow(xev.xunmap.window);
 
               default:
                 XtAppProcessEvent(awt_appContext, iMask);
                 break;
-              }
+	      }
             }
             else {
               /* There must be a timer, alternate input, or signal event. */
               XtAppProcessEvent(awt_appContext, iMask & ~XtIMXEvent);
-            }
+	    }
 
             /*
             ** Bug #4361799: Forte4J sometimes crashes on Solaris:
@@ -1937,15 +1937,15 @@ processOneEvent(XtInputMask iMask) {
             ** This happens when we call XtAppProcessEvent with event type 1e
             ** (SelectionRequest) when running two copies of Forte
             **
-            ** XSetErrorHandler can safely be called repeatedly, so we are
-            ** fixing this with the sledgehammer, and resetting our XError
+            ** XSetErrorHandler can safely be called repeatedly, so we are 
+            ** fixing this with the sledgehammer, and resetting our XError 
             ** handler every time through the loop:
             */
             {
                 extern int32_t xerror_handler();
                 XSetErrorHandler(xerror_handler);
             }
-
+            
 } /* processOneEvent() */
 
 /*
@@ -1953,10 +1953,10 @@ processOneEvent(XtInputMask iMask) {
  * it is likely (but not definite) that there are events waiting to
  * be processed.
  *
- * This routine also flushes the outgoing X queue, when the
+ * This routine also flushes the outgoing X queue, when the 
  * awt_next_flush_time has been reached.
  *
- * If fdAWTPipe is greater or equal than zero the routine also
+ * If fdAWTPipe is greater or equal than zero the routine also 
  * checks if there are events pending on the putback queue.
  */
 void
@@ -1965,22 +1965,22 @@ waitForEvents(JNIEnv *env, int32_t fdXPipe, int32_t fdAWTPipe) {
         while ((fdAWTPipe >= 0 && awt_events_pending(awt_appContext) == 0) ||
                (fdAWTPipe <  0 && XtAppPending(awt_appContext) == 0)) {
 #ifdef USE_SELECT
-            performSelect(env,fdXPipe,fdAWTPipe);
+	    performSelect(env,fdXPipe,fdAWTPipe);
 #else
-            performPoll(env,fdXPipe,fdAWTPipe);
+	    performPoll(env,fdXPipe,fdAWTPipe);
 #endif
-            if ((awt_next_flush_time > 0) &&
-                (awtJNI_TimeMillis() > awt_next_flush_time)) {
+	    if ((awt_next_flush_time > 0) &&
+		(awtJNI_TimeMillis() > awt_next_flush_time)) {
                 AWT_FLUSHOUTPUT_NOW();
-            }
-        }  /* end while awt_events_pending() == 0 */
+	    }
+        }  /* end while awt_events_pending() == 0 */ 
 } /* waitForEvents() */
 
 /*************************************************************************
- **                                                                     **
+ **									**
  ** WE USE EITHER select() OR poll(), DEPENDING ON THE USE_SELECT       **
- ** COMPILE-TIME CONSTANT.                                              **
- **                                                                     **
+ ** COMPILE-TIME CONSTANT.						**
+ **									**
  *************************************************************************/
 
 #ifdef USE_SELECT
@@ -1989,11 +1989,11 @@ static struct fd_set rdset;
 struct timeval sel_time;
 
 /*
- * Performs select() on both the X pipe and our AWT utility pipe.
+ * Performs select() on both the X pipe and our AWT utility pipe. 
  * Returns when data arrives or the operation times out.
  *
  * Not all Xt events come across the X pipe (e.g., timers
- * and alternate inputs), so we must time out every now and
+ * and alternate inputs), so we must time out every now and 
  * then to check the Xt event queue.
  *
  * The fdAWTPipe will be empty when this returns.
@@ -2001,57 +2001,57 @@ struct timeval sel_time;
 static void
 performSelect(JNIEnv *env, int32_t fdXPipe, int32_t fdAWTPipe) {
 
-            int32_t result;
-            int32_t count;
-            int32_t nfds = 1;
-            uint32_t timeout = awt_get_poll_timeout(False);
+	    int32_t result;
+	    int32_t count;
+	    int32_t nfds = 1;
+	    uint32_t timeout = awt_get_poll_timeout(False);
 
             /* Fixed 4250354 7/28/99 ssi@sparc.spb.su
-             * Cleaning up Global Refs in case of No Events
-             */
-            awtJNI_CleanupGlobalRefs();
-
+	     * Cleaning up Global Refs in case of No Events
+	     */
+	    awtJNI_CleanupGlobalRefs();
+	    
             FD_ZERO( &rdset );
-            FD_SET(fdXPipe, &rdset);
-            if (fdAWTPipe >= 0) {
-                nfds++;
-                FD_SET(fdAWTPipe, &rdset);
-            }
-            if (timeout == 0) {
-                // be sure other threads get a chance
-                awtJNI_ThreadYield(env);
-            }
-            // set the appropriate time values. The DASSERT() in
-            // MToolkit_run() makes sure that this will not overflow
-            sel_time.tv_sec = (timeout * 1000) / (1000 * 1000);
-            sel_time.tv_usec = (timeout * 1000) % (1000 * 1000);
-            AWT_NOFLUSH_UNLOCK();
+    	    FD_SET(fdXPipe, &rdset);
+	    if (fdAWTPipe >= 0) {
+		nfds++;
+    	    	FD_SET(fdAWTPipe, &rdset);
+	    }
+	    if (timeout == 0) {
+	        // be sure other threads get a chance
+	        awtJNI_ThreadYield(env);
+	    }
+	    // set the appropriate time values. The DASSERT() in
+	    // MToolkit_run() makes sure that this will not overflow
+	    sel_time.tv_sec = (timeout * 1000) / (1000 * 1000);
+	    sel_time.tv_usec = (timeout * 1000) % (1000 * 1000);
+	    AWT_NOFLUSH_UNLOCK();
             result = select(nfds, &rdset, 0, 0, &sel_time);
-            AWT_LOCK();
+	    AWT_LOCK();
 
-            /* reset tick if this was not a time out */
-            if (result == 0) {
-                /* select() timed out -- update timeout value */
-                awt_get_poll_timeout(True);
-            }
-            if (fdAWTPipe >= 0 && FD_ISSET ( fdAWTPipe, &rdset ) )
-            {
-                /* There is data on the AWT pipe - empty it */
-                do {
-                    count = read(fdAWTPipe, read_buf, AWT_POLL_BUFSIZE );
-                } while (count == AWT_POLL_BUFSIZE );
-            }
+	    /* reset tick if this was not a time out */
+	    if (result == 0) {
+		/* select() timed out -- update timeout value */
+		awt_get_poll_timeout(True);
+	    }
+	    if (fdAWTPipe >= 0 && FD_ISSET ( fdAWTPipe, &rdset ) )
+	    {
+		/* There is data on the AWT pipe - empty it */
+	    	do {
+	            count = read(fdAWTPipe, read_buf, AWT_POLL_BUFSIZE );
+	    	} while (count == AWT_POLL_BUFSIZE ); 
+	    }
 } /* performSelect() */
 
 #else /* !USE_SELECT */
 
 /*
  * Polls both the X pipe and our AWT utility pipe. Returns
- * when there is data on one of the pipes, or the operation times
+ * when there is data on one of the pipes, or the operation times 
  * out.
  *
  * Not all Xt events come across the X pipe (e.g., timers
- * and alternate inputs), so we must time out every now and
+ * and alternate inputs), so we must time out every now and 
  * then to check the Xt event queue.
  *
  * The fdAWTPipe will be empty when this returns.
@@ -2060,61 +2060,61 @@ static void
 performPoll(JNIEnv *env, int32_t fdXPipe, int32_t fdAWTPipe) {
 
             static struct pollfd pollFds[2];
-            uint32_t timeout = awt_get_poll_timeout(False);
-            int32_t result;
-            int32_t count;
+	    uint32_t timeout = awt_get_poll_timeout(False);
+	    int32_t result;
+	    int32_t count;
 
             /* Fixed 4250354 7/28/99 ssi@sparc.spb.su
-             * Cleaning up Global Refs in case of No Events
-             */
-            awtJNI_CleanupGlobalRefs();
+	     * Cleaning up Global Refs in case of No Events
+	     */
+	    awtJNI_CleanupGlobalRefs();
 
             pollFds[0].fd = fdXPipe;
             pollFds[0].events = POLLRDNORM;
-            pollFds[0].revents = 0;
+	    pollFds[0].revents = 0;
 
-            pollFds[1].fd = fdAWTPipe;
+	    pollFds[1].fd = fdAWTPipe;
             pollFds[1].events = POLLRDNORM;
-            pollFds[1].revents = 0;
+	    pollFds[1].revents = 0;
 
-            AWT_NOFLUSH_UNLOCK();
+	    AWT_NOFLUSH_UNLOCK();
 
-            /* print the poll timeout time in brackets */
-            DTRACE_PRINT1("[%dms]",(int32_t)timeout);
-#ifdef DEBUG
-            if (++debugPrintLineCount > 8) {
-                DTRACE_PRINTLN("");
-                debugPrintLineCount = 0;
-            }
+	    /* print the poll timeout time in brackets */
+	    DTRACE_PRINT1("[%dms]",(int32_t)timeout);
+#ifdef DEBUG	    
+	    if (++debugPrintLineCount > 8) {
+		DTRACE_PRINTLN("");
+		debugPrintLineCount = 0;
+	    }
 #endif
-            /* ACTUALLY DO THE POLL() */
-            if (timeout == 0) {
-                // be sure other threads get a chance
-                awtJNI_ThreadYield(env);
-            }
-            result = poll( pollFds, 2, (int32_t) timeout );
+	    /* ACTUALLY DO THE POLL() */
+	    if (timeout == 0) {
+	        // be sure other threads get a chance
+	        awtJNI_ThreadYield(env);
+	    }
+	    result = poll( pollFds, 2, (int32_t) timeout );
 
-#ifdef DEBUG
-            DTRACE_PRINT1("[poll()->%d]", result);
-            if (++debugPrintLineCount > 8) {
-                DTRACE_PRINTLN("");
-                debugPrintLineCount = 0;
-            }
+#ifdef DEBUG	    
+	    DTRACE_PRINT1("[poll()->%d]", result);
+	    if (++debugPrintLineCount > 8) {
+		DTRACE_PRINTLN("");
+		debugPrintLineCount = 0;
+	    }
 #endif
-            AWT_LOCK();
-            if (result == 0) {
-                /* poll() timed out -- update timeout value */
-                awt_get_poll_timeout(True);
-            }
-            if ( pollFds[1].revents )
-            {
-                /* There is data on the AWT pipe - empty it */
-                do {
-                    count = read(AWT_READPIPE, read_buf, AWT_POLL_BUFSIZE );
-                } while (count == AWT_POLL_BUFSIZE );
-                DTRACE_PRINTLN1("wokeup on AWTPIPE, timeout:%d", timeout);
-            }
-            return;
+	    AWT_LOCK();
+	    if (result == 0) {
+	        /* poll() timed out -- update timeout value */
+		awt_get_poll_timeout(True);
+	    }
+	    if ( pollFds[1].revents )
+	    {
+		/* There is data on the AWT pipe - empty it */
+	        do {
+	    	    count = read(AWT_READPIPE, read_buf, AWT_POLL_BUFSIZE );
+	        } while (count == AWT_POLL_BUFSIZE ); 
+		DTRACE_PRINTLN1("wokeup on AWTPIPE, timeout:%d", timeout);
+	    }
+	    return;
 
 } /* performPoll() */
 
@@ -2131,31 +2131,31 @@ awt_put_back_event(JNIEnv *env, XEvent *event) {
 
     Boolean addIt = True;
     if (putbackQueueCount >= putbackQueueCapacity) {
-        /* not enough room - alloc 50% more space */
-        int32_t newCapacity;
-        XEvent *newQueue;
-        newCapacity = putbackQueueCapacity * 3 / 2;
-        if ((newCapacity - putbackQueueCapacity)
-                                        < PUTBACK_QUEUE_MIN_INCREMENT) {
-            /* always increase by at least min increment */
-            newCapacity = putbackQueueCapacity + PUTBACK_QUEUE_MIN_INCREMENT;
-        }
-        newQueue = (XEvent*)realloc(
-                        putbackQueue, newCapacity*(sizeof(XEvent)));
-        if (newQueue == NULL) {
-            JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
-            addIt = False;
-        } else {
-            putbackQueue = newQueue;
-            putbackQueueCapacity = newCapacity;
-        }
+	/* not enough room - alloc 50% more space */
+	int32_t newCapacity;
+	XEvent *newQueue;
+	newCapacity = putbackQueueCapacity * 3 / 2;
+	if ((newCapacity - putbackQueueCapacity) 
+					< PUTBACK_QUEUE_MIN_INCREMENT) {
+	    /* always increase by at least min increment */
+	    newCapacity = putbackQueueCapacity + PUTBACK_QUEUE_MIN_INCREMENT;
+	}
+	newQueue = (XEvent*)realloc(
+			putbackQueue, newCapacity*(sizeof(XEvent)));
+	if (newQueue == NULL) {
+	    JNU_ThrowOutOfMemoryError(env, "OutOfMemoryError");
+	    addIt = False;
+	} else {
+	    putbackQueue = newQueue;
+	    putbackQueueCapacity = newCapacity;
+	}
     }
     if (addIt) {
-        char oneChar = 'p';
-        memcpy(&(putbackQueue[putbackQueueCount]), event, sizeof(XEvent));
-        putbackQueueCount++;
+	char oneChar = 'p';
+	memcpy(&(putbackQueue[putbackQueueCount]), event, sizeof(XEvent));
+	putbackQueueCount++;
 
-        // wake up the event loop, if it's sleeping
+	// wake up the event loop, if it's sleeping
         write (AWT_WRITEPIPE, &oneChar, 1);
     }
 
@@ -2163,7 +2163,7 @@ awt_put_back_event(JNIEnv *env, XEvent *event) {
 } /* awt_put_back_event() */
 
 /*
- * Gets the next event that has been pushed back onto the queue.
+ * Gets the next event that has been pushed back onto the queue. 
  * Returns 0 and fills in xev_out if successful
  */
 static int32_t
@@ -2171,48 +2171,48 @@ awt_get_next_put_back_event(XEvent *xev_out) {
 
     Boolean err = False;
     if (putbackQueueCount < 1) {
-        err = True;
+	err = True;
     } else {
-        memcpy(xev_out, &(putbackQueue[0]), sizeof(XEvent));
+	memcpy(xev_out, &(putbackQueue[0]), sizeof(XEvent));
     }
     if (!err) {
-        /* remove it from the queue */
-        if (putbackQueueCount == 1) {
+	/* remove it from the queue */
+	if (putbackQueueCount == 1) {
 
-            // queue is now empty
-            if (putbackQueueCapacity > PUTBACK_QUEUE_MIN_INCREMENT) {
+	    // queue is now empty
+	    if (putbackQueueCapacity > PUTBACK_QUEUE_MIN_INCREMENT) {
 
-                /* Too much space -- delete it and rebuild later */
-                free(putbackQueue);
-                putbackQueue = NULL;
-                putbackQueueCapacity = 0;
-            }
-        } else {
-            /* more than 1 event in queue - shift all events to the left */
-            /* We don't free the allocated memory until the queue
-               becomes empty, just 'cause it's easier that way. */
-            /* NOTE: use memmove(), because the memory blocks overlap */
-            memmove(&(putbackQueue[0]), &(putbackQueue[1]),
-                (putbackQueueCount-1)*sizeof(XEvent));
-        }
-        --putbackQueueCount;
+		/* Too much space -- delete it and rebuild later */
+		free(putbackQueue);
+		putbackQueue = NULL;
+		putbackQueueCapacity = 0;
+	    }
+	} else {
+	    /* more than 1 event in queue - shift all events to the left */
+	    /* We don't free the allocated memory until the queue
+	       becomes empty, just 'cause it's easier that way. */
+	    /* NOTE: use memmove(), because the memory blocks overlap */
+	    memmove(&(putbackQueue[0]), &(putbackQueue[1]), 
+		(putbackQueueCount-1)*sizeof(XEvent));
+	}
+	--putbackQueueCount;
     }
     DASSERT(putbackQueueCount >= 0);
 
     return (err? -1:0);
-
+    
 } /* awt_get_next_put_back_event() */
 
 /**
  * Determines whether or not there are X or Xt events pending.
  * Looks at the putbackQueue.
  */
-static XtInputMask
+static XtInputMask 
 awt_events_pending(XtAppContext appContext) {
     XtInputMask imask = 0L;
     imask = XtAppPending(appContext);
     if (putbackQueueCount > 0) {
-        imask |= XtIMXEvent;
+	imask |= XtIMXEvent;
     }
     return imask;
 }
@@ -2224,71 +2224,71 @@ static int32_t arraySize = 0;
 static int32_t arrayIndx = 0;
 static Widget *dShells = NULL;
 
-void
-awt_shellPoppedUp(Widget shell,
+void 
+awt_shellPoppedUp(Widget shell, 
                    XtPointer modal,
                    XtPointer call_data)
 {
-    if (arrayIndx == arraySize ) {
-        /* if we have not allocate an array, do it first */
+    if (arrayIndx == arraySize ) {          
+	/* if we have not allocate an array, do it first */
         if (arraySize == 0) {
+	    arraySize += WIDGET_ARRAY_SIZE;
+	    dShells = (Widget *) malloc(sizeof(Widget) * arraySize);
+	} else { 
             arraySize += WIDGET_ARRAY_SIZE;
-            dShells = (Widget *) malloc(sizeof(Widget) * arraySize);
-        } else {
-            arraySize += WIDGET_ARRAY_SIZE;
-            dShells = (Widget *) realloc((void *)dShells, sizeof(Widget) * arraySize);
+	    dShells = (Widget *) realloc((void *)dShells, sizeof(Widget) * arraySize);
         }
-    }
+    } 
 
     dShells[arrayIndx] = shell;
     arrayIndx++;
 }
 
-void
-awt_shellPoppedDown(Widget shell,
+void 
+awt_shellPoppedDown(Widget shell, 
                    XtPointer modal,
                    XtPointer call_data)
 {
     arrayIndx--;
 
     if (dShells[arrayIndx] == shell) {
-        dShells[arrayIndx] = NULL;
-        return;
+	dShells[arrayIndx] = NULL;
+	return;
     } else {
-        int32_t i;
+	int32_t i;
 
-        /* find the position of the shell in the array */
-        for (i = arrayIndx; i >= 0; i--) {
-            if (dShells[i] == shell) {
-                break;
-            }
-        }
-
-        /* remove the found element */
-        while (i <= arrayIndx-1) {
-            dShells[i] = dShells[i+1];
-            i++;
-        }
+	/* find the position of the shell in the array */
+	for (i = arrayIndx; i >= 0; i--) {
+	    if (dShells[i] == shell) {
+		break;
+	    }
+	}
+	
+	/* remove the found element */
+	while (i <= arrayIndx-1) {
+	    dShells[i] = dShells[i+1];
+	    i++;
+	}
     }
 }
 
-Boolean
+Boolean 
 awt_isWidgetModal(Widget widget)
 {
-    Widget w;
+    Widget w;	
 
     for (w = widget; !XtIsShell(w); w = XtParent(w)) { }
-
+    
     while (w != NULL) {
-        if (w == dShells[arrayIndx-1]) {
-            return True;
-        }
-        w = XtParent(w);
+	if (w == dShells[arrayIndx-1]) {
+	    return True; 
+	}
+	w = XtParent(w);
     }
     return False;
 }
 
-Boolean
+Boolean 
 awt_isModal()
 {
     return (arrayIndx > 0);
@@ -2305,7 +2305,7 @@ awt_isModal()
  * dispatch thread during drag-n-drop operation and update
  * secondary_loop_event() predicate to prevent deadlock.
  */
-void
+void 
 awt_MToolkit_modalWait(int32_t (*terminateFn) (void *data), void *data )
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -2323,7 +2323,7 @@ awt_MToolkit_modalWait(int32_t (*terminateFn) (void *data), void *data )
     AWT_UNLOCK();
 }
 
-static uint32_t
+static uint32_t 
 colorToRGB(XColor * color)
 {
     int32_t rgb = 0;
@@ -2341,16 +2341,16 @@ colorToRGB(XColor * color)
 
 XmColorProc oldColorProc;
 
-void
-ColorProc(XColor* bg_color,
-          XColor* fg_color,
-          XColor* sel_color,
-          XColor* ts_color,
-          XColor* bs_color)
+void 
+ColorProc(XColor* bg_color, 
+	  XColor* fg_color, 
+	  XColor* sel_color, 
+	  XColor* ts_color, 
+	  XColor* bs_color)
 {
     unsigned long plane_masks[1];
     unsigned long colors[5];
-
+    
     AwtGraphicsConfigDataPtr defaultConfig =
         getDefaultConfig(DefaultScreen(awt_display));
 
@@ -2358,35 +2358,35 @@ ColorProc(XColor* bg_color,
     oldColorProc(bg_color, fg_color, sel_color, ts_color, bs_color);
 
     /* check if there is enought free color cells */
-    if (XAllocColorCells(awt_display, defaultConfig->awt_cmap, False,
-        plane_masks, 0, colors, 5)) {
+    if (XAllocColorCells(awt_display, defaultConfig->awt_cmap, False, 
+	plane_masks, 0, colors, 5)) {
         XFreeColors(awt_display, defaultConfig->awt_cmap, colors, 5, 0);
-        return;
+	return;
     }
 
     /* find the closest matches currently available */
     fg_color->pixel = defaultConfig->AwtColorMatch(fg_color->red   >> 8,
-                                                   fg_color->green >> 8,
-                                                   fg_color->blue  >> 8,
-                                                   defaultConfig);
+						   fg_color->green >> 8,
+						   fg_color->blue  >> 8, 
+						   defaultConfig);
     fg_color->flags = DoRed | DoGreen | DoBlue;
     XQueryColor(awt_display, defaultConfig->awt_cmap, fg_color);
     sel_color->pixel = defaultConfig->AwtColorMatch(sel_color->red   >> 8,
-                                                    sel_color->green >> 8,
-                                                    sel_color->blue  >> 8,
-                                                    defaultConfig);
+						    sel_color->green >> 8,
+						    sel_color->blue  >> 8,
+						    defaultConfig);
     sel_color->flags = DoRed | DoGreen | DoBlue;
     XQueryColor(awt_display, defaultConfig->awt_cmap, sel_color);
     ts_color->pixel = defaultConfig->AwtColorMatch(ts_color->red   >> 8,
-                                                   ts_color->green >> 8,
-                                                   ts_color->blue  >> 8,
-                                                   defaultConfig);
+						   ts_color->green >> 8,
+						   ts_color->blue  >> 8,
+						   defaultConfig);
     ts_color->flags = DoRed | DoGreen | DoBlue;
     XQueryColor(awt_display, defaultConfig->awt_cmap, ts_color);
     bs_color->pixel = defaultConfig->AwtColorMatch(bs_color->red   >> 8,
-                                                   bs_color->green >> 8,
-                                                   bs_color->blue  >> 8,
-                                                   defaultConfig);
+						   bs_color->green >> 8,
+						   bs_color->blue  >> 8,
+						   defaultConfig);
     bs_color->flags = DoRed | DoGreen | DoBlue;
     XQueryColor(awt_display, defaultConfig->awt_cmap, bs_color);
 }
@@ -2417,7 +2417,7 @@ awt_xsettings_update(int scr, Window owner, void *cookie)
     unsigned char *xsettings;
 
     DTRACE_PRINTLN2("XS: update screen %d, owner 0x%08lx",
-                    scr, owner);
+		    scr, owner);
 
 #if 1 /* XXX: kludge */
     /*
@@ -2426,8 +2426,8 @@ awt_xsettings_update(int scr, Window owner, void *cookie)
      * should be "good enough" for most cases.
      */
     if (scr != DefaultScreen(dpy)) {
-        DTRACE_PRINTLN2("XS: XXX: default screen is %d, update is for %d, ignoring", DefaultScreen(dpy), scr);
-        return;
+	DTRACE_PRINTLN2("XS: XXX: default screen is %d, update is for %d, ignoring", DefaultScreen(dpy), scr);
+	return;
     }
 #endif /* kludge */
 
@@ -2446,46 +2446,46 @@ awt_xsettings_update(int scr, Window owner, void *cookie)
      * use the appropriate one.
      */
     status = XGetWindowProperty(dpy, owner,
-                 _XA_XSETTINGS_SETTINGS, 0, 0xFFFF, False,
-                 _XA_XSETTINGS_SETTINGS,
-                 &actual_type, &actual_format, &nitems, &bytes_after,
-                 &xsettings);
+		 _XA_XSETTINGS_SETTINGS, 0, 0xFFFF, False,
+		 _XA_XSETTINGS_SETTINGS,
+		 &actual_type, &actual_format, &nitems, &bytes_after,
+		 &xsettings);
 
     if (status != Success) {
-        DTRACE_PRINTLN("XS:   unable to read _XSETTINGS");
-        return;
+	DTRACE_PRINTLN("XS:   unable to read _XSETTINGS");
+	return;
     }
 
     if (xsettings == NULL) {
-        DTRACE_PRINTLN("XS:   reading _XSETTINGS, got NULL");
-        return;
+	DTRACE_PRINTLN("XS:   reading _XSETTINGS, got NULL");
+	return;
     }
 
     if (actual_type != _XA_XSETTINGS_SETTINGS) {
-        XFree(xsettings);       /* NULL data already catched above */
-        DTRACE_PRINTLN("XS:   _XSETTINGS_SETTINGS is not of type _XSETTINGS_SETTINGS");
-        return;
+	XFree(xsettings);	/* NULL data already catched above */
+	DTRACE_PRINTLN("XS:   _XSETTINGS_SETTINGS is not of type _XSETTINGS_SETTINGS");
+	return;
     }
 
     DTRACE_PRINTLN1("XS:   read %lu bytes of _XSETTINGS_SETTINGS",
-                    nitems);
+		    nitems);
 
     /* ok, propagate xsettings to the toolkit for processing */
     if ((*env)->EnsureLocalCapacity(env, 1) < 0) {
-        DTRACE_PRINTLN("XS:   EnsureLocalCapacity failed");
-        XFree(xsettings);
+	DTRACE_PRINTLN("XS:   EnsureLocalCapacity failed");
+	XFree(xsettings);
         return;
     }
 
     array = (*env)->NewByteArray(env, (jint)nitems);
     if (JNU_IsNull(env, array)) {
-        DTRACE_PRINTLN("awt_xsettings_update: NewByteArray failed");
-        XFree(xsettings);
-        return;
+	DTRACE_PRINTLN("awt_xsettings_update: NewByteArray failed");
+	XFree(xsettings);
+	return;
     }
 
     (*env)->SetByteArrayRegion(env, array, 0, (jint)nitems,
-                               (jbyte *)xsettings);
+			       (jbyte *)xsettings);
     XFree(xsettings);
 
     (*env)->CallVoidMethod(env, mtoolkit, upcall, (jint)scr, array);
@@ -2500,49 +2500,49 @@ awt_xsettings_update(int scr, Window owner, void *cookie)
 static void
 awt_xsettings_callback(int scr, XEvent *xev, void *cookie)
 {
-    Display *dpy = awt_display; /* xev->xany.display */
+    Display *dpy = awt_display;	/* xev->xany.display */
     XPropertyEvent *ev;
 
     if (xev->type != PropertyNotify) {
-        DTRACE_PRINTLN2("XS: awt_xsettings_callback(%d) event %d ignored",
-                        scr, xev->type);
-        return;
+	DTRACE_PRINTLN2("XS: awt_xsettings_callback(%d) event %d ignored",
+			scr, xev->type);
+	return;
     }
 
     ev = &xev->xproperty;
 
     if (ev->atom == None) {
-        DTRACE_PRINTLN("XS: awt_xsettings_callback(%d) atom == None");
-        return;
+	DTRACE_PRINTLN("XS: awt_xsettings_callback(%d) atom == None");
+	return;
     }
 
 #ifdef DEBUG
     {
-        char *name;
+	char *name;
 
-        DTRACE_PRINT2("XS: awt_xsettings_callback(%d) 0x%08lx ",
-                      scr, ev->window);
-        name = XGetAtomName(dpy, ev->atom);
-        if (name == NULL) {
-            DTRACE_PRINT1("atom #%d", ev->atom);
-        } else {
-            DTRACE_PRINT1("%s", name);
-            XFree(name);
-        }
-        DTRACE_PRINTLN1(" %s", ev->state == PropertyNewValue ?
-                                        "changed" : "deleted");
+	DTRACE_PRINT2("XS: awt_xsettings_callback(%d) 0x%08lx ",
+		      scr, ev->window);
+	name = XGetAtomName(dpy, ev->atom);
+	if (name == NULL) {
+	    DTRACE_PRINT1("atom #%d", ev->atom);
+	} else {
+	    DTRACE_PRINT1("%s", name);
+	    XFree(name);
+	}
+	DTRACE_PRINTLN1(" %s", ev->state == PropertyNewValue ?
+					"changed" : "deleted");
     }
 #endif
 
     if (ev->atom != _XA_XSETTINGS_SETTINGS) {
-        DTRACE_PRINTLN("XS:   property != _XSETTINGS_SETTINGS ...  ignoring");
-        return;
+	DTRACE_PRINTLN("XS:   property != _XSETTINGS_SETTINGS ...  ignoring");
+	return;
     }
 
 
     if (ev->state == PropertyDelete) {
-        /* XXX: notify toolkit to reset to "defaults"? */
-        return;
+	/* XXX: notify toolkit to reset to "defaults"? */
+	return;
     }
 
     awt_xsettings_update(scr, ev->window, cookie);
@@ -2554,16 +2554,16 @@ awt_xsettings_callback(int scr, XEvent *xev, void *cookie)
  */
 static void
 awt_xsettings_owner_callback(int scr, Window owner, long *data_unused,
-                             void *cookie)
+			     void *cookie)
 {
     if (owner == None) {
-        DTRACE_PRINTLN("XS: awt_xsettings_owner_callback: owner = None");
-        /* XXX: reset to defaults??? */
-        return;
+	DTRACE_PRINTLN("XS: awt_xsettings_owner_callback: owner = None");
+	/* XXX: reset to defaults??? */
+	return;
     }
 
     DTRACE_PRINTLN1("XS: awt_xsettings_owner_callback: owner = 0x%08lx",
-                    owner);
+		    owner);
 
     awt_xsettings_update(scr, owner, cookie);
 }
@@ -2584,7 +2584,7 @@ getComponentClass(JNIEnv *env)
             /* exception already thrown */
             return NULL;
         }
-        componentCls = (jclass)(*env)->NewGlobalRef(env, componentClsLocal);
+	componentCls = (jclass)(*env)->NewGlobalRef(env, componentClsLocal);
         (*env)->DeleteLocalRef(env, componentClsLocal);
     }
     return componentCls;
@@ -2607,7 +2607,7 @@ getMenuComponentClass(JNIEnv *env)
             /* exception already thrown */
             return NULL;
         }
-        menuComponentCls = (jclass)(*env)->NewGlobalRef(env, menuComponentClsLocal);
+	menuComponentCls = (jclass)(*env)->NewGlobalRef(env, menuComponentClsLocal);
         (*env)->DeleteLocalRef(env, menuComponentClsLocal);
     }
     return menuComponentCls;
@@ -2687,18 +2687,18 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
         jstring jFontList;
         char       *cFontRsrc;
         char       *cFontRsrc2;
-
+         
         fontConfigClass = (*env)->FindClass(env, "sun/awt/motif/MFontConfiguration");
         methID = (*env)->GetStaticMethodID(env, fontConfigClass,
                                            "getDefaultMotifFontSet",
                                            "()Ljava/lang/String;");
-        jFontList = (*env)->CallStaticObjectMethod(env, fontConfigClass, methID);
-        if (jFontList == NULL) {
-            motifFontList =
-                "-monotype-arial-regular-r-normal--*-140-*-*-p-*-iso8859-1";
-        } else {
-            motifFontList = JNU_GetStringPlatformChars(env, jFontList, NULL);
-        }
+	jFontList = (*env)->CallStaticObjectMethod(env, fontConfigClass, methID);
+	if (jFontList == NULL) {
+	    motifFontList =
+		"-monotype-arial-regular-r-normal--*-140-*-*-p-*-iso8859-1";
+	} else {
+	    motifFontList = JNU_GetStringPlatformChars(env, jFontList, NULL);
+	}
 
         /* fprintf(stderr, "motifFontList: %s\n", motifFontList); */
 
@@ -2708,7 +2708,7 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
         cFontRsrc2 = malloc(strlen(motifFontList) + 20);
         strcpy(cFontRsrc2, "*labelFontList: ");
         strcat(cFontRsrc2, motifFontList);
-
+         
         argc = 1;
         argv[argc++] = "-xrm";
         argv[argc++] = cFontRsrc;
@@ -2716,8 +2716,8 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
         argv[argc++] = cFontRsrc2;
         argv[argc++] = "-font";
         argv[argc++] = (char *)defaultMotifFont;
-    }
-
+    }    
+ 
     awt_appContext = XtCreateApplicationContext();
     XtAppSetErrorHandler(awt_appContext, (XtErrorHandler) xtError);
     XtAppSetFallbackResources(awt_appContext, fallback_resources);
@@ -2725,30 +2725,30 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
     appName = NULL;
     mainChars = NULL;
     if (!JNU_IsNull(env, mainClassName)) {
-        mainChars = (char *)JNU_GetStringPlatformChars(env, mainClassName, NULL);
-        appName = mainChars;
+	mainChars = (char *)JNU_GetStringPlatformChars(env, mainClassName, NULL);
+	appName = mainChars;
     }
     if (appName == NULL || appName[0] == '\0') {
-        appName = "AWT";
+	appName = "AWT";
     }
 
     XtDisplayInitialize(awt_appContext, awt_display,
-                        appName, /* application name  */
-                        appName, /* application class */
-                        NULL, 0, &argc, argv);
+			appName, /* application name  */
+			appName, /* application class */
+			NULL, 0, &argc, argv);
 
     /* Root shell widget that serves as a parent for all AWT top-levels.    */
     awt_root_shell = XtVaAppCreateShell(appName, /* application name  */
-                                        appName, /* application class */
-                                        applicationShellWidgetClass,
-                                        awt_display,
-                                        /* va_list */
-                                        XmNmappedWhenManaged, False,
-                                        NULL);
+					appName, /* application class */
+					applicationShellWidgetClass,
+					awt_display,
+					/* va_list */
+					XmNmappedWhenManaged, False,
+					NULL);
     XtRealizeWidget(awt_root_shell);
 
     if (mainChars != NULL) {
-        JNU_ReleaseStringPlatformChars(env, mainClassName, mainChars);
+	JNU_ReleaseStringPlatformChars(env, mainClassName, mainChars);
     }
 
     awt_mgrsel_init();
@@ -2784,7 +2784,7 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
         multiclick_time_query = XGetDefault(awt_display,
                                             "OpenWindows", "MultiClickTimeout");
         if (multiclick_time_query) {
-            /* Note: OpenWindows.MultiClickTimeout is in tenths of
+            /* Note: OpenWindows.MultiClickTimeout is in tenths of 
                a second, so we need to multiply by 100 to convert to
                milliseconds */
             awt_multiclick_time = atoi(multiclick_time_query) * 100;
@@ -2794,9 +2794,9 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
     }
 
     /*
-    scrollBugWorkAround =
-        (strcmp(XServerVendor(awt_display), "Sun Microsystems, Inc.") == 0
-         && XVendorRelease(awt_display) == 3400);
+    scrollBugWorkAround = 
+	(strcmp(XServerVendor(awt_display), "Sun Microsystems, Inc.") == 0
+	 && XVendorRelease(awt_display) == 3400);
     */
     scrollBugWorkAround = TRUE;
 
@@ -2827,7 +2827,7 @@ Java_sun_awt_motif_MToolkit_init(JNIEnv *env, jobject this,
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_run
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     /*
      * in performSelect(), we multiply the timeout by 1000. Make sure
@@ -2845,11 +2845,11 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_run
  * Signature: ()Ljava/awt/image/ColorModel;
  */
 JNIEXPORT jobject JNICALL Java_sun_awt_motif_MToolkit_makeColorModel
-  (JNIEnv *env, jclass this)
+  (JNIEnv *env, jclass this) 
 {
     AwtGraphicsConfigDataPtr defaultConfig =
         getDefaultConfig(DefaultScreen(awt_display));
-
+    
     return awtJNI_GetColorModel(env, defaultConfig);
 }
 
@@ -2859,7 +2859,7 @@ JNIEXPORT jobject JNICALL Java_sun_awt_motif_MToolkit_makeColorModel
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getScreenResolution
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     return (jint) ((DisplayWidth(awt_display, DefaultScreen(awt_display))
                     * 25.4) /
@@ -2872,7 +2872,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getScreenResolution
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getScreenWidth
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     return DisplayWidth(awt_display, DefaultScreen(awt_display));
 }
@@ -2882,7 +2882,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getScreenWidth
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getScreenHeight
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     return DisplayHeight(awt_display, DefaultScreen(awt_display));
 }
@@ -2893,7 +2893,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getScreenHeight
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_beep
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     AWT_LOCK();
     XBell(awt_display, 0);
@@ -2907,7 +2907,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_beep
  */
 
 JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_shutdown
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     X11SD_LibDispose(env);
 }
@@ -2918,7 +2918,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_shutdown
  * Signature: (I)B
  */
 JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MToolkit_getLockingKeyStateNative
-  (JNIEnv *env, jobject this, jint awtKey)
+  (JNIEnv *env, jobject this, jint awtKey) 
 {
     KeySym sym;
     KeyCode keyCode;
@@ -2927,7 +2927,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MToolkit_getLockingKeyStateNative
     char keyVector[32];
 
     AWT_LOCK();
-
+    
     sym = awt_getX11KeySym(awtKey);
     keyCode = XKeysymToKeycode(awt_display, sym);
     if (sym == NoSymbol || keyCode == 0) {
@@ -2941,7 +2941,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MToolkit_getLockingKeyStateNative
     XQueryKeymap(awt_display, keyVector);
 
     AWT_UNLOCK();
-
+    
     return (1 & (keyVector[byteIndex] >> bitIndex));
 }
 
@@ -2951,7 +2951,7 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_motif_MToolkit_getLockingKeyStateNative
  * Signature: ([I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
-  (JNIEnv *env, jobject this, jintArray systemColors)
+  (JNIEnv *env, jobject this, jintArray systemColors) 
 {
     Widget frame, panel, control, menu, text, scrollbar;
     Colormap cmap;
@@ -2968,8 +2968,8 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
 
     AWT_LOCK();
 
-    /*
-     * initialize array of pixels
+    /* 
+     * initialize array of pixels 
      */
     for (i = 0; i < java_awt_SystemColor_NUM_COLORS; i++) {
         pixels[i] = -1;
@@ -2988,7 +2988,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
     frame = XtAppCreateShell("AWTColors", "XApplication",
                              vendorShellWidgetClass,
                              awt_display,
-                             args, argc);
+			     args, argc);
     /*
       XtSetMappedWhenManaged(frame, False);
       XtRealizeWidget(frame);
@@ -3071,8 +3071,8 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
     pixels[java_awt_SystemColor_SCROLLBAR] = bg;
     count++;
 
-    /*
-     * Convert pixel values to RGB
+    /* 
+     * Convert pixel values to RGB 
      */
     colorsPtr = (XColor *) malloc(count * sizeof(XColor));
     j = 0;
@@ -3084,13 +3084,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
     XQueryColors(awt_display, cmap, colorsPtr, count);
 
     /* Get current System Colors */
-
+ 
     (*env)->GetIntArrayRegion (env, systemColors, 0,
                               java_awt_SystemColor_NUM_COLORS,
                               rgbColors);
 
-    /*
-     * Fill systemColor array with new rgb values
+    /* 
+     * Fill systemColor array with new rgb values 
      */
 
     j = 0;
@@ -3113,7 +3113,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
 
     /* Duplicate system colors. If color allocation is unsuccessful,
        system colors will be approximated with matched colors */
-    if (defaultConfig->awt_depth == 8)
+    if (defaultConfig->awt_depth == 8) 
         awt_allocate_systemcolors(colorsPtr, count, defaultConfig);
 
     /*
@@ -3129,22 +3129,22 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MToolkit_loadSystemColors
  * Class:     sun_awt_motif_MToolkit
  * Method:    isDynamicLayoutSupportedNative
  * Signature: ()Z
- *
- * Note: there doesn't seem to be a protocol for querying the WM
- * about its opaque resize settings, so this function just returns
- * whether there is a solid resize option available for that WM.
+ * 
+ * Note: there doesn't seem to be a protocol for querying the WM 
+ * about its opaque resize settings, so this function just returns 
+ * whether there is a solid resize option available for that WM.   
  */
 JNIEXPORT jboolean JNICALL
 Java_sun_awt_motif_MToolkit_isDynamicLayoutSupportedNative(JNIEnv *env, jobject this)
 {
-    enum wmgr_t wm;
+    enum wmgr_t wm;  
 
     AWT_LOCK();
-    wm = awt_wm_getRunningWM();
+    wm = awt_wm_getRunningWM(); 
     AWT_UNLOCK();
 
     switch (wm) {
-      case ENLIGHTEN_WM:
+      case ENLIGHTEN_WM: 
       case KDE2_WM:
       case SAWFISH_WM:
       case ICE_WM:
@@ -3155,7 +3155,7 @@ Java_sun_awt_motif_MToolkit_isDynamicLayoutSupportedNative(JNIEnv *env, jobject 
       case CDE_WM:
         return JNI_FALSE;
       default:
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
 }
 
@@ -3169,9 +3169,9 @@ Java_sun_awt_motif_MToolkit_isFrameStateSupported(JNIEnv *env, jobject this,
     jint state)
 {
     if (state == java_awt_Frame_NORMAL || state == java_awt_Frame_ICONIFIED) {
-        return JNI_TRUE;
+	return JNI_TRUE;
     } else {
-        return awt_wm_supportsExtendedState(state) ? JNI_TRUE : JNI_FALSE;
+	return awt_wm_supportsExtendedState(state) ? JNI_TRUE : JNI_FALSE;
     }
 }
 
@@ -3181,7 +3181,7 @@ Java_sun_awt_motif_MToolkit_isFrameStateSupported(JNIEnv *env, jobject this,
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getMulticlickTime
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     return awt_multiclick_time;
 }
@@ -3192,7 +3192,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getMulticlickTime
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MToolkit_getNumMouseButtons
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     jint res = 0;
     AWT_LOCK();
@@ -3219,56 +3219,56 @@ Java_sun_awt_motif_MToolkit_loadXSettings(JNIEnv *env, jobject this)
     AWT_LOCK();
 
     if (registered) {
-        AWT_UNLOCK();
-        return;
+	AWT_UNLOCK();
+	return;
     }
 
     if (_XA_XSETTINGS_SETTINGS == None) {
-        _XA_XSETTINGS_SETTINGS = XInternAtom(dpy, "_XSETTINGS_SETTINGS", False);
-        if (_XA_XSETTINGS_SETTINGS == None) {
-            JNU_ThrowNullPointerException(env,
-                "unable to intern _XSETTINGS_SETTINGS");
-            AWT_UNLOCK();
-            return;
-        }
+	_XA_XSETTINGS_SETTINGS = XInternAtom(dpy, "_XSETTINGS_SETTINGS", False);
+	if (_XA_XSETTINGS_SETTINGS == None) {
+	    JNU_ThrowNullPointerException(env,
+		"unable to intern _XSETTINGS_SETTINGS");
+	    AWT_UNLOCK();
+	    return;
+	}
     }
 
     mtoolkitCLS = (*env)->GetObjectClass(env, this);
 
     xsettings_callback_cookie.mtoolkit =
-        (*env)->NewGlobalRef(env, this);
+	(*env)->NewGlobalRef(env, this);
     xsettings_callback_cookie.upcallMID =
-        (*env)->GetMethodID(env, mtoolkitCLS,
-                            "parseXSettings", "(I[B)V");
+	(*env)->GetMethodID(env, mtoolkitCLS,
+			    "parseXSettings", "(I[B)V");
 
     if (JNU_IsNull(env, xsettings_callback_cookie.upcallMID)) {
-        JNU_ThrowNoSuchMethodException(env,
-            "sun.awt.motif.MToolkit.parseXSettings");
-        AWT_UNLOCK();
-        return;
+	JNU_ThrowNoSuchMethodException(env,
+	    "sun.awt.motif.MToolkit.parseXSettings");
+	AWT_UNLOCK();
+	return;
     }
 
     owners = awt_mgrsel_select("_XSETTINGS", PropertyChangeMask,
-                               &xsettings_callback_cookie,
-                               awt_xsettings_callback,
-                               awt_xsettings_owner_callback);
+			       &xsettings_callback_cookie,
+			       awt_xsettings_callback,
+			       awt_xsettings_owner_callback);
     if (owners == NULL) {
-        JNU_ThrowNullPointerException(env,
-            "unable to regiser _XSETTINGS with mgrsel");
-        AWT_UNLOCK();
-        return;
+	JNU_ThrowNullPointerException(env,
+	    "unable to regiser _XSETTINGS with mgrsel");
+	AWT_UNLOCK();
+	return;
     }
 
     registered = True;
 
     for (scr = 0; scr < ScreenCount(dpy); ++scr) {
-        if (owners[scr] == None) {
-            DTRACE_PRINTLN1("XS: MToolkit.loadXSettings: none on screen %d",
-                            scr);
-            continue;
-        }
+	if (owners[scr] == None) {
+	    DTRACE_PRINTLN1("XS: MToolkit.loadXSettings: none on screen %d",
+			    scr);
+	    continue;
+	}
 
-        awt_xsettings_update(scr, owners[scr], &xsettings_callback_cookie);
+	awt_xsettings_update(scr, owners[scr], &xsettings_callback_cookie);
     }
 
     AWT_UNLOCK();
@@ -3283,14 +3283,14 @@ Java_sun_awt_motif_MToolkit_isAlwaysOnTopSupported(JNIEnv *env, jobject toolkit)
     return res;
 }
 
-/*
+/* 
  * Returns true if the current thread is privileged. Currently,
  * only the main event loop thread is considered to be privileged.
  */
-Boolean
+Boolean 
 awt_currentThreadIsPrivileged(JNIEnv *env) {
-    return (*env)->IsSameObject(env,
-                        awt_MainThread, awtJNI_GetCurrentThread(env));
+    return (*env)->IsSameObject(env, 
+			awt_MainThread, awtJNI_GetCurrentThread(env));
 }
 
 JNIEXPORT jboolean JNICALL
@@ -3305,7 +3305,7 @@ Java_sun_awt_motif_MToolkit_isSyncFailed(JNIEnv *env, jobject toolkit) {
 
 JNIEXPORT void JNICALL
 Java_sun_awt_motif_MToolkit_updateSyncSelection(JNIEnv *env, jobject toolkit) {
-
+    
     // AWT_LOCK is held by calling function
     if (wm_selection == None) {
         wm_selection = XInternAtom(awt_display, "WM_S0", False);
@@ -3330,30 +3330,30 @@ Java_sun_awt_motif_MToolkit_getEventNumber(JNIEnv *env, jobject toolkit) {
     return eventNumber;
 }
 
-static void
+static void 
 syncWait_eventHandler(XEvent * event) {
     static jmethodID syncNotifyMID = NULL;
-    if (event != NULL && event->xany.type == SelectionNotify &&
+    if (event != NULL && event->xany.type == SelectionNotify && 
         event->xselection.requestor == XtWindow(awt_root_shell) &&
         event->xselection.property == oops_atom &&
         inSyncWait)
-    {
+    {        
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
         syncUpdated = True;
         inSyncWait = False;
         AWT_NOTIFY_ALL();
-    } else if (event != NULL && event->xany.type == SelectionNotify &&
+    } else if (event != NULL && event->xany.type == SelectionNotify && 
                event->xselection.requestor == XtWindow(awt_root_shell) &&
                event->xselection.target == version_atom &&
                event->xselection.property == None &&
                XGetSelectionOwner(awt_display, wm_selection) == None &&
-               event->xselection.selection == wm_selection)
+               event->xselection.selection == wm_selection) 
     {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
         syncFailed = True;
         inSyncWait = False;
         AWT_NOTIFY_ALL();
-    }
+    }               
 }
 
 JNIEXPORT void JNICALL
@@ -3366,7 +3366,7 @@ Java_sun_awt_motif_MToolkit_nativeGrab(JNIEnv *env, jobject toolkit, jobject win
 
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, window, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget == NULL ||
         wdata->winData.shell == NULL)
@@ -3385,17 +3385,17 @@ Java_sun_awt_motif_MToolkit_nativeGrab(JNIEnv *env, jobject toolkit, jobject win
                                GrabModeAsync, GrabModeAsync, None,
                                cursor, CurrentTime);
     if (GrabSuccess != grab_result) {
-        XUngrabPointer(awt_display, CurrentTime);
+        XUngrabPointer(awt_display, CurrentTime); 
         AWT_UNLOCK();
         DTRACE_PRINTLN1("XGrabPointer() failed, result %d", grab_result);
         return;
     }
     grab_result = XGrabKeyboard(awt_display, XtWindow(wdata->winData.shell),
-                                True,
+                                True, 
                                 GrabModeAsync, GrabModeAsync, CurrentTime);
     if (GrabSuccess != grab_result) {
         XUngrabKeyboard(awt_display, CurrentTime);
-        XUngrabPointer(awt_display, CurrentTime);
+        XUngrabPointer(awt_display, CurrentTime); 
         DTRACE_PRINTLN1("XGrabKeyboard() failed, result %d", grab_result);
     }
     AWT_UNLOCK();
@@ -3409,7 +3409,7 @@ Java_sun_awt_motif_MToolkit_nativeUnGrab(JNIEnv *env, jobject toolkit, jobject w
 
     wdata = (struct FrameData *)
         JNU_GetLongFieldAsPtr(env, window, mComponentPeerIDs.pData);
-
+    
     if (wdata == NULL ||
         wdata->winData.comp.widget == NULL ||
         wdata->winData.shell == NULL)
@@ -3424,7 +3424,7 @@ Java_sun_awt_motif_MToolkit_nativeUnGrab(JNIEnv *env, jobject toolkit, jobject w
     AWT_FLUSHOUTPUT_NOW();
 
     AWT_UNLOCK();
-
+    
 }
 
 /*
@@ -3435,10 +3435,10 @@ Java_sun_awt_motif_MToolkit_nativeUnGrab(JNIEnv *env, jobject toolkit, jobject w
 JNIEXPORT jstring JNICALL
 Java_sun_awt_motif_MToolkit_getWMName(JNIEnv *env, jclass this)
 {
-    enum wmgr_t wm;
+    enum wmgr_t wm;  
 
     AWT_LOCK();
-    wm = awt_wm_getRunningWM();
+    wm = awt_wm_getRunningWM(); 
     AWT_UNLOCK();
 
     switch (wm) {

@@ -29,15 +29,15 @@
 #define ALL_REFS -1
 
 /*
- * Each object sent to the front end is tracked with the RefNode struct
+ * Each object sent to the front end is tracked with the RefNode struct 
  * (see util.h).
- * External to this module, objects are identified by a jlong id which is
+ * External to this module, objects are identified by a jlong id which is 
  * simply the sequence number. A weak reference is usually used so that
  * the presence of a debugger-tracked object will not prevent
- * its collection. Once an object is collected, its RefNode may be
+ * its collection. Once an object is collected, its RefNode may be 
  * deleted and the weak ref inside may be reused (these may happen in
  * either order). Using the sequence number
- * as the object id prevents ambiguity in the object id when the weak ref
+ * as the object id prevents ambiguity in the object id when the weak ref 
  * is reused. The RefNode* is stored with the object as it's JVMTI Tag.
  *
  * The ref member is changed from weak to strong when
@@ -45,9 +45,9 @@
  * Whether or not it is strong, it is never exported from this module.
  *
  * A reference count of each jobject is also maintained here. It tracks
- * the number times an object has been referenced through
+ * the number times an object has been referenced through 
  * commonRef_refToID. A RefNode is freed once the reference
- * count is decremented to 0 (with commonRef_release*), even if the
+ * count is decremented to 0 (with commonRef_release*), even if the 
  * correspoding object has not been collected.
  *
  * One hash table is maintained. The mapping of ID to jobject (or RefNode*)
@@ -63,8 +63,8 @@
 #define HASH_MAX_SIZE  (1024*HASH_INIT_SIZE)
 
 /* Map a key (ID) to a hash bucket */
-static jint
-hashBucket(jlong key)
+static jint 
+hashBucket(jlong key) 
 {
     /* Size should always be a power of 2, use mask instead of mod operator */
     /*LINTED*/
@@ -72,7 +72,7 @@ hashBucket(jlong key)
 }
 
 /* Generate a new ID */
-static jlong
+static jlong 
 newSeqNum(void)
 {
     return gdata->nextSeqNum++;
@@ -80,18 +80,18 @@ newSeqNum(void)
 
 /* Create a fresh RefNode structure, create a weak ref and tag the object */
 static RefNode *
-createNode(JNIEnv *env, jobject ref)
+createNode(JNIEnv *env, jobject ref) 
 {
     RefNode   *node;
     jobject    weakRef;
     jvmtiError error;
-
+  
     /* Could allocate RefNode's in blocks, not sure it would help much */
-    node = (RefNode*)jvmtiAllocate((int)sizeof(RefNode));
+    node = (RefNode*)jvmtiAllocate((int)sizeof(RefNode));     
     if (node == NULL) {
         return NULL;
     }
-
+    
     /* Create weak reference to make sure we have a reference */
     weakRef = JNI_FUNC_PTR(env,NewWeakGlobalRef)(env, ref);
     if (weakRef == NULL) {
@@ -120,7 +120,7 @@ createNode(JNIEnv *env, jobject ref)
 }
 
 /* Delete a RefNode allocation, delete weak/global ref and clear tag */
-static void
+static void 
 deleteNode(JNIEnv *env, RefNode *node)
 {
     LOG_MISC(("Freeing %d (%x)\n", (int)node->seqNum, node->ref));
@@ -141,24 +141,24 @@ deleteNode(JNIEnv *env, RefNode *node)
 
 /* Change a RefNode to have a strong reference */
 static jobject
-strengthenNode(JNIEnv *env, RefNode *node)
+strengthenNode(JNIEnv *env, RefNode *node) 
 {
     if (!node->isStrong) {
         jobject strongRef;
-
+        
         strongRef = JNI_FUNC_PTR(env,NewGlobalRef)(env, node->ref);
         /*
-         * NewGlobalRef on a weak ref will return NULL if the weak
-         * reference has been collected or if out of memory.
+         * NewGlobalRef on a weak ref will return NULL if the weak 
+         * reference has been collected or if out of memory. 
          * We need to distinguish those two occurrences.
          */
         if ((strongRef == NULL) && !isSameObject(env, node->ref, NULL)) {
             EXIT_ERROR(AGENT_ERROR_NULL_POINTER,"NewGlobalRef");
-        }
+        } 
         if (strongRef != NULL) {
             JNI_FUNC_PTR(env,DeleteWeakGlobalRef)(env, node->ref);
             node->ref      = strongRef;
-            node->isStrong = JNI_TRUE;
+            node->isStrong = JNI_TRUE; 
         }
         return strongRef;
     } else {
@@ -168,11 +168,11 @@ strengthenNode(JNIEnv *env, RefNode *node)
 
 /* Change a RefNode to have a weak reference */
 static jweak
-weakenNode(JNIEnv *env, RefNode *node)
+weakenNode(JNIEnv *env, RefNode *node) 
 {
     if (node->isStrong) {
         jweak weakRef;
-
+        
         weakRef = JNI_FUNC_PTR(env,NewWeakGlobalRef)(env, node->ref);
         if (weakRef != NULL) {
             JNI_FUNC_PTR(env,DeleteGlobalRef)(env, node->ref);
@@ -186,13 +186,13 @@ weakenNode(JNIEnv *env, RefNode *node)
 }
 
 /*
- * Returns the node which contains the common reference for the
+ * Returns the node which contains the common reference for the 
  * given object. The passed reference should not be a weak reference
  * managed in the object hash table (i.e. returned by commonRef_idToRef)
  * because no sequence number checking is done.
  */
 static RefNode *
-findNodeByRef(JNIEnv *env, jobject ref)
+findNodeByRef(JNIEnv *env, jobject ref) 
 {
     jvmtiError error;
     jlong      tag;
@@ -201,7 +201,7 @@ findNodeByRef(JNIEnv *env, jobject ref)
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetTag)(gdata->jvmti, ref, &tag);
     if ( error == JVMTI_ERROR_NONE ) {
         RefNode   *node;
-
+        
         node = (RefNode*)jlong_to_ptr(tag);
         return node;
     }
@@ -209,13 +209,13 @@ findNodeByRef(JNIEnv *env, jobject ref)
 }
 
 /* Locate and delete a node based on ID */
-static void
-deleteNodeByID(JNIEnv *env, jlong id, jint refCount)
+static void 
+deleteNodeByID(JNIEnv *env, jlong id, jint refCount) 
 {
     jint     slot;
     RefNode *node;
     RefNode *prev;
-
+    
     slot = hashBucket(id);
     node = gdata->objectsByID[slot];
     prev = NULL;
@@ -248,7 +248,7 @@ deleteNodeByID(JNIEnv *env, jlong id, jint refCount)
 
 /*
  * Returns the node stored in the object hash table for the given object
- * id. The id should be a value previously returned by
+ * id. The id should be a value previously returned by 
  * commonRef_refToID.
  *
  *  NOTE: It is possible that a match is found here, but that the object
@@ -257,7 +257,7 @@ deleteNodeByID(JNIEnv *env, jlong id, jint refCount)
  *
  */
 static RefNode *
-findNodeByID(JNIEnv *env, jlong id)
+findNodeByID(JNIEnv *env, jlong id) 
 {
     jint     slot;
     RefNode *node;
@@ -283,8 +283,8 @@ findNodeByID(JNIEnv *env, jlong id)
 }
 
 /* Initialize the hash table stored in gdata area */
-static void
-initializeObjectsByID(int size)
+static void 
+initializeObjectsByID(int size) 
 {
     /* Size should always be a power of 2 */
     if ( size > HASH_MAX_SIZE ) size = HASH_MAX_SIZE;
@@ -299,7 +299,7 @@ static void
 hashIn(RefNode *node)
 {
     jint     slot;
-
+    
     /* Add to id hashtable */
     slot                     = hashBucket(node->seqNum);
     node->next               = gdata->objectsByID[slot];
@@ -308,7 +308,7 @@ hashIn(RefNode *node)
 
 /* Allocate and add RefNode to hash table */
 static RefNode *
-newCommonRef(JNIEnv *env, jobject ref)
+newCommonRef(JNIEnv *env, jobject ref) 
 {
     RefNode *node;
 
@@ -325,7 +325,7 @@ newCommonRef(JNIEnv *env, jobject ref)
         int       oldsize;
         int       newsize;
         int       i;
-
+        
         /* Save old information */
         old     = gdata->objectsByID;
         oldsize = gdata->objectsByIDsize;
@@ -337,7 +337,7 @@ newCommonRef(JNIEnv *env, jobject ref)
         /* Walk over old one and hash in all the RefNodes */
         for ( i = 0 ; i < oldsize ; i++ ) {
             RefNode *onode;
-
+            
             onode = old[i];
             while (onode != NULL) {
                 RefNode *next;
@@ -356,8 +356,8 @@ newCommonRef(JNIEnv *env, jobject ref)
 }
 
 /* Initialize the commonRefs usage */
-void
-commonRef_initialize(void)
+void 
+commonRef_initialize(void) 
 {
     gdata->refLock = debugMonitorCreate("JDWP Reference Table Monitor");
     gdata->nextSeqNum       = 1; /* 0 used for error indication */
@@ -365,7 +365,7 @@ commonRef_initialize(void)
 }
 
 /* Reset the commonRefs usage */
-void
+void 
 commonRef_reset(JNIEnv *env)
 {
     debugMonitorEnter(gdata->refLock); {
@@ -373,18 +373,18 @@ commonRef_reset(JNIEnv *env)
 
         for (i = 0; i < gdata->objectsByIDsize; i++) {
             RefNode *node;
-
+            
             node = gdata->objectsByID[i];
             while (node != NULL) {
                 RefNode *next;
-
+                
                 next = node->next;
                 deleteNode(env, node);
                 node = next;
             }
             gdata->objectsByID[i] = NULL;
         }
-
+        
         /* Toss entire hash table and re-create a new one */
         jvmtiDeallocate(gdata->objectsByID);
         gdata->objectsByID      = NULL;
@@ -396,10 +396,10 @@ commonRef_reset(JNIEnv *env)
 
 /*
  * Given a reference obtained from JNI or JVMTI, return an object
- * id suitable for sending to the debugger front end.
+ * id suitable for sending to the debugger front end. 
  */
-jlong
-commonRef_refToID(JNIEnv *env, jobject ref)
+jlong 
+commonRef_refToID(JNIEnv *env, jobject ref) 
 {
     jlong id;
 
@@ -428,14 +428,14 @@ commonRef_refToID(JNIEnv *env, jobject ref)
 /*
  * Given an object ID obtained from the debugger front end, return a
  * strong, global reference to that object (or NULL if the object
- * has been collected). The reference can then be used for JNI and
+ * has been collected). The reference can then be used for JNI and 
  * JVMTI calls. Caller is resposible for deleting the returned reference.
  */
-jobject
-commonRef_idToRef(JNIEnv *env, jlong id)
+jobject 
+commonRef_idToRef(JNIEnv *env, jlong id) 
 {
     jobject ref;
-
+    
     ref = NULL;
     debugMonitorEnter(gdata->refLock); {
         RefNode *node;
@@ -446,7 +446,7 @@ commonRef_idToRef(JNIEnv *env, jlong id)
                 saveGlobalRef(env, node->ref, &ref);
             } else {
                 jobject lref;
-
+                
                 lref = JNI_FUNC_PTR(env,NewLocalRef)(env, node->ref);
                 if ( lref == NULL ) {
                     /* Object was GC'd shortly after we found the node */
@@ -473,8 +473,8 @@ commonRef_idToRef_delete(JNIEnv *env, jobject ref)
 
 
 /* Prevent garbage collection of an object */
-jvmtiError
-commonRef_pin(jlong id)
+jvmtiError 
+commonRef_pin(jlong id) 
 {
     jvmtiError error;
 
@@ -492,7 +492,7 @@ commonRef_pin(jlong id)
             error = AGENT_ERROR_INVALID_OBJECT;
         } else {
             jobject strongRef;
-
+            
             strongRef = strengthenNode(env, node);
             if (strongRef == NULL) {
                 /*
@@ -500,15 +500,15 @@ commonRef_pin(jlong id)
                  */
                 error = AGENT_ERROR_INVALID_OBJECT;
                 deleteNodeByID(env, id, ALL_REFS);
-            }
+            } 
         }
     } debugMonitorExit(gdata->refLock);
     return error;
 }
 
 /* Permit garbage collection of an object */
-jvmtiError
-commonRef_unpin(jlong id)
+jvmtiError 
+commonRef_unpin(jlong id) 
 {
     jvmtiError error;
 
@@ -521,27 +521,27 @@ commonRef_unpin(jlong id)
         node = findNodeByID(env, id);
         if (node != NULL) {
             jweak weakRef;
-
+            
             weakRef = weakenNode(env, node);
             if (weakRef == NULL) {
                 error = AGENT_ERROR_OUT_OF_MEMORY;
-            }
+            } 
         }
     } debugMonitorExit(gdata->refLock);
     return error;
 }
 
 /* Release tracking of an object by ID */
-void
-commonRef_release(JNIEnv *env, jlong id)
+void 
+commonRef_release(JNIEnv *env, jlong id) 
 {
     debugMonitorEnter(gdata->refLock); {
         deleteNodeByID(env, id, 1);
     } debugMonitorExit(gdata->refLock);
 }
 
-void
-commonRef_releaseMultiple(JNIEnv *env, jlong id, jint refCount)
+void 
+commonRef_releaseMultiple(JNIEnv *env, jlong id, jint refCount) 
 {
     debugMonitorEnter(gdata->refLock); {
         deleteNodeByID(env, id, refCount);
@@ -549,8 +549,8 @@ commonRef_releaseMultiple(JNIEnv *env, jlong id, jint refCount)
 }
 
 /* Get rid of RefNodes for objects that no longer exist */
-void
-commonRef_compact(void)
+void 
+commonRef_compact(void) 
 {
     JNIEnv  *env;
     RefNode *node;
@@ -560,9 +560,9 @@ commonRef_compact(void)
     env = getEnv();
     debugMonitorEnter(gdata->refLock); {
         if ( gdata->objectsByIDsize > 0 ) {
-            /*
+            /* 
              * Walk through the id-based hash table. Detach any nodes
-             * for which the ref has been collected.
+             * for which the ref has been collected. 
              */
             for (i = 0; i < gdata->objectsByIDsize; i++) {
                 node = gdata->objectsByID[i];
@@ -572,7 +572,7 @@ commonRef_compact(void)
                     if ( (!node->isStrong) &&
                           isSameObject(env, node->ref, NULL)) {
                         RefNode *freed;
-
+                        
                         /* Detach from the ID list */
                         if (prev == NULL) {
                             gdata->objectsByID[i] = node->next;
@@ -593,15 +593,16 @@ commonRef_compact(void)
 }
 
 /* Lock the commonRef tables */
-void
-commonRef_lock(void)
+void 
+commonRef_lock(void) 
 {
     debugMonitorEnter(gdata->refLock);
 }
 
 /* Unlock the commonRef tables */
-void
-commonRef_unlock(void)
+void 
+commonRef_unlock(void) 
 {
     debugMonitorExit(gdata->refLock);
 }
+

@@ -45,31 +45,31 @@ final class X11DropTargetContextPeer extends SunDropTargetContextPeer {
     /*
      * A key to store a peer instance for an AppContext.
      */
-    private static final Object DTCP_KEY = "DropTargetContextPeer";
+    private static final Object DTCP_KEY = "DropTargetContextPeer"; 
 
     private X11DropTargetContextPeer() {}
 
     public static X11DropTargetContextPeer getPeer(AppContext appContext) {
         synchronized (_globalLock) {
-            X11DropTargetContextPeer peer =
+            X11DropTargetContextPeer peer = 
                 (X11DropTargetContextPeer)appContext.get(DTCP_KEY);
             if (peer == null) {
                 peer = new X11DropTargetContextPeer();
                 appContext.put(DTCP_KEY, peer);
             }
-
+            
             return peer;
         }
     }
 
     /*
-     * Note:
+     * Note: 
      * the method can be called on the toolkit thread while holding AWT_LOCK.
      */
-    private static void postDropTargetEventToPeer(final Component component,
-                                                  final int x, final int y,
+    private static void postDropTargetEventToPeer(final Component component, 
+                                                  final int x, final int y, 
                                                   final int dropAction,
-                                                  final int actions,
+                                                  final int actions, 
                                                   final long[] formats,
                                                   final long nativeCtxt,
                                                   final int eventID) {
@@ -82,7 +82,7 @@ final class X11DropTargetContextPeer extends SunDropTargetContextPeer {
                                  !SunDropTargetContextPeer.DISPATCH_SYNC);
     }
 
-    protected void eventProcessed(SunDropTargetEvent e, int returnValue,
+    protected void eventProcessed(SunDropTargetEvent e, int returnValue, 
                                   boolean dispatcherDone) {
         /* If the event was not consumed, send a response to the source. */
         long ctxt = getNativeDragContext();
@@ -92,9 +92,9 @@ final class X11DropTargetContextPeer extends SunDropTargetContextPeer {
         }
     }
 
-    protected void doDropDone(boolean success, int dropAction,
+    protected void doDropDone(boolean success, int dropAction, 
                               boolean isLocal) {
-        dropDone(getNativeDragContext(), success, dropAction);
+	dropDone(getNativeDragContext(), success, dropAction);
     }
 
     protected Object getNativeData(long format) {
@@ -113,7 +113,7 @@ final class X11DropTargetContextPeer extends SunDropTargetContextPeer {
         }
     }
 
-    protected void processMotionMessage(SunDropTargetEvent event,
+    protected void processMotionMessage(SunDropTargetEvent event, 
                                         boolean operationChanged) {
         if (!processSunDropTargetEvent(event)) {
             super.processMotionMessage(event, operationChanged);
@@ -127,7 +127,7 @@ final class X11DropTargetContextPeer extends SunDropTargetContextPeer {
     }
 
     // If source is an XEmbedCanvasPeer, passes the event to it for processing and
-    // return true if the event is forwarded to the XEmbed child.
+    // return true if the event is forwarded to the XEmbed child. 
     // Otherwise, does nothing and return false.
     private boolean processSunDropTargetEvent(SunDropTargetEvent event) {
         Object source = event.getSource();
@@ -156,12 +156,13 @@ final class X11DropTargetContextPeer extends SunDropTargetContextPeer {
         return false;
     }
 
-    private native void sendResponse(int eventID, int returnValue,
+    private native void sendResponse(int eventID, int returnValue, 
                                      long nativeCtxt, boolean dispatcherDone,
                                      boolean consumed);
 
-    private native void dropDone(long nativeCtxt, boolean success,
+    private native void dropDone(long nativeCtxt, boolean success, 
                                  int dropAction);
 
     private native Object getData(long nativeCtxt, long format);
 }
+

@@ -58,9 +58,9 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * <P>
      * Note: if the return type of this method is a reference type (class,
      * interface, or array) and it has not been created or loaded
-     * by the declaring type's class loader - that is,
+     * by the declaring type's class loader - that is, 
      * {@link TypeComponent#declaringType <CODE>declaringType()</CODE>}
-     * <CODE>.classLoader()</CODE>,
+     * <CODE>.classLoader()</CODE>, 
      * then ClassNotLoadedException will be thrown.
      * Also, a reference type may have been loaded but not yet prepared,
      * in which case the type will be returned
@@ -73,7 +73,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * @see Type
      * @see Field#type() Field.type() - for usage examples
      * @return the return {@link Type} of this method.
-     * @throws ClassNotLoadedException if the type has not yet been
+     * @throws ClassNotLoadedException if the type has not yet been 
      * created or loaded
      * through the appropriate class loader.
      */
@@ -90,9 +90,9 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * one List element for each parameter of this method.
      * Each element represents the type of a formal parameter
      * as specified at compile-time.
-     * If the formal parameter was declared with an ellipsis, then
+     * If the formal parameter was declared with an ellipsis, then 
      * it is represented as an array of the type before the ellipsis.
-     *
+     * 
      */
     List<String> argumentTypeNames();
 
@@ -103,9 +103,9 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * Note: if there is any parameter whose type
      * is a reference type (class, interface, or array)
      * and it has not been created or loaded
-     * by the declaring type's class loader - that is,
+     * by the declaring type's class loader - that is, 
      * {@link TypeComponent#declaringType <CODE>declaringType()</CODE>}
-     * <CODE>.classLoader()</CODE>,
+     * <CODE>.classLoader()</CODE>, 
      * then ClassNotLoadedException will be thrown.
      * Also, a reference type may have been loaded but not yet prepared,
      * in which case the list will be returned
@@ -120,7 +120,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * one List element for each parameter of this method.
      * Each element represents the type of a formal parameter
      * as specified at compile-time.
-     * If the formal parameter was declared with an ellipsis, then
+     * If the formal parameter was declared with an ellipsis, then 
      * it is represented as an array of the type before the ellipsis.
      *
      * @throws ClassNotLoadedException if the type has not yet been loaded
@@ -161,10 +161,10 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * @since 1.5
      */
     boolean isVarArgs();
-
+ 
     /**
      * Determine if this method is a bridge method. Bridge
-     * methods are defined in the
+     * methods are defined in the 
      * <a href="http://java.sun.com/docs/books/jls">
      * "Java<sup><font size=-2>TM</font></sup>
      * Language Specification, 3rd Edition.</a>
@@ -175,7 +175,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * @since 1.5
      */
     boolean isBridge();
-
+ 
     /**
      * Determine if this method is a constructor.
      *
@@ -191,7 +191,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * false otherwise.
      */
     boolean isStaticInitializer();
-
+    
     /**
      * Determine if this method is obsolete.
      *
@@ -238,7 +238,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * returned.
      * <P>
      * Returned list is for the specified <i>stratum</i>
-     * (see {@link Location} for a description of strata).
+     * (see {@link Location} for a description of strata). 
      *
      * @param stratum The stratum to retrieve information from
      * or <code>null</code> for the {@link ReferenceType#defaultStratum()}
@@ -256,8 +256,8 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * @since 1.4
      */
     List<Location> allLineLocations(String stratum, String sourceName)
-        throws AbsentInformationException;
-
+	throws AbsentInformationException;
+    
     /**
      * Returns a List containing all {@link Location} objects
      * that map to the given line number.
@@ -294,9 +294,9 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * list.
      * <p>
      * Returned list is for the specified <i>stratum</i>
-     * (see {@link Location} for a description of strata).
+     * (see {@link Location} for a description of strata). 
      *
-     * @param stratum the stratum to use for comparing line number
+     * @param stratum the stratum to use for comparing line number 
      *                and source name, or null to use the default
      *                stratum
      * @param sourceName the source name containing the
@@ -315,8 +315,8 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * @since 1.4
      */
     List<Location> locationsOfLine(String stratum, String sourceName,
-                                   int lineNumber)
-        throws AbsentInformationException;
+				   int lineNumber) 
+	throws AbsentInformationException;
 
     /**
      * Returns a {@link Location} for the given code index.
@@ -368,7 +368,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * information is not available), thus they will throw this exception.
      */
     List<LocalVariable> variablesByName(String name)
-        throws AbsentInformationException;
+	throws AbsentInformationException;
 
     /**
      * Returns a list containing each {@link LocalVariable} that is
@@ -412,7 +412,7 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      * Location object whose codeIndex is -1.
      */
     Location location();
-
+    
     /**
      * Compares the specified Object with this method for equality.
      *
@@ -429,3 +429,4 @@ public interface Method extends TypeComponent, Locatable, Comparable<Method> {
      */
     int hashCode();
 }
+

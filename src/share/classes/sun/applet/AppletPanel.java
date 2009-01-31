@@ -60,6 +60,7 @@ import sun.security.util.SecurityConstants;
  * thread group to call the applet's init(), start(), stop(), and
  * destroy() methods.
  *
+ * @version     1.98, 12/17/02
  * @author      Arthur van Hoff
  */
 public
@@ -157,7 +158,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     protected void setupAppletAppContext() {
         // do nothing
     }
-
+    
     /*
      * Creates a thread to run the applet. This method is called
      * each time an applet is loaded and reloaded.
@@ -168,17 +169,17 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
         String nm = "applet-" + getCode();
         loader = getClassLoader(getCodeBase(), getClassLoaderCacheKey());
         loader.grab(); // Keep this puppy around!
-
-        // 4668479: Option to turn off codebase lookup in AppletClassLoader
+        
+        // 4668479: Option to turn off codebase lookup in AppletClassLoader 
         // during resource requests. [stanley.ho]
         String param = getParameter("codebase_lookup");
-
+        
         if (param != null && param.equals("false"))
-            loader.setCodebaseLookup(false);
-        else
-            loader.setCodebaseLookup(true);
-
-
+	    loader.setCodebaseLookup(false);
+	else
+	    loader.setCodebaseLookup(true);
+	            
+        
         ThreadGroup appletGroup = loader.getThreadGroup();
 
         handler = new Thread(appletGroup, this, "thread " + nm);
@@ -299,7 +300,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
             // not within the applet's ThreadGroup
             if (loader == null)
                 loader = getClassLoader(getCodeBase(), getClassLoaderCacheKey());
-            release();
+            release(); 
         }
     }
 
@@ -323,7 +324,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
     /**
      * This kludge is specific to get over AccessControlException thrown during
-     * Applet.stop() or destroy() when static thread is suspended.  Set a flag
+     * Applet.stop() or destroy() when static thread is suspended.  Set a flag 
      * in AppletClassLoader to indicate that an
      * AccessControlException for RuntimePermission "modifyThread" or
      * "modifyThreadGroup" had occurred.
@@ -346,7 +347,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
      *   Note: (XXX) is the action
      *         APPLET_XXX is the state
      *  (applet code loaded) --> APPLET_LOAD -- (applet init called)--> APPLET_INIT -- (
-     *   applet start called) --> APPLET_START -- (applet stop called) -->APPLET_STOP --(applet
+     *   applet start called) --> APPLET_START -- (applet stop called) -->APPLET_STOP --(applet 
      *   destroyed called) --> APPLET_DESTROY -->(applet gets disposed) -->
      *   APPLET_DISPOSE -->....
      *
@@ -354,19 +355,19 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
      * in the APPLET_START state unless the applet goes away(refresh page or leave the page).
      * So the applet stop method called and the applet enters APPLET_STOP state. Then if the applet
      * is revisited, it will call applet start method and enter the APPLET_START state and stay there.
-     *
+     * 
      * In the modern lifecycle model. When the applet first time visited, it is same as legacy lifecycle
      * model. However, when the applet page goes away. It calls applet stop method and enters APPLET_STOP
-     * state and then applet destroyed method gets called and enters APPLET_DESTROY state.
+     * state and then applet destroyed method gets called and enters APPLET_DESTROY state. 
      *
      * This code is also called by AppletViewer. In AppletViewer "Restart" menu, the applet is jump from
-     * APPLET_STOP to APPLET_DESTROY and to APPLET_INIT .
+     * APPLET_STOP to APPLET_DESTROY and to APPLET_INIT . 
      *
-     * Also, the applet can jump from APPLET_INIT state to APPLET_DESTROY (in Netscape/Mozilla case).
-         * Same as APPLET_LOAD to
+     * Also, the applet can jump from APPLET_INIT state to APPLET_DESTROY (in Netscape/Mozilla case). 
+	 * Same as APPLET_LOAD to 
      * APPLET_DISPOSE since all of this are triggered by browser.
-     *
-     *
+     *  
+     * 
      */
     public void run() {
 
@@ -420,8 +421,8 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                       break;
 
                   case APPLET_INIT:
-                    // AppletViewer "Restart" will jump from destroy method to
-                    // init, that is why we need to check status w/ APPLET_DESTROY
+		    // AppletViewer "Restart" will jump from destroy method to 
+		    // init, that is why we need to check status w/ APPLET_DESTROY
                       if (status != APPLET_LOAD && status != APPLET_DESTROY) {
                           showAppletStatus("notloaded");
                           break;
@@ -437,7 +438,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
                       //Need the default(fallback) font to be created in this AppContext
                       Font f = getFont();
-                      if (f == null ||
+                      if (f == null || 
                           "dialog".equals(f.getFamily().toLowerCase(Locale.ENGLISH)) &&
                           f.getSize() == 12 && f.getStyle() == Font.PLAIN) {
                           setFont(new Font(Font.DIALOG, Font.PLAIN, 12));
@@ -447,7 +448,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
                       // Validate the applet in event dispatch thread
                       // to avoid deadlock.
-                      try {
+                      try {                      
                           final AppletPanel p = this;
 
                           SwingUtilities.invokeAndWait(new Runnable() {
@@ -475,8 +476,8 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                       applet.start();
 
                       // Validate and show the applet in event dispatch thread
-                      // to avoid deadlock.
-                      try {
+                      // to avoid deadlock.                       
+                      try {                           
                           final AppletPanel p = this;
                           final Applet a = applet;
 
@@ -488,10 +489,10 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                                       // Fix for BugTraq ID 4041703.
                                       // Set the default focus for an applet.
                                       if (hasInitialFocus())
-                                        setDefaultFocus();
+					setDefaultFocus();
                                   }
                               });
-                      }
+                      } 
                       catch(InterruptedException ie) {
                       }
                       catch(InvocationTargetException ite) {
@@ -502,100 +503,100 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                       break;
                   }
 
-                case APPLET_STOP:
-                    if (status != APPLET_START) {
-                        showAppletStatus("notstarted");
-                        break;
-                    }
-                    status = APPLET_STOP;
+		case APPLET_STOP:
+		    if (status != APPLET_START) {
+			showAppletStatus("notstarted");
+			break;
+		    }
+		    status = APPLET_STOP;
 
-                    // Hide the applet in event dispatch thread
-                    // to avoid deadlock.
-                    try {
-                        final Applet a = applet;
+		    // Hide the applet in event dispatch thread
+		    // to avoid deadlock.                       
+		    try {       
+			final Applet a = applet;
+                                            
+			SwingUtilities.invokeAndWait(new Runnable() {
+				public void run()
+				{
+				    a.setVisible(false);
+				}
+			    });
+		    }
+		    catch(InterruptedException ie) {
+		    }
+		    catch(InvocationTargetException ite) {
+		    }
 
-                        SwingUtilities.invokeAndWait(new Runnable() {
-                                public void run()
-                                {
-                                    a.setVisible(false);
-                                }
-                            });
-                    }
-                    catch(InterruptedException ie) {
-                    }
-                    catch(InvocationTargetException ite) {
-                    }
+		    
+		    // During Applet.stop(), any AccessControlException on an involved Class remains in
+		    // the "memory" of the AppletClassLoader.  If the same instance of the ClassLoader is
+		    // reused, the same exception will occur during class loading.  Set the AppletClassLoader's 
+		    // exceptionStatusSet flag to allow recognition of what had happened
+		    // when reusing AppletClassLoader object.
+		    try {
+			applet.stop();
+		    } catch (java.security.AccessControlException e) {
+			setExceptionStatus(e);	    
+			// rethrow exception to be handled as it normally would be.
+			throw e;
+		    }
+		    showAppletStatus("stopped");
+		    break;
 
+		case APPLET_DESTROY:
+		    if (status != APPLET_STOP && status != APPLET_INIT) {
+			showAppletStatus("notstopped");
+			break;
+		    }
+		    status = APPLET_DESTROY;
 
-                    // During Applet.stop(), any AccessControlException on an involved Class remains in
-                    // the "memory" of the AppletClassLoader.  If the same instance of the ClassLoader is
-                    // reused, the same exception will occur during class loading.  Set the AppletClassLoader's
-                    // exceptionStatusSet flag to allow recognition of what had happened
-                    // when reusing AppletClassLoader object.
-                    try {
-                        applet.stop();
-                    } catch (java.security.AccessControlException e) {
-                        setExceptionStatus(e);
-                        // rethrow exception to be handled as it normally would be.
-                        throw e;
-                    }
-                    showAppletStatus("stopped");
-                    break;
+		    // During Applet.destroy(), any AccessControlException on an involved Class remains in
+		    // the "memory" of the AppletClassLoader.  If the same instance of the ClassLoader is
+		    // reused, the same exception will occur during class loading.  Set the AppletClassLoader's 
+		    // exceptionStatusSet flag to allow recognition of what had happened
+		    // when reusing AppletClassLoader object.
+		    try {
+			applet.destroy();
+		    } catch (java.security.AccessControlException e) {
+			setExceptionStatus(e);
+			// rethrow exception to be handled as it normally would be.
+			throw e;
+		    }
+		    showAppletStatus("destroyed");
+		    break;
 
-                case APPLET_DESTROY:
-                    if (status != APPLET_STOP && status != APPLET_INIT) {
-                        showAppletStatus("notstopped");
-                        break;
-                    }
-                    status = APPLET_DESTROY;
+		case APPLET_DISPOSE:
+		    if (status != APPLET_DESTROY && status != APPLET_LOAD) {
+			showAppletStatus("notdestroyed");
+			break;
+		    }
+		    status = APPLET_DISPOSE;
 
-                    // During Applet.destroy(), any AccessControlException on an involved Class remains in
-                    // the "memory" of the AppletClassLoader.  If the same instance of the ClassLoader is
-                    // reused, the same exception will occur during class loading.  Set the AppletClassLoader's
-                    // exceptionStatusSet flag to allow recognition of what had happened
-                    // when reusing AppletClassLoader object.
-                    try {
-                        applet.destroy();
-                    } catch (java.security.AccessControlException e) {
-                        setExceptionStatus(e);
-                        // rethrow exception to be handled as it normally would be.
-                        throw e;
-                    }
-                    showAppletStatus("destroyed");
-                    break;
+		    try 
+		    {       
+			final Applet a = applet;
+                                            
+			EventQueue.invokeAndWait(new Runnable() 
+			{
+			    public void run()
+			    {
+				remove(a);
+			    }
+			});
+		    }
+		    catch(InterruptedException ie) 
+		    {
+		    }
+		    catch(InvocationTargetException ite) 
+		    {
+		    }
+		    applet = null;
+		    showAppletStatus("disposed");
+		    disposed = true;
+		    break;
 
-                case APPLET_DISPOSE:
-                    if (status != APPLET_DESTROY && status != APPLET_LOAD) {
-                        showAppletStatus("notdestroyed");
-                        break;
-                    }
-                    status = APPLET_DISPOSE;
-
-                    try
-                    {
-                        final Applet a = applet;
-
-                        EventQueue.invokeAndWait(new Runnable()
-                        {
-                            public void run()
-                            {
-                                remove(a);
-                            }
-                        });
-                    }
-                    catch(InterruptedException ie)
-                    {
-                    }
-                    catch(InvocationTargetException ite)
-                    {
-                    }
-                    applet = null;
-                    showAppletStatus("disposed");
-                    disposed = true;
-                    break;
-
-                case APPLET_QUIT:
-                    return;
+		case APPLET_QUIT:
+		    return;
                 }
             } catch (Exception e) {
                 status = APPLET_ERROR;
@@ -626,7 +627,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     /**
      * Gets most recent focus owner component associated with the given window.
      * It does that without calling Window.getMostRecentFocusOwner since it
-     * provides its own logic contradicting with setDefautlFocus. Instead, it
+     * provides its own logic contradicting with setDefautlFocus. Instead, it 
      * calls KeyboardFocusManager directly.
      */
     private Component getMostRecentFocusOwnerForWindow(Window w) {
@@ -715,11 +716,11 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
         // or at least the additional archives (epll).
 
         String code = getCode();
-
+        
         // setup applet AppContext
         // this must be called before loadJarFiles
         setupAppletAppContext();
-
+        
         try {
             loadJarFiles(loader);
             applet = createApplet(loader);
@@ -810,13 +811,13 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
             applet = (Applet) serObject;
             doInit = false; // skip over the first init
         }
-
+        
         // Determine the JDK level that the applet targets.
         // This is critical for enabling certain backward
-        // compatibility switch if an applet is a JDK 1.1
+        // compatibility switch if an applet is a JDK 1.1 
         // applet. [stanley.ho]
-        findAppletJDKLevel(applet);
-
+        findAppletJDKLevel(applet);        
+        
         if (Thread.interrupted()) {
             try {
                 status = APPLET_DISPOSE; // APPLET_ERROR?
@@ -892,7 +893,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
         return status == APPLET_START;
     }
 
-
+    
     private EventQueue appEvtQ = null;
     /**
      * Is called when the applet wants to be resized.
@@ -913,12 +914,12 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
         if (appEvtQ != null){
             appEvtQ.postEvent(new InvocationEvent(Toolkit.getDefaultToolkit(),
                                                   new Runnable(){
-                                                      public void run(){
-                                                          if(ap != null)
-                                                          {
-                                                              ap.dispatchAppletEvent(APPLET_RESIZE, currentSize);
-                                                          }
-                                                      }
+                                                      public void run(){        
+                                                          if(ap != null)        
+                                                          {                                      
+                                                              ap.dispatchAppletEvent(APPLET_RESIZE, currentSize);           
+                                                          }        
+                                                      }        
                                                   }));
         }
     }
@@ -974,7 +975,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     public String getClassLoaderCacheKey()
     {
         /**
-         * Fixed #4501142: Classlaoder sharing policy doesn't
+         * Fixed #4501142: Classlaoder sharing policy doesn't 
          * take "archive" into account. This will be overridden
          * by Java Plug-in.                     [stanleyh]
          */
@@ -1082,16 +1083,16 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
         perms.add(SecurityConstants.CREATE_CLASSLOADER_PERMISSION);
 
         Permission p;
-        java.net.URLConnection urlConnection = null;
+	java.net.URLConnection urlConnection = null;
         try {
-            urlConnection = codebase.openConnection();
+	    urlConnection = codebase.openConnection();
             p = urlConnection.getPermission();
         } catch (java.io.IOException ioe) {
             p = null;
         }
 
         if (p != null)
-            perms.add(p);
+	    perms.add(p);
 
         if (p instanceof FilePermission) {
 
@@ -1109,14 +1110,14 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                                              SecurityConstants.FILE_READ_ACTION));
             }
         } else {
-            URL locUrl = codebase;
-            if (urlConnection instanceof JarURLConnection) {
-                locUrl = ((JarURLConnection)urlConnection).getJarFileURL();
-            }
-            String host = locUrl.getHost();
-            if (host != null && (host.length() > 0))
-                perms.add(new SocketPermission(host,
-                                               SecurityConstants.SOCKET_CONNECT_ACCEPT_ACTION));
+	    URL locUrl = codebase;
+	    if (urlConnection instanceof JarURLConnection) {
+		locUrl = ((JarURLConnection)urlConnection).getJarFileURL();
+	    }
+	    String host = locUrl.getHost();
+	    if (host != null && (host.length() > 0))
+		perms.add(new SocketPermission(host,
+					       SecurityConstants.SOCKET_CONNECT_ACCEPT_ACTION));
         }
 
         ProtectionDomain domain =
@@ -1143,10 +1144,10 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     public static void changeFrameAppContext(Frame frame, AppContext newAppContext)
     {
         // Fixed #4754451: Applet can have methods running on main
-        // thread event queue.
-        //
-        // The cause of this bug is that the frame of the applet
-        // is created in main thread group. Thus, when certain
+        // thread event queue. 
+        // 
+        // The cause of this bug is that the frame of the applet 
+        // is created in main thread group. Thus, when certain 
         // AWT/Swing events are generated, the events will be
         // dispatched through the wrong event dispatch thread.
         //
@@ -1164,7 +1165,7 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
         // Synchronization on Window.class is needed for locking the
         // critical section of the window list in AppContext.
-        synchronized (Window.class)
+        synchronized (Window.class) 
         {
             WeakReference weakRef = null;
             // Remove frame from the Window list in wrong AppContext
@@ -1202,26 +1203,26 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
     // Flag to indicate if applet is targeted for JDK 1.1.
     private boolean jdk11Applet = false;
-
+     
     // Flag to indicate if applet is targeted for JDK 1.2.
     private boolean jdk12Applet = false;
-
+     
     /**
      * Determine JDK level of an applet.
      */
-    private void findAppletJDKLevel(Applet applet)
-    {
-        // To determine the JDK level of an applet, the
+    private void findAppletJDKLevel(Applet applet)   
+    {  
+	// To determine the JDK level of an applet, the
         // most reliable way is to check the major version
         // of the applet class file.
 
         // synchronized on applet class object, so calling from
-        // different instances of the same applet will be
+        // different instances of the same applet will be 
         // serialized.
         Class appletClass = applet.getClass();
-
-        synchronized(appletClass)  {
-            // Determine if the JDK level of an applet has been
+        
+        synchronized(appletClass)  {        
+            // Determine if the JDK level of an applet has been 
             // checked before.
             Boolean jdk11Target = (Boolean) loader.isJDK11Target(appletClass);
             Boolean jdk12Target = (Boolean) loader.isJDK12Target(appletClass);
@@ -1233,52 +1234,52 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
                 jdk12Applet = (jdk12Target == null) ? false : jdk12Target.booleanValue();
                 return;
             }
-
+        
             String name = appletClass.getName();
 
             // first convert any '.' to '/'
             name = name.replace('.', '/');
-
+        
             // append .class
             final String resourceName = name + ".class";
-
+        
             InputStream is = null;
-            byte[] classHeader = new byte[8];
-
+            byte[] classHeader = new byte[8];    
+        
             try {
                 is = (InputStream) java.security.AccessController.doPrivileged(
                     new java.security.PrivilegedAction() {
                         public Object run() {
                             return loader.getResourceAsStream(resourceName);
                         }
-                    });
+                    });     
 
                 // Read the first 8 bytes of the class file
                 int byteRead = is.read(classHeader, 0, 8);
                 is.close();
 
-                // return if the header is not read in entirely
-                // for some reasons.
+                // return if the header is not read in entirely 
+                // for some reasons. 
                 if (byteRead != 8)
                     return;
             }
-            catch (IOException e)   {
+	    catch (IOException e)   {
                 return;
             }
 
             // Check major version in class file header
             int major_version = readShort(classHeader, 6);
-
+        
             // Major version in class file is as follows:
             //   45 - JDK 1.1
             //   46 - JDK 1.2
             //   47 - JDK 1.3
             //   48 - JDK 1.4
-            //   49 - JDK 1.5
-            if (major_version < 46)
+            //   49 - JDK 1.5    
+            if (major_version < 46) 
                 jdk11Applet = true;
             else if (major_version == 46)
-                jdk12Applet = true;
+                jdk12Applet = true;         
 
             // Store applet JDK level in AppContext for later lookup,
             // e.g. page switch.
@@ -1290,29 +1291,29 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
     /**
      * Return true if applet is targeted to JDK 1.1.
      */
-    protected boolean isJDK11Applet()   {
+    protected boolean isJDK11Applet()	{
         return jdk11Applet;
     }
-
+    
     /**
      * Return true if applet is targeted to JDK1.2.
      */
-    protected boolean isJDK12Applet()   {
+    protected boolean isJDK12Applet()	{
         return jdk12Applet;
     }
 
     /**
      * Read short from byte array.
      */
-    private int readShort(byte[] b, int off)    {
+    private int readShort(byte[] b, int off)	{
         int hi = readByte(b[off]);
         int lo = readByte(b[off + 1]);
         return (hi << 8) | lo;
     }
-
+    
     private int readByte(byte b) {
         return ((int)b) & 0xFF;
-    }
+    }   
 
 
     private static AppletMessageHandler amh = new AppletMessageHandler("appletpanel");

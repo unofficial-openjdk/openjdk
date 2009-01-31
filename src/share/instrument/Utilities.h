@@ -62,7 +62,7 @@ isInstanceofClassName(  JNIEnv*     jnienv,
                         const char* className);
 
 
-/* calling this stops the JVM and does not return */
+/* calling this stops the JVM and does not return */                
 extern void
 abortJVM(   JNIEnv *        jnienv,
             const char *    message);
@@ -74,3 +74,4 @@ abortJVM(   JNIEnv *        jnienv,
 
 
 #endif
+

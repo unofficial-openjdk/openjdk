@@ -34,7 +34,7 @@ public class TypeScript extends JPanel {
 
     private JTextArea history;
     private JTextField entry;
-
+    
     private JLabel promptLabel;
 
     private JScrollBar historyVScrollBar;
@@ -46,79 +46,79 @@ public class TypeScript extends JPanel {
     private static String newline = System.getProperty("line.separator");
 
     public TypeScript(String prompt) {
-        this(prompt, true);
+	this(prompt, true);
     }
-
+    
     public TypeScript(String prompt, boolean echoInput) {
-        this.echoInput = echoInput;
+	this.echoInput = echoInput;
 
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        //setBorder(new EmptyBorder(5, 5, 5, 5));
+	setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+	//setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        history = new JTextArea(0, 0);
-        history.setEditable(false);
-        JScrollPane scroller = new JScrollPane(history);
-        historyVScrollBar = scroller.getVerticalScrollBar();
-        historyHScrollBar = scroller.getHorizontalScrollBar();
+	history = new JTextArea(0, 0);
+	history.setEditable(false);
+	JScrollPane scroller = new JScrollPane(history);
+	historyVScrollBar = scroller.getVerticalScrollBar();
+	historyHScrollBar = scroller.getHorizontalScrollBar();
 
-        add(scroller);
+	add(scroller);
 
-        JPanel cmdLine = new JPanel();
-        cmdLine.setLayout(new BoxLayout(cmdLine, BoxLayout.X_AXIS));
-        //cmdLine.setBorder(new EmptyBorder(5, 5, 0, 0));
+	JPanel cmdLine = new JPanel();
+	cmdLine.setLayout(new BoxLayout(cmdLine, BoxLayout.X_AXIS));
+	//cmdLine.setBorder(new EmptyBorder(5, 5, 0, 0));
 
-        promptLabel = new JLabel(prompt + " ");
-        cmdLine.add(promptLabel);
-        entry = new JTextField();
+	promptLabel = new JLabel(prompt + " ");
+	cmdLine.add(promptLabel);
+	entry = new JTextField();
 //### Swing bug workaround.
 entry.setMaximumSize(new Dimension(1000, 20));
-        cmdLine.add(entry);
-        add(cmdLine);
+	cmdLine.add(entry);
+	add(cmdLine);
     }
 
     /******
     public void setFont(Font f) {
-        entry.setFont(f);
-        history.setFont(f);
+	entry.setFont(f);
+	history.setFont(f);
     }
     ******/
 
     public void setPrompt(String prompt) {
-        promptLabel.setText(prompt + " ");
+	promptLabel.setText(prompt + " ");
     }
 
     public void append(String text) {
-        history.append(text);
-        historyVScrollBar.setValue(historyVScrollBar.getMaximum());
-        historyHScrollBar.setValue(historyHScrollBar.getMinimum());
+	history.append(text);
+	historyVScrollBar.setValue(historyVScrollBar.getMaximum());
+	historyHScrollBar.setValue(historyHScrollBar.getMinimum());
     }
 
     public void newline() {
-        history.append(newline);
-        historyVScrollBar.setValue(historyVScrollBar.getMaximum());
-        historyHScrollBar.setValue(historyHScrollBar.getMinimum());
+	history.append(newline);
+	historyVScrollBar.setValue(historyVScrollBar.getMaximum());
+	historyHScrollBar.setValue(historyHScrollBar.getMinimum());
     }
 
     public void flush() {}
 
     public void addActionListener(ActionListener a) {
-        entry.addActionListener(a);
+	entry.addActionListener(a);
     }
 
     public void removeActionListener(ActionListener a) {
-        entry.removeActionListener(a);
+	entry.removeActionListener(a);
     }
 
     public String readln() {
-        String text = entry.getText();
-        entry.setText("");
-        if (echoInput) {
-            history.append(">>>");
-            history.append(text);
-            history.append(newline);
-            historyVScrollBar.setValue(historyVScrollBar.getMaximum());
-            historyHScrollBar.setValue(historyHScrollBar.getMinimum());
-        }
-        return text;
+	String text = entry.getText();
+	entry.setText("");
+	if (echoInput) {
+	    history.append(">>>");
+	    history.append(text);
+	    history.append(newline);
+	    historyVScrollBar.setValue(historyVScrollBar.getMaximum());
+	    historyHScrollBar.setValue(historyHScrollBar.getMinimum());
+	}
+	return text;
     }
 }

@@ -28,35 +28,33 @@ package java.beans;
 import java.util.EventListenerProxy;
 
 /**
- * A class which extends the {@code EventListenerProxy}
- * specifically for adding a {@code VetoableChangeListener}
- * with a "constrained" property.
- * Instances of this class can be added
- * as {@code VetoableChangeListener}s to a bean
- * which supports firing vetoable change events.
+ * A class which extends the <code>EventListenerProxy</code> specifically 
+ * for associating a <code>VetoableChangeListener</code> with a "constrained"
+ * property. Instances of this class can be added as a 
+ * <code>VetoableChangeListener</code> to a bean which supports firing
+ * VetoableChange events.
  * <p>
- * If the object has a {@code getVetoableChangeListeners} method
- * then the array returned could be a mixture of {@code VetoableChangeListener}
- * and {@code VetoableChangeListenerProxy} objects.
- *
+ * If the object has a <code>getVetoableChangeListeners()</code>
+ * method then the array returned could be a mixture of 
+ * <code>VetoableChangeListener</code> and
+ * <code>VetoableChangeListenerProxy</code> objects.
+ * <p>
  * @see java.util.EventListenerProxy
+ * @see VetoableChangeListener
  * @see VetoableChangeSupport#getVetoableChangeListeners
  * @since 1.4
  */
-public class VetoableChangeListenerProxy
-        extends EventListenerProxy<VetoableChangeListener>
+public class VetoableChangeListenerProxy extends EventListenerProxy
         implements VetoableChangeListener {
-
-    private final String propertyName;
+    
+    private String propertyName;
 
     /**
-     * Constructor which binds the {@code VetoableChangeListener}
-     * to a specific property.
-     *
-     * @param propertyName  the name of the property to listen on
-     * @param listener      the listener object
-     */
-    public VetoableChangeListenerProxy(String propertyName, VetoableChangeListener listener) {
+    * @param propertyName The name of the property to listen on.
+    * @param listener The listener object
+    */ 
+    public VetoableChangeListenerProxy(String propertyName,
+            VetoableChangeListener listener) {
         super(listener);
         this.propertyName = propertyName;
     }
@@ -64,21 +62,21 @@ public class VetoableChangeListenerProxy
     /**
     * Forwards the property change event to the listener delegate.
     *
-    * @param event  the property change event
+    * @param evt the property change event
     *
     * @exception PropertyVetoException if the recipient wishes the property
-    *                                  change to be rolled back
+    *              change to be rolled back.
     */
-    public void vetoableChange(PropertyChangeEvent event) throws PropertyVetoException{
-        getListener().vetoableChange(event);
+    public void vetoableChange(PropertyChangeEvent evt) throws
+            PropertyVetoException{
+        ((VetoableChangeListener)getListener()).vetoableChange(evt);
     }
 
     /**
-     * Returns the name of the named property associated with the listener.
-     *
-     * @return the name of the named property associated with the listener
-     */
+    * Returns the name of the named property associated with the
+    * listener.
+    */
     public String getPropertyName() {
-        return this.propertyName;
+        return propertyName;
     }
 }

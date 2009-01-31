@@ -55,13 +55,14 @@ import javax.swing.*;
  *
  * For an example implementation of a simple file view, see
  * <code><i>yourJDK</i>/demo/jfc/FileChooserDemo/ExampleFileView.java</code>.
- * For more information and examples see
+ * For more information and examples see 
  * <a
  href="http://java.sun.com/docs/books/tutorial/uiswing/components/filechooser.html">How to Use File Choosers</a>,
  * a section in <em>The Java Tutorial</em>.
  *
  * @see javax.swing.JFileChooser
  *
+ * @version %I% %G%
  * @author Jeff Dinkins
  *
  */
@@ -71,7 +72,7 @@ public abstract class FileView {
      * <code>f.getName()</code>.
      */
     public String getName(File f) {
-        return null;
+	return null;
     };
 
     /**
@@ -80,7 +81,7 @@ public abstract class FileView {
      * "A JPEG image file of James Gosling's face".
      */
     public String getDescription(File f) {
-        return null;
+	return null;
     }
 
     /**
@@ -89,14 +90,14 @@ public abstract class FileView {
      * "A JPEG Compressed Image File"
      */
     public String getTypeDescription(File f) {
-        return null;
+	return null;
     }
 
     /**
      * The icon that represents this file in the <code>JFileChooser</code>.
      */
     public Icon getIcon(File f) {
-        return null;
+	return null;
     }
 
     /**
@@ -105,7 +106,7 @@ public abstract class FileView {
      * a compound document and don't want the user to descend into it.
      */
     public Boolean isTraversable(File f) {
-        return null;
+	return null;
     }
 
 }

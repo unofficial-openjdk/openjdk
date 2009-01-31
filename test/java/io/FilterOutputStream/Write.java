@@ -36,29 +36,29 @@ public class Write {
 
     static class F extends FilterOutputStream {
 
-        public F(OutputStream o) {
-            super(o);
-        }
+	public F(OutputStream o) {
+	    super(o);
+	}
 
-        public void write(int b) {
-            System.err.println("Ignoring write of " + b);
-        }
+	public void write(int b) {
+	    System.err.println("Ignoring write of " + b);
+	}
 
     }
 
     static class Sink extends OutputStream {
 
-        public void write(int b) {
-            throw new RuntimeException("Filter stream directly invoked"
-                                       + " write(int) method of underlying"
-                                       + " stream");
-        }
+	public void write(int b) {
+	    throw new RuntimeException("Filter stream directly invoked"
+				       + " write(int) method of underlying"
+				       + " stream");
+	}
 
     }
 
     public static void main(String[] args) throws Exception {
-        OutputStream f = new F(new Sink());
-        f.write(new byte[] { 1, 2, 3 }, 0, 3);
+	OutputStream f = new F(new Sink());
+	f.write(new byte[] { 1, 2, 3 }, 0, 3);
     }
 
 }

@@ -28,9 +28,10 @@ package sun.applet;
 /**
  * An applet security exception.
  *
- * @author      Arthur van Hoff
+ * @version 	%E%
+ * @author 	Arthur van Hoff
  */
-public
+public 
 class AppletIllegalArgumentException extends IllegalArgumentException {
     private String key = null;
 

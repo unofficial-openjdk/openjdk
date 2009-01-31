@@ -53,13 +53,13 @@ public class ThreadBlockedCount {
     private static BlockingThread blocking;
     private static BlockedThread blocked;
     private static ThreadExecutionSynchronizer thrsync;
-
+    
 
 
     public static void main(String args[]) throws Exception {
-        // Create the BlockingThread before BlockedThread
+        // Create the BlockingThread before BlockedThread 
         // to make sure BlockingThread enter the lock before BlockedThread
-        thrsync = new ThreadExecutionSynchronizer();
+	thrsync = new ThreadExecutionSynchronizer();
 
         blocking = new BlockingThread();
         blocking.start();
@@ -88,7 +88,7 @@ public class ThreadBlockedCount {
         // as blockedCount.  Instead, we use a boolean flag and sleep.
         //
         public void run() {
-            // wait Blocking thread
+            // wait Blocking thread 
             thrsync.signal();
 
             // Enter lock a without blocking
@@ -104,7 +104,7 @@ public class ThreadBlockedCount {
                     }
                 }
 
-                // signal BlockingThread.
+                // signal BlockingThread. 
                 thrsync.signal();
 
                 // Block to enter blockedObj1
@@ -114,7 +114,7 @@ public class ThreadBlockedCount {
                 }
             }
 
-            // signal BlockingThread.
+            // signal BlockingThread. 
             thrsync.signal();
 
             // Enter lock a without blocking
@@ -130,7 +130,7 @@ public class ThreadBlockedCount {
                     }
                 }
 
-                // signal BlockingThread.
+                // signal BlockingThread. 
                 thrsync.signal();
 
                 // Block to enter blockedObj2
@@ -140,7 +140,7 @@ public class ThreadBlockedCount {
                 }
             }
 
-            // signal BlockingThread.
+            // signal BlockingThread. 
             thrsync.signal();
 
             // Enter lock a without blocking
@@ -156,7 +156,7 @@ public class ThreadBlockedCount {
                     }
                 }
 
-                // signal BlockingThread.
+                // signal BlockingThread. 
                 thrsync.signal();
 
                 // Block to enter blockedObj3
@@ -173,7 +173,7 @@ public class ThreadBlockedCount {
 
             if (count != EXPECTED_BLOCKED_COUNT) {
                 System.err.println("TEST FAILED: Blocked thread has " + count +
-                                   " blocked counts. Expected " +
+                                   " blocked counts. Expected " + 
                                    EXPECTED_BLOCKED_COUNT);
                 testFailed = true;
             }
@@ -183,12 +183,12 @@ public class ThreadBlockedCount {
     static class BlockingThread extends Thread {
         private void waitForSignalToRelease() {
 
-            // wait for BlockedThread.
+            // wait for BlockedThread. 
             thrsync.waitForSignal();
 
             boolean threadBlocked = false;
             while (!threadBlocked) {
-                // give a chance for BlockedThread to really block
+                // give a chance for BlockedThread to really block 
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
@@ -200,9 +200,9 @@ public class ThreadBlockedCount {
                 threadBlocked = (info.getThreadState() == Thread.State.BLOCKED);
             }
         }
-
+         
         public void run() {
-            // wait for BlockedThread.
+            // wait for BlockedThread. 
             thrsync.waitForSignal();
 
             synchronized (blockedObj1) {
@@ -211,7 +211,7 @@ public class ThreadBlockedCount {
                 waitForSignalToRelease();
             }
 
-            // wait for BlockedThread.
+            // wait for BlockedThread. 
             thrsync.waitForSignal();
 
             // block until BlockedThread is ready
@@ -221,7 +221,7 @@ public class ThreadBlockedCount {
                 waitForSignalToRelease();
             }
 
-            // wait for BlockedThread.
+            // wait for BlockedThread. 
             thrsync.waitForSignal();
 
             // block until BlockedThread is ready

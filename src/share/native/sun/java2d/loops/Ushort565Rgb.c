@@ -82,18 +82,18 @@ NativePrimitive Ushort565RgbPrimitives[] = {
     REGISTER_CONVERT_BLIT(Ushort565Rgb, IntArgb),
     REGISTER_CONVERT_BLIT(IntArgb, Ushort565Rgb),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, Ushort565Rgb,
-                                NAME_CONVERT_BLIT(IntArgb, Ushort565Rgb)),
+				NAME_CONVERT_BLIT(IntArgb, Ushort565Rgb)),
     REGISTER_CONVERT_BLIT_EQUIV(IntArgbBm, Ushort565Rgb,
-                                NAME_CONVERT_BLIT(IntArgb, Ushort565Rgb)),
+				NAME_CONVERT_BLIT(IntArgb, Ushort565Rgb)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, Ushort565Rgb),
     REGISTER_CONVERT_BLIT(ByteGray, Ushort565Rgb),
     REGISTER_CONVERT_BLIT(ByteIndexed, Ushort565Rgb),
     REGISTER_SCALE_BLIT(Ushort565Rgb, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, Ushort565Rgb),
     REGISTER_SCALE_BLIT_EQUIV(IntArgbBm, Ushort565Rgb,
-                              NAME_SCALE_BLIT(IntArgb, Ushort565Rgb)),
+			      NAME_SCALE_BLIT(IntArgb, Ushort565Rgb)),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, Ushort565Rgb,
-                              NAME_SCALE_BLIT(IntArgb, Ushort565Rgb)),
+			      NAME_SCALE_BLIT(IntArgb, Ushort565Rgb)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, Ushort565Rgb),
     REGISTER_SCALE_BLIT(ByteGray, Ushort565Rgb),
     REGISTER_SCALE_BLIT(ByteIndexed, Ushort565Rgb),
@@ -121,7 +121,7 @@ NativePrimitive Ushort565RgbPrimitives[] = {
 jboolean RegisterUshort565Rgb(JNIEnv *env)
 {
     return RegisterPrimitives(env, Ushort565RgbPrimitives,
-                              ArraySize(Ushort565RgbPrimitives));
+			      ArraySize(Ushort565RgbPrimitives));
 }
 
 jint PixelForUshort565Rgb(SurfaceDataRasInfo *pRasInfo, jint rgb)
@@ -183,4 +183,4 @@ DEFINE_ALPHA_MASKBLIT(IntRgb, Ushort565Rgb, 4ByteArgb)
 
 DEFINE_SOLID_DRAWGLYPHLISTAA(Ushort565Rgb, 3ByteRgb)
 
-DEFINE_SOLID_DRAWGLYPHLISTLCD(Ushort565Rgb, 3ByteRgb)
+DEFINE_SOLID_DRAWGLYPHLISTLCD(Ushort565Rgb, 3ByteRgb) 

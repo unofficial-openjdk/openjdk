@@ -68,12 +68,14 @@ PLATFORM_INCLUDE      = $(INCLUDEDIR)/$(PLATFORM_INCLUDE_NAME)
 
 # The following DLL's are considered MS runtime libraries and should
 #     not to be REBASEd, see deploy/make/common/Release.gmk.
+#     unicows.dll: Signed images cannot be rebased in VS2003
 #     msvcrt.dll, msvcr71.dll: Microsoft runtimes
 MS_RUNTIME_LIBRARIES = msvcrt.dll
 ifeq ($(ARCH_DATA_MODEL), 32)
   ifeq ($(COMPILER_VERSION), VS2003)
     MS_RUNTIME_LIBRARIES += msvcr71.dll
   endif
+  MS_RUNTIME_LIBRARIES += unicows.dll
 endif
 
 

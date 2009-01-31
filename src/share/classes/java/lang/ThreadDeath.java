@@ -43,6 +43,7 @@ package java.lang;
  * "normal occurrence", because many applications catch all
  * occurrences of {@code Exception} and then discard the exception.
  *
+ * @version %I%, %G%
  * @since   JDK1.0
  */
 

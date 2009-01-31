@@ -53,7 +53,7 @@ fileOpen(JNIEnv *env, jobject this, jstring path, jfieldID fid, int flags)
 
 
 void
-fileClose(JNIEnv *env, jobject this, jfieldID fid)
+fileClose(JNIEnv *env, jobject this, jfieldID fid) 
 {
     FD fd = GET_FD(this, fid);
     if (fd == -1) {
@@ -61,9 +61,9 @@ fileClose(JNIEnv *env, jobject this, jfieldID fid)
     }
 
     /* Set the fd to -1 before closing it so that the timing window
-     * of other threads using the wrong fd (closed but recycled fd,
-     * that gets re-opened with some other filename) is reduced.
-     * Practically the chance of its occurance is low, however, we are
+     * of other threads using the wrong fd (closed but recycled fd, 
+     * that gets re-opened with some other filename) is reduced. 
+     * Practically the chance of its occurance is low, however, we are 
      * taking extra precaution over here.
      */
     SET_FD(this, -1, fid);
@@ -74,17 +74,17 @@ fileClose(JNIEnv *env, jobject this, jfieldID fid)
      * just redirect these file descriptors to /dev/null.
      */
     if (fd >= STDIN_FILENO && fd <= STDERR_FILENO) {
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull < 0) {
-            SET_FD(this, fd, fid); // restore fd
+	int devnull = open("/dev/null", O_WRONLY);
+	if (devnull < 0) {
+	    SET_FD(this, fd, fid); // restore fd
             JNU_ThrowIOExceptionWithLastError(env, "open /dev/null failed");
-        } else {
-            dup2(devnull, fd);
+	} else {
+	    dup2(devnull, fd);
             close(devnull);
-        }
+	}
     } else if (JVM_Close(fd) == -1) {
-            SET_FD(this, fd, fid); // restore fd
-            printf("JVM_Close returned -1\n");
+	    SET_FD(this, fd, fid); // restore fd
+	    printf("JVM_Close returned -1\n");
             JNU_ThrowIOExceptionWithLastError(env, "close failed");
     }
 }

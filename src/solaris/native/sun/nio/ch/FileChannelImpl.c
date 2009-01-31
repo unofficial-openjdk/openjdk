@@ -35,7 +35,7 @@
 #include "nio_util.h"
 #include <dlfcn.h>
 
-static jfieldID chan_fd;        /* jobject 'fd' in sun.io.FileChannelImpl */
+static jfieldID chan_fd;	/* jobject 'fd' in sun.io.FileChannelImpl */
 
 #ifdef __solaris__
 typedef struct sendfilevec64 {
@@ -61,7 +61,7 @@ typedef ssize_t sendfile64_func(int out_fd, int in_fd, off64_t *offset, size_t c
 sendfile64_func* my_sendfile64_func = NULL;
 #endif
 
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_sun_nio_ch_FileChannelImpl_initIDs(JNIEnv *env, jclass clazz)
 {
     jlong pageSize = sysconf(_SC_PAGESIZE);
@@ -84,9 +84,9 @@ static jlong
 handle(JNIEnv *env, jlong rv, char *msg)
 {
     if (rv >= 0)
-        return rv;
+	return rv;
     if (errno == EINTR)
-        return IOS_INTERRUPTED;
+	return IOS_INTERRUPTED;
     JNU_ThrowIOExceptionWithLastError(env, msg);
     return IOS_THROWN;
 }
@@ -94,7 +94,7 @@ handle(JNIEnv *env, jlong rv, char *msg)
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
-                                     jint prot, jlong off, jlong len)
+				     jint prot, jlong off, jlong len)
 {
     void *mapAddress = 0;
     jobject fdo = (*env)->GetObjectField(env, this, chan_fd);
@@ -122,41 +122,41 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
         off);                 /* Offset into file */
 
     if (mapAddress == MAP_FAILED) {
-        if (errno == ENOMEM) {
-            JNU_ThrowOutOfMemoryError(env, "Map failed");
-            return IOS_THROWN;
-        }
-        return handle(env, -1, "Map failed");
+	if (errno == ENOMEM) {
+	    JNU_ThrowOutOfMemoryError(env, "Map failed");
+	    return IOS_THROWN;
+	}
+	return handle(env, -1, "Map failed");
     }
 
-    return ((jlong) (unsigned long) mapAddress);
+    return ((jlong) (unsigned long) mapAddress);  
 }
 
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_FileChannelImpl_unmap0(JNIEnv *env, jobject this,
-                                       jlong address, jlong len)
+				       jlong address, jlong len)
 {
     void *a = (void *)jlong_to_ptr(address);
     return handle(env,
-                  munmap(a, (size_t)len),
-                  "Unmap failed");
+		  munmap(a, (size_t)len),
+		  "Unmap failed");
 }
 
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_FileChannelImpl_truncate0(JNIEnv *env, jobject this,
-                                          jobject fdo, jlong size)
+					  jobject fdo, jlong size)
 {
     return handle(env,
-                  ftruncate64(fdval(env, fdo), size),
-                  "Truncation failed");
+		  ftruncate64(fdval(env, fdo), size),
+		  "Truncation failed");
 }
 
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_FileChannelImpl_force0(JNIEnv *env, jobject this,
-                                       jobject fdo, jboolean md)
+				       jobject fdo, jboolean md)
 {
     jint fd = fdval(env, fdo);
     int result = 0;
@@ -172,7 +172,7 @@ Java_sun_nio_ch_FileChannelImpl_force0(JNIEnv *env, jobject this,
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileChannelImpl_position0(JNIEnv *env, jobject this,
-                                          jobject fdo, jlong offset)
+					  jobject fdo, jlong offset)
 {
     jint fd = fdval(env, fdo);
     jlong result = 0;
@@ -192,7 +192,7 @@ Java_sun_nio_ch_FileChannelImpl_size0(JNIEnv *env, jobject this, jobject fdo)
     struct stat64 fbuf;
 
     if (fstat64(fdval(env, fdo), &fbuf) < 0)
-        return handle(env, -1, "Size failed");
+	return handle(env, -1, "Size failed");
     return fbuf.st_size;
 }
 
@@ -211,9 +211,9 @@ Java_sun_nio_ch_FileChannelImpl_close0(JNIEnv *env, jobject this, jobject fdo)
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileChannelImpl_transferTo0(JNIEnv *env, jobject this,
-                                            jint srcFD,
-                                            jlong position, jlong count,
-                                            jint dstFD)
+					    jint srcFD,
+					    jlong position, jlong count,
+					    jint dstFD)
 {
 #ifdef __linux__
     jlong max = (jlong)java_lang_Integer_MAX_VALUE;
@@ -221,12 +221,12 @@ Java_sun_nio_ch_FileChannelImpl_transferTo0(JNIEnv *env, jobject this,
 
     if (my_sendfile64_func == NULL) {
         off_t offset;
-        if (position > max)
+        if (position > max) 
             return IOS_UNSUPPORTED_CASE;
         if (count > max)
             count = max;
         offset = (off_t)position;
-        n = sendfile(dstFD, srcFD, &offset, (size_t)count);
+        n = sendfile(dstFD, srcFD, &offset, (size_t)count); 
     } else {
         off64_t offset = (off64_t)position;
         n = (*my_sendfile64_func)(dstFD, srcFD, &offset, (size_t)count);
@@ -239,7 +239,7 @@ Java_sun_nio_ch_FileChannelImpl_transferTo0(JNIEnv *env, jobject this,
         if (errno == EINTR) {
             return IOS_INTERRUPTED;
         }
-        JNU_ThrowIOExceptionWithLastError(env, "Transfer failed");
+	JNU_ThrowIOExceptionWithLastError(env, "Transfer failed");
         return IOS_THROWN;
     }
     return n;
@@ -260,20 +260,20 @@ Java_sun_nio_ch_FileChannelImpl_transferTo0(JNIEnv *env, jobject this,
 
         result = (*my_sendfile_func)(dstFD, &sfv, 1, &numBytes);
 
-        /* Solaris sendfilev() will return -1 even if some bytes have been
-         * transferred, so we check numBytes first.
-         */
-        if (numBytes > 0)
-            return numBytes;
+	/* Solaris sendfilev() will return -1 even if some bytes have been
+	 * transferred, so we check numBytes first.
+	 */
+	if (numBytes > 0)
+	    return numBytes;
         if (result < 0) {
-            if (errno == EAGAIN)
-                return IOS_UNAVAILABLE;
+	    if (errno == EAGAIN)
+		return IOS_UNAVAILABLE;
             if ((errno == EINVAL) && ((ssize_t)count >= 0))
                 return IOS_UNSUPPORTED_CASE;
-            if (errno == EINTR)
-                return IOS_INTERRUPTED;
+	    if (errno == EINTR)
+		return IOS_INTERRUPTED;
             JNU_ThrowIOExceptionWithLastError(env, "Transfer failed");
-            return IOS_THROWN;
+	    return IOS_THROWN;
         }
         return result;
     }
@@ -307,7 +307,7 @@ Java_sun_nio_ch_FileChannelImpl_lock0(JNIEnv *env, jobject this, jobject fdo,
     if (lockResult < 0) {
         if ((cmd == F_SETLK64) && (errno == EAGAIN))
             return sun_nio_ch_FileChannelImpl_NO_LOCK;
-        if (errno == EINTR)
+	if (errno == EINTR)
             return sun_nio_ch_FileChannelImpl_INTERRUPTED;
         JNU_ThrowIOExceptionWithLastError(env, "Lock failed");
     }

@@ -36,7 +36,7 @@ import java.io.IOException;
 public class FinalizeShdCallClose {
 
     static final String FILE_NAME = "empty.txt";
-
+    
     public static class MyStream extends FileInputStream {
         private boolean closed = false;
 
@@ -68,12 +68,12 @@ public class FinalizeShdCallClose {
 
     /* standalone interface */
     public static void main(String argv[]) throws Exception {
-
-        File inFile= new File(System.getProperty("test.dir", "."), FILE_NAME);
+       
+        File inFile= new File(System.getProperty("test.dir", "."), FILE_NAME); 
         inFile.createNewFile();
         inFile.deleteOnExit();
 
-        String name = inFile.getPath();
+	String name = inFile.getPath();
         MyStream ms = null;
         try {
             ms = new MyStream(name);
@@ -84,7 +84,7 @@ public class FinalizeShdCallClose {
         ms.finalize();
         if (!ms.isClosed()) {
             throw new Exception("MyStream.close() method is not called");
-        }
+	}
         System.out.println("OK");
     }
 }

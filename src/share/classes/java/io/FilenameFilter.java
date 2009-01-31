@@ -34,6 +34,7 @@ package java.io;
  *
  * @author  Arthur van Hoff
  * @author  Jonathan Payne
+ * @version %I%, %G%
  * @see     java.awt.FileDialog#setFilenameFilter(java.io.FilenameFilter)
  * @see     java.io.File
  * @see     java.io.File#list(java.io.FilenameFilter)

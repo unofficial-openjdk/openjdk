@@ -42,8 +42,8 @@ public class WindowPropertyGetter {
     private final boolean auto_delete;
     private final long type;
     private boolean executed = false;
-    public WindowPropertyGetter(long window, XAtom property, long offset,
-                                long length, boolean auto_delete, long type)
+    public WindowPropertyGetter(long window, XAtom property, long offset, 
+                                long length, boolean auto_delete, long type) 
     {
         if (property.getAtom() == 0) {
             throw new IllegalArgumentException("Property ATOM should be initialized first:" + property);
@@ -67,10 +67,10 @@ public class WindowPropertyGetter {
                                                                                  actual_format, nitems_ptr, bytes_after}, new long[] {data}));
     }
     UnsafeXDisposerRecord disposer;
-    public WindowPropertyGetter(long window, XAtom property, long offset,
-                                long length, boolean auto_delete, XAtom type)
+    public WindowPropertyGetter(long window, XAtom property, long offset, 
+                                long length, boolean auto_delete, XAtom type) 
     {
-        this(window, property, offset, length, auto_delete, type.getAtom());
+        this(window, property, offset, length, auto_delete, type.getAtom());        
     }
     public int execute() {
         return execute(null);
@@ -210,16 +210,16 @@ public class WindowPropertyGetter {
         Native.putLong(data, unsafe.allocateMemory(getDataLength()));
         XlibWrapper.memcpy(getData(), entry.getData(), getDataLength());
     }
-
+    
     void cacheProperty() {
         XPropertyCache.storeCache(
-            new XPropertyCache.PropertyCacheEntry(getActualFormat(),
-                                                  getNumberOfItems(),
-                                                  getBytesAfter(),
+            new XPropertyCache.PropertyCacheEntry(getActualFormat(), 
+                                                  getNumberOfItems(), 
+                                                  getBytesAfter(), 
                                                   getData(),
                                                   getDataLength()),
             window,
             property);
     }
-
+    
 }

@@ -36,6 +36,7 @@ import sun.jvmstat.monitor.event.VmListener;
  * maintenance of the connection to the target.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public interface MonitoredVm {

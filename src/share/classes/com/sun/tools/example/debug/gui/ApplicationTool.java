@@ -36,38 +36,38 @@ public class ApplicationTool extends JPanel {
 
     private Environment env;
     private ExecutionManager runtime;
-
+    
     private TypeScript script;
 
     private static final String PROMPT = "Input:";
 
     public ApplicationTool(Environment env) {
 
-        super(new BorderLayout());
+	super(new BorderLayout());
 
-        this.env = env;
-        this.runtime = env.getExecutionManager();
+	this.env = env;
+	this.runtime = env.getExecutionManager();
 
-        this.script = new TypeScript(PROMPT, false); // No implicit echo.
-        this.add(script);
+	this.script = new TypeScript(PROMPT, false); // No implicit echo.
+	this.add(script);
 
-        script.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                runtime.sendLineToApplication(script.readln());
-            }
-        });
+	script.addActionListener(new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		runtime.sendLineToApplication(script.readln());
+	    }
+	});
 
-        runtime.addApplicationEchoListener(new TypeScriptOutputListener(script));
-        runtime.addApplicationOutputListener(new TypeScriptOutputListener(script));
-        runtime.addApplicationErrorListener(new TypeScriptOutputListener(script));
+	runtime.addApplicationEchoListener(new TypeScriptOutputListener(script));
+	runtime.addApplicationOutputListener(new TypeScriptOutputListener(script));
+	runtime.addApplicationErrorListener(new TypeScriptOutputListener(script));
 
-        //### should clean up on exit!
+	//### should clean up on exit!
 
     }
 
     /******
     public void setFont(Font f) {
-        script.setFont(f);
+	script.setFont(f);
     }
     ******/
 

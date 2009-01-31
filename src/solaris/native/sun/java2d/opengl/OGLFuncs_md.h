@@ -86,7 +86,7 @@ typedef void * (GLAPIENTRY *glXGetProcAddressType)(const char *);
  * seemed unnecessary (i.e. dlsym() was working fine), but upon further
  * reading I think we should use glXGetProcAddress() in favor of dlsym(),
  * not only to work around this "bug", but also to be safer going forward.
- *
+ * 
  * Just to complicate matters, glXGetProcAddress() was proposed to be added
  * into the GLX 1.4 spec, which is still (as yet) unfinalized.  Sun's OGL 1.3
  * implementation reports its GLX version as 1.4, and therefore includes

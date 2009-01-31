@@ -34,6 +34,7 @@ import java.io.Serializable;
  * Tests if an object can truly be serialized by serializing it to a null
  * OutputStream.
  *
+ * @version %I%, %G%
  * @since 1.4
  */
 final class SerializationTester {
@@ -57,7 +58,7 @@ final class SerializationTester {
         } catch (IOException e) {
             return false;
         } finally {
-            // Fix for 4503661.
+            // Fix for 4503661. 
             // Reset the stream so that it doesn't keep a reference to the
             // written object.
             try {

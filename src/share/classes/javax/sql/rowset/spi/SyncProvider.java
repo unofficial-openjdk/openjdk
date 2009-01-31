@@ -28,53 +28,53 @@ package javax.sql.rowset.spi;
 import javax.sql.*;
 
 /**
- * The synchronization mechanism that provides reader/writer capabilities for
+ * The synchronization mechanism that provides reader/writer capabilities for 
  * disconnected <code>RowSet</code> objects.
  * A <code>SyncProvider</code> implementation is a class that extends the
  * <code>SyncProvider</code> abstract class.
  * <P>
  * A <code>SyncProvider</code> implementation is
  * identified by a unique ID, which is its fully qualified class name.
- * This name must be registered with the
- * <code>SyncFactory</code> SPI, thus making the implementation available to
- * all <code>RowSet</code> implementations.
+ * This name must be registered with the 
+ * <code>SyncFactory</code> SPI, thus making the implementation available to 
+ * all <code>RowSet</code> implementations. 
  * The factory mechanism in the reference implementation uses this name to instantiate
  * the implementation, which can then provide a <code>RowSet</code> object with its
  * reader (a <code>javax.sql.RowSetReader</code> object) and its writer (a
  * <code>javax.sql.RowSetWriter</code> object).
  * <P>
  * The Jdbc <code>RowSet</code> Implementations specification provides two
- * reference implementations of the <code>SyncProvider</code> abstract class:
- * <code>RIOptimisticProvider</code> and <code>RIXMLProvider</code>.
+ * reference implementations of the <code>SyncProvider</code> abstract class: 
+ * <code>RIOptimisticProvider</code> and <code>RIXMLProvider</code>. 
  * The <code>RIOptimisticProvider</code> can set any <code>RowSet</code>
- * implementation with a <code>RowSetReader</code> object and a
+ * implementation with a <code>RowSetReader</code> object and a 
  * <code>RowSetWriter</code> object.  However, only the <code>RIXMLProvider</code>
  * implementation can set an <code>XmlReader</code> object and an
  * <code>XmlWriter</code> object. A <code>WebRowSet</code> object uses the
  * <code>XmlReader</code> object to read data in XML format to populate itself with that
  * data.  It uses the <code>XmlWriter</code> object to write itself to a stream or
- * <code>java.io.Writer</code> object in XML format.
+ * <code>java.io.Writer</code> object in XML format. 
  * <P>
  * <h3>1.0 Naming Convention for Implementations</h3>
  * As a guide  to naming <code>SyncProvider</code>
  * implementations, the following should be noted:
  * <UL>
- * <li>The name for a <code>SyncProvider</code> implementation
- * is its fully qualified class name.
+ * <li>The name for a <code>SyncProvider</code> implementation 
+ * is its fully qualified class name.  
  * <li>It is recommended that vendors supply a
  * <code>SyncProvider</code> implementation in a package named <code>providers</code>.
  * </UL>
  * <p>
- * For instance, if a vendor named Fred, Inc. offered a
+ * For instance, if a vendor named Fred, Inc. offered a 
  * <code>SyncProvider</code> implementation, you could have the following:
  * <PRE>
- *     Vendor name:  Fred, Inc.
+ *     Vendor name:  Fred, Inc.     
  *     Domain name of vendor:  com.fred
  *     Package name:  com.fred.providers
  *     SyncProvider implementation class name:  HighAvailabilityProvider
  *
  *     Fully qualified class name of SyncProvider implementation:
- *                        com.fred.providers.HighAvailabilityProvider
+ *                        com.fred.providers.HighAvailabilityProvider 
  * </PRE>
  * <P>
  * The following line of code uses the fully qualified name to register
@@ -84,41 +84,41 @@ import javax.sql.*;
  *                          "com.fred.providers.HighAvailabilityProvider");
  * </PRE>
  * <P>
- * The default <code>SyncProvider</code> object provided with the reference
+ * The default <code>SyncProvider</code> object provided with the reference 
  * implementation uses the following name:
  * <pre>
- *     com.sun.rowset.providers.RIOptimisticProvider
+ *     com.sun.rowset.providers.RIOptimisticProvider 
  * </pre>
  * <p>
- * A vendor can register a <code>SyncProvider</code> implementation class name
+ * A vendor can register a <code>SyncProvider</code> implementation class name 
  * with Sun Microsystems, Inc. by sending email to jdbc@sun.com.
- * Sun will maintain a database listing the
+ * Sun will maintain a database listing the 
  * available <code>SyncProvider</code> implementations for use with compliant
  * <code>RowSet</code> implementations.  This database will be similar to the
  * one already maintained to list available JDBC drivers.
  * <P>
  * Vendors should refer to the reference implementation synchronization
- * providers for additional guidance on how to implement a new
+ * providers for additional guidance on how to implement a new 
  * <code>SyncProvider</code> implementation.
- *
+ * 
  * <h3>2.0 How a <code>RowSet</code> Object Gets Its Provider</h3>
- *
- * A disconnected <code>Rowset</code> object may get access to a
+ * 
+ * A disconnected <code>Rowset</code> object may get access to a 
  * <code>SyncProvider</code> object in one of the following two ways:
  * <UL>
  *  <LI>Using a constructor<BR>
  *      <PRE>
  *       CachedRowSet crs = new CachedRowSet(
- *                  "com.fred.providers.HighAvailabilitySyncProvider");
+ *                  "com.fred.providers.HighAvailabilitySyncProvider"); 
  *      </PRE>
  *  <LI>Using the <code>setSyncProvider</code> method
  *      <PRE>
- *       CachedRowSet crs = new CachedRowSet();
- *       crs.setSyncProvider("com.fred.providers.HighAvailabilitySyncProvider");
+ *       CachedRowSet crs = new CachedRowSet(); 
+ *       crs.setSyncProvider("com.fred.providers.HighAvailabilitySyncProvider"); 
  *      </PRE>
 
  * </UL>
- * <p>
+ * <p> 
  * By default, the reference implementations of the <code>RowSet</code> synchronization
  * providers are always available to the Java platform.
  * If no other pluggable synchronization providers have been correctly
@@ -126,21 +126,21 @@ import javax.sql.*;
  * an instance of the default <code>SyncProvider</code> reference implementation.
  * Thus, in the preceding code fragment, if no implementation named
  * <code>com.fred.providers.HighAvailabilitySyncProvider</code> has been
- * registered with the <code>SyncFactory</code> instance, <i>crs</i> will be
+ * registered with the <code>SyncFactory</code> instance, <i>crs</i> will be 
  * assigned the default provider in the reference implementation, which is
- * <code>com.sun.rowset.providers.RIOptimisticProvider</code>.
+ * <code>com.sun.rowset.providers.RIOptimisticProvider</code>. 
  * <p>
  * <h3>3.0 Violations and Synchronization Issues</h3>
  * If an update between a disconnected <code>RowSet</code> object
- * and a data source violates
- * the original query or the underlying data source constraints, this will
- * result in undefined behavior for all disconnected <code>RowSet</code> implementations
- * and their designated <code>SyncProvider</code> implementations.
- * Not defining the behavior when such violations occur offers greater flexibility
+ * and a data source violates 
+ * the original query or the underlying data source constraints, this will 
+ * result in undefined behavior for all disconnected <code>RowSet</code> implementations 
+ * and their designated <code>SyncProvider</code> implementations. 
+ * Not defining the behavior when such violations occur offers greater flexibility 
  * for a <code>SyncProvider</code>
  * implementation to determine its own best course of action.
  * <p>
- * A <code>SyncProvider</code> implementation
+ * A <code>SyncProvider</code> implementation 
  * may choose to implement a specific handler to
  * handle a subset of query violations.
  * However if an original query violation or a more general data source constraint
@@ -149,7 +149,7 @@ import javax.sql.*;
  * objects must throw a <code>SyncProviderException</code>.
  * <p>
  * <h3>4.0 Updatable SQL VIEWs</h3>
- * It is possible for any disconnected or connected <code>RowSet</code> object to be populated
+ * It is possible for any disconnected or connected <code>RowSet</code> object to be populated 
  * from an SQL query that is formulated originally from an SQL <code>VIEW</code>.
  * While in many cases it is possible for an update to be performed to an
  * underlying view, such an update requires additional metadata, which may vary.
@@ -159,8 +159,8 @@ import javax.sql.*;
  * <li><code><b>NONUPDATABLE_VIEW_SYNC</b></code> - Indicates that a <code>SyncProvider</code>
  * implementation does not support synchronization with an SQL <code>VIEW</code> as the
  * underlying source of data for the <code>RowSet</code> object.
- * <li><code><b>UPDATABLE_VIEW_SYNC</b></code> - Indicates that a
- * <code>SyncProvider</code> implementation
+ * <li><code><b>UPDATABLE_VIEW_SYNC</b></code> - Indicates that a 
+ * <code>SyncProvider</code> implementation 
  * supports synchronization with an SQL <code>VIEW</code> as the underlying source
  * of data.
  * </ul>
@@ -174,14 +174,14 @@ import javax.sql.*;
  * <code>SyncProvider</code> objects may be implemented to perform synchronization
  * between a <code>RowSet</code> object and its underlying data source with varying
  * degrees of of care. The first group of constants indicate how synchronization
- * is handled. For example, <code>GRADE_NONE</code> indicates that a
+ * is handled. For example, <code>GRADE_NONE</code> indicates that a 
  * <code>SyncProvider</code> object will not take any care to see what data is
  * valid and will simply write the <code>RowSet</code> data to the data source.
  * <code>GRADE_MODIFIED_AT_COMMIT</code> indicates that the provider will check
  * only modified data for validity.  Other grades check all data for validity
  * or set locks when data is modified or loaded.
  * <OL>
- *  <LI>Constants to indicate the synchronization grade of a
+ *  <LI>Constants to indicate the synchronization grade of a 
  *     <code>SyncProvider</code> object
  *   <UL>
  *    <LI>SyncProvider.GRADE_NONE
@@ -191,12 +191,12 @@ import javax.sql.*;
  *    <LI>SyncProvider.GRADE_LOCK_WHEN_LOADED
  *   </UL>
  *  <LI>Constants to indicate what locks are set on the data source
- *   <UL>
+ *   <UL> 
  *     <LI>SyncProvider.DATASOURCE_NO_LOCK
  *     <LI>SyncProvider.DATASOURCE_ROW_LOCK
  *     <LI>SyncProvider.DATASOURCE_TABLE_LOCK
  *     <LI>SyncProvider.DATASOURCE_DB_LOCK
- *   </UL>
+ *   </UL> 
  *  <LI>Constants to indicate whether a <code>SyncProvider</code> object can
  *       perform updates to an SQL <code>VIEW</code> <BR>
  *       These constants are explained in the preceding section (4.0).
@@ -216,20 +216,20 @@ public abstract class SyncProvider {
     * Creates a default <code>SyncProvider</code> object.
     */
     public SyncProvider() {
-    }
-
+    }       
+    
     /**
-     * Returns the unique identifier for this <code>SyncProvider</code> object.
-     *
+     * Returns the unique identifier for this <code>SyncProvider</code> object. 
+     * 
      * @return a <code>String</code> object with the fully qualified class name of
      *         this <code>SyncProvider</code> object
      */
-    public abstract String getProviderID();
-
+    public abstract String getProviderID();              
+        
     /**
      * Returns a <code>javax.sql.RowSetReader</code> object, which can be used to
      * populate a <code>RowSet</code> object with data.
-     *
+     * 
      * @return a <code>javax.sql.RowSetReader</code> object
      */
     public abstract RowSetReader getRowSetReader();
@@ -238,14 +238,14 @@ public abstract class SyncProvider {
      * Returns a <code>javax.sql.RowSetWriter</code> object, which can be
      * used to write a <code>RowSet</code> object's data back to the
      * underlying data source.
-     *
-     * @return a <code>javax.sql.RowSetWriter</code> object
-     */
-    public abstract RowSetWriter getRowSetWriter();
+     * 
+     * @return a <code>javax.sql.RowSetWriter</code> object 
+     */           
+    public abstract RowSetWriter getRowSetWriter();        
 
     /**
      * Returns a constant indicating the
-     * grade of synchronization a <code>RowSet</code> object can expect from
+     * grade of synchronization a <code>RowSet</code> object can expect from 
      * this <code>SyncProvider</code> object.
      *
      * @return an int that is one of the following constants:
@@ -265,19 +265,19 @@ public abstract class SyncProvider {
      * decreasing the level of optimism it provides for a successful
      * synchronization.
      *
-     * @param datasource_lock one of the following constants indicating the severity
+     * @param datasource_lock one of the following constants indicating the severity 
      *           level of data source lock required:
      * <pre>
      *           SyncProvider.DATASOURCE_NO_LOCK,
      *           SyncProvider.DATASOURCE_ROW_LOCK,
      *           SyncProvider.DATASOURCE_TABLE_LOCK,
-     *           SyncProvider.DATASOURCE_DB_LOCK,
+     *           SyncProvider.DATASOURCE_DB_LOCK,          
      * </pre>
-     * @throws SyncProviderException if an unsupported data source locking level
+     * @throws SyncProviderException if an unsupported data source locking level 
      *           is set.
      * @see #getDataSourceLock
      */
-    public abstract void setDataSourceLock(int datasource_lock)
+    public abstract void setDataSourceLock(int datasource_lock) 
         throws SyncProviderException;
 
     /**
@@ -291,44 +291,44 @@ public abstract class SyncProvider {
      *           SyncProvider.DATASOURCE_NO_LOCK,
      *           SyncProvider.DATASOURCE_ROW_LOCK,
      *           SyncProvider.DATASOURCE_TABLE_LOCK,
-     *           SyncProvider.DATASOURCE_DB_LOCK
+     *           SyncProvider.DATASOURCE_DB_LOCK     
      * </pre>
      * @throws SyncProviderExceptiom if an error occurs determining the data
      *        source locking level.
-     * @see #setDataSourceLock
+     * @see #setDataSourceLock     
 
      */
-    public abstract int getDataSourceLock()
+    public abstract int getDataSourceLock() 
         throws SyncProviderException;
 
     /**
      * Returns whether this <code>SyncProvider</code> implementation
      * can perform synchronization between a <code>RowSet</code> object
-     * and the SQL <code>VIEW</code> in the data source from which
+     * and the SQL <code>VIEW</code> in the data source from which 
      * the <code>RowSet</code> object got its data.
      *
      * @return an <code>int</code> saying whether this <code>SyncProvider</code>
-     *         object supports updating an SQL <code>VIEW</code>; one of the
-     *         following:
+     *         object supports updating an SQL <code>VIEW</code>; one of the 
+     *         following: 
      *            SyncProvider.UPDATABLE_VIEW_SYNC,
      *            SyncProvider.NONUPDATABLE_VIEW_SYNC
      */
     public abstract int supportsUpdatableView();
-
+      
     /**
      * Returns the release version of this <code>SyncProvider</code> instance.
-     *
-     * @return a <code>String</code> detailing the release version of the
+     * 
+     * @return a <code>String</code> detailing the release version of the 
      *     <code>SyncProvider</code> implementation
      */
     public abstract String getVersion();
-
+    
     /**
      * Returns the vendor name of this <code>SyncProvider</code> instance
-     *
+     *     
      * @return a <code>String</code> detailing the vendor name of this
      *     <code>SyncProvider</code> implementation
-     */
+     */ 
     public abstract String getVendor();
 
     /*
@@ -338,7 +338,7 @@ public abstract class SyncProvider {
 
     /**
      * Indicates that no synchronization with the originating data source is
-     * provided. A <code>SyncProvider</code>
+     * provided. A <code>SyncProvider</code> 
      * implementation returning this grade will simply attempt to write
      * updates in the <code>RowSet</code> object to the underlying data
      * source without checking the validity of any data.
@@ -347,7 +347,7 @@ public abstract class SyncProvider {
     public static int GRADE_NONE = 1;
 
     /**
-     * Indicates a low level optimistic synchronization grade with
+     * Indicates a low level optimistic synchronization grade with 
      * respect to the originating data source.
      *
      * A <code>SyncProvider</code> implementation
@@ -357,7 +357,7 @@ public abstract class SyncProvider {
     public static int GRADE_CHECK_MODIFIED_AT_COMMIT = 2;
 
     /**
-     * Indicates a high level optimistic synchronization grade with
+     * Indicates a high level optimistic synchronization grade with 
      * respect to the originating data source.
      *
      * A <code>SyncProvider</code> implementation
@@ -367,25 +367,25 @@ public abstract class SyncProvider {
     public static int GRADE_CHECK_ALL_AT_COMMIT = 3;
 
     /**
-     * Indicates a pessimistic synchronization grade with
+     * Indicates a pessimistic synchronization grade with 
      * respect to the originating data source.
      *
-     * A <code>SyncProvider</code>
+     * A <code>SyncProvider</code> 
      * implementation returning this grade will lock the row in the originating
      * data source.
      */
     public static int GRADE_LOCK_WHEN_MODIFIED = 4;
 
     /**
-     * Indicates the most pessimistic synchronization grade with
-     * respect to the originating
+     * Indicates the most pessimistic synchronization grade with 
+     * respect to the originating 
      * data source. A <code>SyncProvider</code>
      * implementation returning this grade will lock the entire view and/or
-     * table affected by the original statement used to populate a
+     * table affected by the original statement used to populate a 
      * <code>RowSet</code> object.
      */
     public static int GRADE_LOCK_WHEN_LOADED = 5;
-
+    
     /**
      * Indicates that no locks remain on the originating data source. This is the default
      * lock setting for all <code>SyncProvider</code> implementations unless

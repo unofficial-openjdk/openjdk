@@ -46,7 +46,7 @@ public class AppendSB {
             test.append(sb1);
             test.append(sb2);
             test.append(sb3);
-
+        
             if (!test.toString().equals(concatResult))
                 throw new RuntimeException("StringBuffer.append failure");
         }

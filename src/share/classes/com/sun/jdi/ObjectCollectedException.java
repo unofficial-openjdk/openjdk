@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Thrown to indicate that the requested operation cannot be
+ * Thrown to indicate that the requested operation cannot be 
  * completed because the specified object has been garbage collected.
  *
  * @author Gordon Hirsch
@@ -34,10 +34,10 @@ package com.sun.jdi;
  */
 public class ObjectCollectedException extends RuntimeException {
     public ObjectCollectedException() {
-        super();
+	super();
     }
 
     public ObjectCollectedException(String s) {
-        super(s);
+	super(s);
     }
 }

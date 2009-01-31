@@ -44,7 +44,7 @@ class JDMInformCommunity extends SimpleNode {
     public static Node jjtCreate(Parser p, int id) {
         return new JDMInformCommunity(p, id);
     }
-
+  
     public String getCommunity() {
         return community;
     }

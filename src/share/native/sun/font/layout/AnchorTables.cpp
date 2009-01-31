@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)AnchorTables.cpp	1.13 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -124,3 +125,6 @@ void Format3AnchorTable::getAnchor(const LEFontInstance *fontInstance, LEPoint &
 
     fontInstance->pixelsToUnits(pixels, anchor);
 }
+
+
+

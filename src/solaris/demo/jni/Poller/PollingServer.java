@@ -90,25 +90,25 @@ public class PollingServer
       Socket ctrlSock = skMain.accept();
 
       BufferedReader ctrlReader =
-        new BufferedReader(new InputStreamReader(ctrlSock.getInputStream()));
+	new BufferedReader(new InputStreamReader(ctrlSock.getInputStream()));
       String ctrlString = ctrlReader.readLine();
       bytesToRead = Integer.valueOf(ctrlString).intValue();
       ctrlString = ctrlReader.readLine();
       totalConn = Integer.valueOf(ctrlString).intValue();
 
       System.out.println("Receiving " + bytesToRead + " bytes from " +
-                         totalConn + " client connections");
-
+			 totalConn + " client connections");
+      
       timestart = System.currentTimeMillis();
 
       /*
        * Start the consumer threads to read data.
        */
       for (int consumerThread = 0;
-           consumerThread < concurrency; consumerThread++ ) {
-        new Consumer(consumerThread).start();
+	   consumerThread < concurrency; consumerThread++ ) {
+	new Consumer(consumerThread).start();
       }
-
+      
       /*
        * Take connections, read Data
        */
@@ -116,74 +116,74 @@ public class PollingServer
 
       while ( bytesRead < bytesToRead ) {
 
-        int loopWaits=0;
-        while (eventsToProcess > 0) {
-          synchronized (eventSync) {
-            loopWaits++;
-            if (eventsToProcess <= 0) break;
-            try { eventSync.wait(); } catch (Exception e) {e.printStackTrace();};
-          }
-        }
-        if (loopWaits > 1)
-          System.out.println("Done waiting...loops = " + loopWaits +
-                             " events " + numEvents +
-                             " bytes read : " + bytesRead );
+	int loopWaits=0;
+	while (eventsToProcess > 0) {
+	  synchronized (eventSync) {
+	    loopWaits++;
+	    if (eventsToProcess <= 0) break;
+	    try { eventSync.wait(); } catch (Exception e) {e.printStackTrace();};
+	  }
+	}
+	if (loopWaits > 1)
+	  System.out.println("Done waiting...loops = " + loopWaits +
+			     " events " + numEvents +
+			     " bytes read : " + bytesRead );
 
-        if (bytesRead >= bytesToRead) break; // may be done!
+	if (bytesRead >= bytesToRead) break; // may be done!
 
-        /*
-         * Wait for events
-         */
-        numEvents = Mux.waitMultiple(100, fds, revents);
-        synchronized (eventSync) {
-          eventsToProcess = numEvents;
-        }
-        /*
-         * Process all the events we got from Mux.waitMultiple
-         */
-        int cnt = 0;
-        while ( (cnt < numEvents) && (bytesRead < bytesToRead) ) {
-          int fd = fds[cnt];
-
-          if (revents[cnt] == Poller.POLLIN) {
-            if (fd == serverFd) {
-              /*
-               * New connection coming in on the ServerSocket
-               * Add the socket to the Mux, keep track of mapping
-               * the fdval returned by Mux.add to the connection.
-               */
-              sockArr[connects] = skMain.accept();
-              instr[connects] = sockArr[connects].getInputStream();
-              int fdval = Mux.add(sockArr[connects], Poller.POLLIN);
-              mapping[fdval] = connects;
-              synchronized(eventSync) {
-                eventsToProcess--; // just processed this one!
-              }
-              connects++;
-            } else {
-              /*
-               * We've got data from this client connection.
-               * Put it on the queue for the consumer threads to process.
-               */
-              linkedQ.put(new Integer(fd));
-            }
-          } else {
-            System.out.println("Got revents[" + cnt + "] == " + revents[cnt]);
-          }
-          cnt++;
-        }
+	/*
+	 * Wait for events
+	 */
+	numEvents = Mux.waitMultiple(100, fds, revents);
+	synchronized (eventSync) {
+	  eventsToProcess = numEvents;
+	}
+	/*
+	 * Process all the events we got from Mux.waitMultiple
+	 */
+	int cnt = 0;
+	while ( (cnt < numEvents) && (bytesRead < bytesToRead) ) {
+	  int fd = fds[cnt];
+	  
+	  if (revents[cnt] == Poller.POLLIN) {
+	    if (fd == serverFd) {
+	      /*
+	       * New connection coming in on the ServerSocket
+	       * Add the socket to the Mux, keep track of mapping
+	       * the fdval returned by Mux.add to the connection.
+	       */
+	      sockArr[connects] = skMain.accept();
+	      instr[connects] = sockArr[connects].getInputStream();
+	      int fdval = Mux.add(sockArr[connects], Poller.POLLIN);
+	      mapping[fdval] = connects;
+	      synchronized(eventSync) {
+		eventsToProcess--; // just processed this one!
+	      }
+	      connects++;
+	    } else {
+	      /*
+	       * We've got data from this client connection.
+	       * Put it on the queue for the consumer threads to process.
+	       */
+	      linkedQ.put(new Integer(fd));
+	    }
+	  } else {
+	    System.out.println("Got revents[" + cnt + "] == " + revents[cnt]);
+	  }
+	  cnt++;
+	}
       }
       timestop = System.currentTimeMillis();
       System.out.println("Time for all reads (" + totalConn +
-                         " sockets) : " + (timestop-timestart));
+			 " sockets) : " + (timestop-timestart));
 
       // Tell the client it can now go away
       byte[] buff = new byte[BYTESPEROP];
       ctrlSock.getOutputStream().write(buff,0,BYTESPEROP);
-
+      
       // Tell the cunsumer threads they can exit.
       for (int cThread = 0; cThread < concurrency; cThread++ ) {
-        linkedQ.put(new Integer(-1));
+	linkedQ.put(new Integer(-1));
       }
     } catch (Exception exc) { exc.printStackTrace(); }
   }
@@ -219,37 +219,37 @@ public class PollingServer
 
       InputStream instream;
       while (bytesRead < bytesToRead) {
-        try {
-          Integer Fd = (Integer) linkedQ.take();
-          int fd = Fd.intValue();
-          if (fd == -1) break; /* got told we could exit */
+	try {
+	  Integer Fd = (Integer) linkedQ.take();
+	  int fd = Fd.intValue();
+	  if (fd == -1) break; /* got told we could exit */
 
-          /*
-           * We have to map the fd value returned from waitMultiple
-           * to the actual input stream associated with that fd.
-           * Take a look at how the Mux.add() was done to see how
-           * we stored that.
-           */
-          int map = mapping[fd];
-          instream = instr[map];
-          bytes = instream.read(buff,0,BYTESPEROP);
-        } catch (Exception e) { System.out.println(e.toString()); }
+	  /*
+	   * We have to map the fd value returned from waitMultiple
+	   * to the actual input stream associated with that fd.
+	   * Take a look at how the Mux.add() was done to see how
+	   * we stored that.
+	   */
+	  int map = mapping[fd];
+	  instream = instr[map];
+	  bytes = instream.read(buff,0,BYTESPEROP);
+	} catch (Exception e) { System.out.println(e.toString()); }
 
-        if (bytes > 0) {
-          /*
-           * Any real server would do some synchronized and some
-           * unsynchronized work on behalf of the client, and
-           * most likely send some data back...but this is a
-           * gross oversimplification.
-           */
-          synchronized(eventSync) {
-            bytesRead += bytes;
-            eventsToProcess--;
-            if (eventsToProcess <= 0) {
-              eventSync.notify();
-            }
-          }
-        }
+	if (bytes > 0) {
+	  /*
+	   * Any real server would do some synchronized and some
+	   * unsynchronized work on behalf of the client, and
+	   * most likely send some data back...but this is a
+	   * gross oversimplification.
+	   */
+	  synchronized(eventSync) {
+	    bytesRead += bytes;
+	    eventsToProcess--;
+	    if (eventsToProcess <= 0) {
+	      eventSync.notify();
+	    }
+	  }
+	}
       }
     }
   }

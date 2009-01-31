@@ -40,19 +40,19 @@ import java.awt.image.ColorModel;
  *
  * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans
  */
-final class RadialGradientPaintContext extends MultipleGradientPaintContext {
-
+final class RadialGradientPaintContext extends MultipleGradientPaintContext {  
+    
     /** True when (focus == center).  */
     private boolean isSimpleFocus = false;
 
     /** True when (cycleMethod == NO_CYCLE). */
     private boolean isNonCyclic = false;
-
+       
     /** Radius of the outermost circle defining the 100% gradient stop. */
-    private float radius;
-
+    private float radius;   
+    
     /** Variables representing center and focus points. */
-    private float centerX, centerY, focusX, focusY;
+    private float centerX, centerY, focusX, focusY;     
 
     /** Radius of the gradient circle squared. */
     private float radiusSq;
@@ -67,34 +67,34 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
      * This value represents the solution when focusX == X.  It is called
      * trivial because it is easier to calculate than the general case.
      */
-    private float trivial;
-
+    private float trivial;       
+    
     /** Amount for offset when clamping focus. */
     private static final float SCALEBACK = .99f;
-
-    /**
+    
+    /** 
      * Constructor for RadialGradientPaintContext.
      *
      * @param paint the {@code RadialGradientPaint} from which this context
      *              is created
      * @param cm the {@code ColorModel} that receives
      *           the {@code Paint} data (this is used only as a hint)
-     * @param deviceBounds the device space bounding box of the
+     * @param deviceBounds the device space bounding box of the 
      *                     graphics primitive being rendered
-     * @param userBounds the user space bounding box of the
+     * @param userBounds the user space bounding box of the 
      *                   graphics primitive being rendered
      * @param t the {@code AffineTransform} from user
-     *          space into device space (gradientTransform should be
-     *          concatenated with this)
+     *          space into device space (gradientTransform should be 
+     *          concatenated with this)    
      * @param hints the hints that the context object uses to choose
      *              between rendering alternatives
-     * @param cx the center X coordinate in user space of the circle defining
+     * @param cx the center X coordinate in user space of the circle defining 
      *           the gradient.  The last color of the gradient is mapped to
      *           the perimeter of this circle.
-     * @param cy the center Y coordinate in user space of the circle defining
+     * @param cy the center Y coordinate in user space of the circle defining 
      *           the gradient.  The last color of the gradient is mapped to
      *           the perimeter of this circle.
-     * @param r the radius of the circle defining the extents of the
+     * @param r the radius of the circle defining the extents of the 
      *          color gradient
      * @param fx the X coordinate in user space to which the first color
      *           is mapped
@@ -103,7 +103,7 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
      * @param fractions the fractions specifying the gradient distribution
      * @param colors the gradient colors
      * @param cycleMethod either NO_CYCLE, REFLECT, or REPEAT
-     * @param colorSpace which colorspace to use for interpolation,
+     * @param colorSpace which colorspace to use for interpolation, 
      *                   either SRGB or LINEAR_RGB
      */
     RadialGradientPaintContext(RadialGradientPaint paint,
@@ -119,20 +119,20 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
                                Color[] colors,
                                CycleMethod cycleMethod,
                                ColorSpaceType colorSpace)
-    {
+    {               
         super(paint, cm, deviceBounds, userBounds, t, hints,
               fractions, colors, cycleMethod, colorSpace);
 
         // copy some parameters
         centerX = cx;
-        centerY = cy;
+        centerY = cy;        
         focusX = fx;
         focusY = fy;
         radius = r;
-
+        
         this.isSimpleFocus = (focusX == centerX) && (focusY == centerY);
         this.isNonCyclic = (cycleMethod == CycleMethod.NO_CYCLE);
-
+        
         // for use in the quadractic equation
         radiusSq = radius * radius;
 
@@ -155,14 +155,14 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
         // in cyclicCircularGradientFillRaster()
         trivial = (float)Math.sqrt(radiusSq - (dX * dX));
 
-        // constant parts of X, Y user space coordinates
+        // constant parts of X, Y user space coordinates 
         constA = a02 - centerX;
         constB = a12 - centerY;
 
         // constant second order delta for simple loop
         gDeltaDelta = 2 * ( a00 *  a00 +  a10 *  a10) / radiusSq;
-    }
-
+    }   
+    
     /**
      * Return a Raster containing the colors generated for the graphics
      * operation.
@@ -178,14 +178,14 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
         } else {
             cyclicCircularGradientFillRaster(pixels, off, adjust, x, y, w, h);
         }
-    }
-
+    }    
+    
     /**
-     * This code works in the simplest of cases, where the focus == center
-     * point, the gradient is noncyclic, and the gradient lookup method is
+     * This code works in the simplest of cases, where the focus == center 
+     * point, the gradient is noncyclic, and the gradient lookup method is 
      * fast (single array index, no conversion necessary).
-     */
-    private void simpleNonCyclicFillRaster(int pixels[], int off, int adjust,
+     */         
+    private void simpleNonCyclicFillRaster(int pixels[], int off, int adjust, 
                                            int x, int y, int w, int h)
     {
         /* We calculate sqrt(X^2 + Y^2) relative to the radius
@@ -310,14 +310,14 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
 
     /**
      * Fill the raster, cycling the gradient colors when a point falls outside
-     * of the perimeter of the 100% stop circle.
-     *
+     * of the perimeter of the 100% stop circle.          
+     * 
      * This calculation first computes the intersection point of the line
      * from the focus through the current point in the raster, and the
      * perimeter of the gradient circle.
-     *
+     * 
      * Then it determines the percentage distance of the current point along
-     * that line (focus is 0%, perimeter is 100%).
+     * that line (focus is 0%, perimeter is 100%). 
      *
      * Equation of a circle centered at (a,b) with radius r:
      *     (x-a)^2 + (y-b)^2 = r^2
@@ -327,13 +327,13 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
      * formula produces the following set of equations.  Constant factors have
      * been extracted out of the inner loop.
      */
-    private void cyclicCircularGradientFillRaster(int pixels[], int off,
-                                                  int adjust,
-                                                  int x, int y,
+    private void cyclicCircularGradientFillRaster(int pixels[], int off, 
+                                                  int adjust, 
+                                                  int x, int y, 
                                                   int w, int h)
     {
         // constant part of the C factor of the quadratic equation
-        final double constC =
+        final double constC = 
             -radiusSq + (centerX * centerX) + (centerY * centerY);
 
         // coefficients of the quadratic equation (Ax^2 + Bx + C = 0)
@@ -373,7 +373,7 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
 
         // incremental index change for pixels array
         int pixInc = w+adjust;
-
+        
         // for every row
         for (int j = 0; j < h; j++) {
 
@@ -383,32 +383,32 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
 
             // for every column (inner loop begins here)
             for (int i = 0; i < w; i++) {
-
-                if (X == focusX) {
+        
+                if (X == focusX) {                   
                     // special case to avoid divide by zero
                     solutionX = focusX;
                     solutionY = centerY;
                     solutionY += (Y > focusY) ? trivial : -trivial;
-                } else {
+                } else {    
                     // slope and y-intercept of the focus-perimeter line
                     slope = (Y - focusY) / (X - focusX);
                     yintcpt = Y - (slope * X);
-
+                    
                     // use the quadratic formula to calculate the
-                    // intersection point
-                    A = (slope * slope) + 1;
+                    // intersection point                  
+                    A = (slope * slope) + 1; 
                     B = precalc3 + (-2 * slope * (centerY - yintcpt));
                     C = constC + (yintcpt* (yintcpt - precalc2));
-
+                    
                     det = (float)Math.sqrt((B * B) - (4 * A * C));
                     solutionX = -B;
-
+                    
                     // choose the positive or negative root depending
                     // on where the X coord lies with respect to the focus
                     solutionX += (X < focusX)? -det : det;
                     solutionX = solutionX / (2 * A); // divisor
                     solutionY = (slope * solutionX) + yintcpt;
-                }
+                }                                    
 
                 // Calculate the square of the distance from the current point
                 // to the focus and the square of the distance from the
@@ -431,16 +431,16 @@ final class RadialGradientPaintContext extends MultipleGradientPaintContext {
 
                 intersectToFocusSq = deltaXSq + deltaYSq;
 
-                // get the percentage (0-1) of the current point along the
+                // get the percentage (0-1) of the current point along the 
                 // focus-circumference line
                 g = (float)Math.sqrt(currentToFocusSq / intersectToFocusSq);
-
+                                              
                 // store the color at this point
                 pixels[indexer + i] = indexIntoGradientsArrays(g);
 
                 // incremental change in X, Y
                 X += a00;
-                Y += a10;
+                Y += a10;        
             } //end inner loop
 
             indexer += pixInc;

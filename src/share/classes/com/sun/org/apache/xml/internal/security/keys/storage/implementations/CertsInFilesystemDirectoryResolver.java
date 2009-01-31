@@ -50,7 +50,7 @@ import com.sun.org.apache.xml.internal.security.utils.Base64;
 public class CertsInFilesystemDirectoryResolver extends StorageResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                     CertsInFilesystemDirectoryResolver.class.getName());
 
@@ -144,7 +144,7 @@ public class CertsInFilesystemDirectoryResolver extends StorageResolverSpi {
 
          if (added) {
             if (true)
-                if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Added certificate: " + dn);
+            	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Added certificate: " + dn);
          }
       }
    }
@@ -158,6 +158,7 @@ public class CertsInFilesystemDirectoryResolver extends StorageResolverSpi {
     * Class FilesystemIterator
     *
     * @author $Author: raul $
+    * @version $Revision: 1.9 $
     */
    class FilesystemIterator implements Iterator {
 

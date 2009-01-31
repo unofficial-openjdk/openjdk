@@ -32,18 +32,18 @@ import sun.nio.cs.ext.DoubleByteEncoder;
 
 public class X11Johab extends Charset {
     public X11Johab () {
-        super("X11Johab", null);
+	super("X11Johab", null);
     }
 
-    public CharsetEncoder newEncoder() {
-        return new Encoder(this);
+    public CharsetEncoder newEncoder() { 
+        return new Encoder(this); 
     }
 
-    public CharsetDecoder newDecoder() {
+    public CharsetDecoder newDecoder() { 
         throw new Error("Decoder is not supported by X11Johab Charset");
     }
 
-    public boolean contains(Charset cs) {
+    public boolean contains(Charset cs) { 
         return cs instanceof X11GB18030_1;
     }
 
@@ -56,7 +56,7 @@ public class X11Johab extends Charset {
             return true;
         }
 
-        private final static String innerIndex0=
+        private final static String innerIndex0= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -570,7 +570,7 @@ public class X11Johab extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
 
-        private final static String innerIndex1=
+        private final static String innerIndex1= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -1084,7 +1084,7 @@ public class X11Johab extends Charset {
             "\uE978\u0000\u0000\u0000\uF866\u0000\uE4F6\u0000"+
             "\u0000\u0000\u0000\uF3DA\u0000\uF894\u0000\u0000";
 
-        private final static String innerIndex2=
+        private final static String innerIndex2= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\uEC9F"+
             "\u0000\u0000\u0000\u0000\u0000\uE5CF\uE39A\u0000"+
             "\u0000\uE1DF\u0000\u0000\uF5CB\u0000\uED92\uE0AB"+
@@ -1598,7 +1598,7 @@ public class X11Johab extends Charset {
             "\uF6C1\u0000\u0000\uEEB6\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
 
-        private final static String innerIndex3=
+        private final static String innerIndex3= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\uEDC7\uE63C\u0000\u0000\u0000"+
             "\u0000\uE957\u0000\u0000\u0000\u0000\u0000\uEBA9"+
@@ -2112,7 +2112,7 @@ public class X11Johab extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\uE1A7\u0000\u0000\uE33C\u0000";
 
-        private final static String innerIndex4=
+        private final static String innerIndex4= 
             "\uE3BA\u0000\uF3C4\u0000\uEDB3\uF8F5\uEFE1\uF9E0"+
             "\uF94C\u0000\uE832\uE833\u0000\uE431\u0000\u0000"+
             "\uE491\u0000\u0000\u0000\uEC7D\u0000\u0000\uEA79"+
@@ -2626,7 +2626,7 @@ public class X11Johab extends Charset {
             "\u0000\u0000\u0000\u0000\uE695\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\uE9B8\uE2C5\uEADF\u0000\u0000";
 
-        private final static String innerIndex5=
+        private final static String innerIndex5= 
             "\u0000\u0000\u0000\u0000\uF44E\uF631\u0000\uF0CB"+
             "\uF3FC\u0000\uF4C7\u0000\u0000\uEB7B\u0000\u0000"+
             "\u0000\u0000\u0000\uF1FC\u0000\u0000\uEBDB\u0000"+
@@ -3140,7 +3140,7 @@ public class X11Johab extends Charset {
             "\u0000\u0000\u0000\uE995\uE7B0\u0000\uEE79\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
 
-        private final static String innerIndex6=
+        private final static String innerIndex6= 
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\uED4C\u0000\u0000\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -3654,7 +3654,7 @@ public class X11Johab extends Charset {
             "\u9E89\u9E8A\u9E8B\u9E8C\u9E8D\u9E8E\u9E8F\u9E90"+
             "\u9E91\u9E93\u9E94\u9E95\u9E96\u9E97\u9E98\u9E99";
 
-        private final static String innerIndex7=
+        private final static String innerIndex7= 
             "\u9E9A\u9E9B\u9E9C\u9E9D\u9EA1\u9EA2\u9EA3\u9EA4"+
             "\u9EA5\u9EA6\u9EA7\u9EA8\u9EA9\u9EAA\u9EAB\u9EAC"+
             "\u9EAD\u9EAE\u9EAF\u9EB0\u9EB1\u9EB3\u9EB4\u9EB5"+
@@ -4168,7 +4168,7 @@ public class X11Johab extends Charset {
             "\uBA71\uBA73\uBA74\uBA75\uBA76\uBA77\uBA78\uBA79"+
             "\uBA7A\uBA7B\uBA7C\uBA7D\uBA81\uBA82\uBA83\uBA84";
 
-        private final static String innerIndex8=
+        private final static String innerIndex8= 
             "\uBA85\uBA86\uBA87\uBA88\uBA89\uBA8A\uBA8B\uBA8C"+
             "\uBA8D\uBA8E\uBA8F\uBA90\uBA91\uBA93\uBA94\uBA95"+
             "\uBA96\uBA97\uBA98\uBA99\uBA9A\uBA9B\uBA9C\uBA9D"+
@@ -4682,7 +4682,7 @@ public class X11Johab extends Charset {
             "\uF171\uF174\uF177\uF178\uF199\uF19A\uF19C\uF1A1"+
             "\uF1A2\uF1A3\uF1EE\uF26B\uF44D\uF49C\uF4B1\uF537";
 
-        private final static String innerIndex9=
+        private final static String innerIndex9= 
             "\uF57E\uF696\uF698\uF6B8\uF6C8\uF6D3\uF76B\uF792"+
             "\uF831\uF832\uF876\uF939\u0000\u0000\u0000\u0000"+
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"+
@@ -4749,35 +4749,35 @@ public class X11Johab extends Charset {
             "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000";
 
         private final static short index1[] = {
-            1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            6, 7, 8, 9, 10, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            13, 14, 15, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 18,
-            19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
-            35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-            51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66,
-            67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82,
-            83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99, 100, 101, 102,
-            103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118,
-            119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134,
-            135, 136, 137, 138, 139, 140, 141, 142, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 143, 144, 0, 0, 0, 0, 145
-        };
+	    1, 2, 3, 4, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    6, 7, 8, 9, 10, 11, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    13, 14, 15, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17, 18, 
+	    19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 
+	    35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 
+	    51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 
+	    67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 
+	    83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 99, 100, 101, 102, 
+	    103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 
+	    119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 
+	    135, 136, 137, 138, 139, 140, 141, 142, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 143, 144, 0, 0, 0, 0, 145
+	};
 
-        private static String index2[] = {
-            innerIndex0,
-            innerIndex1,
-            innerIndex2,
-            innerIndex3,
-            innerIndex4,
-            innerIndex5,
-            innerIndex6,
-            innerIndex7,
-            innerIndex8,
-            innerIndex9
-        };
+	private static String index2[] = {
+	    innerIndex0,
+	    innerIndex1,
+	    innerIndex2,
+	    innerIndex3,
+	    innerIndex4,
+	    innerIndex5,
+	    innerIndex6,
+	    innerIndex7,
+	    innerIndex8,
+	    innerIndex9
+	};
     }
 }

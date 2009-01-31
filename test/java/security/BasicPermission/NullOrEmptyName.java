@@ -25,89 +25,89 @@
  * @test
  * @bug 4240252
  * @summary Make sure BasicPermission constructor raises
- * NullPointerException if permission name is null, and
+ * NullPointerException if permission name is null, and 
  * IllegalArgumentException is permission name is empty.
  */
 
 public class NullOrEmptyName {
 
     public static void main(String[]args) throws Exception {
-        NullOrEmptyName noe = new NullOrEmptyName();
+	NullOrEmptyName noe = new NullOrEmptyName();
 
-        // run without sm installed
-        noe.run();
+	// run without sm installed
+	noe.run();
 
-        // run with sm installed
-        SecurityManager sm = new SecurityManager();
-        System.setSecurityManager(sm);
-        noe.run();
+	// run with sm installed
+	SecurityManager sm = new SecurityManager();
+	System.setSecurityManager(sm);
+	noe.run();
 
-        try {
-            // called by System.getProperty()
-            sm.checkPropertyAccess(null);
-            throw new Exception("Expected NullPointerException not thrown");
-        } catch (NullPointerException npe) {
-            // expected exception thrown
-        }
-
-        try {
-            // called by System.getProperty()
-            sm.checkPropertyAccess("");
-            throw new Exception("Expected IllegalArgumentException not " +
-                                "thrown");
-        } catch (IllegalArgumentException iae) {
-            // expected exception thrown
-        }
+	try {
+	    // called by System.getProperty()
+	    sm.checkPropertyAccess(null);
+	    throw new Exception("Expected NullPointerException not thrown");
+	} catch (NullPointerException npe) {
+	    // expected exception thrown
+	}
+	
+	try {
+	    // called by System.getProperty()
+	    sm.checkPropertyAccess("");
+	    throw new Exception("Expected IllegalArgumentException not " +
+				"thrown");
+	} catch (IllegalArgumentException iae) {
+	    // expected exception thrown
+	}
     }
 
     void run() throws Exception {
 
-        try {
-            System.getProperty(null);
-            throw new Exception("Expected NullPointerException not " +
-                                "thrown");
-        } catch (NullPointerException npe) {
-            // expected exception thrown
-        }
+	try {
+	    System.getProperty(null);
+	    throw new Exception("Expected NullPointerException not " +
+				"thrown");
+	} catch (NullPointerException npe) {
+	    // expected exception thrown
+	}
 
-        try {
-            System.getProperty(null, "value");
-            throw new Exception("Expected NullPointerException not " +
-                                "thrown");
-        } catch (NullPointerException npe) {
-            // expected exception thrown
-        }
+	try {
+	    System.getProperty(null, "value");
+	    throw new Exception("Expected NullPointerException not " +
+				"thrown");
+	} catch (NullPointerException npe) {
+	    // expected exception thrown
+	}
 
-        try {
-            System.getProperty("");
-            throw new Exception("Expected IllegalArgumentException not " +
-                                "thrown");
-        } catch (IllegalArgumentException iae) {
-            // expected exception thrown
-        }
+	try {
+	    System.getProperty("");
+	    throw new Exception("Expected IllegalArgumentException not " +
+				"thrown");
+	} catch (IllegalArgumentException iae) {
+	    // expected exception thrown
+	}
 
-        try {
-            System.getProperty("", "value");
-            throw new Exception("Expected IllegalArgumentException not " +
-                                "thrown");
-        } catch (IllegalArgumentException iae) {
-            // expected exception thrown
-        }
+	try {
+	    System.getProperty("", "value");
+	    throw new Exception("Expected IllegalArgumentException not " +
+				"thrown");
+	} catch (IllegalArgumentException iae) {
+	    // expected exception thrown
+	}
 
-        try {
-            System.setProperty(null, "value");
-            throw new Exception("Expected NullPointerException not " +
-                                "thrown");
-        } catch (NullPointerException npe) {
-            // expected exception thrown
-        }
+	try {
+	    System.setProperty(null, "value");
+	    throw new Exception("Expected NullPointerException not " +
+				"thrown");
+	} catch (NullPointerException npe) {
+	    // expected exception thrown
+	}
 
-        try {
-            System.setProperty("", "value");
-            throw new Exception("Expected IllegalArgumentException not " +
-                                "thrown");
-        } catch (IllegalArgumentException iae) {
-            // expected exception thrown
-        }
+	try {
+	    System.setProperty("", "value");
+	    throw new Exception("Expected IllegalArgumentException not " +
+				"thrown");
+	} catch (IllegalArgumentException iae) {
+	    // expected exception thrown
+	}
     }
 }

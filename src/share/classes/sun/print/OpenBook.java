@@ -38,11 +38,11 @@ import java.awt.print.Printable;
 class OpenBook implements Pageable {
 
  /* Class Constants */
-
+ 	
  /* Class Variables */
-
+ 
  /* Instance Variables */
-
+ 
     /**
      * The format of all of the pages.
      */
@@ -52,24 +52,24 @@ class OpenBook implements Pageable {
      * The object that will render all of the pages.
      */
     private Printable mPainter;
-
+	
  /* Instance Methods */
-
+ 
     /**
      * Create a  Pageable with an unknown number of pages
      * where every page shares the same format and
      * Printable.
      */
     OpenBook(PageFormat format, Printable painter) {
-        mFormat = format;
-        mPainter = painter;
+    	mFormat = format;
+	mPainter = painter;
     }
 
     /**
-     * This object does not know the number of pages.
+     * This object does not know the number of pages. 
      */
     public int getNumberOfPages(){
-        return UNKNOWN_NUMBER_OF_PAGES;
+	return UNKNOWN_NUMBER_OF_PAGES;
     }
 
     /**
@@ -79,9 +79,9 @@ class OpenBook implements Pageable {
      * @return The PageFormat describing the size and orientation
      */
     public PageFormat getPageFormat(int pageIndex) {
-        return mFormat;
+	return mFormat;
     }
-
+ 
     /**
      * Return the Printable instance responsible for rendering
      * the page specified by 'pageIndex'.
@@ -90,8 +90,9 @@ class OpenBook implements Pageable {
      * @return The Printable that will draw the page.
      */
     public Printable getPrintable(int pageIndex)
-        throws IndexOutOfBoundsException
+	throws IndexOutOfBoundsException
     {
-        return mPainter;
+	return mPainter;
     }
 }
+

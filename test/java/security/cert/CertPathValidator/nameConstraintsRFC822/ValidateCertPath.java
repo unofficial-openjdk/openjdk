@@ -56,21 +56,21 @@ import java.util.Set;
  * @author      Steve Hanna
  */
 public final class ValidateCertPath {
-
+    
     private final static String BASE = System.getProperty("test.src", "./");
-
+ 
     private static CertPath path;
     private static PKIXParameters params;
 
     public static void main(String[] args) throws Exception {
 
-        try {
+	try {
             parseArgs(args);
-            validate(path, params);
-            throw new Exception("Successfully validated invalid path.");
-        } catch (CertPathValidatorException e) {
-            System.out.println("Path rejected as expected: " + e);
-        }
+       	    validate(path, params);
+	    throw new Exception("Successfully validated invalid path.");
+	} catch (CertPathValidatorException e) {
+	    System.out.println("Path rejected as expected: " + e);
+	}	
     }
 
     /**
@@ -83,7 +83,7 @@ public final class ValidateCertPath {
      * @throws Exception on error
      */
     public static void parseArgs(String[] args) throws Exception {
-        args = new String[] {"jane2jane.cer", "jane2steve.cer", "steve2tom.cer"};
+	args = new String[] {"jane2jane.cer", "jane2steve.cer", "steve2tom.cer"};
 
         TrustAnchor anchor = new TrustAnchor(getCertFromFile(args[0]), null);
         List list = new ArrayList();
@@ -97,19 +97,19 @@ public final class ValidateCertPath {
         params = new PKIXParameters(anchors);
         params.setRevocationEnabled(false);
     }
-
+    
     /*
      * Reads the entire input stream into a byte array.
      */
     private static byte[] getTotalBytes(InputStream is) throws IOException {
-        byte[] buffer = new byte[8192];
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
-        int n;
-        baos.reset();
-        while ((n = is.read(buffer, 0, buffer.length)) != -1) {
-            baos.write(buffer, 0, n);
-        }
-        return baos.toByteArray();
+	byte[] buffer = new byte[8192];
+	ByteArrayOutputStream baos = new ByteArrayOutputStream(2048);
+	int n;
+	baos.reset();
+	while ((n = is.read(buffer, 0, buffer.length)) != -1) {
+	    baos.write(buffer, 0, n);
+	}
+	return baos.toByteArray();
     }
 
     /**

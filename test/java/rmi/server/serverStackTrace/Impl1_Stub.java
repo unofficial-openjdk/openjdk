@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,37 +29,37 @@ public final class Impl1_Stub
     implements Pong
 {
     private static final java.rmi.server.Operation[] operations = {
-        new java.rmi.server.Operation("void pong()")
+	new java.rmi.server.Operation("void pong()")
     };
-
+    
     private static final long interfaceHash = -6081108852319377105L;
-
+    
     // constructors
     public Impl1_Stub() {
-        super();
+	super();
     }
     public Impl1_Stub(java.rmi.server.RemoteRef ref) {
-        super(ref);
+	super(ref);
     }
-
+    
     // methods from remote interfaces
-
+    
     // implementation of pong()
     public void pong()
-        throws PongException, java.rmi.RemoteException
+	throws PongException, java.rmi.RemoteException
     {
-        try {
-            java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
-            ref.invoke(call);
-            ref.done(call);
-        } catch (java.lang.RuntimeException e) {
-            throw e;
-        } catch (java.rmi.RemoteException e) {
-            throw e;
-        } catch (PongException e) {
-            throw e;
-        } catch (java.lang.Exception e) {
-            throw new java.rmi.UnexpectedException("undeclared checked exception", e);
-        }
+	try {
+	    java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
+	    ref.invoke(call);
+	    ref.done(call);
+	} catch (java.lang.RuntimeException e) {
+	    throw e;
+	} catch (java.rmi.RemoteException e) {
+	    throw e;
+	} catch (PongException e) {
+	    throw e;
+	} catch (java.lang.Exception e) {
+	    throw new java.rmi.UnexpectedException("undeclared checked exception", e);
+	}
     }
 }

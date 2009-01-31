@@ -39,7 +39,7 @@ class AssignBitAndExpression extends AssignOpExpression {
      * Constructor
      */
     public AssignBitAndExpression(long where, Expression left, Expression right) {
-        super(ASGBITAND, where, left, right);
+	super(ASGBITAND, where, left, right);
     }
 
 
@@ -47,6 +47,6 @@ class AssignBitAndExpression extends AssignOpExpression {
      * Code
      */
     void codeOperation(Environment env, Context ctx, Assembler asm) {
-        asm.add(where, opc_iand + itype.getTypeCodeOffset());
+	asm.add(where, opc_iand + itype.getTypeCodeOffset());
     }
 }

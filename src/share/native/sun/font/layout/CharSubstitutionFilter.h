@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)CharSubstitutionFilter.h	1.3 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -99,3 +100,5 @@ public:
 };
 
 #endif
+
+

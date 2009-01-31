@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,9 +32,9 @@ import java.io.ObjectStreamClass;
 
 public class Test {
     public static void main(String[] args) {
-        long suid = ObjectStreamClass.lookup(Foo.class).getSerialVersionUID();
-        if (suid != 8027844768744011556L) {
-            throw new Error("incorrect serialVersionUID: " + suid);
-        }
+	long suid = ObjectStreamClass.lookup(Foo.class).getSerialVersionUID();
+	if (suid != 8027844768744011556L) {
+	    throw new Error("incorrect serialVersionUID: " + suid);
+	}
     }
 }

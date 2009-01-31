@@ -176,8 +176,8 @@ import java.io.IOException;
  * </TABLE>
  *
  * <p> Connectors are created at start-up time. That is, they
- * are created the first time that {@link
- * com.sun.jdi.Bootstrap#virtualMachineManager()} is invoked.
+ * are created the first time that {@link 
+ * com.sun.jdi.Bootstrap#virtualMachineManager()} is invoked. 
  * The list of all Connectors created at start-up time can be
  * obtained from the VirtualMachineManager by invoking the
  * {@link #allConnectors allConnectors} method.
@@ -186,12 +186,12 @@ import java.io.IOException;
  * installed on the platform. In addition, Connectors are created
  * automatically by the VirtualMachineManager to encapsulate any
  * {@link com.sun.jdi.connect.spi.TransportService} implementations
- * that are installed on the platform. These two mechanisms for
+ * that are installed on the platform. These two mechanisms for 
  * creating Connectors are described here.
  *
  * <p> A Connector is installed on the platform if it is installed
  * in a jar file that is visible to the defining class loader of
- * the {@link com.sun.jdi.connect.Connector} type,
+ * the {@link com.sun.jdi.connect.Connector} type, 
  * and that jar file contains a provider configuration file named
  * <tt>com.sun.jdi.connect.Connector</tt> in the resource directory
  * <tt>META-INF/services</tt>, and the provider configuration file
@@ -213,18 +213,18 @@ import java.io.IOException;
  * and instantiate (using the no-arg constructor) each class listed
  * in the provider configuration file. Exceptions thrown when loading
  * or creating the Connector are caught and ignored. In other words,
- * the start-up process continues despite of errors.
+ * the start-up process continues despite of errors. 
  *
- * <p> In addition to Connectors installed on the platform the
+ * <p> In addition to Connectors installed on the platform the 
  * VirtualMachineManager will also create Connectors to encapsulate
  * any {@link com.sun.jdi.connect.spi.TransportService} implementations
  * that are installed on the platform. A TransportService is
  * installed on the platform if it installed in a jar file that is
- * visible to the defining class loader for the
- * {@link com.sun.jdi.connect.spi.TransportService} type, and that jar
+ * visible to the defining class loader for the 
+ * {@link com.sun.jdi.connect.spi.TransportService} type, and that jar 
  * file contains a provider configuration file named
  * <tt>com.sun.jdi.connect.spi.TransportService</tt> in the resource
- * directory <tt>META-INF/services</tt>, and the provider
+ * directory <tt>META-INF/services</tt>, and the provider 
  * configuration file lists the the full-qualified class name of the
  * TransportService implementation. A TransportService is a concrete
  * sub-class of {@link com.sun.jdi.connect.spi.TransportService
@@ -232,23 +232,23 @@ import java.io.IOException;
  * is the same as the provider configuration file for Connectors
  * except that each class listed must be the fully-qualified class
  * name of a class that implements the TransportService interface.
- *
+ * 
  * <p> For each TransportService installed on the platform, the
- * VirtualMachineManager creates a corresponding
+ * VirtualMachineManager creates a corresponding 
  * {@link com.sun.jdi.connect.AttachingConnector} and
  * {@link com.sun.jdi.connect.ListeningConnector}. These
- * Connectors are created to encapsulate a {@link
- * com.sun.jdi.connect.Transport Transport} that in turn
+ * Connectors are created to encapsulate a {@link 
+ * com.sun.jdi.connect.Transport Transport} that in turn 
  * encapsulates the TransportService.
- * The AttachingConnector will be named based on the name of the
- * transport service concatenated with the string <tt>Attach</tt>.
- * For example, if the transport service {@link
+ * The AttachingConnector will be named based on the name of the 
+ * transport service concatenated with the string <tt>Attach</tt>. 
+ * For example, if the transport service {@link 
  * com.sun.jdi.connect.spi.TransportService#name() name()} method
  * returns <tt>telepathic</tt> then the AttachingConnector will
  * be named <tt>telepathicAttach</tt>. Similiarly the ListeningConnector
  * will be named with the string <tt>Listen</tt> tagged onto the
  * name of the transport service. The {@link
- * com.sun.jdi.connect.Connector#description() description()} method
+ * com.sun.jdi.connect.Connector#description() description()} method 
  * of both the AttachingConnector, and the ListeningConnector, will
  * delegate to the {@link com.sun.jdi.connect.spi.TransportService#description()
  * description()} method of the underlying transport service. Both
@@ -256,7 +256,7 @@ import java.io.IOException;
  * Connector {@link com.sun.jdi.connect.Connector$Argument Arguments}.
  * A {@link com.sun.jdi.connect.Connector$StringArgument StringArgument}
  * named <tt>address</tt> is the connector argument to specify the
- * address to attach too, or to listen on. A
+ * address to attach too, or to listen on. A 
  * {@link com.sun.jdi.connect.Connector$IntegerArgument IntegerArgument}
  * named <tt>timeout</tt> is the connector argument to specify the
  * timeout when attaching, or accepting. The timeout connector may be
@@ -302,7 +302,7 @@ public interface VirtualMachineManager {
      * @return a list of {@link com.sun.jdi.connect.AttachingConnector} objects.
      */
     List<AttachingConnector> attachingConnectors();
-
+    
     /**
      * Returns the list of known {@link com.sun.jdi.connect.ListeningConnector} objects.
      * Any of the returned objects can be used to listen for a
@@ -345,7 +345,7 @@ public interface VirtualMachineManager {
       * @return the integer major version number.
       */
      int majorInterfaceVersion();
-
+ 
      /**
       * Returns the minor version number of the JDI interface.
       * See {@link VirtualMachine#version} target VM version and
@@ -360,17 +360,17 @@ public interface VirtualMachineManager {
       * Create a virtual machine mirror for a target VM.
       *
       * <p> Creates a virtual machine mirror for a target VM
-      * for which a {@link com.sun.jdi.connect.spi.Connection Connection}
+      * for which a {@link com.sun.jdi.connect.spi.Connection Connection} 
       * already exists. A Connection is created when a {@link
       * com.sun.jdi.connect.Connector Connector} establishes
       * a connection and successfully handshakes with a target VM.
       * A Connector can then use this method to create a virtual machine
       * mirror to represent the composite state of the target VM.
       *
-      * <p> The <tt>process</tt> argument specifies the
+      * <p> The <tt>process</tt> argument specifies the 
       * {@link java.lang.Process} object for the taget VM. It may be
       * specified as <tt>null</tt>. If the target VM is launched
-      * by a {@link com.sun.jdi.connect.LaunchingConnector
+      * by a {@link com.sun.jdi.connect.LaunchingConnector 
       * LaunchingConnector} the <tt>process</tt> argument should be
       * specified, otherwise calling {@link com.sun.jdi.VirtualMachine#process()}
       * on the created virtual machine will return <tt>null</tt>.
@@ -380,21 +380,21 @@ public interface VirtualMachineManager {
       * to a target VM. Only developers creating new Connector
       * implementations should need to make direct use of this
       * method. </p>
+      * 
+      * @param	connection
+      *		The open connection to the target VM. 
       *
-      * @param  connection
-      *         The open connection to the target VM.
+      * @param	process
+      *		If launched, the {@link java.lang.Process} object for 
+      *		the target VM. <tt>null</tt> if not launched.
       *
-      * @param  process
-      *         If launched, the {@link java.lang.Process} object for
-      *         the target VM. <tt>null</tt> if not launched.
-      *
-      * @return new virtual machine representing the target VM.
-      *
+      * @return	new virtual machine representing the target VM.
+      * 
       * @throws IOException
-      *         if an I/O error occurs
+      *		if an I/O error occurs 
       *
-      * @throws IllegalStateException
-      *         if the connection is not open
+      * @throws	IllegalStateException
+      *		if the connection is not open
       *
       * @see com.sun.jdi.connect.spi.Connection#isOpen()
       * @see com.sun.jdi.VirtualMachine#process()
@@ -407,7 +407,7 @@ public interface VirtualMachineManager {
       * Creates a new virtual machine.
       *
       * <p> This convenience method works as if by invoking {@link
-      * #createVirtualMachine(Connection, Process)} method and
+      * #createVirtualMachine(Connection, Process)} method and 
       * specifying <tt>null</tt> as the <tt>process</tt> argument.
       *
       * <p> This method exists so that Connectors may create
@@ -415,11 +415,11 @@ public interface VirtualMachineManager {
       * to a target VM. Only developers creating new Connector
       * implementations should need to make direct use of this
       * method. </p>
-      *
-      * @return the new virtual machine
-      *
+      * 
+      * @return	the new virtual machine
+      * 
       * @throws IOException
-      *         if an I/O error occurs
+      *         if an I/O error occurs 
       *
       * @throws IllegalStateException
       *         if the connection is not open

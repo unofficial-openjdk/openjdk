@@ -41,8 +41,8 @@ Java_java_util_prefs_FileSystemPreferences_chmod(JNIEnv *env,
     const char *fname = JNU_GetStringPlatformChars(env, java_fname, JNI_FALSE);
     int result;
     result =  chmod(fname, permission);
-    if (result != 0)
-       result = errno;
+    if (result != 0) 
+       result = errno; 
     JNU_ReleaseStringPlatformChars(env, java_fname, fname);
     return (jint) result;
 }
@@ -51,7 +51,7 @@ Java_java_util_prefs_FileSystemPreferences_chmod(JNIEnv *env,
 typedef struct flock64 FLOCK;
 
 /**
- * Try to open a named lock file.
+ * Try to open a named lock file.  
  * The result is a cookie that can be used later to unlock the file.
  * On failure the result is zero.
  */
@@ -61,7 +61,7 @@ Java_java_util_prefs_FileSystemPreferences_lockFile0(JNIEnv *env,
     const char *fname = JNU_GetStringPlatformChars(env, java_fname, JNI_FALSE);
     int fd, rc;
     int result[2];
-    jintArray javaResult;
+    jintArray javaResult; 
     int old_umask;
     FLOCK fl;
 
@@ -72,24 +72,24 @@ Java_java_util_prefs_FileSystemPreferences_lockFile0(JNIEnv *env,
         fl.l_type = F_RDLCK;
     } else {
         fl.l_type = F_WRLCK;
-    }
+    } 
 
     if (shared == JNI_TRUE) {
         fd = open(fname, O_RDONLY, 0);
     } else {
-        old_umask = umask(0);
+        old_umask = umask(0);    
         fd = open(fname, O_WRONLY|O_CREAT, permission);
         result[1] = errno;
-        umask(old_umask);
+        umask(old_umask); 
     }
 
     if (fd < 0) {
         result[0] = 0;
-    } else {
-        rc = fcntl(fd, F_SETLK64, &fl);
-        result[1] = errno;
+    } else { 
+        rc = fcntl(fd, F_SETLK64, &fl); 
+        result[1] = errno; 
         if (rc < 0) {
-            result[0]= 0;
+       	    result[0]= 0;
             close(fd);
         } else {
           result[0] = fd;
@@ -98,7 +98,7 @@ Java_java_util_prefs_FileSystemPreferences_lockFile0(JNIEnv *env,
     JNU_ReleaseStringPlatformChars(env, java_fname, fname);
     javaResult = (*env)->NewIntArray(env,2);
     (*env)->SetIntArrayRegion(env, javaResult, 0, 2, result);
-    return javaResult;
+    return javaResult; 
 }
 
 
@@ -108,7 +108,7 @@ Java_java_util_prefs_FileSystemPreferences_lockFile0(JNIEnv *env,
 JNIEXPORT jint JNICALL
 Java_java_util_prefs_FileSystemPreferences_unlockFile0(JNIEnv *env,
                                       jclass thisclass, jint fd) {
-
+    
     int rc;
     FLOCK fl;
     fl.l_whence = SEEK_SET;
@@ -125,6 +125,6 @@ Java_java_util_prefs_FileSystemPreferences_unlockFile0(JNIEnv *env,
     rc = close(fd);
     if (rc < 0) {
         return (jint) errno;
-    }
+    } 
     return 0;
 }

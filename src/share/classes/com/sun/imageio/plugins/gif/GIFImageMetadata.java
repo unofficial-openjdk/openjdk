@@ -37,6 +37,9 @@ import javax.imageio.metadata.IIOMetadataFormat;
 import javax.imageio.metadata.IIOMetadataFormatImpl;
 import org.w3c.dom.Node;
 
+/**
+ * @version 0.5
+ */
 public class GIFImageMetadata extends GIFMetadata {
 
     // package scope
@@ -108,14 +111,14 @@ public class GIFImageMetadata extends GIFMetadata {
               extraMetadataFormatNames,
               extraMetadataFormatClassNames);
     }
-
+    
     public GIFImageMetadata() {
         this(true,
               nativeMetadataFormatName,
               "com.sun.imageio.plugins.gif.GIFImageMetadataFormat",
               null, null);
     }
-
+    
     public boolean isReadOnly() {
         return true;
     }
@@ -164,7 +167,7 @@ public class GIFImageMetadata extends GIFMetadata {
                               Integer.toString(numEntries));
             node.setAttribute("sortFlag",
                               sortFlag ? "TRUE" : "FALSE");
-
+            
             for (int i = 0; i < numEntries; i++) {
                 IIOMetadataNode entry =
                     new IIOMetadataNode("ColorTableEntry");
@@ -188,7 +191,7 @@ public class GIFImageMetadata extends GIFMetadata {
                           userInputFlag ? "true" : "false");
         node.setAttribute("transparentColorFlag",
                           transparentColorFlag ? "true" : "false");
-        node.setAttribute("delayTime",
+        node.setAttribute("delayTime", 
                           Integer.toString(delayTime));
         node.setAttribute("transparentColorIndex",
                           Integer.toString(transparentColorIndex));
@@ -333,7 +336,7 @@ public class GIFImageMetadata extends GIFMetadata {
         // BitsPerSample not in image
         // SignificantBitsPerSample not in format
         // SampleMSB not in format
-
+        
         return data_node;
     }
 
@@ -381,7 +384,7 @@ public class GIFImageMetadata extends GIFMetadata {
 
         IIOMetadataNode text_node = new IIOMetadataNode("Text");
         IIOMetadataNode node = null; // scratch node
-
+        
         while (commentIter.hasNext()) {
             byte[] comment = (byte[])commentIter.next();
             String s = null;
@@ -405,7 +408,7 @@ public class GIFImageMetadata extends GIFMetadata {
         if (!transparentColorFlag) {
             return null;
         }
-
+        
         IIOMetadataNode transparency_node =
             new IIOMetadataNode("Transparency");
         IIOMetadataNode node = null; // scratch node
@@ -424,7 +427,7 @@ public class GIFImageMetadata extends GIFMetadata {
         return transparency_node;
     }
 
-    public void setFromTree(String formatName, Node root)
+    public void setFromTree(String formatName, Node root) 
         throws IIOInvalidTreeException
     {
         throw new IllegalStateException("Metadata is read-only!");

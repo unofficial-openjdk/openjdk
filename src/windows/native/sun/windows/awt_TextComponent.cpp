@@ -67,7 +67,7 @@ AwtTextComponent::AwtTextComponent() {
     m_lLastPos        = -1;
     m_isLFonly        = FALSE;
     m_EOLchecked      = FALSE;
-//    javaEventsMask = 0;    // accessibility support
+//    javaEventsMask = 0;    // accessibility support 
 }
 
 LPCTSTR AwtTextComponent::GetClassName() {
@@ -83,19 +83,19 @@ void AwtTextComponent::SetFont(AwtFont* font)
 {
     DASSERT(font != NULL);
     if (font->GetAscent() < 0) {
-        AwtFont::SetupAscent(font);
+	AwtFont::SetupAscent(font);
     }
 
     int index = font->GetInputHFontIndex();
     if (index < 0)
-        /* In this case, user cannot get any suitable font for input. */
-        index = 0;
+	/* In this case, user cannot get any suitable font for input. */
+        index = 0;	
 
     //im --- changed for over the spot composing
     m_hFont = font->GetHFont(index);
     SendMessage(WM_SETFONT, (WPARAM)m_hFont, MAKELPARAM(FALSE, 0));
     SendMessage(EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-                MAKELPARAM(1, 1));
+                MAKELPARAM(1, 1)); 
 
     /*
      * WM_SETFONT reverts foreground color to the default for
@@ -139,7 +139,7 @@ AwtTextComponent::WmNotify(UINT notifyCode)
 {
     if (notifyCode == EN_CHANGE) {
       DoCallback("valueChanged", "()V");
-    }
+    } 
     return mrDoDefault;
 }
 
@@ -183,15 +183,15 @@ AwtTextComponent::WmPaste()
 {
     if (m_synthetic) {
         JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
-        if (env->EnsureLocalCapacity(1) < 0) {
-            return mrConsume;
-        }
-        jobject target = GetTarget(env);
-        jboolean canAccessClipboard =
-            env->GetBooleanField(target,
-                                 AwtTextComponent::canAccessClipboardID);
-        env->DeleteLocalRef(target);
-        return (canAccessClipboard) ? mrDoDefault : mrConsume;
+	if (env->EnsureLocalCapacity(1) < 0) {
+	    return mrConsume;
+	}
+	jobject target = GetTarget(env);
+	jboolean canAccessClipboard = 
+	    env->GetBooleanField(target,
+				 AwtTextComponent::canAccessClipboardID);
+	env->DeleteLocalRef(target);
+	return (canAccessClipboard) ? mrDoDefault : mrConsume;
     }
     else {
         return mrDoDefault;
@@ -229,10 +229,10 @@ LONG AwtTextComponent::getJavaSelPos(LONG orgPos)
     }
 
     while (cur < orgPos && pos++ < wlen) {
-        if (wbuf[cur] == _T('\r') && wbuf[cur + 1] == _T('\n')) {
-            cur++;
-        }
-        cur++;
+	if (wbuf[cur] == _T('\r') && wbuf[cur + 1] == _T('\n')) {
+	    cur++;
+	}
+	cur++;
     }
     delete[] wbuf;
     return pos;
@@ -254,11 +254,11 @@ LONG AwtTextComponent::getWin32SelPos(LONG orgPos)
     }
 
     while (cur < orgPos && pos < wlen) {
-        if (wbuf[pos] == _T('\r') && wbuf[pos + 1] == _T('\n')) {
-            pos++;
-        }
-        pos++;
-        cur++;
+	if (wbuf[pos] == _T('\r') && wbuf[pos + 1] == _T('\n')) {
+	    pos++;
+	}
+	pos++;
+	cur++;
     }
     delete[] wbuf;
     return pos;
@@ -294,8 +294,8 @@ void AwtTextComponent::CheckLineSeparator(WCHAR *pStr)
 
 void AwtTextComponent::SetSelRange(LONG start, LONG end)
 {
-    SendMessage(EM_SETSEL,
-                getWin32SelPos(start),
+    SendMessage(EM_SETSEL, 
+                getWin32SelPos(start), 
                 getWin32SelPos(end));
     // it isn't necessary to wrap this in EM_HIDESELECTION or setting/clearing
     // ES_NOHIDESEL, as regular edit control honors EM_SCROLLCARET even when not in focus
@@ -516,7 +516,7 @@ Java_sun_awt_windows_WTextComponentPeer_getText(JNIEnv *env, jobject self)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WTextComponentPeer_setText(JNIEnv *env, jobject self,
-                                                jstring text)
+						jstring text)
 {
     TRY;
 
@@ -525,7 +525,7 @@ Java_sun_awt_windows_WTextComponentPeer_setText(JNIEnv *env, jobject self,
     sts->text = (jstring)env->NewGlobalRef(text);
 
     AwtToolkit::GetInstance().SyncCall(AwtTextComponent::_SetText, sts);
-    // global refs and sts are deleted in _SetText
+    // global refs and sts are deleted in _SetText    
 
     CATCH_BAD_ALLOC;
 }
@@ -537,7 +537,7 @@ Java_sun_awt_windows_WTextComponentPeer_setText(JNIEnv *env, jobject self,
  */
 JNIEXPORT jint JNICALL
 Java_sun_awt_windows_WTextComponentPeer_getSelectionStart(JNIEnv *env,
-                                                          jobject self)
+							  jobject self)
 {
     TRY;
 
@@ -554,9 +554,9 @@ Java_sun_awt_windows_WTextComponentPeer_getSelectionStart(JNIEnv *env,
  * Method:    getSelectionEnd
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
 Java_sun_awt_windows_WTextComponentPeer_getSelectionEnd(JNIEnv *env,
-                                                        jobject self)
+							jobject self)
 {
     TRY;
 
@@ -573,9 +573,9 @@ Java_sun_awt_windows_WTextComponentPeer_getSelectionEnd(JNIEnv *env,
  * Method:    select
  * Signature: (II)V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WTextComponentPeer_select(JNIEnv *env, jobject self,
-                                               jint start, jint end)
+					       jint start, jint end)
 {
     TRY;
 
@@ -596,9 +596,9 @@ Java_sun_awt_windows_WTextComponentPeer_select(JNIEnv *env, jobject self,
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL
-Java_sun_awt_windows_WTextComponentPeer_enableEditing(JNIEnv *env,
-                                                      jobject self,
-                                                      jboolean on)
+Java_sun_awt_windows_WTextComponentPeer_enableEditing(JNIEnv *env, 
+						      jobject self,
+						      jboolean on)
 {
     TRY;
 
@@ -624,9 +624,9 @@ Java_sun_awt_windows_WTextComponentPeer_initIDs(JNIEnv *env, jclass cls)
 
     cls = env->FindClass("java/awt/TextComponent");
     if (cls != NULL) {
-        AwtTextComponent::canAccessClipboardID =
-            env->GetFieldID(cls, "canAccessClipboard", "Z");
-        DASSERT(AwtTextComponent::canAccessClipboardID != NULL);
+        AwtTextComponent::canAccessClipboardID = 
+	    env->GetFieldID(cls, "canAccessClipboard", "Z");
+	DASSERT(AwtTextComponent::canAccessClipboardID != NULL);
     }
 
     CATCH_BAD_ALLOC;
@@ -637,7 +637,7 @@ Java_sun_awt_windows_WTextComponentPeer_initIDs(JNIEnv *env, jclass cls)
 //
 
 /* To be fully implemented in a future release
- *
+ * 
  * Class:     sun_awt_windows_WTextComponentPeer
  * Method:    getIndexAtPoint
  * Signature: (II)I
@@ -667,12 +667,12 @@ Java_sun_awt_windows_WTextComponentPeer_filterEvents(JNIEnv *env, jobject self, 
  *
  * Note: mouse clicks come through WmKeyDown as well (do they??!?!)
  *
-MsgRouting AwtTextComponent::WmKeyDown(UINT wkey, UINT repCnt,
+MsgRouting AwtTextComponent::WmKeyDown(UINT wkey, UINT repCnt, 
                                    UINT flags, BOOL system) {
 
     printf("AwtTextComponent::WmKeyDown called\r\n");
 
-
+    
     // NOTE: WmKeyDown won't be processed 'till well after we return
     //       so we need to modify the values based on the keystroke
     //
@@ -685,10 +685,10 @@ MsgRouting AwtTextComponent::WmKeyDown(UINT wkey, UINT repCnt,
         long start;
         long end;
         SendMessage(EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
-        if (start != oldStart || end != oldEnd) {
-
+        if (start != oldStart || end != oldEnd) {  
+ 
             printf("  -> calling TextComponent.selectionValuesChanged()\r\n");
-            printf("  -> old = (%d, %d); new = (%d, %d)\r\n",
+            printf("  -> old = (%d, %d); new = (%d, %d)\r\n", 
                     oldStart, oldEnd, start, end);
 
             DoCallback("selectionValuesChanged", "(II)V", start, end); // let Java-side track details...
@@ -696,7 +696,7 @@ MsgRouting AwtTextComponent::WmKeyDown(UINT wkey, UINT repCnt,
             oldEnd = end;
         }
     }
-
+    
     return AwtComponent::WmKeyDown(wkey, repCnt, flags, system);
 }
 */
@@ -739,7 +739,7 @@ Java_sun_awt_windows_WTextComponentPeer_getCharacterBounds(JNIEnv *env, jobject 
     //     line = 0; ttl = 0;   // index is passed in as 'i' above
     //     while (ttl < index) {
     //        ttl += SendMessage(EM_LINELENGTH, line++);
-    //     }
+    //     } 
     //     line-- (decrement back again)
     //  alternately, we could use EM_LINEINDEX to the same effect; perhaps slightly cleaner:
     //     computedIndex = 0; line = 0;
@@ -749,9 +749,9 @@ Java_sun_awt_windows_WTextComponentPeer_getCharacterBounds(JNIEnv *env, jobject 
     //     line--;
 
     // EM_POSFROMCHAR  - convert char index into a Point
-    // wParam = (LPPOINT) lpPoint;        // address of structure
-                                                  // receiving character position
-    // lParam = (LPARAM) wCharIndex;      // zero-based index of character
+    // wParam = (LPPOINT) lpPoint;        // address of structure 
+		                                  // receiving character position 
+    // lParam = (LPARAM) wCharIndex;      // zero-based index of character 
     //
     // still need to turn the above into a Rect somehow...
     // (use font metrics on font info for letter to get height?  use
@@ -759,7 +759,7 @@ Java_sun_awt_windows_WTextComponentPeer_getCharacterBounds(JNIEnv *env, jobject 
 
     // WM_GETFONT - get the font struct for the window control
     // wParam = lParam = 0
-    // returns an HFONT
+    // returns an HFONT 
     //  -or-
     // GetTextMetrics(hDC) to get the text info for the font selected
     // into the hDC of the control (tmHeight is what we want in the

@@ -45,23 +45,24 @@ import java.io.Serializable;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class BasicCheckBoxUI extends BasicRadioButtonUI {
 
     private final static BasicCheckBoxUI checkboxUI = new BasicCheckBoxUI();
 
-    private final static String propertyPrefix = "CheckBox" + ".";
+    private final static String propertyPrefix = "CheckBox" + "."; 
 
     // ********************************
-    //            Create PLAF
+    //            Create PLAF 
     // ********************************
     public static ComponentUI createUI(JComponent b) {
         return checkboxUI;
     }
 
     public String getPropertyPrefix() {
-        return propertyPrefix;
+	return propertyPrefix;
     }
 
 }

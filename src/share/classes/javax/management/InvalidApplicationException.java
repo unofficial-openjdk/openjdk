@@ -53,6 +53,6 @@ public class InvalidApplicationException extends Exception   {
      * @param val the detail message of this exception.
      */
     public InvalidApplicationException(Object val) {
-        this.val = val;
+	this.val = val;
     }
 }

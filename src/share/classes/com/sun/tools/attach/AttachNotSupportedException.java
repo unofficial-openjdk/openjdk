@@ -25,14 +25,14 @@
 
 package com.sun.tools.attach;
 
-import com.sun.tools.attach.spi.AttachProvider;         // for javadoc
+import com.sun.tools.attach.spi.AttachProvider;		// for javadoc
 
 /**
  * Thrown by {@link com.sun.tools.attach.VirtualMachine#attach
  * VirtalMachine.attach} when attempting to attach to a Java virtual machine
  * for which a compatible {@link com.sun.tools.attach.spi.AttachProvider
  * AttachProvider} does not exist. It is also thrown by {@link
- * com.sun.tools.attach.spi.AttachProvider#attachVirtualMachine
+ * com.sun.tools.attach.spi.AttachProvider#attachVirtualMachine 
  * AttachProvider.attachVirtualMachine} if the provider attempts to
  * attach to a Java virtual machine with which it not comptatible.
  */
@@ -46,8 +46,8 @@ public class AttachNotSupportedException extends Exception {
      * no detail message.
      */
     public AttachNotSupportedException() {
-        super();
-
+	super();
+	
     }
 
     /**

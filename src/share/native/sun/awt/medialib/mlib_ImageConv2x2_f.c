@@ -22,7 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+  
 
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_ImageConv2x2_f.c	1.2	02/04/19 SMI"
+#endif /* __SUNPRO_C */
 
 /*
  * FUNCTION
@@ -90,7 +94,7 @@ typedef struct {
 
 /* NB: Explicit cast to DTYPE is necessary to avoid warning from Microsoft VC compiler.
       And we need to explicitly define cast behavior if source exceeds destination range.
-      (it is undefined according to C99 spec). We use mask here because this macro is typically
+      (it is undefined according to C99 spec). We use mask here because this macro is typically 
       used to extract bit regions. */
 
 #define STORE2(res0, res1)                                      \

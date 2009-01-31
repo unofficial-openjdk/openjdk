@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * The set of terminals supported by a TerminalFactory.
  * This class allows applications to enumerate the available CardTerminals,
- * obtain a specific CardTerminal, or wait for the insertion or removal of
+ * obtain a specific CardTerminal, or wait for the insertion or removal of 
  * cards.
  *
  * <p>This class is multi-threading safe and can be used by multiple
@@ -44,45 +44,46 @@ import java.util.*;
  * @see TerminalFactory
  * @see CardTerminal
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
  */
 public abstract class CardTerminals {
-
+    
     /**
      * Constructs a new CardTerminals object.
-     *
-     * <p>This constructor is called by subclasses only. Application should
+     * 
+     * <p>This constructor is called by subclasses only. Application should 
      * call {@linkplain TerminalFactory#terminals}
      * to obtain a CardTerminals object.
      */
     protected CardTerminals() {
-        // empty
+	// empty
     }
-
+    
     /**
      * Returns an unmodifiable list of all available terminals.
      *
      * @return an unmodifiable list of all available terminals.
      *
-     * @throws CardException if the card operation failed
+     * @throws CardException if the card operation failed 
      */
     public List<CardTerminal> list() throws CardException {
-         return list(State.ALL);
+	 return list(State.ALL);
     }
 
     /**
-     * Returns an unmodifiable list of all terminals matching the specified
+     * Returns an unmodifiable list of all terminals matching the specified 
      * state.
      *
      * <p>If state is {@link State#ALL State.ALL}, this method returns
      * all CardTerminals encapsulated by this object.
-     * If state is {@link State#CARD_PRESENT State.CARD_PRESENT} or
+     * If state is {@link State#CARD_PRESENT State.CARD_PRESENT} or 
      * {@link State#CARD_ABSENT State.CARD_ABSENT}, it returns all
      * CardTerminals where a card is currently present or absent, respectively.
      *
-     * <p>If state is {@link State#CARD_INSERTION State.CARD_INSERTION} or
+     * <p>If state is {@link State#CARD_INSERTION State.CARD_INSERTION} or 
      * {@link State#CARD_REMOVAL State.CARD_REMOVAL}, it returns all
      * CardTerminals for which an insertion (or removal, respectively)
      * was detected during the last call to {@linkplain #waitForChange}.
@@ -93,11 +94,11 @@ public abstract class CardTerminals {
      * see {@link #waitForChange}.
      *
      * @param state the State
-     * @return an unmodifiable list of all terminals matching the specified
+     * @return an unmodifiable list of all terminals matching the specified 
      *   attribute.
      *
      * @throws NullPointerException if attr is null
-     * @throws CardException if the card operation failed
+     * @throws CardException if the card operation failed 
      */
     public abstract List<CardTerminal> list(State state) throws CardException;
 
@@ -111,21 +112,21 @@ public abstract class CardTerminals {
      * @throws NullPointerException if name is null
      */
     public CardTerminal getTerminal(String name) {
-        if (name == null) {
-            throw new NullPointerException();
-        }
-        try {
-            for (CardTerminal terminal : list()) {
-                if (terminal.getName().equals(name)) {
-                    return terminal;
-                }
-            }
-            return null;
-        } catch (CardException e) {
-            return null;
-        }
+	if (name == null) {
+	    throw new NullPointerException();
+	}
+	try {
+	    for (CardTerminal terminal : list()) {
+		if (terminal.getName().equals(name)) {
+		    return terminal;
+		}
+	    }
+	    return null;
+	} catch (CardException e) {
+	    return null;
+	}
     }
-
+    
     /**
      * Waits for card insertion or removal in any of the terminals of this
      * object.
@@ -135,10 +136,10 @@ public abstract class CardTerminals {
      *
      * @throws IllegalStateException if this <code>CardTerminals</code>
      *   object does not contain any terminals
-     * @throws CardException if the card operation failed
+     * @throws CardException if the card operation failed 
      */
     public void waitForChange() throws CardException {
-        waitForChange(0);
+	waitForChange(0);
     }
 
     /**
@@ -179,7 +180,7 @@ public abstract class CardTerminals {
      * @throws IllegalStateException if this <code>CardTerminals</code>
      *   object does not contain any terminals
      * @throws IllegalArgumentException if timeout is negative
-     * @throws CardException if the card operation failed
+     * @throws CardException if the card operation failed 
      */
     public abstract boolean waitForChange(long timeout) throws CardException;
 
@@ -190,30 +191,30 @@ public abstract class CardTerminals {
      * @since 1.6
      */
     public static enum State {
-        /**
-         * All CardTerminals.
-         */
-        ALL,
-        /**
-         * CardTerminals in which a card is present.
-         */
-        CARD_PRESENT,
-        /**
-         * CardTerminals in which a card is not present.
-         */
-        CARD_ABSENT,
-        /**
-         * CardTerminals for which a card insertion was detected during the
-         * latest call to {@linkplain State#waitForChange waitForChange()}
-         * call.
-         */
-        CARD_INSERTION,
-        /**
-         * CardTerminals for which a card removal was detected during the
-         * latest call to {@linkplain State#waitForChange waitForChange()}
-         * call.
-         */
-        CARD_REMOVAL,
+	/**
+	 * All CardTerminals.
+	 */
+	ALL,
+	/**
+	 * CardTerminals in which a card is present.
+	 */
+	CARD_PRESENT,
+	/**
+	 * CardTerminals in which a card is not present.
+	 */
+	CARD_ABSENT,
+	/**
+	 * CardTerminals for which a card insertion was detected during the
+	 * latest call to {@linkplain State#waitForChange waitForChange()}
+	 * call.
+	 */
+	CARD_INSERTION,
+	/**
+	 * CardTerminals for which a card removal was detected during the
+	 * latest call to {@linkplain State#waitForChange waitForChange()}
+	 * call.
+	 */
+	CARD_REMOVAL,
     }
-
+    
 }

@@ -112,28 +112,28 @@ final public class PersistentSearchControl extends BasicControl {
      * @exception IOException If a BER encoding error occurs.
      */
     public PersistentSearchControl() throws IOException {
-        super(OID);
-        super.value = setEncodedValue();
+	super(OID);
+	super.value = setEncodedValue();
     }
 
     /**
      * Constructs a persistent search control.
      *
-     * @param   changeTypes     The change types of interest.
-     * @param   changesOnly     Return original entries and changed entries
+     * @param	changeTypes	The change types of interest.
+     * @param	changesOnly	Return original entries and changed entries
      *                          or only the changed entries.
-     * @param   returnControls  Return entry change controls.
+     * @param	returnControls	Return entry change controls.
      * @param   criticality     The control's criticality.
      * @exception IOException If a BER encoding error occurs.
      */
     public PersistentSearchControl(int changeTypes, boolean changesOnly,
-        boolean returnControls, boolean criticality) throws IOException {
+	boolean returnControls, boolean criticality) throws IOException {
 
-        super(OID, criticality, null);
-        this.changeTypes = changeTypes;
-        this.changesOnly = changesOnly;
-        this.returnControls = returnControls;
-        super.value = setEncodedValue();
+	super(OID, criticality, null);
+	this.changeTypes = changeTypes;
+	this.changesOnly = changesOnly;
+	this.returnControls = returnControls;
+	super.value = setEncodedValue();
     }
 
     /*
@@ -147,15 +147,15 @@ final public class PersistentSearchControl extends BasicControl {
      */
     private byte[] setEncodedValue() throws IOException {
 
-        // build the ASN.1 encoding
-        BerEncoder ber = new BerEncoder(32);
+	// build the ASN.1 encoding
+	BerEncoder ber = new BerEncoder(32);
 
-        ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
-            ber.encodeInt(changeTypes);
-            ber.encodeBoolean(changesOnly);
-            ber.encodeBoolean(returnControls);
-        ber.endSeq();
+	ber.beginSeq(Ber.ASN_SEQUENCE | Ber.ASN_CONSTRUCTOR);
+	    ber.encodeInt(changeTypes);
+	    ber.encodeBoolean(changesOnly);
+	    ber.encodeBoolean(returnControls);
+	ber.endSeq();
 
-        return ber.getTrimmedBuf();
+	return ber.getTrimmedBuf();
     }
 }

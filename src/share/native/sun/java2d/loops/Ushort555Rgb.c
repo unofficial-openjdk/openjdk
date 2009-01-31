@@ -70,8 +70,8 @@ DECLARE_ALPHA_MASKBLIT(IntArgb, Ushort555Rgb);
 DECLARE_SRCOVER_MASKBLIT(IntArgbPre, Ushort555Rgb);
 DECLARE_ALPHA_MASKBLIT(IntArgbPre, Ushort555Rgb);
 DECLARE_ALPHA_MASKBLIT(IntRgb, Ushort555Rgb);
-DECLARE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgb);
-DECLARE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgb);
+DECLARE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgb); 
+DECLARE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgb); 
 
 NativePrimitive Ushort555RgbPrimitives[] = {
     REGISTER_ANYSHORT_ISOCOPY_BLIT(Ushort555Rgb),
@@ -80,18 +80,18 @@ NativePrimitive Ushort555RgbPrimitives[] = {
     REGISTER_CONVERT_BLIT(Ushort555Rgb, IntArgb),
     REGISTER_CONVERT_BLIT(IntArgb, Ushort555Rgb),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, Ushort555Rgb,
-                                NAME_CONVERT_BLIT(IntArgb, Ushort555Rgb)),
+				NAME_CONVERT_BLIT(IntArgb, Ushort555Rgb)),
     REGISTER_CONVERT_BLIT_EQUIV(IntArgbBm, Ushort555Rgb,
-                                NAME_CONVERT_BLIT(IntArgb, Ushort555Rgb)),
+				NAME_CONVERT_BLIT(IntArgb, Ushort555Rgb)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, Ushort555Rgb),
     REGISTER_CONVERT_BLIT(ByteGray, Ushort555Rgb),
     REGISTER_CONVERT_BLIT(ByteIndexed, Ushort555Rgb),
     REGISTER_SCALE_BLIT(Ushort555Rgb, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, Ushort555Rgb),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, Ushort555Rgb,
-                              NAME_SCALE_BLIT(IntArgb, Ushort555Rgb)),
+			      NAME_SCALE_BLIT(IntArgb, Ushort555Rgb)),
     REGISTER_SCALE_BLIT_EQUIV(IntArgbBm, Ushort555Rgb,
-                              NAME_SCALE_BLIT(IntArgb, Ushort555Rgb)),
+			      NAME_SCALE_BLIT(IntArgb, Ushort555Rgb)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, Ushort555Rgb),
     REGISTER_SCALE_BLIT(ByteGray, Ushort555Rgb),
     REGISTER_SCALE_BLIT(ByteIndexed, Ushort555Rgb),
@@ -111,14 +111,14 @@ NativePrimitive Ushort555RgbPrimitives[] = {
     REGISTER_SRCOVER_MASKBLIT(IntArgbPre, Ushort555Rgb),
     REGISTER_ALPHA_MASKBLIT(IntArgbPre, Ushort555Rgb),
     REGISTER_ALPHA_MASKBLIT(IntRgb, Ushort555Rgb),
-    REGISTER_SOLID_DRAWGLYPHLISTAA(Ushort555Rgb),
-    REGISTER_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgb),
+    REGISTER_SOLID_DRAWGLYPHLISTAA(Ushort555Rgb), 
+    REGISTER_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgb), 
 };
 
 jboolean RegisterUshort555Rgb(JNIEnv *env)
 {
     return RegisterPrimitives(env, Ushort555RgbPrimitives,
-                              ArraySize(Ushort555RgbPrimitives));
+			      ArraySize(Ushort555RgbPrimitives));
 }
 
 jint PixelForUshort555Rgb(SurfaceDataRasInfo *pRasInfo, jint rgb)
@@ -176,6 +176,6 @@ DEFINE_ALPHA_MASKBLIT(IntArgbPre, Ushort555Rgb, 4ByteArgb)
 
 DEFINE_ALPHA_MASKBLIT(IntRgb, Ushort555Rgb, 4ByteArgb)
 
-DEFINE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgb, 3ByteRgb)
+DEFINE_SOLID_DRAWGLYPHLISTAA(Ushort555Rgb, 3ByteRgb) 
 
-DEFINE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgb, 3ByteRgb)
+DEFINE_SOLID_DRAWGLYPHLISTLCD(Ushort555Rgb, 3ByteRgb) 

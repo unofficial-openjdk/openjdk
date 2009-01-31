@@ -51,21 +51,21 @@ final class PBEKey implements SecretKey {
      * @param key the given PBE key specification
      */
     PBEKey(PBEKeySpec keySpec, String keytype) throws InvalidKeySpecException {
-        char[] passwd = keySpec.getPassword();
-        if (passwd == null) {
-            // Should allow an empty password.
-            passwd = new char[0];
-        }
-        for (int i=0; i<passwd.length; i++) {
-            if ((passwd[i] < '\u0020') || (passwd[i] > '\u007E')) {
-                throw new InvalidKeySpecException("Password is not ASCII");
-            }
-        }
-        this.key = new byte[passwd.length];
-        for (int i=0; i<passwd.length; i++)
-            this.key[i] = (byte) (passwd[i] & 0x7f);
-        java.util.Arrays.fill(passwd, ' ');
-        type = keytype;
+	char[] passwd = keySpec.getPassword();
+	if (passwd == null) {
+	    // Should allow an empty password.
+	    passwd = new char[0];
+	}
+	for (int i=0; i<passwd.length; i++) {
+	    if ((passwd[i] < '\u0020') || (passwd[i] > '\u007E')) {
+		throw new InvalidKeySpecException("Password is not ASCII");
+	    }
+	}
+	this.key = new byte[passwd.length];
+	for (int i=0; i<passwd.length; i++)
+	    this.key[i] = (byte) (passwd[i] & 0x7f);
+	java.util.Arrays.fill(passwd, ' ');
+	type = keytype;
     }
 
     public byte[] getEncoded() {
@@ -73,11 +73,11 @@ final class PBEKey implements SecretKey {
     }
 
     public String getAlgorithm() {
-        return type;
+	return type;
     }
-
+	    
     public String getFormat() {
-        return "RAW";
+	return "RAW";
     }
 
     /**
@@ -93,21 +93,21 @@ final class PBEKey implements SecretKey {
     }
 
     public boolean equals(Object obj) {
-        if (obj == this)
-            return true;
+	if (obj == this)
+	    return true;
 
-        if (!(obj instanceof SecretKey))
-            return false;
+	if (!(obj instanceof SecretKey))
+	    return false;
 
-        SecretKey that = (SecretKey)obj;
+	SecretKey that = (SecretKey)obj;
 
-        if (!(that.getAlgorithm().equalsIgnoreCase(type)))
-            return false;
+	if (!(that.getAlgorithm().equalsIgnoreCase(type)))
+	    return false;
 
-        byte[] thatEncoded = that.getEncoded();
-        boolean ret = java.util.Arrays.equals(this.key, thatEncoded);
-        java.util.Arrays.fill(thatEncoded, (byte)0x00);
-        return ret;
+	byte[] thatEncoded = that.getEncoded();
+	boolean ret = java.util.Arrays.equals(this.key, thatEncoded);
+	java.util.Arrays.fill(thatEncoded, (byte)0x00);
+	return ret;
     }
 
     /**
@@ -131,24 +131,25 @@ final class PBEKey implements SecretKey {
      * this PBE key could not be created
      */
     private Object writeReplace() throws java.io.ObjectStreamException {
-        return new KeyRep(KeyRep.Type.SECRET,
-                        getAlgorithm(),
-                        getFormat(),
-                        getEncoded());
+	return new KeyRep(KeyRep.Type.SECRET,
+			getAlgorithm(),
+			getFormat(),
+			getEncoded());
     }
 
     /**
      * Ensures that the password bytes of this key are
-     * set to zero when there are no more references to it.
+     * set to zero when there are no more references to it. 
      */
     protected void finalize() throws Throwable {
-        try {
+	try {
             if (this.key != null) {
                 java.util.Arrays.fill(this.key, (byte)0x00);
                 this.key = null;
             }
-        } finally {
-            super.finalize();
-        }
+	} finally {
+	    super.finalize();
+	}
     }
 }
+

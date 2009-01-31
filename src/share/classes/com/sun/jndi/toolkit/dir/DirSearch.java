@@ -34,37 +34,39 @@ import javax.naming.directory.*;
   * @author Jon Ruiz
   */
 public class DirSearch {
-   public static NamingEnumeration search(DirContext ctx,
+   public static NamingEnumeration search(DirContext ctx, 
        Attributes matchingAttributes,
        String[] attributesToReturn) throws NamingException {
-        SearchControls cons = new SearchControls(
-            SearchControls.ONELEVEL_SCOPE,
-            0, 0, attributesToReturn,
-            false, false);
+	SearchControls cons = new SearchControls(
+	    SearchControls.ONELEVEL_SCOPE,
+	    0, 0, attributesToReturn,
+	    false, false);
 
-        return new LazySearchEnumerationImpl(
-            new ContextEnumerator(ctx, SearchControls.ONELEVEL_SCOPE),
-            new ContainmentFilter(matchingAttributes),
-            cons);
+	return new LazySearchEnumerationImpl(
+	    new ContextEnumerator(ctx, SearchControls.ONELEVEL_SCOPE),
+	    new ContainmentFilter(matchingAttributes),
+	    cons);
+    }
+
+    public static NamingEnumeration search(DirContext ctx, 
+	String filter, SearchControls cons) throws NamingException {
+
+	if (cons == null)
+	    cons = new SearchControls();
+
+	return new LazySearchEnumerationImpl(
+	    new ContextEnumerator(ctx, cons.getSearchScope()),
+	    new SearchFilter(filter),
+	    cons);
     }
 
     public static NamingEnumeration search(DirContext ctx,
-        String filter, SearchControls cons) throws NamingException {
+	String filterExpr, Object[] filterArgs, SearchControls cons)
+	throws NamingException {
 
-        if (cons == null)
-            cons = new SearchControls();
-
-        return new LazySearchEnumerationImpl(
-            new ContextEnumerator(ctx, cons.getSearchScope()),
-            new SearchFilter(filter),
-            cons);
+	String strfilter = SearchFilter.format(filterExpr, filterArgs);
+	return search(ctx, strfilter, cons);
     }
+}	
 
-    public static NamingEnumeration search(DirContext ctx,
-        String filterExpr, Object[] filterArgs, SearchControls cons)
-        throws NamingException {
 
-        String strfilter = SearchFilter.format(filterExpr, filterArgs);
-        return search(ctx, strfilter, cons);
-    }
-}

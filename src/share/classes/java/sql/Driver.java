@@ -48,7 +48,7 @@ package java.sql;
  * </pre>
  *
  * @see DriverManager
- * @see Connection
+ * @see Connection 
  */
 public interface Driver {
 
@@ -59,7 +59,7 @@ public interface Driver {
      * the JDBC driver manager is asked to connect to a given URL it passes
      * the URL to each loaded driver in turn.
      *
-     * <P>The driver should throw an <code>SQLException</code> if it is the right
+     * <P>The driver should throw an <code>SQLException</code> if it is the right 
      * driver to connect to the given URL but has trouble connecting to
      * the database.
      *
@@ -87,7 +87,7 @@ public interface Driver {
      *
      * @param url the URL of the database
      * @return <code>true</code> if this driver understands the given URL;
-     *         <code>false</code> otherwise
+     *         <code>false</code> otherwise  
      * @exception SQLException if a database access error occurs
      */
     boolean acceptsURL(String url) throws SQLException;
@@ -96,9 +96,9 @@ public interface Driver {
     /**
      * Gets information about the possible properties for this driver.
      * <P>
-     * The <code>getPropertyInfo</code> method is intended to allow a generic
-     * GUI tool to discover what properties it should prompt
-     * a human for in order to get
+     * The <code>getPropertyInfo</code> method is intended to allow a generic 
+     * GUI tool to discover what properties it should prompt 
+     * a human for in order to get 
      * enough information to connect to a database.  Note that depending on
      * the values the human has supplied so far, additional values may become
      * necessary, so it may be necessary to iterate though several calls
@@ -107,13 +107,13 @@ public interface Driver {
      * @param url the URL of the database to which to connect
      * @param info a proposed list of tag/value pairs that will be sent on
      *          connect open
-     * @return an array of <code>DriverPropertyInfo</code> objects describing
-     *          possible properties.  This array may be an empty array if
+     * @return an array of <code>DriverPropertyInfo</code> objects describing 
+     *          possible properties.  This array may be an empty array if 
      *          no properties are required.
      * @exception SQLException if a database access error occurs
      */
     DriverPropertyInfo[] getPropertyInfo(String url, java.util.Properties info)
-                         throws SQLException;
+			 throws SQLException;
 
 
     /**
@@ -150,4 +150,5 @@ public interface Driver {
      *         otherwise
      */
     boolean jdbcCompliant();
-}
+} 
+

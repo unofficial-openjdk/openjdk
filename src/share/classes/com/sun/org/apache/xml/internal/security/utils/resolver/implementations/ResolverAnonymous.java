@@ -37,7 +37,7 @@ import org.w3c.dom.Attr;
 
 public class ResolverAnonymous extends ResourceResolverSpi {
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                         ResolverAnonymous.class.getName());
 
@@ -64,7 +64,7 @@ public class ResolverAnonymous extends ResourceResolverSpi {
       return this._input;
    }
 
-   /**
+   /**    
     * @inheritDoc
     */
    public boolean engineCanResolve(Attr uri, String BaseURI) {
@@ -79,3 +79,4 @@ public class ResolverAnonymous extends ResourceResolverSpi {
       return new String[0];
    }
 }
+

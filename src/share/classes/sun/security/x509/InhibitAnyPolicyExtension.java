@@ -58,6 +58,7 @@ import sun.security.util.ObjectIdentifier;
  * SkipCerts ::= INTEGER (0..MAX)
  * </pre></code>
  * @author Anne Anderson
+ * @version %I%, %G%
  * @see CertAttrSet
  * @see Extension
  */
@@ -65,7 +66,7 @@ public class InhibitAnyPolicyExtension extends Extension
 implements CertAttrSet<String> {
 
     private static final Debug debug = Debug.getInstance("certpath");
-
+    
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
@@ -77,13 +78,13 @@ implements CertAttrSet<String> {
      */
     public static ObjectIdentifier AnyPolicy_Id;
     static {
-        try {
-            AnyPolicy_Id = new ObjectIdentifier("2.5.29.32.0");
-        } catch (IOException ioe) {
-            // Should not happen
+	try {
+	    AnyPolicy_Id = new ObjectIdentifier("2.5.29.32.0");
+	} catch (IOException ioe) {
+	    // Should not happen
         }
     }
-
+    
     /**
      * Attribute names.
      */
@@ -91,12 +92,12 @@ implements CertAttrSet<String> {
     public static final String SKIP_CERTS = "skip_certs";
 
     // Private data members
-    private int skipCerts = Integer.MAX_VALUE;
+    private int	skipCerts = Integer.MAX_VALUE;
 
     // Encode this extension value
     private void encodeThis() throws IOException {
         DerOutputStream out = new DerOutputStream();
-        out.putInteger(skipCerts);
+	out.putInteger(skipCerts);
         this.extensionValue = out.toByteArray();
     }
 
@@ -107,8 +108,8 @@ implements CertAttrSet<String> {
      *                  Use value of -1 to request unlimited depth.
      */
     public InhibitAnyPolicyExtension(int skipCerts) throws IOException {
-        if (skipCerts < -1)
-            throw new IOException("Invalid value for skipCerts");
+	if (skipCerts < -1)
+	    throw new IOException("Invalid value for skipCerts");
         if (skipCerts == -1)
             this.skipCerts = Integer.MAX_VALUE;
         else
@@ -146,14 +147,14 @@ implements CertAttrSet<String> {
         if (val.data == null)
             throw new IOException("Invalid encoding of InhibitAnyPolicy: "
                                   + "null data");
-        int skipCertsValue = val.getInteger();
-        if (skipCertsValue < -1)
-            throw new IOException("Invalid value for skipCerts");
-        if (skipCertsValue == -1) {
-            this.skipCerts = Integer.MAX_VALUE;
-        } else {
-            this.skipCerts = skipCertsValue;
-        }
+	int skipCertsValue = val.getInteger();
+	if (skipCertsValue < -1)
+	    throw new IOException("Invalid value for skipCerts");
+	if (skipCertsValue == -1) {
+	    this.skipCerts = Integer.MAX_VALUE;
+	} else {
+	    this.skipCerts = skipCertsValue;
+	}
     }
 
      /**
@@ -178,7 +179,7 @@ implements CertAttrSet<String> {
          }
          super.encode(tmp);
 
-         out.write(tmp.toByteArray());
+	 out.write(tmp.toByteArray());
      }
 
     /**
@@ -190,18 +191,18 @@ implements CertAttrSet<String> {
      * @throws IOException on error
      */
     public void set(String name, Object obj) throws IOException {
-        if (name.equalsIgnoreCase(SKIP_CERTS)) {
-            if (!(obj instanceof Integer))
+	if (name.equalsIgnoreCase(SKIP_CERTS)) {
+	    if (!(obj instanceof Integer))
                 throw new IOException("Attribute value should be of type Integer.");
-            int skipCertsValue = ((Integer)obj).intValue();
-            if (skipCertsValue < -1)
-                throw new IOException("Invalid value for skipCerts");
-            if (skipCertsValue == -1) {
-                skipCerts = Integer.MAX_VALUE;
-            } else {
-                skipCerts = skipCertsValue;
-            }
-        } else
+	    int skipCertsValue = ((Integer)obj).intValue();	    
+	    if (skipCertsValue < -1)
+		throw new IOException("Invalid value for skipCerts");
+	    if (skipCertsValue == -1) {
+		skipCerts = Integer.MAX_VALUE;
+	    } else {
+		skipCerts = skipCertsValue;
+	    }		
+	} else
             throw new IOException("Attribute name not recognized by " +
                                   "CertAttrSet:InhibitAnyPolicy.");
         encodeThis();
@@ -216,9 +217,9 @@ implements CertAttrSet<String> {
      * @throws IOException on error
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(SKIP_CERTS))
-            return (new Integer(skipCerts));
-        else
+	if (name.equalsIgnoreCase(SKIP_CERTS))
+	    return (new Integer(skipCerts));
+	else
             throw new IOException("Attribute name not recognized by " +
                                   "CertAttrSet:InhibitAnyPolicy.");
     }
@@ -232,10 +233,10 @@ implements CertAttrSet<String> {
      *                     required.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(SKIP_CERTS))
+	if (name.equalsIgnoreCase(SKIP_CERTS))
             throw new IOException("Attribute " + SKIP_CERTS +
                                   " may not be deleted.");
-        else
+	else
             throw new IOException("Attribute name not recognized by " +
                                   "CertAttrSet:InhibitAnyPolicy.");
     }
@@ -249,7 +250,7 @@ implements CertAttrSet<String> {
     public Enumeration<String> getElements() {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(SKIP_CERTS);
-        return (elements.elements());
+	return (elements.elements());
     }
 
     /**

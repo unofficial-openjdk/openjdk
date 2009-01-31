@@ -25,6 +25,7 @@
 
 /**
  * Plain text file handler.
+ * @version %I%, %G%
  * @author  Steven B. Byrne
  */
 package sun.net.www.content.text;
@@ -38,11 +39,11 @@ public class plain extends ContentHandler {
      * can be read.
      */
     public Object getContent(URLConnection uc) {
-        try {
-            InputStream is = uc.getInputStream();
-            return new PlainTextInputStream(uc.getInputStream());
-        } catch (IOException e) {
-            return "Error reading document:\n" + e.toString();
-        }
+	try {
+	    InputStream is = uc.getInputStream();
+	    return new PlainTextInputStream(uc.getInputStream());
+	} catch (IOException e) {
+	    return "Error reading document:\n" + e.toString();
+	}
     }
 }

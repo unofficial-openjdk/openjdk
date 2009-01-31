@@ -38,7 +38,7 @@ import sun.management.GcInfoCompositeData;
 import sun.management.GcInfoBuilder;
 
 /**
- * Garbage collection information.  It contains the following
+ * Garbage collection information.  It contains the following 
  * information for one garbage collection as well as GC-specific
  * attributes:
  * <blockquote>
@@ -62,6 +62,7 @@ import sun.management.GcInfoBuilder;
  * with attributes as specified in the {@link #from from} method.
  *
  * @author  Mandy Chung
+ * @version %I%, %G%
  * @since   1.5
  */
 public class GcInfo implements CompositeData, CompositeDataView {
@@ -76,7 +77,7 @@ public class GcInfo implements CompositeData, CompositeDataView {
 
     private GcInfo(GcInfoBuilder builder,
                    long index, long startTime, long endTime,
-                   MemoryUsage[] muBeforeGc,
+                   MemoryUsage[] muBeforeGc, 
                    MemoryUsage[] muAfterGc,
                    Object[] extAttributes) {
         this.builder       = builder;
@@ -84,8 +85,8 @@ public class GcInfo implements CompositeData, CompositeDataView {
         this.startTime     = startTime;
         this.endTime       = endTime;
         String[] poolNames = builder.getPoolNames();
-        this.usageBeforeGc = new HashMap<String, MemoryUsage>(poolNames.length);
-        this.usageAfterGc = new HashMap<String, MemoryUsage>(poolNames.length);
+        this.usageBeforeGc = new HashMap<String, MemoryUsage>(poolNames.length);  
+        this.usageAfterGc = new HashMap<String, MemoryUsage>(poolNames.length);  
         for (int i = 0; i < poolNames.length; i++) {
             this.usageBeforeGc.put(poolNames[i],  muBeforeGc[i]);
             this.usageAfterGc.put(poolNames[i],  muAfterGc[i]);
@@ -100,7 +101,7 @@ public class GcInfo implements CompositeData, CompositeDataView {
         this.index         = GcInfoCompositeData.getId(cd);
         this.startTime     = GcInfoCompositeData.getStartTime(cd);
         this.endTime       = GcInfoCompositeData.getEndTime(cd);
-        this.usageBeforeGc = GcInfoCompositeData.getMemoryUsageBeforeGc(cd);
+        this.usageBeforeGc = GcInfoCompositeData.getMemoryUsageBeforeGc(cd); 
         this.usageAfterGc  = GcInfoCompositeData.getMemoryUsageAfterGc(cd);
         this.extAttributes = null;
         this.builder       = null;
@@ -148,11 +149,11 @@ public class GcInfo implements CompositeData, CompositeDataView {
     }
 
     /**
-     * Returns the memory usage of all memory pools
+     * Returns the memory usage of all memory pools 
      * at the beginning of this GC.
      * This method returns
-     * a <tt>Map</tt> of the name of a memory pool
-     * to the memory usage of the corresponding
+     * a <tt>Map</tt> of the name of a memory pool 
+     * to the memory usage of the corresponding 
      * memory pool before GC starts.
      *
      * @return a <tt>Map</tt> of memory pool names to the memory
@@ -166,8 +167,8 @@ public class GcInfo implements CompositeData, CompositeDataView {
      * Returns the memory usage of all memory pools
      * at the end of this GC.
      * This method returns
-     * a <tt>Map</tt> of the name of a memory pool
-     * to the memory usage of the corresponding
+     * a <tt>Map</tt> of the name of a memory pool 
+     * to the memory usage of the corresponding 
      * memory pool when GC finishes.
      *
      * @return a <tt>Map</tt> of memory pool names to the memory

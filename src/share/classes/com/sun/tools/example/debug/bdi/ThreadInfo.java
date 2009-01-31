@@ -44,77 +44,77 @@ public class ThreadInfo {
     private boolean interrupted = false;
 
     private void assureInterrupted() throws VMNotInterruptedException {
-        if (!interrupted) {
-            throw new VMNotInterruptedException();
-        }
+	if (!interrupted) {
+	    throw new VMNotInterruptedException();
+	}
     }
-
+    
     ThreadInfo (ThreadReference thread) {
-        this.thread = thread;
-        this.frameCount = -1;
+	this.thread = thread;
+	this.frameCount = -1;
     }
 
     public ThreadReference thread() {
-        return thread;
-    }
+	return thread;
+    } 
 
     public int getStatus() throws VMNotInterruptedException {
         assureInterrupted();
-        update();
-        return status;
+	update();
+	return status;
     }
 
     public int getFrameCount() throws VMNotInterruptedException {
         assureInterrupted();
-        update();
-        return frameCount;
+	update();
+	return frameCount;
     }
 
     public StackFrame getFrame(int index) throws VMNotInterruptedException {
         assureInterrupted();
-        update();
-        try {
-            return thread.frame(index);
-        } catch (IncompatibleThreadStateException e) {
-            // Should not happen
-            interrupted = false;
-            throw new VMNotInterruptedException();
-        }
+	update();
+	try {
+	    return thread.frame(index);
+	} catch (IncompatibleThreadStateException e) {
+	    // Should not happen
+	    interrupted = false;
+	    throw new VMNotInterruptedException();
+	}
     }
 
     public Object getUserObject() {
-        return userObject;
+	return userObject;
     }
 
     public void setUserObject(Object obj) {
-        userObject = obj;
+	userObject = obj;
     }
 
     // Refresh upon first access after cache is cleared.
 
     void update() throws VMNotInterruptedException {
-        if (frameCount == -1) {
-            try {
-                status = thread.status();
-                frameCount = thread.frameCount();
-            } catch (IncompatibleThreadStateException e) {
-                // Should not happen
-                interrupted = false;
-                throw new VMNotInterruptedException();
-            }
-        }
+	if (frameCount == -1) {
+	    try {
+		status = thread.status();
+		frameCount = thread.frameCount();
+	    } catch (IncompatibleThreadStateException e) {
+		// Should not happen
+		interrupted = false;
+		throw new VMNotInterruptedException();
+	    }
+	}
     }
-
+    
     // Called from 'ExecutionManager'.
-
+    
     void validate() {
-        interrupted = true;
+	interrupted = true;
     }
 
     void invalidate() {
-        interrupted = false;
-        frameCount = -1;
-        status = ThreadReference.THREAD_STATUS_UNKNOWN;
+	interrupted = false;
+	frameCount = -1;
+	status = ThreadReference.THREAD_STATUS_UNKNOWN;
     }
-
+    
 }

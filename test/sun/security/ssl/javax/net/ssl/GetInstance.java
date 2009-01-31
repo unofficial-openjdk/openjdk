@@ -27,80 +27,80 @@
  * @summary verify getInstance() works using Provider.getService()
  * @author Andreas Sterbenz
  */
-
+ 
 import java.security.*;
 
 import javax.net.ssl.*;
 
 public class GetInstance {
-
+    
     private static void same(Provider p1, Provider p2) throws Exception {
-        if (p1 != p2) {
-            throw new Exception("not same object");
-        }
+	if (p1 != p2) {
+	    throw new Exception("not same object");
+	}
     }
-
+    
     public static void main(String[] args) throws Exception {
-        long start = System.currentTimeMillis();
+	long start = System.currentTimeMillis();
 
-        Provider p = Security.getProvider("SunJSSE");
+	Provider p = Security.getProvider("SunJSSE");
+	
+	SSLContext context;
+	context = SSLContext.getInstance("SSL");
+	same(p, context.getProvider());
+	context = SSLContext.getInstance("SSL", "SunJSSE");
+	same(p, context.getProvider());
+	context = SSLContext.getInstance("SSL", p);
+	same(p, context.getProvider());
+	
+	KeyManagerFactory kmf;
+	kmf = KeyManagerFactory.getInstance("SunX509");
+	same(p, kmf.getProvider());
+	kmf = KeyManagerFactory.getInstance("SunX509", "SunJSSE");
+	same(p, kmf.getProvider());
+	kmf = KeyManagerFactory.getInstance("SunX509", p);
+	same(p, kmf.getProvider());
+	
+	TrustManagerFactory tmf;
+	tmf = TrustManagerFactory.getInstance("SunX509");
+	same(p, tmf.getProvider());
+	tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
+	same(p, tmf.getProvider());
+	tmf = TrustManagerFactory.getInstance("SunX509", p);
+	same(p, tmf.getProvider());
+	
+	testComSun();
 
-        SSLContext context;
-        context = SSLContext.getInstance("SSL");
-        same(p, context.getProvider());
-        context = SSLContext.getInstance("SSL", "SunJSSE");
-        same(p, context.getProvider());
-        context = SSLContext.getInstance("SSL", p);
-        same(p, context.getProvider());
-
-        KeyManagerFactory kmf;
-        kmf = KeyManagerFactory.getInstance("SunX509");
-        same(p, kmf.getProvider());
-        kmf = KeyManagerFactory.getInstance("SunX509", "SunJSSE");
-        same(p, kmf.getProvider());
-        kmf = KeyManagerFactory.getInstance("SunX509", p);
-        same(p, kmf.getProvider());
-
-        TrustManagerFactory tmf;
-        tmf = TrustManagerFactory.getInstance("SunX509");
-        same(p, tmf.getProvider());
-        tmf = TrustManagerFactory.getInstance("SunX509", "SunJSSE");
-        same(p, tmf.getProvider());
-        tmf = TrustManagerFactory.getInstance("SunX509", p);
-        same(p, tmf.getProvider());
-
-        testComSun();
-
-        long stop = System.currentTimeMillis();
-        System.out.println("Done (" + (stop - start) + " ms).");
+	long stop = System.currentTimeMillis();
+	System.out.println("Done (" + (stop - start) + " ms).");
     }
-
+    
     private static void testComSun() throws Exception {
-        Provider p = Security.getProvider("SunJSSE");
-
-        com.sun.net.ssl.SSLContext context;
-        context = com.sun.net.ssl.SSLContext.getInstance("SSL");
-        same(p, context.getProvider());
-        context = com.sun.net.ssl.SSLContext.getInstance("SSL", "SunJSSE");
-        same(p, context.getProvider());
-        context = com.sun.net.ssl.SSLContext.getInstance("SSL", p);
-        same(p, context.getProvider());
-
-        com.sun.net.ssl.KeyManagerFactory kmf;
-        kmf = com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509");
-        same(p, kmf.getProvider());
-        kmf = com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509", "SunJSSE");
-        same(p, kmf.getProvider());
-        kmf = com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509", p);
-        same(p, kmf.getProvider());
-
-        com.sun.net.ssl.TrustManagerFactory tmf;
-        tmf = com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509");
-        same(p, tmf.getProvider());
-        tmf = com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509", "SunJSSE");
-        same(p, tmf.getProvider());
-        tmf = com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509", p);
-        same(p, tmf.getProvider());
+	Provider p = Security.getProvider("SunJSSE");
+	
+	com.sun.net.ssl.SSLContext context;
+	context = com.sun.net.ssl.SSLContext.getInstance("SSL");
+	same(p, context.getProvider());
+	context = com.sun.net.ssl.SSLContext.getInstance("SSL", "SunJSSE");
+	same(p, context.getProvider());
+	context = com.sun.net.ssl.SSLContext.getInstance("SSL", p);
+	same(p, context.getProvider());
+	
+	com.sun.net.ssl.KeyManagerFactory kmf;
+	kmf = com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509");
+	same(p, kmf.getProvider());
+	kmf = com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509", "SunJSSE");
+	same(p, kmf.getProvider());
+	kmf = com.sun.net.ssl.KeyManagerFactory.getInstance("SunX509", p);
+	same(p, kmf.getProvider());
+	
+	com.sun.net.ssl.TrustManagerFactory tmf;
+	tmf = com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509");
+	same(p, tmf.getProvider());
+	tmf = com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509", "SunJSSE");
+	same(p, tmf.getProvider());
+	tmf = com.sun.net.ssl.TrustManagerFactory.getInstance("SunX509", p);
+	same(p, tmf.getProvider());
     }
-
+    
 }

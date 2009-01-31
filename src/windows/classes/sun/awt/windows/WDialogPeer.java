@@ -33,7 +33,7 @@ import sun.awt.im.*;
 
 class WDialogPeer extends WWindowPeer implements DialogPeer {
     // Toolkit & peer internals
-
+ 
     // Platform default background for dialogs.  Gets set on target if
     // target has none explicitly specified.
     final static Color defaultBackground =  SystemColor.control;
@@ -43,14 +43,14 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
     boolean needDefaultBackground;
 
     WDialogPeer(Dialog target) {
-        super(target);
+	super(target);
 
-        InputMethodManager imm = InputMethodManager.getInstance();
-        String menuString = imm.getTriggerMenuString();
-        if (menuString != null)
-        {
+	InputMethodManager imm = InputMethodManager.getInstance();
+	String menuString = imm.getTriggerMenuString();
+	if (menuString != null)
+	{ 
             pSetIMMOption(menuString);
-        }
+	}
     }
 
     native void create(WComponentPeer parent);
@@ -67,10 +67,10 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
 
         super.initialize();
 
-        if (target.getTitle() != null) {
-            setTitle(target.getTitle());
-        }
-        setResizable(target.isResizable());
+	if (target.getTitle() != null) {
+	    setTitle(target.getTitle());
+	}
+	setResizable(target.isResizable());
     }
 
     protected void realShow() {
@@ -132,5 +132,5 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
     native void pSetIMMOption(String option);
     void notifyIMMOptionChange(){
       InputMethodManager.getInstance().notifyChangeRequest((Component)target);
-    }
+    }  
 }

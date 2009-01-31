@@ -29,10 +29,10 @@ package javax.print.attribute;
 import java.io.Serializable;
 
 /**
- * Class HashDocAttributeSet provides an attribute set which
- * inherits its implementation from class {@link HashAttributeSet
- * HashAttributeSet} and enforces the semantic restrictions of interface {@link
- * DocAttributeSet DocAttributeSet}.
+ * Class HashDocAttributeSet provides an attribute set which 
+ * inherits its implementation from class {@link HashAttributeSet 
+ * HashAttributeSet} and enforces the semantic restrictions of interface {@link 
+ * DocAttributeSet DocAttributeSet}. 
  * <P>
  *
  * @author  Alan Kaminsky
@@ -43,15 +43,15 @@ public class HashDocAttributeSet extends HashAttributeSet
     private static final long serialVersionUID = -1128534486061432528L;
 
     /**
-     * Construct a new, empty hash doc attribute set.
+     * Construct a new, empty hash doc attribute set. 
      */
     public HashDocAttributeSet() {
-        super (DocAttribute.class);
+	super (DocAttribute.class);
     }
 
     /**
      * Construct a new hash doc attribute set,
-     * initially populated with the given value.
+     * initially populated with the given value. 
      *
      * @param  attribute  Attribute value to add to the set.
      *
@@ -59,27 +59,27 @@ public class HashDocAttributeSet extends HashAttributeSet
      *     (unchecked exception) Thrown if <CODE>attribute</CODE> is null.
      */
     public HashDocAttributeSet(DocAttribute attribute) {
-        super (attribute, DocAttribute.class);
+	super (attribute, DocAttribute.class);
     }
 
     /**
      * Construct a new hash doc attribute set,
      * initially populated with the values from the given array.
-     * The new attribute set is populated by
-     * adding the elements of <CODE>attributes</CODE> array to the set in
-     * sequence, starting at index 0. Thus, later array elements may replace
-     * earlier array elements if the array contains duplicate attribute
-     * values or attribute categories.
+     * The new attribute set is populated by 
+     * adding the elements of <CODE>attributes</CODE> array to the set in 
+     * sequence, starting at index 0. Thus, later array elements may replace 
+     * earlier array elements if the array contains duplicate attribute 
+     * values or attribute categories. 
      *
      * @param  attributes  Array of attribute values to add to the set.
      *                     If null, an empty attribute set is constructed.
      *
      * @exception  NullPointerException
      *  (unchecked exception)
-     * Thrown if any element of <CODE>attributes</CODE> is null.
+     * Thrown if any element of <CODE>attributes</CODE> is null. 
      */
     public HashDocAttributeSet(DocAttribute[] attributes) {
-        super (attributes, DocAttribute.class);
+	super (attributes, DocAttribute.class);
     }
 
     /**
@@ -93,10 +93,10 @@ public class HashDocAttributeSet extends HashAttributeSet
      * @exception  ClassCastException
      *     (unchecked exception) Thrown if any element of
      * <CODE>attributes</CODE> is not an instance of
-     * <CODE>DocAttribute</CODE>.
+     * <CODE>DocAttribute</CODE>. 
      */
     public HashDocAttributeSet(DocAttributeSet attributes) {
-        super(attributes, DocAttribute.class);
-    }
-
+	super(attributes, DocAttribute.class);
+    }   
+    
 }

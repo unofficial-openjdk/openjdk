@@ -29,8 +29,9 @@ package java.io;
 /**
  * A character stream whose source is a string.
  *
- * @author      Mark Reinhold
- * @since       JDK1.1
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
+ * @since	JDK1.1
  */
 
 public class StringReader extends Reader {
@@ -46,14 +47,14 @@ public class StringReader extends Reader {
      * @param s  String providing the character stream.
      */
     public StringReader(String s) {
-        this.str = s;
-        this.length = s.length();
+	this.str = s;
+	this.length = s.length();
     }
 
     /** Check to make sure that the stream has not been closed */
     private void ensureOpen() throws IOException {
-        if (str == null)
-            throw new IOException("Stream closed");
+	if (str == null)
+	    throw new IOException("Stream closed");
     }
 
     /**
@@ -65,12 +66,12 @@ public class StringReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public int read() throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            if (next >= length)
-                return -1;
-            return str.charAt(next++);
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    if (next >= length)
+		return -1;
+	    return str.charAt(next++);
+	}
     }
 
     /**
@@ -86,21 +87,21 @@ public class StringReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public int read(char cbuf[], int off, int len) throws IOException {
-        synchronized (lock) {
-            ensureOpen();
+	synchronized (lock) {
+	    ensureOpen();
             if ((off < 0) || (off > cbuf.length) || (len < 0) ||
                 ((off + len) > cbuf.length) || ((off + len) < 0)) {
                 throw new IndexOutOfBoundsException();
             } else if (len == 0) {
                 return 0;
             }
-            if (next >= length)
-                return -1;
-            int n = Math.min(length - next, len);
-            str.getChars(next, next + n, cbuf, off);
-            next += n;
-            return n;
-        }
+	    if (next >= length)
+		return -1;
+	    int n = Math.min(length - next, len);
+	    str.getChars(next, next + n, cbuf, off);
+	    next += n;
+	    return n;
+	}
     }
 
     /**
@@ -120,7 +121,7 @@ public class StringReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public long skip(long ns) throws IOException {
-        synchronized (lock) {
+	synchronized (lock) {
             ensureOpen();
             if (next >= length)
                 return 0;
@@ -150,7 +151,7 @@ public class StringReader extends Reader {
      * Tells whether this stream supports the mark() operation, which it does.
      */
     public boolean markSupported() {
-        return true;
+	return true;
     }
 
     /**
@@ -167,13 +168,13 @@ public class StringReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public void mark(int readAheadLimit) throws IOException {
-        if (readAheadLimit < 0){
-            throw new IllegalArgumentException("Read-ahead limit < 0");
-        }
-        synchronized (lock) {
-            ensureOpen();
-            mark = next;
-        }
+	if (readAheadLimit < 0){
+	    throw new IllegalArgumentException("Read-ahead limit < 0");
+	}
+	synchronized (lock) {
+	    ensureOpen();
+	    mark = next;
+	}
     }
 
     /**
@@ -183,10 +184,10 @@ public class StringReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     public void reset() throws IOException {
-        synchronized (lock) {
-            ensureOpen();
-            next = mark;
-        }
+	synchronized (lock) {
+	    ensureOpen();
+	    next = mark;
+	}
     }
 
     /**
@@ -196,6 +197,6 @@ public class StringReader extends Reader {
      * Closing a previously closed stream has no effect.
      */
     public void close() {
-        str = null;
+	str = null;
     }
 }

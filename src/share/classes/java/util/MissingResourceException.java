@@ -44,6 +44,7 @@ package java.util;
  * Signals that a resource is missing.
  * @see java.lang.Exception
  * @see ResourceBundle
+ * @version     %I%, %G%
  * @author      Mark Davis
  * @since       JDK1.1
  */
@@ -82,7 +83,7 @@ class MissingResourceException extends RuntimeException {
      *        or unknown.)
      */
     MissingResourceException(String message, String className, String key, Throwable cause) {
-        super(message, cause);
+	super(message, cause);
         this.className = className;
         this.key = key;
     }

@@ -86,7 +86,7 @@ CK_C_INITIALIZE_ARGS_PTR makeCKInitArgsAdapter(JNIEnv *env, jobject jInitArgs)
 #endif /* NO_CALLBACKS */
 
     if(jInitArgs == NULL) {
-        return NULL_PTR;
+	return NULL_PTR;
     }
 
     /* convert the Java InitArgs object to a pointer to a CK_C_INITIALIZE_ARGS structure */
@@ -122,14 +122,14 @@ CK_C_INITIALIZE_ARGS_PTR makeCKInitArgsAdapter(JNIEnv *env, jobject jInitArgs)
     ckpInitArgs->UnlockMutex = (jMutexHandler != NULL) ? &callJUnlockMutex : NULL_PTR;
 
     if ((ckpInitArgs->CreateMutex != NULL_PTR)
-            || (ckpInitArgs->DestroyMutex != NULL_PTR)
-            || (ckpInitArgs->LockMutex != NULL_PTR)
-            || (ckpInitArgs->UnlockMutex != NULL_PTR)) {
-        /* we only need to keep a global copy, if we need callbacks */
-        /* set the global object jInitArgs so that the right Java mutex functions will be called */
-        jInitArgsObject = (*env)->NewGlobalRef(env, jInitArgs);
-        ckpGlobalInitArgs = (CK_C_INITIALIZE_ARGS_PTR) malloc(sizeof(CK_C_INITIALIZE_ARGS));
-        memcpy(ckpGlobalInitArgs, ckpInitArgs, sizeof(CK_C_INITIALIZE_ARGS));
+	    || (ckpInitArgs->DestroyMutex != NULL_PTR)
+	    || (ckpInitArgs->LockMutex != NULL_PTR)
+	    || (ckpInitArgs->UnlockMutex != NULL_PTR)) {
+	/* we only need to keep a global copy, if we need callbacks */
+	/* set the global object jInitArgs so that the right Java mutex functions will be called */
+	jInitArgsObject = (*env)->NewGlobalRef(env, jInitArgs);
+	ckpGlobalInitArgs = (CK_C_INITIALIZE_ARGS_PTR) malloc(sizeof(CK_C_INITIALIZE_ARGS));
+	memcpy(ckpGlobalInitArgs, ckpInitArgs, sizeof(CK_C_INITIALIZE_ARGS));
     }
 #endif /* NO_CALLBACKS */
 
@@ -186,19 +186,19 @@ CK_RV callJCreateMutex(CK_VOID_PTR_PTR ppMutex)
     /* Determine, if current thread is already attached */
     returnValue = (*jvm)->GetEnv(jvm, (void **) &env, JNI_VERSION_1_2);
     if (returnValue == JNI_EDETACHED) {
-        /* thread detached, so attach it */
-        wasAttached = 0;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* thread detached, so attach it */
+	wasAttached = 0;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else if (returnValue == JNI_EVERSION) {
-        /* this version of JNI is not supported, so just try to attach */
-        /* we assume it was attached to ensure that this thread is not detached
-         * afterwards even though it should not
-         */
-        wasAttached = 1;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* this version of JNI is not supported, so just try to attach */
+	/* we assume it was attached to ensure that this thread is not detached
+	 * afterwards even though it should not
+	 */
+	wasAttached = 1;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else {
-        /* attached */
-        wasAttached = 1;
+	/* attached */
+	wasAttached = 1;
     }
 
 
@@ -227,17 +227,17 @@ CK_RV callJCreateMutex(CK_VOID_PTR_PTR ppMutex)
     pkcs11Exception = (*env)->ExceptionOccurred(env);
 
     if (pkcs11Exception != NULL) {
-        /* The was an exception thrown, now we get the error-code from it */
-        pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
-        methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
-        assert(methodID != 0);
-        errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
-        rv = jLongToCKULong(errorCode);
+	/* The was an exception thrown, now we get the error-code from it */
+	pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
+	methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
+	assert(methodID != 0);
+	errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
+	rv = jLongToCKULong(errorCode);
     }
 
     /* if we attached this thread to the VM just for callback, we detach it now */
     if (wasAttached) {
-        returnValue = (*jvm)->DetachCurrentThread(jvm);
+	returnValue = (*jvm)->DetachCurrentThread(jvm);
     }
 
     return rv ;
@@ -277,19 +277,19 @@ CK_RV callJDestroyMutex(CK_VOID_PTR pMutex)
     /* Determine, if current thread is already attached */
     returnValue = (*jvm)->GetEnv(jvm, (void **) &env, JNI_VERSION_1_2);
     if (returnValue == JNI_EDETACHED) {
-        /* thread detached, so attach it */
-        wasAttached = 0;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* thread detached, so attach it */
+	wasAttached = 0;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else if (returnValue == JNI_EVERSION) {
-        /* this version of JNI is not supported, so just try to attach */
-        /* we assume it was attached to ensure that this thread is not detached
-         * afterwards even though it should not
-         */
-        wasAttached = 1;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* this version of JNI is not supported, so just try to attach */
+	/* we assume it was attached to ensure that this thread is not detached
+	 * afterwards even though it should not
+	 */
+	wasAttached = 1;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else {
-        /* attached */
-        wasAttached = 1;
+	/* attached */
+	wasAttached = 1;
     }
 
 
@@ -318,17 +318,17 @@ CK_RV callJDestroyMutex(CK_VOID_PTR pMutex)
     pkcs11Exception = (*env)->ExceptionOccurred(env);
 
     if (pkcs11Exception != NULL) {
-        /* The was an exception thrown, now we get the error-code from it */
-        pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
-        methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
-        assert(methodID != 0);
-        errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
-        rv = jLongToCKULong(errorCode);
+	/* The was an exception thrown, now we get the error-code from it */
+	pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
+	methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
+	assert(methodID != 0);
+	errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
+	rv = jLongToCKULong(errorCode);
     }
 
     /* if we attached this thread to the VM just for callback, we detach it now */
     if (wasAttached) {
-        returnValue = (*jvm)->DetachCurrentThread(jvm);
+	returnValue = (*jvm)->DetachCurrentThread(jvm);
     }
 
     return rv ;
@@ -368,19 +368,19 @@ CK_RV callJLockMutex(CK_VOID_PTR pMutex)
     /* Determine, if current thread is already attached */
     returnValue = (*jvm)->GetEnv(jvm, (void **) &env, JNI_VERSION_1_2);
     if (returnValue == JNI_EDETACHED) {
-        /* thread detached, so attach it */
-        wasAttached = 0;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* thread detached, so attach it */
+	wasAttached = 0;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else if (returnValue == JNI_EVERSION) {
-        /* this version of JNI is not supported, so just try to attach */
-        /* we assume it was attached to ensure that this thread is not detached
-         * afterwards even though it should not
-         */
-        wasAttached = 1;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* this version of JNI is not supported, so just try to attach */
+	/* we assume it was attached to ensure that this thread is not detached
+	 * afterwards even though it should not
+	 */
+	wasAttached = 1;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else {
-        /* attached */
-        wasAttached = 1;
+	/* attached */
+	wasAttached = 1;
     }
 
 
@@ -406,17 +406,17 @@ CK_RV callJLockMutex(CK_VOID_PTR pMutex)
     pkcs11Exception = (*env)->ExceptionOccurred(env);
 
     if (pkcs11Exception != NULL) {
-        /* The was an exception thrown, now we get the error-code from it */
-        pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
-        methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
-        assert(methodID != 0);
-        errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
-        rv = jLongToCKULong(errorCode);
+	/* The was an exception thrown, now we get the error-code from it */
+	pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
+	methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
+	assert(methodID != 0);
+	errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
+	rv = jLongToCKULong(errorCode);
     }
 
     /* if we attached this thread to the VM just for callback, we detach it now */
     if (wasAttached) {
-        returnValue = (*jvm)->DetachCurrentThread(jvm);
+	returnValue = (*jvm)->DetachCurrentThread(jvm);
     }
 
     return rv ;
@@ -456,19 +456,19 @@ CK_RV callJUnlockMutex(CK_VOID_PTR pMutex)
     /* Determine, if current thread is already attached */
     returnValue = (*jvm)->GetEnv(jvm, (void **) &env, JNI_VERSION_1_2);
     if (returnValue == JNI_EDETACHED) {
-        /* thread detached, so attach it */
-        wasAttached = 0;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* thread detached, so attach it */
+	wasAttached = 0;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else if (returnValue == JNI_EVERSION) {
-        /* this version of JNI is not supported, so just try to attach */
-        /* we assume it was attached to ensure that this thread is not detached
-         * afterwards even though it should not
-         */
-        wasAttached = 1;
-        returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
+	/* this version of JNI is not supported, so just try to attach */
+	/* we assume it was attached to ensure that this thread is not detached
+	 * afterwards even though it should not
+	 */
+	wasAttached = 1;
+	returnValue = (*jvm)->AttachCurrentThread(jvm, (void **) &env, NULL);
     } else {
-        /* attached */
-        wasAttached = 1;
+	/* attached */
+	wasAttached = 1;
     }
 
 
@@ -494,20 +494,21 @@ CK_RV callJUnlockMutex(CK_VOID_PTR pMutex)
     pkcs11Exception = (*env)->ExceptionOccurred(env);
 
     if (pkcs11Exception != NULL) {
-        /* The was an exception thrown, now we get the error-code from it */
-        pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
-        methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
-        assert(methodID != 0);
-        errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
-        rv = jLongToCKULong(errorCode);
+	/* The was an exception thrown, now we get the error-code from it */
+	pkcs11ExceptionClass = (*env)->FindClass(env, CLASS_PKCS11EXCEPTION);
+	methodID = (*env)->GetMethodID(env, pkcs11ExceptionClass, "getErrorCode", "()J");
+	assert(methodID != 0);
+	errorCode = (*env)->CallLongMethod(env, pkcs11Exception, methodID);
+	rv = jLongToCKULong(errorCode);
     }
 
     /* if we attached this thread to the VM just for callback, we detach it now */
     if (wasAttached) {
-        returnValue = (*jvm)->DetachCurrentThread(jvm);
+	returnValue = (*jvm)->DetachCurrentThread(jvm);
     }
 
     return rv ;
 }
 
 #endif /* NO_CALLBACKS */
+

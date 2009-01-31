@@ -34,6 +34,7 @@ import sun.jvmstat.monitor.*;
  * level access to the command line arguments.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Arguments {
@@ -50,7 +51,7 @@ public class Arguments {
     private boolean mainArgs;
     private String hostname;
     private HostIdentifier hostId;
-
+  
     public static void printUsage(PrintStream ps) {
       ps.println("usage: jps [-help]");
       ps.println("       jps [-q] [-mlvV] [<hostid>]");

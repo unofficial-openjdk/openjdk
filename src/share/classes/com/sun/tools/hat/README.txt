@@ -1,3 +1,4 @@
+README on HAT: %W% %E%
 --------------
 This HAT source originally came from the http://hat.dev.java.net site.
 

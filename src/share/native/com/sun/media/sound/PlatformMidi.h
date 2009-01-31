@@ -66,17 +66,17 @@ typedef struct tag_MidiMessage {
     INT32 locked;     // TRUE when event is currently being read
     MidiMessageType type;
     union {
-        struct {
-            // platform-endianness packed message:
-            // status | data1<<8 | data2<<16
-            UINT32 packedMsg;
-        } s; // short message
-        struct {
-            UINT32  size;
-            // this buffer is read only. It must not be freed.
-            UBYTE* data;
-            INT32 index; // sysex buffer number
-        } l; // long message
+	struct {
+	    // platform-endianness packed message:
+	    // status | data1<<8 | data2<<16
+	    UINT32 packedMsg;
+	} s; // short message
+	struct {
+	    UINT32  size;
+	    // this buffer is read only. It must not be freed.
+	    UBYTE* data;
+	    INT32 index; // sysex buffer number
+	} l; // long message
     } data;
 } MidiMessage;
 
@@ -133,7 +133,7 @@ void MIDI_DestroyQueue(MidiMessageQueue* queue);
 // returns true, if message has been added
 int MIDI_QueueAddShort(MidiMessageQueue* queue, UINT32 packedMsg, INT64 timestamp, int overwrite);
 int MIDI_QueueAddLong(MidiMessageQueue* queue, UBYTE* data, UINT32 size,
-                      INT32 sysexIndex, INT64 timestamp, int overwrite);
+		      INT32 sysexIndex, INT64 timestamp, int overwrite);
 
 // returns NULL if no messages in queue.
 MidiMessage* MIDI_QueueRead(MidiMessageQueue* queue);
@@ -146,8 +146,8 @@ void MIDI_QueueClear(MidiMessageQueue* queue);
 
 /*
  * Platform MIDI IN support.
- * deviceId:            device-by-number
- * deviceHandle:        native device handle
+ * deviceId:		device-by-number
+ * deviceHandle:	native device handle
  */
 
 #if USE_PLATFORM_MIDI_IN == TRUE
@@ -247,8 +247,8 @@ void MIDI_IN_ReleaseMessage(MidiDeviceHandle* handle, MidiMessage* msg);
 
 /*
  * Platform MIDI OUT support.
- * deviceId:            device-by-number
- * deviceHandle:        native device handle
+ * deviceId:		device-by-number
+ * deviceHandle:	native device handle
  */
 
 #if USE_PLATFORM_MIDI_OUT == TRUE

@@ -171,7 +171,11 @@ ifeq ($(SYSTEM_UNAME), SunOS)
   BUNDLE_FILE_SUFFIX=.tar
   OS_VENDOR = Sun Microsystems
   # Required Solaris version
-  REQUIRED_OS_VERSION = 5.10
+  ifeq ($(ARCH), amd64)
+    REQUIRED_OS_VERSION = 5.10
+  else
+    REQUIRED_OS_VERSION = 5.8
+  endif
   # Minimum disk space needed as determined by running 'du -sk' on 
   #    a fully built workspace.
   ifeq ($(ARCH_FAMILY), sparc)

@@ -1,22 +1,22 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -31,22 +31,22 @@
 //  Little cms
 //  Copyright (C) 1998-2006 Marti Maria
 //
-// Permission is hereby granted, free of charge, to any person obtaining
-// a copy of this software and associated documentation files (the "Software"),
-// to deal in the Software without restriction, including without limitation
-// the rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of the Software, and to permit persons to whom the Software
+// Permission is hereby granted, free of charge, to any person obtaining 
+// a copy of this software and associated documentation files (the "Software"), 
+// to deal in the Software without restriction, including without limitation 
+// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+// and/or sell copies of the Software, and to permit persons to whom the Software 
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in
+// The above copyright notice and this permission notice shall be included in 
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
@@ -94,7 +94,7 @@ LCMSAPI void   LCMSEXPORT cmsCIECAM97sReverse(LCMSHANDLE hModel, LPcmsJCh pIn,  
 
 #ifdef USE_CIECAM97s2
 
-#       define NOISE_CONSTANT   3.05
+#       define NOISE_CONSTANT   3.05              
 #else
 #       define NOISE_CONSTANT   2.05
 #endif
@@ -593,7 +593,7 @@ LCMSAPI void LCMSEXPORT cmsCIECAM97sReverse(LCMSHANDLE hModel, LPcmsJCh inPtr, L
     double R_suba_prime, G_suba_prime, B_suba_prime;
     double R_prime, G_prime, B_prime;
     double Y_subc, Y_prime, B_term;
-    VEC3 tmp;
+    VEC3 tmp;    
     VEC3 RGB_prime, RGB_subc_Y;
     VEC3 Y_over_Y_subc_RGB;
     VEC3 XYZ_primeprime_over_Y_subc;
@@ -628,7 +628,7 @@ LCMSAPI void LCMSEXPORT cmsCIECAM97sReverse(LCMSHANDLE hModel, LPcmsJCh inPtr, L
 
 
     ComputeHueQuadrature(h, &H1val, &es);
-
+    
     // (7) Calculate s
 
     s = pow(C / (2.44 * pow(J/100.0, 0.67*lpMod->n) * (1.64 - pow(0.29, lpMod->n))) , (1./0.69));
@@ -729,7 +729,7 @@ LCMSAPI void LCMSEXPORT cmsCIECAM97sReverse(LCMSHANDLE hModel, LPcmsJCh inPtr, L
            if (Y_prime < 0 || Y_subc < 0)
            {
                 // Discard to near black point
-
+               
                 outPtr -> X = 0;
                 outPtr -> Y = 0;
                 outPtr -> Z = 0;

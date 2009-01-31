@@ -37,6 +37,7 @@ import sun.awt.AppContext;
  * <code>LayoutStyle</code>.  Instead use the static method
  * <code>getInstance</code> to obtain the current instance.
  *
+ * @version %I%, %G%
  * @since 1.6
  */
 public abstract class LayoutStyle {
@@ -165,7 +166,7 @@ public abstract class LayoutStyle {
      * @param component1 the <code>JComponent</code>
      *               <code>component2</code> is being placed relative to
      * @param component2 the <code>JComponent</code> being placed
-     * @param position the position <code>component2</code> is being placed
+     * @param position the position <code>component2</code> is being placed 
      *        relative to <code>component1</code>; one of
      *        <code>SwingConstants.NORTH</code>,
      *        <code>SwingConstants.SOUTH</code>,
@@ -181,7 +182,7 @@ public abstract class LayoutStyle {
      * @throws IllegalArgumentException if <code>position</code> is not
      *         one of <code>SwingConstants.NORTH</code>,
      *         <code>SwingConstants.SOUTH</code>,
-     *         <code>SwingConstants.EAST</code> or
+     *         <code>SwingConstants.EAST</code> or 
      *         <code>SwingConstants.WEST</code>
      * @see LookAndFeel#getLayoutStyle
      * @since 1.6
@@ -196,7 +197,7 @@ public abstract class LayoutStyle {
      * edge of its parent.
      *
      * @param component the <code>JComponent</code> being positioned
-     * @param position the position <code>component</code> is being placed
+     * @param position the position <code>component</code> is being placed 
      *        relative to its parent; one of
      *        <code>SwingConstants.NORTH</code>,
      *        <code>SwingConstants.SOUTH</code>,
@@ -209,7 +210,7 @@ public abstract class LayoutStyle {
      * @throws IllegalArgumentException if <code>position</code> is not
      *         one of <code>SwingConstants.NORTH</code>,
      *         <code>SwingConstants.SOUTH</code>,
-     *         <code>SwingConstants.EAST</code> or
+     *         <code>SwingConstants.EAST</code> or 
      *         <code>SwingConstants.WEST</code>
      */
     public abstract int getContainerGap(JComponent component, int position,

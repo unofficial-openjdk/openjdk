@@ -43,7 +43,7 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
     boolean closed = false;
 
     EventQueueImpl(VirtualMachine vm, TargetVM target) {
-        super(vm);
+        super(vm);                   
         this.target = target;
         target.addEventQueue(this);
     }
@@ -61,7 +61,7 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
 
     synchronized void enqueue(EventSet eventSet) {
         eventSets.add(eventSet);
-        notifyAll();
+        notifyAll();    
     }
 
     synchronized int size() {
@@ -73,7 +73,7 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
             closed = true; // OK for this the be first since synchronized
 
             // place VMDisconnectEvent into queue
-            enqueue(new EventSetImpl(vm,
+            enqueue(new EventSetImpl(vm, 
                                      (byte)JDWP.EventKind.VM_DISCONNECTED));
         }
     }
@@ -83,7 +83,7 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
     }
 
     /**
-     * Filter out events not for user's eyes.
+     * Filter out events not for user's eyes.  
      * Then filter out empty sets.
      */
     public EventSet remove(long timeout) throws InterruptedException {
@@ -96,7 +96,7 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
             EventSetImpl fullEventSet = removeUnfiltered(timeout);
             if (fullEventSet == null) {
                 eventSet = null;  // timeout
-                break;
+                break;      
             }
             /*
              * Remove events from the event set for which
@@ -127,8 +127,8 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
         /*
          * Currently, no internal events are requested with a suspend
          * policy other than none, so we don't check for notifySuspend()
-         * here. If this changes in the future, there is much
-         * infrastructure that needs to be updated.
+         * here. If this changes in the future, there is much 
+         * infrastructure that needs to be updated. 
          */
 
         return eventSet;
@@ -146,12 +146,12 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
                ((timerThread == null) ? true : !timerThread.timedOut());
     }
 
-    private EventSetImpl removeUnfiltered(long timeout)
+    private EventSetImpl removeUnfiltered(long timeout) 
                                                throws InterruptedException {
         EventSetImpl eventSet = null;
 
-        /*
-         * Make sure the VM has completed initialization before
+        /* 
+         * Make sure the VM has completed initialization before 
          * trying to build events.
          */
         vm.waitInitCompletion();
@@ -165,26 +165,26 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
                 eventSet = (EventSetImpl)eventSets.removeFirst();
             } else {
                 /*
-                 * If a timeout was specified, create a thread to
-                 * notify this one when a timeout
+                 * If a timeout was specified, create a thread to 
+                 * notify this one when a timeout 
                  * occurs. We can't use the timed version of wait()
                  * because it is possible for multiple enqueue() calls
                  * before we see something in the eventSet queue
-                 * (this is possible when multiple threads call
+                 * (this is possible when multiple threads call 
                  * remove() concurrently -- not a great idea, but
-                 * it should be supported). Even if enqueue() did a
-                 * notify() instead of notifyAll() we are not able to
+                 * it should be supported). Even if enqueue() did a 
+                 * notify() instead of notifyAll() we are not able to 
                  * use a timed wait because there's no way to distinguish
-                 * a timeout from a notify.  That limitation implies a
+                 * a timeout from a notify.  That limitation implies a 
                  * possible race condition between a timed out thread
                  * and a notified thread.
                  */
                 TimerThread timerThread = null;
                 try {
-                    if (timeout > 0) {
+                    if (timeout > 0) { 
                         timerThread = startTimerThread(timeout);
                     }
-
+        
                     while (shouldWait(timerThread)) {
                         this.wait();
                     }
@@ -193,7 +193,7 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
                         timerThread.interrupt();
                     }
                 }
-
+    
                 if (eventSets.isEmpty()) {
                     if (closed) {
                         throw new VMDisconnectedException();
@@ -240,3 +240,4 @@ public class EventQueueImpl extends MirrorImpl implements EventQueue {
         }
     }
 }
+

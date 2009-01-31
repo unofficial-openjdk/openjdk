@@ -34,39 +34,39 @@ public class IsHidden {
     private static String dir = System.getProperty("test.dir", ".");
 
     private static void ck(String path, boolean ans) throws Exception {
-        File f = new File(path);
-        boolean x = f.isHidden();
-        if (x != ans)
-            throw new Exception(path + ": expected " + ans + ", got " + x);
-        System.err.println(path + " ==> " + x);
+	File f = new File(path);
+	boolean x = f.isHidden();
+	if (x != ans)
+	    throw new Exception(path + ": expected " + ans + ", got " + x);
+	System.err.println(path + " ==> " + x);
     }
 
     private static void testWin32() throws Exception {
-        File f = new File(dir, "test");
-        f.deleteOnExit();
-        f.createNewFile();
-        String name = f.getCanonicalPath();
-        Process p = Runtime.getRuntime().exec("cmd.exe /c attrib +H " + name);
-        p.waitFor();
-        ck(name, true);
+	File f = new File(dir, "test");
+	f.deleteOnExit();
+	f.createNewFile();
+	String name = f.getCanonicalPath();
+	Process p = Runtime.getRuntime().exec("cmd.exe /c attrib +H " + name);
+	p.waitFor();
+	ck(name, true);
 
-        ck(".foo", false);
-        ck("foo", false);
+	ck(".foo", false);
+	ck("foo", false);
     }
 
     private static void testUnix() throws Exception {
-        ck(dir + "/IsHidden.java", false);
-        ck(dir + "/.", true);
-        ck(".", true);
-        ck("..", true);
-        ck(".foo", true);
-        ck("foo", false);
-        ck("", false);
+	ck(dir + "/IsHidden.java", false);
+	ck(dir + "/.", true);
+	ck(".", true);
+	ck("..", true);
+	ck(".foo", true);
+	ck("foo", false);
+	ck("", false);
     }
 
     public static void main(String[] args) throws Exception {
-        if (File.separatorChar == '\\') testWin32();
-        if (File.separatorChar == '/') testUnix();
+	if (File.separatorChar == '\\') testWin32();
+	if (File.separatorChar == '/') testUnix();
     }
 
 }

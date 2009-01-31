@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 4953126
- * @summary Check that a signed JAR file containing an unsupported signer info
+ * @summary Check that a signed JAR file containing an unsupported signer info 
  *          attribute can be parsed successfully.
  */
 
@@ -37,30 +37,30 @@ import java.util.jar.*;
 public class ScanSignedJar {
 
     public static void main(String[] args) throws Exception {
-        JarFile file = new JarFile(new File(System.getProperty("test.src","."),
-            "bogus-signerinfo-attr.jar"));
-        byte[] buffer = new byte[8192];
-        boolean isSigned = false;
+	JarFile file = new JarFile(new File(System.getProperty("test.src","."),
+	    "bogus-signerinfo-attr.jar"));
+	byte[] buffer = new byte[8192];
+	boolean isSigned = false;
 
-        for (Enumeration entries = file.entries(); entries.hasMoreElements();) {
-            JarEntry entry = (JarEntry) entries.nextElement();
-            InputStream jis = file.getInputStream(entry);
-            while (jis.read(buffer, 0, buffer.length) != -1) {
-                // read the jar entry
-            }
-            jis.close();
-            if (entry.getCertificates() != null) {
-                isSigned = true;
-            }
-            System.out.println((isSigned ? "[signed] " : "\t ") +
-                entry.getName());
-        }
-        file.close();
+	for (Enumeration entries = file.entries(); entries.hasMoreElements();) {
+	    JarEntry entry = (JarEntry) entries.nextElement();
+	    InputStream jis = file.getInputStream(entry);
+	    while (jis.read(buffer, 0, buffer.length) != -1) {
+		// read the jar entry
+	    }
+	    jis.close();
+	    if (entry.getCertificates() != null) {
+		isSigned = true;
+	    }
+	    System.out.println((isSigned ? "[signed] " : "\t ") +
+		entry.getName());
+	}
+	file.close();
 
-        if (isSigned) {
-            System.out.println("\nJAR file has signed entries");
-        } else {
-            throw new Exception("Failed to detect that the JAR file is signed");
-        }
+	if (isSigned) {
+	    System.out.println("\nJAR file has signed entries");
+	} else {
+	    throw new Exception("Failed to detect that the JAR file is signed");
+	}
     }
 }

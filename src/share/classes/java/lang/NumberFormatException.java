@@ -26,11 +26,12 @@
 package java.lang;
 
 /**
- * Thrown to indicate that the application has attempted to convert
- * a string to one of the numeric types, but that the string does not
- * have the appropriate format.
+ * Thrown to indicate that the application has attempted to convert 
+ * a string to one of the numeric types, but that the string does not 
+ * have the appropriate format. 
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @see     java.lang.Integer#toString()
  * @since   JDK1.0
  */
@@ -42,17 +43,17 @@ class NumberFormatException extends IllegalArgumentException {
      * Constructs a <code>NumberFormatException</code> with no detail message.
      */
     public NumberFormatException () {
-        super();
+	super();
     }
 
     /**
-     * Constructs a <code>NumberFormatException</code> with the
-     * specified detail message.
+     * Constructs a <code>NumberFormatException</code> with the 
+     * specified detail message. 
      *
      * @param   s   the detail message.
      */
     public NumberFormatException (String s) {
-        super (s);
+	super (s);
     }
 
     /**

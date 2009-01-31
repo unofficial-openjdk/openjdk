@@ -43,7 +43,7 @@ public class CookieManagerTest {
     public static void main(String[] args) throws Exception {
         startHttpServer();
         makeHttpCall();
-
+        
         if (httpTrans.badRequest) {
             throw new RuntimeException("Test failed : bad cookie header");
         }
@@ -61,10 +61,10 @@ public class CookieManagerTest {
     public static void makeHttpCall() {
         try {
             System.out.println("http server listen on: " + server.getLocalPort());
-
+            
             // install CookieManager to use
             CookieHandler.setDefault(new CookieManager());
-
+            
             for (int i = 0; i < CookieHttpTransaction.testCount; i++) {
                 System.out.println("====== CookieManager test " + (i+1) + " ======");
                 ((CookieManager)CookieHandler.getDefault()).setCookiePolicy(CookieHttpTransaction.testPolicies[i]);
@@ -88,16 +88,16 @@ class CookieHttpTransaction implements HttpCallback {
     // the main test control logic will also loop exactly this number
     // to send http request
     public static final int testCount = 6;
-
+    
     private String localHostAddr = "127.0.0.1";
-
+    
     // test cases
     public static class CookieTestCase {
         public String headerToken;
         public String cookieToSend;
         public String cookieToRecv;
         public String serverPath;
-
+        
         public CookieTestCase(String h, String cts, String ctr, String sp) {
             headerToken = h;
             cookieToSend = cts;
@@ -115,13 +115,13 @@ class CookieHttpTransaction implements HttpCallback {
     CookieHttpTransaction() {
         testCases = new CookieTestCase[testCount][];
         testPolicies = new CookiePolicy[testCount];
-
+        
         try {
             localHostAddr = InetAddress.getLocalHost().getHostAddress();
         } catch (Exception ignored) {
         };
         int count = 0;
-
+        
         // an http session with Netscape cookies exchanged
         testPolicies[count] = CookiePolicy.ACCEPT_ORIGINAL_SERVER;
         testCases[count++] = new CookieTestCase[]{
@@ -146,7 +146,7 @@ class CookieHttpTransaction implements HttpCallback {
                 "/foo"
                 )
                 };
-
+                
         // check whether or not path rule is applied
         testPolicies[count] = CookiePolicy.ACCEPT_ORIGINAL_SERVER;
         testCases[count++] = new CookieTestCase[]{
@@ -161,7 +161,7 @@ class CookieHttpTransaction implements HttpCallback {
                 "/ammo"
                 )
                 };
-
+                
         // an http session with rfc2965 cookies exchanged
         testPolicies[count] = CookiePolicy.ACCEPT_ORIGINAL_SERVER;
         testCases[count++] = new CookieTestCase[]{
@@ -181,7 +181,7 @@ class CookieHttpTransaction implements HttpCallback {
                 "/acme/shipping"
                 )
                 };
-
+                
         // check whether or not the path rule is applied
         testPolicies[count] = CookiePolicy.ACCEPT_ORIGINAL_SERVER;
         testCases[count++] = new CookieTestCase[]{
@@ -201,7 +201,7 @@ class CookieHttpTransaction implements HttpCallback {
                 "/acme/parts"
                 )
                 };
-
+                
         // new cookie should overwrite old cookie
         testPolicies[count] = CookiePolicy.ACCEPT_ORIGINAL_SERVER;
         testCases[count++] = new CookieTestCase[]{
@@ -216,7 +216,7 @@ class CookieHttpTransaction implements HttpCallback {
                 "/acme"
                 )
                 };
-
+                
         // cookies without domain attributes
         testPolicies[count] = CookiePolicy.ACCEPT_ALL;
         testCases[count++] = new CookieTestCase[]{
@@ -239,7 +239,7 @@ class CookieHttpTransaction implements HttpCallback {
 
         assert count == testCount;
     }
-
+    
     private int testcaseDone = 0;
     private int testDone = 0;
     /*
@@ -267,10 +267,10 @@ class CookieHttpTransaction implements HttpCallback {
             e.printStackTrace();
         }
     }
-
+    
     private void checkResquest(HttpTransaction trans) {
         String cookieHeader = null;
-
+        
         assert testDone > 0;
         cookieHeader = trans.getRequestHeader("Cookie");
         if (cookieHeader != null &&

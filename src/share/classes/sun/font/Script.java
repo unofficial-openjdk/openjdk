@@ -24,6 +24,7 @@
  */
 
 /*
+ *  @(#)Script.java	1.1 03/04/28
  *
  * (C) Copyright IBM Corp. 2003 - All Rights Reserved
  */

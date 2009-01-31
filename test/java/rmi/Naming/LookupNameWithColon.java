@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,8 +23,8 @@
 
 /* @test
  * @bug 4387038
- * @summary Ensure that java.rmi.Naming.lookup functions properly for names
- *          containing embedded ':' characters.
+ * @summary Ensure that java.rmi.Naming.lookup functions properly for names 
+ * 	    containing embedded ':' characters.
  */
 
 import java.rmi.Naming;
@@ -33,20 +33,20 @@ import java.rmi.registry.Registry;
 
 public class LookupNameWithColon {
     public static void main(String[] args) throws Exception {
-        String[] names = {
-            "fairly:simple", "somewhat:more/complicated",
-            "multiple:colons:in:name"
-        };
+	String[] names = {
+	    "fairly:simple", "somewhat:more/complicated",
+	    "multiple:colons:in:name"
+	};
 
-        Registry reg;
-        try {
-            reg = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-        } catch (Exception ex) {
-            reg = LocateRegistry.getRegistry();
-        }
-        for (int i = 0; i < names.length; i++) {
-            reg.rebind(names[i], reg);
-            Naming.lookup("rmi://localhost/" + names[i]);
-        }
+	Registry reg;
+	try {
+	    reg = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+	} catch (Exception ex) {
+	    reg = LocateRegistry.getRegistry();
+	}
+	for (int i = 0; i < names.length; i++) {
+	    reg.rebind(names[i], reg);
+	    Naming.lookup("rmi://localhost/" + names[i]);
+	}
     }
 }

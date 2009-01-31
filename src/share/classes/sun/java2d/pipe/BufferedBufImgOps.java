@@ -211,7 +211,7 @@ public class BufferedBufImgOps {
             }
             // Leave alpha untouched...
             normScaleFactors[3] = 1.0f;
-            normOffsets[3]      = 0.0f;
+            normOffsets[3]      = 0.0f;            
         } else { // (numFactors == 4)
             normScaleFactors = origScaleFactors;
             normOffsets      = origOffsets;

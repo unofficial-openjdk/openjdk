@@ -37,10 +37,10 @@ import javax.swing.SwingUtilities;
  *
  * <p>
  * Usage example:
- *
+ * 
  * <p>
  * Say we want to implement JLabel.setText(String text) which sends
- * {@code text} string to the JLabel.setTextImpl(String text) on the EDT.
+ * {@code text} string to the JLabel.setTextImpl(String text) on the EDT. 
  * In the event JLabel.setText is called rapidly many times off the EDT
  * we will get many updates on the EDT but only the last one is important.
  * (Every next updates overrides the previous one.)
@@ -49,9 +49,9 @@ import javax.swing.SwingUtilities;
  * <p>
  * Here is how one can do this using {@code AccumulativeRunnable}:
  * <pre>
- * AccumulativeRunnable<String> doSetTextImpl =
+ * AccumulativeRunnable<String> doSetTextImpl = 
  * new  AccumulativeRunnable<String>() {
- *     @Override
+ *     @Override 
  *     protected void run(List&lt;String&gt; args) {
  *         //set to the last string being passed
  *         setTextImpl(args.get(args.size() - 1));
@@ -65,16 +65,16 @@ import javax.swing.SwingUtilities;
  *
  * <p>
  * Say we want want to implement addDirtyRegion(Rectangle rect)
- * which sends this region to the
+ * which sends this region to the 
  * handleDirtyRegions(List<Rect> regiouns) on the EDT.
  * addDirtyRegions better be accumulated before handling on the EDT.
- *
+ * 
  * <p>
  * Here is how it can be implemented using AccumulativeRunnable:
  * <pre>
- * AccumulativeRunnable<Rectangle> doHandleDirtyRegions =
+ * AccumulativeRunnable<Rectangle> doHandleDirtyRegions = 
  *     new AccumulativeRunnable<Rectangle>() {
- *         @Override
+ *         @Override 
  *         protected void run(List&lt;Rectangle&gt; args) {
  *             handleDirtyRegions(args);
  *         }
@@ -85,14 +85,15 @@ import javax.swing.SwingUtilities;
  * </pre>
  *
  * @author Igor Kushnirskiy
+ * @version %I% %G%
  *
  * @param <T> the type this {@code Runnable} accumulates
  *
- * @since 1.6
+ * @since 1.6 
  */
 public abstract class AccumulativeRunnable<T> implements Runnable {
     private List<T> arguments = null;
-
+    
     /**
      * Equivalent to {@code Runnable.run} method with the
      * accumulated arguments to process.
@@ -100,7 +101,7 @@ public abstract class AccumulativeRunnable<T> implements Runnable {
      * @param args accumulated argumets to process.
      */
     protected abstract void run(List<T> args);
-
+    
     /**
      * {@inheritDoc}
      *
@@ -111,13 +112,13 @@ public abstract class AccumulativeRunnable<T> implements Runnable {
     public final void run() {
         run(flush());
     }
-
+    
     /**
      * appends arguments and sends this {@cod Runnable} for the
      * execution if needed.
      * <p>
-     * This implementation uses {@see #submit} to send this
-     * {@code Runnable} for execution.
+     * This implementation uses {@see #submit} to send this 
+     * {@code Runnable} for execution. 
      * @param args the arguments to accumulate
      */
     public final synchronized void add(T... args) {
@@ -144,7 +145,7 @@ public abstract class AccumulativeRunnable<T> implements Runnable {
     protected void submit() {
         SwingUtilities.invokeLater(this);
     }
-
+        
     /**
      * Returns accumulated arguments and flashes the arguments storage.
      *
@@ -156,3 +157,4 @@ public abstract class AccumulativeRunnable<T> implements Runnable {
         return list;
     }
 }
+

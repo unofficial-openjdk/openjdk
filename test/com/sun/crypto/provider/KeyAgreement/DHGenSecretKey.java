@@ -35,37 +35,37 @@ import javax.crypto.*;
 public class DHGenSecretKey {
 
     public static void main(String[] args) throws Exception {
-        DHGenSecretKey test = new DHGenSecretKey();
-        test.run();
+	DHGenSecretKey test = new DHGenSecretKey();
+	test.run();
     }
 
     public void run() throws Exception {
-        // generate keyPairs using parameters
-        KeyPairGenerator keyGen =
-            KeyPairGenerator.getInstance("DH", "SunJCE");
+	// generate keyPairs using parameters
+	KeyPairGenerator keyGen =
+	    KeyPairGenerator.getInstance("DH", "SunJCE");
 
-        // Alice generates her key pairs
-        KeyPair keyA = keyGen.generateKeyPair();
+	// Alice generates her key pairs
+	KeyPair keyA = keyGen.generateKeyPair();
 
-        // Bob generates his key pairs
-        KeyPair keyB = keyGen.generateKeyPair();
+	// Bob generates his key pairs
+	KeyPair keyB = keyGen.generateKeyPair();
 
-        KeyAgreement bobAlice = KeyAgreement.getInstance("DH", "SunJCE");
-        bobAlice.init(keyB.getPrivate());
-        bobAlice.doPhase(keyA.getPublic(), true);
-        byte[] keyMaterial = bobAlice.generateSecret();
+	KeyAgreement bobAlice = KeyAgreement.getInstance("DH", "SunJCE");
+	bobAlice.init(keyB.getPrivate());
+	bobAlice.doPhase(keyA.getPublic(), true);
+	byte[] keyMaterial = bobAlice.generateSecret();
 
-        bobAlice.doPhase(keyA.getPublic(), true);
-        SecretKey skey = bobAlice.generateSecret("AES");
-        byte[] keyVal = skey.getEncoded();
+	bobAlice.doPhase(keyA.getPublic(), true);
+	SecretKey skey = bobAlice.generateSecret("AES");
+	byte[] keyVal = skey.getEncoded();
 
-        System.out.println("Generated " + keyVal.length*8 +
-            "-bit AES key");
-        for (int i = 0; i < keyVal.length; i++) {
-            if (keyVal[i] != keyMaterial[i]) {
-                throw new Exception("Error: key value comparison failed!");
-            }
-        }
-        System.out.println("Test Passed");
+	System.out.println("Generated " + keyVal.length*8 +
+	    "-bit AES key");
+	for (int i = 0; i < keyVal.length; i++) {
+	    if (keyVal[i] != keyMaterial[i]) {
+		throw new Exception("Error: key value comparison failed!");
+	    }
+	}
+	System.out.println("Test Passed");
     }
 }

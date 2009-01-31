@@ -130,6 +130,7 @@ import sun.awt.image.ToolkitImage;
  *
  * @author David Mendenhall
  * @author Danila Sinopalnikov
+ * @version %I%, %G%
  *
  * @since 1.3.1
  */
@@ -228,7 +229,7 @@ public abstract class DataTransferer {
         }
         charArrayClass = tCharArrayClass;
         byteArrayClass = tByteArrayClass;
-
+        
         DataFlavor tPlainTextStringFlavor = null;
         try {
             tPlainTextStringFlavor = new DataFlavor
@@ -244,7 +245,7 @@ public abstract class DataTransferer {
         } catch (ClassNotFoundException cannotHappen) {
         }
         javaTextEncodingFlavor = tJavaTextEncodingFlavor;
-
+        
         Map tempMap = new HashMap(17);
         tempMap.put("sgml", Boolean.TRUE);
         tempMap.put("xml", Boolean.TRUE);
@@ -350,7 +351,7 @@ public abstract class DataTransferer {
 
     /**
      * If the specified flavor is a text flavor which supports the "charset"
-     * parameter, then this method returns that parameter, or the default
+     * parameter, then this method returns that parameter, or the default 
      * charset if no such parameter was specified at construction. For non-
      * text DataFlavors, and for non-charset text flavors, this method returns
      * null.
@@ -359,9 +360,9 @@ public abstract class DataTransferer {
         if (!isFlavorCharsetTextType(flavor)) {
             return null;
         }
-
+        
         String encoding = flavor.getParameter("charset");
-
+        
         return (encoding != null) ? encoding : getDefaultTextCharset();
     }
 
@@ -482,8 +483,8 @@ public abstract class DataTransferer {
      * specified encoding.
      */
     public static boolean isEncodingSupported(String encoding) {
-        if (encoding == null) {
-            return false;
+        if (encoding == null) { 
+            return false; 
         }
         try {
             return Charset.isSupported(encoding);
@@ -626,7 +627,7 @@ public abstract class DataTransferer {
      * requested when converting to the format.
      * <p>
      * The map keys are sorted according to the native formats preference
-     * order.
+     * order. 
      */
     public SortedMap getFormatsForTransferable(Transferable contents,
                                                FlavorTable map) {
@@ -644,7 +645,7 @@ public abstract class DataTransferer {
      * when converting to the format.
      * <p>
      * The map keys are sorted according to the native formats preference
-     * order.
+     * order. 
      */
     public SortedMap getFormatsForFlavor(DataFlavor flavor, FlavorTable map) {
         return getFormatsForFlavors(new DataFlavor[] { flavor },
@@ -658,7 +659,7 @@ public abstract class DataTransferer {
      * when converting to the format.
      * <p>
      * The map keys are sorted according to the native formats preference
-     * order.
+     * order. 
      *
      * @param flavors the data flavors
      * @param map the FlavorTable which contains mappings between
@@ -725,7 +726,7 @@ public abstract class DataTransferer {
         indexMap.putAll(textPlainIndexMap);
 
         // Sort the map keys according to the formats preference order.
-        Comparator comparator =
+        Comparator comparator = 
             new IndexOrderComparator(indexMap, IndexedComparator.SELECT_WORST);
         SortedMap sortedMap = new TreeMap(comparator);
         sortedMap.putAll(formatMap);
@@ -773,7 +774,7 @@ public abstract class DataTransferer {
 
         // First step: build flavorSet, mappingSet and initial flavorMap
         // flavorSet  - the set of all the DataFlavors into which
-        //              data in the specified formats can be translated;
+        //              data in the specified formats can be translated; 
         // mappingSet - the set of all the mappings from the specified formats
         //              into any DataFlavor;
         // flavorMap  - after this step, this map maps each of the DataFlavors
@@ -796,7 +797,7 @@ public abstract class DataTransferer {
                     flavor.isRepresentationClassRemote())
                 {
                     Long lFormat = Long.valueOf(format);
-                    Object mapping =
+                    Object mapping = 
                         DataTransferer.createMapping(lFormat, flavor);
                     flavorMap.put(flavor, lFormat);
                     mappingSet.add(mapping);
@@ -806,28 +807,28 @@ public abstract class DataTransferer {
         }
 
         // Second step: for each DataFlavor try to figure out which of the
-        // specified formats is the best to translate to this flavor.
-        // Then map each flavor to the best format.
+        // specified formats is the best to translate to this flavor. 
+        // Then map each flavor to the best format. 
         // For the given flavor, FlavorTable indicates which native will
         // best reflect data in the specified flavor to the underlying native
         // platform. We assume that this native is the best to translate
         // to this flavor.
-        // Note: FlavorTable allows one-way mappings, so we can occasionally
-        // map a flavor to the format for which the corresponding
+        // Note: FlavorTable allows one-way mappings, so we can occasionally 
+        // map a flavor to the format for which the corresponding 
         // format-to-flavor mapping doesn't exist. For this reason we have built
         // a mappingSet of all format-to-flavor mappings for the specified formats
         // and check if the format-to-flavor mapping exists for the
         // (flavor,format) pair being added.
-        for (Iterator flavorIter = flavorSet.iterator();
+        for (Iterator flavorIter = flavorSet.iterator(); 
              flavorIter.hasNext(); ) {
             DataFlavor flavor = (DataFlavor)flavorIter.next();
 
             List natives = map.getNativesForFlavor(flavor);
 
-            for (Iterator nativeIter = natives.iterator();
+            for (Iterator nativeIter = natives.iterator(); 
                  nativeIter.hasNext(); ) {
                 Long lFormat =
-                    getFormatForNativeAsLong((String)nativeIter.next());
+                    getFormatForNativeAsLong((String)nativeIter.next()); 
                 Object mapping = DataTransferer.createMapping(lFormat, flavor);
 
                 if (mappingSet.contains(mapping)) {
@@ -841,16 +842,16 @@ public abstract class DataTransferer {
     }
 
     /**
-     * Returns a Set of all DataFlavors for which
+     * Returns a Set of all DataFlavors for which 
      * 1) a mapping from at least one of the specified formats exists in the
      * specified map and
      * 2) the data translation for this mapping can be performed by the data
-     * transfer subsystem.
+     * transfer subsystem. 
      *
      * @param formats the data formats
      * @param map the FlavorTable which contains mappings between
      *            DataFlavors and data formats
-     * @throws NullPointerException if formats or map is <code>null</code>
+     * @throws NullPointerException if formats or map is <code>null</code> 
      */
     public Set getFlavorsForFormatsAsSet(long[] formats, FlavorTable map) {
         Set flavorSet = new HashSet(formats.length);
@@ -880,10 +881,10 @@ public abstract class DataTransferer {
     }
 
     /**
-     * Returns an array of all DataFlavors for which
+     * Returns an array of all DataFlavors for which 
      * 1) a mapping from the specified format exists in the specified map and
      * 2) the data translation for this mapping can be performed by the data
-     * transfer subsystem.
+     * transfer subsystem. 
      * The array will be sorted according to a
      * <code>DataFlavorComparator</code> created with the specified
      * map as an argument.
@@ -891,7 +892,7 @@ public abstract class DataTransferer {
      * @param format the data format
      * @param map the FlavorTable which contains mappings between
      *            DataFlavors and data formats
-     * @throws NullPointerException if map is <code>null</code>
+     * @throws NullPointerException if map is <code>null</code> 
      */
     public DataFlavor[] getFlavorsForFormatAsArray(long format,
                                                    FlavorTable map) {
@@ -899,11 +900,11 @@ public abstract class DataTransferer {
     }
 
     /**
-     * Returns an array of all DataFlavors for which
+     * Returns an array of all DataFlavors for which 
      * 1) a mapping from at least one of the specified formats exists in the
      * specified map and
      * 2) the data translation for this mapping can be performed by the data
-     * transfer subsystem.
+     * transfer subsystem. 
      * The array will be sorted according to a
      * <code>DataFlavorComparator</code> created with the specified
      * map as an argument.
@@ -911,12 +912,12 @@ public abstract class DataTransferer {
      * @param formats the data formats
      * @param map the FlavorTable which contains mappings between
      *            DataFlavors and data formats
-     * @throws NullPointerException if formats or map is <code>null</code>
+     * @throws NullPointerException if formats or map is <code>null</code> 
      */
     public DataFlavor[] getFlavorsForFormatsAsArray(long[] formats,
                                                     FlavorTable map) {
         // getFlavorsForFormatsAsSet() is less expensive than
-        // getFlavorsForFormats().
+        // getFlavorsForFormats(). 
         return setToSortedDataFlavorArray(getFlavorsForFormatsAsSet(formats, map));
     }
 
@@ -925,11 +926,11 @@ public abstract class DataTransferer {
      * key and value. <tt>null</tt> values and the <tt>null</tt> keys are
      * permitted. The internal representation of the mapping object is
      * irrelevant. The only requrement is that the two mapping objects are equal
-     * if and only if their keys are equal and their values are equal.
+     * if and only if their keys are equal and their values are equal. 
      * More formally, the two mapping objects are equal if and only if
      * <tt>(value1 == null ? value2 == null : value1.equals(value2))
      * && (key1 == null ? key2 == null : key1.equals(key2))</tt>.
-     */
+     */    
     private static Object createMapping(Object key, Object value) {
         // NOTE: Should be updated to use AbstractMap.SimpleEntry as
         // soon as it is made public.
@@ -948,11 +949,11 @@ public abstract class DataTransferer {
      */
     protected abstract String getNativeForFormat(long format);
 
-    /* Contains common code for finding the best charset for
+    /* Contains common code for finding the best charset for  
      * clipboard string encoding/decoding, basing on clipboard
      * format and localeTransferable(on decoding, if available)
      */
-    private String getBestCharsetForTextFormat(Long lFormat,
+    private String getBestCharsetForTextFormat(Long lFormat, 
         Transferable localeTransferable) throws IOException
     {
         String charset = null;
@@ -973,7 +974,7 @@ public abstract class DataTransferer {
         if (charset == null) {
             // Only happens when we have a custom text type.
             charset = getDefaultTextCharset();
-        }
+        }  
         return charset;
     }
 
@@ -981,7 +982,7 @@ public abstract class DataTransferer {
      *  Translation function for converting string into
      *  a byte array. Search-and-replace EOLN. Encode into the
      *  target format. Append terminating NUL bytes.
-     *
+     * 
      *  Java to Native string conversion
      */
     private byte[] translateTransferableString(String str,
@@ -992,7 +993,7 @@ public abstract class DataTransferer {
         // Search and replace EOLN. Note that if EOLN is "\n", then we
         // never added an entry to nativeEOLNs anyway, so we'll skip this
         // code altogether.
-        // windows: "abc\nde"->"abc\r\nde"
+        // windows: "abc\nde"->"abc\r\nde"  
         String eoln = (String)nativeEOLNs.get(lFormat);
         if (eoln != null) {
             int length = str.length();
@@ -1039,8 +1040,8 @@ public abstract class DataTransferer {
     /**
      * Translating either a byte array or an InputStream into an String.
      * Strip terminators and search-and-replace EOLN.
-     *
-     * Native to Java string conversion
+     * 
+     * Native to Java string conversion      
      */
     private String translateBytesOrStreamToString(InputStream str,  byte[] bytes,
                                                     long format,
@@ -1053,7 +1054,7 @@ public abstract class DataTransferer {
             bytes = inputStreamToByteArray(str);
         }
         str.close();
-
+        
         Long lFormat = Long.valueOf(format);
         String charset = getBestCharsetForTextFormat(lFormat, localeTransferable);
 
@@ -1061,9 +1062,9 @@ public abstract class DataTransferer {
         // the we never added an entry to nativeTerminators anyway, so
         // we'll skip code altogether.
 
-        // In other words: we are doing char alignment here basing on suggestion
+        // In other words: we are doing char alignment here basing on suggestion 
         // that count of zero-'terminators' is a number of bytes in one symbol
-        // for selected charset (clipboard format). It is not complitly true for
+        // for selected charset (clipboard format). It is not complitly true for 
         // multibyte coding like UTF-8, but helps understand the procedure.
         // "abcde\0" -> "abcde"
 
@@ -1146,8 +1147,8 @@ search:
     {
         // Obtain the transfer data in the source DataFlavor.
         //
-        // Note that we special case DataFlavor.plainTextFlavor because
-        // StringSelection supports this flavor incorrectly -- instead of
+        // Note that we special case DataFlavor.plainTextFlavor because 
+        // StringSelection supports this flavor incorrectly -- instead of 
         // returning an InputStream as the DataFlavor representation class
         // states, it returns a Reader. Instead of using this broken
         // functionality, we request the data in stringFlavor (the other
@@ -1267,8 +1268,8 @@ search:
         // Source data is Image
         } else if (DataFlavor.imageFlavor.equals(flavor)) {
             if (!isImageFormat(format)) {
-                throw new IOException("Data translation failed: " +
-                                      "not an image format");
+                throw new IOException("Data translation failed: " + 
+                                      "not an image format"); 
             }
 
             Image image = (Image)obj;
@@ -1276,8 +1277,8 @@ search:
 
             if (bytes == null) {
                 throw new IOException("Data translation failed: " +
-                    "cannot convert java image to native format");
-            }
+                    "cannot convert java image to native format"); 
+            }            
             return bytes;
         }
 
@@ -1612,7 +1613,7 @@ search:
             return arg; // simple case
         } else {
             Constructor[] constructors = null;
-
+            
             try {
                 constructors = (Constructor[])
                     AccessController.doPrivileged(new PrivilegedAction() {
@@ -1623,7 +1624,7 @@ search:
             } catch (SecurityException se) {
                 throw new IOException(se.getMessage());
             }
-
+            
             Constructor constructor = null;
 
             for (int j = 0; j < constructors.length; j++) {
@@ -1644,7 +1645,7 @@ search:
                 throw new IOException("can't find <init>(L"+ clazz +
                                       ";)V for class: " + dfrc.getName());
             }
-
+            
             try {
                 return constructor.newInstance(new Object[] { arg } );
             } catch (Exception e) {
@@ -1671,7 +1672,7 @@ search:
 
         protected boolean eos;
         protected int index, limit;
-
+        
         public ReencodingInputStream(InputStream bytestream, long format,
                                      String targetEncoding,
                                      Transferable localeTransferable)
@@ -1701,7 +1702,7 @@ search:
             }
             wrapped = new BufferedReader
                 (new InputStreamReader(bytestream, sourceEncoding));
-
+  
             if (targetEncoding == null) {
                 // Throw NullPointerException for compatibility with the former
                 // call to sun.io.CharToByteConverter.getConverter(null)
@@ -1722,7 +1723,7 @@ search:
             } catch (UnsupportedOperationException e) {
                 throw new IOException(e.toString());
             }
-
+  
             String sEoln = (String)nativeEOLNs.get(lFormat);
             if (sEoln != null) {
                 eoln = sEoln.toCharArray();
@@ -1735,7 +1736,7 @@ search:
                 numTerminators = terminators.intValue();
             }
         }
-
+        
         public int read() throws IOException {
             if (eos) {
                 return -1;
@@ -1743,7 +1744,7 @@ search:
 
             if (index >= limit) {
                 int c = wrapped.read();
-
+                
                 if (c == -1) { // -1 is EOS
                     eos = true;
                     return -1;
@@ -1766,7 +1767,7 @@ search:
                 limit = outBuf.limit();
 
                 index = 0;
-
+                
                 return read();
             } else {
                 return out[index++] & 0xFF;
@@ -1832,8 +1833,8 @@ search:
      *
      * @param mimeType image MIME type, such as: image/png, image/jpeg, image/gif
      */
-    protected Image standardImageBytesOrStreamToImage(InputStream inputStream,
-                                                      byte[] bytes,
+    protected Image standardImageBytesOrStreamToImage(InputStream inputStream, 
+                                                      byte[] bytes, 
                                                       String mimeType)
       throws IOException {
         if (inputStream == null) {
@@ -1854,7 +1855,7 @@ search:
             try {
                 ImageInputStream imageInputStream =
                     ImageIO.createImageInputStream(inputStream);
-
+                
                 try {
                     ImageReadParam param = imageReader.getDefaultReadParam();
                     imageReader.setInput(imageInputStream, true, true);
@@ -1886,7 +1887,7 @@ search:
      * specific image data in the given format.
      */
     protected abstract byte[] imageToPlatformBytes(Image image, long format)
-      throws IOException;
+      throws IOException; 
 
     /**
      * Translates a Java Image into a byte array which contains
@@ -1928,14 +1929,14 @@ search:
         }
 
         ColorModel model = ColorModel.getRGBdefault();
-        WritableRaster raster =
+        WritableRaster raster = 
             model.createCompatibleWritableRaster(width, height);
-
-        BufferedImage bufferedImage =
-            new BufferedImage(model, raster, model.isAlphaPremultiplied(),
+        
+        BufferedImage bufferedImage = 
+            new BufferedImage(model, raster, model.isAlphaPremultiplied(), 
                               null);
 
-        Graphics g = bufferedImage.getGraphics();
+        Graphics g = bufferedImage.getGraphics(); 
         try {
             g.drawImage(image, 0, 0, width, height, null);
         } finally {
@@ -1953,13 +1954,13 @@ search:
         }
     }
 
-    protected byte[] imageToStandardBytesImpl(RenderedImage renderedImage,
-                                              String mimeType)
-        throws IOException {
+    protected byte[] imageToStandardBytesImpl(RenderedImage renderedImage, 
+                                              String mimeType) 
+        throws IOException { 
 
         Iterator writerIterator = ImageIO.getImageWritersByMIMEType(mimeType);
 
-        ImageTypeSpecifier typeSpecifier =
+        ImageTypeSpecifier typeSpecifier = 
             new ImageTypeSpecifier(renderedImage);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -1975,7 +1976,7 @@ search:
 
             try {
                 ImageOutputStream imageOutputStream =
-                    ImageIO.createImageOutputStream(baos);
+                    ImageIO.createImageOutputStream(baos); 
                 try {
                     imageWriter.setOutput(imageOutputStream);
                     imageWriter.write(renderedImage);
@@ -1998,7 +1999,7 @@ search:
         baos.close();
 
         if (ioe == null) {
-            ioe = new IOException("Registered service providers failed to encode "
+            ioe = new IOException("Registered service providers failed to encode " 
                                   + renderedImage + " to " + mimeType);
         }
 
@@ -2016,10 +2017,10 @@ search:
      *
      * @param obj1 the first object to be concatenated.
      * @param obj2 the second object to be concatenated.
-     * @return a byte array or an <code>InputStream</code> which represents
+     * @return a byte array or an <code>InputStream</code> which represents 
      *         a logical concatenation of the two arguments.
      * @throws NullPointerException is either of the arguments is
-     *         <code>null</code>
+     *         <code>null</code> 
      * @throws ClassCastException is either of the arguments is
      *         neither byte array nor an instance of <code>InputStream</code>.
      */
@@ -2052,8 +2053,8 @@ search:
     }
 
     public byte[] convertData(final Object source,
-                              final Transferable contents,
-                              final long format,
+                              final Transferable contents, 
+                              final long format, 
                               final Map formatMap,
                               final boolean isToolkitThread)
         throws IOException
@@ -2152,7 +2153,7 @@ search:
      * Helper function to reduce a Map with Long keys to a long array.
      * <p>
      * The map keys are sorted according to the native formats preference
-     * order.
+     * order. 
      */
     public static long[] keysToLongArray(SortedMap map) {
         Set keySet = map.keySet();
@@ -2195,7 +2196,7 @@ search:
     {
         DataFlavor[] flavors = new DataFlavor[flavorsSet.size()];
         flavorsSet.toArray(flavors);
-        Comparator comparator =
+        Comparator comparator = 
             new DataFlavorComparator(flavorToNativeMap,
                                      IndexedComparator.SELECT_WORST);
         Arrays.sort(flavors, comparator);
@@ -2215,7 +2216,7 @@ search:
         while ((len = str.read(buf)) != -1) {
             baos.write(buf, 0, len);
         }
-
+        
         return baos.toByteArray();
     }
 
@@ -2239,7 +2240,7 @@ search:
 
     private static CharsetComparator defaultCharsetComparator =
         new CharsetComparator(IndexedComparator.SELECT_WORST);
-    private static DataFlavorComparator defaultFlavorComparator =
+    private static DataFlavorComparator defaultFlavorComparator = 
         new DataFlavorComparator(IndexedComparator.SELECT_WORST);
 
     /**
@@ -2263,7 +2264,7 @@ search:
         public IndexedComparator() {
             this(SELECT_BEST);
         }
-
+        
         public IndexedComparator(boolean order) {
             this.order = order;
         }
@@ -2271,18 +2272,18 @@ search:
         /**
          * Helper method to compare two objects by their Integer indices in the
          * given map. If the map doesn't contain an entry for either of the
-         * objects, the fallback index will be used for the object instead.
+         * objects, the fallback index will be used for the object instead. 
          *
-         * @param indexMap the map which maps objects into Integer indexes.
+         * @param indexMap the map which maps objects into Integer indexes. 
          * @param obj1 the first object to be compared.
          * @param obj2 the second object to be compared.
          * @param fallbackIndex the Integer to be used as a fallback index.
          * @return a negative integer, zero, or a positive integer as the
          *             first object is mapped to a less, equal to, or greater
-         *             index than the second.
+         *             index than the second. 
          */
-        protected static int compareIndices(Map indexMap,
-                                            Object obj1, Object obj2,
+        protected static int compareIndices(Map indexMap, 
+                                            Object obj1, Object obj2, 
                                             Integer fallbackIndex) {
             Integer index1 = (Integer)indexMap.get(obj1);
             Integer index2 = (Integer)indexMap.get(obj2);
@@ -2300,18 +2301,18 @@ search:
         /**
          * Helper method to compare two objects by their Long indices in the
          * given map. If the map doesn't contain an entry for either of the
-         * objects, the fallback index will be used for the object instead.
+         * objects, the fallback index will be used for the object instead. 
          *
-         * @param indexMap the map which maps objects into Long indexes.
+         * @param indexMap the map which maps objects into Long indexes. 
          * @param obj1 the first object to be compared.
          * @param obj2 the second object to be compared.
          * @param fallbackIndex the Long to be used as a fallback index.
          * @return a negative integer, zero, or a positive integer as the
          *             first object is mapped to a less, equal to, or greater
-         *             index than the second.
+         *             index than the second. 
          */
-        protected static int compareLongs(Map indexMap,
-                                          Object obj1, Object obj2,
+        protected static int compareLongs(Map indexMap, 
+                                          Object obj1, Object obj2, 
                                           Long fallbackIndex) {
             Long index1 = (Long)indexMap.get(obj1);
             Long index2 = (Long)indexMap.get(obj2);
@@ -2341,7 +2342,7 @@ search:
         private static final Integer DEFAULT_CHARSET_INDEX = Integer.valueOf(2);
         private static final Integer OTHER_CHARSET_INDEX = Integer.valueOf(1);
         private static final Integer WORST_CHARSET_INDEX = Integer.valueOf(0);
-        private static final Integer UNSUPPORTED_CHARSET_INDEX =
+        private static final Integer UNSUPPORTED_CHARSET_INDEX = 
             Integer.valueOf(Integer.MIN_VALUE);
 
         private static final String UNSUPPORTED_CHARSET = "UNSUPPORTED";
@@ -2370,15 +2371,15 @@ search:
         }
 
         public CharsetComparator() {
-            this(SELECT_BEST);
+            this(SELECT_BEST); 
         }
-
+        
         public CharsetComparator(boolean order) {
             super(order);
         }
 
         /**
-         * Compares two String objects. Returns a negative integer, zero,
+         * Compares two String objects. Returns a negative integer, zero, 
          * or a positive integer as the first charset is worse than, equal to,
          * or better than the second.
          *
@@ -2402,7 +2403,7 @@ search:
                 charset1 = (String)obj2;
                 charset2 = (String)obj1;
             }
-
+        
             return compareCharsets(charset1, charset2);
         }
 
@@ -2411,7 +2412,7 @@ search:
          * integer as the first charset is worse than, equal to, or better than
          * the second.
          * <p>
-         * Charsets are ordered according to the following rules:
+         * Charsets are ordered according to the following rules: 
          * <ul>
          * <li>All unsupported charsets are equal.
          * <li>Any unsupported charset is worse than any supported charset.
@@ -2427,7 +2428,7 @@ search:
          * @param charset2 the second charset to be compared.
          * @return a negative integer, zero, or a positive integer as the
          *             first argument is worse, equal to, or better than the
-         *             second.
+         *             second. 
          */
         protected int compareCharsets(String charset1, String charset2) {
             charset1 = getEncoding(charset1);
@@ -2445,19 +2446,19 @@ search:
 
         /**
          * Returns encoding for the specified charset according to the
-         * following rules:
+         * following rules: 
          * <ul>
          * <li>If the charset is <code>null</code>, then <code>null</code> will
-         *     be returned.
+         *     be returned. 
          * <li>Iff the charset specifies an encoding unsupported by this JRE,
-         *     <code>UNSUPPORTED_CHARSET</code> will be returned.
+         *     <code>UNSUPPORTED_CHARSET</code> will be returned. 
          * <li>If the charset specifies an alias name, the corresponding
          *     canonical name will be returned iff the charset is a known
          *     Unicode, ASCII, or default charset.
          * </ul>
          *
          * @param charset the charset.
-         * @return an encoding for this charset.
+         * @return an encoding for this charset. 
          */
         protected static String getEncoding(String charset) {
             if (charset == null) {
@@ -2490,7 +2491,7 @@ search:
      */
     public static class DataFlavorComparator extends IndexedComparator {
         protected final Map flavorToFormatMap;
-
+        
         private final CharsetComparator charsetComparator;
 
         private static final Map exactTypes;
@@ -2500,16 +2501,16 @@ search:
         private static final Map decodedTextRepresentations;
         private static final Map encodedTextRepresentations;
 
-        private static final Integer UNKNOWN_OBJECT_LOSES =
+        private static final Integer UNKNOWN_OBJECT_LOSES = 
             Integer.valueOf(Integer.MIN_VALUE);
         private static final Integer UNKNOWN_OBJECT_WINS =
             Integer.valueOf(Integer.MAX_VALUE);
-
-        private static final Long UNKNOWN_OBJECT_LOSES_L =
+        
+        private static final Long UNKNOWN_OBJECT_LOSES_L = 
             Long.valueOf(Long.MIN_VALUE);
         private static final Long UNKNOWN_OBJECT_WINS_L =
             Long.valueOf(Long.MAX_VALUE);
-
+        
         static {
             {
                 HashMap exactTypesMap = new HashMap(4, 1.0f);
@@ -2732,14 +2733,14 @@ search:
 
             // As a last resort, take the DataFlavor with the greater integer
             // format.
-            return compareLongs(flavorToFormatMap, flavor1, flavor2,
+            return compareLongs(flavorToFormatMap, flavor1, flavor2, 
                                 UNKNOWN_OBJECT_LOSES_L);
         }
     }
 
     /*
      * Given the Map that maps objects to Integer indices and a boolean value,
-     * this Comparator imposes a direct or reverse order on set of objects.
+     * this Comparator imposes a direct or reverse order on set of objects. 
      * <p>
      * If the specified boolean value is SELECT_BEST, the Comparator imposes the
      * direct index-based order: an object A is greater than an object B if and
@@ -2748,11 +2749,11 @@ search:
      * <p>
      * If the specified boolean value is SELECT_WORST, the Comparator imposes the
      * reverse index-based order: an object A is greater than an object B if and
-     * only if A is less than B with the direct index-based order.
+     * only if A is less than B with the direct index-based order. 
      */
     public static class IndexOrderComparator extends IndexedComparator {
         private final Map indexMap;
-        private static final Integer FALLBACK_INDEX =
+        private static final Integer FALLBACK_INDEX = 
             Integer.valueOf(Integer.MIN_VALUE);
 
         public IndexOrderComparator(Map indexMap) {

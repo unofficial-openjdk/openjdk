@@ -1,21 +1,21 @@
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -24,12 +24,12 @@
 /**
    This class creates a dialog (with the instructions) and is the interface
    for sending text messages to the user.
-   To print the instructions, send an array of strings to
-   Sysout.createDialogWithInstructions() method.
+   To print the instructions, send an array of strings to 
+   Sysout.createDialogWithInstructions() method.  
    Put one line of instructions per array entry.
    To display a message for the tester to see, simply call Sysout.println()
    with the string to be displayed.
-   This mimics System.out.println but works within the test harness as well
+   This mimics System.out.println but works within the test harness as well 
    as standalone.
    @build TestDialog
  */
@@ -37,13 +37,13 @@ package test.java.awt.regtesthelpers;
 
 import java.awt.*;
 
-public final class Sysout
-{
+public final class Sysout 
+{ 
     private static TestDialog dialog;
 
-    public static void createDefaultInstructionDialog()
+    public static void createDefaultInstructionDialog() 
     {
-        final String[] instructions =
+        final String[] instructions = 
         {
             "This is an AUTOMATIC test, simply wait until it is done.",
             "The result (passed or failed) will be shown in the",
@@ -59,16 +59,16 @@ public final class Sysout
         dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
+   
     public static void createDialog( )
     {
-        String[] defInstr = { "Instructions will appear here. ",
-                              "",
+        String[] defInstr = { "Instructions will appear here. ", 
+                              "", 
                               "Any messages for the tester will display here." } ;
         createDialogWithInstructions(defInstr);
     }
-
-
+   
+      
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -99,18 +99,18 @@ final class TestDialog extends Dialog
     private TextArea messageText;
     private int maxStringLength = 80;
 
-    public TestDialog( Frame frame, String name )
+    public TestDialog( Frame frame, String name ) 
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-
+      
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-
+      
         pack();
-
+      
         setVisible(true);
     }// TestDialog()
 
@@ -123,7 +123,7 @@ final class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        {
+        { 
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -134,29 +134,29 @@ final class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-
+               
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-
+               
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else
-                {
+                else 
+                { 
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-
+            
                 instructionsText.append( printStr + "\n" );
-
+            
             }// while
-
+         
         }// for
-
+      
     }//printInstructions()
 
     public void displayMessage( String messageIn )
     {
         messageText.append( messageIn + "\n" );
-    }
-}// TestDialog  class
+    }  
+}// TestDialog  class    

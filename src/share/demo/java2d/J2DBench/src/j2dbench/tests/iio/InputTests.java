@@ -134,8 +134,8 @@ abstract class InputTests extends IIOTests {
     protected static class InputType extends Option.Enable {
         private int type;
 
-        public InputType(String nodeName, String description, int type) {
-            super(generalSourceRoot, nodeName, description, false);
+	public InputType(String nodeName, String description, int type) {
+	    super(generalSourceRoot, nodeName, description, false);
             this.type = type;
         }
 
@@ -143,13 +143,13 @@ abstract class InputTests extends IIOTests {
             return type;
         }
 
-        public String getAbbreviatedModifierDescription(Object value) {
-            return getModifierValueName(value);
-        }
+	public String getAbbreviatedModifierDescription(Object value) {
+	    return getModifierValueName(value);
+	}
 
-        public String getModifierValueName(Object val) {
-            return getNodeName();
-        }
+	public String getModifierValueName(Object val) {
+	    return getNodeName();
+	}
     }
 
     protected static abstract class Context {

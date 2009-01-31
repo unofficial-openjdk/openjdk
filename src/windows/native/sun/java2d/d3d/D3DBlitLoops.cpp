@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <jni.h>
 #include "jlong.h"
-#include <sun_java2d_d3d_D3DBlitLoops.h>
+#include <sun_java2d_d3d_D3DBlitLoops.h> 
 #include "ddrawUtils.h"
 #include "GraphicsPrimitiveMgr.h"
 #include "Region.h"
@@ -43,7 +43,7 @@ JNIEXPORT void JNICALL
 Java_sun_java2d_d3d_D3DBlitLoops_doTransform
     (JNIEnv *env, jclass d3dbl,
      jlong pSrcData, jlong pDstData,
-     jlong pCtx,
+     jlong pCtx, 
      jint hint,
      jint sx1, jint sy1, jint sx2, jint sy2,
      jfloat dx1, jfloat dy1, jfloat dx2, jfloat dy2)
@@ -62,14 +62,14 @@ Java_sun_java2d_d3d_D3DBlitLoops_doTransform
                 "  dx1=%4f dy1=%4f dx2=%4f dy2=%4f", dx1, dy1, dx2, dy2);
 
     if (sx2 <= sx1 || sy2 <= sy1 || dx2 <= dx1 || dy2 <= dy1) {
-        J2dTraceLn(J2D_TRACE_WARNING,
+        J2dTraceLn(J2D_TRACE_WARNING, 
                    "D3DBlitLoops_doTransform: invalid dimensions");
         return;
     }
 
     D3DContext *d3dc = (D3DContext *)jlong_to_ptr(pCtx);
     if (d3dc == NULL) {
-        J2dTraceLn(J2D_TRACE_WARNING,
+        J2dTraceLn(J2D_TRACE_WARNING, 
                    "D3DBlitLoops_doTransform: null device context");
         return;
     }
@@ -77,10 +77,10 @@ Java_sun_java2d_d3d_D3DBlitLoops_doTransform
     Win32SDOps *dstOps = (Win32SDOps *)jlong_to_ptr(pDstData);
 
     if (!srcOps->ddInstance || !dstOps->ddInstance) {
-        // Some situations can cause us to fail on primary
-        // creation, resulting in null lpSurface and null ddInstance
-        // for a Win32Surface object.. Just noop this call in that case.
-        return;
+	// Some situations can cause us to fail on primary
+	// creation, resulting in null lpSurface and null ddInstance
+	// for a Win32Surface object.. Just noop this call in that case.
+	return;
     }
 
     DDrawSurface *ddTargetSurface = d3dc->GetTargetSurface();
@@ -106,7 +106,7 @@ Java_sun_java2d_d3d_D3DBlitLoops_doTransform
     float ty2 = ((float)sy2) / th;
 
     D3DU_INIT_VERTEX_QUAD(quadVerts, dx1, dy1, dx2, dy2,
-                          d3dc->blitPolygonPixel,
+                          d3dc->blitPolygonPixel, 
                           tx1, ty1, tx2, ty2);
 
     if (hint == D3DSD_XFORM_BILINEAR) {
@@ -128,9 +128,9 @@ Java_sun_java2d_d3d_D3DBlitLoops_doTransform
         }
         d3dc->EndScene(res);
     }
-    D3DU_PRIM2_LOOP_END(env, res, srcOps, dstOps,
+    D3DU_PRIM2_LOOP_END(env, res, srcOps, dstOps, 
                         "DrawPrimitive(D3DPT_TRIANGLEFAN)");
-
+    
     d3dc->ReleaseExclusiveAccess();
     ddTargetSurface->ReleaseExclusiveAccess();
 }

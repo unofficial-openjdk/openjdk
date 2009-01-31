@@ -25,13 +25,13 @@
  *  @test
  *  @bug 4419314
  *  @author Robert Field
- *
+ *  
  *  @run build TestScaffold VMConnection TargetListener TargetAdapter
  *  @run compile -g HelloWorld.java
  *  @run build VMDeathRequestTest
  *  @run main VMDeathRequestTest
  *
- * @summary VMDeathRequestTest checks to see that
+ * @summary VMDeathRequestTest checks to see that 
  * VMDisconnectedException is never thrown before VMDisconnectEvent.
  *
  * Failure mode for this test is throwing VMDisconnectedException
@@ -56,11 +56,11 @@ public class VMDeathRequestTest extends TestScaffold {
     EventSet currentEventSet;
 
     VMDeathRequestTest (String args[]) {
-        super(args);
+	super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        new VMDeathRequestTest(args).startTests();
+    public static void main(String[] args)	throws Exception {
+	new VMDeathRequestTest(args).startTests();
     }
 
     /********** event handlers **********/
@@ -73,7 +73,7 @@ public class VMDeathRequestTest extends TestScaffold {
         if (event.request() == deathRequest) {
             requestedVMDeathOccurred = true;
             println("Got requested VMDeathEvent");
-            if (currentEventSet.suspendPolicy() !=
+            if (currentEventSet.suspendPolicy() != 
                                    EventRequest.SUSPEND_ALL) {
                 failure("failure: wrong suspend policy");
             }
@@ -118,7 +118,7 @@ public class VMDeathRequestTest extends TestScaffold {
         if (!vm().canRequestVMDeathEvent()) {
             failure("failure: canRequestVMDeathEvent() returned false");
         }
-
+            
         /*
          * Event tests
          */
@@ -136,14 +136,14 @@ public class VMDeathRequestTest extends TestScaffold {
         /*
          * Failure analysis
          */
-        if (!requestedVMDeathOccurred) {
+	if (!requestedVMDeathOccurred) {
             failure("failure: didn't get requested VMDeathEvent");
         }
-        if (!defaultVMDeathOccurred) {
+	if (!defaultVMDeathOccurred) {
             failure("failure: didn't get default VMDeathEvent");
         }
 
-        if (!testFailed) {
+	if (!testFailed) {
             println("VMDeathRequestTest: passed");
         } else {
             throw new Exception("VMDeathRequestTest: failed");

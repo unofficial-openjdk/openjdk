@@ -52,7 +52,7 @@ public final class NFS4StringPrep {
     private StringPrep nfsmxs = null;
     //singleton instance
     private static final NFS4StringPrep prep = new NFS4StringPrep();
-
+    
 
     private  NFS4StringPrep (){
         ClassLoader loader = NFS4StringPrep.class.getClassLoader();
@@ -64,15 +64,15 @@ public final class NFS4StringPrep {
           InputStream  nfscssFile = loader.getResourceAsStream("nfscss.spp");
           nfscss = new StringPrep(nfscssFile);
           nfscssFile.close();
-
+          
           InputStream  nfscisFile = loader.getResourceAsStream("nfscis.spp");
           nfscis = new StringPrep(nfscisFile);
           nfscisFile.close();
-
+          
           InputStream  nfsmxpFile = loader.getResourceAsStream("nfsmxp.spp");
           nfsmxp = new StringPrep(nfsmxpFile);
           nfsmxpFile.close();
-
+          
           InputStream  nfsmxsFile = loader.getResourceAsStream("nfsmxs.spp");
           nfsmxs = new StringPrep(nfsmxsFile);
           nfsmxsFile.close();
@@ -80,7 +80,7 @@ public final class NFS4StringPrep {
           throw new RuntimeException(e.toString());
       }
     }
-
+    
     private static byte[] prepare(byte[] src, StringPrep prep)
                 throws ParseException, UnsupportedEncodingException{
         String s = new String(src, "UTF-8");
@@ -88,7 +88,7 @@ public final class NFS4StringPrep {
         StringBuffer out = prep.prepare(iter,StringPrep.DEFAULT);
         return out.toString().getBytes("UTF-8");
     }
-
+    
     public static byte[] cs_prepare(byte[] src, boolean isCaseSensitive)
                          throws ParseException, UnsupportedEncodingException{
         if(isCaseSensitive == true ){
@@ -97,22 +97,22 @@ public final class NFS4StringPrep {
             return prepare(src, prep.nfscsi);
         }
     }
-
+    
     public static byte[] cis_prepare(byte[] src)
                          throws IOException, ParseException, UnsupportedEncodingException{
         return prepare(src, prep.nfscis);
-    }
-
+    }  
+    
     /* sorted array for binary search*/
     private static final String[] special_prefixes={
-        "ANONYMOUS",
+        "ANONYMOUS",    
         "AUTHENTICATED",
-        "BATCH",
-        "DIALUP",
-        "EVERYONE",
+        "BATCH", 
+        "DIALUP", 
+        "EVERYONE", 
         "GROUP",
-        "INTERACTIVE",
-        "NETWORK",
+        "INTERACTIVE",  
+        "NETWORK", 
         "OWNER",
     };
 
@@ -128,7 +128,7 @@ public final class NFS4StringPrep {
         while(left <= right){
             middle = (left+right)/2;
             rc= sortedArr[middle].compareTo(target);
-
+        
             if(rc<0){
                 left = middle+1;
             }else if(rc >0){
@@ -140,7 +140,7 @@ public final class NFS4StringPrep {
         return -1;
     }
     private static final char AT_SIGN = '@';
-
+    
     public static byte[] mixed_prepare(byte[] src)
                          throws IOException, ParseException, UnsupportedEncodingException{
         String s = new String(src, "UTF-8");
@@ -163,9 +163,9 @@ public final class NFS4StringPrep {
         }else{
             UCharacterIterator iter = UCharacterIterator.getInstance(s);
             out.append(prep.nfsmxp.prepare(iter,StringPrep.DEFAULT));
-
+            
         }
        return out.toString().getBytes("UTF-8");
     }
-
+    
 }

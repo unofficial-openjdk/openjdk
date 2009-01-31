@@ -21,7 +21,7 @@
  * have any questions.
  */
 
-/*
+/* 
  * @test
  * @summary Sockets shouldn't be inherited when creating a child process
  */
@@ -37,48 +37,48 @@ public class SocketInheritance {
      * System.out
      */
     static class IOHandler implements Runnable {
-        InputStream in;
+	InputStream in;
 
-        IOHandler(InputStream in) {
-            this.in = in;
-        }
+	IOHandler(InputStream in) { 
+	    this.in = in;
+	}
 
-        static void handle(InputStream in) {
-            IOHandler handler = new IOHandler(in);
-            Thread thr = new Thread(handler);
-            thr.setDaemon(true);
-            thr.start();
-        }
+  	static void handle(InputStream in) {
+	    IOHandler handler = new IOHandler(in);
+	    Thread thr = new Thread(handler);
+	    thr.setDaemon(true);
+	    thr.start();
+  	}
 
-        public void run() {
-            try {
-                byte b[] = new byte[100];
-                for (;;) {
-                    int n = in.read(b);
-                    if (n < 0) return;
-                    System.out.write(b, 0, n);
-                }
-            } catch (IOException ioe) { }
-        }
-
+	public void run() {
+	    try {
+		byte b[] = new byte[100];
+		for (;;) {
+		    int n = in.read(b);
+		    if (n < 0) return;
+		    System.out.write(b, 0, n);
+	 	}
+	    } catch (IOException ioe) { }
+	}
+	
     }
 
     // connect to the given port
     static SocketChannel connect(int port) throws IOException {
-        InetAddress lh = InetAddress.getByName("127.0.0.1");
-        InetSocketAddress isa = new InetSocketAddress(lh, port);
-        return SocketChannel.open(isa);
+	InetAddress lh = InetAddress.getByName("127.0.0.1");
+	InetSocketAddress isa = new InetSocketAddress(lh, port);
+	return SocketChannel.open(isa);
     }
 
     // simple child process that handshakes with the parent and then
     // waits indefinitely until it is destroyed
     static void child(int port) {
-        try {
-            connect(port).close();
-        } catch (IOException x) {
-            x.printStackTrace();
-            return;
-        }
+	try {
+	    connect(port).close();
+	} catch (IOException x) {
+	    x.printStackTrace();
+	    return;
+	}
 
         for (;;) {
             try {
@@ -92,49 +92,49 @@ public class SocketInheritance {
     // Forks process which should not inherit the sockets.
     // Close the sockets, and attempt to re-bind the listener.
 
-    static void start() throws Exception {
+    static void start() throws Exception {                
 
-        // setup loopback connection
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        ssc.socket().bind( new InetSocketAddress(0) );
-
+	// setup loopback connection
+	ServerSocketChannel ssc = ServerSocketChannel.open();
+	ssc.socket().bind( new InetSocketAddress(0) );
+   
         int port = ssc.socket().getLocalPort();
 
         SocketChannel sc1 = connect(port);
-        SocketChannel sc2 = ssc.accept();
-
-        // launch the child
-        String cmd = System.getProperty("java.home") + File.separator + "bin" +
+	SocketChannel sc2 = ssc.accept();
+	
+	// launch the child
+	String cmd = System.getProperty("java.home") + File.separator + "bin" +
             File.separator + "java SocketInheritance -child " + port;
 
-        Process p = Runtime.getRuntime().exec(cmd);
+	Process p = Runtime.getRuntime().exec(cmd);
 
-        IOHandler.handle(p.getInputStream());
-        IOHandler.handle(p.getErrorStream());
+	IOHandler.handle(p.getInputStream());
+	IOHandler.handle(p.getErrorStream());
 
-        // wait for child to connect
-        SocketChannel sc3 = ssc.accept();
+	// wait for child to connect
+	SocketChannel sc3 = ssc.accept();
 
-        // close sockets
-        sc1.close();
-        sc2.close();
-        sc3.close();
-        ssc.close();
+	// close sockets
+	sc1.close();
+	sc2.close();
+	sc3.close();
+	ssc.close();
 
-        // re-bind the listener - if the sockets were inherited then
+	// re-bind the listener - if the sockets were inherited then
         // this will fail
         try {
-            ssc = ServerSocketChannel.open();
-            ssc.socket().bind(new InetSocketAddress(port));
-            ssc.close();
+	    ssc = ServerSocketChannel.open();
+	    ssc.socket().bind(new InetSocketAddress(port));
+	    ssc.close();
         } finally {
-            p.destroy();
+	    p.destroy();
         }
 
     }
 
-    public static void main(String[] args) throws Exception {
-        if (!System.getProperty("os.name").startsWith("Windows"))
+    public static void main(String[] args) throws Exception {       
+        if (!System.getProperty("os.name").startsWith("Windows")) 
             return;
 
         if (args.length == 0) {

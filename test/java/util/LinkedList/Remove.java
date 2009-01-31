@@ -25,7 +25,7 @@
  * @test
  * @bug 4147946
  * @summary Due to a bug in LinkedList's ListIterator's remove() logic, the List would
- *          get screwed up by a remove() following a previous().
+ *	    get screwed up by a remove() following a previous().
  */
 
 import java.util.LinkedList;

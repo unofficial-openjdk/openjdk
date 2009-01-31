@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.awt.*;
@@ -45,6 +46,7 @@ import java.net.*;
  * forked which animates the sorting algorithm.
  *
  * @author James Gosling
+ * @version 	%I%, %G%
  */
 public class SortItem
     extends java.applet.Applet
@@ -80,26 +82,26 @@ public class SortItem
      */
     SortAlgorithm algorithm;
 
-    Dimension initialSize = null;
+    Dimension initialSize = null; 
 
     /**
      * Fill the array with random numbers from 0..n-1.
      */
     void scramble() {
-        initialSize = getSize();
-        int a[] = new int[initialSize.height / 2];
-        double f = initialSize.width / (double) a.length;
+	initialSize = getSize();
+	int a[] = new int[initialSize.height / 2];
+	double f = initialSize.width / (double) a.length;
 
-        for (int i = a.length; --i >= 0;) {
-            a[i] = (int)(i * f);
-        }
-        for (int i = a.length; --i >= 0;) {
-            int j = (int)(i * Math.random());
-            int t = a[i];
-            a[i] = a[j];
-            a[j] = t;
-        }
-        arr = a;
+	for (int i = a.length; --i >= 0;) {
+	    a[i] = (int)(i * f);
+	}
+	for (int i = a.length; --i >= 0;) {
+	    int j = (int)(i * Math.random());
+	    int t = a[i];
+	    a[i] = a[j];
+	    a[j] = t;
+	}
+	arr = a;
     }
 
     /**
@@ -107,7 +109,7 @@ public class SortItem
      * @see SortAlgorithm
      */
     void pause() {
-        pause(-1, -1);
+	pause(-1, -1);
     }
 
     /**
@@ -115,7 +117,7 @@ public class SortItem
      * @see SortAlgorithm
      */
     void pause(int H1) {
-        pause(H1, -1);
+	pause(H1, -1);
     }
 
     /**
@@ -123,32 +125,32 @@ public class SortItem
      * @see SortAlgorithm
      */
     void pause(int H1, int H2) {
-        h1 = H1;
-        h2 = H2;
-        if (kicker != null) {
-            repaint();
-        }
-        try {Thread.sleep(20);} catch (InterruptedException e){}
+	h1 = H1;
+	h2 = H2;
+	if (kicker != null) {
+	    repaint();
+	}
+	try {Thread.sleep(20);} catch (InterruptedException e){}
     }
 
     /**
      * Initialize the applet.
      */
     public void init() {
-        String at = getParameter("alg");
-        if (at == null) {
-            at = "BubbleSort";
-        }
+	String at = getParameter("alg");
+	if (at == null) {
+	    at = "BubbleSort";
+	}
 
-        algName = at + "Algorithm";
-        scramble();
+	algName = at + "Algorithm";
+	scramble();
 
-        resize(100, 100);
-        addMouseListener(this);
+	resize(100, 100);
+	addMouseListener(this);
     }
 
     public void start() {
-        h1 = h2 = -1;
+        h1 = h2 = -1; 
         scramble();
         repaint();
         showStatus(getParameter("alg"));
@@ -168,67 +170,67 @@ public class SortItem
     public void paint(Graphics g) {
         int a[] = arr;
         int y = 0;
-        int deltaY = 0, deltaX = 0, evenY = 0, evenX = 0;
+        int deltaY = 0, deltaX = 0, evenY = 0, evenX = 0; 
 
         Dimension currentSize = getSize();
         int currentHeight = currentSize.height;
         int currentWidth = currentSize.width;
 
-        // Check to see if the applet has been resized since it
-        // started running.  If so, need the deltas to make sure
-        // the applet is centered in its containing panel.
-        // The evenX and evenY are because the high and low
-        // watermarks are calculated from the top, but the rest
-        // of the lines are calculated from the bottom, which
-        // can lead to a discrepancy if the window is not an
-        // even size.
-        if (!currentSize.equals(initialSize)) {
+        // Check to see if the applet has been resized since it 
+        // started running.  If so, need the deltas to make sure 
+        // the applet is centered in its containing panel.  
+        // The evenX and evenY are because the high and low 
+        // watermarks are calculated from the top, but the rest 
+        // of the lines are calculated from the bottom, which 
+        // can lead to a discrepancy if the window is not an 
+        // even size.  
+        if (!currentSize.equals(initialSize)) { 
             evenY = (currentHeight - initialSize.height) % 2;
             evenX = (currentWidth - initialSize.width) % 2;
             deltaY = (currentHeight - initialSize.height) / 2;
             deltaX = (currentWidth - initialSize.width) / 2;
 
-            if (deltaY < 0) {
-                deltaY = 0;
-                evenY = 0;
+            if (deltaY < 0) { 
+                deltaY = 0; 
+                evenY = 0; 
             }
-            if (deltaX < 0) {
-                deltaX = 0;
-                evenX = 0;
+            if (deltaX < 0) { 
+                deltaX = 0; 
+                evenX = 0; 
             }
         }
 
-        // Erase old lines
-        g.setColor(getBackground());
-        y = currentHeight - deltaY - 1;
-        for (int i = a.length; --i >= 0; y -= 2) {
-            g.drawLine(deltaX + arr[i], y, currentWidth, y);
-        }
+	// Erase old lines
+	g.setColor(getBackground());
+	y = currentHeight - deltaY - 1;
+	for (int i = a.length; --i >= 0; y -= 2) {
+	    g.drawLine(deltaX + arr[i], y, currentWidth, y);
+	}
 
-        // Draw new lines
-        g.setColor(Color.black);
-        y = currentHeight - deltaY - 1;
-        for (int i = a.length; --i >= 0; y -= 2) {
-            g.drawLine(deltaX, y, deltaX + arr[i], y);
-        }
+	// Draw new lines
+	g.setColor(Color.black);
+	y = currentHeight - deltaY - 1;
+	for (int i = a.length; --i >= 0; y -= 2) {
+	    g.drawLine(deltaX, y, deltaX + arr[i], y);
+	}
 
-        if (h1 >= 0) {
-            g.setColor(Color.red);
-            y = deltaY + evenY + h1 * 2 + 1;
-            g.drawLine(deltaX, y, deltaX + initialSize.width, y);
-        }
-        if (h2 >= 0) {
-            g.setColor(Color.blue);
-            y = deltaY + evenY + h2 * 2 + 1;
-            g.drawLine(deltaX, y, deltaX + initialSize.width, y);
-        }
+	if (h1 >= 0) {
+	    g.setColor(Color.red);
+	    y = deltaY + evenY + h1 * 2 + 1;
+	    g.drawLine(deltaX, y, deltaX + initialSize.width, y);
+	}
+	if (h2 >= 0) {
+	    g.setColor(Color.blue);
+	    y = deltaY + evenY + h2 * 2 + 1;
+	    g.drawLine(deltaX, y, deltaX + initialSize.width, y);
+	}
     }
 
     /**
      * Update without erasing the background.
      */
     public void update(Graphics g) {
-        paint(g);
+	paint(g);
     }
 
     /**
@@ -239,15 +241,15 @@ public class SortItem
      * @see SortItem#mouseUp
      */
     public void run() {
-        try {
-            if (algorithm == null) {
-                algorithm = (SortAlgorithm)Class.forName(algName).newInstance();
-                algorithm.setParent(this);
-            }
-            algorithm.init();
-            algorithm.sort(arr);
-        } catch(Exception e) {
-        }
+	try {
+	    if (algorithm == null) {
+		algorithm = (SortAlgorithm)Class.forName(algName).newInstance();
+		algorithm.setParent(this);
+	    }
+	    algorithm.init();
+	    algorithm.sort(arr);
+	} catch(Exception e) {
+	}
     }
 
     /**
@@ -255,14 +257,14 @@ public class SortItem
      * is still sorting.
      */
     public synchronized void stop() {
-        if (algorithm != null){
+	if (algorithm != null){
             try {
-                algorithm.stop();
+		algorithm.stop();
             } catch (IllegalThreadStateException e) {
                 // ignore this exception
             }
             kicker = null;
-        }
+	}
     }
 
     /**
@@ -273,10 +275,10 @@ public class SortItem
      * manipulate the common kicker variable.
      */
     private synchronized void startSort() {
-        if (kicker == null || !kicker.isAlive()) {
-            kicker = new Thread(this);
-            kicker.start();
-        }
+	if (kicker == null || !kicker.isAlive()) {
+	    kicker = new Thread(this);
+	    kicker.start();
+	}
     }
 
 
@@ -312,3 +314,4 @@ public class SortItem
         return info;
     }
 }
+

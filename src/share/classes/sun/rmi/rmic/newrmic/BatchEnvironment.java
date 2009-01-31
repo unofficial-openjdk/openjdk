@@ -55,6 +55,7 @@ import static sun.rmi.rmic.newrmic.Constants.*;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
+ * @version %I%, %E%
  * @author Peter Jones
  **/
 public class BatchEnvironment {
@@ -74,24 +75,24 @@ public class BatchEnvironment {
      * Creates a new BatchEnvironment with the specified RootDoc.
      **/
     public BatchEnvironment(RootDoc rootDoc) {
-        this.rootDoc = rootDoc;
+	this.rootDoc = rootDoc;
 
-        /*
-         * Initialize cached ClassDoc for types used by rmic.  Note
-         * that any of these could be null if the boot class path is
-         * incorrect, which could cause a NullPointerException later.
-         */
-        docRemote = rootDoc().classNamed(REMOTE);
-        docException = rootDoc().classNamed(EXCEPTION);
-        docRemoteException = rootDoc().classNamed(REMOTE_EXCEPTION);
-        docRuntimeException = rootDoc().classNamed(RUNTIME_EXCEPTION);
+	/*
+	 * Initialize cached ClassDoc for types used by rmic.  Note
+	 * that any of these could be null if the boot class path is
+	 * incorrect, which could cause a NullPointerException later.
+	 */
+	docRemote = rootDoc().classNamed(REMOTE);
+	docException = rootDoc().classNamed(EXCEPTION);
+	docRemoteException = rootDoc().classNamed(REMOTE_EXCEPTION);
+	docRuntimeException = rootDoc().classNamed(RUNTIME_EXCEPTION);
     }
 
     /**
      * Returns the RootDoc for this environment.
      **/
     public RootDoc rootDoc() {
-        return rootDoc;
+	return rootDoc;
     }
 
     public ClassDoc docRemote() { return docRemote; }
@@ -103,14 +104,14 @@ public class BatchEnvironment {
      * Sets this environment's verbosity status.
      **/
     public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
+	this.verbose = verbose;
     }
 
     /**
      * Returns this environment's verbosity status.
      **/
     public boolean verbose() {
-        return verbose;
+	return verbose;
     }
 
     /**
@@ -118,21 +119,21 @@ public class BatchEnvironment {
      * during this batch.
      **/
     public void addGeneratedFile(File file) {
-        generatedFiles.add(file);
+	generatedFiles.add(file);
     }
 
     /**
      * Returns the list of files generated during this batch.
      **/
     public List<File> generatedFiles() {
-        return Collections.unmodifiableList(generatedFiles);
+	return Collections.unmodifiableList(generatedFiles);
     }
 
     /**
      * Outputs the specified (non-error) message.
      **/
     public void output(String msg) {
-        rootDoc.printNotice(msg);
+	rootDoc.printNotice(msg);
     }
 
     /**
@@ -140,6 +141,6 @@ public class BatchEnvironment {
      * formatting arguments.
      **/
     public void error(String key, String... args) {
-        rootDoc.printError(Resources.getText(key, args));
+	rootDoc.printError(Resources.getText(key, args));
     }
 }

@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 5033583 6316717 6470106
+ * @bug 5033583 6316717
  * @summary Check toGenericString() and toString() methods
  * @author Joseph D. Darcy
  * @compile -source 1.5 GenericStringTest.java
@@ -36,38 +36,38 @@ import java.util.*;
 
 public class GenericStringTest {
     public static void main(String argv[]) throws Exception{
-        int failures = 0;
-        List<Class<?>> classList = new LinkedList<Class<?>>();
-        classList.add(TestClass1.class);
-        classList.add(TestClass2.class);
+	int failures = 0;
+	List<Class<?>> classList = new LinkedList<Class<?>>();
+	classList.add(TestClass1.class);
+	classList.add(TestClass2.class);
+	
 
+	for(Class<?> clazz: classList)
+	    for(Constructor<?> ctor: clazz.getDeclaredConstructors()) {
+		ExpectedGenericString egs = ctor.getAnnotation(ExpectedGenericString.class);
+		String actual = ctor.toGenericString();
+		System.out.println(actual);
+		if (! egs.value().equals(actual)) {
+		    failures++;
+		    System.err.printf("ERROR: Expected generic string ''%s''; got ''%s''.\n",
+				      egs.value(), actual);
+		}
 
-        for(Class<?> clazz: classList)
-            for(Constructor<?> ctor: clazz.getDeclaredConstructors()) {
-                ExpectedGenericString egs = ctor.getAnnotation(ExpectedGenericString.class);
-                String actual = ctor.toGenericString();
-                System.out.println(actual);
-                if (! egs.value().equals(actual)) {
-                    failures++;
-                    System.err.printf("ERROR: Expected generic string ''%s''; got ''%s''.\n",
-                                      egs.value(), actual);
-                }
+		if (ctor.isAnnotationPresent(ExpectedString.class)) {
+		    ExpectedString es = ctor.getAnnotation(ExpectedString.class);
+		    String result = ctor.toString();
+		    if (! es.value().equals(result)) {
+			failures++;
+			System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
+					  es.value(), result);
+		    }
+		}
+	    }
 
-                if (ctor.isAnnotationPresent(ExpectedString.class)) {
-                    ExpectedString es = ctor.getAnnotation(ExpectedString.class);
-                    String result = ctor.toString();
-                    if (! es.value().equals(result)) {
-                        failures++;
-                        System.err.printf("ERROR: Expected ''%s''; got ''%s''.\n",
-                                          es.value(), result);
-                    }
-                }
-            }
-
-        if (failures > 0) {
-            System.err.println("Test failed.");
-            throw new RuntimeException();
-        }
+	if (failures > 0) {
+	    System.err.println("Test failed.");
+	    throw new RuntimeException();
+	}
     }
 }
 
@@ -89,7 +89,7 @@ class TestClass1 {
     protected <S, T> TestClass1(S s, T t) throws Exception{}
 
     @ExpectedGenericString(
-   "TestClass1(java.lang.Object...)")
+   "TestClass1(java.lang.Object[])")
     @ExpectedString(
    "TestClass1(java.lang.Object[])")
     TestClass1(Object... o){}

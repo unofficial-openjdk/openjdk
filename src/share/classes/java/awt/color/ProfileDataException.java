@@ -37,6 +37,6 @@ public class ProfileDataException extends java.lang.RuntimeException {
      *  @param s the specified detail message
      */
     public ProfileDataException(String s) {
-        super (s);
+	super (s);
     }
 }

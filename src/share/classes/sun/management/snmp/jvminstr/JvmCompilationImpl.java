@@ -54,18 +54,18 @@ public class JvmCompilationImpl implements JvmCompilationMBean {
      *
      * "Indicates whether the Java virtual machine supports
      * compilation time monitoring.
-     *
+     * 
      * See java.management.CompilationMXBean.
      * isCompilationTimeMonitoringSupported()
      * "
      *
      */
-    static final EnumJvmJITCompilerTimeMonitoring
-        JvmJITCompilerTimeMonitoringSupported =
-        new EnumJvmJITCompilerTimeMonitoring("supported");
-    static final EnumJvmJITCompilerTimeMonitoring
-        JvmJITCompilerTimeMonitoringUnsupported =
-        new EnumJvmJITCompilerTimeMonitoring("unsupported");
+    static final EnumJvmJITCompilerTimeMonitoring 
+	JvmJITCompilerTimeMonitoringSupported = 
+	new EnumJvmJITCompilerTimeMonitoring("supported");
+    static final EnumJvmJITCompilerTimeMonitoring 
+	JvmJITCompilerTimeMonitoringUnsupported = 
+	new EnumJvmJITCompilerTimeMonitoring("unsupported");
 
 
     /**
@@ -79,43 +79,43 @@ public class JvmCompilationImpl implements JvmCompilationMBean {
 
     /**
      * Constructor for the "JvmCompilation" group.
-     * If the group contains a table, the entries created through an SNMP
+     * If the group contains a table, the entries created through an SNMP 
      * SET will be AUTOMATICALLY REGISTERED in Java DMK.
      */
     public JvmCompilationImpl(SnmpMib myMib, MBeanServer server) {
     }
-
+    
     private static CompilationMXBean getCompilationMXBean() {
-        return ManagementFactory.getCompilationMXBean();
+	return ManagementFactory.getCompilationMXBean();
     }
 
     /**
      * Getter for the "JvmJITCompilerTimeMonitoring" variable.
      */
-    public EnumJvmJITCompilerTimeMonitoring getJvmJITCompilerTimeMonitoring()
-        throws SnmpStatusException {
-
-        // If we reach this point, then we can safely assume that
-        // getCompilationMXBean() will not return null, because this
-        // object will not be instantiated when there is no compilation
-        // system (see JVM_MANAGEMENT_MIB_IMPL).
-        //
+    public EnumJvmJITCompilerTimeMonitoring getJvmJITCompilerTimeMonitoring() 
+	throws SnmpStatusException {
+	
+	// If we reach this point, then we can safely assume that
+	// getCompilationMXBean() will not return null, because this 
+	// object will not be instantiated when there is no compilation
+	// system (see JVM_MANAGEMENT_MIB_IMPL).
+	//
         if(getCompilationMXBean().isCompilationTimeMonitoringSupported())
-            return JvmJITCompilerTimeMonitoringSupported;
-        else
-            return JvmJITCompilerTimeMonitoringUnsupported;
+	    return JvmJITCompilerTimeMonitoringSupported;
+	else
+	    return JvmJITCompilerTimeMonitoringUnsupported;
     }
 
     /**
      * Getter for the "JvmJITCompilerTimeMs" variable.
      */
     public Long getJvmJITCompilerTimeMs() throws SnmpStatusException {
-        final long t;
-        if(getCompilationMXBean().isCompilationTimeMonitoringSupported())
-            t = getCompilationMXBean().getTotalCompilationTime();
-        else
-            t = 0;
-        return new Long(t);
+	final long t;
+	if(getCompilationMXBean().isCompilationTimeMonitoringSupported())
+	    t = getCompilationMXBean().getTotalCompilationTime();
+	else 
+	    t = 0;
+	return new Long(t);
     }
 
     /**
@@ -123,7 +123,7 @@ public class JvmCompilationImpl implements JvmCompilationMBean {
      */
     public String getJvmJITCompilerName() throws SnmpStatusException {
         return JVM_MANAGEMENT_MIB_IMPL.
-            validJavaObjectNameTC(getCompilationMXBean().getName());
+	    validJavaObjectNameTC(getCompilationMXBean().getName());
     }
 
 }

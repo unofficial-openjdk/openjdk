@@ -102,13 +102,13 @@ public class ClassesByName2Test extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new ClassesByName2Test(args).startTests();
     }
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of ready()
+         * Get to the top of ready() 
          */
         startTo("ClassesByName2Targ", "ready", "()V");
 

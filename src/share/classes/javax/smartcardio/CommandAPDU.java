@@ -58,6 +58,7 @@ import java.nio.ByteBuffer;
  * @see ResponseAPDU
  * @see CardChannel#transmit CardChannel.transmit
  *
+ * @version %I%, %G%
  * @since   1.6
  * @author  Andreas Sterbenz
  * @author  JSR 268 Expert Group
@@ -70,13 +71,13 @@ public final class CommandAPDU implements java.io.Serializable {
 
     /** @serial */
     private byte[] apdu;
-
+    
     // value of nc
     private transient int nc;
-
+    
     // value of ne
     private transient int ne;
-
+    
     // index of start of data within the apdu array
     private transient int dataOffset;
 
@@ -95,7 +96,7 @@ public final class CommandAPDU implements java.io.Serializable {
      */
     public CommandAPDU(byte[] apdu) {
         this.apdu = apdu.clone();
-        parse();
+	parse();
     }
 
     /**
@@ -118,35 +119,35 @@ public final class CommandAPDU implements java.io.Serializable {
      *   or if the specified bytes are not a valid APDU
      */
     public CommandAPDU(byte[] apdu, int apduOffset, int apduLength) {
-        checkArrayBounds(apdu, apduOffset, apduLength);
-        this.apdu = new byte[apduLength];
-        System.arraycopy(apdu, apduOffset, this.apdu, 0, apduLength);
-        parse();
+	checkArrayBounds(apdu, apduOffset, apduLength);
+	this.apdu = new byte[apduLength];
+	System.arraycopy(apdu, apduOffset, this.apdu, 0, apduLength);
+	parse();
     }
-
+    
     private void checkArrayBounds(byte[] b, int ofs, int len) {
-        if ((ofs < 0) || (len < 0)) {
-            throw new IllegalArgumentException
-                ("Offset and length must not be negative");
-        }
-        if (b == null) {
-            if ((ofs != 0) && (len != 0)) {
-                throw new IllegalArgumentException
-                    ("offset and length must be 0 if array is null");
-            }
-        } else {
-            if (ofs > b.length - len) {
-                throw new IllegalArgumentException
-                    ("Offset plus length exceed array size");
-            }
-        }
+	if ((ofs < 0) || (len < 0)) {
+	    throw new IllegalArgumentException
+		("Offset and length must not be negative");
+	}
+	if (b == null) {
+	    if ((ofs != 0) && (len != 0)) {
+		throw new IllegalArgumentException
+		    ("offset and length must be 0 if array is null");
+	    }
+	} else {
+	    if (ofs > b.length - len) {
+		throw new IllegalArgumentException
+		    ("Offset plus length exceed array size");
+	    }
+	}
     }
 
     /**
      * Creates a CommandAPDU from the ByteBuffer containing the complete APDU
      * contents (header and body).
      * The buffer's <code>position</code> must be set to the start of the APDU,
-     * its <code>limit</code> to the end of the APDU. Upon return, the buffer's
+     * its <code>limit</code> to the end of the APDU. Upon return, the buffer's 
      * <code>position</code> is equal to its limit; its limit remains unchanged.
      *
      * <p>Note that the data in the ByteBuffer is copied to protect against
@@ -159,11 +160,11 @@ public final class CommandAPDU implements java.io.Serializable {
      *   command APDU
      */
     public CommandAPDU(ByteBuffer apdu) {
-        this.apdu = new byte[apdu.remaining()];
-        apdu.get(this.apdu);
-        parse();
+	this.apdu = new byte[apdu.remaining()];
+	apdu.get(this.apdu);
+	parse();
     }
-
+    
     /**
      * Constructs a CommandAPDU from the four header bytes. This is case 1
      * in ISO 7816, no command body.
@@ -174,7 +175,7 @@ public final class CommandAPDU implements java.io.Serializable {
      * @param p2 the parameter byte P2
      */
     public CommandAPDU(int cla, int ins, int p1, int p2) {
-        this(cla, ins, p1, p2, null, 0, 0, 0);
+	this(cla, ins, p1, p2, null, 0, 0, 0); 
     }
 
     /**
@@ -193,7 +194,7 @@ public final class CommandAPDU implements java.io.Serializable {
      *   65536
      */
     public CommandAPDU(int cla, int ins, int p1, int p2, int ne) {
-        this(cla, ins, p1, p2, null, 0, 0, ne);
+	this(cla, ins, p1, p2, null, 0, 0, ne); 
     }
 
     /**
@@ -211,16 +212,16 @@ public final class CommandAPDU implements java.io.Serializable {
      * @param p2 the parameter byte P2
      * @param data the byte array containing the data bytes of the command body
      *
-     * @throws IllegalArgumentException if data.length is greater than 65535
+     * @throws IllegalArgumentException if data.length is greater than 65535 
      */
     public CommandAPDU(int cla, int ins, int p1, int p2, byte[] data) {
-        this(cla, ins, p1, p2, data, 0, arrayLength(data), 0);
+	this(cla, ins, p1, p2, data, 0, arrayLength(data), 0); 
     }
 
     /**
      * Constructs a CommandAPDU from the four header bytes and command data.
      * This is case 3 in ISO 7816, command data present and Ne absent. The
-     * value Nc is taken as dataLength. If <code>dataLength</code>
+     * value Nc is taken as dataLength. If <code>dataLength</code> 
      * is 0, the APDU is encoded as ISO 7816 case 1.
      *
      * <p>Note that the data bytes are copied to protect against
@@ -241,8 +242,8 @@ public final class CommandAPDU implements java.io.Serializable {
      *   or if dataLength is greater than 65535
      */
     public CommandAPDU(int cla, int ins, int p1, int p2, byte[] data,
-            int dataOffset, int dataLength) {
-        this(cla, ins, p1, p2, data, dataOffset, dataLength, 0);
+	    int dataOffset, int dataLength) {
+	this(cla, ins, p1, p2, data, dataOffset, dataLength, 0); 
     }
 
     /**
@@ -262,15 +263,15 @@ public final class CommandAPDU implements java.io.Serializable {
      * @param data the byte array containing the data bytes of the command body
      * @param ne the maximum number of expected data bytes in a response APDU
      *
-     * @throws IllegalArgumentException if data.length is greater than 65535
+     * @throws IllegalArgumentException if data.length is greater than 65535 
      *   or if ne is negative or greater than 65536
      */
     public CommandAPDU(int cla, int ins, int p1, int p2, byte[] data, int ne) {
-        this(cla, ins, p1, p2, data, 0, arrayLength(data), ne);
+	this(cla, ins, p1, p2, data, 0, arrayLength(data), ne); 
     }
-
+    
     private static int arrayLength(byte[] b) {
-        return (b != null) ? b.length : 0;
+	return (b != null) ? b.length : 0;
     }
 
     /**
@@ -288,73 +289,73 @@ public final class CommandAPDU implements java.io.Serializable {
      * LC must not be 0x00 and LC1|LC2 must not be 0x00|0x00
      */
     private void parse() {
-        if (apdu.length < 4) {
-            throw new IllegalArgumentException("apdu must be at least 4 bytes long");
-        }
-        if (apdu.length == 4) {
-            // case 1
-            return;
-        }
-        int l1 = apdu[4] & 0xff;
-        if (apdu.length == 5) {
-            // case 2s
-            this.ne = (l1 == 0) ? 256 : l1;
-            return;
-        }
-        if (l1 != 0) {
-            if (apdu.length == 4 + 1 + l1) {
-                // case 3s
-                this.nc = l1;
-                this.dataOffset = 5;
-                return;
-            } else if (apdu.length == 4 + 2 + l1) {
-                // case 4s
-                this.nc = l1;
-                this.dataOffset = 5;
-                int l2 = apdu[apdu.length - 1] & 0xff;
-                this.ne = (l2 == 0) ? 256 : l2;
-                return;
-            } else {
-                throw new IllegalArgumentException
-                    ("Invalid APDU: length=" + apdu.length + ", b1=" + l1);
-            }
-        }
-        if (apdu.length < 7) {
-            throw new IllegalArgumentException
-                ("Invalid APDU: length=" + apdu.length + ", b1=" + l1);
-        }
-        int l2 = ((apdu[5] & 0xff) << 8) | (apdu[6] & 0xff);
-        if (apdu.length == 7) {
-            // case 2e
-            this.ne = (l2 == 0) ? 65536 : l2;
-            return;
-        }
-        if (l2 == 0) {
-            throw new IllegalArgumentException("Invalid APDU: length="
-                    + apdu.length + ", b1=" + l1 + ", b2||b3=" + l2);
-        }
-        if (apdu.length == 4 + 3 + l2) {
-            // case 3e
-            this.nc = l2;
-            this.dataOffset = 7;
-            return;
-        } else if (apdu.length == 4 + 5 + l2) {
-            // case 4e
-            this.nc = l2;
-            this.dataOffset = 7;
-            int leOfs = apdu.length - 2;
-            int l3 = ((apdu[leOfs] & 0xff) << 8) | (apdu[leOfs + 1] & 0xff);
-            this.ne = (l3 == 0) ? 65536 : l3;
-        } else {
-            throw new IllegalArgumentException("Invalid APDU: length="
-                    + apdu.length + ", b1=" + l1 + ", b2||b3=" + l2);
-        }
+	if (apdu.length < 4) {
+	    throw new IllegalArgumentException("apdu must be at least 4 bytes long");
+	}
+	if (apdu.length == 4) {
+	    // case 1
+	    return;
+	}
+	int l1 = apdu[4] & 0xff;
+	if (apdu.length == 5) {
+	    // case 2s
+	    this.ne = (l1 == 0) ? 256 : l1;
+	    return;
+	}
+	if (l1 != 0) {
+	    if (apdu.length == 4 + 1 + l1) {
+		// case 3s
+		this.nc = l1;
+		this.dataOffset = 5;
+		return;
+	    } else if (apdu.length == 4 + 2 + l1) {
+		// case 4s
+		this.nc = l1;
+		this.dataOffset = 5;
+		int l2 = apdu[apdu.length - 1] & 0xff;
+		this.ne = (l2 == 0) ? 256 : l2;
+		return;
+	    } else {
+		throw new IllegalArgumentException
+		    ("Invalid APDU: length=" + apdu.length + ", b1=" + l1);
+	    }
+	}
+	if (apdu.length < 7) {
+	    throw new IllegalArgumentException
+		("Invalid APDU: length=" + apdu.length + ", b1=" + l1);
+	}
+	int l2 = ((apdu[5] & 0xff) << 8) | (apdu[6] & 0xff);
+	if (apdu.length == 7) {
+	    // case 2e
+	    this.ne = (l2 == 0) ? 65536 : l2;
+	    return;
+	}
+	if (l2 == 0) {
+	    throw new IllegalArgumentException("Invalid APDU: length="
+		    + apdu.length + ", b1=" + l1 + ", b2||b3=" + l2);
+	}
+	if (apdu.length == 4 + 3 + l2) {
+	    // case 3e
+	    this.nc = l2;
+	    this.dataOffset = 7;
+	    return;
+	} else if (apdu.length == 4 + 5 + l2) {
+	    // case 4e
+	    this.nc = l2;
+	    this.dataOffset = 7;
+	    int leOfs = apdu.length - 2;
+	    int l3 = ((apdu[leOfs] & 0xff) << 8) | (apdu[leOfs + 1] & 0xff);
+	    this.ne = (l3 == 0) ? 65536 : l3;
+	} else {
+	    throw new IllegalArgumentException("Invalid APDU: length="
+		    + apdu.length + ", b1=" + l1 + ", b2||b3=" + l2);
+	}
     }
 
     /**
      * Constructs a CommandAPDU from the four header bytes, command data,
      * and expected response data length. This is case 4 in ISO 7816,
-     * command data and Le present. The value Nc is taken as
+     * command data and Le present. The value Nc is taken as 
      * <code>dataLength</code>.
      * If Ne or Nc
      * are zero, the APDU is encoded as case 1, 2, or 3 per ISO 7816.
@@ -379,104 +380,104 @@ public final class CommandAPDU implements java.io.Serializable {
      *   or if dataLength is greater than 65535
      */
     public CommandAPDU(int cla, int ins, int p1, int p2, byte[] data,
-            int dataOffset, int dataLength, int ne) {
-        checkArrayBounds(data, dataOffset, dataLength);
-        if (dataLength > 65535) {
-            throw new IllegalArgumentException("dataLength is too large");
-        }
-        if (ne < 0) {
-            throw new IllegalArgumentException("ne must not be negative");
-        }
-        if (ne > 65536) {
-            throw new IllegalArgumentException("ne is too large");
-        }
-        this.ne = ne;
-        this.nc = dataLength;
-        if (dataLength == 0) {
-            if (ne == 0) {
-                // case 1
-                this.apdu = new byte[4];
-                setHeader(cla, ins, p1, p2);
-            } else {
-                // case 2s or 2e
-                if (ne <= 256) {
-                    // case 2s
-                    // 256 is encoded as 0x00
-                    byte len = (ne != 256) ? (byte)ne : 0;
-                    this.apdu = new byte[5];
-                    setHeader(cla, ins, p1, p2);
-                    this.apdu[4] = len;
-                } else {
-                    // case 2e
-                    byte l1, l2;
-                    // 65536 is encoded as 0x00 0x00
-                    if (ne == 65536) {
-                        l1 = 0;
-                        l2 = 0;
-                    } else {
-                        l1 = (byte)(ne >> 8);
-                        l2 = (byte)ne;
-                    }
-                    this.apdu = new byte[7];
-                    setHeader(cla, ins, p1, p2);
-                    this.apdu[5] = l1;
-                    this.apdu[6] = l2;
-                }
-            }
-        } else {
-            if (ne == 0) {
-                // case 3s or 3e
-                if (dataLength <= 255) {
-                    // case 3s
-                    apdu = new byte[4 + 1 + dataLength];
-                    setHeader(cla, ins, p1, p2);
-                    apdu[4] = (byte)dataLength;
-                    this.dataOffset = 5;
-                    System.arraycopy(data, dataOffset, apdu, 5, dataLength);
-                } else {
-                    // case 3e
-                    apdu = new byte[4 + 3 + dataLength];
-                    setHeader(cla, ins, p1, p2);
-                    apdu[4] = 0;
-                    apdu[5] = (byte)(dataLength >> 8);
-                    apdu[6] = (byte)dataLength;
-                    this.dataOffset = 7;
-                    System.arraycopy(data, dataOffset, apdu, 7, dataLength);
-                }
-            } else {
-                // case 4s or 4e
-                if ((dataLength <= 255) && (ne <= 256)) {
-                    // case 4s
-                    apdu = new byte[4 + 2 + dataLength];
-                    setHeader(cla, ins, p1, p2);
-                    apdu[4] = (byte)dataLength;
-                    this.dataOffset = 5;
-                    System.arraycopy(data, dataOffset, apdu, 5, dataLength);
-                    apdu[apdu.length - 1] = (ne != 256) ? (byte)ne : 0;
-                } else {
-                    // case 4e
-                    apdu = new byte[4 + 5 + dataLength];
-                    setHeader(cla, ins, p1, p2);
-                    apdu[4] = 0;
-                    apdu[5] = (byte)(dataLength >> 8);
-                    apdu[6] = (byte)dataLength;
-                    this.dataOffset = 7;
-                    System.arraycopy(data, dataOffset, apdu, 7, dataLength);
-                    if (ne != 65536) {
-                        int leOfs = apdu.length - 2;
-                        apdu[leOfs] = (byte)(ne >> 8);
-                        apdu[leOfs + 1] = (byte)ne;
-                    } // else le == 65536: no need to fill in, encoded as 0
-                }
-            }
-        }
+	    int dataOffset, int dataLength, int ne) {
+	checkArrayBounds(data, dataOffset, dataLength);
+	if (dataLength > 65535) {
+	    throw new IllegalArgumentException("dataLength is too large");
+	}
+	if (ne < 0) {
+	    throw new IllegalArgumentException("ne must not be negative");
+	}
+	if (ne > 65536) {
+	    throw new IllegalArgumentException("ne is too large");
+	}
+	this.ne = ne;
+	this.nc = dataLength;
+	if (dataLength == 0) {
+	    if (ne == 0) {
+		// case 1
+		this.apdu = new byte[4];
+		setHeader(cla, ins, p1, p2);
+	    } else {
+		// case 2s or 2e
+		if (ne <= 256) {
+		    // case 2s
+		    // 256 is encoded as 0x00
+		    byte len = (ne != 256) ? (byte)ne : 0;
+		    this.apdu = new byte[5];
+		    setHeader(cla, ins, p1, p2);
+		    this.apdu[4] = len;
+		} else {
+		    // case 2e
+		    byte l1, l2;
+		    // 65536 is encoded as 0x00 0x00
+		    if (ne == 65536) {
+			l1 = 0;
+			l2 = 0;
+		    } else {
+			l1 = (byte)(ne >> 8);
+			l2 = (byte)ne;
+		    }
+		    this.apdu = new byte[7];
+		    setHeader(cla, ins, p1, p2);
+		    this.apdu[5] = l1;
+		    this.apdu[6] = l2;
+		}
+	    }
+	} else {
+	    if (ne == 0) {
+		// case 3s or 3e
+		if (dataLength <= 255) {
+		    // case 3s
+		    apdu = new byte[4 + 1 + dataLength];
+		    setHeader(cla, ins, p1, p2);
+		    apdu[4] = (byte)dataLength;
+		    this.dataOffset = 5;
+		    System.arraycopy(data, dataOffset, apdu, 5, dataLength);
+		} else {
+		    // case 3e
+		    apdu = new byte[4 + 3 + dataLength];
+		    setHeader(cla, ins, p1, p2);
+		    apdu[4] = 0;
+		    apdu[5] = (byte)(dataLength >> 8);
+		    apdu[6] = (byte)dataLength;
+		    this.dataOffset = 7;
+		    System.arraycopy(data, dataOffset, apdu, 7, dataLength);
+		}
+	    } else {
+		// case 4s or 4e
+		if ((dataLength <= 255) && (ne <= 256)) {
+		    // case 4s
+		    apdu = new byte[4 + 2 + dataLength];
+		    setHeader(cla, ins, p1, p2);
+		    apdu[4] = (byte)dataLength;
+		    this.dataOffset = 5;
+		    System.arraycopy(data, dataOffset, apdu, 5, dataLength);
+		    apdu[apdu.length - 1] = (ne != 256) ? (byte)ne : 0;
+		} else {
+		    // case 4e
+		    apdu = new byte[4 + 5 + dataLength];
+		    setHeader(cla, ins, p1, p2);
+		    apdu[4] = 0;
+		    apdu[5] = (byte)(dataLength >> 8);
+		    apdu[6] = (byte)dataLength;
+		    this.dataOffset = 7;
+		    System.arraycopy(data, dataOffset, apdu, 7, dataLength);
+		    if (ne != 65536) {
+			int leOfs = apdu.length - 2;
+			apdu[leOfs] = (byte)(ne >> 8);
+			apdu[leOfs + 1] = (byte)ne;
+		    } // else le == 65536: no need to fill in, encoded as 0
+		}
+	    }
+	}
     }
-
+    
     private void setHeader(int cla, int ins, int p1, int p2) {
-        apdu[0] = (byte)cla;
-        apdu[1] = (byte)ins;
-        apdu[2] = (byte)p1;
-        apdu[3] = (byte)p2;
+	apdu[0] = (byte)cla;
+	apdu[1] = (byte)ins;
+	apdu[2] = (byte)p1;
+	apdu[3] = (byte)p2;
     }
 
     /**
@@ -485,7 +486,7 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return the value of the class byte CLA.
      */
     public int getCLA() {
-        return apdu[0] & 0xff;
+	return apdu[0] & 0xff;
     }
 
     /**
@@ -494,7 +495,7 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return the value of the instruction byte INS.
      */
     public int getINS() {
-        return apdu[1] & 0xff;
+	return apdu[1] & 0xff;
     }
 
     /**
@@ -503,7 +504,7 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return the value of the parameter byte P1.
      */
     public int getP1() {
-        return apdu[2] & 0xff;
+	return apdu[2] & 0xff;
     }
 
     /**
@@ -512,11 +513,11 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return the value of the parameter byte P2.
      */
     public int getP2() {
-        return apdu[3] & 0xff;
+	return apdu[3] & 0xff;
     }
 
     /**
-     * Returns the number of data bytes in the command body (Nc) or 0 if this
+     * Returns the number of data bytes in the command body (Nc) or 0 if this 
      * APDU has no body. This call is equivalent to
      * <code>getData().length</code>.
      *
@@ -524,7 +525,7 @@ public final class CommandAPDU implements java.io.Serializable {
      * has no body.
      */
     public int getNc() {
-        return nc;
+	return nc;
     }
 
     /**
@@ -535,9 +536,9 @@ public final class CommandAPDU implements java.io.Serializable {
      *    byte array if this APDU has no body.
      */
     public byte[] getData() {
-        byte[] data = new byte[nc];
-        System.arraycopy(apdu, dataOffset, data, 0, nc);
-        return data;
+	byte[] data = new byte[nc];
+	System.arraycopy(apdu, dataOffset, data, 0, nc);
+	return data;
     }
 
     /**
@@ -547,7 +548,7 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return the maximum number of expected data bytes in a response APDU.
      */
     public int getNe() {
-        return ne;
+	return ne;
     }
 
     /**
@@ -565,11 +566,11 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return a String representation of this command APDU.
      */
     public String toString() {
-        return "CommmandAPDU: " + apdu.length + " bytes, nc=" + nc + ", ne=" + ne;
+	return "CommmandAPDU: " + apdu.length + " bytes, nc=" + nc + ", ne=" + ne;
     }
-
+    
     /**
-     * Compares the specified object with this command APDU for equality.
+     * Compares the specified object with this command APDU for equality. 
      * Returns true if the given object is also a CommandAPDU and its bytes are
      * identical to the bytes in this CommandAPDU.
      *
@@ -577,30 +578,30 @@ public final class CommandAPDU implements java.io.Serializable {
      * @return true if the specified object is equal to this command APDU
      */
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj instanceof CommandAPDU == false) {
-            return false;
-        }
-        CommandAPDU other = (CommandAPDU)obj;
-        return Arrays.equals(this.apdu, other.apdu);
+	if (this == obj) {
+	    return true;
+	}
+	if (obj instanceof CommandAPDU == false) {
+	    return false;
+	}
+	CommandAPDU other = (CommandAPDU)obj;
+	return Arrays.equals(this.apdu, other.apdu);
      }
-
+    
     /**
      * Returns the hash code value for this command APDU.
      *
      * @return the hash code value for this command APDU.
      */
     public int hashCode() {
-        return Arrays.hashCode(apdu);
+	return Arrays.hashCode(apdu);
     }
-
+    
     private void readObject(java.io.ObjectInputStream in)
-            throws java.io.IOException, ClassNotFoundException {
-        apdu = (byte[])in.readUnshared();
-        // initialize transient fields
-        parse();
+	    throws java.io.IOException, ClassNotFoundException {
+	apdu = (byte[])in.readUnshared();
+	// initialize transient fields
+	parse();
     }
 
 }

@@ -39,51 +39,51 @@ public class B6431193 {
     static boolean error = false;
 
     public static void read (InputStream i) throws IOException {
-        while (i.read() != -1);
-        i.close();
+	while (i.read() != -1);
+	i.close();
     }
 
     /**
-         * @param args
-         */
+	 * @param args
+	 */
     public static void main(String[] args) {
-        class MyHandler implements HttpHandler {
-            public void handle(HttpExchange t) throws IOException {
-                InputStream is = t.getRequestBody();
-                read(is);
-                // .. read the request body
-                    String response = "This is the response";
-                t.sendResponseHeaders(200, response.length());
-                OutputStream os = t.getResponseBody();
-                os.write(response.getBytes());
-                os.close();
-                error = Thread.currentThread().isDaemon();
-            }
-        }
+	class MyHandler implements HttpHandler {
+	    public void handle(HttpExchange t) throws IOException {
+		InputStream is = t.getRequestBody();
+		read(is); 
+		// .. read the request body
+		    String response = "This is the response";
+		t.sendResponseHeaders(200, response.length());
+		OutputStream os = t.getResponseBody();
+		os.write(response.getBytes());
+		os.close();
+		error = Thread.currentThread().isDaemon();
+	    }
+	}
 
 
-        HttpServer server;
-        try {
-            server = HttpServer.create(new InetSocketAddress(0), 10);
+	HttpServer server;
+	try {
+	    server = HttpServer.create(new InetSocketAddress(0), 10);
 
-            server.createContext("/apps", new MyHandler());
-            server.setExecutor(null);
-            // creates a default executor
-                server.start();
-            int port = server.getAddress().getPort();
-            String s = "http://localhost:"+port+"/apps/foo";
-            URL url = new URL (s);
-            InputStream is = url.openStream();
-            read (is);
-            server.stop (1);
-            if (error) {
-                throw new RuntimeException ("error in test");
-            }
+	    server.createContext("/apps", new MyHandler());
+	    server.setExecutor(null); 
+	    // creates a default executor
+		server.start();
+	    int port = server.getAddress().getPort();
+	    String s = "http://localhost:"+port+"/apps/foo";
+	    URL url = new URL (s);
+	    InputStream is = url.openStream();
+	    read (is);
+	    server.stop (1);
+	    if (error) {
+		throw new RuntimeException ("error in test");
+	    }
 
-        }
-        catch (IOException e) {
-            // TODO Auto-generated catch block
-                e.printStackTrace();
-        }
+	} 
+	catch (IOException e) {
+	    // TODO Auto-generated catch block
+		e.printStackTrace();
+	}
     }
 }

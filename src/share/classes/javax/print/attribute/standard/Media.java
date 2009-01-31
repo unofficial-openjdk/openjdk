@@ -48,9 +48,9 @@ import javax.print.attribute.PrintJobAttribute;
  * A Media object is constructed with a value which represents
  * one of the ways in which the Media attribute can be specified.
  * <p>
- * <B>IPP Compatibility:</B>  The category name returned by
- * <CODE>getName()</CODE> is the IPP attribute name.  The enumeration's
- * integer value is the IPP enum value.  The <code>toString()</code> method
+ * <B>IPP Compatibility:</B>  The category name returned by 
+ * <CODE>getName()</CODE> is the IPP attribute name.  The enumeration's 
+ * integer value is the IPP enum value.  The <code>toString()</code> method 
  * returns the IPP string representation of the attribute value.
  * <P>
  *
@@ -59,20 +59,20 @@ import javax.print.attribute.PrintJobAttribute;
 public abstract class Media extends EnumSyntax
     implements DocAttribute, PrintRequestAttribute, PrintJobAttribute {
 
-    private static final long serialVersionUID = -2823970704630722439L;
-
+    private static final long serialVersionUID = -2823970704630722439L;  
+     
     /**
-     * Constructs a new media attribute specified by name.
+     * Constructs a new media attribute specified by name. 
      *
      * @param value         a value
      */
     protected Media(int value) {
-           super (value);
+	   super (value);
     }
-
+  
     /**
-     * Returns whether this media attribute is equivalent to the passed in
-     * object. To be equivalent, all of the following conditions must be true:
+     * Returns whether this media attribute is equivalent to the passed in 
+     * object. To be equivalent, all of the following conditions must be true: 
      * <OL TYPE=1>
      * <LI>
      * <CODE>object</CODE> is not null.
@@ -84,40 +84,40 @@ public abstract class Media extends EnumSyntax
      *
      * @param  object  Object to compare to.
      *
-     * @return  True if <CODE>object</CODE> is equivalent to this media
-     *          attribute, false otherwise.
+     * @return  True if <CODE>object</CODE> is equivalent to this media 
+     *          attribute, false otherwise. 
      */
     public boolean equals(Object object) {
-        return(object != null && object instanceof Media &&
-               object.getClass() == this.getClass() &&
-               ((Media)object).getValue() == this.getValue());
+	return(object != null && object instanceof Media &&
+	       object.getClass() == this.getClass() &&
+	       ((Media)object).getValue() == this.getValue());
     }
 
     /**
-     * Get the printing attribute class which is to be used as the "category"
+     * Get the printing attribute class which is to be used as the "category" 
      * for this printing attribute value.
      * <P>
-     * For class Media and any vendor-defined subclasses, the category is
-     * class Media itself.
+     * For class Media and any vendor-defined subclasses, the category is  
+     * class Media itself. 
      *
      * @return  Printing attribute class (category), an instance of class
      *          {@link java.lang.Class java.lang.Class}.
      */
     public final Class<? extends Attribute> getCategory() {
-        return Media.class;
+	return Media.class;
     }
 
     /**
-     * Get the name of the category of which this attribute value is an
-     * instance.
+     * Get the name of the category of which this attribute value is an 
+     * instance. 
      * <P>
-     * For class Media and any vendor-defined subclasses, the category name is
-     * <CODE>"media"</CODE>.
+     * For class Media and any vendor-defined subclasses, the category name is 
+     * <CODE>"media"</CODE>. 
      *
      * @return  Attribute category name.
      */
     public final String getName() {
-        return "media";
+	return "media";
     }
-
+    
 }

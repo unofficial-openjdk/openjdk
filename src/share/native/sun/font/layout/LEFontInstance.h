@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)LEFontInstance.h	1.14 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -126,7 +127,7 @@ public:
      * <code>this</code> and indicates that the entire string can be rendered.
      *
      * This method will return a valid <code>LEFontInstance</code> unless you
-     * have passed illegal parameters, or an internal error has been encountered.
+     * have passed illegal parameters, or an internal error has been encountered. 
      * For composite fonts, it may return the warning <code>LE_NO_SUBFONT_WARNING</code>
      * to indicate that the returned font may not be able to render all of
      * the text. Whenever a valid font is returned, the <code>offset</code> parameter
@@ -160,7 +161,7 @@ public:
      *
      * @stable ICU 3.2
      */
-    virtual const LEFontInstance *getSubFont(const LEUnicode chars[], le_int32 *offset,
+    virtual const LEFontInstance *getSubFont(const LEUnicode chars[], le_int32 *offset, 
         le_int32 limit, le_int32 script, LEErrorCode &success) const;
 
     //
@@ -176,7 +177,7 @@ public:
      *
      * Subclasses which represent composite fonts should always return <code>NULL</code>.
      *
-     * @param tableTag - the four byte table tag. (e.g. 'cmap')
+     * @param tableTag - the four byte table tag. (e.g. 'cmap') 
      *
      * @return the address of the table in memory, or <code>NULL</code>
      *         if the table doesn't exist.
@@ -238,7 +239,7 @@ public:
      *
      * @draft ICU 3.0
      */
-    virtual void mapCharsToGlyphs(const LEUnicode chars[], le_int32 offset, le_int32 count,
+    virtual void mapCharsToGlyphs(const LEUnicode chars[], le_int32 offset, le_int32 count, 
         le_bool reverse, const LECharMapper *mapper, LEGlyphStorage &glyphStorage) const;
 
     /**
@@ -563,3 +564,5 @@ inline le_int32 LEFontInstance::getLineHeight() const
 }
 
 #endif
+
+

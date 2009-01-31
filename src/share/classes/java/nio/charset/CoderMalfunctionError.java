@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,14 +32,13 @@ package java.nio.charset;
  * encodeLoop} method of a {@link CharsetEncoder}, throws an unexpected
  * exception.
  *
+ * @version %I%, %E%
  * @since 1.4
  */
 
 public class CoderMalfunctionError
     extends Error
 {
-
-    private static final long serialVersionUID = -1151412348057794301L;
 
     /**
      * Initializes an instance of this class.
@@ -48,7 +47,7 @@ public class CoderMalfunctionError
      *         The unexpected exception that was thrown
      */
     public CoderMalfunctionError(Exception cause) {
-        super(cause);
+	super(cause);
     }
 
 }

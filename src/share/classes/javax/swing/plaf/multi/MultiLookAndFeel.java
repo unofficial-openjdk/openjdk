@@ -30,17 +30,17 @@ import javax.swing.*;
 import javax.swing.plaf.*;
 
 /**
- * <p>A multiplexing look and feel that allows more than one UI
- * to be associated with a component at the same time.
+ * <p>A multiplexing look and feel that allows more than one UI 
+ * to be associated with a component at the same time. 
  * The primary look and feel is called
  * the <em>default</em> look and feel,
  * and the other look and feels are called <em>auxiliary</em>.
  * <p>
- *
+ * 
  * For further information, see
  * <a href="doc-files/multi_tsc.html" target="_top">Using the
  * Multiplexing Look and Feel.</a>
- *
+ * 
  * <p>
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
@@ -54,6 +54,7 @@ import javax.swing.plaf.*;
  * @see UIManager#addAuxiliaryLookAndFeel
  * @see javax.swing.plaf.multi
  *
+ * @version %I% %G%
  * @author Willie Walker
  */
 public class MultiLookAndFeel extends LookAndFeel {
@@ -71,20 +72,20 @@ public class MultiLookAndFeel extends LookAndFeel {
     public String getName() {
         return "Multiplexing Look and Feel";
     }
-
+    
     /**
      * Returns a string, suitable for use by applications/services,
      * that identifies this look and feel.
-     *
+     * 
      * @return "Multiplex"
      */
     public String getID() {
-        return "Multiplex";
+	return "Multiplex";
     }
 
     /**
      * Returns a one-line description of this look and feel.
-     *
+     * 
      * @return a descriptive string such as "Allows multiple UI instances per component instance"
      */
     public String getDescription() {
@@ -98,7 +99,7 @@ public class MultiLookAndFeel extends LookAndFeel {
      * @return <code>false</code>
      */
     public boolean isNativeLookAndFeel() {
-        return false;
+	return false;
     }
 
     /**
@@ -108,14 +109,14 @@ public class MultiLookAndFeel extends LookAndFeel {
      * @return <code>true</code>
      */
     public boolean isSupportedLookAndFeel() {
-        return true;
+	return true;
     }
 
     /**
      * Creates, initializes, and returns
      * the look and feel specific defaults.
      * For this look and feel,
-     * the defaults consist solely of
+     * the defaults consist solely of 
      * mappings of UI class IDs
      * (such as "ButtonUI")
      * to <code>ComponentUI</code> class names
@@ -125,56 +126,56 @@ public class MultiLookAndFeel extends LookAndFeel {
      * @see javax.swing.JComponent#getUIClassID
      */
     public UIDefaults getDefaults() {
-        String packageName = "javax.swing.plaf.multi.Multi";
-        Object[] uiDefaults = {
-                   "ButtonUI", packageName + "ButtonUI",
-         "CheckBoxMenuItemUI", packageName + "MenuItemUI",
-                 "CheckBoxUI", packageName + "ButtonUI",
+	String packageName = "javax.swing.plaf.multi.Multi";
+	Object[] uiDefaults = {
+		   "ButtonUI", packageName + "ButtonUI",
+	 "CheckBoxMenuItemUI", packageName + "MenuItemUI",
+		 "CheckBoxUI", packageName + "ButtonUI",
              "ColorChooserUI", packageName + "ColorChooserUI",
-                 "ComboBoxUI", packageName + "ComboBoxUI",
-              "DesktopIconUI", packageName + "DesktopIconUI",
-              "DesktopPaneUI", packageName + "DesktopPaneUI",
+		 "ComboBoxUI", packageName + "ComboBoxUI",
+	      "DesktopIconUI", packageName + "DesktopIconUI",
+	      "DesktopPaneUI", packageName + "DesktopPaneUI",
                "EditorPaneUI", packageName + "TextUI",
               "FileChooserUI", packageName + "FileChooserUI",
        "FormattedTextFieldUI", packageName + "TextUI",
-            "InternalFrameUI", packageName + "InternalFrameUI",
-                    "LabelUI", packageName + "LabelUI",
-                     "ListUI", packageName + "ListUI",
-                  "MenuBarUI", packageName + "MenuBarUI",
-                 "MenuItemUI", packageName + "MenuItemUI",
-                     "MenuUI", packageName + "MenuItemUI",
-               "OptionPaneUI", packageName + "OptionPaneUI",
-                    "PanelUI", packageName + "PanelUI",
-            "PasswordFieldUI", packageName + "TextUI",
+	    "InternalFrameUI", packageName + "InternalFrameUI",
+		    "LabelUI", packageName + "LabelUI",
+		     "ListUI", packageName + "ListUI",
+		  "MenuBarUI", packageName + "MenuBarUI",
+		 "MenuItemUI", packageName + "MenuItemUI",
+		     "MenuUI", packageName + "MenuItemUI",
+	       "OptionPaneUI", packageName + "OptionPaneUI",
+	            "PanelUI", packageName + "PanelUI",
+	    "PasswordFieldUI", packageName + "TextUI",
        "PopupMenuSeparatorUI", packageName + "SeparatorUI",
-                "PopupMenuUI", packageName + "PopupMenuUI",
-              "ProgressBarUI", packageName + "ProgressBarUI",
+		"PopupMenuUI", packageName + "PopupMenuUI",
+	      "ProgressBarUI", packageName + "ProgressBarUI",
       "RadioButtonMenuItemUI", packageName + "MenuItemUI",
-              "RadioButtonUI", packageName + "ButtonUI",
-                 "RootPaneUI", packageName + "RootPaneUI",
-                "ScrollBarUI", packageName + "ScrollBarUI",
-               "ScrollPaneUI", packageName + "ScrollPaneUI",
-                "SeparatorUI", packageName + "SeparatorUI",
-                   "SliderUI", packageName + "SliderUI",
-                  "SpinnerUI", packageName + "SpinnerUI",
-                "SplitPaneUI", packageName + "SplitPaneUI",
-               "TabbedPaneUI", packageName + "TabbedPaneUI",
-              "TableHeaderUI", packageName + "TableHeaderUI",
-                    "TableUI", packageName + "TableUI",
-                 "TextAreaUI", packageName + "TextUI",
-                "TextFieldUI", packageName + "TextUI",
-                 "TextPaneUI", packageName + "TextUI",
-             "ToggleButtonUI", packageName + "ButtonUI",
+	      "RadioButtonUI", packageName + "ButtonUI",
+	         "RootPaneUI", packageName + "RootPaneUI",
+		"ScrollBarUI", packageName + "ScrollBarUI",
+	       "ScrollPaneUI", packageName + "ScrollPaneUI",
+		"SeparatorUI", packageName + "SeparatorUI",
+		   "SliderUI", packageName + "SliderUI",
+		  "SpinnerUI", packageName + "SpinnerUI",
+		"SplitPaneUI", packageName + "SplitPaneUI",
+	       "TabbedPaneUI", packageName + "TabbedPaneUI",
+	      "TableHeaderUI", packageName + "TableHeaderUI",
+		    "TableUI", packageName + "TableUI",
+		 "TextAreaUI", packageName + "TextUI",
+		"TextFieldUI", packageName + "TextUI",
+		 "TextPaneUI", packageName + "TextUI",
+	     "ToggleButtonUI", packageName + "ButtonUI",
          "ToolBarSeparatorUI", packageName + "SeparatorUI",
-                  "ToolBarUI", packageName + "ToolBarUI",
-                  "ToolTipUI", packageName + "ToolTipUI",
-                     "TreeUI", packageName + "TreeUI",
-                 "ViewportUI", packageName + "ViewportUI",
-        };
+		  "ToolBarUI", packageName + "ToolBarUI",
+		  "ToolTipUI", packageName + "ToolTipUI",
+		     "TreeUI", packageName + "TreeUI",
+		 "ViewportUI", packageName + "ViewportUI",
+	};
 
         UIDefaults table = new MultiUIDefaults(uiDefaults.length / 2, 0.75f);
-        table.putDefaults(uiDefaults);
-        return table;
+	table.putDefaults(uiDefaults);
+	return table;
     }
 
 ///////////////////////////////
@@ -191,15 +192,15 @@ public class MultiLookAndFeel extends LookAndFeel {
      * that best represents the component's UI.
      * This method finds the <code>ComponentUI</code> objects
      * by invoking
-     * <code>getDefaults().getUI(target)</code> on each
+     * <code>getDefaults().getUI(target)</code> on each 
      * default and auxiliary look and feel currently in use.
      * The first UI object this method adds
      * to the <code>uis</code> vector
      * is for the default look and feel.
      * <p>
-     * This method is invoked by the <code>createUI</code> method
+     * This method is invoked by the <code>createUI</code> method 
      * of <code>MultiXxxxUI</code> classes.
-     *
+     * 
      * @param mui the <code>ComponentUI</code> object
      *            that represents the complete UI
      *            for the <code>target</code> component;
@@ -220,8 +221,8 @@ public class MultiLookAndFeel extends LookAndFeel {
      * @see MultiButtonUI#createUI
      */
     public static ComponentUI createUIs(ComponentUI mui,
-                                        Vector      uis,
-                                        JComponent  target) {
+				        Vector      uis,
+			                JComponent  target) {
         ComponentUI ui;
 
         // Make sure we can at least get the default UI
@@ -230,7 +231,7 @@ public class MultiLookAndFeel extends LookAndFeel {
         if (ui != null) {
             uis.addElement(ui);
             LookAndFeel[] auxiliaryLookAndFeels;
-            auxiliaryLookAndFeels = UIManager.getAuxiliaryLookAndFeels();
+	    auxiliaryLookAndFeels = UIManager.getAuxiliaryLookAndFeels();
             if (auxiliaryLookAndFeels != null) {
                 for (int i = 0; i < auxiliaryLookAndFeels.length; i++) {
                     ui = auxiliaryLookAndFeels[i].getDefaults().getUI(target);
@@ -238,19 +239,19 @@ public class MultiLookAndFeel extends LookAndFeel {
                         uis.addElement(ui);
                     }
                 }
-            }
+	    }
         } else {
-            return null;
-        }
+	    return null;
+	}
 
         // Don't bother returning the multiplexing UI if all we did was
         // get a UI from just the default look and feel.
         //
-        if (uis.size() == 1) {
-            return (ComponentUI) uis.elementAt(0);
-        } else {
-            return mui;
-        }
+	if (uis.size() == 1) {
+	    return (ComponentUI) uis.elementAt(0);
+	} else {
+	    return mui;
+	}
     }
 
     /**
@@ -263,10 +264,10 @@ public class MultiLookAndFeel extends LookAndFeel {
      * this method returns <code>null</code>.
      * A run-time error occurs if any objects in the <code>uis</code> vector
      * are not of type <code>ComponentUI</code>.
-     *
+     * 
      * @param uis a vector containing <code>ComponentUI</code> objects
      * @return an array equivalent to the passed-in vector
-     *
+     *         
      */
     protected static ComponentUI[] uisToArray(Vector uis) {
         if (uis == null) {
@@ -289,7 +290,7 @@ public class MultiLookAndFeel extends LookAndFeel {
 /**
  * We want the Multiplexing LookAndFeel to be quiet and fallback
  * gracefully if it cannot find a UI.  This class overrides the
- * getUIError method of UIDefaults, which is the method that
+ * getUIError method of UIDefaults, which is the method that 
  * emits error messages when it cannot find a UI class in the
  * LAF.
  */
@@ -298,6 +299,6 @@ class MultiUIDefaults extends UIDefaults {
         super(initialCapacity, loadFactor);
     }
     protected void getUIError(String msg) {
-        System.err.println("Multiplexing LAF:  " + msg);
+	System.err.println("Multiplexing LAF:  " + msg);
     }
 }

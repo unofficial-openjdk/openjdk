@@ -55,7 +55,7 @@ public class ImmutableArrayFieldTest {
             System.out.println("FAILED: modified string array field");
             ok = false;
         }
-
+        
         int[] ints = (int[]) d.getFieldValue("ints");
         ints[0] = 0;
         ints = (int[]) d.getFieldValue("ints");
@@ -63,7 +63,7 @@ public class ImmutableArrayFieldTest {
             System.out.println("FAILED: modified int array field");
             ok = false;
         }
-
+        
         boolean[] bools = (boolean[]) d.getFieldValue("booleans");
         bools[0] = true;
         bools = (boolean[]) d.getFieldValue("booleans");
@@ -71,7 +71,7 @@ public class ImmutableArrayFieldTest {
             System.out.println("FAILED: modified boolean array field");
             ok = false;
         }
-
+        
         Object[] values = d.getFieldValues("strings", "ints", "booleans");
         ((String[]) values[0])[0] = "bar";
         ((int[]) values[1])[0] = 0;
@@ -83,7 +83,7 @@ public class ImmutableArrayFieldTest {
             System.out.println("FAILED: getFieldValues modifiable: " +
                     Arrays.deepToString(values));
         }
-
+        
         if (ok)
             System.out.println("TEST PASSED");
         else

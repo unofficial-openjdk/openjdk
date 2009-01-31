@@ -36,6 +36,7 @@ import java.security.*;
  * @see Identity
  * @see Key
  *
+ * @version	%I%, %G%
  * @author Benjamin Renaud
  */
 public
@@ -57,7 +58,7 @@ class IdentityDatabase extends IdentityScope implements Serializable {
     Hashtable<String, Identity> identities;
 
     IdentityDatabase() throws InvalidParameterException {
-        this("restoring...");
+	this("restoring...");
     }
 
     /**
@@ -66,16 +67,16 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * @param file the source file.
      */
     public IdentityDatabase(File file) throws InvalidParameterException {
-        this(file.getName());
-        sourceFile = file;
+	this(file.getName());
+	sourceFile = file;
     }
 
     /**
      * Construct a new, empty database.
      */
     public IdentityDatabase(String name) throws InvalidParameterException {
-        super(name);
-        identities = new Hashtable<String, Identity>();
+	super(name);
+	identities = new Hashtable<String, Identity>();
     }
 
     /**
@@ -89,35 +90,35 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      */
     public static IdentityDatabase fromStream(InputStream is)
     throws IOException {
-        IdentityDatabase db = null;
-        try {
-            ObjectInputStream ois = new ObjectInputStream(is);
-            db = (IdentityDatabase)ois.readObject();
-        } catch (ClassNotFoundException e) {
-            // this can't happen.
-            debug("This should not be happening.", e);
-            error(
-                "The version of the database is obsolete. Cannot initialize.");
+	IdentityDatabase db = null;
+	try {
+	    ObjectInputStream ois = new ObjectInputStream(is);
+	    db = (IdentityDatabase)ois.readObject();
+	} catch (ClassNotFoundException e) {
+	    // this can't happen.
+	    debug("This should not be happening.", e);
+	    error(
+		"The version of the database is obsolete. Cannot initialize.");
 
-        } catch (InvalidClassException e) {
-            // this may happen in developers workspaces happen.
-            debug("This should not be happening.", e);
-            error("Unable to initialize system identity scope: " +
-                  " InvalidClassException. \nThis is most likely due to " +
-                  "a serialization versioning problem: a class used in " +
-                  "key management was obsoleted");
+	} catch (InvalidClassException e) {
+	    // this may happen in developers workspaces happen.
+	    debug("This should not be happening.", e);
+	    error("Unable to initialize system identity scope: " +
+		  " InvalidClassException. \nThis is most likely due to " +
+		  "a serialization versioning problem: a class used in " +
+		  "key management was obsoleted");
 
-        } catch (StreamCorruptedException e) {
-            debug("The serialization stream is corrupted. Unable to load.", e);
-            error("Unable to initialize system identity scope." +
-                  " StreamCorruptedException.");
-        }
+	} catch (StreamCorruptedException e) {
+	    debug("The serialization stream is corrupted. Unable to load.", e);
+	    error("Unable to initialize system identity scope." +
+		  " StreamCorruptedException.");
+	}
 
-        if (db == null) {
-            db = new IdentityDatabase("uninitialized");
-        }
+	if (db == null) {
+	    db = new IdentityDatabase("uninitialized");
+	}
 
-        return db;
+	return db;
     }
 
     /**
@@ -131,10 +132,10 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * @IOException if a file IO exception occurs.
      */
     public static IdentityDatabase fromFile(File f) throws IOException {
-        FileInputStream fis = new FileInputStream(f);
-        IdentityDatabase edb = fromStream(fis);
-        edb.sourceFile = f;
-        return edb;
+	FileInputStream fis = new FileInputStream(f);
+	IdentityDatabase edb = fromStream(fis);
+	edb.sourceFile = f;
+	return edb;
     }
 
 
@@ -154,11 +155,11 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * no identities named name in the database.
      */
     public Identity getIdentity(String name) {
-        Identity id = identities.get(name);
-        if (id instanceof Signer) {
-            localCheck("get.signer");
-        }
-        return id;
+	Identity id = identities.get(name);
+	if (id instanceof Signer) {
+	    localCheck("get.signer");
+	}
+	return id;
     }
 
     /**
@@ -170,29 +171,29 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * identities with that key in the database.
      */
     public Identity getIdentity(PublicKey key) {
-        if (key == null) {
-            return null;
-        }
-        Enumeration<Identity> e = identities();
-        while (e.hasMoreElements()) {
-            Identity i = e.nextElement();
-            PublicKey k = i.getPublicKey();
-            if (k != null && keyEqual(k, key)) {
-                if (i instanceof Signer) {
-                    localCheck("get.signer");
-                }
-                return i;
-            }
-        }
-        return null;
+	if (key == null) {
+	    return null;
+	}
+	Enumeration<Identity> e = identities();
+	while (e.hasMoreElements()) {
+	    Identity i = e.nextElement();
+	    PublicKey k = i.getPublicKey();
+	    if (k != null && keyEqual(k, key)) {
+		if (i instanceof Signer) {
+		    localCheck("get.signer");
+		}
+		return i;
+	    }
+	}
+	return null;
     }
 
     private boolean keyEqual(Key key1, Key key2) {
-        if (key1 == key2) {
-            return true;
-        } else {
-            return MessageDigest.isEqual(key1.getEncoded(), key2.getEncoded());
-        }
+	if (key1 == key2) {
+	    return true;
+	} else {
+	    return MessageDigest.isEqual(key1.getEncoded(), key2.getEncoded());
+	}
     }
 
     /**
@@ -205,21 +206,21 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      */
     public void addIdentity(Identity identity)
     throws KeyManagementException {
-        localCheck("add.identity");
-        Identity byName = getIdentity(identity.getName());
-        Identity byKey = getIdentity(identity.getPublicKey());
-        String msg = null;
+	localCheck("add.identity");
+	Identity byName = getIdentity(identity.getName());
+	Identity byKey = getIdentity(identity.getPublicKey());
+	String msg = null;
 
-        if (byName != null) {
-            msg = "name conflict";
-        }
-        if (byKey != null) {
-            msg = "key conflict";
-        }
-        if (msg != null) {
-            throw new KeyManagementException(msg);
-        }
-        identities.put(identity.getName(), identity);
+	if (byName != null) {
+	    msg = "name conflict";
+	}
+	if (byKey != null) {
+	    msg = "key conflict";
+	}
+	if (msg != null) {
+	    throw new KeyManagementException(msg);
+	}
+	identities.put(identity.getName(), identity);
     }
 
     /**
@@ -227,34 +228,34 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      */
     public void removeIdentity(Identity identity)
     throws KeyManagementException {
-        localCheck("remove.identity");
-        String name = identity.getName();
-        if (identities.get(name) == null) {
-            throw new KeyManagementException("there is no identity named " +
-                                             name + " in " + this);
-        }
-        identities.remove(name);
+	localCheck("remove.identity");
+	String name = identity.getName();
+	if (identities.get(name) == null) {
+	    throw new KeyManagementException("there is no identity named " +
+					     name + " in " + this);
+	}
+	identities.remove(name);
     }
 
     /**
      * @return an enumeration of all identities in the database.
      */
     public Enumeration<Identity> identities() {
-        return identities.elements();
+	return identities.elements();
     }
 
     /**
      * Set the source file for this database.
      */
     void setSourceFile(File f) {
-        sourceFile = f;
+	sourceFile = f;
     }
 
     /**
      * @return the source file for this database.
      */
     File getSourceFile() {
-        return sourceFile;
+	return sourceFile;
     }
 
     /**
@@ -266,14 +267,14 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * operations.
      */
     public void save(OutputStream os) throws IOException {
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(os);
-            oos.writeObject(this);
-            oos.flush();
-        } catch (InvalidClassException e) {
-            debug("This should not be happening.", e);
-            return;
-        }
+	try {
+	    ObjectOutputStream oos = new ObjectOutputStream(os);
+	    oos.writeObject(this);
+	    oos.flush();
+	} catch (InvalidClassException e) {
+	    debug("This should not be happening.", e);
+	    return;
+	}
     }
 
     /**
@@ -283,9 +284,9 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * operations.
      */
     void save(File f) throws IOException {
-        setSourceFile(f);
-        FileOutputStream fos = new FileOutputStream(f);
-        save(fos);
+	setSourceFile(f);
+	FileOutputStream fos = new FileOutputStream(f);
+	save(fos);
     }
 
     /**
@@ -295,10 +296,10 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * file specified for this database.
      */
     public void save() throws IOException {
-        if (sourceFile == null) {
-            throw new IOException("this database has no source file");
-        }
-        save(sourceFile);
+	if (sourceFile == null) {
+	    throw new IOException("this database has no source file");
+	}
+	save(sourceFile);
     }
 
     /**
@@ -307,26 +308,26 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      */
     private static File systemDatabaseFile() {
 
-        // First figure out where the identity database is hiding, if anywhere.
-        String dbPath = Security.getProperty("identity.database");
-        // if nowhere, it's the canonical place.
-        if (dbPath == null) {
-            dbPath = System.getProperty("user.home") + File.separatorChar +
-                "identitydb.obj";
-        }
-        return new File(dbPath);
+	// First figure out where the identity database is hiding, if anywhere.
+	String dbPath = Security.getProperty("identity.database");
+	// if nowhere, it's the canonical place.
+	if (dbPath == null) {
+	    dbPath = System.getProperty("user.home") + File.separatorChar +
+		"identitydb.obj";
+	}
+	return new File(dbPath);
     }
 
 
     /* This block initializes the system database, if there is one. */
     static {
-        java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<Void>() {
-            public Void run() {
-                initializeSystem();
-                return null;
-            }
-        });
+	java.security.AccessController.doPrivileged(
+	    new java.security.PrivilegedAction<Void>() {
+	    public Void run() {
+		initializeSystem();
+		return null;
+	    }
+	});
     }
 
     /**
@@ -336,83 +337,83 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      * the identity.database property.  */
     private static void initializeSystem() {
 
-        IdentityDatabase systemDatabase;
-        File dbFile = systemDatabaseFile();
+	IdentityDatabase systemDatabase;
+	File dbFile = systemDatabaseFile();
 
-        // Second figure out if it's there, and if it isn't, create one.
-        try {
-            if (dbFile.exists()) {
-                debug("loading system database from file: " + dbFile);
-                systemDatabase = fromFile(dbFile);
-            } else {
-                systemDatabase = new IdentityDatabase(dbFile);
-            }
-            IdentityScope.setSystemScope(systemDatabase);
-            debug("System database initialized: " + systemDatabase);
-        } catch (IOException e) {
-            debug("Error initializing identity database: " + dbFile, e);
-            return;
-        } catch (InvalidParameterException e) {
-            debug("Error trying to instantiate a system identities db in " +
-                               dbFile, e);
-            return;
-        }
+	// Second figure out if it's there, and if it isn't, create one.
+	try {
+	    if (dbFile.exists()) {
+		debug("loading system database from file: " + dbFile);
+		systemDatabase = fromFile(dbFile);
+	    } else {
+		systemDatabase = new IdentityDatabase(dbFile);
+	    }
+	    IdentityScope.setSystemScope(systemDatabase);
+	    debug("System database initialized: " + systemDatabase);
+	} catch (IOException e) {
+	    debug("Error initializing identity database: " + dbFile, e);
+	    return;
+	} catch (InvalidParameterException e) {
+	    debug("Error trying to instantiate a system identities db in " +
+			       dbFile, e);
+	    return;
+	}
     }
 
     /*
     private static File securityPropFile(String filename) {
-        // maybe check for a system property which will specify where to
-        // look.
-        String sep = File.separator;
-        return new File(System.getProperty("java.home") +
-                        sep + "lib" + sep + "security" +
-                        sep + filename);
+	// maybe check for a system property which will specify where to
+	// look.
+	String sep = File.separator;
+	return new File(System.getProperty("java.home") +
+			sep + "lib" + sep + "security" +
+			sep + filename);
     }
     */
 
     public String toString() {
-        return "sun.security.provider.IdentityDatabase, source file: " +
-            sourceFile;
+	return "sun.security.provider.IdentityDatabase, source file: " +
+	    sourceFile;
     }
 
 
     private static void debug(String s) {
-        if (debug) {
-            System.err.println(s);
-        }
+	if (debug) {
+	    System.err.println(s);
+	}
     }
 
     private static void debug(String s, Throwable t) {
-        if (debug) {
-            t.printStackTrace();
-            System.err.println(s);
-        }
+	if (debug) {
+	    t.printStackTrace();
+	    System.err.println(s);
+	}
     }
 
     private static void error(String s) {
-        if (error) {
-            System.err.println(s);
-        }
+	if (error) {
+	    System.err.println(s);
+	}
     }
 
     void localCheck(String directive) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            directive = this.getClass().getName() + "." +
-                directive + "." + localFullName();
-            security.checkSecurityAccess(directive);
-        }
+	SecurityManager security = System.getSecurityManager();
+	if (security != null) {
+	    directive = this.getClass().getName() + "." +
+		directive + "." + localFullName();
+	    security.checkSecurityAccess(directive);
+	}
     }
 
     /**
      * Returns a parsable name for identity: identityName.scopeName
      */
     String localFullName() {
-        String parsable = getName();
-        if (getScope() != null) {
-            parsable += "." +getScope().getName();
-        }
-        return parsable;
+	String parsable = getName();
+	if (getScope() != null) {
+	    parsable += "." +getScope().getName();
+	}
+	return parsable;
     }
 
     /**
@@ -420,8 +421,8 @@ class IdentityDatabase extends IdentityScope implements Serializable {
      */
     private synchronized void writeObject (java.io.ObjectOutputStream stream)
     throws IOException {
-        localCheck("serialize.identity.database");
-        stream.writeObject(identities);
-        stream.writeObject(sourceFile);
+	localCheck("serialize.identity.database");
+	stream.writeObject(identities);
+	stream.writeObject(sourceFile);
     }
 }

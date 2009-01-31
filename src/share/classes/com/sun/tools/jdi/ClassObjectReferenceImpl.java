@@ -43,7 +43,7 @@ public class ClassObjectReferenceImpl extends ObjectReferenceImpl
                     JDWP.ClassObjectReference.ReflectedType.process(vm, this);
                 reflectedType = vm.referenceType(reply.typeID,
                                                  reply.refTypeTag);
-
+                
             } catch (JDWPException exc) {
                 throw exc.toJDIException();
             }
@@ -56,7 +56,7 @@ public class ClassObjectReferenceImpl extends ObjectReferenceImpl
     }
 
     public String toString() {
-        return "instance of " + referenceType().name() +
+        return "instance of " + referenceType().name() + 
                "(reflected class=" + reflectedType().name() + ", " + "id=" + uniqueID() + ")";
     }
 }

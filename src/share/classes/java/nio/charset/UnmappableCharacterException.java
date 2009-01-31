@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,20 +38,18 @@ public class UnmappableCharacterException
     extends CharacterCodingException
 {
 
-    private static final long serialVersionUID = -7026962371537706123L;
-
     private int inputLength;
 
     public UnmappableCharacterException(int inputLength) {
-        this.inputLength = inputLength;
+	this.inputLength = inputLength;
     }
 
     public int getInputLength() {
-        return inputLength;
+	return inputLength;
     }
 
     public String getMessage() {
-        return "Input length = " + inputLength;
+	return "Input length = " + inputLength;
     }
 
 }

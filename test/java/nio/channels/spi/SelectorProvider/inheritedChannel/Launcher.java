@@ -24,7 +24,7 @@
 /*
  *
  *
- * A Launcher to launch a java process with its standard input, output,
+ * A Launcher to launch a java process with its standard input, output, 
  * and error streams connected to a socket.
  */
 import java.net.*;
@@ -34,32 +34,32 @@ import java.io.IOException;
 public class Launcher {
 
     static {
-        System.loadLibrary("Launcher");
+	System.loadLibrary("Launcher");
     }
 
     private static native void launch0(String cmdarray[], int fd) throws IOException;
 
     private static void launch(String className, String options[], String args[], int fd) throws IOException {
-        String[] javacmd = Util.javaCommand();
-        int options_len = (options == null) ? 0 : options.length;
-        int args_len = (args == null) ? 0 : args.length;
+	String[] javacmd = Util.javaCommand();
+	int options_len = (options == null) ? 0 : options.length;
+	int args_len = (args == null) ? 0 : args.length;
 
-        // java [-options] class [args...]
-        int len = javacmd.length + options_len + 1 + args_len;
+	// java [-options] class [args...]
+	int len = javacmd.length + options_len + 1 + args_len;
 
-        String cmdarray[] = new String[len];
-        int pos = 0;
-        for (int i=0; i<javacmd.length; i++) {
+	String cmdarray[] = new String[len];
+	int pos = 0;
+	for (int i=0; i<javacmd.length; i++) {
             cmdarray[pos++] = javacmd[i];
-        }
-        for (int i=0; i<options_len; i++) {
-            cmdarray[pos++] = options[i];
-        }
+	}
+	for (int i=0; i<options_len; i++) {
+	    cmdarray[pos++] = options[i];
+	}
         cmdarray[pos++] = className;
-        for (int i=0; i<args_len; i++) {
-            cmdarray[pos++] = args[i];
-        }
-        launch0(cmdarray, fd);
+	for (int i=0; i<args_len; i++) {
+	    cmdarray[pos++] = args[i];
+	}
+	launch0(cmdarray, fd);
     }
 
     /*
@@ -68,24 +68,24 @@ public class Launcher {
      * will be the SocketChannel returned by this method.
      */
     public static SocketChannel launchWithSocketChannel(String className, String options[], String args[]) throws IOException {
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        ssc.socket().bind(new InetSocketAddress(0));
-        InetSocketAddress isa = new InetSocketAddress(InetAddress.getLocalHost(),
-                                                      ssc.socket().getLocalPort());
-        SocketChannel sc1 = SocketChannel.open(isa);
-        SocketChannel sc2 = ssc.accept();
-        launch(className, options, args, Util.getFD(sc2));
-        sc2.close();
-        ssc.close();
-        return sc1;
+	ServerSocketChannel ssc = ServerSocketChannel.open();
+	ssc.socket().bind(new InetSocketAddress(0));
+	InetSocketAddress isa = new InetSocketAddress(InetAddress.getLocalHost(),
+						      ssc.socket().getLocalPort());
+	SocketChannel sc1 = SocketChannel.open(isa);
+	SocketChannel sc2 = ssc.accept();
+	launch(className, options, args, Util.getFD(sc2));
+	sc2.close();
+	ssc.close();
+	return sc1;
     }
 
     public static SocketChannel launchWithSocketChannel(String className, String args[]) throws IOException {
-        return launchWithSocketChannel(className, null, args);
+	return launchWithSocketChannel(className, null, args);
     }
 
     public static SocketChannel launchWithSocketChannel(String className) throws IOException {
-        return launchWithSocketChannel(className, null);
+	return launchWithSocketChannel(className, null);
     }
 
     /*
@@ -94,24 +94,24 @@ public class Launcher {
      * Once launched this method tries to connect to service. If a connection
      * can be established a SocketChannel, connected to the service, is returned.
      */
-    public static SocketChannel launchWithServerSocketChannel(String className, String options[], String args[])
-        throws IOException
+    public static SocketChannel launchWithServerSocketChannel(String className, String options[], String args[]) 
+	throws IOException 
     {
-        ServerSocketChannel ssc = ServerSocketChannel.open();
+	ServerSocketChannel ssc = ServerSocketChannel.open();
         ssc.socket().bind(new InetSocketAddress(0));
-        int port = ssc.socket().getLocalPort();
-        launch(className, options, args, Util.getFD(ssc));
-        ssc.close();
-        InetSocketAddress isa = new InetSocketAddress(InetAddress.getLocalHost(), port);
-        return SocketChannel.open(isa);
+	int port = ssc.socket().getLocalPort();
+	launch(className, options, args, Util.getFD(ssc));
+	ssc.close();
+	InetSocketAddress isa = new InetSocketAddress(InetAddress.getLocalHost(), port);
+	return SocketChannel.open(isa);
     }
 
     public static SocketChannel launchWithServerSocketChannel(String className, String args[]) throws IOException {
-        return launchWithServerSocketChannel(className, null, args);
+	return launchWithServerSocketChannel(className, null, args);
     }
 
     public static SocketChannel launchWithServerSocketChannel(String className) throws IOException {
-        return launchWithServerSocketChannel(className, null);
+	return launchWithServerSocketChannel(className, null);
     }
 
     /*
@@ -119,29 +119,29 @@ public class Launcher {
      * The launch process will inherited a bound UDP socket.
      * Once launched this method creates a DatagramChannel and "connects
      * it to the service. The created DatagramChannel is then returned.
-     * As it is connected any packets sent from the socket will be
+     * As it is connected any packets sent from the socket will be 
      * sent to the service.
      */
-    public static DatagramChannel launchWithDatagramChannel(String className, String options[], String args[])
-        throws IOException
+    public static DatagramChannel launchWithDatagramChannel(String className, String options[], String args[]) 
+	throws IOException 
     {
-        DatagramChannel dc = DatagramChannel.open();
-        dc.socket().bind(new InetSocketAddress(0));
+	DatagramChannel dc = DatagramChannel.open();
+	dc.socket().bind(new InetSocketAddress(0));
 
-        int port = dc.socket().getLocalPort();
-        launch(className, options, args, Util.getFD(dc));
-        dc.close();
+	int port = dc.socket().getLocalPort();
+	launch(className, options, args, Util.getFD(dc));
+	dc.close();
 
-        dc = DatagramChannel.open();
+	dc = DatagramChannel.open();
 
-        InetSocketAddress isa = new InetSocketAddress(InetAddress.getLocalHost(), port);
+	InetSocketAddress isa = new InetSocketAddress(InetAddress.getLocalHost(), port);
 
-        dc.connect(isa);
-        return dc;
+	dc.connect(isa);
+	return dc;
     }
 
     public static DatagramChannel launchWithDatagramChannel(String className, String args[]) throws IOException {
-        return launchWithDatagramChannel(className, null, args);
+	return launchWithDatagramChannel(className, null, args);
     }
 
     public static DatagramChannel launchWithDatagramChannel(String className) throws IOException {

@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,8 +24,8 @@
 /* @test
  * @bug 4311940
  * @summary Verify that unauthorized ObjectOutputStream and ObjectInputStream
- *          cannot be constructed if they override security-sensitive non-final
- *          methods.
+ * 	    cannot be constructed if they override security-sensitive non-final
+ * 	    methods.
  */
 import java.io.*;
 
@@ -64,73 +64,73 @@ class GoodOIS2 extends GoodOIS1 {
 class BadOIS1 extends ObjectInputStream {
     BadOIS1(InputStream in) throws IOException { super(in); }
     public GetField readFields() throws IOException, ClassNotFoundException {
-        return null;
+	return null;
     }
 }
 
 class BadOIS2 extends ObjectInputStream {
     BadOIS2(InputStream in) throws IOException { super(in); }
     public Object readUnshared() throws IOException, ClassNotFoundException {
-        return null;
+	return null;
     }
 }
 
 class BadOIS3 extends GoodOIS1 {
     BadOIS3(InputStream in) throws IOException { super(in); }
     public Object readUnshared() throws IOException, ClassNotFoundException {
-        return null;
+	return null;
     }
 }
 
 public class AuditStreamSubclass {
     public static void main(String[] args) throws Exception {
-        if (System.getSecurityManager() == null) {
-            System.setSecurityManager(new SecurityManager());
-        }
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        oout.flush();
-        byte[] buf = bout.toByteArray();
-
-        new GoodOOS1(bout);
-        new GoodOOS2(bout);
-        new GoodOIS1(new ByteArrayInputStream(buf));
-        new GoodOIS2(new ByteArrayInputStream(buf));
-
-        try {
-            new BadOOS1(bout);
-            throw new Error();
-        } catch (SecurityException ex) {
-        }
-
-        try {
-            new BadOOS2(bout);
-            throw new Error();
-        } catch (SecurityException ex) {
-        }
-
-        try {
-            new BadOOS3(bout);
-            throw new Error();
-        } catch (SecurityException ex) {
-        }
-
-        try {
-            new BadOIS1(new ByteArrayInputStream(buf));
-            throw new Error();
-        } catch (SecurityException ex) {
-        }
-
-        try {
-            new BadOIS2(new ByteArrayInputStream(buf));
-            throw new Error();
-        } catch (SecurityException ex) {
-        }
-
-        try {
-            new BadOIS3(new ByteArrayInputStream(buf));
-            throw new Error();
-        } catch (SecurityException ex) {
-        }
+	if (System.getSecurityManager() == null) {
+	    System.setSecurityManager(new SecurityManager());
+	}
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	oout.flush();
+	byte[] buf = bout.toByteArray();
+	
+	new GoodOOS1(bout);
+	new GoodOOS2(bout);
+	new GoodOIS1(new ByteArrayInputStream(buf));
+	new GoodOIS2(new ByteArrayInputStream(buf));
+	
+	try {
+	    new BadOOS1(bout);
+	    throw new Error();
+	} catch (SecurityException ex) {
+	}
+	
+	try {
+	    new BadOOS2(bout);
+	    throw new Error();
+	} catch (SecurityException ex) {
+	}
+	
+	try {
+	    new BadOOS3(bout);
+	    throw new Error();
+	} catch (SecurityException ex) {
+	}
+	
+	try {
+	    new BadOIS1(new ByteArrayInputStream(buf));
+	    throw new Error();
+	} catch (SecurityException ex) {
+	}
+	
+	try {
+	    new BadOIS2(new ByteArrayInputStream(buf));
+	    throw new Error();
+	} catch (SecurityException ex) {
+	}
+	
+	try {
+	    new BadOIS3(new ByteArrayInputStream(buf));
+	    throw new Error();
+	} catch (SecurityException ex) {
+	}
     }
 }

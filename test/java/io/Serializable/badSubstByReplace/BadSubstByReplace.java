@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1997-1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -23,8 +23,8 @@
 
 /* @test
  * @clean A B Container ReplacerObjectOutputStream
- * @summary Verify that ClassCastException is thrown when deserializing
- *          an object and one of its object fields is  incompatibly replaced
+ * @summary Verify that ClassCastException is thrown when deserializing 
+ *          an object and one of its object fields is  incompatibly replaced 
  *          by either replaceObject/resolveObject.
  *
  */
@@ -44,33 +44,33 @@ class ReplacerObjectOutputStream extends ObjectOutputStream {
     super(out);
     enableReplaceObject(true);
   }
-
+   
   protected Object replaceObject(Object obj) throws IOException {
       if(obj instanceof A) {
-          System.err.println("replaceObject(" + obj.toString() + ") with " +
+	  System.err.println("replaceObject(" + obj.toString() + ") with " +
                              b.toString());
-          return b;
+	  return b;
       } else return obj;
   }
 }
 
 public class BadSubstByReplace {
     public static void main(String args[]) throws IOException, ClassNotFoundException {
-        Container c = new Container();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ReplacerObjectOutputStream out =   new ReplacerObjectOutputStream(baos);
-        out.writeObject(c);
-        out.close();
-        ObjectInputStream in =
-            new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-        try {
-            c = (Container)in.readObject(); // throws IllegalArgumentException.
-            throw new Error("Should have thrown ClassCastException");
-        } catch ( ClassCastException e) {
-            System.err.println("Caught expected exception " + e.toString());
-            e.printStackTrace();
-        } finally {
-            in.close();
-        }
+	Container c = new Container();
+	ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	ReplacerObjectOutputStream out =   new ReplacerObjectOutputStream(baos);
+	out.writeObject(c);	
+	out.close();
+	ObjectInputStream in =
+	    new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	try {
+	    c = (Container)in.readObject(); // throws IllegalArgumentException.
+	    throw new Error("Should have thrown ClassCastException");
+	} catch ( ClassCastException e) {
+	    System.err.println("Caught expected exception " + e.toString());
+	    e.printStackTrace();
+	} finally {
+	    in.close();
+	}
     }
 }

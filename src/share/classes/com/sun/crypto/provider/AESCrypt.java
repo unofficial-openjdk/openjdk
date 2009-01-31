@@ -45,7 +45,7 @@ import java.security.InvalidKeyException;
  * Rijndael was designed by <a href="mailto:rijmen@esat.kuleuven.ac.be">Vincent
  * Rijmen</a> and <a href="mailto:Joan.Daemen@village.uunet.be">Joan Daemen</a>.
  */
-final class AESCrypt extends SymmetricCipher implements AESConstants
+final class AESCrypt extends SymmetricCipher implements AESConstants 
 {
     private boolean ROUNDS_12 = false;
     private boolean ROUNDS_14 = false;
@@ -56,9 +56,9 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
 
     /** (ROUNDS-1) * 4 */
     private int limit = 0;
-
+    
     AESCrypt() {
-        // empty
+	// empty
     }
 
     /**
@@ -67,26 +67,26 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
      * @return this cipher's block size
      */
     int getBlockSize() {
-        return AES_BLOCK_SIZE;
+	return AES_BLOCK_SIZE;
     }
 
     void init(boolean decrypting, String algorithm, byte[] key)
-            throws InvalidKeyException {
-        if (!algorithm.equalsIgnoreCase("AES")
-                    && !algorithm.equalsIgnoreCase("Rijndael")) {
-            throw new InvalidKeyException
-                ("Wrong algorithm: AES or Rijndael required");
-        }
+	    throws InvalidKeyException {
+	if (!algorithm.equalsIgnoreCase("AES")
+		    && !algorithm.equalsIgnoreCase("Rijndael")) {
+	    throw new InvalidKeyException
+	    	("Wrong algorithm: AES or Rijndael required");
+	}
         if (!isKeySizeValid(key.length)) {
-            throw new InvalidKeyException("Invalid AES key length: " +
-                key.length + " bytes");
-        }
+            throw new InvalidKeyException("Invalid AES key length: " + 
+		key.length + " bytes");
+	} 
 
-        // generate session key and reset sub key.
+	// generate session key and reset sub key.
         sessionK = makeKey(key);
-        setSubKey(decrypting);
+	setSubKey(decrypting);
     }
-
+    
     private void setSubKey(boolean decrypting) {
         int[][] Kd = (int[][]) sessionK[decrypting ? 1 : 0];
         int rounds = Kd.length;
@@ -94,8 +94,8 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
         for(int i=0; i<rounds; i++) {
             for(int j=0; j<4; j++) {
                 K[i*4 + j] = Kd[i][j];
-            }
-        }
+	    }
+	}
 
         if (decrypting) {
             int j0 = K[K.length-4];
@@ -105,7 +105,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
 
             for (int i=this.K.length-1; i>3; i--) {
                 this.K[i] = this.K[i-4];
-            }
+	    }
             K[0] = j0;
             K[1] = j1;
             K[2] = j2;
@@ -147,7 +147,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
 
 
     // Static code - to intialise S-boxes and T-boxes
-    static
+    static 
     {
         int ROOT = 0x11B;
         int i, j = 0;
@@ -157,28 +157,28 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
         // field GF(2^m) (generator = 3)
         //
         alog[0] = 1;
-        for (i = 1; i < 256; i++)
+        for (i = 1; i < 256; i++) 
         {
             j = (alog[i-1] << 1) ^ alog[i-1];
             if ((j & 0x100) != 0) {
-                j ^= ROOT;
+		j ^= ROOT;
             }
-            alog[i] = j;
+	    alog[i] = j;
         }
         for (i = 1; i < 255; i++) {
-            log[alog[i]] = i;
+	    log[alog[i]] = i;
         }
-        byte[][] A = new byte[][]
+	byte[][] A = new byte[][] 
         {
             {1, 1, 1, 1, 1, 0, 0, 0},
             {0, 1, 1, 1, 1, 1, 0, 0},
-            {0, 0, 1, 1, 1, 1, 1, 0},
-            {0, 0, 0, 1, 1, 1, 1, 1},
-            {1, 0, 0, 0, 1, 1, 1, 1},
-            {1, 1, 0, 0, 0, 1, 1, 1},
-            {1, 1, 1, 0, 0, 0, 1, 1},
-            {1, 1, 1, 1, 0, 0, 0, 1}
-        };
+	    {0, 0, 1, 1, 1, 1, 1, 0},
+	    {0, 0, 0, 1, 1, 1, 1, 1},
+	    {1, 0, 0, 0, 1, 1, 1, 1},
+	    {1, 1, 0, 0, 0, 1, 1, 1},
+	    {1, 1, 1, 0, 0, 0, 1, 1},
+	    {1, 1, 1, 1, 0, 0, 0, 1}
+	};
         byte[] B = new byte[] { 0, 1, 1, 0, 0, 0, 1, 1};
 
         //
@@ -191,7 +191,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
             j = alog[255 - log[i]];
             for (t = 0; t < 8; t++) {
                 box[i][t] = (byte)((j >>> (7 - t)) & 0x01);
-            }
+	    }
         }
         //
         // affine transform:  box[i] <- B + A*box[i]
@@ -202,18 +202,18 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                 cox[i][t] = B[t];
                 for (j = 0; j < 8; j++) {
                     cox[i][t] ^= A[t][j] * box[i][j];
-                }
+		}
             }
-        }
+	}
         //
         // S-boxes and inverse S-boxes
         //
         for (i = 0; i < 256; i++) {
             S[i] = (byte)(cox[i][0] << 7);
-            for (t = 1; t < 8; t++) {
-                    S[i] ^= cox[i][t] << (7-t);
+	    for (t = 1; t < 8; t++) {
+	            S[i] ^= cox[i][t] << (7-t);
             }
-            Si[S[i] & 0xFF] = (byte) i;
+	    Si[S[i] & 0xFF] = (byte) i;
         }
         //
         // T-boxes
@@ -238,7 +238,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                 while ((AA[t][i] == 0) && (t < 4)) {
                     t++;
                 }
-                if (t == 4) {
+		if (t == 4) {
                     throw new RuntimeException("G matrix is not invertible");
                 }
                 else {
@@ -254,22 +254,22 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                 if (AA[i][j] != 0) {
                     AA[i][j] = (byte)
                         alog[(255 + log[AA[i][j] & 0xFF] - log[pivot & 0xFF]) % 255];
-                }
-            }
+		}
+	    }
             for (t = 0; t < 4; t++) {
                 if (i != t) {
                     for (j = i+1; j < 8; j++) {
                         AA[t][j] ^= mul(AA[i][j], AA[t][i]);
                     }
-                    AA[t][i] = 0;
+		    AA[t][i] = 0;
                 }
-            }
+	    }
         }
         for (i = 0; i < 4; i++) {
             for (j = 0; j < 4; j++) {
-                iG[i][j] = AA[i][j + 4];
-            }
-        }
+		iG[i][j] = AA[i][j + 4];
+	    }
+	}
 
         int s;
         for (t = 0; t < 256; t++) {
@@ -296,9 +296,9 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
         rcon[0] = 1;
         int r = 1;
         for (t = 1; t < 30; t++) {
-            r = mul(2, r);
-            rcon[t] = (byte) r;
-        }
+	    r = mul(2, r);
+	    rcon[t] = (byte) r;
+	}
         log = null;
         alog = null;
     }
@@ -323,10 +323,10 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
 
     // check if the specified length (in bytes) is a valid keysize for AES
     static final boolean isKeySizeValid(int len) {
-        for (int i = 0; i < AES_KEYSIZES.length; i++) {
-            if (len == AES_KEYSIZES[i]) {
-                return true;
-            }
+	for (int i = 0; i < AES_KEYSIZES.length; i++) {
+	    if (len == AES_KEYSIZES[i]) {
+		return true;
+	    }
         }
         return false;
     }
@@ -334,8 +334,8 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
     /**
      * Encrypt exactly one block of plaintext.
      */
-    void encryptBlock(byte[] in, int inOffset,
-                              byte[] out, int outOffset)
+    void encryptBlock(byte[] in, int inOffset, 
+                              byte[] out, int outOffset) 
     {
         int keyOffset = 0;
         int t0   = ((in[inOffset++]       ) << 24 |
@@ -356,7 +356,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                     (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
 
         // apply round transforms
-        while( keyOffset < limit )
+        while( keyOffset < limit ) 
         {
             int a0, a1, a2;
             a0 = T1[(t0 >>> 24)       ] ^
@@ -405,29 +405,29 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
     /**
      * Decrypt exactly one block of plaintext.
      */
-    void decryptBlock(byte[] in, int inOffset,
-                              byte[] out, int outOffset)
+    void decryptBlock(byte[] in, int inOffset, 
+			      byte[] out, int outOffset)
     {
         int keyOffset = 4;
         int t0 = ((in[inOffset++]       ) << 24 |
-                  (in[inOffset++] & 0xFF) << 16 |
-                  (in[inOffset++] & 0xFF) <<  8 |
-                  (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
+		  (in[inOffset++] & 0xFF) << 16 |
+		  (in[inOffset++] & 0xFF) <<  8 |
+		  (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
         int t1 = ((in[inOffset++]       ) << 24 |
-                  (in[inOffset++] & 0xFF) << 16 |
-                  (in[inOffset++] & 0xFF) <<  8 |
-                  (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
+		  (in[inOffset++] & 0xFF) << 16 |
+		  (in[inOffset++] & 0xFF) <<  8 |
+		  (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
         int t2 = ((in[inOffset++]       ) << 24 |
-                  (in[inOffset++] & 0xFF) << 16 |
-                  (in[inOffset++] & 0xFF) <<  8 |
-                  (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
+		  (in[inOffset++] & 0xFF) << 16 |
+		  (in[inOffset++] & 0xFF) <<  8 |
+		  (in[inOffset++] & 0xFF)        ) ^ K[keyOffset++];
         int t3 = ((in[inOffset++]       ) << 24 |
-                  (in[inOffset++] & 0xFF) << 16 |
-                  (in[inOffset++] & 0xFF) <<  8 |
-                  (in[inOffset  ] & 0xFF)        ) ^ K[keyOffset++];
+		  (in[inOffset++] & 0xFF) << 16 |
+		  (in[inOffset++] & 0xFF) <<  8 |
+		  (in[inOffset  ] & 0xFF)        ) ^ K[keyOffset++];
 
-        int a0, a1, a2;
-        if(ROUNDS_12)
+	int a0, a1, a2;
+        if(ROUNDS_12) 
         {
             a0 = T5[(t0>>>24)     ] ^ T6[(t3>>>16)&0xFF] ^
                  T7[(t2>>> 8)&0xFF] ^ T8[(t1     )&0xFF] ^ K[keyOffset++];
@@ -446,7 +446,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
             t3 = T5[(t3>>>24)     ] ^ T6[(a2>>>16)&0xFF] ^
                  T7[(a1>>> 8)&0xFF] ^ T8[(a0     )&0xFF] ^ K[keyOffset++];
 
-            if(ROUNDS_14)
+            if(ROUNDS_14) 
             {
                 a0 = T5[(t0>>>24)     ] ^ T6[(t3>>>16)&0xFF] ^
                      T7[(t2>>> 8)&0xFF] ^ T8[(t1     )&0xFF] ^ K[keyOffset++];
@@ -571,11 +571,11 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
     private static Object[] makeKey(byte[] k) throws InvalidKeyException {
         if (k == null) {
             throw new InvalidKeyException("Empty key");
-        }
+	}
         if (!isKeySizeValid(k.length)) {
              throw new InvalidKeyException("Invalid AES key length: " +
-                                           k.length + " bytes");
-        }
+					   k.length + " bytes");
+	}
         int ROUNDS          = getRounds(k.length);
         int ROUND_KEY_COUNT = (ROUNDS + 1) * 4;
 
@@ -594,7 +594,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                     (k[j+1] & 0xFF) << 16 |
                     (k[j+2] & 0xFF) <<  8 |
                     (k[j+3] & 0xFF);
-        }
+	}
 
         // copy values into round key arrays
         int t = 0;
@@ -629,7 +629,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
             }
         }
         for (int r = 1; r < ROUNDS; r++) {
-            // inverse MixColumn where needed
+	    // inverse MixColumn where needed
             for (j = 0; j < BC; j++) {
                 tt = Kd[r][j];
                 Kd[r][j] = U1[(tt >>> 24) & 0xFF] ^
@@ -637,7 +637,7 @@ final class AESCrypt extends SymmetricCipher implements AESConstants
                            U3[(tt >>>  8) & 0xFF] ^
                            U4[ tt         & 0xFF];
             }
-        }
+	}
         // assemble the encryption (Ke) and decryption (Kd) round keys into
         // one sessionKey object
         Object[] result = new Object[] {Ke, Kd};

@@ -30,7 +30,7 @@ import com.sun.jdi.*;
 import java.util.*;
 import java.util.ArrayList;
 
-public class ObjectReferenceImpl extends ValueImpl
+public class ObjectReferenceImpl extends ValueImpl 
              implements ObjectReference, VMListener {
 
     protected long ref;
@@ -58,7 +58,7 @@ public class ObjectReferenceImpl extends ValueImpl
             cache = markerCache;
         }
     }
-
+     
     // Override in subclasses
     protected Cache newCache() {
         return new Cache();
@@ -67,13 +67,13 @@ public class ObjectReferenceImpl extends ValueImpl
     protected Cache getCache() {
         synchronized (vm.state()) {
             if (cache == noInitCache) {
-                if (vm.state().isSuspended()) {
-                    // Set cache now, otherwise newly created objects are
-                    // not cached until resuspend
-                    enableCache();
-                } else {
-                    disableCache();
-                }
+		if (vm.state().isSuspended()) {
+		    // Set cache now, otherwise newly created objects are
+		    // not cached until resuspend
+		    enableCache();
+		} else {
+		    disableCache();
+		}
             }
             if (cache == markerCache) {
                 cache = newCache();
@@ -116,9 +116,9 @@ public class ObjectReferenceImpl extends ValueImpl
             disableCache();
             if (addedListener) {
                 /*
-                 * If a listener was added (i.e. this is not a
-                 * ObjectReference that adds a listener on startup),
-                 * remove it here.
+                 * If a listener was added (i.e. this is not a 
+                 * ObjectReference that adds a listener on startup), 
+                 * remove it here. 
                  */
                 addedListener = false;
                 return false;  // false says remove
@@ -149,9 +149,9 @@ public class ObjectReferenceImpl extends ValueImpl
     public ReferenceType referenceType() {
         if (type == null) {
             try {
-                JDWP.ObjectReference.ReferenceType rtinfo =
+                JDWP.ObjectReference.ReferenceType rtinfo = 
                     JDWP.ObjectReference.ReferenceType.process(vm, this);
-                type = vm.referenceType(rtinfo.typeID,
+                type = vm.referenceType(rtinfo.typeID, 
                                         rtinfo.refTypeTag);
             } catch (JDWPException exc) {
                 throw exc.toJDIException();
@@ -204,15 +204,15 @@ public class ObjectReferenceImpl extends ValueImpl
         for (int i=0; i<size; i++) {
             FieldImpl field = (FieldImpl)instanceFields.get(i);/* thanks OTI */
             queryFields[i] = new JDWP.ObjectReference.GetValues.Field(
-                                         field.ref());
+                                         field.ref()); 
         }
-        ValueImpl[] values;
-        try {
-            values = JDWP.ObjectReference.GetValues.
+	ValueImpl[] values;
+	try {
+	    values = JDWP.ObjectReference.GetValues.
                                      process(vm, this, queryFields).values;
-        } catch (JDWPException exc) {
-            throw exc.toJDIException();
-        }
+	} catch (JDWPException exc) {
+	    throw exc.toJDIException();
+	}
 
         if (size != values.length) {
             throw new InternalException(
@@ -226,7 +226,7 @@ public class ObjectReferenceImpl extends ValueImpl
         return map;
     }
 
-    public void setValue(Field field, Value value)
+    public void setValue(Field field, Value value) 
                    throws InvalidTypeException, ClassNotLoadedException {
 
         validateMirror(field);
@@ -247,12 +247,12 @@ public class ObjectReferenceImpl extends ValueImpl
         }
 
         try {
-            JDWP.ObjectReference.SetValues.FieldValue[] fvals =
+            JDWP.ObjectReference.SetValues.FieldValue[] fvals = 
                       new JDWP.ObjectReference.SetValues.FieldValue[1];
             fvals[0] = new JDWP.ObjectReference.SetValues.FieldValue(
                            ((FieldImpl)field).ref(),
                            // Validate and convert if necessary
-                           ValueImpl.prepareForAssignment(value,
+                           ValueImpl.prepareForAssignment(value, 
                                                           (FieldImpl)field));
             try {
                 JDWP.ObjectReference.SetValues.process(vm, this, fvals);
@@ -265,7 +265,7 @@ public class ObjectReferenceImpl extends ValueImpl
              * the field type must be a reference type. The value
              * we're trying to set is null, but if the field's
              * class has not yet been loaded through the enclosing
-             * class loader, then setting to null is essentially a
+             * class loader, then setting to null is essentially a 
              * no-op, and we should allow it without an exception.
              */
             if (value != null) {
@@ -274,7 +274,7 @@ public class ObjectReferenceImpl extends ValueImpl
         }
     }
 
-    void validateMethodInvocation(Method method, int options)
+    void validateMethodInvocation(Method method, int options) 
                                          throws InvalidTypeException,
                                          InvocationException {
 
@@ -296,7 +296,7 @@ public class ObjectReferenceImpl extends ValueImpl
             throw new IllegalArgumentException("Cannot invoke constructor");
         }
 
-        /*
+        /* 
          * For nonvirtual invokes, method must have a body
          */
         if ((options & INVOKE_NONVIRTUAL) != 0) {
@@ -309,7 +309,7 @@ public class ObjectReferenceImpl extends ValueImpl
 
         /*
          * Get the class containing the method that will be invoked.
-         * This class is needed only for proper validation of the
+         * This class is needed only for proper validation of the 
          * method argument types.
          */
         ClassTypeImpl invokedClass;
@@ -322,7 +322,7 @@ public class ObjectReferenceImpl extends ValueImpl
              * Since we are looking for a method with a real body, we
              * don't need to bother with interfaces/abstract methods.
              */
-            Method invoker = clazz.concreteMethodByName(method.name(),
+            Method invoker = clazz.concreteMethodByName(method.name(), 
                                                         method.signature());
             //  isAssignableFrom check above guarantees non-null
             invokedClass = (ClassTypeImpl)invoker.declaringType();
@@ -334,15 +334,15 @@ public class ObjectReferenceImpl extends ValueImpl
 
     PacketStream sendInvokeCommand(final ThreadReferenceImpl thread,
                                    final ClassTypeImpl refType,
-                                   final MethodImpl method,
-                                   final ValueImpl[] args,
+                                   final MethodImpl method, 
+                                   final ValueImpl[] args, 
                                    final int options) {
-        CommandSender sender =
+        CommandSender sender = 
             new CommandSender() {
                 public PacketStream send() {
                     return JDWP.ObjectReference.InvokeMethod.enqueueCommand(
-                                          vm, ObjectReferenceImpl.this,
-                                          thread, refType,
+                                          vm, ObjectReferenceImpl.this, 
+                                          thread, refType, 
                                           method.ref(), args, options);
                 }
         };
@@ -356,8 +356,8 @@ public class ObjectReferenceImpl extends ValueImpl
         return stream;
     }
 
-    public Value invokeMethod(ThreadReference threadIntf, Method methodIntf,
-                              List<? extends Value> origArguments, int options)
+    public Value invokeMethod(ThreadReference threadIntf, Method methodIntf, 
+                              List<? extends Value> origArguments, int options) 
                               throws InvalidTypeException,
                                      IncompatibleThreadStateException,
                                      InvocationException,
@@ -365,7 +365,7 @@ public class ObjectReferenceImpl extends ValueImpl
         validateMirror(threadIntf);
         validateMirror(methodIntf);
         validateMirrorsOrNulls(origArguments);
-
+        
         MethodImpl method = (MethodImpl)methodIntf;
         ThreadReferenceImpl thread = (ThreadReferenceImpl)threadIntf;
 
@@ -383,20 +383,20 @@ public class ObjectReferenceImpl extends ValueImpl
         List<Value> arguments = method.validateAndPrepareArgumentsForInvoke(
                                                   origArguments);
 
-        ValueImpl[] args = (ValueImpl[])arguments.toArray(new ValueImpl[0]);
-        JDWP.ObjectReference.InvokeMethod ret;
-        try {
-            PacketStream stream =
+	ValueImpl[] args = (ValueImpl[])arguments.toArray(new ValueImpl[0]);
+	JDWP.ObjectReference.InvokeMethod ret;
+	try {
+            PacketStream stream = 
                 sendInvokeCommand(thread, invokableReferenceType(method),
                                   method, args, options);
             ret = JDWP.ObjectReference.InvokeMethod.waitForReply(vm, stream);
-        } catch (JDWPException exc) {
+	} catch (JDWPException exc) {
             if (exc.errorCode() == JDWP.Error.INVALID_THREAD) {
                 throw new IncompatibleThreadStateException();
             } else {
                 throw exc.toJDIException();
             }
-        }
+	}
 
         /*
          * There is an implict VM-wide suspend at the conclusion
@@ -437,7 +437,7 @@ public class ObjectReferenceImpl extends ValueImpl
                 if (exc.errorCode() != JDWP.Error.INVALID_OBJECT) {
                     throw exc.toJDIException();
                 }
-                return;
+                return;  
             }
         }
     }
@@ -455,12 +455,12 @@ public class ObjectReferenceImpl extends ValueImpl
         return ref();
     }
 
-    JDWP.ObjectReference.MonitorInfo jdwpMonitorInfo()
+    JDWP.ObjectReference.MonitorInfo jdwpMonitorInfo() 
                              throws IncompatibleThreadStateException {
         JDWP.ObjectReference.MonitorInfo info = null;
         try {
             Cache local;
-
+                
             // getCache() and addlistener() must be synchronized
             // so that no events are lost.
             synchronized (vm.state()) {
@@ -488,7 +488,7 @@ public class ObjectReferenceImpl extends ValueImpl
                 if (local != null) {
                     local.monitorInfo = info;
                     if ((vm.traceFlags & vm.TRACE_OBJREFS) != 0) {
-                        vm.printTrace("ObjectReference " + uniqueID() +
+                        vm.printTrace("ObjectReference " + uniqueID() + 
                                       " temporarily caching monitor info");
                     }
                 }
@@ -523,7 +523,7 @@ public class ObjectReferenceImpl extends ValueImpl
         }
 
         if (maxReferrers < 0) {
-            throw new IllegalArgumentException("maxReferrers is less than zero: "
+            throw new IllegalArgumentException("maxReferrers is less than zero: " 
                                               + maxReferrers);
         }
 
@@ -551,14 +551,14 @@ public class ObjectReferenceImpl extends ValueImpl
     }
 
     ValueImpl prepareForAssignmentTo(ValueContainer destination)
-                                 throws InvalidTypeException,
+                                 throws InvalidTypeException, 
                                         ClassNotLoadedException {
 
         validateAssignment(destination);
         return this;            // conversion never necessary
     }
 
-    void validateAssignment(ValueContainer destination)
+    void validateAssignment(ValueContainer destination) 
                             throws InvalidTypeException, ClassNotLoadedException {
 
         /*
@@ -572,7 +572,7 @@ public class ObjectReferenceImpl extends ValueImpl
         if (destination.signature().length() == 1) {
             throw new InvalidTypeException("Can't assign object value to primitive");
         }
-        if ((destination.signature().charAt(0) == '[') &&
+        if ((destination.signature().charAt(0) == '[') && 
             (type().signature().charAt(0) != '[')) {
             throw new InvalidTypeException("Can't assign non-array value to an array");
         }
@@ -586,13 +586,13 @@ public class ObjectReferenceImpl extends ValueImpl
         if (!myType.isAssignableTo((ReferenceType)destType)) {
             JNITypeParser parser = new JNITypeParser(destType.signature());
             String destTypeName = parser.typeName();
-            throw new InvalidTypeException("Can't assign " +
+            throw new InvalidTypeException("Can't assign " + 
                                            type().name() +
                                            " to " + destTypeName);
         }
     }
 
-
+    
     public String toString() {
         return "instance of " + referenceType().name() + "(id=" + uniqueID() + ")";
     }

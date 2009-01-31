@@ -58,126 +58,126 @@ class HttpConnection {
     int remaining;
     boolean closed = false;
     Logger logger;
-
+    
     public String toString() {
-        String s = null;
-        if (chan != null) {
-            s = chan.toString();
-        }
-        return s;
+	String s = null;
+	if (chan != null) {
+	    s = chan.toString();
+	}
+	return s;
     }
 
     HttpConnection () {
     }
 
     void setChannel (SocketChannel c) {
-        chan = c;
+	chan = c;
     }
 
     void setContext (HttpContextImpl ctx) {
-        context = ctx;
+	context = ctx;
     }
 
     void setParameters (
-        InputStream in, OutputStream rawout, SocketChannel chan,
-        SSLEngine engine, SSLStreams sslStreams, SSLContext sslContext, String protocol,
-        HttpContextImpl context, InputStream raw
+	InputStream in, OutputStream rawout, SocketChannel chan,
+	SSLEngine engine, SSLStreams sslStreams, SSLContext sslContext, String protocol,
+	HttpContextImpl context, InputStream raw
     )
     {
-        this.context = context;
-        this.i = in;
-        this.rawout = rawout;
-        this.raw = raw;
-        this.protocol = protocol;
-        this.engine = engine;
-        this.chan = chan;
-        this.sslContext = sslContext;
-        this.sslStreams = sslStreams;
-        this.logger = context.getLogger();
+	this.context = context;
+	this.i = in;
+	this.rawout = rawout;
+	this.raw = raw;
+	this.protocol = protocol;
+	this.engine = engine;
+	this.chan = chan;
+	this.sslContext = sslContext;
+	this.sslStreams = sslStreams;
+	this.logger = context.getLogger();
     }
 
     SocketChannel getChannel () {
-        return chan;
+	return chan;
     }
 
     synchronized void close () {
-        if (closed) {
-            return;
-        }
-        closed = true;
-        if (logger != null && chan != null) {
-            logger.finest ("Closing connection: " + chan.toString());
-        }
-
+	if (closed) {
+	    return;
+	}
+	closed = true;
+	if (logger != null && chan != null) {
+	    logger.finest ("Closing connection: " + chan.toString());
+	}
+	    
         if (!chan.isOpen()) {
-            ServerImpl.dprint ("Channel already closed");
-            return;
+	    ServerImpl.dprint ("Channel already closed");
+	    return;
         }
-        try {
-            /* need to ensure temporary selectors are closed */
-            if (raw != null) {
-                raw.close();
-            }
-        } catch (IOException e) {
-            ServerImpl.dprint (e);
-        }
-        try {
-            if (rawout != null) {
-                rawout.close();
-            }
-        } catch (IOException e) {
-            ServerImpl.dprint (e);
-        }
-        try {
-            if (sslStreams != null) {
-                sslStreams.close();
-            }
-        } catch (IOException e) {
-            ServerImpl.dprint (e);
-        }
-        try {
-            chan.close();
-        } catch (IOException e) {
-            ServerImpl.dprint (e);
-        }
+	try {
+	    /* need to ensure temporary selectors are closed */
+	    if (raw != null) {
+		raw.close();
+	    }
+	} catch (IOException e) {
+	    ServerImpl.dprint (e);
+	}
+	try {
+	    if (rawout != null) {
+		rawout.close();
+	    }
+	} catch (IOException e) {
+	    ServerImpl.dprint (e);
+	}
+	try {
+	    if (sslStreams != null) {
+		sslStreams.close();
+	    }
+	} catch (IOException e) {
+	    ServerImpl.dprint (e);
+	}
+	try {
+	    chan.close();
+	} catch (IOException e) {
+	    ServerImpl.dprint (e);
+	}
     }
 
     /* remaining is the number of bytes left on the lowest level inputstream
      * after the exchange is finished
      */
     void setRemaining (int r) {
-        remaining = r;
+	remaining = r;
     }
 
     int getRemaining () {
-        return remaining;
+	return remaining;
     }
 
     SelectionKey getSelectionKey () {
-        return selectionKey;
+	return selectionKey;
     }
 
     InputStream getInputStream () {
-            return i;
+	    return i;
     }
 
     OutputStream getRawOutputStream () {
-            return rawout;
+	    return rawout;
     }
 
     String getProtocol () {
-            return protocol;
+	    return protocol;
     }
 
     SSLEngine getSSLEngine () {
-            return engine;
+	    return engine;
     }
 
     SSLContext getSSLContext () {
-            return sslContext;
+	    return sslContext;
     }
 
     HttpContextImpl getHttpContext () {
-            return context;
+	    return context;
     }
 }

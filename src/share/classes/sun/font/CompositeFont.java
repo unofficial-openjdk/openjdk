@@ -58,88 +58,88 @@ public final class CompositeFont extends Font2D {
     boolean isStdComposite = true;
 
     public CompositeFont(String name, String[] compFileNames,
-                         String[] compNames, int metricsSlotCnt,
-                         int[] exclRanges, int[] maxIndexes,
-                         boolean defer) {
+			 String[] compNames, int metricsSlotCnt,
+			 int[] exclRanges, int[] maxIndexes,
+			 boolean defer) {
 
-        handle = new Font2DHandle(this);
-        fullName = name;
-        componentFileNames = compFileNames;
-        componentNames = compNames;
-        if (compNames == null) {
-            numSlots = componentFileNames.length;
-        } else {
-            numSlots = componentNames.length;
-        }
+	handle = new Font2DHandle(this);
+	fullName = name;
+	componentFileNames = compFileNames;
+	componentNames = compNames;
+	if (compNames == null) {
+	    numSlots = componentFileNames.length;
+	} else {
+	    numSlots = componentNames.length;
+	}
 
-        /* Only the first "numMetricsSlots" slots are used for font metrics.
-         * the rest are considered "fallback" slots".
-         */
-        numMetricsSlots = metricsSlotCnt;
-        exclusionRanges = exclRanges;
-        maxIndices = maxIndexes;
+	/* Only the first "numMetricsSlots" slots are used for font metrics.
+	 * the rest are considered "fallback" slots".
+	 */
+	numMetricsSlots = metricsSlotCnt;
+	exclusionRanges = exclRanges;
+	maxIndices = maxIndexes;
 
-        /*
-         * See if this is a windows locale which has a system EUDC font.
-         * If so add it as the final fallback component of the composite.
-         * The caller could be responsible for this, but for now it seems
-         * better that it is handled internally to the CompositeFont class.
-         */
+	/* 
+	 * See if this is a windows locale which has a system EUDC font.
+	 * If so add it as the final fallback component of the composite.
+	 * The caller could be responsible for this, but for now it seems
+	 * better that it is handled internally to the CompositeFont class.
+	 */
         if (FontManager.eudcFont != null) {
-            numSlots++;
-            if (componentNames != null) {
-                componentNames = new String[numSlots];
-                System.arraycopy(compNames, 0, componentNames, 0, numSlots-1);
-                componentNames[numSlots-1] =
-                    FontManager.eudcFont.getFontName(null);
-            }
-            if (componentFileNames != null) {
-                componentFileNames = new String[numSlots];
-                System.arraycopy(compFileNames, 0,
-                                  componentFileNames, 0, numSlots-1);
-            }
-            components = new PhysicalFont[numSlots];
-            components[numSlots-1] = FontManager.eudcFont;
-            deferredInitialisation = new boolean[numSlots];
-            if (defer) {
-                for (int i=0; i<numSlots-1; i++) {
-                    deferredInitialisation[i] = true;
-                }
-            }
+	    numSlots++;
+	    if (componentNames != null) {
+		componentNames = new String[numSlots];
+		System.arraycopy(compNames, 0, componentNames, 0, numSlots-1);
+		componentNames[numSlots-1] =
+		    FontManager.eudcFont.getFontName(null);
+	    }
+	    if (componentFileNames != null) {
+		componentFileNames = new String[numSlots];
+		System.arraycopy(compFileNames, 0,
+				  componentFileNames, 0, numSlots-1);
+	    }
+	    components = new PhysicalFont[numSlots];
+	    components[numSlots-1] = FontManager.eudcFont;
+	    deferredInitialisation = new boolean[numSlots];
+	    if (defer) {
+		for (int i=0; i<numSlots-1; i++) {
+		    deferredInitialisation[i] = true;
+		}
+	    }
         } else {
-            components = new PhysicalFont[numSlots];
-            deferredInitialisation = new boolean[numSlots];
-            if (defer) {
-                for (int i=0; i<numSlots; i++) {
-                    deferredInitialisation[i] = true;
-                }
-            }
-        }
+	    components = new PhysicalFont[numSlots];
+	    deferredInitialisation = new boolean[numSlots];
+	    if (defer) {
+		for (int i=0; i<numSlots; i++) {
+		    deferredInitialisation[i] = true;
+		}
+	    }
+	}
 
-        fontRank = Font2D.FONT_CONFIG_RANK;
+	fontRank = Font2D.FONT_CONFIG_RANK;
 
-        int index = fullName.indexOf('.');
-        if (index>0) {
-            familyName = fullName.substring(0, index);
-            /* composites don't call setStyle() as parsing the style
-             * takes place at the same time as parsing the family name.
-             * Do I really have to parse the style from the name?
-             * Need to look into having the caller provide this. */
-            if (index+1 < fullName.length()) {
-                String styleStr = fullName.substring(index+1);
-                if ("plain".equals(styleStr)) {
-                    style = Font.PLAIN;
-                } else if ("bold".equals(styleStr)) {
-                    style = Font.BOLD;
-                } else if ("italic".equals(styleStr)) {
-                    style = Font.ITALIC;
-                } else if ("bolditalic".equals(styleStr)) {
-                    style = Font.BOLD | Font.ITALIC;
-                }
-            }
-        } else {
-            familyName = fullName;
-        }
+	int index = fullName.indexOf('.');
+	if (index>0) {
+	    familyName = fullName.substring(0, index);
+	    /* composites don't call setStyle() as parsing the style
+	     * takes place at the same time as parsing the family name.
+	     * Do I really have to parse the style from the name?
+	     * Need to look into having the caller provide this. */
+	    if (index+1 < fullName.length()) {
+		String styleStr = fullName.substring(index+1);
+		if ("plain".equals(styleStr)) {
+		    style = Font.PLAIN;
+		} else if ("bold".equals(styleStr)) {
+		    style = Font.BOLD;
+		} else if ("italic".equals(styleStr)) {
+		    style = Font.ITALIC;
+		} else if ("bolditalic".equals(styleStr)) {
+		    style = Font.BOLD | Font.ITALIC;
+		}
+	    }
+	} else {
+	    familyName = fullName;
+	}
     }
 
     /* This method is currently intended to be called only from
@@ -150,44 +150,44 @@ public final class CompositeFont extends Font2D {
     CompositeFont(PhysicalFont physFont, CompositeFont compFont) {
 
         isStdComposite = false;
-        handle = new Font2DHandle(this);
-        fullName = physFont.fullName;
-        familyName = physFont.familyName;
-        style = physFont.style;
+	handle = new Font2DHandle(this);
+	fullName = physFont.fullName;
+	familyName = physFont.familyName;
+	style = physFont.style;
+	
+	numMetricsSlots = 1; /* Only the physical Font */
+	numSlots = compFont.numSlots+1;
 
-        numMetricsSlots = 1; /* Only the physical Font */
-        numSlots = compFont.numSlots+1;
-
-        /* Ugly though it is, we synchronize here on the FontManager class
-         * because it is the lock used to do deferred initialisation.
-         * We need to ensure that the arrays have consistent information.
-         * But it may be possible to dispense with the synchronisation if
-         * it is harmless that we do not know a slot is already initialised
-         * and just need to discover that and mark it so.
-         */
-        synchronized (FontManager.class) {
-            components = new PhysicalFont[numSlots];
-            components[0] = physFont;
-            System.arraycopy(compFont.components, 0,
-                             components, 1, compFont.numSlots);
-
-            if (compFont.componentNames != null) {
-                componentNames = new String[numSlots];
-                componentNames[0] = physFont.fullName;
-                System.arraycopy(compFont.componentNames, 0,
-                                 componentNames, 1, compFont.numSlots);
-            }
-            if (compFont.componentFileNames != null) {
-                componentFileNames = new String[numSlots];
-                componentFileNames[0] = null;
-                System.arraycopy(compFont.componentFileNames, 0,
-                                  componentFileNames, 1, compFont.numSlots);
-            }
-            deferredInitialisation = new boolean[numSlots];
-            deferredInitialisation[0] = false;
-            System.arraycopy(compFont.deferredInitialisation, 0,
-                             deferredInitialisation, 1, compFont.numSlots);
-        }
+	/* Ugly though it is, we synchronize here on the FontManager class
+	 * because it is the lock used to do deferred initialisation.
+	 * We need to ensure that the arrays have consistent information.
+	 * But it may be possible to dispense with the synchronisation if
+	 * it is harmless that we do not know a slot is already initialised
+	 * and just need to discover that and mark it so.
+	 */
+	synchronized (FontManager.class) {
+	    components = new PhysicalFont[numSlots];
+	    components[0] = physFont;
+	    System.arraycopy(compFont.components, 0, 
+			     components, 1, compFont.numSlots);
+	    
+	    if (compFont.componentNames != null) {
+		componentNames = new String[numSlots];
+		componentNames[0] = physFont.fullName;
+		System.arraycopy(compFont.componentNames, 0,
+				 componentNames, 1, compFont.numSlots);
+	    }
+	    if (compFont.componentFileNames != null) {
+		componentFileNames = new String[numSlots];
+		componentFileNames[0] = null;
+		System.arraycopy(compFont.componentFileNames, 0,
+				  componentFileNames, 1, compFont.numSlots);
+	    }
+	    deferredInitialisation = new boolean[numSlots];
+	    deferredInitialisation[0] = false;
+	    System.arraycopy(compFont.deferredInitialisation, 0,
+			     deferredInitialisation, 1, compFont.numSlots);
+	}
     }
 
     /* This is used for deferred initialisation, so that the components of
@@ -226,89 +226,89 @@ public final class CompositeFont extends Font2D {
      * euro one.
      */
     private void doDeferredInitialisation(int slot) {
-        if (deferredInitialisation[slot] == false) {
-            return;
-        }
+	if (deferredInitialisation[slot] == false) {
+	    return;
+	}
+	
+	/* Synchronize on FontManager so that is the global lock
+	 * to update its static set of deferred fonts.
+	 * This global lock is rarely likely to be an issue as there
+	 * are only going to be a few calls into this code.
+	 */
+	synchronized (FontManager.class) {
+	    if (componentNames == null) {
+		componentNames = new String[numSlots];
+	    }
+	    if (components[slot] == null) {
+		/* Warning: it is possible that the returned component is
+		 * not derived from the file name argument, this can happen if:
+		 * - the file can't be found
+		 * - the file has a bad font
+		 * - the font in the file is superseded by a more complete one
+		 * This should not be a problem for composite font as it will
+		 * make no further use of this file, but code debuggers/
+		 * maintainers need to be conscious of this possibility.
+		 */
+		if (componentFileNames != null &&
+		    componentFileNames[slot] != null) {
+		    components[slot] = FontManager.initialiseDeferredFont
+			(componentFileNames[slot]);
+		}
 
-        /* Synchronize on FontManager so that is the global lock
-         * to update its static set of deferred fonts.
-         * This global lock is rarely likely to be an issue as there
-         * are only going to be a few calls into this code.
-         */
-        synchronized (FontManager.class) {
-            if (componentNames == null) {
-                componentNames = new String[numSlots];
-            }
-            if (components[slot] == null) {
-                /* Warning: it is possible that the returned component is
-                 * not derived from the file name argument, this can happen if:
-                 * - the file can't be found
-                 * - the file has a bad font
-                 * - the font in the file is superseded by a more complete one
-                 * This should not be a problem for composite font as it will
-                 * make no further use of this file, but code debuggers/
-                 * maintainers need to be conscious of this possibility.
-                 */
-                if (componentFileNames != null &&
-                    componentFileNames[slot] != null) {
-                    components[slot] = FontManager.initialiseDeferredFont
-                        (componentFileNames[slot]);
-                }
-
-                if (components[slot] == null) {
-                    components[slot] = FontManager.getDefaultPhysicalFont();
-                }
-                String name = components[slot].getFontName(null);
-                if (componentNames[slot] == null) {
-                    componentNames[slot] = name;
-                } else if (!componentNames[slot].equalsIgnoreCase(name)) {
-                    components[slot] =
-                        (PhysicalFont)
-                        FontManager.findFont2D(componentNames[slot],
-                                               style,
-                                               FontManager.PHYSICAL_FALLBACK);
-                }
-            }
-            deferredInitialisation[slot] = false;
-        }
+		if (components[slot] == null) {
+		    components[slot] = FontManager.getDefaultPhysicalFont();
+		}
+		String name = components[slot].getFontName(null);
+		if (componentNames[slot] == null) {
+		    componentNames[slot] = name;
+		} else if (!componentNames[slot].equalsIgnoreCase(name)) {
+		    components[slot] =
+			(PhysicalFont)
+			FontManager.findFont2D(componentNames[slot],
+					       style,
+					       FontManager.PHYSICAL_FALLBACK);
+		}
+	    }
+	    deferredInitialisation[slot] = false;
+	}
     }
-
+    
     /* To called only by FontManager.replaceFont */
     void replaceComponentFont(PhysicalFont oldFont, PhysicalFont newFont) {
-        if (components == null) {
-            return;
-        }
-        for (int slot=0; slot<numSlots; slot++) {
-            if (components[slot] == oldFont) {
-                components[slot] = newFont;
-                if (componentNames != null) {
-                    componentNames[slot] = newFont.getFontName(null);
-                }
-            }
-        }
+	if (components == null) {
+	    return;
+	}
+	for (int slot=0; slot<numSlots; slot++) {
+	    if (components[slot] == oldFont) {
+		components[slot] = newFont;
+		if (componentNames != null) {
+		    componentNames[slot] = newFont.getFontName(null);
+		}
+	    }
+	}	
     }
 
     public boolean isExcludedChar(int slot, int charcode) {
 
-        if (exclusionRanges == null || maxIndices == null ||
-            slot >= numMetricsSlots) {
-            return false;
-        }
+	if (exclusionRanges == null || maxIndices == null ||
+	    slot >= numMetricsSlots) {
+	    return false;
+	}
 
-        int minIndex = 0;
-        int maxIndex = maxIndices[slot];
-        if (slot > 0) {
-            minIndex = maxIndices[slot - 1];
-        }
-        int curIndex = minIndex;
-        while (maxIndex > curIndex) {
-            if ((charcode >= exclusionRanges[curIndex])
-                && (charcode <= exclusionRanges[curIndex+1])) {
-                return true;      // excluded
-            }
-            curIndex += 2;
-        }
-        return false;
+	int minIndex = 0;
+	int maxIndex = maxIndices[slot];
+	if (slot > 0) {
+	    minIndex = maxIndices[slot - 1];
+	}
+	int curIndex = minIndex;
+	while (maxIndex > curIndex) {
+	    if ((charcode >= exclusionRanges[curIndex])
+		&& (charcode <= exclusionRanges[curIndex+1])) {
+		return true;      // excluded
+	    }
+	    curIndex += 2;
+	}
+	return false;	
     }
 
     public void getStyleMetrics(float pointSize, float[] metrics, int offset) {
@@ -321,38 +321,38 @@ public final class CompositeFont extends Font2D {
     }
 
     public int getNumSlots() {
-        return numSlots;
+	return numSlots;
     }
 
     public PhysicalFont getSlotFont(int slot) {
-        /* This is essentially the runtime overhead for deferred font
-         * initialisation: a boolean test on obtaining a slot font,
-         * which will happen per slot, on initialisation of a strike
-         * (as that is the only frequent call site of this method.
-         */
-        if (deferredInitialisation[slot]) {
-            doDeferredInitialisation(slot);
-        }
-        try {
-            PhysicalFont font = components[slot];
-            if (font == null) {
-                try {
-                    font = (PhysicalFont)FontManager.
-                        findFont2D(componentNames[slot], style,
-                                   FontManager.PHYSICAL_FALLBACK);
-                    components[slot] = font;
-                } catch (ClassCastException cce) {
-                    font = FontManager.getDefaultPhysicalFont();
-                }
-            }
-            return font;
-        } catch (Exception e) {
-            return FontManager.getDefaultPhysicalFont();
-        }
+	/* This is essentially the runtime overhead for deferred font
+	 * initialisation: a boolean test on obtaining a slot font,
+	 * which will happen per slot, on initialisation of a strike
+	 * (as that is the only frequent call site of this method.
+	 */
+	if (deferredInitialisation[slot]) {
+	    doDeferredInitialisation(slot);
+	}
+	try {
+	    PhysicalFont font = components[slot];
+	    if (font == null) {
+		try {
+		    font = (PhysicalFont)FontManager.
+			findFont2D(componentNames[slot], style,
+				   FontManager.PHYSICAL_FALLBACK);
+		    components[slot] = font;
+		} catch (ClassCastException cce) {
+		    font = FontManager.getDefaultPhysicalFont();
+		}
+	    }
+	    return font;
+	} catch (Exception e) {
+	    return FontManager.getDefaultPhysicalFont();
+	}	 
     }
 
     FontStrike createStrike(FontStrikeDesc desc) {
-        return new CompositeStrike(this, desc);
+	return new CompositeStrike(this, desc);
     }
 
     /* This is set false when the composite is created using a specified
@@ -361,35 +361,35 @@ public final class CompositeFont extends Font2D {
      * isn't a font which should be adjusted.
      */
     public boolean isStdComposite() {
-        return isStdComposite;
+	return isStdComposite;
     }
-
+	
     /* This isn't very efficient but its infrequently used.
      * StandardGlyphVector uses it when the client assigns the glyph codes.
      * These may not be valid. This validates them substituting the missing
      * glyph elsewhere.
      */
     protected int getValidatedGlyphCode(int glyphCode) {
-        int slot = glyphCode >>> 24;
-        if (slot >= numSlots) {
-            return getMapper().getMissingGlyphCode();
-        }
+	int slot = glyphCode >>> 24;
+	if (slot >= numSlots) {
+	    return getMapper().getMissingGlyphCode();
+	}
 
-        int slotglyphCode = glyphCode & CompositeStrike.SLOTMASK;
-        PhysicalFont slotFont = getSlotFont(slot);
-        if (slotFont.getValidatedGlyphCode(slotglyphCode) ==
-            slotFont.getMissingGlyphCode()) {
-            return getMapper().getMissingGlyphCode();
-        } else {
-            return glyphCode;
-        }
+	int slotglyphCode = glyphCode & CompositeStrike.SLOTMASK;
+	PhysicalFont slotFont = getSlotFont(slot);
+	if (slotFont.getValidatedGlyphCode(slotglyphCode) ==
+	    slotFont.getMissingGlyphCode()) {
+	    return getMapper().getMissingGlyphCode();
+	} else {
+	    return glyphCode;
+	} 
     }
 
     public CharToGlyphMapper getMapper() {
-        if (mapper == null) {
-            mapper = new CompositeGlyphMapper(this);
-        }
-        return mapper;
+	if (mapper == null) {
+	    mapper = new CompositeGlyphMapper(this);
+	}
+	return mapper;
     }
 
     public boolean hasSupplementaryChars() {
@@ -402,18 +402,18 @@ public final class CompositeFont extends Font2D {
     }
 
     public int getNumGlyphs() {
-        if (numGlyphs == 0) {
-            numGlyphs = getMapper().getNumGlyphs();
-        }
-        return numGlyphs;
+	if (numGlyphs == 0) {
+	    numGlyphs = getMapper().getNumGlyphs();
+	}
+	return numGlyphs;
     }
 
     public int getMissingGlyphCode() {
-        return getMapper().getMissingGlyphCode();
+	return getMapper().getMissingGlyphCode();
     }
 
     public boolean canDisplay(char c) {
-        return getMapper().canDisplay(c);
+	return getMapper().canDisplay(c);
     }
 
     public boolean useAAForPtSize(int ptsize) {
@@ -444,15 +444,15 @@ public final class CompositeFont extends Font2D {
         }
         return getSlotFont(localeSlot).useAAForPtSize(ptsize);
     }
-
+   
     public String toString() {
-        String ls = (String)java.security.AccessController.doPrivileged(
-                new sun.security.action.GetPropertyAction("line.separator"));
-        String componentsStr = "";
-        for (int i=0; i<numSlots; i++) {
-            componentsStr += "    Slot["+i+"]="+getSlotFont(i)+ls;
-        }
-        return "** Composite Font: Family=" + familyName +
-            " Name=" + fullName + " style=" + style + ls + componentsStr;
+	String ls = (String)java.security.AccessController.doPrivileged(
+		new sun.security.action.GetPropertyAction("line.separator"));
+	String componentsStr = "";
+	for (int i=0; i<numSlots; i++) {
+	    componentsStr += "    Slot["+i+"]="+getSlotFont(i)+ls;
+	}
+	return "** Composite Font: Family=" + familyName +
+	    " Name=" + fullName + " style=" + style + ls + componentsStr;
     }
 }

@@ -50,9 +50,9 @@ public abstract class GLXSurfaceData extends OGLSurfaceData {
                              ColorModel cm, int type)
     {
         super(gc, cm, type);
-        this.peer = peer;
-        this.graphicsConfig = gc;
-        initOps(peer, graphicsConfig.getAData());
+	this.peer = peer;
+	this.graphicsConfig = gc;
+	initOps(peer, graphicsConfig.getAData());
     }
 
     public GraphicsConfiguration getDeviceConfiguration() {
@@ -88,59 +88,59 @@ public abstract class GLXSurfaceData extends OGLSurfaceData {
      */
     public static GLXOffScreenSurfaceData createData(GLXGraphicsConfig gc,
                                                      int width, int height,
-                                                     ColorModel cm,
+                                                     ColorModel cm, 
                                                      Image image, int type)
     {
-        return new GLXOffScreenSurfaceData(null, gc, width, height,
+	return new GLXOffScreenSurfaceData(null, gc, width, height,
                                            image, cm, type);
     }
 
     public static GLXGraphicsConfig getGC(X11ComponentPeer peer) {
-        if (peer != null) {
-            return (GLXGraphicsConfig)peer.getGraphicsConfiguration();
-        } else {
+	if (peer != null) {
+	    return (GLXGraphicsConfig)peer.getGraphicsConfiguration();
+	} else {
             // REMIND: this should rarely (never?) happen, but what if
             //         default config is not GLX?
-            GraphicsEnvironment env =
-                GraphicsEnvironment.getLocalGraphicsEnvironment();
-            GraphicsDevice gd = env.getDefaultScreenDevice();
-            return (GLXGraphicsConfig)gd.getDefaultConfiguration();
-        }
+	    GraphicsEnvironment env =
+		GraphicsEnvironment.getLocalGraphicsEnvironment();
+	    GraphicsDevice gd = env.getDefaultScreenDevice();
+	    return (GLXGraphicsConfig)gd.getDefaultConfiguration();
+	}
     }
 
     public static class GLXWindowSurfaceData extends GLXSurfaceData {
 
-        public GLXWindowSurfaceData(X11ComponentPeer peer,
+	public GLXWindowSurfaceData(X11ComponentPeer peer, 
                                     GLXGraphicsConfig gc)
         {
             super(peer, gc, peer.getColorModel(), WINDOW);
-        }
+	}
 
-        public SurfaceData getReplacement() {
-            return peer.getSurfaceData();
-        }
+	public SurfaceData getReplacement() {
+	    return peer.getSurfaceData();
+	}
 
-        public Rectangle getBounds() {
+	public Rectangle getBounds() {
             Rectangle r = peer.getBounds();
             r.x = r.y = 0;
             return r;
-        }
+	}
 
-        /**
-         * Returns destination Component associated with this SurfaceData.
-         */
-        public Object getDestination() {
-            return peer.getTarget();
-        }
+	/**
+	 * Returns destination Component associated with this SurfaceData.
+	 */
+	public Object getDestination() {
+	    return peer.getTarget();
+	}
     }
 
     public static class GLXOffScreenSurfaceData extends GLXSurfaceData {
 
-        private Image offscreenImage;
-        private int width, height;
+	private Image offscreenImage;
+	private int width, height;
 
-        public GLXOffScreenSurfaceData(X11ComponentPeer peer,
-                                       GLXGraphicsConfig gc,
+	public GLXOffScreenSurfaceData(X11ComponentPeer peer,
+                                       GLXGraphicsConfig gc, 
                                        int width, int height,
                                        Image image, ColorModel cm,
                                        int type)
@@ -152,13 +152,13 @@ public abstract class GLXSurfaceData extends OGLSurfaceData {
             offscreenImage = image;
 
             initSurface(width, height);
-        }
+	}
 
-        public SurfaceData getReplacement() {
+	public SurfaceData getReplacement() {
             return restoreContents(offscreenImage);
-        }
+	}
 
-        public Rectangle getBounds() {
+	public Rectangle getBounds() {
             if (type == FLIP_BACKBUFFER) {
                 Rectangle r = peer.getBounds();
                 r.x = r.y = 0;
@@ -166,13 +166,13 @@ public abstract class GLXSurfaceData extends OGLSurfaceData {
             } else {
                 return new Rectangle(width, height);
             }
-        }
-
-        /**
-         * Returns destination Image associated with this SurfaceData.
-         */
-        public Object getDestination() {
-            return offscreenImage;
-        }
+	}
+	
+	/**
+	 * Returns destination Image associated with this SurfaceData.
+	 */
+	public Object getDestination() {
+	    return offscreenImage;
+	}
     }
 }

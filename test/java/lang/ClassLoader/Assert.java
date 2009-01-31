@@ -121,7 +121,7 @@ public class Assert {
         } else { // This is a test spawn
             for(int i=0; i<7; i++)
                 switches[i] = Integer.parseInt(args[i]);
-
+            
             SetAssertionSwitches(switches);
             ConstructClassTree();
             TestClassTree(switches);

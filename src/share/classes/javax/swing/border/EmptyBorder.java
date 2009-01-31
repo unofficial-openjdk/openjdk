@@ -44,6 +44,7 @@ import java.beans.ConstructorProperties;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author David Kloba
  */
 public class EmptyBorder extends AbstractBorder implements Serializable
@@ -58,7 +59,7 @@ public class EmptyBorder extends AbstractBorder implements Serializable
      * @param right the right inset of the border
      */
     public EmptyBorder(int top, int left, int bottom, int right)   {
-        this.top = top;
+        this.top = top; 
         this.right = right;
         this.bottom = bottom;
         this.left = left;
@@ -70,7 +71,7 @@ public class EmptyBorder extends AbstractBorder implements Serializable
      */
     @ConstructorProperties({"borderInsets"})
     public EmptyBorder(Insets borderInsets)   {
-        this.top = borderInsets.top;
+        this.top = borderInsets.top; 
         this.right = borderInsets.right;
         this.bottom = borderInsets.bottom;
         this.left = borderInsets.left;
@@ -83,7 +84,16 @@ public class EmptyBorder extends AbstractBorder implements Serializable
     }
 
     /**
-     * Reinitialize the insets parameter with this Border's current Insets.
+     * Returns the insets of the border.
+     * @param c the component for which this border insets value applies
+     * @since 1.3
+     */
+    public Insets getBorderInsets(Component c)       {
+        return getBorderInsets();
+    }
+
+    /** 
+     * Reinitialize the insets parameter with this Border's current Insets. 
      * @param c the component for which this border insets value applies
      * @param insets the object to be reinitialized
      */

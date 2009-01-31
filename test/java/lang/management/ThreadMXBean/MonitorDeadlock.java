@@ -22,7 +22,7 @@
  */
 
 /*
- * @summary MonitorDeadlock creates threads that are deadlocked on
+ * @summary MonitorDeadlock creates threads that are deadlocked on 
  *          object monitors.
  * @author  Mandy Chung
  * @build Barrier
@@ -63,11 +63,11 @@ public class MonitorDeadlock {
 
         while (go.getWaiterCount() != EXPECTED_THREADS) {
             synchronized(this) {
-                try {
+                try { 
                     wait(100);
                 } catch (InterruptedException e) {
                     // ignore
-                }
+                } 
             }
         }
 
@@ -135,14 +135,14 @@ public class MonitorDeadlock {
         for (int j = 0; j < found.length; j++) {
             ok = ok && found[j];
         }
-
+                                
         if (!ok) {
             System.out.print("Returned result is [");
             for (int j = 0; j < threads.length; j++) {
                 System.out.print(threads[j] + " ");
             }
             System.out.println("]");
-
+                                 
             System.out.print("Expected result is [");
             for (int j = 0; j < threads.length; j++) {
                 System.out.print(dThreads[j] + " ");

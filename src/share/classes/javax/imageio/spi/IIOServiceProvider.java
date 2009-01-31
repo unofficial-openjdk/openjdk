@@ -41,6 +41,7 @@ import javax.imageio.spi.ServiceRegistry;
  * @see javax.imageio.spi.ImageTranscoderSpi
  * @see javax.imageio.spi.ImageInputStreamSpi
  *
+ * @version 0.5
  */
 public abstract class IIOServiceProvider implements RegisterableService {
 

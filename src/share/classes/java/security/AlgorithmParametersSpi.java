@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package java.security;
 
 import java.io.*;
@@ -34,12 +34,13 @@ import java.security.spec.InvalidParameterSpecException;
  * for the <code>AlgorithmParameters</code> class, which is used to manage
  * algorithm parameters.
  *
- * <p> All the abstract methods in this class must be implemented by each
+ * <p> All the abstract methods in this class must be implemented by each 
  * cryptographic service provider who wishes to supply parameter management
  * for a particular algorithm.
  *
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @see AlgorithmParameters
  * @see java.security.spec.AlgorithmParameterSpec
@@ -51,7 +52,7 @@ import java.security.spec.InvalidParameterSpecException;
 public abstract class AlgorithmParametersSpi {
 
     /**
-     * Initializes this parameters object using the parameters
+     * Initializes this parameters object using the parameters 
      * specified in <code>paramSpec</code>.
      *
      * @param paramSpec the parameter specification.
@@ -60,8 +61,8 @@ public abstract class AlgorithmParametersSpi {
      * specification is inappropriate for the initialization of this parameter
      * object.
      */
-    protected abstract void engineInit(AlgorithmParameterSpec paramSpec)
-        throws InvalidParameterSpecException;
+    protected abstract void engineInit(AlgorithmParameterSpec paramSpec) 
+	throws InvalidParameterSpecException;
 
     /**
      * Imports the specified parameters and decodes them
@@ -74,7 +75,7 @@ public abstract class AlgorithmParametersSpi {
      * @exception IOException on decoding errors
      */
     protected abstract void engineInit(byte[] params)
-        throws IOException;
+	throws IOException;
 
     /**
      * Imports the parameters from <code>params</code> and
@@ -91,18 +92,18 @@ public abstract class AlgorithmParametersSpi {
      * @exception IOException on decoding errors
      */
     protected abstract void engineInit(byte[] params, String format)
-        throws IOException;
+	throws IOException;
 
     /**
      * Returns a (transparent) specification of this parameters
      * object.
-     * <code>paramSpec</code> identifies the specification class in which
+     * <code>paramSpec</code> identifies the specification class in which 
      * the parameters should be returned. It could, for example, be
      * <code>DSAParameterSpec.class</code>, to indicate that the
-     * parameters should be returned in an instance of the
+     * parameters should be returned in an instance of the 
      * <code>DSAParameterSpec</code> class.
      *
-     * @param paramSpec the the specification class in which
+     * @param paramSpec the the specification class in which 
      * the parameters should be returned.
      *
      * @return the parameter specification.
@@ -111,9 +112,9 @@ public abstract class AlgorithmParametersSpi {
      * specification is inappropriate for this parameter object.
      */
     protected abstract
-        <T extends AlgorithmParameterSpec>
-        T engineGetParameterSpec(Class<T> paramSpec)
-        throws InvalidParameterSpecException;
+	<T extends AlgorithmParameterSpec>
+	T engineGetParameterSpec(Class<T> paramSpec)
+	throws InvalidParameterSpecException;
 
     /**
      * Returns the parameters in their primary encoding format.
@@ -140,7 +141,7 @@ public abstract class AlgorithmParametersSpi {
      * @exception IOException on encoding errors.
      */
     protected abstract byte[] engineGetEncoded(String format)
-        throws IOException;
+	throws IOException;
 
     /**
      * Returns a formatted string describing the parameters.

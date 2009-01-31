@@ -32,6 +32,7 @@ import javax.swing.tree.TreePath;
 /**
  * Pluggable look and feel interface for JTree.
  *
+ * @version %I% %G%
  * @author Rob Davis
  * @author Scott Violet
  */
@@ -70,7 +71,7 @@ public abstract class TreeUI extends ComponentUI
       * the returned path and test x, y against that.
       */
     public abstract TreePath getClosestPathForLocation(JTree tree, int x,
-                                                       int y);
+						       int y);
 
     /**
       * Returns true if the tree is being edited.  The item that is being

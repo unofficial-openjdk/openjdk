@@ -62,7 +62,7 @@ class SourceMapper {
         /*
          * sourcepath can also arrive from the command line
          * as a String.  (via "-sourcepath")
-         *
+         * 
          * Using File.pathSeparator as delimiter below is OK
          * because we are on the same machine as the command
          * line originiated.
@@ -81,7 +81,7 @@ class SourceMapper {
         }
         dirs = (String[])dirList.toArray(new String[0]);
     }
-
+    
     /*
      * Return the current sourcePath as a String.
      */
@@ -124,7 +124,7 @@ class SourceMapper {
     }
 
     /**
-     * Return a BufferedReader cooresponding to the source
+     * Return a BufferedReader cooresponding to the source 
      * of this location.
      * Return null if not available.
      * Note: returned reader must be closed.
@@ -141,3 +141,4 @@ class SourceMapper {
         return null;
     }
 }
+        

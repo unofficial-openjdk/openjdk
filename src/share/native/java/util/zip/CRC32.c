@@ -44,12 +44,12 @@ Java_java_util_zip_CRC32_update(JNIEnv *env, jclass cls, jint crc, jint b)
 
 JNIEXPORT jint JNICALL
 Java_java_util_zip_CRC32_updateBytes(JNIEnv *env, jclass cls, jint crc,
-                                     jarray b, jint off, jint len)
+				     jarray b, jint off, jint len)
 {
     Bytef *buf = (*env)->GetPrimitiveArrayCritical(env, b, 0);
     if (buf) {
         crc = crc32(crc, buf + off, len);
-        (*env)->ReleasePrimitiveArrayCritical(env, b, buf, 0);
+	(*env)->ReleasePrimitiveArrayCritical(env, b, buf, 0);
     }
     return crc;
 }

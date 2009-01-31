@@ -47,7 +47,7 @@
 #include <Xm/ComboBox.h>
 
 #define MAX_VISIBLE 10
-
+ 
 extern struct ComponentIDs componentIDs;
 extern struct ContainerIDs containerIDs;
 extern struct MComponentPeerIDs mComponentPeerIDs;
@@ -55,8 +55,8 @@ extern struct MComponentPeerIDs mComponentPeerIDs;
 extern AwtGraphicsConfigDataPtr
     copyGraphicsConfigToPeer(JNIEnv *env, jobject this);
 
-/*
-   setSelection
+/* 
+   setSelection 
    Set the selected text on the XmTextField of the XmComboBox.
 */
 static void
@@ -75,13 +75,13 @@ setSelection(JNIEnv *env,
     if (target == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
-        return;
+	return;
     }
     /* Get the XmTextField widget in the XmComboBox. */
     text = XtNameToWidget(comboBox, "*Text");
     /* Get the selected Unicode string from the java Choice component. */
     item = (jstring) JNU_CallMethodByName(env, NULL,
-        target, "getItem", "(I)Ljava/lang/String;", index).l;
+	target, "getItem", "(I)Ljava/lang/String;", index).l;
     if ((*env)->ExceptionOccurred(env)) {
         (*env)->ExceptionDescribe(env);
         (*env)->ExceptionClear(env);
@@ -158,7 +158,7 @@ addItems(JNIEnv *env, jobject this,
     Boolean IsMultiFont = awtJNI_IsMultiFont(env, font);
 
     if ((items == NULL) || (nItems == 0)) {
-        return;
+	return;
     }
 
     AWT_LOCK();
@@ -173,23 +173,23 @@ addItems(JNIEnv *env, jobject this,
     }
 
     for (i = 0; i < nItems; ++i) {
-        char *temp = (char *)JNU_GetStringPlatformChars(env, items[i], NULL);
-        mfstr = XmStringCreateLocalized(temp);
-        JNU_ReleaseStringPlatformChars(env, items[i], (const char *)temp);
-        XmComboBoxAddItem(cdata->comp.widget, mfstr, index + i + 1, FALSE);
-
-        if (mfstr != NULL) {
-            XmStringFree(mfstr);
-            mfstr = NULL;
-        }
+	char *temp = (char *)JNU_GetStringPlatformChars(env, items[i], NULL);
+	mfstr = XmStringCreateLocalized(temp);
+	JNU_ReleaseStringPlatformChars(env, items[i], (const char *)temp);
+	XmComboBoxAddItem(cdata->comp.widget, mfstr, index + i + 1, FALSE);
+	
+	if (mfstr != NULL) {
+	    XmStringFree(mfstr);
+	    mfstr = NULL;
+	}
     }
 
     cdata->n_items += nItems;
 
     list = XtNameToWidget(cdata->comp.widget, "*List");
     XtVaSetValues(list,
-                  XmNvisibleItemCount, min(MAX_VISIBLE, cdata->n_items),
-                  NULL);
+		  XmNvisibleItemCount, min(MAX_VISIBLE, cdata->n_items),
+		  NULL);
     AWT_UNLOCK();
 }
 
@@ -205,11 +205,11 @@ Java_sun_awt_motif_MChoicePeer_create(JNIEnv * env, jobject this,
     jobject globalRef = awtJNI_CreateAndSetGlobalRef(env, this);
 
     struct ComponentData *wdata; /* parent's peer data */
-    struct ChoiceData *cdata;    /* our own peer data */
-    Widget list, text, list_shell;               /* components of drop dowwn list widget */
+    struct ChoiceData *cdata;	 /* our own peer data */
+    Widget list, text, list_shell;		 /* components of drop dowwn list widget */
 
     AwtGraphicsConfigDataPtr adata;
-    Pixel fg, bg;                /* colors inherited from parent */
+    Pixel fg, bg;		 /* colors inherited from parent */
     Dimension width = 0, height = 0;
     jclass clsDimension;
     jobject dimension;
@@ -254,8 +254,8 @@ Java_sun_awt_motif_MChoicePeer_create(JNIEnv * env, jobject this,
                              (*env)->GetFieldID(env, clsDimension,
                                  "width" , "I")));
     height = (Dimension)((*env)->GetIntField(env, dimension,
-                             (*env)->GetFieldID(env, clsDimension,
-                                 "height", "I")));
+			     (*env)->GetFieldID(env, clsDimension,
+				 "height", "I")));
 
     /* Inherit visual/colors from parent component */
     XtVaGetValues(wdata->widget, XmNbackground, &bg, NULL);
@@ -263,30 +263,30 @@ Java_sun_awt_motif_MChoicePeer_create(JNIEnv * env, jobject this,
     adata = copyGraphicsConfigToPeer(env, this);
 
     argc = 0;
-    XtSetArg(args[argc], XmNuserData, (XtPointer)globalRef);            ++argc;
-    XtSetArg(args[argc], XmNx, 0);                                      ++argc;
-    XtSetArg(args[argc], XmNy, 0);                                      ++argc;
-    XtSetArg(args[argc], XmNmarginHeight, 2);                           ++argc;
-    XtSetArg(args[argc], XmNmarginWidth, 1);                            ++argc;
-    XtSetArg(args[argc], XmNvisibleItemCount, 0);                       ++argc;
-    XtSetArg(args[argc], XmNancestorSensitive, True);                   ++argc;
+    XtSetArg(args[argc], XmNuserData, (XtPointer)globalRef);		++argc;
+    XtSetArg(args[argc], XmNx, 0);					++argc;
+    XtSetArg(args[argc], XmNy, 0);					++argc;
+    XtSetArg(args[argc], XmNmarginHeight, 2);				++argc;
+    XtSetArg(args[argc], XmNmarginWidth, 1);				++argc;
+    XtSetArg(args[argc], XmNvisibleItemCount, 0);			++argc;
+    XtSetArg(args[argc], XmNancestorSensitive, True);			++argc;
     /* Don't ding on key press */
-    XtSetArg(args[argc], XmNverifyBell, False);                         ++argc;
-    XtSetArg(args[argc], XmNvisual, adata->awt_visInfo.visual);         ++argc;
+    XtSetArg(args[argc], XmNverifyBell, False);				++argc;
+    XtSetArg(args[argc], XmNvisual, adata->awt_visInfo.visual);		++argc;
     XtSetArg(args[argc], XmNscreen,
-             ScreenOfDisplay(awt_display, adata->awt_visInfo.screen));  ++argc;
-    XtSetArg(args[argc], XmNbackground, bg);                            ++argc;
-    XtSetArg(args[argc], XmNforeground, fg);                            ++argc;
+	     ScreenOfDisplay(awt_display, adata->awt_visInfo.screen));	++argc;
+    XtSetArg(args[argc], XmNbackground, bg);				++argc;
+    XtSetArg(args[argc], XmNforeground, fg);				++argc;
 
     DASSERT(!(argc > MAX_ARGC));
     cdata->comp.widget = XmCreateDropDownList(wdata->widget,
-                                              "combobox", args, argc);
+					      "combobox", args, argc);
     cdata->n_items = 0;
 
     list = XtNameToWidget(cdata->comp.widget, "*List");
     text = XtNameToWidget(cdata->comp.widget, "*Text");
     list_shell = XtNameToWidget(cdata->comp.widget, "*GrabShell");
-    XtAddCallback(list_shell,
+    XtAddCallback(list_shell, 
                   XmNpopupCallback,
                   (XtCallbackProc)GrabShellPopup,
                   globalRef);
@@ -294,7 +294,7 @@ Java_sun_awt_motif_MChoicePeer_create(JNIEnv * env, jobject this,
                   XmNpopdownCallback,
                   (XtCallbackProc)GrabShellPopdown,
                   globalRef);
-
+    
     /*
      * Bug 4477410:  Setting the width of the XmComboBox made the XmTextField
      * too small, cutting off the dropdown list knob on the right side. Set
@@ -307,12 +307,12 @@ Java_sun_awt_motif_MChoicePeer_create(JNIEnv * env, jobject this,
                   NULL);
 
     XtAddCallback(list,
-                  XmNbrowseSelectionCallback,
+		  XmNbrowseSelectionCallback, 
                   (XtCallbackProc)Choice_callback,
                   (XtPointer)globalRef);
 
     XtAddEventHandler(text, FocusChangeMask, True,
-                      awt_canvas_event_handler, globalRef);
+		      awt_canvas_event_handler, globalRef);
 
     awt_addWidget(text, cdata->comp.widget, globalRef,
                   java_awt_AWTEvent_KEY_EVENT_MASK
@@ -420,17 +420,17 @@ Java_sun_awt_motif_MChoicePeer_setFont(JNIEnv *env, jobject this,
         fontlist = XmFontListCreate(fdata->xfont, "labelFont");
     }
     XtVaSetValues(cdata->comp.widget,
-                  XmNfontList, fontlist,
-                  NULL);
+		  XmNfontList, fontlist,
+		  NULL);
     list = XtNameToWidget(cdata->comp.widget, "*List");
     XtVaSetValues(list,
-                  XmNfontList, fontlist,
-                  NULL);
+		  XmNfontList, fontlist,
+		  NULL);
 
     text = XtNameToWidget(cdata->comp.widget, "*Text");
     XtVaSetValues(text,
-                  XmNfontList, fontlist,
-                  NULL);
+		  XmNfontList, fontlist,
+		  NULL);
     XmFontListFree(fontlist);
     XtVaGetValues(cdata->comp.widget,
                   XmNx, &x,
@@ -476,7 +476,7 @@ Java_sun_awt_motif_MChoicePeer_setBackground(JNIEnv *env, jobject this,
     AWT_LOCK();
 
     cdata = (struct ChoiceData *)
-        JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,this,mComponentPeerIDs.pData);
     if (cdata == NULL || cdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -550,7 +550,7 @@ Java_sun_awt_motif_MChoicePeer_pReshape(JNIEnv *env, jobject this,
     jclass clsDimension;
     jobject dimension;
     jobject target;
-    Widget text=NULL;
+    Widget text=NULL; 
 
     AWT_LOCK();
 
@@ -563,21 +563,21 @@ Java_sun_awt_motif_MChoicePeer_pReshape(JNIEnv *env, jobject this,
     }
 
     if (w == 0) {
-        /* Set the width and height of the TextField widget to the
-         * PreferredSize, based on the font size.
+	/* Set the width and height of the TextField widget to the
+         * PreferredSize, based on the font size. 
         */
-        clsDimension = (*env)->FindClass(env, "java/awt/Dimension");
-        DASSERT(clsDimension != NULL);
-        dimension = JNU_CallMethodByName(env, NULL,
-                        this, "getPreferredSize", "()Ljava/awt/Dimension;").l;
-        width  = (Dimension)((*env)->GetIntField(env, dimension,
-                                 (*env)->GetFieldID(env, clsDimension,
-                                     "width" , "I")));
-        height = (Dimension)((*env)->GetIntField(env, dimension,
-                                 (*env)->GetFieldID(env, clsDimension,
-                                     "height", "I")));
+	clsDimension = (*env)->FindClass(env, "java/awt/Dimension");
+	DASSERT(clsDimension != NULL);
+	dimension = JNU_CallMethodByName(env, NULL,
+			this, "getPreferredSize", "()Ljava/awt/Dimension;").l;
+	width  = (Dimension)((*env)->GetIntField(env, dimension,
+				 (*env)->GetFieldID(env, clsDimension,
+				     "width" , "I")));
+	height = (Dimension)((*env)->GetIntField(env, dimension,
+				 (*env)->GetFieldID(env, clsDimension,
+				     "height", "I")));
     } else {
-        /* Set the width and height of the TextField widget to the
+	/* Set the width and height of the TextField widget to the
          * given values. BorderLayout passes these values, for example.
         */
         width = w;
@@ -590,22 +590,22 @@ Java_sun_awt_motif_MChoicePeer_pReshape(JNIEnv *env, jobject this,
      * the width of the TextField because it is the widget actually seen.
     */
     XtVaSetValues(text,
-                  XmNwidth, width,
-                  XmNheight, height,
-                  NULL);
+		  XmNwidth, width,
+		  XmNheight, height,
+		  NULL);
 
     awt_util_reshape(cdata->comp.widget, x, y, width, height);
 
     list = XtNameToWidget(cdata->comp.widget, "*List");
-
-    XtVaSetValues(list, XmNwidth, width, NULL);
+    
+    XtVaSetValues(list, XmNwidth, width, NULL); 
 
     /* Set the width and height of the Choice component. */
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
     if (target == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
-        return;
+	return;
     }
     (*env)->SetIntField(env, target, componentIDs.width, (jint)width);
     (*env)->SetIntField(env, target, componentIDs.height, (jint)height);
@@ -649,7 +649,7 @@ Java_sun_awt_motif_MChoicePeer_appendItems(JNIEnv *env, jobject this,
     }
     nItems  = (*env)->GetArrayLength(env, items);
     if (nItems == 0) {
-        return;
+	return;
     }
 
     AWT_LOCK();
@@ -658,29 +658,29 @@ Java_sun_awt_motif_MChoicePeer_appendItems(JNIEnv *env, jobject this,
                 this, mComponentPeerIDs.pData);
     if (cdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
-        goto cleanup;
+	goto cleanup;
     }
 
     strItems = (jstring *)malloc(sizeof(jstring) * nItems);
     if (strItems == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
-        goto cleanup;
+	goto cleanup;
     }
 
     for (i = 0; i < nItems; ++i) {
-        strItems[i] = (jstring)(*env)->GetObjectArrayElement(env,
-                                   items, (jsize)i);
-        if (JNU_IsNull(env, strItems[i])) {
-            JNU_ThrowNullPointerException(env, "NullPointerException");
-            goto cleanup;
-        }
+	strItems[i] = (jstring)(*env)->GetObjectArrayElement(env,
+		                   items, (jsize)i);
+	if (JNU_IsNull(env, strItems[i])) {
+	    JNU_ThrowNullPointerException(env, "NullPointerException");
+	    goto cleanup;
+	}
     }
 
     addItems(env, this, strItems, nItems, (jint)cdata->n_items);
 
   cleanup:
     if (strItems != NULL) {
-        free(strItems);
+	free(strItems);
     }
     AWT_UNLOCK();
 }
@@ -713,12 +713,12 @@ Java_sun_awt_motif_MChoicePeer_remove(JNIEnv *env, jobject this,
     --(cdata->n_items);
 
     list = XtNameToWidget(cdata->comp.widget, "*List");
-    XtVaSetValues(list, XmNvisibleItemCount, min(MAX_VISIBLE, cdata->n_items), NULL);
+    XtVaSetValues(list, XmNvisibleItemCount, min(MAX_VISIBLE, cdata->n_items), NULL); 
 
     if (cdata->n_items == 0) {
         /* No item is selected, so clear the TextField. */
-        text = XtNameToWidget(cdata->comp.widget, "*Text");
-        XtVaSetValues(text, XmNvalue, "", NULL);
+	text = XtNameToWidget(cdata->comp.widget, "*Text");
+	XtVaSetValues(text, XmNvalue, "", NULL);
     }
 
     AWT_UNLOCK();
@@ -748,7 +748,7 @@ Java_sun_awt_motif_MChoicePeer_removeAll(JNIEnv *env, jobject this)
     }
 
     for (i = cdata->n_items - 1; i >= 0; --i) {
-        XmComboBoxDeletePos(cdata->comp.widget, i);
+	XmComboBoxDeletePos(cdata->comp.widget, i);
     }
     cdata->n_items = 0;
 
@@ -758,7 +758,7 @@ Java_sun_awt_motif_MChoicePeer_removeAll(JNIEnv *env, jobject this)
 
     /* should set XmNvisibleItemCount to 1 as 0 is invalid value */
     list = XtNameToWidget(cdata->comp.widget, "*List");
-    XtVaSetValues(list, XmNvisibleItemCount, 1, NULL);
+    XtVaSetValues(list, XmNvisibleItemCount, 1, NULL); 
 
     AWT_UNLOCK();
 }

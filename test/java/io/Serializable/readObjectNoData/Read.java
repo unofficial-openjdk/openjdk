@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -31,14 +31,14 @@
 
 import java.io.*;
 
-/* Non-serializable superclass which defines readObjectNoData:
+/* Non-serializable superclass which defines readObjectNoData: 
  * readObjectNoData should not get called.
  */
 class A {
     private static final long serialVersionUID = 0L;
     boolean aCalled = false;
     private void readObjectNoData() throws ObjectStreamException {
-        aCalled = true;
+	aCalled = true;
     }
 }
 
@@ -49,7 +49,7 @@ class B extends A implements Serializable {
     private static final long serialVersionUID = 0L;
     boolean bCalled = false;
     private void readObjectNoData(int wrong) throws ObjectStreamException {
-        bCalled = true;
+	bCalled = true;
     }
 }
 
@@ -60,7 +60,7 @@ class C extends B {
     private static final long serialVersionUID = 0L;
     boolean cCalled = false;
     private void readObjectNoData() throws ObjectStreamException {
-        cCalled = true;
+	cCalled = true;
     }
 }
 
@@ -72,7 +72,7 @@ class D extends C {
     private static final long serialVersionUID = 0L;
     boolean dCalled = false;
     private void readObjectNoData() throws ObjectStreamException {
-        dCalled = true;
+	dCalled = true;
     }
 }
 
@@ -83,7 +83,7 @@ class E extends D {
     private static final long serialVersionUID = 0L;
     boolean eCalled = false;
     void readObjectNoData() throws ObjectStreamException {
-        eCalled = true;
+	eCalled = true;
     }
 }
 
@@ -95,14 +95,14 @@ class F extends E {
 
 public class Read {
     public static void main(String[] args) throws Exception {
-        ObjectInputStream oin =
-            new ObjectInputStream(new FileInputStream("tmp.ser"));
-        F f = (F) oin.readObject();
-        if (f.aCalled || f.bCalled || f.dCalled || f.eCalled) {
-            throw new Error("readObjectNoData invoked erroneously");
-        }
-        if (! f.cCalled) {
-            throw new Error("readObjectNoData not invoked");
-        }
+	ObjectInputStream oin =
+	    new ObjectInputStream(new FileInputStream("tmp.ser"));
+	F f = (F) oin.readObject();
+	if (f.aCalled || f.bCalled || f.dCalled || f.eCalled) {
+	    throw new Error("readObjectNoData invoked erroneously");
+	}
+	if (! f.cCalled) {
+	    throw new Error("readObjectNoData not invoked");
+	}
     }
 }

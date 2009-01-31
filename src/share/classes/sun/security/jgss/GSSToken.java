@@ -34,6 +34,7 @@ import sun.security.util.*;
 /**
  * Utilities for processing GSS Tokens.
  *
+ * @version %I%, %G%
  */
 
 public abstract class GSSToken {
@@ -46,9 +47,9 @@ public abstract class GSSToken {
      * the integer.
      */
     public static final void writeLittleEndian(int value, byte[] array) {
-        writeLittleEndian(value, array, 0);
+	writeLittleEndian(value, array, 0);
     }
-
+    
     /**
      * Copies an integer value to a byte array in little endian form.
      * @param value the integer value to write
@@ -58,25 +59,25 @@ public abstract class GSSToken {
      * @param pos the position at which to start writing
      */
     public static final void writeLittleEndian(int value, byte[] array,
-                                               int pos) {
-        array[pos++] = (byte)(value);
-        array[pos++] = (byte)((value>>>8));
-        array[pos++] = (byte)((value>>>16));
-        array[pos++] = (byte)((value>>>24));
+					       int pos) {
+	array[pos++] = (byte)(value);
+	array[pos++] = (byte)((value>>>8));
+	array[pos++] = (byte)((value>>>16));
+	array[pos++] = (byte)((value>>>24));
     }
 
     public static final void writeBigEndian(int value, byte[] array) {
-        writeBigEndian(value, array, 0);
+	writeBigEndian(value, array, 0);
     }
 
     public static final void writeBigEndian(int value, byte[] array,
-                                               int pos) {
-        array[pos++] = (byte)((value>>>24));
-        array[pos++] = (byte)((value>>>16));
-        array[pos++] = (byte)((value>>>8));
-        array[pos++] = (byte)(value);
+					       int pos) {
+	array[pos++] = (byte)((value>>>24));
+	array[pos++] = (byte)((value>>>16));
+	array[pos++] = (byte)((value>>>8));
+	array[pos++] = (byte)(value);
     }
-
+    
     /**
      * Reads an integer value from a byte array in little endian form. This
      * method allows the reading of two byte values as well as four bytes
@@ -88,55 +89,55 @@ public abstract class GSSToken {
      * @return the integer value
      */
     public static final int readLittleEndian(byte[] data, int pos, int size) {
-        int retVal = 0;
-        int shifter = 0;
-        while (size > 0) {
-            retVal += (data[pos] & 0xff) << shifter;
-            shifter += 8;
-            pos++;
-            size--;
-        }
-        return retVal;
+	int retVal = 0;
+	int shifter = 0;
+	while (size > 0) {
+	    retVal += (data[pos] & 0xff) << shifter;
+	    shifter += 8;
+	    pos++;
+	    size--;
+	}
+	return retVal;
     }
 
     public static final int readBigEndian(byte[] data, int pos, int size) {
-        int retVal = 0;
-        int shifter = (size-1)*8;
-        while (size > 0) {
-            retVal += (data[pos] & 0xff) << shifter;
-            shifter -= 8;
-            pos++;
-            size--;
-        }
-        return retVal;
+	int retVal = 0;
+	int shifter = (size-1)*8;
+	while (size > 0) {
+	    retVal += (data[pos] & 0xff) << shifter;
+	    shifter -= 8;
+	    pos++;
+	    size--;
+	}
+	return retVal;
     }
-
+    
     /**
      * Writes a two byte integer value to a OutputStream.
-     *
+     * 
      * @param val the integer value. It will lose the high-order two bytes.
      * @param os the OutputStream to write to
      * @throws IOException if an error occurs while writing to the OutputStream
      */
     public static final void writeInt(int val, OutputStream os)
-        throws IOException {
-        os.write(val>>>8);
-        os.write(val);
+	throws IOException { 
+	os.write(val>>>8);
+	os.write(val);
     }
-
+    
     /**
      * Writes a two byte integer value to a byte array.
-     *
+     * 
      * @param val the integer value. It will lose the high-order two bytes.
      * @param dest the byte array to write to
      * @param pos the offset to start writing to
      */
     public static final int writeInt(int val, byte[] dest, int pos) {
-        dest[pos++] = (byte)(val>>>8);
-        dest[pos++] = (byte)val;
-        return pos;
+	dest[pos++] = (byte)(val>>>8);
+	dest[pos++] = (byte)val;
+	return pos;
     }
-
+    
     /**
      * Reads a two byte integer value from an InputStream.
      *
@@ -146,10 +147,10 @@ public abstract class GSSToken {
      * bytes.
      */
     public static final int readInt(InputStream is) throws IOException {
-        return (((0xFF & is.read()) << 8)
-                 | (0xFF & is.read()));
+	return (((0xFF & is.read()) << 8)
+		 | (0xFF & is.read()));
     }
-
+    
     /**
      * Reads a two byte integer value from a byte array.
      *
@@ -158,7 +159,7 @@ public abstract class GSSToken {
      * @returns the integer value
      */
     public static final int readInt(byte[] src, int pos) {
-        return ((0xFF & src[pos])<<8 | (0xFF & src[pos+1]));
+	return ((0xFF & src[pos])<<8 | (0xFF & src[pos+1]));
     }
 
     /**
@@ -172,8 +173,8 @@ public abstract class GSSToken {
      * @throws IOException is an error occurs while reading
      */
     public static final void readFully(InputStream is, byte[] buffer)
-        throws IOException {
-        readFully(is, buffer, 0, buffer.length);
+	throws IOException {
+	readFully(is, buffer, 0, buffer.length);
     }
 
     /**
@@ -188,44 +189,44 @@ public abstract class GSSToken {
      * read.
      * @throws IOException is an error occurs while reading
      */
-    public static final void readFully(InputStream is,
-                                       byte[] buffer, int offset, int len)
-        throws IOException {
-        int temp;
-        while (len > 0) {
-            temp = is.read(buffer, offset, len);
-            if (temp == -1)
-                throw new EOFException("Cannot read all "
-                                       + len
-                                       + " bytes needed to form this token!");
-            offset += temp;
-            len -= temp;
-        }
+    public static final void readFully(InputStream is, 
+				       byte[] buffer, int offset, int len)
+	throws IOException {
+	int temp;
+	while (len > 0) {
+	    temp = is.read(buffer, offset, len);
+	    if (temp == -1)
+		throw new EOFException("Cannot read all " 
+				       + len 
+				       + " bytes needed to form this token!");
+	    offset += temp;
+	    len -= temp;
+	}
     }
 
     public static final void debug(String str) {
-        System.err.print(str);
+	System.err.print(str);
     }
 
     public static final  String getHexBytes(byte[] bytes) {
-        return getHexBytes(bytes, 0, bytes.length);
+	return getHexBytes(bytes, 0, bytes.length);
     }
 
     public static final  String getHexBytes(byte[] bytes, int len) {
-        return getHexBytes(bytes, 0, len);
+	return getHexBytes(bytes, 0, len);
     }
-
+        
     public static final String getHexBytes(byte[] bytes, int pos, int len) {
-        StringBuffer sb = new StringBuffer();
-        for (int i = pos; i < (pos+len); i++) {
-            int b1 = (bytes[i]>>4) & 0x0f;
-            int b2 = bytes[i] & 0x0f;
-
-            sb.append(Integer.toHexString(b1));
-            sb.append(Integer.toHexString(b2));
-            sb.append(' ');
-        }
-        return sb.toString();
+	StringBuffer sb = new StringBuffer();
+	for (int i = pos; i < (pos+len); i++) {
+	    int b1 = (bytes[i]>>4) & 0x0f;
+	    int b2 = bytes[i] & 0x0f;
+        
+	    sb.append(Integer.toHexString(b1));
+	    sb.append(Integer.toHexString(b2));
+	    sb.append(' ');
+	}
+	return sb.toString();
     }
-
+  
 }

@@ -48,6 +48,7 @@ import javax.sound.sampled.AudioSystem;
 /**
  * WAVE file format class.
  *
+ * @version %I% %E%
  * @author Jan Borgersen
  */
 
@@ -71,8 +72,8 @@ class WaveFileFormat extends AudioFileFormat {
     // magic numbers
     static  final int RIFF_MAGIC         = 1380533830;
     static  final int WAVE_MAGIC         = 1463899717;
-    static  final int FMT_MAGIC                  = 0x666d7420; // "fmt "
-    static  final int DATA_MAGIC                 = 0x64617461; // "data"
+    static  final int FMT_MAGIC			 = 0x666d7420; // "fmt "
+    static  final int DATA_MAGIC		 = 0x64617461; // "data"
 
     // encodings
     static final int WAVE_FORMAT_UNKNOWN   = 0x0000;
@@ -92,49 +93,51 @@ class WaveFileFormat extends AudioFileFormat {
 
     WaveFileFormat( AudioFileFormat aff ) {
 
-        this( aff.getType(), aff.getByteLength(), aff.getFormat(), aff.getFrameLength() );
+	this( aff.getType(), aff.getByteLength(), aff.getFormat(), aff.getFrameLength() );
     }
 
     WaveFileFormat(AudioFileFormat.Type type, int lengthInBytes, AudioFormat format, int lengthInFrames) {
 
-        super(type,lengthInBytes,format,lengthInFrames);
+	super(type,lengthInBytes,format,lengthInFrames);
 
-        AudioFormat.Encoding encoding = format.getEncoding();
+	AudioFormat.Encoding encoding = format.getEncoding();
 
-        if( encoding.equals(AudioFormat.Encoding.ALAW) ) {
-            waveType = WAVE_FORMAT_ALAW;
-        } else if( encoding.equals(AudioFormat.Encoding.ULAW) ) {
-            waveType = WAVE_FORMAT_MULAW;
-        } else if( encoding.equals(AudioFormat.Encoding.PCM_SIGNED) ||
-                   encoding.equals(AudioFormat.Encoding.PCM_UNSIGNED) ) {
-            waveType = WAVE_FORMAT_PCM;
-        } else {
-            waveType = WAVE_FORMAT_UNKNOWN;
-        }
+	if( encoding.equals(AudioFormat.Encoding.ALAW) ) {
+	    waveType = WAVE_FORMAT_ALAW;
+	} else if( encoding.equals(AudioFormat.Encoding.ULAW) ) {
+	    waveType = WAVE_FORMAT_MULAW;
+	} else if( encoding.equals(AudioFormat.Encoding.PCM_SIGNED) ||
+		   encoding.equals(AudioFormat.Encoding.PCM_UNSIGNED) ) {
+	    waveType = WAVE_FORMAT_PCM;
+	} else {
+	    waveType = WAVE_FORMAT_UNKNOWN;
+	}
     }
 
     int getWaveType() {
 
-        return waveType;
+	return waveType;
     }
 
     int getHeaderSize() {
-        return getHeaderSize(getWaveType());
+	return getHeaderSize(getWaveType());
     }
 
     static int getHeaderSize(int waveType) {
-        //$$fb 2002-04-16: Fix for 4636355: RIFF audio headers could be _more_ spec compliant
-        // use dynamic format chunk size
-        return STANDARD_HEADER_SIZE + getFmtChunkSize(waveType);
+	//$$fb 2002-04-16: Fix for 4636355: RIFF audio headers could be _more_ spec compliant
+	// use dynamic format chunk size
+	return STANDARD_HEADER_SIZE + getFmtChunkSize(waveType);
     }
 
     static int getFmtChunkSize(int waveType) {
-        //$$fb 2002-04-16: Fix for 4636355: RIFF audio headers could be _more_ spec compliant
-        // add 2 bytes for "codec specific data length" for non-PCM codecs
-        int result = STANDARD_FMT_CHUNK_SIZE;
-        if (waveType != WAVE_FORMAT_PCM) {
-            result += 2; // WORD for "codec specific data length"
-        }
-        return result;
+	//$$fb 2002-04-16: Fix for 4636355: RIFF audio headers could be _more_ spec compliant
+	// add 2 bytes for "codec specific data length" for non-PCM codecs
+	int result = STANDARD_FMT_CHUNK_SIZE;
+	if (waveType != WAVE_FORMAT_PCM) {
+	    result += 2; // WORD for "codec specific data length"
+	}
+	return result;
     }
 }
+
+

@@ -27,7 +27,7 @@
  *
  * @summary this tests support for the ftp URL syntax that includes a
  * user and password.
- * @author Benjamin Renaud
+ * @author Benjamin Renaud 
  */
 
 /*
@@ -42,22 +42,22 @@ import java.util.zip.*;
 import sun.net.ftp.FtpLoginException;
 
 public class UserAndPasswordTest {
-
+  
     static String[] specs = {
-        "ftp://springbank.eng/",
-        "ftp://springbank.eng:21/",
-        "ftp://userid:password@springbank.eng/",
-        "ftp://userid:password@springbank.eng:21/",
-        "ftp://userid:password@springbank.eng:90"
+	"ftp://springbank.eng/",
+	"ftp://springbank.eng:21/",
+	"ftp://userid:password@springbank.eng/",
+	"ftp://userid:password@springbank.eng:21/",
+	"ftp://userid:password@springbank.eng:90"
     };
 
-    public static void main(String[] args) throws Exception {
-        for (int i=0; i<specs.length; i++) {
-            URL ftp = new URL(specs[i]);
+    public static void main(String[] args) throws Exception {  
+        for (int i=0; i<specs.length; i++) {                   
+            URL ftp = new URL(specs[i]);                       
             if (!"springbank.eng".equals(ftp.getHost())) {
                 throw new Exception("Parsing of URLs with : broken");
             }
-        }
+        }                                                      
     }
 
 }

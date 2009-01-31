@@ -44,7 +44,7 @@ import javax.swing.plaf.basic.BasicFileChooserUI;
  * Note: This class is abstract. It does not actually create the file chooser GUI.
  * <p>
  * Note that the classes in the com.sun.java.swing.plaf.synth
- * package are not
+ * package are not 
  * part of the core Java APIs. They are a part of Sun's JDK and JRE
  * distributions. Although other licensees may choose to distribute
  * these classes, developers cannot depend on their availability in
@@ -52,6 +52,7 @@ import javax.swing.plaf.basic.BasicFileChooserUI;
  * incompatible ways between releases. While this class is public, it
  * shoud be considered an implementation detail, and subject to change.
  *
+ * @version %I%, %G%
  * @author Leif Samuelsson
  * @author Jeff Dinkins
  */
@@ -113,13 +114,13 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
             if (border == null || border instanceof UIResource) {
                 c.setBorder(new UIBorder(style.getInsets(context, null)));
             }
-
+            
             directoryIcon = style.getIcon(context, "FileView.directoryIcon");
             fileIcon = style.getIcon(context, "FileView.fileIcon");
             computerIcon = style.getIcon(context, "FileView.computerIcon");
             hardDriveIcon = style.getIcon(context, "FileView.hardDriveIcon");
             floppyDriveIcon = style.getIcon(context, "FileView.floppyDriveIcon");
-
+            
             newFolderIcon    = style.getIcon(context, "FileChooser.newFolderIcon");
             upFolderIcon     = style.getIcon(context, "FileChooser.upFolderIcon");
             homeFolderIcon   = style.getIcon(context, "FileChooser.homeFolderIcon");
@@ -132,64 +133,64 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
         super.installUI(c);
         SwingUtilities.replaceUIActionMap(c, createActionMap());
     }
-
+    
     public void installComponents(JFileChooser fc) {
         SynthContext context = getContext(fc, ENABLED);
 
-        cancelButton = new JButton(cancelButtonText);
-        cancelButton.setName("SynthFileChooser.cancelButton");
-        cancelButton.setIcon(context.getStyle().getIcon(context, "FileChooser.cancelIcon"));
-        cancelButton.setMnemonic(cancelButtonMnemonic);
-        cancelButton.setToolTipText(cancelButtonToolTipText);
-        cancelButton.addActionListener(getCancelSelectionAction());
+	cancelButton = new JButton(cancelButtonText);
+	cancelButton.setName("SynthFileChooser.cancelButton");
+	cancelButton.setIcon(context.getStyle().getIcon(context, "FileChooser.cancelIcon"));
+	cancelButton.setMnemonic(cancelButtonMnemonic);
+	cancelButton.setToolTipText(cancelButtonToolTipText);
+	cancelButton.addActionListener(getCancelSelectionAction());
 
-        approveButton = new JButton(getApproveButtonText(fc));
-        approveButton.setName("SynthFileChooser.approveButton");
-        approveButton.setIcon(context.getStyle().getIcon(context, "FileChooser.okIcon"));
-        approveButton.setMnemonic(getApproveButtonMnemonic(fc));
-        approveButton.setToolTipText(getApproveButtonToolTipText(fc));
-        approveButton.addActionListener(getApproveSelectionAction());
+	approveButton = new JButton(getApproveButtonText(fc));
+	approveButton.setName("SynthFileChooser.approveButton");
+	approveButton.setIcon(context.getStyle().getIcon(context, "FileChooser.okIcon"));
+	approveButton.setMnemonic(getApproveButtonMnemonic(fc));
+	approveButton.setToolTipText(getApproveButtonToolTipText(fc));
+	approveButton.addActionListener(getApproveSelectionAction());
 
     }
 
     public void uninstallComponents(JFileChooser fc) {
-        fc.removeAll();
+	fc.removeAll();
     }
 
     protected void installListeners(JFileChooser fc) {
         super.installListeners(fc);
 
-        getModel().addListDataListener(new ListDataListener() {
-            public void contentsChanged(ListDataEvent e) {
-                // Update the selection after JList has been updated
-                new DelayedSelectionUpdater();
-            }
-            public void intervalAdded(ListDataEvent e) {
-                new DelayedSelectionUpdater();
-            }
-            public void intervalRemoved(ListDataEvent e) {
-            }
-        });
+	getModel().addListDataListener(new ListDataListener() {
+	    public void contentsChanged(ListDataEvent e) {
+		// Update the selection after JList has been updated
+		new DelayedSelectionUpdater();
+	    }
+	    public void intervalAdded(ListDataEvent e) {
+		new DelayedSelectionUpdater();
+	    }
+	    public void intervalRemoved(ListDataEvent e) {
+	    }
+	});
 
     }
 
     private class DelayedSelectionUpdater implements Runnable {
-        DelayedSelectionUpdater() {
-            SwingUtilities.invokeLater(this);
-        }
+	DelayedSelectionUpdater() {
+	    SwingUtilities.invokeLater(this);
+	}
 
-        public void run() {
-            updateFileNameCompletion();
-        }
+	public void run() {
+	    updateFileNameCompletion();
+	}
     }
 
     ActionMap createActionMap() {
-        ActionMap map = new ActionMapUIResource();
+	ActionMap map = new ActionMapUIResource();
         map.put("approveSelection", getApproveSelectionAction());
-        map.put("cancelSelection", getCancelSelectionAction());
+	map.put("cancelSelection", getCancelSelectionAction());
         map.put("Go Up", getChangeToParentDirectoryAction());
         map.put("fileNameCompletion", getFileNameCompletionAction());
-        return map;
+	return map;
     }
 
 
@@ -207,7 +208,7 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
     }
 
     protected void installIcons(JFileChooser fc) {
-        // The icons are installed in updateStyle, not here
+	// The icons are installed in updateStyle, not here
     }
 
     public void update(Graphics g, JComponent c) {
@@ -223,9 +224,9 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
         paint(context, g);
     }
 
-    public void paintBorder(SynthContext context, Graphics g, int x, int y, int w, int h) {
+    public void paintBorder(SynthContext context, Graphics g, int x, int y, int w, int h) {        
     }
-
+    
     public void paint(Graphics g, JComponent c) {
         SynthContext context = getContext(c);
 
@@ -243,7 +244,7 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
 
     protected void doSelectedFilesChanged(PropertyChangeEvent e) {
     }
-
+    
     protected void doDirectoryChanged(PropertyChangeEvent e) {
     }
 
@@ -254,55 +255,55 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
     }
 
     protected void doMultiSelectionChanged(PropertyChangeEvent e) {
-        if (!getFileChooser().isMultiSelectionEnabled()) {
-            getFileChooser().setSelectedFiles(null);
-        }
+	if (!getFileChooser().isMultiSelectionEnabled()) {
+	    getFileChooser().setSelectedFiles(null);
+	}
     }
 
     protected void doControlButtonsChanged(PropertyChangeEvent e) {
-        if (getFileChooser().getControlButtonsAreShown()) {
-            approveButton.setText(getApproveButtonText(getFileChooser()));
-            approveButton.setToolTipText(getApproveButtonToolTipText(getFileChooser()));
-        }
+	if (getFileChooser().getControlButtonsAreShown()) {
+	    approveButton.setText(getApproveButtonText(getFileChooser()));
+	    approveButton.setToolTipText(getApproveButtonToolTipText(getFileChooser()));
+	}
     }
 
     protected void doAncestorChanged(PropertyChangeEvent e) {
     }
 
     public PropertyChangeListener createPropertyChangeListener(JFileChooser fc) {
-        return new SynthFCPropertyChangeListener();
+	return new SynthFCPropertyChangeListener();
     }
 
     private class SynthFCPropertyChangeListener implements PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent e) {
-            String prop = e.getPropertyName();
-            if (prop.equals(JFileChooser.FILE_SELECTION_MODE_CHANGED_PROPERTY)) {
-                doFileSelectionModeChanged(e);
-            } else if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY)) {
-                doSelectedFileChanged(e);
-            } else if (prop.equals(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY)) {
-                doSelectedFilesChanged(e);
-            } else if (prop.equals(JFileChooser.DIRECTORY_CHANGED_PROPERTY)) {
-                doDirectoryChanged(e);
-            } else if (prop == JFileChooser.MULTI_SELECTION_ENABLED_CHANGED_PROPERTY) {
-                doMultiSelectionChanged(e);
-            } else if (prop == JFileChooser.ACCESSORY_CHANGED_PROPERTY) {
-                doAccessoryChanged(e);
-            } else if (prop == JFileChooser.APPROVE_BUTTON_TEXT_CHANGED_PROPERTY ||
-                       prop == JFileChooser.APPROVE_BUTTON_TOOL_TIP_TEXT_CHANGED_PROPERTY ||
-                       prop == JFileChooser.DIALOG_TYPE_CHANGED_PROPERTY ||
-                       prop == JFileChooser.CONTROL_BUTTONS_ARE_SHOWN_CHANGED_PROPERTY) {
-                doControlButtonsChanged(e);
-            } else if (prop.equals("componentOrientation")) {
-                ComponentOrientation o = (ComponentOrientation)e.getNewValue();
-                JFileChooser cc = (JFileChooser)e.getSource();
-                if (o != (ComponentOrientation)e.getOldValue()) {
-                    cc.applyComponentOrientation(o);
-                }
-            } else if (prop.equals("ancestor")) {
-                doAncestorChanged(e);
-            }
-        }
+	public void propertyChange(PropertyChangeEvent e) {
+	    String prop = e.getPropertyName();
+	    if (prop.equals(JFileChooser.FILE_SELECTION_MODE_CHANGED_PROPERTY)) {
+		doFileSelectionModeChanged(e);
+	    } else if (prop.equals(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY)) {
+		doSelectedFileChanged(e);
+	    } else if (prop.equals(JFileChooser.SELECTED_FILES_CHANGED_PROPERTY)) {
+		doSelectedFilesChanged(e);
+	    } else if (prop.equals(JFileChooser.DIRECTORY_CHANGED_PROPERTY)) {
+		doDirectoryChanged(e);
+	    } else if (prop == JFileChooser.MULTI_SELECTION_ENABLED_CHANGED_PROPERTY) {
+		doMultiSelectionChanged(e);
+	    } else if (prop == JFileChooser.ACCESSORY_CHANGED_PROPERTY) {
+		doAccessoryChanged(e);
+	    } else if (prop == JFileChooser.APPROVE_BUTTON_TEXT_CHANGED_PROPERTY ||
+		       prop == JFileChooser.APPROVE_BUTTON_TOOL_TIP_TEXT_CHANGED_PROPERTY ||
+		       prop == JFileChooser.DIALOG_TYPE_CHANGED_PROPERTY ||
+		       prop == JFileChooser.CONTROL_BUTTONS_ARE_SHOWN_CHANGED_PROPERTY) {
+		doControlButtonsChanged(e);
+	    } else if (prop.equals("componentOrientation")) {
+		ComponentOrientation o = (ComponentOrientation)e.getNewValue();
+		JFileChooser cc = (JFileChooser)e.getSource();
+		if (o != (ComponentOrientation)e.getOldValue()) {
+		    cc.applyComponentOrientation(o);
+		}
+	    } else if (prop.equals("ancestor")) {
+		doAncestorChanged(e);
+	    }
+	}
     }
 
 
@@ -352,168 +353,168 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
     private String fileNameCompletionString;
 
     private void updateFileNameCompletion() {
-        if (fileNameCompletionString != null) {
-            if (fileNameCompletionString.equals(getFileName())) {
+	if (fileNameCompletionString != null) {
+	    if (fileNameCompletionString.equals(getFileName())) {
                 File[] files = getModel().getFiles().toArray(new File[0]);
-                String str = getCommonStartString(files);
-                if (str != null && str.startsWith(fileNameCompletionString)) {
-                    setFileName(str);
-                }
-                fileNameCompletionString = null;
-            }
-        }
+		String str = getCommonStartString(files);
+		if (str != null && str.startsWith(fileNameCompletionString)) {
+		    setFileName(str);
+		}
+		fileNameCompletionString = null;
+	    }
+	}
     }
 
     private String getCommonStartString(File[] files) {
-        String str = null;
-        String str2 = null;
-        int i = 0;
+	String str = null;
+	String str2 = null;
+	int i = 0;
         if (files.length == 0) {
             return null;
         }
-        while (true) {
-            for (int f = 0; f < files.length; f++) {
-                String name = files[f].getName();
-                if (f == 0) {
-                    if (name.length() == i) {
-                        return str;
-                    }
-                    str2 = name.substring(0, i+1);
-                }
-                if (!name.startsWith(str2)) {
-                    return str;
-                }
-            }
-            str = str2;
-            i++;
-        }
+	while (true) {
+	    for (int f = 0; f < files.length; f++) {
+		String name = files[f].getName();
+		if (f == 0) {
+		    if (name.length() == i) {
+			return str;
+		    }
+		    str2 = name.substring(0, i+1);
+		}
+		if (!name.startsWith(str2)) {
+		    return str;
+		}
+	    }
+	    str = str2;
+	    i++;
+	}
     }
 
     private void resetGlobFilter() {
-        if (actualFileFilter != null) {
-            JFileChooser chooser = getFileChooser();
-            FileFilter currentFilter = chooser.getFileFilter();
-            if (currentFilter != null && currentFilter.equals(globFilter)) {
-                chooser.setFileFilter(actualFileFilter);
-                chooser.removeChoosableFileFilter(globFilter);
-            }
-            actualFileFilter = null;
-        }
+	if (actualFileFilter != null) {
+	    JFileChooser chooser = getFileChooser();
+	    FileFilter currentFilter = chooser.getFileFilter();
+	    if (currentFilter != null && currentFilter.equals(globFilter)) {
+		chooser.setFileFilter(actualFileFilter);
+		chooser.removeChoosableFileFilter(globFilter);
+	    }
+	    actualFileFilter = null;
+	}
     }
 
     private static boolean isGlobPattern(String fileName) {
-        return ((File.separatorChar == '\\' && fileName.indexOf('*') >= 0)
-                || (File.separatorChar == '/' && (fileName.indexOf('*') >= 0
-                                                  || fileName.indexOf('?') >= 0
-                                                  || fileName.indexOf('[') >= 0)));
+	return ((File.separatorChar == '\\' && fileName.indexOf('*') >= 0)
+		|| (File.separatorChar == '/' && (fileName.indexOf('*') >= 0
+						  || fileName.indexOf('?') >= 0
+						  || fileName.indexOf('[') >= 0)));
     }
 
-
+    
     /* A file filter which accepts file patterns containing
      * the special wildcard '*' on windows, plus '?', and '[ ]' on Unix.
      */
     class GlobFilter extends FileFilter {
-        Pattern pattern;
-        String globPattern;
+	Pattern pattern;
+	String globPattern;
 
-        public void setPattern(String globPattern) {
-            char[] gPat = globPattern.toCharArray();
-            char[] rPat = new char[gPat.length * 2];
-            boolean isWin32 = (File.separatorChar == '\\');
-            boolean inBrackets = false;
-            int j = 0;
+	public void setPattern(String globPattern) {
+	    char[] gPat = globPattern.toCharArray();
+	    char[] rPat = new char[gPat.length * 2];
+	    boolean isWin32 = (File.separatorChar == '\\');
+	    boolean inBrackets = false;
+	    int j = 0;
 
-            this.globPattern = globPattern;
+	    this.globPattern = globPattern;
 
-            if (isWin32) {
-                // On windows, a pattern ending with *.* is equal to ending with *
-                int len = gPat.length;
-                if (globPattern.endsWith("*.*")) {
-                    len -= 2;
-                }
-                for (int i = 0; i < len; i++) {
-                    if (gPat[i] == '*') {
-                        rPat[j++] = '.';
-                    }
-                    rPat[j++] = gPat[i];
-                }
-            } else {
-                for (int i = 0; i < gPat.length; i++) {
-                    switch(gPat[i]) {
-                      case '*':
-                        if (!inBrackets) {
-                            rPat[j++] = '.';
-                        }
-                        rPat[j++] = '*';
-                        break;
+	    if (isWin32) {
+		// On windows, a pattern ending with *.* is equal to ending with *
+		int len = gPat.length;
+		if (globPattern.endsWith("*.*")) {
+		    len -= 2;
+		}
+		for (int i = 0; i < len; i++) {
+		    if (gPat[i] == '*') {
+			rPat[j++] = '.';
+		    }
+		    rPat[j++] = gPat[i];
+		}
+	    } else {
+		for (int i = 0; i < gPat.length; i++) {
+		    switch(gPat[i]) {
+		      case '*':
+			if (!inBrackets) {
+			    rPat[j++] = '.';
+			}
+			rPat[j++] = '*';
+			break;
 
-                      case '?':
-                        rPat[j++] = inBrackets ? '?' : '.';
-                        break;
+		      case '?':
+			rPat[j++] = inBrackets ? '?' : '.';
+			break;
 
-                      case '[':
-                        inBrackets = true;
-                        rPat[j++] = gPat[i];
+		      case '[':
+			inBrackets = true;
+			rPat[j++] = gPat[i];
 
-                        if (i < gPat.length - 1) {
-                            switch (gPat[i+1]) {
-                              case '!':
-                              case '^':
-                                rPat[j++] = '^';
-                                i++;
-                                break;
+			if (i < gPat.length - 1) {
+			    switch (gPat[i+1]) {
+			      case '!':
+			      case '^':
+				rPat[j++] = '^';
+				i++;
+				break;
 
-                              case ']':
-                                rPat[j++] = gPat[++i];
-                                break;
-                            }
-                        }
-                        break;
+			      case ']':
+				rPat[j++] = gPat[++i];
+				break;
+			    }
+			}
+			break;
 
-                      case ']':
-                        rPat[j++] = gPat[i];
-                        inBrackets = false;
-                        break;
+		      case ']':
+			rPat[j++] = gPat[i];
+			inBrackets = false;
+			break;
 
-                      case '\\':
-                        if (i == 0 && gPat.length > 1 && gPat[1] == '~') {
-                            rPat[j++] = gPat[++i];
-                        } else {
-                            rPat[j++] = '\\';
-                            if (i < gPat.length - 1 && "*?[]".indexOf(gPat[i+1]) >= 0) {
-                                rPat[j++] = gPat[++i];
-                            } else {
-                                rPat[j++] = '\\';
-                            }
-                        }
-                        break;
+		      case '\\':
+			if (i == 0 && gPat.length > 1 && gPat[1] == '~') {
+			    rPat[j++] = gPat[++i];
+			} else {
+			    rPat[j++] = '\\';
+			    if (i < gPat.length - 1 && "*?[]".indexOf(gPat[i+1]) >= 0) {
+				rPat[j++] = gPat[++i];
+			    } else {
+				rPat[j++] = '\\';
+			    }
+			}
+			break;
 
-                      default:
-                        //if ("+()|^$.{}<>".indexOf(gPat[i]) >= 0) {
-                        if (!Character.isLetterOrDigit(gPat[i])) {
-                            rPat[j++] = '\\';
-                        }
-                        rPat[j++] = gPat[i];
-                        break;
-                    }
-                }
-            }
-            this.pattern = Pattern.compile(new String(rPat, 0, j), Pattern.CASE_INSENSITIVE);
-        }
+		      default:
+			//if ("+()|^$.{}<>".indexOf(gPat[i]) >= 0) {
+			if (!Character.isLetterOrDigit(gPat[i])) {
+			    rPat[j++] = '\\';
+			}
+			rPat[j++] = gPat[i];
+			break;
+		    }
+		}
+	    }
+	    this.pattern = Pattern.compile(new String(rPat, 0, j), Pattern.CASE_INSENSITIVE);
+	}
 
-        public boolean accept(File f) {
-            if (f == null) {
-                return false;
-            }
-            if (f.isDirectory()) {
-                return true;
-            }
-            return pattern.matcher(f.getName()).matches();
-        }
+	public boolean accept(File f) {
+	    if (f == null) {
+		return false;
+	    }
+	    if (f.isDirectory()) {
+		return true;
+	    }
+	    return pattern.matcher(f.getName()).matches();
+	}
 
-        public String getDescription() {
-            return globPattern;
-        }
+	public String getDescription() {
+	    return globPattern;
+	}
     }
 
 
@@ -527,16 +528,16 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
     // *****************************
 
     public Action getFileNameCompletionAction() {
-        return fileNameCompletionAction;
+	return fileNameCompletionAction;
     }
 
 
     protected JButton getApproveButton(JFileChooser fc) {
-        return approveButton;
+	return approveButton;
     }
 
     protected JButton getCancelButton(JFileChooser fc) {
-        return cancelButton;
+	return cancelButton;
     }
 
 
@@ -566,7 +567,9 @@ public abstract class SynthFileChooserUI extends BasicFileChooserUI implements
                       context, g, x, y, width, height);
             }
         }
-
+        public Insets getBorderInsets(Component c) { 
+            return getBorderInsets(c, null);
+        }
         public Insets getBorderInsets(Component c, Insets insets) {
             if (insets == null) {
                 insets = new Insets(0, 0, 0, 0);

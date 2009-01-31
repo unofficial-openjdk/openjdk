@@ -1,36 +1,36 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
 
 /*****************************************************************************
- *   "Gif-Lib" - Yet another gif library.
- *
- * Written by:  Gershon Elber            IBM PC Ver 0.1,    Jun. 1989
+ *   "Gif-Lib" - Yet another gif library.                     
+ *                                         
+ * Written by:  Gershon Elber            IBM PC Ver 0.1,    Jun. 1989    
  *****************************************************************************
- * Handle error reporting for the GIF library.
+ * Handle error reporting for the GIF library.                     
  *****************************************************************************
- * History:
- * 17 Jun 89 - Version 1.0 by Gershon Elber.
+ * History:                                     
+ * 17 Jun 89 - Version 1.0 by Gershon Elber.                     
  ****************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -43,7 +43,7 @@
 int _GifError = 0;
 
 /*****************************************************************************
- * Return the last GIF error (0 if none) and reset the error.
+ * Return the last GIF error (0 if none) and reset the error.             
  ****************************************************************************/
 int
 GifLastError(void) {
@@ -55,7 +55,7 @@ GifLastError(void) {
 }
 
 /*****************************************************************************
- * Print the last GIF error to stderr.
+ * Print the last GIF error to stderr.                         
  ****************************************************************************/
 void
 PrintGifError(void) {

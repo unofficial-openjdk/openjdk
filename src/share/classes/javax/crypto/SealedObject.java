@@ -146,44 +146,44 @@ public class SealedObject implements Serializable {
      * of the cipher's block size
      */
     public SealedObject(Serializable object, Cipher c) throws IOException,
-        IllegalBlockSizeException
+	IllegalBlockSizeException
     {
-        /*
-         * Serialize the object
-         */
+	/*
+	 * Serialize the object
+	 */
 
-        // creating a stream pipe-line, from a to b
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
-        ObjectOutput a = new ObjectOutputStream(b);
-        byte[] content;
-        try {
-            // write and flush the object content to byte array
-            a.writeObject(object);
-            a.flush();
-            content = b.toByteArray();
-        } finally {
-            a.close();
-        }
+	// creating a stream pipe-line, from a to b
+	ByteArrayOutputStream b = new ByteArrayOutputStream();
+	ObjectOutput a = new ObjectOutputStream(b);
+	byte[] content;
+	try {
+	    // write and flush the object content to byte array
+	    a.writeObject(object);
+	    a.flush();
+	    content = b.toByteArray();
+	} finally {
+	    a.close();
+	}
 
-        /*
-         * Seal the object
-         */
-        try {
-            this.encryptedContent = c.doFinal(content);
-        }
-        catch (BadPaddingException ex) {
-            // if sealing is encryption only
-            // Should never happen??
-        }
+	/*
+	 * Seal the object
+	 */
+	try {
+	    this.encryptedContent = c.doFinal(content);
+	}
+	catch (BadPaddingException ex) {
+	    // if sealing is encryption only
+	    // Should never happen??
+	}
 
-        // Save the parameters
-        if (c.getParameters() != null) {
-            this.encodedParams = c.getParameters().getEncoded();
-            this.paramsAlg = c.getParameters().getAlgorithm();
-        }
+	// Save the parameters
+	if (c.getParameters() != null) {
+	    this.encodedParams = c.getParameters().getEncoded();
+	    this.paramsAlg = c.getParameters().getAlgorithm();
+	}
 
-        // Save the encryption algorithm
-        this.sealAlg = c.getAlgorithm();
+	// Save the encryption algorithm
+	this.sealAlg = c.getAlgorithm();
     }
 
     /**
@@ -193,14 +193,14 @@ public class SealedObject implements Serializable {
      * @exception NullPointerException if the given sealed object is null.
      */
     protected SealedObject(SealedObject so) {
-        this.encryptedContent = (byte[]) so.encryptedContent.clone();
-        this.sealAlg = so.sealAlg;
-        this.paramsAlg = so.paramsAlg;
-        if (so.encodedParams != null) {
-            this.encodedParams = (byte[]) so.encodedParams.clone();
-        } else {
-            this.encodedParams = null;
-        }
+	this.encryptedContent = (byte[]) so.encryptedContent.clone();
+	this.sealAlg = so.sealAlg;
+	this.paramsAlg = so.paramsAlg;
+	if (so.encodedParams != null) {
+	    this.encodedParams = (byte[]) so.encodedParams.clone();
+	} else {
+	    this.encodedParams = null;
+	}
     }
 
     /**
@@ -209,7 +209,7 @@ public class SealedObject implements Serializable {
      * @return the algorithm that was used to seal this object.
      */
     public final String getAlgorithm() {
-        return this.sealAlg;
+	return this.sealAlg;
     }
 
     /**
@@ -242,25 +242,25 @@ public class SealedObject implements Serializable {
      * @exception NullPointerException if <code>key</code> is null.
      */
     public final Object getObject(Key key)
-        throws IOException, ClassNotFoundException, NoSuchAlgorithmException,
-            InvalidKeyException
+	throws IOException, ClassNotFoundException, NoSuchAlgorithmException,
+	    InvalidKeyException
     {
-        if (key == null) {
-            throw new NullPointerException("key is null");
-        }
+	if (key == null) {
+	    throw new NullPointerException("key is null");
+	}
 
-        try {
-            return unseal(key, null);
-        } catch (NoSuchProviderException nspe) {
-            // we've already caught NoSuchProviderException's and converted
-            // them into NoSuchAlgorithmException's with details about
-            // the failing algorithm
-            throw new NoSuchAlgorithmException("algorithm not found");
-        } catch (IllegalBlockSizeException ibse) {
-            throw new InvalidKeyException(ibse.getMessage());
-        } catch (BadPaddingException bpe) {
-            throw new InvalidKeyException(bpe.getMessage());
-        }
+	try {
+	    return unseal(key, null);
+	} catch (NoSuchProviderException nspe) {
+	    // we've already caught NoSuchProviderException's and converted
+	    // them into NoSuchAlgorithmException's with details about
+	    // the failing algorithm
+	    throw new NoSuchAlgorithmException("algorithm not found");
+	} catch (IllegalBlockSizeException ibse) {
+	    throw new InvalidKeyException(ibse.getMessage());
+	} catch (BadPaddingException bpe) {
+	    throw new InvalidKeyException(bpe.getMessage());
+	}
     }
 
     /**
@@ -286,26 +286,26 @@ public class SealedObject implements Serializable {
      * the input data does not have proper expected padding bytes
      */
     public final Object getObject(Cipher c)
-        throws IOException, ClassNotFoundException, IllegalBlockSizeException,
-            BadPaddingException
+	throws IOException, ClassNotFoundException, IllegalBlockSizeException,
+	    BadPaddingException
     {
-        /*
-         * Unseal the object
-         */
-        byte[] content = c.doFinal(this.encryptedContent);
+	/*
+	 * Unseal the object
+	 */
+	byte[] content = c.doFinal(this.encryptedContent);
 
-        /*
-         * De-serialize it
-         */
-        // creating a stream pipe-line, from b to a
-        ByteArrayInputStream b = new ByteArrayInputStream(content);
-        ObjectInput a = new extObjectInputStream(b);
-        try {
-            Object obj = a.readObject();
-            return obj;
-        } finally {
-            a.close();
-        }
+	/*
+	 * De-serialize it
+	 */
+	// creating a stream pipe-line, from b to a
+	ByteArrayInputStream b = new ByteArrayInputStream(content);
+	ObjectInput a = new extObjectInputStream(b);
+	try {
+	    Object obj = a.readObject();
+	    return obj;
+	} finally {
+	    a.close();
+	}
     }
 
     /**
@@ -341,103 +341,103 @@ public class SealedObject implements Serializable {
      * @exception NullPointerException if <code>key</code> is null.
      */
     public final Object getObject(Key key, String provider)
-        throws IOException, ClassNotFoundException, NoSuchAlgorithmException,
-            NoSuchProviderException, InvalidKeyException
+	throws IOException, ClassNotFoundException, NoSuchAlgorithmException,
+	    NoSuchProviderException, InvalidKeyException
     {
-        if (key == null) {
-            throw new NullPointerException("key is null");
-        }
-        if (provider == null || provider.length() == 0) {
-            throw new IllegalArgumentException("missing provider");
-        }
+	if (key == null) {
+	    throw new NullPointerException("key is null");
+	}
+	if (provider == null || provider.length() == 0) {
+	    throw new IllegalArgumentException("missing provider");
+	}
 
-        try {
-            return unseal(key, provider);
-        } catch (IllegalBlockSizeException ibse) {
-            throw new InvalidKeyException(ibse.getMessage());
-        } catch (BadPaddingException bpe) {
-            throw new InvalidKeyException(bpe.getMessage());
-        }
+	try {
+	    return unseal(key, provider);
+	} catch (IllegalBlockSizeException ibse) {
+	    throw new InvalidKeyException(ibse.getMessage());
+	} catch (BadPaddingException bpe) {
+	    throw new InvalidKeyException(bpe.getMessage());
+	}
     }
 
 
     private Object unseal(Key key, String provider)
-        throws IOException, ClassNotFoundException, NoSuchAlgorithmException,
-            NoSuchProviderException, InvalidKeyException,
-            IllegalBlockSizeException, BadPaddingException
+	throws IOException, ClassNotFoundException, NoSuchAlgorithmException,
+	    NoSuchProviderException, InvalidKeyException,
+	    IllegalBlockSizeException, BadPaddingException
     {
-        /*
-         * Create the parameter object.
-         */
-        AlgorithmParameters params = null;
-        if (this.encodedParams != null) {
-            try {
-                if (provider != null)
-                    params = AlgorithmParameters.getInstance(this.paramsAlg,
-                                                             provider);
-                else
-                    params = AlgorithmParameters.getInstance(this.paramsAlg);
+	/*
+	 * Create the parameter object.
+	 */
+	AlgorithmParameters params = null;
+	if (this.encodedParams != null) {
+	    try {
+		if (provider != null)
+		    params = AlgorithmParameters.getInstance(this.paramsAlg,
+							     provider);
+		else
+		    params = AlgorithmParameters.getInstance(this.paramsAlg);
 
-            } catch (NoSuchProviderException nspe) {
-                if (provider == null) {
-                    throw new NoSuchAlgorithmException(this.paramsAlg
-                                                       + " not found");
-                } else {
-                    throw new NoSuchProviderException(nspe.getMessage());
-                }
-            }
-            params.init(this.encodedParams);
-        }
+	    } catch (NoSuchProviderException nspe) {
+		if (provider == null) {
+		    throw new NoSuchAlgorithmException(this.paramsAlg
+						       + " not found");
+		} else {
+		    throw new NoSuchProviderException(nspe.getMessage());
+		}
+	    }
+	    params.init(this.encodedParams);
+	}
 
-        /*
-         * Create and initialize the cipher.
-         */
-        Cipher c;
-        try {
-            if (provider != null)
-                c = Cipher.getInstance(this.sealAlg, provider);
-            else
-                c = Cipher.getInstance(this.sealAlg);
-        } catch (NoSuchPaddingException nspe) {
-            throw new NoSuchAlgorithmException("Padding that was used in "
-                                               + "sealing operation not "
-                                               + "available");
-        } catch (NoSuchProviderException nspe) {
-            if (provider == null) {
-                throw new NoSuchAlgorithmException(this.sealAlg+" not found");
-            } else {
-                throw new NoSuchProviderException(nspe.getMessage());
-            }
-        }
+	/*
+	 * Create and initialize the cipher.
+	 */
+	Cipher c;
+	try {
+	    if (provider != null)
+		c = Cipher.getInstance(this.sealAlg, provider);
+	    else
+		c = Cipher.getInstance(this.sealAlg);
+	} catch (NoSuchPaddingException nspe) {
+	    throw new NoSuchAlgorithmException("Padding that was used in "
+					       + "sealing operation not "
+					       + "available");
+	} catch (NoSuchProviderException nspe) {
+	    if (provider == null) {
+		throw new NoSuchAlgorithmException(this.sealAlg+" not found");
+	    } else {
+		throw new NoSuchProviderException(nspe.getMessage());
+	    }
+	}
 
-        try {
-            if (params != null)
-                c.init(Cipher.DECRYPT_MODE, key, params);
-            else
-                c.init(Cipher.DECRYPT_MODE, key);
-        } catch (InvalidAlgorithmParameterException iape) {
-            // this should never happen, because we use the exact same
-            // parameters that were used in the sealing operation
-            throw new RuntimeException(iape.getMessage());
-        }
+	try {
+	    if (params != null)
+		c.init(Cipher.DECRYPT_MODE, key, params);
+	    else
+		c.init(Cipher.DECRYPT_MODE, key);
+	} catch (InvalidAlgorithmParameterException iape) {
+	    // this should never happen, because we use the exact same
+	    // parameters that were used in the sealing operation
+	    throw new RuntimeException(iape.getMessage());
+	}
 
-        /*
-         * Unseal the object
-         */
-        byte[] content = c.doFinal(this.encryptedContent);
+	/*
+	 * Unseal the object
+	 */
+	byte[] content = c.doFinal(this.encryptedContent);
 
-        /*
-         * De-serialize it
-         */
-        // creating a stream pipe-line, from b to a
-        ByteArrayInputStream b = new ByteArrayInputStream(content);
-        ObjectInput a = new extObjectInputStream(b);
-        try {
-            Object obj = a.readObject();
-            return obj;
-        } finally {
-            a.close();
-        }
+	/*
+	 * De-serialize it
+	 */
+	// creating a stream pipe-line, from b to a
+	ByteArrayInputStream b = new ByteArrayInputStream(content);
+	ObjectInput a = new extObjectInputStream(b);
+	try {
+	    Object obj = a.readObject();
+	    return obj;
+	} finally {
+	    a.close();
+	}
     }
 
     /**
@@ -446,13 +446,13 @@ public class SealedObject implements Serializable {
      * @exception NullPointerException if s is null.
      */
     private void readObject(java.io.ObjectInputStream s)
-        throws java.io.IOException, ClassNotFoundException
+	throws java.io.IOException, ClassNotFoundException
     {
-        s.defaultReadObject();
-        if (encryptedContent != null)
-            encryptedContent = (byte[])encryptedContent.clone();
-        if (encodedParams != null)
-            encodedParams = (byte[])encodedParams.clone();
+	s.defaultReadObject();
+	if (encryptedContent != null)
+	    encryptedContent = (byte[])encryptedContent.clone();
+	if (encodedParams != null)
+	    encodedParams = (byte[])encodedParams.clone();
     }
 }
 
@@ -461,37 +461,37 @@ final class extObjectInputStream extends ObjectInputStream {
     private static ClassLoader systemClassLoader = null;
 
     extObjectInputStream(InputStream in)
-        throws IOException, StreamCorruptedException {
-        super(in);
+	throws IOException, StreamCorruptedException {
+	super(in);
     }
 
     protected Class resolveClass(ObjectStreamClass v)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
 
-        try {
-            /*
-             * Calling the super.resolveClass() first
-             * will let us pick up bug fixes in the super
-             * class (e.g., 4171142).
-             */
-            return super.resolveClass(v);
-        } catch (ClassNotFoundException cnfe) {
-            /*
-             * This is a workaround for bug 4224921.
-             */
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            if (loader == null) {
-                if (systemClassLoader == null) {
-                    systemClassLoader = ClassLoader.getSystemClassLoader();
-                }
-                loader = systemClassLoader;
-                if (loader == null) {
-                    throw new ClassNotFoundException(v.getName());
-                }
-            }
+	try {
+	    /*
+	     * Calling the super.resolveClass() first
+	     * will let us pick up bug fixes in the super
+	     * class (e.g., 4171142).
+	     */
+	    return super.resolveClass(v);
+	} catch (ClassNotFoundException cnfe) {
+	    /*
+	     * This is a workaround for bug 4224921.
+	     */
+	    ClassLoader loader = Thread.currentThread().getContextClassLoader();
+	    if (loader == null) {
+		if (systemClassLoader == null) {
+		    systemClassLoader = ClassLoader.getSystemClassLoader();
+		}
+		loader = systemClassLoader;
+		if (loader == null) {
+		    throw new ClassNotFoundException(v.getName());
+		}
+	    }
 
-            return Class.forName(v.getName(), false, loader);
-        }
+	    return Class.forName(v.getName(), false, loader);
+	}
     }
 }

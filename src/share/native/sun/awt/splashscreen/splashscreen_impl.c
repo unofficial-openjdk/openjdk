@@ -59,7 +59,7 @@ SplashInit()
 
     memset(splash, 0, sizeof(Splash));
     splash->currentFrame = -1;
-    initFormat(&splash->imageFormat, QUAD_RED_MASK, QUAD_GREEN_MASK,
+    initFormat(&splash->imageFormat, QUAD_RED_MASK, QUAD_GREEN_MASK, 
         QUAD_BLUE_MASK, QUAD_ALPHA_MASK);
     SplashInitPlatform(splash);
 }
@@ -113,7 +113,7 @@ SplashIsStillLooping(Splash * splash)
 {
     if (splash->currentFrame < 0)
         return 0;
-    return splash->loopCount != 1 ||
+    return splash->loopCount != 1 || 
         splash->currentFrame + 1 < splash->frameCount;
 }
 
@@ -122,18 +122,18 @@ SplashUpdateScreenData(Splash * splash)
 {
     ImageRect srcRect, dstRect;
 
-    initRect(&srcRect, 0, 0, splash->width, splash->height, 1,
-        splash->width * sizeof(rgbquad_t),
+    initRect(&srcRect, 0, 0, splash->width, splash->height, 1, 
+        splash->width * sizeof(rgbquad_t), 
         splash->frames[splash->currentFrame].bitmapBits, &splash->imageFormat);
     if (splash->screenData)
         free(splash->screenData);
     splash->screenStride = splash->width * splash->screenFormat.depthBytes;
     if (splash->byteAlignment > 1)
-        splash->screenStride =
-            (splash->screenStride + splash->byteAlignment - 1) &
+        splash->screenStride = 
+            (splash->screenStride + splash->byteAlignment - 1) & 
             ~(splash->byteAlignment - 1);
     splash->screenData = malloc(splash->height * splash->screenStride);
-    initRect(&dstRect, 0, 0, splash->width, splash->height, 1,
+    initRect(&dstRect, 0, 0, splash->width, splash->height, 1, 
         splash->screenStride, splash->screenData, &splash->screenFormat);
     if (splash->overlayData) {
         convertRect2(&srcRect, &dstRect, CVT_BLEND, &splash->overlayRect);
@@ -157,7 +157,7 @@ SplashNextFrame(Splash * splash)
             if (splash->loopCount > 0)
                 splash->loopCount--;
         }
-    } while (splash->time + splash->frames[splash->currentFrame].delay -
+    } while (splash->time + splash->frames[splash->currentFrame].delay - 
         SplashTime() <= 0);
 }
 
@@ -178,7 +178,7 @@ BitmapToYXBandedRectangles(ImageRect * pSrcRect, RECT_T * out)
         i = 0;
 
         do {
-            while (i < pSrcRect->numSamples &&
+            while (i < pSrcRect->numSamples && 
                    getRGBA(pSrc, pSrcRect->format) < ALPHA_THRESHOLD) {
                 pSrc += pSrcRect->depthBytes;
                 ++i;
@@ -186,7 +186,7 @@ BitmapToYXBandedRectangles(ImageRect * pSrcRect, RECT_T * out)
             if (i >= pSrcRect->numSamples)
                 break;
             i0 = i;
-            while (i < pSrcRect->numSamples &&
+            while (i < pSrcRect->numSamples && 
                    getRGBA(pSrc, pSrcRect->format) >= ALPHA_THRESHOLD) {
                 pSrc += pSrcRect->depthBytes;
                 ++i;
@@ -196,7 +196,7 @@ BitmapToYXBandedRectangles(ImageRect * pSrcRect, RECT_T * out)
         } while (i < pSrcRect->numSamples);
 
         /*  check if the previous scanline is exactly the same, merge if so
-           (this is the only optimization we can use for YXBanded rectangles, and win32 supports
+           (this is the only optimization we can use for YXBanded rectangles, and win32 supports 
            YXBanded only */
 
         length = pThis - pLine;
@@ -256,7 +256,7 @@ SplashLoadStream(SplashStream * stream)
         }
     }
     stream->close(stream);
-
+    
     if (!success) {             // failed to decode
         if (splash->isVisible == 0) {
             SplashCleanup(splash);
@@ -371,3 +371,4 @@ int SplashStreamInitMemory(SplashStream * pStream, void* pData, int size) {
     pStream->close = closeMem;
     return 1;
 }
+

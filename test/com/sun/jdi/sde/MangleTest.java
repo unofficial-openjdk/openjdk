@@ -27,11 +27,11 @@ public class MangleTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         testSetUp();
         new MangleTest(args).startTests();
     }
-
+    
     /********** test set-up **********/
 
     static void testSetUp() throws Exception {
@@ -40,18 +40,18 @@ public class MangleTest extends TestScaffold {
                            new File(System.getProperty("test.src", "."),
                                     "Mangle.sde"));
     }
-
+    
     /********** test assist **********/
 
     void checkLocation(Location loc, String label,
-                       String expectedSourceName,
-                       String expectedSourcePath,
+                       String expectedSourceName, 
+                       String expectedSourcePath, 
                        int expectedLinenumber) throws Exception {
         String sourceName = loc.sourceName();
         if (sourceName.equals(expectedSourceName)) {
             println(label + " sourceName: " + sourceName);
         } else {
-            failure("FAIL: " + label +
+            failure("FAIL: " + label + 
                     " expected sourceName " + expectedSourceName +
                     " got - " + sourceName);
         }
@@ -60,7 +60,7 @@ public class MangleTest extends TestScaffold {
         if (sourcePath.equals(expectedSourcePath)) {
             println(label + " sourcePath: " + sourcePath);
         } else {
-            failure("FAIL: " + label +
+            failure("FAIL: " + label + 
                     " expected sourcePath " + expectedSourcePath +
                     " got - " + sourcePath);
         }
@@ -69,22 +69,22 @@ public class MangleTest extends TestScaffold {
         if (ln == expectedLinenumber) {
             println(label + " line number: " + ln);
         } else {
-            failure("FAIL: " + label +
+            failure("FAIL: " + label + 
                     " expected line number " + expectedLinenumber +
                     " got - " + ln);
         }
     }
 
-    void checkLocation(String stratum, Location loc, String label,
-                       String expectedSourceName,
-                       String expectedSourcePath,
+    void checkLocation(String stratum, Location loc, String label, 
+                       String expectedSourceName, 
+                       String expectedSourcePath, 
                        int expectedLinenumber) throws Exception {
         String sourceName = loc.sourceName(stratum);
         if (sourceName.equals(expectedSourceName)) {
             println(label + "(" + stratum + ")" +
                     " sourceName: " + sourceName);
         } else {
-            failure("FAIL: " + label + "(" + stratum + ")" +
+            failure("FAIL: " + label + "(" + stratum + ")" + 
                     " expected sourceName " + expectedSourceName +
                     " got " + sourceName);
         }
@@ -94,7 +94,7 @@ public class MangleTest extends TestScaffold {
             println(label + "(" + stratum + ")" +
                     " sourcePath: " + sourcePath);
         } else {
-            failure("FAIL: " + label + "(" + stratum + ")" +
+            failure("FAIL: " + label + "(" + stratum + ")" + 
                     " expected sourcePath " + expectedSourcePath +
                     " got " + sourcePath);
         }
@@ -104,7 +104,7 @@ public class MangleTest extends TestScaffold {
             println(label + "(" + stratum + ")" +
                     " line number: " + ln);
         } else {
-            failure("FAIL: " + label + "(" + stratum + ")" +
+            failure("FAIL: " + label + "(" + stratum + ")" + 
                     " expected line number " + expectedLinenumber +
                     " got " + ln);
         }
@@ -135,20 +135,20 @@ public class MangleTest extends TestScaffold {
         result.add(s1);
         return result;
     }
-
+        
     List listWith(String s1, String s2) {
         List result = new ArrayList();
         result.add(s1);
         result.add(s2);
         return result;
     }
-
+        
 
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass
          */
         BreakpointEvent bpe = startToMain("onion.pickle.Mangle");
@@ -168,28 +168,28 @@ public class MangleTest extends TestScaffold {
         if (sourceNames.equals(listWith("Mangle.java"))) {
             println("ref type Java sourceNames: " + sourceNames);
         } else {
-            failure("FAIL: unexpected ref type Java sourceNames - " +
+            failure("FAIL: unexpected ref type Java sourceNames - " + 
                     sourceNames);
         }
         sourceNames = targetClass.sourceNames("XYZ");
         if (sourceNames.equals(listWith("Mangle.xyz", "Incl.xyz"))) {
             println("ref type XYZ sourceNames: " + sourceNames);
         } else {
-            failure("FAIL: unexpected ref type XYZ sourceNames - " +
+            failure("FAIL: unexpected ref type XYZ sourceNames - " + 
                     sourceNames);
         }
         sourceNames = targetClass.sourceNames(null);
         if (sourceNames.equals(listWith("Mangle.xyz", "Incl.xyz"))) {
             println("ref type null sourceNames: " + sourceNames);
         } else {
-            failure("FAIL: unexpected ref type null sourceNames - " +
+            failure("FAIL: unexpected ref type null sourceNames - " + 
                     sourceNames);
         }
         sourceNames = targetClass.sourceNames("Rats");
         if (sourceNames.equals(listWith("Mangle.rats", "Incl.rats"))) {
             println("ref type Rats sourceNames: " + sourceNames);
         } else {
-            failure("FAIL: unexpected ref type Rats sourceNames - " +
+            failure("FAIL: unexpected ref type Rats sourceNames - " + 
                     sourceNames);
         }
         List sourcePaths;
@@ -197,33 +197,33 @@ public class MangleTest extends TestScaffold {
         if (sourcePaths.equals(listWith(op + "Mangle.java"))) {
             println("ref type Java sourcePaths: " + sourcePaths);
         } else {
-            failure("FAIL: unexpected ref type Java sourcePaths - " +
+            failure("FAIL: unexpected ref type Java sourcePaths - " + 
                     sourcePaths);
         }
         sourcePaths = targetClass.sourcePaths("XYZ");
         if (sourcePaths.equals(listWith("database14", op + "Incl.xyz"))) {
             println("ref type XYZ sourcePaths: " + sourcePaths);
         } else {
-            failure("FAIL: unexpected ref type XYZ sourcePaths - " +
+            failure("FAIL: unexpected ref type XYZ sourcePaths - " + 
                     sourcePaths);
         }
         sourcePaths = targetClass.sourcePaths(null);
         if (sourcePaths.equals(listWith("database14", op + "Incl.xyz"))) {
             println("ref type null sourcePaths: " + sourcePaths);
         } else {
-            failure("FAIL: unexpected ref type null sourcePaths - " +
+            failure("FAIL: unexpected ref type null sourcePaths - " + 
                     sourcePaths);
         }
         sourcePaths = targetClass.sourcePaths("Rats");
-        if (sourcePaths.equals(listWith(op + "Mangle.rats",
+        if (sourcePaths.equals(listWith(op + "Mangle.rats", 
                                         "bleep:bleep:Incl.rats"))) {
             println("ref type Rats sourcePaths: " + sourcePaths);
         } else {
-            failure("FAIL: unexpected ref type Rats sourcePaths - " +
+            failure("FAIL: unexpected ref type Rats sourcePaths - " + 
                     sourcePaths);
         }
 
-        Method main = findMethod(targetClass, "main",
+        Method main = findMethod(targetClass, "main", 
                                  "([Ljava/lang/String;)V");
         List allLines = main.allLineLocations();
         List javaLines = main.allLineLocations("Java", null);
@@ -398,7 +398,7 @@ public class MangleTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -410,3 +410,4 @@ public class MangleTest extends TestScaffold {
         }
     }
 }
+

@@ -59,11 +59,11 @@ get_time_stamp(char *tbuf, size_t ltbuf)
     char format[MAXLEN_TIMESTAMP+1];
     unsigned millisecs = 0;
     time_t t = 0;
-
+    
     GETMILLSECS(millisecs);
     if ( time(&t) == (time_t)(-1) )
         t = 0;
-    (void)strftime(format, sizeof(format),
+    (void)strftime(format, sizeof(format),  
                 /* Break this string up for SCCS's sake */
                 "%" "d.%" "m.%" "Y %" "T.%%.3d %" "Z", localtime(&t));
     (void)snprintf(tbuf, ltbuf, format, (int)(millisecs));
@@ -91,8 +91,8 @@ file_basename(const char *file)
 static void
 fill_location_stamp(const char *flavor, const char *file, int line)
 {
-    (void)snprintf(location_stamp, sizeof(location_stamp),
-                    "%s:\"%s\":%d;",
+    (void)snprintf(location_stamp, sizeof(location_stamp), 
+                    "%s:\"%s\":%d;", 
                     flavor, file_basename(file), line);
     location_stamp[sizeof(location_stamp)-1] = 0;
 }
@@ -119,14 +119,14 @@ standard_logging_format(FILE *fp,
         const char *messageID,
         const char *message)
 {
-    const char *format;
-
+    const char *format; 
+        
     /* "[#|Date&Time&Zone|LogLevel|ProductName|ModuleID|
      *     OptionalKey1=Value1;OptionalKeyN=ValueN|MessageID:MessageText|#]\n"
      */
-
+    
     format="[#|%s|%s|%s|%s|%s|%s:%s|#]\n";
-
+    
     print_message(fp, "", "", format,
             datetime,
             level,
@@ -162,28 +162,28 @@ log_message_end(const char *format, ...)
                 logging = 0;
             }
         }
-
+        
         if ( log_file != NULL ) {
-
+            
             /* Get the rest of the needed information */
             tid = GET_THREAD_ID();
             level = "FINEST"; /* FIXUP? */
             product = "J2SE1.5"; /* FIXUP? */
             module = "jdwp"; /* FIXUP? */
             messageID = ""; /* FIXUP: Unique message string ID? */
-            (void)snprintf(optional, sizeof(optional),
-                        "LOC=%s;PID=%d;THR=t@%d",
+            (void)snprintf(optional, sizeof(optional), 
+                        "LOC=%s;PID=%d;THR=t@%d", 
                         location_stamp,
                         (int)processPid,
                         (int)tid);
-
+            
             /* Construct message string. */
             va_start(ap, format);
             (void)vsnprintf(message, sizeof(message), format, ap);
             va_end(ap);
 
             get_time_stamp(datetime, sizeof(datetime));
-
+            
             /* Send out standard logging format message */
             standard_logging_format(log_file,
                 datetime,
@@ -207,20 +207,20 @@ setup_logging(const char *filename, unsigned flags)
 {
 #ifdef JDWP_LOGGING
     FILE *fp = NULL;
-
+    
     /* Turn off logging */
     logging = 0;
     gdata->log_flags = 0;
-
+   
     /* Just return if not doing logging */
     if ( filename==NULL || flags==0 )
         return;
-
+    
     /* Create potential filename for logging */
     processPid = GETPID();
-    (void)snprintf(logging_filename, sizeof(logging_filename),
+    (void)snprintf(logging_filename, sizeof(logging_filename), 
                     "%s.%d", filename, (int)processPid);
-
+    
     /* Turn on logging (do this last) */
     logging = 1;
     gdata->log_flags = flags;
@@ -245,3 +245,4 @@ finish_logging(int exit_code)
     MUTEX_UNLOCK(my_mutex);
 #endif
 }
+

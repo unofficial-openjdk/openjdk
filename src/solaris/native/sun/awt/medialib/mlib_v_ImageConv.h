@@ -22,11 +22,12 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef __MLIB_V_IMAGECONV_H
 #define __MLIB_V_IMAGECONV_H
 
+#pragma ident	"@(#)mlib_v_ImageConv.h	1.2	02/07/23 SMI"
 
 #ifdef __cplusplus
 extern "C" {

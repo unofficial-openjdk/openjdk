@@ -43,36 +43,36 @@ public class ExecWithInput {
     private static final int N = 200;
 
     static int go(int i) throws Exception {
-        /*
-         * Execute /bin/cat supplying two lines of input. cat should
-         * read the input lines and copy them to stdout. On completion,
-         * p.waitFor should return and the exit status is printed and this
-         * program exits. Under 1.4.1, cat sometimes gets stuck on a pipe
-         * read and never terminates.
-         */
-        //Process p = Runtime.getRuntime().exec(new String[] { CAT } );
-        Process p = Runtime.getRuntime().exec(CAT);
+	/*
+	 * Execute /bin/cat supplying two lines of input. cat should
+	 * read the input lines and copy them to stdout. On completion,
+	 * p.waitFor should return and the exit status is printed and this
+	 * program exits. Under 1.4.1, cat sometimes gets stuck on a pipe
+	 * read and never terminates.
+	 */
+	//Process p = Runtime.getRuntime().exec(new String[] { CAT } );
+	Process p = Runtime.getRuntime().exec(CAT);
 
-        String input = i + ": line 1\n" + i + ": line 2\n";
-        StringBufferInputStream in = new StringBufferInputStream(input);
-        // create threads to handle I/O streams
-        IO ioIn = new IO("stdin", in, p.getOutputStream());
-        IO ioOut = new IO("stdout", p.getInputStream(), System.out);
-        IO ioErr = new IO("stderr", p.getErrorStream(), System.err);
+	String input = i + ": line 1\n" + i + ": line 2\n";
+	StringBufferInputStream in = new StringBufferInputStream(input);
+	// create threads to handle I/O streams
+	IO ioIn = new IO("stdin", in, p.getOutputStream());
+	IO ioOut = new IO("stdout", p.getInputStream(), System.out);
+	IO ioErr = new IO("stderr", p.getErrorStream(), System.err);
 
-        // wait for process to exit
-        return p.waitFor();
+	// wait for process to exit
+	return p.waitFor();
     }
 
     public static void main(String[] args) throws Exception {
-        if (!System.getProperty("os.name").equals("Linux"))
-            return;
-        if (File.separatorChar == '\\') {
-            // no /bin/cat on windows
-            return;
-        }
-        for (int i = 0; i < N; i++)
-            go(i);
+	if (!System.getProperty("os.name").equals("Linux"))
+	    return;
+	if (File.separatorChar == '\\') {
+	    // no /bin/cat on windows
+	    return;
+	}
+	for (int i = 0; i < N; i++)
+	    go(i);
     }
 
     /**
@@ -94,31 +94,31 @@ public class ExecWithInput {
         public void run() {
             try {
                 int c;
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = in.read(buf)) != -1) {
-                    out.write(buf, 0, n);
-                    out.flush();
-                }
-                /*
+		byte[] buf = new byte[8192];
+		int n;
+		while ((n = in.read(buf)) != -1) {
+		    out.write(buf, 0, n);
+		    out.flush();
+		}
+		/*
                 while ((c = in.read()) != -1) {
                     out.write(c);
-                    if (c == '\n')
-                        out.flush();
+		    if (c == '\n')
+		        out.flush();
                 }
                 out.flush();
-                */
+		*/
             } catch (IOException e) {
-                e.printStackTrace();
+		e.printStackTrace();
             } finally {
                 if (!System.out.equals(out) && !System.err.equals(out)) {
                     // Note: in order to get an exec'd java process to
                     // see EOF on input, it is necessary to close stdin
                     if (out != null) {
                         try { out.close(); } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
+			    e.printStackTrace();
+			}
+		    }
                 }
             }
         }

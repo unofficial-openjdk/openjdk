@@ -77,7 +77,7 @@ public class CountFilterTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new CountFilterTest(args).startTests();
     }
 
@@ -92,12 +92,12 @@ public class CountFilterTest extends TestScaffold {
         println("Got MethodEntryEvent");
         locatableEvent(event, event.location());
     }
-
+    
     public void methodExited(MethodExitEvent event) {
         println("Got MethodExitEvent");
         locatableEvent(event, event.location());
     }
-
+    
     public void locatableEvent(Event event, Location loc) {
         String got = loc.method().name();
         String expected = (String)whereMap.get(event.request());
@@ -106,10 +106,10 @@ public class CountFilterTest extends TestScaffold {
                     " but it occurred in " + got);
         }
     }
-
+    
     /********** test assist*****/
 
-    BreakpointRequest breakpointAtMethod(String methodName)
+    BreakpointRequest breakpointAtMethod(String methodName) 
                                            throws Exception {
         List meths = targetClass.methodsByName(methodName);
         if (meths.size() != 1) {
@@ -118,13 +118,13 @@ public class CountFilterTest extends TestScaffold {
         }
         Method meth = (Method)meths.get(0);
         return erm.createBreakpointRequest(meth.location());
-    }
+    } 
 
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("CountFilterTarg");
@@ -143,10 +143,10 @@ public class CountFilterTest extends TestScaffold {
             }
         }
         if (otherThread == null) {
-            throw new Exception("test error: couldn't find " +
+            throw new Exception("test error: couldn't find " + 
                                 "other thread");
         }
-
+        
         /*
          * Set event requests
          */
@@ -164,30 +164,30 @@ public class CountFilterTest extends TestScaffold {
         mxRequest.enable();
         whereMap.put(mxRequest, "nowhere (from method exit)");
 
-        BreakpointRequest thisOneRequest =
+        BreakpointRequest thisOneRequest = 
             breakpointAtMethod("thisOne");
         thisOneRequest.addCountFilter(1);
         thisOneRequest.addThreadFilter(mainThread);
         thisOneRequest.enable();
         whereMap.put(thisOneRequest, "thisOne");
 
-        BreakpointRequest butNotThisOneRequest =
+        BreakpointRequest butNotThisOneRequest = 
             breakpointAtMethod("butNotThisOne");
         butNotThisOneRequest.addCountFilter(1);
         butNotThisOneRequest.addThreadFilter(otherThread);
         butNotThisOneRequest.enable();
-        whereMap.put(butNotThisOneRequest,
+        whereMap.put(butNotThisOneRequest, 
                      "nowhere (post filter)");
 
-        BreakpointRequest norThisOneRequest =
+        BreakpointRequest norThisOneRequest = 
             breakpointAtMethod("norThisOne");
         norThisOneRequest.addThreadFilter(otherThread);
         norThisOneRequest.addCountFilter(1);
         norThisOneRequest.enable();
-        whereMap.put(norThisOneRequest,
+        whereMap.put(norThisOneRequest, 
                      "nowhere (pre filter)");
 
-        BreakpointRequest butThisOneRequest =
+        BreakpointRequest butThisOneRequest = 
             breakpointAtMethod("butThisOne");
         butThisOneRequest.addThreadFilter(mainThread);
         butThisOneRequest.addCountFilter(1);
@@ -198,7 +198,7 @@ public class CountFilterTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * deal with results of test
          * if anything has called failure("foo") testFailed will be true
@@ -210,3 +210,4 @@ public class CountFilterTest extends TestScaffold {
         }
     }
 }
+

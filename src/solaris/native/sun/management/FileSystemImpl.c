@@ -42,15 +42,16 @@ JNIEXPORT jboolean JNICALL Java_sun_management_FileSystemImpl_isAccessUserOnly0
     jboolean isCopy;
     const char *path = JNU_GetStringPlatformChars(env, str, &isCopy);
     if (path != NULL) {
-        struct stat64 sb;
+ 	struct stat64 sb;
         if (stat64(path, &sb) == 0) {
-            res = ((sb.st_mode & (S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)) == 0) ? JNI_TRUE : JNI_FALSE;
-        } else {
-            JNU_ThrowIOExceptionWithLastError(env, "stat64 failed");
-        }
-        if (isCopy) {
-            JNU_ReleaseStringPlatformChars(env, str, path);
-        }
+	    res = ((sb.st_mode & (S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)) == 0) ? JNI_TRUE : JNI_FALSE;
+	} else {
+	    JNU_ThrowIOExceptionWithLastError(env, "stat64 failed");
+	}
+	if (isCopy) {
+	    JNU_ReleaseStringPlatformChars(env, str, path);
+  	}
     }
     return res;
 }
+

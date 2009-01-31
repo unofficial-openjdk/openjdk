@@ -31,6 +31,7 @@ import java.util.EventListener;
  * TableModelListener defines the interface for an object that listens
  * to changes in a TableModel.
  *
+ * @version %I% %G%
  * @author Alan Chung
  * @see javax.swing.table.TableModel
  */
@@ -43,3 +44,4 @@ public interface TableModelListener extends java.util.EventListener
      */
     public void tableChanged(TableModelEvent e);
 }
+

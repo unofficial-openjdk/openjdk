@@ -33,7 +33,8 @@ package sun.tools.java;
  * supported API.  Code that depends on them does so at its own risk:
  * they are subject to change or removal without notice.
  *
- * @author      Arthur van Hoff
+ * @author 	Arthur van Hoff
+ * @version 	%I%, %G%
  */
 public final
 class ClassType extends Type {
@@ -47,18 +48,18 @@ class ClassType extends Type {
      * a new class type.
      */
     ClassType(String typeSig, Identifier className) {
-        super(TC_CLASS, typeSig);
-        this.className = className;
+	super(TC_CLASS, typeSig);
+	this.className = className;
     }
 
     public Identifier getClassName() {
-        return className;
+	return className;
     }
-
+    
     public String typeString(String id, boolean abbrev, boolean ret) {
-        String s = (abbrev ? getClassName().getFlatName() :
-                                Identifier.lookup(getClassName().getQualifier(),
-                                                                  getClassName().getFlatName())).toString();
-        return (id.length() > 0) ? s + " " + id : s;
+	String s = (abbrev ? getClassName().getFlatName() :
+				Identifier.lookup(getClassName().getQualifier(),
+								  getClassName().getFlatName())).toString();
+	return (id.length() > 0) ? s + " " + id : s;
     }
 }

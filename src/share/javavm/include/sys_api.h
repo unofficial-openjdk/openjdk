@@ -149,8 +149,8 @@ extern HPI_SocketInterface  *hpi_socket_interface;
 #define SYS_SIG_ERR HPI_SIG_ERR
 #define SYS_SIG_IGN HPI_SIG_IGN
 
-#define SYS_OK         HPI_OK
-#define SYS_ERR        HPI_ERR
+#define SYS_OK	       HPI_OK
+#define SYS_ERR	       HPI_ERR
 #define SYS_INTRPT     HPI_INTRPT
 #define SYS_TIMEOUT    HPI_TIMEOUT
 #define SYS_NOMEM      HPI_NOMEM
@@ -160,14 +160,14 @@ extern HPI_SocketInterface  *hpi_socket_interface;
 #define SYS_THREAD_MONITOR_WAIT HPI_THREAD_MONITOR_WAIT
 #define SYS_THREAD_CONDVAR_WAIT HPI_THREAD_CONDVAR_WAIT
 
-#define MinimumPriority     HPI_MINIMUM_PRIORITY
-#define MaximumPriority     HPI_MAXIMUM_PRIORITY
-#define NormalPriority      HPI_NORMAL_PRIORITY
+#define MinimumPriority	    HPI_MINIMUM_PRIORITY
+#define MaximumPriority	    HPI_MAXIMUM_PRIORITY
+#define NormalPriority	    HPI_NORMAL_PRIORITY
 
 #define SYS_THREAD_SUSPENDED   HPI_THREAD_SUSPENDED
 #define SYS_THREAD_INTERRUPTED HPI_THREAD_INTERRUPTED
 
-#define PAGE_ALIGNMENT      HPI_PAGE_ALIGNMENT
+#define PAGE_ALIGNMENT	    HPI_PAGE_ALIGNMENT
 
 #define SYS_TIMEOUT_INFINITY HPI_TIMEOUT_INFINITY
 

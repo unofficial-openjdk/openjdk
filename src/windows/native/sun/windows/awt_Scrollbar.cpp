@@ -39,7 +39,7 @@ struct SetValuesStruct {
     jint value;
     jint visible;
     jint min, max;
-
+    
 };
 /************************************************************************
  * AwtScrollbar fields
@@ -105,54 +105,54 @@ AwtScrollbar::Create(jobject peer, jobject parent)
 
     try {
         if (env->EnsureLocalCapacity(1) < 0) {
-            return NULL;
-        }
+	    return NULL;
+	}
 
-        PDATA pData;
-        AwtCanvas* awtParent;
-        JNI_CHECK_PEER_GOTO(parent, done);
+	PDATA pData;
+	AwtCanvas* awtParent;
+	JNI_CHECK_PEER_GOTO(parent, done);
 
-        awtParent = (AwtCanvas*)pData;
-        JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
+	awtParent = (AwtCanvas*)pData;
+	JNI_CHECK_NULL_GOTO(awtParent, "null awtParent", done);
 
-        target = env->GetObjectField(peer, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "null target", done);
+	target = env->GetObjectField(peer, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "null target", done);
 
-        c = new AwtScrollbar();
+	c = new AwtScrollbar();
 
-        {
-            jint orientation =
-                env->GetIntField(target, AwtScrollbar::orientationID);
-            c->m_orientation = (orientation == java_awt_Scrollbar_VERTICAL) ?
-                SB_VERT : SB_HORZ;
-            c->m_lineIncr =
-                env->GetIntField(target, AwtScrollbar::lineIncrementID);
-            c->m_pageIncr =
-                env->GetIntField(target, AwtScrollbar::pageIncrementID);
+	{
+	    jint orientation =
+	        env->GetIntField(target, AwtScrollbar::orientationID);
+	    c->m_orientation = (orientation == java_awt_Scrollbar_VERTICAL) ?
+	        SB_VERT : SB_HORZ;
+	    c->m_lineIncr =
+	        env->GetIntField(target, AwtScrollbar::lineIncrementID);
+	    c->m_pageIncr =
+	        env->GetIntField(target, AwtScrollbar::pageIncrementID);
 
-            DWORD style = WS_CHILD | WS_CLIPSIBLINGS |
-                c->m_orientation;/* Note: SB_ and SBS_ are the same here */
+	    DWORD style = WS_CHILD | WS_CLIPSIBLINGS |
+	        c->m_orientation;/* Note: SB_ and SBS_ are the same here */
 
-            jint x = env->GetIntField(target, AwtComponent::xID);
-            jint y = env->GetIntField(target, AwtComponent::yID);
-            jint width = env->GetIntField(target, AwtComponent::widthID);
-            jint height = env->GetIntField(target, AwtComponent::heightID);
+	    jint x = env->GetIntField(target, AwtComponent::xID);
+	    jint y = env->GetIntField(target, AwtComponent::yID);
+	    jint width = env->GetIntField(target, AwtComponent::widthID);
+	    jint height = env->GetIntField(target, AwtComponent::heightID);
 
-            c->CreateHWnd(env, L"", style, 0,
-                          x, y, width, height,
-                          awtParent->GetHWnd(),
-                          reinterpret_cast<HMENU>(static_cast<INT_PTR>(
+	    c->CreateHWnd(env, L"", style, 0,
+			  x, y, width, height,
+			  awtParent->GetHWnd(),
+			  reinterpret_cast<HMENU>(static_cast<INT_PTR>(
                 awtParent->CreateControlID())),
-                          ::GetSysColor(COLOR_SCROLLBAR),
-                          ::GetSysColor(COLOR_SCROLLBAR),
-                          peer);
-            c->m_backgroundColorSet = TRUE;
-            /* suppress inheriting parent's color. */
+			  ::GetSysColor(COLOR_SCROLLBAR),
+			  ::GetSysColor(COLOR_SCROLLBAR),
+			  peer);
+	    c->m_backgroundColorSet = TRUE;
+	    /* suppress inheriting parent's color. */
             c->UpdateBackground(env, target);
-        }
+	}
     } catch (...) {
         env->DeleteLocalRef(target);
-        throw;
+	throw;
     }
 
 done:
@@ -169,13 +169,13 @@ AwtScrollbar::MouseFilter(int nCode, WPARAM wParam, LPARAM lParam)
     {
         HWND hwnd = ((PMOUSEHOOKSTRUCT)lParam)->hwnd;
         AwtComponent *comp = AwtComponent::GetComponent(hwnd);
-
+        
         if (comp != NULL && comp->IsScrollbar()) {
             MSG msg;
             LPMSG lpMsg = (LPMSG)&msg;
-            UINT msgID = (UINT)wParam;
+            UINT msgID = (UINT)wParam; 
 
-            ms_isInsideMouseFilter = TRUE;
+            ms_isInsideMouseFilter = TRUE;            
 
             // Peek the message to get wParam containing the message's flags.
             // <::PeekMessage> will call this hook again. To prevent recursive
@@ -212,9 +212,9 @@ AwtScrollbar::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       case SBM_SETSCROLLINFO:
       case SBM_SETRANGE:
       case SBM_SETRANGEREDRAW:
-          if (AwtComponent::sm_focusOwner == GetHWnd()) {
-              UpdateFocusIndicator();
-          }
+	  if (AwtComponent::sm_focusOwner == GetHWnd()) {              
+	      UpdateFocusIndicator();
+	  }
           break;
     }
 
@@ -257,9 +257,9 @@ AwtScrollbar::WmMouseDown(UINT flags, int x, int y, int button)
     }
 
     if (button == LEFT_BUTTON)
-        return mrDoDefault;    // Force immediate processing to avoid the race.
+	return mrDoDefault;    // Force immediate processing to avoid the race.
     else
-        return usualRoute;
+	return usualRoute;
 }
 
 MsgRouting
@@ -276,15 +276,15 @@ AwtScrollbar::HandleEvent(MSG *msg, BOOL synthetic)
             env->DeleteLocalRef(target);
             AwtSetFocus();
         }
-        // Left button press was already routed to default window
-        // procedure in the WmMouseDown above.  Propagating synthetic
-        // press seems like a bad idea as internal message loop
-        // doesn't know how to unwrap synthetic release.
-        delete msg;
-        return mrConsume;
+	// Left button press was already routed to default window
+	// procedure in the WmMouseDown above.  Propagating synthetic
+	// press seems like a bad idea as internal message loop
+	// doesn't know how to unwrap synthetic release.
+	delete msg;
+	return mrConsume;
     }
     else {
-        return AwtComponent::HandleEvent(msg, synthetic);
+	return AwtComponent::HandleEvent(msg, synthetic);
     }
 }
 
@@ -308,14 +308,14 @@ MsgRouting
 AwtScrollbar::WmKillFocus(HWND hWndGot)
 {
     if (m_ignoreFocusEvents) {
-        // We are voluntary giving up focus and will get it back
-        // immediately.  This is necessary to force windows to update
-        // the focus indicator.
+	// We are voluntary giving up focus and will get it back
+	// immediately.  This is necessary to force windows to update
+	// the focus indicator.
         sm_focusOwner = NULL;
-        return mrDoDefault;
+	return mrDoDefault;
     }
     else {
-        return AwtComponent::WmKillFocus(hWndGot);
+	return AwtComponent::WmKillFocus(hWndGot);
     }
 }
 
@@ -323,14 +323,14 @@ MsgRouting
 AwtScrollbar::WmSetFocus(HWND hWndLost)
 {
     if (m_ignoreFocusEvents) {
-        // We have voluntary gave up focus and are getting it back
-        // now.  This is necessary to force windows to update the
-        // focus indicator.
+	// We have voluntary gave up focus and are getting it back
+	// now.  This is necessary to force windows to update the
+	// focus indicator.
         sm_focusOwner = GetHWnd();
-        return mrDoDefault;
+	return mrDoDefault;
     }
     else {
-        return AwtComponent::WmSetFocus(hWndLost);
+	return AwtComponent::WmSetFocus(hWndLost);
     }
 }
 
@@ -353,13 +353,13 @@ inline void
 AwtScrollbar::DoScrollCallbackCoalesce(const char* methodName, int newPos)
 {
     if (methodName == m_prevCallback && newPos == m_prevCallbackPos) {
-        DTRACE_PRINTLN2("AwtScrollbar: ignoring duplicate callback %s(%d)",
-                        methodName, newPos);
+	DTRACE_PRINTLN2("AwtScrollbar: ignoring duplicate callback %s(%d)",
+			methodName, newPos);
     }
     else {
-        DoCallback(methodName, "(I)V", newPos);
-        m_prevCallback = methodName;
-        m_prevCallbackPos = newPos;
+	DoCallback(methodName, "(I)V", newPos);
+	m_prevCallback = methodName;
+	m_prevCallbackPos = newPos;
     }
 }
 
@@ -373,7 +373,7 @@ AwtScrollbar::WmVScroll(UINT scrollCode, UINT pos, HWND hScrollbar)
 
     // For drags we have old (static) and new (dynamic) thumb positions
     int dragP = (scrollCode == SB_THUMBTRACK
-              || scrollCode == SB_THUMBPOSITION);
+	      || scrollCode == SB_THUMBPOSITION);
     int thumbPos;
 
     SCROLLINFO si;
@@ -388,7 +388,7 @@ AwtScrollbar::WmVScroll(UINT scrollCode, UINT pos, HWND hScrollbar)
     // was published.  Beware of this older documentation; it may
     // have other obsolete features."
     if (dragP) {
-        si.fMask |= SIF_TRACKPOS;
+	si.fMask |= SIF_TRACKPOS;
     }
 
     VERIFY(::GetScrollInfo(GetHWnd(), SB_CTL, &si));
@@ -413,63 +413,63 @@ AwtScrollbar::WmVScroll(UINT scrollCode, UINT pos, HWND hScrollbar)
     switch (scrollCode) {
 
       case SB_LINEUP:
-          if ((__int64)curPos - m_lineIncr > minPos)
-              newPos = curPos - m_lineIncr;
-          else
-              newPos = minPos;
+	  if ((__int64)curPos - m_lineIncr > minPos)
+	      newPos = curPos - m_lineIncr;
+	  else
+	      newPos = minPos;
           if (newPos != curPos)
               DoScrollCallbackCoalesce(SbNlineUp, newPos);
           break;
 
       case SB_LINEDOWN:
-          if ((__int64)curPos + m_lineIncr < maxPos)
-              newPos = curPos + m_lineIncr;
-          else
-              newPos = maxPos;
+	  if ((__int64)curPos + m_lineIncr < maxPos)
+	      newPos = curPos + m_lineIncr;
+	  else
+	      newPos = maxPos;
           if (newPos != curPos)
               DoScrollCallbackCoalesce(SbNlineDown, newPos);
           break;
 
       case SB_PAGEUP:
-          if ((__int64)curPos - m_pageIncr > minPos)
-              newPos = curPos - m_pageIncr;
-          else
-              newPos = minPos;
+	  if ((__int64)curPos - m_pageIncr > minPos)
+	      newPos = curPos - m_pageIncr;
+	  else
+	      newPos = minPos;
           if (newPos != curPos)
               DoScrollCallbackCoalesce(SbNpageUp, newPos);
           break;
 
       case SB_PAGEDOWN:
-          if ((__int64)curPos + m_pageIncr < maxPos)
-              newPos = curPos + m_pageIncr;
-          else
-              newPos = maxPos;
+	  if ((__int64)curPos + m_pageIncr < maxPos)
+	      newPos = curPos + m_pageIncr;
+	  else
+	      newPos = maxPos;
           if (newPos != curPos)
               DoScrollCallbackCoalesce(SbNpageDown, newPos);
           break;
 
       case SB_TOP:
-          if (minPos != curPos)
-              DoScrollCallbackCoalesce(SbNwarp, minPos);
+	  if (minPos != curPos)
+	      DoScrollCallbackCoalesce(SbNwarp, minPos);
           break;
 
       case SB_BOTTOM:
-          if (maxPos != curPos)
-              DoScrollCallbackCoalesce(SbNwarp, maxPos);
+	  if (maxPos != curPos)
+	      DoScrollCallbackCoalesce(SbNwarp, maxPos);
           break;
 
       case SB_THUMBTRACK:
-          if (thumbPos != curPos)
-              DoScrollCallbackCoalesce(SbNdrag, thumbPos);
+	  if (thumbPos != curPos)
+	      DoScrollCallbackCoalesce(SbNdrag, thumbPos);
           break;
 
       case SB_THUMBPOSITION:
-          DoScrollCallbackCoalesce(SbNdragEnd, thumbPos);
+	  DoScrollCallbackCoalesce(SbNdragEnd, thumbPos);
           break;
 
       case SB_ENDSCROLL:
-          // reset book-keeping info
-          m_prevCallback = NULL;
+	  // reset book-keeping info
+	  m_prevCallback = NULL;
           break;
     }
     return mrDoDefault;
@@ -505,7 +505,7 @@ void AwtScrollbar::_SetValues(void *param)
     {
         BOOL update_p = ::IsWindowEnabled(sb->GetHWnd()); // don't redraw if disabled
         DTRACE_PRINTLN5("AwtScrollbar::SetValues(val = %d, vis = %d,"//(ctd.)
-                        " min = %d, max = %d)%s",
+	                " min = %d, max = %d)%s",
             svs->value, svs->visible, svs->min, svs->max,
             update_p ? "" : " - NOT redrawing");
         ::SetScrollInfo(sb->GetHWnd(), SB_CTL, &si, update_p);
@@ -559,8 +559,8 @@ extern "C" {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WScrollbarPeer_setValues(JNIEnv *env, jobject self,
-                                              jint value, jint visible,
-                                              jint minimum, jint maximum)
+					      jint value, jint visible,
+					      jint minimum, jint maximum)
 {
     TRY;
 
@@ -584,7 +584,7 @@ Java_sun_awt_windows_WScrollbarPeer_setValues(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WScrollbarPeer_setLineIncrement(JNIEnv *env, jobject self,
-                                                     jint increment)
+						     jint increment)
 {
     TRY;
 
@@ -603,7 +603,7 @@ Java_sun_awt_windows_WScrollbarPeer_setLineIncrement(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WScrollbarPeer_setPageIncrement(JNIEnv *env, jobject self,
-                                                     jint increment)
+						     jint increment)
 {
     TRY;
 
@@ -622,15 +622,15 @@ Java_sun_awt_windows_WScrollbarPeer_setPageIncrement(JNIEnv *env, jobject self,
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WScrollbarPeer_create(JNIEnv *env, jobject self,
-                                           jobject parent)
+					   jobject parent)
 {
     TRY;
 
     PDATA pData;
     JNI_CHECK_PEER_RETURN(parent);
     AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)
-                                AwtScrollbar::Create);
+				(AwtToolkit::ComponentFactory)
+				AwtScrollbar::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;

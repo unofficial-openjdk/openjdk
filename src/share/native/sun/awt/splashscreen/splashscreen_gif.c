@@ -81,7 +81,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
 
     stride = gif->SWidth * splash->imageFormat.depthBytes;
     if (splash->byteAlignment > 1)
-        stride =
+        stride = 
             (stride + splash->byteAlignment - 1) & ~(splash->byteAlignment - 1);
 
     bufferSize = stride * gif->SHeight;
@@ -92,7 +92,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
     splash->width = gif->SWidth;
     splash->height = gif->SHeight;
     splash->frameCount = gif->ImageCount;
-    splash->frames = (SplashImage *)
+    splash->frames = (SplashImage *) 
         malloc(sizeof(SplashImage) * gif->ImageCount);
     memset(splash->frames, 0, sizeof(SplashImage) * gif->ImageCount);
     splash->loopCount = 1;
@@ -100,7 +100,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
     for (imageIndex = 0; imageIndex < gif->ImageCount; imageIndex++) {
         SavedImage *image = &(gif->SavedImages[imageIndex]);
         GifImageDesc *desc = &(image->ImageDesc);
-        ColorMapObject *colorMap =
+        ColorMapObject *colorMap = 
             desc->ColorMap ? desc->ColorMap : gif->SColorMap;
 
         int transparentColor = -1;
@@ -136,7 +136,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
                     } else {
                         transparentColor = GIF_NOT_TRANSPARENT;
                     }
-                    disposeMethod =
+                    disposeMethod = 
                         (flag >> GIF_DISPOSE_SHIFT) & GIF_DISPOSE_MASK;
                     break;
                 }
@@ -153,7 +153,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
                             break;
                         iSubCode = pExtension[0] & 0x07;
                         if (iSubCode == NSEXT_LOOP) {
-                            splash->loopCount =
+                            splash->loopCount = 
                                 (pExtension[1] | (pExtension[2] << 8)) - 1;
                         }
                     }
@@ -197,9 +197,9 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
                 int ofs = interlacedOffset[pass];
                 int numLines = (desc->Height + jump - 1 - ofs) / jump;
 
-                initRect(&srcRect, 0, 0, desc->Width, numLines, 1,
+                initRect(&srcRect, 0, 0, desc->Width, numLines, 1, 
                     desc->Width, pSrc, &srcFormat);
-                initRect(&dstRect, desc->Left, desc->Top + ofs, desc->Width,
+                initRect(&dstRect, desc->Left, desc->Top + ofs, desc->Width, 
                     numLines, jump, stride, pBitmapBits, &splash->imageFormat);
                 pSrc += convertRect(&srcRect, &dstRect, CVT_ALPHATEST);
             }
@@ -207,7 +207,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
 
         // now dispose of the previous frame correctly
 
-        splash->frames[imageIndex].bitmapBits =
+        splash->frames[imageIndex].bitmapBits = 
             (rgbquad_t *) malloc(bufferSize);
         memcpy(splash->frames[imageIndex].bitmapBits, pBitmapBits, bufferSize);
 
@@ -228,8 +228,8 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
                     fillColor= MAKE_QUAD_GIF(
                         colorMap->Colors[gif->SBackGroundColor], 0xff);
                 }
-                initRect(&dstRect, desc->Left, desc->Top,
-                    desc->Width, desc->Height, 1, stride,
+                initRect(&dstRect, desc->Left, desc->Top, 
+                    desc->Width, desc->Height, 1, stride, 
                     pBitmapBits, &splash->imageFormat);
                 fillRect(fillColor, &dstRect);
             }
@@ -240,7 +240,7 @@ SplashDecodeGif(Splash * splash, GifFileType * gif)
                 int lineSize = desc->Width * splash->imageFormat.depthBytes;
 
                 for (j = 0; j < desc->Height; j++) {
-                    int lineIndex = stride * (j + desc->Top) +
+                    int lineIndex = stride * (j + desc->Top) + 
                         desc->Left * splash->imageFormat.depthBytes;
 
                     memcpy(pBitmapBits + lineIndex, pOldBitmapBits + lineIndex,

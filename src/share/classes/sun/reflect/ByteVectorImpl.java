@@ -28,7 +28,7 @@ package sun.reflect;
 class ByteVectorImpl implements ByteVector {
     private byte[] data;
     private int pos;
-
+  
     public ByteVectorImpl() {
         this(100);
     }

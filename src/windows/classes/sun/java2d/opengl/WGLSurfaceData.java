@@ -54,8 +54,8 @@ public abstract class WGLSurfaceData extends OGLSurfaceData {
                              ColorModel cm, int type)
     {
         super(gc, cm, type);
-        this.peer = peer;
-        this.graphicsConfig = gc;
+	this.peer = peer;
+	this.graphicsConfig = gc;
 
         long pConfigInfo = gc.getNativeConfigInfo();
         long pPeerData = 0L;
@@ -70,7 +70,7 @@ public abstract class WGLSurfaceData extends OGLSurfaceData {
             pPeerData = peer.getData();
         }
 
-        initOps(pConfigInfo, pPeerData, xoff, yoff);
+	initOps(pConfigInfo, pPeerData, xoff, yoff);
     }
 
     public GraphicsConfiguration getDeviceConfiguration() {
@@ -106,59 +106,59 @@ public abstract class WGLSurfaceData extends OGLSurfaceData {
      */
     public static WGLOffScreenSurfaceData createData(WGLGraphicsConfig gc,
                                                      int width, int height,
-                                                     ColorModel cm,
+                                                     ColorModel cm, 
                                                      Image image, int type)
     {
-        return new WGLOffScreenSurfaceData(null, gc, width, height,
+	return new WGLOffScreenSurfaceData(null, gc, width, height,
                                            image, cm, type);
     }
 
     public static WGLGraphicsConfig getGC(WComponentPeer peer) {
-        if (peer != null) {
-            return (WGLGraphicsConfig)peer.getGraphicsConfiguration();
-        } else {
+	if (peer != null) {
+	    return (WGLGraphicsConfig)peer.getGraphicsConfiguration();
+	} else {
             // REMIND: this should rarely (never?) happen, but what if
             //         default config is not WGL?
-            GraphicsEnvironment env =
-                GraphicsEnvironment.getLocalGraphicsEnvironment();
-            GraphicsDevice gd = env.getDefaultScreenDevice();
-            return (WGLGraphicsConfig)gd.getDefaultConfiguration();
-        }
+	    GraphicsEnvironment env =
+		GraphicsEnvironment.getLocalGraphicsEnvironment();
+	    GraphicsDevice gd = env.getDefaultScreenDevice();
+	    return (WGLGraphicsConfig)gd.getDefaultConfiguration();
+	}
     }
 
     public static class WGLWindowSurfaceData extends WGLSurfaceData {
 
-        public WGLWindowSurfaceData(WComponentPeer peer,
+	public WGLWindowSurfaceData(WComponentPeer peer, 
                                     WGLGraphicsConfig gc)
         {
             super(peer, gc, peer.getColorModel(), WINDOW);
-        }
+	}
 
-        public SurfaceData getReplacement() {
-            return peer.getSurfaceData();
-        }
+	public SurfaceData getReplacement() {
+	    return peer.getSurfaceData();
+	}
 
-        public Rectangle getBounds() {
+	public Rectangle getBounds() {
             Rectangle r = peer.getBounds();
             r.x = r.y = 0;
             return r;
-        }
+	}
 
-        /**
-         * Returns destination Component associated with this SurfaceData.
-         */
-        public Object getDestination() {
-            return peer.getTarget();
-        }
+	/**
+	 * Returns destination Component associated with this SurfaceData.
+	 */
+	public Object getDestination() {
+	    return peer.getTarget();
+	}
     }
 
     public static class WGLOffScreenSurfaceData extends WGLSurfaceData {
 
-        private Image offscreenImage;
-        private int width, height;
+	private Image offscreenImage;
+	private int width, height;
 
-        public WGLOffScreenSurfaceData(WComponentPeer peer,
-                                       WGLGraphicsConfig gc,
+	public WGLOffScreenSurfaceData(WComponentPeer peer,
+                                       WGLGraphicsConfig gc, 
                                        int width, int height,
                                        Image image, ColorModel cm,
                                        int type)
@@ -170,13 +170,13 @@ public abstract class WGLSurfaceData extends OGLSurfaceData {
             offscreenImage = image;
 
             initSurface(width, height);
-        }
+	}
 
-        public SurfaceData getReplacement() {
+	public SurfaceData getReplacement() {
             return restoreContents(offscreenImage);
-        }
+	}
 
-        public Rectangle getBounds() {
+	public Rectangle getBounds() {
             if (type == FLIP_BACKBUFFER) {
                 Rectangle r = peer.getBounds();
                 r.x = r.y = 0;
@@ -184,13 +184,13 @@ public abstract class WGLSurfaceData extends OGLSurfaceData {
             } else {
                 return new Rectangle(width, height);
             }
-        }
+	}
 
-        /**
-         * Returns destination Image associated with this SurfaceData.
-         */
-        public Object getDestination() {
-            return offscreenImage;
-        }
+	/**
+	 * Returns destination Image associated with this SurfaceData.
+	 */
+	public Object getDestination() {
+	    return offscreenImage;
+	}
     }
 }

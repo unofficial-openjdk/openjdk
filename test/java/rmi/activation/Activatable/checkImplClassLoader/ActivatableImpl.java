@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,33 +32,33 @@ import java.rmi.MarshalledObject;
 import java.net.URL;
 
 public class ActivatableImpl extends Activatable implements MyRMI {
-
+    
     private boolean classLoaderOk = false;
-
+    
     public ActivatableImpl(ActivationID id, MarshalledObject mobj)
-        throws RemoteException
+	throws RemoteException
     {
-        super(id, 0);
+	super(id, 0);
 
-        ClassLoader thisLoader = ActivatableImpl.class.getClassLoader();
-        ClassLoader ccl = Thread.currentThread().getContextClassLoader();
+	ClassLoader thisLoader = ActivatableImpl.class.getClassLoader();
+	ClassLoader ccl = Thread.currentThread().getContextClassLoader();
+	
+	System.err.println("implLoader: " + thisLoader);	
+	System.err.println("ccl: " + ccl);
 
-        System.err.println("implLoader: " + thisLoader);
-        System.err.println("ccl: " + ccl);
-
-        /*
-         * the context class loader is the ccl from when this object
-         * was exported.  If the bug has been fixed, the ccl will be
-         * the same as the class loader of this class.
-         */
-        classLoaderOk = (thisLoader == ccl);
+	/*
+	 * the context class loader is the ccl from when this object
+	 * was exported.  If the bug has been fixed, the ccl will be
+	 * the same as the class loader of this class.
+	 */
+	classLoaderOk = (thisLoader == ccl);
     }
 
     public boolean classLoaderOk() throws RemoteException {
-        return classLoaderOk;
+	return classLoaderOk;
     }
-
+    
     public void shutdown() throws Exception {
-        ActivationLibrary.deactivate(this, getID());
+	ActivationLibrary.deactivate(this, getID());
     }
 }

@@ -56,20 +56,20 @@ public class RMIIIOPServerImpl extends RMIServerImpl {
      * @exception IOException if the RMI object cannot be created.
      */
     public RMIIIOPServerImpl(Map<String,?> env)
-            throws IOException {
-        super(env);
+	    throws IOException {
+	super(env);
 
-        this.env = (env == null) ? Collections.<String, Object>emptyMap() : env;
+	this.env = (env == null) ? Collections.<String, Object>emptyMap() : env;
 
         callerACC = AccessController.getContext();
     }
 
     protected void export() throws IOException {
-        PortableRemoteObject.exportObject(this);
+	PortableRemoteObject.exportObject(this);
     }
 
     protected String getProtocol() {
-        return "iiop";
+	return "iiop";
     }
 
     /**
@@ -81,15 +81,15 @@ public class RMIIIOPServerImpl extends RMIServerImpl {
      *            RMIIIOPServerImpl has not been exported yet.
      **/
     public Remote toStub() throws IOException {
-        // javax.rmi.CORBA.Stub stub =
-        //    (javax.rmi.CORBA.Stub) PortableRemoteObject.toStub(this);
-        final Remote stub = PortableRemoteObject.toStub(this);
-        // java.lang.System.out.println("NON CONNECTED STUB " + stub);
-        // org.omg.CORBA.ORB orb =
-        //    org.omg.CORBA.ORB.init((String[])null, (Properties)null);
-        // stub.connect(orb);
-        // java.lang.System.out.println("CONNECTED STUB " + stub);
-        return stub;
+	// javax.rmi.CORBA.Stub stub = 
+	//    (javax.rmi.CORBA.Stub) PortableRemoteObject.toStub(this);
+	final Remote stub = PortableRemoteObject.toStub(this);
+	// java.lang.System.out.println("NON CONNECTED STUB " + stub);
+	// org.omg.CORBA.ORB orb =
+	//    org.omg.CORBA.ORB.init((String[])null, (Properties)null);
+	// stub.connect(orb);
+	// java.lang.System.out.println("CONNECTED STUB " + stub);
+	return stub;
     }
 
     /**
@@ -109,22 +109,22 @@ public class RMIIIOPServerImpl extends RMIServerImpl {
      * created or exported.
      */
     protected RMIConnection makeClient(String connectionId, Subject subject)
-            throws IOException {
+	    throws IOException {
 
-        if (connectionId == null)
-            throw new NullPointerException("Null connectionId");
+	if (connectionId == null)
+	    throw new NullPointerException("Null connectionId");
 
-        RMIConnection client =
-            new RMIConnectionImpl(this, connectionId, getDefaultClassLoader(),
-                                  subject, env);
-        PortableRemoteObject.exportObject(client);
-        return client;
+	RMIConnection client =
+	    new RMIConnectionImpl(this, connectionId, getDefaultClassLoader(),
+				  subject, env);
+	PortableRemoteObject.exportObject(client);
+	return client;
     }
 
     protected void closeClient(RMIConnection client) throws IOException {
-        PortableRemoteObject.unexportObject(client);
+	PortableRemoteObject.unexportObject(client);
     }
-
+    
     /**
      * <p>Called by {@link #close()} to close the connector server by
      * unexporting this object.  After returning from this method, the
@@ -134,7 +134,7 @@ public class RMIIIOPServerImpl extends RMIServerImpl {
      * server failed.
      */
     protected void closeServer() throws IOException {
-        PortableRemoteObject.unexportObject(this);
+	PortableRemoteObject.unexportObject(this);
     }
 
     @Override

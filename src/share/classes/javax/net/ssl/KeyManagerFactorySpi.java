@@ -38,6 +38,7 @@ import java.security.*;
  * @since 1.4
  * @see KeyManagerFactory
  * @see KeyManager
+ * @version %I%
  */
 public abstract class KeyManagerFactorySpi {
     /**
@@ -47,12 +48,12 @@ public abstract class KeyManagerFactorySpi {
      * @param password the password for recovering keys
      * @throws KeyStoreException if this operation fails
      * @throws NoSuchAlgorithmException if the specified algorithm is not
-     *          available from the specified provider.
+     *		available from the specified provider.
      * @throws UnrecoverableKeyException if the key cannot be recovered
      * @see KeyManagerFactory#init(KeyStore, char[])
      */
     protected abstract void engineInit(KeyStore ks, char[] password) throws
-        KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException;
+	KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException;
 
     /**
      * Initializes this factory with a source of key material.
@@ -66,13 +67,13 @@ public abstract class KeyManagerFactorySpi {
      * implementation to obtain the needed information.
      *
      * @param spec an implementation of a provider-specific parameter
-     *          specification
+     *		specification
      * @throws InvalidAlgorithmParameterException if there is problem
-     *          with the parameters
+     *		with the parameters
      * @see KeyManagerFactory#init(ManagerFactoryParameters spec)
      */
     protected abstract void engineInit(ManagerFactoryParameters spec)
-        throws InvalidAlgorithmParameterException;
+	throws InvalidAlgorithmParameterException;
 
     /**
      * Returns one key manager for each type of key material.

@@ -59,8 +59,8 @@ public class ProxyAuthTest {
      */
     static class TestServer extends OriginServer {
         public TestServer(ServerSocket ss) throws Exception {
-            super(ss);
-        }
+	    super(ss);
+    	}
 
         /*
          * Returns an array of bytes containing the bytes for
@@ -68,10 +68,10 @@ public class ProxyAuthTest {
          *
          * @return bytes for the data in the response
          */
-        public byte[] getBytes() {
-            return "Proxy authentication for tunneling succeeded ..".
-                        getBytes();
-        }
+    	public byte[] getBytes() {
+	    return "Proxy authentication for tunneling succeeded ..".
+			getBytes();
+    	}
     }
 
     /*
@@ -79,7 +79,7 @@ public class ProxyAuthTest {
      */
     public static void main(String args[]) throws Exception
     {
-        String keyFilename =
+	String keyFilename =
             System.getProperty("test.src", "./") + "/" + pathToStores +
                 "/" + keyStoreFile;
         String trustFilename =
@@ -91,34 +91,34 @@ public class ProxyAuthTest {
         System.setProperty("javax.net.ssl.trustStore", trustFilename);
         System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
-        boolean useSSL = true;
+	boolean useSSL = true;
         /*
          * setup the server
-         */
-        try {
-            ServerSocketFactory ssf =
-                ProxyAuthTest.getServerSocketFactory(useSSL);
-            ServerSocket ss = ssf.createServerSocket(serverPort);
-            serverPort = ss.getLocalPort();
-            new TestServer(ss);
-        } catch (Exception e) {
-            System.out.println("Server side failed:" +
-                                e.getMessage());
-            throw e;
-        }
-        // trigger the client
-        try {
+	 */
+	try {
+	    ServerSocketFactory ssf =
+		ProxyAuthTest.getServerSocketFactory(useSSL);
+	    ServerSocket ss = ssf.createServerSocket(serverPort);
+	    serverPort = ss.getLocalPort();
+	    new TestServer(ss);
+	} catch (Exception e) {
+	    System.out.println("Server side failed:" +
+				e.getMessage());
+	    throw e;
+	}
+	// trigger the client
+	try {
             doClientSide();
-        } catch (Exception e) {
-            System.out.println("Client side failed: " +
-                                e.getMessage());
-            throw e;
-          }
+	} catch (Exception e) {
+	    System.out.println("Client side failed: " +
+				e.getMessage());
+	    throw e;
+	  }
     }
 
     private static ServerSocketFactory getServerSocketFactory
-                   (boolean useSSL) throws Exception {
-        if (useSSL) {
+		   (boolean useSSL) throws Exception {
+	if (useSSL) {
             SSLServerSocketFactory ssf = null;
             // set up key manager to do server authentication
             SSLContext ctx;
@@ -131,7 +131,7 @@ public class ProxyAuthTest {
             ks = KeyStore.getInstance("JKS");
 
             ks.load(new FileInputStream(System.getProperty(
-                        "javax.net.ssl.keyStore")), passphrase);
+			"javax.net.ssl.keyStore")), passphrase);
             kmf.init(ks, passphrase);
             ctx.init(kmf.getKeyManagers(), null, null);
 
@@ -139,37 +139,37 @@ public class ProxyAuthTest {
             return ssf;
         } else {
             return ServerSocketFactory.getDefault();
-        }
+	}
     }
 
     static void doClientSide() throws Exception {
-        /*
-         * setup up a proxy with authentication information
-         */
+	/*
+	 * setup up a proxy with authentication information
+	 */
         setupProxy();
 
         /*
          * we want to avoid URLspoofCheck failures in cases where the cert
-         * DN name does not match the hostname in the URL.
+	 * DN name does not match the hostname in the URL.
          */
-        HttpsURLConnection.setDefaultHostnameVerifier(
+	HttpsURLConnection.setDefaultHostnameVerifier(
                                       new NameVerifier());
-        URL url = new URL("https://" + "localhost:" + serverPort
+	URL url = new URL("https://" + "localhost:" + serverPort
                                 + "/index.html");
-        BufferedReader in = null;
-        try {
-            in = new BufferedReader(new InputStreamReader(
+	BufferedReader in = null;
+       	try {
+	    in = new BufferedReader(new InputStreamReader(
                                url.openStream()));
-            String inputLine;
-            System.out.print("Client recieved from the server: ");
-            while ((inputLine = in.readLine()) != null)
-                System.out.println(inputLine);
-            in.close();
-        } catch (SSLException e) {
-            if (in != null)
-                in.close();
-            throw e;
-        }
+	    String inputLine;
+	    System.out.print("Client recieved from the server: ");
+	    while ((inputLine = in.readLine()) != null)
+		System.out.println(inputLine);
+	    in.close();
+	} catch (SSLException e) {
+	    if (in != null)
+		in.close();
+	    throw e;
+	}
     }
 
     static class NameVerifier implements HostnameVerifier {
@@ -180,13 +180,13 @@ public class ProxyAuthTest {
 
     static void setupProxy() throws IOException {
         ProxyTunnelServer pserver = new ProxyTunnelServer();
-        /*
-         * register a system wide authenticator and setup the proxy for
+	/*
+	 * register a system wide authenticator and setup the proxy for
          * authentication
-         */
-        Authenticator.setDefault(new TestAuthenticator());
+	 */
+	Authenticator.setDefault(new TestAuthenticator());
 
-        // register with the username and password
+	// register with the username and password
         pserver.needUserAuth(true);
         pserver.setUserAuth("Test", "test123");
 
@@ -200,7 +200,7 @@ public class ProxyAuthTest {
 
         public PasswordAuthentication getPasswordAuthentication() {
             return new PasswordAuthentication("Test",
-                                         "test123".toCharArray());
-        }
+					 "test123".toCharArray());
+    	}
     }
 }

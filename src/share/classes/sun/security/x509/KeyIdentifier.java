@@ -38,6 +38,7 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class KeyIdentifier {
     private byte[] octetString;
@@ -80,24 +81,24 @@ public class KeyIdentifier {
      * @throws IOException on parsing errors
      */
     public KeyIdentifier(PublicKey pubKey)
-        throws IOException
+	throws IOException
     {
-        DerValue algAndKey = new DerValue(pubKey.getEncoded());
-        if (algAndKey.tag != DerValue.tag_Sequence)
-            throw new IOException("PublicKey value is not a valid "
-                                  + "X.509 public key");
+	DerValue algAndKey = new DerValue(pubKey.getEncoded());
+	if (algAndKey.tag != DerValue.tag_Sequence)
+	    throw new IOException("PublicKey value is not a valid "
+				  + "X.509 public key");
 
-        AlgorithmId algid = AlgorithmId.parse(algAndKey.data.getDerValue());
-        byte[] key = algAndKey.data.getUnalignedBitString().toByteArray();
+	AlgorithmId algid = AlgorithmId.parse(algAndKey.data.getDerValue());
+	byte[] key = algAndKey.data.getUnalignedBitString().toByteArray();
 
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException e3) {
-            throw new IOException("SHA1 not supported");
-        }
-        md.update(key);
-        this.octetString = md.digest();
+	MessageDigest md = null;
+	try {
+	    md = MessageDigest.getInstance("SHA1");
+	} catch (NoSuchAlgorithmException e3) {
+	    throw new IOException("SHA1 not supported");
+	}
+	md.update(key);
+	this.octetString = md.digest();
     }
 
     /**
@@ -134,10 +135,10 @@ public class KeyIdentifier {
      * Objects that are equal will also have the same hashcode.
      */
     public int hashCode () {
-        int retval = 0;
-        for (int i = 0; i < octetString.length; i++)
-            retval += octetString[i] * i;
-        return retval;
+	int retval = 0;
+	for (int i = 0; i < octetString.length; i++)
+	    retval += octetString[i] * i;
+	return retval;
     }
 
     /**
@@ -149,6 +150,6 @@ public class KeyIdentifier {
         if (!(other instanceof KeyIdentifier))
             return false;
         return java.util.Arrays.equals(octetString,
-                                       ((KeyIdentifier)other).getIdentifier());
+				       ((KeyIdentifier)other).getIdentifier());
     }
 }

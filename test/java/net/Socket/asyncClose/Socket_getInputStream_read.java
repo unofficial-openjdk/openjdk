@@ -32,69 +32,69 @@ public class Socket_getInputStream_read extends AsyncCloseTest implements Runnab
     Socket s;
     int timeout = 0;
 
-    public Socket_getInputStream_read() {
+    public Socket_getInputStream_read() { 
     }
 
-    public Socket_getInputStream_read(int timeout) {
-        this.timeout = timeout;
+    public Socket_getInputStream_read(int timeout) { 
+	this.timeout = timeout;
     }
 
     public String description() {
-        String s = "Socket.getInputStream().read()";
-        if (timeout > 0) {
-            s += " (with timeout)";
-        }
-        return s;
+	String s = "Socket.getInputStream().read()";
+	if (timeout > 0) {
+	    s += " (with timeout)";
+	}
+	return s;
     }
 
     public void run() {
-        InputStream in;
+	InputStream in;
 
-        try {
-            in = s.getInputStream();
-            if (timeout > 0) {
-                s.setSoTimeout(timeout);
-            }
-        } catch (Exception e) {
-            failed(e.getMessage());
-            return;
-        }
+	try {
+	    in = s.getInputStream();
+	    if (timeout > 0) {
+	        s.setSoTimeout(timeout);
+	    }
+	} catch (Exception e) {
+	    failed(e.getMessage());
+	    return;
+	}
 
-        try {
-            int n = in.read();
-            failed("getInptuStream().read() returned unexpectly!!");
-        } catch (SocketException se) {
-            closed();
-        } catch (Exception e) {
-            failed(e.getMessage());
-        }
+	try {
+	    int n = in.read();
+	    failed("getInptuStream().read() returned unexpectly!!");
+	} catch (SocketException se) {
+	    closed();
+	} catch (Exception e) {
+	    failed(e.getMessage());
+	}
     }
 
     public boolean go() throws Exception {
 
-        ServerSocket ss = new ServerSocket(0);
+	ServerSocket ss = new ServerSocket(0);
 
-        InetAddress lh = InetAddress.getLocalHost();
-        s = new Socket();
-        s.connect( new InetSocketAddress(lh, ss.getLocalPort()) );
+	InetAddress lh = InetAddress.getLocalHost();
+	s = new Socket();
+	s.connect( new InetSocketAddress(lh, ss.getLocalPort()) );
 
-        Socket s2 = ss.accept();
+	Socket s2 = ss.accept();
 
-        Thread thr = new Thread(this);
-        thr.start();
+	Thread thr = new Thread(this);
+	thr.start();
 
-        Thread.currentThread().sleep(1000);
+	Thread.currentThread().sleep(1000);
 
-        s.close();
+	s.close();
 
-        Thread.currentThread().sleep(1000);
+	Thread.currentThread().sleep(1000);
 
-        if (isClosed()) {
-            return true;
-        } else {
-            failed("getInputStream().read() wasn't preempted");
-            return false;
-        }
+	if (isClosed()) {
+	    return true;
+ 	} else {
+	    failed("getInputStream().read() wasn't preempted");
+	    return false;
+	}
 
     }
 }

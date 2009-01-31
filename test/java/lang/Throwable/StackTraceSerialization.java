@@ -32,7 +32,7 @@ import java.util.*;
  */
 
 public class StackTraceSerialization {
-    public static void main(String args[]) throws Exception {
+    public static void main(String args[]) throws Exception { 
         Throwable original = null;
         try {
             a();
@@ -72,7 +72,7 @@ public class StackTraceSerialization {
     }
     static void b() throws MidLevelException {
         c();
-    }
+    }   
     static void c() throws MidLevelException {
         try {
             d();
@@ -80,7 +80,7 @@ public class StackTraceSerialization {
             throw new MidLevelException(e);
         }
     }
-    static void d() throws LowLevelException {
+    static void d() throws LowLevelException { 
        e();
     }
     static void e() throws LowLevelException {

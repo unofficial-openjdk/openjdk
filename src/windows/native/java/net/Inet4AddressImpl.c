@@ -38,7 +38,7 @@
 
 
 /*
- * Returns true if hostname is in dotted IP address format. Note that this
+ * Returns true if hostname is in dotted IP address format. Note that this 
  * function performs a syntax check only. For each octet it just checks that
  * the octet is at most 3 digits.
  */
@@ -49,43 +49,43 @@ jboolean isDottedIPAddress(const char *hostname, unsigned int *addrp) {
     int digit_cnt = 0;
 
     while (*c) {
-        if (*c == '.') {
-            if (digit_cnt == 0) {
-                return JNI_FALSE;
-            } else {
-                if (octets < 4) {
-                    addrp[octets++] = cur;
-                    cur = 0;
-                    digit_cnt = 0;
-                } else {
-                    return JNI_FALSE;
-                }
-            }
-            c++;
-            continue;
-        }
+	if (*c == '.') {
+	    if (digit_cnt == 0) {
+		return JNI_FALSE;
+	    } else {
+		if (octets < 4) {
+		    addrp[octets++] = cur;
+		    cur = 0;
+		    digit_cnt = 0;
+		} else {		
+		    return JNI_FALSE;
+		}
+	    }
+	    c++;
+	    continue;
+	}
 
-        if ((*c < '0') || (*c > '9')) {
-            return JNI_FALSE;
-        }
+	if ((*c < '0') || (*c > '9')) {
+	    return JNI_FALSE;	
+	}
 
-        digit_cnt++;
-        if (digit_cnt > 3) {
-            return JNI_FALSE;
-        }
+	digit_cnt++;
+	if (digit_cnt > 3) {
+	    return JNI_FALSE;
+	}
 
-        /* don't check if current octet > 255 */
-        cur = cur*10 + (*c - '0');
-
-        /* Move onto next character and check for EOF */
-        c++;
-        if (*c == '\0') {
-            if (octets < 4) {
-                addrp[octets++] = cur;
-            } else {
-                return JNI_FALSE;
-            }
-        }
+	/* don't check if current octet > 255 */
+	cur = cur*10 + (*c - '0');			  
+			    
+	/* Move onto next character and check for EOF */
+	c++;
+	if (*c == '\0') {
+	    if (octets < 4) {
+		addrp[octets++] = cur;
+	    } else {		
+		return JNI_FALSE;
+	    }
+	}
     }
 
     return (jboolean)(octets == 4);
@@ -100,12 +100,12 @@ jboolean isDottedIPAddress(const char *hostname, unsigned int *addrp) {
  * Method:    getLocalHostName
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL
+JNIEXPORT jstring JNICALL 
 Java_java_net_Inet4AddressImpl_getLocalHostName (JNIEnv *env, jobject this) {
     char hostname[256];
 
     if (gethostname(hostname, sizeof hostname) == -1) {
-        strcpy(hostname, "localhost");
+	strcpy(hostname, "localhost");
     }
     return JNU_NewStringPlatform(env, hostname);
 }
@@ -122,7 +122,7 @@ static int initialized = 0;
  * Find an internet address for a given hostname.  Not this this
  * code only works for addresses of type INET. The translation
  * of %d.%d.%d.%d to an address (int) occurs in java now, so the
- * String "host" shouldn't be a %d.%d.%d.%d string. The only
+ * String "host" shouldn't be a %d.%d.%d.%d string. The only 
  * exception should be when any of the %d are out of range and
  * we fallback to a lookup.
  *
@@ -133,9 +133,9 @@ static int initialized = 0;
  * This is almost shared code
  */
 
-JNIEXPORT jobjectArray JNICALL
-Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
-                                                jstring host) {
+JNIEXPORT jobjectArray JNICALL 
+Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this, 
+						jstring host) {
     const char *hostname;
     jobject name;
     struct hostent *hp;
@@ -157,8 +157,8 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
     }
 
     if (IS_NULL(host)) {
-        JNU_ThrowNullPointerException(env, "host argument");
-        return NULL;
+	JNU_ThrowNullPointerException(env, "host argument");
+	return NULL;
     }
     hostname = JNU_GetStringPlatformChars(env, host, JNI_FALSE);
     CHECK_NULL_RETURN(hostname, NULL);
@@ -170,90 +170,90 @@ Java_java_net_Inet4AddressImpl_lookupAllHostAddr(JNIEnv *env, jobject this,
      * bug whereby 0.0.0.0 is returned if any host name has a white space.
      */
     if (isspace(hostname[0])) {
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", hostname);
-        goto cleanupAndReturn;
-    }
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", hostname);
+	goto cleanupAndReturn;
+    } 
 
     /*
      * If the format is x.x.x.x then don't use gethostbyname as Windows
      * is unable to handle octets which are out of range.
      */
     if (isDottedIPAddress(hostname, &addr[0])) {
-        unsigned int address;
-        jobject iaObj;
+	unsigned int address;
+	jobject iaObj;
 
-        /*
-         * Are any of the octets out of range?
-         */
-        if (addr[0] > 255 || addr[1] > 255 || addr[2] > 255 || addr[3] > 255) {
-            JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", hostname);
-            goto cleanupAndReturn;
-        }
+	/* 
+	 * Are any of the octets out of range?
+	 */
+	if (addr[0] > 255 || addr[1] > 255 || addr[2] > 255 || addr[3] > 255) {
+	    JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", hostname);
+	    goto cleanupAndReturn;
+	} 
 
-        /*
-         * Return an byte array with the populated address.
-         */
-        address = (addr[3]<<24) & 0xff000000;
-        address |= (addr[2]<<16) & 0xff0000;
-        address |= (addr[1]<<8) & 0xff00;
-        address |= addr[0];
+	/*
+	 * Return an byte array with the populated address.
+	 */
+	address = (addr[3]<<24) & 0xff000000;
+	address |= (addr[2]<<16) & 0xff0000;
+	address |= (addr[1]<<8) & 0xff00;
+	address |= addr[0];
 
-        ret = (*env)->NewObjectArray(env, 1, ni_iacls, NULL);
+	ret = (*env)->NewObjectArray(env, 1, ni_iacls, NULL);
 
-        if (IS_NULL(ret)) {
-            goto cleanupAndReturn;
-        }
+	if (IS_NULL(ret)) {
+	    goto cleanupAndReturn;
+	}
 
-        iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
-        if (IS_NULL(iaObj)) {
-          ret = NULL;
-          goto cleanupAndReturn;
-        }
-        (*env)->SetIntField(env, iaObj, ni_iaaddressID,
-                            ntohl(address));
-        (*env)->SetObjectArrayElement(env, ret, 0, iaObj);
-        JNU_ReleaseStringPlatformChars(env, host, hostname);
-        return ret;
+	iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
+	if (IS_NULL(iaObj)) {
+	  ret = NULL;
+	  goto cleanupAndReturn;
+	}
+	(*env)->SetIntField(env, iaObj, ni_iaaddressID, 
+			    ntohl(address));
+	(*env)->SetObjectArrayElement(env, ret, 0, iaObj);
+	JNU_ReleaseStringPlatformChars(env, host, hostname);
+	return ret;	
     }
 
     /*
      * Perform the lookup
      */
     if ((hp = gethostbyname((char*)hostname)) != NULL) {
-        struct in_addr **addrp = (struct in_addr **) hp->h_addr_list;
-        int len = sizeof(struct in_addr);
-        int i = 0;
+	struct in_addr **addrp = (struct in_addr **) hp->h_addr_list;
+	int len = sizeof(struct in_addr);
+	int i = 0;
 
-        while (*addrp != (struct in_addr *) 0) {
-            i++;
-            addrp++;
-        }
+	while (*addrp != (struct in_addr *) 0) {
+	    i++;
+	    addrp++;
+	}
 
-        name = (*env)->NewStringUTF(env, hostname);
-        if (IS_NULL(name)) {
-          goto cleanupAndReturn;
-        }
-        ret = (*env)->NewObjectArray(env, i, ni_iacls, NULL);
+	name = (*env)->NewStringUTF(env, hostname);
+	if (IS_NULL(name)) {
+	  goto cleanupAndReturn;
+	}
+	ret = (*env)->NewObjectArray(env, i, ni_iacls, NULL);
 
-        if (IS_NULL(ret)) {
-            goto cleanupAndReturn;
-        }
+	if (IS_NULL(ret)) {
+	    goto cleanupAndReturn;
+	}
 
-        addrp = (struct in_addr **) hp->h_addr_list;
-        i = 0;
-        while (*addrp != (struct in_addr *) 0) {
-          jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
-          if (IS_NULL(iaObj)) {
-            ret = NULL;
-            goto cleanupAndReturn;
-          }
-          (*env)->SetIntField(env, iaObj, ni_iaaddressID,
-                              ntohl((*addrp)->s_addr));
-          (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
-          (*env)->SetObjectArrayElement(env, ret, i, iaObj);
-          addrp++;
-          i++;
-        }
+	addrp = (struct in_addr **) hp->h_addr_list;
+	i = 0;
+	while (*addrp != (struct in_addr *) 0) {
+	  jobject iaObj = (*env)->NewObject(env, ni_ia4cls, ni_ia4ctrID);
+	  if (IS_NULL(iaObj)) {
+	    ret = NULL;
+	    goto cleanupAndReturn;
+	  }
+	  (*env)->SetIntField(env, iaObj, ni_iaaddressID, 
+			      ntohl((*addrp)->s_addr));
+	  (*env)->SetObjectField(env, iaObj, ni_iahostID, name);
+	  (*env)->SetObjectArrayElement(env, ret, i, iaObj);
+	  addrp++;
+	  i++;
+	}
     } else {
         JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", hostname);
     }
@@ -269,8 +269,8 @@ cleanupAndReturn:
  * Signature: (I)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL
-Java_java_net_Inet4AddressImpl_getHostByAddr(JNIEnv *env, jobject this,
-                                            jbyteArray addrArray) {
+Java_java_net_Inet4AddressImpl_getHostByAddr(JNIEnv *env, jobject this, 
+					    jbyteArray addrArray) {
     struct hostent *hp;
     jbyte caddr[4];
     jint addr;
@@ -278,17 +278,17 @@ Java_java_net_Inet4AddressImpl_getHostByAddr(JNIEnv *env, jobject this,
     addr = ((caddr[0]<<24) & 0xff000000);
     addr |= ((caddr[1] <<16) & 0xff0000);
     addr |= ((caddr[2] <<8) & 0xff00);
-    addr |= (caddr[3] & 0xff);
+    addr |= (caddr[3] & 0xff); 
     addr = htonl(addr);
 
     hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET);
     if (hp == NULL) {
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", 0);
-        return NULL;
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", 0);
+	return NULL;
     }
     if (hp->h_name == NULL) { /* Deal with bug in Windows XP */
-        JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", 0);
-        return NULL;
+	JNU_ThrowByName(env, JNU_JAVANETPKG "UnknownHostException", 0);
+	return NULL;
     }
     return JNU_NewStringPlatform(env, hp->h_name);
 }
@@ -335,9 +335,9 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
      */
     if (netif != NULL) {
       if (bind(fd, (struct sockaddr*)netif, sizeof(struct sockaddr_in)) < 0) {
-        NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket");
-        closesocket(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket");
+	closesocket(fd);
+	return JNI_FALSE;
       }
     }
 
@@ -371,12 +371,12 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
        * Ping!
        */
       n = sendto(fd, sendbuf, 64, 0, (struct sockaddr *)him,
-                 sizeof(struct sockaddr));
+		 sizeof(struct sockaddr));
       if (n < 0 && WSAGetLastError() != WSAEWOULDBLOCK) {
-        NET_ThrowNew(env, WSAGetLastError(), "Can't send ICMP packet");
-        closesocket(fd);
-        WSACloseEvent(hEvent);
-        return JNI_FALSE;
+	NET_ThrowNew(env, WSAGetLastError(), "Can't send ICMP packet");
+	closesocket(fd);
+	WSACloseEvent(hEvent);
+	return JNI_FALSE;
       }
 
       /*
@@ -384,24 +384,24 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
        */
       tmout2 = timeout > 1000 ? 1000 : timeout;
       do {
-        tmout2 = NET_Wait(env, fd, NET_WAIT_READ, tmout2);
-        if (tmout2 >= 0) {
-          len = sizeof(sa_recv);
-          n = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, &sa_recv, &len);
-          ip = (struct ip*) recvbuf;
-          hlen1 = (ip->ip_hl) << 2;
-          icmp = (struct icmp *) (recvbuf + hlen1);
-          icmplen = n - hlen1;
-          /**
-           * Is that a proper ICMP reply?
-           */
-          if (icmplen >= 8 && icmp->icmp_type == ICMP_ECHOREPLY &&
-              (ntohs(icmp->icmp_seq) == seq) && (ntohs(icmp->icmp_id) == pid)) {
-            closesocket(fd);
-            WSACloseEvent(hEvent);
-            return JNI_TRUE;
-          }
-        }
+	tmout2 = NET_Wait(env, fd, NET_WAIT_READ, tmout2);
+	if (tmout2 >= 0) {
+	  len = sizeof(sa_recv);
+	  n = recvfrom(fd, recvbuf, sizeof(recvbuf), 0, &sa_recv, &len);
+	  ip = (struct ip*) recvbuf;
+	  hlen1 = (ip->ip_hl) << 2;
+	  icmp = (struct icmp *) (recvbuf + hlen1);
+	  icmplen = n - hlen1;
+	  /**
+	   * Is that a proper ICMP reply?
+	   */
+	  if (icmplen >= 8 && icmp->icmp_type == ICMP_ECHOREPLY &&
+	      (ntohs(icmp->icmp_seq) == seq) && (ntohs(icmp->icmp_id) == pid)) {
+	    closesocket(fd);
+	    WSACloseEvent(hEvent);
+	    return JNI_TRUE;
+	  }
+	}
       } while (tmout2 > 0);
       timeout -= 1000;
       seq++;
@@ -418,10 +418,10 @@ ping4(JNIEnv *env, jint fd, struct sockaddr_in* him, jint timeout,
  */
 JNIEXPORT jboolean JNICALL
 Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
-                                           jbyteArray addrArray,
-                                           jint timeout,
-                                           jbyteArray ifArray,
-                                           jint ttl) {
+					   jbyteArray addrArray,
+					   jint timeout, 
+					   jbyteArray ifArray,
+					   jint ttl) {
     jint addr;
     jbyte caddr[4];
     jint fd;
@@ -446,7 +446,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
     addr = ((caddr[0]<<24) & 0xff000000);
     addr |= ((caddr[1] <<16) & 0xff0000);
     addr |= ((caddr[2] <<8) & 0xff00);
-    addr |= (caddr[3] & 0xff);
+    addr |= (caddr[3] & 0xff); 
     addr = htonl(addr);
     /**
      * Socket address
@@ -465,7 +465,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
       addr = ((caddr[0]<<24) & 0xff000000);
       addr |= ((caddr[1] <<16) & 0xff0000);
       addr |= ((caddr[2] <<8) & 0xff00);
-      addr |= (caddr[3] & 0xff);
+      addr |= (caddr[3] & 0xff); 
       addr = htonl(addr);
       inf.sin_addr.s_addr = addr;
       inf.sin_family = AF_INET;
@@ -489,7 +489,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
       /*
        * It didn't fail, so we can use ICMP_ECHO requests.
        */
-        return ping4(env, fd, &him, timeout, netif, ttl);
+	return ping4(env, fd, &him, timeout, netif, ttl);
     }
 #endif
 
@@ -498,12 +498,12 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      */
     fd = NET_Socket(AF_INET, SOCK_STREAM, 0);
     if (fd == JVM_IO_ERR) {
-        /* note: if you run out of fds, you may not be able to load
-         * the exception class, and get a NoClassDefFoundError
-         * instead.
-         */
-        NET_ThrowNew(env, WSAGetLastError(), "Can't create socket");
-        return JNI_FALSE;
+	/* note: if you run out of fds, you may not be able to load
+	 * the exception class, and get a NoClassDefFoundError
+	 * instead.
+	 */
+	NET_ThrowNew(env, WSAGetLastError(), "Can't create socket");
+	return JNI_FALSE;
     }
     if (ttl > 0) {
       setsockopt(fd, IPPROTO_IP, IP_TTL, (const char *)&ttl, sizeof(ttl));
@@ -513,9 +513,9 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      */
     if (netif != NULL) {
       if (bind(fd, (struct sockaddr*)netif, sizeof(struct sockaddr_in)) < 0) {
-        NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket");
-        closesocket(fd);
-        return JNI_FALSE;
+	NET_ThrowNew(env, WSAGetLastError(), "Can't bind socket");
+	closesocket(fd);
+	return JNI_FALSE;
       }
     }
 
@@ -526,7 +526,7 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
     WSAEventSelect(fd, hEvent, FD_READ|FD_CONNECT|FD_CLOSE);
 
     /* no need to use NET_Connect as non-blocking */
-    him.sin_port = htons(7);    /* Echo */
+    him.sin_port = htons(7);	/* Echo */
     connect_rv = connect(fd, (struct sockaddr *)&him, len);
 
     /**
@@ -534,47 +534,47 @@ Java_java_net_Inet4AddressImpl_isReachable0(JNIEnv *env, jobject this,
      * we were able to reach the host!
      */
     if (connect_rv == 0 || WSAGetLastError() == WSAECONNREFUSED) {
-        WSACloseEvent(hEvent);
-        closesocket(fd);
-        return JNI_TRUE;
+	WSACloseEvent(hEvent);
+	closesocket(fd);
+	return JNI_TRUE;
     } else {
-        int optlen;
+	int optlen;
 
         switch (WSAGetLastError()) {
-        case WSAEHOSTUNREACH:   /* Host Unreachable */
-        case WSAENETUNREACH:    /* Network Unreachable */
-        case WSAENETDOWN:       /* Network is down */
-        case WSAEPFNOSUPPORT:   /* Protocol Family unsupported */
-          WSACloseEvent(hEvent);
-          closesocket(fd);
-          return JNI_FALSE;
+        case WSAEHOSTUNREACH:	/* Host Unreachable */
+        case WSAENETUNREACH:	/* Network Unreachable */
+        case WSAENETDOWN:	/* Network is down */
+        case WSAEPFNOSUPPORT:	/* Protocol Family unsupported */
+	  WSACloseEvent(hEvent);
+	  closesocket(fd);   
+	  return JNI_FALSE;
         }
 
-        if (WSAGetLastError() != WSAEWOULDBLOCK) {
-            NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
-                                         "connect failed");
-            WSACloseEvent(hEvent);
-            closesocket(fd);
-            return JNI_FALSE;
-        }
+	if (WSAGetLastError() != WSAEWOULDBLOCK) {
+	    NET_ThrowByNameWithLastError(env, JNU_JAVANETPKG "ConnectException",
+					 "connect failed");
+	    WSACloseEvent(hEvent);
+	    closesocket(fd);
+	    return JNI_FALSE;
+	}
 
-        timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
+	timeout = NET_Wait(env, fd, NET_WAIT_CONNECT, timeout);
 
-        /* has connection been established */
+	/* has connection been established */
 
-        if (timeout >= 0) {
-          optlen = sizeof(connect_rv);
-          if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
-                             &optlen) <0) {
-            connect_rv = WSAGetLastError();
-          }
+	if (timeout >= 0) {
+	  optlen = sizeof(connect_rv);
+	  if (JVM_GetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void*)&connect_rv,
+			     &optlen) <0) {
+	    connect_rv = WSAGetLastError();
+	  }
 
-          if (connect_rv == 0 || connect_rv == WSAECONNREFUSED) {
-            WSACloseEvent(hEvent);
-            closesocket(fd);
-            return JNI_TRUE;
-          }
-        }
+	  if (connect_rv == 0 || connect_rv == WSAECONNREFUSED) {
+	    WSACloseEvent(hEvent);
+	    closesocket(fd);
+	    return JNI_TRUE;
+	  }
+	}
     }
     WSACloseEvent(hEvent);
     closesocket(fd);

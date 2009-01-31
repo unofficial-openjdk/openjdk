@@ -109,13 +109,14 @@ import java.io.IOException;
  *
  * <p>The implementation conforms to RFC 2965, section 3.3.
  *
+ * @version %I%, %E%
  * @author Edward Wang
  * @since 1.6
  */
 public class CookieManager extends CookieHandler
 {
     /* ---------------- Fields -------------- */
-
+    
     private CookiePolicy policyCallback;
 
 
@@ -123,7 +124,7 @@ public class CookieManager extends CookieHandler
 
 
     /* ---------------- Ctors -------------- */
-
+    
     /**
      * Create a new cookie manager.
      *
@@ -153,7 +154,7 @@ public class CookieManager extends CookieHandler
         // use default cookie policy if not specify one
         policyCallback = (cookiePolicy == null) ? CookiePolicy.ACCEPT_ORIGINAL_SERVER
                                                 : cookiePolicy;
-
+        
         // if not specify CookieStore to use, use default one
         if (store == null) {
             cookieJar = new sun.net.www.protocol.http.InMemoryCookieStore();
@@ -162,9 +163,9 @@ public class CookieManager extends CookieHandler
         }
     }
 
-
+    
     /* ---------------- Public operations -------------- */
-
+    
     /**
      * To set the cookie policy of this cookie manager.
      *
@@ -178,8 +179,8 @@ public class CookieManager extends CookieHandler
     public void setCookiePolicy(CookiePolicy cookiePolicy) {
         if (cookiePolicy != null) policyCallback = cookiePolicy;
     }
-
-
+    
+    
     /**
      * To retrieve current cookie store.
      *
@@ -198,13 +199,13 @@ public class CookieManager extends CookieHandler
         if (uri == null || requestHeaders == null) {
             throw new IllegalArgumentException("Argument is null");
         }
-
+        
         Map<String, List<String>> cookieMap =
                         new java.util.HashMap<String, List<String>>();
         // if there's no default CookieStore, no way for us to get any cookie
         if (cookieJar == null)
             return Collections.unmodifiableMap(cookieMap);
-
+        
         List<HttpCookie> cookies = new java.util.ArrayList<HttpCookie>();
         for (HttpCookie cookie : cookieJar.get(uri)) {
             // apply path-matches rule (RFC 2965 sec. 3.3.4)
@@ -212,15 +213,15 @@ public class CookieManager extends CookieHandler
                 cookies.add(cookie);
             }
         }
-
+        
         // apply sort rule (RFC 2965 sec. 3.3.4)
         List<String> cookieHeader = sortByPath(cookies);
-
+        
         cookieMap.put("Cookie", cookieHeader);
         return Collections.unmodifiableMap(cookieMap);
     }
-
-
+    
+    
     public void
         put(URI uri, Map<String, List<String>> responseHeaders)
         throws IOException
@@ -229,12 +230,12 @@ public class CookieManager extends CookieHandler
         if (uri == null || responseHeaders == null) {
             throw new IllegalArgumentException("Argument is null");
         }
-
-
+        
+        
         // if there's no default CookieStore, no need to remember any cookie
         if (cookieJar == null)
             return;
-
+        
         for (String headerKey : responseHeaders.keySet()) {
             // RFC 2965 3.2.2, key must be 'Set-Cookie2'
             // we also accept 'Set-Cookie' here for backward compatibility
@@ -246,7 +247,7 @@ public class CookieManager extends CookieHandler
             {
                 continue;
             }
-
+            
             for (String headerValue : responseHeaders.get(headerKey)) {
                 try {
                     List<HttpCookie> cookies = HttpCookie.parse(headerValue);
@@ -265,7 +266,7 @@ public class CookieManager extends CookieHandler
 
 
     /* ---------------- Private operations -------------- */
-
+    
     // to determine whether or not accept this cookie
     private boolean shouldAcceptInternal(URI uri, HttpCookie cookie) {
         try {
@@ -274,8 +275,8 @@ public class CookieManager extends CookieHandler
             return false;
         }
     }
-
-
+    
+    
     /*
      * path-matches algorithm, as defined by RFC 2965
      */
@@ -286,11 +287,11 @@ public class CookieManager extends CookieHandler
             return false;
         if (path.startsWith(pathToMatchWith))
             return true;
-
+        
         return false;
     }
-
-
+    
+    
     /*
      * sort cookies with respect to their path: those with more specific Path attributes
      * precede those with less specific, as defined in RFC 2965 sec. 3.3.4
@@ -319,10 +320,10 @@ public class CookieManager extends CookieHandler
             if (c1 == c2) return 0;
             if (c1 == null) return -1;
             if (c2 == null) return 1;
-
+            
             // path rule only applies to the cookies with same name
             if (!c1.getName().equals(c2.getName())) return 0;
-
+            
             // those with more specific Path attributes precede those with less specific
             if (c1.getPath().startsWith(c2.getPath()))
                 return -1;

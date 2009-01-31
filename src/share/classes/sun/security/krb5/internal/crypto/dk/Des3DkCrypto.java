@@ -46,38 +46,38 @@ public class Des3DkCrypto extends DkCrypto {
     }
 
     protected int getKeySeedLength() {
-        return 168;   // bits; 3DES key material has 21 bytes
+	return 168;   // bits; 3DES key material has 21 bytes
     }
 
     public byte[] stringToKey(char[] salt) throws GeneralSecurityException {
-        byte[] saltUtf8 = null;
-        try {
-            saltUtf8 = charToUtf8(salt);
-            return stringToKey(saltUtf8, null);
-        } finally {
-            if (saltUtf8 != null) {
-                Arrays.fill(saltUtf8, (byte)0);
-            }
-            // Caller responsible for clearing its own salt
-        }
+	byte[] saltUtf8 = null;
+	try {
+	    saltUtf8 = charToUtf8(salt);
+	    return stringToKey(saltUtf8, null);
+	} finally {
+	    if (saltUtf8 != null) {
+		Arrays.fill(saltUtf8, (byte)0);
+	    }
+	    // Caller responsible for clearing its own salt
+	}
     }
 
     private byte[] stringToKey(byte[] secretAndSalt, byte[] opaque)
-        throws GeneralSecurityException {
+	throws GeneralSecurityException {
+	
+	if (opaque != null && opaque.length > 0) {
+	    throw new RuntimeException("Invalid parameter to stringToKey");
+	}
 
-        if (opaque != null && opaque.length > 0) {
-            throw new RuntimeException("Invalid parameter to stringToKey");
-        }
-
-        byte[] tmpKey = randomToKey(nfold(secretAndSalt, getKeySeedLength()));
-        return dk(tmpKey, KERBEROS_CONSTANT);
+	byte[] tmpKey = randomToKey(nfold(secretAndSalt, getKeySeedLength()));
+	return dk(tmpKey, KERBEROS_CONSTANT);
     }
 
     public byte[] parityFix(byte[] value)
-        throws GeneralSecurityException {
-        // fix key parity
-        setParityBit(value);
-        return value;
+	throws GeneralSecurityException {
+	// fix key parity
+	setParityBit(value);
+	return value;
     }
 
     /*
@@ -89,32 +89,32 @@ public class Des3DkCrypto extends DkCrypto {
      * Result is a 24 byte (192-bit) key.
      */
     protected byte[] randomToKey(byte[] in) {
-        if (in.length != 21) {
-            throw new IllegalArgumentException("input must be 168 bits");
-        }
+	if (in.length != 21) {
+	    throw new IllegalArgumentException("input must be 168 bits");
+	}
+	
+	byte[] one = keyCorrection(des3Expand(in, 0, 7));
+	byte[] two = keyCorrection(des3Expand(in, 7, 14));
+	byte[] three = keyCorrection(des3Expand(in, 14, 21));
 
-        byte[] one = keyCorrection(des3Expand(in, 0, 7));
-        byte[] two = keyCorrection(des3Expand(in, 7, 14));
-        byte[] three = keyCorrection(des3Expand(in, 14, 21));
+	byte[] key = new byte[24];
+	System.arraycopy(one, 0, key, 0, 8);
+	System.arraycopy(two, 0, key, 8, 8);
+	System.arraycopy(three, 0, key, 16, 8);
 
-        byte[] key = new byte[24];
-        System.arraycopy(one, 0, key, 0, 8);
-        System.arraycopy(two, 0, key, 8, 8);
-        System.arraycopy(three, 0, key, 16, 8);
-
-        return key;
+	return key;
     }
 
     private static byte[] keyCorrection(byte[] key) {
-        // check for weak key
-        try {
-            if (DESKeySpec.isWeak(key, 0)) {
-                key[7] = (byte)(key[7] ^ 0xF0);
-            }
-        } catch (InvalidKeyException ex) {
-            // swallow, since it should never happen
-        }
-        return key;
+	// check for weak key
+	try {
+	    if (DESKeySpec.isWeak(key, 0)) {
+		key[7] = (byte)(key[7] ^ 0xF0);
+	    }
+	} catch (InvalidKeyException ex) {
+	    // swallow, since it should never happen
+	}
+	return key;
     }
 
     /**
@@ -131,48 +131,48 @@ public class Des3DkCrypto extends DkCrypto {
      *   49 50 51 52 53 54 55  p
      *   56 48 40 32 24 16  8  p
      *
-     * (PI,P2,...,P8) are reserved for parity bits computed on the preceding
-     * seven independent bits and set so that the parity of the octet is odd,
+     * (PI,P2,...,P8) are reserved for parity bits computed on the preceding 
+     * seven independent bits and set so that the parity of the octet is odd, 
      * i.e., there is an odd number of "1" bits in the octet.
      *
      * @param start index of starting byte (inclusive)
      * @param end index of ending byte (exclusive)
      */
     private static byte[] des3Expand(byte[] input, int start, int end) {
-        if ((end - start) != 7)
-            throw new IllegalArgumentException(
-                "Invalid length of DES Key Value:" + start + "," + end);
+	if ((end - start) != 7) 
+	    throw new IllegalArgumentException(
+		"Invalid length of DES Key Value:" + start + "," + end);
 
-        byte[] result = new byte[8];
-        byte last = 0;
-        System.arraycopy(input, start, result, 0, 7);
-        byte posn = 0;
+	byte[] result = new byte[8];
+	byte last = 0;
+	System.arraycopy(input, start, result, 0, 7);
+	byte posn = 0;
 
-        // Fill in last row
-        for (int i = start; i < end; i++) {
-            byte bit = (byte) (input[i]&0x01);
-            if (debug) {
-                System.out.println(i + ": " + Integer.toHexString(input[i]) +
-                    " bit= " + Integer.toHexString(bit));
-            }
-            ++posn;
-            if (bit != 0) {
-                last |= (bit<<posn);
-            }
-        }
+	// Fill in last row
+	for (int i = start; i < end; i++) {
+	    byte bit = (byte) (input[i]&0x01);
+	    if (debug) {
+		System.out.println(i + ": " + Integer.toHexString(input[i]) +
+		    " bit= " + Integer.toHexString(bit));
+	    }
+	    ++posn;
+	    if (bit != 0) {
+		last |= (bit<<posn);
+	    }
+	}
 
-        if (debug) {
-            System.out.println("last: " + Integer.toHexString(last));
-        }
-        result[7] = last;
-        setParityBit(result);
-        return result;
+	if (debug) {
+	    System.out.println("last: " + Integer.toHexString(last));
+	}
+	result[7] = last;
+	setParityBit(result);
+	return result;
     }
 
     /* Mask used to check for parity adjustment */
     private static final byte[] PARITY_BIT_MASK = {
-        (byte)0x80, (byte)0x40, (byte)0x20, (byte)0x10,
-        (byte)0x08, (byte)0x04, (byte)0x02
+	(byte)0x80, (byte)0x40, (byte)0x20, (byte)0x10,
+	(byte)0x08, (byte)0x04, (byte)0x02
     };
 
     /**
@@ -180,62 +180,62 @@ public class Des3DkCrypto extends DkCrypto {
      * contains an odd number of 1's.
      */
     private static void setParityBit(byte[] key) {
-        for (int i = 0; i < key.length; i++) {
-            int bitCount = 0;
-            for (int maskIndex = 0;
-                 maskIndex < PARITY_BIT_MASK.length; maskIndex++) {
-                if ((key[i] & PARITY_BIT_MASK[maskIndex])
-                    == PARITY_BIT_MASK[maskIndex]) {
-                    bitCount++;
-                }
-            }
-            if ((bitCount & 0x01) == 1) {
-                // Odd number of 1 bits in the top 7 bits. Set parity bit to 0
-                key[i] = (byte)(key[i] & (byte)0xfe);
-            } else {
-                // Even number of 1 bits in the top 7 bits. Set parity bit to 1
-                key[i] = (byte)(key[i] | 1);
-            }
-        }
+	for (int i = 0; i < key.length; i++) {
+	    int bitCount = 0;
+	    for (int maskIndex = 0;
+		 maskIndex < PARITY_BIT_MASK.length; maskIndex++) {
+		if ((key[i] & PARITY_BIT_MASK[maskIndex])
+		    == PARITY_BIT_MASK[maskIndex]) {
+		    bitCount++;
+		}
+	    }
+	    if ((bitCount & 0x01) == 1) {
+		// Odd number of 1 bits in the top 7 bits. Set parity bit to 0
+		key[i] = (byte)(key[i] & (byte)0xfe);
+	    } else {
+		// Even number of 1 bits in the top 7 bits. Set parity bit to 1
+		key[i] = (byte)(key[i] | 1);
+	    }
+	}
     }
 
     protected Cipher getCipher(byte[] key, byte[] ivec, int mode)
-        throws GeneralSecurityException {
-        // NoSuchAlgorithException
-        SecretKeyFactory factory = SecretKeyFactory.getInstance("desede");
+	throws GeneralSecurityException {
+	// NoSuchAlgorithException
+	SecretKeyFactory factory = SecretKeyFactory.getInstance("desede");
 
-        // InvalidKeyException
-        KeySpec spec = new DESedeKeySpec(key, 0);
+	// InvalidKeyException
+	KeySpec spec = new DESedeKeySpec(key, 0);
 
-        // InvalidKeySpecException
-        SecretKey secretKey = factory.generateSecret(spec);
+	// InvalidKeySpecException
+	SecretKey secretKey = factory.generateSecret(spec);
 
-        // IV
-        if (ivec == null) {
+	// IV
+	if (ivec == null) {
             ivec = ZERO_IV;
-        }
+	}
 
-        // NoSuchAlgorithmException, NoSuchPaddingException
-        // NoSuchProviderException
-        Cipher cipher = Cipher.getInstance("DESede/CBC/NoPadding");
-        IvParameterSpec encIv = new IvParameterSpec(ivec, 0, ivec.length);
+	// NoSuchAlgorithmException, NoSuchPaddingException
+	// NoSuchProviderException
+	Cipher cipher = Cipher.getInstance("DESede/CBC/NoPadding");
+	IvParameterSpec encIv = new IvParameterSpec(ivec, 0, ivec.length);
 
-        // InvalidKeyException, InvalidAlgorithParameterException
-        cipher.init(mode, secretKey, encIv);
+	// InvalidKeyException, InvalidAlgorithParameterException
+	cipher.init(mode, secretKey, encIv);
 
-        return cipher;
+	return cipher;
     }
 
     public int getChecksumLength() {
-        return 20;  // bytes
+	return 20;  // bytes
     }
 
     protected byte[] getHmac(byte[] key, byte[] msg)
-        throws GeneralSecurityException {
+	throws GeneralSecurityException {
 
-        SecretKey keyKi = new SecretKeySpec(key, "HmacSHA1");
-        Mac m = Mac.getInstance("HmacSHA1");
-        m.init(keyKi);
-        return m.doFinal(msg);
+ 	SecretKey keyKi = new SecretKeySpec(key, "HmacSHA1");
+ 	Mac m = Mac.getInstance("HmacSHA1");
+ 	m.init(keyKi);
+	return m.doFinal(msg);
     }
 }

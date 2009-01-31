@@ -42,16 +42,16 @@ class ExprExpression extends UnaryExpression {
      * Constructor
      */
     public ExprExpression(long where, Expression right) {
-        super(EXPR, where, right.type, right);
+	super(EXPR, where, right.type, right);
     }
 
     /**
      * Check a condition.  We must pass it on to our unparenthesised form.
      */
     public void checkCondition(Environment env, Context ctx, Vset vset,
-                               Hashtable exp, ConditionVars cvars) {
-        right.checkCondition(env, ctx, vset, exp, cvars);
-        type = right.type;
+			       Hashtable exp, ConditionVars cvars) {
+	right.checkCondition(env, ctx, vset, exp, cvars);
+	type = right.type;
     }
 
     /**
@@ -60,10 +60,10 @@ class ExprExpression extends UnaryExpression {
      * (Part of fix for 4090372)
      */
     public Vset checkAssignOp(Environment env, Context ctx,
-                              Vset vset, Hashtable exp, Expression outside) {
-        vset = right.checkAssignOp(env, ctx, vset, exp, outside);
-        type = right.type;
-        return vset;
+			      Vset vset, Hashtable exp, Expression outside) {
+	vset = right.checkAssignOp(env, ctx, vset, exp, outside);
+	type = right.type;
+	return vset;
     }
 
     /**
@@ -71,7 +71,7 @@ class ExprExpression extends UnaryExpression {
      * (Part of fix for 4090372)
      */
     public FieldUpdater getUpdater(Environment env, Context ctx) {
-        return right.getUpdater(env, ctx);
+	return right.getUpdater(env, ctx);
     }
 
     // Allow (x) = 9;
@@ -87,16 +87,16 @@ class ExprExpression extends UnaryExpression {
     // }
 
     public boolean isNull() {
-        return right.isNull();
+	return right.isNull();
     }
 
     public boolean isNonNull() {
-        return right.isNonNull();
+	return right.isNonNull();
     }
 
     // Probably not necessary
     public Object getValue() {
-        return right.getValue();
+	return right.getValue();
     }
 
     /**
@@ -105,22 +105,22 @@ class ExprExpression extends UnaryExpression {
      * information about this method.
      */
     protected StringBuffer inlineValueSB(Environment env,
-                                         Context ctx,
-                                         StringBuffer buffer) {
-        return right.inlineValueSB(env, ctx, buffer);
+					 Context ctx,
+					 StringBuffer buffer) {
+	return right.inlineValueSB(env, ctx, buffer);
     }
 
     /**
      * Select the type of the expression
      */
     void selectType(Environment env, Context ctx, int tm) {
-        type = right.type;
+	type = right.type;
     }
 
     /**
      * Simplify
      */
     Expression simplify() {
-        return right;
+	return right;
     }
 }

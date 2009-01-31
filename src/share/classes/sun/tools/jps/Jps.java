@@ -33,6 +33,7 @@ import sun.jvmstat.monitor.*;
  * Application to provide a listing of monitorable java processes.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class Jps {
@@ -135,7 +136,7 @@ public class Jps {
                 }
 
                 System.out.println(output);
-
+          
                 monitoredHost.detach(vm);
             }
         } catch (MonitorException e) {

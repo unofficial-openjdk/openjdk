@@ -30,15 +30,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.model;
@@ -49,9 +49,10 @@ import java.io.IOException;
 /**
  * An array of values, that is, an array of ints, boolean, floats or the like.
  *
+ * @version     %W% %E% %U%
  * @author      Bill Foote
  */
-public class JavaValueArray extends JavaLazyReadObject
+public class JavaValueArray extends JavaLazyReadObject 
                 /*imports*/ implements ArrayTypeCodes {
 
     private static String arrayTypeName(byte sig) {
@@ -62,13 +63,13 @@ public class JavaValueArray extends JavaLazyReadObject
                 return "boolean[]";
             case 'C':
                 return "char[]";
-            case 'S':
+            case 'S': 
                 return "short[]";
             case 'I':
                 return "int[]";
             case 'F':
                 return "float[]";
-            case 'J':
+            case 'J': 
                 return "long[]";
             case 'D':
                 return "double[]";
@@ -83,12 +84,12 @@ public class JavaValueArray extends JavaLazyReadObject
             case T_BOOLEAN:
                 return 1;
             case T_CHAR:
-            case T_SHORT:
+            case T_SHORT: 
                 return 2;
             case T_INT:
             case T_FLOAT:
                 return 4;
-            case T_LONG:
+            case T_LONG: 
             case T_DOUBLE:
                 return 8;
             default:
@@ -138,7 +139,7 @@ public class JavaValueArray extends JavaLazyReadObject
     }
 
     // JavaClass set only after resolve.
-    private JavaClass clazz;
+    private JavaClass clazz; 
 
     // This field contains elementSignature byte and
     // divider to be used to calculate length. Note that
@@ -156,8 +157,8 @@ public class JavaValueArray extends JavaLazyReadObject
     private static final int LENGTH_DIVIDER_SHIFT = 8;
 
     public JavaValueArray(byte elementSignature, long offset) {
-        super(offset);
-        this.data = (elementSignature & SIGNATURE_MASK);
+	super(offset);
+	this.data = (elementSignature & SIGNATURE_MASK);
     }
 
     public JavaClass getClazz() {
@@ -165,7 +166,7 @@ public class JavaValueArray extends JavaLazyReadObject
     }
 
     public void visitReferencedObjects(JavaHeapObjectVisitor v) {
-        super.visitReferencedObjects(v);
+	super.visitReferencedObjects(v);
     }
 
     public void resolve(Snapshot snapshot) {
@@ -173,12 +174,12 @@ public class JavaValueArray extends JavaLazyReadObject
             return;
         }
         byte elementSig = getElementType();
-        clazz = snapshot.findClass(arrayTypeName(elementSig));
-        if (clazz == null) {
-            clazz = snapshot.getArrayClass("" + ((char) elementSig));
-        }
-        getClazz().addInstance(this);
-        super.resolve(snapshot);
+	clazz = snapshot.findClass(arrayTypeName(elementSig));
+	if (clazz == null) {
+	    clazz = snapshot.getArrayClass("" + ((char) elementSig));
+	}
+	getClazz().addInstance(this);
+	super.resolve(snapshot);
     }
 
     public int getLength() {
@@ -196,17 +197,17 @@ public class JavaValueArray extends JavaLazyReadObject
                 break;
             case 'I':
             case 'F':
-                divider = 4;
+                divider = 4; 
                 break;
             case 'J':
             case 'D':
                 divider = 8;
                 break;
             default:
-                throw new RuntimeException("unknown primitive type: " +
+                throw new RuntimeException("unknown primitive type: " + 
                                 elementSignature);
             }
-            data |= (divider << LENGTH_DIVIDER_SHIFT);
+            data |= (divider << LENGTH_DIVIDER_SHIFT); 
         }
         return (getValueLength() / divider);
     }
@@ -281,7 +282,7 @@ public class JavaValueArray extends JavaLazyReadObject
                 }
                 return res;
             }
-            default: {
+	    default: {
                 throw new RuntimeException("unknown primitive type?");
             }
         }
@@ -294,7 +295,7 @@ public class JavaValueArray extends JavaLazyReadObject
     private void checkIndex(int index) {
         if (index < 0 || index >= getLength()) {
             throw new ArrayIndexOutOfBoundsException(index);
-        }
+        } 
     }
 
     private void requireType(char type) {
@@ -314,7 +315,7 @@ public class JavaValueArray extends JavaLazyReadObject
         requireType('B');
         return byteAt(index, getValue());
     }
-
+ 
     public char getCharAt(int index) {
         checkIndex(index);
         requireType('C');
@@ -356,89 +357,89 @@ public class JavaValueArray extends JavaLazyReadObject
     }
 
     public String valueString(boolean bigLimit) {
-        // Char arrays deserve special treatment
-        StringBuffer result;
+	// Char arrays deserve special treatment
+	StringBuffer result;
         byte[] value = getValue();
-        int max = value.length;
+	int max = value.length;
         byte elementSignature = getElementType();
-        if (elementSignature == 'C')  {
-            result = new StringBuffer();
-            for (int i = 0; i < value.length; ) {
-                char val = charAt(i, value);
-                result.append(val);
+	if (elementSignature == 'C')  {
+	    result = new StringBuffer();
+	    for (int i = 0; i < value.length; ) {
+		char val = charAt(i, value);
+		result.append(val);
                 i += 2;
-            }
-        } else {
-            int limit = 8;
-            if (bigLimit) {
-                limit = 1000;
-            }
-            result = new StringBuffer("{");
-            int num = 0;
-            for (int i = 0; i < value.length; ) {
-                if (num > 0) {
-                    result.append(", ");
-                }
-                if (num >= limit) {
-                    result.append("... ");
-                    break;
-                }
-                num++;
-                switch (elementSignature) {
-                    case 'Z': {
+	    }
+	} else {
+	    int limit = 8;
+	    if (bigLimit) {
+		limit = 1000;
+	    }
+	    result = new StringBuffer("{");
+	    int num = 0;
+	    for (int i = 0; i < value.length; ) {
+		if (num > 0) {
+		    result.append(", ");
+		}
+		if (num >= limit) {
+		    result.append("... ");
+		    break;
+		}
+		num++;
+		switch (elementSignature) {
+		    case 'Z': {
                         boolean val = booleanAt(i, value);
                         if (val) {
-                            result.append("true");
+			    result.append("true");
                         } else {
-                            result.append("false");
+			    result.append("false");
                         }
+			i++;
+			break;
+		    }
+		    case 'B': {
+			int val = 0xFF & byteAt(i, value);
+			result.append("0x" + Integer.toString(val, 16));
                         i++;
-                        break;
-                    }
-                    case 'B': {
-                        int val = 0xFF & byteAt(i, value);
-                        result.append("0x" + Integer.toString(val, 16));
-                        i++;
-                        break;
-                    }
-                    case 'S': {
-                        short val = shortAt(i, value);
+			break;
+		    }
+		    case 'S': {
+			short val = shortAt(i, value);
                         i += 2;
-                        result.append("" + val);
-                        break;
-                    }
-                    case 'I': {
-                        int val = intAt(i, value);
+			result.append("" + val);
+			break;
+		    }
+		    case 'I': {
+			int val = intAt(i, value);
                         i += 4;
-                        result.append("" + val);
-                        break;
-                    }
-                    case 'J': {         // long
-                        long val = longAt(i, value);
-                        result.append("" + val);
+			result.append("" + val);
+			break;
+		    }
+		    case 'J': {		// long
+			long val = longAt(i, value);
+			result.append("" + val);
                         i += 8;
-                        break;
-                    }
-                    case 'F': {
+			break;
+		    }
+		    case 'F': {
                         float val = floatAt(i, value);
-                        result.append("" + val);
+			result.append("" + val);
                         i += 4;
-                        break;
-                    }
-                    case 'D': {         // double
-                        double val = doubleAt(i, value);
-                        result.append("" + val);
+			break;
+		    }
+		    case 'D': {		// double
+                        double val = doubleAt(i, value); 
+			result.append("" + val);
                         i += 8;
-                        break;
-                    }
-                    default: {
+			break;
+		    }
+		    default: {
                         throw new RuntimeException("unknown primitive type?");
-                    }
-                }
-            }
-            result.append("}");
-        }
-        return result.toString();
+		    }
+		}
+	    }
+	    result.append("}");
+	}
+	return result.toString();
     }
 
 }

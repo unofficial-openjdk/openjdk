@@ -33,7 +33,7 @@ import sun.reflect.generics.tree.FieldTypeSignature;
 
 /**
  * A factory interface for reflective objects representing generic types.
- * Implementors (such as core reflection or JDI, or possibly javadoc
+ * Implementors (such as core reflection or JDI, or possibly javadoc 
  * will manufacture instances of (potentially) different classes
  * in response to invocations of the methods described here.
  * <p> The intent is that reflective systems use these factories to
@@ -42,11 +42,11 @@ import sun.reflect.generics.tree.FieldTypeSignature;
  * of a specific implementation by using this interface. For example,
  * repositories of generic type information are initialized with a
  * factory conforming to this interface, and use it to generate the
- * tpe information they are required to provide. As a result, such
+ * tpe information they are required to provide. As a result, such 
  * repository code can be shared across different reflective systems.
  */
 public interface GenericsFactory {
-    /**
+    /** 
      * Returns a new type variable declaration. Note that <tt>name</tt>
      * may be empty (but not <tt>null</tt>). If <tt>bounds</tt> is
      * empty, a bound of <tt>java.lang.Object</tt> is used.
@@ -54,17 +54,17 @@ public interface GenericsFactory {
      * @param bounds An array of abstract syntax trees representing
      * the upper bound(s) on the type variable being declared
      * @return a new type variable declaration
-     * @throws NullPointerException - if any of the actual parameters
+     * @throws NullPointerException - if any of the actual parameters 
      * or any of the elements of <tt>bounds</tt> are <tt>null</tt>.
      */
-    TypeVariable<?> makeTypeVariable(String name,
-                                     FieldTypeSignature[] bounds);
+    TypeVariable<?> makeTypeVariable(String name, 
+				     FieldTypeSignature[] bounds);
     /**
      * Return an instance of the <tt>ParameterizedType</tt> interface
      * that corresponds to a generic type instantiation of the
      * generic declaration <tt>declaration</tt> with actual type arguments
      * <tt>typeArgs</tt>.
-     * If <tt>owner</tt> is <tt>null</tt>, the declaring class of
+     * If <tt>owner</tt> is <tt>null</tt>, the declaring class of 
      * <tt>declaration</tt> is used as the owner of this parameterized
      * type.
      * <p> This method throws a MalformedParameterizedTypeException
@@ -87,23 +87,23 @@ public interface GenericsFactory {
      * , <tt>typeArgs</tt>
      * or any of the elements of <tt>typeArgs</tt> are <tt>null</tt>
      */
-    ParameterizedType makeParameterizedType(Type declaration,
-                                            Type[] typeArgs,
-                                            Type owner);
+    ParameterizedType makeParameterizedType(Type declaration, 
+					    Type[] typeArgs,
+					    Type owner);
 
-    /**
+    /** 
      * Returns the type variable with name <tt>name</tt>, if such
      * a type variable is declared in the
      * scope used to create this factory.
      * Returns <tt>null</tt> otherwise.
      * @param name - the name of the type variable to search for
      * @return - the type variable with name <tt>name</tt>, or <tt>null</tt>
-     * @throws  NullPointerException - if any of actual parameters are
+     * @throws  NullPointerException - if any of actual parameters are 
      * <tt>null</tt>
      */
     TypeVariable<?> findTypeVariable(String name);
 
-    /**
+    /** 
      * Returns a new wildcard type variable. If
      * <tt>ubs</tt> is empty, a bound of <tt>java.lang.Object</tt> is used.
      * @param ubs An array of abstract syntax trees representing
@@ -111,17 +111,17 @@ public interface GenericsFactory {
      * @param lbs An array of abstract syntax trees representing
      * the lower bound(s) on the type variable being declared
      * @return a new wildcard type variable
-     * @throws NullPointerException - if any of the actual parameters
-     * or any of the elements of <tt>ubs</tt> or <tt>lbs</tt>are
+     * @throws NullPointerException - if any of the actual parameters 
+     * or any of the elements of <tt>ubs</tt> or <tt>lbs</tt>are 
      * <tt>null</tt>
      */
-    WildcardType makeWildcard(FieldTypeSignature[] ubs,
-                              FieldTypeSignature[] lbs);
+    WildcardType makeWildcard(FieldTypeSignature[] ubs, 
+			      FieldTypeSignature[] lbs);
 
     Type makeNamedType(String name);
 
-    /**
-     * Returns a (possibly generic) array type.
+    /** 
+     * Returns a (possibly generic) array type. 
      * If the component type is a parameterized type, it must
      * only have unbounded wildcard arguemnts, otherwise
      * a MalformedParameterizedTypeException is thrown.
@@ -129,7 +129,7 @@ public interface GenericsFactory {
      * @return a (possibly generic) array type.
      * @throws MalformedParameterizedTypeException if <tt>componentType</tt>
      * is a parameterized type with non-wildcard type arguments
-     * @throws NullPointerException - if any of the actual parameters
+     * @throws NullPointerException - if any of the actual parameters 
      * are <tt>null</tt>
      */
     Type makeArrayType(Type componentType);

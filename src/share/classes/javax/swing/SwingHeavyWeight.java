@@ -28,6 +28,7 @@ package javax.swing;
  * An interface used to tag heavy weight components that we want processed
  * by Swing's RepaintManager.
  *
+ * @version %I% %G%
  * @author Scott Violet
  */
 interface SwingHeavyWeight {

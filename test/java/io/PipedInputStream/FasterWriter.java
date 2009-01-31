@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 4131126
- * @summary read throws io exception: Write end dead when there still
+ * @summary read throws io exception: Write end dead when there still 
  *          is data available in the pipe.
  *
  */
@@ -36,24 +36,24 @@ public class FasterWriter implements Runnable {
     static PipedOutputStream os;
 
     public void run() {
-        try {
-            os.write(0);
-            os.write(0);
-            os.write(0);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	try {
+	    os.write(0);
+	    os.write(0);
+	    os.write(0);
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
     }
 
     public static void main(String[] args) throws Exception {
-        is = new PipedInputStream();
-        os = new PipedOutputStream(is);
+	is = new PipedInputStream();
+	os = new PipedOutputStream(is);
 
-        Thread t = new Thread(new FasterWriter());
-        t.start();
+	Thread t = new Thread(new FasterWriter());
+	t.start();
         t.join();
-
-        try {
+        
+	try {
             is.read();
         } catch (IOException e) {
             throw new Exception("Cannot read remaining data in the pipe");

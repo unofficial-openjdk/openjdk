@@ -43,19 +43,19 @@ public interface HotspotClassLoadingMBean {
      * in the Java virtual machine.
      */
     public long getLoadedClassSize();
-
+   
     /**
-     * Returns the number of bytes that the Java virtual machine
+     * Returns the number of bytes that the Java virtual machine 
      * collected due to class unloading.
      *
      * @return the number of bytes that the VM collected due to
      * class unloading.
-     */
+     */ 
     public long getUnloadedClassSize();
 
     /**
      * Returns the accumulated elapsed time spent by class loading
-     * in milliseconds.
+     * in milliseconds.  
      *
      * @return the accumulated elapsed time spent by class loading
      * in milliseconds.
@@ -88,10 +88,10 @@ public interface HotspotClassLoadingMBean {
     public long getClassInitializationTime();
 
     /**
-     * Returns the accumulated elapsed time spent in class verifier
+     * Returns the accumulated elapsed time spent in class verifier 
      * in milliseconds.
      *
-     * @return the accumulated elapsed time spent in class verifier
+     * @return the accumulated elapsed time spent in class verifier 
      * in milliseconds.
      */
     public long getClassVerificationTime();

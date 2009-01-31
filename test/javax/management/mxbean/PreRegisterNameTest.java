@@ -66,7 +66,7 @@ public class PreRegisterNameTest {
     }
 
     public static interface ThingMBean {
-        public boolean getNoddy();
+	public boolean getNoddy();
     }
 
     public static class Thing implements ThingMBean, MBeanRegistration {
@@ -76,19 +76,19 @@ public class PreRegisterNameTest {
             this.realName = realName;
         }
 
-        public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
-            return realName;
-        }
+	public ObjectName preRegister(MBeanServer mbs, ObjectName name) {
+	    return realName;
+	}
 
-        public void postRegister(Boolean done) {}
+	public void postRegister(Boolean done) {}
 
-        public void preDeregister() {}
+	public void preDeregister() {}
 
-        public void postDeregister() {}
+	public void postDeregister() {}
 
-        public boolean getNoddy() {
-            return true;
-        }
+	public boolean getNoddy() {
+	    return true;
+	}
     }
 
     public static class XThing extends StandardMBean implements ThingMBean {
@@ -126,7 +126,7 @@ public class PreRegisterNameTest {
     }
 
     public static void main(String[] args) throws Exception {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+	MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         for (Class<?> c : new Class<?>[] {
                 Spume.class, Thing.class, XSpume.class, XThing.class
              }) {

@@ -1,4 +1,5 @@
 
+ /* %W% %E%           */
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -36,34 +37,34 @@
 
 #ifdef __STDC__
 #ifdef _SCALB_INT
-        double scalb(double x, int fn)          /* wrapper scalb */
+	double scalb(double x, int fn)		/* wrapper scalb */
 #else
-        double scalb(double x, double fn)       /* wrapper scalb */
+	double scalb(double x, double fn)	/* wrapper scalb */
 #endif
 #else
-        double scalb(x,fn)                      /* wrapper scalb */
+	double scalb(x,fn)			/* wrapper scalb */
 #ifdef _SCALB_INT
-        double x; int fn;
+	double x; int fn;
 #else
-        double x,fn;
+	double x,fn;
 #endif
 #endif
 {
 #ifdef _IEEE_LIBM
-        return __ieee754_scalb(x,fn);
+	return __ieee754_scalb(x,fn);
 #else
-        double z;
-        z = __ieee754_scalb(x,fn);
-        if(_LIB_VERSION == _IEEE_) return z;
-        if(!(finite(z)||isnan(z))&&finite(x)) {
-            return __kernel_standard(x,(double)fn,32); /* scalb overflow */
-        }
-        if(z==0.0&&z!=x) {
-            return __kernel_standard(x,(double)fn,33); /* scalb underflow */
-        }
+	double z;
+	z = __ieee754_scalb(x,fn);
+	if(_LIB_VERSION == _IEEE_) return z;
+	if(!(finite(z)||isnan(z))&&finite(x)) {
+	    return __kernel_standard(x,(double)fn,32); /* scalb overflow */
+	}
+	if(z==0.0&&z!=x) {
+	    return __kernel_standard(x,(double)fn,33); /* scalb underflow */
+	}
 #ifndef _SCALB_INT
-        if(!finite(fn)) errno = ERANGE;
+	if(!finite(fn)) errno = ERANGE;
 #endif
-        return z;
+	return z;
 #endif
 }

@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef MLIB_TYPES_H
 #define MLIB_TYPES_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_types.h	1.39	02/10/18 SMI"
+#endif /* __SUNPRO_C */
 
 #include <limits.h>
 #if defined(_MSC_VER)

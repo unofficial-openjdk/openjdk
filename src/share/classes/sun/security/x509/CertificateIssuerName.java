@@ -39,27 +39,28 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see CertAttrSet
  */
 public class CertificateIssuerName implements CertAttrSet<String> {
     /**
      * Identifier for this attribute, to be used with the
      * get, set, delete methods of Certificate, x509 type.
-     */
+     */  
     public static final String IDENT = "x509.info.issuer";
     /**
      * Sub attributes name for this CertAttrSet.
      */
     public static final String NAME = "issuer";
     public static final String DN_NAME = "dname";
-
+    
     // accessor name for cached X500Principal only
     // do not allow a set() of this value, do not advertise with getElements()
     public static final String DN_PRINCIPAL = "x500principal";
 
     // Private data member
-    private X500Name    dnName;
-
+    private X500Name	dnName;
+    
     // cached X500Principal version of the name
     private X500Principal dnPrincipal;
 
@@ -123,7 +124,7 @@ public class CertificateIssuerName implements CertAttrSet<String> {
         }
         if (name.equalsIgnoreCase(DN_NAME)) {
             this.dnName = (X500Name)obj;
-            this.dnPrincipal = null;
+	    this.dnPrincipal = null;
         } else {
             throw new IOException("Attribute name not recognized by " +
                                   "CertAttrSet:CertificateIssuerName.");
@@ -136,11 +137,11 @@ public class CertificateIssuerName implements CertAttrSet<String> {
     public Object get(String name) throws IOException {
         if (name.equalsIgnoreCase(DN_NAME)) {
             return(dnName);
-        } else if (name.equalsIgnoreCase(DN_PRINCIPAL)) {
-            if ((dnPrincipal == null) && (dnName != null)) {
-                dnPrincipal = dnName.asX500Principal();
-            }
-            return dnPrincipal;
+	} else if (name.equalsIgnoreCase(DN_PRINCIPAL)) {
+	    if ((dnPrincipal == null) && (dnName != null)) {
+	        dnPrincipal = dnName.asX500Principal();
+	    }
+	    return dnPrincipal;
         } else {
             throw new IOException("Attribute name not recognized by " +
                                   "CertAttrSet:CertificateIssuerName.");
@@ -153,7 +154,7 @@ public class CertificateIssuerName implements CertAttrSet<String> {
     public void delete(String name) throws IOException {
         if (name.equalsIgnoreCase(DN_NAME)) {
             dnName = null;
-            dnPrincipal = null;
+	    dnPrincipal = null;
         } else {
             throw new IOException("Attribute name not recognized by " +
                                   "CertAttrSet:CertificateIssuerName.");

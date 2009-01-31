@@ -98,7 +98,7 @@ public class AppendCharSequence {
             sb5.insert(index1, (CharSequence)sb4, index2, index2 + len);
             s5 = new StringBuffer(s5).insert(index1, s4.toCharArray(),
                                              index2, len).toString();
-
+            
             if (!sb5.toString().equals(s5))
                 throw new RuntimeException("StringBuffer.insert failure 2");
         }

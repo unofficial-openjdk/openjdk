@@ -32,11 +32,11 @@ import com.sun.tools.attach.spi.AttachProvider;
  *
  * <p> A <code>VirtualMachineDescriptor</code> is a container class used to
  * describe a Java virtual machine. It encapsulates an identifier that identifies
- * a target virtual machine, and a reference to the {@link
- * com.sun.tools.attach.spi.AttachProvider AttachProvider} that should be used
- * when attempting to attach to the virtual machine. The identifier is
+ * a target virtual machine, and a reference to the {@link 
+ * com.sun.tools.attach.spi.AttachProvider AttachProvider} that should be used 
+ * when attempting to attach to the virtual machine. The identifier is  
  * implementation-dependent but is typically the process identifier (or pid)
- * environments where each Java virtual machine runs in its own operating system
+ * environments where each Java virtual machine runs in its own operating system 
  * process. </p>
  *
  * <p> A <code>VirtualMachineDescriptor</code> also has a {@link #displayName() displayName}.
@@ -49,10 +49,10 @@ import com.sun.tools.attach.spi.AttachProvider;
  *
  * <p> <code>VirtualMachineDescriptor</code> instances are typically created by
  * invoking the {@link com.sun.tools.attach.VirtualMachine#list VirtualMachine.list()}
- * method. This returns the complete list of descriptors to describe the
+ * method. This returns the complete list of descriptors to describe the 
  * Java virtual machines known to all installed {@link
  * com.sun.tools.attach.spi.AttachProvider attach providers}.
- *
+ * 
  * @since 1.6
  */
 public class VirtualMachineDescriptor {
@@ -66,26 +66,26 @@ public class VirtualMachineDescriptor {
     /**
      * Creates a virtual machine descriptor from the given components.
      *
-     * @param   provider      The AttachProvider to attach to the Java virtual machine.
-     * @param   id            The virtual machine identifier.
-     * @param   displayName   The display name.
+     * @param	provider      The AttachProvider to attach to the Java virtual machine.
+     * @param	id	      The virtual machine identifier.
+     * @param	displayName   The display name.
      *
      * @throws  NullPointerException
      *          If any of the arguments are <code>null</code>
      */
     public VirtualMachineDescriptor(AttachProvider provider, String id, String displayName) {
-        if (provider == null) {
-            throw new NullPointerException("provider cannot be null");
-        }
-        if (id == null) {
-            throw new NullPointerException("identifier cannot be null");
-        }
-        if (displayName == null) {
-            throw new NullPointerException("display name cannot be null");
-        }
-        this.provider = provider;
-        this.id = id;
-        this.displayName = displayName;
+	if (provider == null) {
+	    throw new NullPointerException("provider cannot be null");
+	}
+	if (id == null) {
+	    throw new NullPointerException("identifier cannot be null");
+	}
+	if (displayName == null) {
+	    throw new NullPointerException("display name cannot be null");
+	}
+	this.provider = provider;
+	this.id = id;
+	this.displayName = displayName;
     }
 
     /**
@@ -119,7 +119,7 @@ public class VirtualMachineDescriptor {
      * @return The <code>AttachProvider</code> that this descriptor references.
      */
     public AttachProvider provider() {
-        return provider;
+	return provider;
     }
 
     /**
@@ -134,16 +134,16 @@ public class VirtualMachineDescriptor {
     /**
      * Return the <i>display name</i> component of this descriptor.
      *
-     * @return  The display name component of this descriptor.
+     * @return	The display name component of this descriptor.
      */
     public String displayName() {
-        return displayName;
+	return displayName;
     }
 
     /**
      * Returns a hash-code value for this VirtualMachineDescriptor. The hash
      * code is based upon the descriptor's components, and satifies
-     * the general contract of the {@link java.lang.Object#hashCode()
+     * the general contract of the {@link java.lang.Object#hashCode() 
      * Object.hashCode} method.
      *
      * @return  A hash-code value for this descriptor.
@@ -151,9 +151,9 @@ public class VirtualMachineDescriptor {
     public int hashCode() {
         if (hash != 0) {
             return hash;
-        }
-        hash = provider.hashCode() * 127 + id.hashCode();
-        return hash;
+  	}
+	hash = provider.hashCode() * 127 + id.hashCode();
+	return hash;
     }
 
     /**
@@ -178,25 +178,25 @@ public class VirtualMachineDescriptor {
             return true;
         if (!(ob instanceof VirtualMachineDescriptor))
             return false;
-        VirtualMachineDescriptor other = (VirtualMachineDescriptor)ob;
-        if (other.provider() != this.provider()) {
-            return false;
-        }
-        if (!other.id().equals(this.id())) {
-            return false;
-        }
-        return true;
+	VirtualMachineDescriptor other = (VirtualMachineDescriptor)ob;
+	if (other.provider() != this.provider()) {
+	    return false;
+	}
+	if (!other.id().equals(this.id())) {
+	    return false;
+	}
+	return true;
     }
 
     /**
      * Returns the string representation of the <code>VirtualMachineDescriptor</code>.
      */
     public String toString() {
-        String s = provider.toString() + ": " + id;
-        if (displayName != id) {
-            s += " " + displayName;
-        }
-        return s;
+	String s = provider.toString() + ": " + id;
+	if (displayName != id) {
+	    s += " " + displayName;
+	}
+	return s;
     }
 
 

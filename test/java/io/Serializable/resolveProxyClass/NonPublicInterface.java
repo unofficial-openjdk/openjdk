@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,43 +34,43 @@ import java.lang.reflect.*;
 public class NonPublicInterface {
 
     static class Handler implements InvocationHandler, Serializable {
-        public Object invoke(Object obj, Method meth, Object[] args) {
-            return null;
-        }
+	public Object invoke(Object obj, Method meth, Object[] args) {
+	    return null;
+	}
     }
 
     public static void main(String[] args) throws Exception {
-        Class nonPublic = null;
-        String[] nonPublicInterfaces = new String[] {
-            "java.awt.Conditional",
-            "java.util.zip.ZipConstants",
-            "javax.swing.GraphicsWrapper",
-            "javax.swing.JPopupMenu$Popup",
-            "javax.swing.JTable$Resizable2",
-            "javax.swing.JTable$Resizable3",
-            "javax.swing.ToolTipManager$Popup",
-            "sun.audio.Format",
-            "sun.audio.HaePlayable",
-            "sun.tools.agent.StepConstants",
-        };
-        for (int i = 0; i < nonPublicInterfaces.length; i++) {
-            try {
-                nonPublic = Class.forName(nonPublicInterfaces[i]);
-                break;
-            } catch (ClassNotFoundException ex) {
-            }
-        }
-        if (nonPublic == null) {
-            throw new Error("couldn't find system non-public interface");
-        }
+	Class nonPublic = null;
+	String[] nonPublicInterfaces = new String[] {
+	    "java.awt.Conditional",
+	    "java.util.zip.ZipConstants",
+	    "javax.swing.GraphicsWrapper",
+	    "javax.swing.JPopupMenu$Popup",
+	    "javax.swing.JTable$Resizable2",
+	    "javax.swing.JTable$Resizable3",
+	    "javax.swing.ToolTipManager$Popup",
+	    "sun.audio.Format",
+	    "sun.audio.HaePlayable",
+	    "sun.tools.agent.StepConstants",
+	};
+	for (int i = 0; i < nonPublicInterfaces.length; i++) {
+	    try {
+		nonPublic = Class.forName(nonPublicInterfaces[i]);
+		break;
+	    } catch (ClassNotFoundException ex) {
+	    }
+	}
+	if (nonPublic == null) {
+	    throw new Error("couldn't find system non-public interface");
+	}
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        oout.writeObject(Proxy.newProxyInstance(nonPublic.getClassLoader(),
-            new Class[]{ nonPublic }, new Handler()));
-        oout.close();
-        ObjectInputStream oin = new ObjectInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        oin.readObject();
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	oout.writeObject(Proxy.newProxyInstance(nonPublic.getClassLoader(),
+	    new Class[]{ nonPublic }, new Handler()));
+	oout.close();
+	ObjectInputStream oin = new ObjectInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	oin.readObject();
     }
 }

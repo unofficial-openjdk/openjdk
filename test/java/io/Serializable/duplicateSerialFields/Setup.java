@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,11 +24,11 @@
 /*
  * @bug 4764280
  * @summary Verify that if a serializable class declares multiple
- *          serialPersistentFields that share the same name, calling
- *          ObjectStreamClass.lookup() for that class will not result in an
- *          InternalError, and that attempts at default serialization or
- *          deserialization of such a class will result in
- *          InvalidClassExceptions.
+ * 	    serialPersistentFields that share the same name, calling
+ * 	    ObjectStreamClass.lookup() for that class will not result in an
+ * 	    InternalError, and that attempts at default serialization or
+ * 	    deserialization of such a class will result in
+ * 	    InvalidClassExceptions.
  */
 
 import java.io.*;
@@ -45,13 +45,13 @@ class B implements Serializable {
 
 public class Setup {
     public static void main(String[] args) throws Exception {
-        ObjectOutputStream oout =
-            new ObjectOutputStream(new FileOutputStream("a.ser"));
-        oout.writeObject(new A());
-        oout.close();
+	ObjectOutputStream oout = 
+	    new ObjectOutputStream(new FileOutputStream("a.ser"));
+	oout.writeObject(new A());
+	oout.close();
 
-        oout = new ObjectOutputStream(new FileOutputStream("b.ser"));
-        oout.writeObject(new B());
-        oout.close();
+	oout = new ObjectOutputStream(new FileOutputStream("b.ser"));
+	oout.writeObject(new B());
+	oout.close();
     }
 }

@@ -54,7 +54,7 @@ public class LeakTest {
      * quite heavily by MXBeanTest.
      */
 //    private static Class<?>[] otherTests = {MXBeanTest.class};
-
+    
     private static Class<?>[] otherTests = {RandomMXBeanTest.class};
 
     // This class just makes it easier for us to spot our loader in heap dumps

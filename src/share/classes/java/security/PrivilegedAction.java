@@ -45,9 +45,9 @@ public interface PrivilegedAction<T> {
      * <code>AccessController.doPrivileged</code> after enabling privileges.
      *
      * @return a class-dependent value that may represent the results of the
-     *         computation. Each class that implements
+     *	       computation. Each class that implements
      *         <code>PrivilegedAction</code>
-     *         should document what (if anything) this value represents.
+     *	       should document what (if anything) this value represents.
      * @see AccessController#doPrivileged(PrivilegedAction)
      * @see AccessController#doPrivileged(PrivilegedAction,
      *                                     AccessControlContext)

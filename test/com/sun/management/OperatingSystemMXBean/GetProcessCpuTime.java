@@ -35,7 +35,7 @@
  *   1. In a shell, enter the command: "ps -ef"
  *   2. The value (reported in seconds) is in the "TIME" column for the process
  * Windows NT/XP/2000:
- *   1. Hit Ctrl-Alt-Delete, select Task Manager, select Processes tab
+ *   1. Hit Ctrl-Alt-Delete, select Task Manager, select Processes tab 
  *   2. The value (reported in seconds) is in the "CPU Time" column for the
  *      process.  You may have to add this column via View menu-> Select
  *      Columns... item.
@@ -49,8 +49,8 @@ import java.lang.management.*;
 public class GetProcessCpuTime {
 
     private static OperatingSystemMXBean mbean =
-        (com.sun.management.OperatingSystemMXBean)
-        ManagementFactory.getOperatingSystemMXBean();
+	(com.sun.management.OperatingSystemMXBean)
+	ManagementFactory.getOperatingSystemMXBean();
 
 
     // Careful with these values.
@@ -66,30 +66,30 @@ public class GetProcessCpuTime {
             trace = true;
         }
 
-        // Consume cpu time
-        double sum=0;
-        for (int i=0; i <=2000000; i++) {
-          sum += i;
-          sum /= i;
-        }
+	// Consume cpu time
+	double sum=0;
+	for (int i=0; i <=2000000; i++) {
+	  sum += i;
+	  sum /= i; 
+	}
 
-        long ns = mbean.getProcessCpuTime();
+	long ns = mbean.getProcessCpuTime();
         if (ns == -1) {
             System.out.println("getProcessCpuTime() is not supported");
             return;
-        }
+        } 
 
-        if (trace) {
-            System.out.println("Process CPU time in ns: " + ns);
-        }
+	if (trace) {
+	    System.out.println("Process CPU time in ns: " + ns);
+	}
 
-        if (ns < MIN_TIME_FOR_PASS || ns > MAX_TIME_FOR_PASS) {
-            throw new RuntimeException("Process CPU time " +
-                                       "illegal value: " + ns + " ns " +
-                                       "(MIN = " + MIN_TIME_FOR_PASS + "; " +
-                                       "MAX = " + MAX_TIME_FOR_PASS + ")");
-        }
-
-        System.out.println("Test passed.");
+	if (ns < MIN_TIME_FOR_PASS || ns > MAX_TIME_FOR_PASS) {
+	    throw new RuntimeException("Process CPU time " +
+				       "illegal value: " + ns + " ns " + 
+				       "(MIN = " + MIN_TIME_FOR_PASS + "; " +
+				       "MAX = " + MAX_TIME_FOR_PASS + ")");
+	}
+	
+	System.out.println("Test passed.");
     }
 }

@@ -36,10 +36,10 @@ package com.sun.jdi;
  */
 public class InconsistentDebugInfoException extends RuntimeException {
     public InconsistentDebugInfoException() {
-        super();
+	super();
     }
 
     public InconsistentDebugInfoException(String s) {
-        super(s);
+	super(s);
     }
 }

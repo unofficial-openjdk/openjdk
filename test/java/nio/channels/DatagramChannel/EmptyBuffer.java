@@ -38,15 +38,15 @@ public class EmptyBuffer {
     static PrintStream log = System.err;
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
     static void test() throws Exception {
         Sprintable server = new Server();
         Thread serverThread = new Thread(server);
         serverThread.start();
-        while (!server.ready())
-            Thread.sleep(50);
+	while (!server.ready())
+	    Thread.sleep(50);
         DatagramChannel dc = DatagramChannel.open();
         ByteBuffer bb = ByteBuffer.allocateDirect(12);
         bb.order(ByteOrder.BIG_ENDIAN);
@@ -67,21 +67,21 @@ public class EmptyBuffer {
 
     public interface Sprintable extends Runnable {
         public void throwException() throws Exception;
-        public boolean ready();
+	public boolean ready();
     }
 
     public static class Server implements Sprintable {
         Exception e = null;
-        private volatile boolean ready = false;
+	private volatile boolean ready = false;
 
         public void throwException() throws Exception {
             if (e != null)
                 throw e;
         }
 
-        public boolean ready() {
-            return ready;
-        }
+	public boolean ready() {
+	    return ready;
+	}
 
         void showBuffer(String s, ByteBuffer bb) {
             log.println(s);
@@ -98,7 +98,7 @@ public class EmptyBuffer {
             int numberReceived = 0;
             try {
                 DatagramChannel dc = DatagramChannel.open();
-                dc.socket().bind(new InetSocketAddress(8888));
+		dc.socket().bind(new InetSocketAddress(8888));
                 ready = true;
                 ByteBuffer bb = ByteBuffer.allocateDirect(12);
                 bb.clear();

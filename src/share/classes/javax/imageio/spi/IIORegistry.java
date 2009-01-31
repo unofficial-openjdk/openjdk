@@ -25,7 +25,7 @@
 
 package javax.imageio.spi;
 
-import java.security.PrivilegedAction;
+import java.security.PrivilegedAction; 
 import java.security.AccessController;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -85,7 +85,7 @@ import java.util.ServiceConfigurationError;
  * <pre>
  * META-INF/services/javax.imageio.spi.ImageReaderSpi
  * </pre>
- *
+ * 
  * containing the line:
  *
  * <pre>
@@ -108,6 +108,7 @@ import java.util.ServiceConfigurationError;
  * href="{@docRoot}/../technotes/guides/jar/jar.html">
  * JAR File Specification</a>.
  *
+ * @version 0.5
  */
 public final class IIORegistry extends ServiceRegistry {
 
@@ -195,24 +196,24 @@ public final class IIORegistry extends ServiceRegistry {
      */
     public void registerApplicationClasspathSpis() {
         // FIX: load only from application classpath
-
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        
+	ClassLoader loader = Thread.currentThread().getContextClassLoader();
 
         Iterator categories = getCategories();
         while (categories.hasNext()) {
             Class<IIOServiceProvider> c = (Class)categories.next();
-            Iterator<IIOServiceProvider> riter =
+            Iterator<IIOServiceProvider> riter = 
                     ServiceLoader.load(c, loader).iterator();
             while (riter.hasNext()) {
                 try {
                     // Note that the next() call is required to be inside
-                    // the try/catch block; see 6342404.
+                    // the try/catch block; see 6342404. 
                     IIOServiceProvider r = riter.next();
                     registerServiceProvider(r);
                 } catch (ServiceConfigurationError err) {
                     if (System.getSecurityManager() != null) {
                         // In the applet case, we will catch the  error so
-                        // registration of other plugins can  proceed
+                        // registration of other plugins can  proceed 
                         err.printStackTrace();
                     } else {
                         // In the application case, we will  throw the
@@ -227,9 +228,9 @@ public final class IIORegistry extends ServiceRegistry {
     private void registerInstalledProviders() {
         /*
           We need load installed providers from lib/ext
-          directory in the privileged mode in order to
+          directory in the privileged mode in order to 
           be able read corresponding jar files even if
-          file read capability is restricted (like the
+          file read capability is restricted (like the 
           applet context case).
          */
         PrivilegedAction doRegistration =
@@ -245,7 +246,7 @@ public final class IIORegistry extends ServiceRegistry {
                     return this;
                 }
             };
-
+        
         AccessController.doPrivileged(doRegistration);
     }
 }

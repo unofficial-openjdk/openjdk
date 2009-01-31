@@ -49,6 +49,7 @@ import sun.security.util.*;
  * </pre>
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -67,7 +68,7 @@ implements CertAttrSet<String> {
     public static final String SUBJECT_NAME = "subject_name";
 
     // private data members
-    GeneralNames        names = null;
+    GeneralNames	names = null;
 
     // Encode this extension
     private void encodeThis() throws IOException {
@@ -76,7 +77,7 @@ implements CertAttrSet<String> {
             return;
         }
         DerOutputStream os = new DerOutputStream();
-        names.encode(os);
+	names.encode(os);
         this.extensionValue = os.toByteArray();
     }
 
@@ -89,7 +90,7 @@ implements CertAttrSet<String> {
      */
     public SubjectAlternativeNameExtension(GeneralNames names)
     throws IOException {
-        this(Boolean.FALSE, names);
+	this(Boolean.FALSE, names);
     }
 
     /**
@@ -133,12 +134,12 @@ implements CertAttrSet<String> {
 
         this.extensionValue = (byte[]) value;
         DerValue val = new DerValue(this.extensionValue);
-        if (val.data == null) {
-            names = new GeneralNames();
-            return;
-        }
+	if (val.data == null) {
+	    names = new GeneralNames();
+	    return;
+	}
 
-        names = new GeneralNames(val);
+	names = new GeneralNames(val);
     }
 
     /**
@@ -167,28 +168,28 @@ implements CertAttrSet<String> {
     public void encode(OutputStream out) throws IOException {
         DerOutputStream tmp = new DerOutputStream();
         if (extensionValue == null) {
-            extensionId = PKIXExtensions.SubjectAlternativeName_Id;
-            critical = false;
-            encodeThis();
-        }
-        super.encode(tmp);
-        out.write(tmp.toByteArray());
+	    extensionId = PKIXExtensions.SubjectAlternativeName_Id;
+	    critical = false;
+	    encodeThis();
+	}
+	super.encode(tmp);
+	out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-        if (name.equalsIgnoreCase(SUBJECT_NAME)) {
-            if (!(obj instanceof GeneralNames)) {
-              throw new IOException("Attribute value should be of " +
+	if (name.equalsIgnoreCase(SUBJECT_NAME)) {
+	    if (!(obj instanceof GeneralNames)) {
+	      throw new IOException("Attribute value should be of " +
                                     "type GeneralNames.");
-            }
-            names = (GeneralNames)obj;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:SubjectAlternativeName.");
-        }
+	    }
+	    names = (GeneralNames)obj;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:SubjectAlternativeName.");
+	}
         encodeThis();
     }
 
@@ -196,24 +197,24 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(SUBJECT_NAME)) {
-            return (names);
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:SubjectAlternativeName.");
-        }
+	if (name.equalsIgnoreCase(SUBJECT_NAME)) {
+	    return (names);
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:SubjectAlternativeName.");
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(SUBJECT_NAME)) {
-            names = null;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:SubjectAlternativeName.");
-        }
+	if (name.equalsIgnoreCase(SUBJECT_NAME)) {
+	    names = null;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:SubjectAlternativeName.");
+	}
         encodeThis();
     }
 
@@ -225,7 +226,7 @@ implements CertAttrSet<String> {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(SUBJECT_NAME);
 
-        return (elements.elements());
+	return (elements.elements());
     }
 
     /**

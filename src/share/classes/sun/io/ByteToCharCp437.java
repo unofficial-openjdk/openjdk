@@ -32,6 +32,7 @@ import sun.nio.cs.IBM437;
  * A table to convert to Cp437 to Unicode
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class ByteToCharCp437 extends ByteToCharSingleByte {

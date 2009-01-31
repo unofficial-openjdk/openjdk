@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -26,7 +26,7 @@
  *
  * @clean A D NewExternFieldClass ReadAddedField WriteAddedField
  * @compile WriteAddedField.java
- * @run main WriteAddedField
+ * @run main WriteAddedField 
  * @clean A D NewExternFieldClass ReadAddedField WriteAddedField
  * @compile ReadAddedField.java
  * @run main ReadAddedField
@@ -39,30 +39,30 @@ class NewExternFieldClass implements Externalizable {
     byte l;
 
     public NewExternFieldClass() {
-        l = 0;
+	l = 0;
     }
-
+	
     public NewExternFieldClass(byte value) {
-        l = value;
+	l = value;
     }
 
     public void readExternal(ObjectInput s)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        l = s.readByte();
-        System.out.println("readExternal read " + l);
+	l = s.readByte();
+	System.out.println("readExternal read " + l);
     }
 
     public void writeExternal(ObjectOutput s) throws IOException
     {
-        s.writeByte(l);
+	s.writeByte(l);
     }
 }
 
 class D implements Serializable {
     public int x;
     D(int y) {
-        x = y;
+	x = y;
     }
 }
 
@@ -74,20 +74,20 @@ class A implements Serializable  {
 
     int bar;
     A() {
-        bar = 4;
-        foo = new NewExternFieldClass((byte)66);
-        zoo = new D(22);
+	bar = 4;
+	foo = new NewExternFieldClass((byte)66);
+	zoo = new D(22);
     }
-}
+} 
 
 public class WriteAddedField {
     public static void main(String args[]) throws IOException {
-        A a = new A();
-        File f = new File("tmp.ser");
-        ObjectOutput out =
-            new ObjectOutputStream(new FileOutputStream(f));
-        out.writeObject(a);
-        out.writeObject(new A());
-        out.close();
+	A a = new A();
+	File f = new File("tmp.ser");
+	ObjectOutput out =
+	    new ObjectOutputStream(new FileOutputStream(f));
+	out.writeObject(a);
+	out.writeObject(new A());
+	out.close();
     }
 }

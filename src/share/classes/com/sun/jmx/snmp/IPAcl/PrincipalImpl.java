@@ -47,7 +47,7 @@ class PrincipalImpl implements java.security.Principal, Serializable {
      * Constructs a principal with the local host.
      */
     public PrincipalImpl () throws UnknownHostException {
-        add = new InetAddress[1];
+	add = new InetAddress[1];
         add[0] = java.net.InetAddress.getLocalHost();
     }
 
@@ -64,9 +64,9 @@ class PrincipalImpl implements java.security.Principal, Serializable {
      */
     public PrincipalImpl(String hostName) throws UnknownHostException {
         if ((hostName.equals("localhost")) || (hostName.equals("127.0.0.1"))) {
-            add = new InetAddress[1];
+	    add = new InetAddress[1];
             add[0] = java.net.InetAddress.getByName(hostName);
-        }
+	}
         else
             add = java.net.InetAddress.getAllByName( hostName );
     }
@@ -78,7 +78,7 @@ class PrincipalImpl implements java.security.Principal, Serializable {
      */
     public PrincipalImpl(InetAddress address) {
         add = new InetAddress[1];
-        add[0] = address;
+	add[0] = address;
     }
 
     /**
@@ -100,11 +100,11 @@ class PrincipalImpl implements java.security.Principal, Serializable {
      */
     public boolean equals(Object a) {
         if (a instanceof PrincipalImpl){
-            for(int i = 0; i < add.length; i++) {
-                if(add[i].equals (((PrincipalImpl) a).getAddress()))
-                    return true;
-            }
-            return false;
+	    for(int i = 0; i < add.length; i++) {
+		if(add[i].equals (((PrincipalImpl) a).getAddress()))
+		    return true;
+	    }
+	    return false;
         } else {
             return false;
         }
@@ -146,3 +146,4 @@ class PrincipalImpl implements java.security.Principal, Serializable {
         return add;
     }
 }
+

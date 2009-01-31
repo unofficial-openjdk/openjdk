@@ -28,15 +28,16 @@ package java.security.cert;
 /**
  * A specification of the result of a certification path validator algorithm.
  * <p>
- * The purpose of this interface is to group (and provide type safety
- * for) all certification path validator results. All results returned
+ * The purpose of this interface is to group (and provide type safety 
+ * for) all certification path validator results. All results returned 
  * by the {@link CertPathValidator#validate CertPathValidator.validate}
- * method must implement this interface.
+ * method must implement this interface.  
  *
  * @see CertPathValidator
  *
- * @since       1.4
- * @author      Yassir Elley
+ * @version 	%I% %G%
+ * @since	1.4
+ * @author	Yassir Elley
  */
 public interface CertPathValidatorResult extends Cloneable {
 

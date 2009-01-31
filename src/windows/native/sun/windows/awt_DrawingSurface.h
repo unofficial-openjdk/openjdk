@@ -37,7 +37,7 @@ class JAWTOffscreenDrawingSurface;
 class JAWTOffscreenDrawingSurfaceInfo;
 
 /*
- * New structure for 1.4.1_02 release that allows access to
+ * New structure for 1.4.1_02 release that allows access to 
  * offscreen drawing surfaces.
  * This structure is slightly different from the old Win32
  * structure because the type of information we pass back
@@ -54,8 +54,8 @@ class JAWTOffscreenDrawingSurfaceInfo;
  * variable and using it based on the surfaceType.
  */
 typedef struct jawt_Win32OffscreenDrawingSurfaceInfo {
-    IDirectDrawSurface  *dxSurface;
-    IDirectDrawSurface7 *dx7Surface;
+    IDirectDrawSurface	*dxSurface;
+    IDirectDrawSurface7	*dx7Surface;
 } JAWT_Win32OffscreenDrawingSurfaceInfo;
 
 
@@ -77,9 +77,9 @@ public:
  * Same as above except for offscreen surfaces instead of onscreen
  * Components.
  */
-class JAWTOffscreenDrawingSurfaceInfo :
+class JAWTOffscreenDrawingSurfaceInfo : 
     public JAWT_Win32OffscreenDrawingSurfaceInfo,
-    public JAWT_DrawingSurfaceInfo
+    public JAWT_DrawingSurfaceInfo 
 {
 public:
     jint Init(JAWTOffscreenDrawingSurface* parent);

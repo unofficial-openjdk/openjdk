@@ -33,12 +33,13 @@ import java.io.IOException;
  * Implements an input stream filter for compressing data in the "deflate"
  * compression format.
  *
- * @since       1.6
- * @author      David R Tribble (david@tribble.com)
+ * @version	%I%
+ * @since	1.6
+ * @author	David R Tribble (david@tribble.com)
  *
- * @see DeflaterOutputStream
- * @see InflaterOutputStream
- * @see InflaterInputStream
+ * @see	DeflaterOutputStream
+ * @see	InflaterOutputStream
+ * @see	InflaterInputStream
  */
 
 public class DeflaterInputStream extends FilterInputStream {

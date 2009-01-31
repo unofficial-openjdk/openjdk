@@ -43,8 +43,9 @@ package java.io;
  * @see   StringWriter
  * @see Reader
  *
- * @author      Mark Reinhold
- * @since       JDK1.1
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
+ * @since	JDK1.1
  */
 
 public abstract class Writer implements Appendable, Closeable, Flushable {
@@ -73,7 +74,7 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      * synchronize on the writer itself.
      */
     protected Writer() {
-        this.lock = this;
+	this.lock = this;
     }
 
     /**
@@ -84,10 +85,10 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      *         Object to synchronize on
      */
     protected Writer(Object lock) {
-        if (lock == null) {
-            throw new NullPointerException();
-        }
-        this.lock = lock;
+	if (lock == null) {
+	    throw new NullPointerException();
+	}
+	this.lock = lock;
     }
 
     /**
@@ -105,13 +106,13 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      *          If an I/O error occurs
      */
     public void write(int c) throws IOException {
-        synchronized (lock) {
-            if (writeBuffer == null){
-                writeBuffer = new char[writeBufferSize];
-            }
-            writeBuffer[0] = (char) c;
-            write(writeBuffer, 0, 1);
-        }
+	synchronized (lock) {
+	    if (writeBuffer == null){
+		writeBuffer = new char[writeBufferSize];
+	    }
+	    writeBuffer[0] = (char) c;
+	    write(writeBuffer, 0, 1);
+	}
     }
 
     /**
@@ -124,7 +125,7 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      *          If an I/O error occurs
      */
     public void write(char cbuf[]) throws IOException {
-        write(cbuf, 0, cbuf.length);
+	write(cbuf, 0, cbuf.length);
     }
 
     /**
@@ -154,7 +155,7 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      *          If an I/O error occurs
      */
     public void write(String str) throws IOException {
-        write(str, 0, str.length());
+	write(str, 0, str.length());
     }
 
     /**
@@ -178,19 +179,19 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      *          If an I/O error occurs
      */
     public void write(String str, int off, int len) throws IOException {
-        synchronized (lock) {
-            char cbuf[];
-            if (len <= writeBufferSize) {
-                if (writeBuffer == null) {
-                    writeBuffer = new char[writeBufferSize];
-                }
-                cbuf = writeBuffer;
-            } else {    // Don't permanently allocate very large buffers.
-                cbuf = new char[len];
-            }
-            str.getChars(off, (off + len), cbuf, 0);
-            write(cbuf, 0, len);
-        }
+	synchronized (lock) {
+	    char cbuf[];
+	    if (len <= writeBufferSize) {
+		if (writeBuffer == null) {
+		    writeBuffer = new char[writeBufferSize];
+		}
+		cbuf = writeBuffer;
+	    } else {	// Don't permanently allocate very large buffers.
+		cbuf = new char[len];
+	    }
+	    str.getChars(off, (off + len), cbuf, 0);
+	    write(cbuf, 0, len);
+	}
     }
 
     /**
@@ -221,11 +222,11 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      * @since  1.5
      */
     public Writer append(CharSequence csq) throws IOException {
-        if (csq == null)
-            write("null");
-        else
-            write(csq.toString());
-        return this;
+	if (csq == null)
+	    write("null");
+	else
+	    write(csq.toString());
+    	return this;
     }
 
     /**
@@ -265,9 +266,9 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      * @since  1.5
      */
     public Writer append(CharSequence csq, int start, int end) throws IOException {
-        CharSequence cs = (csq == null ? "null" : csq);
-        write(cs.subSequence(start, end).toString());
-        return this;
+	CharSequence cs = (csq == null ? "null" : csq);
+	write(cs.subSequence(start, end).toString());
+ 	return this; 
     }
 
     /**
@@ -290,8 +291,8 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      * @since 1.5
      */
     public Writer append(char c) throws IOException {
-        write(c);
-        return this;
+	write(c);
+	return this;
     }
 
     /**
@@ -300,7 +301,7 @@ public abstract class Writer implements Appendable, Closeable, Flushable {
      * intended destination.  Then, if that destination is another character or
      * byte stream, flush it.  Thus one flush() invocation will flush all the
      * buffers in a chain of Writers and OutputStreams.
-     *
+     * 
      * <p> If the intended destination of this stream is an abstraction provided
      * by the underlying operating system, for example a file, then flushing the
      * stream guarantees only that bytes previously written to the stream are

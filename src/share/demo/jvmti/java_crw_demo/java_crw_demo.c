@@ -33,7 +33,7 @@
 
 /*
  * As long as the callbacks allow for it and the class number is unique,
- *     this code is completely re-entrant and any number of classfile
+ *     this code is completely re-entrant and any number of classfile 
  *     injections can happen at the same time.
  *
  *     The current logic requires a unique number for this class instance
@@ -67,11 +67,11 @@
 
   #define CRW_ASSERT(ci, cond) \
         ((cond)?(void)0:assert_error(ci, #cond, __FILE__, __LINE__))
-
+  
 #else
-
+  
   #define CRW_ASSERT(ci, cond)
-
+  
 #endif
 
 #define CRW_ASSERT_MI(mi) CRW_ASSERT((mi)?(mi)->ci:NULL,(mi)!=NULL)
@@ -112,13 +112,13 @@ struct MethodImage;
 /* Class file image storage structure */
 
 typedef struct CrwClassImage {
-
+    
     /* Unique class number for this class */
     unsigned                    number;
-
+   
     /* Name of class, given or gotten out of class image */
     const char *                name;
-
+   
     /* Input and Output class images tracking */
     const unsigned char *       input;
     unsigned char *             output;
@@ -126,18 +126,18 @@ typedef struct CrwClassImage {
     CrwPosition                 output_len;
     CrwPosition                 input_position;
     CrwPosition                 output_position;
-
+   
     /* Mirrored constant pool */
     CrwConstantPoolEntry *      cpool;
     CrwCpoolIndex               cpool_max_elements;             /* Max count */
     CrwCpoolIndex               cpool_count_plus_one;
-
+   
     /* Input flags about class (e.g. is it a system class) */
     int                         system_class;
 
     /* Class access flags gotten from file. */
     unsigned                    access_flags;
-
+   
     /* Names of classes and methods. */
     char* tclass_name;          /* Name of class that has tracker methods. */
     char* tclass_sig;           /* Signature of class */
@@ -157,16 +157,16 @@ typedef struct CrwClassImage {
     CrwCpoolIndex               call_tracker_index;
     CrwCpoolIndex               return_tracker_index;
     CrwCpoolIndex               class_number_index; /* Class number in pool */
-
+    
     /* Count of injections made into this class */
     int                         injection_count;
 
     /* This class must be the java.lang.Object class */
     jboolean                    is_object_class;
-
+    
     /* This class must be the java.lang.Thread class */
     jboolean                    is_thread_class;
-
+    
     /* Callback functions */
     FatalErrorHandler           fatal_error_handler;
     MethodNumberRegister        mnum_callback;
@@ -189,7 +189,7 @@ typedef struct {
 /* Method transformation data (allocated/freed as each method is processed) */
 
 typedef struct MethodImage {
-
+    
     /* Back reference to Class image data. */
     CrwClassImage *     ci;
 
@@ -219,19 +219,19 @@ typedef struct MethodImage {
     /* Original max_stack and new max stack */
     unsigned            max_stack;
     unsigned            new_max_stack;
-
+    
     jboolean            object_init_method;
     jboolean            skip_call_return_sites;
 
     /* Method access flags gotten from file. */
     unsigned            access_flags;
-
+   
 } MethodImage;
 
 /* ----------------------------------------------------------------- */
 /* General support functions (memory and error handling) */
 
-static void
+static void 
 fatal_error(CrwClassImage *ci, const char *message, const char *file, int line)
 {
     if ( ci != NULL && ci->fatal_error_handler != NULL ) {
@@ -246,7 +246,7 @@ fatal_error(CrwClassImage *ci, const char *message, const char *file, int line)
 
 #if defined(DEBUG) || !defined(NDEBUG)
 static void
-assert_error(CrwClassImage *ci, const char *condition,
+assert_error(CrwClassImage *ci, const char *condition, 
                  const char *file, int line)
 {
     char buf[512];
@@ -259,10 +259,10 @@ assert_error(CrwClassImage *ci, const char *condition,
     } else {
         byte_code_offset=-1;
     }
-
+    
     (void)sprintf(buf,
                 "CRW ASSERTION FAILURE: %s (%s:%s:%d)",
-                condition,
+                condition, 
                 ci->name==0?"?":ci->name,
                 mi->name==0?"?":mi->name,
                 byte_code_offset);
@@ -274,13 +274,13 @@ static void *
 allocate(CrwClassImage *ci, int nbytes)
 {
     void * ptr;
-
+   
     if ( nbytes <= 0 ) {
         CRW_FATAL(ci, "Cannot allocate <= 0 bytes");
     }
     ptr = malloc(nbytes);
     if ( ptr == NULL ) {
-        CRW_FATAL(ci, "Ran out of malloc memory");
+        CRW_FATAL(ci, "Ran out of malloc memory"); 
     }
     return ptr;
 }
@@ -289,7 +289,7 @@ static void *
 reallocate(CrwClassImage *ci, void *optr, int nbytes)
 {
     void * ptr;
-
+   
     if ( optr == NULL ) {
         CRW_FATAL(ci, "Cannot deallocate NULL");
     }
@@ -298,7 +298,7 @@ reallocate(CrwClassImage *ci, void *optr, int nbytes)
     }
     ptr = realloc(optr, nbytes);
     if ( ptr == NULL ) {
-        CRW_FATAL(ci, "Ran out of malloc memory");
+        CRW_FATAL(ci, "Ran out of malloc memory"); 
     }
     return ptr;
 }
@@ -307,13 +307,13 @@ static void *
 allocate_clean(CrwClassImage *ci, int nbytes)
 {
     void * ptr;
-
+   
     if ( nbytes <= 0 ) {
         CRW_FATAL(ci, "Cannot allocate <= 0 bytes");
     }
     ptr = calloc(nbytes, 1);
     if ( ptr == NULL ) {
-        CRW_FATAL(ci, "Ran out of malloc memory");
+        CRW_FATAL(ci, "Ran out of malloc memory"); 
     }
     return ptr;
 }
@@ -322,7 +322,7 @@ static const char *
 duplicate(CrwClassImage *ci, const char *str, int len)
 {
     char *copy;
-
+    
     copy = (char*)allocate(ci, len+1);
     (void)memcpy(copy, str, len);
     copy[len] = 0;
@@ -341,41 +341,41 @@ deallocate(CrwClassImage *ci, void *ptr)
 /* ----------------------------------------------------------------- */
 /* Functions for reading/writing bytes to/from the class images */
 
-static unsigned
-readU1(CrwClassImage *ci)
+static unsigned 
+readU1(CrwClassImage *ci) 
 {
     CRW_ASSERT_CI(ci);
     return ((unsigned)(ci->input[ci->input_position++])) & 0xFF;
 }
 
-static unsigned
-readU2(CrwClassImage *ci)
+static unsigned 
+readU2(CrwClassImage *ci) 
 {
     unsigned res;
-
+    
     res = readU1(ci);
     return (res << 8) + readU1(ci);
 }
 
 static signed short
-readS2(CrwClassImage *ci)
+readS2(CrwClassImage *ci) 
 {
     unsigned res;
-
+    
     res = readU1(ci);
     return ((res << 8) + readU1(ci)) & 0xFFFF;
 }
 
-static unsigned
-readU4(CrwClassImage *ci)
+static unsigned 
+readU4(CrwClassImage *ci) 
 {
     unsigned res;
-
+    
     res = readU2(ci);
     return (res << 16) + readU2(ci);
 }
 
-static void
+static void 
 writeU1(CrwClassImage *ci, unsigned val)  /* Only writes out lower 8 bits */
 {
     CRW_ASSERT_CI(ci);
@@ -384,56 +384,56 @@ writeU1(CrwClassImage *ci, unsigned val)  /* Only writes out lower 8 bits */
     }
 }
 
-static void
-writeU2(CrwClassImage *ci, unsigned val)
+static void 
+writeU2(CrwClassImage *ci, unsigned val) 
 {
     writeU1(ci, val >> 8);
     writeU1(ci, val);
 }
 
-static void
-writeU4(CrwClassImage *ci, unsigned val)
+static void 
+writeU4(CrwClassImage *ci, unsigned val) 
 {
     writeU2(ci, val >> 16);
     writeU2(ci, val);
 }
 
-static unsigned
-copyU1(CrwClassImage *ci)
+static unsigned 
+copyU1(CrwClassImage *ci) 
 {
     unsigned value;
-
+    
     value = readU1(ci);
     writeU1(ci, value);
     return value;
 }
 
-static unsigned
-copyU2(CrwClassImage *ci)
+static unsigned 
+copyU2(CrwClassImage *ci) 
 {
     unsigned value;
-
+    
     value = readU2(ci);
     writeU2(ci, value);
     return value;
 }
 
-static unsigned
-copyU4(CrwClassImage *ci)
+static unsigned 
+copyU4(CrwClassImage *ci) 
 {
     unsigned value;
-
+    
     value = readU4(ci);
     writeU4(ci, value);
     return value;
 }
 
-static void
-copy(CrwClassImage *ci, unsigned count)
+static void 
+copy(CrwClassImage *ci, unsigned count) 
 {
     CRW_ASSERT_CI(ci);
     if ( ci->output != NULL ) {
-        (void)memcpy(ci->output+ci->output_position,
+        (void)memcpy(ci->output+ci->output_position, 
                      ci->input+ci->input_position, count);
         ci->output_position += count;
     }
@@ -441,15 +441,15 @@ copy(CrwClassImage *ci, unsigned count)
     CRW_ASSERT_CI(ci);
 }
 
-static void
-skip(CrwClassImage *ci, unsigned count)
+static void 
+skip(CrwClassImage *ci, unsigned count) 
 {
     CRW_ASSERT_CI(ci);
     ci->input_position += count;
 }
 
 static void
-read_bytes(CrwClassImage *ci, void *bytes, unsigned count)
+read_bytes(CrwClassImage *ci, void *bytes, unsigned count) 
 {
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, bytes!=NULL);
@@ -457,8 +457,8 @@ read_bytes(CrwClassImage *ci, void *bytes, unsigned count)
     ci->input_position += count;
 }
 
-static void
-write_bytes(CrwClassImage *ci, void *bytes, unsigned count)
+static void 
+write_bytes(CrwClassImage *ci, void *bytes, unsigned count) 
 {
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, bytes!=NULL);
@@ -468,11 +468,11 @@ write_bytes(CrwClassImage *ci, void *bytes, unsigned count)
     }
 }
 
-static void
-random_writeU2(CrwClassImage *ci, CrwPosition pos, unsigned val)
+static void 
+random_writeU2(CrwClassImage *ci, CrwPosition pos, unsigned val) 
 {
     CrwPosition save_position;
-
+    
     CRW_ASSERT_CI(ci);
     save_position = ci->output_position;
     ci->output_position = pos;
@@ -480,11 +480,11 @@ random_writeU2(CrwClassImage *ci, CrwPosition pos, unsigned val)
     ci->output_position = save_position;
 }
 
-static void
-random_writeU4(CrwClassImage *ci, CrwPosition pos, unsigned val)
+static void 
+random_writeU4(CrwClassImage *ci, CrwPosition pos, unsigned val) 
 {
     CrwPosition save_position;
-
+    
     CRW_ASSERT_CI(ci);
     save_position = ci->output_position;
     ci->output_position = pos;
@@ -510,14 +510,14 @@ fillin_cpool_entry(CrwClassImage *ci, CrwCpoolIndex i,
     ci->cpool[i].len    = (unsigned short)len;
 }
 
-static CrwCpoolIndex
-add_new_cpool_entry(CrwClassImage *ci, ClassConstant tag,
-                    unsigned int index1, unsigned int index2,
+static CrwCpoolIndex 
+add_new_cpool_entry(CrwClassImage *ci, ClassConstant tag, 
+                    unsigned int index1, unsigned int index2, 
                     const char *str, int len)
 {
     CrwCpoolIndex i;
     char *utf8 = NULL;
-
+    
     CRW_ASSERT_CI(ci);
     i = ci->cpool_count_plus_one++;
 
@@ -527,39 +527,39 @@ add_new_cpool_entry(CrwClassImage *ci, ClassConstant tag,
      *       See MAXIMUM_NEW_CPOOL_ENTRIES
      */
     CRW_ASSERT(ci,  ci->cpool_count_plus_one < ci->cpool_max_elements );
-
+    
     writeU1(ci, tag);
     switch (tag) {
-        case JVM_CONSTANT_Class:
+        case JVM_CONSTANT_Class: 
             writeU2(ci, index1);
             break;
-        case JVM_CONSTANT_String:
+        case JVM_CONSTANT_String:  
             writeU2(ci, index1);
             break;
-        case JVM_CONSTANT_Fieldref:
-        case JVM_CONSTANT_Methodref:
-        case JVM_CONSTANT_InterfaceMethodref:
-        case JVM_CONSTANT_Integer:
-        case JVM_CONSTANT_Float:
-        case JVM_CONSTANT_NameAndType:
+        case JVM_CONSTANT_Fieldref: 
+        case JVM_CONSTANT_Methodref: 
+        case JVM_CONSTANT_InterfaceMethodref: 
+        case JVM_CONSTANT_Integer:  
+        case JVM_CONSTANT_Float:  
+        case JVM_CONSTANT_NameAndType: 
             writeU2(ci, index1);
             writeU2(ci, index2);
             break;
-        case JVM_CONSTANT_Long:
-        case JVM_CONSTANT_Double:
+        case JVM_CONSTANT_Long:  
+        case JVM_CONSTANT_Double: 
             writeU4(ci, index1);
             writeU4(ci, index2);
             ci->cpool_count_plus_one++;
             CRW_ASSERT(ci,  ci->cpool_count_plus_one < ci->cpool_max_elements );
             break;
-        case JVM_CONSTANT_Utf8:
+        case JVM_CONSTANT_Utf8:  
             CRW_ASSERT(ci, len==(len & 0xFFFF));
             writeU2(ci, len);
             write_bytes(ci, (void*)str, len);
             utf8 = (char*)duplicate(ci, str, len);
             break;
-        default:
-            CRW_FATAL(ci, "Unknown constant");
+        default: 
+            CRW_FATAL(ci, "Unknown constant"); 
             break;
     }
     fillin_cpool_entry(ci, i, tag, index1, index2, (const char *)utf8, len);
@@ -568,63 +568,63 @@ add_new_cpool_entry(CrwClassImage *ci, ClassConstant tag,
 }
 
 static CrwCpoolIndex
-add_new_class_cpool_entry(CrwClassImage *ci, const char *class_name)
+add_new_class_cpool_entry(CrwClassImage *ci, const char *class_name) 
 {
     CrwCpoolIndex name_index;
     CrwCpoolIndex class_index;
     int           len;
-
+    
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, class_name!=NULL);
-
+        
     len = (int)strlen(class_name);
-    name_index = add_new_cpool_entry(ci, JVM_CONSTANT_Utf8, len, 0,
+    name_index = add_new_cpool_entry(ci, JVM_CONSTANT_Utf8, len, 0, 
                         class_name, len);
-    class_index = add_new_cpool_entry(ci, JVM_CONSTANT_Class, name_index, 0,
+    class_index = add_new_cpool_entry(ci, JVM_CONSTANT_Class, name_index, 0, 
                         NULL, 0);
     return class_index;
 }
 
 static CrwCpoolIndex
 add_new_method_cpool_entry(CrwClassImage *ci, CrwCpoolIndex class_index,
-                     const char *name, const char *descr)
+                     const char *name, const char *descr) 
 {
     CrwCpoolIndex name_index;
     CrwCpoolIndex descr_index;
     CrwCpoolIndex name_type_index;
     int len;
-
+    
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, name!=NULL);
     CRW_ASSERT(ci, descr!=NULL);
     len = (int)strlen(name);
-    name_index =
+    name_index = 
         add_new_cpool_entry(ci, JVM_CONSTANT_Utf8, len, 0, name, len);
     len = (int)strlen(descr);
-    descr_index =
+    descr_index = 
         add_new_cpool_entry(ci, JVM_CONSTANT_Utf8, len, 0, descr, len);
-    name_type_index =
-        add_new_cpool_entry(ci, JVM_CONSTANT_NameAndType,
+    name_type_index = 
+        add_new_cpool_entry(ci, JVM_CONSTANT_NameAndType, 
                                 name_index, descr_index, NULL, 0);
-    return add_new_cpool_entry(ci, JVM_CONSTANT_Methodref,
+    return add_new_cpool_entry(ci, JVM_CONSTANT_Methodref, 
                                 class_index, name_type_index, NULL, 0);
 }
 
-static CrwConstantPoolEntry
-cpool_entry(CrwClassImage *ci, CrwCpoolIndex c_index)
+static CrwConstantPoolEntry 
+cpool_entry(CrwClassImage *ci, CrwCpoolIndex c_index) 
 {
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, c_index > 0 && c_index < ci->cpool_count_plus_one);
     return ci->cpool[c_index];
 }
 
-static void
+static void 
 cpool_setup(CrwClassImage *ci)
 {
     CrwCpoolIndex i;
     CrwPosition cpool_output_position;
     int count_plus_one;
-
+ 
     CRW_ASSERT_CI(ci);
     cpool_output_position = ci->output_position;
     count_plus_one = copyU2(ci);
@@ -633,7 +633,7 @@ cpool_setup(CrwClassImage *ci)
     ci->cpool = (CrwConstantPoolEntry*)allocate_clean(ci,
                 (int)((ci->cpool_max_elements)*sizeof(CrwConstantPoolEntry)));
     ci->cpool_count_plus_one = (CrwCpoolIndex)count_plus_one;
-
+  
     /* Index zero not in class file */
     for (i = 1; i < count_plus_one; ++i) {
         CrwCpoolIndex   ipos;
@@ -642,46 +642,46 @@ cpool_setup(CrwClassImage *ci)
         unsigned int    index2;
         unsigned        len;
         char *          utf8;
-
+        
         ipos    = i;
         index1  = 0;
         index2  = 0;
         len     = 0;
         utf8    = NULL;
-
+        
         tag = copyU1(ci);
         switch (tag) {
-            case JVM_CONSTANT_Class:
-                index1 = copyU2(ci);
+            case JVM_CONSTANT_Class: 
+                index1 = copyU2(ci); 
                 break;
-            case JVM_CONSTANT_String:
-                index1 = copyU2(ci);
+            case JVM_CONSTANT_String:  
+                index1 = copyU2(ci); 
                 break;
-            case JVM_CONSTANT_Fieldref:
-            case JVM_CONSTANT_Methodref:
-            case JVM_CONSTANT_InterfaceMethodref:
-            case JVM_CONSTANT_Integer:
-            case JVM_CONSTANT_Float:
-            case JVM_CONSTANT_NameAndType:
-                index1 = copyU2(ci);
-                index2 = copyU2(ci);
+            case JVM_CONSTANT_Fieldref: 
+            case JVM_CONSTANT_Methodref: 
+            case JVM_CONSTANT_InterfaceMethodref: 
+            case JVM_CONSTANT_Integer:  
+            case JVM_CONSTANT_Float:  
+            case JVM_CONSTANT_NameAndType: 
+                index1 = copyU2(ci); 
+                index2 = copyU2(ci); 
                 break;
-            case JVM_CONSTANT_Long:
-            case JVM_CONSTANT_Double:
-                index1 = copyU4(ci);
-                index2 = copyU4(ci);
+            case JVM_CONSTANT_Long:  
+            case JVM_CONSTANT_Double: 
+                index1 = copyU4(ci); 
+                index2 = copyU4(ci); 
                 ++i;  /* // these take two CP entries - duh! */
                 break;
-            case JVM_CONSTANT_Utf8:
-                len     = copyU2(ci);
+            case JVM_CONSTANT_Utf8:  
+                len     = copyU2(ci); 
                 index1  = (unsigned short)len;
                 utf8    = (char*)allocate(ci, len+1);
                 read_bytes(ci, (void*)utf8, len);
                 utf8[len] = 0;
                 write_bytes(ci, (void*)utf8, len);
                 break;
-            default:
-                CRW_FATAL(ci, "Unknown constant");
+            default: 
+                CRW_FATAL(ci, "Unknown constant"); 
                 break;
         }
         fillin_cpool_entry(ci, ipos, tag, index1, index2, (const char *)utf8, len);
@@ -689,41 +689,41 @@ cpool_setup(CrwClassImage *ci)
 
     if (ci->call_name != NULL || ci->return_name != NULL) {
         if ( ci->number != (ci->number & 0x7FFF) ) {
-            ci->class_number_index =
-                add_new_cpool_entry(ci, JVM_CONSTANT_Integer,
+            ci->class_number_index = 
+                add_new_cpool_entry(ci, JVM_CONSTANT_Integer, 
                     (ci->number>>16) & 0xFFFF, ci->number & 0xFFFF, NULL, 0);
         }
     }
 
     if (  ci->tclass_name != NULL ) {
-        ci->tracker_class_index =
+        ci->tracker_class_index = 
                 add_new_class_cpool_entry(ci, ci->tclass_name);
     }
     if (ci->obj_init_name != NULL) {
-        ci->object_init_tracker_index = add_new_method_cpool_entry(ci,
-                    ci->tracker_class_index,
-                    ci->obj_init_name,
+        ci->object_init_tracker_index = add_new_method_cpool_entry(ci, 
+                    ci->tracker_class_index, 
+                    ci->obj_init_name, 
                     ci->obj_init_sig);
     }
     if (ci->newarray_name != NULL) {
-        ci->newarray_tracker_index = add_new_method_cpool_entry(ci,
-                    ci->tracker_class_index,
-                    ci->newarray_name,
+        ci->newarray_tracker_index = add_new_method_cpool_entry(ci, 
+                    ci->tracker_class_index, 
+                    ci->newarray_name, 
                     ci->newarray_sig);
     }
     if (ci->call_name != NULL) {
-        ci->call_tracker_index = add_new_method_cpool_entry(ci,
-                    ci->tracker_class_index,
-                    ci->call_name,
+        ci->call_tracker_index = add_new_method_cpool_entry(ci, 
+                    ci->tracker_class_index, 
+                    ci->call_name, 
                     ci->call_sig);
     }
     if (ci->return_name != NULL) {
-        ci->return_tracker_index = add_new_method_cpool_entry(ci,
-                    ci->tracker_class_index,
-                    ci->return_name,
+        ci->return_tracker_index = add_new_method_cpool_entry(ci, 
+                    ci->tracker_class_index, 
+                    ci->return_name, 
                     ci->return_sig);
     }
-
+    
     random_writeU2(ci, cpool_output_position, ci->cpool_count_plus_one);
 }
 
@@ -734,12 +734,12 @@ static ByteOffset
 push_pool_constant_bytecodes(ByteCode *bytecodes, CrwCpoolIndex index)
 {
     ByteOffset nbytes = 0;
-
+    
     if ( index == (index&0x7F) ) {
         bytecodes[nbytes++] = (ByteCode)JVM_OPC_ldc;
     } else {
         bytecodes[nbytes++] = (ByteCode)JVM_OPC_ldc_w;
-        bytecodes[nbytes++] = (ByteCode)((index >> 8) & 0xFF);
+        bytecodes[nbytes++] = (ByteCode)((index >> 8) & 0xFF); 
     }
     bytecodes[nbytes++] = (ByteCode)(index & 0xFF);
     return nbytes;
@@ -749,7 +749,7 @@ static ByteOffset
 push_short_constant_bytecodes(ByteCode *bytecodes, unsigned number)
 {
     ByteOffset nbytes = 0;
-
+    
     if ( number <= 5 ) {
         bytecodes[nbytes++] = (ByteCode)(JVM_OPC_iconst_0+number);
     } else if ( number == (number&0x7F) ) {
@@ -757,14 +757,14 @@ push_short_constant_bytecodes(ByteCode *bytecodes, unsigned number)
         bytecodes[nbytes++] = (ByteCode)(number & 0xFF);
     } else {
         bytecodes[nbytes++] = (ByteCode)JVM_OPC_sipush;
-        bytecodes[nbytes++] = (ByteCode)((number >> 8) & 0xFF);
+        bytecodes[nbytes++] = (ByteCode)((number >> 8) & 0xFF); 
         bytecodes[nbytes++] = (ByteCode)(number & 0xFF);
     }
     return nbytes;
 }
 
 static ByteOffset
-injection_template(MethodImage *mi, ByteCode *bytecodes, ByteOffset max_nbytes,
+injection_template(MethodImage *mi, ByteCode *bytecodes, ByteOffset max_nbytes, 
                         CrwCpoolIndex method_index)
 {
     CrwClassImage *     ci;
@@ -774,11 +774,11 @@ injection_template(MethodImage *mi, ByteCode *bytecodes, ByteOffset max_nbytes,
     int add_aload;
     int push_cnum;
     int push_mnum;
-
+    
     ci = mi->ci;
-
+    
     CRW_ASSERT(ci, bytecodes!=NULL);
-
+    
     if ( method_index == 0 )  {
         return 0;
     }
@@ -802,7 +802,7 @@ injection_template(MethodImage *mi, ByteCode *bytecodes, ByteOffset max_nbytes,
         push_cnum       = JNI_TRUE;
         push_mnum       = JNI_TRUE;
     }
-
+    
     if ( add_dup ) {
         bytecodes[nbytes++] = (ByteCode)JVM_OPC_dup;
     }
@@ -811,16 +811,16 @@ injection_template(MethodImage *mi, ByteCode *bytecodes, ByteOffset max_nbytes,
     }
     if ( push_cnum ) {
         if ( ci->number == (ci->number & 0x7FFF) ) {
-            nbytes += push_short_constant_bytecodes(bytecodes+nbytes,
+            nbytes += push_short_constant_bytecodes(bytecodes+nbytes, 
                                                 ci->number);
         } else {
             CRW_ASSERT(ci, ci->class_number_index!=0);
-            nbytes += push_pool_constant_bytecodes(bytecodes+nbytes,
+            nbytes += push_pool_constant_bytecodes(bytecodes+nbytes, 
                                                 ci->class_number_index);
         }
     }
     if ( push_mnum ) {
-        nbytes += push_short_constant_bytecodes(bytecodes+nbytes,
+        nbytes += push_short_constant_bytecodes(bytecodes+nbytes, 
                                             mi->number);
     }
     bytecodes[nbytes++] = (ByteCode)JVM_OPC_invokestatic;
@@ -842,7 +842,7 @@ entry_injection_code(MethodImage *mi, ByteCode *bytecodes, ByteOffset len)
 {
     CrwClassImage *     ci;
     ByteOffset nbytes = 0;
-
+    
     CRW_ASSERT_MI(mi);
 
     ci = mi->ci;
@@ -860,12 +860,12 @@ entry_injection_code(MethodImage *mi, ByteCode *bytecodes, ByteOffset len)
 
 /* Called to create injection code before an opcode */
 static ByteOffset
-before_injection_code(MethodImage *mi, ClassOpcode opcode,
+before_injection_code(MethodImage *mi, ClassOpcode opcode, 
                       ByteCode *bytecodes, ByteOffset len)
 {
     ByteOffset nbytes = 0;
 
-
+    
     CRW_ASSERT_MI(mi);
     switch ( opcode ) {
         case JVM_OPC_return:
@@ -887,15 +887,15 @@ before_injection_code(MethodImage *mi, ClassOpcode opcode,
 
 /* Called to create injection code after an opcode */
 static ByteOffset
-after_injection_code(MethodImage *mi, ClassOpcode opcode,
+after_injection_code(MethodImage *mi, ClassOpcode opcode, 
                      ByteCode *bytecodes, ByteOffset len)
 {
     CrwClassImage* ci;
     ByteOffset nbytes;
-
+    
     ci = mi->ci;
     nbytes = 0;
-
+   
     CRW_ASSERT_MI(mi);
     switch ( opcode ) {
         case JVM_OPC_new:
@@ -914,19 +914,19 @@ after_injection_code(MethodImage *mi, ClassOpcode opcode,
 }
 
 /* Actually inject the bytecodes */
-static void
-inject_bytecodes(MethodImage *mi, ByteOffset at,
-                 ByteCode *bytecodes, ByteOffset len)
+static void 
+inject_bytecodes(MethodImage *mi, ByteOffset at, 
+                 ByteCode *bytecodes, ByteOffset len) 
 {
     Injection injection;
     CrwClassImage *ci;
-
+    
     ci = mi->ci;
     CRW_ASSERT_MI(mi);
     CRW_ASSERT(ci, at <= mi->code_len);
-
+    
     injection = mi->injections[at];
-
+    
     CRW_ASSERT(ci, len <= LARGEST_INJECTION/2);
     CRW_ASSERT(ci, injection.len+len <= LARGEST_INJECTION);
 
@@ -935,7 +935,7 @@ inject_bytecodes(MethodImage *mi, ByteOffset at,
         CRW_ASSERT(ci, injection.len==0);
         injection.code = (ByteCode *)allocate_clean(ci, LARGEST_INJECTION+1);
     }
-
+    
     (void)memcpy(injection.code+injection.len, bytecodes, len);
     injection.len += len;
     injection.code[injection.len] = 0;
@@ -951,19 +951,19 @@ method_init(CrwClassImage *ci, unsigned mnum, ByteOffset code_len)
 {
     MethodImage *       mi;
     ByteOffset          i;
-
+    
     mi                  = (MethodImage*)allocate_clean(ci, (int)sizeof(MethodImage));
     mi->ci              = ci;
     mi->name            = ci->method_name[mnum];
     mi->descr           = ci->method_descr[mnum];
     mi->code_len        = code_len;
-    mi->map             = (ByteOffset*)allocate_clean(ci,
+    mi->map             = (ByteOffset*)allocate_clean(ci, 
                                 (int)((code_len+1)*sizeof(ByteOffset)));
     for(i=0; i<=code_len; i++) {
         mi->map[i] = i;
     }
     mi->widening        = (signed char*)allocate_clean(ci, code_len+1);
-    mi->injections      = (Injection *)allocate_clean(ci,
+    mi->injections      = (Injection *)allocate_clean(ci, 
                                 (int)((code_len+1)*sizeof(Injection)));
     mi->number          = mnum;
     ci->current_mi      = mi;
@@ -974,7 +974,7 @@ static void
 method_term(MethodImage *mi)
 {
     CrwClassImage *ci;
-
+    
     ci = mi->ci;
     CRW_ASSERT_MI(mi);
     if ( mi->map != NULL ) {
@@ -1021,22 +1021,22 @@ rewind_to_beginning_of_input_bytecodes(MethodImage *mi)
  *         a goto or jump instruction was targeting the old bytecode
  *         location.
  */
-static void
-adjust_map(MethodImage *mi, ByteOffset at, ByteOffset offset)
+static void 
+adjust_map(MethodImage *mi, ByteOffset at, ByteOffset offset) 
 {
     ByteOffset i;
-
+    
     CRW_ASSERT_MI(mi);
     for (i = at; i <= mi->code_len; ++i) {
         mi->map[i] += offset;
     }
 }
 
-static void
-widen(MethodImage *mi, ByteOffset at, ByteOffset len)
+static void 
+widen(MethodImage *mi, ByteOffset at, ByteOffset len) 
 {
     int delta;
-
+   
     CRW_ASSERT(mi->ci, at <= mi->code_len);
     delta = len - mi->widening[at];
     /* Adjust everything from the current input location by delta */
@@ -1066,18 +1066,18 @@ static unsigned
 opcode_length(CrwClassImage *ci, ClassOpcode opcode)
 {
     /* Define array that holds length of an opcode */
-    static unsigned char _opcode_length[JVM_OPC_MAX+1] =
+    static unsigned char _opcode_length[JVM_OPC_MAX+1] = 
                           JVM_OPCODE_LENGTH_INITIALIZER;
-
+    
     if ( opcode > JVM_OPC_MAX ) {
         CRW_FATAL(ci, "Invalid opcode supplied to opcode_length()");
     }
     return _opcode_length[opcode];
 }
-
+    
 /* Walk one instruction and inject instrumentation */
-static void
-inject_for_opcode(MethodImage *mi)
+static void 
+inject_for_opcode(MethodImage *mi) 
 {
     CrwClassImage *  ci;
     ClassOpcode      opcode;
@@ -1087,10 +1087,10 @@ inject_for_opcode(MethodImage *mi)
     ci = mi->ci;
     pos = input_code_offset(mi);
     opcode = readU1(ci);
-
+    
     if (opcode == JVM_OPC_wide) {
         ClassOpcode     wopcode;
-
+        
         wopcode = readU1(ci);
         /* lvIndex not used */
         (void)readU2(ci);
@@ -1100,7 +1100,7 @@ inject_for_opcode(MethodImage *mi)
             (void)readU1(ci);
         }
     } else {
-
+        
         ByteCode        bytecodes[LARGEST_INJECTION+1];
         int             header;
         int             instr_len;
@@ -1162,11 +1162,11 @@ inject_for_opcode(MethodImage *mi)
         len = after_injection_code(mi, opcode, bytecodes, (int)sizeof(bytecodes));
         if ( len > 0 ) {
             inject_bytecodes(mi, pos, bytecodes, len);
-
+        
             /* Adjust for any after_injection_code() */
             adjust_map(mi, pos, len);
         }
-
+    
     }
 }
 
@@ -1179,8 +1179,8 @@ method_code_map(MethodImage *mi, ByteOffset pos)
     return mi->map[pos];
 }
 
-static int
-adjust_instruction(MethodImage *mi)
+static int 
+adjust_instruction(MethodImage *mi) 
 {
     CrwClassImage *     ci;
     ClassOpcode         opcode;
@@ -1191,12 +1191,12 @@ adjust_instruction(MethodImage *mi)
     ci = mi->ci;
     pos = input_code_offset(mi);
     new_pos = method_code_map(mi,pos);
-
+    
     opcode = readU1(ci);
-
+    
     if (opcode == JVM_OPC_wide) {
         ClassOpcode wopcode;
-
+        
         wopcode = readU1(ci);
         /* lvIndex not used */
         (void)readU2(ci);
@@ -1206,7 +1206,7 @@ adjust_instruction(MethodImage *mi)
             (void)readU1(ci);
         }
     } else {
-
+        
         int widened;
         int header;
         int newHeader;
@@ -1219,7 +1219,7 @@ adjust_instruction(MethodImage *mi)
         int delta_pad;
         int npairs;
         int instr_len;
-
+        
         switch (opcode) {
 
         case JVM_OPC_tableswitch:
@@ -1290,7 +1290,7 @@ adjust_instruction(MethodImage *mi)
         case JVM_OPC_goto_w:
             (void)readU4(ci);
             break;
-
+                    
         default:
             instr_len = opcode_length(ci, opcode);
             skip(ci, instr_len-1);
@@ -1300,15 +1300,15 @@ adjust_instruction(MethodImage *mi)
     return 1;
 }
 
-static void
-write_instruction(MethodImage *mi)
+static void 
+write_instruction(MethodImage *mi) 
 {
     CrwClassImage *     ci;
     ClassOpcode         opcode;
     ByteOffset          new_code_len;
     int                 pos;
     int                 new_pos;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
     pos = input_code_offset(mi);
@@ -1317,13 +1317,13 @@ write_instruction(MethodImage *mi)
     if (new_code_len > 0) {
         write_bytes(ci, (void*)mi->injections[pos].code, new_code_len);
     }
-
+    
     opcode = readU1(ci);
     if (opcode == JVM_OPC_wide) {
         ClassOpcode     wopcode;
-
+        
         writeU1(ci, opcode);
-
+        
         wopcode = copyU1(ci);
         /* lvIndex not used */
         (void)copyU2(ci);
@@ -1333,7 +1333,7 @@ write_instruction(MethodImage *mi)
             (void)copyU1(ci);
         }
     } else {
-
+        
         ClassOpcode new_opcode;
         int             header;
         int             newHeader;
@@ -1428,49 +1428,49 @@ write_instruction(MethodImage *mi)
                     writeU4(ci, new_delta);
                 } else if (widened == 5) {
                     switch (opcode) {
-                        case JVM_OPC_ifeq:
+                        case JVM_OPC_ifeq: 
                             new_opcode = JVM_OPC_ifne;
                             break;
-                        case JVM_OPC_ifge:
+                        case JVM_OPC_ifge: 
                             new_opcode = JVM_OPC_iflt;
                             break;
                         case JVM_OPC_ifgt:
                             new_opcode = JVM_OPC_ifle;
                             break;
-                        case JVM_OPC_ifle:
+                        case JVM_OPC_ifle: 
                             new_opcode = JVM_OPC_ifgt;
                             break;
-                        case JVM_OPC_iflt:
+                        case JVM_OPC_iflt: 
                             new_opcode = JVM_OPC_ifge;
                             break;
                         case JVM_OPC_ifne:
                             new_opcode = JVM_OPC_ifeq;
                             break;
-                        case JVM_OPC_if_icmpeq:
+                        case JVM_OPC_if_icmpeq: 
                             new_opcode = JVM_OPC_if_icmpne;
                             break;
-                        case JVM_OPC_if_icmpne:
+                        case JVM_OPC_if_icmpne: 
                             new_opcode = JVM_OPC_if_icmpeq;
                             break;
                         case JVM_OPC_if_icmpge:
                             new_opcode = JVM_OPC_if_icmplt;
                             break;
-                        case JVM_OPC_if_icmpgt:
+                        case JVM_OPC_if_icmpgt: 
                             new_opcode = JVM_OPC_if_icmple;
                             break;
-                        case JVM_OPC_if_icmple:
+                        case JVM_OPC_if_icmple: 
                             new_opcode = JVM_OPC_if_icmpgt;
                             break;
                         case JVM_OPC_if_icmplt:
                             new_opcode = JVM_OPC_if_icmpge;
                             break;
-                        case JVM_OPC_if_acmpeq:
+                        case JVM_OPC_if_acmpeq: 
                             new_opcode = JVM_OPC_if_acmpne;
                             break;
                         case JVM_OPC_if_acmpne:
                             new_opcode = JVM_OPC_if_acmpeq;
                             break;
-                        case JVM_OPC_ifnull:
+                        case JVM_OPC_ifnull: 
                             new_opcode = JVM_OPC_ifnonnull;
                             break;
                         case JVM_OPC_ifnonnull:
@@ -1496,26 +1496,26 @@ write_instruction(MethodImage *mi)
                 writeU1(ci, opcode);
                 writeU4(ci, new_delta);
                 break;
-
+                        
             default:
                 instr_len = opcode_length(ci, opcode);
-                writeU1(ci, opcode);
+                writeU1(ci, opcode); 
                 copy(ci, instr_len-1);
                 break;
         }
     }
 }
 
-static void
-method_inject_and_write_code(MethodImage *mi)
+static void 
+method_inject_and_write_code(MethodImage *mi) 
 {
     ByteCode bytecodes[LARGEST_INJECTION+1];
     ByteOffset   len;
-
+    
     CRW_ASSERT_MI(mi);
-
+   
     /* Do injections */
-    rewind_to_beginning_of_input_bytecodes(mi);
+    rewind_to_beginning_of_input_bytecodes(mi);   
     len = entry_injection_code(mi, bytecodes, (int)sizeof(bytecodes));
     if ( len > 0 ) {
         int pos;
@@ -1531,7 +1531,7 @@ method_inject_and_write_code(MethodImage *mi)
     while (input_code_offset(mi) < mi->code_len) {
         inject_for_opcode(mi);
     }
-
+   
     /* Adjust instructions */
     rewind_to_beginning_of_input_bytecodes(mi);
     while (input_code_offset(mi) < mi->code_len) {
@@ -1541,40 +1541,40 @@ method_inject_and_write_code(MethodImage *mi)
     }
 
     /* Write new instructions */
-    rewind_to_beginning_of_input_bytecodes(mi);
+    rewind_to_beginning_of_input_bytecodes(mi); 
     while (input_code_offset(mi) < mi->code_len) {
         write_instruction(mi);
     }
 }
 
-static void
-copy_attribute(CrwClassImage *ci)
+static void 
+copy_attribute(CrwClassImage *ci) 
 {
     int len;
-
+    
     (void)copyU2(ci);
     len = copyU4(ci);
     copy(ci, len);
 }
 
-static void
-copy_attributes(CrwClassImage *ci)
+static void 
+copy_attributes(CrwClassImage *ci) 
 {
     unsigned i;
     unsigned count;
-
+   
     count = copyU2(ci);
     for (i = 0; i < count; ++i) {
         copy_attribute(ci);
     }
 }
 
-static void
+static void 
 copy_all_fields(CrwClassImage *ci)
 {
     unsigned i;
     unsigned count;
-
+    
     count = copyU2(ci);
     for (i = 0; i < count; ++i) {
         /* access, name, descriptor */
@@ -1589,7 +1589,7 @@ write_line_table(MethodImage *mi)
     unsigned             i;
     unsigned             count;
     CrwClassImage *      ci;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
     (void)copyU4(ci);
@@ -1597,15 +1597,15 @@ write_line_table(MethodImage *mi)
     for(i=0; i<count; i++) {
         ByteOffset start_pc;
         ByteOffset new_start_pc;
-
+        
         start_pc = readU2(ci);
-
+        
         if ( start_pc == 0 ) {
             new_start_pc = 0; /* Don't skip entry injection code. */
         } else {
             new_start_pc = method_code_map(mi, start_pc);
         }
-
+        
         writeU2(ci, new_start_pc);
         (void)copyU2(ci);
     }
@@ -1618,7 +1618,7 @@ write_var_table(MethodImage *mi)
     unsigned             i;
     unsigned             count;
     CrwClassImage *      ci;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
     (void)copyU4(ci);
@@ -1630,7 +1630,7 @@ write_var_table(MethodImage *mi)
         ByteOffset new_length;
         ByteOffset end_pc;
         ByteOffset new_end_pc;
-
+        
         start_pc        = readU2(ci);
         length          = readU2(ci);
 
@@ -1642,7 +1642,7 @@ write_var_table(MethodImage *mi)
         end_pc          = start_pc + length;
         new_end_pc      = method_code_map(mi, end_pc);
         new_length      = new_end_pc - new_start_pc;
-
+        
         writeU2(ci, new_start_pc);
         writeU2(ci, new_length);
         (void)copyU2(ci);
@@ -1676,7 +1676,7 @@ static unsigned
 copyUoffset(MethodImage *mi)
 {
     unsigned uoffset;
-
+    
     uoffset = readUoffset(mi);
     writeUoffset(mi, uoffset);
     return uoffset;
@@ -1689,10 +1689,10 @@ copy_verification_types(MethodImage *mi, int ntypes)
     /* If there were ntypes, we just copy that over, no changes */
     if ( ntypes > 0 ) {
         int j;
-
+                    
         for ( j = 0 ; j < ntypes ; j++ ) {
             unsigned tag;
-
+            
             tag = copyU1(mi->ci);
             switch ( tag ) {
                 case JVM_ITEM_Object:
@@ -1723,7 +1723,7 @@ write_stackmap_table(MethodImage *mi)
     unsigned       new_attr_len;
     unsigned       count;
     unsigned       delta_adj;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
 
@@ -1750,7 +1750,7 @@ write_stackmap_table(MethodImage *mi)
         if ( ft <= 63 ) {
             /* Frame Type: same_frame ([0,63]) */
             unsigned   new_ft;    /* new frame_type */
-
+            
             delta     = (delta_adj + ft);
             new_pc    = method_code_map(mi, last_pc + delta);
             new_delta = new_pc - last_new_pc;
@@ -1766,7 +1766,7 @@ write_stackmap_table(MethodImage *mi)
         } else if ( ft >= 64 && ft <= 127 ) {
             /* Frame Type: same_locals_1_stack_item_frame ([64,127]) */
             unsigned   new_ft;    /* new frame_type */
-
+            
             delta     = (delta_adj + ft - 64);
             new_pc    = method_code_map(mi, last_pc + delta);
             new_delta = new_pc - last_new_pc;
@@ -1859,7 +1859,7 @@ write_cldc_stackmap_table(MethodImage *mi)
     unsigned       attr_len;
     unsigned       new_attr_len;
     unsigned       count;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
 
@@ -1895,7 +1895,7 @@ method_write_exception_table(MethodImage *mi)
     unsigned            i;
     unsigned            count;
     CrwClassImage *     ci;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
     count = copyU2(ci);
@@ -1906,15 +1906,15 @@ method_write_exception_table(MethodImage *mi)
         ByteOffset new_end_pc;
         ByteOffset handler_pc;
         ByteOffset new_handler_pc;
-
+        
         start_pc        = readU2(ci);
         end_pc          = readU2(ci);
         handler_pc      = readU2(ci);
-
+        
         new_start_pc    = method_code_map(mi, start_pc);
         new_end_pc      = method_code_map(mi, end_pc);
         new_handler_pc  = method_code_map(mi, handler_pc);
-
+        
         writeU2(ci, new_start_pc);
         writeU2(ci, new_end_pc);
         writeU2(ci, new_handler_pc);
@@ -1927,7 +1927,7 @@ attribute_match(CrwClassImage *ci, CrwCpoolIndex name_index, const char *name)
 {
     CrwConstantPoolEntry cs;
     int                  len;
-
+    
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, name!=NULL);
     len = (int)strlen(name);
@@ -1938,12 +1938,12 @@ attribute_match(CrwClassImage *ci, CrwCpoolIndex name_index, const char *name)
     return 0;
 }
 
-static void
+static void 
 method_write_code_attribute(MethodImage *mi)
 {
     CrwClassImage *     ci;
     CrwCpoolIndex       name_index;
-
+    
     CRW_ASSERT_MI(mi);
     ci = mi->ci;
     name_index = copyU2(ci);
@@ -1992,8 +1992,8 @@ is_finalize_method(const char *name)
 }
 
 static int
-skip_method(CrwClassImage *ci, const char *name,
-                unsigned access_flags, ByteOffset code_len,
+skip_method(CrwClassImage *ci, const char *name, 
+                unsigned access_flags, ByteOffset code_len, 
                 int system_class, jboolean *pskip_call_return_sites)
 {
     *pskip_call_return_sites = JNI_FALSE;
@@ -2017,7 +2017,7 @@ skip_method(CrwClassImage *ci, const char *name,
 }
 
 /* Process all code attributes */
-static void
+static void 
 method_write_bytecodes(CrwClassImage *ci, unsigned mnum, unsigned access_flags)
 {
     CrwPosition         output_attr_len_position;
@@ -2035,23 +2035,23 @@ method_write_bytecodes(CrwClassImage *ci, unsigned mnum, unsigned access_flags)
     jboolean            skip_call_return_sites;
 
     CRW_ASSERT_CI(ci);
-
+    
     /* Attribute Length */
     output_attr_len_position = ci->output_position;
     attr_len = copyU4(ci);
-
+    
     /* Max Stack */
     output_max_stack_position = ci->output_position;
     max_stack = copyU2(ci);
-
+    
     /* Max Locals */
     (void)copyU2(ci);
-
+    
     /* Code Length */
     output_code_len_position = ci->output_position;
     code_len = copyU4(ci);
     start_of_output_bytecodes = ci->output_position;
-
+   
     /* Some methods should not be instrumented */
     object_init_method = JNI_FALSE;
     skip_call_return_sites = JNI_FALSE;
@@ -2060,16 +2060,16 @@ method_write_bytecodes(CrwClassImage *ci, unsigned mnum, unsigned access_flags)
          strcmp(ci->method_descr[mnum],"()V")==0 ) {
         object_init_method = JNI_TRUE;
         skip_call_return_sites = JNI_TRUE;
-    } else if ( skip_method(ci, ci->method_name[mnum], access_flags,
+    } else if ( skip_method(ci, ci->method_name[mnum], access_flags, 
                 code_len, ci->system_class, &skip_call_return_sites) ) {
-        /* Copy remainder minus already copied, the U2 max_stack,
-         *   U2 max_locals, and U4 code_length fields have already
+        /* Copy remainder minus already copied, the U2 max_stack, 
+         *   U2 max_locals, and U4 code_length fields have already 
          *   been processed.
          */
         copy(ci, attr_len - (2+2+4));
         return;
     }
-
+   
     /* Start Injection */
     mi = method_init(ci, mnum, code_len);
     mi->object_init_method = object_init_method;
@@ -2093,7 +2093,7 @@ method_write_bytecodes(CrwClassImage *ci, unsigned mnum, unsigned access_flags)
     /* Fixup max stack */
     CRW_ASSERT(ci, mi->new_max_stack <= 0xFFFF);
     random_writeU2(ci, output_max_stack_position, mi->new_max_stack);
-
+    
     /* Copy exception table */
     method_write_exception_table(mi);
 
@@ -2111,27 +2111,27 @@ method_write_bytecodes(CrwClassImage *ci, unsigned mnum, unsigned access_flags)
     method_term(mi);
     mi = NULL;
 
-}
+}        
 
-static void
-method_write(CrwClassImage *ci, unsigned mnum)
+static void 
+method_write(CrwClassImage *ci, unsigned mnum) 
 {
     unsigned            i;
     unsigned            access_flags;
     CrwCpoolIndex       name_index;
     CrwCpoolIndex       descr_index;
     unsigned            attr_count;
-
+    
     access_flags = copyU2(ci);
     name_index = copyU2(ci);
     ci->method_name[mnum] = cpool_entry(ci, name_index).ptr;
     descr_index = copyU2(ci);
     ci->method_descr[mnum] = cpool_entry(ci, descr_index).ptr;
     attr_count = copyU2(ci);
-
+    
     for (i = 0; i < attr_count; ++i) {
         CrwCpoolIndex name_index;
-
+        
         name_index = copyU2(ci);
         if ( attribute_match(ci, name_index, "Code") ) {
             method_write_bytecodes(ci, mnum, access_flags);
@@ -2143,25 +2143,25 @@ method_write(CrwClassImage *ci, unsigned mnum)
     }
 }
 
-static void
-method_write_all(CrwClassImage *ci)
+static void 
+method_write_all(CrwClassImage *ci) 
 {
     unsigned i;
     unsigned count;
-
+    
     count = copyU2(ci);
     ci->method_count = count;
     if ( count > 0 ) {
         ci->method_name = (const char **)allocate_clean(ci, count*(int)sizeof(const char*));
         ci->method_descr = (const char **)allocate_clean(ci, count*(int)sizeof(const char*));
     }
-
+    
     for (i = 0; i < count; ++i) {
         method_write(ci, i);
     }
-
+    
     if ( ci->mnum_callback != NULL ) {
-        (*(ci->mnum_callback))(ci->number, ci->method_name, ci->method_descr,
+        (*(ci->mnum_callback))(ci->number, ci->method_name, ci->method_descr, 
                          count);
     }
 }
@@ -2207,20 +2207,20 @@ skip_class(unsigned access_flags)
     return JNI_FALSE;
 }
 
-static long
-inject_class(struct CrwClassImage *ci,
+static long 
+inject_class(struct CrwClassImage *ci, 
                  int system_class,
-                 char* tclass_name,
-                 char* tclass_sig,
-                 char* call_name,
-                 char* call_sig,
-                 char* return_name,
-                 char* return_sig,
-                 char* obj_init_name,
-                 char* obj_init_sig,
-                 char* newarray_name,
-                 char* newarray_sig,
-                 unsigned char *buf,
+                 char* tclass_name,     
+                 char* tclass_sig,      
+                 char* call_name,       
+                 char* call_sig,        
+                 char* return_name,     
+                 char* return_sig,      
+                 char* obj_init_name,   
+                 char* obj_init_sig,    
+                 char* newarray_name,   
+                 char* newarray_sig,    
+                 unsigned char *buf, 
                  long buf_len)
 {
     CrwConstantPoolEntry        cs;
@@ -2233,9 +2233,9 @@ inject_class(struct CrwClassImage *ci,
     CRW_ASSERT_CI(ci);
     CRW_ASSERT(ci, buf!=NULL);
     CRW_ASSERT(ci, buf_len!=0);
-
+    
     CRW_ASSERT(ci, strchr(tclass_name,'.')==NULL); /* internal qualified name */
-
+    
     ci->injection_count         = 0;
     ci->system_class            = system_class;
     ci->tclass_name             = tclass_name;
@@ -2250,7 +2250,7 @@ inject_class(struct CrwClassImage *ci,
     ci->newarray_sig            = newarray_sig;
     ci->output                  = buf;
     ci->output_len              = buf_len;
-
+    
     magic = copyU4(ci);
     CRW_ASSERT(ci, magic==0xCAFEBABE);
     if ( magic != 0xCAFEBABE ) {
@@ -2262,23 +2262,23 @@ inject_class(struct CrwClassImage *ci,
     /* major version number not used */
     classfileVersion = copyU2(ci);
     CRW_ASSERT(ci, classfileVersion <= 50); /* Mustang class files or less */
-
+    
     cpool_setup(ci);
 
     ci->access_flags        = copyU2(ci);
     if ( skip_class(ci->access_flags) ) {
         return (long)0;
     }
-
+    
     this_class          = copyU2(ci);
-
+    
     cs = cpool_entry(ci, (CrwCpoolIndex)(cpool_entry(ci, this_class).index1));
     if ( ci->name == NULL ) {
         ci->name = duplicate(ci, cs.ptr, cs.len);
         CRW_ASSERT(ci, strchr(ci->name,'.')==NULL); /* internal qualified name */
     }
     CRW_ASSERT(ci, (int)strlen(ci->name)==cs.len && strncmp(ci->name, cs.ptr, cs.len)==0);
-
+    
     super_class         = copyU2(ci);
     if ( super_class == 0 ) {
         ci->is_object_class = JNI_TRUE;
@@ -2291,11 +2291,11 @@ inject_class(struct CrwClassImage *ci,
     copy_all_fields(ci);
 
     method_write_all(ci);
-
+    
     if ( ci->injection_count == 0 ) {
         return (long)0;
     }
-
+    
     copy_attributes(ci);
 
     return (long)ci->output_position;
@@ -2304,11 +2304,11 @@ inject_class(struct CrwClassImage *ci,
 /* ------------------------------------------------------------------- */
 /* Exported interfaces */
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 java_crw_demo(unsigned class_number,
          const char *name,
          const unsigned char *file_image,
-         long file_len,
+         long file_len, 
          int system_class,
          char* tclass_name,     /* Name of class that has tracker methods. */
          char* tclass_sig,      /* Signature of tclass */
@@ -2320,7 +2320,7 @@ java_crw_demo(unsigned class_number,
          char* obj_init_sig,    /* Signature of this method */
          char* newarray_name,   /* Method name to call after newarray opcodes */
          char* newarray_sig,    /* Signature of this method */
-         unsigned char **pnew_file_image,
+         unsigned char **pnew_file_image, 
          long *pnew_file_len,
          FatalErrorHandler fatal_error_handler,
          MethodNumberRegister mnum_callback)
@@ -2335,7 +2335,7 @@ java_crw_demo(unsigned class_number,
     (void)memset(&ci, 0, (int)sizeof(CrwClassImage));
     ci.fatal_error_handler = fatal_error_handler;
     ci.mnum_callback       = mnum_callback;
-
+    
     /* Do some interface error checks */
     if ( pnew_file_image==NULL ) {
         CRW_FATAL(&ci, "pnew_file_image==NULL");
@@ -2343,7 +2343,7 @@ java_crw_demo(unsigned class_number,
     if ( pnew_file_len==NULL ) {
         CRW_FATAL(&ci, "pnew_file_len==NULL");
     }
-
+    
     /* No file length means do nothing */
     *pnew_file_image = NULL;
     *pnew_file_len = 0;
@@ -2391,15 +2391,15 @@ java_crw_demo(unsigned class_number,
             CRW_FATAL(&ci, "newarray_sig is not (Ljava/lang/Object;)V");
         }
     }
-
+    
     /* Finish setup the CrwClassImage structure */
-    ci.is_thread_class = JNI_FALSE;
+    ci.is_thread_class = JNI_FALSE; 
     if ( name != NULL ) {
         CRW_ASSERT(&ci, strchr(name,'.')==NULL); /* internal qualified name */
-
+    
         ci.name = duplicate(&ci, name, (int)strlen(name));
         if ( strcmp(name, "java/lang/Thread")==0 ) {
-            ci.is_thread_class = JNI_TRUE;
+            ci.is_thread_class = JNI_TRUE; 
         }
     }
     ci.number = class_number;
@@ -2409,21 +2409,21 @@ java_crw_demo(unsigned class_number,
     /* Do the injection */
     max_length = file_len*2 + 512; /* Twice as big + 512 */
     new_image = allocate(&ci, (int)max_length);
-    new_length = inject_class(&ci,
-                                 system_class,
-                                 tclass_name,
-                                 tclass_sig,
-                                 call_name,
-                                 call_sig,
-                                 return_name,
-                                 return_sig,
-                                 obj_init_name,
-                                 obj_init_sig,
-                                 newarray_name,
-                                 newarray_sig,
-                                 new_image,
+    new_length = inject_class(&ci, 
+                                 system_class, 
+                                 tclass_name,     
+                                 tclass_sig,      
+                                 call_name,       
+                                 call_sig,        
+                                 return_name,     
+                                 return_sig,      
+                                 obj_init_name,   
+                                 obj_init_sig,    
+                                 newarray_name,   
+                                 newarray_sig,    
+                                 new_image, 
                                  max_length);
-
+   
     /* Dispose or shrink the space to be returned. */
     if ( new_length == 0 ) {
         deallocate(&ci, (void*)new_image);
@@ -2431,7 +2431,7 @@ java_crw_demo(unsigned class_number,
     } else {
         new_image = (void*)reallocate(&ci, (void*)new_image, (int)new_length);
     }
-
+   
     /* Return the new class image */
     *pnew_file_image = (unsigned char *)new_image;
     *pnew_file_len = (long)new_length;
@@ -2441,7 +2441,7 @@ java_crw_demo(unsigned class_number,
 }
 
 /* Return the classname for this class which is inside the classfile image. */
-JNIEXPORT char * JNICALL
+JNIEXPORT char * JNICALL 
 java_crw_demo_classname(const unsigned char *file_image, long file_len,
         FatalErrorHandler fatal_error_handler)
 {
@@ -2452,7 +2452,7 @@ java_crw_demo_classname(const unsigned char *file_image, long file_len,
     char *                      name;
 
     name = NULL;
-
+    
     if ( file_len==0 || file_image==NULL ) {
         return name;
     }
@@ -2475,19 +2475,19 @@ java_crw_demo_classname(const unsigned char *file_image, long file_len,
     }
     (void)readU2(&ci); /* minor version number */
     (void)readU2(&ci); /* major version number */
-
+   
     /* Read in constant pool. Since no output setup, writes are NOP's */
     cpool_setup(&ci);
 
     (void)readU2(&ci); /* access flags */
     this_class = readU2(&ci); /* 'this' class */
-
+   
     /* Get 'this' constant pool entry */
     cs = cpool_entry(&ci, (CrwCpoolIndex)(cpool_entry(&ci, this_class).index1));
-
+    
     /* Duplicate the name */
     name = (char *)duplicate(&ci, cs.ptr, cs.len);
-
+    
     /* Cleanup before we leave. */
     cleanup(&ci);
 

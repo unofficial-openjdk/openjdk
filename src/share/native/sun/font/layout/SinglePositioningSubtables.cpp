@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)SinglePositioningSubtables.cpp	1.13 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -84,7 +85,7 @@ le_uint32 SinglePositioningFormat2Subtable::process(GlyphIterator *glyphIterator
     le_int16 coverageIndex = (le_int16) getGlyphCoverage(glyph);
 
     if (coverageIndex >= 0) {
-        valueRecordArray[0].adjustPosition(coverageIndex, SWAPW(valueFormat), (const char *) this,
+        valueRecordArray[0].adjustPosition(coverageIndex, SWAPW(valueFormat), (const char *) this, 
             *glyphIterator, fontInstance);
 
         return 1;
@@ -92,3 +93,4 @@ le_uint32 SinglePositioningFormat2Subtable::process(GlyphIterator *glyphIterator
 
     return 0;
 }
+

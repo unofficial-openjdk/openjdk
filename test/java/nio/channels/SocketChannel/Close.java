@@ -33,36 +33,36 @@ import java.nio.channels.*;
 public class Close {
 
     static SelectionKey open() throws IOException {
-        SocketChannel sc = SocketChannel.open();
-        Selector sel = Selector.open();
-        sc.configureBlocking(false);
-        return sc.register(sel, SelectionKey.OP_READ);
+	SocketChannel sc = SocketChannel.open();
+	Selector sel = Selector.open();
+	sc.configureBlocking(false);
+	return sc.register(sel, SelectionKey.OP_READ);
     }
 
     static void check(SelectionKey sk) throws IOException {
-        if (sk.isValid())
-            throw new RuntimeException("Key still valid");
-        if (sk.channel().isOpen())
-            throw new RuntimeException("Channel still open");
-        //      if (!((SocketChannel)sk.channel()).socket().isClosed())
-        //  throw new RuntimeException("Socket still open");
+	if (sk.isValid())
+	    throw new RuntimeException("Key still valid");
+	if (sk.channel().isOpen())
+	    throw new RuntimeException("Channel still open");
+	//	if (!((SocketChannel)sk.channel()).socket().isClosed())
+	//  throw new RuntimeException("Socket still open");
     }
 
     static void testSocketClose() throws IOException {
-        SelectionKey sk = open();
-        //((SocketChannel)sk.channel()).socket().close();
-        check(sk);
+	SelectionKey sk = open();
+	//((SocketChannel)sk.channel()).socket().close();
+	check(sk);
     }
 
     static void testChannelClose() throws IOException {
-        SelectionKey sk = open();
-        sk.channel().close();
-        check(sk);
+	SelectionKey sk = open();
+	sk.channel().close();
+	check(sk);
     }
 
     public static void main(String[] args) throws Exception {
-        //##    testSocketClose();
-        testChannelClose();
+	//##	testSocketClose();
+	testChannelClose();
     }
 
 }

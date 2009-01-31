@@ -29,12 +29,13 @@ package javax.naming.directory;
   * This class represents a modification item.
   * It consists of a modification code and an attribute on which to operate.
   *<p>
-  * A ModificationItem instance is not synchronized against concurrent
+  * A ModificationItem instance is not synchronized against concurrent 
   * multithreaded access. Multiple threads trying to access and modify
   * a single ModificationItem instance should lock the object.
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   * @since 1.3
   */
 
@@ -54,46 +55,46 @@ public class ModificationItem implements java.io.Serializable {
     /**
      * Contains the attribute identifying
      * the attribute and/or its value to be applied for the modification.
-     * @serial
+     * @serial 
      */
     private Attribute attr;
 
     /**
       * Creates a new instance of ModificationItem.
       * @param mod_op Modification to apply.  It must be one of:
-      *         DirContext.ADD_ATTRIBUTE
-      *         DirContext.REPLACE_ATTRIBUTE
-      *         DirContext.REMOVE_ATTRIBUTE
-      * @param attr     The non-null attribute to use for modification.
+      * 	DirContext.ADD_ATTRIBUTE		
+      * 	DirContext.REPLACE_ATTRIBUTE
+      * 	DirContext.REMOVE_ATTRIBUTE
+      * @param attr	The non-null attribute to use for modification.
       * @exception IllegalArgumentException If attr is null, or if mod_op is
-      *         not one of the ones specified above.
+      * 	not one of the ones specified above.
       */
     public ModificationItem(int mod_op, Attribute attr) {
-        switch (mod_op) {
-        case DirContext.ADD_ATTRIBUTE:
-        case DirContext.REPLACE_ATTRIBUTE:
-        case DirContext.REMOVE_ATTRIBUTE:
-            if (attr == null)
-                throw new IllegalArgumentException("Must specify non-null attribute for modification");
+	switch (mod_op) {
+	case DirContext.ADD_ATTRIBUTE:
+	case DirContext.REPLACE_ATTRIBUTE:
+	case DirContext.REMOVE_ATTRIBUTE:
+	    if (attr == null)
+		throw new IllegalArgumentException("Must specify non-null attribute for modification");
+		
+	    this.mod_op = mod_op;
+	    this.attr = attr;
+	    break;
 
-            this.mod_op = mod_op;
-            this.attr = attr;
-            break;
-
-        default:
-            throw new IllegalArgumentException("Invalid modification code " + mod_op);
-        }
+	default:
+	    throw new IllegalArgumentException("Invalid modification code " + mod_op);
+	}
     }
 
     /**
       * Retrieves the modification code of this modification item.
       * @return The modification code.  It is one of:
-      *         DirContext.ADD_ATTRIBUTE
-      *         DirContext.REPLACE_ATTRIBUTE
-      *         DirContext.REMOVE_ATTRIBUTE
+      * 	DirContext.ADD_ATTRIBUTE		
+      * 	DirContext.REPLACE_ATTRIBUTE
+      * 	DirContext.REMOVE_ATTRIBUTE
       */
     public int getModificationOp() {
-        return mod_op;
+	return mod_op;
     }
 
     /**
@@ -101,7 +102,7 @@ public class ModificationItem implements java.io.Serializable {
       * @return The non-null attribute to use for the modification.
       */
     public Attribute getAttribute() {
-        return attr;
+	return attr;
     }
 
     /**
@@ -113,17 +114,17 @@ public class ModificationItem implements java.io.Serializable {
       * @return The non-null string representation of this modification item.
       */
     public String toString() {
-        switch (mod_op) {
-        case DirContext.ADD_ATTRIBUTE:
-            return ("Add attribute: " + attr.toString());
+	switch (mod_op) {
+	case DirContext.ADD_ATTRIBUTE:
+	    return ("Add attribute: " + attr.toString());
+	    
+	case DirContext.REPLACE_ATTRIBUTE:
+	    return ("Replace attribute: " + attr.toString());
 
-        case DirContext.REPLACE_ATTRIBUTE:
-            return ("Replace attribute: " + attr.toString());
-
-        case DirContext.REMOVE_ATTRIBUTE:
-            return ("Remove attribute: " + attr.toString());
-        }
-        return "";      // should never happen
+	case DirContext.REMOVE_ATTRIBUTE:
+	    return ("Remove attribute: " + attr.toString());
+	}
+	return "";	// should never happen
     }
 
     /**
@@ -131,3 +132,4 @@ public class ModificationItem implements java.io.Serializable {
      */
     private static final long serialVersionUID = 7573258562534746850L;
 }
+

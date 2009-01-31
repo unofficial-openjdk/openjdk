@@ -49,6 +49,7 @@ import java.awt.Point;
  * bands with a PackedColorModel (including a DirectColorModel) for
  * color interpretation.
  *
+ * @version 10 Feb 1997
  */
 public class IntegerInterleavedRaster extends IntegerComponentRaster {
 
@@ -135,7 +136,7 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
         DataBufferInt dbi = (DataBufferInt)dataBuffer;
         this.data = stealData(dbi, 0);
 
-        if (sampleModel instanceof SinglePixelPackedSampleModel) {
+	if (sampleModel instanceof SinglePixelPackedSampleModel) {
             SinglePixelPackedSampleModel sppsm =
                     (SinglePixelPackedSampleModel)sampleModel;
             this.scanlineStride = sppsm.getScanlineStride();
@@ -149,7 +150,7 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
             this.numDataElems = sppsm.getNumDataElements();
         } else {
             throw new RasterFormatException("IntegerInterleavedRasters must have"+
-                                            " SinglePixelPackedSampleModel");
+					    " SinglePixelPackedSampleModel");
         }
         verify(false);
     }
@@ -199,7 +200,7 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
 
     /**
      * Returns the data elements for all bands at the specified
-     * location.
+     * location.  
      * An ArrayIndexOutOfBounds exception will be thrown at runtime
      * if the pixel coordinate is out of bounds.
      * A ClassCastException will be thrown if the input object is non null
@@ -353,7 +354,7 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
         if (width <= 0 || height <= 0) {
             return;
         }
-
+            
         // Write inRaster (minX, minY) to (dstX, dstY)
 
         int srcOffX = inRaster.getMinX();
@@ -457,17 +458,17 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
                                                int width, int height,
                                                int x0, int y0,
                                                int bandList[]) {
-        if (x < this.minX) {
-            throw new RasterFormatException("x lies outside raster");
-        }
-        if (y < this.minY) {
-            throw new RasterFormatException("y lies outside raster");
-        }
+	if (x < this.minX) {
+	    throw new RasterFormatException("x lies outside raster");
+	}
+	if (y < this.minY) {
+	    throw new RasterFormatException("y lies outside raster");
+	}
         if ((x+width < x) || (x+width > this.minX + this.width)) {
-            throw new RasterFormatException("(x + width) is outside raster");
+	    throw new RasterFormatException("(x + width) is outside raster");
         }
         if ((y+height < y) || (y+height > this.minY + this.height)) {
-            throw new RasterFormatException("(y + height) is outside raster");
+	    throw new RasterFormatException("(y + height) is outside raster");
         }
 
         SampleModel sm;
@@ -521,8 +522,8 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
      */
     public WritableRaster createCompatibleWritableRaster(int w, int h) {
         if (w <= 0 || h <=0) {
-            throw new RasterFormatException("negative "+
-                                          ((w <= 0) ? "width" : "height"));
+	    throw new RasterFormatException("negative "+
+					  ((w <= 0) ? "width" : "height"));
         }
 
         SampleModel sm = sampleModel.createCompatibleSampleModel(w,h);
@@ -593,3 +594,5 @@ public class IntegerInterleavedRaster extends IntegerComponentRaster {
 //    }
 
 }
+
+

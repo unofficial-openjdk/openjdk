@@ -43,7 +43,7 @@ abstract class UnsafeStaticFieldAccessorImpl extends UnsafeFieldAccessorImpl {
                                           new String[] { "base" });
     }
 
-    protected Object base; // base
+    protected Object base; // base 
 
     UnsafeStaticFieldAccessorImpl(Field field) {
         super(field);

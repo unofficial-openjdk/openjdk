@@ -21,12 +21,12 @@
  * have any questions.
  */
 
-/*
+/* 
   @test
   @bug 6178755
   @summary The test checks that Container's method startLWModal
 and stopLWModal work correctly. The test scenario is very close
-to JOptionPane.showInternal*Dialog methods
+to JOptionPane.showInternal*Dialog methods 
   @author artem.ananiev@...: area=awt.modal
   @library ../../regtesthelpers
   @build Util
@@ -51,13 +51,13 @@ public class LWModalTest
 
     private static volatile boolean passed = false;
 
-    private static void init()
+    private static void init() 
     {
         frame = new JFrame("JFrame");
         frame.setBounds(100, 100, 320, 240);
         frame.setVisible(true);
         Util.waitForIdle(null);
-
+        
         new Thread(new Runnable()
         {
             public void run()
@@ -133,12 +133,12 @@ public class LWModalTest
             return;
         }
 
-        try
+        try 
         {
             Thread.sleep( sleepTime );
             throw new RuntimeException("Timed out after " + sleepTime/1000 + " seconds");
-        }
-        catch (InterruptedException e)
+        } 
+        catch (InterruptedException e) 
         {
             if(!testGeneratedInterrupt) throw e;
 
@@ -155,7 +155,7 @@ public class LWModalTest
     {
         sleepTime = seconds * 1000;
     }
-
+   
     public static synchronized void pass()
     {
         if (mainThread == Thread.currentThread())

@@ -56,28 +56,28 @@ typedef struct SECMODModuleStr SECMODModule;
 typedef struct SECMODModuleListStr SECMODModuleList;
 
 struct SECMODModuleStr {
-    void        *v1;
-    PRBool      internal;       /* true of internally linked modules, false
-                                 * for the loaded modules */
-    PRBool      loaded;         /* Set to true if module has been loaded */
-    PRBool      isFIPS;         /* Set to true if module is finst internal */
-    char        *dllName;       /* name of the shared library which implements
-                                 * this module */
-    char        *commonName;    /* name of the module to display to the user */
-    void        *library;       /* pointer to the library. opaque. used only by
-                                 * pk11load.c */
+    void	*v1;
+    PRBool	internal;	/* true of internally linked modules, false
+				 * for the loaded modules */
+    PRBool	loaded;		/* Set to true if module has been loaded */
+    PRBool	isFIPS;		/* Set to true if module is finst internal */
+    char	*dllName;	/* name of the shared library which implements
+				 * this module */
+    char	*commonName;	/* name of the module to display to the user */
+    void	*library;	/* pointer to the library. opaque. used only by
+				 * pk11load.c */
 
-    void        *functionList; /* The PKCS #11 function table */
-    void        *refLock;       /* only used pk11db.c */
-    int         refCount;       /* Module reference count */
-    void        **slots;        /* array of slot points attached to this mod*/
-    int         slotCount;      /* count of slot in above array */
-    void        *slotInfo;      /* special info about slots default settings */
-    int         slotInfoCount;  /* count */
+    void	*functionList; /* The PKCS #11 function table */
+    void	*refLock;	/* only used pk11db.c */
+    int		refCount;	/* Module reference count */
+    void 	**slots;	/* array of slot points attached to this mod*/
+    int		slotCount;	/* count of slot in above array */
+    void	*slotInfo;	/* special info about slots default settings */
+    int		slotInfoCount;  /* count */
     // incomplete, sizeof() is wrong
 };
 
 struct SECMODModuleListStr {
-    SECMODModuleList    *next;
-    SECMODModule        *module;
+    SECMODModuleList	*next;
+    SECMODModule	*module;
 };

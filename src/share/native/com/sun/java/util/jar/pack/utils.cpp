@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,7 +31,7 @@
 
 #include <sys/stat.h>
 
-#ifdef _MSC_VER
+#ifdef _MSC_VER 
 #include <direct.h>
 #include <io.h>
 #include <process.h>
@@ -140,9 +140,9 @@ void mtrace(char c, void* ptr, size_t size) {
      nd = 0
      for (ptr in allocated) {
        if (allocated[ptr] == 1) {
-         print NR ": " what " " ptr
-         #allocated[ptr] = 0  # stop the dangle
-         nd++
+	 print NR ": " what " " ptr
+	 #allocated[ptr] = 0  # stop the dangle
+	 nd++
        }
      }
      if (nd > 0)  print NR ": count " what " " nd
@@ -154,12 +154,12 @@ void mtrace(char c, void* ptr, size_t size) {
        a0 = 0+allocated[ptr]
        allocated[ptr] = a1
        if (a0 + a1 != 1) {
-         if (a0 == 0 && a1 == 0)
-           print NR ": double free " ptr
-         else if (a0 == 1 && a1 == 1)
-           print NR ": double malloc " ptr
-         else
-           print NR ": oddity " $0
+	 if (a0 == 0 && a1 == 0)
+	   print NR ": double free " ptr
+	 else if (a0 == 1 && a1 == 1)
+	   print NR ": double malloc " ptr
+	 else
+	   print NR ": oddity " $0
        }
        next
      }

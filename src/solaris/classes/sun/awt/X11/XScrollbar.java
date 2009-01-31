@@ -51,7 +51,7 @@ abstract class XScrollbar {
     private XScrollRepeater i_scroller = new XScrollRepeater(null);
 
     // Thumb length is always >= MIN_THUMB_H
-    private final static int MIN_THUMB_H = 5;
+    private final static int MIN_THUMB_H = 5;    
 
     private static final int ARROW_IND = 1;
 
@@ -148,7 +148,7 @@ abstract class XScrollbar {
             arrow.addPoint(x1, y + getArrowWidth()/2);
         }
         return arrow;
-    }
+    }    
 
     /**
      * Gets the area of the scroll track
@@ -170,7 +170,7 @@ abstract class XScrollbar {
         Graphics2D g2 = null;
         BufferedImage buffer = null;
         if (!(g instanceof Graphics2D)) {
-            // Fix for 5045936, 5055171. While printing, g is an instance
+            // Fix for 5045936, 5055171. While printing, g is an instance 
             //   of sun.print.ProxyPrintGraphics which extends Graphics.
             //   So we use a separate buffered image and its graphics is
             //   always Graphics2D instance
@@ -189,25 +189,25 @@ abstract class XScrollbar {
 //              }
 
             prevThumb = thumbRect;
-
+    
             // TODO: Share Motif colors
             Color back = colors[XComponentPeer.BACKGROUND_COLOR];
             Color selectColor = new Color(MotifColorUtilities.calculateSelectFromBackground(back.getRed(),back.getGreen(),back.getBlue()));
             Color darkShadow = new Color(MotifColorUtilities.calculateBottomShadowFromBackground(back.getRed(),back.getGreen(),back.getBlue()));
             Color lightShadow = new Color(MotifColorUtilities.calculateTopShadowFromBackground(back.getRed(),back.getGreen(),back.getBlue()));
-
+      
             XToolkit.awtLock();
             try {
                 XlibWrapper.XFlush(XToolkit.getDisplay());
             } finally {
                 XToolkit.awtUnlock();
             }
-            /* paint the background slightly darker */
+            /* paint the background slightly darker */ 
             if (paintAll) {
                 // fill the entire background
                 g2.setColor(selectColor);
                 if (alignment == ALIGNMENT_HORIZONTAL) {
-                    g2.fillRect(0, 0, thumbRect.x, height);
+                    g2.fillRect(0, 0, thumbRect.x, height); 
                     g2.fillRect(thumbRect.x + thumbRect.width , 0, width - (thumbRect.x + thumbRect.width), height);
                 } else {
                     g2.fillRect(0, 0, width, thumbRect.y);
@@ -236,7 +236,7 @@ abstract class XScrollbar {
                  paintArrows(g2, colors[XComponentPeer.BACKGROUND_COLOR], darkShadow, lightShadow );
 
             }
-
+        
             // Thumb
             g2.setColor(colors[XComponentPeer.BACKGROUND_COLOR]);
             g2.fillRect(thumbRect.x, thumbRect.y, thumbRect.width, thumbRect.height);
@@ -271,34 +271,34 @@ abstract class XScrollbar {
             XToolkit.awtUnlock();
         }
     }
-
+  
       void paintArrows(Graphics2D g, Color background, Color darkShadow, Color lightShadow) {
 
           g.setColor(background);
-
+        
         // paint firstArrow
         if (pressed && (mode == AdjustmentEvent.UNIT_DECREMENT)) {
             g.fill(firstArrow);
             g.setColor(lightShadow);
             g.drawLine(firstArrow.xpoints[0],firstArrow.ypoints[0],
-                    firstArrow.xpoints[1],firstArrow.ypoints[1]);
+                    firstArrow.xpoints[1],firstArrow.ypoints[1]); 
             g.drawLine(firstArrow.xpoints[1],firstArrow.ypoints[1],
-                    firstArrow.xpoints[2],firstArrow.ypoints[2]);
+                    firstArrow.xpoints[2],firstArrow.ypoints[2]); 
             g.setColor(darkShadow);
             g.drawLine(firstArrow.xpoints[2],firstArrow.ypoints[2],
-                    firstArrow.xpoints[0],firstArrow.ypoints[0]);
+                    firstArrow.xpoints[0],firstArrow.ypoints[0]); 
 
         }
         else {
             g.fill(firstArrow);
             g.setColor(darkShadow);
             g.drawLine(firstArrow.xpoints[0],firstArrow.ypoints[0],
-                    firstArrow.xpoints[1],firstArrow.ypoints[1]);
+                    firstArrow.xpoints[1],firstArrow.ypoints[1]); 
             g.drawLine(firstArrow.xpoints[1],firstArrow.ypoints[1],
-                    firstArrow.xpoints[2],firstArrow.ypoints[2]);
+                    firstArrow.xpoints[2],firstArrow.ypoints[2]); 
             g.setColor(lightShadow);
             g.drawLine(firstArrow.xpoints[2],firstArrow.ypoints[2],
-                    firstArrow.xpoints[0],firstArrow.ypoints[0]);
+                    firstArrow.xpoints[0],firstArrow.ypoints[0]); 
 
         }
 
@@ -308,29 +308,29 @@ abstract class XScrollbar {
             g.fill(secondArrow);
             g.setColor(lightShadow);
             g.drawLine(secondArrow.xpoints[0],secondArrow.ypoints[0],
-                    secondArrow.xpoints[1],secondArrow.ypoints[1]);
+                    secondArrow.xpoints[1],secondArrow.ypoints[1]); 
             g.setColor(darkShadow);
             g.drawLine(secondArrow.xpoints[1],secondArrow.ypoints[1],
-                    secondArrow.xpoints[2],secondArrow.ypoints[2]);
+                    secondArrow.xpoints[2],secondArrow.ypoints[2]); 
             g.drawLine(secondArrow.xpoints[2],secondArrow.ypoints[2],
-                    secondArrow.xpoints[0],secondArrow.ypoints[0]);
+                    secondArrow.xpoints[0],secondArrow.ypoints[0]); 
 
         }
         else {
             g.fill(secondArrow);
             g.setColor(darkShadow);
             g.drawLine(secondArrow.xpoints[0],secondArrow.ypoints[0],
-                    secondArrow.xpoints[1],secondArrow.ypoints[1]);
+                    secondArrow.xpoints[1],secondArrow.ypoints[1]); 
             g.setColor(lightShadow);
             g.drawLine(secondArrow.xpoints[1],secondArrow.ypoints[1],
-                    secondArrow.xpoints[2],secondArrow.ypoints[2]);
+                    secondArrow.xpoints[2],secondArrow.ypoints[2]); 
             g.drawLine(secondArrow.xpoints[2],secondArrow.ypoints[2],
-                    secondArrow.xpoints[0],secondArrow.ypoints[0]);
+                    secondArrow.xpoints[0],secondArrow.ypoints[0]); 
 
         }
 
     }
-
+  
     /**
      * Tell the scroller to start scrolling.
      */
@@ -469,9 +469,9 @@ abstract class XScrollbar {
                 default:
                     type = new String("other");
              }
-             log.finer("Mouse " + type + " event in scroll bar " + this +
+             log.finer("Mouse " + type + " event in scroll bar " + this + 
                                                    "x = " + x + ", y = " + y +
-                                                   ", on arrow: " + isInArrow(x, y) +
+                                                   ", on arrow: " + isInArrow(x, y) + 
                                                    ", on thumb: " + isInThumb(x, y) + ", before thumb: " + beforeThumb(x, y)
                                                    + ", thumb rect" + calculateThumbRect());
         }
@@ -502,31 +502,31 @@ abstract class XScrollbar {
               Rectangle pos = calculateThumbRect();
               thumbOffset = new Point(x - pos.x, y - pos.y);
               break;
-
+        
           case MouseEvent.MOUSE_RELEASED:
               pressed = false;
               sb.repaintScrollbarRequest(this);
               scroller.stop();
               if(dragging){
-                  handleTrackEvent(x, y, false);
+                  handleTrackEvent(x, y, false);                  
                   dragging=false;
               }
               break;
-
+      
           case MouseEvent.MOUSE_DRAGGED:
               dragging = true;
               handleTrackEvent(x, y, true);
         }
     }
-
+    
     private void handleTrackEvent(int x, int y, boolean isAdjusting){
         if (mode == AdjustmentEvent.TRACK) {
             notifyValue(calculateCursorOffset(x, y), isAdjusting);
         }
     }
-
+    
     private int calculateCursorOffset(int x, int y){
-        if (alignment == ALIGNMENT_HORIZONTAL) {
+        if (alignment == ALIGNMENT_HORIZONTAL) {            
             if (dragging)
                 return Math.max(0,(int)((x - (thumbOffset.x + getArrowAreaWidth()))/getScaleFactor())) + min;
             else
@@ -538,7 +538,7 @@ abstract class XScrollbar {
                 return Math.max(0,(int)((y - (getArrowAreaWidth()))/getScaleFactor())) + min;
         }
     }
-
+    
 /*
   private void updateNeedsRepaint() {
         Rectangle thumbRect = calculateThumbRect();
@@ -548,15 +548,15 @@ abstract class XScrollbar {
         prevThumb = thumbRect;
     }
     */
-
+ 
     /**
      * Sets the values for this Scrollbar.
      * This method enforces the same constraints as in java.awt.Scrollbar:
      * <UL>
      * <LI> The maximum must be greater than the minimum </LI>
-     * <LI> The value must be greater than or equal to the minumum
-     *      and less than or equal to the maximum minus the
-     *      visible amount </LI>
+     * <LI> The value must be greater than or equal to the minumum 
+     *      and less than or equal to the maximum minus the 
+     *      visible amount </LI>  
      * <LI> The visible amount must be greater than 1 and less than or equal
      *      to the difference between the maximum and minimum values. </LI>
      * </UL>
@@ -589,7 +589,7 @@ abstract class XScrollbar {
         this.min = minimum;
         this.max = maximum;
     }
-
+  
     /**
      * Sets param of this Scrollbar to the specified values.
      * @param value is the position in the current window.
@@ -618,12 +618,12 @@ abstract class XScrollbar {
     int getValue() {
         return val;
     }
-
+  
     /**
      * Sets the value of this Scrollbar to the specified value.
      * @param value the new value of the Scrollbar. If this value is
-     * below the current minimum or above the current maximum minus
-     * the visible amount, it becomes the new one of those values,
+     * below the current minimum or above the current maximum minus 
+     * the visible amount, it becomes the new one of those values, 
      * respectively.
      * @see #getValue
      */
@@ -633,7 +633,7 @@ abstract class XScrollbar {
          */
         setValues(newValue, vis, min, max);
     }
-
+  
     /**
      * Returns the minimum value of this Scrollbar.
      * @see #getMaximum
@@ -642,7 +642,7 @@ abstract class XScrollbar {
     int getMinimum() {
         return min;
     }
-
+  
     /**
      * Sets the minimum value for this Scrollbar.
      * @param minimum the minimum value of the scrollbar
@@ -653,7 +653,7 @@ abstract class XScrollbar {
          */
         setValues(val, vis, newMinimum, max);
     }
-
+  
     /**
      * Returns the maximum value of this Scrollbar.
      * @see #getMinimum
@@ -662,7 +662,7 @@ abstract class XScrollbar {
     int getMaximum() {
         return max;
     }
-
+  
     /**
      * Sets the maximum value for this Scrollbar.
      * @param maximum the maximum value of the scrollbar
@@ -673,14 +673,14 @@ abstract class XScrollbar {
          */
         setValues(val, vis, min, newMaximum);
     }
-
+  
     /**
      * Returns the visible amount of this Scrollbar.
      */
     int getVisibleAmount() {
         return vis;
     }
-
+  
     /**
      * Sets the visible amount of this Scrollbar, which is the range
      * of values represented by the width of the scroll bar's bubble.
@@ -689,7 +689,7 @@ abstract class XScrollbar {
     synchronized void setVisibleAmount(int newAmount) {
         setValues(val, newAmount, min, max);
     }
-
+  
     /**
      * Sets the unit increment for this scrollbar. This is the value
      * that will be added (subtracted) when the user hits the unit down
@@ -699,14 +699,14 @@ abstract class XScrollbar {
     synchronized void setUnitIncrement(int unitSize) {
         line = unitSize;
     }
-
+  
     /**
      * Gets the unit increment for this scrollbar.
      */
     int getUnitIncrement() {
         return line;
     }
-
+  
     /**
      * Sets the block increment for this scrollbar. This is the value
      * that will be added (subtracted) when the user hits the block down
@@ -716,7 +716,7 @@ abstract class XScrollbar {
     synchronized void setBlockIncrement(int blockSize) {
         page = blockSize;
     }
-
+  
     /**
      * Gets the block increment for this scrollbar.
      */
@@ -745,8 +745,8 @@ abstract class XScrollbar {
         else {
             arrowArea = barWidth - 1;
         }
-    }
-
+    }    
+ 
     /**
      * Returns the scale factor for the thumbArea ( thumbAreaH / (max - min)).
      * @see #getArrowAreaSize
@@ -773,7 +773,7 @@ abstract class XScrollbar {
         int hitTheWall = 0;
         int arrAreaH = getArrowAreaWidth();
         Rectangle retVal = new Rectangle(0,0,0,0);
-
+        
         trueSize = barLength - 2*arrAreaH - 1;  // Same if vert or horiz
 
         if (alignment == ALIGNMENT_HORIZONTAL) {
@@ -786,15 +786,15 @@ abstract class XScrollbar {
 
         }
 
-        // Total number of user units displayed
-            range = max - min;
+    	// Total number of user units displayed
+	    range = max - min;
 
-        // A naive notion of pixels per user unit
-            factor = trueSize / range;
+    	// A naive notion of pixels per user unit 
+	    factor = trueSize / range;
 
-            // A naive notion of the size of the slider in pixels
-            // in thermo, slider_size is 0 ans is ignored
-            slideSize = vis * factor;
+	    // A naive notion of the size of the slider in pixels 
+	    // in thermo, slider_size is 0 ans is ignored 
+	    slideSize = vis * factor;
 
         if (alignment == ALIGNMENT_HORIZONTAL) {
             // Simulating MAX_SCROLLBAR_DIMENSION macro
@@ -831,17 +831,17 @@ abstract class XScrollbar {
         }
 
         if (alignment == ALIGNMENT_HORIZONTAL) {
-                    retVal.x = ((int) (((((float) val)
-                        - ((float) min)) * factor) + 0.5))
-                        + arrAreaH;
-                    retVal.y = 1;
+		    retVal.x = ((int) (((((float) val)
+			- ((float) min)) * factor) + 0.5))
+			+ arrAreaH;
+		    retVal.y = 1;
 
         }
         else {
             retVal.x = 1;
-                    retVal.y = ((int) (((((float) val)
-                        - ((float) min)) * factor) + 0.5))
-                        + arrAreaH;
+   		    retVal.y = ((int) (((((float) val)
+			- ((float) min)) * factor) + 0.5))
+			+ arrAreaH;
         }
 
         // There was one final adjustment here in the Motif function, which was
@@ -888,7 +888,7 @@ class XScrollRepeater implements Runnable {
      */
     XScrollRepeater(XScrollbar sb) {
         this.setScrollbar(sb);
-        newScroll = true;
+        newScroll = true;        
     }
 
     public void start() {
@@ -903,7 +903,7 @@ class XScrollRepeater implements Runnable {
         }
         XToolkit.remove(this);
     }
-
+ 
     /**
      * Sets the scrollbar.
      * @param sb the scrollbar that this thread will scroll

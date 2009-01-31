@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef MLIB_IMAGE_H
 #define MLIB_IMAGE_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_image.h	1.16	98/10/21 SMI"
+#endif /* __SUNPRO_C */
 
 #include <mlib_types.h>
 #include <mlib_status.h>
@@ -35,4 +39,4 @@
 #include <mlib_image_blend_proto.h>
 #include <mlib_image_get.h>
 
-#endif  /* MLIB_IMAGE_H */
+#endif	/* MLIB_IMAGE_H */

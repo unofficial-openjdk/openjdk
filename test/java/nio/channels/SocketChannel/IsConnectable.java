@@ -40,12 +40,12 @@ public class IsConnectable {
     static final String DAYTIME_HOST = TestUtil.HOST;
 
     static void test() throws Exception {
-        InetSocketAddress isa
-            = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
-                                    DAYTIME_PORT);
-        SocketChannel sc = SocketChannel.open();
+	InetSocketAddress isa
+	    = new InetSocketAddress(InetAddress.getByName(DAYTIME_HOST),
+				    DAYTIME_PORT);
+	SocketChannel sc = SocketChannel.open();
         sc.configureBlocking(false);
-        sc.connect(isa);
+	sc.connect(isa);
 
         Selector selector = SelectorProvider.provider().openSelector();
         SelectionKey key = sc.register(selector, SelectionKey.OP_CONNECT);
@@ -68,11 +68,11 @@ public class IsConnectable {
         } else {
             throw new Exception("Select failed");
         }
-        sc.close();
+	sc.close();
     }
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
 }

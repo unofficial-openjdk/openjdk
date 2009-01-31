@@ -34,11 +34,12 @@ package java.rmi.server;
  * indicating whether the runtime should attempt to re-create the
  * <code>ServerSocket</code>.
  *
- * @author      Ann Wollrath
- * @since       JDK1.1
+ * @author 	Ann Wollrath
+ * @version	%W%, %E%
+ * @since 	JDK1.1
  */
 public interface RMIFailureHandler {
-
+ 
     /**
      * The <code>failure</code> callback is invoked when the RMI
      * runtime is unable to create a <code>ServerSocket</code> via the
@@ -56,5 +57,6 @@ public interface RMIFailureHandler {
      * @since JDK1.1
      */
     public boolean failure(Exception ex);
-
+    
 }
+

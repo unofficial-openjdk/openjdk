@@ -32,6 +32,7 @@ import sun.nio.cs.MS1250;
  * Tables and data to convert Unicode to Cp1250
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp1250 extends CharToByteSingleByte {

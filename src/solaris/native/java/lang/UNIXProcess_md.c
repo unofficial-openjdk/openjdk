@@ -97,7 +97,7 @@ setSIGCHLDHandler(JNIEnv *env)
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = SA_NOCLDSTOP | SA_RESTART;
     if (sigaction(SIGCHLD, &sa, NULL) < 0)
-        JNU_ThrowInternalError(env, "Can't set SIGCHLD handler");
+	JNU_ThrowInternalError(env, "Can't set SIGCHLD handler");
 }
 
 static void*
@@ -105,7 +105,7 @@ xmalloc(JNIEnv *env, size_t size)
 {
     void *p = malloc(size);
     if (p == NULL)
-        JNU_ThrowOutOfMemoryError(env, NULL);
+	JNU_ThrowOutOfMemoryError(env, NULL);
     return p;
 }
 
@@ -122,10 +122,10 @@ defaultPath(void)
 #ifdef __solaris__
     /* These really are the Solaris defaults! */
     return (geteuid() == 0 || getuid() == 0) ?
-        "/usr/xpg4/bin:/usr/ccs/bin:/usr/bin:/opt/SUNWspro/bin:/usr/sbin" :
-        "/usr/xpg4/bin:/usr/ccs/bin:/usr/bin:/opt/SUNWspro/bin:";
+	"/usr/xpg4/bin:/usr/ccs/bin:/usr/bin:/opt/SUNWspro/bin:/usr/sbin" :
+	"/usr/xpg4/bin:/usr/ccs/bin:/usr/bin:/opt/SUNWspro/bin:";
 #else
-    return ":/bin:/usr/bin";    /* glibc */
+    return ":/bin:/usr/bin";	/* glibc */
 #endif
 }
 
@@ -141,7 +141,7 @@ countOccurrences(const char *s, char c)
 {
     int count;
     for (count = 0; *s != '\0'; s++)
-        count += (*s == c);
+	count += (*s == c);
     return count;
 }
 
@@ -156,18 +156,18 @@ splitPath(JNIEnv *env, const char *path)
     pathv = NEW(char*, count+1);
     pathv[count] = NULL;
     for (p = path, i = 0; i < count; i++, p = q + 1) {
-        for (q = p; (*q != ':') && (*q != '\0'); q++)
-            ;
-        if (q == p)             /* empty PATH component => "." */
-            pathv[i] = "./";
-        else {
-            int addSlash = ((*(q - 1)) != '/');
-            pathv[i] = NEW(char, q - p + addSlash + 1);
-            memcpy(pathv[i], p, q - p);
-            if (addSlash)
-                pathv[i][q - p] = '/';
-            pathv[i][q - p + addSlash] = '\0';
-        }
+	for (q = p; (*q != ':') && (*q != '\0'); q++)
+	    ;
+	if (q == p)		/* empty PATH component => "." */
+	    pathv[i] = "./";
+	else {
+	    int addSlash = ((*(q - 1)) != '/');
+	    pathv[i] = NEW(char, q - p + addSlash + 1);
+	    memcpy(pathv[i], p, q - p);
+	    if (addSlash)
+		pathv[i][q - p] = '/';
+	    pathv[i][q - p + addSlash] = '\0';
+	}
     }
     return (const char * const *) pathv;
 }
@@ -202,23 +202,23 @@ Java_java_lang_UNIXProcess_initIDs(JNIEnv *env, jclass clazz)
 #endif
 
 #ifndef WEXITSTATUS
-#define WEXITSTATUS(status) (((status)>>8)&0xFF)
+#define	WEXITSTATUS(status) (((status)>>8)&0xFF)
 #endif
 
 #ifndef WIFSIGNALED
-#define WIFSIGNALED(status) (((status)&0xFF) > 0 && ((status)&0xFF00) == 0)
+#define	WIFSIGNALED(status) (((status)&0xFF) > 0 && ((status)&0xFF00) == 0)
 #endif
 
 #ifndef WTERMSIG
-#define WTERMSIG(status) ((status)&0x7F)
+#define	WTERMSIG(status) ((status)&0x7F)
 #endif
 
 /* Block until a child process exits and return its exit code.
    Note, can only be called once for any given pid. */
 JNIEXPORT jint JNICALL
 Java_java_lang_UNIXProcess_waitForProcessExit(JNIEnv* env,
-                                              jobject junk,
-                                              jint pid)
+					      jobject junk,
+					      jint pid)
 {
     /* We used to use waitid() on Solaris, waitpid() on Linux, but
      * waitpid() is more standard, so use it on all POSIX platforms. */
@@ -226,11 +226,11 @@ Java_java_lang_UNIXProcess_waitForProcessExit(JNIEnv* env,
     /* Wait for the child process to exit.  This returns immediately if
        the child has already exited. */
     while (waitpid(pid, &status, 0) < 0) {
-        switch (errno) {
-        case ECHILD: return 0;
-        case EINTR: break;
-        default: return -1;
-        }
+	switch (errno) {
+	case ECHILD: return 0;
+	case EINTR: break;
+	default: return -1;
+	}
     }
 
     if (WIFEXITED(status)) {
@@ -240,22 +240,22 @@ Java_java_lang_UNIXProcess_waitForProcessExit(JNIEnv* env,
         return WEXITSTATUS(status);
     } else if (WIFSIGNALED(status)) {
         /* The child exited because of a signal.
-         * The best value to return is 0x80 + signal number,
-         * because that is what all Unix shells do, and because
-         * it allows callers to distinguish between process exit and
-         * process death by signal.
-         * Unfortunately, the historical behavior on Solaris is to return
-         * the signal number, and we preserve this for compatibility. */
+	 * The best value to return is 0x80 + signal number,
+	 * because that is what all Unix shells do, and because
+	 * it allows callers to distinguish between process exit and
+	 * process death by signal.
+	 * Unfortunately, the historical behavior on Solaris is to return
+	 * the signal number, and we preserve this for compatibility. */
 #ifdef __solaris__
-        return WTERMSIG(status);
+	return WTERMSIG(status);
 #else
-        return 0x80 + WTERMSIG(status);
+	return 0x80 + WTERMSIG(status);
 #endif
     } else {
         /*
          * Unknown exit code; pass it through.
          */
-        return status;
+	return status;
     }
 }
 
@@ -273,20 +273,20 @@ closeDescriptors(void)
      * the lowest numbered file descriptor, just like open().  So we
      * close a couple explicitly.  */
 
-    close(from_fd);             /* for possible use by opendir() */
-    close(from_fd + 1);         /* another one for good luck */
+    close(from_fd);		/* for possible use by opendir() */
+    close(from_fd + 1);		/* another one for good luck */
 
     if ((dp = opendir("/proc/self/fd")) == NULL)
-        return 0;
+	return 0;
 
     /* We use readdir64 instead of readdir to work around Solaris bug
      * 6395699: /proc/self/fd fails to report file descriptors >= 1024 on Solaris 9
      */
     while ((dirp = readdir64(dp)) != NULL) {
-        int fd;
+	int fd;
         if (isdigit(dirp->d_name[0]) &&
-            (fd = strtol(dirp->d_name, NULL, 10)) >= from_fd + 2)
-            close(fd);
+	    (fd = strtol(dirp->d_name, NULL, 10)) >= from_fd + 2)
+	    close(fd);
     }
 
     closedir(dp);
@@ -298,8 +298,8 @@ static void
 moveDescriptor(int fd_from, int fd_to)
 {
     if (fd_from != fd_to) {
-        dup2(fd_from, fd_to);
-        close(fd_from);
+	dup2(fd_from, fd_to);
+	close(fd_from);
     }
 }
 
@@ -307,14 +307,14 @@ static const char *
 getBytes(JNIEnv *env, jbyteArray arr)
 {
     return arr == NULL ? NULL :
-        (const char*) (*env)->GetByteArrayElements(env, arr, NULL);
+	(const char*) (*env)->GetByteArrayElements(env, arr, NULL);
 }
 
 static void
 releaseBytes(JNIEnv *env, jbyteArray arr, const char* parr)
 {
     if (parr != NULL)
-        (*env)->ReleaseByteArrayElements(env, arr, (jbyte*) parr, JNI_ABORT);
+	(*env)->ReleaseByteArrayElements(env, arr, (jbyte*) parr, JNI_ABORT);
 }
 
 static void
@@ -323,9 +323,9 @@ initVectorFromBlock(const char**vector, const char* block, int count)
     int i;
     const char *p;
     for (i = 0, p = block; i < count; i++) {
-        /* Invariant: p always points to the start of a C string. */
-        vector[i] = p;
-        while (*(p++));
+	/* Invariant: p always points to the start of a C string. */
+	vector[i] = p;
+	while (*(p++));
     }
     vector[count] = NULL;
 }
@@ -336,23 +336,15 @@ throwIOException(JNIEnv *env, int errnum, const char *defaultDetail)
     static const char * const format = "error=%d, %s";
     const char *detail = defaultDetail;
     char *errmsg;
-    jstring s;
-
     if (errnum != 0) {
-        const char *s = strerror(errnum);
-        if (strcmp(s, "Unknown error") != 0)
-            detail = s;
+	const char *s = strerror(errnum);
+	if (strcmp(s, "Unknown error") != 0)
+	    detail = s;
     }
     /* ASCII Decimal representation uses 2.4 times as many bits as binary. */
     errmsg = NEW(char, strlen(format) + strlen(detail) + 3 * sizeof(errnum));
     sprintf(errmsg, format, errnum, detail);
-    s = JNU_NewStringPlatform(env, errmsg);
-    if (s != NULL) {
-        jobject x = JNU_NewObjectByName(env, "java/io/IOException",
-                                        "(Ljava/lang/String;)V", s);
-        if (x != NULL)
-            (*env)->Throw(env, x);
-    }
+    JNU_ThrowIOException(env, errmsg);
     free(errmsg);
 }
 
@@ -380,54 +372,54 @@ execvp_usingParentPath(const char *file, const char *const argv[])
     const char * const * dirs;
     /* Search parent's PATH */
     for (dirs = parentPathv; *dirs; dirs++) {
-        const char * dir = *dirs;
-        int dirlen = strlen(dir);
-        if (filelen + dirlen + 1 >= PATH_MAX) {
-            /* Resist the urge to remove this limit;
-             * calling malloc after fork is unsafe. */
-            errno = ENAMETOOLONG;
-            continue;
-        }
-        strcpy(expanded_file, dir);
-        strcpy(expanded_file + dirlen, file);
-        execvp(expanded_file, (char **) argv);
-        /* There are 3 responses to various classes of errno:
-         * return immediately, continue (especially for ENOENT),
-         * or continue with "sticky" errno.
-         *
-         * From exec(3):
-         *
-         * If permission is denied for a file (the attempted
-         * execve returned EACCES), these functions will continue
-         * searching the rest of the search path.  If no other
-         * file is found, however, they will return with the
-         * global variable errno set to EACCES.
-         */
-        switch (errno) {
-        case EACCES:
-            sticky_errno = errno;
-            /* FALLTHRU */
-        case ENOENT:
-        case ENOTDIR:
+	const char * dir = *dirs;
+	int dirlen = strlen(dir);
+	if (filelen + dirlen + 1 >= PATH_MAX) {
+	    /* Resist the urge to remove this limit;
+	     * calling malloc after fork is unsafe. */
+	    errno = ENAMETOOLONG;
+	    continue;
+	}
+	strcpy(expanded_file, dir);
+	strcpy(expanded_file + dirlen, file);
+	execvp(expanded_file, (char **) argv);
+	/* There are 3 responses to various classes of errno:
+	 * return immediately, continue (especially for ENOENT),
+	 * or continue with "sticky" errno.
+	 *
+	 * From exec(3):
+	 *
+	 * If permission is denied for a file (the attempted
+	 * execve returned EACCES), these functions will continue
+	 * searching the rest of the search path.  If no other
+	 * file is found, however, they will return with the
+	 * global variable errno set to EACCES.
+	 */
+	switch (errno) {
+	case EACCES:
+	    sticky_errno = errno;
+	    /* FALLTHRU */
+	case ENOENT:
+	case ENOTDIR:
 #ifdef ELOOP
-        case ELOOP:
+	case ELOOP:
 #endif
 #ifdef ESTALE
-        case ESTALE:
+	case ESTALE:
 #endif
 #ifdef ENODEV
-        case ENODEV:
+	case ENODEV:
 #endif
 #ifdef ETIMEDOUT
-        case ETIMEDOUT:
+	case ETIMEDOUT:
 #endif
-            break; /* Try other directories in PATH */
-        default:
-            return -1;
-        }
+	    break; /* Try other directories in PATH */
+	default:
+	    return -1;
+	}
     }
     if (sticky_errno != 0)
-        errno = sticky_errno;
+	errno = sticky_errno;
     return -1;
 }
 
@@ -449,34 +441,34 @@ execvpe(const char *file, const char *const argv[], const char *const envp[])
     extern char **environ;
 
     if (envp != NULL)
-        environ = (char **) envp;
+	environ = (char **) envp;
 
     if (/* Parent and child environment the same?  Use child PATH. */
-        (envp == NULL)
+	(envp == NULL)
 
-        /* http://www.opengroup.org/onlinepubs/009695399/functions/exec.html
-         * "If the file argument contains a slash character, it is used as
-         * the pathname for this file.  Otherwise, the path prefix for this
-         * file is obtained by a search of the directories passed in the
-         * PATH environment variable" */
-        || (strchr(file, '/') != NULL)
+	/* http://www.opengroup.org/onlinepubs/009695399/functions/exec.html
+	 * "If the file argument contains a slash character, it is used as
+	 * the pathname for this file.  Otherwise, the path prefix for this
+	 * file is obtained by a search of the directories passed in the
+	 * PATH environment variable" */
+	|| (strchr(file, '/') != NULL)
 
-        /* Parent and child PATH the same?  Use child PATH. */
-        || (strcmp(parentPath, effectivePath()) == 0)
+	/* Parent and child PATH the same?  Use child PATH. */
+	|| (strcmp(parentPath, effectivePath()) == 0)
 
-        /* We want ENOENT, not EACCES, for zero-length program names. */
-        || (*file == '\0'))
+	/* We want ENOENT, not EACCES, for zero-length program names. */
+	|| (*file == '\0'))
 
-        return execvp(file, (char **) argv);
+	return execvp(file, (char **) argv);
     else
-        return execvp_usingParentPath(file, argv);
+	return execvp_usingParentPath(file, argv);
 }
 
 static void
 closeSafely(int fd)
 {
     if (fd != -1)
-        close(fd);
+	close(fd);
 }
 
 #ifndef __solaris__
@@ -486,15 +478,15 @@ closeSafely(int fd)
 
 JNIEXPORT jint JNICALL
 Java_java_lang_UNIXProcess_forkAndExec(JNIEnv *env,
-                                       jobject process,
-                                       jbyteArray prog,
-                                       jbyteArray argBlock, jint argc,
-                                       jbyteArray envBlock, jint envc,
-                                       jbyteArray dir,
-                                       jboolean redirectErrorStream,
-                                       jobject stdin_fd,
-                                       jobject stdout_fd,
-                                       jobject stderr_fd)
+				       jobject process,
+				       jbyteArray prog,
+				       jbyteArray argBlock, jint argc,
+				       jbyteArray envBlock, jint envc,
+				       jbyteArray dir,
+				       jboolean redirectErrorStream,
+				       jobject stdin_fd,
+				       jobject stdout_fd,
+				       jobject stderr_fd)
 {
     int errnum;
     int resultPid = -1;
@@ -516,94 +508,94 @@ Java_java_lang_UNIXProcess_forkAndExec(JNIEnv *env,
 
     /* Convert pprog + pargBlock into a char ** argv */
     if ((argv = NEW(const char *, argc + 2)) == NULL)
-        goto Catch;
+	goto Catch;
     argv[0] = pprog;
     initVectorFromBlock(argv+1, pargBlock, argc);
 
     if (envBlock != NULL) {
-        /* Convert penvBlock into a char ** envv */
-        if ((envv = NEW(const char *, envc + 1)) == NULL)
-            goto Catch;
-        initVectorFromBlock(envv, penvBlock, envc);
+	/* Convert penvBlock into a char ** envv */
+	if ((envv = NEW(const char *, envc + 1)) == NULL)
+	    goto Catch;
+	initVectorFromBlock(envv, penvBlock, envc);
     }
 
     if ((pipe(in)   < 0) ||
-        (pipe(out)  < 0) ||
-        (pipe(err)  < 0) ||
-        (pipe(fail) < 0)) {
-        throwIOException(env, errno, "Bad file descriptor");
-        goto Catch;
+	(pipe(out)  < 0) ||
+	(pipe(err)  < 0) ||
+	(pipe(fail) < 0)) {
+	throwIOException(env, errno, "Bad file descriptor");
+	goto Catch;
     }
 
     resultPid = fork1();
     if (resultPid < 0) {
-        throwIOException(env, errno, "Fork failed");
-        goto Catch;
+	throwIOException(env, errno, "Fork failed");
+	goto Catch;
     }
 
     if (resultPid == 0) {
-        /* Child process */
+	/* Child process */
 
-        /* Close the parent sides of the pipe.
-           Give the child sides of the pipes the right fileno's.
-           Closing pipe fds here is redundant, since closeDescriptors()
-           would do it anyways, but a little paranoia is a good thing. */
-        /* Note: it is possible for in[0] == 0 */
-        close(in[1]);
-        moveDescriptor(in[0], STDIN_FILENO);
-        close(out[0]);
-        moveDescriptor(out[1], STDOUT_FILENO);
-        close(err[0]);
-        if (redirectErrorStream) {
-            close(err[1]);
-            dup2(STDOUT_FILENO, STDERR_FILENO);
-        } else {
-            moveDescriptor(err[1], STDERR_FILENO);
-        }
-        close(fail[0]);
-        moveDescriptor(fail[1], FAIL_FILENO);
+	/* Close the parent sides of the pipe.
+	   Give the child sides of the pipes the right fileno's.
+	   Closing pipe fds here is redundant, since closeDescriptors()
+	   would do it anyways, but a little paranoia is a good thing. */
+	/* Note: it is possible for in[0] == 0 */
+	close(in[1]);
+	moveDescriptor(in[0], STDIN_FILENO);
+	close(out[0]);
+	moveDescriptor(out[1], STDOUT_FILENO);
+	close(err[0]);
+	if (redirectErrorStream) {
+	    close(err[1]);
+	    dup2(STDOUT_FILENO, STDERR_FILENO);
+	} else {
+	    moveDescriptor(err[1], STDERR_FILENO);
+	}
+	close(fail[0]);
+	moveDescriptor(fail[1], FAIL_FILENO);
 
         /* close everything */
         if (closeDescriptors() == 0) { /* failed,  close the old way */
             int max_fd = (int)sysconf(_SC_OPEN_MAX);
-            int i;
+	    int i;
             for (i = FAIL_FILENO + 1; i < max_fd; i++)
-                close(i);
+		close(i);
         }
 
         /* change to the new working directory */
         if (pdir != NULL && chdir(pdir) < 0)
-            goto WhyCantJohnnyExec;
+	    goto WhyCantJohnnyExec;
 
-        if (fcntl(FAIL_FILENO, F_SETFD, FD_CLOEXEC) == -1)
-            goto WhyCantJohnnyExec;
+	if (fcntl(FAIL_FILENO, F_SETFD, FD_CLOEXEC) == -1)
+	    goto WhyCantJohnnyExec;
 
-        execvpe(argv[0], argv, envv);
+	execvpe(argv[0], argv, envv);
 
     WhyCantJohnnyExec:
-        /* We used to go to an awful lot of trouble to predict whether the
-         * child would fail, but there is no reliable way to predict the
-         * success of an operation without *trying* it, and there's no way
-         * to try a chdir or exec in the parent.  Instead, all we need is a
-         * way to communicate any failure back to the parent.  Easy; we just
-         * send the errno back to the parent over a pipe in case of failure.
-         * The tricky thing is, how do we communicate the *success* of exec?
-         * We use FD_CLOEXEC together with the fact that a read() on a pipe
-         * yields EOF when the write ends (we have two of them!) are closed.
-         */
-        errnum = errno;
-        write(FAIL_FILENO, &errnum, sizeof(errnum));
-        close(FAIL_FILENO);
-        _exit(-1);
+	/* We used to go to an awful lot of trouble to predict whether the
+	 * child would fail, but there is no reliable way to predict the
+	 * success of an operation without *trying* it, and there's no way
+	 * to try a chdir or exec in the parent.  Instead, all we need is a
+	 * way to communicate any failure back to the parent.  Easy; we just
+	 * send the errno back to the parent over a pipe in case of failure.
+	 * The tricky thing is, how do we communicate the *success* of exec?
+	 * We use FD_CLOEXEC together with the fact that a read() on a pipe
+	 * yields EOF when the write ends (we have two of them!) are closed.
+	 */
+	errnum = errno;
+	write(FAIL_FILENO, &errnum, sizeof(errnum));
+	close(FAIL_FILENO);
+	_exit(-1);
     }
 
     /* parent process */
 
     close(fail[1]); fail[1] = -1; /* See: WhyCantJohnnyExec */
     if (read(fail[0], &errnum, sizeof(errnum)) != 0) {
-        waitpid(resultPid, NULL, 0);
-        throwIOException(env, errnum, "Exec failed");
-        goto Catch;
+	waitpid(resultPid, NULL, 0);
+	throwIOException(env, errnum, "Exec failed");
+	goto Catch;
     }
 
     (*env)->SetIntField(env, stdin_fd,  IO_fd_fdID, in [1]);

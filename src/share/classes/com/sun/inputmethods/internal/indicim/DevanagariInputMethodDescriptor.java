@@ -68,12 +68,12 @@ public class DevanagariInputMethodDescriptor implements InputMethodDescriptor {
      * @see java.awt.im.spi.InputMethodDescriptor#getInputMethodDisplayName
      */
     public synchronized String getInputMethodDisplayName(Locale inputLocale, Locale displayLanguage) {
-        try {
-            ResourceBundle resources = ResourceBundle.getBundle("com.sun.inputmethods.internal.indicim.resources.DisplayNames", displayLanguage);
+	try {
+	    ResourceBundle resources = ResourceBundle.getBundle("com.sun.inputmethods.internal.indicim.resources.DisplayNames", displayLanguage);
             return resources.getString("DisplayName.Devanagari");
-        } catch (MissingResourceException mre) {
-            return "Devanagari Input Method";
-        }
+	} catch (MissingResourceException mre) {
+	    return "Devanagari Input Method";
+	}
     }
 
     /**
@@ -88,11 +88,11 @@ public class DevanagariInputMethodDescriptor implements InputMethodDescriptor {
      */
     public InputMethod createInputMethod() throws Exception {
         IndicInputMethodImpl impl = new IndicInputMethodImpl(
-            DevanagariTables.keyboardMap,
-            DevanagariTables.joinWithNukta,
-            DevanagariTables.nuktaForm,
-            DevanagariTables.substitutionTable);
-
+            DevanagariTables.keyboardMap, 
+	    DevanagariTables.joinWithNukta, 
+	    DevanagariTables.nuktaForm, 
+	    DevanagariTables.substitutionTable);
+            
         return new IndicInputMethod(HINDI, impl);
     }
 
@@ -100,3 +100,4 @@ public class DevanagariInputMethodDescriptor implements InputMethodDescriptor {
         return getClass().getName();
     }
 }
+

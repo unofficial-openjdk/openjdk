@@ -39,6 +39,7 @@ import javax.net.ssl.*;
  *
  * @author Mark Reinhold
  * @author Brad R. Wetmore
+ * @version %I%, %E%
  */
 class Acceptor implements Runnable {
 
@@ -48,30 +49,30 @@ class Acceptor implements Runnable {
     private SSLContext sslContext;
 
     Acceptor(ServerSocketChannel ssc, Dispatcher d, SSLContext sslContext) {
-        this.ssc = ssc;
-        this.d = d;
-        this.sslContext = sslContext;
+	this.ssc = ssc;
+	this.d = d;
+	this.sslContext = sslContext;
     }
 
     public void run() {
-        for (;;) {
-            try {
-                SocketChannel sc = ssc.accept();
+	for (;;) {
+	    try {
+		SocketChannel sc = ssc.accept();
 
-                ChannelIO cio = (sslContext != null ?
-                    ChannelIOSecure.getInstance(
-                        sc, false /* non-blocking */, sslContext) :
-                    ChannelIO.getInstance(
-                        sc, false /* non-blocking */));
+		ChannelIO cio = (sslContext != null ?
+		    ChannelIOSecure.getInstance(
+			sc, false /* non-blocking */, sslContext) :
+		    ChannelIO.getInstance(
+			sc, false /* non-blocking */));
 
-                RequestHandler rh = new RequestHandler(cio);
+		RequestHandler rh = new RequestHandler(cio);
 
-                d.register(cio.getSocketChannel(), SelectionKey.OP_READ, rh);
+		d.register(cio.getSocketChannel(), SelectionKey.OP_READ, rh);
 
-            } catch (IOException x) {
-                x.printStackTrace();
-                break;
-            }
-        }
+	    } catch (IOException x) {
+		x.printStackTrace();
+		break;
+	    }
+	}
     }
 }

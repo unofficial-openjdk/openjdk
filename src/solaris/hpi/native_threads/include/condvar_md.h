@@ -32,8 +32,8 @@
 
 #include "threads_md.h"
 
-typedef struct condvar {
-    cond_t  cond;           /* Manual-reset event for notifications */
+typedef	struct condvar {
+    cond_t  cond;	    /* Manual-reset event for notifications */
     unsigned int counter;   /* Current number of notifications */
 } condvar_t;
 

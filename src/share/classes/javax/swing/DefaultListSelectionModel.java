@@ -33,7 +33,7 @@ import javax.swing.event.*;
 
 
 /**
- * Default data model for list selections.
+ * Default data model for list selections. 
  * <p>
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
@@ -44,6 +44,7 @@ import javax.swing.event.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Philip Milne
  * @author Hans Muller
  * @see ListSelectionModel
@@ -60,10 +61,10 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
     private int leadIndex = -1;
     private int firstAdjustedIndex = MAX;
     private int lastAdjustedIndex = MIN;
-    private boolean isAdjusting = false;
+    private boolean isAdjusting = false; 
 
-    private int firstChangedIndex = MAX;
-    private int lastChangedIndex = MIN;
+    private int firstChangedIndex = MAX; 
+    private int lastChangedIndex = MIN; 
 
     private BitSet value = new BitSet(32);
     protected EventListenerList listenerList = new EventListenerList();
@@ -87,42 +88,42 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * @throws IllegalArgumentException {@inheritDoc}
      */
     public void setSelectionMode(int selectionMode) {
-        switch (selectionMode) {
-        case SINGLE_SELECTION:
-        case SINGLE_INTERVAL_SELECTION:
-        case MULTIPLE_INTERVAL_SELECTION:
-            this.selectionMode = selectionMode;
-            break;
-        default:
-            throw new IllegalArgumentException("invalid selectionMode");
-        }
+	switch (selectionMode) {
+	case SINGLE_SELECTION:
+	case SINGLE_INTERVAL_SELECTION:
+	case MULTIPLE_INTERVAL_SELECTION:
+	    this.selectionMode = selectionMode;
+	    break;
+	default:
+	    throw new IllegalArgumentException("invalid selectionMode");
+	}
     }
 
     /** {@inheritDoc} */
     public boolean isSelectedIndex(int index) {
-        return ((index < minIndex) || (index > maxIndex)) ? false : value.get(index);
+	return ((index < minIndex) || (index > maxIndex)) ? false : value.get(index);
     }
 
     /** {@inheritDoc} */
     public boolean isSelectionEmpty() {
-        return (minIndex > maxIndex);
+	return (minIndex > maxIndex);
     }
 
     /** {@inheritDoc} */
     public void addListSelectionListener(ListSelectionListener l) {
-        listenerList.add(ListSelectionListener.class, l);
+ 	listenerList.add(ListSelectionListener.class, l);
     }
 
     /** {@inheritDoc} */
     public void removeListSelectionListener(ListSelectionListener l) {
-        listenerList.remove(ListSelectionListener.class, l);
+ 	listenerList.remove(ListSelectionListener.class, l);
     }
 
     /**
-     * Returns an array of all the list selection listeners
+     * Returns an array of all the list selection listeners 
      * registered on this <code>DefaultListSelectionModel</code>.
      *
-     * @return all of this model's <code>ListSelectionListener</code>s
+     * @return all of this model's <code>ListSelectionListener</code>s 
      *         or an empty
      *         array if no list selection listeners are currently registered
      *
@@ -137,21 +138,21 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
     }
 
     /**
-     * Notifies listeners that we have ended a series of adjustments.
+     * Notifies listeners that we have ended a series of adjustments. 
      */
-    protected void fireValueChanged(boolean isAdjusting) {
+    protected void fireValueChanged(boolean isAdjusting) {  
         if (lastChangedIndex == MIN) {
-            return;
-        }
-        /* Change the values before sending the event to the
-         * listeners in case the event causes a listener to make
-         * another change to the selection.
-         */
-        int oldFirstChangedIndex = firstChangedIndex;
-        int oldLastChangedIndex = lastChangedIndex;
-        firstChangedIndex = MAX;
-        lastChangedIndex = MIN;
-        fireValueChanged(oldFirstChangedIndex, oldLastChangedIndex, isAdjusting);
+	    return; 
+	}
+	/* Change the values before sending the event to the
+	 * listeners in case the event causes a listener to make
+	 * another change to the selection.
+	 */
+	int oldFirstChangedIndex = firstChangedIndex;
+	int oldLastChangedIndex = lastChangedIndex;
+	firstChangedIndex = MAX;
+	lastChangedIndex = MIN; 
+	fireValueChanged(oldFirstChangedIndex, oldLastChangedIndex, isAdjusting); 
     }
 
 
@@ -161,54 +162,54 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * <code>lastIndex</code>, has changed.
      */
     protected void fireValueChanged(int firstIndex, int lastIndex) {
-        fireValueChanged(firstIndex, lastIndex, getValueIsAdjusting());
+	fireValueChanged(firstIndex, lastIndex, getValueIsAdjusting());
     }
 
     /**
      * @param firstIndex the first index in the interval
      * @param lastIndex the last index in the interval
      * @param isAdjusting true if this is the final change in a series of
-     *          adjustments
+     *		adjustments
      * @see EventListenerList
      */
     protected void fireValueChanged(int firstIndex, int lastIndex, boolean isAdjusting)
     {
-        Object[] listeners = listenerList.getListenerList();
-        ListSelectionEvent e = null;
+	Object[] listeners = listenerList.getListenerList();
+	ListSelectionEvent e = null;
 
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-            if (listeners[i] == ListSelectionListener.class) {
-                if (e == null) {
-                    e = new ListSelectionEvent(this, firstIndex, lastIndex, isAdjusting);
-                }
-                ((ListSelectionListener)listeners[i+1]).valueChanged(e);
-            }
-        }
+	for (int i = listeners.length - 2; i >= 0; i -= 2) {
+	    if (listeners[i] == ListSelectionListener.class) {
+		if (e == null) {
+		    e = new ListSelectionEvent(this, firstIndex, lastIndex, isAdjusting);
+		}
+		((ListSelectionListener)listeners[i+1]).valueChanged(e);
+	    }
+	}
     }
 
     private void fireValueChanged() {
-        if (lastAdjustedIndex == MIN) {
-            return;
-        }
-        /* If getValueAdjusting() is true, (eg. during a drag opereration)
-         * record the bounds of the changes so that, when the drag finishes (and
-         * setValueAdjusting(false) is called) we can post a single event
-         * with bounds covering all of these individual adjustments.
-         */
-        if (getValueIsAdjusting()) {
+	if (lastAdjustedIndex == MIN) { 
+	    return;
+	}
+	/* If getValueAdjusting() is true, (eg. during a drag opereration) 
+	 * record the bounds of the changes so that, when the drag finishes (and 
+	 * setValueAdjusting(false) is called) we can post a single event 
+	 * with bounds covering all of these individual adjustments.  
+	 */ 
+	if (getValueIsAdjusting()) { 
             firstChangedIndex = Math.min(firstChangedIndex, firstAdjustedIndex);
-            lastChangedIndex = Math.max(lastChangedIndex, lastAdjustedIndex);
+	    lastChangedIndex = Math.max(lastChangedIndex, lastAdjustedIndex);
         }
-        /* Change the values before sending the event to the
-         * listeners in case the event causes a listener to make
-         * another change to the selection.
-         */
-        int oldFirstAdjustedIndex = firstAdjustedIndex;
-        int oldLastAdjustedIndex = lastAdjustedIndex;
-        firstAdjustedIndex = MAX;
-        lastAdjustedIndex = MIN;
+	/* Change the values before sending the event to the
+	 * listeners in case the event causes a listener to make
+	 * another change to the selection.
+	 */
+	int oldFirstAdjustedIndex = firstAdjustedIndex;
+	int oldLastAdjustedIndex = lastAdjustedIndex;
+	firstAdjustedIndex = MAX;
+	lastAdjustedIndex = MIN; 
 
-        fireValueChanged(oldFirstAdjustedIndex, oldLastAdjustedIndex);
+	fireValueChanged(oldFirstAdjustedIndex, oldLastAdjustedIndex);
     }
 
     /**
@@ -246,22 +247,22 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      *
      * @since 1.3
      */
-    public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-        return listenerList.getListeners(listenerType);
+    public <T extends EventListener> T[] getListeners(Class<T> listenerType) { 
+	return listenerList.getListeners(listenerType); 
     }
 
     // Updates first and last change indices
     private void markAsDirty(int r) {
         firstAdjustedIndex = Math.min(firstAdjustedIndex, r);
-        lastAdjustedIndex =  Math.max(lastAdjustedIndex, r);
+	lastAdjustedIndex =  Math.max(lastAdjustedIndex, r);
     }
 
     // Sets the state at this index and update all relevant state.
     private void set(int r) {
-        if (value.get(r)) {
-            return;
-        }
-        value.set(r);
+	if (value.get(r)) {
+	    return;
+	}
+	value.set(r);
         markAsDirty(r);
 
         // Update minimum and maximum indices
@@ -271,10 +272,10 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
     // Clears the state at this index and update all relevant state.
     private void clear(int r) {
-        if (!value.get(r)) {
-            return;
-        }
-        value.clear(r);
+	if (!value.get(r)) {
+	    return;
+	}
+	value.clear(r);
         markAsDirty(r);
 
         // Update minimum and maximum indices
@@ -283,42 +284,42 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
            The case (r < minIndex) is not possible because r'th value was set.
            We only need to check for the case when lowest entry has been cleared,
            and in this case we need to search for the first value set above it.
-        */
-        if (r == minIndex) {
-            for(minIndex = minIndex + 1; minIndex <= maxIndex; minIndex++) {
-                if (value.get(minIndex)) {
-                    break;
-                }
-            }
-        }
+	*/
+	if (r == minIndex) {
+	    for(minIndex = minIndex + 1; minIndex <= maxIndex; minIndex++) {
+	        if (value.get(minIndex)) {
+	            break;
+	        }
+	    }
+	}
         /*
            If (r < maxIndex) the maximum has not changed.
            The case (r > maxIndex) is not possible because r'th value was set.
            We only need to check for the case when highest entry has been cleared,
            and in this case we need to search for the first value set below it.
-        */
-        if (r == maxIndex) {
-            for(maxIndex = maxIndex - 1; minIndex <= maxIndex; maxIndex--) {
-                if (value.get(maxIndex)) {
-                    break;
-                }
-            }
-        }
-        /* Performance note: This method is called from inside a loop in
-           changeSelection() but we will only iterate in the loops
-           above on the basis of one iteration per deselected cell - in total.
-           Ie. the next time this method is called the work of the previous
-           deselection will not be repeated.
+	*/
+	if (r == maxIndex) {
+	    for(maxIndex = maxIndex - 1; minIndex <= maxIndex; maxIndex--) {
+	        if (value.get(maxIndex)) {
+	            break;
+	        }
+	    }
+	}
+	/* Performance note: This method is called from inside a loop in
+	   changeSelection() but we will only iterate in the loops
+	   above on the basis of one iteration per deselected cell - in total.
+	   Ie. the next time this method is called the work of the previous
+	   deselection will not be repeated.
 
-           We also don't need to worry about the case when the min and max
-           values are in their unassigned states. This cannot happen because
-           this method's initial check ensures that the selection was not empty
-           and therefore that the minIndex and maxIndex had 'real' values.
+	   We also don't need to worry about the case when the min and max
+	   values are in their unassigned states. This cannot happen because
+	   this method's initial check ensures that the selection was not empty
+	   and therefore that the minIndex and maxIndex had 'real' values.
 
-           If we have cleared the whole selection, set the minIndex and maxIndex
-           to their cannonical values so that the next set command always works
-           just by using Math.min and Math.max.
-        */
+	   If we have cleared the whole selection, set the minIndex and maxIndex
+	   to their cannonical values so that the next set command always works
+	   just by using Math.min and Math.max.
+	*/
         if (isSelectionEmpty()) {
             minIndex = MAX;
             maxIndex = MIN;
@@ -327,7 +328,7 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
     /**
      * Sets the value of the leadAnchorNotificationEnabled flag.
-     * @see             #isLeadAnchorNotificationEnabled()
+     * @see		#isLeadAnchorNotificationEnabled()
      */
     public void setLeadAnchorNotificationEnabled(boolean flag) {
         leadAnchorNotificationEnabled = flag;
@@ -348,8 +349,8 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * important, such as when the new lead or anchor needs to be updated in
      * the view. Therefore, caution is urged when changing the default value.
      *
-     * @return  the value of the <code>leadAnchorNotificationEnabled</code> flag
-     * @see             #setLeadAnchorNotificationEnabled(boolean)
+     * @return 	the value of the <code>leadAnchorNotificationEnabled</code> flag
+     * @see		#setLeadAnchorNotificationEnabled(boolean)
      */
     public boolean isLeadAnchorNotificationEnabled() {
         return leadAnchorNotificationEnabled;
@@ -405,7 +406,7 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
         fireValueChanged();
     }
 
-   /**
+   /**  
     * Change the selection with the effect of first clearing the values
     * in the inclusive range [clearMin, clearMax] then setting the values
     * in the inclusive range [setMin, setMax]. Do this in one pass so
@@ -417,10 +418,10 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
     /** {@inheritDoc} */
     public void clearSelection() {
-        removeSelectionIntervalImpl(minIndex, maxIndex, false);
+	removeSelectionIntervalImpl(minIndex, maxIndex, false);
     }
 
-    /**
+    /** 
      * Changes the selection to be between {@code index0} and {@code index1}
      * inclusive. {@code index0} doesn't have to be less than or equal to
      * {@code index1}.
@@ -434,7 +435,7 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * If either index is {@code -1}, this method does nothing and returns
      * without exception. Otherwise, if either index is less than {@code -1},
      * an {@code IndexOutOfBoundsException} is thrown.
-     *
+     * 
      * @param index0 one end of the interval.
      * @param index1 other end of the interval
      * @throws IndexOutOfBoundsException if either index is less than {@code -1}
@@ -454,12 +455,12 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
         int clearMin = minIndex;
         int clearMax = maxIndex;
-        int setMin = Math.min(index0, index1);
-        int setMax = Math.max(index0, index1);
+	int setMin = Math.min(index0, index1);
+	int setMax = Math.max(index0, index1);
         changeSelection(clearMin, clearMax, setMin, setMax);
     }
 
-    /**
+    /** 
      * Changes the selection to be the set union of the current selection
      * and the indices between {@code index0} and {@code index1} inclusive.
      * <p>
@@ -477,7 +478,7 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * If either index is {@code -1}, this method does nothing and returns
      * without exception. Otherwise, if either index is less than {@code -1},
      * an {@code IndexOutOfBoundsException} is thrown.
-     *
+     * 
      * @param index0 one end of the interval.
      * @param index1 other end of the interval
      * @throws IndexOutOfBoundsException if either index is less than {@code -1}
@@ -502,8 +503,8 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
         int clearMin = MAX;
         int clearMax = MIN;
-        int setMin = Math.min(index0, index1);
-        int setMax = Math.max(index0, index1);
+	int setMin = Math.min(index0, index1);
+	int setMax = Math.max(index0, index1);
 
         // If we only allow a single interval and this would result
         // in multiple intervals, then set the selection to be just
@@ -519,7 +520,7 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
     }
 
 
-    /**
+    /** 
      * Changes the selection to be the set difference of the current selection
      * and the indices between {@code index0} and {@code index1} inclusive.
      * {@code index0} doesn't have to be less than or equal to {@code index1}.
@@ -536,7 +537,7 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * If either index is {@code -1}, this method does nothing and returns
      * without exception. Otherwise, if either index is less than {@code -1},
      * an {@code IndexOutOfBoundsException} is thrown.
-     *
+     * 
      * @param index0 one end of the interval
      * @param index1 other end of the interval
      * @throws IndexOutOfBoundsException if either index is less than {@code -1}
@@ -561,16 +562,16 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
             updateLeadAnchorIndices(index0, index1);
         }
 
-        int clearMin = Math.min(index0, index1);
-        int clearMax = Math.max(index0, index1);
-        int setMin = MAX;
-        int setMax = MIN;
+	int clearMin = Math.min(index0, index1);
+	int clearMax = Math.max(index0, index1); 
+	int setMin = MAX;
+	int setMax = MIN;
 
-        // If the removal would produce to two disjoint selections in a mode
-        // that only allows one, extend the removal to the end of the selection.
-        if (getSelectionMode() != MULTIPLE_INTERVAL_SELECTION &&
-               clearMin > minIndex && clearMax < maxIndex) {
-            clearMax = maxIndex;
+        // If the removal would produce to two disjoint selections in a mode 
+	// that only allows one, extend the removal to the end of the selection. 
+	if (getSelectionMode() != MULTIPLE_INTERVAL_SELECTION && 
+	       clearMin > minIndex && clearMax < maxIndex) {
+	    clearMax = maxIndex; 
         }
 
         changeSelection(clearMin, clearMax, setMin, setMax);
@@ -578,15 +579,15 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
     private void setState(int index, boolean state) {
         if (state) {
-            set(index);
-        }
-        else {
-            clear(index);
-        }
+	    set(index); 
+	}
+	else {
+	    clear(index); 
+	}
     }
 
     /**
-     * Insert length indices beginning before/after index. If the value
+     * Insert length indices beginning before/after index. If the value 
      * at index is itself selected and the selection mode is not
      * SINGLE_SELECTION, set all of the newly inserted items as selected.
      * Otherwise leave them unselected. This method is typically
@@ -595,39 +596,39 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      */
     public void insertIndexInterval(int index, int length, boolean before)
     {
-        /* The first new index will appear at insMinIndex and the last
-         * one will appear at insMaxIndex
-         */
-        int insMinIndex = (before) ? index : index + 1;
-        int insMaxIndex = (insMinIndex + length) - 1;
+	/* The first new index will appear at insMinIndex and the last
+	 * one will appear at insMaxIndex
+	 */
+	int insMinIndex = (before) ? index : index + 1;
+	int insMaxIndex = (insMinIndex + length) - 1;
 
-        /* Right shift the entire bitset by length, beginning with
-         * index-1 if before is true, index+1 if it's false (i.e. with
-         * insMinIndex).
-         */
-        for(int i = maxIndex; i >= insMinIndex; i--) {
-            setState(i + length, value.get(i));
-        }
+	/* Right shift the entire bitset by length, beginning with
+	 * index-1 if before is true, index+1 if it's false (i.e. with
+	 * insMinIndex).
+	 */
+	for(int i = maxIndex; i >= insMinIndex; i--) {
+	    setState(i + length, value.get(i)); 
+	}
 
-        /* Initialize the newly inserted indices.
-         */
-        boolean setInsertedValues = ((getSelectionMode() == SINGLE_SELECTION) ?
-                                        false : value.get(index));
-        for(int i = insMinIndex; i <= insMaxIndex; i++) {
-            setState(i, setInsertedValues);
-        }
+	/* Initialize the newly inserted indices.
+	 */
+       	boolean setInsertedValues = ((getSelectionMode() == SINGLE_SELECTION) ?
+                                        false : value.get(index)); 
+	for(int i = insMinIndex; i <= insMaxIndex; i++) { 
+	    setState(i, setInsertedValues); 
+	}
 
-        int leadIndex = this.leadIndex;
-        if (leadIndex > index || (before && leadIndex == index)) {
-            leadIndex = this.leadIndex + length;
-        }
-        int anchorIndex = this.anchorIndex;
-        if (anchorIndex > index || (before && anchorIndex == index)) {
-            anchorIndex = this.anchorIndex + length;
-        }
-        if (leadIndex != this.leadIndex || anchorIndex != this.anchorIndex) {
-            updateLeadAnchorIndices(anchorIndex, leadIndex);
-        }
+	int leadIndex = this.leadIndex;
+	if (leadIndex > index || (before && leadIndex == index)) {
+	    leadIndex = this.leadIndex + length;
+	}
+	int anchorIndex = this.anchorIndex;
+	if (anchorIndex > index || (before && anchorIndex == index)) {
+	    anchorIndex = this.anchorIndex + length;
+	}
+	if (leadIndex != this.leadIndex || anchorIndex != this.anchorIndex) {
+	    updateLeadAnchorIndices(anchorIndex, leadIndex);
+	}
 
         fireValueChanged();
     }
@@ -641,27 +642,27 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      */
     public void removeIndexInterval(int index0, int index1)
     {
-        int rmMinIndex = Math.min(index0, index1);
-        int rmMaxIndex = Math.max(index0, index1);
-        int gapLength = (rmMaxIndex - rmMinIndex) + 1;
+	int rmMinIndex = Math.min(index0, index1);
+	int rmMaxIndex = Math.max(index0, index1);
+	int gapLength = (rmMaxIndex - rmMinIndex) + 1;
 
-        /* Shift the entire bitset to the left to close the index0, index1
-         * gap.
-         */
-        for(int i = rmMinIndex; i <= maxIndex; i++) {
-            setState(i, value.get(i + gapLength));
-        }
+	/* Shift the entire bitset to the left to close the index0, index1
+	 * gap.
+	 */
+	for(int i = rmMinIndex; i <= maxIndex; i++) {
+	    setState(i, value.get(i + gapLength)); 
+	}
 
-        int leadIndex = this.leadIndex;
+	int leadIndex = this.leadIndex;
         if (leadIndex == 0 && rmMinIndex == 0) {
             // do nothing
         } else if (leadIndex > rmMaxIndex) {
-            leadIndex = this.leadIndex - gapLength;
-        } else if (leadIndex >= rmMinIndex) {
+	    leadIndex = this.leadIndex - gapLength;
+	} else if (leadIndex >= rmMinIndex) {
             leadIndex = rmMinIndex - 1;
         }
 
-        int anchorIndex = this.anchorIndex;
+	int anchorIndex = this.anchorIndex;
         if (anchorIndex == 0 && rmMinIndex == 0) {
             // do nothing
         } else if (anchorIndex > rmMaxIndex) {
@@ -670,9 +671,9 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
             anchorIndex = rmMinIndex - 1;
         }
 
-        if (leadIndex != this.leadIndex || anchorIndex != this.anchorIndex) {
-            updateLeadAnchorIndices(anchorIndex, leadIndex);
-        }
+	if (leadIndex != this.leadIndex || anchorIndex != this.anchorIndex) {
+	    updateLeadAnchorIndices(anchorIndex, leadIndex);
+	}
 
         fireValueChanged();
     }
@@ -680,10 +681,10 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
 
     /** {@inheritDoc} */
     public void setValueIsAdjusting(boolean isAdjusting) {
-        if (isAdjusting != this.isAdjusting) {
-            this.isAdjusting = isAdjusting;
-            this.fireValueChanged(isAdjusting);
-        }
+	if (isAdjusting != this.isAdjusting) {
+	    this.isAdjusting = isAdjusting;
+	    this.fireValueChanged(isAdjusting);
+	}
     }
 
 
@@ -694,8 +695,8 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      * @return a <code>String</code> representation of this object
      */
     public String toString() {
-        String s =  ((getValueIsAdjusting()) ? "~" : "=") + value.toString();
-        return getClass().getName() + " " + Integer.toString(hashCode()) + " " + s;
+	String s =  ((getValueIsAdjusting()) ? "~" : "=") + value.toString();
+	return getClass().getName() + " " + Integer.toString(hashCode()) + " " + s;
     }
 
     /**
@@ -707,10 +708,10 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
      *    <code>clone</code> method.
      */
     public Object clone() throws CloneNotSupportedException {
-        DefaultListSelectionModel clone = (DefaultListSelectionModel)super.clone();
-        clone.value = (BitSet)value.clone();
-        clone.listenerList = new EventListenerList();
-        return clone;
+	DefaultListSelectionModel clone = (DefaultListSelectionModel)super.clone();
+	clone.value = (BitSet)value.clone();
+	clone.listenerList = new EventListenerList();
+	return clone;
     }
 
     /** {@inheritDoc} */
@@ -724,16 +725,16 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
     }
 
     /**
-     * Set the anchor selection index, leaving all selection values unchanged.
-     * If leadAnchorNotificationEnabled is true, send a notification covering
-     * the old and new anchor cells.
+     * Set the anchor selection index, leaving all selection values unchanged. 
+     * If leadAnchorNotificationEnabled is true, send a notification covering 
+     * the old and new anchor cells. 
      *
-     * @see #getAnchorSelectionIndex
+     * @see #getAnchorSelectionIndex     
      * @see #setLeadSelectionIndex
-     */
-    public void setAnchorSelectionIndex(int anchorIndex) {
-        updateLeadAnchorIndices(anchorIndex, this.leadIndex);
-        fireValueChanged();
+     */   
+    public void setAnchorSelectionIndex(int anchorIndex) { 
+	updateLeadAnchorIndices(anchorIndex, this.leadIndex); 
+	fireValueChanged(); 
     }
 
     /**
@@ -776,34 +777,34 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
     }
 
     /**
-     * Sets the lead selection index, ensuring that values between the
-     * anchor and the new lead are either all selected or all deselected.
-     * If the value at the anchor index is selected, first clear all the
-     * values in the range [anchor, oldLeadIndex], then select all the values
+     * Sets the lead selection index, ensuring that values between the 
+     * anchor and the new lead are either all selected or all deselected. 
+     * If the value at the anchor index is selected, first clear all the 
+     * values in the range [anchor, oldLeadIndex], then select all the values 
      * values in the range [anchor, newLeadIndex], where oldLeadIndex is the old
-     * leadIndex and newLeadIndex is the new one.
-     * <p>
-     * If the value at the anchor index is not selected, do the same thing in
+     * leadIndex and newLeadIndex is the new one. 
+     * <p> 
+     * If the value at the anchor index is not selected, do the same thing in 
      * reverse selecting values in the old range and deslecting values in the
-     * new one.
+     * new one. 
      * <p>
-     * Generate a single event for this change and notify all listeners.
-     * For the purposes of generating minimal bounds in this event, do the
-     * operation in a single pass; that way the first and last index inside the
-     * ListSelectionEvent that is broadcast will refer to cells that actually
-     * changed value because of this method. If, instead, this operation were
-     * done in two steps the effect on the selection state would be the same
-     * but two events would be generated and the bounds around the changed
-     * values would be wider, including cells that had been first cleared only
-     * to later be set.
+     * Generate a single event for this change and notify all listeners. 
+     * For the purposes of generating minimal bounds in this event, do the 
+     * operation in a single pass; that way the first and last index inside the 
+     * ListSelectionEvent that is broadcast will refer to cells that actually 
+     * changed value because of this method. If, instead, this operation were 
+     * done in two steps the effect on the selection state would be the same 
+     * but two events would be generated and the bounds around the changed 
+     * values would be wider, including cells that had been first cleared only 
+     * to later be set. 
      * <p>
      * This method can be used in the <code>mouseDragged</code> method
-     * of a UI class to extend a selection.
+     * of a UI class to extend a selection.  
      *
-     * @see #getLeadSelectionIndex
+     * @see #getLeadSelectionIndex     
      * @see #setAnchorSelectionIndex
-     */
-    public void setLeadSelectionIndex(int leadIndex) {
+     */   
+    public void setLeadSelectionIndex(int leadIndex) { 
         int anchorIndex = this.anchorIndex;
 
         // only allow a -1 lead if the anchor is already -1
@@ -819,23 +820,23 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
             return;
         }
 
-        if (this.leadIndex == -1) {
-            this.leadIndex = leadIndex;
-        }
+	if (this.leadIndex == -1) { 
+	    this.leadIndex = leadIndex; 
+	}
 
-        boolean shouldSelect = value.get(this.anchorIndex);
+	boolean shouldSelect = value.get(this.anchorIndex); 
 
-        if (getSelectionMode() == SINGLE_SELECTION) {
+        if (getSelectionMode() == SINGLE_SELECTION) { 
             anchorIndex = leadIndex;
-            shouldSelect = true;
+            shouldSelect = true; 
         }
 
         int oldMin = Math.min(this.anchorIndex, this.leadIndex);
         int oldMax = Math.max(this.anchorIndex, this.leadIndex);
-        int newMin = Math.min(anchorIndex, leadIndex);
-        int newMax = Math.max(anchorIndex, leadIndex);
+	int newMin = Math.min(anchorIndex, leadIndex);
+	int newMax = Math.max(anchorIndex, leadIndex);
 
-        updateLeadAnchorIndices(anchorIndex, leadIndex);
+	updateLeadAnchorIndices(anchorIndex, leadIndex); 
 
         if (shouldSelect) {
             changeSelection(oldMin, oldMax, newMin, newMax);
@@ -845,3 +846,4 @@ public class DefaultListSelectionModel implements ListSelectionModel, Cloneable,
         }
     }
 }
+

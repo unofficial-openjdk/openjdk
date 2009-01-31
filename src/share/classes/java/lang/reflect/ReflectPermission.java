@@ -80,7 +80,7 @@ class ReflectPermission extends java.security.BasicPermission {
      * @throws IllegalArgumentException if {@code name} is empty.
      */
     public ReflectPermission(String name) {
-        super(name);
+	super(name);
     }
 
     /**
@@ -95,7 +95,7 @@ class ReflectPermission extends java.security.BasicPermission {
      * @throws IllegalArgumentException if {@code name} is empty.
      */
     public ReflectPermission(String name, String actions) {
-        super(name, actions);
+	super(name, actions);
     }
 
 }

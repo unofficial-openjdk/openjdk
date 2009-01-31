@@ -45,49 +45,49 @@ public abstract class Node {
     }
 
     public Node(Group parent, String nodeName, String description) {
-        this.parent = parent;
-        this.nodeName = nodeName;
-        this.description = description;
-        parent.addChild(this);
+	this.parent = parent;
+	this.nodeName = nodeName;
+	this.description = description;
+	parent.addChild(this);
     }
 
     public Group getParent() {
-        return parent;
+	return parent;
     }
 
     public String getNodeName() {
-        return nodeName;
+	return nodeName;
     }
 
     public String getTreeName() {
-        String name = nodeName;
-        if (parent != null) {
-            String pname = parent.getTreeName();
-            if (pname != null) {
-                name = pname + "." + name;
-            }
-        }
-        return name;
+	String name = nodeName;
+	if (parent != null) {
+	    String pname = parent.getTreeName();
+	    if (pname != null) {
+		name = pname + "." + name;
+	    }
+	}
+	return name;
     }
 
     public String getDescription() {
-        return description;
+	return description;
     }
 
     public JComponent getJComponent() {
-        return (nodeName != null) ? new JLabel(description) : null;
+	return (nodeName != null) ? new JLabel(description) : null;
     }
 
     public Node getNext() {
-        return next;
+	return next;
     }
 
     public void setNext(Node node) {
-        this.next = node;
+	this.next = node;
     }
 
     public void traverse(Visitor v) {
-        v.visit(this);
+	v.visit(this);
     }
 
     public abstract void restoreDefault();
@@ -97,11 +97,11 @@ public abstract class Node {
     public abstract String setOption(String key, String value);
 
     public static interface Visitor {
-        public void visit(Node node);
+	public void visit(Node node);
     }
 
     public static interface Iterator {
-        public boolean hasNext();
-        public Node next();
+	public boolean hasNext();
+	public Node next();
     }
 }

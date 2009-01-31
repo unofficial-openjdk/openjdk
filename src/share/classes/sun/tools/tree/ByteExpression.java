@@ -39,13 +39,13 @@ class ByteExpression extends IntegerExpression {
      * Constructor
      */
     public ByteExpression(long where, byte value) {
-        super(BYTEVAL, where, Type.tByte, value);
+	super(BYTEVAL, where, Type.tByte, value);
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-        out.print(value + "b");
+	out.print(value + "b");
     }
 }

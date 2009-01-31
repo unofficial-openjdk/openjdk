@@ -243,7 +243,7 @@ class OGLUtilities {
 
         SunGraphics2D sg2d = (SunGraphics2D)g;
         SurfaceData sData = (SurfaceData)sg2d.surfaceData;
-        Region r = sg2d.getCompClip();
+	Region r = sg2d.getCompClip();
         if (!r.isRectangular()) {
             // caller probably doesn't know how to handle shape clip
             // appropriately, so just return null (Swing currently never

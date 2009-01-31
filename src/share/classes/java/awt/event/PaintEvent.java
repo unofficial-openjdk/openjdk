@@ -38,27 +38,28 @@ import java.awt.Rectangle;
  * render themselves properly.
  *
  * @author Amy Fowler
+ * @version %I%, %G%
  * @since 1.1
  */
 public class PaintEvent extends ComponentEvent {
 
     /**
      * Marks the first integer id for the range of paint event ids.
-     */
-    public static final int PAINT_FIRST         = 800;
+     */    
+    public static final int PAINT_FIRST		= 800;
 
     /**
      * Marks the last integer id for the range of paint event ids.
      */
-    public static final int PAINT_LAST          = 801;
+    public static final int PAINT_LAST		= 801;
 
     /**
-     * The paint event type.
+     * The paint event type.  
      */
     public static final int PAINT = PAINT_FIRST;
 
     /**
-     * The update event type.
+     * The update event type.  
      */
     public static final int UPDATE = PAINT_FIRST + 1; //801
 
@@ -75,7 +76,7 @@ public class PaintEvent extends ComponentEvent {
     Rectangle updateRect;
 
     /*
-     * JDK 1.1 serialVersionUID
+     * JDK 1.1 serialVersionUID 
      */
     private static final long serialVersionUID = 1267492026433337593L;
 

@@ -53,20 +53,20 @@ public abstract class Transport {
     static final int logLevel = LogStream.parseLevel(getLogLevel());
 
     private static String getLogLevel() {
-        return (String) java.security.AccessController.doPrivileged(
+	return (String) java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.rmi.transport.logLevel"));
     }
 
     /* transport package log */
     static final Log transportLog =
-        Log.getLog("sun.rmi.transport.misc", "transport", Transport.logLevel);
+	Log.getLog("sun.rmi.transport.misc", "transport", Transport.logLevel);
 
     /** References the current transport when a call is being serviced */
     private static final ThreadLocal currentTransport = new ThreadLocal();
 
     /** ObjID for DGCImpl */
     private static final ObjID dgcID = new ObjID(ObjID.DGC_ID);
-
+    
     /**
      * Returns a <I>Channel</I> that generates connections to the
      * endpoint <I>ep</I>. A Channel is an object that creates and
@@ -88,8 +88,8 @@ public abstract class Transport {
      * Export the object so that it can accept incoming calls.
      */
     public void exportObject(Target target) throws RemoteException {
-        target.setExportedTransport(this);
-        ObjectTable.putTarget(target);
+	target.setExportedTransport(this);
+	ObjectTable.putTarget(target);
     }
 
     /**
@@ -104,9 +104,9 @@ public abstract class Transport {
      * returns null.
      **/
     static Transport currentTransport() {
-        return (Transport) currentTransport.get();
+	return (Transport) currentTransport.get();
     }
-
+    
     /**
      * Verify that the current access control context has permission to accept
      * the connection being dispatched by the current thread.  The current
@@ -133,103 +133,103 @@ public abstract class Transport {
      * connection.
      */
     public boolean serviceCall(final RemoteCall call) {
-        try {
-            /* read object id */
-            final Remote impl;
-            ObjID id;
+	try {
+	    /* read object id */
+	    final Remote impl;
+	    ObjID id;
 
-            try {
-                id = ObjID.read(call.getInputStream());
-            } catch (java.io.IOException e) {
-                throw new MarshalException("unable to read objID", e);
-            }
+	    try {
+		id = ObjID.read(call.getInputStream());
+	    } catch (java.io.IOException e) {
+		throw new MarshalException("unable to read objID", e);
+	    }
+	    
+	    /* get the remote object */
+	    Transport transport = id.equals(dgcID) ? null : this;
+	    Target target =
+		ObjectTable.getTarget(new ObjectEndpoint(id, transport));
+				      
+	    if (target == null || (impl = target.getImpl()) == null) {
+		throw new NoSuchObjectException("no such object in table");
+	    }
 
-            /* get the remote object */
-            Transport transport = id.equals(dgcID) ? null : this;
-            Target target =
-                ObjectTable.getTarget(new ObjectEndpoint(id, transport));
+	    final Dispatcher disp = target.getDispatcher();
+	    target.incrementCallCount();
+	    try {
+		/* call the dispatcher */
+		transportLog.log(Log.VERBOSE, "call dispatcher");
 
-            if (target == null || (impl = target.getImpl()) == null) {
-                throw new NoSuchObjectException("no such object in table");
-            }
+		final AccessControlContext acc = 
+		    target.getAccessControlContext();
+		ClassLoader ccl = target.getContextClassLoader();
 
-            final Dispatcher disp = target.getDispatcher();
-            target.incrementCallCount();
-            try {
-                /* call the dispatcher */
-                transportLog.log(Log.VERBOSE, "call dispatcher");
+		Thread t = Thread.currentThread();
+		ClassLoader savedCcl = t.getContextClassLoader();
 
-                final AccessControlContext acc =
-                    target.getAccessControlContext();
-                ClassLoader ccl = target.getContextClassLoader();
+		try {
+		    t.setContextClassLoader(ccl);
+		    currentTransport.set(this);
+		    try {
+			java.security.AccessController.doPrivileged(
+				new java.security.PrivilegedExceptionAction() {
+			    public Object run() throws IOException {
+				checkAcceptPermission(acc);
+				disp.dispatch(impl, call);
+				return null;
+			    }
+			}, acc);
+		    } catch (java.security.PrivilegedActionException pae) {
+			throw (IOException) pae.getException();
+		    }
+		} finally {
+		    t.setContextClassLoader(savedCcl);
+		    currentTransport.set(null);
+		}
 
-                Thread t = Thread.currentThread();
-                ClassLoader savedCcl = t.getContextClassLoader();
+	    } catch (IOException ex) {
+		transportLog.log(Log.BRIEF,
+				 "exception thrown by dispatcher: ", ex);
+		return false;
+	    } finally {
+		target.decrementCallCount();
+	    }
 
-                try {
-                    t.setContextClassLoader(ccl);
-                    currentTransport.set(this);
-                    try {
-                        java.security.AccessController.doPrivileged(
-                                new java.security.PrivilegedExceptionAction() {
-                            public Object run() throws IOException {
-                                checkAcceptPermission(acc);
-                                disp.dispatch(impl, call);
-                                return null;
-                            }
-                        }, acc);
-                    } catch (java.security.PrivilegedActionException pae) {
-                        throw (IOException) pae.getException();
-                    }
-                } finally {
-                    t.setContextClassLoader(savedCcl);
-                    currentTransport.set(null);
-                }
+	} catch (RemoteException e) {
+	    
+	    // if calls are being logged, write out exception
+	    if (UnicastServerRef.callLog.isLoggable(Log.BRIEF)) {
+		// include client host name if possible
+		String clientHost = "";
+		try {
+		    clientHost = "[" +
+			RemoteServer.getClientHost() + "] ";
+		} catch (ServerNotActiveException ex) {
+		}
+		String message = clientHost + "exception: ";
+		UnicastServerRef.callLog.log(Log.BRIEF, message, e);
+	    }
 
-            } catch (IOException ex) {
-                transportLog.log(Log.BRIEF,
-                                 "exception thrown by dispatcher: ", ex);
-                return false;
-            } finally {
-                target.decrementCallCount();
-            }
+	    /* We will get a RemoteException if either a) the objID is
+	     * not readable, b) the target is not in the object table, or
+	     * c) the object is in the midst of being unexported (note:
+	     * NoSuchObjectException is thrown by the incrementCallCount
+	     * method if the object is being unexported).  Here it is
+	     * relatively safe to marshal an exception to the client
+	     * since the client will not have seen a return value yet.
+	     */
+	    try {
+		ObjectOutput out = call.getResultStream(false);
+		UnicastServerRef.clearStackTraces(e);
+		out.writeObject(e);
+		call.releaseOutputStream();
+		
+	    } catch (IOException ie) {
+		transportLog.log(Log.BRIEF,
+		    "exception thrown marshalling exception: ", ie);
+		return false;
+	    }
+	}
 
-        } catch (RemoteException e) {
-
-            // if calls are being logged, write out exception
-            if (UnicastServerRef.callLog.isLoggable(Log.BRIEF)) {
-                // include client host name if possible
-                String clientHost = "";
-                try {
-                    clientHost = "[" +
-                        RemoteServer.getClientHost() + "] ";
-                } catch (ServerNotActiveException ex) {
-                }
-                String message = clientHost + "exception: ";
-                UnicastServerRef.callLog.log(Log.BRIEF, message, e);
-            }
-
-            /* We will get a RemoteException if either a) the objID is
-             * not readable, b) the target is not in the object table, or
-             * c) the object is in the midst of being unexported (note:
-             * NoSuchObjectException is thrown by the incrementCallCount
-             * method if the object is being unexported).  Here it is
-             * relatively safe to marshal an exception to the client
-             * since the client will not have seen a return value yet.
-             */
-            try {
-                ObjectOutput out = call.getResultStream(false);
-                UnicastServerRef.clearStackTraces(e);
-                out.writeObject(e);
-                call.releaseOutputStream();
-
-            } catch (IOException ie) {
-                transportLog.log(Log.BRIEF,
-                    "exception thrown marshalling exception: ", ie);
-                return false;
-            }
-        }
-
-        return true;
+	return true;
     }
 }

@@ -31,7 +31,7 @@
 /**
  * This SourceDebugExtension code does not
  * allow concurrent translation - due to caching method.
- * A separate thread setting the default stratum ID
+ * A separate thread setting the default stratum ID 
  * is, however, fine.
  */
 
@@ -94,8 +94,8 @@ private int defaultStratumIndex;
 private int baseStratumIndex;
 private char* sdePos;
 
-private char* jplsFilename = null;
-private char* NullString = null;
+private char* jplsFilename = null; 
+private char* NullString = null; 
 
 /* mangled in parse, cannot be parsed.  Must be kept. */
 private String sourceDebugExtension;
@@ -125,7 +125,7 @@ private jboolean isValid(void);
             if ( sourceDebugExtension!=null ) {
                 jvmtiDeallocate(sourceDebugExtension);
             }
-            sourceDebugExtension = null;
+            sourceDebugExtension = null; 
 
             /* Init info */
             lineTable = null;
@@ -192,11 +192,11 @@ private jboolean isValid(void);
      * Return 1 if p1 is a SourceName for stratum sti,
      * else, return 0.
      */
-    private int
+    private int 
     searchOneSourceName(int sti, char *p1) {
         int fileIndexStart = stratumTable[sti].fileIndex;
         /* one past end */
-        int fileIndexEnd = stratumTable[sti+1].fileIndex;
+        int fileIndexEnd = stratumTable[sti+1].fileIndex; 
         int ii;
         for (ii = fileIndexStart; ii < fileIndexEnd; ++ii) {
             if (patternMatch(fileTable[ii].sourceName, p1)) {
@@ -210,7 +210,7 @@ private jboolean isValid(void);
      * Return 1 if p1 is a SourceName for any stratum
      * else, return 0.
      */
-    int searchAllSourceNames(JNIEnv *env,
+    int searchAllSourceNames(JNIEnv *env, 
                              jclass clazz,
                              char *p1) {
         int ii;
@@ -232,12 +232,12 @@ private jboolean isValid(void);
      * function GetLineNumberTable, to one for another stratum.
      * Conversion is by overwrite.
      * Actual line numbers are not returned - just a unique
-     * number (file ID in top 16 bits, line number in
+     * number (file ID in top 16 bits, line number in 
      * bottom 16 bits) - this is all stepping needs.
      */
     void
     convertLineNumberTable(JNIEnv *env, jclass clazz,
-                           jint *entryCountPtr,
+                           jint *entryCountPtr, 
                            jvmtiLineNumberEntry **tablePtr) {
         jvmtiLineNumberEntry *fromEntry = *tablePtr;
         jvmtiLineNumberEntry *toEntry = *tablePtr;
@@ -285,7 +285,7 @@ private jboolean isValid(void);
     private void syntax(String msg) {
         char buf[200];
         (void)snprintf(buf, sizeof(buf),
-                "bad SourceDebugExtension syntax - position %d - %s\n",
+                "bad SourceDebugExtension syntax - position %d - %s\n", 
                 /*LINTED*/
                 (int)(sdePos-sourceDebugExtension),
                 msg);
@@ -327,7 +327,7 @@ private jboolean isValid(void);
                 EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY, "SDE line table");
             }
             if ( lineTable!=NULL ) {
-                (void)memcpy(new_lineTable, lineTable,
+                (void)memcpy(new_lineTable, lineTable, 
                         lineTableSize * (int)sizeof(LineTableRecord));
                 jvmtiDeallocate(lineTable);
             }
@@ -351,7 +351,7 @@ private jboolean isValid(void);
                 EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY, "SDE file table");
             }
             if ( fileTable!=NULL ) {
-                (void)memcpy(new_fileTable, fileTable,
+                (void)memcpy(new_fileTable, fileTable, 
                         fileTableSize * (int)sizeof(FileTableRecord));
                 jvmtiDeallocate(fileTable);
             }
@@ -408,11 +408,11 @@ private jboolean isValid(void);
 
     private int defaultStratumTableIndex(void) {
         if ((defaultStratumIndex == -1) && (defaultStratumId != null)) {
-            defaultStratumIndex =
+            defaultStratumIndex = 
                 stratumTableIndex(defaultStratumId);
         }
         return defaultStratumIndex;
-    }
+    }   
 
     private int stratumTableIndex(String stratumId) {
         int i;
@@ -426,12 +426,12 @@ private jboolean isValid(void);
             }
         }
         return defaultStratumTableIndex();
-    }
+    }   
 
 
 /*****************************
  * below functions/methods are written to compile under either Java or C
- *
+ * 
  * Needed support functions:
  *   sdePeek()
  *   sdeRead()
@@ -472,7 +472,7 @@ private jboolean isValid(void);
         do {
            ch = sdeRead();
         } while ((ch != '\n') && (ch != '\r'));
-
+        
         /* check for CR LF */
         if ((ch == '\r') && (sdePeek() == '\n')) {
             sdeAdvance();
@@ -520,7 +520,7 @@ private jboolean isValid(void);
         storeFile(fileId, sourceName, sourcePath);
     }
 
-    private void storeLine(int jplsStart, int jplsEnd, int jplsLineInc,
+    private void storeLine(int jplsStart, int jplsEnd, int jplsLineInc, 
                   int njplsStart, int njplsEnd, int fileId) {
         assureLineTableSize();
         lineTable[lineIndex].jplsStart = jplsStart;
@@ -534,7 +534,7 @@ private jboolean isValid(void);
 
     /**
      * Parse line translation info.  Syntax is
-     *     <NJ-start-line> [ # <file-id> ] [ , <line-count> ] :
+     *     <NJ-start-line> [ # <file-id> ] [ , <line-count> ] : 
      *                 <J-start-line> [ , <line-increment> ] CR
      */
     private void lineLine(void) {
@@ -566,7 +566,7 @@ private jboolean isValid(void);
             lineIncrement = readNumber();
         }
         ignoreLine(); /* flush the rest */
-
+        
         storeLine(jplsStart,
                   jplsStart + (lineCount * lineIncrement) -1,
                   lineIncrement,
@@ -582,9 +582,9 @@ private jboolean isValid(void);
     private void storeStratum(String stratumId) {
         /* remove redundant strata */
         if (stratumIndex > 0) {
-            if ((stratumTable[stratumIndex-1].fileIndex
+            if ((stratumTable[stratumIndex-1].fileIndex 
                                             == fileIndex) &&
-                (stratumTable[stratumIndex-1].lineIndex
+                (stratumTable[stratumIndex-1].lineIndex 
                                             == lineIndex)) {
                 /* nothing changed overwrite it */
                 --stratumIndex;
@@ -666,18 +666,18 @@ private jboolean isValid(void);
                 syntax("expected '*'");
             }
             switch (sdeRead()) {
-                case 'S':
+                case 'S': 
                     stratumSection();
                     break;
-                case 'F':
+                case 'F': 
                     fileSection();
                     break;
-                case 'L':
+                case 'L': 
                     lineSection();
                     break;
-                case 'E':
+                case 'E': 
                     /* set end points */
-                    storeStratum("*terminator*");
+                    storeStratum("*terminator*"); 
                     sourceMapIsValid = true;
                     return;
                 default:
@@ -695,7 +695,7 @@ private jboolean isValid(void);
 
         lineIndexStart = stratumTable[sti].lineIndex;
         /* one past end */
-        lineIndexEnd = stratumTable[sti+1].lineIndex;
+        lineIndexEnd = stratumTable[sti+1].lineIndex; 
         for (i = lineIndexStart; i < lineIndexEnd; ++i) {
             if ((jplsLine >= lineTable[i].jplsStart) &&
                             (jplsLine <= lineTable[i].jplsEnd)) {
@@ -706,8 +706,8 @@ private jboolean isValid(void);
     }
 
     private int stiLineNumber(int sti, int lti, int jplsLine) {
-        return lineTable[lti].njplsStart +
-                (((jplsLine - lineTable[lti].jplsStart) /
+        return lineTable[lti].njplsStart + 
+                (((jplsLine - lineTable[lti].jplsStart) / 
                                    lineTable[lti].jplsLineInc));
     }
 
@@ -715,7 +715,7 @@ private jboolean isValid(void);
         int i;
         int fileIndexStart = stratumTable[sti].fileIndex;
         /* one past end */
-        int fileIndexEnd = stratumTable[sti+1].fileIndex;
+        int fileIndexEnd = stratumTable[sti+1].fileIndex; 
         for (i = fileIndexStart; i < fileIndexEnd; ++i) {
             if (fileTable[i].fileId == fileId) {
                 return i;

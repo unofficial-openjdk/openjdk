@@ -33,7 +33,7 @@ import java.security.spec.AlgorithmParameterSpec;
  * encryption (PBE), as defined in the
  * <a href="http://www.ietf.org/rfc/rfc2898.txt">PKCS #5</a>
  * standard.
- *
+ * 
  * @author Jan Luehe
  *
  * @since 1.4
@@ -47,14 +47,14 @@ public class PBEParameterSpec implements AlgorithmParameterSpec {
      * Constructs a parameter set for password-based encryption as defined in
      * the PKCS #5 standard.
      *
-     * @param salt the salt. The contents of <code>salt</code> are copied
+     * @param salt the salt. The contents of <code>salt</code> are copied 
      * to protect against subsequent modification.
      * @param iterationCount the iteration count.
      * @exception NullPointerException if <code>salt</code> is null.
      */
     public PBEParameterSpec(byte[] salt, int iterationCount) {
-        this.salt = (byte[])salt.clone();
-        this.iterationCount = iterationCount;
+	this.salt = (byte[])salt.clone();
+	this.iterationCount = iterationCount;
     }
 
     /**
@@ -64,7 +64,7 @@ public class PBEParameterSpec implements AlgorithmParameterSpec {
      * each time this method is called.
      */
     public byte[] getSalt() {
-        return (byte[])this.salt.clone();
+	return (byte[])this.salt.clone();
     }
 
     /**
@@ -73,6 +73,6 @@ public class PBEParameterSpec implements AlgorithmParameterSpec {
      * @return the iteration count
      */
     public int getIterationCount() {
-        return this.iterationCount;
+	return this.iterationCount;
     }
 }

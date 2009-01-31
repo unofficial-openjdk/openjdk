@@ -31,6 +31,7 @@ import sun.nio.cs.ext.TIS_620;
  * Tables and data to convert Unicode to TIS620
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteTIS620 extends CharToByteSingleByte {

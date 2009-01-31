@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,29 +29,29 @@ public final class ShutdownGracefully_Stub
     implements RegisteringActivatable, java.rmi.Remote
 {
     private static final long serialVersionUID = 2;
-
+    
     private static java.lang.reflect.Method $method_shutdown_0;
-
+    
     static {
-        try {
-            $method_shutdown_0 = RegisteringActivatable.class.getMethod("shutdown", new java.lang.Class[] {});
-        } catch (java.lang.NoSuchMethodException e) {
-            throw new java.lang.NoSuchMethodError(
-                "stub class initialization failed");
-        }
+	try {
+	    $method_shutdown_0 = RegisteringActivatable.class.getMethod("shutdown", new java.lang.Class[] {});
+	} catch (java.lang.NoSuchMethodException e) {
+	    throw new java.lang.NoSuchMethodError(
+		"stub class initialization failed");
+	}
     }
-
+    
     // constructors
     public ShutdownGracefully_Stub(java.rmi.server.RemoteRef ref) {
-        super(ref);
+	super(ref);
     }
-
+    
     // methods from remote interfaces
-
+    
     // implementation of shutdown()
     public void shutdown()
-        throws java.lang.Exception
+	throws java.lang.Exception
     {
-        ref.invoke(this, $method_shutdown_0, null, -7207851917985848402L);
+	ref.invoke(this, $method_shutdown_0, null, -7207851917985848402L);
     }
 }

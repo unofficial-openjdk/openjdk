@@ -40,5 +40,5 @@ public class DoubleTypeImpl extends PrimitiveTypeImpl implements DoubleType {
     PrimitiveValue convert(PrimitiveValue value) throws InvalidTypeException {
         return vm.mirrorOf(((PrimitiveValueImpl)value).checkedDoubleValue());
     }
-
+    
 }

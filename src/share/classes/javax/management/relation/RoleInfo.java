@@ -99,20 +99,20 @@ public class RoleInfo implements Serializable {
     private static final ObjectStreamField[] serialPersistentFields;
     private static boolean compat = false;
     static {
-        try {
-            GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
-            String form = AccessController.doPrivileged(act);
-            compat = (form != null && form.equals("1.0"));
-        } catch (Exception e) {
-            // OK : Too bad, no compat with 1.0
-        }
-        if (compat) {
-            serialPersistentFields = oldSerialPersistentFields;
-            serialVersionUID = oldSerialVersionUID;
-        } else {
-            serialPersistentFields = newSerialPersistentFields;
-            serialVersionUID = newSerialVersionUID;
-        }
+	try {
+	    GetPropertyAction act = new GetPropertyAction("jmx.serial.form");
+	    String form = AccessController.doPrivileged(act);
+	    compat = (form != null && form.equals("1.0"));
+	} catch (Exception e) {
+	    // OK : Too bad, no compat with 1.0
+	}
+	if (compat) {
+	    serialPersistentFields = oldSerialPersistentFields;
+	    serialVersionUID = oldSerialVersionUID;
+	} else {
+	    serialPersistentFields = newSerialPersistentFields;
+	    serialVersionUID = newSerialVersionUID;
+	}
     }
     //
     // END Serialization compatibility stuff
@@ -201,25 +201,25 @@ public class RoleInfo implements Serializable {
      * is not a MBean class.
      */
     public RoleInfo(String roleName,
-                    String mbeanClassName,
-                    boolean read,
-                    boolean write,
-                    int min,
-                    int max,
-                    String descr)
+		    String mbeanClassName,
+		    boolean read,
+		    boolean write,
+		    int min,
+		    int max,
+		    String descr)
     throws IllegalArgumentException,
-           InvalidRoleInfoException,
+	   InvalidRoleInfoException,
            ClassNotFoundException,
            NotCompliantMBeanException {
 
-        init(roleName,
-             mbeanClassName,
-             read,
-             write,
-             min,
-             max,
-             descr);
-        return;
+	init(roleName,
+	     mbeanClassName,
+	     read,
+	     write,
+	     min,
+	     max,
+	     descr);
+	return;
     }
 
     /**
@@ -247,27 +247,27 @@ public class RoleInfo implements Serializable {
      * declaration of this class for compatibility with existing code.
      */
     public RoleInfo(String roleName,
-                    String mbeanClassName,
-                    boolean read,
-                    boolean write)
+		    String mbeanClassName,
+		    boolean read,
+		    boolean write)
     throws IllegalArgumentException,
-           ClassNotFoundException,
+	   ClassNotFoundException,
            NotCompliantMBeanException {
 
-        try {
-            init(roleName,
-                 mbeanClassName,
-                 read,
-                 write,
-                 1,
-                 1,
-                 null);
-        } catch (InvalidRoleInfoException exc) {
-            // OK : Can never happen as the minimum
-            //      degree equals the maximum degree.
-        }
+	try {
+	    init(roleName,
+		 mbeanClassName,
+		 read,
+		 write,
+		 1,
+		 1,
+		 null);
+	} catch (InvalidRoleInfoException exc) {
+	    // OK : Can never happen as the minimum
+	    //      degree equals the maximum degree.
+	}
 
-        return;
+	return;
     }
 
     /**
@@ -292,25 +292,25 @@ public class RoleInfo implements Serializable {
      * declaration of this class for compatibility with existing code.
       */
     public RoleInfo(String roleName,
-                    String mbeanClassName)
+		    String mbeanClassName)
     throws IllegalArgumentException,
-           ClassNotFoundException,
+	   ClassNotFoundException,
            NotCompliantMBeanException {
 
-        try {
-            init(roleName,
-                 mbeanClassName,
-                 true,
-                 true,
-                 1,
-                 1,
-                 null);
-        } catch (InvalidRoleInfoException exc) {
-            // OK : Can never happen as the minimum
-            //      degree equals the maximum degree.
-        }
+	try {
+	    init(roleName,
+		 mbeanClassName,
+		 true,
+		 true,
+		 1,
+		 1,
+		 null);
+	} catch (InvalidRoleInfoException exc) {
+	    // OK : Can never happen as the minimum
+	    //      degree equals the maximum degree.
+	}
 
-        return;
+	return;
     }
 
     /**
@@ -321,27 +321,27 @@ public class RoleInfo implements Serializable {
      * @exception IllegalArgumentException  if null parameter
      */
     public RoleInfo(RoleInfo roleInfo)
-        throws IllegalArgumentException {
+	throws IllegalArgumentException {
 
-        if (roleInfo == null) {
-            // Revisit [cebro] Localize message
-            String excMsg = "Invalid parameter.";
-            throw new IllegalArgumentException(excMsg);
-        }
+	if (roleInfo == null) {
+	    // Revisit [cebro] Localize message
+	    String excMsg = "Invalid parameter.";
+	    throw new IllegalArgumentException(excMsg);
+	}
 
-        try {
-            init(roleInfo.getName(),
-                 roleInfo.getRefMBeanClassName(),
-                 roleInfo.isReadable(),
-                 roleInfo.isWritable(),
-                 roleInfo.getMinDegree(),
-                 roleInfo.getMaxDegree(),
-                 roleInfo.getDescription());
-        } catch (InvalidRoleInfoException exc3) {
-            // OK : Can never happen as the minimum degree and the maximum
-            //      degree were already checked at the time the roleInfo
-            //      instance was created.
-        }
+	try {
+	    init(roleInfo.getName(),
+		 roleInfo.getRefMBeanClassName(),
+		 roleInfo.isReadable(),
+		 roleInfo.isWritable(),
+		 roleInfo.getMinDegree(),
+		 roleInfo.getMaxDegree(),
+		 roleInfo.getDescription());
+	} catch (InvalidRoleInfoException exc3) {
+	    // OK : Can never happen as the minimum degree and the maximum
+	    //      degree were already checked at the time the roleInfo
+	    //      instance was created.
+	}
     }
 
     //
@@ -354,7 +354,7 @@ public class RoleInfo implements Serializable {
      * @return the name of the role.
      */
     public String getName() {
-        return name;
+	return name;
     }
 
     /**
@@ -363,7 +363,7 @@ public class RoleInfo implements Serializable {
      * @return true if the role is readable.
      */
     public boolean isReadable() {
-        return isReadable;
+	return isReadable;
     }
 
     /**
@@ -372,7 +372,7 @@ public class RoleInfo implements Serializable {
      * @return true if the role is writable.
      */
     public boolean isWritable() {
-        return isWritable;
+	return isWritable;
     }
 
     /**
@@ -381,7 +381,7 @@ public class RoleInfo implements Serializable {
      * @return the description of the role.
      */
     public String getDescription() {
-        return description;
+	return description;
     }
 
     /**
@@ -390,7 +390,7 @@ public class RoleInfo implements Serializable {
      * @return the minimum degree.
      */
     public int getMinDegree() {
-        return minDegree;
+	return minDegree;
     }
 
     /**
@@ -399,7 +399,7 @@ public class RoleInfo implements Serializable {
      * @return the maximum degree.
      */
     public int getMaxDegree() {
-        return maxDegree;
+	return maxDegree;
     }
 
     /**
@@ -409,7 +409,7 @@ public class RoleInfo implements Serializable {
      * @return the name of the referenced type.
      */
     public String getRefMBeanClassName() {
-        return referencedMBeanClassName;
+	return referencedMBeanClassName;
     }
 
     /**
@@ -421,13 +421,13 @@ public class RoleInfo implements Serializable {
      * @return true if greater than or equal to minimum degree, false otherwise.
      */
     public boolean checkMinDegree(int value) {
-        if (value >= ROLE_CARDINALITY_INFINITY &&
-            (minDegree == ROLE_CARDINALITY_INFINITY
-             || value >= minDegree)) {
-            return true;
-        } else {
-            return false;
-        }
+	if (value >= ROLE_CARDINALITY_INFINITY &&
+	    (minDegree == ROLE_CARDINALITY_INFINITY
+	     || value >= minDegree)) {
+	    return true;
+	} else {
+	    return false;
+	}
     }
 
     /**
@@ -439,14 +439,14 @@ public class RoleInfo implements Serializable {
      * @return true if lower than or equal to maximum degree, false otherwise.
      */
     public boolean checkMaxDegree(int value) {
-        if (value >= ROLE_CARDINALITY_INFINITY &&
-            (maxDegree == ROLE_CARDINALITY_INFINITY ||
-             (value != ROLE_CARDINALITY_INFINITY &&
-              value <= maxDegree))) {
-            return true;
-        } else {
-            return false;
-        }
+	if (value >= ROLE_CARDINALITY_INFINITY &&
+	    (maxDegree == ROLE_CARDINALITY_INFINITY ||
+	     (value != ROLE_CARDINALITY_INFINITY &&
+	      value <= maxDegree))) {
+	    return true;
+	} else {
+	    return false;
+	}
     }
 
     /**
@@ -455,15 +455,15 @@ public class RoleInfo implements Serializable {
      * @return a description of the role info.
      */
     public String toString() {
-        StringBuilder result = new StringBuilder();
-        result.append("role info name: " + name);
-        result.append("; isReadable: " + isReadable);
-        result.append("; isWritable: " + isWritable);
-        result.append("; description: " + description);
-        result.append("; minimum degree: " + minDegree);
-        result.append("; maximum degree: " + maxDegree);
-        result.append("; MBean class: " + referencedMBeanClassName);
-        return result.toString();
+	StringBuilder result = new StringBuilder();
+	result.append("role info name: " + name);
+	result.append("; isReadable: " + isReadable);
+	result.append("; isWritable: " + isWritable);
+	result.append("; description: " + description);
+	result.append("; minimum degree: " + minDegree);
+	result.append("; maximum degree: " + maxDegree);
+	result.append("; MBean class: " + referencedMBeanClassName);
+	return result.toString();
     }
 
     //
@@ -472,100 +472,100 @@ public class RoleInfo implements Serializable {
 
     // Initialization
     private void init(String roleName,
-                      String mbeanClassName,
-                      boolean read,
-                      boolean write,
-                      int min,
-                      int max,
-                      String descr)
-            throws IllegalArgumentException,
-                   InvalidRoleInfoException {
+		      String mbeanClassName,
+		      boolean read,
+		      boolean write,
+		      int min,
+		      int max,
+		      String descr)
+	    throws IllegalArgumentException,
+		   InvalidRoleInfoException {
 
-        if (roleName == null ||
-            mbeanClassName == null) {
-            // Revisit [cebro] Localize message
-            String excMsg = "Invalid parameter.";
-            throw new IllegalArgumentException(excMsg);
-        }
+	if (roleName == null ||
+	    mbeanClassName == null) {
+	    // Revisit [cebro] Localize message
+	    String excMsg = "Invalid parameter.";
+	    throw new IllegalArgumentException(excMsg);
+	}
 
-        name = roleName;
-        isReadable = read;
-        isWritable = write;
-        if (descr != null) {
-            description = descr;
-        }
+	name = roleName;
+	isReadable = read;
+	isWritable = write;
+	if (descr != null) {
+	    description = descr;
+	}
 
-        boolean invalidRoleInfoFlg = false;
-        StringBuilder excMsgStrB = new StringBuilder();
-        if (max != ROLE_CARDINALITY_INFINITY &&
-            (min == ROLE_CARDINALITY_INFINITY ||
-             min > max)) {
-            // Revisit [cebro] Localize message
-            excMsgStrB.append("Minimum degree ");
-            excMsgStrB.append(min);
-            excMsgStrB.append(" is greater than maximum degree ");
-            excMsgStrB.append(max);
-            invalidRoleInfoFlg = true;
+	boolean invalidRoleInfoFlg = false;
+	StringBuilder excMsgStrB = new StringBuilder();
+	if (max != ROLE_CARDINALITY_INFINITY &&
+	    (min == ROLE_CARDINALITY_INFINITY ||
+	     min > max)) {
+	    // Revisit [cebro] Localize message
+	    excMsgStrB.append("Minimum degree ");
+	    excMsgStrB.append(min);
+	    excMsgStrB.append(" is greater than maximum degree ");
+	    excMsgStrB.append(max);
+	    invalidRoleInfoFlg = true;
 
-        } else if (min < ROLE_CARDINALITY_INFINITY ||
-                   max < ROLE_CARDINALITY_INFINITY) {
-            // Revisit [cebro] Localize message
-            excMsgStrB.append("Minimum or maximum degree has an illegal value, must be [0, ROLE_CARDINALITY_INFINITY].");
-            invalidRoleInfoFlg = true;
-        }
-        if (invalidRoleInfoFlg) {
-            throw new InvalidRoleInfoException(excMsgStrB.toString());
-        }
-        minDegree = min;
-        maxDegree = max;
+	} else if (min < ROLE_CARDINALITY_INFINITY ||
+		   max < ROLE_CARDINALITY_INFINITY) {
+	    // Revisit [cebro] Localize message
+	    excMsgStrB.append("Minimum or maximum degree has an illegal value, must be [0, ROLE_CARDINALITY_INFINITY].");
+	    invalidRoleInfoFlg = true;
+	}
+	if (invalidRoleInfoFlg) {
+	    throw new InvalidRoleInfoException(excMsgStrB.toString());
+	}
+	minDegree = min;
+	maxDegree = max;
 
         referencedMBeanClassName = mbeanClassName;
 
-        return;
+	return;
     }
 
     /**
      * Deserializes a {@link RoleInfo} from an {@link ObjectInputStream}.
      */
     private void readObject(ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+	    throws IOException, ClassNotFoundException {
       if (compat)
       {
         // Read an object serialized in the old serial form
         //
         ObjectInputStream.GetField fields = in.readFields();
-        name = (String) fields.get("myName", null);
-        if (fields.defaulted("myName"))
+	name = (String) fields.get("myName", null);
+	if (fields.defaulted("myName"))
         {
           throw new NullPointerException("myName");
         }
-        isReadable = fields.get("myIsReadableFlg", false);
-        if (fields.defaulted("myIsReadableFlg"))
+	isReadable = fields.get("myIsReadableFlg", false);
+	if (fields.defaulted("myIsReadableFlg"))
         {
           throw new NullPointerException("myIsReadableFlg");
         }
-        isWritable = fields.get("myIsWritableFlg", false);
-        if (fields.defaulted("myIsWritableFlg"))
+	isWritable = fields.get("myIsWritableFlg", false);
+	if (fields.defaulted("myIsWritableFlg"))
         {
           throw new NullPointerException("myIsWritableFlg");
         }
-        description = (String) fields.get("myDescription", null);
-        if (fields.defaulted("myDescription"))
+	description = (String) fields.get("myDescription", null);
+	if (fields.defaulted("myDescription"))
         {
           throw new NullPointerException("myDescription");
         }
-        minDegree = fields.get("myMinDegree", 0);
-        if (fields.defaulted("myMinDegree"))
+	minDegree = fields.get("myMinDegree", 0);
+	if (fields.defaulted("myMinDegree"))
         {
           throw new NullPointerException("myMinDegree");
         }
-        maxDegree = fields.get("myMaxDegree", 0);
-        if (fields.defaulted("myMaxDegree"))
+	maxDegree = fields.get("myMaxDegree", 0);
+	if (fields.defaulted("myMaxDegree"))
         {
           throw new NullPointerException("myMaxDegree");
         }
-        referencedMBeanClassName = (String) fields.get("myRefMBeanClassName", null);
-        if (fields.defaulted("myRefMBeanClassName"))
+	referencedMBeanClassName = (String) fields.get("myRefMBeanClassName", null);
+	if (fields.defaulted("myRefMBeanClassName"))
         {
           throw new NullPointerException("myRefMBeanClassName");
         }
@@ -583,20 +583,20 @@ public class RoleInfo implements Serializable {
      * Serializes a {@link RoleInfo} to an {@link ObjectOutputStream}.
      */
     private void writeObject(ObjectOutputStream out)
-            throws IOException {
+	    throws IOException {
       if (compat)
       {
         // Serializes this instance in the old serial form
         //
         ObjectOutputStream.PutField fields = out.putFields();
-        fields.put("myName", name);
-        fields.put("myIsReadableFlg", isReadable);
-        fields.put("myIsWritableFlg", isWritable);
-        fields.put("myDescription", description);
-        fields.put("myMinDegree", minDegree);
-        fields.put("myMaxDegree", maxDegree);
-        fields.put("myRefMBeanClassName", referencedMBeanClassName);
-        out.writeFields();
+	fields.put("myName", name);
+	fields.put("myIsReadableFlg", isReadable);
+	fields.put("myIsWritableFlg", isWritable);
+	fields.put("myDescription", description);
+	fields.put("myMinDegree", minDegree);
+	fields.put("myMaxDegree", maxDegree);
+	fields.put("myRefMBeanClassName", referencedMBeanClassName);
+	out.writeFields();
       }
       else
       {

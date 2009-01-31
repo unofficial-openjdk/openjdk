@@ -25,6 +25,7 @@
 
 
 #
+#  @(#)RedefineSetUp.sh FIXME
 #
 
 if [ "${TESTSRC}" = "" ]

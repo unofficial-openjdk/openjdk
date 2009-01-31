@@ -51,7 +51,7 @@ public class CheckSealed {
     private static void test1() {
         p.A.hello();
     }
-
+    
     private static void test2() {
         p.B.hello();
     }

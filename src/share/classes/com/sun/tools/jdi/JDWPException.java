@@ -31,7 +31,7 @@ class JDWPException extends Exception {
     short errorCode;
 
     JDWPException(short errorCode) {
-        super();
+	super();
         this.errorCode = errorCode;
     }
 
@@ -55,14 +55,14 @@ class JDWPException extends Exception {
             case JDWP.Error.NOT_IMPLEMENTED:
                 return new UnsupportedOperationException();
             case JDWP.Error.INVALID_INDEX:
-            case JDWP.Error.INVALID_LENGTH:
+            case JDWP.Error.INVALID_LENGTH: 
                 return new IndexOutOfBoundsException();
             case JDWP.Error.TYPE_MISMATCH:
                 return new InconsistentDebugInfoException();
             case JDWP.Error.INVALID_THREAD:
                 return new IllegalThreadStateException();
             default:
-                return new InternalException("Unexpected JDWP Error: " + errorCode, errorCode);
+                return new InternalException("Unexpected JDWP Error: " + errorCode, errorCode); 
         }
     }
 }

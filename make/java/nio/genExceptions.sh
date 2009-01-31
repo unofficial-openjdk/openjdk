@@ -32,18 +32,21 @@ DST=$2
 gen() {
   ID=$1
   WHAT=$2
-  SVUID=$3 
-  ARG_TYPE=$4
-  ARG_ID=$5
-  ARG_PROP=$6
-  ARG_PHRASE=$7
+  ARG_TYPE=$3
+  ARG_ID=$4
+  ARG_PROP=$5
+  ARG_PHRASE=$6
   ARG_PARAM="$ARG_TYPE$ $ARG_ID"
   echo '-->' $DST/$ID.java
   out=$DST/${ID}.java
 
-  $SHELL addNotices.sh "$COPYRIGHT_YEARS" > $out
-
-cat >>$out <<__END__
+  cat >$out <<__END__
+/*
+ * Copyright 2007 by Sun Microsystems, Inc.  All Rights Reserved.
+ * 
+ * This software is the proprietary information of Sun Microsystems, Inc.  
+ * Use is subject to license terms.
+ */
 
 // -- This file was mechanically generated: Do not edit! -- //
 
@@ -59,8 +62,6 @@ public `if [ ${ABSTRACT:-0} = 1 ];
         then echo 'abstract '; fi`class $ID
     extends ${SUPER}
 {
-
-    private static final long serialVersionUID = $SVUID;
 __END__
 
   if [ $ARG_ID ]; then

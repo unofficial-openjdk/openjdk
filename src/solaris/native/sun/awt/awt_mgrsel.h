@@ -34,9 +34,10 @@ extern void awt_mgrsel_init(void);
 extern int awt_mgrsel_processEvent(XEvent *);
 
 extern const Window * awt_mgrsel_select(const char *, long,
-                                        void *,
-                                        void (*)(int, XEvent *, void *),
-                                        void (*)(int, Window, long *, void *));
+					void *,
+					void (*)(int, XEvent *, void *),
+					void (*)(int, Window, long *, void *));
 
 #endif /* !HEADLESS */
 #endif /* _AWT_MGRSEL_H_ */
+

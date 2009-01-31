@@ -34,11 +34,12 @@ import javax.swing.plaf.*;
 /**
  * Provides the Windows look and feel for a password field.
  * The only difference from the standard text field is that
- * the view of the text is simply a string of the echo
- * character as specified in JPasswordField, rather than the
+ * the view of the text is simply a string of the echo 
+ * character as specified in JPasswordField, rather than the 
  * real text contained in the field.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class BasicPasswordFieldUI extends BasicTextFieldUI {
 
@@ -60,7 +61,7 @@ public class BasicPasswordFieldUI extends BasicTextFieldUI {
      * @return the name ("PasswordField")
      */
     protected String getPropertyPrefix() {
-        return "PasswordField";
+	return "PasswordField";
     }
 
 
@@ -84,7 +85,7 @@ public class BasicPasswordFieldUI extends BasicTextFieldUI {
      * @return the view
      */
     public View create(Element elem) {
-        return new PasswordView(elem);
+	return new PasswordView(elem);
     }
 
     /**
@@ -94,15 +95,20 @@ public class BasicPasswordFieldUI extends BasicTextFieldUI {
      */
 
     ActionMap createActionMap() {
-        ActionMap map = super.createActionMap();
-        if (map.get(DefaultEditorKit.selectWordAction) != null) {
-            Action a = map.get(DefaultEditorKit.selectLineAction);
-            if (a != null) {
-                map.remove(DefaultEditorKit.selectWordAction);
-                map.put(DefaultEditorKit.selectWordAction, a);
-            }
-        }
-        return map;
+	ActionMap map = super.createActionMap();
+	if (map.get(DefaultEditorKit.selectWordAction) != null) {
+	    Action a = map.get(DefaultEditorKit.selectLineAction);
+	    if (a != null) {
+		map.remove(DefaultEditorKit.selectWordAction);
+		map.put(DefaultEditorKit.selectWordAction, a);
+	    }
+	}
+	return map;
     }
 
 }
+
+
+
+
+

@@ -31,17 +31,17 @@ import java.io.*;
 
 public class Connect {
     public static void main(String s[]) throws Exception {
-            try {
-                // This file does not exist.
+	    try {
+		// This file does not exist.
                 URL url = new URL("file:azwe.txt");
-                URLConnection urlConnection = url.openConnection();
-                urlConnection.connect();
-                // We reach here in JDK1.2beta3.
-                throw new RuntimeException("No FileNotFoundException thrown.");
-            }
-            catch(MalformedURLException e) {
-            }
-            catch(IOException e) {
-            }
-        }
+		URLConnection urlConnection = url.openConnection();
+		urlConnection.connect();
+		// We reach here in JDK1.2beta3.
+		throw new RuntimeException("No FileNotFoundException thrown.");
+	    }
+	    catch(MalformedURLException e) {
+	    }
+	    catch(IOException e) {
+	    }
+	}
 }

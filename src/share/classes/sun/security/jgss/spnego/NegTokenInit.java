@@ -36,10 +36,10 @@ import sun.security.util.*;
  * as specified in RFC 2478
  *
  * NegTokenInit ::= SEQUENCE {
- *      mechTypes       [0] MechTypeList  OPTIONAL,
- *      reqFlags        [1] ContextFlags  OPTIONAL,
- *      mechToken       [2] OCTET STRING  OPTIONAL,
- *      mechListMIC     [3] OCTET STRING  OPTIONAL
+ *	mechTypes	[0] MechTypeList  OPTIONAL,
+ *	reqFlags	[1] ContextFlags  OPTIONAL,
+ *	mechToken	[2] OCTET STRING  OPTIONAL,
+ *	mechListMIC	[3] OCTET STRING  OPTIONAL
  * }
  *
  * MechTypeList ::= SEQUENCE OF MechType
@@ -47,16 +47,17 @@ import sun.security.util.*;
  * MechType::= OBJECT IDENTIFIER
  *
  * ContextFlags ::= BIT STRING {
- *      delegFlag       (0),
- *      mutualFlag      (1),
- *      replayFlag      (2),
- *      sequenceFlag    (3),
- *      anonFlag        (4),
- *      confFlag        (5),
- *      integFlag       (6)
+ *	delegFlag	(0),
+ *	mutualFlag	(1),
+ *	replayFlag	(2),
+ *	sequenceFlag	(3),
+ *	anonFlag	(4),
+ *	confFlag	(5),
+ *	integFlag	(6)
  * }
  *
  * @author Seema Malkani
+ * @version %I%, %G%
  * @since 1.6
  */
 
@@ -71,184 +72,184 @@ public class NegTokenInit extends SpNegoToken {
     private byte[] mechListMIC = null;
 
     NegTokenInit(byte[] mechTypes, byte[] flags,
-                byte[] token, byte[] mechListMIC)
+		byte[] token, byte[] mechListMIC)
     {
-        super(NEG_TOKEN_INIT_ID);
-        this.mechTypes = mechTypes;
-        this.reqFlags = flags;
-        this.mechToken = token;
-        this.mechListMIC = mechListMIC;
+	super(NEG_TOKEN_INIT_ID);
+	this.mechTypes = mechTypes;
+	this.reqFlags = flags;
+	this.mechToken = token;
+	this.mechListMIC = mechListMIC;
     }
 
     // Used by sun.security.jgss.wrapper.NativeGSSContext
     // to parse SPNEGO tokens
     public NegTokenInit(byte[] in) throws GSSException {
-        super(NEG_TOKEN_INIT_ID);
-        parseToken(in);
+	super(NEG_TOKEN_INIT_ID);
+	parseToken(in);
     }
 
     final byte[] encode() throws GSSException {
-        try {
-            // create negInitToken
-            DerOutputStream initToken = new DerOutputStream();
+	try {
+	    // create negInitToken
+	    DerOutputStream initToken = new DerOutputStream();
 
-            // DER-encoded mechTypes with CONTEXT 00
-            if (mechTypes != null) {
-                initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
-                                                true, (byte) 0x00), mechTypes);
-            }
+	    // DER-encoded mechTypes with CONTEXT 00
+	    if (mechTypes != null) {
+		initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
+						true, (byte) 0x00), mechTypes);
+	    }
 
-            // write context flags with CONTEXT 01
-            if (reqFlags != null) {
-                DerOutputStream flags = new DerOutputStream();
-                flags.putBitString(reqFlags);
-                initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
-                                                true, (byte) 0x01), flags);
-            }
+	    // write context flags with CONTEXT 01
+	    if (reqFlags != null) {
+		DerOutputStream flags = new DerOutputStream();
+	    	flags.putBitString(reqFlags);
+	    	initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
+						true, (byte) 0x01), flags);
+	    }
 
-            // mechToken with CONTEXT 02
-            if (mechToken != null) {
-                DerOutputStream dataValue = new DerOutputStream();
-                dataValue.putOctetString(mechToken);
-                initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
-                                                true, (byte) 0x02), dataValue);
-            }
+	    // mechToken with CONTEXT 02
+	    if (mechToken != null) {
+		DerOutputStream dataValue = new DerOutputStream();
+		dataValue.putOctetString(mechToken);
+		initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
+						true, (byte) 0x02), dataValue);
+	    }
 
-            // mechListMIC with CONTEXT 03
-            if (mechListMIC != null) {
-                if (DEBUG) {
-                    System.out.println("SpNegoToken NegTokenInit: " +
-                                        "sending MechListMIC");
-                }
-                DerOutputStream mic = new DerOutputStream();
-                mic.putOctetString(mechListMIC);
-                initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
-                                                true, (byte) 0x03), mic);
-            }
+	    // mechListMIC with CONTEXT 03
+	    if (mechListMIC != null) {
+		if (DEBUG) {
+		    System.out.println("SpNegoToken NegTokenInit: " +
+					"sending MechListMIC");
+		}
+		DerOutputStream mic = new DerOutputStream();
+		mic.putOctetString(mechListMIC);
+		initToken.write(DerValue.createTag(DerValue.TAG_CONTEXT,
+						true, (byte) 0x03), mic);
+	    }
 
-            // insert in a SEQUENCE
-            DerOutputStream out = new DerOutputStream();
-            out.write(DerValue.tag_Sequence, initToken);
+	    // insert in a SEQUENCE
+	    DerOutputStream out = new DerOutputStream();
+	    out.write(DerValue.tag_Sequence, initToken);
 
-            return out.toByteArray();
+	    return out.toByteArray();
 
-        } catch (IOException e) {
-            throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
-                "Invalid SPNEGO NegTokenInit token : " + e.getMessage());
-        }
+	} catch (IOException e) {
+	    throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1, 
+		"Invalid SPNEGO NegTokenInit token : " + e.getMessage());
+	}
     }
 
     private void parseToken(byte[] in) throws GSSException {
-        try {
-            DerValue der = new DerValue(in);
-            // verify NegotiationToken type token
+	try {
+	    DerValue der = new DerValue(in);
+	    // verify NegotiationToken type token
             if (!der.isContextSpecific((byte) NEG_TOKEN_INIT_ID)) {
-                throw new IOException("SPNEGO NegoTokenInit : " +
-                                "did not have right token type");
+		throw new IOException("SPNEGO NegoTokenInit : " +
+				"did not have right token type");
             }
             DerValue tmp1 = der.data.getDerValue();
-            if (tmp1.tag != DerValue.tag_Sequence) {
-                throw new IOException("SPNEGO NegoTokenInit : " +
-                                "did not have the Sequence tag");
-            }
+	    if (tmp1.tag != DerValue.tag_Sequence) {
+		throw new IOException("SPNEGO NegoTokenInit : " +
+				"did not have the Sequence tag");
+	    }
 
-            // parse SEQUENCE of mechTypes, if present
-            if (tmp1.data.available() > 0) {
-                DerValue tmp2 = tmp1.data.getDerValue();
-                if (!tmp2.isContextSpecific((byte)0x00)) {
-                    throw new IOException("SPNEGO NegoTokenInit : " +
-                        "did not have the right context tag for mechTypes");
-                }
-                // get the DER-encoded sequence of mechTypes
-                DerInputStream mValue = tmp2.data;
-                mechTypes = mValue.toByteArray();
+	    // parse SEQUENCE of mechTypes, if present
+	    if (tmp1.data.available() > 0) {
+		DerValue tmp2 = tmp1.data.getDerValue();
+		if (!tmp2.isContextSpecific((byte)0x00)) {
+		    throw new IOException("SPNEGO NegoTokenInit : " +
+			"did not have the right context tag for mechTypes");
+		}
+		// get the DER-encoded sequence of mechTypes
+		DerInputStream mValue = tmp2.data;
+		mechTypes = mValue.toByteArray();
 
-                // read all the mechTypes
-                DerValue[] mList = mValue.getSequence(0);
-                mechTypeList = new Oid[mList.length];
-                ObjectIdentifier mech = null;
-                for (int i = 0; i < mList.length; i++) {
-                    mech = mList[i].getOID();
-                    if (DEBUG) {
-                        System.out.println("SpNegoToken NegTokenInit: " +
-                                "reading Mechanism Oid = " + mech);
-                    }
-                    mechTypeList[i] = new Oid(mech.toString());
-                }
-            }
+		// read all the mechTypes
+		DerValue[] mList = mValue.getSequence(0);
+		mechTypeList = new Oid[mList.length];
+		ObjectIdentifier mech = null;
+		for (int i = 0; i < mList.length; i++) {
+		    mech = mList[i].getOID();
+		    if (DEBUG) {
+			System.out.println("SpNegoToken NegTokenInit: " +
+				"reading Mechanism Oid = " + mech);
+		    }
+		    mechTypeList[i] = new Oid(mech.toString());
+		}
+	    }
 
-            // parse mechToken, if present (skip reqFlags)
-            if (tmp1.data.available() > 0) {
-                DerValue tmp3 = tmp1.data.getDerValue();
-                if (tmp3.isContextSpecific((byte)0x01)) {
-                    // received reqFlags, skip it
-                    // now parse next field mechToken
-                    if (tmp1.data.available() > 0) {
-                        tmp3 = tmp1.data.getDerValue();
-                    }
-                }
-                if (!tmp3.isContextSpecific((byte)0x02)) {
-                    throw new IOException("SPNEGO NegoTokenInit : " +
-                        "did not have the right context tag for mechToken");
-                }
-                if (DEBUG) {
-                    System.out.println("SpNegoToken NegTokenInit: " +
-                                        "reading Mech Token");
-                }
-                mechToken = tmp3.data.getOctetString();
-            }
+	    // parse mechToken, if present (skip reqFlags)
+	    if (tmp1.data.available() > 0) {
+		DerValue tmp3 = tmp1.data.getDerValue();
+		if (tmp3.isContextSpecific((byte)0x01)) {
+		    // received reqFlags, skip it
+		    // now parse next field mechToken
+		    if (tmp1.data.available() > 0) {
+			tmp3 = tmp1.data.getDerValue();
+		    }
+		}
+		if (!tmp3.isContextSpecific((byte)0x02)) {
+		    throw new IOException("SPNEGO NegoTokenInit : " +
+			"did not have the right context tag for mechToken");
+		}
+		if (DEBUG) {
+		    System.out.println("SpNegoToken NegTokenInit: " +
+					"reading Mech Token");
+		}
+		mechToken = tmp3.data.getOctetString();
+	    }
 
-            // parse mechListMIC, if present and not in MS interop mode
-            if (!GSSUtil.useMSInterop() && (tmp1.data.available() > 0)) {
-                if (DEBUG) {
-                    System.out.println("SpNegoToken NegTokenInit: " +
-                                        "receiving MechListMIC");
-                }
-                DerValue tmp6 = tmp1.data.getDerValue();
-                if (!tmp6.isContextSpecific((byte)0x03)) {
-                    throw new IOException("SPNEGO NegoTokenInit : " +
-                        "did not have the right context tag for MICToken");
-                }
-                mechListMIC = tmp6.data.getOctetString();
-                if (DEBUG) {
-                    System.out.println("SpNegoToken NegTokenInit: " +
-                        "MechListMIC Token = " + getHexBytes(mechListMIC));
-                }
-            } else {
-                if (DEBUG) {
-                    System.out.println("SpNegoToken NegTokenInit : " +
-                                        "no MIC token included");
-                }
-            }
+	    // parse mechListMIC, if present and not in MS interop mode
+	    if (!GSSUtil.useMSInterop() && (tmp1.data.available() > 0)) {
+		if (DEBUG) {
+		    System.out.println("SpNegoToken NegTokenInit: " +
+					"receiving MechListMIC");
+		}
+		DerValue tmp6 = tmp1.data.getDerValue();
+		if (!tmp6.isContextSpecific((byte)0x03)) {
+		    throw new IOException("SPNEGO NegoTokenInit : " +
+			"did not have the right context tag for MICToken");
+	        }
+		mechListMIC = tmp6.data.getOctetString();
+		if (DEBUG) {
+		    System.out.println("SpNegoToken NegTokenInit: " +
+			"MechListMIC Token = " + getHexBytes(mechListMIC));
+		}
+	    } else {
+		if (DEBUG) {
+		    System.out.println("SpNegoToken NegTokenInit : " +
+					"no MIC token included");
+		}
+	    }
 
-        } catch (IOException e) {
-            throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1,
-                "Invalid SPNEGO NegTokenInit token : " + e.getMessage());
-        }
+	} catch (IOException e) {
+	    throw new GSSException(GSSException.DEFECTIVE_TOKEN, -1, 
+		"Invalid SPNEGO NegTokenInit token : " + e.getMessage());
+	}
     }
 
     byte[] getMechTypes() {
-        return mechTypes;
+	return mechTypes;
     }
 
     // Used by sun.security.jgss.wrapper.NativeGSSContext
     // to find the mechs in SPNEGO tokens
     public Oid[] getMechTypeList() {
-        return mechTypeList;
+	return mechTypeList;
     }
 
     byte[] getReqFlags() {
-        return reqFlags;
+	return reqFlags;
     }
 
     // Used by sun.security.jgss.wrapper.NativeGSSContext
     // to access the mech token portion of SPNEGO tokens
     public byte[] getMechToken() {
-        return mechToken;
+	return mechToken;
     }
 
     byte[] getMechListMIC() {
-        return mechListMIC;
+	return mechListMIC;
     }
 
 }

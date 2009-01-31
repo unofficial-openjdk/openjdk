@@ -33,6 +33,7 @@ package java.lang;
  * compiled.
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since   JDK1.0
  */
 public
@@ -41,7 +42,7 @@ class AbstractMethodError extends IncompatibleClassChangeError {
      * Constructs an <code>AbstractMethodError</code> with no detail  message.
      */
     public AbstractMethodError() {
-        super();
+	super();
     }
 
     /**
@@ -51,6 +52,6 @@ class AbstractMethodError extends IncompatibleClassChangeError {
      * @param   s   the detail message.
      */
     public AbstractMethodError(String s) {
-        super(s);
+	super(s);
     }
 }

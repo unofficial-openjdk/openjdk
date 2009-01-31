@@ -42,6 +42,7 @@ import javax.swing.plaf.basic.BasicTextAreaUI;
  * long term persistence.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class MotifTextAreaUI extends BasicTextAreaUI {
 
@@ -64,7 +65,7 @@ public class MotifTextAreaUI extends BasicTextAreaUI {
      * @return the caret object
      */
     protected Caret createCaret() {
-        return MotifTextUI.createCaret();
+	return MotifTextUI.createCaret();
     }
 
 }

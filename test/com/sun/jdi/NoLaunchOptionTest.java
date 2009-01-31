@@ -40,9 +40,9 @@ public class NoLaunchOptionTest extends Object {
     public static final int STDOUT = 1;
     public static final int STDERR = 2;
 
-    /**
+    /** 
      * Run an arbitrary command and return the results to caller.
-     *
+     * 
      * @param an array of String containing the command
      *        to run and any flags or parameters to the command.
      *
@@ -54,8 +54,8 @@ public class NoLaunchOptionTest extends Object {
      *
      */
     public String[] run (String[] cmdStrings) {
-        StringBuffer stdoutBuffer = new StringBuffer();
-        StringBuffer stderrBuffer = new StringBuffer();
+	StringBuffer stdoutBuffer = new StringBuffer();
+	StringBuffer stderrBuffer = new StringBuffer();
 
         System.out.print(CR + "runCommand method about to execute: ");
         for (int iNdx = 0; iNdx < cmdStrings.length; iNdx++) {
@@ -63,52 +63,52 @@ public class NoLaunchOptionTest extends Object {
             System.out.print(cmdStrings[iNdx]);
         }
         System.out.println(CR);
-        try {
-            Process process = Runtime.getRuntime().exec(cmdStrings);
-            /*
-             * Gather up the output of the subprocess using non-blocking
-             * reads so we can get both the subprocess stdout and the
-             * subprocess stderr without overfilling any buffers.
-             */
-            java.io.BufferedInputStream is =
-                new java.io.BufferedInputStream(process.getInputStream());
-            int isLen = 0;
-            byte[] isBuf = new byte[BUFFERSIZE];
+	try {
+	    Process process = Runtime.getRuntime().exec(cmdStrings);
+	    /*
+	     * Gather up the output of the subprocess using non-blocking
+	     * reads so we can get both the subprocess stdout and the
+	     * subprocess stderr without overfilling any buffers.
+	     */
+	    java.io.BufferedInputStream is =
+		new java.io.BufferedInputStream(process.getInputStream());
+	    int isLen = 0;
+	    byte[] isBuf = new byte[BUFFERSIZE];
 
-            java.io.BufferedInputStream es =
-                new java.io.BufferedInputStream(process.getErrorStream());
-            int esLen = 0;
-            byte[] esBuf = new byte[BUFFERSIZE];
+	    java.io.BufferedInputStream es =
+		new java.io.BufferedInputStream(process.getErrorStream());
+	    int esLen = 0;
+	    byte[] esBuf = new byte[BUFFERSIZE];
 
-            do {
-                isLen = is.read(isBuf);
-                if (isLen > 0) {
-                    stdoutBuffer.append(
-                                        new String(isBuf, 0, isLen));
-                }
-                esLen = es.read(esBuf);
-                if (esLen > 0) {
-                    stderrBuffer.append(
-                                        new String(esBuf, 0, esLen));
-                }
-            } while ((isLen > -1) || (esLen > -1));
-            try {
+	    do {
+		isLen = is.read(isBuf);
+		if (isLen > 0) {
+		    stdoutBuffer.append(
+					new String(isBuf, 0, isLen));
+		}
+		esLen = es.read(esBuf);
+		if (esLen > 0) {
+		    stderrBuffer.append(
+					new String(esBuf, 0, esLen));
+		}
+	    } while ((isLen > -1) || (esLen > -1));
+	    try {
                 process.waitFor();
-                subprocessStatus = process.exitValue();
+		subprocessStatus = process.exitValue();
                 process = null;
-            } catch(java.lang.InterruptedException e) {
-                System.err.println("InterruptedException: " + e);
-            }
+	    } catch(java.lang.InterruptedException e) {
+		System.err.println("InterruptedException: " + e);
+	    }
 
-        } catch(java.io.IOException ex) {
-            System.err.println("IO error: " + ex);
-        }
-        String[] result =
-            new String[] {
-                Integer.toString(subprocessStatus),
-                stdoutBuffer.toString(),
-                stderrBuffer.toString()
-        };
+	} catch(java.io.IOException ex) {
+	    System.err.println("IO error: " + ex);
+	}
+	String[] result =
+	    new String[] {
+	        Integer.toString(subprocessStatus),
+		stdoutBuffer.toString(),
+		stderrBuffer.toString()
+	};
 
         System.out.println(CR + "--- Return code was: " +
                            CR + result[RETSTAT]);
@@ -117,7 +117,7 @@ public class NoLaunchOptionTest extends Object {
         System.out.println(CR + "--- Return stderr was: " +
                            CR + result[STDERR]);
 
-        return result;
+	return result;
     }
 
     public static void main(String[] args) throws Exception {
@@ -138,6 +138,6 @@ public class NoLaunchOptionTest extends Object {
         } else {
             throw new Exception("Test failed: unspecified test failure");
         }
-    }
+    } 
 
 }

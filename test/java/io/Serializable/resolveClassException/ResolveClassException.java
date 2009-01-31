@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,60 +24,61 @@
 /* @test
  * @bug 4191941
  * @summary Ensure that original ClassNotFoundException thrown inside of
- *          ObjectInputStream.resolveClass() is preserved (and thrown).
+ * 	    ObjectInputStream.resolveClass() is preserved (and thrown).
  */
 
 import java.io.*;
 
 class BrokenObjectInputStream extends ObjectInputStream {
-
+    
     static final String message = "bodega";
 
     BrokenObjectInputStream(InputStream in) throws IOException {
-        super(in);
+	super(in);
     }
-
+    
     protected Class resolveClass(ObjectStreamClass desc)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        throw new ClassNotFoundException(message);
+	throw new ClassNotFoundException(message);
     }
 }
 
 public class ResolveClassException {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream bout;
-        ObjectOutputStream oout;
-        ByteArrayInputStream bin;
-        BrokenObjectInputStream oin;
-        Object obj;
+	ByteArrayOutputStream bout;
+	ObjectOutputStream oout;
+	ByteArrayInputStream bin;
+	BrokenObjectInputStream oin;
+	Object obj;
 
-        // write and read an object
-        obj = new Integer(5);
-        bout = new ByteArrayOutputStream();
-        oout = new ObjectOutputStream(bout);
-        oout.writeObject(obj);
-        bin = new ByteArrayInputStream(bout.toByteArray());
-        oin = new BrokenObjectInputStream(bin);
-        try {
-            oin.readObject();
-        } catch (ClassNotFoundException e) {
-            if (! BrokenObjectInputStream.message.equals(e.getMessage()))
-                throw new Error("Original exception not preserved");
-        }
-
-        // write and read an array of objects
-        obj = new Integer[] { new Integer(5) };
-        bout = new ByteArrayOutputStream();
-        oout = new ObjectOutputStream(bout);
-        oout.writeObject(obj);
-        bin = new ByteArrayInputStream(bout.toByteArray());
-        oin = new BrokenObjectInputStream(bin);
-        try {
-            oin.readObject();
-        } catch (ClassNotFoundException e) {
-            if (! BrokenObjectInputStream.message.equals(e.getMessage()))
-                throw new Error("Original exception not preserved");
-        }
+	// write and read an object
+	obj = new Integer(5);
+	bout = new ByteArrayOutputStream();
+	oout = new ObjectOutputStream(bout);
+	oout.writeObject(obj);
+	bin = new ByteArrayInputStream(bout.toByteArray());
+	oin = new BrokenObjectInputStream(bin);
+	try {
+	    oin.readObject();
+	} catch (ClassNotFoundException e) {
+	    if (! BrokenObjectInputStream.message.equals(e.getMessage()))
+		throw new Error("Original exception not preserved");
+	}
+	
+	// write and read an array of objects
+	obj = new Integer[] { new Integer(5) };
+	bout = new ByteArrayOutputStream();
+	oout = new ObjectOutputStream(bout);
+	oout.writeObject(obj);
+	bin = new ByteArrayInputStream(bout.toByteArray());
+	oin = new BrokenObjectInputStream(bin);
+	try {
+	    oin.readObject();
+	} catch (ClassNotFoundException e) {
+	    if (! BrokenObjectInputStream.message.equals(e.getMessage()))
+		throw new Error("Original exception not preserved");
+	}
     }
 }
+

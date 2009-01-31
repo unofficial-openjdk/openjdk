@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * <p>
- *
+ * 
  * @author Dr. Harold Carr
  * </p>
  */
@@ -47,9 +47,9 @@ public interface Stub {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * </p><p>
- *
+ * 
  * @param delegate ...
  * </p>
  */
@@ -58,10 +58,17 @@ public interface Stub {
  * <p>
  * Does ...
  * </p><p>
- *
+ * 
  * @return a Delegate with ...
  * </p>
  */
     public Delegate _getDelegate();
 
 } // end Stub
+
+
+
+
+
+
+

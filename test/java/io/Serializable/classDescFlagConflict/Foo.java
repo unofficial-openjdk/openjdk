@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,13 +24,13 @@
 /*
  * @bug 4632671
  * @summary Verify that reading an object whose class descriptor has both
- *          SC_SERIALIZABLE and SC_EXTERNALIZABLE bits set results in an
- *          InvalidClassException.
+ * 	    SC_SERIALIZABLE and SC_EXTERNALIZABLE bits set results in an
+ * 	    InvalidClassException.
  */
 import java.io.*;
 
 public class Foo implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {}
-    public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException {}
+    public void readExternal(ObjectInput in) 
+	throws IOException, ClassNotFoundException {}
 }

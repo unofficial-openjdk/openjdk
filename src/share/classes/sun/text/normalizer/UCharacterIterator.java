@@ -40,20 +40,20 @@ package sun.text.normalizer;
 import java.text.CharacterIterator;
 
 /**
- * Abstract class that defines an API for iteration on text objects.This is an
- * interface for forward and backward iteration and random access into a text
- * object. Forward iteration is done with post-increment and backward iteration
- * is done with pre-decrement semantics, while the
- * <code>java.text.CharacterIterator</code> interface methods provided forward
- * iteration with "pre-increment" and backward iteration with pre-decrement
+ * Abstract class that defines an API for iteration on text objects.This is an 
+ * interface for forward and backward iteration and random access into a text 
+ * object. Forward iteration is done with post-increment and backward iteration 
+ * is done with pre-decrement semantics, while the 
+ * <code>java.text.CharacterIterator</code> interface methods provided forward 
+ * iteration with "pre-increment" and backward iteration with pre-decrement 
  * semantics. This API is more efficient for forward iteration over code points.
- * The other major difference is that this API can do both code unit and code point
- * iteration, <code>java.text.CharacterIterator</code> can only iterate over
+ * The other major difference is that this API can do both code unit and code point 
+ * iteration, <code>java.text.CharacterIterator</code> can only iterate over 
  * code units and is limited to BMP (0 - 0xFFFF)
  * @author Ram
  * @stable ICU 2.4
  */
-public abstract class UCharacterIterator
+public abstract class UCharacterIterator 
                       implements Cloneable {
 
     /**
@@ -69,11 +69,11 @@ public abstract class UCharacterIterator
      * @stable ICU 2.4
      */
     public static final int DONE = -1;
-
+    
     // static final methods ----------------------------------------------------
-
+    
     /**
-     * Returns a <code>UCharacterIterator</code> object given a
+     * Returns a <code>UCharacterIterator</code> object given a 
      * source string.
      * @param source a string
      * @return UCharacterIterator object
@@ -86,7 +86,7 @@ public abstract class UCharacterIterator
 
     //// for StringPrep
     /**
-     * Returns a <code>UCharacterIterator</code> object given a
+     * Returns a <code>UCharacterIterator</code> object given a 
      * source StringBuffer.
      * @param source an string buffer of UTF-16 code units
      * @return UCharacterIterator object
@@ -96,21 +96,21 @@ public abstract class UCharacterIterator
     public static final UCharacterIterator getInstance(StringBuffer source){
         return new ReplaceableUCharacterIterator(source);
     }
-
+    
     /**
-     * Returns a <code>UCharacterIterator</code> object given a
+     * Returns a <code>UCharacterIterator</code> object given a 
      * CharacterIterator.
      * @param source a valid CharacterIterator object.
      * @return UCharacterIterator object
      * @exception IllegalArgumentException if the argument is null
      * @stable ICU 2.4
-     */
+     */    
     public static final UCharacterIterator getInstance(CharacterIterator source){
         return new CharacterIteratorWrapper(source);
     }
-
+       
     // public methods ----------------------------------------------------------
-
+   
     /**
      * Returns the code unit at the current index.  If index is out
      * of range, returns DONE.  Index is not changed.
@@ -118,7 +118,7 @@ public abstract class UCharacterIterator
      * @stable ICU 2.4
      */
     public abstract int current();
-
+    
     /**
      * Returns the length of the text
      * @return length of the text
@@ -126,7 +126,7 @@ public abstract class UCharacterIterator
      */
     public abstract int getLength();
 
-
+    
     /**
      * Gets the current index in text.
      * @return current index in text.
@@ -142,7 +142,7 @@ public abstract class UCharacterIterator
      * of the text.
      * @return the next UTF16 code unit, or DONE if the index is at the limit
      *         of the text.
-     * @stable ICU 2.4
+     * @stable ICU 2.4  
      */
     public abstract int next();
 
@@ -155,7 +155,7 @@ public abstract class UCharacterIterator
      * is returned.
      * @return the next codepoint in text, or DONE if the index is at
      *         the limit of the text.
-     * @stable ICU 2.4
+     * @stable ICU 2.4  
      */
     public int nextCodePoint(){
         int ch1 = next();
@@ -179,14 +179,14 @@ public abstract class UCharacterIterator
      * DONE is returned.
      * @return the previous code unit in the text, or DONE if the new
      *         index is before the start of the text.
-     * @stable ICU 2.4
+     * @stable ICU 2.4  
      */
     public abstract int previous();
 
     /**
      * Sets the index to the specified index in the text.
-     * @param index the index within the text.
-     * @exception IndexOutOfBoundsException is thrown if an invalid index is
+     * @param index the index within the text. 
+     * @exception IndexOutOfBoundsException is thrown if an invalid index is 
      *            supplied
      * @stable ICU 2.4
      */
@@ -196,16 +196,16 @@ public abstract class UCharacterIterator
     /**
      * Fills the buffer with the underlying text storage of the iterator
      * If the buffer capacity is not enough a exception is thrown. The capacity
-     * of the fill in buffer should at least be equal to length of text in the
+     * of the fill in buffer should at least be equal to length of text in the 
      * iterator obtained by calling <code>getLength()</code>.
      * <b>Usage:</b>
-     *
+     * 
      * <code>
      * <pre>
      *         UChacterIterator iter = new UCharacterIterator.getInstance(text);
      *         char[] buf = new char[iter.getLength()];
      *         iter.getText(buf);
-     *
+     *         
      *         OR
      *         char[] buf= new char[1];
      *         int len = 0;
@@ -219,32 +219,32 @@ public abstract class UCharacterIterator
      *         }
      * </pre>
      * </code>
-     *
-     * @param fillIn an array of chars to fill with the underlying UTF-16 code
+     *             
+     * @param fillIn an array of chars to fill with the underlying UTF-16 code 
      *         units.
      * @param offset the position within the array to start putting the data.
      * @return the number of code units added to fillIn, as a convenience
      * @exception IndexOutOfBounds exception if there is not enough
      *            room after offset in the array, or if offset < 0.
-     * @stable ICU 2.4
+     * @stable ICU 2.4  
      */
-    public abstract int getText(char[] fillIn, int offset);
+    public abstract int getText(char[] fillIn, int offset); 
 
     //// for StringPrep
     /**
      * Convenience override for <code>getText(char[], int)</code> that provides
      * an offset of 0.
-     * @param fillIn an array of chars to fill with the underlying UTF-16 code
+     * @param fillIn an array of chars to fill with the underlying UTF-16 code 
      *         units.
      * @return the number of code units added to fillIn, as a convenience
      * @exception IndexOutOfBounds exception if there is not enough
      *            room in the array.
-     * @stable ICU 2.4
+     * @stable ICU 2.4  
      */
     public final int getText(char[] fillIn) {
         return getText(fillIn, 0);
     }
-
+         
     //// for StringPrep
     /**
      * Convenience method for returning the underlying text storage as as string
@@ -268,10 +268,10 @@ public abstract class UCharacterIterator
      * @param delta the number of code units to move the current
      *              index.
      * @return the new index.
-     * @exception IndexOutOfBoundsException is thrown if an invalid index is
-     *            supplied
-     * @stable ICU 2.4
-     *
+     * @exception IndexOutOfBoundsException is thrown if an invalid index is 
+     *            supplied 
+     * @stable ICU 2.4 
+     * 
      */
     public int moveIndex(int delta) {
         int x = Math.max(0, Math.min(getIndex() + delta, getLength()));
@@ -287,6 +287,7 @@ public abstract class UCharacterIterator
      */
     public Object clone() throws CloneNotSupportedException{
         return super.clone();
-    }
-
+    }   
+    
 }
+

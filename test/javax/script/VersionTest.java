@@ -35,9 +35,9 @@ public class VersionTest  {
         private static final String JS_LANG_VERSION = "1.6";
         private static final String JS_ENGINE_VERSION = "1.6 release 2";
 
-        public static void main(String[] args) throws Exception {
-            ScriptEngineManager manager = new ScriptEngineManager();
-            ScriptEngine jsengine = manager.getEngineByName("js");
+	public static void main(String[] args) throws Exception {
+	    ScriptEngineManager manager = new ScriptEngineManager();
+	    ScriptEngine jsengine = manager.getEngineByName("js");
             if (jsengine == null) {
                 throw new RuntimeException("no js engine found");
             }
@@ -51,5 +51,5 @@ public class VersionTest  {
                 throw new RuntimeException("Expected Rhino version is " +
                             JS_ENGINE_VERSION);
             }
-        }
+	}
 }

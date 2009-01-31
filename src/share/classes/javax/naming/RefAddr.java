@@ -38,11 +38,12 @@ package javax.naming;
   * A RefAddr is contained within a Reference.
   *<p>
   * RefAddr is an abstract class. Concrete implementations of it
-  * determine its synchronization properties.
+  * determine its synchronization properties. 
   *
   * @author Rosanna Lee
   * @author Scott Seligman
-  *
+  * @version %I% %E%
+  * 
   * @see Reference
   * @see LinkRef
   * @see StringRefAddr
@@ -58,7 +59,7 @@ package javax.naming;
 public abstract class RefAddr implements java.io.Serializable {
     /**
      * Contains the type of this address.
-     * @serial
+     * @serial 
      */
     protected String addrType;
 
@@ -68,7 +69,7 @@ public abstract class RefAddr implements java.io.Serializable {
       * @param addrType A non-null string describing the type of the address.
       */
     protected RefAddr(String addrType) {
-        this.addrType = addrType;
+	this.addrType = addrType;
     }
 
     /**
@@ -77,9 +78,9 @@ public abstract class RefAddr implements java.io.Serializable {
       * @return The non-null address type of this address.
       */
     public String getType() {
-        return addrType;
+	return addrType;
     }
-
+	
     /**
       * Retrieves the contents of this address.
       *
@@ -92,10 +93,10 @@ public abstract class RefAddr implements java.io.Serializable {
       *<p>
       * obj is equal to this RefAddr all of these conditions are true
       *<ul> non-null
-      *<li> instance of RefAddr
+      *<li> instance of RefAddr 
       *<li> obj has the same address type as this RefAddr (using String.compareTo())
       *<li> both obj and this RefAddr's contents are null or they are equal
-      *         (using the equals() test).
+      *		(using the equals() test).
       *</ul>
       * @param obj possibly null obj to check.
       * @return true if obj is equal to this refaddr; false otherwise.
@@ -103,18 +104,18 @@ public abstract class RefAddr implements java.io.Serializable {
       * @see #getType
       */
     public boolean equals(Object obj) {
-        if ((obj != null) && (obj instanceof RefAddr)) {
-            RefAddr target = (RefAddr)obj;
-            if (addrType.compareTo(target.addrType) == 0) {
-                Object thisobj = this.getContent();
-                Object thatobj = target.getContent();
-                if (thisobj == thatobj)
-                    return true;
-                if (thisobj != null)
-                    return thisobj.equals(thatobj);
-            }
-        }
-        return false;
+	if ((obj != null) && (obj instanceof RefAddr)) {
+	    RefAddr target = (RefAddr)obj;
+	    if (addrType.compareTo(target.addrType) == 0) {
+		Object thisobj = this.getContent();
+		Object thatobj = target.getContent();
+		if (thisobj == thatobj)
+		    return true;
+		if (thisobj != null) 
+		    return thisobj.equals(thatobj);
+	    }
+	}
+	return false;
     }
 
     /**
@@ -126,11 +127,11 @@ public abstract class RefAddr implements java.io.Serializable {
       * @see java.lang.Object#hashCode
       */
     public int hashCode() {
-        return (getContent() == null)
-                ? addrType.hashCode()
-                : addrType.hashCode() + getContent().hashCode();
+	return (getContent() == null)
+		? addrType.hashCode()
+		: addrType.hashCode() + getContent().hashCode();
     }
-
+    
     /**
       * Generates the string representation of this address.
       * The string consists of the address's type and contents with labels.
@@ -138,10 +139,10 @@ public abstract class RefAddr implements java.io.Serializable {
       * @return The non-null string representation of this address.
       */
     public String toString(){
-        StringBuffer str = new StringBuffer("Type: " + addrType + "\n");
+	StringBuffer str = new StringBuffer("Type: " + addrType + "\n");
 
-        str.append("Content: " + getContent() + "\n");
-        return (str.toString());
+	str.append("Content: " + getContent() + "\n");
+	return (str.toString());
     }
 
     /**

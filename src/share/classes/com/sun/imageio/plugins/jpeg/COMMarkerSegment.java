@@ -39,14 +39,14 @@ import org.w3c.dom.Node;
  * comment data as it is read from the stream.  If the marker segment is
  * constructed from a String, then local default encoding is assumed
  * when creating the byte array.  If the marker segment is created from
- * an <code>IIOMetadataNode</code>, the user object, if present is
+ * an <code>IIOMetadataNode</code>, the user object, if present is 
  * assumed to be a byte array containing the comment data.  If there is
  * no user object then the comment attribute is used to create the
  * byte array, again assuming the default local encoding.
- */
+ */ 
 class COMMarkerSegment extends MarkerSegment {
     private static final String ENCODING = "ISO-8859-1";
-
+        
     /**
      * Constructs a marker segment from the given buffer, which contains
      * data from an <code>ImageInputStream</code>.  This is used when
@@ -58,7 +58,7 @@ class COMMarkerSegment extends MarkerSegment {
     }
 
     /**
-     * Constructs a marker segment from a String.  This is used when
+     * Constructs a marker segment from a String.  This is used when 
      * modifying metadata from a non-native tree and when transcoding.
      * The default encoding is used to construct the byte array.
      */
@@ -80,7 +80,7 @@ class COMMarkerSegment extends MarkerSegment {
             data = (byte []) ourNode.getUserObject();
         }
         if (data == null) {
-            String comment =
+            String comment = 
                 node.getAttributes().getNamedItem("comment").getNodeValue();
             if (comment != null) {
                 data = comment.getBytes(); // Default encoding
@@ -131,3 +131,4 @@ class COMMarkerSegment extends MarkerSegment {
         System.out.println("<" + getComment() + ">");
     }
 }
+

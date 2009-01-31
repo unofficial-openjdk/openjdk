@@ -46,6 +46,7 @@ import java.awt.Shape;
  * @see javax.swing.text.DefaultCaret
  * @see javax.swing.text.View
  *
+ * @version %I% %G%
  * @since 1.4
  */
 public class NavigationFilter {
@@ -102,7 +103,7 @@ public class NavigationFilter {
      *  location visual position
      * @exception BadLocationException
      * @exception IllegalArgumentException if <code>direction</code>
-     *          doesn't have one of the legal values above
+     *		doesn't have one of the legal values above
      */
     public int getNextVisualPositionFrom(JTextComponent text, int pos,
                                          Position.Bias bias, int direction,

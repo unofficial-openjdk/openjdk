@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -20,7 +20,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 /* @test
  * @bug 4450891
  * @summary verify that the java.util.ServiceLoader-based location of an
@@ -47,39 +47,39 @@ import java.security.cert.Certificate;
 public class ContextInsulation {
     public static void main(String[] args) throws Exception {
 
-        /*
-         * If we delay setting the security manager until after the service
-         * configuration file has been installed, then this test still
-         * functions properly, but the -Djava.security.debug output is
-         * lacking, so to ease debugging, we'll set it early-- at the cost
-         * of having to specify the policy even when running standalone.
-         */
-        TestLibrary.suggestSecurityManager(null);
+	/*
+	 * If we delay setting the security manager until after the service
+	 * configuration file has been installed, then this test still
+	 * functions properly, but the -Djava.security.debug output is
+	 * lacking, so to ease debugging, we'll set it early-- at the cost
+	 * of having to specify the policy even when running standalone.
+	 */
+	TestLibrary.suggestSecurityManager(null);
 
-        ServiceConfiguration.installServiceConfigurationFile();
+	ServiceConfiguration.installServiceConfigurationFile();
 
-        /*
-         * Execute use of RMIClassLoader within an AccessControlContext
-         * that has a protection domain with no permissions, to make sure
-         * that RMIClassLoader can still properly initialize itself.
-         */
-        CodeSource codesource = new CodeSource(null, (Certificate[]) null);
-        Permissions perms = null;
-        ProtectionDomain pd = new ProtectionDomain(codesource, perms);
-        AccessControlContext acc =
-            new AccessControlContext(new ProtectionDomain[] { pd });
+	/*
+	 * Execute use of RMIClassLoader within an AccessControlContext
+	 * that has a protection domain with no permissions, to make sure
+	 * that RMIClassLoader can still properly initialize itself.
+	 */
+	CodeSource codesource = new CodeSource(null, (Certificate[]) null);
+	Permissions perms = null;
+	ProtectionDomain pd = new ProtectionDomain(codesource, perms);
+	AccessControlContext acc =
+	    new AccessControlContext(new ProtectionDomain[] { pd });
 
-        java.security.AccessController.doPrivileged(
-        new java.security.PrivilegedExceptionAction() {
-            public Object run() throws Exception {
-                TestProvider.exerciseTestProvider(
-                    TestProvider2.loadClassReturn,
-                    TestProvider2.loadProxyClassReturn,
-                    TestProvider2.getClassLoaderReturn,
-                    TestProvider2.getClassAnnotationReturn,
-                    TestProvider2.invocations);
-                return null;
-            }
-        }, acc);
+	java.security.AccessController.doPrivileged(
+	new java.security.PrivilegedExceptionAction() {
+	    public Object run() throws Exception {
+		TestProvider.exerciseTestProvider(
+		    TestProvider2.loadClassReturn,
+		    TestProvider2.loadProxyClassReturn,
+		    TestProvider2.getClassLoaderReturn,
+		    TestProvider2.getClassAnnotationReturn,
+		    TestProvider2.invocations);
+		return null;
+	    }
+	}, acc);
     }
 }

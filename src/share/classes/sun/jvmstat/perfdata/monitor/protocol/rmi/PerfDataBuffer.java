@@ -40,6 +40,7 @@ import java.nio.ByteBuffer;
  * data for a remote target HotSpot Java Virtual Machine.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class PerfDataBuffer extends AbstractPerfDataBuffer {

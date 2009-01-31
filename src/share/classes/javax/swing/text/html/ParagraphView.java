@@ -41,6 +41,7 @@ import javax.swing.text.JTextComponent;
  * configuration.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 
 public class ParagraphView extends javax.swing.text.ParagraphView {
@@ -51,20 +52,20 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      * @param elem the element that this view is responsible for
      */
     public ParagraphView(Element elem) {
-        super(elem);
+	super(elem);
     }
 
     /**
      * Establishes the parent view for this view.  This is
      * guaranteed to be called before any other methods if the
      * parent view is functioning properly.
-     * <p>
+     * <p> 
      * This is implemented
      * to forward to the superclass as well as call the
      * <a href="#setPropertiesFromAttributes">setPropertiesFromAttributes</a>
      * method to set the paragraph properties from the css
      * attributes.  The call is made at this time to ensure
-     * the ability to resolve upward through the parents
+     * the ability to resolve upward through the parents 
      * view attributes.
      *
      * @param parent the new parent, or null if the view is
@@ -72,9 +73,9 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      *  to
      */
     public void setParent(View parent) {
-        super.setParent(parent);
+	super.setParent(parent);
         if (parent != null) {
-            setPropertiesFromAttributes();
+	    setPropertiesFromAttributes();
         }
     }
 
@@ -84,11 +85,11 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      * model with a StyleSheet.
      */
     public AttributeSet getAttributes() {
-        if (attr == null) {
-            StyleSheet sheet = getStyleSheet();
-            attr = sheet.getViewAttributes(this);
-        }
-        return attr;
+	if (attr == null) {
+	    StyleSheet sheet = getStyleSheet();
+	    attr = sheet.getViewAttributes(this);
+	}
+	return attr;
     }
 
     /**
@@ -97,40 +98,40 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      * by the superclass).  Since
      */
     protected void setPropertiesFromAttributes() {
-        StyleSheet sheet = getStyleSheet();
-        attr = sheet.getViewAttributes(this);
-        painter = sheet.getBoxPainter(attr);
-        if (attr != null) {
-            super.setPropertiesFromAttributes();
-            setInsets((short) painter.getInset(TOP, this),
-                      (short) painter.getInset(LEFT, this),
-                      (short) painter.getInset(BOTTOM, this),
-                      (short) painter.getInset(RIGHT, this));
-            Object o = attr.getAttribute(CSS.Attribute.TEXT_ALIGN);
-            if (o != null) {
-                // set horizontal alignment
-                String ta = o.toString();
-                if (ta.equals("left")) {
-                    setJustification(StyleConstants.ALIGN_LEFT);
-                } else if (ta.equals("center")) {
-                    setJustification(StyleConstants.ALIGN_CENTER);
-                } else if (ta.equals("right")) {
-                    setJustification(StyleConstants.ALIGN_RIGHT);
-                } else if (ta.equals("justify")) {
-                    setJustification(StyleConstants.ALIGN_JUSTIFIED);
-                }
-            }
+	StyleSheet sheet = getStyleSheet();
+	attr = sheet.getViewAttributes(this);
+	painter = sheet.getBoxPainter(attr);
+	if (attr != null) {
+	    super.setPropertiesFromAttributes();
+	    setInsets((short) painter.getInset(TOP, this),
+		      (short) painter.getInset(LEFT, this),
+		      (short) painter.getInset(BOTTOM, this),
+		      (short) painter.getInset(RIGHT, this));
+	    Object o = attr.getAttribute(CSS.Attribute.TEXT_ALIGN);
+	    if (o != null) {
+		// set horizontal alignment
+		String ta = o.toString();
+		if (ta.equals("left")) {
+		    setJustification(StyleConstants.ALIGN_LEFT);
+		} else if (ta.equals("center")) {
+		    setJustification(StyleConstants.ALIGN_CENTER);
+		} else if (ta.equals("right")) {
+		    setJustification(StyleConstants.ALIGN_RIGHT);
+		} else if (ta.equals("justify")) {
+		    setJustification(StyleConstants.ALIGN_JUSTIFIED);
+		}
+	    }
             // Get the width/height
             cssWidth = (CSS.LengthValue)attr.getAttribute(
                                         CSS.Attribute.WIDTH);
             cssHeight = (CSS.LengthValue)attr.getAttribute(
                                          CSS.Attribute.HEIGHT);
-        }
+	}
     }
 
     protected StyleSheet getStyleSheet() {
-        HTMLDocument doc = (HTMLDocument) getDocument();
-        return doc.getStyleSheet();
+	HTMLDocument doc = (HTMLDocument) getDocument();
+	return doc.getStyleSheet();
     }
 
 
@@ -148,13 +149,13 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      * object is returned.</p>
      *
      * @param axis  the minor axis
-     * @param r     the input {@code SizeRequirements} object
+     * @param r     the input {@code SizeRequirements} object 
      * @return      the new or adjusted {@code SizeRequirements} object
      * @throw IllegalArgumentException  if the {@code axis} parameter is invalid
      */
     protected SizeRequirements calculateMinorAxisRequirements(
                                                 int axis, SizeRequirements r) {
-        r = super.calculateMinorAxisRequirements(axis, r);
+	r = super.calculateMinorAxisRequirements(axis, r);
 
         if (BlockView.spanSetFromAttributes(axis, r, cssWidth, cssHeight)) {
             // Offset by the margins so that pref/min/max return the
@@ -165,48 +166,48 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
             r.preferred -= margin;
             r.maximum -= margin;
         }
-        return r;
+	return r;
     }
 
 
     /**
-     * Indicates whether or not this view should be
+     * Indicates whether or not this view should be 
      * displayed.  If none of the children wish to be
-     * displayed and the only visible child is the
+     * displayed and the only visible child is the 
      * break that ends the paragraph, the paragraph
      * will not be considered visible.  Otherwise,
      * it will be considered visible and return true.
-     *
+     * 
      * @return true if the paragraph should be displayed
      */
     public boolean isVisible() {
-
-        int n = getLayoutViewCount() - 1;
-        for (int i = 0; i < n; i++) {
-            View v = getLayoutView(i);
-            if (v.isVisible()) {
-                return true;
-            }
-        }
-        if (n > 0) {
-            View v = getLayoutView(n);
-            if ((v.getEndOffset() - v.getStartOffset()) == 1) {
-                return false;
-            }
-        }
-        // If it's the last paragraph and not editable, it shouldn't
-        // be visible.
-        if (getStartOffset() == getDocument().getLength()) {
-            boolean editable = false;
-            Component c = getContainer();
-            if (c instanceof JTextComponent) {
-                editable = ((JTextComponent)c).isEditable();
-            }
-            if (!editable) {
-                return false;
-            }
-        }
-        return true;
+	
+	int n = getLayoutViewCount() - 1;
+	for (int i = 0; i < n; i++) {
+	    View v = getLayoutView(i);
+	    if (v.isVisible()) {
+		return true;
+	    }
+	}
+	if (n > 0) {
+	    View v = getLayoutView(n);
+	    if ((v.getEndOffset() - v.getStartOffset()) == 1) {
+		return false;
+	    }
+	}
+	// If it's the last paragraph and not editable, it shouldn't
+	// be visible.
+	if (getStartOffset() == getDocument().getLength()) {
+	    boolean editable = false;
+	    Component c = getContainer();
+	    if (c instanceof JTextComponent) {
+		editable = ((JTextComponent)c).isEditable();
+	    }
+	    if (!editable) {
+		return false;
+	    }
+	}
+	return true;
     }
 
     /**
@@ -222,14 +223,14 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
         if (a == null) {
             return;
         }
-
-        Rectangle r;
-        if (a instanceof Rectangle) {
-            r = (Rectangle) a;
-        } else {
-            r = a.getBounds();
-        }
-        painter.paint(g, r.x, r.y, r.width, r.height, this);
+        
+	Rectangle r;
+	if (a instanceof Rectangle) {
+	    r = (Rectangle) a;
+	} else {
+	    r = a.getBounds();
+	}
+	painter.paint(g, r.x, r.y, r.width, r.height, this);
         super.paint(g, a);
     }
 
@@ -247,27 +248,27 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      * @see javax.swing.text.ParagraphView#getPreferredSpan
      */
     public float getPreferredSpan(int axis) {
-        if (!isVisible()) {
-            return 0;
-        }
-        return super.getPreferredSpan(axis);
+	if (!isVisible()) {
+	    return 0;
+	}
+	return super.getPreferredSpan(axis);
     }
 
     /**
      * Determines the minimum span for this view along an
-     * axis.  Returns 0 if the view is not visible, otherwise
+     * axis.  Returns 0 if the view is not visible, otherwise 
      * it calls the superclass method to get the minimum span.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or
-     *  <code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or 
+     *	<code>View.Y_AXIS</code>
      * @return  the minimum span the view can be rendered into
      * @see javax.swing.text.ParagraphView#getMinimumSpan
      */
     public float getMinimumSpan(int axis) {
-        if (!isVisible()) {
-            return 0;
-        }
-        return super.getMinimumSpan(axis);
+	if (!isVisible()) {
+	    return 0;
+	}
+	return super.getMinimumSpan(axis);
     }
 
     /**
@@ -275,16 +276,16 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
      * axis.  Returns 0 if the view is not visible, otherwise
      * it calls the superclass method ot get the maximum span.
      *
-     * @param axis may be either <code>View.X_AXIS</code> or
-     *  <code>View.Y_AXIS</code>
+     * @param axis may be either <code>View.X_AXIS</code> or 
+     *	<code>View.Y_AXIS</code>
      * @return  the maximum span the view can be rendered into
      * @see javax.swing.text.ParagraphView#getMaximumSpan
      */
     public float getMaximumSpan(int axis) {
-        if (!isVisible()) {
-            return 0;
-        }
-        return super.getMaximumSpan(axis);
+	if (!isVisible()) {
+	    return 0;
+	}
+	return super.getMaximumSpan(axis);
     }
 
     private AttributeSet attr;
@@ -292,3 +293,4 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
     private CSS.LengthValue cssWidth;
     private CSS.LengthValue cssHeight;
 }
+

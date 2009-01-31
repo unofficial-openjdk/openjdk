@@ -33,10 +33,10 @@
  * LoopMacros.h to manipulate a surface of type "IntRgbx".
  */
 
-typedef jint    IntRgbxPixelType;
-typedef jint    IntRgbxDataType;
+typedef jint	IntRgbxPixelType;
+typedef jint	IntRgbxDataType;
 
-#define IntRgbxPixelStride      4
+#define IntRgbxPixelStride	4
 
 #define DeclareIntRgbxLoadVars(PREFIX)
 #define DeclareIntRgbxStoreVars(PREFIX)
@@ -48,9 +48,9 @@ typedef jint    IntRgbxDataType;
 #define NextIntRgbxStoreVarsX(PREFIX)
 #define NextIntRgbxStoreVarsY(PREFIX)
 
-#define IntRgbxXparLutEntry                     1
-#define IntRgbxIsXparLutEntry(pix)              ((pix & 1) != 0)
-#define StoreIntRgbxNonXparFromArgb             StoreIntRgbxFromArgb
+#define IntRgbxXparLutEntry			1
+#define IntRgbxIsXparLutEntry(pix)		((pix & 1) != 0)
+#define StoreIntRgbxNonXparFromArgb		StoreIntRgbxFromArgb
 
 
 #define IntRgbxPixelFromArgb(pixel, rgb, pRasInfo) \
@@ -75,14 +75,14 @@ typedef jint    IntRgbxDataType;
 
 #define LoadIntRgbxTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-        jint pixel = (pRas)[x]; \
-        ExtractIntDcmComponents123X(pixel, r, g, b); \
+	jint pixel = (pRas)[x]; \
+	ExtractIntDcmComponents123X(pixel, r, g, b); \
     } while (0)
 
 #define LoadIntRgbxTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-        LoadIntRgbxTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
-        (a) = 0xff; \
+	LoadIntRgbxTo3ByteRgb(pRas, PREFIX, x, r, g, b); \
+	(a) = 0xff; \
     } while (0)
 
 #define StoreIntRgbxFrom1IntRgb(pRas, PREFIX, x, rgb) \
@@ -110,14 +110,14 @@ typedef jint    IntRgbxDataType;
 
 #define Postload4ByteArgbFromIntRgbx(pRas, PREFIX, COMP_PREFIX) \
     LoadIntRgbxTo3ByteRgb(pRas, PREFIX, 0, COMP_PREFIX ## R, \
-                          COMP_PREFIX ## G, COMP_PREFIX ## B)
+			  COMP_PREFIX ## G, COMP_PREFIX ## B)
 
 #define StoreIntRgbxFrom4ByteArgbComps(pRas, PREFIX, x, COMP_PREFIX) \
     StoreIntRgbxFrom4ByteArgb(pRas, PREFIX, x, \
-                              COMP_PREFIX ## A, COMP_PREFIX ## R, \
-                              COMP_PREFIX ## G, COMP_PREFIX ## B)
+			      COMP_PREFIX ## A, COMP_PREFIX ## R, \
+			      COMP_PREFIX ## G, COMP_PREFIX ## B)
 
-#define IntRgbxIsPremultiplied  0
+#define IntRgbxIsPremultiplied	0
 
 #define DeclareIntRgbxBlendFillVars(PREFIX)
 

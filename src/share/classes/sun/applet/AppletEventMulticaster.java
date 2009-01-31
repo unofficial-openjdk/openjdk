@@ -34,22 +34,23 @@ import java.io.IOException;
  * AppletEventMulticaster class.  This class manages an immutable
  * structure consisting of a chain of AppletListeners and is
  * responsible for dispatching events to them.
- *
+ * 
+ * @version %I%, %G%
  * @author  Sunita Mani
  */
 public class AppletEventMulticaster implements AppletListener {
 
     private final AppletListener a, b;
-
+    
     public AppletEventMulticaster(AppletListener a, AppletListener b) {
-        this.a = a; this.b = b;
+	this.a = a; this.b = b;
     }
-
+  
     public void appletStateChanged(AppletEvent e) {
-        a.appletStateChanged(e);
-        b.appletStateChanged(e);
+	a.appletStateChanged(e);
+	b.appletStateChanged(e);
     }
-
+  
     /**
      * Adds Applet-listener-a with Applet-listener-b and
      * returns the resulting multicast listener.
@@ -57,7 +58,7 @@ public class AppletEventMulticaster implements AppletListener {
      * @param b Applet-listener-b
      */
     public static AppletListener add(AppletListener a, AppletListener b) {
-        return addInternal(a, b);
+	return addInternal(a, b);
     }
 
     /**
@@ -67,13 +68,13 @@ public class AppletEventMulticaster implements AppletListener {
      * @param oldl the Applet-listener being removed
      */
     public static AppletListener remove(AppletListener l, AppletListener oldl) {
-        return removeInternal(l, oldl);
+	return removeInternal(l, oldl);
     }
 
-    /**
+    /** 
      * Returns the resulting multicast listener from adding listener-a
-     * and listener-b together.
-     * If listener-a is null, it returns listener-b;
+     * and listener-b together.  
+     * If listener-a is null, it returns listener-b;  
      * If listener-b is null, it returns listener-a
      * If neither are null, then it creates and returns
      * a new AppletEventMulticaster instance which chains a with b.
@@ -81,33 +82,33 @@ public class AppletEventMulticaster implements AppletListener {
      * @param b event listener-b
      */
     private static AppletListener addInternal(AppletListener a, AppletListener b) {
-        if (a == null)  return b;
-        if (b == null)  return a;
-        return new AppletEventMulticaster(a, b);
+	if (a == null)  return b;
+	if (b == null)  return a;
+	return new AppletEventMulticaster(a, b);
     }
-
-
+  
+    
     /**
      * Removes a listener from this multicaster and returns the
      * resulting multicast listener.
      * @param oldl the listener to be removed
      */
     protected AppletListener remove(AppletListener oldl) {
-        if (oldl == a)  return b;
-        if (oldl == b)  return a;
-        AppletListener a2 = removeInternal(a, oldl);
-        AppletListener b2 = removeInternal(b, oldl);
-        if (a2 == a && b2 == b) {
-            return this;        // it's not here
-        }
-        return addInternal(a2, b2);
+	if (oldl == a)  return b;
+	if (oldl == b)  return a;
+	AppletListener a2 = removeInternal(a, oldl);
+	AppletListener b2 = removeInternal(b, oldl);
+	if (a2 == a && b2 == b) {
+	    return this;	// it's not here
+	}
+	return addInternal(a2, b2);
     }
+    
 
-
-    /**
+    /** 
      * Returns the resulting multicast listener after removing the
      * old listener from listener-l.
-     * If listener-l equals the old listener OR listener-l is null,
+     * If listener-l equals the old listener OR listener-l is null, 
      * returns null.
      * Else if listener-l is an instance of AppletEventMulticaster
      * then it removes the old listener from it.
@@ -116,12 +117,12 @@ public class AppletEventMulticaster implements AppletListener {
      * @param oldl the listener being removed
      */
     private static AppletListener removeInternal(AppletListener l, AppletListener oldl) {
-        if (l == oldl || l == null) {
-            return null;
-        } else if (l instanceof AppletEventMulticaster) {
-            return ((AppletEventMulticaster)l).remove(oldl);
-        } else {
-            return l;           // it's not here
-        }
+	if (l == oldl || l == null) {
+	    return null;
+	} else if (l instanceof AppletEventMulticaster) {
+	    return ((AppletEventMulticaster)l).remove(oldl);
+	} else {
+	    return l;		// it's not here
+	}
     }
 }

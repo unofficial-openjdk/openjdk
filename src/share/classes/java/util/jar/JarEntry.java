@@ -49,17 +49,17 @@ class JarEntry extends ZipEntry {
      *            0xFFFF bytes.
      */
     public JarEntry(String name) {
-        super(name);
+	super(name);
     }
 
     /**
      * Creates a new <code>JarEntry</code> with fields taken from the
      * specified <code>ZipEntry</code> object.
-     * @param ze the <code>ZipEntry</code> object to create the
+     * @param ze the <code>ZipEntry</code> object to create the 
      *           <code>JarEntry</code> from
      */
     public JarEntry(ZipEntry ze) {
-        super(ze);
+	super(ze);
     }
 
     /**
@@ -69,10 +69,10 @@ class JarEntry extends ZipEntry {
      * @param je the <code>JarEntry</code> to copy
      */
     public JarEntry(JarEntry je) {
-        this((ZipEntry)je);
-        this.attr = je.attr;
-        this.certs = je.certs;
-        this.signers = je.signers;
+	this((ZipEntry)je);
+	this.attr = je.attr;
+	this.certs = je.certs;
+	this.signers = je.signers;
     }
 
     /**
@@ -83,7 +83,7 @@ class JarEntry extends ZipEntry {
      * entry, or <code>null</code> if none
      */
     public Attributes getAttributes() throws IOException {
-        return attr;
+	return attr;
     }
 
     /**
@@ -104,7 +104,7 @@ class JarEntry extends ZipEntry {
      * <code>null</code> if none.
      */
     public Certificate[] getCertificates() {
-        return certs == null ? null : certs.clone();
+	return certs == null ? null : certs.clone();
     }
 
     /**
@@ -115,7 +115,7 @@ class JarEntry extends ZipEntry {
      * reached. Otherwise, this method will return <code>null</code>.
      *
      * <p>The returned array comprises all the code signers that have signed
-     * this entry.
+     * this entry. 
      *
      * @return the <code>CodeSigner</code> objects for this entry, or
      * <code>null</code> if none.
@@ -123,6 +123,6 @@ class JarEntry extends ZipEntry {
      * @since 1.5
      */
     public CodeSigner[] getCodeSigners() {
-        return signers == null ? null : signers.clone();
+	return signers == null ? null : signers.clone();
     }
 }

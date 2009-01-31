@@ -26,10 +26,10 @@
 #ifndef _JAVASOFT_BOOL_H_
 #define _JAVASOFT_BOOL_H_
 
-#undef  TRUE
-#undef  FALSE
+#undef	TRUE
+#undef	FALSE
 
-typedef enum {
+typedef	enum {
     FALSE = 0,
     TRUE = 1
 } bool_t;

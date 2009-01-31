@@ -27,10 +27,10 @@
  * @summary Verify that nio is loaded after net.
  */
 
-import java.nio.channels.Pipe;
+import java.nio.channels.Pipe; 
 
 public class Basic {
     public static void main(String[] args) throws Exception {
-        Pipe p = Pipe.open();
+	Pipe p = Pipe.open();
     }
 }

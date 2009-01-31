@@ -99,31 +99,31 @@ public class CipherInputStream extends FilterInputStream {
      * return -1 (absolutely no more data)
      */
     private int getMoreData() throws IOException {
-        if (done) return -1;
-        int readin = input.read(ibuffer);
-        if (readin == -1) {
-            done = true;
-            try {
-                obuffer = cipher.doFinal();
-            }
-            catch (IllegalBlockSizeException e) {obuffer = null;}
-            catch (BadPaddingException e) {obuffer = null;}
-            if (obuffer == null)
-                return -1;
-            else {
-                ostart = 0;
-                ofinish = obuffer.length;
-                return ofinish;
-            }
-        }
-        try {
-            obuffer = cipher.update(ibuffer, 0, readin);
-        } catch (IllegalStateException e) {obuffer = null;};
-        ostart = 0;
-        if (obuffer == null)
-            ofinish = 0;
-        else ofinish = obuffer.length;
-        return ofinish;
+	if (done) return -1;
+	int readin = input.read(ibuffer);
+	if (readin == -1) {
+	    done = true;
+	    try {
+		obuffer = cipher.doFinal();
+	    }
+	    catch (IllegalBlockSizeException e) {obuffer = null;}
+	    catch (BadPaddingException e) {obuffer = null;}
+	    if (obuffer == null)
+		return -1;
+	    else {
+		ostart = 0;
+		ofinish = obuffer.length;
+		return ofinish;
+	    }
+	}
+	try {
+	    obuffer = cipher.update(ibuffer, 0, readin);
+	} catch (IllegalStateException e) {obuffer = null;};
+	ostart = 0;
+	if (obuffer == null)
+	    ofinish = 0;
+	else ofinish = obuffer.length;
+	return ofinish;
     }
 
     /**
@@ -136,9 +136,9 @@ public class CipherInputStream extends FilterInputStream {
      * @param c an initialized Cipher object
      */
     public CipherInputStream(InputStream is, Cipher c) {
-        super(is);
-        input = is;
-        cipher = c;
+	super(is);
+	input = is;
+	cipher = c;
     }
 
     /**
@@ -150,9 +150,9 @@ public class CipherInputStream extends FilterInputStream {
      * @param is the to-be-processed input stream
      */
     protected CipherInputStream(InputStream is) {
-        super(is);
-        input = is;
-        cipher = new NullCipher();
+	super(is);
+	input = is;
+	cipher = new NullCipher();
     }
 
     /**
@@ -165,19 +165,19 @@ public class CipherInputStream extends FilterInputStream {
      * is thrown.
      * <p>
      *
-     * @return  the next byte of data, or <code>-1</code> if the end of the
-     *          stream is reached.
+     * @return	the next byte of data, or <code>-1</code> if the end of the
+     *		stream is reached.
      * @exception  IOException  if an I/O error occurs.
      * @since JCE1.2
      */
     public int read() throws IOException {
-        if (ostart >= ofinish) {
-            // we loop for new data as the spec says we are blocking
-            int i = 0;
-            while (i == 0) i = getMoreData();
-            if (i == -1) return -1;
-        }
-        return ((int) obuffer[ostart++] & 0xff);
+	if (ostart >= ofinish) {
+	    // we loop for new data as the spec says we are blocking
+	    int i = 0;
+	    while (i == 0) i = getMoreData();
+	    if (i == -1) return -1;
+	}
+	return ((int) obuffer[ostart++] & 0xff);
     };
 
     /**
@@ -188,16 +188,16 @@ public class CipherInputStream extends FilterInputStream {
      * the <code>read</code> method of three arguments with the arguments
      * <code>b</code>, <code>0</code>, and <code>b.length</code>.
      *
-     * @param      b   the buffer into which the data is read.
-     * @return     the total number of bytes read into the buffer, or
+     * @param	   b   the buffer into which the data is read.
+     * @return	   the total number of bytes read into the buffer, or
      *             <code>-1</code> is there is no more data because the end of
      *             the stream has been reached.
      * @exception  IOException  if an I/O error occurs.
-     * @see        java.io.InputStream#read(byte[], int, int)
+     * @see	   java.io.InputStream#read(byte[], int, int)
      * @since      JCE1.2
      */
     public int read(byte b[]) throws IOException {
-        return read(b, 0, b.length);
+	return read(b, 0, b.length);
     }
 
     /**
@@ -218,22 +218,22 @@ public class CipherInputStream extends FilterInputStream {
      * @since      JCE1.2
      */
     public int read(byte b[], int off, int len) throws IOException {
-        if (ostart >= ofinish) {
-            // we loop for new data as the spec says we are blocking
-            int i = 0;
-            while (i == 0) i = getMoreData();
-            if (i == -1) return -1;
-        }
-        if (len <= 0) {
-            return 0;
-        }
-        int available = ofinish - ostart;
-        if (len < available) available = len;
-        if (b != null) {
-            System.arraycopy(obuffer, ostart, b, off, available);
-        }
-        ostart = ostart + available;
-        return available;
+	if (ostart >= ofinish) {
+	    // we loop for new data as the spec says we are blocking
+	    int i = 0;
+	    while (i == 0) i = getMoreData();
+	    if (i == -1) return -1;
+	}
+	if (len <= 0) {
+	    return 0;
+	}
+	int available = ofinish - ostart;
+	if (len < available) available = len;
+	if (b != null) {
+	    System.arraycopy(obuffer, ostart, b, off, available);
+	}
+	ostart = ostart + available;
+	return available;
     }
 
     /**
@@ -255,15 +255,15 @@ public class CipherInputStream extends FilterInputStream {
      * @since JCE1.2
      */
     public long skip(long n) throws IOException {
-        int available = ofinish - ostart;
-        if (n > available) {
-            n = available;
-        }
-        if (n < 0) {
-            return 0;
-        }
-        ostart += n;
-        return n;
+	int available = ofinish - ostart;
+	if (n > available) {
+	    n = available;
+	}
+	if (n < 0) {
+	    return 0;
+	}
+	ostart += n;
+	return n;
     }
 
     /**
@@ -275,10 +275,10 @@ public class CipherInputStream extends FilterInputStream {
      * @return     the number of bytes that can be read from this input stream
      *             without blocking.
      * @exception  IOException  if an I/O error occurs.
-     * @since      JCE1.2
+     * @since	   JCE1.2
      */
     public int available() throws IOException {
-        return (ofinish - ostart);
+	return (ofinish - ostart);
     }
 
     /**
@@ -293,17 +293,17 @@ public class CipherInputStream extends FilterInputStream {
      * @since JCE1.2
      */
     public void close() throws IOException {
-        input.close();
-        try {
-            // throw away the unprocessed data
-            cipher.doFinal();
-        }
-        catch (BadPaddingException ex) {
-        }
-        catch (IllegalBlockSizeException ex) {
-        }
-        ostart = 0;
-        ofinish = 0;
+	input.close();
+	try {
+	    // throw away the unprocessed data
+	    cipher.doFinal();
+	}
+	catch (BadPaddingException ex) {
+	}
+	catch (IllegalBlockSizeException ex) {
+	}
+	ostart = 0;
+	ofinish = 0;
     }
 
     /**
@@ -317,6 +317,6 @@ public class CipherInputStream extends FilterInputStream {
      * @since   JCE1.2
      */
     public boolean markSupported() {
-        return false;
+	return false;
     }
 }

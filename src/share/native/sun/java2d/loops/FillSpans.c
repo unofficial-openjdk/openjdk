@@ -50,21 +50,21 @@ Java_sun_java2d_loops_FillSpans_FillSpans
 
     pSpanFuncs = (SpanIteratorFuncs *) jlong_to_ptr(pIterator);
     if (pSpanFuncs == NULL) {
-        JNU_ThrowNullPointerException(env, "native iterator not supplied");
-        return;
+	JNU_ThrowNullPointerException(env, "native iterator not supplied");
+	return;
     }
 
     pPrim = GetNativePrim(env, self);
     if (pPrim == NULL) {
-        return;
+	return;
     }
-    if (pPrim->pCompType->getCompInfo != NULL) {
-        GrPrim_Sg2dGetCompInfo(env, sg2d, pPrim, &compInfo);
+    if (pPrim->pCompType->getCompInfo != NULL) { 
+        GrPrim_Sg2dGetCompInfo(env, sg2d, pPrim, &compInfo); 
     }
 
     sdOps = SurfaceData_GetOps(env, sData);
     if (sdOps == NULL) {
-        return;
+	return;
     }
 
     siData = (*pSpanFuncs->open)(env, si);
@@ -76,20 +76,20 @@ Java_sun_java2d_loops_FillSpans_FillSpans
     rasInfo.bounds.y2 = bbox[3];
 
     if (sdOps->Lock(env, sdOps, &rasInfo, pPrim->dstflags) != SD_SUCCESS) {
-        /* Lock threw an exception */
-        (*pSpanFuncs->close)(env, siData);
-        return;
+	/* Lock threw an exception */
+	(*pSpanFuncs->close)(env, siData);
+	return;
     }
     (*pSpanFuncs->intersectClipBox)(env, siData,
-                                    rasInfo.bounds.x1,
-                                    rasInfo.bounds.y1,
-                                    rasInfo.bounds.x2,
-                                    rasInfo.bounds.y2);
+				    rasInfo.bounds.x1,
+				    rasInfo.bounds.y1,
+				    rasInfo.bounds.x2,
+				    rasInfo.bounds.y2);
 
     sdOps->GetRasInfo(env, sdOps, &rasInfo);
     /* Protect against silent failure of GetRasInfo */
     if (rasInfo.rasBase != NULL) {
-        pPrim->funcs.fillspans(&rasInfo, pSpanFuncs, siData,
+	pPrim->funcs.fillspans(&rasInfo, pSpanFuncs, siData, 
                                pixel, pPrim, &compInfo);
     }
 

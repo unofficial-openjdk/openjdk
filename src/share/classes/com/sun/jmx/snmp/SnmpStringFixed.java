@@ -27,17 +27,18 @@
 package com.sun.jmx.snmp;
 
 
+// %Z%%M% %I% %E% SMI
 
 // java imports
 //
 import java.lang.Math;
 
 /**
- * Represents an SNMP String defined with a fixed length.
+ * Represents an SNMP String defined with a fixed length. 
  * The class is mainly used when dealing with table indexes for which one of the keys
  * is defined as a <CODE>String</CODE>.
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
@@ -90,7 +91,7 @@ public class SnmpStringFixed extends SnmpString {
             value[i] = 0 ;
         }
     }
-
+      
     /**
      * Constructs a new <CODE>SnmpStringFixed</CODE> from the specified <CODE>Bytes</CODE> array
      * with the specified length.
@@ -111,7 +112,7 @@ public class SnmpStringFixed extends SnmpString {
             value[i] = 0 ;
         }
     }
-
+      
     /**
      * Constructs a new <CODE>SnmpStringFixed</CODE> from the specified <CODE>String</CODE>
      * with the specified length.
@@ -133,7 +134,7 @@ public class SnmpStringFixed extends SnmpString {
             value[i] = 0 ;
         }
     }
-
+      
     // PUBLIC METHODS
     //---------------
     /**
@@ -164,7 +165,7 @@ public class SnmpStringFixed extends SnmpString {
     /**
      * Scans an index OID, skip the string value and returns the position
      * of the next value.
-     * @param l The number of successive array elements to be passed
+     * @param l The number of successive array elements to be passed 
      * in order to get the position of the next value.
      * These elements are passed starting at the <CODE>start</CODE> position.
      * @param index The index array.

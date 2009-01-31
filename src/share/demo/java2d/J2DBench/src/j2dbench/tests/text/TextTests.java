@@ -71,10 +71,10 @@ public abstract class TextTests extends Test {
     public static boolean hasGraphics2D;
 
     static {
-        try {
-            hasGraphics2D = (Graphics2D.class != null);
-        } catch (NoClassDefFoundError e) {
-        }
+	try {
+	    hasGraphics2D = (Graphics2D.class != null);
+	} catch (NoClassDefFoundError e) {
+	}
     }
 
     // core data
@@ -185,25 +185,25 @@ public abstract class TextTests extends Test {
             "wtr", "wysrt"
         };
 
-        txDescNames = new String[] {
-            "Identity",
+        txDescNames = new String[] { 
+            "Identity", 
             "Sm Scale", "Lg Scale", "Wide", "Tall",
             "X Trans", "Y Trans", "XY Trans",
             "Sm Rot", "Lg Rot", "PI/2 Rot",
             "X Shear", "Y Shear", "XY Shear",
-            "FlipX", "FlipY", "FlipXY",
-            "WRot", "WYShear", "WRTrans",
-            "WTRot", "WYSRTrans"
+            "FlipX", "FlipY", "FlipXY", 
+            "WRot", "WYShear", "WRTrans", 
+            "WTRot", "WYSRTrans" 
         };
 
         txList = new AffineTransform[] {
-            identity,
+            identity, 
             sm_scale, lg_scale, wide, tall,
             x_trans, y_trans, xy_trans,
-            sm_rot, lg_rot, pi2_rot,
+            sm_rot, lg_rot, pi2_rot, 
             x_shear, y_shear, xy_shear,
-            x_flip, y_flip, xy_flip,
-            w_rot, w_y_shear, w_r_trans,
+            x_flip, y_flip, xy_flip, 
+            w_rot, w_y_shear, w_r_trans, 
             w_t_rot, w_y_s_r_trans,
         };
 
@@ -211,7 +211,7 @@ public abstract class TextTests extends Test {
         HashMap fontMap = new HashMap();
         fontMap.put(TextAttribute.FONT, new Font("Dialog", Font.ITALIC, 18));
 
-        HashMap emptyMap = new HashMap();
+	HashMap emptyMap = new HashMap();
 
         HashMap simpleMap = new HashMap();
         simpleMap.put(TextAttribute.FAMILY, "Lucida Sans");
@@ -222,17 +222,17 @@ public abstract class TextTests extends Test {
         complexMap.put(TextAttribute.FAMILY, "Serif");
         complexMap.put(TextAttribute.TRANSFORM, tall);
         complexMap.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
-        complexMap.put(TextAttribute.RUN_DIRECTION,
+        complexMap.put(TextAttribute.RUN_DIRECTION, 
                        TextAttribute.RUN_DIRECTION_RTL);
-        try {
-            complexMap.put(TextAttribute.NUMERIC_SHAPING,
-                           NumericShaper.getContextualShaper(NumericShaper.ALL_RANGES));
-        } catch (NoSuchFieldError e) {
-        }
+	try {
+	    complexMap.put(TextAttribute.NUMERIC_SHAPING,
+			   NumericShaper.getContextualShaper(NumericShaper.ALL_RANGES));
+	} catch (NoSuchFieldError e) {
+	}
 
         maps = new Map[] {
             fontMap,
-            emptyMap,
+	    emptyMap,
             simpleMap,
             complexMap,
         };
@@ -276,9 +276,9 @@ public abstract class TextTests extends Test {
             pos += span;
         }
         return s.substring(0, len);
-    }
-
-
+    }                
+                                    
+            
     static HashMap strcache = new HashMap(tscripts.length);
     private static String getSimpleString(Object key) {
         String s = (String)strcache.get(key);
@@ -289,7 +289,7 @@ public abstract class TextTests extends Test {
                 if (is == null) {
                     throw new IOException("Can't load resource " + fname);
                 }
-                BufferedReader r =
+                BufferedReader r = 
                     new BufferedReader(new InputStreamReader(is, "utf8"));
                 StringBuffer buf = new StringBuffer(r.readLine());
                 while (null != (s = r.readLine())) {
@@ -302,7 +302,7 @@ public abstract class TextTests extends Test {
                 }
             }
             catch (IOException e) {
-                s = "This is a dummy ascii string because " +
+                s = "This is a dummy ascii string because " + 
                     fname + " was not found.";
             }
             strcache.put(key, s);
@@ -316,7 +316,7 @@ public abstract class TextTests extends Test {
     static Group txoptfontroot;
     static Group txoptgraphicsroot;
     static Group advoptsroot;
-
+    
     static Option tlengthList;
     static Option tscriptList;
     static Option fnameList;
@@ -353,23 +353,23 @@ public abstract class TextTests extends Test {
     //   advance
     //   (gv) lb, vb, pb, glb, gvb, glb, gp, gjust, gmet, gtx
     //   (tl) bounds, charpos, cursor
-    //
+    // 
     // construction/layout
     //   (bidi) no controls, controls, styles
     //   (gv) createGV, layoutGV
     //   (tl) TL constructors
     //   (tm) line break
-
+    
     public static void init() {
-        textroot = new Group("text", "Text Benchmarks");
-        textroot.setTabbed();
+	textroot = new Group("text", "Text Benchmarks");
+	textroot.setTabbed();
 
-        txoptroot = new Group(textroot, "opts", "Text Options");
+	txoptroot = new Group(textroot, "opts", "Text Options");
         txoptroot.setTabbed();
 
         txoptdataroot = new Group(txoptroot, "data", "Text Data");
 
-        tlengthList = new Option.IntList(txoptdataroot, "tlength",
+	tlengthList = new Option.IntList(txoptdataroot, "tlength",
                                         "Text Length",
                                         tlengths,
                                         intStringList(tlengths),
@@ -395,7 +395,7 @@ public abstract class TextTests extends Test {
                                         new int[] {
                                             Font.PLAIN, Font.BOLD, Font.ITALIC, Font.BOLD + Font.ITALIC,
                                         },
-                                        new String[] {
+                                        new String[] { 
                                             "plain", "bold", "italic", "bolditalic",
                                         },
                                         new String[] {
@@ -412,7 +412,7 @@ public abstract class TextTests extends Test {
                                           floatStringList(fsl, "pt"),
                                           0x40);
         ((Option.ObjectList) fsizeList).setNumRows(5);
-
+        
         if (hasGraphics2D) {
             ftxList = new Option.ObjectList(txoptfontroot, "ftx",
                                             "Transform",
@@ -422,7 +422,7 @@ public abstract class TextTests extends Test {
                                             txDescNames,
                                             0x1);
             ((Option.ObjectList) ftxList).setNumRows(6);
-
+                                        
             txoptgraphicsroot = new Group(txoptroot, "graphics", "Graphics");
 
             String[] taaNames;
@@ -547,7 +547,7 @@ public abstract class TextTests extends Test {
     }
 
     public static class TextContext extends Context {
-        Graphics graphics;
+	Graphics graphics;
         String text;
         char[] chars;
         Font font;
@@ -587,12 +587,12 @@ public abstract class TextTests extends Test {
                 Graphics2D g2d = (Graphics2D)graphics;
                 g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                                      env.getModifier(taaList));
-                g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                                     env.isEnabled(tfmTog)
+                g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, 
+                                     env.isEnabled(tfmTog) 
                                      ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
                                      : RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                     env.isEnabled(gaaTog)
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, 
+                                     env.isEnabled(gaaTog) 
                                      ? RenderingHints.VALUE_ANTIALIAS_ON
                                      : RenderingHints.VALUE_ANTIALIAS_OFF);
                 g2d.transform((AffineTransform)env.getModifier(gtxList));
@@ -621,17 +621,17 @@ public abstract class TextTests extends Test {
     }
 
     public TextTests(Group parent, String nodeName, String description) {
-        super(parent, nodeName, description);
-        addDependency(Destinations.destroot);
-        addDependencies(txoptroot, true);
+	super(parent, nodeName, description);
+	addDependency(Destinations.destroot);
+	addDependencies(txoptroot, true);
     }
 
     public Context createContext() {
-        return new TextContext();
+	return new TextContext();
     }
 
     public Object initTest(TestEnvironment env, Result result) {
-        Context ctx = createContext();
+	Context ctx = createContext();
         ctx.init(env, result);
         return ctx;
     }
@@ -692,18 +692,19 @@ public abstract class TextTests extends Test {
         static String[] descnames = {
             "Default", "Serif", "Lucida Sans", "Physical"
         };
-
+                
         public FontOption(Group parent, String nodeName, String description) {
-            super(parent, nodeName, description,
+            super(parent, nodeName, description, 
                   optionnames, descnames, optionnames, descnames, 0xa);
         }
 
-        public String getValString(Object value) {
-            return value.toString();
-        }
+	public String getValString(Object value) {
+	    return value.toString();
+	}
 
-        public String getAbbreviatedModifierDescription(Object value) {
-            return value.toString();
-        }
+	public String getAbbreviatedModifierDescription(Object value) {
+	    return value.toString();
+	}
     }
 }
+

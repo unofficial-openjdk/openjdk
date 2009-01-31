@@ -91,7 +91,7 @@ public class ReadObject extends Hashtable {
         }
         return newObj;
     }
-
+    
     public static void main(String[] args) {
         ReadObject myHashtable = new ReadObject();
         myHashtable.put("key", "value");

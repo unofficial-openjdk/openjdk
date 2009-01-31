@@ -25,7 +25,7 @@
 
 package org.ietf.jgss;
 
-/**
+/** 
  * This is a utility class used within the per-message GSSContext
  * methods to convey per-message properties.<p>
  *
@@ -43,13 +43,14 @@ package org.ietf.jgss;
  * contain any supplementary status values applicable to the processed
  * token.  The supplementary status values can indicate old tokens, out
  * of sequence tokens, gap tokens or duplicate tokens.<p>
- *
+ * 
  * @see GSSContext#wrap
  * @see GSSContext#unwrap
  * @see GSSContext#getMIC
  * @see GSSContext#verifyMIC
  *
  * @author Mayank Upadhyay
+ * @version %I%, %G%
  * @since 1.4
  */
 public class MessageProp {
@@ -73,10 +74,10 @@ public class MessageProp {
         this(0, privState);
     }
 
-    /**
+    /** 
      * Constructor which sets the values for the qop and privacy state.
-     *
-     * @param qop the QOP value
+     * 
+     * @param qop the QOP value 
      * @param privState the privacy (i.e. confidentiality) state
      */
     public MessageProp(int qop, boolean privState) {
@@ -85,9 +86,9 @@ public class MessageProp {
         resetStatusValues();
     }
 
-    /**
+    /** 
      * Retrieves the QOP value.
-     *
+     * 
      * @return an int representing the QOP value
      * @see #setQOP
      */
@@ -95,21 +96,21 @@ public class MessageProp {
         return qop;
     }
 
-    /**
+    /** 
      * Retrieves the privacy state.
-     *
+     * 
      * @return true if the privacy (i.e., confidentiality) state is true,
      * false otherwise.
      * @see #setPrivacy
      */
     public boolean getPrivacy() {
-
+    
         return (privacyState);
     }
 
-    /**
+    /** 
      * Sets the QOP value.
-     *
+     * 
      * @param qop the int value to set the QOP to
      * @see #getQOP
      */
@@ -118,20 +119,20 @@ public class MessageProp {
     }
 
 
-    /**
+    /** 
      * Sets the privacy state.
-     *
+     * 
      * @param privState true is the privacy (i.e., confidentiality) state
      * is true, false otherwise.
      * @see #getPrivacy
      */
     public void setPrivacy(boolean privState) {
-
+    
         this.privacyState = privState;
     }
 
 
-    /**
+    /** 
      * Tests if this is a duplicate of an earlier token.
      *
      * @return true if this is a duplicate, false otherwise.
@@ -140,7 +141,7 @@ public class MessageProp {
         return dupToken;
     }
 
-    /**
+    /** 
      * Tests if this token's validity period has expired, i.e., the token
      * is too old to be checked for duplication.
      *
@@ -151,7 +152,7 @@ public class MessageProp {
         return oldToken;
     }
 
-    /**
+    /** 
      * Tests if a later token had already been processed.
      *
      * @return true if a later token had already been processed, false otherwise.
@@ -160,7 +161,7 @@ public class MessageProp {
         return unseqToken;
     }
 
-    /**
+    /** 
      * Tests if an expected token was not received, i.e., one or more
      * predecessor tokens have not yet been successfully processed.
      *
@@ -180,9 +181,9 @@ public class MessageProp {
     public int getMinorStatus(){
         return minorStatus;
     }
-
+    
     /**
-     * Retrieves a string explaining the minor status code.
+     * Retrieves a string explaining the minor status code. 
      *
      * @return a String corresponding to the minor status
      * code. <code>null</code> will be returned when no minor status code
@@ -191,7 +192,7 @@ public class MessageProp {
     public String getMinorString(){
         return minorString;
     }
-
+    
     /**
      * This method sets the state for the supplementary information flags
      * and the minor status in MessageProp.  It is not used by the
@@ -221,7 +222,7 @@ public class MessageProp {
        this.minorString = minorString;
     }
 
-    /**
+    /** 
      * Resets the supplementary status values to false.
      */
     private void resetStatusValues() {

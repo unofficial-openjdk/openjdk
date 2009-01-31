@@ -41,8 +41,8 @@ import sun.management.snmp.jvmmib.JvmRTInputArgsEntryMBean;
 /**
  * The class is used for implementing the "JvmRTInputArgsEntry" group.
  */
-public class JvmRTInputArgsEntryImpl implements JvmRTInputArgsEntryMBean,
-                                                Serializable {
+public class JvmRTInputArgsEntryImpl implements JvmRTInputArgsEntryMBean, 
+						Serializable {
 
     private final String item;
     private final int index;
@@ -51,14 +51,14 @@ public class JvmRTInputArgsEntryImpl implements JvmRTInputArgsEntryMBean,
      * Constructor for the "JvmRTInputArgsEntry" group.
      */
     public JvmRTInputArgsEntryImpl(String item, int index) {
-        this.item = validArgValueTC(item);
-        this.index = index;
+	this.item = validArgValueTC(item);
+	this.index = index;
     }
-
+    
     private String validArgValueTC(String str) {
-        return JVM_MANAGEMENT_MIB_IMPL.validArgValueTC(str);
+	return JVM_MANAGEMENT_MIB_IMPL.validArgValueTC(str);
     }
-
+    
     /**
      * Getter for the "JvmRTInputArgsItem" variable.
      */

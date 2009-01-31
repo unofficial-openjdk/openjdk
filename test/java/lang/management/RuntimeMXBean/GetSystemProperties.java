@@ -28,7 +28,7 @@
  * @author  Mandy Chung
  *
  * @compile -source 1.5 GetSystemProperties.java
- * @run main GetSystemProperties
+ * @run main GetSystemProperties 
  */
 
 import java.lang.management.ManagementFactory;
@@ -60,24 +60,24 @@ public class GetSystemProperties {
         System.setProperty(KEY2, VALUE2);
 
         Map<String,String> props1 = mbean.getSystemProperties();
-        String value1 = props1.get(KEY1);
+        String value1 = props1.get(KEY1); 
         if (value1 == null || !value1.equals(VALUE1)) {
             throw new RuntimeException(KEY1 + " property found" +
-                 " with value = " + value1 +
-                 " but expected to be " + VALUE1);
+                 " with value = " + value1 + 
+                 " but expected to be " + VALUE1); 
         }
 
-        String value2 = props1.get(KEY2);
+        String value2 = props1.get(KEY2); 
         if (value2 == null || !value2.equals(VALUE2)) {
             throw new RuntimeException(KEY2 + " property found" +
-                 " with value = " + value2 +
-                 " but expected to be " + VALUE2);
+                 " with value = " + value2 + 
+                 " but expected to be " + VALUE2); 
         }
 
-        String value3 = props1.get(KEY3);
+        String value3 = props1.get(KEY3); 
         if (value3 != null) {
             throw new RuntimeException(KEY3 + " property found" +
-                 " but should not exist" );
+                 " but should not exist" ); 
         }
 
         // Add new system properties but are not Strings
@@ -89,8 +89,8 @@ public class GetSystemProperties {
         // expect the system properties returned should be
         // same as the one before adding KEY3 and KEY4
         props1.equals(props2);
-
-        System.out.println("Test passed.");
+       
+        System.out.println("Test passed."); 
     }
 
     private static void printProperties(Map<String,String> props) {

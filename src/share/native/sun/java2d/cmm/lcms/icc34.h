@@ -31,20 +31,20 @@
  * This version of the header file corresponds to the profile
  * specification version 3.4.
  *
- * All header file entries are pre-fixed with "ic" to help
+ * All header file entries are pre-fixed with "ic" to help 
  * avoid name space collisions. Signatures are pre-fixed with
  * icSig.
  *
  * The structures defined in this header file were created to
  * represent a description of an ICC profile on disk. Rather
- * than use pointers a technique is used where a single byte array
+ * than use pointers a technique is used where a single byte array 
  * was placed at the end of each structure. This allows us in "C"
  * to extend the structure by allocating more data than is needed
  * to account for variable length structures.
  *
  * This also ensures that data following is allocated
  * contiguously and makes it easier to write and read data from
- * the file.
+ * the file. 
  *
  * For example to allocate space for a 256 count length UCR
  * and BG array, and fill the allocated data.  Note strlen + 1
@@ -56,20 +56,20 @@
         char            ucr_string[100], *ucr_char;
 
         strcpy(ucr_string, "Example ucrBG curves");
-        ucr_nbytes = sizeof(icUInt32Number) +
+        ucr_nbytes = sizeof(icUInt32Number) + 
                  (UCR_CURVE_SIZE * sizeof(icUInt16Number));
-        bg_nbytes = sizeof(icUInt32Number) +
+        bg_nbytes = sizeof(icUInt32Number) + 
                  (BG_CURVE_SIZE * sizeof(icUInt16Number));
         string_bytes = strlen(ucr_string) + 1;
 
         ucrBgWrite = (icUcrBg *)malloc(
                                 (ucr_nbytes + bg_nbytes + string_bytes));
-
+ 
         ucrCurve = (icUcrBgCurve *)ucrBgWrite->data;
         ucrCurve->count = UCR_CURVE_SIZE;
         for (i=0; i<ucrCurve->count; i++)
                 ucrCurve->curve[i] = (icUInt16Number)i;
-
+ 
         bgCurve = (icUcrBgCurve *)((char *)ucrCurve + ucr_nbytes);
         bgCurve->count = BG_CURVE_SIZE;
         for (i=0; i<bgCurve->count; i++)
@@ -100,7 +100,7 @@
 #define icLinesPerInch                  0x00000002L     /* Bit pos 1 */
 #define icLinesPerCm                    0x00000000L     /* Bit pos 1 */
 
-/*
+/* 
  * Device attributes, currently defined values correspond
  * to the low 4 bytes of the 8 byte attribute quantity, see
  * the header for their location.
@@ -120,10 +120,10 @@
 #define icUseWithEmbeddedDataOnly       0x00000002L     /* Bit pos 1 */
 
 /* Ascii or Binary data */
-#define icAsciiData                     0x00000000L
+#define icAsciiData                     0x00000000L 
 #define icBinaryData                    0x00000001L
 
-/*
+/* 
  * Define used to indicate that this is a variable length array
  */
 #define icAny                           1
@@ -141,23 +141,23 @@
 #ifdef PACKAGE_NAME
 /*
   June 9, 2003, Adapted for use with configure by Bob Friesenhahn
-  Added the stupid check for autoconf by Marti Maria.
-  PACKAGE_NAME is defined if autoconf is being used
+  Added the stupid check for autoconf by Marti Maria. 
+  PACKAGE_NAME is defined if autoconf is being used 
 */
 
-typedef @UINT8_T@       icUInt8Number;
-typedef @UINT16_T@      icUInt16Number;
-typedef @UINT32_T@      icUInt32Number;
-typedef @UINT32_T@      icUInt64Number[2];
+typedef @UINT8_T@	icUInt8Number;
+typedef @UINT16_T@	icUInt16Number;
+typedef @UINT32_T@	icUInt32Number;
+typedef @UINT32_T@	icUInt64Number[2];
 
-typedef @INT8_T@        icInt8Number;
-typedef @INT16_T@       icInt16Number;
-typedef @INT32_T@       icInt32Number;
-typedef @INT32_T@       icInt64Number[2];
+typedef @INT8_T@	icInt8Number;
+typedef @INT16_T@	icInt16Number;
+typedef @INT32_T@	icInt32Number;
+typedef @INT32_T@	icInt64Number[2];
 
 #else
 
-/*
+/* 
  *Apr-17-2002: Modified by Marti Maria in order to provide wider portability.
  */
 
@@ -199,7 +199,7 @@ typedef __int32_t       icInt32Number;
 typedef __int32_t       icInt64Number[2];
 
 
-#else
+#else   
 #if defined(__GNUC__) || defined(__unix__) || defined(__unix)
 
 #include <sys/types.h>
@@ -263,16 +263,16 @@ typedef icUInt32Number   icU16Fixed16Number;
 /*------------------------------------------------------------------------*/
 /* public tags and sizes */
 typedef enum {
-    icSigAToB0Tag                       = 0x41324230L,  /* 'A2B0' */
+    icSigAToB0Tag                       = 0x41324230L,  /* 'A2B0' */ 
     icSigAToB1Tag                       = 0x41324231L,  /* 'A2B1' */
-    icSigAToB2Tag                       = 0x41324232L,  /* 'A2B2' */
+    icSigAToB2Tag                       = 0x41324232L,  /* 'A2B2' */ 
     icSigBlueColorantTag                = 0x6258595AL,  /* 'bXYZ' */
     icSigBlueTRCTag                     = 0x62545243L,  /* 'bTRC' */
     icSigBToA0Tag                       = 0x42324130L,  /* 'B2A0' */
     icSigBToA1Tag                       = 0x42324131L,  /* 'B2A1' */
     icSigBToA2Tag                       = 0x42324132L,  /* 'B2A2' */
     icSigCalibrationDateTimeTag         = 0x63616C74L,  /* 'calt' */
-    icSigCharTargetTag                  = 0x74617267L,  /* 'targ' */
+    icSigCharTargetTag                  = 0x74617267L,  /* 'targ' */ 
     icSigCopyrightTag                   = 0x63707274L,  /* 'cprt' */
     icSigCrdInfoTag                     = 0x63726469L,  /* 'crdi' */
     icSigDeviceMfgDescTag               = 0x646D6E64L,  /* 'dmnd' */
@@ -285,7 +285,7 @@ typedef enum {
     icSigMeasurementTag                 = 0x6D656173L,  /* 'meas' */
     icSigMediaBlackPointTag             = 0x626B7074L,  /* 'bkpt' */
     icSigMediaWhitePointTag             = 0x77747074L,  /* 'wtpt' */
-    icSigNamedColorTag                  = 0x6E636f6CL,  /* 'ncol'
+    icSigNamedColorTag                  = 0x6E636f6CL,  /* 'ncol' 
                                                          * OBSOLETE, use ncl2 */
     icSigNamedColor2Tag                 = 0x6E636C32L,  /* 'ncl2' */
     icSigPreview0Tag                    = 0x70726530L,  /* 'pre0' */
@@ -307,7 +307,7 @@ typedef enum {
     icSigUcrBgTag                       = 0x62666420L,  /* 'bfd ' */
     icSigViewingCondDescTag             = 0x76756564L,  /* 'vued' */
     icSigViewingConditionsTag           = 0x76696577L,  /* 'view' */
-    icMaxEnumTag                        = 0xFFFFFFFFL
+    icMaxEnumTag                        = 0xFFFFFFFFL 
 } icTagSignature;
 
 /* technology signature descriptions */
@@ -315,7 +315,7 @@ typedef enum {
     icSigDigitalCamera                  = 0x6463616DL,  /* 'dcam' */
     icSigFilmScanner                    = 0x6673636EL,  /* 'fscn' */
     icSigReflectiveScanner              = 0x7273636EL,  /* 'rscn' */
-    icSigInkJetPrinter                  = 0x696A6574L,  /* 'ijet' */
+    icSigInkJetPrinter                  = 0x696A6574L,  /* 'ijet' */ 
     icSigThermalWaxPrinter              = 0x74776178L,  /* 'twax' */
     icSigElectrophotographicPrinter     = 0x6570686FL,  /* 'epho' */
     icSigElectrostaticPrinter           = 0x65737461L,  /* 'esta' */
@@ -334,7 +334,7 @@ typedef enum {
     icSigOffsetLithography              = 0x6F666673L,  /* 'offs' */
     icSigSilkscreen                     = 0x73696C6BL,  /* 'silk' */
     icSigFlexography                    = 0x666C6578L,  /* 'flex' */
-    icMaxEnumTechnology                 = 0xFFFFFFFFL
+    icMaxEnumTechnology                 = 0xFFFFFFFFL   
 } icTechnologySignature;
 
 /* type signatures */
@@ -345,7 +345,7 @@ typedef enum {
     icSigLut16Type                      = 0x6d667432L,  /* 'mft2' */
     icSigLut8Type                       = 0x6d667431L,  /* 'mft1' */
     icSigMeasurementType                = 0x6D656173L,  /* 'meas' */
-    icSigNamedColorType                 = 0x6E636f6CL,  /* 'ncol'
+    icSigNamedColorType                 = 0x6E636f6CL,  /* 'ncol' 
                                                          * OBSOLETE, use ncl2 */
     icSigProfileSequenceDescType        = 0x70736571L,  /* 'pseq' */
     icSigS15Fixed16ArrayType            = 0x73663332L,  /* 'sf32' */
@@ -364,14 +364,14 @@ typedef enum {
     icSigXYZArrayType                   = 0x58595A20L,  /* 'XYZ ' */
     icSigNamedColor2Type                = 0x6E636C32L,  /* 'ncl2' */
     icSigCrdInfoType                    = 0x63726469L,  /* 'crdi' */
-    icMaxEnumType                       = 0xFFFFFFFFL
+    icMaxEnumType                       = 0xFFFFFFFFL   
 } icTagTypeSignature;
 
-/*
+/* 
  * Color Space Signatures
  * Note that only icSigXYZData and icSigLabData are valid
  * Profile Connection Spaces (PCSs)
- */
+ */ 
 typedef enum {
     icSigXYZData                        = 0x58595A20L,  /* 'XYZ ' */
     icSigLabData                        = 0x4C616220L,  /* 'Lab ' */
@@ -398,7 +398,7 @@ typedef enum {
     icSig13colorData                    = 0x44434C52L,  /* 'DCLR' */
     icSig14colorData                    = 0x45434C52L,  /* 'ECLR' */
     icSig15colorData                    = 0x46434C52L,  /* 'FCLR' */
-    icMaxEnumData                       = 0xFFFFFFFFL
+    icMaxEnumData                       = 0xFFFFFFFFL   
 } icColorSpaceSignature;
 
 /* profileClass enumerations */
@@ -410,7 +410,7 @@ typedef enum {
     icSigAbstractClass                  = 0x61627374L,  /* 'abst' */
     icSigColorSpaceClass                = 0x73706163L,  /* 'spac' */
     icSigNamedColorClass                = 0x6e6d636cL,  /* 'nmcl' */
-    icMaxEnumClass                      = 0xFFFFFFFFL
+    icMaxEnumClass                      = 0xFFFFFFFFL  
 } icProfileClassSignature;
 
 /* Platform Signatures */
@@ -420,7 +420,7 @@ typedef enum {
     icSigSolaris                        = 0x53554E57L,  /* 'SUNW' */
     icSigSGI                            = 0x53474920L,  /* 'SGI ' */
     icSigTaligent                       = 0x54474E54L,  /* 'TGNT' */
-    icMaxEnumPlatform                   = 0xFFFFFFFFL
+    icMaxEnumPlatform                   = 0xFFFFFFFFL  
 } icPlatformSignature;
 
 /*------------------------------------------------------------------------*/
@@ -432,7 +432,7 @@ typedef enum {
 typedef enum {
     icFlare0                            = 0x00000000L,  /* 0% flare */
     icFlare100                          = 0x00000001L,  /* 100% flare */
-    icMaxFlare                          = 0xFFFFFFFFL
+    icMaxFlare                          = 0xFFFFFFFFL   
 } icMeasurementFlare;
 
 /* Measurement Geometry, used in the measurmentType tag */
@@ -440,7 +440,7 @@ typedef enum {
     icGeometryUnknown                   = 0x00000000L,  /* Unknown */
     icGeometry045or450                  = 0x00000001L,  /* 0/45, 45/0 */
     icGeometry0dord0                    = 0x00000002L,  /* 0/d or d/0 */
-    icMaxGeometry                       = 0xFFFFFFFFL
+    icMaxGeometry                       = 0xFFFFFFFFL   
 } icMeasurementGeometry;
 
 /* Rendering Intents, used in the profile header */
@@ -449,7 +449,7 @@ typedef enum {
     icRelativeColorimetric              = 1,
     icSaturation                        = 2,
     icAbsoluteColorimetric              = 3,
-    icMaxEnumIntent                     = 0xFFFFFFFFL
+    icMaxEnumIntent                     = 0xFFFFFFFFL   
 } icRenderingIntent;
 
 /* Different Spot Shapes currently defined, used for screeningType */
@@ -462,7 +462,7 @@ typedef enum {
     icSpotShapeLine                     = 5,
     icSpotShapeSquare                   = 6,
     icSpotShapeCross                    = 7,
-    icMaxEnumSpot                       = 0xFFFFFFFFL
+    icMaxEnumSpot                       = 0xFFFFFFFFL   
 } icSpotShape;
 
 /* Standard Observer, used in the measurmentType tag */
@@ -470,7 +470,7 @@ typedef enum {
     icStdObsUnknown                     = 0x00000000L,  /* Unknown */
     icStdObs1931TwoDegrees              = 0x00000001L,  /* 2 deg */
     icStdObs1964TenDegrees              = 0x00000002L,  /* 10 deg */
-    icMaxStdObs                         = 0xFFFFFFFFL
+    icMaxStdObs                         = 0xFFFFFFFFL   
 } icStandardObserver;
 
 /* Pre-defined illuminants, used in measurement and viewing conditions type */
@@ -482,15 +482,15 @@ typedef enum {
     icIlluminantF2                      = 0x00000004L,
     icIlluminantD55                     = 0x00000005L,
     icIlluminantA                       = 0x00000006L,
-    icIlluminantEquiPowerE              = 0x00000007L,
-    icIlluminantF8                      = 0x00000008L,
-    icMaxEnumIluminant                  = 0xFFFFFFFFL
+    icIlluminantEquiPowerE              = 0x00000007L,  
+    icIlluminantF8                      = 0x00000008L,  
+    icMaxEnumIluminant                  = 0xFFFFFFFFL   
 } icIlluminant;
 
 
 /*------------------------------------------------------------------------*/
 /*
- * Arrays of numbers
+ * Arrays of numbers 
  */
 
 /* Int8 Array */
@@ -532,7 +532,7 @@ typedef struct {
 typedef struct {
     icInt64Number       data[icAny];    /* Variable array of values */
 } icInt64Array;
-
+    
 /* u16Fixed16 Array */
 typedef struct {
     icU16Fixed16Number  data[icAny];    /* Variable array of values */
@@ -588,13 +588,13 @@ typedef struct {
     icUInt8Number       clutPoints;     /* Number of grid points */
     icInt8Number        pad;            /* Padding for byte alignment */
     icS15Fixed16Number  e00;            /* e00 in the 3 * 3 */
-    icS15Fixed16Number  e01;            /* e01 in the 3 * 3 */
+    icS15Fixed16Number  e01;            /* e01 in the 3 * 3 */    
     icS15Fixed16Number  e02;            /* e02 in the 3 * 3 */
     icS15Fixed16Number  e10;            /* e10 in the 3 * 3 */
-    icS15Fixed16Number  e11;            /* e11 in the 3 * 3 */
-    icS15Fixed16Number  e12;            /* e12 in the 3 * 3 */
+    icS15Fixed16Number  e11;            /* e11 in the 3 * 3 */    
+    icS15Fixed16Number  e12;            /* e12 in the 3 * 3 */ 
     icS15Fixed16Number  e20;            /* e20 in the 3 * 3 */
-    icS15Fixed16Number  e21;            /* e21 in the 3 * 3 */
+    icS15Fixed16Number  e21;            /* e21 in the 3 * 3 */    
     icS15Fixed16Number  e22;            /* e22 in the 3 * 3 */
     icUInt16Number      inputEnt;       /* Num of in-table entries */
     icUInt16Number      outputEnt;      /* Num of out-table entries */
@@ -603,7 +603,7 @@ typedef struct {
  *  Data that follows is of this form
  *
  *  icUInt16Number      inputTable[inputChan][icAny];   * The in-table
- *  icUInt16Number      clutTable[icAny];               * The clut
+ *  icUInt16Number      clutTable[icAny];               * The clut 
  *  icUInt16Number      outputTable[outputChan][icAny]; * The out-table
  */
 } icLut16;
@@ -615,20 +615,20 @@ typedef struct {
     icUInt8Number       clutPoints;     /* Num of grid points */
     icInt8Number        pad;
     icS15Fixed16Number  e00;            /* e00 in the 3 * 3 */
-    icS15Fixed16Number  e01;            /* e01 in the 3 * 3 */
+    icS15Fixed16Number  e01;            /* e01 in the 3 * 3 */    
     icS15Fixed16Number  e02;            /* e02 in the 3 * 3 */
     icS15Fixed16Number  e10;            /* e10 in the 3 * 3 */
-    icS15Fixed16Number  e11;            /* e11 in the 3 * 3 */
-    icS15Fixed16Number  e12;            /* e12 in the 3 * 3 */
+    icS15Fixed16Number  e11;            /* e11 in the 3 * 3 */    
+    icS15Fixed16Number  e12;            /* e12 in the 3 * 3 */ 
     icS15Fixed16Number  e20;            /* e20 in the 3 * 3 */
-    icS15Fixed16Number  e21;            /* e21 in the 3 * 3 */
+    icS15Fixed16Number  e21;            /* e21 in the 3 * 3 */    
     icS15Fixed16Number  e22;            /* e22 in the 3 * 3 */
     icUInt8Number       data[icAny];    /* Data follows see spec */
 /*
  *  Data that follows is of this form
  *
  *  icUInt8Number       inputTable[inputChan][256];     * The in-table
- *  icUInt8Number       clutTable[icAny];               * The clut
+ *  icUInt8Number       clutTable[icAny];               * The clut 
  *  icUInt8Number       outputTable[outputChan][256];   * The out-table
  */
 } icLut8;
@@ -645,7 +645,7 @@ typedef struct {
 /* Named color */
 
 /*
- * icNamedColor2 takes the place of icNamedColor
+ * icNamedColor2 takes the place of icNamedColor 
  */
 typedef struct {
     icUInt32Number      vendorFlag;     /* Bottom 16 bits for IC use */
@@ -666,16 +666,16 @@ typedef struct {
  *                      :
  *                      :
  * Repeat for name and PCS and device color coordinates up to (count-1)
- *
- * NOTES:
+ * 
+ * NOTES:  
  * PCS and device space can be determined from the header.
  *
- * PCS coordinates are icUInt16 numbers and are described in Annex A of
- * the ICC spec. Only 16 bit L*a*b* and XYZ are allowed. The number of
+ * PCS coordinates are icUInt16 numbers and are described in Annex A of 
+ * the ICC spec. Only 16 bit L*a*b* and XYZ are allowed. The number of 
  * coordinates is consistent with the headers PCS.
  *
  * Device coordinates are icUInt16 numbers where 0x0000 represents
- * the minimum value and 0xFFFF represents the maximum value.
+ * the minimum value and 0xFFFF represents the maximum value. 
  * If the nDeviceCoords value is 0 this field is not given.
  */
 } icNamedColor2;
@@ -689,7 +689,7 @@ typedef struct {
     icInt8Number                data[icAny];    /* Desc text follows */
 /*
  *  Data that follows is of this form, this is an icInt8Number
- *  to avoid problems with a compiler generating  bad code as
+ *  to avoid problems with a compiler generating  bad code as 
  *  these arrays are variable in length.
  *
  * icTextDescription            deviceMfgDesc;  * Manufacturer text
@@ -749,7 +749,7 @@ typedef struct {
     icInt8Number        data[icAny];            /* The Ucr BG data */
 /*
  *  Data that follows is of this form, this is a icInt8Number
- *  to avoid problems with a compiler generating  bad code as
+ *  to avoid problems with a compiler generating  bad code as 
  *  these arrays are variable in length.
  *
  * icUcrBgCurve         ucr;            * Ucr curve
@@ -896,7 +896,7 @@ typedef struct {
     icTagBase           base;           /* Signature, "ui64" */
     icUInt64Array       data;           /* Variable array of values */
 } icUInt64ArrayType;
-
+    
 /* uInt8Type */
 typedef struct {
     icTagBase           base;           /* Signature, "ui08" */
@@ -923,11 +923,11 @@ typedef struct {
     icCrdInfo           info;           /* 5 sets of counts & strings */
 }icCrdInfoType;
      /*   icCrdInfo       productName;     PS product count/string */
-     /*   icCrdInfo       CRDName0;        CRD name for intent 0 */
-     /*   icCrdInfo       CRDName1;        CRD name for intent 1 */
-     /*   icCrdInfo       CRDName2;        CRD name for intent 2 */
+     /*   icCrdInfo       CRDName0;        CRD name for intent 0 */ 
+     /*   icCrdInfo       CRDName1;        CRD name for intent 1 */ 
+     /*   icCrdInfo       CRDName2;        CRD name for intent 2 */ 
      /*   icCrdInfo       CRDName3;        CRD name for intent 3 */
-
+    
 /*------------------------------------------------------------------------*/
 
 /*
@@ -937,8 +937,8 @@ typedef struct {
 /* A tag */
 typedef struct {
     icTagSignature      sig;            /* The tag signature */
-    icUInt32Number      offset;         /* Start of tag relative to
-                                         * start of header, Spec
+    icUInt32Number      offset;         /* Start of tag relative to 
+                                         * start of header, Spec 
                                          * Clause 5 */
     icUInt32Number      size;           /* Size in bytes */
 } icTag;
@@ -970,8 +970,8 @@ typedef struct {
     icInt8Number                reserved[44];   /* Reserved */
 } icHeader;
 
-/*
- * A profile,
+/* 
+ * A profile, 
  * we can't use icTagList here because its not at the end of the structure
  */
 typedef struct {
@@ -981,10 +981,10 @@ typedef struct {
 /*
  * Data that follows is of the form
  *
- * icTag        tagTable[icAny];        * The tag table
- * icInt8Number tagData[icAny];         * The tag data
+ * icTag        tagTable[icAny];        * The tag table 
+ * icInt8Number tagData[icAny];         * The tag data 
  */
-} icProfile;
+} icProfile;           
 
 /*------------------------------------------------------------------------*/
 /* Obsolete entries */
@@ -997,12 +997,12 @@ typedef struct {
 /*
  *  Data that follows is of this form
  *
- * icInt8Number         prefix[icAny];  * Prefix
- * icInt8Number         suffix[icAny];  * Suffix
- * icInt8Number         root1[icAny];   * Root name
- * icInt8Number         coords1[icAny]; * Color coordinates
- * icInt8Number         root2[icAny];   * Root name
- * icInt8Number         coords2[icAny]; * Color coordinates
+ * icInt8Number         prefix[icAny];  * Prefix 
+ * icInt8Number         suffix[icAny];  * Suffix 
+ * icInt8Number         root1[icAny];   * Root name 
+ * icInt8Number         coords1[icAny]; * Color coordinates 
+ * icInt8Number         root2[icAny];   * Root name 
+ * icInt8Number         coords2[icAny]; * Color coordinates 
  *                      :
  *                      :
  * Repeat for root name and color coordinates up to (count-1)

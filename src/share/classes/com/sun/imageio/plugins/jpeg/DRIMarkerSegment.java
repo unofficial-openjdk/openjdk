@@ -61,9 +61,9 @@ class DRIMarkerSegment extends MarkerSegment {
         return node;
     }
 
-    void updateFromNativeNode(Node node, boolean fromScratch)
+    void updateFromNativeNode(Node node, boolean fromScratch)  
         throws IIOInvalidTreeException {
-        restartInterval = getAttributeValue(node, null, "interval",
+        restartInterval = getAttributeValue(node, null, "interval", 
                                             0, 65535, true);
     }
 
@@ -77,7 +77,8 @@ class DRIMarkerSegment extends MarkerSegment {
 
     void print() {
         printTag("DRI");
-        System.out.println("Interval: "
+        System.out.println("Interval: " 
                            + Integer.toString(restartInterval));
     }
 }
+

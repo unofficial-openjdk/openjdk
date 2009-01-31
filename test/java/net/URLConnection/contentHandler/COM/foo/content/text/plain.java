@@ -24,7 +24,7 @@
 
 /**
  * Plain text file handler
- *
+ * 
  * This class provides an example of a a replacement content handler for
  * the text/plain content type.  It reads the content of the URL, and prepends
  * an additional message at the beginning.
@@ -52,7 +52,7 @@ public class plain extends ContentHandler {
      * versions):
      * 1) instance of Thread:
      *    Invoke the thread to launch an external viewer.
-     * 2) instance of InputStream:
+     * 2) instance of InputStream: 
      *    Bring up the "Save to disk" dialog page to allow the content
      *    to be saved to disk.
      * 3) instance of InputStreamImageSource:
@@ -62,33 +62,34 @@ public class plain extends ContentHandler {
      *    of that page.
      */
     public Object getContent(URLConnection uc) {
-        try {
-            InputStream is = uc.getInputStream();
-            StringBuffer sb = new StringBuffer();
-            int c;
+	try {
+	    InputStream is = uc.getInputStream();
+	    StringBuffer sb = new StringBuffer();
+	    int c;
 
-            sb.append("[Content of " + uc.getURL() + "]\n\n");
-            sb.append("[This opening message brought to you by your plain/text\n");
-            sb.append("content handler. To remove this content handler, delete the\n");
-            sb.append("COM.foo.content.text directory from your class path and\n");
-            sb.append("the java.content.handler.pkgs property from your HotJava\n");
-            sb.append("properties file.]\n");
-            sb.append("----------------------------------------------------------------\n\n");
+	    sb.append("[Content of " + uc.getURL() + "]\n\n");
+	    sb.append("[This opening message brought to you by your plain/text\n");
+	    sb.append("content handler. To remove this content handler, delete the\n");
+	    sb.append("COM.foo.content.text directory from your class path and\n");
+	    sb.append("the java.content.handler.pkgs property from your HotJava\n");
+	    sb.append("properties file.]\n");
+	    sb.append("----------------------------------------------------------------\n\n");
 
-            // Read the characters from the source, accumulate them into the string buffer.
-            // (Not the most efficient, but simplest for this example.)
-            while ((c = is.read()) >= 0) {
-                sb.append((char)c);
-            }
+	    // Read the characters from the source, accumulate them into the string buffer.
+	    // (Not the most efficient, but simplest for this example.)
+	    while ((c = is.read()) >= 0) {
+		sb.append((char)c);
+	    }
 
-            // Tidy up
-            is.close();
+	    // Tidy up
+	    is.close();
 
-            // Return the resulting string to our client (we're case 4 above)
-            return sb.toString();
-        } catch (IOException e) {
-            // For any exception, just return an indication of what went wrong.
-            return "Problem reading document: " + uc.getURL();
-        }
+	    // Return the resulting string to our client (we're case 4 above)
+	    return sb.toString();
+	} catch (IOException e) {
+	    // For any exception, just return an indication of what went wrong.
+	    return "Problem reading document: " + uc.getURL();
+	}
     }
 }
+

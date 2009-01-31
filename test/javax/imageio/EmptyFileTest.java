@@ -40,7 +40,7 @@ public class EmptyFileTest {
         String format = "MY_IMG";
 
         File out = new File("output.myimg");
-
+        
         System.out.printf("File %s: %s\n", out.getAbsolutePath(),
                           out.exists() ? "EXISTS" : "NEW");
 
@@ -67,3 +67,4 @@ public class EmptyFileTest {
         return new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
     }
 }
+

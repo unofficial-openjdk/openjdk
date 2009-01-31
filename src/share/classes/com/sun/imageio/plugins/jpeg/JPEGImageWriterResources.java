@@ -30,26 +30,26 @@ import java.util.ListResourceBundle;
 public class JPEGImageWriterResources extends ListResourceBundle {
 
     public JPEGImageWriterResources() {}
-
+         
     protected Object[][] getContents() {
         return new Object[][] {
 
         {Integer.toString(JPEGImageWriter.WARNING_DEST_IGNORED),
-         "Only Rasters or band subsets may be written with a destination type. "
+         "Only Rasters or band subsets may be written with a destination type. " 
          + "Destination type ignored."},
         {Integer.toString(JPEGImageWriter.WARNING_STREAM_METADATA_IGNORED),
          "Stream metadata ignored on write"},
         {Integer.toString(JPEGImageWriter.WARNING_DEST_METADATA_COMP_MISMATCH),
-         "Metadata component ids incompatible with destination type. "
+         "Metadata component ids incompatible with destination type. " 
          + "Metadata modified."},
         {Integer.toString(JPEGImageWriter.WARNING_DEST_METADATA_JFIF_MISMATCH),
-         "Metadata JFIF settings incompatible with destination type. "
+         "Metadata JFIF settings incompatible with destination type. " 
          + "Metadata modified."},
         {Integer.toString(JPEGImageWriter.WARNING_DEST_METADATA_ADOBE_MISMATCH),
          "Metadata Adobe settings incompatible with destination type. "
          + "Metadata modified."},
         {Integer.toString(JPEGImageWriter.WARNING_IMAGE_METADATA_JFIF_MISMATCH),
-         "Metadata JFIF settings incompatible with image type. "
+         "Metadata JFIF settings incompatible with image type. " 
          + "Metadata modified."},
         {Integer.toString(JPEGImageWriter.WARNING_IMAGE_METADATA_ADOBE_MISMATCH),
          "Metadata Adobe settings incompatible with image type. "

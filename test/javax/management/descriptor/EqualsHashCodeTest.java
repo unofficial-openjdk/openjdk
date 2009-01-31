@@ -40,7 +40,7 @@ public class EqualsHashCodeTest {
         int[] squares = {1, 4, 9, 16};
         int[] serauqs = {16, 9, 4, 1};
         int[][] numbers = {squares, serauqs};
-
+        
         Descriptor sq1 =
             new ImmutableDescriptor(new String[] {"name", "rank", "squares",
                                                   "null", "numbers"},
@@ -55,7 +55,7 @@ public class EqualsHashCodeTest {
                                                 numbers});
         Descriptor sq3 = (Descriptor) sq2.clone();
         Descriptor sq4 = ImmutableDescriptor.union(sq1, sq2);
-
+        
         String[] names = sq1.getFieldNames();
         Object[] values = sq1.getFieldValues((String[]) null);
         Object[] values2 = sq1.getFieldValues(names);
@@ -63,7 +63,7 @@ public class EqualsHashCodeTest {
             throw new Exception("Arrays not equal: " +
                     Arrays.deepToString(values) + Arrays.deepToString(values2));
         }
-
+        
         int expectedHashCode = 0;
         for (int i = 0; i < names.length; i++) {
             Object value = values[i];
@@ -100,7 +100,7 @@ public class EqualsHashCodeTest {
         Descriptor qs1 = new ImmutableDescriptor(names, values);
         values[i] = serauqs.clone();
         Descriptor qs2 = new DescriptorSupport(names, values);
-
+        
         System.out.println("Testing equality...");
 
         Object[][] equivalenceClasses = {
@@ -127,7 +127,7 @@ public class EqualsHashCodeTest {
                 }
             }
         }
-
+        
         System.out.println("TEST PASSED");
     }
 }

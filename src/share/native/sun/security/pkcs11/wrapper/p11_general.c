@@ -87,13 +87,13 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
  * Method:    initializeLibrary
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_initializeLibrary
 (JNIEnv *env, jclass thisClass)
 {
 #ifndef NO_CALLBACKS
     if (notifyListLock == NULL) {
-        notifyListLock = createLockObject(env);
+	notifyListLock = createLockObject(env);
     }
 #endif
 
@@ -129,35 +129,35 @@ void prefetchFields(JNIEnv *env, jclass thisClass) {
  * Method:    finalizeLibrary
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_finalizeLibrary
 (JNIEnv *env, jclass thisClass)
 {
 /* XXX
-    * remove all left lists and release the resources and the lock
+    * remove all left lists and release the resources and the lock 
      * objects that synchroniz access to these lists.
      *
     removeAllModuleEntries(env);
     if (moduleListHead == NULL) { * check, if we removed the last active module *
-        * remove also the moduleListLock, it is no longer used *
-        if (moduleListLock != NULL) {
-            destroyLockObject(env, moduleListLock);
-            moduleListLock = NULL;
-        }
+	* remove also the moduleListLock, it is no longer used *
+	if (moduleListLock != NULL) {
+	    destroyLockObject(env, moduleListLock);
+	    moduleListLock = NULL;
+	}
 #ifndef NO_CALLBACKS
-        * remove all left notify callback entries *
-        while (removeFirstNotifyEntry(env));
-        * remove also the notifyListLock, it is no longer used *
-        if (notifyListLock != NULL) {
-            destroyLockObject(env, notifyListLock);
-            notifyListLock = NULL;
-        }
-        if (jInitArgsObject != NULL) {
-            (*env)->DeleteGlobalRef(env, jInitArgsObject);
-        }
-        if (ckpGlobalInitArgs != NULL_PTR) {
-            free(ckpGlobalInitArgs);
-        }
+	* remove all left notify callback entries *
+	while (removeFirstNotifyEntry(env));
+	* remove also the notifyListLock, it is no longer used *
+	if (notifyListLock != NULL) {
+	    destroyLockObject(env, notifyListLock);
+	    notifyListLock = NULL;
+	}
+	if (jInitArgsObject != NULL) {
+	    (*env)->DeleteGlobalRef(env, jInitArgsObject);
+	}
+	if (ckpGlobalInitArgs != NULL_PTR) {
+	    free(ckpGlobalInitArgs);
+	}
 #endif * NO_CALLBACKS *
     }
 */
@@ -171,7 +171,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_finalizeLibrary
  * Parametermapping:                    *PKCS11*
  * @param   jobject jInitArgs           CK_VOID_PTR pInitArgs
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1Initialize
 (JNIEnv *env, jobject obj, jobject jInitArgs)
 {
@@ -186,13 +186,13 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Initialize
 
     ckpFunctions = getFunctionList(env, obj);
     if (ckpFunctions == NULL) {
-        TRACE0("failed getting module entry");
-        return;
+	TRACE0("failed getting module entry");
+	return;
     }
 
     ckpInitArgs = (jInitArgs != NULL)
-                ? makeCKInitArgsAdapter(env, jInitArgs)
-                : NULL_PTR;
+		? makeCKInitArgsAdapter(env, jInitArgs)
+		: NULL_PTR;
 
     rv = (*ckpFunctions->C_Initialize)(ckpInitArgs);
 
@@ -212,7 +212,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Initialize
  * Parametermapping:                    *PKCS11*
  * @param   jobject jReserved           CK_VOID_PTR pReserved
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1Finalize
 (JNIEnv *env, jobject obj, jobject jReserved)
 {
@@ -240,7 +240,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1Finalize
  * Parametermapping:                    *PKCS11*
  * @return  jobject jInfoObject         CK_INFO_PTR pInfo
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetInfo
 (JNIEnv *env, jobject obj)
 {
@@ -283,22 +283,22 @@ jobject ckInfoPtrToJInfo(JNIEnv *env, const CK_INFO_PTR ckpInfo)
 
     /* load CK_INFO constructor */
     jCtrId = (*env)->GetMethodID
-      (env, jInfoClass, "<init>",
+      (env, jInfoClass, "<init>", 
        "(Lsun/security/pkcs11/wrapper/CK_VERSION;[CJ[CLsun/security/pkcs11/wrapper/CK_VERSION;)V");
 
     assert(jCtrId != 0);
 
     /* prep all fields */
     jCryptokiVer = ckVersionPtrToJVersion(env, &(ckpInfo->cryptokiVersion));
-    jVendor =
+    jVendor = 
       ckUTF8CharArrayToJCharArray(env, &(ckpInfo->manufacturerID[0]), 32);
     jFlags = ckULongToJLong(ckpInfo->flags);
-    jLibraryDesc =
+    jLibraryDesc = 
       ckUTF8CharArrayToJCharArray(env, &(ckpInfo->libraryDescription[0]), 32);
     jLibraryVer = ckVersionPtrToJVersion(env, &(ckpInfo->libraryVersion));
 
     /* create new CK_INFO object */
-    jInfoObject = (*env)->NewObject(env, jInfoClass, jCtrId, jCryptokiVer,
+    jInfoObject = (*env)->NewObject(env, jInfoClass, jCtrId, jCryptokiVer, 
                                     jVendor, jFlags, jLibraryDesc, jLibraryVer);
     assert(jInfoObject != 0);
 
@@ -323,7 +323,7 @@ jobject ckInfoPtrToJInfo(JNIEnv *env, const CK_INFO_PTR ckpInfo)
  * @return  jlongArray jSlotList        CK_SLOT_ID_PTR pSlotList
  *                                      CK_ULONG_PTR pulCount
  */
-JNIEXPORT jlongArray JNICALL
+JNIEXPORT jlongArray JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetSlotList
 (JNIEnv *env, jobject obj, jboolean jTokenPresent)
 {
@@ -338,14 +338,14 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetSlotList
 
     ckTokenPresent = jBooleanToCKBBool(jTokenPresent);
 
-    rv = (*ckpFunctions->C_GetSlotList)(ckTokenPresent, NULL_PTR,
-                                        &ckTokenNumber);
+    rv = (*ckpFunctions->C_GetSlotList)(ckTokenPresent, NULL_PTR, 
+					&ckTokenNumber);
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return NULL ; }
 
     ckpSlotList = (CK_SLOT_ID_PTR) malloc(ckTokenNumber * sizeof(CK_SLOT_ID));
 
-    rv = (*ckpFunctions->C_GetSlotList)(ckTokenPresent, ckpSlotList,
-                                        &ckTokenNumber);
+    rv = (*ckpFunctions->C_GetSlotList)(ckTokenPresent, ckpSlotList, 
+					&ckTokenNumber);
 
     jSlotList = ckULongArrayToJLongArray(env, ckpSlotList, ckTokenNumber);
     free(ckpSlotList);
@@ -365,7 +365,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetSlotList
  * @param   jlong jSlotID               CK_SLOT_ID slotID
  * @return  jobject jSlotInfoObject     CK_SLOT_INFO_PTR pInfo
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetSlotInfo
 (JNIEnv *env, jobject obj, jlong jSlotID)
 {
@@ -388,14 +388,14 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetSlotInfo
 }
 
 /*
- * converts a pointer to a CK_SLOT_INFO structure into a Java CK_SLOT_INFO
+ * converts a pointer to a CK_SLOT_INFO structure into a Java CK_SLOT_INFO 
  * Object.
  *
  * @param env - used to call JNI funktions to create the new Java object
  * @param ckpSlotInfo - the pointer to the CK_SLOT_INFO structure
  * @return - the new Java CK_SLOT_INFO object
  */
-jobject
+jobject 
 ckSlotInfoPtrToJSlotInfo
 (JNIEnv *env, const CK_SLOT_INFO_PTR ckpSlotInfo)
 {
@@ -414,14 +414,14 @@ ckSlotInfoPtrToJSlotInfo
 
     /* load CK_SLOT_INFO constructor */
     jCtrId = (*env)->GetMethodID
-      (env, jSlotInfoClass, "<init>",
+      (env, jSlotInfoClass, "<init>", 
        "([C[CJLsun/security/pkcs11/wrapper/CK_VERSION;Lsun/security/pkcs11/wrapper/CK_VERSION;)V");
     assert(jCtrId != 0);
 
     /* prep all fields */
-    jSlotDesc =
+    jSlotDesc = 
       ckUTF8CharArrayToJCharArray(env, &(ckpSlotInfo->slotDescription[0]), 64);
-    jVendor =
+    jVendor = 
       ckUTF8CharArrayToJCharArray(env, &(ckpSlotInfo->manufacturerID[0]), 32);
     jFlags = ckULongToJLong(ckpSlotInfo->flags);
     jHardwareVer = ckVersionPtrToJVersion(env, &(ckpSlotInfo->hardwareVersion));
@@ -429,7 +429,7 @@ ckSlotInfoPtrToJSlotInfo
 
     /* create new CK_SLOT_INFO object */
     jSlotInfoObject = (*env)->NewObject
-      (env, jSlotInfoClass, jCtrId, jSlotDesc, jVendor, jFlags,
+      (env, jSlotInfoClass, jCtrId, jSlotDesc, jVendor, jFlags, 
        jHardwareVer, jFirmwareVer);
     assert(jSlotInfoObject != 0);
 
@@ -454,7 +454,7 @@ ckSlotInfoPtrToJSlotInfo
  * @param   jlong jSlotID               CK_SLOT_ID slotID
  * @return  jobject jInfoTokenObject    CK_TOKEN_INFO_PTR pInfo
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetTokenInfo
 (JNIEnv *env, jobject obj, jlong jSlotID)
 {
@@ -477,7 +477,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetTokenInfo
 }
 
 /*
- * converts a pointer to a CK_TOKEN_INFO structure into a Java CK_TOKEN_INFO
+ * converts a pointer to a CK_TOKEN_INFO structure into a Java CK_TOKEN_INFO 
  * Object.
  *
  * @param env - used to call JNI funktions to create the new Java object
@@ -516,16 +516,16 @@ ckTokenInfoPtrToJTokenInfo
 
     /* load CK_TOKEN_INFO constructor */
     jCtrId = (*env)->GetMethodID
-      (env, jTokenInfoClass, "<init>",
+      (env, jTokenInfoClass, "<init>", 
        "([C[C[C[CJJJJJJJJJJJLsun/security/pkcs11/wrapper/CK_VERSION;Lsun/security/pkcs11/wrapper/CK_VERSION;[C)V");
     assert(jCtrId != 0);
 
     /* prep all fields */
     jLabel = ckUTF8CharArrayToJCharArray(env, &(ckpTokenInfo->label[0]), 32);
-    jVendor =
+    jVendor = 
       ckUTF8CharArrayToJCharArray(env, &(ckpTokenInfo->manufacturerID[0]), 32);
     jModel = ckUTF8CharArrayToJCharArray(env, &(ckpTokenInfo->model[0]), 16);
-    jSerialNo =
+    jSerialNo = 
       ckUTF8CharArrayToJCharArray(env, &(ckpTokenInfo->serialNumber[0]), 16);
     jFlags = ckULongToJLong(ckpTokenInfo->flags);
     jMaxSnCnt = ckULongSpecialToJLong(ckpTokenInfo->ulMaxSessionCount);
@@ -538,19 +538,19 @@ ckTokenInfoPtrToJTokenInfo
     jFreePubMem = ckULongSpecialToJLong(ckpTokenInfo->ulFreePublicMemory);
     jTotalPrivMem = ckULongSpecialToJLong(ckpTokenInfo->ulTotalPrivateMemory);
     jFreePrivMem = ckULongSpecialToJLong(ckpTokenInfo->ulFreePrivateMemory);
-    jHardwareVer =
+    jHardwareVer = 
       ckVersionPtrToJVersion(env, &(ckpTokenInfo->hardwareVersion));
-    jFirmwareVer =
+    jFirmwareVer = 
       ckVersionPtrToJVersion(env, &(ckpTokenInfo->firmwareVersion));
-    jUtcTime =
+    jUtcTime = 
       ckUTF8CharArrayToJCharArray(env, &(ckpTokenInfo->utcTime[0]), 16);
 
     /* create new CK_TOKEN_INFO object */
-    jTokenInfoObject =
-      (*env)->NewObject(env, jTokenInfoClass, jCtrId, jLabel, jVendor, jModel,
-                        jSerialNo, jFlags,
-                        jMaxSnCnt, jSnCnt, jMaxRwSnCnt, jRwSnCnt,
-                        jMaxPinLen, jMinPinLen,
+    jTokenInfoObject = 
+      (*env)->NewObject(env, jTokenInfoClass, jCtrId, jLabel, jVendor, jModel, 
+                        jSerialNo, jFlags, 
+                        jMaxSnCnt, jSnCnt, jMaxRwSnCnt, jRwSnCnt, 
+                        jMaxPinLen, jMinPinLen, 
                         jTotalPubMem, jFreePubMem, jTotalPrivMem, jFreePrivMem,
                         jHardwareVer, jFirmwareVer, jUtcTime);
     assert(jTokenInfoObject != 0);
@@ -578,7 +578,7 @@ ckTokenInfoPtrToJTokenInfo
  * @param   jobject jReserved           CK_VOID_PTR pReserved
  * @return  jlong jSlotID               CK_SLOT_ID_PTR pSlot
  */
-JNIEXPORT jlong JNICALL
+JNIEXPORT jlong JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1WaitForSlotEvent
 (JNIEnv *env, jobject obj, jlong jFlags, jobject jReserved)
 {
@@ -611,7 +611,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1WaitForSlotEvent
  * @return  jlongArray jMechanismList   CK_MECHANISM_TYPE_PTR pMechanismList
  *                                      CK_ULONG_PTR pulCount
  */
-JNIEXPORT jlongArray JNICALL
+JNIEXPORT jlongArray JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetMechanismList
 (JNIEnv *env, jobject obj, jlong jSlotID)
 {
@@ -626,15 +626,15 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetMechanismList
 
     ckSlotID = jLongToCKULong(jSlotID);
 
-    rv = (*ckpFunctions->C_GetMechanismList)(ckSlotID, NULL_PTR,
-                                             &ckMechanismNumber);
+    rv = (*ckpFunctions->C_GetMechanismList)(ckSlotID, NULL_PTR, 
+					     &ckMechanismNumber);
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return NULL ; }
 
-    ckpMechanismList = (CK_MECHANISM_TYPE_PTR)
+    ckpMechanismList = (CK_MECHANISM_TYPE_PTR) 
       malloc(ckMechanismNumber * sizeof(CK_MECHANISM_TYPE));
 
-    rv = (*ckpFunctions->C_GetMechanismList)(ckSlotID, ckpMechanismList,
-                                             &ckMechanismNumber);
+    rv = (*ckpFunctions->C_GetMechanismList)(ckSlotID, ckpMechanismList, 
+					     &ckMechanismNumber);
 
     jMechanismList = ckULongArrayToJLongArray(env, ckpMechanismList,
                                               ckMechanismNumber);
@@ -656,7 +656,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetMechanismList
  * @param   jlong jType                 CK_MECHANISM_TYPE type
  * @return  jobject jMechanismInfo      CK_MECHANISM_INFO_PTR pInfo
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetMechanismInfo
 (JNIEnv *env, jobject obj, jlong jSlotID, jlong jType)
 {
@@ -672,7 +672,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetMechanismInfo
     ckSlotID = jLongToCKULong(jSlotID);
     ckMechanismType = jLongToCKULong(jType);
 
-    rv = (*ckpFunctions->C_GetMechanismInfo)(ckSlotID, ckMechanismType,
+    rv = (*ckpFunctions->C_GetMechanismInfo)(ckSlotID, ckMechanismType, 
                                              &ckMechanismInfo);
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return NULL ; }
 
@@ -682,7 +682,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1GetMechanismInfo
 }
 
 /*
- * converts a pointer to a CK_MECHANISM_INFO structure into a Java
+ * converts a pointer to a CK_MECHANISM_INFO structure into a Java 
  * CK_MECHANISM_INFO Object.
  *
  * @param env - used to call JNI funktions to create the new Java object
@@ -737,7 +737,7 @@ ckMechanismInfoPtrToJMechanismInfo
  *                                      CK_ULONG ulPinLen
  * @param   jcharArray jLabel           CK_UTF8CHAR_PTR pLabel
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1InitToken
 (JNIEnv *env, jobject obj, jlong jSlotID, jcharArray jPin, jcharArray jLabel)
 {
@@ -776,7 +776,7 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1InitToken
  * @param   jcharArray jPin             CK_CHAR_PTR pPin
  *                                      CK_ULONG ulPinLen
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1InitPIN
 (JNIEnv *env, jobject obj, jlong jSessionHandle, jcharArray jPin)
 {
@@ -811,9 +811,9 @@ Java_sun_security_pkcs11_wrapper_PKCS11_C_1InitPIN
  * @param   jcharArray jNewPin          CK_CHAR_PTR pNewPin
  *                                      CK_ULONG ulNewLen
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_security_pkcs11_wrapper_PKCS11_C_1SetPIN
-(JNIEnv *env, jobject obj, jlong jSessionHandle, jcharArray jOldPin,
+(JNIEnv *env, jobject obj, jlong jSessionHandle, jcharArray jOldPin, 
 jcharArray jNewPin)
 {
     CK_SESSION_HANDLE ckSessionHandle;
@@ -839,3 +839,4 @@ jcharArray jNewPin)
     if (ckAssertReturnValueOK(env, rv) != CK_ASSERT_OK) { return; }
 }
 #endif
+

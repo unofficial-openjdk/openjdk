@@ -30,7 +30,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.EventRequest;
 
 class ModificationWatchpointSpec extends WatchpointSpec {
-    ModificationWatchpointSpec(ReferenceTypeSpec refSpec, String fieldId)
+    ModificationWatchpointSpec(ReferenceTypeSpec refSpec, String fieldId) 
                                   throws MalformedMemberNameException {
         super(refSpec, fieldId);
     }
@@ -38,7 +38,7 @@ class ModificationWatchpointSpec extends WatchpointSpec {
     /**
      * The 'refType' is known to match, return the EventRequest.
      */
-    EventRequest resolveEventRequest(ReferenceType refType)
+    EventRequest resolveEventRequest(ReferenceType refType) 
                                       throws NoSuchFieldException {
         Field field = refType.fieldByName(fieldId);
         EventRequestManager em = refType.virtualMachine().eventRequestManager();
@@ -54,3 +54,5 @@ class ModificationWatchpointSpec extends WatchpointSpec {
                                                    fieldId});
     }
 }
+
+

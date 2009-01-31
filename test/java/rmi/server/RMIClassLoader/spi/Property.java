@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,16 +39,16 @@
 public class Property {
     public static void main(String[] args) throws Exception {
 
-        ServiceConfiguration.installServiceConfigurationFile();
+	ServiceConfiguration.installServiceConfigurationFile();
 
-        System.setProperty(
-            "java.rmi.server.RMIClassLoaderSpi", "TestProvider");
+	System.setProperty(
+	    "java.rmi.server.RMIClassLoaderSpi", "TestProvider");
 
-        TestProvider.exerciseTestProvider(
-            TestProvider.loadClassReturn,
-            TestProvider.loadProxyClassReturn,
-            TestProvider.getClassLoaderReturn,
-            TestProvider.getClassAnnotationReturn,
-            TestProvider.invocations);
+	TestProvider.exerciseTestProvider(
+	    TestProvider.loadClassReturn,
+	    TestProvider.loadProxyClassReturn,
+	    TestProvider.getClassLoaderReturn,
+	    TestProvider.getClassAnnotationReturn,
+	    TestProvider.invocations);
     }
 }

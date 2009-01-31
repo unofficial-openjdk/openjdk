@@ -45,6 +45,7 @@ import sun.security.util.*;
  * }
  * </pre>
  * @author Hemma Prafullchandra
+ * @version %I%, %G%
  */
 public class OtherName implements GeneralNameInterface {
 
@@ -66,17 +67,17 @@ public class OtherName implements GeneralNameInterface {
      * @throws IOException on error
      */
     public OtherName(ObjectIdentifier oid, byte[] value) throws IOException {
-        if (oid == null || value == null) {
-            throw new NullPointerException("parameters may not be null");
-        }
-        this.oid = oid;
-        this.nameValue = value;
-        gni = getGNI(oid, value);
-        if (gni != null) {
-            name = gni.toString();
-        } else {
-            name = "Unrecognized ObjectIdentifier: " + oid.toString();
-        }
+	if (oid == null || value == null) {
+	    throw new NullPointerException("parameters may not be null");
+	}
+	this.oid = oid;
+	this.nameValue = value;
+	gni = getGNI(oid, value);
+	if (gni != null) {
+	    name = gni.toString();
+	} else {
+	    name = "Unrecognized ObjectIdentifier: " + oid.toString();
+	}
     }
 
     /**
@@ -96,29 +97,29 @@ public class OtherName implements GeneralNameInterface {
             name = gni.toString();
         } else {
             name = "Unrecognized ObjectIdentifier: " + oid.toString();
-        }
+	}
     }
 
     /**
      * Get ObjectIdentifier
      */
     public ObjectIdentifier getOID() {
-        //XXXX May want to consider cloning this
-        return oid;
+	//XXXX May want to consider cloning this
+	return oid;
     }
 
     /**
      * Get name value
      */
     public byte[] getNameValue() {
-        return nameValue.clone();
+	return nameValue.clone();
     }
 
     /**
      * Get GeneralNameInterface
      */
     private GeneralNameInterface getGNI(ObjectIdentifier oid, byte[] nameValue)
-            throws IOException {
+	    throws IOException {
         try {
             Class extClass = OIDMap.getClass(oid);
             if (extClass == null) {   // Unsupported OtherName
@@ -132,7 +133,7 @@ public class OtherName implements GeneralNameInterface {
                        (GeneralNameInterface)cons.newInstance(passed);
             return gni;
         } catch (Exception e) {
-            throw (IOException)new IOException("Instantiation error: " + e).initCause(e);
+	    throw (IOException)new IOException("Instantiation error: " + e).initCause(e);
         }
     }
 
@@ -151,16 +152,16 @@ public class OtherName implements GeneralNameInterface {
      */
     public void encode(DerOutputStream out) throws IOException {
         if (gni != null) {
-            // This OtherName has a supported class
-            gni.encode(out);
-            return;
-        } else {
-            // This OtherName has no supporting class
-            DerOutputStream tmp = new DerOutputStream();
-            tmp.putOID(oid);
-            tmp.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_VALUE), nameValue);
-            out.write(DerValue.tag_Sequence, tmp);
-        }
+	    // This OtherName has a supported class
+	    gni.encode(out);
+	    return;
+	} else {
+	    // This OtherName has no supporting class
+	    DerOutputStream tmp = new DerOutputStream();
+	    tmp.putOID(oid);
+	    tmp.write(DerValue.createTag(DerValue.TAG_CONTEXT, true, TAG_VALUE), nameValue);
+	    out.write(DerValue.tag_Sequence, tmp);
+	}
     }
 
     /**
@@ -169,35 +170,35 @@ public class OtherName implements GeneralNameInterface {
      * @return true iff the names are identical.
      */
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof OtherName)) {
-            return false;
-        }
-        OtherName otherOther = (OtherName)other;
-        if (!(otherOther.oid.equals(oid))) {
-            return false;
-        }
-        GeneralNameInterface otherGNI = null;
-        try {
-            otherGNI = getGNI(otherOther.oid, otherOther.nameValue);
-        } catch (IOException ioe) {
-            return false;
-        }
+	if (this == other) {
+	    return true;
+	}
+	if (!(other instanceof OtherName)) {
+	    return false;
+	}
+	OtherName otherOther = (OtherName)other;
+	if (!(otherOther.oid.equals(oid))) {
+	    return false;
+	}
+	GeneralNameInterface otherGNI = null;
+	try {
+	    otherGNI = getGNI(otherOther.oid, otherOther.nameValue);
+	} catch (IOException ioe) {
+	    return false;
+	}
 
-        boolean result;
-        if (otherGNI != null) {
-            try {
-                result = (otherGNI.constrains(this) == NAME_MATCH);
-            } catch (UnsupportedOperationException ioe) {
-                result = false;
-            }
-        } else {
-            result = Arrays.equals(nameValue, otherOther.nameValue);
-        }
-
-        return result;
+	boolean result;
+	if (otherGNI != null) {
+	    try {
+	        result = (otherGNI.constrains(this) == NAME_MATCH);
+	    } catch (UnsupportedOperationException ioe) {
+		result = false;
+	    }
+	} else {
+	    result = Arrays.equals(nameValue, otherOther.nameValue);
+	}
+	 
+	return result;
     }
 
     /**
@@ -207,10 +208,10 @@ public class OtherName implements GeneralNameInterface {
      */
     public int hashCode() {
         if (myhash == -1) {
-            myhash = 37 + oid.hashCode();
-            for (int i = 0; i < nameValue.length; i++) {
-                myhash = 37 * myhash + nameValue[i];
-            }
+	    myhash = 37 + oid.hashCode();
+	    for (int i = 0; i < nameValue.length; i++) {
+		myhash = 37 * myhash + nameValue[i];
+	    }
         }
         return myhash;
     }
@@ -227,31 +228,31 @@ public class OtherName implements GeneralNameInterface {
      *   <li>NAME_DIFF_TYPE = -1: input name is different type from name
      *       (i.e. does not constrain).
      *   <li>NAME_MATCH = 0: input name matches name.
-     *   <li>NAME_NARROWS = 1: input name narrows name (is lower in the
+     *   <li>NAME_NARROWS = 1: input name narrows name (is lower in the 
      *       naming subtree)
-     *   <li>NAME_WIDENS = 2: input name widens name (is higher in the
+     *   <li>NAME_WIDENS = 2: input name widens name (is higher in the 
      *       naming subtree)
-     *   <li>NAME_SAME_TYPE = 3: input name does not match or narrow name,
+     *   <li>NAME_SAME_TYPE = 3: input name does not match or narrow name, 
      *       but is same type.
      * </ul>.  These results are used in checking NameConstraints during
      * certification path verification.
      *
      * @param inputName to be checked for being constrained
      * @returns constraint type above
-     * @throws UnsupportedOperationException if name is same type, but
+     * @throws UnsupportedOperationException if name is same type, but 
      *         comparison operations are not supported for this name type.
      */
     public int constrains(GeneralNameInterface inputName) {
-        int constraintType;
-        if (inputName == null) {
-            constraintType = NAME_DIFF_TYPE;
-        } else if (inputName.getType() != NAME_ANY) {
-            constraintType = NAME_DIFF_TYPE;
-        } else {
-            throw new UnsupportedOperationException("Narrowing, widening, "
-                + "and matching are not supported for OtherName.");
-        }
-        return constraintType;
+	int constraintType;
+	if (inputName == null) {
+	    constraintType = NAME_DIFF_TYPE;
+	} else if (inputName.getType() != NAME_ANY) {
+	    constraintType = NAME_DIFF_TYPE;
+	} else {
+	    throw new UnsupportedOperationException("Narrowing, widening, "
+	        + "and matching are not supported for OtherName.");
+	}
+	return constraintType;
     }
 
     /**
@@ -262,8 +263,8 @@ public class OtherName implements GeneralNameInterface {
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() {
-        throw new UnsupportedOperationException
-            ("subtreeDepth() not supported for generic OtherName");
+	throw new UnsupportedOperationException
+	    ("subtreeDepth() not supported for generic OtherName");
     }
 
 }

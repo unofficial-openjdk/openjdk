@@ -97,7 +97,7 @@ public class XlibUtil
         }
 
         return root == rootCandidate;
-    }
+    }   
 
     /**
      * Returns the bounds of the given window, in absolute coordinates
@@ -125,7 +125,7 @@ public class XlibUtil
             int y = Native.getInt(XlibWrapper.larg3);
             long width = Native.getUInt(XlibWrapper.larg4);
             long height = Native.getUInt(XlibWrapper.larg5);
-
+                            
             return new Rectangle(x, y, (int)width, (int)height);
         }
         finally
@@ -145,7 +145,7 @@ public class XlibUtil
         XToolkit.awtLock();
         try
         {
-            XTranslateCoordinates xtc =
+            XTranslateCoordinates xtc = 
                 new XTranslateCoordinates(src, dst, p.x, p.y);
             try
             {
@@ -189,7 +189,7 @@ public class XlibUtil
 
     /**
      * Returns the parent for the given window
-     */
+     */    
     static long getParentWindow(long window)
     {
         XToolkit.awtLock();
@@ -252,7 +252,7 @@ public class XlibUtil
                 }
 
                 long children = xqt.get_children();
-
+            
                 if (children == 0)
                 {
                     return Collections.emptySet();
@@ -265,7 +265,7 @@ public class XlibUtil
                 {
                     childrenSet.add(Native.getWindow(children, i));
                 }
-
+            
                 return childrenSet;
             }
             finally
@@ -301,9 +301,9 @@ public class XlibUtil
         XToolkit.awtLock();
         try
         {
-            WindowPropertyGetter wpg =
-                new WindowPropertyGetter(window, XWM.XA_WM_STATE, 0, 1, false,
-                                         XWM.XA_WM_STATE);
+            WindowPropertyGetter wpg = 
+                new WindowPropertyGetter(window, XWM.XA_WM_STATE, 0, 1, false, 
+                                         XWM.XA_WM_STATE);        
             try
             {
                 wpg.execute(XToolkit.IgnoreBadWindowHandler);
@@ -349,7 +349,7 @@ public class XlibUtil
             int status = XlibWrapper.XGetWindowAttributes(XToolkit.getDisplay(),
                                                           window, wattr.pData);
             XToolkit.RESTORE_XERROR_HANDLER();
-            if ((status != 0) &&
+            if ((status != 0) && 
                 ((XToolkit.saved_error == null) ||
                  (XToolkit.saved_error.get_error_code() == XlibWrapper.Success)))
             {
@@ -368,12 +368,12 @@ public class XlibUtil
     /**
      * XSHAPE extension support.
      */
-
+    
     // The variable is declared static as the XSHAPE extension cannot
     // be disabled at run-time, and thus is available all the time
     // once the check is passed.
     static Boolean isShapingSupported = null;
-
+    
     /**
      *  Returns whether the XSHAPE extension available
      *  @since 1.7
@@ -383,16 +383,16 @@ public class XlibUtil
         if (isShapingSupported == null) {
             XToolkit.awtLock();
             try {
-                isShapingSupported =
+                isShapingSupported = 
                     XlibWrapper.XShapeQueryExtension(
-                            XToolkit.getDisplay(),
-                            XlibWrapper.larg1,
+                            XToolkit.getDisplay(), 
+                            XlibWrapper.larg1, 
                             XlibWrapper.larg2);
             } finally {
                 XToolkit.awtUnlock();
             }
         }
-
+        
         return isShapingSupported.booleanValue();
     }
 

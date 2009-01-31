@@ -33,6 +33,7 @@ package java.net;
  * <code>URLStreamHandler</code> for a specific protocol.
  *
  * @author  Arthur van Hoff
+ * @version %I%, %G%
  * @see     java.net.URL
  * @see     java.net.URLStreamHandler
  * @since   JDK1.0

@@ -56,6 +56,7 @@ import java.nio.channels.spi.*;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -67,7 +68,7 @@ public abstract class ServerSocketChannel
      * Initializes a new instance of this class.
      */
     protected ServerSocketChannel(SelectorProvider provider) {
-        super(provider);
+	super(provider);
     }
 
     /**
@@ -89,7 +90,7 @@ public abstract class ServerSocketChannel
      *          If an I/O error occurs
      */
     public static ServerSocketChannel open() throws IOException {
-        return SelectorProvider.provider().openServerSocketChannel();
+	return SelectorProvider.provider().openServerSocketChannel();
     }
 
     /**
@@ -103,7 +104,7 @@ public abstract class ServerSocketChannel
      * @return  The valid-operation set
      */
     public final int validOps() {
-        return SelectionKey.OP_ACCEPT;
+	return SelectionKey.OP_ACCEPT;
     }
 
 

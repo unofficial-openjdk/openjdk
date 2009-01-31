@@ -48,7 +48,7 @@ import java.util.ServiceLoader;
  * each of which is defined by a class of interface (described by a
  * <code>Class</code> object) that all of its members must implement.
  * The set of categories may be changed dynamically.
- *
+ * 
  * <p> Only a single instance of a given leaf class (that is, the
  * actual class returned by <code>getClass()</code>, as opposed to any
  * inherited classes or interfaces) may be registered.  That is,
@@ -72,7 +72,7 @@ import java.util.ServiceLoader;
  * <code>javax.someapi.SomeService</code> interface, the JAR file
  * would contain a file named: <pre>
  * META-INF/services/javax.someapi.SomeService </pre>
- *
+ * 
  * containing the line:
  *
  * <pre>
@@ -95,6 +95,7 @@ import java.util.ServiceLoader;
  *
  * @see RegisterableService
  *
+ * @version 0.5
  */
 public class ServiceRegistry {
 
@@ -126,7 +127,7 @@ public class ServiceRegistry {
     // The following two methods expose functionality from
     // sun.misc.Service.  If that class is made public, they may be
     // removed.
-    //
+    // 
     // The sun.misc.ServiceConfigurationError class may also be
     // exposed, in which case the references to 'an
     // <code>Error</code>' below should be changed to 'a
@@ -156,7 +157,7 @@ public class ServiceRegistry {
      * provider-configuration files and instantiate provider classes,
      * or <code>null</code> if the system class loader (or, failing that
      * the bootstrap class loader) is to be used.
-     *
+     * 
      * @return An <code>Iterator</code> that yields provider objects
      * for the given service, in some arbitrary order.  The iterator
      * will throw an <code>Error</code> if a provider-configuration
@@ -166,8 +167,8 @@ public class ServiceRegistry {
      * @exception IllegalArgumentException if
      * <code>providerClass</code> is <code>null</code>.
      */
-    public static <T> Iterator<T> lookupProviders(Class<T> providerClass,
-                                                  ClassLoader loader)
+    public static <T> Iterator<T> lookupProviders(Class<T> providerClass, 
+						  ClassLoader loader)
     {
         if (providerClass == null) {
             throw new IllegalArgumentException("providerClass == null!");
@@ -259,7 +260,7 @@ public class ServiceRegistry {
      * the <code>Class</code> defined by <code>category</code>.
      */
     public <T> boolean registerServiceProvider(T provider,
-                                               Class<T> category) {
+					       Class<T> category) {
         if (provider == null) {
             throw new IllegalArgumentException("provider == null!");
         }
@@ -270,7 +271,7 @@ public class ServiceRegistry {
         if (!category.isAssignableFrom(provider.getClass())) {
             throw new ClassCastException();
         }
-
+        
         return reg.registerServiceProvider(provider);
     }
 
@@ -361,7 +362,7 @@ public class ServiceRegistry {
      * the class defined by <code>category</code>.
      */
     public <T> boolean deregisterServiceProvider(T provider,
-                                                 Class<T> category) {
+						 Class<T> category) {
         if (provider == null) {
             throw new IllegalArgumentException("provider == null!");
         }
@@ -420,7 +421,7 @@ public class ServiceRegistry {
         }
 
         return false;
-    }
+    } 
 
     /**
      * Returns an <code>Iterator</code> containing all registered
@@ -443,7 +444,7 @@ public class ServiceRegistry {
      * corresponding to <code>category</code>.
      */
     public <T> Iterator<T> getServiceProviders(Class<T> category,
-                                               boolean useOrdering) {
+					       boolean useOrdering) {
         SubRegistry reg = (SubRegistry)categoryMap.get(category);
         if (reg == null) {
             throw new IllegalArgumentException("category unknown!");
@@ -498,8 +499,8 @@ public class ServiceRegistry {
      * corresponding to <code>category</code>.
      */
     public <T> Iterator<T> getServiceProviders(Class<T> category,
-                                               Filter filter,
-                                               boolean useOrdering) {
+					       Filter filter,
+					       boolean useOrdering) {
         SubRegistry reg = (SubRegistry)categoryMap.get(category);
         if (reg == null) {
             throw new IllegalArgumentException("category unknown!");
@@ -571,8 +572,8 @@ public class ServiceRegistry {
      * corresponding to <code>category</code>.
      */
     public <T> boolean setOrdering(Class<T> category,
-                                   T firstProvider,
-                                   T secondProvider) {
+				   T firstProvider,
+				   T secondProvider) {
         if (firstProvider == null || secondProvider == null) {
             throw new IllegalArgumentException("provider is null!");
         }
@@ -616,8 +617,8 @@ public class ServiceRegistry {
      * corresponding to <code>category</code>.
      */
     public <T> boolean unsetOrdering(Class<T> category,
-                                     T firstProvider,
-                                     T secondProvider) {
+				     T firstProvider,
+				     T secondProvider) {
         if (firstProvider == null || secondProvider == null) {
             throw new IllegalArgumentException("provider is null!");
         }
@@ -720,7 +721,7 @@ class SubRegistry {
 
     /**
      * If the provider was not previously registered, do nothing.
-     *
+     * 
      * @return true if the provider was previously registered.
      */
     public boolean deregisterServiceProvider(Object provider) {
@@ -748,7 +749,7 @@ class SubRegistry {
                                Object secondProvider) {
         return poset.setOrdering(firstProvider, secondProvider);
     }
-
+    
     public boolean unsetOrdering(Object firstProvider,
                                  Object secondProvider) {
         return poset.unsetOrdering(firstProvider, secondProvider);

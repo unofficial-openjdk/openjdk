@@ -51,13 +51,13 @@ public class ArgWithSpaceAndFinalBackslash {
         }
 
         String[] cmd = new String[5];
-        int i = 0;
+	int i = 0;
         cmd[i++] = getJavaCommand();
-        cmd[i++] = "-cp";
-        String cp = System.getProperty("test.classes");
-        if (cp == null)
-            cp = ".";
-        cmd[i++] = cp;
+	cmd[i++] = "-cp";
+	String cp = System.getProperty("test.classes");
+	if (cp == null)
+	    cp = ".";
+	cmd[i++] = cp;
         cmd[i++] = "ArgWithSpaceAndFinalBackslash";
         cmd[i++] = "foo bar\\baz\\";
 
@@ -66,11 +66,11 @@ public class ArgWithSpaceAndFinalBackslash {
         byte[] buf = new byte[1024];
         int n = 0, d;
         while ((d = in.read(buf, n, buf.length - n)) >= 0)
-            n += d;
-        String s = new String(buf, 0, n, "US-ASCII").trim();
-        if (!s.equals(cmd[i - 1]))
-            throw new Exception("Test failed: Got \"" + s
-                                + "\", expected \"" + cmd[i - 1] + "\"");
+	    n += d;
+	String s = new String(buf, 0, n, "US-ASCII").trim();
+	if (!s.equals(cmd[i - 1]))
+	    throw new Exception("Test failed: Got \"" + s
+				+ "\", expected \"" + cmd[i - 1] + "\"");
     }
 
 }

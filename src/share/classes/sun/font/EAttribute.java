@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  *
  * (C) Copyright IBM Corp. 2005 - All Rights Reserved
  *
@@ -90,3 +91,4 @@ public enum EAttribute {
         return name().substring(1).toLowerCase();
     }
 }
+

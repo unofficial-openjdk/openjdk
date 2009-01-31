@@ -1,37 +1,37 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
 
 /*****************************************************************************
- *   "Gif-Lib" - Yet another gif library.
- *
- * Written by:  Gershon Elber                Ver 0.1, Jun. 1989
- * Extensively hacked by: Eric S. Raymond        Ver 1.?, Sep 1992
+ *   "Gif-Lib" - Yet another gif library.                     
+ *                                         
+ * Written by:  Gershon Elber                Ver 0.1, Jun. 1989   
+ * Extensively hacked by: Eric S. Raymond        Ver 1.?, Sep 1992    
  *****************************************************************************
- * GIF construction tools
+ * GIF construction tools                              
  *****************************************************************************
- * History:
- * 15 Sep 92 - Version 1.0 by Eric Raymond.
+ * History:                                     
+ * 15 Sep 92 - Version 1.0 by Eric Raymond.                     
  ****************************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -46,13 +46,13 @@
 #define MAX(x, y)    (((x) > (y)) ? (x) : (y))
 
 /******************************************************************************
- * Miscellaneous utility functions
+ * Miscellaneous utility functions                          
  *****************************************************************************/
 
 /* return smallest bitfield size n will fit in */
 int
 BitSize(int n) {
-
+    
     register int i;
 
     for (i = 1; i <= 8; i++)
@@ -62,7 +62,7 @@ BitSize(int n) {
 }
 
 /******************************************************************************
- * Color map object functions
+ * Color map object functions                              
  *****************************************************************************/
 
 /*
@@ -72,7 +72,7 @@ BitSize(int n) {
 ColorMapObject *
 MakeMapObject(int ColorCount,
               const GifColorType * ColorMap) {
-
+    
     ColorMapObject *Object;
 
     /*** FIXME: Our ColorCount has to be a power of two.  Is it necessary to
@@ -80,7 +80,7 @@ MakeMapObject(int ColorCount,
     if (ColorCount != (1 << BitSize(ColorCount))) {
         return ((ColorMapObject *) NULL);
     }
-
+    
     Object = (ColorMapObject *)malloc(sizeof(ColorMapObject));
     if (Object == (ColorMapObject *) NULL) {
         return ((ColorMapObject *) NULL);
@@ -137,7 +137,7 @@ DumpColorMap(ColorMapObject * Object,
 #endif /* DEBUG */
 
 /******************************************************************************
- * Extension record functions
+ * Extension record functions                              
  *****************************************************************************/
 
 void
@@ -205,7 +205,7 @@ FreeExtension(SavedImage * Image)
 }
 
 /******************************************************************************
- * Image block allocation functions
+ * Image block allocation functions                          
 ******************************************************************************/
 
 /* Private Function:
@@ -215,7 +215,7 @@ void
 FreeLastSavedImage(GifFileType *GifFile) {
 
     SavedImage *sp;
-
+    
     if ((GifFile == NULL) || (GifFile->SavedImages == NULL))
         return;
 
@@ -244,7 +244,7 @@ FreeLastSavedImage(GifFileType *GifFile) {
 }
 
 /*
- * Append an image block to the SavedImages array
+ * Append an image block to the SavedImages array  
  */
 SavedImage *
 MakeSavedImage(GifFileType * GifFile,
@@ -267,7 +267,7 @@ MakeSavedImage(GifFileType * GifFile,
         if (CopyFrom) {
             memcpy((char *)sp, CopyFrom, sizeof(SavedImage));
 
-            /*
+            /* 
              * Make our own allocated copies of the heap fields in the
              * copied record.  This guards against potential aliasing
              * problems.
@@ -308,9 +308,9 @@ MakeSavedImage(GifFileType * GifFile,
                 memcpy(sp->ExtensionBlocks, CopyFrom->ExtensionBlocks,
                        sizeof(ExtensionBlock) * CopyFrom->ExtensionBlockCount);
 
-                /*
+                /* 
                  * For the moment, the actual blocks can take their
-                 * chances with free().  We'll fix this later.
+                 * chances with free().  We'll fix this later. 
                  *** FIXME: [Better check this out... Toshio]
                  * 2004 May 27: Looks like this was an ESR note.
                  * It means the blocks are shallow copied from InFile to

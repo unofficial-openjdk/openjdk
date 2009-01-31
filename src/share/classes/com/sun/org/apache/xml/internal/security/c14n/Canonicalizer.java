@@ -49,12 +49,12 @@ public class Canonicalizer {
    /** The output encoding of canonicalized data */
    public static final String ENCODING = "UTF8";
 
-
+   
    /**
-     * XPath Expresion for selecting every node and continuos comments joined in only one node
+     * XPath Expresion for selecting every node and continuos comments joined in only one node 
      */
     public static final String XPATH_C14N_WITH_COMMENTS_SINGLE_NODE = "(.//. | .//@* | .//namespace::*)";
-
+   
 
    /**
      * The URL defined in XML-SEC Rec for inclusive c14n <b>without</b> comments.
@@ -150,10 +150,10 @@ public class Canonicalizer {
       }
 
       try {
-                _canonicalizerHash.put(algorithmURI, Class.forName(implementingClass));
-        } catch (ClassNotFoundException e) {
-                throw new RuntimeException("c14n class not found");
-        }
+		_canonicalizerHash.put(algorithmURI, Class.forName(implementingClass));
+	} catch (ClassNotFoundException e) {
+		throw new RuntimeException("c14n class not found");
+	}
    }
 
    /**
@@ -287,7 +287,7 @@ public class Canonicalizer {
               throws CanonicalizationException {
       return this.canonicalizerSpi.engineCanonicalizeXPathNodeSet(xpathNodeSet,
               inclusiveNamespaces);
-   }
+   } 
 
    /**
     * Canonicalizes an XPath node set.
@@ -317,12 +317,12 @@ public class Canonicalizer {
    }
 
    /**
-    * Sets the writter where the cannocalization ends. ByteArrayOutputStream if
+    * Sets the writter where the cannocalization ends. ByteArrayOutputStream if 
     * none is setted.
     * @param os
     */
    public void setWriter(OutputStream os) {
-            this.canonicalizerSpi.setWriter(os);
+   	    this.canonicalizerSpi.setWriter(os);
    }
 
    /**
@@ -336,19 +336,19 @@ public class Canonicalizer {
 
    /**
     * Method getImplementingClass
-    *
+    * 
     * @param URI
     * @return the name of the class that implements the give URI
     */
    private static Class getImplementingClass(String URI) {
-      return (Class) _canonicalizerHash.get(URI);
+      return (Class) _canonicalizerHash.get(URI);         
    }
-
+   
    /**
     * Set the canonicalizator behaviour to not reset.
     *
     */
    public void notReset() {
-            this.canonicalizerSpi.reset=false;
+   	    this.canonicalizerSpi.reset=false;
    }
 }

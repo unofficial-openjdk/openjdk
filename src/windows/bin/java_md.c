@@ -28,11 +28,9 @@
 #include <process.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <wtypes.h>
 
 #include <jni.h>
 #include "java.h"
@@ -47,29 +45,11 @@
  */
 static jboolean GetPublicJREHome(char *path, jint pathsize);
 static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
-                           char *jvmpath, jint jvmpathsize);
+			   char *jvmpath, jint jvmpathsize);
 static jboolean GetJREPath(char *path, jint pathsize);
 
-static jboolean _isjavaw = JNI_FALSE;
-
-void
-SetJavaw()
-{
-    _isjavaw = JNI_TRUE;
-}
-
-jboolean
-IsJavaw()
-{
-    return _isjavaw;
-}
-
-/*
- * Returns the arch path, to get the current arch use the
- * macro GetArch, nbits here is ignored for now.
- */
-const char *
-GetArchPath(int nbits)
+const char * 
+GetArch() 
 {
 #ifdef _M_AMD64
     return "amd64";
@@ -80,17 +60,18 @@ GetArchPath(int nbits)
 #endif
 }
 
+
 /*
  *
  */
 void
 CreateExecutionEnvironment(int *_argc,
-                           char ***_argv,
-                           char jrepath[],
-                           jint so_jrepath,
-                           char jvmpath[],
-                           jint so_jvmpath,
-                           char **original_argv) {
+			   char ***_argv,
+			   char jrepath[],
+			   jint so_jrepath,
+			   char jvmpath[],
+			   jint so_jvmpath,
+			   char **original_argv) {
     char * jvmtype;
     int i = 0;
     char** pargv = *_argv;
@@ -98,38 +79,45 @@ CreateExecutionEnvironment(int *_argc,
 
     int wanted = running;
 
-    for (i = 0; i < *_argc ; i++) {
-        if (JLI_StrCmp(pargv[i], "-J-d64") == 0 || JLI_StrCmp(pargv[i], "-d64") == 0) {
-            wanted = 64;
-            continue;
-        }
-        if (JLI_StrCmp(pargv[i], "-J-d32") == 0 || JLI_StrCmp(pargv[i], "-d32") == 0) {
-            wanted = 32;
-            continue;
-        }
+    for (i = 0; i < *_argc ; i++) { 
+	if (strcmp(pargv[i], "-J-d64") == 0 || strcmp(pargv[i], "-d64") == 0) {
+	    wanted = 64;
+	    continue;
+	}
+	if (strcmp(pargv[i], "-J-d32") == 0 || strcmp(pargv[i], "-d32") == 0) {
+	    wanted = 32;
+	    continue;
+	}
     }
     if (running != wanted) {
-        ReportErrorMessage(JRE_ERROR2, wanted);
-        exit(1);
+	fprintf(stderr, "This Java instance does not support a %d-bit JVM.\nPlease install the desired version.\n", wanted);
+	exit(1);
     }
 
     /* Find out where the JRE is that we will be using. */
     if (!GetJREPath(jrepath, so_jrepath)) {
-        ReportErrorMessage(JRE_ERROR1);
-        exit(2);
+	ReportErrorMessage("Error: could not find Java 2 Runtime Environment.",
+			   JNI_TRUE);
+	exit(2);
     }
 
     /* Find the specified JVM type */
     if (ReadKnownVMs(jrepath, (char*)GetArch(), JNI_FALSE) < 1) {
-        ReportErrorMessage(CFG_ERROR7);
-        exit(1);
+	ReportErrorMessage("Error: no known VMs. (check for corrupt jvm.cfg file)", 
+			   JNI_TRUE);
+	exit(1);
     }
     jvmtype = CheckJvmType(_argc, _argv, JNI_FALSE);
 
     jvmpath[0] = '\0';
     if (!GetJVMPath(jrepath, jvmtype, jvmpath, so_jvmpath)) {
-        ReportErrorMessage(CFG_ERROR8, jvmtype, jvmpath);
-        exit(4);
+        char * message=NULL;
+	const char * format = "Error: no `%s' JVM at `%s'.";
+	message = (char *)JLI_MemAlloc((strlen(format)+strlen(jvmtype)+
+				    strlen(jvmpath)) * sizeof(char));
+	sprintf(message,format, jvmtype, jvmpath); 
+	ReportErrorMessage(message, JNI_TRUE);
+	exit(4);
     }
     /* If we got here, jvmpath has been correctly initialized. */
 
@@ -145,30 +133,31 @@ GetJREPath(char *path, jint pathsize)
     struct stat s;
 
     if (GetApplicationHome(path, pathsize)) {
-        /* Is JRE co-located with the application? */
-        sprintf(javadll, "%s\\bin\\" JAVA_DLL, path);
-        if (stat(javadll, &s) == 0) {
-            goto found;
-        }
+	/* Is JRE co-located with the application? */
+	sprintf(javadll, "%s\\bin\\" JAVA_DLL, path);
+	if (stat(javadll, &s) == 0) {
+	    goto found;
+	}
 
-        /* Does this app ship a private JRE in <apphome>\jre directory? */
-        sprintf(javadll, "%s\\jre\\bin\\" JAVA_DLL, path);
-        if (stat(javadll, &s) == 0) {
-            JLI_StrCat(path, "\\jre");
-            goto found;
-        }
+	/* Does this app ship a private JRE in <apphome>\jre directory? */
+	sprintf(javadll, "%s\\jre\\bin\\" JAVA_DLL, path);
+	if (stat(javadll, &s) == 0) {
+	    strcat(path, "\\jre");
+	    goto found;
+	}
     }
 
     /* Look for a public JRE on this machine. */
     if (GetPublicJREHome(path, pathsize)) {
-        goto found;
+	goto found;
     }
 
-    ReportErrorMessage(JRE_ERROR8 JAVA_DLL);
+    fprintf(stderr, "Error: could not find " JAVA_DLL "\n");
     return JNI_FALSE;
 
  found:
-    JLI_TraceLauncher("JRE path is %s\n", path);
+    if (_launcher_debug)
+      printf("JRE path is %s\n", path);
     return JNI_TRUE;
 }
 
@@ -179,18 +168,18 @@ GetJREPath(char *path, jint pathsize)
  */
 static jboolean
 GetJVMPath(const char *jrepath, const char *jvmtype,
-           char *jvmpath, jint jvmpathsize)
+	   char *jvmpath, jint jvmpathsize)
 {
     struct stat s;
-    if (JLI_StrChr(jvmtype, '/') || JLI_StrChr(jvmtype, '\\')) {
-        sprintf(jvmpath, "%s\\" JVM_DLL, jvmtype);
+    if (strchr(jvmtype, '/') || strchr(jvmtype, '\\')) {
+	sprintf(jvmpath, "%s\\" JVM_DLL, jvmtype);
     } else {
-        sprintf(jvmpath, "%s\\bin\\%s\\" JVM_DLL, jrepath, jvmtype);
+	sprintf(jvmpath, "%s\\bin\\%s\\" JVM_DLL, jrepath, jvmtype);
     }
     if (stat(jvmpath, &s) == 0) {
-        return JNI_TRUE;
+	return JNI_TRUE;
     } else {
-        return JNI_FALSE;
+	return JNI_FALSE;
     }
 }
 
@@ -203,7 +192,9 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
     HINSTANCE handle;
     char crtpath[MAXPATHLEN];
 
-    JLI_TraceLauncher("JVM path is %s\n", jvmpath);
+    if (_launcher_debug) {
+	printf("JVM path is %s\n", jvmpath);
+    }
 
     /*
      * The Microsoft C Runtime Library needs to be loaded first.  A copy is
@@ -212,30 +203,33 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
      * nature take its course, which is likely to be a failure to execute.
      */
     if (GetJREPath(crtpath, MAXPATHLEN)) {
-        (void)JLI_StrCat(crtpath, "\\bin\\" CRT_DLL);   /* Add crt dll */
-        JLI_TraceLauncher("CRT path is %s\n", crtpath);
-        if (_access(crtpath, 0) == 0) {
-            if (LoadLibrary(crtpath) == 0) {
-                ReportErrorMessage(DLL_ERROR4, crtpath);
-                return JNI_FALSE;
-            }
-        }
+	(void)strcat(crtpath, "\\bin\\" CRT_DLL);	/* Add crt dll */
+	if (_launcher_debug) {
+	     printf("CRT path is %s\n", crtpath);
+	}
+	if (_access(crtpath, 0) == 0) {
+	    if (LoadLibrary(crtpath) == 0) {
+		ReportErrorMessage2("Error loading: %s", crtpath, JNI_TRUE);
+		return JNI_FALSE;
+	    }
+	}
     }
 
     /* Load the Java VM DLL */
     if ((handle = LoadLibrary(jvmpath)) == 0) {
-        ReportErrorMessage(DLL_ERROR4, (char *)jvmpath);
-        return JNI_FALSE;
+	ReportErrorMessage2("Error loading: %s", (char *)jvmpath, JNI_TRUE);
+	return JNI_FALSE;
     }
 
     /* Now get the function addresses */
     ifn->CreateJavaVM =
-        (void *)GetProcAddress(handle, "JNI_CreateJavaVM");
+	(void *)GetProcAddress(handle, "JNI_CreateJavaVM");
     ifn->GetDefaultJavaVMInitArgs =
-        (void *)GetProcAddress(handle, "JNI_GetDefaultJavaVMInitArgs");
+	(void *)GetProcAddress(handle, "JNI_GetDefaultJavaVMInitArgs");
     if (ifn->CreateJavaVM == 0 || ifn->GetDefaultJavaVMInitArgs == 0) {
-        ReportErrorMessage(JNI_ERROR1, (char *)jvmpath);
-        return JNI_FALSE;
+	ReportErrorMessage2("Error: can't find JNI interfaces in: %s", 
+			    (char *)jvmpath, JNI_TRUE);
+	return JNI_FALSE;
     }
 
     return JNI_TRUE;
@@ -249,22 +243,38 @@ GetApplicationHome(char *buf, jint bufsize)
 {
     char *cp;
     GetModuleFileName(0, buf, bufsize);
-    *JLI_StrRChr(buf, '\\') = '\0'; /* remove .exe file name */
-    if ((cp = JLI_StrRChr(buf, '\\')) == 0) {
-        /* This happens if the application is in a drive root, and
-         * there is no bin directory. */
-        buf[0] = '\0';
-        return JNI_FALSE;
+    *strrchr(buf, '\\') = '\0'; /* remove .exe file name */
+    if ((cp = strrchr(buf, '\\')) == 0) {
+	/* This happens if the application is in a drive root, and
+	 * there is no bin directory. */
+	buf[0] = '\0';
+	return JNI_FALSE;
     }
     *cp = '\0';  /* remove the bin\ part */
     return JNI_TRUE;
 }
 
+#ifdef JAVAW
+__declspec(dllimport) char **__initenv;
+
+int WINAPI
+WinMain(HINSTANCE inst, HINSTANCE previnst, LPSTR cmdline, int cmdshow)
+{
+    int   ret;
+
+    __initenv = _environ;
+    ret = main(__argc, __argv);
+
+    return ret; 
+}
+#endif
+
 /*
  * Helpers to look in the registry for a public JRE.
  */
                     /* Same for 1.5.0, 1.5.1, 1.5.2 etc. */
-#define JRE_KEY     "Software\\JavaSoft\\Java Runtime Environment"
+#define DOTRELEASE  JDK_MAJOR_VERSION "." JDK_MINOR_VERSION
+#define JRE_KEY	    "Software\\JavaSoft\\Java Runtime Environment"
 
 static jboolean
 GetStringFromRegistry(HKEY key, const char *name, char *buf, jint bufsize)
@@ -272,11 +282,11 @@ GetStringFromRegistry(HKEY key, const char *name, char *buf, jint bufsize)
     DWORD type, size;
 
     if (RegQueryValueEx(key, name, 0, &type, 0, &size) == 0
-        && type == REG_SZ
-        && (size < (unsigned int)bufsize)) {
-        if (RegQueryValueEx(key, name, 0, 0, buf, &size) == 0) {
-            return JNI_TRUE;
-        }
+	&& type == REG_SZ
+	&& (size < (unsigned int)bufsize)) {
+	if (RegQueryValueEx(key, name, 0, 0, buf, &size) == 0) {
+	    return JNI_TRUE;
+	}
     }
     return JNI_FALSE;
 }
@@ -296,46 +306,49 @@ GetPublicJREHome(char *buf, jint bufsize)
 
     /* Find the current version of the JRE */
     if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, JRE_KEY, 0, KEY_READ, &key) != 0) {
-        ReportErrorMessage(REG_ERROR1, JRE_KEY);
-        return JNI_FALSE;
+	fprintf(stderr, "Error opening registry key '" JRE_KEY "'\n");
+	return JNI_FALSE;
     }
 
     if (!GetStringFromRegistry(key, "CurrentVersion",
-                               version, sizeof(version))) {
-        ReportErrorMessage(REG_ERROR2, JRE_KEY);
-        RegCloseKey(key);
-        return JNI_FALSE;
+			       version, sizeof(version))) {
+	fprintf(stderr, "Failed reading value of registry key:\n\t"
+		JRE_KEY "\\CurrentVersion\n");
+	RegCloseKey(key);
+	return JNI_FALSE;
     }
 
-    if (JLI_StrCmp(version, GetDotVersion()) != 0) {
-        ReportErrorMessage(REG_ERROR3, JRE_KEY, version, GetDotVersion()
-        );
-        RegCloseKey(key);
-        return JNI_FALSE;
+    if (strcmp(version, DOTRELEASE) != 0) {
+	fprintf(stderr, "Registry key '" JRE_KEY "\\CurrentVersion'\nhas "
+		"value '%s', but '" DOTRELEASE "' is required.\n", version);
+	RegCloseKey(key);
+	return JNI_FALSE;
     }
 
     /* Find directory where the current version is installed. */
     if (RegOpenKeyEx(key, version, 0, KEY_READ, &subkey) != 0) {
-        ReportErrorMessage(REG_ERROR1, JRE_KEY, version);
-        RegCloseKey(key);
-        return JNI_FALSE;
+	fprintf(stderr, "Error opening registry key '"
+		JRE_KEY "\\%s'\n", version);
+	RegCloseKey(key);
+	return JNI_FALSE;
     }
 
     if (!GetStringFromRegistry(subkey, "JavaHome", buf, bufsize)) {
-        ReportErrorMessage(REG_ERROR4, JRE_KEY, version);
-        RegCloseKey(key);
-        RegCloseKey(subkey);
-        return JNI_FALSE;
+	fprintf(stderr, "Failed reading value of registry key:\n\t"
+		JRE_KEY "\\%s\\JavaHome\n", version);
+	RegCloseKey(key);
+	RegCloseKey(subkey);
+	return JNI_FALSE;
     }
 
-    if (JLI_IsTraceLauncher()) {
-        char micro[MAXPATHLEN];
-        if (!GetStringFromRegistry(subkey, "MicroVersion", micro,
-                                   sizeof(micro))) {
-            printf("Warning: Can't read MicroVersion\n");
-            micro[0] = '\0';
-        }
-        printf("Version major.minor.micro = %s.%s\n", version, micro);
+    if (_launcher_debug) {
+	char micro[MAXPATHLEN];
+	if (!GetStringFromRegistry(subkey, "MicroVersion", micro,
+				   sizeof(micro))) {
+	    printf("Warning: Can't read MicroVersion\n");
+	    micro[0] = '\0';
+	}
+	printf("Version major.minor.micro = %s.%s\n", version, micro);
     }
 
     RegCloseKey(key);
@@ -355,11 +368,11 @@ jlong CounterGet()
     LARGE_INTEGER count;
 
     if (!counterInitialized) {
-        counterAvailable = QueryPerformanceFrequency(&counterFrequency);
-        counterInitialized = JNI_TRUE;
+	counterAvailable = QueryPerformanceFrequency(&counterFrequency);
+	counterInitialized = JNI_TRUE;
     }
     if (!counterAvailable) {
-        return 0;
+	return 0;
     }
     QueryPerformanceCounter(&count);
     return (jlong)(count.QuadPart);
@@ -368,120 +381,147 @@ jlong CounterGet()
 jlong Counter2Micros(jlong counts)
 {
     if (!counterAvailable || !counterInitialized) {
-        return 0;
+	return 0;
     }
     return (counts * 1000 * 1000)/counterFrequency.QuadPart;
 }
 
-void
-ReportErrorMessage(const char* fmt, ...) {
-    va_list vl;
-    va_start(vl,fmt);
+void ReportErrorMessage(char * message, jboolean always) {
+#ifdef JAVAW
+  if (message != NULL) {
+    MessageBox(NULL, message, "Java Virtual Machine Launcher",
+	       (MB_OK|MB_ICONSTOP|MB_APPLMODAL)); 
+  }
+#else
+  if (always) {
+    fprintf(stderr, "%s\n", message);
+  }
+#endif
+}
 
-    if (IsJavaw()) {
-        char *message;
-
-        /* get the length of the string we need */
-        int n = _vscprintf(fmt, vl);
-
-        message = (char *)JLI_MemAlloc(n + 1);
-        _vsnprintf(message, n, fmt, vl);
-        message[n]='\0';
-        MessageBox(NULL, message, "Java Virtual Machine Launcher",
-            (MB_OK|MB_ICONSTOP|MB_APPLMODAL));
-        JLI_MemFree(message);
-    } else {
-        vfprintf(stderr, fmt, vl);
-        fprintf(stderr, "\n");
-    }
-    va_end(vl);
+void ReportErrorMessage2(char * format, char * string, jboolean always) { 
+  /*
+   * The format argument must be a printf format string with one %s
+   * argument, which is passed the string argument.
+   */
+#ifdef JAVAW
+  size_t size;
+  char * message;
+  size = strlen(format) + strlen(string);
+  message = (char*)JLI_MemAlloc(size*sizeof(char));
+  sprintf(message, (const char *)format, string);
+  
+  if (message != NULL) {
+    MessageBox(NULL, message, "Java Virtual Machine Launcher",
+	       (MB_OK|MB_ICONSTOP|MB_APPLMODAL));
+    JLI_MemFree(message);
+  }
+#else
+  if (always) {
+    fprintf(stderr, (const char *)format, string);
+    fprintf(stderr, "\n");
+  }
+#endif
 }
 
 /*
- * Just like ReportErrorMessage, except that it concatenates the system
- * error message if any, its upto the calling routine to correctly
- * format the separation of the messages.
+ * As ReportErrorMessage2 (above) except the system message (if any)
+ * associated with this error is written to a second %s format specifier
+ * in the format argument.
  */
-void
-ReportErrorMessageSys(const char *fmt, ...)
-{
-    va_list vl;
+void ReportSysErrorMessage2(char * format, char * string, jboolean always) {
+  int	save_errno = errno;
+  DWORD	errval;
+  int	freeit = 0;
+  char  *errtext = NULL;
 
-    int save_errno = errno;
-    DWORD       errval;
-    jboolean freeit = JNI_FALSE;
-    char  *errtext = NULL;
-
-    va_start(vl, fmt);
-
-    if ((errval = GetLastError()) != 0) {               /* Platform SDK / DOS Error */
-        int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|
-            FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_ALLOCATE_BUFFER,
-            NULL, errval, 0, (LPTSTR)&errtext, 0, NULL);
-        if (errtext == NULL || n == 0) {                /* Paranoia check */
-            errtext = "";
-            n = 0;
-        } else {
-            freeit = JNI_TRUE;
-            if (n > 2) {                                /* Drop final CR, LF */
-                if (errtext[n - 1] == '\n') n--;
-                if (errtext[n - 1] == '\r') n--;
-                errtext[n] = '\0';
-            }
-        }
-    } else {   /* C runtime error that has no corresponding DOS error code */
-        errtext = strerror(save_errno);
-    }
-
-    if (IsJavaw()) {
-        char *message;
-        int mlen;
-        /* get the length of the string we need */
-        int len = mlen =  _vscprintf(fmt, vl) + 1;
-        if (freeit) {
-           mlen += JLI_StrLen(errtext);
-        }
-
-        message = (char *)JLI_MemAlloc(mlen);
-        _vsnprintf(message, len, fmt, vl);
-        message[len]='\0';
-
-        if (freeit) {
-           JLI_StrCat(message, errtext);
-        }
-
-        MessageBox(NULL, message, "Java Virtual Machine Launcher",
-            (MB_OK|MB_ICONSTOP|MB_APPLMODAL));
-
-        JLI_MemFree(message);
+  if ((errval = GetLastError()) != 0) {		/* Platform SDK / DOS Error */
+    int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|
+      FORMAT_MESSAGE_IGNORE_INSERTS|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+      NULL, errval, 0, (LPTSTR)&errtext, 0, NULL);
+    if (errtext == NULL || n == 0) {		/* Paranoia check */
+      errtext = "";
+      n = 0;
     } else {
-        vfprintf(stderr, fmt, vl);
-        if (freeit) {
-           fprintf(stderr, "%s", errtext);
-        }
+      freeit = 1;
+      if (n > 2) {				/* Drop final CR, LF */
+	if (errtext[n - 1] == '\n') n--;
+	if (errtext[n - 1] == '\r') n--;
+	errtext[n] = '\0';
+      }
     }
-    if (freeit) {
-        (void)LocalFree((HLOCAL)errtext);
+  } else	/* C runtime error that has no corresponding DOS error code */
+    errtext = strerror(save_errno);
+ 
+#ifdef JAVAW
+  {
+    size_t size;
+    char * message;
+    size = strlen(format) + strlen(string) + strlen(errtext);
+    message = (char*)JLI_MemAlloc(size*sizeof(char));
+    sprintf(message, (const char *)format, string, errtext);
+ 
+    if (message != NULL) {
+      MessageBox(NULL, message, "Java Virtual Machine Launcher",
+	       (MB_OK|MB_ICONSTOP|MB_APPLMODAL)); 
+      JLI_MemFree(message);
     }
-    va_end(vl);
+  }
+#else
+  if (always) {
+    fprintf(stderr, (const char *)format, string, errtext);
+    fprintf(stderr, "\n");
+  }
+#endif
+  if (freeit)
+    (void)LocalFree((HLOCAL)errtext);
 }
 
 void  ReportExceptionDescription(JNIEnv * env) {
-    if (IsJavaw()) {
-       /*
-        * This code should be replaced by code which opens a window with
-        * the exception detail message, for now atleast put a dialog up.
-        */
-        MessageBox(NULL, "A Java Exception has occurred.", "Java Virtual Machine Launcher",
-               (MB_OK|MB_ICONSTOP|MB_APPLMODAL));
-    } else {
-        (*env)->ExceptionDescribe(env);
-    }
+#ifdef JAVAW
+  /*
+   * This code should be replaced by code which opens a window with
+   * the exception detail message.
+   */
+  (*env)->ExceptionDescribe(env);
+#else
+  (*env)->ExceptionDescribe(env);
+#endif
 }
+
+
+/*
+ * Return JNI_TRUE for an option string that has no effect but should
+ * _not_ be passed on to the vm; return JNI_FALSE otherwise. On
+ * windows, there are no options that should be screened in this
+ * manner.
+ */
+jboolean RemovableMachineDependentOption(char * option) {
+  /*
+   * Unconditionally remove both -d32 and -d64 options since only
+   * the last such options has an effect; e.g. 
+   * java -d32 -d64 -d32 -version
+   * is equivalent to 
+   * java -d32 -version
+   */
+
+  if( (strcmp(option, "-d32")  == 0 ) || 
+      (strcmp(option, "-d64")  == 0 ) )
+    return JNI_TRUE;
+  else
+    return JNI_FALSE;
+}
+
 
 jboolean
 ServerClassMachine() {
-    return (GetErgoPolicy() == ALWAYS_SERVER_CLASS) ? JNI_TRUE : JNI_FALSE;
+  jboolean result = JNI_FALSE;
+#if   defined(NEVER_ACT_AS_SERVER_CLASS_MACHINE)
+  result = JNI_FALSE;
+#elif defined(ALWAYS_ACT_AS_SERVER_CLASS_MACHINE)
+  result = JNI_TRUE;
+#endif
+  return result;
 }
 
 /*
@@ -500,21 +540,21 @@ ProcessDir(manifest_info* info, HKEY top_key) {
     DWORD   index = 0;
     HKEY    ver_key;
     char    name[MAXNAMELEN];
-    int     len;
+    int	    len;
     char    *best = NULL;
 
     /*
      * Enumerate "<top_key>/SOFTWARE/JavaSoft/Java Runtime Environment"
      * searching for the best available version.
      */
-    while (RegEnumKey(top_key, index, name, MAXNAMELEN) == ERROR_SUCCESS) {
-        index++;
-        if (JLI_AcceptableRelease(name, info->jre_version))
-            if ((best == NULL) || (JLI_ExactVersionId(name, best) > 0)) {
-                if (best != NULL)
-                    JLI_MemFree(best);
-                best = JLI_StringDup(name);
-            }
+    while (RegEnumKey(top_key, index, name, MAXNAMELEN) == ERROR_SUCCESS) {   
+	index++;
+	if (JLI_AcceptableRelease(name, info->jre_version))
+	    if ((best == NULL) || (JLI_ExactVersionId(name, best) > 0)) {
+		if (best != NULL)
+		    JLI_MemFree(best);
+		best = JLI_StringDup(name);
+	    }
     }
 
     /*
@@ -523,26 +563,26 @@ ProcessDir(manifest_info* info, HKEY top_key) {
      * error in extracting the "JavaHome" string, return null.
      */
     if (best == NULL)
-        return (NULL);
-    else {
-        if (RegOpenKeyEx(top_key, best, 0, KEY_READ, &ver_key)
-          != ERROR_SUCCESS) {
-            JLI_MemFree(best);
-            if (ver_key != NULL)
-                RegCloseKey(ver_key);
-            return (NULL);
-        }
-        JLI_MemFree(best);
-        len = MAXNAMELEN;
-        if (RegQueryValueEx(ver_key, "JavaHome", NULL, NULL, (LPBYTE)name, &len)
-          != ERROR_SUCCESS) {
-            if (ver_key != NULL)
-                RegCloseKey(ver_key);
-            return (NULL);
-        }
-        if (ver_key != NULL)
-            RegCloseKey(ver_key);
-        return (JLI_StringDup(name));
+	return (NULL);
+    else { 
+	if (RegOpenKeyEx(top_key, best, 0, KEY_READ, &ver_key)
+	  != ERROR_SUCCESS) {
+	    JLI_MemFree(best);
+	    if (ver_key != NULL)
+		RegCloseKey(ver_key);
+	    return (NULL);
+	}
+	JLI_MemFree(best);
+	len = MAXNAMELEN;
+	if (RegQueryValueEx(ver_key, "JavaHome", NULL, NULL, (LPBYTE)name, &len)
+	  != ERROR_SUCCESS) {
+	    if (ver_key != NULL)
+		RegCloseKey(ver_key);
+	    return (NULL);
+	}
+	if (ver_key != NULL)
+	    RegCloseKey(ver_key);
+	return (JLI_StringDup(name));
     }
 }
 
@@ -551,7 +591,7 @@ ProcessDir(manifest_info* info, HKEY top_key) {
  * JRE to be used by scanning a set of registry entries.  This set of entries
  * is hardwired on Windows as "Software\JavaSoft\Java Runtime Environment"
  * under the set of roots "{ HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE }".
- *
+ *  
  * This routine simply opens each of these registry directories before passing
  * control onto ProcessDir().
  */
@@ -559,19 +599,19 @@ char *
 LocateJRE(manifest_info* info) {
     HKEY    key = NULL;
     char    *path;
-    int     key_index;
+    int	    key_index;
     HKEY    root_keys[2] = { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE };
 
     for (key_index = 0; key_index <= 1; key_index++) {
-        if (RegOpenKeyEx(root_keys[key_index], JRE_KEY, 0, KEY_READ, &key)
-          == ERROR_SUCCESS)
-            if ((path = ProcessDir(info, key)) != NULL) {
-                if (key != NULL)
-                    RegCloseKey(key);
-                return (path);
-            }
-        if (key != NULL)
-            RegCloseKey(key);
+	if (RegOpenKeyEx(root_keys[key_index], JRE_KEY, 0, KEY_READ, &key)
+	  == ERROR_SUCCESS)
+	    if ((path = ProcessDir(info, key)) != NULL) {
+		if (key != NULL)
+		    RegCloseKey(key);
+		return (path);
+	    }
+	if (key != NULL)
+	    RegCloseKey(key);
     }
     return NULL;
 }
@@ -599,23 +639,23 @@ LocateJRE(manifest_info* info) {
  * parsing rule details.  The rule summary from that specification is:
  *
  *  * Arguments are delimited by white space, which is either a space or a tab.
- *
+ *  
  *  * A string surrounded by double quotation marks is interpreted as a single
  *    argument, regardless of white space contained within. A quoted string can
  *    be embedded in an argument. Note that the caret (^) is not recognized as
  *    an escape character or delimiter.
- *
+ *    
  *  * A double quotation mark preceded by a backslash, \", is interpreted as a
  *    literal double quotation mark (").
- *
+ *    
  *  * Backslashes are interpreted literally, unless they immediately precede a
  *    double quotation mark.
- *
+ *    
  *  * If an even number of backslashes is followed by a double quotation mark,
  *    then one backslash (\) is placed in the argv array for every pair of
  *    backslashes (\\), and the double quotation mark (") is interpreted as a
  *    string delimiter.
- *
+ *    
  *  * If an odd number of backslashes is followed by a double quotation mark,
  *    then one backslash (\) is placed in the argv array for every pair of
  *    backslashes (\\) and the double quotation mark is interpreted as an
@@ -635,17 +675,17 @@ nextarg(char** s) {
      */
     while (*p != (char)0 && (*p == ' ' || *p == '\t'))
         p++;
-    head = p;                   /* Save the start of the token to return */
+    head = p;			/* Save the start of the token to return */
 
     /*
      * Isolate a token from the command line.
      */
     while (*p != (char)0 && (inquote || !(*p == ' ' || *p == '\t'))) {
-        if (*p == '\\' && *(p+1) == '"' && slashes % 2 == 0)
-            p++;
-        else if (*p == '"')
-            inquote = !inquote;
-        slashes = (*p++ == '\\') ? slashes + 1 : 0;
+	if (*p == '\\' && *(p+1) == '"' && slashes % 2 == 0)
+	    p++;
+	else if (*p == '"')
+	    inquote = !inquote;
+	slashes = (*p++ == '\\') ? slashes + 1 : 0;
     }
 
     /*
@@ -654,7 +694,7 @@ nextarg(char** s) {
      * next character.
      */
     if (*p != (char)0)
-        *p++ = (char)0;
+	*p++ = (char)0;
 
     /*
      * Update the parameter to point to the head of the remaining string
@@ -691,26 +731,26 @@ nextarg(char** s) {
  */
 static char*
 unquote(const char *s) {
-    const char *p = s;          /* Pointer to the tail of the original string */
-    char *un = (char*)JLI_MemAlloc(JLI_StrLen(s) + 1);  /* Ptr to unquoted string */
-    char *pun = un;             /* Pointer to the tail of the unquoted string */
+    const char *p = s;		/* Pointer to the tail of the original string */
+    char *un = (char*)JLI_MemAlloc(strlen(s) + 1);  /* Ptr to unquoted string */
+    char *pun = un;		/* Pointer to the tail of the unquoted string */
 
     while (*p != '\0') {
-        if (*p == '"') {
-            p++;
-        } else if (*p == '\\') {
-            const char *q = p + JLI_StrSpn(p,"\\");
-            if (*q == '"')
-                do {
-                    *pun++ = '\\';
-                    p += 2;
-                 } while (*p == '\\' && p < q);
-            else
-                while (p < q)
-                    *pun++ = *p++;
-        } else {
-            *pun++ = *p++;
-        }
+	if (*p == '"') {
+	    p++;
+	} else if (*p == '\\') {
+	    const char *q = p + strspn(p,"\\");
+	    if (*q == '"')
+		do {
+		    *pun++ = '\\';
+		    p += 2;
+		 } while (*p == '\\' && p < q);
+	    else
+		while (p < q)
+		    *pun++ = *p++;
+	} else {
+	    *pun++ = *p++;
+	}
     }
     *pun = '\0';
     return un;
@@ -728,35 +768,57 @@ unquote(const char *s) {
 void
 ExecJRE(char *jre, char **argv) {
     int     len;
+    char    *progname;
     char    path[MAXPATHLEN + 1];
 
-    const char *progname = GetProgramName();
+    /*
+     * Determine the executable we are building (or in the rare case, running).
+     */
+#ifdef JAVA_ARGS  /* javac, jar and friends. */
+    progname = "java";
+#else             /* java, oldjava, javaw and friends */
+#ifdef PROGNAME
+    progname = PROGNAME;
+#else
+    {
+	char *s;
+	progname = *argv;
+	if ((s = strrchr(progname, FILE_SEPARATOR)) != 0) {
+	    progname = s + 1;
+	}
+    }
+#endif /* PROGNAME */
+#endif /* JAVA_ARGS */
 
     /*
      * Resolve the real path to the currently running launcher.
      */
     len = GetModuleFileName(NULL, path, MAXPATHLEN + 1);
     if (len == 0 || len > MAXPATHLEN) {
-        ReportErrorMessageSys(JRE_ERROR9, progname);
-        exit(1);
+	ReportSysErrorMessage2(
+	  "Unable to resolve path to current %s executable: %s",
+	  progname, JNI_TRUE);
+	exit(1);
     }
 
-    JLI_TraceLauncher("ExecJRE: old: %s\n", path);
-    JLI_TraceLauncher("ExecJRE: new: %s\n", jre);
+    if (_launcher_debug) {
+	printf("ExecJRE: old: %s\n", path);
+	printf("ExecJRE: new: %s\n", jre);
+    }
 
     /*
      * If the path to the selected JRE directory is a match to the initial
      * portion of the path to the currently executing JRE, we have a winner!
-     * If so, just return.
+     * If so, just return. (strnicmp() is the Windows equiv. of strncasecmp().)
      */
-    if (JLI_StrNCaseCmp(jre, path, JLI_StrLen(jre)) == 0)
-        return;                 /* I am the droid you were looking for */
+    if (strnicmp(jre, path, strlen(jre)) == 0)
+	return;			/* I am the droid you were looking for */
 
     /*
      * If this isn't the selected version, exec the selected version.
      */
-    (void)JLI_StrCat(JLI_StrCat(JLI_StrCpy(path, jre), "\\bin\\"), progname);
-    (void)JLI_StrCat(path, ".exe");
+    (void)strcat(strcat(strcpy(path, jre), "\\bin\\"), progname);
+    (void)strcat(path, ".exe");
 
     /*
      * Although Windows has an execv() entrypoint, it doesn't actually
@@ -770,12 +832,12 @@ ExecJRE(char *jre, char **argv) {
      * If it weren't for this semantic flaw, the code below would be ...
      *
      *     execv(path, argv);
-     *     ReportErrorMessage("Error: Exec of %s failed\n", path);
+     *     ReportErrorMessage2("Exec of %s failed\n", path, JNI_TRUE);
      *     exit(1);
      *
      * The incorrect exec semantics could be addressed by:
      *
-     *     exit((int)spawnv(_P_WAIT, path, argv));
+     *	   exit((int)spawnv(_P_WAIT, path, argv));
      *
      * Unfortunately, a bug in Windows spawn/exec impementation prevents
      * this from completely working.  All the Windows POSIX process creation
@@ -791,111 +853,112 @@ ExecJRE(char *jre, char **argv) {
      * to the native CreateProcess() Windows process control interface.
      */
     {
-        char    *cmdline;
-        char    *p;
-        char    *np;
-        char    *ocl;
-        char    *ccl;
-        char    *unquoted;
-        DWORD   exitCode;
-        STARTUPINFO si;
-        PROCESS_INFORMATION pi;
+	char	*cmdline;
+	char	*p;
+	char	*np;
+	char	*ocl;
+	char	*ccl;
+	char	*unquoted;
+	DWORD	exitCode;
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
 
-        /*
-         * The following code block gets and processes the original command
-         * line, replacing the argv[0] equivalent in the command line with
-         * the path to the new executable and removing the appropriate
-         * Multiple JRE support options. Note that similar logic exists
-         * in the platform independent SelectVersion routine, but is
-         * replicated here due to the syntax of CreateProcess().
-         *
-         * The magic "+ 4" characters added to the command line length are
-         * 2 possible quotes around the path (argv[0]), a space after the
-         * path and a terminating null character.
-         */
-        ocl = GetCommandLine();
-        np = ccl = JLI_StringDup(ocl);
-        p = nextarg(&np);               /* Discard argv[0] */
-        cmdline = (char *)JLI_MemAlloc(JLI_StrLen(path) + JLI_StrLen(np) + 4);
-        if (JLI_StrChr(path, (int)' ') == NULL && JLI_StrChr(path, (int)'\t') == NULL)
-            cmdline = JLI_StrCpy(cmdline, path);
-        else
-            cmdline = JLI_StrCat(JLI_StrCat(JLI_StrCpy(cmdline, "\""), path), "\"");
+	/*
+	 * The following code block gets and processes the original command
+	 * line, replacing the argv[0] equivalent in the command line with
+	 * the path to the new executable and removing the appropriate
+	 * Multiple JRE support options. Note that similar logic exists
+	 * in the platform independent SelectVersion routine, but is
+	 * replicated here due to the syntax of CreateProcess().
+	 *
+	 * The magic "+ 4" characters added to the command line length are
+	 * 2 possible quotes around the path (argv[0]), a space after the
+	 * path and a terminating null character.
+	 */
+	ocl = GetCommandLine();
+	np = ccl = JLI_StringDup(ocl);
+	p = nextarg(&np);		/* Discard argv[0] */
+	cmdline = (char *)JLI_MemAlloc(strlen(path) + strlen(np) + 4);
+	if (strchr(path, (int)' ') == NULL && strchr(path, (int)'\t') == NULL)
+	    cmdline = strcpy(cmdline, path);
+	else
+	    cmdline = strcat(strcat(strcpy(cmdline, "\""), path), "\"");
 
-        while (*np != (char)0) {                /* While more command-line */
-            p = nextarg(&np);
-            if (*p != (char)0) {                /* If a token was isolated */
-                unquoted = unquote(p);
-                if (*unquoted == '-') {         /* Looks like an option */
-                    if (JLI_StrCmp(unquoted, "-classpath") == 0 ||
-                      JLI_StrCmp(unquoted, "-cp") == 0) {       /* Unique cp syntax */
-                        cmdline = JLI_StrCat(JLI_StrCat(cmdline, " "), p);
-                        p = nextarg(&np);
-                        if (*p != (char)0)      /* If a token was isolated */
-                            cmdline = JLI_StrCat(JLI_StrCat(cmdline, " "), p);
-                    } else if (JLI_StrNCmp(unquoted, "-version:", 9) != 0 &&
-                      JLI_StrCmp(unquoted, "-jre-restrict-search") != 0 &&
-                      JLI_StrCmp(unquoted, "-no-jre-restrict-search") != 0) {
-                        cmdline = JLI_StrCat(JLI_StrCat(cmdline, " "), p);
-                    }
-                } else {                        /* End of options */
-                    cmdline = JLI_StrCat(JLI_StrCat(cmdline, " "), p);
-                    cmdline = JLI_StrCat(JLI_StrCat(cmdline, " "), np);
-                    JLI_MemFree((void *)unquoted);
-                    break;
-                }
-                JLI_MemFree((void *)unquoted);
-            }
-        }
-        JLI_MemFree((void *)ccl);
+	while (*np != (char)0) {		/* While more command-line */
+	    p = nextarg(&np);
+	    if (*p != (char)0) {		/* If a token was isolated */
+		unquoted = unquote(p);
+		if (*unquoted == '-') {		/* Looks like an option */
+		    if (strcmp(unquoted, "-classpath") == 0 ||
+		      strcmp(unquoted, "-cp") == 0) {	/* Unique cp syntax */
+			cmdline = strcat(strcat(cmdline, " "), p);
+			p = nextarg(&np);
+			if (*p != (char)0)	/* If a token was isolated */
+			    cmdline = strcat(strcat(cmdline, " "), p);
+		    } else if (strncmp(unquoted, "-version:", 9) != 0 &&
+		      strcmp(unquoted, "-jre-restrict-search") != 0 &&
+		      strcmp(unquoted, "-no-jre-restrict-search") != 0) {
+			cmdline = strcat(strcat(cmdline, " "), p);
+		    }
+		} else {			/* End of options */
+		    cmdline = strcat(strcat(cmdline, " "), p);
+		    cmdline = strcat(strcat(cmdline, " "), np);
+		    JLI_MemFree((void *)unquoted);
+		    break;
+		}
+		JLI_MemFree((void *)unquoted);
+	    }
+	}
+	JLI_MemFree((void *)ccl);
 
-        if (JLI_IsTraceLauncher()) {
-            np = ccl = JLI_StringDup(cmdline);
-            p = nextarg(&np);
-            printf("ReExec Command: %s (%s)\n", path, p);
-            printf("ReExec Args: %s\n", np);
-            JLI_MemFree((void *)ccl);
-        }
-        (void)fflush(stdout);
-        (void)fflush(stderr);
+	if (_launcher_debug) {
+	    np = ccl = JLI_StringDup(cmdline);
+	    p = nextarg(&np);
+	    printf("ReExec Command: %s (%s)\n", path, p);
+	    printf("ReExec Args: %s\n", np);
+	    JLI_MemFree((void *)ccl);
+	}
+	(void)fflush(stdout);
+	(void)fflush(stderr);
 
-        /*
-         * The following code is modeled after a model presented in the
-         * Microsoft Technical Article "Moving Unix Applications to
-         * Windows NT" (March 6, 1994) and "Creating Processes" on MSDN
-         * (Februrary 2005).  It approximates UNIX spawn semantics with
-         * the parent waiting for termination of the child.
-         */
-        memset(&si, 0, sizeof(si));
-        si.cb =sizeof(STARTUPINFO);
-        memset(&pi, 0, sizeof(pi));
+	/*
+	 * The following code is modeled after a model presented in the
+	 * Microsoft Technical Article "Moving Unix Applications to
+	 * Windows NT" (March 6, 1994) and "Creating Processes" on MSDN
+	 * (Februrary 2005).  It approximates UNIX spawn semantics with
+	 * the parent waiting for termination of the child.
+	 */
+	memset(&si, 0, sizeof(si));
+	si.cb =sizeof(STARTUPINFO);
+	memset(&pi, 0, sizeof(pi));
 
-        if (!CreateProcess((LPCTSTR)path,       /* executable name */
-          (LPTSTR)cmdline,                      /* command line */
-          (LPSECURITY_ATTRIBUTES)NULL,          /* process security attr. */
-          (LPSECURITY_ATTRIBUTES)NULL,          /* thread security attr. */
-          (BOOL)TRUE,                           /* inherits system handles */
-          (DWORD)0,                             /* creation flags */
-          (LPVOID)NULL,                         /* environment block */
-          (LPCTSTR)NULL,                        /* current directory */
-          (LPSTARTUPINFO)&si,                   /* (in) startup information */
-          (LPPROCESS_INFORMATION)&pi)) {        /* (out) process information */
-            ReportErrorMessageSys(SYS_ERROR1, path);
-            exit(1);
-        }
+	if (!CreateProcess((LPCTSTR)path,	/* executable name */
+	  (LPTSTR)cmdline,			/* command line */
+	  (LPSECURITY_ATTRIBUTES)NULL,		/* process security attr. */
+	  (LPSECURITY_ATTRIBUTES)NULL,		/* thread security attr. */
+	  (BOOL)TRUE,				/* inherits system handles */
+	  (DWORD)0,				/* creation flags */
+	  (LPVOID)NULL,				/* environment block */
+	  (LPCTSTR)NULL,			/* current directory */
+	  (LPSTARTUPINFO)&si,			/* (in) startup information */
+	  (LPPROCESS_INFORMATION)&pi)) {	/* (out) process information */
+	    ReportSysErrorMessage2("CreateProcess(%s, ...) failed: %s",
+	      path, JNI_TRUE);
+	      exit(1);
+	}
 
-        if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_FAILED) {
-            if (GetExitCodeProcess(pi.hProcess, &exitCode) == FALSE)
-                exitCode = 1;
-        } else {
-            ReportErrorMessage(SYS_ERROR2);
-            exitCode = 1;
-        }
+	if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_FAILED) {
+	    if (GetExitCodeProcess(pi.hProcess, &exitCode) == FALSE)
+		exitCode = 1;
+	} else {
+	    ReportErrorMessage("WaitForSingleObject() failed.", JNI_TRUE);
+	    exitCode = 1;
+	}
 
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
 
-        exit(exitCode);
+	exit(exitCode);
     }
 
 }
@@ -907,8 +970,8 @@ int
 UnsetEnv(char *name)
 {
     int ret;
-    char *buf = JLI_MemAlloc(JLI_StrLen(name) + 2);
-    buf = JLI_StrCat(JLI_StrCpy(buf, name), "=");
+    char *buf = JLI_MemAlloc(strlen(name) + 2);
+    buf = strcat(strcpy(buf, name), "=");
     ret = _putenv(buf);
     JLI_MemFree(buf);
     return (ret);
@@ -921,23 +984,23 @@ static const char* SPLASHSCREEN_SO = "\\bin\\splashscreen.dll";
 static HMODULE hSplashLib = NULL;
 
 void* SplashProcAddress(const char* name) {
-    char libraryPath[MAXPATHLEN]; /* some extra space for JLI_StrCat'ing SPLASHSCREEN_SO */
+    char libraryPath[MAXPATHLEN]; /* some extra space for strcat'ing SPLASHSCREEN_SO */
 
     if (!GetJREPath(libraryPath, MAXPATHLEN)) {
         return NULL;
     }
-    if (JLI_StrLen(libraryPath)+JLI_StrLen(SPLASHSCREEN_SO) >= MAXPATHLEN) {
+    if (strlen(libraryPath)+strlen(SPLASHSCREEN_SO) >= MAXPATHLEN) {
         return NULL;
     }
-    JLI_StrCat(libraryPath, SPLASHSCREEN_SO);
+    strcat(libraryPath, SPLASHSCREEN_SO);
 
-    if (!hSplashLib) {
-        hSplashLib = LoadLibrary(libraryPath);
+    if (!hSplashLib) { 
+        hSplashLib = LoadLibrary(libraryPath); 
     }
-    if (hSplashLib) {
-        return GetProcAddress(hSplashLib, name);
-    } else {
-        return NULL;
+    if (hSplashLib) { 
+        return GetProcAddress(hSplashLib, name); 
+    } else { 
+        return NULL; 
     }
 }
 
@@ -957,7 +1020,7 @@ jlong_format_specifier() {
  * Block current thread and continue execution in a new thread
  */
 int
-ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void * args) {
+ContinueInNewThread(int (JNICALL *continuation)(void *), jlong stack_size, void * args, int ret) {
     int rslt = 0;
     unsigned thread_id;
 
@@ -967,7 +1030,7 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
 
     /*
      * STACK_SIZE_PARAM_IS_A_RESERVATION is what we want, but it's not
-     * supported on older version of Windows. Try first with the flag; and
+     * supported on older version of Windows. Try first with the flag; and 
      * if that fails try again without the flag. See MSDN document or HotSpot
      * source (os_win32.cpp) for details.
      */
@@ -994,7 +1057,11 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
     } else {
       rslt = continuation(args);
     }
-    return rslt;
+    /* If the caller has deemed there is an error we
+     * simply return that, otherwise we return the value of
+     * the callee
+     */
+    return (ret != 0) ? ret : rslt;
 }
 
 /* Linux only, empty on windows. */

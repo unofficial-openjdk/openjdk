@@ -27,8 +27,8 @@
 
 #include "debug_util.h"
 
-#define DMEM_MIN(a,b)   (a) < (b) ? (a) : (b)
-#define DMEM_MAX(a,b)   (a) > (b) ? (a) : (b)
+#define DMEM_MIN(a,b)	(a) < (b) ? (a) : (b)
+#define DMEM_MAX(a,b)	(a) > (b) ? (a) : (b)
 
 typedef char byte_t;
 
@@ -37,41 +37,41 @@ static const byte_t ByteFreed = '\xDD';
 static const byte_t ByteGuard = '\xFD';
 
 enum {
-    MAX_LINENUM = 50000,        /* I certainly hope we don't have source files bigger than this */
-    MAX_CHECK_BYTES = 27,       /* max bytes to check at start of block */
-    MAX_GUARD_BYTES = 8,        /* size of guard areas on either side of a block */
+    MAX_LINENUM = 50000, 	/* I certainly hope we don't have source files bigger than this */
+    MAX_CHECK_BYTES = 27,	/* max bytes to check at start of block */
+    MAX_GUARD_BYTES = 8,	/* size of guard areas on either side of a block */
     MAX_DECIMAL_DIGITS = 15
 };
 
 /* Debug Info Header to precede allocated block */
 typedef struct MemoryBlockHeader {
-    char                        filename[FILENAME_MAX+1]; /* filename where alloc occurred */
-    int                         linenumber;             /* line where alloc occurred */
-    size_t                      size;                   /* size of the allocation */
-    int                         order;                  /* the order the block was allocated in */
-    struct MemoryListLink *     listEnter;              /* pointer to the free list node */
-    byte_t                      guard[MAX_GUARD_BYTES]; /* guard area for underrun check */
+    char			filename[FILENAME_MAX+1]; /* filename where alloc occurred */
+    int				linenumber;		/* line where alloc occurred */
+    size_t			size;			/* size of the allocation */
+    int				order;			/* the order the block was allocated in */
+    struct MemoryListLink *	listEnter;		/* pointer to the free list node */
+    byte_t			guard[MAX_GUARD_BYTES];	/* guard area for underrun check */
 } MemoryBlockHeader;
 
 /* Tail to follow allocated block */
 typedef struct MemoryBlockTail {
-    byte_t                      guard[MAX_GUARD_BYTES]; /* guard area overrun check */
+    byte_t			guard[MAX_GUARD_BYTES];	/* guard area overrun check */
 } MemoryBlockTail;
 
 /* Linked list of allocated memory blocks */
 typedef struct MemoryListLink {
-    struct MemoryListLink *     next;
-    MemoryBlockHeader *         header;
-    int                         freed;
+    struct MemoryListLink *	next;
+    MemoryBlockHeader *		header;
+    int				freed;
 } MemoryListLink;
 
 /**************************************************
  * Global Data structures
  */
-static DMemState                DMemGlobalState;
-extern const DMemState *        DMemStatePtr = &DMemGlobalState;
-static MemoryListLink           MemoryList = {NULL,NULL,FALSE};
-static dmutex_t                 DMemMutex = NULL;
+static DMemState 		DMemGlobalState;
+extern const DMemState * 	DMemStatePtr = &DMemGlobalState;
+static MemoryListLink		MemoryList = {NULL,NULL,FALSE};
+static dmutex_t 		DMemMutex = NULL;
 
 /**************************************************/
 
@@ -80,21 +80,21 @@ static dmutex_t                 DMemMutex = NULL;
  */
 static void * DMem_ClientAllocate(size_t size) {
     if (DMemGlobalState.pfnAlloc != NULL) {
-        return (*DMemGlobalState.pfnAlloc)(size);
+	return (*DMemGlobalState.pfnAlloc)(size);
     }
     return malloc(size);
 }
 
 static void DMem_ClientFree(void * ptr) {
     if (DMemGlobalState.pfnFree != NULL) {
-        (*DMemGlobalState.pfnFree)(ptr);
+	(*DMemGlobalState.pfnFree)(ptr);
     }
     free(ptr);
 }
 
 static dbool_t DMem_ClientCheckPtr(void * ptr, size_t size) {
     if (DMemGlobalState.pfnCheckPtr != NULL) {
-        return (*DMemGlobalState.pfnCheckPtr)(ptr, size);
+	return (*DMemGlobalState.pfnCheckPtr)(ptr, size);
     }
     return ptr != NULL;
 }
@@ -106,27 +106,27 @@ static dbool_t DMem_ClientCheckPtr(void * ptr, size_t size) {
  */
 
 static MemoryListLink * DMem_TrackBlock(MemoryBlockHeader * header) {
-    MemoryListLink *    link;
+    MemoryListLink *	link;
 
     link = (MemoryListLink *)DMem_ClientAllocate(sizeof(MemoryListLink));
     if (link != NULL) {
-        link->header = header;
-        link->header->listEnter = link;
-        link->next = MemoryList.next;
-        link->freed = FALSE;
-        MemoryList.next = link;
+	link->header = header;
+	link->header->listEnter = link;
+	link->next = MemoryList.next;
+	link->freed = FALSE;
+	MemoryList.next = link;
     }
 
     return link;
 }
 
 static int DMem_VerifyGuardArea(const byte_t * area) {
-    int         nbyte;
-
+    int		nbyte;
+    
     for ( nbyte = 0; nbyte < MAX_GUARD_BYTES; nbyte++ ) {
-        if (area[nbyte] != ByteGuard) {
-            return FALSE;
-        }
+	if (area[nbyte] != ByteGuard) {
+	    return FALSE;
+	}
     }
     return TRUE;
 }
@@ -146,7 +146,7 @@ static void DMem_VerifyTail(MemoryBlockTail * tail) {
 
 static MemoryBlockHeader * DMem_VerifyBlock(void * memptr) {
     MemoryBlockHeader * header;
-    MemoryBlockTail *   tail;
+    MemoryBlockTail *	tail;
 
     /* check if the pointer is valid */
     DASSERTMSG( DMem_ClientCheckPtr(memptr, 1), "Invalid pointer");
@@ -161,7 +161,7 @@ static MemoryBlockHeader * DMem_VerifyBlock(void * memptr) {
     /* check the tail of the block for overruns */
     tail = (MemoryBlockTail *) ( (byte_t *)memptr + header->size );
     DMem_VerifyTail(tail);
-
+    
     return header;
 }
 
@@ -192,33 +192,33 @@ void DMem_Shutdown() {
 }
 /*
  * Allocates a block of memory, reserving extra space at the start and end of the
- * block to store debug info on where the block was allocated, it's size, and
+ * block to store debug info on where the block was allocated, it's size, and 
  * 'guard' areas to catch overwrite/underwrite bugs
  */
 void * DMem_AllocateBlock(size_t size, const char * filename, int linenumber) {
-    MemoryBlockHeader * header;
-    MemoryBlockTail *   tail;
-    size_t              debugBlockSize;
-    byte_t *            memptr = NULL;
+    MemoryBlockHeader *	header;
+    MemoryBlockTail *	tail;
+    size_t		debugBlockSize;
+    byte_t *		memptr = NULL;
 
     DMutex_Enter(DMemMutex);
     if (DMemGlobalState.failNextAlloc) {
     /* force an allocation failure if so ordered */
-        DMemGlobalState.failNextAlloc = FALSE; /* reset flag */
-        goto Exit;
+    	DMemGlobalState.failNextAlloc = FALSE; /* reset flag */
+    	goto Exit;
     }
-
+        
     /* allocate a block large enough to hold extra debug info */
     debugBlockSize = sizeof(MemoryBlockHeader) + size + sizeof(MemoryBlockTail);
     header = (MemoryBlockHeader *)DMem_ClientAllocate(debugBlockSize);
     if (header == NULL) {
-        goto Exit;
+	goto Exit;
     }
 
     /* add block to list of allocated memory */
     header->listEnter = DMem_TrackBlock(header);
     if ( header->listEnter == NULL ) {
-        goto Exit;
+	goto Exit;
     }
 
     /* store size of requested block */
@@ -226,7 +226,7 @@ void * DMem_AllocateBlock(size_t size, const char * filename, int linenumber) {
     /* update maximum block size */
     DMemGlobalState.biggestBlock = DMEM_MAX(header->size, DMemGlobalState.biggestBlock);
     /* update used memory total */
-    DMemGlobalState.totalHeapUsed += header->size;
+    DMemGlobalState.totalHeapUsed += header->size;  
     /* store filename and linenumber where allocation routine was called */
     strncpy(header->filename, filename, FILENAME_MAX);
     header->linenumber = linenumber;
@@ -240,7 +240,7 @@ void * DMem_AllocateBlock(size_t size, const char * filename, int linenumber) {
     /* put guard area after block */
     tail = (MemoryBlockTail *)(memptr + size);
     memset(tail->guard, ByteGuard, MAX_GUARD_BYTES);
-
+    
 Exit:
     DMutex_Exit(DMemMutex);
     return memptr;
@@ -254,7 +254,7 @@ void DMem_FreeBlock(void * memptr) {
 
     DMutex_Enter(DMemMutex);
     if ( memptr == NULL) {
-        goto Exit;
+	goto Exit;
     }
 
     /* get the debug block header preceding the allocated memory */
@@ -264,19 +264,19 @@ void DMem_FreeBlock(void * memptr) {
     /* mark block as freed */
     header->listEnter->freed = TRUE;
     /* update used memory total */
-    DMemGlobalState.totalHeapUsed -= header->size;
+    DMemGlobalState.totalHeapUsed -= header->size;  
 Exit:
     DMutex_Exit(DMemMutex);
 }
 
 static void DMem_DumpHeader(MemoryBlockHeader * header) {
-    char        report[FILENAME_MAX+MAX_DECIMAL_DIGITS*3+1];
+    char	report[FILENAME_MAX+MAX_DECIMAL_DIGITS*3+1];
     static const char * reportFormat =
-        "file:  %s, line %d\n"
-        "size:  %d bytes\n"
-        "order: %d\n"
-        "-------";
-
+	"file:  %s, line %d\n"
+	"size:  %d bytes\n"
+	"order: %d\n"
+	"-------";
+    
     DMem_VerifyHeader(header);
     sprintf(report, reportFormat, header->filename, header->linenumber, header->size, header->order);
     DTRACE_PRINTLN(report);
@@ -286,23 +286,23 @@ static void DMem_DumpHeader(MemoryBlockHeader * header) {
  * Call this function at shutdown time to report any leaked blocks
  */
 void DMem_ReportLeaks() {
-    MemoryListLink *    link;
+    MemoryListLink *	link;
 
     DMutex_Enter(DMemMutex);
-
+    
     /* Force memory leaks to be output regardless of trace settings */
     DTrace_EnableFile(__FILE__, TRUE);
     DTRACE_PRINTLN("--------------------------");
     DTRACE_PRINTLN("Debug Memory Manager Leaks");
     DTRACE_PRINTLN("--------------------------");
-
+    
     /* walk through allocated list and dump any blocks not marked as freed */
     link = MemoryList.next;
     while (link != NULL) {
-        if ( !link->freed ) {
-            DMem_DumpHeader(link->header);
-        }
-        link = link->next;
+	if ( !link->freed ) {
+	    DMem_DumpHeader(link->header);
+	}
+	link = link->next;
     }
 
     DMutex_Exit(DMemMutex);
@@ -332,7 +332,8 @@ void DMem_DisableMutex() {
 
 #endif  /* defined(DEBUG) */
 
-/* The following line is only here to prevent compiler warnings
- * on release (non-debug) builds
+/* The following line is only here to prevent compiler warnings 
+ * on release (non-debug) builds 
  */
-static int dummyVariable = 0;
+static int dummyVariable = 0;  
+

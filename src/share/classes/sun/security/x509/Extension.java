@@ -26,7 +26,6 @@
 package sun.security.x509;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import sun.security.util.*;
 
@@ -44,9 +43,9 @@ import sun.security.util.*;
  * <pre>
  * ASN.1 definition of Extension:
  * Extension ::= SEQUENCE {
- *      ExtensionId     OBJECT IDENTIFIER,
- *      critical        BOOLEAN DEFAULT FALSE,
- *      extensionValue  OCTET STRING
+ *	ExtensionId	OBJECT IDENTIFIER,
+ *	critical	BOOLEAN DEFAULT FALSE,
+ *	extensionValue	OCTET STRING
  * }
  * </pre>
  * All subclasses need to implement a constructor of the form
@@ -57,12 +56,13 @@ import sun.security.util.*;
  * <p>
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  */
-public class Extension implements java.security.cert.Extension {
+public class Extension {
 
-    protected ObjectIdentifier  extensionId = null;
-    protected boolean           critical = false;
-    protected byte[]            extensionValue = null;
+    protected ObjectIdentifier	extensionId = null;
+    protected boolean		critical = false;
+    protected byte[]		extensionValue = null;
 
     /**
      * Default constructor.  Used only by sub-classes.
@@ -124,42 +124,6 @@ public class Extension implements java.security.cert.Extension {
     }
 
     /**
-     * Constructs an Extension from individual components of ObjectIdentifier,
-     * criticality and the raw encoded extension value.
-     *
-     * @param extensionId the ObjectIdentifier of the extension
-     * @param critical the boolean indicating if the extension is critical
-     * @param rawExtensionValue the raw DER-encoded extension value (this
-     * is not the encoded OctetString).
-     */
-    public static Extension newExtension(ObjectIdentifier extensionId,
-        boolean critical, byte[] rawExtensionValue) throws IOException {
-        Extension ext = new Extension();
-        ext.extensionId = extensionId;
-        ext.critical = critical;
-        ext.extensionValue = rawExtensionValue;
-        return ext;
-    }
-
-    public void encode(OutputStream out) throws IOException {
-        if (out == null) {
-            throw new NullPointerException();
-        }
-
-        DerOutputStream dos1 = new DerOutputStream();
-        DerOutputStream dos2 = new DerOutputStream();
-
-        dos1.putOID(extensionId);
-        if (critical) {
-            dos1.putBoolean(critical);
-        }
-        dos1.putOctetString(extensionValue);
-
-        dos2.write(DerValue.tag_Sequence, dos1);
-        out.write(dos2.toByteArray());
-    }
-
-    /**
      * Write the extension to the DerOutputStream.
      *
      * @param out the DerOutputStream to write the extension to.
@@ -196,23 +160,15 @@ public class Extension implements java.security.cert.Extension {
         return extensionId;
     }
 
-    public byte[] getValue() {
-        return extensionValue.clone();
-    }
-
     /**
      * Returns the extension value as an byte array for further processing.
      * Note, this is the raw DER value of the extension, not the DER
      * encoded octet string which is in the certificate.
-     * This method does not return a clone; it is the responsibility of the
+     * This method does not return a clone; it is the responsibility of the 
      * caller to clone the array if necessary.
      */
     public byte[] getExtensionValue() {
         return extensionValue;
-    }
-
-    public String getId() {
-        return extensionId.toString();
     }
 
     /**
@@ -237,15 +193,15 @@ public class Extension implements java.security.cert.Extension {
      * @return the hashcode value.
      */
     public int hashCode() {
-        int h = 0;
-        if (extensionValue != null) {
+	int h = 0;
+	if (extensionValue != null) {
             byte[] val = extensionValue;
             int len = val.length;
             while (len > 0)
                 h += len * val[--len];
-        }
-        h = h * hashMagic + extensionId.hashCode();
-        h = h * hashMagic + (critical?1231:1237);
+	}
+	h = h * hashMagic + extensionId.hashCode();
+	h = h * hashMagic + (critical?1231:1237);
         return h;
     }
 
@@ -258,7 +214,7 @@ public class Extension implements java.security.cert.Extension {
      *
      * @param other the object to test for equality with this Extension.
      * @return true iff the other object is of type Extension, and the
-     * criticality flag, object identifier and encoded extension value of
+     * criticality flag, object identifier and encoded extension value of 
      * the two Extensions match, false otherwise.
      */
     public boolean equals(Object other) {
@@ -266,11 +222,11 @@ public class Extension implements java.security.cert.Extension {
             return true;
         if (!(other instanceof Extension))
             return false;
-        Extension otherExt = (Extension) other;
-        if (critical != otherExt.critical)
-            return false;
-        if (!extensionId.equals(otherExt.extensionId))
-            return false;
+	Extension otherExt = (Extension) other;
+	if (critical != otherExt.critical)
+	    return false;
+	if (!extensionId.equals(otherExt.extensionId))
+	    return false;
         return Arrays.equals(extensionValue, otherExt.extensionValue);
     }
 }

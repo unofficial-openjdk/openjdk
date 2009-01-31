@@ -44,7 +44,7 @@
     jint srcpixel = src_ptr[index];                                          \
     jint neg_mask = srcpixel >> 31;                                          \
     srcpixel = (srcpixel << 16) | (srcpixel & 0xff00) |                      \
-               ((srcpixel >> 16) & 0xff);                                    \
+	       ((srcpixel >> 16) & 0xff);                                    \
     dst_ptr[index] ^= (srcpixel ^ xorpixel) & (neg_mask &~ alphamask);       \
 }
 
@@ -65,7 +65,7 @@
     jint srcpixel = src_ptr[index];                    \
     jint neg_mask = srcpixel >> 31;                    \
     dst_ptr[index] ^= ((srcpixel << 8) ^ xorpixel) &   \
-                      (neg_mask &~ alphamask);         \
+		      (neg_mask &~ alphamask);         \
 }
 
 /***************************************************************/
@@ -98,13 +98,13 @@ void ADD_SUFF(IntArgbToIntArgbXorBlit)(BLIT_PARAMS)
     mlib_d64 res, xorpixel64, alphamask64, dzero;
 
     if (width < 8) {
-        LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan, ARGB_XOR);
-        return;
+	LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan, ARGB_XOR);
+	return;
     }
 
     if (dstScan == 4*width && srcScan == dstScan) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     xorpixel64 = vis_to_double_dup(xorpixel);
@@ -112,36 +112,36 @@ void ADD_SUFF(IntArgbToIntArgbXorBlit)(BLIT_PARAMS)
     dzero = vis_fzero();
 
     for (j = 0; j < height; j++) {
-        mlib_s32 *dst_ptr = dstBase;
-        mlib_s32 *src_ptr = srcBase;
-        mlib_s32 size = width;
+	mlib_s32 *dst_ptr = dstBase;
+	mlib_s32 *src_ptr = srcBase;
+	mlib_s32 size = width;
 
-        if ((mlib_s32)dst_ptr & 7) {
-            ARGB_XOR(0, 0);
-            dst_ptr++;
-            src_ptr++;
-            size--;
-        }
+	if ((mlib_s32)dst_ptr & 7) {
+	    ARGB_XOR(0, 0);
+	    dst_ptr++;
+	    src_ptr++;
+	    size--;
+	}
 
 #pragma pipeloop(0)
-        for (i = 0; i <= size - 2; i += 2) {
-            mlib_s32 neg_mask;
-            mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
-            mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
-            neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
-            res = vis_freg_pair(*pp0, *pp1);
-            res = vis_fxor(res, xorpixel64);
-            res = vis_fandnot(alphamask64, res);
-            res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
-            vis_pst_32(res, dst_ptr + i, neg_mask);
-        }
+	for (i = 0; i <= size - 2; i += 2) {
+	    mlib_s32 neg_mask;
+	    mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
+	    mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
+	    neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
+	    res = vis_freg_pair(*pp0, *pp1);
+	    res = vis_fxor(res, xorpixel64);
+	    res = vis_fandnot(alphamask64, res);
+	    res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
+	    vis_pst_32(res, dst_ptr + i, neg_mask);
+	}
 
-        if (i < size) {
-            ARGB_XOR(i, 0);
-        }
+	if (i < size) {
+	    ARGB_XOR(i, 0);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -157,13 +157,13 @@ void ADD_SUFF(IntArgbToIntBgrXorBlit)(BLIT_PARAMS)
     mlib_d64 res, xorpixel64, alphamask64, dzero;
 
     if (width < 8) {
-        LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan, BGR_XOR);
-        return;
+	LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan, BGR_XOR);
+	return;
     }
 
     if (dstScan == 4*width && srcScan == dstScan) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     xorpixel64 = vis_to_double_dup(xorpixel);
@@ -171,36 +171,36 @@ void ADD_SUFF(IntArgbToIntBgrXorBlit)(BLIT_PARAMS)
     dzero = vis_fzero();
 
     for (j = 0; j < height; j++) {
-        mlib_s32 *dst_ptr = dstBase;
-        mlib_s32 *src_ptr = srcBase;
-        mlib_s32 size = width;
+	mlib_s32 *dst_ptr = dstBase;
+	mlib_s32 *src_ptr = srcBase;
+	mlib_s32 size = width;
 
-        if ((mlib_s32)dst_ptr & 7) {
-            BGR_XOR(0, 0);
-            dst_ptr++;
-            src_ptr++;
-            size--;
-        }
+	if ((mlib_s32)dst_ptr & 7) {
+	    BGR_XOR(0, 0);
+	    dst_ptr++;
+	    src_ptr++;
+	    size--;
+	}
 
 #pragma pipeloop(0)
-        for (i = 0; i <= size - 2; i += 2) {
-            mlib_s32 neg_mask;
-            mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
-            mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
-            neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
-            ARGB_to_GBGR_FL2(res, *pp0, *pp1);
-            res = vis_fxor(res, xorpixel64);
-            res = vis_fandnot(alphamask64, res);
-            res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
-            vis_pst_32(res, dst_ptr + i, neg_mask);
-        }
+	for (i = 0; i <= size - 2; i += 2) {
+	    mlib_s32 neg_mask;
+	    mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
+	    mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
+	    neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
+	    ARGB_to_GBGR_FL2(res, *pp0, *pp1);
+	    res = vis_fxor(res, xorpixel64);
+	    res = vis_fandnot(alphamask64, res);
+	    res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
+	    vis_pst_32(res, dst_ptr + i, neg_mask);
+	}
 
-        if (i < size) {
-            BGR_XOR(i, 0);
-        }
+	if (i < size) {
+	    BGR_XOR(i, 0);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -216,14 +216,14 @@ void ADD_SUFF(IntArgbToIntArgbBmXorBlit)(BLIT_PARAMS)
     mlib_d64 res, xorpixel64, alphamask64, dzero, dFF;
 
     if (width < 8) {
-        LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan,
-                     ARGB_BM_XOR);
-        return;
+	LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan,
+		     ARGB_BM_XOR);
+	return;
     }
 
     if (dstScan == 4*width && srcScan == dstScan) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     xorpixel64 = vis_to_double_dup(xorpixel);
@@ -232,37 +232,37 @@ void ADD_SUFF(IntArgbToIntArgbBmXorBlit)(BLIT_PARAMS)
     dFF = vis_to_double_dup(0xFF000000);
 
     for (j = 0; j < height; j++) {
-        mlib_s32 *dst_ptr = dstBase;
-        mlib_s32 *src_ptr = srcBase;
-        mlib_s32 size = width;
+	mlib_s32 *dst_ptr = dstBase;
+	mlib_s32 *src_ptr = srcBase;
+	mlib_s32 size = width;
 
-        if ((mlib_s32)dst_ptr & 7) {
-            ARGB_BM_XOR(0, 0);
-            dst_ptr++;
-            src_ptr++;
-            size--;
-        }
+	if ((mlib_s32)dst_ptr & 7) {
+	    ARGB_BM_XOR(0, 0);
+	    dst_ptr++;
+	    src_ptr++;
+	    size--;
+	}
 
 #pragma pipeloop(0)
-        for (i = 0; i <= size - 2; i += 2) {
-            mlib_s32 neg_mask;
-            mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
-            mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
-            neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
-            res = vis_freg_pair(*pp0, *pp1);
-            res = vis_for(res, dFF);
-            res = vis_fxor(res, xorpixel64);
-            res = vis_fandnot(alphamask64, res);
-            res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
-            vis_pst_32(res, dst_ptr + i, neg_mask);
-        }
+	for (i = 0; i <= size - 2; i += 2) {
+	    mlib_s32 neg_mask;
+	    mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
+	    mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
+	    neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
+	    res = vis_freg_pair(*pp0, *pp1);
+	    res = vis_for(res, dFF);
+	    res = vis_fxor(res, xorpixel64);
+	    res = vis_fandnot(alphamask64, res);
+	    res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
+	    vis_pst_32(res, dst_ptr + i, neg_mask);
+	}
 
-        if (i < size) {
-            ARGB_BM_XOR(i, 0);
-        }
+	if (i < size) {
+	    ARGB_BM_XOR(i, 0);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -278,13 +278,13 @@ void ADD_SUFF(IntArgbToIntRgbxXorBlit)(BLIT_PARAMS)
     mlib_d64 res, xorpixel64, alphamask64, rgbx_mask, dzero;
 
     if (width < 8) {
-        LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan, RGBX_XOR);
-        return;
+	LOOP_DST_SRC(AnyInt, 1, dstBase, dstScan, srcBase, srcScan, RGBX_XOR);
+	return;
     }
 
     if (dstScan == 4*width && srcScan == dstScan) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     xorpixel64 = vis_to_double_dup(xorpixel);
@@ -295,37 +295,37 @@ void ADD_SUFF(IntArgbToIntRgbxXorBlit)(BLIT_PARAMS)
     vis_alignaddr(NULL, 1);
 
     for (j = 0; j < height; j++) {
-        mlib_s32 *dst_ptr = dstBase;
-        mlib_s32 *src_ptr = srcBase;
-        mlib_s32 size = width;
+	mlib_s32 *dst_ptr = dstBase;
+	mlib_s32 *src_ptr = srcBase;
+	mlib_s32 size = width;
 
-        if ((mlib_s32)dst_ptr & 7) {
-            RGBX_XOR(0, 0);
-            dst_ptr++;
-            src_ptr++;
-            size--;
-        }
+	if ((mlib_s32)dst_ptr & 7) {
+	    RGBX_XOR(0, 0);
+	    dst_ptr++;
+	    src_ptr++;
+	    size--;
+	}
 
 #pragma pipeloop(0)
-        for (i = 0; i <= size - 2; i += 2) {
-            mlib_s32 neg_mask;
-            mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
-            mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
-            neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
-            res = vis_freg_pair(*pp0, *pp1);
-            res = vis_fand(vis_faligndata(res, res), rgbx_mask);
-            res = vis_fxor(res, xorpixel64);
-            res = vis_fandnot(alphamask64, res);
-            res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
-            vis_pst_32(res, dst_ptr + i, neg_mask);
-        }
+	for (i = 0; i <= size - 2; i += 2) {
+	    mlib_s32 neg_mask;
+	    mlib_f32 *pp0 = (mlib_f32*)src_ptr + i;
+	    mlib_f32 *pp1 = (mlib_f32*)src_ptr + i + 1;
+	    neg_mask = (((*(mlib_u8*)pp0) >> 6) & 2) | ((*(mlib_u8*)pp1) >> 7);
+	    res = vis_freg_pair(*pp0, *pp1);
+	    res = vis_fand(vis_faligndata(res, res), rgbx_mask);
+	    res = vis_fxor(res, xorpixel64);
+	    res = vis_fandnot(alphamask64, res);
+	    res = vis_fxor(res, *(mlib_d64*)(dst_ptr + i));
+	    vis_pst_32(res, dst_ptr + i, neg_mask);
+	}
 
-        if (i < size) {
-            RGBX_XOR(i, 0);
-        }
+	if (i < size) {
+	    RGBX_XOR(i, 0);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -355,33 +355,33 @@ void ADD_SUFF(IntArgbToFourByteAbgrPreXorBlit)(BLIT_PARAMS)
     dstScan -= width * 4;
 
     do {
-        juint w = width;;
-        do {
-            jint srcpixel;
-            jint a, r, g, b;
+	juint w = width;;
+	do {
+	    jint srcpixel;
+	    jint a, r, g, b;
 
-            srcpixel = pSrc[0];
-            b = srcpixel & 0xff;
-            g = (srcpixel >> 8) & 0xff;
-            r = (srcpixel >> 16) & 0xff;
-            a = (mlib_u32)srcpixel >> 24;
+	    srcpixel = pSrc[0];
+	    b = srcpixel & 0xff;
+	    g = (srcpixel >> 8) & 0xff;
+	    r = (srcpixel >> 16) & 0xff;
+	    a = (mlib_u32)srcpixel >> 24;
 
-            if (srcpixel < 0) {
-                r = mul8table[a][r];
-                g = mul8table[a][g];
-                b = mul8table[a][b];
+	    if (srcpixel < 0) {
+		r = mul8table[a][r];
+		g = mul8table[a][g];
+		b = mul8table[a][b];
 
-                pDst[0] ^= (a ^ xor0) & ~mask0;
-                pDst[1] ^= (b ^ xor1) & ~mask1;
-                pDst[2] ^= (g ^ xor2) & ~mask2;
-                pDst[3] ^= (r ^ xor3) & ~mask3;
-            }
-            pSrc = ((void *) (((intptr_t) (pSrc)) + (4)));
-            pDst = ((void *) (((intptr_t) (pDst)) + (4)));;
-        }
-        while (--w > 0);
-        pSrc = ((void *) (((intptr_t) (pSrc)) + (srcScan)));
-        pDst = ((void *) (((intptr_t) (pDst)) + (dstScan)));;
+		pDst[0] ^= (a ^ xor0) & ~mask0;
+		pDst[1] ^= (b ^ xor1) & ~mask1;
+		pDst[2] ^= (g ^ xor2) & ~mask2;
+		pDst[3] ^= (r ^ xor3) & ~mask3;
+	    }
+	    pSrc = ((void *) (((intptr_t) (pSrc)) + (4)));
+	    pDst = ((void *) (((intptr_t) (pDst)) + (4)));;
+	}
+	while (--w > 0);
+	pSrc = ((void *) (((intptr_t) (pSrc)) + (srcScan)));
+	pDst = ((void *) (((intptr_t) (pDst)) + (dstScan)));;
     }
     while (--height > 0);
 }

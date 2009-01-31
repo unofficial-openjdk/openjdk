@@ -60,21 +60,21 @@ Java_sun_java2d_d3d_D3DMaskFill_MaskFill
     D3DContext *d3dc = (D3DContext *)jlong_to_ptr(pCtx);
 
     J2dTraceLn(J2D_TRACE_INFO, "D3DMaskFill_MaskFill");
-    J2dTraceLn4(J2D_TRACE_VERBOSE, "  x=%-4d y=%-4d w=%-4d h=%-4d",
+    J2dTraceLn4(J2D_TRACE_VERBOSE, "  x=%-4d y=%-4d w=%-4d h=%-4d", 
                 x, y, w, h);
     J2dTraceLn2(J2D_TRACE_VERBOSE, "  maskoff=%-4d maskscan=%-4d",
                 maskoff, maskscan);
 
     if (d3dc == NULL || wsdo == NULL) {
-        J2dTraceLn(J2D_TRACE_WARNING,
+        J2dTraceLn(J2D_TRACE_WARNING, 
                    "D3DMaskFill_MaskFill: context is null");
         return;
     }
 
     HRESULT res;
     D3D_EXEC_PRIM_LOOP(env, res, wsdo,
-                  doMaskFill(env, self, wsdo, d3dc,
-                             x, y, w, h,
+                  doMaskFill(env, self, wsdo, d3dc, 
+                             x, y, w, h, 
                              maskArray, maskoff, maskscan));
 }
 
@@ -105,7 +105,7 @@ inline static HRESULT doMaskFill
 
     HRESULT res = D3D_OK;
     if (maskArray) {
-        jubyte *pMask =
+        jubyte *pMask = 
             (jubyte*)env->GetPrimitiveArrayCritical(maskArray, 0);
         float tx1, ty1, tx2, ty2;
         jint tw, th, x0;
@@ -154,32 +154,32 @@ inline static HRESULT doMaskFill
             for (sx = sx1; (sx < sx2) && SUCCEEDED(res); sx += tw, x += tw) {
                 sw = ((sx + tw) > sx2) ? (sx2 - sx) : tw;
 
-                if (FAILED(d3dc->UploadImageToTexture(maskTexture,
+                if (FAILED(d3dc->UploadImageToTexture(maskTexture, 
                                                       pMask,
                                                       0, 0, sx, sy, sw, sh,
                                                       maskscan)))
                 {
                     continue;
                 }
-
+                
                 // update the lower right texture coordinates
                 tx2 = ((float)sw) / tw;
                 ty2 = ((float)sh) / th;
 
                 D3DU_INIT_VERTEX_QUAD_XYUV(quadVerts,
-                                           (float)x, (float)y,
+                                           (float)x, (float)y, 
                                            (float)(x+sw), (float)(y+sh),
                                            tx1, ty1, tx2, ty2);
                 if (SUCCEEDED(res = ddTargetSurface->IsLost())) {
                     // render texture tile to the destination surface
                     res = d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN,
-                                                   D3DFVF_J2DLVERTEX,
+                                                   D3DFVF_J2DLVERTEX, 
                                                    quadVerts, 4, 0);
                 }
 
             }
         }
-
+        
         d3dc->EndScene(res);
 
         env->ReleasePrimitiveArrayCritical(maskArray, pMask, JNI_ABORT);
@@ -192,7 +192,7 @@ inline static HRESULT doMaskFill
         D3DU_INIT_VERTEX_QUAD_XY(quadVerts, x1, y1, x2, y2);
         if (SUCCEEDED(res = d3dc->BeginScene(STATE_RENDEROP))) {
             if (SUCCEEDED(res = ddTargetSurface->IsLost())) {
-                res = d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN,
+                res = d3dDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 
                                                D3DFVF_J2DLVERTEX,
                                                quadVerts, 4, 0);
             }

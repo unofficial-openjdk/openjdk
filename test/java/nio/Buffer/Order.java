@@ -36,36 +36,36 @@ public class Order {
     static final ByteOrder nord = ByteOrder.nativeOrder();
 
     static void ck(ByteOrder ord, ByteOrder expected) {
-        if (ord != expected)
-            throw new RuntimeException("Got " + ord
-                                       + ", expected " + expected);
+	if (ord != expected)
+	    throw new RuntimeException("Got " + ord
+				       + ", expected " + expected);
     }
 
     static void ckViews(ByteBuffer bb, ByteOrder ord) {
-        ck(bb.asCharBuffer().order(), bb.order());
-        ck(bb.asIntBuffer().order(), bb.order());
-        ck(bb.asLongBuffer().order(), bb.order());
-        ck(bb.asFloatBuffer().order(), bb.order());
-        ck(bb.asDoubleBuffer().order(), bb.order());
+	ck(bb.asCharBuffer().order(), bb.order());
+	ck(bb.asIntBuffer().order(), bb.order());
+	ck(bb.asLongBuffer().order(), bb.order());
+	ck(bb.asFloatBuffer().order(), bb.order());
+	ck(bb.asDoubleBuffer().order(), bb.order());
     }
 
     static void ckByteBuffer(ByteBuffer bb) {
-        ckViews(bb, bb.order());
-        bb.order(be);
-        ckViews(bb, be);
-        bb.order(le);
-        ckViews(bb, le);
+	ckViews(bb, bb.order());
+	bb.order(be);
+	ckViews(bb, be);
+	bb.order(le);
+	ckViews(bb, le);
     }
 
     public static void main(String args[]) throws Exception {
 
-        ck(ByteBuffer.allocate(10).order(), be);
-        ck(ByteBuffer.allocateDirect(10).order(), be);
-        ck(ByteBuffer.allocate(10).order(be).order(), be);
-        ck(ByteBuffer.allocate(10).order(le).order(), le);
+	ck(ByteBuffer.allocate(10).order(), be);
+	ck(ByteBuffer.allocateDirect(10).order(), be);
+	ck(ByteBuffer.allocate(10).order(be).order(), be);
+	ck(ByteBuffer.allocate(10).order(le).order(), le);
 
-        ckByteBuffer(ByteBuffer.allocate(10));
-        ckByteBuffer(ByteBuffer.allocateDirect(10));
+	ckByteBuffer(ByteBuffer.allocate(10));
+	ckByteBuffer(ByteBuffer.allocateDirect(10));
 
     }
 

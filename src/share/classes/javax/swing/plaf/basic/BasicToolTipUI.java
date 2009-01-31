@@ -43,6 +43,7 @@ import javax.swing.text.View;
  * Standard tool tip L&F.
  * <p>
  *
+ * @version %I% %G%
  * @author Dave Moore
  */
 public class BasicToolTipUI extends ToolTipUI
@@ -65,52 +66,52 @@ public class BasicToolTipUI extends ToolTipUI
     }
 
     public void installUI(JComponent c) {
-        installDefaults(c);
-        installComponents(c);
-        installListeners(c);
+	installDefaults(c);
+	installComponents(c);
+	installListeners(c);
     }
 
     public void uninstallUI(JComponent c) {
-        // REMIND: this is NOT getting called
-        uninstallDefaults(c);
-        uninstallComponents(c);
-        uninstallListeners(c);
+	// REMIND: this is NOT getting called
+	uninstallDefaults(c);
+	uninstallComponents(c);
+	uninstallListeners(c);
     }
 
     protected void installDefaults(JComponent c){
-        LookAndFeel.installColorsAndFont(c, "ToolTip.background",
-                                         "ToolTip.foreground",
-                                         "ToolTip.font");
+	LookAndFeel.installColorsAndFont(c, "ToolTip.background",
+					 "ToolTip.foreground",
+					 "ToolTip.font");
         LookAndFeel.installProperty(c, "opaque", Boolean.TRUE);
         componentChanged(c);
     }
-
+    
    protected void uninstallDefaults(JComponent c){
-        LookAndFeel.uninstallBorder(c);
+	LookAndFeel.uninstallBorder(c);
     }
 
     /* Unfortunately this has to remain private until we can make API additions.
      */
     private void installComponents(JComponent c){
-        BasicHTML.updateRenderer(c, ((JToolTip)c).getTipText());
+ 	BasicHTML.updateRenderer(c, ((JToolTip)c).getTipText());
     }
-
+     
     /* Unfortunately this has to remain private until we can make API additions.
      */
     private void uninstallComponents(JComponent c){
-        BasicHTML.updateRenderer(c, "");
+ 	BasicHTML.updateRenderer(c, "");
     }
 
     protected void installListeners(JComponent c) {
-        propertyChangeListener = createPropertyChangeListener(c);
-
-        c.addPropertyChangeListener(propertyChangeListener);
+	propertyChangeListener = createPropertyChangeListener(c);
+	
+        c.addPropertyChangeListener(propertyChangeListener);      
     }
 
     protected void uninstallListeners(JComponent c) {
         c.removePropertyChangeListener(propertyChangeListener);
 
-        propertyChangeListener = null;
+	propertyChangeListener = null;
     }
 
     /* Unfortunately this has to remain private until we can make API additions.
@@ -128,11 +129,11 @@ public class BasicToolTipUI extends ToolTipUI
         Dimension size = c.getSize();
 
         g.setColor(c.getForeground());
-        // fix for bug 4153892
-        String tipText = ((JToolTip)c).getTipText();
-        if (tipText == null) {
-            tipText = "";
-        }
+	// fix for bug 4153892
+	String tipText = ((JToolTip)c).getTipText();
+	if (tipText == null) {
+	    tipText = "";
+	}
 
         Insets insets = c.getInsets();
         Rectangle paintTextR = new Rectangle(
@@ -140,57 +141,57 @@ public class BasicToolTipUI extends ToolTipUI
             insets.top,
             size.width - (insets.left + insets.right) - 6,
             size.height - (insets.top + insets.bottom));
-        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v != null) {
-            v.paint(g, paintTextR);
-        } else {
+	View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+	if (v != null) {
+	    v.paint(g, paintTextR);
+	} else {
             g.setFont(font);
-            SwingUtilities2.drawString(c, g, tipText, paintTextR.x,
+	    SwingUtilities2.drawString(c, g, tipText, paintTextR.x,
                                   paintTextR.y + metrics.getAscent());
-        }
+	}
     }
 
     public Dimension getPreferredSize(JComponent c) {
         Font font = c.getFont();
         FontMetrics fm = c.getFontMetrics(font);
-        Insets insets = c.getInsets();
+	Insets insets = c.getInsets();
 
-        Dimension prefSize = new Dimension(insets.left+insets.right,
-                                           insets.top+insets.bottom);
-        String text = ((JToolTip)c).getTipText();
+	Dimension prefSize = new Dimension(insets.left+insets.right,
+					   insets.top+insets.bottom);
+	String text = ((JToolTip)c).getTipText();
 
-        if ((text == null) || text.equals("")) {
+	if ((text == null) || text.equals("")) {
             text = "";
         }
         else {
-            View v = (c != null) ? (View) c.getClientProperty("html") : null;
-            if (v != null) {
-                prefSize.width += (int) v.getPreferredSpan(View.X_AXIS) + 6;
-                prefSize.height += (int) v.getPreferredSpan(View.Y_AXIS);
-            } else {
-                prefSize.width += SwingUtilities2.stringWidth(c,fm,text) + 6;
-                prefSize.height += fm.getHeight();
-            }
+	    View v = (c != null) ? (View) c.getClientProperty("html") : null;
+	    if (v != null) {
+		prefSize.width += (int) v.getPreferredSpan(View.X_AXIS) + 6;
+		prefSize.height += (int) v.getPreferredSpan(View.Y_AXIS);
+	    } else {
+		prefSize.width += SwingUtilities2.stringWidth(c,fm,text) + 6;
+		prefSize.height += fm.getHeight();
+	    }
         }
-        return prefSize;
+	return prefSize;
     }
 
     public Dimension getMinimumSize(JComponent c) {
-        Dimension d = getPreferredSize(c);
-        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v != null) {
-            d.width -= v.getPreferredSpan(View.X_AXIS) - v.getMinimumSpan(View.X_AXIS);
-        }
-        return d;
+	Dimension d = getPreferredSize(c);
+ 	View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+ 	if (v != null) {
+ 	    d.width -= v.getPreferredSpan(View.X_AXIS) - v.getMinimumSpan(View.X_AXIS);
+ 	}
+ 	return d;
     }
 
     public Dimension getMaximumSize(JComponent c) {
-        Dimension d = getPreferredSize(c);
-        View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-        if (v != null) {
-            d.width += v.getMaximumSpan(View.X_AXIS) - v.getPreferredSpan(View.X_AXIS);
-        }
-        return d;
+	Dimension d = getPreferredSize(c);
+ 	View v = (View) c.getClientProperty(BasicHTML.propertyKey);
+ 	if (v != null) {
+ 	    d.width += v.getMaximumSpan(View.X_AXIS) - v.getPreferredSpan(View.X_AXIS);
+ 	}
+ 	return d;
     }
 
     /**
@@ -230,24 +231,24 @@ public class BasicToolTipUI extends ToolTipUI
 
     private static class PropertyChangeHandler implements
                                  PropertyChangeListener {
-        public void propertyChange(PropertyChangeEvent e) {
-            String name = e.getPropertyName();
-            if (name.equals("tiptext") || "font".equals(name) ||
+	public void propertyChange(PropertyChangeEvent e) {
+	    String name = e.getPropertyName();
+	    if (name.equals("tiptext") || "font".equals(name) ||
                 "foreground".equals(name)) {
-                // remove the old html view client property if one
-                // existed, and install a new one if the text installed
-                // into the JLabel is html source.
-                JToolTip tip = ((JToolTip) e.getSource());
-                String text = tip.getTipText();
-                BasicHTML.updateRenderer(tip, text);
-            }
+		// remove the old html view client property if one
+		// existed, and install a new one if the text installed
+		// into the JLabel is html source.
+		JToolTip tip = ((JToolTip) e.getSource());
+		String text = tip.getTipText();
+		BasicHTML.updateRenderer(tip, text);
+	    }
             else if ("component".equals(name)) {
-                JToolTip tip = ((JToolTip) e.getSource());
+		JToolTip tip = ((JToolTip) e.getSource());
 
                 if (tip.getUI() instanceof BasicToolTipUI) {
                     ((BasicToolTipUI)tip.getUI()).componentChanged(tip);
                 }
             }
-        }
+	}
     }
 }

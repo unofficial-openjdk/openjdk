@@ -29,6 +29,7 @@ package javax.swing;
  * tracks and indicates a drop location during drag and drop.
  *
  * @author Shannon Hickey
+ * @version %I% %G%
  * @see JTable#setDropMode
  * @see JList#setDropMode
  * @see JTree#setDropMode
@@ -84,7 +85,7 @@ public enum DropMode {
      * as specified by <code>INSERT</code>.
      */
     ON_OR_INSERT,
-
+    
     /**
      * This mode is a combination of <code>ON</code>
      * and <code>INSERT_ROWS</code>, specifying that data can be
@@ -92,7 +93,7 @@ public enum DropMode {
      * as specified by <code>INSERT_ROWS</code>.
      */
     ON_OR_INSERT_ROWS,
-
+    
     /**
      * This mode is a combination of <code>ON</code>
      * and <code>INSERT_COLS</code>, specifying that data can be

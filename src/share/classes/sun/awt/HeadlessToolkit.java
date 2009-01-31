@@ -44,7 +44,7 @@ import sun.awt.im.InputContext;
 import sun.awt.image.ImageRepresentation;
 
 public class HeadlessToolkit extends Toolkit
-    implements ComponentFactory, KeyboardFocusManagerPeerProvider {
+    implements ComponentFactory {
 
     private Toolkit tk;
     private ComponentFactory componentFactory;
@@ -178,7 +178,7 @@ public class HeadlessToolkit extends Toolkit
         throws AWTException, HeadlessException {
         throw new HeadlessException();
     }
-
+    
     public  KeyboardFocusManagerPeer createKeyboardFocusManagerPeer(KeyboardFocusManager manager) throws HeadlessException {
         KeyboardFocusManagerPeerImpl peer = new KeyboardFocusManagerPeerImpl(manager);
         return peer;
@@ -202,7 +202,7 @@ public class HeadlessToolkit extends Toolkit
         throws HeadlessException {
         throw new HeadlessException();
     }
-
+    
     /*
      * Headless toolkit - unsupported.
      */
@@ -257,9 +257,9 @@ public class HeadlessToolkit extends Toolkit
     }
 
     public <T extends DragGestureRecognizer> T
-        createDragGestureRecognizer(Class<T> abstractRecognizerClass,
-                                    DragSource ds, Component c,
-                                    int srcActions, DragGestureListener dgl)
+	createDragGestureRecognizer(Class<T> abstractRecognizerClass,
+				    DragSource ds, Component c,
+				    int srcActions, DragGestureListener dgl)
     {
         return null;
     }
@@ -271,14 +271,14 @@ public class HeadlessToolkit extends Toolkit
 
     public int getScreenWidth()
         throws HeadlessException {
-        throw new HeadlessException();
-    }
+        throw new HeadlessException(); 
+    } 
 
     public Dimension getScreenSize()
         throws HeadlessException {
-        throw new HeadlessException();
+        throw new HeadlessException(); 
     }
-
+    
     public Insets getScreenInsets(GraphicsConfiguration gc)
         throws HeadlessException {
         throw new HeadlessException();
@@ -301,10 +301,10 @@ public class HeadlessToolkit extends Toolkit
 
     public Clipboard getSystemClipboard()
         throws HeadlessException {
-        throw new HeadlessException();
-    }
+        throw new HeadlessException(); 
+    } 
 
-    /*
+    /* 
      * Printing
      */
     public PrintJob getPrintJob(Frame frame, String jobtitle,
@@ -314,7 +314,7 @@ public class HeadlessToolkit extends Toolkit
             // Should never happen
             throw new HeadlessException();
         }
-        throw new IllegalArgumentException(
+	throw new IllegalArgumentException(
                 "PrintJob not supported in a headless environment");
     }
 
@@ -324,7 +324,7 @@ public class HeadlessToolkit extends Toolkit
             // Should never happen
             throw new HeadlessException();
         }
-        throw new IllegalArgumentException(
+	throw new IllegalArgumentException(
                 "PrintJob not supported in a headless environment");
     }
 
@@ -334,12 +334,12 @@ public class HeadlessToolkit extends Toolkit
 
     public void sync() {
         // Do nothing
-    }
+    } 
 
     public void beep() {
         // Send alert character
         System.out.write(0x07);
-    }
+    } 
 
     /*
      * Event Queue
@@ -348,18 +348,18 @@ public class HeadlessToolkit extends Toolkit
         return SunToolkit.getSystemEventQueueImplPP();
     }
 
-    /*
-     * Images.
-     */
-    public int checkImage(Image img, int w, int h, ImageObserver o) {
-        return tk.checkImage(img, w, h, o);
-    }
+    /* 
+     * Images. 
+     */ 
+    public int checkImage(Image img, int w, int h, ImageObserver o) { 
+        return tk.checkImage(img, w, h, o); 
+    } 
 
     public boolean prepareImage(
         Image img, int w, int h, ImageObserver o) {
         return tk.prepareImage(img, w, h, o);
     }
-
+       
     public Image getImage(String filename) {
         return tk.getImage(filename);
     }
@@ -455,13 +455,13 @@ public class HeadlessToolkit extends Toolkit
     public AWTEventListener[] getAWTEventListeners() {
         return tk.getAWTEventListeners();
     }
-
+    
     public boolean isDesktopSupported() {
         return false;
     }
-
-    public DesktopPeer createDesktopPeer(Desktop target)
+    
+    public DesktopPeer createDesktopPeer(Desktop target) 
     throws HeadlessException{
         throw new HeadlessException();
-    }
+    }    
 }

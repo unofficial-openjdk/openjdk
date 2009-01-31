@@ -74,33 +74,33 @@ DECLARE_ALPHA_MASKBLIT(IntRgb, Index12Gray);
 DECLARE_SRCOVER_MASKFILL(Index12Gray);
 DECLARE_SRCOVER_MASKBLIT(IntArgb, Index12Gray);
 DECLARE_SRCOVER_MASKBLIT(IntArgbPre, Index12Gray);
-DECLARE_SOLID_DRAWGLYPHLISTAA(Index12Gray);
+DECLARE_SOLID_DRAWGLYPHLISTAA(Index12Gray); 
 
 DECLARE_TRANSFORMHELPER_FUNCS(Index12Gray);
 
 NativePrimitive Index12GrayPrimitives[] = {
     REGISTER_CONVERT_BLIT(IntArgb, Index12Gray),
     REGISTER_CONVERT_BLIT_EQUIV(IntRgb, Index12Gray,
-                                NAME_CONVERT_BLIT(IntArgb, Index12Gray)),
+				NAME_CONVERT_BLIT(IntArgb, Index12Gray)),
     REGISTER_CONVERT_BLIT(ThreeByteBgr, Index12Gray),
     REGISTER_CONVERT_BLIT(ByteGray, Index12Gray),
     REGISTER_CONVERT_BLIT(Index8Gray, Index12Gray),
-    REGISTER_CONVERT_BLIT_FLAGS(Index12Gray, Index12Gray,
-                                SD_LOCK_LUT,
-                                SD_LOCK_LUT | SD_LOCK_INVGRAY),
+    REGISTER_CONVERT_BLIT_FLAGS(Index12Gray, Index12Gray, 
+				SD_LOCK_LUT,
+				SD_LOCK_LUT | SD_LOCK_INVGRAY),
     REGISTER_CONVERT_BLIT(ByteIndexed, Index12Gray),
 
     REGISTER_SCALE_BLIT(Index12Gray, IntArgb),
     REGISTER_SCALE_BLIT(IntArgb, Index12Gray),
     REGISTER_SCALE_BLIT_EQUIV(IntRgb, Index12Gray,
-                              NAME_SCALE_BLIT(IntArgb, Index12Gray)),
+			      NAME_SCALE_BLIT(IntArgb, Index12Gray)),
     REGISTER_SCALE_BLIT(ThreeByteBgr, Index12Gray),
     REGISTER_SCALE_BLIT(UshortGray, Index12Gray),
     REGISTER_SCALE_BLIT(ByteIndexed, Index12Gray),
     REGISTER_SCALE_BLIT(ByteGray, Index12Gray),
     REGISTER_SCALE_BLIT(Index8Gray, Index12Gray),
-    REGISTER_SCALE_BLIT_FLAGS(Index12Gray, Index12Gray, 0,
-                              SD_LOCK_LUT | SD_LOCK_INVGRAY),
+    REGISTER_SCALE_BLIT_FLAGS(Index12Gray, Index12Gray, 0, 
+			      SD_LOCK_LUT | SD_LOCK_INVGRAY),
 
     REGISTER_XPAR_CONVERT_BLIT(ByteIndexedBm, Index12Gray),
     REGISTER_XPAR_BLITBG(ByteIndexedBm, Index12Gray),
@@ -119,13 +119,13 @@ NativePrimitive Index12GrayPrimitives[] = {
 };
 
 extern jboolean checkSameLut(jint *SrcReadLut, jint *DstReadLut,
-                             SurfaceDataRasInfo *pSrcInfo,
-                             SurfaceDataRasInfo *pDstInfo);
+			     SurfaceDataRasInfo *pSrcInfo,
+			     SurfaceDataRasInfo *pDstInfo);
 
 jboolean RegisterIndex12Gray(JNIEnv *env)
 {
     return RegisterPrimitives(env, Index12GrayPrimitives,
-                              ArraySize(Index12GrayPrimitives));
+			      ArraySize(Index12GrayPrimitives));
 }
 
 jint PixelForIndex12Gray(SurfaceDataRasInfo *pRasInfo, jint rgb)
@@ -163,21 +163,21 @@ void NAME_CONVERT_BLIT(Index12Gray, Index12Gray)
     InitIndex12GrayLoadVars(DstRead, pDstInfo);
 
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {
-        do {
-            memcpy(dstBase, srcBase, width);
-            srcBase = PtrAddBytes(srcBase, srcScan);
-            dstBase = PtrAddBytes(dstBase, dstScan);
-        } while (--height > 0);
+	do {
+	    memcpy(dstBase, srcBase, width);
+	    srcBase = PtrAddBytes(srcBase, srcScan);
+	    dstBase = PtrAddBytes(dstBase, dstScan);
+	} while (--height > 0);
     } else {
-        DeclareIndex12GrayStoreVars(DstWrite);
-        InitIndex12GrayStoreVarsY(DstWrite, pDstInfo);
+	DeclareIndex12GrayStoreVars(DstWrite);
+	InitIndex12GrayStoreVarsY(DstWrite, pDstInfo);
 
-        BlitLoopWidthHeight(Index12Gray, pSrc, srcBase, pSrcInfo,
-                            Index12Gray, pDst, dstBase, pDstInfo, DstWrite,
-                            width, height,
-                            ConvertVia1ByteGray
+	BlitLoopWidthHeight(Index12Gray, pSrc, srcBase, pSrcInfo,
+			    Index12Gray, pDst, dstBase, pDstInfo, DstWrite,
+			    width, height,
+			    ConvertVia1ByteGray
                                 (pSrc, Index12Gray, SrcRead,
-                                 pDst, Index12Gray, DstWrite, 0, 0));
+				 pDst, Index12Gray, DstWrite, 0, 0));
     }
 }
 
@@ -201,21 +201,21 @@ void NAME_SCALE_BLIT(Index12Gray, Index12Gray)
     InitIndex8GrayLoadVars(DstRead, pDstInfo);
 
     if (checkSameLut(SrcReadLut, DstReadLut, pSrcInfo, pDstInfo)) {
-        BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
-                                 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
-                                 x, width, height,
-                                 sxloc, syloc, sxinc, syinc, shift,
-                                 pDst[0] = pSrc[x]);
+	BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
+				 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
+				 x, width, height,
+				 sxloc, syloc, sxinc, syinc, shift,
+				 pDst[0] = pSrc[x]);
     } else {
-        DeclareIndex8GrayStoreVars(DstWrite);
-        InitIndex8GrayStoreVarsY(DstWrite, pDstInfo);
-        BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
-                                 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
-                                 x, width, height,
-                                 sxloc, syloc, sxinc, syinc, shift,
-                                 ConvertVia1ByteGray(pSrc, Index8Gray, SrcRead,
-                                                     pDst, Index8Gray, DstWrite,
-                                                     x, 0));
+	DeclareIndex8GrayStoreVars(DstWrite);
+	InitIndex8GrayStoreVarsY(DstWrite, pDstInfo);
+	BlitLoopScaleWidthHeight(Index8Gray, pSrc, srcBase, pSrcInfo,
+				 Index8Gray, pDst, dstBase, pDstInfo, DstWrite,
+				 x, width, height,
+				 sxloc, syloc, sxinc, syinc, shift,
+				 ConvertVia1ByteGray(pSrc, Index8Gray, SrcRead,
+						     pDst, Index8Gray, DstWrite,
+						     x, 0));
     }
 }
 

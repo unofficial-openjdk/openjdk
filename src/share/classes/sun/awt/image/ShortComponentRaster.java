@@ -50,6 +50,7 @@ import java.awt.Point;
  * a ComponentColorModel.
  *
  *
+ * @version 10 Feb 1997
  */
 public class ShortComponentRaster extends SunWritableRaster {
 
@@ -79,7 +80,7 @@ public class ShortComponentRaster extends SunWritableRaster {
     static private native void initIDs();
     static {
         /* ensure that the necessary native libraries are loaded */
-        NativeLibLoader.loadLibraries();
+	NativeLibLoader.loadLibraries();
         initIDs();
     }
 
@@ -151,16 +152,16 @@ public class ShortComponentRaster extends SunWritableRaster {
                                    Point origin,
                                    ShortComponentRaster parent) {
 
-        super(sampleModel, dataBuffer, aRegion, origin, parent);
+	super(sampleModel, dataBuffer, aRegion, origin, parent);
         this.maxX = minX + width;
         this.maxY = minY + height;
 
-        if(!(dataBuffer instanceof DataBufferUShort)) {
-            throw new RasterFormatException("ShortComponentRasters must have "+
+	if(!(dataBuffer instanceof DataBufferUShort)) {
+	    throw new RasterFormatException("ShortComponentRasters must have "+
                                             "short DataBuffers");
-        }
+	}
 
-        DataBufferUShort dbus = (DataBufferUShort)dataBuffer;
+	DataBufferUShort dbus = (DataBufferUShort)dataBuffer;
         this.data = stealData(dbus, 0);
         if (dbus.getNumBanks() != 1) {
             throw new
@@ -169,19 +170,19 @@ public class ShortComponentRaster extends SunWritableRaster {
         }
         int dbOffset = dbus.getOffset();
 
-        if (sampleModel instanceof ComponentSampleModel) {
-            ComponentSampleModel csm = (ComponentSampleModel)sampleModel;
+	if (sampleModel instanceof ComponentSampleModel) {
+	    ComponentSampleModel csm = (ComponentSampleModel)sampleModel;
             this.type = IntegerComponentRaster.TYPE_USHORT_SAMPLES;
-            this.scanlineStride = csm.getScanlineStride();
-            this.pixelStride = csm.getPixelStride();
-            this.dataOffsets = csm.getBandOffsets();
+	    this.scanlineStride = csm.getScanlineStride();
+	    this.pixelStride = csm.getPixelStride();
+	    this.dataOffsets = csm.getBandOffsets();
             int xOffset = aRegion.x - origin.x;
             int yOffset = aRegion.y - origin.y;
             for (int i = 0; i < getNumDataElements(); i++) {
                 dataOffsets[i] += dbOffset +
                     xOffset*pixelStride+yOffset*scanlineStride;
             }
-        } else if (sampleModel instanceof SinglePixelPackedSampleModel) {
+	} else if (sampleModel instanceof SinglePixelPackedSampleModel) {
             SinglePixelPackedSampleModel sppsm =
                     (SinglePixelPackedSampleModel)sampleModel;
             this.type = IntegerComponentRaster.TYPE_USHORT_PACKED_SAMPLES;
@@ -245,7 +246,7 @@ public class ShortComponentRaster extends SunWritableRaster {
 
     /**
      * Returns the data elements for all bands at the specified
-     * location.
+     * location.  
      * An ArrayIndexOutOfBounds exception will be thrown at runtime
      * if the pixel coordinate is out of bounds.
      * A ClassCastException will be thrown if the input object is non null
@@ -517,7 +518,7 @@ public class ShortComponentRaster extends SunWritableRaster {
         if (width <= 0 || height <= 0) {
             return;
         }
-
+            
         // Write inRaster (minX, minY) to (dstX, dstY)
 
         int srcOffX = inRaster.getMinX();
@@ -704,11 +705,11 @@ public class ShortComponentRaster extends SunWritableRaster {
     public Raster createChild (int x, int y,
                                int width, int height,
                                int x0, int y0, int[] bandList) {
-        WritableRaster newRaster = createWritableChild(x, y,
+	WritableRaster newRaster = createWritableChild(x, y,
                                                        width, height,
                                                        x0, y0,
                                                        bandList);
-        return (Raster) newRaster;
+	return (Raster) newRaster;
     }
 
     /**
@@ -734,35 +735,35 @@ public class ShortComponentRaster extends SunWritableRaster {
                                               int width, int height,
                                               int x0, int y0,
                                               int[] bandList) {
-        if (x < this.minX) {
-            throw new RasterFormatException("x lies outside the raster");
-        }
-        if (y < this.minY) {
-            throw new RasterFormatException("y lies outside the raster");
-        }
+	if (x < this.minX) {
+	    throw new RasterFormatException("x lies outside the raster");
+	}
+	if (y < this.minY) {
+	    throw new RasterFormatException("y lies outside the raster");
+	}
         if ((x+width < x) || (x+width > this.minX + this.width)) {
-            throw new RasterFormatException("(x + width) is outside of Raster");
+	    throw new RasterFormatException("(x + width) is outside of Raster");
         }
         if ((y+height < y) || (y+height > this.minY + this.height)) {
-            throw new RasterFormatException("(y + height) is outside of Raster");
+	    throw new RasterFormatException("(y + height) is outside of Raster");
         }
 
-        SampleModel sm;
+	SampleModel sm;
 
-        if (bandList != null)
-            sm = sampleModel.createSubsetSampleModel(bandList);
-        else
-            sm = sampleModel;
+	if (bandList != null)
+	    sm = sampleModel.createSubsetSampleModel(bandList);
+	else
+	    sm = sampleModel;
 
         int deltaX = x0 - x;
         int deltaY = y0 - y;
 
-        return new ShortComponentRaster(sm,
-                                       dataBuffer,
-                                       new Rectangle(x0, y0, width, height),
-                                       new Point(sampleModelTranslateX+deltaX,
-                                                 sampleModelTranslateY+deltaY),
-                                       this);
+	return new ShortComponentRaster(sm,
+				       dataBuffer,
+				       new Rectangle(x0, y0, width, height),
+				       new Point(sampleModelTranslateX+deltaX,
+						 sampleModelTranslateY+deltaY),
+				       this);
     }
 
     /**
@@ -771,13 +772,13 @@ public class ShortComponentRaster extends SunWritableRaster {
      */
     public WritableRaster createCompatibleWritableRaster(int w, int h) {
         if (w <= 0 || h <=0) {
-            throw new RasterFormatException("negative "+
-                                          ((w <= 0) ? "width" : "height"));
+	    throw new RasterFormatException("negative "+
+					  ((w <= 0) ? "width" : "height"));
         }
 
-        SampleModel sm = sampleModel.createCompatibleSampleModel(w, h);
+	SampleModel sm = sampleModel.createCompatibleSampleModel(w, h);
 
-        return new ShortComponentRaster(sm, new Point(0, 0));
+	return new ShortComponentRaster(sm, new Point(0, 0));
     }
 
     /**
@@ -830,7 +831,9 @@ public class ShortComponentRaster extends SunWritableRaster {
         return new String ("ShortComponentRaster: width = "+width
                            +" height = " + height
                            +" #numDataElements "+numDataElements);
-                           // +" xOff = "+xOffset+" yOff = "+yOffset);
+			   // +" xOff = "+xOffset+" yOff = "+yOffset);
     }
 
 }
+
+

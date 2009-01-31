@@ -34,29 +34,29 @@ import java.util.concurrent.*;
 
 public class ToString {
     private static void realMain(String[] args) {
-        testCollection(new LinkedHashSet<Object>() {
-                public int size() {
-                    return super.size() + 1; // Lies, lies, all lies!
-                }});
-        testCollection(new ArrayList<Object>());
-        testCollection(new Vector<Object>());
-        testCollection(new CopyOnWriteArrayList<Object>());
-        testCollection(new CopyOnWriteArraySet<Object>());
+	testCollection(new LinkedHashSet<Object>() {
+		public int size() {
+		    return super.size() + 1; // Lies, lies, all lies!
+		}});
+	testCollection(new ArrayList<Object>());
+	testCollection(new Vector<Object>());
+	testCollection(new CopyOnWriteArrayList<Object>());
+	testCollection(new CopyOnWriteArraySet<Object>());
     }
 
     private static void testCollection(Collection<Object> c) {
-        System.out.println(c.getClass());
-        equal(c.toString(), "[]");
-        check(c.add("x"));
-        equal(c.toString(), "[x]");
+	System.out.println(c.getClass());
+	equal(c.toString(), "[]");
+	check(c.add("x"));
+	equal(c.toString(), "[x]");
         check(c.add("y"));
-        equal(c.toString(), "[x, y]");
-        check(c.add(null));
-        equal(c.toString(), "[x, y, null]");
-        if (c instanceof AbstractCollection) {
-            check(c.add(c));
-            equal(c.toString(), "[x, y, null, (this Collection)]");
-        }
+	equal(c.toString(), "[x, y]");
+	check(c.add(null));
+	equal(c.toString(), "[x, y, null]");
+	if (c instanceof AbstractCollection) {
+	    check(c.add(c));
+	    equal(c.toString(), "[x, y, null, (this Collection)]");
+	}
     }
 
     //--------------------- Infrastructure ---------------------------
@@ -67,13 +67,13 @@ public class ToString {
     static void unexpected(Throwable t) { failed++; t.printStackTrace(); }
     static void check(boolean cond) { if (cond) pass(); else fail(); }
     static void equal(Object x, Object y) {
-        if (x == null ? y == null : x.equals(y)) pass();
-        else {System.out.println(x + " not equal to " + y); fail(); }}
+	if (x == null ? y == null : x.equals(y)) pass();
+	else {System.out.println(x + " not equal to " + y); fail(); }}
 
     public static void main(String[] args) throws Throwable {
-        try { realMain(args); } catch (Throwable t) { unexpected(t); }
+	try { realMain(args); } catch (Throwable t) { unexpected(t); }
 
-        System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
-        if (failed > 0) throw new Exception("Some tests failed");
+	System.out.printf("%nPassed = %d, failed = %d%n%n", passed, failed);
+	if (failed > 0) throw new Exception("Some tests failed");
     }
 }

@@ -41,10 +41,10 @@ class PipeImpl
     PipeImpl(SelectorProvider sp) {
         int[] fdes = new int[2];
         IOUtil.initPipe(fdes, true);
-        FileDescriptor sourcefd = new FileDescriptor();
+	FileDescriptor sourcefd = new FileDescriptor();
         IOUtil.setfdVal(sourcefd, fdes[0]);
-        source = new SourceChannelImpl(sp, sourcefd);
-        FileDescriptor sinkfd = new FileDescriptor();
+	source = new SourceChannelImpl(sp, sourcefd);
+	FileDescriptor sinkfd = new FileDescriptor();
         IOUtil.setfdVal(sinkfd, fdes[1]);
         sink = new SinkChannelImpl(sp, sinkfd);
     }
@@ -54,7 +54,7 @@ class PipeImpl
     }
 
     public SinkChannel sink() {
-        return sink;
+	return sink;
     }
 
 }

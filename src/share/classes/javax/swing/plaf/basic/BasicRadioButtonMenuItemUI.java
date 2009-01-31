@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package javax.swing.plaf.basic;
 
 import javax.swing.*;
@@ -34,6 +34,7 @@ import javax.swing.border.*;
 /**
  * BasicRadioButtonMenuItem implementation
  *
+ * @version %I% %G%
  * @author Georges Saab
  * @author David Karlton
  */
@@ -44,9 +45,9 @@ public class BasicRadioButtonMenuItemUI extends BasicMenuItemUI
     }
 
     protected String getPropertyPrefix() {
-        return "RadioButtonMenuItem";
+	return "RadioButtonMenuItem";
     }
-
+    
     public void processMouseEvent(JMenuItem item,MouseEvent e,MenuElement path[],MenuSelectionManager manager) {
         Point p = e.getPoint();
         if(p.x >= 0 && p.x < item.getWidth() &&
@@ -66,3 +67,11 @@ public class BasicRadioButtonMenuItemUI extends BasicMenuItemUI
         }
     }
 }
+
+
+
+
+
+
+
+

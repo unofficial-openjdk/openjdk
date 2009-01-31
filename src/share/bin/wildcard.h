@@ -26,6 +26,10 @@
 #ifndef WILDCARD_H_
 #define WILDCARD_H_
 
+#ifdef EXPAND_CLASSPATH_WILDCARDS
 const char *JLI_WildcardExpandClasspath(const char *classpath);
+#else
+#define JLI_WildcardExpandClasspath(s) (s)
+#endif
 
 #endif /* include guard */

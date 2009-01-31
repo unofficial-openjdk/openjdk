@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.awt.AWTPermission;
@@ -42,8 +43,9 @@ import javax.swing.*;
 /**
  * Font2DTestApplet.java
  *
+ * @version @(#)Font2DTestApplet.java	1.1 00/08/22
  * @author Shinsuke Fukuda
- * @author Ankit Patel [Conversion to Swing - 01/07/30]
+ * @author Ankit Patel [Conversion to Swing - 01/07/30]  
  */
 
 /// Applet version of Font2DTest that wraps the actual demo
@@ -68,7 +70,7 @@ public final class Font2DTestApplet extends JApplet {
                                     "Printing feature will not be available\n" );
             }
         }
-
+        
         final JFrame f = new JFrame( "Font2DTest" );
         final Font2DTest f2dt = new Font2DTest( f, true );
         f.addWindowListener( new WindowAdapter() {

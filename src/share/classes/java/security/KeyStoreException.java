@@ -26,10 +26,11 @@
 package java.security;
 
 /**
- * This is the generic KeyStore exception.
- *
+ * This is the generic KeyStore exception. 
+ * 
  * @author Jan Luehe
  *
+ * @version %I%, %G%
  *
  * @since 1.2
  */
@@ -38,21 +39,21 @@ public class KeyStoreException extends GeneralSecurityException {
 
     private static final long serialVersionUID = -1119353179322377262L;
 
-    /**
+    /** 
      * Constructs a KeyStoreException with no detail message.  (A
      * detail message is a String that describes this particular
-     * exception.)
+     * exception.)  
      */
     public KeyStoreException() {
-        super();
+	super();
     }
 
-    /**
+    /** 
      * Constructs a KeyStoreException with the specified detail
      * message.  (A detail message is a String that describes this
      * particular exception.)
      *
-     * @param msg the detail message.
+     * @param msg the detail message.  
      */
    public KeyStoreException(String msg) {
        super(msg);

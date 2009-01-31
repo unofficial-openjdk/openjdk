@@ -35,19 +35,20 @@ import java.io.Serializable;
 /**
  * Synth's CheckBoxUI.
  *
+ * @version %I%, %G%
  * @author Jeff Dinkins
  */
 class SynthCheckBoxUI extends SynthRadioButtonUI {
 
     // ********************************
-    //            Create PLAF
+    //            Create PLAF 
     // ********************************
     public static ComponentUI createUI(JComponent b) {
         return new SynthCheckBoxUI();
     }
 
     protected String getPropertyPrefix() {
-        return "CheckBox.";
+	return "CheckBox.";
     }
 
     void paintBackground(SynthContext context, Graphics g, JComponent c) {

@@ -33,6 +33,7 @@ import javax.swing.JRootPane;
  * functionality as specified in
  * {@link java.awt.im.spi.InputMethodContext#createInputMethodJFrame}.
  *
+ * @version %I% %G%
  */
 public class InputMethodJFrame
         extends JFrame
@@ -54,9 +55,9 @@ public class InputMethodJFrame
         if (context != null) {
             this.inputContext = context;
         }
-        setFocusableWindowState(false);
+	setFocusableWindowState(false);
     }
-
+    
     public void setInputContext(InputContext inputContext) {
         this.inputContext = inputContext;
     }

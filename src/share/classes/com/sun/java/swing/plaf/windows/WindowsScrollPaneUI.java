@@ -42,3 +42,4 @@ import javax.swing.*;
  */
 public class WindowsScrollPaneUI extends BasicScrollPaneUI
 {}
+

@@ -41,6 +41,7 @@ import sun.swing.SwingUtilities2;
  * layout semantics.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  * @since 1.3
  */
 public class BasicHTML {
@@ -50,22 +51,22 @@ public class BasicHTML {
      * string of html.
      */
     public static View createHTMLView(JComponent c, String html) {
-        BasicEditorKit kit = getFactory();
-        Document doc = kit.createDefaultDocument(c.getFont(),
+	BasicEditorKit kit = getFactory();
+	Document doc = kit.createDefaultDocument(c.getFont(),
                                                  c.getForeground());
-        Object base = c.getClientProperty(documentBaseKey);
-        if (base instanceof URL) {
-            ((HTMLDocument)doc).setBase((URL)base);
-        }
-        Reader r = new StringReader(html);
-        try {
-            kit.read(r, doc, 0);
-        } catch (Throwable e) {
-        }
-        ViewFactory f = kit.getViewFactory();
-        View hview = f.create(doc.getDefaultRootElement());
-        View v = new Renderer(c, f, hview);
-        return v;
+	Object base = c.getClientProperty(documentBaseKey);
+	if (base instanceof URL) {
+	    ((HTMLDocument)doc).setBase((URL)base);
+	}
+	Reader r = new StringReader(html);
+	try {
+	    kit.read(r, doc, 0);
+	} catch (Throwable e) {
+	}
+	ViewFactory f = kit.getViewFactory();
+	View hview = f.create(doc.getDefaultRootElement());
+	View v = new Renderer(c, f, hview);
+	return v;
     }
 
     /**
@@ -176,22 +177,22 @@ public class BasicHTML {
 
     /**
      * Check the given string to see if it should trigger the
-     * html rendering logic in a non-text component that supports
+     * html rendering logic in a non-text component that supports 
      * html rendering.
      */
     public static boolean isHTMLString(String s) {
-        if (s != null) {
-            if ((s.length() >= 6) && (s.charAt(0) == '<') && (s.charAt(5) == '>')) {
-                String tag = s.substring(1,5);
-                return tag.equalsIgnoreCase(propertyKey);
-            }
-        }
-        return false;
+	if (s != null) {
+	    if ((s.length() >= 6) && (s.charAt(0) == '<') && (s.charAt(5) == '>')) {
+		String tag = s.substring(1,5);
+		return tag.equalsIgnoreCase(propertyKey);
+	    }
+	}
+	return false;
     }
 
     /**
      * Stash the HTML render for the given text into the client
-     * properties of the given JComponent. If the given text is
+     * properties of the given JComponent. If the given text is 
      * <em>NOT HTML</em> the property will be cleared of any
      * renderer.
      * <p>
@@ -200,18 +201,18 @@ public class BasicHTML {
      * entirely from the JComponent.
      */
     public static void updateRenderer(JComponent c, String text) {
-        View value = null;
+	View value = null;
         View oldValue = (View)c.getClientProperty(BasicHTML.propertyKey);
         Boolean htmlDisabled = (Boolean) c.getClientProperty(htmlDisable);
-        if (htmlDisabled != Boolean.TRUE && BasicHTML.isHTMLString(text)) {
-            value = BasicHTML.createHTMLView(c, text);
-        }
+	if (htmlDisabled != Boolean.TRUE && BasicHTML.isHTMLString(text)) {
+	    value = BasicHTML.createHTMLView(c, text);
+	}
         if (value != oldValue && oldValue != null) {
             for (int i = 0; i < oldValue.getViewCount(); i++) {
                 oldValue.getView(i).setParent(null);
             }
         }
-        c.putClientProperty(BasicHTML.propertyKey, value);
+	c.putClientProperty(BasicHTML.propertyKey, value);
     }
 
     /**
@@ -221,7 +222,7 @@ public class BasicHTML {
     private static final String htmlDisable = "html.disable";
 
     /**
-     * Key to use for the html renderer when stored as a
+     * Key to use for the html renderer when stored as a 
      * client property of a JComponent.
      */
     public static final String propertyKey = "html";
@@ -239,11 +240,11 @@ public class BasicHTML {
     public static final String documentBaseKey = "html.base";
 
     static BasicEditorKit getFactory() {
-        if (basicHTMLFactory == null) {
+	if (basicHTMLFactory == null) {
             basicHTMLViewFactory = new BasicHTMLViewFactory();
-            basicHTMLFactory = new BasicEditorKit();
-        }
-        return basicHTMLFactory;
+	    basicHTMLFactory = new BasicEditorKit();
+	}
+	return basicHTMLFactory;
     }
 
     /**
@@ -260,59 +261,59 @@ public class BasicHTML {
      * Overrides to the default stylesheet.  Should consider
      * just creating a completely fresh stylesheet.
      */
-    private static final String styleChanges =
+    private static final String styleChanges = 
     "p { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0 }" +
     "body { margin-top: 0; margin-bottom: 0; margin-left: 0; margin-right: 0 }";
 
     /**
      * The views produced for the ComponentUI implementations aren't
      * going to be edited and don't need full html support.  This kit
-     * alters the HTMLEditorKit to try and trim things down a bit.
+     * alters the HTMLEditorKit to try and trim things down a bit.  
      * It does the following:
      * <ul>
-     * <li>It doesn't produce Views for things like comments,
-     * head, title, unknown tags, etc.
+     * <li>It doesn't produce Views for things like comments, 
+     * head, title, unknown tags, etc.  
      * <li>It installs a different set of css settings from the default
      * provided by HTMLEditorKit.
      * </ul>
      */
     static class BasicEditorKit extends HTMLEditorKit {
-        /** Shared base style for all documents created by us use. */
-        private static StyleSheet defaultStyles;
+	/** Shared base style for all documents created by us use. */
+	private static StyleSheet defaultStyles;
 
-        /**
-         * Overriden to return our own slimmed down style sheet.
-         */
-        public StyleSheet getStyleSheet() {
-            if (defaultStyles == null) {
-                defaultStyles = new StyleSheet();
-                StringReader r = new StringReader(styleChanges);
-                try {
-                    defaultStyles.loadRules(r, null);
-                } catch (Throwable e) {
-                    // don't want to die in static initialization...
-                    // just display things wrong.
-                }
-                r.close();
-                defaultStyles.addStyleSheet(super.getStyleSheet());
-            }
-            return defaultStyles;
-        }
+	/**
+	 * Overriden to return our own slimmed down style sheet.
+	 */
+	public StyleSheet getStyleSheet() {
+	    if (defaultStyles == null) {
+		defaultStyles = new StyleSheet();
+		StringReader r = new StringReader(styleChanges);
+		try {
+		    defaultStyles.loadRules(r, null);
+		} catch (Throwable e) {
+		    // don't want to die in static initialization... 
+		    // just display things wrong.
+		}
+		r.close();
+		defaultStyles.addStyleSheet(super.getStyleSheet());
+	    }
+	    return defaultStyles;
+	}
 
-        /**
-         * Sets the async policy to flush everything in one chunk, and
-         * to not display unknown tags.
-         */
+	/**
+	 * Sets the async policy to flush everything in one chunk, and
+	 * to not display unknown tags.
+	 */
         public Document createDefaultDocument(Font defaultFont,
                                               Color foreground) {
-            StyleSheet styles = getStyleSheet();
-            StyleSheet ss = new StyleSheet();
-            ss.addStyleSheet(styles);
-            BasicDocument doc = new BasicDocument(ss, defaultFont, foreground);
-            doc.setAsynchronousLoadPriority(Integer.MAX_VALUE);
-            doc.setPreservesUnknownTags(false);
-            return doc;
-        }
+	    StyleSheet styles = getStyleSheet();
+	    StyleSheet ss = new StyleSheet();
+	    ss.addStyleSheet(styles);
+	    BasicDocument doc = new BasicDocument(ss, defaultFont, foreground);
+	    doc.setAsynchronousLoadPriority(Integer.MAX_VALUE);
+	    doc.setPreservesUnknownTags(false);
+	    return doc;
+	}
 
         /**
          * Returns the ViewFactory that is used to make sure the Views don't
@@ -346,14 +347,14 @@ public class BasicHTML {
      * was created for.
      */
     static class BasicDocument extends HTMLDocument {
-        /** The host, that is where we are rendering. */
-        // private JComponent host;
+	/** The host, that is where we are rendering. */
+	// private JComponent host;
 
-        BasicDocument(StyleSheet s, Font defaultFont, Color foreground) {
-            super(s);
-            setPreservesUnknownTags(false);
+	BasicDocument(StyleSheet s, Font defaultFont, Color foreground) {
+	    super(s);
+	    setPreservesUnknownTags(false);
             setFontAndColor(defaultFont, foreground);
-        }
+	}
 
         /**
          * Sets the default font and default color. These are set by
@@ -361,10 +362,10 @@ public class BasicHTML {
          * This allows the html to override these should it wish to have
          * a custom font or color.
          */
-        private void setFontAndColor(Font font, Color fg) {
+	private void setFontAndColor(Font font, Color fg) {
             getStyleSheet().addRule(sun.swing.SwingUtilities2.
                                     displayPropertiesToCSS(font,fg));
-        }
+	}
     }
 
 
@@ -375,22 +376,22 @@ public class BasicHTML {
 
         Renderer(JComponent c, ViewFactory f, View v) {
             super(null);
-            host = c;
-            factory = f;
-            view = v;
-            view.setParent(this);
-            // initially layout to the preferred size
-            setSize(view.getPreferredSpan(X_AXIS), view.getPreferredSpan(Y_AXIS));
+	    host = c;
+	    factory = f;
+	    view = v;
+	    view.setParent(this);
+	    // initially layout to the preferred size
+	    setSize(view.getPreferredSpan(X_AXIS), view.getPreferredSpan(Y_AXIS));
         }
 
-        /**
-         * Fetches the attributes to use when rendering.  At the root
-         * level there are no attributes.  If an attribute is resolved
-         * up the view hierarchy this is the end of the line.
-         */
+	/**
+	 * Fetches the attributes to use when rendering.  At the root
+	 * level there are no attributes.  If an attribute is resolved
+	 * up the view hierarchy this is the end of the line.
+	 */
         public AttributeSet getAttributes() {
-            return null;
-        }
+	    return null;
+	}
 
         /**
          * Determines the preferred span for this view along an axis.
@@ -402,11 +403,11 @@ public class BasicHTML {
          *         The parent may choose to resize or break the view.
          */
         public float getPreferredSpan(int axis) {
-            if (axis == X_AXIS) {
-                // width currently laid out to
-                return width;
-            }
-            return view.getPreferredSpan(axis);
+	    if (axis == X_AXIS) {
+		// width currently laid out to
+		return width;
+	    }
+	    return view.getPreferredSpan(axis);
         }
 
         /**
@@ -419,7 +420,7 @@ public class BasicHTML {
          *         The parent may choose to resize or break the view.
          */
         public float getMinimumSpan(int axis) {
-            return view.getMinimumSpan(axis);
+	    return view.getMinimumSpan(axis);
         }
 
         /**
@@ -432,7 +433,7 @@ public class BasicHTML {
          *         The parent may choose to resize or break the view.
          */
         public float getMaximumSpan(int axis) {
-            return Integer.MAX_VALUE;
+	    return Integer.MAX_VALUE;
         }
 
         /**
@@ -444,7 +445,7 @@ public class BasicHTML {
          * This can be called on a different thread from the
          * event dispatching thread and is basically unsafe to
          * propagate into the component.  To make this safe,
-         * the operation is transferred over to the event dispatching
+         * the operation is transferred over to the event dispatching 
          * thread for completion.  It is a design goal that all view
          * methods be safe to call without concern for concurrency,
          * and this behavior helps make that true.
@@ -452,10 +453,10 @@ public class BasicHTML {
          * @param child the child view
          * @param width true if the width preference has changed
          * @param height true if the height preference has changed
-         */
+         */ 
         public void preferenceChanged(View child, boolean width, boolean height) {
             host.revalidate();
-            host.repaint();
+	    host.repaint();
         }
 
         /**
@@ -466,7 +467,7 @@ public class BasicHTML {
          *     and 1.0 the full span away from the origin
          */
         public float getAlignment(int axis) {
-            return view.getAlignment(axis);
+	    return view.getAlignment(axis);
         }
 
         /**
@@ -476,11 +477,11 @@ public class BasicHTML {
          * @param allocation the region to render into
          */
         public void paint(Graphics g, Shape allocation) {
-            Rectangle alloc = allocation.getBounds();
-            view.setSize(alloc.width, alloc.height);
-            view.paint(g, allocation);
+	    Rectangle alloc = allocation.getBounds();
+	    view.setSize(alloc.width, alloc.height);
+	    view.paint(g, allocation);
         }
-
+        
         /**
          * Sets the view parent.
          *
@@ -490,7 +491,7 @@ public class BasicHTML {
             throw new Error("Can't set parent on root view");
         }
 
-        /**
+        /** 
          * Returns the number of views in this view.  Since
          * this view simply wraps the root of the view hierarchy
          * it has exactly one child.
@@ -502,7 +503,7 @@ public class BasicHTML {
             return 1;
         }
 
-        /**
+        /** 
          * Gets the n-th view in this container.
          *
          * @param n the number of the view to get
@@ -521,32 +522,32 @@ public class BasicHTML {
          * @return the bounding box of the given position
          */
         public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
-            return view.modelToView(pos, a, b);
+	    return view.modelToView(pos, a, b);
         }
 
-        /**
-         * Provides a mapping from the document model coordinate space
-         * to the coordinate space of the view mapped to it.
-         *
-         * @param p0 the position to convert >= 0
-         * @param b0 the bias toward the previous character or the
-         *  next character represented by p0, in case the
-         *  position is a boundary of two views.
-         * @param p1 the position to convert >= 0
-         * @param b1 the bias toward the previous character or the
-         *  next character represented by p1, in case the
-         *  position is a boundary of two views.
-         * @param a the allocated region to render into
-         * @return the bounding box of the given position is returned
-         * @exception BadLocationException  if the given position does
-         *   not represent a valid location in the associated document
-         * @exception IllegalArgumentException for an invalid bias argument
-         * @see View#viewToModel
-         */
-        public Shape modelToView(int p0, Position.Bias b0, int p1,
-                                 Position.Bias b1, Shape a) throws BadLocationException {
-            return view.modelToView(p0, b0, p1, b1, a);
-        }
+	/**
+	 * Provides a mapping from the document model coordinate space
+	 * to the coordinate space of the view mapped to it.
+	 *
+	 * @param p0 the position to convert >= 0
+	 * @param b0 the bias toward the previous character or the
+	 *  next character represented by p0, in case the 
+	 *  position is a boundary of two views. 
+	 * @param p1 the position to convert >= 0
+	 * @param b1 the bias toward the previous character or the
+	 *  next character represented by p1, in case the 
+	 *  position is a boundary of two views. 
+	 * @param a the allocated region to render into
+	 * @return the bounding box of the given position is returned
+	 * @exception BadLocationException  if the given position does
+	 *   not represent a valid location in the associated document
+	 * @exception IllegalArgumentException for an invalid bias argument
+	 * @see View#viewToModel
+	 */
+	public Shape modelToView(int p0, Position.Bias b0, int p1, 
+				 Position.Bias b1, Shape a) throws BadLocationException {
+	    return view.modelToView(p0, b0, p1, b1, a);
+	}
 
         /**
          * Provides a mapping from the view coordinate space to the logical
@@ -559,7 +560,7 @@ public class BasicHTML {
          *    given point in the view
          */
         public int viewToModel(float x, float y, Shape a, Position.Bias[] bias) {
-            return view.viewToModel(x, y, a, bias);
+	    return view.viewToModel(x, y, a, bias);
         }
 
         /**
@@ -570,14 +571,14 @@ public class BasicHTML {
         public Document getDocument() {
             return view.getDocument();
         }
-
+        
         /**
          * Returns the starting offset into the model for this view.
          *
          * @return the starting offset
          */
         public int getStartOffset() {
-            return view.getStartOffset();
+	    return view.getStartOffset();
         }
 
         /**
@@ -586,7 +587,7 @@ public class BasicHTML {
          * @return the ending offset
          */
         public int getEndOffset() {
-            return view.getEndOffset();
+	    return view.getEndOffset();
         }
 
         /**
@@ -595,7 +596,7 @@ public class BasicHTML {
          * @return the view
          */
         public Element getElement() {
-            return view.getElement();
+	    return view.getElement();
         }
 
         /**
@@ -605,13 +606,13 @@ public class BasicHTML {
          * @param height the height
          */
         public void setSize(float width, float height) {
-            this.width = (int) width;
-            view.setSize(width, height);
+	    this.width = (int) width;
+	    view.setSize(width, height);
         }
 
         /**
          * Fetches the container hosting the view.  This is useful for
-         * things like scheduling a repaint, finding out the host
+         * things like scheduling a repaint, finding out the host 
          * components font, etc.  The default implementation
          * of this is to forward the query to the parent view.
          *
@@ -620,7 +621,7 @@ public class BasicHTML {
         public Container getContainer() {
             return host;
         }
-
+        
         /**
          * Fetches the factory to be used for building the
          * various view fragments that make up the view that
@@ -632,13 +633,13 @@ public class BasicHTML {
          * @return the factory
          */
         public ViewFactory getViewFactory() {
-            return factory;
+	    return factory;
         }
 
-        private int width;
+	private int width;
         private View view;
-        private ViewFactory factory;
-        private JComponent host;
+	private ViewFactory factory;
+	private JComponent host;
 
     }
 }

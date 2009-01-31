@@ -38,8 +38,8 @@
    on a ButtonRelease to prevent the continuous scrolling that would
    occur if a timeout expired after the ButtonRelease.
 */
-/*
- * Note: RFE:4263104 is filed when the API is available these needs to removed
+/*  
+ * Note: RFE:4263104 is filed when the API is available these needs to removed 
  */
 void
 awt_motif_Scrollbar_ButtonReleaseHandler(Widget w,

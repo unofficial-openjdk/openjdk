@@ -58,7 +58,7 @@ public class Refused {
         server = DatagramChannel.open();
 
         client.socket().bind((SocketAddress)null);
-        server.socket().bind((SocketAddress)null);
+	server.socket().bind((SocketAddress)null);
 
         client.configureBlocking(false);
         server.configureBlocking(false);

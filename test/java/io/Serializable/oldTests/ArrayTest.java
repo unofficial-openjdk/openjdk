@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -39,58 +39,58 @@ public class ArrayTest implements java.io.Serializable {
     static  int si[] = {9, 8, 7, 6, 4} ;
 
     public ArrayTest() {
-        z[0] = true;
-        z[1] = false;
-        z[2] = true;
-        z[3] = false;
+	z[0] = true;
+	z[1] = false;
+	z[2] = true;
+	z[3] = false;
     }
 
     public boolean equals(ArrayTest other) {
-        boolean ret = true;
-        if (other == null) {
-            System.err.println("\nother Array is " + other);
-            return false;
-        }
-        if (!ArrayOpsTest.verify(i, other.i)) {
-            System.err.println("\nUnpickling of int array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(b, other.b)) {
-            System.err.println("\nUnpickling of byte array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(s, other.s)) {
-            System.err.println("\nUnpickling of short array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(c, other.c)) {
-            System.err.println("\nUnpickling of char array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(l, other.l)) {
-            System.err.println("\nUnpickling of long array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(f, other.f)) {
-            System.err.println("\nUnpickling of float array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(d, other.d)) {
-            System.err.println("\nUnpickling of double array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(z, other.z)) {
-            System.err.println("\nUnpickling of boolean array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(string, other.string)) {
-            System.err.println("\nUnpickling of String array failed");
-            ret = false;
-        }
-        if (!ArrayOpsTest.verify(prim, other.prim)) {
-            System.err.println("\nUnpickling of Primitives array failed");
-            ret = false;
-        }
-        return ret;
+	boolean ret = true;
+	if (other == null) {
+	    System.err.println("\nother Array is " + other);
+	    return false;
+	}
+	if (!ArrayOpsTest.verify(i, other.i)) {
+	    System.err.println("\nUnpickling of int array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(b, other.b)) {
+	    System.err.println("\nUnpickling of byte array failed");
+	    ret = false;
+	}
+    	if (!ArrayOpsTest.verify(s, other.s)) {
+	    System.err.println("\nUnpickling of short array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(c, other.c)) {
+	    System.err.println("\nUnpickling of char array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(l, other.l)) {
+	    System.err.println("\nUnpickling of long array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(f, other.f)) {
+	    System.err.println("\nUnpickling of float array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(d, other.d)) {
+	    System.err.println("\nUnpickling of double array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(z, other.z)) {
+	    System.err.println("\nUnpickling of boolean array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(string, other.string)) {
+    	    System.err.println("\nUnpickling of String array failed");
+	    ret = false;
+	}
+	if (!ArrayOpsTest.verify(prim, other.prim)) {
+	    System.err.println("\nUnpickling of Primitives array failed");
+	    ret = false;
+	}
+	return ret;
     }
 }

@@ -61,7 +61,7 @@ import java.util.List;
  * @author Sun Microsystems, 2006 - All rights reserved.
  */
 public class DirectoryScannerTest extends TestCase {
-
+    
     public DirectoryScannerTest(String testName) {
         super(testName);
     }
@@ -74,23 +74,23 @@ public class DirectoryScannerTest extends TestCase {
 
     public static Test suite() {
         TestSuite suite = new TestSuite(DirectoryScannerTest.class);
-
+        
         return suite;
     }
 
     private void doTestOperation(
             DirectoryScannerMXBean proxy,
-            Call op,
+            Call op, 
             EnumSet<ScanState> after,
-            String testName)
+            String testName) 
         throws Exception {
         System.out.println("doTestOperation: "+testName);
-
-        final LinkedBlockingQueue<Notification> queue =
+        
+        final LinkedBlockingQueue<Notification> queue = 
                 new LinkedBlockingQueue<Notification>();
-
+        
         NotificationListener listener = new NotificationListener() {
-            public void handleNotification(Notification notification,
+            public void handleNotification(Notification notification, 
                         Object handback) {
                 try {
                     queue.put(notification);
@@ -131,28 +131,28 @@ public class DirectoryScannerTest extends TestCase {
             }
         }
     }
-
+    
 
     /**
      * Test of getRootDirectory method, of class com.sun.jmx.examples.scandir.DirectoryScanner.
      */
     public void testGetRootDirectory() throws Exception {
         System.out.println("getRootDirectory");
-
+        
        final ScanManagerMXBean manager = ScanManager.register();
         try {
             final String tmpdir = System.getProperty("java.io.tmpdir");
             final ScanDirConfigMXBean config = manager.getConfigurationMBean();
             System.err.println("Configuration MXBean is: " + config);
-            final DirectoryScannerConfig bean =
+            final DirectoryScannerConfig bean = 
                     config.addDirectoryScanner("test",tmpdir,".*",0,0);
             final String root = bean.getRootDirectory();
             if (root == null)
                 throw new NullPointerException("bean.getRootDirectory()");
             if (config.getConfiguration().getScan("test").getRootDirectory() == null)
-                throw new NullPointerException("config.getConfig().getScan(\"test\").getRootDirectory()");
+                throw new NullPointerException("config.getConfig().getScan(\"test\").getRootDirectory()");                
             manager.applyConfiguration(true);
-            final DirectoryScannerMXBean proxy =
+            final DirectoryScannerMXBean proxy = 
                     manager.getDirectoryScanners().get("test");
             final File tmpFile =  new File(tmpdir);
             final File rootFile = new File(proxy.getRootDirectory());
@@ -176,7 +176,7 @@ public class DirectoryScannerTest extends TestCase {
      */
     public void testScan() throws Exception {
         System.out.println("scan");
-
+        
         final ScanManagerMXBean manager = ScanManager.register();
         try {
             final String tmpdir = System.getProperty("java.io.tmpdir");
@@ -206,7 +206,7 @@ public class DirectoryScannerTest extends TestCase {
                     while(true) {
                         final Notification n = queue.poll(10,TimeUnit.SECONDS);
                         if (n == null) break;
-                        final AttributeChangeNotification at =
+                        final AttributeChangeNotification at = 
                                 (AttributeChangeNotification) n;
                         if (RUNNING == ScanState.valueOf((String)at.getNewValue()))
                             break;
@@ -248,14 +248,14 @@ public class DirectoryScannerTest extends TestCase {
      */
     public void testGetState() {
         System.out.println("getState");
-
-        final DirectoryScannerConfig bean =
+        
+        final DirectoryScannerConfig bean = 
                 new DirectoryScannerConfig("test");
         bean.setRootDirectory(System.getProperty("java.io.tmpdir"));
         final ResultLogManager log = new ResultLogManager();
-        DirectoryScanner instance =
+        DirectoryScanner instance = 
                 new DirectoryScanner(bean,log);
-
+        
         ScanState expResult = STOPPED;
         ScanState result = instance.getState();
         assertEquals(STOPPED, result);
@@ -269,7 +269,7 @@ public class DirectoryScannerTest extends TestCase {
      */
     public void testAddNotificationListener() throws Exception {
         System.out.println("addNotificationListener");
-
+        
         final ScanManagerMXBean manager = ScanManager.register();
         final Call op = new Call() {
             public void call() throws Exception {
@@ -285,7 +285,7 @@ public class DirectoryScannerTest extends TestCase {
             final DirectoryScannerConfig bean =
                     config.addDirectoryScanner("test1",tmpdir,".*",0,0);
             manager.applyConfiguration(true);
-            final DirectoryScannerMXBean proxy =
+            final DirectoryScannerMXBean proxy = 
                     manager.getDirectoryScanners().get("test1");
            doTestOperation(proxy,op,
                             EnumSet.of(RUNNING,SCHEDULED),
@@ -300,5 +300,5 @@ public class DirectoryScannerTest extends TestCase {
         }
     }
 
-
+   
 }

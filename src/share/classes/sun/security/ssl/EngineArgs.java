@@ -33,6 +33,7 @@ import java.nio.*;
  * It validates arguments, checks for RO conditions, does space
  * calculations, performs scatter/gather, etc.
  *
+ * @version %I%
  * @author Brad R. Wetmore
  */
 class EngineArgs {
@@ -43,7 +44,7 @@ class EngineArgs {
     ByteBuffer netData;
     ByteBuffer [] appData;
 
-    private int offset;         // offset/len for the appData array.
+    private int offset;		// offset/len for the appData array.
     private int len;
 
     /*
@@ -69,18 +70,18 @@ class EngineArgs {
      * Called by the SSLEngine.wrap() method.
      */
     EngineArgs(ByteBuffer [] appData, int offset, int len,
-            ByteBuffer netData) {
-        this.wrapMethod = true;
-        init(netData, appData, offset, len);
+	    ByteBuffer netData) {
+	this.wrapMethod = true;
+	init(netData, appData, offset, len);
     }
 
     /*
      * Called by the SSLEngine.unwrap() method.
      */
     EngineArgs(ByteBuffer netData, ByteBuffer [] appData, int offset,
-            int len) {
-        this.wrapMethod = false;
-        init(netData, appData, offset, len);
+	    int len) {
+	this.wrapMethod = false;
+	init(netData, appData, offset, len);
     }
 
     /*
@@ -95,54 +96,54 @@ class EngineArgs {
      * buffer.
      */
     private void init(ByteBuffer netData, ByteBuffer [] appData,
-            int offset, int len) {
+	    int offset, int len) {
 
-        if ((netData == null) || (appData == null)) {
-            throw new IllegalArgumentException("src/dst is null");
-        }
+	if ((netData == null) || (appData == null)) {
+	    throw new IllegalArgumentException("src/dst is null");
+	}
 
-        if ((offset < 0) || (len < 0) || (offset > appData.length - len)) {
-            throw new IndexOutOfBoundsException();
-        }
+	if ((offset < 0) || (len < 0) || (offset > appData.length - len)) {
+	    throw new IndexOutOfBoundsException();
+	}
 
-        if (wrapMethod && netData.isReadOnly()) {
-            throw new ReadOnlyBufferException();
-        }
+	if (wrapMethod && netData.isReadOnly()) {
+	    throw new ReadOnlyBufferException();
+	}
 
-        netPos = netData.position();
-        netLim = netData.limit();
+	netPos = netData.position();
+	netLim = netData.limit();
 
-        appPoss = new int [appData.length];
-        appLims = new int [appData.length];
+	appPoss = new int [appData.length];
+	appLims = new int [appData.length];
 
-        for (int i = offset; i < offset + len; i++) {
-            if (appData[i] == null) {
-                throw new IllegalArgumentException(
-                    "appData[" + i + "] == null");
-            }
+	for (int i = offset; i < offset + len; i++) {
+	    if (appData[i] == null) {
+		throw new IllegalArgumentException(
+		    "appData[" + i + "] == null");
+	    }
 
-            /*
-             * If we're unwrapping, then check to make sure our
-             * destination bufffers are writable.
-             */
-            if (!wrapMethod && appData[i].isReadOnly()) {
-                throw new ReadOnlyBufferException();
-            }
+	    /*
+	     * If we're unwrapping, then check to make sure our
+	     * destination bufffers are writable.
+	     */
+	    if (!wrapMethod && appData[i].isReadOnly()) {
+		throw new ReadOnlyBufferException();
+	    }
 
-            appRemaining += appData[i].remaining();
+	    appRemaining += appData[i].remaining();
 
-            appPoss[i] = appData[i].position();
-            appLims[i] = appData[i].limit();
-        }
+	    appPoss[i] = appData[i].position();
+	    appLims[i] = appData[i].limit();
+	}
 
-        /*
-         * Ok, looks like we have a good set of args, let's
-         * store the rest of this stuff.
-         */
-        this.netData = netData;
-        this.appData = appData;
-        this.offset = offset;
-        this.len = len;
+	/*
+	 * Ok, looks like we have a good set of args, let's
+	 * store the rest of this stuff.
+	 */
+	this.netData = netData;
+	this.appData = appData;
+	this.offset = offset;
+	this.len = len;
     }
 
     /*
@@ -153,12 +154,12 @@ class EngineArgs {
      * The user has already ensured there is enough room.
      */
     void gather(int spaceLeft) {
-        for (int i = offset; (i < (offset + len)) && (spaceLeft > 0); i++) {
-            int amount = Math.min(appData[i].remaining(), spaceLeft);
-            appData[i].limit(appData[i].position() + amount);
-            netData.put(appData[i]);
-            spaceLeft -= amount;
-        }
+	for (int i = offset; (i < (offset + len)) && (spaceLeft > 0); i++) {
+	    int amount = Math.min(appData[i].remaining(), spaceLeft);
+	    appData[i].limit(appData[i].position() + amount);
+	    netData.put(appData[i]);
+	    spaceLeft -= amount;
+	}
     }
 
     /*
@@ -168,20 +169,20 @@ class EngineArgs {
      * The user has already ensured there is enough room.
      */
     void scatter(ByteBuffer readyData) {
-        int amountLeft = readyData.remaining();
+	int amountLeft = readyData.remaining();
 
-        for (int i = offset; (i < (offset + len)) && (amountLeft > 0);
-                i++) {
-            int amount = Math.min(appData[i].remaining(), amountLeft);
-            readyData.limit(readyData.position() + amount);
-            appData[i].put(readyData);
-            amountLeft -= amount;
-        }
-        assert(readyData.remaining() == 0);
+	for (int i = offset; (i < (offset + len)) && (amountLeft > 0);
+		i++) {
+	    int amount = Math.min(appData[i].remaining(), amountLeft);
+	    readyData.limit(readyData.position() + amount);
+	    appData[i].put(readyData);
+	    amountLeft -= amount;
+	}
+	assert(readyData.remaining() == 0);
     }
 
     int getAppRemaining() {
-        return appRemaining;
+	return appRemaining;
     }
 
     /*
@@ -189,7 +190,7 @@ class EngineArgs {
      * we saved this off earlier?
      */
     int deltaNet() {
-        return (netData.position() - netPos);
+	return (netData.position() - netPos);
     }
 
     /*
@@ -197,13 +198,13 @@ class EngineArgs {
      * we saved this off earlier?
      */
     int deltaApp() {
-        int sum = 0;    // Only calculating 2^14 here, don't need a long.
+	int sum = 0;	// Only calculating 2^14 here, don't need a long.
 
-        for (int i = offset; i < offset + len; i++) {
-            sum += appData[i].position() - appPoss[i];
-        }
+	for (int i = offset; i < offset + len; i++) {
+	    sum += appData[i].position() - appPoss[i];
+	}
 
-        return sum;
+	return sum;
     }
 
     /*
@@ -211,10 +212,10 @@ class EngineArgs {
      * to appear as though no data has been consumed or produced.
      */
     void resetPos() {
-        netData.position(netPos);
-        for (int i = offset; i < offset + len; i++) {
-            appData[i].position(appPoss[i]);
-        }
+	netData.position(netPos);
+	for (int i = offset; i < offset + len; i++) {
+	    appData[i].position(appPoss[i]);
+	}
     }
 
     /*
@@ -224,9 +225,9 @@ class EngineArgs {
      * the user.
      */
     void resetLim() {
-        netData.limit(netLim);
-        for (int i = offset; i < offset + len; i++) {
-            appData[i].limit(appLims[i]);
-        }
+	netData.limit(netLim);
+	for (int i = offset; i < offset + len; i++) {
+	    appData[i].limit(appLims[i]);
+	}
     }
 }

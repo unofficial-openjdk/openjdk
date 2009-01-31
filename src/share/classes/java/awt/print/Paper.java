@@ -31,10 +31,10 @@ import java.awt.geom.Rectangle2D;
  * The <code>Paper</code> class describes the physical characteristics of
  * a piece of paper.
  * <p>
- * When creating a <code>Paper</code> object, it is the application's
+ * When creating a <code>Paper</code> object, it is the application's 
  * responsibility to ensure that the paper size and the imageable area
- * are compatible.  For example, if the paper size is changed from
- * 11 x 17 to 8.5 x 11, the application might need to reduce the
+ * are compatible.  For example, if the paper size is changed from 
+ * 11 x 17 to 8.5 x 11, the application might need to reduce the 
  * imageable area so that whatever is printed fits on the page.
  * <p>
  * @see #setSize(double, double)
@@ -85,11 +85,11 @@ public class Paper implements Cloneable {
      * with one inch margins.
      */
     public Paper() {
-        mHeight = LETTER_HEIGHT;
-        mWidth = LETTER_WIDTH;
-        mImageableArea = new Rectangle2D.Double(INCH, INCH,
-                                                mWidth - 2 * INCH,
-                                                mHeight - 2 * INCH);
+	mHeight = LETTER_HEIGHT;
+	mWidth = LETTER_WIDTH;
+	mImageableArea = new Rectangle2D.Double(INCH, INCH,
+						mWidth - 2 * INCH,
+						mHeight - 2 * INCH);
     }
 
  /* Instance Methods */
@@ -101,30 +101,30 @@ public class Paper implements Cloneable {
      */
     public Object clone() {
 
-        Paper newPaper;
+	Paper newPaper;
 
-        try {
-            /* It's okay to copy the reference to the imageable
-             * area into the clone since we always return a copy
-             * of the imageable area when asked for it.
-             */
-            newPaper = (Paper) super.clone();
+	try {
+	    /* It's okay to copy the reference to the imageable
+	     * area into the clone since we always return a copy
+	     * of the imageable area when asked for it.
+	     */
+	    newPaper = (Paper) super.clone();
 
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-            newPaper = null;    // should never happen.
-        }
+	} catch (CloneNotSupportedException e) {
+	    e.printStackTrace();
+	    newPaper = null;	// should never happen.
+	}
 
-        return newPaper;
+	return newPaper;
     }
 
     /**
      * Returns the height of the page in 1/72nds of an inch.
      * @return the height of the page described by this
-     *          <code>Paper</code>.
+     *		<code>Paper</code>.
      */
     public double getHeight() {
-        return mHeight;
+	return mHeight;
     }
 
     /**
@@ -139,8 +139,8 @@ public class Paper implements Cloneable {
      * object's height
      */
     public void setSize(double width, double height) {
-        mWidth = width;
-        mHeight = height;
+	mWidth = width;
+	mHeight = height;
     }
 
     /**
@@ -150,25 +150,25 @@ public class Paper implements Cloneable {
      * <code>Paper</code>.
      */
     public double getWidth() {
-        return mWidth;
+	return mWidth;
     }
 
     /**
-     * Sets the imageable area of this <code>Paper</code>.  The
+     * Sets the imageable area of this <code>Paper</code>.  The 
      * imageable area is the area on the page in which printing
-     * occurs.
+     * occurs. 
      * @param x the X coordinate to which to set the
      * upper-left corner of the imageable area of this <code>Paper</code>
      * @param y the Y coordinate to which to set the
      * upper-left corner of the imageable area of this <code>Paper</code>
-     * @param width the value to which to set the width of the
+     * @param width the value to which to set the width of the 
      * imageable area of this <code>Paper</code>
      * @param height the value to which to set the height of the
      * imageable area of this <code>Paper</code>
      */
     public void setImageableArea(double x, double y,
-                                 double width, double height) {
-        mImageableArea = new Rectangle2D.Double(x, y, width,height);
+				 double width, double height) {
+	mImageableArea = new Rectangle2D.Double(x, y, width,height);
     }
 
     /**
@@ -177,7 +177,7 @@ public class Paper implements Cloneable {
      * @return the x coordinate of the imageable area.
      */
     public double getImageableX() {
-        return mImageableArea.getX();
+	return mImageableArea.getX();
     }
 
     /**
@@ -186,7 +186,7 @@ public class Paper implements Cloneable {
      * @return the y coordinate of the imageable area.
      */
     public double getImageableY() {
-        return mImageableArea.getY();
+	return mImageableArea.getY();
     }
 
     /**
@@ -195,15 +195,15 @@ public class Paper implements Cloneable {
      * @return the width of the imageable area.
      */
     public double getImageableWidth() {
-        return mImageableArea.getWidth();
+	return mImageableArea.getWidth();
     }
 
     /**
      * Returns the height of this <code>Paper</code> object's imageable
      * area.
-     * @return the height of the imageable area.
+     * @return the height of the imageable area.   
      */
     public double getImageableHeight() {
-        return mImageableArea.getHeight();
+	return mImageableArea.getHeight();
     }
 }

@@ -100,7 +100,7 @@ final class RBCollationTables {
          * copies them en masse into the actual tables object once all the construction
          * logic is complete.  This function does that "copying en masse".
          * @param f2ary The value for frenchSec (the French-secondary flag)
-         * @param swap The value for SE Asian swapping rule
+	 * @param swap The value for SE Asian swapping rule
          * @param map The collator's character-mapping table (the value for mapping)
          * @param cTbl The collator's contracting-character table (the value for contractTable)
          * @param eTbl The collator's expanding-character table (the value for expandTable)
@@ -110,7 +110,7 @@ final class RBCollationTables {
          * @param mto The value for maxTerOrder
          */
         void fillInTables(boolean f2ary,
-                          boolean swap,
+			  boolean swap,
                           UCompactIntArray map,
                           Vector cTbl,
                           Vector eTbl,
@@ -118,7 +118,7 @@ final class RBCollationTables {
                           short mso,
                           short mto) {
             frenchSec = f2ary;
-            seAsianSwapping = swap;
+	    seAsianSwapping = swap;
             mapping = map;
             contractTable = cTbl;
             expandTable = eTbl;
@@ -141,12 +141,12 @@ final class RBCollationTables {
     public boolean isFrenchSec() {
         return frenchSec;
     }
-
+    
     public boolean isSEAsianSwapping() {
         return seAsianSwapping;
     }
-
-    // ==============================================================
+    
+    // ==============================================================      
     // internal (for use by CollationElementIterator)
     // ==============================================================
 

@@ -97,7 +97,7 @@ public class NoLocInfoTest extends TestScaffold {
         this.args = args;
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new NoLocInfoTest(args).startTests();
     }
 
@@ -147,7 +147,7 @@ public class NoLocInfoTest extends TestScaffold {
             } else {
                failure("Failure: LineNumberTable.size()==" + size + ", but ZERO was expected");
             }
-        }
+	}
         catch (com.sun.jdi.AbsentInformationException ex) {
             failure("Failure: com.sun.jdi.AbsentInformationException was not expected; ");
         }
@@ -163,22 +163,22 @@ public class NoLocInfoTest extends TestScaffold {
          */
         startToMain("NoLocInfoTarg");
 
-        println("\n Abstract Methods:");
+	println("\n Abstract Methods:");
         // For abtsract methods allLineLocations() always returns empty List
         checkEmptyLineNumberTable("InterfaceNoLocInfoTarg", "instanceMeth");
         checkEmptyLineNumberTable("InterfaceNoLocInfoTarg", "instanceMeth1");
         checkEmptyLineNumberTable("AbstractNoLocInfoTarg",  "instanceMeth");
 
-        println("\n Native Methods:");
+	println("\n Native Methods:");
         // For native methods allLineLocations() always returns empty List
         checkEmptyLineNumberTable("NoLocInfoTarg", "staticNativeMeth");
         checkEmptyLineNumberTable("NoLocInfoTarg", "instanceNativeMeth");
 
-        println("\n Non-Abstract Methods of Abstract class:");
+	println("\n Non-Abstract Methods of Abstract class:");
         checkLineNumberTable("AbstractNoLocInfoTarg", "<init>");
         checkLineNumberTable("AbstractNoLocInfoTarg", "instanceMeth1");
 
-        println("\n Methods of Non-Abstract class:");
+	println("\n Methods of Non-Abstract class:");
         checkLineNumberTable("NoLocInfoTarg", "<init>"); // default constructor
         checkLineNumberTable("NoLocInfoTarg", "main");
         checkLineNumberTable("NoLocInfoTarg", "instanceMeth");
@@ -201,3 +201,4 @@ public class NoLocInfoTest extends TestScaffold {
         }
     }
 }
+

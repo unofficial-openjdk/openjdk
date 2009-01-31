@@ -22,10 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 
 #ifndef MLIB_SYSMATH_H
 #define MLIB_SYSMATH_H
+
+#ifdef __SUNPRO_C
+#pragma ident	"@(#)mlib_SysMath.h	1.16	02/03/12 SMI"
+#endif /* __SUNPRO_C */
 
 #include <math.h>
 #ifdef _MSC_VER

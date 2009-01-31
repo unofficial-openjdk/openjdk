@@ -84,20 +84,20 @@ INT32 PORT_GetPortMixerCount() {
     card = -1;
     mixerCount = 0;
     if (snd_card_next(&card) >= 0) {
-        while (card >= 0) {
-            sprintf(devname, ALSA_HARDWARE_CARD, card);
-            TRACE1("PORT_GetPortMixerCount: Opening alsa device \"%s\"...\n", devname);
-            err = snd_ctl_open(&handle, devname, 0);
-            if (err < 0) {
-                ERROR2("ERROR: snd_ctl_open, card=%d: %s\n", card, snd_strerror(err));
-            } else {
-                mixerCount++;
-                snd_ctl_close(handle);
-            }
-            if (snd_card_next(&card) < 0) {
-                break;
-            }
-        }
+	while (card >= 0) {
+	    sprintf(devname, ALSA_HARDWARE_CARD, card);
+	    TRACE1("PORT_GetPortMixerCount: Opening alsa device \"%s\"...\n", devname);
+	    err = snd_ctl_open(&handle, devname, 0);
+	    if (err < 0) {
+		ERROR2("ERROR: snd_ctl_open, card=%d: %s\n", card, snd_strerror(err));
+	    } else {
+		mixerCount++;
+		snd_ctl_close(handle);
+	    }
+	    if (snd_card_next(&card) < 0) {
+		break;
+	    }
+	}
     }
     snd_ctl_card_info_free(info);
     TRACE0("< PORT_GetPortMixerCount\n");
@@ -119,12 +119,12 @@ INT32 PORT_GetPortMixerDescription(INT32 mixerIndex, PortMixerDescription* descr
     TRACE1("Opening alsa device \"%s\"...\n", devname);
     err = snd_ctl_open(&handle, devname, 0);
     if (err < 0) {
-        ERROR2("ERROR: snd_ctl_open, card=%d: %s\n", (int) mixerIndex, snd_strerror(err));
-        return FALSE;
+	ERROR2("ERROR: snd_ctl_open, card=%d: %s\n", (int) mixerIndex, snd_strerror(err));
+	return FALSE;
     }
     err = snd_ctl_card_info(handle, card_info);
     if (err < 0) {
-        ERROR2("ERROR: snd_ctl_card_info, card=%d: %s\n", (int) mixerIndex, snd_strerror(err));
+	ERROR2("ERROR: snd_ctl_card_info, card=%d: %s\n", (int) mixerIndex, snd_strerror(err));
     }
     strncpy(description->name, snd_ctl_card_info_get_id(card_info), PORT_STRING_LENGTH - 1);
     sprintf(buffer, " [%s]", devname);
@@ -151,55 +151,55 @@ void* PORT_Open(INT32 mixerIndex) {
     TRACE0("> PORT_Open\n");
     sprintf(devname, ALSA_HARDWARE_CARD, (int) mixerIndex);
     if ((err = snd_mixer_open(&mixer_handle, 0)) < 0) {
-        ERROR2("Mixer %s open error: %s", devname, snd_strerror(err));
-        return NULL;
+	ERROR2("Mixer %s open error: %s", devname, snd_strerror(err));
+	return NULL;
     }
     if ((err = snd_mixer_attach(mixer_handle, devname)) < 0) {
-        ERROR2("Mixer attach %s error: %s", devname, snd_strerror(err));
-        snd_mixer_close(mixer_handle);
-        return NULL;
+	ERROR2("Mixer attach %s error: %s", devname, snd_strerror(err));
+	snd_mixer_close(mixer_handle);
+	return NULL;
     }
     if ((err = snd_mixer_selem_register(mixer_handle, NULL, NULL)) < 0) {
-        ERROR1("Mixer register error: %s", snd_strerror(err));
-        snd_mixer_close(mixer_handle);
-        return NULL;
+	ERROR1("Mixer register error: %s", snd_strerror(err));
+	snd_mixer_close(mixer_handle);
+	return NULL;
     }
     err = snd_mixer_load(mixer_handle);
     if (err < 0) {
-        ERROR2("Mixer %s load error: %s", devname, snd_strerror(err));
-        snd_mixer_close(mixer_handle);
-        return NULL;
+	ERROR2("Mixer %s load error: %s", devname, snd_strerror(err));
+	snd_mixer_close(mixer_handle);
+	return NULL;
     }
     handle = (PortMixer*) calloc(1, sizeof(PortMixer));
     if (handle == NULL) {
-        ERROR0("malloc() failed.");
-        snd_mixer_close(mixer_handle);
-        return NULL;
+	ERROR0("malloc() failed.");
+	snd_mixer_close(mixer_handle);
+	return NULL;
     }
     handle->numElems = 0;
     handle->elems = (snd_mixer_elem_t**) calloc(MAX_ELEMS, sizeof(snd_mixer_elem_t*));
     if (handle->elems == NULL) {
-        ERROR0("malloc() failed.");
-        snd_mixer_close(mixer_handle);
-        free(handle);
-        return NULL;
+	ERROR0("malloc() failed.");
+	snd_mixer_close(mixer_handle);
+	free(handle);
+	return NULL;
     }
     handle->types = (INT32*) calloc(MAX_ELEMS, sizeof(INT32));
     if (handle->types == NULL) {
-        ERROR0("malloc() failed.");
-        snd_mixer_close(mixer_handle);
-        free(handle->elems);
-        free(handle);
-        return NULL;
+	ERROR0("malloc() failed.");
+	snd_mixer_close(mixer_handle);
+	free(handle->elems);
+	free(handle);
+	return NULL;
     }
     handle->controls = (PortControl*) calloc(MAX_CONTROLS, sizeof(PortControl));
     if (handle->controls == NULL) {
-        ERROR0("malloc() failed.");
-        snd_mixer_close(mixer_handle);
-        free(handle->elems);
-        free(handle->types);
-        free(handle);
-        return NULL;
+	ERROR0("malloc() failed.");
+	snd_mixer_close(mixer_handle);
+	free(handle->elems);
+	free(handle->types);
+	free(handle);
+	return NULL;
     }
     handle->mixer_handle = mixer_handle;
     // necessary to initialize data structures
@@ -212,20 +212,20 @@ void* PORT_Open(INT32 mixerIndex) {
 void PORT_Close(void* id) {
     TRACE0("> PORT_Close\n");
     if (id != NULL) {
-        PortMixer* handle = (PortMixer*) id;
-        if (handle->mixer_handle != NULL) {
-            snd_mixer_close(handle->mixer_handle);
-        }
-        if (handle->elems != NULL) {
-            free(handle->elems);
-        }
-        if (handle->types != NULL) {
-            free(handle->types);
-        }
-        if (handle->controls != NULL) {
-            free(handle->controls);
-        }
-        free(handle);
+	PortMixer* handle = (PortMixer*) id;
+	if (handle->mixer_handle != NULL) {
+	    snd_mixer_close(handle->mixer_handle);
+	}
+	if (handle->elems != NULL) {
+	    free(handle->elems);
+	}
+	if (handle->types != NULL) {
+	    free(handle->types);
+	}
+	if (handle->controls != NULL) {
+	    free(handle->controls);
+	}
+	free(handle);
     }
     TRACE0("< PORT_Close\n");
 }
@@ -238,38 +238,38 @@ INT32 PORT_GetPortCount(void* id) {
 
     TRACE0("> PORT_GetPortCount\n");
     if (id == NULL) {
-        // $$mp: Should become a descriptive error code (invalid handle).
-        return -1;
+	// $$mp: Should become a descriptive error code (invalid handle).
+	return -1;
     }
     portMixer = (PortMixer*) id;
     if (portMixer->numElems == 0) {
-        for (elem = snd_mixer_first_elem(portMixer->mixer_handle); elem; elem = snd_mixer_elem_next(elem)) {
-            if (!snd_mixer_selem_is_active(elem))
-                continue;
-            TRACE2("Simple mixer control '%s',%i\n",
-                   snd_mixer_selem_get_name(elem),
-                   snd_mixer_selem_get_index(elem));
-            if (snd_mixer_selem_has_playback_volume(elem)) {
-                portMixer->elems[portMixer->numElems] = elem;
-                portMixer->types[portMixer->numElems] = PORT_DST_UNKNOWN;
-                portMixer->numElems++;
-            }
-            // to prevent buffer overflow
-            if (portMixer->numElems >= MAX_ELEMS) {
-                break;
-            }
-            /* If an element has both playback an capture volume, it is put into the arrays
-               twice. */
-            if (snd_mixer_selem_has_capture_volume(elem)) {
-                portMixer->elems[portMixer->numElems] = elem;
-                portMixer->types[portMixer->numElems] = PORT_SRC_UNKNOWN;
-                portMixer->numElems++;
-            }
-            // to prevent buffer overflow
-            if (portMixer->numElems >= MAX_ELEMS) {
-                break;
-            }
-        }
+	for (elem = snd_mixer_first_elem(portMixer->mixer_handle); elem; elem = snd_mixer_elem_next(elem)) {
+	    if (!snd_mixer_selem_is_active(elem))
+		continue;
+	    TRACE2("Simple mixer control '%s',%i\n",
+		   snd_mixer_selem_get_name(elem),
+		   snd_mixer_selem_get_index(elem));
+	    if (snd_mixer_selem_has_playback_volume(elem)) {
+		portMixer->elems[portMixer->numElems] = elem;
+		portMixer->types[portMixer->numElems] = PORT_DST_UNKNOWN;
+		portMixer->numElems++;
+	    }
+	    // to prevent buffer overflow
+	    if (portMixer->numElems >= MAX_ELEMS) {
+		break;
+	    }
+	    /* If an element has both playback an capture volume, it is put into the arrays
+	       twice. */
+	    if (snd_mixer_selem_has_capture_volume(elem)) {
+		portMixer->elems[portMixer->numElems] = elem;
+		portMixer->types[portMixer->numElems] = PORT_SRC_UNKNOWN;
+		portMixer->numElems++;
+	    }
+	    // to prevent buffer overflow
+	    if (portMixer->numElems >= MAX_ELEMS) {
+		break;
+	    }
+	}
     }
     TRACE0("< PORT_GetPortCount\n");
     return portMixer->numElems;
@@ -281,13 +281,13 @@ INT32 PORT_GetPortType(void* id, INT32 portIndex) {
     INT32 type;
     TRACE0("> PORT_GetPortType\n");
     if (id == NULL) {
-        // $$mp: Should become a descriptive error code (invalid handle).
-        return -1;
+	// $$mp: Should become a descriptive error code (invalid handle).
+	return -1;
     }
     portMixer = (PortMixer*) id;
     if (portIndex < 0 || portIndex >= portMixer->numElems) {
-        // $$mp: Should become a descriptive error code (index out of bounds).
-        return -1;
+	// $$mp: Should become a descriptive error code (index out of bounds).
+	return -1;
     }
     type = portMixer->types[portIndex];
     TRACE0("< PORT_GetPortType\n");
@@ -301,13 +301,13 @@ INT32 PORT_GetPortName(void* id, INT32 portIndex, char* name, INT32 len) {
 
     TRACE0("> PORT_GetPortName\n");
     if (id == NULL) {
-        // $$mp: Should become a descriptive error code (invalid handle).
-        return -1;
+	// $$mp: Should become a descriptive error code (invalid handle).
+	return -1;
     }
     portMixer = (PortMixer*) id;
     if (portIndex < 0 || portIndex >= portMixer->numElems) {
-        // $$mp: Should become a descriptive error code (index out of bounds).
-        return -1;
+	// $$mp: Should become a descriptive error code (index out of bounds).
+	return -1;
     }
     nam = snd_mixer_selem_get_name(portMixer->elems[portIndex]);
     strncpy(name, nam, len - 1);
@@ -318,7 +318,7 @@ INT32 PORT_GetPortName(void* id, INT32 portIndex, char* name, INT32 len) {
 
 
 static int isPlaybackFunction(INT32 portType) {
-        return (portType & PORT_DST_MASK);
+	return (portType & PORT_DST_MASK);
 }
 
 
@@ -327,11 +327,11 @@ static int isPlaybackFunction(INT32 portType) {
    free slot. In this case, portControl is not altered */
 static int getControlSlot(PortMixer* portMixer, PortControl** portControl) {
     if (portMixer->numControls >= MAX_CONTROLS) {
-        return FALSE;
+	return FALSE;
     } else {
-        *portControl = &(portMixer->controls[portMixer->numControls]);
-        portMixer->numControls++;
-        return TRUE;
+	*portControl = &(portMixer->controls[portMixer->numControls]);
+	portMixer->numControls++;
+	return TRUE;
     }
 }
 
@@ -340,9 +340,9 @@ static int getControlSlot(PortMixer* portMixer, PortControl** portControl) {
  */
 inline static long getRange(long min, long max) {
     if (max > min) {
-        return max - min;
+	return max - min;
     } else {
-        return 1;
+	return 1;
     }
 }
 
@@ -351,16 +351,16 @@ inline static long getRange(long min, long max) {
    the values are logarithmic.
 */
 static void* createVolumeControl(PortControlCreator* creator,
-                                 PortControl* portControl,
-                                 snd_mixer_elem_t* elem, int isPlayback) {
+				 PortControl* portControl,
+				 snd_mixer_elem_t* elem, int isPlayback) {
     void* control;
     float precision;
     long min, max;
 
     if (isPlayback) {
-        snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
+	snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
     } else {
-        snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
+	snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
     }
     /* $$mp: The volume values retrieved with the ALSA API are strongly supposed to be logarithmic.
        So the following calculation is wrong. However, there is no correct calculation, since
@@ -388,97 +388,97 @@ void PORT_GetControls(void* id, INT32 portIndex, PortControlCreator* creator) {
 
     TRACE0("> PORT_GetControls\n");
     if (id == NULL) {
-        ERROR0("Invalid handle!");
-        // $$mp: an error code should be returned.
-        return;
+	ERROR0("Invalid handle!");
+	// $$mp: an error code should be returned.
+	return;
     }
     portMixer = (PortMixer*) id;
     if (portIndex < 0 || portIndex >= portMixer->numElems) {
-        ERROR0("Port index out of range!");
-        // $$mp: an error code should be returned.
-        return;
+	ERROR0("Port index out of range!");
+	// $$mp: an error code should be returned.
+	return;
     }
     numControls = 0;
     elem = portMixer->elems[portIndex];
     if (snd_mixer_selem_has_playback_volume(elem) || snd_mixer_selem_has_capture_volume(elem)) {
-        /* Since we've splitted/duplicated elements with both playback and capture on the recovery
-           of elements, we now can assume that we handle only to deal with either playback or
-           capture. */
-        isPlayback = isPlaybackFunction(portMixer->types[portIndex]);
-        isMono = (isPlayback && snd_mixer_selem_is_playback_mono(elem)) ||
-            (!isPlayback && snd_mixer_selem_is_capture_mono(elem));
-        isStereo = (isPlayback &&
-                    snd_mixer_selem_has_playback_channel(elem, SND_MIXER_SCHN_FRONT_LEFT) &&
-                    snd_mixer_selem_has_playback_channel(elem, SND_MIXER_SCHN_FRONT_RIGHT)) ||
-            (!isPlayback &&
-             snd_mixer_selem_has_capture_channel(elem, SND_MIXER_SCHN_FRONT_LEFT) &&
-             snd_mixer_selem_has_capture_channel(elem, SND_MIXER_SCHN_FRONT_RIGHT));
-        // single volume control
-        if (isMono || isStereo) {
-            if (getControlSlot(portMixer, &portControl)) {
-                portControl->elem = elem;
-                portControl->portType = portMixer->types[portIndex];
-                portControl->controlType = CONTROL_TYPE_VOLUME;
-                if (isMono) {
-                    portControl->channel = CHANNELS_MONO;
-                } else {
-                    portControl->channel = CHANNELS_STEREO;
-                }
-                control = createVolumeControl(creator, portControl, elem, isPlayback);
-                if (control != NULL) {
-                    controls[numControls++] = control;
-                }
-            }
-        } else { // more than two channels, each channels has its own control.
-            for (channel = SND_MIXER_SCHN_FRONT_LEFT; channel <= SND_MIXER_SCHN_LAST; channel++) {
-                if (isPlayback && snd_mixer_selem_has_playback_channel(elem, channel) ||
-                    !isPlayback && snd_mixer_selem_has_capture_channel(elem, channel)) {
-                    if (getControlSlot(portMixer, &portControl)) {
-                        portControl->elem = elem;
-                        portControl->portType = portMixer->types[portIndex];
-                        portControl->controlType = CONTROL_TYPE_VOLUME;
-                        portControl->channel = channel;
-                        control = createVolumeControl(creator, portControl, elem, isPlayback);
-                        // We wrap in a compound control to provide the channel name.
-                        if (control != NULL) {
-                            /* $$mp 2003-09-14: The following cast shouln't be necessary. Instead, the
-                               declaration of PORT_NewCompoundControlPtr in Ports.h should be changed
-                               to take a const char* parameter. */
-                            control = (creator->newCompoundControl)(creator, (char*) snd_mixer_selem_channel_name(channel), &control, 1);
-                        }
-                        if (control != NULL) {
-                            controls[numControls++] = control;
-                        }
-                    }
-                }
-            }
-        }
-        // BALANCE control
-        if (isStereo) {
-            if (getControlSlot(portMixer, &portControl)) {
-                portControl->elem = elem;
-                portControl->portType = portMixer->types[portIndex];
-                portControl->controlType = CONTROL_TYPE_BALANCE;
-                portControl->channel = CHANNELS_STEREO;
-                /* $$mp: The value for precision is chosen more or less arbitrarily. */
-                control = (creator->newFloatControl)(creator, portControl, CONTROL_TYPE_BALANCE, -1.0F, 1.0F, 0.01F, "");
-                if (control != NULL) {
-                    controls[numControls++] = control;
-                }
-            }
-        }
+	/* Since we've splitted/duplicated elements with both playback and capture on the recovery
+	   of elements, we now can assume that we handle only to deal with either playback or
+	   capture. */
+	isPlayback = isPlaybackFunction(portMixer->types[portIndex]);
+	isMono = (isPlayback && snd_mixer_selem_is_playback_mono(elem)) ||
+	    (!isPlayback && snd_mixer_selem_is_capture_mono(elem));
+	isStereo = (isPlayback &&
+		    snd_mixer_selem_has_playback_channel(elem, SND_MIXER_SCHN_FRONT_LEFT) &&
+		    snd_mixer_selem_has_playback_channel(elem, SND_MIXER_SCHN_FRONT_RIGHT)) ||
+	    (!isPlayback &&
+	     snd_mixer_selem_has_capture_channel(elem, SND_MIXER_SCHN_FRONT_LEFT) &&
+	     snd_mixer_selem_has_capture_channel(elem, SND_MIXER_SCHN_FRONT_RIGHT));
+	// single volume control
+	if (isMono || isStereo) {
+	    if (getControlSlot(portMixer, &portControl)) {
+		portControl->elem = elem;
+		portControl->portType = portMixer->types[portIndex];
+		portControl->controlType = CONTROL_TYPE_VOLUME;
+		if (isMono) {
+		    portControl->channel = CHANNELS_MONO;
+		} else {
+		    portControl->channel = CHANNELS_STEREO;
+		}
+		control = createVolumeControl(creator, portControl, elem, isPlayback);
+		if (control != NULL) {
+		    controls[numControls++] = control;
+		}
+	    }
+	} else { // more than two channels, each channels has its own control.
+	    for (channel = SND_MIXER_SCHN_FRONT_LEFT; channel <= SND_MIXER_SCHN_LAST; channel++) {
+		if (isPlayback && snd_mixer_selem_has_playback_channel(elem, channel) ||
+		    !isPlayback && snd_mixer_selem_has_capture_channel(elem, channel)) {
+		    if (getControlSlot(portMixer, &portControl)) {
+			portControl->elem = elem;
+			portControl->portType = portMixer->types[portIndex];
+			portControl->controlType = CONTROL_TYPE_VOLUME;
+			portControl->channel = channel;
+			control = createVolumeControl(creator, portControl, elem, isPlayback);
+			// We wrap in a compound control to provide the channel name.
+			if (control != NULL) {
+			    /* $$mp 2003-09-14: The following cast shouln't be necessary. Instead, the
+			       declaration of PORT_NewCompoundControlPtr in Ports.h should be changed
+			       to take a const char* parameter. */
+			    control = (creator->newCompoundControl)(creator, (char*) snd_mixer_selem_channel_name(channel), &control, 1);
+			}
+			if (control != NULL) {
+			    controls[numControls++] = control;
+			}
+		    }
+		}
+	    }
+	}
+	// BALANCE control
+	if (isStereo) {
+	    if (getControlSlot(portMixer, &portControl)) {
+		portControl->elem = elem;
+		portControl->portType = portMixer->types[portIndex];
+		portControl->controlType = CONTROL_TYPE_BALANCE;
+		portControl->channel = CHANNELS_STEREO;
+		/* $$mp: The value for precision is chosen more or less arbitrarily. */
+		control = (creator->newFloatControl)(creator, portControl, CONTROL_TYPE_BALANCE, -1.0F, 1.0F, 0.01F, "");
+		if (control != NULL) {
+		    controls[numControls++] = control;
+		}
+	    }
+	}
     }
     if (snd_mixer_selem_has_playback_switch(elem) || snd_mixer_selem_has_capture_switch(elem)) {
-        if (getControlSlot(portMixer, &portControl)) {
-            type = isPlayback ? CONTROL_TYPE_MUTE : CONTROL_TYPE_SELECT;
-            portControl->elem = elem;
-            portControl->portType = portMixer->types[portIndex];
-            portControl->controlType = type;
-            control = (creator->newBooleanControl)(creator, portControl, type);
-            if (control != NULL) {
-                controls[numControls++] = control;
-            }
-        }
+	if (getControlSlot(portMixer, &portControl)) {
+	    type = isPlayback ? CONTROL_TYPE_MUTE : CONTROL_TYPE_SELECT;
+	    portControl->elem = elem;
+	    portControl->portType = portMixer->types[portIndex];
+	    portControl->controlType = type;
+	    control = (creator->newBooleanControl)(creator, portControl, type);
+	    if (control != NULL) {
+		controls[numControls++] = control;
+	    }
+	}
     }
     /* $$mp 2003-09-14: The following cast shouln't be necessary. Instead, the
        declaration of PORT_NewCompoundControlPtr in Ports.h should be changed
@@ -486,7 +486,7 @@ void PORT_GetControls(void* id, INT32 portIndex, PortControlCreator* creator) {
     portName = (char*) snd_mixer_selem_get_name(elem);
     control = (creator->newCompoundControl)(creator, portName, controls, numControls);
     if (control != NULL) {
-        (creator->addControl)(creator, control);
+	(creator->addControl)(creator, control);
     }
     TRACE0("< PORT_GetControls\n");
 }
@@ -498,32 +498,32 @@ INT32 PORT_GetIntValue(void* controlIDV) {
     snd_mixer_selem_channel_id_t channel;
 
     if (portControl != NULL) {
-        switch (portControl->channel) {
-        case CHANNELS_MONO:
-            channel = SND_MIXER_SCHN_MONO;
-            break;
+	switch (portControl->channel) {
+	case CHANNELS_MONO:
+	    channel = SND_MIXER_SCHN_MONO;
+	    break;
 
-        case CHANNELS_STEREO:
-            channel = SND_MIXER_SCHN_FRONT_LEFT;
-            break;
+	case CHANNELS_STEREO:
+	    channel = SND_MIXER_SCHN_FRONT_LEFT;
+	    break;
 
-        default:
-            channel = portControl->channel;
-        }
-        if (portControl->controlType == CONTROL_TYPE_MUTE ||
-            portControl->controlType == CONTROL_TYPE_SELECT) {
-            if (isPlaybackFunction(portControl->portType)) {
-                snd_mixer_selem_get_playback_switch(portControl->elem, channel, &value);
-            } else {
-                snd_mixer_selem_get_capture_switch(portControl->elem, channel, &value);
-            }
-            if (portControl->controlType == CONTROL_TYPE_MUTE) {
-                value = ! value;
-            }
-        } else {
-            ERROR1("PORT_GetIntValue(): inappropriate control type: %s\n",
-                   portControl->controlType);
-        }
+	default:
+	    channel = portControl->channel;
+	}
+	if (portControl->controlType == CONTROL_TYPE_MUTE ||
+	    portControl->controlType == CONTROL_TYPE_SELECT) {
+	    if (isPlaybackFunction(portControl->portType)) {
+		snd_mixer_selem_get_playback_switch(portControl->elem, channel, &value);
+	    } else {
+		snd_mixer_selem_get_capture_switch(portControl->elem, channel, &value);
+	    }
+	    if (portControl->controlType == CONTROL_TYPE_MUTE) {
+		value = ! value;
+	    }
+	} else {
+	    ERROR1("PORT_GetIntValue(): inappropriate control type: %s\n",
+		   portControl->controlType);
+	}
     }
     return (INT32) value;
 }
@@ -534,20 +534,20 @@ void PORT_SetIntValue(void* controlIDV, INT32 value) {
     snd_mixer_selem_channel_id_t channel;
 
     if (portControl != NULL) {
-        if (portControl->controlType == CONTROL_TYPE_MUTE) {
-            value = ! value;
-        }
-        if (portControl->controlType == CONTROL_TYPE_MUTE ||
-            portControl->controlType == CONTROL_TYPE_SELECT) {
-            if (isPlaybackFunction(portControl->portType)) {
-                snd_mixer_selem_set_playback_switch_all(portControl->elem, value);
-            } else {
-                snd_mixer_selem_set_capture_switch_all(portControl->elem, value);
-            }
-        } else {
-            ERROR1("PORT_SetIntValue(): inappropriate control type: %s\n",
-                   portControl->controlType);
-        }
+	if (portControl->controlType == CONTROL_TYPE_MUTE) {
+	    value = ! value;
+	}
+	if (portControl->controlType == CONTROL_TYPE_MUTE ||
+	    portControl->controlType == CONTROL_TYPE_SELECT) {
+	    if (isPlaybackFunction(portControl->portType)) {
+		snd_mixer_selem_set_playback_switch_all(portControl->elem, value);
+	    } else {
+		snd_mixer_selem_set_capture_switch_all(portControl->elem, value);
+	    }
+	} else {
+	    ERROR1("PORT_SetIntValue(): inappropriate control type: %s\n",
+		   portControl->controlType);
+	}
     }
 }
 
@@ -563,22 +563,22 @@ static long scaleVolumeValueToHardware(float value, long min, long max) {
 
 
 float getRealVolume(PortControl* portControl,
-                    snd_mixer_selem_channel_id_t channel) {
+		    snd_mixer_selem_channel_id_t channel) {
     float fValue;
     long lValue = 0;
     long min = 0;
     long max = 0;
 
     if (isPlaybackFunction(portControl->portType)) {
-        snd_mixer_selem_get_playback_volume_range(portControl->elem,
-                                                  &min, &max);
-        snd_mixer_selem_get_playback_volume(portControl->elem,
-                                            channel, &lValue);
+	snd_mixer_selem_get_playback_volume_range(portControl->elem,
+						  &min, &max);
+	snd_mixer_selem_get_playback_volume(portControl->elem,
+					    channel, &lValue);
     } else {
-        snd_mixer_selem_get_capture_volume_range(portControl->elem,
-                                                 &min, &max);
-        snd_mixer_selem_get_capture_volume(portControl->elem,
-                                           channel, &lValue);
+	snd_mixer_selem_get_capture_volume_range(portControl->elem,
+						 &min, &max);
+	snd_mixer_selem_get_capture_volume(portControl->elem,
+					   channel, &lValue);
     }
     fValue = scaleVolumeValueToNormalized(lValue, min, max);
     return fValue;
@@ -586,23 +586,23 @@ float getRealVolume(PortControl* portControl,
 
 
 void setRealVolume(PortControl* portControl,
-                   snd_mixer_selem_channel_id_t channel, float value) {
+		   snd_mixer_selem_channel_id_t channel, float value) {
     long lValue = 0;
     long min = 0;
     long max = 0;
 
     if (isPlaybackFunction(portControl->portType)) {
-        snd_mixer_selem_get_playback_volume_range(portControl->elem,
-                                                  &min, &max);
-        lValue = scaleVolumeValueToHardware(value, min, max);
-        snd_mixer_selem_set_playback_volume(portControl->elem,
-                                            channel, lValue);
+	snd_mixer_selem_get_playback_volume_range(portControl->elem,
+						  &min, &max);
+	lValue = scaleVolumeValueToHardware(value, min, max);
+	snd_mixer_selem_set_playback_volume(portControl->elem,
+					    channel, lValue);
     } else {
-        snd_mixer_selem_get_capture_volume_range(portControl->elem,
-                                                 &min, &max);
-        lValue = scaleVolumeValueToHardware(value, min, max);
-        snd_mixer_selem_set_capture_volume(portControl->elem,
-                                           channel, lValue);
+	snd_mixer_selem_get_capture_volume_range(portControl->elem,
+						 &min, &max);
+	lValue = scaleVolumeValueToHardware(value, min, max);
+	snd_mixer_selem_set_capture_volume(portControl->elem,
+					   channel, lValue);
     }
 }
 
@@ -614,10 +614,10 @@ static float getFakeBalance(PortControl* portControl) {
     volL = getRealVolume(portControl, SND_MIXER_SCHN_FRONT_LEFT);
     volR = getRealVolume(portControl, SND_MIXER_SCHN_FRONT_RIGHT);
     if (volL > volR) {
-        return -1.0f + (volR / volL);
+	return -1.0f + (volR / volL);
     }
     else if (volR > volL) {
-        return 1.0f - (volL / volR);
+	return 1.0f - (volL / volR);
     }
     return 0.0f;
 }
@@ -645,11 +645,11 @@ static void setFakeVolume(PortControl* portControl, float vol, float bal) {
     float volumeRight;
 
     if (bal < 0.0f) {
-        volumeLeft = vol;
-        volumeRight = vol * (bal + 1.0f);
+	volumeLeft = vol;
+	volumeRight = vol * (bal + 1.0f);
     } else {
-        volumeLeft = vol * (1.0f - bal);
-        volumeRight = vol;
+	volumeLeft = vol * (1.0f - bal);
+	volumeRight = vol;
     }
     setRealVolume(portControl, SND_MIXER_SCHN_FRONT_LEFT, volumeLeft);
     setRealVolume(portControl, SND_MIXER_SCHN_FRONT_RIGHT, volumeRight);
@@ -661,29 +661,29 @@ float PORT_GetFloatValue(void* controlIDV) {
     float value = 0.0F;
 
     if (portControl != NULL) {
-        if (portControl->controlType == CONTROL_TYPE_VOLUME) {
-            switch (portControl->channel) {
-            case CHANNELS_MONO:
-                value = getRealVolume(portControl, SND_MIXER_SCHN_MONO);
-                break;
+	if (portControl->controlType == CONTROL_TYPE_VOLUME) {
+	    switch (portControl->channel) {
+	    case CHANNELS_MONO:
+		value = getRealVolume(portControl, SND_MIXER_SCHN_MONO);
+		break;
 
-            case CHANNELS_STEREO:
-                value = getFakeVolume(portControl);
-                break;
+	    case CHANNELS_STEREO:
+		value = getFakeVolume(portControl);
+		break;
 
-            default:
-                value = getRealVolume(portControl, portControl->channel);
-            }
-        } else if (portControl->controlType == CONTROL_TYPE_BALANCE) {
-            if (portControl->channel == CHANNELS_STEREO) {
-                value = getFakeBalance(portControl);
-            } else {
-                ERROR0("PORT_GetFloatValue(): Balance only allowed for stereo channels!\n");
-            }
-        } else {
-            ERROR1("PORT_GetFloatValue(): inappropriate control type: %s!\n",
-                   portControl->controlType);
-        }
+	    default:
+		value = getRealVolume(portControl, portControl->channel);
+	    }
+	} else if (portControl->controlType == CONTROL_TYPE_BALANCE) {
+	    if (portControl->channel == CHANNELS_STEREO) {
+		value = getFakeBalance(portControl);
+	    } else {
+		ERROR0("PORT_GetFloatValue(): Balance only allowed for stereo channels!\n");
+	    }
+	} else {
+	    ERROR1("PORT_GetFloatValue(): inappropriate control type: %s!\n",
+		   portControl->controlType);
+	}
     }
     return value;
 }
@@ -693,29 +693,29 @@ void PORT_SetFloatValue(void* controlIDV, float value) {
     PortControl* portControl = (PortControl*) controlIDV;
 
     if (portControl != NULL) {
-        if (portControl->controlType == CONTROL_TYPE_VOLUME) {
-            switch (portControl->channel) {
-            case CHANNELS_MONO:
-                setRealVolume(portControl, SND_MIXER_SCHN_MONO, value);
-                break;
+	if (portControl->controlType == CONTROL_TYPE_VOLUME) {
+	    switch (portControl->channel) {
+	    case CHANNELS_MONO:
+		setRealVolume(portControl, SND_MIXER_SCHN_MONO, value);
+		break;
 
-            case CHANNELS_STEREO:
-                setFakeVolume(portControl, value, getFakeBalance(portControl));
-                break;
+	    case CHANNELS_STEREO:
+		setFakeVolume(portControl, value, getFakeBalance(portControl));
+		break;
 
-            default:
-                setRealVolume(portControl, portControl->channel, value);
-            }
-        } else if (portControl->controlType == CONTROL_TYPE_BALANCE) {
-            if (portControl->channel == CHANNELS_STEREO) {
-                setFakeVolume(portControl, getFakeVolume(portControl), value);
-            } else {
-                ERROR0("PORT_SetFloatValue(): Balance only allowed for stereo channels!\n");
-            }
-        } else {
-            ERROR1("PORT_SetFloatValue(): inappropriate control type: %s!\n",
-                   portControl->controlType);
-        }
+	    default:
+		setRealVolume(portControl, portControl->channel, value);
+	    }
+	} else if (portControl->controlType == CONTROL_TYPE_BALANCE) {
+	    if (portControl->channel == CHANNELS_STEREO) {
+		setFakeVolume(portControl, getFakeVolume(portControl), value);
+	    } else {
+		ERROR0("PORT_SetFloatValue(): Balance only allowed for stereo channels!\n");
+	    }
+	} else {
+	    ERROR1("PORT_SetFloatValue(): inappropriate control type: %s!\n",
+		   portControl->controlType);
+	}
     }
 }
 

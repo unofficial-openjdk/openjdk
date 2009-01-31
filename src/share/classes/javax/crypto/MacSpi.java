@@ -66,8 +66,8 @@ public abstract class MacSpi {
      * parameters are inappropriate for this MAC.
      */
     protected abstract void engineInit(Key key,
-                                       AlgorithmParameterSpec params)
-        throws InvalidKeyException, InvalidAlgorithmParameterException ;
+				       AlgorithmParameterSpec params)
+	throws InvalidKeyException, InvalidAlgorithmParameterException ;
 
     /**
      * Processes the given byte.
@@ -99,26 +99,26 @@ public abstract class MacSpi {
      * @since 1.5
      */
     protected void engineUpdate(ByteBuffer input) {
-        if (input.hasRemaining() == false) {
-            return;
-        }
-        if (input.hasArray()) {
-            byte[] b = input.array();
-            int ofs = input.arrayOffset();
-            int pos = input.position();
-            int lim = input.limit();
-            engineUpdate(b, ofs + pos, lim - pos);
-            input.position(lim);
-        } else {
-            int len = input.remaining();
-            byte[] b = new byte[CipherSpi.getTempArraySize(len)];
-            while (len > 0) {
-                int chunk = Math.min(len, b.length);
-                input.get(b, 0, chunk);
-                engineUpdate(b, 0, chunk);
-                len -= chunk;
-            }
-        }
+	if (input.hasRemaining() == false) {
+	    return;
+	}
+	if (input.hasArray()) {
+	    byte[] b = input.array();
+	    int ofs = input.arrayOffset();
+	    int pos = input.position();
+	    int lim = input.limit();
+	    engineUpdate(b, ofs + pos, lim - pos);
+	    input.position(lim);
+	} else {
+	    int len = input.remaining();
+	    byte[] b = new byte[CipherSpi.getTempArraySize(len)];
+	    while (len > 0) {
+		int chunk = Math.min(len, b.length);
+		input.get(b, 0, chunk);
+		engineUpdate(b, 0, chunk);
+		len -= chunk;
+	    }
+	}
     }
 
     /**
@@ -144,10 +144,10 @@ public abstract class MacSpi {
      * on an implementation that does not support <code>Cloneable</code>.
      */
     public Object clone() throws CloneNotSupportedException {
-        if (this instanceof Cloneable) {
-            return super.clone();
-        } else {
-            throw new CloneNotSupportedException();
-        }
+	if (this instanceof Cloneable) {
+	    return super.clone();
+	} else {
+	    throw new CloneNotSupportedException();
+	}
     }
 }

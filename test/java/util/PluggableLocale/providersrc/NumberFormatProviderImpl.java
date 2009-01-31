@@ -1,21 +1,21 @@
-/*
+/* 
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -56,35 +56,35 @@ public class NumberFormatProviderImpl extends NumberFormatProvider {
     static final int NUMBERSTYLE = 0;
     static final int CURRENCYSTYLE = 1;
     static final int PERCENTSTYLE = 2;
-
+    
     public Locale[] getAvailableLocales() {
-        return avail;
+	return avail;
     }
 
     public NumberFormat getCurrencyInstance(Locale locale) {
         for (int i = 0; i < avail.length; i ++) {
             if (Utils.supportsLocale(avail[i], locale)) {
-                String pattern =
-                    MessageFormat.format(patterns[CURRENCYSTYLE],
-                                         dialect[i],
-                                         dialect[i]);
-                DecimalFormat df = new DecimalFormat(pattern,
+                String pattern = 
+                    MessageFormat.format(patterns[CURRENCYSTYLE], 
+                                         dialect[i], 
+                                         dialect[i]); 
+	        DecimalFormat df = new DecimalFormat(pattern,
                     DecimalFormatSymbols.getInstance(locale));
                 adjustForCurrencyDefaultFractionDigits(df);
                 return df;
             }
         }
-        throw new IllegalArgumentException("locale is not supported: "+locale);
+        throw new IllegalArgumentException("locale is not supported: "+locale);    
     }
 
     public NumberFormat getIntegerInstance(Locale locale) {
         for (int i = 0; i < avail.length; i ++) {
             if (Utils.supportsLocale(avail[i], locale)) {
-                String pattern =
-                    MessageFormat.format(patterns[NUMBERSTYLE],
-                                         dialect[i],
-                                         dialect[i]);
-                DecimalFormat df = new DecimalFormat(pattern,
+                String pattern = 
+                    MessageFormat.format(patterns[NUMBERSTYLE], 
+                                         dialect[i], 
+                                         dialect[i]); 
+	        DecimalFormat df = new DecimalFormat(pattern,
                     DecimalFormatSymbols.getInstance(locale));
                 df.setMaximumFractionDigits(0);
                 df.setDecimalSeparatorAlwaysShown(false);
@@ -92,34 +92,34 @@ public class NumberFormatProviderImpl extends NumberFormatProvider {
                 return df;
             }
         }
-        throw new IllegalArgumentException("locale is not supported: "+locale);
+        throw new IllegalArgumentException("locale is not supported: "+locale);    
     }
 
     public NumberFormat getNumberInstance(Locale locale) {
         for (int i = 0; i < avail.length; i ++) {
             if (Utils.supportsLocale(avail[i], locale)) {
-                String pattern =
-                    MessageFormat.format(patterns[NUMBERSTYLE],
-                                         dialect[i],
-                                         dialect[i]);
-                return new DecimalFormat(pattern,
+                String pattern = 
+                    MessageFormat.format(patterns[NUMBERSTYLE], 
+                                         dialect[i], 
+                                         dialect[i]); 
+	        return new DecimalFormat(pattern,
                     DecimalFormatSymbols.getInstance(locale));
             }
         }
-        throw new IllegalArgumentException("locale is not supported: "+locale);
+        throw new IllegalArgumentException("locale is not supported: "+locale);    
     }
 
     public NumberFormat getPercentInstance(Locale locale) {
         for (int i = 0; i < avail.length; i ++) {
             if (Utils.supportsLocale(avail[i], locale)) {
-                String pattern =
-                    MessageFormat.format(patterns[PERCENTSTYLE],
-                                         dialect[i]);
-                return new DecimalFormat(pattern,
+                String pattern = 
+                    MessageFormat.format(patterns[PERCENTSTYLE], 
+                                         dialect[i]); 
+	        return new DecimalFormat(pattern,
                     DecimalFormatSymbols.getInstance(locale));
             }
         }
-        throw new IllegalArgumentException("locale is not supported: "+locale);
+        throw new IllegalArgumentException("locale is not supported: "+locale);    
     }
 
     /**

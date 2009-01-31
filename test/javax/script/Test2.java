@@ -31,28 +31,29 @@ import javax.script.*;
 import java.io.*;
 
 public class Test2 {
-        public static class Testobj {
-                private String val;
-                public Testobj(String s) {
-                        val = s;
-                }
-                public void setVal(String v) {
-                        val = v;
-                }
-                public String getVal() {
-                        return val;
-                }
-                public String toString() {
-                        return "Testobj containing " + val;
-                }
-        }
+	public static class Testobj {
+		private String val;
+		public Testobj(String s) {
+			val = s;
+		}
+		public void setVal(String v) {
+			val = v;
+		}
+		public String getVal() {
+			return val;
+		}
+		public String toString() {
+			return "Testobj containing " + val;
+		}
+	}
 
-        public static void main(String[] args) throws Exception {
-            System.out.println("\nTest2\n");
+	public static void main(String[] args) throws Exception {
+            System.out.println("\nTest2\n");	
             ScriptEngineManager m = new ScriptEngineManager();
-            ScriptEngine eng = m.getEngineByName("js");
+	    ScriptEngine eng = m.getEngineByName("js");
             eng.put("Testobj", new Testobj("Hello World"));
             eng.eval(new FileReader(
                     new File(System.getProperty("test.src", "."), "Test2.js")));
-        }
+    	}
 }
+

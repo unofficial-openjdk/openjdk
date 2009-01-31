@@ -1,4 +1,4 @@
-/* /nodynamiccopyright/ */  // DO NOT DELETE ANY LINES!!!!
+/* /nodynamiccopyright/ */  // DO NOT DELETE ANY LINES!!!! 
 //    THIS TEST IS LINE NUMBER SENSITIVE
 /**
  *  @test
@@ -25,14 +25,14 @@ class PopAndStepTarg {
         System.out.println("debuggee: in B");
         System.out.println("debuggee: in B, back to A");   // add line breakpoint here line 26 !!!
     }
-
+    
     public void A() {
         System.out.println("debuggee: in A, about to call B");  // line 30
         B();
         System.out.println("debuggee: in A, back from B");      // line 32
         throw new RuntimeException("debuggee: Got to line 33");
     }
-
+    
     public static void main(String[] args) {
         System.out.println("debuggee: Howdy!");      // line 37
         PopAndStepTarg xxx = new PopAndStepTarg();   // line 39
@@ -52,11 +52,11 @@ public class PopAndStepTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new PopAndStepTest(args).startTests();
     }
 
-
+  
     StackFrame frameFor(String methodName) throws Exception {
         Iterator it = mainThread.frames().iterator();
 
@@ -80,11 +80,11 @@ public class PopAndStepTest extends TestScaffold {
         Location loc = frame.location();
         int theLine = loc.lineNumber();
         if (expectedLine != theLine) {
-            failure("FAIL: Should be at " + expectedLine + ", are at " +
+            failure("FAIL: Should be at " + expectedLine + ", are at " + 
                     theLine + ", method = " + loc.method().name());
         } else {
             println("Should be at, and am at: " + expectedLine);
-        }
+        } 
         return theLine;
     }
 
@@ -92,7 +92,7 @@ public class PopAndStepTest extends TestScaffold {
     public void vmDied(VMDeathEvent event) {
         println("Got VMDeathEvent");
     }
-
+    
     public void vmDisconnected(VMDisconnectEvent event) {
         println("Got VMDisconnectEvent");
     }
@@ -101,7 +101,7 @@ public class PopAndStepTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         runOnce();
@@ -109,7 +109,7 @@ public class PopAndStepTest extends TestScaffold {
 
     void runOnce() throws Exception{
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("PopAndStepTarg");
@@ -119,7 +119,7 @@ public class PopAndStepTest extends TestScaffold {
 
         println("Resuming to line 26");
         bpe = resumeTo("PopAndStepTarg", 26); getDebuggeeLineNum(26);
-
+        
         // The failure is this:
         //   create step request
         //   enable step request
@@ -127,7 +127,7 @@ public class PopAndStepTest extends TestScaffold {
         //   do the step
         //   do another step - This step runs to completion
         EventRequestManager erm = eventRequestManager();
-        StepRequest srInto = erm.createStepRequest(mainThread, StepRequest.STEP_LINE,
+        StepRequest srInto = erm.createStepRequest(mainThread, StepRequest.STEP_LINE, 
                                                    StepRequest.STEP_INTO);
         srInto.addClassExclusionFilter("java.*");
         srInto.addClassExclusionFilter("sun.*");
@@ -147,7 +147,7 @@ public class PopAndStepTest extends TestScaffold {
         println("Stepping over to line 31");
         stepOverLine(mainThread);   // println
         getDebuggeeLineNum(31);
-
+            
         println("Stepping over to line 32");
         stepOverLine(mainThread);        // call to B()
         getDebuggeeLineNum(32);
@@ -156,7 +156,8 @@ public class PopAndStepTest extends TestScaffold {
 
         if (testFailed) {
             throw new Exception("PopAndStepTest failed");
-        }
+        } 
         println("Passed:");
     }
 }
+

@@ -48,10 +48,10 @@ class AwtMenuItem : public AwtObject {
 public:
     // id's for methods executed on toolkit thread
     enum {
-        MENUITEM_SETLABEL,
-        MENUITEM_ENABLE,
-        MENUITEM_SETSTATE,
-        MENUITEM_LAST
+	MENUITEM_SETLABEL,
+	MENUITEM_ENABLE,
+	MENUITEM_SETSTATE,
+	MENUITEM_LAST
     };
 
     /* java.awt.MenuComponent fields */
@@ -101,13 +101,13 @@ public:
     /* for multifont menuitem */
     INLINE jstring GetJavaString(JNIEnv *env) {
         if (env->EnsureLocalCapacity(2) < 0) {
-            return NULL;
-        }
-        jobject target = GetTarget(env);
-        jstring res = (jstring)env->GetObjectField(target,
-                                                   AwtMenuItem::labelID);
-        env->DeleteLocalRef(target);
-        return res;
+	    return NULL;
+	}
+	jobject target = GetTarget(env);
+	jstring res = (jstring)env->GetObjectField(target,
+						   AwtMenuItem::labelID);
+	env->DeleteLocalRef(target);
+	return res;
     }
 // Added by waleed for BIDI Support
     // returns the right to left status

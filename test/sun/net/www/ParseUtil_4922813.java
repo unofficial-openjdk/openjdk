@@ -41,9 +41,9 @@ public class ParseUtil_4922813 {
             String v117 = ParseUtil_V117.encodePath(source);
             if (!ec.equals(v117)) {
                 throw new RuntimeException("Test Failed for : \n"
-                                           + "   source  =<"
-                                           + getUnicodeString(source)
-                                           + ">");
+					   + "   source  =<" 
+					   + getUnicodeString(source)
+					   + ">");
             }
 
         }
@@ -53,10 +53,10 @@ public class ParseUtil_4922813 {
     static int maxCodePoint = 0x10ffff;
     static Random random;
     static String getTestSource() {
-        if (random == null) {
-            long seed = System.currentTimeMillis();
-            random = new Random(seed);
-        }
+	if (random == null) {
+	    long seed = System.currentTimeMillis();
+	    random = new Random(seed); 	    
+	}
         String source = "";
         int i = 0;
         int count = random.nextInt(maxCharCount) + 1;
@@ -77,7 +77,7 @@ public class ParseUtil_4922813 {
 
     static String getUnicodeString(String s){
         String unicodeString = "";
-        for(int j=0; j< s.length(); j++){
+        for(int j=0; j< s.length(); j++){              
              unicodeString += "0x"+ Integer.toString(s.charAt(j), 16);
         }
         return unicodeString;
@@ -131,7 +131,7 @@ class ParseUtil_V117 {
      */
     public static String encodePath(String path) {
         StringBuffer sb = new StringBuffer();
-        int n = path.length();
+	int n = path.length();
         for (int i=0; i<n; i++) {
             char c = path.charAt(i);
             if (c == File.separatorChar)
@@ -165,3 +165,5 @@ class ParseUtil_V117 {
         s.append(Character.forDigit(c & 0xF, 16));
     }
 }
+
+

@@ -28,13 +28,14 @@ import java.io.InputStream;
 import java.io.FilterInputStream;
 
 /**
- * PlainTextInputStream class extends the FilterInputStream class.
- * Currently all calls to the PlainTextInputStream object will call
- * the corresponding methods in the FilterInputStream class.  Hence
+ * PlainTextInputStream class extends the FilterInputStream class. 
+ * Currently all calls to the PlainTextInputStream object will call 
+ * the corresponding methods in the FilterInputStream class.  Hence 
  * for now its use is more semantic.
  *
  * @author Sunita Mani
- */
+ * @version %I%, %G%
+ */ 
 public class PlainTextInputStream extends FilterInputStream {
 
     /**
@@ -42,6 +43,6 @@ public class PlainTextInputStream extends FilterInputStream {
      * @param an InputStream
      */
     PlainTextInputStream(InputStream is) {
-        super(is);
+	super(is);
     }
 }

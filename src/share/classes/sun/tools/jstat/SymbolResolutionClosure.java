@@ -33,6 +33,7 @@ import sun.jvmstat.monitor.MonitorException;
  * all the symbols in the expressions contained in ColumnFormat objects.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class SymbolResolutionClosure implements Closure {

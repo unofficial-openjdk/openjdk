@@ -28,14 +28,14 @@
 #include "inStream.h"
 #include "outStream.h"
 
-static jboolean
+static jboolean 
 superclass(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
     jclass clazz;
-
+    
     env = getEnv();
-
+    
     clazz = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -44,12 +44,12 @@ superclass(PacketInputStream *in, PacketOutputStream *out)
     WITH_LOCAL_REFS(env, 1) {
 
         jclass superclass;
-
+        
         superclass = JNI_FUNC_PTR(env,GetSuperclass)(env,clazz);
         (void)outStream_writeObjectRef(env, out, superclass);
 
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
@@ -66,7 +66,7 @@ readStaticFieldValue(JNIEnv *env, PacketInputStream *in, jclass clazz,
             value.l = inStream_readObjectRef(env, in);
             JNI_FUNC_PTR(env,SetStaticObjectField)(env, clazz, field, value.l);
             break;
-
+        
         case JDWP_TAG(BYTE):
             value.b = inStream_readByte(in);
             JNI_FUNC_PTR(env,SetStaticByteField)(env, clazz, field, value.b);
@@ -111,19 +111,19 @@ readStaticFieldValue(JNIEnv *env, PacketInputStream *in, jclass clazz,
     if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
         serror = JDWP_ERROR(INTERNAL);
     }
-
+    
     return serror;
 }
 
-static jboolean
+static jboolean 
 setValues(PacketInputStream *in, PacketOutputStream *out)
 {
     JNIEnv *env;
     jint count;
     jclass clazz;
-
+    
     env = getEnv();
-
+    
     clazz = inStream_readClassRef(env, in);
     if (inStream_error(in)) {
         return JNI_TRUE;
@@ -136,14 +136,14 @@ setValues(PacketInputStream *in, PacketOutputStream *out)
     WITH_LOCAL_REFS(env, count) {
 
         int i;
-
+        
         for (i = 0; i < count; i++) {
-
+            
             jfieldID field;
             char *signature = NULL;
             jvmtiError error;
             jdwpError serror;
-
+            
             field = inStream_readFieldID(in);
             if (inStream_error(in)) {
                 break;
@@ -153,23 +153,23 @@ setValues(PacketInputStream *in, PacketOutputStream *out)
             if (error != JVMTI_ERROR_NONE) {
                 break;
             }
-
+            
             serror = readStaticFieldValue(env, in, clazz, field, signature);
-
+            
             jvmtiDeallocate(signature);
-
+            
             if ( serror != JDWP_ERROR(NONE) ) {
                 break;
             }
-
+            
         }
 
     } END_WITH_LOCAL_REFS(env);
-
+    
     return JNI_TRUE;
 }
 
-static jboolean
+static jboolean 
 invokeStatic(PacketInputStream *in, PacketOutputStream *out)
 {
     return sharedInvoke(in, out);
@@ -181,3 +181,4 @@ void *ClassType_Cmds[] = { (void *)0x4
     ,(void *)invokeStatic
     ,(void *)invokeStatic
 };
+

@@ -89,18 +89,18 @@ Java_sun_management_Flag_getFlags
     jobject origin;
     jobject valueObj;
     jobject flag;
-
+  
     if (flags == NULL) {
         JNU_ThrowNullPointerException(env, 0);
         return 0;
     }
-
+  
     if (count == 0) {
         JNU_ThrowIllegalArgumentException(env, 0);
         return 0;
     }
-
-    globals = (jmmVMGlobal*) malloc(count * sizeof(jmmVMGlobal));
+  
+    globals = (jmmVMGlobal*) malloc(count * sizeof(jmmVMGlobal));  
     if (globals == NULL) {
         JNU_ThrowOutOfMemoryError(env, 0);
         return 0;
@@ -111,7 +111,7 @@ Java_sun_management_Flag_getFlags
         free(globals);
         return 0;
     }
-
+  
     index = 0;
     for (i = 0; i < count; i++) {
         if (globals[i].name == NULL) {
@@ -119,7 +119,7 @@ Java_sun_management_Flag_getFlags
         }
         switch (globals[i].type) {
         case JMM_VMGLOBAL_TYPE_JBOOLEAN:
-            valueObj = JNU_NewObjectByName(env, "java/lang/Boolean", "(Z)V",
+            valueObj = JNU_NewObjectByName(env, "java/lang/Boolean", "(Z)V", 
                                            globals[i].value.z);
             break;
         case JMM_VMGLOBAL_TYPE_JSTRING:
@@ -132,7 +132,7 @@ Java_sun_management_Flag_getFlags
         default:
             // unsupported type
             sprintf(errmsg, "Unsupported VMGlobal Type %d", globals[i].type);
-            JNU_ThrowInternalError(env, errmsg);
+            JNU_ThrowInternalError(env, errmsg); 
             free(globals);
             return 0;
         }
@@ -163,8 +163,8 @@ Java_sun_management_Flag_getFlags
             origin = other_origin;
             break;
         }
-        flag = JNU_NewObjectByName(env, class_name, signature, globals[i].name,
-                                   valueObj, globals[i].writeable,
+        flag = JNU_NewObjectByName(env, class_name, signature, globals[i].name, 
+                                   valueObj, globals[i].writeable, 
                                    globals[i].external, origin);
         if (flag == NULL) {
             free(globals);

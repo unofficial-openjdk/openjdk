@@ -53,15 +53,15 @@ D3DUtils_FindDepthBufferFormat(IDirect3D7 *d3dObject,
 HRESULT
 D3DUtils_FindMaskTileTextureFormat(IDirect3DDevice7 *d3dDevice,
                                    DDPIXELFORMAT* pddpf);
-void
-D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice,
+void 
+D3DUtils_SetupTextureFormats(IDirect3DDevice7 *d3dDevice, 
                              D3DTextureTable &table);
 
 // - Utility funcions for working with matricies ---------------------
-void
+void 
 D3DUtils_SetIdentityMatrix(D3DMATRIX *m, BOOL adjust = TRUE);
 
-void
+void 
 D3DUtils_SetOrthoMatrixOffCenterLH(D3DMATRIX *m,
                                    float width, float height);
 DDrawSurface *
@@ -90,7 +90,7 @@ D3DUtils_CheckDepthCaps(LPD3DDEVICEDESC7 lpDesc7);
 HRESULT
 D3DUtils_CheckTextureCaps(LPD3DDEVICEDESC7 lpDesc7);
 
-HRESULT
+HRESULT 
 D3DUtils_CheckDeviceCaps(LPD3DDEVICEDESC7 lpDesc7);
 
 // - Utility macros error handling of d3d operations -----------------
@@ -107,7 +107,7 @@ D3DUtils_CheckDeviceCaps(LPD3DDEVICEDESC7 lpDesc7);
 #else /* NO_D3D_CHECKING */
 
 #ifndef MAX_BUSY_ATTEMPTS
-  #define MAX_BUSY_ATTEMPTS 50  // Arbitrary number of times to attempt
+  #define MAX_BUSY_ATTEMPTS 50	// Arbitrary number of times to attempt
 #endif
 
 

@@ -23,8 +23,8 @@
 
 /**
  * @test
- * @bug 4637504 4653814
- * @summary Destroy should close stderr, stdout and stdin
+ * @bug 4637504 4653814 
+ * @summary Destroy should close stderr, stdout and stdin 
  * @author kladko
  */
 
@@ -36,7 +36,7 @@ public class LotsOfDestroys {
 
     public static void main(String[] args) throws Exception {
         if (File.separatorChar == '\\' ||                // Windows
-                                !new File(ECHO).exists()) // no echo
+                                !new File(ECHO).exists()) // no echo 
             return;
 
         for (int i = 0; i<= RUNS; i++) {
@@ -45,3 +45,5 @@ public class LotsOfDestroys {
         }
     }
 }
+
+

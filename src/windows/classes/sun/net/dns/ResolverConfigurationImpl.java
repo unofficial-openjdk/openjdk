@@ -47,7 +47,7 @@ public class ResolverConfigurationImpl
     private static boolean changed = false;
 
     // Time of last refresh.
-    private static long lastRefresh = -1;
+    private static long lastRefresh = -1;    
 
     // Cache timeout (120 seconds) - should be converted into property
     // or configured as preference in the future.
@@ -64,109 +64,109 @@ public class ResolverConfigurationImpl
     // Parse string that consists of token delimited by space or commas
     // and return LinkedHashMap
     private LinkedList stringToList(String str) {
-        LinkedList ll = new LinkedList();
+	LinkedList ll = new LinkedList();
 
-        // comma and space are valid delimites
-        StringTokenizer st = new StringTokenizer(str, ", ");
-        while (st.hasMoreTokens()) {
-            String s = st.nextToken();
-            if (!ll.contains(s)) {
-                ll.add(s);
-            }
-        }
-        return ll;
+	// comma and space are valid delimites
+	StringTokenizer st = new StringTokenizer(str, ", ");
+	while (st.hasMoreTokens()) {
+	    String s = st.nextToken();
+	    if (!ll.contains(s)) {
+		ll.add(s);
+	    }
+	}
+	return ll;
     }
 
     // Load DNS configuration from OS
 
     private void loadConfig() {
-        assert Thread.holdsLock(lock);
+	assert Thread.holdsLock(lock);
 
-        // if address have changed then DNS probably changed aswell;
-        // otherwise check if cached settings have expired.
-        //
-        if (changed) {
-            changed = false;
-        } else {
-            if (lastRefresh >= 0) {
-                long currTime = System.currentTimeMillis();
-                if ((currTime - lastRefresh) < TIMEOUT) {
-                    return;
-                }
-            }
-        }
+	// if address have changed then DNS probably changed aswell;
+	// otherwise check if cached settings have expired.
+	//
+	if (changed) {
+	    changed = false;
+	} else {
+	    if (lastRefresh >= 0) {
+		long currTime = System.currentTimeMillis();
+		if ((currTime - lastRefresh) < TIMEOUT) {
+		    return;
+		}
+	    }
+	}
 
-        // load DNS configuration, update timestamp, create
-        // new HashMaps from the loaded configuration
-        //
-        loadDNSconfig0();
+	// load DNS configuration, update timestamp, create
+	// new HashMaps from the loaded configuration
+	//
+	loadDNSconfig0();
 
-        lastRefresh = System.currentTimeMillis();
-        searchlist = stringToList(os_searchlist);
-        nameservers = stringToList(os_nameservers);
-        os_searchlist = null;                       // can be GC'ed
-        os_nameservers = null;
+	lastRefresh = System.currentTimeMillis();
+	searchlist = stringToList(os_searchlist);
+	nameservers = stringToList(os_nameservers);
+	os_searchlist = null;			    // can be GC'ed
+	os_nameservers = null;
     }
 
     ResolverConfigurationImpl() {
-        opts = new OptionsImpl();
+	opts = new OptionsImpl();
     }
 
     public List searchlist() {
-        synchronized (lock) {
-            loadConfig();
+	synchronized (lock) {
+	    loadConfig();
 
-            // List is mutable so return a shallow copy
-            return (List)searchlist.clone();
-        }
+	    // List is mutable so return a shallow copy
+	    return (List)searchlist.clone();
+	}
     }
 
     public List nameservers() {
-        synchronized (lock) {
-            loadConfig();
+	synchronized (lock) {
+	    loadConfig();
 
-            // List is mutable so return a shallow copy
-            return (List)nameservers.clone();
-         }
+	    // List is mutable so return a shallow copy
+	    return (List)nameservers.clone();
+	 }
     }
 
     public Options options() {
-        return opts;
+	return opts;
     }
 
-    // --- Address Change Listener
+    // --- Address Change Listener 
 
     static class AddressChangeListener extends Thread {
-        public void run() {
-            for (;;) {
-                // wait for configuration to change
-                if (notifyAddrChange0() != 0)
-                    return;
-                synchronized (lock) {
-                    changed = true;
-                }
-            }
-        }
+	public void run() {
+	    for (;;) {
+		// wait for configuration to change
+		if (notifyAddrChange0() != 0)
+		    return;	
+		synchronized (lock) {
+		    changed = true;
+		}
+	    }
+	}
     }
 
 
     // --- Native methods --
 
     static native void init0();
-
+   
     static native void loadDNSconfig0();
 
     static native int notifyAddrChange0();
 
     static {
-        java.security.AccessController.doPrivileged(
-            new sun.security.action.LoadLibraryAction("net"));
-        init0();
+	java.security.AccessController.doPrivileged(
+	    new sun.security.action.LoadLibraryAction("net"));
+	init0();
 
-        // start the address listener thread
-        AddressChangeListener thr = new AddressChangeListener();
-        thr.setDaemon(true);
-        thr.start();
+	// start the address listener thread
+	AddressChangeListener thr = new AddressChangeListener();
+	thr.setDaemon(true);	
+	thr.start();
     }
 }
 

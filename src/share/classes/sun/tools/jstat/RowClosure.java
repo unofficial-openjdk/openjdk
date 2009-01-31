@@ -34,6 +34,7 @@ import sun.jvmstat.monitor.*;
  * data representing a row of output for the form.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class RowClosure implements Closure {

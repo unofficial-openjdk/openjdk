@@ -24,7 +24,7 @@
 /*
  *
  *
- * Unit test for Instrumentation appendToBootstrapClassLoaderSearch method.
+ * Unit test for Instrumentation appendToBootstrapClassLoaderSearch method. 
  * The test works as follows:
  *
  * 1. Load class "Application" and execute the doSomething() method
@@ -36,7 +36,7 @@
  *    version of doSomething() that invokes a method in org.tools.Tracer.
  *
  * 4. Re-execute doSomething() - this should provoke the loading of org.tools.Tracer
- *    from the jar file. If updated version of doSomething() executes then test
+ *    from the jar file. If updated version of doSomething() executes then test 
  *    passes.
  */
 import java.lang.instrument.*;
@@ -47,38 +47,38 @@ public class DynamicTest {
 
     public static void main(String args[]) throws Exception {
 
-        // Load Application
-        Application app = new Application();
-        if (app.doSomething() != 1) {
-            throw new RuntimeException("Test configuration error - doSomething should return 1");
-        }
+	// Load Application
+	Application app = new Application();
+	if (app.doSomething() != 1) {
+	    throw new RuntimeException("Test configuration error - doSomething should return 1");
+	}
 
-        // Add org.tools.Tracer package to the boot class path
-        JarFile jf = new JarFile("Tracer.jar");
-        Agent.getInstrumentation().appendToBootstrapClassLoaderSearch(jf);
+	// Add org.tools.Tracer package to the boot class path
+	JarFile jf = new JarFile("Tracer.jar");
+	Agent.getInstrumentation().appendToBootstrapClassLoaderSearch(jf);
 
-        // Redefine Application with the instrumented version
-        File f = new File("InstrumentedApplication.bytes");
-        int len = (int)f.length();
-        byte[] def = new byte[len];
+	// Redefine Application with the instrumented version
+	File f = new File("InstrumentedApplication.bytes");
+	int len = (int)f.length();
+	byte[] def = new byte[len];
 
-        FileInputStream fis = new FileInputStream(f);
-        int nread = 0;
-        do {
-            int n = fis.read(def, nread, len-nread);
-            if (n > 0) {
-                nread += n;
-            }
-        } while (nread < len);
+	FileInputStream fis = new FileInputStream(f);
+	int nread = 0;
+	do {
+	    int n = fis.read(def, nread, len-nread);
+	    if (n > 0) {
+		nread += n;
+	    }
+	} while (nread < len);
 
-        ClassDefinition classDefs = new ClassDefinition(Application.class, def);
-        Agent.getInstrumentation().redefineClasses(new ClassDefinition[] { classDefs } );
+	ClassDefinition classDefs = new ClassDefinition(Application.class, def);
+	Agent.getInstrumentation().redefineClasses(new ClassDefinition[] { classDefs } );
 
-        // Re-execute doSomething() - should get 3 messages printed
-        int res = app.doSomething();
-        if (res != 3) {
-            throw new RuntimeException("FAIL: redefined Application returned: " + res);
-        }
-        System.out.println("PASS: Test passed.");
+	// Re-execute doSomething() - should get 3 messages printed
+	int res = app.doSomething();
+	if (res != 3) {
+	    throw new RuntimeException("FAIL: redefined Application returned: " + res);
+	}
+	System.out.println("PASS: Test passed.");
     }
 }

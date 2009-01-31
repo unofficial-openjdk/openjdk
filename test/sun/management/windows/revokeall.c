@@ -27,13 +27,13 @@
 #include <string.h>
 
 /*
- * Simple Windows utility to remove all non-owner access to a given
+ * Simple Windows utility to remove all non-owner access to a given 
  * file - suitable for NT/2000/XP only.
  */
 
 
 /*
- * Access mask to represent any file access
+ * Access mask to represent any file access 
  */
 #define ANY_ACCESS (FILE_GENERIC_READ | FILE_GENERIC_WRITE | FILE_GENERIC_EXECUTE)
 
@@ -51,22 +51,22 @@ static void printLastError(const char* msg) {
 
     errval = GetLastError();
     if (errval != 0) {
-        int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
-                              NULL, errval,
-                              0, buf, len, NULL);
-        if (n > 3) {
-            /* Drop final '.', CR, LF */
-            if (buf[n - 1] == '\n') n--;
-            if (buf[n - 1] == '\r') n--;
-            if (buf[n - 1] == '.') n--;
-            buf[n] = '\0';
-        }
-    }
+	int n = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
+			      NULL, errval,
+			      0, buf, len, NULL);
+	if (n > 3) {
+	    /* Drop final '.', CR, LF */
+	    if (buf[n - 1] == '\n') n--;
+	    if (buf[n - 1] == '\r') n--;
+	    if (buf[n - 1] == '.') n--;
+	    buf[n] = '\0';
+	}
+    }    
 
     if (strlen(buf) > 0) {
-        fprintf(stderr, "revokeall %s: %s\n", msg, buf);
+	fprintf(stderr, "revokeall %s: %s\n", msg, buf);
     } else {
-        fprintf(stderr, "revokeall %s\n", msg);
+	fprintf(stderr, "revokeall %s\n", msg);
     }
 }
 
@@ -83,7 +83,7 @@ static char *getTextualSid(SID* sid) {
     DWORD len;
     char* name;
 
-    /*
+    /* 
      * Get the identifier authority and the number of sub-authorities
      */
     sia = GetSidIdentifierAuthority(sid);
@@ -96,13 +96,13 @@ static char *getTextualSid(SID* sid) {
     len=(15 + 12 + (12 * count) + 1) * sizeof(char);
     name = (char*)malloc(len);
     if (name == NULL) {
-        return NULL;
+	return NULL;
     }
 
     // S-SID_REVISION
     sprintf(name, "S-%lu-", SID_REVISION );
 
-    // Identifier authority
+    // Identifier authority 
     if ((sia->Value[0] != 0) || (sia->Value[1] != 0))
     {
         sprintf(name + strlen(name), "0x%02hx%02hx%02hx%02hx%02hx%02hx",
@@ -122,7 +122,7 @@ static char *getTextualSid(SID* sid) {
                 (ULONG)(sia->Value[2] << 24)   );
     }
 
-    // finally, the sub-authorities
+    // finally, the sub-authorities 
     for (i=0 ; i<count; i++) {
         sprintf(name + strlen(name), "-%lu",
                 *GetSidSubAuthority(sid, i) );
@@ -132,10 +132,10 @@ static char *getTextualSid(SID* sid) {
 }
 
 /*
- * Returns a string to represent the given security identifier (SID).
+ * Returns a string to represent the given security identifier (SID). 
  * If the account is known to the local computer then the account
  * domain is returned. The format will be \\name or domain\\name depending
- * on if the computer belongs to a domain.
+ * on if the computer belongs to a domain. 
  * If the account name is not known then the textual representation of
  * SID is returned -- eg: S-1-5-21-2818032319-470147023-1036452850-13037.
  */
@@ -145,22 +145,22 @@ static char *getSIDString(SID* sid) {
     DWORD domainLen = sizeof(domain);
     DWORD nameLen = sizeof(name);
     SID_NAME_USE use;
-
+   
     if(!IsValidSid(sid)) {
-        return strdup("<Invalid SID>");
+	return strdup("<Invalid SID>");
     }
 
-    if (LookupAccountSid(NULL, sid, name, &nameLen, domain, &domainLen, &use)) {
-        int len = strlen(name) + strlen(domain) + 3;
-        char* s = (char*)malloc(len);
-        if (s != NULL) {
-            strcpy(s, domain);
-            strcat(s, "\\\\");
-            strcat(s, name);
-        }
-        return s;
+    if (LookupAccountSid(NULL, sid, name, &nameLen, domain, &domainLen, &use)) { 
+	int len = strlen(name) + strlen(domain) + 3;
+	char* s = (char*)malloc(len);
+	if (s != NULL) {
+	    strcpy(s, domain);
+	    strcat(s, "\\\\");
+	    strcat(s, name);
+	}
+	return s;
     } else {
-        return getTextualSid(sid);
+	return getTextualSid(sid);
     }
 }
 
@@ -185,52 +185,52 @@ static int isSecuritySupported(const char* path) {
      */
     root = strdup(path);
     if (*root == '\\') {
-        /*
-         * \\server\share\file ==> \\server\share\
-         */
-        int slashskip = 3;
-        p = root;
-        while ((*p == '\\') && (slashskip > 0)) {
-            char* p2;
-            p++;
-            p2 = strchr(p, '\\');
-            if ((p2 == NULL) || (*p2 != '\\')) {
-                free(root);
-                fprintf(stderr, "Malformed UNC");
-                return -1;
-            }
-            p = p2;
-            slashskip--;
-        }
-        if (slashskip != 0) {
-            free(root);
-            fprintf(stderr, "Malformed UNC");
-            return -1;
-        }
-        p++;
-        *p = '\0';
+	/*
+	 * \\server\share\file ==> \\server\share\	 
+	 */
+	int slashskip = 3;
+	p = root;		   
+	while ((*p == '\\') && (slashskip > 0)) {
+	    char* p2;
+	    p++;
+	    p2 = strchr(p, '\\');
+	    if ((p2 == NULL) || (*p2 != '\\')) {
+		free(root);
+		fprintf(stderr, "Malformed UNC");
+		return -1;
+	    }
+	    p = p2;
+	    slashskip--;
+	}
+	if (slashskip != 0) {
+	    free(root);
+	    fprintf(stderr, "Malformed UNC");
+	    return -1;
+	}
+	p++;
+	*p = '\0';
 
     } else {
-        p = strchr(root, '\\');
+	p = strchr(root, '\\');
 
-        /*
-         * Relative path so use current directory
-         */
-        if (p == NULL) {
-            free(root);
-            root = malloc(255);
-            if (GetCurrentDirectory(255, root) == 0) {
-                printLastError("GetCurrentDirectory failed");
-                return -1;
-            }
-            p = strchr(root, '\\');
-            if (p == NULL) {
-                fprintf(stderr, "GetCurrentDirectory doesn't include drive letter!!!!\n");
-                return -1;
-            }
-        }
-        p++;
-        *p = '\0';
+	/*
+	 * Relative path so use current directory
+	 */
+	if (p == NULL) {
+	    free(root);
+	    root = malloc(255);
+	    if (GetCurrentDirectory(255, root) == 0) {
+		printLastError("GetCurrentDirectory failed");
+		return -1;
+	    }
+	    p = strchr(root, '\\');
+	    if (p == NULL) {
+		fprintf(stderr, "GetCurrentDirectory doesn't include drive letter!!!!\n"); 
+		return -1;
+	    }
+	}
+	p++;
+	*p = '\0';
     }
 
     /*
@@ -239,17 +239,17 @@ static int isSecuritySupported(const char* path) {
      */
     fsNameLength = sizeof(fsName)-1;
     res = GetVolumeInformation(root,
-                               NULL,        // address of name of the volume, can be NULL
-                               0,           // length of volume name
-                               NULL,        // address of volume serial number, can be NULL
-                               &dwMaxComponentLength,
-                               &dwFlags,
-                               fsName,
-                               fsNameLength);
+			       NULL,	    // address of name of the volume, can be NULL
+			       0,	    // length of volume name
+			       NULL,	    // address of volume serial number, can be NULL
+			       &dwMaxComponentLength,
+			       &dwFlags,
+			       fsName,
+			       fsNameLength);	
     if (res == 0) {
-        printLastError("GetVolumeInformation failed");
-        free(root);
-        return -1;
+	printLastError("GetVolumeInformation failed");
+	free(root);
+	return -1;
     }
 
     free(root);
@@ -258,33 +258,33 @@ static int isSecuritySupported(const char* path) {
 
 
 /*
- * Returns the security descriptor for a file.
+ * Returns the security descriptor for a file. 
  */
 static SECURITY_DESCRIPTOR* getFileSecurityDescriptor(const char* path) {
     SECURITY_DESCRIPTOR* sd;
     DWORD len = 0;
-    SECURITY_INFORMATION info =
-        OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
+    SECURITY_INFORMATION info = 
+	OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
 
     GetFileSecurity(path, info , 0, 0, &len);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
         printLastError("GetFileSecurity failed");
-        return NULL;
+	return NULL;
     }
     sd = (SECURITY_DESCRIPTOR *)malloc(len);
     if (sd == NULL) {
-        fprintf(stderr, "Out of memory");
+	fprintf(stderr, "Out of memory");
     } else {
-        if (!GetFileSecurity(path, info, sd, len, &len)) {
-            printLastError("GetFileSecurity failed");
-            free(sd);
-            return NULL;
-        }
-    }
+	if (!GetFileSecurity(path, info, sd, len, &len)) {
+	    printLastError("GetFileSecurity failed");
+	    free(sd);
+	    return NULL;
+	}
+    }    
     return sd;
 }
 
-
+    
 /*
  * Revoke all access to the specific file
  */
@@ -303,100 +303,100 @@ static int revokeAll(const char* path) {
      */
     sd = getFileSecurityDescriptor(path);
     if (sd == NULL) {
-        return -1;      /* error already reported */
+	return -1;	/* error already reported */
     }
     if (!GetSecurityDescriptorOwner(sd, &owner, &defaulted)) {
-        printLastError("GetSecurityDescriptorOwner failed");
-        return -1;
+	printLastError("GetSecurityDescriptorOwner failed");
+	return -1;
     }
     str = getSIDString(owner);
     if (str != NULL) {
         printf("owner: %s\n", str);
-        free(str);
+	free(str);
     }
     if (!GetSecurityDescriptorDacl(sd, &present, &acl, &defaulted)) {
-        printLastError("GetSecurityDescriptorDacl failed");
-        return -1;
-    }
+	printLastError("GetSecurityDescriptorDacl failed");
+	return -1;
+    }        
     if (!present) {
-        fprintf(stderr, "Security descriptor does not contain a DACL");
-        return -1;
+	fprintf(stderr, "Security descriptor does not contain a DACL");
+	return -1;
     }
 
     /*
      * If DACL is NULL there is no access to the file - we are done
      */
     if (acl == NULL) {
-        return 1;
+	return 1;
     }
 
     /*
      * Iterate over the ACEs. For each "allow" type check that the SID
      * matches the owner - if not we remove the ACE from the ACL
      */
-    if (!GetAclInformation(acl, (void *) &acl_size_info, sizeof(acl_size_info),
-                                  AclSizeInformation)) {
-        printLastError("GetAclInformation failed");
-        return -1;
-    }
+    if (!GetAclInformation(acl, (void *) &acl_size_info, sizeof(acl_size_info), 
+				  AclSizeInformation)) {
+	printLastError("GetAclInformation failed");
+	return -1;
+    }  
     count = acl_size_info.AceCount;
     i = 0;
     while (count > 0) {
-        void* ace;
-        ACCESS_ALLOWED_ACE *access;
-        SID* sid;
+	void* ace;
+	ACCESS_ALLOWED_ACE *access;
+	SID* sid;
         BOOL deleted;
 
-        if (!GetAce(acl, i, &ace)) {
-            printLastError("GetAce failed");
-            return -1;
-        }
-        if (((ACCESS_ALLOWED_ACE *)ace)->Header.AceType != ACCESS_ALLOWED_ACE_TYPE) {
-            continue;
-        }
-        access = (ACCESS_ALLOWED_ACE *)ace;
-        sid = (SID *) &access->SidStart;
+	if (!GetAce(acl, i, &ace)) {
+ 	    printLastError("GetAce failed");
+	    return -1;
+	}
+	if (((ACCESS_ALLOWED_ACE *)ace)->Header.AceType != ACCESS_ALLOWED_ACE_TYPE) {	    
+	    continue;
+	}
+	access = (ACCESS_ALLOWED_ACE *)ace;
+	sid = (SID *) &access->SidStart;
 
+	
+	deleted = FALSE;
+	if (!EqualSid(owner, sid)) {
+	    /*
+	     * If the ACE allows any access then the file then we
+	     * delete it.
+	     */
+	    if (access->Mask & ANY_ACCESS) {
+	        str = getSIDString(sid);
+		if (str != NULL) {
+		    printf("remove ALLOW %s\n", str);
+		    free(str);
+		}	       	    
+		if (DeleteAce(acl, i) == 0) {
+		    printLastError("DeleteAce failed");
+		    return -1;
+		}
+		deleted = TRUE;
+	    }
+	}
 
-        deleted = FALSE;
-        if (!EqualSid(owner, sid)) {
-            /*
-             * If the ACE allows any access then the file then we
-             * delete it.
-             */
-            if (access->Mask & ANY_ACCESS) {
-                str = getSIDString(sid);
-                if (str != NULL) {
-                    printf("remove ALLOW %s\n", str);
-                    free(str);
-                }
-                if (DeleteAce(acl, i) == 0) {
-                    printLastError("DeleteAce failed");
-                    return -1;
-                }
-                deleted = TRUE;
-            }
-        }
+	if (!deleted) {
+	    str = getSIDString(sid);
+	    if (str != NULL) {
+	        printf("ALLOW %s (access mask=%x)\n", str, access->Mask);
+		free(str);
+	    }
 
-        if (!deleted) {
-            str = getSIDString(sid);
-            if (str != NULL) {
-                printf("ALLOW %s (access mask=%x)\n", str, access->Mask);
-                free(str);
-            }
-
-            /* onto the next ACE */
-            i++;
-        }
-        count--;
+	    /* onto the next ACE */
+	    i++;
+	}
+	count--;
     }
 
     /*
      * No changes - only owner has access
      */
-    if (i == acl_size_info.AceCount) {
-        printf("No changes.\n");
-        return 1;
+    if (i == acl_size_info.AceCount) {	
+	printf("No changes.\n");
+	return 1;
     }
 
     /*
@@ -404,16 +404,16 @@ static int revokeAll(const char* path) {
      * that we just edited
      */
     if (!InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION)) {
-        printLastError("InitializeSecurityDescriptor failed");
-        return -1;
+	printLastError("InitializeSecurityDescriptor failed");
+	return -1;
     }
     if (!SetSecurityDescriptorDacl(sd, present, acl, defaulted)) {
-        printLastError("SetSecurityDescriptorDacl failed");
-        return -1;
+	printLastError("SetSecurityDescriptorDacl failed");
+	return -1;
     }
     if (!SetFileSecurity(path, DACL_SECURITY_INFORMATION, sd)) {
-        printLastError("SetFileSecurity failed");
-        return -1;
+	printLastError("SetFileSecurity failed");
+	return -1;
     }
 
     printf("File updated.\n");
@@ -439,23 +439,23 @@ static char* convert_path(const char* p) {
 /*
  * Usage: revokeall file
  */
-int main( int argc, char *argv[])
+int main( int argc, char *argv[]) 
 {
     int rc;
     const char* path;
 
     if (argc != 2) {
-        fprintf(stderr, "Usage: %s file\n", argv[0]);
-        return -1;
+	fprintf(stderr, "Usage: %s file\n", argv[0]);
+	return -1;
     }
     path = convert_path(argv[1]);
     printf("Revoking all non-owner access to %s\n", path);
-    rc = isSecuritySupported(path);
+    rc = isSecuritySupported(path);    
     if (rc != 1) {
-        if (rc == 0) {
-            printf("File security not supported on this file system\n");
-        }
-        return rc;
+	if (rc == 0) {
+	    printf("File security not supported on this file system\n");
+	}
+	return rc;
     } else {
         return revokeAll(path);
     }

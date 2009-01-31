@@ -85,9 +85,9 @@ public class Correct {
     }
 
     static void swap(Object x[], int a, int b) {
-        Object t = x[a];
-        x[a] = x[b];
-        x[b] = t;
+	Object t = x[a];
+	x[a] = x[b];
+	x[b] = t;
     }
 
     private static final Comparator TEST_ORDER = new IntegerComparator();

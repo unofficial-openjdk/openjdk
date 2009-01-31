@@ -49,7 +49,7 @@ public class FieldRepository extends AbstractRepository<TypeSignature> {
     }
 
     protected TypeSignature parse(String s) {
-        return SignatureParser.make().parseTypeSig(s);
+	return SignatureParser.make().parseTypeSig(s);
     }
 
     /**
@@ -61,9 +61,9 @@ public class FieldRepository extends AbstractRepository<TypeSignature> {
      * @return a <tt>FieldRepository</tt> that manages the generic type
      * information represented in the signature <tt>rawSig</tt>
      */
-    public static FieldRepository make(String rawSig,
-                                             GenericsFactory f) {
-        return new FieldRepository(rawSig, f);
+    public static FieldRepository make(String rawSig, 
+					     GenericsFactory f) {
+	return new FieldRepository(rawSig, f);
     }
 
     // public API
@@ -72,20 +72,20 @@ public class FieldRepository extends AbstractRepository<TypeSignature> {
  * When queried for a particular piece of type information, the
  * general pattern is to consult the corresponding cached value.
  * If the corresponding field is non-null, it is returned.
- * If not, it is created lazily. This is done by selecting the appropriate
+ * If not, it is created lazily. This is done by selecting the appropriate 
  * part of the tree and transforming it into a reflective object
- * using a visitor.
+ * using a visitor. 
  * a visitor, which is created by feeding it the factory
  * with which the repository was created.
  */
 
     public Type getGenericType(){
-        if (genericType == null) { // lazily initialize generic type
-            Reifier r = getReifier(); // obtain visitor
-            getTree().accept(r); // reify subtree
-            // extract result from visitor and cache it
-            genericType = r.getResult();
-        }
-        return genericType; // return cached result
+	if (genericType == null) { // lazily initialize generic type
+	    Reifier r = getReifier(); // obtain visitor
+	    getTree().accept(r); // reify subtree
+	    // extract result from visitor and cache it
+	    genericType = r.getResult(); 
+	}
+	return genericType; // return cached result
     }
 }

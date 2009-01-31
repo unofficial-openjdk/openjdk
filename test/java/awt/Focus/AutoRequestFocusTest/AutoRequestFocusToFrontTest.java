@@ -1,21 +1,21 @@
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -30,14 +30,14 @@
   @build      Util
   @run       main AutoRequestFocusToFrontTest
 */
-
+ 
 import java.awt.*;
 import java.awt.event.*;
 import java.applet.Applet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.lang.reflect.InvocationTargetException;
 import test.java.awt.regtesthelpers.Util;
-
+ 
 public class AutoRequestFocusToFrontTest extends Applet {
     static boolean haveDelays;
 
@@ -61,9 +61,9 @@ public class AutoRequestFocusToFrontTest extends Applet {
 
     static String toolkitClassName;
     static Robot robot = Util.createRobot();
-
+ 
     public static void main(String[] args) {
-
+        
         if (args.length != 0) {
             haveDelays = "delay".equals(args[0]) ? true : false;
         }
@@ -72,7 +72,7 @@ public class AutoRequestFocusToFrontTest extends Applet {
         app.init();
         app.start();
     }
-
+ 
     public void init() {
         // Create instructions for the user here, as well as set up
         // the environment -- set the layout manager, add buttons,
@@ -149,7 +149,7 @@ public class AutoRequestFocusToFrontTest extends Applet {
         modalDialog.add(modalDlgButton);
         modalDialog.setModal(true);
     }
-
+ 
     public void start() {
         // 1. Simple Frame.
         //////////////////
@@ -361,7 +361,7 @@ public class AutoRequestFocusToFrontTest extends Applet {
             if (!gained && !testButton.hasFocus()) {
                 throw new TestFailedException("the window should gain focus automatically but it didn't!");
             }
-
+        
             showWindows(testWindow, showWindows, false);
         }
 
@@ -426,17 +426,17 @@ public class AutoRequestFocusToFrontTest extends Applet {
         }
     }
 }
-
+ 
 class TestFailedException extends RuntimeException {
     TestFailedException(String msg) {
         super("Test failed: " + msg);
     }
 }
-
+ 
 /****************************************************
  Standard Test Machinery
- DO NOT modify anything below -- it's a standard
-  chunk of code whose purpose is to make user
+ DO NOT modify anything below -- it's a standard 
+  chunk of code whose purpose is to make user 
   interaction uniform, and thereby make it simpler
   to read and understand someone else's test.
  ****************************************************/
@@ -449,12 +449,12 @@ class TestFailedException extends RuntimeException {
   WithInstructions method.  Put one line of instructions per array entry.
  To display a message for the tester to see, simply call Sysout.println
   with the string to be displayed.
- This mimics System.out.println but works within the test harness as well
+ This mimics System.out.println but works within the test harness as well 
   as standalone.
  */
 
-class Sysout
-{
+class Sysout 
+{ 
     static TestDialog dialog;
 
     public static void createDialogWithInstructions( String[] instructions )
@@ -464,7 +464,7 @@ class Sysout
 //        dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
+   
     public static void createDialog( )
     {
         dialog = new TestDialog( new Frame(), "Instructions" );
@@ -473,8 +473,8 @@ class Sysout
 //        dialog.setVisible(true);
         println( "Any messages for the tester will display here." );
     }
-
-
+   
+      
     public static void printInstructions( String[] instructions )
     {
         dialog.printInstructions( instructions );
@@ -502,20 +502,20 @@ class TestDialog extends Dialog
     TextArea instructionsText;
     TextArea messageText;
     int maxStringLength = 80;
-
+   
     //DO NOT call this directly, go through Sysout
-    public TestDialog( Frame frame, String name )
+    public TestDialog( Frame frame, String name ) 
     {
         super( frame, name );
         int scrollBoth = TextArea.SCROLLBARS_BOTH;
         instructionsText = new TextArea( "", 15, maxStringLength, scrollBoth );
         add( "North", instructionsText );
-
+      
         messageText = new TextArea( "", 5, maxStringLength, scrollBoth );
         add("Center", messageText);
-
+      
         pack();
-
+      
 //        setVisible(true);
     }// TestDialog()
 
@@ -529,7 +529,7 @@ class TestDialog extends Dialog
 
         String printStr, remainingStr;
         for( int i=0; i < instructions.length; i++ )
-        {
+        { 
             //chop up each into pieces maxSringLength long
             remainingStr = instructions[ i ];
             while( remainingStr.length() > 0 )
@@ -540,25 +540,25 @@ class TestDialog extends Dialog
                     //Try to chop on a word boundary
                     int posOfSpace = remainingStr.
                         lastIndexOf( ' ', maxStringLength - 1 );
-
+               
                     if( posOfSpace <= 0 ) posOfSpace = maxStringLength - 1;
-
+               
                     printStr = remainingStr.substring( 0, posOfSpace + 1 );
                     remainingStr = remainingStr.substring( posOfSpace + 1 );
                 }
                 //else just print
-                else
-                {
+                else 
+                { 
                     printStr = remainingStr;
                     remainingStr = "";
                 }
-
+            
                 instructionsText.append( printStr + "\n" );
-
+            
             }// while
-
+         
         }// for
-
+      
     }//printInstructions()
 
     //DO NOT call this directly, go through Sysout
@@ -566,6 +566,6 @@ class TestDialog extends Dialog
     {
         messageText.append( messageIn + "\n" );
         System.out.println(messageIn);
-    }
-
+    }  
+   
 }// TestDialog  class

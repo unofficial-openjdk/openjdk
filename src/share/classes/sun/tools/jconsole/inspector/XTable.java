@@ -36,28 +36,28 @@ public abstract class XTable extends JTable {
     private Font normalFont, boldFont;
 
     public XTable () {
-        super();
-        TableSorter sorter;
-        setModel(sorter = new TableSorter());
-        sorter.addMouseListenerToHeaderInTable(this);
-        setRowSelectionAllowed(false);
-        setColumnSelectionAllowed(false);
-        setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+	super();
+	TableSorter sorter;
+	setModel(sorter = new TableSorter());
+	sorter.addMouseListenerToHeaderInTable(this);
+	setRowSelectionAllowed(false);
+	setColumnSelectionAllowed(false);
+	setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     }
 
     Color getDefaultColor() {
-        return defaultColor;
+	return defaultColor;
     }
 
     Color getEditableColor() {
-        return editableColor;
+	return editableColor;
     }
 
     /**
      * This returns the select index as the table was at initialization
      */
     public int getSelectedIndex() {
-        return convertRowToIndex(getSelectedRow());
+	return convertRowToIndex(getSelectedRow());
     }
 
     /*
@@ -71,13 +71,13 @@ public abstract class XTable extends JTable {
             return row;
         }
     }
-
+	
     public void emptyTable() {
-        DefaultTableModel model = (DefaultTableModel)getModel();
-        while (model.getRowCount()>0)
-            model.removeRow(0);
+	DefaultTableModel model = (DefaultTableModel)getModel();
+	while (model.getRowCount()>0)
+	    model.removeRow(0);
     }
-
+    
     public abstract boolean isTableEditable();
     public abstract boolean isColumnEditable(int column);
     public abstract boolean isReadable(int row);
@@ -90,29 +90,29 @@ public abstract class XTable extends JTable {
     public abstract String getValueName(int row);
 
     public boolean isReadWrite(int row) {
-        return (isReadable(row) && isWritable(row));
+	return (isReadable(row) && isWritable(row));
     }
-
-    //JTable re-implementation
+    
+    //JTable re-implementation 
 
     //attribute can be editable even if unavailable
     public boolean isCellEditable(int row, int col) {
-        return ((isTableEditable() && isColumnEditable(col)
-                 &&  isWritable(row)
-                 && Utils.isEditableType(getClassName(row))));
+	return ((isTableEditable() && isColumnEditable(col)
+		 &&  isWritable(row) 
+		 && Utils.isEditableType(getClassName(row))));
     }
 
     //attribute can be droppable even if unavailable
     public boolean isCellDroppable(int row, int col) {
-        return (isTableEditable() && isColumnEditable(col)
-                && isWritable(row));
+	return (isTableEditable() && isColumnEditable(col) 
+		&& isWritable(row));
     }
 
     //returns null, means no tool tip
     public String getToolTip(int row, int column) {
-        return null;
+	return null;
     }
-
+	
     /**
      * This method sets read write rows to be blue, and other rows to be their
      * default rendered colour.
@@ -146,20 +146,20 @@ public abstract class XTable extends JTable {
     }
 
     public Component prepareRenderer(TableCellRenderer renderer,
-                                     int row, int column) {
-        Component comp = super.prepareRenderer(renderer, row, column);
-
-        if (normalFont == null) {
-            normalFont = comp.getFont();
-            boldFont = normalFont.deriveFont(Font.BOLD);
-        }
-
-        if (column == VALUE_COLUMN && isAttributeViewable(row, VALUE_COLUMN)) {
-            comp.setFont(boldFont);
-        } else {
-            comp.setFont(normalFont);
-        }
-
-        return comp;
+				     int row, int column) {
+	Component comp = super.prepareRenderer(renderer, row, column);
+	
+	if (normalFont == null) {
+	    normalFont = comp.getFont();
+	    boldFont = normalFont.deriveFont(Font.BOLD);
+	}
+	
+	if (column == VALUE_COLUMN && isAttributeViewable(row, VALUE_COLUMN)) {
+	    comp.setFont(boldFont);
+	} else {
+	    comp.setFont(normalFont);
+	}
+	
+	return comp;
     }
 }

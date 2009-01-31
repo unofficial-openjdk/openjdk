@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @summary it is new version of old test which was
+ * @summary it is new version of old test which was 
  *          /src/share/test/serialization/piotest.java
  *          Test of serialization/deserialization of
  *          objects with BinaryTree types
@@ -32,7 +32,7 @@ import java.io.*;
 
 public class BinaryTree {
     public static void main (String argv[]) {
-        System.err.println("\nRegression test for testing of " +
+	System.err.println("\nRegression test for testing of " +
             "serialization/deserialization of objects " +
             "with BinaryTree types \n");
 
@@ -48,7 +48,7 @@ public class BinaryTree {
 
             FileInputStream istream = new FileInputStream("piotest3.tmp");
             ObjectInputStream q = new ObjectInputStream(istream);
-
+	    
             Object n = q.readObject();
             if (n != null) {
                 System.err.println("\nnull read as " + n);
@@ -60,11 +60,11 @@ public class BinaryTree {
                 throw new Error();
             }
             System.err.println("\nTEST PASSED");
-        } catch (Exception e) {
-            System.err.print("TEST FAILED: ");
-            e.printStackTrace();
+	} catch (Exception e) {
+	    System.err.print("TEST FAILED: ");
+	    e.printStackTrace();
             throw new Error();
-        }
+	}
     }
 }
 
@@ -77,46 +77,46 @@ class BinaryTreeTest implements java.io.Serializable {
     private static int count = 0;
 
     public BinaryTreeTest(int l) {
-        id = count++;
-        level = l;
-        if (l > 0) {
-            left = new BinaryTreeTest(l-1);
-            right = new BinaryTreeTest(l-1);
-        }
+	id = count++;
+	level = l;
+	if (l > 0) {
+	    left = new BinaryTreeTest(l-1);
+	    right = new BinaryTreeTest(l-1);
+	}
     }
 
     public void print(int levels) {
-        for (int i = 0; i < level; i++) {
-            System.out.print("  ");
+	for (int i = 0; i < level; i++) {
+	    System.out.print("  ");
         }
-        System.err.println("node " + id);
-
-        if (level <= levels && left != null) {
-            left.print(levels);
+	System.err.println("node " + id);
+	
+	if (level <= levels && left != null) {
+	    left.print(levels);
         }
 
-        if (level <= levels && right != null) {
-            right.print(levels);
+	if (level <= levels && right != null) {
+	    right.print(levels);
         }
     }
 
     public boolean equals(BinaryTreeTest other) {
-        if (other == null) {
-            return false;
+    	if (other == null) {
+	    return false;
         }
 
-        if (id != other.id) {
-            return false;
+	if (id != other.id) {
+	    return false;
         }
 
-        if (left != null && !left.equals(other.left)) {
-            return false;
+	if (left != null && !left.equals(other.left)) {
+	    return false;
         }
 
-        if (right != null && !right.equals(other.right)) {
-            return false;
+	if (right != null && !right.equals(other.right)) {
+	    return false;
         }
 
-        return true;
+	return true;
     }
 }

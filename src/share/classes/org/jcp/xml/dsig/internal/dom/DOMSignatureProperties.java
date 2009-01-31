@@ -42,17 +42,17 @@ import org.w3c.dom.NodeList;
  *
  * @author Sean Mullan
  */
-public final class DOMSignatureProperties extends DOMStructure
+public final class DOMSignatureProperties extends DOMStructure 
     implements SignatureProperties {
-
+ 
     private final String id;
     private final List properties;
 
     /**
-     * Creates a <code>DOMSignatureProperties</code> from the specified
+     * Creates a <code>DOMSignatureProperties</code> from the specified 
      * parameters.
      *
-     * @param properties a list of one or more {@link SignatureProperty}s. The
+     * @param properties a list of one or more {@link SignatureProperty}s. The 
      *    list is defensively copied to protect against subsequent modification.
      * @param id the Id (may be <code>null</code>)
      * @return a <code>DOMSignatureProperties</code>
@@ -62,10 +62,10 @@ public final class DOMSignatureProperties extends DOMStructure
      * @throws NullPointerException if <code>properties</code>
      */
     public DOMSignatureProperties(List properties, String id) {
-        if (properties == null) {
-            throw new NullPointerException("properties cannot be null");
-        } else if (properties.isEmpty()) {
-            throw new IllegalArgumentException("properties cannot be empty");
+	if (properties == null) {
+	    throw new NullPointerException("properties cannot be null");
+	} else if (properties.isEmpty()) {
+	    throw new IllegalArgumentException("properties cannot be empty");
         } else {
             List propsCopy = new ArrayList(properties);
             for (int i = 0, size = propsCopy.size(); i < size; i++) {
@@ -76,7 +76,7 @@ public final class DOMSignatureProperties extends DOMStructure
             }
             this.properties = Collections.unmodifiableList(propsCopy);
         }
-        this.id = id;
+	this.id = id;
     }
 
     /**
@@ -86,20 +86,20 @@ public final class DOMSignatureProperties extends DOMStructure
      * @throws MarshalException if a marshalling error occurs
      */
     public DOMSignatureProperties(Element propsElem) throws MarshalException{
-        // unmarshal attributes
+	// unmarshal attributes
         id = DOMUtils.getAttributeValue(propsElem, "Id");
 
-        NodeList nodes = propsElem.getChildNodes();
-        int length = nodes.getLength();
-        List properties = new ArrayList(length);
-        for (int i = 0; i < length; i++) {
-            Node child = nodes.item(i);
-            if (child.getNodeType() == Node.ELEMENT_NODE) {
-                properties.add(new DOMSignatureProperty((Element) child));
-            }
-        }
+	NodeList nodes = propsElem.getChildNodes();
+	int length = nodes.getLength();
+	List properties = new ArrayList(length);
+	for (int i = 0; i < length; i++) {
+	    Node child = nodes.item(i);
+	    if (child.getNodeType() == Node.ELEMENT_NODE) {
+	        properties.add(new DOMSignatureProperty((Element) child));
+	    }
+	}
         if (properties.isEmpty()) {
-            throw new MarshalException("properties cannot be empty");
+	    throw new MarshalException("properties cannot be empty");
         } else {
             this.properties = Collections.unmodifiableList(properties);
         }
@@ -114,38 +114,38 @@ public final class DOMSignatureProperties extends DOMStructure
     }
 
     public void marshal(Node parent, String dsPrefix, DOMCryptoContext context)
-        throws MarshalException {
+	throws MarshalException {
         Document ownerDoc = DOMUtils.getOwnerDocument(parent);
 
         Element propsElem = DOMUtils.createElement
             (ownerDoc, "SignatureProperties", XMLSignature.XMLNS, dsPrefix);
 
-        // set attributes
+	// set attributes
         DOMUtils.setAttributeID(propsElem, "Id", id);
 
         // create and append any properties
-        for (int i = 0, size = properties.size(); i < size; i++) {
-            DOMSignatureProperty property =
-                (DOMSignatureProperty) properties.get(i);
-            property.marshal(propsElem, dsPrefix, context);
+	for (int i = 0, size = properties.size(); i < size; i++) {
+	    DOMSignatureProperty property = 
+		(DOMSignatureProperty) properties.get(i);
+	    property.marshal(propsElem, dsPrefix, context);
         }
-
-        parent.appendChild(propsElem);
+	    
+	parent.appendChild(propsElem);
     }
 
     public boolean equals(Object o) {
-        if (this == o) {
+	if (this == o) {
             return true;
-        }
+	}
 
         if (!(o instanceof SignatureProperties)) {
             return false;
-        }
+	}
         SignatureProperties osp = (SignatureProperties) o;
 
-        boolean idsEqual = (id == null ? osp.getId() == null :
+	boolean idsEqual = (id == null ? osp.getId() == null :
             id.equals(osp.getId()));
 
-        return (properties.equals(osp.getProperties()) && idsEqual);
+	return (properties.equals(osp.getProperties()) && idsEqual);
     }
 }

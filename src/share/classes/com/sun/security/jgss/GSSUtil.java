@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+  
 package com.sun.security.jgss;
 
 import javax.security.auth.Subject;
@@ -30,7 +30,7 @@ import org.ietf.jgss.GSSName;
 import org.ietf.jgss.GSSCredential;
 
 /**
- * GSS-API Utilities for using in conjunction with Sun Microsystem's
+ * GSS-API Utilities for using in conjunction with Sun Microsystem's 
  * implementation of Java GSS-API.
  */
 public class GSSUtil {
@@ -52,21 +52,21 @@ public class GSSUtil {
      * @return a Subject with the entries that contain elements from the
      * given GSSName and GSSCredential.
      *
-     * @param principals a GSSName containing one or more mechanism specific
-     * representations of the same entity. These mechanism specific
-     * representations will be populated in the returned Subject's principal
+     * @param principals a GSSName containing one or more mechanism specific 
+     * representations of the same entity. These mechanism specific 
+     * representations will be populated in the returned Subject's principal 
      * set.
      *
-     * @param credentials a GSSCredential containing one or more mechanism
-     * specific credentials for the same entity. These mechanism specific
+     * @param credentials a GSSCredential containing one or more mechanism 
+     * specific credentials for the same entity. These mechanism specific 
      * credentials will be populated in the returned Subject's private
-     * credential set. Passing in a value of null will imply that the private
+     * credential set. Passing in a value of null will imply that the private 
      * credential set should be left empty.
      */
     public static Subject createSubject(GSSName principals,
-                                     GSSCredential credentials) {
+				     GSSCredential credentials) {
 
-        return  sun.security.jgss.GSSUtil.getSubject(principals,
-                                                     credentials);
+	return  sun.security.jgss.GSSUtil.getSubject(principals,
+						     credentials);
     }
 }

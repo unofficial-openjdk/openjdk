@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -40,25 +40,25 @@ public class AppleEvent implements java.io.Serializable {
 
     public AppleEvent(int what)
     {
-        this.what = what;
-        this.when = new Date();
+	this.what = what;
+	this.when = new Date();
     }
 
     public String toString()
     {
-        String desc = "[";
-        switch (what) {
-        case BUY:
-            desc += "BUY";
-            break;
-        case EAT:
-            desc += "EAT";
-            break;
-        case THROW:
-            desc += "THROW";
-            break;
-        }
-        desc += " @ " + when + "]";
-        return desc;
+	String desc = "[";
+	switch (what) {
+	case BUY:
+	    desc += "BUY";
+	    break;
+	case EAT:
+	    desc += "EAT";
+	    break;
+	case THROW:
+	    desc += "THROW";
+	    break;
+	}
+	desc += " @ " + when + "]";
+	return desc;
     }
 }

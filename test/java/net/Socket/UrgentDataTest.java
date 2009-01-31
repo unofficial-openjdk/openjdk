@@ -43,110 +43,110 @@ public class UrgentDataTest {
     OutputStream clos, sos;
 
     static void usage () {
-        System.out.println ("   usage: java UrgentDataTest <runs client and server together>");
-        System.out.println ("   usage: java UrgentDataTest -server <runs server alone>");
-        System.out.println ("   usage: java UrgentDataTest -client host port <runs client and connects to"+
-            " specified server>");
+	System.out.println ("	usage: java UrgentDataTest <runs client and server together>");
+	System.out.println ("	usage: java UrgentDataTest -server <runs server alone>");
+	System.out.println ("	usage: java UrgentDataTest -client host port <runs client and connects to"+
+	    " specified server>");
     }
 
     public static void main (String args[]) {
-        try {
-            UrgentDataTest test = new UrgentDataTest ();
-            if (args.length == 0) {
-                test.listener = new ServerSocket (0);
-                test.isClient = true;
-                test.isServer = true;
-                test.clHost = "127.0.0.1";
-                test.clPort = test.listener.getLocalPort();
-                test.run();
-            } else if (args[0].equals ("-server")) {
-                test.listener = new ServerSocket (0);
-                System.out.println ("Server listening on port " + test.listener.getLocalPort());
-                test.isClient = false;
-                test.isServer = true;
-                test.run();
-                System.out.println ("Server: Completed OK");
-            } else if (args[0].equals ("-client")) {
-                test.isClient = true;
-                test.isServer = false;
-                test.clHost = args [1];
-                test.clPort = Integer.parseInt (args[2]);
-                test.run();
-                System.out.println ("Client: Completed OK");
-            } else {
-                usage ();
-            }
-        }
-        catch (ArrayIndexOutOfBoundsException e) {
-            usage();
-        }
-        catch (NumberFormatException e) {
-            usage();
-        }
-        catch (Exception e) {
-            e.printStackTrace ();
-            throw new RuntimeException ("Exception caught");
-        }
+	try {
+	    UrgentDataTest test = new UrgentDataTest ();
+	    if (args.length == 0) {
+		test.listener = new ServerSocket (0);
+		test.isClient = true;
+		test.isServer = true;
+		test.clHost = "127.0.0.1";
+		test.clPort = test.listener.getLocalPort();
+		test.run();
+	    } else if (args[0].equals ("-server")) {
+		test.listener = new ServerSocket (0);
+		System.out.println ("Server listening on port " + test.listener.getLocalPort());
+		test.isClient = false;
+		test.isServer = true;
+		test.run();
+		System.out.println ("Server: Completed OK");
+	    } else if (args[0].equals ("-client")) {
+		test.isClient = true;
+		test.isServer = false;
+		test.clHost = args [1];
+		test.clPort = Integer.parseInt (args[2]);
+		test.run();
+		System.out.println ("Client: Completed OK");
+	    } else {
+		usage ();
+	    }
+	} 
+	catch (ArrayIndexOutOfBoundsException e) {
+	    usage();
+	} 
+	catch (NumberFormatException e) {
+	    usage();
+	} 
+	catch (Exception e) {
+	    e.printStackTrace ();
+	    throw new RuntimeException ("Exception caught");
+	}
     }
 
     public void run () throws Exception {
-        if (isClient) {
-            client = new Socket (clHost, clPort);
-            clis = client.getInputStream();
-            clos = client.getOutputStream();
-            client.setOOBInline (true);
-            if (client.getOOBInline() != true) {
-                throw new RuntimeException ("Setting OOBINLINE failed");
-            }
-        }
-        if (isServer) {
-            server = listener.accept ();
-            sis = server.getInputStream();
-            sos = server.getOutputStream();
-        }
-        if (isClient) {
-            clos.write ("Hello".getBytes ());
-            client.sendUrgentData (100);
-            clos.write ("world".getBytes ());
-        }
-        // read Hello world from server (during which oob byte must have been dropped)
-        String s = "Helloworld";
-        if (isServer) {
-            for (int y=0; y<s.length(); y++) {
-                int c = sis.read ();
-                if (c != (int)s.charAt (y)) {
-                    throw new RuntimeException ("Unexpected character read");
-                }
-            }
-            // Do the same from server to client
-            sos.write ("Hello".getBytes ());
-            server.sendUrgentData (101);
-            sos.write ("World".getBytes ());
-        }
-        if (isClient) {
-            // read Hello world from client (during which oob byte must have been read)
-            s="Hello";
-            for (int y=0; y<s.length(); y++) {
-                int c = clis.read ();
-                if (c != (int)s.charAt (y)) {
-                    throw new RuntimeException ("Unexpected character read");
-                }
-            }
-            if (clis.read() != 101) {
-                throw new RuntimeException ("OOB byte not received");
-            }
-            s="World";
-            for (int y=0; y<s.length(); y++) {
-                int c = clis.read ();
-                if (c != (int)s.charAt (y)) {
-                    throw new RuntimeException ("Unexpected character read");
-                }
-            }
-        }
+	if (isClient) {
+	    client = new Socket (clHost, clPort);
+	    clis = client.getInputStream();
+	    clos = client.getOutputStream();
+	    client.setOOBInline (true);
+	    if (client.getOOBInline() != true) {
+		throw new RuntimeException ("Setting OOBINLINE failed");
+	    }
+	}
+	if (isServer) {
+	    server = listener.accept ();
+	    sis = server.getInputStream();
+	    sos = server.getOutputStream();
+	}
+	if (isClient) {
+	    clos.write ("Hello".getBytes ());
+	    client.sendUrgentData (100);
+	    clos.write ("world".getBytes ());
+	}
+	// read Hello world from server (during which oob byte must have been dropped)
+   	String s = "Helloworld";
+	if (isServer) {
+	    for (int y=0; y<s.length(); y++) {
+		int c = sis.read ();
+		if (c != (int)s.charAt (y)) {
+		    throw new RuntimeException ("Unexpected character read");
+		}
+	    }
+	    // Do the same from server to client
+	    sos.write ("Hello".getBytes ());
+	    server.sendUrgentData (101);
+	    sos.write ("World".getBytes ());
+	}
+	if (isClient) {
+	    // read Hello world from client (during which oob byte must have been read)
+	    s="Hello";
+	    for (int y=0; y<s.length(); y++) {
+		int c = clis.read ();
+		if (c != (int)s.charAt (y)) {
+		    throw new RuntimeException ("Unexpected character read");
+		}
+	    }
+	    if (clis.read() != 101) {
+		throw new RuntimeException ("OOB byte not received");
+	    }
+	    s="World";
+	    for (int y=0; y<s.length(); y++) {
+		int c = clis.read ();
+		if (c != (int)s.charAt (y)) {
+		    throw new RuntimeException ("Unexpected character read");
+		}
+	    }
+	}
 
-        if (isClient)
-            client.close ();
-        if (isServer)
-            server.close ();
+	if (isClient)
+	    client.close ();
+	if (isServer)
+	    server.close ();
     }
 }

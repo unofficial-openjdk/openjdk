@@ -36,7 +36,8 @@ import sun.swing.plaf.synth.SynthUI;
 
 /**
  * Synth's OptionPaneUI.
- *
+ * 
+ * @version %I%, %G%
  * @author James Gosling
  * @author Scott Violet
  * @author Amy Fowler
@@ -49,7 +50,7 @@ class SynthOptionPaneUI extends BasicOptionPaneUI implements
       * Creates a new BasicOptionPaneUI instance.
       */
     public static ComponentUI createUI(JComponent x) {
-        return new SynthOptionPaneUI();
+	return new SynthOptionPaneUI();
     }
 
     protected void installDefaults() {
@@ -94,8 +95,8 @@ class SynthOptionPaneUI extends BasicOptionPaneUI implements
     }
 
     protected void installComponents() {
-        optionPane.add(createMessageArea());
-
+	optionPane.add(createMessageArea());
+        
         Container separator = createSeparator();
         if (separator != null) {
             optionPane.add(separator);
@@ -104,8 +105,8 @@ class SynthOptionPaneUI extends BasicOptionPaneUI implements
                        getInt(context, "OptionPane.separatorPadding", 6)));
             context.dispose();
         }
-        optionPane.add(createButtonArea());
-        optionPane.applyComponentOrientation(optionPane.getComponentOrientation());
+	optionPane.add(createButtonArea());
+	optionPane.applyComponentOrientation(optionPane.getComponentOrientation());
     }
 
     public SynthContext getContext(JComponent c) {
@@ -157,7 +158,7 @@ class SynthOptionPaneUI extends BasicOptionPaneUI implements
     }
 
     protected boolean getSizeButtonsToSameWidth() {
-        return DefaultLookup.getBoolean(optionPane, this,
+	return DefaultLookup.getBoolean(optionPane, this,
                                         "OptionPane.sameSizeButtons", true);
     }
 
@@ -169,41 +170,41 @@ class SynthOptionPaneUI extends BasicOptionPaneUI implements
     protected Container createMessageArea() {
         JPanel top = new JPanel();
         top.setName("OptionPane.messageArea");
-        top.setLayout(new BorderLayout());
+	top.setLayout(new BorderLayout());
 
-        /* Fill the body. */
-        Container          body = new JPanel(new GridBagLayout());
-        Container          realBody = new JPanel(new BorderLayout());
+	/* Fill the body. */
+	Container          body = new JPanel(new GridBagLayout());
+	Container          realBody = new JPanel(new BorderLayout());
 
         body.setName("OptionPane.body");
         realBody.setName("OptionPane.realBody");
 
-        if (getIcon() != null) {
+	if (getIcon() != null) {
             JPanel sep = new JPanel();
             sep.setName("OptionPane.separator");
             sep.setPreferredSize(new Dimension(15, 1));
-            realBody.add(sep, BorderLayout.BEFORE_LINE_BEGINS);
-        }
-        realBody.add(body, BorderLayout.CENTER);
+	    realBody.add(sep, BorderLayout.BEFORE_LINE_BEGINS);
+	}
+	realBody.add(body, BorderLayout.CENTER);
 
-        GridBagConstraints cons = new GridBagConstraints();
-        cons.gridx = cons.gridy = 0;
-        cons.gridwidth = GridBagConstraints.REMAINDER;
-        cons.gridheight = 1;
+	GridBagConstraints cons = new GridBagConstraints();
+	cons.gridx = cons.gridy = 0;
+	cons.gridwidth = GridBagConstraints.REMAINDER;
+	cons.gridheight = 1;
 
         SynthContext context = getContext(optionPane, ENABLED);
-        cons.anchor = context.getStyle().getInt(context,
+	cons.anchor = context.getStyle().getInt(context,
                       "OptionPane.messageAnchor", GridBagConstraints.CENTER);
         context.dispose();
 
-        cons.insets = new Insets(0,0,3,0);
+	cons.insets = new Insets(0,0,3,0);
 
-        addMessageComponents(body, cons, getMessage(),
-                          getMaxCharactersPerLineCount(), false);
-        top.add(realBody, BorderLayout.CENTER);
+	addMessageComponents(body, cons, getMessage(),
+			  getMaxCharactersPerLineCount(), false);
+	top.add(realBody, BorderLayout.CENTER);
 
-        addIcon(top);
-        return top;
+	addIcon(top);
+	return top;
     }
 
     protected Container createSeparator() {

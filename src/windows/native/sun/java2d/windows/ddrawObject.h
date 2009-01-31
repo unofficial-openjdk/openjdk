@@ -35,9 +35,9 @@
 
 #ifdef DEBUG
   #define DX_FUNC(func) do { \
-          HRESULT ddr = (func); \
-          if (FAILED(ddr)) \
-              DebugPrintDirectDrawError(ddr, #func); \
+  	  HRESULT ddr = (func); \
+  	  if (FAILED(ddr)) \
+  	      DebugPrintDirectDrawError(ddr, #func); \
   } while (0)
 #else
   #define DX_FUNC(func) do { func; } while (0)
@@ -84,12 +84,12 @@ public:
     }
     virtual ~DXObject();
     HRESULT GetCaps(LPDDCAPS halCaps, LPDDCAPS helCaps) {
-        return ddObject->GetCaps(halCaps, helCaps);
+	return ddObject->GetCaps(halCaps, helCaps);
     }
     HMONITOR GetHMonitor() { return hMonitor; }
-    HRESULT GetAvailableVidMem(DWORD caps, DWORD *total,
-                                       DWORD *free);
-    HRESULT CreateSurface(DWORD dwFlags,
+    HRESULT GetAvailableVidMem(DWORD caps, DWORD *total, 
+				       DWORD *free);
+    HRESULT CreateSurface(DWORD dwFlags, 
                           DWORD ddsCaps, DWORD ddsCaps2,
                           LPDDPIXELFORMAT lpPf,
                           int width, int height,
@@ -106,37 +106,37 @@ public:
                              lpDDSurface, numBackBuffers);
     }
     HRESULT CreateSurface(DWORD dwFlags, DWORD ddsCaps,
-                          DXSurface **lpDDSurface)
+                          DXSurface **lpDDSurface) 
     {
-        return CreateSurface(dwFlags, ddsCaps, NULL, 0, 0, lpDDSurface, 0);
+	return CreateSurface(dwFlags, ddsCaps, NULL, 0, 0, lpDDSurface, 0);
     }
     HRESULT CreateSurface(DWORD dwFlags, DWORD ddsCaps,
                           DXSurface **lpDDSurface,
-                          int numBackBuffers)
+                          int numBackBuffers) 
     {
-        return CreateSurface(dwFlags, ddsCaps, NULL, 0, 0, lpDDSurface,
-                             numBackBuffers);
+	return CreateSurface(dwFlags, ddsCaps, NULL, 0, 0, lpDDSurface, 
+			     numBackBuffers);
     }
 
-    HRESULT CreateClipper(DWORD dwFlags,
+    HRESULT CreateClipper(DWORD dwFlags, 
                           LPDIRECTDRAWCLIPPER FAR *lplpDDClipper)
     {
-        return ddObject->CreateClipper(dwFlags, lplpDDClipper, NULL);
+	return ddObject->CreateClipper(dwFlags, lplpDDClipper, NULL);
     }
-    HRESULT GetDisplayMode(DDrawDisplayMode &dm);
-    HRESULT SetDisplayMode(DWORD width, DWORD height, DWORD depth,
+    HRESULT GetDisplayMode(DDrawDisplayMode &dm);	
+    HRESULT SetDisplayMode(DWORD width, DWORD height, DWORD depth, 
                            DWORD refreshRate)
     {
-        return ddObject->SetDisplayMode(width, height, depth, refreshRate, 0);
+	return ddObject->SetDisplayMode(width, height, depth, refreshRate, 0);
     }
-    HRESULT EnumDisplayModes(DDrawDisplayMode *dm,
+    HRESULT EnumDisplayModes(DDrawDisplayMode *dm, 
                              DDrawDisplayMode::Callback callback,
                              void *context);
     HRESULT RestoreDisplayMode() {
-        return ddObject->RestoreDisplayMode();
+	return ddObject->RestoreDisplayMode();
     }
     HRESULT SetCooperativeLevel(HWND hWnd, DWORD dwFlags) {
-        return ddObject->SetCooperativeLevel(hWnd,
+	return ddObject->SetCooperativeLevel(hWnd, 
                                              (dwFlags | DDSCL_FPUPRESERVE));
     }
     HRESULT CreateD3DObject(IDirect3D7 **d3dObject);
@@ -166,15 +166,15 @@ private:
 public:
     DDraw(DXObject *dxObject);
     virtual ~DDraw();
-
+    
     static DDraw *CreateDDrawObject(GUID *lpGUID, HMONITOR hMonitor);
 
     BOOL GetDDCaps(LPDDCAPS caps);
     HRESULT GetDDAvailableVidMem(DWORD *free);
     DDrawSurface* CreateDDOffScreenSurface(DWORD width, DWORD height,
-                                           DWORD depth,
+					   DWORD depth,
                                            jint transparency,
-                                           DWORD surfaceTypeCaps);
+					   DWORD surfaceTypeCaps);
     DDrawSurface* CreateDDPrimarySurface(DWORD backBufferCount);
     void InitD3DContext();
     void ReleaseD3DContext();
@@ -193,14 +193,14 @@ public:
     HRESULT SetCooperativeLevel(HWND hwnd, DWORD dwFlags);
 
 private:
-    DXObject                *dxObject;
-    DDrawSurface            *lpPrimary;
+    DXObject		    *dxObject;
+    DDrawSurface	    *lpPrimary;
     D3DContext              *d3dContext;
     BOOL                    deviceUseD3D;
 };
 
 
-#define VERSION_DX7     0x00000007
+#define VERSION_DX7	0x00000007
 
 /**
  * DXSurface class implementating DX 7 interfaces
@@ -213,43 +213,43 @@ public:
     DXSurface* depthBuffer;
 
 public:
-    DXSurface() {
+    DXSurface() { 
         versionID = VERSION_DX7; depthBuffer = NULL; clipperSet = FALSE;
     }
-
+    
     DXSurface(IDirectDrawSurface7 *lpSurface);
 
     IDirectDrawSurface7 *GetDDSurface() { return lpSurface; }
-    HRESULT Blt(RECT *destRect, DXSurface *lpSurfaceSrc,
+    HRESULT Blt(RECT *destRect, DXSurface *lpSurfaceSrc, 
                 RECT *srcRect, DWORD dwFlags, LPDDBLTFX ddBltFx)
     {
-        return lpSurface->Blt(destRect,
-                              lpSurfaceSrc ?
-                                  lpSurfaceSrc->GetDDSurface() :
-                                  NULL,
-                              srcRect, dwFlags, ddBltFx);
+	return lpSurface->Blt(destRect, 
+			      lpSurfaceSrc ?
+			          lpSurfaceSrc->GetDDSurface() :
+			          NULL,
+			      srcRect, dwFlags, ddBltFx);
     }
-    HRESULT Lock(RECT *lockRect, SurfaceDataRasInfo *pRasInfo,
-                         DWORD dwFlags, HANDLE hEvent);
+    HRESULT Lock(RECT *lockRect, SurfaceDataRasInfo *pRasInfo, 
+    			 DWORD dwFlags, HANDLE hEvent);
     HRESULT Unlock(RECT *unlockRect) {
-        return lpSurface->Unlock(unlockRect);
+	return lpSurface->Unlock(unlockRect);
     }
     HRESULT Flip(DWORD dwFlags) {
-        return lpSurface->Flip(NULL, dwFlags);
+	return lpSurface->Flip(NULL, dwFlags);
     }
     HRESULT IsLost() {
         HRESULT res = D3D_OK;
         if (depthBuffer != NULL) {
             res = depthBuffer->IsLost();
         }
-        return FAILED(res) ? res : lpSurface->IsLost();
+	return FAILED(res) ? res : lpSurface->IsLost();
     }
     HRESULT Restore();
     HRESULT GetDC(HDC *hDC) {
-        return lpSurface->GetDC(hDC);
+	return lpSurface->GetDC(hDC);
     }
     HRESULT ReleaseDC(HDC hDC) {
-        return lpSurface->ReleaseDC(hDC);
+	return lpSurface->ReleaseDC(hDC);
     }
     ULONG   Release() {
         if (depthBuffer != NULL) {
@@ -257,14 +257,14 @@ public:
             delete depthBuffer;
             depthBuffer = NULL;
         }
-        return lpSurface->Release();
+	return lpSurface->Release();
     }
     HRESULT SetClipper(DDrawClipper *pClipper);
     HRESULT SetColorKey(DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) {
-        return lpSurface->SetColorKey(dwFlags, lpDDColorKey);
+	return lpSurface->SetColorKey(dwFlags, lpDDColorKey);
     }
     HRESULT GetColorKey(DWORD dwFlags, LPDDCOLORKEY lpDDColorKey) {
-        return lpSurface->GetColorKey(dwFlags, lpDDColorKey);
+	return lpSurface->GetColorKey(dwFlags, lpDDColorKey);
     }
     HRESULT GetAttachedSurface(DWORD dwCaps, DXSurface **bbSurface);
     int     GetSurfaceDepth();
@@ -325,14 +325,14 @@ public:
     void    GetExclusiveAccess() { CRITICAL_SECTION_ENTER(*surfaceLock); };
     void    ReleaseExclusiveAccess() { CRITICAL_SECTION_LEAVE(*surfaceLock); };
     virtual DDrawSurface* GetDDAttachedSurface(DWORD caps = 0)
-        { return NULL; };
+	{ return NULL; };
     virtual DXSurface *GetDXSurface() { return dxSurface; }
     void    FlushD3DContext(BOOL bForce = FALSE);
     int     GetSurfaceDepth();
 
 protected:
     DDraw *ddObject;
-    DXSurface   *dxSurface;
+    DXSurface	*dxSurface;
     CriticalSection *surfaceLock;
 };
 
@@ -347,7 +347,7 @@ class DDrawPrimarySurface : DDrawSurface {
 
 protected:
     BackBufferHolder *bbHolder;
-
+    
 protected:
     DDrawPrimarySurface(DDraw *ddObject, DXSurface *dxSurface);
     DDrawPrimarySurface();
@@ -371,7 +371,7 @@ class DDrawBackBufferSurface : DDrawSurface {
 protected:
     DDrawPrimarySurface *lpPrimary;
     BackBufferHolder *bbHolder;
-
+    
 protected:
     DDrawBackBufferSurface(DDraw *ddObject, BackBufferHolder *holder);
     DDrawBackBufferSurface();
@@ -392,29 +392,29 @@ public:
     BackBufferList *next;
 };
 
-/**
+/** 
  * Class for storing the shared ddraw/d3d back buffer objects
  * and a list of all objects that use those shared surfaces.
  */
 class BackBufferHolder {
-
+    
 public:
     BackBufferHolder(DXSurface *dxSurface);
-    BackBufferHolder();
-    ~BackBufferHolder();
-
+    BackBufferHolder();    
+    ~BackBufferHolder();	
+    
     virtual void Add(DDrawBackBufferSurface *surf);
     virtual void Remove(DDrawBackBufferSurface *surf);
     DXSurface *GetBackBufferSurface() { return backBuffer; };
     HRESULT RestoreDepthBuffer();
-
+    
 protected:
-    BackBufferList *bbList;             // linked list of objects that
-                                        // share the ddraw/d3d surfaces
+    BackBufferList *bbList;		// linked list of objects that
+    					// share the ddraw/d3d surfaces
     DXSurface *backBuffer;
-    CriticalSection bbLock;             // synchronize accesses to list
+    CriticalSection bbLock;		// synchronize accesses to list
 };
-
+    
 
 #ifdef DEBUG
 void StackTrace();
@@ -429,13 +429,13 @@ public:
     }
     void Enter() {
         ++count;
-        //J2dTraceLn2(J2D_TRACE_VERBOSE,
+        //J2dTraceLn2(J2D_TRACE_VERBOSE, 
         //            "DDCriticalSection::Enter for surface 0x%x count %d\n",
         //             lpSurface, count);
         CriticalSection::Enter();
     }
     void Leave() {
-        //J2dTraceLn2(J2D_TRACE_VERBOSE,
+        //J2dTraceLn2(J2D_TRACE_VERBOSE, 
         //            "DDCriticalSection::Leave for surface 0x%x count %d\n",
         //            lpSurface, count);
         if (count == 0) {

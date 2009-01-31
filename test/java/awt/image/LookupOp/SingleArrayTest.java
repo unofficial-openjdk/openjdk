@@ -49,7 +49,7 @@ public class SingleArrayTest {
     private LookupOp op;
 
     public SingleArrayTest() {
-
+    
         byte[] array = new byte[256];
         for (int i = 0; i < 256; i++) {
             array[i] = (byte)i;
@@ -66,7 +66,7 @@ public class SingleArrayTest {
         BufferedImage dst = new BufferedImage(2, 2, bi_type);
 
         doTest(src.getData(), dst.getRaster());
-
+        
         doTest(src, dst);
 
         System.out.println("Test passed.");

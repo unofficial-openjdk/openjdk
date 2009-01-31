@@ -62,7 +62,8 @@ import sun.security.util.DerOutputStream;
  * CertPolicyId ::= OBJECT IDENTIFIER
  * </pre>
  * @author Anne Anderson
- * @since       1.4
+ * @version %I%, %G%
+ * @since	1.4
  * @see Extension
  * @see CertAttrSet
  */
@@ -89,16 +90,16 @@ implements CertAttrSet<String> {
         if (certPolicies == null || certPolicies.isEmpty()) {
             this.extensionValue = null;
         } else {
-            DerOutputStream os = new DerOutputStream();
-            DerOutputStream tmp = new DerOutputStream();
+	    DerOutputStream os = new DerOutputStream();
+	    DerOutputStream tmp = new DerOutputStream();
 
-            for (PolicyInformation info : certPolicies) {
-                info.encode(tmp);
-            }
+	    for (PolicyInformation info : certPolicies) {
+		info.encode(tmp);
+	    }
 
-            os.write(DerValue.tag_Sequence, tmp);
-            this.extensionValue = os.toByteArray();
-        }
+	    os.write(DerValue.tag_Sequence, tmp);
+	    this.extensionValue = os.toByteArray();
+	}
     }
 
     /**
@@ -109,7 +110,7 @@ implements CertAttrSet<String> {
      */
     public CertificatePoliciesExtension(List<PolicyInformation> certPolicies)
     throws IOException {
-        this(Boolean.FALSE, certPolicies);
+	this(Boolean.FALSE, certPolicies);
     }
 
     /**
@@ -119,11 +120,11 @@ implements CertAttrSet<String> {
      * @param critical true if the extension is to be treated as critical.
      * @param certPolicies the List of PolicyInformation.
      */
-    public CertificatePoliciesExtension(Boolean critical,
-            List<PolicyInformation> certPolicies) throws IOException {
-        this.certPolicies = certPolicies;
-        this.extensionId = PKIXExtensions.CertificatePolicies_Id;
-        this.critical = critical.booleanValue();
+    public CertificatePoliciesExtension(Boolean critical, 
+	    List<PolicyInformation> certPolicies) throws IOException {
+	this.certPolicies = certPolicies;
+	this.extensionId = PKIXExtensions.CertificatePolicies_Id;
+	this.critical = critical.booleanValue();
         encodeThis();
     }
 
@@ -137,36 +138,36 @@ implements CertAttrSet<String> {
      */
     public CertificatePoliciesExtension(Boolean critical, Object value)
     throws IOException {
-        this.extensionId = PKIXExtensions.CertificatePolicies_Id;
-        this.critical = critical.booleanValue();
-        this.extensionValue = (byte[]) value;
-        DerValue val = new DerValue(this.extensionValue);
-        if (val.tag != DerValue.tag_Sequence) {
-            throw new IOException("Invalid encoding for " +
-                                   "CertificatePoliciesExtension.");
-        }
-        certPolicies = new ArrayList<PolicyInformation>();
-        while (val.data.available() != 0) {
-            DerValue seq = val.data.getDerValue();
-            PolicyInformation policy = new PolicyInformation(seq);
-            certPolicies.add(policy);
-        }
+	this.extensionId = PKIXExtensions.CertificatePolicies_Id;
+	this.critical = critical.booleanValue();
+	this.extensionValue = (byte[]) value;
+	DerValue val = new DerValue(this.extensionValue);
+	if (val.tag != DerValue.tag_Sequence) {
+	    throw new IOException("Invalid encoding for " +
+				   "CertificatePoliciesExtension.");
+	}
+	certPolicies = new ArrayList<PolicyInformation>();
+	while (val.data.available() != 0) {
+	    DerValue seq = val.data.getDerValue();
+	    PolicyInformation policy = new PolicyInformation(seq);
+	    certPolicies.add(policy);
+	}
     }
 
     /**
      * Return the extension as user readable string.
      */
     public String toString() {
-        if (certPolicies == null) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder(super.toString());
-        sb.append("CertificatePolicies [\n");
-        for (PolicyInformation info : certPolicies) {
-            sb.append(info.toString());
-        }
-        sb.append("]\n");
-        return sb.toString();
+	if (certPolicies == null) {
+	    return "";
+	}
+	StringBuilder sb = new StringBuilder(super.toString());
+	sb.append("CertificatePolicies [\n");
+	for (PolicyInformation info : certPolicies) {
+	    sb.append(info.toString());
+	}
+	sb.append("]\n");
+	return sb.toString();
     }
 
     /**
@@ -178,28 +179,28 @@ implements CertAttrSet<String> {
     public void encode(OutputStream out) throws IOException {
         DerOutputStream tmp = new DerOutputStream();
         if (extensionValue == null) {
-          extensionId = PKIXExtensions.CertificatePolicies_Id;
-          critical = false;
-          encodeThis();
-        }
-        super.encode(tmp);
-        out.write(tmp.toByteArray());
+	  extensionId = PKIXExtensions.CertificatePolicies_Id;
+	  critical = false;
+	  encodeThis();
+	}
+	super.encode(tmp);
+	out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-        if (name.equalsIgnoreCase(POLICIES)) {
-            if (!(obj instanceof List)) {
-                throw new IOException("Attribute value should be of type List.");
-            }
-            certPolicies = (List<PolicyInformation>)obj;
-        } else {
-          throw new IOException("Attribute name [" + name +
+	if (name.equalsIgnoreCase(POLICIES)) {
+	    if (!(obj instanceof List)) {
+	        throw new IOException("Attribute value should be of type List.");
+	    }
+	    certPolicies = (List<PolicyInformation>)obj;
+	} else {
+	  throw new IOException("Attribute name [" + name + 
                                 "] not recognized by " +
-                                "CertAttrSet:CertificatePoliciesExtension.");
-        }
+				"CertAttrSet:CertificatePoliciesExtension.");
+	}
         encodeThis();
     }
 
@@ -207,27 +208,27 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(POLICIES)) {
-            //XXXX May want to consider cloning this
-            return certPolicies;
-        } else {
-          throw new IOException("Attribute name [" + name +
-                                "] not recognized by " +
-                                "CertAttrSet:CertificatePoliciesExtension.");
-        }
+	if (name.equalsIgnoreCase(POLICIES)) {
+	    //XXXX May want to consider cloning this
+	    return certPolicies;
+	} else {
+	  throw new IOException("Attribute name [" + name + 
+				"] not recognized by " +
+				"CertAttrSet:CertificatePoliciesExtension.");
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(POLICIES)) {
-            certPolicies = null;
-        } else {
-          throw new IOException("Attribute name [" + name +
-                                "] not recognized by " +
-                                "CertAttrSet:CertificatePoliciesExtension.");
-        }
+	if (name.equalsIgnoreCase(POLICIES)) {
+	    certPolicies = null;
+	} else {
+	  throw new IOException("Attribute name [" + name + 
+			        "] not recognized by " +
+				"CertAttrSet:CertificatePoliciesExtension.");
+	}
         encodeThis();
     }
 
@@ -239,7 +240,7 @@ implements CertAttrSet<String> {
         AttributeNameEnumeration elements = new AttributeNameEnumeration();
         elements.addElement(POLICIES);
 
-        return (elements.elements());
+	return (elements.elements());
     }
 
     /**

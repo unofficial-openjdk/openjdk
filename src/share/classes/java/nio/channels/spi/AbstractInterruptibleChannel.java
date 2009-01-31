@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package java.nio.channels.spi;
@@ -81,6 +82,7 @@ import sun.nio.ch.Interruptible;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -108,12 +110,12 @@ public abstract class AbstractInterruptibleChannel
      *          If an I/O error occurs
      */
     public final void close() throws IOException {
-        synchronized (closeLock) {
-            if (!open)
-                return;
-            open = false;
-            implCloseChannel();
-        }
+	synchronized (closeLock) {
+	    if (!open)
+		return;
+	    open = false;
+	    implCloseChannel();
+	}
     }
 
     /**
@@ -135,10 +137,10 @@ public abstract class AbstractInterruptibleChannel
     protected abstract void implCloseChannel() throws IOException;
 
     public final boolean isOpen() {
-        return open;
+	return open;
     }
 
-
+
     // -- Interruption machinery --
 
     private Interruptible interruptor;
@@ -153,23 +155,23 @@ public abstract class AbstractInterruptibleChannel
      * closing and interruption for this channel.  </p>
      */
     protected final void begin() {
-        if (interruptor == null) {
-            interruptor = new Interruptible() {
-                    public void interrupt() {
-                        synchronized (closeLock) {
-                            if (!open)
-                                return;
-                            interrupted = true;
-                            open = false;
-                            try {
-                                AbstractInterruptibleChannel.this.implCloseChannel();
-                            } catch (IOException x) { }
-                        }
-                    }};
-        }
-        blockedOn(interruptor);
-        if (Thread.currentThread().isInterrupted())
-            interruptor.interrupt();
+	if (interruptor == null) {
+	    interruptor = new Interruptible() {
+		    public void interrupt() {
+			synchronized (closeLock) {
+			    if (!open)
+				return;
+			    interrupted = true;
+			    open = false;
+			    try {
+				AbstractInterruptibleChannel.this.implCloseChannel();
+			    } catch (IOException x) { }
+			}
+		    }};
+	}
+	blockedOn(interruptor);
+	if (Thread.currentThread().isInterrupted())
+	    interruptor.interrupt();
     }
 
     /**
@@ -192,21 +194,21 @@ public abstract class AbstractInterruptibleChannel
      *          If the thread blocked in the I/O operation was interrupted
      */
     protected final void end(boolean completed)
-        throws AsynchronousCloseException
+	throws AsynchronousCloseException
     {
-        blockedOn(null);
-        if (completed) {
-            interrupted = false;
-            return;
-        }
-        if (interrupted) throw new ClosedByInterruptException();
-        if (!open) throw new AsynchronousCloseException();
+	blockedOn(null);
+	if (completed) {
+	    interrupted = false;
+	    return;
+	}
+	if (interrupted) throw new ClosedByInterruptException();
+	if (!open) throw new AsynchronousCloseException();
     }
 
-
+
     // -- sun.misc.SharedSecrets --
-    static void blockedOn(Interruptible intr) {         // package-private
+    static void blockedOn(Interruptible intr) { 	// package-private
         sun.misc.SharedSecrets.getJavaLangAccess().blockedOn(Thread.currentThread(),
-                                                             intr);
+							     intr);
     }
 }

@@ -30,7 +30,7 @@ package javax.management.timer;
  * MBeans.</p>
  */
 class TimerAlarmClockNotification
-    extends javax.management.Notification {
+    extends javax.management.Notification { 
 
     /* Serial version */
     private static final long serialVersionUID = -4841061275673620641L;
@@ -40,7 +40,7 @@ class TimerAlarmClockNotification
      *  CONSTRUCTORS
      * ------------------------------------------
      */
-
+    
     /**
      * Constructor.
      *

@@ -56,7 +56,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @param url the URL
      */
     public HttpsURLConnection(URL url) throws IOException {
-        super(url);
+	super(url);
     }
 
     /**
@@ -81,11 +81,11 @@ class HttpsURLConnection extends HttpURLConnection
      * The default implementation will deny such connections.
      */
     private static HostnameVerifier defaultHostnameVerifier =
-        new HostnameVerifier() {
-            public boolean verify(String urlHostname, String certHostname) {
-                return false;
-            }
-        };
+	new HostnameVerifier() {
+	    public boolean verify(String urlHostname, String certHostname) {
+		return false;
+	    }
+	};
 
     protected HostnameVerifier hostnameVerifier = defaultHostnameVerifier;
 
@@ -95,16 +95,16 @@ class HttpsURLConnection extends HttpURLConnection
      * @param v the default host name verifier
      */
     public static void setDefaultHostnameVerifier(HostnameVerifier v) {
-        if (v == null) {
-            throw new IllegalArgumentException(
-                "no default HostnameVerifier specified");
-        }
+	if (v == null) {
+	    throw new IllegalArgumentException(
+		"no default HostnameVerifier specified");
+	}
 
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new SSLPermission("setHostnameVerifier"));
-        }
-        defaultHostnameVerifier = v;
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkPermission(new SSLPermission("setHostnameVerifier"));
+	}
+	defaultHostnameVerifier = v;
     }
 
     /**
@@ -112,7 +112,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @return the default host name verifier
      */
     public static HostnameVerifier getDefaultHostnameVerifier() {
-        return defaultHostnameVerifier;
+	return defaultHostnameVerifier;
     }
 
     /**
@@ -120,12 +120,12 @@ class HttpsURLConnection extends HttpURLConnection
      * @param v the host name verifier
      */
     public void setHostnameVerifier(HostnameVerifier v) {
-        if (v == null) {
-            throw new IllegalArgumentException(
-                "no HostnameVerifier specified");
-        }
+	if (v == null) {
+	    throw new IllegalArgumentException(
+		"no HostnameVerifier specified");
+	}
 
-        hostnameVerifier = v;
+	hostnameVerifier = v;
     }
 
     /**
@@ -133,7 +133,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @return the host name verifier
      */
     public HostnameVerifier getHostnameVerifier() {
-        return hostnameVerifier;
+	return hostnameVerifier;
     }
 
     private static SSLSocketFactory defaultSSLSocketFactory = null;
@@ -146,16 +146,16 @@ class HttpsURLConnection extends HttpURLConnection
      * @param sf the default SSL socket factory
      */
     public static void setDefaultSSLSocketFactory(SSLSocketFactory sf) {
-        if (sf == null) {
-            throw new IllegalArgumentException(
-                "no default SSLSocketFactory specified");
-        }
+	if (sf == null) {
+	    throw new IllegalArgumentException(
+		"no default SSLSocketFactory specified");
+	}
 
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkSetFactory();
-        }
-        defaultSSLSocketFactory = sf;
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkSetFactory();
+	}
+	defaultSSLSocketFactory = sf;
     }
 
     /**
@@ -163,11 +163,11 @@ class HttpsURLConnection extends HttpURLConnection
      * @return the default SSL socket factory
      */
     public static SSLSocketFactory getDefaultSSLSocketFactory() {
-        if (defaultSSLSocketFactory == null) {
-            defaultSSLSocketFactory =
-                (SSLSocketFactory)SSLSocketFactory.getDefault();
-        }
-        return defaultSSLSocketFactory;
+	if (defaultSSLSocketFactory == null) {
+	    defaultSSLSocketFactory =
+		(SSLSocketFactory)SSLSocketFactory.getDefault();
+	}
+	return defaultSSLSocketFactory;
     }
 
     /**
@@ -175,11 +175,11 @@ class HttpsURLConnection extends HttpURLConnection
      * @param sf the SSL socket factory
      */
     public void setSSLSocketFactory(SSLSocketFactory sf) {
-        if (sf == null) {
-            throw new IllegalArgumentException(
-                "no SSLSocketFactory specified");
-        }
-        sslSocketFactory = sf;
+	if (sf == null) {
+	    throw new IllegalArgumentException(
+		"no SSLSocketFactory specified");
+	}
+	sslSocketFactory = sf;
     }
 
     /**
@@ -187,6 +187,7 @@ class HttpsURLConnection extends HttpURLConnection
      * @return the SSL socket factory
      */
     public SSLSocketFactory getSSLSocketFactory() {
-        return sslSocketFactory;
+	return sslSocketFactory;
     }
 }
+

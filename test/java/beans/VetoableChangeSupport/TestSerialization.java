@@ -22,7 +22,7 @@
  */
 
 /*
- * @test
+ * @test %I% %G%
  * @bug 5004188
  * @run main TestSerialization 1.5.0_10.ser 1.6.0.ser
  * @summary Tests serialization of VetoableChangeSupport

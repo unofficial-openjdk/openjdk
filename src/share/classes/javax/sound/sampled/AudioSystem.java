@@ -157,6 +157,7 @@ import com.sun.media.sound.JDK13Services;
  * @author Florian Bomers
  * @author Matthias Pfisterer
  * @author Kevin P. Smith
+ * @version %I%, %E%
  *
  * @see AudioFormat
  * @see AudioInputStream
@@ -194,9 +195,9 @@ public class AudioSystem {
      */
     public static Mixer.Info[] getMixerInfo() {
 
-        List infos = getMixerInfoList();
-        Mixer.Info[] allInfos = (Mixer.Info[]) infos.toArray(new Mixer.Info[infos.size()]);
-        return allInfos;
+	List infos = getMixerInfoList();
+	Mixer.Info[] allInfos = (Mixer.Info[]) infos.toArray(new Mixer.Info[infos.size()]);
+	return allInfos;
     }
 
 
@@ -213,48 +214,48 @@ public class AudioSystem {
      */
     public static Mixer getMixer(Mixer.Info info) {
 
-        Mixer mixer = null;
-        List providers = getMixerProviders();
+	Mixer mixer = null;
+	List providers = getMixerProviders();
 
-        for(int i = 0; i < providers.size(); i++ ) {
+	for(int i = 0; i < providers.size(); i++ ) {
 
-            try {
-                return ((MixerProvider)providers.get(i)).getMixer(info);
+	    try {
+		return ((MixerProvider)providers.get(i)).getMixer(info);
 
-            } catch (IllegalArgumentException e) {
-            } catch (NullPointerException e) {
-                // $$jb 08.20.99:  If the strings in the info object aren't
-                // set, then Netscape (using jdk1.1.5) tends to throw
-                // NPE's when doing some string manipulation.  This is
-                // probably not the best fix, but is solves the problem
-                // of the NPE in Netscape using local classes
-                // $$jb 11.01.99: Replacing this patch.
-            }
-        }
+	    } catch (IllegalArgumentException e) {
+	    } catch (NullPointerException e) {
+		// $$jb 08.20.99:  If the strings in the info object aren't
+		// set, then Netscape (using jdk1.1.5) tends to throw
+		// NPE's when doing some string manipulation.  This is
+		// probably not the best fix, but is solves the problem
+		// of the NPE in Netscape using local classes
+		// $$jb 11.01.99: Replacing this patch.
+	    }
+	}
 
-        //$$fb if looking for default mixer, and not found yet, add a round of looking
-        if (info == null) {
-            for(int i = 0; i < providers.size(); i++ ) {
-                try {
-                    MixerProvider provider = (MixerProvider) providers.get(i);
-                    Mixer.Info[] infos = provider.getMixerInfo();
-                    // start from 0 to last device (do not reverse this order)
-                    for (int ii = 0; ii < infos.length; ii++) {
-                        try {
-                            return provider.getMixer(infos[ii]);
-                        } catch (IllegalArgumentException e) {
-                            // this is not a good default device :)
-                        }
-                    }
-                } catch (IllegalArgumentException e) {
-                } catch (NullPointerException e) {
-                }
-            }
-        }
+	//$$fb if looking for default mixer, and not found yet, add a round of looking
+	if (info == null) {
+	    for(int i = 0; i < providers.size(); i++ ) {
+		try {
+		    MixerProvider provider = (MixerProvider) providers.get(i);
+		    Mixer.Info[] infos = provider.getMixerInfo();
+		    // start from 0 to last device (do not reverse this order)
+		    for (int ii = 0; ii < infos.length; ii++) {
+			try {
+			    return provider.getMixer(infos[ii]);
+			} catch (IllegalArgumentException e) {
+			    // this is not a good default device :)
+			}
+		    }
+		} catch (IllegalArgumentException e) {
+		} catch (NullPointerException e) {
+		}
+	    }
+	}
 
 
-        throw new IllegalArgumentException("Mixer not supported: "
-                                           + (info!=null?info.toString():"null"));
+	throw new IllegalArgumentException("Mixer not supported: "
+					   + (info!=null?info.toString():"null"));
     }
 
 
@@ -272,30 +273,30 @@ public class AudioSystem {
      */
     public static Line.Info[] getSourceLineInfo(Line.Info info) {
 
-        Vector vector = new Vector();
-        Line.Info[] currentInfoArray;
+	Vector vector = new Vector();
+	Line.Info[] currentInfoArray;
 
-        Mixer mixer;
-        Line.Info fullInfo = null;
-        Mixer.Info[] infoArray = getMixerInfo();
+	Mixer mixer;
+	Line.Info fullInfo = null;
+	Mixer.Info[] infoArray = getMixerInfo();
 
-        for (int i = 0; i < infoArray.length; i++) {
+	for (int i = 0; i < infoArray.length; i++) {
 
-            mixer = getMixer(infoArray[i]);
+	    mixer = getMixer(infoArray[i]);
 
-            currentInfoArray = mixer.getSourceLineInfo(info);
-            for (int j = 0; j < currentInfoArray.length; j++) {
-                vector.addElement(currentInfoArray[j]);
-            }
-        }
+	    currentInfoArray = mixer.getSourceLineInfo(info);
+	    for (int j = 0; j < currentInfoArray.length; j++) {
+		vector.addElement(currentInfoArray[j]);
+	    }
+	}
 
-        Line.Info[] returnedArray = new Line.Info[vector.size()];
+	Line.Info[] returnedArray = new Line.Info[vector.size()];
 
-        for (int i = 0; i < returnedArray.length; i++) {
-            returnedArray[i] = (Line.Info)vector.get(i);
-        }
+	for (int i = 0; i < returnedArray.length; i++) {
+	    returnedArray[i] = (Line.Info)vector.get(i);
+	}
 
-        return returnedArray;
+	return returnedArray;
     }
 
 
@@ -312,30 +313,30 @@ public class AudioSystem {
      */
     public static Line.Info[] getTargetLineInfo(Line.Info info) {
 
-        Vector vector = new Vector();
-        Line.Info[] currentInfoArray;
+	Vector vector = new Vector();
+	Line.Info[] currentInfoArray;
 
-        Mixer mixer;
-        Line.Info fullInfo = null;
-        Mixer.Info[] infoArray = getMixerInfo();
+	Mixer mixer;
+	Line.Info fullInfo = null;
+	Mixer.Info[] infoArray = getMixerInfo();
 
-        for (int i = 0; i < infoArray.length; i++) {
+	for (int i = 0; i < infoArray.length; i++) {
 
-            mixer = getMixer(infoArray[i]);
+	    mixer = getMixer(infoArray[i]);
 
-            currentInfoArray = mixer.getTargetLineInfo(info);
-            for (int j = 0; j < currentInfoArray.length; j++) {
-                vector.addElement(currentInfoArray[j]);
-            }
-        }
+	    currentInfoArray = mixer.getTargetLineInfo(info);
+	    for (int j = 0; j < currentInfoArray.length; j++) {
+		vector.addElement(currentInfoArray[j]);
+	    }
+	}
 
-        Line.Info[] returnedArray = new Line.Info[vector.size()];
+	Line.Info[] returnedArray = new Line.Info[vector.size()];
 
-        for (int i = 0; i < returnedArray.length; i++) {
-            returnedArray[i] = (Line.Info)vector.get(i);
-        }
+	for (int i = 0; i < returnedArray.length; i++) {
+	    returnedArray[i] = (Line.Info)vector.get(i);
+	}
 
-        return returnedArray;
+	return returnedArray;
     }
 
 
@@ -351,20 +352,20 @@ public class AudioSystem {
      */
     public static boolean isLineSupported(Line.Info info) {
 
-        Mixer mixer;
-        Mixer.Info[] infoArray = getMixerInfo();
+	Mixer mixer;
+	Mixer.Info[] infoArray = getMixerInfo();
 
-        for (int i = 0; i < infoArray.length; i++) {
+	for (int i = 0; i < infoArray.length; i++) {
 
-            if( infoArray[i] != null ) {
-                mixer = getMixer(infoArray[i]);
-                if (mixer.isLineSupported(info)) {
-                    return true;
-                }
-            }
-        }
+	    if( infoArray[i] != null ) {
+		mixer = getMixer(infoArray[i]);
+		if (mixer.isLineSupported(info)) {
+		    return true;
+		}
+	    }
+	}
 
-        return false;
+	return false;
     }
 
     /**
@@ -405,76 +406,76 @@ public class AudioSystem {
      * through any installed mixer
      */
     public static Line getLine(Line.Info info) throws LineUnavailableException {
-        LineUnavailableException lue = null;
-        List providers = getMixerProviders();
+	LineUnavailableException lue = null;
+	List providers = getMixerProviders();
 
 
-        // 1: try from default mixer for this line class
-        try {
-            Mixer mixer = getDefaultMixer(providers, info);
-            if (mixer != null && mixer.isLineSupported(info)) {
-                return mixer.getLine(info);
-            }
-        } catch (LineUnavailableException e) {
-            lue = e;
-        } catch (IllegalArgumentException iae) {
-            // must not happen... but better to catch it here,
-            // if plug-ins are badly written
-        }
+	// 1: try from default mixer for this line class
+	try {
+	    Mixer mixer = getDefaultMixer(providers, info);
+	    if (mixer != null && mixer.isLineSupported(info)) {
+		return mixer.getLine(info);
+	    }
+	} catch (LineUnavailableException e) {
+	    lue = e;
+	} catch (IllegalArgumentException iae) {
+	    // must not happen... but better to catch it here,
+	    // if plug-ins are badly written
+	}
 
 
-        // 2: if that doesn't work, try to find any mixing mixer
-        for(int i = 0; i < providers.size(); i++) {
-            MixerProvider provider = (MixerProvider) providers.get(i);
-            Mixer.Info[] infos = provider.getMixerInfo();
+	// 2: if that doesn't work, try to find any mixing mixer
+	for(int i = 0; i < providers.size(); i++) {
+	    MixerProvider provider = (MixerProvider) providers.get(i);
+	    Mixer.Info[] infos = provider.getMixerInfo();
 
-            for (int j = 0; j < infos.length; j++) {
-                try {
-                    Mixer mixer = provider.getMixer(infos[j]);
-                    // see if this is an appropriate mixer which can mix
-                    if (isAppropriateMixer(mixer, info, true)) {
-                        return mixer.getLine(info);
-                    }
-                } catch (LineUnavailableException e) {
-                    lue = e;
-                } catch (IllegalArgumentException iae) {
-                    // must not happen... but better to catch it here,
-                    // if plug-ins are badly written
-                }
-            }
-        }
+	    for (int j = 0; j < infos.length; j++) {
+ 		try {
+		    Mixer mixer = provider.getMixer(infos[j]);
+		    // see if this is an appropriate mixer which can mix
+		    if (isAppropriateMixer(mixer, info, true)) {
+			return mixer.getLine(info);
+		    }
+		} catch (LineUnavailableException e) {
+		    lue = e;
+		} catch (IllegalArgumentException iae) {
+		    // must not happen... but better to catch it here,
+		    // if plug-ins are badly written
+		}
+	    }
+	}
 
 
-        // 3: if that didn't work, try to find any non-mixing mixer
-        for(int i = 0; i < providers.size(); i++) {
-            MixerProvider provider = (MixerProvider) providers.get(i);
-            Mixer.Info[] infos = provider.getMixerInfo();
-            for (int j = 0; j < infos.length; j++) {
-                try {
-                    Mixer mixer = provider.getMixer(infos[j]);
-                    // see if this is an appropriate mixer which can mix
-                    if (isAppropriateMixer(mixer, info, false)) {
-                        return mixer.getLine(info);
-                    }
-                } catch (LineUnavailableException e) {
-                    lue = e;
-                } catch (IllegalArgumentException iae) {
-                    // must not happen... but better to catch it here,
-                    // if plug-ins are badly written
-                }
-            }
-        }
+	// 3: if that didn't work, try to find any non-mixing mixer
+	for(int i = 0; i < providers.size(); i++) {
+	    MixerProvider provider = (MixerProvider) providers.get(i);
+	    Mixer.Info[] infos = provider.getMixerInfo();
+	    for (int j = 0; j < infos.length; j++) {
+ 		try {
+		    Mixer mixer = provider.getMixer(infos[j]);
+		    // see if this is an appropriate mixer which can mix
+		    if (isAppropriateMixer(mixer, info, false)) {
+			return mixer.getLine(info);
+		    }
+		} catch (LineUnavailableException e) {
+		    lue = e;
+		} catch (IllegalArgumentException iae) {
+		    // must not happen... but better to catch it here,
+		    // if plug-ins are badly written
+		}
+	    }
+	}
 
-        // if this line was supported but was not available, throw the last
-        // LineUnavailableException we got (??).
-        if (lue != null) {
-            throw lue;
-        }
+	// if this line was supported but was not available, throw the last
+	// LineUnavailableException we got (??).
+	if (lue != null) {
+	    throw lue;
+	}
 
-        // otherwise, the requested line was not supported, so throw
-        // an Illegal argument exception
-        throw new IllegalArgumentException("No line matching " +
-                                           info.toString() + " is supported.");
+	// otherwise, the requested line was not supported, so throw
+	// an Illegal argument exception
+	throw new IllegalArgumentException("No line matching " +
+					   info.toString() + " is supported.");
     }
 
 
@@ -512,12 +513,12 @@ public class AudioSystem {
      * @since 1.5
      */
     public static Clip getClip() throws LineUnavailableException{
-        AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-                                             AudioSystem.NOT_SPECIFIED,
-                                             16, 2, 4,
-                                             AudioSystem.NOT_SPECIFIED, true);
-        DataLine.Info info = new DataLine.Info(Clip.class, format);
-        return (Clip) AudioSystem.getLine(info);
+	AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+					     AudioSystem.NOT_SPECIFIED,
+					     16, 2, 4,
+					     AudioSystem.NOT_SPECIFIED, true);
+	DataLine.Info info = new DataLine.Info(Clip.class, format);
+	return (Clip) AudioSystem.getLine(info);
     }
 
 
@@ -547,13 +548,13 @@ public class AudioSystem {
      * @since 1.5
      */
     public static Clip getClip(Mixer.Info mixerInfo) throws LineUnavailableException{
-        AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
-                                             AudioSystem.NOT_SPECIFIED,
-                                             16, 2, 4,
-                                             AudioSystem.NOT_SPECIFIED, true);
-        DataLine.Info info = new DataLine.Info(Clip.class, format);
-        Mixer mixer = AudioSystem.getMixer(mixerInfo);
-        return (Clip) mixer.getLine(info);
+	AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+					     AudioSystem.NOT_SPECIFIED,
+					     16, 2, 4,
+					     AudioSystem.NOT_SPECIFIED, true);
+	DataLine.Info info = new DataLine.Info(Clip.class, format);
+	Mixer mixer = AudioSystem.getMixer(mixerInfo);
+	return (Clip) mixer.getLine(info);
     }
 
 
@@ -600,8 +601,8 @@ public class AudioSystem {
      */
     public static SourceDataLine getSourceDataLine(AudioFormat format)
         throws LineUnavailableException{
-        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-        return (SourceDataLine) AudioSystem.getLine(info);
+	DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+	return (SourceDataLine) AudioSystem.getLine(info);
     }
 
 
@@ -643,11 +644,11 @@ public class AudioSystem {
      * @since 1.5
      */
     public static SourceDataLine getSourceDataLine(AudioFormat format,
-                                                   Mixer.Info mixerinfo)
+						   Mixer.Info mixerinfo)
         throws LineUnavailableException{
-        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
-        Mixer mixer = AudioSystem.getMixer(mixerinfo);
-        return (SourceDataLine) mixer.getLine(info);
+	DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+	Mixer mixer = AudioSystem.getMixer(mixerinfo);
+	return (SourceDataLine) mixer.getLine(info);
   }
 
 
@@ -688,10 +689,10 @@ public class AudioSystem {
      * @since 1.5
      */
     public static TargetDataLine getTargetDataLine(AudioFormat format)
-        throws LineUnavailableException{
+	throws LineUnavailableException{
 
-        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-        return (TargetDataLine) AudioSystem.getLine(info);
+	DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+	return (TargetDataLine) AudioSystem.getLine(info);
     }
 
 
@@ -740,12 +741,12 @@ public class AudioSystem {
      * @since 1.5
      */
     public static TargetDataLine getTargetDataLine(AudioFormat format,
-                                                   Mixer.Info mixerinfo)
-        throws LineUnavailableException {
+						   Mixer.Info mixerinfo)
+	throws LineUnavailableException {
 
-        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
-        Mixer mixer = AudioSystem.getMixer(mixerinfo);
-        return (TargetDataLine) mixer.getLine(info);
+	DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+	Mixer mixer = AudioSystem.getMixer(mixerinfo);
+	return (TargetDataLine) mixer.getLine(info);
     }
 
 
@@ -762,23 +763,23 @@ public class AudioSystem {
      */
     public static AudioFormat.Encoding[] getTargetEncodings(AudioFormat.Encoding sourceEncoding) {
 
-        List codecs = getFormatConversionProviders();
-        Vector encodings = new Vector();
+	List codecs = getFormatConversionProviders();
+	Vector encodings = new Vector();
 
-        AudioFormat.Encoding encs[] = null;
+	AudioFormat.Encoding encs[] = null;
 
-        // gather from all the codecs
-        for(int i=0; i<codecs.size(); i++ ) {
-            FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
-            if( codec.isSourceEncodingSupported( sourceEncoding ) ) {
-                encs = codec.getTargetEncodings();
-                for (int j = 0; j < encs.length; j++) {
-                    encodings.addElement( encs[j] );
-                }
-            }
-        }
-        AudioFormat.Encoding encs2[] = (AudioFormat.Encoding[]) encodings.toArray(new AudioFormat.Encoding[0]);
-        return encs2;
+	// gather from all the codecs
+	for(int i=0; i<codecs.size(); i++ ) {
+	    FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
+	    if( codec.isSourceEncodingSupported( sourceEncoding ) ) {
+		encs = codec.getTargetEncodings();
+		for (int j = 0; j < encs.length; j++) {
+		    encodings.addElement( encs[j] );
+		}
+	    }
+	}
+	AudioFormat.Encoding encs2[] = (AudioFormat.Encoding[]) encodings.toArray(new AudioFormat.Encoding[0]);
+	return encs2;
     }
 
 
@@ -797,31 +798,31 @@ public class AudioSystem {
     public static AudioFormat.Encoding[] getTargetEncodings(AudioFormat sourceFormat) {
 
 
-        List codecs = getFormatConversionProviders();
-        Vector encodings = new Vector();
+	List codecs = getFormatConversionProviders();
+	Vector encodings = new Vector();
 
-        int size = 0;
-        int index = 0;
-        AudioFormat.Encoding encs[] = null;
+	int size = 0;
+	int index = 0;
+	AudioFormat.Encoding encs[] = null;
 
-        // gather from all the codecs
+	// gather from all the codecs
 
-        for(int i=0; i<codecs.size(); i++ ) {
-            encs = ((FormatConversionProvider) codecs.get(i)).getTargetEncodings(sourceFormat);
-            size += encs.length;
-            encodings.addElement( encs );
-        }
+	for(int i=0; i<codecs.size(); i++ ) {
+	    encs = ((FormatConversionProvider) codecs.get(i)).getTargetEncodings(sourceFormat);
+	    size += encs.length;
+	    encodings.addElement( encs );
+	}
 
-        // now build a new array
+	// now build a new array
 
-        AudioFormat.Encoding encs2[] = new AudioFormat.Encoding[size];
-        for(int i=0; i<encodings.size(); i++ ) {
-            encs = (AudioFormat.Encoding [])(encodings.get(i));
-            for(int j=0; j<encs.length; j++ ) {
-                encs2[index++] = encs[j];
-            }
-        }
-        return encs2;
+	AudioFormat.Encoding encs2[] = new AudioFormat.Encoding[size];
+	for(int i=0; i<encodings.size(); i++ ) {
+	    encs = (AudioFormat.Encoding [])(encodings.get(i));
+	    for(int j=0; j<encs.length; j++ ) {
+		encs2[index++] = encs[j];
+	    }
+	}
+	return encs2;
     }
 
 
@@ -837,15 +838,15 @@ public class AudioSystem {
     public static boolean isConversionSupported(AudioFormat.Encoding targetEncoding, AudioFormat sourceFormat) {
 
 
-        List codecs = getFormatConversionProviders();
+	List codecs = getFormatConversionProviders();
 
-        for(int i=0; i<codecs.size(); i++ ) {
-            FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
-            if(codec.isConversionSupported(targetEncoding,sourceFormat) ) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i<codecs.size(); i++ ) {
+	    FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
+	    if(codec.isConversionSupported(targetEncoding,sourceFormat) ) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -862,18 +863,18 @@ public class AudioSystem {
      * @see #getAudioInputStream(AudioFormat, AudioInputStream)
      */
     public static AudioInputStream getAudioInputStream(AudioFormat.Encoding targetEncoding,
-                                                       AudioInputStream sourceStream) {
+						       AudioInputStream sourceStream) {
 
-        List codecs = getFormatConversionProviders();
+	List codecs = getFormatConversionProviders();
 
-        for(int i = 0; i < codecs.size(); i++) {
-            FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
-            if( codec.isConversionSupported( targetEncoding, sourceStream.getFormat() ) ) {
-                return codec.getAudioInputStream( targetEncoding, sourceStream );
-            }
-        }
-        // we ran out of options, throw an exception
-        throw new IllegalArgumentException("Unsupported conversion: " + targetEncoding + " from " + sourceStream.getFormat());
+	for(int i = 0; i < codecs.size(); i++) {
+	    FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
+	    if( codec.isConversionSupported( targetEncoding, sourceStream.getFormat() ) ) {
+		return codec.getAudioInputStream( targetEncoding, sourceStream );
+	    }
+	}
+	// we ran out of options, throw an exception
+	throw new IllegalArgumentException("Unsupported conversion: " + targetEncoding + " from " + sourceStream.getFormat());
     }
 
 
@@ -888,32 +889,32 @@ public class AudioSystem {
      */
     public static AudioFormat[] getTargetFormats(AudioFormat.Encoding targetEncoding, AudioFormat sourceFormat) {
 
-        List codecs = getFormatConversionProviders();
-        Vector formats = new Vector();
+	List codecs = getFormatConversionProviders();
+	Vector formats = new Vector();
 
-        int size = 0;
-        int index = 0;
-        AudioFormat fmts[] = null;
+	int size = 0;
+	int index = 0;
+	AudioFormat fmts[] = null;
 
-        // gather from all the codecs
+	// gather from all the codecs
 
-        for(int i=0; i<codecs.size(); i++ ) {
-            FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
-            fmts = codec.getTargetFormats(targetEncoding, sourceFormat);
-            size += fmts.length;
-            formats.addElement( fmts );
-        }
+	for(int i=0; i<codecs.size(); i++ ) {
+	    FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
+	    fmts = codec.getTargetFormats(targetEncoding, sourceFormat);
+	    size += fmts.length;
+	    formats.addElement( fmts );
+	}
 
-        // now build a new array
+	// now build a new array
 
-        AudioFormat fmts2[] = new AudioFormat[size];
-        for(int i=0; i<formats.size(); i++ ) {
-            fmts = (AudioFormat [])(formats.get(i));
-            for(int j=0; j<fmts.length; j++ ) {
-                fmts2[index++] = fmts[j];
-            }
-        }
-        return fmts2;
+	AudioFormat fmts2[] = new AudioFormat[size];
+	for(int i=0; i<formats.size(); i++ ) {
+	    fmts = (AudioFormat [])(formats.get(i));
+	    for(int j=0; j<fmts.length; j++ ) {
+		fmts2[index++] = fmts[j];
+	    }
+	}
+	return fmts2;
     }
 
 
@@ -928,15 +929,15 @@ public class AudioSystem {
 
     public static boolean isConversionSupported(AudioFormat targetFormat, AudioFormat sourceFormat) {
 
-        List codecs = getFormatConversionProviders();
+	List codecs = getFormatConversionProviders();
 
-        for(int i=0; i<codecs.size(); i++ ) {
-            FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
-            if(codec.isConversionSupported(targetFormat, sourceFormat) ) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i<codecs.size(); i++ ) {
+	    FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
+	    if(codec.isConversionSupported(targetFormat, sourceFormat) ) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -953,23 +954,23 @@ public class AudioSystem {
      * @see #getAudioInputStream(AudioFormat.Encoding, AudioInputStream)
      */
     public static AudioInputStream getAudioInputStream(AudioFormat targetFormat,
-                                                       AudioInputStream sourceStream) {
+						       AudioInputStream sourceStream) {
 
-        if (sourceStream.getFormat().matches(targetFormat)) {
-            return sourceStream;
-        }
+	if (sourceStream.getFormat().matches(targetFormat)) {
+	    return sourceStream;
+	}
 
-        List codecs = getFormatConversionProviders();
+	List codecs = getFormatConversionProviders();
 
-        for(int i = 0; i < codecs.size(); i++) {
-            FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
-            if(codec.isConversionSupported(targetFormat,sourceStream.getFormat()) ) {
-                return codec.getAudioInputStream(targetFormat,sourceStream);
-            }
-        }
+	for(int i = 0; i < codecs.size(); i++) {
+	    FormatConversionProvider codec = (FormatConversionProvider) codecs.get(i);
+	    if(codec.isConversionSupported(targetFormat,sourceStream.getFormat()) ) {
+		return codec.getAudioInputStream(targetFormat,sourceStream);
+	    }
+	}
 
-        // we ran out of options...
-        throw new IllegalArgumentException("Unsupported conversion: " + targetFormat + " from " + sourceStream.getFormat());
+	// we ran out of options...
+	throw new IllegalArgumentException("Unsupported conversion: " + targetFormat + " from " + sourceStream.getFormat());
     }
 
 
@@ -991,26 +992,26 @@ public class AudioSystem {
      * @see InputStream#mark
      */
     public static AudioFileFormat getAudioFileFormat(InputStream stream)
-        throws UnsupportedAudioFileException, IOException {
+	throws UnsupportedAudioFileException, IOException {
 
-        List providers = getAudioFileReaders();
-        AudioFileFormat format = null;
+	List providers = getAudioFileReaders();
+	AudioFileFormat format = null;
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            AudioFileReader reader = (AudioFileReader) providers.get(i);
-            try {
-                format = reader.getAudioFileFormat( stream ); // throws IOException
-                break;
-            } catch (UnsupportedAudioFileException e) {
-                continue;
-            }
-        }
+	for(int i = 0; i < providers.size(); i++ ) {
+	    AudioFileReader reader = (AudioFileReader) providers.get(i);
+	    try {
+		format = reader.getAudioFileFormat( stream ); // throws IOException
+		break;
+	    } catch (UnsupportedAudioFileException e) {
+		continue;
+	    }
+	}
 
-        if( format==null ) {
-            throw new UnsupportedAudioFileException("file is not a supported file type");
-        } else {
-            return format;
-        }
+	if( format==null ) {
+	    throw new UnsupportedAudioFileException("file is not a supported file type");
+	} else {
+	    return format;
+	}
     }
 
     /**
@@ -1024,26 +1025,26 @@ public class AudioSystem {
      * @throws IOException if an input/output exception occurs
      */
     public static AudioFileFormat getAudioFileFormat(URL url)
-        throws UnsupportedAudioFileException, IOException {
+	throws UnsupportedAudioFileException, IOException {
 
-        List providers = getAudioFileReaders();
-        AudioFileFormat format = null;
+	List providers = getAudioFileReaders();
+	AudioFileFormat format = null;
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            AudioFileReader reader = (AudioFileReader) providers.get(i);
-            try {
-                format = reader.getAudioFileFormat( url ); // throws IOException
-                break;
-            } catch (UnsupportedAudioFileException e) {
-                continue;
-            }
-        }
+	for(int i = 0; i < providers.size(); i++ ) {
+	    AudioFileReader reader = (AudioFileReader) providers.get(i);
+	    try {
+		format = reader.getAudioFileFormat( url ); // throws IOException
+		break;
+	    } catch (UnsupportedAudioFileException e) {
+		continue;
+	    }
+	}
 
-        if( format==null ) {
-            throw new UnsupportedAudioFileException("file is not a supported file type");
-        } else {
-            return format;
-        }
+	if( format==null ) {
+	    throw new UnsupportedAudioFileException("file is not a supported file type");
+	} else {
+	    return format;
+	}
     }
 
     /**
@@ -1057,26 +1058,26 @@ public class AudioSystem {
      * @throws IOException if an I/O exception occurs
      */
     public static AudioFileFormat getAudioFileFormat(File file)
-        throws UnsupportedAudioFileException, IOException {
+	throws UnsupportedAudioFileException, IOException {
 
-        List providers = getAudioFileReaders();
-        AudioFileFormat format = null;
+	List providers = getAudioFileReaders();
+	AudioFileFormat format = null;
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            AudioFileReader reader = (AudioFileReader) providers.get(i);
-            try {
-                format = reader.getAudioFileFormat( file ); // throws IOException
-                break;
-            } catch (UnsupportedAudioFileException e) {
-                continue;
-            }
-        }
+	for(int i = 0; i < providers.size(); i++ ) {
+	    AudioFileReader reader = (AudioFileReader) providers.get(i);
+	    try {
+		format = reader.getAudioFileFormat( file ); // throws IOException
+		break;
+	    } catch (UnsupportedAudioFileException e) {
+		continue;
+	    }
+	}
 
-        if( format==null ) {
-            throw new UnsupportedAudioFileException("file is not a supported file type");
-        } else {
-            return format;
-        }
+	if( format==null ) {
+	    throw new UnsupportedAudioFileException("file is not a supported file type");
+	} else {
+	    return format;
+	}
     }
 
 
@@ -1100,26 +1101,26 @@ public class AudioSystem {
      * @see InputStream#mark
      */
     public static AudioInputStream getAudioInputStream(InputStream stream)
-        throws UnsupportedAudioFileException, IOException {
+	throws UnsupportedAudioFileException, IOException {
 
-        List providers = getAudioFileReaders();
-        AudioInputStream audioStream = null;
+	List providers = getAudioFileReaders();
+	AudioInputStream audioStream = null;
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            AudioFileReader reader = (AudioFileReader) providers.get(i);
-            try {
-                audioStream = reader.getAudioInputStream( stream ); // throws IOException
-                break;
-            } catch (UnsupportedAudioFileException e) {
-                continue;
-            }
-        }
+	for(int i = 0; i < providers.size(); i++ ) {
+	    AudioFileReader reader = (AudioFileReader) providers.get(i);
+	    try {
+		audioStream = reader.getAudioInputStream( stream ); // throws IOException
+		break;
+	    } catch (UnsupportedAudioFileException e) {
+		continue;
+	    }
+	}
 
-        if( audioStream==null ) {
-            throw new UnsupportedAudioFileException("could not get audio input stream from input stream");
-        } else {
-            return audioStream;
-        }
+	if( audioStream==null ) {
+	    throw new UnsupportedAudioFileException("could not get audio input stream from input stream");
+	} else {
+	    return audioStream;
+	}
     }
 
     /**
@@ -1134,26 +1135,26 @@ public class AudioSystem {
      * @throws IOException if an I/O exception occurs
      */
     public static AudioInputStream getAudioInputStream(URL url)
-        throws UnsupportedAudioFileException, IOException {
+	throws UnsupportedAudioFileException, IOException {
 
-        List providers = getAudioFileReaders();
-        AudioInputStream audioStream = null;
+	List providers = getAudioFileReaders();
+	AudioInputStream audioStream = null;
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            AudioFileReader reader = (AudioFileReader) providers.get(i);
-            try {
-                audioStream = reader.getAudioInputStream( url ); // throws IOException
-                break;
-            } catch (UnsupportedAudioFileException e) {
-                continue;
-            }
-        }
+	for(int i = 0; i < providers.size(); i++ ) {
+	    AudioFileReader reader = (AudioFileReader) providers.get(i);
+	    try {
+		audioStream = reader.getAudioInputStream( url ); // throws IOException
+		break;
+	    } catch (UnsupportedAudioFileException e) {
+		continue;
+	    }
+	}
 
-        if( audioStream==null ) {
-            throw new UnsupportedAudioFileException("could not get audio input stream from input URL");
-        } else {
-            return audioStream;
-        }
+	if( audioStream==null ) {
+	    throw new UnsupportedAudioFileException("could not get audio input stream from input URL");
+	} else {
+	    return audioStream;
+	}
     }
 
     /**
@@ -1168,26 +1169,26 @@ public class AudioSystem {
      * @throws IOException if an I/O exception occurs
      */
     public static AudioInputStream getAudioInputStream(File file)
-        throws UnsupportedAudioFileException, IOException {
+	throws UnsupportedAudioFileException, IOException {
 
-        List providers = getAudioFileReaders();
-        AudioInputStream audioStream = null;
+	List providers = getAudioFileReaders();
+	AudioInputStream audioStream = null;
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            AudioFileReader reader = (AudioFileReader) providers.get(i);
-            try {
-                audioStream = reader.getAudioInputStream( file ); // throws IOException
-                break;
-            } catch (UnsupportedAudioFileException e) {
-                continue;
-            }
-        }
+	for(int i = 0; i < providers.size(); i++ ) {
+	    AudioFileReader reader = (AudioFileReader) providers.get(i);
+	    try {
+		audioStream = reader.getAudioInputStream( file ); // throws IOException
+		break;
+	    } catch (UnsupportedAudioFileException e) {
+		continue;
+	    }
+	}
 
-        if( audioStream==null ) {
-            throw new UnsupportedAudioFileException("could not get audio input stream from input file");
-        } else {
-            return audioStream;
-        }
+	if( audioStream==null ) {
+	    throw new UnsupportedAudioFileException("could not get audio input stream from input file");
+	} else {
+	    return audioStream;
+	}
     }
 
 
@@ -1197,19 +1198,19 @@ public class AudioSystem {
      * an array of length 0 is returned.
      */
     public static AudioFileFormat.Type[] getAudioFileTypes() {
-        List providers = getAudioFileWriters();
-        Set returnTypesSet = new HashSet();
+	List providers = getAudioFileWriters();
+	Set returnTypesSet = new HashSet();
 
-        for(int i=0; i < providers.size(); i++) {
-            AudioFileWriter writer = (AudioFileWriter) providers.get(i);
-            AudioFileFormat.Type[] fileTypes = writer.getAudioFileTypes();
-            for(int j=0; j < fileTypes.length; j++) {
-                returnTypesSet.add(fileTypes[j]);
-            }
-        }
-        AudioFileFormat.Type returnTypes[] = (AudioFileFormat.Type[])
-            returnTypesSet.toArray(new AudioFileFormat.Type[0]);
-        return returnTypes;
+	for(int i=0; i < providers.size(); i++) {
+	    AudioFileWriter writer = (AudioFileWriter) providers.get(i);
+	    AudioFileFormat.Type[] fileTypes = writer.getAudioFileTypes();
+	    for(int j=0; j < fileTypes.length; j++) {
+		returnTypesSet.add(fileTypes[j]);
+	    }
+	}
+	AudioFileFormat.Type returnTypes[] = (AudioFileFormat.Type[])
+	    returnTypesSet.toArray(new AudioFileFormat.Type[0]);
+	return returnTypes;
     }
 
 
@@ -1222,15 +1223,15 @@ public class AudioSystem {
      */
     public static boolean isFileTypeSupported(AudioFileFormat.Type fileType) {
 
-        List providers = getAudioFileWriters();
+	List providers = getAudioFileWriters();
 
-        for(int i=0; i < providers.size(); i++) {
-            AudioFileWriter writer = (AudioFileWriter) providers.get(i);
-            if (writer.isFileTypeSupported(fileType)) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i < providers.size(); i++) {
+	    AudioFileWriter writer = (AudioFileWriter) providers.get(i);
+	    if (writer.isFileTypeSupported(fileType)) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -1243,19 +1244,19 @@ public class AudioSystem {
      * an array of length 0 is returned.
      */
     public static AudioFileFormat.Type[] getAudioFileTypes(AudioInputStream stream) {
-        List providers = getAudioFileWriters();
-        Set returnTypesSet = new HashSet();
+	List providers = getAudioFileWriters();
+	Set returnTypesSet = new HashSet();
 
-        for(int i=0; i < providers.size(); i++) {
-            AudioFileWriter writer = (AudioFileWriter) providers.get(i);
-            AudioFileFormat.Type[] fileTypes = writer.getAudioFileTypes(stream);
-            for(int j=0; j < fileTypes.length; j++) {
-                returnTypesSet.add(fileTypes[j]);
-            }
-        }
-        AudioFileFormat.Type returnTypes[] = (AudioFileFormat.Type[])
-            returnTypesSet.toArray(new AudioFileFormat.Type[0]);
-        return returnTypes;
+	for(int i=0; i < providers.size(); i++) {
+	    AudioFileWriter writer = (AudioFileWriter) providers.get(i);
+	    AudioFileFormat.Type[] fileTypes = writer.getAudioFileTypes(stream);
+	    for(int j=0; j < fileTypes.length; j++) {
+		returnTypesSet.add(fileTypes[j]);
+	    }
+	}
+	AudioFileFormat.Type returnTypes[] = (AudioFileFormat.Type[])
+	    returnTypesSet.toArray(new AudioFileFormat.Type[0]);
+	return returnTypes;
     }
 
 
@@ -1268,17 +1269,17 @@ public class AudioSystem {
      * otherwise <code>false</code>
      */
     public static boolean isFileTypeSupported(AudioFileFormat.Type fileType,
-                                              AudioInputStream stream) {
+					      AudioInputStream stream) {
 
-        List providers = getAudioFileWriters();
+	List providers = getAudioFileWriters();
 
-        for(int i=0; i < providers.size(); i++) {
-            AudioFileWriter writer = (AudioFileWriter) providers.get(i);
-            if(writer.isFileTypeSupported(fileType, stream)) {
-                return true;
-            }
-        }
-        return false;
+	for(int i=0; i < providers.size(); i++) {
+	    AudioFileWriter writer = (AudioFileWriter) providers.get(i);
+	    if(writer.isFileTypeSupported(fileType, stream)) {
+		return true;
+	    }
+	}
+	return false;
     }
 
 
@@ -1299,31 +1300,31 @@ public class AudioSystem {
      * @throws IllegalArgumentException if the file type is not supported by
      * the system
      * @see #isFileTypeSupported
-     * @see     #getAudioFileTypes
+     * @see	#getAudioFileTypes
      */
     public static int write(AudioInputStream stream, AudioFileFormat.Type fileType,
-                            OutputStream out) throws IOException {
+			    OutputStream out) throws IOException {
 
-        List providers = getAudioFileWriters();
-        int bytesWritten = 0;
-        boolean flag = false;
+	List providers = getAudioFileWriters();
+	int bytesWritten = 0;
+	boolean flag = false;
 
-        for(int i=0; i < providers.size(); i++) {
-            AudioFileWriter writer = (AudioFileWriter) providers.get(i);
-            try {
-                bytesWritten = writer.write( stream, fileType, out ); // throws IOException
-                flag = true;
-                break;
-            } catch (IllegalArgumentException e) {
-                // thrown if this provider cannot write the sequence, try the next
-                continue;
-            }
-        }
-        if(!flag) {
-            throw new IllegalArgumentException("could not write audio file: file type not supported: " + fileType);
-        } else {
-            return bytesWritten;
-        }
+	for(int i=0; i < providers.size(); i++) {
+	    AudioFileWriter writer = (AudioFileWriter) providers.get(i);
+	    try {
+		bytesWritten = writer.write( stream, fileType, out ); // throws IOException
+		flag = true;
+		break;
+	    } catch (IllegalArgumentException e) {
+		// thrown if this provider cannot write the sequence, try the next
+		continue;
+	    }
+	}
+	if(!flag) {
+	    throw new IllegalArgumentException("could not write audio file: file type not supported: " + fileType);
+	} else {
+	    return bytesWritten;
+	}
     }
 
 
@@ -1339,31 +1340,31 @@ public class AudioSystem {
      * @throws IllegalArgumentException if the file type is not supported by
      * the system
      * @see #isFileTypeSupported
-     * @see     #getAudioFileTypes
+     * @see	#getAudioFileTypes
      */
     public static int write(AudioInputStream stream, AudioFileFormat.Type fileType,
-                            File out) throws IOException {
+			    File out) throws IOException {
 
-        List providers = getAudioFileWriters();
-        int bytesWritten = 0;
-        boolean flag = false;
+	List providers = getAudioFileWriters();
+	int bytesWritten = 0;
+	boolean flag = false;
 
-        for(int i=0; i < providers.size(); i++) {
-            AudioFileWriter writer = (AudioFileWriter) providers.get(i);
-            try {
-                bytesWritten = writer.write( stream, fileType, out ); // throws IOException
-                flag = true;
-                break;
-            } catch (IllegalArgumentException e) {
-                // thrown if this provider cannot write the sequence, try the next
-                continue;
-            }
-        }
-        if (!flag) {
-            throw new IllegalArgumentException("could not write audio file: file type not supported: " + fileType);
-        } else {
-            return bytesWritten;
-        }
+	for(int i=0; i < providers.size(); i++) {
+	    AudioFileWriter writer = (AudioFileWriter) providers.get(i);
+	    try {
+		bytesWritten = writer.write( stream, fileType, out ); // throws IOException
+		flag = true;
+		break;
+	    } catch (IllegalArgumentException e) {
+		// thrown if this provider cannot write the sequence, try the next
+		continue;
+	    }
+	}
+	if (!flag) {
+	    throw new IllegalArgumentException("could not write audio file: file type not supported: " + fileType);
+	} else {
+	    return bytesWritten;
+	}
     }
 
 
@@ -1373,7 +1374,7 @@ public class AudioSystem {
      * Obtains the set of MixerProviders on the system.
      */
     private static List getMixerProviders() {
-        return getProviders(MixerProvider.class);
+	return getProviders(MixerProvider.class);
     }
 
 
@@ -1388,7 +1389,7 @@ public class AudioSystem {
      * returned.
      */
     private static List getFormatConversionProviders() {
-        return getProviders(FormatConversionProvider.class);
+	return getProviders(FormatConversionProvider.class);
     }
 
 
@@ -1401,7 +1402,7 @@ public class AudioSystem {
      * readers are available on the system, an empty List is returned.
      */
     private static List getAudioFileReaders() {
-        return getProviders(AudioFileReader.class);
+	return getProviders(AudioFileReader.class);
     }
 
 
@@ -1413,7 +1414,7 @@ public class AudioSystem {
      * writers are available on the system, an empty List is returned.
      */
     private static List getAudioFileWriters() {
-        return getProviders(AudioFileWriter.class);
+	return getProviders(AudioFileWriter.class);
     }
 
 
@@ -1427,66 +1428,66 @@ public class AudioSystem {
      * @return a Mixer that matches the requirements, or null if no default mixer found
      */
     private static Mixer getDefaultMixer(List providers, Line.Info info) {
-        Class lineClass = info.getLineClass();
-        String providerClassName = JDK13Services.getDefaultProviderClassName(lineClass);
-        String instanceName = JDK13Services.getDefaultInstanceName(lineClass);
-        Mixer mixer;
+	Class lineClass = info.getLineClass();
+	String providerClassName = JDK13Services.getDefaultProviderClassName(lineClass);
+	String instanceName = JDK13Services.getDefaultInstanceName(lineClass);
+	Mixer mixer;
 
-        if (providerClassName != null) {
-            MixerProvider defaultProvider = getNamedProvider(providerClassName, providers);
-            if (defaultProvider != null) {
-                if (instanceName != null) {
-                    mixer = getNamedMixer(instanceName, defaultProvider, info);
-                    if (mixer != null) {
-                        return mixer;
-                    }
-                } else {
-                    mixer = getFirstMixer(defaultProvider, info,
-                                          false /* mixing not required*/);
-                    if (mixer != null) {
-                        return mixer;
-                    }
-                }
+	if (providerClassName != null) {
+	    MixerProvider defaultProvider = getNamedProvider(providerClassName, providers);
+	    if (defaultProvider != null) {
+		if (instanceName != null) {
+		    mixer = getNamedMixer(instanceName, defaultProvider, info);
+		    if (mixer != null) {
+			return mixer;
+		    }
+		} else {
+		    mixer = getFirstMixer(defaultProvider, info,
+					  false /* mixing not required*/);
+		    if (mixer != null) {
+			return mixer;
+		    }
+		}
 
-            }
-        }
+	    }
+	}
 
-        /* Provider class not specified or
-           provider class cannot be found, or
-           provider class and instance specified and instance cannot be found or is not appropriate */
-        if (instanceName != null) {
-            mixer = getNamedMixer(instanceName, providers, info);
-            if (mixer != null) {
-                return mixer;
-            }
-        }
+	/* Provider class not specified or
+	   provider class cannot be found, or
+	   provider class and instance specified and instance cannot be found or is not appropriate */
+	if (instanceName != null) {
+	    mixer = getNamedMixer(instanceName, providers, info);
+	    if (mixer != null) {
+		return mixer;
+	    }
+	}
 
 
-        /* No default are specified, or if something is specified, everything
-           failed. */
-        return null;
+	/* No default are specified, or if something is specified, everything
+	   failed. */
+	return null;
     }
 
 
 
     /** Return a MixerProvider of a given class from the list of
-        MixerProviders.
+	MixerProviders.
 
-        This method never requires the returned Mixer to do mixing.
-        @param providerClassName The class name of the provider to be returned.
-        @param providers The list of MixerProviders that is searched.
-        @return A MixerProvider of the requested class, or null if none is
-        found.
+	This method never requires the returned Mixer to do mixing.
+	@param providerClassName The class name of the provider to be returned.
+	@param providers The list of MixerProviders that is searched.
+	@return A MixerProvider of the requested class, or null if none is
+	found.
      */
     private static MixerProvider getNamedProvider(String providerClassName,
-                                                  List providers) {
-        for(int i = 0; i < providers.size(); i++) {
-            MixerProvider provider = (MixerProvider) providers.get(i);
-            if (provider.getClass().getName().equals(providerClassName)) {
-                return provider;
-            }
-        }
-        return null;
+						  List providers) {
+	for(int i = 0; i < providers.size(); i++) {
+	    MixerProvider provider = (MixerProvider) providers.get(i);
+	    if (provider.getClass().getName().equals(providerClassName)) {
+		return provider;
+	    }
+	}
+	return null;
     }
 
 
@@ -1500,90 +1501,90 @@ public class AudioSystem {
       @return A Mixer matching the requirements, or null if none is found.
      */
     private static Mixer getNamedMixer(String mixerName,
-                                       MixerProvider provider,
-                                       Line.Info info) {
-        Mixer.Info[] infos = provider.getMixerInfo();
-        for (int i = 0; i < infos.length; i++) {
-            if (infos[i].getName().equals(mixerName)) {
-                Mixer mixer = provider.getMixer(infos[i]);
-                if (isAppropriateMixer(mixer, info, false)) {
-                    return mixer;
-                }
-            }
-        }
-        return null;
+				       MixerProvider provider,
+				       Line.Info info) {
+	Mixer.Info[] infos = provider.getMixerInfo();
+	for (int i = 0; i < infos.length; i++) {
+	    if (infos[i].getName().equals(mixerName)) {
+		Mixer mixer = provider.getMixer(infos[i]);
+		if (isAppropriateMixer(mixer, info, false)) {
+		    return mixer;
+		}
+	    }
+	}
+	return null;
     }
 
 
     /** From a List of MixerProviders, return a Mixer with a given name.
-        This method never requires the returned Mixer to do mixing.
-        @param mixerName The name of the Mixer to be returned.
-        @param providers The List of MixerProviders to check for Mixers.
-        @param info The type of line the returned Mixer is required to
-        support.
-        @return A Mixer matching the requirements, or null if none is found.
+	This method never requires the returned Mixer to do mixing.
+	@param mixerName The name of the Mixer to be returned.
+	@param providers The List of MixerProviders to check for Mixers.
+	@param info The type of line the returned Mixer is required to
+	support.
+	@return A Mixer matching the requirements, or null if none is found.
      */
     private static Mixer getNamedMixer(String mixerName,
-                                       List providers,
-                                       Line.Info info) {
-        for(int i = 0; i < providers.size(); i++) {
-            MixerProvider provider = (MixerProvider) providers.get(i);
-            Mixer mixer = getNamedMixer(mixerName, provider, info);
-            if (mixer != null) {
-                return mixer;
-            }
-        }
-        return null;
+				       List providers,
+				       Line.Info info) {
+	for(int i = 0; i < providers.size(); i++) {
+	    MixerProvider provider = (MixerProvider) providers.get(i);
+	    Mixer mixer = getNamedMixer(mixerName, provider, info);
+	    if (mixer != null) {
+		return mixer;
+	    }
+	}
+	return null;
     }
 
 
     /** From a given MixerProvider, return the first appropriate Mixer.
-        @param provider The MixerProvider to check for Mixers.
-        @param info The type of line the returned Mixer is required to
-        support.
-        @param isMixingRequired If true, only Mixers that support mixing are
-        returned for line types of SourceDataLine and Clip.
+	@param provider The MixerProvider to check for Mixers.
+	@param info The type of line the returned Mixer is required to
+	support.
+	@param isMixingRequired If true, only Mixers that support mixing are
+	returned for line types of SourceDataLine and Clip.
 
-        @return A Mixer that is considered appropriate, or null
-        if none is found.
+	@return A Mixer that is considered appropriate, or null
+	if none is found.
      */
     private static Mixer getFirstMixer(MixerProvider provider,
-                                       Line.Info info,
-                                       boolean isMixingRequired) {
-        Mixer.Info[] infos = provider.getMixerInfo();
-        for (int j = 0; j < infos.length; j++) {
-            Mixer mixer = provider.getMixer(infos[j]);
-            if (isAppropriateMixer(mixer, info, isMixingRequired)) {
-                return mixer;
-            }
-        }
-        return null;
+				       Line.Info info,
+				       boolean isMixingRequired) {
+	Mixer.Info[] infos = provider.getMixerInfo();
+	for (int j = 0; j < infos.length; j++) {
+	    Mixer mixer = provider.getMixer(infos[j]);
+	    if (isAppropriateMixer(mixer, info, isMixingRequired)) {
+		return mixer;
+	    }
+	}
+	return null;
     }
 
 
     /** Checks if a Mixer is appropriate.
-        A Mixer is considered appropriate if it support the given line type.
-        If isMixingRequired is true and the line type is an output one
-        (SourceDataLine, Clip), the mixer is appropriate if it supports
-        at least 2 (concurrent) lines of the given type.
+	A Mixer is considered appropriate if it support the given line type.
+	If isMixingRequired is true and the line type is an output one
+	(SourceDataLine, Clip), the mixer is appropriate if it supports
+	at least 2 (concurrent) lines of the given type.
 
-        @return true if the mixer is considered appropriate according to the
-        rules given above, false otherwise.
+	@return true if the mixer is considered appropriate according to the
+	rules given above, false otherwise.
      */
     private static boolean isAppropriateMixer(Mixer mixer,
-                                              Line.Info lineInfo,
-                                              boolean isMixingRequired) {
-        if (! mixer.isLineSupported(lineInfo)) {
-            return false;
-        }
-        Class lineClass = lineInfo.getLineClass();
-        if (isMixingRequired
-            && (SourceDataLine.class.isAssignableFrom(lineClass) ||
-                Clip.class.isAssignableFrom(lineClass))) {
-            int maxLines = mixer.getMaxLines(lineInfo);
-            return ((maxLines == NOT_SPECIFIED) || (maxLines > 1));
-        }
-        return true;
+					      Line.Info lineInfo,
+					      boolean isMixingRequired) {
+	if (! mixer.isLineSupported(lineInfo)) {
+	    return false;
+	}
+	Class lineClass = lineInfo.getLineClass();
+	if (isMixingRequired 
+	    && (SourceDataLine.class.isAssignableFrom(lineClass) ||
+		Clip.class.isAssignableFrom(lineClass))) {
+	    int maxLines = mixer.getMaxLines(lineInfo);
+	    return ((maxLines == NOT_SPECIFIED) || (maxLines > 1));
+	}
+	return true;
     }
 
 
@@ -1592,8 +1593,8 @@ public class AudioSystem {
      * Like getMixerInfo, but return List
      */
     private static List getMixerInfoList() {
-        List providers = getMixerProviders();
-        return getMixerInfoList(providers);
+	List providers = getMixerProviders();
+	return getMixerInfoList(providers);
     }
 
 
@@ -1601,21 +1602,21 @@ public class AudioSystem {
      * Like getMixerInfo, but return List
      */
     private static List getMixerInfoList(List providers) {
-        List infos = new ArrayList();
+	List infos = new ArrayList();
 
-        Mixer.Info[] someInfos; // per-mixer
-        Mixer.Info[] allInfos;  // for all mixers
+	Mixer.Info[] someInfos;	// per-mixer
+	Mixer.Info[] allInfos;	// for all mixers
 
-        for(int i = 0; i < providers.size(); i++ ) {
-            someInfos = (Mixer.Info[])
-                ((MixerProvider)providers.get(i)).getMixerInfo();
+	for(int i = 0; i < providers.size(); i++ ) {
+	    someInfos = (Mixer.Info[])
+		((MixerProvider)providers.get(i)).getMixerInfo();
 
-            for (int j = 0; j < someInfos.length; j++) {
-                infos.add(someInfos[j]);
-            }
-        }
+	    for (int j = 0; j < someInfos.length; j++) {
+		infos.add(someInfos[j]);
+	    }
+	}
 
-        return infos;
+	return infos;
     }
 
 
@@ -1626,6 +1627,6 @@ public class AudioSystem {
      * If no providers are available, a vector of length 0 will be returned.
      */
     private static List getProviders(Class providerClass) {
-        return JDK13Services.getProviders(providerClass);
+	return JDK13Services.getProviders(providerClass);
     }
 }

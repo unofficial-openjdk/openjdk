@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /* @test
  * @bug 4838379
  * @summary Verify that custom serialization methods defined by enum types are
- *          not invoked during serialization or deserialization.
+ * 	    not invoked during serialization or deserialization.
  *
  * @compile -source 1.5 Test.java
  * @run main Test
@@ -36,33 +36,33 @@ enum Foo {
 
     foo,
     bar {
-        private void writeObject(ObjectOutputStream out) throws IOException {
-            throw new Error("bar.writeObject invoked");
-        }
-        private void readObject(ObjectInputStream in)
-            throws IOException, ClassNotFoundException
-        {
-            throw new Error("bar.readObject invoked");
-        }
-        Object writeReplace() throws ObjectStreamException {
-            throw new Error("bar.writeReplace invoked");
-        }
-        // readResolve cannot be defined until Enum.readResolve is removed
-        // Object readResolve() throws ObjectStreamException {
-        //    throw new Error("bar.readResolve invoked");
-        // }
+	private void writeObject(ObjectOutputStream out) throws IOException {
+	    throw new Error("bar.writeObject invoked");
+	}
+	private void readObject(ObjectInputStream in)
+	    throws IOException, ClassNotFoundException
+	{
+	    throw new Error("bar.readObject invoked");
+	}
+	Object writeReplace() throws ObjectStreamException {
+	    throw new Error("bar.writeReplace invoked");
+	}
+	// readResolve cannot be defined until Enum.readResolve is removed
+	// Object readResolve() throws ObjectStreamException {
+	//    throw new Error("bar.readResolve invoked");
+	// }
     };
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-        throw new Error("Foo.writeObject invoked");
+	throw new Error("Foo.writeObject invoked");
     }
     private void readObject(ObjectInputStream in)
-        throws IOException, ClassNotFoundException
+	throws IOException, ClassNotFoundException
     {
-        throw new Error("Foo.readObject invoked");
+	throw new Error("Foo.readObject invoked");
     }
     Object writeReplace() throws ObjectStreamException {
-        throw new Error("Foo.writeReplace invoked");
+	throw new Error("Foo.writeReplace invoked");
     }
     // readResolve cannot be defined until Enum.readResolve is removed
     // Object readResolve() throws ObjectStreamException {
@@ -72,19 +72,19 @@ enum Foo {
 
 public class Test {
     public static void main(String[] args) throws Exception {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ObjectOutputStream oout = new ObjectOutputStream(bout);
-        for (Foo f : Foo.values()) {
-            oout.writeObject(f);
-        }
-        oout.close();
-        ObjectInputStream oin = new ObjectInputStream(
-            new ByteArrayInputStream(bout.toByteArray()));
-        for (Foo f : Foo.values()) {
-            Object obj = oin.readObject();
-            if (obj != f) {
-                throw new Error("expected " + f + ", got " + obj);
-            }
-        }
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ObjectOutputStream oout = new ObjectOutputStream(bout);
+	for (Foo f : Foo.values()) {
+	    oout.writeObject(f);
+	}
+	oout.close();
+	ObjectInputStream oin = new ObjectInputStream(
+	    new ByteArrayInputStream(bout.toByteArray()));
+	for (Foo f : Foo.values()) {
+	    Object obj = oin.readObject();
+	    if (obj != f) {
+		throw new Error("expected " + f + ", got " + obj);
+	    }
+	}
     }
 }

@@ -25,6 +25,7 @@
 
 
 /*
+ * @(#)IndicLayoutEngine.cpp	1.14 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -45,19 +46,19 @@
 
 #include "IndicReordering.h"
 
-IndicOpenTypeLayoutEngine::IndicOpenTypeLayoutEngine(const LEFontInstance *fontInstance,
+IndicOpenTypeLayoutEngine::IndicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
     le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags,
     const GlyphSubstitutionTableHeader *gsubTable)
-    : OpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags, gsubTable),
+    : OpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags, gsubTable), 
     fMPreFixups(NULL)
 {
     fFeatureMap = IndicReordering::getFeatureMap(fFeatureMapCount);
     fFeatureOrder = TRUE;
 }
 
-IndicOpenTypeLayoutEngine::IndicOpenTypeLayoutEngine(const LEFontInstance *fontInstance,
+IndicOpenTypeLayoutEngine::IndicOpenTypeLayoutEngine(const LEFontInstance *fontInstance, 
     le_int32 scriptCode, le_int32 languageCode, le_int32 typoFlags)
-    : OpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags),
+    : OpenTypeLayoutEngine(fontInstance, scriptCode, languageCode, typoFlags), 
     fMPreFixups(NULL)
 {
     fFeatureMap = IndicReordering::getFeatureMap(fFeatureMapCount);
@@ -71,7 +72,7 @@ IndicOpenTypeLayoutEngine::~IndicOpenTypeLayoutEngine()
 
 // Input: characters, tags
 // Output: glyphs, char indices
-le_int32 IndicOpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[],
+le_int32 IndicOpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_int32 max, le_bool rightToLeft,
     LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
@@ -84,7 +85,7 @@ le_int32 IndicOpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[],
         return 0;
     }
 
-    le_int32 retCount = OpenTypeLayoutEngine::glyphProcessing(chars, offset, count, max,
+    le_int32 retCount = OpenTypeLayoutEngine::glyphProcessing(chars, offset, count, max, 
         rightToLeft, glyphStorage, success);
 
     if (LE_FAILURE(success)) {
@@ -99,7 +100,7 @@ le_int32 IndicOpenTypeLayoutEngine::glyphProcessing(const LEUnicode chars[],
 // Input: characters
 // Output: characters, char indices, tags
 // Returns: output character count
-le_int32 IndicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
+le_int32 IndicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[], 
     le_int32 offset, le_int32 count, le_int32 max, le_bool rightToLeft,
     LEUnicode *&outChars, LEGlyphStorage &glyphStorage, LEErrorCode &success)
 {
@@ -131,9 +132,10 @@ le_int32 IndicOpenTypeLayoutEngine::characterProcessing(const LEUnicode chars[],
 
     // NOTE: assumes this allocates featureTags...
     // (probably better than doing the worst case stuff here...)
-    le_int32 outCharCount = IndicReordering::reorder(&chars[offset], count, fScriptCode,
+    le_int32 outCharCount = IndicReordering::reorder(&chars[offset], count, fScriptCode, 
         outChars, glyphStorage, &fMPreFixups);
     glyphStorage.adoptGlyphCount(outCharCount);
 
     return outCharCount;
 }
+

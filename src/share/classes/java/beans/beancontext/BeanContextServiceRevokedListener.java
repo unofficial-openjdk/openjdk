@@ -29,18 +29,21 @@ import java.beans.beancontext.BeanContextServiceRevokedEvent;
 import java.util.EventListener;
 
 /**
- *  The listener interface for receiving
- * <code>BeanContextServiceRevokedEvent</code> objects. A class that is
+ *  The listener interface for receiving 
+ * <code>BeanContextServiceRevokedEvent</code> objects. A class that is 
  * interested in processing a <code>BeanContextServiceRevokedEvent</code>
- * implements this interface.
+ * implements this interface. 
  */
 public interface BeanContextServiceRevokedListener extends EventListener {
 
     /**
      * The service named has been revoked. getService requests for
      * this service will no longer be satisifed.
-     * @param bcsre the <code>BeanContextServiceRevokedEvent</code> received
-     * by this listener.
+     * @param bcsre the <code>BeanContextServiceRevokedEvent</code> received 
+     * by this listener. 
      */
     void serviceRevoked(BeanContextServiceRevokedEvent bcsre);
 }
+
+
+

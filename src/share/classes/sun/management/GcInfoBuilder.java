@@ -50,7 +50,7 @@ public class GcInfoBuilder {
     // the CompositeType for the GcInfo could be different.
     private CompositeType gcInfoCompositeType;
 
-    // GC-specific items
+    // GC-specific items 
     private final int gcExtItemCount;
     private final String[] gcExtItemNames;
     private final String[] gcExtItemDescs;
@@ -78,7 +78,7 @@ public class GcInfoBuilder {
         MemoryUsage[] usageAfterGC = new MemoryUsage[poolNames.length];
         Object[] values = new Object[gcExtItemCount];
 
-        return getLastGcInfo0(gc, gcExtItemCount, values, gcExtItemTypes,
+        return getLastGcInfo0(gc, gcExtItemCount, values, gcExtItemTypes, 
                               usageBeforeGC, usageAfterGC);
     }
 
@@ -90,11 +90,11 @@ public class GcInfoBuilder {
         return gcExtItemCount;
     }
 
-    // Returns the CompositeType for the GcInfo including
+    // Returns the CompositeType for the GcInfo including 
     // the extension attributes
     synchronized CompositeType getGcInfoCompositeType() {
-        if (gcInfoCompositeType != null)
-            return gcInfoCompositeType;
+        if (gcInfoCompositeType != null) 
+            return gcInfoCompositeType; 
 
         // First, fill with the attributes in the GcInfo
         String[] gcInfoItemNames = GcInfoCompositeData.getBaseGcInfoItemNames();
@@ -153,11 +153,11 @@ public class GcInfoBuilder {
 
         CompositeType gict = null;
         try {
-            final String typeName =
+            final String typeName = 
                 "sun.management." + gc.getName() + ".GcInfoCompositeType";
 
             gict = new CompositeType(typeName,
-                                     "CompositeType for GC info for " +
+                                     "CompositeType for GC info for " + 
                                          gc.getName(),
                                      allItemNames,
                                      allItemDescs,
@@ -168,7 +168,7 @@ public class GcInfoBuilder {
         }
         gcInfoCompositeType = gict;
 
-        return gcInfoCompositeType;
+        return gcInfoCompositeType; 
     }
 
     synchronized String[] getItemNames() {
@@ -189,9 +189,9 @@ public class GcInfoBuilder {
 
     /**
      * Returns the last GcInfo
-     *
+     * 
      * @param gc GarbageCollectorMXBean that the gc info is associated with.
-     * @param numExtAtts number of extension attributes
+     * @param numExtAtts number of extension attributes 
      * @param extAttValues Values of extension attributes to be filled.
      * @param before Memory usage before GC to be filled.
      * @param after Memory usage after GC to be filled.

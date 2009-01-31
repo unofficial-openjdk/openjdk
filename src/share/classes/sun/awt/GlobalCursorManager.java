@@ -40,32 +40,32 @@ public abstract class GlobalCursorManager {
     class NativeUpdater implements Runnable {
         boolean pending = false;
 
-        public void run() {
-            boolean shouldUpdate = false;
-            synchronized (this) {
-                if (pending) {
-                    pending = false;
-                    shouldUpdate = true;
-                }
-            }
-            if (shouldUpdate) {
-                _updateCursor(false);
-            }
-        }
-
+	public void run() {
+	    boolean shouldUpdate = false;
+	    synchronized (this) {
+		if (pending) {
+		    pending = false;
+		    shouldUpdate = true;
+		}
+	    }
+	    if (shouldUpdate) {
+		_updateCursor(false);
+	    }
+	}
+	
         public void postIfNotPending(Component heavy, InvocationEvent in) {
-            boolean shouldPost = false;
-            synchronized (this) {
-                if (!pending) {
-                    pending = shouldPost = true;
-                }
-            }
-            if (shouldPost) {
-                SunToolkit.postEvent(SunToolkit.targetToAppContext(heavy), in);
-            }
-        }
+	    boolean shouldPost = false;
+	    synchronized (this) {
+	        if (!pending) {
+		    pending = shouldPost = true;
+		}
+	    }
+	    if (shouldPost) {
+		SunToolkit.postEvent(SunToolkit.targetToAppContext(heavy), in);
+	    }
+	}
     }
-
+    
     /**
      * Use a singleton NativeUpdater for better performance. We cannot use
      * a singleton InvocationEvent because we want each event to have a fresh
@@ -90,9 +90,9 @@ public abstract class GlobalCursorManager {
      */
     public void updateCursorImmediately() {
         synchronized (nativeUpdater) {
-            nativeUpdater.pending = false;
-        }
-        _updateCursor(false);
+	    nativeUpdater.pending = false;
+	}
+	_updateCursor(false);
     }
 
     /**
@@ -102,13 +102,13 @@ public abstract class GlobalCursorManager {
      * @param   e the InputEvent which triggered the cursor update.
      */
     public void updateCursorImmediately(InputEvent e) {
-        boolean shouldUpdate;
+	boolean shouldUpdate;
         synchronized (lastUpdateLock) {
-            shouldUpdate = (e.getWhen() >= lastUpdateMillis);
-        }
-        if (shouldUpdate) {
-            _updateCursor(true);
-        }
+	    shouldUpdate = (e.getWhen() >= lastUpdateMillis);
+	}
+	if (shouldUpdate) {
+	    _updateCursor(true);
+	}
     }
 
     /**
@@ -128,7 +128,7 @@ public abstract class GlobalCursorManager {
      * all platforms may require the Component.
      */
     protected abstract void setCursor(Component comp, Cursor cursor,
-                                      boolean useCache);
+				      boolean useCache);
     /**
      * Returns the global cursor position, in screen coordinates.
      */
@@ -169,44 +169,44 @@ public abstract class GlobalCursorManager {
     private void _updateCursor(boolean useCache) {
 
         synchronized (lastUpdateLock) {
-            lastUpdateMillis = System.currentTimeMillis();
-        }
+	    lastUpdateMillis = System.currentTimeMillis();
+	}
 
         Point queryPos = null, p = null;
-        Component comp;
+	Component comp;
 
-        try {
-            comp = findHeavyweightUnderCursor(useCache);
-            if (comp == null) {
+	try {
+	    comp = findHeavyweightUnderCursor(useCache);
+	    if (comp == null) {
                 updateCursorOutOfJava();
-                return;
-            }
+		return;
+	    }
 
-            if (comp instanceof Window) {
-                p = ComponentAccessor.getLocation_NoClientCode(comp);
-            } else if (comp instanceof Container) {
-                p = getLocationOnScreen(comp);
-            }
-            if (p != null) {
-                queryPos = new Point();
-                getCursorPos(queryPos);
-                Component c = findComponentAt((Container)comp,
-                                              queryPos.x - p.x,
-                                              queryPos.y - p.y);
-                // If findComponentAt returns null, then something bad has
-                // happened. For example, the heavyweight Component may
-                // have been hidden or disabled by another thread. In that
-                // case, we'll just use the originial heavyweight.
-                if (c != null) {
-                    comp = c;
-                }
-            }
+	    if (comp instanceof Window) {
+		p = ComponentAccessor.getLocation_NoClientCode(comp);
+	    } else if (comp instanceof Container) {
+		p = getLocationOnScreen(comp);
+	    }
+	    if (p != null) {
+		queryPos = new Point();
+		getCursorPos(queryPos);
+		Component c = findComponentAt((Container)comp,
+					      queryPos.x - p.x,
+					      queryPos.y - p.y);
+		// If findComponentAt returns null, then something bad has
+		// happened. For example, the heavyweight Component may
+		// have been hidden or disabled by another thread. In that
+		// case, we'll just use the originial heavyweight.
+		if (c != null) {
+		    comp = c;
+		}
+	    }
+	    
+	    setCursor(comp, ComponentAccessor.getCursor_NoClientCode(comp), useCache);
 
-            setCursor(comp, ComponentAccessor.getCursor_NoClientCode(comp), useCache);
-
-        } catch (IllegalComponentStateException e) {
-            // Shouldn't happen, but if it does, abort.
-        }
+	} catch (IllegalComponentStateException e) {
+	    // Shouldn't happen, but if it does, abort.
+	}
     }
 
     protected void updateCursorOutOfJava() {
@@ -214,3 +214,4 @@ public abstract class GlobalCursorManager {
         // But we need to update it in case of grab on X.
     }
 }
+

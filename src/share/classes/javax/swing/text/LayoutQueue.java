@@ -27,11 +27,12 @@ package javax.swing.text;
 import java.util.Vector;
 
 /**
- * A queue of text layout tasks.
+ * A queue of text layout tasks. 
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  * @see     AsyncBoxView
- * @since   1.3
+ * @since   1.3 
  */
 public class LayoutQueue {
 
@@ -44,17 +45,17 @@ public class LayoutQueue {
      * Construct a layout queue.
      */
     public LayoutQueue() {
-        tasks = new Vector();
+	tasks = new Vector();
     }
 
     /**
      * Fetch the default layout queue.
      */
     public static LayoutQueue getDefaultQueue() {
-        if (defaultQueue == null) {
-            defaultQueue = new LayoutQueue();
-        }
-        return defaultQueue;
+	if (defaultQueue == null) {
+	    defaultQueue = new LayoutQueue();
+	}
+	return defaultQueue;
     }
 
     /**
@@ -63,7 +64,7 @@ public class LayoutQueue {
      * @param q the new queue.
      */
     public static void setDefaultQueue(LayoutQueue q) {
-        defaultQueue = q;
+	defaultQueue = q;
     }
 
     /**
@@ -71,49 +72,49 @@ public class LayoutQueue {
      * the results are not believed to be visible.
      */
     public synchronized void addTask(Runnable task) {
-        if (worker == null) {
-            worker = new LayoutThread();
-            worker.start();
-        }
-        tasks.addElement(task);
-        notifyAll();
+	if (worker == null) {
+	    worker = new LayoutThread();
+	    worker.start();
+	}
+	tasks.addElement(task);
+	notifyAll();
     }
 
     /**
      * Used by the worker thread to get a new task to execute
      */
     protected synchronized Runnable waitForWork() {
-        while (tasks.size() == 0) {
-            try {
-                wait();
-            } catch (InterruptedException ie) {
-                return null;
-            }
-        }
-        Runnable work = (Runnable) tasks.firstElement();
-        tasks.removeElementAt(0);
-        return work;
+	while (tasks.size() == 0) {
+	    try {
+		wait();
+	    } catch (InterruptedException ie) {
+		return null;
+	    }
+	}
+	Runnable work = (Runnable) tasks.firstElement();
+	tasks.removeElementAt(0);
+	return work;
     }
 
     /**
      * low priority thread to perform layout work forever
      */
     class LayoutThread extends Thread {
-
-        LayoutThread() {
-            super("text-layout");
-            setPriority(Thread.MIN_PRIORITY);
-        }
-
+	
+	LayoutThread() {
+	    super("text-layout");
+	    setPriority(Thread.MIN_PRIORITY);
+	}
+	
         public void run() {
-            Runnable work;
-            do {
-                work = waitForWork();
-                if (work != null) {
-                    work.run();
-                }
-            } while (work != null);
-        }
+	    Runnable work;
+	    do {
+		work = waitForWork();
+		if (work != null) {
+		    work.run();
+		}
+	    } while (work != null);
+	}
 
 
     }

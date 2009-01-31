@@ -48,8 +48,9 @@ import sun.java2d.windows.WindowsFlags;
  *
  * @see GraphicsEnvironment
  * @see GraphicsConfiguration
+ * @version 10 Feb 1997
  */
-public class Win32GraphicsDevice extends GraphicsDevice implements
+public class Win32GraphicsDevice extends GraphicsDevice implements 
  DisplayChangedListener {
     int screen;
     ColorModel dynamicColorModel;   // updated with dev changes
@@ -58,7 +59,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
     GraphicsConfiguration defaultConfig;
     boolean offscreenAccelerationEnabled = true;
     private D3DContext d3dContext;
-
+    
     private final String idString;
     private final String descString;
     // Note that we do not synchronize access to this variable - it doesn't
@@ -86,8 +87,8 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         String nopixfmt = (String)java.security.AccessController.doPrivileged(
             new sun.security.action.GetPropertyAction("sun.awt.nopixfmt"));
         pfDisabled = (nopixfmt != null);
-        initIDs();
-    }
+	initIDs();
+    }    
 
     private static native void initIDs();
 
@@ -98,7 +99,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
      * was disabled by the user or had problems initializing.
      */
     public boolean isOffscreenAccelerationEnabled() {
-        return offscreenAccelerationEnabled;
+	return offscreenAccelerationEnabled;
     }
 
     native void initDevice(int screen);
@@ -122,7 +123,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
      * @see #TYPE_IMAGE_BUFFER
      */
     public int getType() {
-        return TYPE_RASTER_SCREEN;
+	return TYPE_RASTER_SCREEN;
     }
 
     /**
@@ -131,7 +132,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
     public int getScreen() {
         return screen;
     }
-
+    
     /**
      * Returns whether this is a valid devicie. Device can become
      * invalid as a result of device removal event.
@@ -139,7 +140,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
     boolean isValid() {
         return valid;
     }
-
+    
     /**
      * Called from native code when the device was removed.
      *
@@ -149,7 +150,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         valid = false;
         screen = defaultScreen;
     }
-
+    
     /**
      * Returns the identification string associated with this graphics
      * device.
@@ -218,14 +219,14 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             return getMaxConfigsImpl(screen);
         }
     }
-
+  
     private native int getMaxConfigsImpl(int screen);
 
     /**
-     * Returns whether or not the PixelFormat indicated by index is
+     * Returns whether or not the PixelFormat indicated by index is 
      * supported.  Supported PixelFormats support drawing to a Window
      * (PFD_DRAW_TO_WINDOW), support GDI (PFD_SUPPORT_GDI), and in the
-     * case of an 8-bit format (cColorBits <= 8) uses indexed colors
+     * case of an 8-bit format (cColorBits <= 8) uses indexed colors 
      * (iPixelType == PFD_TYPE_COLORINDEX).
      * We use the index 0 to indicate that PixelFormat calls don't work, or
      * are disabled.  Do not call this function with an index of 0.
@@ -251,7 +252,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
      * are disabled.
      */
     private native int getDefaultPixIDImpl(int screen);
-
+    
     /**
      * Returns the default graphics configuration
      * associated with this graphics device.
@@ -278,7 +279,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
 
             // Fix for 4669614.  Most apps are not concerned with PixelFormats,
             // yet we ALWAYS used them for determining ColorModels and such.
-            // By passing in 0 as the PixelFormatID here, we signal that
+            // By passing in 0 as the PixelFormatID here, we signal that 
             // PixelFormats should not be used, thus avoid loading the opengl
             // library.  Apps concerned with PixelFormats can still use
             // GraphicsConfiguration.getConfigurations().
@@ -310,7 +311,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
     }
 
     private native boolean isDDEnabledOnDeviceNative(int screen);
-
+    
     public D3DContext getD3DContext() {
         if (d3dContext == null) {
             d3dContext = new D3DContext(this);
@@ -318,12 +319,12 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         return d3dContext;
     }
 
-
+    
     public boolean isDDEnabledOnDevice() {
         return (WindowsFlags.isDDEnabled() && isValid() &&
-                isDDEnabledOnDeviceNative(screen));
+		isDDEnabledOnDeviceNative(screen));
     }
-
+    
     public boolean isD3DEnabledOnDevice() {
         // The conditions under which we enable the D3D pipeline for the device:
         //  - d3d is not disabled via a flag
@@ -331,10 +332,10 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         //  - the hardware/drivers meet our requirements
         return (WindowsFlags.isD3DEnabled() && isValid() &&
                 (WindowsFlags.isD3DSet() || getFullScreenWindow() != null) &&
-                ((getD3DContext().getDeviceCaps() &
+                ((getD3DContext().getDeviceCaps() & 
                   D3DContext.J2D_D3D_ENABLED_OK) != 0));
     }
-
+    
     private static boolean isFSExclusiveModeAllowed() {
         SecurityManager security = System.getSecurityManager();
         if (security != null) {
@@ -350,7 +351,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         }
         return true;
     }
-
+    
     /**
      * We support the exclusive fullscreen mode in both ddraw and
      * noddraw modes, so we return true unless we're not allowed to use
@@ -366,17 +367,17 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
      * into fullscreen mode.
      */
     private Frame getToplevelOwner(Window w) {
-        Window owner = w;
-        while (owner != null) {
-            owner = owner.getOwner();
-            if (owner instanceof Frame) {
-                return (Frame) owner;
-            }
-        }
+	Window owner = w;
+	while (owner != null) {
+	    owner = owner.getOwner();
+	    if (owner instanceof Frame) {
+		return (Frame) owner;
+	    }
+	}
         // Should not get here, but return something intelligent just in case
         return null;
     }
-
+    
     public synchronized void setFullScreenWindow(Window w) {
         Window old = getFullScreenWindow();
         if (w == old) {
@@ -386,7 +387,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             super.setFullScreenWindow(w);
             return;
         }
-
+        
         // Enter windowed mode.
         if (old != null) {
             // restore the original display mode
@@ -404,13 +405,13 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             if (peer != null) {
                 synchronized(peer) {
                     peer.destroyBuffers();
-                    exitFullScreenExclusive(isDDEnabledOnDevice(),
+                    exitFullScreenExclusive(isDDEnabledOnDevice(), 
                                             screen, peer);
                 }
             }
             /**
-             * Bug 4933099: There is some funny-business to deal with when this
-             * method is called with a Window instead of a Frame.  See 4836744
+             * Bug 4933099: There is some funny-business to deal with when this 
+             * method is called with a Window instead of a Frame.  See 4836744 
              * for more information on this.  One side-effect of our workaround
              * for the problem is that the owning Frame of a Window may end
              * up getting resized during the fullscreen process.  When we
@@ -423,7 +424,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
                 if (owner != null && ownerWindowedModeBounds != null) {
                     owner.setBounds(ownerWindowedModeBounds);
                 }
-                ownerWindowedModeBounds = null;
+		ownerWindowedModeBounds = null;
             }
         }
         super.setFullScreenWindow(w);
@@ -436,7 +437,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
                 Frame owner = getToplevelOwner(w);
                 if (owner != null) {
                     ownerWindowedModeBounds = owner.getBounds();
-                    // These will get set for the native window in
+                    // These will get set for the native window in 
                     // any case.  Set them here so that resetting them
                     // later actually does the right thing
                     owner.setBounds(w.getBounds());
@@ -445,7 +446,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             // Enter full screen exclusive mode.
             WWindowPeer peer = (WWindowPeer)w.getPeer();
             synchronized(peer) {
-                enterFullScreenExclusive(isDDEnabledOnDevice(),
+                enterFullScreenExclusive(isDDEnabledOnDevice(), 
                                          screen, peer);
                 // Note: removed replaceSurfaceData() call because
                 // changing the window size or making it visible
@@ -458,7 +459,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             peer.resetTargetGC();
         }
     }
-
+    
     // Entering and exiting full-screen mode are done within a
     // tree-lock and should never lock on any resources which are
     // required by other threads which may have them and may require
@@ -467,7 +468,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
                                                  int screen, WindowPeer w);
     private native void exitFullScreenExclusive(boolean useDD,
                                                 int screen, WindowPeer w);
-
+    
     public boolean isDisplayChangeSupported() {
         return (isFullScreenSupported() && getFullScreenWindow() != null);
     }
@@ -486,25 +487,25 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         Window w = getFullScreenWindow();
         if (w != null) {
             WWindowPeer peer = (WWindowPeer)w.getPeer();
-            configDisplayMode(screen, peer, dm.getWidth(), dm.getHeight(),
-                dm.getBitDepth(), dm.getRefreshRate());
+	    configDisplayMode(screen, peer, dm.getWidth(), dm.getHeight(),
+		dm.getBitDepth(), dm.getRefreshRate());
             // resize the fullscreen window to the dimensions of the new
             // display mode
             Rectangle screenBounds = getDefaultConfiguration().getBounds();
-            w.setBounds(screenBounds.x, screenBounds.y,
+            w.setBounds(screenBounds.x, screenBounds.y, 
                         dm.getWidth(), dm.getHeight());
-            // Note: no call to replaceSurfaceData is required here since
-            // replacement will be caused by an upcoming display change event
+	    // Note: no call to replaceSurfaceData is required here since
+	    // replacement will be caused by an upcoming display change event
         } else {
-            throw new IllegalStateException("Must be in fullscreen mode " +
-                                            "in order to set display mode");
-        }
+	    throw new IllegalStateException("Must be in fullscreen mode " +
+	    				    "in order to set display mode");
+	}
     }
 
     private native DisplayMode getCurrentDisplayMode(int screen);
     private native void configDisplayMode(int screen, WindowPeer w, int width,
-                                          int height, int bitDepth,
-                                          int refreshRate);
+    					  int height, int bitDepth,
+    					  int refreshRate);
     private native void enumDisplayModes(int screen, ArrayList modes);
     // This function is only available if DirectDraw is enabled, otherwise we
     // have to do the work the hard way (enumerating all of the display modes
@@ -527,16 +528,16 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
         }
         return retArray;
     }
-
+    
     private synchronized DisplayMode getMatchingDisplayMode(DisplayMode dm) {
         if (!isDisplayChangeSupported()) {
             return null;
         }
         if (isDDEnabledOnDevice()) {
-            return
-                isDisplayModeAvailable(screen, dm.getWidth(), dm.getHeight(),
-                                       dm.getBitDepth(), dm.getRefreshRate())
-                ? dm : null;
+            return 
+		isDisplayModeAvailable(screen, dm.getWidth(), dm.getHeight(),
+				       dm.getBitDepth(), dm.getRefreshRate())
+		? dm : null;
         } else {
             // The function isDisplayModeAvailable is only available if
             // DirectDraw is enabled, otherwise we have to do the work the
@@ -544,16 +545,16 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             // and checking each one)
             DisplayMode[] modes = getDisplayModes();
             for (DisplayMode mode : modes) {
-                if (dm.equals(mode) ||
-                    (dm.getRefreshRate() == DisplayMode.REFRESH_RATE_UNKNOWN &&
-                     dm.getWidth() == mode.getWidth() &&
-                     dm.getHeight() == mode.getHeight() &&
-                     dm.getBitDepth() == mode.getBitDepth()))
-                {
-                    return mode;
+                if (dm.equals(mode) || 
+		    (dm.getRefreshRate() == DisplayMode.REFRESH_RATE_UNKNOWN &&
+		     dm.getWidth() == mode.getWidth() &&
+		     dm.getHeight() == mode.getHeight() &&
+		     dm.getBitDepth() == mode.getBitDepth())) 
+		{
+		    return mode;
                 }
             }
-            return null;
+	    return null;
         }
     }
 
@@ -564,9 +565,9 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
      */
     public void displayChanged() {
         d3dContext = null;
-        dynamicColorModel = null;
+	dynamicColorModel = null;
         defaultConfig = null;
-        configs = null;
+        configs = null;    
         // pass on to all top-level windows on this display
         topLevels.notifyListeners();
     }
@@ -597,18 +598,18 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
     /**
      * Creates and returns the color model associated with this device
      */
-    private native ColorModel makeColorModel (int screen,
-                                              boolean dynamic);
+    private native ColorModel makeColorModel (int screen, 
+					      boolean dynamic);
 
     /**
      * Returns a dynamic ColorModel which is updated when there
      * are any changes (e.g., palette changes) in the device
      */
     public ColorModel getDynamicColorModel() {
-        if (dynamicColorModel == null) {
-            dynamicColorModel = makeColorModel(screen, true);
-        }
-        return dynamicColorModel;
+	if (dynamicColorModel == null) {
+	    dynamicColorModel = makeColorModel(screen, true);
+	}
+	return dynamicColorModel;
     }
 
     /**
@@ -616,9 +617,9 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
      */
     public ColorModel getColorModel() {
         if (colorModel == null)  {
-            colorModel = makeColorModel(screen, false);
-        }
-        return colorModel;
+	    colorModel = makeColorModel(screen, false);
+	}
+	return colorModel;
     }
 
     private native int getDeviceMemoryNative(int screen);
@@ -632,6 +633,7 @@ public class Win32GraphicsDevice extends GraphicsDevice implements
             // of accelerated memory, so just return the default value
             return super.getAvailableAcceleratedMemory();
         }
-        return getDeviceMemoryNative(screen);
+	return getDeviceMemoryNative(screen);
     }
 }
+

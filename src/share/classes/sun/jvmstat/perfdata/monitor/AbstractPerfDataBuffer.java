@@ -39,6 +39,7 @@ import java.nio.ByteBuffer;
  * to its contents.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public abstract class AbstractPerfDataBuffer {

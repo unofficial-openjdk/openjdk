@@ -101,7 +101,7 @@ Java_sun_java2d_pipe_BufferedMaskBlit_enqueueTile
     if (pMask == NULL) {
         J2dRlsTraceLn(J2D_TRACE_ERROR,
             "BufferedMaskBlit_enqueueTile: cannot lock mask array");
-        return bpos;
+        return bpos;        
     }
 
     srcInfo.bounds.x1 = srcx;

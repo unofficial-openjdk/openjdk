@@ -22,7 +22,7 @@
  */
 
 /* @test
- * @bug 4812991 4804456
+ * @bug 4812991 4804456 
  * @summary Test creation of new files with long names
  */
 

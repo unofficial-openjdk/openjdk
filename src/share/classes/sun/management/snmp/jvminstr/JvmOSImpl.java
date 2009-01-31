@@ -49,7 +49,7 @@ public class JvmOSImpl implements JvmOSMBean, Serializable {
 
     /**
      * Constructor for the "JvmOS" group.
-     * If the group contains a table, the entries created through an
+     * If the group contains a table, the entries created through an 
      * SNMP SET will not be registered in Java DMK.
      */
     public JvmOSImpl(SnmpMib myMib) {
@@ -58,24 +58,24 @@ public class JvmOSImpl implements JvmOSMBean, Serializable {
 
     /**
      * Constructor for the "JvmOS" group.
-     * If the group contains a table, the entries created through an
+     * If the group contains a table, the entries created through an 
      * SNMP SET will be AUTOMATICALLY REGISTERED in Java DMK.
      */
     public JvmOSImpl(SnmpMib myMib, MBeanServer server) {
     }
 
     static OperatingSystemMXBean getOSMBean() {
-        return ManagementFactory.getOperatingSystemMXBean();
+	return ManagementFactory.getOperatingSystemMXBean();
     }
-
+    
     private static String validDisplayStringTC(String str) {
-        return JVM_MANAGEMENT_MIB_IMPL.validDisplayStringTC(str);
+	return JVM_MANAGEMENT_MIB_IMPL.validDisplayStringTC(str);
     }
-
+    
     private static String validJavaObjectNameTC(String str) {
-        return JVM_MANAGEMENT_MIB_IMPL.validJavaObjectNameTC(str);
+	return JVM_MANAGEMENT_MIB_IMPL.validJavaObjectNameTC(str);
     }
-
+    
     /**
      * Getter for the "JvmRTProcessorCount" variable.
      */

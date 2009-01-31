@@ -87,7 +87,7 @@ public class ImplVersionTest {
             new ImplVersionReader(proc, proc.getInputStream()).start();
             new ImplVersionReader(proc, proc.getErrorStream()).start();
             int exitValue = proc.waitFor();
-            System.out.println("ImplVersionCommand Exit Value = " +
+            System.out.println("ImplVersionCommand Exit Value = " + 
                                exitValue);
             if (exitValue != 0) {
                 System.out.println("TEST FAILED: Incorrect exit value " +

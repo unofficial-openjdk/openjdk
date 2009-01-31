@@ -43,20 +43,20 @@ public class DelayDefaultContextLoading {
      * to load.
      */
     public static void main(String[] args) throws Exception {
-        Date date1 = new Date();
-        HttpsURLConnection.getDefaultHostnameVerifier();
-        Date date2 = new Date();
-        long delta = (date2.getTime() - date1.getTime()) / 1000;
+	Date date1 = new Date();
+	HttpsURLConnection.getDefaultHostnameVerifier();
+	Date date2 = new Date();
+	long delta = (date2.getTime() - date1.getTime()) / 1000;
 
-        /*
-         * Did it take longer than 5 second to run?
-         * If so, we're probably still loading incorrectly.
-         */
-        if (delta > 5) {
-            throw new Exception("FAILED:  HttpsURLConnection took " + delta +
-                " seconds to load");
-        }
-        System.out.println("PASSED:  HttpsURLConnection took " + delta +
-            " seconds to load");
+	/*
+	 * Did it take longer than 5 second to run?
+	 * If so, we're probably still loading incorrectly.
+	 */
+	if (delta > 5) {
+	    throw new Exception("FAILED:  HttpsURLConnection took " + delta +
+		" seconds to load");
+	}
+	System.out.println("PASSED:  HttpsURLConnection took " + delta +
+	    " seconds to load");
     }
 }

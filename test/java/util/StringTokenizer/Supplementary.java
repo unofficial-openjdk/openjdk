@@ -32,44 +32,44 @@ import java.util.StringTokenizer;
 
 public class Supplementary {
     public static void main(String[] args) {
-        String text =
-            "ab\uD800\uDC00\uD800\uDC01cd\uD800\uDC00\uD800xy \uD801\uDC00z\t123\uDCFF456";
-        String delims = " \t\r\n\f.\uD800\uDC00,:;";
-        String[] expected =
-            {"ab", "\uD800\uDC01cd", "\uD800xy", "\uD801\uDC00z", "123\uDCFF456" };
-        testTokenizer(text, delims, expected);
+	String text =
+	    "ab\uD800\uDC00\uD800\uDC01cd\uD800\uDC00\uD800xy \uD801\uDC00z\t123\uDCFF456";
+	String delims = " \t\r\n\f.\uD800\uDC00,:;";
+	String[] expected =
+	    {"ab", "\uD800\uDC01cd", "\uD800xy", "\uD801\uDC00z", "123\uDCFF456" };
+	testTokenizer(text, delims, expected);
 
-        delims = " \t\r\n\f.,:;\uDCFF";
-        expected = new String[] { "ab\uD800\uDC00\uD800\uDC01cd\uD800\uDC00\uD800xy",
-                                  "\uD801\uDC00z",
-                                  "123",
-                                  "456" };
-        testTokenizer(text, delims, expected);
+	delims = " \t\r\n\f.,:;\uDCFF";
+	expected = new String[] { "ab\uD800\uDC00\uD800\uDC01cd\uD800\uDC00\uD800xy",
+				  "\uD801\uDC00z",
+				  "123",
+				  "456" };
+	testTokenizer(text, delims, expected);
 
-        delims = "\uD800";
-        expected = new String[] { "ab\uD800\uDC00\uD800\uDC01cd\uD800\uDC00",
-                                  "xy \uD801\uDC00z\t123\uDCFF456" };
-        testTokenizer(text, delims, expected);
+	delims = "\uD800";
+	expected = new String[] { "ab\uD800\uDC00\uD800\uDC01cd\uD800\uDC00",
+				  "xy \uD801\uDC00z\t123\uDCFF456" };
+	testTokenizer(text, delims, expected);
     }
 
     static void testTokenizer(String text, String delims, String[] expected) {
-        StringTokenizer tokenizer = new StringTokenizer(text, delims);
-        int n = tokenizer.countTokens();
-        if (n != expected.length) {
-            throw new RuntimeException("countToken(): wrong value " + n
-                                       + ", expected " + expected.length);
-        }
-        int i = 0;
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            if (!token.equals(expected[i++])) {
-                throw new RuntimeException("nextToken(): wrong token. got \""
-                                           + token + "\", expected \"" + expected[i-1]);
-            }
-        }
-        if (i != expected.length) {
-            throw new RuntimeException("unexpected the number of tokens: " + i
-                                       + ", expected " + expected.length);
-        }
+	StringTokenizer tokenizer = new StringTokenizer(text, delims);
+	int n = tokenizer.countTokens();
+	if (n != expected.length) {
+	    throw new RuntimeException("countToken(): wrong value " + n
+				       + ", expected " + expected.length);
+	}
+	int i = 0;
+	while (tokenizer.hasMoreTokens()) {
+	    String token = tokenizer.nextToken();
+	    if (!token.equals(expected[i++])) {
+		throw new RuntimeException("nextToken(): wrong token. got \""
+					   + token + "\", expected \"" + expected[i-1]);
+	    }
+	}
+	if (i != expected.length) {
+	    throw new RuntimeException("unexpected the number of tokens: " + i
+				       + ", expected " + expected.length);
+	}
     }
 }

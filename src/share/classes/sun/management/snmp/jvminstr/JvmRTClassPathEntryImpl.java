@@ -41,8 +41,8 @@ import sun.management.snmp.jvmmib.JvmRTClassPathEntryMBean;
 /**
  * The class is used for implementing the "JvmRTClassPathEntry" group.
  */
-public class JvmRTClassPathEntryImpl implements JvmRTClassPathEntryMBean,
-                                                Serializable {
+public class JvmRTClassPathEntryImpl implements JvmRTClassPathEntryMBean, 
+						Serializable {
 
     private final String item;
     private final int index;
@@ -51,14 +51,14 @@ public class JvmRTClassPathEntryImpl implements JvmRTClassPathEntryMBean,
      * Constructor for the "JvmRTClassPathEntry" group.
      */
     public JvmRTClassPathEntryImpl(String item, int index) {
-        this.item = validPathElementTC(item);
-        this.index = index;
+	this.item = validPathElementTC(item);
+	this.index = index;
     }
-
+    
     private String validPathElementTC(String str) {
-        return JVM_MANAGEMENT_MIB_IMPL.validPathElementTC(str);
+	return JVM_MANAGEMENT_MIB_IMPL.validPathElementTC(str);
     }
-
+    
     /**
      * Getter for the "JvmRTClassPathItem" variable.
      */

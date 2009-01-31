@@ -44,6 +44,7 @@ import sun.swing.plaf.synth.SynthUI;
 /**
  * Synth's ComboBoxUI.
  *
+ * @version %I%, %G%
  * @author Scott Violet
  */
 class SynthComboBoxUI extends BasicComboBoxUI implements
@@ -306,8 +307,8 @@ class SynthComboBoxUI extends BasicComboBoxUI implements
             return editor;
         }
 
-        /**
-         * Sets the item that should be edited.
+        /** 
+         * Sets the item that should be edited. 
          *
          * @param anObject the displayed value of the editor
          */
@@ -328,7 +329,7 @@ class SynthComboBoxUI extends BasicComboBoxUI implements
 
         public Object getItem() {
             Object newValue = editor.getText();
-
+        
             if (oldValue != null && !(oldValue instanceof String))  {
                 // The original value is not a string. Should return the value in it's
                 // original type.

@@ -50,7 +50,7 @@ public interface Annotation {
      *    are <tt>x</tt> and <tt>y</tt> are considered equal if
      *    <tt>Float.valueOf(x).equals(Float.valueOf(y))</tt>.
      *    (Unlike the <tt>==</tt> operator, NaN is considered equal
-     *    to itself, and <tt>0.0f</tt> unequal to <tt>-0.0f</tt>.)
+     *    to itself, and <tt>0.0f</tt> unequal to <tt>-0.0f</tt>.) 
      *
      *    <li>Two corresponding <tt>double</tt> members whose values
      *    are <tt>x</tt> and <tt>y</tt> are considered equal if

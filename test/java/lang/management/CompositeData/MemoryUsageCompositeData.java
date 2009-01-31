@@ -55,13 +55,13 @@ public class MemoryUsageCompositeData {
             "Dummy",
         };
 
-        CompositeType muct =
+        CompositeType muct = 
             new CompositeType("MyMemoryUsageCompositeType",
                               "CompositeType for MemoryUsage",
                               memoryUsageItemNames,
                               memoryUsageItemNames,
                               memoryUsageItemTypes);
-        CompositeData cd =
+        CompositeData cd = 
             new CompositeDataSupport(muct,
                                      memoryUsageItemNames,
                                      values);
@@ -96,13 +96,13 @@ public class MemoryUsageCompositeData {
             "Dummy",
         };
 
-        CompositeType muct =
+        CompositeType muct = 
             new CompositeType("MyMemoryUsageCompositeType",
                               "CompositeType for MemoryUsage",
                               memoryUsageItemNames,
                               memoryUsageItemNames,
                               badMUItemTypes);
-        CompositeData cd =
+        CompositeData cd = 
            new CompositeDataSupport(muct,
                                     memoryUsageItemNames,
                                     values);
@@ -128,13 +128,13 @@ public class MemoryUsageCompositeData {
             "Dummy",
         };
 
-        CompositeType muct =
+        CompositeType muct = 
             new CompositeType("MyMemoryUsageCompositeType",
                               "CompositeType for MemoryUsage",
                                badMUItemNames,
                                badMUItemNames,
                                memoryUsageItemTypes);
-        CompositeData cd =
+        CompositeData cd = 
             new CompositeDataSupport(muct,
                                      badMUItemNames,
                                      values);

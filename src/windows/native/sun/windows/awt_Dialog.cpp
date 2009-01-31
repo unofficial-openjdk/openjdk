@@ -93,9 +93,9 @@ void AwtDialog::FillClassInfo(WNDCLASSEX *lpwc)
 }
 
 /*
- * Create a new AwtDialog object and window.
+ * Create a new AwtDialog object and window.   
  */
-AwtDialog* AwtDialog::Create(jobject peer, jobject parent)
+AwtDialog* AwtDialog::Create(jobject peer, jobject parent) 
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
@@ -105,20 +105,20 @@ AwtDialog* AwtDialog::Create(jobject peer, jobject parent)
 
     try {
         if (env->EnsureLocalCapacity(2) < 0) {
-            return NULL;
-        }
+	    return NULL;
+	}
 
-        PDATA pData;
+	PDATA pData;
         AwtWindow* awtParent = NULL;
-        HWND hwndParent = NULL;
-        target = env->GetObjectField(peer, AwtObject::targetID);
-        JNI_CHECK_NULL_GOTO(target, "null target", done);
-
-        if (parent != NULL) {
-            JNI_CHECK_PEER_GOTO(parent, done);
+	HWND hwndParent = NULL;
+	target = env->GetObjectField(peer, AwtObject::targetID);
+	JNI_CHECK_NULL_GOTO(target, "null target", done);
+	
+	if (parent != NULL) {
+	    JNI_CHECK_PEER_GOTO(parent, done);
             awtParent = (AwtWindow *)(JNI_GET_PDATA(parent));
             hwndParent = awtParent->GetHWnd();
-        } else {
+	} else {
             // There is no way to prevent a parentless dialog from showing on
             //  the taskbar other than to specify an invisible parent and set
             //  WS_POPUP style for the dialog. Using toolkit window here. That
@@ -129,23 +129,23 @@ AwtDialog* AwtDialog::Create(jobject peer, jobject parent)
             //  parent window here.
 //            hwndParent = AwtToolkit::GetInstance().GetHWnd();
         }
-        dialog = new AwtDialog();
-
-        {
-            int colorId = IS_WIN4X ? COLOR_3DFACE : COLOR_WINDOW;
-            DWORD style = WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
+	dialog = new AwtDialog();
+	
+	{
+	    int colorId = IS_WIN4X ? COLOR_3DFACE : COLOR_WINDOW;
+	    DWORD style = WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN;
             if (hwndParent != NULL) {
                 style |= WS_POPUP;
             }
-            style &= ~(WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
-            DWORD exStyle = IS_WIN4X ? WS_EX_WINDOWEDGE | WS_EX_DLGMODALFRAME
-                                     : 0;
+	    style &= ~(WS_MINIMIZEBOX|WS_MAXIMIZEBOX);
+	    DWORD exStyle = IS_WIN4X ? WS_EX_WINDOWEDGE | WS_EX_DLGMODALFRAME
+	                             : 0;
 
-            if (GetRTL()) {
-                exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
-                if (GetRTLReadingOrder())
-                    exStyle |= WS_EX_RTLREADING;
-            }
+	    if (GetRTL()) {
+	        exStyle |= WS_EX_RIGHT | WS_EX_LEFTSCROLLBAR;
+		if (GetRTLReadingOrder())
+		    exStyle |= WS_EX_RTLREADING;
+	    }
 
 
             if (env->GetBooleanField(target, AwtDialog::undecoratedID) == JNI_TRUE) {
@@ -154,19 +154,19 @@ AwtDialog* AwtDialog::Create(jobject peer, jobject parent)
                 dialog->m_isUndecorated = TRUE;
             }
 
-            jint x = env->GetIntField(target, AwtComponent::xID);
-            jint y = env->GetIntField(target, AwtComponent::yID);
-            jint width = env->GetIntField(target, AwtComponent::widthID);
-            jint height = env->GetIntField(target, AwtComponent::heightID);
+	    jint x = env->GetIntField(target, AwtComponent::xID);
+	    jint y = env->GetIntField(target, AwtComponent::yID);
+	    jint width = env->GetIntField(target, AwtComponent::widthID);
+	    jint height = env->GetIntField(target, AwtComponent::heightID);
 
-            dialog->CreateHWnd(env, L"",
-                               style, exStyle,
-                               x, y, width, height,
-                               hwndParent,
-                               NULL,
-                               ::GetSysColor(COLOR_WINDOWTEXT),
-                               ::GetSysColor(colorId),
-                               peer);
+	    dialog->CreateHWnd(env, L"",
+			       style, exStyle,
+			       x, y, width, height,
+			       hwndParent,
+			       NULL,
+			       ::GetSysColor(COLOR_WINDOWTEXT),
+			       ::GetSysColor(colorId),
+			       peer);
 
             dialog->RecalcNonClient();
             dialog->UpdateSystemMenu();
@@ -182,17 +182,17 @@ AwtDialog* AwtDialog::Create(jobject peer, jobject parent)
             dialog->DoUpdateIcon();
 
 
-            background = env->GetObjectField(target,
-                                             AwtComponent::backgroundID);
-            if (background == NULL) {
-                JNU_CallMethodByName(env, NULL,
-                                     peer, "setDefaultColor", "()V");
-            }
-        }
+	    background = env->GetObjectField(target,
+					     AwtComponent::backgroundID);
+	    if (background == NULL) {
+ 	        JNU_CallMethodByName(env, NULL,
+ 				     peer, "setDefaultColor", "()V");
+	    }
+	}
     } catch (...) {
         env->DeleteLocalRef(background);
-        env->DeleteLocalRef(target);
-        throw;
+	env->DeleteLocalRef(target);
+	throw;
     }
 
 done:
@@ -207,7 +207,7 @@ MsgRouting AwtDialog::WmNcMouseDown(WPARAM hitTest, int x, int y, int button) {
     if (m_grabbedWindow != NULL/* && !m_grabbedWindow->IsOneOfOwnersOf(this)*/) {
         m_grabbedWindow->Ungrab();
     }
-
+    
     if (!IsFocusableWindow() && (button & LEFT_BUTTON)) {
         // Dialog is non-maximizable
         if ((button & DBL_CLICK) && hitTest == HTCAPTION) {
@@ -333,7 +333,7 @@ LRESULT CALLBACK AwtDialog::MouseHookProc_NonTT(int nCode,
 void AwtDialog::Show()
 {
     m_visible = true;
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);  
 
     BOOL locationByPlatform = env->GetBooleanField(GetTarget(env), AwtWindow::locationByPlatformID);
     if (locationByPlatform) {
@@ -346,12 +346,12 @@ void AwtDialog::Show()
     }
 }
 
-void AwtDialog::DoUpdateIcon()
+void AwtDialog::DoUpdateIcon() 
 {
     AwtFrame::DoUpdateIcon();
     //Workaround windows bug:
-    //Decorations are not updated correctly for owned dialogs
-    //when changing dlg with icon <--> dlg without icon
+    //Decorations are not updated correctly for owned dialogs 
+    //when changing dlg with icon <--> dlg without icon 
     RECT winRect;
     RECT clientRect;
     ::GetWindowRect(GetHWnd(), &winRect);
@@ -360,22 +360,22 @@ void AwtDialog::DoUpdateIcon()
     HRGN winRgn = CreateRectRgnIndirect(&winRect);
     HRGN clientRgn = CreateRectRgnIndirect(&clientRect);
     ::CombineRgn(winRgn, winRgn, clientRgn, RGN_DIFF);
-    ::RedrawWindow(GetHWnd(), NULL, winRgn, RDW_FRAME | RDW_INVALIDATE);
+    ::RedrawWindow(GetHWnd(), NULL, winRgn, RDW_FRAME | RDW_INVALIDATE); 
     ::DeleteObject(winRgn);
     ::DeleteObject(clientRgn);
 }
 
-HICON AwtDialog::GetEffectiveIcon(int iconType)
+HICON AwtDialog::GetEffectiveIcon(int iconType) 
 {
     HWND hOwner = ::GetWindow(GetHWnd(), GW_OWNER);
     BOOL isResizable = ((GetStyle() & WS_THICKFRAME) != 0);
     BOOL smallIcon = ((iconType == ICON_SMALL) || (iconType == 2/*ICON_SMALL2*/));
     HICON hIcon = (smallIcon) ? GetHIconSm() : GetHIcon();
-    if ((hIcon == NULL) && (isResizable || (hOwner == NULL))) {
+    if ((hIcon == NULL) && (isResizable || (hOwner == NULL))) { 
         //Java cup icon is not loaded in window class for dialogs
         //It needs to be set explicitly for resizable dialogs
         //and ownerless dialogs
-        hIcon = (smallIcon) ? AwtToolkit::GetInstance().GetAwtIconSm() :
+        hIcon = (smallIcon) ? AwtToolkit::GetInstance().GetAwtIconSm() : 
             AwtToolkit::GetInstance().GetAwtIcon();
     } else if ((hIcon != NULL) && IsIconInherited() && !isResizable) {
         //Non-resizable dialogs without explicitely set icon
@@ -405,7 +405,7 @@ void AwtDialog::CheckUninstallModalHook() {
 
 void AwtDialog::ModalPerformActivation(HWND hWnd)
 {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);  
 
     AwtWindow *w = (AwtWindow *)AwtComponent::GetComponent(hWnd);
     if ((w != NULL) && w->IsEmbeddedFrame()) {
@@ -466,7 +466,7 @@ MsgRouting AwtDialog::WmShowModal()
 
 MsgRouting AwtDialog::WmEndModal()
 {
-    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);  
 
     DASSERT( ::GetCurrentThreadId() == AwtToolkit::MainThread() );
     DASSERT( ::IsWindow(m_modalWnd) );
@@ -479,7 +479,7 @@ MsgRouting AwtDialog::WmEndModal()
     jobject peer = GetPeer(env);
     jobject target = GetTarget(env);
     if (::GetForegroundWindow() == GetHWnd()) {
-        ModalActivateNextWindow(GetHWnd(), target, peer);
+        ModalActivateNextWindow(GetHWnd(), target, peer); 
     }
     // hide the dialog
     SendMessage(WM_AWT_COMPONENT_HIDE);
@@ -543,7 +543,7 @@ void AwtDialog::UpdateSystemMenu()
     ::GetSystemMenu(hWndSelf, TRUE);
     // now get a working copy of the menu
     HMENU hMenuSys = GetSystemMenu(hWndSelf, FALSE);
-
+    
     if (!isResizable) {
         // remove inapplicable sizing commands
         ::DeleteMenu(hMenuSys, SC_MINIMIZE, MF_BYCOMMAND);
@@ -579,12 +579,12 @@ MsgRouting AwtDialog::WmStyleChanged(int wStyleType, LPSTYLESTRUCT lpss)
 
 MsgRouting AwtDialog::WmSize(UINT type, int w, int h)
 {
-    if (type == SIZE_MAXIMIZED || type == SIZE_MINIMIZED
-            || (type == SIZE_RESTORED && !IsResizing()))
+    if (type == SIZE_MAXIMIZED || type == SIZE_MINIMIZED 
+            || (type == SIZE_RESTORED && !IsResizing())) 
     {
         UpdateSystemMenu(); // adjust to reflect restored vs. maximized state
     }
-
+    
     return AwtFrame::WmSize(type, w, h);
 }
 
@@ -673,7 +673,7 @@ void AwtDialog::_SetIMMOption(void *param)
         {
             HMENU hSysMenu = ::GetSystemMenu(d->GetHWnd(), FALSE);
             ::AppendMenu(hSysMenu,  MF_STRING, SYSCOMMAND_IMM, coption);
-
+        
             if (coption != empty)
             {
                 JNU_ReleaseStringPlatformChars(env, option, coption);
@@ -709,8 +709,8 @@ Java_java_awt_Dialog_initIDs(JNIEnv *env, jclass cls)
     AwtDialog::undecoratedID
         = env->GetFieldID(cls,"undecorated","Z");
 
-    DASSERT(AwtDialog::undecoratedID != NULL);
-    DASSERT(AwtDialog::titleID != NULL);
+    DASSERT(AwtDialog::undecoratedID != NULL);     
+    DASSERT(AwtDialog::titleID != NULL); 
 
     CATCH_BAD_ALLOC;
 }
@@ -731,14 +731,14 @@ extern "C" {
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WDialogPeer_create(JNIEnv *env, jobject self,
-                                        jobject parent)
+					jobject parent) 
 {
     TRY;
 
     PDATA pData;
-    AwtToolkit::CreateComponent(self, parent,
-                                (AwtToolkit::ComponentFactory)
-                                AwtDialog::Create);
+    AwtToolkit::CreateComponent(self, parent, 
+				(AwtToolkit::ComponentFactory)
+				AwtDialog::Create);
     JNI_CHECK_PEER_CREATION_RETURN(self);
 
     CATCH_BAD_ALLOC;
@@ -768,7 +768,7 @@ Java_sun_awt_windows_WDialogPeer_showModal(JNIEnv *env, jobject self)
  * Method:    _hide
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_windows_WDialogPeer_endModal(JNIEnv *env, jobject self)
 {
     TRY;
@@ -789,7 +789,7 @@ Java_sun_awt_windows_WDialogPeer_endModal(JNIEnv *env, jobject self)
  */
 JNIEXPORT void JNICALL
 Java_sun_awt_windows_WDialogPeer_pSetIMMOption(JNIEnv *env, jobject self,
-                                               jstring option)
+					       jstring option) 
 {
     TRY;
 

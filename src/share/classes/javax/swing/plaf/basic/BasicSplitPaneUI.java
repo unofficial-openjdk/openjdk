@@ -48,6 +48,7 @@ import sun.swing.SwingUtilities2;
 /**
  * A Basic L&F implementation of the SplitPaneUI.
  *
+ * @version %I% %G%
  * @author Scott Violet
  * @author Steve Wilson
  * @author Ralph Kar
@@ -296,13 +297,13 @@ public class BasicSplitPaneUI extends SplitPaneUI
 
     static void loadActionMap(LazyActionMap map) {
         map.put(new Actions(Actions.NEGATIVE_INCREMENT));
-        map.put(new Actions(Actions.POSITIVE_INCREMENT));
-        map.put(new Actions(Actions.SELECT_MIN));
-        map.put(new Actions(Actions.SELECT_MAX));
-        map.put(new Actions(Actions.START_RESIZE));
-        map.put(new Actions(Actions.TOGGLE_FOCUS));
-        map.put(new Actions(Actions.FOCUS_OUT_FORWARD));
-        map.put(new Actions(Actions.FOCUS_OUT_BACKWARD));
+	map.put(new Actions(Actions.POSITIVE_INCREMENT));
+	map.put(new Actions(Actions.SELECT_MIN));
+	map.put(new Actions(Actions.SELECT_MAX));
+	map.put(new Actions(Actions.START_RESIZE));
+	map.put(new Actions(Actions.TOGGLE_FOCUS));
+	map.put(new Actions(Actions.FOCUS_OUT_FORWARD));
+	map.put(new Actions(Actions.FOCUS_OUT_BACKWARD));
     }
 
 
@@ -325,7 +326,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
     /**
      * Installs the UI defaults.
      */
-    protected void installDefaults(){
+    protected void installDefaults(){ 
         LookAndFeel.installBorder(splitPane, "SplitPane.border");
         LookAndFeel.installColors(splitPane, "SplitPane.background",
                                   "SplitPane.foreground");
@@ -334,24 +335,24 @@ public class BasicSplitPaneUI extends SplitPaneUI
         if (divider == null) divider = createDefaultDivider();
         divider.setBasicSplitPaneUI(this);
 
-        Border    b = divider.getBorder();
+	Border    b = divider.getBorder();
 
-        if (b == null || !(b instanceof UIResource)) {
-            divider.setBorder(UIManager.getBorder("SplitPaneDivider.border"));
-        }
+	if (b == null || !(b instanceof UIResource)) {
+	    divider.setBorder(UIManager.getBorder("SplitPaneDivider.border"));
+	}
 
-        dividerDraggingColor = UIManager.getColor("SplitPaneDivider.draggingColor");
+	dividerDraggingColor = UIManager.getColor("SplitPaneDivider.draggingColor");
 
         setOrientation(splitPane.getOrientation());
 
-        // This plus 2 here is to provide backwards consistancy. Previously,
-        // the old size did not include the 2 pixel border around the divider,
-        // it now does.
-        LookAndFeel.installProperty(splitPane, "dividerSize",
-                                    UIManager.get("SplitPane.dividerSize"));
+	// This plus 2 here is to provide backwards consistancy. Previously,
+	// the old size did not include the 2 pixel border around the divider,
+	// it now does.
+        LookAndFeel.installProperty(splitPane, "dividerSize", 
+				    UIManager.get("SplitPane.dividerSize"));
 
         divider.setDividerSize(splitPane.getDividerSize());
-        dividerSize = divider.getDividerSize();
+	dividerSize = divider.getDividerSize();
         splitPane.add(divider, JSplitPane.DIVIDER);
 
         setContinuousLayout(splitPane.isContinuousLayout());
@@ -368,22 +369,22 @@ public class BasicSplitPaneUI extends SplitPaneUI
             setNonContinuousLayoutDivider(nonContinuousLayoutDivider, true);
         }
 
-        // focus forward traversal key
-        if (managingFocusForwardTraversalKeys==null) {
-            managingFocusForwardTraversalKeys = new HashSet();
-            managingFocusForwardTraversalKeys.add(
-                KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
-        }
-        splitPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
-                                        managingFocusForwardTraversalKeys);
-        // focus backward traversal key
-        if (managingFocusBackwardTraversalKeys==null) {
-            managingFocusBackwardTraversalKeys = new HashSet();
-            managingFocusBackwardTraversalKeys.add(
-                KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK));
-        }
-        splitPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
-                                        managingFocusBackwardTraversalKeys);
+	// focus forward traversal key
+	if (managingFocusForwardTraversalKeys==null) {
+	    managingFocusForwardTraversalKeys = new HashSet();
+	    managingFocusForwardTraversalKeys.add(
+		KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0));
+	}
+	splitPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+					managingFocusForwardTraversalKeys);
+	// focus backward traversal key
+	if (managingFocusBackwardTraversalKeys==null) {
+	    managingFocusBackwardTraversalKeys = new HashSet();
+	    managingFocusBackwardTraversalKeys.add(
+		KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_MASK));
+	}
+	splitPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+					managingFocusBackwardTraversalKeys);
     }
 
 
@@ -406,22 +407,22 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * Installs the keyboard actions for the UI.
      */
     protected void installKeyboardActions() {
-        InputMap km = getInputMap(JComponent.
-                                  WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+	InputMap km = getInputMap(JComponent.
+				  WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-        SwingUtilities.replaceUIInputMap(splitPane, JComponent.
-                                       WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
-                                       km);
+	SwingUtilities.replaceUIInputMap(splitPane, JComponent.
+				       WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
+				       km);
         LazyActionMap.installLazyActionMap(splitPane, BasicSplitPaneUI.class,
                                            "SplitPane.actionMap");
     }
 
     InputMap getInputMap(int condition) {
-        if (condition == JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT) {
-            return (InputMap)DefaultLookup.get(splitPane, this,
+	if (condition == JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT) {
+	    return (InputMap)DefaultLookup.get(splitPane, this,
                                                "SplitPane.ancestorInputMap");
-        }
-        return null;
+	}
+	return null;
     }
 
     /**
@@ -451,11 +452,11 @@ public class BasicSplitPaneUI extends SplitPaneUI
 
         LookAndFeel.uninstallBorder(splitPane);
 
-        Border    b = divider.getBorder();
+	Border    b = divider.getBorder();
 
-        if (b instanceof UIResource) {
-            divider.setBorder(null);
-        }
+	if (b instanceof UIResource) {
+	    divider.setBorder(null);
+	}
 
         splitPane.remove(divider);
         divider.setBasicSplitPaneUI(null);
@@ -465,10 +466,10 @@ public class BasicSplitPaneUI extends SplitPaneUI
 
         setNonContinuousLayoutDivider(null);
 
-        // sets the focus forward and backward traversal keys to null
-        // to restore the defaults
-        splitPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
-        splitPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
+	// sets the focus forward and backward traversal keys to null
+	// to restore the defaults
+	splitPane.setFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS, null);
+	splitPane.setFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS, null);
     }
 
 
@@ -498,10 +499,10 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * Uninstalls the keyboard actions for the UI.
      */
     protected void uninstallKeyboardActions() {
-        SwingUtilities.replaceUIActionMap(splitPane, null);
-        SwingUtilities.replaceUIInputMap(splitPane, JComponent.
-                                      WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
-                                      null);
+	SwingUtilities.replaceUIActionMap(splitPane, null);
+	SwingUtilities.replaceUIInputMap(splitPane, JComponent.
+				      WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,
+				      null);
     }
 
 
@@ -674,7 +675,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * @return increment via keyboard methods.
      */
     int getKeyboardMoveIncrement() {
-        return KEYBOARD_DIVIDER_MOVE_OFFSET;
+	return KEYBOARD_DIVIDER_MOVE_OFFSET;
     }
 
     /**
@@ -722,7 +723,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
             getHandler().focusLost(ev);
         }
     }
-
+    
 
     /**
      * Implementation of an ActionListener that the JSplitPane UI uses for
@@ -735,8 +736,8 @@ public class BasicSplitPaneUI extends SplitPaneUI
     {
         public void actionPerformed(ActionEvent ev) {
             if (dividerKeyboardResize) {
-                splitPane.setDividerLocation(Math.max(0,getDividerLocation
-                                  (splitPane) - getKeyboardMoveIncrement()));
+		splitPane.setDividerLocation(Math.max(0,getDividerLocation
+				  (splitPane) - getKeyboardMoveIncrement()));
             }
         }
     }
@@ -753,7 +754,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
         public void actionPerformed(ActionEvent ev) {
             if (dividerKeyboardResize) {
                 splitPane.setDividerLocation(getDividerLocation(splitPane) +
-                                             getKeyboardMoveIncrement());
+					     getKeyboardMoveIncrement());
             }
         }
     }
@@ -774,7 +775,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
             }
         }
     }
-
+    
 
     /**
      * Implementation of an ActionListener that the JSplitPane UI uses for
@@ -787,9 +788,9 @@ public class BasicSplitPaneUI extends SplitPaneUI
     {
         public void actionPerformed(ActionEvent ev) {
             if (dividerKeyboardResize) {
-                Insets   insets = splitPane.getInsets();
-                int      bottomI = (insets != null) ? insets.bottom : 0;
-                int      rightI = (insets != null) ? insets.right : 0;
+		Insets   insets = splitPane.getInsets();
+		int      bottomI = (insets != null) ? insets.bottom : 0;
+		int      rightI = (insets != null) ? insets.right : 0;
 
                 if (orientation == JSplitPane.VERTICAL_SPLIT) {
                     splitPane.setDividerLocation(splitPane.getHeight() -
@@ -797,7 +798,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                 }
                 else {
                     splitPane.setDividerLocation(splitPane.getWidth() -
-                                                 rightI);
+						 rightI);
                 }
             }
         }
@@ -877,13 +878,13 @@ public class BasicSplitPaneUI extends SplitPaneUI
         if(nonContinuousLayoutDivider != null && splitPane != null) {
 
             /* Needs to remove all the components and re-add them! YECK! */
-            // This is all done so that the nonContinuousLayoutDivider will
-            // be drawn on top of the other components, without this, one
-            // of the heavyweights will draw over the divider!
+	    // This is all done so that the nonContinuousLayoutDivider will
+	    // be drawn on top of the other components, without this, one
+	    // of the heavyweights will draw over the divider!
             Component             leftC = splitPane.getLeftComponent();
             Component             rightC = splitPane.getRightComponent();
-            int                   lastLocation = splitPane.
-                                              getDividerLocation();
+	    int                   lastLocation = splitPane.
+		                              getDividerLocation();
 
             if(leftC != null)
                 splitPane.setLeftComponent(null);
@@ -897,10 +898,10 @@ public class BasicSplitPaneUI extends SplitPaneUI
             splitPane.setRightComponent(rightC);
             splitPane.add(divider, JSplitPane.DIVIDER);
             if(rememberPaneSizes) {
-                splitPane.setDividerLocation(lastLocation);
-            }
+		splitPane.setDividerLocation(lastLocation);
+	    } 
         }
-
+ 
     }
 
 
@@ -938,7 +939,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
         if(splitPane != null) {
             layoutManager.resetToPreferredSizes();
             splitPane.revalidate();
-            splitPane.repaint();
+	    splitPane.repaint();
         }
     }
 
@@ -947,27 +948,27 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * Sets the location of the divider to location.
      */
     public void setDividerLocation(JSplitPane jc, int location) {
-        if (!ignoreDividerLocationChange) {
-            dividerLocationIsSet = true;
-            splitPane.revalidate();
-            splitPane.repaint();
+	if (!ignoreDividerLocationChange) {
+	    dividerLocationIsSet = true;
+	    splitPane.revalidate();
+	    splitPane.repaint();
 
-            if (keepHidden) {
-                Insets insets = splitPane.getInsets();
-                int orientation = splitPane.getOrientation();
-                if ((orientation == JSplitPane.VERTICAL_SPLIT &&
-                     location != insets.top &&
-                     location != splitPane.getHeight()-divider.getHeight()-insets.top) ||
-                    (orientation == JSplitPane.HORIZONTAL_SPLIT &&
-                     location != insets.left &&
-                     location != splitPane.getWidth()-divider.getWidth()-insets.left)) {
-                    setKeepHidden(false);
-                }
-            }
-        }
-        else {
-            ignoreDividerLocationChange = false;
-        }
+            if (keepHidden) {		
+		Insets insets = splitPane.getInsets();
+		int orientation = splitPane.getOrientation(); 
+		if ((orientation == JSplitPane.VERTICAL_SPLIT &&
+		     location != insets.top &&
+		     location != splitPane.getHeight()-divider.getHeight()-insets.top) ||
+		    (orientation == JSplitPane.HORIZONTAL_SPLIT &&
+		     location != insets.left &&
+		     location != splitPane.getWidth()-divider.getWidth()-insets.left)) {
+  		    setKeepHidden(false);
+		}
+	    }
+	}
+	else {
+	    ignoreDividerLocationChange = false;
+	}
     }
 
 
@@ -1026,7 +1027,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
             if(orientation == JSplitPane.HORIZONTAL_SPLIT) {
                 maxLoc = splitPaneSize.width - minSize.width;
             } else {
-                maxLoc = splitPaneSize.height - minSize.height;
+                maxLoc = splitPaneSize.height - minSize.height; 
             }
             maxLoc -= dividerSize;
             if(insets != null) {
@@ -1066,11 +1067,11 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * Messaged to paint the look and feel.
      */
     public void paint(Graphics g, JComponent jc) {
-        if (!painted && splitPane.getDividerLocation()<0) {
-            ignoreDividerLocationChange = true;
-            splitPane.setDividerLocation(getDividerLocation(splitPane));
-        }
-        painted = true;
+	if (!painted && splitPane.getDividerLocation()<0) {
+	    ignoreDividerLocationChange = true;
+	    splitPane.setDividerLocation(getDividerLocation(splitPane));
+	}
+	painted = true;
     }
 
 
@@ -1136,7 +1137,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * Set the value to indicate if one of the splitpane sides is expanded.
      */
     void setKeepHidden(boolean keepHidden) {
-        this.keepHidden = keepHidden;
+	this.keepHidden = keepHidden;
     }
 
     /**
@@ -1144,7 +1145,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
      * @return true if one of the splitpane sides is expanded, false otherwise.
      */
     private boolean getKeepHidden() {
-        return keepHidden;
+	return keepHidden;
     }
 
     /**
@@ -1172,7 +1173,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                 nonContinuousLayoutDivider.setBounds
                         (getLastDragLocation(), 0, dividerSize,
                          splitPane.getHeight());
-                      addHeavyweightDivider();
+		      addHeavyweightDivider();
             }
         } else {
             setLastDragLocation(divider.getBounds().y);
@@ -1181,7 +1182,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                 nonContinuousLayoutDivider.setBounds
                         (0, getLastDragLocation(), splitPane.getWidth(),
                          dividerSize);
-                      addHeavyweightDivider();
+		      addHeavyweightDivider();
             }
         }
     }
@@ -1195,7 +1196,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
     protected void dragDividerTo(int location) {
         if(getLastDragLocation() != location) {
             if(isContinuousLayout()) {
-                splitPane.setDividerLocation(location);
+		splitPane.setDividerLocation(location);
                 setLastDragLocation(location);
             } else {
                 int lastLoc = getLastDragLocation();
@@ -1206,7 +1207,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                         nonContinuousLayoutDivider.setLocation(
                             getLastDragLocation(), 0);
                     } else {
-                        int   splitHeight = splitPane.getHeight();
+			int   splitHeight = splitPane.getHeight();
                         splitPane.repaint(lastLoc, 0, dividerSize,
                                           splitHeight);
                         splitPane.repaint(location, 0, dividerSize,
@@ -1217,7 +1218,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                         nonContinuousLayoutDivider.setLocation(0,
                             getLastDragLocation());
                     } else {
-                        int    splitWidth = splitPane.getWidth();
+			int    splitWidth = splitPane.getWidth();
 
                         splitPane.repaint(0, lastLoc, splitWidth,
                                           dividerSize);
@@ -1241,16 +1242,16 @@ public class BasicSplitPaneUI extends SplitPaneUI
             Component   leftC = splitPane.getLeftComponent();
             Rectangle   leftBounds = leftC.getBounds();
 
-            if (draggingHW) {
-                if(orientation == JSplitPane.HORIZONTAL_SPLIT) {
+	    if (draggingHW) {
+		if(orientation == JSplitPane.HORIZONTAL_SPLIT) {
                     nonContinuousLayoutDivider.setLocation(-dividerSize, 0);
-                }
-                else {
+		}
+		else {
                     nonContinuousLayoutDivider.setLocation(0, -dividerSize);
-                }
-                splitPane.remove(nonContinuousLayoutDivider);
-            }
-            splitPane.setDividerLocation(location);
+		}
+		splitPane.remove(nonContinuousLayoutDivider);
+	    }
+	    splitPane.setDividerLocation(location);
         }
     }
 
@@ -1279,30 +1280,30 @@ public class BasicSplitPaneUI extends SplitPaneUI
         /* left, right, divider. (in this exact order) */
         protected int[]         sizes;
         protected Component[]   components;
-        /** Size of the splitpane the last time laid out. */
-        private int             lastSplitPaneSize;
-        /** True if resetToPreferredSizes has been invoked. */
-        private boolean         doReset;
-        /** Axis, 0 for horizontal, or 1 for veritcal. */
-        private int             axis;
+	/** Size of the splitpane the last time laid out. */
+	private int             lastSplitPaneSize;
+	/** True if resetToPreferredSizes has been invoked. */
+	private boolean         doReset;
+	/** Axis, 0 for horizontal, or 1 for veritcal. */
+	private int             axis;
 
 
-        BasicHorizontalLayoutManager() {
-            this(0);
-        }
+	BasicHorizontalLayoutManager() {
+	    this(0);
+	}
 
         BasicHorizontalLayoutManager(int axis) {
-            this.axis = axis;
+	    this.axis = axis;
             components = new Component[3];
             components[0] = components[1] = components[2] = null;
             sizes = new int[3];
         }
 
-        //
-        // LayoutManager
-        //
+	//
+	// LayoutManager
+	//
 
-        /**
+	/**
          * Does the actual layout.
          */
         public void layoutContainer(Container container) {
@@ -1312,51 +1313,51 @@ public class BasicSplitPaneUI extends SplitPaneUI
             // If we execute this function now, we're going to cause ourselves
             // much grief.
             if (containerSize.height <= 0 || containerSize.width <= 0 ) {
-                lastSplitPaneSize = 0;
+		lastSplitPaneSize = 0;
                 return;
             }
 
-            int         spDividerLocation = splitPane.getDividerLocation();
+	    int         spDividerLocation = splitPane.getDividerLocation();
             Insets      insets = splitPane.getInsets();
-            int         availableSize = getAvailableSize(containerSize,
-                                                         insets);
-            int         newSize = getSizeForPrimaryAxis(containerSize);
-            int         beginLocation = getDividerLocation(splitPane);
-            int         dOffset = getSizeForPrimaryAxis(insets, true);
-            Dimension   dSize = (components[2] == null) ? null :
-                                 components[2].getPreferredSize();
+	    int         availableSize = getAvailableSize(containerSize,
+							 insets);
+	    int         newSize = getSizeForPrimaryAxis(containerSize);
+	    int         beginLocation = getDividerLocation(splitPane);
+	    int         dOffset = getSizeForPrimaryAxis(insets, true);
+	    Dimension   dSize = (components[2] == null) ? null :
+		                 components[2].getPreferredSize();
 
-            if ((doReset && !dividerLocationIsSet) || spDividerLocation < 0) {
-                resetToPreferredSizes(availableSize);
-            }
-            else if (lastSplitPaneSize <= 0 ||
-                     availableSize == lastSplitPaneSize || !painted ||
-                     (dSize != null &&
-                      getSizeForPrimaryAxis(dSize) != sizes[2])) {
-                if (dSize != null) {
-                    sizes[2] = getSizeForPrimaryAxis(dSize);
-                }
-                else {
-                    sizes[2] = 0;
-                }
-                setDividerLocation(spDividerLocation - dOffset, availableSize);
-                dividerLocationIsSet = false;
-            }
-            else if (availableSize != lastSplitPaneSize) {
-                distributeSpace(availableSize - lastSplitPaneSize,
+	    if ((doReset && !dividerLocationIsSet) || spDividerLocation < 0) {
+		resetToPreferredSizes(availableSize);
+	    }
+	    else if (lastSplitPaneSize <= 0 ||
+		     availableSize == lastSplitPaneSize || !painted ||
+		     (dSize != null &&
+		      getSizeForPrimaryAxis(dSize) != sizes[2])) {
+		if (dSize != null) {
+		    sizes[2] = getSizeForPrimaryAxis(dSize);
+		}
+		else {
+		    sizes[2] = 0;
+		}
+		setDividerLocation(spDividerLocation - dOffset, availableSize);
+		dividerLocationIsSet = false;
+	    }
+	    else if (availableSize != lastSplitPaneSize) {
+		distributeSpace(availableSize - lastSplitPaneSize,
                                 getKeepHidden());
-            }
-            doReset = false;
-            dividerLocationIsSet = false;
-            lastSplitPaneSize = availableSize;
+	    }
+	    doReset = false;
+	    dividerLocationIsSet = false;
+	    lastSplitPaneSize = availableSize;
 
             // Reset the bounds of each component
             int nextLocation = getInitialLocation(insets);
-            int counter = 0;
+	    int counter = 0;
 
             while (counter < 3) {
                 if (components[counter] != null &&
-                    components[counter].isVisible()) {
+		    components[counter].isVisible()) {
                     setComponentToSize(components[counter], sizes[counter],
                                        nextLocation, insets, containerSize);
                     nextLocation += sizes[counter];
@@ -1373,33 +1374,33 @@ public class BasicSplitPaneUI extends SplitPaneUI
                     break;
                 }
             }
-            if (painted) {
-                // This is tricky, there is never a good time for us
-                // to push the value to the splitpane, painted appears to
-                // the best time to do it. What is really needed is
-                // notification that layout has completed.
-                int      newLocation = getDividerLocation(splitPane);
+	    if (painted) {
+		// This is tricky, there is never a good time for us
+		// to push the value to the splitpane, painted appears to
+		// the best time to do it. What is really needed is
+		// notification that layout has completed.
+		int      newLocation = getDividerLocation(splitPane);
 
-                if (newLocation != (spDividerLocation - dOffset)) {
-                    int  lastLocation = splitPane.getLastDividerLocation();
+		if (newLocation != (spDividerLocation - dOffset)) {
+		    int  lastLocation = splitPane.getLastDividerLocation();
 
-                    ignoreDividerLocationChange = true;
-                    try {
-                        splitPane.setDividerLocation(newLocation);
-                        // This is not always needed, but is rather tricky
-                        // to determine when... The case this is needed for
-                        // is if the user sets the divider location to some
-                        // bogus value, say 0, and the actual value is 1, the
-                        // call to setDividerLocation(1) will preserve the
-                        // old value of 0, when we really want the divider
-                        // location value  before the call. This is needed for
-                        // the one touch buttons.
-                        splitPane.setLastDividerLocation(lastLocation);
-                    } finally {
-                        ignoreDividerLocationChange = false;
-                    }
-                }
-            }
+		    ignoreDividerLocationChange = true;
+		    try {
+			splitPane.setDividerLocation(newLocation);
+			// This is not always needed, but is rather tricky
+			// to determine when... The case this is needed for
+			// is if the user sets the divider location to some
+			// bogus value, say 0, and the actual value is 1, the
+			// call to setDividerLocation(1) will preserve the
+			// old value of 0, when we really want the divider
+			// location value  before the call. This is needed for
+			// the one touch buttons.
+			splitPane.setLastDividerLocation(lastLocation);
+		    } finally {
+			ignoreDividerLocationChange = false;
+		    }
+		}
+	    }
         }
 
 
@@ -1416,7 +1417,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                     /* Divider. */
                     components[2] = component;
                     sizes[2] = getSizeForPrimaryAxis(component.
-                                                     getPreferredSize());
+						     getPreferredSize());
                 } else if(place.equals(JSplitPane.LEFT) ||
                           place.equals(JSplitPane.TOP)) {
                     components[0] = component;
@@ -1435,7 +1436,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                 throw new IllegalArgumentException("cannot add to layout: " +
                     "unknown constraint: " +
                     place);
-            doReset = true;
+	    doReset = true;
         }
 
 
@@ -1452,7 +1453,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
             for (int counter=0; counter<3; counter++) {
                 if(components[counter] != null) {
                     Dimension   minSize = components[counter].getMinimumSize();
-                    int         secSize = getSizeForSecondaryAxis(minSize);
+		    int         secSize = getSizeForSecondaryAxis(minSize);
 
                     minPrimary += getSizeForPrimaryAxis(minSize);
                     if(secSize > minSecondary)
@@ -1461,14 +1462,14 @@ public class BasicSplitPaneUI extends SplitPaneUI
             }
             if(insets != null) {
                 minPrimary += getSizeForPrimaryAxis(insets, true) +
-                              getSizeForPrimaryAxis(insets, false);
-                minSecondary += getSizeForSecondaryAxis(insets, true) +
-                              getSizeForSecondaryAxis(insets, false);
+		              getSizeForPrimaryAxis(insets, false);
+		minSecondary += getSizeForSecondaryAxis(insets, true) +
+		              getSizeForSecondaryAxis(insets, false);
             }
-            if (axis == 0) {
-                return new Dimension(minPrimary, minSecondary);
-            }
-            return new Dimension(minSecondary, minPrimary);
+	    if (axis == 0) {
+		return new Dimension(minPrimary, minSecondary);
+	    }
+	    return new Dimension(minSecondary, minPrimary);
         }
 
 
@@ -1484,9 +1485,9 @@ public class BasicSplitPaneUI extends SplitPaneUI
 
             for(int counter = 0; counter < 3; counter++) {
                 if(components[counter] != null) {
-                    Dimension   preSize = components[counter].
-                                          getPreferredSize();
-                    int         secSize = getSizeForSecondaryAxis(preSize);
+		    Dimension   preSize = components[counter].
+			                  getPreferredSize();
+		    int         secSize = getSizeForSecondaryAxis(preSize);
 
                     prePrimary += getSizeForPrimaryAxis(preSize);
                     if(secSize > preSecondary)
@@ -1495,14 +1496,14 @@ public class BasicSplitPaneUI extends SplitPaneUI
             }
             if(insets != null) {
                 prePrimary += getSizeForPrimaryAxis(insets, true) +
-                              getSizeForPrimaryAxis(insets, false);
-                preSecondary += getSizeForSecondaryAxis(insets, true) +
-                              getSizeForSecondaryAxis(insets, false);
+		              getSizeForPrimaryAxis(insets, false);
+		preSecondary += getSizeForSecondaryAxis(insets, true) +
+		              getSizeForSecondaryAxis(insets, false);
             }
-            if (axis == 0) {
-                return new Dimension(prePrimary, preSecondary);
-            }
-            return new Dimension(preSecondary, prePrimary);
+	    if (axis == 0) {
+		return new Dimension(prePrimary, preSecondary);
+	    }
+	    return new Dimension(preSecondary, prePrimary);
         }
 
 
@@ -1514,7 +1515,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
                 if(components[counter] == component) {
                     components[counter] = null;
                     sizes[counter] = 0;
-                    doReset = true;
+		    doReset = true;
                 }
             }
         }
@@ -1544,7 +1545,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
 
         /**
          * Returns the alignment along the x axis.  This specifies how
-         * the component would like to be aligned relative to other
+         * the component would like to be aligned relative to other 
          * components.  The value should be a number between 0 and 1
          * where 0 represents alignment along the origin, 1 is aligned
          * the furthest away from the origin, 0.5 is centered, etc.
@@ -1556,7 +1557,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
 
         /**
          * Returns the alignment along the y axis.  This specifies how
-         * the component would like to be aligned relative to other
+         * the component would like to be aligned relative to other 
          * components.  The value should be a number between 0 and 1
          * where 0 represents alignment along the origin, 1 is aligned
          * the furthest away from the origin, 0.5 is centered, etc.
@@ -1584,16 +1585,16 @@ public class BasicSplitPaneUI extends SplitPaneUI
         }
 
 
-        //
-        // New methods.
-        //
+	//
+	// New methods.
+	//
 
         /**
          * Marks the receiver so that the next time this instance is
          * laid out it'll ask for the preferred sizes.
          */
         public void resetToPreferredSizes() {
-            doReset = true;
+	    doReset = true;
         }
 
         /**
@@ -1601,7 +1602,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
          */
         protected void resetSizeAt(int index) {
             sizes[index] = 0;
-            doReset = true;
+	    doReset = true;
         }
 
 
@@ -1628,7 +1629,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
          * Returns the width of the passed in Components preferred size.
          */
         protected int getPreferredSizeOfComponent(Component c) {
-            return getSizeForPrimaryAxis(c.getPreferredSize());
+	    return getSizeForPrimaryAxis(c.getPreferredSize());
         }
 
 
@@ -1636,7 +1637,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
          * Returns the width of the passed in Components minimum size.
          */
         int getMinimumSizeOfComponent(Component c) {
-            return getSizeForPrimaryAxis(c.getMinimumSize());
+	    return getSizeForPrimaryAxis(c.getMinimumSize());
         }
 
 
@@ -1644,7 +1645,7 @@ public class BasicSplitPaneUI extends SplitPaneUI
          * Returns the width of the passed in component.
          */
         protected int getSizeOfComponent(Component c) {
-            return getSizeForPrimaryAxis(c.getSize());
+	    return getSizeForPrimaryAxis(c.getSize());
         }
 
 
@@ -1656,9 +1657,9 @@ public class BasicSplitPaneUI extends SplitPaneUI
                                        Insets insets) {
             if(insets == null)
                 return getSizeForPrimaryAxis(containerSize);
-            return (getSizeForPrimaryAxis(containerSize) -
-                    (getSizeForPrimaryAxis(insets, true) +
-                     getSizeForPrimaryAxis(insets, false)));
+            return (getSizeForPrimaryAxis(containerSize) - 
+		    (getSizeForPrimaryAxis(insets, true) +
+		     getSizeForPrimaryAxis(insets, false)));
         }
 
 
@@ -1682,89 +1683,89 @@ public class BasicSplitPaneUI extends SplitPaneUI
                                           int location, Insets insets,
                                           Dimension containerSize) {
             if(insets != null) {
+		if (axis == 0) {
+		    c.setBounds(location, insets.top, size,
+				containerSize.height -
+				(insets.top + insets.bottom));
+		}
+		else {
+		    c.setBounds(insets.left, location, containerSize.width -
+				(insets.left + insets.right), size);
+		}
+            }
+	    else {
                 if (axis == 0) {
-                    c.setBounds(location, insets.top, size,
-                                containerSize.height -
-                                (insets.top + insets.bottom));
-                }
-                else {
-                    c.setBounds(insets.left, location, containerSize.width -
-                                (insets.left + insets.right), size);
-                }
-            }
-            else {
-                if (axis == 0) {
-                    c.setBounds(location, 0, size, containerSize.height);
-                }
-                else {
-                    c.setBounds(0, location, containerSize.width, size);
-                }
+		    c.setBounds(location, 0, size, containerSize.height);
+		}
+		else {
+		    c.setBounds(0, location, containerSize.width, size);
+		}
             }
         }
 
-        /**
-         * If the axis == 0, the width is returned, otherwise the height.
-         */
-        int getSizeForPrimaryAxis(Dimension size) {
-            if (axis == 0) {
-                return size.width;
-            }
-            return size.height;
-        }
+	/**
+	 * If the axis == 0, the width is returned, otherwise the height.
+	 */
+	int getSizeForPrimaryAxis(Dimension size) {
+	    if (axis == 0) {
+		return size.width;
+	    }
+	    return size.height;
+	}
 
-        /**
-         * If the axis == 0, the width is returned, otherwise the height.
-         */
-        int getSizeForSecondaryAxis(Dimension size) {
-            if (axis == 0) {
-                return size.height;
-            }
-            return size.width;
-        }
+	/**
+	 * If the axis == 0, the width is returned, otherwise the height.
+	 */
+	int getSizeForSecondaryAxis(Dimension size) {
+	    if (axis == 0) {
+		return size.height;
+	    }
+	    return size.width;
+	}
 
-        /**
-         * Returns a particular value of the inset identified by the
-         * axis and <code>isTop</code><p>
-         *   axis isTop
-         *    0    true    - left
-         *    0    false   - right
-         *    1    true    - top
-         *    1    false   - bottom
-         */
-        int getSizeForPrimaryAxis(Insets insets, boolean isTop) {
-            if (axis == 0) {
-                if (isTop) {
-                    return insets.left;
-                }
-                return insets.right;
-            }
-            if (isTop) {
-                return insets.top;
-            }
-            return insets.bottom;
-        }
+	/**
+	 * Returns a particular value of the inset identified by the
+	 * axis and <code>isTop</code><p>
+	 *   axis isTop
+	 *    0    true    - left
+	 *    0    false   - right
+	 *    1    true    - top
+	 *    1    false   - bottom
+	 */
+	int getSizeForPrimaryAxis(Insets insets, boolean isTop) {
+	    if (axis == 0) {
+		if (isTop) {
+		    return insets.left;
+		}
+		return insets.right;
+	    }
+	    if (isTop) {
+		return insets.top;
+	    }
+	    return insets.bottom;
+	} 
 
-        /**
-         * Returns a particular value of the inset identified by the
-         * axis and <code>isTop</code><p>
-         *   axis isTop
-         *    0    true    - left
-         *    0    false   - right
-         *    1    true    - top
-         *    1    false   - bottom
-         */
-        int getSizeForSecondaryAxis(Insets insets, boolean isTop) {
-            if (axis == 0) {
-                if (isTop) {
-                    return insets.top;
-                }
-                return insets.bottom;
-            }
-            if (isTop) {
-                return insets.left;
-            }
-            return insets.right;
-        }
+	/**
+	 * Returns a particular value of the inset identified by the
+	 * axis and <code>isTop</code><p>
+	 *   axis isTop
+	 *    0    true    - left
+	 *    0    false   - right
+	 *    1    true    - top
+	 *    1    false   - bottom
+	 */
+	int getSizeForSecondaryAxis(Insets insets, boolean isTop) {
+	    if (axis == 0) {
+		if (isTop) {
+		    return insets.top;
+		}
+		return insets.bottom;
+	    }
+	    if (isTop) {
+		return insets.left;
+	    }
+	    return insets.right;
+	} 
 
         /**
          * Determines the components. This should be called whenever
@@ -1812,127 +1813,127 @@ public class BasicSplitPaneUI extends SplitPaneUI
                 }
             }
             if(components[2] == null) {
-                sizes[2] = 0;
-            }
-            else {
-                sizes[2] = getSizeForPrimaryAxis(components[2].getPreferredSize());
-            }
+		sizes[2] = 0;
+	    }
+	    else {
+		sizes[2] = getSizeForPrimaryAxis(components[2].getPreferredSize());
+	    }
         }
 
-        /**
-         * Resets the size of the first component to <code>leftSize</code>,
-         * and the right component to the remainder of the space.
-         */
-        void setDividerLocation(int leftSize, int availableSize) {
-            boolean          lValid = (components[0] != null &&
-                                       components[0].isVisible());
-            boolean          rValid = (components[1] != null &&
-                                       components[1].isVisible());
-            boolean          dValid = (components[2] != null &&
-                                       components[2].isVisible());
-            int              max = availableSize;
+	/**
+	 * Resets the size of the first component to <code>leftSize</code>,
+	 * and the right component to the remainder of the space.
+	 */
+	void setDividerLocation(int leftSize, int availableSize) {
+	    boolean          lValid = (components[0] != null &&
+				       components[0].isVisible());
+	    boolean          rValid = (components[1] != null &&
+				       components[1].isVisible());
+	    boolean          dValid = (components[2] != null && 
+				       components[2].isVisible());
+	    int              max = availableSize;
 
-            if (dValid) {
-                max -= sizes[2];
-            }
-            leftSize = Math.max(0, Math.min(leftSize, max));
-            if (lValid) {
-                if (rValid) {
-                    sizes[0] = leftSize;
-                    sizes[1] = max - leftSize;
-                }
-                else {
-                    sizes[0] = max;
-                    sizes[1] = 0;
-                }
-            }
-            else if (rValid) {
-                sizes[1] = max;
-                sizes[0] = 0;
-            }
-        }
+	    if (dValid) {
+		max -= sizes[2];
+	    }
+	    leftSize = Math.max(0, Math.min(leftSize, max));
+	    if (lValid) {
+		if (rValid) {
+		    sizes[0] = leftSize;
+		    sizes[1] = max - leftSize;
+		}
+		else {
+		    sizes[0] = max;
+		    sizes[1] = 0;
+		}
+	    }
+	    else if (rValid) {
+		sizes[1] = max;
+		sizes[0] = 0;
+	    }
+	}
 
-        /**
-         * Returns an array of the minimum sizes of the components.
-         */
-        int[] getPreferredSizes() {
-            int[]         retValue = new int[3];
+	/**
+	 * Returns an array of the minimum sizes of the components.
+	 */
+	int[] getPreferredSizes() {
+	    int[]         retValue = new int[3];
 
-            for (int counter = 0; counter < 3; counter++) {
-                if (components[counter] != null &&
-                    components[counter].isVisible()) {
-                    retValue[counter] = getPreferredSizeOfComponent
-                                        (components[counter]);
-                }
-                else {
-                    retValue[counter] = -1;
-                }
-            }
-            return retValue;
-        }
+	    for (int counter = 0; counter < 3; counter++) {
+		if (components[counter] != null &&
+		    components[counter].isVisible()) {
+		    retValue[counter] = getPreferredSizeOfComponent
+			                (components[counter]);
+		}
+		else {
+		    retValue[counter] = -1;
+		}
+	    }
+	    return retValue;
+	}
 
-        /**
-         * Returns an array of the minimum sizes of the components.
-         */
-        int[] getMinimumSizes() {
-            int[]         retValue = new int[3];
+	/**
+	 * Returns an array of the minimum sizes of the components.
+	 */
+	int[] getMinimumSizes() {
+	    int[]         retValue = new int[3];
 
-            for (int counter = 0; counter < 2; counter++) {
-                if (components[counter] != null &&
-                    components[counter].isVisible()) {
-                    retValue[counter] = getMinimumSizeOfComponent
-                                        (components[counter]);
-                }
-                else {
-                    retValue[counter] = -1;
-                }
-            }
-            retValue[2] = (components[2] != null) ?
-                getMinimumSizeOfComponent(components[2]) : -1;
-            return retValue;
-        }
+	    for (int counter = 0; counter < 2; counter++) {
+		if (components[counter] != null &&
+		    components[counter].isVisible()) {
+		    retValue[counter] = getMinimumSizeOfComponent
+			                (components[counter]);
+		}
+		else {
+		    retValue[counter] = -1;
+		}
+	    }
+	    retValue[2] = (components[2] != null) ?
+ 		getMinimumSizeOfComponent(components[2]) : -1;
+	    return retValue;
+	}
 
-        /**
-         * Resets the components to their preferred sizes.
-         */
-        void resetToPreferredSizes(int availableSize) {
-            // Set the sizes to the preferred sizes (if fits), otherwise
-            // set to min sizes and distribute any extra space.
-            int[]       testSizes = getPreferredSizes();
-            int         totalSize = 0;
+	/**
+	 * Resets the components to their preferred sizes.
+	 */
+	void resetToPreferredSizes(int availableSize) {
+	    // Set the sizes to the preferred sizes (if fits), otherwise
+	    // set to min sizes and distribute any extra space.
+	    int[]       testSizes = getPreferredSizes();
+	    int         totalSize = 0;
 
-            for (int counter = 0; counter < 3; counter++) {
-                if (testSizes[counter] != -1) {
-                    totalSize += testSizes[counter];
-                }
-            }
-            if (totalSize > availableSize) {
-                testSizes = getMinimumSizes();
+	    for (int counter = 0; counter < 3; counter++) {
+		if (testSizes[counter] != -1) {
+		    totalSize += testSizes[counter];
+		}
+	    }
+	    if (totalSize > availableSize) {
+		testSizes = getMinimumSizes();
 
-                totalSize = 0;
-                for (int counter = 0; counter < 3; counter++) {
-                    if (testSizes[counter] != -1) {
-                        totalSize += testSizes[counter];
-                    }
-                }
-            }
-            setSizes(testSizes);
-            distributeSpace(availableSize - totalSize, false);
-        }
+		totalSize = 0;
+		for (int counter = 0; counter < 3; counter++) {
+		    if (testSizes[counter] != -1) {
+			totalSize += testSizes[counter];
+		    }
+		}
+	    }
+	    setSizes(testSizes);
+	    distributeSpace(availableSize - totalSize, false);
+	}
 
-        /**
-         * Distributes <code>space</code> between the two components
-         * (divider won't get any extra space) based on the weighting. This
-         * attempts to honor the min size of the components.
+	/**
+	 * Distributes <code>space</code> between the two components 
+	 * (divider won't get any extra space) based on the weighting. This
+	 * attempts to honor the min size of the components.
          *
          * @param keepHidden if true and one of the components is 0x0
          *                   it gets none of the extra space
-         */
-        void distributeSpace(int space, boolean keepHidden) {
-            boolean          lValid = (components[0] != null &&
-                                       components[0].isVisible());
-            boolean          rValid = (components[1] != null &&
-                                       components[1].isVisible());
+	 */
+	void distributeSpace(int space, boolean keepHidden) {
+	    boolean          lValid = (components[0] != null &&
+				       components[0].isVisible());
+	    boolean          rValid = (components[1] != null &&
+				       components[1].isVisible());
 
             if (keepHidden) {
                 if (lValid && getSizeForPrimaryAxis(
@@ -1949,69 +1950,69 @@ public class BasicSplitPaneUI extends SplitPaneUI
                     rValid = false;
                 }
             }
-            if (lValid && rValid) {
-                double        weight = splitPane.getResizeWeight();
-                int           lExtra = (int)(weight * (double)space);
-                int           rExtra = (space - lExtra);
+	    if (lValid && rValid) {
+		double        weight = splitPane.getResizeWeight();
+		int           lExtra = (int)(weight * (double)space);
+		int           rExtra = (space - lExtra);
 
-                sizes[0] += lExtra;
-                sizes[1] += rExtra;
+		sizes[0] += lExtra;
+		sizes[1] += rExtra;
 
-                int           lMin = getMinimumSizeOfComponent(components[0]);
-                int           rMin = getMinimumSizeOfComponent(components[1]);
-                boolean       lMinValid = (sizes[0] >= lMin);
-                boolean       rMinValid = (sizes[1] >= rMin);
+		int           lMin = getMinimumSizeOfComponent(components[0]);
+		int           rMin = getMinimumSizeOfComponent(components[1]);
+		boolean       lMinValid = (sizes[0] >= lMin);
+		boolean       rMinValid = (sizes[1] >= rMin);
 
-                if (!lMinValid && !rMinValid) {
-                    if (sizes[0] < 0) {
-                        sizes[1] += sizes[0];
-                        sizes[0] = 0;
-                    }
-                    else if (sizes[1] < 0) {
-                        sizes[0] += sizes[1];
-                        sizes[1] = 0;
-                    }
-                }
-                else if (!lMinValid) {
-                    if (sizes[1] - (lMin - sizes[0]) < rMin) {
-                        // both below min, just make sure > 0
-                        if (sizes[0] < 0) {
-                            sizes[1] += sizes[0];
-                            sizes[0] = 0;
-                        }
-                    }
-                    else {
-                        sizes[1] -= (lMin - sizes[0]);
-                        sizes[0] = lMin;
-                    }
-                }
-                else if (!rMinValid) {
-                    if (sizes[0] - (rMin - sizes[1]) < lMin) {
-                        // both below min, just make sure > 0
-                        if (sizes[1] < 0) {
-                            sizes[0] += sizes[1];
-                            sizes[1] = 0;
-                        }
-                    }
-                    else {
-                        sizes[0] -= (rMin - sizes[1]);
-                        sizes[1] = rMin;
-                    }
-                }
-                if (sizes[0] < 0) {
-                    sizes[0] = 0;
-                }
-                if (sizes[1] < 0) {
-                    sizes[1] = 0;
-                }
-            }
-            else if (lValid) {
-                sizes[0] = Math.max(0, sizes[0] + space);
-            }
-            else if (rValid) {
-                sizes[1] = Math.max(0, sizes[1] + space);
-            }
-        }
+		if (!lMinValid && !rMinValid) {
+		    if (sizes[0] < 0) {
+			sizes[1] += sizes[0];
+			sizes[0] = 0;
+		    }
+		    else if (sizes[1] < 0) {
+			sizes[0] += sizes[1];
+			sizes[1] = 0;
+		    }
+		}
+		else if (!lMinValid) {
+		    if (sizes[1] - (lMin - sizes[0]) < rMin) {
+			// both below min, just make sure > 0
+			if (sizes[0] < 0) {
+			    sizes[1] += sizes[0];
+			    sizes[0] = 0;
+			}
+		    }
+		    else {
+			sizes[1] -= (lMin - sizes[0]);
+			sizes[0] = lMin;
+		    }
+		}
+		else if (!rMinValid) {
+		    if (sizes[0] - (rMin - sizes[1]) < lMin) {
+			// both below min, just make sure > 0
+			if (sizes[1] < 0) {
+			    sizes[0] += sizes[1];
+			    sizes[1] = 0;
+			}
+		    }
+		    else {
+			sizes[0] -= (rMin - sizes[1]);
+			sizes[1] = rMin;
+		    }
+		}
+		if (sizes[0] < 0) {
+		    sizes[0] = 0;
+		}
+		if (sizes[1] < 0) {
+		    sizes[1] = 0;
+		}
+	    }
+	    else if (lValid) {
+		sizes[0] = Math.max(0, sizes[0] + space);
+	    }
+	    else if (rValid) {
+		sizes[1] = Math.max(0, sizes[1] + space);
+	    }
+	}
     }
 
 
@@ -2023,9 +2024,9 @@ public class BasicSplitPaneUI extends SplitPaneUI
     public class BasicVerticalLayoutManager extends
             BasicHorizontalLayoutManager
     {
-        public BasicVerticalLayoutManager() {
-            super(1);
-        }
+	public BasicVerticalLayoutManager() {
+	    super(1);
+	}
     }
 
 
@@ -2061,9 +2062,9 @@ public class BasicSplitPaneUI extends SplitPaneUI
                     }
                 } else if(changeName == JSplitPane.DIVIDER_SIZE_PROPERTY){
                     divider.setDividerSize(splitPane.getDividerSize());
-                    dividerSize = divider.getDividerSize();
+		    dividerSize = divider.getDividerSize();
                     splitPane.revalidate();
-                    splitPane.repaint();
+		    splitPane.repaint();
                 }
             }
         }
@@ -2098,8 +2099,8 @@ public class BasicSplitPaneUI extends SplitPaneUI
         }
 
         public void actionPerformed(ActionEvent ev) {
-            JSplitPane splitPane = (JSplitPane)ev.getSource();
-            BasicSplitPaneUI ui = (BasicSplitPaneUI)BasicLookAndFeel.
+	    JSplitPane splitPane = (JSplitPane)ev.getSource();
+	    BasicSplitPaneUI ui = (BasicSplitPaneUI)BasicLookAndFeel.
                       getUIOfType(splitPane.getUI(), BasicSplitPaneUI.class);
 
             if (ui == null) {
@@ -2164,86 +2165,86 @@ public class BasicSplitPaneUI extends SplitPaneUI
             }
         }
 
-        private void moveFocus(JSplitPane splitPane, int direction) {
-            Container rootAncestor = splitPane.getFocusCycleRootAncestor();
-            FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
-            Component focusOn = (direction > 0) ?
-                policy.getComponentAfter(rootAncestor, splitPane) :
-                policy.getComponentBefore(rootAncestor, splitPane);
-            HashSet focusFrom = new HashSet();
-            if (splitPane.isAncestorOf(focusOn)) {
-                do {
-                    focusFrom.add(focusOn);
-                    rootAncestor = focusOn.getFocusCycleRootAncestor();
-                    policy = rootAncestor.getFocusTraversalPolicy();
-                    focusOn = (direction > 0) ?
-                        policy.getComponentAfter(rootAncestor, focusOn) :
-                        policy.getComponentBefore(rootAncestor, focusOn);
-                } while (splitPane.isAncestorOf(focusOn) &&
-                         !focusFrom.contains(focusOn));
-            }
-            if ( focusOn!=null && !splitPane.isAncestorOf(focusOn) ) {
-                focusOn.requestFocus();
-            }
-        }
+	private void moveFocus(JSplitPane splitPane, int direction) {
+	    Container rootAncestor = splitPane.getFocusCycleRootAncestor();
+	    FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
+	    Component focusOn = (direction > 0) ?
+		policy.getComponentAfter(rootAncestor, splitPane) :
+		policy.getComponentBefore(rootAncestor, splitPane);
+	    HashSet focusFrom = new HashSet();
+	    if (splitPane.isAncestorOf(focusOn)) {
+		do {
+		    focusFrom.add(focusOn);
+		    rootAncestor = focusOn.getFocusCycleRootAncestor();
+		    policy = rootAncestor.getFocusTraversalPolicy();
+		    focusOn = (direction > 0) ?
+			policy.getComponentAfter(rootAncestor, focusOn) :
+			policy.getComponentBefore(rootAncestor, focusOn);
+		} while (splitPane.isAncestorOf(focusOn) &&
+			 !focusFrom.contains(focusOn));
+	    }
+	    if ( focusOn!=null && !splitPane.isAncestorOf(focusOn) ) {
+		focusOn.requestFocus();
+	    }
+	}
 
-        private void toggleFocus(JSplitPane splitPane) {
-            Component left = splitPane.getLeftComponent();
-            Component right = splitPane.getRightComponent();
+	private void toggleFocus(JSplitPane splitPane) {
+	    Component left = splitPane.getLeftComponent();
+	    Component right = splitPane.getRightComponent();
 
-            KeyboardFocusManager manager =
-                KeyboardFocusManager.getCurrentKeyboardFocusManager();
-            Component focus = manager.getFocusOwner();
-            Component focusOn = getNextSide(splitPane, focus);
-            if (focusOn != null) {
-                // don't change the focus if the new focused component belongs
-                // to the same splitpane and the same side
-                if ( focus!=null &&
-                     ( (SwingUtilities.isDescendingFrom(focus, left) &&
-                        SwingUtilities.isDescendingFrom(focusOn, left)) ||
-                       (SwingUtilities.isDescendingFrom(focus, right) &&
-                        SwingUtilities.isDescendingFrom(focusOn, right)) ) ) {
-                    return;
-                }
-                SwingUtilities2.compositeRequestFocus(focusOn);
-            }
-        }
+	    KeyboardFocusManager manager =
+		KeyboardFocusManager.getCurrentKeyboardFocusManager();
+	    Component focus = manager.getFocusOwner();
+	    Component focusOn = getNextSide(splitPane, focus);
+	    if (focusOn != null) {
+		// don't change the focus if the new focused component belongs
+		// to the same splitpane and the same side
+		if ( focus!=null &&
+		     ( (SwingUtilities.isDescendingFrom(focus, left) &&
+			SwingUtilities.isDescendingFrom(focusOn, left)) ||
+		       (SwingUtilities.isDescendingFrom(focus, right) &&
+			SwingUtilities.isDescendingFrom(focusOn, right)) ) ) {
+		    return;
+		}
+ 		SwingUtilities2.compositeRequestFocus(focusOn);
+	    }
+	}
 
-        private Component getNextSide(JSplitPane splitPane, Component focus) {
-            Component left = splitPane.getLeftComponent();
-            Component right = splitPane.getRightComponent();
-            Component next = null;
-            if (focus!=null && SwingUtilities.isDescendingFrom(focus, left) &&
-                right!=null) {
-                next = getFirstAvailableComponent(right);
-                if (next != null) {
-                    return next;
-                }
-            }
-            JSplitPane parentSplitPane = (JSplitPane)SwingUtilities.getAncestorOfClass(JSplitPane.class, splitPane);
-            if (parentSplitPane!=null) {
-                // focus next side of the parent split pane
-                next = getNextSide(parentSplitPane, focus);
-            } else {
-                next = getFirstAvailableComponent(left);
-                if (next == null) {
-                    next = getFirstAvailableComponent(right);
-                }
-            }
-            return next;
-        }
+	private Component getNextSide(JSplitPane splitPane, Component focus) {
+	    Component left = splitPane.getLeftComponent();
+	    Component right = splitPane.getRightComponent();
+	    Component next = null;
+	    if (focus!=null && SwingUtilities.isDescendingFrom(focus, left) &&
+		right!=null) {
+		next = getFirstAvailableComponent(right);
+		if (next != null) {
+		    return next;
+		}
+	    }
+	    JSplitPane parentSplitPane = (JSplitPane)SwingUtilities.getAncestorOfClass(JSplitPane.class, splitPane);
+	    if (parentSplitPane!=null) {
+		// focus next side of the parent split pane
+		next = getNextSide(parentSplitPane, focus);
+	    } else {
+		next = getFirstAvailableComponent(left);
+		if (next == null) {
+		    next = getFirstAvailableComponent(right);
+		}
+	    }
+	    return next;
+	}
 
-        private Component getFirstAvailableComponent(Component c) {
-            if (c!=null && c instanceof JSplitPane) {
-                JSplitPane sp = (JSplitPane)c;
-                Component left = getFirstAvailableComponent(sp.getLeftComponent());
-                if (left != null) {
-                    c = left;
-                } else {
-                    c = getFirstAvailableComponent(sp.getRightComponent());
-                }
-            }
-            return c;
-        }
+	private Component getFirstAvailableComponent(Component c) {
+	    if (c!=null && c instanceof JSplitPane) {
+		JSplitPane sp = (JSplitPane)c;
+		Component left = getFirstAvailableComponent(sp.getLeftComponent());
+		if (left != null) {
+		    c = left;
+		} else {
+		    c = getFirstAvailableComponent(sp.getRightComponent());
+		}
+	    }
+	    return c;
+	}
     }
 }

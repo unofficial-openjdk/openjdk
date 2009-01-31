@@ -40,14 +40,14 @@ Java_java_io_Console_istty(JNIEnv *env, jclass cls)
 
 JNIEXPORT jstring JNICALL
 Java_java_io_Console_encoding(JNIEnv *env, jclass cls)
-{
+{  
     return NULL;
 }
 
 JNIEXPORT jboolean JNICALL
-Java_java_io_Console_echo(JNIEnv *env,
-                          jclass cls,
-                          jboolean on)
+Java_java_io_Console_echo(JNIEnv *env, 
+			  jclass cls, 
+			  jboolean on)
 {
     struct termios tio;
     jboolean old;
@@ -58,12 +58,13 @@ Java_java_io_Console_echo(JNIEnv *env,
     }
     old = (tio.c_lflag & ECHO);
     if (on) {
-        tio.c_lflag |= ECHO;
+	tio.c_lflag |= ECHO;
     } else {
-        tio.c_lflag &= ~ECHO;
+	tio.c_lflag &= ~ECHO;
     }
     if (tcsetattr(tty, TCSANOW, &tio) == -1) {
         JNU_ThrowIOExceptionWithLastError(env, "tcsetattr failed");
     }
     return old;
 }
+

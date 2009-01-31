@@ -31,27 +31,28 @@ package java.util;
  * that the token is out of range for the expected type.
  *
  * @author  unascribed
+ * @version %I% %G%
  * @see     java.util.Scanner
  * @since   1.5
  */
 public
 class InputMismatchException extends NoSuchElementException {
     /**
-     * Constructs an <code>InputMismatchException</code> with <tt>null</tt>
+     * Constructs an <code>InputMismatchException</code> with <tt>null</tt> 
      * as its error message string.
      */
     public InputMismatchException() {
-        super();
+	super();
     }
 
     /**
-     * Constructs an <code>InputMismatchException</code>, saving a reference
-     * to the error message string <tt>s</tt> for later retrieval by the
+     * Constructs an <code>InputMismatchException</code>, saving a reference 
+     * to the error message string <tt>s</tt> for later retrieval by the 
      * <tt>getMessage</tt> method.
      *
      * @param   s   the detail message.
      */
     public InputMismatchException(String s) {
-        super(s);
+	super(s);
     }
 }

@@ -73,9 +73,9 @@ public class ExpressionParser implements ExpressionParserConstants {
         parser.frameGetter = frameGetter;
         Value value = null;
         parser.Expression();
-        lastFrameGetter = frameGetter;
-        lastLValue = parser.pop();
-        return lastLValue.getValue();
+	lastFrameGetter = frameGetter;
+	lastLValue = parser.pop();
+	return lastLValue.getValue();
   }
 
   public static void main(String args[]) {

@@ -38,12 +38,12 @@
  * for management by a JMX agent:
  *      - the read/write "State" attribute,
  *      - the read only "NbChanges" attribute,
- *      - the "reset()" operation.
+ *	- the "reset()" operation.
  *
  * This object also has one property and one method not exposed
  * for management by a JMX agent:
- *      - the "NbResets" property,
- *      - the "getNbResets()" method.
+ *	- the "NbResets" property,
+ *	- the "getNbResets()" method.
  */
 
 import javax.management.AttributeChangeNotification;
@@ -80,7 +80,7 @@ public class SimpleStandard
         return state;
     }
 
-    /**
+    /** 
      * Setter: set the "State" attribute of the "SimpleStandard" standard MBean.
      *
      * @param <VAR>s</VAR> the new value of the "State" attribute.
@@ -105,19 +105,19 @@ public class SimpleStandard
      * attributes of the "SimpleStandard" standard MBean.
      */
     public void reset() {
-        AttributeChangeNotification acn =
-            new AttributeChangeNotification(this,
-                                            0,
-                                            0,
-                                            "NbChanges reset",
-                                            "NbChanges",
-                                            "Integer",
-                                            new Integer(nbChanges),
-                                            new Integer(0));
-        state = "initial state";
+	AttributeChangeNotification acn =
+	    new AttributeChangeNotification(this,
+					    0,
+					    0,
+					    "NbChanges reset",
+					    "NbChanges",
+					    "Integer",
+					    new Integer(nbChanges),
+					    new Integer(0));
+	state = "initial state";
         nbChanges = 0;
-        nbResets++;
-        sendNotification(acn);
+	nbResets++;
+	sendNotification(acn);
     }
 
     /*
@@ -134,7 +134,7 @@ public class SimpleStandard
      * @return the current value of the "NbResets" property.
      */
     public int getNbResets() {
-        return nbResets;
+	return nbResets;
     }
 
     /*

@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package javax.swing.plaf.basic;
 
 import java.awt.*;
@@ -36,6 +36,7 @@ import java.io.Serializable;
 /**
  * BasicCheckboxMenuItem implementation
  *
+ * @version %I% %G%
  * @author Georges Saab
  * @author David Karlton
  * @author Arnaud Weber
@@ -47,7 +48,7 @@ public class BasicCheckBoxMenuItemUI extends BasicMenuItemUI {
     }
 
     protected String getPropertyPrefix() {
-        return "CheckBoxMenuItem";
+	return "CheckBoxMenuItem";
     }
 
     public void processMouseEvent(JMenuItem item,MouseEvent e,MenuElement path[],MenuSelectionManager manager) {
@@ -68,3 +69,11 @@ public class BasicCheckBoxMenuItemUI extends BasicMenuItemUI {
         }
     }
 }
+
+
+
+
+
+
+
+

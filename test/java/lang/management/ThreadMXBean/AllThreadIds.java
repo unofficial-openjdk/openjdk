@@ -63,14 +63,14 @@ public class AllThreadIds {
             System.out.println(i + ": Thread id = " + list[i-1]);
         }
         for (int i = 0; i < ALL_THREADS; i++) {
-            Thread t = allThreads[i];
+            Thread t = allThreads[i]; 
             System.out.println(t.getName() + " Id = " + t.getId() +
-                " die = " + live[i] +
+                " die = " + live[i] + 
                 " alive = " + t.isAlive());
         }
     }
 
-    private static void checkThreadCount(int numNewThreads,
+    private static void checkThreadCount(int numNewThreads, 
                                          int numTerminatedThreads)
         throws Exception {
         prevTotalThreadCount = curTotalThreadCount;
@@ -80,29 +80,29 @@ public class AllThreadIds {
         curLiveThreadCount = mbean.getThreadCount();
         curPeakThreadCount = mbean.getPeakThreadCount();
 
-        if ((curLiveThreadCount - prevLiveThreadCount) !=
+        if ((curLiveThreadCount - prevLiveThreadCount) != 
             (numNewThreads - numTerminatedThreads)) {
             throw new RuntimeException("Unexpected number of live threads: " +
                 " Prev Total = " + prevTotalThreadCount +
                 " Current Total = " + curTotalThreadCount +
                 " Threads added = " + numNewThreads +
                 " Threads terminated = " + numTerminatedThreads);
-        }
+        } 
         if (curPeakThreadCount - prevPeakThreadCount != numNewThreads) {
             throw new RuntimeException("Unexpected number of peak threads: " +
                 " Prev Total = " + prevTotalThreadCount +
                 " Current Total = " + curTotalThreadCount +
-                " Threads added = " + numNewThreads);
-        }
+                " Threads added = " + numNewThreads); 
+        } 
         if (curTotalThreadCount - prevTotalThreadCount != numNewThreads) {
             throw new RuntimeException("Unexpected number of total threads: " +
                 " Prev Total = " + prevTotalThreadCount +
                 " Current Total = " + curTotalThreadCount +
-                " Threads added = " + numNewThreads);
-        }
+                " Threads added = " + numNewThreads); 
+        } 
         long[] list = mbean.getAllThreadIds();
         if (list.length != curLiveThreadCount) {
-            throw new RuntimeException("Array length returned by " +
+            throw new RuntimeException("Array length returned by " + 
                 "getAllThreadIds() = " + list.length +
                 " not matched count = " + curLiveThreadCount);
         }
@@ -156,8 +156,8 @@ public class AllThreadIds {
             }
             if (trace) {
                 if (!found) {
-                    System.out.print(". TEST FAILED.");
-                }
+                    System.out.print(". TEST FAILED."); 
+                } 
                 System.out.println();
             }
         }
@@ -187,7 +187,7 @@ public class AllThreadIds {
             boolean live = (i >= DAEMON_THREADS);
 
             if (trace) {
-                System.out.print("Looking for thread with id " + expectedId +
+                System.out.print("Looking for thread with id " + expectedId + 
                     (live ? " expected alive." : " expected terminated."));
             }
             for (int j = 0; j < list.length; j++) {

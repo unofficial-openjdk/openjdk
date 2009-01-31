@@ -41,8 +41,8 @@ import java.util.logging.Level;
 import java.util.Vector;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.security.acl.AclEntry;
-import java.security.acl.NotOwnerException;
+import java.security.acl.AclEntry; 
+import java.security.acl.NotOwnerException; 
 
 // SNMP Runtime import
 //
@@ -52,22 +52,22 @@ import com.sun.jmx.snmp.InetAddressAcl;
 /**
  * Defines an implementation of the {@link com.sun.jmx.snmp.InetAddressAcl InetAddressAcl} interface.
  * <p>
- * In this implementation the ACL information is stored on a flat file and
- * its default location is "$JRE/lib/snmp.acl" - See
+ * In this implementation the ACL information is stored on a flat file and 
+ * its default location is "$JRE/lib/snmp.acl" - See 
  * {@link #getDefaultAclFileName()}
  * <p>
  * <OL>
   *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 
 public class SnmpAcl implements InetAddressAcl, Serializable {
     private static final long serialVersionUID = -6702287103824397063L;
 
-    static final PermissionImpl READ  = new PermissionImpl("READ");
+    static final PermissionImpl READ  = new PermissionImpl("READ"); 
     static final PermissionImpl WRITE = new PermissionImpl("WRITE");
-
+  
     /**
      * Constructs the Java Dynamic Management(TM) Access Control List
      * based on IP addresses. The ACL will take the given owner name.
@@ -78,11 +78,11 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
      * @exception UnknownHostException If the local host is unknown.
      * @exception IllegalArgumentException If the ACL file doesn't exist.
      */
-    public SnmpAcl(String Owner)
-        throws UnknownHostException, IllegalArgumentException {
-        this(Owner,null);
+    public SnmpAcl(String Owner) 
+	throws UnknownHostException, IllegalArgumentException {   
+	this(Owner,null);
     }
-
+  
     /**
      * Constructs the Java Dynamic Management(TM) Access Control List
      * based on IP addresses. The ACL will take the given owner name.
@@ -94,11 +94,11 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
      * @exception UnknownHostException If the local host is unknown.
      * @exception IllegalArgumentException If the ACL file doesn't exist.
      */
-    public SnmpAcl(String Owner, String aclFileName)
-        throws UnknownHostException, IllegalArgumentException {
+    public SnmpAcl(String Owner, String aclFileName) 
+	throws UnknownHostException, IllegalArgumentException {   
         trapDestList= new Hashtable<InetAddress, Vector<String>>();
         informDestList= new Hashtable<InetAddress, Vector<String>>();
-
+        
         // PrincipalImpl() take the current host as entry
         owner = new PrincipalImpl();
         try {
@@ -112,14 +112,14 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
                 SNMP_LOGGER.logp(Level.FINEST, SnmpAcl.class.getName(),
                     "SnmpAcl(String,String)",
                     "Should never get NotOwnerException as the owner " +
-                    "is built in this constructor");
+		    "is built in this constructor");
             }
         }
         if (aclFileName == null) setDefaultFileName();
-        else setAuthorizedListFile(aclFileName);
+	else setAuthorizedListFile(aclFileName);
         readAuthorizedListFile();
     }
-
+  
     /**
      * Returns an enumeration of the entries in this ACL. Each element in the
      * enumeration is of type <CODE>java.security.acl.AclEntry</CODE>.
@@ -129,26 +129,26 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     public Enumeration entries() {
         return acl.entries();
     }
-
+  
     /**
      * Returns ann enumeration of community strings. Community strings are returned as String.
      * @return The enumeration of community strings.
      */
     public Enumeration<String> communities() {
-        HashSet<String> set = new HashSet<String>();
-        Vector<String> res = new Vector<String>();
-        for (Enumeration e = acl.entries() ; e.hasMoreElements() ;) {
-            AclEntryImpl entry = (AclEntryImpl) e.nextElement();
-            for (Enumeration cs = entry.communities();
-                 cs.hasMoreElements() ;) {
-                set.add((String) cs.nextElement());
-            }
-        }
-        String[] objs = set.toArray(new String[0]);
-        for(int i = 0; i < objs.length; i++)
-            res.addElement(objs[i]);
+	HashSet<String> set = new HashSet<String>();
+	Vector<String> res = new Vector<String>();
+	for (Enumeration e = acl.entries() ; e.hasMoreElements() ;) {
+	    AclEntryImpl entry = (AclEntryImpl) e.nextElement();
+	    for (Enumeration cs = entry.communities(); 
+		 cs.hasMoreElements() ;) {
+		set.add((String) cs.nextElement());
+	    }
+	}
+	String[] objs = set.toArray(new String[0]);
+	for(int i = 0; i < objs.length; i++)
+	    res.addElement(objs[i]);
 
-        return res.elements();
+	return res.elements();
     }
 
     /**
@@ -159,7 +159,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     public String getName() {
         return acl.getName();
     }
-
+  
     /**
      * Returns the read permission instance used.
      *
@@ -168,7 +168,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     static public PermissionImpl getREAD() {
         return READ;
     }
-
+  
     /**
      * Returns the write permission instance used.
      *
@@ -177,20 +177,20 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     static public PermissionImpl getWRITE() {
         return WRITE;
     }
-
+  
     /**
      * Get the default name for the ACL file.
      * In this implementation this is "$JRE/lib/snmp.acl"
      * @return The default name for the ACL file.
      **/
     public static String getDefaultAclFileName() {
-        final String fileSeparator =
-            System.getProperty("file.separator");
-        final StringBuffer defaultAclName =
-            new StringBuffer(System.getProperty("java.home")).
-            append(fileSeparator).append("lib").append(fileSeparator).
-            append("snmp.acl");
-        return defaultAclName.toString();
+	final String fileSeparator = 
+	    System.getProperty("file.separator");
+	final StringBuffer defaultAclName = 
+	    new StringBuffer(System.getProperty("java.home")).
+	    append(fileSeparator).append("lib").append(fileSeparator).
+	    append("snmp.acl");
+	return defaultAclName.toString();
     }
 
     /**
@@ -199,26 +199,26 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
      * @param filename The full path of the file containing the ACL information.
      * @throws IllegalArgumentException If the passed ACL file doesn't exist.
      */
-    public void setAuthorizedListFile(String filename)
-        throws IllegalArgumentException {
-        File file = new File(filename);
-        if (!file.isFile() ) {
+    public void setAuthorizedListFile(String filename) 
+	throws IllegalArgumentException {
+	File file = new File(filename);
+	if (!file.isFile() ) {
             if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
                 SNMP_LOGGER.logp(Level.FINEST, SnmpAcl.class.getName(),
                     "setAuthorizedListFile", "ACL file not found: " + filename);
             }
-            throw new
-                IllegalArgumentException("The specified file ["+file+"] "+
-                                         "doesn't exist or is not a file, "+
-                                         "no configuration loaded");
-        }
+	    throw new 
+		IllegalArgumentException("The specified file ["+file+"] "+
+					 "doesn't exist or is not a file, "+
+					 "no configuration loaded");
+	}
         if (SNMP_LOGGER.isLoggable(Level.FINER)) {
             SNMP_LOGGER.logp(Level.FINER, SnmpAcl.class.getName(),
                 "setAuthorizedListFile", "Default file set to " + filename);
         }
         authorizedListFile = filename;
     }
-
+  
     /**
      * Resets this ACL to the values contained in the configuration file.
      *
@@ -232,11 +232,11 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
         informDestList.clear();
         AclEntry ownEntry = new AclEntryImpl(owner);
         ownEntry.addPermission(READ);
-        ownEntry.addPermission(WRITE);
+        ownEntry.addPermission(WRITE);  
         acl.addEntry(owner,ownEntry);
         readAuthorizedListFile();
     }
-
+  
     /**
      * Returns the full path of the file used to get ACL information.
      *
@@ -245,7 +245,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     public String getAuthorizedListFile() {
         return authorizedListFile;
     }
-
+  
     /**
      * Checks whether or not the specified host has <CODE>READ</CODE> access.
      *
@@ -258,7 +258,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
         PrincipalImpl p = new PrincipalImpl(address);
         return acl.checkPermission(p, READ);
     }
-
+  
     /**
      * Checks whether or not the specified host and community have <CODE>READ</CODE> access.
      *
@@ -272,7 +272,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
         PrincipalImpl p = new PrincipalImpl(address);
         return acl.checkPermission(p, community, READ);
     }
-
+  
     /**
      * Checks whether or not a community string is defined.
      *
@@ -283,7 +283,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     public boolean checkCommunity(String community) {
         return acl.checkCommunity(community);
     }
-
+  
     /**
      * Checks whether or not the specified host has <CODE>WRITE</CODE> access.
      *
@@ -295,7 +295,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
         if (alwaysAuthorized) return ( true );
         PrincipalImpl p = new PrincipalImpl(address);
         return acl.checkPermission(p, WRITE);
-    }
+    } 
 
     /**
      * Checks whether or not the specified host and community have <CODE>WRITE</CODE> access.
@@ -309,8 +309,8 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
         if (alwaysAuthorized) return ( true );
         PrincipalImpl p = new PrincipalImpl(address);
         return acl.checkPermission(p, community, WRITE);
-    }
-
+    } 
+  
     /**
      * Returns an enumeration of trap destinations.
      *
@@ -319,7 +319,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     public Enumeration getTrapDestinations() {
         return trapDestList.keys();
     }
-
+  
     /**
      * Returns an enumeration of trap communities for a given host.
      *
@@ -342,9 +342,9 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
                     "getTrapCommunities", "["+i.toString()+"] is not in list");
             }
             return list.elements();
-        }
+        } 
     }
-
+  
     /**
      * Returns an enumeration of inform destinations.
      *
@@ -353,7 +353,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
     public Enumeration getInformDestinations() {
         return informDestList.keys();
     }
-
+  
     /**
      * Returns an enumeration of inform communities for a given host.
      *
@@ -376,9 +376,9 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
                     "getInformCommunities", "["+i.toString()+"] is not in list");
             }
             return list.elements();
-        }
+        } 
     }
-
+  
     /**
      * Converts the input configuration file into ACL.
      */
@@ -394,7 +394,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
             alwaysAuthorized = true ;
         } else {
             // Read the file content
-            Parser parser = null;
+            Parser parser = null;  
             try {
                 parser= new Parser(new FileInputStream(getAuthorizedListFile()));
             } catch (FileNotFoundException e) {
@@ -406,7 +406,7 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
                 alwaysAuthorized = true ;
                 return;
             }
-
+          
             try {
                 JDMSecurityDefs n = parser.SecurityDefs();
                 n.buildAclEntries(owner, acl);
@@ -417,15 +417,15 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
                     SNMP_LOGGER.logp(Level.FINEST, SnmpAcl.class.getName(),
                         "readAuthorizedListFile", "Got parsing exception", e);
                 }
-                throw new IllegalArgumentException(e.getMessage());
+		throw new IllegalArgumentException(e.getMessage());
             } catch (Error err) {
                 if (SNMP_LOGGER.isLoggable(Level.FINEST)) {
                     SNMP_LOGGER.logp(Level.FINEST, SnmpAcl.class.getName(),
                         "readAuthorizedListFile", "Got unexpected error", err);
                 }
-                throw new IllegalArgumentException(err.getMessage());
+		throw new IllegalArgumentException(err.getMessage());
             }
-
+          
             for(Enumeration e = acl.entries(); e.hasMoreElements();) {
                 AclEntryImpl aa = (AclEntryImpl) e.nextElement();
                 if (SNMP_LOGGER.isLoggable(Level.FINER)) {
@@ -443,23 +443,23 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
             }
         }
     }
-
+  
     /**
      * Set the default full path for "snmp.acl" input file.
      * Do not complain if the file does not exists.
      */
     private void setDefaultFileName() {
-        try {
-            setAuthorizedListFile(getDefaultAclFileName());
-        } catch (IllegalArgumentException x) {
-            // OK...
-        }
+	try {
+	    setAuthorizedListFile(getDefaultAclFileName());
+	} catch (IllegalArgumentException x) {
+	    // OK...
+	}
     }
-
-
+  
+    
     // PRIVATE VARIABLES
     //------------------
-
+    
     /**
      * Represents the Access Control List.
      */
@@ -481,6 +481,6 @@ public class SnmpAcl implements InetAddressAcl, Serializable {
      * Contains the hosts list for inform destination.
      */
     private Hashtable<InetAddress, Vector<String>> informDestList = null;
-
+    
     private PrincipalImpl owner = null;
 }

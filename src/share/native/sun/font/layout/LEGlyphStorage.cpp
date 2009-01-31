@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)LEGlyphStorage.cpp	1.4 06/12/13
  *
  **********************************************************************
  *   Copyright (C) 1998-2005, International Business Machines
@@ -191,17 +192,17 @@ void LEGlyphStorage::getCharIndices(le_int32 charIndices[], LEErrorCode &success
     if (LE_FAILURE(success)) {
       return;
     }
-
+    
     if (charIndices == NULL) {
       success = LE_ILLEGAL_ARGUMENT_ERROR;
       return;
     }
-
+    
     if (fCharIndices == NULL) {
       success = LE_NO_LAYOUT_ERROR;
       return;
     }
-
+    
     LE_ARRAY_COPY(charIndices, fCharIndices, fGlyphCount);
 }
 
@@ -234,17 +235,17 @@ void LEGlyphStorage::getGlyphs(LEGlyphID glyphs[], LEErrorCode &success) const
     if (LE_FAILURE(success)) {
       return;
     }
-
+    
     if (glyphs == NULL) {
       success = LE_ILLEGAL_ARGUMENT_ERROR;
       return;
     }
-
+    
     if (fGlyphs == NULL) {
       success = LE_NO_LAYOUT_ERROR;
       return;
     }
-
+    
     LE_ARRAY_COPY(glyphs, fGlyphs, fGlyphCount);
 }
 
@@ -329,17 +330,17 @@ void LEGlyphStorage::getAuxData(le_uint32 auxData[], LEErrorCode &success) const
     if (LE_FAILURE(success)) {
       return;
     }
-
+    
     if (auxData == NULL) {
       success = LE_ILLEGAL_ARGUMENT_ERROR;
       return;
     }
-
+    
     if (fAuxData == NULL) {
       success = LE_NO_LAYOUT_ERROR;
       return;
     }
-
+    
     LE_ARRAY_COPY(auxData, fAuxData, fGlyphCount);
 }
 
@@ -353,7 +354,7 @@ le_uint32 LEGlyphStorage::getAuxData(le_int32 glyphIndex, LEErrorCode &success) 
         success = LE_NO_LAYOUT_ERROR;
         return 0;
     }
-
+    
     if (glyphIndex < 0 || glyphIndex >= fGlyphCount) {
         success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
         return 0;
@@ -386,17 +387,17 @@ void LEGlyphStorage::getGlyphPositions(float positions[], LEErrorCode &success) 
     if (LE_FAILURE(success)) {
       return;
     }
-
+  
     if (positions == NULL) {
       success = LE_ILLEGAL_ARGUMENT_ERROR;
       return;
     }
-
+    
     if (fPositions == NULL) {
       success = LE_NO_LAYOUT_ERROR;
       return;
     }
-
+    
     LE_ARRAY_COPY(positions, fPositions, fGlyphCount * 2 + 2);
 }
 
@@ -405,17 +406,17 @@ void LEGlyphStorage::getGlyphPosition(le_int32 glyphIndex, float &x, float &y, L
     if (LE_FAILURE(success)) {
       return;
     }
-
+    
     if (glyphIndex < 0 || glyphIndex > fGlyphCount) {
       success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
       return;
     }
-
+    
     if (fPositions == NULL) {
       success = LE_NO_LAYOUT_ERROR;
       return;
     }
-
+    
     x = fPositions[glyphIndex * 2];
     y = fPositions[glyphIndex * 2 + 1];
 }
@@ -425,12 +426,12 @@ void LEGlyphStorage::setPosition(le_int32 glyphIndex, float x, float y, LEErrorC
     if (LE_FAILURE(success)) {
         return;
     }
-
+    
     if (glyphIndex < 0 || glyphIndex > fGlyphCount) {
       success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
       return;
     }
-
+    
     fPositions[glyphIndex * 2]     = x;
     fPositions[glyphIndex * 2 + 1] = y;
 }
@@ -440,12 +441,12 @@ void LEGlyphStorage::adjustPosition(le_int32 glyphIndex, float xAdjust, float yA
     if (LE_FAILURE(success)) {
         return;
     }
-
+    
     if (glyphIndex < 0 || glyphIndex > fGlyphCount) {
       success = LE_INDEX_OUT_OF_BOUNDS_ERROR;
       return;
     }
-
+    
     fPositions[glyphIndex * 2]     += xAdjust;
     fPositions[glyphIndex * 2 + 1] += yAdjust;
 }
@@ -603,3 +604,4 @@ le_bool LEGlyphStorage::applyInsertion(le_int32 atPosition, le_int32 count, LEGl
 
     return FALSE;
 }
+

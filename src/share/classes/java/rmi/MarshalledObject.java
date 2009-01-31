@@ -64,6 +64,7 @@ import sun.rmi.server.MarshalOutputStream;
  * @param <T> the type of the object contained in this
  * <code>MarshalledObject</code>
  *
+ * @version %I%, %G%
  * @author  Ann Wollrath
  * @author  Peter Jones
  * @since   1.2
@@ -83,8 +84,8 @@ public final class MarshalledObject<T> implements Serializable {
      */
     private byte[] locBytes = null;
 
-    /**
-     * @serial Stored hash code of contained object.
+    /** 
+     * @serial Stored hash code of contained object. 
      *
      * @see #hashCode
      */
@@ -106,30 +107,30 @@ public final class MarshalledObject<T> implements Serializable {
      * @since 1.2
      */
     public MarshalledObject(T obj) throws IOException {
-        if (obj == null) {
-            hash = 13;
-            return;
-        }
+	if (obj == null) {
+	    hash = 13;
+	    return;
+	}
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ByteArrayOutputStream lout = new ByteArrayOutputStream();
-        MarshalledObjectOutputStream out =
-            new MarshalledObjectOutputStream(bout, lout);
-        out.writeObject(obj);
-        out.flush();
-        objBytes = bout.toByteArray();
-        // locBytes is null if no annotations
-        locBytes = (out.hadAnnotations() ? lout.toByteArray() : null);
+	ByteArrayOutputStream bout = new ByteArrayOutputStream();
+	ByteArrayOutputStream lout = new ByteArrayOutputStream();
+	MarshalledObjectOutputStream out =
+	    new MarshalledObjectOutputStream(bout, lout);
+	out.writeObject(obj);
+	out.flush();
+	objBytes = bout.toByteArray();
+	// locBytes is null if no annotations
+	locBytes = (out.hadAnnotations() ? lout.toByteArray() : null);
 
-        /*
-         * Calculate hash from the marshalled representation of object
-         * so the hashcode will be comparable when sent between VMs.
-         */
-        int h = 0;
-        for (int i = 0; i < objBytes.length; i++) {
-            h = 31 * h + objBytes[i];
-        }
-        hash = h;
+	/*
+	 * Calculate hash from the marshalled representation of object
+	 * so the hashcode will be comparable when sent between VMs.
+	 */
+	int h = 0;
+	for (int i = 0; i < objBytes.length; i++) {
+	    h = 31 * h + objBytes[i];
+	}
+	hash = h;
     }
 
     /**
@@ -147,18 +148,18 @@ public final class MarshalledObject<T> implements Serializable {
      * @since 1.2
      */
     public T get() throws IOException, ClassNotFoundException {
-        if (objBytes == null)   // must have been a null object
-            return null;
+	if (objBytes == null)	// must have been a null object
+	    return null;
 
-        ByteArrayInputStream bin = new ByteArrayInputStream(objBytes);
-        // locBytes is null if no annotations
-        ByteArrayInputStream lin =
-            (locBytes == null ? null : new ByteArrayInputStream(locBytes));
-        MarshalledObjectInputStream in =
-            new MarshalledObjectInputStream(bin, lin);
-        T obj = (T) in.readObject();
-        in.close();
-        return obj;
+	ByteArrayInputStream bin = new ByteArrayInputStream(objBytes);
+	// locBytes is null if no annotations
+	ByteArrayInputStream lin =
+	    (locBytes == null ? null : new ByteArrayInputStream(locBytes));
+	MarshalledObjectInputStream in =
+	    new MarshalledObjectInputStream(bin, lin);
+	T obj = (T) in.readObject();
+	in.close();
+	return obj;
     }
 
     /**
@@ -167,7 +168,7 @@ public final class MarshalledObject<T> implements Serializable {
      * @return a hash code
      */
     public int hashCode() {
-        return hash;
+	return hash;
     }
 
     /**
@@ -186,30 +187,30 @@ public final class MarshalledObject<T> implements Serializable {
      * @since 1.2
      */
     public boolean equals(Object obj) {
-        if (obj == this)
-            return true;
+	if (obj == this)
+	    return true;
 
-        if (obj != null && obj instanceof MarshalledObject) {
-            MarshalledObject other = (MarshalledObject) obj;
+	if (obj != null && obj instanceof MarshalledObject) {
+	    MarshalledObject other = (MarshalledObject) obj;
 
-            // if either is a ref to null, both must be
-            if (objBytes == null || other.objBytes == null)
-                return objBytes == other.objBytes;
+	    // if either is a ref to null, both must be
+	    if (objBytes == null || other.objBytes == null)
+		return objBytes == other.objBytes;
 
-            // quick, easy test
-            if (objBytes.length != other.objBytes.length)
-                return false;
+	    // quick, easy test
+	    if (objBytes.length != other.objBytes.length)
+		return false;
 
-            //!! There is talk about adding an array comparision method
-            //!! at 1.2 -- if so, this should be rewritten.  -arnold
-            for (int i = 0; i < objBytes.length; ++i) {
-                if (objBytes[i] != other.objBytes[i])
-                    return false;
-            }
-            return true;
-        } else {
-            return false;
-        }
+	    //!! There is talk about adding an array comparision method
+	    //!! at 1.2 -- if so, this should be rewritten.  -arnold
+	    for (int i = 0; i < objBytes.length; ++i) {
+		if (objBytes[i] != other.objBytes[i])
+		    return false;
+	    }
+	    return true;
+	} else {
+	    return false;
+	}
     }
 
     /**
@@ -224,93 +225,93 @@ public final class MarshalledObject<T> implements Serializable {
      * @see MarshalledObjectInputStream
      */
     private static class MarshalledObjectOutputStream
-        extends MarshalOutputStream
+    	extends MarshalOutputStream
     {
-        /** The stream on which location objects are written. */
-        private ObjectOutputStream locOut;
+	/** The stream on which location objects are written. */
+	private ObjectOutputStream locOut;
 
-        /** <code>true</code> if non-<code>null</code> annotations are
+	/** <code>true</code> if non-<code>null</code> annotations are
          *  written.
-         */
-        private boolean hadAnnotations;
+	 */
+	private boolean hadAnnotations;
 
-        /**
-         * Creates a new <code>MarshalledObjectOutputStream</code> whose
-         * non-location bytes will be written to <code>objOut</code> and whose
-         * location annotations (if any) will be written to
-         * <code>locOut</code>.
-         */
-        MarshalledObjectOutputStream(OutputStream objOut, OutputStream locOut)
-            throws IOException
-        {
-            super(objOut);
-            this.useProtocolVersion(ObjectStreamConstants.PROTOCOL_VERSION_2);
-            this.locOut = new ObjectOutputStream(locOut);
-            hadAnnotations = false;
-        }
+	/**
+	 * Creates a new <code>MarshalledObjectOutputStream</code> whose
+	 * non-location bytes will be written to <code>objOut</code> and whose
+	 * location annotations (if any) will be written to
+	 * <code>locOut</code>.
+	 */
+	MarshalledObjectOutputStream(OutputStream objOut, OutputStream locOut)
+	    throws IOException
+	{
+	    super(objOut);
+	    this.useProtocolVersion(ObjectStreamConstants.PROTOCOL_VERSION_2);
+	    this.locOut = new ObjectOutputStream(locOut);
+	    hadAnnotations = false;
+	}
 
-        /**
-         * Returns <code>true</code> if any non-<code>null</code> location
-         * annotations have been written to this stream.
-         */
-        boolean hadAnnotations() {
-            return hadAnnotations;
-        }
+	/**
+	 * Returns <code>true</code> if any non-<code>null</code> location
+	 * annotations have been written to this stream.
+	 */
+	boolean hadAnnotations() {
+	    return hadAnnotations;
+	}
 
-        /**
-         * Overrides MarshalOutputStream.writeLocation implementation to write
-         * annotations to the location stream.
-         */
-        protected void writeLocation(String loc) throws IOException {
-            hadAnnotations |= (loc != null);
-            locOut.writeObject(loc);
-        }
-
-
-        public void flush() throws IOException {
-            super.flush();
-            locOut.flush();
-        }
+	/**
+	 * Overrides MarshalOutputStream.writeLocation implementation to write
+	 * annotations to the location stream.
+	 */
+	protected void writeLocation(String loc) throws IOException {
+	    hadAnnotations |= (loc != null);
+	    locOut.writeObject(loc);
+	}
+	
+	
+	public void flush() throws IOException {
+	    super.flush();
+	    locOut.flush();
+	}
     }
-
+    
     /**
      * The counterpart to <code>MarshalledObjectOutputStream</code>.
      *
      * @see MarshalledObjectOutputStream
      */
     private static class MarshalledObjectInputStream
-        extends MarshalInputStream
+    	extends MarshalInputStream
     {
-        /**
-         * The stream from which annotations will be read.  If this is
-         * <code>null</code>, then all annotations were <code>null</code>.
-         */
-        private ObjectInputStream locIn;
+	/**
+	 * The stream from which annotations will be read.  If this is
+	 * <code>null</code>, then all annotations were <code>null</code>.
+	 */
+	private ObjectInputStream locIn;
 
-        /**
-         * Creates a new <code>MarshalledObjectInputStream</code> that
-         * reads its objects from <code>objIn</code> and annotations
-         * from <code>locIn</code>.  If <code>locIn</code> is
-         * <code>null</code>, then all annotations will be
-         * <code>null</code>.
-         */
-        MarshalledObjectInputStream(InputStream objIn, InputStream locIn)
-            throws IOException
-        {
-            super(objIn);
-            this.locIn = (locIn == null ? null : new ObjectInputStream(locIn));
-        }
+	/**
+	 * Creates a new <code>MarshalledObjectInputStream</code> that
+	 * reads its objects from <code>objIn</code> and annotations
+	 * from <code>locIn</code>.  If <code>locIn</code> is
+	 * <code>null</code>, then all annotations will be
+	 * <code>null</code>.
+	 */
+	MarshalledObjectInputStream(InputStream objIn, InputStream locIn)
+	    throws IOException
+	{
+	    super(objIn);
+	    this.locIn = (locIn == null ? null : new ObjectInputStream(locIn));
+	}
 
-        /**
-         * Overrides MarshalInputStream.readLocation to return locations from
-         * the stream we were given, or <code>null</code> if we were given a
-         * <code>null</code> location stream.
-         */
-        protected Object readLocation()
-            throws IOException, ClassNotFoundException
-        {
-            return (locIn == null ? null : locIn.readObject());
-        }
+	/**
+	 * Overrides MarshalInputStream.readLocation to return locations from
+	 * the stream we were given, or <code>null</code> if we were given a
+	 * <code>null</code> location stream.
+	 */
+	protected Object readLocation()
+	    throws IOException, ClassNotFoundException
+	{
+	    return (locIn == null ? null : locIn.readObject());
+	}
     }
 
 }

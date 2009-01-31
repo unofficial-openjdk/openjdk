@@ -28,12 +28,12 @@ import java.awt.*;
 import java.awt.peer.*;
 
 class WMenuPeer extends WMenuItemPeer implements MenuPeer {
-
+  
     // MenuPeer implementation
 
     public native void addSeparator();
     public void addItem(MenuItem item) {
-        WMenuItemPeer itemPeer = (WMenuItemPeer) WToolkit.targetToPeer(item);
+	WMenuItemPeer itemPeer = (WMenuItemPeer) WToolkit.targetToPeer(item);
     }
     public native void delItem(int index);
 
@@ -42,21 +42,21 @@ class WMenuPeer extends WMenuItemPeer implements MenuPeer {
     WMenuPeer() {}   // used by subclasses.
 
     WMenuPeer(Menu target) {
-        this.target = target;
-        MenuContainer parent = target.getParent();
+	this.target = target;
+	MenuContainer parent = target.getParent();
 
-        if (parent instanceof MenuBar) {
-            WMenuBarPeer mbPeer = (WMenuBarPeer) WToolkit.targetToPeer(parent);
+	if (parent instanceof MenuBar) {
+	    WMenuBarPeer mbPeer = (WMenuBarPeer) WToolkit.targetToPeer(parent);
             this.parent = mbPeer;
-            createMenu(mbPeer);
-        }
+	    createMenu(mbPeer);
+	}
         else if (parent instanceof Menu) {
-            this.parent = (WMenuPeer) WToolkit.targetToPeer(parent);
-            createSubMenu(this.parent);
-        }
+	    this.parent = (WMenuPeer) WToolkit.targetToPeer(parent);
+	    createSubMenu(this.parent);
+	}
         else {
-            throw new IllegalArgumentException("unknown menu container class");
-        }
+	    throw new IllegalArgumentException("unknown menu container class");
+	}
         // fix for 5088782: check if menu object is created successfully
         checkMenuCreation();
     }

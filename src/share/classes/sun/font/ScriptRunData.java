@@ -66,7 +66,7 @@ public final class ScriptRunData {
         throw new IllegalArgumentException(Integer.toString(cp));
     }
 
-    private static final int[] data = {
+    private static final int[] data = { 
         0x000000, 0x00,
         0x000041, 0x19, // 'latn' latin
         0x00005B, 0x00,

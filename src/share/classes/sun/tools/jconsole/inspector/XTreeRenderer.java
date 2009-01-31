@@ -35,7 +35,7 @@ import sun.tools.jconsole.inspector.XNodeInfo.Type;
 
 @SuppressWarnings("serial")
 public class XTreeRenderer extends DefaultTreeCellRenderer {
-
+    
     public Component getTreeCellRendererComponent(
             JTree tree, Object value, boolean selected, boolean expanded,
             boolean leaf, int row, boolean hasFocus) {

@@ -31,24 +31,24 @@ import sun.security.action.LoadLibraryAction;
 
 // Platform specific code and constants
 class PlatformPCSC {
-
+    
     static final Throwable initException;
-
+    
     PlatformPCSC() {
-        // empty
+	// empty
     }
 
     static {
-        initException = loadLibrary();
+	initException = loadLibrary();
     }
-
+    
     private static Throwable loadLibrary() {
-        try {
-            AccessController.doPrivileged(new LoadLibraryAction("j2pcsc"));
-            return null;
-        } catch (Throwable e) {
-            return e;
-        }
+	try {
+	    AccessController.doPrivileged(new LoadLibraryAction("j2pcsc"));
+	    return null;
+	} catch (Throwable e) {
+	    return e;
+	}
     }
 
     // PCSC constants defined differently under Windows and MUSCLE

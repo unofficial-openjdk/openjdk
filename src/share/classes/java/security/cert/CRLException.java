@@ -31,6 +31,7 @@ import java.security.GeneralSecurityException;
  * CRL (Certificate Revocation List) Exception.
  *
  * @author Hemma Prafullchandra
+ * %I%
  */
 public class CRLException extends GeneralSecurityException {
 
@@ -48,7 +49,7 @@ public class CRLException extends GeneralSecurityException {
     /**
      * Constructs a CRLException with the specified detail
      * message. A detail message is a String that describes this
-     * particular exception.
+     * particular exception. 
      *
      * @param message the detail message.
      */

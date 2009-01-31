@@ -24,6 +24,7 @@
  */
 
 /*
+ *  %W% %E%
  *
  * (C) Copyright IBM Corp. 1999-2003 - All Rights Reserved
  *
@@ -63,7 +64,7 @@
  * To perform layout, call get() to get a new (or reuse an old)
  * GlyphLayout, call layout on it, then call done(GlyphLayout) when
  * finished.  There's no particular problem if you don't call done,
- * but it assists in reuse of the GlyphLayout.
+ * but it assists in reuse of the GlyphLayout.  
  */
 
 package sun.font;
@@ -103,7 +104,7 @@ public final class GlyphLayout {
         private Font2D font;
         private int script;
         private int lang;
-
+        
         LayoutEngineKey() {
         }
 
@@ -117,9 +118,9 @@ public final class GlyphLayout {
             this.lang = lang;
         }
 
-        LayoutEngineKey copy() {
-            return new LayoutEngineKey(font, script, lang);
-        }
+	LayoutEngineKey copy() {
+	    return new LayoutEngineKey(font, script, lang);
+	}
 
         Font2D font() {
             return font;
@@ -172,7 +173,7 @@ public final class GlyphLayout {
          * If the GVData does not have room for the glyphs, throws an IndexOutOfBoundsException and
          * leave pt and the gvdata unchanged.
          */
-        public void layout(FontStrikeDesc sd, float[] mat, int gmask,
+        public void layout(FontStrikeDesc sd, float[] mat, int gmask, 
                            int baseIndex, TextRecord text, int typo_flags, Point2D.Float pt, GVData data);
     }
 
@@ -197,7 +198,7 @@ public final class GlyphLayout {
         result._lef = lef;
         return result;
     }
-
+    
     /**
      * Return the old instance of GlyphLayout when you are done.  This enables reuse
      * of GlyphLayout objects.
@@ -220,13 +221,13 @@ public final class GlyphLayout {
         private SDCache(Font font, FontRenderContext frc) {
             key_font = font;
             key_frc = frc;
-
+            
             // !!! add getVectorTransform and hasVectorTransform to frc?  then
             // we could just skip this work...
 
             dtx = frc.getTransform();
-            dtx.setTransform(dtx.getScaleX(), dtx.getShearY(),
-                             dtx.getShearX(), dtx.getScaleY(),
+            dtx.setTransform(dtx.getScaleX(), dtx.getShearY(), 
+                             dtx.getShearX(), dtx.getScaleY(), 
                              0, 0);
             if (!dtx.isIdentity()) {
                 try {
@@ -253,16 +254,16 @@ public final class GlyphLayout {
                 gtx.scale(ptSize, ptSize);
             }
 
-            /* Similar logic to that used in SunGraphics2D.checkFontInfo().
-             * Whether a grey (AA) strike is needed is size dependent if
-             * AA mode is 'gasp'.
-             */
-            int aa =
-                FontStrikeDesc.getAAHintIntVal(frc.getAntiAliasingHint(),
-                                               FontManager.getFont2D(font),
-                                               (int)Math.abs(ptSize));
-            int fm = FontStrikeDesc.getFMHintIntVal
-                (frc.getFractionalMetricsHint());
+	    /* Similar logic to that used in SunGraphics2D.checkFontInfo().
+	     * Whether a grey (AA) strike is needed is size dependent if
+	     * AA mode is 'gasp'.
+	     */
+	    int aa =
+		FontStrikeDesc.getAAHintIntVal(frc.getAntiAliasingHint(),
+					       FontManager.getFont2D(font),
+					       (int)Math.abs(ptSize));
+	    int fm = FontStrikeDesc.getFMHintIntVal
+		(frc.getFractionalMetricsHint());
             sd = new FontStrikeDesc(dtx, gtx, font.getStyle(), aa, fm);
         }
 
@@ -275,7 +276,7 @@ public final class GlyphLayout {
             private final Font font;
             private final FontRenderContext frc;
             private final int hash;
-
+            
             SDKey(Font font, FontRenderContext frc) {
                 this.font = font;
                 this.frc = frc;
@@ -356,8 +357,8 @@ public final class GlyphLayout {
      * @param result a StandardGlyphVector to modify, can be null
      * @return the layed out glyphvector, if result was passed in, it is returned
      */
-    public StandardGlyphVector layout(Font font, FontRenderContext frc,
-                                      char[] text, int offset, int count,
+    public StandardGlyphVector layout(Font font, FontRenderContext frc, 
+                                      char[] text, int offset, int count, 
                                       int flags, StandardGlyphVector result)
     {
         if (text == null || offset < 0 || count < 0 || (count > text.length - offset)) {
@@ -366,13 +367,13 @@ public final class GlyphLayout {
 
         init(count);
 
-        // need to set after init
-        // go through the back door for this
-        if (font.hasLayoutAttributes()) {
-            AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
-            if (values.getKerning() != 0) _typo_flags |= 0x1;
-            if (values.getLigatures() != 0) _typo_flags |= 0x2;
-        }
+	// need to set after init
+	// go through the back door for this
+	if (font.hasLayoutAttributes()) {
+	    AttributeValues values = ((AttributeMap)font.getAttributes()).getValues();
+	    if (values.getKerning() != 0) _typo_flags |= 0x1;
+	    if (values.getLigatures() != 0) _typo_flags |= 0x2;
+	}
 
         _offset = offset;
 
@@ -391,7 +392,7 @@ public final class GlyphLayout {
         int max = text.length;
         if (flags != 0) {
             if ((flags & Font.LAYOUT_RIGHT_TO_LEFT) != 0) {
-              _typo_flags |= 0x80000000; // RTL
+	      _typo_flags |= 0x80000000; // RTL
             }
 
             if ((flags & Font.LAYOUT_NO_START_CONTEXT) != 0) {
@@ -417,15 +418,15 @@ public final class GlyphLayout {
                 int script = _scriptRuns.getScriptCode();
                 while (_fontRuns.next(script, limit)) {
                     Font2D pfont = _fontRuns.getFont();
-                    /* layout can't deal with NativeFont instances. The
-                     * native font is assumed to know of a suitable non-native
-                     * substitute font. This currently works because
-                     * its consistent with the way NativeFonts delegate
-                     * in other cases too.
-                     */
-                    if (pfont instanceof NativeFont) {
-                        pfont = ((NativeFont)pfont).getDelegateFont();
-                    }
+		    /* layout can't deal with NativeFont instances. The
+		     * native font is assumed to know of a suitable non-native
+		     * substitute font. This currently works because
+		     * its consistent with the way NativeFonts delegate
+		     * in other cases too.
+		     */
+		    if (pfont instanceof NativeFont) {
+			pfont = ((NativeFont)pfont).getDelegateFont();
+		    }
                     int gmask = _fontRuns.getGlyphMask();
                     int pos = _fontRuns.getPos();
                     nextEngineRecord(start, pos, script, lang, pfont, gmask);
@@ -560,28 +561,28 @@ public final class GlyphLayout {
 
         public StandardGlyphVector createGlyphVector(Font font, FontRenderContext frc, StandardGlyphVector result) {
 
-            // !!! default initialization until we let layout engines do it
+	    // !!! default initialization until we let layout engines do it
             if (_flags == UNINITIALIZED_FLAGS) {
                 _flags = 0;
 
-                if (_count > 1) { // if only 1 glyph assume LTR
-                    boolean ltr = true;
-                    boolean rtl = true;
+		if (_count > 1) { // if only 1 glyph assume LTR
+		    boolean ltr = true;
+		    boolean rtl = true;
 
-                    int rtlix = _count; // rtl index
-                    for (int i = 0; i < _count && (ltr || rtl); ++i) {
-                        int cx = _indices[i];
+		    int rtlix = _count; // rtl index
+		    for (int i = 0; i < _count && (ltr || rtl); ++i) {
+			int cx = _indices[i];
+                    
+			ltr = ltr && (cx == i);
+			rtl = rtl && (cx == --rtlix);
+		    }
 
-                        ltr = ltr && (cx == i);
-                        rtl = rtl && (cx == --rtlix);
-                    }
+		    if (rtl) _flags |= GlyphVector.FLAG_RUN_RTL;
+		    if (!rtl && !ltr) _flags |= GlyphVector.FLAG_COMPLEX_GLYPHS;
+		}
 
-                    if (rtl) _flags |= GlyphVector.FLAG_RUN_RTL;
-                    if (!rtl && !ltr) _flags |= GlyphVector.FLAG_COMPLEX_GLYPHS;
-                }
-
-                // !!! layout engines need to tell us whether they performed
-                // position adjustments. currently they don't tell us, so
+                // !!! layout engines need to tell us whether they performed 
+                // position adjustments. currently they don't tell us, so 
                 // we must assume they did
                 _flags |= GlyphVector.FLAG_HAS_POSITION_ADJUSTMENTS;
             }
@@ -639,7 +640,7 @@ public final class GlyphLayout {
                 int ch = _textRecord.text[i];
                 if (isHighSurrogate((char)ch) &&
                     i < limit - 1 &&
-                    isLowSurrogate(_textRecord.text[i+1])) {
+                    isLowSurrogate(_textRecord.text[i+1])) { 
                     // rare case
                     ch = toCodePoint((char)ch,_textRecord.text[++i]); // inc
                 }
@@ -659,8 +660,9 @@ public final class GlyphLayout {
         void layout() {
             _textRecord.start = start;
             _textRecord.limit = limit;
-            engine.layout(_sd, _mat, gmask, start - _offset, _textRecord,
+            engine.layout(_sd, _mat, gmask, start - _offset, _textRecord, 
                           _typo_flags | eflags, _pt, _gvdata);
         }
     }
 }
+

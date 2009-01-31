@@ -36,7 +36,7 @@ Java_java_util_logging_FileHandler_isSetUID(JNIEnv *env, jclass thisclass) {
 
     /* Return true if we are in a set UID or set GID process. */
     if (getuid() != geteuid() || getgid() != getegid()) {
-        return JNI_TRUE;
+	return JNI_TRUE;
     }
     return JNI_FALSE;
 }

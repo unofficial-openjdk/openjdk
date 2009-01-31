@@ -38,6 +38,7 @@ import sun.java2d.Disposer;
  * output directly to a <code>File</code> or
  * <code>RandomAccessFile</code>.
  *
+ * @version 0.5
  */
 public class FileImageOutputStream extends ImageOutputStreamImpl {
 

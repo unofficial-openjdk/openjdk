@@ -51,16 +51,16 @@ JNIEXPORT void JNICALL
 Java_java_lang_Object_registerNatives(JNIEnv *env, jclass cls)
 {
     (*env)->RegisterNatives(env, cls,
-                            methods, sizeof(methods)/sizeof(methods[0]));
+			    methods, sizeof(methods)/sizeof(methods[0]));
 }
 
 JNIEXPORT jclass JNICALL
 Java_java_lang_Object_getClass(JNIEnv *env, jobject this)
 {
     if (this == NULL) {
-        JNU_ThrowNullPointerException(env, NULL);
-        return 0;
+	JNU_ThrowNullPointerException(env, NULL);
+	return 0;
     } else {
-        return (*env)->GetObjectClass(env, this);
+	return (*env)->GetObjectClass(env, this);
     }
 }

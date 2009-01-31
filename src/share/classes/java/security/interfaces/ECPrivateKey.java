@@ -32,6 +32,7 @@ import java.security.PrivateKey;
  *
  * @author Valerie Peng
  *
+ * @version %I%, %G%
  *
  * @see PrivateKey
  * @see ECKey

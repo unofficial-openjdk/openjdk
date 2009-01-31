@@ -53,49 +53,49 @@ public abstract class AbstractCounter implements Counter {
         this.flags = flags;
         this.vectorLength = vectorLength;
     }
-
+  
     protected AbstractCounter(String name, Units units,
                               Variability variability, int flags) {
         this(name, units, variability, flags, 0);
     }
-
+  
     /**
      * Returns the name of the Performance Counter
      */
     public String getName() {
         return name;
     }
-
+  
     /**
      * Returns the Units for this Performance Counter
      */
     public Units getUnits() {
         return units;
     }
-
+  
     /**
      * Returns the Variability for this performance Object
      */
     public Variability getVariability() {
         return variability;
     }
-
+  
     /**
      * Return true if this performance counter is a vector
      */
     public boolean isVector() {
         return vectorLength > 0;
     }
-
+  
     /**
      * return the length of the vector
      */
     public int getVectorLength() {
         return vectorLength;
     }
-
+   
     public boolean isInternal() {
-        return (flags & Flags.SUPPORTED) == 0;
+        return (flags & Flags.SUPPORTED) == 0; 
     }
 
     /**

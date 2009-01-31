@@ -101,7 +101,7 @@ typedef struct
     jint  pfType;
 } D3DTextureTableCell;
 
-// texture table:
+// texture table: 
 // [transparency={OPAQUE,BITMASK,TRANCLUCENT},depth={16,24,32}]
 typedef D3DTextureTableCell D3DTextureTable[TR_MAX_IDX][DEPTH_MAX_IDX];
 
@@ -111,7 +111,7 @@ typedef D3DTextureTableCell D3DTextureTable[TR_MAX_IDX][DEPTH_MAX_IDX];
  * This class provides the following functionality:
  *  - holds the state of D3DContext java class (current pixel color,
  *    alpha compositing mode, extra alpha)
- *  - provides access to IDirect3DDevice7 interface (creation,
+ *  - provides access to IDirect3DDevice7 interface (creation, 
  *    disposal, exclusive access)
  *  - handles state changes of the direct3d device (transform,
  *    compositing mode, current texture)
@@ -123,12 +123,12 @@ class D3DContext {
 public:
     /**
      * Creates and returns D3DContext instance. If created context was
-     * unable to initialize d3d device or if the device tests failed,
+     * unable to initialize d3d device or if the device tests failed, 
      * returns NULL.
      */
     static D3DContext* CreateD3DContext(DDraw *ddObject, DXObject* dxObject);
     /**
-     * Releases the old device (if there was one) and all associated
+     * Releases the old device (if there was one) and all associated 
      * resources, re-creates, initializes and tests the new device.
      *
      * If the device doesn't pass the test, it's released.
@@ -183,14 +183,14 @@ public:
     DXSurface /*NOLOCK*/ *GetMaskTexture();
     GlyphCacheInfo *GetGlyphCache() { return glyphCache; }
 
-    HRESULT CreateSurface(JNIEnv *env,
-                          jint width, jint height, jint depth,
+    HRESULT CreateSurface(JNIEnv *env, 
+                          jint width, jint height, jint depth, 
                           jint transparency, jint d3dSurfaceType,
                           DXSurface** dxSurface, jint* pType);
 
     /**
      * Attaches a depth buffer to the specified dxSurface.
-     * If depthBufferFormat is not initialized (depthBufferFormat.dwSize == 0),
+     * If depthBufferFormat is not initialized (depthBufferFormat.dwSize == 0), 
      * it will be initialized at the time of the call.
      *
      * If the buffer for this surface already exists, a "lost" status of the
@@ -228,12 +228,12 @@ public:
     DWORD GetMinTextureHeight() { return d3dDevDesc.dwMinTextureHeight; }
     DWORD GetMaxTextureWidth() { return d3dDevDesc.dwMaxTextureWidth; }
     DWORD GetMaxTextureHeight() { return d3dDevDesc.dwMaxTextureHeight; }
-    DWORD GetMaxTextureAspectRatio()
+    DWORD GetMaxTextureAspectRatio() 
         { return d3dDevDesc.dwMaxTextureAspectRatio; };
-    BOOL IsPow2TexturesOnly()
+    BOOL IsPow2TexturesOnly() 
         { return d3dDevDesc.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2; };
-    BOOL IsSquareTexturesOnly()
-        { return d3dDevDesc.dpcTriCaps.dwTextureCaps &
+    BOOL IsSquareTexturesOnly() 
+        { return d3dDevDesc.dpcTriCaps.dwTextureCaps & 
               D3DPTEXTURECAPS_SQUAREONLY; }
 
     /**
@@ -275,7 +275,7 @@ public:
     // pixel for vertices used in blits via texture mapping,
     // set in SetAlphaComposite()
     jint       blitPolygonPixel;
-
+    
     /**
      * Current operation state.
      * See STATE_* macros above.
@@ -315,7 +315,7 @@ private:
      * Used to invalidate the java D3DContext object if the device has been
      * recreated.
      * See SetJavaContext() method.
-     */
+     */ 
     jobject jD3DContext;
 
     D3DDEVICEDESC7 d3dDevDesc;
@@ -362,16 +362,16 @@ typedef struct _J2DLVERTEX {
 
 #ifndef USE_SINGLE_VERTEX_FORMAT
 
-#define D3DFVF_J2D_XY_C (D3DFVF_XYZ | D3DFVF_DIFFUSE)
+#define D3DFVF_J2D_XY_C (D3DFVF_XYZ | D3DFVF_DIFFUSE) 
 #define D3DFVF_XY_VERTEX D3DFVF_XYZ
 
-typedef struct _J2D_XY_C_VERTEX {
-    float x, y, z;
-    DWORD color;
-} J2D_XY_C_VERTEX;
-typedef struct _J2D_XY_VERTEX {
-    float x, y, z;
-} J2D_XY_VERTEX;
+typedef struct _J2D_XY_C_VERTEX { 
+    float x, y, z; 
+    DWORD color; 
+} J2D_XY_C_VERTEX; 
+typedef struct _J2D_XY_VERTEX { 
+    float x, y, z; 
+} J2D_XY_VERTEX; 
 
 #else // USE_SINGLE_VERTEX_FORMAT
 

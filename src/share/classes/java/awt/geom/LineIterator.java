@@ -31,7 +31,8 @@ import java.util.*;
  * A utility class to iterate over the path segments of a line segment
  * through the PathIterator interface.
  *
- * @author      Jim Graham
+ * @version 	%I%, %G%
+ * @author	Jim Graham
  */
 class LineIterator implements PathIterator {
     Line2D line;
@@ -39,8 +40,8 @@ class LineIterator implements PathIterator {
     int index;
 
     LineIterator(Line2D l, AffineTransform at) {
-        this.line = l;
-        this.affine = at;
+	this.line = l;
+	this.affine = at;
     }
 
     /**
@@ -50,7 +51,7 @@ class LineIterator implements PathIterator {
      * @see #WIND_NON_ZERO
      */
     public int getWindingRule() {
-        return WIND_NON_ZERO;
+	return WIND_NON_ZERO;
     }
 
     /**
@@ -58,7 +59,7 @@ class LineIterator implements PathIterator {
      * @return true if there are more points to read
      */
     public boolean isDone() {
-        return (index > 1);
+	return (index > 1);
     }
 
     /**
@@ -67,7 +68,7 @@ class LineIterator implements PathIterator {
      * more points in that direction.
      */
     public void next() {
-        index++;
+	index++;
     }
 
     /**
@@ -89,23 +90,23 @@ class LineIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(float[] coords) {
-        if (isDone()) {
-            throw new NoSuchElementException("line iterator out of bounds");
-        }
-        int type;
-        if (index == 0) {
-            coords[0] = (float) line.getX1();
-            coords[1] = (float) line.getY1();
-            type = SEG_MOVETO;
-        } else {
-            coords[0] = (float) line.getX2();
-            coords[1] = (float) line.getY2();
-            type = SEG_LINETO;
-        }
-        if (affine != null) {
-            affine.transform(coords, 0, coords, 0, 1);
-        }
-        return type;
+	if (isDone()) {
+	    throw new NoSuchElementException("line iterator out of bounds");
+	}
+	int type;
+	if (index == 0) {
+	    coords[0] = (float) line.getX1();
+	    coords[1] = (float) line.getY1();
+	    type = SEG_MOVETO;
+	} else {
+	    coords[0] = (float) line.getX2();
+	    coords[1] = (float) line.getY2();
+	    type = SEG_LINETO;
+	}
+	if (affine != null) {
+	    affine.transform(coords, 0, coords, 0, 1);
+	}
+	return type;
     }
 
     /**
@@ -127,22 +128,22 @@ class LineIterator implements PathIterator {
      * @see #SEG_CLOSE
      */
     public int currentSegment(double[] coords) {
-        if (isDone()) {
-            throw new NoSuchElementException("line iterator out of bounds");
-        }
-        int type;
-        if (index == 0) {
-            coords[0] = line.getX1();
-            coords[1] = line.getY1();
-            type = SEG_MOVETO;
-        } else {
-            coords[0] = line.getX2();
-            coords[1] = line.getY2();
-            type = SEG_LINETO;
-        }
-        if (affine != null) {
-            affine.transform(coords, 0, coords, 0, 1);
-        }
-        return type;
+	if (isDone()) {
+	    throw new NoSuchElementException("line iterator out of bounds");
+	}
+	int type;
+	if (index == 0) {
+	    coords[0] = line.getX1();
+	    coords[1] = line.getY1();
+	    type = SEG_MOVETO;
+	} else {
+	    coords[0] = line.getX2();
+	    coords[1] = line.getY2();
+	    type = SEG_LINETO;
+	}
+	if (affine != null) {
+	    affine.transform(coords, 0, coords, 0, 1);
+	}
+	return type;
     }
 }

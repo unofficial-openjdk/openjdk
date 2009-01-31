@@ -37,9 +37,10 @@ import sun.security.util.*;
  *
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class CertificateAlgorithmId implements CertAttrSet<String> {
-    private AlgorithmId algId;
+    private AlgorithmId	algId;
 
     /**
      * Identifier for this attribute, to be used with the
@@ -160,7 +161,7 @@ public class CertificateAlgorithmId implements CertAttrSet<String> {
         elements.addElement(ALGORITHM);
         return (elements.elements());
     }
-
+ 
    /**
     * Return the name of this attribute.
     */

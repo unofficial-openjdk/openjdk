@@ -40,7 +40,7 @@ import javax.swing.event.ChangeListener;
  * no selection the dot and mark will be equal.  If a selection
  * exists, the two values will be different.
  * <p>
- * The dot can be placed by either calling
+ * The dot can be placed by either calling 
  * <code>setDot</code> or <code>moveDot</code>.  Setting
  * the dot has the effect of removing any selection that may
  * have previously existed.  The dot and mark will be equal.
@@ -48,6 +48,7 @@ import javax.swing.event.ChangeListener;
  * the mark is left at whatever position it previously had.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public interface Caret {
 
@@ -55,7 +56,7 @@ public interface Caret {
      * Called when the UI is being installed into the
      * interface of a JTextComponent.  This can be used
      * to gain access to the model that is being navigated
-     * by the implementation of this interface.
+     * by the implementation of this interface. 
      *
      * @param c the JTextComponent
      */
@@ -63,7 +64,7 @@ public interface Caret {
 
     /**
      * Called when the UI is being removed from the
-     * interface of a JTextComponent.  This is used to
+     * interface of a JTextComponent.  This is used to 
      * unregister any listeners that were attached.
      *
      * @param c the JTextComponent
@@ -123,7 +124,7 @@ public interface Caret {
     public void setSelectionVisible(boolean v);
 
     /**
-     * Set the current caret visual location.  This can be used when
+     * Set the current caret visual location.  This can be used when 
      * moving between lines that have uneven end positions (such as
      * when caret up or down actions occur).  If text flows
      * left-to-right or right-to-left the x-coordinate will indicate
@@ -137,7 +138,7 @@ public interface Caret {
     public void setMagicCaretPosition(Point p);
 
     /**
-     * Gets the current caret visual location.
+     * Gets the current caret visual location. 
      *
      * @return the visual position.
      * @see #setMagicCaretPosition
@@ -202,3 +203,4 @@ public interface Caret {
     public void moveDot(int dot);
 
 };
+    

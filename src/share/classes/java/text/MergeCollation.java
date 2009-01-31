@@ -57,6 +57,7 @@ import java.util.ArrayList;
  * "a < b < d & b < c"
  * XXX: make '' be a single quote.
  * @see PatternEntry
+ * @version    %I% %G%
  * @author             Mark Davis, Helena Shih
  */
 
@@ -174,9 +175,9 @@ final class MergeCollation {
     {
         if (pattern == null)
             return;
-
+        
         PatternEntry.Parser parser = new PatternEntry.Parser(pattern);
-
+        
         PatternEntry entry = parser.next();
         while (entry != null) {
             fixEntry(entry);
@@ -208,7 +209,7 @@ final class MergeCollation {
 
     private transient PatternEntry saveEntry = null;
     private transient PatternEntry lastEntry = null;
-
+    
     // This is really used as a local variable inside fixEntry, but we cache
     // it here to avoid newing it up every time the method is called.
     private transient StringBuffer excess = new StringBuffer();
@@ -251,18 +252,18 @@ final class MergeCollation {
                 return;
             }
         }
-
+        
         boolean changeLastEntry = true;
         if (newEntry.strength != PatternEntry.RESET) {
             int oldIndex = -1;
 
             if ((newEntry.chars.length() == 1)) {
-
+            
                 char c = newEntry.chars.charAt(0);
                 int statusIndex = c >> BYTEPOWER;
                 byte bitClump = statusArray[statusIndex];
                 byte setBit = (byte)(BITARRAYMASK << (c & BYTEMASK));
-
+                
                 if (bitClump != 0 && (bitClump & setBit) != 0) {
                     oldIndex = patterns.lastIndexOf(newEntry);
                 } else {
@@ -276,7 +277,7 @@ final class MergeCollation {
             if (oldIndex != -1) {
                 patterns.remove(oldIndex);
             }
-
+            
             excess.setLength(0);
             int lastIndex = findLastEntry(lastEntry, excess);
 
@@ -304,11 +305,11 @@ final class MergeCollation {
     {
         if (entry == null)
             return 0;
-
+            
         if (entry.strength != PatternEntry.RESET) {
             // Search backwards for string that contains this one;
             // most likely entry is last one
-
+            
             int oldIndex = -1;
             if ((entry.chars.length() == 1)) {
                 int index = entry.chars.charAt(0) >> BYTEPOWER;
@@ -340,3 +341,4 @@ final class MergeCollation {
         }
     }
 }
+

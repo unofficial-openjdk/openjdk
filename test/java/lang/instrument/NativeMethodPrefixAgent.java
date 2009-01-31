@@ -38,7 +38,7 @@ import java.io.*;
 import ilib.*;
 
 class NativeMethodPrefixAgent {
-
+    
     static ClassFileTransformer t0, t1, t2;
     static Instrumentation inst;
 
@@ -50,7 +50,7 @@ class NativeMethodPrefixAgent {
             this.trname = "tr" + transformId;
             this.transformId = transformId;
         }
-
+      
         public byte[]
         transform(
             ClassLoader loader,
@@ -95,8 +95,8 @@ class NativeMethodPrefixAgent {
     }
 
     public static void
-    premain (String agentArgs, Instrumentation instArg)
-        throws IOException, IllegalClassFormatException,
+    premain (String agentArgs, Instrumentation instArg) 
+        throws IOException, IllegalClassFormatException, 
         ClassNotFoundException, UnmodifiableClassException {
         inst = instArg;
         System.out.println("Premain");
@@ -113,5 +113,5 @@ class NativeMethodPrefixAgent {
 
         // warm up: cause load of transformer classes before used during class load
         instArg.retransformClasses(Runtime.class);
-    }
+    }    
 }

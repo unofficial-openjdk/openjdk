@@ -36,6 +36,7 @@ import java.io.*;
  * for local Java Virtual Machines..
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class LocalEventTimer extends Timer {

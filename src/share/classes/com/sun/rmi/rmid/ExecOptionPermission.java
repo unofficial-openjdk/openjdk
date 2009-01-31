@@ -33,6 +33,7 @@ import java.util.*;
  * The ExecOptionPermission class represents permission for rmid to use
  * a specific command-line option when launching an activation group.
  * <P>
+ * @version %I%, %G%
  *
  * @author Ann Wollrath
  *
@@ -54,14 +55,14 @@ public final class ExecOptionPermission extends Permission
      * UID for serialization
      */
     private static final long serialVersionUID = 5842294756823092756L;
-
+    
     public ExecOptionPermission(String name) {
-        super(name);
-        init(name);
+	super(name);
+	init(name);
     }
 
     public ExecOptionPermission(String name, String actions) {
-        this(name);
+	this(name);
     }
 
     /**
@@ -83,28 +84,28 @@ public final class ExecOptionPermission extends Permission
      * implied by this permission, false otherwise.
      */
     public boolean implies(Permission p) {
-        if (!(p instanceof ExecOptionPermission))
-            return false;
+	if (!(p instanceof ExecOptionPermission))
+	    return false;
 
-        ExecOptionPermission that = (ExecOptionPermission) p;
+	ExecOptionPermission that = (ExecOptionPermission) p;
 
-        if (this.wildcard) {
-            if (that.wildcard) {
-                // one wildcard can imply another
-                return that.name.startsWith(name);
-            } else {
-                // make sure p.name is longer so a.b.* doesn't imply a.b
-                return (that.name.length() > this.name.length()) &&
-                    that.name.startsWith(this.name);
-            }
-        } else {
-            if (that.wildcard) {
-                // a non-wildcard can't imply a wildcard
-                return false;
-            } else {
-                return this.name.equals(that.name);
-            }
-        }
+	if (this.wildcard) {
+	    if (that.wildcard) {
+		// one wildcard can imply another
+		return that.name.startsWith(name);
+	    } else {
+		// make sure p.name is longer so a.b.* doesn't imply a.b
+		return (that.name.length() > this.name.length()) &&
+		    that.name.startsWith(this.name);
+	    }
+	} else {
+	    if (that.wildcard) {
+		// a non-wildcard can't imply a wildcard
+		return false;
+	    } else {
+		return this.name.equals(that.name);
+	    }
+	}
     }
 
     /**
@@ -117,15 +118,15 @@ public final class ExecOptionPermission extends Permission
      * name as this ExecOptionPermission object, false otherwise.
      */
     public boolean equals(Object obj) {
-        if (obj == this)
-            return true;
+	if (obj == this)
+	    return true;
 
-        if ((obj == null) || (obj.getClass() != getClass()))
-            return false;
+	if ((obj == null) || (obj.getClass() != getClass()))
+	    return false;
 
-        ExecOptionPermission that = (ExecOptionPermission) obj;
+	ExecOptionPermission that = (ExecOptionPermission) obj;
 
-        return this.getName().equals(that.getName());
+	return this.getName().equals(that.getName());
     }
 
 
@@ -138,7 +139,7 @@ public final class ExecOptionPermission extends Permission
      * @return a hash code value for this object.
      */
     public int hashCode() {
-        return this.getName().hashCode();
+	return this.getName().hashCode();
     }
 
     /**
@@ -147,9 +148,9 @@ public final class ExecOptionPermission extends Permission
      * @return the canonical string representation of the actions.
      */
     public String getActions() {
-        return "";
+	return "";
     }
-
+    
     /**
      * Returns a new PermissionCollection object for storing
      * ExecOptionPermission objects.
@@ -166,44 +167,44 @@ public final class ExecOptionPermission extends Permission
      * storing ExecOptionPermissions.
      */
     public PermissionCollection newPermissionCollection() {
-        return new ExecOptionPermissionCollection();
+	return new ExecOptionPermissionCollection();
     }
 
     /**
      * readObject is called to restore the state of the ExecOptionPermission
-     * from a stream.
+     * from a stream. 
      */
     private synchronized void readObject(java.io.ObjectInputStream s)
          throws IOException, ClassNotFoundException
     {
-        s.defaultReadObject();
-        // init is called to initialize the rest of the values.
-        init(getName());
+	s.defaultReadObject();
+	// init is called to initialize the rest of the values.
+	init(getName());
     }
-
+    
     /**
      * Initialize a ExecOptionPermission object. Common to all constructors.
      * Also called during de-serialization.
      */
-    private void init(String name)
+    private void init(String name) 
     {
-        if (name == null)
-            throw new NullPointerException("name can't be null");
+	if (name == null)
+	    throw new NullPointerException("name can't be null");
 
-        if (name.equals("")) {
-            throw new IllegalArgumentException("name can't be empty");
-        }
+	if (name.equals("")) {
+	    throw new IllegalArgumentException("name can't be empty");
+	}
 
-        if (name.endsWith(".*") || name.endsWith("=*") || name.equals("*")) {
-            wildcard = true;
-            if (name.length() == 1) {
-                this.name = "";
-            } else {
-                this.name = name.substring(0, name.length()-1);
-            }
-        } else {
-            this.name = name;
-        }
+	if (name.endsWith(".*") || name.endsWith("=*") || name.equals("*")) {
+	    wildcard = true;
+	    if (name.length() == 1) {
+		this.name = "";
+	    } else {
+		this.name = name.substring(0, name.length()-1);
+	    }
+	} else {
+	    this.name = name;
+	}
     }
 
     /**
@@ -220,130 +221,130 @@ public final class ExecOptionPermission extends Permission
      */
     private static class ExecOptionPermissionCollection
         extends PermissionCollection
-        implements java.io.Serializable
+	implements java.io.Serializable
     {
 
-        private Hashtable permissions;
-        private boolean all_allowed; // true if "*" is in the collection
-        private static final long serialVersionUID = -1242475729790124375L;
+	private Hashtable permissions;
+	private boolean all_allowed; // true if "*" is in the collection
+	private static final long serialVersionUID = -1242475729790124375L;
+	
+	/**
+	 * Create an empty ExecOptionPermissionCollection.
+	 */
+	public ExecOptionPermissionCollection() {
+	    permissions = new Hashtable(11);
+	    all_allowed = false;
+	}
 
-        /**
-         * Create an empty ExecOptionPermissionCollection.
-         */
-        public ExecOptionPermissionCollection() {
-            permissions = new Hashtable(11);
-            all_allowed = false;
-        }
+	/**
+	 * Adds a permission to the collection. The key for the hash is
+	 * permission.name.
+	 *
+	 * @param permission the Permission object to add.
+	 *
+	 * @exception IllegalArgumentException - if the permission is not a
+	 *                                       ExecOptionPermission
+	 *
+	 * @exception SecurityException - if this ExecOptionPermissionCollection 
+	 *                                object has been marked readonly
+	 */
 
-        /**
-         * Adds a permission to the collection. The key for the hash is
-         * permission.name.
-         *
-         * @param permission the Permission object to add.
-         *
-         * @exception IllegalArgumentException - if the permission is not a
-         *                                       ExecOptionPermission
-         *
-         * @exception SecurityException - if this ExecOptionPermissionCollection
-         *                                object has been marked readonly
-         */
+	public void add(Permission permission)
+	{
+	    if (! (permission instanceof ExecOptionPermission))
+		throw new IllegalArgumentException("invalid permission: "+
+						   permission);
+	    if (isReadOnly())
+		throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
 
-        public void add(Permission permission)
-        {
-            if (! (permission instanceof ExecOptionPermission))
-                throw new IllegalArgumentException("invalid permission: "+
-                                                   permission);
-            if (isReadOnly())
-                throw new SecurityException("attempt to add a Permission to a readonly PermissionCollection");
+	    ExecOptionPermission p = (ExecOptionPermission) permission;
 
-            ExecOptionPermission p = (ExecOptionPermission) permission;
+	    permissions.put(p.getName(), permission);
+	    if (!all_allowed) {
+		if (p.getName().equals("*"))
+		    all_allowed = true;
+	    }
+	}
 
-            permissions.put(p.getName(), permission);
-            if (!all_allowed) {
-                if (p.getName().equals("*"))
-                    all_allowed = true;
-            }
-        }
+	/**
+	 * Check and see if this set of permissions implies the permissions
+	 * expressed in "permission".
+	 *
+	 * @param p the Permission object to compare
+	 *
+	 * @return true if "permission" is a proper subset of a permission in
+	 * the set, false if not.
+	 */
+	public boolean implies(Permission permission)
+	{
+	    if (! (permission instanceof ExecOptionPermission))
+   		return false;
 
-        /**
-         * Check and see if this set of permissions implies the permissions
-         * expressed in "permission".
-         *
-         * @param p the Permission object to compare
-         *
-         * @return true if "permission" is a proper subset of a permission in
-         * the set, false if not.
-         */
-        public boolean implies(Permission permission)
-        {
-            if (! (permission instanceof ExecOptionPermission))
-                return false;
+	    ExecOptionPermission p = (ExecOptionPermission) permission;
 
-            ExecOptionPermission p = (ExecOptionPermission) permission;
+	    // short circuit if the "*" Permission was added
+	    if (all_allowed)
+		return true;
 
-            // short circuit if the "*" Permission was added
-            if (all_allowed)
-                return true;
+	    // strategy:
+	    // Check for full match first. Then work our way up the
+	    // name looking for matches on a.b.*
 
-            // strategy:
-            // Check for full match first. Then work our way up the
-            // name looking for matches on a.b.*
+	    String pname = p.getName();
 
-            String pname = p.getName();
+	    Permission x = (Permission) permissions.get(pname);
 
-            Permission x = (Permission) permissions.get(pname);
-
-            if (x != null)
-                // we have a direct hit!
-                return x.implies(permission);
+	    if (x != null)
+		// we have a direct hit!
+		return x.implies(permission);
 
 
-            // work our way up the tree...
-            int last, offset;
+	    // work our way up the tree...
+	    int last, offset;
 
-            offset = pname.length() - 1;
+	    offset = pname.length() - 1;
 
-            while ((last = pname.lastIndexOf(".", offset)) != -1) {
+	    while ((last = pname.lastIndexOf(".", offset)) != -1) {
 
-                pname = pname.substring(0, last+1) + "*";
-                x = (Permission) permissions.get(pname);
+		pname = pname.substring(0, last+1) + "*";
+		x = (Permission) permissions.get(pname);
 
-                if (x != null) {
-                    return x.implies(permission);
-                }
-                offset = last - 1;
-            }
+		if (x != null) {
+		    return x.implies(permission);
+		}
+		offset = last - 1;
+	    }
 
-            // check for "=*" wildcard match
-            pname = p.getName();
-            offset = pname.length() - 1;
+	    // check for "=*" wildcard match
+	    pname = p.getName();
+	    offset = pname.length() - 1;
+	    
+	    while ((last = pname.lastIndexOf("=", offset)) != -1) {
+		
+		pname = pname.substring(0, last+1) + "*";
+		x = (Permission) permissions.get(pname);
 
-            while ((last = pname.lastIndexOf("=", offset)) != -1) {
+		if (x != null) {
+		    return x.implies(permission);
+		}
+		offset = last - 1;
+	    }
 
-                pname = pname.substring(0, last+1) + "*";
-                x = (Permission) permissions.get(pname);
+	    // we don't have to check for "*" as it was already checked
+	    // at the top (all_allowed), so we just return false
+	    return false;
+	}
 
-                if (x != null) {
-                    return x.implies(permission);
-                }
-                offset = last - 1;
-            }
+	/**
+	 * Returns an enumeration of all the ExecOptionPermission objects in the
+	 * container.
+	 *
+	 * @return an enumeration of all the ExecOptionPermission objects.
+	 */
 
-            // we don't have to check for "*" as it was already checked
-            // at the top (all_allowed), so we just return false
-            return false;
-        }
-
-        /**
-         * Returns an enumeration of all the ExecOptionPermission objects in the
-         * container.
-         *
-         * @return an enumeration of all the ExecOptionPermission objects.
-         */
-
-        public Enumeration elements()
-        {
-            return permissions.elements();
-        }
+	public Enumeration elements()
+	{
+	    return permissions.elements();
+	}
     }
 }

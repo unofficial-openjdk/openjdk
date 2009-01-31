@@ -30,6 +30,7 @@ import java.util.EventListener;
 /**
  * Defines an object which listens for {@link FlavorEvent}s.
  *
+ * @version %I% %G%
  * @author Alexander Gerasimov
  * @since 1.5
  */
@@ -44,7 +45,7 @@ public interface FlavorListener extends EventListener {
      * For example, if the clipboard subsystem supposes that
      * the system clipboard's contents has been changed but it
      * can't ascertain whether its DataFlavors have been changed
-     * because of some exceptional condition when accessing the
+     * because of some exceptional condition when accessing the 
      * clipboard, the notification is sent to ensure from omitting
      * a significant notification. Ordinarily, those redundant
      * notifications should be occasional.

@@ -52,7 +52,7 @@ public class ImmutableDescriptor implements Descriptor {
      * {@code names} array.
      */
     private final Object[] values;
-
+    
     private transient int hashCode = -1;
 
     /**
@@ -60,7 +60,7 @@ public class ImmutableDescriptor implements Descriptor {
      */
     public static final ImmutableDescriptor EMPTY_DESCRIPTOR =
             new ImmutableDescriptor();
-
+    
     /**
      * Construct a descriptor containing the given fields and values.
      *
@@ -72,7 +72,7 @@ public class ImmutableDescriptor implements Descriptor {
     public ImmutableDescriptor(String[] fieldNames, Object[] fieldValues) {
         this(makeMap(fieldNames, fieldValues));
     }
-
+    
     /**
      * Construct a descriptor containing the given fields.  Each String
      * must be of the form {@code fieldName=fieldValue}.  The field name
@@ -97,7 +97,7 @@ public class ImmutableDescriptor implements Descriptor {
      * if a field name is null or empty, or if the same field name appears
      * more than once (which can happen because field names are not case
      * sensitive).
-     */
+     */    
     public ImmutableDescriptor(Map<String, ?> fields) {
         if (fields == null)
             throw new IllegalArgumentException("Null Map");
@@ -115,7 +115,7 @@ public class ImmutableDescriptor implements Descriptor {
         this.names = map.keySet().toArray(new String[size]);
         this.values = map.values().toArray(new Object[size]);
     }
-
+    
     /**
      * This method can replace a deserialized instance of this
      * class with another instance.  For example, it might replace
@@ -150,7 +150,7 @@ public class ImmutableDescriptor implements Descriptor {
 
         return this;
     }
-
+    
     private static SortedMap<String, ?> makeMap(String[] fieldNames,
                                                 Object[] fieldValues) {
         if (fieldNames == null || fieldValues == null)
@@ -190,7 +190,7 @@ public class ImmutableDescriptor implements Descriptor {
         }
         return makeMap(fieldNames, fieldValues);
     }
-
+    
     /**
      * <p>Return an {@code ImmutableDescriptor} whose contents are the union of
      * the given descriptors.  Every field name that appears in any of
@@ -270,7 +270,7 @@ public class ImmutableDescriptor implements Descriptor {
             return biggestImmutable;
         return new ImmutableDescriptor(map);
     }
-
+    
     private static boolean isEmpty(Descriptor d) {
         if (d == null)
             return true;
@@ -279,7 +279,7 @@ public class ImmutableDescriptor implements Descriptor {
         else
             return (d.getFieldNames().length == 0);
     }
-
+    
     private static int findNonEmpty(Descriptor[] ds, int start) {
         for (int i = start; i < ds.length; i++) {
             if (!isEmpty(ds[i]))
@@ -291,7 +291,7 @@ public class ImmutableDescriptor implements Descriptor {
     private int fieldIndex(String name) {
         return Arrays.binarySearch(names, name, String.CASE_INSENSITIVE_ORDER);
     }
-
+    
     public final Object getFieldValue(String fieldName) {
         checkIllegalFieldName(fieldName);
         int i = fieldIndex(fieldName);
@@ -344,7 +344,7 @@ public class ImmutableDescriptor implements Descriptor {
      * the same field names (possibly differing in case) and the same
      * associated values.  The respective values for a field in the two
      * Descriptors are equal if the following conditions hold:</p>
-     *
+     * 
      * <ul>
      * <li>If one value is null then the other must be too.</li>
      * <li>If one value is a primitive array then the other must be a primitive
@@ -387,7 +387,7 @@ public class ImmutableDescriptor implements Descriptor {
             ovalues = ((Descriptor) o).getFieldValues(onames);
         return Arrays.deepEquals(values, ovalues);
     }
-
+    
     /**
      * <p>Returns the hash code value for this descriptor.  The hash
      * code is computed as the sum of the hash codes for each field in
@@ -395,7 +395,7 @@ public class ImmutableDescriptor implements Descriptor {
      * and value {@code v} is {@code n.toLowerCase().hashCode() ^ h}.
      * Here {@code h} is the hash code of {@code v}, computed as
      * follows:</p>
-     *
+     * 
      * <ul>
      * <li>If {@code v} is null then {@code h} is 0.</li>
      * <li>If {@code v} is a primitive array then {@code h} is computed using
@@ -432,7 +432,7 @@ public class ImmutableDescriptor implements Descriptor {
         }
         return hashCode;
     }
-
+    
     public String toString() {
         StringBuilder sb = new StringBuilder("{");
         for (int i = 0; i < names.length; i++) {
@@ -454,9 +454,9 @@ public class ImmutableDescriptor implements Descriptor {
      * Returns true if all of the fields have legal values given their
      * names.  This method always returns true, but a subclass can
      * override it to return false when appropriate.
-     *
+     * 
      * @return true if the values are legal.
-     *
+     * 
      * @exception RuntimeOperationsException if the validity checking fails.
      * The method returns false if the descriptor is not valid, but throws
      * this exception if the attempt to determine validity fails.
@@ -464,7 +464,7 @@ public class ImmutableDescriptor implements Descriptor {
     public boolean isValid() {
         return true;
     }
-
+    
     /**
      * <p>Returns a descriptor which is equal to this descriptor.
      * Changes to the returned descriptor will have no effect on this
@@ -541,7 +541,7 @@ public class ImmutableDescriptor implements Descriptor {
         if (fieldName != null && fieldIndex(fieldName) >= 0)
             unsupported();
     }
-
+    
     static Descriptor nonNullDescriptor(Descriptor d) {
         if (d == null)
             return EMPTY_DESCRIPTOR;
@@ -553,7 +553,7 @@ public class ImmutableDescriptor implements Descriptor {
         if (name == null || name.equals(""))
             illegal("Null or empty field name");
     }
-
+    
     private static void unsupported() {
         UnsupportedOperationException uoe =
             new UnsupportedOperationException("Descriptor is read-only");

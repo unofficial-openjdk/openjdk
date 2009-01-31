@@ -24,8 +24,8 @@
 /*
  * @test
  * @bug 4406033
- * @summary     ConfigFile throws an inconsistent error message
- *              when the configuration file is not found
+ * @summary	ConfigFile throws an inconsistent error message
+ *		when the configuration file is not found
  */
 
 import com.sun.security.auth.login.*;
@@ -35,46 +35,46 @@ public class InconsistentError {
 
     public static void main(String[] args) {
 
-        try {
-            System.setProperty("java.security.auth.login.config",
-                                "=nofile");
-            ConfigFile config = new ConfigFile();
-            throw new SecurityException("test 1 failed");
-        } catch (SecurityException se) {
-            if (se.getMessage().indexOf("No such file or directory") > 0) {
-                System.out.println("test 1 succeeded");
-            } else {
-                System.out.println("test 1 failed");
-                throw se;
-            }
-        }
+	try {
+	    System.setProperty("java.security.auth.login.config",
+				"=nofile");
+	    ConfigFile config = new ConfigFile();
+	    throw new SecurityException("test 1 failed");
+	} catch (SecurityException se) {
+	    if (se.getMessage().indexOf("No such file or directory") > 0) {
+		System.out.println("test 1 succeeded");
+	    } else {
+		System.out.println("test 1 failed");
+		throw se;
+	    }
+	}
 
-        try {
-            System.setProperty("java.security.auth.login.config",
-                                "=file:/nofile");
-            ConfigFile config = new ConfigFile();
-            throw new SecurityException("test 2 failed");
-        } catch (SecurityException se) {
-            if (se.getMessage().indexOf("No such file or directory") > 0) {
-                System.out.println("test 2 succeeded");
-            } else {
-                // if the OS is Solaris then this is an error; on windows
-                // this is not an error since the  error message on windows
-                // is "The system cannot find the file specified "
-                // See bug 4450257
+	try {
+	    System.setProperty("java.security.auth.login.config",
+				"=file:/nofile");
+	    ConfigFile config = new ConfigFile();
+	    throw new SecurityException("test 2 failed");
+	} catch (SecurityException se) {
+	    if (se.getMessage().indexOf("No such file or directory") > 0) {
+		System.out.println("test 2 succeeded");
+	    } else {
+		// if the OS is Solaris then this is an error; on windows
+		// this is not an error since the  error message on windows 
+		// is "The system cannot find the file specified "
+		// See bug 4450257
 
-                if (System.getProperty("os.name").equals("SunOS")) {
-                        System.out.println("test 2 failed");
-                        throw se;
-                }
-            }
-        }
+		if (System.getProperty("os.name").equals("SunOS")) {
+			System.out.println("test 2 failed");
+			throw se;
+		}
+	    }
+	}
 
-        System.setProperty("java.security.auth.login.config",
-                                "=file:${test.src}/InconsistentError.config");
-        ConfigFile config = new ConfigFile();
+	System.setProperty("java.security.auth.login.config",
+				"=file:${test.src}/InconsistentError.config");
+	ConfigFile config = new ConfigFile();
 
-        System.out.println("test succeeded");
+	System.out.println("test succeeded");
 
     }
 }

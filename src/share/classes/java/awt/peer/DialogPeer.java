@@ -39,3 +39,5 @@ public interface DialogPeer extends WindowPeer {
     void setResizable(boolean resizeable);
     void blockWindows(java.util.List<Window> windows);
 }
+
+

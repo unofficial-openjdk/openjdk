@@ -25,8 +25,8 @@
  * @test
  * @bug 4667976
  * @compile JavaxSSLContextImpl.java ComSSLContextImpl.java
- *      JavaxTrustManagerFactoryImpl.java ComTrustManagerFactoryImpl.java
- *      JavaxKeyManagerFactoryImpl.java ComKeyManagerFactoryImpl.java
+ *	JavaxTrustManagerFactoryImpl.java ComTrustManagerFactoryImpl.java
+ *	JavaxKeyManagerFactoryImpl.java ComKeyManagerFactoryImpl.java
  * @summary brokenness in the com.sun.net.ssl.SSLSecurity wrappers
  */
 
@@ -36,32 +36,32 @@ import com.sun.net.ssl.*;
 public class ProviderTest {
 
     public static void main(String args[]) throws Exception {
-        SSLContext sslc;
-        TrustManagerFactory tmf;
-        KeyManagerFactory kmf;
+	SSLContext sslc;
+	TrustManagerFactory tmf;
+	KeyManagerFactory kmf;
 
-        Security.addProvider(new MyProvider());
+	Security.addProvider(new MyProvider());
 
-        System.out.println("getting a javax SSLContext");
-        sslc = SSLContext.getInstance("javax");
-        sslc.init(null, null, null);
-        System.out.println("\ngetting a com SSLContext");
-        sslc = SSLContext.getInstance("com");
-        sslc.init(null, null, null);
+	System.out.println("getting a javax SSLContext");
+	sslc = SSLContext.getInstance("javax");
+	sslc.init(null, null, null);
+	System.out.println("\ngetting a com SSLContext");
+	sslc = SSLContext.getInstance("com");
+	sslc.init(null, null, null);
 
-        System.out.println("\ngetting a javax TrustManagerFactory");
-        tmf = TrustManagerFactory.getInstance("javax");
-        tmf.init((KeyStore) null);
-        System.out.println("\ngetting a com TrustManagerFactory");
-        tmf = TrustManagerFactory.getInstance("com");
-        tmf.init((KeyStore) null);
+	System.out.println("\ngetting a javax TrustManagerFactory");
+	tmf = TrustManagerFactory.getInstance("javax");
+	tmf.init((KeyStore) null);
+	System.out.println("\ngetting a com TrustManagerFactory");
+	tmf = TrustManagerFactory.getInstance("com");
+	tmf.init((KeyStore) null);
 
-        System.out.println("\ngetting a javax KeyManagerFactory");
-        kmf = KeyManagerFactory.getInstance("javax");
-        kmf.init((KeyStore) null, null);
-        System.out.println("\ngetting a com KeyManagerFactory");
-        kmf = KeyManagerFactory.getInstance("com");
-        kmf.init((KeyStore) null, null);
+	System.out.println("\ngetting a javax KeyManagerFactory");
+	kmf = KeyManagerFactory.getInstance("javax");
+	kmf.init((KeyStore) null, null);
+	System.out.println("\ngetting a com KeyManagerFactory");
+	kmf = KeyManagerFactory.getInstance("com");
+	kmf.init((KeyStore) null, null);
     }
 }
 
@@ -74,30 +74,30 @@ class MyProvider extends Provider {
      */
     public static synchronized void install()
     {
-        /* nop. Remove this method in the future. */
+	/* nop. Remove this method in the future. */
     }
 
     public MyProvider()
     {
-        super("BRAD", 1.0, info);
+	super("BRAD", 1.0, info);
 
-        AccessController.doPrivileged(new java.security.PrivilegedAction() {
-            public Object run() {
+	AccessController.doPrivileged(new java.security.PrivilegedAction() {
+	    public Object run() {
 
-                put("SSLContext.javax", "JavaxSSLContextImpl");
-                put("SSLContext.com",   "ComSSLContextImpl");
-                put("TrustManagerFactory.javax",
-                                        "JavaxTrustManagerFactoryImpl");
-                put("TrustManagerFactory.com",
-                                        "ComTrustManagerFactoryImpl");
-                put("KeyManagerFactory.javax",
-                                        "JavaxKeyManagerFactoryImpl");
-                put("KeyManagerFactory.com",
-                                        "ComKeyManagerFactoryImpl");
+		put("SSLContext.javax",	"JavaxSSLContextImpl");
+		put("SSLContext.com",	"ComSSLContextImpl");
+		put("TrustManagerFactory.javax",
+					"JavaxTrustManagerFactoryImpl");
+		put("TrustManagerFactory.com",
+					"ComTrustManagerFactoryImpl");
+		put("KeyManagerFactory.javax",
+					"JavaxKeyManagerFactoryImpl");
+		put("KeyManagerFactory.com",
+					"ComKeyManagerFactoryImpl");
 
-                return null;
-            }
-        });
+		return null;
+	    }
+	});
 
     }
 }

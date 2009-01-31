@@ -43,19 +43,19 @@ import com.sun.jmx.snmp.SnmpStatusException;
  * </p>
  *
  * <p><b><i>
- * This interface is used internally between the generated Metadata and
- * the SNMP runtime and you shouldn't need to worry about it, because
+ * This interface is used internally between the generated Metadata and 
+ * the SNMP runtime and you shouldn't need to worry about it, because 
  * you will never have to use it directly.
  * </b></i></p>
  *
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
- **/
+ **/ 
 public interface SnmpGenericMetaServer {
 
     /**
      * Construct an attribute value (as returned by Attribute::getValue())
-     * from an SnmpValue. The returned attribute value can be used to
+     * from an SnmpValue. The returned attribute value can be used to 
      * construct an Attribute object.
      *
      * @param id The OID arc identifying the variable for which the
@@ -63,16 +63,16 @@ public interface SnmpGenericMetaServer {
      * @param value The SnmpValue from which the Attribute::value will be
      *              constructed.
      * @return The attribute value built from the given <code>value</code>.
-     * @exception SnmpStatusException if the attribute value cannot be built
+     * @exception SnmpStatusException if the attribute value cannot be built 
      *            from the given SnmpValue <code>value</code>.
-     *
+     * 
      */
     Object buildAttributeValue(long id, SnmpValue value)
-        throws SnmpStatusException;
+	throws SnmpStatusException;
 
     /**
-     * Construct an SnmpValue from an Attribute value as returned by
-     * Attribute::getValue().
+     * Construct an SnmpValue from an Attribute value as returned by 
+     * Attribute::getValue(). 
      *
      * @param id The OID arc identifying the variable for which the
      *           value is constructed.
@@ -83,26 +83,26 @@ public interface SnmpGenericMetaServer {
      *            the given <code>value</code>.
      **/
     SnmpValue buildSnmpValue(long id, Object value)
-        throws SnmpStatusException;
+	throws SnmpStatusException;
 
     /**
-     * Return the name of the attribute corresponding to the
+     * Return the name of the attribute corresponding to the 
      * SNMP variable identified by the given <code>id</code>.
      *
      * @param id The OID arc identifying the variable.
      *
-     * @return The name of the variable identified by the given
+     * @return The name of the variable identified by the given 
      *         <code>id</code>.
      *
      * @exception SnmpStatusException if the given <code>id</code> does not
      *            correspond to a known variable.
      */
     String getAttributeName(long id)
-        throws SnmpStatusException;
+	throws SnmpStatusException;
 
     /**
-     * Check the access rights for a SET operation.
-     *
+     * Check the access rights for a SET operation. 
+     * 
      * @param x  The new requested value.
      * @param id The OID arc identifying the variable for which the SET is
      *           requested.
@@ -112,12 +112,12 @@ public interface SnmpGenericMetaServer {
      *           for each incoming SNMP request.
      * @exception SnmpStatusException if the SET operation must be rejected.
      */
-    void checkSetAccess(SnmpValue x, long id, Object data)
-        throws SnmpStatusException;
-
+    void checkSetAccess(SnmpValue x, long id, Object data) 
+	throws SnmpStatusException;
+    
     /**
-     * Check the access rights for a GET operation.
-     *
+     * Check the access rights for a GET operation. 
+     * 
      * @param id The OID arc identifying the variable for which the SET is
      *           requested.
      * @param data A contextual object containing user-data.
@@ -126,7 +126,8 @@ public interface SnmpGenericMetaServer {
      *           for each incoming SNMP request.
      * @exception SnmpStatusException if the SET operation must be rejected.
      */
-    void checkGetAccess(long id, Object data)
-        throws SnmpStatusException;
-
+    void checkGetAccess(long id, Object data) 
+	throws SnmpStatusException;
+    
 }
+

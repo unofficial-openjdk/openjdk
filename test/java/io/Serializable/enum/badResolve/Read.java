@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,7 +24,7 @@
 /*
  * @bug 4838379
  * @summary Verify that enum classes present in a serialization stream cannot
- *          be resolved by the receiver to non-enum classes, and vice-versa.
+ * 	    be resolved by the receiver to non-enum classes, and vice-versa.
  */
 
 import java.io.*;
@@ -37,20 +37,20 @@ enum NonEnumToEnum { foo }
 
 public class Read {
     public static void main(String[] args) throws Exception {
-        read("0.ser");
-        read("1.ser");
-        read("2.ser");
-        read("3.ser");
+	read("0.ser");
+	read("1.ser");
+	read("2.ser");
+	read("3.ser");
     }
 
     static void read(String filename) throws Exception {
-        ObjectInputStream oin =
-            new ObjectInputStream(new FileInputStream(filename));
-        try {
-            Object obj = oin.readObject();
-            throw new Error("read of " + obj + " should not have succeeded");
-        } catch (InvalidClassException e) {
-            System.out.println("caught expected exception " + e);
-        }
+	ObjectInputStream oin =
+	    new ObjectInputStream(new FileInputStream(filename));
+	try {
+	    Object obj = oin.readObject();
+	    throw new Error("read of " + obj + " should not have succeeded");
+	} catch (InvalidClassException e) {
+	    System.out.println("caught expected exception " + e);
+	}
     }
 }

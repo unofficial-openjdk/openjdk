@@ -23,7 +23,7 @@
 
 /* @test
    @bug 4174396
-   @summary Use replace to append chars; No OutOfMemoryException should result
+   @summary Use replace to append chars; No OutOfMemoryException should result 
 */
 
 public class Replace {

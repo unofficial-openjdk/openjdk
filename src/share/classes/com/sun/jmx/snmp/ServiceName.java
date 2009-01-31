@@ -27,7 +27,7 @@ package com.sun.jmx.snmp;
 
 /**
  * Used for storing default values used by SNMP Runtime services.
- * <p><b>This API is a Sun Microsystems internal API  and is subject
+ * <p><b>This API is a Sun Microsystems internal API  and is subject 
  * to change without notice.</b></p>
  */
 public class ServiceName {
@@ -128,7 +128,7 @@ public class ServiceName {
     public static final String HTML_ADAPTOR_SERVER = "name=HtmlAdaptorServer" ;
 
     /**
-     * The name of the JMX specification implemented by this product.
+     * The name of the JMX specification implemented by this product.    
      * <BR>
      * The value is <CODE>Java Management Extensions</CODE>.
      */
@@ -142,14 +142,14 @@ public class ServiceName {
     public static final String JMX_SPEC_VERSION = "1.2 Maintenance Release";
 
     /**
-     * The vendor of the JMX specification implemented by this product.
+     * The vendor of the JMX specification implemented by this product.     
      * <BR>
      * The value is <CODE>Sun Microsystems</CODE>.
      */
     public static final String JMX_SPEC_VENDOR = "Sun Microsystems";
 
     /**
-     * The name of the vendor of this product implementing the  JMX specification.
+     * The name of the vendor of this product implementing the  JMX specification.  
      * <BR>
      * The value is <CODE>Sun Microsystems</CODE>.
      */
@@ -161,7 +161,7 @@ public class ServiceName {
     public static final String BUILD_NUMBER = "r01";
 
     /**
-     * The version of this product implementing the  JMX specification.
+     * The version of this product implementing the  JMX specification.  
      * <BR>
      * The value is <CODE>5.1_rXX</CODE>, where <CODE>rXX</CODE> is the <CODE>BUILD_NUMBER</CODE> .
      */

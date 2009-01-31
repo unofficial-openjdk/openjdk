@@ -41,7 +41,7 @@ struct jar {
   // Private members
   fillbytes   central_directory;
   ushort      central_directory_count;
-  uint        output_file_offset;
+  uint        output_file_offset;   
   fillbytes   deflated;  // temporary buffer
 
   // pointer to outer unpacker, for error checks etc.
@@ -50,8 +50,8 @@ struct jar {
   // Public Methods
   void openJarFile(const char* fname);
   void addJarEntry(const char* fname,
-                   bool deflate_hint, int modtime,
-                   bytes& head, bytes& tail);
+		   bool deflate_hint, int modtime,
+		   bytes& head, bytes& tail);
   void addDirectoryToJarFile(const char* dir_name);
   void closeJarFile(bool central);
 
@@ -71,9 +71,9 @@ struct jar {
   void write_data(void* ptr, int len);
   void write_data(bytes& b) { write_data(b.ptr, b.len); }
   void add_to_jar_directory(const char* fname, bool store, int modtime,
-                            int len, int clen, uLong crc);
+			    int len, int clen, uLong crc);
   void write_jar_header(const char* fname, bool store, int modtime,
-                        int len, int clen, unsigned int crc);
+			int len, int clen, unsigned int crc);
   void write_central_directory();
   uLong dostime(int y, int n, int d, int h, int m, int s);
   uLong get_dostime(int modtime);
@@ -89,7 +89,7 @@ struct jar {
 
 struct gunzip {
   // optional gzip input stream control block
-
+  
   // pointer to outer unpacker, for error checks etc.
   unpacker* u;
 

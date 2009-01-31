@@ -47,7 +47,7 @@ class MethodSet {
      * contain methods which share the same name.
      */
     private final Map lookupMap;
-
+ 
     /**
      * The number of methods stored in the MethodSet.
      */
@@ -66,14 +66,14 @@ class MethodSet {
         lookupMap = new HashMap();
         count = 0;
     }
-
+    
     /**
      * Returns the number of distinct methods stored in the MethodSet.
      */
     public int size() {
         return count;
     }
-
+    
     /**
      * Adds `method' to the MethodSet.  No method of the same signature
      * should be already defined.
@@ -81,33 +81,33 @@ class MethodSet {
     public void add(MemberDefinition method) {
             // Check for late additions.
             if (frozen) {
-                throw new CompilerError("add()");
+		throw new CompilerError("add()");
             }
 
-            // todo: Check for method??
-
+	    // todo: Check for method??
+ 
             Identifier name = method.getName();
-
+            
             // Get a List containing all methods of this name.
             List methodList = (List) lookupMap.get(name);
-
+            
             if (methodList == null) {
                 // There is no method with this name already.
                 // Create a List, and insert it into the hash.
                 methodList = new ArrayList();
                 lookupMap.put(name, methodList);
-            }
-
+            }       
+            
             // Make sure that no method with the same signature has already
             // been added to the MethodSet.
             int size = methodList.size();
-            for (int i = 0; i < size; i++) {
-                if (((MemberDefinition) methodList.get(i))
-                    .getType().equalArguments(method.getType())) {
-                    throw new CompilerError("duplicate addition");
-                }
-            }
-
+	    for (int i = 0; i < size; i++) {
+		if (((MemberDefinition) methodList.get(i))
+		    .getType().equalArguments(method.getType())) {
+		    throw new CompilerError("duplicate addition");
+		}
+	    }
+            
             // We add the method to the appropriate list.
             methodList.add(method);
             count++;
@@ -120,34 +120,34 @@ class MethodSet {
     public void replace(MemberDefinition method) {
             // Check for late additions.
             if (frozen) {
-                throw new CompilerError("replace()");
+		throw new CompilerError("replace()");
             }
 
-            // todo: Check for method??
-
+	    // todo: Check for method??
+ 
             Identifier name = method.getName();
-
+            
             // Get a List containing all methods of this name.
             List methodList = (List) lookupMap.get(name);
-
+            
             if (methodList == null) {
                 // There is no method with this name already.
                 // Create a List, and insert it into the hash.
                 methodList = new ArrayList();
                 lookupMap.put(name, methodList);
-            }
-
-            // Replace the element which has the same signature as
-            // `method'.
+            }       
+            
+	    // Replace the element which has the same signature as
+	    // `method'.
             int size = methodList.size();
-            for (int i = 0; i < size; i++) {
-                if (((MemberDefinition) methodList.get(i))
-                    .getType().equalArguments(method.getType())) {
-                    methodList.set(i, method);
-                    return;
-                }
-            }
-
+	    for (int i = 0; i < size; i++) {
+		if (((MemberDefinition) methodList.get(i))
+		    .getType().equalArguments(method.getType())) {
+		    methodList.set(i, method);
+		    return;
+		}
+	    }
+            
             // We add the method to the appropriate list.
             methodList.add(method);
             count++;
@@ -162,14 +162,14 @@ class MethodSet {
         // have the right signature.
         Iterator matches = lookupName(name);
         MemberDefinition candidate;
-
+ 
         while (matches.hasNext()) {
             candidate = (MemberDefinition) matches.next();
             if (candidate.getType().equalArguments(type)) {
                 return candidate;
             }
         }
-
+ 
         // No match.
         return null;
     }
@@ -185,7 +185,7 @@ class MethodSet {
         if (methodList == null) {
             // If there is no method of this name, return a bogus, empty
             // Iterator.
-            return Collections.emptyIterator();
+            return Collections.emptyList().iterator();
         }
         return methodList.iterator();
     }
@@ -195,13 +195,13 @@ class MethodSet {
      */
     public Iterator iterator() {
 
-        //----------------------------------------------------------
+	//----------------------------------------------------------
         // The inner class MethodIterator is used to create our
         // Iterator of all methods in the MethodSet.
         class MethodIterator implements Iterator {
             Iterator hashIter = lookupMap.values().iterator();
-            Iterator listIter = Collections.emptyIterator();
-
+            Iterator listIter = Collections.emptyList().iterator();
+            
             public boolean hasNext() {
                 if (listIter.hasNext()) {
                     return true;
@@ -209,7 +209,7 @@ class MethodSet {
                     if (hashIter.hasNext()) {
                         listIter = ((List) hashIter.next())
                             .iterator();
-
+ 
                         // The following should be always true.
                         if (listIter.hasNext()) {
                             return true;
@@ -219,26 +219,26 @@ class MethodSet {
                         }
                     }
                 }
-
+ 
                 // We've run out of Lists.
                 return false;
             }
-
+ 
             public Object next() {
                 return listIter.next();
             }
 
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
+	    public void remove() {
+		throw new UnsupportedOperationException();
+	    }
         }
-        // end MethodIterator
-        //----------------------------------------------------------
-
+	// end MethodIterator
+	//----------------------------------------------------------
+ 
         // A one-liner.
         return new MethodIterator();
     }
-
+ 
     /**
      * After freeze() is called, the MethodSet becomes (mostly)
      * immutable.  Any calls to add() or addMeet() lead to
@@ -248,14 +248,14 @@ class MethodSet {
     public void freeze() {
         frozen = true;
     }
-
+ 
     /**
      * Tells whether freeze() has been called on this MethodSet.
      */
     public boolean isFrozen() {
         return frozen;
     }
-
+    
     /**
      * Returns a (big) string representation of this MethodSet
      */
@@ -264,7 +264,7 @@ class MethodSet {
         StringBuffer buf = new StringBuffer();
         Iterator all = iterator();
         buf.append("{");
-
+ 
         while (all.hasNext()) {
             buf.append(all.next().toString());
             len--;

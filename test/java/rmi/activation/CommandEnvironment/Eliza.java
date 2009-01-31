@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,5 +25,5 @@ public interface Eliza
     extends java.rmi.Remote
 {
     public String complain(String plaint)
-        throws java.rmi.RemoteException;
+	throws java.rmi.RemoteException;
 }

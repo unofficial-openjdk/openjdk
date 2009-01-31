@@ -110,7 +110,7 @@ public class TwoThreadsTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new TwoThreadsTest(args).startTests();
     }
 
@@ -133,20 +133,20 @@ public class TwoThreadsTest extends TestScaffold {
              */
             bkpts++;
         }
-
+        
         /*
          * The bug occurs when the requests are disabled
          * and then re-enabled during the event handler.
          */
         request1.disable();
         request2.disable();
-
-        /*
+        
+        /* 
          * This code between the disables and enables
          * is just filler that leaves the requests disabled
          * for awhile.  I suppose a sleep could be used instead
          */
-        Method mmm = event.location().method();
+        Method mmm = event.location().method(); 
         List lvlist;
         try {
             lvlist = mmm.variablesByName("i");
@@ -168,15 +168,15 @@ public class TwoThreadsTest extends TestScaffold {
         println("Got bkpt at: " + event.location() + ", i = " + ival);
         request1.enable();
         request2.enable();
-
+        
     }
-
+    
     /********** test core **********/
 
     protected void runTests() throws Exception {
 
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("TwoThreadsTarg");
@@ -184,7 +184,7 @@ public class TwoThreadsTest extends TestScaffold {
         mainThread = bpe.thread();
         EventRequestManager erm = vm().eventRequestManager();
         final Thread mainThread = Thread.currentThread();
-
+        
         /*
          * Set event requests
          */
@@ -243,3 +243,4 @@ public class TwoThreadsTest extends TestScaffold {
         }
     }
 }
+

@@ -29,6 +29,7 @@ package sun.jvmstat.monitor;
  * Interface for Monitoring StringInstrument objects.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  * @see sun.jvmstat.instrument.StringInstrument
  */

@@ -26,19 +26,20 @@
 package java.lang;
 
 /**
- * An <code>Error</code> is a subclass of <code>Throwable</code>
- * that indicates serious problems that a reasonable application
- * should not try to catch. Most such errors are abnormal conditions.
+ * An <code>Error</code> is a subclass of <code>Throwable</code> 
+ * that indicates serious problems that a reasonable application 
+ * should not try to catch. Most such errors are abnormal conditions. 
  * The <code>ThreadDeath</code> error, though a "normal" condition,
  * is also a subclass of <code>Error</code> because most applications
- * should not try to catch it.
+ * should not try to catch it. 
  * <p>
- * A method is not required to declare in its <code>throws</code>
- * clause any subclasses of <code>Error</code> that might be thrown
- * during the execution of the method but not caught, since these
- * errors are abnormal conditions that should never occur.
+ * A method is not required to declare in its <code>throws</code> 
+ * clause any subclasses of <code>Error</code> that might be thrown 
+ * during the execution of the method but not caught, since these 
+ * errors are abnormal conditions that should never occur. 
  *
  * @author  Frank Yellin
+ * @version %I%, %G%
  * @see     java.lang.ThreadDeath
  * @since   JDK1.0
  */
@@ -51,7 +52,7 @@ public class Error extends Throwable {
      * call to {@link #initCause}.
      */
     public Error() {
-        super();
+	super();
     }
 
     /**
@@ -59,11 +60,11 @@ public class Error extends Throwable {
      * cause is not initialized, and may subsequently be initialized by
      * a call to {@link #initCause}.
      *
-     * @param   message   the detail message. The detail message is saved for
+     * @param   message   the detail message. The detail message is saved for 
      *          later retrieval by the {@link #getMessage()} method.
      */
     public Error(String message) {
-        super(message);
+	super(message);
     }
 
     /**

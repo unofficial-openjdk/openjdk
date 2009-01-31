@@ -22,9 +22,9 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
-package sun.security.jgss;
-
+ 
+package sun.security.jgss;  
+  
 import org.ietf.jgss.*;
 import sun.security.jgss.spi.*;
 import java.util.Set;
@@ -39,11 +39,11 @@ import sun.security.util.DerOutputStream;
 
 /**
  * This is the implementation class for GSSName. Conceptually the
- * GSSName is a container with mechanism specific name elements. Each
+ * GSSName is a container with mechanism specific name elements. Each 
  * name element is a representation of how that particular mechanism
  * would canonicalize this principal.
  *
- * Generally a GSSName is created by an application when it supplies
+ * Generally a GSSName is created by an application when it supplies 
  * a sequence of bytes and a nametype that helps each mechanism
  * decide how to interpret those bytes.
  *
@@ -65,8 +65,8 @@ import sun.security.util.DerOutputStream;
  *
  * When a GSSName is to be exported, the name element for the desired
  * mechanism is converted to a byte representation and written
- * out. It might happen that a name element for that mechanism cannot
- * be obtained. This happens when the mechanism is just not supported
+ * out. It might happen that a name element for that mechanism cannot 
+ * be obtained. This happens when the mechanism is just not supported 
  * in this GSS-API or when the mechanism is supported but bytes
  * corresponding to the nametypes that it understands are not
  * available in this GSSName.
@@ -76,6 +76,7 @@ import sun.security.util.DerOutputStream;
  * hashmap of elements, but getElement() is synchronized.
  *
  * @author Mayank Upadhyay
+ * @version %I%, %G%
  * @since 1.4
  */
 
@@ -90,7 +91,7 @@ public class GSSNameImpl implements GSSName {
      * Store both the String and the byte[]. Leave I18N to the
      * mechanism by allowing it to extract bytes from the String!
      */
-
+    
     private String appNameStr = null;
     private byte[] appNameBytes = null;
     private Oid appNameType = null;
@@ -102,145 +103,145 @@ public class GSSNameImpl implements GSSName {
 
     private String printableName = null;
     private Oid printableNameType = null;
-
+    
     private HashMap<Oid, GSSNameSpi> elements = null;
     private GSSNameSpi mechElement = null;
 
-    static GSSNameImpl wrapElement(GSSManagerImpl gssManager,
-        GSSNameSpi mechElement) throws GSSException {
-        return (mechElement == null ?
-            null : new GSSNameImpl(gssManager, mechElement));
+    static GSSNameImpl wrapElement(GSSManagerImpl gssManager, 
+	GSSNameSpi mechElement) throws GSSException {
+	return (mechElement == null ? 
+	    null : new GSSNameImpl(gssManager, mechElement));
     }
 
     GSSNameImpl(GSSManagerImpl gssManager, GSSNameSpi mechElement) {
-        this.gssManager = gssManager;
-        appNameStr = printableName = mechElement.toString();
-        appNameType = printableNameType = mechElement.getStringNameType();
-        this.mechElement = mechElement;
-        elements = new HashMap<Oid, GSSNameSpi>(1);
-        elements.put(mechElement.getMechanism(), this.mechElement);
+	this.gssManager = gssManager;
+	appNameStr = printableName = mechElement.toString();
+	appNameType = printableNameType = mechElement.getStringNameType();
+	this.mechElement = mechElement;
+	elements = new HashMap<Oid, GSSNameSpi>(1);
+	elements.put(mechElement.getMechanism(), this.mechElement);
     }
 
-    GSSNameImpl(GSSManagerImpl gssManager,
-                       Object appName,
-                       Oid appNameType)
-        throws GSSException {
-        this(gssManager, appName, appNameType, null);
+    GSSNameImpl(GSSManagerImpl gssManager, 
+		       Object appName, 
+		       Oid appNameType)
+	throws GSSException { 
+	this(gssManager, appName, appNameType, null);
     }
-
-    GSSNameImpl(GSSManagerImpl gssManager,
-                        Object appName,
-                        Oid appNameType,
-                        Oid mech)
-        throws GSSException {
-
-        if (appName == null)
-            throw new GSSExceptionImpl(GSSException.BAD_NAME,
-                                   "Cannot import null name");
-        if (mech == null) mech = ProviderList.DEFAULT_MECH_OID;
-        if (NT_EXPORT_NAME.equals(appNameType)) {
-            importName(gssManager, appName);
-        } else {
-            init(gssManager, appName, appNameType, mech);
-        }
+    
+    GSSNameImpl(GSSManagerImpl gssManager, 
+			Object appName,
+			Oid appNameType,
+			Oid mech) 
+	throws GSSException {
+	
+	if (appName == null)
+	    throw new GSSExceptionImpl(GSSException.BAD_NAME,
+				   "Cannot import null name");
+	if (mech == null) mech = ProviderList.DEFAULT_MECH_OID;
+	if (NT_EXPORT_NAME.equals(appNameType)) {
+	    importName(gssManager, appName);
+	} else {
+	    init(gssManager, appName, appNameType, mech);
+	}
     }
-
+    
     private void init(GSSManagerImpl gssManager,
-                      Object appName, Oid appNameType,
-                      Oid mech)
-        throws GSSException {
+		      Object appName, Oid appNameType, 
+		      Oid mech)
+	throws GSSException {
+	
+	this.gssManager = gssManager;
+	this.elements =
+		new HashMap<Oid, GSSNameSpi>(gssManager.getMechs().length);
 
-        this.gssManager = gssManager;
-        this.elements =
-                new HashMap<Oid, GSSNameSpi>(gssManager.getMechs().length);
-
-        if (appName instanceof String) {
-            this.appNameStr = (String) appName;
-            /*
-             * If appNameType is null, then the nametype for this printable
-             * string is determined only by interrogating the
-             * mechanism. Thus, defer the setting of printableName and
-             * printableNameType till later.
-             */
-            if (appNameType != null) {
-                printableName = appNameStr;
-                printableNameType = appNameType;
-            }
-        } else {
-            this.appNameBytes = (byte[]) appName;
-        }
-
-        this.appNameType = appNameType;
-
-        mechElement = getElement(mech);
-
-        /*
-         * printableName will be null if appName was in a byte[] or if
-         * appName was in a String but appNameType was null.
-         */
-        if (printableName == null) {
-            printableName = mechElement.toString();
-            printableNameType = mechElement.getStringNameType();
-        }
-
-        /*
-         *  At this point the GSSNameImpl has the following set:
-         *   appNameStr or appNameBytes
-         *   appNameType (could be null)
-         *   printableName
-         *   printableNameType
-         *   mechElement (which also exists in the hashmap of elements)
-         */
+	if (appName instanceof String) {
+	    this.appNameStr = (String) appName;
+	    /*
+	     * If appNameType is null, then the nametype for this printable
+	     * string is determined only by interrogating the
+	     * mechanism. Thus, defer the setting of printableName and
+	     * printableNameType till later.
+	     */
+	    if (appNameType != null) {
+		printableName = appNameStr;
+		printableNameType = appNameType;
+	    }
+	} else {
+	    this.appNameBytes = (byte[]) appName;
+	}
+	
+	this.appNameType = appNameType;
+	
+	mechElement = getElement(mech);
+	
+	/*
+	 * printableName will be null if appName was in a byte[] or if
+	 * appName was in a String but appNameType was null.
+	 */
+	if (printableName == null) {
+	    printableName = mechElement.toString();
+	    printableNameType = mechElement.getStringNameType();
+	}
+	    
+	/*
+	 *  At this point the GSSNameImpl has the following set:
+	 *   appNameStr or appNameBytes
+	 *   appNameType (could be null)
+	 *   printableName
+	 *   printableNameType
+	 *   mechElement (which also exists in the hashmap of elements)
+	 */
     }
-
+	
     private void importName(GSSManagerImpl gssManager,
-                            Object appName)
-        throws GSSException {
+			    Object appName)
+	throws GSSException {
 
-        int pos = 0;
-        byte[] bytes = null;
+	int pos = 0;
+	byte[] bytes = null;    
 
-        if (appName instanceof String) {
-            try {
-                bytes = ((String) appName).getBytes("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                // Won't happen
-            }
-        } else
-            bytes = (byte[]) appName;
+	if (appName instanceof String) {
+	    try {
+		bytes = ((String) appName).getBytes("UTF-8");
+	    } catch (UnsupportedEncodingException e) {
+		// Won't happen
+	    }
+	} else
+	    bytes = (byte[]) appName;
 
-        if ((bytes[pos++] != 0x04) ||
-            (bytes[pos++] != 0x01))
-            throw new GSSExceptionImpl(GSSException.BAD_NAME,
-                                   "Exported name token id is corrupted!");
+	if ((bytes[pos++] != 0x04) ||
+	    (bytes[pos++] != 0x01))
+	    throw new GSSExceptionImpl(GSSException.BAD_NAME,
+				   "Exported name token id is corrupted!");
 
-        int oidLen  = (((0xFF & bytes[pos++]) << 8) |
-                       (0xFF & bytes[pos++]));
-        ObjectIdentifier temp = null;
-        try {
-            DerInputStream din = new DerInputStream(bytes, pos,
-                                                    oidLen);
-            temp = new ObjectIdentifier(din);
-        } catch (IOException e) {
-            throw new GSSExceptionImpl(GSSException.BAD_NAME,
-                       "Exported name Object identifier is corrupted!");
-        }
-        Oid oid = new Oid(temp.toString());
-        pos += oidLen;
-        int mechPortionLen = (((0xFF & bytes[pos++]) << 24) |
-                              ((0xFF & bytes[pos++]) << 16) |
-                              ((0xFF & bytes[pos++]) << 8) |
-                              (0xFF & bytes[pos++]));
-        byte[] mechPortion = new byte[mechPortionLen];
-        System.arraycopy(bytes, pos, mechPortion, 0, mechPortionLen);
+	int oidLen  = (((0xFF & bytes[pos++]) << 8) |
+		       (0xFF & bytes[pos++]));
+	ObjectIdentifier temp = null;
+	try {
+	    DerInputStream din = new DerInputStream(bytes, pos,
+						    oidLen);
+	    temp = new ObjectIdentifier(din);
+	} catch (IOException e) {
+	    throw new GSSExceptionImpl(GSSException.BAD_NAME,
+		       "Exported name Object identifier is corrupted!");
+	}
+	Oid oid = new Oid(temp.toString());
+	pos += oidLen;
+	int mechPortionLen = (((0xFF & bytes[pos++]) << 24) |
+			      ((0xFF & bytes[pos++]) << 16) |
+			      ((0xFF & bytes[pos++]) << 8) |
+			      (0xFF & bytes[pos++]));
+	byte[] mechPortion = new byte[mechPortionLen];
+	System.arraycopy(bytes, pos, mechPortion, 0, mechPortionLen);
 
-        init(gssManager, mechPortion, NT_EXPORT_NAME, oid);
+	init(gssManager, mechPortion, NT_EXPORT_NAME, oid);
     }
 
-    public GSSName canonicalize(Oid mech) throws GSSException {
-        if (mech == null) mech = ProviderList.DEFAULT_MECH_OID;
+    public GSSName canonicalize(Oid mech) throws GSSException { 
+	if (mech == null) mech = ProviderList.DEFAULT_MECH_OID;
 
-        return wrapElement(gssManager, getElement(mech));
+	return wrapElement(gssManager, getElement(mech));
     }
 
     /**
@@ -248,66 +249,66 @@ public class GSSNameImpl implements GSSName {
      * names are equals, then there is some mechanism that
      * authenticates them as the same principal.
      */
-    public boolean equals(GSSName other) throws GSSException {
+    public boolean equals(GSSName other) throws GSSException { 
 
-        if (this.isAnonymous() || other.isAnonymous())
-            return false;
+	if (this.isAnonymous() || other.isAnonymous())
+	    return false;
 
-        if (other == this)
-            return true;
+	if (other == this)
+	    return true;
 
-        if (! (other instanceof GSSNameImpl))
-            return equals(gssManager.createName(other.toString(),
-                                                other.getStringNameType()));
+	if (! (other instanceof GSSNameImpl))
+	    return equals(gssManager.createName(other.toString(), 
+						other.getStringNameType()));
+	
+	/*
+	 * XXX Do a comparison of the appNameStr/appNameBytes if
+	 * available. If that fails, then proceed with this test.
+	 */
 
-        /*
-         * XXX Do a comparison of the appNameStr/appNameBytes if
-         * available. If that fails, then proceed with this test.
-         */
+	GSSNameImpl that = (GSSNameImpl) other;
 
-        GSSNameImpl that = (GSSNameImpl) other;
+	GSSNameSpi myElement = this.mechElement;
+	GSSNameSpi element = that.mechElement;
 
-        GSSNameSpi myElement = this.mechElement;
-        GSSNameSpi element = that.mechElement;
+	/*
+	 * XXX If they are not of the same mechanism type, convert both to 
+	 * Kerberos since it is guaranteed to be present.
+	 */
+	if ((myElement == null) && (element != null)) {
+	    myElement = this.getElement(element.getMechanism());
+	} else if ((myElement != null) && (element == null)) {
+	    element = that.getElement(myElement.getMechanism());
+	}
+	
+	if (myElement != null && element != null) {
+	    return myElement.equals(element);
+	}
 
-        /*
-         * XXX If they are not of the same mechanism type, convert both to
-         * Kerberos since it is guaranteed to be present.
-         */
-        if ((myElement == null) && (element != null)) {
-            myElement = this.getElement(element.getMechanism());
-        } else if ((myElement != null) && (element == null)) {
-            element = that.getElement(myElement.getMechanism());
-        }
+	if ((this.appNameType != null) && 
+	    (that.appNameType != null)) {
+	    if (!this.appNameType.equals(that.appNameType)) {
+		return false;
+	    }
+	    byte[] myBytes = null; 
+	    byte[] bytes = null; 
+	    try {
+		myBytes = 
+		    (this.appNameStr != null ? 
+		     this.appNameStr.getBytes("UTF-8") :
+		     this.appNameBytes);
+		bytes =
+		    (that.appNameStr != null ? 
+		     that.appNameStr.getBytes("UTF-8") :
+		     that.appNameBytes);
+	    } catch (UnsupportedEncodingException e) {
+		// Won't happen
+	    }
 
-        if (myElement != null && element != null) {
-            return myElement.equals(element);
-        }
+	    return Arrays.equals(myBytes, bytes);
+	}
 
-        if ((this.appNameType != null) &&
-            (that.appNameType != null)) {
-            if (!this.appNameType.equals(that.appNameType)) {
-                return false;
-            }
-            byte[] myBytes = null;
-            byte[] bytes = null;
-            try {
-                myBytes =
-                    (this.appNameStr != null ?
-                     this.appNameStr.getBytes("UTF-8") :
-                     this.appNameBytes);
-                bytes =
-                    (that.appNameStr != null ?
-                     that.appNameStr.getBytes("UTF-8") :
-                     that.appNameBytes);
-            } catch (UnsupportedEncodingException e) {
-                // Won't happen
-            }
-
-            return Arrays.equals(myBytes, bytes);
-        }
-
-        return false;
+	return false;
 
     }
 
@@ -317,32 +318,32 @@ public class GSSNameImpl implements GSSName {
      * @return a hashCode value
      */
     public int hashCode() {
-        /*
-         * XXX
-         * In order to get this to work reliably and properly(!), obtain a
-         * Kerberos name element for the name and then call hashCode on its
-         * string representation. But this cannot be done if the nametype
-         * is not one of those supported by the Kerberos provider and hence
-         * this name cannot be imported by Kerberos. In that case return a
-         * constant value!
-         */
+	/*
+	 * XXX
+	 * In order to get this to work reliably and properly(!), obtain a
+	 * Kerberos name element for the name and then call hashCode on its 
+	 * string representation. But this cannot be done if the nametype
+	 * is not one of those supported by the Kerberos provider and hence 
+	 * this name cannot be imported by Kerberos. In that case return a
+	 * constant value!
+	 */
 
-        return 1;
+	return 1;
     }
 
-    public boolean equals(Object another) {
+    public boolean equals(Object another) { 
 
-        try {
-            // XXX This can lead to an infinite loop. Extract info
-            // and create a GSSNameImpl with it.
+	try {
+	    // XXX This can lead to an infinite loop. Extract info
+	    // and create a GSSNameImpl with it.
 
-            if (another instanceof GSSName)
-                return equals((GSSName) another);
-        } catch (GSSException e) {
-            // Squelch it and return false
-        }
+	    if (another instanceof GSSName)
+		return equals((GSSName) another);
+	} catch (GSSException e) {
+	    // Squelch it and return false
+	}
 
-            return false;
+	    return false;
     }
 
     /**
@@ -362,69 +363,69 @@ public class GSSNameImpl implements GSSName {
      *
      * Note that it is not required to canonicalize a name before
      * calling export(). i.e., the name need not be an MN. If it is
-     * not an MN, an implementation defined algorithm can be used for
+     * not an MN, an implementation defined algorithm can be used for 
      * choosing the mechanism which should export this name.
      *
      * @return the flat name representation for this object
      * @exception GSSException with major codes NAME_NOT_MN, BAD_NAME,
-     *  BAD_NAME, FAILURE.
+     *	BAD_NAME, FAILURE.   
      */
-    public byte[] export() throws GSSException {
+    public byte[] export() throws GSSException { 
 
-        if (mechElement == null) {
-            /* Use default mech */
-            mechElement = getElement(ProviderList.DEFAULT_MECH_OID);
-        }
+	if (mechElement == null) {
+	    /* Use default mech */
+	    mechElement = getElement(ProviderList.DEFAULT_MECH_OID);
+	}
+	
+	byte[] mechPortion = mechElement.export();
+	byte[] oidBytes = null;
+	ObjectIdentifier oid = null;
+	
+	try {
+	    oid = new ObjectIdentifier
+		(mechElement.getMechanism().toString());
+	} catch (IOException e) {
+	    throw new GSSExceptionImpl(GSSException.FAILURE,
+				       "Invalid OID String ");
+	}
+	DerOutputStream dout = new DerOutputStream();
+	try {
+	    dout.putOID(oid);
+	} catch (IOException e) {
+	    throw new GSSExceptionImpl(GSSException.FAILURE,
+				   "Could not ASN.1 Encode "
+				   + oid.toString());
+	}
+	oidBytes = dout.toByteArray();
 
-        byte[] mechPortion = mechElement.export();
-        byte[] oidBytes = null;
-        ObjectIdentifier oid = null;
-
-        try {
-            oid = new ObjectIdentifier
-                (mechElement.getMechanism().toString());
-        } catch (IOException e) {
-            throw new GSSExceptionImpl(GSSException.FAILURE,
-                                       "Invalid OID String ");
-        }
-        DerOutputStream dout = new DerOutputStream();
-        try {
-            dout.putOID(oid);
-        } catch (IOException e) {
-            throw new GSSExceptionImpl(GSSException.FAILURE,
-                                   "Could not ASN.1 Encode "
-                                   + oid.toString());
-        }
-        oidBytes = dout.toByteArray();
-
-        byte[] retVal = new byte[2
-                                + 2 + oidBytes.length
-                                + 4 + mechPortion.length];
-        int pos = 0;
-        retVal[pos++] = 0x04;
-        retVal[pos++] = 0x01;
-        retVal[pos++] = (byte) (oidBytes.length>>>8);
-        retVal[pos++] = (byte) oidBytes.length;
-        System.arraycopy(oidBytes, 0, retVal, pos, oidBytes.length);
-        pos += oidBytes.length;
-        retVal[pos++] = (byte) (mechPortion.length>>>24);
-        retVal[pos++] = (byte) (mechPortion.length>>>16);
-        retVal[pos++] = (byte) (mechPortion.length>>>8);
-        retVal[pos++] = (byte)  mechPortion.length;
-        System.arraycopy(mechPortion, 0, retVal, pos, mechPortion.length);
-        return retVal;
+	byte[] retVal = new byte[2 
+				+ 2 + oidBytes.length 
+				+ 4 + mechPortion.length];
+	int pos = 0;
+	retVal[pos++] = 0x04;
+	retVal[pos++] = 0x01;
+	retVal[pos++] = (byte) (oidBytes.length>>>8);
+	retVal[pos++] = (byte) oidBytes.length;
+	System.arraycopy(oidBytes, 0, retVal, pos, oidBytes.length);
+	pos += oidBytes.length;
+	retVal[pos++] = (byte) (mechPortion.length>>>24);
+	retVal[pos++] = (byte) (mechPortion.length>>>16);
+	retVal[pos++] = (byte) (mechPortion.length>>>8);
+	retVal[pos++] = (byte)  mechPortion.length;
+	System.arraycopy(mechPortion, 0, retVal, pos, mechPortion.length);
+	return retVal;
+    }
+  
+    public String toString() { 
+	 return printableName;
+	
     }
 
-    public String toString() {
-         return printableName;
-
+    public Oid getStringNameType() throws GSSException { 
+	return printableNameType;
     }
 
-    public Oid getStringNameType() throws GSSException {
-        return printableNameType;
-    }
-
-    public boolean isAnonymous() {
+    public boolean isAnonymous() { 
         if (printableNameType == null) {
             return false;
         } else {
@@ -436,42 +437,42 @@ public class GSSNameImpl implements GSSName {
         return true; // Since always canonicalized for some mech
     }
 
-    public synchronized GSSNameSpi getElement(Oid mechOid)
-        throws GSSException {
+    public synchronized GSSNameSpi getElement(Oid mechOid) 
+	throws GSSException {
 
-        GSSNameSpi retVal = elements.get(mechOid);
+	GSSNameSpi retVal = elements.get(mechOid);
 
-        if (retVal == null) {
-            if (appNameStr != null) {
-                retVal = gssManager.getNameElement
-                    (appNameStr, appNameType, mechOid);
-            } else {
-                retVal = gssManager.getNameElement
-                    (appNameBytes, appNameType, mechOid);
-            }
-            elements.put(mechOid, retVal);
-        }
-        return retVal;
+	if (retVal == null) {
+	    if (appNameStr != null) {
+		retVal = gssManager.getNameElement
+		    (appNameStr, appNameType, mechOid);
+	    } else {
+		retVal = gssManager.getNameElement
+		    (appNameBytes, appNameType, mechOid);
+	    }
+	    elements.put(mechOid, retVal);
+	}
+	return retVal;
     }
 
     Set<GSSNameSpi> getElements() {
-        return new HashSet<GSSNameSpi>(elements.values());
+	return new HashSet<GSSNameSpi>(elements.values());
     }
 
     private static String getNameTypeStr(Oid nameTypeOid) {
 
-        if (nameTypeOid == null)
-            return "(NT is null)";
+	if (nameTypeOid == null)
+	    return "(NT is null)";
 
-        if (nameTypeOid.equals(NT_USER_NAME))
-            return "NT_USER_NAME";
-        if (nameTypeOid.equals(NT_HOSTBASED_SERVICE))
-            return "NT_HOSTBASED_SERVICE";
-        if (nameTypeOid.equals(NT_EXPORT_NAME))
-            return "NT_EXPORT_NAME";
-        if (nameTypeOid.equals(GSSUtil.NT_GSS_KRB5_PRINCIPAL))
-            return "NT_GSS_KRB5_PRINCIPAL";
-        else
-            return "Unknown";
+	if (nameTypeOid.equals(NT_USER_NAME))
+	    return "NT_USER_NAME";
+	if (nameTypeOid.equals(NT_HOSTBASED_SERVICE))
+	    return "NT_HOSTBASED_SERVICE";
+	if (nameTypeOid.equals(NT_EXPORT_NAME))
+	    return "NT_EXPORT_NAME";
+	if (nameTypeOid.equals(GSSUtil.NT_GSS_KRB5_PRINCIPAL))
+	    return "NT_GSS_KRB5_PRINCIPAL";
+	else
+	    return "Unknown";
     }
 }

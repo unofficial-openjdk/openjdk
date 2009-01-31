@@ -49,18 +49,18 @@ public class ContextManager {
     private Vector<ContextListener> contextListeners = new Vector<ContextListener>();
 
     public ContextManager(Environment env) {
-        classManager = env.getClassManager();
-        runtime = env.getExecutionManager();
-        mainClassName = "";
-        vmArguments = "";
-        commandArguments = "";
-        currentThread = null;
+	classManager = env.getClassManager();
+	runtime = env.getExecutionManager();
+	mainClassName = "";
+	vmArguments = "";
+	commandArguments = "";
+	currentThread = null;
 
-        ContextManagerListener listener = new ContextManagerListener();
-        runtime.addJDIListener(listener);
-        runtime.addSessionListener(listener);
+	ContextManagerListener listener = new ContextManagerListener();
+	runtime.addJDIListener(listener);
+	runtime.addSessionListener(listener);
     }
-
+    
     // Program execution defaults.
 
     //### Should there be change listeners for these?
@@ -68,35 +68,35 @@ public class ContextManager {
     //### synchronized with command input while it was open.
 
     public String getMainClassName() {
-        return mainClassName;
+	return mainClassName;
     }
 
     public void setMainClassName(String mainClassName) {
-        this.mainClassName = mainClassName;
+	this.mainClassName = mainClassName;
     }
 
     public String getVmArguments() {
-        return processClasspathDefaults(vmArguments);
+	return processClasspathDefaults(vmArguments);
     }
 
     public void setVmArguments(String vmArguments) {
-        this.vmArguments = vmArguments;
+	this.vmArguments = vmArguments;
     }
 
     public String getProgramArguments() {
-        return commandArguments;
+	return commandArguments;
     }
 
     public void setProgramArguments(String commandArguments) {
-        this.commandArguments = commandArguments;
+	this.commandArguments = commandArguments;
     }
 
     public String getRemotePort() {
-        return remotePort;
+	return remotePort;
     }
 
     public void setRemotePort(String remotePort) {
-        this.remotePort = remotePort;
+	this.remotePort = remotePort;
 
     }
 
@@ -104,30 +104,30 @@ public class ContextManager {
     // Miscellaneous debugger session preferences.
 
     public boolean getVerboseFlag() {
-        return verbose;
+	return verbose;
     }
 
     public void setVerboseFlag(boolean verbose) {
-        this.verbose = verbose;
+	this.verbose = verbose;
     }
 
 
     // Thread focus.
 
     public ThreadReference getCurrentThread() {
-        return currentThread;
+	return currentThread;
     }
 
     public void setCurrentThread(ThreadReference t) {
-        if (t != currentThread) {
-            currentThread = t;
-            notifyCurrentThreadChanged(t);
-        }
+	if (t != currentThread) {
+	    currentThread = t;
+	    notifyCurrentThreadChanged(t);
+	}
     }
 
     public void setCurrentThreadInvalidate(ThreadReference t) {
-        currentThread = t;
-        notifyCurrentFrameChanged(runtime.threadInfo(t),
+	currentThread = t;
+        notifyCurrentFrameChanged(runtime.threadInfo(t), 
                                   0, true);
     }
 
@@ -144,12 +144,12 @@ public class ContextManager {
 
     /******
     public int getCurrentFrameIndex() {
-        return getCurrentFrameIndex(currentThreadInfo);
+	return getCurrentFrameIndex(currentThreadInfo);
     }
     ******/
 
     public int getCurrentFrameIndex(ThreadReference t) {
-        return getCurrentFrameIndex(runtime.threadInfo(t));
+	return getCurrentFrameIndex(runtime.threadInfo(t));
     }
 
     //### Used in StackTraceTool.
@@ -157,24 +157,24 @@ public class ContextManager {
         if (tinfo == null) {
             return 0;
         }
-        Integer currentFrame = (Integer)tinfo.getUserObject();
-        if (currentFrame == null) {
-            return 0;
-        } else {
-            return currentFrame.intValue();
-        }
+	Integer currentFrame = (Integer)tinfo.getUserObject();
+	if (currentFrame == null) {
+	    return 0;
+	} else {
+	    return currentFrame.intValue();
+	}
     }
 
     public int moveCurrentFrameIndex(ThreadReference t, int count) throws VMNotInterruptedException {
-        return setCurrentFrameIndex(t,count, true);
+	return setCurrentFrameIndex(t,count, true);
     }
 
     public int setCurrentFrameIndex(ThreadReference t, int newIndex) throws VMNotInterruptedException {
-        return setCurrentFrameIndex(t, newIndex, false);
+	return setCurrentFrameIndex(t, newIndex, false);
     }
 
     public int setCurrentFrameIndex(int newIndex) throws VMNotInterruptedException {
-        if (currentThread == null) {
+	if (currentThread == null) {
             return 0;
         } else {
             return setCurrentFrameIndex(currentThread, newIndex, false);
@@ -183,58 +183,58 @@ public class ContextManager {
 
     private int setCurrentFrameIndex(ThreadReference t, int x, boolean relative) throws VMNotInterruptedException {
         boolean sameThread = t.equals(currentThread);
-        ThreadInfo tinfo = runtime.threadInfo(t);
+	ThreadInfo tinfo = runtime.threadInfo(t);
         if (tinfo == null) {
             return 0;
         }
-        int maxIndex = tinfo.getFrameCount()-1;
-        int oldIndex = getCurrentFrameIndex(tinfo);
+	int maxIndex = tinfo.getFrameCount()-1;
+	int oldIndex = getCurrentFrameIndex(tinfo);
         int newIndex = relative? oldIndex + x : x;
-        if (newIndex > maxIndex) {
-            newIndex = maxIndex;
-        } else  if (newIndex < 0) {
-            newIndex = 0;
-        }
+	if (newIndex > maxIndex) {
+	    newIndex = maxIndex;
+	} else 	if (newIndex < 0) {
+	    newIndex = 0;
+	}
         if (!sameThread || newIndex != oldIndex) {  // don't recurse
             setCurrentFrameIndex(tinfo, newIndex);
         }
-        return newIndex - oldIndex;
+	return newIndex - oldIndex;
     }
 
     private void setCurrentFrameIndex(ThreadInfo tinfo, int index) {
-        tinfo.setUserObject(new Integer(index));
-        //### In fact, the value may not have changed at this point.
-        //### We need to signal that the user attempted to change it,
-        //### however, so that the selection can be "warped" to the
-        //### current location.
-        notifyCurrentFrameChanged(tinfo.thread(), index);
+	tinfo.setUserObject(new Integer(index));
+	//### In fact, the value may not have changed at this point.
+	//### We need to signal that the user attempted to change it,
+	//### however, so that the selection can be "warped" to the
+	//### current location.
+	notifyCurrentFrameChanged(tinfo.thread(), index);
     }
 
     public StackFrame getCurrentFrame() throws VMNotInterruptedException {
-        return getCurrentFrame(runtime.threadInfo(currentThread));
+	return getCurrentFrame(runtime.threadInfo(currentThread));
     }
 
     public StackFrame getCurrentFrame(ThreadReference t) throws VMNotInterruptedException {
-        return getCurrentFrame(runtime.threadInfo(t));
+	return getCurrentFrame(runtime.threadInfo(t));
     }
 
     public StackFrame getCurrentFrame(ThreadInfo tinfo) throws VMNotInterruptedException {
-        int index = getCurrentFrameIndex(tinfo);
-        try {
-            // It is possible, though unlikely, that the VM was interrupted
-            // before the thread created its Java stack.
-            return tinfo.getFrame(index);
-        } catch (FrameIndexOutOfBoundsException e) {
-            return null;
-        }
+	int index = getCurrentFrameIndex(tinfo);
+	try {
+	    // It is possible, though unlikely, that the VM was interrupted
+	    // before the thread created its Java stack.
+	    return tinfo.getFrame(index);
+	} catch (FrameIndexOutOfBoundsException e) {
+	    return null;
+	}
     }
 
     public void addContextListener(ContextListener cl) {
-        contextListeners.add(cl);
+	contextListeners.add(cl);
     }
 
     public void removeContextListener(ContextListener cl) {
-        contextListeners.remove(cl);
+	contextListeners.remove(cl);
     }
 
     //### These notifiers are fired only in response to USER-INITIATED changes
@@ -258,50 +258,50 @@ public class ContextManager {
     }
 
     private void notifyCurrentFrameChanged(ThreadReference t, int index) {
-        notifyCurrentFrameChanged(runtime.threadInfo(t),
+        notifyCurrentFrameChanged(runtime.threadInfo(t), 
                                   index, false);
     }
 
     private void notifyCurrentFrameChanged(ThreadInfo tinfo, int index,
                                            boolean invalidate) {
-        Vector l = (Vector)contextListeners.clone();
-        CurrentFrameChangedEvent evt =
-            new CurrentFrameChangedEvent(this, tinfo, index, invalidate);
-        for (int i = 0; i < l.size(); i++) {
-            ((ContextListener)l.elementAt(i)).currentFrameChanged(evt);
-        }
+	Vector l = (Vector)contextListeners.clone();
+	CurrentFrameChangedEvent evt =
+	    new CurrentFrameChangedEvent(this, tinfo, index, invalidate);
+	for (int i = 0; i < l.size(); i++) {
+	    ((ContextListener)l.elementAt(i)).currentFrameChanged(evt);
+	}
     }
 
     private class ContextManagerListener extends JDIAdapter
-                       implements SessionListener, JDIListener {
+		       implements SessionListener, JDIListener {
 
         // SessionListener
 
         public void sessionStart(EventObject e) {
-            invalidateCurrentThread();
-        }
+	    invalidateCurrentThread();
+	}
 
         public void sessionInterrupt(EventObject e) {
-            setCurrentThreadInvalidate(currentThread);
-        }
+	    setCurrentThreadInvalidate(currentThread);
+	}
 
         public void sessionContinue(EventObject e) {
-            invalidateCurrentThread();
-        }
+	    invalidateCurrentThread();
+	}
 
         // JDIListener
 
-        public void locationTrigger(LocationTriggerEventSet e) {
-            setCurrentThreadInvalidate(e.getThread());
-        }
+	public void locationTrigger(LocationTriggerEventSet e) {
+	    setCurrentThreadInvalidate(e.getThread());
+	}
 
-        public void exception(ExceptionEventSet e) {
-            setCurrentThreadInvalidate(e.getThread());
-        }
+	public void exception(ExceptionEventSet e) {
+	    setCurrentThreadInvalidate(e.getThread());
+	}
 
         public void vmDisconnect(VMDisconnectEventSet e) {
-            invalidateCurrentThread();
-        }
+	    invalidateCurrentThread();
+	}
 
     }
 
@@ -319,15 +319,15 @@ public class ContextManager {
     private String processClasspathDefaults(String javaArgs) {
         if (javaArgs.indexOf("-classpath ") == -1) {
             StringBuffer munged = new StringBuffer(javaArgs);
-            SearchPath classpath = classManager.getClassPath();
-            if (classpath.isEmpty()) {
-                String envcp = System.getProperty("env.class.path");
+	    SearchPath classpath = classManager.getClassPath();
+	    if (classpath.isEmpty()) {
+		String envcp = System.getProperty("env.class.path");
                 if ((envcp != null) && (envcp.length() > 0)) {
                     munged.append(" -classpath " + envcp);
                 }
-            } else {
-                munged.append(" -classpath " + classpath.asString());
-            }
+	    } else {
+		munged.append(" -classpath " + classpath.asString());
+	    }
             return munged.toString();
         } else {
             return javaArgs;

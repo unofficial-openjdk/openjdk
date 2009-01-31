@@ -59,7 +59,7 @@
  *
  * <a name="charenc"></a>
  * <h3>Character Encodings</h3>
- *
+ * 
  * The specification of the {@link java.nio.charset.Charset
  * java.nio.charset.Charset} class describes the naming conventions
  * for character encodings as well as the set of standard encodings

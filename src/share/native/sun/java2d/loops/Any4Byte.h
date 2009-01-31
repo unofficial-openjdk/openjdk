@@ -31,9 +31,9 @@
  * LoopMacros.h to manipulate a surface of type "Any4Byte".
  */
 
-typedef jubyte  Any4ByteDataType;
+typedef jubyte	Any4ByteDataType;
 
-#define Any4BytePixelStride     4
+#define Any4BytePixelStride	4
 
 #define DeclareAny4ByteLoadVars(PREFIX)
 #define DeclareAny4ByteStoreVars(PREFIX)
@@ -48,46 +48,46 @@ typedef jubyte  Any4ByteDataType;
 
 #define ExtractAny4BytePixelData(PIXEL, PREFIX) \
     do { \
-        PREFIX ## 0 = (jubyte) (PIXEL); \
-        PREFIX ## 1 = (jubyte) (PIXEL >> 8); \
-        PREFIX ## 2 = (jubyte) (PIXEL >> 16); \
-        PREFIX ## 3 = (jubyte) (PIXEL >> 24); \
+	PREFIX ## 0 = (jubyte) (PIXEL); \
+	PREFIX ## 1 = (jubyte) (PIXEL >> 8); \
+	PREFIX ## 2 = (jubyte) (PIXEL >> 16); \
+	PREFIX ## 3 = (jubyte) (PIXEL >> 24); \
     } while (0)
 
 #define StoreAny4BytePixelData(pPix, x, pixel, PREFIX) \
     do { \
-        (pPix)[4*x+0] = PREFIX ## 0; \
-        (pPix)[4*x+1] = PREFIX ## 1; \
-        (pPix)[4*x+2] = PREFIX ## 2; \
-        (pPix)[4*x+3] = PREFIX ## 3; \
+	(pPix)[4*x+0] = PREFIX ## 0; \
+	(pPix)[4*x+1] = PREFIX ## 1; \
+	(pPix)[4*x+2] = PREFIX ## 2; \
+	(pPix)[4*x+3] = PREFIX ## 3; \
     } while (0)
 
 #define CopyAny4BytePixelData(pSrc, sx, pDst, dx) \
     do { \
-        (pDst)[4*dx+0] = (pSrc)[4*sx+0]; \
-        (pDst)[4*dx+1] = (pSrc)[4*sx+1]; \
-        (pDst)[4*dx+2] = (pSrc)[4*sx+2]; \
-        (pDst)[4*dx+3] = (pSrc)[4*sx+3]; \
+	(pDst)[4*dx+0] = (pSrc)[4*sx+0]; \
+	(pDst)[4*dx+1] = (pSrc)[4*sx+1]; \
+	(pDst)[4*dx+2] = (pSrc)[4*sx+2]; \
+	(pDst)[4*dx+3] = (pSrc)[4*sx+3]; \
     } while (0)
 
 #define XorCopyAny4BytePixelData(pSrc, pDst, x, xorpixel, XORPREFIX) \
     do { \
-        (pDst)[4*x+0] ^= (pSrc)[4*x+0] ^ XORPREFIX ## 0; \
-        (pDst)[4*x+1] ^= (pSrc)[4*x+1] ^ XORPREFIX ## 1; \
-        (pDst)[4*x+2] ^= (pSrc)[4*x+2] ^ XORPREFIX ## 2; \
-        (pDst)[4*x+3] ^= (pSrc)[4*x+3] ^ XORPREFIX ## 3; \
+	(pDst)[4*x+0] ^= (pSrc)[4*x+0] ^ XORPREFIX ## 0; \
+	(pDst)[4*x+1] ^= (pSrc)[4*x+1] ^ XORPREFIX ## 1; \
+	(pDst)[4*x+2] ^= (pSrc)[4*x+2] ^ XORPREFIX ## 2; \
+	(pDst)[4*x+3] ^= (pSrc)[4*x+3] ^ XORPREFIX ## 3; \
     } while (0)
 
 #define XorAny4BytePixelData(srcpixel, SRCPREFIX, pDst, x, \
                              xorpixel, XORPREFIX, mask, MASKPREFIX) \
     do { \
-        (pDst)[4*x+0] ^= ((SRCPREFIX ## 0 ^ XORPREFIX ## 0) & \
+	(pDst)[4*x+0] ^= ((SRCPREFIX ## 0 ^ XORPREFIX ## 0) & \
                           ~MASKPREFIX ## 0); \
-        (pDst)[4*x+1] ^= ((SRCPREFIX ## 1 ^ XORPREFIX ## 1) & \
+	(pDst)[4*x+1] ^= ((SRCPREFIX ## 1 ^ XORPREFIX ## 1) & \
                           ~MASKPREFIX ## 1); \
-        (pDst)[4*x+2] ^= ((SRCPREFIX ## 2 ^ XORPREFIX ## 2) & \
+	(pDst)[4*x+2] ^= ((SRCPREFIX ## 2 ^ XORPREFIX ## 2) & \
                           ~MASKPREFIX ## 2); \
-        (pDst)[4*x+3] ^= ((SRCPREFIX ## 3 ^ XORPREFIX ## 3) & \
+	(pDst)[4*x+3] ^= ((SRCPREFIX ## 3 ^ XORPREFIX ## 3) & \
                           ~MASKPREFIX ## 3); \
     } while (0)
 

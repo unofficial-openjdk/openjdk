@@ -38,10 +38,11 @@ import sun.security.pkcs11.wrapper.*;
  * this class, the id() method to obtain the session id.
  *
  * @author  Andreas Sterbenz
+ * @version %I%, %G%
  * @since   1.5
  */
 final class Session implements Comparable<Session> {
-
+    
     // time after which to close idle sessions, in milliseconds (3 minutes)
     private final static long MAX_IDLE_TIME = 3 * 60 * 1000;
 
@@ -50,62 +51,63 @@ final class Session implements Comparable<Session> {
 
     // session id
     private final long id;
-
+    
     // number of objects created within this session
     private final AtomicInteger createdObjects;
-
+    
     // time this session was last used
     // not synchronized/volatile for performance, so may be unreliable
     // this could lead to idle sessions being closed early, but that is harmless
     private long lastAccess;
-
+    
     Session(Token token, long id) {
-        this.token = token;
-        this.id = id;
-        createdObjects = new AtomicInteger();
-        id();
+	this.token = token;
+	this.id = id;
+	createdObjects = new AtomicInteger();
+	id();
     }
-
+    
     public int compareTo(Session other) {
-        if (this.lastAccess == other.lastAccess) {
-            return 0;
-        } else {
-            return (this.lastAccess < other.lastAccess) ? -1 : 1;
-        }
+	if (this.lastAccess == other.lastAccess) {
+	    return 0;
+	} else {
+	    return (this.lastAccess < other.lastAccess) ? -1 : 1;
+	}
     }
-
+    
     boolean isLive(long currentTime) {
-        return currentTime - lastAccess < MAX_IDLE_TIME;
+	return currentTime - lastAccess < MAX_IDLE_TIME;
     }
 
     long idInternal() {
-        return id;
+	return id;
     }
-
+    
     long id() {
-        if (token.isPresent(this) == false) {
-            throw new ProviderException("Token has been removed");
-        }
-        lastAccess = System.currentTimeMillis();
-        return id;
+	if (token.isPresent(this) == false) {
+	    throw new ProviderException("Token has been removed");
+	}
+	lastAccess = System.currentTimeMillis();
+	return id;
     }
-
+    
     void addObject() {
-        int n = createdObjects.incrementAndGet();
-        // XXX update statistics in session manager if n == 1
+	int n = createdObjects.incrementAndGet();
+	// XXX update statistics in session manager if n == 1
     }
-
+    
     void removeObject() {
-        int n = createdObjects.decrementAndGet();
-        if (n == 0) {
-            token.sessionManager.demoteObjSession(this);
-        } else if (n < 0) {
-            throw new ProviderException("Internal error: objects created " + n);
-        }
+	int n = createdObjects.decrementAndGet();
+	if (n == 0) {
+	    token.sessionManager.demoteObjSession(this);
+	} else if (n < 0) {
+	    throw new ProviderException("Internal error: objects created " + n);
+	}
     }
-
+    
     boolean hasObjects() {
-        return createdObjects.get() != 0;
+	return createdObjects.get() != 0;
     }
-
+    
 }
+

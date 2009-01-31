@@ -48,12 +48,12 @@ public class WEmbeddedFrame extends EmbeddedFrame {
     private int imgWid = 0;
     private int imgHgt = 0;
 
-    private static final int MAX_BAND_SIZE = (1024*30);
+    private static final int MAX_BAND_SIZE = (1024*30); 
 
     public WEmbeddedFrame() {
         this((long)0);
     }
-
+    
     /**
      * @deprecated This constructor will be removed in 1.5
      */
@@ -82,7 +82,7 @@ public class WEmbeddedFrame extends EmbeddedFrame {
      * Get the native handle
     */
     public long getEmbedderHandle() {
-        return handle;
+	return handle;
     }
 
     /*
@@ -90,89 +90,89 @@ public class WEmbeddedFrame extends EmbeddedFrame {
      */
 
     void print(long hdc) {
-        BufferedImage bandImage = null;
+	BufferedImage bandImage = null;
+ 
+	int xscale = 1;
+	int yscale = 1;
 
-        int xscale = 1;
-        int yscale = 1;
+	/* Is this is either a printer DC or an enhanced meta file DC ?
+	 * Mozilla passes in a printer DC, IE passes plug-in a DC for an
+	 * enhanced meta file. Its possible we may be passed to a memory
+	 * DC. If we here create a larger image, draw in to it and have
+	 * that memory DC then lose the image resolution only to scale it
+	 * back up again when sending to a printer it will look really bad.
+	 * So, is this is either a printer DC or an enhanced meta file DC ?
+	 * Scale only if it is. Use a 4x scale factor, partly since for
+	 * an enhanced meta file we don't know anything about the
+	 * real resolution of the destination.
+	 * 
+	 * For a printer DC we could probably derive the scale factor to use
+	 * by querying LOGPIXELSX/Y, and dividing that by the screen
+	 * resolution (typically 96 dpi or 120 dpi) but that would typically
+	 * make for even bigger output for marginal extra quality.
+	 * But for enhanced meta file we don't know anything about the
+	 * real resolution of the destination so 
+	 */
+	if (isPrinterDC(hdc)) {
+	    xscale = 4;
+	    yscale = 4;
+	}
 
-        /* Is this is either a printer DC or an enhanced meta file DC ?
-         * Mozilla passes in a printer DC, IE passes plug-in a DC for an
-         * enhanced meta file. Its possible we may be passed to a memory
-         * DC. If we here create a larger image, draw in to it and have
-         * that memory DC then lose the image resolution only to scale it
-         * back up again when sending to a printer it will look really bad.
-         * So, is this is either a printer DC or an enhanced meta file DC ?
-         * Scale only if it is. Use a 4x scale factor, partly since for
-         * an enhanced meta file we don't know anything about the
-         * real resolution of the destination.
-         *
-         * For a printer DC we could probably derive the scale factor to use
-         * by querying LOGPIXELSX/Y, and dividing that by the screen
-         * resolution (typically 96 dpi or 120 dpi) but that would typically
-         * make for even bigger output for marginal extra quality.
-         * But for enhanced meta file we don't know anything about the
-         * real resolution of the destination so
-         */
-        if (isPrinterDC(hdc)) {
-            xscale = 4;
-            yscale = 4;
-        }
+	int frameHeight = getHeight();
+	if (bandImage == null) {
+	    bandWidth = getWidth();
+	    if (bandWidth % 4 != 0) {
+		bandWidth += (4 - (bandWidth % 4));
+	    }
+	    if (bandWidth <= 0) {
+		return;
+	    }
 
-        int frameHeight = getHeight();
-        if (bandImage == null) {
-            bandWidth = getWidth();
-            if (bandWidth % 4 != 0) {
-                bandWidth += (4 - (bandWidth % 4));
-            }
-            if (bandWidth <= 0) {
-                return;
-            }
+	    bandHeight = Math.min(MAX_BAND_SIZE/bandWidth, frameHeight);
 
-            bandHeight = Math.min(MAX_BAND_SIZE/bandWidth, frameHeight);
+	    imgWid = (int)(bandWidth * xscale);
+	    imgHgt = (int)(bandHeight * yscale);
+	    bandImage = new BufferedImage(imgWid, imgHgt,
+					  BufferedImage.TYPE_3BYTE_BGR);
+	}
 
-            imgWid = (int)(bandWidth * xscale);
-            imgHgt = (int)(bandHeight * yscale);
-            bandImage = new BufferedImage(imgWid, imgHgt,
-                                          BufferedImage.TYPE_3BYTE_BGR);
-        }
+	Graphics clearGraphics = bandImage.getGraphics();
+	clearGraphics.setColor(Color.white);
+	Graphics2D g2d = (Graphics2D)bandImage.getGraphics();
+	g2d.translate(0, imgHgt);
+	g2d.scale(xscale, -yscale);
 
-        Graphics clearGraphics = bandImage.getGraphics();
-        clearGraphics.setColor(Color.white);
-        Graphics2D g2d = (Graphics2D)bandImage.getGraphics();
-        g2d.translate(0, imgHgt);
-        g2d.scale(xscale, -yscale);
+	ByteInterleavedRaster ras = (ByteInterleavedRaster)bandImage.getRaster();
+	byte[] data = ras.getDataStorage();
 
-        ByteInterleavedRaster ras = (ByteInterleavedRaster)bandImage.getRaster();
-        byte[] data = ras.getDataStorage();
+	for (int bandTop = 0; bandTop < frameHeight; bandTop += bandHeight) {
+	    clearGraphics.fillRect(0, 0, bandWidth, bandHeight);
 
-        for (int bandTop = 0; bandTop < frameHeight; bandTop += bandHeight) {
-            clearGraphics.fillRect(0, 0, bandWidth, bandHeight);
+	    printComponents(g2d);
+	    int imageOffset =0;
+	    int currBandHeight = bandHeight;
+	    int currImgHeight = imgHgt;
+	    if ((bandTop+bandHeight) > frameHeight) {
+		// last band
+		currBandHeight = frameHeight - bandTop;
+		currImgHeight = (int)(currBandHeight*yscale);
 
-            printComponents(g2d);
-            int imageOffset =0;
-            int currBandHeight = bandHeight;
-            int currImgHeight = imgHgt;
-            if ((bandTop+bandHeight) > frameHeight) {
-                // last band
-                currBandHeight = frameHeight - bandTop;
-                currImgHeight = (int)(currBandHeight*yscale);
-
-                // multiply by 3 because the image is a 3 byte BGR
-                imageOffset = imgWid*(imgHgt-currImgHeight)*3;
-            }
-
-            printBand(hdc, data, imageOffset,
-                      0, 0, imgWid, currImgHeight,
-                      0, bandTop, bandWidth, currBandHeight);
-            g2d.translate(0, -bandHeight);
-        }
+		// multiply by 3 because the image is a 3 byte BGR
+		imageOffset = imgWid*(imgHgt-currImgHeight)*3;
+	    }
+	
+	    printBand(hdc, data, imageOffset,
+		      0, 0, imgWid, currImgHeight,
+		      0, bandTop, bandWidth, currBandHeight);
+	    g2d.translate(0, -bandHeight);
+	}
     }
 
     protected native boolean isPrinterDC(long hdc);
-
+  
     protected native void printBand(long hdc, byte[] data, int offset,
-                                    int sx, int sy, int swidth, int sheight,
-                                    int dx, int dy, int dwidth, int dheight);
+				    int sx, int sy, int swidth, int sheight,
+				    int dx, int dy, int dwidth, int dheight);
 
     /**
      * Initialize JNI field IDs

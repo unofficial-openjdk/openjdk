@@ -1,5 +1,5 @@
 /**
-    @test
+    @test  @(#)Bug6275682.java	1.1 07/01/03
     @summary Verifying that the language names starts with lowercase in spanish
     @bug 6275682
 */
@@ -7,12 +7,12 @@
 import java.util.Locale;
 
 public class Bug6275682 {
-
+    
    public static void main (String[] args) throws Exception {
         Locale es = new Locale ("es");
         String[] isoLangs = es.getISOLanguages ();
         String error = "";
-
+        
         for (int i = 0; i < isoLangs.length; i++) {
             Locale current = new Locale (isoLangs[i]);
             String localeString = current.getDisplayLanguage (es);
@@ -26,6 +26,6 @@ public class Bug6275682 {
             throw new Exception ("\nFollowing language names starts with upper-case letter: "
                     + error + "\nLower-case expected!");
         }
-
-    }
+        
+    } 
 }

@@ -32,6 +32,7 @@ package java.util;
  * method or constructor in this class will cause a {@link
  * NullPointerException} to be thrown.
  *
+ * @version 	%I%, %G%
  * @since 1.5
  */
 public class MissingFormatWidthException extends IllegalFormatException {
@@ -42,15 +43,15 @@ public class MissingFormatWidthException extends IllegalFormatException {
 
     /**
      * Constructs an instance of this class with the specified format
-     * specifier.
+     * specifier. 
      *
      * @param  s
      *         The format specifier which does not have a width
      */
     public MissingFormatWidthException(String s) {
-        if (s == null)
-            throw new NullPointerException();
-        this.s = s;
+	if (s == null)
+	    throw new NullPointerException();
+	this.s = s;
     }
 
     /**
@@ -59,10 +60,10 @@ public class MissingFormatWidthException extends IllegalFormatException {
      * @return  The format specifier which does not have a width
      */
     public String getFormatSpecifier() {
-        return s;
+	return s;
     }
 
     public String getMessage() {
-        return s;
+	return s;
     }
 }

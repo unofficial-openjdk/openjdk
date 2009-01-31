@@ -31,10 +31,10 @@ package java.util;
  * differ from enumerations in two ways:
  *
  * <ul>
- *      <li> Iterators allow the caller to remove elements from the
- *           underlying collection during the iteration with well-defined
- *           semantics.
- *      <li> Method names have been improved.
+ *	<li> Iterators allow the caller to remove elements from the
+ *	     underlying collection during the iteration with well-defined
+ * 	     semantics.
+ *	<li> Method names have been improved.
  * </ul>
  *
  * <p>This interface is a member of the
@@ -42,6 +42,7 @@ package java.util;
  * Java Collections Framework</a>.
  *
  * @author  Josh Bloch
+ * @version %I%, %G%
  * @see Collection
  * @see ListIterator
  * @see Iterable
@@ -74,12 +75,12 @@ public interface Iterator<E> {
      * method.
      *
      * @throws UnsupportedOperationException if the {@code remove}
-     *         operation is not supported by this iterator
+     *	       operation is not supported by this iterator
      *
      * @throws IllegalStateException if the {@code next} method has not
-     *         yet been called, or the {@code remove} method has already
-     *         been called after the last call to the {@code next}
-     *         method
+     *	       yet been called, or the {@code remove} method has already
+     *	       been called after the last call to the {@code next}
+     *	       method
      */
     void remove();
 }

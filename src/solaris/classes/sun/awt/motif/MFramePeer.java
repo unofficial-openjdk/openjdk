@@ -52,53 +52,53 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
     }
 
     MFramePeer(Frame target) {
-        super();
-        // set the window attributes for this Frame
-        winAttr.nativeDecor = !target.isUndecorated();
-        winAttr.initialFocus = true;
-        winAttr.isResizable =  target.isResizable();
-        winAttr.initialState = target.getState();
-        winAttr.title = target.getTitle();
-        winAttr.icon = target.getIconImage();
+	super();
+	// set the window attributes for this Frame
+        winAttr.nativeDecor = !target.isUndecorated();  
+	winAttr.initialFocus = true;
+	winAttr.isResizable =  target.isResizable();
+	winAttr.initialState = target.getState();
+	winAttr.title = target.getTitle();
+	winAttr.icon = target.getIconImage();
         if (winAttr.nativeDecor) {
             winAttr.decorations = winAttr.AWT_DECOR_ALL;
         } else {
             winAttr.decorations = winAttr.AWT_DECOR_NONE;
         }
+	
+	// for input method windows, use minimal decorations	
+	if (target instanceof InputMethodWindow) {
+	    winAttr.initialFocus = false;
+	    winAttr.decorations = (winAttr.AWT_DECOR_TITLE | winAttr.AWT_DECOR_BORDER);
+	}
 
-        // for input method windows, use minimal decorations
-        if (target instanceof InputMethodWindow) {
-            winAttr.initialFocus = false;
-            winAttr.decorations = (winAttr.AWT_DECOR_TITLE | winAttr.AWT_DECOR_BORDER);
-        }
-
-        // create and init native component
-        init( target);
+        // create and init native component 
+	init( target);
     if (winAttr.icon != null) {
         setIconImage(winAttr.icon);
     }
-        allFrames.addElement(this);
+	allFrames.addElement(this);
     }
 
     public void setTitle(String title) {
-        pSetTitle(title);
+	pSetTitle(title);
     }
 
     protected void disposeImpl() {
-        allFrames.removeElement(this);
-        super.disposeImpl();
+	allFrames.removeElement(this);
+	super.disposeImpl();
     }
 
     public void setMenuBar(MenuBar mb) {
-        MMenuBarPeer mbpeer = (MMenuBarPeer) MToolkit.targetToPeer(mb);
-        pSetMenuBar(mbpeer);
+	MMenuBarPeer mbpeer = (MMenuBarPeer) MToolkit.targetToPeer(mb);
+	pSetMenuBar(mbpeer);
 
-        Rectangle r = target.bounds();
+	Rectangle r = target.bounds();
 
-        pReshape(r.x, r.y, r.width, r.height);
-        if (target.isVisible()) {
-            target.validate();
-        }
+	pReshape(r.x, r.y, r.width, r.height);
+	if (target.isVisible()) {
+	    target.validate();
+	}
     }
 
     public void setIconImage(Image im) {
@@ -122,18 +122,18 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             defaultGC = getGraphicsConfiguration().getDevice().
                 getDefaultConfiguration();
             ColorModel model = defaultGC.getColorModel();
-            WritableRaster raster =
+            WritableRaster raster = 
                 model.createCompatibleWritableRaster(iconWidth, iconHeight);
-            Image image = new BufferedImage(model, raster,
+            Image image = new BufferedImage(model, raster, 
                                             model.isAlphaPremultiplied(),
                                             null);
-
+            
             // ARGB BufferedImage to hunt for transparent pixels
-            BufferedImage bimage =
+            BufferedImage bimage = 
                 new BufferedImage(iconWidth, iconHeight,
                                   BufferedImage.TYPE_INT_ARGB);
             ColorModel alphaCheck = bimage.getColorModel();
-            Graphics g = image.getGraphics();
+            Graphics g = image.getGraphics(); 
             Graphics big = bimage.getGraphics();
             try {
                 g.drawImage(im, 0, 0, iconWidth, iconHeight, null);
@@ -177,12 +177,12 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
                 // Truecolor data
                 intdata = ((DataBufferInt) db).getData();
             }
-            else if (db instanceof DataBufferUShort) {
-                // Truecolor data
-                ushortdata = ((DataBufferUShort) db).getData();
-            }
-               pSetIconImage(bytedata, intdata, ushortdata,
-                          iconWidth, iconHeight);
+	    else if (db instanceof DataBufferUShort) {
+		// Truecolor data
+		ushortdata = ((DataBufferUShort) db).getData();
+	    }
+	       pSetIconImage(bytedata, intdata, ushortdata,
+			  iconWidth, iconHeight);
         }
         }
     }
@@ -191,9 +191,9 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
 
     // [jk] added ushortData for 16-bpp displays
     native void pSetIconImage(byte[] byteData,
-                              int[] intData,
-                              short[] ushortData,
-                              int iconWidth, int iconHeight);
+			      int[] intData,
+			      short[] ushortData,
+			      int iconWidth, int iconHeight);
 
     // NOTE: This method may be called by privileged threads.
     //       DO NOT INVOKE CLIENT CODE ON THIS THREAD!
@@ -222,25 +222,25 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
     static final int BUTTON_Y = CROSSHAIR_INSET + 1;
     static final int BUTTON_W = 17;
     static final int BUTTON_H = 17;
-
+  
     static final int SYS_MENU_X = CROSSHAIR_INSET + 1;
     static final int SYS_MENU_CONTAINED_X = SYS_MENU_X + 5;
     static final int SYS_MENU_CONTAINED_Y = BUTTON_Y + 7;
     static final int SYS_MENU_CONTAINED_W = 8;
     static final int SYS_MENU_CONTAINED_H = 3;
-
+  
     static final int MAXIMIZE_X_DIFF = CROSSHAIR_INSET + BUTTON_W;
     static final int MAXIMIZE_CONTAINED_X_DIFF = MAXIMIZE_X_DIFF - 5;
     static final int MAXIMIZE_CONTAINED_Y = BUTTON_Y + 5;
     static final int MAXIMIZE_CONTAINED_W = 8;
     static final int MAXIMIZE_CONTAINED_H = 8;
-
+  
     static final int MINIMIZE_X_DIFF = MAXIMIZE_X_DIFF + BUTTON_W;
     static final int MINIMIZE_CONTAINED_X_DIFF = MINIMIZE_X_DIFF - 7;
     static final int MINIMIZE_CONTAINED_Y = BUTTON_Y + 7;
     static final int MINIMIZE_CONTAINED_W = 3;
     static final int MINIMIZE_CONTAINED_H = 3;
-
+  
     static final int TITLE_X = SYS_MENU_X + BUTTON_W;
     static final int TITLE_W_DIFF = BUTTON_W * 3 + CROSSHAIR_INSET * 2 - 1;
     static final int TITLE_MID_Y = BUTTON_Y + (BUTTON_H / 2);
@@ -261,18 +261,18 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
     public void print(Graphics g) {
         super.print(g);
 
-        Frame f = (Frame)target;
-        Insets finsets = f.getInsets();
-        Dimension fsize = f.getSize();
+	Frame f = (Frame)target;
+	Insets finsets = f.getInsets();
+	Dimension fsize = f.getSize();
 
-        Color bg = f.getBackground();
-        Color fg = f.getForeground();
-        Color highlight = bg.brighter();
-        Color shadow = bg.darker();
+	Color bg = f.getBackground();
+	Color fg = f.getForeground();
+	Color highlight = bg.brighter();
+	Color shadow = bg.darker();
 
-        // Well, we could query for the currently running window manager
-        // and base the look on that, or we could just always do dtwm.
-        // aim, tball, and levenson all agree we'll just do dtwm.
+	// Well, we could query for the currently running window manager
+	// and base the look on that, or we could just always do dtwm.
+	// aim, tball, and levenson all agree we'll just do dtwm.
 
         if (hasDecorations(MWindowAttributes.AWT_DECOR_BORDER)) {
 
@@ -287,7 +287,7 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             }
             g.drawLine(0, 0, fsize.width, 0);
             g.drawLine(0, 1, fsize.width - 1, 1);
-
+            
             // left outer
             // if (highlight.equals(Color.white)) {
             //     g.setColor(new Color(230, 230, 230));
@@ -297,19 +297,19 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             // }
             g.drawLine(0, 0, 0, fsize.height);
             g.drawLine(1, 0, 1, fsize.height - 1);
-
+            
             // bottom cross-hair
             g.setColor(highlight);
             g.drawLine(CROSSHAIR_INSET + 1, fsize.height - CROSSHAIR_INSET,
-                       fsize.width - CROSSHAIR_INSET,
+                       fsize.width - CROSSHAIR_INSET, 
                        fsize.height - CROSSHAIR_INSET);
-
+            
             // right cross-hair
             // g.setColor(highlight);
             g.drawLine(fsize.width - CROSSHAIR_INSET, CROSSHAIR_INSET + 1,
                        fsize.width - CROSSHAIR_INSET,
                        fsize.height - CROSSHAIR_INSET);
-
+            
             // bottom outer
             g.setColor(shadow);
             g.drawLine(1, fsize.height, fsize.width, fsize.height);
@@ -322,13 +322,13 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
 
             // top cross-hair
             // g.setColor(shadow);
-            g.drawLine(CROSSHAIR_INSET, CROSSHAIR_INSET,
+            g.drawLine(CROSSHAIR_INSET, CROSSHAIR_INSET, 
                        fsize.width - CROSSHAIR_INSET, CROSSHAIR_INSET);
 
             // left cross-hair
             // g.setColor(shadow);
             g.drawLine(CROSSHAIR_INSET, CROSSHAIR_INSET, CROSSHAIR_INSET,
-                   fsize.height - CROSSHAIR_INSET);
+		   fsize.height - CROSSHAIR_INSET);
         }
 
         if (hasDecorations(MWindowAttributes.AWT_DECOR_TITLE)) {
@@ -346,7 +346,7 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             // g.setColor(bg);
             g.fill3DRect(TITLE_X, BUTTON_Y, fsize.width - TITLE_W_DIFF, BUTTON_H,
                          true);
-
+	
             if (hasDecorations(MWindowAttributes.AWT_DECOR_MINIMIZE)) {
 
                 // minimize button
@@ -375,13 +375,13 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             g.setFont(sysfont);
             FontMetrics sysfm = g.getFontMetrics();
             String ftitle = f.getTitle();
-            g.drawString(ftitle,
-                         ((TITLE_X + TITLE_X + fsize.width - TITLE_W_DIFF) / 2) -
-                         (sysfm.stringWidth(ftitle) / 2),
+            g.drawString(ftitle, 
+                         ((TITLE_X + TITLE_X + fsize.width - TITLE_W_DIFF) / 2) - 
+		         (sysfm.stringWidth(ftitle) / 2),
                          TITLE_MID_Y + sysfm.getMaxDescent());
         }
-
-        if (f.isResizable() &&
+            
+	if (f.isResizable() && 
             hasDecorations(MWindowAttributes.AWT_DECOR_RESIZEH)) {
 
             // add resize cross hairs
@@ -435,7 +435,7 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
                        HORIZ_RESIZE_INSET + 1);
             // upper-right vert (highlight)
             // g.setColor(highlight);
-            g.drawLine(fsize.width - VERT_RESIZE_INSET, 2,
+            g.drawLine(fsize.width - VERT_RESIZE_INSET, 2, 
                        fsize.width - VERT_RESIZE_INSET, CROSSHAIR_INSET);
             // lower-left horiz (highlight)
             // g.setColor(highlight);
@@ -444,7 +444,7 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             // lower-left vert (highlight)
             // g.setColor(highlight);
             g.drawLine(VERT_RESIZE_INSET + 1,
-                       fsize.height - CROSSHAIR_INSET + 1,
+                       fsize.height - CROSSHAIR_INSET + 1, 
                        VERT_RESIZE_INSET + 1, fsize.height - 1);
             // lower-right horiz (highlight)
             // g.setColor(highlight);
@@ -456,14 +456,14 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
             g.drawLine(fsize.width - VERT_RESIZE_INSET,
                        fsize.height - CROSSHAIR_INSET + 1,
                        fsize.width - VERT_RESIZE_INSET, fsize.height - 1);
-        }
+	}
 
-        MenuBar mb = f.getMenuBar();
-        if (mb != null) {
-            MMenuBarPeer peer = (MMenuBarPeer) MToolkit.targetToPeer(mb);
-            if (peer != null) {
-                Insets insets = getInsets();
-                Graphics ng = g.create();
+	MenuBar mb = f.getMenuBar();
+	if (mb != null) {
+	    MMenuBarPeer peer = (MMenuBarPeer) MToolkit.targetToPeer(mb);
+	    if (peer != null) {
+	        Insets insets = getInsets();
+	        Graphics ng = g.create();
                 int menubarX = 0;
                 int menubarY = 0;
                 if (hasDecorations(MWindowAttributes.AWT_DECOR_BORDER)) {
@@ -473,14 +473,14 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
                 if (hasDecorations(MWindowAttributes.AWT_DECOR_TITLE)) {
                     menubarY += BUTTON_H;
                 }
-                try {
-                    ng.translate(menubarX, menubarY);
-                    peer.print(ng);
-                } finally {
-                    ng.dispose();
-                }
-            }
-        }
+		try {
+		    ng.translate(menubarX, menubarY);
+	            peer.print(ng);
+		} finally {
+		    ng.dispose();
+		}
+	    }
+	}
     }
 
     // Saveunders are not done by Frame.
@@ -489,9 +489,9 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
     /* Returns the native paint should be posted after setting new size
      */
     public boolean checkNativePaintOnSetBounds(int width, int height) {
-        // Fix for 4418155. Undecorated Frame does not repaint
-        // automticaly if shrinking. Should not wait for Expose
-        return ((Frame)target).isUndecorated() ?
+	// Fix for 4418155. Undecorated Frame does not repaint
+	// automticaly if shrinking. Should not wait for Expose
+	return ((Frame)target).isUndecorated() ? 
             ((width > oldWidth) || (height > oldHeight)):
             ((width != oldWidth) || (height != oldHeight));
     }

@@ -33,7 +33,7 @@ public class CharToByteBig5_HKSCS extends CharToByteHKSCS_2001 {
     }
 
     protected int getNative(char ch) {
-        int r = super.getNative(ch);
-        return (r != 0) ? r : cbBig5.getNative(ch);
+	int r = super.getNative(ch);
+	return (r != 0) ? r : cbBig5.getNative(ch);
     }
 }

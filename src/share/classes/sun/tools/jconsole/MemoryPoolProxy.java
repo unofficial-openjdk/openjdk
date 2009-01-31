@@ -64,9 +64,9 @@ public class MemoryPoolProxy {
                 }
             } catch (Exception e) {
                 assert false;
-            }
-
-        }
+            } 
+   
+        } 
     }
 
     public boolean isCollectedMemoryPool() {
@@ -78,11 +78,11 @@ public class MemoryPoolProxy {
     }
 
     public MemoryPoolStat getStat() throws java.io.IOException {
-        long usageThreshold = (pool.isUsageThresholdSupported()
-                                  ? pool.getUsageThreshold()
+        long usageThreshold = (pool.isUsageThresholdSupported() 
+                                  ? pool.getUsageThreshold() 
                                   : -1);
-        long collectThreshold = (pool.isCollectionUsageThresholdSupported()
-                                  ? pool.getCollectionUsageThreshold()
+        long collectThreshold = (pool.isCollectionUsageThresholdSupported() 
+                                  ? pool.getCollectionUsageThreshold() 
                                   : -1);
         long lastGcStartTime = 0;
         long lastGcEndTime = 0;
@@ -99,7 +99,7 @@ public class MemoryPoolProxy {
 
         Set<Map.Entry<ObjectName,Long>> set = gcMBeans.entrySet();
         for (Map.Entry<ObjectName,Long> e : set) {
-            GarbageCollectorMXBean gc =
+            GarbageCollectorMXBean gc = 
                 client.getMXBean(e.getKey(),
                                  com.sun.management.GarbageCollectorMXBean.class);
             Long gcCount = e.getValue();
@@ -119,15 +119,15 @@ public class MemoryPoolProxy {
             }
         }
 
-        MemoryUsage usage = pool.getUsage();
-        return new MemoryPoolStat(poolName,
-                                  usageThreshold,
-                                  usage,
-                                  gcId,
-                                  lastGcStartTime,
-                                  lastGcEndTime,
-                                  collectThreshold,
-                                  beforeGcUsage,
+        MemoryUsage usage = pool.getUsage(); 
+        return new MemoryPoolStat(poolName, 
+                                  usageThreshold, 
+                                  usage, 
+                                  gcId, 
+                                  lastGcStartTime, 
+                                  lastGcEndTime, 
+                                  collectThreshold, 
+                                  beforeGcUsage, 
                                   afterGcUsage);
     }
 }

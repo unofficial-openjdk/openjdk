@@ -125,24 +125,24 @@ public final class Normalizer {
      */
     public static enum Form {
 
-        /**
+	/**
          * Canonical decomposition.
-         */
-        NFD,
+	 */
+	NFD,
 
-        /**
+	/**
          * Canonical decomposition, followed by canonical composition.
-         */
-        NFC,
+	 */
+	NFC,	
 
-        /**
+	/**	
          * Compatibility decomposition.
-         */
+	 */
         NFKD,
 
-        /**
+	/**
          * Compatibility decomposition, followed by canonical composition.
-         */
+	 */
         NFKC
     }
 

@@ -56,7 +56,7 @@ class XDialogPeer extends XDecoratedPeer implements DialogPeer {
         winAttr.initialResizability =  target.isResizable();
         winAttr.title = target.getTitle();
         winAttr.initialState = XWindowAttributesData.NORMAL;
-    }
+    }    
 
     public void setVisible(boolean vis) {
         XToolkit.awtLock();
@@ -144,7 +144,7 @@ class XDialogPeer extends XDecoratedPeer implements DialogPeer {
     boolean isFocusedWindowModalBlocker() {
         Window focusedWindow = XKeyboardFocusManagerPeer.getCurrentNativeFocusedWindow();
         XWindowPeer focusedWindowPeer = null;
-
+ 
         if (focusedWindow != null) {
             focusedWindowPeer = (XWindowPeer)ComponentAccessor.getPeer(focusedWindow);
         } else {

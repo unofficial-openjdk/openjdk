@@ -1,4 +1,5 @@
 
+ /* %W% %E%           */
 /*
  * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -28,21 +29,21 @@
  * Return tangent function of x.
  *
  * kernel function:
- *      __kernel_tan            ... tangent function on [-pi/4,pi/4]
- *      __ieee754_rem_pio2      ... argument reduction routine
+ *	__kernel_tan		... tangent function on [-pi/4,pi/4]
+ *	__ieee754_rem_pio2	... argument reduction routine
  *
  * Method.
  *      Let S,C and T denote the sin, cos and tan respectively on
- *      [-PI/4, +PI/4]. Reduce the argument x to y1+y2 = x-k*pi/2
- *      in [-pi/4 , +pi/4], and let n = k mod 4.
- *      We have
+ *	[-PI/4, +PI/4]. Reduce the argument x to y1+y2 = x-k*pi/2
+ *	in [-pi/4 , +pi/4], and let n = k mod 4.
+ *	We have
  *
  *          n        sin(x)      cos(x)        tan(x)
  *     ----------------------------------------------------------
- *          0          S           C             T
- *          1          C          -S            -1/T
- *          2         -S          -C             T
- *          3         -C           S            -1/T
+ *	    0	       S	   C		 T
+ *	    1	       C	  -S		-1/T
+ *	    2	      -S	  -C		 T
+ *	    3	      -C	   S		-1/T
  *     ----------------------------------------------------------
  *
  * Special cases:
@@ -51,35 +52,35 @@
  *      trig(NaN)    is that NaN;
  *
  * Accuracy:
- *      TRIG(x) returns trig(x) nearly rounded
+ *	TRIG(x) returns trig(x) nearly rounded
  */
 
 #include "fdlibm.h"
 
 #ifdef __STDC__
-        double tan(double x)
+	double tan(double x)
 #else
-        double tan(x)
-        double x;
+	double tan(x)
+	double x;
 #endif
 {
-        double y[2],z=0.0;
-        int n, ix;
+	double y[2],z=0.0;
+	int n, ix;
 
     /* High word of x. */
-        ix = __HI(x);
+	ix = __HI(x);
 
     /* |x| ~< pi/4 */
-        ix &= 0x7fffffff;
-        if(ix <= 0x3fe921fb) return __kernel_tan(x,z,1);
+	ix &= 0x7fffffff;
+	if(ix <= 0x3fe921fb) return __kernel_tan(x,z,1);
 
     /* tan(Inf or NaN) is NaN */
-        else if (ix>=0x7ff00000) return x-x;            /* NaN */
+	else if (ix>=0x7ff00000) return x-x;		/* NaN */
 
     /* argument reduction needed */
-        else {
-            n = __ieee754_rem_pio2(x,y);
-            return __kernel_tan(y[0],y[1],1-((n&1)<<1)); /*   1 -- n even
-                                                        -1 -- n odd */
-        }
+	else {
+	    n = __ieee754_rem_pio2(x,y);
+	    return __kernel_tan(y[0],y[1],1-((n&1)<<1)); /*   1 -- n even
+							-1 -- n odd */
+	}
 }

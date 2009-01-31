@@ -38,6 +38,7 @@ package sun.misc;
  *   </ul>
  *
  * @author Mark Reinhold
+ * @version %I%, %E%
  * @since 1.3
  */
 
@@ -47,14 +48,14 @@ public class ServiceConfigurationError extends Error {
      * Constructs a new instance with the specified detail string.
      */
     public ServiceConfigurationError(String msg) {
-        super(msg);
+	super(msg);
     }
 
     /**
      * Constructs a new instance that wraps the specified throwable.
      */
     public ServiceConfigurationError(Throwable x) {
-        super(x);
+	super(x);
     }
 
 }

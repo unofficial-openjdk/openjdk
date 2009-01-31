@@ -40,13 +40,13 @@ import org.w3c.dom.Node;
 public abstract class DOMStructure implements XMLStructure {
 
     public final boolean isFeatureSupported(String feature) {
-        if (feature == null) {
-            throw new NullPointerException();
-        } else {
-            return false;
-        }
+	if (feature == null) {
+	    throw new NullPointerException();
+	} else {
+	    return false;
+	}
     }
 
-    public abstract void marshal(Node parent, String dsPrefix,
-        DOMCryptoContext context) throws MarshalException;
+    public abstract void marshal(Node parent, String dsPrefix, 
+	DOMCryptoContext context) throws MarshalException;
 }

@@ -39,30 +39,30 @@
 
 #define DDINSTANCE_USABLE(ddInst) \
     ((ddInst) && (ddInst->valid) && (ddInst->accelerated))
+    
+void	DDRelease();
 
-void    DDRelease();
-
-void    DDReleaseSurfaceMemory(DDrawSurface *lpSurface);
+void	DDReleaseSurfaceMemory(DDrawSurface *lpSurface);
 
 BOOL    DDCreatePrimary(Win32SDOps *wsdo);
 
 void    DDFreeSyncSurface(DDrawObjectStruct *tmpDdInstance);
 
-void    DDSync();
+void	DDSync();
 
-BOOL    DDCanCreatePrimary(HMONITOR hMon);
+BOOL	DDCanCreatePrimary(HMONITOR hMon);
 
-BOOL    DDCanBlt(Win32SDOps *wsdo);
+BOOL	DDCanBlt(Win32SDOps *wsdo);
 
-BOOL    DDUseDDraw(Win32SDOps *wsdo);
+BOOL	DDUseDDraw(Win32SDOps *wsdo);
 
-BOOL    DeviceUseDDraw(HMONITOR hMon);
+BOOL	DeviceUseDDraw(HMONITOR hMon);
 
 BOOL    DeviceUseD3D(HMONITOR hMon);
 
-void    DDInvalidateDDInstance(DDrawObjectStruct *ddInst);
+void	DDInvalidateDDInstance(DDrawObjectStruct *ddInst);
 
-void    ReleaseDDInstance(DDrawObjectStruct *ddInst);
+void	ReleaseDDInstance(DDrawObjectStruct *ddInst);
 
 BOOL    DDEnterFullScreen(HMONITOR hMon, HWND hwnd, HWND topLevelHwnd);
 
@@ -75,61 +75,61 @@ BOOL    DDSetDisplayMode(HMONITOR hMon, DDrawDisplayMode& displayMode);
 BOOL    DDEnumDisplayModes(HMONITOR hMon, DDrawDisplayMode* constraint,
                            DDrawDisplayMode::Callback callback, void* context);
 
-BOOL    DDClipCheck(Win32SDOps *wsdo, RECT *operationRect);
+BOOL	DDClipCheck(Win32SDOps *wsdo, RECT *operationRect);
 
-BOOL    DDLock(JNIEnv *env, Win32SDOps *wsdo, RECT *lockRect,
-               SurfaceDataRasInfo *pRasInfo);
+BOOL	DDLock(JNIEnv *env, Win32SDOps *wsdo, RECT *lockRect, 
+	       SurfaceDataRasInfo *pRasInfo);
 
-void    DDUnlock(JNIEnv *env, Win32SDOps *wsdo);
+void	DDUnlock(JNIEnv *env, Win32SDOps *wsdo);
 
-BOOL    DDColorFill(JNIEnv *env, jobject sData, Win32SDOps *wsdo,
-                    RECT *fillRect, jint color);
+BOOL	DDColorFill(JNIEnv *env, jobject sData, Win32SDOps *wsdo, 
+		    RECT *fillRect, jint color);
 
-BOOL    DDBlt(JNIEnv *env, Win32SDOps *wsdoSrc, Win32SDOps *wsdoDst,
-              RECT *rDst, RECT *rSrc, CompositeInfo *compInfo = NULL);
+BOOL	DDBlt(JNIEnv *env, Win32SDOps *wsdoSrc, Win32SDOps *wsdoDst,
+	      RECT *rDst, RECT *rSrc, CompositeInfo *compInfo = NULL);
 
 void    DDSetColorKey(JNIEnv *env, Win32SDOps *wsdo, jint color);
 
 BOOL    DDFlip(JNIEnv *env, Win32SDOps *src, Win32SDOps *dest);
 
-BOOL    DDRestoreSurface(Win32SDOps *wsdo);
+BOOL	DDRestoreSurface(Win32SDOps *wsdo);
 
-jint    DDGetAvailableMemory(HMONITOR hMon);
+jint	DDGetAvailableMemory(HMONITOR hMon);
 
-BOOL    DDCreateSurface(Win32SDOps *wsdo);
+BOOL	DDCreateSurface(Win32SDOps *wsdo);
 
-BOOL    DDCreateOffScreenSurface(Win32SDOps *wsdo, DDrawObjectStruct *ddInst);
+BOOL	DDCreateOffScreenSurface(Win32SDOps *wsdo, DDrawObjectStruct *ddInst);
 
 BOOL    DDGetAttachedSurface(JNIEnv *env, Win32SDOps* wsdo_parent, Win32SDOps* wsdo);
 
-void    DDDestroySurface(Win32SDOps *wsdo);
+void	DDDestroySurface(Win32SDOps *wsdo);
 
-BOOL    DDCanReplaceSurfaces(HWND hwnd);
+BOOL	DDCanReplaceSurfaces(HWND hwnd);
 
 BOOL    DDSurfaceDepthsCompatible(int javaDepth, int nativeDepth);
 
-void    PrintDirectDrawError(DWORD errNum, char *message);
+void	PrintDirectDrawError(DWORD errNum, char *message);
 
-void    DebugPrintDirectDrawError(DWORD errNum, char *message);
+void	DebugPrintDirectDrawError(DWORD errNum, char *message);
 
-void    GetDDErrorString(DWORD errNum, char *buffer);
+void	GetDDErrorString(DWORD errNum, char *buffer);
 
 DDrawObjectStruct *GetDDInstanceForDevice(HMONITOR hMon);
 
 #define CLIP2RECTS_1PARAM(r1, r2, param, comp, lim) \
     do { \
-        if (r1.param comp lim) { \
-            r2.param += lim - r1.param; \
-            r1.param = lim; \
-        } \
+	if (r1.param comp lim) { \
+	    r2.param += lim - r1.param; \
+	    r1.param = lim; \
+	} \
     } while (0)
 
 #define CLIP2RECTS(r1, L, T, R, B, r2) \
     do { \
-        CLIP2RECTS_1PARAM(r1, r2, left, <, L); \
-        CLIP2RECTS_1PARAM(r1, r2, top, <, T); \
-        CLIP2RECTS_1PARAM(r1, r2, right, >, R); \
-        CLIP2RECTS_1PARAM(r1, r2, bottom, >, B); \
+	CLIP2RECTS_1PARAM(r1, r2, left, <, L); \
+	CLIP2RECTS_1PARAM(r1, r2, top, <, T); \
+	CLIP2RECTS_1PARAM(r1, r2, right, >, R); \
+	CLIP2RECTS_1PARAM(r1, r2, bottom, >, B); \
     } while(0)
 
 #endif DDRAWUTILS_H

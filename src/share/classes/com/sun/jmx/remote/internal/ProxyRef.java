@@ -42,38 +42,38 @@ public class ProxyRef implements RemoteRef {
     private static final long serialVersionUID = -6503061366316814723L;
 
     public ProxyRef(RemoteRef ref) {
-        this.ref = ref;
+	this.ref = ref;
     }
 
     public void readExternal(ObjectInput in)
-            throws IOException, ClassNotFoundException {
-        ref.readExternal(in);
+	    throws IOException, ClassNotFoundException {
+	ref.readExternal(in);
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
-        ref.writeExternal(out);
+	ref.writeExternal(out);
     }
 
     public void invoke(RemoteCall call) throws Exception {
-        ref.invoke(call);
+	ref.invoke(call);
     }
 
     public Object invoke(Remote obj, Method method, Object[] params,
-                         long opnum) throws Exception {
-        return ref.invoke(obj, method, params, opnum);
+			 long opnum) throws Exception {
+	return ref.invoke(obj, method, params, opnum);
     }
 
     public void done(RemoteCall call) throws RemoteException {
-        ref.done(call);
+	ref.done(call);
     }
 
     public String getRefClass(ObjectOutput out) {
-        return ref.getRefClass(out);
+	return ref.getRefClass(out);
     }
 
     public RemoteCall newCall(RemoteObject obj, Operation[] op, int opnum,
-                              long hash) throws RemoteException {
-        return ref.newCall(obj, op, opnum, hash);
+			      long hash) throws RemoteException {
+	return ref.newCall(obj, op, opnum, hash);
     }
 
     public boolean remoteEquals(RemoteRef obj) {
@@ -90,3 +90,4 @@ public class ProxyRef implements RemoteRef {
 
     protected RemoteRef ref;
 }
+    

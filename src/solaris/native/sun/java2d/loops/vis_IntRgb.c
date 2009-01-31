@@ -47,36 +47,36 @@ void ADD_SUFF(IntRgbToIntArgbConvert)(BLIT_PARAMS)
     mlib_s32 i, i0, j;
 
     if (dstScan == 4*width && srcScan == 4*width) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     mask = vis_to_double_dup(0xFF000000);
 
     for (j = 0; j < height; j++) {
-        mlib_f32 *src = srcBase;
-        mlib_f32 *dst = dstBase;
+	mlib_f32 *src = srcBase;
+	mlib_f32 *dst = dstBase;
 
-        i = i0 = 0;
+	i = i0 = 0;
 
-        if ((mlib_s32)dst & 7) {
-            dst[i] = vis_fors(src[i], vis_read_hi(mask));
-            i0 = 1;
-        }
+	if ((mlib_s32)dst & 7) {
+	    dst[i] = vis_fors(src[i], vis_read_hi(mask));
+	    i0 = 1;
+	}
 
 #pragma pipeloop(0)
-        for (i = i0; i <= (mlib_s32)width - 2; i += 2) {
-            dd = vis_freg_pair(src[i], src[i + 1]);
+	for (i = i0; i <= (mlib_s32)width - 2; i += 2) {
+	    dd = vis_freg_pair(src[i], src[i + 1]);
 
-            *(mlib_d64*)(dst + i) = vis_for(dd, mask);
-        }
+	    *(mlib_d64*)(dst + i) = vis_for(dd, mask);
+	}
 
-        if (i < width) {
-            dst[i] = vis_fors(src[i], vis_read_hi(mask));
-        }
+	if (i < width) {
+	    dst[i] = vis_fors(src[i], vis_read_hi(mask));
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -92,33 +92,33 @@ void ADD_SUFF(IntRgbToIntArgbScaleConvert)(SCALE_PARAMS)
     mask = vis_to_double_dup(0xFF000000);
 
     for (j = 0; j < height; j++) {
-        mlib_f32 *src = srcBase;
-        mlib_f32 *dst = dstBase;
-        mlib_f32 *dst_end = dst + width;
-        mlib_s32 tmpsxloc = sxloc;
+	mlib_f32 *src = srcBase;
+	mlib_f32 *dst = dstBase;
+	mlib_f32 *dst_end = dst + width;
+	mlib_s32 tmpsxloc = sxloc;
 
-        PTR_ADD(src, (syloc >> shift) * srcScan);
+	PTR_ADD(src, (syloc >> shift) * srcScan);
 
-        if ((mlib_s32)dst & 7) {
-            *dst++ = vis_fors(src[tmpsxloc >> shift], vis_read_hi(mask));
-            tmpsxloc += sxinc;
-        }
+	if ((mlib_s32)dst & 7) {
+	    *dst++ = vis_fors(src[tmpsxloc >> shift], vis_read_hi(mask));
+	    tmpsxloc += sxinc;
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= dst_end - 2; dst += 2) {
-            dd = vis_freg_pair(src[tmpsxloc >> shift],
-                               src[(tmpsxloc + sxinc) >> shift]);
-            *(mlib_d64*)dst = vis_for(dd, mask);
-            tmpsxloc += 2*sxinc;
-        }
+	for (; dst <= dst_end - 2; dst += 2) {
+	    dd = vis_freg_pair(src[tmpsxloc >> shift],
+			       src[(tmpsxloc + sxinc) >> shift]);
+	    *(mlib_d64*)dst = vis_for(dd, mask);
+	    tmpsxloc += 2*sxinc;
+	}
 
-        for (; dst < dst_end; dst++) {
-            *dst++ = vis_fors(src[tmpsxloc >> shift], vis_read_hi(mask));
-            tmpsxloc += sxinc;
-        }
+	for (; dst < dst_end; dst++) {
+	    *dst++ = vis_fors(src[tmpsxloc >> shift], vis_read_hi(mask));
+	    tmpsxloc += sxinc;
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        syloc += syinc;
+	PTR_ADD(dstBase, dstScan);
+	syloc += syinc;
     }
 }
 
@@ -163,65 +163,65 @@ void ADD_SUFF(ThreeByteBgrToIntRgbConvert)(BLIT_PARAMS)
     mlib_s32 i, i0, j;
 
     if (width < 16) {
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = srcBase;
-            mlib_s32 *dst = dstBase;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = srcBase;
+	    mlib_s32 *dst = dstBase;
 
-            for (i = 0; i < width; i++) {
-                dst[i] = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
-            }
+	    for (i = 0; i < width; i++) {
+		dst[i] = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
+	    }
 
-            PTR_ADD(dstBase, dstScan);
-            PTR_ADD(srcBase, srcScan);
-        }
-        return;
+	    PTR_ADD(dstBase, dstScan);
+	    PTR_ADD(srcBase, srcScan);
+	}
+	return;    
     }
 
     if (srcScan == 3*width && dstScan == 4*width) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     s_0 = vis_fzero();
 
     for (j = 0; j < height; j++) {
-        mlib_u8  *src = srcBase;
-        mlib_f32 *dst = dstBase;
+	mlib_u8  *src = srcBase;
+	mlib_f32 *dst = dstBase;
 
-        i = i0 = 0;
+	i = i0 = 0;
 
-        if ((mlib_s32)dst & 7) {
-            ((mlib_s32*)dst)[i] = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
-            i0 = 1;
-        }
+	if ((mlib_s32)dst & 7) {
+	    ((mlib_s32*)dst)[i] = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
+	    i0 = 1;
+	}
 
-        sp = vis_alignaddr(src, 3*i0);
-        s3 = *sp++;
+	sp = vis_alignaddr(src, 3*i0);
+	s3 = *sp++;
 
 #pragma pipeloop(0)
-        for (i = i0; i <= (mlib_s32)width - 8; i += 8) {
-            s0 = s3;
-            s1 = *sp++;
-            s2 = *sp++;
-            s3 = *sp++;
-            sd0 = vis_faligndata(s0, s1);
-            sd1 = vis_faligndata(s1, s2);
-            sd2 = vis_faligndata(s2, s3);
+	for (i = i0; i <= (mlib_s32)width - 8; i += 8) {
+	    s0 = s3;
+	    s1 = *sp++;
+	    s2 = *sp++;
+	    s3 = *sp++;
+	    sd0 = vis_faligndata(s0, s1);
+	    sd1 = vis_faligndata(s1, s2);
+	    sd2 = vis_faligndata(s2, s3);
 
-            BGR_TO_ARGB
+	    BGR_TO_ARGB
 
-            *(mlib_d64*)(dst + i    ) = dd0;
-            *(mlib_d64*)(dst + i + 2) = dd1;
-            *(mlib_d64*)(dst + i + 4) = dd2;
-            *(mlib_d64*)(dst + i + 6) = dd3;
-        }
+	    *(mlib_d64*)(dst + i    ) = dd0;
+	    *(mlib_d64*)(dst + i + 2) = dd1;
+	    *(mlib_d64*)(dst + i + 4) = dd2;
+	    *(mlib_d64*)(dst + i + 6) = dd3;
+	}
 
-        for (; i < width; i++) {
-            ((mlib_s32*)dst)[i] = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
-        }
+	for (; i < width; i++) {
+	    ((mlib_s32*)dst)[i] = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -235,24 +235,24 @@ void ADD_SUFF(ThreeByteBgrToIntRgbScaleConvert)(SCALE_PARAMS)
     mlib_s32 i, i0, i1, j;
 
     if (width < 16) {
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = srcBase;
-            mlib_s32 *dst = dstBase;
-            mlib_s32 *dst_end = dst + width;
-            mlib_s32 tmpsxloc = sxloc;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = srcBase;
+	    mlib_s32 *dst = dstBase;
+	    mlib_s32 *dst_end = dst + width;
+	    mlib_s32 tmpsxloc = sxloc;
 
-            PTR_ADD(src, (syloc >> shift) * srcScan);
+	    PTR_ADD(src, (syloc >> shift) * srcScan);
 
-            for (; dst < dst_end; dst++) {
-                i = tmpsxloc >> shift;
-                tmpsxloc += sxinc;
-                *(mlib_s32*)dst = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
-            }
+	    for (; dst < dst_end; dst++) {
+		i = tmpsxloc >> shift;
+		tmpsxloc += sxinc;
+		*(mlib_s32*)dst = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
+	    }
 
-            PTR_ADD(dstBase, dstScan);
-            syloc += syinc;
-        }
-        return;
+	    PTR_ADD(dstBase, dstScan);
+	    syloc += syinc;
+	}
+	return;    
     }
 
     maskFF = vis_fzero();
@@ -260,46 +260,46 @@ void ADD_SUFF(ThreeByteBgrToIntRgbScaleConvert)(SCALE_PARAMS)
     vis_alignaddr(NULL, 7);
 
     for (j = 0; j < height; j++) {
-        mlib_u8  *src = srcBase;
-        mlib_f32 *dst = dstBase;
-        mlib_f32 *dst_end = dst + width;
-        mlib_s32 tmpsxloc = sxloc;
+	mlib_u8  *src = srcBase;
+	mlib_f32 *dst = dstBase;
+	mlib_f32 *dst_end = dst + width;
+	mlib_s32 tmpsxloc = sxloc;
 
-        PTR_ADD(src, (syloc >> shift) * srcScan);
+	PTR_ADD(src, (syloc >> shift) * srcScan);
 
-        if ((mlib_s32)dst & 7) {
-            i = tmpsxloc >> shift;
-            tmpsxloc += sxinc;
-            *(mlib_s32*)dst = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
-            dst++;
-        }
+	if ((mlib_s32)dst & 7) {
+	    i = tmpsxloc >> shift;
+	    tmpsxloc += sxinc;
+	    *(mlib_s32*)dst = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
+	    dst++;
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= dst_end - 2; dst += 2) {
-            i0 = tmpsxloc >> shift;
-            i1 = (tmpsxloc + sxinc) >> shift;
-            tmpsxloc += 2*sxinc;
+	for (; dst <= dst_end - 2; dst += 2) {
+	    i0 = tmpsxloc >> shift;
+	    i1 = (tmpsxloc + sxinc) >> shift;
+	    tmpsxloc += 2*sxinc;
 
-            dd = vis_faligndata(vis_ld_u8(src + 3*i1    ), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 1), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 2), dd);
-            dd = vis_faligndata(maskFF, dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i0    ), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 1), dd);
-            dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 2), dd);
-            dd = vis_faligndata(maskFF, dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i1    ), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 1), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i1 + 2), dd);
+	    dd = vis_faligndata(maskFF, dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i0    ), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 1), dd);
+	    dd = vis_faligndata(vis_ld_u8(src + 3*i0 + 2), dd);
+	    dd = vis_faligndata(maskFF, dd);
 
-            *(mlib_d64*)dst = dd;
-        }
+	    *(mlib_d64*)dst = dd;
+	}
 
-        for (; dst < dst_end; dst++) {
-            i = tmpsxloc >> shift;
-            tmpsxloc += sxinc;
-            *(mlib_s32*)dst = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
-        }
+	for (; dst < dst_end; dst++) {
+	    i = tmpsxloc >> shift;
+	    tmpsxloc += sxinc;
+	    *(mlib_s32*)dst = INT_RGB(src[3*i + 2], src[3*i + 1], src[3*i]);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        syloc += syinc;
+	PTR_ADD(dstBase, dstScan);
+	syloc += syinc;
     }
 }
 
@@ -314,59 +314,59 @@ void ADD_SUFF(ByteGrayToIntRgbConvert)(BLIT_PARAMS)
     mlib_s32 i, j, x;
 
     if (width < 8) {
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = srcBase;
-            mlib_s32 *dst = dstBase;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = srcBase;
+	    mlib_s32 *dst = dstBase;
 
-            for (i = 0; i < width; i++) {
-                x = src[i];
-                dst[i] = Gray2Rgb(x);
-            }
+	    for (i = 0; i < width; i++) {
+		x = src[i];
+		dst[i] = Gray2Rgb(x);
+	    }
 
-            PTR_ADD(dstBase, dstScan);
-            PTR_ADD(srcBase, srcScan);
-        }
-        return;
+	    PTR_ADD(dstBase, dstScan);
+	    PTR_ADD(srcBase, srcScan);
+	}
+	return;
     }
 
     if (srcScan == width && dstScan == 4*width) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     for (j = 0; j < height; j++) {
-        mlib_u8  *src = srcBase;
-        mlib_s32 *dst = dstBase;
-        mlib_s32 *dst_end;
+	mlib_u8  *src = srcBase;
+	mlib_s32 *dst = dstBase;
+	mlib_s32 *dst_end;
 
-        dst_end = dst + width;
+	dst_end = dst + width;
 
-        while (((mlib_s32)src & 3) && dst < dst_end) {
-            x = *src++;
-            *dst++ = Gray2Rgb(x);
-        }
+	while (((mlib_s32)src & 3) && dst < dst_end) {
+	    x = *src++;
+	    *dst++ = Gray2Rgb(x);
+	}
 
 #pragma pipeloop(0)
-        for (; dst <= (dst_end - 4); dst += 4) {
-            ff = *(mlib_f32*)src;
-            d0 = vis_fpmerge(aa, ff);
-            d1 = vis_fpmerge(ff, ff);
-            d2 = vis_fpmerge(vis_read_hi(d0), vis_read_hi(d1));
-            d3 = vis_fpmerge(vis_read_lo(d0), vis_read_lo(d1));
-            ((mlib_f32*)dst)[0] = vis_read_hi(d2);
-            ((mlib_f32*)dst)[1] = vis_read_lo(d2);
-            ((mlib_f32*)dst)[2] = vis_read_hi(d3);
-            ((mlib_f32*)dst)[3] = vis_read_lo(d3);
-            src += 4;
-        }
+	for (; dst <= (dst_end - 4); dst += 4) {
+	    ff = *(mlib_f32*)src;
+	    d0 = vis_fpmerge(aa, ff);
+	    d1 = vis_fpmerge(ff, ff);
+	    d2 = vis_fpmerge(vis_read_hi(d0), vis_read_hi(d1));
+	    d3 = vis_fpmerge(vis_read_lo(d0), vis_read_lo(d1));
+	    ((mlib_f32*)dst)[0] = vis_read_hi(d2);
+	    ((mlib_f32*)dst)[1] = vis_read_lo(d2);
+	    ((mlib_f32*)dst)[2] = vis_read_hi(d3);
+	    ((mlib_f32*)dst)[3] = vis_read_lo(d3);
+	    src += 4;
+	}
 
-        while (dst < dst_end) {
-            x = *src++;
-            *dst++ = Gray2Rgb(x);
-        }
+	while (dst < dst_end) {
+	    x = *src++;
+	    *dst++ = Gray2Rgb(x);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -381,63 +381,63 @@ void ADD_SUFF(ByteGrayToIntRgbScaleConvert)(SCALE_PARAMS)
     mlib_s32 i, j, x;
 
     if (width < 16) {
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = srcBase;
-            mlib_s32 *dst = dstBase;
-            mlib_s32 tmpsxloc = sxloc;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = srcBase;
+	    mlib_s32 *dst = dstBase;
+	    mlib_s32 tmpsxloc = sxloc;
 
-            PTR_ADD(src, (syloc >> shift) * srcScan);
+	    PTR_ADD(src, (syloc >> shift) * srcScan);
 
-            for (i = 0; i < width; i++) {
-                x = src[tmpsxloc >> shift];
-                tmpsxloc += sxinc;
-                dst[i] = Gray2Rgb(x);
-            }
+	    for (i = 0; i < width; i++) {
+		x = src[tmpsxloc >> shift];
+		tmpsxloc += sxinc;
+		dst[i] = Gray2Rgb(x);
+	    }
 
-            PTR_ADD(dstBase, dstScan);
-            syloc += syinc;
-        }
-        return;
+	    PTR_ADD(dstBase, dstScan);
+	    syloc += syinc;
+	}
+	return;
     }
 
     vis_alignaddr(NULL, 7);
 
     for (j = 0; j < height; j++) {
-        mlib_u8  *src = srcBase;
-        mlib_s32 *dst = dstBase;
-        mlib_s32 *dst_end;
-        mlib_s32 tmpsxloc = sxloc;
+	mlib_u8  *src = srcBase;
+	mlib_s32 *dst = dstBase;
+	mlib_s32 *dst_end;
+	mlib_s32 tmpsxloc = sxloc;
 
-        PTR_ADD(src, (syloc >> shift) * srcScan);
+	PTR_ADD(src, (syloc >> shift) * srcScan);
 
-        dst_end = dst + width;
+	dst_end = dst + width;
 
 #pragma pipeloop(0)
-        for (; dst <= (dst_end - 4); dst += 4) {
-            LOAD_NEXT_U8(dd, src + ((tmpsxloc + 3*sxinc) >> shift));
-            LOAD_NEXT_U8(dd, src + ((tmpsxloc + 2*sxinc) >> shift));
-            LOAD_NEXT_U8(dd, src + ((tmpsxloc +   sxinc) >> shift));
-            LOAD_NEXT_U8(dd, src + ((tmpsxloc          ) >> shift));
-            tmpsxloc += 4*sxinc;
-            ff = vis_read_hi(dd);
-            d0 = vis_fpmerge(aa, ff);
-            d1 = vis_fpmerge(ff, ff);
-            d2 = vis_fpmerge(vis_read_hi(d0), vis_read_hi(d1));
-            d3 = vis_fpmerge(vis_read_lo(d0), vis_read_lo(d1));
-            ((mlib_f32*)dst)[0] = vis_read_hi(d2);
-            ((mlib_f32*)dst)[1] = vis_read_lo(d2);
-            ((mlib_f32*)dst)[2] = vis_read_hi(d3);
-            ((mlib_f32*)dst)[3] = vis_read_lo(d3);
-        }
+	for (; dst <= (dst_end - 4); dst += 4) {
+	    LOAD_NEXT_U8(dd, src + ((tmpsxloc + 3*sxinc) >> shift));
+	    LOAD_NEXT_U8(dd, src + ((tmpsxloc + 2*sxinc) >> shift));
+	    LOAD_NEXT_U8(dd, src + ((tmpsxloc +   sxinc) >> shift));
+	    LOAD_NEXT_U8(dd, src + ((tmpsxloc          ) >> shift));
+	    tmpsxloc += 4*sxinc;
+	    ff = vis_read_hi(dd);
+	    d0 = vis_fpmerge(aa, ff);
+	    d1 = vis_fpmerge(ff, ff);
+	    d2 = vis_fpmerge(vis_read_hi(d0), vis_read_hi(d1));
+	    d3 = vis_fpmerge(vis_read_lo(d0), vis_read_lo(d1));
+	    ((mlib_f32*)dst)[0] = vis_read_hi(d2);
+	    ((mlib_f32*)dst)[1] = vis_read_lo(d2);
+	    ((mlib_f32*)dst)[2] = vis_read_hi(d3);
+	    ((mlib_f32*)dst)[3] = vis_read_lo(d3);
+	}
 
-        while (dst < dst_end) {
-            x = src[tmpsxloc >> shift];
-            tmpsxloc += sxinc;
-            *dst++ = Gray2Rgb(x);
-        }
+	while (dst < dst_end) {
+	    x = src[tmpsxloc >> shift];
+	    tmpsxloc += sxinc;
+	    *dst++ = Gray2Rgb(x);
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        syloc += syinc;
+	PTR_ADD(dstBase, dstScan);
+	syloc += syinc;
     }
 }
 
@@ -451,40 +451,40 @@ void ADD_SUFF(IntArgbBmToIntRgbXparOver)(BLIT_PARAMS)
     mlib_s32 i, i0, j, mask;
 
     if (dstScan == 4*width && srcScan == 4*width) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     for (j = 0; j < height; j++) {
-        mlib_f32 *src = srcBase;
-        mlib_f32 *dst = dstBase;
+	mlib_f32 *src = srcBase;
+	mlib_f32 *dst = dstBase;
 
-        i = i0 = 0;
+	i = i0 = 0;
 
-        if ((mlib_s32)dst & 7) {
-            if (*(mlib_u8*)(src + i)) {
-                dst[i] = src[i];
-            }
-            i0 = 1;
-        }
+	if ((mlib_s32)dst & 7) {
+	    if (*(mlib_u8*)(src + i)) {
+		dst[i] = src[i];
+	    }
+	    i0 = 1;
+	}
 
 #pragma pipeloop(0)
-        for (i = i0; i <= (mlib_s32)width - 2; i += 2) {
-            dd = vis_freg_pair(src[i], src[i + 1]);
+	for (i = i0; i <= (mlib_s32)width - 2; i += 2) {
+	    dd = vis_freg_pair(src[i], src[i + 1]);
 
-            mask = (((-*(mlib_u8*)(src + i)) >> 31) & 2) |
-                   (((-*(mlib_u8*)(src + i + 1)) >> 31) & 1);
-            vis_pst_32(dd, dst + i, mask);
-        }
+	    mask = (((-*(mlib_u8*)(src + i)) >> 31) & 2) |
+		   (((-*(mlib_u8*)(src + i + 1)) >> 31) & 1);
+	    vis_pst_32(dd, dst + i, mask);
+	}
 
-        if (i < width) {
-            if (*(mlib_u8*)(src + i)) {
-                dst[i] = src[i];
-            }
-        }
+	if (i < width) {
+	    if (*(mlib_u8*)(src + i)) {
+		dst[i] = src[i];
+	    }
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -498,47 +498,47 @@ void ADD_SUFF(IntArgbBmToIntRgbXparBgCopy)(BCOPY_PARAMS)
     mlib_s32 i, i0, j, mask;
 
     if (dstScan == 4*width && srcScan == 4*width) {
-        width *= height;
-        height = 1;
+	width *= height;
+	height = 1;
     }
 
     d_bgpixel = vis_to_double_dup(bgpixel);
 
     for (j = 0; j < height; j++) {
-        mlib_f32 *src = srcBase;
-        mlib_f32 *dst = dstBase;
+	mlib_f32 *src = srcBase;
+	mlib_f32 *dst = dstBase;
 
-        i = i0 = 0;
+	i = i0 = 0;
 
-        if ((mlib_s32)dst & 7) {
-            if (*(mlib_u8*)(src + i)) {
-                dst[i] = src[i];
-            } else {
-                dst[i] = vis_read_hi(d_bgpixel);
-            }
-            i0 = 1;
-        }
+	if ((mlib_s32)dst & 7) {
+	    if (*(mlib_u8*)(src + i)) {
+		dst[i] = src[i];
+	    } else {
+		dst[i] = vis_read_hi(d_bgpixel);
+	    }
+	    i0 = 1;
+	}
 
 #pragma pipeloop(0)
-        for (i = i0; i <= (mlib_s32)width - 2; i += 2) {
-            dd = vis_freg_pair(src[i], src[i + 1]);
+	for (i = i0; i <= (mlib_s32)width - 2; i += 2) {
+	    dd = vis_freg_pair(src[i], src[i + 1]);
 
-            mask = (((-*(mlib_u8*)(src + i)) >> 31) & 2) |
-                   (((-*(mlib_u8*)(src + i + 1)) >> 31) & 1);
-            *(mlib_d64*)(dst + i) = d_bgpixel;
-            vis_pst_32(dd, dst + i, mask);
-        }
+	    mask = (((-*(mlib_u8*)(src + i)) >> 31) & 2) |
+		   (((-*(mlib_u8*)(src + i + 1)) >> 31) & 1);
+	    *(mlib_d64*)(dst + i) = d_bgpixel;
+	    vis_pst_32(dd, dst + i, mask);
+	}
 
-        if (i < width) {
-            if (*(mlib_u8*)(src + i)) {
-                dst[i] = src[i];
-            } else {
-                dst[i] = vis_read_hi(d_bgpixel);
-            }
-        }
+	if (i < width) {
+	    if (*(mlib_u8*)(src + i)) {
+		dst[i] = src[i];
+	    } else {
+		dst[i] = vis_read_hi(d_bgpixel);
+	    }
+	}
 
-        PTR_ADD(dstBase, dstScan);
-        PTR_ADD(srcBase, srcScan);
+	PTR_ADD(dstBase, dstScan);
+	PTR_ADD(srcBase, srcScan);
     }
 }
 
@@ -567,103 +567,103 @@ void ADD_SUFF(IntRgbDrawGlyphListAA)(GLYPH_LIST_PARAMS)
     vis_write_gsr(0 << 3);
 
     for (glyphCounter = 0; glyphCounter < totalGlyphs; glyphCounter++) {
-        const jubyte *pixels;
-        unsigned int rowBytes;
-        int left, top;
-        int width, height;
-        int right, bottom;
+	const jubyte *pixels;
+	unsigned int rowBytes;
+	int left, top;
+	int width, height;
+	int right, bottom;
 
-        pixels = (const jubyte *) glyphs[glyphCounter].pixels;
+	pixels = (const jubyte *) glyphs[glyphCounter].pixels;
 
-        if (!pixels) continue;
+	if (!pixels) continue;
 
-        left = glyphs[glyphCounter].x;
-        top = glyphs[glyphCounter].y;
-        width = glyphs[glyphCounter].width;
-        height = glyphs[glyphCounter].height;
-        rowBytes = width;
-        right = left + width;
-        bottom = top + height;
-        if (left < clipLeft) {
-            pixels += clipLeft - left;
-            left = clipLeft;
-        }
-        if (top < clipTop) {
-            pixels += (clipTop - top) * rowBytes;
-            top = clipTop;
-        }
-        if (right > clipRight) {
-            right = clipRight;
-        }
-        if (bottom > clipBottom) {
-            bottom = clipBottom;
-        }
-        if (right <= left || bottom <= top) {
-            continue;
-        }
-        width = right - left;
-        height = bottom - top;
+	left = glyphs[glyphCounter].x;
+	top = glyphs[glyphCounter].y;
+	width = glyphs[glyphCounter].width;
+	height = glyphs[glyphCounter].height;
+	rowBytes = width;
+	right = left + width;
+	bottom = top + height;
+	if (left < clipLeft) {
+	    pixels += clipLeft - left;
+	    left = clipLeft;
+	}
+	if (top < clipTop) {
+	    pixels += (clipTop - top) * rowBytes;
+	    top = clipTop;
+	}
+	if (right > clipRight) {
+	    right = clipRight;
+	}
+	if (bottom > clipBottom) {
+	    bottom = clipBottom;
+	}
+	if (right <= left || bottom <= top) {
+	    continue;
+	}
+	width = right - left;
+	height = bottom - top;
 
-        dstBase = pRasInfo->rasBase;
-        PTR_ADD(dstBase, top*scan + 4*left);
+	dstBase = pRasInfo->rasBase;
+	PTR_ADD(dstBase, top*scan + 4*left);
 
-        for (j = 0; j < height; j++) {
-            mlib_u8  *src = (void*)pixels;
-            mlib_s32 *dst, *dst_end;
+	for (j = 0; j < height; j++) {
+	    mlib_u8  *src = (void*)pixels;
+	    mlib_s32 *dst, *dst_end;
 
-            dst = (void*)dstBase;
-            dst_end = dst + width;
+	    dst = (void*)dstBase;
+	    dst_end = dst + width;
 
-            if ((mlib_s32)dst & 7) {
-                pix = *src++;
-                if (pix) {
-                    dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
-                    dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
-                    *(mlib_f32*)dst = vis_fands(vis_fpack16(dd),
-                                                vis_read_hi(maskRGB));
-                    if (pix == 255) *(mlib_f32*)dst = vis_read_hi(fgpixel_d);
-                }
-                dst++;
-            }
+	    if ((mlib_s32)dst & 7) {
+		pix = *src++;
+		if (pix) {
+		    dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+		    dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
+		    *(mlib_f32*)dst = vis_fands(vis_fpack16(dd),
+						vis_read_hi(maskRGB));
+		    if (pix == 255) *(mlib_f32*)dst = vis_read_hi(fgpixel_d);
+		}
+		dst++;
+	    }
 
 #pragma pipeloop(0)
-            for (; dst <= (dst_end - 2); dst += 2) {
-                dmix0 = vis_freg_pair(((mlib_f32 *)vis_mul8s_tbl)[src[0]],
-                                      ((mlib_f32 *)vis_mul8s_tbl)[src[1]]);
-                mask = vis_fcmplt32(dmix0, done16);
-                mask_z = vis_fcmpne32(dmix0, dzero);
-                dmix1 = vis_fpsub16(done, dmix0);
-                src += 2;
+	    for (; dst <= (dst_end - 2); dst += 2) {
+		dmix0 = vis_freg_pair(((mlib_f32 *)vis_mul8s_tbl)[src[0]],
+				      ((mlib_f32 *)vis_mul8s_tbl)[src[1]]);
+		mask = vis_fcmplt32(dmix0, done16);
+		mask_z = vis_fcmpne32(dmix0, dzero);
+		dmix1 = vis_fpsub16(done, dmix0);
+		src += 2;
 
-                dd = *(mlib_d64*)dst;
-                d0 = vis_fmul8x16al(srcG_f, vis_read_hi(dmix0));
-                d1 = vis_fmul8x16al(srcG_f, vis_read_lo(dmix0));
-                e0 = vis_fmul8x16al(vis_read_hi(dd), vis_read_hi(dmix1));
-                e1 = vis_fmul8x16al(vis_read_lo(dd), vis_read_lo(dmix1));
-                d0 = vis_fpadd16(vis_fpadd16(d0, d_half), e0);
-                d1 = vis_fpadd16(vis_fpadd16(d1, d_half), e1);
-                dd = vis_fpack16_pair(d0, d1);
-                dd = vis_fand(dd, maskRGB);
+		dd = *(mlib_d64*)dst;
+		d0 = vis_fmul8x16al(srcG_f, vis_read_hi(dmix0));
+		d1 = vis_fmul8x16al(srcG_f, vis_read_lo(dmix0));
+		e0 = vis_fmul8x16al(vis_read_hi(dd), vis_read_hi(dmix1));
+		e1 = vis_fmul8x16al(vis_read_lo(dd), vis_read_lo(dmix1));
+		d0 = vis_fpadd16(vis_fpadd16(d0, d_half), e0);
+		d1 = vis_fpadd16(vis_fpadd16(d1, d_half), e1);
+		dd = vis_fpack16_pair(d0, d1);
+		dd = vis_fand(dd, maskRGB);
 
-                vis_pst_32(fgpixel_d, dst, mask_z);
-                vis_pst_32(dd, dst, mask & mask_z);
-            }
+		vis_pst_32(fgpixel_d, dst, mask_z);
+		vis_pst_32(dd, dst, mask & mask_z);
+	    }
 
-            while (dst < dst_end) {
-                pix = *src++;
-                if (pix) {
-                    dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
-                    dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
-                    *(mlib_f32*)dst = vis_fands(vis_fpack16(dd),
-                                                vis_read_hi(maskRGB));
-                    if (pix == 255) *(mlib_f32*)dst = vis_read_hi(fgpixel_d);
-                }
-                dst++;
-            }
+	    while (dst < dst_end) {
+		pix = *src++;
+		if (pix) {
+		    dd = vis_fpadd16(MUL8_VIS(srcG_f, pix), d_half);
+		    dd = vis_fpadd16(MUL8_VIS(*(mlib_f32*)dst, 255 - pix), dd);
+		    *(mlib_f32*)dst = vis_fands(vis_fpack16(dd),
+						vis_read_hi(maskRGB));
+		    if (pix == 255) *(mlib_f32*)dst = vis_read_hi(fgpixel_d);
+		}
+		dst++;
+	    }
 
-            PTR_ADD(dstBase, scan);
-            pixels += rowBytes;
-        }
+	    PTR_ADD(dstBase, scan);
+	    pixels += rowBytes;
+	}
     }
 }
 

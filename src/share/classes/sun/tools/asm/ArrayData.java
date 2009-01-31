@@ -38,7 +38,7 @@ class ArrayData {
     int nargs;
 
     public ArrayData(Type type, int nargs) {
-        this.type = type;
-        this.nargs = nargs;
+	this.type = type;
+	this.nargs = nargs;
     }
 }

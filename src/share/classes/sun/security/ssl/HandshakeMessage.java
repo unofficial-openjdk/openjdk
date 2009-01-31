@@ -71,6 +71,7 @@ import sun.security.ssl.CipherSuite.*;
  * for debugging.  They always identify their type, and can optionally
  * dump all of their content.
  *
+ * @version %I%, %G%
  * @author David Brownell
  */
 abstract class HandshakeMessage {
@@ -78,22 +79,22 @@ abstract class HandshakeMessage {
     HandshakeMessage() { }
 
     // enum HandshakeType:
-    static final byte   ht_hello_request = 0;
-    static final byte   ht_client_hello = 1;
-    static final byte   ht_server_hello = 2;
+    static final byte	ht_hello_request = 0;
+    static final byte	ht_client_hello = 1;
+    static final byte	ht_server_hello = 2;
 
-    static final byte   ht_certificate = 11;
-    static final byte   ht_server_key_exchange = 12;
-    static final byte   ht_certificate_request = 13;
-    static final byte   ht_server_hello_done = 14;
-    static final byte   ht_certificate_verify = 15;
-    static final byte   ht_client_key_exchange = 16;
+    static final byte	ht_certificate = 11;
+    static final byte	ht_server_key_exchange = 12;
+    static final byte	ht_certificate_request = 13;
+    static final byte	ht_server_hello_done = 14;
+    static final byte	ht_certificate_verify = 15;
+    static final byte	ht_client_key_exchange = 16;
 
-    static final byte   ht_finished = 20;
+    static final byte	ht_finished = 20;
 
     /* Class and subclass dynamic debugging support */
     static final Debug debug = Debug.getInstance("ssl");
-
+    
     /**
      * Utility method to convert a BigInteger to a byte array in unsigned
      * format as needed in the handshake messages. BigInteger uses
@@ -101,14 +102,14 @@ abstract class HandshakeMessage {
      * is set. We remove that.
      */
     static byte[] toByteArray(BigInteger bi) {
-        byte[] b = bi.toByteArray();
-        if ((b.length > 1) && (b[0] == 0)) {
-            int n = b.length - 1;
-            byte[] newarray = new byte[n];
-            System.arraycopy(b, 1, newarray, 0, n);
-            b = newarray;
-        }
-        return b;
+	byte[] b = bi.toByteArray();
+	if ((b.length > 1) && (b[0] == 0)) {
+	    int n = b.length - 1;
+	    byte[] newarray = new byte[n];
+	    System.arraycopy(b, 1, newarray, 0, n);
+	    b = newarray;
+	}
+	return b;
     }
 
     /*
@@ -122,9 +123,9 @@ abstract class HandshakeMessage {
     static final byte[] SHA_pad2 = genPad(0x5c, 40);
 
     private static byte[] genPad(int b, int count) {
-        byte[] padding = new byte[count];
-        Arrays.fill(padding, (byte)b);
-        return padding;
+	byte[] padding = new byte[count];
+	Arrays.fill(padding, (byte)b);
+	return padding;
     }
 
     /*
@@ -135,14 +136,14 @@ abstract class HandshakeMessage {
      * chains -- are handled correctly.
      */
     final void write(HandshakeOutStream s) throws IOException {
-        int len = messageLength();
-        if (len > (1 << 24)) {
-            throw new SSLException("Handshake message too big"
-                + ", type = " + messageType() + ", len = " + len);
-        }
-        s.write(messageType());
-        s.putInt24(len);
-        send(s);
+	int len = messageLength();
+	if (len > (1 << 24)) {
+	    throw new SSLException("Handshake message too big"
+		+ ", type = " + messageType() + ", len = " + len);
+	}
+	s.write(messageType());
+	s.putInt24(len);
+	send(s);
     }
 
     /*
@@ -182,19 +183,19 @@ class HelloRequest extends HandshakeMessage
 
     HelloRequest(HandshakeInStream in) throws IOException
     {
-        // nothing in this message
+	// nothing in this message
     }
 
     int messageLength() { return 0; }
 
     void send(HandshakeOutStream out) throws IOException
     {
-        // nothing in this messaage
+	// nothing in this messaage
     }
 
     void print(PrintStream out) throws IOException
     {
-        out.println("*** HelloRequest (empty)");
+	out.println("*** HelloRequest (empty)");
     }
 
 }
@@ -216,85 +217,85 @@ class ClientHello extends HandshakeMessage
 {
     int messageType() { return ht_client_hello; }
 
-    ProtocolVersion     protocolVersion;
-    RandomCookie        clnt_random;
-    SessionId           sessionId;
+    ProtocolVersion	protocolVersion;
+    RandomCookie	clnt_random;
+    SessionId		sessionId;
     private CipherSuiteList    cipherSuites;
-    byte[]              compression_methods;
+    byte[]		compression_methods;
 
     HelloExtensions extensions = new HelloExtensions();
-
-    private final static byte[]  NULL_COMPRESSION = new byte[] {0};
+    
+    private final static byte[]	 NULL_COMPRESSION = new byte[] {0};
 
     ClientHello(SecureRandom generator, ProtocolVersion protocolVersion) {
-        this.protocolVersion = protocolVersion;
-        clnt_random = new RandomCookie(generator);
-        compression_methods = NULL_COMPRESSION;
-        // sessionId, cipher_suites TBS later
+	this.protocolVersion = protocolVersion;
+	clnt_random = new RandomCookie(generator);
+	compression_methods = NULL_COMPRESSION;
+	// sessionId, cipher_suites TBS later
     }
-
+    
     CipherSuiteList getCipherSuites() {
-        return cipherSuites;
+	return cipherSuites;
     }
 
     // Set the ciphersuites.
     // This method may only be called once.
     void setCipherSuites(CipherSuiteList cipherSuites) {
-        this.cipherSuites = cipherSuites;
-        if (cipherSuites.containsEC()) {
-            extensions.add(SupportedEllipticCurvesExtension.DEFAULT);
-            extensions.add(SupportedEllipticPointFormatsExtension.DEFAULT);
-        }
+	this.cipherSuites = cipherSuites;
+	if (cipherSuites.containsEC()) {
+	    extensions.add(SupportedEllipticCurvesExtension.DEFAULT);
+	    extensions.add(SupportedEllipticPointFormatsExtension.DEFAULT);
+	}
     }
-
+    
     int messageLength() {
-        /*
-         * Add fixed size parts of each field...
-         * version + random + session + cipher + compress
-         */
-        return (2 + 32 + 1 + 2 + 1
-            + sessionId.length()                /* ... + variable parts */
-            + (cipherSuites.size() * 2)
-            + compression_methods.length)
-            + extensions.length();
+	/*
+	 * Add fixed size parts of each field...
+	 * version + random + session + cipher + compress
+	 */
+	return (2 + 32 + 1 + 2 + 1
+	    + sessionId.length()		/* ... + variable parts */
+	    + (cipherSuites.size() * 2)
+	    + compression_methods.length)
+	    + extensions.length();
     }
 
     ClientHello(HandshakeInStream s, int messageLength) throws IOException {
-        protocolVersion = ProtocolVersion.valueOf(s.getInt8(), s.getInt8());
-        clnt_random = new RandomCookie(s);
-        sessionId = new SessionId(s.getBytes8());
-        cipherSuites = new CipherSuiteList(s);
-        compression_methods = s.getBytes8();
-        if (messageLength() != messageLength) {
-            extensions = new HelloExtensions(s);
-        }
+	protocolVersion = ProtocolVersion.valueOf(s.getInt8(), s.getInt8());
+	clnt_random = new RandomCookie(s);
+	sessionId = new SessionId(s.getBytes8());
+	cipherSuites = new CipherSuiteList(s);
+	compression_methods = s.getBytes8();
+	if (messageLength() != messageLength) {
+	    extensions = new HelloExtensions(s);
+	}
     }
 
     void send(HandshakeOutStream s) throws IOException {
-        s.putInt8(protocolVersion.major);
-        s.putInt8(protocolVersion.minor);
-        clnt_random.send(s);
-        s.putBytes8(sessionId.getId());
-        cipherSuites.send(s);
-        s.putBytes8(compression_methods);
-        extensions.send(s);
+	s.putInt8(protocolVersion.major);
+	s.putInt8(protocolVersion.minor);
+	clnt_random.send(s);
+	s.putBytes8(sessionId.getId());
+	cipherSuites.send(s);
+	s.putBytes8(compression_methods);
+	extensions.send(s);
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** ClientHello, " + protocolVersion);
+	s.println("*** ClientHello, " + protocolVersion);
 
-        if (debug != null && Debug.isOn("verbose")) {
-            s.print   ("RandomCookie:  "); clnt_random.print(s);
+	if (debug != null && Debug.isOn("verbose")) {
+	    s.print   ("RandomCookie:  "); clnt_random.print(s);
 
-            s.print("Session ID:  ");
-            s.println(sessionId);
+	    s.print("Session ID:  ");
+	    s.println(sessionId);
 
-            s.println("Cipher Suites: " + cipherSuites);
-
-            Debug.println(s, "Compression Methods", compression_methods);
-            extensions.print(s);
-            s.println("***");
-        }
+	    s.println("Cipher Suites: " + cipherSuites);
+	    
+	    Debug.println(s, "Compression Methods", compression_methods);
+	    extensions.print(s);
+	    s.println("***");
+	}
     }
 }
 
@@ -309,71 +310,71 @@ static final
 class ServerHello extends HandshakeMessage
 {
     int messageType() { return ht_server_hello; }
-
-    ProtocolVersion     protocolVersion;
-    RandomCookie        svr_random;
+    
+    ProtocolVersion	protocolVersion;
+    RandomCookie	svr_random;
     SessionId           sessionId;
-    CipherSuite         cipherSuite;
-    byte                compression_method;
+    CipherSuite		cipherSuite;
+    byte		compression_method;
     HelloExtensions extensions = new HelloExtensions();
     int extensionLength;
 
     ServerHello() {
-        // empty
+	// empty
     }
 
     ServerHello(HandshakeInStream input, int messageLength) throws IOException {
-        protocolVersion = ProtocolVersion.valueOf(input.getInt8(),
-                                                  input.getInt8());
-        svr_random = new RandomCookie(input);
-        sessionId = new SessionId(input.getBytes8());
-        cipherSuite = CipherSuite.valueOf(input.getInt8(), input.getInt8());
-        compression_method = (byte)input.getInt8();
-        if (messageLength() != messageLength) {
-            extensions = new HelloExtensions(input);
-        }
+	protocolVersion = ProtocolVersion.valueOf(input.getInt8(), 
+						  input.getInt8());
+	svr_random = new RandomCookie(input);
+	sessionId = new SessionId(input.getBytes8());
+	cipherSuite = CipherSuite.valueOf(input.getInt8(), input.getInt8());
+	compression_method = (byte)input.getInt8();
+	if (messageLength() != messageLength) {
+	    extensions = new HelloExtensions(input);
+	}
     }
 
     int messageLength()
     {
-        // almost fixed size, except session ID and extensions:
-        //      major + minor = 2
-        //      random = 32
-        //      session ID len field = 1
-        //      cipher suite + compression = 3
-        //      extensions: if present, 2 + length of extensions
-        return 38 + sessionId.length() + extensions.length();
+	// almost fixed size, except session ID and extensions:
+	//	major + minor = 2
+	//	random = 32
+	//	session ID len field = 1
+	//	cipher suite + compression = 3
+	//	extensions: if present, 2 + length of extensions
+	return 38 + sessionId.length() + extensions.length();
     }
 
     void send(HandshakeOutStream s) throws IOException
     {
-        s.putInt8(protocolVersion.major);
-        s.putInt8(protocolVersion.minor);
-        svr_random.send(s);
-        s.putBytes8(sessionId.getId());
-        s.putInt8(cipherSuite.id >> 8);
-        s.putInt8(cipherSuite.id & 0xff);
-        s.putInt8(compression_method);
-        extensions.send(s);
+	s.putInt8(protocolVersion.major);
+	s.putInt8(protocolVersion.minor);
+	svr_random.send(s);
+	s.putBytes8(sessionId.getId());
+	s.putInt8(cipherSuite.id >> 8);
+	s.putInt8(cipherSuite.id & 0xff);
+	s.putInt8(compression_method);
+	extensions.send(s);
     }
 
     void print(PrintStream s) throws IOException
     {
-        s.println("*** ServerHello, " + protocolVersion);
+	s.println("*** ServerHello, " + protocolVersion);
 
-        if (debug != null && Debug.isOn("verbose")) {
-            s.print   ("RandomCookie:  "); svr_random.print(s);
+	if (debug != null && Debug.isOn("verbose")) {
+	    s.print   ("RandomCookie:  "); svr_random.print(s);
 
-            int i;
+	    int i;
 
-            s.print("Session ID:  ");
-            s.println(sessionId);
+	    s.print("Session ID:  ");
+	    s.println(sessionId);
 
-            s.println("Cipher Suite: " + cipherSuite);
-            s.println("Compression Method: " + compression_method);
-            extensions.print(s);
-            s.println("***");
-        }
+	    s.println("Cipher Suite: " + cipherSuite);
+	    s.println("Compression Method: " + compression_method);
+	    extensions.print(s);
+	    s.println("***");
+	}
     }
 }
 
@@ -397,74 +398,74 @@ class CertificateMsg extends HandshakeMessage
     int messageType() { return ht_certificate; }
 
     private X509Certificate[] chain;
-
+    
     private List<byte[]> encodedChain;
-
+    
     private int messageLength;
 
     CertificateMsg(X509Certificate[] certs) {
-        chain = certs;
+	chain = certs;
     }
 
     CertificateMsg(HandshakeInStream input) throws IOException {
-        int chainLen = input.getInt24();
-        List<Certificate> v = new ArrayList<Certificate>(4);
+	int chainLen = input.getInt24();
+	List<Certificate> v = new ArrayList<Certificate>(4);
 
-        CertificateFactory cf = null;
-        while (chainLen > 0) {
-            byte[] cert = input.getBytes24();
-            chainLen -= (3 + cert.length);
-            try {
-                if (cf == null) {
-                    cf = CertificateFactory.getInstance("X.509");
-                }
-                v.add(cf.generateCertificate(new ByteArrayInputStream(cert)));
-            } catch (CertificateException e) {
-                throw (SSLProtocolException)new SSLProtocolException
-                        (e.getMessage()).initCause(e);
-            }
-        }
+	CertificateFactory cf = null;
+	while (chainLen > 0) {
+	    byte[] cert = input.getBytes24();
+	    chainLen -= (3 + cert.length);
+	    try {
+		if (cf == null) {
+		    cf = CertificateFactory.getInstance("X.509");
+		}
+		v.add(cf.generateCertificate(new ByteArrayInputStream(cert)));
+	    } catch (CertificateException e) {
+		throw (SSLProtocolException)new SSLProtocolException
+			(e.getMessage()).initCause(e);
+	    }
+	}
 
-        chain = v.toArray(new X509Certificate[v.size()]);
+	chain = v.toArray(new X509Certificate[v.size()]);
     }
-
+    
     int messageLength() {
-        if (encodedChain == null) {
-            messageLength = 3;
-            encodedChain = new ArrayList<byte[]>(chain.length);
-            try {
-                for (X509Certificate cert : chain) {
-                    byte[] b = cert.getEncoded();
-                    encodedChain.add(b);
-                    messageLength += b.length + 3;
-                }
-            } catch (CertificateEncodingException e) {
-                encodedChain = null;
-                throw new RuntimeException("Could not encode certificates", e);
-            }
-        }
-        return messageLength;
+	if (encodedChain == null) {
+	    messageLength = 3;
+	    encodedChain = new ArrayList<byte[]>(chain.length);
+	    try {
+		for (X509Certificate cert : chain) {
+		    byte[] b = cert.getEncoded();
+		    encodedChain.add(b);
+		    messageLength += b.length + 3;
+		}
+	    } catch (CertificateEncodingException e) {
+		encodedChain = null;
+		throw new RuntimeException("Could not encode certificates", e);
+	    }
+	}
+	return messageLength;
     }
 
     void send(HandshakeOutStream s) throws IOException {
-        s.putInt24(messageLength() - 3);
-        for (byte[] b : encodedChain) {
-            s.putBytes24(b);
-        }
+	s.putInt24(messageLength() - 3);
+	for (byte[] b : encodedChain) {
+	    s.putBytes24(b);
+	}
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** Certificate chain");
+	s.println("*** Certificate chain");
 
-        if (debug != null && Debug.isOn("verbose")) {
-            for (int i = 0; i < chain.length; i++)
-                s.println("chain [" + i + "] = " + chain[i]);
-            s.println("***");
-        }
+	if (debug != null && Debug.isOn("verbose")) {
+	    for (int i = 0; i < chain.length; i++)
+		s.println("chain [" + i + "] = " + chain[i]);
+	    s.println("***");
+	}
     }
 
     X509Certificate[] getCertificateChain() {
-        return chain;
+	return chain;
     }
 }
 
@@ -484,21 +485,21 @@ class CertificateMsg extends HandshakeMessage
  * Key exchange can be viewed as having three modes, which are explicit
  * for the Diffie-Hellman flavors and poorly specified for RSA ones:
  *
- *      - "Ephemeral" keys.  Here, a "temporary" key is allocated by the
- *        server, and signed.  Diffie-Hellman keys signed using RSA or
- *        DSS are ephemeral (DHE flavor).  RSA keys get used to do the same
- *        thing, to cut the key size down to 512 bits (export restrictions)
- *        or for signing-only RSA certificates.
+ *	- "Ephemeral" keys.  Here, a "temporary" key is allocated by the
+ *	  server, and signed.  Diffie-Hellman keys signed using RSA or
+ *	  DSS are ephemeral (DHE flavor).  RSA keys get used to do the same
+ *	  thing, to cut the key size down to 512 bits (export restrictions)
+ *	  or for signing-only RSA certificates.
  *
- *      - Anonymity.  Here no server certificate is sent, only the public
- *        key of the server.  This case is subject to man-in-the-middle
- *        attacks.  This can be done with Diffie-Hellman keys (DH_anon) or
- *        with RSA keys, but is only used in SSLv3 for DH_anon.
+ *	- Anonymity.  Here no server certificate is sent, only the public
+ *	  key of the server.  This case is subject to man-in-the-middle
+ *	  attacks.  This can be done with Diffie-Hellman keys (DH_anon) or
+ *	  with RSA keys, but is only used in SSLv3 for DH_anon.
  *
- *      - "Normal" case.  Here a server certificate is sent, and the public
- *        key there is used directly in exchanging the premaster secret.
- *        For example, Diffie-Hellman "DH" flavor, and any RSA flavor with
- *        only 512 bit keys.
+ *	- "Normal" case.  Here a server certificate is sent, and the public
+ *	  key there is used directly in exchanging the premaster secret.
+ *	  For example, Diffie-Hellman "DH" flavor, and any RSA flavor with
+ *	  only 512 bit keys.
  *
  * If a server certificate is sent, there is no anonymity.  However,
  * when a certificate is sent, ephemeral keys may still be used to
@@ -531,22 +532,22 @@ class RSA_ServerKeyExchange extends ServerKeyExchange
     /*
      * Hash the nonces and the ephemeral RSA public key.
      */
-    private void updateSignature(byte clntNonce[], byte svrNonce[])
-            throws SignatureException {
-        int tmp;
+    private void updateSignature(byte clntNonce[], byte svrNonce[]) 
+	    throws SignatureException {
+	int tmp;
 
-        signature.update(clntNonce);
-        signature.update(svrNonce);
+	signature.update(clntNonce);
+	signature.update(svrNonce);
 
-        tmp = rsa_modulus.length;
-        signature.update((byte)(tmp >> 8));
-        signature.update((byte)(tmp & 0x0ff));
-        signature.update(rsa_modulus);
+	tmp = rsa_modulus.length;
+	signature.update((byte)(tmp >> 8));
+	signature.update((byte)(tmp & 0x0ff));
+	signature.update(rsa_modulus);
 
-        tmp = rsa_exponent.length;
-        signature.update((byte)(tmp >> 8));
-        signature.update((byte)(tmp & 0x0ff));
-        signature.update(rsa_exponent);
+	tmp = rsa_exponent.length;
+	signature.update((byte)(tmp >> 8));
+	signature.update((byte)(tmp & 0x0ff));
+	signature.update(rsa_exponent);
     }
 
 
@@ -561,15 +562,15 @@ class RSA_ServerKeyExchange extends ServerKeyExchange
      * ones sent using this message.
      */
     RSA_ServerKeyExchange(PublicKey ephemeralKey, PrivateKey privateKey,
-            RandomCookie clntNonce, RandomCookie svrNonce, SecureRandom sr)
-            throws GeneralSecurityException {
-        RSAPublicKeySpec rsaKey = JsseJce.getRSAPublicKeySpec(ephemeralKey);
-        rsa_modulus = toByteArray(rsaKey.getModulus());
-        rsa_exponent = toByteArray(rsaKey.getPublicExponent());
-        signature = RSASignature.getInstance();
-        signature.initSign(privateKey, sr);
-        updateSignature(clntNonce.random_bytes, svrNonce.random_bytes);
-        signatureBytes = signature.sign();
+    	    RandomCookie clntNonce, RandomCookie svrNonce, SecureRandom sr)
+	    throws GeneralSecurityException {
+	RSAPublicKeySpec rsaKey = JsseJce.getRSAPublicKeySpec(ephemeralKey);
+	rsa_modulus = toByteArray(rsaKey.getModulus());
+	rsa_exponent = toByteArray(rsaKey.getPublicExponent());
+	signature = RSASignature.getInstance();
+	signature.initSign(privateKey, sr);
+	updateSignature(clntNonce.random_bytes, svrNonce.random_bytes);
+	signatureBytes = signature.sign();
     }
 
 
@@ -578,11 +579,11 @@ class RSA_ServerKeyExchange extends ServerKeyExchange
      * to the client (and, in some situations, eavesdroppers).
      */
     RSA_ServerKeyExchange(HandshakeInStream input)
-            throws IOException, NoSuchAlgorithmException {
-        signature = RSASignature.getInstance();
-        rsa_modulus = input.getBytes16();
-        rsa_exponent = input.getBytes16();
-        signatureBytes = input.getBytes16();
+    	    throws IOException, NoSuchAlgorithmException {
+	signature = RSASignature.getInstance();
+	rsa_modulus = input.getBytes16();
+	rsa_exponent = input.getBytes16();
+	signatureBytes = input.getBytes16();
     }
 
     /*
@@ -590,16 +591,16 @@ class RSA_ServerKeyExchange extends ServerKeyExchange
      * SSL connection.
      */
     PublicKey getPublicKey() {
-        try {
-            KeyFactory kfac = JsseJce.getKeyFactory("RSA");
-            // modulus and exponent are always positive
-            RSAPublicKeySpec kspec = new RSAPublicKeySpec
-                                         (new BigInteger(1, rsa_modulus),
-                                          new BigInteger(1, rsa_exponent));
-            return kfac.generatePublic(kspec);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+	try {
+	    KeyFactory kfac = JsseJce.getKeyFactory("RSA");
+	    // modulus and exponent are always positive
+	    RSAPublicKeySpec kspec = new RSAPublicKeySpec
+					 (new BigInteger(1, rsa_modulus),
+					  new BigInteger(1, rsa_exponent));
+	    return kfac.generatePublic(kspec);
+	} catch (Exception e) {
+	    throw new RuntimeException(e);
+	}
     }
 
     /*
@@ -607,31 +608,31 @@ class RSA_ServerKeyExchange extends ServerKeyExchange
      * from it and the two nonces.  This is called by clients
      * with "exportable" RSA flavors.
      */
-    boolean verify(PublicKey certifiedKey, RandomCookie clntNonce,
-            RandomCookie svrNonce) throws GeneralSecurityException {
-        signature.initVerify(certifiedKey);
-        updateSignature(clntNonce.random_bytes, svrNonce.random_bytes);
-        return signature.verify(signatureBytes);
+    boolean verify(PublicKey certifiedKey, RandomCookie clntNonce, 
+	    RandomCookie svrNonce) throws GeneralSecurityException { 
+	signature.initVerify(certifiedKey);
+	updateSignature(clntNonce.random_bytes, svrNonce.random_bytes);
+	return signature.verify(signatureBytes);
     }
 
     int messageLength() {
-        return 6 + rsa_modulus.length + rsa_exponent.length
-               + signatureBytes.length;
+	return 6 + rsa_modulus.length + rsa_exponent.length
+	       + signatureBytes.length;
     }
 
     void send(HandshakeOutStream s) throws IOException {
-        s.putBytes16(rsa_modulus);
-        s.putBytes16(rsa_exponent);
-        s.putBytes16(signatureBytes);
+	s.putBytes16(rsa_modulus);
+	s.putBytes16(rsa_exponent);
+	s.putBytes16(signatureBytes);
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** RSA ServerKeyExchange");
+	s.println("*** RSA ServerKeyExchange");
 
-        if (debug != null && Debug.isOn("verbose")) {
-            Debug.println(s, "RSA Modulus", rsa_modulus);
-            Debug.println(s, "RSA Public Exponent", rsa_exponent);
-        }
+	if (debug != null && Debug.isOn("verbose")) {
+	    Debug.println(s, "RSA Modulus", rsa_modulus);
+	    Debug.println(s, "RSA Public Exponent", rsa_exponent);
+	}
     }
 }
 
@@ -654,54 +655,54 @@ static final
 class DH_ServerKeyExchange extends ServerKeyExchange
 {
     // Fix message encoding, see 4348279
-    private final static boolean dhKeyExchangeFix =
-        Debug.getBooleanProperty("com.sun.net.ssl.dhKeyExchangeFix", true);
+    private final static boolean dhKeyExchangeFix = 
+    	Debug.getBooleanProperty("com.sun.net.ssl.dhKeyExchangeFix", true);
 
-    private byte                dh_p [];        // 1 to 2^16 - 1 bytes
-    private byte                dh_g [];        // 1 to 2^16 - 1 bytes
-    private byte                dh_Ys [];       // 1 to 2^16 - 1 bytes
+    private byte		dh_p [];	// 1 to 2^16 - 1 bytes
+    private byte		dh_g [];	// 1 to 2^16 - 1 bytes
+    private byte		dh_Ys [];	// 1 to 2^16 - 1 bytes
 
-    private byte                signature [];
+    private byte		signature [];
 
     /* Return the Diffie-Hellman modulus */
     BigInteger getModulus() {
-        return new BigInteger(1, dh_p);
+    	return new BigInteger(1, dh_p);
     }
 
     /* Return the Diffie-Hellman base/generator */
     BigInteger getBase() {
-        return new BigInteger(1, dh_g);
+    	return new BigInteger(1, dh_g);
     }
 
     /* Return the server's Diffie-Hellman public key */
     BigInteger getServerPublicKey() {
-        return new BigInteger(1, dh_Ys);
+    	return new BigInteger(1, dh_Ys);
     }
 
     /*
      * Update sig with nonces and Diffie-Hellman public key.
      */
-    private void updateSignature(Signature sig, byte clntNonce[],
-            byte svrNonce[]) throws SignatureException {
-        int tmp;
+    private void updateSignature(Signature sig, byte clntNonce[], 
+    	    byte svrNonce[]) throws SignatureException {
+	int tmp;
 
-        sig.update(clntNonce);
-        sig.update(svrNonce);
+	sig.update(clntNonce);
+	sig.update(svrNonce);
 
-        tmp = dh_p.length;
-        sig.update((byte)(tmp >> 8));
-        sig.update((byte)(tmp & 0x0ff));
-        sig.update(dh_p);
+	tmp = dh_p.length;
+	sig.update((byte)(tmp >> 8));
+	sig.update((byte)(tmp & 0x0ff));
+	sig.update(dh_p);
 
-        tmp = dh_g.length;
-        sig.update((byte)(tmp >> 8));
-        sig.update((byte)(tmp & 0x0ff));
-        sig.update(dh_g);
+	tmp = dh_g.length;
+	sig.update((byte)(tmp >> 8));
+	sig.update((byte)(tmp & 0x0ff));
+	sig.update(dh_g);
 
-        tmp = dh_Ys.length;
-        sig.update((byte)(tmp >> 8));
-        sig.update((byte)(tmp & 0x0ff));
-        sig.update(dh_Ys);
+	tmp = dh_Ys.length;
+	sig.update((byte)(tmp >> 8));
+	sig.update((byte)(tmp & 0x0ff));
+	sig.update(dh_Ys);
     }
 
     /*
@@ -709,8 +710,8 @@ class DH_ServerKeyExchange extends ServerKeyExchange
      * key exchange.
      */
     DH_ServerKeyExchange(DHCrypt obj) {
-        getValues(obj);
-        signature = null;
+	getValues(obj);
+	signature = null;
     }
 
     /*
@@ -719,25 +720,25 @@ class DH_ServerKeyExchange extends ServerKeyExchange
      * key exchange.  (Constructor called by server.)
      */
     DH_ServerKeyExchange(DHCrypt obj, PrivateKey key, byte clntNonce[],
-            byte svrNonce[], SecureRandom sr) throws GeneralSecurityException {
+	    byte svrNonce[], SecureRandom sr) throws GeneralSecurityException {
 
-        getValues(obj);
+	getValues(obj);
 
-        Signature sig;
-        if (key.getAlgorithm().equals("DSA")) {
-            sig = JsseJce.getSignature(JsseJce.SIGNATURE_DSA);
-        } else {
-            sig = RSASignature.getInstance();
-        }
-        sig.initSign(key, sr);
-        updateSignature(sig, clntNonce, svrNonce);
-        signature = sig.sign();
+	Signature sig;
+	if (key.getAlgorithm().equals("DSA")) {
+	    sig = JsseJce.getSignature(JsseJce.SIGNATURE_DSA);
+	} else {
+	    sig = RSASignature.getInstance();
+	}
+	sig.initSign(key, sr);
+	updateSignature(sig, clntNonce, svrNonce);
+	signature = sig.sign();
     }
 
     private void getValues(DHCrypt obj) {
-        dh_p = toByteArray(obj.getModulus());
-        dh_g = toByteArray(obj.getBase());
-        dh_Ys = toByteArray(obj.getPublicKey());
+	dh_p = toByteArray(obj.getModulus());
+	dh_g = toByteArray(obj.getBase());
+	dh_Ys = toByteArray(obj.getPublicKey());
     }
 
     /*
@@ -746,10 +747,10 @@ class DH_ServerKeyExchange extends ServerKeyExchange
      * DH_anon key exchange
      */
     DH_ServerKeyExchange(HandshakeInStream input) throws IOException {
-        dh_p = input.getBytes16();
-        dh_g = input.getBytes16();
-        dh_Ys = input.getBytes16();
-        signature = null;
+	dh_p = input.getBytes16();
+	dh_g = input.getBytes16();
+	dh_Ys = input.getBytes16();
+	signature = null;
     }
 
     /*
@@ -758,85 +759,85 @@ class DH_ServerKeyExchange extends ServerKeyExchange
      * DHE_DSS or DHE_RSA key exchange.  (Called by client.)
      */
     DH_ServerKeyExchange(HandshakeInStream input, PublicKey publicKey,
-            byte clntNonce[], byte svrNonce[], int messageSize)
-            throws IOException, GeneralSecurityException {
+    	    byte clntNonce[], byte svrNonce[], int messageSize) 
+	    throws IOException, GeneralSecurityException {
 
-        dh_p = input.getBytes16();
-        dh_g = input.getBytes16();
-        dh_Ys = input.getBytes16();
+	dh_p = input.getBytes16();
+	dh_g = input.getBytes16();
+	dh_Ys = input.getBytes16();
 
-        byte signature[];
-        if (dhKeyExchangeFix) {
-            signature = input.getBytes16();
-        } else {
-            messageSize -= (dh_p.length + 2);
-            messageSize -= (dh_g.length + 2);
-            messageSize -= (dh_Ys.length + 2);
+	byte signature[];
+	if (dhKeyExchangeFix) {
+	    signature = input.getBytes16();
+	} else {
+	    messageSize -= (dh_p.length + 2);
+	    messageSize -= (dh_g.length + 2);
+	    messageSize -= (dh_Ys.length + 2);
 
-            signature = new byte[messageSize];
-            input.read(signature);
-        }
+	    signature = new byte[messageSize];
+	    input.read(signature);
+	}
+	
+	Signature sig;
+	String algorithm = publicKey.getAlgorithm();
+	if (algorithm.equals("DSA")) {
+	    sig = JsseJce.getSignature(JsseJce.SIGNATURE_DSA);
+	} else if (algorithm.equals("RSA")) {
+	    sig = RSASignature.getInstance();
+	} else {
+	    throw new SSLKeyException("neither an RSA or a DSA key");
+	}
 
-        Signature sig;
-        String algorithm = publicKey.getAlgorithm();
-        if (algorithm.equals("DSA")) {
-            sig = JsseJce.getSignature(JsseJce.SIGNATURE_DSA);
-        } else if (algorithm.equals("RSA")) {
-            sig = RSASignature.getInstance();
-        } else {
-            throw new SSLKeyException("neither an RSA or a DSA key");
-        }
+	sig.initVerify(publicKey);
+	updateSignature(sig, clntNonce, svrNonce);
 
-        sig.initVerify(publicKey);
-        updateSignature(sig, clntNonce, svrNonce);
-
-        if (sig.verify(signature) == false ) {
-            throw new SSLKeyException("Server D-H key verification failed");
-        }
+	if (sig.verify(signature) == false ) {
+	    throw new SSLKeyException("Server D-H key verification failed");
+	}
     }
 
     int messageLength() {
-        int temp = 6;   // overhead for p, g, y(s) values.
+	int temp = 6;	// overhead for p, g, y(s) values.
 
-        temp += dh_p.length;
-        temp += dh_g.length;
-        temp += dh_Ys.length;
-        if (signature != null) {
-            temp += signature.length;
-            if (dhKeyExchangeFix) {
-                temp += 2;
-            }
-        }
-        return temp;
+	temp += dh_p.length;
+	temp += dh_g.length;
+	temp += dh_Ys.length;
+	if (signature != null) {
+	    temp += signature.length;
+	    if (dhKeyExchangeFix) {
+		temp += 2;
+	    }
+	}
+	return temp;
     }
 
     void send(HandshakeOutStream s) throws IOException {
-        s.putBytes16(dh_p);
-        s.putBytes16(dh_g);
-        s.putBytes16(dh_Ys);
-        if (signature != null) {
-            if (dhKeyExchangeFix) {
-                s.putBytes16(signature);
-            } else {
-                s.write(signature);
-            }
-        }
+	s.putBytes16(dh_p);
+	s.putBytes16(dh_g);
+	s.putBytes16(dh_Ys);
+	if (signature != null) {
+	    if (dhKeyExchangeFix) {
+		s.putBytes16(signature);
+	    } else {
+		s.write(signature);
+	    }
+	}
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** Diffie-Hellman ServerKeyExchange");
+	s.println("*** Diffie-Hellman ServerKeyExchange");
 
-        if (debug != null && Debug.isOn("verbose")) {
-            Debug.println(s, "DH Modulus", dh_p);
-            Debug.println(s, "DH Base", dh_g);
-            Debug.println(s, "Server DH Public Key", dh_Ys);
+	if (debug != null && Debug.isOn("verbose")) {
+	    Debug.println(s, "DH Modulus", dh_p);
+	    Debug.println(s, "DH Base", dh_g);
+	    Debug.println(s, "Server DH Public Key", dh_Ys);
 
-            if (signature == null) {
-                s.println("Anonymous");
-            } else {
-                s.println("Signed with a DSA or RSA public key");
-            }
-        }
+	    if (signature == null) {
+		s.println("Anonymous");
+	    } else {
+		s.println("Signed with a DSA or RSA public key");
+	    }
+	}
     }
 }
 
@@ -866,166 +867,166 @@ class ECDH_ServerKeyExchange extends ServerKeyExchange
 
     // public key object encapsulated in this message
     private ECPublicKey publicKey;
-
+    
     ECDH_ServerKeyExchange(ECDHCrypt obj, PrivateKey privateKey,
-            byte[] clntNonce, byte[] svrNonce, SecureRandom sr)
-            throws GeneralSecurityException {
-        publicKey = (ECPublicKey)obj.getPublicKey();
-        ECParameterSpec params = publicKey.getParams();
-        ECPoint point = publicKey.getW();
-        pointBytes = JsseJce.encodePoint(point, params.getCurve());
-        curveId = SupportedEllipticCurvesExtension.getCurveIndex(params);
+    	    byte[] clntNonce, byte[] svrNonce, SecureRandom sr)
+	    throws GeneralSecurityException {
+	publicKey = (ECPublicKey)obj.getPublicKey();
+	ECParameterSpec params = publicKey.getParams();
+	ECPoint point = publicKey.getW();
+	pointBytes = JsseJce.encodePoint(point, params.getCurve());
+	curveId = SupportedEllipticCurvesExtension.getCurveIndex(params);
+	
+	if (privateKey == null) {
+	    // ECDH_anon
+	    return;
+	}
 
-        if (privateKey == null) {
-            // ECDH_anon
-            return;
-        }
-
-        Signature sig = getSignature(privateKey.getAlgorithm());
-        sig.initSign(privateKey);
-
-        updateSignature(sig, clntNonce, svrNonce);
-        signatureBytes = sig.sign();
+	Signature sig = getSignature(privateKey.getAlgorithm());
+	sig.initSign(privateKey);
+	
+	updateSignature(sig, clntNonce, svrNonce);
+	signatureBytes = sig.sign();
     }
-
+    
     /*
      * Parse an ECDH server key exchange message.
      */
     ECDH_ServerKeyExchange(HandshakeInStream input, PublicKey signingKey,
-            byte[] clntNonce, byte[] svrNonce)
-            throws IOException, GeneralSecurityException {
-        int curveType = input.getInt8();
-        ECParameterSpec parameters;
-        // These parsing errors should never occur as we negotiated
-        // the supported curves during the exchange of the Hello messages.
-        if (curveType == CURVE_NAMED_CURVE) {
-            curveId = input.getInt16();
-            if (SupportedEllipticCurvesExtension.isSupported(curveId) == false) {
-                throw new SSLHandshakeException("Unsupported curveId: " + curveId);
-            }
-            String curveOid = SupportedEllipticCurvesExtension.getCurveOid(curveId);
-            if (curveOid == null) {
-                throw new SSLHandshakeException("Unknown named curve: " + curveId);
-            }
-            parameters = JsseJce.getECParameterSpec(curveOid);
-            if (parameters == null) {
-                throw new SSLHandshakeException("Unsupported curve: " + curveOid);
-            }
-        } else {
-            throw new SSLHandshakeException("Unsupported ECCurveType: " + curveType);
-        }
-        pointBytes = input.getBytes8();
+    	    byte[] clntNonce, byte[] svrNonce) 
+	    throws IOException, GeneralSecurityException {
+	int curveType = input.getInt8();
+	ECParameterSpec parameters;
+	// These parsing errors should never occur as we negotiated
+	// the supported curves during the exchange of the Hello messages.
+	if (curveType == CURVE_NAMED_CURVE) {
+	    curveId = input.getInt16();
+	    if (SupportedEllipticCurvesExtension.isSupported(curveId) == false) {
+		throw new SSLHandshakeException("Unsupported curveId: " + curveId);
+	    }
+	    String curveOid = SupportedEllipticCurvesExtension.getCurveOid(curveId);
+	    if (curveOid == null) {
+		throw new SSLHandshakeException("Unknown named curve: " + curveId);
+	    }
+	    parameters = JsseJce.getECParameterSpec(curveOid);
+	    if (parameters == null) {
+		throw new SSLHandshakeException("Unsupported curve: " + curveOid);
+	    }
+	} else {
+	    throw new SSLHandshakeException("Unsupported ECCurveType: " + curveType);
+	}
+	pointBytes = input.getBytes8();
 
-        ECPoint point = JsseJce.decodePoint(pointBytes, parameters.getCurve());
-        KeyFactory factory = JsseJce.getKeyFactory("EC");
-        publicKey = (ECPublicKey)factory.generatePublic(new ECPublicKeySpec(point, parameters));
+	ECPoint point = JsseJce.decodePoint(pointBytes, parameters.getCurve());
+	KeyFactory factory = JsseJce.getKeyFactory("EC");
+	publicKey = (ECPublicKey)factory.generatePublic(new ECPublicKeySpec(point, parameters));
+	
+	if (signingKey == null) {
+	    // ECDH_anon
+	    return;
+	}
 
-        if (signingKey == null) {
-            // ECDH_anon
-            return;
-        }
-
-        // verify the signature
-        signatureBytes = input.getBytes16();
-        Signature sig = getSignature(signingKey.getAlgorithm());
-        sig.initVerify(signingKey);
-
-        updateSignature(sig, clntNonce, svrNonce);
-
-        if (sig.verify(signatureBytes) == false ) {
-            throw new SSLKeyException
-                ("Invalid signature on ECDH server key exchange message");
-        }
+	// verify the signature
+	signatureBytes = input.getBytes16();
+	Signature sig = getSignature(signingKey.getAlgorithm());
+	sig.initVerify(signingKey);
+	
+	updateSignature(sig, clntNonce, svrNonce);
+	
+	if (sig.verify(signatureBytes) == false ) {
+	    throw new SSLKeyException
+		("Invalid signature on ECDH server key exchange message");
+	}
     }
 
     /*
      * Get the ephemeral EC public key encapsulated in this message.
      */
     ECPublicKey getPublicKey() {
-        return publicKey;
+	return publicKey;
     }
 
     private static Signature getSignature(String keyAlgorithm) throws NoSuchAlgorithmException {
-        if (keyAlgorithm.equals("EC")) {
-            return JsseJce.getSignature(JsseJce.SIGNATURE_ECDSA);
-        } else if (keyAlgorithm.equals("RSA")) {
-            return RSASignature.getInstance();
-        } else {
-            throw new NoSuchAlgorithmException("neither an RSA or a EC key");
-        }
+	if (keyAlgorithm.equals("EC")) {
+	    return JsseJce.getSignature(JsseJce.SIGNATURE_ECDSA);
+	} else if (keyAlgorithm.equals("RSA")) {
+	    return RSASignature.getInstance();
+	} else {
+	    throw new NoSuchAlgorithmException("neither an RSA or a EC key");
+	}
     }
 
     private void updateSignature(Signature sig, byte clntNonce[],
-            byte svrNonce[]) throws SignatureException {
-        sig.update(clntNonce);
-        sig.update(svrNonce);
-
-        sig.update((byte)CURVE_NAMED_CURVE);
-        sig.update((byte)(curveId >> 8));
-        sig.update((byte)curveId);
-        sig.update((byte)pointBytes.length);
-        sig.update(pointBytes);
+	    byte svrNonce[]) throws SignatureException {
+	sig.update(clntNonce);
+	sig.update(svrNonce);
+	
+	sig.update((byte)CURVE_NAMED_CURVE);
+	sig.update((byte)(curveId >> 8));
+	sig.update((byte)curveId);
+	sig.update((byte)pointBytes.length);
+	sig.update(pointBytes);
     }
 
     int messageLength() {
-        int sigLen = (signatureBytes == null) ? 0 : 2 + signatureBytes.length;
-        return 4 + pointBytes.length + sigLen;
+	int sigLen = (signatureBytes == null) ? 0 : 2 + signatureBytes.length;
+	return 4 + pointBytes.length + sigLen;
     }
 
     void send(HandshakeOutStream s) throws IOException {
-        s.putInt8(CURVE_NAMED_CURVE);
-        s.putInt16(curveId);
-        s.putBytes8(pointBytes);
-        if (signatureBytes != null) {
-            s.putBytes16(signatureBytes);
-        }
+	s.putInt8(CURVE_NAMED_CURVE);
+	s.putInt16(curveId);
+	s.putBytes8(pointBytes);
+	if (signatureBytes != null) {
+	    s.putBytes16(signatureBytes);
+	}
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** ECDH ServerKeyExchange");
+	s.println("*** ECDH ServerKeyExchange");
 
-        if (debug != null && Debug.isOn("verbose")) {
-            s.println("Server key: " + publicKey);
-        }
+	if (debug != null && Debug.isOn("verbose")) {
+	    s.println("Server key: " + publicKey);
+	}
     }
 }
 
 static final class DistinguishedName {
 
-    /*
+    /* 
      * DER encoded distinguished name.
      * TLS requires that its not longer than 65535 bytes.
-     */
+     */ 
     byte name[];
 
     DistinguishedName(HandshakeInStream input) throws IOException {
-        name = input.getBytes16();
+	name = input.getBytes16();
     }
 
     DistinguishedName(X500Principal dn) {
         name = dn.getEncoded();
     }
-
+    
     X500Principal getX500Principal() throws IOException {
         try {
             return new X500Principal(name);
-        } catch (IllegalArgumentException e) {
-            throw (SSLProtocolException)new SSLProtocolException
-                    (e.getMessage()).initCause(e);
-        }
+	} catch (IllegalArgumentException e) {
+	    throw (SSLProtocolException)new SSLProtocolException
+		    (e.getMessage()).initCause(e);
+	}
     }
 
-    int length() {
+    int length() { 
         return 2 + name.length;
     }
 
     void send(HandshakeOutStream output) throws IOException {
-        output.putBytes16(name);
+	output.putBytes16(name);
     }
 
     void print(PrintStream output) throws IOException {
         X500Principal principal = new X500Principal(name);
-        output.println("<" + principal.toString() + ">");
+	output.println("<" + principal.toString() + ">");
     }
 }
 
@@ -1045,127 +1046,127 @@ class CertificateRequest extends HandshakeMessage
     static final int   cct_dss_sign = 2;
     static final int   cct_rsa_fixed_dh = 3;
     static final int   cct_dss_fixed_dh = 4;
-
+    
     // The existance of these two values is a bug in the SSL specification.
     // They are never used in the protocol.
     static final int   cct_rsa_ephemeral_dh = 5;
     static final int   cct_dss_ephemeral_dh = 6;
-
+    
     // From RFC 4492 (ECC)
-    static final int    cct_ecdsa_sign       = 64;
-    static final int    cct_rsa_fixed_ecdh   = 65;
-    static final int    cct_ecdsa_fixed_ecdh = 66;
+    static final int	cct_ecdsa_sign       = 64;
+    static final int	cct_rsa_fixed_ecdh   = 65;
+    static final int	cct_ecdsa_fixed_ecdh = 66;
 
     private final static byte[] TYPES_NO_ECC = { cct_rsa_sign, cct_dss_sign };
-    private final static byte[] TYPES_ECC =
-        { cct_rsa_sign, cct_dss_sign, cct_ecdsa_sign };
-
-    byte                types [];               // 1 to 255 types
-    DistinguishedName   authorities [];         // 3 to 2^16 - 1
-        // ... "3" because that's the smallest DER-encoded X500 DN
-
-    CertificateRequest(X509Certificate ca[], KeyExchange keyExchange)
-            throws IOException {
-        // always use X500Principal
-        authorities = new DistinguishedName[ca.length];
-        for (int i = 0; i < ca.length; i++) {
-            X500Principal x500Principal = ca[i].getSubjectX500Principal();
-            authorities[i] = new DistinguishedName(x500Principal);
-        }
-        // we support RSA, DSS, and ECDSA client authentication and they
-        // can be used with all ciphersuites. If this changes, the code
-        // needs to be adapted to take keyExchange into account.
-        // We only request ECDSA client auth if we have ECC crypto available.
-        this.types = JsseJce.isEcAvailable() ? TYPES_ECC : TYPES_NO_ECC;
+    private final static byte[] TYPES_ECC = 
+	{ cct_rsa_sign, cct_dss_sign, cct_ecdsa_sign };
+    
+    byte		types [];		// 1 to 255 types
+    DistinguishedName	authorities [];		// 3 to 2^16 - 1
+	// ... "3" because that's the smallest DER-encoded X500 DN
+    
+    CertificateRequest(X509Certificate ca[], KeyExchange keyExchange) 
+	    throws IOException {
+	// always use X500Principal
+	authorities = new DistinguishedName[ca.length];
+	for (int i = 0; i < ca.length; i++) {
+	    X500Principal x500Principal = ca[i].getSubjectX500Principal();
+	    authorities[i] = new DistinguishedName(x500Principal);
+	}
+	// we support RSA, DSS, and ECDSA client authentication and they
+	// can be used with all ciphersuites. If this changes, the code
+	// needs to be adapted to take keyExchange into account.
+	// We only request ECDSA client auth if we have ECC crypto available.
+	this.types = JsseJce.isEcAvailable() ? TYPES_ECC : TYPES_NO_ECC;
     }
 
     CertificateRequest(HandshakeInStream input) throws IOException {
-        types = input.getBytes8();
-        int len = input.getInt16();
-        ArrayList<DistinguishedName> v = new ArrayList<DistinguishedName>();
-        while (len >= 3) {
-            DistinguishedName dn = new DistinguishedName(input);
-            v.add(dn);
-            len -= dn.length();
-        }
+	types = input.getBytes8();
+	int len = input.getInt16();
+	ArrayList<DistinguishedName> v = new ArrayList<DistinguishedName>();
+	while (len >= 3) {
+	    DistinguishedName dn = new DistinguishedName(input);
+	    v.add(dn);
+	    len -= dn.length();
+	}
 
-        if (len != 0) {
-            throw new SSLProtocolException("Bad CertificateRequest DN length");
-        }
-
-        authorities = v.toArray(new DistinguishedName[v.size()]);
+	if (len != 0) {
+	    throw new SSLProtocolException("Bad CertificateRequest DN length");
+	}
+	
+	authorities = v.toArray(new DistinguishedName[v.size()]);
     }
 
     X500Principal[] getAuthorities() throws IOException {
-        X500Principal[] ret = new X500Principal[authorities.length];
-        for (int i = 0; i < authorities.length; i++) {
-            ret[i] = authorities[i].getX500Principal();
-        }
-        return ret;
+	X500Principal[] ret = new X500Principal[authorities.length];
+	for (int i = 0; i < authorities.length; i++) {
+	    ret[i] = authorities[i].getX500Principal();
+	}
+	return ret;
     }
 
     int messageLength()
     {
-        int len;
+	int len;
 
-        len = 1 + types.length + 2;
-        for (int i = 0; i < authorities.length; i++)
-            len += authorities[i].length();
-        return len;
+	len = 1 + types.length + 2;
+	for (int i = 0; i < authorities.length; i++)
+	    len += authorities[i].length();
+	return len;
     }
 
     void send(HandshakeOutStream output) throws IOException
     {
-        int     len = 0;
+	int	len = 0;
 
-        for (int i = 0; i < authorities.length; i++)
-            len += authorities[i].length();
+	for (int i = 0; i < authorities.length; i++)
+	    len += authorities[i].length();
 
-        output.putBytes8(types);
-        output.putInt16(len);
-        for (int i = 0; i < authorities.length; i++)
-            authorities[i].send(output);
+	output.putBytes8(types);
+	output.putInt16(len);
+	for (int i = 0; i < authorities.length; i++)
+	    authorities[i].send(output);
     }
 
     void print(PrintStream s) throws IOException
     {
-        s.println("*** CertificateRequest");
+	s.println("*** CertificateRequest");
 
-        if (debug != null && Debug.isOn("verbose")) {
-            s.print("Cert Types: ");
-            for (int i = 0; i < types.length; i++) {
-                switch (types[i]) {
-                  case cct_rsa_sign:
-                    s.print("RSA"); break;
-                  case cct_dss_sign:
-                    s.print("DSS"); break;
-                  case cct_rsa_fixed_dh:
-                    s.print("Fixed DH (RSA sig)"); break;
-                  case cct_dss_fixed_dh:
-                    s.print("Fixed DH (DSS sig)"); break;
-                  case cct_rsa_ephemeral_dh:
-                    s.print("Ephemeral DH (RSA sig)"); break;
-                  case cct_dss_ephemeral_dh:
-                    s.print("Ephemeral DH (DSS sig)"); break;
-                  case cct_ecdsa_sign:
-                    s.print("ECDSA"); break;
-                  case cct_rsa_fixed_ecdh:
-                    s.print("Fixed ECDH (RSA sig)"); break;
-                  case cct_ecdsa_fixed_ecdh:
-                    s.print("Fixed ECDH (ECDSA sig)"); break;
-                  default:
-                    s.print("Type-" + (types[i] & 0xff)); break;
-                }
-                if (i != types.length - 1) {
-                    s.print(", ");
-                }
-            }
-            s.println();
+	if (debug != null && Debug.isOn("verbose")) {
+	    s.print("Cert Types: ");
+	    for (int i = 0; i < types.length; i++) {
+		switch (types[i]) {
+		  case cct_rsa_sign:
+		    s.print("RSA"); break;
+		  case cct_dss_sign:
+		    s.print("DSS"); break;
+		  case cct_rsa_fixed_dh:
+		    s.print("Fixed DH (RSA sig)"); break;
+		  case cct_dss_fixed_dh:
+		    s.print("Fixed DH (DSS sig)"); break;
+		  case cct_rsa_ephemeral_dh:
+		    s.print("Ephemeral DH (RSA sig)"); break;
+		  case cct_dss_ephemeral_dh:
+		    s.print("Ephemeral DH (DSS sig)"); break;
+		  case cct_ecdsa_sign:
+		    s.print("ECDSA"); break;
+		  case cct_rsa_fixed_ecdh:
+		    s.print("Fixed ECDH (RSA sig)"); break;
+		  case cct_ecdsa_fixed_ecdh:
+		    s.print("Fixed ECDH (ECDSA sig)"); break;
+		  default:
+		    s.print("Type-" + (types[i] & 0xff)); break;
+		}
+		if (i != types.length - 1) {
+		    s.print(", ");
+		}
+	    }
+	    s.println();
 
-            s.println("Cert Authorities:");
-            for (int i = 0; i < authorities.length; i++)
-                authorities[i].print(s);
-        }
+	    s.println("Cert Authorities:");
+	    for (int i = 0; i < authorities.length; i++)
+		authorities[i].print(s);
+	}
     }
 }
 
@@ -1187,22 +1188,22 @@ class ServerHelloDone extends HandshakeMessage
 
     ServerHelloDone(HandshakeInStream input)
     {
-        // nothing to do
+	// nothing to do
     }
 
     int messageLength()
     {
-        return 0;
+	return 0;
     }
 
     void send(HandshakeOutStream s) throws IOException
     {
-        // nothing to send
+	// nothing to send
     }
 
     void print(PrintStream s) throws IOException
     {
-        s.println("*** ServerHelloDone");
+	s.println("*** ServerHelloDone");
     }
 }
 
@@ -1218,41 +1219,41 @@ static final class CertificateVerify extends HandshakeMessage {
     int messageType() { return ht_certificate_verify; }
 
     private byte[] signature;
-
+    
     /*
      * Create an RSA or DSA signed certificate verify message.
      */
-    CertificateVerify(ProtocolVersion protocolVersion, HandshakeHash
-            handshakeHash, PrivateKey privateKey, SecretKey masterSecret,
-            SecureRandom sr) throws GeneralSecurityException {
-        String algorithm = privateKey.getAlgorithm();
-        Signature sig = getSignature(protocolVersion, algorithm);
-        sig.initSign(privateKey, sr);
-        updateSignature(sig, protocolVersion, handshakeHash, algorithm,
-                        masterSecret);
-        signature = sig.sign();
+    CertificateVerify(ProtocolVersion protocolVersion, HandshakeHash 
+	    handshakeHash, PrivateKey privateKey, SecretKey masterSecret, 
+	    SecureRandom sr) throws GeneralSecurityException {
+	String algorithm = privateKey.getAlgorithm();
+	Signature sig = getSignature(protocolVersion, algorithm);
+	sig.initSign(privateKey, sr);
+	updateSignature(sig, protocolVersion, handshakeHash, algorithm, 
+			masterSecret);
+	signature = sig.sign();
     }
 
     //
     // Unmarshal the signed data from the input stream.
     //
     CertificateVerify(HandshakeInStream input) throws IOException  {
-        signature = input.getBytes16();
+	signature = input.getBytes16();
     }
-
+    
     /*
      * Verify a certificate verify message. Return the result of verification,
      * if there is a problem throw a GeneralSecurityException.
      */
-    boolean verify(ProtocolVersion protocolVersion,
-            HandshakeHash handshakeHash, PublicKey publicKey,
-            SecretKey masterSecret) throws GeneralSecurityException {
-        String algorithm = publicKey.getAlgorithm();
-        Signature sig = getSignature(protocolVersion, algorithm);
-        sig.initVerify(publicKey);
-        updateSignature(sig, protocolVersion, handshakeHash, algorithm,
-                        masterSecret);
-        return sig.verify(signature);
+    boolean verify(ProtocolVersion protocolVersion, 
+    	    HandshakeHash handshakeHash, PublicKey publicKey, 
+	    SecretKey masterSecret) throws GeneralSecurityException {
+	String algorithm = publicKey.getAlgorithm();
+	Signature sig = getSignature(protocolVersion, algorithm);
+	sig.initVerify(publicKey);
+	updateSignature(sig, protocolVersion, handshakeHash, algorithm, 
+			masterSecret);
+	return sig.verify(signature);
     }
 
     /*
@@ -1260,101 +1261,101 @@ static final class CertificateVerify extends HandshakeMessage {
      * given signature algorithm and protocol version.
      */
     private static Signature getSignature(ProtocolVersion protocolVersion,
-            String algorithm) throws GeneralSecurityException {
-        if (algorithm.equals("RSA")) {
-            return RSASignature.getInternalInstance();
-        } else if (algorithm.equals("DSA")) {
-            return JsseJce.getSignature(JsseJce.SIGNATURE_RAWDSA);
-        } else if (algorithm.equals("EC")) {
-            return JsseJce.getSignature(JsseJce.SIGNATURE_RAWECDSA);
-        } else {
-            throw new SignatureException("Unrecognized algorithm: "
-                + algorithm);
-        }
+    	    String algorithm) throws GeneralSecurityException {
+	if (algorithm.equals("RSA")) {
+	    return RSASignature.getInternalInstance();
+	} else if (algorithm.equals("DSA")) {
+	    return JsseJce.getSignature(JsseJce.SIGNATURE_RAWDSA);
+	} else if (algorithm.equals("EC")) {
+	    return JsseJce.getSignature(JsseJce.SIGNATURE_RAWECDSA);
+	} else {
+	    throw new SignatureException("Unrecognized algorithm: "
+	    	+ algorithm);
+	}
     }
-
+    
     /*
      * Update the Signature with the data appropriate for the given
      * signature algorithm and protocol version so that the object is
      * ready for signing or verifying.
      */
-    private static void updateSignature(Signature sig,
-            ProtocolVersion protocolVersion,
-            HandshakeHash handshakeHash, String algorithm, SecretKey masterKey)
-            throws SignatureException {
-        MessageDigest md5Clone = handshakeHash.getMD5Clone();
-        MessageDigest shaClone = handshakeHash.getSHAClone();
-        boolean tls = protocolVersion.v >= ProtocolVersion.TLS10.v;
-        if (algorithm.equals("RSA")) {
-            if (tls) {
-                // nothing to do
-            } else { // SSLv3
-                updateDigest(md5Clone, MD5_pad1, MD5_pad2, masterKey);
-                updateDigest(shaClone, SHA_pad1, SHA_pad2, masterKey);
-            }
-            // need to use these hashes directly
-            RSASignature.setHashes(sig, md5Clone, shaClone);
-        } else { // DSA, ECDSA
-            if (tls) {
-                // nothing to do
-            } else { // SSLv3
-                updateDigest(shaClone, SHA_pad1, SHA_pad2, masterKey);
-            }
-            sig.update(shaClone.digest());
-        }
+    private static void updateSignature(Signature sig, 
+    	    ProtocolVersion protocolVersion,
+	    HandshakeHash handshakeHash, String algorithm, SecretKey masterKey)
+	    throws SignatureException {
+	MessageDigest md5Clone = handshakeHash.getMD5Clone();
+	MessageDigest shaClone = handshakeHash.getSHAClone();
+	boolean tls = protocolVersion.v >= ProtocolVersion.TLS10.v;
+	if (algorithm.equals("RSA")) {
+	    if (tls) {
+		// nothing to do
+	    } else { // SSLv3
+		updateDigest(md5Clone, MD5_pad1, MD5_pad2, masterKey);
+		updateDigest(shaClone, SHA_pad1, SHA_pad2, masterKey);
+	    }
+	    // need to use these hashes directly
+	    RSASignature.setHashes(sig, md5Clone, shaClone);
+	} else { // DSA, ECDSA
+	    if (tls) {
+		// nothing to do
+	    } else { // SSLv3
+		updateDigest(shaClone, SHA_pad1, SHA_pad2, masterKey);
+	    }
+	    sig.update(shaClone.digest());
+	}
     }
-
+    
     /*
-     * Update the MessageDigest for SSLv3 certificate verify or finished
-     * message calculation. The digest must already have been updated with
+     * Update the MessageDigest for SSLv3 certificate verify or finished 
+     * message calculation. The digest must already have been updated with 
      * all preceding handshake messages.
      * Used by the Finished class as well.
      */
     static void updateDigest(MessageDigest md, byte[] pad1, byte[] pad2,
-            SecretKey masterSecret) {
-        // Digest the key bytes if available.
-        // Otherwise (sensitive key), try digesting the key directly.
-        // That is currently only implemented in SunPKCS11 using a private
-        // reflection API, so we avoid that if possible.
-        byte[] keyBytes = "RAW".equals(masterSecret.getFormat())
-                        ? masterSecret.getEncoded() : null;
-        if (keyBytes != null) {
-            md.update(keyBytes);
-        } else {
-            digestKey(md, masterSecret);
-        }
-        md.update(pad1);
-        byte[] temp = md.digest();
+	    SecretKey masterSecret) {
+	// Digest the key bytes if available.
+	// Otherwise (sensitive key), try digesting the key directly.
+	// That is currently only implemented in SunPKCS11 using a private
+	// reflection API, so we avoid that if possible.
+	byte[] keyBytes = "RAW".equals(masterSecret.getFormat())
+			? masterSecret.getEncoded() : null;
+	if (keyBytes != null) {
+	    md.update(keyBytes);
+	} else {
+	    digestKey(md, masterSecret);
+	}
+	md.update(pad1);
+	byte[] temp = md.digest();
 
-        if (keyBytes != null) {
-            md.update(keyBytes);
-        } else {
-            digestKey(md, masterSecret);
-        }
-        md.update(pad2);
-        md.update(temp);
+	if (keyBytes != null) {
+	    md.update(keyBytes);
+	} else {
+	    digestKey(md, masterSecret);
+	}
+	md.update(pad2);
+	md.update(temp);
     }
-
+    
     private final static Class delegate;
     private final static Field spiField;
-
+    
     static {
-        try {
-            delegate = Class.forName("java.security.MessageDigest$Delegate");
-            spiField = delegate.getDeclaredField("digestSpi");
-        } catch (Exception e) {
-            throw new RuntimeException("Reflection failed", e);
-        }
-        makeAccessible(spiField);
+	try {
+	    delegate = Class.forName("java.security.MessageDigest$Delegate");
+	    spiField = delegate.getDeclaredField("digestSpi");
+	} catch (Exception e) {
+	    throw new RuntimeException("Reflection failed", e);
+	}
+	makeAccessible(spiField);
     }
-
+    
     private static void makeAccessible(final AccessibleObject o) {
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
-            public Object run() {
-                o.setAccessible(true);
-                return null;
-            }
-        });
+	AccessController.doPrivileged(new PrivilegedAction<Object>() {
+	    public Object run() {
+		o.setAccessible(true);
+		return null;
+	    }
+	});
     }
 
     // ConcurrentHashMap does not allow null values, use this marker object
@@ -1364,48 +1365,48 @@ static final class CertificateVerify extends HandshakeMessage {
     // Note that this will prevent the Spi classes from being GC'd. We assume
     // that is not a problem.
     private final static Map<Class,Object> methodCache =
-                                        new ConcurrentHashMap<Class,Object>();
-
+					new ConcurrentHashMap<Class,Object>();
+    
     private static void digestKey(MessageDigest md, SecretKey key) {
-        try {
-            // Verify that md is implemented via MessageDigestSpi, not
-            // via JDK 1.1 style MessageDigest subclassing.
-            if (md.getClass() != delegate) {
-                throw new Exception("Digest is not a MessageDigestSpi");
-            }
-            MessageDigestSpi spi = (MessageDigestSpi)spiField.get(md);
-            Class<?> clazz = spi.getClass();
-            Object r = methodCache.get(clazz);
-            if (r == null) {
-                try {
-                    r = clazz.getDeclaredMethod("implUpdate", SecretKey.class);
-                    makeAccessible((Method)r);
-                } catch (NoSuchMethodException e) {
-                    r = NULL_OBJECT;
-                }
-                methodCache.put(clazz, r);
-            }
-            if (r == NULL_OBJECT) {
-                throw new Exception("Digest does not support implUpdate(SecretKey)");
-            }
-            Method update = (Method)r;
-            update.invoke(spi, key);
-        } catch (Exception e) {
-            throw new RuntimeException
-            ("Could not obtain encoded key and MessageDigest cannot digest key", e);
-        }
+	try {
+	    // Verify that md is implemented via MessageDigestSpi, not
+	    // via JDK 1.1 style MessageDigest subclassing.
+	    if (md.getClass() != delegate) {
+		throw new Exception("Digest is not a MessageDigestSpi");
+	    }
+	    MessageDigestSpi spi = (MessageDigestSpi)spiField.get(md);
+	    Class<?> clazz = spi.getClass();
+	    Object r = methodCache.get(clazz);
+	    if (r == null) {
+		try {
+		    r = clazz.getDeclaredMethod("implUpdate", SecretKey.class);
+		    makeAccessible((Method)r);
+		} catch (NoSuchMethodException e) {
+		    r = NULL_OBJECT;
+		}
+		methodCache.put(clazz, r);
+	    }
+	    if (r == NULL_OBJECT) {
+		throw new Exception("Digest does not support implUpdate(SecretKey)");
+	    }
+	    Method update = (Method)r;
+	    update.invoke(spi, key);
+	} catch (Exception e) {
+	    throw new RuntimeException
+	    ("Could not obtain encoded key and MessageDigest cannot digest key", e);
+	}
     }
-
+    
     int messageLength() {
-        return 2 + signature.length;
+	return 2 + signature.length;
     }
 
     void send(HandshakeOutStream s) throws IOException {
-        s.putBytes16(signature);
+	s.putBytes16(signature);
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** CertificateVerify");
+	s.println("*** CertificateVerify");
     }
 }
 
@@ -1428,7 +1429,7 @@ static final class CertificateVerify extends HandshakeMessage {
 static final class Finished extends HandshakeMessage {
 
     int messageType() { return ht_finished; }
-
+    
     // constant for a Finished message sent by the client
     final static int CLIENT = 1;
 
@@ -1438,7 +1439,7 @@ static final class Finished extends HandshakeMessage {
     // enum Sender:  "CLNT" and "SRVR"
     private static final byte[] SSL_CLIENT = { 0x43, 0x4C, 0x4E, 0x54 };
     private static final byte[] SSL_SERVER = { 0x53, 0x52, 0x56, 0x52 };
-
+    
     /*
      * Contents of the finished message ("checksum"). For TLS, it
      * is 12 bytes long, for SSLv3 36 bytes.
@@ -1448,20 +1449,20 @@ static final class Finished extends HandshakeMessage {
     /*
      * Create a finished message to send to the remote peer.
      */
-    Finished(ProtocolVersion protocolVersion, HandshakeHash handshakeHash,
-            int sender, SecretKey master) {
-        verifyData = getFinished(protocolVersion, handshakeHash, sender,
-                                 master);
+    Finished(ProtocolVersion protocolVersion, HandshakeHash handshakeHash, 
+	    int sender, SecretKey master) {
+	verifyData = getFinished(protocolVersion, handshakeHash, sender, 
+				 master);
     }
-
+    
     /*
      * Constructor that reads FINISHED message from stream.
      */
     Finished(ProtocolVersion protocolVersion, HandshakeInStream input)
-            throws IOException {
-        int msgLen = (protocolVersion.v >= ProtocolVersion.TLS10.v) ? 12 : 36;
-        verifyData = new byte[msgLen];
-        input.read(verifyData);
+	    throws IOException {
+	int msgLen = (protocolVersion.v >= ProtocolVersion.TLS10.v) ? 12 : 36;
+	verifyData = new byte[msgLen];
+	input.read(verifyData);
     }
 
     /*
@@ -1470,94 +1471,94 @@ static final class Finished extends HandshakeMessage {
      * both client and server are fully in sync, and that the handshake
      * computations have been successful.
      */
-     boolean verify(ProtocolVersion protocolVersion,
-             HandshakeHash handshakeHash, int sender, SecretKey master) {
-        byte[] myFinished = getFinished(protocolVersion, handshakeHash,
-                                        sender, master);
-        return Arrays.equals(myFinished, verifyData);
+     boolean verify(ProtocolVersion protocolVersion, 
+	     HandshakeHash handshakeHash, int sender, SecretKey master) {
+	byte[] myFinished = getFinished(protocolVersion, handshakeHash, 
+					sender, master);
+	return Arrays.equals(myFinished, verifyData);
     }
-
+    
     /*
      * Perform the actual finished message calculation.
      */
-    private static byte[] getFinished(ProtocolVersion protocolVersion,
-            HandshakeHash handshakeHash, int sender, SecretKey masterKey) {
-        byte[] sslLabel;
-        String tlsLabel;
-        if (sender == CLIENT) {
-            sslLabel = SSL_CLIENT;
-            tlsLabel = "client finished";
-        } else if (sender == SERVER) {
-            sslLabel = SSL_SERVER;
-            tlsLabel = "server finished";
-        } else {
-            throw new RuntimeException("Invalid sender: " + sender);
-        }
-        MessageDigest md5Clone = handshakeHash.getMD5Clone();
-        MessageDigest shaClone = handshakeHash.getSHAClone();
-        if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
-            // TLS
-            try {
-                byte[] seed = new byte[36];
-                md5Clone.digest(seed, 0, 16);
-                shaClone.digest(seed, 16, 20);
-
-                TlsPrfParameterSpec spec = new TlsPrfParameterSpec
-                                                (masterKey, tlsLabel, seed, 12);
-                KeyGenerator prf = JsseJce.getKeyGenerator("SunTlsPrf");
-                prf.init(spec);
-                SecretKey prfKey = prf.generateKey();
-                if ("RAW".equals(prfKey.getFormat()) == false) {
-                    throw new ProviderException
-                        ("Invalid PRF output, format must be RAW");
-                }
-                byte[] finished = prfKey.getEncoded();
-                return finished;
-            } catch (GeneralSecurityException e) {
-                throw new RuntimeException("PRF failed", e);
-            }
-        } else {
-            // SSLv3
-            updateDigest(md5Clone, sslLabel, MD5_pad1, MD5_pad2, masterKey);
-            updateDigest(shaClone, sslLabel, SHA_pad1, SHA_pad2, masterKey);
-            byte[] finished = new byte[36];
-            try {
-                md5Clone.digest(finished, 0, 16);
-                shaClone.digest(finished, 16, 20);
-            } catch (DigestException e) {
-                // cannot occur
-                throw new RuntimeException("Digest failed", e);
-            }
-            return finished;
-        }
+    private static byte[] getFinished(ProtocolVersion protocolVersion, 
+	    HandshakeHash handshakeHash, int sender, SecretKey masterKey) {
+	byte[] sslLabel;
+	String tlsLabel;
+	if (sender == CLIENT) {
+	    sslLabel = SSL_CLIENT;
+	    tlsLabel = "client finished";
+	} else if (sender == SERVER) {
+	    sslLabel = SSL_SERVER;
+	    tlsLabel = "server finished";
+	} else {
+	    throw new RuntimeException("Invalid sender: " + sender);
+	}
+	MessageDigest md5Clone = handshakeHash.getMD5Clone();
+	MessageDigest shaClone = handshakeHash.getSHAClone();
+	if (protocolVersion.v >= ProtocolVersion.TLS10.v) {
+	    // TLS
+	    try {
+		byte[] seed = new byte[36];
+		md5Clone.digest(seed, 0, 16);
+		shaClone.digest(seed, 16, 20);
+    
+		TlsPrfParameterSpec spec = new TlsPrfParameterSpec
+						(masterKey, tlsLabel, seed, 12);
+		KeyGenerator prf = JsseJce.getKeyGenerator("SunTlsPrf");
+		prf.init(spec);
+		SecretKey prfKey = prf.generateKey();
+		if ("RAW".equals(prfKey.getFormat()) == false) {
+		    throw new ProviderException
+			("Invalid PRF output, format must be RAW");
+		}
+		byte[] finished = prfKey.getEncoded();
+		return finished;
+	    } catch (GeneralSecurityException e) {
+		throw new RuntimeException("PRF failed", e);
+	    }
+	} else {
+	    // SSLv3
+	    updateDigest(md5Clone, sslLabel, MD5_pad1, MD5_pad2, masterKey);
+	    updateDigest(shaClone, sslLabel, SHA_pad1, SHA_pad2, masterKey);
+	    byte[] finished = new byte[36];
+	    try {
+		md5Clone.digest(finished, 0, 16);
+		shaClone.digest(finished, 16, 20);
+	    } catch (DigestException e) {
+		// cannot occur
+		throw new RuntimeException("Digest failed", e);
+	    }
+	    return finished;
+	}
     }
-
+    
     /*
      * Update the MessageDigest for SSLv3 finished message calculation.
      * The digest must already have been updated with all preceding handshake
      * messages. This operation is almost identical to the certificate verify
      * hash, reuse that code.
      */
-    private static void updateDigest(MessageDigest md, byte[] sender,
-            byte[] pad1, byte[] pad2, SecretKey masterSecret) {
-        md.update(sender);
-        CertificateVerify.updateDigest(md, pad1, pad2, masterSecret);
+    private static void updateDigest(MessageDigest md, byte[] sender, 
+	    byte[] pad1, byte[] pad2, SecretKey masterSecret) {
+	md.update(sender);
+	CertificateVerify.updateDigest(md, pad1, pad2, masterSecret);
     }
-
+    
     int messageLength() {
-        return verifyData.length;
+	return verifyData.length;
     }
 
     void send(HandshakeOutStream out) throws IOException {
-        out.write(verifyData);
+	out.write(verifyData);
     }
 
     void print(PrintStream s) throws IOException {
-        s.println("*** Finished");
-        if (debug != null && Debug.isOn("verbose")) {
-            Debug.println(s, "verify_data", verifyData);
-            s.println("***");
-        }
+	s.println("*** Finished");
+	if (debug != null && Debug.isOn("verbose")) {
+	    Debug.println(s, "verify_data", verifyData);
+	    s.println("***");
+	}
     }
 
 }

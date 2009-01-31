@@ -33,11 +33,12 @@ import java.text.MessageFormat;
  * the only class that should be printing directly or otherwise
  * accessing System.[out,err].
  *
+ * @version     %Z% %M% %I% %E% %T%
  * @bug 4348376
  * @author Tim Bell
  */
 public class MessageOutput {
-    /**
+    /** 
      * The resource bundle containing localizable message content.
      * This is loaded by TTY.main() at start-up
      */
@@ -62,7 +63,7 @@ public class MessageOutput {
      */
     static String format(String key) {
         return (textResources.getString(key));
-    }
+    }    
 
     /**
      * Fetch and format a message with one string argument.
@@ -85,7 +86,7 @@ public class MessageOutput {
     }
 
     /**
-     * Print directly to System.out.
+     * Print directly to System.out.  
      * Every rule has a few exceptions.
      * The exceptions to "must use the MessageOutput formatters" are:
      *     VMConnection.dumpStream()
@@ -173,7 +174,7 @@ public class MessageOutput {
                 println(key);
             } catch (MissingResourceException mex) {
                 printDirectln(key);
-            }
+            }   
         }
         System.out.flush();
         e.printStackTrace();

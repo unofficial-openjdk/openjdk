@@ -29,22 +29,22 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public class ClassPrepareEventSet extends AbstractEventSet {
-
+    
     ClassPrepareEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
 
     /**
-     * Returns the thread in which this event has occurred.
+     * Returns the thread in which this event has occurred. 
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in
+     * @return a {@link ThreadReference} which mirrors the event's thread in 
      * the target VM.
      */
     public ThreadReference getThread() {
         return ((ClassPrepareEvent)oneEvent).thread();
     }
-
-
+    
+    
     /**
      * Returns the reference type for which this event was generated.
      *
@@ -59,3 +59,4 @@ public class ClassPrepareEventSet extends AbstractEventSet {
         listener.classPrepare(this);
     }
 }
+

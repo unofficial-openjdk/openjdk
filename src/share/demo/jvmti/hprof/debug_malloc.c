@@ -31,7 +31,7 @@
 
 /* **************************************************************************
  *
- * Set of malloc/realloc/calloc/strdup/free replacement macros that
+ * Set of malloc/realloc/calloc/strdup/free replacement macros that 
  *    insert some extra words around each allocation for debugging purposes
  *    and also attempt to detect invalid uses of the malloc heap through
  *    various tricks like inserting clobber words at the head and tail of
@@ -40,12 +40,12 @@
  *    can include warrants so that when an area is clobbered, this
  *    package can report where the allocation took place.
  *    The macros included are:
- *              malloc(size)
- *              realloc(ptr,size)
- *              calloc(nelem,elsize)
- *              strdup(s1)
- *              free(ptr)
- *              malloc_police()   <--- Not a system function
+ *		malloc(size)
+ *		realloc(ptr,size)
+ *		calloc(nelem,elsize)
+ *		strdup(s1)
+ *		free(ptr)
+ *		malloc_police()   <--- Not a system function
  *    The above macros match the standard behavior of the system functions.
  *
  *    They should be used through the include file "debug_malloc.h".
@@ -68,7 +68,7 @@
  *
  *   In addition the function debug_malloc_police() can be called to
  *      tell you what memory has not been freed.
- *         void debug_malloc_police(void*, int);
+ *	   void debug_malloc_police(void*, int);
  *      The function debug_malloc_police() is available through the macro
  *      malloc_police(). Normally you would want to call this at exit()
  *      time to find out what memory is still allocated.
@@ -123,20 +123,20 @@
 /* ***************************************************************************
  * Space normally looks like (clobber Word is 64 bits and aligned to 8 bytes):
  *
- *                  -----------------
+ *		    -----------------
  * malloc/free get->| clobber Word  |   ---> contains -size requested by user
- *                  -----------------
+ *		    -----------------
  *    User gets --->| user space    |
- *                  |               |
- *                  |  | left_over  |  ---> left_over bytes will be <= 7
- *                  -----------------
- *                  | clobber Word  |   ---> contains -size requested by user
- *                  -----------------
- *                  |   Warrant     |   ---> Optional (malloc_watch!=0)
- *                  |               |        Contains filename and line number
- *                  |               |          where allocation happened
- *                  |               |
- *                  -----------------
+ *		    | 		    |
+ *		    |  | left_over  |  ---> left_over bytes will be <= 7
+ *		    -----------------
+ *		    | clobber Word  |   ---> contains -size requested by user
+ *		    -----------------
+ *		    |   Warrant     |   ---> Optional (malloc_watch!=0)
+ *		    |		    |        Contains filename and line number
+ *		    |		    |          where allocation happened
+ *		    |		    |
+ *		    -----------------
  ***************************************************************************/
 
 /*
@@ -155,11 +155,11 @@ static int      malloc_watch = 1;
 #define LEFT_OVER_CHAR  'Z'
 
 /* Number of 'free' calls that will be delayed until the end */
-#define MAX_FREE_DELAY_COUNT    1
+#define MAX_FREE_DELAY_COUNT	1
 #undef MAX_FREE_DELAY_COUNT
 
 /* Maximum name of __FILE_ stored in each malloc'd area */
-#define WARRANT_NAME_MAX (32-1) /* 1 less than multiple of 8 is best */
+#define WARRANT_NAME_MAX (32-1)	/* 1 less than multiple of 8 is best */
 
 /* Macro to convert a user pointer to the malloc pointer */
 #define user2malloc_(uptr)   (((char*)(void*)uptr)-sizeof(Word))
@@ -172,35 +172,35 @@ static int      malloc_watch = 1;
 
 /* Macro to round up a number of bytes to a multiple of sizeof(Word) bytes */
 #define round_up_(n) \
-        ((n)==0?0:(sizeof(Word)+(((n)-1)/sizeof(Word))*sizeof(Word)))
+	((n)==0?0:(sizeof(Word)+(((n)-1)/sizeof(Word))*sizeof(Word)))
 
 /* Macro to calculate the needed malloc bytes from the user's request. */
 #define rbytes_(nbytes) \
     (size_t)( sizeof(Word) + round_up_(nbytes) + sizeof(Word) + warrant_space )
 
 /* Macro to get the -size stored in space through the malloc pointer */
-#define nsize1_(mptr)           (((Word*)(void*)(mptr))->nsize1)
-#define nsize2_(mptr)           (((Word*)(void*)(mptr))->nsize2)
+#define nsize1_(mptr) 		(((Word*)(void*)(mptr))->nsize1)
+#define nsize2_(mptr) 		(((Word*)(void*)(mptr))->nsize2)
 
 /* Macro to get the -size stored in the tail of the space through */
 /*     the malloc pointer */
 #define tail_nsize1_(mptr)     \
-        nsize1_(((char*)(void*)(mptr))+round_up_(-nsize1_(mptr))+sizeof(Word))
+	nsize1_(((char*)(void*)(mptr))+round_up_(-nsize1_(mptr))+sizeof(Word))
 #define tail_nsize2_(mptr)     \
-        nsize2_(((char*)(void*)(mptr))+round_up_(-nsize1_(mptr))+sizeof(Word))
+	nsize2_(((char*)(void*)(mptr))+round_up_(-nsize1_(mptr))+sizeof(Word))
 
 /* Macro to get the -size stored in space through the user pointer */
-#define user_nsize1_(uptr)      nsize1_(user2malloc_(uptr))
-#define user_nsize2_(uptr)      nsize2_(user2malloc_(uptr))
+#define user_nsize1_(uptr)    	nsize1_(user2malloc_(uptr))
+#define user_nsize2_(uptr)    	nsize2_(user2malloc_(uptr))
 
 /* Macro to get the -size stored in the tail of the space through */
 /*     the user pointer */
-#define user_tail_nsize1_(uptr) tail_nsize1_(user2malloc_(uptr))
-#define user_tail_nsize2_(uptr) tail_nsize2_(user2malloc_(uptr))
+#define user_tail_nsize1_(uptr)	tail_nsize1_(user2malloc_(uptr))
+#define user_tail_nsize2_(uptr)	tail_nsize2_(user2malloc_(uptr))
 
 /* Macro to get the int* of the last 32bit word of user space */
-#define last_user_word_(mptr)   \
-        ((int*)(((char*)(void*)(mptr))+round_up_(-nsize1_(mptr))))
+#define last_user_word_(mptr)	\
+	((int*)(((char*)(void*)(mptr))+round_up_(-nsize1_(mptr))))
 
 /* Macros to get at the warrant contents from the malloc pointer */
 #define warrant_(mptr) \
@@ -209,10 +209,10 @@ static int      malloc_watch = 1;
 /* This struct is allocated after the tail clobber word if malloc_watch */
 /*    is true. */
 typedef struct {
-    void           *link;       /* Next mptr in list */
-    char            name[WARRANT_NAME_MAX + 1]; /* Name of allocator */
-    int             line;       /* Line number where allocated */
-    int             id;         /* Nth allocation */
+    void           *link;	/* Next mptr in list */
+    char            name[WARRANT_NAME_MAX + 1];	/* Name of allocator */
+    int             line;	/* Line number where allocated */
+    int             id;	        /* Nth allocation */
 }               Warrant_Record;
 #define warrant_link_(mptr) warrant_(mptr).link
 #define warrant_name_(mptr) warrant_(mptr).name
@@ -226,7 +226,7 @@ typedef struct {
 typedef struct {
     int             nsize1;
     int             nsize2;
-}               Word;           /* Largest basic type , sizeof(double)? */
+}               Word;		/* Largest basic type , sizeof(double)? */
 
 /* The first malloc pointer for the warrants */
 static void    *first_warrant_mptr = NULL;
@@ -271,76 +271,76 @@ memory_error(void *mptr, const char *name, int mid, const char *mfile, int mline
     void *mptr_walk;
 
     if (name == NULL)
-        name = "UNKNOWN_NAME";
+	name = "UNKNOWN_NAME";
     if (file == NULL)
-        file = "UNKNOWN_FILE";
+	file = "UNKNOWN_FILE";
     md_system_error(temp, (int)sizeof(temp));
     (void)strcpy(nice_words, temp);
     if ( debug_check!=NULL ) {
        (void)md_snprintf(nice_words, sizeof(nice_words),
-                    "%s The %s at %p appears to have been hit.",
-                    temp, debug_check, clobbered_ptr);
+		    "%s The %s at %p appears to have been hit.",
+		    temp, debug_check, clobbered_ptr);
     }
     len = -nsize1_(mptr);
     error_message("Error: "
-                   "%s The malloc space #%d is at %p [user size=%d(0x%x)],"
-                   " and was allocated from file \"%s\" at line %d."
-                   " [The debug function %s() detected this error "
-                   "in file \"%s\" at line %d.]",
-                   nice_words, mid, mptr, len, len, mfile, mline,
-                   name, file, line);
-
+		   "%s The malloc space #%d is at %p [user size=%d(0x%x)],"
+		   " and was allocated from file \"%s\" at line %d."
+		   " [The debug function %s() detected this error "
+		   "in file \"%s\" at line %d.]",
+		   nice_words, mid, mptr, len, len, mfile, mline, 
+		   name, file, line);
+    
     /* Print out contents of this allocation */
     {
-        int i;
+	int i;
         void *uptr = malloc2user_(mptr);
-        char *pmess;
-        pmess = temp;
-        for(i=0;i<(int)sizeof(temp);i++) {
-            int ch = ((unsigned char*)uptr)[i];
-            if ( isprint(ch) ) {
-                *pmess++ = ch;
-            } else {
-                *pmess++ = '\\';
-                *pmess++ = 'x';
-                (void)sprintf(pmess,"%02x",ch);
-                pmess+=2;
-            }
-        }
-        *pmess = 0;
+	char *pmess;
+	pmess = temp;
+	for(i=0;i<(int)sizeof(temp);i++) {
+	    int ch = ((unsigned char*)uptr)[i];
+	    if ( isprint(ch) ) {
+		*pmess++ = ch;
+	    } else {
+		*pmess++ = '\\';
+		*pmess++ = 'x';
+		(void)sprintf(pmess,"%02x",ch);
+		pmess+=2;
+	    }
+	}
+	*pmess = 0;
         error_message("Error: %p contains user data: %s", uptr, temp);
     }
 
     /* Try and print out table */
     if (!malloc_watch) {
-        return;
+	return;
     }
     mptr_walk = first_warrant_mptr;
     if (mptr_walk != NULL) {
-        error_message("Active allocations: "
-           "count=%d, largest_size=%d, address range (%p,%p)",
-                        id_counter, largest_size, smallest_addr, largest_addr);
-        do {
-            int size1;
-            int size2;
-            char *mfile_walk;
+	error_message("Active allocations: "
+	   "count=%d, largest_size=%d, address range (%p,%p)", 
+			id_counter, largest_size, smallest_addr, largest_addr);
+	do {
+	    int size1;
+	    int size2;
+	    char *mfile_walk;
 
-            if ( mptr_walk > largest_addr || mptr_walk < smallest_addr ) {
-                error_message("Terminating list due to pointer corruption");
-                break;
-            }
-            size1 = -nsize1_(mptr_walk);
-            size2 = -nsize2_(mptr_walk);
-            mfile_walk = MFILE(mptr_walk);
-            error_message("#%d: addr=%p size1=%d size2=%d file=\"%.*s\" line=%d",
-                MID(mptr_walk), mptr_walk, size1, size2,
-                WARRANT_NAME_MAX, mfile_walk, MLINE(mptr_walk));
-            if ( size1 != size2 || size1 > largest_size || size1 < 0 ) {
-                error_message("Terminating list due to size corruption");
-                break;
-            }
-            mptr_walk = warrant_link_(mptr_walk);
-        } while (mptr_walk != NULL);
+	    if ( mptr_walk > largest_addr || mptr_walk < smallest_addr ) {
+		error_message("Terminating list due to pointer corruption");
+		break;
+	    }
+	    size1 = -nsize1_(mptr_walk);
+	    size2 = -nsize2_(mptr_walk);
+	    mfile_walk = MFILE(mptr_walk);
+	    error_message("#%d: addr=%p size1=%d size2=%d file=\"%.*s\" line=%d",
+		MID(mptr_walk), mptr_walk, size1, size2, 
+		WARRANT_NAME_MAX, mfile_walk, MLINE(mptr_walk));
+	    if ( size1 != size2 || size1 > largest_size || size1 < 0 ) {
+		error_message("Terminating list due to size corruption");
+		break;
+	    }
+	    mptr_walk = warrant_link_(mptr_walk);
+	} while (mptr_walk != NULL);
     }
     abort();
 }
@@ -378,7 +378,7 @@ setup_space_and_issue_warrant(void *mptr, size_t size, const char *file, int lin
             register int    i;
             p = ((char *) mptr) + sizeof(Word) + nbytes;
             for (i = 0; i < trailing_extra_bytes; i++)
-                p[i] = LEFT_OVER_CHAR;
+	        p[i] = LEFT_OVER_CHAR;
         }
     }
 #endif
@@ -388,22 +388,22 @@ setup_space_and_issue_warrant(void *mptr, size_t size, const char *file, int lin
         static Warrant_Record zero_warrant;
         register void  *p1,
                        *p2;
-        size_t len;
-        int start_pos = 0;
-        warrant_(mptr) = zero_warrant;
-        p1 = warrant_name_(mptr);
-        len = strlen(file);
-        if ( len >  WARRANT_NAME_MAX )  {
+	size_t len;
+	int start_pos = 0;
+	warrant_(mptr) = zero_warrant;
+	p1 = warrant_name_(mptr);
+	len = strlen(file);
+	if ( len >  WARRANT_NAME_MAX )  {
             /*LINTED*/
-            start_pos = (int)len - WARRANT_NAME_MAX;
-        }
-        p2 = ((char*)file) + start_pos;
-        /*LINTED*/
-        (void) memcpy(p1, p2, minimum(((int)len), WARRANT_NAME_MAX));
-        warrant_line_(mptr) = line;
-        warrant_id_(mptr)   = ++id_counter;
-        warrant_link_(mptr) = first_warrant_mptr;
-        first_warrant_mptr = mptr;
+	    start_pos = (int)len - WARRANT_NAME_MAX;
+	}
+	p2 = ((char*)file) + start_pos;
+	/*LINTED*/
+	(void) memcpy(p1, p2, minimum(((int)len), WARRANT_NAME_MAX));
+	warrant_line_(mptr) = line;
+	warrant_id_(mptr)   = ++id_counter;
+	warrant_link_(mptr) = first_warrant_mptr;
+	first_warrant_mptr = mptr;
     }
 }
 
@@ -419,30 +419,30 @@ memory_check(void *uptr, int mid, const char *mfile, int mline, const char *file
     debug_check = "pointer value itself";
     clobbered_ptr = uptr;
     if (uptr == NULL)
-        memory_error((void *) NULL, "memory_check", mid, mfile, mline, file, line);
+	memory_error((void *) NULL, "memory_check", mid, mfile, mline, file, line);
 
     /* Check both Word structures */
-
+    
     debug_check = "first beginning clobber word";
     clobbered_ptr = (char*)&user_nsize1_(uptr);
     neg_nbytes = user_nsize1_(uptr);
     if (neg_nbytes >= 0)
-        memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
-
+	memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
+    
     debug_check = "second beginning clobber word";
     clobbered_ptr = (char*)&user_nsize2_(uptr);
     if (neg_nbytes != user_nsize2_(uptr))
-        memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
-
+	memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
+    
     debug_check = "first ending clobber word";
     clobbered_ptr = (char*)&user_tail_nsize1_(uptr);
     if (neg_nbytes != user_tail_nsize1_(uptr))
-        memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
-
+	memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
+    
     debug_check = "second ending clobber word";
     clobbered_ptr = (char*)&user_tail_nsize2_(uptr);
     if (neg_nbytes != user_tail_nsize2_(uptr))
-        memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
+	memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
 
     /* Get a positive count of bytes */
     nbytes = -neg_nbytes;
@@ -459,9 +459,9 @@ memory_check(void *uptr, int mid, const char *mfile, int mline, const char *file
         debug_check = "trailing left over area";
         for (i = 0; i < trailing_extra_bytes; i++) {
             clobbered_ptr = p+1;
-            if (p[i] != LEFT_OVER_CHAR) {
-                memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
-            }
+	    if (p[i] != LEFT_OVER_CHAR) {
+	        memory_error(user2malloc_(uptr), "memory_check", mid, mfile, mline, file, line);
+	    }
         }
     }
 #endif
@@ -472,7 +472,7 @@ memory_check(void *uptr, int mid, const char *mfile, int mline, const char *file
 
 /* This function looks for the given malloc pointer in the police line up
  *   and removes it from the warrant list.
- *      mptr            The pointer to the malloc space being removed
+ *   	mptr		The pointer to the malloc space being removed
  */
 static int
 remove_warrant(void *mptr)
@@ -482,24 +482,24 @@ remove_warrant(void *mptr)
 
     /* Free it up from the list */
     if (malloc_watch && mptr != NULL) {
-        int found;
+	int found;
 
-        found = 0;
-        last_mptr1 = NULL;
-        mptr1 = first_warrant_mptr;
-        while (mptr1 != NULL) {
-            if (mptr1 == mptr) {
-                if (last_mptr1 == NULL)
-                    first_warrant_mptr = warrant_link_(mptr1);
-                else
-                    warrant_link_(last_mptr1) = warrant_link_(mptr1);
-                found = 1;
-                break;
-            }
-            last_mptr1 = mptr1;
-            mptr1 = warrant_link_(mptr1);
-        }
-        return found;
+	found = 0;
+	last_mptr1 = NULL;
+	mptr1 = first_warrant_mptr;
+	while (mptr1 != NULL) {
+	    if (mptr1 == mptr) {
+		if (last_mptr1 == NULL)
+		    first_warrant_mptr = warrant_link_(mptr1);
+		else
+		    warrant_link_(last_mptr1) = warrant_link_(mptr1);
+		found = 1;
+		break;
+	    }
+	    last_mptr1 = mptr1;
+	    mptr1 = warrant_link_(mptr1);
+	}
+	return found;
     }
     return 1;
 }
@@ -512,16 +512,16 @@ actual_free(void *uptr, const char *file, int line)
     int mline;
     int mid;
     if ( uptr == NULL )
-        return;
+	return;
     mptr = user2malloc_(uptr);
     memory_check(uptr, (mid=MID(mptr)), (mfile=MFILE(mptr)), (mline=MLINE(mptr)), file, line);
     if (malloc_watch && remove_warrant(mptr)==0 )
-        memory_check(uptr, mid, mfile, mline, file, line);
+	memory_check(uptr, mid, mfile, mline, file, line);
 #ifdef FREED_CHAR
     if ( mptr!=NULL ) {
-        size_t nbytes = -nsize1_(mptr);
+	size_t nbytes = -nsize1_(mptr);
         /* LINTED */
-        (void)memset(mptr, FREED_CHAR, rbytes_(nbytes));
+	(void)memset(mptr, FREED_CHAR, rbytes_(nbytes));
     }
 #endif
     free(mptr);
@@ -532,18 +532,18 @@ actual_free(void *uptr, const char *file, int line)
 static void *free_delay[MAX_FREE_DELAY_COUNT];
 static int free_delay_pos = 0;
 
-static void
+static void 
 delayed_free(void *uptr, const char* file, int line)
 {
     void *mptr;
     void *olduptr = free_delay[free_delay_pos];
     size_t nbytes;
     if ( uptr==NULL )
-        return;
+	return;
     mptr = user2malloc_(uptr);
     memory_check(uptr, MID(mptr), MFILE(mptr), MLINE(mptr), file, line);
     if ( olduptr!=NULL ) {
-        actual_free(olduptr, file, line);
+	actual_free(olduptr, file, line);
     }
     free_delay[free_delay_pos] = uptr;
     free_delay_pos++;
@@ -554,15 +554,15 @@ delayed_free(void *uptr, const char* file, int line)
 #endif
 }
 
-static void
+static void 
 delayed_free_all(const char *file, int line)
 {
     int i;
     for ( i=0; i< MAX_FREE_DELAY_COUNT; i++) {
-        void *olduptr = free_delay[i];
-        free_delay[i] = NULL;
-        if ( olduptr!=NULL ) {
-            actual_free(olduptr, file, line);
+	void *olduptr = free_delay[i];
+	free_delay[i] = NULL;
+	if ( olduptr!=NULL ) {
+	    actual_free(olduptr, file, line);
         }
     }
 }
@@ -575,7 +575,7 @@ debug_free(void *uptr, const char *file, int line)
     int mid = 0;
 
     if (uptr == NULL)
-        memory_error((void *) NULL, "debug_free", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_free", mid, file, line, file, line);
 #ifdef MAX_FREE_DELAY_COUNT
     delayed_free(uptr, file, line);
 #else
@@ -593,11 +593,11 @@ debug_malloc(size_t nbytes, const char *file, int line)
 
     /*LINTED*/
     if ((int)nbytes <= 0)
-        memory_error((void *) NULL, "debug_malloc", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_malloc", mid, file, line, file, line);
     /* LINTED */
     mptr = malloc(rbytes_(nbytes));
     if (mptr == NULL)
-        memory_error((void *) NULL, "debug_malloc", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_malloc", mid, file, line, file, line);
     setup_space_and_issue_warrant(mptr, nbytes, file, line);
     uptr = malloc2user_(mptr);
 #ifdef ALLOC_CHAR
@@ -618,22 +618,22 @@ debug_realloc(void *uptr, size_t nbytes, const char *file, int line)
     oldmptr = user2malloc_(uptr);
     oldnbytes = 0;
     if ((int)nbytes <= 0)
-        memory_error(oldmptr, "debug_realloc", mid, file, line, file, line);
+	memory_error(oldmptr, "debug_realloc", mid, file, line, file, line);
     if (uptr != NULL) {
-        memory_check(uptr, MID(oldmptr), MFILE(oldmptr), MLINE(oldmptr), file, line);
+	memory_check(uptr, MID(oldmptr), MFILE(oldmptr), MLINE(oldmptr), file, line);
         oldnbytes = -user_nsize1_(uptr);
-        if ( malloc_watch && remove_warrant(oldmptr)==0 )
-            memory_check(uptr, MID(oldmptr), MFILE(oldmptr), MLINE(oldmptr), file, line);
+	if ( malloc_watch && remove_warrant(oldmptr)==0 )
+	    memory_check(uptr, MID(oldmptr), MFILE(oldmptr), MLINE(oldmptr), file, line);
     }
     if (uptr == NULL) {
         /* LINTED */
-        mptr = malloc(rbytes_(nbytes));
+	mptr = malloc(rbytes_(nbytes));
     } else {
         /* LINTED */
-        mptr = realloc(oldmptr, rbytes_(nbytes));
+	mptr = realloc(oldmptr, rbytes_(nbytes));
     }
     if (mptr == NULL)
-        memory_error(oldmptr, "debug_realloc", mid, file, line, file, line);
+	memory_error(oldmptr, "debug_realloc", mid, file, line, file, line);
     setup_space_and_issue_warrant(mptr, nbytes, file, line);
     newuptr = malloc2user_(mptr);
 #ifdef ALLOC_CHAR
@@ -650,17 +650,17 @@ void           *
 debug_calloc(size_t nelem, size_t elsize, const char *file, int line)
 {
     void           *mptr;
-    size_t          nbytes;
+    size_t	    nbytes;
     int mid = id_counter;
 
     nbytes = nelem*elsize;
     /*LINTED*/
     if ((int)nbytes <= 0)
-        memory_error((void *) NULL, "debug_calloc", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_calloc", mid, file, line, file, line);
     /* LINTED */
     mptr = calloc(rbytes_(nbytes),1);
     if (mptr == NULL)
-        memory_error((void *) NULL, "debug_calloc", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_calloc", mid, file, line, file, line);
     setup_space_and_issue_warrant(mptr, nbytes, file, line);
     return malloc2user_(mptr);
 }
@@ -671,19 +671,19 @@ debug_strdup(const char *s1, const char *file, int line)
 {
     void           *mptr;
     void           *uptr;
-    size_t          nbytes;
+    size_t	    nbytes;
     int mid = id_counter;
 
     if (s1 == NULL)
-        memory_error((void *) NULL, "debug_strdup", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_strdup", mid, file, line, file, line);
     nbytes = strlen(s1)+1;
     /*LINTED*/
     if ((int)nbytes < 0)
-        memory_error((void *) NULL, "debug_strdup", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_strdup", mid, file, line, file, line);
     /* LINTED */
     mptr = malloc(rbytes_(nbytes));
     if (mptr == NULL)
-        memory_error((void *) NULL, "debug_strdup", mid, file, line, file, line);
+	memory_error((void *) NULL, "debug_strdup", mid, file, line, file, line);
     setup_space_and_issue_warrant(mptr, nbytes, file, line);
     uptr = malloc2user_(mptr);
     (void)strcpy((char*)uptr, s1);
@@ -700,15 +700,15 @@ debug_malloc_verify(const char *file, int line)
 #endif
 
     if (!malloc_watch) {
-        return;
+	return;
     }
     mptr = first_warrant_mptr;
     if (mptr != NULL) {
-        /* Check all this memory first */
-        do {
-            memory_check(malloc2user_(mptr), MID(mptr), MFILE(mptr), MLINE(mptr), file, line);
-            mptr = warrant_link_(mptr);
-        } while (mptr != NULL);
+	/* Check all this memory first */
+	do {
+	    memory_check(malloc2user_(mptr), MID(mptr), MFILE(mptr), MLINE(mptr), file, line);
+	    mptr = warrant_link_(mptr);
+	} while (mptr != NULL);
     }
 }
 
@@ -723,21 +723,21 @@ debug_malloc_police(const char *file, int line)
 #endif
 
     if (!malloc_watch) {
-        return;
+	return;
     }
 
     mptr = first_warrant_mptr;
     if (mptr != NULL) {
         debug_malloc_verify(file, line);
-        /* Now issue warrants */
+	/* Now issue warrants */
         mptr = first_warrant_mptr;
-        do {
-            error_message("Outstanding space warrant: %p (%d bytes) allocated by %s at line %d, allocation #%d",
-               mptr, -nsize1_(mptr), warrant_name_(mptr),
-               warrant_line_(mptr), warrant_id_(mptr));
+	do {
+	    error_message("Outstanding space warrant: %p (%d bytes) allocated by %s at line %d, allocation #%d",
+	       mptr, -nsize1_(mptr), warrant_name_(mptr), 
+	       warrant_line_(mptr), warrant_id_(mptr));
 
-            mptr = warrant_link_(mptr);
-        } while (mptr != NULL);
+	    mptr = warrant_link_(mptr);
+	} while (mptr != NULL);
     }
 }
 
@@ -758,3 +758,4 @@ debug_malloc_police(const char *file, int line)
 }
 
 #endif
+

@@ -31,7 +31,7 @@
 import java.util.*;
 
 public class UUIDTest {
-
+    
     static Random generator = new Random();
 
     public static void main(String[] args) throws Exception {
@@ -247,7 +247,7 @@ public class UUIDTest {
 
         if (id.compareTo(id) != 0)
             throw new RuntimeException("compareTo failure");
-
+        
     }
-
+    
 }

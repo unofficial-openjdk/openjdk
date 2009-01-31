@@ -29,7 +29,7 @@ import com.sun.jdi.*;
 
 /**
  * Notification of a field access in the target VM. Field modifications
- * are not considered field accesses.
+ * are not considered field accesses. 
  *
  * @see EventQueue
  * @see VirtualMachine
@@ -39,3 +39,5 @@ import com.sun.jdi.*;
  */
 public interface AccessWatchpointEvent extends WatchpointEvent {
 }
+    
+

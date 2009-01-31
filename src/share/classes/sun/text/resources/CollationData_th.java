@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 /*
@@ -50,8 +51,8 @@ public class CollationData_th extends ListResourceBundle {
     protected final Object[][] getContents() {
         return new Object[][] {
             { "Rule",
-                "! "                            // First turn on the SE Asian Vowel/Consonant
-                                                // swapping rule
+		"! "                            // First turn on the SE Asian Vowel/Consonant
+		                                // swapping rule
                 + "& Z "                        // Put in all of the consonants, after Z
                 + "< \u0E01 "                   //  KO KAI
                 + "< \u0E02 "                   //  KHO KHAI
@@ -161,7 +162,7 @@ public class CollationData_th extends ListResourceBundle {
                 + "< \u0E4F "                   //  FONGMAN
                 + "< \u0E5A "                   //  ANGKHANKHU
                 + "< \u0E5B "                   //  KHOMUT
-                + "< \u0E3F "                   //  CURRENCY SYMBOL BAHT
+		+ "< \u0E3F "                   //  CURRENCY SYMBOL BAHT
 
                 // These symbols are supposed to be "after all characters"
                 + "< \u0E4E "                   //  YAMAKKAN

@@ -32,12 +32,13 @@ import java.security.PrivilegedAction;
  * SocketImpl. We do this because PlainSocketImpl is already extended
  * by SocksSocketImpl.
  * <p>
- * There are two possibilities for the real SocketImpl,
+ * There are two possibilities for the real SocketImpl, 
  * TwoStacksPlainSocketImpl or DualStackPlainSocketImpl. We use
  * DualStackPlainSocketImpl on systems that have a dual stack
- * TCP implementation. Otherwise we create an instance of
+ * TCP implementation. Otherwise we create an instance of 
  * TwoStacksPlainSocketImpl and delegate to it.
  *
+ * @version %I%, %G%
  * @author Chris Hegarty
  */
 
@@ -56,28 +57,28 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
 
     static {
         java.security.AccessController.doPrivileged( new PrivilegedAction<Object>() {
-                public Object run() {
-                    version = 0;
-                    try {
-                        version = Float.parseFloat(System.getProperties().getProperty("os.version"));
-                        preferIPv4Stack = Boolean.parseBoolean(
-                                          System.getProperties().getProperty("java.net.preferIPv4Stack"));
-                    } catch (NumberFormatException e ) {
-                        assert false : e;
-                    }
-                    return null; // nothing to return
-                } });
+		public Object run() {
+		    version = 0;
+		    try { 
+			version = Float.parseFloat(System.getProperties().getProperty("os.version"));
+			preferIPv4Stack = Boolean.parseBoolean(
+					  System.getProperties().getProperty("java.net.preferIPv4Stack"));
+		    } catch (NumberFormatException e ) {
+			assert false : e;
+		    }
+		    return null; // nothing to return
+		} });
 
-        // (version >= 6.0) implies Vista or greater.
-        if (version >= 6.0 && !preferIPv4Stack) {
-            useDualStackImpl = true;
-        }
+	// (version >= 6.0) implies Vista or greater.
+	if (version >= 6.0 && !preferIPv4Stack) {
+	    useDualStackImpl = true;
+ 	}
     }
 
     /**
      * Constructs an empty instance.
      */
-    PlainSocketImpl() {
+    PlainSocketImpl() { 
         if (useDualStackImpl) {
             impl = new DualStackPlainSocketImpl();
         } else {
@@ -99,15 +100,15 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
     // Override methods in SocketImpl that access impl's fields.
 
     protected FileDescriptor getFileDescriptor() {
-        return impl.getFileDescriptor();
+	return impl.getFileDescriptor();
     }
-
+    
     protected InetAddress getInetAddress() {
-        return impl.getInetAddress();
+	return impl.getInetAddress();
     }
 
     protected int getPort() {
-        return impl.getPort();
+	return impl.getPort();
     }
 
     protected int getLocalPort() {
@@ -115,7 +116,7 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
     }
 
     void setSocket(Socket soc) {
-        impl.setSocket(soc);
+	impl.setSocket(soc);
     }
 
     Socket getSocket() {
@@ -123,59 +124,59 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
     }
 
     void setServerSocket(ServerSocket soc) {
-        impl.setServerSocket(soc);
+	impl.setServerSocket(soc);
     }
 
     ServerSocket getServerSocket() {
-        return impl.getServerSocket();
+	return impl.getServerSocket();
     }
 
     public String toString() {
-        return impl.toString();
+	return impl.toString();
     }
 
     // Override methods in AbstractPlainSocketImpl that access impl's fields.
 
     protected synchronized void create(boolean stream) throws IOException {
-        impl.create(stream);
+	impl.create(stream);
     }
 
     protected void connect(String host, int port)
         throws UnknownHostException, IOException
     {
-        impl.connect(host, port);
+	impl.connect(host, port);
     }
 
     protected void connect(InetAddress address, int port) throws IOException {
-        impl.connect(address, port);
+	impl.connect(address, port);
     }
 
     protected void connect(SocketAddress address, int timeout) throws IOException {
-        impl.connect(address, timeout);
+	impl.connect(address, timeout);
     }
 
     public void setOption(int opt, Object val) throws SocketException {
-        impl.setOption(opt, val);
+	impl.setOption(opt, val);
     }
 
     public Object getOption(int opt) throws SocketException {
-        return impl.getOption(opt);
+	return impl.getOption(opt);
     }
 
     synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
-        impl.doConnect(address, port, timeout);
+	impl.doConnect(address, port, timeout);
     }
 
      protected synchronized void bind(InetAddress address, int lport)
         throws IOException
     {
-        impl.bind(address, lport);
+	impl.bind(address, lport);
     }
 
     protected synchronized void accept(SocketImpl s) throws IOException {
-        // pass in the real impl not the wrapper.
-        ((PlainSocketImpl)s).impl.address = new InetAddress();
-        ((PlainSocketImpl)s).impl.fd = new FileDescriptor();
+	// pass in the real impl not the wrapper.
+	((PlainSocketImpl)s).impl.address = new InetAddress();
+	((PlainSocketImpl)s).impl.fd = new FileDescriptor();
         impl.accept(((PlainSocketImpl)s).impl);
     }
 
@@ -196,120 +197,120 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
     }
 
     protected synchronized InputStream getInputStream() throws IOException {
-        return impl.getInputStream();
+	return impl.getInputStream();
     }
 
     void setInputStream(SocketInputStream in) {
-        impl.setInputStream(in);
+	impl.setInputStream(in);
     }
 
     protected synchronized OutputStream getOutputStream() throws IOException {
-        return impl.getOutputStream();
+	return impl.getOutputStream();
     }
 
     protected void close() throws IOException {
-        impl.close();
+	impl.close();
     }
 
     void reset() throws IOException {
-        impl.reset();
+	impl.reset();
     }
 
     protected void shutdownInput() throws IOException {
-        impl.shutdownInput();
+	impl.shutdownInput();
     }
 
     protected void shutdownOutput() throws IOException {
-        impl.shutdownOutput();
+	impl.shutdownOutput();
     }
 
     protected void sendUrgentData(int data) throws IOException {
-        impl.sendUrgentData(data);
+	impl.sendUrgentData(data);
     }
 
     FileDescriptor acquireFD() {
-        return impl.acquireFD();
+	return impl.acquireFD();
     }
 
     void releaseFD() {
-        impl.releaseFD();
+	impl.releaseFD();
     }
 
     public boolean isConnectionReset() {
-        return impl.isConnectionReset();
+	return impl.isConnectionReset();
     }
 
     public boolean isConnectionResetPending() {
-        return impl.isConnectionResetPending();
+	return impl.isConnectionResetPending();
     }
 
     public void setConnectionReset() {
-        impl.setConnectionReset();
+	impl.setConnectionReset();
     }
 
     public void setConnectionResetPending() {
-        impl.setConnectionResetPending();
+	impl.setConnectionResetPending();
     }
 
     public boolean isClosedOrPending() {
-        return impl.isClosedOrPending();
+	return impl.isClosedOrPending();
     }
 
     public int getTimeout() {
-        return impl.getTimeout();
+	return impl.getTimeout();
     }
 
     // Override methods in AbstractPlainSocketImpl that need to be implemented.
 
     void socketCreate(boolean isServer) throws IOException {
-        impl.socketCreate(isServer);
+	impl.socketCreate(isServer);
     }
 
     void socketConnect(InetAddress address, int port, int timeout)
         throws IOException {
-        impl.socketConnect(address, port, timeout);
+	impl.socketConnect(address, port, timeout);
     }
 
     void socketBind(InetAddress address, int port)
         throws IOException {
-        impl.socketBind(address, port);
+	impl.socketBind(address, port);
     }
 
     void socketListen(int count) throws IOException {
-        impl.socketListen(count);
+	impl.socketListen(count);
     }
 
     void socketAccept(SocketImpl s) throws IOException {
-        impl.socketAccept(s);
+	impl.socketAccept(s);
     }
 
     int socketAvailable() throws IOException {
-        return impl.socketAvailable();
+	return impl.socketAvailable(); 
     }
 
     void socketClose0(boolean useDeferredClose) throws IOException {
-        impl.socketClose0(useDeferredClose);
+	impl.socketClose0(useDeferredClose);
     }
 
     void socketShutdown(int howto) throws IOException {
-        impl.socketShutdown(howto);
+	impl.socketShutdown(howto);
     }
 
     void socketSetOption(int cmd, boolean on, Object value)
         throws SocketException {
-        socketSetOption(cmd, on, value);
+	socketSetOption(cmd, on, value);
     }
 
     int socketGetOption(int opt, Object iaContainerObj) throws SocketException {
-        return impl.socketGetOption(opt, iaContainerObj);
+	return impl.socketGetOption(opt, iaContainerObj);
     }
 
-    int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd)
-        throws SocketException {
-        return impl.socketGetOption1(opt, iaContainerObj, fd);
+    int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd) 
+	throws SocketException {
+	return impl.socketGetOption1(opt, iaContainerObj, fd);
     }
 
     void socketSendUrgentData(int data) throws IOException {
-        impl.socketSendUrgentData(data);
+	impl.socketSendUrgentData(data);
     }
 }

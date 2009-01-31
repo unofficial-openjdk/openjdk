@@ -34,27 +34,27 @@ public class WriteUTF {
 
     public static void main(String[] args) throws IOException {
 
-        RandomAccessFile f;
-        File fn = new File("x.WriteUTF");
+	RandomAccessFile f;
+	File fn = new File("x.WriteUTF");
 
-        String s = "\uffff";
-        for (int i = 0; i < 16; i++)
-            s += s;
-        System.err.println("String length " + s.length());
+	String s = "\uffff";
+	for (int i = 0; i < 16; i++)
+	    s += s;
+	System.err.println("String length " + s.length());
 
-        try {
-            f = new RandomAccessFile(fn, "rw");
-            try {
-                f.writeUTF(s);
-            }
-            catch (UTFDataFormatException x) {
-                return;
-            }
-            throw new RuntimeException("UTFDataFormatException not thrown");
-        }
-        finally {
-            fn.delete();
-        }
+	try {
+	    f = new RandomAccessFile(fn, "rw");
+	    try {
+		f.writeUTF(s);
+	    }
+	    catch (UTFDataFormatException x) {
+		return;
+	    }
+	    throw new RuntimeException("UTFDataFormatException not thrown");
+	}
+	finally {
+	    fn.delete();
+	}
 
     }
 

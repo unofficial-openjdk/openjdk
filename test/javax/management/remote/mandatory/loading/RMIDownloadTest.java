@@ -96,7 +96,7 @@ public class RMIDownloadTest {
         17, 0, 1, 0, 1, 0, 0, 0, 5, 42, -73, 0, 1, -79, 0, 0,
         0, 0, 0, 0,
     };
-
+    
     private static class ZoobyClassLoader extends ClassLoader {
         protected Class<?> findClass(String name) throws ClassNotFoundException {
             if (name.equals("Zooby")) {
@@ -106,12 +106,12 @@ public class RMIDownloadTest {
                 throw new ClassNotFoundException(name);
         }
     }
-
-
+    
+    
     private static MBeanServer pmbs;
     private static ObjectName getSetName;
     private static GetSet getSetInstance;
-
+    
     public static void main(String[] args) throws Exception {
         int sendIndex = -1;
         int withIndex = -1;
@@ -130,11 +130,11 @@ public class RMIDownloadTest {
         getSetName = new ObjectName(":type=GetSet");
         getSetInstance = new GetSet();
         pmbs.registerMBean(getSetInstance, getSetName);
-
+        
         System.setSecurityManager(new LaidBackSecurityManager());
-
+        
 //        System.setProperty("sun.rmi.loader.logLevel", "VERBOSE");
-
+        
         String tmpdir = System.getProperty("java.io.tmpdir");
         String classfile = tmpdir + File.separator + "Zooby.class";
         File zoobyFile = new File(classfile);
@@ -143,7 +143,7 @@ public class RMIDownloadTest {
         for (byte b : zoobyClassBytes)
             os.write(b);
         os.close();
-
+        
         // Check that we can't load the Zooby class from the classpath
         try {
             Class.forName("Zooby");
@@ -151,7 +151,7 @@ public class RMIDownloadTest {
         } catch (ClassNotFoundException e) {
             // OK: expected
         }
-
+        
         if (send)
             System.out.println("Testing we can send an object from client to server");
         else
@@ -172,9 +172,9 @@ public class RMIDownloadTest {
             System.out.println("Testing without codebase, should fail");
             test(send, false);
         }
-
+        
     }
-
+    
     private static void test(boolean send, boolean shouldWork) throws Exception {
         try {
             testWithException(send);
@@ -187,7 +187,7 @@ public class RMIDownloadTest {
         if (!shouldWork)
             throw new Exception("Test passed without codebase but should not");
     }
-
+    
     private static void testWithException(boolean send)
     throws Exception {
         ClassLoader zoobyCL = new ZoobyClassLoader();
@@ -201,7 +201,7 @@ public class RMIDownloadTest {
         JMXServiceURL addr = cs.getAddress();
         JMXConnector cc = JMXConnectorFactory.connect(addr);
         MBeanServerConnection mbsc = cc.getMBeanServerConnection();
-
+        
         Object rzooby;
         if (send) {
             System.out.println("Sending object...");
@@ -212,7 +212,7 @@ public class RMIDownloadTest {
             getSetInstance.setIt(zooby);
             rzooby = mbsc.getAttribute(getSetName, "It");
         }
-
+        
         if (!rzooby.getClass().getName().equals("Zooby")) {
             throw new Exception("FAILED: remote object is not a Zooby");
         }
@@ -221,31 +221,31 @@ public class RMIDownloadTest {
             throw new Exception("FAILED: same class loader: " +
                     zooby.getClass().getClassLoader());
         }
-
+        
         cc.close();
         cs.stop();
     }
-
+    
     public static interface GetSetMBean {
         public Object getIt();
         public void setIt(Object x);
     }
-
+    
     public static class GetSet implements GetSetMBean {
         public GetSet() {
         }
-
+        
         public Object getIt() {
             return what;
         }
-
+        
         public void setIt(Object x) {
             this.what = x;
         }
-
+        
         private Object what;
     }
-
+    
     public static class LaidBackSecurityManager extends SecurityManager {
         public void checkPermission(Permission perm) {
             // OK, dude

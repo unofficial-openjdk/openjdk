@@ -45,6 +45,7 @@ import java.lang.Character.Subset;
  *
  * @since 1.3
  *
+ * @version 	%I%, %G%
  * @author JavaSoft International
  */
 
@@ -97,7 +98,7 @@ public interface InputMethod {
      * @return the current input locale, or null
      */
     public Locale getLocale();
-
+    
     /**
      * Sets the subsets of the Unicode character set that this input method
      * is allowed to input. Null may be passed in to indicate that all
@@ -127,10 +128,10 @@ public interface InputMethod {
      * for composition may still interpret events for control purposes,
      * including to enable or disable itself for composition.
      * <p>
-     * For input methods provided by host operating systems, it is not always possible to
+     * For input methods provided by host operating systems, it is not always possible to 
      * determine whether this operation is supported. For example, an input method may enable
-     * composition only for some locales, and do nothing for other locales. For such input
-     * methods, it is possible that this method does not throw
+     * composition only for some locales, and do nothing for other locales. For such input 
+     * methods, it is possible that this method does not throw 
      * {@link java.lang.UnsupportedOperationException UnsupportedOperationException},
      * but also does not affect whether composition is enabled.
      * <p>
@@ -315,7 +316,7 @@ public interface InputMethod {
      * The method is only called when the input method is inactive.
      */
     public void hideWindows();
-
+  
     /**
      * Notifies the input method that a client component has been
      * removed from its containment hierarchy, or that input method

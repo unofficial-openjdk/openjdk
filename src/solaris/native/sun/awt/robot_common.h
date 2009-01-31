@@ -32,8 +32,8 @@
 
 int QueryColorMap(Display *disp,
                   Colormap src_cmap,
-                  Visual *src_vis,
+                  Visual *src_vis, 
                   XColor **src_colors,
                   int *rShift, int *gShift, int *bShift);
-
+           
 #endif /* _ROBOT_COMMON_H */

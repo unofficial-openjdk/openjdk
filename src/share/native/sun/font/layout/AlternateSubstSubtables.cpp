@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)AlternateSubstSubtables.cpp	1.5 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -55,7 +56,7 @@ le_uint32 AlternateSubstitutionSubtable::process(GlyphIterator *glyphIterator, c
             if (filter == NULL || filter->accept(LE_SET_GLYPH(glyph, alternate))) {
                 glyphIterator->setCurrGlyphID(SWAPW(alternateSetTable->alternateArray[0]));
             }
-
+            
             return 1;
         }
 

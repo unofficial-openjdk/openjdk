@@ -52,7 +52,7 @@ DECLARE_JAVA_CLASS(selectionClazz, "sun/awt/motif/X11Selection")
 
 static jobject
 call_getSelectionsArray(JNIEnv* env) {
-    DECLARE_STATIC_OBJECT_JAVA_METHOD(getSelectionsArray, selectionClazz,
+    DECLARE_STATIC_OBJECT_JAVA_METHOD(getSelectionsArray, selectionClazz, 
                                     "getSelectionsArray", "()[Ljava/lang/Object;")
     DASSERT(!JNU_IsNull(env, getSelectionsArray));
     return (*env)->CallStaticObjectMethod(env, clazz, getSelectionsArray);
@@ -71,7 +71,7 @@ call_checkChange(JNIEnv* env, jobject jselection, jlongArray targetArray)
 static jlongArray
 call_getSelectionAtomsToCheckChange(JNIEnv* env)
 {
-    DECLARE_STATIC_OBJECT_JAVA_METHOD(getSelectionAtomsToCheckChangeMID,
+    DECLARE_STATIC_OBJECT_JAVA_METHOD(getSelectionAtomsToCheckChangeMID, 
             selectionClazz, "getSelectionAtomsToCheckChange", "()[J")
 
     return (jlongArray)(*env)->CallStaticObjectMethod(env,
@@ -107,14 +107,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_X11Selection_initIDs
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_X11Selection_init
-    (JNIEnv *env, jclass this)
+    (JNIEnv *env, jclass this) 
 {
     AWT_LOCK();
 
     AWT_UNLOCK();
 }
 
-static jobject
+static jobject 
 getX11Selection(JNIEnv * env, Atom atom)
 {
     jobjectArray selections;
@@ -152,7 +152,7 @@ getX11Selection(JNIEnv * env, Atom atom)
     return returnSelection;
 }
 
-Boolean
+Boolean 
 awtJNI_isSelectionOwner(JNIEnv * env, char *sel_str)
 {
     Atom selection;
@@ -174,7 +174,7 @@ awtJNI_isSelectionOwner(JNIEnv * env, char *sel_str)
 
 static void losingSelectionOwnership(Widget w, Atom * selection);
 
-void
+void 
 awtJNI_notifySelectionLost(JNIEnv * env, char *sel_str)
 {
     Atom selection;
@@ -183,13 +183,13 @@ awtJNI_notifySelectionLost(JNIEnv * env, char *sel_str)
     losingSelectionOwnership(NULL, &selection);
 }
 
-static void
+static void 
 losingSelectionOwnership(Widget w, Atom * selection)
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jobject this = getX11Selection(env, *selection);
 
-    /*
+    /* 
      * SECURITY: OK to call this on privileged thread - peer does
      *         not call into client code
      */
@@ -199,7 +199,7 @@ losingSelectionOwnership(Widget w, Atom * selection)
         (*env)->ExceptionClear(env);
     }
     /*
-     * Fix for 4692059.
+     * Fix for 4692059. 
      * The native context is cleaned up on the event dispatch thread after the
      * references to the current contents and owner are cleared.
      */
@@ -210,17 +210,17 @@ losingSelectionOwnership(Widget w, Atom * selection)
  * Method:    pGetSelectionOwnership
  * Signature: (Ljava/lang/Object;Ljava/awt/datatransfer/Transferable;[JLjava/util/Map;Lsun/awt/motif/X11SelectionHolder;)Z
  */
-JNIEXPORT jboolean JNICALL
-Java_sun_awt_motif_X11Selection_pGetSelectionOwnership(JNIEnv *env,
+JNIEXPORT jboolean JNICALL 
+Java_sun_awt_motif_X11Selection_pGetSelectionOwnership(JNIEnv *env, 
                                                        jobject this,
                                                        jobject source,
                                                        jobject transferable,
                                                        jlongArray formats,
                                                        jobject formatMap,
-                                                       jobject holder)
+                                                       jobject holder) 
 {
     Boolean gotit = False;
-    Atom selection = (Atom)(*env)->GetLongField(env, this,
+    Atom selection = (Atom)(*env)->GetLongField(env, this, 
                                                 x11SelectionIDs.atom);
     awt_convertDataCallbackStruct* structPtr = NULL;
     Time time = CurrentTime;
@@ -255,7 +255,7 @@ Java_sun_awt_motif_X11Selection_pGetSelectionOwnership(JNIEnv *env,
                 return JNI_FALSE;
             }
 
-            if (XSaveContext(awt_display, selection, awt_convertDataContext,
+            if (XSaveContext(awt_display, selection, awt_convertDataContext, 
                              (XPointer)structPtr) == XCNOMEM) {
                 XtDisownSelection(awt_root_shell, selection, time);
                 free(structPtr);
@@ -267,7 +267,7 @@ Java_sun_awt_motif_X11Selection_pGetSelectionOwnership(JNIEnv *env,
 
         structPtr->source = (*env)->NewGlobalRef(env, source);
         structPtr->transferable = (*env)->NewGlobalRef(env, transferable);
-        structPtr->formatMap = (*env)->NewGlobalRef(env, formatMap);
+        structPtr->formatMap = (*env)->NewGlobalRef(env, formatMap); 
         structPtr->formats = (*env)->NewGlobalRef(env, formats);
 
         if (JNU_IsNull(env, structPtr->source) ||
@@ -308,9 +308,9 @@ Java_sun_awt_motif_X11Selection_pGetSelectionOwnership(JNIEnv *env,
  * Method:    clearNativeContext
  * Signature: ()V
  */
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 Java_sun_awt_motif_X11Selection_clearNativeContext(JNIEnv *env, jobject this) {
-    Atom selection = (Atom)(*env)->GetLongField(env, this,
+    Atom selection = (Atom)(*env)->GetLongField(env, this, 
                                                 x11SelectionIDs.atom);
 
     AWT_LOCK();
@@ -322,7 +322,7 @@ Java_sun_awt_motif_X11Selection_clearNativeContext(JNIEnv *env, jobject this) {
 }
 
 
-static void
+static void 
 getSelectionTargetsToCheckChange(Widget w, XtPointer client_data,
         Atom * selection, Atom * type, XtPointer value, unsigned long *length,
         int32_t *format)
@@ -385,7 +385,7 @@ propertyChangeEventHandlerToSelectionCheck
     JNIEnv *env;
     jlongArray jselectionAtoms;
 
-    if (event->type != PropertyNotify || event->xproperty.atom !=
+    if (event->type != PropertyNotify || event->xproperty.atom != 
             _XA_JAVA_TIME_PROPERTY_ATOM_CHECK_SELECTION_CHANGE_ON_TIMEOUT) {
         return;
     }
@@ -413,7 +413,7 @@ propertyChangeEventHandlerToSelectionCheck
         }
     }
 
-    // Reschedule the timer callback.
+    // Reschedule the timer callback. 
     XtAppAddTimeOut(awt_appContext, selectionPollInterval,
                     checkSelectionChangeOnTimeout, client_data);
 }
@@ -439,7 +439,7 @@ Java_sun_awt_motif_X11Clipboard_registerClipboardViewer(JNIEnv *env, jobject sel
 
     if (_XA_JAVA_TIME_PROPERTY_ATOM_CHECK_SELECTION_CHANGE_ON_TIMEOUT == 0) {
         _XA_JAVA_TIME_PROPERTY_ATOM_CHECK_SELECTION_CHANGE_ON_TIMEOUT =
-                XInternAtom(awt_display,
+                XInternAtom(awt_display, 
                             "_SUNW_JAVA_AWT_TIME_CHECK_SELECTION_CHANGE_ON_TIMEOUT",
                             False);
     }
@@ -486,7 +486,7 @@ Java_sun_awt_motif_X11Clipboard_unregisterClipboardViewer(JNIEnv *env, jobject s
  * Method:    getClipboardFormats
  * Signature: (J)[J
  */
-JNIEXPORT jlongArray JNICALL
+JNIEXPORT jlongArray JNICALL 
 Java_sun_awt_motif_X11Clipboard_getClipboardFormats
     (JNIEnv *env, jclass cls, jlong selectionAtom)
 {
@@ -499,7 +499,7 @@ Java_sun_awt_motif_X11Clipboard_getClipboardFormats
  * Method:    getClipboardData
  * Signature: (JJ)[B
  */
-JNIEXPORT jbyteArray JNICALL
+JNIEXPORT jbyteArray JNICALL 
 Java_sun_awt_motif_X11Clipboard_getClipboardData
     (JNIEnv *env, jclass cls, jlong selectionAtom, jlong format)
 {

@@ -31,14 +31,15 @@ package sun.io;
  * little-endian byte order; do not write a byte-order mark before the first
  * converted character.
  *
- * @author      Mark Reinhold
+ * @version 	%I%, %E%
+ * @author	Mark Reinhold
  */
 
 public class CharToByteUnicodeLittleUnmarked extends CharToByteUnicode {
 
     public CharToByteUnicodeLittleUnmarked () {
-        byteOrder = LITTLE;
-        usesMark = false;
+	byteOrder = LITTLE;
+	usesMark = false;
     }
 
 }

@@ -46,7 +46,7 @@ import java.sql.Clob;
  * access an SQL <code>NCLOB</code> value.  In addition, this interface
  * has methods for updating a <code>NCLOB</code> value.
  * <p>
- * All methods on the <code>NClob</code> interface must be fully implemented if the
+ * All methods on the <code>NClob</code> interface must be fully implemented if the 
  * JDBC driver supports the data type.
  *
  * @since 1.6

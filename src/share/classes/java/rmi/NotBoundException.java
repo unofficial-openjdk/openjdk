@@ -28,14 +28,15 @@ package java.rmi;
  * A <code>NotBoundException</code> is thrown if an attempt
  * is made to lookup or unbind in the registry a name that has
  * no associated binding.
- *
+ * 
+ * @version %I%, %G%
  * @since   JDK1.1
  * @author  Ann Wollrath
  * @author  Roger Riggs
  * @see     java.rmi.Naming#lookup(String)
  * @see     java.rmi.Naming#unbind(String)
  * @see     java.rmi.registry.Registry#lookup(String)
- * @see     java.rmi.registry.Registry#unbind(String)
+ * @see     java.rmi.registry.Registry#unbind(String) 
  */
 public class NotBoundException extends java.lang.Exception {
 
@@ -48,7 +49,7 @@ public class NotBoundException extends java.lang.Exception {
      * @since JDK1.1
      */
     public NotBoundException() {
-        super();
+	super();
     }
 
     /**
@@ -59,6 +60,6 @@ public class NotBoundException extends java.lang.Exception {
      * @since JDK1.1
      */
     public NotBoundException(String s) {
-        super(s);
+	super(s);
     }
 }

@@ -37,9 +37,9 @@ import sun.security.jgss.GSSUtil;
 import sun.security.jgss.LoginConfigImpl;
 
 public class DefaultGssConfig {
-
+    
     public static void main(String[] argv) throws Exception {
-
+        
         // 1. Make sure the FileNotFoundException is hidden
         try {
             Configuration.getInstance("JavaLoginConfig", new URIParameter(new URI("file:///no/such/file")));
@@ -51,10 +51,10 @@ public class DefaultGssConfig {
                 throw nsae;
             }
         }
-
+        
         // 2. Make sure there's always a Configuration even if no config file exists
         Configuration.getConfiguration();
-
+        
         // 3. Make sure there're default entries for GSS krb5 client/server
         LoginConfigImpl lc = new LoginConfigImpl(GSSUtil.CALLER_INITIATE, GSSUtil.GSS_KRB5_MECH_OID);
         if (lc.getAppConfigurationEntry("").length == 0) {

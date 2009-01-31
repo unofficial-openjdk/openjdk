@@ -49,8 +49,8 @@ import javax.management.remote.JMXServiceURL;
 
 public class GetConnectionTest {
     public static void main(String[] args) {
-        System.out.println("Verify whether getting an IOException when "+
-             "calling getMBeanServerConnection to a unconnected connector.");
+	System.out.println("Verify whether getting an IOException when "+
+	     "calling getMBeanServerConnection to a unconnected connector.");
 
         boolean ok = true;
         String[] protocols = {"rmi", "iiop", "jmxmp"};
@@ -76,26 +76,26 @@ public class GetConnectionTest {
     }
 
     private static boolean test(String proto) throws Exception {
-        JMXConnector client;
-        try {
-            JMXServiceURL url = new JMXServiceURL(proto, null, 0);
-            client = JMXConnectorFactory.newJMXConnector(url, null);
+	JMXConnector client;
+	try {
+	    JMXServiceURL url = new JMXServiceURL(proto, null, 0);
+	    client = JMXConnectorFactory.newJMXConnector(url, null);
         } catch (MalformedURLException e) {
             System.out.println("Protocol " + proto +
                                " not supported, ignoring");
             return true;
         }
 
-        // IOException is expected
-        try {
-            MBeanServerConnection connection =
-                client.getMBeanServerConnection();
+	// IOException is expected
+	try {
+	    MBeanServerConnection connection =
+		client.getMBeanServerConnection();
 
-            System.out.println("FAILED: Expected IOException is not thrown.");
-            return false;
-        } catch (IOException e) {
-            System.out.println("PASSED");
-            return true;
-        }
+	    System.out.println("FAILED: Expected IOException is not thrown."); 
+	    return false;
+	} catch (IOException e) {
+	    System.out.println("PASSED");
+	    return true;
+	}
     }
 }

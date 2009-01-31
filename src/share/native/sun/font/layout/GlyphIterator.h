@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)GlyphIterator.h	1.20 06/12/13
  *
  * (C) Copyright IBM Corp. 1998-2005 - All Rights Reserved
  *
@@ -49,7 +50,7 @@ class GlyphPositionAdjustments;
 
 class GlyphIterator {
 public:
-    GlyphIterator(LEGlyphStorage &theGlyphStorage, GlyphPositionAdjustments *theGlyphPositionAdjustments,
+    GlyphIterator(LEGlyphStorage &theGlyphStorage, GlyphPositionAdjustments *theGlyphPositionAdjustments, 
         le_bool rightToLeft, le_uint16 theLookupFlags, FeatureMask theFeatureMask,
         const GlyphDefinitionTableHeader *theGlyphDefinitionTableHeader);
 

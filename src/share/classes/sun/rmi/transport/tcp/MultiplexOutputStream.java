@@ -77,15 +77,15 @@ final class MultiplexOutputStream extends OutputStream {
      * @param bufferLength length of output buffer
      */
     MultiplexOutputStream(
-        ConnectionMultiplexer    manager,
-        MultiplexConnectionInfo  info,
-        int                      bufferLength)
+	ConnectionMultiplexer    manager,
+	MultiplexConnectionInfo  info,
+	int                      bufferLength)
     {
-        this.manager = manager;
-        this.info    = info;
+	this.manager = manager;
+	this.info    = info;
 
-        buffer = new byte[bufferLength];
-        pos = 0;
+	buffer = new byte[bufferLength];
+	pos = 0;
     }
 
     /**
@@ -94,9 +94,9 @@ final class MultiplexOutputStream extends OutputStream {
      */
     public synchronized void write(int b) throws IOException
     {
-        while (pos >= buffer.length)
-            push();
-        buffer[pos ++] = (byte) b;
+	while (pos >= buffer.length)
+	    push();
+	buffer[pos ++] = (byte) b;
     }
 
     /**
@@ -106,51 +106,51 @@ final class MultiplexOutputStream extends OutputStream {
      * @param len number of bytes to write
      */
     public synchronized void write(byte b[], int off, int len)
-        throws IOException
+	throws IOException
     {
-        if (len <= 0)
-            return;
+	if (len <= 0)
+	    return;
 
-        // if enough free space in output buffer, just copy into there
-        int freeSpace = buffer.length - pos;
-        if (len <= freeSpace) {
-            System.arraycopy(b, off, buffer, pos, len);
-            pos += len;
-            return;
-        }
+	// if enough free space in output buffer, just copy into there
+	int freeSpace = buffer.length - pos;
+	if (len <= freeSpace) {
+	    System.arraycopy(b, off, buffer, pos, len);
+	    pos += len;
+	    return;
+	}
 
-        // else, flush buffer and send rest directly to avoid array copy
-        flush();
-        int local_requested;
-        while (true) {
-            synchronized (lock) {
-                while ((local_requested = requested) < 1 && !disconnected) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                    }
-                }
-                if (disconnected)
-                    throw new IOException("Connection closed");
-            }
+	// else, flush buffer and send rest directly to avoid array copy
+	flush();
+	int local_requested;
+	while (true) {
+	    synchronized (lock) {
+		while ((local_requested = requested) < 1 && !disconnected) {
+		    try {
+			lock.wait();
+		    } catch (InterruptedException e) {
+		    }
+		}
+		if (disconnected)
+		    throw new IOException("Connection closed");
+	    }
 
-            if (local_requested < len) {
-                manager.sendTransmit(info, b, off, local_requested);
-                off += local_requested;
-                len -= local_requested;
-                synchronized (lock) {
-                    requested -= local_requested;
-                }
-            }
-            else {
-                manager.sendTransmit(info, b, off, len);
-                synchronized (lock) {
-                    requested -= len;
-                }
-                // len = 0;
-                break;
-            }
-        }
+	    if (local_requested < len) {
+		manager.sendTransmit(info, b, off, local_requested);
+		off += local_requested;
+		len -= local_requested;
+		synchronized (lock) {
+		    requested -= local_requested;
+		}
+	    }
+	    else {
+		manager.sendTransmit(info, b, off, len);
+		synchronized (lock) {
+		    requested -= len;
+		}
+		// len = 0;
+		break;
+	    }
+	}
     }
 
     /**
@@ -158,8 +158,8 @@ final class MultiplexOutputStream extends OutputStream {
      * over and made available to the remote endpoint.
      */
     public synchronized void flush() throws IOException {
-        while (pos > 0)
-            push();
+	while (pos > 0)
+	    push();
     }
 
     /**
@@ -167,7 +167,7 @@ final class MultiplexOutputStream extends OutputStream {
      */
     public void close() throws IOException
     {
-        manager.sendClose(info);
+	manager.sendClose(info);
     }
 
     /**
@@ -176,10 +176,10 @@ final class MultiplexOutputStream extends OutputStream {
      */
     void request(int num)
     {
-        synchronized (lock) {
-            requested += num;
-            lock.notifyAll();
-        }
+	synchronized (lock) {
+	    requested += num;
+	    lock.notifyAll();
+	}
     }
 
     /**
@@ -187,10 +187,10 @@ final class MultiplexOutputStream extends OutputStream {
      */
     void disconnect()
     {
-        synchronized (lock) {
-            disconnected = true;
-            lock.notifyAll();
-        }
+	synchronized (lock) {
+	    disconnected = true;
+	    lock.notifyAll();
+	}
     }
 
     /**
@@ -199,33 +199,33 @@ final class MultiplexOutputStream extends OutputStream {
      */
     private void push() throws IOException
     {
-        int local_requested;
-        synchronized (lock) {
-            while ((local_requested = requested) < 1 && !disconnected) {
-                try {
-                    lock.wait();
-                } catch (InterruptedException e) {
-                }
-            }
-            if (disconnected)
-                throw new IOException("Connection closed");
-        }
+	int local_requested;
+	synchronized (lock) {
+	    while ((local_requested = requested) < 1 && !disconnected) {
+		try {
+		    lock.wait();
+		} catch (InterruptedException e) {
+		}
+	    }
+	    if (disconnected)
+		throw new IOException("Connection closed");
+	}
 
-        if (local_requested < pos) {
-            manager.sendTransmit(info, buffer, 0, local_requested);
-            System.arraycopy(buffer, local_requested,
-                             buffer, 0, pos - local_requested);
-            pos -= local_requested;
-            synchronized (lock) {
-                requested -= local_requested;
-            }
-        }
-        else {
-            manager.sendTransmit(info, buffer, 0, pos);
-            synchronized (lock) {
-                requested -= pos;
-            }
-            pos = 0;
-        }
+	if (local_requested < pos) {
+	    manager.sendTransmit(info, buffer, 0, local_requested);
+	    System.arraycopy(buffer, local_requested,
+	                     buffer, 0, pos - local_requested);
+	    pos -= local_requested;
+	    synchronized (lock) {
+		requested -= local_requested;
+	    }
+	}
+	else {
+	    manager.sendTransmit(info, buffer, 0, pos);
+	    synchronized (lock) {
+		requested -= pos;
+	    }
+	    pos = 0;
+	}
     }
 }

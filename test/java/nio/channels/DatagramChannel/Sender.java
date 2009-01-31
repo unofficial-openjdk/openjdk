@@ -38,7 +38,7 @@ public class Sender {
     static PrintStream log = System.err;
 
     public static void main(String[] args) throws Exception {
-        test();
+	test();
     }
 
     static void test() throws Exception {
@@ -47,8 +47,8 @@ public class Sender {
 
         Thread serverThread = new Thread(server);
         serverThread.start();
-        while (!server.ready())
-            Thread.sleep(50);
+	while (!server.ready())
+	    Thread.sleep(50);
 
         Thread clientThread = new Thread(client);
         clientThread.start();
@@ -62,7 +62,7 @@ public class Sender {
 
     public interface Sprintable extends Runnable {
         public void throwException() throws Exception;
-        public boolean ready();
+	public boolean ready();
     }
 
     public static class Client implements Sprintable {
@@ -73,11 +73,11 @@ public class Sender {
                 throw e;
         }
 
-        private volatile boolean ready = false;
+	private volatile boolean ready = false;
 
-        public boolean ready() {
-            return ready;
-        }
+	public boolean ready() {
+	    return ready;
+	}
 
         public void run() {
             try {
@@ -98,16 +98,16 @@ public class Sender {
 
     public static class Server implements Sprintable {
         Exception e = null;
-        private volatile boolean ready = false;
+	private volatile boolean ready = false;
 
         public void throwException() throws Exception {
             if (e != null)
                 throw e;
         }
 
-        public boolean ready() {
-            return ready;
-        }
+	public boolean ready() {
+	    return ready;
+	}
 
         void showBuffer(String s, ByteBuffer bb) {
             log.println(s);
@@ -121,10 +121,10 @@ public class Sender {
 
         public void run() {
             SocketAddress sa = null;
-
+               
             try {
                 DatagramChannel dc = DatagramChannel.open();
-                dc.socket().bind(new InetSocketAddress(8888));
+		dc.socket().bind(new InetSocketAddress(8888));
                 dc.configureBlocking(false);
                 ready = true;
                 ByteBuffer bb = ByteBuffer.allocateDirect(12);

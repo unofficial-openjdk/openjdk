@@ -58,7 +58,7 @@ final class EngineWriter {
     private static final Debug debug = Debug.getInstance("ssl");
 
     EngineWriter() {
-        outboundList = new LinkedList<Object>();
+	outboundList = new LinkedList<Object>();
     }
 
     /*
@@ -68,30 +68,30 @@ final class EngineWriter {
      */
     private HandshakeStatus getOutboundData(ByteBuffer dstBB) {
 
-        Object msg = outboundList.removeFirst();
-        assert(msg instanceof ByteBuffer);
+	Object msg = outboundList.removeFirst();
+	assert(msg instanceof ByteBuffer);
 
-        ByteBuffer bbIn = (ByteBuffer) msg;
-        assert(dstBB.remaining() >= bbIn.remaining());
+	ByteBuffer bbIn = (ByteBuffer) msg;
+	assert(dstBB.remaining() >= bbIn.remaining());
 
-        dstBB.put(bbIn);
+	dstBB.put(bbIn);
 
-        /*
-         * If we have more data in the queue, it's either
-         * a finished message, or an indication that we need
-         * to call wrap again.
-         */
-        if (hasOutboundDataInternal()) {
-            msg = outboundList.getFirst();
-            if (msg == HandshakeStatus.FINISHED) {
-                outboundList.removeFirst();     // consume the message
-                return HandshakeStatus.FINISHED;
-            } else {
-                return HandshakeStatus.NEED_WRAP;
-            }
-        } else {
-            return null;
-        }
+	/*
+	 * If we have more data in the queue, it's either
+	 * a finished message, or an indication that we need
+	 * to call wrap again.
+	 */
+	if (hasOutboundDataInternal()) {
+	    msg = outboundList.getFirst();
+	    if (msg == HandshakeStatus.FINISHED) {
+		outboundList.removeFirst();	// consume the message
+		return HandshakeStatus.FINISHED;
+	    } else {
+		return HandshakeStatus.NEED_WRAP;
+	    }
+	} else {
+	    return null;
+	}
     }
 
     /*
@@ -100,46 +100,46 @@ final class EngineWriter {
      * other writeRecord.
      */
     synchronized void writeRecord(EngineOutputRecord outputRecord,
-            MAC writeMAC, CipherBox writeCipher) throws IOException {
+	    MAC writeMAC, CipherBox writeCipher) throws IOException {
 
-        /*
-         * Only output if we're still open.
-         */
-        if (outboundClosed) {
-            throw new IOException("writer side was already closed.");
-        }
+	/*
+	 * Only output if we're still open.
+	 */
+	if (outboundClosed) {
+	    throw new IOException("writer side was already closed.");
+	}
 
-        outputRecord.write(writeMAC, writeCipher);
+	outputRecord.write(writeMAC, writeCipher);
 
-        /*
-         * Did our handshakers notify that we just sent the
-         * Finished message?
-         *
-         * Add an "I'm finished" message to the queue.
-         */
-        if (outputRecord.isFinishedMsg()) {
-            outboundList.addLast(HandshakeStatus.FINISHED);
-        }
+	/*
+	 * Did our handshakers notify that we just sent the
+	 * Finished message?
+	 *
+	 * Add an "I'm finished" message to the queue.
+	 */
+	if (outputRecord.isFinishedMsg()) {
+	    outboundList.addLast(HandshakeStatus.FINISHED);
+	}
     }
 
     /*
      * Output the packet info.
      */
     private void dumpPacket(EngineArgs ea, boolean hsData) {
-        try {
-            HexDumpEncoder hd = new HexDumpEncoder();
+	try {
+	    HexDumpEncoder hd = new HexDumpEncoder();
 
-            ByteBuffer bb = ea.netData.duplicate();
+	    ByteBuffer bb = ea.netData.duplicate();
 
-            int pos = bb.position();
-            bb.position(pos - ea.deltaNet());
-            bb.limit(pos);
+	    int pos = bb.position();
+	    bb.position(pos - ea.deltaNet());
+	    bb.limit(pos);
 
-            System.out.println("[Raw write" +
-                (hsData ? "" : " (bb)") + "]: length = " +
-                bb.remaining());
-            hd.encodeBuffer(bb, System.out);
-        } catch (IOException e) { }
+	    System.out.println("[Raw write" +
+		(hsData ? "" : " (bb)") + "]: length = " +
+		bb.remaining());
+	    hd.encodeBuffer(bb, System.out);
+	} catch (IOException e) { }
     }
 
     /*
@@ -152,49 +152,49 @@ final class EngineWriter {
      * Return any determined status.
      */
     synchronized HandshakeStatus writeRecord(
-            EngineOutputRecord outputRecord, EngineArgs ea, MAC writeMAC,
-            CipherBox writeCipher) throws IOException {
+	    EngineOutputRecord outputRecord, EngineArgs ea, MAC writeMAC,
+	    CipherBox writeCipher) throws IOException {
 
-        /*
-         * If we have data ready to go, output this first before
-         * trying to consume app data.
-         */
-        if (hasOutboundDataInternal()) {
-            HandshakeStatus hss = getOutboundData(ea.netData);
+	/*
+	 * If we have data ready to go, output this first before
+	 * trying to consume app data.
+	 */
+	if (hasOutboundDataInternal()) {
+	    HandshakeStatus hss = getOutboundData(ea.netData);
 
-            if (debug != null && Debug.isOn("packet")) {
-                /*
-                 * We could have put the dump in
-                 * OutputRecord.write(OutputStream), but let's actually
-                 * output when it's actually output by the SSLEngine.
-                 */
-                dumpPacket(ea, true);
-            }
+	    if (debug != null && Debug.isOn("packet")) {
+		/*
+		 * We could have put the dump in
+		 * OutputRecord.write(OutputStream), but let's actually
+		 * output when it's actually output by the SSLEngine.
+		 */
+		dumpPacket(ea, true);
+	    }
 
-            return hss;
-        }
+	    return hss;
+	}
 
-        /*
-         * If we are closed, no more app data can be output.
-         * Only existing handshake data (above) can be obtained.
-         */
-        if (outboundClosed) {
-            throw new IOException("The write side was already closed");
-        }
+	/*
+	 * If we are closed, no more app data can be output.
+	 * Only existing handshake data (above) can be obtained.
+	 */
+	if (outboundClosed) {
+	    throw new IOException("The write side was already closed");
+	}
 
-        outputRecord.write(ea, writeMAC, writeCipher);
+	outputRecord.write(ea, writeMAC, writeCipher);
 
-        if (debug != null && Debug.isOn("packet")) {
-            dumpPacket(ea, false);
-        }
+	if (debug != null && Debug.isOn("packet")) {
+	    dumpPacket(ea, false);
+	}
 
-        /*
-         * No way new outbound handshake data got here if we're
-         * locked properly.
-         *
-         * We don't have any status we can return.
-         */
-        return null;
+	/*
+	 * No way new outbound handshake data got here if we're
+	 * locked properly.
+	 *
+	 * We don't have any status we can return.
+	 */
+	return null;
     }
 
     /*
@@ -204,7 +204,7 @@ final class EngineWriter {
      * and the closure is sync'd.
      */
     void putOutboundData(ByteBuffer bytes) {
-        outboundList.addLast(bytes);
+	outboundList.addLast(bytes);
     }
 
     /*
@@ -212,32 +212,32 @@ final class EngineWriter {
      * the *InputRecord* before we know what to do with it.
      */
     synchronized void putOutboundDataSync(ByteBuffer bytes)
-            throws IOException {
+	    throws IOException {
 
-        if (outboundClosed) {
-            throw new IOException("Write side already closed");
-        }
+	if (outboundClosed) {
+	    throw new IOException("Write side already closed");
+	}
 
-        outboundList.addLast(bytes);
+	outboundList.addLast(bytes);
     }
 
     /*
      * Non-synch'd version of this method, called by internals
      */
     private boolean hasOutboundDataInternal() {
-        return (outboundList.size() != 0);
+	return (outboundList.size() != 0);
     }
 
     synchronized boolean hasOutboundData() {
-        return hasOutboundDataInternal();
+	return hasOutboundDataInternal();
     }
 
     synchronized boolean isOutboundDone() {
-        return outboundClosed && !hasOutboundDataInternal();
+	return outboundClosed && !hasOutboundDataInternal();
     }
 
     synchronized void closeOutbound() {
-        outboundClosed = true;
+	outboundClosed = true;
     }
 
 }

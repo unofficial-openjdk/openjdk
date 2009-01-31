@@ -113,8 +113,8 @@ typedef AwtObject* PDATA;
 #define JNI_GET_PDATA(peer) (PDATA) env->GetLongField(peer, AwtObject::pDataID)
 
 #define JNI_SET_PDATA(peer, data) env->SetLongField(peer,                  \
-                                                   AwtObject::pDataID,    \
-                                                   (jlong)data)
+						   AwtObject::pDataID,    \
+						   (jlong)data)
 /*  /NEW JNI */
 
 /*
@@ -207,7 +207,7 @@ extern JavaVM *jvm;
 #define RESTORE_CONTROLWORD   \
    if (IS_WIN95) { \
        if ( _control87(0, 0) != fpu_cw) {  \
-              _control87(fpu_cw, 0xfffff);   \
+	      _control87(fpu_cw, 0xfffff);   \
        }   \
    }
 
@@ -222,8 +222,9 @@ extern JavaVM *jvm;
   if (GetCurrentThreadId() == AwtToolkit::MainThread())  \
   { JNU_ThrowInternalError(env,"Operation is not permitted on toolkit thread!\n"); }
 #else
-#define CHECK_IS_TOOLKIT_THREAD()
-#define CHECK_ISNOT_TOOLKIT_THREAD()
+#define CHECK_IS_TOOLKIT_THREAD() 
+#define CHECK_ISNOT_TOOLKIT_THREAD() 
 #endif
 
 #endif  /* _AWT_H_ */
+

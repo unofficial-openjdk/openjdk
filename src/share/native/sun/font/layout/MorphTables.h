@@ -24,6 +24,7 @@
  */
 
 /*
+ * @(#)MorphTables.h	1.8 05/05/11
  *
  * (C) Copyright IBM Corp. 1998-2004 - All Rights Reserved
  *
@@ -99,3 +100,4 @@ struct MorphSubtableHeader
 };
 
 #endif
+

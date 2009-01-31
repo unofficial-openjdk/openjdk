@@ -36,7 +36,7 @@
 import java.util.ResourceBundle;
 
 public class ImmutableResourceTest {
-
+    
     public static void main(String[] args) throws Exception {
         /* Reach under the covers and get the message strings */
         com.sun.tools.example.debug.tty.TTYResources ttyr =
@@ -49,7 +49,7 @@ public class ImmutableResourceTest {
             testData[ii][1] = "yyy";
         }
 
-        /*
+        /* 
          * Try to lookup the shredded key.
          * If this is successful we have a problem.
          */
@@ -57,7 +57,7 @@ public class ImmutableResourceTest {
         try {
             ss = ttyr.getString("T6287579");
         } catch (java.util.MissingResourceException mre) {
-            /*
+            /* 
              * Ignore the expected exception since key "T6287579" is
              * not in the canonical TTYResources.
              */

@@ -36,7 +36,7 @@ public class CharToByteCp1381
 
 {
 
-        private final static IBM1381 nioCoder = new IBM1381();
+	private final static IBM1381 nioCoder = new IBM1381();
 
         // Return the character set id
         public String getCharacterEncoding()

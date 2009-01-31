@@ -26,27 +26,27 @@
  * @bug 6219491
  * @summary CertStore.getInstance(String,CertStoreParameters,String) throws NoSuchAlgorithmE
  */
-
+ 
 import java.security.*;
 import java.security.cert.*;
 
 public class CertStoreConstructorParam {
     public static void main(String[] args) throws Exception {
-        try {
+	try {
 
-            // attempt with null constructor param
-            CertStore.getInstance("Collection", null, "SUN");
+	    // attempt with null constructor param
+	    CertStore.getInstance("Collection", null, "SUN");
 
-        } catch (InvalidAlgorithmParameterException iape) {
+	} catch (InvalidAlgorithmParameterException iape) {
 
-            // ok - thrown by SUN provider
-            System.out.println("test passed");
+	    // ok - thrown by SUN provider
+	    System.out.println("test passed");
 
-        } catch (NoSuchAlgorithmException nsae) {
+	} catch (NoSuchAlgorithmException nsae) {
 
-            // bad - thrown by Provider.Service.newInstance
-            System.out.println("test failed");
-            throw nsae;
-        }
+	    // bad - thrown by Provider.Service.newInstance
+	    System.out.println("test failed");
+	    throw nsae;
+	}
     }
 }

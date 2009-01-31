@@ -43,6 +43,7 @@ import java.rmi.*;
  * of a live, remote target Java Virtual Machine through an RMI server.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class RemoteMonitoredVm extends AbstractMonitoredVm {

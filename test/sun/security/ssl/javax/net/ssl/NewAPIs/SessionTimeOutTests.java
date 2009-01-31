@@ -69,7 +69,7 @@ public class SessionTimeOutTests {
     static String keyStoreFile = "keystore";
     static String trustStoreFile = "truststore";
     static String passwd = "passphrase";
-
+    
     private static int PORTS = 3;
 
     /*
@@ -105,29 +105,29 @@ public class SessionTimeOutTests {
 
     void doServerSide(int serverPort, int serverConns) throws Exception {
 
-        SSLServerSocket sslServerSocket =
-            (SSLServerSocket) sslssf.createServerSocket(serverPort);
-        serverPorts[createdPorts++] = sslServerSocket.getLocalPort();
+	SSLServerSocket sslServerSocket =
+	    (SSLServerSocket) sslssf.createServerSocket(serverPort);
+	serverPorts[createdPorts++] = sslServerSocket.getLocalPort();
 
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady--;
+	/*
+	 * Signal Client, we're ready for his connect.
+	 */
+	serverReady--;
         int read = 0;
         int nConnections = 0;
-        SSLSession sessions [] = new SSLSession [serverConns];
+	SSLSession sessions [] = new SSLSession [serverConns];
 
         while (nConnections < serverConns) {
-            SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-            InputStream sslIS = sslSocket.getInputStream();
-            OutputStream sslOS = sslSocket.getOutputStream();
-            read = sslIS.read();
-            sessions[nConnections] = sslSocket.getSession();
-            sslOS.write(85);
-            sslOS.flush();
-            sslSocket.close();
-            nConnections++;
-        }
+	    SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+	    InputStream sslIS = sslSocket.getInputStream();
+	    OutputStream sslOS = sslSocket.getOutputStream();
+	    read = sslIS.read();
+	    sessions[nConnections] = sslSocket.getSession();
+	    sslOS.write(85);
+	    sslOS.flush();
+	    sslSocket.close();
+	    nConnections++;
+	}
     }
 
     /*
@@ -138,130 +138,130 @@ public class SessionTimeOutTests {
      */
     void doClientSide() throws Exception {
 
-        /*
-         * Wait for server to get started.
-         */
-        while (serverReady > 0) {
-            Thread.sleep(50);
-        }
+	/*
+	 * Wait for server to get started.
+	 */
+	while (serverReady > 0) {
+	    Thread.sleep(50);
+	}
 
         int nConnections = 0;
         SSLSocket sslSockets[] = new SSLSocket [MAX_ACTIVE_CONNECTIONS];
-        Vector sessions = new Vector();
-        SSLSessionContext sessCtx = sslctx.getClientSessionContext();
+	Vector sessions = new Vector();
+   	SSLSessionContext sessCtx = sslctx.getClientSessionContext();
 
-        sessCtx.setSessionTimeout(10); // in secs
+	sessCtx.setSessionTimeout(10); // in secs
         int timeout = sessCtx.getSessionTimeout();
-        while (nConnections < MAX_ACTIVE_CONNECTIONS) {
-            // divide the connections among the available server ports
-            sslSockets[nConnections] = (SSLSocket) sslsf.
-                        createSocket("localhost",
-                        serverPorts [nConnections % (serverPorts.length)]);
-            InputStream sslIS = sslSockets[nConnections].getInputStream();
-            OutputStream sslOS = sslSockets[nConnections].getOutputStream();
-            sslOS.write(237);
-            sslOS.flush();
+	while (nConnections < MAX_ACTIVE_CONNECTIONS) {
+	    // divide the connections among the available server ports
+	    sslSockets[nConnections] = (SSLSocket) sslsf.
+			createSocket("localhost",
+			serverPorts [nConnections % (serverPorts.length)]);
+	    InputStream sslIS = sslSockets[nConnections].getInputStream();
+	    OutputStream sslOS = sslSockets[nConnections].getOutputStream();
+	    sslOS.write(237);
+	    sslOS.flush();
             int read = sslIS.read();
             SSLSession sess = sslSockets[nConnections].getSession();
-            if (!sessions.contains(sess))
-                sessions.add(sess);
-            nConnections++;
-        }
-        System.out.println();
-        System.out.println("Current timeout is set to: " + timeout);
-        System.out.println("Testing SSLSessionContext.getSession()......");
-        System.out.println("========================================"
-                                + "=======================");
-        System.out.println("Session                                 "
-                                + "Session-     Session");
-        System.out.println("                                        "
-                                + "lifetime     timedout?");
-        System.out.println("========================================"
-                                + "=======================");
+	    if (!sessions.contains(sess))
+		sessions.add(sess);
+	    nConnections++;
+	}
+	System.out.println();
+	System.out.println("Current timeout is set to: " + timeout);
+	System.out.println("Testing SSLSessionContext.getSession()......");
+	System.out.println("========================================"
+				+ "=======================");
+	System.out.println("Session                                 "
+				+ "Session-     Session");
+	System.out.println("                                        "
+				+ "lifetime     timedout?");
+	System.out.println("========================================"
+				+ "=======================");
 
         for (int i = 0; i < sessions.size(); i++) {
-            SSLSession session = (SSLSession) sessions.elementAt(i);
-            long currentTime  = System.currentTimeMillis();
-            long creationTime = session.getCreationTime();
-            long lifetime = (currentTime - creationTime) / 1000;
+	    SSLSession session = (SSLSession) sessions.elementAt(i);
+	    long currentTime  = System.currentTimeMillis();
+	    long creationTime = session.getCreationTime();
+	    long lifetime = (currentTime - creationTime) / 1000;
 
             System.out.print(session + "      " + lifetime + "            ");
-            if (sessCtx.getSession(session.getId()) == null) {
-                if (lifetime < timeout)
-                    // sessions can be garbage collected before the timeout
-                    // limit is reached
-                    System.out.println("Invalidated before timeout");
-                else
-                    System.out.println("YES");
-            } else {
-                System.out.println("NO");
+	    if (sessCtx.getSession(session.getId()) == null) {
+		if (lifetime < timeout)
+		    // sessions can be garbage collected before the timeout
+		    // limit is reached
+		    System.out.println("Invalidated before timeout");
+		else
+		    System.out.println("YES");
+	    } else {
+		System.out.println("NO");
                 if ((timeout != 0) && (lifetime > timeout)) {
-                    throw new Exception("Session timeout test failed for the"
-                        + " obove session");
-                }
-            }
-            // change the timeout
-            if (i == ((sessions.size()) / 2)) {
-                System.out.println();
-                sessCtx.setSessionTimeout(2); // in secs
-                timeout = sessCtx.getSessionTimeout();
-                System.out.println("timeout is changed to: " + timeout);
-                System.out.println();
-            }
-        }
+		    throw new Exception("Session timeout test failed for the"
+			+ " obove session");
+		}
+	    }
+	    // change the timeout
+	    if (i == ((sessions.size()) / 2)) {
+		System.out.println();
+		sessCtx.setSessionTimeout(2); // in secs
+		timeout = sessCtx.getSessionTimeout();
+		System.out.println("timeout is changed to: " + timeout);
+		System.out.println();
+	    }
+	}
 
-        // check the ids returned by the enumerator
-        Enumeration e = sessCtx.getIds();
-        System.out.println("----------------------------------------"
-                                + "-----------------------");
-        System.out.println("Testing SSLSessionContext.getId()......");
-        System.out.println();
+	// check the ids returned by the enumerator
+	Enumeration e = sessCtx.getIds();
+	System.out.println("----------------------------------------"
+				+ "-----------------------");
+	System.out.println("Testing SSLSessionContext.getId()......");
+	System.out.println();
 
-        SSLSession nextSess = null;
-        SSLSession sess;
+	SSLSession nextSess = null;
+	SSLSession sess;
         for (int i = 0; i < sessions.size(); i++) {
-            sess = (SSLSession)sessions.elementAt(i);
-            String isTimedout = "YES";
-            long currentTime  = System.currentTimeMillis();
-            long creationTime  = sess.getCreationTime();
-            long lifetime = (currentTime - creationTime) / 1000;
+	    sess = (SSLSession)sessions.elementAt(i);
+	    String isTimedout = "YES";
+	    long currentTime  = System.currentTimeMillis();
+	    long creationTime  = sess.getCreationTime();
+	    long lifetime = (currentTime - creationTime) / 1000;
 
-            if (nextSess != null) {
-                if (isEqualSessionId(nextSess.getId(), sess.getId())) {
-                    isTimedout = "NO";
-                    nextSess = null;
-                }
-            } else if (e.hasMoreElements()) {
-                nextSess = sessCtx.getSession((byte[]) e.nextElement());
-                if ((nextSess != null) && isEqualSessionId(nextSess.getId(),
+	    if (nextSess != null) {
+		if (isEqualSessionId(nextSess.getId(), sess.getId())) {
+		    isTimedout = "NO";
+		    nextSess = null;
+		}
+	    } else if (e.hasMoreElements()) {
+		nextSess = sessCtx.getSession((byte[]) e.nextElement());
+		if ((nextSess != null) && isEqualSessionId(nextSess.getId(),
                                         sess.getId())) {
-                    nextSess = null;
-                    isTimedout = "NO";
-                }
-            }
+		    nextSess = null;
+		    isTimedout = "NO";
+		}
+	    }
 
-            /*
-             * A session not invalidated even after it's timeout?
-             */
-            if ((timeout != 0) && (lifetime > timeout) &&
-                        (isTimedout.equals("NO"))) {
-                throw new Exception("Session timeout test failed for session: "
-                                + sess + " lifetime: " + lifetime);
-            }
+	    /*
+	     * A session not invalidated even after it's timeout?
+	     */
+	    if ((timeout != 0) && (lifetime > timeout) &&
+			(isTimedout.equals("NO"))) {
+		throw new Exception("Session timeout test failed for session: "
+				+ sess + " lifetime: " + lifetime);
+	    }
             System.out.print(sess + "      " + lifetime);
-            if (((timeout == 0) || (lifetime < timeout)) &&
-                                  (isTimedout == "YES")) {
-                isTimedout = "Invalidated before timeout";
-            }
+	    if (((timeout == 0) || (lifetime < timeout)) &&
+				  (isTimedout == "YES")) {
+		isTimedout = "Invalidated before timeout";
+	    }
 
             System.out.println("            " + isTimedout);
-        }
+	}
         for (int i = 0; i < nConnections; i++) {
-            sslSockets[i].close();
-        }
-         System.out.println("----------------------------------------"
-                                 + "-----------------------");
-        System.out.println("Session timeout test passed");
+	    sslSockets[i].close();
+	}
+	 System.out.println("----------------------------------------"
+				 + "-----------------------");
+	System.out.println("Session timeout test passed");
     }
 
     boolean isEqualSessionId(byte[] id1, byte[] id2) {
@@ -293,32 +293,32 @@ public class SessionTimeOutTests {
     volatile Exception clientException = null;
 
     public static void main(String[] args) throws Exception {
-        String keyFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + keyStoreFile;
-        String trustFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + trustStoreFile;
+	String keyFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + keyStoreFile;
+	String trustFilename =
+	    System.getProperty("test.src", "./") + "/" + pathToStores +
+		"/" + trustStoreFile;
 
-        System.setProperty("javax.net.ssl.keyStore", keyFilename);
-        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-        System.setProperty("javax.net.ssl.trustStore", trustFilename);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
+	System.setProperty("javax.net.ssl.keyStore", keyFilename);
+	System.setProperty("javax.net.ssl.keyStorePassword", passwd);
+	System.setProperty("javax.net.ssl.trustStore", trustFilename);
+	System.setProperty("javax.net.ssl.trustStorePassword", passwd);
 
         sslctx = SSLContext.getInstance("TLS");
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream(keyFilename), passwd.toCharArray());
-        kmf.init(ks, passwd.toCharArray());
-        sslctx.init(kmf.getKeyManagers(), null, null);
-        sslssf = (SSLServerSocketFactory) sslctx.getServerSocketFactory();
+    	KeyStore ks = KeyStore.getInstance("JKS");
+    	ks.load(new FileInputStream(keyFilename), passwd.toCharArray());
+    	kmf.init(ks, passwd.toCharArray());
+    	sslctx.init(kmf.getKeyManagers(), null, null);
+	sslssf = (SSLServerSocketFactory) sslctx.getServerSocketFactory();
         sslsf = (SSLSocketFactory) sslctx.getSocketFactory();
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
+	if (debug)
+	    System.setProperty("javax.net.debug", "all");
 
-        /*
-         * Start the tests.
-         */
+	/*
+	 * Start the tests.
+	 */
         new SessionTimeOutTests();
     }
 
@@ -332,9 +332,9 @@ public class SessionTimeOutTests {
      */
     SessionTimeOutTests() throws Exception {
 
-        /*
-         * create the SSLServerSocket and SSLSocket factories
-         */
+	/*
+	 * create the SSLServerSocket and SSLSocket factories
+	 */
 
         /*
          * Divide the max connections among the available server ports.
@@ -344,92 +344,92 @@ public class SessionTimeOutTests {
         int serverConns = MAX_ACTIVE_CONNECTIONS / (serverPorts.length);
         int remainingConns = MAX_ACTIVE_CONNECTIONS % (serverPorts.length);
 
-        if (separateServerThread) {
-            for (int i = 0; i < serverPorts.length; i++) {
-                // distribute remaining connections among the available ports
+	if (separateServerThread) {
+	    for (int i = 0; i < serverPorts.length; i++) {
+		// distribute remaining connections among the available ports
                 if (i < remainingConns)
                     startServer(serverPorts[i], (serverConns + 1), true);
                 else
                     startServer(serverPorts[i], serverConns, true);
-            }
-            startClient(false);
-        } else {
-            startClient(true);
-            for (int i = 0; i < serverPorts.length; i++) {
-                if (i < remainingConns)
+	    }
+	    startClient(false);
+	} else {
+	    startClient(true);
+	    for (int i = 0; i < serverPorts.length; i++) {
+		if (i < remainingConns)
                     startServer(serverPorts[i], (serverConns + 1), false);
                 else
                     startServer(serverPorts[i], serverConns, false);
-            }
-        }
+	    }
+	}
 
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
+	/*
+	 * Wait for other side to close down.
+	 */
+	if (separateServerThread) {
+	    serverThread.join();
+	} else {
+	    clientThread.join();
+	}
 
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null)
-            throw serverException;
-        if (clientException != null)
-            throw clientException;
+	/*
+	 * When we get here, the test is pretty much over.
+	 *
+	 * If the main thread excepted, that propagates back
+	 * immediately.  If the other thread threw an exception, we
+	 * should report back.
+	 */
+	if (serverException != null)
+	    throw serverException;
+	if (clientException != null)
+	    throw clientException;
     }
 
     void startServer(final int port, final int nConns,
-                        boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide(port, nConns);
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.err.println("Server died...");
-                        e.printStackTrace();
-                        serverReady = 0;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide(port, nConns);
-        }
+			boolean newThread) throws Exception {
+	if (newThread) {
+	    serverThread = new Thread() {
+		public void run() {
+		    try {
+			doServerSide(port, nConns);
+		    } catch (Exception e) {
+			/*
+			 * Our server thread just died.
+			 *
+			 * Release the client, if not active already...
+			 */
+			System.err.println("Server died...");
+			e.printStackTrace();
+			serverReady = 0;
+			serverException = e;
+		    }
+		}
+	    };
+	    serverThread.start();
+	} else {
+	    doServerSide(port, nConns);
+	}
     }
 
     void startClient(boolean newThread)
-                 throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+		 throws Exception {
+	if (newThread) {
+	    clientThread = new Thread() {
+		public void run() {
+		    try {
+			doClientSide();
+		    } catch (Exception e) {
+			/*
+			 * Our client thread just died.
+			 */
+			System.err.println("Client died...");
+			clientException = e;
+		    }
+		}
+	    };
+	    clientThread.start();
+	} else {
+	    doClientSide();
+	}
     }
 }

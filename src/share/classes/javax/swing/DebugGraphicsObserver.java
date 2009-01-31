@@ -29,7 +29,8 @@ import java.awt.*;
 import java.awt.image.*;
 
 /** ImageObserver for DebugGraphics, used for images only.
-  *
+  * 
+  * @version %I% %G%
   * @author Dave Karlton
   */
 class DebugGraphicsObserver implements ImageObserver {

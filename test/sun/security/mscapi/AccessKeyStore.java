@@ -36,123 +36,123 @@ public class AccessKeyStore {
 
     public static void main(String[] args) throws Exception {
 
-        // Check if the provider is available
-        try {
-            Class.forName("sun.security.mscapi.SunMSCAPI");
+	// Check if the provider is available
+	try {
+	    Class.forName("sun.security.mscapi.SunMSCAPI");
 
-        } catch (Exception e) {
-            System.out.println(
-                "The SunMSCAPI provider is not available on this platform: " +
-                e);
-            return;
-        }
+	} catch (Exception e) {
+	    System.out.println(
+		"The SunMSCAPI provider is not available on this platform: " +
+		e);
+	    return;
+	}
 
-        // Check that a security manager has been installed
-        if (System.getSecurityManager() == null) {
-            throw new Exception("A security manager has not been installed");
-        }
+	// Check that a security manager has been installed
+	if (System.getSecurityManager() == null) {
+	    throw new Exception("A security manager has not been installed");
+	}
 
         Provider p = Security.getProvider("SunMSCAPI");
 
-        System.out.println("SunMSCAPI provider classname is " +
-            p.getClass().getName());
+        System.out.println("SunMSCAPI provider classname is " + 
+	    p.getClass().getName());
 
-        KeyStore keyStore = KeyStore.getInstance("Windows-MY", p);
+	KeyStore keyStore = KeyStore.getInstance("Windows-MY", p);
 
-        /*
-         * If a SecurityManager exists then this will trigger a
-         * SecurityException if the following permission has not
-         * been granted:
-         *
-         *     SecurityPermission("authProvider.SunMSCAPI")
-         */
-        try {
+	/*
+	 * If a SecurityManager exists then this will trigger a
+	 * SecurityException if the following permission has not 
+	 * been granted:
+	 *
+	 *     SecurityPermission("authProvider.SunMSCAPI")
+	 */
+	try {
 
-            keyStore.load(null, null);
+	    keyStore.load(null, null);
 
-            if (args.length > 0 && "-deny".equals(args[0])) {
-                throw new Exception(
-                    "Expected KeyStore.load to throw a SecurityException");
-            }
+	    if (args.length > 0 && "-deny".equals(args[0])) {
+		throw new Exception(
+		    "Expected KeyStore.load to throw a SecurityException");
+	    }
 
-        } catch (SecurityException se) {
+	} catch (SecurityException se) {
 
-            if (args.length > 0 && "-deny".equals(args[0])) {
-                System.out.println("Caught the expected exception: " + se);
-                return;
-            } else {
-                throw se;
-            }
-        }
+	    if (args.length > 0 && "-deny".equals(args[0])) {
+		System.out.println("Caught the expected exception: " + se);
+		return;
+	    } else {
+		throw se;
+	    }
+	}
 
-        int i = 0;
+	int i = 0;
         for (Enumeration e = keyStore.aliases(); e.hasMoreElements(); ) {
             String alias = (String) e.nextElement();
             displayEntry(keyStore, alias, i++);
         }
     }
 
-    private static void displayEntry(KeyStore keyStore, String alias,
-        int index) throws KeyStoreException, NoSuchAlgorithmException  {
+    private static void displayEntry(KeyStore keyStore, String alias, 
+	int index) throws KeyStoreException, NoSuchAlgorithmException  {
 
-        if (keyStore.isKeyEntry(alias)) {
-            System.out.println("[" + index + "]\n    " + alias +
-                " [key-entry]\n");
+	if (keyStore.isKeyEntry(alias)) {
+	    System.out.println("[" + index + "]\n    " + alias + 
+		" [key-entry]\n");
 
-            try {
+	    try {
 
-                Key key = keyStore.getKey(alias, null);
+		Key key = keyStore.getKey(alias, null);
 
-                if (key instanceof RSAKey) {
-                    System.out.println("    Key type: " + key.getAlgorithm() +
-                        " (" + ((RSAKey)key).getModulus().bitLength() +
-                        " bit)\n");
-                } else {
-                    System.out.println("    Key type: " + key.getAlgorithm() +
-                        "\n");
-                }
+		if (key instanceof RSAKey) {
+		    System.out.println("    Key type: " + key.getAlgorithm() +
+			" (" + ((RSAKey)key).getModulus().bitLength() +
+			" bit)\n");
+		} else {
+		    System.out.println("    Key type: " + key.getAlgorithm() + 
+			"\n");
+		}
 
-            } catch (UnrecoverableKeyException e) {
-                System.out.println("    Key type: Unknown\n");
-            }
+	    } catch (UnrecoverableKeyException e) {
+		System.out.println("    Key type: Unknown\n");
+	    }
 
-            Certificate[] chain = keyStore.getCertificateChain(alias);
-            if (chain != null) {
-                System.out.println("    Certificate chain: ");
-                for (int i = 0; i < chain.length; i ++) {
-                    System.out.println("        ["+ (i + 1) + "]");
-                    displayCert(chain[i], "            ");
-                }
-            }
+	    Certificate[] chain = keyStore.getCertificateChain(alias);
+	    if (chain != null) {
+	        System.out.println("    Certificate chain: ");
+	        for (int i = 0; i < chain.length; i ++) {
+		    System.out.println("        ["+ (i + 1) + "]");
+		    displayCert(chain[i], "            ");
+	        }
+	    }
 
-        } else {
-            System.out.println("[" + index + "]\n    " + alias +
-                " [trusted-cert-entry]\n");
-            Certificate[] chain = keyStore.getCertificateChain(alias);
-            if (chain != null) {
-                System.out.println("    Certificate chain: ");
-                for (int i = 0; i < chain.length; i ++) {
-                    System.out.println("        ["+ (i + 1) + "]");
-                    displayCert(chain[i], "            ");
-                }
-            }
-        }
+	} else {
+	    System.out.println("[" + index + "]\n    " + alias + 
+		" [trusted-cert-entry]\n");
+	    Certificate[] chain = keyStore.getCertificateChain(alias);
+	    if (chain != null) {
+		System.out.println("    Certificate chain: ");
+		for (int i = 0; i < chain.length; i ++) {
+		    System.out.println("        ["+ (i + 1) + "]");
+		    displayCert(chain[i], "            ");
+		}
+	    }
+	}
         System.out.println("-------------------------------------------------");
     }
 
     private static void displayCert(Certificate cert, String tab) {
-        if (cert instanceof X509Certificate) {
-            X509Certificate x = (X509Certificate) cert;
-            System.out.println(
-                tab + "Owner: " + x.getSubjectDN().toString() + "\n" +
-                tab + "Issuer: " + x.getIssuerDN().toString() + "\n" +
-                tab + "Serial number: " + x.getSerialNumber().toString(16) +
-                "\n"+
-                tab + "Valid from: " + x.getNotBefore().toString() + "\n" +
-                tab + "     until: " + x.getNotAfter().toString());
-        } else {
-            System.out.println(tab + "[unknown certificate format]");
-        }
-        System.out.println();
+	if (cert instanceof X509Certificate) {
+	    X509Certificate x = (X509Certificate) cert;
+	    System.out.println(
+		tab + "Owner: " + x.getSubjectDN().toString() + "\n" +
+		tab + "Issuer: " + x.getIssuerDN().toString() + "\n" +
+		tab + "Serial number: " + x.getSerialNumber().toString(16) +
+		"\n"+
+		tab + "Valid from: " + x.getNotBefore().toString() + "\n" +
+		tab + "     until: " + x.getNotAfter().toString());
+	} else {
+	    System.out.println(tab + "[unknown certificate format]");
+	}
+	System.out.println();
     }
 }

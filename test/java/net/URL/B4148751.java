@@ -43,39 +43,39 @@ public class B4148751
     final static String encoded = "http://web2.javasoft.com/some%20file.html";
 
     public static void main(String args[]) throws URISyntaxException,
-        MalformedURLException {
+	MalformedURLException {
 
-        URL url = null;
-        URL url1 = null;
+	URL url = null;
+	URL url1 = null;
 
-        try {
-            url = new URL(unencoded);
-            url1 = new URL(encoded);
-        }
-        catch(Exception e) {
-            System.out.println("Unexpected exception :" + e);
-            System.exit(-1);
-        }
+	try {
+	    url = new URL(unencoded);
+	    url1 = new URL(encoded);
+	} 
+	catch(Exception e) {
+	    System.out.println("Unexpected exception :" + e);
+	    System.exit(-1);
+	}
 
-        if(url.sameFile(url1)) {
-            throw new RuntimeException ("URL does not understand escaping");
-        }
+	if(url.sameFile(url1)) {
+	    throw new RuntimeException ("URL does not understand escaping");
+	}
 
-        /* check decoding of a URL */
+	/* check decoding of a URL */
 
-        URI uri = url1.toURI();
-        if (!uri.getPath().equals (path)) {
-            throw new RuntimeException ("Got: " + uri.getPath() + " expected: " +
-                path);
-        }
+	URI uri = url1.toURI();
+	if (!uri.getPath().equals (path)) {
+	    throw new RuntimeException ("Got: " + uri.getPath() + " expected: " +
+		path);
+	}
 
-        /* check encoding of a URL */
+	/* check encoding of a URL */
 
-        URI uri1 = new URI (scheme, auth, path);
-        url = uri.toURL();
-        if (!url.toString().equals (encoded)) {
-            throw new RuntimeException ("Got: " + url.toString() + " expected: " +
-                encoded);
-        }
+	URI uri1 = new URI (scheme, auth, path);
+	url = uri.toURL();
+	if (!url.toString().equals (encoded)) {
+	    throw new RuntimeException ("Got: " + url.toString() + " expected: " +
+		encoded);
+	}
     }
 }

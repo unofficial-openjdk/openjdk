@@ -42,7 +42,7 @@ public class XMLX509IssuerSerial extends SignatureElementProxy
         implements XMLX509DataContent {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(
                     XMLX509IssuerSerial.class.getName());
 
@@ -126,7 +126,7 @@ public class XMLX509IssuerSerial extends SignatureElementProxy
          this.getTextFromChildElement(Constants._TAG_X509SERIALNUMBER,
                                       Constants.SignatureSpecNS);
       if (true)
-        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "In dem X509SerialNumber wurde gefunden: " + text);
+      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "In dem X509SerialNumber wurde gefunden: " + text);
 
       return new BigInteger(text);
    }
@@ -170,7 +170,7 @@ public class XMLX509IssuerSerial extends SignatureElementProxy
            return true;
       }
 
-       return false;
+       return false;      
    }
 
    /** @inheritDoc */

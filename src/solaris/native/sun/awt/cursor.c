@@ -62,10 +62,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCustomCursor_queryBestCursor
 {
     Window root;
     uint32_t width, height;
-
+    
     AWT_LOCK();
     root = RootWindow(awt_display, DefaultScreen(awt_display));
-    XQueryBestCursor(awt_display, root,
+    XQueryBestCursor(awt_display, root, 
                      (*env)->GetIntField(env, dimension, widthID),
                      (*env)->GetIntField(env, dimension, heightID),
                      &width, &height);
@@ -80,7 +80,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCustomCursor_queryBestCursor
  * Signature: ([B[BIIII)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MCustomCursor_createCursor
-  (JNIEnv *env , jobject this, jbyteArray xorMask, jbyteArray andMask,
+  (JNIEnv *env , jobject this, jbyteArray xorMask, jbyteArray andMask, 
    jint width, jint height, jint fc, jint bc, jint xHotSpot, jint yHotSpot)
 {
     Cursor cursor;
@@ -126,7 +126,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MCustomCursor_createCursor
     (*env)->ReleasePrimitiveArrayCritical(env, xorMask, sourceBits, JNI_ABORT);
     (*env)->ReleasePrimitiveArrayCritical(env, andMask, maskBits, JNI_ABORT);
 
-        JNU_SetLongFieldFromPtr(env, this, cursorIDs.pData, cursor);
+	JNU_SetLongFieldFromPtr(env, this, cursorIDs.pData, cursor);
 
     AWT_FLUSH_UNLOCK();
 }

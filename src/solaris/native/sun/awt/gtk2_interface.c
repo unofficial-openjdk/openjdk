@@ -33,32 +33,32 @@
 
 #define GTK2_LIB "libgtk-x11-2.0.so.0"
 
-#define G_TYPE_INVALID                  G_TYPE_MAKE_FUNDAMENTAL (0)
-#define G_TYPE_NONE                     G_TYPE_MAKE_FUNDAMENTAL (1)
-#define G_TYPE_INTERFACE                G_TYPE_MAKE_FUNDAMENTAL (2)
-#define G_TYPE_CHAR                     G_TYPE_MAKE_FUNDAMENTAL (3)
-#define G_TYPE_UCHAR                    G_TYPE_MAKE_FUNDAMENTAL (4)
-#define G_TYPE_BOOLEAN                  G_TYPE_MAKE_FUNDAMENTAL (5)
-#define G_TYPE_INT                      G_TYPE_MAKE_FUNDAMENTAL (6)
-#define G_TYPE_UINT                     G_TYPE_MAKE_FUNDAMENTAL (7)
-#define G_TYPE_LONG                     G_TYPE_MAKE_FUNDAMENTAL (8)
-#define G_TYPE_ULONG                    G_TYPE_MAKE_FUNDAMENTAL (9)
-#define G_TYPE_INT64                    G_TYPE_MAKE_FUNDAMENTAL (10)
-#define G_TYPE_UINT64                   G_TYPE_MAKE_FUNDAMENTAL (11)
-#define G_TYPE_ENUM                     G_TYPE_MAKE_FUNDAMENTAL (12)
-#define G_TYPE_FLAGS                    G_TYPE_MAKE_FUNDAMENTAL (13)
-#define G_TYPE_FLOAT                    G_TYPE_MAKE_FUNDAMENTAL (14)
-#define G_TYPE_DOUBLE                   G_TYPE_MAKE_FUNDAMENTAL (15)
-#define G_TYPE_STRING                   G_TYPE_MAKE_FUNDAMENTAL (16)
-#define G_TYPE_POINTER                  G_TYPE_MAKE_FUNDAMENTAL (17)
-#define G_TYPE_BOXED                    G_TYPE_MAKE_FUNDAMENTAL (18)
-#define G_TYPE_PARAM                    G_TYPE_MAKE_FUNDAMENTAL (19)
-#define G_TYPE_OBJECT                   G_TYPE_MAKE_FUNDAMENTAL (20)
+#define G_TYPE_INVALID			G_TYPE_MAKE_FUNDAMENTAL (0)
+#define G_TYPE_NONE			G_TYPE_MAKE_FUNDAMENTAL (1)
+#define G_TYPE_INTERFACE		G_TYPE_MAKE_FUNDAMENTAL (2)
+#define G_TYPE_CHAR			G_TYPE_MAKE_FUNDAMENTAL (3)
+#define G_TYPE_UCHAR			G_TYPE_MAKE_FUNDAMENTAL (4)
+#define G_TYPE_BOOLEAN			G_TYPE_MAKE_FUNDAMENTAL (5)
+#define G_TYPE_INT			G_TYPE_MAKE_FUNDAMENTAL (6)
+#define G_TYPE_UINT			G_TYPE_MAKE_FUNDAMENTAL (7)
+#define G_TYPE_LONG			G_TYPE_MAKE_FUNDAMENTAL (8)
+#define G_TYPE_ULONG			G_TYPE_MAKE_FUNDAMENTAL (9)
+#define G_TYPE_INT64			G_TYPE_MAKE_FUNDAMENTAL (10)
+#define G_TYPE_UINT64			G_TYPE_MAKE_FUNDAMENTAL (11)
+#define G_TYPE_ENUM			G_TYPE_MAKE_FUNDAMENTAL (12)
+#define G_TYPE_FLAGS			G_TYPE_MAKE_FUNDAMENTAL (13)
+#define G_TYPE_FLOAT			G_TYPE_MAKE_FUNDAMENTAL (14)
+#define G_TYPE_DOUBLE			G_TYPE_MAKE_FUNDAMENTAL (15)
+#define G_TYPE_STRING			G_TYPE_MAKE_FUNDAMENTAL (16)
+#define G_TYPE_POINTER			G_TYPE_MAKE_FUNDAMENTAL (17)
+#define G_TYPE_BOXED			G_TYPE_MAKE_FUNDAMENTAL (18)
+#define G_TYPE_PARAM			G_TYPE_MAKE_FUNDAMENTAL (19)
+#define G_TYPE_OBJECT			G_TYPE_MAKE_FUNDAMENTAL (20)
 
 #define GTK_TYPE_BORDER                 ((*fp_gtk_border_get_type)())
 
-#define G_TYPE_FUNDAMENTAL_SHIFT        (2)
-#define G_TYPE_MAKE_FUNDAMENTAL(x)      ((GType) ((x) << G_TYPE_FUNDAMENTAL_SHIFT))
+#define	G_TYPE_FUNDAMENTAL_SHIFT	(2)
+#define	G_TYPE_MAKE_FUNDAMENTAL(x)	((GType) ((x) << G_TYPE_FUNDAMENTAL_SHIFT))
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 
 #define CONV_BUFFER_SIZE 128
@@ -156,17 +156,17 @@ static gboolean (*fp_g_main_context_iteration)(GMainContext *context,
 
 static GValue*      (*fp_g_value_init)(GValue *value, GType g_type);
 static gboolean     (*fp_g_type_is_a)(GType type, GType is_a_type);
-static gboolean     (*fp_g_value_get_boolean)(const GValue *value);
-static gchar        (*fp_g_value_get_char)(const GValue *value);
-static guchar       (*fp_g_value_get_uchar)(const GValue *value);
-static gint         (*fp_g_value_get_int)(const GValue *value);
-static guint        (*fp_g_value_get_uint)(const GValue *value);
-static glong        (*fp_g_value_get_long)(const GValue *value);
-static gulong       (*fp_g_value_get_ulong)(const GValue *value);
-static gint64       (*fp_g_value_get_int64)(const GValue *value);
-static guint64      (*fp_g_value_get_uint64)(const GValue *value);
-static gfloat       (*fp_g_value_get_float)(const GValue *value);
-static gdouble      (*fp_g_value_get_double)(const GValue *value);
+static gboolean	    (*fp_g_value_get_boolean)(const GValue *value);
+static gchar	    (*fp_g_value_get_char)(const GValue *value);
+static guchar	    (*fp_g_value_get_uchar)(const GValue *value);
+static gint	    (*fp_g_value_get_int)(const GValue *value);
+static guint	    (*fp_g_value_get_uint)(const GValue *value);
+static glong	    (*fp_g_value_get_long)(const GValue *value);
+static gulong	    (*fp_g_value_get_ulong)(const GValue *value);
+static gint64	    (*fp_g_value_get_int64)(const GValue *value);
+static guint64	    (*fp_g_value_get_uint64)(const GValue *value);
+static gfloat	    (*fp_g_value_get_float)(const GValue *value);
+static gdouble	    (*fp_g_value_get_double)(const GValue *value);
 static const gchar* (*fp_g_value_get_string)(const GValue *value);
 static gint         (*fp_g_value_get_enum)(const GValue *value);
 static guint        (*fp_g_value_get_flags)(const GValue *value);
@@ -418,7 +418,7 @@ gboolean gtk2_load()
     int i;
     int (*handler)();
     int (*io_handler)();
-    char *gtk_modules_env;
+    char *gtk_modules_env; 
 
     gtk2_libhandle = dlopen(GTK2_LIB, RTLD_LAZY | RTLD_LOCAL);
     if (gtk2_libhandle == NULL)
@@ -469,7 +469,7 @@ gboolean gtk2_load()
         fp_gdk_pixbuf_get_from_drawable =
             dl_symbol("gdk_pixbuf_get_from_drawable");
         fp_gdk_gc_new = dl_symbol("gdk_gc_new");
-        fp_gdk_rgb_gc_set_foreground =
+        fp_gdk_rgb_gc_set_foreground = 
             dl_symbol("gdk_rgb_gc_set_foreground");
         fp_gdk_draw_rectangle = dl_symbol("gdk_draw_rectangle");
         fp_gdk_drawable_get_size = dl_symbol("gdk_drawable_get_size");
@@ -568,9 +568,9 @@ gboolean gtk2_load()
         fp_gtk_widget_destroy = dl_symbol("gtk_widget_destroy");
         fp_gtk_widget_render_icon =
             dl_symbol("gtk_widget_render_icon");
-        fp_gtk_widget_set_name =
+        fp_gtk_widget_set_name = 
             dl_symbol("gtk_widget_set_name");
-        fp_gtk_widget_set_direction =
+        fp_gtk_widget_set_direction = 
             dl_symbol("gtk_widget_set_direction");
         fp_gtk_widget_style_get =
             dl_symbol("gtk_widget_style_get");
@@ -625,7 +625,7 @@ gboolean gtk2_load()
     }
 
     /*
-     * Strip the AT-SPI GTK_MODULEs if present
+     * Strip the AT-SPI GTK_MODULEs if present 
      */
     gtk_modules_env = getenv ("GTK_MODULES");
 
@@ -821,7 +821,7 @@ void gtk2_init_painting(gint width, gint height)
  * buffer. This method compares two pixbufs taken from white and black
  * pixmaps and decodes color and alpha components. Pixbufs are RGB without
  * alpha, destination buffer is ABGR.
- *
+ * 
  * The return value is the transparency type of the resulting image, either
  * one of java_awt_Transparency_OPAQUE, java_awt_Transparency_BITMASK, and
  * java_awt_Transparency_TRANSLUCENT.
@@ -889,7 +889,7 @@ gint gtk2_copy_image(gint *dst, gint width, gint height)
 }
 
 static void
-gtk2_set_direction(GtkWidget *widget, GtkTextDirection dir)
+gtk2_set_direction(GtkWidget *widget, GtkTextDirection dir) 
 {
     /*
      * Some engines (inexplicably) look at the direction of the widget's
@@ -1437,7 +1437,7 @@ static GtkWidget *gtk2_get_widget(WidgetType widget_type)
 
 void gtk2_paint_arrow(WidgetType widget_type, GtkStateType state_type,
         GtkShadowType shadow_type, const gchar *detail,
-        gint x, gint y, gint width, gint height,
+        gint x, gint y, gint width, gint height, 
         GtkArrowType arrow_type, gboolean fill)
 {
     static int w, h;
@@ -1495,7 +1495,7 @@ void gtk2_paint_arrow(WidgetType widget_type, GtkStateType state_type,
 }
 
 void gtk2_paint_box(WidgetType widget_type, GtkStateType state_type,
-                    GtkShadowType shadow_type, const gchar *detail,
+                    GtkShadowType shadow_type, const gchar *detail, 
                     gint x, gint y, gint width, gint height,
                     gint synth_state, GtkTextDirection dir)
 {
@@ -1649,7 +1649,7 @@ void gtk2_paint_box(WidgetType widget_type, GtkStateType state_type,
 
 void gtk2_paint_box_gap(WidgetType widget_type, GtkStateType state_type,
         GtkShadowType shadow_type, const gchar *detail,
-        gint x, gint y, gint width, gint height,
+        gint x, gint y, gint width, gint height, 
         GtkPositionType gap_side, gint gap_x, gint gap_width)
 {
     /* Clearlooks needs a real clip area to paint the gap properly */
@@ -2097,7 +2097,7 @@ void gtk2_set_range_value(WidgetType widget_type, jdouble value,
 {
     GtkAdjustment *adj;
 
-    gtk2_widget = gtk2_get_widget(widget_type);
+    gtk2_widget = gtk2_get_widget(widget_type);    
 
     adj = (*fp_gtk_range_get_adjustment)((GtkRange *)gtk2_widget);
     adj->value = (gdouble)value;

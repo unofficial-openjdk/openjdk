@@ -39,15 +39,15 @@ class HttpSendOutputStream extends FilterOutputStream {
 
     /**
      * Create new filter on a given output stream.
-     * @param out the OutputStream to filter from
+     * @param out the OutputStream to filter from 
      * @param owner the HttpSendSocket that is providing this stream
      */
     public HttpSendOutputStream(OutputStream out, HttpSendSocket owner)
-        throws IOException
+	throws IOException
     {
-        super(out);
+	super(out);
 
-        this.owner = owner;
+	this.owner = owner;
     }
 
     /**
@@ -57,7 +57,7 @@ class HttpSendOutputStream extends FilterOutputStream {
      */
     public void deactivate()
     {
-        out = null;
+	out = null;
     }
 
     /**
@@ -65,9 +65,9 @@ class HttpSendOutputStream extends FilterOutputStream {
      */
     public void write(int b) throws IOException
     {
-        if (out == null)
-            out = owner.writeNotify();
-        out.write(b);
+	if (out == null)
+	    out = owner.writeNotify();
+	out.write(b);
     }
 
     /**
@@ -78,11 +78,11 @@ class HttpSendOutputStream extends FilterOutputStream {
      */
     public void write(byte b[], int off, int len) throws IOException
     {
-        if (len == 0)
-            return;
-        if (out == null)
-            out = owner.writeNotify();
-        out.write(b, off, len);
+	if (len == 0)
+	    return;
+	if (out == null)
+	    out = owner.writeNotify();
+	out.write(b, off, len);
     }
 
     /**
@@ -90,8 +90,8 @@ class HttpSendOutputStream extends FilterOutputStream {
      */
     public void flush() throws IOException
     {
-        if (out != null)
-            out.flush();
+	if (out != null)
+	    out.flush();
     }
 
     /**
@@ -99,7 +99,7 @@ class HttpSendOutputStream extends FilterOutputStream {
      */
     public void close() throws IOException
     {
-        flush();
-        owner.close();
+	flush();
+	owner.close();
     }
 }

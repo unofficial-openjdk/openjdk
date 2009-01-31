@@ -24,7 +24,7 @@
  */
 
 /*
- * Solaris dependent type definitions  includes intptr_t, etc
+ * Solaris dependent type definitions  includes intptr_t, etc 
  */
 
 
@@ -36,3 +36,4 @@
 #include <stdint.h>
 #include <malloc.h>
 #endif /* __linux__ */
+

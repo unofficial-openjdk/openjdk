@@ -156,7 +156,7 @@ class XWINProtocol extends XProtocol implements XStateProtocol, XLayerProtocol {
             req.set_format(32);
             req.set_data(0, layer == LAYER_NORMAL ? WIN_LAYER_NORMAL : WIN_LAYER_ONTOP);
             req.set_data(1, 0);
-            req.set_data(2, 0);
+            req.set_data(2, 0);            
             if (log.isLoggable(Level.FINE)) log.fine("Setting layer " + layer + " by root message : " + req);
             XToolkit.awtLock();
             try {

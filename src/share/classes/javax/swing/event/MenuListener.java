@@ -26,11 +26,12 @@ package javax.swing.event;
 
 
 import java.util.EventListener;
-
-
+ 
+ 
 /**
  * Defines a listener for menu events.
  *
+ * @version %I% %G%
  * @author Georges Saab
  */
 public interface MenuListener extends EventListener {
@@ -53,3 +54,4 @@ public interface MenuListener extends EventListener {
      */
     void menuCanceled(MenuEvent e);
 }
+

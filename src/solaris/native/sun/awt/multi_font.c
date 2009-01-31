@@ -59,9 +59,9 @@ extern struct MFontPeerIDs mFontPeerIDs;
 
 /*
  * make string with str + string representation of num
- * This string is used as tag string of Motif Compound String and FontList.
+ * This string is used as tag string of Motif Compound String and FontList. 
  */
-static void
+static void 
 makeTag(char *str, int32_t num, char *buf)
 {
     int32_t len = strlen(str);
@@ -71,7 +71,7 @@ makeTag(char *str, int32_t num, char *buf)
     buf[len + 1] = '\0';
 }
 #ifndef XAWT
-jobject
+jobject 
 awtJNI_CreateAndSetGlobalRef(JNIEnv * env, jobject this)
 {
     jobject gRef;
@@ -104,7 +104,7 @@ static struct gRefStruct *gRefTail = NULL;
  * either of these functions _must_ have AWT_LOCK'd
  * before using them!
  */
-void
+void 
 awtJNI_DeleteGlobalRef(JNIEnv * env, jobject this)
 {
     jobject gRef;
@@ -112,7 +112,7 @@ awtJNI_DeleteGlobalRef(JNIEnv * env, jobject this)
     struct gRefStruct *temp;
 
     gRef = (jobject)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.jniGlobalRef);
     JNU_SetLongFieldFromPtr(env, this, mComponentPeerIDs.jniGlobalRef, NULL);
 
     /*
@@ -143,7 +143,7 @@ awtJNI_DeleteGlobalRef(JNIEnv * env, jobject this)
     }
 }
 
-void
+void 
 awtJNI_DeleteGlobalMenuRef(JNIEnv * env, jobject this)
 {
     jobject gRef;
@@ -201,7 +201,7 @@ void awtJNI_CleanupGlobalRefs()
     {
         count++;
         next = working->next;
-        (*env)->DeleteGlobalRef(env, working->gRef);
+        (*env)->DeleteGlobalRef(env, working->gRef); 
 
         free((void *)working);
 
@@ -209,7 +209,7 @@ void awtJNI_CleanupGlobalRefs()
     }
 }
 #endif
-static int32_t
+static int32_t 
 awtJNI_GetFontDescriptorNumber(JNIEnv * env
                                ,jobject font
                                ,jobject fd)
@@ -256,7 +256,7 @@ awtJNI_GetFontDescriptorNumber(JNIEnv * env
     return 0;
 }
 #ifndef XAWT
-jobject
+jobject 
 awtJNI_GetFont(JNIEnv * env, jobject this)
 {
     jobject target = NULL;
@@ -265,23 +265,23 @@ awtJNI_GetFont(JNIEnv * env, jobject this)
     target = (*env)->GetObjectField(env, this, mComponentPeerIDs.target);
     // SECURITY: Must call _NoClientCode() methods to ensure that we
     //           are not invoking client code on the privileged thread
-    font = JNU_CallMethodByName(env,
-                                NULL,
-                                target,
-                                "getFont_NoClientCode",
-                                "()Ljava/awt/Font;").l;
+    font = JNU_CallMethodByName(env, 
+				NULL, 
+				target, 
+				"getFont_NoClientCode",
+				"()Ljava/awt/Font;").l;
     (*env)->DeleteLocalRef(env, target);
     return font;
 }
 #endif
-jobject
+jobject 
 awtJNI_GetFMFont(JNIEnv * env, jobject this)
 {
-    return JNU_CallMethodByName(env, NULL, this, "getFont_NoClientCode",
-                                "()Ljava/awt/Font;").l;
+    return JNU_CallMethodByName(env, NULL, this, "getFont_NoClientCode", 
+				"()Ljava/awt/Font;").l;
 }
 
-jboolean
+jboolean 
 awtJNI_IsMultiFont(JNIEnv * env, jobject this)
 {
     jobject peer = NULL;
@@ -311,7 +311,7 @@ awtJNI_IsMultiFont(JNIEnv * env, jobject this)
     return JNI_TRUE;
 }
 
-jboolean
+jboolean 
 awtJNI_IsMultiFontMetrics(JNIEnv * env, jobject this)
 {
     jobject peer = NULL;
@@ -326,7 +326,7 @@ awtJNI_IsMultiFontMetrics(JNIEnv * env, jobject this)
     }
 
     font = JNU_CallMethodByName(env, NULL, this, "getFont_NoClientCode",
-                                "()Ljava/awt/Font;").l;
+				"()Ljava/awt/Font;").l;
     if (JNU_IsNull(env, font)) {
         return JNI_FALSE;
     }
@@ -349,7 +349,7 @@ awtJNI_IsMultiFontMetrics(JNIEnv * env, jobject this)
 }
 #ifndef XAWT
 #ifdef __linux__
-XmString
+XmString 
 unicodeXmStringCreate(char* text, char* tag, int len) {
     XmString ret_val;
     XtProcessLock();
@@ -364,7 +364,7 @@ unicodeXmStringCreate(char* text, char* tag, int len) {
  *
  * ASSUMES: We are not running on a privileged thread
  */
-XmString
+XmString 
 awtJNI_MakeMultiFontString(JNIEnv * env, jstring s, jobject font)
 {
     XmString xmstr = NULL, xmtmp1, xmtmp2;
@@ -389,10 +389,10 @@ awtJNI_MakeMultiFontString(JNIEnv * env, jstring s, jobject font)
         DASSERT(!awt_currentThreadIsPrivileged(env));
         dataArray =
             (*env)->CallObjectMethod(
-                             env,
-                             peer,
-                             platformFontIDs.makeConvertedMultiFontString,
-                             s);
+			     env,
+			     peer,
+			     platformFontIDs.makeConvertedMultiFontString,
+			     s);
 
         if ((*env)->ExceptionOccurred(env)) {
             (*env)->ExceptionDescribe(env);
@@ -434,22 +434,22 @@ awtJNI_MakeMultiFontString(JNIEnv * env, jstring s, jobject font)
 
             offsetStringData = stringData + (4 * sizeof(char));
 #ifdef __linux__
-            len = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
-            /* Motif XmStringCreate() API requests "text must be a NULL-terminated
-               string" and its implementation uses "strlen()" to calculate the length
+            len = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3]; 
+            /* Motif XmStringCreate() API requests "text must be a NULL-terminated 
+               string" and its implementation uses "strlen()" to calculate the length 
                of the text string. Unfortunately when we deal with iso10646 font
-               on linux, the "text" is requested to be encoded in UTF16, which has the
+               on linux, the "text" is requested to be encoded in UTF16, which has the 
                posibility of including code points like "0xYY00" ("0xYY" + "0x00") that
                causes problem when XmStringCreate() calls _XmStringNCreate() without
-               specifying a specific text lenth (see Motif XmString.c). The workaround is
-               to call _XmStringNCreate() directly with specific text length at this
+               specifying a specific text lenth (see Motif XmString.c). The workaround is 
+               to call _XmStringNCreate() directly with specific text length at this 
                cirsumstance.
-            */
+	    */               
             if (strstr(fdata->flist[fdnumber].charset_name, "UnicodeBigUnmarked"))
                 xmtmp1 = unicodeXmStringCreate(offsetStringData, tag, len);
             else
                 xmtmp1 = XmStringCreate(offsetStringData, tag);
-            if (xmstr == NULL)
+            if (xmstr == NULL) 
                 xmstr = xmtmp1;
             else {
                 xmtmp2 = XmStringConcat(xmstr, xmtmp1);
@@ -462,7 +462,7 @@ awtJNI_MakeMultiFontString(JNIEnv * env, jstring s, jobject font)
                 xmstr = XmStringCreate(offsetStringData, tag);
             }
             else {
-                xmtmp1 = XmStringCreate(offsetStringData, tag);
+		xmtmp1 = XmStringCreate(offsetStringData, tag);
                 xmtmp2 = XmStringConcat(xmstr, xmtmp1);
                 XmStringFree(xmtmp1);
                 XmStringFree(xmstr);
@@ -472,8 +472,8 @@ awtJNI_MakeMultiFontString(JNIEnv * env, jstring s, jobject font)
         }
 
         (*env)->ReleasePrimitiveArrayCritical(env, data, stringData, JNI_ABORT);
-        (*env)->DeleteLocalRef(env, fontDescriptor);
-        (*env)->DeleteLocalRef(env, data);
+	(*env)->DeleteLocalRef(env, fontDescriptor);
+	(*env)->DeleteLocalRef(env, data);
     }
     (*env)->PopLocalFrame(env, NULL);
     return xmstr;
@@ -492,35 +492,35 @@ static void registerEncoding(char *xlfd, char *tag)
     do { --e; } while (e != xlfd && *e != '-');
     do { --e; } while (e != xlfd && *e != '-');
     if (e != xlfd) {
-        char *encoding = strdup(++e);
-        char *u = NULL;
+	char *encoding = strdup(++e);
+	char *u = NULL;
 
-        for (u = encoding; *u != '\0'; ++u) {
-            if (islower(*u)) {
-                *u = toupper(*u);
-            }
-        }
+	for (u = encoding; *u != '\0'; ++u) {
+	    if (islower(*u)) {
+		*u = toupper(*u);
+	    }
+	}
 
-        /*
-         * Motif will core dump on or otherwise mishandle unknown (or
-         * non-standard) character encodings (in conversion to compound
-         * text, bug 4122785).  Register Sun private encodings for
-         * Symbol or dingbat fonts as ISO8859-1, which is a lie,
-         * but produces predictable results.
-         */
-        if (strncmp(encoding, "SUN-", 4) == 0) {
-                free(encoding);
-                encoding = strdup("ISO8859-1");
-        }
-        ret = XmRegisterSegmentEncoding(tag, encoding);
-        if (ret != NULL)
-                XtFree(ret);
-        free(encoding);
+	/*
+	 * Motif will core dump on or otherwise mishandle unknown (or
+	 * non-standard) character encodings (in conversion to compound
+	 * text, bug 4122785).  Register Sun private encodings for
+	 * Symbol or dingbat fonts as ISO8859-1, which is a lie,
+	 * but produces predictable results.
+	 */
+	if (strncmp(encoding, "SUN-", 4) == 0) {
+		free(encoding);
+		encoding = strdup("ISO8859-1");
+	}
+	ret = XmRegisterSegmentEncoding(tag, encoding);
+	if (ret != NULL)
+		XtFree(ret);
+	free(encoding);
     }
 }
 
 
-XmFontList
+XmFontList 
 awtJNI_GetFontList(JNIEnv * env, jobject font)
 {
     int32_t i;
@@ -530,7 +530,7 @@ awtJNI_GetFontList(JNIEnv * env, jobject font)
     int32_t size;
     struct FontData *fdata = NULL;
     char *err = NULL, tag[BUFSIZ];
-
+    
     fdata = awtJNI_GetFontData(env, font, &err);
 
     makeTag(fdata->flist[0].charset_name, 0, tag);
@@ -540,25 +540,25 @@ awtJNI_GetFontList(JNIEnv * env, jobject font)
     if (fdata->flist[0].load == 0) {
         xf = loadFont(awt_display, fdata->flist[0].xlfd, size * 10);
 
-        if (xf == NULL) {
-            /* printf("Cannot load font: %s\n", fdata->list[0].xlfd); */
-        } else {
+	if (xf == NULL) {
+	    /* printf("Cannot load font: %s\n", fdata->list[0].xlfd); */
+	} else {
             fdata->flist[0].xfont = xf;
             fdata->flist[0].load = 1;
 
             if (xf->min_byte1 == 0 && xf->max_byte1 == 0)
-                fdata->flist[0].index_length = 1;
+        	fdata->flist[0].index_length = 1;
             else
-                fdata->flist[0].index_length = 2;
-        }
+        	fdata->flist[0].index_length = 2;
+	}
     }
     registerEncoding(fdata->flist[0].xlfd, tag);
     fle = XmFontListEntryCreate(tag, XmFONT_IS_FONT,
-                                (XtPointer) fdata->flist[0].xfont);
+				(XtPointer) fdata->flist[0].xfont);
 
     fontlist = XmFontListAppendEntry(NULL, fle);
     /*
-     * Some versions of motif have a bug in
+     * Some versions of motif have a bug in 
      * XmFontListEntryFree() which causes it to free more than it
      * should.  Use XtFree() is used instead.  See O'Reilly's
      * Motif Reference Manual for more information.
@@ -571,10 +571,10 @@ awtJNI_GetFontList(JNIEnv * env, jobject font)
         if (fdata->flist[i].load == 0) {
             xf = loadFont(awt_display, fdata->flist[i].xlfd, size * 10);
 
-            if (xf == NULL) {
-                /* printf("Cannot load font: %s\n", fdata->flist[0].xlfd); */
-                continue;
-            }
+	    if (xf == NULL) {
+		/* printf("Cannot load font: %s\n", fdata->flist[0].xlfd); */
+		continue;
+	    } 
             fdata->flist[i].xfont = xf;
             fdata->flist[i].load = 1;
             if (xf->min_byte1 == 0 && xf->max_byte1 == 0) {
@@ -583,17 +583,17 @@ awtJNI_GetFontList(JNIEnv * env, jobject font)
                 fdata->flist[i].index_length = 2;
             }
         }
-        registerEncoding(fdata->flist[i].xlfd, tag);
+	registerEncoding(fdata->flist[i].xlfd, tag);
         fle = XmFontListEntryCreate(tag, XmFONT_IS_FONT,
-                                    (XtPointer) fdata->flist[i].xfont);
+				    (XtPointer) fdata->flist[i].xfont);
         fontlist = XmFontListAppendEntry(fontlist, fle);
-        /*
-         * Some versions of motif have a bug in
-         * XmFontListEntryFree() which causes it to free more than it
-         * should.  Use XtFree() instead.  See O'Reilly's
-         * Motif Reference Manual for more information.
-         */
-        XmFontListEntryFree(&fle);
+	/*
+	 * Some versions of motif have a bug in 
+	 * XmFontListEntryFree() which causes it to free more than it
+	 * should.  Use XtFree() instead.  See O'Reilly's
+	 * Motif Reference Manual for more information.
+	 */
+	XmFontListEntryFree(&fle);
     }
 
     return fontlist;
@@ -601,7 +601,7 @@ awtJNI_GetFontList(JNIEnv * env, jobject font)
 #endif
 /* #define FONT_DEBUG 2 */
 
-XFontSet
+XFontSet 
 awtJNI_MakeFontSet(JNIEnv * env, jobject font)
 {
     jstring xlfd = NULL;
@@ -660,14 +660,14 @@ awtJNI_MakeFontSet(JNIEnv * env, jobject font)
 
 #if FONT_DEBUG
     if (missing_count != 0) {
-        int32_t i;
-        fprintf(stderr, "XCreateFontSet missing %d fonts:\n", missing_count);
-        for (i = 0; i < missing_count; ++i) {
-            fprintf(stderr, "\t\"%s\"\n", missing_list[i]);
-        }
-        fprintf(stderr, "  requested \"%s\"\n", xx);
+	int32_t i;
+	fprintf(stderr, "XCreateFontSet missing %d fonts:\n", missing_count);
+	for (i = 0; i < missing_count; ++i) {
+	    fprintf(stderr, "\t\"%s\"\n", missing_list[i]);
+	}
+	fprintf(stderr, "  requested \"%s\"\n", xx);
 #if FONT_DEBUG >= 3
-        exit(-1);
+	exit(-1);
 #endif
     }
 #endif
@@ -687,7 +687,7 @@ awtJNI_MakeFontSet(JNIEnv * env, jobject font)
  *
  * ASSUMES: We are not running on a privileged thread
  */
-int32_t
+int32_t 
 awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int offset, int sLength, jobject font)
 {
     char *err = NULL;
@@ -713,12 +713,12 @@ awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int offset, int sLength, job
     {
         jobject peer;
         peer = (*env)->CallObjectMethod(env,font,fontIDs.getPeer);
-
+        
         dataArray = (*env)->CallObjectMethod(
-                                 env,
-                                 peer,
-                                 platformFontIDs.makeConvertedMultiFontChars,
-                                 s, offset, sLength);
+				 env,
+				 peer,
+				 platformFontIDs.makeConvertedMultiFontChars,
+				 s, offset, sLength);
 
         if ((*env)->ExceptionOccurred(env))
         {
@@ -726,7 +726,7 @@ awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int offset, int sLength, job
             (*env)->ExceptionClear(env);
         }
 
-        (*env)->DeleteLocalRef(env, peer);
+	(*env)->DeleteLocalRef(env, peer);
 
         if(dataArray == NULL)
         {
@@ -749,19 +749,19 @@ awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int offset, int sLength, job
 
         /* Bail if we've finished */
         if (fontDescriptor == NULL || data == NULL) {
-            (*env)->DeleteLocalRef(env, fontDescriptor);
-            (*env)->DeleteLocalRef(env, data);
+	    (*env)->DeleteLocalRef(env, fontDescriptor);
+	    (*env)->DeleteLocalRef(env, data);
             break;
-        }
-
+	}
+        
         j = awtJNI_GetFontDescriptorNumber(env, font, fontDescriptor);
 
         if (fdata->flist[j].load == 0) {
             xf = loadFont(awt_display,
                           fdata->flist[j].xlfd, size * 10);
             if (xf == NULL) {
-                (*env)->DeleteLocalRef(env, fontDescriptor);
-                (*env)->DeleteLocalRef(env, data);
+	        (*env)->DeleteLocalRef(env, fontDescriptor);
+	        (*env)->DeleteLocalRef(env, data);
                 continue;
             }
             fdata->flist[j].load = 1;
@@ -774,7 +774,7 @@ awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int offset, int sLength, job
         xf = fdata->flist[j].xfont;
 
         stringData =
-            (unsigned char *)(*env)->GetPrimitiveArrayCritical(env, data,NULL);
+	    (unsigned char *)(*env)->GetPrimitiveArrayCritical(env, data,NULL);
         length = (stringData[0] << 24) | (stringData[1] << 16) |
             (stringData[2] << 8) | stringData[3];
         offsetStringData = (char *)(stringData + (4 * sizeof(char)));
@@ -786,10 +786,11 @@ awtJNI_GetMFStringWidth(JNIEnv * env, jcharArray s, int offset, int sLength, job
         }
 
         (*env)->ReleasePrimitiveArrayCritical(env, data, stringData, JNI_ABORT);
-        (*env)->DeleteLocalRef(env, fontDescriptor);
-        (*env)->DeleteLocalRef(env, data);
+	(*env)->DeleteLocalRef(env, fontDescriptor);
+	(*env)->DeleteLocalRef(env, data);
     }
     (*env)->DeleteLocalRef(env, dataArray);
 
     return width;
 }
+

@@ -30,6 +30,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.io.File;
@@ -41,6 +42,7 @@ import javax.swing.filechooser.FileSystemView;
  * You can provide a superclass of the FileSystemView class with your own functionality.
  *
  * @author Pavel Porvatov
+ * @version %I% %G%
  */
 public class ExampleFileSystemView extends FileSystemView {
     /**

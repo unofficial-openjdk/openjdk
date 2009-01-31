@@ -35,6 +35,7 @@ import sun.management.counter.Variability;
  * such as simplification of constant subexpressions.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class ExpressionResolver implements ExpressionEvaluator {

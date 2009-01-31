@@ -35,38 +35,38 @@ final class VersionHelper12 extends VersionHelper {
 
     VersionHelper12() {} // Disallow external from creating one of these.
 
-    ClassLoader getURLClassLoader(String[] url)
-        throws MalformedURLException {
-            ClassLoader parent = getContextClassLoader();
-            if (url != null) {
-                return URLClassLoader.newInstance(getUrlArray(url), parent);
-            } else {
-                return parent;
-            }
+    ClassLoader getURLClassLoader(String[] url) 
+	throws MalformedURLException {
+	    ClassLoader parent = getContextClassLoader();
+	    if (url != null) {
+		return URLClassLoader.newInstance(getUrlArray(url), parent);
+	    } else {
+		return parent;
+	    }
     }
 
     Class loadClass(String className) throws ClassNotFoundException {
-        ClassLoader cl = getContextClassLoader();
-        return Class.forName(className, true, cl);
+	ClassLoader cl = getContextClassLoader();
+	return Class.forName(className, true, cl);
     }
 
     private ClassLoader getContextClassLoader() {
-        return (ClassLoader) AccessController.doPrivileged(
-            new PrivilegedAction() {
-                public Object run() {
-                    return Thread.currentThread().getContextClassLoader();
-                }
-            }
-        );
+	return (ClassLoader) AccessController.doPrivileged(
+	    new PrivilegedAction() {
+		public Object run() {
+		    return Thread.currentThread().getContextClassLoader();
+		}
+	    }
+	);
     }
 
     Thread createThread(final Runnable r) {
-        return (Thread) AccessController.doPrivileged(
-            new PrivilegedAction() {
-                public Object run() {
-                    return new Thread(r);
-                }
-            }
-        );
+	return (Thread) AccessController.doPrivileged(
+	    new PrivilegedAction() {
+	        public Object run() {
+		    return new Thread(r);
+		}
+	    }
+	);
     }
 }

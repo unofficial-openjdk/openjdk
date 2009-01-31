@@ -97,15 +97,15 @@ TextArea_valueChanged(Widget w, XtPointer client_data, XtPointer call_data)
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
     jboolean skipped;
 
-    skipped = (*env)->GetBooleanField(env, (jobject) client_data,
+    skipped = (*env)->GetBooleanField(env, (jobject) client_data, 
                                       mTextAreaPeerIDs.firstChangeSkipped);
     if (!(*env)->ExceptionOccurred(env)) {
         if (skipped == JNI_FALSE) {
-            (*env)->SetBooleanField(env, (jobject) client_data,
-                                    mTextAreaPeerIDs.firstChangeSkipped,
+            (*env)->SetBooleanField(env, (jobject) client_data, 
+                                    mTextAreaPeerIDs.firstChangeSkipped, 
                                     JNI_TRUE);
         } else {
-            JNU_CallMethodByName(env, NULL, (jobject) client_data,
+            JNU_CallMethodByName(env, NULL, (jobject) client_data, 
                                  "valueChanged", "()V");
         }
     }
@@ -125,7 +125,7 @@ extern void Text_handlePaste(Widget w, XtPointer client_data, XEvent * event,
  * Signature: (Lsun/awt/motif/MComponentPeer;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pCreate
-  (JNIEnv *env, jobject this, jobject parent)
+  (JNIEnv *env, jobject this, jobject parent) 
 {
     struct TextAreaData *tdata;
 #define MAX_ARGC 30
@@ -143,14 +143,14 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pCreate
     AWT_LOCK();
 
     adata = copyGraphicsConfigToPeer(env, this);
-
+    
     if (JNU_IsNull(env, parent)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
         return;
     }
     wdata = (struct ComponentData *)
-        JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env,parent,mComponentPeerIDs.pData);
     if (wdata == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -169,7 +169,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pCreate
     XtVaGetValues(wdata->widget, XmNbackground, &bg, NULL);
 
     sbVisibility = (*env)->GetIntField(env, target,
-                                       textAreaIDs.scrollbarVisibility);
+				       textAreaIDs.scrollbarVisibility);
     switch (sbVisibility) {
         case java_awt_TextArea_SCROLLBARS_NONE:
             wordWrap = True;
@@ -228,10 +228,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pCreate
     argc++;
 
     /* Initialize with a non-empty text, so the
-     * TextArea_valueChanged callback will be called
+     * TextArea_valueChanged callback will be called 
      * even if the following conditions are true:
      * 1. TextArea constructed with an empty initial text.
-     * 2. setText() with an empty argument is called
+     * 2. setText() with an empty argument is called 
      *    immediately after the TextArea component is created.
      * For more details please see #4028580.
      */
@@ -244,10 +244,10 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pCreate
     tdata->comp.widget = XtParent(tdata->txt);
 
     /* Bug 4208972. Give the ScrolledWindow a minimum size. */
-    XtVaSetValues(tdata->comp.widget,
-        XmNwidth,  1,
-        XmNheight, 1, NULL);
-
+    XtVaSetValues(tdata->comp.widget, 
+        XmNwidth,  1, 
+        XmNheight, 1, NULL); 
+  
     XtSetMappedWhenManaged(tdata->comp.widget, False);
     XtManageChild(tdata->txt);
     XtManageChild(tdata->comp.widget);
@@ -285,7 +285,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pCreate
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getExtraWidth
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     struct TextAreaData *tdata;
     Dimension spacing, shadowThickness, textMarginWidth, sbWidth;
@@ -327,7 +327,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getExtraWidth
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getExtraHeight
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     struct TextAreaData *tdata;
     Dimension spacing, shadowThickness, textMarginHeight, sbHeight;
@@ -346,8 +346,8 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getExtraHeight
     }
 
     XtVaGetValues(tdata->txt, XmNmarginHeight, &textMarginHeight,
-                              XmNshadowThickness, &shadowThickness,
-                              XmNhighlightThickness, &highlightThickness, NULL);
+		              XmNshadowThickness, &shadowThickness,
+		              XmNhighlightThickness, &highlightThickness, NULL);
     height = 2 * (textMarginHeight + shadowThickness + highlightThickness);
 
     XtVaGetValues(tdata->comp.widget,
@@ -357,12 +357,12 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getExtraHeight
 
     if (horizontalScrollBar != NULL) {
         XtVaGetValues(horizontalScrollBar,
-                      XmNshadowThickness, &sbShadowThickness,
-                      XmNhighlightThickness, &sbHighlightThickness,
+		      XmNshadowThickness, &sbShadowThickness,
+		      XmNhighlightThickness, &sbHighlightThickness,
                       XmNheight, &sbHeight,
                       NULL);
-        height += sbHeight + spacing
-                + 2 * (sbShadowThickness + sbHighlightThickness);
+	height += sbHeight + spacing
+	        + 2 * (sbShadowThickness + sbHighlightThickness);
     }
 
     AWT_UNLOCK();
@@ -376,7 +376,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getExtraHeight
  * Signature: (Ljava/awt/Color;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setTextBackground
-  (JNIEnv *env, jobject this, jobject c)
+  (JNIEnv *env, jobject this, jobject c) 
 {
     struct TextAreaData *tdata;
     Pixel color;
@@ -404,7 +404,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setTextBackground
  * Signature: (Z)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pSetEditable
-  (JNIEnv *env, jobject this, jboolean editable)
+  (JNIEnv *env, jobject this, jboolean editable) 
 {
     struct TextAreaData *tdata;
 
@@ -431,7 +431,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pSetEditable
  * Signature: (II)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_select
-  (JNIEnv *env, jobject this, jint start, jint end)
+  (JNIEnv *env, jobject this, jint start, jint end) 
 {
     struct TextAreaData *tdata;
 
@@ -454,7 +454,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_select
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getSelectionStart
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     struct TextAreaData *tdata;
     XmTextPosition start, end, pos;
@@ -468,7 +468,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getSelectionStart
         AWT_UNLOCK();
         return 0;
     }
-    if (XmTextGetSelectionPosition(tdata->txt, &start, &end) &&
+    if (XmTextGetSelectionPosition(tdata->txt, &start, &end) && 
                                              (start != end)) {
         pos = start;
     } else {
@@ -485,7 +485,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getSelectionStart
  * Signature: ()I
  */
 JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getSelectionEnd
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     struct TextAreaData *tdata;
     XmTextPosition start, end, pos;
@@ -515,7 +515,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_motif_MTextAreaPeer_getSelectionEnd
  * Signature: (Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setText
-  (JNIEnv *env, jobject this, jstring txt)
+  (JNIEnv *env, jobject this, jstring txt) 
 {
     struct TextAreaData *tdata;
     char *cTxt;
@@ -555,7 +555,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setText
  * Signature: ()Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_sun_awt_motif_MTextAreaPeer_getText
-  (JNIEnv *env, jobject this)
+  (JNIEnv *env, jobject this) 
 {
     struct TextAreaData *tdata;
     char *cTxt;
@@ -588,7 +588,7 @@ JNIEXPORT jstring JNICALL Java_sun_awt_motif_MTextAreaPeer_getText
  * Signature: (Ljava/lang/String;I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_insert
-  (JNIEnv *env, jobject this, jstring txt, jint pos)
+  (JNIEnv *env, jobject this, jstring txt, jint pos) 
 {
     struct TextAreaData *tdata;
     char *cTxt;
@@ -627,7 +627,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_insert
  * Signature: (Ljava/lang/String;II)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_replaceRange
-  (JNIEnv *env, jobject this, jstring txt, jint start, jint end)
+  (JNIEnv *env, jobject this, jstring txt, jint start, jint end) 
 {
     struct TextAreaData *tdata;
     char *cTxt;
@@ -669,7 +669,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_replaceRange
  * Signature: (Ljava/awt/Font;)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setFont
-  (JNIEnv *env, jobject this, jobject f)
+  (JNIEnv *env, jobject this, jobject f) 
 {
     struct TextAreaData *tdata;
     struct FontData *fdata;
@@ -705,13 +705,13 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setFont
                                               XmFONT_IS_FONTSET,
                                               (XtPointer) (fdata->xfs));
             fontlist = XmFontListAppendEntry(NULL, fontentry);
-            /*
-             * Some versions of motif have a bug in
-             * XmFontListEntryFree() which causes it to free more than it
-             * should.  Use XtFree() instead.  See O'Reilly's
-             * Motif Reference Manual for more information.
-             */
-            XmFontListEntryFree(&fontentry);
+	    /*
+	     * Some versions of motif have a bug in 
+	     * XmFontListEntryFree() which causes it to free more than it
+	     * should.  Use XtFree() instead.  See O'Reilly's
+	     * Motif Reference Manual for more information.
+	     */
+	    XmFontListEntryFree(&fontentry);
 
         } else {
             fontlist = XmFontListCreate(fdata->xfont, "labelFont");
@@ -760,7 +760,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setFont
  * Signature: (I)V
  */
 JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_setCaretPosition
-  (JNIEnv *env, jobject this, jint pos)
+  (JNIEnv *env, jobject this, jint pos) 
 {
     struct TextAreaData *tdata;
 
@@ -864,7 +864,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_pSetCursor
 
     AWT_LOCK();
     tdata = (struct TextAreaData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (tdata == NULL || tdata->comp.widget == NULL || JNU_IsNull(env, cursor)) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -890,7 +890,7 @@ JNIEXPORT void JNICALL Java_sun_awt_motif_MTextAreaPeer_nativeHandleMouseWheel
 
     AWT_LOCK();
     tdata = (struct TextAreaData *)
-        JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
+	JNU_GetLongFieldAsPtr(env, this, mComponentPeerIDs.pData);
     if (tdata == NULL || tdata->comp.widget == NULL) {
         JNU_ThrowNullPointerException(env, "NullPointerException");
         AWT_UNLOCK();
@@ -1001,3 +1001,4 @@ Java_sun_awt_motif_MTextAreaPeer_getCharacterBounds(JNIEnv *env, jobject self, j
     return rect;
 }
 */
+

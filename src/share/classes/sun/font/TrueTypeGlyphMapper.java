@@ -36,7 +36,7 @@ public class TrueTypeGlyphMapper extends CharToGlyphMapper {
     static final char JA_WAVE_DASH_CHAR = 0x301c;
 
     /* if running on Solaris and default Locale is ja_JP then
-     * we map need to remap reverse solidus (backslash) to Yen as
+     * we map need to remap reverse solidus (backslash) to Yen as 
      * apparently expected there.
      */
     static final boolean isJAlocale = Locale.JAPAN.equals(Locale.getDefault());
@@ -48,35 +48,35 @@ public class TrueTypeGlyphMapper extends CharToGlyphMapper {
     int numGlyphs;
 
     public TrueTypeGlyphMapper(TrueTypeFont font) {
-        this.font = font;
-        try {
-            cmap = CMap.initialize(font);
-        } catch (Exception e) {
-            cmap = null;
-        }
-        if (cmap == null) {
-            handleBadCMAP();
-        }
-        missingGlyph = 0; /* standard for TrueType fonts */
+	this.font = font;
+	try {
+	    cmap = CMap.initialize(font);
+	} catch (Exception e) {
+	    cmap = null;
+	}
+	if (cmap == null) {
+	    handleBadCMAP();
+	}
+	missingGlyph = 0; /* standard for TrueType fonts */
         ByteBuffer buffer = font.getTableBuffer(TrueTypeFont.maxpTag);
-        numGlyphs = buffer.getChar(4); // offset 4 bytes in MAXP table.
-        if (FontManager.isSolaris && isJAlocale && font.supportsJA()) {
-            needsJAremapping = true;
-            if (FontManager.isSolaris8 &&
-                getGlyphFromCMAP(JA_WAVE_DASH_CHAR) == missingGlyph) {
-                remapJAWaveDash = true;
-            }
-        } else {
-            needsJAremapping = false;
-        }
+	numGlyphs = buffer.getChar(4); // offset 4 bytes in MAXP table.
+	if (FontManager.isSolaris && isJAlocale && font.supportsJA()) {
+	    needsJAremapping = true;
+	    if (FontManager.isSolaris8 &&
+		getGlyphFromCMAP(JA_WAVE_DASH_CHAR) == missingGlyph) {
+		remapJAWaveDash = true;
+	    }
+	} else {
+	    needsJAremapping = false;
+	}
     }
 
     public int getNumGlyphs() {
-        return numGlyphs;
+	return numGlyphs;
     }
 
     private char getGlyphFromCMAP(int charCode) {
-        try {
+	try {
             char glyphCode = cmap.getGlyph(charCode);
             if (glyphCode < numGlyphs ||
                 glyphCode >= FileFontStrike.INVISIBLE_GLYPHS) {
@@ -85,128 +85,128 @@ public class TrueTypeGlyphMapper extends CharToGlyphMapper {
                 if (FontManager.logging) {
                     FontManager.logger.warning
                         (font + " out of range glyph id=" +
-                         Integer.toHexString((int)glyphCode) +
+                         Integer.toHexString((int)glyphCode) + 
                          " for char " + Integer.toHexString(charCode));
                 }
                 return (char)missingGlyph;
             }
-        } catch(Exception e) {
-            handleBadCMAP();
-            return (char) missingGlyph;
-        }
+	} catch(Exception e) {
+	    handleBadCMAP();
+	    return (char) missingGlyph;
+	}
     }
 
     private void handleBadCMAP() {
-        if (FontManager.logging) {
-            FontManager.logger.severe("Null Cmap for " + font +
-                                      "substituting for this font");
-        }
-        FontManager.deRegisterBadFont(font);
-        /* The next line is not really a solution, but might
-         * reduce the exceptions until references to this font2D
-         * are gone.
-         */
-        cmap = CMap.theNullCmap;
+	if (FontManager.logging) {
+	    FontManager.logger.severe("Null Cmap for " + font +
+				      "substituting for this font");
+	}
+	FontManager.deRegisterBadFont(font);
+	/* The next line is not really a solution, but might
+	 * reduce the exceptions until references to this font2D
+	 * are gone.
+	 */
+	cmap = CMap.theNullCmap;
     }
 
     private final char remapJAChar(char unicode) {
-        switch (unicode) {
-        case REVERSE_SOLIDUS:
-            return JA_YEN;
-            /* This is a workaround for bug 4533422.
-             * Japanese wave dash missing from Solaris JA TrueType fonts.
-             */
-        case JA_WAVE_DASH_CHAR:
-            if (remapJAWaveDash) {
-                return JA_FULLWIDTH_TILDE_CHAR;
-            }
-        default: return unicode;
-        }
+	switch (unicode) {
+	case REVERSE_SOLIDUS:
+	    return JA_YEN;
+	    /* This is a workaround for bug 4533422.
+	     * Japanese wave dash missing from Solaris JA TrueType fonts.
+	     */
+	case JA_WAVE_DASH_CHAR:
+	    if (remapJAWaveDash) {
+		return JA_FULLWIDTH_TILDE_CHAR;
+	    }
+	default: return unicode;
+	}
     }
     private final int remapJAIntChar(int unicode) {
-        switch (unicode) {
-        case REVERSE_SOLIDUS:
-            return JA_YEN;
-            /* This is a workaround for bug 4533422.
-             * Japanese wave dash missing from Solaris JA TrueType fonts.
-             */
-        case JA_WAVE_DASH_CHAR:
-            if (remapJAWaveDash) {
-                return JA_FULLWIDTH_TILDE_CHAR;
-            }
-        default: return unicode;
-        }
+	switch (unicode) {
+	case REVERSE_SOLIDUS:
+	    return JA_YEN;
+	    /* This is a workaround for bug 4533422.
+	     * Japanese wave dash missing from Solaris JA TrueType fonts.
+	     */
+	case JA_WAVE_DASH_CHAR:
+	    if (remapJAWaveDash) {
+		return JA_FULLWIDTH_TILDE_CHAR;
+	    }
+	default: return unicode;
+	}
     }
 
     public int charToGlyph(char unicode) {
-        if (needsJAremapping) {
-            unicode = remapJAChar(unicode);
-        }
-        int glyph = getGlyphFromCMAP(unicode);
-        if (font.checkUseNatives() && glyph < font.glyphToCharMap.length) {
-            font.glyphToCharMap[glyph] = unicode;
-        }
+	if (needsJAremapping) {
+	    unicode = remapJAChar(unicode);
+	}
+	int glyph = getGlyphFromCMAP(unicode);
+	if (font.checkUseNatives() && glyph < font.glyphToCharMap.length) {
+	    font.glyphToCharMap[glyph] = unicode;
+	}
         return glyph;
     }
 
     public int charToGlyph(int unicode) {
-        if (needsJAremapping) {
-            unicode = remapJAIntChar(unicode);
-        }
-        int glyph = getGlyphFromCMAP(unicode);
-        if (font.checkUseNatives() && glyph < font.glyphToCharMap.length) {
-            font.glyphToCharMap[glyph] = (char)unicode;
-        }
+	if (needsJAremapping) {
+	    unicode = remapJAIntChar(unicode);
+	}	
+	int glyph = getGlyphFromCMAP(unicode);
+	if (font.checkUseNatives() && glyph < font.glyphToCharMap.length) {
+	    font.glyphToCharMap[glyph] = (char)unicode;
+	}
         return glyph;
     }
 
     public void charsToGlyphs(int count, int[] unicodes, int[] glyphs) {
-        for (int i=0;i<count;i++) {
-            if (needsJAremapping) {
-                glyphs[i] = getGlyphFromCMAP(remapJAIntChar(unicodes[i]));
-            } else {
-                glyphs[i] = getGlyphFromCMAP(unicodes[i]);
-            }
-            if (font.checkUseNatives() &&
-                glyphs[i] < font.glyphToCharMap.length) {
-                font.glyphToCharMap[glyphs[i]] = (char)unicodes[i];
-            }
-        }
+	for (int i=0;i<count;i++) {
+	    if (needsJAremapping) {
+		glyphs[i] = getGlyphFromCMAP(remapJAIntChar(unicodes[i]));
+	    } else {		    
+		glyphs[i] = getGlyphFromCMAP(unicodes[i]);
+	    }
+	    if (font.checkUseNatives() &&
+		glyphs[i] < font.glyphToCharMap.length) {
+		font.glyphToCharMap[glyphs[i]] = (char)unicodes[i];
+	    }
+	}
     }
 
     public void charsToGlyphs(int count, char[] unicodes, int[] glyphs) {
 
-        for (int i=0; i<count; i++) {
-            int code;
-            if (needsJAremapping) {
-                code = remapJAChar(unicodes[i]);
-            } else {
-                code = unicodes[i]; // char is unsigned.
-            }
+	for (int i=0; i<count; i++) {
+	    int code;
+	    if (needsJAremapping) {
+		code = remapJAChar(unicodes[i]);
+	    } else {
+		code = unicodes[i]; // char is unsigned.
+	    }
+	    
+	    if (code >= HI_SURROGATE_START && 
+		code <= HI_SURROGATE_END && i < count - 1) {
+		char low = unicodes[i + 1];
+		
+		if (low >= LO_SURROGATE_START &&
+		    low <= LO_SURROGATE_END) {
+		    code = (code - HI_SURROGATE_START) * 
+			0x400 + low - LO_SURROGATE_START + 0x10000;
 
-            if (code >= HI_SURROGATE_START &&
-                code <= HI_SURROGATE_END && i < count - 1) {
-                char low = unicodes[i + 1];
+		    glyphs[i] = getGlyphFromCMAP(code);
+		    i += 1; // Empty glyph slot after surrogate
+		    glyphs[i] = INVISIBLE_GLYPH_ID;
+		    continue;
+		}
+	    }
+	    glyphs[i] = getGlyphFromCMAP(code);
 
-                if (low >= LO_SURROGATE_START &&
-                    low <= LO_SURROGATE_END) {
-                    code = (code - HI_SURROGATE_START) *
-                        0x400 + low - LO_SURROGATE_START + 0x10000;
-
-                    glyphs[i] = getGlyphFromCMAP(code);
-                    i += 1; // Empty glyph slot after surrogate
-                    glyphs[i] = INVISIBLE_GLYPH_ID;
-                    continue;
-                }
-            }
-            glyphs[i] = getGlyphFromCMAP(code);
-
-            if (font.checkUseNatives() &&
-                glyphs[i] < font.glyphToCharMap.length) {
-                font.glyphToCharMap[glyphs[i]] = (char)code;
-            }
-
-        }
+	    if (font.checkUseNatives() &&
+		glyphs[i] < font.glyphToCharMap.length) {
+		font.glyphToCharMap[glyphs[i]] = (char)code;
+	    }
+	    
+	}
     }
 
     /* This variant checks if shaping is needed and immediately
@@ -216,45 +216,45 @@ public class TrueTypeGlyphMapper extends CharToGlyphMapper {
      */
     public boolean charsToGlyphsNS(int count, char[] unicodes, int[] glyphs) {
 
-        for (int i=0; i<count; i++) {
-            int code;
-            if (needsJAremapping) {
-                code = remapJAChar(unicodes[i]);
-            } else {
-                code = unicodes[i]; // char is unsigned.
-            }
+	for (int i=0; i<count; i++) {
+	    int code;
+	    if (needsJAremapping) {
+		code = remapJAChar(unicodes[i]);
+	    } else {
+		code = unicodes[i]; // char is unsigned.
+	    }
+	    
+	    if (code >= HI_SURROGATE_START && 
+		code <= HI_SURROGATE_END && i < count - 1) {
+		char low = unicodes[i + 1];
+		
+		if (low >= LO_SURROGATE_START &&
+		    low <= LO_SURROGATE_END) {
+		    code = (code - HI_SURROGATE_START) * 
+			0x400 + low - LO_SURROGATE_START + 0x10000;
+		    glyphs[i + 1] = INVISIBLE_GLYPH_ID;
+		}
+	    }
 
-            if (code >= HI_SURROGATE_START &&
-                code <= HI_SURROGATE_END && i < count - 1) {
-                char low = unicodes[i + 1];
-
-                if (low >= LO_SURROGATE_START &&
-                    low <= LO_SURROGATE_END) {
-                    code = (code - HI_SURROGATE_START) *
-                        0x400 + low - LO_SURROGATE_START + 0x10000;
-                    glyphs[i + 1] = INVISIBLE_GLYPH_ID;
-                }
-            }
-
-            glyphs[i] = getGlyphFromCMAP(code);
-            if (font.checkUseNatives() &&
-                glyphs[i] < font.glyphToCharMap.length) {
-                font.glyphToCharMap[glyphs[i]] = (char)code;
-            }
+	    glyphs[i] = getGlyphFromCMAP(code);
+	    if (font.checkUseNatives() &&
+		glyphs[i] < font.glyphToCharMap.length) {
+		font.glyphToCharMap[glyphs[i]] = (char)code;
+	    }
 
             if (code < FontManager.MIN_LAYOUT_CHARCODE) {
-                continue;
-            }
+		continue;
+	    }
             else if (FontManager.isComplexCharCode(code)) {
-                return true;
-            }
-            else if (code >= 0x10000) {
-                i += 1; // Empty glyph slot after surrogate
-                continue;
-            }
-        }
+		return true;
+	    }
+	    else if (code >= 0x10000) {
+		i += 1; // Empty glyph slot after surrogate
+		continue;
+	    }
+	}
 
-        return false;
+	return false;
     }
 
     /* A pretty good heuristic is that the cmap we are using

@@ -42,12 +42,12 @@ import java.lang.reflect.Array;
 /*
  * This test has a debuggee which calls an instance method
  * for each kind of JDI value return type.
- *
+ * 
  * The debugger sets breakpoints in all methods.  When a breakpoint
  * is hit the debugger requests an early return and supplies a new
  * return value. The new value is not compatible with the method's
  * return type so an InvalidTypeException should be thrown.
- *
+ * 
  * Each value is stored in a static var in the debuggee.  The debugger
  * gets the values from these static vars to pass back to the
  * debuggee in forceEarlyReturn.
@@ -89,7 +89,7 @@ class EarlyReturnNegativeTarg {
     public static int[]       intArrayValue = new int[] {1, 2, 3};
     public static Object[]    objectArrayValue = new Object[] {"a", "b", "c"};
 
-    public static EarlyReturnNegativeTarg  objectValue =
+    public static EarlyReturnNegativeTarg  objectValue = 
         new EarlyReturnNegativeTarg();
     public String ivar = stringValue;
 
@@ -111,7 +111,7 @@ class EarlyReturnNegativeTarg {
     public ClassLoader i_classLoaderf()
                                      { return classLoaderValue; }
     public Thread i_threadf()        { return threadValue; }
-    public ThreadGroup i_threadGroupf()
+    public ThreadGroup i_threadGroupf()  
                                      { return threadGroupValue; }
     public int[] i_intArrayf()       { return intArrayValue; }
     public Object[] i_objectArrayf() { return objectArrayValue; }
@@ -151,9 +151,9 @@ class EarlyReturnNegativeTarg {
          */
         System.err.println("debugee in main");
 
-        EarlyReturnNegativeTarg xx =
+        EarlyReturnNegativeTarg xx = 
             new EarlyReturnNegativeTarg();
-
+        
         doit(xx);
     }
 }
@@ -178,19 +178,19 @@ public class EarlyReturnNegativeTest extends TestScaffold {
     ArrayReference intArrayVV;
     ArrayReference objectArrayVV;
     VoidValue voidVV;
-
+    
     EarlyReturnNegativeTest(String args[]) {
-        super(args);
+	super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
-        EarlyReturnNegativeTest meee = new EarlyReturnNegativeTest(args);
+    public static void main(String[] args)	throws Exception {
+	EarlyReturnNegativeTest meee = new EarlyReturnNegativeTest(args);
         vmm = Bootstrap.virtualMachineManager();
-        meee.startTests();
+	meee.startTests();
     }
 
-    public BreakpointRequest setBreakpoint(String clsName,
-                                           String methodName,
+    public BreakpointRequest setBreakpoint(String clsName, 
+                                           String methodName, 
                                            String methodSignature) {
         ReferenceType rt = findReferenceType(clsName);
         if (rt == null) {
@@ -285,7 +285,7 @@ public class EarlyReturnNegativeTest extends TestScaffold {
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
 
@@ -298,7 +298,7 @@ public class EarlyReturnNegativeTest extends TestScaffold {
          * methods called by doit().  In the breakpointReached()
          * handler we force an early return with a different return
          * value.
-         *
+         * 
          */
 
         setBreakpoint("EarlyReturnNegativeTarg", "i_bytef", "()B");
@@ -318,7 +318,7 @@ public class EarlyReturnNegativeTest extends TestScaffold {
         setBreakpoint("EarlyReturnNegativeTarg", "i_threadGroupf", "()Ljava/lang/ThreadGroup;");
         setBreakpoint("EarlyReturnNegativeTarg", "i_nullObjectf", "()Ljava/lang/Object;");
         setBreakpoint("EarlyReturnNegativeTarg", "i_objectf", "()Ljava/lang/Object;");
-        setBreakpoint("EarlyReturnNegativeTarg", "i_voidf", "()V");
+        setBreakpoint("EarlyReturnNegativeTarg", "i_voidf", "()V");     
 
         /* Create Value objects to be passed in forceEarlyReturn calls */
         Field theValueField = targetClass.fieldByName("byteValue");
@@ -361,13 +361,13 @@ public class EarlyReturnNegativeTest extends TestScaffold {
          */
         listenUntilVMDisconnect();
 
-        if (!testFailed) {
+	if (!testFailed) { 
             System.out.println();
             System.out.println("EarlyReturnNegativeTest: passed");
         } else {
             System.out.println();
             System.out.println("EarlyReturnNegativeTest: failed");
             throw new Exception("EarlyReturnNegativeTest: failed");
-        }
+	}
     }
 }

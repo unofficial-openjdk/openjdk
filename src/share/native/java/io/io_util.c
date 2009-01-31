@@ -45,9 +45,9 @@ readSingle(JNIEnv *env, jobject this, jfieldID fid) {
     }
     nread = IO_Read(fd, &ret, 1);
     if (nread == 0) { /* EOF */
-        return -1;
+	return -1;
     } else if (nread == JVM_IO_ERR) { /* error */
-        JNU_ThrowIOExceptionWithLastError(env, "Read error");
+	JNU_ThrowIOExceptionWithLastError(env, "Read error");
     } else if (nread == JVM_IO_INTR) {
         JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
     }
@@ -61,38 +61,38 @@ readSingle(JNIEnv *env, jobject this, jfieldID fid) {
 
 int
 readBytes(JNIEnv *env, jobject this, jbyteArray bytes,
-          jint off, jint len, jfieldID fid)
+	  jint off, jint len, jfieldID fid)
 {
     int nread, datalen;
     char stackBuf[BUF_SIZE];
     char *buf = 0;
     FD fd;
-
+    
     if (IS_NULL(bytes)) {
-        JNU_ThrowNullPointerException(env, 0);
-        return -1;
+	JNU_ThrowNullPointerException(env, 0);
+	return -1;
     }
     datalen = (*env)->GetArrayLength(env, bytes);
 
     if ((off < 0) || (off > datalen) ||
         (len < 0) || ((off + len) > datalen) || ((off + len) < 0)) {
         JNU_ThrowByName(env, "java/lang/IndexOutOfBoundsException", 0);
-        return -1;
+	return -1;
     }
 
     if (len == 0) {
-        return 0;
+	return 0;
     } else if (len > BUF_SIZE) {
         buf = malloc(len);
-        if (buf == 0) {
-            JNU_ThrowOutOfMemoryError(env, 0);
-            return 0;
+	if (buf == 0) {
+	    JNU_ThrowOutOfMemoryError(env, 0);
+	    return 0;
         }
     } else {
         buf = stackBuf;
     }
 
-    fd = GET_FD(this, fid);
+    fd = GET_FD(this, fid); 
     if (fd == -1) {
         JNU_ThrowIOException (env, "Stream Closed");
         return  -1;
@@ -102,11 +102,11 @@ readBytes(JNIEnv *env, jobject this, jbyteArray bytes,
     if (nread > 0) {
         (*env)->SetByteArrayRegion(env, bytes, off, nread, (jbyte *)buf);
     } else if (nread == JVM_IO_ERR) {
-        JNU_ThrowIOExceptionWithLastError(env, "Read error");
+	JNU_ThrowIOExceptionWithLastError(env, "Read error");
     } else if (nread == JVM_IO_INTR) { /* EOF */
         JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
     } else { /* EOF */
-        nread = -1;
+	nread = -1;
     }
 
     if (buf != stackBuf) {
@@ -126,7 +126,7 @@ writeSingle(JNIEnv *env, jobject this, jint byte, jfieldID fid) {
     }
     n = IO_Write(fd, &c, 1);
     if (n == JVM_IO_ERR) {
-        JNU_ThrowIOExceptionWithLastError(env, "Write error");
+	JNU_ThrowIOExceptionWithLastError(env, "Write error");
     } else if (n == JVM_IO_INTR) {
         JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
     }
@@ -134,7 +134,7 @@ writeSingle(JNIEnv *env, jobject this, jint byte, jfieldID fid) {
 
 void
 writeBytes(JNIEnv *env, jobject this, jbyteArray bytes,
-          jint off, jint len, jfieldID fid)
+	  jint off, jint len, jfieldID fid)
 {
     int n, datalen;
     char stackBuf[BUF_SIZE];
@@ -142,25 +142,25 @@ writeBytes(JNIEnv *env, jobject this, jbyteArray bytes,
     FD fd;
 
     if (IS_NULL(bytes)) {
-        JNU_ThrowNullPointerException(env, 0);
-        return;
+	JNU_ThrowNullPointerException(env, 0);
+	return;
     }
     datalen = (*env)->GetArrayLength(env, bytes);
 
     if ((off < 0) || (off > datalen) ||
         (len < 0) || ((off + len) > datalen) || ((off + len) < 0)) {
         JNU_ThrowByName(env, "java/lang/IndexOutOfBoundsException", 0);
-        return;
+	return;
     }
 
     if (len == 0) {
         return;
     } else if (len > BUF_SIZE) {
         buf = malloc(len);
-        if (buf == 0) {
-            JNU_ThrowOutOfMemoryError(env, 0);
-            return;
-        }
+	if (buf == 0) {
+	    JNU_ThrowOutOfMemoryError(env, 0);
+	    return;
+	}
     } else {
         buf = stackBuf;
     }
@@ -169,23 +169,23 @@ writeBytes(JNIEnv *env, jobject this, jbyteArray bytes,
 
     if (!(*env)->ExceptionOccurred(env)) {
         off = 0;
-        while (len > 0) {
-            fd = GET_FD(this, fid);
-            if (fd == -1) {
-                JNU_ThrowIOException (env, "Stream Closed");
-                return;
-            }
-            n = IO_Write(fd, buf+off, len);
-            if (n == JVM_IO_ERR) {
-                JNU_ThrowIOExceptionWithLastError(env, "Write error");
-                break;
-            } else if (n == JVM_IO_INTR) {
-                JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
-                break;
-            }
-            off += n;
-            len -= n;
-        }
+	while (len > 0) {
+	    fd = GET_FD(this, fid);
+	    if (fd == -1) {
+        	JNU_ThrowIOException (env, "Stream Closed");
+            	return;
+    	    }
+	    n = IO_Write(fd, buf+off, len);
+	    if (n == JVM_IO_ERR) {
+	        JNU_ThrowIOExceptionWithLastError(env, "Write error");
+		break;
+	    } else if (n == JVM_IO_INTR) {
+	        JNU_ThrowByName(env, "java/io/InterruptedIOException", 0);
+		break;
+	    }
+	    off += n;
+	    len -= n;
+	}
     }
     if (buf != stackBuf) {
         free(buf);

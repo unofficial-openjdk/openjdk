@@ -32,38 +32,39 @@ package java.lang;
  * thrown when the index is equal to the size of the string.
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @see     java.lang.String#charAt(int)
  * @since   JDK1.0
  */
 public
 class StringIndexOutOfBoundsException extends IndexOutOfBoundsException {
     /**
-     * Constructs a <code>StringIndexOutOfBoundsException</code> with no
-     * detail message.
+     * Constructs a <code>StringIndexOutOfBoundsException</code> with no 
+     * detail message. 
      *
      * @since   JDK1.0.
      */
     public StringIndexOutOfBoundsException() {
-        super();
+	super();
     }
 
     /**
-     * Constructs a <code>StringIndexOutOfBoundsException</code> with
-     * the specified detail message.
+     * Constructs a <code>StringIndexOutOfBoundsException</code> with 
+     * the specified detail message. 
      *
      * @param   s   the detail message.
      */
     public StringIndexOutOfBoundsException(String s) {
-        super(s);
+	super(s);
     }
 
     /**
-     * Constructs a new <code>StringIndexOutOfBoundsException</code>
-     * class with an argument indicating the illegal index.
+     * Constructs a new <code>StringIndexOutOfBoundsException</code> 
+     * class with an argument indicating the illegal index. 
      *
      * @param   index   the illegal index.
      */
     public StringIndexOutOfBoundsException(int index) {
-        super("String index out of range: " + index);
+	super("String index out of range: " + index);
     }
 }

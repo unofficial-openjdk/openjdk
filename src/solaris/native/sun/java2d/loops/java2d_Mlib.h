@@ -216,28 +216,28 @@
     mlib_s32 i, j;                                             \
     j = 0;                                                     \
     do {                                                       \
-        i = 0;                                                 \
-        do {                                                   \
-            PROCESS_PIX_##NCHAN(BODY);                         \
-            i++;                                               \
-        } while (i < width);                                   \
-        PTR_ADD(dst_ptr, dstScan);                             \
-        j++;                                                   \
+	i = 0;                                                 \
+	do {                                                   \
+	    PROCESS_PIX_##NCHAN(BODY);                         \
+	    i++;                                               \
+	} while (i < width);                                   \
+	PTR_ADD(dst_ptr, dstScan);                             \
+	j++;                                                   \
     } while (j < height);                                      \
 }
 
 #define LOOP_DST_SRC(TYPE, NCHAN, dstBase, dstScan,    \
-                     srcBase, srcScan, BODY)           \
+		     srcBase, srcScan, BODY)           \
 {                                                      \
     TYPE##DataType *dst_ptr = (void*)(dstBase);        \
     TYPE##DataType *src_ptr = (void*)(srcBase);        \
     mlib_s32 i, j;                                     \
     for (j = 0; j < height; j++) {                     \
-        for (i = 0; i < width; i++) {                  \
-            PROCESS_PIX_##NCHAN(BODY);                 \
-        }                                              \
-        PTR_ADD(dst_ptr, dstScan);                     \
-        PTR_ADD(src_ptr, srcScan);                     \
+	for (i = 0; i < width; i++) {                  \
+	    PROCESS_PIX_##NCHAN(BODY);                 \
+	}                                              \
+	PTR_ADD(dst_ptr, dstScan);                     \
+	PTR_ADD(src_ptr, srcScan);                     \
     }                                                  \
 }
 
@@ -259,49 +259,49 @@
 /***************************************************************/
 
 jboolean checkSameLut(jint * SrcReadLut,
-                      jint * DstReadLut,
-                      SurfaceDataRasInfo * pSrcInfo,
-                      SurfaceDataRasInfo * pDstInfo);
+		      jint * DstReadLut,
+		      SurfaceDataRasInfo * pSrcInfo,
+		      SurfaceDataRasInfo * pDstInfo);
 
 void ADD_SUFF(AnyByteIsomorphicCopy)(BLIT_PARAMS);
 
 void ADD_SUFF(AnyByteIsomorphicScaleCopy)(SCALE_PARAMS);
 
 void ADD_SUFF(AnyByteSetRect)(SurfaceDataRasInfo * pRasInfo,
-                              jint lox, jint loy, jint hix,
-                              jint hiy, jint pixel,
-                              NativePrimitive * pPrim,
-                              CompositeInfo * pCompInfo);
+			      jint lox, jint loy, jint hix,
+			      jint hiy, jint pixel,
+			      NativePrimitive * pPrim,
+			      CompositeInfo * pCompInfo);
 
 void ADD_SUFF(Any4ByteSetRect)(SurfaceDataRasInfo * pRasInfo,
-                               jint lox, jint loy, jint hix,
-                               jint hiy, jint pixel,
-                               NativePrimitive * pPrim,
-                               CompositeInfo * pCompInfo);
+			       jint lox, jint loy, jint hix,
+			       jint hiy, jint pixel,
+			       NativePrimitive * pPrim,
+			       CompositeInfo * pCompInfo);
 
 void ADD_SUFF(Any3ByteSetRect)(SurfaceDataRasInfo * pRasInfo,
-                               jint lox, jint loy, jint hix,
-                               jint hiy, jint pixel,
-                               NativePrimitive * pPrim,
-                               CompositeInfo * pCompInfo);
+			       jint lox, jint loy, jint hix,
+			       jint hiy, jint pixel,
+			       NativePrimitive * pPrim,
+			       CompositeInfo * pCompInfo);
 
 void ADD_SUFF(AnyIntSetRect)(SurfaceDataRasInfo * pRasInfo,
-                             jint lox, jint loy, jint hix,
-                             jint hiy, jint pixel,
-                             NativePrimitive * pPrim,
-                             CompositeInfo * pCompInfo);
+			     jint lox, jint loy, jint hix,
+			     jint hiy, jint pixel,
+			     NativePrimitive * pPrim,
+			     CompositeInfo * pCompInfo);
 
 void AnyByteSetRect(SurfaceDataRasInfo * pRasInfo,
-                    jint lox, jint loy, jint hix,
-                    jint hiy, jint pixel,
-                    NativePrimitive * pPrim,
-                    CompositeInfo * pCompInfo);
+		    jint lox, jint loy, jint hix,
+		    jint hiy, jint pixel,
+		    NativePrimitive * pPrim,
+		    CompositeInfo * pCompInfo);
 
 void AnyIntSetRect(SurfaceDataRasInfo * pRasInfo,
-                   jint lox, jint loy, jint hix,
-                   jint hiy, jint pixel,
-                   NativePrimitive * pPrim,
-                   CompositeInfo * pCompInfo);
+		   jint lox, jint loy, jint hix,
+		   jint hiy, jint pixel,
+		   NativePrimitive * pPrim,
+		   CompositeInfo * pCompInfo);
 
 void ADD_SUFF(IntArgbToByteGrayConvert)(BLIT_PARAMS);
 void ADD_SUFF(ByteGrayToIntArgbConvert)(BLIT_PARAMS);

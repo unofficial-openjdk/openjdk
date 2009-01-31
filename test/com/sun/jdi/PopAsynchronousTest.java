@@ -75,11 +75,11 @@ public class PopAsynchronousTest extends TestScaffold {
         super(args);
     }
 
-    public static void main(String[] args)      throws Exception {
+    public static void main(String[] args)	throws Exception {
         new PopAsynchronousTest(args).startTests();
     }
-
-
+    
+    
 
     /********** event handlers **********/
 
@@ -124,12 +124,12 @@ public class PopAsynchronousTest extends TestScaffold {
                                 backoff = false;
                                 StackFrame popThis = top;
                                 Iterator it = mainThread.frames().iterator();
-
+                            
                                 /* pop lowest fibonacci frame */
                                 while (it.hasNext()) {
                                     StackFrame frame = (StackFrame)it.next();
                                     if (!frame.location().method().name().equals("fibonacci")) {
-                                        break;
+                                        break; 
                                     }
                                     popThis = frame;
                                 }
@@ -163,12 +163,12 @@ public class PopAsynchronousTest extends TestScaffold {
             println("Harassment complete, count = " + harassCount);
         }
     }
-
+                    
     /********** test core **********/
 
     protected void runTests() throws Exception {
         /*
-         * Get to the top of main()
+         * Get to the top of main() 
          * to determine targetClass and mainThread
          */
         BreakpointEvent bpe = startToMain("PopAsynchronousTarg");
@@ -193,7 +193,7 @@ public class PopAsynchronousTest extends TestScaffold {
          * resume the target listening for events
          */
         listenUntilVMDisconnect();
-
+        
         /*
          * check result
          */
@@ -202,7 +202,7 @@ public class PopAsynchronousTest extends TestScaffold {
         if (result == correct) {
             println("Got expected result: " + result);
         } else {
-            failure("FAIL: expected result: " + correct +
+            failure("FAIL: expected result: " + correct + 
                     ", got: " + result);
         }
 
@@ -217,3 +217,4 @@ public class PopAsynchronousTest extends TestScaffold {
         }
     }
 }
+

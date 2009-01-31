@@ -35,6 +35,7 @@ import java.io.PrintWriter;
 /**
  * This class processes incoming JDI events and displays them
  *
+ * @version     %Z% %M% %I% %E% %T%
  * @author Robert Field
  */
 public class EventThread extends Thread {
@@ -59,11 +60,11 @@ public class EventThread extends Thread {
     }
 
     /**
-     * Run the event handling thread.
-     * As long as we are connected, get event sets off
+     * Run the event handling thread.  
+     * As long as we are connected, get event sets off 
      * the queue and dispatch the events within them.
      */
-    public void run() {
+    public void run() { 
         EventQueue queue = vm.eventQueue();
         while (connected) {
             try {
@@ -83,7 +84,7 @@ public class EventThread extends Thread {
     }
 
     /**
-     * Create the desired event requests, and enable
+     * Create the desired event requests, and enable 
      * them so that we will get events.
      * @param excludes     Class patterns for which we don't want events
      * @param watchFields  Do we want to watch assignments to fields
@@ -92,8 +93,8 @@ public class EventThread extends Thread {
         EventRequestManager mgr = vm.eventRequestManager();
 
         // want all exceptions
-        ExceptionRequest excReq = mgr.createExceptionRequest(null,
-                                                             true, true);
+        ExceptionRequest excReq = mgr.createExceptionRequest(null, 
+                                                             true, true); 
         // suspend so we can step
         excReq.setSuspendPolicy(EventRequest.SUSPEND_ALL);
         excReq.enable();
@@ -113,18 +114,18 @@ public class EventThread extends Thread {
         mexr.enable();
 
         ThreadDeathRequest tdr = mgr.createThreadDeathRequest();
-        // Make sure we sync on thread death
+	// Make sure we sync on thread death
         tdr.setSuspendPolicy(EventRequest.SUSPEND_ALL);
         tdr.enable();
 
-        if (watchFields) {
-            ClassPrepareRequest cpr = mgr.createClassPrepareRequest();
-            for (int i=0; i<excludes.length; ++i) {
-                cpr.addClassExclusionFilter(excludes[i]);
-            }
-            cpr.setSuspendPolicy(EventRequest.SUSPEND_ALL);
-            cpr.enable();
-        }
+	if (watchFields) {
+	    ClassPrepareRequest cpr = mgr.createClassPrepareRequest();
+	    for (int i=0; i<excludes.length; ++i) {
+		cpr.addClassExclusionFilter(excludes[i]);
+	    }
+	    cpr.setSuspendPolicy(EventRequest.SUSPEND_ALL);
+	    cpr.enable();
+	}
     }
 
     /**
@@ -134,54 +135,54 @@ public class EventThread extends Thread {
     class ThreadTrace {
         final ThreadReference thread;
         final String baseIndent;
-        static final String threadDelta = "                     ";
-        StringBuffer indent;
+	static final String threadDelta = "                     ";
+	StringBuffer indent;
 
-        ThreadTrace(ThreadReference thread) {
+	ThreadTrace(ThreadReference thread) {
             this.thread = thread;
             this.baseIndent = nextBaseIndent;
-            indent = new StringBuffer(baseIndent);
-            nextBaseIndent += threadDelta;
-            println("====== " + thread.name() + " ======");
-        }
+	    indent = new StringBuffer(baseIndent);
+	    nextBaseIndent += threadDelta;
+	    println("====== " + thread.name() + " ======");
+	}
 
-        private void println(String str) {
-            writer.print(indent);
-            writer.println(str);
-        }
+	private void println(String str) {
+	    writer.print(indent);
+	    writer.println(str);
+	}
 
-        void methodEntryEvent(MethodEntryEvent event)  {
-            println(event.method().name() + "  --  "
+	void methodEntryEvent(MethodEntryEvent event)  {
+	    println(event.method().name() + "  --  " 
                     + event.method().declaringType().name());
-            indent.append("| ");
-        }
-
-        void methodExitEvent(MethodExitEvent event)  {
-            indent.setLength(indent.length()-2);
-        }
-
-        void fieldWatchEvent(ModificationWatchpointEvent event)  {
+	    indent.append("| ");
+	}
+	
+	void methodExitEvent(MethodExitEvent event)  {
+	    indent.setLength(indent.length()-2);
+	}
+	
+	void fieldWatchEvent(ModificationWatchpointEvent event)  {
             Field field = event.field();
             Value value = event.valueToBe();
-            println("    " + field.name() + " = " + value);
-        }
-
-        void exceptionEvent(ExceptionEvent event) {
-            println("Exception: " + event.exception() +
-                    " catch: " + event.catchLocation());
+	    println("    " + field.name() + " = " + value);
+	}
+	
+	void exceptionEvent(ExceptionEvent event) {
+	    println("Exception: " + event.exception() + 
+		    " catch: " + event.catchLocation());
 
             // Step to the catch
             EventRequestManager mgr = vm.eventRequestManager();
-            StepRequest req = mgr.createStepRequest(thread,
+            StepRequest req = mgr.createStepRequest(thread, 
                                                     StepRequest.STEP_MIN,
                                                     StepRequest.STEP_INTO);
             req.addCountFilter(1);  // next step only
             req.setSuspendPolicy(EventRequest.SUSPEND_ALL);
             req.enable();
-        }
+	}
 
         // Step to exception catch
-        void stepEvent(StepEvent event)  {
+	void stepEvent(StepEvent event)  {
             // Adjust call depth
             int cnt = 0;
             indent = new StringBuffer(baseIndent);
@@ -197,23 +198,23 @@ public class EventThread extends Thread {
             mgr.deleteEventRequest(event.request());
         }
 
-        void threadDeathEvent(ThreadDeathEvent event)  {
+	void threadDeathEvent(ThreadDeathEvent event)  {
             indent = new StringBuffer(baseIndent);
-            println("====== " + thread.name() + " end ======");
+	    println("====== " + thread.name() + " end ======");
         }
-    }
+    }	
 
     /**
      * Returns the ThreadTrace instance for the specified thread,
      * creating one if needed.
      */
     ThreadTrace threadTrace(ThreadReference thread) {
-        ThreadTrace trace = (ThreadTrace)traceMap.get(thread);
-        if (trace == null) {
-            trace = new ThreadTrace(thread);
-            traceMap.put(thread, trace);
-        }
-        return trace;
+	ThreadTrace trace = (ThreadTrace)traceMap.get(thread);
+	if (trace == null) {
+	    trace = new ThreadTrace(thread);
+	    traceMap.put(thread, trace);
+	}
+	return trace;
     }
 
     /**
@@ -263,7 +264,7 @@ public class EventThread extends Thread {
                         vmDeathEvent((VMDeathEvent)event);
                     } else if (event instanceof VMDisconnectEvent) {
                         vmDisconnectEvent((VMDisconnectEvent)event);
-                    }
+                    } 
                 }
                 eventSet.resume(); // Resume the VM
             } catch (InterruptedException exc) {
@@ -297,47 +298,47 @@ public class EventThread extends Thread {
     }
 
     void threadDeathEvent(ThreadDeathEvent event)  {
-        ThreadTrace trace = (ThreadTrace)traceMap.get(event.thread());
-        if (trace != null) {  // only want threads we care about
+	ThreadTrace trace = (ThreadTrace)traceMap.get(event.thread());
+	if (trace != null) {  // only want threads we care about
             trace.threadDeathEvent(event);   // Forward event
         }
     }
 
     /**
-     * A new class has been loaded.
+     * A new class has been loaded.  
      * Set watchpoints on each of its fields
      */
     private void classPrepareEvent(ClassPrepareEvent event)  {
         EventRequestManager mgr = vm.eventRequestManager();
-        List fields = event.referenceType().visibleFields();
-        for (Iterator it = fields.iterator(); it.hasNext(); ) {
-            Field field = (Field)it.next();
-            ModificationWatchpointRequest req =
-                     mgr.createModificationWatchpointRequest(field);
+	List fields = event.referenceType().visibleFields();
+	for (Iterator it = fields.iterator(); it.hasNext(); ) {
+	    Field field = (Field)it.next();
+	    ModificationWatchpointRequest req = 
+		     mgr.createModificationWatchpointRequest(field);
             for (int i=0; i<excludes.length; ++i) {
                 req.addClassExclusionFilter(excludes[i]);
             }
-            req.setSuspendPolicy(EventRequest.SUSPEND_NONE);
-            req.enable();
-        }
+	    req.setSuspendPolicy(EventRequest.SUSPEND_NONE);
+	    req.enable();
+	}
     }
 
     private void exceptionEvent(ExceptionEvent event) {
-        ThreadTrace trace = (ThreadTrace)traceMap.get(event.thread());
-        if (trace != null) {  // only want threads we care about
+	ThreadTrace trace = (ThreadTrace)traceMap.get(event.thread());
+	if (trace != null) {  // only want threads we care about
             trace.exceptionEvent(event);      // Forward event
         }
     }
 
     public void vmDeathEvent(VMDeathEvent event) {
-        vmDied = true;
+	vmDied = true;
         writer.println("-- The application exited --");
     }
 
     public void vmDisconnectEvent(VMDisconnectEvent event) {
         connected = false;
         if (!vmDied) {
-            writer.println("-- The application has been disconnected --");
-        }
+	    writer.println("-- The application has been disconnected --");
+	}
     }
 }

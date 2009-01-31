@@ -45,7 +45,7 @@ import org.w3c.dom.Element;
 public class X509SKIResolver extends KeyResolverSpi {
 
    /** {@link java.util.logging} logging facility */
-    static java.util.logging.Logger log =
+    static java.util.logging.Logger log = 
         java.util.logging.Logger.getLogger(X509SKIResolver.class.getName());
 
    /** Field _x509childNodes */
@@ -65,9 +65,9 @@ public class X509SKIResolver extends KeyResolverSpi {
    public boolean engineCanResolve(Element element, String BaseURI,
                                    StorageResolver storage) {
       if (true) {
-        if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
+      	if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "Can I resolve " + element.getTagName() + "?");
       }
-
+      
          if (!XMLUtils.elementIsInSignatureSpace(element,
                  Constants._TAG_X509DATA)) {
          if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I can't");
@@ -75,8 +75,8 @@ public class X509SKIResolver extends KeyResolverSpi {
          return false;
       }
 
-
-
+      
+ 
 
          this._x509childNodes = XMLUtils.selectDsNodes(element,
                   Constants._TAG_X509SKI);
@@ -87,7 +87,7 @@ public class X509SKIResolver extends KeyResolverSpi {
 
             return true;
          }
-
+      
       if (log.isLoggable(java.util.logging.Level.FINE))                                     log.log(java.util.logging.Level.FINE, "I can't");
 
       return false;

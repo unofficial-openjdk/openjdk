@@ -29,6 +29,7 @@ package sun.security.tools;
  * <p> This class provides several utilities to <code>KeyStore</code>.
  *
  * @since 1.6.0
+ * @version %I%, %G%
  */
 public class KeyStoreUtil {
 
@@ -36,14 +37,14 @@ public class KeyStoreUtil {
     // accessed by JarSigner, which although lies in a package
     // with the same name, but bundled in tools.jar and loaded
     // by another class loader, hence in a different *runtime*
-    // package.
+    // package. 
     //
     // See JVM Spec, 5.3 and 5.4.4
 
     private KeyStoreUtil() {
         // this class is not meant to be instantiated
     }
-
+    
 
     /**
      * Returns true if KeyStore has a password. This is true except for

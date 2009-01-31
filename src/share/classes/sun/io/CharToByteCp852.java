@@ -31,6 +31,7 @@ import sun.nio.cs.IBM852;
  * Tables and data to convert Unicode to Cp852
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp852 extends CharToByteSingleByte {

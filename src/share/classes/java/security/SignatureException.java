@@ -26,9 +26,10 @@
 package java.security;
 
 /**
- * This is the generic Signature exception.
- *
- * @author Benjamin Renaud
+ * This is the generic Signature exception. 
+ * 
+ * @version %I% %G%
+ * @author Benjamin Renaud 
  */
 
 public class SignatureException extends GeneralSecurityException {
@@ -41,7 +42,7 @@ public class SignatureException extends GeneralSecurityException {
      * exception.
      */
     public SignatureException() {
-        super();
+	super();
     }
 
     /**
@@ -49,10 +50,10 @@ public class SignatureException extends GeneralSecurityException {
      * message.  A detail message is a String that describes this
      * particular exception.
      *
-     * @param msg the detail message.
+     * @param msg the detail message.  
      */
     public SignatureException(String msg) {
-        super(msg);
+	super(msg);
     }
 
     /**

@@ -37,7 +37,7 @@ public class RegionIterator {
     int numXbands;
 
     RegionIterator(Region r) {
-        region = r;
+	region = r;
     }
 
     /**
@@ -46,10 +46,10 @@ public class RegionIterator {
      * branches from the current position.
      */
     public RegionIterator createCopy() {
-        RegionIterator r = new RegionIterator(region);
-        r.curIndex = this.curIndex;
-        r.numXbands = this.numXbands;
-        return r;
+	RegionIterator r = new RegionIterator(region);
+	r.curIndex = this.curIndex;
+	r.numXbands = this.numXbands;
+	return r;
     }
 
     /**
@@ -58,11 +58,11 @@ public class RegionIterator {
      * branches from the current position.
      */
     public void copyStateFrom(RegionIterator ri) {
-        if (this.region != ri.region) {
-            throw new InternalError("region mismatch");
-        }
-        this.curIndex = ri.curIndex;
-        this.numXbands = ri.numXbands;
+	if (this.region != ri.region) {
+	    throw new InternalError("region mismatch");
+	}
+	this.curIndex = ri.curIndex;
+	this.numXbands = ri.numXbands;
     }
 
     /**
@@ -72,15 +72,15 @@ public class RegionIterator {
      * range in the array at locations 1 and 3 respectively.
      */
     public boolean nextYRange(int range[]) {
-        curIndex += numXbands * 2;
-        numXbands = 0;
-        if (curIndex >= region.endIndex) {
+	curIndex += numXbands * 2;
+	numXbands = 0;
+	if (curIndex >= region.endIndex) {
             return false;
-        }
-        range[1] = region.bands[curIndex++];
-        range[3] = region.bands[curIndex++];
-        numXbands = region.bands[curIndex++];
-        return true;
+	}
+	range[1] = region.bands[curIndex++];
+	range[3] = region.bands[curIndex++];
+	numXbands = region.bands[curIndex++];
+	return true;
     }
 
     /**
@@ -90,12 +90,12 @@ public class RegionIterator {
      * the range in the array at locations 0 and 2 respectively.
      */
     public boolean nextXBand(int range[]) {
-        if (numXbands <= 0) {
-            return false;
-        }
-        numXbands--;
-        range[0] = region.bands[curIndex++];
-        range[2] = region.bands[curIndex++];
-        return true;
+	if (numXbands <= 0) {
+	    return false;
+	}
+	numXbands--;
+	range[0] = region.bands[curIndex++];
+	range[2] = region.bands[curIndex++];
+	return true;
     }
 }

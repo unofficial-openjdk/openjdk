@@ -47,21 +47,21 @@ class CompilerMember implements Comparable {
     String key;
 
     CompilerMember(MemberDefinition field, Assembler asm) {
-        this.field = field;
-        this.asm = asm;
-        name = field.getName().toString();
-        sig = field.getType().getTypeSignature();
+	this.field = field;
+	this.asm = asm;
+	name = field.getName().toString();
+	sig = field.getType().getTypeSignature();
     }
 
     public int compareTo(Object o) {
-        CompilerMember cm = (CompilerMember) o;
-        return getKey().compareTo(cm.getKey());
+	CompilerMember cm = (CompilerMember) o;
+	return getKey().compareTo(cm.getKey());
     }
 
     String getKey() {
-        if (key==null)
-            key = name+sig;
-        return key;
+	if (key==null) 
+	    key = name+sig;
+	return key;
     }
 
 }

@@ -29,7 +29,7 @@ import com.sun.jdi.*;
 
 /**
  * Notification that a thread in the target VM is about to
- * wait on a monitor object.
+ * wait on a monitor object. 
  * <P>
  *
  * @see EventQueue
@@ -41,10 +41,10 @@ import com.sun.jdi.*;
 public interface MonitorWaitEvent extends LocatableEvent {
 
     /**
-     * Returns the thread in which monitor wait event has occurred.
+     * Returns the thread in which monitor wait event has occurred. 
      * <p>
      *
-     * @return a {@link ThreadReference} which mirrors the event's thread in
+     * @return a {@link ThreadReference} which mirrors the event's thread in 
      * the target VM.
      */
     public ThreadReference thread();
@@ -63,3 +63,4 @@ public interface MonitorWaitEvent extends LocatableEvent {
      */
     public long  timeout();
 }
+

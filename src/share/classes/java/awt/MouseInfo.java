@@ -30,6 +30,7 @@ import sun.security.util.SecurityConstants;
  * <code>MouseInfo</code>  provides methods for getting information about the mouse,
  * such as mouse pointer location and the number of mouse buttons.
  *
+ * @version    %I%, %G%
  * @author     Roman Poborchiy
  * @since 1.5
  */
@@ -122,7 +123,7 @@ public class MouseInfo {
             throw new HeadlessException();
         }
         Object prop = Toolkit.getDefaultToolkit().
-                              getDesktopProperty("awt.mouse.numButtons");
+                              getDesktopProperty("awt.mouse.numButtons"); 
         if (prop instanceof Integer) {
             return ((Integer)prop).intValue();
         }

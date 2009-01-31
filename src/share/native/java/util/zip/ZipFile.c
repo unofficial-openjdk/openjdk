@@ -65,20 +65,20 @@ ThrowZipException(JNIEnv *env, const char *msg)
 {
     jstring s = NULL;
     jobject x;
-
+    
     if (msg != NULL) {
-        s = JNU_NewStringPlatform(env, msg);
+	s = JNU_NewStringPlatform(env, msg);
     }
     x = JNU_NewObjectByName(env,
-                            "java/util/zip/ZipException",
-                            "(Ljava/lang/String;)V", s);
+			    "java/util/zip/ZipException",
+			    "(Ljava/lang/String;)V", s);
     if (x != NULL) {
-        (*env)->Throw(env, x);
+	(*env)->Throw(env, x);
     }
 }
 
 JNIEXPORT jlong JNICALL
-Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name,
+Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name, 
                                         jint mode, jlong lastModified)
 {
     const char *path = JNU_GetStringPlatformChars(env, name, 0);
@@ -91,8 +91,8 @@ Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name,
     if (mode & OPEN_DELETE) flag |= JVM_O_DELETE;
 
     if (path != 0) {
-        zip = ZIP_Get_From_Cache(path, &msg, lastModified);
-        if (zip == 0 && msg == 0) {
+	zip = ZIP_Get_From_Cache(path, &msg, lastModified);
+	if (zip == 0 && msg == 0) {
             ZFILE zfd = 0;
 #ifdef WIN32
             zfd = winFileHandleOpen(env, name, flag);
@@ -104,23 +104,23 @@ Java_java_util_zip_ZipFile_open(JNIEnv *env, jclass cls, jstring name,
             zfd = JVM_Open(path, flag, 0);
 #endif
 
-            if (zfd >= 0) {
-                zip = ZIP_Put_In_Cache(path, zfd, &msg, lastModified);
-            }
-        }
+	    if (zfd >= 0) {
+		zip = ZIP_Put_In_Cache(path, zfd, &msg, lastModified);
+	    }
+	}
 
-        if (zip != 0) {
-            result = ptr_to_jlong(zip);
-        } else if (msg != 0) {
-            ThrowZipException(env, msg);
-        } else if (errno == ENOMEM) {
-            JNU_ThrowOutOfMemoryError(env, 0);
-        } else {
-            ThrowZipException(env, "error in opening zip file");
-        }
+	if (zip != 0) {
+	    result = ptr_to_jlong(zip);
+	} else if (msg != 0) {
+	    ThrowZipException(env, msg);
+	} else if (errno == ENOMEM) {
+	    JNU_ThrowOutOfMemoryError(env, 0);
+	} else {
+	    ThrowZipException(env, "error in opening zip file");
+	}
 
 finally:
-        JNU_ReleaseStringPlatformChars(env, name, path);
+	JNU_ReleaseStringPlatformChars(env, name, path);
     }
     return result;
 }
@@ -174,7 +174,7 @@ Java_java_util_zip_ZipFile_getEntry(JNIEnv *env, jclass cls, jlong zfile,
 
 JNIEXPORT void JNICALL
 Java_java_util_zip_ZipFile_freeEntry(JNIEnv *env, jclass cls, jlong zfile,
-                                    jlong zentry)
+				    jlong zentry)
 {
     jzfile *zip = jlong_to_ptr(zfile);
     jzentry *ze = jlong_to_ptr(zentry);
@@ -183,7 +183,7 @@ Java_java_util_zip_ZipFile_freeEntry(JNIEnv *env, jclass cls, jlong zfile,
 
 JNIEXPORT jlong JNICALL
 Java_java_util_zip_ZipFile_getNextEntry(JNIEnv *env, jclass cls, jlong zfile,
-                                        jint n)
+					jint n)
 {
     jzentry *ze = ZIP_GetNextEntry(jlong_to_ptr(zfile), n);
 
@@ -216,8 +216,8 @@ Java_java_util_zip_ZipFile_getSize(JNIEnv *env, jclass cls, jlong zentry)
 
 JNIEXPORT jint JNICALL
 Java_java_util_zip_ZipFile_read(JNIEnv *env, jclass cls, jlong zfile,
-                                jlong zentry, jlong pos, jbyteArray bytes,
-                                jint off, jint len)
+				jlong zentry, jlong pos, jbyteArray bytes,
+				jint off, jint len)
 {
     jzfile *zip = jlong_to_ptr(zfile);
     char *msg;
@@ -227,7 +227,7 @@ Java_java_util_zip_ZipFile_read(JNIEnv *env, jclass cls, jlong zfile,
     jbyte buf[BUFSIZE];
 
     if (len > BUFSIZE) {
-        len = BUFSIZE;
+	len = BUFSIZE;
     }
 
     ZIP_Lock(zip);
@@ -235,18 +235,18 @@ Java_java_util_zip_ZipFile_read(JNIEnv *env, jclass cls, jlong zfile,
     msg = zip->msg;
     ZIP_Unlock(zip);
     if (len != -1) {
-        (*env)->SetByteArrayRegion(env, bytes, off, len, buf);
+	(*env)->SetByteArrayRegion(env, bytes, off, len, buf);
     }
 
     if (len == -1) {
-        if (msg != 0) {
-            ThrowZipException(env, msg);
-        } else {
-            char errmsg[128];
-            sprintf(errmsg, "errno: %d, error: %s\n",
-                    errno, "Error reading ZIP file");
+	if (msg != 0) {
+	    ThrowZipException(env, msg);
+	} else {
+	    char errmsg[128];
+	    sprintf(errmsg, "errno: %d, error: %s\n",
+		    errno, "Error reading ZIP file");
             JNU_ThrowIOExceptionWithLastError(env, errmsg);
-        }
+	}
     }
 
     return len;
@@ -276,27 +276,27 @@ Java_java_util_jar_JarFile_getMetaInfEntryNames(JNIEnv *env, jobject obj)
     /* count the number of valid ZIP metanames */
     count = 0;
     if (zip->metanames != 0) {
-        for (i = 0; i < zip->metacount; i++) {
-            if (zip->metanames[i] != 0) {
-                count++;
-            }
-        }
+	for (i = 0; i < zip->metacount; i++) {
+	    if (zip->metanames[i] != 0) {
+		count++;
+	    }
+	}
     }
 
     /* If some names were found then build array of java strings */
     if (count > 0) {
-        jclass cls = (*env)->FindClass(env, "java/lang/String");
-        result = (*env)->NewObjectArray(env, count, cls, 0);
-        if (result != 0) {
-            for (i = 0; i < count; i++) {
-                jstring str = (*env)->NewStringUTF(env, zip->metanames[i]);
-                if (str == 0) {
-                    break;
-                }
-                (*env)->SetObjectArrayElement(env, result, i, str);
-                (*env)->DeleteLocalRef(env, str);
-            }
-        }
+	jclass cls = (*env)->FindClass(env, "java/lang/String");
+	result = (*env)->NewObjectArray(env, count, cls, 0);
+	if (result != 0) {
+	    for (i = 0; i < count; i++) {
+		jstring str = (*env)->NewStringUTF(env, zip->metanames[i]);
+		if (str == 0) {
+		    break;
+		}
+		(*env)->SetObjectArrayElement(env, result, i, str);
+		(*env)->DeleteLocalRef(env, str);
+	    }
+	}
     }
     return result;
 }
@@ -307,7 +307,7 @@ Java_java_util_zip_ZipFile_getZipMessage(JNIEnv *env, jclass cls, jlong zfile)
     jzfile *zip = jlong_to_ptr(zfile);
     char *msg = zip->msg;
     if (msg == NULL) {
-        return NULL;
-    }
+        return NULL; 
+    } 
     return JNU_NewStringPlatform(env, msg);
 }

@@ -30,7 +30,8 @@ import javax.swing.colorchooser.*;
 
 /**
  * Pluggable look and feel interface for JColorChooser.
- *
+ * 
+ * @version %I% %G%
  * @author Amy Fowler
  * @author Steve Wilson
  */
@@ -39,3 +40,4 @@ public abstract class ColorChooserUI extends ComponentUI
 {
 
 }
+

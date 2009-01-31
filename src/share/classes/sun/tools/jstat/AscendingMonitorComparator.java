@@ -32,6 +32,7 @@ import sun.jvmstat.monitor.*;
  * Class to compare two Monitor objects by name in ascending order.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 class AscendingMonitorComparator implements Comparator<Monitor> {

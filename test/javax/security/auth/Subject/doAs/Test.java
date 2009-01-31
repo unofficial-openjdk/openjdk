@@ -28,28 +28,28 @@ import java.util.*;
 
 public class Test {
     public static Subject get(String name) {
-        return new Subject(true,
-                           Collections.singleton(new X500Principal(name)),
-                           new HashSet(),
-                           Collections.singleton(Boolean.TRUE));
+	return new Subject(true,
+			   Collections.singleton(new X500Principal(name)),
+			   new HashSet(),
+			   Collections.singleton(Boolean.TRUE));
     }
 
     public static void main(String[] args) {
-        System.setSecurityManager(new SecurityManager());
-        try {
-            Subject.doAsPrivileged(get("CN=joe"), new PrivilegedAction() {
-                public Object run() {
-                    return Subject.doAs(null, new PrivilegedAction() {
-                        public Object run() {
-                        return System.getProperty("foobar");
-                        }
-                    });
-                }
-            }, null);
-        throw new RuntimeException
-                 ("Access control exception should have occcured");
-        } catch (java.security.AccessControlException e) {
-                // Expected exception occured
-        }
+	System.setSecurityManager(new SecurityManager());
+	try {
+	    Subject.doAsPrivileged(get("CN=joe"), new PrivilegedAction() {
+	        public Object run() {
+		    return Subject.doAs(null, new PrivilegedAction() {
+		        public Object run() {
+		    	return System.getProperty("foobar");
+		        }
+		    });
+	        }
+	    }, null);
+	throw new RuntimeException
+		 ("Access control exception should have occcured");
+	} catch (java.security.AccessControlException e) {
+		// Expected exception occured
+	}
     }
 }

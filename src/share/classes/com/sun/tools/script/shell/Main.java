@@ -42,21 +42,21 @@ public class Main {
     public static void main(String[] args) {
         // parse command line options
         String[] scriptArgs = processOptions(args);
-
+        
         // process each script command
         for (Command cmd : scripts) {
             cmd.run(scriptArgs);
         }
-
+        
         System.exit(EXIT_SUCCESS);
     }
-
-    // Each -e or -f or interactive mode is represented
+    
+    // Each -e or -f or interactive mode is represented 
     // by an instance of Command.
     private static interface Command {
         public void run(String[] arguments);
     }
-
+    
     /**
      * Parses and processes command line options.
      * @param args command line argument array
@@ -66,10 +66,10 @@ public class Main {
         String currentLanguage = DEFAULT_LANGUAGE;
         // current script file encoding selected
         String currentEncoding = null;
-
+        
         // check for -classpath or -cp first
         checkClassPath(args);
-
+        
         // have we seen -e or -f ?
         boolean seenScript = false;
         // have we seen -f - already?
@@ -82,7 +82,7 @@ public class Main {
                 i++;
                 continue;
             }
-
+            
             // collect non-option arguments and pass these as script arguments
             if (!arg.startsWith("-")) {
                 int numScriptArgs;
@@ -106,7 +106,7 @@ public class Main {
                 System.arraycopy(args, startScriptArg, result, 0, numScriptArgs);
                 return result;
             }
-
+            
             if (arg.startsWith("-D")) {
                 String value = arg.substring(2);
                 int eq = value.indexOf('=');
@@ -128,7 +128,7 @@ public class Main {
                 seenScript = true;
                 if (++i == args.length)
                     usage(EXIT_CMD_NO_SCRIPT);
-
+                
                 ScriptEngine se = getScriptEngine(currentLanguage);
                 addStringSource(se, args[i]);
                 continue;
@@ -164,14 +164,14 @@ public class Main {
             // some unknown option...
             usage(EXIT_UNKNOWN_OPTION);
         }
-
+        
         if (! seenScript) {
             ScriptEngine se = getScriptEngine(currentLanguage);
             addInteractiveMode(se);
         }
         return new String[0];
     }
-
+    
     /**
      * Adds interactive mode Command
      * @param se ScriptEngine to use in interactive mode.
@@ -184,7 +184,7 @@ public class Main {
             }
         });
     }
-
+    
     /**
      * Adds script source file Command
      * @param se ScriptEngine used to evaluate the script file
@@ -201,7 +201,7 @@ public class Main {
             }
         });
     }
-
+    
     /**
      * Adds script string source Command
      * @param se ScriptEngine to be used to evaluate the script string
@@ -221,7 +221,7 @@ public class Main {
             }
         });
     }
-
+    
     /**
      * Prints list of script engines available and exits.
      */
@@ -237,7 +237,7 @@ public class Main {
         }
         System.exit(EXIT_SUCCESS);
     }
-
+    
     /**
      * Processes a given source file or standard input.
      * @param se ScriptEngine to be used to evaluate
@@ -285,7 +285,7 @@ public class Main {
             evaluateStream(se, fis, filename, encoding);
         }
     }
-
+    
     /**
      * Evaluates given script source
      * @param se ScriptEngine to evaluate the string
@@ -306,10 +306,10 @@ public class Main {
             if (exitOnError)
                 System.exit(EXIT_SCRIPT_ERROR);
         }
-
+        
         return null;
     }
-
+    
     /**
      * Evaluate script string source and exit on script error
      * @param se ScriptEngine to evaluate the string
@@ -318,7 +318,7 @@ public class Main {
     private static void evaluateString(ScriptEngine se, String script) {
         evaluateString(se, script, true);
     }
-
+    
     /**
      * Evaluates script from given reader
      * @param se ScriptEngine to evaluate the string
@@ -342,7 +342,7 @@ public class Main {
         }
         return null;
     }
-
+    
     /**
      * Evaluates given input stream
      * @param se ScriptEngine to evaluate the string
@@ -367,7 +367,7 @@ public class Main {
         }
         return evaluateReader(se, reader, name);
     }
-
+    
     /**
      * Prints usage message and exits
      * @param exitCode process exit code
@@ -377,7 +377,7 @@ public class Main {
                 new Object[] { PROGRAM_NAME }));
                 System.exit(exitCode);
     }
-
+    
     /**
      * Gets prompt for interactive mode
      * @return prompt string to use
@@ -386,24 +386,24 @@ public class Main {
         List<String> names = se.getFactory().getNames();
         return names.get(0) + "> ";
     }
-
+    
     /**
      * Get formatted, localized error message
      */
     private static String getMessage(String key, Object[] params) {
         return MessageFormat.format(msgRes.getString(key), params);
     }
-
+    
     // input stream from where we will read
     private static InputStream getIn() {
         return System.in;
     }
-
+    
     // stream to print error messages
     private static PrintStream getError() {
         return System.err;
     }
-
+    
     // get current script engine
     private static ScriptEngine getScriptEngine(String lang) {
         ScriptEngine se = engines.get(lang);
@@ -414,7 +414,7 @@ public class Main {
                         new Object[] { lang }));
                         System.exit(EXIT_ENGINE_NOT_FOUND);
             }
-
+            
             // initialize the engine
             initScriptEngine(se);
             // to avoid re-initialization of engine, store it in a map
@@ -422,12 +422,12 @@ public class Main {
         }
         return se;
     }
-
+    
     // initialize a given script engine
     private static void initScriptEngine(ScriptEngine se) {
         // put engine global variable
         se.put("engine", se);
-
+        
         // load init.<ext> file from resource
         List<String> exts = se.getFactory().getExtensions();
         InputStream sysIn = null;
@@ -441,7 +441,7 @@ public class Main {
             evaluateStream(se, sysIn, "<system-init>", null);
         }
     }
-
+    
     /**
      * Checks for -classpath, -cp in command line args. Creates a ClassLoader
      * and sets it as Thread context loader for current thread.
@@ -461,7 +461,7 @@ public class Main {
                 }
             }
         }
-
+        
         if (classPath != null) {
             /* We create a class loader, configure it with specified
              * classpath values and set the same as context loader.
@@ -479,13 +479,13 @@ public class Main {
             URLClassLoader loader = new URLClassLoader(urls, parent);
             Thread.currentThread().setContextClassLoader(loader);
         }
-
+        
         // now initialize script engine manager. Note that this has to
         // be done after setting the context loader so that manager
         // will see script engines from user specified classpath
         engineManager = new ScriptEngineManager();
     }
-
+    
     /**
      * Utility method for converting a search path string to an array
      * of directory and JAR file URLs.
@@ -510,7 +510,7 @@ public class Main {
         }
         return urls;
     }
-
+    
     /**
      * Returns the directory or JAR file URL corresponding to the specified
      * local file name.
@@ -539,18 +539,18 @@ public class Main {
             throw new IllegalArgumentException("file");
         }
     }
-
+    
     private static void setScriptArguments(ScriptEngine se, String[] args) {
         se.put("arguments", args);
         se.put(ScriptEngine.ARGV, args);
     }
-
+    
     private static String setScriptFilename(ScriptEngine se, String name) {
         String oldName = (String) se.get(ScriptEngine.FILENAME);
         se.put(ScriptEngine.FILENAME, name);
         return oldName;
     }
-
+    
     // exit codes
     private static final int EXIT_SUCCESS            = 0;
     private static final int EXIT_CMD_NO_CLASSPATH   = 1;
@@ -565,7 +565,7 @@ public class Main {
     private static final int EXIT_SCRIPT_ERROR       = 10;
     private static final int EXIT_FILE_NOT_FOUND     = 11;
     private static final int EXIT_MULTIPLE_STDIN     = 12;
-
+    
     // default scripting language
     private static final String DEFAULT_LANGUAGE = "js";
     // list of scripts to process
@@ -578,7 +578,7 @@ public class Main {
     private static ResourceBundle msgRes;
     private static String BUNDLE_NAME = "com.sun.tools.script.shell.messages";
     private static String PROGRAM_NAME = "jrunscript";
-
+    
     static {
         scripts = new ArrayList<Command>();
         engines = new HashMap<String, ScriptEngine>();

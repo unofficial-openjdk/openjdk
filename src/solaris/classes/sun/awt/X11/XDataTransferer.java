@@ -70,7 +70,7 @@ public class XDataTransferer extends DataTransferer {
 
     static XDataTransferer getInstanceImpl() {
         synchronized (XDataTransferer.class) {
-            if (transferer == null) {
+            if (transferer == null) {            
                 transferer = new XDataTransferer();
             }
         }
@@ -78,15 +78,15 @@ public class XDataTransferer extends DataTransferer {
     }
 
     public String getDefaultUnicodeEncoding() {
-        return "iso-10646-ucs-2";
+	return "iso-10646-ucs-2";
     }
-
+    
     public boolean isLocaleDependentTextFormat(long format) {
         return false;
     }
 
     public boolean isTextFormat(long format) {
-        return super.isTextFormat(format)
+        return super.isTextFormat(format) 
             || isMimeFormat(format, "text");
     }
 
@@ -96,7 +96,7 @@ public class XDataTransferer extends DataTransferer {
             String nat = getNativeForFormat(format);
             DataFlavor df = new DataFlavor(nat, null);
             // Ignore the charset parameter of the MIME type if the subtype
-            // doesn't support charset.
+            // doesn't support charset. 
             if (!DataTransferer.doesSubtypeSupportCharset(df)) {
                 return null;
             }
@@ -109,13 +109,13 @@ public class XDataTransferer extends DataTransferer {
     }
 
     public boolean isFileFormat(long format) {
-        return format == FILE_NAME_ATOM.getAtom() ||
+        return format == FILE_NAME_ATOM.getAtom() || 
             format == DT_NET_FILE_ATOM.getAtom();
     }
 
     public boolean isImageFormat(long format) {
-        return format == PNG_ATOM.getAtom() ||
-            format == JFIF_ATOM.getAtom() ||
+        return format == PNG_ATOM.getAtom() || 
+            format == JFIF_ATOM.getAtom() || 
             isMimeFormat(format, "image");
     }
 
@@ -141,7 +141,7 @@ public class XDataTransferer extends DataTransferer {
         return XAtom.get(atom).getName();
     }
 
-    protected byte[] imageToPlatformBytes(Image image, long format)
+    protected byte[] imageToPlatformBytes(Image image, long format) 
       throws IOException {
         String mimeType = null;
         if (format == PNG_ATOM.getAtom()) {
@@ -165,8 +165,8 @@ public class XDataTransferer extends DataTransferer {
             return imageToStandardBytes(image, mimeType);
         } else {
             String nativeFormat = getNativeForFormat(format);
-            throw new IOException("Translation to " + nativeFormat +
-                                  " is not supported.");
+            throw new IOException("Translation to " + nativeFormat + 
+                                  " is not supported."); 
         }
     }
 
@@ -174,9 +174,9 @@ public class XDataTransferer extends DataTransferer {
      * Translates either a byte array or an input stream which contain
      * platform-specific image data in the given format into an Image.
      */
-    protected Image platformImageBytesOrStreamToImage(InputStream inputStream,
-                                                      byte[] bytes,
-                                                      long format)
+    protected Image platformImageBytesOrStreamToImage(InputStream inputStream, 
+                                                      byte[] bytes, 
+                                                      long format) 
       throws IOException {
         String mimeType = null;
         if (format == PNG_ATOM.getAtom()) {
@@ -200,15 +200,15 @@ public class XDataTransferer extends DataTransferer {
             return standardImageBytesOrStreamToImage(inputStream, bytes, mimeType);
         } else {
             String nativeFormat = getNativeForFormat(format);
-            throw new IOException("Translation from " + nativeFormat +
-                                  " is not supported.");
+            throw new IOException("Translation from " + nativeFormat + 
+                                  " is not supported."); 
         }
     }
 
     protected String[] dragQueryFile(byte[] bytes) {
         XToolkit.awtLock();
         try {
-            return XlibWrapper.XTextPropertyToStringList(bytes,
+            return XlibWrapper.XTextPropertyToStringList(bytes, 
                                                          XAtom.get("STRING").getAtom());
         } finally {
             XToolkit.awtUnlock();
@@ -221,7 +221,7 @@ public class XDataTransferer extends DataTransferer {
      */
     private boolean isMimeFormat(long format, String primaryType) {
         String nat = getNativeForFormat(format);
-
+        
         if (nat == null) {
             return false;
         }
@@ -241,7 +241,7 @@ public class XDataTransferer extends DataTransferer {
     /*
      * The XDnD protocol prescribes that the Atoms used as targets for data
      * transfer should have string names that represent the corresponding MIME
-     * types.
+     * types. 
      * To meet this requirement we check if the passed native format constitutes
      * a valid MIME and return a list of flavors to which the data in this MIME
      * type can be translated by the Data Transfer subsystem.
@@ -288,11 +288,11 @@ public class XDataTransferer extends DataTransferer {
     private ImageTypeSpecifier getDefaultImageTypeSpecifier() {
         if (defaultSpecifier == null) {
             ColorModel model = ColorModel.getRGBdefault();
-            WritableRaster raster =
+            WritableRaster raster = 
                 model.createCompatibleWritableRaster(10, 10);
 
-            BufferedImage bufferedImage =
-                new BufferedImage(model, raster, model.isAlphaPremultiplied(),
+            BufferedImage bufferedImage = 
+                new BufferedImage(model, raster, model.isAlphaPremultiplied(), 
                                   null);
 
             defaultSpecifier = new ImageTypeSpecifier(bufferedImage);
@@ -304,10 +304,10 @@ public class XDataTransferer extends DataTransferer {
     /*
      * The XDnD protocol prescribes that the Atoms used as targets for data
      * transfer should have string names that represent the corresponding MIME
-     * types.
-     * To meet this requirement we return a list of formats that represent
+     * types. 
+     * To meet this requirement we return a list of formats that represent 
      * MIME types to which the data in this flavor can be translated by the Data
-     * Transfer subsystem.
+     * Transfer subsystem. 
      */
     public List getPlatformMappingsForFlavor(DataFlavor df) {
         List natives = new ArrayList(1);
@@ -337,12 +337,12 @@ public class XDataTransferer extends DataTransferer {
             String[] mimeTypes = ImageIO.getWriterMIMETypes();
             if (mimeTypes != null) {
                 for (int i = 0; i < mimeTypes.length; i++) {
-                    Iterator writers =
+                    Iterator writers = 
                         ImageIO.getImageWritersByMIMEType(mimeTypes[i]);
 
                     while (writers.hasNext()) {
                         ImageWriter imageWriter = (ImageWriter)writers.next();
-                        ImageWriterSpi writerSpi =
+                        ImageWriterSpi writerSpi = 
                             imageWriter.getOriginatingProvider();
 
                         if (writerSpi != null &&
@@ -378,3 +378,4 @@ public class XDataTransferer extends DataTransferer {
         return natives;
     }
 }
+

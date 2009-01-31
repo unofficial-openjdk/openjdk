@@ -43,7 +43,7 @@ public class InvalidRelationTypeException extends RelationException {
      * Default constructor, no message put in exception.
      */
     public InvalidRelationTypeException() {
-        super();
+	super();
     }
 
     /**
@@ -52,6 +52,6 @@ public class InvalidRelationTypeException extends RelationException {
      * @param message the detail message.
      */
     public InvalidRelationTypeException(String message) {
-        super(message);
+	super(message);
     }
 }

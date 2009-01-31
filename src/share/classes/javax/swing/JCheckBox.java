@@ -38,13 +38,13 @@ import java.io.IOException;
 
 /**
  * An implementation of a check box -- an item that can be selected or
- * deselected, and which displays its state to the user.
+ * deselected, and which displays its state to the user. 
  * By convention, any number of check boxes in a group can be selected.
  * See <a href="http://java.sun.com/docs/books/tutorial/uiswing/components/button.html">How to Use Buttons, Check Boxes, and Radio Buttons</a>
  * in <em>The Java Tutorial</em>
  * for examples and information on using check boxes.
  * <p>
- * Buttons can be configured, and to some degree controlled, by
+ * Buttons can be configured, and to some degree controlled, by 
  * <code><a href="Action.html">Action</a></code>s.  Using an
  * <code>Action</code> with a button has many benefits beyond directly
  * configuring a button.  Refer to <a href="Action.html#buttonActions">
@@ -73,6 +73,7 @@ import java.io.IOException;
  *   attribute: isContainer false
  * description: A component which can be selected or deselected.
  *
+ * @version %I% %G%
  * @author Jeff Dinkins
  */
 public class JCheckBox extends JToggleButton implements Accessible {
@@ -104,7 +105,7 @@ public class JCheckBox extends JToggleButton implements Accessible {
     public JCheckBox(Icon icon) {
         this(null, icon, false);
     }
-
+    
     /**
      * Creates a check box with an icon and specifies whether
      * or not it is initially selected.
@@ -116,7 +117,7 @@ public class JCheckBox extends JToggleButton implements Accessible {
     public JCheckBox(Icon icon, boolean selected) {
         this(null, icon, selected);
     }
-
+    
     /**
      * Creates an initially unselected check box with text.
      *
@@ -127,19 +128,19 @@ public class JCheckBox extends JToggleButton implements Accessible {
     }
 
     /**
-     * Creates a check box where properties are taken from the
+     * Creates a check box where properties are taken from the 
      * Action supplied.
      *
      * @since 1.3
      */
     public JCheckBox(Action a) {
         this();
-        setAction(a);
+	setAction(a);
     }
 
 
     /**
-     * Creates a check box with text and specifies whether
+     * Creates a check box with text and specifies whether 
      * or not it is initially selected.
      *
      * @param text the text of the check box.
@@ -151,7 +152,7 @@ public class JCheckBox extends JToggleButton implements Accessible {
     }
 
     /**
-     * Creates an initially unselected check box with
+     * Creates an initially unselected check box with 
      * the specified text and icon.
      *
      * @param text the text of the check box.
@@ -205,7 +206,7 @@ public class JCheckBox extends JToggleButton implements Accessible {
         if (b != oldValue) {
             revalidate();
             repaint();
-        }
+	}
     }
 
     /**
@@ -216,7 +217,7 @@ public class JCheckBox extends JToggleButton implements Accessible {
      * @since 1.3
      */
     public boolean isBorderPaintedFlat() {
-        return flat;
+	return flat;
     }
 
     /**
@@ -272,28 +273,28 @@ public class JCheckBox extends JToggleButton implements Accessible {
      * See JComponent.readObject() for information about serialization
      * in Swing.
      */
-    private void readObject(ObjectInputStream s)
-        throws IOException, ClassNotFoundException
+    private void readObject(ObjectInputStream s) 
+	throws IOException, ClassNotFoundException 
     {
         s.defaultReadObject();
-        if (getUIClassID().equals(uiClassID)) {
-            updateUI();
-        }
+	if (getUIClassID().equals(uiClassID)) {
+	    updateUI();
+	}
     }
 
 
     /**
-     * Returns a string representation of this JCheckBox. This method
-     * is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * Returns a string representation of this JCheckBox. This method 
+     * is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between      
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
      * specific new aspects of the JFC components.
-     *
+     * 
      * @return  a string representation of this JCheckBox.
      */
     protected String paramString() {
-        return super.paramString();
+	return super.paramString();
     }
 
 /////////////////
@@ -301,12 +302,12 @@ public class JCheckBox extends JToggleButton implements Accessible {
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JCheckBox.
-     * For JCheckBoxes, the AccessibleContext takes the form of an
-     * AccessibleJCheckBox.
+     * Gets the AccessibleContext associated with this JCheckBox. 
+     * For JCheckBoxes, the AccessibleContext takes the form of an 
+     * AccessibleJCheckBox. 
      * A new AccessibleJCheckBox instance is created if necessary.
      *
-     * @return an AccessibleJCheckBox that serves as the
+     * @return an AccessibleJCheckBox that serves as the 
      *         AccessibleContext of this JCheckBox
      * @beaninfo
      *       expert: true
@@ -320,9 +321,9 @@ public class JCheckBox extends JToggleButton implements Accessible {
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>JCheckBox</code> class.  It provides an implementation of the
-     * Java Accessibility API appropriate to check box user-interface
+     * This class implements accessibility support for the 
+     * <code>JCheckBox</code> class.  It provides an implementation of the 
+     * Java Accessibility API appropriate to check box user-interface 
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -348,3 +349,4 @@ public class JCheckBox extends JToggleButton implements Accessible {
 
     } // inner class AccessibleJCheckBox
 }
+  

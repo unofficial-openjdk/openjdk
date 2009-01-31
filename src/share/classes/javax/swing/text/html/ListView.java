@@ -32,6 +32,7 @@ import javax.swing.text.*;
  * A view implementation to display an html list
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  */
 public class ListView extends BlockView  {
 
@@ -41,7 +42,7 @@ public class ListView extends BlockView  {
      * @param elem the element to create a view for
      */
     public ListView(Element elem) {
-        super(elem, View.Y_AXIS);
+	super(elem, View.Y_AXIS);
     }
 
     /**
@@ -70,33 +71,33 @@ public class ListView extends BlockView  {
      * @see View#paint
      */
     public void paint(Graphics g, Shape allocation) {
-        super.paint(g, allocation);
-        Rectangle alloc = allocation.getBounds();
-        Rectangle clip = g.getClipBounds();
-        // Since listPainter paints in the insets we have to check for the
-        // case where the child is not painted because the paint region is
-        // to the left of the child. This assumes the ListPainter paints in
-        // the left margin.
-        if ((clip.x + clip.width) < (alloc.x + getLeftInset())) {
-            Rectangle childRect = alloc;
-            alloc = getInsideAllocation(allocation);
-            int n = getViewCount();
-            int endY = clip.y + clip.height;
-            for (int i = 0; i < n; i++) {
-                childRect.setBounds(alloc);
-                childAllocation(i, childRect);
-                if (childRect.y < endY) {
-                    if ((childRect.y + childRect.height) >= clip.y) {
-                        listPainter.paint(g, childRect.x, childRect.y,
-                                          childRect.width, childRect.height,
-                                          this, i);
-                    }
-                }
-                else {
-                    break;
-                }
-            }
-        }
+	super.paint(g, allocation);
+	Rectangle alloc = allocation.getBounds();
+	Rectangle clip = g.getClipBounds();
+	// Since listPainter paints in the insets we have to check for the
+	// case where the child is not painted because the paint region is
+	// to the left of the child. This assumes the ListPainter paints in
+	// the left margin.
+	if ((clip.x + clip.width) < (alloc.x + getLeftInset())) {
+	    Rectangle childRect = alloc;
+	    alloc = getInsideAllocation(allocation);
+	    int n = getViewCount();
+	    int endY = clip.y + clip.height;
+	    for (int i = 0; i < n; i++) {
+		childRect.setBounds(alloc);
+		childAllocation(i, childRect);
+		if (childRect.y < endY) {
+		    if ((childRect.y + childRect.height) >= clip.y) {
+			listPainter.paint(g, childRect.x, childRect.y,
+					  childRect.width, childRect.height,
+					  this, i);
+		    }
+		}
+		else {
+		    break;
+		}
+	    }
+	}
     }
 
     /**
@@ -109,13 +110,13 @@ public class ListView extends BlockView  {
      * @param index the index of the child
      */
     protected void paintChild(Graphics g, Rectangle alloc, int index) {
-        listPainter.paint(g, alloc.x, alloc.y, alloc.width, alloc.height, this, index);
-        super.paintChild(g, alloc, index);
+	listPainter.paint(g, alloc.x, alloc.y, alloc.width, alloc.height, this, index);
+	super.paintChild(g, alloc, index);
     }
 
     protected void setPropertiesFromAttributes() {
-        super.setPropertiesFromAttributes();
-        listPainter = getStyleSheet().getListPainter(getAttributes());
+	super.setPropertiesFromAttributes();
+	listPainter = getStyleSheet().getListPainter(getAttributes());
     }
 
     private StyleSheet.ListPainter listPainter;

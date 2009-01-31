@@ -34,28 +34,29 @@ import com.sun.jndi.cosnaming.CNCtx;
 
 /**
  * An IIOP URL context factory.
- *
+ * 
  * @author Rosanna Lee
+ * @version %I% %E%
  */
 
 public class iiopURLContextFactory implements ObjectFactory {
 
     public Object getObjectInstance(Object urlInfo, Name name, Context nameCtx,
-                                    Hashtable<?,?> env) throws Exception {
+				    Hashtable<?,?> env) throws Exception {
 
 //System.out.println("iiopURLContextFactory " + urlInfo);
-        if (urlInfo == null) {
-            return new iiopURLContext(env);
-        }
-        if (urlInfo instanceof String) {
-            return getUsingURL((String)urlInfo, env);
-        } else if (urlInfo instanceof String[]) {
-            return getUsingURLs((String[])urlInfo, env);
-        } else {
-            throw (new IllegalArgumentException(
-                    "iiopURLContextFactory.getObjectInstance: " +
-                    "argument must be a URL String or array of URLs"));
-        }
+	if (urlInfo == null) {
+	    return new iiopURLContext(env);
+	}
+	if (urlInfo instanceof String) {
+	    return getUsingURL((String)urlInfo, env);
+	} else if (urlInfo instanceof String[]) {
+	    return getUsingURLs((String[])urlInfo, env);
+	} else {
+	    throw (new IllegalArgumentException(
+		    "iiopURLContextFactory.getObjectInstance: " +
+		    "argument must be a URL String or array of URLs"));
+	}
     }
 
     /**
@@ -65,37 +66,37 @@ public class iiopURLContextFactory implements ObjectFactory {
       *
       * For example, with a iiop URL "iiop://localhost:900/rest/of/name",
       * this method resolves "iiop://localhost:900/" to the "NameService"
-      * context on for the ORB at 'localhost' on port 900,
+      * context on for the ORB at 'localhost' on port 900, 
       * and returns as the remaining name "rest/of/name".
       */
     static ResolveResult getUsingURLIgnoreRest(String url, Hashtable env)
-        throws NamingException {
-        return CNCtx.createUsingURL(url, env);
+	throws NamingException {
+	return CNCtx.createUsingURL(url, env);
     }
 
     private static Object getUsingURL(String url, Hashtable env)
-        throws NamingException {
-        ResolveResult res = getUsingURLIgnoreRest(url, env);
+	throws NamingException {
+	ResolveResult res = getUsingURLIgnoreRest(url, env);
 
-        Context ctx = (Context)res.getResolvedObj();
-        try {
-            return ctx.lookup(res.getRemainingName());
-        } finally {
-            ctx.close();
-        }
+	Context ctx = (Context)res.getResolvedObj();
+	try {
+	    return ctx.lookup(res.getRemainingName());
+	} finally {
+	    ctx.close();
+	}
     }
 
     private static Object getUsingURLs(String[] urls, Hashtable env) {
-        for (int i = 0; i < urls.length; i++) {
-            String url = urls[i];
-            try {
-                Object obj = getUsingURL(url, env);
-                if (obj != null) {
-                    return obj;
-                }
-            } catch (NamingException e) {
-            }
-        }
-        return null;    // %%% exception??
+	for (int i = 0; i < urls.length; i++) {
+	    String url = urls[i];
+	    try {
+		Object obj = getUsingURL(url, env);
+		if (obj != null) {
+		    return obj;
+		}
+	    } catch (NamingException e) {
+	    }
+	}
+	return null;	// %%% exception??
     }
 }

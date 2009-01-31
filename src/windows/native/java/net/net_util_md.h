@@ -60,7 +60,7 @@
  *     1310 for Vc7
  */
 
-#define IPPROTO_IPV6    41
+#define IPPROTO_IPV6	41
 #define IPV6_MULTICAST_IF 9
 
 struct in6_addr {
@@ -86,11 +86,11 @@ struct in6_addr {
 /* IPv6 socket address structure, RFC 2553 */
 
 struct SOCKADDR_IN6 {
-        short   sin6_family;    /* AF_INET6 */
-        u_short sin6_port;      /* Transport level port number */
-        u_long  sin6_flowinfo;  /* IPv6 flow information */
-        struct in6_addr sin6_addr; /* IPv6 address */
-        u_long sin6_scope_id;  /* set of interfaces for a scope */
+	short   sin6_family;    /* AF_INET6 */
+	u_short sin6_port;      /* Transport level port number */
+	u_long  sin6_flowinfo;  /* IPv6 flow information */
+	struct in6_addr sin6_addr; /* IPv6 address */
+	u_long sin6_scope_id;  /* set of interfaces for a scope */
 };
 
 
@@ -168,9 +168,9 @@ IN6_IS_ADDR_LINKLOCAL(const struct in6_addr *a)
 #define NI_DGRAM        0x10  /* Service is a datagram service */
 
 
-#define IN6_IS_ADDR_V4MAPPED(a) \
-    (((a)->s6_words[0] == 0) && ((a)->s6_words[1] == 0) &&      \
-    ((a)->s6_words[2] == 0) && ((a)->s6_words[3] == 0) &&       \
+#define IN6_IS_ADDR_V4MAPPED(a)	\
+    (((a)->s6_words[0] == 0) && ((a)->s6_words[1] == 0) &&	\
+    ((a)->s6_words[2] == 0) && ((a)->s6_words[3] == 0) &&	\
     ((a)->s6_words[4] == 0) && ((a)->s6_words[5] == 0xffff))
 
 
@@ -200,7 +200,7 @@ typedef
 int
 (WSAAPI * LPFN_GETNAMEINFO)(
     IN  const struct sockaddr FAR * sa,
-    IN  int             salen,
+    IN  int       	salen,
     OUT char FAR *      host,
     IN  DWORD           hostlen,
     OUT char FAR *      serv,
@@ -219,9 +219,9 @@ LPFN_GETNAMEINFO getnameinfo_ptr;
 #endif
 
 #ifndef IN6_IS_ADDR_ANY
-#define IN6_IS_ADDR_ANY(a)      \
-    (((a)->s6_words[0] == 0) && ((a)->s6_words[1] == 0) &&      \
-    ((a)->s6_words[2] == 0) && ((a)->s6_words[3] == 0) &&       \
+#define IN6_IS_ADDR_ANY(a)	\
+    (((a)->s6_words[0] == 0) && ((a)->s6_words[1] == 0) &&	\
+    ((a)->s6_words[2] == 0) && ((a)->s6_words[3] == 0) &&	\
     ((a)->s6_words[4] == 0) && ((a)->s6_words[5] == 0))
 #endif
 
@@ -232,8 +232,8 @@ LPFN_GETNAMEINFO getnameinfo_ptr;
 #include "java_io_FileDescriptor.h"
 #include "java_net_SocketOptions.h"
 
-#define MAX_BUFFER_LEN          2048
-#define MAX_HEAP_BUFFER_LEN     65536
+#define MAX_BUFFER_LEN		2048
+#define MAX_HEAP_BUFFER_LEN	65536
 
 
 /* true if SO_RCVTIMEO is supported by underlying provider */
@@ -247,47 +247,47 @@ void NET_ThrowCurrent(JNIEnv *env, char *msg);
 int NET_GetDefaultTOS(void);
 
 typedef union {
-    struct sockaddr     him;
-    struct sockaddr_in  him4;
-    struct SOCKADDR_IN6 him6;
+    struct sockaddr	him;
+    struct sockaddr_in	him4;
+    struct SOCKADDR_IN6	him6;
 } SOCKETADDRESS;
 
 /*
- * passed to NET_BindV6. Both ipv4_fd and ipv6_fd must be created and unbound
+ * passed to NET_BindV6. Both ipv4_fd and ipv6_fd must be created and unbound 
  * sockets. On return they may refer to different sockets.
  */
 struct ipv6bind {
-    SOCKETADDRESS       *addr;
-    SOCKET               ipv4_fd;
-    SOCKET               ipv6_fd;
+    SOCKETADDRESS	*addr;
+    SOCKET	 	 ipv4_fd;
+    SOCKET 	 	 ipv6_fd;
 };
 
-#define SOCKETADDRESS_LEN(X)    \
-        (((X)->him.sa_family==AF_INET6)? sizeof(struct SOCKADDR_IN6) : \
-                         sizeof(struct sockaddr_in))
+#define SOCKETADDRESS_LEN(X)	\
+	(((X)->him.sa_family==AF_INET6)? sizeof(struct SOCKADDR_IN6) : \
+			 sizeof(struct sockaddr_in))
 
-#define SOCKETADDRESS_COPY(DST,SRC) {                           \
-    if ((SRC)->sa_family == AF_INET6) {                         \
-        memcpy ((DST), (SRC), sizeof (struct SOCKADDR_IN6));    \
-    } else {                                                    \
-        memcpy ((DST), (SRC), sizeof (struct sockaddr_in));     \
-    }                                                           \
+#define SOCKETADDRESS_COPY(DST,SRC) {				\
+    if ((SRC)->sa_family == AF_INET6) {				\
+	memcpy ((DST), (SRC), sizeof (struct SOCKADDR_IN6)); 	\
+    } else {							\
+	memcpy ((DST), (SRC), sizeof (struct sockaddr_in)); 	\
+    }								\
 }
-
-#define SET_PORT(X,Y) {                         \
-    if ((X)->him.sa_family == AF_INET) {        \
-        (X)->him4.sin_port = (Y);               \
-    } else {                                    \
-        (X)->him6.sin6_port = (Y);              \
-    }                                           \
+    
+#define SET_PORT(X,Y) {				\
+    if ((X)->him.sa_family == AF_INET) {	\
+    	(X)->him4.sin_port = (Y);		\
+    } else {					\
+    	(X)->him6.sin6_port = (Y);		\
+    }						\
 }
 
 #define GET_PORT(X) ((X)->him.sa_family==AF_INET ?(X)->him4.sin_port: (X)->him6.sin6_port)
 
 #define IS_LOOPBACK_ADDRESS(x) ( \
     ((x)->him.sa_family == AF_INET) ? \
-        (ntohl((x)->him4.sin_addr.s_addr)==INADDR_LOOPBACK) : \
-        (IN6ADDR_ISLOOPBACK (x)) \
+	(ntohl((x)->him4.sin_addr.s_addr)==INADDR_LOOPBACK) : \
+	(IN6ADDR_ISLOOPBACK (x)) \
 )
 
 JNIEXPORT int JNICALL NET_SocketClose(int fd);
@@ -309,9 +309,9 @@ JNIEXPORT int JNICALL NET_Timeout2(int fd, int fd1, long timeout, int *fdret);
 
 JNIEXPORT int JNICALL NET_BindV6(struct ipv6bind* b);
 
-#define NET_WAIT_READ   0x01
-#define NET_WAIT_WRITE  0x02
-#define NET_WAIT_CONNECT        0x04
+#define NET_WAIT_READ	0x01
+#define NET_WAIT_WRITE	0x02
+#define NET_WAIT_CONNECT	0x04
 
 extern jint NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout);
 

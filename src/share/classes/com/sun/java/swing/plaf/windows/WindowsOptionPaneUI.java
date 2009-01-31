@@ -45,3 +45,4 @@ import java.beans.PropertyChangeListener;
  */
 public class WindowsOptionPaneUI extends BasicOptionPaneUI {
 }
+

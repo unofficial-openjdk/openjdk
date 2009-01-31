@@ -1,21 +1,21 @@
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ * 
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.
- *
+ * 
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ * 
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ * 
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
@@ -57,45 +57,45 @@ public class ThresholdTest {
         if (threshold != 0) {
             // Expect the default threshold is zero (disabled)
             throw new RuntimeException("TEST FAILED: " +
-                "Pool " + p.getName() +
-                " has non-zero threshold (" + threshold);
+                "Pool " + p.getName() + 
+                " has non-zero threshold (" + threshold); 
         }
-
+  
         // isUsageThresholdExceeded() should return false if threshold == 0
         if (p.isUsageThresholdExceeded()) {
             throw new RuntimeException("TEST FAILED: " +
-                "Pool " + p.getName() +
+                "Pool " + p.getName() + 
                 " isUsageThresholdExceeded() returned true" +
-                " but threshold = 0");
+                " but threshold = 0"); 
         }
-
+ 
         p.setUsageThreshold(1);
         MemoryUsage u = p.getUsage();
-        if (u.getUsed() >= 1) {
+        if (u.getUsed() >= 1) { 
             if (!p.isUsageThresholdExceeded()) {
                 throw new RuntimeException("TEST FAILED: " +
-                    "Pool " + p.getName() +
+                    "Pool " + p.getName() + 
                     " isUsageThresholdExceeded() returned false but " +
                     " threshold(" + p.getUsageThreshold() +
-                    ") <= used(" + u.getUsed() + ")");
+                    ") <= used(" + u.getUsed() + ")"); 
             }
         } else {
             if (p.isUsageThresholdExceeded()) {
                 throw new RuntimeException("TEST FAILED: " +
-                    "Pool " + p.getName() +
+                    "Pool " + p.getName() + 
                     " isUsageThresholdExceeded() returned true but" +
                     " threshold(" + p.getUsageThreshold() +
-                    ") > used(" + u.getUsed() + ")");
+                    ") > used(" + u.getUsed() + ")"); 
             }
         }
 
-        // disable low memory detection and isUsageThresholdExceeded()
+        // disable low memory detection and isUsageThresholdExceeded() 
         // should return false
         p.setUsageThreshold(0);
         if (p.isUsageThresholdExceeded()) {
             throw new RuntimeException("TEST FAILED: " +
-                "Pool " + p.getName() +
-                " isUsageThresholdExceeded() returned true but threshold = 0");
+                "Pool " + p.getName() + 
+                " isUsageThresholdExceeded() returned true but threshold = 0"); 
         }
     }
 
@@ -109,52 +109,52 @@ public class ThresholdTest {
         if (threshold != 0) {
             // Expect the default threshold is zero (disabled)
             throw new RuntimeException("TEST FAILED: " +
-                "Pool " + p.getName() +
-                " has non-zero threshold (" + threshold);
+                "Pool " + p.getName() + 
+                " has non-zero threshold (" + threshold); 
         }
-
+  
         // isCollectionUsageThresholdExceeded() should return false if threshold == 0
         if (p.isCollectionUsageThresholdExceeded()) {
             throw new RuntimeException("TEST FAILED: " +
-                "Pool " + p.getName() +
+                "Pool " + p.getName() + 
                 " isCollectionUsageThresholdExceeded() returned true" +
-                " but threshold = 0");
+                " but threshold = 0"); 
         }
-
+ 
         p.setCollectionUsageThreshold(1);
         MemoryUsage u = p.getCollectionUsage();
         if (u == null) {
             if (p.isCollectionUsageThresholdExceeded()) {
                 throw new RuntimeException("TEST FAILED: " +
-                    "Pool " + p.getName() +
+                    "Pool " + p.getName() + 
                     " isCollectionUsageThresholdExceeded() returned true but" +
                     " getCollectionUsage() return null");
             }
-        } else if (u.getUsed() >= 1) {
+        } else if (u.getUsed() >= 1) { 
             if (!p.isCollectionUsageThresholdExceeded()) {
                 throw new RuntimeException("TEST FAILED: " +
-                    "Pool " + p.getName() +
+                    "Pool " + p.getName() + 
                     " isCollectionUsageThresholdExceeded() returned false but " +
                     " threshold(" + p.getCollectionUsageThreshold() +
-                    ") < used(" + u.getUsed() + ")");
+                    ") < used(" + u.getUsed() + ")"); 
             }
         } else {
             if (p.isCollectionUsageThresholdExceeded()) {
                 throw new RuntimeException("TEST FAILED: " +
-                    "Pool " + p.getName() +
+                    "Pool " + p.getName() + 
                     " isCollectionUsageThresholdExceeded() returned true but" +
                     " threshold(" + p.getCollectionUsageThreshold() +
-                    ") > used(" + u.getUsed() + ")");
+                    ") > used(" + u.getUsed() + ")"); 
             }
         }
 
-        // disable low memory detection and isCollectionUsageThresholdExceeded()
+        // disable low memory detection and isCollectionUsageThresholdExceeded() 
         // should return false
         p.setCollectionUsageThreshold(0);
         if (p.isCollectionUsageThresholdExceeded()) {
             throw new RuntimeException("TEST FAILED: " +
-                "Pool " + p.getName() +
-                " isCollectionUsageThresholdExceeded() returned true but threshold = 0");
+                "Pool " + p.getName() + 
+                " isCollectionUsageThresholdExceeded() returned true but threshold = 0"); 
         }
     }
 }

@@ -39,6 +39,7 @@ package javax.security.cert;
  *
  * @since 1.4
  * @author Hemma Prafullchandra
+ * @version %I%
  */
 public class CertificateParsingException extends CertificateException {
 
@@ -55,7 +56,7 @@ public class CertificateParsingException extends CertificateException {
      * Constructs a CertificateParsingException with the specified detail
      * message. A detail message is a String that describes this
      * particular exception.
-     *
+     *   
      * @param message the detail message.
      */
     public CertificateParsingException(String message) {

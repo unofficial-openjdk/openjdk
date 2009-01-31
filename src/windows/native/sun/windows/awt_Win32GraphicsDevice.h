@@ -41,77 +41,77 @@ class Devices;
 
 class AwtWin32GraphicsDevice {
 public:
-                            AwtWin32GraphicsDevice(int screen, MHND mhnd, Devices *arr);
-                            ~AwtWin32GraphicsDevice();
-    void                    UpdateDeviceColorState();
-    void                    SetGrayness(int grayValue);
-    int                     GetGrayness() { return colorData->grayscale; }
-    HDC                     GetDC();
-    void                    ReleaseDC(HDC hDC);
-    jobject                 GetColorModel(JNIEnv *env,
-                                          jboolean useDeviceSettings);
-    void                    Initialize();
-    void                    UpdateDynamicColorModel();
-    BOOL                    UpdateSystemPalette();
-    unsigned int            *GetSystemPaletteEntries();
-    unsigned char           *GetSystemInverseLUT();
-    void                    SetJavaDevice(JNIEnv *env, jobject objPtr);
-    HPALETTE                SelectPalette(HDC hDC);
-    void                    RealizePalette(HDC hDC);
-    HPALETTE                GetPalette();
-    ColorData               *GetColorData() { return cData; }
-    int                     GetBitDepth() { return colorData->bitsperpixel; }
-    MHND                    GetMonitor() { return monitor; }
+			    AwtWin32GraphicsDevice(int screen, MHND mhnd, Devices *arr);
+			    ~AwtWin32GraphicsDevice();
+    void		    UpdateDeviceColorState();
+    void		    SetGrayness(int grayValue);
+    int			    GetGrayness() { return colorData->grayscale; }
+    HDC			    GetDC();
+    void		    ReleaseDC(HDC hDC);
+    jobject		    GetColorModel(JNIEnv *env, 
+					  jboolean useDeviceSettings);
+    void		    Initialize();
+    void		    UpdateDynamicColorModel();
+    BOOL		    UpdateSystemPalette();
+    unsigned int	    *GetSystemPaletteEntries();
+    unsigned char	    *GetSystemInverseLUT();
+    void		    SetJavaDevice(JNIEnv *env, jobject objPtr);
+    HPALETTE		    SelectPalette(HDC hDC);
+    void		    RealizePalette(HDC hDC);
+    HPALETTE		    GetPalette();
+    ColorData		    *GetColorData() { return cData; }
+    int	                    GetBitDepth() { return colorData->bitsperpixel; }
+    MHND		    GetMonitor() { return monitor; }
     MONITOR_INFO            *GetMonitorInfo() { return pMonitorInfo; }
     DxCapabilities          *GetDxCaps() { return &dxCaps; }
     jobject                 GetJavaDevice() { return javaDevice; }
-    int                     GetDeviceIndex() { return screen; }
-    void                    Release();
-    void                    DisableOffscreenAcceleration();
+    int			    GetDeviceIndex() { return screen; }
+    void		    Release();
+    void		    DisableOffscreenAcceleration();
     void                    Invalidate(JNIEnv *env);
 
-    static int              DeviceIndexForWindow(HWND hWnd);
-    static jobject          GetColorModel(JNIEnv *env, jboolean dynamic,
-                                          int deviceIndex);
-    static HPALETTE         SelectPalette(HDC hDC, int deviceIndex);
-    static void             RealizePalette(HDC hDC, int deviceIndex);
-    static ColorData        *GetColorData(int deviceIndex);
-    static int              GetGrayness(int deviceIndex);
-    static void             UpdateDynamicColorModel(int deviceIndex);
-    static BOOL             UpdateSystemPalette(int deviceIndex);
-    static HPALETTE         GetPalette(int deviceIndex);
-    static MHND             GetMonitor(int deviceIndex);
-    static MONITOR_INFO     *GetMonitorInfo(int deviceIndex);
+    static int		    DeviceIndexForWindow(HWND hWnd);
+    static jobject	    GetColorModel(JNIEnv *env, jboolean dynamic, 
+					  int deviceIndex);
+    static HPALETTE	    SelectPalette(HDC hDC, int deviceIndex);
+    static void		    RealizePalette(HDC hDC, int deviceIndex);
+    static ColorData	    *GetColorData(int deviceIndex);
+    static int		    GetGrayness(int deviceIndex);
+    static void		    UpdateDynamicColorModel(int deviceIndex);
+    static BOOL		    UpdateSystemPalette(int deviceIndex);
+    static HPALETTE	    GetPalette(int deviceIndex);
+    static MHND		    GetMonitor(int deviceIndex);
+    static MONITOR_INFO	    *GetMonitorInfo(int deviceIndex);
     static void             ResetAllMonitorInfo();
-    static BOOL             IsPrimaryPalettized() { return primaryPalettized; }
-    static int              GetDefaultDeviceIndex() { return primaryIndex; }
-    static void             DisableOffscreenAccelerationForDevice(MHND hMonitor);
+    static BOOL		    IsPrimaryPalettized() { return primaryPalettized; }
+    static int		    GetDefaultDeviceIndex() { return primaryIndex; }
+    static void		    DisableOffscreenAccelerationForDevice(MHND hMonitor);
     static DxCapabilities   *GetDxCapsForDevice(MHND hMonitor);
     static HDC              GetDCFromScreen(int screen);
     static int              GetScreenFromMHND(MHND mon);
 
-    static int              primaryIndex;
-    static BOOL             primaryPalettized;
-    static jclass           indexCMClass;
-    static jclass           wToolkitClass;
-    static jfieldID         dynamicColorModelID;
-    static jfieldID         indexCMrgbID;
-    static jfieldID         indexCMcacheID;
-    static jfieldID         accelerationEnabledID;
-    static jmethodID        paletteChangedMID;
+    static int		    primaryIndex;
+    static BOOL		    primaryPalettized;
+    static jclass	    indexCMClass;
+    static jclass	    wToolkitClass;
+    static jfieldID	    dynamicColorModelID;
+    static jfieldID	    indexCMrgbID;
+    static jfieldID	    indexCMcacheID;
+    static jfieldID	    accelerationEnabledID;
+    static jmethodID	    paletteChangedMID;
 
 private:
     static BOOL             AreSameMonitors(MHND mon1, MHND mon2);
-    ImgColorData            *colorData;
-    AwtPalette              *palette;
-    ColorData               *cData;     // Could be static, but may sometime
-                                        // have per-device info in this structure
-    BITMAPINFO              *gpBitmapInfo;
-    int                     screen;
-    MHND                    monitor;
+    ImgColorData	    *colorData;
+    AwtPalette		    *palette;
+    ColorData		    *cData;	// Could be static, but may sometime
+					// have per-device info in this structure
+    BITMAPINFO		    *gpBitmapInfo;
+    int			    screen;
+    MHND		    monitor;
     MONITOR_INFO            *pMonitorInfo;
-    jobject                 javaDevice;
-    Devices                 *devicesArray;
+    jobject		    javaDevice;
+    Devices		    *devicesArray;
     DxCapabilities          dxCaps;
 };
 

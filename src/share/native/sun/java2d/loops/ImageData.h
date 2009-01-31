@@ -191,7 +191,7 @@ typedef struct ImageDataIndex8GrayLockInfo {
     jintArray  arrayToLockLut;
     unsigned int *arrayLockedLut;
     unsigned int arrayLutSize;
-    unsigned int minLut[256];
+    unsigned int minLut[256]; 
     ColorData *colorData;
     unsigned int lockedForWrite;
     const char* inv_cmap;       /* The inverse cmap to use */
@@ -259,7 +259,7 @@ getViewOriginFromImageData(JNIEnv *env, jobject img, int *x, int *y);
 
 JNIEXPORT void JNICALL
 getDeviceOriginFromImageData(JNIEnv *env, jobject img, int *x, int *y);
-
+    
 JNIEXPORT void JNICALL
 getOutputOriginFromImageData(JNIEnv *env, jobject img, int *x, int *y);
 
@@ -376,3 +376,6 @@ JNIEXPORT void JNICALL unlockBitImageData(
 #endif
 
 #endif
+
+
+

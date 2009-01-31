@@ -40,6 +40,7 @@ import java.awt.event.*;
  * version of Swing.  A future release of Swing will provide support for
  * long term persistence.
  *
+ * @version %i% %G%
  * @author David Kloba
  */
 public class WindowsDesktopPaneUI extends BasicDesktopPaneUI
@@ -49,11 +50,11 @@ public class WindowsDesktopPaneUI extends BasicDesktopPaneUI
     }
 
     protected void installDesktopManager() {
-        desktopManager = desktop.getDesktopManager();
-        if(desktopManager == null) {
-            desktopManager = new WindowsDesktopManager();
-            desktop.setDesktopManager(desktopManager);
-        }
+	desktopManager = desktop.getDesktopManager();
+	if(desktopManager == null) {
+	    desktopManager = new WindowsDesktopManager();
+	    desktop.setDesktopManager(desktopManager);
+	}
     }
 
     protected void installDefaults() {
@@ -61,7 +62,7 @@ public class WindowsDesktopPaneUI extends BasicDesktopPaneUI
     }
 
     protected void installKeyboardActions() {
-        super.installKeyboardActions();
+	super.installKeyboardActions();
 
         // Request focus if it isn't set.
         if(!desktop.requestDefaultFocus()) {

@@ -26,9 +26,10 @@
 package java.io;
 
 /**
- * Constants written into the Object Serialization Stream.
+ * Constants written into the Object Serialization Stream. 
  *
  * @author  unascribed
+ * @version %I%, %G%
  * @since JDK 1.1
  */
 public interface ObjectStreamConstants {
@@ -46,7 +47,7 @@ public interface ObjectStreamConstants {
     /* Each item in the stream is preceded by a tag
      */
 
-    /**
+    /** 
      * First tag value.
      */
     final static byte TC_BASE = 0x70;
@@ -54,88 +55,88 @@ public interface ObjectStreamConstants {
     /**
      * Null object reference.
      */
-    final static byte TC_NULL =         (byte)0x70;
+    final static byte TC_NULL = 	(byte)0x70;
 
     /**
      * Reference to an object already written into the stream.
      */
-    final static byte TC_REFERENCE =    (byte)0x71;
+    final static byte TC_REFERENCE =	(byte)0x71;
 
     /**
      * new Class Descriptor.
      */
-    final static byte TC_CLASSDESC =    (byte)0x72;
+    final static byte TC_CLASSDESC = 	(byte)0x72;
 
     /**
      * new Object.
      */
-    final static byte TC_OBJECT =       (byte)0x73;
+    final static byte TC_OBJECT = 	(byte)0x73;
 
-    /**
+    /** 
      * new String.
      */
-    final static byte TC_STRING =       (byte)0x74;
+    final static byte TC_STRING = 	(byte)0x74;
 
     /**
      * new Array.
      */
-    final static byte TC_ARRAY =        (byte)0x75;
+    final static byte TC_ARRAY = 	(byte)0x75;
 
     /**
      * Reference to Class.
      */
-    final static byte TC_CLASS =        (byte)0x76;
+    final static byte TC_CLASS = 	(byte)0x76;
 
     /**
      * Block of optional data. Byte following tag indicates number
      * of bytes in this block data.
      */
-    final static byte TC_BLOCKDATA =    (byte)0x77;
+    final static byte TC_BLOCKDATA = 	(byte)0x77;
 
-    /**
+    /** 
      * End of optional block data blocks for an object.
      */
-    final static byte TC_ENDBLOCKDATA = (byte)0x78;
+    final static byte TC_ENDBLOCKDATA =	(byte)0x78;
 
     /**
      * Reset stream context. All handles written into stream are reset.
      */
-    final static byte TC_RESET =        (byte)0x79;
-
+    final static byte TC_RESET = 	(byte)0x79;
+    
     /**
      * long Block data. The long following the tag indicates the
      * number of bytes in this block data.
      */
     final static byte TC_BLOCKDATALONG= (byte)0x7A;
-
+    
     /**
-     * Exception during write.
+     * Exception during write. 
      */
-    final static byte TC_EXCEPTION =    (byte)0x7B;
+    final static byte TC_EXCEPTION = 	(byte)0x7B;
 
     /**
      * Long string.
      */
-    final static byte TC_LONGSTRING =   (byte)0x7C;
+    final static byte TC_LONGSTRING = 	(byte)0x7C;
 
     /**
      * new Proxy Class Descriptor.
      */
-    final static byte TC_PROXYCLASSDESC =       (byte)0x7D;
+    final static byte TC_PROXYCLASSDESC =	(byte)0x7D;
 
     /**
      * new Enum constant.
      * @since 1.5
      */
-    final static byte TC_ENUM =         (byte)0x7E;
+    final static byte TC_ENUM =		(byte)0x7E;
 
-    /**
+    /** 
      * Last tag value.
      */
-    final static byte TC_MAX =          (byte)0x7E;
+    final static byte TC_MAX = 		(byte)0x7E;
 
     /**
-     * First wire handle to be assigned.
+     * First wire handle to be assigned. 
      */
     final static int baseWireHandle = 0x7e0000;
 
@@ -143,21 +144,21 @@ public interface ObjectStreamConstants {
     /******************************************************/
     /* Bit masks for ObjectStreamClass flag.*/
 
-    /**
-     * Bit mask for ObjectStreamClass flag. Indicates a Serializable class
+    /** 
+     * Bit mask for ObjectStreamClass flag. Indicates a Serializable class 
      * defines its own writeObject method.
      */
     final static byte SC_WRITE_METHOD = 0x01;
 
     /**
-     * Bit mask for ObjectStreamClass flag. Indicates Externalizable data
+     * Bit mask for ObjectStreamClass flag. Indicates Externalizable data 
      * written in Block Data mode.
      * Added for PROTOCOL_VERSION_2.
      *
      * @see #PROTOCOL_VERSION_2
      * @since 1.2
      */
-    final static byte SC_BLOCK_DATA = 0x08;
+    final static byte SC_BLOCK_DATA = 0x08;  
 
     /**
      * Bit mask for ObjectStreamClass flag. Indicates class is Serializable.
@@ -175,12 +176,12 @@ public interface ObjectStreamConstants {
      */
     final static byte SC_ENUM = 0x10;
 
-
+    
     /* *******************************************************************/
     /* Security permissions */
 
     /**
-     * Enable substitution of one object for another during
+     * Enable substitution of one object for another during 
      * serialization/deserialization.
      *
      * @see java.io.ObjectOutputStream#enableReplaceObject(boolean)
@@ -201,10 +202,10 @@ public interface ObjectStreamConstants {
                     new SerializablePermission("enableSubclassImplementation");
    /**
     * A Stream Protocol Version. <p>
-    *
-    * All externalizable data is written in JDK 1.1 external data
-    * format after calling this method. This version is needed to write
-    * streams containing Externalizable data that can be read by
+    * 
+    * All externalizable data is written in JDK 1.1 external data 
+    * format after calling this method. This version is needed to write 
+    * streams containing Externalizable data that can be read by 
     * pre-JDK 1.1.6 JVMs.
     *
     * @see java.io.ObjectOutputStream#useProtocolVersion(int)
@@ -212,20 +213,20 @@ public interface ObjectStreamConstants {
     */
     public final static int PROTOCOL_VERSION_1 = 1;
 
-
+    
    /**
     * A Stream Protocol Version. <p>
-    *
+    * 
     * This protocol is written by JVM 1.2.
     *
-    * Externalizable data is written in block data mode and is
+    * Externalizable data is written in block data mode and is 
     * terminated with TC_ENDBLOCKDATA. Externalizable classdescriptor
-    * flags has SC_BLOCK_DATA enabled. JVM 1.1.6 and greater can
+    * flags has SC_BLOCK_DATA enabled. JVM 1.1.6 and greater can 
     * read this format change.
     *
     * Enables writing a nonSerializable class descriptor into the
-    * stream. The serialVersionUID of a nonSerializable class is
-    * set to 0L.
+    * stream. The serialVersionUID of a nonSerializable class is 
+    * set to 0L. 
     *
     * @see java.io.ObjectOutputStream#useProtocolVersion(int)
     * @see #SC_BLOCK_DATA

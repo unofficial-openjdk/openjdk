@@ -30,7 +30,7 @@ import java.util.zip.*;
 import java.io.*;
 
 public class StreamConstructor {
-
+  
     public static void main(String[] args) throws Exception {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Deflater def = new Deflater();
@@ -38,26 +38,26 @@ public class StreamConstructor {
         Inflater inf = new Inflater();
         InflaterInputStream infOS;
         DeflaterOutputStream defOS;
-
+    
         try {
             defOS = new DeflaterOutputStream(bos, null);
             throw new Exception("didn't catch illegal argument");
         } catch (NullPointerException e){
         }
-
+    
         try {
             defOS = new DeflaterOutputStream(null, def);
             throw new Exception("didn't catch illegal argument");
         } catch (NullPointerException e){
         }
-
+      
         try {
             defOS = new DeflaterOutputStream(bos, def, -1);
             throw new Exception("didn't catch illegal argument");
         } catch (IllegalArgumentException e) {
         }
 
-
+  
         try {
             infOS = new InflaterInputStream(bis, null);
             throw new Exception("didn't catch illegal argument");
@@ -77,3 +77,4 @@ public class StreamConstructor {
         }
     }
 }
+

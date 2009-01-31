@@ -42,9 +42,10 @@ import sun.java2d.SunGraphicsEnvironment;
  * {@link Graphics2D} drawing methods.  Each <code>GraphicsDevice</code>
  * has a number of {@link GraphicsConfiguration} objects associated with
  * it.  These objects specify the different configurations in which the
- * <code>GraphicsDevice</code> can be used.
+ * <code>GraphicsDevice</code> can be used.  
  * @see GraphicsDevice
  * @see GraphicsConfiguration
+ * @version 	%I%, %G%
  */
 
 public abstract class GraphicsEnvironment {
@@ -72,32 +73,32 @@ public abstract class GraphicsEnvironment {
      * @return the local <code>GraphicsEnvironment</code>
      */
     public static synchronized GraphicsEnvironment getLocalGraphicsEnvironment() {
-        if (localEnv == null) {
-            String nm = (String) java.security.AccessController.doPrivileged
-                (new sun.security.action.GetPropertyAction
-                 ("java.awt.graphicsenv", null));
+	if (localEnv == null) {
+	    String nm = (String) java.security.AccessController.doPrivileged
+		(new sun.security.action.GetPropertyAction
+		 ("java.awt.graphicsenv", null));
 
-            try {
-//                      long t0 = System.currentTimeMillis();
-                localEnv =
-                    (GraphicsEnvironment) Class.forName(nm).newInstance();
-//              long t1 = System.currentTimeMillis();
-//              System.out.println("GE creation took " + (t1-t0)+ "ms.");
+	    try {
+// 			long t0 = System.currentTimeMillis();
+		localEnv =
+		    (GraphicsEnvironment) Class.forName(nm).newInstance();
+// 		long t1 = System.currentTimeMillis();
+// 		System.out.println("GE creation took " + (t1-t0)+ "ms.");
                 if (isHeadless()) {
                     localEnv = new HeadlessGraphicsEnvironment(localEnv);
                 }
-            } catch (ClassNotFoundException e) {
+	    } catch (ClassNotFoundException e) {
                 throw new Error("Could not find class: "+nm);
             } catch (InstantiationException e) {
                 throw new Error("Could not instantiate Graphics Environment: "
-                                + nm);
+				+ nm);
             } catch (IllegalAccessException e) {
                 throw new Error ("Could not access Graphics Environment: "
-                                 + nm);
+				 + nm);
             }
         }
 
-        return localEnv;
+	return localEnv;
     }
 
     /**
@@ -106,13 +107,13 @@ public abstract class GraphicsEnvironment {
      * a HeadlessException is thrown from areas of the Toolkit
      * and GraphicsEnvironment that are dependent on a display,
      * keyboard, or mouse.
-     * @return <code>true</code> if this environment cannot support
-     * a display, keyboard, and mouse; <code>false</code>
+     * @return <code>true</code> if this environment cannot support 
+     * a display, keyboard, and mouse; <code>false</code> 
      * otherwise
      * @see java.awt.HeadlessException
      * @since 1.4
      */
-    public static boolean isHeadless() {
+    public static boolean isHeadless() {   
         return getHeadlessProperty();
     }
 
@@ -123,7 +124,7 @@ public abstract class GraphicsEnvironment {
      */
     static String getHeadlessMessage() {
         if (headless == null) {
-            getHeadlessProperty(); // initialize the values
+            getHeadlessProperty(); // initialize the values 
         }
         return defaultHeadless != Boolean.TRUE ? null :
             "\nNo X11 DISPLAY variable was set, " +
@@ -140,13 +141,13 @@ public abstract class GraphicsEnvironment {
             new java.security.PrivilegedAction() {
                 public Object run() {
                     String nm = System.getProperty("java.awt.headless");
-
+                    
                     if (nm == null) {
                         /* No need to ask for DISPLAY when run in a browser */
                         if (System.getProperty("javaplugin.version") != null) {
-                            headless = defaultHeadless = Boolean.FALSE;
+                            headless = defaultHeadless = Boolean.FALSE; 
                         } else {
-                            String osName = System.getProperty("os.name");
+                            String osName = System.getProperty("os.name");                        
                             headless = defaultHeadless =
                                 Boolean.valueOf(("Linux".equals(osName) || "SunOS".equals(osName)) &&
                                                 (System.getenv("DISPLAY") == null));
@@ -175,12 +176,12 @@ public abstract class GraphicsEnvironment {
     }
 
     /**
-     * Returns whether or not a display, keyboard, and mouse can be
+     * Returns whether or not a display, keyboard, and mouse can be 
      * supported in this graphics environment.  If this returns true,
      * <code>HeadlessException</code> will be thrown from areas of the
      * graphics environment that are dependent on a display, keyboard, or
      * mouse.
-     * @return <code>true</code> if a display, keyboard, and mouse
+     * @return <code>true</code> if a display, keyboard, and mouse 
      * can be supported in this environment; <code>false</code>
      * otherwise
      * @see java.awt.HeadlessException
@@ -356,7 +357,7 @@ public abstract class GraphicsEnvironment {
      * @since 1.5
      */
     public void preferLocaleFonts() {
-        sun.font.FontManager.preferLocaleFonts();
+	sun.font.FontManager.preferLocaleFonts();
     }
 
     /**
@@ -376,7 +377,7 @@ public abstract class GraphicsEnvironment {
      * @since 1.5
      */
     public void preferProportionalFonts() {
-        sun.font.FontManager.preferProportionalFonts();
+	sun.font.FontManager.preferProportionalFonts();
     }
 
     /**
@@ -392,10 +393,10 @@ public abstract class GraphicsEnvironment {
     public Point getCenterPoint() throws HeadlessException {
     // Default implementation: return the center of the usable bounds of the
     // default screen device.
-        Rectangle usableBounds =
+        Rectangle usableBounds = 
          SunGraphicsEnvironment.getUsableBounds(getDefaultScreenDevice());
         return new Point((usableBounds.width / 2) + usableBounds.x,
-                         (usableBounds.height / 2) + usableBounds.y);
+                         (usableBounds.height / 2) + usableBounds.y);    
     }
 
     /**
@@ -406,7 +407,7 @@ public abstract class GraphicsEnvironment {
      * be centered across all displays, this method returns the bounds of the
      * entire display area.
      * <p>
-     * To get the usable bounds of a single display, use
+     * To get the usable bounds of a single display, use 
      * <code>GraphicsConfiguration.getBounds()</code> and
      * <code>Toolkit.getScreenInsets()</code>.
      * @return  the maximum bounds for centered Windows
@@ -423,3 +424,4 @@ public abstract class GraphicsEnvironment {
         return SunGraphicsEnvironment.getUsableBounds(getDefaultScreenDevice());
     }
 }
+

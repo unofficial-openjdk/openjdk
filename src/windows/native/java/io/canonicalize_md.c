@@ -74,7 +74,7 @@ cp(char *dst, char *dend, char first, char *src, char *send)
 
 /* Wide character version of cp */
 
-static WCHAR*
+static WCHAR* 
 wcp(WCHAR *dst, WCHAR *dend, WCHAR first, WCHAR *src, WCHAR *send)
 {
     WCHAR *p = src, *q = dst;
@@ -144,7 +144,7 @@ wwild(WCHAR *start)
     WCHAR *p = start;
     int c;
     while (c = *p) {
-        if ((c == L'*') || (c == L'?'))
+        if ((c == L'*') || (c == L'?')) 
             return 1;
         p++;
     }
@@ -156,7 +156,7 @@ wwild(WCHAR *start)
    Allowed canonical paths: c:\xa...dksd\..ksa\.lk    c:\...a\.b\cd..x.x
    Prohibited canonical paths: c:\..\x  c:\x.\d c:\...
 */
-static int
+static int 
 dots(char *start)
 {
     char *p = start;
@@ -168,14 +168,14 @@ dots(char *start)
             p++;
         if (*p && (*p != '\\')) // path element does not end with a dot
             p++; // go to the next char
-        else
+        else 
             return 1; // path element does end with a dot - prohibited
     }
     return 0; // no prohibited combinations of dots found
 }
 
 /* Wide character version of dots */
-static int
+static int 
 wdots(WCHAR *start)
 {
     WCHAR *p = start;
@@ -187,7 +187,7 @@ wdots(WCHAR *start)
             p++;
         if (*p && (*p != L'\\')) // path element does not end with a dot
             p++; // go to the next char
-        else
+        else 
             return 1; // path element does end with a dot - prohibited
     }
     return 0; // no prohibited combinations of dots found
@@ -205,14 +205,14 @@ lastErrorReportable()
 {
     DWORD errval = GetLastError();
     if ((errval == ERROR_FILE_NOT_FOUND)
-        || (errval == ERROR_DIRECTORY)
-        || (errval == ERROR_PATH_NOT_FOUND)
-        || (errval == ERROR_BAD_NETPATH)
-        || (errval == ERROR_BAD_NET_NAME)
-        || (errval == ERROR_ACCESS_DENIED)
-        || (errval == ERROR_NETWORK_UNREACHABLE)
-        || (errval == ERROR_NETWORK_ACCESS_DENIED)) {
-        return 0;
+	|| (errval == ERROR_DIRECTORY)
+	|| (errval == ERROR_PATH_NOT_FOUND)
+	|| (errval == ERROR_BAD_NETPATH)
+	|| (errval == ERROR_BAD_NET_NAME)
+	|| (errval == ERROR_ACCESS_DENIED)
+	|| (errval == ERROR_NETWORK_UNREACHABLE)
+	|| (errval == ERROR_NETWORK_ACCESS_DENIED)) {
+	return 0;
     }
 
 #ifdef DEBUG_PATH
@@ -226,7 +226,7 @@ lastErrorReportable()
    necessary because _fullpath() rejects duplicate separator characters on
    Win95, though it accepts them on NT. */
 
-int
+int 
 canonicalize(char *orig_path, char *result, int size)
 {
     WIN32_FIND_DATA fd;
@@ -315,28 +315,28 @@ canonicalize(char *orig_path, char *result, int size)
         char c = *p;
         assert(*src == '\\');        /* Invariant */
         *p = '\0';            /* Temporarily clear separator */
-        h = FindFirstFile(path, &fd);    /* Look up prefix */
-        *p = c;                /* Restore separator */
-        if (h != INVALID_HANDLE_VALUE) {
-            /* Lookup succeeded; append true name to result and continue */
-            FindClose(h);
-            if (!(dst = cp(dst, dend, '\\',
-                           fd.cFileName,
-                           fd.cFileName + strlen(fd.cFileName)))) {
-                return -1;
-            }
-            src = p;
-            continue;
-        } else {
-            if (!lastErrorReportable()) {
-                if (!(dst = cp(dst, dend, '\0', src, src + strlen(src)))) {
-                    return -1;
-                }
-                break;
-            } else {
-                return -1;
-            }
-        }
+	h = FindFirstFile(path, &fd);    /* Look up prefix */
+	*p = c;                /* Restore separator */
+	if (h != INVALID_HANDLE_VALUE) {
+	    /* Lookup succeeded; append true name to result and continue */
+	    FindClose(h);
+	    if (!(dst = cp(dst, dend, '\\',
+			   fd.cFileName,
+			   fd.cFileName + strlen(fd.cFileName)))) {
+		return -1;
+	    }
+	    src = p;
+	    continue;
+	} else {
+	    if (!lastErrorReportable()) {
+		if (!(dst = cp(dst, dend, '\0', src, src + strlen(src)))) {
+		    return -1;
+		}
+		break;
+	    } else {
+		return -1;
+	    }
+	}
     }
 
     if (dst >= dend) {
@@ -357,7 +357,7 @@ canonicalize(char *orig_path, char *result, int size)
    used while still returning canonical names with the correct
    capitalization. */
 
-int
+int 
 canonicalizeWithPrefix(char* canonicalPrefix, char* pathWithCanonicalPrefix, char *result, int size)
 {
     WIN32_FIND_DATA fd;
@@ -383,7 +383,7 @@ canonicalizeWithPrefix(char* canonicalPrefix, char* pathWithCanonicalPrefix, cha
             return -1;
         }
     } else {
-        if (!lastErrorReportable()) {
+	if (!lastErrorReportable()) {
             if (!(dst = cp(dst, dend, '\0', src, src + strlen(src)))) {
                 return -1;
             }
@@ -441,7 +441,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         /* Drive specifier */
         *src = towupper(*src);    /* Canonicalize drive letter */
         if (!(dst = wcp(dst, dend, L'\0', src, src + 2))) {
-            goto err;
+	    goto err;
         }
 
         src += 2;
@@ -457,7 +457,7 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         }
         p = wnextsep(p + 1);    /* Skip past share name */
         if (!(dst = wcp(dst, dend, L'\0', src, p)))
-            goto err;
+	    goto err;
         src = p;
     } else {
         /* Invalid path */
@@ -480,32 +480,32 @@ wcanonicalize(WCHAR *orig_path, WCHAR *result, int size)
         *p = L'\0';            /* Temporarily clear separator */
 
         if ((pathlen = wcslen(path)) > MAX_PATH - 1) {
-            pathbuf = getPrefixed(path, pathlen);
+	    pathbuf = getPrefixed(path, pathlen);
             h = FindFirstFileW(pathbuf, &fd);    /* Look up prefix */
             free(pathbuf);
-        } else
+        } else 
             h = FindFirstFileW(path, &fd);    /* Look up prefix */
 
         *p = c;                /* Restore separator */
         if (h != INVALID_HANDLE_VALUE) {
             /* Lookup succeeded; append true name to result and continue */
             FindClose(h);
-            if (!(dst = wcp(dst, dend, L'\\', fd.cFileName,
-                            fd.cFileName + wcslen(fd.cFileName)))){
+            if (!(dst = wcp(dst, dend, L'\\', fd.cFileName, 
+			    fd.cFileName + wcslen(fd.cFileName)))){
                 goto err;
-            }
-            src = p;
-            continue;
-        } else {
-            if (!lastErrorReportable()) {
-               if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src)))){
+	    }
+	    src = p;
+	    continue;
+	} else {
+	    if (!lastErrorReportable()) {
+	       if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src)))){
                    goto err;
-               }
-                break;
-            } else {
-                goto err;
-            }
-        }
+	       }
+		break;
+	    } else {
+	        goto err;
+	    }
+	}
     }
 
     if (dst >= dend) {
@@ -540,8 +540,8 @@ wcanonicalizeWithPrefix(WCHAR *canonicalPrefix, WCHAR *pathWithCanonicalPrefix, 
 
     if ((pathlen=wcslen(pathWithCanonicalPrefix)) > MAX_PATH - 1) {
         pathbuf = getPrefixed(pathWithCanonicalPrefix, pathlen);
-        h = FindFirstFileW(pathbuf, &fd);    /* Look up prefix */
-        free(pathbuf);
+	h = FindFirstFileW(pathbuf, &fd);    /* Look up prefix */
+	free(pathbuf);
     } else
         h = FindFirstFileW(pathWithCanonicalPrefix, &fd);    /* Look up prefix */
     if (h != INVALID_HANDLE_VALUE) {
@@ -553,12 +553,12 @@ wcanonicalizeWithPrefix(WCHAR *canonicalPrefix, WCHAR *pathWithCanonicalPrefix, 
             return -1;
         }
         if (!(dst = wcp(dst, dend, L'\\',
-                        fd.cFileName,
+                        fd.cFileName, 
                         fd.cFileName + wcslen(fd.cFileName)))) {
             return -1;
         }
     } else {
-        if (!lastErrorReportable()) {
+	if (!lastErrorReportable()) {
             if (!(dst = wcp(dst, dend, L'\0', src, src + wcslen(src)))) {
                 return -1;
             }
@@ -578,22 +578,22 @@ wcanonicalizeWithPrefix(WCHAR *canonicalPrefix, WCHAR *pathWithCanonicalPrefix, 
 
 /* The appropriate location of getPrefixed() should be io_util_md.c, but
    java.lang.instrument package has hardwired canonicalize_md.c into their
-   dll, to avoid complicate solution such as including io_util_md.c into
+   dll, to avoid complicate solution such as including io_util_md.c into 
    that package, as a workaround we put this method here.
  */
-
+   
 /* copy \\?\ or \\?\UNC\ to the front of path*/
-WCHAR*
+WCHAR* 
 getPrefixed(const WCHAR* path, int pathlen) {
     WCHAR* pathbuf = (WCHAR*)malloc((pathlen + 10) * sizeof (WCHAR));
-    if (pathbuf != 0) {
+    if (pathbuf != 0) {                    
         if (path[0] == L'\\' && path[1] == L'\\') {
             if (path[2] == L'?' && path[3] == L'\\'){
                 /* if it already has a \\?\ don't do the prefix */
                 wcscpy(pathbuf, path );
             } else {
                 /* only UNC pathname includes double slashes here */
-                wcscpy(pathbuf, L"\\\\?\\UNC\0");
+                wcscpy(pathbuf, L"\\\\?\\UNC\0");                        
                 wcscat(pathbuf, path + 1);
             }
         } else {

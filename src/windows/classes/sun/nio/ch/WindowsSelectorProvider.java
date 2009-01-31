@@ -24,6 +24,7 @@
  */
 
 /*
+ * %W% %E%
  */
 
 package sun.nio.ch;
@@ -35,11 +36,12 @@ import java.nio.channels.spi.AbstractSelector;
  * SelectorProvider for sun.nio.ch.WindowsSelectorImpl.
  *
  * @author Konstantin Kladko
+ * @version %I%, %G%
  * @since 1.4
  */
 
 public class WindowsSelectorProvider extends SelectorProviderImpl {
-
+    
     public AbstractSelector openSelector() throws IOException {
         return new WindowsSelectorImpl(this);
     }

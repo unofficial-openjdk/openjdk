@@ -29,11 +29,11 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 
 public class ModificationWatchpointEventSet extends WatchpointEventSet {
-
+    
     ModificationWatchpointEventSet(EventSet jdiEventSet) {
         super(jdiEventSet);
     }
-
+    
     /**
      * Value that will be assigned to the field when the instruction
      * completes.
@@ -46,3 +46,4 @@ public class ModificationWatchpointEventSet extends WatchpointEventSet {
         listener.modificationWatchpoint(this);
     }
 }
+

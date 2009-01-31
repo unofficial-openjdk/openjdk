@@ -28,21 +28,22 @@ package javax.swing;
 
 /**
  * Constants used to control the window-closing operation.
- * The <code>setDefaultCloseOperation</code> and
+ * The <code>setDefaultCloseOperation</code> and 
  * <code>getDefaultCloseOperation</code> methods
  * provided by <code>JFrame</code>,
  * <code>JInternalFrame</code>, and
  * <code>JDialog</code>
  * use these constants.
- * For examples of setting the default window-closing operation, see
+ * For examples of setting the default window-closing operation, see 
  * <a
  href="http://java.sun.com/docs/books/tutorial/uiswing/components/frame.html#windowevents">Responding to Window-Closing Events</a>,
  * a section in <em>The Java Tutorial</em>.
  * @see JFrame#setDefaultCloseOperation(int)
  * @see JDialog#setDefaultCloseOperation(int)
  * @see JInternalFrame#setDefaultCloseOperation(int)
+ * 
  *
- *
+ * @version %I% %G%
  * @author Amy Fowler
  */
 public interface WindowConstants

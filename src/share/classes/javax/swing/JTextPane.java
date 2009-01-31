@@ -37,7 +37,7 @@ import javax.swing.plaf.*;
 
 /**
  * A text component that can be marked up with attributes that are
- * represented graphically.
+ * represented graphically. 
  * You can find how-to information and examples of using text panes in
  * <a href="http://java.sun.com/docs/books/tutorial/uiswing/components/text.html">Using Text Components</a>,
  * a section in <em>The Java Tutorial.</em>
@@ -77,6 +77,7 @@ import javax.swing.plaf.*;
  * description: A text component that can be marked up with attributes that are graphically represented.
  *
  * @author  Timothy Prinzing
+ * @version %I% %G%
  * @see javax.swing.text.StyledEditorKit
  */
 public class JTextPane extends JEditorPane {
@@ -90,7 +91,7 @@ public class JTextPane extends JEditorPane {
         super();
         EditorKit editorKit = createDefaultEditorKit();
         String contentType = editorKit.getContentType();
-        if (contentType != null
+        if (contentType != null 
             && getEditorKitClassNameForContentType(contentType) ==
                  defaultEditorKitMap.get(contentType)) {
             setEditorKitForContentType(contentType, editorKit);
@@ -151,13 +152,13 @@ public class JTextPane extends JEditorPane {
     }
 
     /**
-     * Fetches the model associated with the editor.
+     * Fetches the model associated with the editor.  
      *
      * @return the model
      */
     public StyledDocument getStyledDocument() {
         return (StyledDocument) getDocument();
-    }
+    } 
 
     /**
      * Replaces the currently selected content with new content
@@ -169,9 +170,9 @@ public class JTextPane extends JEditorPane {
      * insertion.  If the document is not editable, beep and return.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param content  the content to replace the selection with
      */
@@ -181,7 +182,7 @@ public class JTextPane extends JEditorPane {
 
     private void replaceSelection(String content, boolean checkEditable) {
         if (checkEditable && !isEditable()) {
-            UIManager.getLookAndFeel().provideErrorFeedback(JTextPane.this);
+	    UIManager.getLookAndFeel().provideErrorFeedback(JTextPane.this);
             return;
         }
         Document doc = getStyledDocument();
@@ -190,7 +191,7 @@ public class JTextPane extends JEditorPane {
                 Caret caret = getCaret();
                 int p0 = Math.min(caret.getDot(), caret.getMark());
                 int p1 = Math.max(caret.getDot(), caret.getMark());
-                AttributeSet attr = getInputAttributes().copyAttributes();
+		AttributeSet attr = getInputAttributes().copyAttributes();
                 if (doc instanceof AbstractDocument) {
                     ((AbstractDocument)doc).replace(p0, p1 - p0, content,attr);
                 }
@@ -203,7 +204,7 @@ public class JTextPane extends JEditorPane {
                     }
                 }
             } catch (BadLocationException e) {
-                UIManager.getLookAndFeel().provideErrorFeedback(JTextPane.this);
+	        UIManager.getLookAndFeel().provideErrorFeedback(JTextPane.this);
             }
         }
     }
@@ -211,9 +212,9 @@ public class JTextPane extends JEditorPane {
     /**
      * Inserts a component into the document as a replacement
      * for the currently selected content.  If there is no
-     * selection the component is effectively inserted at the
+     * selection the component is effectively inserted at the 
      * current position of the caret.  This is represented in
-     * the associated document as an attribute of one character
+     * the associated document as an attribute of one character 
      * of content.
      * <p>
      * The component given is the actual component used by the
@@ -221,19 +222,19 @@ public class JTextPane extends JEditorPane {
      * one container, this method should not be used in situations
      * where the model is shared by text components.
      * <p>
-     * The component is placed relative to the text baseline
-     * according to the value returned by
+     * The component is placed relative to the text baseline 
+     * according to the value returned by 
      * <code>Component.getAlignmentY</code>.  For Swing components
      * this value can be conveniently set using the method
      * <code>JComponent.setAlignmentY</code>.  For example, setting
-     * a value of <code>0.75</code> will cause 75 percent of the
+     * a value of <code>0.75</code> will cause 75 percent of the 
      * component to be above the baseline, and 25 percent of the
      * component to be below the baseline.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param c    the component to insert
      */
@@ -248,15 +249,15 @@ public class JTextPane extends JEditorPane {
     /**
      * Inserts an icon into the document as a replacement
      * for the currently selected content.  If there is no
-     * selection the icon is effectively inserted at the
+     * selection the icon is effectively inserted at the 
      * current position of the caret.  This is represented in
-     * the associated document as an attribute of one character
-     * of content.
+     * the associated document as an attribute of one character 
+     * of content.  
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param g    the icon to insert
      * @see Icon
@@ -279,12 +280,12 @@ public class JTextPane extends JEditorPane {
      *   if the style is unnamed, but the caller is responsible
      *   for managing the reference returned as an unnamed style can't
      *   be fetched by name.  An unnamed style may be useful for things
-     *   like character attribute overrides such as found in a style
+     *   like character attribute overrides such as found in a style 
      *   run.
      * @param parent the parent style.  This may be <code>null</code>
      *   if unspecified
      *   attributes need not be resolved in some other style.
-     * @return the new <code>Style</code>
+     * @return the new <code>Style</code> 
      */
     public Style addStyle(String nm, Style parent) {
         StyledDocument doc = getStyledDocument();
@@ -293,7 +294,7 @@ public class JTextPane extends JEditorPane {
 
     /**
      * Removes a named non-<code>null</code> style previously added to
-     * the document.
+     * the document.  
      *
      * @param nm  the name of the style to remove
      */
@@ -315,26 +316,26 @@ public class JTextPane extends JEditorPane {
 
     /**
      * Sets the logical style to use for the paragraph at the
-     * current caret position.  If attributes aren't explicitly set
-     * for character and paragraph attributes they will resolve
+     * current caret position.  If attributes aren't explicitly set 
+     * for character and paragraph attributes they will resolve 
      * through the logical style assigned to the paragraph, which
-     * in term may resolve through some hierarchy completely
+     * in term may resolve through some hierarchy completely 
      * independent of the element hierarchy in the document.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param s  the logical style to assign to the paragraph,
-     *          or <code>null</code> for no style
+     *		or <code>null</code> for no style
      */
     public void setLogicalStyle(Style s) {
         StyledDocument doc = getStyledDocument();
         doc.setLogicalStyle(getCaretPosition(), s);
     }
 
-    /**
+    /** 
      * Fetches the logical style assigned to the paragraph represented
      * by the current position of the caret, or <code>null</code>.
      *
@@ -346,8 +347,8 @@ public class JTextPane extends JEditorPane {
     }
 
     /**
-     * Fetches the character attributes in effect at the
-     * current location of the caret, or <code>null</code>.
+     * Fetches the character attributes in effect at the 
+     * current location of the caret, or <code>null</code>.  
      *
      * @return the attributes, or <code>null</code>
      */
@@ -361,7 +362,7 @@ public class JTextPane extends JEditorPane {
     }
 
     /**
-     * Applies the given attributes to character
+     * Applies the given attributes to character 
      * content.  If there is a selection, the attributes
      * are applied to the selection range.  If there
      * is no selection, the attributes are applied to
@@ -369,9 +370,9 @@ public class JTextPane extends JEditorPane {
      * for any new text that gets inserted.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param attr the attributes
      * @param replace if true, then replace the existing attributes first
@@ -414,9 +415,9 @@ public class JTextPane extends JEditorPane {
      * to the paragraph at the current caret position.
      * <p>
      * This method is thread safe, although most Swing methods
-     * are not. Please see
+     * are not. Please see 
      * <A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html">How
-     * to Use Threads</A> for more information.
+     * to Use Threads</A> for more information.     
      *
      * @param attr the non-<code>null</code> attributes
      * @param replace if true, replace the existing attributes first
@@ -453,9 +454,9 @@ public class JTextPane extends JEditorPane {
     private static final String uiClassID = "TextPaneUI";
 
 
-    /**
+    /** 
      * See <code>readObject</code> and <code>writeObject</code> in
-     * <code>JComponent</code> for more
+     * <code>JComponent</code> for more 
      * information about serialization in Swing.
      *
      * @param s the output stream
@@ -488,10 +489,10 @@ public class JTextPane extends JEditorPane {
      * Sets the currently installed kit for handling
      * content.  This is the bound property that
      * establishes the content type of the editor.
-     *
+     * 
      * @param kit the desired editor behavior
      * @exception IllegalArgumentException if kit is not a
-     *          <code>StyledEditorKit</code>
+     *		<code>StyledEditorKit</code>
      */
     public final void setEditorKit(EditorKit kit) {
         if (kit instanceof StyledEditorKit) {
@@ -503,12 +504,12 @@ public class JTextPane extends JEditorPane {
 
     /**
      * Returns a string representation of this <code>JTextPane</code>.
-     * This method
-     * is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * This method 
+     * is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between      
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
-     *
+     * 
      * @return  a string representation of this <code>JTextPane</code>
      */
     protected String paramString() {

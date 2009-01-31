@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM284;
  * Tables and data to convert Unicode to Cp284
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp284 extends CharToByteSingleByte {

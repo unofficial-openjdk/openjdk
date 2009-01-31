@@ -54,11 +54,11 @@ public class IntTrie extends Trie
 
     /**
     * <p>Creates a new Trie with the settings for the trie data.</p>
-    * <p>Unserialize the 32-bit-aligned input stream and use the data for the
+    * <p>Unserialize the 32-bit-aligned input stream and use the data for the 
     * trie.</p>
-    * @param inputStream file input stream to a ICU data file, containing
+    * @param inputStream file input stream to a ICU data file, containing 
     *                    the trie
-    * @param dataManipulate object which provides methods to parse the char
+    * @param dataManipulate object which provides methods to parse the char 
     *                        data
     * @throws IOException thrown when data reading fails
     * @draft 2.1
@@ -126,7 +126,7 @@ public class IntTrie extends Trie
         }
         return m_initialValue_;
     }
-
+    
     // protected methods -----------------------------------------------
 
     /**
@@ -135,7 +135,7 @@ public class IntTrie extends Trie
     * @param inputStream data input stream containing trie data
     * @exception IOException thrown when data reading fails
     */
-    protected final void unserialize(InputStream inputStream)
+    protected final void unserialize(InputStream inputStream) 
                                                     throws IOException
     {
         super.unserialize(inputStream);
@@ -147,7 +147,7 @@ public class IntTrie extends Trie
         }
         m_initialValue_ = m_data_[0];
     }
-
+    
     /**
     * Gets the offset to the data which the surrogate pair points to.
     * @param lead lead surrogate
@@ -173,7 +173,7 @@ public class IntTrie extends Trie
         // value: m_initialValue_
         return -1;
     }
-
+    
     /**
     * Gets the value at the argument index.
     * For use internally in TrieIterator
@@ -186,10 +186,10 @@ public class IntTrie extends Trie
     {
       return m_data_[index];
     }
-
+    
     /**
     * Gets the default initial value
-    * @return 32 bit value
+    * @return 32 bit value 
     * @draft 2.1
     */
     protected final int getInitialValue()
@@ -198,7 +198,7 @@ public class IntTrie extends Trie
     }
 
     // package private methods -----------------------------------------
-
+    
     /**
      * Internal constructor for builder use
      * @param index the index array to be slotted into this trie
@@ -215,7 +215,7 @@ public class IntTrie extends Trie
         m_dataLength_ = m_data_.length;
         m_initialValue_ = initialvalue;
     }
-
+    
     // private data members --------------------------------------------
 
     /**

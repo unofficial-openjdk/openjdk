@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -24,22 +24,22 @@
 /* @test
  * @bug 4442373
  * @summary Verify that RMI can successfully unmarshal Class objects for
- *          primitive types.
+ * 	    primitive types.
  */
 
 import java.rmi.MarshalledObject;
 
 public class PrimitiveClasses {
     public static void main(String[] args) throws Exception {
-        Class[] primClasses = {
-            boolean.class, byte.class, char.class, short.class,
-            int.class, long.class, float.class, double.class
-        };
-        for (int i = 0; i < primClasses.length; i++) {
-            Class pc = primClasses[i];
-            if (new MarshalledObject(pc).get() != pc) {
-                throw new Error();
-            }
-        }
+	Class[] primClasses = { 
+	    boolean.class, byte.class, char.class, short.class, 
+	    int.class, long.class, float.class, double.class
+	};
+	for (int i = 0; i < primClasses.length; i++) {
+	    Class pc = primClasses[i];
+	    if (new MarshalledObject(pc).get() != pc) {
+		throw new Error();
+	    }
+	}
     }
 }

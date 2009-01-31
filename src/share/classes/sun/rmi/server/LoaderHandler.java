@@ -62,20 +62,21 @@ import sun.security.action.GetPropertyAction;
  * <code>LoaderHandler</code> provides the implementation of the static
  * methods of the <code>java.rmi.server.RMIClassLoader</code> class.
  *
- * @author      Ann Wollrath
- * @author      Peter Jones
- * @author      Laird Dornin
+ * @author	Ann Wollrath
+ * @author	Peter Jones
+ * @author	Laird Dornin
+ * @version	%I%, %E%
  */
 public final class LoaderHandler {
 
     /** RMI class loader log level */
     static final int logLevel = LogStream.parseLevel(
-        (String) java.security.AccessController.doPrivileged(
+	(String) java.security.AccessController.doPrivileged(
             new GetPropertyAction("sun.rmi.loader.logLevel")));
 
     /* loader system log */
     static final Log loaderLog =
-        Log.getLog("sun.rmi.loader", "loader", LoaderHandler.logLevel);
+	Log.getLog("sun.rmi.loader", "loader", LoaderHandler.logLevel);
 
     /**
      * value of "java.rmi.server.codebase" property, as cached at class
@@ -83,11 +84,11 @@ public final class LoaderHandler {
      */
     private static String codebaseProperty = null;
     static {
-        String prop = (String) java.security.AccessController.doPrivileged(
+	String prop = (String) java.security.AccessController.doPrivileged(
             new GetPropertyAction("java.rmi.server.codebase"));
-        if (prop != null && prop.trim().length() > 0) {
-            codebaseProperty = prop;
-        }
+	if (prop != null && prop.trim().length() > 0) {
+	    codebaseProperty = prop;
+	}
     }
 
     /** list of URLs represented by the codebase property, if valid */
@@ -95,14 +96,14 @@ public final class LoaderHandler {
 
     /** table of class loaders that use codebase property for annotation */
     private static final Map codebaseLoaders =
-        Collections.synchronizedMap(new IdentityHashMap(5));
+	Collections.synchronizedMap(new IdentityHashMap(5));
     static {
-        for (ClassLoader codebaseLoader = ClassLoader.getSystemClassLoader();
-             codebaseLoader != null;
-             codebaseLoader = codebaseLoader.getParent())
-        {
-            codebaseLoaders.put(codebaseLoader, null);
-        }
+	for (ClassLoader codebaseLoader = ClassLoader.getSystemClassLoader();
+	     codebaseLoader != null;
+	     codebaseLoader = codebaseLoader.getParent())
+	{
+	    codebaseLoaders.put(codebaseLoader, null);
+	}
     }
 
     /**
@@ -126,20 +127,20 @@ public final class LoaderHandler {
      * java.rmi.server.codebase property as the URL path.
      */
     private static synchronized URL[] getDefaultCodebaseURLs()
-        throws MalformedURLException
+	throws MalformedURLException
     {
-        /*
-         * If it hasn't already been done, convert the codebase property
-         * into an array of URLs; this may throw a MalformedURLException.
-         */
-        if (codebaseURLs == null) {
-            if (codebaseProperty != null) {
-                codebaseURLs = pathToURLs(codebaseProperty);
-            } else {
-                codebaseURLs = new URL[0];
-            }
-        }
-        return codebaseURLs;
+	/*
+	 * If it hasn't already been done, convert the codebase property
+	 * into an array of URLs; this may throw a MalformedURLException.
+	 */
+	if (codebaseURLs == null) {
+	    if (codebaseProperty != null) {
+		codebaseURLs = pathToURLs(codebaseProperty);
+	    } else {
+		codebaseURLs = new URL[0];
+	    }
+	}
+	return codebaseURLs;
     }
 
     /**
@@ -148,16 +149,16 @@ public final class LoaderHandler {
      * "default loader".
      */
     public static Class loadClass(String codebase, String name,
-                                  ClassLoader defaultLoader)
-        throws MalformedURLException, ClassNotFoundException
+				  ClassLoader defaultLoader)
+	throws MalformedURLException, ClassNotFoundException
     {
-        if (loaderLog.isLoggable(Log.BRIEF)) {
-            loaderLog.log(Log.BRIEF,
-                "name = \"" + name + "\", " +
-                "codebase = \"" + (codebase != null ? codebase : "") + "\"" +
-                (defaultLoader != null ?
-                 ", defaultLoader = " + defaultLoader : ""));
-        }
+	if (loaderLog.isLoggable(Log.BRIEF)) {
+	    loaderLog.log(Log.BRIEF,
+		"name = \"" + name + "\", " +
+		"codebase = \"" + (codebase != null ? codebase : "") + "\"" +
+		(defaultLoader != null ?
+		 ", defaultLoader = " + defaultLoader : ""));
+	}
 
         URL[] urls;
         if (codebase != null) {
@@ -166,20 +167,20 @@ public final class LoaderHandler {
             urls = getDefaultCodebaseURLs();
         }
 
-        if (defaultLoader != null) {
-            try {
-                Class c = Class.forName(name, false, defaultLoader);
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    loaderLog.log(Log.VERBOSE,
-                        "class \"" + name + "\" found via defaultLoader, " +
-                        "defined by " + c.getClassLoader());
-                }
-                return c;
-            } catch (ClassNotFoundException e) {
-            }
-        }
+	if (defaultLoader != null) {
+	    try {
+		Class c = Class.forName(name, false, defaultLoader);
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    loaderLog.log(Log.VERBOSE,
+			"class \"" + name + "\" found via defaultLoader, " +
+			"defined by " + c.getClassLoader());
+		}
+		return c;
+	    } catch (ClassNotFoundException e) {
+	    }
+	}
 
-        return loadClass(urls, name);
+	return loadClass(urls, name);
     }
 
     /**
@@ -188,97 +189,97 @@ public final class LoaderHandler {
      * marshalling objects of the given class.
      */
     public static String getClassAnnotation(Class cl) {
-        String name = cl.getName();
+	String name = cl.getName();
+
+	/*
+	 * Class objects for arrays of primitive types never need an
+	 * annotation, because they never need to be (or can be) downloaded.
+	 *
+	 * REMIND: should we (not) be annotating classes that are in
+	 * "java.*" packages?
+	 */
+	int nameLength = name.length();
+	if (nameLength > 0 && name.charAt(0) == '[') {
+	    // skip past all '[' characters (see bugid 4211906)
+	    int i = 1;
+	    while (nameLength > i && name.charAt(i) == '[') {
+		i++;
+	    }
+	    if (nameLength > i && name.charAt(i) != 'L') {
+		return null;
+	    }
+	}
+
+	/*
+	 * Get the class's class loader.  If it is null, the system class
+	 * loader, an ancestor of the base class loader (such as the loader
+	 * for installed extensions), return the value of the
+	 * "java.rmi.server.codebase" property.
+	 */
+	ClassLoader loader = cl.getClassLoader();
+	if (loader == null || codebaseLoaders.containsKey(loader)) {
+	    return codebaseProperty;
+	}
 
         /*
-         * Class objects for arrays of primitive types never need an
-         * annotation, because they never need to be (or can be) downloaded.
-         *
-         * REMIND: should we (not) be annotating classes that are in
-         * "java.*" packages?
-         */
-        int nameLength = name.length();
-        if (nameLength > 0 && name.charAt(0) == '[') {
-            // skip past all '[' characters (see bugid 4211906)
-            int i = 1;
-            while (nameLength > i && name.charAt(i) == '[') {
-                i++;
-            }
-            if (nameLength > i && name.charAt(i) != 'L') {
-                return null;
-            }
-        }
+	 * Get the codebase URL path for the class loader, if it supports
+	 * such a notion (i.e., if it is a URLClassLoader or subclass).
+	 */
+	String annotation = null;
+	if (loader instanceof Loader) {
+	    /*
+	     * If the class loader is one of our RMI class loaders, we have
+	     * already computed the class annotation string, and no
+	     * permissions are required to know the URLs.
+	     */
+	    annotation = ((Loader) loader).getClassAnnotation();
 
-        /*
-         * Get the class's class loader.  If it is null, the system class
-         * loader, an ancestor of the base class loader (such as the loader
-         * for installed extensions), return the value of the
-         * "java.rmi.server.codebase" property.
-         */
-        ClassLoader loader = cl.getClassLoader();
-        if (loader == null || codebaseLoaders.containsKey(loader)) {
-            return codebaseProperty;
-        }
+	} else if (loader instanceof URLClassLoader) {
+	    try {
+		URL[] urls = ((URLClassLoader) loader).getURLs();
+		if (urls != null) {
+		    /*
+		     * If the class loader is not one of our RMI class loaders,
+		     * we must verify that the current access control context
+		     * has permission to know all of these URLs.
+		     */
+		    SecurityManager sm = System.getSecurityManager();
+		    if (sm != null) {
+			Permissions perms = new Permissions();
+			for (int i = 0; i < urls.length; i++) {
+			    Permission p =
+				urls[i].openConnection().getPermission();
+			    if (p != null) {
+				if (!perms.implies(p)) {
+				    sm.checkPermission(p);
+				    perms.add(p);
+				}
+			    }
+			}
+		    }
 
-        /*
-         * Get the codebase URL path for the class loader, if it supports
-         * such a notion (i.e., if it is a URLClassLoader or subclass).
-         */
-        String annotation = null;
-        if (loader instanceof Loader) {
-            /*
-             * If the class loader is one of our RMI class loaders, we have
-             * already computed the class annotation string, and no
-             * permissions are required to know the URLs.
-             */
-            annotation = ((Loader) loader).getClassAnnotation();
+		    annotation = urlsToPath(urls);
+		}
+	    } catch (SecurityException e) {
+		/*
+		 * If access was denied to the knowledge of the class
+		 * loader's URLs, fall back to the default behavior.
+		 */
+	    } catch (IOException e) {
+		/*
+		 * This shouldn't happen, although it is declared to be
+		 * thrown by openConnection() and getPermission().  If it
+		 * does happen, forget about this class loader's URLs and
+		 * fall back to the default behavior.
+		 */
+	    }
+	}
 
-        } else if (loader instanceof URLClassLoader) {
-            try {
-                URL[] urls = ((URLClassLoader) loader).getURLs();
-                if (urls != null) {
-                    /*
-                     * If the class loader is not one of our RMI class loaders,
-                     * we must verify that the current access control context
-                     * has permission to know all of these URLs.
-                     */
-                    SecurityManager sm = System.getSecurityManager();
-                    if (sm != null) {
-                        Permissions perms = new Permissions();
-                        for (int i = 0; i < urls.length; i++) {
-                            Permission p =
-                                urls[i].openConnection().getPermission();
-                            if (p != null) {
-                                if (!perms.implies(p)) {
-                                    sm.checkPermission(p);
-                                    perms.add(p);
-                                }
-                            }
-                        }
-                    }
-
-                    annotation = urlsToPath(urls);
-                }
-            } catch (SecurityException e) {
-                /*
-                 * If access was denied to the knowledge of the class
-                 * loader's URLs, fall back to the default behavior.
-                 */
-            } catch (IOException e) {
-                /*
-                 * This shouldn't happen, although it is declared to be
-                 * thrown by openConnection() and getPermission().  If it
-                 * does happen, forget about this class loader's URLs and
-                 * fall back to the default behavior.
-                 */
-            }
-        }
-
-        if (annotation != null) {
-            return annotation;
-        } else {
-            return codebaseProperty;    // REMIND: does this make sense??
-        }
+	if (annotation != null) {
+	    return annotation;
+	} else {
+	    return codebaseProperty;	// REMIND: does this make sense??
+	}
     }
 
     /**
@@ -287,61 +288,61 @@ public final class LoaderHandler {
      * context class loader.
      */
     public static ClassLoader getClassLoader(String codebase)
-        throws MalformedURLException
+	throws MalformedURLException
     {
-        ClassLoader parent = getRMIContextClassLoader();
+	ClassLoader parent = getRMIContextClassLoader();
 
-        URL[] urls;
-        if (codebase != null) {
-            urls = pathToURLs(codebase);
-        } else {
-            urls = getDefaultCodebaseURLs();
-        }
+	URL[] urls;
+	if (codebase != null) {
+	    urls = pathToURLs(codebase);
+	} else {
+	    urls = getDefaultCodebaseURLs();
+	}
+	
+	/*
+	 * If there is a security manager, the current access control
+	 * context must have the "getClassLoader" RuntimePermission.
+	 */
+	SecurityManager sm = System.getSecurityManager();
+	if (sm != null) {
+	    sm.checkPermission(new RuntimePermission("getClassLoader"));
+	} else {
+	    /*
+	     * But if no security manager is set, disable access to
+	     * RMI class loaders and simply return the parent loader.
+	     */
+	    return parent;
+	}
 
-        /*
-         * If there is a security manager, the current access control
-         * context must have the "getClassLoader" RuntimePermission.
-         */
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(new RuntimePermission("getClassLoader"));
-        } else {
-            /*
-             * But if no security manager is set, disable access to
-             * RMI class loaders and simply return the parent loader.
-             */
-            return parent;
-        }
+	Loader loader = lookupLoader(urls, parent);
 
-        Loader loader = lookupLoader(urls, parent);
+	/*
+	 * Verify that the caller has permission to access this loader.
+	 */
+	if (loader != null) {
+	    loader.checkPermissions();
+	}
 
-        /*
-         * Verify that the caller has permission to access this loader.
-         */
-        if (loader != null) {
-            loader.checkPermissions();
-        }
-
-        return loader;
+	return loader;
     }
 
     /**
      * Return the security context of the given class loader.
      */
     public static Object getSecurityContext(ClassLoader loader) {
-        /*
-         * REMIND: This is a bogus JDK1.1-compatible implementation.
-         * This method should never be called by application code anyway
-         * (hence the deprecation), but should it do something different
-         * and perhaps more useful, like return a String or a URL[]?
-         */
-        if (loader instanceof Loader) {
-            URL[] urls = ((Loader) loader).getURLs();
-            if (urls.length > 0) {
-                return urls[0];
-            }
-        }
-        return null;
+	/*
+	 * REMIND: This is a bogus JDK1.1-compatible implementation.
+	 * This method should never be called by application code anyway
+	 * (hence the deprecation), but should it do something different
+	 * and perhaps more useful, like return a String or a URL[]?
+	 */
+	if (loader instanceof Loader) {
+	    URL[] urls = ((Loader) loader).getURLs();
+	    if (urls.length > 0) {
+		return urls[0];
+	    }
+	}
+	return null;
     }
 
     /**
@@ -349,7 +350,7 @@ public final class LoaderHandler {
      * annotated with the value of the "java.rmi.server.codebase" property.
      */
     public static void registerCodebaseLoader(ClassLoader loader) {
-        codebaseLoaders.put(loader, null);
+	codebaseLoaders.put(loader, null);
     }
 
     /**
@@ -357,113 +358,113 @@ public final class LoaderHandler {
      * codebase URL path in the current execution context.
      */
     private static Class loadClass(URL[] urls, String name)
-        throws ClassNotFoundException
+	throws ClassNotFoundException
     {
-        ClassLoader parent = getRMIContextClassLoader();
-        if (loaderLog.isLoggable(Log.VERBOSE)) {
-            loaderLog.log(Log.VERBOSE,
-                "(thread context class loader: " + parent + ")");
-        }
+	ClassLoader parent = getRMIContextClassLoader();
+	if (loaderLog.isLoggable(Log.VERBOSE)) {
+	    loaderLog.log(Log.VERBOSE,
+		"(thread context class loader: " + parent + ")");
+	}
 
-        /*
-         * If no security manager is set, disable access to RMI class
-         * loaders and simply delegate request to the parent loader
-         * (see bugid 4140511).
-         */
-        SecurityManager sm = System.getSecurityManager();
-        if (sm == null) {
-            try {
-                Class c = Class.forName(name, false, parent);
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    loaderLog.log(Log.VERBOSE,
-                        "class \"" + name + "\" found via " +
-                        "thread context class loader " +
-                        "(no security manager: codebase disabled), " +
-                        "defined by " + c.getClassLoader());
-                }
-                return c;
-            } catch (ClassNotFoundException e) {
-                if (loaderLog.isLoggable(Log.BRIEF)) {
-                    loaderLog.log(Log.BRIEF,
-                        "class \"" + name + "\" not found via " +
-                        "thread context class loader " +
-                        "(no security manager: codebase disabled)", e);
-                }
-                throw new ClassNotFoundException(e.getMessage() +
-                    " (no security manager: RMI class loader disabled)",
-                    e.getException());
-            }
-        }
+	/*
+	 * If no security manager is set, disable access to RMI class
+	 * loaders and simply delegate request to the parent loader
+	 * (see bugid 4140511).
+	 */
+	SecurityManager sm = System.getSecurityManager();
+	if (sm == null) {
+	    try {
+		Class c = Class.forName(name, false, parent);
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    loaderLog.log(Log.VERBOSE,
+			"class \"" + name + "\" found via " +
+			"thread context class loader " +
+			"(no security manager: codebase disabled), " +
+			"defined by " + c.getClassLoader());
+		}
+		return c;
+	    } catch (ClassNotFoundException e) {
+		if (loaderLog.isLoggable(Log.BRIEF)) {
+		    loaderLog.log(Log.BRIEF,
+			"class \"" + name + "\" not found via " +
+			"thread context class loader " +
+			"(no security manager: codebase disabled)", e);
+		}
+		throw new ClassNotFoundException(e.getMessage() +
+		    " (no security manager: RMI class loader disabled)",
+		    e.getException());
+	    }
+	}
 
-        /*
-         * Get or create the RMI class loader for this codebase URL path
-         * and parent class loader pair.
-         */
-        Loader loader = lookupLoader(urls, parent);
+	/*
+	 * Get or create the RMI class loader for this codebase URL path
+	 * and parent class loader pair.
+	 */
+	Loader loader = lookupLoader(urls, parent);
 
-        try {
-            if (loader != null) {
-                /*
-                 * Verify that the caller has permission to access this loader.
-                 */
-                loader.checkPermissions();
-            }
-        } catch (SecurityException e) {
-            /*
-             * If the current access control context does not have permission
-             * to access all of the URLs in the codebase path, wrap the
-             * resulting security exception in a ClassNotFoundException, so
-             * the caller can handle this outcome just like any other class
-             * loading failure (see bugid 4146529).
-             */
-            try {
-                /*
-                 * But first, check to see if the named class could have been
-                 * resolved without the security-offending codebase anyway;
-                 * if so, return successfully (see bugids 4191926 & 4349670).
-                 */
-                Class c = Class.forName(name, false, parent);
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    loaderLog.log(Log.VERBOSE,
-                        "class \"" + name + "\" found via " +
-                        "thread context class loader " +
-                        "(access to codebase denied), " +
-                        "defined by " + c.getClassLoader());
-                }
-                return c;
-            } catch (ClassNotFoundException unimportant) {
-                /*
-                 * Presumably the security exception is the more important
-                 * exception to report in this case.
-                 */
-                if (loaderLog.isLoggable(Log.BRIEF)) {
-                    loaderLog.log(Log.BRIEF,
-                        "class \"" + name + "\" not found via " +
-                        "thread context class loader " +
-                        "(access to codebase denied)", e);
-                }
-                throw new ClassNotFoundException(
-                    "access to class loader denied", e);
-            }
-        }
+	try {
+	    if (loader != null) {
+		/*
+		 * Verify that the caller has permission to access this loader.
+		 */
+		loader.checkPermissions();
+	    }
+	} catch (SecurityException e) {
+	    /*
+	     * If the current access control context does not have permission
+	     * to access all of the URLs in the codebase path, wrap the
+	     * resulting security exception in a ClassNotFoundException, so
+	     * the caller can handle this outcome just like any other class
+	     * loading failure (see bugid 4146529).
+	     */
+	    try {
+		/*
+		 * But first, check to see if the named class could have been
+		 * resolved without the security-offending codebase anyway;
+		 * if so, return successfully (see bugids 4191926 & 4349670).
+		 */
+		Class c = Class.forName(name, false, parent);
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    loaderLog.log(Log.VERBOSE,
+			"class \"" + name + "\" found via " +
+			"thread context class loader " +
+			"(access to codebase denied), " +
+			"defined by " +	c.getClassLoader());
+		}
+		return c;
+	    } catch (ClassNotFoundException unimportant) {
+		/*	
+		 * Presumably the security exception is the more important
+		 * exception to report in this case.
+		 */
+		if (loaderLog.isLoggable(Log.BRIEF)) {
+		    loaderLog.log(Log.BRIEF,
+			"class \"" + name + "\" not found via " +
+			"thread context class loader " +
+			"(access to codebase denied)", e);
+		}
+		throw new ClassNotFoundException(
+		    "access to class loader denied", e);
+	    }
+	}
 
-        try {
-            Class c = Class.forName(name, false, loader);
-            if (loaderLog.isLoggable(Log.VERBOSE)) {
-                loaderLog.log(Log.VERBOSE,
-                    "class \"" + name + "\" " + "found via codebase, " +
-                    "defined by " + c.getClassLoader());
-            }
-            return c;
-        } catch (ClassNotFoundException e) {
-            if (loaderLog.isLoggable(Log.BRIEF)) {
-                loaderLog.log(Log.BRIEF,
-                    "class \"" + name + "\" not found via codebase", e);
-            }
-            throw e;
-        }
+	try {
+	    Class c = Class.forName(name, false, loader);
+	    if (loaderLog.isLoggable(Log.VERBOSE)) {
+		loaderLog.log(Log.VERBOSE,
+		    "class \"" + name + "\" " + "found via codebase, " +
+		    "defined by " + c.getClassLoader());
+	    }
+	    return c;
+	} catch (ClassNotFoundException e) {
+	    if (loaderLog.isLoggable(Log.BRIEF)) {
+		loaderLog.log(Log.BRIEF,
+		    "class \"" + name + "\" not found via codebase", e);
+	    }
+	    throw e;
+	}
     }
-
+    
     /**
      * Define and return a dynamic proxy class in a class loader with
      * URLs supplied in the given location.  The proxy class will
@@ -471,55 +472,55 @@ public final class LoaderHandler {
      * interface names.
      */
     public static Class loadProxyClass(String codebase, String[] interfaces,
-                                       ClassLoader defaultLoader)
-        throws MalformedURLException, ClassNotFoundException
+				       ClassLoader defaultLoader)
+	throws MalformedURLException, ClassNotFoundException
     {
-        if (loaderLog.isLoggable(Log.BRIEF)) {
-            loaderLog.log(Log.BRIEF,
-                "interfaces = " + Arrays.asList(interfaces) + ", " +
-                "codebase = \"" + (codebase != null ? codebase : "") + "\"" +
-                (defaultLoader != null ?
-                 ", defaultLoader = " + defaultLoader : ""));
-        }
+	if (loaderLog.isLoggable(Log.BRIEF)) {
+	    loaderLog.log(Log.BRIEF,
+		"interfaces = " + Arrays.asList(interfaces) + ", " +
+		"codebase = \"" + (codebase != null ? codebase : "") + "\"" +
+		(defaultLoader != null ?
+		 ", defaultLoader = " + defaultLoader : ""));
+	}
 
-        /*
-         * This method uses a fairly complex algorithm to load the
-         * proxy class and its interface classes in order to maximize
-         * the likelihood that the proxy's codebase annotation will be
-         * preserved.  The algorithm is (assuming that all of the
-         * proxy interface classes are public):
-         *
-         * If the default loader is not null, try to load the proxy
-         * interfaces through that loader. If the interfaces can be
-         * loaded in that loader, try to define the proxy class in an
-         * RMI class loader (child of the context class loader) before
-         * trying to define the proxy in the default loader.  If the
-         * attempt to define the proxy class succeeds, the codebase
-         * annotation is preserved.  If the attempt fails, try to
-         * define the proxy class in the default loader.
-         *
-         * If the interface classes can not be loaded from the default
-         * loader or the default loader is null, try to load them from
-         * the RMI class loader.  Then try to define the proxy class
-         * in the RMI class loader.
-         *
-         * Additionally, if any of the proxy interface classes are not
-         * public, all of the non-public interfaces must reside in the
-         * same class loader or it will be impossible to define the
-         * proxy class (an IllegalAccessError will be thrown).  An
-         * attempt to load the interfaces from the default loader is
-         * made.  If the attempt fails, a second attempt will be made
-         * to load the interfaces from the RMI loader. If all of the
-         * non-public interfaces classes do reside in the same class
-         * loader, then we attempt to define the proxy class in the
-         * class loader of the non-public interfaces.  No other
-         * attempt to define the proxy class will be made.
-         */
-        ClassLoader parent = getRMIContextClassLoader();
-        if (loaderLog.isLoggable(Log.VERBOSE)) {
-            loaderLog.log(Log.VERBOSE,
-                "(thread context class loader: " + parent + ")");
-        }
+	/*
+	 * This method uses a fairly complex algorithm to load the
+	 * proxy class and its interface classes in order to maximize
+	 * the likelihood that the proxy's codebase annotation will be
+	 * preserved.  The algorithm is (assuming that all of the
+	 * proxy interface classes are public):
+	 *
+	 * If the default loader is not null, try to load the proxy
+	 * interfaces through that loader. If the interfaces can be
+	 * loaded in that loader, try to define the proxy class in an
+	 * RMI class loader (child of the context class loader) before
+	 * trying to define the proxy in the default loader.  If the
+	 * attempt to define the proxy class succeeds, the codebase
+	 * annotation is preserved.  If the attempt fails, try to
+	 * define the proxy class in the default loader.
+	 *
+	 * If the interface classes can not be loaded from the default
+	 * loader or the default loader is null, try to load them from
+	 * the RMI class loader.  Then try to define the proxy class
+	 * in the RMI class loader.
+	 *
+	 * Additionally, if any of the proxy interface classes are not
+	 * public, all of the non-public interfaces must reside in the
+	 * same class loader or it will be impossible to define the
+	 * proxy class (an IllegalAccessError will be thrown).  An
+	 * attempt to load the interfaces from the default loader is
+	 * made.  If the attempt fails, a second attempt will be made
+	 * to load the interfaces from the RMI loader. If all of the
+	 * non-public interfaces classes do reside in the same class
+	 * loader, then we attempt to define the proxy class in the
+	 * class loader of the non-public interfaces.  No other
+	 * attempt to define the proxy class will be made.
+	 */
+	ClassLoader parent = getRMIContextClassLoader();
+	if (loaderLog.isLoggable(Log.VERBOSE)) {
+	    loaderLog.log(Log.VERBOSE,
+		"(thread context class loader: " + parent + ")");
+	}
 
         URL[] urls;
         if (codebase != null) {
@@ -535,20 +536,20 @@ public final class LoaderHandler {
         SecurityManager sm = System.getSecurityManager();
         if (sm == null) {
             try {
-                Class c = loadProxyClass(interfaces, defaultLoader, parent,
-                                         false);
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    loaderLog.log(Log.VERBOSE,
-                        "(no security manager: codebase disabled) " +
-                        "proxy class defined by " + c.getClassLoader());
-                }
-                return c;
+		Class c = loadProxyClass(interfaces, defaultLoader, parent,
+					 false);
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    loaderLog.log(Log.VERBOSE,
+			"(no security manager: codebase disabled) " +
+			"proxy class defined by " + c.getClassLoader());
+		}
+		return c;
             } catch (ClassNotFoundException e) {
-                if (loaderLog.isLoggable(Log.BRIEF)) {
-                    loaderLog.log(Log.BRIEF,
-                        "(no security manager: codebase disabled) " +
-                        "proxy class resolution failed", e);
-                }
+		if (loaderLog.isLoggable(Log.BRIEF)) {
+		    loaderLog.log(Log.BRIEF,
+			"(no security manager: codebase disabled) " +
+			"proxy class resolution failed", e);
+		}
                 throw new ClassNotFoundException(e.getMessage() +
                     " (no security manager: RMI class loader disabled)",
                     e.getException());
@@ -583,44 +584,44 @@ public final class LoaderHandler {
                  * if so, return successfully (see bugids 4191926 & 4349670).
                  */
                 Class c = loadProxyClass(interfaces, defaultLoader, parent,
-                                         false);
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    loaderLog.log(Log.VERBOSE,
-                        "(access to codebase denied) " +
-                        "proxy class defined by " + c.getClassLoader());
-                }
-                return c;
+					 false);
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    loaderLog.log(Log.VERBOSE,
+			"(access to codebase denied) " +
+			"proxy class defined by " + c.getClassLoader());
+		}
+		return c;
             } catch (ClassNotFoundException unimportant) {
                 /*
                  * Presumably the security exception is the more important
                  * exception to report in this case.
                  */
-                if (loaderLog.isLoggable(Log.BRIEF)) {
-                    loaderLog.log(Log.BRIEF,
-                        "(access to codebase denied) " +
-                        "proxy class resolution failed", e);
-                }
+		if (loaderLog.isLoggable(Log.BRIEF)) {
+		    loaderLog.log(Log.BRIEF,
+			"(access to codebase denied) " +
+			"proxy class resolution failed", e);
+		}
                 throw new ClassNotFoundException(
                     "access to class loader denied", e);
             }
         }
 
-        try {
-            Class c = loadProxyClass(interfaces, defaultLoader, loader, true);
-            if (loaderLog.isLoggable(Log.VERBOSE)) {
-                loaderLog.log(Log.VERBOSE,
-                              "proxy class defined by " + c.getClassLoader());
-            }
-            return c;
-        } catch (ClassNotFoundException e) {
-            if (loaderLog.isLoggable(Log.BRIEF)) {
-                loaderLog.log(Log.BRIEF,
-                              "proxy class resolution failed", e);
-            }
-            throw e;
-        }
+	try {
+	    Class c = loadProxyClass(interfaces, defaultLoader, loader, true);
+	    if (loaderLog.isLoggable(Log.VERBOSE)) {
+		loaderLog.log(Log.VERBOSE,
+			      "proxy class defined by " + c.getClassLoader());
+	    }
+	    return c;
+	} catch (ClassNotFoundException e) {
+	    if (loaderLog.isLoggable(Log.BRIEF)) {
+		loaderLog.log(Log.BRIEF,
+			      "proxy class resolution failed", e);
+	    }
+	    throw e;
+	}
     }
-
+    
     /**
      * Define a proxy class in the default loader if appropriate.
      * Define the class in an RMI class loader otherwise.  The proxy
@@ -641,18 +642,18 @@ public final class LoaderHandler {
         if (defaultLoader != null) {
             try {
                 proxyLoader =
-                    loadProxyInterfaces(interfaceNames, defaultLoader,
-                                        classObjs, nonpublic);
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    ClassLoader[] definingLoaders =
-                        new ClassLoader[classObjs.length];
-                    for (int i = 0; i < definingLoaders.length; i++) {
-                        definingLoaders[i] = classObjs[i].getClassLoader();
-                    }
-                    loaderLog.log(Log.VERBOSE,
-                        "proxy interfaces found via defaultLoader, " +
-                        "defined by " + Arrays.asList(definingLoaders));
-                }
+		    loadProxyInterfaces(interfaceNames, defaultLoader,
+					classObjs, nonpublic);
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    ClassLoader[] definingLoaders =
+			new ClassLoader[classObjs.length];
+		    for (int i = 0; i < definingLoaders.length; i++) {
+			definingLoaders[i] = classObjs[i].getClassLoader();
+		    }
+		    loaderLog.log(Log.VERBOSE,
+			"proxy interfaces found via defaultLoader, " +
+			"defined by " + Arrays.asList(definingLoaders));
+		}
             } catch (ClassNotFoundException e) {
                 break defaultLoaderCase;
             }
@@ -671,15 +672,15 @@ public final class LoaderHandler {
         nonpublic[0] = false;
         proxyLoader = loadProxyInterfaces(interfaceNames, codebaseLoader,
                                           classObjs, nonpublic);
-        if (loaderLog.isLoggable(Log.VERBOSE)) {
-            ClassLoader[] definingLoaders = new ClassLoader[classObjs.length];
-            for (int i = 0; i < definingLoaders.length; i++) {
-                definingLoaders[i] = classObjs[i].getClassLoader();
-            }
-            loaderLog.log(Log.VERBOSE,
-                "proxy interfaces found via codebase, " +
-                "defined by " + Arrays.asList(definingLoaders));
-        }
+	if (loaderLog.isLoggable(Log.VERBOSE)) {
+	    ClassLoader[] definingLoaders = new ClassLoader[classObjs.length];
+	    for (int i = 0; i < definingLoaders.length; i++) {
+		definingLoaders[i] = classObjs[i].getClassLoader();
+	    }
+	    loaderLog.log(Log.VERBOSE,
+		"proxy interfaces found via codebase, " +
+		"defined by " + Arrays.asList(definingLoaders));
+	}
         if (!nonpublic[0]) {
             proxyLoader = codebaseLoader;
         }
@@ -716,36 +717,36 @@ public final class LoaderHandler {
      * as the proxy class loader.
      */
     private static ClassLoader loadProxyInterfaces(String[] interfaces,
-                                                   ClassLoader loader,
-                                                   Class[] classObjs,
-                                                   boolean[] nonpublic)
-        throws ClassNotFoundException
+						   ClassLoader loader,
+						   Class[] classObjs,
+						   boolean[] nonpublic)
+	throws ClassNotFoundException
     {
-        /* loader of a non-public interface class */
-        ClassLoader nonpublicLoader = null;
+	/* loader of a non-public interface class */
+	ClassLoader nonpublicLoader = null;
 
-        for (int i = 0; i < interfaces.length; i++) {
-            Class cl =
-                (classObjs[i] = Class.forName(interfaces[i], false, loader));
+	for (int i = 0; i < interfaces.length; i++) {
+	    Class cl =
+		(classObjs[i] = Class.forName(interfaces[i], false, loader));
 
-            if (!Modifier.isPublic(cl.getModifiers())) {
-                ClassLoader current = cl.getClassLoader();
-                if (loaderLog.isLoggable(Log.VERBOSE)) {
-                    loaderLog.log(Log.VERBOSE,
-                        "non-public interface \"" + interfaces[i] +
-                        "\" defined by " + current);
-                }
-                if (!nonpublic[0]) {
-                    nonpublicLoader = current;
-                    nonpublic[0] = true;
-                } else if (current != nonpublicLoader) {
-                    throw new IllegalAccessError(
-                        "non-public interfaces defined in different " +
-                        "class loaders");
-                }
-            }
-        }
-        return nonpublicLoader;
+	    if (!Modifier.isPublic(cl.getModifiers())) {
+		ClassLoader current = cl.getClassLoader();
+		if (loaderLog.isLoggable(Log.VERBOSE)) {
+		    loaderLog.log(Log.VERBOSE,
+			"non-public interface \"" + interfaces[i] +
+			"\" defined by " + current);
+		}
+		if (!nonpublic[0]) {
+		    nonpublicLoader = current;
+		    nonpublic[0] = true;
+		} else if (current != nonpublicLoader) {
+		    throw new IllegalAccessError(
+			"non-public interfaces defined in different " +
+			"class loaders");
+		}
+	    }
+	}
+	return nonpublicLoader;
     }
 
     /**
@@ -754,24 +755,24 @@ public final class LoaderHandler {
      * if any of the URLs are invalid.
      */
     private static URL[] pathToURLs(String path)
-        throws MalformedURLException
+	throws MalformedURLException
     {
-        synchronized (pathToURLsCache) {
-            Object[] v = (Object[]) pathToURLsCache.get(path);
-            if (v != null) {
-                return ((URL[])v[0]);
-            }
-        }
-        StringTokenizer st = new StringTokenizer(path); // divide by spaces
-        URL[] urls = new URL[st.countTokens()];
-        for (int i = 0; st.hasMoreTokens(); i++) {
-            urls[i] = new URL(st.nextToken());
-        }
-        synchronized (pathToURLsCache) {
-            pathToURLsCache.put(path,
-                                new Object[] {urls, new SoftReference(path)});
-        }
-        return urls;
+	synchronized (pathToURLsCache) {
+	    Object[] v = (Object[]) pathToURLsCache.get(path);
+	    if (v != null) {
+		return ((URL[])v[0]);
+	    }
+	}
+	StringTokenizer st = new StringTokenizer(path);	// divide by spaces
+	URL[] urls = new URL[st.countTokens()];
+	for (int i = 0; st.hasMoreTokens(); i++) {
+	    urls[i] = new URL(st.nextToken());
+	}
+	synchronized (pathToURLsCache) {
+	    pathToURLsCache.put(path,
+				new Object[] {urls, new SoftReference(path)});
+	}
+	return urls;
     }
 
     /** map from weak(key=string) to [URL[], soft(key)] */
@@ -785,18 +786,18 @@ public final class LoaderHandler {
      * null, not the empty string.
      */
     private static String urlsToPath(URL[] urls) {
-        if (urls.length == 0) {
-            return null;
-        } else if (urls.length == 1) {
-            return urls[0].toExternalForm();
-        } else {
-            StringBuffer path = new StringBuffer(urls[0].toExternalForm());
-            for (int i = 1; i < urls.length; i++) {
-                path.append(' ');
-                path.append(urls[i].toExternalForm());
-            }
-            return path.toString();
-        }
+	if (urls.length == 0) {
+	    return null;
+	} else if (urls.length == 1) {
+	    return urls[0].toExternalForm();
+	} else {
+	    StringBuffer path = new StringBuffer(urls[0].toExternalForm());
+	    for (int i = 1; i < urls.length; i++) {
+		path.append(' ');
+		path.append(urls[i].toExternalForm());
+	    }
+	    return path.toString();
+	}
     }
 
     /**
@@ -804,11 +805,11 @@ public final class LoaderHandler {
      * loader used in the current execution context.
      */
     private static ClassLoader getRMIContextClassLoader() {
-        /*
-         * The current implementation simply uses the current thread's
-         * context class loader.
-         */
-        return Thread.currentThread().getContextClassLoader();
+	/*
+	 * The current implementation simply uses the current thread's
+	 * context class loader.
+	 */
+	return Thread.currentThread().getContextClassLoader();
     }
 
     /**
@@ -817,82 +818,82 @@ public final class LoaderHandler {
      * will be created and returned if no match is found.
      */
     private static Loader lookupLoader(final URL[] urls,
-                                       final ClassLoader parent)
+				       final ClassLoader parent)
     {
-        /*
-         * If the requested codebase URL path is empty, the supplied
-         * parent class loader will be sufficient.
-         *
-         * REMIND: To be conservative, this optimization is commented out
-         * for now so that it does not open a security hole in the future
-         * by providing untrusted code with direct access to the public
-         * loadClass() method of a class loader instance that it cannot
-         * get a reference to.  (It's an unlikely optimization anyway.)
-         *
-         * if (urls.length == 0) {
-         *     return parent;
-         * }
-         */
+	/*
+	 * If the requested codebase URL path is empty, the supplied
+	 * parent class loader will be sufficient.
+	 *
+	 * REMIND: To be conservative, this optimization is commented out
+	 * for now so that it does not open a security hole in the future
+	 * by providing untrusted code with direct access to the public
+	 * loadClass() method of a class loader instance that it cannot
+	 * get a reference to.  (It's an unlikely optimization anyway.)
+	 *
+	 * if (urls.length == 0) {
+	 *     return parent;
+	 * }
+	 */
 
-        LoaderEntry entry;
-        Loader loader;
+	LoaderEntry entry;
+	Loader loader;
 
-        synchronized (LoaderHandler.class) {
-            /*
-             * Take this opportunity to remove from the table entries
-             * whose weak references have been cleared.
-             */
-            while ((entry = (LoaderEntry) refQueue.poll()) != null) {
-                if (!entry.removed) {   // ignore entries removed below
-                    loaderTable.remove(entry.key);
-                }
-            }
+	synchronized (LoaderHandler.class) {
+	    /*
+	     * Take this opportunity to remove from the table entries
+	     * whose weak references have been cleared.
+	     */
+	    while ((entry = (LoaderEntry) refQueue.poll()) != null) {
+		if (!entry.removed) {	// ignore entries removed below
+		    loaderTable.remove(entry.key);
+		}
+	    }
 
-            /*
-             * Look up the codebase URL path and parent class loader pair
-             * in the table of RMI class loaders.
-             */
-            LoaderKey key = new LoaderKey(urls, parent);
-            entry = (LoaderEntry) loaderTable.get(key);
+	    /*
+	     * Look up the codebase URL path and parent class loader pair
+	     * in the table of RMI class loaders.
+	     */
+	    LoaderKey key = new LoaderKey(urls, parent);
+	    entry = (LoaderEntry) loaderTable.get(key);
 
-            if (entry == null || (loader = (Loader) entry.get()) == null) {
-                /*
-                 * If entry was in table but it's weak reference was cleared,
-                 * remove it from the table and mark it as explicitly cleared,
-                 * so that new matching entry that we put in the table will
-                 * not be erroneously removed when this entry is processed
-                 * from the weak reference queue.
-                 */
-                if (entry != null) {
-                    loaderTable.remove(key);
-                    entry.removed = true;
-                }
+	    if (entry == null || (loader = (Loader) entry.get()) == null) {
+		/*
+		 * If entry was in table but it's weak reference was cleared,
+		 * remove it from the table and mark it as explicitly cleared,
+		 * so that new matching entry that we put in the table will
+		 * not be erroneously removed when this entry is processed
+		 * from the weak reference queue.
+		 */
+		if (entry != null) {
+		    loaderTable.remove(key);
+		    entry.removed = true;
+		}
 
-                /*
-                 * A matching loader was not found, so create a new class
-                 * loader instance for the requested codebase URL path and
-                 * parent class loader.  The instance is created within an
-                 * access control context retricted to the permissions
-                 * necessary to load classes from its codebase URL path.
-                 */
-                AccessControlContext acc = getLoaderAccessControlContext(urls);
-                loader = (Loader) java.security.AccessController.doPrivileged(
-                    new java.security.PrivilegedAction() {
-                        public Object run() {
-                            return new Loader(urls, parent);
-                        }
-                    }, acc);
+		/*
+		 * A matching loader was not found, so create a new class
+		 * loader instance for the requested codebase URL path and
+		 * parent class loader.  The instance is created within an
+		 * access control context retricted to the permissions
+		 * necessary to load classes from its codebase URL path.
+		 */
+		AccessControlContext acc = getLoaderAccessControlContext(urls);
+		loader = (Loader) java.security.AccessController.doPrivileged(
+		    new java.security.PrivilegedAction() {
+			public Object run() {
+			    return new Loader(urls, parent);
+			}
+		    }, acc);
 
-                /*
-                 * Finally, create an entry to hold the new loader with a
-                 * weak reference and store it in the table with the key.
-                 */
-                entry = new LoaderEntry(key, loader);
-                loaderTable.put(key, entry);
-            }
-        }
+		/*
+		 * Finally, create an entry to hold the new loader with a
+		 * weak reference and store it in the table with the key.
+		 */
+		entry = new LoaderEntry(key, loader);
+		loaderTable.put(key, entry);
+	    }
+	}
 
-        return loader;
+	return loader;
     }
 
     /**
@@ -901,50 +902,50 @@ public final class LoaderHandler {
      */
     private static class LoaderKey {
 
-        private URL[] urls;
+	private URL[] urls;
 
-        private ClassLoader parent;
+	private ClassLoader parent;
 
-        private int hashValue;
+	private int hashValue;
 
-        public LoaderKey(URL[] urls, ClassLoader parent) {
-            this.urls = urls;
-            this.parent = parent;
+	public LoaderKey(URL[] urls, ClassLoader parent) {
+	    this.urls = urls;
+	    this.parent = parent;
 
-            if (parent != null) {
-                hashValue = parent.hashCode();
-            }
-            for (int i = 0; i < urls.length; i++) {
-                hashValue ^= urls[i].hashCode();
-            }
-        }
+	    if (parent != null) {
+		hashValue = parent.hashCode();
+	    }
+	    for (int i = 0; i < urls.length; i++) {
+		hashValue ^= urls[i].hashCode();
+	    }
+	}
 
-        public int hashCode() {
-            return hashValue;
-        }
+	public int hashCode() {
+	    return hashValue;
+	}
 
-        public boolean equals(Object obj) {
-            if (obj instanceof LoaderKey) {
-                LoaderKey other = (LoaderKey) obj;
-                if (parent != other.parent) {
-                    return false;
-                }
-                if (urls == other.urls) {
-                    return true;
-                }
-                if (urls.length != other.urls.length) {
-                    return false;
-                }
-                for (int i = 0; i < urls.length; i++) {
-                    if (!urls[i].equals(other.urls[i])) {
-                        return false;
-                    }
-                }
-                return true;
-            } else {
-                return false;
-            }
-        }
+	public boolean equals(Object obj) {
+	    if (obj instanceof LoaderKey) {
+		LoaderKey other = (LoaderKey) obj;
+		if (parent != other.parent) {
+		    return false;
+		}
+		if (urls == other.urls) {
+		    return true;
+		}
+		if (urls.length != other.urls.length) {
+		    return false;
+		}
+		for (int i = 0; i < urls.length; i++) {
+		    if (!urls[i].equals(other.urls[i])) {
+			return false;
+		    }
+		}
+		return true;
+	    } else {
+		return false;
+	    }
+	}
     }
 
     /**
@@ -956,19 +957,19 @@ public final class LoaderHandler {
      */
     private static class LoaderEntry extends WeakReference {
 
-        public LoaderKey key;
+	public LoaderKey key;
 
-        /**
-         * set to true if the entry has been removed from the table
-         * because it has been replaced, so it should not be attempted
-         * to be removed again
-         */
-        public boolean removed = false;
+	/**
+	 * set to true if the entry has been removed from the table
+	 * because it has been replaced, so it should not be attempted
+	 * to be removed again
+	 */
+	public boolean removed = false;
 
-        public LoaderEntry(LoaderKey key, Loader loader) {
-            super(loader, refQueue);
-            this.key = key;
-        }
+	public LoaderEntry(LoaderKey key, Loader loader) {
+	    super(loader, refQueue);
+	    this.key = key;
+	}
     }
 
     /**
@@ -976,46 +977,46 @@ public final class LoaderHandler {
      * codebase URL path should execute with.
      */
     private static AccessControlContext getLoaderAccessControlContext(
-        URL[] urls)
+	URL[] urls)
     {
-        /*
-         * The approach used here is taken from the similar method
-         * getAccessControlContext() in the sun.applet.AppletPanel class.
-         */
-        // begin with permissions granted to all code in current policy
-        PermissionCollection perms = (PermissionCollection)
-            java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                public Object run() {
-                    CodeSource codesource = new CodeSource(null,
-                        (java.security.cert.Certificate[]) null);
-                    Policy p = java.security.Policy.getPolicy();
-                    if (p != null) {
-                        return p.getPermissions(codesource);
-                    } else {
-                        return new Permissions();
-                    }
-                }
-            });
+	/*
+	 * The approach used here is taken from the similar method
+	 * getAccessControlContext() in the sun.applet.AppletPanel class.
+	 */
+	// begin with permissions granted to all code in current policy
+	PermissionCollection perms = (PermissionCollection)
+	    java.security.AccessController.doPrivileged(
+		new java.security.PrivilegedAction() {
+		public Object run() {
+		    CodeSource codesource = new CodeSource(null, 
+			(java.security.cert.Certificate[]) null);
+		    Policy p = java.security.Policy.getPolicy();
+		    if (p != null) {
+			return p.getPermissions(codesource);
+		    } else {
+			return new Permissions();
+		    }
+		}
+	    });
 
-        // createClassLoader permission needed to create loader in context
-        perms.add(new RuntimePermission("createClassLoader"));
+	// createClassLoader permission needed to create loader in context
+	perms.add(new RuntimePermission("createClassLoader"));
 
-        // add permissions to read any "java.*" property
-        perms.add(new java.util.PropertyPermission("java.*","read"));
+	// add permissions to read any "java.*" property
+	perms.add(new java.util.PropertyPermission("java.*","read"));
 
-        // add permissions reuiqred to load from codebase URL path
-        addPermissionsForURLs(urls, perms, true);
+	// add permissions reuiqred to load from codebase URL path
+	addPermissionsForURLs(urls, perms, true);
 
-        /*
-         * Create an AccessControlContext that consists of a single
-         * protection domain with only the permissions calculated above.
-         */
-        ProtectionDomain pd = new ProtectionDomain(
-            new CodeSource((urls.length > 0 ? urls[0] : null),
-                (java.security.cert.Certificate[]) null),
-            perms);
-        return new AccessControlContext(new ProtectionDomain[] { pd });
+	/*
+	 * Create an AccessControlContext that consists of a single
+	 * protection domain with only the permissions calculated above.
+	 */
+	ProtectionDomain pd = new ProtectionDomain(
+	    new CodeSource((urls.length > 0 ? urls[0] : null), 
+		(java.security.cert.Certificate[]) null),
+	    perms);
+	return new AccessControlContext(new ProtectionDomain[] { pd });
     }
 
     /**
@@ -1029,95 +1030,95 @@ public final class LoaderHandler {
      * it is not already implied by the collection.
      */
     private static void addPermissionsForURLs(URL[] urls,
-                                              PermissionCollection perms,
-                                              boolean forLoader)
+					      PermissionCollection perms,
+					      boolean forLoader)
     {
-        for (int i = 0; i < urls.length; i++) {
-            URL url = urls[i];
-            try {
-                URLConnection urlConnection = url.openConnection();
-                Permission p = urlConnection.getPermission();
-                if (p != null) {
-                    if (p instanceof FilePermission) {
-                        /*
-                         * If the codebase is a file, the permission required
-                         * to actually read classes from the codebase URL is
-                         * the permission to read all files beneath the last
-                         * directory in the file path, either because JAR
-                         * files can refer to other JAR files in the same
-                         * directory, or because permission to read a
-                         * directory is not implied by permission to read the
-                         * contents of a directory, which all that might be
-                         * granted.
-                         */
-                        String path = p.getName();
-                        int endIndex = path.lastIndexOf(File.separatorChar);
-                        if (endIndex != -1) {
-                            path = path.substring(0, endIndex+1);
-                            if (path.endsWith(File.separator)) {
-                                path += "-";
-                            }
-                            Permission p2 = new FilePermission(path, "read");
-                            if (!perms.implies(p2)) {
-                                perms.add(p2);
-                            }
-                            perms.add(new FilePermission(path, "read"));
-                        } else {
-                            /*
-                             * No directory separator: use permission to
-                             * read the file.
-                             */
-                            if (!perms.implies(p)) {
-                                perms.add(p);
-                            }
-                        }
-                    } else {
-                        if (!perms.implies(p)) {
-                            perms.add(p);
-                        }
+	for (int i = 0; i < urls.length; i++) {
+	    URL url = urls[i];
+	    try {
+		URLConnection urlConnection = url.openConnection();
+		Permission p = urlConnection.getPermission();
+		if (p != null) {
+		    if (p instanceof FilePermission) {
+			/*
+			 * If the codebase is a file, the permission required
+			 * to actually read classes from the codebase URL is
+			 * the permission to read all files beneath the last
+			 * directory in the file path, either because JAR
+			 * files can refer to other JAR files in the same
+			 * directory, or because permission to read a
+			 * directory is not implied by permission to read the
+			 * contents of a directory, which all that might be
+			 * granted.
+			 */
+			String path = p.getName();
+			int endIndex = path.lastIndexOf(File.separatorChar);
+			if (endIndex != -1) {
+			    path = path.substring(0, endIndex+1);
+			    if (path.endsWith(File.separator)) {
+				path += "-";
+			    }
+			    Permission p2 = new FilePermission(path, "read");
+			    if (!perms.implies(p2)) {
+				perms.add(p2);
+			    }
+			    perms.add(new FilePermission(path, "read"));
+			} else {
+			    /*
+			     * No directory separator: use permission to
+			     * read the file.
+			     */
+			    if (!perms.implies(p)) {
+				perms.add(p);
+			    }
+			}
+		    } else {
+			if (!perms.implies(p)) {
+			    perms.add(p);
+			}
 
-                        /*
-                         * If the purpose of these permissions is to grant
-                         * them to an instance of a URLClassLoader subclass,
-                         * we must add permission to connect to and accept
-                         * from the host of non-"file:" URLs, otherwise the
-                         * getPermissions() method of URLClassLoader will
-                         * throw a security exception.
-                         */
-                        if (forLoader) {
-                            // get URL with meaningful host component
-                            URL hostURL = url;
-                            for (URLConnection conn = urlConnection;
-                                 conn instanceof JarURLConnection;)
-                            {
-                                hostURL =
-                                    ((JarURLConnection) conn).getJarFileURL();
-                                conn = hostURL.openConnection();
-                            }
-                            String host = hostURL.getHost();
-                            if (host != null &&
-                                p.implies(new SocketPermission(host,
-                                                               "resolve")))
-                            {
-                                Permission p2 =
-                                    new SocketPermission(host,
-                                                         "connect,accept");
-                                if (!perms.implies(p2)) {
-                                    perms.add(p2);
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                /*
-                 * This shouldn't happen, although it is declared to be
-                 * thrown by openConnection() and getPermission().  If it
-                 * does, don't bother granting or requiring any permissions
-                 * for this URL.
-                 */
-            }
-        }
+			/*
+			 * If the purpose of these permissions is to grant
+			 * them to an instance of a URLClassLoader subclass,
+			 * we must add permission to connect to and accept
+			 * from the host of non-"file:" URLs, otherwise the
+			 * getPermissions() method of URLClassLoader will
+			 * throw a security exception.
+			 */
+			if (forLoader) {
+			    // get URL with meaningful host component
+			    URL hostURL = url;
+			    for (URLConnection conn = urlConnection;
+				 conn instanceof JarURLConnection;)
+			    {
+				hostURL =
+				    ((JarURLConnection) conn).getJarFileURL();
+				conn = hostURL.openConnection();
+			    }
+			    String host = hostURL.getHost();
+			    if (host != null &&
+				p.implies(new SocketPermission(host,
+							       "resolve")))
+			    {
+				Permission p2 =
+				    new SocketPermission(host,
+							 "connect,accept");
+				if (!perms.implies(p2)) {
+				    perms.add(p2);
+				}
+			    }
+			}
+		    }
+		}
+	    } catch (IOException e) {
+		/*
+		 * This shouldn't happen, although it is declared to be
+		 * thrown by openConnection() and getPermission().  If it
+		 * does, don't bother granting or requiring any permissions
+		 * for this URL.
+		 */
+	    }
+	}
     }
 
     /**
@@ -1126,73 +1127,73 @@ public final class LoaderHandler {
      */
     private static class Loader extends URLClassLoader {
 
-        /** parent class loader, kept here as an optimization */
-        private ClassLoader parent;
+	/** parent class loader, kept here as an optimization */
+	private ClassLoader parent;
 
-        /** string form of loader's codebase URL path, also an optimization */
-        private String annotation;
+	/** string form of loader's codebase URL path, also an optimization */
+	private String annotation;
 
-        /** permissions required to access loader through public API */
-        private Permissions permissions;
+	/** permissions required to access loader through public API */
+	private Permissions permissions;
 
-        private Loader(URL[] urls, ClassLoader parent) {
-            super(urls, parent);
-            this.parent = parent;
+	private Loader(URL[] urls, ClassLoader parent) {
+	    super(urls, parent);
+	    this.parent = parent;
 
-            /*
-             * Precompute the permissions required to access the loader.
-             */
-            permissions = new Permissions();
-            addPermissionsForURLs(urls, permissions, false);
+	    /*
+	     * Precompute the permissions required to access the loader.
+	     */
+	    permissions = new Permissions();
+	    addPermissionsForURLs(urls, permissions, false);
 
-            /*
-             * Caching the value of class annotation string here assumes
-             * that the protected method addURL() is never called on this
-             * class loader.
-             */
-            annotation = urlsToPath(urls);
-        }
+	    /*
+	     * Caching the value of class annotation string here assumes
+	     * that the protected method addURL() is never called on this
+	     * class loader.
+	     */
+	    annotation = urlsToPath(urls);
+	}
 
-        /**
-         * Return the string to be annotated with all classes loaded from
-         * this class loader.
-         */
-        public String getClassAnnotation() {
-            return annotation;
-        }
+	/**
+	 * Return the string to be annotated with all classes loaded from
+	 * this class loader.
+	 */
+	public String getClassAnnotation() {
+	    return annotation;
+	}
 
-        /**
-         * Check that the current access control context has all of the
-         * permissions necessary to load classes from this loader.
-         */
-        private void checkPermissions() {
-            SecurityManager sm = System.getSecurityManager();
-            if (sm != null) {           // should never be null?
-                Enumeration enum_ = permissions.elements();
-                while (enum_.hasMoreElements()) {
-                    sm.checkPermission((Permission) enum_.nextElement());
-                }
-            }
-        }
+	/**
+	 * Check that the current access control context has all of the
+	 * permissions necessary to load classes from this loader.
+	 */
+	private void checkPermissions() {
+	    SecurityManager sm = System.getSecurityManager();
+	    if (sm != null) {		// should never be null?
+		Enumeration enum_ = permissions.elements();
+		while (enum_.hasMoreElements()) {
+		    sm.checkPermission((Permission) enum_.nextElement());
+		}
+	    }
+	}
 
-        /**
-         * Return the permissions to be granted to code loaded from the
-         * given code source.
-         */
-        protected PermissionCollection getPermissions(CodeSource codesource) {
-            PermissionCollection perms = super.getPermissions(codesource);
-            /*
-             * Grant the same permissions that URLClassLoader would grant.
-             */
-            return perms;
-        }
+	/**
+	 * Return the permissions to be granted to code loaded from the
+	 * given code source.
+	 */
+	protected PermissionCollection getPermissions(CodeSource codesource) {
+	    PermissionCollection perms = super.getPermissions(codesource);
+	    /*
+	     * Grant the same permissions that URLClassLoader would grant.
+	     */
+	    return perms;
+	}
 
-        /**
-         * Return a string representation of this loader (useful for
-         * debugging).
-         */
-        public String toString() {
-            return super.toString() + "[\"" + annotation + "\"]";
-        }
+	/**
+	 * Return a string representation of this loader (useful for
+	 * debugging).
+	 */
+	public String toString() {
+	    return super.toString() + "[\"" + annotation + "\"]";
+	}
     }
 }

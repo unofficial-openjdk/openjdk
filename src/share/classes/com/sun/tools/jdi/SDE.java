@@ -27,8 +27,8 @@ package com.sun.tools.jdi;
 
 import com.sun.jdi.*;
 
-import java.util.*;
-import java.io.File;
+import java.util.*;    
+import java.io.File; 
 
 class SDE {
     private static final int INIT_SIZE_FILE = 3;
@@ -38,7 +38,7 @@ class SDE {
     static final String BASE_STRATUM_NAME = "Java";
 
     /* for C capatibility */
-    static final String NullString = null;
+    static final String NullString = null; 
 
     private class FileTableRecord {
         int fileId;
@@ -81,7 +81,7 @@ class SDE {
         int njplsEnd;
         int fileId;
     }
-
+        
     private class StratumTableRecord {
         String id;
         int fileIndex;
@@ -114,7 +114,7 @@ class SDE {
             int i;
             int fileIndexStart = stratumTable[sti].fileIndex;
             /* one past end */
-            int fileIndexEnd = stratumTable[sti+1].fileIndex;
+            int fileIndexEnd = stratumTable[sti+1].fileIndex; 
             List<String> result = new ArrayList<String>(fileIndexEnd - fileIndexStart);
             for (i = fileIndexStart; i < fileIndexEnd; ++i) {
                 result.add(fileTable[i].sourceName);
@@ -133,7 +133,7 @@ class SDE {
             int i;
             int fileIndexStart = stratumTable[sti].fileIndex;
             /* one past end */
-            int fileIndexEnd = stratumTable[sti+1].fileIndex;
+            int fileIndexEnd = stratumTable[sti+1].fileIndex; 
             List<String> result = new ArrayList<String>(fileIndexEnd - fileIndexStart);
             for (i = fileIndexStart; i < fileIndexEnd; ++i) {
                 result.add(fileTable[i].getSourcePath(refType));
@@ -152,7 +152,7 @@ class SDE {
             }
         }
     }
-
+        
     class LineStratum {
         private final int sti; /* stratum index */
         private final int lti; /* line table index */
@@ -180,7 +180,7 @@ class SDE {
             } else {
                 return false;
             }
-        }
+        }        
 
         int lineNumber() {
             return stiLineNumber(sti, lti, jplsLine);
@@ -217,11 +217,11 @@ class SDE {
             return sourcePath;
         }
     }
-
+        
     private FileTableRecord[] fileTable = null;
     private LineTableRecord[] lineTable = null;
     private StratumTableRecord[] stratumTable = null;
-
+    
     private int fileIndex = 0;
     private int lineIndex = 0;
     private int stratumIndex = 0;
@@ -232,7 +232,7 @@ class SDE {
     private int sdePos = 0;
 
     final String sourceDebugExtension;
-    String jplsFilename = null;
+    String jplsFilename = null; 
     String defaultStratumId = null;
     boolean isValid = false;
 
@@ -339,11 +339,11 @@ class SDE {
 
     private int defaultStratumTableIndex() {
         if ((defaultStratumIndex == -1) && (defaultStratumId != null)) {
-            defaultStratumIndex =
+            defaultStratumIndex = 
                 stratumTableIndex(defaultStratumId);
         }
         return defaultStratumIndex;
-    }
+    }   
 
     int stratumTableIndex(String stratumId) {
         int i;
@@ -357,7 +357,7 @@ class SDE {
             }
         }
         return defaultStratumTableIndex();
-    }
+    }   
 
     Stratum stratum(String stratumID) {
         int sti = stratumTableIndex(stratumID);
@@ -376,7 +376,7 @@ class SDE {
 
 /*****************************
  * below functions/methods are written to compile under either Java or C
- *
+ * 
  * Needed support functions:
  *   sdePeek()
  *   sdeRead()
@@ -464,7 +464,7 @@ class SDE {
         storeFile(fileId, sourceName, sourcePath);
     }
 
-    void storeLine(int jplsStart, int jplsEnd, int jplsLineInc,
+    void storeLine(int jplsStart, int jplsEnd, int jplsLineInc, 
                   int njplsStart, int njplsEnd, int fileId) {
         assureLineTableSize();
         lineTable[lineIndex].jplsStart = jplsStart;
@@ -478,7 +478,7 @@ class SDE {
 
     /**
      * Parse line translation info.  Syntax is
-     *     <NJ-start-line> [ # <file-id> ] [ , <line-count> ] :
+     *     <NJ-start-line> [ # <file-id> ] [ , <line-count> ] : 
      *                 <J-start-line> [ , <line-increment> ] CR
      */
     void lineLine() {
@@ -510,7 +510,7 @@ class SDE {
             lineIncrement = readNumber();
         }
         ignoreLine(); /* flush the rest */
-
+        
         storeLine(jplsStart,
                   jplsStart + (lineCount * lineIncrement) -1,
                   lineIncrement,
@@ -526,9 +526,9 @@ class SDE {
     void storeStratum(String stratumId) {
         /* remove redundant strata */
         if (stratumIndex > 0) {
-            if ((stratumTable[stratumIndex-1].fileIndex
+            if ((stratumTable[stratumIndex-1].fileIndex 
                                             == fileIndex) &&
-                (stratumTable[stratumIndex-1].lineIndex
+                (stratumTable[stratumIndex-1].lineIndex 
                                             == lineIndex)) {
                 /* nothing changed overwrite it */
                 --stratumIndex;
@@ -610,18 +610,18 @@ class SDE {
                 syntax();
             }
             switch (sdeRead()) {
-                case 'S':
+                case 'S': 
                     stratumSection();
                     break;
-                case 'F':
+                case 'F': 
                     fileSection();
                     break;
-                case 'L':
+                case 'L': 
                     lineSection();
                     break;
-                case 'E':
+                case 'E': 
                     /* set end points */
-                    storeStratum("*terminator*");
+                    storeStratum("*terminator*"); 
                     isValid = true;
                     return;
                 default:
@@ -635,7 +635,7 @@ class SDE {
         defaultStratumId = BASE_STRATUM_NAME;
         defaultStratumIndex = stratumIndex;
         createJavaStratum();
-        storeStratum("*terminator*");
+        storeStratum("*terminator*"); 
     }
 
     /***************** query functions ***********************/
@@ -647,7 +647,7 @@ class SDE {
 
         lineIndexStart = stratumTable[sti].lineIndex;
         /* one past end */
-        lineIndexEnd = stratumTable[sti+1].lineIndex;
+        lineIndexEnd = stratumTable[sti+1].lineIndex; 
         for (i = lineIndexStart; i < lineIndexEnd; ++i) {
             if ((jplsLine >= lineTable[i].jplsStart) &&
                             (jplsLine <= lineTable[i].jplsEnd)) {
@@ -658,8 +658,8 @@ class SDE {
     }
 
     private int stiLineNumber(int sti, int lti, int jplsLine) {
-        return lineTable[lti].njplsStart +
-                (((jplsLine - lineTable[lti].jplsStart) /
+        return lineTable[lti].njplsStart + 
+                (((jplsLine - lineTable[lti].jplsStart) / 
                                    lineTable[lti].jplsLineInc));
     }
 
@@ -667,7 +667,7 @@ class SDE {
         int i;
         int fileIndexStart = stratumTable[sti].fileIndex;
         /* one past end */
-        int fileIndexEnd = stratumTable[sti+1].fileIndex;
+        int fileIndexEnd = stratumTable[sti+1].fileIndex; 
         for (i = fileIndexStart; i < fileIndexEnd; ++i) {
             if (fileTable[i].fileId == fileId) {
                 return i;
@@ -683,4 +683,4 @@ class SDE {
     boolean isValid() {
         return isValid;
     }
-}
+}    

@@ -1,35 +1,35 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
+ *  
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
  * published by the Free Software Foundation.  Sun designates this
  * particular file as subject to the "Classpath" exception as provided
  * by Sun in the LICENSE file that accompanied this code.
- *
+ *  
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
- *
+ *  
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
+ *  
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
 /* $XConsortium: multiVis.h /main/4 1996/10/14 15:04:12 swick $ */
 /** ------------------------------------------------------------------------
-        This file contains routines for manipulating generic lists.
-        Lists are implemented with a "harness".  In other words, each
-        node in the list consists of two pointers, one to the data item
-        and one to the next node in the list.  The head of the list is
-        the same struct as each node, but the "item" ptr is used to point
-        to the current member of the list (used by the first_in_list and
-        next_in_list functions).
+	This file contains routines for manipulating generic lists.
+	Lists are implemented with a "harness".  In other words, each
+	node in the list consists of two pointers, one to the data item
+	and one to the next node in the list.  The head of the list is
+	the same struct as each node, but the "item" ptr is used to point
+	to the current member of the list (used by the first_in_list and
+	next_in_list functions).
 
  This file is available under and governed by the GNU General Public
  License version 2 only, as published by the Free Software Foundation.
@@ -72,13 +72,13 @@ extern int32_t GetMultiVisualRegions(
     OverlayInfo  **, int32_t *, XVisualInfo ***, list_ptr *,
     list_ptr *, int32_t *
 #endif
-);
+); 
 
 extern XImage *ReadAreaToImage(
 #if NeedFunctionPrototypes
     Display *, Window, int32_t, int32_t, uint32_t,
     uint32_t, int32_t, XVisualInfo *, int32_t,
-    OverlayInfo *, int32_t, XVisualInfo **, list_ptr,
+    OverlayInfo	*, int32_t, XVisualInfo **, list_ptr,
     list_ptr, int32_t, int32_t
 #endif
 );

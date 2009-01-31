@@ -129,22 +129,22 @@ static BOOL initShellProcs()
     }
 
     // Set up procs - libShell32
-        fn_FindExecutable = (FindExecutableType)GetProcAddress(
-                (libUnicows ? libUnicows : libShell32), "FindExecutableW");
+	fn_FindExecutable = (FindExecutableType)GetProcAddress(
+		(libUnicows ? libUnicows : libShell32), "FindExecutableW");
     if (fn_FindExecutable == NULL) {
         return FALSE;
     }
-        fn_SHGetDesktopFolder = (SHGetDesktopFolderType)GetProcAddress(libShell32,
-                "SHGetDesktopFolder");
+	fn_SHGetDesktopFolder = (SHGetDesktopFolderType)GetProcAddress(libShell32,
+		"SHGetDesktopFolder");
     if (fn_SHGetDesktopFolder == NULL) {
         return FALSE;
     }
-        fn_SHGetFileInfo = (SHGetFileInfoType)GetProcAddress(
-                (libUnicows ? libUnicows : libShell32), "SHGetFileInfoW");
+	fn_SHGetFileInfo = (SHGetFileInfoType)GetProcAddress(
+		(libUnicows ? libUnicows : libShell32), "SHGetFileInfoW");
     if (fn_SHGetFileInfo == NULL) {
         return FALSE;
     }
-        fn_SHGetMalloc = (SHGetMallocType)GetProcAddress(libShell32,
+	fn_SHGetMalloc = (SHGetMallocType)GetProcAddress(libShell32,
         "SHGetMalloc");
     if (fn_SHGetMalloc == NULL) {
         return FALSE;
@@ -153,12 +153,12 @@ static BOOL initShellProcs()
     if (fn_SHGetMalloc(&pMalloc) != S_OK) {
         return FALSE;
     }
-        fn_SHGetPathFromIDList = (SHGetPathFromIDListType)GetProcAddress(
-                (libUnicows ? libUnicows : libShell32), "SHGetPathFromIDListW");
+	fn_SHGetPathFromIDList = (SHGetPathFromIDListType)GetProcAddress(
+		(libUnicows ? libUnicows : libShell32), "SHGetPathFromIDListW");
     if (fn_SHGetPathFromIDList == NULL) {
         return FALSE;
     }
-        fn_SHGetSpecialFolderLocation = (SHGetSpecialFolderLocationType)
+	fn_SHGetSpecialFolderLocation = (SHGetSpecialFolderLocationType)
         GetProcAddress(libShell32, "SHGetSpecialFolderLocation");
     if (fn_SHGetSpecialFolderLocation == NULL) {
         return FALSE;
@@ -216,9 +216,9 @@ JNIEXPORT void JNICALL Java_sun_awt_shell_Win32ShellFolder2_initIDs
     // Find out if we are on XP or later
     long version = GetVersion();
     isXP = (!(version & 0x80000000) &&
-            (LOBYTE(LOWORD(version)) == 5 &&
-             HIBYTE(LOWORD(version)) >= 1) ||
-            LOBYTE(LOWORD(version)) > 5);
+	    (LOBYTE(LOWORD(version)) == 5 &&
+	     HIBYTE(LOWORD(version)) >= 1) ||
+	    LOBYTE(LOWORD(version)) > 5);
 }
 
 static IShellIcon* getIShellIcon(IShellFolder* pIShellFolder) {
@@ -227,10 +227,10 @@ static IShellIcon* getIShellIcon(IShellFolder* pIShellFolder) {
     HICON hIcon = NULL;
     IShellIcon* pIShellIcon;
     if (pIShellFolder != NULL) {
-        hres = pIShellFolder->QueryInterface(IID_IShellIcon, (void**)&pIShellIcon);
-        if (SUCCEEDED(hres)) {
-            return pIShellIcon;
-        }
+	hres = pIShellFolder->QueryInterface(IID_IShellIcon, (void**)&pIShellIcon);
+	if (SUCCEEDED(hres)) {
+	    return pIShellIcon;
+	}
     }
     return (IShellIcon*)NULL;
 }
@@ -349,14 +349,14 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getNextPIDLEntry
 
     // Check for valid pIDL.
     if(pIDL == NULL)
-        return NULL;
+	return NULL;
 
     // Get the size of the specified item identifier.
     int cb = pIDL->mkid.cb;
 
     // If the size is zero, it is the end of the list.
     if (cb == 0)
-        return NULL;
+	return NULL;
 
     // Add cb to pidl (casting to increment by bytes).
     pIDL = (LPITEMIDLIST)(((LPBYTE)pIDL) + cb);
@@ -376,34 +376,34 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_copyFirstPIDLEntry
 {
     LPITEMIDLIST pIDL = (LPITEMIDLIST)jpIDL;
     if (pIDL == NULL) {
-        return 0;
+	return 0;
     }
     // Get the size of the specified item identifier.
     int cb = pIDL->mkid.cb;
-
+    
     // If the size is zero, it is the end of the list.
     if (cb == 0)
-        return 0;
+	return 0;
 
     // Allocate space for this as well as null-terminating entry.
     LPITEMIDLIST newPIDL = (LPITEMIDLIST)pMalloc->Alloc(cb + sizeof(SHITEMID));
-
+    
     // Copy data.
     memcpy(newPIDL, pIDL, cb);
 
     // Set null terminator for next entry.
     LPITEMIDLIST nextPIDL = (LPITEMIDLIST)(((LPBYTE)newPIDL) + cb);
     nextPIDL->mkid.cb = 0;
-
+    
     return (jlong)newPIDL;
 }
 
 static int pidlLength(LPITEMIDLIST pIDL) {
     int len = 0;
     while (pIDL->mkid.cb != 0) {
-        int cb = pIDL->mkid.cb;
-        len += cb;
-        pIDL = (LPITEMIDLIST)(((LPBYTE)pIDL) + cb);
+	int cb = pIDL->mkid.cb;
+	len += cb;
+	pIDL = (LPITEMIDLIST)(((LPBYTE)pIDL) + cb);
     }
     return len;
 }
@@ -517,9 +517,9 @@ JNIEXPORT jstring JNICALL Java_sun_awt_shell_Win32ShellFolder2_getFileSystemPath
         return NULL;
     }
     if (fn_SHGetPathFromIDList(relPIDL, szBuf)) {
-        return JNU_NewStringPlatform(env, szBuf);
+	return JNU_NewStringPlatform(env, szBuf);
     } else {
-        return NULL;
+	return NULL;
     }
 }
 
@@ -538,13 +538,13 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getEnumObjects
     }
     DWORD dwFlags = SHCONTF_FOLDERS | SHCONTF_NONFOLDERS;
     if (includeHiddenFiles) {
-        dwFlags |= SHCONTF_INCLUDEHIDDEN;
+	dwFlags |= SHCONTF_INCLUDEHIDDEN;
     }
-        /*
+	/*
     if (!isDesktop) {
         dwFlags = dwFlags | SHCONTF_NONFOLDERS;
     }
-        */
+	*/
     IEnumIDList* pEnum;
     if (pFolder->EnumObjects(NULL, dwFlags, &pEnum) != S_OK) {
         return 0;
@@ -650,19 +650,19 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getLinkLocation
 
     switch (strret.uType) {
       case STRRET_CSTR :
-        // IShellFolder::ParseDisplayName requires the path name in Unicode.
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, strret.cStr, -1, olePath, MAX_PATH);
-        wstr = olePath;
-        break;
+	// IShellFolder::ParseDisplayName requires the path name in Unicode.
+	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, strret.cStr, -1, olePath, MAX_PATH);
+	wstr = olePath;
+	break;
 
       case STRRET_OFFSET :
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (CHAR *)pidl + strret.uOffset, -1, olePath, MAX_PATH);
-        wstr = olePath;
-        break;
+	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, (CHAR *)pidl + strret.uOffset, -1, olePath, MAX_PATH);
+	wstr = olePath;
+	break;
 
       case STRRET_WSTR :
-        wstr = strret.pOleStr;
-        break;
+	wstr = strret.pOleStr;
+	break;
     }
 
     BOOL doCoUninit;
@@ -670,44 +670,44 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getLinkLocation
         return 0;
     }
     if (IS_NT) {
-        IShellLinkW* psl;
-        hres = ::CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (LPVOID *)&psl);
-        if (SUCCEEDED(hres)) {
-            IPersistFile* ppf;
-            hres = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
-            if (SUCCEEDED(hres)) {
-                hres = ppf->Load(wstr, STGM_READ);
-                if (SUCCEEDED(hres)) {
-                    if (resolve) {
-                        hres = psl->Resolve(NULL, 0);
-                        // Ignore failure
-                    }
-                    pidl = (LPITEMIDLIST)NULL;
-                    hres = psl->GetIDList(&pidl);
-                }
-                ppf->Release();
-            }
-            psl->Release();
+	IShellLinkW* psl;
+	hres = ::CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (LPVOID *)&psl);
+	if (SUCCEEDED(hres)) {
+	    IPersistFile* ppf;
+	    hres = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
+	    if (SUCCEEDED(hres)) {
+	        hres = ppf->Load(wstr, STGM_READ);
+	        if (SUCCEEDED(hres)) {
+		    if (resolve) {
+			hres = psl->Resolve(NULL, 0);
+			// Ignore failure
+		    }
+		    pidl = (LPITEMIDLIST)NULL;
+		    hres = psl->GetIDList(&pidl);
+		}
+	        ppf->Release();
+	    }
+	    psl->Release();
         }
     } else {
         IShellLinkA* psl;
-        hres = ::CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID *)&psl);
-        if (SUCCEEDED(hres)) {
-            IPersistFile* ppf;
-            hres = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
-            if (SUCCEEDED(hres)) {
-                hres = ppf->Load(wstr, STGM_READ);
-                if (SUCCEEDED(hres)) {
-                    if (resolve) {
-                        hres = psl->Resolve(NULL, 0);
-                        // Ignore failure
-                    }
-                    pidl = (LPITEMIDLIST)NULL;
-                    hres = psl->GetIDList(&pidl);
-                }
-                ppf->Release();
-            }
-            psl->Release();
+	hres = ::CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkA, (LPVOID *)&psl);
+	if (SUCCEEDED(hres)) {
+	    IPersistFile* ppf;
+	    hres = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
+	    if (SUCCEEDED(hres)) {
+	        hres = ppf->Load(wstr, STGM_READ);
+	        if (SUCCEEDED(hres)) {
+		    if (resolve) {
+			hres = psl->Resolve(NULL, 0);
+			// Ignore failure
+		    }
+		    pidl = (LPITEMIDLIST)NULL;
+		    hres = psl->GetIDList(&pidl);
+		}
+		ppf->Release();
+	    }
+	    psl->Release();
         }
     }
     if (doCoUninit) {
@@ -715,9 +715,9 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getLinkLocation
     }
 
     if (SUCCEEDED(hres)) {
-        return (jlong)pidl;
+	return (jlong)pidl;
     } else {
-        return 0;
+	return 0;
     }
 }
 
@@ -745,10 +745,10 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_parseDisplayName0
     wcsncpy(wszPath, strPath, nLength);
     wszPath[nLength] = 0;
     HRESULT res = pIShellFolder->ParseDisplayName(NULL, NULL,
-                        const_cast<jchar*>(wszPath), NULL, &pIDL, NULL);
+			const_cast<jchar*>(wszPath), NULL, &pIDL, NULL);
     if (res != S_OK) {
         JNU_ThrowIOException(env, "Could not parse name");
-        pIDL = 0;
+	pIDL = 0;
     }
     delete[] wszPath;
     env->ReleaseStringChars(jname, strPath);
@@ -806,7 +806,7 @@ JNIEXPORT jstring JNICALL Java_sun_awt_shell_Win32ShellFolder2_getExecutableType
     TCHAR szBuf[MAX_PATH];
     LPCTSTR szPath = (LPCTSTR)JNU_GetStringPlatformChars(env, path, NULL);
     if (szPath == NULL) {
-        return NULL;
+	return NULL;
     }
     HINSTANCE res = fn_FindExecutable(szPath, szPath, szBuf);
     JNU_ReleaseStringPlatformChars(env, path, szPath);
@@ -829,8 +829,8 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getIcon
     SHFILEINFO fileInfo;
     LPCTSTR pathStr = (LPCTSTR)JNU_GetStringPlatformChars(env, absolutePath, NULL);
     if (fn_SHGetFileInfo(pathStr, 0L, &fileInfo, sizeof(fileInfo),
-                         SHGFI_ICON | (getLargeIcon ? 0 : SHGFI_SMALLICON)) != 0) {
-        hIcon = fileInfo.hIcon;
+			 SHGFI_ICON | (getLargeIcon ? 0 : SHGFI_SMALLICON)) != 0) {
+	hIcon = fileInfo.hIcon;
     }
     JNU_ReleaseStringPlatformChars(env, absolutePath, pathStr);
     return (jlong)hIcon;
@@ -859,7 +859,7 @@ JNIEXPORT jint JNICALL Java_sun_awt_shell_Win32ShellFolder2_getIconIndex
     HRESULT hres;
     // http://msdn.microsoft.com/library/en-us/shellcc/platform/Shell/programmersguide/shell_int/shell_int_programming/std_ifaces.asp
     if (pIShellIcon != NULL) {
-        hres = pIShellIcon->GetIconOf(pidl, GIL_FORSHELL, &index);
+	hres = pIShellIcon->GetIconOf(pidl, GIL_FORSHELL, &index);
     }
 
     if (doCoUninit) {
@@ -893,48 +893,48 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_extractIcon
     if (IS_NT) {
         IExtractIconW* pIcon;
         hres = pIShellFolder->GetUIObjectOf(NULL, 1, const_cast<LPCITEMIDLIST*>(&pidl),
-                                        IID_IExtractIconW, NULL, (void**)&pIcon);
+					IID_IExtractIconW, NULL, (void**)&pIcon);
         if (SUCCEEDED(hres)) {
-            WCHAR szBuf[MAX_PATH];
-            INT index;
-            UINT flags;
-            hres = pIcon->GetIconLocation(GIL_FORSHELL, szBuf, MAX_PATH, &index, &flags);
-            if (SUCCEEDED(hres)) {
-                HICON hIconLarge;
-                hres = pIcon->Extract(szBuf, index, &hIconLarge, &hIcon, (16 << 16) + 32);
-                if (SUCCEEDED(hres)) {
-                    if (getLargeIcon) {
+	    WCHAR szBuf[MAX_PATH];
+	    INT index;
+	    UINT flags;
+	    hres = pIcon->GetIconLocation(GIL_FORSHELL, szBuf, MAX_PATH, &index, &flags);
+	    if (SUCCEEDED(hres)) {
+	        HICON hIconLarge;
+	        hres = pIcon->Extract(szBuf, index, &hIconLarge, &hIcon, (16 << 16) + 32);
+	        if (SUCCEEDED(hres)) {
+		    if (getLargeIcon) {
                         fn_DestroyIcon((HICON)hIcon);
                         hIcon = hIconLarge;
                     } else {
                         fn_DestroyIcon((HICON)hIconLarge);
-                    }
-                }
-            }
-            pIcon->Release();
+		    }
+	        }
+	    }
+	    pIcon->Release();
         }
     } else {
         IExtractIconA* pIcon;
         hres = pIShellFolder->GetUIObjectOf(NULL, 1, const_cast<LPCITEMIDLIST*>(&pidl),
-                                        IID_IExtractIconA, NULL, (void**)&pIcon);
+					IID_IExtractIconA, NULL, (void**)&pIcon);
         if (SUCCEEDED(hres)) {
-            CHAR szBuf[MAX_PATH];
-            INT index;
-            UINT flags;
-            hres = pIcon->GetIconLocation(GIL_FORSHELL, szBuf, MAX_PATH, &index, &flags);
-            if (SUCCEEDED(hres)) {
-                HICON hIconLarge;
-                hres = pIcon->Extract(szBuf, index, &hIconLarge, &hIcon, (16 << 16) + 32);
-                if (SUCCEEDED(hres)) {
-                    if (getLargeIcon) {
+	    CHAR szBuf[MAX_PATH];
+	    INT index;
+	    UINT flags;
+	    hres = pIcon->GetIconLocation(GIL_FORSHELL, szBuf, MAX_PATH, &index, &flags);
+	    if (SUCCEEDED(hres)) {
+	        HICON hIconLarge;
+	        hres = pIcon->Extract(szBuf, index, &hIconLarge, &hIcon, (16 << 16) + 32);
+	        if (SUCCEEDED(hres)) {
+		    if (getLargeIcon) {
                         fn_DestroyIcon((HICON)hIcon);
                         hIcon = hIconLarge;
                     } else {
                         fn_DestroyIcon((HICON)hIconLarge);
-                    }
-                }
-            }
-            pIcon->Release();
+		    }
+	        }
+	    }
+	    pIcon->Release();
         }
     }
     if (doCoUninit) {
@@ -984,7 +984,7 @@ JNIEXPORT jintArray JNICALL Java_sun_awt_shell_Win32ShellFolder2_getIconBits
             int nBits = iconSize * iconSize;
             long colorBits[1024];
             GetDIBits(dc, iconInfo.hbmColor, 0, iconSize, colorBits, &bmi, DIB_RGB_COLORS);
-            // XP supports alpha in some icons, and depending on device.
+            // XP supports alpha in some icons, and depending on device. 
             // This should take precedence over the icon mask bits.
             BOOL hasAlpha = FALSE;
             if (isXP) {
@@ -1014,12 +1014,12 @@ JNIEXPORT jintArray JNICALL Java_sun_awt_shell_Win32ShellFolder2_getIconBits
             env->SetIntArrayRegion(iconBits, 0, nBits, colorBits);
         }
         // Fix 4745575 GDI Resource Leak
-        // MSDN
-        // GetIconInfo creates bitmaps for the hbmMask and hbmColor members of ICONINFO.
-        // The calling application must manage these bitmaps and delete them when they
-        // are no longer necessary.
+        // MSDN 
+        // GetIconInfo creates bitmaps for the hbmMask and hbmColor members of ICONINFO. 
+        // The calling application must manage these bitmaps and delete them when they 
+        // are no longer necessary. 
         ::DeleteObject(iconInfo.hbmColor);
-        ::DeleteObject(iconInfo.hbmMask);
+        ::DeleteObject(iconInfo.hbmMask);    
     }
     return iconBits;
 }
@@ -1043,19 +1043,19 @@ JNIEXPORT jintArray JNICALL Java_sun_awt_shell_Win32ShellFolder2_getFileChooserB
         long osVersion = GetVersion();
         BOOL isVista = (!(osVersion & 0x80000000) && (LOBYTE(LOWORD(osVersion)) >= 6));
 
-        hBitmap = (HBITMAP)LoadImage(libShell32,
+        hBitmap = (HBITMAP)LoadImage(libShell32, 
                     isVista ? TEXT("IDB_TB_SH_DEF_16") : MAKEINTRESOURCE(216),
                     IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
     }
     if (hBitmap == NULL) {
-        libComCtl32 = LoadLibrary(TEXT("comctl32.dll"));
-        if (libComCtl32 != NULL) {
-            hBitmap = (HBITMAP)LoadImage(libComCtl32, MAKEINTRESOURCE(124),
-                                         IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
-        }
+	libComCtl32 = LoadLibrary(TEXT("comctl32.dll"));
+	if (libComCtl32 != NULL) {
+	    hBitmap = (HBITMAP)LoadImage(libComCtl32, MAKEINTRESOURCE(124),
+					 IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
+	}
     }
     if (hBitmap == NULL) {
-        return NULL;
+	return NULL;
     }
 
     GetObject(hBitmap, sizeof(bm), (LPSTR)&bm);
@@ -1091,9 +1091,9 @@ JNIEXPORT jintArray JNICALL Java_sun_awt_shell_Win32ShellFolder2_getFileChooserB
     // http://msdn.microsoft.com/library/psdk/winui/resource_9fhi.htm
     long transparent = colorBits[0];
     for (int i=0; i < numPixels; i++) {
-        if (colorBits[i] != transparent) {
-            colorBits[i] |= 0xff000000;
-        }
+	if (colorBits[i] != transparent) {
+	    colorBits[i] |= 0xff000000;
+	}
     }
 
     // Create java array
@@ -1129,10 +1129,10 @@ JNIEXPORT jlong JNICALL Java_sun_awt_shell_Win32ShellFolder2_getIconResource
 {
     HINSTANCE libHandle = LoadLibrary(env->GetStringChars(libName, NULL));
     if (libHandle != NULL) {
-        UINT fuLoad = (useVGAColors && !isXP) ? LR_VGACOLOR : 0;
-        return ptr_to_jlong(LoadImage(libHandle, MAKEINTRESOURCE(iconID),
-                                      IMAGE_ICON, cxDesired, cyDesired,
-                                      fuLoad));
+	UINT fuLoad = (useVGAColors && !isXP) ? LR_VGACOLOR : 0;
+	return ptr_to_jlong(LoadImage(libHandle, MAKEINTRESOURCE(iconID),
+				      IMAGE_ICON, cxDesired, cyDesired,
+				      fuLoad));
     }
     return 0;
 }
@@ -1183,7 +1183,7 @@ static HRESULT GetDetailsOf(
  */
 static jobject CreateColumnInfo(JNIEnv *pEnv,
                                 jclass *pClass, jmethodID *pConstructor,
-                                SHELLDETAILS *psd, ULONG visible)
+                                SHELLDETAILS *psd, ULONG visible) 
 {
     return pEnv->NewObject(*pClass, *pConstructor,
                     jstringFromSTRRET(pEnv, NULL, &(psd->str)),
@@ -1197,7 +1197,7 @@ static jobject CreateColumnInfo(JNIEnv *pEnv,
  * Method:    doGetColumnInfo
  * Signature: (J)[Lsun/awt/shell/ShellFolderColumnInfo;
  */
-JNIEXPORT jobjectArray JNICALL
+JNIEXPORT jobjectArray JNICALL 
     Java_sun_awt_shell_Win32ShellFolder2_doGetColumnInfo
             (JNIEnv *env, jobject obj, jlong iShellFolder)
 {
@@ -1211,7 +1211,7 @@ JNIEXPORT jobjectArray JNICALL
         return NULL;
     }
 
-    jmethodID columnConstructor =
+    jmethodID columnConstructor = 
         env->GetMethodID(columnClass, "<init>", "(Ljava/lang/String;IIZ)V");
     if(NULL == columnConstructor) {
         return NULL;
@@ -1313,9 +1313,9 @@ JNIEXPORT jobjectArray JNICALL
  * Method:    doGetColumnValue
  * Signature: (JJI)Ljava/lang/Object;
  */
-JNIEXPORT jobject JNICALL
+JNIEXPORT jobject JNICALL 
     Java_sun_awt_shell_Win32ShellFolder2_doGetColumnValue
-            (JNIEnv *env, jobject obj, jlong iShellFolder,
+            (JNIEnv *env, jobject obj, jlong iShellFolder, 
             jlong jpidl, jint columnIdx)
 {
 
@@ -1360,9 +1360,9 @@ JNIEXPORT jobject JNICALL
  * Method:    compareIDsByColumn
  * Signature: (JJJI)I
  */
-JNIEXPORT jint JNICALL
+JNIEXPORT jint JNICALL 
     Java_sun_awt_shell_Win32ShellFolder2_compareIDsByColumn
-            (JNIEnv* env, jclass cls, jlong jpParentIShellFolder,
+            (JNIEnv* env, jclass cls, jlong jpParentIShellFolder, 
             jlong pIDL1, jlong pIDL2, jint columnIdx)
 {
     IShellFolder* pParentIShellFolder = (IShellFolder*)jpParentIShellFolder;
@@ -1371,8 +1371,8 @@ JNIEXPORT jint JNICALL
     }
 
     HRESULT hr = pParentIShellFolder->CompareIDs(
-                                            (UINT) columnIdx,
-                                            (LPCITEMIDLIST) pIDL1,
+                                            (UINT) columnIdx, 
+                                            (LPCITEMIDLIST) pIDL1, 
                                             (LPCITEMIDLIST) pIDL2);
     if (SUCCEEDED (hr)) {
         return (jint) (short) HRESULT_CODE(hr);

@@ -34,15 +34,16 @@ package sun.awt;
   * if a SecurityManager is installed which derives from
   * AWTSecurityManager, the AWTSecurityManager's getAppContext()
   * method is called to determine the AppContext.
-  *
+  * 
   * A typical example of the use of this class is where an applet
   * is called by a system thread, yet the system AppContext is
   * inappropriate, because applet code is currently executing.
   * In this case, the getAppContext() method can walk the call stack
   * to determine the applet code being executed and return the applet's
   * AppContext object.
-  *
+  * 
   * @author  Fred Ecks
+  * @version %I% %G%
   */
 public class AWTSecurityManager extends SecurityManager {
 
@@ -52,7 +53,7 @@ public class AWTSecurityManager extends SecurityManager {
       * may be overridden by various SecurityManagers
       * (e.g. AppletSecurity) to index AppContext objects by the
       * calling context.
-      *
+      * 
       * @return  the AppContext corresponding to the current context.
       * @see     sun.awt.AppContext
       * @see     java.lang.SecurityManager

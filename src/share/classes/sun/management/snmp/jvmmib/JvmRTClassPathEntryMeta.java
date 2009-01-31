@@ -142,10 +142,10 @@ public class JvmRTClassPathEntryMeta extends SnmpMibEntry
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "get" method defined in "SnmpMibEntry".
     // See the "SnmpMibEntry" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void get(SnmpMibSubRequest req, int depth)
@@ -155,10 +155,10 @@ public class JvmRTClassPathEntryMeta extends SnmpMibEntry
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "set" method defined in "SnmpMibEntry".
     // See the "SnmpMibEntry" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void set(SnmpMibSubRequest req, int depth)
@@ -168,10 +168,10 @@ public class JvmRTClassPathEntryMeta extends SnmpMibEntry
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "check" method defined in "SnmpMibEntry".
     // See the "SnmpMibEntry" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public void check(SnmpMibSubRequest req, int depth)
@@ -210,10 +210,10 @@ public class JvmRTClassPathEntryMeta extends SnmpMibEntry
 
 
     // ------------------------------------------------------------
-    //
+    // 
     // Implements the "skipVariable" method defined in "SnmpMibEntry".
     // See the "SnmpMibEntry" Javadoc API for more details.
-    //
+    // 
     // ------------------------------------------------------------
 
     public boolean  skipVariable(long var, Object data, int pduVersion) {

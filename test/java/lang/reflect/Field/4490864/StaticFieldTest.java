@@ -65,7 +65,7 @@ public class StaticFieldTest {
         doubleField.setDouble(null, (double) 77);
         String myString = "Hello, world";
         stringField.set      (null, myString);
-
+        
         if (byteField.getByte(null)     != 77) throw new RuntimeException("Test failed");
         if (shortField.getShort(null)   != 77) throw new RuntimeException("Test failed");
         if (charField.getChar(null)     != 77) throw new RuntimeException("Test failed");

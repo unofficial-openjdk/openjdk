@@ -31,7 +31,7 @@
 
 /**
  * XMLHTMLReporter.java
- *
+ * 
  * Generates HTML reports from XML results
  *
  * @author Rakesh Menon
@@ -71,7 +71,7 @@ public class XMLHTMLReporter {
     /**
      * Color -> Better, Same, Worse
      */
-    private static final String[] color = {"#99FF99", "#CCFFFF", "#FFCC00"};
+    private static final String[] color = {"#99FF99", "#CCFFFF", "#FFCC00"}; 
 
     /**
      * String for holding base-build and target-build version
@@ -79,16 +79,16 @@ public class XMLHTMLReporter {
     private static String baseBuild = "";
     private static String targetBuild = "";
 
-    private static final DecimalFormat decimalFormat =
+    private static final DecimalFormat decimalFormat = 
         new DecimalFormat("0.##");
-    private static final SimpleDateFormat dateFormat =
+    private static final SimpleDateFormat dateFormat = 
         new SimpleDateFormat("EEE, MMM d, yyyy G 'at' HH:mm:ss z");
 
     public static void setGroupLevel(int level) {
         XMLHTMLReporter.LEVEL = level;
     }
 
-    /**
+    /** 
      * Add Test Group to the list
      */
     private static void addGroup(String testName) {
@@ -116,7 +116,7 @@ public class XMLHTMLReporter {
         String tempName = null;
 
         for(int i=0; i<groupSplit.length; i++) {
-            tempName = groupSplit[i].substring(0, 1).toUpperCase() +
+            tempName = groupSplit[i].substring(0, 1).toUpperCase() + 
                 groupSplit[i].substring(1);
             if(i == 0) {
                 groupName.append(tempName);
@@ -132,7 +132,7 @@ public class XMLHTMLReporter {
      * Get the group to which this testcase belongs
      */
     private static String getGroup(String testName) {
-
+        
         String testNameSplit[] = testName.replace('.', '_').split("_");
         String group = testNameSplit[0];
         for(int i=1; i<LEVEL; i++) {
@@ -170,7 +170,7 @@ public class XMLHTMLReporter {
     }
 
     /**
-     * Generate an HTML report based on the XML results file passed -
+     * Generate an HTML report based on the XML results file passed - 
      * J2DBench_Results.html
      */
     public static void generateReport(String resultsDir, String xmlFileName) {
@@ -183,8 +183,8 @@ public class XMLHTMLReporter {
             String[] tempstr = new String[2];
 
             J2DAnalyzer.readResults(xmlFileName);
-            J2DAnalyzer.SingleResultSetHolder srsh =
-                (J2DAnalyzer.SingleResultSetHolder)
+            J2DAnalyzer.SingleResultSetHolder srsh = 
+                (J2DAnalyzer.SingleResultSetHolder) 
                 J2DAnalyzer.results.elementAt(0);
             Enumeration enum_ = srsh.getKeyEnumeration();
             Vector keyvector = new Vector();
@@ -196,14 +196,14 @@ public class XMLHTMLReporter {
             J2DAnalyzer.sort(keys);
 
             File reportFile = new File(resultsDir, "J2DBench_Results.html");
-            PrintWriter writer =
-                openFile(reportFile.getAbsolutePath(), HTMLGEN_FILE_NEW);
+            PrintWriter writer = 
+                openFile(reportFile.getAbsolutePath(), HTMLGEN_FILE_NEW); 
 
             writer.println("<html><body bgcolor=\"#ffffff\"><hr size=\"1\">");
             writer.println("<center><h2>J2DBench2 - Report</h2>");
             writer.println("</center><hr size=\"1\"><br>");
             writer.println("<table cols=\"2\" cellspacing=\"2\" " +
-                           "cellpadding=\"5\" " +
+                           "cellpadding=\"5\" " + 
                            "border=\"0\" width=\"80%\">");
             writer.println("<tr><td bgcolor=\"#CCCCFF\" colspan=\"2\">" +
                            "<b>Build Details</b></td></tr>");
@@ -212,11 +212,11 @@ public class XMLHTMLReporter {
             writer.println("<td>" + srsh.getDescription() + "</td>");
             writer.println("</tr>");
             writer.println("<tr><td bgcolor=\"#f0f0f0\">From Date</td>");
-            writer.println("<td>" +
-                           dateFormat.format(new Date(srsh.getStartTime())) +
+            writer.println("<td>" + 
+                           dateFormat.format(new Date(srsh.getStartTime())) + 
                            "</td></tr>");
             writer.println("<tr><td bgcolor=\"#f0f0f0\">To Date</td>");
-            writer.println("<td>" +
+            writer.println("<td>" + 
                            dateFormat.format(new Date(srsh.getEndTime())) +
                            "</td></tr>");
             writer.flush();
@@ -232,7 +232,7 @@ public class XMLHTMLReporter {
             while(iter.hasNext()) {
                 key = iter.next().toString();
                 value = sysProps.get(key).toString();
-                writer.println("<tr><td bgcolor=\"#f0f0f0\">" +
+                writer.println("<tr><td bgcolor=\"#f0f0f0\">" + 
                                key + "</td><td>" + value + "&nbsp;</td></tr>");
             }
             writer.flush();
@@ -242,7 +242,7 @@ public class XMLHTMLReporter {
             writer.println("<hr size=\"1\">");
             writer.println("<br>");
 
-            writer.println("<table cellspacing=\"0\" " +
+            writer.println("<table cellspacing=\"0\" " + 
                            "cellpadding=\"3\" border=\"1\" width=\"80%\">");
             writer.println("<tr>");
             writer.println("<td bgcolor=\"#CCCCFF\" align=\"center\">" +
@@ -260,9 +260,9 @@ public class XMLHTMLReporter {
 
             for (int k = 0; k < keys.length; k++) {
 
-                J2DAnalyzer.ResultHolder testResult =
+                J2DAnalyzer.ResultHolder testResult = 
                     srsh.getResultByKey(keys[k]);
-
+                
                 writer.println("<tr>");
                 writer.println("<td>" + testResult.getReps() + "</td>");
                 writer.println("<td>" + testResult.getUnits() + "</td>");
@@ -276,15 +276,15 @@ public class XMLHTMLReporter {
                     writer.println("<li>" + key + " = " + value + "</li>");
                 }
                 writer.println("</ul></td>");
-                writer.println("<td valign=\"center\">" +
-                               decimalFormat.format(testResult.getScore()) +
+                writer.println("<td valign=\"center\">" + 
+                               decimalFormat.format(testResult.getScore()) + 
                                "</td>");
                 writer.println("</tr>");
             }
             writer.flush();
 
             writer.println("</table>");
-
+            
             writer.println("<br><hr WIDTH=\"100%\" size=\"1\">");
             writer.println("</p><hr WIDTH=\"100%\" size=\"1\"></body></html>");
 
@@ -299,15 +299,15 @@ public class XMLHTMLReporter {
     /**
      * Generate the reports from the base & target result XML
      */
-    public static void generateComparisonReport(String resultsDir,
-                                                String baseXMLFileName,
+    public static void generateComparisonReport(String resultsDir, 
+                                                String baseXMLFileName, 
                                                 String targetXMLFileName) {
 
         XMLHTMLReporter.resultsDir = resultsDir;
 
         //Get Base XML File ResultSetHolder
         J2DAnalyzer.readResults(baseXMLFileName);
-        J2DAnalyzer.SingleResultSetHolder baseSRSH =
+        J2DAnalyzer.SingleResultSetHolder baseSRSH = 
             (J2DAnalyzer.SingleResultSetHolder) J2DAnalyzer.results.elementAt(0);
         Enumeration baseEnum_ = baseSRSH.getKeyEnumeration();
         Vector baseKeyvector = new Vector();
@@ -320,7 +320,7 @@ public class XMLHTMLReporter {
 
         //Get Target XML File ResultSetHolder
         J2DAnalyzer.readResults(targetXMLFileName);
-        J2DAnalyzer.SingleResultSetHolder targetSRSH =
+        J2DAnalyzer.SingleResultSetHolder targetSRSH = 
             (J2DAnalyzer.SingleResultSetHolder)
                 J2DAnalyzer.results.elementAt(1);
         Enumeration targetEnum_ = baseSRSH.getKeyEnumeration();
@@ -337,11 +337,11 @@ public class XMLHTMLReporter {
         generateSysPropsReport(targetSRSH);
 
         File reportFile = new File(resultsDir, "J2DBench_Complete_Report.html");
-        PrintWriter writer = openFile(reportFile.getAbsolutePath(),
-                                      HTMLGEN_FILE_NEW);
+        PrintWriter writer = openFile(reportFile.getAbsolutePath(), 
+                                      HTMLGEN_FILE_NEW); 
 
-        String header = getHeader(baseSRSH, targetSRSH,
-                                  "J2DBench - Complete Report",
+        String header = getHeader(baseSRSH, targetSRSH, 
+                                  "J2DBench - Complete Report", 
                                   "System_Properties.html");
         writer.println(header);
         writer.flush();
@@ -358,7 +358,7 @@ public class XMLHTMLReporter {
                          "<b>Options</b></td>");
         startTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\">" +
                          "<b>" + baseBuild + " Score</b></td>");
-        startTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\"><b>" +
+        startTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\"><b>" + 
                          targetBuild + " Score</b></td>");
         startTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\">" +
                          "<b>% Speedup</b></td>");
@@ -377,9 +377,9 @@ public class XMLHTMLReporter {
 
         for (int k = 0; k < targetKeys.length; k++) {
 
-            J2DAnalyzer.ResultHolder baseTCR =
+            J2DAnalyzer.ResultHolder baseTCR = 
                 baseSRSH.getResultByKey(targetKeys[k]);
-            J2DAnalyzer.ResultHolder targetTCR =
+            J2DAnalyzer.ResultHolder targetTCR = 
                 targetSRSH.getResultByKey(targetKeys[k]);
 
             Object curTestCountObj = testCaseResultCount.get(baseTCR.getName());
@@ -388,11 +388,11 @@ public class XMLHTMLReporter {
                 curTestCount = ((Integer) curTestCountObj).intValue();
             }
             curTestCount++;
-            testCaseBaseResult.put(baseTCR.getName() + "_" +
+            testCaseBaseResult.put(baseTCR.getName() + "_" + 
                                    (curTestCount - 1), baseTCR);
-            testCaseTargetResult.put(targetTCR.getName() + "_" +
+            testCaseTargetResult.put(targetTCR.getName() + "_" + 
                                      (curTestCount - 1), targetTCR);
-            testCaseResultCount.put(baseTCR.getName(),
+            testCaseResultCount.put(baseTCR.getName(), 
                                     new Integer(curTestCount));
 
             /******************************************************************
@@ -408,11 +408,11 @@ public class XMLHTMLReporter {
             StringBuffer tagBuffer = new StringBuffer();
 
             tagBuffer.append("<tr bgcolor=\""+ color[selColorIndex] + "\">");
-            tagBuffer.append("<td align=\"center\">" + baseTCR.getScore() +
+            tagBuffer.append("<td align=\"center\">" + baseTCR.getScore() + 
                              "</td>");
-            tagBuffer.append("<td align=\"center\">" + baseTCR.getUnits() +
+            tagBuffer.append("<td align=\"center\">" + baseTCR.getUnits() + 
                              "</td>");
-            tagBuffer.append("<td align=\"center\">" + baseTCR.getName() +
+            tagBuffer.append("<td align=\"center\">" + baseTCR.getName() + 
                              "</td>");
             tagBuffer.append("<td valign=\"center\"><ul>");
             Map map = baseTCR.getOptions();
@@ -423,16 +423,16 @@ public class XMLHTMLReporter {
                 tagBuffer.append("<li>" + key + " = " + value + "</li>");
             }
             tagBuffer.append("</ul></td>");
-            tagBuffer.append("<td valign=\"center\" align=\"center\">" +
-                             decimalFormat.format(baseTCR.getScore()) +
+            tagBuffer.append("<td valign=\"center\" align=\"center\">" + 
+                             decimalFormat.format(baseTCR.getScore()) + 
                              "</td>");
-            tagBuffer.append("<td valign=\"center\" align=\"center\">" +
-                             decimalFormat.format(targetTCR.getScore()) +
+            tagBuffer.append("<td valign=\"center\" align=\"center\">" + 
+                             decimalFormat.format(targetTCR.getScore()) + 
                              "</td>");
-            tagBuffer.append("<td valign=\"center\" align=\"center\">" +
+            tagBuffer.append("<td valign=\"center\" align=\"center\">" + 
                              decimalFormat.format(
                                  calculateSpeedupPercentage(
-                                     baseTCR.getScore(),
+                                     baseTCR.getScore(), 
                                      targetTCR.getScore())) + "</td>");
             tagBuffer.append("</tr>");
 
@@ -462,7 +462,7 @@ public class XMLHTMLReporter {
                 curTotalScore = ((Double) curTotalScoreObj).doubleValue();
             }
             curTotalScore = curTotalScore + targetTCR.getScore();
-            consolTargetResult.put(targetTCR.getName(),
+            consolTargetResult.put(targetTCR.getName(), 
                                    new Double(curTotalScore));
         }
 
@@ -471,22 +471,22 @@ public class XMLHTMLReporter {
 
         writer.println("<table cellspacing=\"0\" " +
                          "cellpadding=\"3\" border=\"1\" width=\"80%\">");
-
-        writer.println("<tr><td colspan=\"7\" bgcolor=\"#f0f0f0\">" +
+        
+        writer.println("<tr><td colspan=\"7\" bgcolor=\"#f0f0f0\">" + 
                        "<font size=\"+1\">Tests which run BETTER on target" +
                        "</font></td></tr>");
         writer.println(betterResultTags.toString());
         writer.flush();
 
         writer.println("<tr><td colspan=\"7\">&nbsp;<br>&nbsp;</td></tr>");
-        writer.println("<tr><td colspan=\"7\" bgcolor=\"#f0f0f0\">" +
+        writer.println("<tr><td colspan=\"7\" bgcolor=\"#f0f0f0\">" + 
                        "<font size=\"+1\">Tests which run " +
                        "SAME on target</font></td></tr>");
         writer.println(sameResultTags.toString());
         writer.flush();
 
         writer.println("<tr><td colspan=\"7\">&nbsp;<br>&nbsp;</td></tr>");
-        writer.println("<tr><td colspan=\"7\" bgcolor=\"#f0f0f0\">" +
+        writer.println("<tr><td colspan=\"7\" bgcolor=\"#f0f0f0\">" + 
                        "<font size=\"+1\">Tests which run WORSE on target" +
                        "</font></td></tr>");
         writer.println(worseResultTags.toString());
@@ -500,13 +500,13 @@ public class XMLHTMLReporter {
         writer.close();
 
         generateTestCaseSummaryReport(baseSRSH, targetSRSH,
-                                      consolBaseRes, consolTargetResult,
+                                      consolBaseRes, consolTargetResult, 
                                       testCaseBaseResult,
-                                      testCaseResultCount,
+                                      testCaseResultCount, 
                                       testCaseTargetResult);
 
         generateGroupSummaryReport(baseSRSH, targetSRSH,
-                                   consolBaseRes, consolTargetResult,
+                                   consolBaseRes, consolTargetResult, 
                                    testCaseBaseResult,
                                    testCaseResultCount, testCaseTargetResult);
     }
@@ -523,14 +523,14 @@ public class XMLHTMLReporter {
         Map testCaseResultCount,
         Map testCaseTargetResult) {
 
-        File groupSummaryReportFile =
+        File groupSummaryReportFile = 
             new File(resultsDir, "Summary_Report.html");
-        PrintWriter writer =
-            openFile(groupSummaryReportFile.getAbsolutePath(),
-                     HTMLGEN_FILE_NEW);
+        PrintWriter writer = 
+            openFile(groupSummaryReportFile.getAbsolutePath(), 
+                     HTMLGEN_FILE_NEW); 
 
-        String header = getHeader(baseSRSH, targetSRSH,
-                                  "J2DBench - Summary Report",
+        String header = getHeader(baseSRSH, targetSRSH, 
+                                  "J2DBench - Summary Report", 
                                   "System_Properties.html");
         writer.println(header);
         writer.flush();
@@ -539,7 +539,7 @@ public class XMLHTMLReporter {
 
         Map baseValuesMap = new HashMap();
         Map targetValuesMap = new HashMap();
-
+        
         String tempGroup = null;
         for(int i=0; i<groups.size(); i++) {
             tempGroup = groups.get(i).toString();
@@ -547,7 +547,7 @@ public class XMLHTMLReporter {
             targetValuesMap.put(tempGroup, new Double(0));
         }
 
-
+        
         Object key = null;
         double baseValue = 0, targetValue = 0;
         Iterator resultsIter = consolBaseResult.keySet().iterator();
@@ -582,13 +582,13 @@ public class XMLHTMLReporter {
 
         writer.println("<A NAME=\"results_summary\"></A>" +
                        "<H3>Results Summary:</H3>");
-        writer.println("<table cols=\"4\" cellspacing=\"0\" " +
+        writer.println("<table cols=\"4\" cellspacing=\"0\" " + 
                        "cellpadding=\"3\" border=\"1\" width=\"80%\">");
         writer.println("<TR BGCOLOR=\"#CCCCFF\">");
         writer.println("<TD><B>Testcase</B></TD>");
-        writer.println("<TD align=\"center\"><B>Score for " + baseBuild +
+        writer.println("<TD align=\"center\"><B>Score for " + baseBuild + 
                        "</B></TD>");
-        writer.println("<TD align=\"center\"><B>Score for " + targetBuild +
+        writer.println("<TD align=\"center\"><B>Score for " + targetBuild + 
                        "</B></TD>");
         writer.println("<TD align=\"center\"><B>% Speedup</TD>");
         writer.println("</TR>");
@@ -616,56 +616,56 @@ public class XMLHTMLReporter {
 
             switch(selColorIndex) {
                 case 0:
-                    betterResultTags.append("<tr bgcolor=\""+
+                    betterResultTags.append("<tr bgcolor=\""+ 
                                             color[selColorIndex] + "\">");
                     betterResultTags.append("<td><a href=" +
                         "\"Testcase_Summary_Report.html#status_" + key +
-                                            "\">" + groupNames.get(key) +
+                                            "\">" + groupNames.get(key) + 
                                             "</a></td>");
-                    betterResultTags.append("<td align=\"center\">" +
-                                            decimalFormat.format(baseValue) +
+                    betterResultTags.append("<td align=\"center\">" + 
+                                            decimalFormat.format(baseValue) + 
                                             "</td>");
-                    betterResultTags.append("<td align=\"center\">" +
-                                            decimalFormat.format(targetValue) +
+                    betterResultTags.append("<td align=\"center\">" + 
+                                            decimalFormat.format(targetValue) + 
                                             "</td>");
-                    betterResultTags.append("<td align=\"center\">" +
-                                            decimalFormat.format(speedup) +
+                    betterResultTags.append("<td align=\"center\">" + 
+                                            decimalFormat.format(speedup) + 
                                             "</td>");
                     betterResultTags.append("</tr>");
                     break;
                 case 1:
-                    sameResultTags.append("<tr bgcolor=\""+
+                    sameResultTags.append("<tr bgcolor=\""+ 
                                           color[selColorIndex] + "\">");
                     sameResultTags.append("<td>" +
                         "<a href=\"Testcase_Summary_Report.html#status_" + key +
-                                          "\">" + groupNames.get(key) +
+                                          "\">" + groupNames.get(key) + 
                                           "</a></td>");
-                    sameResultTags.append("<td align=\"center\">" +
-                                          decimalFormat.format(baseValue) +
+                    sameResultTags.append("<td align=\"center\">" + 
+                                          decimalFormat.format(baseValue) + 
                                           "</td>");
-                    sameResultTags.append("<td align=\"center\">" +
-                                          decimalFormat.format(targetValue) +
+                    sameResultTags.append("<td align=\"center\">" + 
+                                          decimalFormat.format(targetValue) + 
                                           "</td>");
-                    sameResultTags.append("<td align=\"center\">" +
-                                          decimalFormat.format(speedup) +
+                    sameResultTags.append("<td align=\"center\">" + 
+                                          decimalFormat.format(speedup) + 
                                           "</td>");
                     sameResultTags.append("</tr>");
                     break;
                 case 2:
-                    worseResultTags.append("<tr bgcolor=\""+
+                    worseResultTags.append("<tr bgcolor=\""+ 
                                            color[selColorIndex] + "\">");
                     worseResultTags.append("<td>" +
                         "<a href=\"Testcase_Summary_Report.html#status_" + key +
-                                           "\">" + groupNames.get(key) +
+                                           "\">" + groupNames.get(key) + 
                                            "</a></td>");
-                    worseResultTags.append("<td align=\"center\">" +
-                                           decimalFormat.format(baseValue) +
+                    worseResultTags.append("<td align=\"center\">" + 
+                                           decimalFormat.format(baseValue) + 
                                            "</td>");
-                    worseResultTags.append("<td align=\"center\">" +
-                                           decimalFormat.format(targetValue) +
+                    worseResultTags.append("<td align=\"center\">" + 
+                                           decimalFormat.format(targetValue) + 
                                            "</td>");
-                    worseResultTags.append("<td align=\"center\">" +
-                                           decimalFormat.format(speedup) +
+                    worseResultTags.append("<td align=\"center\">" + 
+                                           decimalFormat.format(speedup) + 
                                            "</td>");
                     worseResultTags.append("</tr>");
                     break;
@@ -700,13 +700,13 @@ public class XMLHTMLReporter {
         Map testCaseResultCount,
         Map testCaseTargetResult) {
 
-        File tcSummaryReportFile =
+        File tcSummaryReportFile = 
             new File(resultsDir, "Testcase_Summary_Report.html");
-        PrintWriter writer =
-            openFile(tcSummaryReportFile.getAbsolutePath(), HTMLGEN_FILE_NEW);
+        PrintWriter writer = 
+            openFile(tcSummaryReportFile.getAbsolutePath(), HTMLGEN_FILE_NEW); 
 
-        String header = getHeader(baseSRSH, targetSRSH,
-                                  "J2DBench - Testcase Summary Report",
+        String header = getHeader(baseSRSH, targetSRSH, 
+                                  "J2DBench - Testcase Summary Report", 
                                   "System_Properties.html");
         writer.println(header);
         writer.flush();
@@ -716,13 +716,13 @@ public class XMLHTMLReporter {
         testResultsStartBuffer.append("<TD><B>Testcase</B></TD>");
         testResultsStartBuffer.append("<TD align=\"center\"><B>Score for " +
                                       baseBuild + "</B></TD>");
-        testResultsStartBuffer.append("<TD align=\"center\"><B>Score for " +
+        testResultsStartBuffer.append("<TD align=\"center\"><B>Score for " + 
                                      targetBuild + "</B></TD>");
         testResultsStartBuffer.append("<TD align=\"center\"><B>% Speedup</TD>");
         testResultsStartBuffer.append("</TR>");
 
         StringBuffer testResultsScoreBuffer = new StringBuffer();
-        testResultsScoreBuffer.append("<table cols=\"4\" cellspacing=\"0\" " +
+        testResultsScoreBuffer.append("<table cols=\"4\" cellspacing=\"0\" " + 
                                       "cellpadding=\"3\" border=\"1\" " +
                                       "width=\"80%\">");
 
@@ -748,7 +748,7 @@ public class XMLHTMLReporter {
                        "cellpadding=\"3\" border=\"1\" width=\"80%\">");
 
         for(int j=0; j<groupNameArray.length; j++) {
-
+            
             if(j != 0) {
                 testResultsScoreBuffer.append("<tr><td colspan=\"4\">&nbsp;" +
                                               "<br>&nbsp;</td></tr>");
@@ -759,9 +759,9 @@ public class XMLHTMLReporter {
             curGroupName = groupNameArray[j].toString();
 
             writer.println("<tr><td colspan=\"5\" valign=\"center\" " +
-                           "bgcolor=\"#f0f0f0\">" +
-                           "<A NAME=\"status_" + curGroupName + "\"></A>" +
-                           "<font size=\"+1\">Status - " +
+                           "bgcolor=\"#f0f0f0\">" + 
+                           "<A NAME=\"status_" + curGroupName + "\"></A>" + 
+                           "<font size=\"+1\">Status - " + 
                            groupNames.get(curGroupName) + "</font></td></tr>");
             writer.println("<tr>");
             writer.println("<td bgcolor=\"#CCCCFF\"><b>Tests " +
@@ -779,12 +779,12 @@ public class XMLHTMLReporter {
 
             testResultsScoreBuffer.append("<tr><td colspan=\"4\" " +
                                           "valign=\"center\" " +
-                                          "bgcolor=\"#f0f0f0\">" +
-                                          "<A NAME=\"test_result_" +
-                                          curGroupName +
+                                          "bgcolor=\"#f0f0f0\">" + 
+                                          "<A NAME=\"test_result_" + 
+                                          curGroupName + 
                                           "\"></A><font size=\"+1\">" +
-                                          "Test Results - " +
-                                          groupNames.get(curGroupName) +
+                                          "Test Results - " + 
+                                          groupNames.get(curGroupName) + 
                                           "</font></td></tr>");
             testResultsScoreBuffer.append(testResultsStartBuffer);
 
@@ -795,12 +795,12 @@ public class XMLHTMLReporter {
                 curTestName = testCaseList[i].toString();
 
                 if(curTestName.startsWith(curGroupName)) {
-
+                    
                     tableTags = generateTestCaseReport(
                         curGroupName, curTestName, baseSRSH, targetSRSH,
-                        testCaseResultCount, testCaseBaseResult,
+                        testCaseResultCount, testCaseBaseResult, 
                         testCaseTargetResult);
-
+                    
                     writer.println(tableTags[0]);
                     writer.flush();
 
@@ -829,9 +829,9 @@ public class XMLHTMLReporter {
      *|----------|------------------------|--------------------------|-----------|
      *
      */
-    private static String getTestResultsTableForSummary(String testName,
-                                                        double baseScore,
-                                                        double targetScore)
+    private static String getTestResultsTableForSummary(String testName, 
+                                                        double baseScore, 
+                                                        double targetScore) 
     {
 
         double totalScore = baseScore + targetScore;
@@ -844,20 +844,20 @@ public class XMLHTMLReporter {
         StringBuffer buffer = new StringBuffer();
 
         buffer.append("<TR BGCOLOR=\"" + color[selColorIndex] + "\">");
-        buffer.append("<TD><P><A HREF=\"testcases/" + fileName +
+        buffer.append("<TD><P><A HREF=\"testcases/" + fileName + 
                       "\">" + testName + "</A></P></TD>");
-        buffer.append("<TD align=\"center\"><P><A HREF=\"testcases/" +
+        buffer.append("<TD align=\"center\"><P><A HREF=\"testcases/" + 
                       fileName +
-                      "\"><B>" + decimalFormat.format(baseScore) +
+                      "\"><B>" + decimalFormat.format(baseScore) + 
                       "</B></A></P></TD>");
-        buffer.append("<TD align=\"center\"><P><A HREF=\"testcases/" +
-                      fileName + "\"><B>" + decimalFormat.format(targetScore) +
+        buffer.append("<TD align=\"center\"><P><A HREF=\"testcases/" + 
+                      fileName + "\"><B>" + decimalFormat.format(targetScore) + 
                       "</B></A></P></TD>");
-        buffer.append("<TD align=\"center\"><P><A HREF=\"testcases/" +
-                      fileName + "\"><B>" +
+        buffer.append("<TD align=\"center\"><P><A HREF=\"testcases/" + 
+                      fileName + "\"><B>" + 
                       decimalFormat.format(calculateSpeedupPercentage(
-                          baseScore,
-                          targetScore)) +
+                          baseScore, 
+                          targetScore)) + 
                       "</B></A></P></TD>");
         buffer.append("</TR>");
 
@@ -871,8 +871,8 @@ public class XMLHTMLReporter {
      *
      */
     private static String getStatusTableForSummary(
-        String curGroupName, String testName, int nBetter,
-        int nSame, int nWorse)
+        String curGroupName, String testName, int nBetter, 
+        int nSame, int nWorse) 
     {
 
         String fileName = testName.replace('.', '_');
@@ -886,22 +886,22 @@ public class XMLHTMLReporter {
         buffer.append("<TD><P><A HREF=\"#test_result_" + curGroupName +
                       "\">" + testName + "</A></P></TD>");
         buffer.append("<TD BGCOLOR=\"#99FF99\" align=\"center\"><P>" +
-                      "<A HREF=\"#test_result_" + curGroupName +
-                      "\"><B>" + nBetter + "</A></B>&nbsp;&nbsp;&nbsp;&nbsp;(" +
+                      "<A HREF=\"#test_result_" + curGroupName + 
+                      "\"><B>" + nBetter + "</A></B>&nbsp;&nbsp;&nbsp;&nbsp;(" + 
                       (nBetter * 100)/totalTests + "%)</P></TD>");
         buffer.append("<TD BGCOLOR=\"#CCFFFF\" align=\"center\"><P>" +
-                      "<A HREF=\"#test_result_" + curGroupName +
-                      "\"><B>" + nSame + "</A></B>&nbsp;&nbsp;&nbsp;&nbsp;(" +
+                      "<A HREF=\"#test_result_" + curGroupName + 
+                      "\"><B>" + nSame + "</A></B>&nbsp;&nbsp;&nbsp;&nbsp;(" + 
                       (nSame * 100)/totalTests + "%)</P></TD>");
         buffer.append("<TD BGCOLOR=\"#FFCC00\" align=\"center\"><P>" +
-                      "<A HREF=\"#test_result_" + curGroupName +
-                      "\"><B>" + nWorse + "</A></B>&nbsp;&nbsp;&nbsp;&nbsp;(" +
+                      "<A HREF=\"#test_result_" + curGroupName + 
+                      "\"><B>" + nWorse + "</A></B>&nbsp;&nbsp;&nbsp;&nbsp;(" + 
                       (nWorse * 100)/totalTests + "%)</P></TD>");
         buffer.append("<TD BGCOLOR=\"#FFFFFF\" align=\"center\"><P>" +
-                      "<A HREF=\"#test_result_" + curGroupName +
+                      "<A HREF=\"#test_result_" + curGroupName + 
                       "\"><B>" + totalTests + "</B></A></P></TD>");
         buffer.append("</TR>");
-
+        
         return buffer.toString();
     }
 
@@ -921,7 +921,7 @@ public class XMLHTMLReporter {
         buffer.append("<hr size=\"1\">");
         buffer.append("<H3>Status:</H3>");
 
-        buffer.append("<table cols=\"4\" cellspacing=\"0\" " +
+        buffer.append("<table cols=\"4\" cellspacing=\"0\" " + 
                       "cellpadding=\"3\" border=\"1\" width=\"80%\">");
         buffer.append("<TR BGCOLOR=\"#CCCCFF\">");
         buffer.append("<TD align=\"center\"><B>Tests performance</B></TD>");
@@ -931,29 +931,29 @@ public class XMLHTMLReporter {
         buffer.append("</TR>");
 
         buffer.append("<TR BGCOLOR=\"#99FF99\">");
-        buffer.append("<TD><P><A HREF=\"#better\">" +
+        buffer.append("<TD><P><A HREF=\"#better\">" + 
                       "Target is at least 10 percent BETTER</A></P></TD>");
-        buffer.append("<TD align=\"center\"><P><A HREF=\"#better\"><B>" +
+        buffer.append("<TD align=\"center\"><P><A HREF=\"#better\"><B>" + 
                       nBetter + "</B></A></P></TD>");
-        buffer.append("<TD align=\"center\"><P>" + (nBetter * 100/totalTests) +
+        buffer.append("<TD align=\"center\"><P>" + (nBetter * 100/totalTests) + 
                       "</P></TD>");
         buffer.append("</TR>");
 
         buffer.append("<TR BGCOLOR=\"#CCFFFF\">");
-        buffer.append("<TD><P><A HREF=\"#same\">" +
+        buffer.append("<TD><P><A HREF=\"#same\">" + 
                       "The same within 10 percent</A></P></TD>");
-        buffer.append("<TD align=\"center\"><P><A HREF=\"#same\"><B>" +
+        buffer.append("<TD align=\"center\"><P><A HREF=\"#same\"><B>" + 
                       nSame + "</B></A></P></TD>");
-        buffer.append("<TD align=\"center\"><P>" + (nSame * 100/totalTests) +
+        buffer.append("<TD align=\"center\"><P>" + (nSame * 100/totalTests) + 
                       "</P></TD>");
         buffer.append("</TR>");
 
         buffer.append("<TR BGCOLOR=\"#FFCC00\">");
-        buffer.append("<TD><P><A HREF=\"#worse\">" +
+        buffer.append("<TD><P><A HREF=\"#worse\">" + 
                       "Target is at least 10 percent WORSE</A></P></TD>");
-        buffer.append("<TD align=\"center\"><P><A HREF=\"#worse\"><B>" +
+        buffer.append("<TD align=\"center\"><P><A HREF=\"#worse\"><B>" + 
                       nWorse + "</B></A></P></TD>");
-        buffer.append("<TD align=\"center\"><P>" + (nWorse * 100/totalTests) +
+        buffer.append("<TD align=\"center\"><P>" + (nWorse * 100/totalTests) + 
                       "</P></TD>");
         buffer.append("</TR>");
 
@@ -991,19 +991,19 @@ public class XMLHTMLReporter {
                            "<b>Num Units</b></td>");
         tcStartTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\">" +
                            "<b>Options</b></td>");
-        tcStartTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\"><b>" +
+        tcStartTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\"><b>" + 
                            baseBuild + " Score</b></td>");
-        tcStartTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\"><b>" +
+        tcStartTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\"><b>" + 
                            targetBuild + " Score</b></td>");
         tcStartTags.append("<td bgcolor=\"#CCCCFF\" align=\"center\">" +
                            "<b>% Speedup</b></td>");
         tcStartTags.append("</tr>");
 
-        StringBuffer worseTestcaseResultTags =
+        StringBuffer worseTestcaseResultTags = 
             new StringBuffer(tcStartTags.toString());
-        StringBuffer sameTestcaseResultTags =
+        StringBuffer sameTestcaseResultTags = 
             new StringBuffer(tcStartTags.toString());
-        StringBuffer betterTestcaseResultTags =
+        StringBuffer betterTestcaseResultTags = 
             new StringBuffer(tcStartTags.toString());
 
         Object curTestCountObj = testCaseResultCount.get(key.toString());
@@ -1014,13 +1014,13 @@ public class XMLHTMLReporter {
 
         String fileName = key.toString().replace('.', '_');
         fileName = fileName.toLowerCase() + ".html";
-        File testcaseReportFile =
+        File testcaseReportFile = 
             new File(resultsDir + File.separator + "testcases", fileName);
         PrintWriter writer = openFile(
-            testcaseReportFile.getAbsolutePath(), HTMLGEN_FILE_NEW);
+            testcaseReportFile.getAbsolutePath(), HTMLGEN_FILE_NEW); 
 
-        String header = getHeader(baseSRSH, targetSRSH,
-                                  "J2DBench - " + key.toString(),
+        String header = getHeader(baseSRSH, targetSRSH, 
+                                  "J2DBench - " + key.toString(), 
                                   "../System_Properties.html");
         writer.println(header);
         writer.flush();
@@ -1030,10 +1030,10 @@ public class XMLHTMLReporter {
 
         for(int i=0; i<curTestCount; i++) {
 
-            J2DAnalyzer.ResultHolder baseTCR =
+            J2DAnalyzer.ResultHolder baseTCR = 
                 (J2DAnalyzer.ResultHolder)testCaseBaseResult.get(
                     key.toString() + "_" + i);
-            J2DAnalyzer.ResultHolder targetTCR =
+            J2DAnalyzer.ResultHolder targetTCR = 
                 (J2DAnalyzer.ResultHolder) testCaseTargetResult.get(
                     key.toString() + "_" + i);
 
@@ -1044,7 +1044,7 @@ public class XMLHTMLReporter {
 
             int selColorIndex = selectColor(baseScore, targetScore);
             tcTagBuffer.append("<tr bgcolor=\""+ color[selColorIndex] + "\">");
-            tcTagBuffer.append("<td align=\"center\">" + baseTCR.getUnits() +
+            tcTagBuffer.append("<td align=\"center\">" + baseTCR.getUnits() + 
                                "</td>");
             tcTagBuffer.append("<td valign=\"center\">");
 
@@ -1055,20 +1055,20 @@ public class XMLHTMLReporter {
             while(iter.hasNext()) {
                 subKey = iter.next().toString();
                 subValue = map.get(subKey).toString();
-                tcTagBuffer.append("<li>" + subKey + " = " +
+                tcTagBuffer.append("<li>" + subKey + " = " + 
                                    subValue + "</li>");
             }
             tcTagBuffer.append("</ul></td>");
-            tcTagBuffer.append("<td valign=\"center\" align=\"center\">" +
-                               decimalFormat.format(baseTCR.getScore()) +
+            tcTagBuffer.append("<td valign=\"center\" align=\"center\">" + 
+                               decimalFormat.format(baseTCR.getScore()) + 
                                "</td>");
-            tcTagBuffer.append("<td valign=\"center\" align=\"center\">" +
-                               decimalFormat.format(targetTCR.getScore()) +
+            tcTagBuffer.append("<td valign=\"center\" align=\"center\">" + 
+                               decimalFormat.format(targetTCR.getScore()) + 
                                "</td>");
-            tcTagBuffer.append("<td valign=\"center\" align=\"center\">" +
+            tcTagBuffer.append("<td valign=\"center\" align=\"center\">" + 
                                decimalFormat.format(
                                    calculateSpeedupPercentage(
-                                       baseTCR.getScore(),
+                                       baseTCR.getScore(), 
                                        targetTCR.getScore())) +
                                    "</td>");
             tcTagBuffer.append("</tr>");
@@ -1092,9 +1092,9 @@ public class XMLHTMLReporter {
             }
         }
 
-        String performanceTable =
-            getPerformanceTableForTestcase(key.toString(),
-                                           numBetterTestCases, numSameTestCases,
+        String performanceTable = 
+            getPerformanceTableForTestcase(key.toString(), 
+                                           numBetterTestCases, numSameTestCases, 
                                            numWorseTestCases);
 
         writer.println(performanceTable);
@@ -1103,23 +1103,23 @@ public class XMLHTMLReporter {
         writer.println("<hr size=\"1\">");
         writer.println("<A NAME=\"details\"></A><H3>Details:</H3>");
 
-        writer.println("<table cellspacing=\"0\" " +
+        writer.println("<table cellspacing=\"0\" " + 
                        "cellpadding=\"3\" border=\"1\" width=\"80%\">");
 
         writer.println("<tr><td colspan=\"5\" " +
-                       "valign=\"center\" bgcolor=\"#f0f0f0\">" +
-                       "<a name=\"better\"></a><font size=\"+1\">" +
-                       key.toString() +
+                       "valign=\"center\" bgcolor=\"#f0f0f0\">" + 
+                       "<a name=\"better\"></a><font size=\"+1\">" + 
+                       key.toString() + 
                        " Tests which run BETTER on target</font></td></tr>");
         writer.println(betterTestcaseResultTags.toString());
         writer.flush();
 
         writer.println("<tr><td colspan=\"5\">&nbsp;<br>&nbsp;</td></tr>");
-
+        
         writer.println("<tr><td colspan=\"5\" " +
                        "valign=\"center\" bgcolor=\"#f0f0f0\">" +
-                       "<a name=\"same\"></a><font size=\"+1\">" +
-                       key.toString() +
+                       "<a name=\"same\"></a><font size=\"+1\">" + 
+                       key.toString() + 
                        " Tests which run SAME on target</font></td></tr>");
         writer.println(sameTestcaseResultTags.toString());
         writer.flush();
@@ -1127,13 +1127,13 @@ public class XMLHTMLReporter {
         writer.println("<tr><td colspan=\"5\">&nbsp;<br>&nbsp;</td></tr>");
 
         writer.println("<tr><td colspan=\"5\" " +
-                       "valign=\"center\" bgcolor=\"#f0f0f0\">" +
-                       "<a name=\"worse\"></a><font size=\"+1\">" +
-                       key.toString() +
+                       "valign=\"center\" bgcolor=\"#f0f0f0\">" + 
+                       "<a name=\"worse\"></a><font size=\"+1\">" + 
+                       key.toString() + 
                        " Tests which run WORSE on target</font></td></tr>");
         writer.println(worseTestcaseResultTags.toString());
         writer.flush();
-
+        
         writer.println("</table>");
 
         writer.println(getFooter());
@@ -1141,12 +1141,12 @@ public class XMLHTMLReporter {
 
         writer.close();
 
-        String statusTable =
-            getStatusTableForSummary(curGroupName, key.toString(),
-                                     numBetterTestCases,
+        String statusTable = 
+            getStatusTableForSummary(curGroupName, key.toString(), 
+                                     numBetterTestCases, 
                                      numSameTestCases, numWorseTestCases);
 
-        String testResultsTable =
+        String testResultsTable = 
             getTestResultsTableForSummary(key.toString(),
                                           totalBaseScore, totalTargetScore);
 
@@ -1164,36 +1164,36 @@ public class XMLHTMLReporter {
         buffer.append("<A NAME=\"legend\"></A><H3>Legend:</H3>");
         buffer.append("<table cellspacing=\"0\" cellpadding=\"3\" " +
                       "border=\"1\" width=\"80%\">");
-        buffer.append("<TR BGCOLOR=\"" + color[0] +
-                      "\"><TD>The result for " + targetBuild +
-                      " is at least 10 percent BETTER than for " + baseBuild +
+        buffer.append("<TR BGCOLOR=\"" + color[0] + 
+                      "\"><TD>The result for " + targetBuild + 
+                      " is at least 10 percent BETTER than for " + baseBuild + 
                       "</TD></TR>");
-        buffer.append("<TR BGCOLOR=\"" + color[1] +
-                      "\"><TD>The results for " + targetBuild + " and " +
+        buffer.append("<TR BGCOLOR=\"" + color[1] + 
+                      "\"><TD>The results for " + targetBuild + " and " + 
                       baseBuild + " are within 10 percent</TD></TR>");
-        buffer.append("<TR BGCOLOR=\"" + color[2] +
-                      "\"><TD>The result for " + targetBuild +
-                      " is at least 10 percent WORSE than " + baseBuild +
+        buffer.append("<TR BGCOLOR=\"" + color[2] + 
+                      "\"><TD>The result for " + targetBuild + 
+                      " is at least 10 percent WORSE than " + baseBuild + 
                       "</TD></TR>");
         buffer.append("<TR><TD>The 'Score' is a number of " +
-                      "successful rendering " +
+                      "successful rendering " + 
                       "operations per second</TD></TR>");
         buffer.append("</table>");
 
         buffer.append("<br><hr WIDTH=\"100%\" size=\"1\">");
         buffer.append("</p><hr WIDTH=\"100%\" size=\"1\"></body></html>");
-
+        
         return buffer.toString();
     }
 
     /**
      * Returns header tag for HTML files
      */
-    private static String
-        getHeader(J2DAnalyzer.SingleResultSetHolder baseSRSH,
-                  J2DAnalyzer.SingleResultSetHolder targetSRSH,
+    private static String 
+        getHeader(J2DAnalyzer.SingleResultSetHolder baseSRSH, 
+                  J2DAnalyzer.SingleResultSetHolder targetSRSH, 
                   String title,
-                 String sysPropLoc)
+                 String sysPropLoc) 
     {
 
         StringBuffer buffer = new StringBuffer();
@@ -1202,19 +1202,19 @@ public class XMLHTMLReporter {
         buffer.append(headerTitle);
 
         //System Properties
-        buffer.append("<tr><td bgcolor=\"#CCCCFF\">" +
+        buffer.append("<tr><td bgcolor=\"#CCCCFF\">" + 
                       "<b><A HREF=\"" + sysPropLoc + "\">System Property</A>" +
-                      "</b></td>" +
-                      "<td bgcolor=\"#CCCCFF\"><b><A HREF=\"" +
+                      "</b></td>" + 
+                      "<td bgcolor=\"#CCCCFF\"><b><A HREF=\"" + 
                       sysPropLoc + "\">Value<A></b></td></tr>");
         Map sysProps = targetSRSH.getProperties();
-        buffer.append("<tr><td bgcolor=\"#f0f0f0\">os.name</td><td>" +
+        buffer.append("<tr><td bgcolor=\"#f0f0f0\">os.name</td><td>" + 
                       sysProps.get("os.name") + "</td></tr>");
-        buffer.append("<tr><td bgcolor=\"#f0f0f0\">os.version</td><td>" +
+        buffer.append("<tr><td bgcolor=\"#f0f0f0\">os.version</td><td>" + 
                       sysProps.get("os.version") + "</td></tr>");
-        buffer.append("<tr><td bgcolor=\"#f0f0f0\">os.arch</td><td>" +
+        buffer.append("<tr><td bgcolor=\"#f0f0f0\">os.arch</td><td>" + 
                       sysProps.get("os.arch") + "</td></tr>");
-        buffer.append("<tr><td bgcolor=\"#f0f0f0\">sun.desktop</td><td>" +
+        buffer.append("<tr><td bgcolor=\"#f0f0f0\">sun.desktop</td><td>" + 
                       sysProps.get("sun.desktop") + "</td></tr>");
 
         buffer.append("</table>");
@@ -1233,7 +1233,7 @@ public class XMLHTMLReporter {
         buffer.append("<body bgcolor=\"#ffffff\"><hr size=\"1\">");
         buffer.append("<center><h2>" + title + "</h2>");
         buffer.append("</center><hr size=\"1\"><br>");
-        buffer.append("<table cols=\"2\" cellspacing=\"2\" cellpadding=\"5\" " +
+        buffer.append("<table cols=\"2\" cellspacing=\"2\" cellpadding=\"5\" " + 
                       "border=\"0\" width=\"80%\">");
         buffer.append("<tr><td bgcolor=\"#CCCCFF\" colspan=\"2\">" +
                       "<b>Test Details</b></td></tr>");
@@ -1248,20 +1248,20 @@ public class XMLHTMLReporter {
     /**
      * Generats System-Properties HTML file - System_Property.html
      */
-    private static void
-        generateSysPropsReport(J2DAnalyzer.SingleResultSetHolder srsh)
+    private static void 
+        generateSysPropsReport(J2DAnalyzer.SingleResultSetHolder srsh) 
     {
 
-        File sysPropsFile =
+        File sysPropsFile = 
             new File(resultsDir, "System_Properties.html");
-        PrintWriter writer =
-            openFile(sysPropsFile.getAbsolutePath(), HTMLGEN_FILE_NEW);
+        PrintWriter writer = 
+            openFile(sysPropsFile.getAbsolutePath(), HTMLGEN_FILE_NEW); 
 
         String headerTitle = getHeaderTitle("System Properties");
         writer.println(headerTitle);
         writer.flush();
 
-        writer.println("<tr><td bgcolor=\"#CCCCFF\"><b>" +
+        writer.println("<tr><td bgcolor=\"#CCCCFF\"><b>" + 
                        "System Property</b></td><td bgcolor=\"#CCCCFF\">" +
                        "<b>Value</b></td></tr>");
 
@@ -1272,7 +1272,7 @@ public class XMLHTMLReporter {
         while(iter.hasNext()) {
             key = iter.next().toString();
             value = sysProps.get(key).toString();
-            writer.println("<tr><td bgcolor=\"#f0f0f0\">" +
+            writer.println("<tr><td bgcolor=\"#f0f0f0\">" + 
                            key + "</td><td>" + value + "</td></tr>");
         }
         writer.println("</table>");
@@ -1280,7 +1280,7 @@ public class XMLHTMLReporter {
 
         writer.println("<br><hr WIDTH=\"100%\" size=\"1\">");
         writer.println("</p><hr WIDTH=\"100%\" size=\"1\"></body></html>");
-
+        
         writer.flush();
     }
 
@@ -1302,18 +1302,18 @@ public class XMLHTMLReporter {
     }
 
     /**
-     * Calculate Speedup Percentage ->
+     * Calculate Speedup Percentage -> 
      *     ((target_score - base_score) * 100) / baseScore
      * Can change this implementation so as to provide some analysis.
      */
-    private static double calculateSpeedupPercentage(double baseScore,
-                                                     double targetScore)
+    private static double calculateSpeedupPercentage(double baseScore, 
+                                                     double targetScore) 
     {
         return ((targetScore - baseScore) * 100)/baseScore;
     }
 
     private static void printUsage() {
-        String usage =
+        String usage = 
             "\njava XMLHTMLReporter [options]      "     +
             "                                      \n\n" +
             "where options include:                "     +
@@ -1342,14 +1342,14 @@ public class XMLHTMLReporter {
      * main
      */
     public static void main(String args[]) {
-
+        
         String resDir = ".";
         String baseXML = null;
         String targetXML = null;
         String resultXML = null;
         int group = 2;
-
-        /* ---- Analysis Mode ----
+        
+        /* ---- Analysis Mode ---- 
             BEST    = 1;
             WORST   = 2;
             AVERAGE = 3;
@@ -1360,34 +1360,34 @@ public class XMLHTMLReporter {
         try {
 
             for (int i = 0; i < args.length; i++) {
-                if (args[i].startsWith("-results") ||
-                    args[i].startsWith("-r"))
+                if (args[i].startsWith("-results") || 
+                    args[i].startsWith("-r")) 
                 {
                     i++;
                     resDir = args[i];
-                } else if (args[i].startsWith("-basexml") ||
-                           args[i].startsWith("-b"))
+                } else if (args[i].startsWith("-basexml") || 
+                           args[i].startsWith("-b")) 
                 {
                     i++;
                     baseXML = args[i];
-                } else if (args[i].startsWith("-targetxml") ||
-                           args[i].startsWith("-t"))
+                } else if (args[i].startsWith("-targetxml") || 
+                           args[i].startsWith("-t")) 
                 {
                     i++;
                     targetXML = args[i];
-                } else if (args[i].startsWith("-resultxml") ||
-                           args[i].startsWith("-xml"))
+                } else if (args[i].startsWith("-resultxml") || 
+                           args[i].startsWith("-xml")) 
                 {
                     i++;
                     resultXML = args[i];
-                } else if (args[i].startsWith("-group") ||
-                           args[i].startsWith("-g"))
+                } else if (args[i].startsWith("-group") || 
+                           args[i].startsWith("-g")) 
                 {
                     i++;
                     group = Integer.parseInt(args[i]);
                     System.out.println("Grouping Level for tests: " + group);
-                } else if (args[i].startsWith("-analyzermode") ||
-                           args[i].startsWith("-am"))
+                } else if (args[i].startsWith("-analyzermode") || 
+                           args[i].startsWith("-am")) 
                 {
                     i++;
                     String strAnalyzerMode = args[i];
@@ -1416,7 +1416,7 @@ public class XMLHTMLReporter {
             J2DAnalyzer.setMode(analyzerMode);
 
             if(targetXML != null && baseXML != null) {
-                XMLHTMLReporter.generateComparisonReport(resDir, baseXML,
+                XMLHTMLReporter.generateComparisonReport(resDir, baseXML, 
                                                          targetXML);
             } else if (resultXML != null) {
                 XMLHTMLReporter.generateReport(resDir, resultXML);

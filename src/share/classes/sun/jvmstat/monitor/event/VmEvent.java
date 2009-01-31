@@ -32,6 +32,7 @@ import sun.jvmstat.monitor.MonitoredVm;
  * Base class for events emitted by a {@link MonitoredVm}.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class VmEvent extends EventObject {

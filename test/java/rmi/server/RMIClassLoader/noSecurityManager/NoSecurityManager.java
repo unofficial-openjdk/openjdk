@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -61,93 +61,93 @@ public class NoSecurityManager {
     private static final String classFileName = className + ".class";
 
     public static void main(String[] args) throws Exception {
-        /*
-         * Specify the file to contain the class definition.
-         * Make sure that there is a "classes" subdirectory underneath
-         * the working directory to be used as the codebase for the
-         * class definition to be located.
-         */
-        File dstDir = new File(System.getProperty("user.dir"), "codebase");
-        if (!dstDir.exists()) {
-            if (!dstDir.mkdir()) {
-                throw new RuntimeException(
-                    "could not create codebase directory");
-            }
-        }
-        File dstFile = new File(dstDir, classFileName);
+	/*
+	 * Specify the file to contain the class definition.
+	 * Make sure that there is a "classes" subdirectory underneath
+	 * the working directory to be used as the codebase for the
+	 * class definition to be located.
+	 */
+	File dstDir = new File(System.getProperty("user.dir"), "codebase");
+	if (!dstDir.exists()) {
+	    if (!dstDir.mkdir()) {
+		throw new RuntimeException(
+		    "could not create codebase directory");
+	    }
+	}
+	File dstFile = new File(dstDir, classFileName);
 
-        /*
-         * Specify where we will copy the class definition from, if
-         * necessary.  After the test is built, the class file can be
-         * found in the "test.classes" directory.
-         */
-        File srcDir = new File(System.getProperty("test.classes", "."));
-        File srcFile = new File(srcDir, classFileName);
+	/*
+	 * Specify where we will copy the class definition from, if
+	 * necessary.  After the test is built, the class file can be
+	 * found in the "test.classes" directory.
+	 */
+	File srcDir = new File(System.getProperty("test.classes", "."));
+	File srcFile = new File(srcDir, classFileName);
 
-        /*
-         * If the class definition is not already located at the codebase,
-         * copy it there from the test build area.
-         */
-        if (!dstFile.exists()) {
-            if (!srcFile.exists()) {
-                throw new RuntimeException(
-                    "could not find class file to install in codebase " +
-                    "(try rebuilding the test)");
-            }
-            if (!srcFile.renameTo(dstFile)) {
-                throw new RuntimeException(
-                    "could not install class file in codebase");
-            }
-        }
+	/*
+	 * If the class definition is not already located at the codebase,
+	 * copy it there from the test build area.
+	 */
+	if (!dstFile.exists()) {
+	    if (!srcFile.exists()) {
+		throw new RuntimeException(
+		    "could not find class file to install in codebase " +
+		    "(try rebuilding the test)");
+	    }
+	    if (!srcFile.renameTo(dstFile)) {
+		throw new RuntimeException(
+		    "could not install class file in codebase");
+	    }
+	}
 
-        /*
-         * After the class definition is successfully installed at the
-         * codebase, delete it from the test's CLASSPATH, so that it will
-         * not be found there first before the codebase is searched.
-         */
-        if (srcFile.exists()) {
-            if (!srcFile.delete()) {
-                throw new RuntimeException(
-                    "could not delete duplicate class file in CLASSPATH");
-            }
-        }
+	/*
+	 * After the class definition is successfully installed at the
+	 * codebase, delete it from the test's CLASSPATH, so that it will
+	 * not be found there first before the codebase is searched.
+	 */
+	if (srcFile.exists()) {
+	    if (!srcFile.delete()) {
+		throw new RuntimeException(
+		    "could not delete duplicate class file in CLASSPATH");
+	    }
+	}
 
-        /*
-         * Obtain the URL for the codebase.
-         */
-        URL codebaseURL = new URL("file", "",
-            dstDir.getAbsolutePath().replace(File.separatorChar, '/') + "/");
+	/*
+	 * Obtain the URL for the codebase.
+	 */
+	URL codebaseURL = new URL("file", "",
+	    dstDir.getAbsolutePath().replace(File.separatorChar, '/') + "/");
 
-        /*
-         * No security manager has been set: verify that we cannot load
-         * a class from a specified codebase (that is not in the class path).
-         */
-        try {
-            RMIClassLoader.loadClass(codebaseURL, className);
-            throw new RuntimeException(
-                "TEST FAILED: class loaded successfully from codebase");
-        } catch (ClassNotFoundException e) {
-            System.err.println(e.toString());
-        }
+	/*
+	 * No security manager has been set: verify that we cannot load
+	 * a class from a specified codebase (that is not in the class path).
+	 */
+	try {
+	    RMIClassLoader.loadClass(codebaseURL, className);
+	    throw new RuntimeException(
+		"TEST FAILED: class loaded successfully from codebase");
+	} catch (ClassNotFoundException e) {
+	    System.err.println(e.toString());
+	}
 
-        /*
-         * No security manager has been set: verify that we can still
-         * load a class available in the context class loader (class path).
-         */
-        RMIClassLoader.loadClass(codebaseURL, "LocalDummy");
-        System.err.println("TEST PASSED: local class loaded successfully");
+	/*
+	 * No security manager has been set: verify that we can still
+	 * load a class available in the context class loader (class path).
+	 */
+	RMIClassLoader.loadClass(codebaseURL, "LocalDummy");
+	System.err.println("TEST PASSED: local class loaded successfully");
 
-        /*
-         * Verify that getClassLoader returns context class loader
-         * if no security manager is set.
-         */
-        System.err.println("/nTest getClassLoader with no security manager set");
-        ClassLoader loader = RMIClassLoader.getClassLoader("http://codebase");
-        if (loader == Thread.currentThread().getContextClassLoader()) {
-            System.err.println("TEST PASSED: returned context class loader");
-        } else {
-            throw new RuntimeException(
-                "TEST FAILED: returned RMI-created class loader");
-        }
+	/*
+	 * Verify that getClassLoader returns context class loader
+	 * if no security manager is set.
+	 */
+	System.err.println("/nTest getClassLoader with no security manager set");
+	ClassLoader loader = RMIClassLoader.getClassLoader("http://codebase");
+	if (loader == Thread.currentThread().getContextClassLoader()) {
+	    System.err.println("TEST PASSED: returned context class loader");
+	} else {
+	    throw new RuntimeException(
+		"TEST FAILED: returned RMI-created class loader");
+	}
     }
 }

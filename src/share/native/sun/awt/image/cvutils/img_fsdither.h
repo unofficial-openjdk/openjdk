@@ -51,53 +51,53 @@
  * their implementations for the specific cases.
  */
 #define DitherDeclared
-#define DeclareDitherVars       DeclareAnyDitherVars
-#define InitDither              InitAnyDither
-#define StartDitherLine         StartAnyDitherLine
-#define DitherPixel             AnyDitherPixel
-#define DitherBufComplete       AnyDitherBufComplete
+#define DeclareDitherVars	DeclareAnyDitherVars
+#define InitDither		InitAnyDither
+#define StartDitherLine		StartAnyDitherLine
+#define DitherPixel		AnyDitherPixel
+#define DitherBufComplete	AnyDitherBufComplete
 
 /* Include the specific implementations for color and grayscale displays */
 #include "img_fscolor.h"
 #include "img_fsgray.h"
 
-#define DeclareAnyDitherVars                                    \
-    DeclareColorDitherVars                                      \
-    DeclareGrayDitherVars                                       \
+#define DeclareAnyDitherVars					\
+    DeclareColorDitherVars					\
+    DeclareGrayDitherVars					\
     int grayscale;
 
-#define InitAnyDither(cvdata, clrdata, dstTW)                           \
-    do {                                                                \
-        if (grayscale = clrdata->grayscale) {                           \
-            InitGrayDither(cvdata, clrdata, dstTW);                     \
-        } else {                                                        \
-            InitColorDither(cvdata, clrdata, dstTW);                    \
-        }                                                               \
+#define InitAnyDither(cvdata, clrdata, dstTW)				\
+    do {								\
+	if (grayscale = clrdata->grayscale) {				\
+	    InitGrayDither(cvdata, clrdata, dstTW);			\
+	} else {							\
+	    InitColorDither(cvdata, clrdata, dstTW);			\
+	}								\
     } while (0)
 
-#define StartAnyDitherLine(cvdata, dstX1, dstY)                         \
-    do {                                                                \
-        if (grayscale) {                                                \
-            StartGrayDitherLine(cvdata, dstX1, dstY);                   \
-        } else {                                                        \
-            StartColorDitherLine(cvdata, dstX1, dstY);                  \
-        }                                                               \
+#define StartAnyDitherLine(cvdata, dstX1, dstY)				\
+    do {								\
+	if (grayscale) {						\
+	    StartGrayDitherLine(cvdata, dstX1, dstY);			\
+	} else {							\
+	    StartColorDitherLine(cvdata, dstX1, dstY);			\
+	}								\
     } while (0)
 
-#define AnyDitherPixel(dstX, dstY, pixel, red, green, blue)             \
-    do {                                                                \
-        if (grayscale) {                                                \
-            GrayDitherPixel(dstX, dstY, pixel, red, green, blue);       \
-        } else {                                                        \
-            ColorDitherPixel(dstX, dstY, pixel, red, green, blue);      \
-        }                                                               \
+#define AnyDitherPixel(dstX, dstY, pixel, red, green, blue) 		\
+    do {								\
+	if (grayscale) {						\
+	    GrayDitherPixel(dstX, dstY, pixel, red, green, blue);	\
+	} else {							\
+	    ColorDitherPixel(dstX, dstY, pixel, red, green, blue);	\
+	}								\
     } while (0)
 
-#define AnyDitherBufComplete(cvdata, dstX1)                             \
-    do {                                                                \
-        if (grayscale) {                                                \
-            GrayDitherBufComplete(cvdata, dstX1);                       \
-        } else {                                                        \
-            ColorDitherBufComplete(cvdata, dstX1);                      \
-        }                                                               \
+#define AnyDitherBufComplete(cvdata, dstX1)				\
+    do {								\
+	if (grayscale) {						\
+	    GrayDitherBufComplete(cvdata, dstX1);			\
+	} else {							\
+	    ColorDitherBufComplete(cvdata, dstX1);			\
+	}								\
     } while (0)

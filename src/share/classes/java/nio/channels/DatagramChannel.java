@@ -66,6 +66,7 @@ import java.nio.channels.spi.*;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -78,7 +79,7 @@ public abstract class DatagramChannel
      * Initializes a new instance of this class.
      */
     protected DatagramChannel(SelectorProvider provider) {
-        super(provider);
+	super(provider);
     }
 
     /**
@@ -96,7 +97,7 @@ public abstract class DatagramChannel
      *          If an I/O error occurs
      */
     public static DatagramChannel open() throws IOException {
-        return SelectorProvider.provider().openDatagramChannel();
+	return SelectorProvider.provider().openDatagramChannel();
     }
 
     /**
@@ -110,8 +111,8 @@ public abstract class DatagramChannel
      * @return  The valid-operation set
      */
     public final int validOps() {
-        return (SelectionKey.OP_READ
-                | SelectionKey.OP_WRITE);
+	return (SelectionKey.OP_READ
+		| SelectionKey.OP_WRITE);
     }
 
 
@@ -153,7 +154,7 @@ public abstract class DatagramChannel
      * datagrams to be received from and sent to, respectively, the given
      * remote address.
      *
-     * <p> This method may be invoked at any time.  It will not have any effect
+     * <p> This method may be invoked at any time.  It will not have any effect 
      * on read or write operations that are already in progress at the moment
      * that it is invoked.  </p>
      *
@@ -183,16 +184,16 @@ public abstract class DatagramChannel
      *          If some other I/O error occurs
      */
     public abstract DatagramChannel connect(SocketAddress remote)
-        throws IOException;
+	throws IOException;
 
     /**
      * Disconnects this channel's socket.
      *
      * <p> The channel's socket is configured so that it can receive datagrams
-     * from, and sends datagrams to, any remote address so long as the security
+     * from, and sends datagrams to, any remote address so long as the security 
      * manager, if installed, permits it.
      *
-     * <p> This method may be invoked at any time.  It will not have any effect
+     * <p> This method may be invoked at any time.  It will not have any effect 
      * on read or write operations that are already in progress at the moment
      * that it is invoked.
      *
@@ -229,7 +230,7 @@ public abstract class DatagramChannel
      * then for each datagram received this method verifies that the source's
      * address and port number are permitted by the security manager's {@link
      * java.lang.SecurityManager#checkAccept checkAccept} method.  The overhead
-     * of this security check can be avoided by first connecting the socket via
+     * of this security check can be avoided by first connecting the socket via 
      * the {@link #connect connect} method.
      *
      * <p> This method may be invoked at any time.  If another thread has
@@ -328,7 +329,7 @@ public abstract class DatagramChannel
      *          If some other I/O error occurs
      */
     public abstract int send(ByteBuffer src, SocketAddress target)
-        throws IOException;
+	throws IOException;
 
 
     // -- ByteChannel operations --
@@ -362,7 +363,7 @@ public abstract class DatagramChannel
      *          If this channel's socket is not connected
      */
     public abstract long read(ByteBuffer[] dsts, int offset, int length)
-        throws IOException;
+	throws IOException;
 
     /**
      * Reads a datagram from this channel.
@@ -378,7 +379,7 @@ public abstract class DatagramChannel
      *          If this channel's socket is not connected
      */
     public final long read(ByteBuffer[] dsts) throws IOException {
-        return read(dsts, 0, dsts.length);
+	return read(dsts, 0, dsts.length);
     }
 
     /**
@@ -412,7 +413,7 @@ public abstract class DatagramChannel
      *          If this channel's socket is not connected
      */
     public abstract long write(ByteBuffer[] srcs, int offset, int length)
-        throws IOException;
+	throws IOException;
 
     /**
      * Writes a datagram to this channel.
@@ -432,7 +433,7 @@ public abstract class DatagramChannel
      *          If this channel's socket is not connected
      */
     public final long write(ByteBuffer[] srcs) throws IOException {
-        return write(srcs, 0, srcs.length);
+	return write(srcs, 0, srcs.length);
     }
 
 }

@@ -26,8 +26,8 @@
 package com.sun.jdi;
 
 /**
- * The type of all primitive <code>boolean</code> values
- * accessed in the target VM. Calls to {@link Value#type} will return an
+ * The type of all primitive <code>boolean</code> values 
+ * accessed in the target VM. Calls to {@link Value#type} will return an 
  * implementor of this interface.
  *
  * @see BooleanValue
@@ -37,3 +37,4 @@ package com.sun.jdi;
  */
 public interface BooleanType extends PrimitiveType {
 }
+

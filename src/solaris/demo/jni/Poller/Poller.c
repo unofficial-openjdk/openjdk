@@ -97,7 +97,7 @@
 
 #define MAX_HANDLES 32
 
-
+
 #ifdef DEBUG
 #define DBGMSG(x) printf x
 #define ASSERT(x) {if (!(x)) \
@@ -142,28 +142,28 @@ static ioevent_t IOE_handles[MAX_HANDLES];
 static jint throwOutOfMemoryError(JNIEnv *env, const char * cause)
 {
   (*env)->ThrowNew(env, (*env)->FindClass(env,"java/lang/OutOfMemoryError"),
-                   cause);
+		   cause);
   return -1;
 }
 static jint throwInterruptedIOException(JNIEnv *env, const char * cause)
 {
   (*env)->ThrowNew(env,
-                   (*env)->FindClass(env,"java/io/InterruptedIOException"),
-                   cause);
+		   (*env)->FindClass(env,"java/io/InterruptedIOException"),
+		   cause);
   return -1;
 }
 static jint throwIllegalStateException(JNIEnv *env, const char * cause)
 {
   (*env)->ThrowNew(env,
-                   (*env)->FindClass(env,"java/lang/IllegalStateException"),
-                   cause);
+		   (*env)->FindClass(env,"java/lang/IllegalStateException"),
+		   cause);
   return -1;
 }
 
 #define MEMORY_EXCEPTION(str) throwOutOfMemoryError(env, "Poller:" ## str)
 #define STATE_EXCEPTION(str)  throwIllegalStateException(env, "Poller:" ## str)
 #define INTERRUPT_EXCEPTION(str) throwInterruptedIOException(env, \
-                                                             "Poller:" ## str)
+							     "Poller:" ## str)
 jint addfd(JNIEnv *, ioevent_t *, jint, jshort);
 jint removefd(JNIEnv *, ioevent_t *, jint);
 
@@ -171,7 +171,7 @@ jint removefd(JNIEnv *, ioevent_t *, jint);
  * Class Poller
  * Method: nativeInit
  * Signature: ()I
- *
+ * 
  * Only to be called once, right after this library is loaded,
  * so no need to deal with reentrancy here.
  * Could do as a pragma ini, but that isn't as portable.
@@ -200,7 +200,7 @@ JNIEXPORT jint JNICALL Java_Poller_nativeInit(JNIEnv *env, jclass cls)
       }
     else
       {
-        Use_devpoll = 1;
+	Use_devpoll = 1;
       }
   }
 
@@ -260,8 +260,8 @@ JNIEXPORT jint JNICALL Java_Poller_nativeCreatePoller
   if (Current_handle >= MAX_HANDLES) {
     for (i = 0; i < MAX_HANDLES; i++) {
       if (IOE_handles[i].inuse == 0) {
-        handle = i;
-        break;
+	handle = i;
+	break;
       }
     }
     if (handle >= MAX_HANDLES) {
@@ -332,13 +332,13 @@ static void check_handle(ioevent_t *ioeh)
   for (i = 0; i < ioeh->last_index; i++)
     {
       if (ioeh->pfd[i].fd == -1)
-        unused++;
+	unused++;
       else
-        used++;
+	used++;
     }
   if (unused != ioeh->total_free)
     printf("WARNING : found %d free, claimed %d.  Used : %d\n",
-           unused, ioeh->total_free, used);
+	   unused, ioeh->total_free, used);
 }
 #endif
 
@@ -376,14 +376,14 @@ JNIEXPORT jint JNICALL Java_Poller_nativeAddFd
       pollelt.fd = fd;
       pollelt.events = events;
       if ((i = write(ioeh->devpollfd, &pollelt, sizeof(pollfd_t))) !=
-          sizeof(pollfd_t)) {
-        DBGMSG(("write to devpollfd=%d showed %d bytes out of %d\n",
-                ioeh->devpollfd,i,sizeof(pollfd_t)));
-        return STATE_EXCEPTION("AddFd - /dev/poll add failure");
+	  sizeof(pollfd_t)) {
+	DBGMSG(("write to devpollfd=%d showed %d bytes out of %d\n",
+		ioeh->devpollfd,i,sizeof(pollfd_t)));
+	return STATE_EXCEPTION("AddFd - /dev/poll add failure");
       }
     else
       {
-        retval = fd;
+	retval = fd;
       }
     }
   else
@@ -408,8 +408,8 @@ jint addfd(JNIEnv *env, ioevent_t *ioeh, jint fd, jshort events)
        */
       ioeh->total_free--;
       for (idx = ioeh->last_index - 1; idx >= 0; idx--) {
-        if (ioeh->pfd[idx].fd == -1)
-          break;
+	if (ioeh->pfd[idx].fd == -1)
+	  break;
       }
     }
   else if (ioeh->last_index >= ioeh->max_index)
@@ -428,15 +428,15 @@ jint addfd(JNIEnv *env, ioevent_t *ioeh, jint fd, jshort events)
       new_total = ioeh->last_index;
       new_total += (new_total/10) + 1; /* bump size by 10% */
       if (new_total > ioeh->max_index)
-        new_total = ioeh->max_index;
+	new_total = ioeh->max_index;
       for (i = ioeh->last_index; i <= new_total; i++)
-        {
-          ioeh->pfd[i].fd = -1;
-        }
+	{
+	  ioeh->pfd[i].fd = -1;
+	}
       idx = ioeh->last_index;
       ioeh->total_free = new_total - ioeh->last_index - 1;
       DBGMSG(("Just grew from %d to %d in size\n",
-              ioeh->last_index, new_total));
+	      ioeh->last_index, new_total));
       ioeh->last_index = new_total;
     }
   ASSERT((idx >= 0) && (idx <= ioeh->max_index));
@@ -472,14 +472,14 @@ JNIEXPORT jint JNICALL Java_Poller_nativeRemoveFd
        * use /dev/poll - currently no need for locking here.
        */
       pollfd_t pollelt;
-
+      
       pollelt.fd = fd;
       pollelt.events = POLLREMOVE;
       if (write(ioeh->devpollfd, &pollelt,
-                sizeof(pollfd_t) ) != sizeof(pollfd_t))
-        {
-          return STATE_EXCEPTION("RemoveFd - /dev/poll failure");
-        }
+		sizeof(pollfd_t) ) != sizeof(pollfd_t))
+	{
+	  return STATE_EXCEPTION("RemoveFd - /dev/poll failure");
+	}
     }
   else
   #endif DEVPOLL
@@ -497,59 +497,59 @@ jint removefd(JNIEnv *env, ioevent_t *ioeh, jint fd)
 
     { /* !Use_devpoll */
       for (i = 0; i < ioeh->last_index; i++)
-        {
-          if (ioeh->pfd[i].fd == fd)
-            {
-              ioeh->pfd[i].fd = -1;
-              found = 1;
-              break;
-            }
-        }
+	{
+	  if (ioeh->pfd[i].fd == fd)
+	    {
+	      ioeh->pfd[i].fd = -1;
+	      found = 1;
+	      break;
+	    }
+	}
       if (!found)
-        {
-          return STATE_EXCEPTION("RemoveFd - no such fd");
-        }
+	{
+	  return STATE_EXCEPTION("RemoveFd - no such fd");
+	}
       ioeh->left_events = 0; /* Have to go back to the kernel */
       ioeh->total_free++;
       /*
        * Shrinking pool if > 33% empty. Just don't do this often!
        */
       if ( (ioeh->last_index > 100) &&
-           (ioeh->total_free > (ioeh->last_index / 3)) )
-        {
-          int j;
-          /*
-           * we'll just bite the bullet here, since we're > 33% empty.
-           * walk through and eliminate -1 fd values, shrink total
-           * size to still have ~ 10 fd==-1 values at end.
-           * Start at end (since we pad here) and, when we find fd != -1,
-           * swap with an earlier fd == -1 until we have all -1 values
-           * at the end.
-           */
-          CHECK_HANDLE(ioeh);
-          for (i = ioeh->last_index - 1, j = 0; i > j; i--)
-            {
-              if (ioeh->pfd[i].fd != -1)
-                {
-                  while ( (j < i) && (ioeh->pfd[j].fd != -1) )
-                    j++;
-                  DBGMSG( ("i=%d,j=%d,ioeh->pfd[j].fd=%d\n",
-                           i, j, ioeh->pfd[j].fd) );
-                  if (j < i)
-                      {
-                        ASSERT(ioeh->pfd[j].fd == -1);
-                        ioeh->pfd[j].fd = ioeh->pfd[i].fd;
-                        ioeh->pfd[j].events = ioeh->pfd[i].events;
-                        ioeh->pfd[i].fd = -1;
-                      }
-                }
-            }
-          DBGMSG(("Just shrunk from %d to %d in size\n",
-                  ioeh->last_index, j+11));
-          ioeh->last_index = j + 11; /* last_index always 1 greater */
-          ioeh->total_free = 10;
-          CHECK_HANDLE(ioeh);
-        }
+	   (ioeh->total_free > (ioeh->last_index / 3)) )
+	{
+	  int j;
+	  /*
+	   * we'll just bite the bullet here, since we're > 33% empty.
+	   * walk through and eliminate -1 fd values, shrink total
+	   * size to still have ~ 10 fd==-1 values at end.
+	   * Start at end (since we pad here) and, when we find fd != -1,
+	   * swap with an earlier fd == -1 until we have all -1 values
+	   * at the end.
+	   */
+	  CHECK_HANDLE(ioeh);
+	  for (i = ioeh->last_index - 1, j = 0; i > j; i--)
+	    {
+	      if (ioeh->pfd[i].fd != -1)
+		{
+		  while ( (j < i) && (ioeh->pfd[j].fd != -1) )
+		    j++;
+		  DBGMSG( ("i=%d,j=%d,ioeh->pfd[j].fd=%d\n",
+			   i, j, ioeh->pfd[j].fd) );
+		  if (j < i)
+		      {
+			ASSERT(ioeh->pfd[j].fd == -1);
+			ioeh->pfd[j].fd = ioeh->pfd[i].fd;
+			ioeh->pfd[j].events = ioeh->pfd[i].events;
+			ioeh->pfd[i].fd = -1;
+		      }
+		}
+	    }
+	  DBGMSG(("Just shrunk from %d to %d in size\n",
+		  ioeh->last_index, j+11));
+	  ioeh->last_index = j + 11; /* last_index always 1 greater */
+	  ioeh->total_free = 10;
+	  CHECK_HANDLE(ioeh);
+	}
     } /* !Use_devpoll */
 
   return 1;
@@ -584,21 +584,21 @@ JNIEXPORT jint JNICALL Java_Poller_nativeIsMember
       pfd.revents = 0;
       found = ioctl(ioeh->devpollfd, DP_ISPOLLED, &pfd);
       if (found == -1)
-        {
-          return STATE_EXCEPTION("IsMember - /dev/poll failure");
-        }
+	{
+	  return STATE_EXCEPTION("IsMember - /dev/poll failure");
+	}
     }
   else
   #endif
     {
       for (i = 0; i < ioeh->last_index; i++)
-        {
-          if (fd == ioeh->pfd[i].fd)
-            {
-              found = 1;
-              break;
-            }
-        }
+	{
+	  if (fd == ioeh->pfd[i].fd)
+	    {
+	      found = 1;
+	      break;
+	    }
+	}
     }
 
   return found;
@@ -641,37 +641,37 @@ JNIEXPORT jint JNICALL Java_Poller_nativeWait
       dopoll.dp_timeout = timeout;
       dopoll.dp_nfds=maxEvents;
       dopoll.dp_fds=ioeh->pfd;
-
+      
       useEvents = ioctl(ioeh->devpollfd, DP_POLL, &dopoll);
-      while ((useEvents == -1) && (errno == EAGAIN))
-            useEvents = ioctl(ioeh->devpollfd, DP_POLL, &dopoll);
+      while ((useEvents == -1) && (errno == EAGAIN)) 
+	    useEvents = ioctl(ioeh->devpollfd, DP_POLL, &dopoll);
 
       if (useEvents == -1)
-        {
-          if (errno == EINTR)
-            return INTERRUPT_EXCEPTION("nativeWait - /dev/poll failure EINTR");
-          else
-            return STATE_EXCEPTION("nativeWait - /dev/poll failure");
-        }
+	{
+	  if (errno == EINTR)
+	    return INTERRUPT_EXCEPTION("nativeWait - /dev/poll failure EINTR");
+	  else
+	    return STATE_EXCEPTION("nativeWait - /dev/poll failure");
+	}
 
       reventp =(*env)->GetShortArrayElements(env,jrevents,&isCopy1);
       fdp =(*env)->GetIntArrayElements(env,jfds,&isCopy2);
       for (idx = 0,count = 0; idx < useEvents; idx++)
-        {
-          if (ioeh->pfd[idx].revents)
-            {
-              fdp[count] = ioeh->pfd[idx].fd;
-              reventp[count] = ioeh->pfd[idx].revents;
-              count++;
-            }
-        }
+	{
+	  if (ioeh->pfd[idx].revents)
+	    {
+	      fdp[count] = ioeh->pfd[idx].fd;
+	      reventp[count] = ioeh->pfd[idx].revents;
+	      count++;
+	    }
+	}
       if (count < useEvents)
-        return STATE_EXCEPTION("Wait - Corrupted internals");
+	return STATE_EXCEPTION("Wait - Corrupted internals");
 
       if (isCopy1 == JNI_TRUE)
-        (*env)->ReleaseShortArrayElements(env,jrevents,reventp,0);
+	(*env)->ReleaseShortArrayElements(env,jrevents,reventp,0);
       if (isCopy2 == JNI_TRUE)
-        (*env)->ReleaseIntArrayElements(env,jfds,fdp,0);
+	(*env)->ReleaseIntArrayElements(env,jfds,fdp,0);
     }
   else
   #endif
@@ -679,66 +679,67 @@ JNIEXPORT jint JNICALL Java_Poller_nativeWait
 
     /* no leftovers=>go to kernel */
       if (ioeh->left_events == 0)
-        {
-          useEvents = poll(ioeh->pfd,ioeh->last_index, timeout);
-          while ((useEvents == -1) && (errno == EAGAIN))
-            useEvents = poll(ioeh->pfd,ioeh->last_index, timeout);
-          if (useEvents == -1)
-            {
-              if (errno == EINTR)
-                return INTERRUPT_EXCEPTION("Wait - poll() failure EINTR-" \
-                                           "IO interrupted.");
-              else if (errno == EINVAL)
-                return STATE_EXCEPTION("Wait - poll() failure EINVAL-" \
-                                       "invalid args (is fdlim cur < max?)");
-              else
-                return STATE_EXCEPTION("Wait - poll() failure");
-            }
-          ioeh->left_events = useEvents;
-          DBGMSG(("waitnative : poll returns : %d\n",useEvents));
-        }
+	{ 
+	  useEvents = poll(ioeh->pfd,ioeh->last_index, timeout);
+	  while ((useEvents == -1) && (errno == EAGAIN)) 
+	    useEvents = poll(ioeh->pfd,ioeh->last_index, timeout);
+	  if (useEvents == -1)
+	    {
+	      if (errno == EINTR)
+		return INTERRUPT_EXCEPTION("Wait - poll() failure EINTR-" \
+					   "IO interrupted.");
+	      else if (errno == EINVAL)
+		return STATE_EXCEPTION("Wait - poll() failure EINVAL-" \
+				       "invalid args (is fdlim cur < max?)");
+	      else
+		return STATE_EXCEPTION("Wait - poll() failure");
+	    }
+	  ioeh->left_events = useEvents;
+	  DBGMSG(("waitnative : poll returns : %d\n",useEvents));
+	}
       else
-        {  /* left over from last call */
-          useEvents = ioeh->left_events;
-        }
+	{  /* left over from last call */
+	  useEvents = ioeh->left_events;
+	}
 
       if (useEvents > maxEvents)
-        {
-          useEvents = maxEvents;
-        }
+	{
+	  useEvents = maxEvents;
+	}
 
       ioeh->left_events -= useEvents; /* left to process */
 
       DBGMSG(("waitnative : left %d, use %d, max %d\n",ioeh->left_events,
-              useEvents,maxEvents));
-
+	      useEvents,maxEvents));
+      
       if (useEvents > 0)
-        {
-          reventp =(*env)->GetShortArrayElements(env,jrevents,&isCopy1);
-          fdp =(*env)->GetIntArrayElements(env,jfds,&isCopy2);
-          for (idx = 0,count = 0; (idx < ioeh->last_index) &&
-                 (count < useEvents); idx++)
-            {
-              if (ioeh->pfd[idx].revents)
-                {
-                  fdp[count] = ioeh->pfd[idx].fd;
-                  reventp[count] = ioeh->pfd[idx].revents;
-                  /* in case of leftover for next walk */
-                  ioeh->pfd[idx].revents = 0;
-                  count++;
-                }
-            }
-          if (count < useEvents)
-            {
-              ioeh->left_events = 0;
-              return STATE_EXCEPTION("Wait - Corrupted internals");
-            }
-          if (isCopy1 == JNI_TRUE)
-            (*env)->ReleaseShortArrayElements(env,jrevents,reventp,0);
-          if (isCopy2 == JNI_TRUE)
-            (*env)->ReleaseIntArrayElements(env,jfds,fdp,0);
-        }
+	{
+	  reventp =(*env)->GetShortArrayElements(env,jrevents,&isCopy1);
+	  fdp =(*env)->GetIntArrayElements(env,jfds,&isCopy2);
+	  for (idx = 0,count = 0; (idx < ioeh->last_index) &&
+		 (count < useEvents); idx++)
+	    {
+	      if (ioeh->pfd[idx].revents)
+		{
+		  fdp[count] = ioeh->pfd[idx].fd;
+		  reventp[count] = ioeh->pfd[idx].revents;
+		  /* in case of leftover for next walk */
+		  ioeh->pfd[idx].revents = 0;
+		  count++;
+		}
+	    }
+	  if (count < useEvents)
+	    {
+	      ioeh->left_events = 0;
+	      return STATE_EXCEPTION("Wait - Corrupted internals");
+	    }
+	  if (isCopy1 == JNI_TRUE)
+	    (*env)->ReleaseShortArrayElements(env,jrevents,reventp,0);
+	  if (isCopy2 == JNI_TRUE)
+	    (*env)->ReleaseIntArrayElements(env,jfds,fdp,0);
+	}
     } /* !Use_devpoll */
 
   return useEvents;
 }
+

@@ -82,12 +82,12 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
 
     void addVisibleMethods(Map<String, Method> methodMap) {
         /*
-         * Add methods from
+         * Add methods from 
          * parent types first, so that the methods in this class will
          * overwrite them in the hash table
          */
 
-        for (InterfaceType interfaze : superinterfaces()) {
+	for (InterfaceType interfaze : superinterfaces()) {
             ((InterfaceTypeImpl)interfaze).addVisibleMethods(methodMap);
         }
 
@@ -96,9 +96,9 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
 
     public List<Method> allMethods() {
         ArrayList<Method> list = new ArrayList<Method>(methods());
-
+        
         /*
-         * It's more efficient if don't do this
+         * It's more efficient if don't do this 
          * recursively.
          */
         for (InterfaceType interfaze : allSuperinterfaces()) {
@@ -116,7 +116,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
 
     void addSuperinterfaces(List<InterfaceType> list) {
         /*
-         * This code is a little strange because it
+         * This code is a little strange because it 
          * builds the list with a more suitable order than the
          * depth-first approach a normal recursive solution would
          * take. Instead, all direct superinterfaces precede all
@@ -124,7 +124,7 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
          */
 
         /*
-         * Get a list of direct superinterfaces that's not already in the
+         * Get a list of direct superinterfaces that's not already in the 
          * list being built.
          */
         List<InterfaceType> immediate = new ArrayList<InterfaceType>(superinterfaces());
@@ -172,8 +172,8 @@ public class InterfaceTypeImpl extends ReferenceTypeImpl
         return superinterfaces();
     }
 
-    public boolean isInitialized() {
-        return isPrepared();
+    public boolean isInitialized() { 
+        return isPrepared(); 
     }
 
     public String toString() {

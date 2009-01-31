@@ -26,53 +26,53 @@
  * @bug 4145315
  * @summary Test a read from nonexistant URL
  */
-
+   
 import java.net.*;
 import java.io.*;
-
+ 
 public class GetContent implements Runnable {
 
      ServerSocket ss;
 
      public void run() {
-        try {
-            Socket s = ss.accept();
-            s.setTcpNoDelay(true);
+	try {
+	    Socket s = ss.accept();
+	    s.setTcpNoDelay(true);
 
-            PrintStream out = new PrintStream(
+	    PrintStream out = new PrintStream(
                                  new BufferedOutputStream(
                                     s.getOutputStream() ));
 
-            out.print("HTTP/1.1 404 Not Found\r\n");
-            out.print("Connection: close\r\n");
-            out.print("Content-Type: text/html; charset=iso-8859-1\r\n");
-            out.print("\r\n");
-            out.flush();
-            out.print("<HTML><BODY>Sorry, page not found</BODY></HTML>");
-            out.flush();
+	    out.print("HTTP/1.1 404 Not Found\r\n");
+	    out.print("Connection: close\r\n");
+	    out.print("Content-Type: text/html; charset=iso-8859-1\r\n");
+	    out.print("\r\n");
+	    out.flush();
+	    out.print("<HTML><BODY>Sorry, page not found</BODY></HTML>");
+	    out.flush();
 
-            // wait for client to read response - otherwise http
-            // client get error and re-establish connection
-            Thread.currentThread().sleep(2000);
+	    // wait for client to read response - otherwise http
+	    // client get error and re-establish connection
+	    Thread.currentThread().sleep(2000);
 
-            s.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	    s.close();
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
      }
-
+ 
      GetContent() throws Exception {
 
-         ss = new ServerSocket(0);
-         Thread thr = new Thread(this);
-         thr.start();
+	 ss = new ServerSocket(0);
+	 Thread thr = new Thread(this);
+	 thr.start();
 
          boolean error = true;
          try {
              String name = "http://localhost:" + ss.getLocalPort() +
-                           "/no-such-name";
+			   "/no-such-name";
              java.net.URL url = null;
-             url = new java.net.URL(name);
+             url = new java.net.URL(name);        
              Object obj = url.getContent();
              InputStream in = (InputStream) obj;
              byte buff[] = new byte[200];
@@ -81,13 +81,13 @@ public class GetContent implements Runnable {
              error = false;
          }
 
-         ss.close();
-
+	 ss.close();
+          
          if (error)
              throw new RuntimeException("No IOException generated.");
      }
 
      public static void main(String args[]) throws Exception {
-        new GetContent();
+	new GetContent();
      }
 }

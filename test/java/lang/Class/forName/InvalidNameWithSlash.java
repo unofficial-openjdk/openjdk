@@ -32,7 +32,7 @@ public class InvalidNameWithSlash {
         boolean exceptionOccurred = false;
         try {
             Class c = Class.forName("java/lang.Object");
-        } catch (Exception e) {
+	} catch (Exception e) {
             exceptionOccurred = true;
         }
         if (!exceptionOccurred) {

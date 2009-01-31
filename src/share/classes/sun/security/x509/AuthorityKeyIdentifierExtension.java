@@ -51,6 +51,7 @@ import sun.security.util.*;
  * </pre>
  * @author Amit Kapoor
  * @author Hemma Prafullchandra
+ * @version %I%
  * @see Extension
  * @see CertAttrSet
  */
@@ -75,9 +76,9 @@ implements CertAttrSet<String> {
     private static final byte TAG_NAMES = 1;
     private static final byte TAG_SERIAL_NUM = 2;
 
-    private KeyIdentifier       id = null;
-    private GeneralNames        names = null;
-    private SerialNumber        serialNum = null;
+    private KeyIdentifier	id = null;
+    private GeneralNames	names = null;
+    private SerialNumber	serialNum = null;
 
     // Encode only the extension value
     private void encodeThis() throws IOException {
@@ -95,9 +96,9 @@ implements CertAttrSet<String> {
         }
         try {
             if (names != null) {
-                DerOutputStream tmp1 = new DerOutputStream();
-                names.encode(tmp1);
-                tmp.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT,
+	        DerOutputStream tmp1 = new DerOutputStream();
+	        names.encode(tmp1);
+		tmp.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT,
                                   true, TAG_NAMES), tmp1);
             }
         } catch (Exception e) {
@@ -106,7 +107,7 @@ implements CertAttrSet<String> {
         if (serialNum != null) {
             DerOutputStream tmp1 = new DerOutputStream();
             serialNum.encode(tmp1);
-            tmp.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT,
+	    tmp.writeImplicit(DerValue.createTag(DerValue.TAG_CONTEXT,
                               false, TAG_SERIAL_NUM), tmp1);
         }
         seq.write(DerValue.tag_Sequence, tmp);
@@ -152,18 +153,18 @@ implements CertAttrSet<String> {
         DerValue val = new DerValue(this.extensionValue);
         if (val.tag != DerValue.tag_Sequence) {
             throw new IOException("Invalid encoding for " +
-                                  "AuthorityKeyIdentifierExtension.");
+				  "AuthorityKeyIdentifierExtension.");
         }
 
-        // Note that all the fields in AuthorityKeyIdentifier are defined as
-        // being OPTIONAL, i.e., there could be an empty SEQUENCE, resulting
-        // in val.data being null.
+	// Note that all the fields in AuthorityKeyIdentifier are defined as
+	// being OPTIONAL, i.e., there could be an empty SEQUENCE, resulting
+	// in val.data being null.
         while ((val.data != null) && (val.data.available() != 0)) {
             DerValue opt = val.data.getDerValue();
 
-            // NB. this is always encoded with the IMPLICIT tag
-            // The checks only make sense if we assume implicit tagging,
-            // with explicit tagging the form is always constructed.
+	    // NB. this is always encoded with the IMPLICIT tag
+	    // The checks only make sense if we assume implicit tagging,
+	    // with explicit tagging the form is always constructed.
             if (opt.isContextSpecific(TAG_ID) && !opt.isConstructed()) {
                 if (id != null)
                     throw new IOException("Duplicate KeyIdentifier in " +
@@ -176,8 +177,8 @@ implements CertAttrSet<String> {
                 if (names != null)
                     throw new IOException("Duplicate GeneralNames in " +
                                           "AuthorityKeyIdentifier.");
-                opt.resetTag(DerValue.tag_Sequence);
-                names = new GeneralNames(opt);
+		opt.resetTag(DerValue.tag_Sequence);
+		names = new GeneralNames(opt);
 
             } else if (opt.isContextSpecific(TAG_SERIAL_NUM) &&
                        !opt.isConstructed()) {
@@ -188,7 +189,7 @@ implements CertAttrSet<String> {
                 serialNum = new SerialNumber(opt);
             } else
                 throw new IOException("Invalid encoding of " +
-                                      "AuthorityKeyIdentifierExtension.");
+				      "AuthorityKeyIdentifierExtension.");
         }
     }
 
@@ -223,35 +224,35 @@ implements CertAttrSet<String> {
             encodeThis();
         }
         super.encode(tmp);
-        out.write(tmp.toByteArray());
+	out.write(tmp.toByteArray());
     }
 
     /**
      * Set the attribute value.
      */
     public void set(String name, Object obj) throws IOException {
-        if (name.equalsIgnoreCase(KEY_ID)) {
-            if (!(obj instanceof KeyIdentifier)) {
-              throw new IOException("Attribute value should be of " +
+	if (name.equalsIgnoreCase(KEY_ID)) {
+	    if (!(obj instanceof KeyIdentifier)) {
+	      throw new IOException("Attribute value should be of " +
                                     "type KeyIdentifier.");
-            }
-            id = (KeyIdentifier)obj;
-        } else if (name.equalsIgnoreCase(AUTH_NAME)) {
-            if (!(obj instanceof GeneralNames)) {
-              throw new IOException("Attribute value should be of " +
+	    }
+	    id = (KeyIdentifier)obj;
+	} else if (name.equalsIgnoreCase(AUTH_NAME)) {
+	    if (!(obj instanceof GeneralNames)) {
+	      throw new IOException("Attribute value should be of " +
                                     "type GeneralNames.");
-            }
-            names = (GeneralNames)obj;
-        } else if (name.equalsIgnoreCase(SERIAL_NUMBER)) {
-            if (!(obj instanceof SerialNumber)) {
-              throw new IOException("Attribute value should be of " +
+	    }
+	    names = (GeneralNames)obj;
+	} else if (name.equalsIgnoreCase(SERIAL_NUMBER)) {
+	    if (!(obj instanceof SerialNumber)) {
+	      throw new IOException("Attribute value should be of " +
                                     "type SerialNumber.");
-            }
-            serialNum = (SerialNumber)obj;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:AuthorityKeyIdentifier.");
-        }
+	    }
+	    serialNum = (SerialNumber)obj;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:AuthorityKeyIdentifier.");
+	}
         encodeThis();
     }
 
@@ -259,32 +260,32 @@ implements CertAttrSet<String> {
      * Get the attribute value.
      */
     public Object get(String name) throws IOException {
-        if (name.equalsIgnoreCase(KEY_ID)) {
-            return (id);
-        } else if (name.equalsIgnoreCase(AUTH_NAME)) {
-            return (names);
-        } else if (name.equalsIgnoreCase(SERIAL_NUMBER)) {
-            return (serialNum);
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:AuthorityKeyIdentifier.");
-        }
+	if (name.equalsIgnoreCase(KEY_ID)) {
+	    return (id);
+	} else if (name.equalsIgnoreCase(AUTH_NAME)) {
+	    return (names);
+	} else if (name.equalsIgnoreCase(SERIAL_NUMBER)) {
+	    return (serialNum);
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:AuthorityKeyIdentifier.");
+	}
     }
 
     /**
      * Delete the attribute value.
      */
     public void delete(String name) throws IOException {
-        if (name.equalsIgnoreCase(KEY_ID)) {
-            id = null;
-        } else if (name.equalsIgnoreCase(AUTH_NAME)) {
-            names = null;
-        } else if (name.equalsIgnoreCase(SERIAL_NUMBER)) {
-            serialNum = null;
-        } else {
-          throw new IOException("Attribute name not recognized by " +
-                        "CertAttrSet:AuthorityKeyIdentifier.");
-        }
+	if (name.equalsIgnoreCase(KEY_ID)) {
+	    id = null;
+	} else if (name.equalsIgnoreCase(AUTH_NAME)) {
+	    names = null;
+	} else if (name.equalsIgnoreCase(SERIAL_NUMBER)) {
+	    serialNum = null;
+	} else {
+	  throw new IOException("Attribute name not recognized by " +
+			"CertAttrSet:AuthorityKeyIdentifier.");
+	}
         encodeThis();
     }
 
@@ -298,7 +299,7 @@ implements CertAttrSet<String> {
         elements.addElement(AUTH_NAME);
         elements.addElement(SERIAL_NUMBER);
 
-        return (elements.elements());
+	return (elements.elements());
     }
 
     /**

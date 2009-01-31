@@ -26,7 +26,7 @@
 package com.sun.jdi;
 
 /**
- * Provides access to a primitive <code>float</code> value in
+ * Provides access to a primitive <code>float</code> value in 
  * the target VM.
  *
  * @author Robert Field
@@ -38,11 +38,11 @@ public interface FloatValue extends PrimitiveValue, Comparable<FloatValue>
 {
     /**
      * Returns this FloatValue as a float.
-     *
+     * 
      * @return the <code>float</code> mirrored by this object.
      */
     float value();
-
+    
     /**
      * Compares the specified Object with this FloatValue for equality.
      *
@@ -59,3 +59,4 @@ public interface FloatValue extends PrimitiveValue, Comparable<FloatValue>
      */
     int hashCode();
 }
+

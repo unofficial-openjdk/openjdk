@@ -43,6 +43,7 @@ import java.nio.ByteBuffer;
  *
  * @author Mark Reinhold
  * @author JSR-51 Expert Group
+ * @version %I%, %E%
  * @since 1.4
  */
 
@@ -125,7 +126,7 @@ public interface GatheringByteChannel
      *          If some other I/O error occurs
      */
     public long write(ByteBuffer[] srcs, int offset, int length)
-        throws IOException;
+	throws IOException;
 
 
     /**

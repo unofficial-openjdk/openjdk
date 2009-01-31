@@ -30,12 +30,14 @@
  */
 
 /*
+ * %W% %E%
  */
 
 import java.awt.*;
 
 /**
  * A simple bar chart demo
+ * @version     1.6
  * @author Sami Shaio
  * @modified 06/21/00 Daniel Peek : refactored, comments
  */
@@ -62,9 +64,9 @@ public class BarChart extends java.applet.Applet {
     private int maxValue = 0;
 
     public void init() {
-
+  
         getSettings();
-
+        
         values = new int[columns];
         labels = new String[columns];
         styles = new int[columns];
@@ -77,7 +79,7 @@ public class BarChart extends java.applet.Applet {
             parseColor(i);
         }
     }
-
+            
     private void getSettings() {
         font = new java.awt.Font("Monospaced", Font.BOLD, 12);
         metrics = getFontMetrics(font);
@@ -86,14 +88,14 @@ public class BarChart extends java.applet.Applet {
         if (title == null) {
             title = "Chart";
         }
-
+        
         String temp = getParameter("columns");
         if (temp == null) {
             columns = 5;
         } else {
             columns = Integer.parseInt(temp);
         }
-
+        
         temp = getParameter("scale");
         if (temp == null) {
             scale = 10;
@@ -122,7 +124,7 @@ public class BarChart extends java.applet.Applet {
         }
         maxValue = Math.max(maxValue, values[i]);
     }
-
+    
     private void parseLabel(int i) {
         String temp = getParameter("C" + (i+1) + "_label");
         if (temp==null) {
@@ -144,7 +146,7 @@ public class BarChart extends java.applet.Applet {
             styles[i] = SOLID;
         }
     }
-
+    
     private void parseColor(int i) {
         String temp = getParameter("C" + (i+1) + "_color");
         if (temp != null) {
@@ -183,7 +185,7 @@ public class BarChart extends java.applet.Applet {
         // draw the title centered at the bottom of the bar graph
         g.setColor(Color.black);
         g.setFont(font);
-
+        
         g.drawRect(0, 0, getSize().width - 1, getSize().height - 1);
 
         int titleWidth = metrics.stringWidth(title);
@@ -198,19 +200,19 @@ public class BarChart extends java.applet.Applet {
             paintVertical(g);
         }
     }
-
+        
     private void paintHorizontal(Graphics g) {
-        // x and y coordinates to draw/write to
+        // x and y coordinates to draw/write to 
         int cx, cy;
         int barHeight = metrics.getHeight();
 
         for (int i = 0; i < columns; i++) {
-
+            
             // set the X coordinate for this bar and label and center it
-            int widthOfItems = maxLabelWidth + 3 + (maxValue * scale) + 5
+            int widthOfItems = maxLabelWidth + 3 + (maxValue * scale) + 5  
                 + metrics.stringWidth(Integer.toString(maxValue));
             cx = Math.max((getSize().width - widthOfItems) / 2, 0);
-
+            
             // set the Y coordinate for this bar and label
             cy = getSize().height - metrics.getDescent() - metrics.getHeight()
                 - barSpacing - ((columns - i - 1) * (barSpacing + barHeight));
@@ -220,7 +222,7 @@ public class BarChart extends java.applet.Applet {
             g.drawString(labels[i], cx, cy);
             cx += maxLabelWidth + 3;
 
-
+        
             // draw the shadow
             g.fillRect(cx + 4, cy - barHeight + 4,
                        (values[i] * scale), barHeight);
@@ -232,17 +234,17 @@ public class BarChart extends java.applet.Applet {
                     g.drawLine(cx + k, cy - barHeight, cx + k, cy);
                 }
             } else {      // SOLID
-                g.fillRect(cx, cy - barHeight,
+                g.fillRect(cx, cy - barHeight, 
                            (values[i] * scale) + 1, barHeight + 1);
             }
             cx += (values[i] * scale) + 4;
-
-            // draw the value at the end of the bar
+            
+            // draw the value at the end of the bar 
             g.setColor(g.getColor().darker());
             g.drawString(Integer.toString(values[i]), cx, cy);
-        }
+        } 
     }
-
+    
     private void paintVertical(Graphics g) {
         int barWidth = maxLabelWidth;
 
@@ -252,7 +254,7 @@ public class BarChart extends java.applet.Applet {
             int widthOfItems = (barWidth + barSpacing) * columns - barSpacing;
             int cx = Math.max((getSize().width - widthOfItems) / 2, 0);
             cx += (maxLabelWidth + barSpacing) * i;
-
+            
             // Y coordinate for this label and bar
             int cy = getSize().height - metrics.getHeight()
                 - metrics.getDescent() - 4;
@@ -263,18 +265,18 @@ public class BarChart extends java.applet.Applet {
             cy -= metrics.getHeight() - 3;
 
             // draw the shadow
-            g.fillRect(cx + 4, cy - (values[i] * scale) - 4,
+            g.fillRect(cx + 4, cy - (values[i] * scale) - 4, 
                        barWidth, (values[i] * scale));
-
+            
             // draw the bar
             g.setColor(colors[i]);
             if (styles[i] == STRIPED) {
                 for (int k=0; k <= values[i] * scale; k+=2) {
-                    g.drawLine(cx, cy - k,
+                    g.drawLine(cx, cy - k, 
                                cx + barWidth, cy - k);
                 }
             } else {
-                g.fillRect(cx, cy - (values[i] * scale),
+                g.fillRect(cx, cy - (values[i] * scale), 
                            barWidth + 1, (values[i] * scale) + 1);
             }
             cy -= (values[i] * scale) + 5;
@@ -283,29 +285,29 @@ public class BarChart extends java.applet.Applet {
             g.setColor(g.getColor().darker());
             g.drawString(Integer.toString(values[i]), cx, cy);
         }
-    }
-
+    }    
+    
     public String getAppletInfo() {
         return "Title: Bar Chart \n"
             + "Author: Sami Shaio \n"
             + "A simple bar chart demo.";
     }
-
+    
     public String[][] getParameterInfo() {
         String[][] info = {
             {"title", "string", "The title of bar graph.  Default is 'Chart'"},
             {"scale", "int", "The scale of the bar graph.  Default is 10."},
             {"columns", "int", "The number of columns/rows.  Default is 5."},
-            {"orientation", "{VERTICAL, HORIZONTAL}",
+            {"orientation", "{VERTICAL, HORIZONTAL}", 
              "The orienation of the bar graph.  Default is VERTICAL."},
-            {"c#", "int", "Subsitute a number for #.  "
+            {"c#", "int", "Subsitute a number for #.  " 
              + "The value/size of bar #.  Default is 0."},
             {"c#_label", "string", "The label for bar #.  "
              + "Default is an empty label."},
             {"c#_style", "{SOLID, STRIPED}", "The style of bar #.  "
              + "Default is SOLID."},
             {"c#_color", "{RED, GREEN, BLUE, PINK, ORANGE, MAGENTA, CYAN, "
-             + "WHITE, YELLOW, GRAY, DARKGRAY}",
+             + "WHITE, YELLOW, GRAY, DARKGRAY}", 
              "The color of bar #.  Default is GRAY."}
         };
         return info;

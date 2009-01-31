@@ -123,6 +123,7 @@ import java.net.*;
  * @see URI
  * @see HostIdentifier
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  */
 public class VmIdentifier {

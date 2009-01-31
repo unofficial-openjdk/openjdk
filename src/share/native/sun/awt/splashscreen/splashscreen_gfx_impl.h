@@ -76,11 +76,11 @@ ditherColor(rgbquad_t value, ImageFormat * format, int row, int col)
     int green = QUAD_GREEN(value);
     int red = QUAD_RED(value);
 
-    blue = format->dithers[0].colorTable[blue +
+    blue = format->dithers[0].colorTable[blue + 
         format->dithers[0].matrix[col & DITHER_MASK][row & DITHER_MASK]];
-    green = format->dithers[1].colorTable[green +
+    green = format->dithers[1].colorTable[green + 
         format->dithers[1].matrix[col & DITHER_MASK][row & DITHER_MASK]];
-    red = format->dithers[2].colorTable[red +
+    red = format->dithers[2].colorTable[red + 
         format->dithers[2].matrix[col & DITHER_MASK][row & DITHER_MASK]];
     return red + green + blue;
 }
@@ -112,7 +112,7 @@ blendRGB(rgbquad_t dst, rgbquad_t src, rgbquad_t alpha)
 }
 
 /*      scales rgb quad by alpha. basically similar to what's above. src alpha is retained.
-        used for premultiplying alpha
+        used for premultiplying alpha 
 
         btw: braindead MSVC6 generates _three_ mul instructions for this function */
 
@@ -136,16 +136,16 @@ premultiplyRGBA(rgbquad_t src)
 /*      The functions below are inherently ineffective, but the performance seems to be
         more or less adequate for the case of splash screens. They can be optimized later
         if needed. The idea of optimization is to provide inlineable form of putRGBADither and
-        getRGBA at least for certain most frequently used visuals. Something like this is
-        done in Java 2D ("loops"). This would be possible with C++ templates, but making it
+        getRGBA at least for certain most frequently used visuals. Something like this is 
+        done in Java 2D ("loops"). This would be possible with C++ templates, but making it 
         clean for C would require ugly preprocessor tricks. Leaving it out for later.
 */
 
-/*      convert a single pixel color value from rgbquad according to visual format
+/*      convert a single pixel color value from rgbquad according to visual format 
         and place it to pointed location
         ordered dithering used when necessary */
 INLINE void
-putRGBADither(rgbquad_t value, void *ptr, ImageFormat * format,
+putRGBADither(rgbquad_t value, void *ptr, ImageFormat * format, 
         int row, int col)
 {
     if (format->premultiplied) {
@@ -155,7 +155,7 @@ putRGBADither(rgbquad_t value, void *ptr, ImageFormat * format,
         value = format->colorIndex[ditherColor(value, format, row, col)];
     }
     else {
-        value = CONVCOMP(value, format, 0) | CONVCOMP(value, format, 1) |
+        value = CONVCOMP(value, format, 0) | CONVCOMP(value, format, 1) | 
             CONVCOMP(value, format, 2) | CONVCOMP(value, format, 3);
     }
     switch (format->byteOrder) {
@@ -281,15 +281,15 @@ getRGBA(void *ptr, ImageFormat * format)
             return format->colorMap[value];
     }
     else {
-        return UNCONVCOMP(value, format, 0) | UNCONVCOMP(value, format, 1) |
-            UNCONVCOMP(value, format, 2) | UNCONVCOMP(value, format, 3) |
+        return UNCONVCOMP(value, format, 0) | UNCONVCOMP(value, format, 1) | 
+            UNCONVCOMP(value, format, 2) | UNCONVCOMP(value, format, 3) | 
             format->fixedBits;
     }
 }
 
 /* fill the line with the specified color according to visual format */
 INLINE void
-fillLine(rgbquad_t color, void *pDst, int incDst, int n,
+fillLine(rgbquad_t color, void *pDst, int incDst, int n, 
         ImageFormat * dstFormat, int row, int col)
 {
     int i;

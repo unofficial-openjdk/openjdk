@@ -34,7 +34,7 @@ import java.io.PrintWriter;
  *<p>
  */
 public interface CommonDataSource {
-
+  
   /**
    * <p>Retrieves the log writer for this <code>DataSource</code>
    * object.
@@ -108,6 +108,6 @@ public interface CommonDataSource {
    * @see #setLoginTimeout
    * @since 1.4
    */
-  int getLoginTimeout() throws SQLException;
-
+  int getLoginTimeout() throws SQLException; 
+  
 }

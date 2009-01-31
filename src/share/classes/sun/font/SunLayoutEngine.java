@@ -24,6 +24,7 @@
  */
 
 /*
+ *  @(#)SunLayoutEngine.java	1.6 07/02/07
  *
  * (C) Copyright IBM Corp. 2003 - All Rights Reserved
  */
@@ -96,7 +97,7 @@ import java.util.Locale;
  * scripts that don't have default engines-- either a list or a hash
  * table, so a null return from the table means 'default' and not 'i
  * don't know yet'.
- *
+ * 
  * On the other hand, in most all cases the number of unique
  * script/font combinations will be small, so a flat hashtable should
  * suffice.
@@ -105,7 +106,7 @@ public final class SunLayoutEngine implements LayoutEngine, LayoutEngineFactory 
     private static native void initGVIDs();
     static {
         FontManagerNativeLibrary.load();
-        initGVIDs();
+	initGVIDs();
     }
 
     private LayoutEngineKey key;
@@ -122,7 +123,7 @@ public final class SunLayoutEngine implements LayoutEngine, LayoutEngineFactory 
     private SunLayoutEngine() {
         // actually a factory, key is null so layout cannot be called on it
     }
-
+    
     public LayoutEngine getEngine(Font2D font, int script, int lang) {
         return getEngine(new LayoutEngineKey(font, script, lang));
     }
@@ -143,29 +144,29 @@ public final class SunLayoutEngine implements LayoutEngine, LayoutEngineFactory 
         return e;
     }
     private SoftReference cacheref = new SoftReference(null);
-
+    
     private SunLayoutEngine(LayoutEngineKey key) {
         this.key = key;
     }
 
-    public void layout(FontStrikeDesc desc, float[] mat, int gmask,
-                       int baseIndex, TextRecord tr, int typo_flags,
-                       Point2D.Float pt, GVData data) {
+    public void layout(FontStrikeDesc desc, float[] mat, int gmask, 
+                       int baseIndex, TextRecord tr, int typo_flags, 
+		       Point2D.Float pt, GVData data) {
         Font2D font = key.font();
         FontStrike strike = font.getStrike(desc);
         long layoutTables = 0;
         if (font instanceof TrueTypeFont) {
             layoutTables = ((TrueTypeFont) font).getLayoutTableCache();
         }
-        nativeLayout(font, strike, mat, gmask, baseIndex,
-             tr.text, tr.start, tr.limit, tr.min, tr.max,
+        nativeLayout(font, strike, mat, gmask, baseIndex, 
+             tr.text, tr.start, tr.limit, tr.min, tr.max, 
              key.script(), key.lang(), typo_flags, pt, data,
-             font.getUnitsPerEm(), layoutTables);
+             font.getUnitsPerEm(), layoutTables); 
     }
 
-    private static native void
-        nativeLayout(Font2D font, FontStrike strike, float[] mat, int gmask,
-             int baseIndex, char[] chars, int offset, int limit,
-             int min, int max, int script, int lang, int typo_flags,
+    private static native void 
+	nativeLayout(Font2D font, FontStrike strike, float[] mat, int gmask, 
+             int baseIndex, char[] chars, int offset, int limit, 
+             int min, int max, int script, int lang, int typo_flags, 
              Point2D.Float pt, GVData data, long upem, long layoutTables);
 }

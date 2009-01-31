@@ -44,9 +44,9 @@ import sun.security.util.DerOutputStream;
  * --      built-in-standard-attribute sequence is empty and the
  * --      built-in-domain-defined-attributes and extension-attributes are
  * --      both omitted.
- *
+ * 
  * --      Built-in Standard Attributes
- *
+ * 
  * BuiltInStandardAttributes ::= SEQUENCE {
  *    country-name CountryName OPTIONAL,
  *    administration-domain-name AdministrationDomainName OPTIONAL,
@@ -61,34 +61,34 @@ import sun.security.util.DerOutputStream;
  *    -- see also teletex-personal-name
  *    organizational-unit-names    [6] OrganizationalUnitNames OPTIONAL
  *    -- see also teletex-organizational-unit-names -- }
- *
+ * 
  * CountryName ::= [APPLICATION 1] CHOICE {
  *    x121-dcc-code NumericString
  *                 (SIZE (ub-country-name-numeric-length)),
  *    iso-3166-alpha2-code PrintableString
  *                 (SIZE (ub-country-name-alpha-length)) }
- *
+ * 
  * AdministrationDomainName ::= [APPLICATION 2] CHOICE {
  *    numeric NumericString (SIZE (0..ub-domain-name-length)),
  *    printable PrintableString (SIZE (0..ub-domain-name-length)) }
- *
+ * 
  * NetworkAddress ::= X121Address  -- see also extended-network-address
- *
+ * 
  * X121Address ::= NumericString (SIZE (1..ub-x121-address-length))
- *
+ * 
  * TerminalIdentifier ::= PrintableString (SIZE (1..ub-terminal-id-length))
- *
+ * 
  * PrivateDomainName ::= CHOICE {
  *    numeric NumericString (SIZE (1..ub-domain-name-length)),
  *    printable PrintableString (SIZE (1..ub-domain-name-length)) }
- *
+ * 
  * OrganizationName ::= PrintableString
  *                             (SIZE (1..ub-organization-name-length))
  * -- see also teletex-organization-name
- *
+ * 
  * NumericUserIdentifier ::= NumericString
  *                             (SIZE (1..ub-numeric-user-id-length))
- *
+ * 
  * PersonalName ::= SET {
  *    surname [0] PrintableString (SIZE (1..ub-surname-length)),
  *    given-name [1] PrintableString
@@ -97,54 +97,54 @@ import sun.security.util.DerOutputStream;
  *    generation-qualifier [3] PrintableString
  *                 (SIZE (1..ub-generation-qualifier-length)) OPTIONAL }
  * -- see also teletex-personal-name
- *
+ * 
  * OrganizationalUnitNames ::= SEQUENCE SIZE (1..ub-organizational-units)
  *                                         OF OrganizationalUnitName
  * -- see also teletex-organizational-unit-names
- *
+ * 
  * OrganizationalUnitName ::= PrintableString (SIZE
  *                         (1..ub-organizational-unit-name-length))
- *
+ * 
  * --      Built-in Domain-defined Attributes
- *
+ * 
  * BuiltInDomainDefinedAttributes ::= SEQUENCE SIZE
  *                                 (1..ub-domain-defined-attributes) OF
  *                                 BuiltInDomainDefinedAttribute
- *
+ * 
  * BuiltInDomainDefinedAttribute ::= SEQUENCE {
  *    type PrintableString (SIZE
  *                         (1..ub-domain-defined-attribute-type-length)),
  *    value PrintableString (SIZE
  *                         (1..ub-domain-defined-attribute-value-length))}
- *
+ * 
  * --      Extension Attributes
- *
+ * 
  * ExtensionAttributes ::= SET SIZE (1..ub-extension-attributes) OF
  *                         ExtensionAttribute
- *
+ * 
  * ExtensionAttribute ::=  SEQUENCE {
  *    extension-attribute-type [0] INTEGER (0..ub-extension-attributes),
  *    extension-attribute-value [1]
  *                         ANY DEFINED BY extension-attribute-type }
- *
+ * 
  * -- Extension types and attribute values
  * --
- *
+ * 
  * common-name INTEGER ::= 1
- *
+ * 
  * CommonName ::= PrintableString (SIZE (1..ub-common-name-length))
- *
+ * 
  * teletex-common-name INTEGER ::= 2
- *
+ * 
  * TeletexCommonName ::= TeletexString (SIZE (1..ub-common-name-length))
- *
+ * 
  * teletex-organization-name INTEGER ::= 3
- *
+ * 
  * TeletexOrganizationName ::=
  *                 TeletexString (SIZE (1..ub-organization-name-length))
- *
+ * 
  * teletex-personal-name INTEGER ::= 4
- *
+ * 
  * TeletexPersonalName ::= SET {
  *    surname [0] TeletexString (SIZE (1..ub-surname-length)),
  *    given-name [1] TeletexString
@@ -152,107 +152,107 @@ import sun.security.util.DerOutputStream;
  *    initials [2] TeletexString (SIZE (1..ub-initials-length)) OPTIONAL,
  *    generation-qualifier [3] TeletexString (SIZE
  *                 (1..ub-generation-qualifier-length)) OPTIONAL }
- *
+ * 
  * teletex-organizational-unit-names INTEGER ::= 5
- *
+ * 
  * TeletexOrganizationalUnitNames ::= SEQUENCE SIZE
  *         (1..ub-organizational-units) OF TeletexOrganizationalUnitName
- *
+ * 
  * TeletexOrganizationalUnitName ::= TeletexString
  *                         (SIZE (1..ub-organizational-unit-name-length))
- *
+ * 
  * pds-name INTEGER ::= 7
- *
+ * 
  * PDSName ::= PrintableString (SIZE (1..ub-pds-name-length))
- *
+ * 
  * physical-delivery-country-name INTEGER ::= 8
- *
+ * 
  * PhysicalDeliveryCountryName ::= CHOICE {
  *    x121-dcc-code NumericString (SIZE (ub-country-name-numeric-length)),
  *    iso-3166-alpha2-code PrintableString
  *                         (SIZE (ub-country-name-alpha-length)) }
- *
+ * 
  * postal-code INTEGER ::= 9
- *
+ * 
  * PostalCode ::= CHOICE {
  *    numeric-code NumericString (SIZE (1..ub-postal-code-length)),
  *    printable-code PrintableString (SIZE (1..ub-postal-code-length)) }
- *
+ * 
  * physical-delivery-office-name INTEGER ::= 10
- *
+ * 
  * PhysicalDeliveryOfficeName ::= PDSParameter
- *
+ * 
  * physical-delivery-office-number INTEGER ::= 11
- *
+ * 
  * PhysicalDeliveryOfficeNumber ::= PDSParameter
- *
+ * 
  * extension-OR-address-components INTEGER ::= 12
- *
+ * 
  * ExtensionORAddressComponents ::= PDSParameter
- *
+ * 
  * physical-delivery-personal-name INTEGER ::= 13
- *
+ * 
  * PhysicalDeliveryPersonalName ::= PDSParameter
- *
+ * 
  * physical-delivery-organization-name INTEGER ::= 14
- *
+ * 
  * PhysicalDeliveryOrganizationName ::= PDSParameter
- *
+ * 
  * extension-physical-delivery-address-components INTEGER ::= 15
- *
+ * 
  * ExtensionPhysicalDeliveryAddressComponents ::= PDSParameter
- *
+ * 
  * unformatted-postal-address INTEGER ::= 16
- *
+ * 
  * UnformattedPostalAddress ::= SET {
  *    printable-address SEQUENCE SIZE (1..ub-pds-physical-address-lines) OF
  *            PrintableString (SIZE (1..ub-pds-parameter-length)) OPTIONAL,
  *    teletex-string TeletexString
  *          (SIZE (1..ub-unformatted-address-length)) OPTIONAL }
- *
+ * 
  * street-address INTEGER ::= 17
- *
+ * 
  * StreetAddress ::= PDSParameter
- *
+ * 
  * post-office-box-address INTEGER ::= 18
- *
+ * 
  * PostOfficeBoxAddress ::= PDSParameter
- *
+ * 
  * poste-restante-address INTEGER ::= 19
- *
+ * 
  * PosteRestanteAddress ::= PDSParameter
- *
+ * 
  * unique-postal-name INTEGER ::= 20
- *
+ * 
  * UniquePostalName ::= PDSParameter
- *
+ * 
  * local-postal-attributes INTEGER ::= 21
- *
+ * 
  * LocalPostalAttributes ::= PDSParameter
- *
+ * 
  * PDSParameter ::= SET {
  *    printable-string PrintableString
  *                 (SIZE(1..ub-pds-parameter-length)) OPTIONAL,
  *    teletex-string TeletexString
  *                 (SIZE(1..ub-pds-parameter-length)) OPTIONAL }
- *
+ * 
  * extended-network-address INTEGER ::= 22
- *
+ * 
  * ExtendedNetworkAddress ::= CHOICE {
  *    e163-4-address SEQUENCE {
  *         number [0] NumericString (SIZE (1..ub-e163-4-number-length)),
  *         sub-address [1] NumericString
  *                 (SIZE (1..ub-e163-4-sub-address-length)) OPTIONAL },
  *    psap-address [0] PresentationAddress }
- *
+ * 
  * PresentationAddress ::= SEQUENCE {
  *         pSelector       [0] EXPLICIT OCTET STRING OPTIONAL,
  *         sSelector       [1] EXPLICIT OCTET STRING OPTIONAL,
  *         tSelector       [2] EXPLICIT OCTET STRING OPTIONAL,
  *         nAddresses      [3] EXPLICIT SET SIZE (1..MAX) OF OCTET STRING }
- *
+ * 
  * terminal-type  INTEGER ::= 23
- *
+ * 
  * TerminalType ::= INTEGER {
  *    telex (3),
  *    teletex (4),
@@ -260,14 +260,14 @@ import sun.security.util.DerOutputStream;
  *    g4-facsimile (6),
  *    ia5-terminal (7),
  *    videotex (8) } (0..ub-integer-options)
- *
+ * 
  * --      Extension Domain-defined Attributes
- *
+ * 
  * teletex-domain-defined-attributes INTEGER ::= 6
- *
+ * 
  * TeletexDomainDefinedAttributes ::= SEQUENCE SIZE
  *    (1..ub-domain-defined-attributes) OF TeletexDomainDefinedAttribute
- *
+ * 
  * TeletexDomainDefinedAttribute ::= SEQUENCE {
  *         type TeletexString
  *                (SIZE (1..ub-domain-defined-attribute-type-length)),
@@ -277,7 +277,7 @@ import sun.security.util.DerOutputStream;
  * --  specifications of Upper Bounds shall be regarded as mandatory
  * --  from Annex B of ITU-T X.411 Reference Definition of MTS Parameter
  * --  Upper Bounds
- *
+ * 
  * --      Upper Bounds
  * ub-name INTEGER ::=     32768
  * ub-common-name  INTEGER ::=     64
@@ -287,9 +287,9 @@ import sun.security.util.DerOutputStream;
  * ub-organizational-unit-name     INTEGER ::=     64
  * ub-title        INTEGER ::=     64
  * ub-match        INTEGER ::=     128
- *
+ * 
  * ub-emailaddress-length INTEGER ::= 128
- *
+ * 
  * ub-common-name-length INTEGER ::= 64
  * ub-country-name-alpha-length INTEGER ::= 2
  * ub-country-name-numeric-length INTEGER ::= 3
@@ -316,7 +316,7 @@ import sun.security.util.DerOutputStream;
  * ub-terminal-id-length INTEGER ::= 24
  * ub-unformatted-address-length INTEGER ::= 180
  * ub-x121-address-length INTEGER ::= 16
- *
+ * 
  * -- Note - upper bounds on string types, such as TeletexString, are
  * -- measured in characters.  Excepting PrintableString or IA5String, a
  * -- significantly greater number of octets will be required to hold
@@ -327,7 +327,8 @@ import sun.security.util.DerOutputStream;
  * </pre>
  *
  * @author Anne Anderson
- * @since       1.4
+ * @version %I%, %G%
+ * @since	1.4
  * @see GeneralName
  * @see GeneralNames
  * @see GeneralNameInterface
@@ -348,10 +349,10 @@ public class X400Address implements GeneralNameInterface {
 
     /**
      * Create the X400Address object from the passed encoded Der value.
-     *
+     *   
      * @param derValue the encoded DER X400Address.
      * @exception IOException on error.
-     */
+     */  
     public X400Address(DerValue derValue) throws IOException {
         nameValue = derValue.toByteArray();
     }
@@ -365,13 +366,13 @@ public class X400Address implements GeneralNameInterface {
 
     /**
      * Encode the X400 name into the DerOutputStream.
-     *
+     *   
      * @param out the DER stream to encode the X400Address to.
      * @exception IOException on encoding errors.
      */
     public void encode(DerOutputStream out) throws IOException {
-        DerValue derValue = new DerValue(nameValue);
-        out.putDerValue(derValue);
+	DerValue derValue = new DerValue(nameValue);
+	out.putDerValue(derValue);
     }
 
     /**
@@ -397,15 +398,15 @@ public class X400Address implements GeneralNameInterface {
      *          not supported for this name type.
      */
     public int constrains(GeneralNameInterface inputName) throws UnsupportedOperationException {
-        int constraintType;
-        if (inputName == null)
-            constraintType = NAME_DIFF_TYPE;
-        else if (inputName.getType() != NAME_X400)
-            constraintType = NAME_DIFF_TYPE;
-        else
-            //Narrowing, widening, and match constraints not defined in rfc2459 for X400Address
-            throw new UnsupportedOperationException("Narrowing, widening, and match are not supported for X400Address.");
-        return constraintType;
+	int constraintType;
+	if (inputName == null)
+	    constraintType = NAME_DIFF_TYPE;
+	else if (inputName.getType() != NAME_X400)
+	    constraintType = NAME_DIFF_TYPE;
+	else
+	    //Narrowing, widening, and match constraints not defined in rfc2459 for X400Address
+	    throw new UnsupportedOperationException("Narrowing, widening, and match are not supported for X400Address.");
+	return constraintType;
     }
 
     /**
@@ -417,7 +418,7 @@ public class X400Address implements GeneralNameInterface {
      * @throws UnsupportedOperationException if not supported for this name type
      */
     public int subtreeDepth() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("subtreeDepth not supported for X400Address");
+	throw new UnsupportedOperationException("subtreeDepth not supported for X400Address");
     }
 
 }

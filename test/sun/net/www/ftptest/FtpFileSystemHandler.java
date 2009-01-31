@@ -62,7 +62,7 @@ public interface FtpFileSystemHandler {
      * Returns the size, in bytes, of the specified file.
      *
      * @param name the pathname, which can be either relative or absolute,
-     *             of the file.
+     *		   of the file.
      * @return the size in bytes of the file.
      */
     public long getFileSize(String name);
@@ -101,6 +101,6 @@ public interface FtpFileSystemHandler {
      * @param to the new name.
      * @return <code>true</code> if the operation was successful.
      */
-
+     
     public boolean rename(String from, String to);
 }

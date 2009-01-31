@@ -44,6 +44,7 @@ import javax.naming.NamingException;
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   *
   * @see DirContext#modifyAttributes
   * @since 1.3
@@ -66,16 +67,16 @@ public class AttributeModificationException extends NamingException {
     private ModificationItem[] unexecs = null;
 
     /**
-     * Constructs a new instance of AttributeModificationException using
+     * Constructs a new instance of AttributeModificationException using 
      * an explanation. All other fields are set to null.
      *
-     * @param   explanation     Possibly null additional detail about this exception.
+     * @param	explanation	Possibly null additional detail about this exception. 
      * If null, this exception has no detail message.
 
      * @see java.lang.Throwable#getMessage
      */
     public AttributeModificationException(String explanation) {
-        super(explanation);
+	super(explanation);
     }
 
     /**
@@ -83,27 +84,27 @@ public class AttributeModificationException extends NamingException {
       * All fields are set to null.
       */
     public AttributeModificationException() {
-        super();
+	super();
     }
 
     /**
       * Sets the unexecuted modification list to be e.
-      * Items in the list must appear in the same order in which they were
+      * Items in the list must appear in the same order in which they were 
       * originally supplied in DirContext.modifyAttributes().
       * The first item in the list is the first one that was not executed.
       * If this list is null, none of the operations originally submitted
       * to modifyAttributes() were executed.
 
-      * @param e        The possibly null list of unexecuted modifications.
+      * @param e	The possibly null list of unexecuted modifications.
       * @see #getUnexecutedModifications
       */
     public void setUnexecutedModifications(ModificationItem[] e) {
-        unexecs = e;
+	unexecs = e;
     }
 
     /**
       * Retrieves the unexecuted modification list.
-      * Items in the list appear in the same order in which they were
+      * Items in the list appear in the same order in which they were 
       * originally supplied in DirContext.modifyAttributes().
       * The first item in the list is the first one that was not executed.
       * If this list is null, none of the operations originally submitted
@@ -113,7 +114,7 @@ public class AttributeModificationException extends NamingException {
       * @see #setUnexecutedModifications
       */
     public ModificationItem[] getUnexecutedModifications() {
-        return unexecs;
+	return unexecs;
     }
 
     /**
@@ -125,12 +126,12 @@ public class AttributeModificationException extends NamingException {
       * @return The non-null string representation of this exception.
       */
     public String toString() {
-        String orig = super.toString();
-        if (unexecs != null) {
-            orig += ("First unexecuted modification: " +
-                     unexecs[0].toString());
-        }
-        return orig;
+	String orig = super.toString();
+	if (unexecs != null) {
+	    orig += ("First unexecuted modification: " + 
+		     unexecs[0].toString());
+	}
+	return orig;
     }
 
     /**

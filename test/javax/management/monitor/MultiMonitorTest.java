@@ -52,174 +52,174 @@ public class MultiMonitorTest {
     static final String DIFFERENT_STRING = "chevre";
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Test that monitors can sample a large " +
-                           "number of attributes");
+	System.out.println("Test that monitors can sample a large " +
+			   "number of attributes");
 
-        final MBeanServer mbs = MBeanServerFactory.createMBeanServer();
-        for (int i = 0; i < N; i++) {
-            mbeanNames[i] = new ObjectName(":type=Monitored,instance=" + i);
-            monitored[i] = new Monitored();
-            mbs.registerMBean(monitored[i], mbeanNames[i]);
-        }
-        final ObjectName counterMonitor =
-            new ObjectName(":type=CounterMonitor");
-        final ObjectName gaugeMonitor =
-            new ObjectName(":type=GaugeMonitor");
-        final ObjectName stringMonitor =
-            new ObjectName(":type=StringMonitor");
-        final ObjectName[] monitorNames =
-            new ObjectName[] {counterMonitor, gaugeMonitor, stringMonitor};
-        final String[] attrNames =
-            new String[] {"CounterValue", "GaugeValue", "StringValue"};
-        mbs.createMBean(CounterMonitor.class.getName(), counterMonitor);
-        mbs.createMBean(GaugeMonitor.class.getName(), gaugeMonitor);
-        mbs.createMBean(StringMonitor.class.getName(), stringMonitor);
-        final CounterMonitorMBean counterProxy = (CounterMonitorMBean)
-            MBeanServerInvocationHandler
-            .newProxyInstance(mbs, counterMonitor, CounterMonitorMBean.class,
-                              false);
-        final GaugeMonitorMBean gaugeProxy = (GaugeMonitorMBean)
-            MBeanServerInvocationHandler
-            .newProxyInstance(mbs, gaugeMonitor, GaugeMonitorMBean.class,
-                              false);
-        final StringMonitorMBean stringProxy = (StringMonitorMBean)
-            MBeanServerInvocationHandler
-            .newProxyInstance(mbs, stringMonitor, StringMonitorMBean.class,
-                              false);
-        final MonitorMBean[] proxies = new MonitorMBean[] {
-            counterProxy, gaugeProxy, stringProxy,
-        };
-        for (int i = 0; i < 3; i++) {
-            proxies[i].setGranularityPeriod(1);
-            proxies[i].setObservedAttribute(attrNames[i]);
-            for (int j = 0; j < N; j++)
-                proxies[i].addObservedObject(mbeanNames[j]);
-        }
+	final MBeanServer mbs = MBeanServerFactory.createMBeanServer();
+	for (int i = 0; i < N; i++) {
+	    mbeanNames[i] = new ObjectName(":type=Monitored,instance=" + i);
+	    monitored[i] = new Monitored();
+	    mbs.registerMBean(monitored[i], mbeanNames[i]);
+	}
+	final ObjectName counterMonitor =
+	    new ObjectName(":type=CounterMonitor");
+	final ObjectName gaugeMonitor =
+	    new ObjectName(":type=GaugeMonitor");
+	final ObjectName stringMonitor =
+	    new ObjectName(":type=StringMonitor");
+	final ObjectName[] monitorNames =
+	    new ObjectName[] {counterMonitor, gaugeMonitor, stringMonitor};
+	final String[] attrNames =
+	    new String[] {"CounterValue", "GaugeValue", "StringValue"};
+	mbs.createMBean(CounterMonitor.class.getName(), counterMonitor);
+	mbs.createMBean(GaugeMonitor.class.getName(), gaugeMonitor);
+	mbs.createMBean(StringMonitor.class.getName(), stringMonitor);
+	final CounterMonitorMBean counterProxy = (CounterMonitorMBean)
+	    MBeanServerInvocationHandler
+	    .newProxyInstance(mbs, counterMonitor, CounterMonitorMBean.class,
+			      false);
+	final GaugeMonitorMBean gaugeProxy = (GaugeMonitorMBean)
+	    MBeanServerInvocationHandler
+	    .newProxyInstance(mbs, gaugeMonitor, GaugeMonitorMBean.class,
+			      false);
+	final StringMonitorMBean stringProxy = (StringMonitorMBean)
+	    MBeanServerInvocationHandler
+	    .newProxyInstance(mbs, stringMonitor, StringMonitorMBean.class,
+			      false);
+	final MonitorMBean[] proxies = new MonitorMBean[] {
+	    counterProxy, gaugeProxy, stringProxy,
+	};
+	for (int i = 0; i < 3; i++) {
+	    proxies[i].setGranularityPeriod(1);
+	    proxies[i].setObservedAttribute(attrNames[i]);
+	    for (int j = 0; j < N; j++)
+		proxies[i].addObservedObject(mbeanNames[j]);
+	}
 
-        final CountListener[] listeners = new CountListener[] {
-            new CountListener(), new CountListener(), new CountListener()
-        };
-        for (int i = 0; i < 3; i++) {
-            mbs.addNotificationListener(monitorNames[i], listeners[i],
-                                        null, null);
-        }
+	final CountListener[] listeners = new CountListener[] {
+	    new CountListener(), new CountListener(), new CountListener()
+	};
+	for (int i = 0; i < 3; i++) {
+	    mbs.addNotificationListener(monitorNames[i], listeners[i],
+					null, null);
+	}
 
-        counterProxy.setInitThreshold(new Integer(COUNTER_THRESHOLD));
-        counterProxy.setNotify(true);
-        gaugeProxy.setThresholds(new Double(GAUGE_THRESHOLD), new Double(0.0));
-        gaugeProxy.setNotifyHigh(true);
-        stringProxy.setStringToCompare(STRING_TO_COMPARE);
-        stringProxy.setNotifyDiffer(true);
+	counterProxy.setInitThreshold(new Integer(COUNTER_THRESHOLD));
+	counterProxy.setNotify(true);
+	gaugeProxy.setThresholds(new Double(GAUGE_THRESHOLD), new Double(0.0));
+	gaugeProxy.setNotifyHigh(true);
+	stringProxy.setStringToCompare(STRING_TO_COMPARE);
+	stringProxy.setNotifyDiffer(true);
 
-        // A couple of granularity periods to detect bad behaviour
-        Thread.sleep(2);
+	// A couple of granularity periods to detect bad behaviour
+	Thread.sleep(2);
 
-        if (!listenersAreAll(0, listeners)) {
-            System.out.println("TEST FAILED: listeners not all 0");
-            System.exit(1);
-        }
+	if (!listenersAreAll(0, listeners)) {
+	    System.out.println("TEST FAILED: listeners not all 0");
+	    System.exit(1);
+	}
 
-        for (int i = 0; i < 3; i++)
-            proxies[i].start();
+	for (int i = 0; i < 3; i++)
+	    proxies[i].start();
 
-        long startTime = System.currentTimeMillis();
-        while (!listenersAreAll(N, listeners)
-               && System.currentTimeMillis() < startTime + 5000)
-            Thread.sleep(1);
+	long startTime = System.currentTimeMillis();
+	while (!listenersAreAll(N, listeners)
+	       && System.currentTimeMillis() < startTime + 5000)
+	    Thread.sleep(1);
 
-        // More time for bad behaviour
-        Thread.sleep(1000);
+	// More time for bad behaviour
+	Thread.sleep(1000);
 
-        if (!listenersAreAll(N, listeners)) {
-            System.out.print("TEST FAILED: listener counts wrong:");
-            for (int i = 0; i < listeners.length; i++)
-                System.out.print(" " + listeners[i].getCount());
-            System.out.println();
-            System.exit(1);
-        }
+	if (!listenersAreAll(N, listeners)) {
+	    System.out.print("TEST FAILED: listener counts wrong:");
+	    for (int i = 0; i < listeners.length; i++)
+		System.out.print(" " + listeners[i].getCount());
+	    System.out.println();
+	    System.exit(1);
+	}
 
-        for (int i = 0; i < 3; i++) {
-            proxies[i].stop();
-            for (int j = 0; j < N; j++)
-                proxies[i].removeObservedObject(mbeanNames[j]);
-            ObjectName[] observed = proxies[i].getObservedObjects();
-            if (observed.length != 0) {
-                System.out.println("TEST FAILED: not all observed objects " +
-                                   "removed: " + Arrays.asList(observed));
-                System.exit(1);
-            }
-        }
+	for (int i = 0; i < 3; i++) {
+	    proxies[i].stop();
+	    for (int j = 0; j < N; j++)
+		proxies[i].removeObservedObject(mbeanNames[j]);
+	    ObjectName[] observed = proxies[i].getObservedObjects();
+	    if (observed.length != 0) {
+		System.out.println("TEST FAILED: not all observed objects " +
+				   "removed: " + Arrays.asList(observed));
+		System.exit(1);
+	    }
+	}
 
-        System.out.println("Test passed");
+	System.out.println("Test passed");
     }
 
     public static interface MonitoredMBean {
-        public int getCounterValue();
-        public double getGaugeValue();
-        public String getStringValue();
+	public int getCounterValue();
+	public double getGaugeValue();
+	public String getStringValue();
     }
 
     public static class Monitored implements MonitoredMBean {
-        /* We give a small random number of normal readings (possibly
-           zero) before giving a reading that provokes a
-           notification.  */
-        private int okCounter = randomInt(5);
-        private int okGauge = randomInt(5);
-        private int okString = randomInt(5);
+	/* We give a small random number of normal readings (possibly
+	   zero) before giving a reading that provokes a
+	   notification.  */
+	private int okCounter = randomInt(5);
+	private int okGauge = randomInt(5);
+	private int okString = randomInt(5);
 
-        public synchronized int getCounterValue() {
-            if (--okCounter >= 0)
-                return 0;
-            else
-                return OVER_COUNTER_THRESHOLD;
-        }
+	public synchronized int getCounterValue() {
+	    if (--okCounter >= 0)
+		return 0;
+	    else
+		return OVER_COUNTER_THRESHOLD;
+	}
 
-        public synchronized double getGaugeValue() {
-            if (--okGauge >= 0)
-                return 0.0;
-            else
-                return OVER_GAUGE_THRESHOLD;
-        }
+	public synchronized double getGaugeValue() {
+	    if (--okGauge >= 0)
+		return 0.0;
+	    else
+		return OVER_GAUGE_THRESHOLD;
+	}
 
-        public synchronized String getStringValue() {
-            if (--okString >= 0)
-                return STRING_TO_COMPARE;
-            else
-                return DIFFERENT_STRING;
-        }
+	public synchronized String getStringValue() {
+	    if (--okString >= 0)
+		return STRING_TO_COMPARE;
+	    else
+		return DIFFERENT_STRING;
+	}
     }
 
     public static class CountListener implements NotificationListener {
-        private int count;
+	private int count;
 
-        public synchronized void handleNotification(Notification n, Object h) {
-            if (!(n instanceof MonitorNotification)) {
-                System.out.println("TEST FAILED: bad notif: " +
-                                   n.getClass().getName());
-                System.exit(1);
-            }
-            if (n.getType().indexOf("error") >= 0) {
-                System.out.println("TEST FAILED: error notif: " + n.getType());
-                System.exit(1);
-            }
-            count++;
-        }
+	public synchronized void handleNotification(Notification n, Object h) {
+	    if (!(n instanceof MonitorNotification)) {
+		System.out.println("TEST FAILED: bad notif: " +
+				   n.getClass().getName());
+		System.exit(1);
+	    }
+	    if (n.getType().indexOf("error") >= 0) {
+		System.out.println("TEST FAILED: error notif: " + n.getType());
+		System.exit(1);
+	    }
+	    count++;
+	}
 
-        public synchronized int getCount() {
-            return count;
-        }
+	public synchronized int getCount() {
+	    return count;
+	}
     }
 
     private static boolean listenersAreAll(int n, CountListener[] listeners) {
-        for (int i = 0; i < listeners.length; i++) {
-            if (listeners[i].getCount() != n)
-                return false;
-        }
-        return true;
+	for (int i = 0; i < listeners.length; i++) {
+	    if (listeners[i].getCount() != n)
+		return false;
+	}
+	return true;
     }
 
     private static final Random random = new Random();
     static synchronized int randomInt(int n) {
-        return random.nextInt(n);
+	return random.nextInt(n);
     }
 }

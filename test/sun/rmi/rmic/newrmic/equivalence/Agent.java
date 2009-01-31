@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -34,13 +34,13 @@ public interface Agent extends Serializable, Runnable {
      * Run method controls the execution of agent and is called by servers.
      */
     void run();
-
+    
     /**
      * getInfo method is called by home server to collect the information
      * that the agent has collected.
      */
     Vector getInfo();
-
+    
     /**
      * getErrors returns String of errors encountered by Agent
      */

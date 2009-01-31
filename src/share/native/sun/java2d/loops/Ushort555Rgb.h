@@ -31,10 +31,10 @@
  * LoopMacros.h to manipulate a surface of type "Ushort555Rgb".
  */
 
-typedef jushort Ushort555RgbPixelType;
-typedef jushort Ushort555RgbDataType;
+typedef jushort	Ushort555RgbPixelType;
+typedef jushort	Ushort555RgbDataType;
 
-#define Ushort555RgbPixelStride         2
+#define Ushort555RgbPixelStride		2
 
 #define DeclareUshort555RgbLoadVars(PREFIX)
 #define DeclareUshort555RgbStoreVars(PREFIX)
@@ -48,20 +48,20 @@ typedef jushort Ushort555RgbDataType;
 #define DeclareUshort555RgbPixelData(PREFIX)
 #define ExtractUshort555RgbPixelData(PIXEL, PREFIX)
 
-#define Ushort555RgbXparLutEntry                -1
-#define Ushort555RgbIsXparLutEntry(pix)         (pix < 0)
-#define StoreUshort555RgbNonXparFromArgb        StoreUshort555RgbFrom1IntArgb
+#define Ushort555RgbXparLutEntry		-1
+#define Ushort555RgbIsXparLutEntry(pix)		(pix < 0)
+#define StoreUshort555RgbNonXparFromArgb	StoreUshort555RgbFrom1IntArgb
 
 
 #define ComposeUshort555RgbFrom3ByteRgb(r, g, b) \
     (Ushort555RgbPixelType)((((r) >> 3) << 10) | \
-                            (((g) >> 3) <<  5) | \
-                            (((b) >> 3) <<  0))
+			    (((g) >> 3) <<  5) | \
+			    (((b) >> 3) <<  0))
 
 #define IntArgbToUshort555Rgb(rgb) \
     (Ushort555RgbPixelType)((((rgb) >> (16 + 3 - 10)) & 0x7c00) | \
-                            (((rgb) >> ( 8 + 3 -  5)) & 0x03e0) | \
-                            (((rgb) >> ( 0 + 3 -  0)) & 0x001f))
+			    (((rgb) >> ( 8 + 3 -  5)) & 0x03e0) | \
+			    (((rgb) >> ( 0 + 3 -  0)) & 0x001f))
 
 #define Ushort555RgbPixelFromArgb(pixel, rgb, pRasInfo) \
     (pixel) = IntArgbToUshort555Rgb(rgb)
@@ -75,19 +75,19 @@ typedef jushort Ushort555RgbDataType;
 
 #define LoadUshort555RgbTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
     do { \
-        jushort pixel = (pRas)[x]; \
-        (r) = ((pixel) >> 10) & 0x1f; \
-        (r) = ((r) << 3) | ((r) >> 2); \
-        (g) = ((pixel) >>  5) & 0x1f; \
-        (g) = ((g) << 3) | ((g) >> 2); \
-        (b) = ((pixel) >>  0) & 0x1f; \
-        (b) = ((b) << 3) | ((b) >> 2); \
+	jushort pixel = (pRas)[x]; \
+	(r) = ((pixel) >> 10) & 0x1f; \
+	(r) = ((r) << 3) | ((r) >> 2); \
+	(g) = ((pixel) >>  5) & 0x1f; \
+	(g) = ((g) << 3) | ((g) >> 2); \
+	(b) = ((pixel) >>  0) & 0x1f; \
+	(b) = ((b) << 3) | ((b) >> 2); \
     } while (0)
 
 #define LoadUshort555RgbTo4ByteArgb(pRas, PREFIX, x, a, r, g, b) \
     do { \
-        LoadUshort555RgbTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
-        (a) = 0xff; \
+	LoadUshort555RgbTo3ByteRgb(pRas, PREFIX, x, r, g, b) \
+	(a) = 0xff; \
     } while (0)
 
 #define StoreUshort555RgbFrom1IntRgb(pRas, PREFIX, x, rgb) \
@@ -114,7 +114,7 @@ typedef jushort Ushort555RgbDataType;
                                COMP_PREFIX ## G, COMP_PREFIX ## B)
 
 
-#define Ushort555RgbIsPremultiplied     0
+#define Ushort555RgbIsPremultiplied	0
 
 #define DeclareUshort555RgbBlendFillVars(PREFIX) \
     jushort PREFIX;

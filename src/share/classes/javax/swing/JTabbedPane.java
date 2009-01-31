@@ -22,7 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
+ 
 package javax.swing;
 
 import java.awt.*;
@@ -34,7 +34,7 @@ import javax.swing.plaf.*;
 import javax.accessibility.*;
 import sun.swing.SwingUtilities2;
 
-import java.io.Serializable;
+import java.io.Serializable; 
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
 import java.io.IOException;
@@ -54,7 +54,7 @@ import java.io.IOException;
  * <p>
  * The <code>TabbedPane</code> uses a <code>SingleSelectionModel</code>
  * to represent the set
- * of tab indices and the currently selected index.  If the tab count
+ * of tab indices and the currently selected index.  If the tab count 
  * is greater than 0, then there will always be a selected index, which
  * by default will be initialized to the first tab.  If the tab count is
  * 0, then the selected index will be -1.
@@ -76,7 +76,7 @@ import java.io.IOException;
  * <p>
  * If you specify a component for a tab, the <code>JTabbedPane</code>
  * will not render any text or icon you have specified for the tab.
- * <p>
+ * <p> 
  * <strong>Note:</strong>
  * Do not use <code>setVisible</code> directly on a tab component to make it visible,
  * use <code>setSelectedComponent</code> or <code>setSelectedIndex</code> methods instead.
@@ -85,7 +85,7 @@ import java.io.IOException;
  * information see <a
  * href="package-summary.html#threading">Swing's Threading
  * Policy</a>.
- * <p>
+ * <p> 
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
  * future Swing releases. The current serialization support is
@@ -97,16 +97,17 @@ import java.io.IOException;
  *
  * @beaninfo
  *      attribute: isContainer true
- *    description: A component which provides a tab folder metaphor for
+ *    description: A component which provides a tab folder metaphor for 
  *                 displaying one component from a set of components.
  *
+ * @version %I% %G%
  * @author Dave Moore
  * @author Philip Milne
  * @author Amy Fowler
  *
  * @see SingleSelectionModel
  */
-public class JTabbedPane extends JComponent
+public class JTabbedPane extends JComponent 
        implements Serializable, Accessible, SwingConstants {
 
    /**
@@ -130,7 +131,7 @@ public class JTabbedPane extends JComponent
      */
     private static final String uiClassID = "TabbedPaneUI";
 
-    /**
+    /** 
      * Where the tabs are placed.
      * @see #setTabPlacement
      */
@@ -145,7 +146,7 @@ public class JTabbedPane extends JComponent
 
     /**
      * The <code>changeListener</code> is the listener we add to the
-     * model.
+     * model.  
      */
     protected ChangeListener changeListener = null;
 
@@ -185,7 +186,7 @@ public class JTabbedPane extends JComponent
 
     /**
      * Creates an empty <code>TabbedPane</code> with the specified tab placement
-     * and tab layout policy.  Tab placement may be either:
+     * and tab layout policy.  Tab placement may be either: 
      * <code>JTabbedPane.TOP</code>, <code>JTabbedPane.BOTTOM</code>,
      * <code>JTabbedPane.LEFT</code>, or <code>JTabbedPane.RIGHT</code>.
      * Tab layout policy may be either: <code>JTabbedPane.WRAP_TAB_LAYOUT</code>
@@ -267,15 +268,15 @@ public class JTabbedPane extends JComponent
      */
     protected class ModelListener implements ChangeListener, Serializable {
         public void stateChanged(ChangeEvent e) {
-            fireStateChanged();
-        }
+            fireStateChanged();            
+        }       
     }
 
     /**
      * Subclasses that want to handle <code>ChangeEvents</code> differently
      * can override this to return a subclass of <code>ModelListener</code> or
      * another <code>ChangeListener</code> implementation.
-     *
+     * 
      * @see #fireStateChanged
      */
     protected ChangeListener createChangeListener() {
@@ -292,7 +293,7 @@ public class JTabbedPane extends JComponent
     public void addChangeListener(ChangeListener l) {
         listenerList.add(ChangeListener.class, l);
     }
-
+    
     /**
      * Removes a <code>ChangeListener</code> from this tabbedpane.
      *
@@ -303,7 +304,7 @@ public class JTabbedPane extends JComponent
     public void removeChangeListener(ChangeListener l) {
         listenerList.remove(ChangeListener.class, l);
     }
-
+        
    /**
      * Returns an array of all the <code>ChangeListener</code>s added
      * to this <code>JTabbedPane</code> with <code>addChangeListener</code>.
@@ -327,7 +328,7 @@ public class JTabbedPane extends JComponent
      * cases, such as deleting the selected tab, where the index remains the
      * same, but a new tab moves to that index. Events are fired for all of
      * these cases.
-     *
+     * 
      * @see #addChangeListener
      * @see EventListenerList
      */
@@ -415,9 +416,9 @@ public class JTabbedPane extends JComponent
                 if (changeEvent == null)
                     changeEvent = new ChangeEvent(this);
                 ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
-            }
+            }          
         }
-    }
+    }   
 
     /**
      * Returns the model associated with this tabbedpane.
@@ -430,7 +431,7 @@ public class JTabbedPane extends JComponent
 
     /**
      * Sets the model to be used with this tabbedpane.
-     *
+     * 
      * @param model the model to be used
      * @see #getModel
      * @beaninfo
@@ -482,7 +483,7 @@ public class JTabbedPane extends JComponent
      *    preferred: true
      *        bound: true
      *    attribute: visualUpdate true
-     *         enum: TOP JTabbedPane.TOP
+     *         enum: TOP JTabbedPane.TOP 
      *               LEFT JTabbedPane.LEFT
      *               BOTTOM JTabbedPane.BOTTOM
      *               RIGHT JTabbedPane.RIGHT
@@ -490,7 +491,7 @@ public class JTabbedPane extends JComponent
      *
      */
     public void setTabPlacement(int tabPlacement) {
-        if (tabPlacement != TOP && tabPlacement != LEFT &&
+        if (tabPlacement != TOP && tabPlacement != LEFT && 
             tabPlacement != BOTTOM && tabPlacement != RIGHT) {
             throw new IllegalArgumentException("illegal tab placement: must be TOP, BOTTOM, LEFT, or RIGHT");
         }
@@ -515,13 +516,13 @@ public class JTabbedPane extends JComponent
 
    /**
      * Sets the policy which the tabbedpane will use in laying out the tabs
-     * when all the tabs will not fit within a single run.
+     * when all the tabs will not fit within a single run.       
      * Possible values are:
      * <ul>
      * <li><code>JTabbedPane.WRAP_TAB_LAYOUT</code>
      * <li><code>JTabbedPane.SCROLL_TAB_LAYOUT</code>
      * </ul>
-     *
+     * 
      * The default value, if not set by the UI, is <code>JTabbedPane.WRAP_TAB_LAYOUT</code>.
      * <p>
      * Some look and feels might only support a subset of the possible
@@ -562,7 +563,7 @@ public class JTabbedPane extends JComponent
      *
      * @return the index of the selected tab
      * @see #setSelectedIndex
-     */
+     */    
     public int getSelectedIndex() {
         return model.getSelectedIndex();
     }
@@ -575,7 +576,7 @@ public class JTabbedPane extends JComponent
      * the results will be implementation defined.
      *
      * @param index  the index to be selected
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < -1 || index >= tab count)
      *
      * @see #getSelectedIndex
@@ -647,8 +648,8 @@ public class JTabbedPane extends JComponent
      *
      * @return the component corresponding to the selected tab
      * @see #setSelectedComponent
-     */
-    public Component getSelectedComponent() {
+     */   
+    public Component getSelectedComponent() { 
         int index = getSelectedIndex();
         if (index == -1) {
             return null;
@@ -684,7 +685,7 @@ public class JTabbedPane extends JComponent
      *
      * @param title the title to be displayed on the tab
      * @param icon the icon to be displayed on the tab
-     * @param component the component to be displayed when this tab is clicked.
+     * @param component the component to be displayed when this tab is clicked. 
      * @param tip the tooltip to be displayed for this tab
      * @param index the position to insert this new tab
      *       ({@code > 0 and <= getTabCount()})
@@ -741,7 +742,7 @@ public class JTabbedPane extends JComponent
 
         if (accessibleContext != null) {
             accessibleContext.firePropertyChange(
-                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, 
                     null, component);
         }
         revalidate();
@@ -758,43 +759,43 @@ public class JTabbedPane extends JComponent
      * @param icon the icon to be displayed in this tab
      * @param component the component to be displayed when this tab is clicked
      * @param tip the tooltip to be displayed for this tab
-     *
+     * 
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void addTab(String title, Icon icon, Component component, String tip) {
-        insertTab(title, icon, component, tip, pages.size());
+        insertTab(title, icon, component, tip, pages.size()); 
     }
 
     /**
      * Adds a <code>component</code> represented by a <code>title</code>
-     * and/or <code>icon</code>, either of which can be <code>null</code>.
-     * Cover method for <code>insertTab</code>.
+     * and/or <code>icon</code>, either of which can be <code>null</code>. 
+     * Cover method for <code>insertTab</code>. 
      *
      * @param title the title to be displayed in this tab
      * @param icon the icon to be displayed in this tab
      * @param component the component to be displayed when this tab is clicked
      *
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void addTab(String title, Icon icon, Component component) {
-        insertTab(title, icon, component, null, pages.size());
+        insertTab(title, icon, component, null, pages.size()); 
     }
 
     /**
      * Adds a <code>component</code> represented by a <code>title</code>
-     * and no icon.
+     * and no icon. 
      * Cover method for <code>insertTab</code>.
      *
      * @param title the title to be displayed in this tab
      * @param component the component to be displayed when this tab is clicked
-     *
+     * 
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void addTab(String title, Component component) {
-        insertTab(title, null, component, null, pages.size());
+        insertTab(title, null, component, null, pages.size()); 
     }
 
     /**
@@ -807,7 +808,7 @@ public class JTabbedPane extends JComponent
      * @return the component
      *
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public Component add(Component component) {
         if (!(component instanceof UIResource)) {
@@ -827,7 +828,7 @@ public class JTabbedPane extends JComponent
      * @return the component
      *
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public Component add(String title, Component component) {
         if (!(component instanceof UIResource)) {
@@ -844,17 +845,17 @@ public class JTabbedPane extends JComponent
      * Cover method for <code>insertTab</code>.
      *
      * @param component the component to be displayed when this tab is clicked
-     * @param index the position to insert this new tab
+     * @param index the position to insert this new tab 
      * @return the component
      *
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public Component add(Component component, int index) {
         if (!(component instanceof UIResource)) {
             // Container.add() interprets -1 as "append", so convert
             // the index appropriately to be handled by the vector
-            insertTab(component.getName(), null, component, null,
+            insertTab(component.getName(), null, component, null, 
                       index == -1? getTabCount() : index);
         } else {
             super.add(component, index);
@@ -866,14 +867,14 @@ public class JTabbedPane extends JComponent
      * Adds a <code>component</code> to the tabbed pane.
      * If <code>constraints</code> is a <code>String</code> or an
      * <code>Icon</code>, it will be used for the tab title,
-     * otherwise the component's name will be used as the tab title.
+     * otherwise the component's name will be used as the tab title. 
      * Cover method for <code>insertTab</code>.
      *
      * @param component the component to be displayed when this tab is clicked
      * @param constraints the object to be displayed in the tab
      *
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void add(Component component, Object constraints) {
         if (!(component instanceof UIResource)) {
@@ -893,15 +894,15 @@ public class JTabbedPane extends JComponent
      * Adds a <code>component</code> at the specified tab index.
      * If <code>constraints</code> is a <code>String</code> or an
      * <code>Icon</code>, it will be used for the tab title,
-     * otherwise the component's name will be used as the tab title.
+     * otherwise the component's name will be used as the tab title. 
      * Cover method for <code>insertTab</code>.
      *
      * @param component the component to be displayed when this tab is clicked
      * @param constraints the object to be displayed in the tab
-     * @param index the position to insert this new tab
+     * @param index the position to insert this new tab 
      *
      * @see #insertTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void add(Component component, Object constraints, int index) {
         if (!(component instanceof UIResource)) {
@@ -922,13 +923,13 @@ public class JTabbedPane extends JComponent
      * its visibility is reset to true to ensure it will be visible
      * if added to other containers.
      * @param index the index of the tab to be removed
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #addTab
-     * @see #insertTab
+     * @see #insertTab  
      */
-    public void removeTabAt(int index) {
+    public void removeTabAt(int index) {    
         checkIndex(index);
 
         Component component = getComponentAt(index);
@@ -954,7 +955,7 @@ public class JTabbedPane extends JComponent
             }
 
             accessibleContext.firePropertyChange(
-                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, 
                     component, null);
         }
 
@@ -988,7 +989,7 @@ public class JTabbedPane extends JComponent
             changeAccessibleSelection(null, oldName, pages.get(index));
         }
 
-        // We can't assume the tab indices correspond to the
+        // We can't assume the tab indices correspond to the 
         // container's children array indices, so make sure we
         // remove the correct child!
         if (component != null) {
@@ -1017,7 +1018,7 @@ public class JTabbedPane extends JComponent
      *
      * @param component the component to remove from the tabbedpane
      * @see #addTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void remove(Component component) {
         int index = indexOfComponent(component);
@@ -1039,12 +1040,12 @@ public class JTabbedPane extends JComponent
     /**
      * Removes the tab and component which corresponds to the specified index.
      *
-     * @param index the index of the component to remove from the
+     * @param index the index of the component to remove from the 
      *          <code>tabbedpane</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      * @see #addTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void remove(int index) {
         removeTabAt(index);
@@ -1055,7 +1056,7 @@ public class JTabbedPane extends JComponent
      * from the <code>tabbedpane</code>.
      *
      * @see #addTab
-     * @see #removeTabAt
+     * @see #removeTabAt  
      */
     public void removeAll() {
         setSelectedIndexImpl(-1, true);
@@ -1079,11 +1080,11 @@ public class JTabbedPane extends JComponent
 
     /**
      * Returns the number of tab runs currently used to display
-     * the tabs.
-     * @return an integer giving the number of rows if the
+     * the tabs. 
+     * @return an integer giving the number of rows if the 
      *          <code>tabPlacement</code>
      *          is <code>TOP</code> or <code>BOTTOM</code>
-     *          and the number of columns if
+     *          and the number of columns if 
      *          <code>tabPlacement</code>
      *          is <code>LEFT</code> or <code>RIGHT</code>,
      *          or 0 if there is no UI set on this <code>tabbedpane</code>
@@ -1103,7 +1104,7 @@ public class JTabbedPane extends JComponent
      *
      * @param index  the index of the item being queried
      * @return the title at <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      * @see #setTitleAt
      */
@@ -1116,7 +1117,7 @@ public class JTabbedPane extends JComponent
      *
      * @param index  the index of the item being queried
      * @return the icon at <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setIconAt
@@ -1132,10 +1133,10 @@ public class JTabbedPane extends JComponent
      * an appropriate disabled Icon from the corresponding enabled
      * Icon. Some look and feels might not render the disabled Icon,
      * in which case it won't be created.
-     *
+     * 
      * @param index  the index of the item being queried
      * @return the icon at <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setDisabledIconAt
@@ -1153,7 +1154,7 @@ public class JTabbedPane extends JComponent
      *
      * @param index  the index of the item being queried
      * @return a string containing the tool tip text at <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setToolTipTextAt
@@ -1169,7 +1170,7 @@ public class JTabbedPane extends JComponent
      * @param index  the index of the item being queried
      * @return the <code>Color</code> of the tab background at
      *          <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setBackgroundAt
@@ -1184,7 +1185,7 @@ public class JTabbedPane extends JComponent
      * @param index  the index of the item being queried
      * @return the <code>Color</code> of the tab foreground at
      *          <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setForegroundAt
@@ -1200,7 +1201,7 @@ public class JTabbedPane extends JComponent
      * @param index  the index of the item being queried
      * @return true if the tab at <code>index</code> is enabled;
      *          false otherwise
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setEnabledAt
@@ -1214,7 +1215,7 @@ public class JTabbedPane extends JComponent
      *
      * @param index  the index of the item being queried
      * @return the <code>Component</code> at <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setComponentAt
@@ -1233,7 +1234,7 @@ public class JTabbedPane extends JComponent
      * @param tabIndex the index of the tab that the mnemonic refers to
      * @return the key code which represents the mnemonic;
      *         -1 if a mnemonic is not specified for the tab
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (<code>tabIndex</code> &lt; 0 ||
      *              <code>tabIndex</code> &gt;= tab count)
      * @see #setDisplayedMnemonicIndexAt(int,int)
@@ -1254,7 +1255,7 @@ public class JTabbedPane extends JComponent
      * @param tabIndex the index of the tab that the mnemonic refers to
      * @return index representing mnemonic character if one exists;
      *    otherwise returns -1
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (<code>tabIndex</code> &lt; 0 ||
      *              <code>tabIndex</code> &gt;= tab count)
      * @see #setDisplayedMnemonicIndexAt(int,int)
@@ -1269,7 +1270,7 @@ public class JTabbedPane extends JComponent
 
     /**
      * Returns the tab bounds at <code>index</code>.  If the tab at
-     * this index is not currently visible in the UI, then returns
+     * this index is not currently visible in the UI, then returns 
      * <code>null</code>.
      * If there is no UI set on this <code>tabbedpane</code>,
      * then returns <code>null</code>.
@@ -1279,7 +1280,7 @@ public class JTabbedPane extends JComponent
      *          <code>index</code>, or <code>null</code> if tab at
      *          <code>index</code> is not currently visible in the UI,
      *          or if there is no UI set on this <code>tabbedpane</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      */
     public Rectangle getBoundsAt(int index) {
@@ -1288,7 +1289,7 @@ public class JTabbedPane extends JComponent
             return ((TabbedPaneUI)ui).getTabBounds(this, index);
         }
         return null;
-    }
+    } 
 
 
 // Setters for the Pages
@@ -1296,12 +1297,12 @@ public class JTabbedPane extends JComponent
     /**
      * Sets the title at <code>index</code> to <code>title</code> which
      * can be <code>null</code>.
-     * The title is not shown if a tab component for this tab was specified.
+     * The title is not shown if a tab component for this tab was specified.  
      * An internal exception is raised if there is no tab at that index.
      *
-     * @param index the tab index where the title should be set
+     * @param index the tab index where the title should be set 
      * @param title the title to be displayed in the tab
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
      * @see #getTitleAt
@@ -1315,14 +1316,14 @@ public class JTabbedPane extends JComponent
         Page page = pages.get(index);
         String oldTitle =page.title;
         page.title = title;
-
+        
         if (oldTitle != title) {
             firePropertyChange("indexForTitle", -1, index);
         }
         page.updateDisplayedMnemonicIndex();
         if ((oldTitle != title) && (accessibleContext != null)) {
             accessibleContext.firePropertyChange(
-                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, 
                     oldTitle, title);
         }
         if (title == null || oldTitle == null ||
@@ -1338,18 +1339,18 @@ public class JTabbedPane extends JComponent
      * If the new Icon is different than the current Icon and disabled icon
      * is not explicitly set, the LookAndFeel will be asked to generate a disabled
      * Icon. To explicitly set disabled icon, use <code>setDisableIconAt()</code>.
-     * The icon is not shown if a tab component for this tab was specified.
-     * An internal exception is raised if there is no tab at that index.
+     * The icon is not shown if a tab component for this tab was specified.  
+     * An internal exception is raised if there is no tab at that index. 
      *
-     * @param index the tab index where the icon should be set
+     * @param index the tab index where the icon should be set 
      * @param icon the icon to be displayed in the tab
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setDisabledIconAt
      * @see #getIconAt
      * @see #getDisabledIconAt
-     * @see #setTabComponentAt
+     * @see #setTabComponentAt  
      * @beaninfo
      *    preferred: true
      *    attribute: visualUpdate true
@@ -1357,10 +1358,10 @@ public class JTabbedPane extends JComponent
      */
     public void setIconAt(int index, Icon icon) {
         Page page = pages.get(index);
-        Icon oldIcon = page.icon;
+        Icon oldIcon = page.icon;        
         if (icon != oldIcon) {
             page.icon = icon;
-
+    
             /* If the default icon has really changed and we had
              * generated the disabled icon for this page, then
              * clear the disabledIcon field of the page.
@@ -1368,11 +1369,11 @@ public class JTabbedPane extends JComponent
             if (page.disabledIcon instanceof UIResource) {
                 page.disabledIcon = null;
             }
-
+    
             // Fire the accessibility Visible data change
             if (accessibleContext != null) {
                 accessibleContext.firePropertyChange(
-                        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                        AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, 
                         oldIcon, icon);
             }
             revalidate();
@@ -1383,11 +1384,11 @@ public class JTabbedPane extends JComponent
     /**
      * Sets the disabled icon at <code>index</code> to <code>icon</code>
      * which can be <code>null</code>.
-     * An internal exception is raised if there is no tab at that index.
+     * An internal exception is raised if there is no tab at that index. 
      *
-     * @param index the tab index where the disabled icon should be set
+     * @param index the tab index where the disabled icon should be set 
      * @param disabledIcon the icon to be displayed in the tab when disabled
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
      * @see #getDisabledIconAt
@@ -1407,12 +1408,12 @@ public class JTabbedPane extends JComponent
 
     /**
      * Sets the tooltip text at <code>index</code> to <code>toolTipText</code>
-     * which can be <code>null</code>.
+     * which can be <code>null</code>. 
      * An internal exception is raised if there is no tab at that index.
      *
-     * @param index the tab index where the tooltip text should be set
+     * @param index the tab index where the tooltip text should be set 
      * @param toolTipText the tooltip text to be displayed for the tab
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
      * @see #getToolTipTextAt
@@ -1427,7 +1428,7 @@ public class JTabbedPane extends JComponent
 
         if ((oldToolTipText != toolTipText) && (accessibleContext != null)) {
             accessibleContext.firePropertyChange(
-                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY,
+                    AccessibleContext.ACCESSIBLE_VISIBLE_DATA_PROPERTY, 
                     oldToolTipText, toolTipText);
         }
         if (!haveRegistered && toolTipText != null) {
@@ -1438,13 +1439,13 @@ public class JTabbedPane extends JComponent
 
     /**
      * Sets the background color at <code>index</code> to
-     * <code>background</code>
+     * <code>background</code> 
      * which can be <code>null</code>, in which case the tab's background color
      * will default to the background color of the <code>tabbedpane</code>.
      * An internal exception is raised if there is no tab at that index.
-     * @param index the tab index where the background should be set
+     * @param index the tab index where the background should be set 
      * @param background the color to be displayed in the tab's background
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
      * @see #getBackgroundAt
@@ -1470,11 +1471,11 @@ public class JTabbedPane extends JComponent
      * <code>foreground</code> which can be
      * <code>null</code>, in which case the tab's foreground color
      * will default to the foreground color of this <code>tabbedpane</code>.
-     * An internal exception is raised if there is no tab at that index.
+     * An internal exception is raised if there is no tab at that index. 
      *
-     * @param index the tab index where the foreground should be set
+     * @param index the tab index where the foreground should be set 
      * @param foreground the color to be displayed as the tab's foreground
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
      * @see #getForegroundAt
@@ -1501,10 +1502,10 @@ public class JTabbedPane extends JComponent
      *
      * @param index the tab index which should be enabled/disabled
      * @param enabled whether or not the tab should be enabled
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
-     * @see #isEnabledAt
+     * @see #isEnabledAt 
      */
     public void setEnabledAt(int index, boolean enabled) {
         boolean oldEnabled = pages.get(index).isEnabled();
@@ -1516,15 +1517,15 @@ public class JTabbedPane extends JComponent
     }
 
     /**
-     * Sets the component at <code>index</code> to <code>component</code>.
+     * Sets the component at <code>index</code> to <code>component</code>.  
      * An internal exception is raised if there is no tab at that index.
      *
      * @param index the tab index where this component is being placed
      * @param component the component for the tab
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index &lt; 0 || index &gt;= tab count)
      *
-     * @see #getComponentAt
+     * @see #getComponentAt  
      * @beaninfo
      *    attribute: visualUpdate true
      *  description: The component at the specified tab index.
@@ -1599,7 +1600,7 @@ public class JTabbedPane extends JComponent
      * @exception IndexOutOfBoundsException if <code>tabIndex</code> is
      *            out of range (<code>tabIndex < 0 || tabIndex >= tab
      *            count</code>)
-     * @exception IllegalArgumentException will be thrown if
+     * @exception IllegalArgumentException will be thrown if 
      *            <code>mnemonicIndex</code> is &gt;= length of the tab
      *            title , or &lt; -1
      * @see #setMnemonicAt(int,int)
@@ -1627,7 +1628,7 @@ public class JTabbedPane extends JComponent
      * <p>
      * A mnemonic must correspond to a single key on the keyboard
      * and should be specified using one of the <code>VK_XXX</code>
-     * keycodes defined in <code>java.awt.event.KeyEvent</code>.
+     * keycodes defined in <code>java.awt.event.KeyEvent</code>. 
      * Mnemonics are case-insensitive, therefore a key event
      * with the corresponding keycode would cause the button to be
      * activated whether or not the Shift modifier was pressed.
@@ -1662,19 +1663,19 @@ public class JTabbedPane extends JComponent
 
     /**
      * Returns the first tab index with a given <code>title</code>,  or
-     * -1 if no tab has this title.
+     * -1 if no tab has this title. 
      *
      * @param title the title for the tab
      * @return the first tab index which matches <code>title</code>, or
      *          -1 if no tab has this title
      */
     public int indexOfTab(String title) {
-        for(int i = 0; i < getTabCount(); i++) {
-            if (getTitleAt(i).equals(title == null? "" : title)) {
+        for(int i = 0; i < getTabCount(); i++) { 
+            if (getTitleAt(i).equals(title == null? "" : title)) { 
                 return i;
             }
         }
-        return -1;
+        return -1; 
     }
 
     /**
@@ -1689,11 +1690,11 @@ public class JTabbedPane extends JComponent
         for(int i = 0; i < getTabCount(); i++) {
             Icon tabIcon = getIconAt(i);
             if ((tabIcon != null && tabIcon.equals(icon)) ||
-                (tabIcon == null && tabIcon == icon)) {
+                (tabIcon == null && tabIcon == icon)) { 
                 return i;
             }
         }
-        return -1;
+        return -1; 
     }
 
     /**
@@ -1708,15 +1709,15 @@ public class JTabbedPane extends JComponent
         for(int i = 0; i < getTabCount(); i++) {
             Component c = getComponentAt(i);
             if ((c != null && c.equals(component)) ||
-                (c == null && c == component)) {
+                (c == null && c == component)) { 
                 return i;
             }
         }
-        return -1;
+        return -1; 
     }
 
     /**
-     * Returns the tab index corresponding to the tab whose bounds
+     * Returns the tab index corresponding to the tab whose bounds 
      * intersect the specified location.  Returns -1 if no tab
      * intersects the location.
      *
@@ -1731,8 +1732,8 @@ public class JTabbedPane extends JComponent
             return ((TabbedPaneUI)ui).tabForCoordinate(this, x, y);
         }
         return -1;
-    }
-
+    } 
+ 
 
     /**
      * Returns the tooltip text for the component determined by the
@@ -1760,9 +1761,9 @@ public class JTabbedPane extends JComponent
     }
 
 
-    /**
+    /** 
      * See <code>readObject</code> and <code>writeObject</code> in
-     * <code>JComponent</code> for more
+     * <code>JComponent</code> for more 
      * information about serialization in Swing.
      */
     private void writeObject(ObjectOutputStream s) throws IOException {
@@ -1774,10 +1775,10 @@ public class JTabbedPane extends JComponent
                 ui.installUI(this);
             }
         }
-    }
+    }   
 
-    /* Called from the <code>JComponent</code>'s
-     * <code>EnableSerializationFocusListener</code> to
+    /* Called from the <code>JComponent</code>'s 
+     * <code>EnableSerializationFocusListener</code> to 
      * do any Swing-specific pre-serialization configuration.
      */
     void compWriteObjectNotify() {
@@ -1786,12 +1787,12 @@ public class JTabbedPane extends JComponent
         // unregistered by JComponent.compWriteObjectNotify()
         if (getToolTipText() == null && haveRegistered) {
             ToolTipManager.sharedInstance().unregisterComponent(this);
-        }
+        }           
     }
 
-    /**
+    /** 
      * See <code>readObject</code> and <code>writeObject</code> in
-     * <code>JComponent</code> for more
+     * <code>JComponent</code> for more 
      * information about serialization in Swing.
      */
     private void readObject(ObjectInputStream s)
@@ -1802,7 +1803,7 @@ public class JTabbedPane extends JComponent
             ui.installUI(this);
         }
         // If ToolTipText != null, then the tooltip has already been
-        // registered by JComponent.readObject()
+        // registered by JComponent.readObject() 
         if (getToolTipText() == null && haveRegistered) {
             ToolTipManager.sharedInstance().registerComponent(this);
         }
@@ -1811,12 +1812,12 @@ public class JTabbedPane extends JComponent
 
     /**
      * Returns a string representation of this <code>JTabbedPane</code>.
-     * This method
-     * is intended to be used only for debugging purposes, and the
-     * content and format of the returned string may vary between
-     * implementations. The returned string may be empty but may not
+     * This method 
+     * is intended to be used only for debugging purposes, and the 
+     * content and format of the returned string may vary between      
+     * implementations. The returned string may be empty but may not 
      * be <code>null</code>.
-     *
+     * 
      * @return  a string representation of this JTabbedPane.
      */
     protected String paramString() {
@@ -1843,12 +1844,12 @@ public class JTabbedPane extends JComponent
 ////////////////
 
     /**
-     * Gets the AccessibleContext associated with this JTabbedPane.
-     * For tabbed panes, the AccessibleContext takes the form of an
-     * AccessibleJTabbedPane.
+     * Gets the AccessibleContext associated with this JTabbedPane. 
+     * For tabbed panes, the AccessibleContext takes the form of an 
+     * AccessibleJTabbedPane. 
      * A new AccessibleJTabbedPane instance is created if necessary.
      *
-     * @return an AccessibleJTabbedPane that serves as the
+     * @return an AccessibleJTabbedPane that serves as the 
      *         AccessibleContext of this JTabbedPane
      */
     public AccessibleContext getAccessibleContext() {
@@ -1865,9 +1866,9 @@ public class JTabbedPane extends JComponent
     }
 
     /**
-     * This class implements accessibility support for the
-     * <code>JTabbedPane</code> class.  It provides an implementation of the
-     * Java Accessibility API appropriate to tabbed pane user-interface
+     * This class implements accessibility support for the 
+     * <code>JTabbedPane</code> class.  It provides an implementation of the 
+     * Java Accessibility API appropriate to tabbed pane user-interface 
      * elements.
      * <p>
      * <strong>Warning:</strong>
@@ -1879,7 +1880,7 @@ public class JTabbedPane extends JComponent
      * has been added to the <code>java.beans</code> package.
      * Please see {@link java.beans.XMLEncoder}.
      */
-    protected class AccessibleJTabbedPane extends AccessibleJComponent
+    protected class AccessibleJTabbedPane extends AccessibleJComponent 
         implements AccessibleSelection, ChangeListener {
 
         /**
@@ -1901,7 +1902,7 @@ public class JTabbedPane extends JComponent
             }
 
             int index = getSelectedIndex();
-
+            
             if (index >= 0) {
                 return pages.get(index).getAccessibleName();
             }
@@ -1926,7 +1927,7 @@ public class JTabbedPane extends JComponent
         /**
          * Get the role of this object.
          *
-         * @return an instance of AccessibleRole describing the role of
+         * @return an instance of AccessibleRole describing the role of 
          *          the object
          */
         public AccessibleRole getAccessibleRole() {
@@ -1958,11 +1959,11 @@ public class JTabbedPane extends JComponent
 
         /**
          * Gets the <code>AccessibleSelection</code> associated with
-         * this object.  In the implementation of the Java
-         * Accessibility API for this class,
+         * this object.  In the implementation of the Java 
+         * Accessibility API for this class, 
          * returns this object, which is responsible for implementing the
          * <code>AccessibleSelection</code> interface on behalf of itself.
-         *
+         * 
          * @return this object
          */
         public AccessibleSelection getAccessibleSelection() {
@@ -1978,7 +1979,7 @@ public class JTabbedPane extends JComponent
          *    location, if it exists
          */
         public Accessible getAccessibleAt(Point p) {
-            int tab = ((TabbedPaneUI) ui).tabForCoordinate(JTabbedPane.this,
+            int tab = ((TabbedPaneUI) ui).tabForCoordinate(JTabbedPane.this, 
                                                            p.x, p.y);
             if (tab == -1) {
                 tab = getSelectedIndex();
@@ -2019,7 +2020,7 @@ public class JTabbedPane extends JComponent
         }
     }
 
-    private class Page extends AccessibleContext
+    private class Page extends AccessibleContext 
         implements Serializable, Accessible, AccessibleComponent {
         String title;
         Color background;
@@ -2035,7 +2036,7 @@ public class JTabbedPane extends JComponent
         int mnemonicIndex = -1;
         Component tabComponent;
 
-        Page(JTabbedPane parent,
+        Page(JTabbedPane parent, 
              String title, Icon icon, Icon disabledIcon, Component component, String tip) {
             this.title = title;
             this.icon = icon;
@@ -2052,11 +2053,11 @@ public class JTabbedPane extends JComponent
          * initializes the AccessibleContext for the page
          */
         void initAccessibleContext() {
-            if (JTabbedPane.this.accessibleContext != null &&
+            if (JTabbedPane.this.accessibleContext != null && 
                 component instanceof Accessible) {
                 /*
                  * Do initialization if the AccessibleJTabbedPane
-                 * has been instantiated. We do not want to load
+                 * has been instantiated. We do not want to load 
                  * Accessibility classes unnecessarily.
                  */
                 AccessibleContext ac;
@@ -2092,14 +2093,14 @@ public class JTabbedPane extends JComponent
                                                     null, null);
             }
         }
-
+ 
         /*
          * Returns the page displayed mnemonic index
          */
         int getDisplayedMnemonicIndex() {
             return this.mnemonicIndex;
         }
-
+  
         void updateDisplayedMnemonicIndex() {
             setDisplayedMnemonicIndex(
                 SwingUtilities.findDisplayedMnemonicIndex(title, mnemonic));
@@ -2145,7 +2146,7 @@ public class JTabbedPane extends JComponent
             int i = parent.indexOfTab(title);
             if (i == parent.getSelectedIndex()) {
                 states.add(AccessibleState.SELECTED);
-            }
+            }       
             return states;
         }
 
@@ -2159,7 +2160,7 @@ public class JTabbedPane extends JComponent
             } else {
                 return 0;
             }
-        }
+        }       
 
         public Accessible getAccessibleChild(int i) {
             if (component instanceof Accessible) {
@@ -2247,18 +2248,18 @@ public class JTabbedPane extends JComponent
              componentLocation.translate(parentLocation.x, parentLocation.y);
              return componentLocation;
         }
-
+    
         public Point getLocation() {
              Rectangle r = getBounds();
              return new Point(r.x, r.y);
         }
-
+    
         public void setLocation(Point p) {
             // do nothing
         }
 
         public Rectangle getBounds() {
-            return parent.getUI().getTabBounds(parent,
+            return parent.getUI().getTabBounds(parent, 
                                                parent.indexOfTab(title));
         }
 
@@ -2303,7 +2304,7 @@ public class JTabbedPane extends JComponent
         /**
          * Returns an AccessibleIcon
          *
-         * @return the enabled icon if one exists and the page
+         * @return the enabled icon if one exists and the page 
          * is enabled. Otherwise, returns the disabled icon if
          * one exists and the page is disabled.  Otherwise, null
          * is returned.
@@ -2311,14 +2312,14 @@ public class JTabbedPane extends JComponent
         public AccessibleIcon [] getAccessibleIcon() {
             AccessibleIcon accessibleIcon = null;
             if (enabled && icon instanceof ImageIcon) {
-                AccessibleContext ac =
+                AccessibleContext ac = 
                     ((ImageIcon)icon).getAccessibleContext();
                 accessibleIcon = (AccessibleIcon)ac;
             } else if (!enabled && disabledIcon instanceof ImageIcon) {
-                AccessibleContext ac =
+                AccessibleContext ac = 
                     ((ImageIcon)disabledIcon).getAccessibleContext();
                 accessibleIcon = (AccessibleIcon)ac;
-            }
+            } 
             if (accessibleIcon != null) {
                 AccessibleIcon [] returnIcons = new AccessibleIcon[1];
                 returnIcons[0] = accessibleIcon;
@@ -2328,7 +2329,7 @@ public class JTabbedPane extends JComponent
             }
         }
     }
-
+    
     /**
     * Sets the component that is responsible for rendering the
     * title for the specified tab.  A null value means
@@ -2339,7 +2340,7 @@ public class JTabbedPane extends JComponent
     * <p>
     * Note: The component must not be one that the developer has
     *       already added to the tabbed pane.
-    *
+    *  
     * @param index the tab index where the component should be set
     * @param component the component to render the title for the
     *                  specified tab
@@ -2354,7 +2355,7 @@ public class JTabbedPane extends JComponent
     *    attribute: visualUpdate true
     *  description: The tab component at the specified tab index.
     * @since 1.6
-    */
+    */ 
     public void setTabComponentAt(int index, Component component) {
         if (component != null && indexOfComponent(component) != -1) {
             throw new IllegalArgumentException("Component is already added to this JTabbedPane");
@@ -2363,19 +2364,19 @@ public class JTabbedPane extends JComponent
         if (component != oldValue) {
             int tabComponentIndex = indexOfTabComponent(component);
             if (tabComponentIndex != -1) {
-                setTabComponentAt(tabComponentIndex, null);
+                setTabComponentAt(tabComponentIndex, null); 
             }
             pages.get(index).tabComponent = component;
             firePropertyChange("indexForTabComponent", -1, index);
         }
     }
-
+     
     /**
      * Returns the tab component at <code>index</code>.
      *
      * @param index  the index of the item being queried
      * @return the tab component at <code>index</code>
-     * @exception IndexOutOfBoundsException if index is out of range
+     * @exception IndexOutOfBoundsException if index is out of range 
      *            (index < 0 || index >= tab count)
      *
      * @see #setTabComponentAt
@@ -2384,7 +2385,7 @@ public class JTabbedPane extends JComponent
     public Component getTabComponentAt(int index) {
         return pages.get(index).tabComponent;
     }
-
+    
     /**
      * Returns the index of the tab for the specified tab component.
      * Returns -1 if there is no tab for this tab component.
@@ -2395,7 +2396,7 @@ public class JTabbedPane extends JComponent
      * @see #setTabComponentAt
      * @see #getTabComponentAt
      * @since 1.6
-     */
+     */    
      public int indexOfTabComponent(Component tabComponent) {
         for(int i = 0; i < getTabCount(); i++) {
             Component c = getTabComponentAt(i);
@@ -2403,6 +2404,6 @@ public class JTabbedPane extends JComponent
                 return i;
             }
         }
-        return -1;
+        return -1; 
     }
 }

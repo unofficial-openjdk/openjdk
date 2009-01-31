@@ -55,12 +55,12 @@ public class JMXServerErrorException extends IOException {
      * connectors will never do so.
      */
     public JMXServerErrorException(String s, Error err) {
-        super(s);
-        cause = err;
+	super(s);
+	cause = err;
     }
 
     public Throwable getCause() {
-        return cause;
+	return cause;
     }
 
     /**

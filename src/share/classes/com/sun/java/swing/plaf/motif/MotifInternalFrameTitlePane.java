@@ -39,11 +39,12 @@ import java.beans.PropertyVetoException;
 
 /**
  * Class that manages a Motif title bar
+ * @version %I% %G%
  *
  * @since 1.3
  */
-public class MotifInternalFrameTitlePane
-    extends BasicInternalFrameTitlePane implements LayoutManager, ActionListener, PropertyChangeListener
+public class MotifInternalFrameTitlePane 
+    extends BasicInternalFrameTitlePane implements LayoutManager, ActionListener, PropertyChangeListener 
 {
     SystemButton systemButton;
     MinimizeButton minimizeButton;
@@ -64,7 +65,7 @@ public class MotifInternalFrameTitlePane
 
     protected void installDefaults() {
         setFont(UIManager.getFont("InternalFrame.titleFont"));
-        setPreferredSize(new Dimension(100, BUTTON_SIZE));
+	setPreferredSize(new Dimension(100, BUTTON_SIZE));
     }
 
     protected void uninstallListeners() {
@@ -85,23 +86,23 @@ public class MotifInternalFrameTitlePane
     }
 
     protected void assembleSystemMenu() {
-        systemMenu = new JPopupMenu();
-        JMenuItem mi = (JMenuItem)systemMenu.add(new JMenuItem(restoreAction));
+	systemMenu = new JPopupMenu();
+	JMenuItem mi = (JMenuItem)systemMenu.add(new JMenuItem(restoreAction));
         mi.setMnemonic('R');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(moveAction));
+	mi = (JMenuItem) systemMenu.add(new JMenuItem(moveAction));
         mi.setMnemonic('M');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(sizeAction));
+	mi = (JMenuItem) systemMenu.add(new JMenuItem(sizeAction));
         mi.setMnemonic('S');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(iconifyAction));
+	mi = (JMenuItem) systemMenu.add(new JMenuItem(iconifyAction));
         mi.setMnemonic('n');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(maximizeAction));
+	mi = (JMenuItem) systemMenu.add(new JMenuItem(maximizeAction));
         mi.setMnemonic('x');
-        systemMenu.add(new JSeparator());
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(closeAction));
+	systemMenu.add(new JSeparator());
+	mi = (JMenuItem) systemMenu.add(new JMenuItem(closeAction));
         mi.setMnemonic('C');
-
+	
         systemButton = new SystemButton();
-        systemButton.addActionListener(new ActionListener() {
+	systemButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 systemMenu.show(systemButton, 0, BUTTON_SIZE);
             }
@@ -126,11 +127,11 @@ public class MotifInternalFrameTitlePane
 
 
     protected void createButtons() {
-        minimizeButton = new MinimizeButton();
-        minimizeButton.addActionListener(iconifyAction);
+	minimizeButton = new MinimizeButton();
+	minimizeButton.addActionListener(iconifyAction);
 
-        maximizeButton = new MaximizeButton();
-        maximizeButton.addActionListener(maximizeAction);
+	maximizeButton = new MaximizeButton();
+	maximizeButton.addActionListener(maximizeAction);
     }
 
 
@@ -138,10 +139,10 @@ public class MotifInternalFrameTitlePane
         title = new Title(frame.getTitle());
         title.setFont(getFont());
 
-        add(systemButton);
+	add(systemButton);
         add(title);
-        add(minimizeButton);
-        add(maximizeButton);
+	add(minimizeButton);
+	add(maximizeButton);
     }
 
     public void paintComponent(Graphics g) {
@@ -157,11 +158,11 @@ public class MotifInternalFrameTitlePane
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
-        String prop = (String)evt.getPropertyName();
-        JInternalFrame f = (JInternalFrame)evt.getSource();
-        boolean value = false;
-        if (JInternalFrame.IS_SELECTED_PROPERTY.equals(prop)) {
-            repaint();
+	String prop = (String)evt.getPropertyName();
+	JInternalFrame f = (JInternalFrame)evt.getSource();
+	boolean value = false;
+	if (JInternalFrame.IS_SELECTED_PROPERTY.equals(prop)) {
+	    repaint();
         } else if (prop.equals("maximizable")) {
             if ((Boolean)evt.getNewValue() == Boolean.TRUE)
                 add(maximizeButton);
@@ -183,57 +184,57 @@ public class MotifInternalFrameTitlePane
     }
 
     public void addLayoutComponent(String name, Component c) {}
-    public void removeLayoutComponent(Component c) {}
+    public void removeLayoutComponent(Component c) {}    
     public Dimension preferredLayoutSize(Container c)  {
         return minimumLayoutSize(c);
     }
-
+    
     public Dimension minimumLayoutSize(Container c) {
-        return new Dimension(100, BUTTON_SIZE);
+	return new Dimension(100, BUTTON_SIZE);
     }
-
+    
     public void layoutContainer(Container c) {
-        int w = getWidth();
-        systemButton.setBounds(0, 0, BUTTON_SIZE, BUTTON_SIZE);
-        int x = w - BUTTON_SIZE;
+	int w = getWidth();
+	systemButton.setBounds(0, 0, BUTTON_SIZE, BUTTON_SIZE);
+	int x = w - BUTTON_SIZE;
 
-        if(frame.isMaximizable()) {
-            maximizeButton.setBounds(x, 0, BUTTON_SIZE, BUTTON_SIZE);
-            x -= BUTTON_SIZE;
-        } else if(maximizeButton.getParent() != null) {
-            maximizeButton.getParent().remove(maximizeButton);
-        }
-
-        if(frame.isIconifiable()) {
-            minimizeButton.setBounds(x, 0, BUTTON_SIZE, BUTTON_SIZE);
-            x -= BUTTON_SIZE;
-        } else if(minimizeButton.getParent() != null) {
-            minimizeButton.getParent().remove(minimizeButton);
-        }
+	if(frame.isMaximizable()) {
+	    maximizeButton.setBounds(x, 0, BUTTON_SIZE, BUTTON_SIZE);
+	    x -= BUTTON_SIZE;
+	} else if(maximizeButton.getParent() != null) {
+	    maximizeButton.getParent().remove(maximizeButton);
+	}
+        
+	if(frame.isIconifiable()) {
+	    minimizeButton.setBounds(x, 0, BUTTON_SIZE, BUTTON_SIZE);
+	    x -= BUTTON_SIZE;
+	} else if(minimizeButton.getParent() != null) {
+	    minimizeButton.getParent().remove(minimizeButton);
+	}
 
         title.setBounds(BUTTON_SIZE, 0, x, BUTTON_SIZE);
     }
 
     protected void showSystemMenu(){
       systemMenu.show(systemButton, 0, BUTTON_SIZE);
-    }
-
+    }    
+   
     protected void hideSystemMenu(){
       systemMenu.setVisible(false);
     }
-
+    
     static Dimension buttonDimension = new Dimension(BUTTON_SIZE, BUTTON_SIZE);
 
     private abstract class FrameButton extends JButton {
 
         FrameButton() {
             super();
-            setFocusPainted(false);
+            setFocusPainted(false);     
             setBorderPainted(false);
         }
 
-        public boolean isFocusTraversable() {
-            return false;
+        public boolean isFocusTraversable() { 
+            return false; 
         }
 
         public void requestFocus() {
@@ -267,10 +268,10 @@ public class MotifInternalFrameTitlePane
             g.drawLine(maxX, 1, maxX, maxY);
         }
     }
-
+    
     private class MinimizeButton extends FrameButton {
         public void paintComponent(Graphics g) {
-            super.paintComponent(g);
+            super.paintComponent(g); 
             g.setColor(highlight);
             g.drawLine(7, 8, 7, 11);
             g.drawLine(7, 8, 10, 8);
@@ -282,7 +283,7 @@ public class MotifInternalFrameTitlePane
 
     private class MaximizeButton extends FrameButton {
         public void paintComponent(Graphics g) {
-            super.paintComponent(g);
+            super.paintComponent(g); 
             int max = BUTTON_SIZE - 5;
             boolean isMaxed = frame.isMaximum();
             g.setColor(isMaxed ? shadow : highlight);

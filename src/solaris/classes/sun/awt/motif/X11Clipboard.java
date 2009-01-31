@@ -48,6 +48,7 @@ import sun.security.action.GetIntegerAction;
  * @author Roger Brinkley
  * @author Danila Sinopalnikov
  * @author Alexander Gerasimov
+ * @version %I%, %G%
  *
  * @since JDK1.1
  */
@@ -97,7 +98,7 @@ public class X11Clipboard extends SunClipboard implements X11SelectionHolder {
         return getClipboardFormats(getID());
     }
     private static native long[] getClipboardFormats(long clipboardID);
-
+  
     protected byte[] getClipboardData(long format)
           throws IOException {
         return getClipboardData(getID(), format);

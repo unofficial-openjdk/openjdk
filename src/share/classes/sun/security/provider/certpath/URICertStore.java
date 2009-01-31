@@ -59,36 +59,37 @@ import sun.security.util.Debug;
 /**
  * A <code>CertStore</code> that retrieves <code>Certificates</code> or
  * <code>CRL</code>s from a URI, for example, as specified in an X.509
- * AuthorityInformationAccess or CRLDistributionPoint extension.
+ * AuthorityInformationAccess or CRLDistributionPoint extension. 
  * <p>
  * For CRLs, this implementation retrieves a single DER encoded CRL per URI.
  * For Certificates, this implementation retrieves a single DER encoded CRL or
  * a collection of Certificates encoded as a PKCS#7 "certs-only" CMS message.
  * <p>
- * This <code>CertStore</code> also implements Certificate/CRL caching.
- * Currently, the cache is shared between all applications in the VM and uses a
+ * This <code>CertStore</code> also implements Certificate/CRL caching. 
+ * Currently, the cache is shared between all applications in the VM and uses a 
  * hardcoded policy. The cache has a maximum size of 185 entries, which are held
  * by SoftReferences. A request will be satisfied from the cache if we last
  * checked for an update within CHECK_INTERVAL (last 30 seconds). Otherwise,
- * we open an URLConnection to download the Certificate(s)/CRL using an
- * If-Modified-Since request (HTTP) if possible. Note that both positive and
- * negative responses are cached, i.e. if we are unable to open the connection
- * or the Certificate(s)/CRL cannot be parsed, we remember this result and
- * additional calls during the CHECK_INTERVAL period do not try to open another
+ * we open an URLConnection to download the Certificate(s)/CRL using an 
+ * If-Modified-Since request (HTTP) if possible. Note that both positive and 
+ * negative responses are cached, i.e. if we are unable to open the connection 
+ * or the Certificate(s)/CRL cannot be parsed, we remember this result and 
+ * additional calls during the CHECK_INTERVAL period do not try to open another 
  * connection.
  * <p>
- * The URICertStore is not currently a standard CertStore type. We should
+ * The URICertStore is not currently a standard CertStore type. We should 
  * consider adding a standard "URI" CertStore type.
  *
  * @author Andreas Sterbenz
  * @author Sean Mullan
+ * @version %I%, %G%
  * @since 7.0
  */
 class URICertStore extends CertStoreSpi {
 
     private static final Debug debug = Debug.getInstance("certpath");
 
-    // interval between checks for update of cached Certificates/CRLs
+    // interval between checks for update of cached Certificates/CRLs 
     // (30 seconds)
     private final static int CHECK_INTERVAL = 30 * 1000;
 
@@ -99,8 +100,8 @@ class URICertStore extends CertStoreSpi {
     private final CertificateFactory factory;
 
     // cached Collection of X509Certificates (may be empty, never null)
-    private Collection<X509Certificate> certs =
-        Collections.<X509Certificate>emptySet();
+    private Collection<X509Certificate> certs = 
+	Collections.<X509Certificate>emptySet();
 
     // cached X509CRL (may be null)
     private X509CRL crl;
@@ -114,7 +115,7 @@ class URICertStore extends CertStoreSpi {
 
     // the URI of this CertStore
     private URI uri;
-
+ 
     // true if URI is ldap
     private boolean ldap = false;
     private CertStore ldapCertStore;
@@ -123,27 +124,27 @@ class URICertStore extends CertStoreSpi {
     /**
      * Creates a URICertStore.
      *
-     * @param parameters specifying the URI
+     * @param parameters specifying the URI 
      */
-    URICertStore(CertStoreParameters params)
-        throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
-        super(params);
-        if (!(params instanceof URICertStoreParameters)) {
-            throw new InvalidAlgorithmParameterException
-                ("params must be instanceof URICertStoreParameters");
-        }
-        this.uri = ((URICertStoreParameters) params).uri;
-        // if ldap URI, use an LDAPCertStore to fetch certs and CRLs
-        if (uri.getScheme().toLowerCase().equals("ldap")) {
-            ldap = true;
-            ldapCertStore =
-                LDAPCertStore.getInstance(LDAPCertStore.getParameters(uri));
+    URICertStore(CertStoreParameters params) 
+	throws InvalidAlgorithmParameterException, NoSuchAlgorithmException { 
+	super(params); 
+	if (!(params instanceof URICertStoreParameters)) {
+	    throw new InvalidAlgorithmParameterException
+		("params must be instanceof URICertStoreParameters");
+	}
+	this.uri = ((URICertStoreParameters) params).uri;
+	// if ldap URI, use an LDAPCertStore to fetch certs and CRLs
+	if (uri.getScheme().toLowerCase().equals("ldap")) {
+	    ldap = true;
+	    ldapCertStore = 
+		LDAPCertStore.getInstance(LDAPCertStore.getParameters(uri));	
             ldapPath = uri.getPath();
             // strip off leading '/'
             if (ldapPath.charAt(0) == '/') {
                 ldapPath = ldapPath.substring(1);
             }
-        }
+	}
         try {
             factory = CertificateFactory.getInstance("X.509");
         } catch (CertificateException e) {
@@ -155,8 +156,8 @@ class URICertStore extends CertStoreSpi {
      * Returns a URI CertStore. This method consults a cache of
      * CertStores (shared per JVM) using the URI as a key.
      */
-    private static final Cache certStoreCache =
-        Cache.newSoftMemoryCache(CACHE_SIZE);
+    private static final Cache certStoreCache = 
+	Cache.newSoftMemoryCache(CACHE_SIZE);
     static synchronized CertStore getInstance(URICertStoreParameters params)
         throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
         if (debug != null) {
@@ -164,7 +165,7 @@ class URICertStore extends CertStoreSpi {
         }
         CertStore ucs = (CertStore) certStoreCache.get(params);
         if (ucs == null) {
-            ucs = new UCS(new URICertStore(params), null, "URI", params);
+	    ucs = new UCS(new URICertStore(params), null, "URI", params);
             certStoreCache.put(params, ucs);
         } else {
             if (debug != null) {
@@ -193,7 +194,7 @@ class URICertStore extends CertStoreSpi {
         } catch (Exception ex) {
             if (debug != null) {
                 debug.println("exception creating CertStore: " + ex);
-                ex.printStackTrace();
+		ex.printStackTrace();
             }
             return null;
         }
@@ -214,21 +215,21 @@ class URICertStore extends CertStoreSpi {
     public synchronized Collection<X509Certificate> engineGetCertificates
         (CertSelector selector) throws CertStoreException {
 
-        // if ldap URI we wrap the CertSelector in an LDAPCertSelector to
-        // avoid LDAP DN matching issues (see LDAPCertSelector for more info)
-        if (ldap) {
-            X509CertSelector xsel = (X509CertSelector) selector;
-            try {
+	// if ldap URI we wrap the CertSelector in an LDAPCertSelector to
+	// avoid LDAP DN matching issues (see LDAPCertSelector for more info)
+	if (ldap) {
+	    X509CertSelector xsel = (X509CertSelector) selector;
+	    try {
                 xsel = new LDAPCertStore.LDAPCertSelector
-                    (xsel, xsel.getSubject(), ldapPath);
-            } catch (IOException ioe) {
-                throw new CertStoreException(ioe);
-            }
-            // Fetch the certificates via LDAP. LDAPCertStore has its own
-            // caching mechanism, see the class description for more info.
-            return (Collection<X509Certificate>)
-                ldapCertStore.getCertificates(xsel);
-        }
+	            (xsel, xsel.getSubject(), ldapPath);
+	    } catch (IOException ioe) {
+		throw new CertStoreException(ioe);
+	    }
+	    // Fetch the certificates via LDAP. LDAPCertStore has its own
+	    // caching mechanism, see the class description for more info.
+	    return (Collection<X509Certificate>) 
+		ldapCertStore.getCertificates(xsel);
+	}
 
         // Return the Certificates for this entry. It returns the cached value
         // if it is still current and fetches the Certificates otherwise.
@@ -255,7 +256,7 @@ class URICertStore extends CertStoreSpi {
                     if (debug != null) {
                         debug.println("Not modified, using cached copy");
                     }
-                    return getMatchingCerts(certs, selector);
+            	    return getMatchingCerts(certs, selector);
                 } else if (connection instanceof HttpURLConnection) {
                     // some proxy servers omit last modified
                     HttpURLConnection hconn = (HttpURLConnection) connection;
@@ -264,7 +265,7 @@ class URICertStore extends CertStoreSpi {
                         if (debug != null) {
                             debug.println("Not modified, using cached copy");
                         }
-                        return getMatchingCerts(certs, selector);
+            	        return getMatchingCerts(certs, selector);
                     }
                 }
             }
@@ -305,17 +306,17 @@ class URICertStore extends CertStoreSpi {
      * CertSelector.
      */
     private static Collection<X509Certificate> getMatchingCerts
-        (Collection<X509Certificate> certs, CertSelector selector) {
-        // if selector not specified, all certs match
-        if (selector == null) {
-            return certs;
-        }
-        List<X509Certificate> matchedCerts =
-            new ArrayList<X509Certificate>(certs.size());
+	(Collection<X509Certificate> certs, CertSelector selector) {
+	// if selector not specified, all certs match
+	if (selector == null) {
+	    return certs;
+	}
+        List<X509Certificate> matchedCerts = 
+	    new ArrayList<X509Certificate>(certs.size());
         for (X509Certificate cert : certs) {
-            if (selector.match(cert)) {
-                matchedCerts.add(cert);
-            }
+	    if (selector.match(cert)) {
+	        matchedCerts.add(cert);
+	    }
         }
         return matchedCerts;
     }
@@ -335,19 +336,19 @@ class URICertStore extends CertStoreSpi {
     public synchronized Collection<X509CRL> engineGetCRLs(CRLSelector selector)
         throws CertStoreException {
 
-        // if ldap URI we wrap the CRLSelector in an LDAPCRLSelector to
-        // avoid LDAP DN matching issues (see LDAPCRLSelector for more info)
-        if (ldap) {
-            X509CRLSelector xsel = (X509CRLSelector) selector;
-            try {
+	// if ldap URI we wrap the CRLSelector in an LDAPCRLSelector to
+	// avoid LDAP DN matching issues (see LDAPCRLSelector for more info)
+	if (ldap) {
+	    X509CRLSelector xsel = (X509CRLSelector) selector;
+	    try {
                 xsel = new LDAPCertStore.LDAPCRLSelector(xsel, null, ldapPath);
-            } catch (IOException ioe) {
-                throw new CertStoreException(ioe);
-            }
-            // Fetch the CRLs via LDAP. LDAPCertStore has its own
-            // caching mechanism, see the class description for more info.
-            return (Collection<X509CRL>) ldapCertStore.getCRLs(xsel);
-        }
+	    } catch (IOException ioe) {
+		throw new CertStoreException(ioe);
+	    }
+	    // Fetch the CRLs via LDAP. LDAPCertStore has its own
+	    // caching mechanism, see the class description for more info.
+	    return (Collection<X509CRL>) ldapCertStore.getCRLs(xsel);
+	}
 
         // Return the CRLs for this entry. It returns the cached value
         // if it is still current and fetches the CRLs otherwise.
@@ -418,59 +419,59 @@ class URICertStore extends CertStoreSpi {
     }
 
     /**
-     * Checks if the specified X509CRL matches the criteria specified in the
+     * Checks if the specified X509CRL matches the criteria specified in the 
      * CRLSelector.
      */
     private static Collection<X509CRL> getMatchingCRLs
-        (X509CRL crl, CRLSelector selector) {
+	(X509CRL crl, CRLSelector selector) {
         if (selector == null || (crl != null && selector.match(crl))) {
-            return Collections.<X509CRL>singletonList(crl);
+	    return Collections.<X509CRL>singletonList(crl);
         } else {
-            return Collections.<X509CRL>emptyList();
-        }
+	    return Collections.<X509CRL>emptyList();
+	}
     }
 
     /**
      * CertStoreParameters for the URICertStore.
      */
     static class URICertStoreParameters implements CertStoreParameters {
-        private final URI uri;
-        private volatile int hashCode = 0;
-        URICertStoreParameters(URI uri) {
-            this.uri = uri;
-        }
-        public boolean equals(Object obj) {
-            if (!(obj instanceof URICertStoreParameters)) {
-                return false;
-            }
-            URICertStoreParameters params = (URICertStoreParameters) obj;
-            return uri.equals(params.uri);
-        }
-        public int hashCode() {
-            if (hashCode == 0) {
+	private final URI uri;
+	private volatile int hashCode = 0;
+	URICertStoreParameters(URI uri) {
+	    this.uri = uri;
+	}
+	public boolean equals(Object obj) {
+	    if (!(obj instanceof URICertStoreParameters)) {
+		return false;
+	    }
+	    URICertStoreParameters params = (URICertStoreParameters) obj;
+	    return uri.equals(params.uri);
+	}
+	public int hashCode() {
+	    if (hashCode == 0) {
                 int result = 17;
                 result = 37*result + uri.hashCode();
                 hashCode = result;
             }
             return hashCode;
         }
-        public Object clone() {
+	public Object clone() {
             try {
                 return super.clone();
             } catch (CloneNotSupportedException e) {
                 /* Cannot happen */
                 throw new InternalError(e.toString());
             }
-        }
-    }
+	}
+    }	
 
     /**
      * This class allows the URICertStore to be accessed as a CertStore.
      */
     private static class UCS extends CertStore {
-        protected UCS(CertStoreSpi spi, Provider p, String type,
-            CertStoreParameters params) {
-            super(spi, p, type, params);
-        }
+	protected UCS(CertStoreSpi spi, Provider p, String type, 
+	    CertStoreParameters params) {
+	    super(spi, p, type, params);
+	}
     }
 }

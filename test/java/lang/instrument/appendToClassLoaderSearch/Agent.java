@@ -35,11 +35,11 @@ public class Agent {
     static Instrumentation inst;
 
     public static void premain(String args, Instrumentation ins) {
-        inst = ins;
+	inst = ins;
     }
 
     public static Instrumentation getInstrumentation() {
-        return inst;
+	return inst;
     }
 
 }

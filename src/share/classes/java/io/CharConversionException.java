@@ -28,6 +28,7 @@ package java.io;
  * Base class for character conversion exceptions.
  *
  * @author      Asmus Freytag
+ * @version 	%I%, %G%
  * @since       JDK1.1
  */
 public class CharConversionException

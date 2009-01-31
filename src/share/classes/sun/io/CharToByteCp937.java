@@ -45,7 +45,7 @@ public class CharToByteCp937
         private short index1[];
         private String index2;
         private String index2a;
-        private static final IBM937 nioCoder = new IBM937();
+	private static final IBM937 nioCoder = new IBM937();
 
         public CharToByteCp937()
         {

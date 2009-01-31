@@ -31,9 +31,9 @@
 
 /* Object references table (used in hprof_object.c). */
 
-/*
+/* 
  * This table is used by the object table to store object reference
- *   and primitive data information obtained from iterations over the
+ *   and primitive data information obtained from iterations over the 
  *   heap (see hprof_site.c).
  *
  * Most of these table entries have no Key, but the key is used to store
@@ -41,11 +41,11 @@
  *   are ever looked up, there will be no hash table, use of the
  *   LookupTable was just an easy way to handle a unbounded table of
  *   entries. The object table (see hprof_object.c) will completely
- *   free this reference table after each heap dump or after processing the
+ *   free this reference table after each heap dump or after processing the 
  *   references and primitive data.
  *
  * The hprof format required this accumulation of all heap iteration
- *   references and primitive data from objects in order to compose an
+ *   references and primitive data from objects in order to compose an 
  *   hprof records for it.
  *
  * This file contains detailed understandings of how an hprof CLASS
@@ -95,7 +95,7 @@ get_key_value(RefIndex index)
     int    len;
     jvalue value;
     static jvalue empty_value;
-
+    
     key = NULL;
     table_get_key(gdata->reference_table, index, &key, &len);
     HPROF_ASSERT(key!=NULL);
@@ -149,15 +149,15 @@ get_prim_size(jvmtiPrimitiveType primType)
 
 /* Get a void* elements array that was stored as the key. */
 static void *
-get_key_elements(RefIndex index, jvmtiPrimitiveType primType,
+get_key_elements(RefIndex index, jvmtiPrimitiveType primType, 
                  jint *nelements, jint *nbytes)
 {
     void  *key;
     jint   byteLen;
-
+    
     HPROF_ASSERT(nelements!=NULL);
     HPROF_ASSERT(nbytes!=NULL);
-
+    
     table_get_key(gdata->reference_table, index, &key, &byteLen);
     HPROF_ASSERT(byteLen>=0);
     HPROF_ASSERT(byteLen!=0?key!=NULL:key==NULL);
@@ -221,11 +221,11 @@ dump_field(FieldInfo *fields, jvalue *fvalues, int n_fields,
           sig!=0?string_get(sig):"?");
     if ( fields[index].primType!=0 || fields[index].primType!=primType ) {
         debug_message(" (primType=%d(%c)",
-          fields[index].primType,
+          fields[index].primType, 
           primTypeToSigChar(fields[index].primType));
         if ( primType != fields[index].primType ) {
-            debug_message(", got %d(%c)",
-              primType,
+            debug_message(", got %d(%c)", 
+              primType, 
               primTypeToSigChar(primType));
         }
         debug_message(")");
@@ -245,7 +245,7 @@ static void
 dump_fields(RefIndex list, FieldInfo *fields, jvalue *fvalues, int n_fields)
 {
     int i;
-
+    
     debug_message("\nHPROF LIST OF ALL FIELDS:\n");
     for ( i = 0 ; i < n_fields ; i++ ) {
         if ( fields[i].name_index != 0 ) {
@@ -271,7 +271,7 @@ verify_field(RefIndex list, FieldInfo *fields, jvalue *fvalues, int n_fields,
         debug_message("\n");
         HPROF_ERROR(JNI_FALSE, "Trouble with fields and heap data");
     }
-    if ( primType == JVMTI_PRIMITIVE_TYPE_BOOLEAN &&
+    if ( primType == JVMTI_PRIMITIVE_TYPE_BOOLEAN && 
          ( value.b != 1 && value.b != 0 ) ) {
         dump_fields(list, fields, fvalues, n_fields);
         debug_message("\nPROBLEM WITH:\n");
@@ -283,8 +283,8 @@ verify_field(RefIndex list, FieldInfo *fields, jvalue *fvalues, int n_fields,
 
 /* Fill in a field value, making sure the index is safe */
 static void
-fill_in_field_value(RefIndex list, FieldInfo *fields, jvalue *fvalues,
-                    int n_fields, jint index, jvalue value,
+fill_in_field_value(RefIndex list, FieldInfo *fields, jvalue *fvalues, 
+                    int n_fields, jint index, jvalue value, 
                     jvmtiPrimitiveType primType)
 {
     HPROF_ASSERT(fvalues != NULL);
@@ -344,7 +344,7 @@ dump_class_and_supers(JNIEnv *env, ObjectIndex object_index, RefIndex list)
     if ( super_cnum != 0 ) {
         super_index  = class_get_object_index(super_cnum);
         if ( super_index != 0 ) {
-            dump_class_and_supers(env, super_index,
+            dump_class_and_supers(env, super_index, 
                         object_get_references(super_index));
         }
     }
@@ -364,32 +364,32 @@ dump_class_and_supers(JNIEnv *env, ObjectIndex object_index, RefIndex list)
     fields       = NULL;
     fvalues      = NULL;
     if ( class_get_all_fields(env, cnum, &n_fields, &fields) == 1 ) {
-        /* Problems getting all the fields, can't trust field index values */
-        skip_fields = JNI_TRUE;
-        /* Class with no references at all? (ok to be unprepared if list==0?) */
-        if ( list != 0 ) {
-            /* It is assumed that the reason why we didn't get the fields
-             *     was because the class is not prepared.
-             */
-            if ( gdata->debugflags & DEBUGFLAG_UNPREPARED_CLASSES ) {
+	/* Problems getting all the fields, can't trust field index values */
+	skip_fields = JNI_TRUE;
+	/* Class with no references at all? (ok to be unprepared if list==0?) */
+	if ( list != 0 ) {
+	    /* It is assumed that the reason why we didn't get the fields
+	     *     was because the class is not prepared.
+	     */
+	    if ( gdata->debugflags & DEBUGFLAG_UNPREPARED_CLASSES ) {
                 dump_ref_list(list);
-                debug_message("Unprepared class with references: %s\n",
-                               sig);
-            }
+		debug_message("Unprepared class with references: %s\n",
+			       sig);
+	    }
             HPROF_ERROR(JNI_FALSE, "Trouble with unprepared classes");
-        }
-        /* Why would an unprepared class contain references? */
+	}
+	/* Why would an unprepared class contain references? */
     }
     if ( n_fields > 0 ) {
         fvalues      = (jvalue*)HPROF_MALLOC(n_fields*(int)sizeof(jvalue));
         (void)memset(fvalues, 0, n_fields*(int)sizeof(jvalue));
     }
-
+    
     /* We use a Stack just because it will automatically expand as needed */
     cpool_values = stack_init(16, 16, sizeof(ConstantPoolValue));
     cpool = NULL;
     cpool_count = 0;
-
+    
     index      = list;
     while ( index != 0 ) {
         RefInfo    *info;
@@ -407,12 +407,12 @@ dump_class_and_supers(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                         HPROF_ASSERT(0);
                         break;
                     case JVMTI_HEAP_REFERENCE_STATIC_FIELD:
-                        if ( skip_fields == JNI_TRUE ) {
-                            break;
-                        }
+			if ( skip_fields == JNI_TRUE ) {
+			    break;
+			}
                         ovalue   = empty_value;
                         ovalue.i = info->object_index;
-                        fill_in_field_value(list, fields, fvalues, n_fields,
+                        fill_in_field_value(list, fields, fvalues, n_fields, 
                                         info->index, ovalue, 0);
                         n_fields_set++;
                         HPROF_ASSERT(n_fields_set <= n_fields);
@@ -422,14 +422,14 @@ dump_class_and_supers(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                         ObjectIndex       cp_object_index;
                         SiteIndex         cp_site_index;
                         ClassIndex        cp_cnum;
-
+                        
                         cp_object_index = info->object_index;
                         HPROF_ASSERT(cp_object_index!=0);
                         cp_site_index = object_get_site(cp_object_index);
                         HPROF_ASSERT(cp_site_index!=0);
                         cp_cnum = site_get_class_index(cp_site_index);
                         cpv.constant_pool_index = info->index;
-                        cpv.sig_index = class_get_signature(cp_cnum);
+                        cpv.sig_index = class_get_signature(cp_cnum); 
                         cpv.value.i = cp_object_index;
                         stack_push(cpool_values, (void*)&cpv);
                         cpool_count++;
@@ -449,14 +449,14 @@ dump_class_and_supers(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                 }
                 break;
             case INFO_PRIM_FIELD_DATA:
-                if ( skip_fields == JNI_TRUE ) {
-                    break;
-                }
+		if ( skip_fields == JNI_TRUE ) {
+		    break;
+		}
                 HPROF_ASSERT(info->primType!=0);
                 HPROF_ASSERT(info->length==-1);
                 HPROF_ASSERT(info->refKind==JVMTI_HEAP_REFERENCE_STATIC_FIELD);
                 ovalue = get_key_value(index);
-                fill_in_field_value(list, fields, fvalues, n_fields,
+                fill_in_field_value(list, fields, fvalues, n_fields, 
                                     info->index, ovalue, info->primType);
                 n_fields_set++;
                 HPROF_ASSERT(n_fields_set <= n_fields);
@@ -477,8 +477,8 @@ dump_class_and_supers(JNIEnv *env, ObjectIndex object_index, RefIndex list)
         cpool = (ConstantPoolValue*)stack_element(cpool_values, 0);
     }
     io_heap_class_dump(cnum, sig, object_index, trace_serial_num,
-            super_index,
-            loader_object_index(env, loader_index),
+            super_index, 
+            loader_object_index(env, loader_index), 
             signers_index, domain_index,
             (jint)size, cpool_count, cpool, n_fields, fields, fvalues);
 
@@ -529,42 +529,42 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
     trace_serial_num = trace_get_serial_number(trace_index);
     sig              = string_get(class_get_signature(cnum));
     class_index      = class_get_object_index(cnum);
-
+        
     values       = NULL;
     elements     = NULL;
     num_elements = 0;
     num_bytes    = 0;
-
+    
     n_fields     = 0;
     skip_fields  = JNI_FALSE;
     n_fields_set = 0;
     fields       = NULL;
     fvalues      = NULL;
-
+    
     index      = list;
-
+    
     is_array      = JNI_FALSE;
     is_prim_array = JNI_FALSE;
-
+    
     if ( sig[0] != JVM_SIGNATURE_ARRAY ) {
         if ( class_get_all_fields(env, cnum, &n_fields, &fields) == 1 ) {
-            /* Trouble getting all the fields, can't trust field index values */
-            skip_fields = JNI_TRUE;
-            /* It is assumed that the reason why we didn't get the fields
-             *     was because the class is not prepared.
-             */
-            if ( gdata->debugflags & DEBUGFLAG_UNPREPARED_CLASSES ) {
+	    /* Trouble getting all the fields, can't trust field index values */
+	    skip_fields = JNI_TRUE;
+	    /* It is assumed that the reason why we didn't get the fields
+	     *     was because the class is not prepared.
+	     */
+	    if ( gdata->debugflags & DEBUGFLAG_UNPREPARED_CLASSES ) {
                 if ( list != 0 ) {
-                    dump_ref_list(list);
-                    debug_message("Instance of unprepared class with refs: %s\n",
-                                   sig);
-                } else {
-                    debug_message("Instance of unprepared class without refs: %s\n",
-                                   sig);
-                }
+		    dump_ref_list(list);
+		    debug_message("Instance of unprepared class with refs: %s\n", 
+				   sig);
+		} else {
+		    debug_message("Instance of unprepared class without refs: %s\n", 
+				   sig);
+		}
                 HPROF_ERROR(JNI_FALSE, "Big Trouble with unprepared class instances");
-            }
-        }
+	    }
+	}
         if ( n_fields > 0 ) {
             fvalues = (jvalue*)HPROF_MALLOC(n_fields*(int)sizeof(jvalue));
             (void)memset(fvalues, 0, n_fields*(int)sizeof(jvalue));
@@ -597,13 +597,13 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                         HPROF_ASSERT(0);
                         break;
                     case JVMTI_HEAP_REFERENCE_FIELD:
-                        if ( skip_fields == JNI_TRUE ) {
-                            break;
-                        }
+			if ( skip_fields == JNI_TRUE ) {
+			    break;
+			}
                         HPROF_ASSERT(is_array!=JNI_TRUE);
                         ovalue   = empty_value;
                         ovalue.i = info->object_index;
-                        fill_in_field_value(list, fields, fvalues, n_fields,
+                        fill_in_field_value(list, fields, fvalues, n_fields, 
                                         info->index, ovalue, 0);
                         n_fields_set++;
                         HPROF_ASSERT(n_fields_set <= n_fields);
@@ -614,7 +614,7 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                         HPROF_ASSERT(is_prim_array!=JNI_TRUE);
                         if ( num_elements <= info->index ) {
                             int nbytes;
-
+                            
                             if ( values == NULL ) {
                                 num_elements = info->index + 1;
                                 nbytes = num_elements*(int)sizeof(ObjectIndex);
@@ -630,7 +630,7 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                                 nbytes = new_size*(int)sizeof(ObjectIndex);
                                 new_values = (void*)HPROF_MALLOC(nbytes);
                                 (void)memcpy(new_values, values, obytes);
-                                (void)memset(((char*)new_values)+obytes, 0,
+                                (void)memset(((char*)new_values)+obytes, 0, 
                                                         nbytes-obytes);
                                 HPROF_FREE(values);
                                 num_elements = new_size;
@@ -646,15 +646,15 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                 }
                 break;
             case INFO_PRIM_FIELD_DATA:
-                if ( skip_fields == JNI_TRUE ) {
-                    break;
-                }
+		if ( skip_fields == JNI_TRUE ) {
+		    break;
+		}
                 HPROF_ASSERT(info->primType!=0);
                 HPROF_ASSERT(info->length==-1);
                 HPROF_ASSERT(info->refKind==JVMTI_HEAP_REFERENCE_FIELD);
                 HPROF_ASSERT(is_array!=JNI_TRUE);
                 ovalue = get_key_value(index);
-                fill_in_field_value(list, fields, fvalues, n_fields,
+                fill_in_field_value(list, fields, fvalues, n_fields, 
                                     info->index, ovalue, info->primType);
                 n_fields_set++;
                 HPROF_ASSERT(n_fields_set <= n_fields);
@@ -667,7 +667,7 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
                 HPROF_ASSERT(is_array==JNI_TRUE);
                 HPROF_ASSERT(is_prim_array==JNI_TRUE);
                 primType = info->primType;
-                elements = get_key_elements(index, primType,
+                elements = get_key_elements(index, primType, 
                                             &num_elements, &num_bytes);
                 HPROF_ASSERT(info->length==num_elements);
                 size = num_bytes;
@@ -678,21 +678,21 @@ dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
         }
         index = info->next;
     }
-
+    
     if ( is_array == JNI_TRUE ) {
         if ( is_prim_array == JNI_TRUE ) {
             HPROF_ASSERT(values==NULL);
-            io_heap_prim_array(object_index, trace_serial_num,
+            io_heap_prim_array(object_index, trace_serial_num, 
                     (jint)size, num_elements, sig, elements);
         } else {
             HPROF_ASSERT(elements==NULL);
             io_heap_object_array(object_index, trace_serial_num,
                     (jint)size, num_elements, sig, values, class_index);
         }
-    } else {
+    } else { 
         io_heap_instance_dump(cnum, object_index, trace_serial_num,
                     class_index, (jint)size, sig, fields, fvalues, n_fields);
-    }
+    } 
     if ( values != NULL ) {
         HPROF_FREE(values);
     }
@@ -716,13 +716,13 @@ reference_init(void)
 
 /* Save away a reference to an object */
 RefIndex
-reference_obj(RefIndex next, jvmtiHeapReferenceKind refKind,
+reference_obj(RefIndex next, jvmtiHeapReferenceKind refKind, 
               ObjectIndex object_index, jint index, jint length)
 {
     static RefInfo  empty_info;
     RefIndex        entry;
     RefInfo         info;
-
+    
     info                = empty_info;
     info.flavor         = INFO_OBJECT_REF_DATA;
     info.refKind        = refKind;
@@ -736,15 +736,15 @@ reference_obj(RefIndex next, jvmtiHeapReferenceKind refKind,
 
 /* Save away some primitive field data */
 RefIndex
-reference_prim_field(RefIndex next, jvmtiHeapReferenceKind refKind,
+reference_prim_field(RefIndex next, jvmtiHeapReferenceKind refKind, 
               jvmtiPrimitiveType primType, jvalue field_value, jint field_index)
 {
     static RefInfo  empty_info;
     RefIndex        entry;
     RefInfo         info;
-
+   
     HPROF_ASSERT(primType==JVMTI_PRIMITIVE_TYPE_BOOLEAN?(field_value.b==1||field_value.b==0):1);
-
+    
     info                = empty_info;
     info.flavor         = INFO_PRIM_FIELD_DATA;
     info.refKind        = refKind;
@@ -752,24 +752,24 @@ reference_prim_field(RefIndex next, jvmtiHeapReferenceKind refKind,
     info.index          = field_index;
     info.length         = -1;
     info.next           = next;
-    entry = table_create_entry(gdata->reference_table,
+    entry = table_create_entry(gdata->reference_table, 
                 (void*)&field_value, (int)sizeof(jvalue), (void*)&info);
     return entry;
 }
 
 /* Save away some primitive array data */
 RefIndex
-reference_prim_array(RefIndex next, jvmtiPrimitiveType primType,
+reference_prim_array(RefIndex next, jvmtiPrimitiveType primType, 
               const void *elements, jint elementCount)
 {
     static RefInfo  empty_info;
     RefIndex        entry;
     RefInfo         info;
-
+    
     HPROF_ASSERT(next == 0);
     HPROF_ASSERT(elementCount >= 0);
     HPROF_ASSERT(elements != NULL);
-
+    
     info                = empty_info;
     info.flavor         = INFO_PRIM_ARRAY_DATA;
     info.refKind        = 0;
@@ -792,14 +792,15 @@ reference_cleanup(void)
     gdata->reference_table = NULL;
 }
 
-void
+void     
 reference_dump_instance(JNIEnv *env, ObjectIndex object_index, RefIndex list)
 {
     dump_instance(env, object_index, list);
 }
 
-void
+void     
 reference_dump_class(JNIEnv *env, ObjectIndex object_index, RefIndex list)
 {
     dump_class_and_supers(env, object_index, list);
 }
+

@@ -34,3 +34,4 @@ public class ParseUtil_6274990 {
         URI uri1 = ParseUtil.toURI(new URL("http://www.example.com/%93%fa/"));
     }
 }
+

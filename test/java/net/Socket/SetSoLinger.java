@@ -25,7 +25,7 @@
  * @test
  * @bug 4151834
  * @summary Test Socket.setSoLinger
- *
+ * 
  */
 
 import java.net.*;
@@ -39,27 +39,27 @@ public class SetSoLinger implements Runnable {
         boolean      error = true;
         int          linger = 65546;
         int          value = 0;
-        addr = InetAddress.getLocalHost();
+	addr = InetAddress.getLocalHost();
         ss = new ServerSocket(0);
-        port = ss.getLocalPort();
+	port = ss.getLocalPort();
 
-        Thread t = new Thread(new SetSoLinger());
-        t.start();
+	Thread t = new Thread(new SetSoLinger());
+	t.start();
         Socket soc = ss.accept();
         soc.setSoLinger(true, linger);
         value = soc.getSoLinger();
         soc.close();
-
+    
         if(value != 65535)
             throw new RuntimeException("Failed. Value not properly reduced.");
     }
 
     public void run() {
-        try {
-            Socket s = new Socket(addr, port);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+	try {
+	    Socket s = new Socket(addr, port);
+	} catch (Exception e) {
+	    e.printStackTrace();
+	}
     }
 
 }

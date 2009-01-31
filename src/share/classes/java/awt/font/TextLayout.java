@@ -68,8 +68,8 @@ import sun.font.LayoutPathImpl;
 import sun.text.CodePointIterator;
 
 /**
- *
- * <code>TextLayout</code> is an immutable graphical representation of styled
+ * 
+ * <code>TextLayout</code> is an immutable graphical representation of styled 
  * character data.
  * <p>
  * It provides the following capabilities:
@@ -87,13 +87,13 @@ import sun.text.CodePointIterator;
  * <li>rendering
  * </ul>
  * <p>
- * A <code>TextLayout</code> object can be rendered using
+ * A <code>TextLayout</code> object can be rendered using 
  * its <code>draw</code> method.
  * <p>
- * <code>TextLayout</code> can be constructed either directly or through
- * the use of a {@link LineBreakMeasurer}.  When constructed directly, the
+ * <code>TextLayout</code> can be constructed either directly or through 
+ * the use of a {@link LineBreakMeasurer}.  When constructed directly, the 
  * source text represents a single paragraph.  <code>LineBreakMeasurer</code>
- * allows styled text to be broken into lines that fit within a particular
+ * allows styled text to be broken into lines that fit within a particular 
  * width.  See the <code>LineBreakMeasurer</code> documentation for more
  * information.
  * <p>
@@ -112,35 +112,35 @@ import sun.text.CodePointIterator;
  * <li>final bidirectional reordering is performed on the glyphvectors
  * </ul>
  * <p>
- * All graphical information returned from a <code>TextLayout</code>
- * object's methods is relative to the origin of the
+ * All graphical information returned from a <code>TextLayout</code> 
+ * object's methods is relative to the origin of the 
  * <code>TextLayout</code>, which is the intersection of the
- * <code>TextLayout</code> object's baseline with its left edge.  Also,
- * coordinates passed into a <code>TextLayout</code> object's methods
+ * <code>TextLayout</code> object's baseline with its left edge.  Also, 
+ * coordinates passed into a <code>TextLayout</code> object's methods 
  * are assumed to be relative to the <code>TextLayout</code> object's
- * origin.  Clients usually need to translate between a
+ * origin.  Clients usually need to translate between a 
  * <code>TextLayout</code> object's coordinate system and the coordinate
- * system in another object (such as a
+ * system in another object (such as a 
  * {@link java.awt.Graphics Graphics} object).
  * <p>
- * <code>TextLayout</code> objects are constructed from styled text,
- * but they do not retain a reference to their source text.  Thus,
+ * <code>TextLayout</code> objects are constructed from styled text, 
+ * but they do not retain a reference to their source text.  Thus, 
  * changes in the text previously used to generate a <code>TextLayout</code>
  * do not affect the <code>TextLayout</code>.
  * <p>
- * Three methods on a <code>TextLayout</code> object
- * (<code>getNextRightHit</code>, <code>getNextLeftHit</code>, and
- * <code>hitTestChar</code>) return instances of {@link TextHitInfo}.
+ * Three methods on a <code>TextLayout</code> object 
+ * (<code>getNextRightHit</code>, <code>getNextLeftHit</code>, and 
+ * <code>hitTestChar</code>) return instances of {@link TextHitInfo}.  
  * The offsets contained in these <code>TextHitInfo</code> objects
- * are relative to the start of the <code>TextLayout</code>, <b>not</b>
- * to the text used to create the <code>TextLayout</code>.  Similarly,
+ * are relative to the start of the <code>TextLayout</code>, <b>not</b> 
+ * to the text used to create the <code>TextLayout</code>.  Similarly, 
  * <code>TextLayout</code> methods that accept <code>TextHitInfo</code>
- * instances as parameters expect the <code>TextHitInfo</code> object's
- * offsets to be relative to the <code>TextLayout</code>, not to any
+ * instances as parameters expect the <code>TextHitInfo</code> object's 
+ * offsets to be relative to the <code>TextLayout</code>, not to any 
  * underlying text storage model.
  * <p>
  * <strong>Examples</strong>:<p>
- * Constructing and drawing a <code>TextLayout</code> and its bounding
+ * Constructing and drawing a <code>TextLayout</code> and its bounding 
  * rectangle:
  * <blockquote><pre>
  *   Graphics2D g = ...;
@@ -299,10 +299,10 @@ public final class TextLayout implements Cloneable {
     /**
      * Defines a policy for determining the strong caret location.
      * This class contains one method, <code>getStrongCaret</code>, which
-     * is used to specify the policy that determines the strong caret in
+     * is used to specify the policy that determines the strong caret in 
      * dual-caret text.  The strong caret is used to move the caret to the
      * left or right. Instances of this class can be passed to
-     * <code>getCaretShapes</code>, <code>getNextLeftHit</code> and
+     * <code>getCaretShapes</code>, <code>getNextLeftHit</code> and 
      * <code>getNextRightHit</code> to customize strong caret
      * selection.
      * <p>
@@ -322,11 +322,11 @@ public final class TextLayout implements Cloneable {
          }
 
         /**
-         * Chooses one of the specified <code>TextHitInfo</code> instances as
+         * Chooses one of the specified <code>TextHitInfo</code> instances as 
          * a strong caret in the specified <code>TextLayout</code>.
          * @param hit1 a valid hit in <code>layout</code>
          * @param hit2 a valid hit in <code>layout</code>
-         * @param layout the <code>TextLayout</code> in which
+         * @param layout the <code>TextLayout</code> in which 
          *        <code>hit1</code> and <code>hit2</code> are used
          * @return <code>hit1</code> or <code>hit2</code>
          *        (or an equivalent <code>TextHitInfo</code>), indicating the
@@ -342,7 +342,7 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * This <code>CaretPolicy</code> is used when a policy is not specified
+     * This <code>CaretPolicy</code> is used when a policy is not specified 
      * by the client.  With this policy, a hit on a character whose direction
      * is the same as the line direction is stronger than a hit on a
      * counterdirectional character.  If the characters' directions are
@@ -356,12 +356,12 @@ public final class TextLayout implements Cloneable {
      * and a {@link Font}.  All the text is styled using the specified
      * <code>Font</code>.
      * <p>
-     * The <code>String</code> must specify a single paragraph of text,
+     * The <code>String</code> must specify a single paragraph of text, 
      * because an entire paragraph is required for the bidirectional
      * algorithm.
      * @param string the text to display
      * @param font a <code>Font</code> used to style the text
-     * @param frc contains information about a graphics device which is needed
+     * @param frc contains information about a graphics device which is needed 
      *       to measure the text correctly.
      *       Text measurements can vary slightly depending on the
      *       device resolution, and attributes such as antialiasing.  This
@@ -391,7 +391,7 @@ public final class TextLayout implements Cloneable {
         if (sameBaselineUpTo(font, text, 0, text.length) == text.length) {
             fastInit(text, font, attributes, frc);
         } else {
-            AttributedString as = attributes == null
+            AttributedString as = attributes == null 
                 ? new AttributedString(string)
                 : new AttributedString(string, attributes);
             as.addAttribute(TextAttribute.FONT, font);
@@ -409,7 +409,7 @@ public final class TextLayout implements Cloneable {
      * entire paragraph is required for the bidirectional algorithm.
      * @param string the text to display
      * @param attributes the attributes used to style the text
-     * @param frc contains information about a graphics device which is needed
+     * @param frc contains information about a graphics device which is needed 
      *       to measure the text correctly.
      *       Text measurements can vary slightly depending on the
      *       device resolution, and attributes such as antialiasing.  This
@@ -443,8 +443,8 @@ public final class TextLayout implements Cloneable {
 
     /*
      * Determines a font for the attributes, and if a single font can render
-     * all the text on one baseline, return it, otherwise null.  If the
-     * attributes specify a font, assume it can display all the text without
+     * all the text on one baseline, return it, otherwise null.  If the 
+     * attributes specify a font, assume it can display all the text without 
      * checking.
      * If the AttributeSet contains an embedded graphic, return null.
      */
@@ -464,7 +464,7 @@ public final class TextLayout implements Cloneable {
         catch (ClassCastException e) {
         }
         if (font == null) {
-            if (attributes.get(TextAttribute.FAMILY) != null) {
+            if (attributes.get(TextAttribute.FAMILY) != null) {            
                 font = Font.getFont(attributes);
                 if (font.canDisplayUpTo(text, start, limit) != -1) {
                     return null;
@@ -493,7 +493,7 @@ public final class TextLayout implements Cloneable {
      * entire paragraph is required for the bidirectional
      * algorithm.
      * @param text the styled text to display
-     * @param frc contains information about a graphics device which is needed
+     * @param frc contains information about a graphics device which is needed 
      *       to measure the text correctly.
      *       Text measurements can vary slightly depending on the
      *       device resolution, and attributes such as antialiasing.  This
@@ -535,13 +535,13 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Creates a <code>TextLayout</code> from a {@link TextLine} and
+     * Creates a <code>TextLayout</code> from a {@link TextLine} and 
      * some paragraph data.  This method is used by {@link TextMeasurer}.
      * @param textLine the line measurement attributes to apply to the
      *       the resulting <code>TextLayout</code>
      * @param baseline the baseline of the text
-     * @param baselineOffsets the baseline offsets for this
-     * <code>TextLayout</code>.  This should already be normalized to
+     * @param baselineOffsets the baseline offsets for this 
+     * <code>TextLayout</code>.  This should already be normalized to 
      * <code>baseline</code>
      * @param justifyRatio <code>0</code> if the <code>TextLayout</code>
      *     cannot be justified; <code>1</code> otherwise.
@@ -562,12 +562,12 @@ public final class TextLayout implements Cloneable {
      * Initialize the paragraph-specific data.
      */
     private void paragraphInit(byte aBaseline, CoreMetrics lm, Map paragraphAttrs, char[] text) {
-
+        
         baseline = aBaseline;
 
         // normalize to current baseline
         baselineOffsets = TextLine.getNormalizedOffsets(lm.baselineOffsets, baseline);
-
+        
         justifyRatio = AttributeValues.getJustification(paragraphAttrs);
         NumericShaper shaper = AttributeValues.getNumericShaping(paragraphAttrs);
         if (shaper != null) {
@@ -721,7 +721,7 @@ public final class TextLayout implements Cloneable {
 
     /**
      * The 'natural bounds' encloses all the carets the layout can draw.
-     *
+     * 
      */
     private Rectangle2D getNaturalBounds() {
         ensureCache();
@@ -773,12 +773,12 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Creates a copy of this <code>TextLayout</code> justified to the
+     * Creates a copy of this <code>TextLayout</code> justified to the 
      * specified width.
      * <p>
      * If this <code>TextLayout</code> has already been justified, an
-     * exception is thrown.  If this <code>TextLayout</code> object's
-     * justification ratio is zero, a <code>TextLayout</code> identical
+     * exception is thrown.  If this <code>TextLayout</code> object's 
+     * justification ratio is zero, a <code>TextLayout</code> identical 
      * to this <code>TextLayout</code> is returned.
      * @param justificationWidth the width to use when justifying the line.
      * For best results, it should not be too different from the current
@@ -854,14 +854,14 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns the offsets array for the baselines used for this
+     * Returns the offsets array for the baselines used for this 
      * <code>TextLayout</code>.
      * <p>
-     * The array is indexed by one of the values defined in
-     * <code>Font</code>, which are roman, centered and hanging.  The
-     * values are relative to this <code>TextLayout</code> object's
+     * The array is indexed by one of the values defined in 
+     * <code>Font</code>, which are roman, centered and hanging.  The 
+     * values are relative to this <code>TextLayout</code> object's 
      * baseline, so that <code>getBaselineOffsets[getBaseline()] == 0</code>.
-     * Offsets are added to the position of the <code>TextLayout</code>
+     * Offsets are added to the position of the <code>TextLayout</code> 
      * object's baseline to get the position for the new baseline.
      * @return the offsets array containing the baselines used for this
      *    <code>TextLayout</code>.
@@ -887,7 +887,7 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns the advance of this <code>TextLayout</code>, minus trailing
+     * Returns the advance of this <code>TextLayout</code>, minus trailing 
      * whitespace.  This is in baseline-relative coordinates.
      * @return the advance of this <code>TextLayout</code> without the
      *      trailing whitespace.
@@ -900,11 +900,11 @@ public final class TextLayout implements Cloneable {
 
     /**
      * Returns the ascent of this <code>TextLayout</code>.
-     * The ascent is the distance from the top (right) of the
-     * <code>TextLayout</code> to the baseline.  It is always either
+     * The ascent is the distance from the top (right) of the 
+     * <code>TextLayout</code> to the baseline.  It is always either 
      * positive or zero.  The ascent is sufficient to
      * accomodate superscripted text and is the maximum of the sum of the
-     * ascent, offset, and baseline of each glyph.  The ascent is
+     * ascent, offset, and baseline of each glyph.  The ascent is 
      * the maximum ascent from the baseline of all the text in the
      * TextLayout.  It is in baseline-relative coordinates.
      * @return the ascent of this <code>TextLayout</code>.
@@ -917,8 +917,8 @@ public final class TextLayout implements Cloneable {
     /**
      * Returns the descent of this <code>TextLayout</code>.
      * The descent is the distance from the baseline to the bottom (left) of
-     * the <code>TextLayout</code>.  It is always either positive or zero.
-     * The descent is sufficient to accomodate subscripted text and is the
+     * the <code>TextLayout</code>.  It is always either positive or zero.  
+     * The descent is sufficient to accomodate subscripted text and is the 
      * maximum of the sum of the descent, offset, and baseline of each glyph.
      * This is the maximum descent from the baseline of all the text in
      * the TextLayout.  It is in baseline-relative coordinates.
@@ -931,12 +931,12 @@ public final class TextLayout implements Cloneable {
 
     /**
      * Returns the leading of the <code>TextLayout</code>.
-     * The leading is the suggested interline spacing for this
+     * The leading is the suggested interline spacing for this 
      * <code>TextLayout</code>.  This is in baseline-relative
      * coordinates.
      * <p>
      * The leading is computed from the leading, descent, and baseline
-     * of all glyphvectors in the <code>TextLayout</code>.  The algorithm
+     * of all glyphvectors in the <code>TextLayout</code>.  The algorithm 
      * is roughly as follows:
      * <blockquote><pre>
      * maxD = 0;
@@ -960,7 +960,7 @@ public final class TextLayout implements Cloneable {
      * The bounds are in standard coordinates.
      * <p>Due to rasterization effects, this bounds might not enclose all of the
      * pixels rendered by the TextLayout.</p>
-     * It might not coincide exactly with the ascent, descent,
+     * It might not coincide exactly with the ascent, descent, 
      * origin or advance of the <code>TextLayout</code>.
      * @return a {@link Rectangle2D} that is the bounds of this
      *        <code>TextLayout</code>.
@@ -990,7 +990,7 @@ public final class TextLayout implements Cloneable {
      * rendered in a graphics with the given
      * <code>FontRenderContext</code> at the given location.  The
      * graphics render context need not be the same as the
-     * <code>FontRenderContext</code> used to create this
+     * <code>FontRenderContext</code> used to create this 
      * <code>TextLayout</code>, and can be null.  If it is null, the
      * <code>FontRenderContext</code> of this <code>TextLayout</code>
      * is used.
@@ -1006,18 +1006,18 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns <code>true</code> if this <code>TextLayout</code> has
+     * Returns <code>true</code> if this <code>TextLayout</code> has 
      * a left-to-right base direction or <code>false</code> if it has
      * a right-to-left base direction.  The <code>TextLayout</code>
      * has a base direction of either left-to-right (LTR) or
-     * right-to-left (RTL).  The base direction is independent of the
-     * actual direction of text on the line, which may be either LTR,
-     * RTL, or mixed. Left-to-right layouts by default should position
+     * right-to-left (RTL).  The base direction is independent of the 
+     * actual direction of text on the line, which may be either LTR, 
+     * RTL, or mixed. Left-to-right layouts by default should position 
      * flush left.  If the layout is on a tabbed line, the
      * tabs run left to right, so that logically successive layouts position
      * left to right.  The opposite is true for RTL layouts. By default they
      * should position flush left, and tabs run right-to-left.
-     * @return <code>true</code> if the base direction of this
+     * @return <code>true</code> if the base direction of this 
      *         <code>TextLayout</code> is left-to-right; <code>false</code>
      *         otherwise.
      */
@@ -1035,7 +1035,7 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns the number of characters represented by this
+     * Returns the number of characters represented by this 
      * <code>TextLayout</code>.
      * @return the number of characters in this <code>TextLayout</code>.
      */
@@ -1113,7 +1113,7 @@ public final class TextLayout implements Cloneable {
      * first (last) caret position in the layout.
      */
 
-    private float[] getCaretInfo(int caret,
+    private float[] getCaretInfo(int caret, 
                                  Rectangle2D bounds,
                                  float[] info) {
 
@@ -1216,7 +1216,7 @@ public final class TextLayout implements Cloneable {
     // this version provides extra info in the float array
     // the first two values are as above
     // the next four values are the endpoints of the caret, as computed
-    // using the hit character's offset (baseline + ssoffset) and
+    // using the hit character's offset (baseline + ssoffset) and 
     // natural ascent and descent.
     // these  values are trimmed to the bounds where required to fit,
     // but otherwise independent of it.
@@ -1299,7 +1299,7 @@ public final class TextLayout implements Cloneable {
 
         return info;
     }
-
+    
     /**
      * Returns information about the caret corresponding to <code>hit</code>.
      * This method is a convenience overload of <code>getCaretInfo</code> and
@@ -1391,9 +1391,9 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns the hit for the next caret to the right (bottom); if there
+     * Returns the hit for the next caret to the right (bottom); if there 
      * is no such hit, returns <code>null</code>.
-     * If the hit character index is out of bounds, an
+     * If the hit character index is out of bounds, an 
      * {@link IllegalArgumentException} is thrown.
      * @param hit a hit on a character in this layout
      * @return a hit whose caret appears at the next position to the
@@ -1418,13 +1418,13 @@ public final class TextLayout implements Cloneable {
 
     /**
      * Returns the hit for the next caret to the right (bottom); if no
-     * such hit, returns <code>null</code>.  The hit is to the right of
+     * such hit, returns <code>null</code>.  The hit is to the right of 
      * the strong caret at the specified offset, as determined by the
      * specified policy.
      * The returned hit is the stronger of the two possible
      * hits, as determined by the specified policy.
      * @param offset an insertion offset in this <code>TextLayout</code>.
-     * Cannot be less than 0 or greater than this <code>TextLayout</code>
+     * Cannot be less than 0 or greater than this <code>TextLayout</code> 
      * object's character count.
      * @param policy the policy used to select the strong caret
      * @return a hit whose caret appears at the next position to the
@@ -1457,7 +1457,7 @@ public final class TextLayout implements Cloneable {
     /**
      * Returns the hit for the next caret to the right (bottom); if no
      * such hit, returns <code>null</code>.  The hit is to the right of
-     * the strong caret at the specified offset, as determined by the
+     * the strong caret at the specified offset, as determined by the 
      * default policy.
      * The returned hit is the stronger of the two possible
      * hits, as determined by the default policy.
@@ -1475,7 +1475,7 @@ public final class TextLayout implements Cloneable {
     /**
      * Returns the hit for the next caret to the left (top); if no such
      * hit, returns <code>null</code>.
-     * If the hit character index is out of bounds, an
+     * If the hit character index is out of bounds, an 
      * <code>IllegalArgumentException</code> is thrown.
      * @param hit a hit on a character in this <code>TextLayout</code>.
      * @return a hit whose caret appears at the next position to the
@@ -1543,7 +1543,7 @@ public final class TextLayout implements Cloneable {
      * default policy.
      * The returned hit is the stronger of the two possible
      * hits, as determined by the default policy.
-     * @param offset an insertion offset in this <code>TextLayout</code>.
+     * @param offset an insertion offset in this <code>TextLayout</code>.  
      * Cannot be less than 0 or greater than this <code>TextLayout</code>
      * object's character count.
      * @return a hit whose caret appears at the next position to the
@@ -1710,7 +1710,7 @@ public final class TextLayout implements Cloneable {
 
             x0 = pos - y0 * slope;
             x1 = pos - y1 * slope;
-
+            
             // x0 <= x1, always
 
             if (clipToBounds) {
@@ -1765,11 +1765,11 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns a {@link Shape} representing the caret at the specified
+     * Returns a {@link Shape} representing the caret at the specified 
      * hit inside the specified bounds.
      * @param hit the hit at which to generate the caret
-     * @param bounds the bounds of the <code>TextLayout</code> to use
-     *    in generating the caret.  The bounds is in baseline-relative
+     * @param bounds the bounds of the <code>TextLayout</code> to use 
+     *    in generating the caret.  The bounds is in baseline-relative 
      *    coordinates.
      * @return a <code>Shape</code> representing the caret.  The returned
      *    shape is in standard coordinates.
@@ -1828,7 +1828,7 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns the level of the character at <code>index</code>.
+     * Returns the level of the character at <code>index</code>.  
      * Indices -1 and <code>characterCount</code> are assigned the base
      * level of this <code>TextLayout</code>.
      * @param index the index of the character from which to get the level
@@ -1910,7 +1910,7 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns two paths corresponding to the strong and weak caret.
+     * Returns two paths corresponding to the strong and weak caret.  
      * This method is a convenience overload of <code>getCaretShapes</code>
      * that uses the default caret policy.
      * @param offset an offset in this <code>TextLayout</code>
@@ -1926,10 +1926,10 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns two paths corresponding to the strong and weak caret.
+     * Returns two paths corresponding to the strong and weak caret.  
      * This method is a convenience overload of <code>getCaretShapes</code>
      * that uses the default caret policy and this <code>TextLayout</code>
-     * object's natural bounds.
+     * object's natural bounds.  
      * @param offset an offset in this <code>TextLayout</code>
      * @return two paths corresponding to the strong and weak caret as
      *    defined by the <code>DEFAULT_CARET_POLICY</code>.  These are
@@ -1955,7 +1955,7 @@ public final class TextLayout implements Cloneable {
         GeneralPath result = pathToShape(path0, false, null);
 
         boolean sameDirection;
-
+                
         if (isVerticalLine) {
             sameDirection = (path0[1] > path0[path0.length-1]) ==
                             (path1[1] > path1[path1.length-1]);
@@ -2135,17 +2135,17 @@ public final class TextLayout implements Cloneable {
      * extended to <code>bounds</code>.
      * <p>
      * If the selection includes the leftmost (topmost) position, the selection
-     * is extended to the left (top) of <code>bounds</code>.  If the
+     * is extended to the left (top) of <code>bounds</code>.  If the 
      * selection includes the rightmost (bottommost) position, the selection
-     * is extended to the right (bottom) of the bounds.  The height
-     * (width on vertical lines) of the selection is always extended to
+     * is extended to the right (bottom) of the bounds.  The height 
+     * (width on vertical lines) of the selection is always extended to 
      * <code>bounds</code>.
      * <p>
      * Although the selection is always contiguous, the logically selected
      * text can be discontiguous on lines with mixed-direction text.  The
      * logical ranges of text selected can be retrieved using
-     * <code>getLogicalRangesForVisualSelection</code>.  For example,
-     * consider the text 'ABCdef' where capital letters indicate
+     * <code>getLogicalRangesForVisualSelection</code>.  For example, 
+     * consider the text 'ABCdef' where capital letters indicate 
      * right-to-left text, rendered on a right-to-left line, with a visual
      * selection from 0L (the leading edge of 'A') to 3T (the trailing edge
      * of 'd').  The text appears as follows, with bold underlined areas
@@ -2228,10 +2228,10 @@ public final class TextLayout implements Cloneable {
      * specified range, extended to the specified <code>bounds</code>.
      * <p>
      * If the selection range includes the first logical character, the
-     * selection is extended to the portion of <code>bounds</code> before
+     * selection is extended to the portion of <code>bounds</code> before 
      * the start of this <code>TextLayout</code>.  If the range includes
      * the last logical character, the selection is extended to the portion
-     * of <code>bounds</code> after the end of this <code>TextLayout</code>.
+     * of <code>bounds</code> after the end of this <code>TextLayout</code>.  
      * The height (width on vertical lines) of the selection is always
      * extended to <code>bounds</code>.
      * <p>
@@ -2249,7 +2249,7 @@ public final class TextLayout implements Cloneable {
      * visually discontiguous. Also note that since the range includes the
      * first logical character (A), the selection is extended to the portion
      * of the <code>bounds</code> before the start of the layout, which in
-     * this case (a right-to-left line) is the right portion of the
+     * this case (a right-to-left line) is the right portion of the 
      * <code>bounds</code>.
      * @param firstEndpoint an endpoint in the range of characters to select
      * @param secondEndpoint the other endpoint of the range of characters
@@ -2347,8 +2347,8 @@ public final class TextLayout implements Cloneable {
     /**
      * Returns a <code>Shape</code> enclosing the logical selection in the
      * specified range, extended to the natural bounds of this
-     * <code>TextLayout</code>.  This method is a convenience overload of
-     * <code>getLogicalHighlightShape</code> that uses the natural bounds of
+     * <code>TextLayout</code>.  This method is a convenience overload of 
+     * <code>getLogicalHighlightShape</code> that uses the natural bounds of 
      * this <code>TextLayout</code>.
      * @param firstEndpoint an endpoint in the range of characters to select
      * @param secondEndpoint the other endpoint of the range of characters
@@ -2391,7 +2391,7 @@ public final class TextLayout implements Cloneable {
          * return an area that consists of the bounding boxes of all the
          * characters from firstEndpoint to limit
          */
-
+ 
         GeneralPath result = new GeneralPath(GeneralPath.WIND_NON_ZERO);
 
         if (firstEndpoint < characterCount) {
@@ -2420,9 +2420,9 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns the distance from the point (x,&nbsp;y) to the caret along
-     * the line direction defined in <code>caretInfo</code>.  Distance is
-     * negative if the point is to the left of the caret on a horizontal
+     * Returns the distance from the point (x,&nbsp;y) to the caret along 
+     * the line direction defined in <code>caretInfo</code>.  Distance is 
+     * negative if the point is to the left of the caret on a horizontal 
      * line, or above the caret on a vertical line.
      * Utility for use by hitTestChar.
      */
@@ -2437,14 +2437,14 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns a <code>TextHitInfo</code> corresponding to the
+     * Returns a <code>TextHitInfo</code> corresponding to the 
      * specified point.
      * Coordinates outside the bounds of the <code>TextLayout</code>
-     * map to hits on the leading edge of the first logical character,
-     * or the trailing edge of the last logical character, as appropriate,
+     * map to hits on the leading edge of the first logical character, 
+     * or the trailing edge of the last logical character, as appropriate, 
      * regardless of the position of that character in the line.  Only the
      * direction along the baseline is used to make this evaluation.
-     * @param x the x offset from the origin of this
+     * @param x the x offset from the origin of this 
      *     <code>TextLayout</code>.  This is in standard coordinates.
      * @param y the y offset from the origin of this
      *     <code>TextLayout</code>.  This is in standard coordinates.
@@ -2478,7 +2478,7 @@ public final class TextLayout implements Cloneable {
                 return isLeftToRight() ? TextHitInfo.trailing(characterCount-1) : TextHitInfo.leading(0);
             }
         }
-
+ 
         // revised hit test
         // the original seems too complex and fails miserably with italic offsets
         // the natural tendency is to move towards the character you want to hit
@@ -2522,7 +2522,7 @@ public final class TextLayout implements Cloneable {
             float ca = textLine.getCharAdvance(i);
             float dx = ca / 2;
             cx += dx - dya;
-
+ 
             // proximity in x (along baseline) is two times as important as proximity in y
             double nd = Math.sqrt(4*(cx - x)*(cx - x) + ydsq);
             if (nd < distance) {
@@ -2537,15 +2537,15 @@ public final class TextLayout implements Cloneable {
         if (trail == -1) {
             trail = characterCount;
         }
-        TextHitInfo result = leading ? TextHitInfo.leading(index) :
+        TextHitInfo result = leading ? TextHitInfo.leading(index) : 
             TextHitInfo.trailing(trail-1);
         return result;
     }
 
     /**
-     * Returns a <code>TextHitInfo</code> corresponding to the
-     * specified point.  This method is a convenience overload of
-     * <code>hitTestChar</code> that uses the natural bounds of this
+     * Returns a <code>TextHitInfo</code> corresponding to the 
+     * specified point.  This method is a convenience overload of 
+     * <code>hitTestChar</code> that uses the natural bounds of this 
      * <code>TextLayout</code>.
      * @param x the x offset from the origin of this
      *     <code>TextLayout</code>.  This is in standard coordinates.
@@ -2572,7 +2572,7 @@ public final class TextLayout implements Cloneable {
     }
 
     /**
-     * Returns <code>true</code> if the specified <code>Object</code> is a
+     * Returns <code>true</code> if the specified <code>Object</code> is a 
      * <code>TextLayout</code> object and if the specified <code>Object</code>
      * equals this <code>TextLayout</code>.
      * @param obj an <code>Object</code> to test for equality
@@ -2587,7 +2587,7 @@ public final class TextLayout implements Cloneable {
     /**
      * Returns <code>true</code> if the two layouts are equal.
      * Two layouts are equal if they contain equal glyphvectors in the same order.
-     * @param rhs the <code>TextLayout</code> to compare to this
+     * @param rhs the <code>TextLayout</code> to compare to this 
      *       <code>TextLayout</code>
      * @return <code>true</code> if the specified <code>TextLayout</code>
      *      equals this <code>TextLayout</code>.
@@ -2617,10 +2617,10 @@ public final class TextLayout implements Cloneable {
      }
 
     /**
-     * Renders this <code>TextLayout</code> at the specified location in
+     * Renders this <code>TextLayout</code> at the specified location in 
      * the specified {@link java.awt.Graphics2D Graphics2D} context.
      * The origin of the layout is placed at x,&nbsp;y.  Rendering may touch
-     * any point within <code>getBounds()</code> of this position.  This
+     * any point within <code>getBounds()</code> of this position.  This 
      * leaves the <code>g2</code> unchanged.  Text is rendered along the
      * baseline path.
      * @param g2 the <code>Graphics2D</code> context into which to render
@@ -2708,7 +2708,7 @@ public final class TextLayout implements Cloneable {
     }
 
    /**
-     * Convert a hit to a point in standard coordinates.  The point is
+     * Convert a hit to a point in standard coordinates.  The point is 
      * on the baseline of the character at the leading or trailing
      * edge of the character, as appropriate.  If the path is
      * broken at the side of the character represented by the hit, the
@@ -2724,7 +2724,7 @@ public final class TextLayout implements Cloneable {
      */
     public void hitToPoint(TextHitInfo hit, Point2D point) {
         if (hit == null || point == null) {
-            throw new NullPointerException((hit == null ? "hit" : "point") +
+            throw new NullPointerException((hit == null ? "hit" : "point") + 
                                            " can't be null");
         }
         ensureCache();

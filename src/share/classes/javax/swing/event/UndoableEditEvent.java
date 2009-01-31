@@ -39,6 +39,7 @@ import javax.swing.undo.*;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Ray Ryan
  */
 public class UndoableEditEvent extends java.util.EventObject {
@@ -52,16 +53,16 @@ public class UndoableEditEvent extends java.util.EventObject {
      * @param edit    an UndoableEdit object
      */
     public UndoableEditEvent(Object source, UndoableEdit edit) {
-        super(source);
-        myEdit = edit;
+	super(source);
+	myEdit = edit;
     }
-
+    
     /**
      * Returns the edit value.
      *
      * @return the UndoableEdit object encapsulating the edit
      */
     public UndoableEdit getEdit() {
-        return myEdit;
+	return myEdit;
     }
 }

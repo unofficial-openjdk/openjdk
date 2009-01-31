@@ -37,27 +37,27 @@ import java.io.PrintStream;
 public
 class LongExpression extends ConstantExpression {
     long value;
-
+    
     /**
      * Constructor
      */
     public LongExpression(long where, long value) {
-        super(LONGVAL, where, Type.tLong);
-        this.value = value;
+	super(LONGVAL, where, Type.tLong);
+	this.value = value;
     }
 
     /**
      * Get the value
      */
     public Object getValue() {
-        return new Long(value);
+	return new Long(value);
     }
 
     /**
      * Check if the expression is equal to a value
      */
     public boolean equals(int i) {
-        return value == i;
+	return value == i;
     }
 
     /**
@@ -71,13 +71,13 @@ class LongExpression extends ConstantExpression {
      * Code
      */
     public void codeValue(Environment env, Context ctx, Assembler asm) {
-        asm.add(where, opc_ldc2_w, new Long(value));
+	asm.add(where, opc_ldc2_w, new Long(value));
     }
 
     /**
      * Print
      */
     public void print(PrintStream out) {
-        out.print(value + "L");
+	out.print(value + "L");
     }
 }

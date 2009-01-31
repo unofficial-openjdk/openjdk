@@ -33,25 +33,25 @@
  * and blue components.
  */
 
-#define DeclareDitherVars                                               \
+#define DeclareDitherVars						\
     int red_dither_shift, green_dither_shift, blue_dither_shift;
 
-#define InitDither(cvdata, clrdata, dstTW)                      \
-    do {                                                        \
-        red_dither_shift = clrdata->rOff;                       \
-        green_dither_shift = clrdata->gOff;                     \
-        blue_dither_shift = clrdata->bOff;                      \
+#define InitDither(cvdata, clrdata, dstTW)			\
+    do {							\
+	red_dither_shift = clrdata->rOff;			\
+	green_dither_shift = clrdata->gOff;			\
+	blue_dither_shift = clrdata->bOff;			\
     } while (0)
 
-#define StartDitherLine(cvdata, dstX1, dstY)                    \
+#define StartDitherLine(cvdata, dstX1, dstY)			\
     do {} while (0)
 
-#define DitherPixel(dstX, dstY, pixel, red, green, blue)        \
-    do {                                                        \
-        pixel = ((red << red_dither_shift) |                    \
-                 (green << green_dither_shift) |                \
-                 (blue << blue_dither_shift));                  \
+#define DitherPixel(dstX, dstY, pixel, red, green, blue) 	\
+    do {							\
+	pixel = ((red << red_dither_shift) |			\
+		 (green << green_dither_shift) |		\
+		 (blue << blue_dither_shift));			\
     } while (0)
 
-#define DitherBufComplete(cvdata, dstX1)                        \
+#define DitherBufComplete(cvdata, dstX1)			\
     do {} while (0)

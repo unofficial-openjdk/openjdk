@@ -33,11 +33,12 @@ import java.nio.ByteBuffer;
 /**
  * Class for monitoring a PerfData Byte Array instrumentation object.
  *
- * This class is provided to support the PerfStringMonitor classes.
+ * This class is provided to support the PerfStringMonitor classes. 
  * Instrumentation objects of this direct type currently cannot be
  * created or monitored.
  *
  * @author Brian Doherty
+ * @version %I%, %G%
  * @since 1.5
  * @see sun.jvmstat.instrument.ByteArrayInstrument
  */

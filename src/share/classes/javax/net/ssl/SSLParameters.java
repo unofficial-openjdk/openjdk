@@ -33,14 +33,14 @@ package javax.net.ssl;
  *
  * <p>SSLParameters can be created via the constructors in this class.
  * Objects can also be obtained using the <code>getSSLParameters()</code>
- * methods in
- * {@link SSLSocket#getSSLParameters SSLSocket} and
+ * methods in 
+ * {@link SSLSocket#getSSLParameters SSLSocket} and 
  * {@link SSLEngine#getSSLParameters SSLEngine} or the
  * {@link SSLContext#getDefaultSSLParameters getDefaultSSLParameters()} and
- * {@link SSLContext#getSupportedSSLParameters getSupportedSSLParameters()}
+ * {@link SSLContext#getSupportedSSLParameters getSupportedSSLParameters()} 
  * methods in <code>SSLContext</code>.
  *
- * <P>SSLParameters can be applied to a connection via the methods
+ * <P>SSLParameters can be applied to a connection via the methods 
  * {@link SSLSocket#setSSLParameters SSLSocket.setSSLParameters()} and
  * {@link SSLEngine#setSSLParameters SSLEngine.getSSLParameters()}.
  *
@@ -51,7 +51,7 @@ package javax.net.ssl;
  * @since 1.6
  */
 public class SSLParameters {
-
+    
     private String[] cipherSuites;
     private String[] protocols;
     private boolean wantClientAuth;
@@ -64,9 +64,9 @@ public class SSLParameters {
      * wantClientAuth and needClientAuth are set to <code>false</code>.
      */
     public SSLParameters() {
-        // empty
+	// empty
     }
-
+    
     /**
      * Constructs SSLParameters from the specified array of ciphersuites.
      * Calling this constructor is equivalent to calling the no-args
@@ -76,9 +76,9 @@ public class SSLParameters {
      * @param cipherSuites the array of ciphersuites (or null)
      */
     public SSLParameters(String[] cipherSuites) {
-        setCipherSuites(cipherSuites);
+	setCipherSuites(cipherSuites);
     }
-
+    
     /**
      * Constructs SSLParameters from the specified array of ciphersuites
      * and protocols.
@@ -90,12 +90,12 @@ public class SSLParameters {
      * @param protocols the array of protocols (or null)
      */
     public SSLParameters(String[] cipherSuites, String[] protocols) {
-        setCipherSuites(cipherSuites);
-        setProtocols(protocols);
+	setCipherSuites(cipherSuites);
+	setProtocols(protocols);
     }
-
+    
     private static String[] clone(String[] s) {
-        return (s == null) ? null : s.clone();
+	return (s == null) ? null : s.clone();
     }
 
     /**
@@ -106,16 +106,16 @@ public class SSLParameters {
      * have been set.
      */
     public String[] getCipherSuites() {
-        return clone(cipherSuites);
+	return clone(cipherSuites);
     }
-
+    
     /**
      * Sets the array of ciphersuites.
      *
      * @param cipherSuites the array of ciphersuites (or null)
      */
     public void setCipherSuites(String[] cipherSuites) {
-        this.cipherSuites = clone(cipherSuites);
+	this.cipherSuites = clone(cipherSuites);
     }
 
     /**
@@ -126,7 +126,7 @@ public class SSLParameters {
      * have been set.
      */
     public String[] getProtocols() {
-        return clone(protocols);
+	return clone(protocols);
     }
 
     /**
@@ -135,7 +135,7 @@ public class SSLParameters {
      * @param protocols the array of protocols (or null)
      */
     public void setProtocols(String[] protocols) {
-        this.protocols = clone(protocols);
+	this.protocols = clone(protocols);
     }
 
     /**
@@ -144,7 +144,7 @@ public class SSLParameters {
      * @return whether client authentication should be requested.
      */
     public boolean getWantClientAuth() {
-        return wantClientAuth;
+	return wantClientAuth;
     }
 
     /**
@@ -154,17 +154,17 @@ public class SSLParameters {
      * @param wantClientAuth whether client authentication should be requested
      */
     public void setWantClientAuth(boolean wantClientAuth) {
-        this.wantClientAuth = wantClientAuth;
-        this.needClientAuth = false;
+	this.wantClientAuth = wantClientAuth;
+	this.needClientAuth = false;
     }
-
+    
     /**
      * Returns whether client authentication should be required.
      *
      * @return whether client authentication should be required.
      */
     public boolean getNeedClientAuth() {
-        return needClientAuth;
+	return needClientAuth;
     }
 
     /**
@@ -174,8 +174,8 @@ public class SSLParameters {
      * @param needClientAuth whether client authentication should be required
      */
     public void setNeedClientAuth(boolean needClientAuth) {
-        this.wantClientAuth = false;
-        this.needClientAuth = needClientAuth;
+	this.wantClientAuth = false;
+	this.needClientAuth = needClientAuth;
     }
 
 }

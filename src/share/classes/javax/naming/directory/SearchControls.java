@@ -31,12 +31,13 @@ package javax.naming.directory;
   * factors that determine scope of search and what gets returned
   * as a result of the search.
   *<p>
-  * A SearchControls instance is not synchronized against concurrent
+  * A SearchControls instance is not synchronized against concurrent 
   * multithreaded access. Multiple threads trying to access and modify
   * a single SearchControls instance should lock the object.
   *
   * @author Rosanna Lee
   * @author Scott Seligman
+  * @version %I% %E%
   * @since 1.3
   */
 
@@ -49,7 +50,7 @@ public class SearchControls implements java.io.Serializable {
      * The enumeration contains one element if the named object satisfies
      * the search filter specified in search().
      * The element will have as its name the empty string because the names
-     * of elements in the NamingEnumeration are relative to the
+     * of elements in the NamingEnumeration are relative to the 
      * target context--in this case, the target context is the named object.
      * It contains zero element if the named object does not satisfy
      * the search filter specified in search().
@@ -87,7 +88,7 @@ public class SearchControls implements java.io.Serializable {
      * The names of elements in the NamingEnumeration are either
      * relative to the named context or is a URL string.
      * If the named context satisfies the search filter, it is
-     * included in the enumeration with the empty string as
+     * included in the enumeration with the empty string as 
      * its name.
      * <p>
      * The value of this constant is <tt>2</tt>.
@@ -96,7 +97,7 @@ public class SearchControls implements java.io.Serializable {
 
     /**
      * Contains the scope with which to apply the search. One of
-     * <tt>ONELEVEL_SCOPE</tt>, <tt>OBJECT_SCOPE</tt>, or
+     * <tt>ONELEVEL_SCOPE</tt>, <tt>OBJECT_SCOPE</tt>, or 
      * <tt>SUBTREE_SCOPE</tt>.
      * @serial
      */
@@ -151,41 +152,41 @@ public class SearchControls implements java.io.Serializable {
      *</ul>
      */
     public SearchControls() {
-        searchScope = ONELEVEL_SCOPE;
-        timeLimit = 0; // no limit
-        countLimit = 0; // no limit
-        derefLink = false;
-        returnObj = false;
-        attributesToReturn = null; // return all
+	searchScope = ONELEVEL_SCOPE;
+	timeLimit = 0; // no limit
+	countLimit = 0; // no limit
+	derefLink = false;
+	returnObj = false;
+	attributesToReturn = null; // return all
     }
 
     /**
      * Constructs a search constraints using arguments.
-     * @param scope     The search scope.  One of:
-     *                  OBJECT_SCOPE, ONELEVEL_SCOPE, SUBTREE_SCOPE.
-     * @param timelim   The number of milliseconds to wait before returning.
-     *                  If 0, wait indefinitely.
-     * @param deref     If true, dereference links during search.
-     * @param countlim  The maximum number of entries to return.  If 0, return
-     *                  all entries that satisfy filter.
-     * @param retobj    If true, return the object bound to the name of the
-     *                  entry; if false, do not return object.
-     * @param attrs     The identifiers of the attributes to return along with
-     *                  the entry.  If null, return all attributes. If empty
-     *                  return no attributes.
+     * @param scope	The search scope.  One of:
+     *			OBJECT_SCOPE, ONELEVEL_SCOPE, SUBTREE_SCOPE.
+     * @param timelim	The number of milliseconds to wait before returning.
+     *			If 0, wait indefinitely.
+     * @param deref	If true, dereference links during search.
+     * @param countlim	The maximum number of entries to return.  If 0, return
+     *			all entries that satisfy filter.
+     * @param retobj	If true, return the object bound to the name of the
+     *			entry; if false, do not return object.
+     * @param attrs	The identifiers of the attributes to return along with
+     *			the entry.  If null, return all attributes. If empty
+     *			return no attributes.
      */
-    public SearchControls(int scope,
-                             long countlim,
-                             int timelim,
-                             String[] attrs,
-                             boolean retobj,
-                             boolean deref) {
-        searchScope = scope;
-        timeLimit = timelim; // no limit
-        derefLink = deref;
-        returnObj = retobj;
-        countLimit = countlim; // no limit
-        attributesToReturn = attrs; // return all
+    public SearchControls(int scope, 
+			     long countlim, 
+			     int timelim, 
+			     String[] attrs,
+			     boolean retobj, 
+			     boolean deref) {
+	searchScope = scope;
+	timeLimit = timelim; // no limit
+	derefLink = deref;
+	returnObj = retobj;
+	countLimit = countlim; // no limit
+	attributesToReturn = attrs; // return all
     }
 
     /**
@@ -197,7 +198,7 @@ public class SearchControls implements java.io.Serializable {
      * @see #setSearchScope
      */
     public int getSearchScope() {
-        return searchScope;
+	return searchScope;
     }
 
     /**
@@ -208,7 +209,7 @@ public class SearchControls implements java.io.Serializable {
      * @see #setTimeLimit
      */
     public int getTimeLimit() {
-        return timeLimit;
+	return timeLimit;
     }
 
     /**
@@ -218,29 +219,29 @@ public class SearchControls implements java.io.Serializable {
      * @see #setDerefLinkFlag
      */
     public boolean getDerefLinkFlag() {
-        return derefLink;
+	return derefLink;
     }
 
     /**
      * Determines whether objects will be returned as part of the result.
-     *
+     * 
      * @return true if objects will be returned; false otherwise.
      * @see #setReturningObjFlag
      */
     public boolean getReturningObjFlag() {
-        return returnObj;
+	return returnObj;
     }
 
     /**
      * Retrieves the maximum number of entries that will be returned
-     * as a result of the search.
+     * as a result of the search.  
      *<p>
      * 0 indicates that all entries will be returned.
      * @return The maximum number of entries that will be returned.
      * @see #setCountLimit
      */
     public long getCountLimit() {
-        return countLimit;
+	return countLimit;
     }
 
     /**
@@ -254,38 +255,38 @@ public class SearchControls implements java.io.Serializable {
      * @see #setReturningAttributes
      */
     public String[] getReturningAttributes() {
-        return attributesToReturn;
+	return attributesToReturn;
     }
 
     /**
      * Sets the search scope to one of:
      * OBJECT_SCOPE, ONELEVEL_SCOPE, SUBTREE_SCOPE.
-     * @param scope     The search scope of this SearchControls.
+     * @param scope	The search scope of this SearchControls.
      * @see #getSearchScope
      */
     public void setSearchScope(int scope) {
-        searchScope = scope;
+	searchScope = scope;
     }
 
     /**
      * Sets the time limit of these SearchControls in milliseconds.
      *<p>
      * If the value is 0, this means to wait indefinitely.
-     * @param ms        The time limit of these SearchControls in milliseconds.
+     * @param ms	The time limit of these SearchControls in milliseconds.
      * @see #getTimeLimit
      */
     public void setTimeLimit(int ms) {
-        timeLimit = ms;
+	timeLimit = ms;
     }
 
     /**
      * Enables/disables link dereferencing during the search.
      *
-     * @param on        if true links will be dereferenced; if false, not followed.
+     * @param on 	if true links will be dereferenced; if false, not followed.
      * @see #getDerefLinkFlag
      */
     public void setDerefLinkFlag(boolean on) {
-        derefLink = on;
+	derefLink = on;
     }
 
     /**
@@ -293,26 +294,26 @@ public class SearchControls implements java.io.Serializable {
      *<p>
      * If disabled, only the name and class of the object is returned.
      * If enabled, the object will be returned.
-     *
-     * @param on        if true, objects will be returned; if false,
-     *                  objects will not be returned.
+     * 
+     * @param on	if true, objects will be returned; if false, 
+     * 			objects will not be returned.
      * @see #getReturningObjFlag
      */
     public void setReturningObjFlag(boolean on) {
-        returnObj = on;
+	returnObj = on;
     }
 
     /**
      * Sets the maximum number of entries to be returned
-     * as a result of the search.
+     * as a result of the search.  
      *<p>
      * 0 indicates no limit:  all entries will be returned.
-     *
+     * 
      * @param limit The maximum number of entries that will be returned.
      * @see #getCountLimit
      */
     public void setCountLimit(long limit) {
-        countLimit = limit;
+	countLimit = limit;
     }
 
     /**
@@ -322,11 +323,11 @@ public class SearchControls implements java.io.Serializable {
      * An empty array indicates no attributes are returned.
      *
      * @param attrs An array of attribute ids identifying the attributes that
-     *              will be returned. Can be null.
+     * 		    will be returned. Can be null.
      * @see #getReturningAttributes
      */
     public void setReturningAttributes(String[] attrs) {
-        attributesToReturn = attrs;
+	attributesToReturn = attrs;
     }
 
     /**

@@ -32,8 +32,9 @@ import java.awt.Image;
 /**
  * A subclass of <code>ImageIcon</code> that implements UIResource.
  *
+ * @version %I% %G%
  * @author Shannon Hickey
- *
+ * 
  */
 public class ImageIconUIResource extends ImageIcon implements UIResource {
 
@@ -46,7 +47,7 @@ public class ImageIconUIResource extends ImageIcon implements UIResource {
     public ImageIconUIResource(byte[] imageData) {
         super(imageData);
     }
-
+    
     /**
      * Calls the superclass constructor with the same parameter.
      *

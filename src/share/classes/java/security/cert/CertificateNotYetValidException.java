@@ -32,6 +32,7 @@ package java.security.cert;
  * validity period.
  *
  * @author Hemma Prafullchandra
+ * %I%
  */
 public class CertificateNotYetValidException extends CertificateException {
 
@@ -50,7 +51,7 @@ public class CertificateNotYetValidException extends CertificateException {
      * Constructs a CertificateNotYetValidException with the specified detail
      * message. A detail message is a String that describes this
      * particular exception.
-     *
+     *   
      * @param message the detail message.
      */
     public CertificateNotYetValidException(String message) {

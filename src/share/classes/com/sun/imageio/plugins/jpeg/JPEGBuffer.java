@@ -54,14 +54,14 @@ class JPEGBuffer {
      * Anytime data is read from the buffer, this should be updated.
      */
     int bufAvail;
-
+    
     /**
      * A pointer to the next available byte in the buffer.  This is
-     * used to read data from the buffer and must be updated to
+     * used to read data from the buffer and must be updated to 
      * move through the buffer.
      */
     int bufPtr;
-
+    
     /**
      * The ImageInputStream buffered.
      */
@@ -123,7 +123,7 @@ class JPEGBuffer {
      * if necessary.  The buffer is left in an appropriate
      * state.  If the end of the stream is encountered, an
      * <code>IIOException</code> is thrown with the
-     * message "Image Format Error".
+     * message "Image Format Error". 
      */
     void readData(byte [] data) throws IOException {
         int count = data.length;
@@ -152,7 +152,7 @@ class JPEGBuffer {
      * Skips <code>count</code> bytes, leaving the buffer
      * in an appropriate state.  If the end of the stream is
      * encountered, an <code>IIOException</code> is thrown with the
-     * message "Image Format Error".
+     * message "Image Format Error". 
      */
     void skipData(int count) throws IOException {
         // First see what's left in the buffer.
@@ -231,10 +231,10 @@ class JPEGBuffer {
         }
         return retval;
     }
-
+        
     /**
      * Prints the contents of the buffer, in hex.
-     * @param count the number of bytes to print,
+     * @param count the number of bytes to print, 
      * starting at the current available byte.
      */
     void print(int count) {
@@ -250,5 +250,6 @@ class JPEGBuffer {
         }
         System.out.println();
     }
-
+    
 }
+

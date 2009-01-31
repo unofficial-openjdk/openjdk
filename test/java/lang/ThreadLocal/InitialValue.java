@@ -33,42 +33,42 @@ public class InitialValue implements Runnable {
     static boolean passed;
 
     public class MyLocal extends ThreadLocal<String> {
-        String val;
-        protected String initialValue() {
-            other = new ThreadLocal<String>();
-            // This should reuse the map that the containing get() created
-            // or visa versa (i.e. instead of a second map being created).
-            other.set("Other");
-            return "Initial";
-        }
+	String val;
+	protected String initialValue() {
+	    other = new ThreadLocal<String>();
+	    // This should reuse the map that the containing get() created
+	    // or visa versa (i.e. instead of a second map being created).
+	    other.set("Other");
+	    return "Initial";
+	}
     }
 
     public void run() {
-        MyLocal l = new MyLocal();
-        // This should pick up the initial value
-        String s1 = l.get();
-        // And this should pick up the other local in this thread's locals map
-        String s2 = other.get();
-        if ((s2 != null) && s2.equals("Other")) {
-            // JMM guarantees this will be visible to
-            // another thread joining with this thread's
-            // termination: no need for this to be volatile.
-            passed = true;
-        }
+	MyLocal l = new MyLocal();
+	// This should pick up the initial value 
+	String s1 = l.get();
+	// And this should pick up the other local in this thread's locals map
+	String s2 = other.get();
+	if ((s2 != null) && s2.equals("Other")) {
+	    // JMM guarantees this will be visible to
+	    // another thread joining with this thread's
+	    // termination: no need for this to be volatile.
+	    passed = true;
+	}
     }
-
+ 
     public static void main(String[] args) {
-        // Starting with Mustang the main thread already has an initialized
-        // ThreadLocal map at this point, so test with a second thread.
-        Thread t = new Thread(new InitialValue());
-        t.start();
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Test Interrupted: failed");
-        }
-        if (!passed) {
-            throw new RuntimeException("Test Failed");
-        }
+	// Starting with Mustang the main thread already has an initialized
+	// ThreadLocal map at this point, so test with a second thread.
+	Thread t = new Thread(new InitialValue());
+	t.start();
+	try {
+	    t.join();
+	} catch (InterruptedException e) {
+	    throw new RuntimeException("Test Interrupted: failed");
+	}
+	if (!passed) {
+	    throw new RuntimeException("Test Failed");
+	}
     }
 }

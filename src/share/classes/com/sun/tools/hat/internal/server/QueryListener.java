@@ -29,12 +29,12 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
  */
@@ -43,6 +43,7 @@ package com.sun.tools.hat.internal.server;
 
 /**
  *
+ * @version     1.14, 03/06/98 [jhat %W% %E%]
  * @author      Bill Foote
  */
 
@@ -72,49 +73,49 @@ public class QueryListener implements Runnable {
     private int port;
 
     public QueryListener(int port) {
-        this.port = port;
-        this.snapshot = null;   // Client will setModel when it's ready
+	this.port = port;
+	this.snapshot = null;	// Client will setModel when it's ready
         this.engine = null; // created when snapshot is set
     }
 
     public void setModel(Snapshot ss) {
-        this.snapshot = ss;
+	this.snapshot = ss;
         if (OQLEngine.isOQLSupported()) {
             this.engine = new OQLEngine(ss);
         }
     }
 
     public void run() {
-        try {
-            waitForRequests();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            System.exit(1);
-        }
+	try {
+	    waitForRequests();
+	} catch (IOException ex) {
+	    ex.printStackTrace();
+	    System.exit(1);
+	}
     }
 
     private void waitForRequests() throws IOException {
-        ServerSocket ss = new ServerSocket(port);
-        Thread last = null;
-        for (;;) {
-            Socket s = ss.accept();
-            Thread t = new Thread(new HttpReader(s, snapshot, engine));
-            if (snapshot == null) {
-                t.setPriority(Thread.NORM_PRIORITY+1);
-            } else {
-                t.setPriority(Thread.NORM_PRIORITY-1);
-                if (last != null) {
-                    try {
-                        last.setPriority(Thread.NORM_PRIORITY-2);
-                    } catch (Throwable ignored) {
-                    }
-                    // If the thread is no longer alive, we'll get a
-                    // NullPointerException
-                }
-            }
-            t.start();
-            last = t;
-        }
+	ServerSocket ss = new ServerSocket(port);
+	Thread last = null;
+	for (;;) {
+	    Socket s = ss.accept();
+	    Thread t = new Thread(new HttpReader(s, snapshot, engine));
+	    if (snapshot == null) {
+		t.setPriority(Thread.NORM_PRIORITY+1);
+	    } else {
+		t.setPriority(Thread.NORM_PRIORITY-1);
+		if (last != null) {
+		    try {
+			last.setPriority(Thread.NORM_PRIORITY-2);
+		    } catch (Throwable ignored) {
+		    }
+		    // If the thread is no longer alive, we'll get a 
+		    // NullPointerException
+		}
+	    }
+	    t.start();
+	    last = t;
+	}
     }
 
 }

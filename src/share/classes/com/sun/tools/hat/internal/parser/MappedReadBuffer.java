@@ -29,15 +29,15 @@
  * compliance with the License. A copy of the License is available at
  * http://www.sun.com/, and in the file LICENSE.html in the
  * doc directory.
- *
+ * 
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
  * at JavaSoft/Sun. Portions created by Bill Foote and others
  * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
- *
+ * 
  * In addition to the formal license, I ask that you don't
  * change the history or donations files without permission.
- *
+ * 
  */
 
 package com.sun.tools.hat.internal.parser;
@@ -50,6 +50,7 @@ import java.nio.channels.FileChannel;
 /**
  * Implementation of ReadBuffer using mapped file buffer
  *
+ * %W% %E%
  * @author A. Sundararajan
  */
 class MappedReadBuffer implements ReadBuffer {
@@ -57,7 +58,7 @@ class MappedReadBuffer implements ReadBuffer {
 
     MappedReadBuffer(MappedByteBuffer buf) {
         this.buf = buf;
-    }
+    }    
 
     // factory method to create correct ReadBuffer for a given file
     static ReadBuffer create(RandomAccessFile file) throws IOException {
@@ -81,11 +82,11 @@ class MappedReadBuffer implements ReadBuffer {
     }
 
     private static boolean canUseFileMap() {
-        // set jhat.disableFileMap to any value other than "false"
+        // set jhat.disableFileMap to any value other than "false" 
         // to disable file mapping
         String prop = System.getProperty("jhat.disableFileMap");
         return prop == null || prop.equals("false");
-    }
+    } 
 
     private void seek(long pos) throws IOException {
         assert pos <= Integer.MAX_VALUE :  "position overflow";

@@ -28,7 +28,8 @@ package javax.security.auth;
 /**
  * Objects such as credentials may optionally implement this interface
  * to provide the capability to destroy its contents.
- *
+ * 
+ * @version %I%, %G%
  * @see javax.security.auth.Subject
  */
 public interface Destroyable {
@@ -46,7 +47,7 @@ public interface Destroyable {
      * @exception DestroyFailedException if the destroy operation fails. <p>
      *
      * @exception SecurityException if the caller does not have permission
-     *          to destroy this <code>Object</code>.
+     *		to destroy this <code>Object</code>.
      */
     void destroy() throws DestroyFailedException;
 
@@ -56,7 +57,7 @@ public interface Destroyable {
      * <p>
      *
      * @return true if this <code>Object</code> has been destroyed,
-     *          false otherwise.
+     *		false otherwise.
      */
     boolean isDestroyed();
 }

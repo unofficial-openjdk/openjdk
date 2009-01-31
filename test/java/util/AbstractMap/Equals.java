@@ -42,7 +42,7 @@ public class Equals {
         Map m1 = new TreeMap();
         m1.put(new Integer(42), "The Answer");
         Map m2 = new TreeMap();
-        m2.put("The Answer", new Integer(42));
+        m2.put("The Answer", new Integer(42)); 
         if (m1.equals(m2))
             throw new RuntimeException("3");
 
@@ -54,3 +54,4 @@ public class Equals {
             throw new RuntimeException("2");
     }
 }
+

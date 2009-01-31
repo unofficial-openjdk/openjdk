@@ -34,7 +34,7 @@
 
 /* Hprof binary format enums and spec. */
 
-/* Need to #define or typedef HprofId before including this file.
+/* Need to #define or typedef HprofId before including this file. 
  *    hprof used ObjectIndex or 4 bytes, but it can be 4 or 8 byte type.
  */
 
@@ -45,7 +45,7 @@
 /*
  * hprof binary format: (result either written to a file or sent over
  * the network).
- *
+ * 
  * WARNING: This format is still under development, and is subject to
  * change without notice.
  *
@@ -54,7 +54,7 @@
  *            UTF8 strings, objects, stack traces, etc. They usually
  *            have the same size as host pointers. For example, on
  *            Solaris and Win32, the size is 4.
- * u4         high word
+ * u4         high word 
  * u4         low word    number of milliseconds since 0:00 GMT, 1/1/70
  * [record]*  a sequence of records.
  */
@@ -75,7 +75,7 @@
  *
  * TAG           BODY       notes
  *----------------------------------------------------------
- * HPROF_UTF8               a UTF8-encoded name
+ * HPROF_UTF8               a UTF8-encoded name  
  *
  *               id         name ID
  *               [u1]*      UTF8 characters (no trailing zero)
@@ -148,7 +148,7 @@
  *               id         thread group name ID
  *               id         thread group parent name ID
  *
- * HPROF_END_THREAD         a terminating thread.
+ * HPROF_END_THREAD         a terminating thread. 
  *
  *               u4         thread serial number
  *
@@ -228,7 +228,7 @@
  *
  *                          u2         size of constant pool
  *                          [u2,       constant pool index,
- *                           ty,       type
+ *                           ty,       type 
  *                                     2:  object
  *                                     4:  boolean
  *                                     5:  char
@@ -316,7 +316,7 @@ typedef enum HprofTag {
     HPROF_CONTROL_SETTINGS        = 0x0E
 } HprofTag;
 
-/*
+/* 
  * Heap dump constants
  */
 
@@ -337,35 +337,36 @@ typedef enum HprofGcTag {
 } HprofGcTag;
 
 enum HprofType {
-        HPROF_ARRAY_OBJECT      = 1,
-        HPROF_NORMAL_OBJECT     = 2,
-        HPROF_BOOLEAN           = 4,
-        HPROF_CHAR              = 5,
-        HPROF_FLOAT             = 6,
-        HPROF_DOUBLE            = 7,
-        HPROF_BYTE              = 8,
-        HPROF_SHORT             = 9,
-        HPROF_INT               = 10,
-        HPROF_LONG              = 11
+	HPROF_ARRAY_OBJECT 	= 1,
+	HPROF_NORMAL_OBJECT 	= 2,
+	HPROF_BOOLEAN 		= 4,
+	HPROF_CHAR 		= 5,
+	HPROF_FLOAT 		= 6,
+	HPROF_DOUBLE 		= 7,
+	HPROF_BYTE 		= 8,
+	HPROF_SHORT 		= 9,
+	HPROF_INT 		= 10,
+	HPROF_LONG 		= 11
 };
 typedef unsigned char HprofType;
 
-#define HPROF_TYPE_SIZES                        \
-    {                                           \
-        /*Object?*/     sizeof(HprofId),        \
-        /*Object?*/     sizeof(HprofId),        \
-        /*Array*/       sizeof(HprofId),        \
-        /*Object?*/     sizeof(HprofId),        \
-        /*jboolean*/    1,                      \
-        /*jchar*/       2,                      \
-        /*jfloat*/      4,                      \
-        /*jdouble*/     8,                      \
-        /*jbyte*/       1,                      \
-        /*jshort*/      2,                      \
-        /*jint*/        4,                      \
-        /*jlong*/       8                       \
+#define HPROF_TYPE_SIZES 			\
+    {						\
+        /*Object?*/	sizeof(HprofId), 	\
+        /*Object?*/	sizeof(HprofId), 	\
+        /*Array*/	sizeof(HprofId), 	\
+        /*Object?*/	sizeof(HprofId), 	\
+        /*jboolean*/ 	1, 			\
+        /*jchar*/ 	2, 			\
+        /*jfloat*/ 	4, 			\
+        /*jdouble*/ 	8, 			\
+        /*jbyte*/	1, 			\
+        /*jshort*/	2, 			\
+        /*jint*/	4, 			\
+        /*jlong*/	8 			\
     }
 
 #define HPROF_TYPE_IS_PRIMITIVE(ty)  ((ty)>=HPROF_BOOLEAN)
 
 #endif
+

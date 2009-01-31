@@ -65,20 +65,20 @@ private:
 
     float euclidianDistance(float a, float b);
 
-    /* Table format is the same as defined in the truetype spec.
+    /* Table format is the same as defined in the truetype spec. 
        Pointer can be NULL (e.g. for Type1 fonts). */
     TTLayoutTableCache* layoutTables;
 
 public:
     FontInstanceAdapter(JNIEnv *env,
                         jobject theFont2D, jobject theFontStrike,
-                        float *matrix, le_int32 xRes, le_int32 yRes,
+                        float *matrix, le_int32 xRes, le_int32 yRes, 
                         le_int32 theUPEM, TTLayoutTableCache *ltables);
 
     virtual ~FontInstanceAdapter() { };
 
-    virtual const LEFontInstance *getSubFont(const LEUnicode chars[],
-                            le_int32 *offset, le_int32 limit,
+    virtual const LEFontInstance *getSubFont(const LEUnicode chars[], 
+                            le_int32 *offset, le_int32 limit, 
                             le_int32 script, LEErrorCode &success) const {
       return this;
     }
@@ -96,8 +96,8 @@ public:
 
     virtual le_bool canDisplay(LEUnicode32 ch) const
     {
-        return  (le_bool)env->CallBooleanMethod(font2D,
-                                                sunFontIDs.canDisplayMID, ch);
+	return  (le_bool)env->CallBooleanMethod(font2D,
+						sunFontIDs.canDisplayMID, ch);
     };
 
     virtual le_int32 getUnitsPerEM() const {
@@ -108,11 +108,11 @@ public:
 
     virtual LEGlyphID mapCharToGlyph(LEUnicode32 ch) const;
 
-    virtual void mapCharsToWideGlyphs(const LEUnicode chars[],
-        le_int32 offset, le_int32 count, le_bool reverse,
+    virtual void mapCharsToWideGlyphs(const LEUnicode chars[], 
+        le_int32 offset, le_int32 count, le_bool reverse, 
         const LECharMapper *mapper, le_uint32 glyphs[]) const;
 
-    virtual le_uint32 mapCharToWideGlyph(LEUnicode32 ch,
+    virtual le_uint32 mapCharToWideGlyph(LEUnicode32 ch, 
         const LECharMapper *mapper) const;
 
     virtual void getGlyphAdvance(LEGlyphID glyph, LEPoint &advance) const;
@@ -121,7 +121,7 @@ public:
 
     virtual void getWideGlyphAdvance(le_uint32 glyph, LEPoint &advance) const;
 
-    virtual le_bool getGlyphPoint(LEGlyphID glyph,
+    virtual le_bool getGlyphPoint(LEGlyphID glyph, 
         le_int32 pointNumber, LEPoint &point) const;
 
     float getXPixelsPerEm() const

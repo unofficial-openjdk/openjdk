@@ -45,6 +45,7 @@ import java.util.Stack;
  * has been added to the <code>java.beans</code> package.
  * Please see {@link java.beans.XMLEncoder}.
  *
+ * @version %I% %G%
  * @author Scott Violet
  */
 
@@ -75,12 +76,12 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
 
 
     public FixedHeightLayoutCache() {
-        super();
-        tempStacks = new Stack();
-        boundsBuffer = new Rectangle();
-        treePathMapping = new Hashtable();
-        info = new SearchInfo();
-        setRowHeight(1);
+	super();
+	tempStacks = new Stack();
+	boundsBuffer = new Rectangle();
+	treePathMapping = new Hashtable();
+	info = new SearchInfo();
+	setRowHeight(1);
     }
 
     /**
@@ -89,8 +90,8 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * @param newModel the TreeModel that is to provide the data
      */
     public void setModel(TreeModel newModel) {
-        super.setModel(newModel);
-        rebuild(false);
+	super.setModel(newModel);
+	rebuild(false);
     }
 
     /**
@@ -101,20 +102,20 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * @see #rootVisible
      */
     public void setRootVisible(boolean rootVisible) {
-        if(isRootVisible() != rootVisible) {
-            super.setRootVisible(rootVisible);
-            if(root != null) {
-                if(rootVisible) {
-                    rowCount++;
-                    root.adjustRowBy(1);
-                }
-                else {
-                    rowCount--;
-                    root.adjustRowBy(-1);
-                }
-                visibleNodesChanged();
-            }
-        }
+	if(isRootVisible() != rootVisible) {
+	    super.setRootVisible(rootVisible);
+	    if(root != null) {
+		if(rootVisible) {
+		    rowCount++;
+		    root.adjustRowBy(1);
+		}
+		else {
+		    rowCount--;
+		    root.adjustRowBy(-1);
+		}
+		visibleNodesChanged();
+	    }
+	}
     }
 
     /**
@@ -124,19 +125,19 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * @param rowHeight the height of each cell, in pixels
      */
     public void setRowHeight(int rowHeight) {
-        if(rowHeight <= 0)
-            throw new IllegalArgumentException("FixedHeightLayoutCache only supports row heights greater than 0");
-        if(getRowHeight() != rowHeight) {
-            super.setRowHeight(rowHeight);
-            visibleNodesChanged();
-        }
+	if(rowHeight <= 0)
+	    throw new IllegalArgumentException("FixedHeightLayoutCache only supports row heights greater than 0");
+	if(getRowHeight() != rowHeight) {
+	    super.setRowHeight(rowHeight);
+	    visibleNodesChanged();
+	}
     }
 
     /**
      * Returns the number of visible rows.
      */
     public int getRowCount() {
-        return rowCount;
+	return rowCount;
     }
 
     /**
@@ -152,21 +153,21 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * it is referencing.
      */
     public void invalidateSizes() {
-        // Nothing to do here, rowHeight still same, which is all
-        // this is interested in, visible region may have changed though.
-        visibleNodesChanged();
+	// Nothing to do here, rowHeight still same, which is all
+	// this is interested in, visible region may have changed though.
+	visibleNodesChanged();
     }
 
     /**
       * Returns true if the value identified by row is currently expanded.
       */
     public boolean isExpanded(TreePath path) {
-        if(path != null) {
-            FHTreeStateNode     lastNode = getNodeForPath(path, true, false);
+	if(path != null) {
+	    FHTreeStateNode     lastNode = getNodeForPath(path, true, false);
 
-            return (lastNode != null && lastNode.isExpanded());
-        }
-        return false;
+	    return (lastNode != null && lastNode.isExpanded());
+	}
+	return false;
     }
 
     /**
@@ -177,27 +178,27 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * @return a Rectangle object specifying the space to be used
      */
     public Rectangle getBounds(TreePath path, Rectangle placeIn) {
-        if(path == null)
-            return null;
+	if(path == null)
+	    return null;
 
-        FHTreeStateNode      node = getNodeForPath(path, true, false);
+	FHTreeStateNode      node = getNodeForPath(path, true, false);
 
-        if(node != null)
-            return getBounds(node, -1, placeIn);
+	if(node != null)
+	    return getBounds(node, -1, placeIn);
 
-        // node hasn't been created yet.
-        TreePath       parentPath = path.getParentPath();
+	// node hasn't been created yet.
+	TreePath       parentPath = path.getParentPath();
 
-        node = getNodeForPath(parentPath, true, false);
+	node = getNodeForPath(parentPath, true, false);
         if (node != null && node.isExpanded()) {
-            int              childIndex = treeModel.getIndexOfChild
-                                 (parentPath.getLastPathComponent(),
-                                  path.getLastPathComponent());
+	    int              childIndex = treeModel.getIndexOfChild
+		                 (parentPath.getLastPathComponent(),
+				  path.getLastPathComponent());
 
-            if(childIndex != -1)
-                return getBounds(node, childIndex, placeIn);
-        }
-        return null;
+	    if(childIndex != -1)
+		return getBounds(node, childIndex, placeIn);
+	}
+	return null;
     }
 
     /**
@@ -205,12 +206,12 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
       * null is returned.
       */
     public TreePath getPathForRow(int row) {
-        if(row >= 0 && row < getRowCount()) {
-            if(root.getPathForRow(row, getRowCount(), info)) {
-                return info.getPath();
-            }
-        }
-        return null;
+	if(row >= 0 && row < getRowCount()) {
+	    if(root.getPathForRow(row, getRowCount(), info)) {
+		return info.getPath();
+	    }
+	}
+	return null;
     }
 
     /**
@@ -219,23 +220,23 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
       * currently visible.
       */
     public int getRowForPath(TreePath path) {
-        if(path == null || root == null)
-            return -1;
+	if(path == null || root == null)
+	    return -1;
 
-        FHTreeStateNode         node = getNodeForPath(path, true, false);
+	FHTreeStateNode         node = getNodeForPath(path, true, false);
 
-        if(node != null)
-            return node.getRow();
+	if(node != null)
+	    return node.getRow();
 
-        TreePath       parentPath = path.getParentPath();
+	TreePath       parentPath = path.getParentPath();
 
-        node = getNodeForPath(parentPath, true, false);
-        if(node != null && node.isExpanded()) {
-            return node.getRowToModelIndex(treeModel.getIndexOfChild
-                                           (parentPath.getLastPathComponent(),
-                                            path.getLastPathComponent()));
-        }
-        return -1;
+	node = getNodeForPath(parentPath, true, false);
+	if(node != null && node.isExpanded()) {
+	    return node.getRowToModelIndex(treeModel.getIndexOfChild
+					   (parentPath.getLastPathComponent(),
+					    path.getLastPathComponent()));
+	}
+	return -1;
     }
 
     /**
@@ -246,23 +247,23 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
       * the returned path and test x, y against that.
       */
     public TreePath getPathClosestTo(int x, int y) {
-        if(getRowCount() == 0)
-            return null;
+	if(getRowCount() == 0)
+	    return null;
 
-        int                row = getRowContainingYLocation(y);
+	int                row = getRowContainingYLocation(y);
 
-        return getPathForRow(row);
+	return getPathForRow(row);
     }
 
     /**
      * Returns the number of visible children for row.
      */
     public int getVisibleChildCount(TreePath path) {
-        FHTreeStateNode         node = getNodeForPath(path, true, false);
+	FHTreeStateNode         node = getNodeForPath(path, true, false);
 
-        if(node == null)
-            return 0;
-        return node.getTotalChildCount();
+	if(node == null)
+	    return 0;
+	return node.getTotalChildCount();
     }
 
     /**
@@ -271,23 +272,23 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * is based on how the paths are displayed.
      */
     public Enumeration<TreePath> getVisiblePathsFrom(TreePath path) {
-        if(path == null)
-            return null;
+	if(path == null)
+	    return null;
 
-        FHTreeStateNode         node = getNodeForPath(path, true, false);
+	FHTreeStateNode         node = getNodeForPath(path, true, false);
 
-        if(node != null) {
-            return new VisibleFHTreeStateNodeEnumeration(node);
-        }
-        TreePath            parentPath = path.getParentPath();
+	if(node != null) {
+	    return new VisibleFHTreeStateNodeEnumeration(node);
+	}
+	TreePath            parentPath = path.getParentPath();
 
-        node = getNodeForPath(parentPath, true, false);
-        if(node != null && node.isExpanded()) {
-            return new VisibleFHTreeStateNodeEnumeration(node,
-                  treeModel.getIndexOfChild(parentPath.getLastPathComponent(),
-                                            path.getLastPathComponent()));
-        }
-        return null;
+	node = getNodeForPath(parentPath, true, false);
+	if(node != null && node.isExpanded()) {
+	    return new VisibleFHTreeStateNodeEnumeration(node,
+		  treeModel.getIndexOfChild(parentPath.getLastPathComponent(),
+					    path.getLastPathComponent()));
+	}
+	return null;
     }
 
     /**
@@ -295,35 +296,35 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * <code>isExpanded</code>.
      */
     public void setExpandedState(TreePath path, boolean isExpanded) {
-        if(isExpanded)
-            ensurePathIsExpanded(path, true);
-        else if(path != null) {
-            TreePath              parentPath = path.getParentPath();
+	if(isExpanded)
+	    ensurePathIsExpanded(path, true);
+	else if(path != null) {
+	    TreePath              parentPath = path.getParentPath();
 
-            // YECK! Make the parent expanded.
-            if(parentPath != null) {
-                FHTreeStateNode     parentNode = getNodeForPath(parentPath,
-                                                                false, true);
-                if(parentNode != null)
-                    parentNode.makeVisible();
-            }
-            // And collapse the child.
-            FHTreeStateNode         childNode = getNodeForPath(path, true,
-                                                               false);
+	    // YECK! Make the parent expanded.
+	    if(parentPath != null) {
+		FHTreeStateNode     parentNode = getNodeForPath(parentPath,
+								false, true);
+		if(parentNode != null)
+		    parentNode.makeVisible();
+	    }
+	    // And collapse the child.
+	    FHTreeStateNode         childNode = getNodeForPath(path, true,
+							       false);
 
-            if(childNode != null)
-                childNode.collapse(true);
-        }
+	    if(childNode != null)
+		childNode.collapse(true);
+	}
     }
 
     /**
      * Returns true if the path is expanded, and visible.
      */
     public boolean getExpandedState(TreePath path) {
-        FHTreeStateNode       node = getNodeForPath(path, true, false);
+	FHTreeStateNode       node = getNodeForPath(path, true, false);
 
-        return (node != null) ? (node.isVisible() && node.isExpanded()) :
-                                 false;
+	return (node != null) ? (node.isVisible() && node.isExpanded()) :
+	                         false;
     }
 
     //
@@ -343,40 +344,40 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * <p>e.childIndices() returns the index(es) of the changed node(s).</p>
      */
     public void treeNodesChanged(TreeModelEvent e) {
-        if(e != null) {
-            int                 changedIndexs[];
-            FHTreeStateNode     changedParent = getNodeForPath
-                                  (e.getTreePath(), false, false);
-            int                 maxCounter;
+	if(e != null) {
+	    int                 changedIndexs[];
+	    FHTreeStateNode     changedParent = getNodeForPath
+		                  (e.getTreePath(), false, false);
+	    int                 maxCounter;
 
-            changedIndexs = e.getChildIndices();
-            /* Only need to update the children if the node has been
-               expanded once. */
-            // PENDING(scott): make sure childIndexs is sorted!
-            if (changedParent != null) {
-                if (changedIndexs != null &&
-                    (maxCounter = changedIndexs.length) > 0) {
-                    Object       parentValue = changedParent.getUserObject();
+	    changedIndexs = e.getChildIndices();
+	    /* Only need to update the children if the node has been
+	       expanded once. */
+	    // PENDING(scott): make sure childIndexs is sorted!
+	    if (changedParent != null) {
+		if (changedIndexs != null &&
+		    (maxCounter = changedIndexs.length) > 0) {
+		    Object       parentValue = changedParent.getUserObject();
 
-                    for(int counter = 0; counter < maxCounter; counter++) {
-                        FHTreeStateNode    child = changedParent.
-                                 getChildAtModelIndex(changedIndexs[counter]);
+		    for(int counter = 0; counter < maxCounter; counter++) {
+			FHTreeStateNode    child = changedParent.
+			         getChildAtModelIndex(changedIndexs[counter]);
 
-                        if(child != null) {
-                            child.setUserObject(treeModel.getChild(parentValue,
-                                                     changedIndexs[counter]));
-                        }
-                    }
-                    if(changedParent.isVisible() && changedParent.isExpanded())
-                        visibleNodesChanged();
-                }
-                // Null for root indicates it changed.
-                else if (changedParent == root && changedParent.isVisible() &&
-                         changedParent.isExpanded()) {
-                    visibleNodesChanged();
-                }
-            }
-        }
+			if(child != null) {
+			    child.setUserObject(treeModel.getChild(parentValue,
+						     changedIndexs[counter]));
+			}
+		    }
+		    if(changedParent.isVisible() && changedParent.isExpanded())
+			visibleNodesChanged();
+		}
+		// Null for root indicates it changed.
+		else if (changedParent == root && changedParent.isVisible() &&
+			 changedParent.isExpanded()) {
+		    visibleNodesChanged();
+		}
+	    }
+	}
     }
 
     /**
@@ -387,32 +388,32 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * ascending order.
      */
     public void treeNodesInserted(TreeModelEvent e) {
-        if(e != null) {
-            int                 changedIndexs[];
-            FHTreeStateNode     changedParent = getNodeForPath
-                                  (e.getTreePath(), false, false);
-            int                 maxCounter;
+	if(e != null) {
+	    int                 changedIndexs[];
+	    FHTreeStateNode     changedParent = getNodeForPath
+		                  (e.getTreePath(), false, false);
+	    int                 maxCounter;
 
-            changedIndexs = e.getChildIndices();
-            /* Only need to update the children if the node has been
-               expanded once. */
-            // PENDING(scott): make sure childIndexs is sorted!
-            if(changedParent != null && changedIndexs != null &&
-               (maxCounter = changedIndexs.length) > 0) {
-                boolean          isVisible =
-                    (changedParent.isVisible() &&
-                     changedParent.isExpanded());
+	    changedIndexs = e.getChildIndices();
+	    /* Only need to update the children if the node has been
+	       expanded once. */
+	    // PENDING(scott): make sure childIndexs is sorted!
+	    if(changedParent != null && changedIndexs != null &&
+	       (maxCounter = changedIndexs.length) > 0) {
+		boolean          isVisible =
+		    (changedParent.isVisible() &&
+		     changedParent.isExpanded());
 
-                for(int counter = 0; counter < maxCounter; counter++) {
-                    changedParent.childInsertedAtModelIndex
-                        (changedIndexs[counter], isVisible);
-                }
-                if(isVisible && treeSelectionModel != null)
-                    treeSelectionModel.resetRowSelection();
-                if(changedParent.isVisible())
-                    this.visibleNodesChanged();
-            }
-        }
+		for(int counter = 0; counter < maxCounter; counter++) {
+		    changedParent.childInsertedAtModelIndex
+			(changedIndexs[counter], isVisible);
+		}
+		if(isVisible && treeSelectionModel != null)
+		    treeSelectionModel.resetRowSelection();
+		if(changedParent.isVisible())
+		    this.visibleNodesChanged();
+	    }
+	}
     }
 
     /**
@@ -426,42 +427,42 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * <p>e.childIndices() returns the indices the nodes had before they were deleted in ascending order.</p>
      */
     public void treeNodesRemoved(TreeModelEvent e) {
-        if(e != null) {
-            int                  changedIndexs[];
-            int                  maxCounter;
-            TreePath             parentPath = e.getTreePath();
-            FHTreeStateNode      changedParentNode = getNodeForPath
-                                       (parentPath, false, false);
+	if(e != null) {
+	    int                  changedIndexs[];
+	    int                  maxCounter;
+	    TreePath             parentPath = e.getTreePath();
+	    FHTreeStateNode      changedParentNode = getNodeForPath
+		                       (parentPath, false, false);
 
-            changedIndexs = e.getChildIndices();
-            // PENDING(scott): make sure that changedIndexs are sorted in
-            // ascending order.
-            if(changedParentNode != null && changedIndexs != null &&
-               (maxCounter = changedIndexs.length) > 0) {
-                Object[]           children = e.getChildren();
-                boolean            isVisible =
-                    (changedParentNode.isVisible() &&
-                     changedParentNode.isExpanded());
+	    changedIndexs = e.getChildIndices();
+	    // PENDING(scott): make sure that changedIndexs are sorted in
+	    // ascending order.
+	    if(changedParentNode != null && changedIndexs != null &&
+	       (maxCounter = changedIndexs.length) > 0) {
+		Object[]           children = e.getChildren();
+		boolean            isVisible =
+		    (changedParentNode.isVisible() &&
+		     changedParentNode.isExpanded());
 
-                for(int counter = maxCounter - 1; counter >= 0; counter--) {
-                    changedParentNode.removeChildAtModelIndex
-                                     (changedIndexs[counter], isVisible);
-                }
-                if(isVisible) {
-                    if(treeSelectionModel != null)
-                        treeSelectionModel.resetRowSelection();
+		for(int counter = maxCounter - 1; counter >= 0; counter--) {
+		    changedParentNode.removeChildAtModelIndex
+			             (changedIndexs[counter], isVisible);
+		}
+		if(isVisible) {
+		    if(treeSelectionModel != null)
+			treeSelectionModel.resetRowSelection();
                     if (treeModel.getChildCount(changedParentNode.
                                                 getUserObject()) == 0 &&
                                   changedParentNode.isLeaf()) {
                         // Node has become a leaf, collapse it.
                         changedParentNode.collapse(false);
                     }
-                    visibleNodesChanged();
-                }
-                else if(changedParentNode.isVisible())
-                    visibleNodesChanged();
-            }
-        }
+		    visibleNodesChanged();
+		}
+		else if(changedParentNode.isVisible())
+		    visibleNodesChanged();
+	    }
+	}
     }
 
     /**
@@ -474,14 +475,14 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * <p>e.childIndices() returns null.</p>
      */
     public void treeStructureChanged(TreeModelEvent e) {
-        if(e != null) {
-            TreePath          changedPath = e.getTreePath();
+	if(e != null) {
+	    TreePath          changedPath = e.getTreePath();
             FHTreeStateNode   changedNode = getNodeForPath
-                                                (changedPath, false, false);
+			                        (changedPath, false, false);
 
-            // Check if root has changed, either to a null root, or
+	    // Check if root has changed, either to a null root, or
             // to an entirely new root.
-            if (changedNode == root ||
+	    if (changedNode == root ||
                 (changedNode == null &&
                  ((changedPath == null && treeModel != null &&
                    treeModel.getRoot() == null) ||
@@ -496,14 +497,14 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
                 wasExpanded = changedNode.isExpanded();
                 wasVisible = changedNode.isVisible();
 
-                int index = parent.getIndex(changedNode);
-                changedNode.collapse(false);
-                parent.remove(index);
+  		int index = parent.getIndex(changedNode);
+  		changedNode.collapse(false);
+  		parent.remove(index);
 
                 if(wasVisible && wasExpanded) {
-                    int row = changedNode.getRow();
-                    parent.resetChildrenRowsFrom(row, index,
-                                                 changedNode.getChildIndex());
+ 		    int row = changedNode.getRow();
+ 		    parent.resetChildrenRowsFrom(row, index,
+ 						 changedNode.getChildIndex());
                     changedNode = getNodeForPath(changedPath, false, true);
                     changedNode.expand();
                 }
@@ -511,8 +512,8 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
                     treeSelectionModel.resetRowSelection();
                 if(wasVisible)
                     this.visibleNodesChanged();
-            }
-        }
+	    }
+	}
     }
 
 
@@ -529,40 +530,40 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * the bounds of the node at <code>childIndex</code> are returned.
      */
     private Rectangle getBounds(FHTreeStateNode parent, int childIndex,
-                                  Rectangle placeIn) {
-        boolean              expanded;
-        int                  level;
-        int                  row;
-        Object               value;
+				  Rectangle placeIn) {
+	boolean              expanded;
+	int                  level;
+	int                  row;
+	Object               value;
 
-        if(childIndex == -1) {
-            // Getting bounds for parent
-            row = parent.getRow();
-            value = parent.getUserObject();
-            expanded = parent.isExpanded();
-            level = parent.getLevel();
-        }
-        else {
-            row = parent.getRowToModelIndex(childIndex);
-            value = treeModel.getChild(parent.getUserObject(), childIndex);
-            expanded = false;
-            level = parent.getLevel() + 1;
-        }
+	if(childIndex == -1) {
+	    // Getting bounds for parent
+	    row = parent.getRow();
+	    value = parent.getUserObject();
+	    expanded = parent.isExpanded();
+	    level = parent.getLevel();
+	}
+	else {
+	    row = parent.getRowToModelIndex(childIndex);
+	    value = treeModel.getChild(parent.getUserObject(), childIndex);
+	    expanded = false;
+	    level = parent.getLevel() + 1;
+	}
 
-        Rectangle      bounds = getNodeDimensions(value, row, level,
-                                                  expanded, boundsBuffer);
-        // No node dimensions, bail.
-        if(bounds == null)
-            return null;
+	Rectangle      bounds = getNodeDimensions(value, row, level,
+						  expanded, boundsBuffer);
+	// No node dimensions, bail.
+	if(bounds == null)
+	    return null;
 
-        if(placeIn == null)
-            placeIn = new Rectangle();
+	if(placeIn == null)
+	    placeIn = new Rectangle();
 
-        placeIn.x = bounds.x;
-        placeIn.height = getRowHeight();
-        placeIn.y = row * placeIn.height;
-        placeIn.width = bounds.width;
-        return placeIn;
+	placeIn.x = bounds.x;
+	placeIn.height = getRowHeight();
+	placeIn.y = row * placeIn.height;
+	placeIn.width = bounds.width;
+	return placeIn;
     }
 
     /**
@@ -570,21 +571,21 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * created with.
      */
     private void adjustRowCountBy(int changeAmount) {
-        rowCount += changeAmount;
+	rowCount += changeAmount;
     }
 
     /**
      * Adds a mapping for node.
      */
     private void addMapping(FHTreeStateNode node) {
-        treePathMapping.put(node.getTreePath(), node);
+	treePathMapping.put(node.getTreePath(), node);
     }
 
     /**
      * Removes the mapping for a previously added node.
      */
     private void removeMapping(FHTreeStateNode node) {
-        treePathMapping.remove(node.getTreePath());
+	treePathMapping.remove(node.getTreePath());
     }
 
     /**
@@ -592,7 +593,7 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * return null, if you to create a node use getNodeForPath.
      */
     private FHTreeStateNode getMapping(TreePath path) {
-        return (FHTreeStateNode)treePathMapping.get(path);
+	return (FHTreeStateNode)treePathMapping.get(path);
     }
 
     /**
@@ -601,29 +602,29 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
     private void rebuild(boolean clearSelection) {
         Object            rootUO;
 
-        treePathMapping.clear();
-        if(treeModel != null && (rootUO = treeModel.getRoot()) != null) {
-            root = createNodeForValue(rootUO, 0);
-            root.path = new TreePath(rootUO);
-            addMapping(root);
-            if(isRootVisible()) {
-                rowCount = 1;
-                root.row = 0;
-            }
-            else {
-                rowCount = 0;
-                root.row = -1;
-            }
-            root.expand();
-        }
-        else {
-            root = null;
-            rowCount = 0;
-        }
-        if(clearSelection && treeSelectionModel != null) {
-            treeSelectionModel.clearSelection();
-        }
-        this.visibleNodesChanged();
+	treePathMapping.clear();
+	if(treeModel != null && (rootUO = treeModel.getRoot()) != null) {
+	    root = createNodeForValue(rootUO, 0);
+	    root.path = new TreePath(rootUO);
+	    addMapping(root);
+	    if(isRootVisible()) {
+		rowCount = 1;
+		root.row = 0;
+	    }
+	    else {
+		rowCount = 0;
+		root.row = -1;
+	    }
+	    root.expand();
+	}
+	else {
+	    root = null;
+	    rowCount = 0;
+	}
+	if(clearSelection && treeSelectionModel != null) {
+	    treeSelectionModel.clearSelection();
+	}
+	this.visibleNodesChanged();
     }
 
     /**
@@ -632,10 +633,10 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
       * row index, the last row index is returned.
       */
     private int getRowContainingYLocation(int location) {
-        if(getRowCount() == 0)
-            return -1;
-        return Math.max(0, Math.min(getRowCount() - 1,
-                                    location / getRowHeight()));
+	if(getRowCount() == 0)
+	    return -1;
+	return Math.max(0, Math.min(getRowCount() - 1,
+				    location / getRowHeight()));
     }
 
     /**
@@ -645,33 +646,33 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * Returns true if succesful in finding the path.
      */
     private boolean ensurePathIsExpanded(TreePath aPath,
-                                           boolean expandLast) {
-        if(aPath != null) {
-            // Make sure the last entry isn't a leaf.
-            if(treeModel.isLeaf(aPath.getLastPathComponent())) {
-                aPath = aPath.getParentPath();
-                expandLast = true;
-            }
-            if(aPath != null) {
-                FHTreeStateNode     lastNode = getNodeForPath(aPath, false,
-                                                              true);
+					   boolean expandLast) {
+	if(aPath != null) {
+	    // Make sure the last entry isn't a leaf.
+	    if(treeModel.isLeaf(aPath.getLastPathComponent())) {
+		aPath = aPath.getParentPath();
+		expandLast = true;
+	    }
+	    if(aPath != null) {
+		FHTreeStateNode     lastNode = getNodeForPath(aPath, false,
+							      true);
 
-                if(lastNode != null) {
-                    lastNode.makeVisible();
-                    if(expandLast)
-                        lastNode.expand();
-                    return true;
-                }
-            }
-        }
-        return false;
+		if(lastNode != null) {
+		    lastNode.makeVisible();
+		    if(expandLast)
+			lastNode.expand();
+		    return true;
+		}
+	    }
+	}
+	return false;
     }
 
     /**
      * Creates and returns an instance of FHTreeStateNode.
      */
     private FHTreeStateNode createNodeForValue(Object value,int childIndex) {
-        return new FHTreeStateNode(value, childIndex, -1);
+	return new FHTreeStateNode(value, childIndex, -1);
     }
 
     /**
@@ -680,58 +681,58 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * Otherwise returns null.
      */
     private FHTreeStateNode getNodeForPath(TreePath path,
-                                             boolean onlyIfVisible,
-                                             boolean shouldCreate) {
-        if(path != null) {
-            FHTreeStateNode      node;
+					     boolean onlyIfVisible,
+					     boolean shouldCreate) {
+	if(path != null) {
+	    FHTreeStateNode      node;
 
-            node = getMapping(path);
-            if(node != null) {
-                if(onlyIfVisible && !node.isVisible())
-                    return null;
-                return node;
-            }
-            if(onlyIfVisible)
-                return null;
+	    node = getMapping(path);
+	    if(node != null) {
+		if(onlyIfVisible && !node.isVisible())
+		    return null;
+		return node;
+	    }
+	    if(onlyIfVisible)
+		return null;
 
-            // Check all the parent paths, until a match is found.
-            Stack                paths;
+	    // Check all the parent paths, until a match is found.
+	    Stack                paths;
 
-            if(tempStacks.size() == 0) {
-                paths = new Stack();
-            }
-            else {
-                paths = (Stack)tempStacks.pop();
-            }
+	    if(tempStacks.size() == 0) {
+		paths = new Stack();
+	    }
+	    else {
+		paths = (Stack)tempStacks.pop();
+	    }
 
-            try {
-                paths.push(path);
-                path = path.getParentPath();
-                node = null;
-                while(path != null) {
-                    node = getMapping(path);
-                    if(node != null) {
-                        // Found a match, create entries for all paths in
-                        // paths.
-                        while(node != null && paths.size() > 0) {
-                            path = (TreePath)paths.pop();
-                            node = node.createChildFor(path.
-                                                       getLastPathComponent());
-                        }
-                        return node;
-                    }
-                    paths.push(path);
-                    path = path.getParentPath();
-                }
-            }
-            finally {
-                paths.removeAllElements();
-                tempStacks.push(paths);
-            }
-            // If we get here it means they share a different root!
-            return null;
-        }
-        return null;
+	    try {
+		paths.push(path);
+		path = path.getParentPath();
+		node = null;
+		while(path != null) {
+		    node = getMapping(path);
+		    if(node != null) {
+			// Found a match, create entries for all paths in
+			// paths.
+			while(node != null && paths.size() > 0) {
+			    path = (TreePath)paths.pop();
+			    node = node.createChildFor(path.
+						       getLastPathComponent());
+			}
+			return node;
+		    }
+		    paths.push(path);
+		    path = path.getParentPath();
+		}
+	    }
+	    finally {
+		paths.removeAllElements();
+		tempStacks.push(paths);
+	    }
+	    // If we get here it means they share a different root!
+	    return null;
+	}
+	return null;
     }
 
     /**
@@ -742,709 +743,709 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * obviously does not support variable sized row heights.
      */
     private class FHTreeStateNode extends DefaultMutableTreeNode {
-        /** Is this node expanded? */
-        protected boolean         isExpanded;
+	/** Is this node expanded? */
+	protected boolean         isExpanded;
 
-        /** Index of this node from the model. */
-        protected int             childIndex;
+	/** Index of this node from the model. */
+	protected int             childIndex;
 
-        /** Child count of the receiver. */
-        protected int             childCount;
+  	/** Child count of the receiver. */
+  	protected int             childCount;
+ 	
+	/** Row of the receiver. This is only valid if the row is expanded.
+	 */
+	protected int             row;
 
-        /** Row of the receiver. This is only valid if the row is expanded.
-         */
-        protected int             row;
-
-        /** Path of this node. */
-        protected TreePath        path;
+	/** Path of this node. */
+	protected TreePath        path;
 
 
-        public FHTreeStateNode(Object userObject, int childIndex, int row) {
-            super(userObject);
-            this.childIndex = childIndex;
-            this.row = row;
-        }
+	public FHTreeStateNode(Object userObject, int childIndex, int row) {
+	    super(userObject);
+	    this.childIndex = childIndex;
+	    this.row = row;
+	}
 
-        //
-        // Overriden DefaultMutableTreeNode methods
-        //
+	//
+	// Overriden DefaultMutableTreeNode methods
+	//
 
-        /**
-         * Messaged when this node is added somewhere, resets the path
-         * and adds a mapping from path to this node.
-         */
-        public void setParent(MutableTreeNode parent) {
-            super.setParent(parent);
-            if(parent != null) {
-                path = ((FHTreeStateNode)parent).getTreePath().
-                            pathByAddingChild(getUserObject());
-                addMapping(this);
-            }
-        }
+	/**
+	 * Messaged when this node is added somewhere, resets the path
+	 * and adds a mapping from path to this node.
+	 */
+	public void setParent(MutableTreeNode parent) {
+	    super.setParent(parent);
+	    if(parent != null) {
+		path = ((FHTreeStateNode)parent).getTreePath().
+		            pathByAddingChild(getUserObject());
+		addMapping(this);
+	    }
+	}
 
-        /**
-         * Messaged when this node is removed from its parent, this messages
-         * <code>removedFromMapping</code> to remove all the children.
-         */
-        public void remove(int childIndex) {
-            FHTreeStateNode     node = (FHTreeStateNode)getChildAt(childIndex);
+	/**
+	 * Messaged when this node is removed from its parent, this messages
+	 * <code>removedFromMapping</code> to remove all the children.
+	 */
+	public void remove(int childIndex) {
+	    FHTreeStateNode     node = (FHTreeStateNode)getChildAt(childIndex);
 
-            node.removeFromMapping();
-            super.remove(childIndex);
-        }
+	    node.removeFromMapping();
+	    super.remove(childIndex);
+	}
 
-        /**
-         * Messaged to set the user object. This resets the path.
-         */
-        public void setUserObject(Object o) {
-            super.setUserObject(o);
-            if(path != null) {
-                FHTreeStateNode      parent = (FHTreeStateNode)getParent();
+	/**
+	 * Messaged to set the user object. This resets the path.
+	 */
+	public void setUserObject(Object o) {
+	    super.setUserObject(o);
+	    if(path != null) {
+		FHTreeStateNode      parent = (FHTreeStateNode)getParent();
 
-                if(parent != null)
-                    resetChildrenPaths(parent.getTreePath());
-                else
-                    resetChildrenPaths(null);
-            }
-        }
+		if(parent != null)
+		    resetChildrenPaths(parent.getTreePath());
+		else
+		    resetChildrenPaths(null);
+	    }
+	}
 
-        //
-        //
+	//
+	//
 
-        /**
-         * Returns the index of the receiver in the model.
-         */
-        public int getChildIndex() {
-            return childIndex;
-        }
+	/**
+	 * Returns the index of the receiver in the model.
+	 */
+	public int getChildIndex() {
+	    return childIndex;
+	}
 
-        /**
-         * Returns the <code>TreePath</code> of the receiver.
-         */
-        public TreePath getTreePath() {
-            return path;
-        }
+	/**
+	 * Returns the <code>TreePath</code> of the receiver.
+	 */
+	public TreePath getTreePath() {
+	    return path;
+	}
 
-        /**
-         * Returns the child for the passed in model index, this will
-         * return <code>null</code> if the child for <code>index</code>
+	/**
+	 * Returns the child for the passed in model index, this will
+	 * return <code>null</code> if the child for <code>index</code>
          * has not yet been created (expanded).
-         */
-        public FHTreeStateNode getChildAtModelIndex(int index) {
-            // PENDING: Make this a binary search!
-            for(int counter = getChildCount() - 1; counter >= 0; counter--)
-                if(((FHTreeStateNode)getChildAt(counter)).childIndex == index)
-                    return (FHTreeStateNode)getChildAt(counter);
-            return null;
-        }
+	 */
+	public FHTreeStateNode getChildAtModelIndex(int index) {
+	    // PENDING: Make this a binary search!
+	    for(int counter = getChildCount() - 1; counter >= 0; counter--)
+		if(((FHTreeStateNode)getChildAt(counter)).childIndex == index)
+		    return (FHTreeStateNode)getChildAt(counter);
+	    return null;
+	}
 
-        /**
-         * Returns true if this node is visible. This is determined by
-         * asking all the parents if they are expanded.
-         */
-        public boolean isVisible() {
-            FHTreeStateNode         parent = (FHTreeStateNode)getParent();
+	/**
+	 * Returns true if this node is visible. This is determined by
+	 * asking all the parents if they are expanded.
+	 */
+	public boolean isVisible() {
+	    FHTreeStateNode         parent = (FHTreeStateNode)getParent();
 
-            if(parent == null)
-                return true;
-            return (parent.isExpanded() && parent.isVisible());
-        }
+	    if(parent == null)
+		return true;
+	    return (parent.isExpanded() && parent.isVisible());
+	}
 
-        /**
-         * Returns the row of the receiver.
-         */
-        public int getRow() {
-            return row;
-        }
+	/**
+	 * Returns the row of the receiver.
+	 */
+	public int getRow() {
+	    return row;
+	}
 
-        /**
-         * Returns the row of the child with a model index of
-         * <code>index</code>.
-         */
-        public int getRowToModelIndex(int index) {
-            FHTreeStateNode      child;
-            int                  lastRow = getRow() + 1;
-            int                  retValue = lastRow;
+	/**
+	 * Returns the row of the child with a model index of
+	 * <code>index</code>.
+	 */
+	public int getRowToModelIndex(int index) {
+	    FHTreeStateNode      child;
+	    int                  lastRow = getRow() + 1;
+	    int                  retValue = lastRow;
 
-            // This too could be a binary search!
-            for(int counter = 0, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                child = (FHTreeStateNode)getChildAt(counter);
-                if(child.childIndex >= index) {
-                    if(child.childIndex == index)
-                        return child.row;
-                    if(counter == 0)
-                        return getRow() + 1 + index;
-                    return child.row - (child.childIndex - index);
-                }
-            }
-            // YECK!
-            return getRow() + 1 + getTotalChildCount() -
-                             (childCount - index);
-        }
+	    // This too could be a binary search!
+	    for(int counter = 0, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		child = (FHTreeStateNode)getChildAt(counter);
+		if(child.childIndex >= index) {
+		    if(child.childIndex == index)
+			return child.row;
+		    if(counter == 0)
+			return getRow() + 1 + index;
+		    return child.row - (child.childIndex - index);
+		}
+	    }
+	    // YECK!
+	    return getRow() + 1 + getTotalChildCount() -
+		             (childCount - index);
+	}
 
-        /**
-         * Returns the number of children in the receiver by descending all
-         * expanded nodes and messaging them with getTotalChildCount.
-         */
-        public int getTotalChildCount() {
-            if(isExpanded()) {
-                FHTreeStateNode      parent = (FHTreeStateNode)getParent();
-                int                  pIndex;
+	/**
+	 * Returns the number of children in the receiver by descending all
+	 * expanded nodes and messaging them with getTotalChildCount.
+	 */
+	public int getTotalChildCount() {
+	    if(isExpanded()) {
+		FHTreeStateNode      parent = (FHTreeStateNode)getParent();
+		int                  pIndex;
 
-                if(parent != null && (pIndex = parent.getIndex(this)) + 1 <
-                   parent.getChildCount()) {
-                    // This node has a created sibling, to calc total
-                    // child count directly from that!
-                    FHTreeStateNode  nextSibling = (FHTreeStateNode)parent.
-                                           getChildAt(pIndex + 1);
+		if(parent != null && (pIndex = parent.getIndex(this)) + 1 <
+		   parent.getChildCount()) {
+		    // This node has a created sibling, to calc total
+		    // child count directly from that!
+		    FHTreeStateNode  nextSibling = (FHTreeStateNode)parent.
+			                   getChildAt(pIndex + 1);
 
-                    return nextSibling.row - row -
-                           (nextSibling.childIndex - childIndex);
-                }
-                else {
-                    int retCount = childCount;
+		    return nextSibling.row - row -
+			   (nextSibling.childIndex - childIndex);
+		}
+		else {
+ 		    int retCount = childCount;
 
-                    for(int counter = getChildCount() - 1; counter >= 0;
-                        counter--) {
-                        retCount += ((FHTreeStateNode)getChildAt(counter))
-                                                  .getTotalChildCount();
-                    }
-                    return retCount;
-                }
-            }
-            return 0;
-        }
+		    for(int counter = getChildCount() - 1; counter >= 0;
+			counter--) {
+			retCount += ((FHTreeStateNode)getChildAt(counter))
+			                          .getTotalChildCount();
+		    }
+		    return retCount;
+		}
+	    }
+	    return 0;
+	}
 
-        /**
-         * Returns true if this node is expanded.
-         */
-        public boolean isExpanded() {
-            return isExpanded;
-        }
+	/**
+	 * Returns true if this node is expanded.
+	 */
+	public boolean isExpanded() {
+	    return isExpanded;
+	}
 
-        /**
-         * The highest visible nodes have a depth of 0.
-         */
-        public int getVisibleLevel() {
-            if (isRootVisible()) {
-                return getLevel();
-            } else {
-                return getLevel() - 1;
-            }
-        }
+	/**
+	 * The highest visible nodes have a depth of 0.
+	 */
+	public int getVisibleLevel() {
+	    if (isRootVisible()) {
+		return getLevel();
+	    } else {
+		return getLevel() - 1;
+	    }
+	}
 
-        /**
-         * Recreates the receivers path, and all its childrens paths.
-         */
-        protected void resetChildrenPaths(TreePath parentPath) {
-            removeMapping(this);
-            if(parentPath == null)
-                path = new TreePath(getUserObject());
-            else
-                path = parentPath.pathByAddingChild(getUserObject());
-            addMapping(this);
-            for(int counter = getChildCount() - 1; counter >= 0; counter--)
-                ((FHTreeStateNode)getChildAt(counter)).
-                               resetChildrenPaths(path);
-        }
+	/**
+	 * Recreates the receivers path, and all its childrens paths.
+	 */
+	protected void resetChildrenPaths(TreePath parentPath) {
+	    removeMapping(this);
+	    if(parentPath == null)
+		path = new TreePath(getUserObject());
+	    else
+		path = parentPath.pathByAddingChild(getUserObject());
+	    addMapping(this);
+	    for(int counter = getChildCount() - 1; counter >= 0; counter--)
+		((FHTreeStateNode)getChildAt(counter)).
+		               resetChildrenPaths(path);
+	}
 
-        /**
-         * Removes the receiver, and all its children, from the mapping
-         * table.
-         */
-        protected void removeFromMapping() {
-            if(path != null) {
-                removeMapping(this);
-                for(int counter = getChildCount() - 1; counter >= 0; counter--)
-                    ((FHTreeStateNode)getChildAt(counter)).removeFromMapping();
-            }
-        }
+	/**
+	 * Removes the receiver, and all its children, from the mapping
+	 * table.
+	 */
+	protected void removeFromMapping() {
+	    if(path != null) {
+		removeMapping(this);
+		for(int counter = getChildCount() - 1; counter >= 0; counter--)
+		    ((FHTreeStateNode)getChildAt(counter)).removeFromMapping();
+	    }
+	}
 
-        /**
-         * Creates a new node to represent <code>userObject</code>.
-         * This does NOT check to ensure there isn't already a child node
-         * to manage <code>userObject</code>.
-         */
-        protected FHTreeStateNode createChildFor(Object userObject) {
-            int      newChildIndex = treeModel.getIndexOfChild
-                                     (getUserObject(), userObject);
+	/**
+	 * Creates a new node to represent <code>userObject</code>.
+	 * This does NOT check to ensure there isn't already a child node
+	 * to manage <code>userObject</code>.
+	 */
+	protected FHTreeStateNode createChildFor(Object userObject) {
+	    int      newChildIndex = treeModel.getIndexOfChild
+		                     (getUserObject(), userObject);
 
-            if(newChildIndex < 0)
-                return null;
+	    if(newChildIndex < 0)
+		return null;
 
-            FHTreeStateNode     aNode;
-            FHTreeStateNode     child = createNodeForValue(userObject,
-                                                           newChildIndex);
-            int                 childRow;
+	    FHTreeStateNode     aNode;
+	    FHTreeStateNode     child = createNodeForValue(userObject,
+							   newChildIndex);
+	    int                 childRow;
 
-            if(isVisible()) {
-                childRow = getRowToModelIndex(newChildIndex);
-            }
-            else {
-                childRow = -1;
-            }
-            child.row = childRow;
-            for(int counter = 0, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                aNode = (FHTreeStateNode)getChildAt(counter);
-                if(aNode.childIndex > newChildIndex) {
-                    insert(child, counter);
-                    return child;
-                }
-            }
-            add(child);
-            return child;
-        }
+	    if(isVisible()) {
+		childRow = getRowToModelIndex(newChildIndex);
+	    }
+	    else {
+		childRow = -1;
+	    }
+	    child.row = childRow;
+	    for(int counter = 0, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		aNode = (FHTreeStateNode)getChildAt(counter);
+		if(aNode.childIndex > newChildIndex) {
+		    insert(child, counter);
+		    return child;
+		}
+	    }
+	    add(child);
+	    return child;
+	}
 
-        /**
-         * Adjusts the receiver, and all its children rows by
-         * <code>amount</code>.
-         */
-        protected void adjustRowBy(int amount) {
-            row += amount;
-            if(isExpanded) {
-                for(int counter = getChildCount() - 1; counter >= 0;
-                    counter--)
-                    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);
-            }
-        }
+	/**
+	 * Adjusts the receiver, and all its children rows by
+	 * <code>amount</code>.
+	 */
+	protected void adjustRowBy(int amount) {
+	    row += amount;
+	    if(isExpanded) {
+		for(int counter = getChildCount() - 1; counter >= 0;
+		    counter--)
+		    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);
+	    }
+	}
 
-        /**
-         * Adjusts this node, its child, and its parent starting at
-         * an index of <code>index</code> index is the index of the child
-         * to start adjusting from, which is not necessarily the model
-         * index.
-         */
-        protected void adjustRowBy(int amount, int startIndex) {
-            // Could check isVisible, but probably isn't worth it.
-            if(isExpanded) {
-                // children following startIndex.
-                for(int counter = getChildCount() - 1; counter >= startIndex;
-                    counter--)
-                    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);
-            }
-            // Parent
-            FHTreeStateNode        parent = (FHTreeStateNode)getParent();
+	/**
+	 * Adjusts this node, its child, and its parent starting at
+	 * an index of <code>index</code> index is the index of the child
+	 * to start adjusting from, which is not necessarily the model
+	 * index.
+	 */
+	protected void adjustRowBy(int amount, int startIndex) {
+	    // Could check isVisible, but probably isn't worth it.
+	    if(isExpanded) {
+		// children following startIndex.
+		for(int counter = getChildCount() - 1; counter >= startIndex;
+		    counter--)
+		    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);
+	    }
+	    // Parent
+	    FHTreeStateNode        parent = (FHTreeStateNode)getParent();
 
-            if(parent != null) {
-                parent.adjustRowBy(amount, parent.getIndex(this) + 1);
-            }
-        }
+	    if(parent != null) {
+		parent.adjustRowBy(amount, parent.getIndex(this) + 1);
+	    }
+	}
 
-        /**
-         * Messaged when the node has expanded. This updates all of
-         * the receivers children rows, as well as the total row count.
-         */
-        protected void didExpand() {
-            int               nextRow = setRowAndChildren(row);
-            FHTreeStateNode   parent = (FHTreeStateNode)getParent();
-            int               childRowCount = nextRow - row - 1;
+	/**
+	 * Messaged when the node has expanded. This updates all of
+	 * the receivers children rows, as well as the total row count.
+	 */
+	protected void didExpand() {
+	    int               nextRow = setRowAndChildren(row);
+	    FHTreeStateNode   parent = (FHTreeStateNode)getParent();
+	    int               childRowCount = nextRow - row - 1;
 
-            if(parent != null) {
-                parent.adjustRowBy(childRowCount, parent.getIndex(this) + 1);
-            }
-            adjustRowCountBy(childRowCount);
-        }
+	    if(parent != null) {
+		parent.adjustRowBy(childRowCount, parent.getIndex(this) + 1);
+	    }
+	    adjustRowCountBy(childRowCount);
+	}
 
-        /**
-         * Sets the receivers row to <code>nextRow</code> and recursively
-         * updates all the children of the receivers rows. The index the
-         * next row is to be placed as is returned.
-         */
-        protected int setRowAndChildren(int nextRow) {
-            row = nextRow;
+	/**
+	 * Sets the receivers row to <code>nextRow</code> and recursively
+	 * updates all the children of the receivers rows. The index the
+	 * next row is to be placed as is returned.
+	 */
+	protected int setRowAndChildren(int nextRow) {
+	    row = nextRow;
 
-            if(!isExpanded())
-                return row + 1;
+	    if(!isExpanded())
+		return row + 1;
 
-            int              lastRow = row + 1;
-            int              lastModelIndex = 0;
-            FHTreeStateNode  child;
-            int              maxCounter = getChildCount();
+	    int              lastRow = row + 1;
+	    int              lastModelIndex = 0;
+	    FHTreeStateNode  child;
+	    int              maxCounter = getChildCount();
 
-            for(int counter = 0; counter < maxCounter; counter++) {
-                child = (FHTreeStateNode)getChildAt(counter);
-                lastRow += (child.childIndex - lastModelIndex);
-                lastModelIndex = child.childIndex + 1;
-                if(child.isExpanded) {
-                    lastRow = child.setRowAndChildren(lastRow);
-                }
-                else {
-                    child.row = lastRow++;
-                }
-            }
-            return lastRow + childCount - lastModelIndex;
-        }
+	    for(int counter = 0; counter < maxCounter; counter++) {
+		child = (FHTreeStateNode)getChildAt(counter);
+		lastRow += (child.childIndex - lastModelIndex);
+		lastModelIndex = child.childIndex + 1;
+		if(child.isExpanded) {
+		    lastRow = child.setRowAndChildren(lastRow);
+		}
+		else {
+		    child.row = lastRow++;
+		}
+	    }
+	    return lastRow + childCount - lastModelIndex;
+	}
 
-        /**
-         * Resets the receivers childrens rows. Starting with the child
-         * at <code>childIndex</code> (and <code>modelIndex</code>) to
-         * <code>newRow</code>. This uses <code>setRowAndChildren</code>
-         * to recursively descend children, and uses
-         * <code>resetRowSelection</code> to ascend parents.
-         */
-        // This can be rather expensive, but is needed for the collapse
-        // case this is resulting from a remove (although I could fix
-        // that by having instances of FHTreeStateNode hold a ref to
-        // the number of children). I prefer this though, making determing
-        // the row of a particular node fast is very nice!
-        protected void resetChildrenRowsFrom(int newRow, int childIndex,
-                                            int modelIndex) {
-            int              lastRow = newRow;
-            int              lastModelIndex = modelIndex;
-            FHTreeStateNode  node;
-            int              maxCounter = getChildCount();
+	/**
+	 * Resets the receivers childrens rows. Starting with the child
+	 * at <code>childIndex</code> (and <code>modelIndex</code>) to
+	 * <code>newRow</code>. This uses <code>setRowAndChildren</code>
+	 * to recursively descend children, and uses
+	 * <code>resetRowSelection</code> to ascend parents.
+	 */
+	// This can be rather expensive, but is needed for the collapse
+	// case this is resulting from a remove (although I could fix
+	// that by having instances of FHTreeStateNode hold a ref to
+	// the number of children). I prefer this though, making determing
+	// the row of a particular node fast is very nice!
+	protected void resetChildrenRowsFrom(int newRow, int childIndex,
+					    int modelIndex) {
+	    int              lastRow = newRow;
+	    int              lastModelIndex = modelIndex;
+	    FHTreeStateNode  node;
+	    int              maxCounter = getChildCount();
 
-            for(int counter = childIndex; counter < maxCounter; counter++) {
-                node = (FHTreeStateNode)getChildAt(counter);
-                lastRow += (node.childIndex - lastModelIndex);
-                lastModelIndex = node.childIndex + 1;
-                if(node.isExpanded) {
-                    lastRow = node.setRowAndChildren(lastRow);
-                }
-                else {
-                    node.row = lastRow++;
-                }
-            }
-            lastRow += childCount - lastModelIndex;
-            node = (FHTreeStateNode)getParent();
-            if(node != null) {
-                node.resetChildrenRowsFrom(lastRow, node.getIndex(this) + 1,
-                                           this.childIndex + 1);
-            }
-            else { // This is the root, reset total ROWCOUNT!
-                rowCount = lastRow;
-            }
-        }
+	    for(int counter = childIndex; counter < maxCounter; counter++) {
+		node = (FHTreeStateNode)getChildAt(counter);
+		lastRow += (node.childIndex - lastModelIndex);
+		lastModelIndex = node.childIndex + 1;
+		if(node.isExpanded) {
+		    lastRow = node.setRowAndChildren(lastRow);
+		}
+		else {
+		    node.row = lastRow++;
+		}
+	    }
+	    lastRow += childCount - lastModelIndex;
+	    node = (FHTreeStateNode)getParent();
+	    if(node != null) {
+		node.resetChildrenRowsFrom(lastRow, node.getIndex(this) + 1,
+					   this.childIndex + 1);
+	    }
+	    else { // This is the root, reset total ROWCOUNT!
+		rowCount = lastRow;
+	    }
+	}
 
-        /**
-         * Makes the receiver visible, but invoking
-         * <code>expandParentAndReceiver</code> on the superclass.
-         */
-        protected void makeVisible() {
-            FHTreeStateNode       parent = (FHTreeStateNode)getParent();
+	/**
+	 * Makes the receiver visible, but invoking
+	 * <code>expandParentAndReceiver</code> on the superclass.
+	 */
+	protected void makeVisible() {
+	    FHTreeStateNode       parent = (FHTreeStateNode)getParent();
 
-            if(parent != null)
-                parent.expandParentAndReceiver();
-        }
+	    if(parent != null)
+		parent.expandParentAndReceiver();
+	}
 
-        /**
-         * Invokes <code>expandParentAndReceiver</code> on the parent,
-         * and expands the receiver.
-         */
-        protected void expandParentAndReceiver() {
-            FHTreeStateNode       parent = (FHTreeStateNode)getParent();
+	/**
+	 * Invokes <code>expandParentAndReceiver</code> on the parent,
+	 * and expands the receiver.
+	 */
+	protected void expandParentAndReceiver() {
+	    FHTreeStateNode       parent = (FHTreeStateNode)getParent();
 
-            if(parent != null)
-                parent.expandParentAndReceiver();
-            expand();
-        }
+	    if(parent != null)
+		parent.expandParentAndReceiver();
+	    expand();
+	}
 
-        /**
-         * Expands the receiver.
-         */
-        protected void expand() {
-            if(!isExpanded && !isLeaf()) {
-                boolean            visible = isVisible();
+	/**
+	 * Expands the receiver.
+	 */
+	protected void expand() {
+	    if(!isExpanded && !isLeaf()) {
+		boolean            visible = isVisible();
 
-                isExpanded = true;
-                childCount = treeModel.getChildCount(getUserObject());
+		isExpanded = true;
+		childCount = treeModel.getChildCount(getUserObject());
 
-                if(visible) {
-                    didExpand();
-                }
+		if(visible) {
+		    didExpand();
+		}
 
-                // Update the selection model.
-                if(visible && treeSelectionModel != null) {
-                    treeSelectionModel.resetRowSelection();
-                }
-            }
-        }
+		// Update the selection model.
+		if(visible && treeSelectionModel != null) {
+		    treeSelectionModel.resetRowSelection();
+		}
+	    }
+	}
 
-        /**
-         * Collapses the receiver. If <code>adjustRows</code> is true,
-         * the rows of nodes after the receiver are adjusted.
-         */
-        protected void collapse(boolean adjustRows) {
-            if(isExpanded) {
-                if(isVisible() && adjustRows) {
-                    int              childCount = getTotalChildCount();
+	/**
+	 * Collapses the receiver. If <code>adjustRows</code> is true,
+	 * the rows of nodes after the receiver are adjusted.
+	 */
+	protected void collapse(boolean adjustRows) {
+	    if(isExpanded) {
+		if(isVisible() && adjustRows) {
+		    int              childCount = getTotalChildCount();
 
-                    isExpanded = false;
-                    adjustRowCountBy(-childCount);
-                    // We can do this because adjustRowBy won't descend
-                    // the children.
-                    adjustRowBy(-childCount, 0);
-                }
-                else
-                    isExpanded = false;
+		    isExpanded = false;
+		    adjustRowCountBy(-childCount);
+		    // We can do this because adjustRowBy won't descend
+		    // the children.
+		    adjustRowBy(-childCount, 0);
+		}
+		else
+		    isExpanded = false;
 
-                if(adjustRows && isVisible() && treeSelectionModel != null)
-                    treeSelectionModel.resetRowSelection();
-            }
-        }
+		if(adjustRows && isVisible() && treeSelectionModel != null)
+		    treeSelectionModel.resetRowSelection();
+	    }
+	}
 
-        /**
-         * Returns true if the receiver is a leaf.
-         */
-        public boolean isLeaf() {
+	/**
+	 * Returns true if the receiver is a leaf.
+	 */
+	public boolean isLeaf() {
             TreeModel model = getModel();
 
             return (model != null) ? model.isLeaf(this.getUserObject()) :
                    true;
-        }
+	}
 
-        /**
-         * Adds newChild to this nodes children at the appropriate location.
-         * The location is determined from the childIndex of newChild.
-         */
-        protected void addNode(FHTreeStateNode newChild) {
-            boolean         added = false;
-            int             childIndex = newChild.getChildIndex();
+	/**
+	 * Adds newChild to this nodes children at the appropriate location.
+	 * The location is determined from the childIndex of newChild.
+	 */
+	protected void addNode(FHTreeStateNode newChild) {
+	    boolean         added = false;
+	    int             childIndex = newChild.getChildIndex();
 
-            for(int counter = 0, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                if(((FHTreeStateNode)getChildAt(counter)).getChildIndex() >
-                   childIndex) {
-                    added = true;
-                    insert(newChild, counter);
-                    counter = maxCounter;
-                }
-            }
-            if(!added)
-                add(newChild);
-        }
+	    for(int counter = 0, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		if(((FHTreeStateNode)getChildAt(counter)).getChildIndex() >
+		   childIndex) {
+		    added = true;
+		    insert(newChild, counter);
+		    counter = maxCounter;
+		}
+	    }
+	    if(!added)
+		add(newChild);
+	}
 
-        /**
-         * Removes the child at <code>modelIndex</code>.
-         * <code>isChildVisible</code> should be true if the receiver
-         * is visible and expanded.
-         */
-        protected void removeChildAtModelIndex(int modelIndex,
-                                               boolean isChildVisible) {
-            FHTreeStateNode     childNode = getChildAtModelIndex(modelIndex);
+	/**
+	 * Removes the child at <code>modelIndex</code>.
+	 * <code>isChildVisible</code> should be true if the receiver
+	 * is visible and expanded.
+	 */
+	protected void removeChildAtModelIndex(int modelIndex,
+					       boolean isChildVisible) {
+	    FHTreeStateNode     childNode = getChildAtModelIndex(modelIndex);
 
-            if(childNode != null) {
-                int          row = childNode.getRow();
-                int          index = getIndex(childNode);
+	    if(childNode != null) {
+		int          row = childNode.getRow();
+		int          index = getIndex(childNode);
 
-                childNode.collapse(false);
-                remove(index);
-                adjustChildIndexs(index, -1);
-                childCount--;
-                if(isChildVisible) {
-                    // Adjust the rows.
-                    resetChildrenRowsFrom(row, index, modelIndex);
-                }
-            }
-            else {
-                int                  maxCounter = getChildCount();
-                FHTreeStateNode      aChild;
+		childNode.collapse(false);
+		remove(index);
+		adjustChildIndexs(index, -1);
+		childCount--;
+		if(isChildVisible) {
+		    // Adjust the rows.
+		    resetChildrenRowsFrom(row, index, modelIndex);
+		}
+	    }
+	    else {
+		int                  maxCounter = getChildCount();
+		FHTreeStateNode      aChild;
 
-                for(int counter = 0; counter < maxCounter; counter++) {
-                    aChild = (FHTreeStateNode)getChildAt(counter);
-                    if(aChild.childIndex >= modelIndex) {
-                        if(isChildVisible) {
-                            adjustRowBy(-1, counter);
-                            adjustRowCountBy(-1);
-                        }
-                        // Since matched and children are always sorted by
-                        // index, no need to continue testing with the
-                        // above.
-                        for(; counter < maxCounter; counter++)
-                            ((FHTreeStateNode)getChildAt(counter)).
-                                              childIndex--;
-                        childCount--;
-                        return;
-                    }
-                }
-                // No children to adjust, but it was a child, so we still need
-                // to adjust nodes after this one.
-                if(isChildVisible) {
-                    adjustRowBy(-1, maxCounter);
-                    adjustRowCountBy(-1);
-                }
-                childCount--;
-            }
-        }
+		for(int counter = 0; counter < maxCounter; counter++) {
+		    aChild = (FHTreeStateNode)getChildAt(counter);
+		    if(aChild.childIndex >= modelIndex) {
+			if(isChildVisible) {
+			    adjustRowBy(-1, counter);
+			    adjustRowCountBy(-1);
+			}
+			// Since matched and children are always sorted by
+			// index, no need to continue testing with the
+			// above.
+			for(; counter < maxCounter; counter++)
+			    ((FHTreeStateNode)getChildAt(counter)).
+				              childIndex--;
+			childCount--;
+			return;
+		    }
+		}
+		// No children to adjust, but it was a child, so we still need
+		// to adjust nodes after this one.
+		if(isChildVisible) {
+		    adjustRowBy(-1, maxCounter);
+		    adjustRowCountBy(-1);
+		}
+		childCount--;
+	    }
+	}
 
-        /**
-         * Adjusts the child indexs of the receivers children by
-         * <code>amount</code>, starting at <code>index</code>.
-         */
-        protected void adjustChildIndexs(int index, int amount) {
-            for(int counter = index, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                ((FHTreeStateNode)getChildAt(counter)).childIndex += amount;
-            }
-        }
+	/**
+	 * Adjusts the child indexs of the receivers children by
+	 * <code>amount</code>, starting at <code>index</code>.
+	 */
+	protected void adjustChildIndexs(int index, int amount) {
+	    for(int counter = index, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		((FHTreeStateNode)getChildAt(counter)).childIndex += amount;
+	    }
+	}
 
-        /**
-         * Messaged when a child has been inserted at index. For all the
-         * children that have a childIndex >= index their index is incremented
-         * by one.
-         */
-        protected void childInsertedAtModelIndex(int index,
-                                               boolean isExpandedAndVisible) {
-            FHTreeStateNode                aChild;
-            int                            maxCounter = getChildCount();
+	/**
+	 * Messaged when a child has been inserted at index. For all the
+	 * children that have a childIndex >= index their index is incremented
+	 * by one.
+	 */
+	protected void childInsertedAtModelIndex(int index,
+					       boolean isExpandedAndVisible) {
+	    FHTreeStateNode                aChild;
+	    int                            maxCounter = getChildCount();
 
-            for(int counter = 0; counter < maxCounter; counter++) {
-                aChild = (FHTreeStateNode)getChildAt(counter);
-                if(aChild.childIndex >= index) {
-                    if(isExpandedAndVisible) {
-                        adjustRowBy(1, counter);
-                        adjustRowCountBy(1);
-                    }
-                    /* Since matched and children are always sorted by
-                       index, no need to continue testing with the above. */
-                    for(; counter < maxCounter; counter++)
-                        ((FHTreeStateNode)getChildAt(counter)).childIndex++;
-                    childCount++;
-                    return;
-                }
-            }
-            // No children to adjust, but it was a child, so we still need
-            // to adjust nodes after this one.
-            if(isExpandedAndVisible) {
-                adjustRowBy(1, maxCounter);
-                adjustRowCountBy(1);
-            }
-            childCount++;
-        }
+	    for(int counter = 0; counter < maxCounter; counter++) {
+		aChild = (FHTreeStateNode)getChildAt(counter);
+		if(aChild.childIndex >= index) {
+		    if(isExpandedAndVisible) {
+			adjustRowBy(1, counter);
+			adjustRowCountBy(1);
+		    }
+		    /* Since matched and children are always sorted by
+		       index, no need to continue testing with the above. */
+		    for(; counter < maxCounter; counter++)
+			((FHTreeStateNode)getChildAt(counter)).childIndex++;
+		    childCount++;
+		    return;
+		}
+	    }
+	    // No children to adjust, but it was a child, so we still need
+	    // to adjust nodes after this one.
+	    if(isExpandedAndVisible) {
+		adjustRowBy(1, maxCounter);
+		adjustRowCountBy(1);
+	    }
+	    childCount++;
+	}
 
-        /**
-         * Returns true if there is a row for <code>row</code>.
-         * <code>nextRow</code> gives the bounds of the receiver.
-         * Information about the found row is returned in <code>info</code>.
-         * This should be invoked on root with <code>nextRow</code> set
-         * to <code>getRowCount</code>().
-         */
-        protected boolean getPathForRow(int row, int nextRow,
-                                        SearchInfo info) {
-            if(this.row == row) {
-                info.node = this;
-                info.isNodeParentNode = false;
-                info.childIndex = childIndex;
-                return true;
-            }
+	/**
+	 * Returns true if there is a row for <code>row</code>.
+	 * <code>nextRow</code> gives the bounds of the receiver.
+	 * Information about the found row is returned in <code>info</code>.
+	 * This should be invoked on root with <code>nextRow</code> set
+	 * to <code>getRowCount</code>().
+	 */
+	protected boolean getPathForRow(int row, int nextRow,
+					SearchInfo info) {
+	    if(this.row == row) {
+		info.node = this;
+		info.isNodeParentNode = false;
+		info.childIndex = childIndex;
+		return true;
+	    }
 
-            FHTreeStateNode            child;
-            FHTreeStateNode            lastChild = null;
+	    FHTreeStateNode            child;
+	    FHTreeStateNode            lastChild = null;
 
-            for(int counter = 0, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                child = (FHTreeStateNode)getChildAt(counter);
-                if(child.row > row) {
-                    if(counter == 0) {
-                        // No node exists for it, and is first.
-                        info.node = this;
-                        info.isNodeParentNode = true;
-                        info.childIndex = row - this.row - 1;
-                        return true;
-                    }
-                    else {
-                        // May have been in last childs bounds.
-                        int          lastChildEndRow = 1 + child.row -
-                                     (child.childIndex - lastChild.childIndex);
+	    for(int counter = 0, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		child = (FHTreeStateNode)getChildAt(counter);
+		if(child.row > row) {
+		    if(counter == 0) {
+			// No node exists for it, and is first.
+			info.node = this;
+			info.isNodeParentNode = true;
+			info.childIndex = row - this.row - 1;
+			return true;
+		    }
+		    else {
+			// May have been in last childs bounds.
+			int          lastChildEndRow = 1 + child.row -
+			             (child.childIndex - lastChild.childIndex);
 
-                        if(row < lastChildEndRow) {
-                            return lastChild.getPathForRow(row,
-                                                       lastChildEndRow, info);
-                        }
-                        // Between last child and child, but not in last child
-                        info.node = this;
-                        info.isNodeParentNode = true;
-                        info.childIndex = row - lastChildEndRow +
-                                                lastChild.childIndex + 1;
-                        return true;
-                    }
-                }
-                lastChild = child;
-            }
+			if(row < lastChildEndRow) {
+			    return lastChild.getPathForRow(row,
+						       lastChildEndRow, info);
+			}
+			// Between last child and child, but not in last child
+			info.node = this;
+			info.isNodeParentNode = true;
+			info.childIndex = row - lastChildEndRow +
+			                        lastChild.childIndex + 1;
+			return true;
+		    }
+		}
+		lastChild = child;
+	    }
 
-            // Not in children, but we should have it, offset from
-            // nextRow.
-            if(lastChild != null) {
-                int        lastChildEndRow = nextRow -
-                                  (childCount - lastChild.childIndex) + 1;
+	    // Not in children, but we should have it, offset from
+	    // nextRow.
+	    if(lastChild != null) {
+		int        lastChildEndRow = nextRow -
+		                  (childCount - lastChild.childIndex) + 1;
 
-                if(row < lastChildEndRow) {
-                    return lastChild.getPathForRow(row, lastChildEndRow, info);
-                }
-                // Between last child and child, but not in last child
-                info.node = this;
-                info.isNodeParentNode = true;
-                info.childIndex = row - lastChildEndRow +
-                                             lastChild.childIndex + 1;
-                return true;
-            }
-            else {
-                // No children.
-                int         retChildIndex = row - this.row - 1;
+		if(row < lastChildEndRow) {
+		    return lastChild.getPathForRow(row, lastChildEndRow, info);
+		}
+		// Between last child and child, but not in last child
+		info.node = this;
+		info.isNodeParentNode = true;
+		info.childIndex = row - lastChildEndRow +
+		                             lastChild.childIndex + 1;
+		return true;
+	    }
+	    else {
+		// No children.
+		int         retChildIndex = row - this.row - 1;
 
-                if(retChildIndex >= childCount) {
-                    return false;
-                }
-                info.node = this;
-                info.isNodeParentNode = true;
-                info.childIndex = retChildIndex;
-                return true;
-            }
-        }
+		if(retChildIndex >= childCount) {
+		    return false;
+		}
+		info.node = this;
+		info.isNodeParentNode = true;
+		info.childIndex = retChildIndex;
+		return true;
+	    }
+	}
 
-        /**
-         * Asks all the children of the receiver for their totalChildCount
-         * and returns this value (plus stopIndex).
-         */
-        protected int getCountTo(int stopIndex) {
-            FHTreeStateNode    aChild;
-            int                retCount = stopIndex + 1;
+	/**
+	 * Asks all the children of the receiver for their totalChildCount
+	 * and returns this value (plus stopIndex).
+	 */
+	protected int getCountTo(int stopIndex) {
+	    FHTreeStateNode    aChild;
+	    int                retCount = stopIndex + 1;
 
-            for(int counter = 0, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                aChild = (FHTreeStateNode)getChildAt(counter);
-                if(aChild.childIndex >= stopIndex)
-                    counter = maxCounter;
-                else
-                    retCount += aChild.getTotalChildCount();
-            }
-            if(parent != null)
-                return retCount + ((FHTreeStateNode)getParent())
-                                   .getCountTo(childIndex);
-            if(!isRootVisible())
-                return (retCount - 1);
-            return retCount;
-        }
+	    for(int counter = 0, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		aChild = (FHTreeStateNode)getChildAt(counter);
+		if(aChild.childIndex >= stopIndex)
+		    counter = maxCounter;
+		else
+		    retCount += aChild.getTotalChildCount();
+	    }
+	    if(parent != null)
+		return retCount + ((FHTreeStateNode)getParent())
+		                   .getCountTo(childIndex);
+	    if(!isRootVisible())
+		return (retCount - 1);
+	    return retCount;
+	}
 
-        /**
-         * Returns the number of children that are expanded to
-         * <code>stopIndex</code>. This does not include the number
-         * of children that the child at <code>stopIndex</code> might
-         * have.
-         */
-        protected int getNumExpandedChildrenTo(int stopIndex) {
-            FHTreeStateNode    aChild;
-            int                retCount = stopIndex;
+	/**
+	 * Returns the number of children that are expanded to
+	 * <code>stopIndex</code>. This does not include the number
+	 * of children that the child at <code>stopIndex</code> might
+	 * have.
+	 */
+	protected int getNumExpandedChildrenTo(int stopIndex) {
+	    FHTreeStateNode    aChild;
+	    int                retCount = stopIndex;
 
-            for(int counter = 0, maxCounter = getChildCount();
-                counter < maxCounter; counter++) {
-                aChild = (FHTreeStateNode)getChildAt(counter);
-                if(aChild.childIndex >= stopIndex)
-                    return retCount;
-                else {
-                    retCount += aChild.getTotalChildCount();
-                }
-            }
-            return retCount;
-        }
+	    for(int counter = 0, maxCounter = getChildCount();
+		counter < maxCounter; counter++) {
+		aChild = (FHTreeStateNode)getChildAt(counter);
+		if(aChild.childIndex >= stopIndex)
+		    return retCount;
+		else {
+		    retCount += aChild.getTotalChildCount();
+		}
+	    }
+	    return retCount;
+	}
 
-        /**
-         * Messaged when this node either expands or collapses.
-         */
-        protected void didAdjustTree() {
-        }
+	/**
+	 * Messaged when this node either expands or collapses.
+	 */
+	protected void didAdjustTree() {
+	}
 
     } // FixedHeightLayoutCache.FHTreeStateNode
 
@@ -1453,20 +1454,20 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
      * Used as a placeholder when getting the path in FHTreeStateNodes.
      */
     private class SearchInfo {
-        protected FHTreeStateNode   node;
-        protected boolean           isNodeParentNode;
-        protected int               childIndex;
+	protected FHTreeStateNode   node;
+	protected boolean           isNodeParentNode;
+	protected int               childIndex;
 
-        protected TreePath getPath() {
-            if(node == null)
-                return null;
+	protected TreePath getPath() {
+	    if(node == null)
+		return null;
 
-            if(isNodeParentNode)
-                return node.getTreePath().pathByAddingChild(treeModel.getChild
-                                            (node.getUserObject(),
-                                             childIndex));
-            return node.path;
-        }
+	    if(isNodeParentNode)
+		return node.getTreePath().pathByAddingChild(treeModel.getChild
+					    (node.getUserObject(),
+					     childIndex));
+	    return node.path;
+	}
     } // FixedHeightLayoutCache.SearchInfo
 
 
@@ -1476,126 +1477,126 @@ public class FixedHeightLayoutCache extends AbstractLayoutCache {
     // This is very similiar to
     // VariableHeightTreeState.VisibleTreeStateNodeEnumeration
     private class VisibleFHTreeStateNodeEnumeration
-        implements Enumeration<TreePath>
+	implements Enumeration<TreePath>
     {
-        /** Parent thats children are being enumerated. */
-        protected FHTreeStateNode     parent;
-        /** Index of next child. An index of -1 signifies parent should be
-         * visibled next. */
-        protected int                 nextIndex;
-        /** Number of children in parent. */
-        protected int                 childCount;
+	/** Parent thats children are being enumerated. */
+	protected FHTreeStateNode     parent;
+	/** Index of next child. An index of -1 signifies parent should be
+	 * visibled next. */
+	protected int                 nextIndex;
+	/** Number of children in parent. */
+	protected int                 childCount;
 
-        protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode node) {
-            this(node, -1);
-        }
+	protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode node) {
+	    this(node, -1);
+	}
 
-        protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode parent,
-                                                    int startIndex) {
-            this.parent = parent;
-            this.nextIndex = startIndex;
-            this.childCount = treeModel.getChildCount(this.parent.
-                                                      getUserObject());
-        }
+	protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode parent,
+						    int startIndex) {
+	    this.parent = parent;
+	    this.nextIndex = startIndex;
+	    this.childCount = treeModel.getChildCount(this.parent.
+						      getUserObject());
+	}
 
-        /**
-         * @return true if more visible nodes.
-         */
-        public boolean hasMoreElements() {
-            return (parent != null);
-        }
+	/**
+	 * @return true if more visible nodes.
+	 */
+	public boolean hasMoreElements() {
+	    return (parent != null);
+	}
 
-        /**
-         * @return next visible TreePath.
-         */
-        public TreePath nextElement() {
-            if(!hasMoreElements())
-                throw new NoSuchElementException("No more visible paths");
+	/**
+	 * @return next visible TreePath.
+	 */
+	public TreePath nextElement() {
+	    if(!hasMoreElements())
+		throw new NoSuchElementException("No more visible paths");
 
-            TreePath                retObject;
+	    TreePath                retObject;
 
-            if(nextIndex == -1)
-                retObject = parent.getTreePath();
-            else {
-                FHTreeStateNode  node = parent.getChildAtModelIndex(nextIndex);
+	    if(nextIndex == -1)
+		retObject = parent.getTreePath();
+	    else {
+		FHTreeStateNode  node = parent.getChildAtModelIndex(nextIndex);
 
-                if(node == null)
-                    retObject = parent.getTreePath().pathByAddingChild
-                                  (treeModel.getChild(parent.getUserObject(),
-                                                      nextIndex));
-                else
-                    retObject = node.getTreePath();
-            }
-            updateNextObject();
-            return retObject;
-        }
+		if(node == null)
+		    retObject = parent.getTreePath().pathByAddingChild
+			          (treeModel.getChild(parent.getUserObject(),
+						      nextIndex));
+		else
+		    retObject = node.getTreePath();
+	    }
+	    updateNextObject();
+	    return retObject;
+	}
 
-        /**
-         * Determines the next object by invoking <code>updateNextIndex</code>
-         * and if not succesful <code>findNextValidParent</code>.
-         */
-        protected void updateNextObject() {
-            if(!updateNextIndex()) {
-                findNextValidParent();
-            }
-        }
+	/**
+	 * Determines the next object by invoking <code>updateNextIndex</code>
+	 * and if not succesful <code>findNextValidParent</code>.
+	 */
+	protected void updateNextObject() {
+	    if(!updateNextIndex()) {
+		findNextValidParent();
+	    }
+	}
 
-        /**
-         * Finds the next valid parent, this should be called when nextIndex
-         * is beyond the number of children of the current parent.
-         */
-        protected boolean findNextValidParent() {
-            if(parent == root) {
-                // mark as invalid!
-                parent = null;
-                return false;
-            }
-            while(parent != null) {
-                FHTreeStateNode      newParent = (FHTreeStateNode)parent.
-                                                  getParent();
+	/**
+	 * Finds the next valid parent, this should be called when nextIndex
+	 * is beyond the number of children of the current parent.
+	 */
+	protected boolean findNextValidParent() {
+	    if(parent == root) {
+		// mark as invalid!
+		parent = null;
+		return false;
+	    }
+	    while(parent != null) {
+		FHTreeStateNode      newParent = (FHTreeStateNode)parent.
+		                                  getParent();
 
-                if(newParent != null) {
-                    nextIndex = parent.childIndex;
-                    parent = newParent;
-                    childCount = treeModel.getChildCount
-                                            (parent.getUserObject());
-                    if(updateNextIndex())
-                        return true;
-                }
-                else
-                    parent = null;
-            }
-            return false;
-        }
+		if(newParent != null) {
+		    nextIndex = parent.childIndex;
+		    parent = newParent;
+		    childCount = treeModel.getChildCount
+			                    (parent.getUserObject());
+		    if(updateNextIndex())
+			return true;
+		}
+		else
+		    parent = null;
+	    }
+	    return false;
+	}
 
-        /**
-         * Updates <code>nextIndex</code> returning false if it is beyond
-         * the number of children of parent.
-         */
-        protected boolean updateNextIndex() {
-            // nextIndex == -1 identifies receiver, make sure is expanded
-            // before descend.
-            if(nextIndex == -1 && !parent.isExpanded()) {
-                return false;
-            }
+	/**
+	 * Updates <code>nextIndex</code> returning false if it is beyond
+	 * the number of children of parent.
+	 */
+	protected boolean updateNextIndex() {
+	    // nextIndex == -1 identifies receiver, make sure is expanded
+	    // before descend.
+	    if(nextIndex == -1 && !parent.isExpanded()) {
+		return false;
+	    }
 
-            // Check that it can have kids
-            if(childCount == 0) {
-                return false;
-            }
-            // Make sure next index not beyond child count.
-            else if(++nextIndex >= childCount) {
-                return false;
-            }
+	    // Check that it can have kids
+	    if(childCount == 0) {
+		return false;
+	    }
+	    // Make sure next index not beyond child count.
+	    else if(++nextIndex >= childCount) {
+		return false;
+	    }
 
-            FHTreeStateNode    child = parent.getChildAtModelIndex(nextIndex);
+	    FHTreeStateNode    child = parent.getChildAtModelIndex(nextIndex);
 
-            if(child != null && child.isExpanded()) {
-                parent = child;
-                nextIndex = -1;
-                childCount = treeModel.getChildCount(child.getUserObject());
-            }
-            return true;
-        }
+	    if(child != null && child.isExpanded()) {
+		parent = child;
+		nextIndex = -1;
+		childCount = treeModel.getChildCount(child.getUserObject());
+	    }
+	    return true;
+	}
     } // FixedHeightLayoutCache.VisibleFHTreeStateNodeEnumeration
 }

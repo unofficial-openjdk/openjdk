@@ -29,7 +29,7 @@
  */
 
 public class NewChainedExceptions {
-    public static void main(String args[]) {
+    public static void main(String args[]) { 
         Throwable interior = new Exception();
         String    message  = "Good heavens!";
 

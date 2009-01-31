@@ -55,9 +55,9 @@ class CipherBlockChaining extends FeedbackCipher  {
     private byte[] rSave = null;
 
     CipherBlockChaining(SymmetricCipher embeddedCipher) {
-        super(embeddedCipher);
-        k = new byte[blockSize];
-        r = new byte[blockSize];
+	super(embeddedCipher);
+	k = new byte[blockSize];
+	r = new byte[blockSize];
     }
 
     /**
@@ -66,7 +66,7 @@ class CipherBlockChaining extends FeedbackCipher  {
      * @return the string <code>CBC</code>
      */
     String getFeedback() {
-        return "CBC";
+	return "CBC";
     }
 
     /**
@@ -82,13 +82,13 @@ class CipherBlockChaining extends FeedbackCipher  {
      * initializing this cipher
      */
     void init(boolean decrypting, String algorithm, byte[] key, byte[] iv)
-            throws InvalidKeyException {
-        if ((key == null) || (iv == null) || (iv.length != blockSize)) {
-            throw new InvalidKeyException("Internal error");
-        }
-        this.iv = iv;
-        reset();
-        embeddedCipher.init(decrypting, algorithm, key);
+	    throws InvalidKeyException {
+	if ((key == null) || (iv == null) || (iv.length != blockSize)) {
+	    throw new InvalidKeyException("Internal error");
+	}
+	this.iv = iv;
+	reset();
+	embeddedCipher.init(decrypting, algorithm, key);
     }
 
     /**
@@ -97,24 +97,24 @@ class CipherBlockChaining extends FeedbackCipher  {
      * cipher can be reused (with its original iv).
      */
     void reset() {
-        System.arraycopy(iv, 0, r, 0, blockSize);
+	System.arraycopy(iv, 0, r, 0, blockSize);
     }
 
     /**
      * Save the current content of this cipher.
      */
     void save() {
-        if (rSave == null) {
-            rSave = new byte[blockSize];
-        }
-        System.arraycopy(r, 0, rSave, 0, blockSize);
+	if (rSave == null) {
+	    rSave = new byte[blockSize];
+	}
+	System.arraycopy(r, 0, rSave, 0, blockSize);
     }
 
     /**
      * Restores the content of this cipher to the previous saved one.
      */
     void restore() {
-        System.arraycopy(rSave, 0, r, 0, blockSize);
+	System.arraycopy(rSave, 0, r, 0, blockSize);
     }
 
     /**
@@ -137,19 +137,19 @@ class CipherBlockChaining extends FeedbackCipher  {
      * @param cipherOffset the offset in <code>cipher</code>
      */
     void encrypt(byte[] plain, int plainOffset, int plainLen,
-                 byte[] cipher, int cipherOffset)
+		 byte[] cipher, int cipherOffset)
     {
-        int i;
-        int endIndex = plainOffset + plainLen;
+	int i;
+	int endIndex = plainOffset + plainLen;
 
-        for (; plainOffset < endIndex;
-             plainOffset+=blockSize, cipherOffset += blockSize) {
-            for (i=0; i<blockSize; i++) {
-                k[i] = (byte)(plain[i+plainOffset] ^ r[i]);
-            }
-            embeddedCipher.encryptBlock(k, 0, cipher, cipherOffset);
-            System.arraycopy(cipher, cipherOffset, r, 0, blockSize);
-        }
+	for (; plainOffset < endIndex;
+	     plainOffset+=blockSize, cipherOffset += blockSize) {
+	    for (i=0; i<blockSize; i++) {
+		k[i] = (byte)(plain[i+plainOffset] ^ r[i]);
+	    }
+	    embeddedCipher.encryptBlock(k, 0, cipher, cipherOffset);
+	    System.arraycopy(cipher, cipherOffset, r, 0, blockSize);
+	}
     }
 
     /**
@@ -180,33 +180,33 @@ class CipherBlockChaining extends FeedbackCipher  {
      * embedded cipher
      */
     void decrypt(byte[] cipher, int cipherOffset, int cipherLen,
-                 byte[] plain, int plainOffset)
+		 byte[] plain, int plainOffset)
     {
-        int i;
-        byte[] cipherOrig=null;
-        int endIndex = cipherOffset + cipherLen;
+	int i;
+	byte[] cipherOrig=null;
+	int endIndex = cipherOffset + cipherLen;
 
-        if (cipher==plain && (cipherOffset >= plainOffset)
-            && ((cipherOffset - plainOffset) < blockSize)) {
-            // Save the original ciphertext blocks, so they can be
-            // stored in the feedback register "r".
-            // This is necessary because in this constellation, a
-            // ciphertext block (or parts of it) will be overridden by
-            // the plaintext result.
-            cipherOrig = (byte[])cipher.clone();
-        }
+	if (cipher==plain && (cipherOffset >= plainOffset)
+	    && ((cipherOffset - plainOffset) < blockSize)) {
+	    // Save the original ciphertext blocks, so they can be
+	    // stored in the feedback register "r".
+	    // This is necessary because in this constellation, a
+	    // ciphertext block (or parts of it) will be overridden by
+	    // the plaintext result.
+	    cipherOrig = (byte[])cipher.clone();
+	}
 
-        for (; cipherOffset < endIndex;
-             cipherOffset += blockSize, plainOffset += blockSize) {
-            embeddedCipher.decryptBlock(cipher, cipherOffset, k, 0);
-            for (i = 0; i < blockSize; i++) {
-                plain[i+plainOffset] = (byte)(k[i] ^ r[i]);
-            }
-            if (cipherOrig==null) {
-                System.arraycopy(cipher, cipherOffset, r, 0, blockSize);
-            } else {
-                System.arraycopy(cipherOrig, cipherOffset, r, 0, blockSize);
-            }
-        }
+	for (; cipherOffset < endIndex;
+	     cipherOffset += blockSize, plainOffset += blockSize) {
+	    embeddedCipher.decryptBlock(cipher, cipherOffset, k, 0);
+	    for (i = 0; i < blockSize; i++) {
+		plain[i+plainOffset] = (byte)(k[i] ^ r[i]);
+	    }
+	    if (cipherOrig==null) {
+		System.arraycopy(cipher, cipherOffset, r, 0, blockSize);
+	    } else {
+		System.arraycopy(cipherOrig, cipherOffset, r, 0, blockSize);
+	    }
+	}
     }
 }

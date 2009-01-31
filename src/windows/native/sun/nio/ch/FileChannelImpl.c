@@ -66,7 +66,7 @@ Java_sun_nio_ch_FileChannelImpl_initIDs(JNIEnv *env, jclass clazz)
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
-                               jint prot, jlong off, jlong len)
+			       jint prot, jlong off, jlong len)
 {
     void *mapAddress = 0;
     jint lowOffset = (jint)off;
@@ -79,7 +79,7 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
     HANDLE mapping;
     DWORD mapAccess = FILE_MAP_READ;
     DWORD fileProtect = PAGE_READONLY;
-    DWORD mapError;
+    DWORD mapError; 
     BOOL result;
 
     if (prot == sun_nio_ch_FileChannelImpl_MAP_RO) {
@@ -96,9 +96,9 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
     mapping = CreateFileMapping(
         fileHandle,      /* Handle of file */
         NULL,            /* Not inheritable */
-        fileProtect,     /* Read and write */
-        highLen,         /* High word of max size */
-        lowLen,          /* Low word of max size */
+	fileProtect,     /* Read and write */
+	highLen,         /* High word of max size */
+	lowLen,          /* Low word of max size */
         NULL);           /* No name for object */
 
     if (mapping == NULL) {
@@ -108,10 +108,10 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
 
     mapAddress = MapViewOfFile(
         mapping,             /* Handle of file mapping object */
-        mapAccess,           /* Read and write access */
-        highOffset,          /* High word of offset */
-        lowOffset,           /* Low word of offset */
-        (DWORD)len);         /* Number of bytes to map */
+	mapAccess,           /* Read and write access */
+	highOffset,          /* High word of offset */
+	lowOffset,           /* Low word of offset */
+	(DWORD)len);         /* Number of bytes to map */
     mapError = GetLastError();
 
     result = CloseHandle(mapping);
@@ -123,7 +123,7 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
     if (mapAddress == NULL) {
         if (mapError == ERROR_NOT_ENOUGH_MEMORY)
             JNU_ThrowOutOfMemoryError(env, "Map failed");
-        else
+	else
             JNU_ThrowIOExceptionWithLastError(env, "Map failed");
         return IOS_THROWN;
     }
@@ -133,7 +133,7 @@ Java_sun_nio_ch_FileChannelImpl_map0(JNIEnv *env, jobject this,
 
 JNIEXPORT jint JNICALL
 Java_sun_nio_ch_FileChannelImpl_unmap0(JNIEnv *env, jobject this,
-                                 jlong address, jlong len)
+				 jlong address, jlong len)
 {
     BOOL result;
     void *a = (void *) jlong_to_ptr(address);
@@ -213,7 +213,7 @@ Java_sun_nio_ch_FileChannelImpl_position0(JNIEnv *env, jobject this,
     }
     if (lowPos == ((DWORD)-1)) {
         if (GetLastError() != ERROR_SUCCESS) {
-            JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
+	    JNU_ThrowIOExceptionWithLastError(env, "Seek failed");
             return IOS_THROWN;
         }
     }
@@ -251,9 +251,9 @@ Java_sun_nio_ch_FileChannelImpl_close0(JNIEnv *env, jobject this, jobject fdo)
 
 JNIEXPORT jlong JNICALL
 Java_sun_nio_ch_FileChannelImpl_transferTo0(JNIEnv *env, jobject this,
-                                            jint srcFD,
-                                            jlong position, jlong count,
-                                            jint dstFD)
+					    jint srcFD,
+					    jlong position, jlong count,
+					    jint dstFD)
 {
     return IOS_UNSUPPORTED;
 }

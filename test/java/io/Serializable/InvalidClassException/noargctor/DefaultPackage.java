@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -77,7 +77,7 @@ extends DefaultPackagePrivateConstructor implements Serializable
     int field1 = 5;
 
     DefaultPrivateSerializable() {
-        super(1);
+	super(1);
     }
 };
 
@@ -87,9 +87,9 @@ class ExternalizablePublicConstructor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 class ExternalizableProtectedConstructor implements Externalizable {
@@ -98,9 +98,9 @@ class ExternalizableProtectedConstructor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 class ExternalizableAccessConstructor implements Externalizable {
@@ -109,9 +109,9 @@ class ExternalizableAccessConstructor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 class ExternalizablePrivateConstructor implements Externalizable {
@@ -122,79 +122,80 @@ class ExternalizablePrivateConstructor implements Externalizable {
     public void writeExternal(ObjectOutput out) throws IOException {
     }
     public void readExternal(ObjectInput in)
-        throws IOException, ClassNotFoundException
-        {
-        }
+	throws IOException, ClassNotFoundException
+	{
+	} 
 };
 
 
 public class DefaultPackage {
     public static void main(String args[])
-        throws IOException, ClassNotFoundException
-        {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream out =   new ObjectOutputStream(baos);
-            out.writeObject(new DefaultPublicSerializable());
-            out.writeObject(new DefaultProtectedSerializable());
-            out.writeObject(new DefaultAccessSerializable());
-            out.writeObject(new DefaultPrivateSerializable());
+	throws IOException, ClassNotFoundException
+	{
+	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	    ObjectOutputStream out =   new ObjectOutputStream(baos);
+	    out.writeObject(new DefaultPublicSerializable());
+	    out.writeObject(new DefaultProtectedSerializable());
+	    out.writeObject(new DefaultAccessSerializable());
+	    out.writeObject(new DefaultPrivateSerializable());
+	
+	    InputStream is = new ByteArrayInputStream(baos.toByteArray());
+	    ObjectInputStream in = new ObjectInputStream(is);
+	    /* (DefaultPublicSerializable) */ in.readObject();
+	    /* (DefaultProtectedSerializable) */ in.readObject();
+	    /* (DefaultAcccessSerializable) */ in.readObject();
+	    try {
+		/* (DefaultPrivateSerializable) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading DefaultPrivateSerialziable");
+	    } catch (InvalidClassException e) {
+	    } 
+	    in.close();
 
-            InputStream is = new ByteArrayInputStream(baos.toByteArray());
-            ObjectInputStream in = new ObjectInputStream(is);
-            /* (DefaultPublicSerializable) */ in.readObject();
-            /* (DefaultProtectedSerializable) */ in.readObject();
-            /* (DefaultAcccessSerializable) */ in.readObject();
-            try {
-                /* (DefaultPrivateSerializable) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading DefaultPrivateSerialziable");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizablePublicConstructor());
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizablePublicConstructor());
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    /* (ExternalizablePublicConstructor) */ in.readObject();
+	    in.close();
 
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            /* (ExternalizablePublicConstructor) */ in.readObject();
-            in.close();
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizableProtectedConstructor());
+	
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizableProtectedConstructor());
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (ExternalizableProtectedConstructor) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading ExternalizableProtectedConstructor");
+	    } catch (InvalidClassException e) {
+	    }
+	    in.close();
 
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizableAccessConstructor());
 
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (ExternalizableProtectedConstructor) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading ExternalizableProtectedConstructor");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (ExternalizableAccessConstructor) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading ExternalizableAccessConstructor");
+	    } catch (InvalidClassException e) {
+	    }
+	    in.close();
+      
+	    baos.reset();
+	    out = new ObjectOutputStream(baos);
+	    out.writeObject(new ExternalizablePrivateConstructor(2));
 
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizableAccessConstructor());
-
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (ExternalizableAccessConstructor) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading ExternalizableAccessConstructor");
-            } catch (InvalidClassException e) {
-            }
-            in.close();
-
-            baos.reset();
-            out = new ObjectOutputStream(baos);
-            out.writeObject(new ExternalizablePrivateConstructor(2));
-
-            in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
-            try {
-                /* (ExternalizablePrivateConstructor) */ in.readObject();
-                throw new Error("Expected InvalidClassException reading ExternalizablePrivateConstructor");
-            } catch (InvalidClassException e) {
-            }
-            out.close();
-            in.close();
-        }
+	    in = new ObjectInputStream(new ByteArrayInputStream(baos.toByteArray()));
+	    try {
+		/* (ExternalizablePrivateConstructor) */ in.readObject();
+		throw new Error("Expected InvalidClassException reading ExternalizablePrivateConstructor");
+	    } catch (InvalidClassException e) {
+	    }
+	    out.close();
+	    in.close();
+	}
 }
+

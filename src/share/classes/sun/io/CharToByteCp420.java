@@ -31,6 +31,7 @@ import sun.nio.cs.ext.IBM420;
  * Tables and data to convert Unicode to Cp420
  *
  * @author  ConverterGenerator tool
+ * @version >= JDK1.1.6
  */
 
 public class CharToByteCp420 extends CharToByteSingleByte {
